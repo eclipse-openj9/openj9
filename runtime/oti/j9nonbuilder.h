@@ -5023,6 +5023,9 @@ typedef struct J9InternalVMFunctions {
 	void (*releaseVThreadInspector)(struct J9VMThread *currentThread, jobject thread);
 #endif /* JAVA_SPEC_VERSION >= 19 */
 	UDATA (*checkArgsConsumed)(struct J9JavaVM * vm, struct J9PortLibrary* portLibrary, struct J9VMInitArgs* j9vm_args);
+#if defined(J9VM_ZOS_3164_INTEROPERABILITY) && (JAVA_SPEC_VERSION >= 17)
+	I_32 (*invoke31BitJNI_OnXLoad)(struct J9JavaVM *vm, void *handle, jboolean isOnLoad, void *reserved);
+#endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) && (JAVA_SPEC_VERSION >= 17) */
 } J9InternalVMFunctions;
 
 /* Jazz 99339: define a new structure to replace JavaVM so as to pass J9NativeLibrary to JVMTIEnv  */

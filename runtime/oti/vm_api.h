@@ -3962,6 +3962,20 @@ UDATA
 initializeNativeLibrary(J9JavaVM * javaVM, J9NativeLibrary* library);
 
 
+#if defined(J9VM_ZOS_3164_INTEROPERABILITY) && (JAVA_SPEC_VERSION >= 17)
+/**
+ * Invoke JNI_OnLoad/JNI_OnUnload functions in 31-bit interoperability native target library.
+ * @param vm The J9JavaVM pointer passed as first parameter to JNI_OnXLoad function
+ * @param handle The target function pointer to invoke - should be a 31-bit interop target
+ * @param isOnLoad JNI_TRUE if invoking JNI_OnLoad, JNI_FALSE if invoking JNI_OnUnload
+ * @param reserved The reserved second parameter to JNI_OnXLoad function
+ * @return the return value for JNI_OnLoad, or 0 for JNI_OnUnload
+ */
+I_32
+invoke31BitJNI_OnXLoad(J9JavaVM *vm, void *handle, jboolean isOnLoad, void *reserved);
+#endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) && (JAVA_SPEC_VERSION >= 17) */
+
+
 /* ---------------- vmhook.c ---------------- */
 
 #if defined(J9VM_INTERP_NATIVE_SUPPORT)
