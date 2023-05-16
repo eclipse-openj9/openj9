@@ -284,7 +284,7 @@ public:
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	void markClassAsUsedByAconst_init(U_16 classCfrCPIndex)    { mark(classCfrCPIndex, ACONST_INIT); }
 	void markFieldRefAsUsedByWithField(U_16 fieldRefCfrCPIndex) { mark(fieldRefCfrCPIndex, WITH_FIELD); }
-#endif
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 	void markFieldRefAsUsedByGetStatic(U_16 fieldRefCfrCPIndex) { mark(fieldRefCfrCPIndex, GET_STATIC); }
 	void markFieldRefAsUsedByPutStatic(U_16 fieldRefCfrCPIndex) { mark(fieldRefCfrCPIndex, PUT_STATIC); }

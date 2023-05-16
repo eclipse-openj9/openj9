@@ -52,11 +52,11 @@ const U_8 fieldModifiersLookupTable[] = {
 	0x00												/* N */,
 	0x00												/* O */,
 	0x00												/* P */,
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	(U_8)(J9FieldFlagObject >> 16)						/* Q */,
-#else
+#else /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
 	0x00												/* Q */,
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
 	0x00												/* R */,
 	(U_8)(J9FieldTypeShort >> 16)						/* S */,
 	0x00												/* T */,

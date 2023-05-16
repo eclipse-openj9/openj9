@@ -249,6 +249,7 @@ extern "C" {
 #cmakedefine J9VM_OPT_USE_FFI
 #cmakedefine J9VM_OPT_USE_FFI_ONLY
 #cmakedefine J9VM_OPT_VALHALLA_VALUE_TYPES
+#cmakedefine J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES
 #cmakedefine J9VM_OPT_VEE_SUPPORT
 #cmakedefine J9VM_OPT_VM_LOCAL_STORAGE
 #cmakedefine J9VM_OPT_ZERO

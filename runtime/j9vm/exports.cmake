@@ -377,6 +377,11 @@ if(NOT JAVA_SPEC_VERSION LESS 17)
 		JVM_DumpClassListToFile
 		JVM_DumpDynamicArchive
 	)
+	if(J9VM_ZOS_3164_INTEROPERABILITY)
+		jvm_add_exports(jvm
+			JVM_Invoke31BitJNI_OnXLoad
+		)
+	endif()
 	if(J9VM_OPT_JAVA_OFFLOAD_SUPPORT)
 		jvm_add_exports(jvm
 			JVM_ValidateJNILibrary

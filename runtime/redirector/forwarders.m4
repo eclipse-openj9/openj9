@@ -83,6 +83,8 @@ _X(JVM_GetThreadInterruptEvent,JNICALL,true,void *,void)
 _X(JVM_Halt,JNICALL,true,void,jint exitCode)
 _X(JVM_InitializeSocketLibrary,JNICALL,true,jint,void)
 _X(JVM_InvokeMethod,JNICALL,true,jobject,JNIEnv *env, jobject method, jobject obj, jobjectArray args)
+_IF([defined(J9VM_ZOS_3164_INTEROPERABILITY) && (JAVA_SPEC_VERSION >= 17)],
+	_X(JVM_Invoke31BitJNI_OnXLoad,JNICALL,true,jint,JavaVM *vm,void *handle,jboolean isOnLoad,void *reserved))
 _X(JVM_IsNaN,JNICALL,true,jboolean,jdouble dbl)
 _X(JVM_LatestUserDefinedLoader,JNICALL,true,jobject,JNIEnv *env)
 _X(JVM_Listen,JNICALL,true,jint,jint descriptor, jint count)
