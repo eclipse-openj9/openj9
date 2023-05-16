@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright IBM Corp. and others 2021
+ * Copyright IBM Corp. and others 2023
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,7 +19,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-package org.openj9.test.jep424.downcall;
+package org.openj9.test.jep442.downcall;
 
 import org.testng.annotations.Test;
 import org.testng.Assert;
@@ -27,24 +27,26 @@ import org.testng.AssertJUnit;
 import static org.testng.Assert.fail;
 
 import java.lang.invoke.MethodHandle;
+
+import java.lang.invoke.MethodHandle;
 import java.lang.invoke.VarHandle;
 import java.lang.invoke.WrongMethodTypeException;
 
-import java.lang.foreign.Addressable;
+import java.lang.foreign.Arena;
 import java.lang.foreign.Linker;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.GroupLayout;
-import java.lang.foreign.MemoryAddress;
 import java.lang.foreign.MemoryLayout;
+import java.lang.foreign.MemoryLayout.PathElement;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.MemorySession;
 import java.lang.foreign.SegmentAllocator;
+import java.lang.foreign.SequenceLayout;
 import java.lang.foreign.SymbolLookup;
 import static java.lang.foreign.ValueLayout.*;
 
 /**
- * Test cases for JEP 424: Foreign Linker API (Preview) for primitive types in downcall,
- * which verifies the illegal cases including unsupported layouts, etc.
+ * Test cases for JEP 442: Foreign Linker API (Third Preview) for primitive types in downcall,
+ * which verify the illegal cases including unsupported layouts, etc.
  * Note: the majority of illegal cases are removed given the corresponding method type
  * is deduced from the function descriptor which is verified in OpenJDK.
  */
@@ -61,14 +63,14 @@ public class InvalidDownCallTests {
 	@Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Unsupported layout.*")
 	public void test_invalidMemoryLayoutForIntType() throws Throwable {
 		FunctionDescriptor fd = FunctionDescriptor.ofVoid(JAVA_INT, MemoryLayout.paddingLayout(32));
-		Addressable functionSymbol = nativeLibLookup.lookup("add2IntsReturnVoid").get();
+		MemorySegment functionSymbol = nativeLibLookup.find("add2IntsReturnVoid").get();
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 		fail("Failed to throw out IllegalArgumentException in the case of the invalid MemoryLayout");
 	}
 
 	@Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Unsupported layout.*")
-	public void test_invalidMemoryLayoutForMemoryAddress() throws Throwable {
-		Addressable functionSymbol = defaultLibLookup.lookup("strlen").get();
+	public void test_invalidMemoryLayoutForMemAddr() throws Throwable {
+		MemorySegment functionSymbol = defaultLibLookup.find("strlen").get();
 		FunctionDescriptor fd = FunctionDescriptor.of(JAVA_LONG, MemoryLayout.paddingLayout(64));
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 		fail("Failed to throw out IllegalArgumentException in the case of the invalid MemoryLayout");
@@ -76,7 +78,7 @@ public class InvalidDownCallTests {
 
 	@Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Unsupported layout.*")
 	public void test_invalidMemoryLayoutForReturnType() throws Throwable {
-		Addressable functionSymbol = defaultLibLookup.lookup("strlen").get();
+		MemorySegment functionSymbol = defaultLibLookup.find("strlen").get();
 		FunctionDescriptor fd = FunctionDescriptor.of(MemoryLayout.paddingLayout(64), JAVA_LONG);
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 		fail("Failed to throw out IllegalArgumentException in the case of the invalid MemoryLayout");
@@ -89,7 +91,7 @@ public class InvalidDownCallTests {
 		VarHandle intHandle2 = structLayout.varHandle(PathElement.groupElement("elem2"));
 
 		FunctionDescriptor fd = FunctionDescriptor.of(JAVA_INT, JAVA_INT, ADDRESS);
-		Addressable functionSymbol = nativeLibLookup.lookup("addIntAndIntsFromStructPointer").get();
+		MemorySegment functionSymbol = nativeLibLookup.find("addIntAndIntsFromStructPointer").get();
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 
 		int result = (int)mh.invoke(19202122, null);
@@ -103,11 +105,11 @@ public class InvalidDownCallTests {
 		VarHandle intHandle2 = structLayout.varHandle(PathElement.groupElement("elem2"));
 
 		FunctionDescriptor fd = FunctionDescriptor.of(structLayout, structLayout, structLayout);
-		Addressable functionSymbol = nativeLibLookup.lookup("add2IntStructs_returnStruct").get();
+		MemorySegment functionSymbol = nativeLibLookup.find("add2IntStructs_returnStruct").get();
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 
-		try (MemorySession session = MemorySession.openConfined()) {
-			SegmentAllocator allocator = SegmentAllocator.newNativeArena(session);
+		try (Arena arena = Arena.openConfined()) {
+			SegmentAllocator allocator = SegmentAllocator.nativeAllocator(arena.scope());
 			MemorySegment structSegmt1 = allocator.allocate(structLayout);
 			intHandle1.set(structSegmt1, 11223344);
 			intHandle2.set(structSegmt1, 55667788);
@@ -117,51 +119,53 @@ public class InvalidDownCallTests {
 		}
 	}
 
-	@Test(expectedExceptions = NullPointerException.class)
 	public void test_nullSegmentForPtrArgument() throws Throwable {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_INT.withName("elem1"), JAVA_INT.withName("elem2"));
 		VarHandle intHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));
 		VarHandle intHandle2 = structLayout.varHandle(PathElement.groupElement("elem2"));
 
 		FunctionDescriptor fd = FunctionDescriptor.of(JAVA_INT, JAVA_INT, ADDRESS);
-		Addressable functionSymbol = nativeLibLookup.lookup("addIntAndIntsFromStructPointer").get();
+		MemorySegment functionSymbol = nativeLibLookup.find("validateNullAddrArgument").get();
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 
-		int result = (int)mh.invoke(19202122, MemoryAddress.NULL);
-		fail("Failed to throw out NullPointerException in the case of the null address");
+		int result = (int)mh.invoke(19202122, MemorySegment.NULL);
+		Assert.assertEquals(result, 19202122);
+	}
+
+	@Test(expectedExceptions = NullPointerException.class)
+	public void test_nullSegmentForStructArgument() throws Throwable {
+		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_INT.withName("elem1"), JAVA_INT.withName("elem2"));
+		VarHandle intHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));
+		VarHandle intHandle2 = structLayout.varHandle(PathElement.groupElement("elem2"));
+
+		FunctionDescriptor fd = FunctionDescriptor.of(structLayout, structLayout, structLayout);
+		MemorySegment functionSymbol = nativeLibLookup.find("add2IntStructs_returnStruct").get();
+		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
+
+		try (Arena arena = Arena.openConfined()) {
+			SegmentAllocator allocator = SegmentAllocator.nativeAllocator(arena.scope());
+			MemorySegment structSegmt1 = allocator.allocate(structLayout);
+			intHandle1.set(structSegmt1, 11223344);
+			intHandle2.set(structSegmt1, 55667788);
+
+			MemorySegment resultSegmt = (MemorySegment)mh.invokeExact(allocator, structSegmt1, MemorySegment.NULL);
+			fail("Failed to throw out NullPointerException in the case of the null segment");
+		}
 	}
 
 	@Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Heap segment not allowed.*")
-	public void test_heapSegmentForPtrArgument_1() throws Throwable {
+	public void test_heapSegmentForPtrArgument() throws Throwable {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_INT.withName("elem1"), JAVA_INT.withName("elem2"));
 		VarHandle intHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));
 		VarHandle intHandle2 = structLayout.varHandle(PathElement.groupElement("elem2"));
 
 		FunctionDescriptor fd = FunctionDescriptor.of(JAVA_INT, JAVA_INT, ADDRESS);
-		Addressable functionSymbol = nativeLibLookup.lookup("addIntAndIntsFromStructPointer").get();
+		MemorySegment functionSymbol = nativeLibLookup.find("addIntAndIntsFromStructPointer").get();
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 
 		MemorySegment structSegmt = MemorySegment.ofArray(new int[]{11121314, 15161718});
 		int result = (int)mh.invoke(19202122, structSegmt);
 		fail("Failed to throw out IllegalArgumentException in the case of the heap segment");
-	}
-
-	/* An UnsupportedOperationException is thrown out by MemorySegment.address() in the case of
-	 * the on-heap segment in JDK19.
-	 */
-	@Test(expectedExceptions = UnsupportedOperationException.class, expectedExceptionsMessageRegExp = "Cannot obtain address of on-heap segment.*")
-	public void test_heapSegmentForPtrArgument_2() throws Throwable {
-		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_INT.withName("elem1"), JAVA_INT.withName("elem2"));
-		VarHandle intHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));
-		VarHandle intHandle2 = structLayout.varHandle(PathElement.groupElement("elem2"));
-
-		FunctionDescriptor fd = FunctionDescriptor.of(JAVA_INT, JAVA_INT, ADDRESS);
-		Addressable functionSymbol = nativeLibLookup.lookup("addIntAndIntsFromStructPointer").get();
-		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
-
-		MemorySegment structSegmt = MemorySegment.ofArray(new int[]{11121314, 15161718});
-		int result = (int)mh.invokeExact(19202122, structSegmt.address());
-		fail("Failed to throw out UnsupportedOperationException in the case of the heap address");
 	}
 
 	public void test_heapSegmentForStructArgument() throws Throwable {
@@ -170,11 +174,11 @@ public class InvalidDownCallTests {
 		VarHandle intHandle2 = structLayout.varHandle(PathElement.groupElement("elem2"));
 
 		FunctionDescriptor fd = FunctionDescriptor.of(structLayout, structLayout, structLayout);
-		Addressable functionSymbol = nativeLibLookup.lookup("add2IntStructs_returnStruct").get();
+		MemorySegment functionSymbol = nativeLibLookup.find("add2IntStructs_returnStruct").get();
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 
-		try (MemorySession session = MemorySession.openConfined()) {
-			SegmentAllocator allocator = SegmentAllocator.newNativeArena(session);
+		try (Arena arena = Arena.openConfined()) {
+			SegmentAllocator allocator = SegmentAllocator.nativeAllocator(arena.scope());
 			MemorySegment structSegmt1 = allocator.allocate(structLayout);
 			intHandle1.set(structSegmt1, 11223344);
 			intHandle2.set(structSegmt1, 55667788);

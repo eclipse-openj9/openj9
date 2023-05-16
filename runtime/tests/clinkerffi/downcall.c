@@ -1990,3 +1990,20 @@ add3DoubleStructs_returnStruct(stru_Double_Double_Double arg1, stru_Double_Doubl
 	doubleStruct.elem3 = arg1.elem3 + arg2.elem3;
 	return doubleStruct;
 }
+
+/**
+ * Validate that a null pointer of struct is successfully passed
+ * from java to native in downcall.
+ *
+ * @param arg1 an integer
+ * @param arg2 a pointer to struct with two integers
+ * @return the value of arg1
+ *
+ * Note:
+ * arg2 is a null pointer passed from java to native.
+ */
+int
+validateNullAddrArgument(int arg1, stru_Int_Int *arg2)
+{
+	return arg1;
+}

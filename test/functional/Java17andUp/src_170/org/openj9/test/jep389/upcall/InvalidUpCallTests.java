@@ -115,4 +115,140 @@ public class InvalidUpCallTests {
 			fail("Failed to throw out IllegalArgumentException from the nested upcall");
 		}
 	}
+
+	@Test(expectedExceptions = NullPointerException.class)
+	public void test_nullValueForReturnPtr() throws Throwable {
+		GroupLayout structLayout = MemoryLayout.structLayout(C_INT.withName("elem1"), C_INT.withName("elem2"));
+		VarHandle intHandle1 = structLayout.varHandle(int.class, PathElement.groupElement("elem1"));
+		VarHandle intHandle2 = structLayout.varHandle(int.class, PathElement.groupElement("elem2"));
+
+		MethodType mt = MethodType.methodType(MemoryAddress.class, MemoryAddress.class, MemorySegment.class, MemoryAddress.class);
+		FunctionDescriptor fd = FunctionDescriptor.of(C_POINTER, C_POINTER, structLayout, C_POINTER);
+		Addressable functionSymbol = nativeLibLookup.lookup("add2IntStructs_returnStructPointerByUpcallMH").get();
+		MethodHandle mh = clinker.downcallHandle(functionSymbol, mt, fd);
+
+		try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+			MemoryAddress upcallFuncAddr = clinker.upcallStub(UpcallMethodHandles.MH_add2IntStructs_returnStructPointer_nullValue,
+					FunctionDescriptor.of(C_POINTER, C_POINTER, structLayout), scope);
+			SegmentAllocator allocator = SegmentAllocator.ofScope(scope);
+			MemorySegment structSegmt1 = allocator.allocate(structLayout);
+			intHandle1.set(structSegmt1, 11223344);
+			intHandle2.set(structSegmt1, 55667788);
+			MemorySegment structSegmt2 = allocator.allocate(structLayout);
+			intHandle1.set(structSegmt2, 99001122);
+			intHandle2.set(structSegmt2, 33445566);
+
+			MemoryAddress resultAddr = (MemoryAddress)mh.invokeExact(structSegmt1.address(), structSegmt2, upcallFuncAddr);
+			fail("Failed to throw out NullPointerException in the case of the null value upon return");
+		}
+	}
+
+	@Test(expectedExceptions = NullPointerException.class)
+	public void test_nullValueForReturnStruct() throws Throwable {
+		GroupLayout structLayout = MemoryLayout.structLayout(C_INT.withName("elem1"), C_INT.withName("elem2"));
+		VarHandle intHandle1 = structLayout.varHandle(int.class, PathElement.groupElement("elem1"));
+		VarHandle intHandle2 = structLayout.varHandle(int.class, PathElement.groupElement("elem2"));
+
+		MethodType mt = MethodType.methodType(MemorySegment.class, MemorySegment.class, MemorySegment.class, MemoryAddress.class);
+		FunctionDescriptor fd = FunctionDescriptor.of(structLayout, structLayout, structLayout, C_POINTER);
+		Addressable functionSymbol = nativeLibLookup.lookup("add2IntStructs_returnStructByUpcallMH").get();
+
+		try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+			MemoryAddress upcallFuncAddr = clinker.upcallStub(UpcallMethodHandles.MH_add2IntStructs_returnStruct_nullValue,
+					FunctionDescriptor.of(structLayout, structLayout, structLayout), scope);
+			SegmentAllocator allocator = SegmentAllocator.ofScope(scope);
+			MethodHandle mh = clinker.downcallHandle(functionSymbol, allocator, mt, fd);
+			MemorySegment structSegmt1 = allocator.allocate(structLayout);
+			intHandle1.set(structSegmt1, 11223344);
+			intHandle2.set(structSegmt1, 55667788);
+			MemorySegment structSegmt2 = allocator.allocate(structLayout);
+			intHandle1.set(structSegmt2, 99001122);
+			intHandle2.set(structSegmt2, 33445566);
+
+			MemorySegment resultSegmt = (MemorySegment)mh.invokeExact(structSegmt1, structSegmt2, upcallFuncAddr);
+			fail("Failed to throw out NullPointerException in the case of the null value upon return");
+		}
+	}
+
+	public void test_nullAddrForReturnPtr() throws Throwable {
+		GroupLayout structLayout = MemoryLayout.structLayout(C_INT.withName("elem1"), C_INT.withName("elem2"));
+		VarHandle intHandle1 = structLayout.varHandle(int.class, PathElement.groupElement("elem1"));
+		VarHandle intHandle2 = structLayout.varHandle(int.class, PathElement.groupElement("elem2"));
+
+		MethodType mt = MethodType.methodType(MemoryAddress.class, MemoryAddress.class, MemorySegment.class, MemoryAddress.class);
+		FunctionDescriptor fd = FunctionDescriptor.of(C_POINTER, C_POINTER, structLayout, C_POINTER);
+		Addressable functionSymbol = nativeLibLookup.lookup("validateReturnNullAddrByUpcallMH").get();
+		MethodHandle mh = clinker.downcallHandle(functionSymbol, mt, fd);
+
+		try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+			MemoryAddress upcallFuncAddr = clinker.upcallStub(UpcallMethodHandles.MH_add2IntStructs_returnStructPointer_nullAddr,
+					FunctionDescriptor.of(C_POINTER, C_POINTER, structLayout), scope);
+			SegmentAllocator allocator = SegmentAllocator.ofScope(scope);
+			MemorySegment structSegmt1 = allocator.allocate(structLayout);
+			intHandle1.set(structSegmt1, 11223344);
+			intHandle2.set(structSegmt1, 55667788);
+			MemorySegment structSegmt2 = allocator.allocate(structLayout);
+			intHandle1.set(structSegmt2, 99001122);
+			intHandle2.set(structSegmt2, 33445566);
+
+			MemoryAddress resultAddr = (MemoryAddress)mh.invokeExact(structSegmt1.address(), structSegmt2, upcallFuncAddr);
+			MemorySegment resultSegmt = resultAddr.asSegment(structLayout.byteSize(), scope);
+			Assert.assertEquals(intHandle1.get(resultSegmt), 11223344);
+			Assert.assertEquals(intHandle2.get(resultSegmt), 55667788);
+		}
+	}
+
+	@Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "A heap address is not allowed.*")
+	public void test_heapSegmentForReturnPtr() throws Throwable {
+		GroupLayout structLayout = MemoryLayout.structLayout(C_INT.withName("elem1"), C_INT.withName("elem2"));
+		VarHandle intHandle1 = structLayout.varHandle(int.class, PathElement.groupElement("elem1"));
+		VarHandle intHandle2 = structLayout.varHandle(int.class, PathElement.groupElement("elem2"));
+
+		MethodType mt = MethodType.methodType(MemoryAddress.class, MemoryAddress.class, MemorySegment.class, MemoryAddress.class);
+		FunctionDescriptor fd = FunctionDescriptor.of(C_POINTER, C_POINTER, structLayout, C_POINTER);
+		Addressable functionSymbol = nativeLibLookup.lookup("add2IntStructs_returnStructPointerByUpcallMH").get();
+		MethodHandle mh = clinker.downcallHandle(functionSymbol, mt, fd);
+
+		try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+			MemoryAddress upcallFuncAddr = clinker.upcallStub(UpcallMethodHandles.MH_add2IntStructs_returnStructPointer_heapSegmt,
+					FunctionDescriptor.of(C_POINTER, C_POINTER, structLayout), scope);
+			SegmentAllocator allocator = SegmentAllocator.ofScope(scope);
+			MemorySegment structSegmt1 = allocator.allocate(structLayout);
+			intHandle1.set(structSegmt1, 11223344);
+			intHandle2.set(structSegmt1, 55667788);
+			MemorySegment structSegmt2 = allocator.allocate(structLayout);
+			intHandle1.set(structSegmt2, 99001122);
+			intHandle2.set(structSegmt2, 33445566);
+
+			MemoryAddress resultAddr = (MemoryAddress)mh.invokeExact(structSegmt1.address(), structSegmt2, upcallFuncAddr);
+			fail("Failed to throw out IllegalArgumentException in the case of the heap address upon return");
+		}
+	}
+
+	public void test_heapSegmentForReturnStruct() throws Throwable {
+		GroupLayout structLayout = MemoryLayout.structLayout(C_INT.withName("elem1"), C_INT.withName("elem2"));
+		VarHandle intHandle1 = structLayout.varHandle(int.class, PathElement.groupElement("elem1"));
+		VarHandle intHandle2 = structLayout.varHandle(int.class, PathElement.groupElement("elem2"));
+
+		MethodType mt = MethodType.methodType(MemorySegment.class, MemorySegment.class, MemorySegment.class, MemoryAddress.class);
+		FunctionDescriptor fd = FunctionDescriptor.of(structLayout, structLayout, structLayout, C_POINTER);
+		Addressable functionSymbol = nativeLibLookup.lookup("add2IntStructs_returnStructByUpcallMH").get();
+
+		try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+			MemoryAddress upcallFuncAddr = clinker.upcallStub(UpcallMethodHandles.MH_add2IntStructs_returnStruct_heapSegmt,
+					FunctionDescriptor.of(structLayout, structLayout, structLayout), scope);
+			SegmentAllocator allocator = SegmentAllocator.ofScope(scope);
+			MethodHandle mh = clinker.downcallHandle(functionSymbol, allocator, mt, fd);
+			MemorySegment structSegmt1 = allocator.allocate(structLayout);
+			intHandle1.set(structSegmt1, 11223344);
+			intHandle2.set(structSegmt1, 55667788);
+			MemorySegment structSegmt2 = allocator.allocate(structLayout);
+			intHandle1.set(structSegmt2, 99001122);
+			intHandle2.set(structSegmt2, 33445566);
+
+			MemorySegment resultSegmt = (MemorySegment)mh.invokeExact(structSegmt1, structSegmt2, upcallFuncAddr);
+			Assert.assertEquals(intHandle1.get(resultSegmt), 110224466);
+			Assert.assertEquals(intHandle2.get(resultSegmt), 89113354);
+		}
+	}
 }

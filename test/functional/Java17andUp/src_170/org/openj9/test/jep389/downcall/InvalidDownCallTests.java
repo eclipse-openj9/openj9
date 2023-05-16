@@ -25,17 +25,24 @@ import org.testng.annotations.Test;
 import org.testng.Assert;
 import org.testng.AssertJUnit;
 import static org.testng.Assert.fail;
+
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
+import java.lang.invoke.VarHandle;
+import java.lang.invoke.WrongMethodTypeException;
 
 import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.CLinker;
 import static jdk.incubator.foreign.CLinker.*;
 import jdk.incubator.foreign.FunctionDescriptor;
+import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryLayouts;
+import jdk.incubator.foreign.MemoryLayout.PathElement;
+import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
+import jdk.incubator.foreign.SegmentAllocator;
 import jdk.incubator.foreign.SymbolLookup;
 import jdk.incubator.foreign.ValueLayout;
 
@@ -392,4 +399,93 @@ public class InvalidDownCallTests {
 		fail("Failed to throw out IllegalArgumentException in the case of the unsupported String type");
 	}
 
+	@Test(expectedExceptions = NullPointerException.class)
+	public void test_nullValueForPtrArgument() throws Throwable {
+		GroupLayout structLayout = MemoryLayout.structLayout(C_INT.withName("elem1"), C_INT.withName("elem2"));
+		VarHandle intHandle1 = structLayout.varHandle(int.class, PathElement.groupElement("elem1"));
+		VarHandle intHandle2 = structLayout.varHandle(int.class, PathElement.groupElement("elem2"));
+
+		MethodType mt = MethodType.methodType(int.class, int.class, MemoryAddress.class);
+		FunctionDescriptor fd = FunctionDescriptor.of(C_INT, C_INT, C_POINTER);
+		Addressable functionSymbol = nativeLibLookup.lookup("addIntAndIntsFromStructPointer").get();
+		MethodHandle mh = clinker.downcallHandle(functionSymbol, mt, fd);
+
+		int result = (int)mh.invoke(19202122, null);
+		fail("Failed to throw out NullPointerException in the case of the null value");
+	}
+
+	@Test(expectedExceptions = WrongMethodTypeException.class)
+	public void test_nullValueForStructArgument() throws Throwable {
+		GroupLayout structLayout = MemoryLayout.structLayout(C_INT.withName("elem1"), C_INT.withName("elem2"));
+		VarHandle intHandle1 = structLayout.varHandle(int.class, PathElement.groupElement("elem1"));
+		VarHandle intHandle2 = structLayout.varHandle(int.class, PathElement.groupElement("elem2"));
+
+		MethodType mt = MethodType.methodType(MemorySegment.class, MemorySegment.class, MemorySegment.class);
+		FunctionDescriptor fd = FunctionDescriptor.of(structLayout, structLayout, structLayout);
+		Addressable functionSymbol = nativeLibLookup.lookup("add2IntStructs_returnStruct").get();
+		MethodHandle mh = clinker.downcallHandle(functionSymbol, mt, fd);
+
+		try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+			SegmentAllocator allocator = SegmentAllocator.ofScope(scope);
+			MemorySegment structSegmt1 = allocator.allocate(structLayout);
+			intHandle1.set(structSegmt1, 11223344);
+			intHandle2.set(structSegmt1, 55667788);
+
+			MemorySegment resultSegmt = (MemorySegment)mh.invokeExact(allocator, structSegmt1, null);
+			fail("Failed to throw out WrongMethodTypeException in the case of the null value");
+		}
+	}
+
+	public void test_nullSegmentForPtrArgument() throws Throwable {
+		GroupLayout structLayout = MemoryLayout.structLayout(C_INT.withName("elem1"), C_INT.withName("elem2"));
+		VarHandle intHandle1 = structLayout.varHandle(int.class, PathElement.groupElement("elem1"));
+		VarHandle intHandle2 = structLayout.varHandle(int.class, PathElement.groupElement("elem2"));
+
+		MethodType mt = MethodType.methodType(int.class, int.class, MemoryAddress.class);
+		FunctionDescriptor fd = FunctionDescriptor.of(C_INT, C_INT, C_POINTER);
+		Addressable functionSymbol = nativeLibLookup.lookup("validateNullAddrArgument").get();
+		MethodHandle mh = clinker.downcallHandle(functionSymbol, mt, fd);
+
+		int result = (int)mh.invoke(19202122, MemoryAddress.NULL);
+		Assert.assertEquals(result, 19202122);
+	}
+
+	@Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "A heap address is not allowed.*")
+	public void test_heapSegmentForPtrArgument() throws Throwable {
+		GroupLayout structLayout = MemoryLayout.structLayout(C_INT.withName("elem1"), C_INT.withName("elem2"));
+		VarHandle intHandle1 = structLayout.varHandle(int.class, PathElement.groupElement("elem1"));
+		VarHandle intHandle2 = structLayout.varHandle(int.class, PathElement.groupElement("elem2"));
+
+		MethodType mt = MethodType.methodType(int.class, int.class, MemoryAddress.class);
+		FunctionDescriptor fd = FunctionDescriptor.of(C_INT, C_INT, C_POINTER);
+		Addressable functionSymbol = nativeLibLookup.lookup("addIntAndIntsFromStructPointer").get();
+		MethodHandle mh = clinker.downcallHandle(functionSymbol, mt, fd);
+
+		MemorySegment structSegmt = MemorySegment.ofArray(new int[]{11121314, 15161718});
+		int result = (int)mh.invoke(19202122, structSegmt.address());
+		fail("Failed to throw out IllegalArgumentException in the case of the heap address");
+	}
+
+	public void test_heapSegmentForStructArgument() throws Throwable {
+		GroupLayout structLayout = MemoryLayout.structLayout(C_INT.withName("elem1"), C_INT.withName("elem2"));
+		VarHandle intHandle1 = structLayout.varHandle(int.class, PathElement.groupElement("elem1"));
+		VarHandle intHandle2 = structLayout.varHandle(int.class, PathElement.groupElement("elem2"));
+
+		MethodType mt = MethodType.methodType(MemorySegment.class, MemorySegment.class, MemorySegment.class);
+		FunctionDescriptor fd = FunctionDescriptor.of(structLayout, structLayout, structLayout);
+		Addressable functionSymbol = nativeLibLookup.lookup("add2IntStructs_returnStruct").get();
+		MethodHandle mh = clinker.downcallHandle(functionSymbol, mt, fd);
+
+		try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+			SegmentAllocator allocator = SegmentAllocator.ofScope(scope);
+			MemorySegment structSegmt1 = allocator.allocate(structLayout);
+			intHandle1.set(structSegmt1, 11223344);
+			intHandle2.set(structSegmt1, 55667788);
+			MemorySegment structSegmt2 = MemorySegment.ofArray(new int[]{99001122, 33445566});
+
+			MemorySegment resultSegmt = (MemorySegment)mh.invokeExact(allocator, structSegmt1, structSegmt2);
+			Assert.assertEquals(intHandle1.get(resultSegmt), 110224466);
+			Assert.assertEquals(intHandle2.get(resultSegmt), 89113354);
+		}
+	}
 }

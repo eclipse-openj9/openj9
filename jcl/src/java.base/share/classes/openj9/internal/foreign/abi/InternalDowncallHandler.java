@@ -62,6 +62,9 @@ import java.lang.foreign.SegmentAllocator;
 import java.lang.foreign.SegmentScope;
 /*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 import java.lang.foreign.ValueLayout;
+/*[IF JAVA_SPEC_VERSION >= 20]*/
+import static java.lang.foreign.ValueLayout.*;
+/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 import java.lang.foreign.VaList;
 /*[IF JAVA_SPEC_VERSION >= 20]*/
 import jdk.internal.foreign.Utils;
@@ -103,13 +106,6 @@ public class InternalDowncallHandler {
 	/*[IF JAVA_SPEC_VERSION == 16]*/
 	private Addressable functionAddr;
 	/*[ENDIF] JAVA_SPEC_VERSION == 16 */
-	/*[IF JAVA_SPEC_VERSION >= 18]*/
-	/*[IF JAVA_SPEC_VERSION <= 19]*/
-	private static final Class<?> addrClass = Addressable.class;
-	/*[ENDIF] JAVA_SPEC_VERSION <= 19 */
-	/*[ELSE] JAVA_SPEC_VERSION >= 18 */
-	private static final Class<?> addrClass = MemoryAddress.class;
-	/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
 	private long cifNativeThunkAddr;
 	private long argTypesAddr;
 	private MemoryLayout[] argLayoutArray;
@@ -145,9 +141,11 @@ public class InternalDowncallHandler {
 	private static final MethodHandle intToLongArgFilter;
 	private static final MethodHandle floatToLongArgFilter;
 	private static final MethodHandle doubleToLongArgFilter;
-	/*[IF JAVA_SPEC_VERSION <= 19]*/
+	/*[IF JAVA_SPEC_VERSION >= 20]*/
+	private MethodHandle memSegmtOfPtrToLongArgFilter;
+	/*[ELSE] JAVA_SPEC_VERSION >= 20 */
 	private MethodHandle memAddrToLongArgFilter;
-	/*[ENDIF] JAVA_SPEC_VERSION <= 19 */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 	private MethodHandle memSegmtToLongArgFilter;
 
 	/* Return value filters that convert the Long object to the primitive types/MemoryAddress/MemorySegment. */
@@ -292,13 +290,20 @@ public class InternalDowncallHandler {
 	}
 	/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 
-	/*[IF JAVA_SPEC_VERSION <= 19]*/
+	/*[IF JAVA_SPEC_VERSION >= 20]*/
+	/* Intended for memSegmtOfPtrToLongArgFilter that converts the memory segment
+	 * of the passed-in pointer argument to long.
+	 */
+	private final long memSegmtOfPtrToLongArg(MemorySegment argValue) throws IllegalStateException {
+		addMemArgScope(argValue.scope());
+		return UpcallMHMetaData.getNativeArgRetSegmentOfPtr(argValue);
+	}
+	/*[ELSEIF JAVA_SPEC_VERSION >= 18] */
 	/* Intended for memAddrToLongArgFilter that converts the memory address to long.
 	 * Note: the passed-in argument can be an instance of MemoryAddress, MemorySegment
 	 * or VaList which extends Addressable in OpenJDK since Java 18 featured with
 	 * JEP419 (Second Incubator).
 	 */
-	/*[IF JAVA_SPEC_VERSION >= 18]*/
 	private final long memAddrToLongArg(Addressable argValue) throws IllegalStateException {
 		/* Only check MemorySegment and VaList given MemoryAddress.scope() doesn't exist in JDK17. */
 		if (argValue instanceof MemorySegment value) {
@@ -319,19 +324,33 @@ public class InternalDowncallHandler {
 			addMemArgScope(value.scope());
 		}
 		/*[ENDIF] JAVA_SPEC_VERSION == 18 */
-		return argValue.address().toRawLongValue();
+
+		/* Instead of assigning nativeAddr with argValue.address().toRawLongValue() by fefault,
+		 * (which triggers the exception in the case of the on-heap segment in JDK19), the
+		 * argument is validated at first in the case of MemorySegment/MemoryAddress.
+		 */
+		long nativeAddr = 0;
+		if (argValue instanceof MemorySegment value) {
+			nativeAddr = UpcallMHMetaData.getNativeArgRetSegmentOfPtr(value);
+		} else if (argValue instanceof MemoryAddress value) {
+			nativeAddr = UpcallMHMetaData.getNativeArgRetAddrOfPtr(value);
+		} else {
+			nativeAddr = argValue.address().toRawLongValue();
+		}
+		return nativeAddr;
 	}
 	/*[ELSEIF JAVA_SPEC_VERSION == 17]*/
+	/* Intended for memAddrToLongArgFilter that converts the memory address to long. */
 	private final long memAddrToLongArg(MemoryAddress argValue) throws IllegalStateException {
 		addMemArgScope(argValue.scope());
-		return argValue.address().toRawLongValue();
+		return UpcallMHMetaData.getNativeArgRetAddrOfPtr(argValue);
 	}
 	/*[ELSE] JAVA_SPEC_VERSION == 17 */
+	/* Intended for memAddrToLongArgFilter that converts the memory address to long. */
 	private static final long memAddrToLongArg(MemoryAddress argValue) {
 		return argValue.address().toRawLongValue();
 	}
-	/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
-	/*[ENDIF] JAVA_SPEC_VERSION <= 19 */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 
 	/* Intended for memSegmtToLongArgFilter that converts the memory segment to long. */
 	private final long memSegmtToLongArg(MemorySegment argValue) throws IllegalStateException {
@@ -340,12 +359,7 @@ public class InternalDowncallHandler {
 		/*[ELSE] JAVA_SPEC_VERSION == 19 */
 		addMemArgScope(argValue.scope());
 		/*[ENDIF] JAVA_SPEC_VERSION == 19 */
-
-		/*[IF JAVA_SPEC_VERSION >= 20]*/
-		return argValue.address();
-		/*[ELSE] JAVA_SPEC_VERSION >= 20 */
-		return argValue.address().toRawLongValue();
-		/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
+		return UpcallMHMetaData.getNativeArgRetSegment(argValue);
 	}
 
 	/* Intended for longObjToVoidRetFilter that converts the Long object to void. */
@@ -500,9 +514,13 @@ public class InternalDowncallHandler {
 		try {
 			/*[IF JAVA_SPEC_VERSION >= 20]*/
 			longObjToMemSegmtRetFilter = lookup.bind(this, "longObjToMemSegmtRet", methodType(MemorySegment.class, Object.class)); //$NON-NLS-1$
-			/*[ELSE] JAVA_SPEC_VERSION >= 20 */
-			memAddrToLongArgFilter = lookup.bind(this, "memAddrToLongArg", methodType(long.class, addrClass)); //$NON-NLS-1$
+			memSegmtOfPtrToLongArgFilter = lookup.bind(this, "memSegmtOfPtrToLongArg", methodType(long.class, MemorySegment.class)); //$NON-NLS-1$
+			/*[ELSEIF JAVA_SPEC_VERSION >= 18]*/
+			memAddrToLongArgFilter = lookup.bind(this, "memAddrToLongArg", methodType(long.class, Addressable.class)); //$NON-NLS-1$
+			/*[ELSE] JAVA_SPEC_VERSION >= 18 */
+			memAddrToLongArgFilter = lookup.bind(this, "memAddrToLongArg", methodType(long.class, MemoryAddress.class)); //$NON-NLS-1$
 			/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
+
 			memSegmtToLongArgFilter = lookup.bind(this, "memSegmtToLongArg", methodType(long.class, MemorySegment.class)); //$NON-NLS-1$
 		} catch (ReflectiveOperationException e) {
 			throw new InternalError(e);
@@ -635,7 +653,7 @@ public class InternalDowncallHandler {
 		/* Convert the argument values to long via filterArguments() prior to the native call. */
 		MethodHandle[] argFilters = new MethodHandle[nativeArgCount];
 		for (int argIndex = 0; argIndex < nativeArgCount; argIndex++) {
-			argFilters[argIndex] = getArgumentFilter(argTypeClasses[argIndex]);
+			argFilters[argIndex] = getArgumentFilter(argTypeClasses[argIndex], argLayoutArray[argIndex]);
 		}
 		resultHandle = filterArguments(resultHandle, argPosition, argFilters);
 
@@ -655,7 +673,7 @@ public class InternalDowncallHandler {
 	}
 
 	/* Obtain the filter that converts the passed-in argument to long against its type. */
-	private MethodHandle getArgumentFilter(Class<?> argTypeClass) {
+	private MethodHandle getArgumentFilter(Class<?> argTypeClass, MemoryLayout argLayout) {
 		/* Set the filter to null in the case of long by default as there is no conversion for long. */
 		MethodHandle filterMH = null;
 
@@ -684,7 +702,15 @@ public class InternalDowncallHandler {
 		} else
 		/*[ENDIF] JAVA_SPEC_VERSION <= 19 */
 		if (argTypeClass == MemorySegment.class) {
-			filterMH = memSegmtToLongArgFilter;
+			/*[IF JAVA_SPEC_VERSION >= 20]*/
+			/* The address layout for pointer might come with different representations of ADDRESS. */
+			if (argLayout instanceof OfAddress) {
+				filterMH = memSegmtOfPtrToLongArgFilter;
+			} else
+			/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
+			{
+				filterMH = memSegmtToLongArgFilter;
+			}
 		}
 
 		return filterMH;
