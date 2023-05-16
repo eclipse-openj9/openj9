@@ -159,14 +159,13 @@ public class InvalidUpCallTests {
 		}
 	}
 
-	@Test(expectedExceptions = NullPointerException.class)
 	public void test_nullSegmentForReturnPtr() throws Throwable {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_INT.withName("elem1"), JAVA_INT.withName("elem2"));
 		VarHandle intHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));
 		VarHandle intHandle2 = structLayout.varHandle(PathElement.groupElement("elem2"));
 
 		FunctionDescriptor fd = FunctionDescriptor.of(ADDRESS, ADDRESS, structLayout, ADDRESS);
-		MemorySegment functionSymbol = nativeLibLookup.find("add2IntStructs_returnStructPointerByUpcallMH").get();
+		MemorySegment functionSymbol = nativeLibLookup.find("validateReturnNullAddrByUpcallMH").get();
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 
 		try (Arena arena = Arena.openConfined()) {
@@ -181,7 +180,9 @@ public class InvalidUpCallTests {
 			intHandle2.set(structSegmt2, 33445566);
 
 			MemorySegment resultAddr = (MemorySegment)mh.invoke(structSegmt1, structSegmt2, upcallFuncAddr);
-			fail("Failed to throw out NullPointerException in the case of the null segment upon return");
+			MemorySegment resultSegmt = MemorySegment.ofAddress(resultAddr.address(), structLayout.byteSize(), arena.scope());
+			Assert.assertEquals(resultSegmt.get(JAVA_INT, 0), 11223344);
+			Assert.assertEquals(resultSegmt.get(JAVA_INT, 4), 55667788);
 		}
 	}
 

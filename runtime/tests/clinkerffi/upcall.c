@@ -2847,3 +2847,22 @@ return4KBytesFromStructByUpcallMH(stru_4K_Bytes (*upcallMH)())
 {
 	return (*upcallMH)();
 }
+
+/**
+ * Validate that a null pointer is successfully returned
+ * from the upcall method to native.
+ *
+ * @param arg1 a pointer to the 1st struct with two ints
+ * @param arg2 the 2nd struct with two ints
+ * @param upcallMH the function pointer to the upcall method
+ * @return a pointer to struct with two ints (arg1)
+ *
+ * Note:
+ * A null pointer is returned from upcallMH().
+ */
+stru_Int_Int *
+validateReturnNullAddrByUpcallMH(stru_Int_Int *arg1, stru_Int_Int arg2, stru_Int_Int * (*upcallMH)(stru_Int_Int *, stru_Int_Int))
+{
+	(*upcallMH)(arg1, arg2);
+	return arg1;
+}

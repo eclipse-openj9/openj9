@@ -273,7 +273,7 @@ J9::Recompilation::beforeOptimization()
          }
       else
          {
-         if (!debug("disableCatchBlockProfiler"))
+         if (!debug("disableCatchBlockProfiler") && _compilation->getOption(TR_EnableOldEDO))
             {
             _profilers.add(new (_compilation->trHeapMemory()) TR_CatchBlockProfiler(_compilation, self(), true));
             }

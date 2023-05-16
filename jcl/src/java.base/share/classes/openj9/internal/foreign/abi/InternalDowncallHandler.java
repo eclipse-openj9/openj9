@@ -703,7 +703,8 @@ public class InternalDowncallHandler {
 		/*[ENDIF] JAVA_SPEC_VERSION <= 19 */
 		if (argTypeClass == MemorySegment.class) {
 			/*[IF JAVA_SPEC_VERSION >= 20]*/
-			if (argLayout == ADDRESS) {
+			/* The address layout for pointer might come with different representations of ADDRESS. */
+			if (argLayout instanceof OfAddress) {
 				filterMH = memSegmtOfPtrToLongArgFilter;
 			} else
 			/*[ENDIF] JAVA_SPEC_VERSION >= 20 */

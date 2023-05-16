@@ -1098,12 +1098,6 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
    if (calltarget->_calleeMethod->numberOfExceptionHandlers() > 0)
       _hasExceptionHandlers = true;
 
-   if (_aggressivelyInlineThrows)
-      {
-      TR_CatchBlockProfileInfo * catchInfo = TR_CatchBlockProfileInfo::get(comp(), calltarget->_calleeMethod);
-      if (catchInfo)
-         _throwCount += catchInfo->getThrowCounter();
-      }
 
    //TR::Compilation * comp = _inliner->comp();
 
@@ -1605,7 +1599,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
                      //_optimisticSize = origOptimisticSize;
                      //_realSize = origRealSize;
                      calltargetSetTooBig = true;
-                        
+
                      }
                   }
 

@@ -2664,11 +2664,18 @@ TR_J9VMBase::shouldPerformEDO(
    if (recomp
       && comp->getOptions()->allowRecompilation()
       && recomp->useSampling()
-      && recomp->shouldBeCompiledAgain()
-      && comp->getMethodHotness() < hot
-      && comp->getNodeCount() < TR::Options::_catchSamplingSizeThreshold)
+      && recomp->shouldBeCompiledAgain())
       {
-      return true;
+      int32_t threshold = TR::Compiler->vm.isVMInStartupPhase(_jitConfig) ? comp->getOptions()->getEdoRecompSizeThresholdInStartupMode() : comp->getOptions()->getEdoRecompSizeThreshold();
+      if (comp->getOption(TR_EnableOldEDO))
+         {
+         return comp->getMethodHotness() < hot && comp->getNodeCount() < threshold;
+         }
+      else
+         {
+         ncount_t nodeCount = TR::Compiler->vm.isVMInStartupPhase(_jitConfig) ? comp->getNodeCount() : comp->getAccurateNodeCount();
+         return comp->getMethodHotness() <= hot && nodeCount < threshold;
+         }
       }
    else
       {

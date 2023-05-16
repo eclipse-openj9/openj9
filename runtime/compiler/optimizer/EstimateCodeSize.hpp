@@ -126,7 +126,6 @@ class TR_EstimateCodeSize
    bool _hasExceptionHandlers;
    bool _mayHaveVirtualCallProfileInfo;
    bool _aggressivelyInlineThrows;
-   int32_t _throwCount;
 
    int32_t _recursionDepth;
    bool _recursedTooDeep;

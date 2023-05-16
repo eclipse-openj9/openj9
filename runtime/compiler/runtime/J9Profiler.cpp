@@ -2374,8 +2374,6 @@ TR_BlockFrequencyInfo * TR_BlockFrequencyInfo::deserialize(uint8_t * &buffer, TR
    return new (PERSISTENT_NEW) TR_BlockFrequencyInfo(serializedData, buffer, currentProfileInfo);
    }
 
-const uint32_t TR_CatchBlockProfileInfo::EDOThreshold = 50;
-
 TR_CallSiteInfo::TR_CallSiteInfo(TR::Compilation * comp, TR_AllocationKind allocKind) :
    _numCallSites(comp->getNumInlinedCallSites()),
    _callSites(

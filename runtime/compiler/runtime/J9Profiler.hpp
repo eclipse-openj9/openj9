@@ -821,8 +821,6 @@ class TR_CatchBlockProfileInfo
    static inline TR_CatchBlockProfileInfo * get(TR::Compilation *comp);
    static inline TR_CatchBlockProfileInfo * getCurrent(TR::Compilation *comp);
 
-   static const uint32_t EDOThreshold;
-
    uint32_t & getCatchCounter() { return _catchCounter; }
    uint32_t & getThrowCounter() { return _throwCounter; }
 

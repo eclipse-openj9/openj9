@@ -436,7 +436,6 @@ public class InvalidDownCallTests {
 		}
 	}
 
-	@Test(expectedExceptions = NullPointerException.class)
 	public void test_nullSegmentForPtrArgument() throws Throwable {
 		GroupLayout structLayout = MemoryLayout.structLayout(C_INT.withName("elem1"), C_INT.withName("elem2"));
 		VarHandle intHandle1 = structLayout.varHandle(int.class, PathElement.groupElement("elem1"));
@@ -444,11 +443,11 @@ public class InvalidDownCallTests {
 
 		MethodType mt = MethodType.methodType(int.class, int.class, MemoryAddress.class);
 		FunctionDescriptor fd = FunctionDescriptor.of(C_INT, C_INT, C_POINTER);
-		Addressable functionSymbol = nativeLibLookup.lookup("addIntAndIntsFromStructPointer").get();
+		Addressable functionSymbol = nativeLibLookup.lookup("validateNullAddrArgument").get();
 		MethodHandle mh = clinker.downcallHandle(functionSymbol, mt, fd);
 
 		int result = (int)mh.invoke(19202122, MemoryAddress.NULL);
-		fail("Failed to throw out NullPointerException in the case of the null memory address");
+		Assert.assertEquals(result, 19202122);
 	}
 
 	@Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "A heap address is not allowed.*")

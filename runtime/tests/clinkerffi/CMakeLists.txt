@@ -164,6 +164,7 @@ omr_add_exports(clinkerffitests
 	add2DoubleStructs_returnStruct
 	add2DoubleStructs_returnStructPointer
 	add3DoubleStructs_returnStruct
+	validateNullAddrArgument
 	add2BoolsWithOrByUpcallMH
 	addBoolAndBoolFromPointerWithOrByUpcallMH
 	addBoolAndBoolFromNativePtrWithOrByUpcallMH
@@ -341,6 +342,7 @@ omr_add_exports(clinkerffitests
 	addDoubleAndIntDoubleLongFromStructByUpcallMH
 	return254BytesFromStructByUpcallMH
 	return4KBytesFromStructByUpcallMH
+	validateReturnNullAddrByUpcallMH
 	addIntsFromVaList
 	addLongsFromVaList
 	addDoublesFromVaList

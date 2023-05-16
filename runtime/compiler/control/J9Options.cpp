@@ -155,7 +155,6 @@ int32_t J9::Options::_compilationExpirationTime = -1;
 int32_t J9::Options::_minSamplingPeriod = 10; // ms
 int32_t J9::Options::_compilationBudget = 0;  // ms; 0 means disabled
 
-int32_t J9::Options::_catchSamplingSizeThreshold = -1; // measured in nodes; -1 means not initialized
 int32_t J9::Options::_compilationThreadPriorityCode = 4; // these codes are converted into
                                                          // priorities in startCompilationThread
 int32_t J9::Options::_disableIProfilerClassUnloadThreshold = 20000;// The usefulness of IProfiling is questionable at this point
@@ -849,9 +848,6 @@ TR::OptionTable OMR::Options::_feOptions[] = {
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_countForLoopyBootstrapMethods, 250, "F%d", NOT_IN_SUBSET },
    {"bigAppSampleThresholdAdjust=", "O\tadjust the hot and scorching threshold for certain 'big' apps",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_bigAppSampleThresholdAdjust, 0, "F%d", NOT_IN_SUBSET},
-   {"catchSamplingSizeThreshold=", "R<nnn>\tThe sample counter will not be decremented in a catch block "
-                                   "if the number of nodes in the compiled method exceeds this threshold",
-        TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_catchSamplingSizeThreshold, 0, "F%d", NOT_IN_SUBSET},
    {"classLoadPhaseInterval=", "O<nnn>\tnumber of sampling ticks before we run "
                                "again the code for a class loading phase detection",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_classLoadingPhaseInterval, 0, "P%d", NOT_IN_SUBSET},
@@ -2602,7 +2598,7 @@ J9::Options::fePreProcess(void * base)
 
    if (!self()->preProcessJitServer(vm, jitConfig))
       {
-         return false;
+      return false;
       }
 
 #if (defined(TR_HOST_X86) || defined(TR_HOST_S390) || defined(TR_HOST_POWER)) && defined(TR_TARGET_64BIT)
@@ -3177,12 +3173,6 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
       TR::Options::_coldUpgradeSampleThreshold = 10;
       }
 
-   if (TR::Options::_catchSamplingSizeThreshold == -1) // not yet set
-      {
-      TR::Options::_catchSamplingSizeThreshold = 1100; // in number of nodes
-      if (TR::Compiler->target.numberOfProcessors() <= 2)
-         TR::Options::_catchSamplingSizeThreshold = 850;
-      }
    return true;
    }
 
