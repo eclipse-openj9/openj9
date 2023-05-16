@@ -6189,8 +6189,20 @@ TR_J9TransformInlinedFunction::wrapCalleeInTryRegion(bool isSynchronized, bool p
    TR::Block *block      = NULL;
    TR_ScratchList<TR::Block> newCatchBlocks(trMemory());
 
-   TR_CatchBlockProfileInfo * catchInfo = TR_CatchBlockProfileInfo::get(comp());
-   if (catchInfo && catchInfo->getCatchCounter() >= TR_CatchBlockProfileInfo::EDOThreshold)
+   bool doCreateExplicitCatchBlock = false;
+   if (comp()->getOption(TR_EnableOldEDO))
+      {
+      TR_CatchBlockProfileInfo * catchInfo = TR_CatchBlockProfileInfo::get(comp());
+      if (catchInfo && catchInfo->getCatchCounter() >= comp()->getOptions()->getCatchBlockCounterThreshold())
+         doCreateExplicitCatchBlock = true;
+      }
+   else
+      {
+      TR::Recompilation *recomp = comp()->getRecompilationInfo();
+      if (recomp && recomp->getMethodInfo()->getCatchBlockCounter() >= comp()->getOptions()->getCatchBlockCounterThreshold())
+         doCreateExplicitCatchBlock = true;
+      }
+   if (doCreateExplicitCatchBlock)
       {
       // For each explicit throw in the callee add an explicit catch block so that we have a chance
       // of converting throws to gotos.

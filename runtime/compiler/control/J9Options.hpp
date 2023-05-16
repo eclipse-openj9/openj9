@@ -257,7 +257,6 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    static int32_t _activeThreadsThreshold; // -1 means 'determine dynamically', 0 means feature disabled
    static int32_t _samplingThreadExpirationTime;
    static int32_t _compilationExpirationTime;
-   static int32_t _catchSamplingSizeThreshold;
    static int32_t _compilationThreadPriorityCode; // a number between 0 and 4
    static int32_t _disableIProfilerClassUnloadThreshold;
    static int32_t _iprofilerReactivateThreshold;

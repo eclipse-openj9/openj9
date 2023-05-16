@@ -85,6 +85,7 @@
 #include "optimizer/HandleRecompilationOps.hpp"
 #include "optimizer/MethodHandleTransformer.hpp"
 #include "optimizer/VectorAPIExpansion.hpp"
+#include "optimizer/CatchBlockProfiler.hpp"
 
 
 static const OptimizationStrategy J9EarlyGlobalOpts[] =
@@ -264,7 +265,7 @@ static const OptimizationStrategy coldStrategyOpts[] =
    { OMR::trivialInlining                                                       },
    { OMR::jProfilingBlock                                                       },
    { OMR::virtualGuardTailSplitter                                              },
-   { OMR::recompilationModifier,                     OMR::IfEnabled                  },
+   { OMR::recompilationModifier,                     OMR::IfEnabled             },
    { OMR::samplingJProfiling                                                    },
    { OMR::treeSimplification                                                    }, // cleanup before basicBlockExtension
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
@@ -296,6 +297,7 @@ static const OptimizationStrategy coldStrategyOpts[] =
    { OMR::treeLowering,                              OMR::MustBeDone            },
    { OMR::globalLiveVariablesForGC,                  OMR::IfAggressiveLiveness  },
    { OMR::jitProfilingGroup,                         OMR::IfJitProfiling             },
+   { OMR::catchBlockProfiler,                        OMR::IfExceptionHandlers   },
    { OMR::regDepCopyRemoval                                                     },
    { OMR::hotFieldMarking                                                       },
    { OMR::endOpts                                                               }
@@ -323,13 +325,13 @@ static const OptimizationStrategy warmStrategyOpts[] =
    { OMR::jProfilingBlock                                                       },
    { OMR::virtualGuardTailSplitter                                              }, // merge virtual guards
    { OMR::treeSimplification                                                    },
-   { OMR::sequentialLoadAndStoreWarmGroup,           OMR::IfEnabled                  }, // disabled by default, enabled by -Xjit:enableSequentialLoadStoreWarm
+   { OMR::sequentialLoadAndStoreWarmGroup,           OMR::IfEnabled             }, // disabled by default, enabled by -Xjit:enableSequentialLoadStoreWarm
    { OMR::cheapGlobalValuePropagationGroup                                      },
-   { OMR::localCSE,                                    OMR::IfVectorAPI },
+   { OMR::localCSE,                                    OMR::IfVectorAPI         },
    { OMR::dataAccessAccelerator                                                 }, // globalValuePropagation and inlining might expose opportunities for dataAccessAccelerator
-   { OMR::globalCopyPropagation,                       OMR::IfVoluntaryOSR          },
-   { OMR::lastLoopVersionerGroup,                      OMR::IfLoops                  },
-   { OMR::globalDeadStoreElimination,                  OMR::IfEnabledAndLoops},
+   { OMR::globalCopyPropagation,                       OMR::IfVoluntaryOSR      },
+   { OMR::lastLoopVersionerGroup,                      OMR::IfLoops             },
+   { OMR::globalDeadStoreElimination,                  OMR::IfEnabledAndLoops   },
    { OMR::deadTreesElimination                                                  },
    { OMR::recompilationModifier,                     OMR::IfEnabledAndNotProfiling   },
    { OMR::localReordering,                           OMR::IfNoLoopsOREnabledAndLoops }, // if required or if not done earlier
@@ -395,6 +397,7 @@ static const OptimizationStrategy warmStrategyOpts[] =
    { OMR::compactLocals,                             OMR::IfNotJitProfiling          }, // analysis results are invalidated by jitProfilingGroup
    { OMR::globalLiveVariablesForGC                                              },
    { OMR::jitProfilingGroup,                         OMR::IfJitProfiling             },
+   { OMR::catchBlockProfiler,                        OMR::IfExceptionHandlers   },
    { OMR::regDepCopyRemoval                                                     },
    { OMR::hotFieldMarking                                                       },
    { OMR::endOpts                                                               }
@@ -468,9 +471,9 @@ const OptimizationStrategy hotStrategyOpts[] =
    { OMR::loopCanonicalizationGroup,             OMR::IfLoops                  }, // canonicalize loops (improve fall throughs)
    { OMR::inductionVariableAnalysis,             OMR::IfLoops                  },
    { OMR::redundantInductionVarElimination,      OMR::IfLoops                  },
-   { OMR::loopAliasRefinerGroup,                 OMR::IfLoops     },
+   { OMR::loopAliasRefinerGroup,                 OMR::IfLoops                  },
    { OMR::recompilationModifier,                 OMR::IfEnabledAndNotProfiling },
-   { OMR::partialRedundancyEliminationGroup                               },
+   { OMR::partialRedundancyEliminationGroup                                    },
    { OMR::globalDeadStoreElimination,            OMR::IfLoopsAndNotProfiling   },
    { OMR::inductionVariableAnalysis,             OMR::IfLoopsAndNotProfiling   },
    { OMR::loopSpecializerGroup,                  OMR::IfLoopsAndNotProfiling   },
@@ -510,9 +513,10 @@ const OptimizationStrategy hotStrategyOpts[] =
    { OMR::compactNullChecks                                               }, // cleanup at the end
    { OMR::finalGlobalGroup                                                }, // done just before codegen
    { OMR::jitProfilingGroup,                     OMR::IfJitProfiling           },
-   { OMR::regDepCopyRemoval                                               },
-   { OMR::hotFieldMarking                                                       },
-   { OMR::endOpts                                                         }
+   { OMR::catchBlockProfiler,                    OMR::IfExceptionHandlers      },
+   { OMR::regDepCopyRemoval                                                    },
+   { OMR::hotFieldMarking                                                      },
+   { OMR::endOpts                                                              }
    };
 
 // ***************************************************************************
@@ -702,14 +706,14 @@ static const OptimizationStrategy *j9CompilationStrategies[] =
 //
 static const OptimizationStrategy cheapWarmStrategyOpts[] =
    {
-   { OMR::trivialDeadTreeRemoval,                    OMR::IfEnabled                  },
+   { OMR::trivialDeadTreeRemoval,                    OMR::IfEnabled             },
    { OMR::coldBlockOutlining                                                    },
    { OMR::stringBuilderTransformer                                              },
    { OMR::stringPeepholes                                                       }, // need stringpeepholes to catch bigdecimal patterns
    { OMR::inlining                                                              },
    { OMR::methodHandleInvokeInliningGroup,           OMR::IfEnabled             },
    { OMR::staticFinalFieldFolding,                                              },
-   { OMR::osrGuardInsertion,                         OMR::MustBeDone        },
+   { OMR::osrGuardInsertion,                         OMR::MustBeDone            },
    { OMR::osrExceptionEdgeRemoval                                               }, // most inlining is done by now
    { OMR::jProfilingBlock                                                       },
    { OMR::virtualGuardTailSplitter                                              }, // merge virtual guards
@@ -718,12 +722,12 @@ static const OptimizationStrategy cheapWarmStrategyOpts[] =
    { OMR::sequentialLoadAndStoreWarmGroup,           OMR::IfEnabled                  },
 #endif
    { OMR::cheapGlobalValuePropagationGroup                                      },
-   { OMR::localCSE,                                  OMR::IfVectorAPI },
+   { OMR::localCSE,                                  OMR::IfVectorAPI           },
    { OMR::dataAccessAccelerator                                                 },
 #ifdef TR_HOST_S390
-   { OMR::globalCopyPropagation,                     OMR::IfVoluntaryOSR            },
+   { OMR::globalCopyPropagation,                     OMR::IfVoluntaryOSR        },
 #endif
-   { OMR::lastLoopVersionerGroup,                    OMR::IfLoops                    },
+   { OMR::lastLoopVersionerGroup,                    OMR::IfLoops               },
 #ifdef TR_HOST_S390
    { OMR::globalDeadStoreElimination,                OMR::IfEnabledAndLoops          },
    { OMR::deadTreesElimination                                                       },
@@ -767,7 +771,7 @@ static const OptimizationStrategy cheapWarmStrategyOpts[] =
    */
    { OMR::dynamicLiteralPool,                        OMR::IfNotProfiling             },
    { OMR::samplingJProfiling                                                         },
-   { OMR::trivialBlockExtension                                                 },
+   { OMR::trivialBlockExtension                                                      },
    { OMR::localCSE,                                  OMR::IfEnabled                  },  //common up lit pool refs in the same block
    { OMR::deadTreesElimination,                      OMR::IfEnabled                  }, // cleanup at the end
    { OMR::treeSimplification,                        OMR::IfEnabledMarkLastRun       }, // Simplify non-normalized address computations introduced by prefetch insertion
@@ -780,17 +784,18 @@ static const OptimizationStrategy cheapWarmStrategyOpts[] =
    { OMR::cheapTacticalGlobalRegisterAllocatorGroup, OMR::IfEnabled                  },
    { OMR::jProfilingValue,                           OMR::MustBeDone                 },
    { OMR::treeLowering,                              OMR::MustBeDone                 },
-   { OMR::globalDeadStoreGroup,                                                 },
+   { OMR::globalDeadStoreGroup,                                                      },
    { OMR::compactNullChecks,                         OMR::IfEnabled                  }, // cleanup at the end
    { OMR::deadTreesElimination,                      OMR::IfEnabled                  }, // remove dead anchors created by check/store removal
    { OMR::deadTreesElimination,                      OMR::IfEnabled                  }, // remove dead RegStores produced by previous deadTrees pass
    { OMR::redundantGotoElimination,                  OMR::IfEnabledAndNotJitProfiling }, // dead store and dead tree elimination may have left empty blocks
    { OMR::compactLocals,                             OMR::IfNotJitProfiling          }, // analysis results are invalidated by jitProfilingGroup
-   { OMR::globalLiveVariablesForGC                                              },
+   { OMR::globalLiveVariablesForGC                                                   },
    { OMR::jitProfilingGroup,                         OMR::IfJitProfiling             },
-   { OMR::regDepCopyRemoval                                                     },
-   { OMR::hotFieldMarking                                                       },
-   { OMR::endOpts                                                               }
+   { OMR::catchBlockProfiler,                        OMR::IfExceptionHandlers        },
+   { OMR::regDepCopyRemoval                                                          },
+   { OMR::hotFieldMarking                                                            },
+   { OMR::endOpts                                                                    }
    };
 
 
@@ -903,6 +908,8 @@ J9::Optimizer::Optimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *method
       new (comp->allocator()) TR::OptimizationManager(self(), TR_HotFieldMarking::create, OMR::hotFieldMarking);
    _opts[OMR::vectorAPIExpansion] =
       new (comp->allocator()) TR::OptimizationManager(self(), TR_VectorAPIExpansion::create, OMR::vectorAPIExpansion);
+   _opts[OMR::catchBlockProfiler] =
+      new (comp->allocator()) TR::OptimizationManager(self(), TR::CatchBlockProfiler::create, OMR::catchBlockProfiler);
    // NOTE: Please add new J9 optimizations here!
 
    // initialize additional J9 optimization groups

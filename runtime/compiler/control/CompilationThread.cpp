@@ -9459,6 +9459,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
 
    TR_MethodMetaData * metaData = NULL;
 
+   bool isEDOCompilation = false;
    if (compiler)
       {
       if (compiler->getRecompilationInfo())
@@ -9470,6 +9471,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
             bodyInfo->setStartPCAfterPreviousCompile(that->_methodBeingCompiled->_oldStartPC);
             if (reducedWarm && options->getOptLevel() == warm)
                bodyInfo->setReducedWarm();
+            isEDOCompilation = bodyInfo->getMethodInfo()->getReasonForRecompilation() == TR_PersistentMethodInfo::RecompDueToEdo;
             }
          }
 
@@ -9494,13 +9496,8 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
          TR_J9VMBase *fej9 = (TR_J9VMBase *)(compiler->fej9());
          if (!fej9->isAOT_DEPRECATED_DO_NOT_USE())
             {
-            bool isEDOCompilation = false;
-            TR_CatchBlockProfileInfo * profileInfo = TR_CatchBlockProfileInfo::get(compiler);
-            if (profileInfo && profileInfo->getCatchCounter() >= TR_CatchBlockProfileInfo::EDOThreshold)
-               {
-               isEDOCompilation = true;
+            if (isEDOCompilation)
                sc->addHint(method, TR_HintEDO);
-               }
 
             // There is the possibility that a hot/scorching compilation happened outside
             // startup and with hints we move this expensive compilation during startup
@@ -10994,6 +10991,7 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
             }
 
          char recompReason = '-';
+         uint32_t catchBlockCounter = 0;
          // For recompiled methods try to find the reason for recompilation
          if (_methodBeingCompiled->_oldStartPC)
             {
@@ -11032,6 +11030,7 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
                      _compInfo._statNumGCRInducedCompilations++;
                      break;
                   case TR_PersistentMethodInfo::RecompDueToEdo:
+                     catchBlockCounter = bodyInfo->getMethodInfo()->getCatchBlockCounter();
                      recompReason = 'E'; break;
                   } // end switch
                bodyInfo->getMethodInfo()->setReasonForRecompilation(0); // reset the flags
@@ -11064,6 +11063,9 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
             if (recompReason == 'T')
                TR_VerboseLog::write(" %.2f%%", optimizationPlan->getPerceivedCPUUtil() / 10.0);
 
+            if (recompReason == 'E')
+               TR_VerboseLog::write(" catchBlockCounter=%u", catchBlockCounter);
+
             TR_VerboseLog::write(" %c", recompReason);
             TR_VerboseLog::write(" Q_SZ=%d Q_SZI=%d QW=%d", _compInfo.getMethodQueueSize(),
                                  _compInfo.getNumQueuedFirstTimeCompilations(), _compInfo.getQueueWeight());
@@ -11093,6 +11095,10 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
 
             if (_methodBeingCompiled->_reqFromJProfilingQueue)
                TR_VerboseLog::write(" JPQ");
+
+            if (compiler->getRecompilationInfo() &&
+                compiler->getRecompilationInfo()->getJittedBodyInfo()->getHasEdoSnippet())
+               TR_VerboseLog::write(" EDO");
 
 #if defined(J9VM_OPT_JITSERVER)
             if (_methodBeingCompiled->isRemoteCompReq())
