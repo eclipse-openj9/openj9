@@ -11337,14 +11337,15 @@ VMgenerateCatchBlockBBStartPrologue(
    TR::Block *block = node->getBlock();
    if (fej9->shouldPerformEDO(block, comp))
       {
+      TR_ASSERT_FATAL(cg->comp()->getRecompilationInfo(), "Recompilation info should be available");
+
       TR::LabelSymbol *snippetLabel = generateLabelSymbol(cg);
       TR::LabelSymbol *restartLabel = generateLabelSymbol(cg);
 
-      generateMemInstruction(TR::InstOpCode::DEC4Mem, node, generateX86MemoryReference((intptr_t)comp->getRecompilationInfo()->getCounterAddress(), cg), cg);
+      generateMemInstruction(TR::InstOpCode::DEC4Mem, node, generateX86MemoryReference(comp->getRecompilationInfo()->getCounterSymRef(), cg), cg);
       generateLabelInstruction(TR::InstOpCode::JE4, node, snippetLabel, cg);
       generateLabelInstruction(TR::InstOpCode::label, node, restartLabel, cg);
       cg->addSnippet(new (cg->trHeapMemory()) TR::X86ForceRecompilationSnippet(cg, node, restartLabel, snippetLabel));
-      TR_ASSERT_FATAL(cg->comp()->getRecompilationInfo(), "Recompilation info should be available");
       cg->comp()->getRecompilationInfo()->getJittedBodyInfo()->setHasEdoSnippet();
       }
 
