@@ -860,6 +860,9 @@ TR_RelocationRecord::create(TR_RelocationRecord *storage, TR_RelocationRuntime *
       case TR_ValidateIsClassVisible:
          reloRecord = new (storage) TR_RelocationRecordValidateIsClassVisible(reloRuntime, record);
          break;
+      case TR_CatchBlockCounter:
+         reloRecord = new (storage) TR_RelocationRecordCatchBlockCounter(reloRuntime, record);
+         break;
       default:
          // TODO: error condition
          printf("Unexpected relo record: %d\n", reloType);fflush(stdout);
@@ -6435,6 +6438,54 @@ TR_RelocationRecordStaticDefaultValueInstance::applyRelocation(TR_RelocationRunt
    return TR_RelocationErrorCode::relocationOK;
    }
 
+// TR_CatchBlockCounter
+//
+char *
+TR_RelocationRecordCatchBlockCounter::name()
+   {
+   return "TR_CatchBlockCounter";
+   }
+
+void
+TR_RelocationRecordCatchBlockCounter::preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget)
+   {
+   TR_RelocationRecordWithOffsetPrivateData *reloPrivateData = &(privateData()->offset);
+   reloPrivateData->_addressToPatch = NULL;
+
+   TR_PersistentJittedBodyInfo *bodyInfo = reinterpret_cast<TR_PersistentJittedBodyInfo *>(reloRuntime->exceptionTable()->bodyInfo);
+   if (bodyInfo)
+      {
+      TR_PersistentMethodInfo *methodInfo = bodyInfo->getMethodInfo();
+      if (methodInfo)
+         reloPrivateData->_addressToPatch = (uint8_t *)methodInfo->getCatchBlockCounterAddress();
+      }
+   RELO_LOG(reloRuntime->reloLogger(), 6, "\tpreparePrivateData: addressToPatch: %p \n", reloPrivateData->_addressToPatch);
+   }
+
+TR_RelocationErrorCode
+TR_RelocationRecordCatchBlockCounter::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
+   {
+   TR_RelocationRecordWithOffsetPrivateData *reloPrivateData = &(privateData()->offset);
+   if (!reloPrivateData->_addressToPatch)
+      {
+      return TR_RelocationErrorCode::catchBlockCounterRelocationFailure;
+      }
+   reloTarget->storeAddressSequence(reloPrivateData->_addressToPatch, reloLocation, reloFlags(reloTarget));
+   return TR_RelocationErrorCode::relocationOK;
+   }
+
+TR_RelocationErrorCode
+TR_RelocationRecordCatchBlockCounter::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocationHigh, uint8_t *reloLocationLow)
+   {
+   TR_RelocationRecordWithOffsetPrivateData *reloPrivateData = &(privateData()->offset);
+   if (!reloPrivateData->_addressToPatch)
+      {
+      return TR_RelocationErrorCode::catchBlockCounterRelocationFailure;
+      }
+   reloTarget->storeAddress(reloPrivateData->_addressToPatch, reloLocationHigh, reloLocationLow, reloFlags(reloTarget));
+   return TR_RelocationErrorCode::relocationOK;
+   }
+
 // The _relocationRecordHeaderSizeTable table should be the last thing in this file
 uint32_t TR_RelocationRecord::_relocationRecordHeaderSizeTable[TR_NumExternalRelocationKinds] =
    {
@@ -6551,5 +6602,6 @@ uint32_t TR_RelocationRecord::_relocationRecordHeaderSizeTable[TR_NumExternalRel
    sizeof(TR_RelocationRecordValidateJ2IThunkFromMethodBinaryTemplate),              // TR_ValidateJ2IThunkFromMethod                   = 110
    sizeof(TR_RelocationRecordConstantPoolWithIndexBinaryTemplate),                   // TR_StaticDefaultValueInstance                   = 111
    sizeof(TR_RelocationRecordValidateIsClassVisibleBinaryTemplate),                  // TR_ValidateIsClassVisible                       = 112
+   sizeof(TR_RelocationRecordBinaryTemplate),                                        // TR_CatchBlockCounter                            = 113
    };
 // The _relocationRecordHeaderSizeTable table should be the last thing in this file
