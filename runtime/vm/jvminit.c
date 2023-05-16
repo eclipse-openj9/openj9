@@ -881,6 +881,16 @@ freeJavaVM(J9JavaVM * vm)
 		pool_kill(vm->tlsPool);
 		vm->tlsPool = NULL;
 	}
+
+	if (NULL != vm->globalContinuationCacheArray) {
+		for (U_32 i = 0; i < vm->continuationArraySize; i++) {
+			if (NULL != vm->globalContinuationCacheArray[i]) {
+				freeJavaStack(vm, vm->globalContinuationCacheArray[i]->stackObject);
+				j9mem_free_memory(vm->globalContinuationCacheArray[i]);
+			}
+		}
+		j9mem_free_memory(vm->globalContinuationCacheArray);
+	}
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
 	j9mem_free_memory(vm->vTableScratch);
