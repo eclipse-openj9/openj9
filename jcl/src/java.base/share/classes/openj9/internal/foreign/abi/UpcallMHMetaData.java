@@ -116,12 +116,6 @@ final class UpcallMHMetaData {
 	 * The method is shared in java (downcall) and in native (upcall) via the calling-in from the dispatcher.
 	 */
 	static long getNativeArgRetSegmentOfPtr(MemorySegment argRetSegmentOfPtr) {
-		/*[IF JAVA_SPEC_VERSION >= 20]*/
-		/* Verify MemorySegment.NULL as it is introduced since JDK20. */
-		if (argRetSegmentOfPtr == MemorySegment.NULL) {
-			throw new NullPointerException("A NULL memory segment is not allowed for pointer.");
-		}
-		/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 		if (!argRetSegmentOfPtr.isNative()) {
 			throw new IllegalArgumentException("Heap segment not allowed: " + argRetSegmentOfPtr);
 		}
@@ -141,10 +135,6 @@ final class UpcallMHMetaData {
 	 * The method is shared in java (downcall) and in native (upcall) via the calling-in from the dispatcher.
 	 */
 	static long getNativeArgRetAddrOfPtr(MemoryAddress argRetAddrOfPtr) {
-		if (argRetAddrOfPtr == MemoryAddress.NULL) {
-			throw new NullPointerException("A NULL memory address is not allowed for pointer.");
-		}
-
 		/*[IF JAVA_SPEC_VERSION > 17]*/
 		/* Validate the native address as MemoryAddress.isNative() is removed in JDK18/19. */
 		if (argRetAddrOfPtr.toRawLongValue() == 0)
@@ -169,8 +159,7 @@ final class UpcallMHMetaData {
 	static long getNativeArgRetSegment(MemorySegment argRetSegment) {
 		/*[IF JAVA_SPEC_VERSION >= 20]*/
 		/* MemorySegment.NULL is introduced since JDK20+. */
-		if (argRetSegment == MemorySegment.NULL)
-		{
+		if (argRetSegment == MemorySegment.NULL) {
 			throw new NullPointerException("A NULL memory segment is not allowed for struct.");
 		}
 		/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
