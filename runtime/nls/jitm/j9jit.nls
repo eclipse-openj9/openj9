@@ -421,3 +421,12 @@ J9NLS_RELOCATABLE_CODE_CH_TABLE_MISMATCH.system_action=The compiler will not gen
 J9NLS_RELOCATABLE_CODE_CH_TABLE_MISMATCH.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
 J9NLS_RELOCATABLE_CODE_CH_TABLE_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
 # END NON-TRANSLATABLE
+
+J9NLS_JIT_OPTIONS_PERCENT_OUT_OF_RANGE=Value '%1$s%2$f' must be between 1.0 and 100.0; using default percentage '%3$d' instead.
+# START NON-TRANSLATABLE
+J9NLS_JIT_OPTIONS_PERCENT_OUT_OF_RANGE.explanation=The specified option is not within the permitted range.
+J9NLS_JIT_OPTIONS_PERCENT_OUT_OF_RANGE.system_action=The default percentage value will be used instead.
+J9NLS_JIT_OPTIONS_PERCENT_OUT_OF_RANGE.user_response=Correct the option.
+J9NLS_JIT_OPTIONS_PERCENT_OUT_OF_RANGE.sample_input_1=-XX:codecachetotalMaxRAMPercentage=
+J9NLS_JIT_OPTIONS_PERCENT_OUT_OF_RANGE.sample_input_2=25
+# END NON-TRANSLATABLE
