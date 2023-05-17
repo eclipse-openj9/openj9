@@ -567,6 +567,101 @@ done:
 		return value;
 	}
 
+	/**
+	 * Copies an array of non-primitive objects
+	 * Handles flattened and non-flattened cases
+	 * A generic special stack frame must be built before calling this function
+	 *
+	 * Assumes srcObject and destObject are not null
+	 * Assumes array bounds (srcIndex to (srcIndex + lengthInSlots), and destIndex to (destIndex + lengthInSlots)) are valid
+	 * Assumes a generic special stack frame has been built on the stack
+	 *
+	 * @param[in] currentThread thread token
+	 * @param[in] objectAccessBarrier access barrier
+	 * @param[in] objectAllocate allocator
+	 * @param[in] srcObject the source array to copy objects from
+	 * @param[out] destObject the destination array in which objects should be stored
+	 * @param[in] srcIndex the index in the source array to begin copying objects from
+	 * @param[in] destIndex the index in the destination array to begin storing objects
+	 * @param[in] lengthInSlots the number of elements to copy
+	 *
+	 * @return 0 if copy was successful, -1 if there was an array store error, -2 if there was a null pointer exception
+	 */
+	static VMINLINE I_32
+	copyFlattenableArray(J9VMThread *currentThread, MM_ObjectAccessBarrierAPI objectAccessBarrier, MM_ObjectAllocationAPI objectAllocate, j9object_t srcObject, j9object_t destObject, I_32 srcIndex, I_32 destIndex, I_32 lengthInSlots)
+	{
+		I_32 srcEndIndex = srcIndex + lengthInSlots;
+		J9Class *srcClazz = J9OBJECT_CLAZZ(currentThread, srcObject);
+		J9Class *destClazz = J9OBJECT_CLAZZ(currentThread, destObject);
+		J9Class *destComponentClass = ((J9ArrayClass *)destClazz)->componentType;
+
+		/* Array elements must be copied backwards if source and destination overlap in memory and source is before destination */
+		if ((srcObject == destObject) && (srcIndex < destIndex) && ((srcIndex + lengthInSlots) > destIndex)) {
+			srcEndIndex = srcIndex;
+			srcIndex += lengthInSlots;
+			destIndex += lengthInSlots;
+
+			while (srcIndex > srcEndIndex) {
+				srcIndex--;
+				destIndex--;
+
+				j9object_t copyObject = loadFlattenableArrayElement(currentThread, objectAccessBarrier, objectAllocate, srcObject, srcIndex, true);
+
+				/*
+				When the return value of loadFlattenableArrayElement is NULL, 2 things are possible:
+					1: The array element at that index is actually NULL
+					2: There was an allocation failure
+				But loadFlattenableArrayElement only tries to allocate when srcClazz is flattened, and so if copyObject is NULL and srcClazz is flattened then there has been an allocation failure
+				*/
+				if ((NULL == copyObject) && J9_IS_J9CLASS_FLATTENED(srcClazz)) {
+					VM_VMHelpers::pushObjectInSpecialFrame(currentThread, srcObject);
+					copyObject = loadFlattenableArrayElement(currentThread, objectAccessBarrier, objectAllocate, srcObject, srcIndex, false);
+					srcObject = VM_VMHelpers::popObjectInSpecialFrame(currentThread);
+				}
+
+				/* No type checks required since srcObject == destObject */
+
+				storeFlattenableArrayElement(currentThread, objectAccessBarrier, destObject, destIndex, copyObject);
+			}
+		} else {
+
+			UDATA typeChecksRequired = !isSameOrSuperClassOf(destClazz, srcClazz);
+
+			while (srcIndex < srcEndIndex) {
+				j9object_t copyObject = loadFlattenableArrayElement(currentThread, objectAccessBarrier, objectAllocate, srcObject, srcIndex, true);
+
+				/*
+				When the return value of loadFlattenableArrayElement is NULL, 2 things are possible:
+					1: The array element at that index is actually NULL
+					2: There was an allocation failure
+				But loadFlattenableArrayElement only tries to allocate when srcClazz is flattened, and so if copyObject is NULL and srcClazz is flattened then there has been an allocation failure
+				*/
+				if ((NULL == copyObject) && J9_IS_J9CLASS_FLATTENED(srcClazz)) {
+					VM_VMHelpers::pushObjectInSpecialFrame(currentThread, srcObject);
+					copyObject = loadFlattenableArrayElement(currentThread, objectAccessBarrier, objectAllocate, srcObject, srcIndex, false);
+					srcObject = VM_VMHelpers::popObjectInSpecialFrame(currentThread);
+				}
+
+				if (typeChecksRequired) {
+					if (J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(destComponentClass) && (NULL == copyObject)) {
+						/* Null objects cannot be stored in an array of primitive value types */
+						return -2;
+					}
+					if (!VM_VMHelpers::objectArrayStoreAllowed(currentThread, destObject, copyObject)) {
+						return -1;
+					}
+				}
+
+				storeFlattenableArrayElement(currentThread, objectAccessBarrier, destObject, destIndex, copyObject);
+
+				srcIndex++;
+				destIndex++;
+			}
+		}
+
+		return 0;
+	}
+
 };
 
 #endif /* VALUETYPEHELPERS_HPP_ */
