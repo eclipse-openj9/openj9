@@ -253,6 +253,16 @@ areValueTypesEnabled(J9JavaVM *vm)
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 }
 
+BOOLEAN
+areFlattenableValueTypesEnabled(J9JavaVM *vm)
+{
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+	return TRUE;
+#else /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+	return FALSE;
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+}
+
 j9object_t*
 getDefaultValueSlotAddress(J9Class* clazz)
 {

@@ -374,6 +374,7 @@ J9InternalVMFunctions J9InternalFunctions = {
 	setNestmatesError,
 #endif /* JAVA_SPEC_VERSION >= 11 */
 	areValueTypesEnabled,
+	areFlattenableValueTypesEnabled,
 	peekClassHashTable,
 #if defined(J9VM_OPT_JITSERVER)
 	isJITServerEnabled,
