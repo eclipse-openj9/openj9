@@ -1195,10 +1195,43 @@ obj:
 					_currentThread->tempSlot = (UDATA)invalidIndex;
 					rc = THROW_AIOB;
 				} else {
-					I_32 value = VM_ArrayCopyHelpers::referenceArrayCopy(_currentThread, srcObject, srcStart, destObject, destStart, elementCount);
-					if (-1 != value) {
-						buildInternalNativeStackFrame(REGISTER_ARGS);
-						rc = THROW_ARRAY_STORE;
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+					J9Class *srcClazz = J9OBJECT_CLAZZ(_currentThread, srcObject);
+					J9Class *destClazz = J9OBJECT_CLAZZ(_currentThread, destObject);
+					J9Class *srcComponentClass = ((J9ArrayClass *)srcClazz)->componentType;
+					J9Class *destComponentClass = ((J9ArrayClass *)destClazz)->componentType;
+
+					if (J9_IS_J9CLASS_FLATTENED(srcClazz) && J9_IS_J9CLASS_FLATTENED(destClazz) && J9_ARE_NO_BITS_SET(srcComponentClass->classFlags, J9ClassHasReferences) && J9_ARE_NO_BITS_SET(destComponentClass->classFlags, J9ClassHasReferences)) {
+						if (srcClazz == destClazz) {
+							UDATA elementSize = J9ARRAYCLASS_GET_STRIDE(srcClazz);
+							/* This only works for contiguous flattened arrays, since discontiguous flattened arrays are not supported by GC */
+							VM_ArrayCopyHelpers::primitiveArrayCopy(_currentThread, srcObject, srcStart * elementSize, destObject, destStart * elementSize, elementSize * elementCount, 0);
+						} else {
+							rc = THROW_ARRAY_STORE;
+						}
+					} else if (J9_IS_J9CLASS_FLATTENED(srcClazz) || J9_IS_J9CLASS_FLATTENED(destClazz) || J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(destComponentClass)) {
+						/* VM_ArrayCopyHelpers::referenceArrayCopy cannot handle flattened arrays or null elements being copied into arrays of primitive value types, so for those cases use copyFlattenableArray instead */
+						buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
+						updateVMStruct(REGISTER_ARGS);
+						I_32 value = VM_ValueTypeHelpers::copyFlattenableArray(_currentThread, _objectAccessBarrier, _objectAllocate, srcObject, destObject, srcStart, destStart, elementCount);
+						VMStructHasBeenUpdated(REGISTER_ARGS);
+						restoreGenericSpecialStackFrame(REGISTER_ARGS);
+
+						if (-1 == value) {
+							buildInternalNativeStackFrame(REGISTER_ARGS);
+							rc = THROW_ARRAY_STORE;
+						} else if (-2 == value) {
+							buildInternalNativeStackFrame(REGISTER_ARGS);
+							rc = THROW_NPE;
+						}
+					} else
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+					{
+						I_32 errorIndex = VM_ArrayCopyHelpers::referenceArrayCopy(_currentThread, srcObject, srcStart, destObject, destStart, elementCount);
+						if (-1 != errorIndex) {
+							buildInternalNativeStackFrame(REGISTER_ARGS);
+							rc = THROW_ARRAY_STORE;
+						}
 					}
 				}
 			}

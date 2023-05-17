@@ -1666,6 +1666,14 @@ BOOLEAN
 areValueTypesEnabled(J9JavaVM *vm);
 
 /**
+ * @brief Queries whether flattenable valueTypes are enable on the JVM
+ * @param vm A handle to the J9JavaVM
+ * @return TRUE if flattenable valueTypes are enabled, FALSE otherwise
+ */
+BOOLEAN
+areFlattenableValueTypesEnabled(J9JavaVM *vm);
+
+/**
  * Checks if args in specified args array have been consumed by the JVM, if not it outputs a warning message
  * and returns FALSE. This function consults the -XXvm:ignoreUnrecognized, -XX:[+|-]IgnoreUnrecognizedVMOptions
  * and -XX:[-|+]IgnoreUnrecognizedXXColonOptions to determine if args are consumed or not.
