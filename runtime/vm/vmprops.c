@@ -628,11 +628,18 @@ initializeSystemProperties(J9JavaVM * vm)
 #endif /* JAVA_SPEC_VERSION < 12 */
 
 #if JAVA_SPEC_VERSION == 8
-	rc = addSystemProperty(vm, "java.specification.maintenance.version", "4", 0);
+#define JAVA_SPEC_MAINTENANCE_VERSION "5"
+#elif JAVA_SPEC_VERSION == 11 /* JAVA_SPEC_VERSION == 8 */
+#define JAVA_SPEC_MAINTENANCE_VERSION "2"
+#endif /* JAVA_SPEC_VERSION == 8 */
+
+#if defined(JAVA_SPEC_MAINTENANCE_VERSION)
+	rc = addSystemProperty(vm, "java.specification.maintenance.version", JAVA_SPEC_MAINTENANCE_VERSION, 0);
 	if (J9SYSPROP_ERROR_NONE != rc) {
 		goto fail;
 	}
-#endif /* JAVA_SPEC_VERSION == 8 */
+#undef JAVA_SPEC_MAINTENANCE_VERSION
+#endif /* defined(JAVA_SPEC_MAINTENANCE_VERSION) */
 
 	rc = addSystemProperty(vm, "java.vm.vendor", JAVA_VM_VENDOR, 0);
 	if (J9SYSPROP_ERROR_NONE != rc) {
