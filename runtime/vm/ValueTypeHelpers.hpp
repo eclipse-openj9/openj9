@@ -567,6 +567,7 @@ done:
 		return value;
 	}
 
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	/**
 	 * Copies an array of non-primitive objects
 	 * Handles flattened and non-flattened cases
@@ -661,6 +662,7 @@ done:
 
 		return 0;
 	}
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
 };
 
