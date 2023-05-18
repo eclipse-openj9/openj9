@@ -18,8 +18,8 @@ ZZ [1] https://www.gnu.org/software/classpath/license.html
 ZZ [2] https://openjdk.org/legal/assembly-exception.html
 ZZ
 ZZ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR
-ZZ GPL-2.0 WITH Classpath-exception-2.0 OR
-ZZ LicenseRef-GPL-2.0 WITH Assembly-exception
+ZZ GPL-2.0-only WITH Classpath-exception-2.0 OR
+ZZ GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 
 ifdef({TR_HOST_64BIT},{dnl
 
