@@ -253,7 +253,11 @@ class PrivateLinkage : public J9::PrivateLinkage
    //
    // doneLabel (always provided) is placed at the end of the call sequence by the caller of these functions.
    //
-   virtual void buildDirectCall(TR::SymbolReference *methodSymRef, TR::X86CallSite &site); // NOTE: the methodSymRef being called is not necessarily site.getSymbolReference()
+   virtual void buildDirectCall(
+      TR::SymbolReference *methodSymRef, // NOTE: the methodSymRef being called is not necessarily site.getSymbolReference()
+      TR::X86CallSite &site,
+      TR::LabelSymbol *doneLabel = NULL); // doneLabel is used only for jitDispatchJ9Method
+
    virtual void buildVirtualOrComputedCall(TR::X86CallSite &site, TR::LabelSymbol *entryLabel, TR::LabelSymbol *doneLabel, uint8_t *thunk)=0;
    virtual void buildInterfaceCall(TR::X86CallSite &site, TR::LabelSymbol *entryLabel, TR::LabelSymbol *doneLabel, uint8_t *thunk);
 
