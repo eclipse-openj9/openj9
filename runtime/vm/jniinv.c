@@ -160,10 +160,7 @@ jint JNICALL J9_CreateJavaVM(JavaVM ** p_vm, void ** p_env, J9CreateJavaVMParams
 	env = vm->mainThread;
 
 	/* Success */
-	omrthread_monitor_enter(vm->runtimeFlagsMutex);
 	vm->runtimeFlags |= J9_RUNTIME_INITIALIZED;
-	omrthread_monitor_notify_all(vm->runtimeFlagsMutex);
-	omrthread_monitor_exit(vm->runtimeFlagsMutex);
 	*p_env = (void*) env;
 
 	/* Link the VM into the list */
@@ -348,14 +345,6 @@ protectedDestroyJavaVM(J9PortLibrary* portLibrary, void * userData)
 		 * the other thread shutting down.
 		 */
 		return JNI_ERR;
-	}
-	/* Wait until the JVM has initialized before exiting the JVM. */
-	while (OMR_ARE_NO_BITS_SET(vm->runtimeFlags, J9_RUNTIME_INITIALIZED)) {
-		if (vm->runtimeFlagsMutex != NULL) {
-			omrthread_monitor_wait(vm->runtimeFlagsMutex);
-		} else {
-			omrthread_yield();
-		}
 	}
 	if (vm->runtimeFlagsMutex != NULL) {
 		omrthread_monitor_exit(vm->runtimeFlagsMutex);
