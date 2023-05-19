@@ -41,6 +41,8 @@ import org.eclipse.openj9.criu.*;
 import jdk.internal.misc.Unsafe;
 
 public class DeadlockTest {
+	final static TestResult mainTestResult = new TestResult(true, 0);
+	final static Object lock = new Object();
 
 	public static void main(String[] args) {
 		String test = args[0];
@@ -54,6 +56,12 @@ public class DeadlockTest {
 			break;
 		case "MethodTypeDeadlockTest":
 			methodTypeDeadlockTest();
+			break;
+		case "ClinitTest":
+			clinitTest();
+			break;
+		case "ClinitTest2":
+			clinitTest2();
 			break;
 		default:
 			throw new RuntimeException("incorrect parameters");
@@ -227,6 +235,95 @@ public class DeadlockTest {
 			throw new RuntimeException("Error reading in resource: " + clazz.getName(), e);
 		}
 		return result;
+	}
+
+	public static void clinitTest() {
+		Path path = Paths.get("cpData");
+
+		mainTestResult.testPassed = false;
+		mainTestResult.lockStatus = 0;
+
+		Thread t1 = new Thread(()->{
+			new ClinitDeadlock();
+		});
+
+		t1.start();
+
+		while (mainTestResult.lockStatus == 0) {
+			Thread.yield();
+		}
+
+		try {
+			System.out.println("Pre-checkpoint");
+			CRIUTestUtils.checkPointJVM(path);
+			mainTestResult.testPassed = false;
+		} catch (JVMCheckpointException e) {
+			mainTestResult.testPassed = true;
+		} finally {
+			synchronized(lock) {
+				lock.notify();
+			}
+		}
+
+		if (mainTestResult.testPassed) {
+			System.out.println("TEST PASSED");
+		} else {
+			System.out.println("TEST FAILED");
+		}
+
+		System.exit(0);
+	}
+
+	public static void clinitTest2() {
+		Path path = Paths.get("cpData");
+
+		mainTestResult.testPassed = false;
+		mainTestResult.lockStatus = 0;
+
+		Thread t1 = new Thread(()->{
+			new ClinitDeadlock();
+		});
+
+		t1.start();
+
+		while (mainTestResult.lockStatus == 0) {
+			Thread.yield();
+		}
+
+		try {
+			System.out.println("Pre-checkpoint");
+			CRIUTestUtils.checkPointJVM(path);
+			mainTestResult.testPassed = true;
+		} catch (JVMCheckpointException e) {
+			mainTestResult.testPassed = false;
+		} finally {
+			synchronized(lock) {
+				lock.notify();
+			}
+		}
+
+		if (mainTestResult.testPassed) {
+			System.out.println("TEST PASSED");
+		} else {
+			System.out.println("TEST FAILED");
+		}
+
+		System.exit(0);
+	}
+
+	static class ClinitDeadlock {
+
+		static {
+			mainTestResult.lockStatus = 1;
+			synchronized(lock) {
+				try {
+					System.out.println("Thread waiting");
+					lock.wait();
+				} catch(InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		}
 	}
 
 	static class A {

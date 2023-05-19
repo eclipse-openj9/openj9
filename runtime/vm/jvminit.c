@@ -2863,7 +2863,7 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 			TRIGGER_J9HOOK_VM_ABOUT_TO_BOOTSTRAP(vm->hookInterface, vm->mainThread);
 			/* At this point, the decision about which interpreter to use has been made */
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-			if (vm->checkpointState.isCheckPointAllowed) {
+			if (J9_ARE_ALL_BITS_SET(vm->checkpointState.flags, J9VM_CRIU_IS_CHECKPOINT_ALLOWED)) {
 				if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
 #if defined(OMR_GC_COMPRESSED_POINTERS)
 					vm->bytecodeLoop = criuBytecodeLoopCompressed;
@@ -3817,8 +3817,7 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 		IDATA disableCRIU = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXDISABLECRIU, NULL);
 		if (enableCRIU > disableCRIU) {
 			PORT_ACCESS_FROM_JAVAVM(vm);
-			vm->checkpointState.isCheckPointEnabled = TRUE;
-			vm->checkpointState.isCheckPointAllowed = TRUE;
+			vm->checkpointState.flags |= J9VM_CRIU_IS_CHECKPOINT_ENABLED | J9VM_CRIU_IS_CHECKPOINT_ALLOWED;
 			vm->portLibrary->isCheckPointAllowed = TRUE;
 			j9port_control(J9PORT_CTLDATA_CRIU_SUPPORT_FLAGS, OMRPORT_CRIU_SUPPORT_ENABLED);
 		}
@@ -3828,9 +3827,17 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 		IDATA enableCRIUNonPortableMode = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXENABLECRIUNONPORTABLEMODE, NULL);
 		IDATA disableCRIUNonPortableMode = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXDISABLECRIUNONPORTABLEMODE, NULL);
 		if (enableCRIUNonPortableMode >= disableCRIUNonPortableMode) {
-			if (vm->checkpointState.isCheckPointEnabled) {
-				vm->checkpointState.isNonPortableRestoreMode = TRUE;
+			if (J9_ARE_ALL_BITS_SET(vm->checkpointState.flags, J9VM_CRIU_IS_CHECKPOINT_ENABLED)) {
+				vm->checkpointState.flags |= J9VM_CRIU_IS_NON_PORTABLE_RESTORE_MODE;
 			}
+		}
+	}
+
+	{
+		IDATA enableThrowOnDelayedCheckpointOperation = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXENABLETHROWONDELAYECHECKPOINTOPERATION, NULL);
+		IDATA disableThrowOnDelayedCheckpointOperation = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXDISABLETHROWONDELAYECHECKPOINTOPERATION, NULL);
+		if (disableThrowOnDelayedCheckpointOperation >= enableThrowOnDelayedCheckpointOperation) {
+			vm->checkpointState.flags |= J9VM_CRIU_IS_THROW_ON_DELAYED_CHECKPOINT_ENABLED;
 		}
 	}
 
