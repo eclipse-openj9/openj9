@@ -832,7 +832,7 @@ void DLTLogic(J9VMThread* vmThread, TR::CompilationInfo *compInfo)
        TR::Options::getCmdLineOptions()->getOption(TR_DisableDynamicLoopTransfer) )
       return;
    if (TR::Options::_compilationDelayTime > 0 && // feature enabled
-      TR::Options::_compilationDelayTime > compInfo->getPersistentInfo()->getElapsedTime())
+      TR::Options::_compilationDelayTime * 1000 > compInfo->getPersistentInfo()->getElapsedTime())
       return;
 
    J9StackWalkState walkState;
@@ -4829,8 +4829,8 @@ static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInf
       if (!compInfo->getLowPriorityCompQueue().isTrackingEnabled() && timeToAllocateTrackingHT == 0xffffffffffffffff)
          {
          uint64_t t = crtElapsedTime + TR::Options::_delayToEnableIdleCpuExploitation;
-         if (TR::Options::_compilationDelayTime > 0 && (uint64_t)TR::Options::_compilationDelayTime > t)
-            t = TR::Options::_compilationDelayTime;
+         if (TR::Options::_compilationDelayTime > 0 && (uint64_t)TR::Options::_compilationDelayTime * 1000 > t)
+            t = TR::Options::_compilationDelayTime * 1000;
          timeToAllocateTrackingHT = t;
          }
       }
@@ -4922,8 +4922,8 @@ static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInf
                   !compInfo->getLowPriorityCompQueue().isTrackingEnabled())
             {
             uint64_t t = crtElapsedTime + TR::Options::_delayToEnableIdleCpuExploitation;
-            if (TR::Options::_compilationDelayTime > 0 && (uint64_t)TR::Options::_compilationDelayTime > t)
-               t = TR::Options::_compilationDelayTime;
+            if (TR::Options::_compilationDelayTime > 0 && (uint64_t)TR::Options::_compilationDelayTime * 1000 > t)
+               t = TR::Options::_compilationDelayTime * 1000;
             timeToAllocateTrackingHT = t;
             }
 
@@ -5056,8 +5056,8 @@ static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInf
                !compInfo->getLowPriorityCompQueue().isTrackingEnabled())
                {
                uint64_t t = crtElapsedTime + TR::Options::_delayToEnableIdleCpuExploitation;
-               if (TR::Options::_compilationDelayTime > 0 && (uint64_t)TR::Options::_compilationDelayTime > t)
-                  t = TR::Options::_compilationDelayTime;
+               if (TR::Options::_compilationDelayTime > 0 && (uint64_t)TR::Options::_compilationDelayTime * 1000 > t)
+                  t = TR::Options::_compilationDelayTime * 1000;
                timeToAllocateTrackingHT = t;
                }
             }
