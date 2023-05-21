@@ -38,6 +38,7 @@ JIT_PRODUCT_BACKEND_SOURCES+= \
     omr/compiler/aarch64/codegen/OMRRealRegister.cpp \
     omr/compiler/aarch64/codegen/OMRRegisterDependency.cpp \
     omr/compiler/aarch64/codegen/OMRSnippet.cpp \
+    omr/compiler/aarch64/codegen/OMRSnippetDelegate.cpp \
     omr/compiler/aarch64/codegen/OMRTreeEvaluator.cpp \
     omr/compiler/aarch64/codegen/OpBinary.cpp \
     omr/compiler/aarch64/codegen/UnaryEvaluator.cpp \

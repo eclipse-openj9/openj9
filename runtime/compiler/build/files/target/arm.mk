@@ -38,6 +38,7 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/arm/codegen/OMRRealRegister.cpp \
     omr/compiler/arm/codegen/OMRRegisterDependency.cpp \
     omr/compiler/arm/codegen/OMRSnippet.cpp \
+    omr/compiler/arm/codegen/OMRSnippetDelegate.cpp \
     omr/compiler/arm/codegen/OMRTreeEvaluator.cpp \
     omr/compiler/arm/codegen/StackCheckFailureSnippet.cpp \
     omr/compiler/arm/codegen/SubtractAnalyser.cpp \

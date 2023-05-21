@@ -35,6 +35,7 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/p/codegen/OMRRealRegister.cpp \
     omr/compiler/p/codegen/OMRRegisterDependency.cpp \
     omr/compiler/p/codegen/OMRSnippet.cpp \
+    omr/compiler/p/codegen/OMRSnippetDelegate.cpp \
     omr/compiler/p/codegen/OMRTreeEvaluator.cpp \
     omr/compiler/p/codegen/PPCAOTRelocation.cpp \
     omr/compiler/p/codegen/PPCBinaryEncoding.cpp \
