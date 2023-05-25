@@ -28,7 +28,7 @@ echo "start running script"
 # $2 is the JAVA_COMMAND
 # $3 is the JVM_OPTIONS
 $2 $3 -XX:+EnableCRIUSupport -cp $1/criu.jar org.openj9.criu.CRIUSecurityTest >testOutput 2>&1
-criu restore -D cpData --shell-job
+criu-ns restore -D cpData --shell-job
 cat testOutput
 rm -rf testOutput
 echo "finished script"

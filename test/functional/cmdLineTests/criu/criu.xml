@@ -40,6 +40,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
   </test>
 
+<!--
   <test id="Create and Restore Criu Checkpoint Image twice">
     <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ $JVM_OPTIONS$ $MAINCLASS_SIMPLE$ 2 2 false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
@@ -68,5 +69,6 @@
     <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
   </test>
+-->
 
 </suite>

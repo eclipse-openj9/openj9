@@ -43,7 +43,7 @@ if [ "$7" != true ]; then
     NUM_CHECKPOINT=$6
     for ((i=0; i<$NUM_CHECKPOINT; i++)); do
         sleep 2;
-        criu restore -D ./cpData --shell-job;
+        criu-ns restore -D ./cpData --shell-job;
     done
 fi
 
