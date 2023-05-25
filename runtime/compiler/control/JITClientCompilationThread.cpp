@@ -553,13 +553,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, fe->getObjectClassFromKnownObjectIndex(comp, idx));
          }
          break;
-      case MessageType::VM_getStaticReferenceFieldAtAddress:
-         {
-         TR::VMAccessCriticalSection getStaticReferenceFieldAtAddress(fe);
-         uintptr_t fieldAddress = std::get<0>(client->getRecvData<uintptr_t>());
-         client->write(response, fe->getStaticReferenceFieldAtAddress(fieldAddress));
-         }
-         break;
       case MessageType::VM_stackWalkerMaySkipFrames:
          {
          client->getRecvData<JITServer::Void>();
@@ -608,29 +601,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          {
          J9ROMClass *clazz = std::get<0>(client->getRecvData<J9ROMClass *>());
          client->write(response, fe->matchRAMclassFromROMclass(clazz, comp));
-         }
-         break;
-      case MessageType::VM_getReferenceFieldAtAddress:
-         {
-         TR::VMAccessCriticalSection getReferenceFieldAtAddress(fe);
-         uintptr_t fieldAddress = std::get<0>(client->getRecvData<uintptr_t>());
-         client->write(response, fe->getReferenceFieldAtAddress(fieldAddress));
-         }
-         break;
-      case MessageType::VM_getReferenceFieldAt:
-         {
-         auto recv = client->getRecvData<uintptr_t, uintptr_t>();
-         uintptr_t objectPointer = std::get<0>(recv);
-         uintptr_t fieldOffset = std::get<1>(recv);
-         client->write(response, fe->getReferenceFieldAt(objectPointer, fieldOffset));
-         }
-         break;
-      case MessageType::VM_getVolatileReferenceFieldAt:
-         {
-         auto recv = client->getRecvData<uintptr_t, uintptr_t>();
-         uintptr_t objectPointer = std::get<0>(recv);
-         uintptr_t fieldOffset = std::get<1>(recv);
-         client->write(response, fe->getVolatileReferenceFieldAt(objectPointer, fieldOffset));
          }
          break;
       case MessageType::VM_getInt32FieldAt:
