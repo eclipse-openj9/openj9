@@ -106,6 +106,10 @@
 #define JSR292_forGenericInvoke    "forGenericInvoke"
 #define JSR292_forGenericInvokeSig "(Ljava/lang/invoke/MethodType;Z)Ljava/lang/invoke/MethodHandle;"
 
+#define OPT_DETAILS_CLASS_LOOKAHEAD "O^O CLASS LOOKAHEAD: "
+#define OPT_DETAILS_BIT_OPCODE "O^O BIT OPCODE: "
+#define OPT_DETAILS_ORB_OPTIMIZATION "O^O ORB OPTIMIZATION : "
+#define OPT_DETAILS_JAVA_SERIALIZATION_OPTIMIZATION "O^O JAVA SERIALIZATION OPTIMIZATION : "
 
 static void printStack(TR::Compilation *comp, TR_Stack<TR::Node*> *stack, const char *message)
    {
@@ -1908,11 +1912,11 @@ TR_J9ByteCodeIlGenerator::genArrayBoundsCheck(TR::Node * offset, int32_t width)
 
             if (!TR::Compiler->om.useHybridArraylets() || !TR::Compiler->om.isDiscontiguousArray(firstDimension, width))
                {
-               if (performTransformation(comp(), "O^O CLASS LOOKAHEAD: Can skip array length calculation for array %p based on class file examination\n", baseArray))
+               if (performTransformation(comp(), "%sCan skip array length calculation for array %p based on class file examination\n", OPT_DETAILS_CLASS_LOOKAHEAD, baseArray))
                   canSkipArrayLengthCalc = true;
                }
 
-            if (performTransformation(comp(), "O^O CLASS LOOKAHEAD: Can skip null check for array %p based on class file examination\n", baseArray))
+            if (performTransformation(comp(), "%sCan skip null check for array %p based on class file examination\n", OPT_DETAILS_CLASS_LOOKAHEAD, baseArray))
                canSkipThisNullCheck = true;
 
             if (offset->getOpCode().isLoadConst() &&
@@ -1921,7 +1925,7 @@ TR_J9ByteCodeIlGenerator::genArrayBoundsCheck(TR::Node * offset, int32_t width)
                 offset->getInt() >= 0 &&
                 (!TR::Compiler->om.useHybridArraylets() || !TR::Compiler->om.isDiscontiguousArray(firstDimension, width)))
                {
-               if (performTransformation(comp(), "O^O CLASS LOOKAHEAD: Can skip bound check for access %p using array %p which has length %d based on class file examination\n", offset, baseArray, firstDimension))
+               if (performTransformation(comp(), "%sCan skip bound check for access %p using array %p which has length %d based on class file examination\n", OPT_DETAILS_CLASS_LOOKAHEAD, offset, baseArray, firstDimension))
                   canSkipThisBoundCheck = true;
                }
             }
@@ -3604,7 +3608,7 @@ TR_J9ByteCodeIlGenerator::genInvoke(TR::SymbolReference * symRef, TR::Node *indi
 
    if (opcode != TR::BadILOp)
       {
-      performTransformation(comp(), "O^O BIT OPCODE: convert call to method %s to bit opcode\n",calledMethod->signature(trMemory()));
+      performTransformation(comp(), "%sconvert call to method %s to bit opcode\n", OPT_DETAILS_BIT_OPCODE, calledMethod->signature(trMemory()));
       TR::Node * node = TR::Node::create(opcode, 1);
       node->setAndIncChild(0, pop());
       push(node);
@@ -4102,7 +4106,7 @@ break
          {
          if (fieldInfo->getNumChars() == len && !memcmp(s, fieldInfo->getClassPointer(), len))
             {
-            if (performTransformation(comp(), "O^O CLASS LOOKAHEAD: Devirtualizing call to method %s on receiver object %p which has type %.*s based on class file examination\n", calledMethod->signature(trMemory()), thisObject, len, s))
+            if (performTransformation(comp(), "%sDevirtualizing call to method %s on receiver object %p which has type %.*s based on class file examination\n", OPT_DETAILS_CLASS_LOOKAHEAD, calledMethod->signature(trMemory()), thisObject, len, s))
                isDirectCall = true;
             }
          }
@@ -4111,7 +4115,7 @@ break
          {
          if (22 == len && !memcmp(s, "Ljava/math/BigDecimal;", len))
             {
-            if (performTransformation(comp(), "O^O CLASS LOOKAHEAD: Devirtualizing call to method %s on receiver object %p which has type %.*s based on class file examination\n", calledMethod->signature(trMemory()), thisObject, len, s))
+            if (performTransformation(comp(), "%sDevirtualizing call to method %s on receiver object %p which has type %.*s based on class file examination\n", OPT_DETAILS_CLASS_LOOKAHEAD, calledMethod->signature(trMemory()), thisObject, len, s))
                isDirectCall = true;
             }
          }
@@ -4120,7 +4124,7 @@ break
          {
          if (22 == len && !memcmp(s, "Ljava/math/BigInteger;", len))
             {
-            if (performTransformation(comp(), "O^O CLASS LOOKAHEAD: Devirtualizing call to method %s on receiver object %p which has type %.*s based on class file examination\n", calledMethod->signature(trMemory()), thisObject, len, s))
+            if (performTransformation(comp(), "%sDevirtualizing call to method %s on receiver object %p which has type %.*s based on class file examination\n", OPT_DETAILS_CLASS_LOOKAHEAD, calledMethod->signature(trMemory()), thisObject, len, s))
                isDirectCall = true;
             }
          }
@@ -4301,7 +4305,7 @@ break
 
                if (replacementMethod)
                   {
-                  if (performTransformation(comp(), "O^O ORB OPTIMIZATION : changing ObjectInputStream.readObject call to ORB redirectedReadObject\n"))
+                  if (performTransformation(comp(), "%schanging ObjectInputStream.readObject call to ORB redirectedReadObject\n", OPT_DETAILS_ORB_OPTIMIZATION))
                      {
                      TR::Node *clazzLoad = TR::Node::createWithSymRef(TR::loadaddr, 0, symRefTab()->findOrCreateClassSymbol(_methodSymbol, 0, cl));
                      TR::Node *jlClazzLoad = TR::Node::createWithSymRef(TR::aloadi, 1, 1, clazzLoad, symRefTab()->findOrCreateJavaLangClassFromClassSymbolRef());
@@ -4377,7 +4381,7 @@ break
                        }
                    if (replacementMethod)
                       {
-                      if (performTransformation(comp(), "O^O JAVA SERIALIZATION OPTIMIZATION : changing ObjectInputStream.readObject call to ObjectInputStream redirectedReadObject\n"))
+                      if (performTransformation(comp(), "%schanging ObjectInputStream.readObject call to ObjectInputStream redirectedReadObject\n", OPT_DETAILS_JAVA_SERIALIZATION_OPTIMIZATION))
                          {
                          TR::Node *clazzLoad = TR::Node::createWithSymRef(TR::loadaddr, 0, symRefTab()->findOrCreateClassSymbol(_methodSymbol, 0, cl));
                          TR::Node *jlClazzLoad = TR::Node::createWithSymRef(TR::aloadi, 1, clazzLoad, 0, symRefTab()->findOrCreateJavaLangClassFromClassSymbolRef());
@@ -6992,7 +6996,7 @@ TR_J9ByteCodeIlGenerator::storeInstance(TR::SymbolReference * symRef)
 
       TR_PersistentFieldInfo * fieldInfo = _classInfo->getFieldInfo() ? _classInfo->getFieldInfo()->findFieldInfo(comp(), node, true) : NULL;
       if (storeCanBeRemovedForUnreadField(fieldInfo, value) &&
-          performTransformation(comp(), "O^O CLASS LOOKAHEAD: Can skip store to instance field (that is never read) storing value %p based on class file examination\n", value))
+          performTransformation(comp(), "%sCan skip store to instance field (that is never read) storing value %p based on class file examination\n", OPT_DETAILS_CLASS_LOOKAHEAD, value))
          {
          //int32_t length;
          //char *sig = TR_ClassLookahead::getFieldSignature(comp(), symbol, symRef, length);
@@ -7259,7 +7263,7 @@ TR_J9ByteCodeIlGenerator::storeStatic(int32_t cpIndex)
       TR_PersistentFieldInfo * fieldInfo = _classInfo->getFieldInfo() ? _classInfo->getFieldInfo()->findFieldInfo(comp(), node, false) : NULL;
       //traceMsg(comp(), "Field %p info %p\n", node, fieldInfo);
       if (storeCanBeRemovedForUnreadField(fieldInfo, value) &&
-          performTransformation(comp(), "O^O CLASS LOOKAHEAD: Can skip store to static (that is never read) storing value %p based on class file examination\n", value))
+          performTransformation(comp(), "%sCan skip store to static (that is never read) storing value %p based on class file examination\n", OPT_DETAILS_CLASS_LOOKAHEAD, value))
          {
          //int32_t length;
          //char *sig = TR_ClassLookahead::getFieldSignature(comp(), symbol, symRef, length);
@@ -7491,7 +7495,7 @@ TR_J9ByteCodeIlGenerator::storeArrayElement(TR::DataType dataType, TR::ILOpCodes
             const char * s = value->getFirstChild()->getSymbolReference()->getTypeSignature(len);
             if (arrayFieldInfo->getNumChars() == len && !memcmp(s, arrayFieldInfo->getClassPointer(), len))
                {
-               if (performTransformation(comp(), "O^O CLASS LOOKAHEAD: Can skip array store check for value %p using array object %p which has type %s based on class file examination\n", value, arrayBaseAddress, s))
+               if (performTransformation(comp(), "%sCan skip array store check for value %p using array object %p which has type %s based on class file examination\n", OPT_DETAILS_CLASS_LOOKAHEAD, value, arrayBaseAddress, s))
                   canSkipThisArrayStoreCheck = true;
                }
             }
@@ -7688,7 +7692,7 @@ TR_J9ByteCodeIlGenerator::genAThrow()
       TR_PersistentFieldInfo * fieldInfo = _classInfo->getFieldInfo() ? _classInfo->getFieldInfo()->findFieldInfo(comp(), thisObject, false) : NULL;
       if (fieldInfo && fieldInfo->isTypeInfoValid())
          {
-         if (performTransformation(comp(), "O^O CLASS LOOKAHEAD: Can skip null check at exception throw %p based on class file examination\n", thisObject))
+         if (performTransformation(comp(), "%sCan skip null check at exception throw %p based on class file examination\n", OPT_DETAILS_CLASS_LOOKAHEAD, thisObject))
             canSkipNullCheck = true;
          }
       }

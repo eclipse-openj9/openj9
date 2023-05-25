@@ -46,6 +46,11 @@
 #include "optimizer/Structure.hpp"
 #include "optimizer/HCRGuardAnalysis.hpp"
 
+#define OPT_DETAILS "O^O J9 TRANSFORM UTIL: "
+#define OPT_DETAILS_TRANSFORM_INDIRECT_LOAD "O^O transformIndirectLoadChain: "
+#define OPT_DETAILS_FOLD_STATIC_FINAL_FIELD "O^O foldStaticFinalField: "
+#define OPT_DETAILS_TRANSFORM_DIRECT_LOAD "O^O transformDirectLoad: "
+
 /**
  * Walks the TR_RegionStructure counting loops to get the nesting depth of the block
  */
@@ -742,7 +747,7 @@ static bool changeIndirectLoadIntoConst(TR::Node *node, TR::ILOpCodes opCode, TR
    // constant value / symref / anything else that may be necessary.
    //
    TR::ILOpCode opCodeObject; opCodeObject.setOpCodeValue(opCode);
-   if (performTransformation(comp, "O^O transformIndirectLoadChain: change %s [%p] into %s\n", node->getOpCode().getName(), node, opCodeObject.getName()))
+   if (performTransformation(comp, "%schange %s [%p] into %s\n", OPT_DETAILS_TRANSFORM_INDIRECT_LOAD, node->getOpCode().getName(), node, opCodeObject.getName()))
       {
       *removedChild = node->getFirstChild();
       node->setNumChildren(0);
@@ -1192,7 +1197,7 @@ J9::TransformUtil::foldStaticFinalFieldImpl(TR::Compilation *comp, TR::Node *nod
    TR_StaticFinalData data = ((TR_J9VM *) comp->fej9())->dereferenceStaticFinalAddress(staticSym->getStaticAddress(), loadType);
    if (typeIsConstible)
       {
-      if (performTransformation(comp, "O^O foldStaticFinalField: turn [%p] %s %s into load const\n", node, node->getOpCode().getName(), symRef->getName(comp->getDebug())))
+      if (performTransformation(comp, "%sturn [%p] %s %s into load const\n", OPT_DETAILS_FOLD_STATIC_FINAL_FIELD, node, node->getOpCode().getName(), symRef->getName(comp->getDebug())))
          {
          TR::VMAccessCriticalSection isConsitble(comp->fej9());
          prepareNodeToBeLoadConst(node);
@@ -1242,7 +1247,7 @@ J9::TransformUtil::foldStaticFinalFieldImpl(TR::Compilation *comp, TR::Node *nod
          case TR::Symbol::Java_lang_J9VMInternals_jitHelpers:
             return false;
          default:
-            if (performTransformation(comp, "O^O transformDirectLoad: [%p] field is null - change to aconst NULL\n", node))
+            if (performTransformation(comp, "%s[%p] field is null - change to aconst NULL\n", OPT_DETAILS_TRANSFORM_DIRECT_LOAD, node))
                {
                prepareNodeToBeLoadConst(node);
                TR::Node::recreate(node, TR::aconst);
@@ -1259,7 +1264,8 @@ J9::TransformUtil::foldStaticFinalFieldImpl(TR::Compilation *comp, TR::Node *nod
       uintptr_t *refLocation = (uintptr_t*)staticSym->getStaticAddress();
       TR::SymbolReference *improvedSymRef = comp->getSymRefTab()->findOrCreateSymRefWithKnownObject(node->getSymbolReference(), refLocation);
       if (improvedSymRef->hasKnownObjectIndex()
-         && performTransformation(comp, "O^O transformDirectLoad: [%p] use object-specific symref #%d (=obj%d) for %s %s\n",
+         && performTransformation(comp, "%s[%p] use object-specific symref #%d (=obj%d) for %s %s\n",
+            OPT_DETAILS_TRANSFORM_DIRECT_LOAD,
             node,
             improvedSymRef->getReferenceNumber(),
             improvedSymRef->getKnownObjectIndex(),
@@ -1582,7 +1588,7 @@ J9::TransformUtil::transformIndirectLoadChainImpl(TR::Compilation *comp, TR::Nod
                TR::SymbolReference *improvedSymRef = comp->getSymRefTab()->findOrCreateSymRefWithKnownObject(symRef, &value, isArrayWithConstantElements(symRef, comp));
 
                if (improvedSymRef->hasKnownObjectIndex()
-                  && performTransformation(comp, "O^O transformIndirectLoadChain: %s [%p] with fieldOffset %d is obj%d referenceAddr is %p\n", node->getOpCode().getName(), node, improvedSymRef->getKnownObjectIndex(), symRef->getOffset(), value))
+                  && performTransformation(comp, "%s%s [%p] with fieldOffset %d is obj%d referenceAddr is %p\n", OPT_DETAILS_TRANSFORM_INDIRECT_LOAD, node->getOpCode().getName(), node, improvedSymRef->getKnownObjectIndex(), symRef->getOffset(), value))
                   {
                   node->setSymbolReference(improvedSymRef);
                   node->setIsNull(false);
@@ -2253,7 +2259,7 @@ J9::TransformUtil::refineMethodHandleInvokeBasic(TR::Compilation* comp, TR::Tree
    auto symRef = node->getSymbolReference();
    // Refine the call
    auto refinedMethod = fej9->createResolvedMethod(comp->trMemory(), targetMethod, symRef->getOwningMethod(comp));
-   if (!performTransformation(comp, "O^O Refine invokeBasic n%dn %p with known MH object\n", node->getGlobalIndex(), node))
+   if (!performTransformation(comp, "%sRefine invokeBasic n%dn %p with known MH object\n", OPT_DETAILS, node->getGlobalIndex(), node))
       return false;
 
    // Preserve NULLCHK
@@ -2403,7 +2409,7 @@ J9::TransformUtil::refineMethodHandleLinkTo(TR::Compilation* comp, TR::TreeTop* 
          callKind = TR::MethodSymbol::Static;
       }
 
-   if (!performTransformation(comp, "O^O Refine linkToXXX n%dn [%p] with known MemberName object\n", node->getGlobalIndex(), node))
+   if (!performTransformation(comp, "%sRefine linkToXXX n%dn [%p] with known MemberName object\n", OPT_DETAILS, node->getGlobalIndex(), node))
       return false;
 
    auto resolvedMethod = fej9->createResolvedMethodWithVTableSlot(comp->trMemory(), vTableSlot, targetMethod, symRef->getOwningMethod(comp));

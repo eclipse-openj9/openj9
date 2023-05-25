@@ -78,6 +78,7 @@ enum
 // Note AOT relocations assumes that this value is 0.  Shall this value change, the AOT relocations also need to reflect this change.
 #define VM_NEEDS_8_BYTE_CPINDEX            (0)
 
+#define OPT_DETAILS "O^O AMD64 PRIVATE LINKAGE: "
 
 ////////////////////////////////////////////////
 //
@@ -1296,7 +1297,8 @@ void J9::X86::AMD64::PrivateLinkage::buildIPIC(TR::X86CallSite &site, TR::LabelS
    uintptr_t itableIndex;
    if (  useLastITableCache
       && (declaringClass = site.getSymbolReference()->getOwningMethod(comp())->getResolvedInterfaceMethod(site.getSymbolReference()->getCPIndex(), &itableIndex))
-      && performTransformation(comp(), "O^O useLastITableCache for n%dn itableIndex=%d: %.*s.%.*s%.*s\n",
+      && performTransformation(comp(), "%suseLastITableCache for n%dn itableIndex=%d: %.*s.%.*s%.*s\n",
+            OPT_DETAILS,
             site.getCallNode()->getGlobalIndex(), (int)itableIndex,
             method->classNameLength(), method->classNameChars(),
             method->nameLength(),      method->nameChars(),

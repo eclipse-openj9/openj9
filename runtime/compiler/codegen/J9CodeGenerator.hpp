@@ -49,6 +49,8 @@ namespace J9 { typedef J9::CodeGenerator CodeGeneratorConnector; }
 #include "optimizer/Dominators.hpp"
 #include "cs2/arrayof.h"
 
+#define OPT_DETAILS_OMIT_HCR_CLASS_POINTER_ASSUMPTION "O^O OMIT HCR CLASS POINTER ASSUMPTION: "
+
 class NVVMIRBuffer;
 class TR_BitVector;
 class TR_SharedMemoryAnnotations;

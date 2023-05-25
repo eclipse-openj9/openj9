@@ -52,6 +52,8 @@
 #include "ilgen/J9ByteCodeIterator.hpp"
 
 #define OPT_DETAILS "O^O INLINER: "
+#define OPT_DETAILS_CALL_SITE_REMAT "O^O CALL SITE REMAT: "
+
 const float MIN_PROFILED_CALL_FREQUENCY = (.65f); // lowered this from .80f since opportunities were being missed in WAS; in those cases getting rid of the call even in 65% of the cases was beneficial probably due to the improved icache impact
 
 extern int32_t          *NumInlinedMethods;  // Defined in Inliner.cpp
@@ -490,7 +492,7 @@ bool TR_InlinerBase::inlineCallTarget(TR_CallStack *callStack, TR_CallTarget *ca
        && comp()->getOSRMode() == TR::voluntaryOSR
        && comp()->isOSRTransitionTarget(TR::postExecutionOSR)
        && comp()->isPotentialOSRPointWithSupport(calltarget->_myCallSite->_callNodeTreeTop)
-       && performTransformation(comp(), "O^O CALL SITE REMAT: populate OSR call site remat table for call [%p]\n", calltarget->_myCallSite->_callNode))
+       && performTransformation(comp(), "%spopulate OSR call site remat table for call [%p]\n", OPT_DETAILS_CALL_SITE_REMAT, calltarget->_myCallSite->_callNode))
       {
       if (comp()->trace(OMR::inlining))
          traceMsg(comp(), "callSiteRemat: populating OSR call site remat table for call [%p]\n", calltarget->_myCallSite->_callNode);

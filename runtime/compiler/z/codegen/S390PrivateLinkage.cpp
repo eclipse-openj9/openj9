@@ -55,6 +55,9 @@
 
 #define MIN_PROFILED_CALL_FREQUENCY (.075f)
 
+#define OPT_DETAILS "O^O COMPACT LOCALS: "
+#define OPT_DETAILS_S390_PRIVATE_LINKAGE "O^O S390 PRIVATE LINKAGE: "
+
 ////////////////////////////////////////////////////////////////////////////////
 // J9::Z::PrivateLinkage for J9
 ////////////////////////////////////////////////////////////////////////////////
@@ -392,7 +395,7 @@ J9::Z::PrivateLinkage::mapCompactedStack(TR::ResolvedMethodSymbol * method)
                }
             else
                {
-                  traceMsg(comp(), "O^O COMPACT LOCALS: Sharing slot for local %p (colour = %d)\n",localCursor, colour);
+                  traceMsg(comp(), "%sSharing slot for local %p (colour = %d)\n",OPT_DETAILS, localCursor, colour);
                   localCursor->setOffset(colourToOffsetMap[colour]);
                }
             }
@@ -465,7 +468,7 @@ J9::Z::PrivateLinkage::mapCompactedStack(TR::ResolvedMethodSymbol * method)
                   }
                else // share local with already mapped stack slot
                   {
-                     traceMsg(comp(), "O^O COMPACT LOCALS: Sharing slot for local %p (colour = %d)\n",localCursor, colour);
+                     traceMsg(comp(), "%sSharing slot for local %p (colour = %d)\n", OPT_DETAILS, localCursor, colour);
                      localCursor->setOffset(colourToOffsetMap[colour]);
                   }
 #ifdef DEBUG
@@ -539,7 +542,7 @@ J9::Z::PrivateLinkage::mapCompactedStack(TR::ResolvedMethodSymbol * method)
                   }
                else // share local with already mapped stack slot
                   {
-                     traceMsg(comp(), "O^O COMPACT LOCALS: Sharing slot for local %p (colour = %d)\n",localCursor, colour);
+                     traceMsg(comp(), "%sSharing slot for local %p (colour = %d)\n", OPT_DETAILS, localCursor, colour);
                      localCursor->setOffset(colourToOffsetMap[colour]);
                   }
 #ifdef DEBUG
@@ -729,7 +732,7 @@ J9::Z::PrivateLinkage::mapStack(TR::ResolvedMethodSymbol * method)
    // Force the stack size to be increased by...
    if (comp()->getOption(TR_Randomize) && comp()->getOptions()->get390StackBufferSize() == 0)
       {
-      if (cg()->randomizer.randomBoolean(300) && performTransformation(comp(),"O^O Random Codegen  - Added 5000 dummy slots to Java Stack frame to test large displacement.\n"))
+      if (cg()->randomizer.randomBoolean(300) && performTransformation(comp(),"%sRandom Codegen  - Added 5000 dummy slots to Java Stack frame to test large displacement.\n", OPT_DETAILS_S390_PRIVATE_LINKAGE))
          {
          stackIndex -= 5000;
          }
@@ -1427,7 +1430,7 @@ J9::Z::PrivateLinkage::createEpilogue(TR::Instruction * cursor)
 
    // Any one of these conditions will force us to restore RA
    bool restoreRA = disableRARestoreOpt                                                                  ||
-                    !(performTransformation(comp(), "O^O No need to restore RAREG in epilog\n")) ||
+                    !(performTransformation(comp(), "%sNo need to restore RAREG in epilog\n", OPT_DETAILS_S390_PRIVATE_LINKAGE)) ||
                     getRealRegister(getReturnAddressRegister())->getHasBeenAssignedInMethod()                       ||
                     cg()->canExceptByTrap()                                                      ||
                     cg()->getExitPointsInMethod()                                                ||

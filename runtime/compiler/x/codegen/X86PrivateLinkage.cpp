@@ -65,6 +65,8 @@
 #include "x/codegen/GuardedDevirtualSnippet.hpp"
 #endif
 
+#define OPT_DETAILS "O^O X86 PRIVATE LINKAGE: "
+
 inline uint32_t gcd(uint32_t a, uint32_t b)
    {
    while (b != 0)
@@ -1496,7 +1498,7 @@ void TR::X86CallSite::computeProfiledTargets()
          //
          float lastITableCacheThreshold = lastITableCacheThresholdStr? atof(lastITableCacheThresholdStr) : 0.2;
          if (  missRatio >= lastITableCacheThreshold
-            && performTransformation(comp(), "O^O PIC miss ratio is %f >= %f -- adding lastITable cache\n", missRatio, lastITableCacheThreshold))
+            && performTransformation(comp(), "%sPIC miss ratio is %f >= %f -- adding lastITable cache\n", OPT_DETAILS, missRatio, lastITableCacheThreshold))
             {
             _useLastITableCache = true;
             }

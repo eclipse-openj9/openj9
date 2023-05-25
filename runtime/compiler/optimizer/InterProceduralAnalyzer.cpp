@@ -60,6 +60,8 @@
 #define MAX_SNIFF_DEPTH 10
 #define MAX_SUB_METHODS 5
 
+#define OPT_DETAILS "O^O INTERPROCEDURAL ANALYZER: "
+
 class TR_OpaqueClassBlock;
 class TR_OpaqueMethodBlock;
 
@@ -495,7 +497,7 @@ List<OMR::RuntimeAssumption> *TR::InterProceduralAnalyzer::analyzeMethod(TR::Nod
          return 0;
          }
 
-      if (!performTransformation(comp(), "O^O INTERPROCEDURAL ANALYZER: Peeking into the IL for doing a limited form of interprocedural analysis  \n"))
+      if (!performTransformation(comp(), "%sPeeking into the IL for doing a limited form of interprocedural analysis  \n", OPT_DETAILS))
           return 0;
 
       TR_PeekingArgInfo *peekInfo = (TR_PeekingArgInfo *) trMemory()->allocateStackMemory(sizeof(TR_PeekingArgInfo)); // can stack allocate in some cases

@@ -68,6 +68,7 @@
 #include "optimizer/Optimizer.hpp"
 #include "ras/Debug.hpp"
 
+#define OPT_DETAILS "O^O ALLOCATION SINKING: "
 
 int32_t TR_AllocationSinking::perform()
    {
@@ -118,8 +119,8 @@ int32_t TR_AllocationSinking::perform()
             else if (
                   (useTree->getNode()->containsNode(allocation, visitCount))
                || (useNode->getOpCodeValue() == TR::allocationFence && useNode->getAllocation() == NULL) // found a flush that *might* be protecting this allocation and others; time to give up
-               || (trace() && !performTransformation(comp(), "O^O ALLOCATION SINKING: Moving allocation %s down past %s\n",
-                     comp()->getDebug()->getName(allocation), comp()->getDebug()->getName(useTree->getNode())))
+               || (trace() && !performTransformation(comp(), "%sMoving allocation %s down past %s\n",
+                     OPT_DETAILS, comp()->getDebug()->getName(allocation), comp()->getDebug()->getName(useTree->getNode())))
                ){
                if (allocTree->getNextTreeTop() == useTree)
                   {
@@ -146,8 +147,8 @@ int32_t TR_AllocationSinking::perform()
                // is on because it would interfere with the finer-grained one.)
                //
                if (  trace()
-                  || (!comp()->ilGenTrace() || performTransformation(comp(), "O^O ALLOCATION SINKING: Moving allocation %s down to %s\n",
-                        comp()->getDebug()->getName(allocation), comp()->getDebug()->getName(useTree->getNode())))
+                  || (!comp()->ilGenTrace() || performTransformation(comp(), "%sMoving allocation %s down to %s\n",
+                        OPT_DETAILS, comp()->getDebug()->getName(allocation), comp()->getDebug()->getName(useTree->getNode())))
                   ){
                   allocTree->unlink(false);
                   useTree->insertBefore(allocTree);

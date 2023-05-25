@@ -41,6 +41,8 @@
 #include "z/codegen/S390Register.hpp"
 #endif
 
+#define OPT_DETAILS "O^O NODE FLAGS: "
+
 #if (HOST_COMPILER == COMPILER_MSVC)
 #define MAX_PACKED_DECIMAL_SIZE 32
 #define UNICODE_SIGN_SIZE 2
@@ -1580,7 +1582,7 @@ J9::Node::setHasKnownCleanSign(bool v)
    TR::Compilation *c = TR::comp();
    TR_ASSERT(self()->getType().isBCD(), "setHasKnownCleanSign only supported for BCD type nodes\n");
    if (self()->getType().isBCD() &&
-       performNodeTransformation2(c, "O^O NODE FLAGS: Setting hasKnownCleanSign flag on node %p to %d\n", self(), v))
+       performNodeTransformation3(c, "%sSetting hasKnownCleanSign flag on node %p to %d\n", OPT_DETAILS, self(), v))
       {
       self()->setSignStateIsKnown();
       TR_ASSERT(self()->hasDecimalInfo(), "attempting to access _decimalInfo._hasCleanSign field for node %s %p that does not have it", self()->getOpCode().getName(), self());
@@ -1602,7 +1604,7 @@ J9::Node::setHasAssumedCleanSign(bool v)
    TR::Compilation * c = TR::comp();
    TR_ASSERT(self()->getType().isBCD(), "setHasAssumedCleanSign only supported for BCD type nodes\n");
    if (self()->getType().isBCD() &&
-       performNodeTransformation2(c, "O^O NODE FLAGS: Setting hasAssumedCleanSign flag on node %p to %d\n", self(), v))
+       performNodeTransformation3(c, "%sSetting hasAssumedCleanSign flag on node %p to %d\n", OPT_DETAILS, self(), v))
       {
       self()->setSignStateIsAssumed();
       TR_ASSERT(self()->hasDecimalInfo(), "attempting to access _decimalInfo._hasCleanSign field for node %s %p that does not have it", self()->getOpCode().getName(), self());
@@ -1651,7 +1653,7 @@ J9::Node::setHasKnownPreferredSign(bool v)
    TR::Compilation *c = TR::comp();
    TR_ASSERT(self()->getType().isBCD(), "setHasKnownPreferredSign only supported for BCD type nodes\n");
    if (self()->getType().isBCD() &&
-       performNodeTransformation2(c, "O^O NODE FLAGS: Setting hasKnownPreferredSign flag on node %p to %d\n", self(), v))
+       performNodeTransformation3(c, "%sSetting hasKnownPreferredSign flag on node %p to %d\n", OPT_DETAILS, self(), v))
       {
       self()->setSignStateIsKnown();
       TR_ASSERT(self()->hasDecimalInfo(), "attempting to access _decimalInfo._hasPreferredSign field for node %s %p that does not have it", self()->getOpCode().getName(), self());
@@ -1673,7 +1675,7 @@ J9::Node::setHasAssumedPreferredSign(bool v)
    TR::Compilation *c = TR::comp();
    TR_ASSERT(self()->getType().isBCD(), "setHasAssumedPreferredSign only supported for BCD type nodes\n");
    if (self()->getType().isBCD() &&
-       performNodeTransformation2(c, "O^O NODE FLAGS: Setting hasAssumedPreferredSign flag on node %p to %d\n", self(), v))
+       performNodeTransformation3(c, "%sSetting hasAssumedPreferredSign flag on node %p to %d\n", OPT_DETAILS, self(), v))
       {
       self()->setSignStateIsAssumed();
       TR_ASSERT(self()->hasDecimalInfo(), "attempting to access _decimalInfo._hasPreferredSign field for node %s %p that does not have it", self()->getOpCode().getName(), self());
@@ -1749,7 +1751,7 @@ J9::Node::setKnownOrAssumedSignCode(TR_RawBCDSignCode sign, bool isKnown)
    // TODO: start tracking SeparateOneByte and SeparateTwoByte sign sizes too
    if (self()->getType().isBCD() && TR::Node::typeSupportedForSignCodeTracking(self()->getDataType()))
       {
-      if (performNodeTransformation2(c, "O^O NODE FLAGS: Setting knownSignCode on node %p to %s\n", self(), TR::DataType::getName(sign)))
+      if (performNodeTransformation3(c, "%sSetting knownSignCode on node %p to %s\n", OPT_DETAILS, self(), TR::DataType::getName(sign)))
          {
          if (isKnown)
             self()->setSignStateIsKnown();
@@ -1880,7 +1882,7 @@ J9::Node::setHasSignStateOnLoad(bool v)
    TR_ASSERT(self()->getOpCode().isBCDLoad(), "only BCDLoads can use setHasSignStateOnLoad (%s %p)\n", self()->getOpCode().getName(), self());
 
    if (self()->getOpCode().isBCDLoad() &&
-       performNodeTransformation2(c, "O^O NODE FLAGS: Setting _hasNoSignStateOnLoad flag on node %p to %d\n", self(), v?0:1))
+       performNodeTransformation3(c, "%sSetting _hasNoSignStateOnLoad flag on node %p to %d\n", OPT_DETAILS, self(), v?0:1))
       {
       TR_ASSERT(self()->hasDecimalInfo(), "attempting to access _decimalInfo._hasNoSignStateOnLoad field for node %s %p that does not have it", self()->getOpCode().getName(), self());
       _unionPropertyB._decimalInfo._hasNoSignStateOnLoad = v ? 0 : 1; // v=true is the conservative setting, v=false will allow clobbering of the sign code
@@ -2060,7 +2062,7 @@ void
 J9::Node::setSpineCheckWithArrayElementChild(bool v, TR::Compilation *comp)
    {
    TR_ASSERT(self()->getOpCode().isSpineCheck(), "assertion failure");
-   if (performNodeTransformation2(comp, "O^O NODE FLAGS: Setting spineCHKWithArrayElementChild flag on node %p to %d\n", self(), v))
+   if (performNodeTransformation3(comp, "%sSetting spineCHKWithArrayElementChild flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(spineCHKWithArrayElementChild, v);
    }
 
@@ -2120,7 +2122,7 @@ J9::Node::setDontInlinePutOrderedCall(TR::Compilation *comp)
    TR_ASSERT(isPutOrdered, "attempt to set dontInlinePutOrderedCall flag and not a putOrdered call");
    if (isPutOrdered)
       {
-      if (performNodeTransformation1(comp, "O^O NODE FLAGS: Setting dontInlineUnsafePutOrderedCall flag on node %p\n", self()))
+      if (performNodeTransformation2(comp, "%sSetting dontInlineUnsafePutOrderedCall flag on node %p\n", OPT_DETAILS, self()))
          _flags.set(dontInlineUnsafePutOrderedCall);
       }
 
@@ -2181,7 +2183,7 @@ J9::Node::setUnsafeGetPutCASCallOnNonArray(TR::Compilation *comp)
 
    TR_ASSERT(self()->getSymbol()->getMethodSymbol()->getMethod()->isUnsafeWithObjectArg() || self()->getSymbol()->getMethodSymbol()->getMethod()->isUnsafeCAS(),"Attempt to check flag on a method that is not JNI Unsafe that needs special care for arraylets\n");
 
-   if (performNodeTransformation1(comp, "O^O NODE FLAGS: Setting unsafeGetPutOnNonArray flag on node %p\n", self()))
+   if (performNodeTransformation2(comp, "%sSetting unsafeGetPutOnNonArray flag on node %p\n", OPT_DETAILS, self()))
       _flags.set(unsafeGetPutOnNonArray);
    }
 
@@ -2236,7 +2238,7 @@ J9::Node::setBCDStoreIsTemporarilyALoad(bool v)
    TR_ASSERT(self()->getOpCode().isBCDLoadVar(),
              "flag only valid for BCD load ops\n");
    if (self()->getOpCode().isBCDLoadVar() &&
-       performNodeTransformation2(c, "O^O NODE FLAGS: Setting IsBCDStoreTemporarilyALoad flag on node %p to %d\n", self(), v))
+       performNodeTransformation3(c, "%sSetting IsBCDStoreTemporarilyALoad flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(IsBCDStoreTemporarilyALoad, v);
    }
 
@@ -2257,7 +2259,7 @@ J9::Node::setCleanSignDuringPackedLeftShift(bool v)
    {
    TR::Compilation *c = TR::comp();
    TR_ASSERT(self()->getOpCode().isPackedLeftShift(), "flag only valid for isPackedLeftShift nodes\n");
-   if (self()->getOpCode().isPackedLeftShift() && performNodeTransformation2(c, "O^O NODE FLAGS: Setting CleanSignDuringPackedLeftShift flag on node %p to %d\n", self(), v))
+   if (self()->getOpCode().isPackedLeftShift() && performNodeTransformation3(c, "%sSetting CleanSignDuringPackedLeftShift flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(CleanSignDuringPackedLeftShift, v);
    }
 
@@ -2290,7 +2292,7 @@ J9::Node::setSkipCopyOnLoad(bool v)
    TR::Compilation *c = TR::comp();
    TR_ASSERT(self()->chkOpsSkipCopyOnLoad(), "flag only valid for BCD or aggregate non-store and non-call ops\n");
    if ((self()->getType().isBCD() || self()->getType().isAggregate()) && !self()->getOpCode().isStore() && !self()->getOpCode().isCall() &&
-       performNodeTransformation2(c, "O^O NODE FLAGS: Setting skipCopyOnLoad flag on node %p to %d\n", self(), v))
+       performNodeTransformation3(c, "%sSetting skipCopyOnLoad flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(SkipCopyOnLoad, v);
    }
 
@@ -2322,7 +2324,7 @@ J9::Node::setSkipCopyOnStore(bool v)
    TR::Compilation *c = TR::comp();
    TR_ASSERT(self()->chkOpsSkipCopyOnStore(), "flag only valid for BCD or aggregate store ops\n");
    if (self()->chkOpsSkipCopyOnStore() &&
-       performNodeTransformation2(c, "O^O NODE FLAGS: Setting skipCopyOnStore flag on node %p to %d\n", self(), v))
+       performNodeTransformation3(c, "%sSetting skipCopyOnStore flag on node %p to %d\n", OPT_DETAILS, self(), v))
       {
       _flags.set(SkipCopyOnStore, v);
       }
@@ -2356,7 +2358,7 @@ J9::Node::setCleanSignInPDStoreEvaluator(bool v)
    TR::Compilation *c = TR::comp();
    TR_ASSERT(self()->chkOpsCleanSignInPDStoreEvaluator(), "flag only valid for packed decimal store nodes\n");
    if (self()->chkOpsCleanSignInPDStoreEvaluator() &&
-       performNodeTransformation2(c, "O^O NODE FLAGS: Setting cleanSignInPDStoreEvaluator flag on node %p to %d\n", self(), v))
+       performNodeTransformation3(c, "%sSetting cleanSignInPDStoreEvaluator flag on node %p to %d\n", OPT_DETAILS, self(), v))
       _flags.set(cleanSignInPDStoreEvaluator, v);
    }
 
@@ -2388,7 +2390,7 @@ J9::Node::setUseStoreAsAnAccumulator(bool v)
    TR::Compilation *c = TR::comp();
    TR_ASSERT(self()->chkOpsUseStoreAsAnAccumulator(), "flag only valid for BCD or aggregate store ops\n");
    if (self()->chkOpsUseStoreAsAnAccumulator() &&
-       performNodeTransformation2(c, "O^O NODE FLAGS: Setting UseStoreAsAnAccumulator flag on node %p to %d\n", self(), v))
+       performNodeTransformation3(c, "%sSetting UseStoreAsAnAccumulator flag on node %p to %d\n", OPT_DETAILS, self(), v))
       {
       _flags.set(UseStoreAsAnAccumulator, v);
       }
@@ -2418,7 +2420,7 @@ J9::Node::setSkipPadByteClearing(bool v)
    TR_ASSERT(self()->getType().isAnyPacked() && !self()->getOpCode().isStore(),
              "flag only valid for wcode non-store packed operations\n");
    if (self()->getType().isAnyPacked() && !self()->getOpCode().isStore() &&
-       (c==NULL || performNodeTransformation2(c, "O^O NODE FLAGS: Setting skipPadByteClearing flag on node %p to %d\n", self(), v)))
+       (c==NULL || performNodeTransformation3(c, "%sSetting skipPadByteClearing flag on node %p to %d\n", OPT_DETAILS, self(), v)))
       _flags.set(skipPadByteClearing, v);
    }
 

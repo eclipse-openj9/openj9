@@ -5031,7 +5031,7 @@ int32_t TR_EscapeAnalysis::sniffCall(TR::Node *callNode, TR::ResolvedMethodSymbo
       {
       //comp()->setVisitCount(1);
 
-      dumpOptDetails(comp(), "O^O ESCAPE ANALYSIS: Peeking into the IL to check for escaping objects \n");
+      dumpOptDetails(comp(), "%sPeeking into the IL to check for escaping objects \n", OPT_DETAILS);
 
       bool ilgenFailed = false;
       bool isPeekableCall = ((PersistentData *)manager()->getOptData())->_peekableCalls->get(callNode->getGlobalIndex());

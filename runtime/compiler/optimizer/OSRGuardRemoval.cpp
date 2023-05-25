@@ -29,6 +29,8 @@
 #include "optimizer/OSRGuardAnalysis.hpp"
 #include "ras/DebugCounter.hpp"
 
+#define OPT_DETAILS "O^O OSR GUARD REMOVAL: "
+
 /**
  * Find an OSR guard between the provided treetop and the end of the
  * block. If the treetop will no longer be an yield and this function
@@ -104,7 +106,7 @@ int32_t TR_OSRGuardRemoval::perform()
 
       TR::Node *node = block->getLastRealTreeTop()->getNode();
       if (node->isOSRGuard()
-          && performTransformation(comp(), "O^O OSR GUARD REMOVAL: removing OSRGuard node n%dn\n", node->getGlobalIndex()))
+          && performTransformation(comp(), "%sremoving OSRGuard node n%dn\n", OPT_DETAILS, node->getGlobalIndex()))
          {
          if (!modified)
             {
@@ -122,7 +124,7 @@ int32_t TR_OSRGuardRemoval::perform()
          } 
       else if (node->isTheVirtualGuardForAGuardedInlinedCall()
           && comp()->cg()->supportsMergingGuards()
-          && performTransformation(comp(), "O^O OSR GUARD REMOVAL: removing merged OSRGuard with VG node n%dn\n", node->getGlobalIndex()))
+          && performTransformation(comp(), "%sremoving merged OSRGuard with VG node n%dn\n", OPT_DETAILS, node->getGlobalIndex()))
          {
          TR_VirtualGuard *guardInfo = comp()->findVirtualGuardInfo(node);
          if (guardInfo->mergedWithOSRGuard())

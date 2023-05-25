@@ -35,6 +35,8 @@
 #include "ilgen/J9ByteCodeIterator.hpp"
 #include "infra/Cfg.hpp"
 
+#define OPT_DETAILS "O^O CLASS LOOKAHEAD: "
+
 TR_ClassLookahead::TR_ClassLookahead(
    TR_PersistentClassInfo * classInfo, TR_FrontEnd * fe, TR::Compilation * comp,
    TR::SymbolReferenceTable * symRefTab)
@@ -104,7 +106,7 @@ TR_ClassLookahead::perform()
    if (_traceIt)
       printf("ATTN: Doing classlookahead for %.*s\n", len, name);
 
-   if (!performTransformation(comp(), "O^O CLASS LOOKAHEAD: Performing class lookahead for %s\n", name))
+   if (!performTransformation(comp(), "%sPerforming class lookahead for %s\n", OPT_DETAILS, name))
        return 0;
 
    TR_ScratchList<TR::ResolvedMethodSymbol> initializerMethodsInClass(comp()->trMemory());
