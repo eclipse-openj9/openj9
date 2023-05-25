@@ -345,7 +345,7 @@ aarch64_linux:
     11: 'linux-aarch64-normal-server-release'
   node_labels:
     build: 'ci.role.build && hw.arch.aarch64 && sw.tool.docker'
-    docker_image: 'adoptopenjdk/centos7_build_image@sha256:8ce0a5c8607e92aeb6aa6c5dd81643b47842e00adfdbde2730fb5f5237064d1a'
+    docker_image: 'adoptopenjdk/centos7_build_image:latest'
   build_env:
     vars:
       all: 'CC=/usr/local/gcc10/bin/gcc-10.3 CXX=/usr/local/gcc10/bin/g++-10.3'
