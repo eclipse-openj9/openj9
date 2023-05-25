@@ -924,9 +924,7 @@ TR_J9ServerVM::getObjectClassFromKnownObjectIndex(TR::Compilation *comp, TR::Kno
 uintptr_t
 TR_J9ServerVM::getStaticReferenceFieldAtAddress(uintptr_t fieldAddress)
    {
-   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITServer::MessageType::VM_getStaticReferenceFieldAtAddress, fieldAddress);
-   return std::get<0>(stream->read<uintptr_t>());
+   TR_ASSERT_FATAL(false, "getStaticReferenceFieldAtAddress() should not be called by JITServer");
    }
 
 bool
@@ -1172,25 +1170,19 @@ TR_J9ServerVM::getCurrentLocalsMapForDLT(TR::Compilation *comp)
 uintptr_t
 TR_J9ServerVM::getReferenceFieldAtAddress(uintptr_t fieldAddress)
    {
-   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITServer::MessageType::VM_getReferenceFieldAtAddress, fieldAddress);
-   return std::get<0>(stream->read<uintptr_t>());
+   TR_ASSERT_FATAL(false, "getReferenceFieldAtAddress() should not be called by JITServer");
    }
 
 uintptr_t
 TR_J9ServerVM::getReferenceFieldAt(uintptr_t objectPointer, uintptr_t fieldOffset)
    {
-   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITServer::MessageType::VM_getReferenceFieldAt, objectPointer, fieldOffset);
-   return std::get<0>(stream->read<uintptr_t>());
+   TR_ASSERT_FATAL(false, "getReferenceFieldAt() should not be called by JITServer");
    }
 
 uintptr_t
 TR_J9ServerVM::getVolatileReferenceFieldAt(uintptr_t objectPointer, uintptr_t fieldOffset)
    {
-   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITServer::MessageType::VM_getVolatileReferenceFieldAt, objectPointer, fieldOffset);
-   return std::get<0>(stream->read<uintptr_t>());
+   TR_ASSERT_FATAL(false, "getVolatileReferenceFieldAt() should not be called by JITServer");
    }
 
 int32_t

@@ -9203,6 +9203,9 @@ uintptr_t
 TR_J9ByteCodeIlGenerator::walkReferenceChain(TR::Node *node, uintptr_t receiver)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp()->fe());
+#if defined(J9VM_OPT_JITSERVER)
+   TR_ASSERT_FATAL(!comp()->isOutOfProcessCompilation(), "walkReferenceChain() should not be called by JITServer because of getReferenceFieldAt() call");
+#endif
    uintptr_t result = 0;
    if (node->getOpCode().isLoadDirect() && node->getType() == TR::Address)
       {
