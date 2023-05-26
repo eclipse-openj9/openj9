@@ -45,6 +45,14 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
+/*[IF JAVA_SPEC_VERSION >= 17]*/
+import jdk.internal.access.JavaNetInetAddressAccess;
+import jdk.internal.access.SharedSecrets;
+/*[ELSE] JAVA_SPEC_VERSION >= 17
+import jdk.internal.misc.JavaNetInetAddressAccess;
+import jdk.internal.misc.SharedSecrets;
+/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
+
 import openj9.internal.criu.InternalCRIUSupport;
 
 /**
@@ -211,6 +219,7 @@ public final class CRIUSupport {
 	/* Higher priority hooks are run last in pre-checkoint hooks, and are run
 	 * first in post restore hooks.
 	 */
+	private static final int RESTORE_CLEAR_INETADDRESS_CACHE_PRIORITY = 100;
 	private static final int RESTORE_ENVIRONMENT_VARIABLES_PRIORITY = 100;
 	private static final int RESTORE_SYSTEM_PROPERTIES_PRIORITY = 100;
 	private static final int USER_HOOKS_PRIORITY = 1;
@@ -623,6 +632,10 @@ public final class CRIUSupport {
 		}
 	}
 
+	private static void clearInetAddressCache() {
+		SharedSecrets.getJavaNetInetAddressAccess().clearInetAddressCache();
+	}
+
 	/**
 	 * Checkpoint the JVM. This operation will use the CRIU options set by the
 	 * options setters.
@@ -647,6 +660,7 @@ public final class CRIUSupport {
 					registerRestoreEnvVariables();
 				}
 
+				J9InternalCheckpointHookAPI.registerPostRestoreHook(RESTORE_CLEAR_INETADDRESS_CACHE_PRIORITY, "Clear InetAddress cache on restore", CRIUSupport::clearInetAddressCache);
 				J9InternalCheckpointHookAPI.registerPostRestoreHook(RESTORE_ENVIRONMENT_VARIABLES_PRIORITY, "Restore system properties", CRIUSupport::setRestoreJavaProperties);
 
 				/* Add security provider hooks. */
