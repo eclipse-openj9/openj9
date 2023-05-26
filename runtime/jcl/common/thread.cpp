@@ -616,7 +616,14 @@ Java_java_lang_Thread_setExtentLocalCache(JNIEnv *env, jclass unusedClass, jobje
 jobject JNICALL
 Java_java_lang_Thread_findScopedValueBindings(JNIEnv *env, jclass unusedClass)
 {
-	/* TODO: Implement. See https://github.com/eclipse-openj9/openj9/issues/16677. */
+	/* Currently, this method is unused since there is no API or test that
+	 * invokes this method in OpenJ9. If the assertion ever triggers, the
+	 * draft implementation below should be completed and merged.
+	 *
+	 * Issue: https://github.com/eclipse-openj9/openj9/issues/16677.
+	 * Implementation: https://github.com/eclipse-openj9/openj9/pull/17402.
+	 */
+	Assert_JCL_unimplemented();
 	return NULL;
 }
 
