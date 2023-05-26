@@ -61,11 +61,15 @@ uses com.ibm.gpu.spi.GPUAssist.Provider;
 exports com.ibm.gpu.spi to
     openj9.gpu;
 /*[IF CRIU_SUPPORT]*/
+/*[IF JAVA_SPEC_VERSION >= 17]*/
+exports jdk.internal.access to
+    openj9.criu;
+/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
+exports jdk.internal.misc to
+    openj9.criu;
 exports openj9.internal.criu to
     openj9.criu;
 exports openj9.internal.criu.security to
-    openj9.criu;
-exports jdk.internal.misc to
     openj9.criu;
 opens jdk.internal.misc to
     openj9.criu;
