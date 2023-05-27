@@ -168,6 +168,7 @@ J9::OptionsPostRestore::iterateOverExternalOptions()
          case J9::ExternalOptions::XXplusJITServerAOTCachePersistenceOption:
          case J9::ExternalOptions::XXminusJITServerAOTCachePersistenceOption:
          case J9::ExternalOptions::XXJITServerAOTCacheDirOption:
+         case J9::ExternalOptions::XXcodecachetotalMaxRAMPercentage:
             {
             // do nothing, consume them to prevent errors
             FIND_AND_CONSUME_RESTORE_ARG(OPTIONAL_LIST_MATCH, optString, 0);
