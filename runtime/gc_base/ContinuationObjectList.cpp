@@ -45,6 +45,38 @@ MM_ContinuationObjectList::MM_ContinuationObjectList()
 	_typeId = __FUNCTION__;
 }
 
+MM_ContinuationObjectList *
+MM_ContinuationObjectList::newInstanceArray(MM_EnvironmentBase *env, uintptr_t arrayElements)
+{
+	MM_ContinuationObjectList *continuationObjectLists;
+
+	continuationObjectLists = (MM_ContinuationObjectList *)env->getForge()->allocate(sizeof(MM_ContinuationObjectList) * arrayElements,  MM_AllocationCategory::FIXED, J9_GET_CALLSITE());
+	if (NULL != continuationObjectLists) {
+		new(continuationObjectLists) MM_ContinuationObjectList[arrayElements]();
+
+		for (uintptr_t index = 0; index < arrayElements; index++) {
+			continuationObjectLists[index].initialize(env);
+		}
+	}
+
+	return continuationObjectLists;
+}
+
+bool
+MM_ContinuationObjectList::initialize(MM_EnvironmentBase *env)
+{
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
+
+	setNextList(extensions->getContinuationObjectLists());
+	setPreviousList(NULL);
+	if (NULL != extensions->getContinuationObjectLists()) {
+		extensions->getContinuationObjectLists()->setPreviousList(this);
+	}
+	extensions->setContinuationObjectLists(this);
+
+	return true;
+}
+
 void
 MM_ContinuationObjectList::addAll(MM_EnvironmentBase* env, j9object_t head, j9object_t tail)
 {
