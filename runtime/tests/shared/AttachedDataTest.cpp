@@ -201,8 +201,7 @@ AttachedDataTest::openTestCache(J9JavaVM* vm, BlockPtr preallocatedCache, UDATA 
 		goto done;
 	}
 	memset(piConfig, 0, sizeof(J9SharedClassPreinitConfig));
-	/* j9mmap_get_region_granularity returns 0 on zOS */
-	osPageSize = j9mmap_get_region_granularity(NULL);
+	osPageSize = J9_ARE_ANY_BITS_SET(j9mmap_capabilities(), J9PORT_MMAP_CAPABILITY_PROTECT) ? j9mmap_get_region_granularity(NULL) : 0;
 	piConfig->sharedClassDebugAreaBytes = -1;
 	piConfig->sharedClassSoftMaxBytes = -1;
 	if (0 == preallocatedCacheSize) {

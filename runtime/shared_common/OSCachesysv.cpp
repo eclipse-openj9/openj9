@@ -1600,7 +1600,7 @@ SH_OSCachesysv::runExitCode(void)
 	/* No action required */
 }
 
-#if defined(J9SHR_MSYNC_SUPPORT)
+#if defined(J9VM_OPT_SHR_MSYNC_SUPPORT)
 /**
  * Synchronise cache updates to disk
  *
@@ -1613,7 +1613,7 @@ SH_OSCachesysv::syncUpdates(void* start, UDATA length, U_32 flags)
 {
 	return -1;
 }
-#endif /* defined(J9SHR_MSYNC_SUPPORT) */
+#endif /* defined(J9VM_OPT_SHR_MSYNC_SUPPORT) */
 
 /**
  * Return the locking capabilities of this shared classes cache implementation

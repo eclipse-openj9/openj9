@@ -464,11 +464,11 @@ private:
 	bool _doMetaProtect;
 	bool _doPartialPagesProtect;
 	bool _readOnlyOSCache;
-#if defined (J9SHR_MSYNC_SUPPORT)
+#if defined(J9VM_OPT_SHR_MSYNC_SUPPORT)
 	bool _doMetaSync;
 	bool _doHeaderSync;
 	bool _doSegmentSync;
-#endif
+#endif /* defined(J9VM_OPT_SHR_MSYNC_SUPPORT) */
 	
 	IDATA _headerProtectCntr;
 	IDATA _readWriteProtectCntr;

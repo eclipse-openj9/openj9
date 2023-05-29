@@ -2994,3 +2994,8 @@ TraceException=Trc_SHR_CC_changePartialPageProtection_NotDone_V1 Overhead=1 Leve
 TraceEvent=Trc_SHR_CC_freeBlockBytes_info NoEnv Overhead=1 Level=10 Template="CC getFreeBlockBytes: case %d, retVal %d, freeBytes %d, minAOT %d, aotBytes %d, minJIT %d, jitBytes %d"
 
 TraceExit-Exception=Trc_SHR_CM_getCachedUTFString_exit4 Overhead=1 Level=2 Template="CM getCachedUTFString: Exiting due to memory allocation failed"
+
+TraceEvent=Trc_SHR_CC_startup_setCacheInitComplete Overhead=1 Level=9 Template="CC startup: set cache initialization complete"
+TraceEvent=Trc_SHR_CC_enterWriteMutex_writerCountInc Overhead=1 Level=9 Template="CC enterWriteMutex writerCount incremented from %zu to %zu"
+TraceEvent=Trc_SHR_CC_exitWriteMutex_writerCountDec Overhead=1 Level=9 Template="CC exitWriteMutex writerCount decremented to %zu"
+TraceExit=Trc_SHR_OSC_Mmap_syncUpdates_badmsync1 NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::syncUpdates: j9mmap_msync failed with error number: %d, error message %s"
