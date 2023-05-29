@@ -1046,7 +1046,11 @@ MM_RootScanner::scanClearable(MM_EnvironmentBase *env)
 #if JAVA_SPEC_VERSION >= 19
 	J9JavaVM *vm = (J9JavaVM*)env->getOmrVM()->_language_vm;
 	J9JITConfig *jitConfig = vm->jitConfig;
-	if ((NULL != jitConfig) && (NULL != jitConfig->methodsToDelete)) {
+	uintptr_t cycle_type = env->_cycleState->_type;
+
+	if (((_extensions->codeCacheReclamationOnLocalGCEnabled && ((OMR_GC_CYCLE_TYPE_SCAVENGE == cycle_type) || (OMR_GC_CYCLE_TYPE_VLHGC_PARTIAL_GARBAGE_COLLECT == cycle_type))) ||
+		 (_extensions->codeCacheReclamationOnGlobalGCEnabled && ((OMR_GC_CYCLE_TYPE_GLOBAL == cycle_type) || (OMR_GC_CYCLE_TYPE_VLHGC_GLOBAL_GARBAGE_COLLECT == cycle_type)))) &&
+		(NULL != jitConfig) && (NULL != jitConfig->methodsToDelete)) {
 		iterateAllContinuationObjects(env);
 	}
 #endif /* JAVA_SPEC_VERSION >= 19 */

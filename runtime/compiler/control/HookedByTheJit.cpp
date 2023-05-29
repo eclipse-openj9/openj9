@@ -6662,6 +6662,12 @@ static jvmtiIterationControl jitResetContinuationFlag(J9VMThread *vmThread, J9MM
 static void jitReleaseCodeStackWalk(OMR_VMThread *omrVMThread, condYieldFromGCFunctionPtr condYield = NULL)
    {
    J9VMThread *vmThread = (J9VMThread *)omrVMThread->_language_vmthread;
+   J9JavaVM *vm = vmThread->javaVM;
+   J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+
+   if (!vm->memoryManagerFunctions->j9gc_is_codecachereclamation_enabled(vmThread)) {
+	   return;
+   }
    J9JITConfig *jitConfig = vmThread->javaVM->jitConfig;
    if (!jitConfig)
       return; // not much we can do if the hook is called after freeJitConfig
@@ -6671,8 +6677,6 @@ static void jitReleaseCodeStackWalk(OMR_VMThread *omrVMThread, condYieldFromGCFu
 
    bool isRealTimeGC = TR::Options::getCmdLineOptions()->realTimeGC();
 #if JAVA_SPEC_VERSION >= 19
-   J9JavaVM *vm = vmThread->javaVM;
-   J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
    PORT_ACCESS_FROM_VMC(vmThread);
 
    if (isRealTimeGC && !TR::Options::getCmdLineOptions()->getOption(TR_DisableIncrementalCCR))
@@ -6723,14 +6727,16 @@ static void jitReleaseCodeStackWalk(OMR_VMThread *omrVMThread, condYieldFromGCFu
             yieldHappened = true;
          }
       while (yieldHappened);
-   } else {
-      J9StackWalkState walkState;
-      walkState.flags     = J9_STACKWALK_ITERATE_HIDDEN_JIT_FRAMES | J9_STACKWALK_ITERATE_FRAMES | J9_STACKWALK_SKIP_INLINES;
-      walkState.skipCount = 0;
-      walkState.frameWalkFunction = jitReleaseCodeStackWalkFrame;
+      }
+   else
+      {
+         J9StackWalkState walkState;
+         walkState.flags     = J9_STACKWALK_ITERATE_HIDDEN_JIT_FRAMES | J9_STACKWALK_ITERATE_FRAMES | J9_STACKWALK_SKIP_INLINES;
+         walkState.skipCount = 0;
+         walkState.frameWalkFunction = jitReleaseCodeStackWalkFrame;
 
-      vmFuncs->walkAllStackFrames(vmThread, &walkState);
-   }
+         vmFuncs->walkAllStackFrames(vmThread, &walkState);
+      }
 #else /* JAVA_SPEC_VERSION >= 19 */
    bool yieldHappened = false;
    bool doStackWalkForThread = true;
