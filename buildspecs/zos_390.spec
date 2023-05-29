@@ -232,6 +232,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<flag id="opt_valhallaFlattenableValueTypes" value="false"/>
 		<flag id="opt_reflect" value="true"/>
 		<flag id="opt_sharedClasses" value="true"/>
+		<flag id="opt_shrMsyncSupport" value="true"/>
 		<flag id="opt_sidecar" value="true"/>
 		<flag id="opt_srpAvlTreeSupport" value="true"/>
 		<flag id="opt_stringCompression" value="true"/>

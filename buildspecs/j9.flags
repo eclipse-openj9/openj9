@@ -1862,6 +1862,13 @@ Only available on zOS</description>
 			<require flag="interp_jniSupport"/>
 		</requires>
 	</flag>
+	<flag id="opt_shrMsyncSupport">
+		<description>Support for synchronizing memory with physical storage in shared classes cache</description>
+		<ifRemoved>No support for synchronizing memory with physical storage in shared classes cache</ifRemoved>
+		<requires>
+			<require flag="opt_sharedClasses"/>
+		</requires>
+	</flag>
 	<flag id="opt_sidecar">
 		<description>Determines if sidecar files are built.</description>
 		<ifRemoved>Standard J9 VM only - no sidecar support</ifRemoved>

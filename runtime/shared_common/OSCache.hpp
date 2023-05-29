@@ -238,9 +238,9 @@ public:
   	
 	virtual void *attach(J9VMThread* currentThread, J9PortShcVersion* expectedVersionData) = 0;
 
-#if defined (J9SHR_MSYNC_SUPPORT)
+#if defined(J9VM_OPT_SHR_MSYNC_SUPPORT)
 	virtual IDATA syncUpdates(void* start, UDATA length, U_32 flags) = 0;
-#endif
+#endif /* defined(J9VM_OPT_SHR_MSYNC_SUPPORT) */
 	
 	virtual IDATA getError(void) = 0;
 	

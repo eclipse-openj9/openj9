@@ -27,9 +27,6 @@
 #include "edcwccwi.h"
 #endif
 
-#define ZOS_V1R10_RELEASE	20.00
-#define ZOS_V1R10_VERSION	3
-
 /**
  * Register the J9VMThread->systemStackPointer field with the operating system.
  * This function needs to be called by the running thread on itself as the OS
