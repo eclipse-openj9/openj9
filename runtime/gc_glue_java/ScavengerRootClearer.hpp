@@ -166,6 +166,9 @@ public:
 	}
 
 	virtual void
+	iterateAllContinuationObjects(MM_EnvironmentBase *env);
+
+	virtual void
 	scanPhantomReferenceObjects(MM_EnvironmentBase *env)
 	{
 		if (_scavenger->getDelegate()->getShouldScavengePhantomReferenceObjects()) {

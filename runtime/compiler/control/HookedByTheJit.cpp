@@ -6601,6 +6601,22 @@ static UDATA jitReleaseCodeStackWalkFrame(J9VMThread *vmThread, J9StackWalkState
    }
 
 #if JAVA_SPEC_VERSION >= 19
+static void jitWalkContinuationStackFrames(J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData)
+{
+	MM_ContinuationIteratingEvent *continuationIteratingEvent = (MM_ContinuationIteratingEvent *)eventData;
+	J9VMThread * vmThread = continuationIteratingEvent->vmThread;
+	J9InternalVMFunctions *vmFuncs = vmThread->javaVM->internalVMFunctions;
+	J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(vmThread, continuationIteratingEvent->object);
+	if (NULL != continuation) {
+		J9StackWalkState walkState;
+		walkState.flags     = J9_STACKWALK_ITERATE_HIDDEN_JIT_FRAMES | J9_STACKWALK_ITERATE_FRAMES | J9_STACKWALK_SKIP_INLINES;
+		walkState.skipCount = 0;
+		walkState.frameWalkFunction = jitReleaseCodeStackWalkFrame;
+
+		vmFuncs->walkContinuationStackFrames(vmThread, continuation, &walkState);
+	}
+}
+
 static jvmtiIterationControl jitWalkContinuationCallBack(J9VMThread *vmThread, J9MM_IterateObjectDescriptor *object, void *userData)
    {
    J9InternalVMFunctions *vmFuncs = vmThread->javaVM->internalVMFunctions;
@@ -6651,12 +6667,12 @@ static void jitReleaseCodeStackWalk(OMR_VMThread *omrVMThread, condYieldFromGCFu
    if (!jitConfig->methodsToDelete)
       return; // nothing to do
 
-
    bool isRealTimeGC = TR::Options::getCmdLineOptions()->realTimeGC();
 #if JAVA_SPEC_VERSION >= 19
    J9JavaVM *vm = vmThread->javaVM;
    J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
    PORT_ACCESS_FROM_VMC(vmThread);
+
    if (isRealTimeGC && !TR::Options::getCmdLineOptions()->getOption(TR_DisableIncrementalCCR))
       {
       bool yieldHappened = false;
@@ -6837,14 +6853,6 @@ static void jitReleaseCodeStackWalk(OMR_VMThread *omrVMThread, condYieldFromGCFu
 
    }
 
-static void jitHookReleaseCodeGlobalGCEnd(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData)
-   {
-   MM_GlobalGCEndEvent *event = (MM_GlobalGCEndEvent *)eventData;
-   J9VMThread  *vmThread  = (J9VMThread*)event->currentThread->_language_vmthread;
-   jitReleaseCodeStackWalk(vmThread->omrVMThread);
-   jitReclaimMarkedAssumptions(true);
-   }
-
 static void jitHookReleaseCodeGCCycleEnd(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData)
    {
    MM_GCCycleEndEvent *event = (MM_GCCycleEndEvent *)eventData;
@@ -6856,14 +6864,6 @@ static void jitHookReleaseCodeGCCycleEnd(J9HookInterface **hook, UDATA eventNum,
    jitReleaseCodeStackWalk(omrVMThread,condYield);
    jitReclaimMarkedAssumptions(true);
    }
-
-static void jitHookReleaseCodeLocalGCEnd(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData)
-   {
-   MM_LocalGCEndEvent *event = (MM_LocalGCEndEvent *)eventData;
-   jitReleaseCodeStackWalk(event->currentThread);
-   jitReclaimMarkedAssumptions(true);
-   }
-
 
 /// setupHooks is used in ABOUT_TO_BOOTSTRAP stage (13)
 int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
@@ -7067,16 +7067,10 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
 
       IDATA unableToRegisterHooks = 0;
 
-      if (TR::Options::getCmdLineOptions()->realTimeGC())
+
+      if (!TR::Options::getCmdLineOptions()->realTimeGC() || !TR::Options::getCmdLineOptions()->getOption(TR_NoClassGC))
          {
-         if (!TR::Options::getCmdLineOptions()->getOption(TR_NoClassGC))
-            unableToRegisterHooks = (*gcOmrHooks)->J9HookRegisterWithCallSite(gcOmrHooks, J9HOOK_MM_OMR_GC_CYCLE_END, jitHookReleaseCodeGCCycleEnd, OMR_GET_CALLSITE(), NULL);
-         }
-      else
-         {
-         unableToRegisterHooks =
-             ((*gcOmrHooks)->J9HookRegisterWithCallSite(gcOmrHooks, J9HOOK_MM_OMR_GLOBAL_GC_END, jitHookReleaseCodeGlobalGCEnd, OMR_GET_CALLSITE(), NULL) ||
-             (*gcOmrHooks)->J9HookRegisterWithCallSite(gcOmrHooks, J9HOOK_MM_OMR_LOCAL_GC_END, jitHookReleaseCodeLocalGCEnd, OMR_GET_CALLSITE(), NULL));
+         unableToRegisterHooks = (*gcOmrHooks)->J9HookRegisterWithCallSite(gcOmrHooks, J9HOOK_MM_OMR_GC_CYCLE_END, jitHookReleaseCodeGCCycleEnd, OMR_GET_CALLSITE(), NULL);
          }
 
       if (unableToRegisterHooks)
@@ -7110,6 +7104,9 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
            (*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_CLASS_LOADERS_UNLOAD, jitHookClassLoadersUnload, OMR_GET_CALLSITE(), NULL) ||
 #endif
            (*gcHooks)->J9HookRegisterWithCallSite(gcHooks, J9HOOK_MM_INTERRUPT_COMPILATION, jitHookInterruptCompilation, OMR_GET_CALLSITE(), NULL) ||
+#if JAVA_SPEC_VERSION >= 19
+           (*gcHooks)->J9HookRegisterWithCallSite(gcHooks, J9HOOK_MM_WALKCONTINUATION, jitWalkContinuationStackFrames, OMR_GET_CALLSITE(), NULL) ||
+#endif /* JAVA_SPEC_VERSION >= 19 */
            (*gcHooks)->J9HookRegisterWithCallSite(gcHooks, J9HOOK_MM_CLASS_UNLOADING_END, jitHookClassesUnloadEnd, OMR_GET_CALLSITE(), NULL))
          {
          j9tty_printf(PORTLIB, "Error: Unable to register class event hook\n");

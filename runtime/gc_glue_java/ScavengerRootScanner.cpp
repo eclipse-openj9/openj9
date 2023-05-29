@@ -50,14 +50,18 @@ MM_ScavengerRootScanner::startContinuationProcessing(MM_EnvironmentBase *env)
 {
 	if(J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
 		_scavengerDelegate->setShouldScavengeContinuationObjects(false);
+		_scavengerDelegate->setShouldIterateContinuationObjects(false);
 
 		MM_HeapRegionDescriptorStandard *region = NULL;
 		GC_HeapRegionIteratorStandard regionIterator(env->getExtensions()->getHeap()->getHeapRegionManager());
 		while(NULL != (region = regionIterator.nextRegion())) {
-			if ((MEMORY_TYPE_NEW == (region->getTypeFlags() & MEMORY_TYPE_NEW))) {
-				MM_HeapRegionDescriptorStandardExtension *regionExtension = MM_ConfigurationDelegate::getHeapRegionDescriptorStandardExtension(env, region);
-				for (UDATA i = 0; i < regionExtension->_maxListIndex; i++) {
-					MM_ContinuationObjectList *list = &regionExtension->_continuationObjectLists[i];
+			MM_HeapRegionDescriptorStandardExtension *regionExtension = MM_ConfigurationDelegate::getHeapRegionDescriptorStandardExtension(env, region);
+			for (UDATA i = 0; i < regionExtension->_maxListIndex; i++) {
+				MM_ContinuationObjectList *list = &regionExtension->_continuationObjectLists[i];
+				if (!list->isEmpty()) {
+					_scavengerDelegate->setShouldIterateContinuationObjects(true);
+				}
+				if ((MEMORY_TYPE_NEW == (region->getTypeFlags() & MEMORY_TYPE_NEW))) {
 					list->startProcessing();
 					if (!list->wasEmpty()) {
 						_scavengerDelegate->setShouldScavengeContinuationObjects(true);
