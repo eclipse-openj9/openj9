@@ -439,6 +439,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 
 	<exports group="jdk21">
 		<!-- Additions for Java 21 (General) -->
+		<export name="JVM_IsForeignLinkerSupported"/>
 		<export name="JVM_VirtualThreadMount"/>
 		<export name="JVM_VirtualThreadUnmount"/>
 	</exports>
