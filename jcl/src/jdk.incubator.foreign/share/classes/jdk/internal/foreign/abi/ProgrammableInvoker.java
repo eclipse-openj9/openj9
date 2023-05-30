@@ -1,4 +1,4 @@
-/*[INCLUDE-IF (JAVA_SPEC_VERSION >= 16) & (JAVA_SPEC_VERSION <= 18)]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION == 17]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2021
  *
@@ -43,13 +43,7 @@ public class ProgrammableInvoker {
 	 * @param funcDesc The function descriptor of the specified native function
 	 * @return a method handle bound to the native method
 	 */
-	/*[IF JAVA_SPEC_VERSION >= 17]*/
 	public static MethodHandle getBoundMethodHandle(MethodType functionMethodType, FunctionDescriptor funcDesc) {
 		return new InternalDowncallHandler(functionMethodType, funcDesc).getBoundMethodHandle();
 	}
-	/*[ELSE] JAVA_SPEC_VERSION >= 17 */
-	public static MethodHandle getBoundMethodHandle(Addressable downcallAddr, MethodType functionMethodType, FunctionDescriptor funcDesc) {
-		return new InternalDowncallHandler(downcallAddr, functionMethodType, funcDesc).getBoundMethodHandle();
-	}
-	/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 }

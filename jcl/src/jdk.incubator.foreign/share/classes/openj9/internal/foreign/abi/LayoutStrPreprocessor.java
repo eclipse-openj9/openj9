@@ -1,4 +1,4 @@
-/*[INCLUDE-IF (JAVA_SPEC_VERSION >= 16) & (JAVA_SPEC_VERSION <= 18)]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION == 17]*/
 /*[IF] Final copyright notice is included. */
 /*******************************************************************************
  * Copyright IBM Corp. and others 2022

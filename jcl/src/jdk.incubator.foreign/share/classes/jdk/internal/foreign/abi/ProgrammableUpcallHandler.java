@@ -1,4 +1,4 @@
-/*[INCLUDE-IF (JAVA_SPEC_VERSION >= 16) & (JAVA_SPEC_VERSION <= 18)]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION == 17]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2022
  *
@@ -26,9 +26,6 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 
 import jdk.incubator.foreign.FunctionDescriptor;
-/*[IF JAVA_SPEC_VERSION == 18]*/
-import jdk.incubator.foreign.NativeSymbol;
-/*[ENDIF] JAVA_SPEC_VERSION == 18 */
 import jdk.incubator.foreign.ResourceScope;
 import openj9.internal.foreign.abi.InternalUpcallHandler;
 
@@ -36,12 +33,7 @@ import openj9.internal.foreign.abi.InternalUpcallHandler;
  * The counterpart in OpenJDK is replaced with this class that wraps up
  * an upcall handler enabling the native call to the java code at runtime.
  */
-/*[IF JAVA_SPEC_VERSION >= 18]*/
-/* UpcallHandler has been removed in Java 18 */
-public final class ProgrammableUpcallHandler
-/*[ELSE] JAVA_SPEC_VERSION >= 18 */
 public final class ProgrammableUpcallHandler implements UpcallHandler
-/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
 {
 	private final long thunkAddr;
 
@@ -72,16 +64,9 @@ public final class ProgrammableUpcallHandler implements UpcallHandler
 	 * @param mt The MethodType of the upcall method handle
 	 * @param cDesc The FunctionDescriptor of the upcall method handle
 	 * @param scope The ResourceScope of the upcall method handle
-	 * @return the native function symbol(JDK18) or the upcall hander(JDK17) in upcall
+	 * @return the upcall hander in upcall
 	 */
-	/*[IF JAVA_SPEC_VERSION == 18]*/
-	public static NativeSymbol makeUpcall(MethodHandle target, MethodType mt, FunctionDescriptor cDesc, ResourceScope scope) {
-		ProgrammableUpcallHandler upcallHandler = new ProgrammableUpcallHandler(target, mt, cDesc, scope);
-		return UpcallStubs.makeUpcall(upcallHandler.entryPoint(), scope);
-	}
-	/*[ELSE] JAVA_SPEC_VERSION == 18 */
 	public static UpcallHandler makeUpcall(MethodHandle target, MethodType mt, FunctionDescriptor cDesc, ResourceScope scope) {
 		return new ProgrammableUpcallHandler(target, mt, cDesc, scope);
 	}
-	/*[ENDIF] JAVA_SPEC_VERSION == 18 */
 }
