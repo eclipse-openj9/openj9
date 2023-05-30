@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 package com.ibm.jpp.om;
 
@@ -223,7 +223,7 @@ public class ExternalMessagesExtension extends BuilderExtension {
 					put.println("#     [1] https://www.gnu.org/software/classpath/license.html");
 					put.println("#     [2] https://openjdk.org/legal/assembly-exception.html");
 					put.println("#");
-					put.println("#     SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception");
+					put.println("#     SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0");
 					put.println("#");
 					put.println("# External Messages for EN locale");
 					Set<Entry<String, String>> entries = messages.entrySet();
