@@ -23,6 +23,7 @@ package org.openj9.criu;
 
 import jdk.internal.misc.Unsafe;
 import openj9.internal.criu.InternalCRIUSupport;
+import org.eclipse.openj9.criu.CRIUSupport;
 
 public class JDK11UpTimeoutAdjustmentTest {
 	private static final long MILLIS_PER_SECOND = 1000L;
@@ -43,8 +44,13 @@ public class JDK11UpTimeoutAdjustmentTest {
 	private static Object objWait = new Object();
 	// 5s time in ms
 	private static final long msWaitNotify5s = 5 * MILLIS_PER_SECOND;
+	final TestResult testResult = new TestResult(true, 0);
 
 	private void test(String testName) throws InterruptedException {
+		CRIUSupport criu = CRIUTestUtils.prepareCheckPointJVM(CRIUTestUtils.imagePath);
+		if (criu == null) {
+			return;
+		}
 		System.out.println("Start test name: " + testName);
 		CRIUTestUtils.showThreadCurrentTime("Before starting " + testName);
 		switch (testName) {
@@ -59,21 +65,22 @@ public class JDK11UpTimeoutAdjustmentTest {
 		case "testObjectWaitNotify":
 			testObjectWaitNotify();
 			break;
-		case "testObjectWaitTimedV1":
-			testObjectWaitTimedHelper("testObjectWaitTimedV1 NO C/R", msSleepTime10s, 0);
-			testObjectWaitTimedV1();
+		case "testObjectWaitTimedNoNanoSecond":
+			testObjectWaitTimedHelper("testObjectWaitTimedNoNanoSecond NO C/R", msSleepTime10s, 0);
+			testObjectWaitTimedNoNanoSecond();
 			break;
-		case "testObjectWaitTimedV2":
-			testObjectWaitTimedHelper("testObjectWaitTimedV2 NO C/R", msSleepTime10s, 500000);
-			testObjectWaitTimedV2();
+		case "testObjectWaitTimedWithNanoSecond":
+			testObjectWaitTimedHelper("testObjectWaitTimedWithNanoSecond NO C/R", msSleepTime10s, 500000);
+			testObjectWaitTimedWithNanoSecond();
 			break;
 		default:
 			throw new RuntimeException("Unrecognized test name: " + testName);
 		}
 
-		// delay 1s to allow the test thread start before checkPointJVM()
-		Thread.sleep(1 * MILLIS_PER_SECOND);
-		CRIUTestUtils.checkPointJVM(CRIUTestUtils.imagePath, false);
+		while (testResult.lockStatus == 0) {
+			Thread.yield();
+		}
+		CRIUTestUtils.checkPointJVMNoSetup(criu, CRIUTestUtils.imagePath, false);
 
 		switch (testName) {
 		case "testThreadPark":
@@ -90,11 +97,11 @@ public class JDK11UpTimeoutAdjustmentTest {
 			}
 			Thread.sleep(5 * MILLIS_PER_SECOND);
 			break;
-		case "testObjectWaitTimedV1":
-			testObjectWaitTimedHelper("testObjectWaitTimedV1", msSleepTime10s, 0);
+		case "testObjectWaitTimedNoNanoSecond":
+			testObjectWaitTimedHelper("testObjectWaitTimedNoNanoSecond NO C/R", msSleepTime10s, 0);
 			break;
-		case "testObjectWaitTimedV2":
-			testObjectWaitTimedHelper("testObjectWaitTimedV2", msSleepTime10s, 500000);
+		case "testObjectWaitTimedWithNanoSecond":
+			testObjectWaitTimedHelper("testObjectWaitTimedWithNanoSecond NO C/R", msSleepTime10s, 500000);
 			break;
 		default:
 		}
@@ -129,6 +136,7 @@ public class JDK11UpTimeoutAdjustmentTest {
 	private void testThreadParkHelper(String testName) {
 		CRIUTestUtils.showThreadCurrentTime(testName + " before park()");
 		final long startNanoTime = System.nanoTime();
+		testResult.lockStatus = 1;
 		unsafe.park(false, nsParkTime10s);
 		final long endNanoTime = System.nanoTime();
 		final long elapsedTime = endNanoTime - startNanoTime;
@@ -155,6 +163,7 @@ public class JDK11UpTimeoutAdjustmentTest {
 		CRIUTestUtils.showThreadCurrentTime(testName + " before sleep()");
 		final long startNanoTime = System.nanoTime();
 		try {
+			testResult.lockStatus = 1;
 			Thread.sleep(msSleepTime10s);
 			boolean pass = false;
 			final long endNanoTime = System.nanoTime();
@@ -186,6 +195,7 @@ public class JDK11UpTimeoutAdjustmentTest {
 				try {
 					final long startNanoTime = System.nanoTime();
 					synchronized (objWait) {
+						testResult.lockStatus = 1;
 						objWait.wait();
 					}
 					boolean pass = false;
@@ -216,6 +226,7 @@ public class JDK11UpTimeoutAdjustmentTest {
 		try {
 			final long startNanoTime = System.nanoTime();
 			synchronized (objWait) {
+				testResult.lockStatus = 1;
 				objWait.wait(ms, ns);
 			}
 			boolean pass = false;
@@ -238,11 +249,11 @@ public class JDK11UpTimeoutAdjustmentTest {
 		}
 	}
 
-	private void testObjectWaitTimedV1() {
-		new Thread(() -> testObjectWaitTimedHelper("testObjectWaitTimedV1", msSleepTime10s, 0)).start();
+	private void testObjectWaitTimedNoNanoSecond() {
+		new Thread(() -> testObjectWaitTimedHelper("testObjectWaitTimedNoNanoSecond", msSleepTime10s, 0)).start();
 	}
 
-	private void testObjectWaitTimedV2() {
-		new Thread(() -> testObjectWaitTimedHelper("testObjectWaitTimedV2", msSleepTime10s, 500000)).start();
+	private void testObjectWaitTimedWithNanoSecond() {
+		new Thread(() -> testObjectWaitTimedHelper("testObjectWaitTimedWithNanoSecond", msSleepTime10s, 500000)).start();
 	}
 }
