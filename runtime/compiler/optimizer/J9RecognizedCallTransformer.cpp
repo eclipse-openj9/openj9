@@ -795,15 +795,7 @@ void J9::RecognizedCallTransformer::process_java_lang_invoke_MethodHandle_invoke
                                                                                                 "java/lang/invoke/LambdaForm.vmentry Ljava/lang/invoke/MemberName;");
    TR::Node * memberNameNode = TR::Node::createWithSymRef(node, comp()->il.opCodeForIndirectLoad(TR::Address), 1, lambdaFormNode, memberNameSymRef);
    // load from membername.vmTarget, which is the J9Method
-   TR::SymbolReference * vmTargetSymRef = comp()->getSymRefTab()->findOrFabricateShadowSymbol(comp()->getMethodSymbol(),
-                                                                                                TR::Symbol::Java_lang_invoke_MemberName_vmtarget,
-                                                                                                TR::Address,
-                                                                                                fej9->getVMTargetOffset(),
-                                                                                                false,
-                                                                                                false,
-                                                                                                true,
-                                                                                                "java/lang/invoke/MemberName.vmtarget J");
-   vmTargetSymRef->getSymbol()->setNotCollected();
+   TR::SymbolReference * vmTargetSymRef = comp()->getSymRefTab()->findOrFabricateMemberNameVmTargetShadow();
    TR::Node * vmTargetNode = TR::Node::createWithSymRef(node, TR::aloadi, 1, memberNameNode, vmTargetSymRef);
    processVMInternalNativeFunction(treetop, node, vmTargetNode, argsList, inlCallNode);
    }
@@ -826,15 +818,7 @@ void J9::RecognizedCallTransformer::process_java_lang_invoke_MethodHandle_linkTo
       }
    // load from membername.vmTarget, which is the J9Method
    TR::Node* mnNode = TR::Node::createLoad(node, argsList->back());
-   TR::SymbolReference * vmTargetSymRef = comp()->getSymRefTab()->findOrFabricateShadowSymbol(comp()->getMethodSymbol(),
-                                                                                                TR::Symbol::Java_lang_invoke_MemberName_vmtarget,
-                                                                                                TR::Address,
-                                                                                                fej9->getVMTargetOffset(),
-                                                                                                false,
-                                                                                                false,
-                                                                                                true,
-                                                                                                "java/lang/invoke/MemberName.vmtarget J");
-   vmTargetSymRef->getSymbol()->setNotCollected();
+   TR::SymbolReference * vmTargetSymRef = comp()->getSymRefTab()->findOrFabricateMemberNameVmTargetShadow();
    TR::Node * vmTargetNode = TR::Node::createWithSymRef(node, TR::aloadi, 1, mnNode, vmTargetSymRef);
    vmTargetNode->setIsNonNull(true);
    argsList->pop_back(); // MemberName is not required when dispatching directly to the jitted method address
@@ -1085,17 +1069,7 @@ void J9::RecognizedCallTransformer::process_java_lang_invoke_MethodHandle_linkTo
    const bool vmtargetIsPrivate = false; // could be true? It's a hidden field
    const bool vmtargetIsFinal = true;
    TR::SymbolReference * vmtargetSymRef =
-      comp()->getSymRefTab()->findOrFabricateShadowSymbol(
-         comp()->getMethodSymbol(),
-         TR::Symbol::Java_lang_invoke_MemberName_vmtarget,
-         TR::Address,
-         fej9->getVMTargetOffset(),
-         vmtargetIsVolatile,
-         vmtargetIsPrivate,
-         vmtargetIsFinal,
-         "java/lang/invoke/MemberName.vmtarget J");
-
-   vmtargetSymRef->getSymbol()->setNotCollected();
+      comp()->getSymRefTab()->findOrFabricateMemberNameVmTargetShadow();
 
    TR::Node * vmTargetNode = TR::Node::createWithSymRef(
       node, TR::aloadi, 1, TR::Node::createLoad(node, mnSymRef), vmtargetSymRef);
