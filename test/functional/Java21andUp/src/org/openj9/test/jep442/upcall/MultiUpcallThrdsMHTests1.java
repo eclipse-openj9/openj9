@@ -39,7 +39,7 @@ import static java.lang.foreign.ValueLayout.*;
 /**
  * Test cases for JEP 442: Foreign Linker API (Third Preview) intended for
  * the situation when the multi-threading specific upcalls happen to the same
- * upcall method handle within different memory arena.scope()s, in which case the upcall
+ * upcall method handle within different memory arenas, in which case the upcall
  * metadata and the generated thunk are allocated separately.
  */
 @Test(groups = { "level.sanity" })
@@ -68,9 +68,9 @@ public class MultiUpcallThrdsMHTests1 implements Thread.UncaughtExceptionHandler
 					MemorySegment functionSymbol = nativeLibLookup.find("add2IntsByUpcallMH").get();
 					MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 
-					try (Arena arena = Arena.openConfined()) {
+					try (Arena arena = Arena.ofConfined()) {
 						MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_add2Ints,
-								FunctionDescriptor.of(JAVA_INT, JAVA_INT, JAVA_INT), arena.scope());
+								FunctionDescriptor.of(JAVA_INT, JAVA_INT, JAVA_INT), arena);
 						int result = (int)mh.invoke(111112, 111123, upcallFuncAddr);
 						Assert.assertEquals(result, 222235);
 					}
@@ -90,9 +90,9 @@ public class MultiUpcallThrdsMHTests1 implements Thread.UncaughtExceptionHandler
 					MemorySegment functionSymbol = nativeLibLookup.find("add2IntsByUpcallMH").get();
 					MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 
-					try (Arena arena = Arena.openConfined()) {
+					try (Arena arena = Arena.ofConfined()) {
 						MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_add2Ints,
-								FunctionDescriptor.of(JAVA_INT, JAVA_INT, JAVA_INT), arena.scope());
+								FunctionDescriptor.of(JAVA_INT, JAVA_INT, JAVA_INT), arena);
 						int result = (int)mh.invoke(111113, 111124, upcallFuncAddr);
 						Assert.assertEquals(result, 222237);
 					}
@@ -112,9 +112,9 @@ public class MultiUpcallThrdsMHTests1 implements Thread.UncaughtExceptionHandler
 					MemorySegment functionSymbol = nativeLibLookup.find("add2IntsByUpcallMH").get();
 					MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 
-					try (Arena arena = Arena.openConfined()) {
+					try (Arena arena = Arena.ofConfined()) {
 						MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_add2Ints,
-								FunctionDescriptor.of(JAVA_INT, JAVA_INT, JAVA_INT), arena.scope());
+								FunctionDescriptor.of(JAVA_INT, JAVA_INT, JAVA_INT), arena);
 						int result = (int)mh.invoke(111114, 111125, upcallFuncAddr);
 						Assert.assertEquals(result, 222239);
 					}

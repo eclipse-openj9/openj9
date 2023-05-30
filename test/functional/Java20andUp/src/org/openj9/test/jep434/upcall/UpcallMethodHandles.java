@@ -1838,7 +1838,7 @@ public class UpcallMethodHandles {
 		/* The size of [int, double] on AIX/PPC 64-bit is 12 bytes without padding by default
 		 * while the same struct is 16 bytes with padding on other platforms.
 		 */
-		double structElem2 = (isAixOS) ? arg2.get(JAVA_DOUBLE.withBitAlignment(32), 4) : arg2.get(JAVA_DOUBLE, 8);
+		double structElem2 = arg2.get(JAVA_DOUBLE, isAixOS ? 4 : 8);
 		double doubleSum = arg1 + structElem1 + structElem2;
 		return doubleSum;
 	}
@@ -1853,7 +1853,7 @@ public class UpcallMethodHandles {
 		/* The size of [float, double] on AIX/PPC 64-bit is 12 bytes without padding by default
 		 * while the same struct is 16 bytes with padding on other platforms.
 		 */
-		double structElem2 = (isAixOS) ? arg2.get(JAVA_DOUBLE.withBitAlignment(32), 4) : arg2.get(JAVA_DOUBLE, 8);
+		double structElem2 = arg2.get(JAVA_DOUBLE, isAixOS ? 4 : 8);
 		double doubleSum = arg1 + structElem1 + structElem2;
 		return doubleSum;
 	}
@@ -1960,7 +1960,7 @@ public class UpcallMethodHandles {
 		/* The size of [int, double, float] on AIX/PPC 64-bit is 16 bytes without padding by default
 		 * while the same struct is 20 bytes with padding on other platforms.
 		 */
-		double structElem2 = (isAixOS) ? arg2.get(JAVA_DOUBLE.withBitAlignment(32), 4) : arg2.get(JAVA_DOUBLE, 8);
+		double structElem2 = arg2.get(JAVA_DOUBLE, isAixOS ? 4 : 8);
 		float structElem3 = arg2.get(JAVA_FLOAT, isAixOS ? 12 : 16);
 		double doubleSum = arg1 + structElem1 + structElem2 + structElem3;
 		return doubleSum;
@@ -1971,7 +1971,7 @@ public class UpcallMethodHandles {
 		/* The size of [float, double, int] on AIX/PPC 64-bit is 16 bytes without padding by default
 		 * while the same struct is 20 bytes with padding on other platforms.
 		 */
-		double structElem2 = (isAixOS) ? arg2.get(JAVA_DOUBLE.withBitAlignment(32), 4) : arg2.get(JAVA_DOUBLE, 8);
+		double structElem2 = arg2.get(JAVA_DOUBLE, isAixOS ? 4 : 8);
 		int structElem3 = arg2.get(JAVA_INT, isAixOS ? 12 : 16);
 		double doubleSum = arg1 + structElem1 + structElem2 + structElem3;
 		return doubleSum;
@@ -1982,7 +1982,7 @@ public class UpcallMethodHandles {
 		/* The size of [int, double, int] on AIX/PPC 64-bit is 16 bytes without padding by default
 		 * while the same struct is 20 bytes with padding on other platforms.
 		 */
-		double structElem2 = (isAixOS) ? arg2.get(JAVA_DOUBLE.withBitAlignment(32), 4) : arg2.get(JAVA_DOUBLE, 8);
+		double structElem2 = arg2.get(JAVA_DOUBLE, isAixOS ? 4 : 8);
 		int structElem3 = arg2.get(JAVA_INT, isAixOS ? 12 : 16);
 		double doubleSum = arg1 + structElem1 + structElem2 + structElem3;
 		return doubleSum;
@@ -1993,7 +1993,7 @@ public class UpcallMethodHandles {
 		/* The size of [float, double, float] on AIX/PPC 64-bit is 16 bytes without padding by default
 		 * while the same struct is 20 bytes with padding on other platforms.
 		 */
-		double structElem2 = (isAixOS) ? arg2.get(JAVA_DOUBLE.withBitAlignment(32), 4) : arg2.get(JAVA_DOUBLE, 8);
+		double structElem2 = arg2.get(JAVA_DOUBLE, isAixOS ? 4 : 8);
 		float structElem3 = arg2.get(JAVA_FLOAT, isAixOS ? 12 : 16);
 		double doubleSum = arg1 + structElem1 + structElem2 + structElem3;
 		return doubleSum;
@@ -2006,7 +2006,7 @@ public class UpcallMethodHandles {
 		 * 1) there is no padding between int and double.
 		 * 2) there is a 4-byte padding between double and long.
 		 */
-		double structElem2 = (isAixOS) ? arg2.get(JAVA_DOUBLE.withBitAlignment(32), 4) : arg2.get(JAVA_DOUBLE, 8);
+		double structElem2 = arg2.get(JAVA_DOUBLE, isAixOS ? 4 : 8);
 		double structElem3 = arg2.get(JAVA_LONG, 16);
 		double doubleSum = arg1 + structElem1 + structElem2 + structElem3;
 		return doubleSum;

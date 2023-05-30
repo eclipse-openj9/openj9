@@ -25,16 +25,18 @@ package jdk.internal.foreign.abi;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 
+/*[IF JAVA_SPEC_VERSION >= 21]*/
+import java.lang.foreign.Arena;
+/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemorySegment;
 /*[IF JAVA_SPEC_VERSION >= 21]*/
 import jdk.internal.foreign.abi.AbstractLinker.UpcallStubFactory;
-import jdk.internal.foreign.abi.LinkerOptions;
 /*[ELSE] JAVA_SPEC_VERSION >= 21 */
 import java.lang.foreign.SegmentScope;
+/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 import jdk.internal.foreign.abi.LinkerOptions;
 import openj9.internal.foreign.abi.InternalUpcallHandler;
-/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 
 /**
  * The counterpart in OpenJDK is replaced with this class that wrap up
@@ -42,18 +44,26 @@ import openj9.internal.foreign.abi.InternalUpcallHandler;
  */
 public final class UpcallLinker {
 
-	/*[IF JAVA_SPEC_VERSION == 20]*/
 	private final long thunkAddr;
 
 	/* The constructor creates an upcall handler specific to the requested java method
 	 * by generating a native thunk in upcall on a given platform.
 	 */
-	UpcallLinker(MethodHandle target, MethodType methodType, FunctionDescriptor descriptor, SegmentScope session)
+	/*[IF JAVA_SPEC_VERSION >= 21]*/
+	UpcallLinker(MethodHandle target, MethodType methodType, FunctionDescriptor descriptor, Arena arena, LinkerOptions options)
 	{
-		InternalUpcallHandler internalUpcallHandler = new InternalUpcallHandler(target, methodType, descriptor, session);
+		InternalUpcallHandler internalUpcallHandler = new InternalUpcallHandler(target, methodType, descriptor, arena, options);
 		/* The thunk address must be set given entryPoint() is used in OpenJDK. */
 		thunkAddr = internalUpcallHandler.upcallThunkAddr();
 	}
+	/*[ELSE] JAVA_SPEC_VERSION >= 21 */
+	UpcallLinker(MethodHandle target, MethodType methodType, FunctionDescriptor descriptor, SegmentScope scope)
+	{
+		InternalUpcallHandler internalUpcallHandler = new InternalUpcallHandler(target, methodType, descriptor, scope);
+		/* The thunk address must be set given entryPoint() is used in OpenJDK. */
+		thunkAddr = internalUpcallHandler.upcallThunkAddr();
+	}
+	/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 
 	/**
 	 * Returns the address of the generated thunk at runtime.
@@ -64,23 +74,42 @@ public final class UpcallLinker {
 		return thunkAddr;
 	}
 
+	/*[IF JAVA_SPEC_VERSION >= 21]*/
 	/**
-	 * The method invoked via Clinker generates a native thunk to create
+	 * The method invoked via Linker generates a native thunk to create
 	 * a native symbol that holds an entry point to the native function
 	 * intended for the requested java method in upcall.
 	 *
 	 * @param target the upcall method handle to the requested java method
 	 * @param methodType the MethodType of the upcall method handle
 	 * @param descriptor the FunctionDescriptor of the upcall method handle
-	 * @param session the SegmentScope of the upcall method handle
+	 * @param arena the Arena of the upcall method handle
+	 * @param options the LinkerOptions indicating additional linking requirements to the linker
 	 * @return the native symbol
 	 */
-	public static MemorySegment make(MethodHandle target, MethodType methodType, FunctionDescriptor descriptor, SegmentScope session)
+	public static MemorySegment make(MethodHandle target, MethodType methodType, FunctionDescriptor descriptor, Arena arena, LinkerOptions options)
 	{
-		UpcallLinker upcallLinker = new UpcallLinker(target, methodType, descriptor, session);
-		return UpcallStubs.makeUpcall(upcallLinker.entryPoint(), session);
+		UpcallLinker upcallLinker = new UpcallLinker(target, methodType, descriptor, arena, options);
+		return UpcallStubs.makeUpcall(upcallLinker.entryPoint(), arena);
 	}
-	/*[ENDIF] JAVA_SPEC_VERSION == 20 */
+	/*[ELSE] JAVA_SPEC_VERSION >= 21 */
+	/**
+	 * The method invoked via Linker generates a native thunk to create
+	 * a native symbol that holds an entry point to the native function
+	 * intended for the requested java method in upcall.
+	 *
+	 * @param target the upcall method handle to the requested java method
+	 * @param methodType the MethodType of the upcall method handle
+	 * @param descriptor the FunctionDescriptor of the upcall method handle
+	 * @param scope the segment scope of the upcall method handle
+	 * @return the native symbol
+	 */
+	public static MemorySegment make(MethodHandle target, MethodType methodType, FunctionDescriptor descriptor, SegmentScope scope)
+	{
+		UpcallLinker upcallLinker = new UpcallLinker(target, methodType, descriptor, scope);
+		return UpcallStubs.makeUpcall(upcallLinker.entryPoint(), scope);
+	}
+	/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 
 	/*[IF JAVA_SPEC_VERSION >= 21]*/
 	/**
@@ -113,14 +142,11 @@ public final class UpcallLinker {
 	 * @param descriptor the FunctionDescriptor of the upcall method handle
 	 * @param options the LinkerOptions indicating additional linking requirements to the linker
 	 * @return a factory instance that wraps up the upcall specific code
-	 * @throws InternalError as the upcalll specific code is not yet implemented
 	 */
-	@SuppressWarnings("nls")
 	public static UpcallStubFactory makeFactory(MethodType methodType, FunctionDescriptor descriptor, LinkerOptions options) {
-		// return (target, arena) -> {
-		//	return UpcallLinker.make(target, methodType, descriptor, arena, options);
-		// };
-		throw new InternalError("Upcall is not yet implemented");
+		return (target, arena) -> {
+			return UpcallLinker.make(target, methodType, descriptor, arena, options);
+		};
 	}
 	/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 }
