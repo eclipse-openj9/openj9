@@ -1372,7 +1372,7 @@ JVM_GetVmArguments(JNIEnv *env)
 					/* exit vm before calling jni method */
 					internalFunctions->internalExitVMToJNI(currentThread);
 
-					result = (jobjectArray)((*env)->CallObjectMethod(env, vmJniClass, mid));
+					result = (jobjectArray)((*env)->CallStaticObjectMethod(env, vmJniClass, mid));
 
 					internalFunctions->internalEnterVMFromJNI(currentThread);
 					internalFunctions->j9jni_deleteLocalRef(env, (jobject)vmJniClass);
