@@ -79,11 +79,11 @@
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
   </test>
 
-  <test id="Create CRIU checkpoint image and restore once - testObjectWaitTimedV1">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ $TRACECRIU$ $EXPORTS$" "$MAINCLASS_TIMEOUTADJUSTMENT$ testObjectWaitTimedV1" 1 1 false</command>
+  <test id="Create CRIU checkpoint image and restore once - testObjectWaitTimedNoNanoSecond">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ $TRACECRIU$ $EXPORTS$" "$MAINCLASS_TIMEOUTADJUSTMENT$ testObjectWaitTimedNoNanoSecond" 1 1 false</command>
     <output type="success" caseSensitive="yes" regex="no">PASSED: expected wait time</output>
     <output type="required" caseSensitive="no" regex="no">Killed</output>
-    <output type="required" caseSensitive="yes" regex="no">Start test name: testObjectWaitTimedV1</output>
+    <output type="required" caseSensitive="yes" regex="no">Start test name: testObjectWaitTimedNoNanoSecond</output>
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
     <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
     <output type="failure" caseSensitive="yes" regex="no">FAILED: expected wait time</output>
@@ -96,11 +96,11 @@
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
   </test>
 
-  <test id="Create CRIU checkpoint image and restore once - testObjectWaitTimedV2">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ $TRACECRIU$ $EXPORTS$" "$MAINCLASS_TIMEOUTADJUSTMENT$ testObjectWaitTimedV2" 1 1 false</command>
+  <test id="Create CRIU checkpoint image and restore once - testObjectWaitTimedWithNanoSecond">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ $TRACECRIU$ $EXPORTS$" "$MAINCLASS_TIMEOUTADJUSTMENT$ testObjectWaitTimedWithNanoSecond" 1 1 false</command>
     <output type="success" caseSensitive="yes" regex="no">PASSED: expected wait time</output>
     <output type="required" caseSensitive="no" regex="no">Killed</output>
-    <output type="required" caseSensitive="yes" regex="no">Start test name: testObjectWaitTimedV2</output>
+    <output type="required" caseSensitive="yes" regex="no">Start test name: testObjectWaitTimedWithNanoSecond</output>
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
     <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
     <output type="failure" caseSensitive="yes" regex="no">FAILED: expected wait time</output>
