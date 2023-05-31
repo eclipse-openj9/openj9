@@ -169,7 +169,7 @@ jobs:
          openj9_repo: '${{ fromJSON(steps.get-pr.outputs.result).head.repo.full_name }}:${{ fromJSON(steps.get-pr.outputs.result).head.ref }}'
          openjdk_testRepo: ${{ matrix.openjdk_testrepo }}
          tkg_Repo: ${{ matrix.tkg_repo }}
-    - uses: actions/upload-artifact@82c141cc518b40d92cc801eee768e7aafc9c2fa2 # v2.3.1
+    - uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
       if: failure()
       with:
         name: test_output
