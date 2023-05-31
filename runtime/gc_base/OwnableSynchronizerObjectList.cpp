@@ -45,6 +45,38 @@ MM_OwnableSynchronizerObjectList::MM_OwnableSynchronizerObjectList()
 	_typeId = __FUNCTION__;
 }
 
+MM_OwnableSynchronizerObjectList *
+MM_OwnableSynchronizerObjectList::newInstanceArray(MM_EnvironmentBase *env, uintptr_t arrayElements)
+{
+	MM_OwnableSynchronizerObjectList *ownableSynchronizerObjectLists;
+
+	ownableSynchronizerObjectLists = (MM_OwnableSynchronizerObjectList *)env->getForge()->allocate(sizeof(MM_OwnableSynchronizerObjectList) * arrayElements,  MM_AllocationCategory::FIXED, J9_GET_CALLSITE());
+	if (NULL != ownableSynchronizerObjectLists) {
+		new(ownableSynchronizerObjectLists) MM_OwnableSynchronizerObjectList[arrayElements]();
+
+		for (uintptr_t index = 0; index < arrayElements; index++) {
+			ownableSynchronizerObjectLists[index].initialize(env);
+		}
+	}
+
+	return ownableSynchronizerObjectLists;
+}
+
+bool
+MM_OwnableSynchronizerObjectList::initialize(MM_EnvironmentBase *env)
+{
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
+
+	setNextList(extensions->getOwnableSynchronizerObjectLists());
+	setPreviousList(NULL);
+	if (NULL != extensions->getOwnableSynchronizerObjectLists()) {
+		extensions->getOwnableSynchronizerObjectLists()->setPreviousList(this);
+	}
+	extensions->setOwnableSynchronizerObjectLists(this);
+
+	return true;
+}
+
 void 
 MM_OwnableSynchronizerObjectList::addAll(MM_EnvironmentBase* env, j9object_t head, j9object_t tail)
 {

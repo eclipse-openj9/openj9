@@ -44,6 +44,23 @@ MM_ReferenceObjectList::MM_ReferenceObjectList()
 	_typeId = __FUNCTION__;
 }
 
+MM_ReferenceObjectList *
+MM_ReferenceObjectList::newInstanceArray(MM_EnvironmentBase *env, uintptr_t arrayElements)
+{
+	MM_ReferenceObjectList *referenceObjectLists;
+
+	referenceObjectLists = (MM_ReferenceObjectList *)env->getForge()->allocate(sizeof(MM_ReferenceObjectList) * arrayElements,  MM_AllocationCategory::FIXED, J9_GET_CALLSITE());
+	if (NULL != referenceObjectLists) {
+		new(referenceObjectLists) MM_ReferenceObjectList[arrayElements]();
+
+		for (uintptr_t index = 0; index < arrayElements; index++) {
+			referenceObjectLists[index].initialize(env);
+		}
+	}
+
+	return referenceObjectLists;
+}
+
 void 
 MM_ReferenceObjectList::addAll(MM_EnvironmentBase* env, UDATA referenceObjectType, j9object_t head, j9object_t tail)
 {

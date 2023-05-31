@@ -52,6 +52,17 @@ private:
 protected:
 public:
 	/**
+	 * Allocate and initialize an array of MM_ReferenceObjectList instances, resembling the functionality of operator new[].
+	 *
+	 * @param env the current thread
+	 * @param arrayElements the number of lists to create
+	 *
+	 * @return a pointer to the first list in the array, or NULL if we failed to allocate/init the array
+	 */
+	static MM_ReferenceObjectList *newInstanceArray(MM_EnvironmentBase *env, uintptr_t arrayElements);
+	bool initialize(MM_EnvironmentBase *env) { return true; }
+
+	/**
 	 * Add the specified linked list of objects to the buffer.
 	 * The objects are expected to be in a NULL terminated linked
 	 * list, starting from head and end at tail.
