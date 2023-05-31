@@ -42,6 +42,38 @@ MM_UnfinalizedObjectList::MM_UnfinalizedObjectList()
 	_typeId = __FUNCTION__;
 }
 
+MM_UnfinalizedObjectList *
+MM_UnfinalizedObjectList::newInstanceArray(MM_EnvironmentBase *env, uintptr_t arrayElements)
+{
+	MM_UnfinalizedObjectList *unfinalizedObjectLists;
+
+	unfinalizedObjectLists = (MM_UnfinalizedObjectList *)env->getForge()->allocate(sizeof(MM_UnfinalizedObjectList) * arrayElements,  MM_AllocationCategory::FIXED, J9_GET_CALLSITE());
+	if (NULL != unfinalizedObjectLists) {
+		new(unfinalizedObjectLists) MM_UnfinalizedObjectList[arrayElements]();
+
+		for (uintptr_t index = 0; index < arrayElements; index++) {
+			unfinalizedObjectLists[index].initialize(env);
+		}
+	}
+
+	return unfinalizedObjectLists;
+}
+
+bool
+MM_UnfinalizedObjectList::initialize(MM_EnvironmentBase *env)
+{
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
+
+	setNextList(extensions->unfinalizedObjectLists);
+	setPreviousList(NULL);
+	if (NULL != extensions->unfinalizedObjectLists) {
+		extensions->unfinalizedObjectLists->setPreviousList(this);
+	}
+	extensions->unfinalizedObjectLists = this;
+
+	return true;
+}
+
 void 
 MM_UnfinalizedObjectList::addAll(MM_EnvironmentBase* env, j9object_t head, j9object_t tail)
 {
