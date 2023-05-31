@@ -42,16 +42,6 @@ import jdk.internal.misc.Unsafe;
 
 public class DeadlockTest {
 
-	static class TestResult {
-		boolean testPassed;
-		volatile int lockStatus;
-
-		TestResult(boolean testPassed, int lockStatus) {
-			this.testPassed = testPassed;
-			this.lockStatus = lockStatus;
-		}
-	}
-
 	public static void main(String[] args) {
 		String test = args[0];
 

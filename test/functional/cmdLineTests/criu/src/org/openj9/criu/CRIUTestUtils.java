@@ -86,6 +86,34 @@ public class CRIUTestUtils {
 		}
 	}
 
+	public static CRIUSupport prepareCheckPointJVM(Path path) {
+		CRIUSupport criu = null;
+		if (CRIUSupport.isCRIUSupportEnabled()) {
+			deleteCheckpointDirectory(path);
+			createCheckpointDirectory(path);
+			criu = new CRIUSupport(path);
+		} else {
+			System.err.println("CRIU is not enabled");
+		}
+		return criu;
+	}
+
+	public static void checkPointJVMNoSetup(CRIUSupport criu, Path path, boolean deleteDir) {
+		if (criu != null) {
+			try {
+				showThreadCurrentTime("Performing CRIUSupport.checkpointJVM()");
+				criu.setLeaveRunning(false).setShellJob(true).setFileLocks(true).checkpointJVM();
+			} catch (SystemRestoreException e) {
+				e.printStackTrace();
+			}
+			if (deleteDir) {
+				deleteCheckpointDirectory(path);
+			}
+		} else {
+			System.err.println("CRIU is not enabled");
+		}
+	}
+
 	public static void showThreadCurrentTime(String logStr) {
 		System.out.println(logStr + ", current thread name: " + Thread.currentThread().getName() + ", " + new Date()
 				+ ", System.currentTimeMillis(): " + System.currentTimeMillis() + ", System.nanoTime(): "
