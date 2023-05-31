@@ -160,7 +160,7 @@ jobs:
             core.setFailed(`Request failed with error ${err}`)
           }
     - name: AQA
-      uses: adoptium/run-aqa@6fd68688345b96eedd83b69131559f5e965af289 # v1.0.8
+      uses: adoptium/run-aqa@c6cda6b996deaf508e968d1063efc5e7f34680d8 # v2.0.1
       with:
          build_list: ${{ matrix.build_list }}
          target: ${{ matrix.target }}
