@@ -40,11 +40,11 @@ jobs:
         run: |
           pip install lxml
       - name: checkout current repo
-        uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5 # v2.7.0
+        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
         with:
           path: 'tests'
       - name: checkout TKG repo
-        uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5 # v2.7.0
+        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
         with:
           repository: 'adoptium/TKG.git'
           ref: 'master'
