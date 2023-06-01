@@ -11960,7 +11960,7 @@ void VMgenerateCatchBlockBBStartPrologue(TR::Node *node, TR::Instruction *fenceI
       TR::Register *biAddrReg = cg->allocateRegister();
       TR::Register *recompCounterReg = cg->allocateRegister();
       intptr_t addr = (intptr_t) (comp->getRecompilationInfo()->getCounterAddress());
-      TR::Instruction *cursor = loadAddressConstant(cg, cg->needRelocationsForBodyInfoData(), node, addr, biAddrReg, NULL, false, TR_BodyInfoAddressLoad);
+      TR::Instruction *cursor = loadAddressConstant(cg, comp->compileRelocatableCode(), node, addr, biAddrReg);
       TR::MemoryReference *loadbiMR = TR::MemoryReference::createWithDisplacement(cg, biAddrReg, 0, TR::Compiler->om.sizeofReferenceAddress());
       TR::MemoryReference *storebiMR = TR::MemoryReference::createWithDisplacement(cg, biAddrReg, 0, TR::Compiler->om.sizeofReferenceAddress());
       cursor = generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, node, recompCounterReg, loadbiMR);
