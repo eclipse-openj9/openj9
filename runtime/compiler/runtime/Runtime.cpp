@@ -2142,8 +2142,6 @@ bool isOrderedPair(U_8 recordType)
       case TR_GlobalValue:
       case TR_RamMethodSequence:
       case TR_BodyInfoAddressLoad:
-      case TR_CatchBlockCounter:
-      case TR_StartPC:
       case TR_DataAddress:
       case TR_DebugCounter:
 #endif
