@@ -1951,5 +1951,31 @@ class TR_RelocationRecordValidateIsClassVisible : public TR_RelocationRecord
       bool isVisible(TR_RelocationTarget *reloTarget);
    };
 
+class TR_RelocationRecordCatchBlockCounter : public TR_RelocationRecord
+   {
+   public:
+      TR_RelocationRecordCatchBlockCounter() {}
+      TR_RelocationRecordCatchBlockCounter(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record) : TR_RelocationRecord(reloRuntime, record) {}
+
+      virtual char *name();
+
+      virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget);
+      virtual TR_RelocationErrorCode applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
+      virtual TR_RelocationErrorCode applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocationHigh, uint8_t *reloLocationLow);
+   };
+
+class TR_RelocationRecordStartPC : public TR_RelocationRecord
+   {
+   public:
+      TR_RelocationRecordStartPC() {}
+      TR_RelocationRecordStartPC(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record) : TR_RelocationRecord(reloRuntime, record) {}
+
+      virtual char *name();
+
+      virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget);
+      virtual TR_RelocationErrorCode applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
+      virtual TR_RelocationErrorCode applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocationHigh, uint8_t *reloLocationLow);
+   };
+
 #endif   // RELOCATION_RECORD_INCL
 
