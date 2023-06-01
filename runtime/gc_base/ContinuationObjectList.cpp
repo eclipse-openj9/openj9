@@ -52,9 +52,8 @@ MM_ContinuationObjectList::newInstanceArray(MM_EnvironmentBase *env, uintptr_t a
 
 	continuationObjectLists = (MM_ContinuationObjectList *)env->getForge()->allocate(sizeof(MM_ContinuationObjectList) * arrayElements,  MM_AllocationCategory::FIXED, J9_GET_CALLSITE());
 	if (NULL != continuationObjectLists) {
-		new(continuationObjectLists) MM_ContinuationObjectList[arrayElements]();
-
 		for (uintptr_t index = 0; index < arrayElements; index++) {
+			new(&continuationObjectLists[index]) MM_ContinuationObjectList();
 			continuationObjectLists[index].initialize(env);
 		}
 	}
