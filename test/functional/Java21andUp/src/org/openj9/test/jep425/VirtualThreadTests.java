@@ -170,7 +170,7 @@ public class VirtualThreadTests {
 		/* The expected frame count is based on test's callstack and OpenJ9's implementation of
 		 * Continuation.yield().
 		 */
-		int expectedFrames = 12;
+		int expectedFrames = 10;
 		String expectedMethodName = "yieldImpl";
 
 		try {
@@ -231,7 +231,7 @@ public class VirtualThreadTests {
 			}
 
 			StackTraceElement[] ste = t.getStackTrace();
-			Assert.assertEquals(ste.length, 4);
+			Assert.assertEquals(ste.length, 3);
 			Assert.assertEquals(ste[0].getClassName(), "org.openj9.test.jep425.VirtualThreadTests");
 
 			testThread2_state = false;
