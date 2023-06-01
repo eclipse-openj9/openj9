@@ -5914,7 +5914,7 @@ JVM_GetInterfaceVersion(void)
 
 /* jclass parameter 2 is apparently not used */
 
-jint JNICALL
+void JNICALL
 JVM_Sleep(JNIEnv* env, jclass thread, jlong timeout)
 {
 	Trc_SC_Sleep_Entry(env, thread, timeout);
@@ -5922,8 +5922,6 @@ JVM_Sleep(JNIEnv* env, jclass thread, jlong timeout)
 	(*env)->CallStaticVoidMethod(env, jlThread, sleepMID, timeout);
 
 	Trc_SC_Sleep_Exit(env);
-
-	return 0;
 }
 
 
