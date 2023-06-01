@@ -4887,12 +4887,6 @@ J9::CodeGenerator::needRelocationsForCurrentMethodPC()
    }
 
 bool
-J9::CodeGenerator::needRelocationsForCurrentMethodStartPC()
-   {
-   return self()->fej9()->needRelocationsForCurrentMethodStartPC();
-   }
-
-bool
 J9::CodeGenerator::needRelocationsForHelpers()
    {
    return self()->fej9()->needRelocationsForHelpers();
