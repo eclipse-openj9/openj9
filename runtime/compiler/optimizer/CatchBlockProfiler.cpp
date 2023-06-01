@@ -65,6 +65,8 @@ int32_t TR::CatchBlockProfiler::perform()
                {
                uint32_t *catchBlockCounterAddress = recompilation->getMethodInfo()->getCatchBlockCounterAddress();
                _catchBlockCounterSymRef = comp()->getSymRefTab()->createKnownStaticDataSymbolRef(catchBlockCounterAddress, TR::Int32);
+               _catchBlockCounterSymRef->getSymbol()->setIsCatchBlockCounter();
+               _catchBlockCounterSymRef->getSymbol()->setNotDataAddress();
                }
             TR::TreeTop *profilingTree = TR::TreeTop::createIncTree(comp(), b->getEntry()->getNode(), _catchBlockCounterSymRef, 1, b->getEntry());
             profilingTree->getNode()->setIsProfilingCode();
