@@ -171,6 +171,7 @@ class PersistentInfo : public OMR::PersistentInfoConnector
          _JITServerAOTCacheName("default"),
          _JITServerUseAOTCachePersistence(false),
          _JITServerAOTCacheDir(),
+         _JITServerAOTCacheDelayMethodRelocation(false),
 #endif /* defined(J9VM_OPT_JITSERVER) */
       OMR::PersistentInfoConnector(pm)
       {}
@@ -363,6 +364,8 @@ class PersistentInfo : public OMR::PersistentInfoConnector
    void setJITServerUseAOTCachePersistence(bool use) { _JITServerUseAOTCachePersistence = use; }
    const std::string &getJITServerAOTCacheDir() const { return _JITServerAOTCacheDir; }
    void setJITServerAOTCacheDir(const char *dir) { _JITServerAOTCacheDir = dir; }
+   bool getJITServerAOTCacheDelayMethodRelocation() const { return _JITServerAOTCacheDelayMethodRelocation; }
+   void setJITServerAOTCacheDelayMethodRelocation(bool b) { _JITServerAOTCacheDelayMethodRelocation = b; }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    private:
@@ -460,6 +463,7 @@ class PersistentInfo : public OMR::PersistentInfoConnector
    std::string _JITServerAOTCacheName; // Name of the server AOT cache that this client is using
    bool        _JITServerUseAOTCachePersistence; // Whether to persist the JITServer AOT caches at the server
    std::string _JITServerAOTCacheDir;  // Directory where the JITServer persistent AOT caches are located
+   bool        _JITServerAOTCacheDelayMethodRelocation; // At the client, whether to delay deserialized method relocation or not
 #endif /* defined(J9VM_OPT_JITSERVER) */
    };
 

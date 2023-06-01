@@ -11948,14 +11948,6 @@ TR::CompilationInfo::replenishInvocationCount(J9Method *method, TR::Compilation 
    if ((methodVMExtra == 1) || (methodVMExtra == J9_JIT_QUEUED_FOR_COMPILATION))
       {
       int32_t count;
-#if defined(J9VM_OPT_JITSERVER)
-      // Even if the option to disable AOT relocation delay was specified, we need to delay relocation of deserialized
-      // AOT methods using SVM received from the JITServer AOT cache until the next interpreted invocation. Such methods
-      // cannot be immediately relocated in the current implementation; see CompilationInfo::canRelocateMethod().
-      if (comp->isDeserializedAOTMethodUsingSVM() && comp->getOption(TR_DisableDelayRelocationForAOTCompilations))
-         count = 0;
-      else
-#endif /* defined(J9VM_OPT_JITSERVER) */
       // We want to use high counts unless the user specified counts on the command line
       // or used useLowerMethodCounts (or -Xquickstart)
       if (TR::Options::getCountsAreProvidedByUser() || (TR::Options::startupTimeMatters() == TR_yes))
@@ -13164,16 +13156,7 @@ TR::CompilationInfo::canRelocateMethod(TR::Compilation *comp)
       return false;
 
 #if defined(J9VM_OPT_JITSERVER)
-   // Delay relocation if this is a deserialized AOT method using SVM received from the JITServer AOT cache.
-   // Such methods cannot be immediately relocated in the current implementation. An immediate AOT+SVM load
-   // uses the ID-symbol mapping created during compilation. This mapping is missing when the client receives
-   // a serialized AOT method from the server, and trying to load the deserialized method immediately
-   // triggers fatal assertions in SVM validation in certain cases. As a workaround, we delay the AOT load
-   // until the next interpreted invocation of the method; see CompilationInfo::replenishInvocationCounter().
-   //
-   //TODO: Avoid the overhead of rescheduling this compilation request by handling the deserialized AOT load as if
-   //      the method came from the local SCC, rather than as if it was freshly AOT-compiled at the JITServer.
-   if (comp->isDeserializedAOTMethodUsingSVM())
+   if (comp->isDeserializedAOTMethod() && comp->getPersistentInfo()->getJITServerAOTCacheDelayMethodRelocation())
       return false;
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
