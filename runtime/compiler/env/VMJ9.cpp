@@ -5970,6 +5970,7 @@ TR_J9VMBase::revertToInterpreted(TR_OpaqueMethodBlock * method)
 int32_t *
 TR_J9VMBase::getStringClassEnableCompressionFieldAddr(TR::Compilation *comp, bool isVettedForAOT)
    {
+   TR_ASSERT_FATAL(!comp->compileRelocatableCode() || comp->reloRuntime()->isRelocating(), "Function cannot be called during AOT method compilation");
    if (!TR_J9VMBase::staticStringEnableCompressionFieldAddr) // Not yet cached
       {
       int32_t *enableCompressionFieldAddr = NULL;
@@ -5979,7 +5980,9 @@ TR_J9VMBase::getStringClassEnableCompressionFieldAddr(TR::Compilation *comp, boo
          TR_PersistentClassInfo * classInfo = (comp->getPersistentInfo()->getPersistentCHTable() == NULL) ?
             NULL :
             comp->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(stringClass, comp, isVettedForAOT);
-         if (classInfo && classInfo->isInitialized())
+         // Since this method should only be called during relocation (and not compilation), we pass false to isInitialized
+         // here so that a relo record is not created for this query.
+         if (classInfo && classInfo->isInitialized(false))
             {
             enableCompressionFieldAddr = (int32_t *)getStaticFieldAddress(stringClass,
                (unsigned char *)"COMPACT_STRINGS", 15, (unsigned char *)"Z", 1);
