@@ -134,7 +134,7 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
 
    bool isShortRunningMethod(int32_t callerIndex);
 
-   int32_t getDltBcIndex() { return (uint32_t)_dltBcIndex;}
+   int32_t getDltBcIndex() { return _dltBcIndex;}
    void setDltBcIndex(int32_t ix) { _dltBcIndex=ix;}
 
    int32_t *getDltSlotDescription() { return _dltSlotDescription;}
@@ -431,7 +431,7 @@ private:
 
    bool _needsClassLookahead;
 
-   uint16_t _dltBcIndex;
+   int32_t _dltBcIndex;
 
    int32_t * _dltSlotDescription;
 
