@@ -49,9 +49,8 @@ MM_UnfinalizedObjectList::newInstanceArray(MM_EnvironmentBase *env, uintptr_t ar
 
 	unfinalizedObjectLists = (MM_UnfinalizedObjectList *)env->getForge()->allocate(sizeof(MM_UnfinalizedObjectList) * arrayElements,  MM_AllocationCategory::FIXED, J9_GET_CALLSITE());
 	if (NULL != unfinalizedObjectLists) {
-		new(unfinalizedObjectLists) MM_UnfinalizedObjectList[arrayElements]();
-
 		for (uintptr_t index = 0; index < arrayElements; index++) {
+			new(&unfinalizedObjectLists[index]) MM_UnfinalizedObjectList();
 			unfinalizedObjectLists[index].initialize(env);
 		}
 	}

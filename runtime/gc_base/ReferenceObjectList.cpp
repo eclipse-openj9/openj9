@@ -51,9 +51,8 @@ MM_ReferenceObjectList::newInstanceArray(MM_EnvironmentBase *env, uintptr_t arra
 
 	referenceObjectLists = (MM_ReferenceObjectList *)env->getForge()->allocate(sizeof(MM_ReferenceObjectList) * arrayElements,  MM_AllocationCategory::FIXED, J9_GET_CALLSITE());
 	if (NULL != referenceObjectLists) {
-		new(referenceObjectLists) MM_ReferenceObjectList[arrayElements]();
-
 		for (uintptr_t index = 0; index < arrayElements; index++) {
+			new(&referenceObjectLists[index]) MM_ReferenceObjectList();
 			referenceObjectLists[index].initialize(env);
 		}
 	}

@@ -52,9 +52,8 @@ MM_OwnableSynchronizerObjectList::newInstanceArray(MM_EnvironmentBase *env, uint
 
 	ownableSynchronizerObjectLists = (MM_OwnableSynchronizerObjectList *)env->getForge()->allocate(sizeof(MM_OwnableSynchronizerObjectList) * arrayElements,  MM_AllocationCategory::FIXED, J9_GET_CALLSITE());
 	if (NULL != ownableSynchronizerObjectLists) {
-		new(ownableSynchronizerObjectLists) MM_OwnableSynchronizerObjectList[arrayElements]();
-
 		for (uintptr_t index = 0; index < arrayElements; index++) {
+			new(&ownableSynchronizerObjectLists[index]) MM_OwnableSynchronizerObjectList();
 			ownableSynchronizerObjectLists[index].initialize(env);
 		}
 	}
