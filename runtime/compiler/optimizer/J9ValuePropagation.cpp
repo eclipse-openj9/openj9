@@ -47,6 +47,8 @@
 #include "runtime/RuntimeAssumptions.hpp"
 #include "env/J9JitMemory.hpp"
 #include "optimizer/HCRGuardAnalysis.hpp"
+#include "optimizer/VectorAPIExpansion.hpp"
+
 
 #define OPT_DETAILS "O^O VALUE PROPAGATION: "
 
@@ -3597,10 +3599,14 @@ J9::ValuePropagation::innerConstrainAcall(TR::Node *node)
          method->getRecognizedMethod() == TR::jdk_internal_vm_vector_VectorSupport_ternaryOp;
          bool isVectorSupportCompare =
          method->getRecognizedMethod() == TR::jdk_internal_vm_vector_VectorSupport_compare;
+         bool isVectorSupportCompressExpandOp =
+         method->getRecognizedMethod() == TR::jdk_internal_vm_vector_VectorSupport_compressExpandOp;
          bool isVectorSupportConvert =
          method->getRecognizedMethod() == TR::jdk_internal_vm_vector_VectorSupport_convert;
          bool isVectorSupportBlend =
          method->getRecognizedMethod() == TR::jdk_internal_vm_vector_VectorSupport_blend;
+         bool isVectorSupportBroadcastInt =
+         method->getRecognizedMethod() == TR::jdk_internal_vm_vector_VectorSupport_broadcastInt;
 
          if (isVectorSupportLoad ||
              isVectorSupportBinaryOp ||
@@ -3608,8 +3614,10 @@ J9::ValuePropagation::innerConstrainAcall(TR::Node *node)
              isVectorSupportUnaryOp ||
              isVectorSupportTernaryOp ||
              isVectorSupportCompare ||
+             isVectorSupportCompressExpandOp ||
              isVectorSupportConvert ||
-             isVectorSupportBlend)
+             isVectorSupportBlend ||
+             isVectorSupportBroadcastInt)
             {
             bool isGlobal; // dummy
             int typeChildIndex;
@@ -3624,6 +3632,11 @@ J9::ValuePropagation::innerConstrainAcall(TR::Node *node)
                typeChildIndex = 4;
             else
                typeChildIndex = 1;
+
+            if (isVectorSupportCompressExpandOp &&
+                node->getFirstChild()->getOpCode().isLoadConst() &&
+                node->getFirstChild()->get32bitIntegralValue() == TR_VectorAPIExpansion::VECTOR_OP_MASK_COMPRESS)
+                typeChildIndex = 2;
 
             TR::VPConstraint *jlClass = getConstraint(node->getChild(typeChildIndex), isGlobal);
 
