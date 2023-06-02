@@ -236,10 +236,10 @@ cleanSharedMemorySegments(struct J9PortLibrary* portLibrary)
 
 	Trc_PRT_shared_cleanSharedMemorySegments_entry();
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-	/* finalRestore is equivalent to !isCheckpointAllowed().
+	/* isCheckPointAllowed is equivalent to isCheckpointAllowed().
 	 * https://github.com/eclipse-openj9/openj9/issues/15800
 	 */
-	if (portLibrary->finalRestore)
+	if (!portLibrary->isCheckPointAllowed)
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 	{
 		result = omrsysinfo_get_username(processOwner, OUTPUTBUFSIZE);

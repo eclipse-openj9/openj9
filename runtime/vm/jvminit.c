@@ -3819,7 +3819,7 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 			PORT_ACCESS_FROM_JAVAVM(vm);
 			vm->checkpointState.isCheckPointEnabled = TRUE;
 			vm->checkpointState.isCheckPointAllowed = TRUE;
-			vm->portLibrary->finalRestore = FALSE;
+			vm->portLibrary->isCheckPointAllowed = TRUE;
 			j9port_control(J9PORT_CTLDATA_CRIU_SUPPORT_FLAGS, OMRPORT_CRIU_SUPPORT_ENABLED);
 		}
 	}

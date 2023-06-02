@@ -1293,10 +1293,10 @@ j9shmem_getDir(struct J9PortLibrary* portLibrary, const char* ctrlDirName, uint3
 			if (NULL == homeDir) {
 				struct passwd *pwent = NULL;
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-				/* finalRestore is equivalent to !isCheckpointAllowed().
+				/* isCheckPointAllowed is equivalent to isCheckpointAllowed().
 				 * https://github.com/eclipse-openj9/openj9/issues/15800
 				 */
-				if (!portLibrary->finalRestore) {
+				if (portLibrary->isCheckPointAllowed) {
 					Trc_PRT_j9shmem_getDir_tryHomeDirFailed_notFinalRestore();
 				} else
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
