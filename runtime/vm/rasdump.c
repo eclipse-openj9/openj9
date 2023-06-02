@@ -339,7 +339,14 @@ J9RASInitialize(J9JavaVM* javaVM)
 	j9rasSetServiceLevel(javaVM, NULL);
 
 #if defined(J9PRODUCT_NAME)
-	javaVM->j9ras->productName = J9PRODUCT_NAME;
+	/* copy product name to allocated memory */
+	{
+		char *productName = j9mem_allocate_memory(strlen(J9PRODUCT_NAME) + 1, OMRMEM_CATEGORY_VM);
+		if (NULL != productName) {
+			strcpy(productName, J9PRODUCT_NAME);
+		}
+		javaVM->j9ras->productName = productName;
+	}
 #endif /* defined(J9PRODUCT_NAME) */
 }
 
@@ -529,31 +536,36 @@ freeRASStruct(J9JavaVM *javaVM, J9RAS* rasStruct)
 void
 J9RASShutdown(J9JavaVM *javaVM)
 {
-	J9RASSystemInfo *systemInfo = NULL;
 	PORT_ACCESS_FROM_JAVAVM(javaVM);
+	J9RAS *j9ras = javaVM->j9ras;
 
-	if (NULL == javaVM->j9ras) {
+	if (NULL == j9ras) {
 		return;
 	}
 
-	j9mem_free_memory(javaVM->j9ras->ddrData);
-	javaVM->j9ras->ddrData = NULL;
+	javaVM->j9ras = NULL;
 
-	j9mem_free_memory(javaVM->j9ras->serviceLevel);
-	javaVM->j9ras->serviceLevel = NULL;
+	j9mem_free_memory(j9ras->productName);
+	j9ras->productName = NULL;
 
-	while (!J9_LINKED_LIST_IS_EMPTY(javaVM->j9ras->systemInfo)) {
+	j9mem_free_memory(j9ras->ddrData);
+	j9ras->ddrData = NULL;
+
+	j9mem_free_memory(j9ras->serviceLevel);
+	j9ras->serviceLevel = NULL;
+
+	while (!J9_LINKED_LIST_IS_EMPTY(j9ras->systemInfo)) {
+		J9RASSystemInfo *systemInfo = NULL;
 		/* Assume that systemInfo->data either doesn't need freeing or was
 		 * allocated by the same j9mem_allocate_memory call that created
 		 * systemInfo itself.
 		 * See initSystemInfo and appendSystemInfoFromFile in dmpsup.c
 		 */
-		J9_LINKED_LIST_REMOVE_FIRST(javaVM->j9ras->systemInfo, systemInfo);
+		J9_LINKED_LIST_REMOVE_FIRST(j9ras->systemInfo, systemInfo);
 		j9mem_free_memory(systemInfo);
 	}
 
-	freeRASStruct(javaVM, javaVM->j9ras);
-	javaVM->j9ras = NULL;
+	freeRASStruct(javaVM, j9ras);
 }
 
 void
