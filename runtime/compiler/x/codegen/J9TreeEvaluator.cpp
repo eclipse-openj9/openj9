@@ -2679,6 +2679,46 @@ bool isConditionCodeSetForCompare(TR::Node *node, bool *jumpOnOppositeCondition)
    return false;
    }
 
+void setImplicitNULLCHKExceptionInfo(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR_ASSERT_FATAL(node->hasFoldedImplicitNULLCHK(), "Attempt to set exception info on BNDCHK without implicit NULLCHK");
+
+   TR::Compilation *comp = cg->comp();
+   bool isTraceCG = comp->getOption(TR_TraceCG);
+
+   TR::Instruction *faultingInstruction = cg->getImplicitExceptionPoint();
+   if (faultingInstruction)
+      {
+      // Check and correctly set the implicit exception point
+      //
+      // The compare analyzer may have generated a secondary load to
+      // resolved a compressed pointer and incorrectly set the exception point.
+      // If that is the case, correctly set the exception point on
+      // the comparison that actually throws the null pointer exception.
+      //
+      // The last instruction is a branch, the comparison is before.
+      TR::Instruction *cmpInstruction = cg->getAppendInstruction()->getPrev();
+      TR::InstOpCode::Mnemonic mnemonic = cmpInstruction->getOpCodeValue();
+      bool isComparisonMemForm = mnemonic == TR::InstOpCode::CMP4MemReg ||
+                                 mnemonic == TR::InstOpCode::CMP4RegMem;
+      if (comp->useCompressedPointers() &&
+          faultingInstruction != cmpInstruction &&
+          isComparisonMemForm)
+         {
+         if (isTraceCG)
+            traceMsg(comp,"Faulting instruction (previously %p) updated to %p\n",faultingInstruction,cmpInstruction);
+
+         faultingInstruction = cmpInstruction;
+         cg->setImplicitExceptionPoint(faultingInstruction);
+         }
+
+      faultingInstruction->setNeedsGCMap(0xFF00FFFF);
+      faultingInstruction->setNode(node);
+      }
+
+   if (isTraceCG)
+      traceMsg(comp,"Node %p has foldedimplicitNULLCHK, and a faulting instruction of %p\n",node,faultingInstruction);
+   }
 
 TR::Register *J9::X86::TreeEvaluator::BNDCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
@@ -2745,21 +2785,8 @@ TR::Register *J9::X86::TreeEvaluator::BNDCHKEvaluator(TR::Node *node, TR::CodeGe
                                                      instr,
                                                      false
                                                      ));
-
    if (node->hasFoldedImplicitNULLCHK())
-      {
-      TR::Instruction *faultingInstruction = cg->getImplicitExceptionPoint();
-      if (comp->getOption(TR_TraceCG))
-         {
-         traceMsg(comp,"Node %p has foldedimplicitNULLCHK, and a faulting instruction of %p\n",node,faultingInstruction);
-         }
-
-      if (faultingInstruction)
-         {
-         faultingInstruction->setNeedsGCMap(0xFF00FFFF);
-         faultingInstruction->setNode(node);
-         }
-      }
+      setImplicitNULLCHKExceptionInfo(node, cg);
 
    firstChild->setIsNonNegative(true);
    secondChild->setIsNonNegative(true);
