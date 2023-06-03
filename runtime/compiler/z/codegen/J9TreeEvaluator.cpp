@@ -7183,19 +7183,10 @@ J9::Z::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node * node, TR::CodeGenerator 
 
    // Store for case where we have a NULL ptr detected at runtime and
    // branches around the wrtbar
-   //
-   // For the non-NULL case we chose to simply exec the ST twice as this is
-   // cheaper than branching around the a single ST inst.
-   //
+
    if (!sourceChild->isNonNull() && (doWrtBar || doCrdMrk))
       {
-      // As we could hit a gc when doing the gencon wrtbar, we have to not
-      // re-do the ST.  We must branch around the second store.
-      //
-      if (doWrtBar)
-         {
-         generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, cFlowRegionEnd);
-         }
+      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, cFlowRegionEnd);
 
       generateS390LabelInstruction(cg, TR::InstOpCode::label, node, simpleStoreLabel);
 
