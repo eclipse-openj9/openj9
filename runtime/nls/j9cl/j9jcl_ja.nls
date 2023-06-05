@@ -17,7 +17,7 @@
 # [1] https://www.gnu.org/software/classpath/license.html
 # [2] https://openjdk.org/legal/assembly-exception.html
 #
-# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 #
 
 # Externalised messages for the VM components of the JCL module.
@@ -579,4 +579,12 @@ J9NLS_JCL_CRIU_LOADING_OPTIONS_FILE_FAILED.sample_input_1=1
 J9NLS_JCL_CRIU_LOADING_OPTIONS_FILE_FAILED.explanation=CRIUSupport::checkpointJVM failed.
 J9NLS_JCL_CRIU_LOADING_OPTIONS_FILE_FAILED.system_action=The JVM will throw a JVMRestoreException.
 J9NLS_JCL_CRIU_LOADING_OPTIONS_FILE_FAILED.user_response=Check the arguments to CRIUSupport::registerRestoreOptionsFile.
+# END NON-TRANSLATABLE
+
+J9NLS_JCL_CRIU_FAILED_TO_ENABLE_ALL_RESTORE_OPTIONS=JVM \u306f\u3001\u6307\u5b9a\u3055\u308c\u305f\u3059\u3079\u3066\u306e\u30ea\u30b9\u30c8\u30a2\u30fb\u30aa\u30d7\u30b7\u30e7\u30f3\u3092\u4f7f\u7528\u53ef\u80fd\u306b\u3059\u308b\u3053\u3068\u304c\u3067\u304d\u307e\u305b\u3093\u3067\u3057\u305f\u3002
+# START NON-TRANSLATABLE
+J9NLS_JCL_CRIU_FAILED_TO_ENABLE_ALL_RESTORE_OPTIONS.sample_input_1=1
+J9NLS_JCL_CRIU_FAILED_TO_ENABLE_ALL_RESTORE_OPTIONS.explanation=CRIUSupport::checkpointJVM failed.
+J9NLS_JCL_CRIU_FAILED_TO_ENABLE_ALL_RESTORE_OPTIONS.system_action=The JVM will throw a JVMRestoreException.
+J9NLS_JCL_CRIU_FAILED_TO_ENABLE_ALL_RESTORE_OPTIONS.user_response=Check documentation to see which options are allowed on restore.
 # END NON-TRANSLATABLE

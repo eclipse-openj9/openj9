@@ -17,7 +17,7 @@
 # [1] https://www.gnu.org/software/classpath/license.html
 # [2] https://openjdk.org/legal/assembly-exception.html
 #
-# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 #
 
 # j9modron.nls
@@ -951,4 +951,39 @@ J9NLS_GC_OPTIONS_PREFERREDHEAPBASE_NOT_SUPPORTED_ON_ZOS_WARN=Volba -Xgc:preferre
 J9NLS_GC_OPTIONS_PREFERREDHEAPBASE_NOT_SUPPORTED_ON_ZOS_WARN.explanation=The JVM was started with the -Xgc:preferredHeapBase option, which has no effect on z/OS.
 J9NLS_GC_OPTIONS_PREFERREDHEAPBASE_NOT_SUPPORTED_ON_ZOS_WARN.system_action=The JVM ignores the -Xgc:preferredHeapBase option.
 J9NLS_GC_OPTIONS_PREFERREDHEAPBASE_NOT_SUPPORTED_ON_ZOS_WARN.user_response=Refer to the IBM SDK documentation.
+
+# END NON-TRANSLATABLE
+
+# Note %s gc policy ("balanced" or "metronome")
+J9NLS_GC_POLICY_NOT_SUPPOURTED_CRIU=Volba -Xgcpolicy:%s nen\u00ed v sou\u010dasn\u00e9 dob\u011b podporov\u00e1na s volbou -XX:+EnableCRIUSupport
+# START NON-TRANSLATABLE
+J9NLS_GC_POLICY_NOT_SUPPOURTED_CRIU.explanation=The specified GC policy is currently unsuppourted with CRIU
+J9NLS_GC_POLICY_NOT_SUPPOURTED_CRIU.system_action=The JVM will terminate
+J9NLS_GC_POLICY_NOT_SUPPOURTED_CRIU.user_response=Adjust the garbage collector policy option (-Xgcpolicy) with one of the following supported policies: gencon, optavgpause or optthruput
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_FAILED_TO_REINITIALIZE_PARSING_RESTORE_OPTIONS=Inicializace se nezda\u0159ila; nelze analyzovat volby obnoven\u00ed GC
+# START NON-TRANSLATABLE
+J9NLS_GC_FAILED_TO_REINITIALIZE_PARSING_RESTORE_OPTIONS.explanation=The garbage collector failed to initialize because of an error in the restore options
+J9NLS_GC_FAILED_TO_REINITIALIZE_PARSING_RESTORE_OPTIONS.system_action=The JVM will terminate
+J9NLS_GC_FAILED_TO_REINITIALIZE_PARSING_RESTORE_OPTIONS.user_response=Check that all of the GC options are correctly specified
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_THREAD_VALUE_MUST_BE_ABOVE_WARN=Volba -Xgcthreads bude ignorov\u00e1na. Uveden\u00fd po\u010det podproces\u016f GC mus\u00ed b\u00fdt v\u011bt\u0161\u00ed ne\u017e po\u010det podproces\u016f GC kontroln\u00edho bodu %1$zu
+# START NON-TRANSLATABLE
+J9NLS_GC_THREAD_VALUE_MUST_BE_ABOVE_WARN.explanation=-Xgcthreads must be greater than the specified value
+J9NLS_GC_THREAD_VALUE_MUST_BE_ABOVE_WARN.system_action=The JVM will terminate
+J9NLS_GC_THREAD_VALUE_MUST_BE_ABOVE_WARN.user_response=Refer to the OpenJ9 documentation and adjust -Xgcthreads to specify a GC thread count greater than the checkpoint GC thread count
+J9NLS_GC_THREAD_VALUE_MUST_BE_ABOVE_WARN.sample_input_1=4
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_OPTIONS_HIERARCHICAL_SCAN_ORDERING_NOT_SUPPORTED_WARN=Nepodporovan\u00e1 volba -Xgc:hierarchicalScanOrdering s volbou -Xgcpolicy:%s bude ignorov\u00e1na.
+# START NON-TRANSLATABLE
+J9NLS_GC_OPTIONS_HIERARCHICAL_SCAN_ORDERING_NOT_SUPPORTED_WARN.explanation=-Xgc:hierarchicalScanOrdering is currently only supported with -Xgcpolicy:gencon.
+J9NLS_GC_OPTIONS_HIERARCHICAL_SCAN_ORDERING_NOT_SUPPORTED_WARN.system_action=The JVM ignores the -Xgc:hierarchicalScanOrdering option.
+J9NLS_GC_OPTIONS_HIERARCHICAL_SCAN_ORDERING_NOT_SUPPORTED_WARN.user_response=Refer to the OpenJ9 documentation for -Xgc:hierarchicalScanOrdering.
+
 # END NON-TRANSLATABLE

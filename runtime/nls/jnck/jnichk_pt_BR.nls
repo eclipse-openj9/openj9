@@ -17,7 +17,7 @@
 # [1] https://www.gnu.org/software/classpath/license.html
 # [2] https://openjdk.org/legal/assembly-exception.html
 #
-# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 #
 
 # Externalised messages for the JNICHK module.
@@ -1039,4 +1039,13 @@ J9NLS_JNICHK_HELP_16=\tabortonerror causa uma interrup\u00e7\u00e3o em erros fat
 J9NLS_JNICHK_HELP_15.explanation=NOTAG
 J9NLS_JNICHK_HELP_15.system_action=
 J9NLS_JNICHK_HELP_15.user_response=
+# END NON-TRANSLATABLE
+
+# JNI, -Xcheck:jni:nonfatal and JVM are not translatable
+J9NLS_JNICHK_THREAD_NOT_ATTACHED_TO_VM=Erro de JNI em %s: no momento n\u00e3o h\u00e1 nenhum encadeamento conectado \u00e0 VM
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_THREAD_NOT_ATTACHED_TO_VM.sample_input_1=methodName
+J9NLS_JNICHK_THREAD_NOT_ATTACHED_TO_VM.explanation=There is no Java thread running.
+J9NLS_JNICHK_THREAD_NOT_ATTACHED_TO_VM.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
+J9NLS_JNICHK_THREAD_NOT_ATTACHED_TO_VM.user_response=Ensure there is a Java thread currently running.
 # END NON-TRANSLATABLE
