@@ -62,7 +62,7 @@ initVMThread(JNIEnv *env, J9VMThread **vmthread, omrthread_t osthread)
 	J9VMThread *currentThread = (J9VMThread *)env;
 	J9JavaVM *vm = currentThread->javaVM;
 
-	*vmthread = vm->internalVMFunctions->allocateVMThread(vm, osthread, 0, currentThread->omrVMThread->memorySpace, NULL);
+	*vmthread = vm->internalVMFunctions->allocateVMThread(vm, osthread, 0, currentThread->omrVMThread->memorySpace, NULL, NULL);
 	if (*vmthread == NULL) {
 		return -1;
 	}

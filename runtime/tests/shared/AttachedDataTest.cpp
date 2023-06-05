@@ -1414,7 +1414,7 @@ IDATA createThread(J9JavaVM *vm, omrthread_t *osThread, J9VMThread **vmThread, o
 		goto end;
 	}
 
-	*vmThread = vm->internalVMFunctions->allocateVMThread(vm, *osThread, 0, currentThread->omrVMThread->memorySpace, NULL);
+	*vmThread = vm->internalVMFunctions->allocateVMThread(vm, *osThread, 0, currentThread->omrVMThread->memorySpace, NULL, testName);
 	if (NULL == (*vmThread)) {
 		ERRPRINTF("Failed to allocate VM thread");
 		rc = FAIL;

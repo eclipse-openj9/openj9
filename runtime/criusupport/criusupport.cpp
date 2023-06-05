@@ -288,12 +288,13 @@ static bool
 shouldToggleJavaThread(J9VMThread *currentThread, BOOLEAN toggleDebugThreads)
 {
 	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+
 	bool result = true;
 	if (J9_ARE_ALL_BITS_SET(vm->checkpointState.flags, J9VM_CRIU_IS_JDWP_ENABLED)) {
 		char *threadName = getOMRVMThreadName(currentThread->omrVMThread);
 		releaseOMRVMThreadName(currentThread->omrVMThread);
-		/* all threads started by JDWP begin with "JDWP" in their name */
-		bool isJdwpThread = 0 == strncmp("JDWP", threadName, 4);
+		bool isJdwpThread = vmFuncs->isJdwpDebugThread(currentThread, threadName);
 		result = (toggleDebugThreads) ? isJdwpThread : !isJdwpThread;
 	}
 	return result;
@@ -992,7 +993,7 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 			break;
 		}
 
-		VM_VMHelpers::setVMState(currentThread, J9VMSTATE_CRIU_SUPPORT_RESTORE_PHASE_JAVA_HOOKS);
+		VM_VMHelpers::setVMState(currentThread, J9VMSTATE_CRIU_SUPPORT_RESTORE_PHASE_INTERNAL_HOOKS);
 
 		/* Run internal restore hooks, and cleanup */
 		if (FALSE == vmFuncs->runInternalJVMRestoreHooks(currentThread, &nlsMsgFormat)) {
@@ -1012,7 +1013,7 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 			goto wakeJavaThreads;
 		}
 
-		VM_VMHelpers::setVMState(currentThread, J9VMSTATE_CRIU_SUPPORT_RESTORE_PHASE_INTERNAL_HOOKS);
+		VM_VMHelpers::setVMState(currentThread, J9VMSTATE_CRIU_SUPPORT_RESTORE_PHASE_JAVA_HOOKS);
 
 		if (FALSE == vmFuncs->jvmRestoreHooks(currentThread)) {
 			/* throw the pending exception */

@@ -377,6 +377,18 @@ static const jvmtiParamInfo jvmtiGetCarrierThread_params[] = {
 };
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+/* (jvmtiEnv *jvmti_env) */
+static const jvmtiParamInfo jvmtiVMCheckpoint_params[] = {
+	{ "jni_env", JVMTI_KIND_IN_PTR, JVMTI_TYPE_JNIENV, JNI_FALSE },
+	{ "thread", JVMTI_KIND_IN, JVMTI_TYPE_JTHREAD, JNI_FALSE },
+};
+static const jvmtiParamInfo jvmtiVMRestore_params[] = {
+	{ "jni_env", JVMTI_KIND_IN_PTR, JVMTI_TYPE_JNIENV, JNI_FALSE },
+	{ "thread", JVMTI_KIND_IN, JVMTI_TYPE_JTHREAD, JNI_FALSE },
+};
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+
 /*
  * Error lists for extended functions
  */
@@ -850,6 +862,20 @@ static const J9JVMTIExtensionEventInfo J9JVMTIExtensionEventInfoTable[] = {
 		SIZE_AND_TABLE(jvmtiVirtualThreadUnmount_params),
 	},
 #endif /* JAVA_SPEC_VERSION >= 19 */
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	{
+		J9JVMTI_EVENT_OPENJ9_VM_CHECKPOINT,
+		OPENJ9_EVENT_VM_CHECKPOINT,
+		J9NLS_J9JVMTI_EVENT_OPENJ9_VM_CHECKPOINT,
+		SIZE_AND_TABLE(jvmtiVMCheckpoint_params),
+	},
+	{
+		J9JVMTI_EVENT_OPENJ9_VM_RESTORE,
+		OPENJ9_EVENT_VM_RESTORE,
+		J9NLS_J9JVMTI_EVENT_OPENJ9_VM_RESTORE,
+		SIZE_AND_TABLE(jvmtiVMRestore_params),
+	},
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 };
 
 #define NUM_EXTENSION_EVENTS (sizeof(J9JVMTIExtensionEventInfoTable) / sizeof(J9JVMTIExtensionEventInfoTable[0]))

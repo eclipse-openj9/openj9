@@ -135,6 +135,34 @@ isNonPortableRestoreMode(J9VMThread *currentThread)
 	return J9_ARE_ALL_BITS_SET(currentThread->javaVM->checkpointState.flags, J9VM_CRIU_IS_NON_PORTABLE_RESTORE_MODE);
 }
 
+BOOLEAN
+isJdwpDebugThread(J9VMThread *thread, const char *threadName)
+{
+	BOOLEAN result = FALSE;
+	j9object_t threadObject = thread->threadObject;
+	j9object_t threadGroup = NULL;
+	J9JavaVM *vm = thread->javaVM;
+
+	if (vm->checkpointState.isJdwpEnabled) {
+		if (NULL != threadObject) {
+#if JAVA_SPEC_VERSION >= 19
+			j9object_t threadHolder = J9VMJAVALANGTHREAD_HOLDER(thread, threadObject);
+			if (NULL != threadHolder) {
+				threadGroup = (j9object_t)J9VMJAVALANGTHREADFIELDHOLDER_GROUP(thread, threadHolder);
+			}
+#else /* JAVA_SPEC_VERSION >= 19 */
+			threadGroup = (j9object_t)J9VMJAVALANGTHREAD_GROUP(thread, threadObject);
+#endif /* JAVA_SPEC_VERSION >= 19 */
+		}
+		if ((NULL != threadGroup) && (NULL != threadName)) {
+			result = (threadGroup == *(vm->systemThreadGroupRef))
+					&& J9_ARE_ANY_BITS_SET(thread->privateFlags, J9_PRIVATE_FLAGS_DAEMON_THREAD)
+					&& (0 == strncmp("JDWP", threadName, 4));
+		}
+	}
+	return result;
+}
+
 /**
  * This adds an internal CRIU hook to trace all heap objects of instanceType and its subclasses if specified.
  *

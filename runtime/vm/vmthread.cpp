@@ -91,7 +91,7 @@ static void printCustomSpinOptions(void *element, void *userData);
 #endif /* J9VM_INTERP_CUSTOM_SPIN_OPTIONS */
 
 J9VMThread *
-allocateVMThread(J9JavaVM * vm, omrthread_t osThread, UDATA privateFlags, void * memorySpace, J9Object * threadObject)
+allocateVMThread(J9JavaVM *vm, omrthread_t osThread, UDATA privateFlags, void *memorySpace, J9Object *threadObject, const char *threadName)
 {
 	PORT_ACCESS_FROM_PORT(vm->portLibrary);
 	J9JavaStack *stack = NULL;
@@ -292,7 +292,10 @@ allocateVMThread(J9JavaVM * vm, omrthread_t osThread, UDATA privateFlags, void *
 	}
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 	if (VM_CRIUHelpers::isJVMInSingleThreadMode(vm) && VM_VMHelpers::threadCanRunJavaCode(newThread)) {
-		setHaltFlag(newThread, J9_PUBLIC_FLAGS_HALT_THREAD_FOR_CHECKPOINT);
+		/* If JDWP is enabled, new JDWP debug threads should not be halted. */
+		if (!vm->internalVMFunctions->isJdwpDebugThread(newThread, threadName)) {
+			setHaltFlag(newThread, J9_PUBLIC_FLAGS_HALT_THREAD_FOR_CHECKPOINT);
+		}
 	}
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 	omrthread_monitor_exit(vm->exclusiveAccessMutex);
@@ -1948,7 +1951,7 @@ startJavaThreadInternal(J9VMThread * currentThread, UDATA privateFlags, UDATA os
 
 	/* Create the vmThread */
 
-	newThread = allocateVMThread(vm, osThread, privateFlags, currentThread->omrVMThread->memorySpace, threadObject);
+	newThread = allocateVMThread(vm, osThread, privateFlags, currentThread->omrVMThread->memorySpace, threadObject, threadName);
 	if (newThread == NULL) {
 		PORT_ACCESS_FROM_PORT(vm->portLibrary);
 
