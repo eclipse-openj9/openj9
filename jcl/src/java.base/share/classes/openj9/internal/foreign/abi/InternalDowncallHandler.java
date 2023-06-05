@@ -855,6 +855,17 @@ public class InternalDowncallHandler {
 	}
 	/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
 
+	/*[IF JAVA_SPEC_VERSION >= 20]*/
+	/* Return the valid downcall address by doing the validity check on the address's scope
+	 * in OpenJ9 since the related code and APIs were adjusted in JDK20 in which case the
+	 * scope check on the downcall in address() in OpenJDK was entirely removed.
+	 */
+	private long getValidDowncallAddr(MemorySegment downcallAddr) {
+		validateMemScope(downcallAddr.scope());
+		return downcallAddr.address();
+	}
+	/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
+
 	/* The method (bound by the method handle to the native code) intends to invoke the C function via the inlined code. */
 	/*[IF JAVA_SPEC_VERSION >= 17]*/
 	/*[IF JAVA_SPEC_VERSION >= 20]*/
@@ -878,14 +889,6 @@ public class InternalDowncallHandler {
 			throw new IllegalArgumentException("A non-null memory address is expected for downcall"); //$NON-NLS-1$
 		}
 		/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
-
-		/*[IF JAVA_SPEC_VERSION >= 20]*/
-		/* The scope of the downcall function address needs to be validated in OpenJ9
-		 * since the related code and APIs were adjusted in JDK20 in which case the
-		 * validity check on the address's scope in OpenJDK was entirely removed.
-		 */
-		validateMemScope(downcallAddr.scope());
-		/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 
 		long retMemAddr = 0;
 		MemorySegment retStruSegmt = null;
@@ -935,7 +938,7 @@ public class InternalDowncallHandler {
 				/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 
 				/*[IF JAVA_SPEC_VERSION >= 20]*/
-				returnVal = invokeNative(stateSegmt.address(), retMemAddr, downcallAddr.address(), cifNativeThunkAddr, args);
+				returnVal = invokeNative(stateSegmt.address(), retMemAddr, getValidDowncallAddr(downcallAddr), cifNativeThunkAddr, args);
 				/*[ELSE] JAVA_SPEC_VERSION >= 20 */
 				returnVal = invokeNative(retMemAddr, downcallAddr.address().toRawLongValue(), cifNativeThunkAddr, args);
 				/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
@@ -949,7 +952,7 @@ public class InternalDowncallHandler {
 		else
 		{
 			/*[IF JAVA_SPEC_VERSION >= 20]*/
-			returnVal = invokeNative(stateSegmt.address(), retMemAddr, downcallAddr.address(), cifNativeThunkAddr, args);
+			returnVal = invokeNative(stateSegmt.address(), retMemAddr, getValidDowncallAddr(downcallAddr), cifNativeThunkAddr, args);
 			/*[ELSEIF JAVA_SPEC_VERSION >= 17]*/
 			returnVal = invokeNative(retMemAddr, downcallAddr.address().toRawLongValue(), cifNativeThunkAddr, args);
 			/*[ELSE] JAVA_SPEC_VERSION >= 17 */
