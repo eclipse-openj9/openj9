@@ -23,6 +23,7 @@
 #include "compile/SymbolReferenceTable.hpp"
 #include "control/Recompilation.hpp"
 #include "il/Block.hpp"
+#include "il/SymbolReference.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
 #include "optimizer/CatchBlockProfiler.hpp"
@@ -65,6 +66,8 @@ int32_t TR::CatchBlockProfiler::perform()
                {
                uint32_t *catchBlockCounterAddress = recompilation->getMethodInfo()->getCatchBlockCounterAddress();
                _catchBlockCounterSymRef = comp()->getSymRefTab()->createKnownStaticDataSymbolRef(catchBlockCounterAddress, TR::Int32);
+               _catchBlockCounterSymRef->getSymbol()->setIsCatchBlockCounter();
+               _catchBlockCounterSymRef->getSymbol()->setNotDataAddress();
                }
             TR::TreeTop *profilingTree = TR::TreeTop::createIncTree(comp(), b->getEntry()->getNode(), _catchBlockCounterSymRef, 1, b->getEntry());
             profilingTree->getNode()->setIsProfilingCode();
