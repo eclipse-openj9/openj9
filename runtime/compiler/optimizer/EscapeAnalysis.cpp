@@ -8323,6 +8323,29 @@ static void printSymRefList(TR_ScratchList<TR::SymbolReference> *list, TR::Compi
 void Candidate::print()
    {
    traceMsg(comp(), "   Node = %p, contiguous = %d, local = %d\n", _node, isContiguousAllocation(), isLocalAllocation());
+   if (_flags.getValue() != 0)
+      {
+
+#define PRINT_FLAG_IF(comp, cond, text) do { if (cond) traceMsg(comp, text " "); } while (false)
+#define PRINT_FLAG(comp, query, text) PRINT_FLAG_IF(comp, query(), text)
+
+      traceMsg(comp(), "   Flags = {");
+      PRINT_FLAG(comp(), isLocalAllocation, "LocalAllocation");
+      PRINT_FLAG(comp(), mustBeContiguousAllocation, "MustBeContiguous");
+      PRINT_FLAG(comp(), isExplicitlyInitialized, "ExplicitlyInitialized");
+      PRINT_FLAG(comp(), objectIsReferenced, "ObjectIsReferenced");
+      PRINT_FLAG(comp(), fillsInStackTrace, "FillsInStackTrace");
+      PRINT_FLAG(comp(), usesStackTrace, "UsesStackTrace");
+      PRINT_FLAG(comp(), isInsideALoop, "InsideALoop");
+      PRINT_FLAG(comp(), isInAColdBlock, "InAColdBlock");
+      PRINT_FLAG(comp(), isProfileOnly, "ProfileOnly");
+      PRINT_FLAG(comp(), callsStringCopyConstructor, "CallsStringCopy");
+      PRINT_FLAG(comp(), forceLocalAllocation, "ForceLocalAllocation");
+      traceMsg(comp(), "}\n");
+
+#undef PRINT_FLAG_IF
+#undef PRINT_FLAG
+      }
    traceMsg(comp(), "   Value numbers = {");
    for (uint32_t j = 0; j <_valueNumbers->size(); j++)
       traceMsg(comp(), " %d", _valueNumbers->element(j));
