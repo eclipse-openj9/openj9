@@ -8762,7 +8762,6 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                options->setOption(TR_DisableOnDemandLiteralPoolRegister);
 
                options->setOption(TR_DisableIPA);
-               options->setOption(TR_DisableEDO);
                options->setDisabled(OMR::invariantArgumentPreexistence, true);
                options->setOption(TR_DisableHierarchyInlining);
                options->setOption(TR_DisableKnownObjectTable);
