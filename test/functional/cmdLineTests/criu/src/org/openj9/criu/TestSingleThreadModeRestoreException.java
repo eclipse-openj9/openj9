@@ -22,58 +22,138 @@
 package org.openj9.criu;
 
 import org.eclipse.openj9.criu.CRIUSupport;
-import org.eclipse.openj9.criu.JVMCheckpointException;
+import org.eclipse.openj9.criu.JVMRestoreException;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class TestSingleThreadModeRestoreException {
 
-	private static final Object lock = new Object();
+	private static final Lock jucLock = new ReentrantLock();
+	private static final Object synLock = new Object();
 
 	public static void main(String[] args) {
-		new TestSingleThreadModeRestoreException().testSingleThreadModeRestoreException();
+		new TestSingleThreadModeRestoreException().testAll();
 	}
 
-	Thread doCheckpoint() {
+	void testAll() {
+		testSingleThreadModeRestoreExceptionSynLock();
+		testSingleThreadModeRestoreExceptionJUCLock();
+	}
+
+	Thread doCheckpointJUCLock(CRIUSupport criu) {
 		Thread t = new Thread(new Runnable() {
 			public void run() {
-				Path imagePath = Paths.get("cpData");
-				CRIUTestUtils.deleteCheckpointDirectory(imagePath);
-				CRIUTestUtils.deleteCheckpointDirectory(imagePath);
-				CRIUTestUtils.createCheckpointDirectory(imagePath);
-				CRIUSupport criu = new CRIUSupport(imagePath);
+				boolean result = false;
 				criu.registerPostRestoreHook(new Runnable() {
 					public void run() {
-						CRIUTestUtils.showThreadCurrentTime("PreCheckpointHook() before synchronized on " + lock);
-						synchronized (lock) {
-							CRIUTestUtils.showThreadCurrentTime("PreCheckpointHook() within synchronized on " + lock);
-						}
-						CRIUTestUtils.showThreadCurrentTime("PreCheckpointHook() after synchronized on " + lock);
+						CRIUTestUtils.showThreadCurrentTime("PreCheckpointHook() before ReentrantLock");
+						jucLock.lock();
+						CRIUTestUtils.showThreadCurrentTime("PreCheckpointHook() within ReentrantLock");
+						jucLock.unlock();
+						CRIUTestUtils.showThreadCurrentTime("PreCheckpointHook() after ReentrantLock");
 					}
 				});
 
-				System.out.println("Pre-checkpoint");
-				CRIUTestUtils.checkPointJVM(criu, imagePath, false);
+				try {
+					System.out.println("Pre-checkpoint JUC LOCK");
+					CRIUTestUtils.checkPointJVMNoSetup(criu, CRIUTestUtils.imagePath, false);
+				} catch (JVMRestoreException jvmre) {
+					result = true;
+				}
+				if (result) {
+					System.out.println("testSingleThreadModeRestoreExceptionJUCLock: PASSED.");
+				} else {
+					System.out.println("testSingleThreadModeRestoreExceptionJUCLock: FAILED.");
+				}
 			}
 		});
 		return t;
 	}
 
-	void testSingleThreadModeRestoreException() {
-		CRIUTestUtils.showThreadCurrentTime("testSingleThreadModeRestoreException() before synchronized on " + lock);
-		synchronized (lock) {
+	void testSingleThreadModeRestoreExceptionJUCLock() {
+		CRIUTestUtils
+				.showThreadCurrentTime("testSingleThreadModeRestoreExceptionJUCLock() before ReentrantLock.lock()");
+		jucLock.lock();
+		CRIUSupport criu = CRIUTestUtils.prepareCheckPointJVM(CRIUTestUtils.imagePath);
+		if (criu == null) {
+			// "CRIU is not enabled" is to appear and cause the test failure.
+			return;
+		}
+
+		try {
+			// ensure the lock already taken before performing a checkpoint
+			CRIUTestUtils.showThreadCurrentTime(
+					"testSingleThreadModeRestoreExceptionJUCLock() before doCheckpointJUCLock()");
+			Thread tpc = doCheckpointJUCLock(criu);
+			tpc.start();
+			// set timeout 10s
+			tpc.join(10000);
+			CRIUTestUtils.showThreadCurrentTime("testSingleThreadModeRestoreExceptionJUCLock() after doCheckpointJUCLock()");
+		} catch (InterruptedException e) {
+		}
+		jucLock.unlock();
+		CRIUTestUtils.showThreadCurrentTime(
+				"testSingleThreadModeRestoreExceptionJUCLock() after after ReentrantLock.unlock()");
+
+	}
+
+	Thread doCheckpointSynLock(CRIUSupport criu) {
+		Thread t = new Thread(new Runnable() {
+			public void run() {
+				boolean result = false;
+				criu.registerPostRestoreHook(new Runnable() {
+					public void run() {
+						CRIUTestUtils.showThreadCurrentTime("PreCheckpointHook() before synchronized on " + synLock);
+						synchronized (synLock) {
+							CRIUTestUtils.showThreadCurrentTime("PreCheckpointHook() within synchronized on " + synLock);
+						}
+						CRIUTestUtils.showThreadCurrentTime("PreCheckpointHook() after synchronized on " + synLock);
+					}
+				});
+
+				try {
+					System.out.println("Pre-checkpoint synchronization");
+					CRIUTestUtils.checkPointJVMNoSetup(criu, CRIUTestUtils.imagePath, false);
+				} catch (JVMRestoreException jvmre) {
+					result = true;
+				}
+				if (result) {
+					System.out.println("testSingleThreadModeRestoreExceptionSynLock: PASSED.");
+				} else {
+					System.out.println("testSingleThreadModeRestoreExceptionSynLock: FAILED.");
+				}
+			}
+		});
+		return t;
+	}
+
+	void testSingleThreadModeRestoreExceptionSynLock() {
+		CRIUTestUtils.showThreadCurrentTime(
+				"testSingleThreadModeRestoreExceptionSynLock() before synchronized on " + synLock);
+		synchronized (synLock) {
+			CRIUSupport criu = CRIUTestUtils.prepareCheckPointJVM(CRIUTestUtils.imagePath);
+			if (criu == null) {
+				// "CRIU is not enabled" is to appear and cause the test failure.
+				return;
+			}
+
 			try {
 				// ensure the lock already taken before performing a checkpoint
-				CRIUTestUtils.showThreadCurrentTime("testSingleThreadModeRestoreException() before doCheckpoint()");
-				Thread tpc = doCheckpoint();
+				CRIUTestUtils.showThreadCurrentTime(
+						"testSingleThreadModeRestoreExceptionSynLock() before doCheckpointSynLock()");
+				Thread tpc = doCheckpointSynLock(criu);
 				tpc.start();
 				// set timeout 10s
 				tpc.join(10000);
-				CRIUTestUtils.showThreadCurrentTime("testSingleThreadModeRestoreException() after doCheckpoint()");
+				CRIUTestUtils.showThreadCurrentTime(
+						"testSingleThreadModeRestoreExceptionSynLock() after doCheckpointSynLock()");
 			} catch (InterruptedException e) {
 			}
 		}
-		CRIUTestUtils.showThreadCurrentTime("testSingleThreadModeRestoreException() after synchronized on " + lock);
+		CRIUTestUtils.showThreadCurrentTime(
+				"testSingleThreadModeRestoreExceptionSynLock() after synchronized on " + synLock);
 	}
 }
