@@ -3576,8 +3576,10 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 		IDATA dynamicAgentLoading = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXENABLEDYNAMICAGENTLOADING, NULL);
 		if (noDynamicAgentLoading > dynamicAgentLoading) {
 			vm->extendedRuntimeFlags &= ~(UDATA)(J9_EXTENDED_RUNTIME_OSR_SAFE_POINT | (UDATA) J9_EXTENDED_RUNTIME_ENABLE_HCR);
+			vm->agentEnabled = FALSE;
 		} else {
 			vm->extendedRuntimeFlags |= (J9_EXTENDED_RUNTIME_OSR_SAFE_POINT | (UDATA)J9_EXTENDED_RUNTIME_ENABLE_HCR);
+			vm->agentEnabled = TRUE;
 		}
 	}
 
