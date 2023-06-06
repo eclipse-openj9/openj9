@@ -46,6 +46,8 @@ public:
 
    TR::Recompilation *allocateRecompilationInfo();
 
+   TR::SymbolReference *getNanoTimeTemp();
+
    void beginInstructionSelection();
 
    void endInstructionSelection();
@@ -101,6 +103,9 @@ public:
 
    // See J9::CodeGenerator::guaranteesResolvedVirtualDispatchForSVM
    bool guaranteesResolvedVirtualDispatchForSVM() { return true; }
+
+private:
+   TR::SymbolReference *_nanoTimeTemp;
    };
 
 }
