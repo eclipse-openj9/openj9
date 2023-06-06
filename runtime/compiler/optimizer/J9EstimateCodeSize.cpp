@@ -47,6 +47,8 @@ const float TR_J9EstimateCodeSize::STRING_COMPRESSION_ADJUSTMENT_FACTOR = 0.75f;
 // There was no analysis done to determine this factor. It was chosen by intuition.
 const float TR_J9EstimateCodeSize::METHOD_INVOKE_ADJUSTMENT_FACTOR = 0.20f;
 
+// Empirically determined value
+const float TR_J9EstimateCodeSize::CONST_ARG_IN_CALLEE_ADJUSTMENT_FACTOR = 0.75f;
 
 /*
 DEFINEs are ugly in general, but putting
@@ -409,6 +411,55 @@ TR_J9EstimateCodeSize::adjustEstimateForMethodInvoke(TR_ResolvedMethod* method, 
       }
 
    return false;
+   }
+
+bool
+TR_J9EstimateCodeSize::adjustEstimateForConstArgs(TR_CallTarget * target, int32_t& value, float factor)
+   {
+   static const char * disableConstArgWeightReduction = feGetEnv("TR_disableConstArgWeightReduction");
+   if (disableConstArgWeightReduction || !target->_calleeSymbol)
+      return false;
+
+   int32_t originalWeight = value;
+   TR_LinkHead<TR_ParameterMapping> argMap;
+   if (((TR_J9InlinerPolicy *)_inliner->getPolicy())->validateArguments(target,argMap))
+      {
+      for (TR_ParameterMapping* parm = argMap.getFirst(); parm; parm = parm->getNext())
+         {
+         int32_t interimWeight = value;
+         TR::Node * parmNode = parm->_parameterNode;
+         if (parmNode->getSymbolReference())
+            {
+            if (parmNode->getSymbolReference()->getSymbol()->isStatic()
+               && parmNode->getSymbolReference()->getSymbol()->castToStaticSymbol()->isConstString())
+               {
+               value *= factor;
+               heuristicTrace(tracer(),"Setting size from %d to %d because arg is constant string.", interimWeight, value);
+               }
+            else if (parmNode->getOpCodeValue() == TR::aload
+                  && parmNode->getSymbolReference()->getSymbol()->isConstObjectRef())
+               {
+               value *= factor;
+               heuristicTrace(tracer(),"Setting size from %d to %d because arg is const object ref.", interimWeight, value);
+               }
+            else if (parmNode->getOpCodeValue() == TR::aloadi
+                  && parmNode->getSymbolReference() == comp()->getSymRefTab()->findJavaLangClassFromClassSymbolRef())
+               {
+               value *= factor;
+               heuristicTrace(tracer(),"Setting size from %d to %d because arg is const class ref.", interimWeight, value);
+               }
+            }
+         if (parmNode->getOpCode().isLoadConst())
+            {
+            value *= factor;
+            heuristicTrace(tracer(),"Setting size from %d to %d because arg is load const.", interimWeight, value);
+            }
+         }
+      }
+      if (value < originalWeight)
+         return true;
+      else
+         return false;
    }
 
 bool
@@ -819,6 +870,12 @@ TR_J9EstimateCodeSize::processBytecodeAndGenerateCFG(TR_CallTarget *calltarget, 
    if (adjustEstimateForMethodInvoke(calltarget->_calleeMethod, size, METHOD_INVOKE_ADJUSTMENT_FACTOR))
       {
       heuristicTrace(tracer(), "*** Depth %d: Adjusting size for %s because of java/lang/reflect/Method.invoke from %d to %d", _recursionDepth, callerName, sizeBeforeAdjustment, size);
+      }
+
+   sizeBeforeAdjustment = size;
+   if (adjustEstimateForConstArgs(calltarget, size, CONST_ARG_IN_CALLEE_ADJUSTMENT_FACTOR))
+      {
+      heuristicTrace(tracer(), "*** Depth %d: Adjusting size for %s because of constants in args from %d to %d", _recursionDepth, callerName, sizeBeforeAdjustment, size);
       }
 
    calltarget->_fullSize = size;

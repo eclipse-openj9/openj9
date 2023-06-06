@@ -57,6 +57,8 @@ class TR_J9EstimateCodeSize : public TR_EstimateCodeSize
     */
    static const float METHOD_INVOKE_ADJUSTMENT_FACTOR;
 
+   static const float CONST_ARG_IN_CALLEE_ADJUSTMENT_FACTOR;
+
    /** \brief
     *     Adjusts the estimated \p value by a \p factor for string compression related methods.
     *  \param method
@@ -92,6 +94,21 @@ class TR_J9EstimateCodeSize : public TR_EstimateCodeSize
     *     \endcode
     */
    static bool adjustEstimateForMethodInvoke(TR_ResolvedMethod* method, int32_t& value, float factor);
+
+   /**
+    * \brief
+    *    Adjusts the estimated \p value by \p factor for methods with args that are constant strings,
+    *    const class/object refs or load consts
+    * \param target
+    *    The call target to examine
+    * \param value
+    *    The weight that may be modified if const args exist
+    * \param factor
+    *    The factor multiplier to adjust the \p value
+    * \return
+    *    true if the \p value was lowered using the adjustment factor, otherwise false
+    */
+   bool adjustEstimateForConstArgs(TR_CallTarget * target, int32_t& value, float factor);
 
    static TR::Block *getBlock(TR::Compilation *comp, TR::Block * * blocks, TR_ResolvedMethod *feMethod, int32_t i, TR::CFG & cfg);
 
