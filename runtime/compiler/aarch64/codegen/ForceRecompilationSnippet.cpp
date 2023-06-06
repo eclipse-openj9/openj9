@@ -69,8 +69,15 @@ TR::ARM64ForceRecompilationSnippet::emitSnippetBody()
 
    // bl distance
    *(uint32_t *)cursor = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::bl) | ((distance >> 2) & 0x03ffffff); // imm26
-   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *)induceRecompilationSymRef, TR_HelperAddress, cg()),
-                               __FILE__, __LINE__, getNode());
+   cg()->addExternalRelocation(
+      TR::ExternalRelocation::create(
+         cursor,
+         (uint8_t *)induceRecompilationSymRef,
+         TR_HelperAddress,
+         cg()),
+      __FILE__,
+      __LINE__,
+      getNode());
    cursor += ARM64_INSTRUCTION_LENGTH;
 
    if (_restartLabel != NULL)

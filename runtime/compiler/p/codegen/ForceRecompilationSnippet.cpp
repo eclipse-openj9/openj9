@@ -170,10 +170,15 @@ uint8_t *TR::PPCForceRecompilationSnippet::emitSnippetBody()
    // b distance
    *(int32_t *)buffer = 0x48000000 | ((helperAddress - (intptr_t)buffer) & 0x03ffffff);
 
-   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(buffer,(uint8_t *)induceRecompilationSymRef,TR_HelperAddress, cg()),
-                          __FILE__,
-                          __LINE__,
-                          getNode());
+   cg()->addExternalRelocation(
+      TR::ExternalRelocation::create(
+         buffer,
+         (uint8_t *)induceRecompilationSymRef,
+         TR_HelperAddress,
+         cg()),
+      __FILE__,
+      __LINE__,
+      getNode());
 
    buffer += PPC_INSTRUCTION_LENGTH;
 
