@@ -2105,3 +2105,43 @@ J9NLS_VM_CRIU_SINGLETHREADMODE_JVMCRIUEXCEPTION.explanation=Blocking operation i
 J9NLS_VM_CRIU_SINGLETHREADMODE_JVMCRIUEXCEPTION.system_action=The JVM will throw a JVMCRIUException.
 J9NLS_VM_CRIU_SINGLETHREADMODE_JVMCRIUEXCEPTION.user_response=View CRIU documentation to determine how to resolve the exception.
 # END NON-TRANSLATABLE
+
+J9NLS_VM_CRIU_RESTORE_INITIALIZE_TRACE_FAILED=La JVM no ha podido inicializar Xtrace al restaurar la JVM
+# START NON-TRANSLATABLE
+J9NLS_VM_CRIU_RESTORE_INITIALIZE_TRACE_FAILED.sample_input_1=1
+J9NLS_VM_CRIU_RESTORE_INITIALIZE_TRACE_FAILED.explanation=CRIUSupport::checkpointJVM failed.
+J9NLS_VM_CRIU_RESTORE_INITIALIZE_TRACE_FAILED.system_action=The JVM will throw a JVMRestoreException.
+J9NLS_VM_CRIU_RESTORE_INITIALIZE_TRACE_FAILED.user_response=Check documentation for CRIUSupport restore options.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_SEEDOFFSET=La JVM no ha podido volver a iniciar j.u.Random.seed.value debido a un desplazamiento de semilla no v\u00e1lido
+# START NON-TRANSLATABLE
+J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_SEEDOFFSET.sample_input_1=1
+J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_SEEDOFFSET.explanation=CRIUSupport::checkpointJVM failed.
+J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_SEEDOFFSET.system_action=The JVM will throw a JVMRestoreException.
+J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_SEEDOFFSET.user_response=View CRIU documentation to determine how to resolve the exception.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_CRIU_RESTORE_RESEED_ATOMICLONG_CNF=La JVM no ha podido volver a iniciar j.u.Random.seed.value debido a que no se ha encontrado j.u.c.a.AtomicLong
+# START NON-TRANSLATABLE
+J9NLS_VM_CRIU_RESTORE_RESEED_ATOMICLONG_CNF.sample_input_1=1
+J9NLS_VM_CRIU_RESTORE_RESEED_ATOMICLONG_CNF.explanation=CRIUSupport::checkpointJVM failed.
+J9NLS_VM_CRIU_RESTORE_RESEED_ATOMICLONG_CNF.system_action=The JVM will throw a JVMRestoreException.
+J9NLS_VM_CRIU_RESTORE_RESEED_ATOMICLONG_CNF.user_response=View CRIU documentation to determine how to resolve the exception.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_VALUEOFFSET=La JVM no ha podido volver a iniciar j.u.Random.seed.value debido a un desplazamiento de valor no v\u00e1lido
+# START NON-TRANSLATABLE
+J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_VALUEOFFSET.sample_input_1=1
+J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_VALUEOFFSET.explanation=CRIUSupport::checkpointJVM failed.
+J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_VALUEOFFSET.system_action=The JVM will throw a JVMRestoreException.
+J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_VALUEOFFSET.user_response=View CRIU documentation to determine how to resolve the exception.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_CRIU_RESTORE_INITIALIZE_DUMP_FAILED=La JVM no ha podido inicializar Xdump al restaurar la JVM
+# START NON-TRANSLATABLE
+J9NLS_VM_CRIU_RESTORE_INITIALIZE_DUMP_FAILED.sample_input_1=1
+J9NLS_VM_CRIU_RESTORE_INITIALIZE_DUMP_FAILED.explanation=CRIUSupport::checkpointJVM failed.
+J9NLS_VM_CRIU_RESTORE_INITIALIZE_DUMP_FAILED.system_action=The JVM will throw a JVMRestoreException.
+J9NLS_VM_CRIU_RESTORE_INITIALIZE_DUMP_FAILED.user_response=Check documentation for CRIUSupport restore options.
+# END NON-TRANSLATABLE

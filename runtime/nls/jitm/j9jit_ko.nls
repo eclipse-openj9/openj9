@@ -384,3 +384,49 @@ J9NLS_RELOCATABLE_CODE_FSD_MISMATCH.system_action=The compiler will not generate
 J9NLS_RELOCATABLE_CODE_FSD_MISMATCH.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
 J9NLS_RELOCATABLE_CODE_FSD_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
 # END NON-TRANSLATABLE
+
+J9NLS_JIT_CHECKPOINT_RESTORE_JIT_COMPILATION_DISABLED=JIT \ucef4\ud30c\uc77c\uc774 \uc0ac\ud6c4 \ubcf5\uc6d0\uc744 \ube44\ud65c\uc131\ud654\ud588\uc2b5\ub2c8\ub2e4.
+# START NON-TRANSLATABLE
+J9NLS_JIT_CHECKPOINT_RESTORE_JIT_COMPILATION_DISABLED.explanation=The JVM is running in a mode post-restore that prevents further compilation.
+J9NLS_JIT_CHECKPOINT_RESTORE_JIT_COMPILATION_DISABLED.system_action=The compiler will not generate JIT code.
+J9NLS_JIT_CHECKPOINT_RESTORE_JIT_COMPILATION_DISABLED.user_response=Remove any (post-restore) option that would have resulted in this behaviour.
+# END NON-TRANSLATABLE
+
+J9NLS_JIT_CHECKPOINT_RESTORE_AOT_DISABLED=AOT \ub85c\ub4dc \ubc0f \ucef4\ud30c\uc77c\uc774 \ubcf5\uc6d0 \ud6c4 \ube44\ud65c\uc131\ud654\ub418\uc5c8\uc2b5\ub2c8\ub2e4.
+# START NON-TRANSLATABLE
+J9NLS_JIT_CHECKPOINT_RESTORE_AOT_DISABLED.explanation=The JVM is running in a mode post-restore that prevents further AOT load and compilation.
+J9NLS_JIT_CHECKPOINT_RESTORE_AOT_DISABLED.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_JIT_CHECKPOINT_RESTORE_AOT_DISABLED.user_response=Remove any (post-restore) option that would have resulted in this behaviour.
+# END NON-TRANSLATABLE
+
+J9NLS_JIT_CHECKPOINT_RESTORE_CODE_INVALIDATED=\ucf54\ub4dc \uce90\uc2dc\uc758 \ucef4\ud30c\uc77c\ub41c \ucf54\ub4dc \uc77c\ubd80 \ub610\ub294 \uc804\uccb4\uac00 \uc0ac\ud6c4 \ubcf5\uc6d0\uc744 \ubb34\ud6a8\ud654\ud588\uc2b5\ub2c8\ub2e4.
+# START NON-TRANSLATABLE
+J9NLS_JIT_CHECKPOINT_RESTORE_CODE_INVALIDATED.explanation=The JVM is running in a mode that results in some or all existing compiled being invalid.
+J9NLS_JIT_CHECKPOINT_RESTORE_CODE_INVALIDATED.system_action=The compiler will invalidate code as applicable.
+J9NLS_JIT_CHECKPOINT_RESTORE_CODE_INVALIDATED.user_response=Remove any (post-restore) option that would have resulted in this behaviour.
+# END NON-TRANSLATABLE
+
+J9NLS_RELOCATABLE_CODE_ARRAY_HEADER_SHAPE_MISMATCH=\ubc30\uc5f4 \ud5e4\ub354 \ud615\ud0dc \uae30\ub2a5\uc774 \uc77c\uce58\ud558\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4. \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc\uc758 AOT \ucf54\ub4dc\ub97c \ubb34\uc2dc\ud569\ub2c8\ub2e4.
+# START NON-TRANSLATABLE
+J9NLS_RELOCATABLE_CODE_ARRAY_HEADER_SHAPE_MISMATCH.explanation=The JVM is not running with the same header shape as the one that generated the code in the SCC.
+J9NLS_RELOCATABLE_CODE_ARRAY_HEADER_SHAPE_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_ARRAY_HEADER_SHAPE_MISMATCH.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_ARRAY_HEADER_SHAPE_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+# END NON-TRANSLATABLE
+
+J9NLS_RELOCATABLE_CODE_CH_TABLE_MISMATCH=CH \ud14c\uc774\ube14\uc774 \uc77c\uce58\ud558\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4. \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc\uc758 AOT \ucf54\ub4dc\ub97c \ubb34\uc2dc\ud569\ub2c8\ub2e4.
+# START NON-TRANSLATABLE
+J9NLS_RELOCATABLE_CODE_CH_TABLE_MISMATCH.explanation=The JVM is not running in the same CH Table configuration as the one that generated the code in the SCC.
+J9NLS_RELOCATABLE_CODE_CH_TABLE_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_CH_TABLE_MISMATCH.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_CH_TABLE_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+# END NON-TRANSLATABLE
+
+J9NLS_JIT_OPTIONS_PERCENT_OUT_OF_RANGE='%1$s%2$f' \uac12\uc740 1.0 \u007e 100.0 \uc0ac\uc774\uc5ec\uc57c \ud569\ub2c8\ub2e4. \ub300\uc2e0 \uae30\ubcf8 \ubc31\ubd84\uc728 '%3$d'\uc744(\ub97c) \uc0ac\uc6a9\ud569\ub2c8\ub2e4.
+# START NON-TRANSLATABLE
+J9NLS_JIT_OPTIONS_PERCENT_OUT_OF_RANGE.explanation=The specified option is not within the permitted range.
+J9NLS_JIT_OPTIONS_PERCENT_OUT_OF_RANGE.system_action=The default percentage value will be used instead.
+J9NLS_JIT_OPTIONS_PERCENT_OUT_OF_RANGE.user_response=Correct the option.
+J9NLS_JIT_OPTIONS_PERCENT_OUT_OF_RANGE.sample_input_1=-XX:codecachetotalMaxRAMPercentage=
+J9NLS_JIT_OPTIONS_PERCENT_OUT_OF_RANGE.sample_input_2=25
+# END NON-TRANSLATABLE
