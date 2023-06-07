@@ -558,11 +558,7 @@ TR_J9ByteCodeIlGenerator::genILFromByteCodes()
 
       if (currNode->getOpCodeValue() == TR::checkcast
           && currNode->getSecondChild()->getOpCodeValue() == TR::loadaddr
-          && currNode->getSecondChild()->getSymbolReference()->isUnresolved()
-          && // check whether the checkcast class is primitive valuetype. Expansion is only needed for checkcast to reference type.
-            (!TR::Compiler->om.areValueTypesEnabled()
-            || !TR::Compiler->cls.isClassRefPrimitiveValueType(comp(), method()->classOfMethod(),
-                                        currNode->getSecondChild()->getSymbolReference()->getCPIndex())))
+          && currNode->getSecondChild()->getSymbolReference()->isUnresolved())
           {
           unresolvedCheckcastTopsNeedingNullGuard.add(currTree);
           }

@@ -2506,8 +2506,11 @@ public class ValueTypeTests {
 	
 	/*
 	 * Ensure that casting null to a value type class will throw a null pointer exception
+	 * This test is disabled since the latest spec from
+	 * https://cr.openjdk.org/~dlsmith/jep401/jep401-20230519/specs/types-cleanup-jvms.html
+	 * no longer requires null check on the objectref for null restricted value type class
 	 */
-	@Test(priority=1, expectedExceptions=NullPointerException.class)
+	@Test(enabled=false, priority=1, expectedExceptions=NullPointerException.class)
 	static public void testCheckCastValueTypeOnNull() throws Throwable {
 		String fields[] = {"longField:J"};
 		Class valueClass = ValueTypeGenerator.generateValueClass("TestCheckCastValueTypeOnNull", fields);
