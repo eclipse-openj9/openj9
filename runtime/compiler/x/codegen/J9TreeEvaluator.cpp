@@ -10041,52 +10041,6 @@ bool J9::X86::TreeEvaluator::VMinlineCallEvaluator(
             }
             break;
 
-         case TR::java_util_concurrent_atomic_Fences_reachabilityFence:
-            {
-            cg->decReferenceCount(node->getChild(0));
-            break;
-            }
-
-         case TR::java_util_concurrent_atomic_Fences_orderAccesses:
-            {
-            if (comp->target().cpu.supportsMFence())
-               {
-               TR::InstOpCode fenceOp;
-               fenceOp.setOpCodeValue(TR::InstOpCode::MFENCE);
-               generateInstruction(fenceOp.getOpCodeValue(), node, cg);
-               }
-
-            cg->decReferenceCount(node->getChild(0));
-            break;
-            }
-
-         case TR::java_util_concurrent_atomic_Fences_orderReads:
-            {
-            if (comp->target().cpu.requiresLFence() &&
-                comp->target().cpu.supportsLFence())
-               {
-               TR::InstOpCode fenceOp;
-               fenceOp.setOpCodeValue(TR::InstOpCode::LFENCE);
-               generateInstruction(fenceOp.getOpCodeValue(), node, cg);
-               }
-
-            cg->decReferenceCount(node->getChild(0));
-            break;
-            }
-
-         case TR::java_util_concurrent_atomic_Fences_orderWrites:
-            {
-            if (comp->target().cpu.supportsSFence())
-               {
-               TR::InstOpCode fenceOp;
-               fenceOp.setOpCodeValue(TR::InstOpCode::SFENCE);
-               generateInstruction(fenceOp.getOpCodeValue(), node, cg);
-               }
-
-            cg->decReferenceCount(node->getChild(0));
-            break;
-            }
-
         case TR::java_lang_Object_clone:
            {
            return (objectCloneEvaluator(node, cg) != NULL);
@@ -11704,10 +11658,6 @@ J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::CodeGenerator *c
       case TR::java_lang_Math_sqrt:
       case TR::java_lang_StrictMath_sqrt:
       case TR::java_lang_System_nanoTime:
-      case TR::java_util_concurrent_atomic_Fences_orderAccesses:
-      case TR::java_util_concurrent_atomic_Fences_orderReads:
-      case TR::java_util_concurrent_atomic_Fences_orderWrites:
-      case TR::java_util_concurrent_atomic_Fences_reachabilityFence:
       case TR::sun_nio_ch_NativeThread_current:
          if (TR::TreeEvaluator::VMinlineCallEvaluator(node, false, cg))
             {
