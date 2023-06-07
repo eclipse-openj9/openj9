@@ -1040,3 +1040,12 @@ J9NLS_JNICHK_HELP_15.explanation=NOTAG
 J9NLS_JNICHK_HELP_15.system_action=
 J9NLS_JNICHK_HELP_15.user_response=
 # END NON-TRANSLATABLE
+
+# JNI, -Xcheck:jni:nonfatal and JVM are not translatable
+J9NLS_JNICHK_THREAD_NOT_ATTACHED_TO_VM=%s\uc758 JNI \uc624\ub958: \ud604\uc7ac VM\uc5d0 \uc5f0\uacb0\ub41c \uc2a4\ub808\ub4dc\uac00 \uc5c6\uc2b5\ub2c8\ub2e4.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_THREAD_NOT_ATTACHED_TO_VM.sample_input_1=methodName
+J9NLS_JNICHK_THREAD_NOT_ATTACHED_TO_VM.explanation=There is no Java thread running.
+J9NLS_JNICHK_THREAD_NOT_ATTACHED_TO_VM.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
+J9NLS_JNICHK_THREAD_NOT_ATTACHED_TO_VM.user_response=Ensure there is a Java thread currently running.
+# END NON-TRANSLATABLE
