@@ -278,14 +278,8 @@ public class InternalDowncallHandler {
 	private void validateMemScope(ResourceScope memScope) throws IllegalStateException
 	/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 	{
-		if (!memScope.isAlive())
-		{
-			/*[IF JAVA_SPEC_VERSION == 19]*/
-			String scopeName = "session";
-			/*[ELSE] JAVA_SPEC_VERSION == 19 */
-			String scopeName = "scope";
-			/*[ENDIF] JAVA_SPEC_VERSION == 19 */
-			throw new IllegalStateException("Already closed: attempted to access the memory value in a closed " + scopeName);  //$NON-NLS-1$
+		if (!memScope.isAlive()) {
+			throw new IllegalStateException("Already closed: attempted to access the memory value in a closed scope");
 		}
 	}
 	/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
@@ -855,31 +849,29 @@ public class InternalDowncallHandler {
 	}
 	/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
 
-	/*[IF JAVA_SPEC_VERSION >= 20]*/
 	/* Return the valid downcall address by doing the validity check on the address's scope
 	 * in OpenJ9 since the related code and APIs were adjusted in JDK20 in which case the
 	 * scope check on the downcall in address() in OpenJDK was entirely removed.
 	 */
+	/*[IF JAVA_SPEC_VERSION >= 20]*/
 	private long getValidDowncallAddr(MemorySegment downcallAddr) {
 		validateMemScope(downcallAddr.scope());
 		return downcallAddr.address();
 	}
+	/*[ELSE] JAVA_SPEC_VERSION >= 20 */
+	private long getValidDowncallAddr(Addressable downcallAddr) {
+		validateMemScope(downcallAddr.address().scope());
+		return downcallAddr.address().toRawLongValue();
+	}
 	/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 
 	/* The method (bound by the method handle to the native code) intends to invoke the C function via the inlined code. */
-	/*[IF JAVA_SPEC_VERSION >= 17]*/
 	/*[IF JAVA_SPEC_VERSION >= 20]*/
 	Object runNativeMethod(MemorySegment downcallAddr, SegmentAllocator segmtAllocator, MemorySegment stateSegmt, long[] args) throws IllegalArgumentException, IllegalStateException
-	/*[ELSEIF JAVA_SPEC_VERSION == 18]*/
-	Object runNativeMethod(NativeSymbol downcallAddr, SegmentAllocator segmtAllocator, long[] args) throws IllegalArgumentException, IllegalStateException
-	/*[ELSE] JAVA_SPEC_VERSION == 18 */
+	/*[ELSE] JAVA_SPEC_VERSION >= 20 */
 	Object runNativeMethod(Addressable downcallAddr, SegmentAllocator segmtAllocator, long[] args) throws IllegalArgumentException, IllegalStateException
 	/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
-	/*[ELSE] JAVA_SPEC_VERSION >= 17 */
-	Object runNativeMethod(long[] args)
-	/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 	{
-		/*[IF JAVA_SPEC_VERSION >= 17]*/
 		/*[IF JAVA_SPEC_VERSION >= 20]*/
 		if (downcallAddr == MemorySegment.NULL)
 		/*[ELSE] JAVA_SPEC_VERSION >= 20 */
@@ -888,7 +880,6 @@ public class InternalDowncallHandler {
 		{
 			throw new IllegalArgumentException("A non-null memory address is expected for downcall"); //$NON-NLS-1$
 		}
-		/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 
 		long retMemAddr = 0;
 		MemorySegment retStruSegmt = null;
@@ -897,16 +888,11 @@ public class InternalDowncallHandler {
 		 * JDK20+.
 		 */
 		if ((realReturnLayout != null) && (realReturnLayout instanceof GroupLayout)) {
-			/*[IF JAVA_SPEC_VERSION >= 17]*/
 			/* The segment allocator (introduced since Java 17 to replace NativeScope in Java 16) is confined
 			 * by the memory session(Java19)/resource scope(Java17/18) defined in user applications in which
 			 * case the allocated memory will be released automatically once the session/scope is closed.
 			 */
 			retStruSegmt = segmtAllocator.allocate(realReturnLayout);
-			/*[ELSE] JAVA_SPEC_VERSION >= 17 */
-			/* The memory segment will be released explicitly by users via close() in java code in Java 16. */
-			retStruSegmt = MemorySegment.allocateNative(realReturnLayout);
-			/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 			if (retStruSegmt == null) {
 				throw new OutOfMemoryError("Failed to allocate native memory for the returned memory segment"); //$NON-NLS-1$
 			}
@@ -917,49 +903,31 @@ public class InternalDowncallHandler {
 			/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 		}
 
-		long returnVal = 0;
-		/* The session/scope associated with memory specific arguments must be kept alive in downcall since JDK17. */
-		if (!memArgScopeSet.isEmpty()) {
-			/*[IF JAVA_SPEC_VERSION > 17]*/
-			/*[IF JAVA_SPEC_VERSION >= 20]*/
-			try (Arena arena = Arena.openConfined())
-			/*[ELSEIF JAVA_SPEC_VERSION == 19]*/
-			try (MemorySession nativeSession = MemorySession.openConfined())
-			/*[ELSEIF JAVA_SPEC_VERSION == 18]*/
-			try (ResourceScope nativeScope = ResourceScope.newConfinedScope())
-			/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
-			{
-				/*[IF JAVA_SPEC_VERSION >= 20]*/
-				SetDependency(arena.scope());
-				/*[ELSEIF JAVA_SPEC_VERSION == 19]*/
-				SetDependency(nativeSession);
-				/*[ELSEIF JAVA_SPEC_VERSION == 18]*/
-				SetDependency(nativeScope);
-				/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
+		/* Add the scope of the downcall address to the set to ensure it is kept alive
+		 * till the downcall is finished.
+		 */
+		/*[IF JAVA_SPEC_VERSION >= 20]*/
+		addMemArgScope(downcallAddr.scope());
+		/*[ELSE] JAVA_SPEC_VERSION >= 20 */
+		addMemArgScope(downcallAddr.address().scope());
+		/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 
-				/*[IF JAVA_SPEC_VERSION >= 20]*/
-				returnVal = invokeNative(stateSegmt.address(), retMemAddr, getValidDowncallAddr(downcallAddr), cifNativeThunkAddr, args);
-				/*[ELSE] JAVA_SPEC_VERSION >= 20 */
-				returnVal = invokeNative(retMemAddr, downcallAddr.address().toRawLongValue(), cifNativeThunkAddr, args);
-				/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
-			}
-			/*[ELSE] JAVA_SPEC_VERSION > 17 */
-			acquireScope();
-			returnVal = invokeNative(retMemAddr, downcallAddr.address().toRawLongValue(), cifNativeThunkAddr, args);
-			releaseScope();
-			/*[ENDIF] JAVA_SPEC_VERSION > 17 */
-		}
-		else
-		{
-			/*[IF JAVA_SPEC_VERSION >= 20]*/
+		long returnVal = 0;
+		/* The scope associated with memory specific arguments must be kept alive
+		 * during the downcall since JDK17, including the downcall adddress.
+		 *
+		 *Note: memArgScopeSet is not empty with the downcall address added to the set.
+		 */
+		/*[IF JAVA_SPEC_VERSION >= 20]*/
+		try (Arena arena = Arena.openConfined()) {
+			SetDependency(arena.scope());
 			returnVal = invokeNative(stateSegmt.address(), retMemAddr, getValidDowncallAddr(downcallAddr), cifNativeThunkAddr, args);
-			/*[ELSEIF JAVA_SPEC_VERSION >= 17]*/
-			returnVal = invokeNative(retMemAddr, downcallAddr.address().toRawLongValue(), cifNativeThunkAddr, args);
-			/*[ELSE] JAVA_SPEC_VERSION >= 17 */
-			/* The given function address never changes since the initialization of the downcall handler in JDK16. */
-			returnVal = invokeNative(retMemAddr, functionAddr.address().toRawLongValue(), cifNativeThunkAddr, args);
-			/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 		}
+		/*[ELSE] JAVA_SPEC_VERSION >= 20 */
+		acquireScope();
+		returnVal = invokeNative(retMemAddr, getValidDowncallAddr(downcallAddr), cifNativeThunkAddr, args);
+		releaseScope();
+		/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 
 		/* This struct specific MemorySegment object returns to the current thread in the multithreading environment,
 		 * in which case the native invocations from threads end up with distinct returned structs.
