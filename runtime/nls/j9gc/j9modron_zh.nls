@@ -732,7 +732,6 @@ J9NLS_GC_FAILED_TO_INSTANTIATE_SPLIT_HEAP.sample_input_5=M
 
 # Exception thrown on return from wait interruptible primitive wrapper rtsj_waitScopeReferenceCountLock for ScopedMemory.join and .joinAndEnter
 J9NLS_GC_AIE_THROW_DURING_SCOPED_MEMORY_JOIN=ScopedMemory.join/joinAndEnter \u4e2d\u65ad
-
 # START NON-TRANSLATABLE
 J9NLS_GC_AIE_THROW_DURING_SCOPED_MEMORY_JOIN.explanation=Interrupt has broken the wait in ScopedMemory.join/joinAndEnter
 J9NLS_GC_AIE_THROW_DURING_SCOPED_MEMORY_JOIN.system_action=A java/lang/InterruptedException will be thrown
@@ -952,4 +951,39 @@ J9NLS_GC_OPTIONS_PREFERREDHEAPBASE_NOT_SUPPORTED_ON_ZOS_WARN=z/OS \u4e0a\u4e0d\u
 J9NLS_GC_OPTIONS_PREFERREDHEAPBASE_NOT_SUPPORTED_ON_ZOS_WARN.explanation=The JVM was started with the -Xgc:preferredHeapBase option, which has no effect on z/OS.
 J9NLS_GC_OPTIONS_PREFERREDHEAPBASE_NOT_SUPPORTED_ON_ZOS_WARN.system_action=The JVM ignores the -Xgc:preferredHeapBase option.
 J9NLS_GC_OPTIONS_PREFERREDHEAPBASE_NOT_SUPPORTED_ON_ZOS_WARN.user_response=Refer to the IBM SDK documentation.
+
+# END NON-TRANSLATABLE
+
+# Note %s gc policy ("balanced" or "metronome")
+J9NLS_GC_POLICY_NOT_SUPPOURTED_CRIU=-Xgcpolicy:%s \u5f53\u524d\u4e0d\u53d7 -XX:+EnableCRIUSupport \u652f\u6301
+# START NON-TRANSLATABLE
+J9NLS_GC_POLICY_NOT_SUPPOURTED_CRIU.explanation=The specified GC policy is currently unsuppourted with CRIU
+J9NLS_GC_POLICY_NOT_SUPPOURTED_CRIU.system_action=The JVM will terminate
+J9NLS_GC_POLICY_NOT_SUPPOURTED_CRIU.user_response=Adjust the garbage collector policy option (-Xgcpolicy) with one of the following supported policies: gencon, optavgpause or optthruput
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_FAILED_TO_REINITIALIZE_PARSING_RESTORE_OPTIONS=\u521d\u59cb\u5316\u5931\u8d25\uff1b\u65e0\u6cd5\u89e3\u6790 GC \u590d\u539f\u9009\u9879
+# START NON-TRANSLATABLE
+J9NLS_GC_FAILED_TO_REINITIALIZE_PARSING_RESTORE_OPTIONS.explanation=The garbage collector failed to initialize because of an error in the restore options
+J9NLS_GC_FAILED_TO_REINITIALIZE_PARSING_RESTORE_OPTIONS.system_action=The JVM will terminate
+J9NLS_GC_FAILED_TO_REINITIALIZE_PARSING_RESTORE_OPTIONS.user_response=Check that all of the GC options are correctly specified
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_THREAD_VALUE_MUST_BE_ABOVE_WARN=\u5c06\u5ffd\u7565 -Xgcthreads\u3002 \u6307\u5b9a\u7684 GC \u7ebf\u7a0b\u8ba1\u6570\u5fc5\u987b\u5927\u4e8e\u68c0\u67e5\u70b9 GC \u7ebf\u7a0b\u8ba1\u6570 %1$zu
+# START NON-TRANSLATABLE
+J9NLS_GC_THREAD_VALUE_MUST_BE_ABOVE_WARN.explanation=-Xgcthreads must be greater than the specified value
+J9NLS_GC_THREAD_VALUE_MUST_BE_ABOVE_WARN.system_action=The JVM will terminate
+J9NLS_GC_THREAD_VALUE_MUST_BE_ABOVE_WARN.user_response=Refer to the OpenJ9 documentation and adjust -Xgcthreads to specify a GC thread count greater than the checkpoint GC thread count
+J9NLS_GC_THREAD_VALUE_MUST_BE_ABOVE_WARN.sample_input_1=4
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_OPTIONS_HIERARCHICAL_SCAN_ORDERING_NOT_SUPPORTED_WARN=\u5c06\u5ffd\u7565\u5e26\u6709 -Xgcpolicy:%s \u7684\u4e0d\u53d7\u652f\u6301\u7684 -Xgc:hierarchicalScan \u6392\u5e8f\u9009\u9879\u3002
+# START NON-TRANSLATABLE
+J9NLS_GC_OPTIONS_HIERARCHICAL_SCAN_ORDERING_NOT_SUPPORTED_WARN.explanation=-Xgc:hierarchicalScanOrdering is currently only supported with -Xgcpolicy:gencon.
+J9NLS_GC_OPTIONS_HIERARCHICAL_SCAN_ORDERING_NOT_SUPPORTED_WARN.system_action=The JVM ignores the -Xgc:hierarchicalScanOrdering option.
+J9NLS_GC_OPTIONS_HIERARCHICAL_SCAN_ORDERING_NOT_SUPPORTED_WARN.user_response=Refer to the OpenJ9 documentation for -Xgc:hierarchicalScanOrdering.
+
 # END NON-TRANSLATABLE
