@@ -3823,13 +3823,6 @@ J9::Z::CodeGenerator::inlineDirectCall(
             }
          break;
 
-      case TR::java_util_concurrent_atomic_Fences_reachabilityFence:
-      case TR::java_util_concurrent_atomic_Fences_orderAccesses:
-      case TR::java_util_concurrent_atomic_Fences_orderReads:
-      case TR::java_util_concurrent_atomic_Fences_orderWrites:
-         cg->decReferenceCount(node->getChild(0));
-         break;
-
       case TR::java_util_concurrent_atomic_AtomicBoolean_getAndSet:
       case TR::java_util_concurrent_atomic_AtomicInteger_getAndAdd:
       case TR::java_util_concurrent_atomic_AtomicInteger_getAndIncrement:

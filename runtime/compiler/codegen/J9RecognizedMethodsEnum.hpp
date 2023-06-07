@@ -275,30 +275,6 @@
 
    java_nio_ByteOrder_nativeOrder,
 
-   // routines from the memory Fence library.  See JIT design 1598
-   java_util_concurrent_atomic_Fences_postLoadFence,
-   java_util_concurrent_atomic_Fences_preStoreFence,
-   java_util_concurrent_atomic_Fences_postStorePreLoadFence,
-   // same 3 with java.lang.Object parm
-   java_util_concurrent_atomic_Fences_postLoadFence_jlObject,
-   java_util_concurrent_atomic_Fences_preStoreFence_jlObject,
-   java_util_concurrent_atomic_Fences_postStorePreLoadFence_jlObject,
-   // as above, with java.lang.reflect.Field parm
-   java_util_concurrent_atomic_Fences_postLoadFence_jlObjectjlrField,
-   java_util_concurrent_atomic_Fences_preStoreFence_jlObjectjlrField,
-   java_util_concurrent_atomic_Fences_postStorePreLoadFence_jlObjectjlrField,
-   // for array element
-   java_util_concurrent_atomic_Fences_postLoadFence_jlObjectI,
-   java_util_concurrent_atomic_Fences_preStoreFence_jlObjectI,
-   java_util_concurrent_atomic_Fences_postStorePreLoadFence_jlObjectI,
-
-   // JSR 166y
-   //
-   java_util_concurrent_atomic_Fences_orderAccesses,
-   java_util_concurrent_atomic_Fences_orderReads,
-   java_util_concurrent_atomic_Fences_orderWrites,
-   java_util_concurrent_atomic_Fences_reachabilityFence,
-
    java_util_regex_Matcher_init,
    java_util_regex_Matcher_usePattern,
 
