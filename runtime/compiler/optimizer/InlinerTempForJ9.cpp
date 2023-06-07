@@ -3204,7 +3204,7 @@ bool TR_MultipleCallTargetInliner::inlineCallTargets(TR::ResolvedMethodSymbol *c
          if ((uint32_t)(estimatedNumberOfNodes*factor) > _nodeCountThreshold)
             {
             callTargetToChop = calltarget;
-            debugTrace(tracer(),"estimate nodes exceeds _nodeCountThreshold, chopped off targets staring from %p, lastTargetToInline %p\n", callTargetToChop, prev);
+            debugTrace(tracer(),"estimate nodes exceeds _nodeCountThreshold, chopped off targets starting from %p, lastTargetToInline %p\n", callTargetToChop, prev);
             break;
             }
          }
