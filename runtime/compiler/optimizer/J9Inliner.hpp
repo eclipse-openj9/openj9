@@ -246,6 +246,7 @@ class TR_J9InlinerPolicy : public OMR_InlinerPolicy
       TR::Node *     genCompressedRefs(TR::Node *, bool genTT = true, int32_t isLoad = 1);
       void genCodeForUnsafeGetPut(TR::Node* unsafeAddress, TR::TreeTop* callNodeTreeTop, TR::TreeTop* prevTreeTop, TR::SymbolReference* newSymbolReferenceForAddress, TR::TreeTop* directAccessTreeTop, TR::TreeTop* lowTagCmpTree, bool needNullCheck, bool isUnsafeGet, bool conversionNeeded, TR::Block * joinBlock, TR_OpaqueClassBlock *javaLangClass, TR::Node* orderedCallNode);
       virtual bool callMustBeInlined(TR_CallTarget *calltarget);
+      virtual bool callMustBeInlinedInCold(TR_ResolvedMethod *method);
       bool mustBeInlinedEvenInDebug(TR_ResolvedMethod * calleeMethod, TR::TreeTop *callNodeTreeTop);
       bool _tryToGenerateILForMethod (TR::ResolvedMethodSymbol* calleeSymbol, TR::ResolvedMethodSymbol* callerSymbol, TR_CallTarget* calltarget);
       bool doCorrectnessAndSizeChecksForInlineCallTarget(TR_CallStack *callStack, TR_CallTarget *calltarget, bool inlinefromgraph, TR_PrexArgInfo *argInfo);
