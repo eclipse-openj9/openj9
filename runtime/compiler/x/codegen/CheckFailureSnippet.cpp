@@ -159,13 +159,15 @@ uint8_t *TR::X86CheckFailureSnippet::emitCheckFailureSnippetBody(uint8_t *buffer
       }
 
    *(int32_t *)buffer = (int32_t)(destinationAddress - (intptr_t)(buffer+4));
-   cg()->addExternalRelocation(new (cg()->trHeapMemory())
-      TR::ExternalRelocation(
+   cg()->addExternalRelocation(
+      TR::ExternalRelocation::create(
          buffer,
          (uint8_t *)getDestination(),
          TR_HelperAddress,
          cg()),
-      __FILE__, __LINE__, getCheckInstruction()->getNode());
+      __FILE__,
+      __LINE__,
+      getCheckInstruction()->getNode());
 
    buffer += 4;
    uint8_t *checkSite = getCheckInstruction()->getBinaryEncoding();
@@ -303,12 +305,16 @@ uint8_t *TR::X86CheckFailureSnippetWithResolve::emitSnippetBody()
    //
    *buffer++ = 0x68; // push   imm4
    *(int32_t *)buffer = (int32_t) (intptr_t) getDataSymbolReference()->getOwningMethod(cg()->comp())->constantPool();
-   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(buffer,
-                                                                           *(uint8_t **)buffer,
-                                                                           getCheckInstruction()->getNode() ? (uint8_t *)(uintptr_t)getCheckInstruction()->getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
-                                                                           TR_ConstantPool, cg()),
-                          __FILE__, __LINE__,
-                          getCheckInstruction()->getNode());
+   cg()->addExternalRelocation(
+      TR::ExternalRelocation::create(
+         buffer,
+         *(uint8_t **)buffer,
+         getCheckInstruction()->getNode() ? (uint8_t *)(uintptr_t)getCheckInstruction()->getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
+         TR_ConstantPool,
+         cg()),
+      __FILE__,
+      __LINE__,
+      getCheckInstruction()->getNode());
    buffer += 4;
 
    // Call the glue routine
@@ -324,12 +330,15 @@ uint8_t *TR::X86CheckFailureSnippetWithResolve::emitSnippetBody()
       TR_ASSERT(IS_32BIT_RIP(glueAddress, buffer+4), "Local helper trampoline should be reachable directly.\n");
       }
    *(int32_t *)buffer = (int32_t)(glueAddress - (intptr_t)(buffer+4));
-   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(buffer,
-                                                         (uint8_t *)glueSymRef,
-                                                         TR_HelperAddress, cg()),
-                          __FILE__,
-                          __LINE__,
-                          getCheckInstruction()->getNode());
+   cg()->addExternalRelocation(
+      TR::ExternalRelocation::create(
+         buffer,
+         (uint8_t *)glueSymRef,
+         TR_HelperAddress,
+         cg()),
+      __FILE__,
+      __LINE__,
+      getCheckInstruction()->getNode());
 
    buffer += 4;
 
@@ -351,13 +360,15 @@ uint8_t *TR::X86CheckFailureSnippetWithResolve::emitSnippetBody()
       TR_ASSERT(IS_32BIT_RIP(destinationAddress, buffer+4), "Local helper trampoline should be reachable directly.\n");
       }
    *(int32_t *)buffer = (int32_t)(destinationAddress - (intptr_t)(buffer+4));
-   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(buffer,
-                                                         (uint8_t *)getDestination(),
-                                                         TR_HelperAddress,
-                                                         cg()),
-                                                         __FILE__,
-                                                         __LINE__,
-                                                         getCheckInstruction()->getNode());
+   cg()->addExternalRelocation(
+      TR::ExternalRelocation::create(
+         buffer,
+         (uint8_t *)getDestination(),
+         TR_HelperAddress,
+         cg()),
+      __FILE__,
+      __LINE__,
+      getCheckInstruction()->getNode());
    buffer += 4;
    uint8_t *checkSite = getCheckInstruction()->getBinaryEncoding();
    *(uint32_t *)buffer = (uint32_t)(buffer - checkSite);

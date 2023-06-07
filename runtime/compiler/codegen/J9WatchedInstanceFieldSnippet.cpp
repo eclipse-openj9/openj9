@@ -54,14 +54,27 @@ uint8_t *TR::J9WatchedInstanceFieldSnippet::emitSnippetBody()
    if (cg()->comp()->getOption(TR_UseSymbolValidationManager))
       {
       cg()->addExternalRelocation(
-         new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor + offsetof(J9JITWatchedInstanceFieldData, method), reinterpret_cast<uint8_t *>(instanceFieldData.method), reinterpret_cast<uint8_t *>(TR::SymbolType::typeMethod), TR_SymbolFromManager, cg()),
+         TR::ExternalRelocation::create(
+            cursor + offsetof(J9JITWatchedInstanceFieldData, method),
+            reinterpret_cast<uint8_t *>(instanceFieldData.method),
+            reinterpret_cast<uint8_t *>(TR::SymbolType::typeMethod),
+            TR_SymbolFromManager,
+            cg()),
          __FILE__,
          __LINE__,
          node);
       }
    else
       {
-      cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor  + offsetof(J9JITWatchedInstanceFieldData, method), NULL, TR_RamMethod, cg()), __FILE__, __LINE__, node);
+      cg()->addExternalRelocation(
+         TR::ExternalRelocation::create(
+            cursor  + offsetof(J9JITWatchedInstanceFieldData, method),
+            NULL,
+            TR_RamMethod,
+            cg()),
+         __FILE__,
+         __LINE__,
+         node);
       }
    cursor += sizeof(J9JITWatchedInstanceFieldData);
 

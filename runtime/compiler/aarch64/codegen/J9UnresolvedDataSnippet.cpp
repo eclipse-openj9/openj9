@@ -99,10 +99,15 @@ J9::ARM64::UnresolvedDataSnippet::emitSnippetBody()
    cursor += 4;
 
    *(intptr_t *)cursor = (intptr_t)getAddressOfDataReference(); // Code Cache RA
-   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(
-               cursor,
-               NULL,
-               TR_AbsoluteMethodAddress, cg()), __FILE__, __LINE__, getNode());
+   cg()->addExternalRelocation(
+      TR::ExternalRelocation::create(
+         cursor,
+         NULL,
+         TR_AbsoluteMethodAddress,
+         cg()),
+      __FILE__,
+      __LINE__,
+      getNode());
    cursor += 8;
 
    if (getDataSymbol()->isCallSiteTableEntry())
@@ -120,11 +125,16 @@ J9::ARM64::UnresolvedDataSnippet::emitSnippetBody()
    cursor += 8;
 
    *(intptr_t *)cursor = (intptr_t)getDataSymbolReference()->getOwningMethod(cg()->comp())->constantPool(); // CP
-   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(
-               cursor,
-               *(uint8_t **)cursor,
-               getNode() ? (uint8_t *)(intptr_t)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
-               TR_ConstantPool, cg()), __FILE__, __LINE__, getNode());
+   cg()->addExternalRelocation(
+      TR::ExternalRelocation::create(
+         cursor,
+         *(uint8_t **)cursor,
+         getNode() ? (uint8_t *)(intptr_t)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
+         TR_ConstantPool,
+         cg()),
+      __FILE__,
+      __LINE__,
+      getNode());
    cursor += 8;
 
    *(int32_t *)cursor = getMemoryReference()->getOffset(); // offset

@@ -54,10 +54,15 @@ uint8_t *TR::ARMHelperCallSnippet::emitSnippetBody()
    *(int32_t *)buffer = 0xea000000 | ((distance >> 2)& 0x00ffffff);
    if (_restartLabel != NULL)
       *(int32_t *)buffer |= 0x01000000;
-   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(
-                             buffer,
-                             (uint8_t *)getDestination(),
-                             TR_HelperAddress, cg()), __FILE__, __LINE__, getNode());
+   cg()->addExternalRelocation(
+      TR::ExternalRelocation::create(
+         buffer,
+         (uint8_t *)getDestination(),
+         TR_HelperAddress,
+         cg()),
+      __FILE__,
+      __LINE__,
+      getNode());
    buffer += 4;
 
    gcMap().registerStackMap(buffer, cg());

@@ -152,8 +152,15 @@ uint8_t *TR::PPCDepImmSymInstruction::generateBinaryEncoding()
             }
          else
             {
-            cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,(uint8_t *)getSymbolReference(),TR_HelperAddress, cg()),
-                               __FILE__, __LINE__, getNode());
+            cg()->addExternalRelocation(
+               TR::ExternalRelocation::create(
+                  cursor,
+                  (uint8_t *)getSymbolReference(),
+                  TR_HelperAddress,
+                  cg()),
+               __FILE__,
+               __LINE__,
+               getNode());
             }
          }
       }
