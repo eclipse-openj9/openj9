@@ -9264,7 +9264,7 @@ TR_J9ByteCodeIlGenerator::packReferenceChainOffsets(TR::Node *node, std::vector<
 bool
 TR_ResolvedJ9Method::isFieldQType(int32_t cpIndex)
    {
-   if (!TR::Compiler->om.areValueTypesEnabled() ||
+   if (!TR::Compiler->om.areFlattenableValueTypesEnabled() ||
       (-1 == cpIndex))
       return false;
 
@@ -9279,7 +9279,7 @@ TR_ResolvedJ9Method::isFieldQType(int32_t cpIndex)
 bool
 TR_ResolvedJ9Method::isFieldFlattened(TR::Compilation *comp, int32_t cpIndex, bool isStatic)
    {
-   if (!TR::Compiler->om.areValueTypesEnabled() ||
+   if (!TR::Compiler->om.areFlattenableValueTypesEnabled() ||
       (-1 == cpIndex))
       return false;
 
@@ -9287,7 +9287,7 @@ TR_ResolvedJ9Method::isFieldFlattened(TR::Compilation *comp, int32_t cpIndex, bo
    J9ROMFieldShape *fieldShape = NULL;
    TR_OpaqueClassBlock *containingClass = definingClassAndFieldShapeFromCPFieldRef(comp, cp(), cpIndex, isStatic, &fieldShape);
 
-   // No lock is required here. Entires in J9Class::flattenedClassCache are only written during classload.
+   // No lock is required here. Entries in J9Class::flattenedClassCache are only written during classload.
    // They are effectively read only when being exposed to the JIT.
    return vmThread->javaVM->internalVMFunctions->isFlattenableFieldFlattened(reinterpret_cast<J9Class *>(containingClass), fieldShape);
    }

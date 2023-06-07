@@ -2225,8 +2225,6 @@ TR_J9ByteCodeIlGenerator::genCheckCast()
  *
  * If the class specified in the bytecode is unresolved, this leaves out the
  * ResolveCHK since it has to be conditional on a non-null object.
- * If the class specified in the bytecode is a primitive value type, it has to
- * be resolved unconditionally, regardless of whether the value is null.
  *
  * @param cpIndex The constant pool entry of the class given in the bytecode
  *
@@ -2236,20 +2234,7 @@ TR_J9ByteCodeIlGenerator::genCheckCast()
 void
 TR_J9ByteCodeIlGenerator::genCheckCast(int32_t cpIndex)
    {
-   if (TR::Compiler->om.areValueTypesEnabled()
-       && TR::Compiler->cls.isClassRefPrimitiveValueType(comp(), method()->classOfMethod(), cpIndex))
-      {
-      TR::Node * objNode = _stack->top();
-
-      loadClassObject(cpIndex);
-
-      TR::Node *passThruNode = TR::Node::create(TR::PassThrough, 1, objNode);
-      genTreeTop(genNullCheck(passThruNode));
-      }
-   else
-      {
-      loadClassObjectForTypeTest(cpIndex, TR_DisableAOTCheckCastInlining);
-      }
+   loadClassObjectForTypeTest(cpIndex, TR_DisableAOTCheckCastInlining);
    genCheckCast();
    }
 
@@ -4962,17 +4947,24 @@ TR_J9ByteCodeIlGenerator::loadInstance(int32_t cpIndex)
       comp()->failCompilation<J9::AOTNoSupportForAOTFailure>("NO support for AOT in field watch");
 
    TR_ResolvedJ9Method * owningMethod = static_cast<TR_ResolvedJ9Method*>(_methodSymbol->getResolvedMethod());
-   if (TR::Compiler->om.areValueTypesEnabled() && owningMethod->isFieldQType(cpIndex))
+   if (TR::Compiler->om.areFlattenableValueTypesEnabled())
       {
-      if (!isFieldResolved(comp(), owningMethod, cpIndex, false))
+      if (!TR::Compiler->om.isQDescriptorForValueTypesSupported())
          {
-         abortForUnresolvedValueTypeOp("getfield", "field");
+         TR_ASSERT_FATAL(false, "Support for null-restricted types without Q descriptor is to be implemented!!!");
          }
-      else if (owningMethod->isFieldFlattened(comp(), cpIndex, _methodSymbol->isStatic()))
+      else if (owningMethod->isFieldQType(cpIndex))
          {
-         return comp()->getOption(TR_UseFlattenedFieldRuntimeHelpers) ?
-                  loadFlattenableInstanceWithHelper(cpIndex) :
-                  loadFlattenableInstance(cpIndex);
+         if (!isFieldResolved(comp(), owningMethod, cpIndex, false))
+            {
+            abortForUnresolvedValueTypeOp("getfield", "field");
+            }
+         else if (owningMethod->isFieldFlattened(comp(), cpIndex, _methodSymbol->isStatic()))
+            {
+            return comp()->getOption(TR_UseFlattenedFieldRuntimeHelpers) ?
+                     loadFlattenableInstanceWithHelper(cpIndex) :
+                     loadFlattenableInstance(cpIndex);
+            }
          }
       }
 
@@ -5906,8 +5898,7 @@ TR_J9ByteCodeIlGenerator::loadArrayElement(TR::DataType dataType, TR::ILOpCodes 
    // helper is needed.
    //
    if (mayBeValueType &&
-       TR::Compiler->om.areValueTypesEnabled() &&
-       TR::Compiler->om.isValueTypeArrayFlatteningEnabled() &&
+       TR::Compiler->om.isValueTypeArrayFlatteningEnabled() && // isValueTypeArrayFlatteningEnabled() checks areFlattenableValueTypesEnabled()
        !TR::Compiler->om.canGenerateArraylets() &&
        dataType == TR::Address)
       {
@@ -6204,11 +6195,18 @@ TR_J9ByteCodeIlGenerator::genWithField(int32_t fieldCpIndex)
       }
 
    TR_ResolvedJ9Method * owningMethod = static_cast<TR_ResolvedJ9Method*>(_methodSymbol->getResolvedMethod());
-   if (owningMethod->isFieldQType(fieldCpIndex) && owningMethod->isFieldFlattened(comp(), fieldCpIndex, _methodSymbol->isStatic()))
+   if (TR::Compiler->om.areFlattenableValueTypesEnabled())
       {
-      return comp()->getOption(TR_UseFlattenedFieldRuntimeHelpers) ?
-               genFlattenableWithFieldWithHelper(fieldCpIndex) :
-               genFlattenableWithField(fieldCpIndex, valueClass);
+      if (!TR::Compiler->om.isQDescriptorForValueTypesSupported())
+         {
+         TR_ASSERT_FATAL(false, "Support for null-restricted types without Q descriptor is to be implemented!!!");
+         }
+      else if (owningMethod->isFieldQType(fieldCpIndex) && owningMethod->isFieldFlattened(comp(), fieldCpIndex, _methodSymbol->isStatic()))
+         {
+         return comp()->getOption(TR_UseFlattenedFieldRuntimeHelpers) ?
+                  genFlattenableWithFieldWithHelper(fieldCpIndex) :
+                  genFlattenableWithField(fieldCpIndex, valueClass);
+         }
       }
 
    bool isStore = false;
@@ -6567,32 +6565,46 @@ TR_J9ByteCodeIlGenerator::genAconst_init(TR_OpaqueClassBlock *valueTypeClass, in
                // for that value type.  That's handled with a recursive call to genAconst_init.
                // If the signature does not begin with a Q, the field is an identity type whose default value is a Java null
                /// reference.
-               if (fieldSignature[0] == 'Q')
+               bool isNullRestricted = false;
+               if (TR::Compiler->om.areFlattenableValueTypesEnabled())
                   {
-                  // In non-SVM AOT compilation, cpIndex is required for AOT relocation.
-                  // In this case, cpindex is unknown for the field.
-                  if (comp()->compileRelocatableCode() && !comp()->getOption(TR_UseSymbolValidationManager))
+                  if (!TR::Compiler->om.isQDescriptorForValueTypesSupported())
                      {
-                     abortForUnresolvedValueTypeOp("aconst_init", "field");
+                     TR_ASSERT_FATAL(false, "Support for null-restricted types without Q descriptor is to be implemented!!!");
                      }
-
-                  TR_OpaqueClassBlock *fieldClass = fej9()->getClassFromSignature(fieldSignature, (int32_t)strlen(fieldSignature),
-                                                                                  comp()->getCurrentMethod());
-                  if (comp()->getOption(TR_TraceILGen))
+                  else if (fieldSignature[0] == 'Q')
                      {
-                     traceMsg(comp(), "fieldSignature %s fieldClass %p\n", fieldSignature, fieldClass);
-                     }
+                     isNullRestricted = true;
 
-                  // Set cpIndex as -1 since it's unknown for the field class
-                  genAconst_init(fieldClass, -1 /* cpIndex */);
+                     // In non-SVM AOT compilation, cpIndex is required for AOT relocation.
+                     // In this case, cpindex is unknown for the field.
+                     if (comp()->compileRelocatableCode() && !comp()->getOption(TR_UseSymbolValidationManager))
+                        {
+                        abortForUnresolvedValueTypeOp("aconst_init", "field");
+                        }
+
+                     TR_OpaqueClassBlock *fieldClass = fej9()->getClassFromSignature(fieldSignature, (int32_t)strlen(fieldSignature),
+                                                                                     comp()->getCurrentMethod());
+                     if (comp()->getOption(TR_TraceILGen))
+                        {
+                        traceMsg(comp(), "fieldSignature %s fieldClass %p\n", fieldSignature, fieldClass);
+                        }
+
+                     // Set cpIndex as -1 since it's unknown for the field class
+                     genAconst_init(fieldClass, -1 /* cpIndex */);
+                     }
                   }
-               else if (comp()->target().is64Bit())
+
+               if (!isNullRestricted)
                   {
-                  loadConstant(TR::aconst, (int64_t)0);
-                  }
-               else
-                  {
-                  loadConstant(TR::aconst, (int32_t)0);
+                  if (comp()->target().is64Bit())
+                     {
+                     loadConstant(TR::aconst, (int64_t)0);
+                     }
+                  else
+                     {
+                     loadConstant(TR::aconst, (int32_t)0);
+                     }
                   }
                break;
                }
@@ -6941,17 +6953,25 @@ TR_J9ByteCodeIlGenerator::storeInstance(int32_t cpIndex)
       comp()->failCompilation<J9::AOTNoSupportForAOTFailure>("NO support for AOT in field watch");
 
    TR_ResolvedJ9Method * owningMethod = static_cast<TR_ResolvedJ9Method*>(_methodSymbol->getResolvedMethod());
-   if (TR::Compiler->om.areValueTypesEnabled() && owningMethod->isFieldQType(cpIndex))
+
+   if (TR::Compiler->om.areFlattenableValueTypesEnabled())
       {
-      if (!isFieldResolved(comp(), owningMethod, cpIndex, true))
+      if (!TR::Compiler->om.isQDescriptorForValueTypesSupported())
          {
-         abortForUnresolvedValueTypeOp("putfield", "field");
+         TR_ASSERT_FATAL(false, "Support for null-restricted types without Q descriptor is to be implemented!!!");
          }
-      else if (owningMethod->isFieldFlattened(comp(), cpIndex, _methodSymbol->isStatic()))
+      else if (owningMethod->isFieldQType(cpIndex))
          {
-         return comp()->getOption(TR_UseFlattenedFieldRuntimeHelpers) ?
-                  storeFlattenableInstanceWithHelper(cpIndex) :
-                  storeFlattenableInstance(cpIndex);
+         if (!isFieldResolved(comp(), owningMethod, cpIndex, true))
+            {
+            abortForUnresolvedValueTypeOp("putfield", "field");
+            }
+         else if (owningMethod->isFieldFlattened(comp(), cpIndex, _methodSymbol->isStatic()))
+            {
+            return comp()->getOption(TR_UseFlattenedFieldRuntimeHelpers) ?
+                     storeFlattenableInstanceWithHelper(cpIndex) :
+                     storeFlattenableInstance(cpIndex);
+            }
          }
       }
 
@@ -7417,7 +7437,9 @@ TR_J9ByteCodeIlGenerator::storeArrayElement(TR::DataType dataType, TR::ILOpCodes
    // we won't have flattening, so no call to flattenable array element access
    // helper is needed.
    //
-   if (TR::Compiler->om.areValueTypesEnabled() && !TR::Compiler->om.canGenerateArraylets() && dataType == TR::Address)
+   if (TR::Compiler->om.areFlattenableValueTypesEnabled() &&
+       !TR::Compiler->om.canGenerateArraylets() &&
+       dataType == TR::Address)
       {
       TR::Node* elementIndex = pop();
       TR::Node* arrayBaseAddress = pop();
