@@ -580,3 +580,11 @@ J9NLS_JCL_CRIU_LOADING_OPTIONS_FILE_FAILED.explanation=CRIUSupport::checkpointJV
 J9NLS_JCL_CRIU_LOADING_OPTIONS_FILE_FAILED.system_action=The JVM will throw a JVMRestoreException.
 J9NLS_JCL_CRIU_LOADING_OPTIONS_FILE_FAILED.user_response=Check the arguments to CRIUSupport::registerRestoreOptionsFile.
 # END NON-TRANSLATABLE
+
+J9NLS_JCL_CRIU_FAILED_TO_ENABLE_ALL_RESTORE_OPTIONS=La machine virtuelle Java n'a pas pu activer toutes les options de restauration sp\u00e9cifi\u00e9es
+# START NON-TRANSLATABLE
+J9NLS_JCL_CRIU_FAILED_TO_ENABLE_ALL_RESTORE_OPTIONS.sample_input_1=1
+J9NLS_JCL_CRIU_FAILED_TO_ENABLE_ALL_RESTORE_OPTIONS.explanation=CRIUSupport::checkpointJVM failed.
+J9NLS_JCL_CRIU_FAILED_TO_ENABLE_ALL_RESTORE_OPTIONS.system_action=The JVM will throw a JVMRestoreException.
+J9NLS_JCL_CRIU_FAILED_TO_ENABLE_ALL_RESTORE_OPTIONS.user_response=Check documentation to see which options are allowed on restore.
+# END NON-TRANSLATABLE
