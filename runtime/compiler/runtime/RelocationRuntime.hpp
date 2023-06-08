@@ -218,6 +218,21 @@ typedef TR_RelocationError::TR_RelocationErrorCodeType TR_RelocationErrorCodeTyp
 
 class TR_RelocationRuntime {
    public:
+      // Used to track whether or not a relocation operation in prepareRelocateAOTCodeAndData is in progress
+      class IsRelocating
+         {
+         public:
+         IsRelocating(TR_RelocationRuntime *reloRuntime) : _reloRuntime(reloRuntime)
+            {
+            TR_ASSERT_FATAL(!_reloRuntime->isRelocating(), "Cannot already be relocating a method");
+            _reloRuntime->setIsRelocating();
+            }
+         ~IsRelocating() { _reloRuntime->resetIsRelocating(); }
+
+         private:
+         TR_RelocationRuntime *_reloRuntime;
+         };
+
       TR_ALLOC(TR_Memory::Relocation)
       void * operator new(size_t, J9JITConfig *);
       TR_RelocationRuntime(J9JITConfig *jitCfg);
@@ -299,9 +314,13 @@ class TR_RelocationRuntime {
          return _globalValueNames[g];
          }
 
-      bool isLoading() { return _isLoading; }
+      bool isLoading() const { return _isLoading; }
       void setIsLoading() { _isLoading = true; }
       void resetIsLoading() { _isLoading = false; }
+
+      bool isRelocating() const { return _isRelocating; }
+      void setIsRelocating() { _isRelocating = true; }
+      void resetIsRelocating() { _isRelocating = false; }
 
       void initializeHWProfilerRecords(TR::Compilation *comp);
       void addClazzRecord(uint8_t *ia, uint32_t bcIndex, TR_OpaqueMethodBlock *method);
@@ -419,6 +438,7 @@ class TR_RelocationRuntime {
       TR_ResolvedMethod *_currentResolvedMethod;
 
       bool _isLoading;
+      bool _isRelocating;
 
 #if 1 // defined(DEBUG) || defined(PROD_WITH_ASSUMES)
       // Detect unexpected scenarios when build has assumes

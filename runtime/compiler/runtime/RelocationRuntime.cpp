@@ -213,6 +213,7 @@ TR_RelocationRuntime::TR_RelocationRuntime(J9JITConfig *jitCfg)
       }
 
       _isLoading = false;
+      _isRelocating = false;
 
 #if defined(DEBUG) || defined(PROD_WITH_ASSUMES)
       _numValidations = 0;
@@ -262,6 +263,8 @@ TR_RelocationRuntime::prepareRelocateAOTCodeAndData(J9VMThread* vmThread,
    _options = options;
    TR_ASSERT(_options, "Options were not correctly initialized.");
    _reloLogger->setupOptions(_options);
+
+   TR_RelocationRuntime::IsRelocating startRelocating(this);
 
    uint8_t *tempCodeStart, *tempDataStart;
    uint8_t *oldDataStart, *oldCodeStart, *newCodeStart;
