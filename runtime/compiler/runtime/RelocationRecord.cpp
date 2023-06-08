@@ -397,6 +397,11 @@ struct TR_RelocationRecordValidateIsClassVisibleBinaryTemplate : public TR_Reloc
    uint8_t _isVisible;
    };
 
+struct TR_RelocationRecordMethodEnterExitHookAddressBinaryTemplate : public TR_RelocationRecordBinaryTemplate
+   {
+   uint8_t _isEnterHookAddr;
+   };
+
 // END OF BINARY TEMPLATES
 
 uint8_t
@@ -826,6 +831,9 @@ TR_RelocationRecord::create(TR_RelocationRecord *storage, TR_RelocationRuntime *
          break;
       case TR_StartPC:
          reloRecord = new (storage) TR_RelocationRecordStartPC(reloRuntime, record);
+         break;
+      case TR_MethodEnterExitHookAddress:
+         reloRecord = new (storage) TR_RelocationRecordMethodEnterExitHookAddress(reloRuntime, record);
          break;
       default:
          // TODO: error condition
@@ -6485,6 +6493,61 @@ TR_RelocationRecordStartPC::applyRelocation(TR_RelocationRuntime *reloRuntime, T
    return TR_RelocationErrorCode::relocationOK;
    }
 
+// TR_RelocationRecordMethodEnterExitHookAddress
+//
+void
+TR_RelocationRecordMethodEnterExitHookAddress::print(TR_RelocationRuntime *reloRuntime)
+   {
+   TR_RelocationTarget *reloTarget = reloRuntime->reloTarget();
+   TR_RelocationRuntimeLogger *reloLogger = reloRuntime->reloLogger();
+   TR_RelocationRecord::print(reloRuntime);
+   reloLogger->printf("\tisEnterHookAddr %s\n", isEnterHookAddr(reloTarget) ? "true" : "false");
+   }
+
+void
+TR_RelocationRecordMethodEnterExitHookAddress::setIsEnterHookAddr(TR_RelocationTarget *reloTarget, bool isEnterHookAddr)
+   {
+   reloTarget->storeUnsigned8b((uint8_t)isEnterHookAddr, (uint8_t *) &((TR_RelocationRecordMethodEnterExitHookAddressBinaryTemplate *)_record)->_isEnterHookAddr);
+   }
+
+bool
+TR_RelocationRecordMethodEnterExitHookAddress::isEnterHookAddr(TR_RelocationTarget *reloTarget)
+   {
+   return (bool)reloTarget->loadUnsigned8b((uint8_t *) &((TR_RelocationRecordMethodEnterExitHookAddressBinaryTemplate *)_record)->_isEnterHookAddr);
+   }
+
+void
+TR_RelocationRecordMethodEnterExitHookAddress::preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget)
+   {
+   TR_RelocationRecordMethodEnterExitHookAddressPrivateData *reloPrivateData = &(privateData()->hookAddress);
+
+   reloPrivateData->_isEnterHookAddr = isEnterHookAddr(reloTarget);
+   }
+
+TR_RelocationErrorCode
+TR_RelocationRecordMethodEnterExitHookAddress::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
+   {
+   TR_RelocationRecordMethodEnterExitHookAddressPrivateData *reloPrivateData = &(privateData()->hookAddress);
+   int32_t event = reloPrivateData->_isEnterHookAddr ? J9HOOK_VM_METHOD_ENTER : J9HOOK_VM_METHOD_RETURN;
+   void *hookAddr = reloRuntime->fej9()->getStaticHookAddress(event);
+
+   reloTarget->storeAddressSequence((uint8_t *)hookAddr, reloLocation, reloFlags(reloTarget));
+
+   return TR_RelocationErrorCode::relocationOK;
+   }
+
+TR_RelocationErrorCode
+TR_RelocationRecordMethodEnterExitHookAddress::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocationHigh, uint8_t *reloLocationLow)
+   {
+   TR_RelocationRecordMethodEnterExitHookAddressPrivateData *reloPrivateData = &(privateData()->hookAddress);
+   int32_t event = reloPrivateData->_isEnterHookAddr ? J9HOOK_VM_METHOD_ENTER : J9HOOK_VM_METHOD_RETURN;
+   void *hookAddr = reloRuntime->fej9()->getStaticHookAddress(event);
+
+   reloTarget->storeAddress((uint8_t *)hookAddr, reloLocationHigh, reloLocationLow, reloFlags(reloTarget));
+
+   return TR_RelocationErrorCode::relocationOK;
+   }
+
 // The _relocationRecordHeaderSizeTable table should be the last thing in this file
 uint32_t TR_RelocationRecord::_relocationRecordHeaderSizeTable[TR_NumExternalRelocationKinds] =
    {
@@ -6603,5 +6666,6 @@ uint32_t TR_RelocationRecord::_relocationRecordHeaderSizeTable[TR_NumExternalRel
    sizeof(TR_RelocationRecordValidateIsClassVisibleBinaryTemplate),                  // TR_ValidateIsClassVisible                       = 112
    sizeof(TR_RelocationRecordBinaryTemplate),                                        // TR_CatchBlockCounter                            = 113
    sizeof(TR_RelocationRecordBinaryTemplate),                                        // TR_StartPC                                      = 114
+   sizeof(TR_RelocationRecordMethodEnterExitHookAddressBinaryTemplate),              // TR_MethodEnterExitHookAddress                   = 115
    };
 // The _relocationRecordHeaderSizeTable table should be the last thing in this file

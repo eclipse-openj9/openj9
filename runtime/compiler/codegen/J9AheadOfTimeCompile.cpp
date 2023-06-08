@@ -1323,6 +1323,22 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          }
          break;
 
+      case TR_MethodEnterExitHookAddress:
+         {
+         TR_RelocationRecordMethodEnterExitHookAddress *mehaRecord = reinterpret_cast<TR_RelocationRecordMethodEnterExitHookAddress *>(reloRecord);
+
+         TR::SymbolReference *symRef = reinterpret_cast<TR::SymbolReference *>(relocation->getTargetAddress());
+         uint8_t flags = static_cast<uint8_t>(reinterpret_cast<uintptr_t>(relocation->getTargetAddress2()));
+
+         TR::Symbol *sym = symRef->getSymbol();
+         TR_ASSERT_FATAL((sym->isEnterEventHookAddress() || sym->isExitEventHookAddress()),
+                         "TR_MethodEnterExitHookAddress: symbol %p is neither enter nor exit hook address\n");
+
+         mehaRecord->setReloFlags(reloTarget, flags);
+         mehaRecord->setIsEnterHookAddr(reloTarget, sym->isEnterEventHookAddress());
+         }
+         break;
+
       default:
          TR_ASSERT(false, "Unknown relo type %d!\n", kind);
          comp->failCompilation<J9::AOTRelocationRecordGenerationFailure>("Unknown relo type %d!\n", kind);
@@ -2247,6 +2263,21 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
                      (uint32_t)icvRecord->sourceClassID(reloTarget),
                      (uint32_t)icvRecord->destClassID(reloTarget),
                      icvRecord->isVisible(reloTarget) ? "true" : "false");
+            }
+         }
+         break;
+
+      case TR_MethodEnterExitHookAddress:
+         {
+         TR_RelocationRecordMethodEnterExitHookAddress *mehaRecord = reinterpret_cast<TR_RelocationRecordMethodEnterExitHookAddress *>(reloRecord);
+
+         self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
+         if (isVerbose)
+            {
+            traceMsg(
+               self()->comp(),
+               "\n Method Enter/Exit Hook Address: isEnterHookAddr=%s ",
+               mehaRecord->isEnterHookAddr(reloTarget) ? "true" : "false");
             }
          }
          break;

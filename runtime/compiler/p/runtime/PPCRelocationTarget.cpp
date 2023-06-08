@@ -312,6 +312,7 @@ TR_PPC32RelocationTarget::isOrderedPairRelocation(TR_RelocationRecord *reloRecor
       case TR_StartPC:
       case TR_DataAddress:
       case TR_DebugCounter:
+      case TR_MethodEnterExitHookAddress:
          return true;
       }
 
