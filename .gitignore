@@ -45,3 +45,6 @@ com.ibm.jvmti.tests
 # Default test directory (BUILD_ROOT)
 /jvmtest/
 /build/
+.DS_Store
+doc/.DS_Store
+doc/release-notes/.DS_Store
