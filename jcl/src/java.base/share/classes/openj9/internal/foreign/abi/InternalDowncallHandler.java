@@ -247,10 +247,8 @@ public class InternalDowncallHandler {
 	private void validateMemScope(ResourceScope memScope) throws IllegalStateException
 	/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 	{
-		if (!memScope.isAlive())
-		{
-			String scopeName = "scope";
-			throw new IllegalStateException("Already closed: attempted to access the memory value in a closed " + scopeName);
+		if (!memScope.isAlive()) {
+			throw new IllegalStateException("Already closed: attempted to access the memory value in a closed scope");
 		}
 	}
 
@@ -640,11 +638,9 @@ public class InternalDowncallHandler {
 	/* Set up the dependency from the sessions of memory related arguments to the specified session
 	 * so as to keep these arguments' session alive till the specified session is closed.
 	 */
-	private void SetDependency(SegmentScope session)
-	{
+	private void SetDependency(SegmentScope session) {
 		Objects.requireNonNull(session);
-		for (SegmentScope memArgSession : memArgScopeSet)
-		{
+		for (SegmentScope memArgSession : memArgScopeSet) {
 			if (memArgSession.isAlive()) {
 				MemorySessionImpl memArgSessionImpl = (MemorySessionImpl)memArgSession;
 				Thread owner = memArgSessionImpl.ownerThread();
@@ -694,14 +690,19 @@ public class InternalDowncallHandler {
 	}
 	/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 
-	/*[IF JAVA_SPEC_VERSION >= 20]*/
 	/* Return the valid downcall address by doing the validity check on the address's scope
 	 * in OpenJ9 since the related code and APIs were adjusted in JDK20 in which case the
 	 * scope check on the downcall in address() in OpenJDK was entirely removed.
 	 */
+	/*[IF JAVA_SPEC_VERSION >= 20]*/
 	private long getValidDowncallAddr(MemorySegment downcallAddr) {
 		validateMemScope(downcallAddr.scope());
 		return downcallAddr.address();
+	}
+	/*[ELSE] JAVA_SPEC_VERSION >= 20 */
+	private long getValidDowncallAddr(Addressable downcallAddr) {
+		validateMemScope(downcallAddr.address().scope());
+		return downcallAddr.address().toRawLongValue();
 	}
 	/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 
@@ -743,26 +744,31 @@ public class InternalDowncallHandler {
 			/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 		}
 
+		/* Add the scope of the downcall address to the set to ensure it is kept alive
+		 * till the downcall is finished.
+		 */
+		/*[IF JAVA_SPEC_VERSION >= 20]*/
+		addMemArgScope(downcallAddr.scope());
+		/*[ELSE] JAVA_SPEC_VERSION >= 20 */
+		addMemArgScope(downcallAddr.address().scope());
+		/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
+
 		long returnVal = 0;
-		/* The session/scope associated with memory specific arguments must be kept alive in downcall since JDK17. */
-		if (!memArgScopeSet.isEmpty()) {
-			/*[IF JAVA_SPEC_VERSION >= 20]*/
-			try (Arena arena = Arena.openConfined()) {
-				SetDependency(arena.scope());
-				returnVal = invokeNative(stateSegmt.address(), retMemAddr, getValidDowncallAddr(downcallAddr), cifNativeThunkAddr, args);
-			}
-			/*[ELSE] JAVA_SPEC_VERSION >= 20 */
-			acquireScope();
-			returnVal = invokeNative(retMemAddr, downcallAddr.address().toRawLongValue(), cifNativeThunkAddr, args);
-			releaseScope();
-			/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
-		} else {
-			/*[IF JAVA_SPEC_VERSION >= 20]*/
+		/* The scope associated with memory specific arguments must be kept alive
+		 * during the downcall since JDK17, including the downcall adddress.
+		 *
+		 *Note: memArgScopeSet is not empty with the downcall address added to the set.
+		 */
+		/*[IF JAVA_SPEC_VERSION >= 20]*/
+		try (Arena arena = Arena.openConfined()) {
+			SetDependency(arena.scope());
 			returnVal = invokeNative(stateSegmt.address(), retMemAddr, getValidDowncallAddr(downcallAddr), cifNativeThunkAddr, args);
-			/*[ELSE] JAVA_SPEC_VERSION >= 20 */
-			returnVal = invokeNative(retMemAddr, downcallAddr.address().toRawLongValue(), cifNativeThunkAddr, args);
-			/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 		}
+		/*[ELSE] JAVA_SPEC_VERSION >= 20 */
+		acquireScope();
+		returnVal = invokeNative(retMemAddr, getValidDowncallAddr(downcallAddr), cifNativeThunkAddr, args);
+		releaseScope();
+		/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 
 		/* This struct specific MemorySegment object returns to the current thread in the multithreading environment,
 		 * in which case the native invocations from threads end up with distinct returned structs.
