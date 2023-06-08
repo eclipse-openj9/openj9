@@ -25,6 +25,7 @@
 #include "j9.h"
 #include "j9consts.h"
 #include "j9vmconstantpool.h"
+#include "ObjectAccessBarrierAPI.hpp"
 
 /* These should match the error code values in enum Pinned within class Continuation. */
 #define J9VM_CONTINUATION_PINNED_REASON_NATIVE 1
@@ -84,6 +85,30 @@ public:
 		}
 		threadELS->i2jState = tempI2J;
 		SWAP_MEMBER(oldEntryLocalStorage, J9VMEntryLocalStorage*, threadELS, continuation);
+	}
+
+	static VMINLINE void
+	enterVThreadTransitionCritical(J9VMThread *currentThread, jobject thread)
+	{
+		J9JavaVM *vm = currentThread->javaVM;
+		J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+		MM_ObjectAccessBarrierAPI objectAccessBarrier = MM_ObjectAccessBarrierAPI(currentThread);
+		j9object_t threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
+
+		while(!objectAccessBarrier.inlineMixedObjectCompareAndSwapU64(currentThread, threadObj, vm->virtualThreadInspectorCountOffset, 0, (U_64)-1)) {
+			/* Thread is being inspected or unmounted, wait. */
+			vmFuncs->internalExitVMToJNI(currentThread);
+			VM_AtomicSupport::yieldCPU();
+			/* After wait, the thread may suspend here. */
+			vmFuncs->internalEnterVMFromJNI(currentThread);
+			threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
+		}
+	}
+
+	static VMINLINE void
+	exitVThreadTransitionCritical(J9VMThread *currentThread, j9object_t vthread)
+	{
+		J9OBJECT_I64_STORE(currentThread, vthread, currentThread->javaVM->virtualThreadInspectorCountOffset, 0);
 	}
 
 	static VMINLINE ContinuationState volatile *

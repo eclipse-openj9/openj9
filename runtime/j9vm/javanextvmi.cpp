@@ -30,6 +30,7 @@
 
 #if JAVA_SPEC_VERSION >= 19
 #include "VMHelpers.hpp"
+#include "ContinuationHelpers.hpp"
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
 extern "C" {
@@ -247,31 +248,6 @@ JVM_IsPreviewEnabled(void)
 	return isPreviewEnabled;
 }
 
-static void
-enterVThreadTransitionCritical(J9VMThread *currentThread, jobject thread)
-{
-	J9JavaVM *vm = currentThread->javaVM;
-	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
-	MM_ObjectAccessBarrierAPI objectAccessBarrier = MM_ObjectAccessBarrierAPI(currentThread);
-	j9object_t threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
-
-	while(!objectAccessBarrier.inlineMixedObjectCompareAndSwapU64(currentThread, threadObj, vm->virtualThreadInspectorCountOffset, 0, (U_64)-1)) {
-		/* Thread is being inspected or unmounted, wait. */
-		vmFuncs->internalExitVMToJNI(currentThread);
-		VM_AtomicSupport::yieldCPU();
-		/* After wait, the thread may suspend here. */
-		vmFuncs->internalEnterVMFromJNI(currentThread);
-		threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
-	}
-}
-
-static void
-exitVThreadTransitionCritical(J9VMThread *currentThread, j9object_t vthread)
-{
-	Assert_SC_true(-1 == J9OBJECT_I64_LOAD(currentThread, vthread, currentThread->javaVM->virtualThreadInspectorCountOffset));
-	J9OBJECT_I64_STORE(currentThread, vthread, currentThread->javaVM->virtualThreadInspectorCountOffset, 0);
-}
-
 JNIEXPORT void JNICALL
 JVM_VirtualThreadMountBegin(JNIEnv *env, jobject thread, jboolean firstMount)
 {
@@ -298,7 +274,7 @@ JVM_VirtualThreadMountBegin(JNIEnv *env, jobject thread, jboolean firstMount)
 				continuation);
 	}
 
-	enterVThreadTransitionCritical(currentThread, thread);
+	VM_ContinuationHelpers::enterVThreadTransitionCritical(currentThread, thread);
 
 	vmFuncs->internalExitVMToJNI(currentThread);
 
@@ -311,9 +287,7 @@ JVM_VirtualThreadMountEnd(JNIEnv *env, jobject thread, jboolean firstMount)
 	J9VMThread *currentThread = (J9VMThread *)env;
 	J9JavaVM *vm = currentThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
-	j9object_t rootVirtualThread = NULL;
 	j9object_t threadObj = NULL;
-	BOOLEAN runJ9Hooks = FALSE;
 
 	Trc_SC_VirtualThreadMountEnd_Entry(currentThread, thread, firstMount);
 
@@ -344,7 +318,8 @@ JVM_VirtualThreadMountEnd(JNIEnv *env, jobject thread, jboolean firstMount)
 	}
 
 	/* Allow thread to be inspected again. */
-	exitVThreadTransitionCritical(currentThread, threadObj);
+	Assert_SC_true(-1 == J9OBJECT_I64_LOAD(currentThread, threadObj, vm->virtualThreadInspectorCountOffset));
+	VM_ContinuationHelpers::exitVThreadTransitionCritical(currentThread, threadObj);
 
 	if (firstMount) {
 		TRIGGER_J9HOOK_VM_VIRTUAL_THREAD_STARTED(vm->hookInterface, currentThread);
@@ -387,7 +362,7 @@ JVM_VirtualThreadUnmountBegin(JNIEnv *env, jobject thread, jboolean lastUnmount)
 		TRIGGER_J9HOOK_VM_VIRTUAL_THREAD_END(vm->hookInterface, currentThread);
 	}
 
-	enterVThreadTransitionCritical(currentThread, thread);
+	VM_ContinuationHelpers::enterVThreadTransitionCritical(currentThread, thread);
 	if (lastUnmount) {
 		/* Re-fetch reference as enterVThreadTransitionCritical may release VMAccess. */
 		threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
@@ -440,7 +415,8 @@ JVM_VirtualThreadUnmountEnd(JNIEnv *env, jobject thread, jboolean lastUnmount)
 	}
 
 	/* Allow thread to be inspected again. */
-	exitVThreadTransitionCritical(currentThread, threadObj);
+	Assert_SC_true(-1 == J9OBJECT_I64_LOAD(currentThread, threadObj, vm->virtualThreadInspectorCountOffset));
+	VM_ContinuationHelpers::exitVThreadTransitionCritical(currentThread, threadObj);
 
 	vmFuncs->internalExitVMToJNI(currentThread);
 
