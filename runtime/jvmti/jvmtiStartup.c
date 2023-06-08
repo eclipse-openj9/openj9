@@ -751,6 +751,8 @@ loadAgentLibrary(J9JavaVM * vm, J9JVMTIAgentLibrary * agentLibrary)
 			}
 		}
 	}
+
+	vm->agentEnabled = TRUE;
 exit:
 	Trc_JVMTI_loadAgentLibrary_Exit(result);
 	return result;
