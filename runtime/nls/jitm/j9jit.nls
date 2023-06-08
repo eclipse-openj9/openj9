@@ -428,5 +428,6 @@ J9NLS_JIT_OPTIONS_PERCENT_OUT_OF_RANGE.explanation=The specified option is not w
 J9NLS_JIT_OPTIONS_PERCENT_OUT_OF_RANGE.system_action=The default percentage value will be used instead.
 J9NLS_JIT_OPTIONS_PERCENT_OUT_OF_RANGE.user_response=Correct the option.
 J9NLS_JIT_OPTIONS_PERCENT_OUT_OF_RANGE.sample_input_1=-XX:codecachetotalMaxRAMPercentage=
-J9NLS_JIT_OPTIONS_PERCENT_OUT_OF_RANGE.sample_input_2=25
+J9NLS_JIT_OPTIONS_PERCENT_OUT_OF_RANGE.sample_input_2=0.8
+J9NLS_JIT_OPTIONS_PERCENT_OUT_OF_RANGE.sample_input_3=25
 # END NON-TRANSLATABLE

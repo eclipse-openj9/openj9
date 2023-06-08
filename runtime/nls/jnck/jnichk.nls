@@ -1008,6 +1008,7 @@ J9NLS_JNICHK_NON_PACKED_API_USED_FOR_PACKED_OBJECTS.user_response=Check and corr
 J9NLS_JNICHK_NON_STATIC_FIELDID_PASSED=JNI error in %1$s: Argument #%2$d is expected to be static but a non-static field ID is passed to JNI
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_NON_STATIC_FIELDID_PASSED.sample_input_1=methodName
+J9NLS_JNICHK_NON_STATIC_FIELDID_PASSED.sample_input_2=3
 J9NLS_JNICHK_NON_STATIC_FIELDID_PASSED.explanation=Validation of the field ID passed on the named JNI function has failed.
 J9NLS_JNICHK_NON_STATIC_FIELDID_PASSED.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
 J9NLS_JNICHK_NON_STATIC_FIELDID_PASSED.user_response=Check that the field ID passed in the function is correct.
@@ -1016,6 +1017,7 @@ J9NLS_JNICHK_NON_STATIC_FIELDID_PASSED.user_response=Check that the field ID pas
 J9NLS_JNICHK_STATIC_FIELDID_PASSED=JNI error in %1$s: Argument #%2$d is expected to be non-static but a static field ID is passed to JNI
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_STATIC_FIELDID_PASSED.sample_input_1=methodName
+J9NLS_JNICHK_STATIC_FIELDID_PASSED.sample_input_2=3
 J9NLS_JNICHK_STATIC_FIELDID_PASSED.explanation=Validation of the field ID passed on the named JNI function has failed.
 J9NLS_JNICHK_STATIC_FIELDID_PASSED.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
 J9NLS_JNICHK_STATIC_FIELDID_PASSED.user_response=Check that the field ID passed in the function is correct.
