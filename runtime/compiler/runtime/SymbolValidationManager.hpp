@@ -862,8 +862,6 @@ public:
    static int getSystemClassesNotWorthRememberingCount();
 
 #if defined(J9VM_OPT_JITSERVER)
-   std::string serializeValueToSymbolMap();
-   void deserializeValueToSymbolMap(const std::string &valueToSymbolStr);
    static void populateSystemClassesNotWorthRemembering(ClientSessionData *clientData);
 #endif /* defined(J9VM_OPT_JITSERVER) */
 

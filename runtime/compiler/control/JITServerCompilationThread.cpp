@@ -146,12 +146,6 @@ outOfProcessCompilationEnd(TR_MethodToBeCompiled *entry, TR::Compilation *comp)
    // Pack log file to send to client
    std::string logFileStr = TR::Options::packLogFile(comp->getOutFile());
 
-   std::string svmValueToSymbolStr;
-   if (comp->getOption(TR_UseSymbolValidationManager))
-      {
-      svmValueToSymbolStr = comp->getSymbolValidationManager()->serializeValueToSymbolMap();
-      }
-
    // Send runtime assumptions created during compilation to the client
    std::vector<SerializedRuntimeAssumption> serializedRuntimeAssumptions;
    if (comp->getSerializedRuntimeAssumptions().size() > 0)
@@ -182,7 +176,7 @@ outOfProcessCompilationEnd(TR_MethodToBeCompiled *entry, TR::Compilation *comp)
    entry->_stream->finishCompilation(
       codeCacheStr, dataCacheStr, chTableData,
       std::vector<TR_OpaqueClassBlock*>(classesThatShouldNotBeNewlyExtended->begin(), classesThatShouldNotBeNewlyExtended->end()),
-      logFileStr, svmValueToSymbolStr,
+      logFileStr,
       resolvedMirrorMethodsPersistIPInfo
          ? std::vector<TR_ResolvedJ9Method*>(resolvedMirrorMethodsPersistIPInfo->begin(), resolvedMirrorMethodsPersistIPInfo->end())
          : std::vector<TR_ResolvedJ9Method*>(),
