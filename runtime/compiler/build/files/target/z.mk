@@ -39,6 +39,7 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/z/codegen/OMRRegister.cpp \
     omr/compiler/z/codegen/OMRRegisterDependency.cpp \
     omr/compiler/z/codegen/OMRSnippet.cpp \
+    omr/compiler/z/codegen/OMRSnippetDelegate.cpp \
     omr/compiler/z/codegen/OMRTreeEvaluator.cpp \
     omr/compiler/z/codegen/OpMemToMem.cpp \
     omr/compiler/z/codegen/S390BranchCondNames.cpp \

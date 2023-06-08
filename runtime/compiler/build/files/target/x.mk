@@ -41,6 +41,7 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/x/codegen/OMRRegister.cpp \
     omr/compiler/x/codegen/OMRRegisterDependency.cpp \
     omr/compiler/x/codegen/OMRSnippet.cpp \
+    omr/compiler/x/codegen/OMRSnippetDelegate.cpp \
     omr/compiler/x/codegen/OMRTreeEvaluator.cpp \
     omr/compiler/x/codegen/OMRX86Instruction.cpp \
     omr/compiler/x/codegen/OutlinedInstructions.cpp \
