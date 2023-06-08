@@ -2726,10 +2726,8 @@ TR_RelocationRecordInlinedMethod::inlinedSiteCanBeActivated(TR_RelocationRuntime
       return false;
       }
 
-   if (reloRuntime->fej9()->isAnyMethodTracingEnabled((TR_OpaqueMethodBlock *) currentMethod)
-       || (!reloRuntime->comp()->getOption(TR_FullSpeedDebug)
-           && (reloRuntime->fej9()->canMethodEnterEventBeHooked()
-               || reloRuntime->fej9()->canMethodExitEventBeHooked())))
+   if (reloRuntime->fej9()->isMethodTracingEnabled((TR_OpaqueMethodBlock *)currentMethod)
+       && !(reloFlags(reloTarget) & methodTracingEnabled))
       {
       RELO_LOG(reloRuntime->reloLogger(), 6, "\tinlinedSiteCanBeActivated: target may need enter/exit tracing so disabling inline site\n");
       return false;
@@ -2788,7 +2786,8 @@ TR_RelocationRecordInlinedMethod::inlinedSiteValid(TR_RelocationRuntime *reloRun
          else
             reloPrivateData->_receiverClass = NULL;
 
-         if (reloFlags(reloTarget) != inlinedMethodIsStatic && reloFlags(reloTarget) != inlinedMethodIsSpecial)
+         if (((reloFlags(reloTarget) & inlinedMethodIsStatic) == 0)
+             && ((reloFlags(reloTarget) & inlinedMethodIsSpecial) == 0))
             {
             TR_ResolvedMethod *calleeResolvedMethod = reloRuntime->fej9()->createResolvedMethod(reloRuntime->comp()->trMemory(),
                                                                                                 (TR_OpaqueMethodBlock *)currentMethod,
