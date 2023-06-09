@@ -31,8 +31,6 @@ ARG user=jenkins
 RUN apt-get update \
   && apt-get install -qq -y --no-install-recommends \
     software-properties-common \
-    python-software-properties \
-  && add-apt-repository ppa:ubuntu-toolchain-r/test \
   && apt-get update \
   && apt-get install -qq -y --no-install-recommends \
     autoconf \
@@ -41,29 +39,23 @@ RUN apt-get update \
     cmake \
     cpio \
     file \
-    g++-7 \
-    gcc-7 \
+    g++ \
+    gcc \
     git \
     git-core \
     make \
     pkg-config \
     qemu \
-    realpath \
     ssh \
     unzip \
     vim-tiny \
     wget \
+    xz-utils \
     zip \
   && rm -rf /var/lib/apt/lists/*
 
 # Add user home
 RUN useradd -ms /bin/bash --uid 1000 --home-dir /home/$user $user
-
-# Create links for c++,g++,cc,gcc
-RUN ln -s g++ /usr/bin/c++ \
-  && ln -s g++-7 /usr/bin/g++ \
-  && ln -s gcc /usr/bin/cc \
-  && ln -s gcc-7 /usr/bin/gcc
 
 # Download and setup freemarker.jar
 RUN cd /home/$user \
@@ -81,7 +73,7 @@ RUN cd /home/$user \
 # get the toolchain
 RUN cd /home/$user \
   && wget https://releases.linaro.org/components/toolchain/binaries/7.5-2019.12/aarch64-linux-gnu/gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux-gnu.tar.xz \
-  && tar xf gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux-gnu.tar.xz \
+  && tar xJf gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux-gnu.tar.xz \
   && rm gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux-gnu.tar.xz
 
 # Get the debs for native libraries on the target platform
@@ -91,24 +83,24 @@ RUN cd /home/$user \
 # Libraries can be found through https://www.debian.org/distrib/packages
 # TODO Mirror site should be configurable.
 ADD \
-    http://ftp.us.debian.org/debian/pool/main/a/alsa-lib/libasound2_1.1.3-5_arm64.deb                \
-    http://ftp.us.debian.org/debian/pool/main/a/alsa-lib/libasound2-dev_1.1.3-5_arm64.deb            \
-    http://ftp.us.debian.org/debian/pool/main/c/cups/libcups2-dev_2.2.1-8+deb9u6_arm64.deb           \
-    http://ftp.us.debian.org/debian/pool/main/c/cups/libcupsimage2-dev_2.2.1-8+deb9u6_arm64.deb      \
+    http://ftp.us.debian.org/debian/pool/main/a/alsa-lib/libasound2_1.1.8-1_arm64.deb                \
+    http://ftp.us.debian.org/debian/pool/main/a/alsa-lib/libasound2-dev_1.1.8-1_arm64.deb            \
+    http://ftp.us.debian.org/debian/pool/main/c/cups/libcups2-dev_2.2.10-6+deb10u6_arm64.deb         \
+    http://ftp.us.debian.org/debian/pool/main/c/cups/libcupsimage2-dev_2.2.10-6+deb10u6_arm64.deb    \
     http://ftp.us.debian.org/debian/pool/main/d/dwarfutils/libdwarf-dev_20180809-1_arm64.deb         \
     http://ftp.us.debian.org/debian/pool/main/e/elfutils/libelf-dev_0.176-1.1_arm64.deb              \
-    http://ftp.us.debian.org/debian/pool/main/f/freetype/libfreetype6_2.6.3-3.2+deb9u1_arm64.deb     \
-    http://ftp.us.debian.org/debian/pool/main/f/freetype/libfreetype6-dev_2.6.3-3.2+deb9u1_arm64.deb \
+    http://ftp.us.debian.org/debian/pool/main/f/freetype/libfreetype6_2.9.1-3+deb10u3_arm64.deb      \
+    http://ftp.us.debian.org/debian/pool/main/f/freetype/libfreetype6-dev_2.9.1-3+deb10u3_arm64.deb  \
     http://ftp.us.debian.org/debian/pool/main/f/fontconfig/libfontconfig1_2.13.1-2_arm64.deb         \
     http://ftp.us.debian.org/debian/pool/main/f/fontconfig/libfontconfig1-dev_2.13.1-2_arm64.deb     \
     http://ftp.us.debian.org/debian/pool/main/libi/libice/libice-dev_1.0.9-2_arm64.deb               \
-    http://ftp.us.debian.org/debian/pool/main/libp/libpng1.6/libpng16-16_1.6.28-1+deb9u1_arm64.deb   \
-    http://ftp.us.debian.org/debian/pool/main/libp/libpng1.6/libpng-dev_1.6.28-1+deb9u1_arm64.deb    \
-    http://ftp.us.debian.org/debian/pool/main/libs/libsm/libsm-dev_1.2.2-1+b3_arm64.deb              \
-    http://ftp.us.debian.org/debian/pool/main/o/openssl/libssl1.1_1.1.1k-1_arm64.deb                 \
-    http://ftp.us.debian.org/debian/pool/main/o/openssl/libssl-dev_1.1.1k-1_arm64.deb                \
-    http://ftp.us.debian.org/debian/pool/main/libx/libx11/libx11-6_1.6.4-3%2bdeb9u1_arm64.deb        \
-    http://ftp.us.debian.org/debian/pool/main/libx/libx11/libx11-dev_1.6.4-3%2bdeb9u1_arm64.deb      \
+    http://ftp.us.debian.org/debian/pool/main/libp/libpng1.6/libpng16-16_1.6.36-6_arm64.deb          \
+    http://ftp.us.debian.org/debian/pool/main/libp/libpng1.6/libpng-dev_1.6.36-6_arm64.deb           \
+    http://ftp.us.debian.org/debian/pool/main/libs/libsm/libsm-dev_1.2.3-1_arm64.deb                 \
+    http://ftp.us.debian.org/debian/pool/main/o/openssl/libssl1.1_1.1.1n-0+deb10u3_arm64.deb         \
+    http://ftp.us.debian.org/debian/pool/main/o/openssl/libssl-dev_1.1.1n-0+deb10u3_arm64.deb        \
+    http://ftp.us.debian.org/debian/pool/main/libx/libx11/libx11-6_1.7.2-1_arm64.deb                 \
+    http://ftp.us.debian.org/debian/pool/main/libx/libx11/libx11-dev_1.7.2-1_arm64.deb               \
     http://ftp.us.debian.org/debian/pool/main/libx/libxext/libxext6_1.3.3-1+b2_arm64.deb             \
     http://ftp.us.debian.org/debian/pool/main/libx/libxext/libxext-dev_1.3.3-1+b2_arm64.deb          \
     http://ftp.us.debian.org/debian/pool/main/libx/libxi/libxi6_1.7.9-1_arm64.deb                    \
@@ -117,16 +109,16 @@ ADD \
     http://ftp.us.debian.org/debian/pool/main/libx/libxrandr/libxrandr2_1.5.1-1_arm64.deb            \
     http://ftp.us.debian.org/debian/pool/main/libx/libxrender/libxrender1_0.9.10-1_arm64.deb         \
     http://ftp.us.debian.org/debian/pool/main/libx/libxrender/libxrender-dev_0.9.10-1_arm64.deb      \
-    http://ftp.us.debian.org/debian/pool/main/libx/libxt/libxt-dev_1.1.5-1_arm64.deb                 \
+    http://ftp.us.debian.org/debian/pool/main/libx/libxt/libxt-dev_1.1.5-1+b3_arm64.deb              \
     http://ftp.us.debian.org/debian/pool/main/libx/libxtst/libxtst6_1.2.3-1_arm64.deb                \
     http://ftp.us.debian.org/debian/pool/main/libx/libxtst/libxtst-dev_1.2.3-1_arm64.deb             \
-    http://ftp.us.debian.org/debian/pool/main/x/x11proto-core/x11proto-core-dev_7.0.31-1_all.deb     \
-    http://ftp.us.debian.org/debian/pool/main/x/x11proto-input/x11proto-input-dev_2.3.2-1_all.deb    \
-    http://ftp.us.debian.org/debian/pool/main/x/x11proto-kb/x11proto-kb-dev_1.0.7-1_all.deb          \
-    http://ftp.us.debian.org/debian/pool/main/x/x11proto-randr/x11proto-randr-dev_1.5.0-1_all.deb    \
-    http://ftp.us.debian.org/debian/pool/main/x/x11proto-render/x11proto-render-dev_0.11.1-2_all.deb \
-    http://ftp.us.debian.org/debian/pool/main/x/x11proto-xext/x11proto-xext-dev_7.3.0-1_all.deb      \
-    http://ftp.us.debian.org/debian/pool/main/z/zlib/zlib1g_1.2.8.dfsg-5_arm64.deb                   \
+    http://ftp.us.debian.org/debian/pool/main/x/xorgproto/x11proto-core-dev_2020.1-1_all.deb         \
+    http://ftp.us.debian.org/debian/pool/main/x/xorgproto/x11proto-input-dev_2020.1-1_all.deb        \
+    http://ftp.us.debian.org/debian/pool/main/x/xorgproto/x11proto-kb-dev_2020.1-1_all.deb           \
+    http://ftp.us.debian.org/debian/pool/main/x/xorgproto/x11proto-randr-dev_2020.1-1_all.deb        \
+    http://ftp.us.debian.org/debian/pool/main/x/xorgproto/x11proto-render-dev_2020.1-1_all.deb       \
+    http://ftp.us.debian.org/debian/pool/main/x/xorgproto/x11proto-xext-dev_2020.1-1_all.deb         \
+    http://ftp.us.debian.org/debian/pool/main/z/zlib/zlib1g_1.2.13.dfsg-1_arm64.deb                  \
     /home/$user/debs/
 
 # unpack debs into toolchain libc dir
