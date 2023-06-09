@@ -1077,12 +1077,12 @@ JavaCoreDumpWriter::writeEnvironmentSection(void)
 	if (NULL != jitConfig) {
 		if (0 != jitConfig->clientUID) {
 			_OutputStream.writeCharacters("1CICLIENTID    Client UID ");
-			_OutputStream.writeInteger64(jitConfig->clientUID, "%" OMR_PRIu64);
+			_OutputStream.writeInteger64(jitConfig->clientUID, "%llu");
 			_OutputStream.writeCharacters("\n");
 		}
 		if (0 != jitConfig->serverUID) {
 			_OutputStream.writeCharacters("1CISERVERID    Server UID ");
-			_OutputStream.writeInteger64(jitConfig->serverUID, "%" OMR_PRIu64);
+			_OutputStream.writeInteger64(jitConfig->serverUID, "%llu");
 			_OutputStream.writeCharacters("\n");
 		}
 	}
@@ -3431,8 +3431,8 @@ JavaCoreDumpWriter::writeTrailer(void)
 	uint64_t duration = (uint64_t)(now - _DumpStart);
 
 	_OutputStream.writeCharacters("1TIDMPDURATION Approximate time to produce this dump: ");
-	_OutputStream.writeInteger64(duration, "%" OMR_PRId64);
-	_OutputStream.writeCharacters(" ms\n");
+	_OutputStream.writeInteger64(duration, "%llu");
+	_OutputStream.writeCharacters("ms\n");
 
 	_OutputStream.writeCharacters(
 		"NULL           ---------------------- END OF DUMP -------------------------------------\n"
