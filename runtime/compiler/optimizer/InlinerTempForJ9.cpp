@@ -2402,17 +2402,10 @@ TR_J9InlinerPolicy::adjustFanInSizeInExceedsSizeThreshold(int bytecodeSize,
    return false;
    }
 
+
 bool
-TR_J9InlinerPolicy::callMustBeInlined(TR_CallTarget *calltarget)
+TR_J9InlinerPolicy::callMustBeInlinedInCold(TR_ResolvedMethod *method)
    {
-   TR_ResolvedMethod *method = calltarget->_calleeMethod;
-
-   if (method->convertToMethod()->isArchetypeSpecimen())
-      return true;
-
-   if (comp()->fej9()->isLambdaFormGeneratedMethod(method))
-      return true;
-
    if (insideIntPipelineForEach(method, comp()))
       {
       if (comp()->trace(OMR::inlining))
@@ -2421,13 +2414,12 @@ TR_J9InlinerPolicy::callMustBeInlined(TR_CallTarget *calltarget)
       return true;
       }
 
-
    if (comp()->getOption(TR_EnableSIMDLibrary) &&
-       strncmp(calltarget->_calleeMethod->classNameChars(), "com/ibm/dataaccess/SIMD", 23) == 0)
+       strncmp(method->classNameChars(), "com/ibm/dataaccess/SIMD", 23) == 0)
       return true;
 
 #ifdef ENABLE_GPU
-   if (strncmp(calltarget->_calleeMethod->classNameChars(), "com/ibm/gpu/Kernel", 18) == 0)
+   if (strncmp(method->classNameChars(), "com/ibm/gpu/Kernel", 18) == 0)
       return true;
 #endif
 
@@ -2453,6 +2445,21 @@ TR_J9InlinerPolicy::callMustBeInlined(TR_CallTarget *calltarget)
       }
 
    return false;
+   }
+
+
+bool
+TR_J9InlinerPolicy::callMustBeInlined(TR_CallTarget *calltarget)
+   {
+   TR_ResolvedMethod *method = calltarget->_calleeMethod;
+
+   if (method->convertToMethod()->isArchetypeSpecimen())
+      return true;
+
+   if (comp()->fej9()->isLambdaFormGeneratedMethod(method))
+      return true;
+
+   return callMustBeInlinedInCold(method);
    }
 
 void
@@ -3025,7 +3032,16 @@ bool TR_MultipleCallTargetInliner::inlineCallTargets(TR::ResolvedMethodSymbol *c
             TR_CallStack::SetCurrentCallNode sccn(callStack, node);
 
             TR::Symbol *sym  = node->getSymbol();
-            if (!isCold && !node->isTheVirtualCallNodeForAGuardedInlinedCall())
+            bool forceInlineInCold = false;
+
+            if (sym->isResolvedMethod())
+               {
+               TR_J9InlinerPolicy *j9inlinerPolicy = (TR_J9InlinerPolicy *) getPolicy();
+               forceInlineInCold = j9inlinerPolicy->callMustBeInlinedInCold(sym->getResolvedMethodSymbol()->getResolvedMethod());
+               }
+
+            if ((!isCold || forceInlineInCold) &&
+                !node->isTheVirtualCallNodeForAGuardedInlinedCall())
                {
                TR::SymbolReference * symRef = node->getSymbolReference();
                TR::MethodSymbol * calleeSymbol = symRef->getSymbol()->castToMethodSymbol();
