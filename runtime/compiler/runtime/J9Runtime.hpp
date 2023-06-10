@@ -115,7 +115,7 @@ typedef struct TR_InlinedSiteLinkedListEntry
    } TR_InlinedSiteLinkedListEntry;
 
 
-typedef struct TR_InlinedSiteHastTableEntry
+typedef struct TR_InlinedSiteHashTableEntry
    {
    TR_InlinedSiteLinkedListEntry *first;
    TR_InlinedSiteLinkedListEntry *last;
