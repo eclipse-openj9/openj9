@@ -40,6 +40,7 @@
 #include "j9vmconstantpool.h"
 #include "j9modifiers_api.h"
 #include "j9cp.h"
+#include "vm_api.h"
 #include "ute.h"
 #include "AtomicSupport.hpp"
 #include "ObjectAllocationAPI.hpp"
@@ -2072,6 +2073,100 @@ exit:
 		}
 	}
 #endif /* JAVA_SPEC_VERSION >= 20 */
+
+	/**
+	 * Get a static field object within a defining class.
+	 *
+	 * Current thread must have VM access.
+	 *
+	 * @param[in] currentThread the current J9VMThread
+	 * @param[in] definingClassName the defining class name
+	 * @param[in] fieldName the field name
+	 * @param[in] signature the field signature
+	 *
+	 * @return the field object if successs, otherwise NULL
+	 */
+	static VMINLINE j9object_t
+	getStaticFieldObject(J9VMThread *currentThread, const char *definingClassName, const char *fieldName, const char *signature)
+	{
+		J9JavaVM *vm = currentThread->javaVM;
+		j9object_t fieldObject = NULL;
+		J9InternalVMFunctions const *vmFuncs = vm->internalVMFunctions;
+		J9Class *definingClass = vmFuncs->peekClassHashTable(currentThread, vm->systemClassLoader, (U_8 *)definingClassName, strlen(definingClassName));
+		void *fieldAddress = vmFuncs->staticFieldAddress(currentThread, definingClass, (U_8*)fieldName, strlen(fieldName), (U_8*)signature, strlen(signature), NULL, NULL, 0, NULL);
+		if (NULL != fieldAddress) {
+			MM_ObjectAccessBarrierAPI objectAccessBarrier = MM_ObjectAccessBarrierAPI(currentThread);
+			fieldObject = objectAccessBarrier.inlineStaticReadObject(currentThread, definingClass, (j9object_t*)fieldAddress, FALSE);
+		}
+		return fieldObject;
+	}
+
+	/**
+	 * Find the offset of an instance field.
+	 *
+	 * @param[in] currentThread the current J9VMThread
+	 * @param[in] instanceType the instance class
+	 * @param[in] fieldName the field name
+	 * @param[in] fieldSig the field signature
+	 *
+	 * @return the offset
+	 */
+	static VMINLINE IDATA
+	findinstanceFieldOffset(J9VMThread *currentThread, J9Class *instanceType, const char *fieldName, const char *fieldSig)
+	{
+		J9JavaVM *vm = currentThread->javaVM;
+
+		IDATA offset = (UDATA)vm->internalVMFunctions->instanceFieldOffset(
+			currentThread, instanceType,
+			(U_8 *)fieldName, strlen(fieldName),
+			(U_8 *)fieldSig, strlen(fieldSig),
+			NULL, NULL, 0);
+
+		if (-1 != offset) {
+			offset += J9VMTHREAD_OBJECT_HEADER_SIZE(currentThread);
+		}
+
+		return offset;
+	}
+
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	/**
+	 * Reset java.util.concurrent.ForkJoinPool.parallelism with a value supplied.
+	 *
+	 * Current thread must have VM access.
+	 *
+	 * @param[in] currentThread the current J9VMThread
+	 * @param[in] instanceObject a java.util.concurrent.ForkJoinPool instance object
+	 * @param[in] value the I_32 value to be set into the parallelism field
+	 *
+	 * @return true if the value has been set into the field within the instance object, false if not
+	 */
+	static VMINLINE bool
+	resetJUCForkJoinPoolParallelism(J9VMThread *currentThread, j9object_t instanceObject, I_32 value)
+	{
+		bool result = false;
+		J9JavaVM *vm = currentThread->javaVM;
+		IDATA fieldOffset = vm->checkpointState.jucForkJoinPoolParallelismOffset;
+
+		if (0 == fieldOffset) {
+#define JUC_FORKJOINPOOL "java/util/concurrent/ForkJoinPool"
+			J9Class *definingClass = vm->internalVMFunctions->peekClassHashTable(currentThread, vm->systemClassLoader, (U_8 *)JUC_FORKJOINPOOL, LITERAL_STRLEN(JUC_FORKJOINPOOL));
+#undef JUC_FORKJOINPOOL
+			if (NULL != definingClass) {
+				fieldOffset = findinstanceFieldOffset(currentThread, definingClass, "parallelism", "I");
+			} else {
+				fieldOffset = -1;
+			}
+		}
+		if (-1 != fieldOffset) {
+			MM_ObjectAccessBarrierAPI objectAccessBarrier = MM_ObjectAccessBarrierAPI(currentThread);
+			objectAccessBarrier.inlineMixedObjectStoreI32(currentThread, instanceObject, fieldOffset, value, false);
+			vm->checkpointState.jucForkJoinPoolParallelismOffset = fieldOffset;
+			result = true;
+		}
+		return result;
+	}
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 };
 
 #endif /* VMHELPERS_HPP_ */
