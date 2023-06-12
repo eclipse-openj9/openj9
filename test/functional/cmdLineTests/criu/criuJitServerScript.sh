@@ -31,6 +31,7 @@ echo "start running script";
 # $5 is the APP ARGS
 # $6 is the NUM_CHECKPOINT
 # $7 is the KEEP_CHECKPOINT
+# $8 is the KEEP_TEST_OUTPUT
 
 source $1/jitserverconfig.sh
 
@@ -59,15 +60,17 @@ if [ "$JITSERVER_EXISTS" == 0 ]; then
         NUM_CHECKPOINT=$6
         for ((i=0; i<$NUM_CHECKPOINT; i++)); do
             sleep 2;
-            criu restore -D ./cpData --shell-job;
+            criu restore -D ./cpData --shell-job >criuOutput 2>&1;
         done
     fi
 
-    cat testOutput;
+    cat testOutput criuOutput;
 
     if  [ "$7" != true ]; then
-        rm -rf testOutput
-        echo "Removed testOutput file"
+        if [ "$8" != true ]; then
+            rm -rf testOutput criuOutput
+            echo "Removed test output files"
+        fi
     fi
 
     ps | grep $JITSERVER_PID | grep 'jitserver'
