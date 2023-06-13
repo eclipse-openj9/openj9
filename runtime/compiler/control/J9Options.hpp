@@ -121,7 +121,9 @@ enum ExternalOptions
    XXJITServerAOTCacheDirOption                = 65,
    XXJITServerAOTCacheNameOption               = 66,
    XXcodecachetotalMaxRAMPercentage            = 67,
-   TR_NumExternalOptions                       = 68
+   XXplusJITServerAOTCacheDelayMethodRelocation  = 68,
+   XXminusJITServerAOTCacheDelayMethodRelocation = 69,
+   TR_NumExternalOptions                         = 70
    };
 
 class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
