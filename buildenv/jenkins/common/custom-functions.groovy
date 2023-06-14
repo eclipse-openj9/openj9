@@ -25,16 +25,8 @@ def set_gskit() {
             def gskitDir = "${WORKSPACE}/gskit"
             def gskitLibDir = "${gskitDir}/lib/"
 
-            //env.ARTIFACTORY_SERVER should be already set in build.groovy
-            //see set_basic_artifactory_config() in variables-functions.groovy
-            def server = Artifactory.server env.ARTIFACTORY_SERVER
-            def artifactoryCredentialsID = server.getCredentialsId()
-
-			// download GSKIT
-			withCredentials([usernamePassword(credentialsId: "${artifactoryCredentialsID}", usernameVariable: "ARTIFACTORY_USERNAME", passwordVariable: "ARTIFACTORY_PASSWORD_TOKEN")]) {
-                sh "_ENCODE_FILE_NEW=UNTAGGED curl -sSkL -u \$ARTIFACTORY_USERNAME:\$ARTIFACTORY_PASSWORD_TOKEN ${gskitSDKDownloadUrl} -o gskit_sdk.tar"
-                sh "_ENCODE_FILE_NEW=UNTAGGED curl -sSkL -u \$ARTIFACTORY_USERNAME:\$ARTIFACTORY_PASSWORD_TOKEN ${gskitLibDownloadUrl} -o gskit_lib.tar"
-            }
+            curl_artifactory(gskitSDKDownloadUrl, 'gskit_sdk.tar')
+            curl_artifactory(gskitLibDownloadUrl, 'gskit_lib.tar')
 
             def extractCommand = "tar -xf"
             def extractSDKCmdOpts = "-d gskit"
@@ -73,17 +65,29 @@ def set_healthcenter() {
     def hcAgentDownloadUrl = buildspec.getScalarField("healthcenter.agent", SDK_VERSION)
 
     if (hcAgentDownloadUrl) {
-        def hcAgentCredentialsId = variableFile.get_user_credentials_id('java-bin')
         def hcAgentArchName = hcAgentDownloadUrl.tokenize('/').getAt(-1)
 
-        withCredentials([usernamePassword(credentialsId: "${hcAgentCredentialsId}", usernameVariable: "HCA_USERNAME", passwordVariable: "HCA_PASSWORD")]) {
-            sh "_ENCODE_FILE_NEW=UNTAGGED curl -sSkLO -u ${HCA_USERNAME}:${HCA_PASSWORD} ${hcAgentDownloadUrl}"
-        }
+        curl_artifactory(hcAgentDownloadUrl)
 
         if (fileExists("${WORKSPACE}/${hcAgentArchName}")) {
             // add --with-healthcenter configure option
             EXTRA_CONFIGURE_OPTIONS += " --with-healthcenter=${WORKSPACE}/${hcAgentArchName}"
         }
+    }
+}
+
+def curl_artifactory(downloadURL, outputFile = null) {
+    // env.ARTIFACTORY_SERVER should be already set in build.groovy
+    // see set_basic_artifactory_config() in variables-functions.groovy
+    def server = Artifactory.server env.ARTIFACTORY_SERVER
+    def artifactoryCredentialsID = server.getCredentialsId()
+
+    def outputOption = '-O'
+    if (outputFile) {
+        outputOption = "-o ${outputFile}"
+    }
+    withCredentials([usernamePassword(credentialsId: "${artifactoryCredentialsID}", usernameVariable: "ARTIFACTORY_USERNAME", passwordVariable: "ARTIFACTORY_TOKEN")]) {
+        sh "_ENCODE_FILE_NEW=UNTAGGED curl -sSkL -u \$ARTIFACTORY_USERNAME:\$ARTIFACTORY_TOKEN ${downloadURL} ${outputOption}"
     }
 }
 
