@@ -545,6 +545,15 @@ JVM_VirtualThreadHideFrames(JNIEnv *env, jobject vthread, jboolean hide)
 #endif /* JAVA_SPEC_VERSION >= 20 */
 
 #if JAVA_SPEC_VERSION >= 21
+JNIEXPORT jboolean JNICALL
+JVM_PrintWarningAtDynamicAgentLoad()
+{
+	/* A temporary implementation, an actual solution is provided via
+	 * https://github.com/eclipse-openj9/openj9/issues/17500
+	 */
+	return JNI_TRUE;
+}
+
 JNIEXPORT void JNICALL
 JVM_VirtualThreadMount(JNIEnv *env, jobject vthread, jboolean hide)
 {

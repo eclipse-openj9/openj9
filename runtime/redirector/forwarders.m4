@@ -412,6 +412,8 @@ _IF([JAVA_SPEC_VERSION >= 20],
 _IF([JAVA_SPEC_VERSION >= 21],
 	[_X(JVM_IsForeignLinkerSupported, JNICALL, false, jboolean, void)])
 _IF([JAVA_SPEC_VERSION >= 21],
+	[_X(JVM_PrintWarningAtDynamicAgentLoad, JNICALL, false, jboolean, void)])
+_IF([JAVA_SPEC_VERSION >= 21],
 	[_X(JVM_VirtualThreadEnd, JNICALL, false, void, JNIEnv *env, jobject vthread)])
 _IF([JAVA_SPEC_VERSION >= 21],
 	[_X(JVM_VirtualThreadMount, JNICALL, false, void, JNIEnv *env, jobject vthread, jboolean hide)])
