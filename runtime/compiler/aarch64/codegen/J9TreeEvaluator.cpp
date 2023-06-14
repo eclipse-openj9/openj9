@@ -1805,6 +1805,7 @@ J9::ARM64::TreeEvaluator::instanceofEvaluator(TR::Node *node, TR::CodeGenerator 
  *    Here It sets up the condition code for callee to react on.
  *
  *  @param[in] node:                           node
+ *  @param[in] classNode:                      class node. NULL if called from ArrayStoreCHK
  *  @param[in] instanceClassReg:               register contains instance class
  *  @param[in] instanceClassRegCanBeReclaimed: if true, instanceClassReg is reclaimed
  *  @param[in] castClassReg:                   register contains cast class
@@ -1814,7 +1815,7 @@ J9::ARM64::TreeEvaluator::instanceofEvaluator(TR::Node *node, TR::CodeGenerator 
  *  @param[in] cg:                             code generator
  */
 static
-void genSuperClassTest(TR::Node *node, TR::Register *instanceClassReg, bool instanceClassRegCanBeReclaimed, TR::Register *castClassReg, int32_t castClassDepth,
+void genSuperClassTest(TR::Node *node, TR::Node *classNode, TR::Register *instanceClassReg, bool instanceClassRegCanBeReclaimed, TR::Register *castClassReg, int32_t castClassDepth,
                                             TR::LabelSymbol *falseLabel, TR_ARM64ScratchRegisterManager *srm, TR::CodeGenerator *cg)
    {
 
@@ -1825,7 +1826,7 @@ void genSuperClassTest(TR::Node *node, TR::Register *instanceClassReg, bool inst
       {
       TR::Register *scratchRegister1 = srm->findOrCreateScratchRegister();
       TR::Register *scratchRegister2 = srm->findOrCreateScratchRegister();
-      TR_ASSERT(node->getSecondChild()->getOpCodeValue() != TR::loadaddr,
+      TR_ASSERT_FATAL_WITH_NODE(node, (classNode == NULL) || (classNode->getOpCodeValue() != TR::loadaddr),
             "genSuperClassTest: castClassDepth == -1 is not supported for a loadaddr castClass");
 
       generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, scratchRegister1, TR::MemoryReference::createWithDisplacement(cg, castClassReg, offsetof(J9Class, romClass)));
@@ -2128,7 +2129,7 @@ J9::ARM64::TreeEvaluator::VMinstanceofEvaluator(TR::Node *node, TR::CodeGenerato
 
             int32_t castClassDepth = castClassNode->getSymbolReference()->classDepth(comp);
             auto falseLabel = isNextItemGoToFalse(it, itEnd) ? doneLabel : (isNextItemHelperCall(it, itEnd) ? callHelperLabel : nextSequenceLabel);
-            genSuperClassTest(node, objectClassReg, false, castClassReg, castClassDepth, falseLabel, srm, cg);
+            genSuperClassTest(node, castClassNode, objectClassReg, false, castClassReg, castClassDepth, falseLabel, srm, cg);
             generateCSetInstruction(cg, node, resultReg, TR::CC_EQ);
             }
             break;
@@ -2425,7 +2426,7 @@ J9::ARM64::TreeEvaluator::VMcheckcastEvaluator(TR::Node *node, TR::CodeGenerator
 
             int32_t castClassDepth = castClassNode->getSymbolReference()->classDepth(comp);
             auto falseLabel = (isNextItemGoToFalse(it, itEnd) || isNextItemHelperCall(it, itEnd)) ? callHelperLabel : nextSequenceLabel;
-            genSuperClassTest(node, objectClassReg, false, castClassReg, castClassDepth, falseLabel, srm, cg);
+            genSuperClassTest(node, castClassNode, objectClassReg, false, castClassReg, castClassDepth, falseLabel, srm, cg);
             }
             break;
          /**
@@ -4204,7 +4205,7 @@ static void VMarrayStoreCHKEvaluator(TR::Node *node, TR::Register *srcReg, TR::R
       cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "ArrayStoreCHKEvaluator:010VMarrayStoreCHKEvaluator:06ArrayComponentClassCheckDone"), *srm);
       }
 
-   genSuperClassTest(node, sourceClassReg, true, destComponentClassReg, -1, helperCallLabel, srm, cg);
+   genSuperClassTest(node, NULL, sourceClassReg, true, destComponentClassReg, -1, helperCallLabel, srm, cg);
    srm->reclaimScratchRegister(destComponentClassReg);
 
    // prevent re-using these registers by error
