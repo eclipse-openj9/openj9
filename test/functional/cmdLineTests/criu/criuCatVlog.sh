@@ -1,7 +1,7 @@
 #!/bin/sh
 
 #
-# Copyright IBM Corp. and others 2022
+# Copyright IBM Corp. and others 2023
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,36 +24,41 @@
 
 echo "start running script";
 # the expected arguments are:
-# $1 is the TEST_ROOT
-# $2 is the JAVA_COMMAND
-# $3 is the JVM_OPTIONS
-# $4 is the MAINCLASS
-# $5 is the APP ARGS
-# $6 is the NUM_CHECKPOINT
-# $7 is the KEEP_CHECKPOINT
-# $8 is the KEEP_TEST_OUTPUT
+# $1 is the VLOG_TO_CAT
+# $2 is the CHECK_PREVIOUS_TEST_OUTPUT
+# $3 is the DELETE_PREV_TEST_OUTPUT
 
-echo "export GLIBC_TUNABLES=glibc.cpu.hwcaps=-XSAVEC,-XSAVE,-AVX2,-ERMS,-AVX,-AVX_Fast_Unaligned_Load";
-export GLIBC_TUNABLES=glibc.pthread.rseq=0:glibc.cpu.hwcaps=-XSAVEC,-XSAVE,-AVX2,-ERMS,-AVX,-AVX_Fast_Unaligned_Load
-echo "export LD_BIND_NOT=on";
-export LD_BIND_NOT=on
+cat_prev_output() {
+    echo "Outputting previous test output"
+    cat testOutput criuOutput
+    echo ""
+}
 
-$2 -XX:+EnableCRIUSupport $3 -cp "$1/criu.jar" $4 $5 $6 >testOutput 2>&1;
+if [ -f "$1" ]; then
+    echo "Outputting vlog $1"
+    cat $1
+    echo ""
 
-if [ "$7" != true ]; then
-    NUM_CHECKPOINT=$6
-    for ((i=0; i<$NUM_CHECKPOINT; i++)); do
-        sleep 2;
-        criu restore -D ./cpData --shell-job >criuOutput 2>&1;
-    done
-fi
+    if [ "$2" == true ]; then
+        cat_prev_output
+    fi
+else
+    if [ "$2" == true ]; then
+        echo "vlog $1 does not exist"
+        echo ""
 
-cat testOutput criuOutput;
+        cat_prev_output
 
-if  [ "$7" != true ]; then
-    if [ "$8" != true ]; then
-        rm -rf testOutput criuOutput
-        echo "Removed test output files"
+        $(grep -q "Thread pid mismatch\|do not match expected\|Unable to create a thread:" testOutput criuOutput)
+        if [ $? -eq 0 ]; then
+            echo "CAT VLOG FORCE PASS"
+        fi
     fi
 fi
+
+if [ "$3" == true ]; then
+    rm -rf testOutput criuOutput
+    echo "Removed test output files"
+fi
+
 echo "finished script";

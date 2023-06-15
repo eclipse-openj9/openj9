@@ -39,7 +39,7 @@
   <variable name="XDUMP_DYNAMIC" value="-Xdump:dynamic" />
 
   <test id="Create and Restore Criu Checkpoint Image once">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_SIMPLE$ 1 1 false</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_SIMPLE$ 1 1 false false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
     <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
@@ -54,7 +54,7 @@
   </test>
 
   <test id="Create and Restore Criu Checkpoint Image twice">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_SIMPLE$ 2 2 false</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_SIMPLE$ 2 2 false false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
     <output type="success" caseSensitive="yes" regex="no">Post-checkpoint 1</output>
@@ -72,7 +72,7 @@
 
 <!--
   <test id="Create CRIU checkpoint image and restore three times - testSystemNanoTime">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" "$MAINCLASS_TIMECHANGE$ testSystemNanoTime" 3 3 false</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" "$MAINCLASS_TIMECHANGE$ testSystemNanoTime" 3 3 false false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="required" caseSensitive="yes" regex="no">System.nanoTime() before CRIU checkpoint:</output>
     <output type="success" caseSensitive="yes" regex="no">PASSED: System.nanoTime() after CRIU restore:</output>
@@ -84,7 +84,7 @@
  -->
 
   <test id="Create CRIU checkpoint image and restore three times - testSystemNanoTimeJitPreCheckpointCompile">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" "$MAINCLASS_TIMECHANGE$ testSystemNanoTimeJitPreCheckpointCompile" 3 3 false</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" "$MAINCLASS_TIMECHANGE$ testSystemNanoTimeJitPreCheckpointCompile" 3 3 false false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="required" caseSensitive="yes" regex="no">System.nanoTime() before CRIU checkpoint:</output>
     <output type="success" caseSensitive="yes" regex="no">PASSED: System.nanoTime() after CRIU restore:</output>
@@ -100,7 +100,7 @@
   </test>
 
   <test id="Create CRIU checkpoint image and restore three times - testSystemNanoTimeJitPostCheckpointCompile">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" "$MAINCLASS_TIMECHANGE$ testSystemNanoTimeJitPostCheckpointCompile" 3 3 false</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" "$MAINCLASS_TIMECHANGE$ testSystemNanoTimeJitPostCheckpointCompile" 3 3 false false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="required" caseSensitive="yes" regex="no">System.nanoTime() before CRIU checkpoint:</output>
     <output type="success" caseSensitive="yes" regex="no">PASSED: System.nanoTime() after CRIU restore:</output>
@@ -116,7 +116,7 @@
   </test>
 
   <test id="Create CRIU checkpoint image and restore three times - testMillisDelayBeforeCheckpointDone">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" "$MAINCLASS_TIMECHANGE$ testMillisDelayBeforeCheckpointDone" 3 3 false</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" "$MAINCLASS_TIMECHANGE$ testMillisDelayBeforeCheckpointDone" 3 3 false false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="required" caseSensitive="yes" regex="no">Start test name: testMillisDelay</output>
     <output type="success" caseSensitive="yes" regex="no">PASSED: expected MILLIS_DELAY</output>
@@ -132,7 +132,7 @@
   </test>
 
   <test id="Create CRIU checkpoint image and restore three times - testMillisDelayBeforeCheckpointDone">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" "$MAINCLASS_TIMECHANGE$ testMillisDelayAfterCheckpointDone" 3 3 false</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" "$MAINCLASS_TIMECHANGE$ testMillisDelayAfterCheckpointDone" 3 3 false false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="required" caseSensitive="yes" regex="no">Start test name: testMillisDelay</output>
     <output type="success" caseSensitive="yes" regex="no">PASSED: expected MILLIS_DELAY</output>
@@ -148,7 +148,7 @@
   </test>
 
   <test id="Create CRIU checkpoint image and restore three times - testDateScheduledBeforeCheckpointDone">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" "$MAINCLASS_TIMECHANGE$ testDateScheduledBeforeCheckpointDone" 3 3 false</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" "$MAINCLASS_TIMECHANGE$ testDateScheduledBeforeCheckpointDone" 3 3 false false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="required" caseSensitive="yes" regex="no">Start test name: testDateScheduledBeforeCheckpointDone</output>
     <output type="success" caseSensitive="yes" regex="no">PASSED: expected to run after timeMillisScheduledBeforeCheckpointDone</output>
@@ -164,7 +164,7 @@
   </test>
 
   <test id="Create CRIU checkpoint image and restore three times - testDateScheduledAfterCheckpointDone">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" "$MAINCLASS_TIMECHANGE$ testDateScheduledAfterCheckpointDone" 3 3 false</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" "$MAINCLASS_TIMECHANGE$ testDateScheduledAfterCheckpointDone" 3 3 false false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="required" caseSensitive="yes" regex="no">Start test name: testDateScheduledAfterCheckpointDone</output>
     <output type="success" caseSensitive="yes" regex="no">PASSED: expected to run after timeMillisScheduledAfterCheckpointDone</output>
@@ -180,7 +180,7 @@
   </test>
 
   <test id="Create Criu Checkpoint Image once and no restore - TestSingleThreadModeCheckpointException">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_SINGLETHREADMODE_CHECKPOINT$ 1 1 true</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_SINGLETHREADMODE_CHECKPOINT$ 1 1 true true</command>
     <output type="success" caseSensitive="yes" regex="no">TestSingleThreadModeCheckpointException: PASSED</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
     <output type="failure" caseSensitive="no" regex="no">TestSingleThreadModeCheckpointException: FAILED</output>
@@ -196,7 +196,7 @@
   </test>
 
   <test id="Create and Restore Criu Checkpoint Image once - TestSingleThreadModeRestoreException">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_SINGLETHREADMODE_RESTORE$ 1 1 false</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_SINGLETHREADMODE_RESTORE$ 1 1 false false</command>
     <output type="success" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException: Exception thrown when running user post-restore</output>
     <output type="required" caseSensitive="no" regex="no">Killed</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
@@ -260,7 +260,7 @@
 -->
 
   <test id="Create and Restore Criu Checkpoint Image once - TestDelayedOperations">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_DELAYEDOPERATIONS$ 1 1 false</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_DELAYEDOPERATIONS$ 1 1 false false</command>
     <output type="success" caseSensitive="yes" regex="no">TestDelayedOperations.testDelayedThreadInterrupt(): PASSED</output>
     <output type="required" caseSensitive="no" regex="no">Killed</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>

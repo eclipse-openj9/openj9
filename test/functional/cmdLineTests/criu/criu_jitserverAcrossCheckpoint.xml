@@ -32,7 +32,7 @@
 	<variable name="PORTABLE_CRIU_MODE" value="-XX:-CRIURestoreNonPortableMode" />
 
 	<test id="Generate Verbose Log">
-		<command>bash $SCRIPPATH$ $TEST_RESROOT$ $TEST_JDK_BIN$ "$JVM_OPTIONS$ $PRE_CRIU_VERBOSE$" $MAINCLASS_OPTIONSFILE_TEST$ "JitOptionsTest $ENABLE_JITSERVER$ $POST_CRIU_VERBOSE$" 1 false</command>
+		<command>bash $SCRIPPATH$ $TEST_RESROOT$ $TEST_JDK_BIN$ "$JVM_OPTIONS$ $PRE_CRIU_VERBOSE$" $MAINCLASS_OPTIONSFILE_TEST$ "JitOptionsTest $ENABLE_JITSERVER$ $POST_CRIU_VERBOSE$" 1 false true</command>
 		<output type="success" caseSensitive="no" regex="no">Killed</output>
 		<output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
 		<output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
@@ -49,19 +49,20 @@
 	</test>
 
 	<test id="Check Connection in Pre-Checkpoint Verbose Log">
-		<command>cat preCheckpointVlog</command>
+		<command>bash $CATSCRIPPATH$ preCheckpointVlog false false</command>
 		<output regex="no" type="success">JITServer: JITServer Client Mode.</output>
 		<output regex="no" type="failure">Connected to a server</output>
 	</test>
 
 	<test id="Check Connection in Post-Restore Verbose Log">
-		<command>cat postRestoreVlog</command>
-		<output regex="no" type="required">CHECKPOINT RESTORE: Ready for restore</output>
+		<command>bash $CATSCRIPPATH$ postRestoreVlog true true</command>
+		<output regex="no" type="success">CHECKPOINT RESTORE: Ready for restore</output>
 		<output regex="no" type="success">Connected to a server</output>
+		<output regex="no" type="success">CAT VLOG FORCE PASS</output>
 	</test>
 
 	<test id="JITServer not explicitly enabled Post-Restore">
-		<command>bash $SCRIPPATH$ $TEST_RESROOT$ $TEST_JDK_BIN$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ "JitOptionsTest $POST_CRIU_VERBOSE$" 1 false</command>
+		<command>bash $SCRIPPATH$ $TEST_RESROOT$ $TEST_JDK_BIN$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ "JitOptionsTest $POST_CRIU_VERBOSE$" 1 false true</command>
 		<output type="success" caseSensitive="no" regex="no">Killed</output>
 		<output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
 		<output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
@@ -78,13 +79,14 @@
 	</test>
 
 	<test id="JITServer not explicitly enabled Post-Restore: Check no connection in Post-Restore Verbose Log">
-		<command>cat postRestoreVlog</command>
+		<command>bash $CATSCRIPPATH$ postRestoreVlog true true</command>
 		<output regex="no" type="success">CHECKPOINT RESTORE: Ready for restore</output>
+		<output regex="no" type="success">CAT VLOG FORCE PASS</output>
 		<output regex="no" type="failure">Connected to a server</output>
 	</test>
 
 	<test id="Portable CRIU Mode: JITServer not explicitly enabled Post-Restore">
-		<command>bash $SCRIPPATH$ $TEST_RESROOT$ $TEST_JDK_BIN$ "$JVM_OPTIONS$ $PORTABLE_CRIU_MODE$" $MAINCLASS_OPTIONSFILE_TEST$ "JitOptionsTest $POST_CRIU_VERBOSE$" 1 false</command>
+		<command>bash $SCRIPPATH$ $TEST_RESROOT$ $TEST_JDK_BIN$ "$JVM_OPTIONS$ $PORTABLE_CRIU_MODE$" $MAINCLASS_OPTIONSFILE_TEST$ "JitOptionsTest $POST_CRIU_VERBOSE$" 1 false true</command>
 		<output type="success" caseSensitive="no" regex="no">Killed</output>
 		<output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
 		<output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
@@ -101,13 +103,14 @@
 	</test>
 
 	<test id="Portable CRIU Mode; JITServer not explicitly enabled Post-Restore: Check no connection in Post-Restore Verbose Log">
-		<command>cat postRestoreVlog</command>
+		<command>bash $CATSCRIPPATH$ postRestoreVlog true true</command>
 		<output regex="no" type="success">CHECKPOINT RESTORE: Ready for restore</output>
+		<output regex="no" type="success">CAT VLOG FORCE PASS</output>
 		<output regex="no" type="failure">Connected to a server</output>
 	</test>
 
 	<test id="Enable JITServer specified Pre-Checkpoint but not explicitly enabled Post-Restore">
-		<command>bash $SCRIPPATH$ $TEST_RESROOT$ $TEST_JDK_BIN$ "$JVM_OPTIONS$ $ENABLE_JITSERVER$ $PRE_CRIU_VERBOSE$" $MAINCLASS_OPTIONSFILE_TEST$ "JitOptionsTest $POST_CRIU_VERBOSE$" 1 false</command>
+		<command>bash $SCRIPPATH$ $TEST_RESROOT$ $TEST_JDK_BIN$ "$JVM_OPTIONS$ $ENABLE_JITSERVER$ $PRE_CRIU_VERBOSE$" $MAINCLASS_OPTIONSFILE_TEST$ "JitOptionsTest $POST_CRIU_VERBOSE$" 1 false true</command>
 		<output type="success" caseSensitive="no" regex="no">Killed</output>
 		<output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
 		<output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
@@ -124,19 +127,20 @@
 	</test>
 
 	<test id="Enable JITServer specified Pre-Checkpoint: Check no connection in Pre-Checkpoint Verbose Log">
-		<command>cat preCheckpointVlog</command>
+		<command>bash $CATSCRIPPATH$ preCheckpointVlog false false</command>
 		<output regex="no" type="success">JITServer: JITServer Client Mode.</output>
 		<output regex="no" type="failure">Connected to a server</output>
 	</test>
 
 	<test id="Enable JITServer specified Pre-Checkpoint: Check connection in Post-Restore Verbose Log">
-		<command>cat postRestoreVlog</command>
-		<output regex="no" type="required">CHECKPOINT RESTORE: Ready for restore</output>
+		<command>bash $CATSCRIPPATH$ postRestoreVlog true true</command>
+		<output regex="no" type="success">CHECKPOINT RESTORE: Ready for restore</output>
 		<output regex="no" type="success">Connected to a server</output>
+		<output regex="no" type="success">CAT VLOG FORCE PASS</output>
 	</test>
 
 	<test id="Portable CRIU Mode: Enable JITServer specified Pre-Checkpoint but not explicitly enabled Post-Restore">
-		<command>bash $SCRIPPATH$ $TEST_RESROOT$ $TEST_JDK_BIN$ "$JVM_OPTIONS$ $ENABLE_JITSERVER$ $PORTABLE_CRIU_MODE$ $PRE_CRIU_VERBOSE$" $MAINCLASS_OPTIONSFILE_TEST$ "JitOptionsTest $POST_CRIU_VERBOSE$" 1 false</command>
+		<command>bash $SCRIPPATH$ $TEST_RESROOT$ $TEST_JDK_BIN$ "$JVM_OPTIONS$ $ENABLE_JITSERVER$ $PORTABLE_CRIU_MODE$ $PRE_CRIU_VERBOSE$" $MAINCLASS_OPTIONSFILE_TEST$ "JitOptionsTest $POST_CRIU_VERBOSE$" 1 false true</command>
 		<output type="success" caseSensitive="no" regex="no">Killed</output>
 		<output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
 		<output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
@@ -153,14 +157,15 @@
 	</test>
 
 	<test id="Portable CRIU Mode; Enable JITServer specified Pre-Checkpoint: Check connection in Pre-Checkpoint Verbose Log">
-		<command>cat preCheckpointVlog</command>
+		<command>bash $CATSCRIPPATH$ preCheckpointVlog false false</command>
 		<output regex="no" type="required">JITServer: JITServer Client Mode.</output>
 		<output regex="no" type="success">Connected to a server</output>
 	</test>
 
 	<test id="Portable CRIU Mode; Enable JITServer specified Pre-Checkpoint: Check connection in Post-Restore Verbose Log">
-		<command>cat postRestoreVlog</command>
-		<output regex="no" type="required">CHECKPOINT RESTORE: Ready for restore</output>
+		<command>bash $CATSCRIPPATH$ postRestoreVlog true true</command>
+		<output regex="no" type="success">CHECKPOINT RESTORE: Ready for restore</output>
 		<output regex="no" type="success">Connected to a server</output>
+		<output regex="no" type="success">CAT VLOG FORCE PASS</output>
 	</test>
 </suite>

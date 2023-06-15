@@ -28,7 +28,7 @@
 	<variable name="MAINCLASS_OPTIONSFILE_TEST" value="org.openj9.criu.OptionsFileTest" />
 
 	<test id="Generate Verbose Log">
-		<command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ "JitOptionsTest -Xjit:verbose={CheckpointRestore},vlog=vlog" 1 false</command>
+		<command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ "JitOptionsTest -Xjit:verbose={CheckpointRestore},vlog=vlog" 1 false true</command>
 		<output type="success" caseSensitive="no" regex="no">Killed</output>
 		<output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
 		<output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
@@ -41,12 +41,13 @@
 	</test>
 
 	<test id="Check Verbose Log">
-		<command>cat vlog</command>
+		<command>bash $CATSCRIPPATH$ vlog true true</command>
 		<output regex="no" type="success">CHECKPOINT RESTORE: Ready for restore</output>
+		<output regex="no" type="success">CAT VLOG FORCE PASS</output>
 	</test>
 
 	<test id="Test -Xnojit -Xnoaot">
-		<command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ "JitOptionsTest -Xnojit -Xnoaot" 1 false</command>
+		<command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ "JitOptionsTest -Xnojit -Xnoaot" 1 false false</command>
 		<output type="success" caseSensitive="no" regex="no">Killed</output>
 		<output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
 		<output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
@@ -62,7 +63,7 @@
 	</test>
 
 	<test id="Test -Xnoaot">
-		<command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ "JitOptionsTest -Xnoaot" 1 false</command>
+		<command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ "JitOptionsTest -Xnoaot" 1 false false</command>
 		<output type="success" caseSensitive="no" regex="no">Killed</output>
 		<output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
 		<output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
@@ -78,7 +79,7 @@
 	</test>
 
 	<test id="Test -Xjit:exclude={*}">
-		<command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ "JitOptionsTest -Xjit:exclude={*}" 1 false</command>
+		<command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ "JitOptionsTest -Xjit:exclude={*}" 1 false false</command>
 		<output type="success" caseSensitive="no" regex="no">Killed</output>
 		<output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
 		<output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>

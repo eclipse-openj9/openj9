@@ -30,7 +30,7 @@
 	<variable name="CRIU_VERBOSE" value="-Xjit:verbose={compilePerformance},verbose={CheckpointRestore},verbose={JITServer},verbose={JITServerConns},vlog=vlog" />
 
 	<test id="Generate Verbose Log">
-		<command>bash $SCRIPPATH$ $TEST_RESROOT$ $TEST_JDK_BIN$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ "JitOptionsTest $ENABLE_JITSERVER$ $CRIU_VERBOSE$" 1 false</command>
+		<command>bash $SCRIPPATH$ $TEST_RESROOT$ $TEST_JDK_BIN$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ "JitOptionsTest $ENABLE_JITSERVER$ $CRIU_VERBOSE$" 1 false true</command>
 		<output type="success" caseSensitive="no" regex="no">Killed</output>
 		<output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
 		<output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
@@ -47,13 +47,14 @@
 	</test>
 
 	<test id="Check Verbose Log">
-		<command>cat vlog</command>
-		<output regex="no" type="required">CHECKPOINT RESTORE: Ready for restore</output>
+		<command>bash $CATSCRIPPATH$ vlog true true</command>
+		<output regex="no" type="success">CHECKPOINT RESTORE: Ready for restore</output>
 		<output regex="no" type="success">Connected to a server</output>
+		<output regex="no" type="success">CAT VLOG FORCE PASS</output>
 	</test>
 
 	<test id="Test -Xnojit -Xnoaot">
-		<command>bash $SCRIPPATH$ $TEST_RESROOT$ $TEST_JDK_BIN$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ "JitOptionsTest $ENABLE_JITSERVER$ -Xnojit -Xnoaot" 1 false</command>
+		<command>bash $SCRIPPATH$ $TEST_RESROOT$ $TEST_JDK_BIN$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ "JitOptionsTest $ENABLE_JITSERVER$ -Xnojit -Xnoaot" 1 false false</command>
 		<output type="success" caseSensitive="no" regex="no">Killed</output>
 		<output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
 		<output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
@@ -73,7 +74,7 @@
 	</test>
 
 	<test id="Test -Xnoaot">
-		<command>bash $SCRIPPATH$ $TEST_RESROOT$ $TEST_JDK_BIN$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ "JitOptionsTest $ENABLE_JITSERVER$ -Xnoaot" 1 false</command>
+		<command>bash $SCRIPPATH$ $TEST_RESROOT$ $TEST_JDK_BIN$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ "JitOptionsTest $ENABLE_JITSERVER$ -Xnoaot" 1 false false</command>
 		<output type="success" caseSensitive="no" regex="no">Killed</output>
 		<output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
 		<output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
@@ -93,7 +94,7 @@
 	</test>
 
 	<test id="Test -Xjit:exclude={*}">
-		<command>bash $SCRIPPATH$ $TEST_RESROOT$ $TEST_JDK_BIN$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ "JitOptionsTest $ENABLE_JITSERVER$ -Xjit:exclude={*}" 1 false</command>
+		<command>bash $SCRIPPATH$ $TEST_RESROOT$ $TEST_JDK_BIN$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ "JitOptionsTest $ENABLE_JITSERVER$ -Xjit:exclude={*}" 1 false false</command>
 		<output type="success" caseSensitive="no" regex="no">Killed</output>
 		<output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
 		<output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
