@@ -58,6 +58,9 @@
    java_lang_Class_newInstancePrototype,
    java_lang_Class_isArray,
    java_lang_Class_isPrimitive,
+   java_lang_Class_isValue,
+   java_lang_Class_isPrimitiveClass,
+   java_lang_Class_isIdentity,
    java_lang_Class_getComponentType,
    java_lang_Class_getModifiersImpl,
    java_lang_Class_getSuperclass,
@@ -1104,9 +1107,10 @@
    java_lang_J9VMInternals_getInstanceDescriptionFromJ9Class64,
    java_lang_J9VMInternals_getDescriptionWordFromPtr64,
    java_lang_J9VMInternals_getSuperclass,
+   java_lang_J9VMInternals_primitiveClone,
+
    java_lang_J9VMInternals_identityHashCode,
    java_lang_J9VMInternals_fastIdentityHashCode,
-   java_lang_J9VMInternals_primitiveClone,
 
    java_util_GregorianCalendar_computeFields,
 

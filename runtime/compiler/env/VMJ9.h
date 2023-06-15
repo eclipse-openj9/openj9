@@ -1228,6 +1228,15 @@ public:
    TR::Node * testIsClassPrimitiveValueType(TR::Node *j9ClassRefNode);
 
    /**
+    * \brief Load class flags field of the specified class and test whether the hasIdentity
+    *        flag is set.
+    * \param j9ClassRefNode A node representing a reference to a \ref J9Class
+    * \return \ref TR::Node that evaluates to a non-zero integer if the class is an identity type,
+    *         or zero otherwise
+    */
+   TR::Node * testIsClassIdentityType(TR::Node *j9ClassRefNode);
+
+   /**
     * \brief Test whether any of the specified flags is set on the array's component class
     * \param arrayBaseAddressNode A node representing a reference to the array base address
     * \param ifCmpOp If comparison opCode such as ificmpeq or ificmpne

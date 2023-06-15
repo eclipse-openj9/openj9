@@ -1583,6 +1583,95 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
             }
          break;
          }
+      case TR::java_lang_Class_isValue:
+      case TR::java_lang_Class_isPrimitiveClass:
+      case TR::java_lang_Class_isIdentity:
+         {
+         TR::Node *classChild = node->getLastChild();
+         bool classChildGlobal;
+         TR::VPConstraint *classChildConstraint = getConstraint(classChild, classChildGlobal);
+
+         // If the class is known for a call to Class.isValue, Class.isPrimitiveClass or
+         // Class.isIdentity, fold it at compile-time.  Otherwise, inline a test of the
+         // class flags
+         //
+         if (classChildConstraint
+             && classChildConstraint->isJavaLangClassObject() == TR_yes
+             && classChildConstraint->isNonNullObject()
+             && classChildConstraint->getClassType()
+             && classChildConstraint->getClassType()->asFixedClass())
+            {
+            TR_OpaqueClassBlock *thisClass = classChildConstraint->getClass();
+
+            const int queryResult = ((rm == TR::java_lang_Class_isValue) && TR::Compiler->cls.isValueTypeClass(thisClass))
+                                     || ((rm == TR::java_lang_Class_isPrimitiveClass) && TR::Compiler->cls.isPrimitiveValueTypeClass(thisClass))
+                                     || ((rm == TR::java_lang_Class_isIdentity) && TR::Compiler->cls.classHasIdentity(thisClass));
+            transformCallToIconstInPlaceOrInDelayedTransformations(_curTree, queryResult, classChildGlobal, true, false);
+            TR::DebugCounter::incStaticDebugCounter(comp(), TR::DebugCounter::debugCounterName(comp(), "constrainCall/(%s)", signature));
+            }
+         else if (classChildConstraint
+                  && classChildConstraint->isJavaLangClassObject() == TR_yes
+                  && classChildConstraint->isNonNullObject())
+            {
+            // Consider two cases:
+            //
+            // (i)  The operand is an instance of java.lang.Class indirectly loaded through a vft.  In that case,
+            //      we can work with the vft directly
+            // (ii) The operand is definitely a non-null instance of java.lang.Class.  In that case, load the
+            //      J9Class from the java.lang.Class by way of <classFromJavaLangClass>
+            //
+            // The result of Class.isValueType(), Class.isPrimitiveValueType() or Class.isIdentity() can then
+            // be determined by checking the corresponding bit in the classFlags field.
+            TR::SymbolReference *symRef = classChild->getOpCode().hasSymbolReference() ? classChild->getSymbolReference() : NULL;
+            TR::Node *classOperand = NULL;
+
+            if ((symRef != NULL) && (symRef == comp()->getSymRefTab()->findJavaLangClassFromClassSymbolRef()))
+               {
+               classOperand = classChild->getFirstChild();
+               }
+            else
+               {
+               classOperand = TR::Node::createWithSymRef(TR::aloadi, 1, 1, classChild,
+                                                      comp()->getSymRefTab()->findOrCreateClassFromJavaLangClassSymbolRef());
+               }
+
+            TR::Node *testFlagsNode = NULL;
+            TR::ILOpCodes testFlagsCompareOp;
+
+            switch (rm)
+               {
+               case TR::java_lang_Class_isValue:
+                  {
+                  testFlagsNode = comp()->fej9()->testIsClassValueType(classOperand);
+                  break;
+                  }
+               case TR::java_lang_Class_isPrimitiveClass:
+                  {
+                  testFlagsNode = comp()->fej9()->testIsClassPrimitiveValueType(classOperand);
+                  break;
+                  }
+               case TR::java_lang_Class_isIdentity:
+                  {
+                  testFlagsNode = comp()->fej9()->testIsClassIdentityType(classOperand);
+                  break;
+                  }
+               default:
+                  {
+                  TR_ASSERT_FATAL(false, "%s:  How did we get here?\n", __FUNCTION__);
+                  break;
+                  }
+               }
+
+            // The testIsClass*Type methods will produce IL whose result is zero if the specified
+            // flags(s) are not set, and non-zero if any of the specified flag(s) are set;
+            // compare the result to zero to force the result to be zero or one.
+            //
+            TR::Node *inlineFlagsTest = TR::Node::create(node, TR::icmpne, 2, testFlagsNode, TR::Node::iconst(node, 0));
+            transformCallToNodeDelayedTransformations(_curTree, inlineFlagsTest, false);
+            }
+
+         break;
+         }
       case TR::java_lang_Class_getComponentType:
          {
          TR::Node *classChild = node->getLastChild();
