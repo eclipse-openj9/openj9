@@ -2865,6 +2865,12 @@ TR_J9VMBase::testIsClassPrimitiveValueType(TR::Node *j9ClassRefNode)
    }
 
 TR::Node *
+TR_J9VMBase::testIsClassIdentityType(TR::Node *j9ClassRefNode)
+   {
+   return testAreSomeClassFlagsSet(j9ClassRefNode, J9ClassHasIdentity);
+   }
+
+TR::Node *
 TR_J9VMBase::checkSomeArrayCompClassFlags(TR::Node *arrayBaseAddressNode, TR::ILOpCodes ifCmpOp, uint32_t flagsToTest)
    {
    TR::SymbolReference *vftSymRef = TR::comp()->getSymRefTab()->findOrCreateVftSymbolRef();
