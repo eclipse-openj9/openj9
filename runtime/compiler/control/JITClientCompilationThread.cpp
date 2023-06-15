@@ -3181,7 +3181,6 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
    CHTableCommitData chTableData;
    std::vector<TR_OpaqueClassBlock *> classesThatShouldNotBeNewlyExtended;
    std::string logFileStr;
-   std::string svmValueToSymbolStr;
    std::vector<TR_ResolvedJ9Method *> resolvedMirrorMethodsPersistIPInfo;
    TR_OptimizationPlan modifiedOptPlan;
    std::vector<SerializedRuntimeAssumption> serializedRuntimeAssumptions;
@@ -3221,7 +3220,7 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
       if (JITServer::MessageType::compilationCode == response)
          {
          auto recv = client->getRecvData<
-            std::string, std::string, CHTableCommitData, std::vector<TR_OpaqueClassBlock*>, std::string, std::string,
+            std::string, std::string, CHTableCommitData, std::vector<TR_OpaqueClassBlock*>, std::string,
             std::vector<TR_ResolvedJ9Method*>, TR_OptimizationPlan, std::vector<SerializedRuntimeAssumption>,
             JITServer::ServerMemoryState, JITServer::ServerActiveThreadsState, std::vector<TR_OpaqueMethodBlock *>
          >();
@@ -3231,13 +3230,12 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
          chTableData = std::get<2>(recv);
          classesThatShouldNotBeNewlyExtended = std::get<3>(recv);
          logFileStr = std::get<4>(recv);
-         svmValueToSymbolStr = std::get<5>(recv);
-         resolvedMirrorMethodsPersistIPInfo = std::get<6>(recv);
-         modifiedOptPlan = std::get<7>(recv);
-         serializedRuntimeAssumptions = std::get<8>(recv);
-         JITServer::ServerMemoryState nextMemoryState = std::get<9>(recv);
-         JITServer::ServerActiveThreadsState nextActiveThreadState = std::get<10>(recv);
-         methodsRequiringTrampolines = std::get<11>(recv);
+         resolvedMirrorMethodsPersistIPInfo = std::get<5>(recv);
+         modifiedOptPlan = std::get<6>(recv);
+         serializedRuntimeAssumptions = std::get<7>(recv);
+         JITServer::ServerMemoryState nextMemoryState = std::get<8>(recv);
+         JITServer::ServerActiveThreadsState nextActiveThreadState = std::get<9>(recv);
+         methodsRequiringTrampolines = std::get<10>(recv);
 
          updateCompThreadActivationPolicy(compInfoPT, nextMemoryState, nextActiveThreadState);
 
@@ -3468,8 +3466,6 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
             // Compilation is done, now we need client to validate all of the records accumulated by the server,
             // so need to exit heuristic region.
             compiler->exitHeuristicRegion();
-            // Populate symbol to id map
-            compiler->getSymbolValidationManager()->deserializeValueToSymbolMap(svmValueToSymbolStr);
             }
 
          TR_ASSERT(codeCacheStr.size(), "must have code cache");
