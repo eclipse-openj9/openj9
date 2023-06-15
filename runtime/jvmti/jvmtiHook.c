@@ -2046,9 +2046,11 @@ jvmtiHookMonitorWaited(J9HookInterface** hook, UDATA eventNum, void* eventData, 
 static void
 jvmtiHookFramePop(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData)
 {
-	J9JVMTIEnv * j9env = userData;
-	J9VMFramePopEvent * data = eventData;
+	J9JVMTIEnv *j9env = userData;
+	J9VMFramePopEvent *data = eventData;
 	jvmtiEventFramePop callback = j9env->callbacks.FramePop;
+	J9VMThread *currentThread = data->currentThread;
+	J9Method *method = data->method;
 
 	Trc_JVMTI_jvmtiHookFramePop_Entry();
 
@@ -2056,15 +2058,12 @@ jvmtiHookFramePop(J9HookInterface** hook, UDATA eventNum, void* eventData, void*
 
 	/* Call the event callback */
 
-	if (callback != NULL) {
-		J9VMThread * currentThread= data->currentThread;
+	if ((NULL != callback) && shouldPostEvent(currentThread, method)) {
 		jthread threadRef;
 		UDATA hadVMAccess;
 		UDATA javaOffloadOldState = 0;
-
 		if (prepareForEvent(j9env, currentThread, currentThread, JVMTI_EVENT_FRAME_POP, &threadRef, &hadVMAccess, TRUE, 0, &javaOffloadOldState)) {
-			J9JavaVM * vm = currentThread->javaVM;
-			J9Method * method= data->method;
+			J9JavaVM *vm = currentThread->javaVM;
 			jmethodID methodID;
 
 			methodID = getCurrentMethodID(currentThread, method);
