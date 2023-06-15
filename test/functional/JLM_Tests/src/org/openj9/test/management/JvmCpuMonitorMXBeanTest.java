@@ -463,7 +463,7 @@ public class JvmCpuMonitorMXBeanTest {
 		}
 
 		lock.waitForEvent("child started");
-		logger.debug("staring remoteServet finished");
+		logger.debug("starting remoteServer finished");
 	}
 
 	/**
