@@ -130,6 +130,7 @@
 			TR_Options=$(Q)disableSuffixLogs$(Q) \
 			$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -Xdump \
 			-DSCRIPPATH=$(TEST_RESROOT)$(D)criuScript.sh -DTEST_RESROOT=$(TEST_RESROOT) \
+			-DCATSCRIPPATH=$(TEST_RESROOT)$(D)criuCatVlog.sh \
 			-DJAVA_COMMAND=$(JAVA_COMMAND) -DJVM_OPTIONS=$(Q)$(JVM_OPTIONS)$(Q) \
 			-jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)criu_jitPostRestore.xml$(Q) \
 			-explainExcludes -xids all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
@@ -159,6 +160,7 @@
 				TR_Options=$(Q)disableSuffixLogs$(Q) \
 				$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -Xdump \
 				-DSCRIPPATH=$(TEST_RESROOT)$(D)criuJitServerScript.sh -DTEST_RESROOT=$(TEST_RESROOT) \
+				-DCATSCRIPPATH=$(TEST_RESROOT)$(D)criuCatVlog.sh \
 				-DTEST_JDK_BIN=$(TEST_JDK_BIN) -DJVM_OPTIONS=$(Q)$(JVM_OPTIONS)$(Q) \
 				-jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)criu_jitserverAcrossCheckpoint.xml$(Q) \
 				-explainExcludes -xids all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
@@ -196,6 +198,7 @@
 				TR_Options=$(Q)disableSuffixLogs$(Q) \
 				$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -Xdump \
 				-DSCRIPPATH=$(TEST_RESROOT)$(D)criuJitServerScript.sh -DTEST_RESROOT=$(TEST_RESROOT) \
+				-DCATSCRIPPATH=$(TEST_RESROOT)$(D)criuCatVlog.sh \
 				-DTEST_JDK_BIN=$(TEST_JDK_BIN) -DJVM_OPTIONS=$(Q)$(JVM_OPTIONS)$(Q) \
 				-jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)criu_jitserverPostRestore.xml$(Q) \
 				-explainExcludes -xids all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
