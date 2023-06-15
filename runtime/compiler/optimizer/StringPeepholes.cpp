@@ -779,7 +779,7 @@ TR::TreeTop *TR_StringPeepholes::detectSubMulSetScalePattern(TR::TreeTop *tt, TR
    bool foundPattern = false;
 
    if (trace())
-      traceMsg(comp(), "Looking for subtract multiply setscale pattern in block %d, staring at tt: %p, node: %p\n", firstTree->getEnclosingBlock()->getNumber(), firstTree, firstTree->getNode());
+      traceMsg(comp(), "Looking for subtract multiply setscale pattern in block %d, starting at tt: %p, node: %p\n", firstTree->getEnclosingBlock()->getNumber(), firstTree, firstTree->getNode());
 
    for (; !foundPattern && tt != exit; tt = tt->getNextRealTreeTop())
       {

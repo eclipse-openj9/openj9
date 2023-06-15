@@ -610,7 +610,7 @@ public class TestOpenJ9DiagnosticsMXBean {
 		remoteServer = builder.start();
 
 		lock.waitForEvent("child started");
-		logger.info("Staring remote server finished");
+		logger.info("Starting remote server finished");
 	} 
 
 	/**

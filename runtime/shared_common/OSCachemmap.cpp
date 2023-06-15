@@ -668,7 +668,7 @@ SH_OSCachemmap::acquireWriteLock(UDATA lockID)
 	while ((rc == -1) && (j9error_last_error_number() == J9PORT_ERROR_FILE_LOCK_EDEADLK)) {
 		if (++loopCount > 1) {
 			/* We time the loop so it doesn't loop forever. Try the lock algorithm below
-			 * once before staring the timer. */
+			 * once before starting the timer. */
 			if (startLoopTime == 0) {
 				startLoopTime = j9time_nano_time();
 			} else if (loopCount > 2) {
