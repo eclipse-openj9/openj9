@@ -181,13 +181,13 @@ improperly referenced, and the commit is not signed off by the author.
 
 ### Other resources for writing good commits
 
-- http://chris.beams.io/posts/git-commit/
+- https://cbea.ms/git-commit/
 
 ## Legal considerations
 
-Please read the [Eclipse Foundation policy on accepting contributions via Git](http://wiki.eclipse.org/Development_Resources/Contributing_via_Git).
+Please read the [Eclipse Foundation policy on accepting contributions via Git](https://wiki.eclipse.org/Development_Resources/Contributing_via_Git).
 
-Your contribution cannot be accepted unless you have a signed [ECA - Eclipse Foundation Contributor Agreement](http://www.eclipse.org/legal/ECA.php) in place. If you have an active signed Eclipse CLA
+Your contribution cannot be accepted unless you have a signed [ECA - Eclipse Foundation Contributor Agreement](https://www.eclipse.org/legal/ECA.php) in place. If you have an active signed Eclipse CLA
 ([the CLA was updated by the Eclipse Foundation to become the ECA in August 2016](https://mmilinkov.wordpress.com/2016/08/15/contributor-agreement-update/)),
 then that signed CLA is sufficient. You will have to sign the ECA once your CLA expires.
 

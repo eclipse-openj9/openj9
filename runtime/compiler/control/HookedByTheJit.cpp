@@ -3237,7 +3237,7 @@ int32_t getAvailableVirtualMemoryMB(TR::CompilationInfo *compInfo, J9VMThread *v
    uint32_t totalVirtualMemoryMB = (uint32_t)TR::Options::_userSpaceVirtualMemoryMB;
 
    /*
-   See http://man7.org/linux/man-pages/man5/proc.5.html or run "man proc" for information on the
+   See https://man7.org/linux/man-pages/man5/proc.5.html or run "man proc" for information on the
    /proc pseudo filesystem. The file we're using to get the virtual memory information
    is /proc/self/status. A small glimpse into the file:
 

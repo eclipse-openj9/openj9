@@ -226,7 +226,7 @@ OpenJDK  - 27f5b8f based on jdk8u152-b03)
 
 :pencil: **OpenSSL support:** If you built an OpenJDK with OpenJ9 that includes OpenSSL v1.1.x support, the following acknowledgements apply in accordance with the license terms:
 
-  - *This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit. (http://www.openssl.org/).*
+  - *This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit. (https://www.openssl.org/).*
   - *This product includes cryptographic software written by Eric Young (eay@cryptsoft.com).*
 
 :penguin: *Congratulations!* :tada:
@@ -362,7 +362,7 @@ OpenJDK  - 27f5b8f based on jdk8u152-b03)
 
 :pencil: **OpenSSL support:** If you built an OpenJDK with OpenJ9 that includes OpenSSL v1.1.x support, the following acknowledgements apply in accordance with the license terms:
 
-  - *This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit. (http://www.openssl.org/).*
+  - *This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit. (https://www.openssl.org/).*
   - *This product includes cryptographic software written by Eric Young (eay@cryptsoft.com).*
 
 :blue_book: *Congratulations!* :tada:
@@ -381,7 +381,7 @@ You must install a number of software dependencies to create a suitable build en
 - [Windows JDK 8](https://api.adoptopenjdk.net/v3/binary/latest/8/ga/windows/x64/jdk/openj9/normal/adoptopenjdk), which is used as the boot JDK.
 - [Microsoft Visual Studio 2019](https://aka.ms/vs/16/release/vs_community.exe), which is the version currently used by OpenJ9 builds.
 - [Freemarker V2.3.8](https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download) - only when building with `--with-cmake=no`
-- [LLVM/Clang 64bit](http://releases.llvm.org/7.0.0/LLVM-7.0.0-win64.exe) or [LLVM/Clang 32bit](http://releases.llvm.org/7.0.0/LLVM-7.0.0-win32.exe)
+- [LLVM/Clang 64bit](https://releases.llvm.org/7.0.0/LLVM-7.0.0-win64.exe) or [LLVM/Clang 32bit](https://releases.llvm.org/7.0.0/LLVM-7.0.0-win32.exe)
 - [NASM Assembler v2.13.03 or newer](https://www.nasm.us/pub/nasm/releasebuilds/?C=M;O=D)
 
 Add the binary path of Clang to the `PATH` environment variable to override the older version of clang integrated in Cygwin. e.g.
@@ -549,7 +549,7 @@ JCL      - 7f27c537a8 based on jdk8u172-b11)
 
 :pencil: **OpenSSL support:** If you built an OpenJDK with OpenJ9 that includes OpenSSL v1.1.x support, the following acknowledgements apply in accordance with the license terms:
 
-  - *This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit. (http://www.openssl.org/).*
+  - *This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit. (https://www.openssl.org/).*
   - *This product includes cryptographic software written by Eric Young (eay@cryptsoft.com).*
 
 :ledger: *Congratulations!* :tada:
@@ -700,7 +700,7 @@ JCL      - fcd436bf56 based on jdk8u192-b03)
 
 :pencil: **OpenSSL support:** If you built an OpenJDK with OpenJ9 that includes OpenSSL v1.1.x support, the following acknowledgements apply in accordance with the license terms:
 
-- *This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit. (http://www.openssl.org/).*
+- *This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit. (https://www.openssl.org/).*
 - *This product includes cryptographic software written by Eric Young (eay@cryptsoft.com).*
 
 :ledger: *Congratulations!* :tada:
@@ -817,7 +817,7 @@ JCL      - 28815f64 based on jdk8u265-b01)
 
 :pencil: **OpenSSL support:** If you built an OpenJDK with OpenJ9 that includes OpenSSL v1.1.x support, the following acknowledgements apply in accordance with the license terms:
 
-  - *This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit. (http://www.openssl.org/).*
+  - *This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit. (https://www.openssl.org/).*
   - *This product includes cryptographic software written by Eric Young (eay@cryptsoft.com).*
 
 :penguin: *Congratulations!* :tada:

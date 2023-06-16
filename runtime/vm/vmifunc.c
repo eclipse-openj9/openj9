@@ -192,7 +192,7 @@ vmi_getPortLibrary(VMInterface* vmi)
  * <TABLE>
  * <TR><TD><B>Property Name</B></TD>			<TD><B>Example Value or Description</B></TD></TR>
  * <TR><TD>java.vendor</TD>			<TD>"Eclipse OpenJ9"</TD></TR>
- * <TR><TD>java.vendor.url</TD>			<TD>"http://www.eclipse.org/openj9"</TD></TR>
+ * <TR><TD>java.vendor.url</TD>			<TD>"https://www.eclipse.org/openj9"</TD></TR>
  * <TR><TD>java.specification.version</TD>	<TD>"1.8"</TD></TR>
  * <TR><TD>java.vm.specification.version</TD>	<TD>"1.8"</TD></TR>
  * <TR><TD>java.vm.specification.vendor</TD>	<TD>"Oracle Corporation"</TD></TR>

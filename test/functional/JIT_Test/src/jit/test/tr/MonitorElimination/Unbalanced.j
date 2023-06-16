@@ -1,5 +1,5 @@
 ; This file designed to be assembled by the jasmin tool
-; Jasmin can be obtained from http://jasmin.sourceforge.net/
+; Jasmin can be obtained from https://jasmin.sourceforge.net/
 
 ;  Copyright IBM Corp. and others 2016
 ;  This program and the accompanying materials are made available under
