@@ -379,9 +379,7 @@ You must install a number of software dependencies to create a suitable build en
 
 - [Cygwin for 64-bit versions of Windows](https://cygwin.com/install.html), which provides a Unix-style command line interface. Install all packages in the `Devel` category. In the `Archive` category, install the packages `zip` and `unzip`. In the `Utils` category, install the `cpio` package. Install any further package dependencies that are identified by the installer. More information about using Cygwin can be found [here](https://cygwin.com/docs.html).
 - [Windows JDK 8](https://api.adoptopenjdk.net/v3/binary/latest/8/ga/windows/x64/jdk/openj9/normal/adoptopenjdk), which is used as the boot JDK.
-- [Windows SDK 7 Debugging tools](https://www.microsoft.com/download/confirmation.aspx?id=8279).
-- [Microsoft Visual Studio 2013 Professional](https://www.visualstudio.com/vs/older-downloads/) OR
-- [Microsoft Visual Studio 2017](https://visualstudio.microsoft.com/thank-you-downloading-visual-studio/?sku=Community&rel=15), the OpenJ9 project is using this level.
+- [Microsoft Visual Studio 2019](https://aka.ms/vs/16/release/vs_community.exe), which is the version currently used by OpenJ9 builds.
 - [Freemarker V2.3.8](https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download) - only when building with `--with-cmake=no`
 - [LLVM/Clang 64bit](http://releases.llvm.org/7.0.0/LLVM-7.0.0-win64.exe) or [LLVM/Clang 32bit](http://releases.llvm.org/7.0.0/LLVM-7.0.0-win32.exe)
 - [NASM Assembler v2.13.03 or newer](https://www.nasm.us/pub/nasm/releasebuilds/?C=M;O=D)
@@ -396,13 +394,6 @@ export PATH="/cygdrive/c/Program Files/LLVM_32/bin:$PATH" (in Cygwin for 32bit)
 Add the path to `nasm.exe` to the `PATH` environment variable to override the older version of NASM installed in Cygwin. e.g.
 ```
 export PATH="/cygdrive/c/Program Files/NASM:$PATH" (in Cygwin)
-```
-
-Update your `LIB` and `INCLUDE` environment variables to provide a path to the Windows debugging tools with the following commands:
-
-```
-set INCLUDE=C:\Program Files\Debugging Tools for Windows (x64)\sdk\inc;%INCLUDE%
-set LIB=C:\Program Files\Debugging Tools for Windows (x64)\sdk\lib;%LIB%
 ```
 
 Not all of the shared libraries that are included with Visual Studio 2013 or 2017 are registered during installation.
