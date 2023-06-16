@@ -7749,6 +7749,20 @@ TR_J9VM::inlineNativeCall(TR::Compilation * comp, TR::TreeTop * callNodeTreeTop,
             if (!ReferenceClass)
                return 0;
 
+            int32_t offset =
+               getInstanceFieldOffset(ReferenceClass, REFERENCEFIELD, REFERENCEFIELDLEN, REFERENCERETURNTYPE, REFERENCERETURNTYPELEN, J9_RESOLVE_FLAG_INIT_CLASS);
+
+            // Guard against the possibility that the "referent" field can't be retrieved
+            // under AOT compilation, or (less likely) that the field has been renamed
+            // or otherwise removed in some future version of Java
+            //
+            if (offset == FIELD_OFFSET_NOT_FOUND)
+               {
+               return 0;
+               }
+
+            offset += (int32_t)getObjectHeaderSizeInBytes();  // size of a J9 object header to move past it
+
             // This pointer of Reference
             TR::Node * thisNode = callNode->getFirstChild();
 
@@ -7768,10 +7782,6 @@ TR_J9VM::inlineNativeCall(TR::Compilation * comp, TR::TreeTop * callNodeTreeTop,
                nullchk->getAndDecChild(0);
                nullchk->setAndIncChild(0, TR::Node::create(TR::PassThrough, 1, thisNode));
                }
-
-            int32_t offset =
-               getInstanceFieldOffset(ReferenceClass, REFERENCEFIELD, REFERENCEFIELDLEN, REFERENCERETURNTYPE, REFERENCERETURNTYPELEN, J9_RESOLVE_FLAG_INIT_CLASS);
-            offset += (int32_t)getObjectHeaderSizeInBytes();  // size of a J9 object header to move past it
 
             // Generate reference symbol
             TR::SymbolReference * symRefField = comp->getSymRefTab()->findOrCreateJavaLangReferenceReferentShadowSymbol(callerSymRef->getOwningMethodSymbol(comp),
@@ -9201,18 +9211,6 @@ bool
 TR_J9SharedCacheVM::classHasBeenExtended(TR_OpaqueClassBlock * classPointer)
    {
    return true;
-   }
-
-bool
-TR_J9SharedCacheVM::isGetImplInliningSupported()
-   {
-   return isGetImplAndRefersToInliningSupported();
-   }
-
-bool
-TR_J9SharedCacheVM::isGetImplAndRefersToInliningSupported()
-   {
-   return false;
    }
 
 TR_ResolvedMethod *
