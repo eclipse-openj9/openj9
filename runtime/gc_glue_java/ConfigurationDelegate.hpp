@@ -39,6 +39,7 @@
 #include "HeapRegionDescriptor.hpp"
 #include "HeapRegionDescriptorStandardExtension.hpp"
 #include "HeapRegionManager.hpp"
+#include "HeapRegionIterator.hpp"
 #include "ObjectAccessBarrier.hpp"
 #include "ObjectAllocationInterface.hpp"
 #include "StringTable.hpp"
@@ -153,6 +154,40 @@ public:
 		}
 		return regionExtension;
 	}
+
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	void
+	reinitializeGCParameters(MM_EnvironmentBase* env)
+	{
+		/* reinitialize the size of Local Object Buffers */
+		uintptr_t objectListFragmentCount = (4 * _extensions->gcThreadCount) + 4;
+		_extensions->objectListFragmentCount = OMR_MAX(_extensions->objectListFragmentCount, objectListFragmentCount);
+	}
+
+	bool
+	reinitializeForRestore(MM_EnvironmentBase* env)
+	{
+		Assert_MM_true(_extensions->isStandardGC());
+
+		reinitializeGCParameters(env);
+
+		MM_HeapRegionDescriptor *region = NULL;
+		GC_HeapRegionIterator regionIterator(_extensions->heap->getHeapRegionManager());
+
+		_extensions->unfinalizedObjectLists = NULL;
+		_extensions->setOwnableSynchronizerObjectLists(NULL);
+		_extensions->setContinuationObjectLists(NULL);
+
+		while (NULL != (region = regionIterator.nextRegion())) {
+			MM_HeapRegionDescriptorStandardExtension *regionExtension = getHeapRegionDescriptorStandardExtension(env, region);
+			if (!regionExtension->reinitializeForRestore(env)) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 	bool
 	initializeHeapRegionDescriptorExtension(MM_EnvironmentBase *env, MM_HeapRegionDescriptor *region)

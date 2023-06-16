@@ -45,13 +45,22 @@ MM_ReferenceObjectList::MM_ReferenceObjectList()
 }
 
 MM_ReferenceObjectList *
-MM_ReferenceObjectList::newInstanceArray(MM_EnvironmentBase *env, uintptr_t arrayElements)
+MM_ReferenceObjectList::newInstanceArray(MM_EnvironmentBase *env, uintptr_t arrayElementsTotal, MM_ReferenceObjectList *listsToCopy, uintptr_t arrayElementsToCopy)
 {
-	MM_ReferenceObjectList *referenceObjectLists;
+	MM_ReferenceObjectList *referenceObjectLists = NULL;
 
-	referenceObjectLists = (MM_ReferenceObjectList *)env->getForge()->allocate(sizeof(MM_ReferenceObjectList) * arrayElements,  MM_AllocationCategory::FIXED, J9_GET_CALLSITE());
+	referenceObjectLists = (MM_ReferenceObjectList *)env->getForge()->allocate(sizeof(MM_ReferenceObjectList) * arrayElementsTotal,  MM_AllocationCategory::FIXED, J9_GET_CALLSITE());
 	if (NULL != referenceObjectLists) {
-		for (uintptr_t index = 0; index < arrayElements; index++) {
+		Assert_MM_true(arrayElementsTotal >= arrayElementsToCopy);
+		/* Check whether a new array instance in being created from an existing array. If so, copy over the elements first. */
+		if (arrayElementsToCopy > 0) {
+			for (uintptr_t index = 0; index < arrayElementsToCopy; index++) {
+				referenceObjectLists[index] = listsToCopy[index];
+				referenceObjectLists[index].initialize(env);
+			}
+		}
+
+		for (uintptr_t index = arrayElementsToCopy; index < arrayElementsTotal; index++) {
 			new(&referenceObjectLists[index]) MM_ReferenceObjectList();
 			referenceObjectLists[index].initialize(env);
 		}
