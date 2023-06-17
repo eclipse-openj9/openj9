@@ -2834,7 +2834,7 @@ remoteCompilationEnd(J9VMThread *vmThread, TR::Compilation *comp, TR_ResolvedMet
                      J9Method *method, TR::CompilationInfoPerThreadBase *compInfoPT,
                      const std::string &codeCacheStr, const std::string &dataCacheStr)
    {
-   TR_MethodMetaData *relocatedMetaData = NULL;
+   TR_MethodMetaData *metaData = NULL;
    TR_J9VM *fe = comp->fej9vm();
    TR_MethodToBeCompiled *entry = compInfoPT->getMethodBeingCompiled();
    J9JITConfig *jitConfig = compInfoPT->getJitConfig();
@@ -2846,12 +2846,12 @@ remoteCompilationEnd(J9VMThread *vmThread, TR::Compilation *comp, TR_ResolvedMet
       {
       compInfoPT->reloRuntime()->setReloStartTime(compInfoPT->getTimeWhenCompStarted());
 
-      relocatedMetaData = compInfoPT->reloRuntime()->prepareRelocateAOTCodeAndData(
+      metaData = compInfoPT->reloRuntime()->prepareRelocateAOTCodeAndData(
          vmThread, fe, comp->cg()->getCodeCache(), (J9JITDataCacheHeader *)dataCacheStr.data(),
          method, false, comp->getOptions(), comp, compilee, (uint8_t *)codeCacheStr.data()
       );
 
-      if (!relocatedMetaData)
+      if (!metaData)
          {
          if (TR::Options::getVerboseOption(TR_VerboseJITServer))
             {
@@ -2871,11 +2871,6 @@ remoteCompilationEnd(J9VMThread *vmThread, TR::Compilation *comp, TR_ResolvedMet
       TR_ASSERT(entry->_useAotCompilation || comp->isDeserializedAOTMethod(),
                 "entry must be an AOT compilation or a deserialized AOT method");
       TR_ASSERT(entry->isRemoteCompReq(), "entry must be a remote compilation");
-      J9ROMMethod *romMethod = comp->fej9()->getROMMethodFromRAMMethod(method);
-      TR::CompilationInfo::storeAOTInSharedCache(
-         vmThread, romMethod, (uint8_t *)dataCacheStr.data(), dataCacheStr.size(),
-         (uint8_t *)codeCacheStr.data(), codeCacheStr.size(), comp, jitConfig, entry
-      );
 
 #if defined(J9VM_INTERP_AOT_RUNTIME_SUPPORT)
       bool canRelocateMethod = TR::CompilationInfo::canRelocateMethod(comp);
@@ -2898,7 +2893,7 @@ remoteCompilationEnd(J9VMThread *vmThread, TR::Compilation *comp, TR_ResolvedMet
             {
             // Need to get a non-shared cache VM to relocate
             TR_J9VMBase *fe = TR_J9VMBase::get(jitConfig, vmThread);
-            relocatedMetaData = entry->_compInfoPT->reloRuntime()->prepareRelocateAOTCodeAndData(
+            metaData = entry->_compInfoPT->reloRuntime()->prepareRelocateAOTCodeAndData(
                vmThread, fe, comp->cg()->getCodeCache(), (J9JITDataCacheHeader *)dataCacheStr.data(),
                method, false, comp->getOptions(), comp, compilee, (uint8_t *)codeCacheStr.data()
             );
@@ -2910,7 +2905,7 @@ remoteCompilationEnd(J9VMThread *vmThread, TR::Compilation *comp, TR_ResolvedMet
             returnCode = compilationAotRelocationInterrupted;
             }
 
-         if (relocatedMetaData)
+         if (metaData)
             {
             if (TR::Options::getVerboseOption(TR_VerboseJITServer))
                {
@@ -2919,7 +2914,7 @@ remoteCompilationEnd(J9VMThread *vmThread, TR::Compilation *comp, TR_ResolvedMet
 
             if (J9_EVENT_IS_HOOKED(jitConfig->javaVM->hookInterface, J9HOOK_VM_DYNAMIC_CODE_LOAD))
                {
-               TR::CompilationInfo::addJ9HookVMDynamicCodeLoadForAOT(vmThread, method, jitConfig, relocatedMetaData);
+               TR::CompilationInfo::addJ9HookVMDynamicCodeLoadForAOT(vmThread, method, jitConfig, metaData);
                }
             }
          else
@@ -2954,18 +2949,23 @@ remoteCompilationEnd(J9VMThread *vmThread, TR::Compilation *comp, TR_ResolvedMet
          // We still need metadata, because metaData->startPC != 0 indicates that compilation
          // didn't actually fail.
          J9JITDataCacheHeader *dataCacheHeader = (J9JITDataCacheHeader *)dataCacheStr.data();
-         J9JITExceptionTable *metaData = compInfoPT->reloRuntime()->copyMethodMetaData(dataCacheHeader);
+         metaData = compInfoPT->reloRuntime()->copyMethodMetaData(dataCacheHeader);
          // Temporarily store meta data pointer.
          // This is not exactly how it's used in baseline, but in remote AOT we do not use
          // AOT method data start for anything else, so should be fine.
          comp->setAotMethodDataStart(metaData);
          TR::CompilationInfo::replenishInvocationCount(method, comp);
-         return metaData;
          }
 #endif /* J9VM_INTERP_AOT_RUNTIME_SUPPORT */
+
+      J9ROMMethod *romMethod = comp->fej9()->getROMMethodFromRAMMethod(method);
+      TR::CompilationInfo::storeAOTInSharedCache(
+         vmThread, romMethod, (uint8_t *)dataCacheStr.data(), dataCacheStr.size(),
+         (uint8_t *)codeCacheStr.data(), codeCacheStr.size(), comp, jitConfig, entry
+      );
       }
 #endif // defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
-   return relocatedMetaData;
+   return metaData;
    }
 
 void
