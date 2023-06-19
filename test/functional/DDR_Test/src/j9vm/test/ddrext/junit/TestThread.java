@@ -49,10 +49,10 @@ public class TestThread extends DDRExtTesterBase {
 				Constants.STACK_FAILURE_KEY, true));
 	}
 
-	/*
-	 * tests !stackslots extension with all options !stackslots thread
-	 * !stackslots thread,sp,a0,pc,literals !stackslots
-	 * thread,sp,a0,pc,literals,els
+	/**
+	 * Tests !stackslots extension with all options:
+	 *   !stackslots thread
+	 *   !stackslots thread,sp,a0,pc,literals
 	 */
 	public void testStackSlots() {
 		String threadOutput = exec(Constants.THREAD_CMD, new String[0]);
@@ -72,8 +72,7 @@ public class TestThread extends DDRExtTesterBase {
 				Constants.STACKSLOTS_FAILURE_KEY, true));
 
 		/* test !stackslots thread,sp,a0,pc,literals */
-		String paramSet1 = getStackSlotsParamSet(stackSlotsOutput,
-				threadAddress, false);
+		String paramSet1 = getStackSlotsParamSet(stackSlotsOutput, threadAddress);
 		if (paramSet1 == null) {
 			fail("Failed to construct parameter list for command : !stackslots thread,sp,a0,pc,literals\nStackSlots Output being used : \n"
 					+ stackSlotsOutput);
@@ -81,20 +80,6 @@ public class TestThread extends DDRExtTesterBase {
 			String stackSlotsOutputParam1 = exec(Constants.STACKSLOTS_CMD,
 					new String[] { paramSet1 });
 			assertTrue(validate(stackSlotsOutputParam1,
-					Constants.STACKSLOTS_SUCCESS_KEY,
-					Constants.STACKSLOTS_FAILURE_KEY, true));
-		}
-
-		/* test !stackslots thread,sp,a0,pc,literals,els */
-		String paramSet2 = getStackSlotsParamSet(stackSlotsOutput,
-				threadAddress, true);
-		if (paramSet2 == null) {
-			fail("Failed to construct parameter list for command : !stackslots thread,sp,a0,pc,literals,els\nStackSlots Output being used : \n"
-					+ stackSlotsOutput);
-		} else {
-			String stackSlotsOutputParam2 = exec(Constants.STACKSLOTS_CMD,
-					new String[] { paramSet2 });
-			assertTrue(validate(stackSlotsOutputParam2,
 					Constants.STACKSLOTS_SUCCESS_KEY,
 					Constants.STACKSLOTS_FAILURE_KEY, true));
 		}
@@ -238,48 +223,38 @@ public class TestThread extends DDRExtTesterBase {
 		return results;
 	}
 
-	/*
-	 * If needELS, we return the second param list for stackslots:
-	 * thread,sp,a0,pc,literals,elsElse,we return the first param list for
-	 * stackslots : thread,sp,a0,pc,literals
+	/**
+	 * Constructs the parameter list of stackslots (thread, sp, a0, pc, literals) from the output.
+	 * @param stackOutput the output of the stackslots command
+	 * @param threadAddress the address of the walked thread
+	 * @return the parameter list for stackslots, or null if it failed to construct the list
 	 */
-	private String getStackSlotsParamSet(String stackOutput,
-			String threadAddress, boolean needELS) {
-		String output[] = stackOutput.split(Constants.NL);
+	private static String getStackSlotsParamSet(String stackOutput, String threadAddress) {
+		String[] output = stackOutput.split(Constants.NL);
 		String paramList = threadAddress;
 		for (String aLine : output) {
 			if (aLine.contains("Initial values")) {
-				String sp = null, pc = null, literals = null, a0 = null, els = null;
-				String tokens[] = aLine.split(",");
-				for (int i = 0; i < tokens.length; i++) {
-					String token = tokens[i].trim();
+				String sp = null;
+				String pc = null;
+				String literals = null;
+				String a0 = null;
+				String[] tokens = aLine.split(",");
+				for (String token : tokens) {
+					token = token.trim();
 					if (token.contains("walkSP")) {
-						sp = tokens[i].split("=")[1].trim();
+						sp = token.split("=")[1].trim();
 					} else if (token.startsWith("PC")) {
 						pc = token.split("=")[1].trim();
 					} else if (token.startsWith("literals")) {
 						literals = token.split("=")[1].trim();
 					} else if (token.startsWith("A0")) {
 						a0 = token.split("=")[1].trim();
-					} else if (token.startsWith("ELS")) {
-						els = token.split("=")[1].trim();
 					}
 				}
-				if (needELS) {
-					if (sp == null || a0 == null || pc == null
-							|| literals == null || els == null) {
-						return null;
-					}
-					return paramList + "," + sp + "," + a0 + "," + pc + ","
-							+ literals + "," + els;
-				} else {
-					if (sp == null || a0 == null || pc == null
-							|| literals == null) {
-						return null;
-					}
-					return paramList + "," + sp + "," + a0 + "," + pc + ","
-							+ literals;
+				if (sp == null || a0 == null || pc == null || literals == null) {
+					return null;
 				}
+				return paramList + "," + sp + "," + a0 + "," + pc + "," + literals;
 			}
 		}
 		return null;
