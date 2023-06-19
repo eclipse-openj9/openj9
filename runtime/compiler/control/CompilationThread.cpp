@@ -1176,6 +1176,8 @@ TR::CompilationInfo::CompilationInfo(J9JITConfig *jitConfig) :
    OMRPORT_ACCESS_FROM_J9PORT(jitConfig->javaVM->portLibrary);
    _cgroupMemorySubsystemEnabled = (OMR_CGROUP_SUBSYSTEM_MEMORY == omrsysinfo_cgroup_are_subsystems_enabled(OMR_CGROUP_SUBSYSTEM_MEMORY));
    _suspendThreadDueToLowPhysicalMemory = false;
+   J9MemoryInfo memInfo;
+   _isSwapMemoryDisabled = ((omrsysinfo_get_memory_info(&memInfo) == 0) && (0 == memInfo.totalSwap));
 
    // Initialize the compilation monitor
    //
@@ -2947,6 +2949,9 @@ void TR::CompilationInfo::prepareForRestore()
    J9JavaVM   *vm       = _jitConfig->javaVM;
    J9VMThread *vmThread = vm->internalVMFunctions->currentVMThread(vm);
 
+   PORT_ACCESS_FROM_JAVAVM(vm);
+   OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
+
    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestore))
       TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Preparing for restore");
 
@@ -2967,6 +2972,19 @@ void TR::CompilationInfo::prepareForRestore()
    // Resume suspended compilation threads.
    resumeCompilationThread();
    }
+
+   // Check if there is no swap memory post restore
+   J9MemoryInfo memInfo;
+   if ((omrsysinfo_get_memory_info(&memInfo) == 0) && (0 == memInfo.totalSwap))
+      {
+      setIsSwapMemoryDisabled(true);
+      }
+   else
+      {
+      setIsSwapMemoryDisabled(false);
+      }
+   if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCodeCache))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_CODECACHE, "At Checkpoint Restore:: Swap Memory is %s", isSwapMemoryDisabled()? "disabled":"enabled");
 
    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestore))
       TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Ready for restore");

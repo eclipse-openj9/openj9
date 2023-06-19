@@ -1378,7 +1378,7 @@ onLoadInternal(
       {
       // Code cache total value defaults were overridden due to low memory available
       bool incomplete;
-      uint64_t freePhysicalMemoryB = getCompilationInfo(jitConfig)->computeFreePhysicalMemory(incomplete);
+      uint64_t freePhysicalMemoryB = getCompilationInfo(jitConfig)->computeAndCacheFreePhysicalMemory(incomplete);
       if (freePhysicalMemoryB != OMRPORT_MEMINFO_NOT_AVAILABLE)
          TR_VerboseLog::writeLineLocked(TR_Vlog_CODECACHE, "Available freePhysicalMemory=%llu MB, allocating code cache total size=%lu MB", freePhysicalMemoryB >> 20, jitConfig->codeCacheTotalKB >> 10);
       else
