@@ -899,6 +899,17 @@ public:
     *    VM access is not required
     */
    virtual uintptr_t vTableOrITableIndexFromMemberName(TR::Compilation* comp, TR::KnownObjectTable::Index objIndex);
+
+   /**
+    * \brief
+    *    invokedynamic resolution can either result in a valid entry in the corresponding CallSite table slot if successful,
+    *    or an exception object otherwise. The entry is considered valid when the object in the slot is an array type.
+    *    This helper must be used before trying to access elements of an invokeCacheArray corresponding to an invokedynamic bytecode
+    * \param invokeCacheArray the invokeCacheArray address
+    * \return true if entry is an array type; false otherwise
+    */
+   virtual bool isInvokeCacheEntryAnArray(uintptr_t *invokeCacheArray);
+
    /*
     * \brief
     *    Create and return a resolved method from member name index of an invoke cache array.

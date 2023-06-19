@@ -4863,6 +4863,13 @@ TR_J9VMBase::vTableOrITableIndexFromMemberName(TR::Compilation* comp, TR::KnownO
    return (uintptr_t)-1;
    }
 
+bool
+TR_J9VMBase::isInvokeCacheEntryAnArray(uintptr_t *invokeCacheArray)
+   {
+   TR::VMAccessCriticalSection vmAccess(this);
+   return VM_VMHelpers::objectIsArray(getCurrentVMThread(), (j9object_t) *invokeCacheArray);
+   }
+
 TR::KnownObjectTable::Index
 TR_J9VMBase::getKnotIndexOfInvokeCacheArrayAppendixElement(TR::Compilation *comp, uintptr_t *invokeCacheArray)
    {
