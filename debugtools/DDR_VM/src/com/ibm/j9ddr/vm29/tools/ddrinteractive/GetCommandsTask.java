@@ -37,6 +37,7 @@ import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.CPDescriptionCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.ClassForNameCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.ClassloadersSummaryCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.CompressedRefMappingCommand;
+import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.ContinuationStackWalkCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.CoreInfoCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.DumpAllClassesInModuleCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.DumpAllClassloadersCommand;
@@ -200,6 +201,7 @@ public class GetCommandsTask extends BaseJVMCommands implements IBootstrapRunnab
 		if (J9ConstantPoolCommand.isSupported()) {
 			toPassBack.add(new J9ConstantPoolCommand());
 		}
+		toPassBack.add(new ContinuationStackWalkCommand());
 
 		if (ValueTypeHelper.getValueTypeHelper().areValueTypesSupported()) {
 			toPassBack.add(new FlatObjectCommand());
