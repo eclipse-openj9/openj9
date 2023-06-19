@@ -91,7 +91,7 @@ static void printCustomSpinOptions(void *element, void *userData);
 #endif /* J9VM_INTERP_CUSTOM_SPIN_OPTIONS */
 
 J9VMThread *
-allocateVMThread(J9JavaVM *vm, omrthread_t osThread, UDATA privateFlags, void *memorySpace, J9Object *threadObject, const char *threadName)
+allocateVMThread(J9JavaVM *vm, omrthread_t osThread, UDATA privateFlags, void *memorySpace, J9Object *threadObject)
 {
 	PORT_ACCESS_FROM_PORT(vm->portLibrary);
 	J9JavaStack *stack = NULL;
@@ -205,6 +205,21 @@ allocateVMThread(J9JavaVM *vm, omrthread_t osThread, UDATA privateFlags, void *m
 	newThread->stackObject = stack;
 	newThread->stackOverflowMark = newThread->stackOverflowMark2 = J9JAVASTACK_STACKOVERFLOWMARK(stack);
 	newThread->osThread = osThread;
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	/* JDWP threads need to remain live while checkpoint/restore hooks run, so add
+	 * J9_PRIVATE_FLAGS2_DELAY_HALT_FOR_CHECKPOINT to the new J9VMThread created from a
+	 * JDWP java thread object.
+	 */
+	if (J9_ARE_ALL_BITS_SET(vm->checkpointState.flags, J9VM_CRIU_IS_JDWP_ENABLED)) {
+		for (UDATA i = 0; i < vm->checkpointState.javaDebugThreadCount; i++) {
+			j9object_t jdwpThreadObject = J9_JNI_UNWRAP_REFERENCE(vm->checkpointState.javaDebugThreads[i]);
+			if (jdwpThreadObject == threadObject) {
+				newThread->privateFlags2 |= J9_PRIVATE_FLAGS2_DELAY_HALT_FOR_CHECKPOINT;
+				break;
+			}
+		}
+	}
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 #ifdef J9VM_OPT_JAVA_OFFLOAD_SUPPORT
 	newThread->javaOffloadState = 0;
@@ -292,8 +307,8 @@ allocateVMThread(J9JavaVM *vm, omrthread_t osThread, UDATA privateFlags, void *m
 	}
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 	if (VM_CRIUHelpers::isJVMInSingleThreadMode(vm) && VM_VMHelpers::threadCanRunJavaCode(newThread)) {
-		/* If JDWP is enabled, new JDWP debug threads should not be halted. */
-		if (!vm->internalVMFunctions->isJdwpDebugThread(newThread, threadName)) {
+		/* New threads with the delay halt flag should not be halted here. */
+		if (J9_ARE_NO_BITS_SET(newThread->privateFlags2, J9_PRIVATE_FLAGS2_DELAY_HALT_FOR_CHECKPOINT)) {
 			setHaltFlag(newThread, J9_PUBLIC_FLAGS_HALT_THREAD_FOR_CHECKPOINT);
 		}
 	}
@@ -1951,7 +1966,7 @@ startJavaThreadInternal(J9VMThread * currentThread, UDATA privateFlags, UDATA os
 
 	/* Create the vmThread */
 
-	newThread = allocateVMThread(vm, osThread, privateFlags, currentThread->omrVMThread->memorySpace, threadObject, threadName);
+	newThread = allocateVMThread(vm, osThread, privateFlags, currentThread->omrVMThread->memorySpace, threadObject);
 	if (newThread == NULL) {
 		PORT_ACCESS_FROM_PORT(vm->portLibrary);
 

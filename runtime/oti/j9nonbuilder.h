@@ -4189,6 +4189,8 @@ typedef struct J9DelayedLockingOpertionsRecord {
 #define J9VM_CRIU_IS_JDWP_ENABLED 0x8
 #define J9VM_CRIU_IS_THROW_ON_DELAYED_CHECKPOINT_ENABLED 0x10
 
+#define J9VM_CRIU_MAX_DEBUG_THREADS_STORED 10 /* matches maximum count defined by JDWP in threadControl.c */
+
 typedef struct J9CRIUCheckpointState {
 	U_32 flags;
 	struct J9DelayedLockingOpertionsRecord *delayedLockingOperationsRoot;
@@ -4227,6 +4229,9 @@ typedef struct J9CRIUCheckpointState {
 	UDATA libCRIUHandle;
 	struct J9VMInitArgs *restoreArgsList;
 	char *restoreArgsChars;
+	/* the array of threads is updated by the JDWP agent */
+	jthread javaDebugThreads[J9VM_CRIU_MAX_DEBUG_THREADS_STORED];
+	UDATA javaDebugThreadCount;
 } J9CRIUCheckpointState;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
@@ -4645,7 +4650,7 @@ typedef struct J9InternalVMFunctions {
 	UDATA  ( *hashClassTableDelete)(struct J9ClassLoader *classLoader, U_8 *className, UDATA classNameLength) ;
 	void  ( *hashClassTableReplace)(struct J9VMThread* vmThread, struct J9ClassLoader *classLoader, struct J9Class *originalClass, struct J9Class *replacementClass) ;
 	struct J9ObjectMonitor *  ( *monitorTableAt)(struct J9VMThread* vmStruct, j9object_t object) ;
-	struct J9VMThread*  ( *allocateVMThread)(struct J9JavaVM *vm, omrthread_t osThread, UDATA privateFlags, void *memorySpace, J9Object *threadObject, const char *threadName) ;
+	struct J9VMThread*  ( *allocateVMThread)(struct J9JavaVM *vm, omrthread_t osThread, UDATA privateFlags, void *memorySpace, J9Object *threadObject) ;
 	void  ( *deallocateVMThread)(struct J9VMThread * vmThread, UDATA decrementZombieCount, UDATA sendThreadDestroyEvent) ;
 	struct J9MemorySegment*  ( *allocateMemorySegment)(struct J9JavaVM *javaVM, UDATA size, UDATA type, U_32 memoryCategory) ;
 	IDATA  ( *javaThreadProc)(void *entryarg) ;
@@ -5001,7 +5006,6 @@ typedef struct J9InternalVMFunctions {
 	BOOLEAN (*isCRIUSupportEnabled_VM)(struct J9JavaVM *vm);
 	BOOLEAN (*isCheckpointAllowed)(struct J9VMThread *currentThread);
 	BOOLEAN (*isNonPortableRestoreMode)(struct J9VMThread *currentThread);
-	BOOLEAN (*isJdwpDebugThread)(struct J9VMThread *thread, const char *threadName);
 	BOOLEAN (*runInternalJVMCheckpointHooks)(struct J9VMThread *currentThread, const char **nlsMsgFormat);
 	BOOLEAN (*runInternalJVMRestoreHooks)(struct J9VMThread *currentThread, const char **nlsMsgFormat);
 	BOOLEAN (*runDelayedLockRelatedOperations)(struct J9VMThread *currentThread);

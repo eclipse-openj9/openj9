@@ -701,7 +701,7 @@ protectedInternalAttachCurrentThread(J9PortLibrary* portLibrary, void * userData
 		}
 	}
 
-	env = allocateVMThread(vm, args->osThread, threadType, memorySpace, NULL, threadName);
+	env = allocateVMThread(vm, args->osThread, threadType, memorySpace, NULL);
 	if (NULL == env) {
 		return JNI_ENOMEM;
 	}

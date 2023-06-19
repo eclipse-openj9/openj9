@@ -109,6 +109,9 @@
 #define OPENJ9_EVENT_VM_CHECKPOINT "openj9.criu.events.VMCheckpoint"
 #define OPENJ9_EVENT_VM_RESTORE "openj9.criu.events.VMRestore"
 
+#define OPENJ9_FUNCTION_ADD_DEBUG_THREAD "openj9.criu.functions.AddDebugThreadToCheckpointState"
+#define OPENJ9_FUNCTION_REMOVE_DEBUG_THREAD "openj9.criu.functions.RemoveDebugThreadFromCheckpointState"
+
 #define COM_IBM_SHARED_CACHE_MODLEVEL_JAVA5 1
 #define COM_IBM_SHARED_CACHE_MODLEVEL_JAVA6 2
 #define COM_IBM_SHARED_CACHE_MODLEVEL_JAVA7 3

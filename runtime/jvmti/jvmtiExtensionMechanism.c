@@ -119,6 +119,11 @@ static jvmtiError JNICALL jvmtiGetVirtualThread(jvmtiEnv* jvmti_env, ...);
 static jvmtiError JNICALL jvmtiGetCarrierThread(jvmtiEnv* jvmti_env, ...);
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+static jvmtiError JNICALL jvmtiAddDebugThreadToCheckpointState(jvmtiEnv *jvmti_env, ...);
+static jvmtiError JNICALL jvmtiRemoveDebugThreadFromCheckpointState(jvmtiEnv *jvmti_env, ...);
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+
 /*
  * Struct to encapsulate the details of a verbose GC subscriber
  */
@@ -387,6 +392,15 @@ static const jvmtiParamInfo jvmtiVMRestore_params[] = {
 	{ "jni_env", JVMTI_KIND_IN_PTR, JVMTI_TYPE_JNIENV, JNI_FALSE },
 	{ "thread", JVMTI_KIND_IN, JVMTI_TYPE_JTHREAD, JNI_FALSE },
 };
+
+static const jvmtiParamInfo jvmtiAddDebugThreadToCheckpointState_params[] = {
+	{ "jni_env", JVMTI_KIND_IN_PTR, JVMTI_TYPE_JNIENV, JNI_FALSE },
+	{ "thread", JVMTI_KIND_IN, JVMTI_TYPE_JTHREAD, JNI_FALSE },
+};
+static const jvmtiParamInfo jvmtiRemoveDebugThreadFromCheckpointState_params[] = {
+	{ "jni_env", JVMTI_KIND_IN_PTR, JVMTI_TYPE_JNIENV, JNI_FALSE },
+	{ "thread", JVMTI_KIND_IN, JVMTI_TYPE_JTHREAD, JNI_FALSE },
+};
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 /*
@@ -555,6 +569,16 @@ static const jvmtiError get_carrier_thread_errors[] = {
 	JVMTI_ERROR_MUST_POSSESS_CAPABILITY
 };
 #endif /* JAVA_SPEC_VERSION >= 19 */
+
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+static const jvmtiError jvmtiAddDebugThreadToCheckpointState_errors[] = {
+	JVMTI_ERROR_OUT_OF_MEMORY,
+};
+
+static const jvmtiError jvmtiRemoveDebugThreadFromCheckpointState_errors[] = {
+	JVMTI_ERROR_INVALID_THREAD,
+};
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 #define SIZE_AND_TABLE(table) (sizeof(table) / sizeof(table[0])) , (table)
 #define EMPTY_SIZE_AND_TABLE 0, NULL
@@ -797,6 +821,22 @@ static const J9JVMTIExtensionFunctionInfo J9JVMTIExtensionFunctionInfoTable[] = 
 		SIZE_AND_TABLE(get_carrier_thread_errors)
 	},
 #endif /* JAVA_SPEC_VERSION >= 19 */
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	{
+		(jvmtiExtensionFunction) jvmtiAddDebugThreadToCheckpointState,
+		OPENJ9_FUNCTION_ADD_DEBUG_THREAD,
+		J9NLS_J9JVMTI_OPENJ9_FUNCTION_ADD_DEBUG_THREAD,
+		SIZE_AND_TABLE(jvmtiAddDebugThreadToCheckpointState_params),
+		SIZE_AND_TABLE(jvmtiAddDebugThreadToCheckpointState_errors),
+	},
+	{
+		(jvmtiExtensionFunction) jvmtiRemoveDebugThreadFromCheckpointState,
+		OPENJ9_FUNCTION_REMOVE_DEBUG_THREAD,
+		J9NLS_J9JVMTI_OPENJ9_FUNCTION_REMOVE_DEBUG_THREAD,
+		SIZE_AND_TABLE(jvmtiRemoveDebugThreadFromCheckpointState_params),
+		SIZE_AND_TABLE(jvmtiRemoveDebugThreadFromCheckpointState_errors),
+	},
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 };
 
 #define NUM_EXTENSION_FUNCTIONS (sizeof(J9JVMTIExtensionFunctionInfoTable) / sizeof(J9JVMTIExtensionFunctionInfoTable[0]))
@@ -3914,3 +3954,71 @@ done:
 	TRACE_JVMTI_RETURN(jvmtiGetCarrierThread);
 }
 #endif /* JAVA_SPEC_VERSION >= 19 */
+
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+/**
+ * Adds a thread to the Java debug thread list.
+ *
+ * @param[in] jvmti_env the jvmti env
+ * @param[in] thread the thread to be added
+ * @return JVMTI_ERROR_NONE on success, or a JVMTI error on failure.
+ */
+static jvmtiError JNICALL
+jvmtiAddDebugThreadToCheckpointState(jvmtiEnv *jvmti_env, ...)
+{
+	J9JavaVM *vm = JAVAVM_FROM_ENV(jvmti_env);
+	jvmtiError rc = JVMTI_ERROR_NONE;
+	jthread thread = NULL;
+	va_list args;
+
+	va_start(args, jvmti_env);
+	thread = va_arg(args, jthread);
+	va_end(args);
+
+	if (vm->checkpointState.javaDebugThreadCount >= J9VM_CRIU_MAX_DEBUG_THREADS_STORED) {
+		rc = JVMTI_ERROR_OUT_OF_MEMORY;
+	} else {
+		vm->checkpointState.javaDebugThreads[vm->checkpointState.javaDebugThreadCount] = thread;
+		vm->checkpointState.javaDebugThreadCount += 1;
+	}
+	return rc;
+}
+
+/**
+ * Removes a thread to the Java debug thread list.
+ *
+ * @param[in] jvmti_env the jvmti env
+ * @param[in] thread the thread to be removed
+ * @return JVMTI_ERROR_NONE on success, or a JVMTI error on failure.
+ */
+static jvmtiError JNICALL
+jvmtiRemoveDebugThreadFromCheckpointState(jvmtiEnv *jvmti_env, ...)
+{
+	J9JavaVM *vm = JAVAVM_FROM_ENV(jvmti_env);
+	jvmtiError rc = JVMTI_ERROR_NONE;
+	jthread thread = NULL;
+	j9object_t threadObject = NULL;
+	UDATA i = 0;
+	va_list args;
+
+	va_start(args, jvmti_env);
+	thread = va_arg(args, jthread);
+	threadObject = J9_JNI_UNWRAP_REFERENCE(thread);
+	va_end(args);
+
+	for (i = 0; i < vm->checkpointState.javaDebugThreadCount; i++) {
+		j9object_t debugThreadObject = J9_JNI_UNWRAP_REFERENCE(vm->checkpointState.javaDebugThreads[i]);
+		if (threadObject == debugThreadObject) {
+			UDATA j = i + 1;
+
+			for (; j < vm->checkpointState.javaDebugThreadCount; j++) {
+				vm->checkpointState.javaDebugThreads[j - 1] = vm->checkpointState.javaDebugThreads[j];
+			}
+			vm->checkpointState.javaDebugThreadCount -= 1;
+			rc = JVMTI_ERROR_NONE;
+			break;
+		}
+	}
+	return rc;
+}
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */

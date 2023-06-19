@@ -542,19 +542,6 @@ BOOLEAN
 isNonPortableRestoreMode(J9VMThread *currentThread);
 
 /**
- * Queries whether the given thread is a debug thread created by JDWP. Special
- * consideration needs to be given to the debug threads when halting them for
- * the checkpoint phase.
- *
- * @param[in] thread J9VMThread token of thread being checked
- * @param[in] threadName string representing the name, given separately in case
- * 			  it is not set in the J9VMThread yet
- * @return TRUE if thread is a JDWP debug thread, FALSE otherwise
- */
-BOOLEAN
-isJdwpDebugThread(J9VMThread *thread, const char *threadName);
-
-/**
  * @brief JVM hooks to run before performing a JVM checkpoint
  *
  * @param currentThread vmthread token
@@ -4274,7 +4261,7 @@ fatalRecursiveStackOverflow(J9VMThread *currentThread);
 * @return J9VMThread *
 */
 J9VMThread *
-allocateVMThread(J9JavaVM *vm, omrthread_t osThread, UDATA privateFlags, void *memorySpace, J9Object *threadObject, const char *threadName);
+allocateVMThread(J9JavaVM *vm, omrthread_t osThread, UDATA privateFlags, void *memorySpace, J9Object *threadObject);
 
 
 /**
