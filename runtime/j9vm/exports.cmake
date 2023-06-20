@@ -433,7 +433,10 @@ if(JAVA_SPEC_VERSION LESS 21)
 else()
 	jvm_add_exports(jvm
 		JVM_IsForeignLinkerSupported
+		JVM_PrintWarningAtDynamicAgentLoad
+		JVM_VirtualThreadEnd
 		JVM_VirtualThreadMount
+		JVM_VirtualThreadStart
 		JVM_VirtualThreadUnmount
 	)
 endif()
