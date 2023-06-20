@@ -5375,7 +5375,7 @@ typedef struct J9VMThread {
 	UDATA callOutCount;
 	j9object_t carrierThreadObject;
 	j9object_t scopedValueCache;
-	J9VMContinuation *cachedContinuation;
+	J9VMContinuation **continuationT1Cache;
 #endif /* JAVA_SPEC_VERSION >= 19 */
 } J9VMThread;
 
@@ -5921,8 +5921,9 @@ typedef struct J9JavaVM {
 	struct J9Pool *tlsPool;
 	omrthread_monitor_t tlsPoolMutex;
 	jobject vthreadGroup;
-	J9VMContinuation **globalContinuationCacheArray;
-	U_32 continuationArraySize;
+	J9VMContinuation **continuationT2Cache;
+	U_32 continuationT1Size;
+	U_32 continuationT2Size;
 #endif /* JAVA_SPEC_VERSION >= 19 */
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 	omrthread_monitor_t delayedLockingOperationsMutex;

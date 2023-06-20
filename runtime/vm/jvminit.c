@@ -110,6 +110,10 @@
 #include "SCAbstractAPI.h"
 #endif
 
+#if JAVA_SPEC_VERSION >= 19
+#include "omrutil.h"
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
 #if defined(AIXPPC) && !defined(J9OS_I5)
 #include <sys/systemcfg.h> /* for isPPC64bit() */
 #endif /* AIXPPC && !J9OS_I5 */
@@ -882,14 +886,14 @@ freeJavaVM(J9JavaVM * vm)
 		vm->tlsPool = NULL;
 	}
 
-	if (NULL != vm->globalContinuationCacheArray) {
-		for (U_32 i = 0; i < vm->continuationArraySize; i++) {
-			if (NULL != vm->globalContinuationCacheArray[i]) {
-				freeJavaStack(vm, vm->globalContinuationCacheArray[i]->stackObject);
-				j9mem_free_memory(vm->globalContinuationCacheArray[i]);
+	if (NULL != vm->continuationT2Cache) {
+		for (U_32 i = 0; i < vm->continuationT2Size; i++) {
+			if (NULL != vm->continuationT2Cache[i]) {
+				freeJavaStack(vm, vm->continuationT2Cache[i]->stackObject);
+				j9mem_free_memory(vm->continuationT2Cache[i]);
 			}
 		}
-		j9mem_free_memory(vm->globalContinuationCacheArray);
+		j9mem_free_memory(vm->continuationT2Cache);
 	}
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
@@ -1822,6 +1826,45 @@ processMemoryInterleaveOptions(J9JavaVM * vm)
 	j9port_control(J9PORT_CTLDATA_VMEM_NUMA_INTERLEAVE_MEM, enabled? 1 : 0);
 }
 
+#if JAVA_SPEC_VERSION >= 19
+/**
+ * -XX:ContinuationCache:t1=<U_32>,t2=<U_32>
+ *
+ * This helper searches for and consumes the Continuation cache option,
+ * if option found, it is parsed based on the above syntax.
+ * if option not found, default values are set for T1 and T2 cache size.
+ *
+ * Returns 0 on success, -1 if option parsing failed.
+ */
+static VMINLINE IDATA
+processContinuationCacheOptions(J9JavaVM *vm)
+{
+	IDATA rc = -1;
+	IDATA argIndex = FIND_AND_CONSUME_VMARG(STARTSWITH_MATCH, VMOPT_XXCONTINUATIONCACHE, NULL);
+	if (-1 != argIndex) {
+		char *cursor = NULL;
+		U_32 cacheSize = 0;
+		GET_OPTION_OPTION(argIndex, ':', ':', &cursor);
+
+		if (try_scan(&cursor, "t1=") && (0 == omr_scan_u32(&cursor, &cacheSize))) {
+			vm->continuationT1Size = cacheSize;
+
+			if (try_scan(&cursor, ",t2=") && (0 == omr_scan_u32(&cursor, &cacheSize))){
+				vm->continuationT2Size = cacheSize;
+				rc = 0;
+			}
+		}
+	} else {
+		PORT_ACCESS_FROM_JAVAVM(vm);
+		vm->continuationT1Size = 1;
+		vm->continuationT2Size = (U_32)(j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_TARGET) * 2);
+		rc = 0;
+	}
+
+	return rc;
+}
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
 static VMINLINE void
 dumpClassLoader(J9JavaVM *vm, J9ClassLoader *loader, IDATA fd)
 {
@@ -2587,7 +2630,13 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 				vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_VALUE_BASED_WARNING;
 			}
 #endif /* JAVA_SPEC_VERSION >= 16 */
-
+#if JAVA_SPEC_VERSION >= 19
+			if (0 != processContinuationCacheOptions(vm)) {
+				parseErrorOption = VMOPT_XXCONTINUATIONCACHE;
+				parseError = OPTION_MALFORMED;
+				goto _memParseError;
+			}
+#endif /* JAVA_SPEC_VERSION >= 19 */
 			if ((argIndex = FIND_AND_CONSUME_VMARG(STARTSWITH_MATCH, VMOPT_XXDUMPLOADEDCLASSLIST, NULL)) >= 0) {
 				J9HookInterface **vmHooks = vm->internalVMFunctions->getVMHookInterface(vm);
 				GET_OPTION_VALUE(argIndex, '=', &optionValue);

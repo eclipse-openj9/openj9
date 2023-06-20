@@ -237,9 +237,13 @@ deallocateVMThread(J9VMThread * vmThread, UDATA decrementZombieCount, UDATA send
 	}
 
 	/* Cleanup Continuation cache */
-	if (NULL != vmThread->cachedContinuation) {
-		vm->internalVMFunctions->recycleContinuation(vm, NULL, vmThread->cachedContinuation, TRUE);
-		vmThread->cachedContinuation = NULL;
+	if (NULL != vmThread->continuationT1Cache) {
+		for (U_32 i = 0; i < vm->continuationT1Size; i++) {
+			if (NULL != vmThread->continuationT1Cache[i]) {
+				vm->internalVMFunctions->recycleContinuation(vm, NULL, vmThread->continuationT1Cache[i], TRUE);
+			}
+		}
+		j9mem_free_memory(vmThread->continuationT1Cache);
 	}
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
