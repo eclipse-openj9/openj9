@@ -69,24 +69,60 @@ public:
 	bool
 	initialize(MM_EnvironmentBase *env)
 	{
-		if (NULL == (_unfinalizedObjectLists = MM_UnfinalizedObjectList::newInstanceArray(env, _maxListIndex))) {
-			return false;
-		}
-
-		if (NULL == (_ownableSynchronizerObjectLists = MM_OwnableSynchronizerObjectList::newInstanceArray(env, _maxListIndex))) {
-			return false;
-		}
-
-		if (NULL == (_continuationObjectLists = MM_ContinuationObjectList::newInstanceArray(env, _maxListIndex))) {
-			return false;
-		}
-
-		if (NULL == (_referenceObjectLists = MM_ReferenceObjectList::newInstanceArray(env, _maxListIndex))) {
+		if ((NULL == (_unfinalizedObjectLists = MM_UnfinalizedObjectList::newInstanceArray(env, _maxListIndex, NULL, 0)))
+			|| (NULL == (_ownableSynchronizerObjectLists = MM_OwnableSynchronizerObjectList::newInstanceArray(env, _maxListIndex, NULL, 0)))
+			|| (NULL == (_continuationObjectLists = MM_ContinuationObjectList::newInstanceArray(env, _maxListIndex, NULL, 0)))
+			|| (NULL == (_referenceObjectLists = MM_ReferenceObjectList::newInstanceArray(env, _maxListIndex, NULL, 0)))
+		) {
+			tearDown(env);
 			return false;
 		}
 
 		return true;
 	}
+
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	bool
+	reinitializeForRestore(MM_EnvironmentBase* env)
+	{
+		MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
+
+		MM_UnfinalizedObjectList *newUnfinalizedObjectLists = NULL;
+		MM_OwnableSynchronizerObjectList *newOwnableSynchronizerObjectLists = NULL;
+		MM_ContinuationObjectList *newContinuationObjectLists = NULL;
+		MM_ReferenceObjectList *newReferenceObjectLists = NULL;
+
+		uintptr_t newListCount = extensions->gcThreadCount;
+
+		Assert_MM_true(_maxListIndex > 0);
+
+		if (newListCount > _maxListIndex) {
+			if ((NULL == (newUnfinalizedObjectLists = MM_UnfinalizedObjectList::newInstanceArray(env, newListCount, _unfinalizedObjectLists, _maxListIndex)))
+				|| (NULL == (newOwnableSynchronizerObjectLists = MM_OwnableSynchronizerObjectList::newInstanceArray(env, newListCount, _ownableSynchronizerObjectLists, _maxListIndex)))
+				|| (NULL == (newContinuationObjectLists = MM_ContinuationObjectList::newInstanceArray(env, newListCount, _continuationObjectLists, _maxListIndex)))
+				|| (NULL == (newReferenceObjectLists = MM_ReferenceObjectList::newInstanceArray(env, newListCount, _referenceObjectLists, _maxListIndex)))
+			) {
+				goto failed;
+			}
+
+			tearDown(env);
+
+			_unfinalizedObjectLists = newUnfinalizedObjectLists;
+			_ownableSynchronizerObjectLists = newOwnableSynchronizerObjectLists;
+			_continuationObjectLists = newContinuationObjectLists;
+			_referenceObjectLists = newReferenceObjectLists;
+
+			_maxListIndex = newListCount;
+		}
+
+		return true;
+
+failed:
+		releaseLists(env, &newUnfinalizedObjectLists, &newOwnableSynchronizerObjectLists, &newContinuationObjectLists, &newReferenceObjectLists);
+
+		return false;
+	}
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 	void
 	kill(MM_EnvironmentBase *env)
@@ -98,24 +134,30 @@ public:
 	void
 	tearDown(MM_EnvironmentBase *env)
 	{
-		if (NULL != _unfinalizedObjectLists) {
-			env->getForge()->free(_unfinalizedObjectLists);
-			_unfinalizedObjectLists = NULL;
+		releaseLists(env, &_unfinalizedObjectLists, &_ownableSynchronizerObjectLists, &_continuationObjectLists, &_referenceObjectLists);
+	}
+
+	void
+	releaseLists(MM_EnvironmentBase *env, MM_UnfinalizedObjectList **unfinalizedObjectLists, MM_OwnableSynchronizerObjectList **ownableSynchronizerObjectLists, MM_ContinuationObjectList **continuationObjectLists, MM_ReferenceObjectList **referenceObjectLists)
+	{
+		if (NULL != *unfinalizedObjectLists) {
+			env->getForge()->free(*unfinalizedObjectLists);
+			*unfinalizedObjectLists = NULL;
 		}
 
-		if (NULL != _ownableSynchronizerObjectLists) {
-			env->getForge()->free(_ownableSynchronizerObjectLists);
-			_ownableSynchronizerObjectLists = NULL;
+		if (NULL != *ownableSynchronizerObjectLists) {
+			env->getForge()->free(*ownableSynchronizerObjectLists);
+			*ownableSynchronizerObjectLists = NULL;
 		}
 
-		if (NULL != _continuationObjectLists) {
-			env->getForge()->free(_continuationObjectLists);
-			_continuationObjectLists = NULL;
+		if (NULL != *continuationObjectLists) {
+			env->getForge()->free(*continuationObjectLists);
+			*continuationObjectLists = NULL;
 		}
 
-		if (NULL != _referenceObjectLists) {
-			env->getForge()->free(_referenceObjectLists);
-			_referenceObjectLists = NULL;
+		if (NULL != *referenceObjectLists) {
+			env->getForge()->free(*referenceObjectLists);
+			*referenceObjectLists = NULL;
 		}
 	}
 

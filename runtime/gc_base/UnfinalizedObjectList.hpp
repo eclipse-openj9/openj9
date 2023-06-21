@@ -54,11 +54,13 @@ public:
 	 * Allocate and initialize an array of MM_UnfinalizedObjectList instances, resembling the functionality of operator new[].
 	 *
 	 * @param env the current thread
-	 * @param arrayElements the number of lists to create
+	 * @param arrayElementsTotal the number of lists to create
+	 * @param listsToCopy existing MM_UnfinalizedObjectList array to use to construct a new array of lists
+	 * @param arrayElementsToCopy the size of the list array to be copied
 	 *
 	 * @return a pointer to the first list in the array, or NULL if we failed to allocate/init the array
 	 */
-	static MM_UnfinalizedObjectList *newInstanceArray(MM_EnvironmentBase *env, uintptr_t arrayElements);
+	static MM_UnfinalizedObjectList *newInstanceArray(MM_EnvironmentBase *env, uintptr_t arrayElementsTotal, MM_UnfinalizedObjectList *listsToCopy, uintptr_t arrayElementsToCopy);
 	bool initialize(MM_EnvironmentBase *env);
 
 	/**

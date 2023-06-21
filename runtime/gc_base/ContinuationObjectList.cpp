@@ -46,13 +46,22 @@ MM_ContinuationObjectList::MM_ContinuationObjectList()
 }
 
 MM_ContinuationObjectList *
-MM_ContinuationObjectList::newInstanceArray(MM_EnvironmentBase *env, uintptr_t arrayElements)
+MM_ContinuationObjectList::newInstanceArray(MM_EnvironmentBase *env, uintptr_t arrayElementsTotal, MM_ContinuationObjectList *listsToCopy, uintptr_t arrayElementsToCopy)
 {
-	MM_ContinuationObjectList *continuationObjectLists;
+	MM_ContinuationObjectList *continuationObjectLists = NULL;
 
-	continuationObjectLists = (MM_ContinuationObjectList *)env->getForge()->allocate(sizeof(MM_ContinuationObjectList) * arrayElements,  MM_AllocationCategory::FIXED, J9_GET_CALLSITE());
+	continuationObjectLists = (MM_ContinuationObjectList *)env->getForge()->allocate(sizeof(MM_ContinuationObjectList) * arrayElementsTotal,  MM_AllocationCategory::FIXED, J9_GET_CALLSITE());
 	if (NULL != continuationObjectLists) {
-		for (uintptr_t index = 0; index < arrayElements; index++) {
+		Assert_MM_true(arrayElementsTotal >= arrayElementsToCopy);
+		/* Check whether a new array instance in being created from an existing array. If so, copy over the elements first. */
+		if (arrayElementsToCopy > 0) {
+			for (uintptr_t index = 0; index < arrayElementsToCopy; index++) {
+				continuationObjectLists[index] = listsToCopy[index];
+				continuationObjectLists[index].initialize(env);
+			}
+		}
+
+		for (uintptr_t index = arrayElementsToCopy; index < arrayElementsTotal; index++) {
 			new(&continuationObjectLists[index]) MM_ContinuationObjectList();
 			continuationObjectLists[index].initialize(env);
 		}
