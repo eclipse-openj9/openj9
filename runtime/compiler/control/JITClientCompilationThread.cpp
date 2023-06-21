@@ -2834,6 +2834,8 @@ remoteCompilationEnd(J9VMThread *vmThread, TR::Compilation *comp, TR_ResolvedMet
                      J9Method *method, TR::CompilationInfoPerThreadBase *compInfoPT,
                      const std::string &codeCacheStr, const std::string &dataCacheStr)
    {
+   static const bool shouldStoreRemoteAOTMethods = !feGetEnv("TR_disableRemoteAOTMethodStorage");
+
    TR_MethodMetaData *metaData = NULL;
    TR_J9VM *fe = comp->fej9vm();
    TR_MethodToBeCompiled *entry = compInfoPT->getMethodBeingCompiled();
@@ -2958,11 +2960,14 @@ remoteCompilationEnd(J9VMThread *vmThread, TR::Compilation *comp, TR_ResolvedMet
          }
 #endif /* J9VM_INTERP_AOT_RUNTIME_SUPPORT */
 
-      J9ROMMethod *romMethod = comp->fej9()->getROMMethodFromRAMMethod(method);
-      TR::CompilationInfo::storeAOTInSharedCache(
-         vmThread, romMethod, (uint8_t *)dataCacheStr.data(), dataCacheStr.size(),
-         (uint8_t *)codeCacheStr.data(), codeCacheStr.size(), comp, jitConfig, entry
-      );
+      if (shouldStoreRemoteAOTMethods)
+         {
+         J9ROMMethod *romMethod = comp->fej9()->getROMMethodFromRAMMethod(method);
+         TR::CompilationInfo::storeAOTInSharedCache(
+            vmThread, romMethod, (uint8_t *)dataCacheStr.data(), dataCacheStr.size(),
+            (uint8_t *)codeCacheStr.data(), codeCacheStr.size(), comp, jitConfig, entry
+         );
+         }
       }
 #endif // defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
    return metaData;
