@@ -124,7 +124,7 @@ finalizeForcedUnfinalizedToFinalizable(J9VMThread *vmThread)
 
 	GC_FinalizableObjectBuffer buffer(extensions);
 	/* process the lists */
-	MM_UnfinalizedObjectList *unfinalizedObjectList = extensions->unfinalizedObjectLists;
+	MM_UnfinalizedObjectList *unfinalizedObjectList = extensions->getUnfinalizedObjectLists();
 	while(NULL != unfinalizedObjectList) {
 		/* Iterate directly the current list. Not calling startUnfinalizedProcessing() to create and iterate priorList.
 		 * If forced finalize occurs in a middle of a CS cycle, startUnfinalizedProcessing have been already done.

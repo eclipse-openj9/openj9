@@ -93,12 +93,12 @@ MM_HeapRegionDescriptorVLHGC::initialize(MM_EnvironmentBase *env, MM_HeapRegionM
 
 	/* add our unfinalized list to the global list (no locking - assumes single threaded initialization) */
 	MM_GCExtensions* extensions = MM_GCExtensions::getExtensions(env);
-	_unfinalizedObjectList.setNextList(extensions->unfinalizedObjectLists);
+	_unfinalizedObjectList.setNextList(extensions->getUnfinalizedObjectLists());
 	_unfinalizedObjectList.setPreviousList(NULL);
-	if (NULL != extensions->unfinalizedObjectLists) {
-		extensions->unfinalizedObjectLists->setPreviousList(&_unfinalizedObjectList);
+	if (NULL != extensions->getUnfinalizedObjectLists()) {
+		extensions->getUnfinalizedObjectLists()->setPreviousList(&_unfinalizedObjectList);
 	}
-	extensions->unfinalizedObjectLists = &_unfinalizedObjectList;
+	extensions->setUnfinalizedObjectLists(&_unfinalizedObjectList);
 
 	/* add our ownable synchronizer list to the global list (no locking - assumes single threaded initialization) */
 	_ownableSynchronizerObjectList.setNextList(extensions->getOwnableSynchronizerObjectLists());
@@ -136,7 +136,7 @@ MM_HeapRegionDescriptorVLHGC::tearDown(MM_EnvironmentBase *env)
 	}
 
 	_rememberedSetCardList.tearDown(extensions);
-	extensions->unfinalizedObjectLists = NULL;
+	extensions->setUnfinalizedObjectLists(NULL);
 	extensions->setOwnableSynchronizerObjectLists(NULL);
 	extensions->setContinuationObjectLists(NULL);
 

@@ -53,12 +53,10 @@ MM_ContinuationObjectList::newInstanceArray(MM_EnvironmentBase *env, uintptr_t a
 	continuationObjectLists = (MM_ContinuationObjectList *)env->getForge()->allocate(sizeof(MM_ContinuationObjectList) * arrayElementsTotal,  MM_AllocationCategory::FIXED, J9_GET_CALLSITE());
 	if (NULL != continuationObjectLists) {
 		Assert_MM_true(arrayElementsTotal >= arrayElementsToCopy);
-		/* Check whether a new array instance in being created from an existing array. If so, copy over the elements first. */
-		if (arrayElementsToCopy > 0) {
-			for (uintptr_t index = 0; index < arrayElementsToCopy; index++) {
-				continuationObjectLists[index] = listsToCopy[index];
-				continuationObjectLists[index].initialize(env);
-			}
+		/* When creating a new array instance from an existing array, start by copying the elements. */
+		for (uintptr_t index = 0; index < arrayElementsToCopy; index++) {
+			continuationObjectLists[index] = listsToCopy[index];
+			continuationObjectLists[index].initialize(env);
 		}
 
 		for (uintptr_t index = arrayElementsToCopy; index < arrayElementsTotal; index++) {

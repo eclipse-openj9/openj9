@@ -452,7 +452,7 @@ MM_HeapRootScanner::scanUnfinalizedObjects()
 	setReachability(RootScannerEntityReachability_Weak);
 	
 	MM_ObjectAccessBarrier *barrier = _extensions->accessBarrier;
-	MM_UnfinalizedObjectList *unfinalizedObjectList = _extensions->unfinalizedObjectLists;
+	MM_UnfinalizedObjectList *unfinalizedObjectList = _extensions->getUnfinalizedObjectLists();
 
 	while (NULL != unfinalizedObjectList) {
 		J9Object *objectPtr = unfinalizedObjectList->getHeadOfList();
