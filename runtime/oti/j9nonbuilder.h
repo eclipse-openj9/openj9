@@ -4178,11 +4178,14 @@ typedef struct J9DelayedLockingOpertionsRecord {
 #define J9_SINGLE_THREAD_MODE_OP_NOTIFY_ALL 0x2
 #define J9_SINGLE_THREAD_MODE_OP_INTERRUPT 0x3
 
+#define J9VM_CRIU_IS_CHECKPOINT_ENABLED 0x1
+#define J9VM_CRIU_IS_CHECKPOINT_ALLOWED 0x2
+#define J9VM_CRIU_IS_NON_PORTABLE_RESTORE_MODE 0x4
+#define J9VM_CRIU_IS_JDWP_ENABLED 0x8
+#define J9VM_CRIU_IS_THROW_ON_DELAYED_CHECKPOINT_ENABLED 0x10
+
 typedef struct J9CRIUCheckpointState {
-	BOOLEAN isCheckPointEnabled;
-	BOOLEAN isCheckPointAllowed;
-	BOOLEAN isNonPortableRestoreMode;
-	BOOLEAN isJdwpEnabled;
+	U_32 flags;
 	struct J9DelayedLockingOpertionsRecord *delayedLockingOperationsRoot;
 	struct J9Pool *hookRecords;
 	struct J9Pool *classIterationRestoreHookRecords;
