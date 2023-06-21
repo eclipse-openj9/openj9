@@ -2862,6 +2862,18 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 #endif /* defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH) */
 			TRIGGER_J9HOOK_VM_ABOUT_TO_BOOTSTRAP(vm->hookInterface, vm->mainThread);
 			/* At this point, the decision about which interpreter to use has been made */
+
+			if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_DEBUG_MODE)) {
+				if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
+#if defined(OMR_GC_COMPRESSED_POINTERS)
+					vm->bytecodeLoop = debugBytecodeLoopCompressed;
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
+				} else {
+#if defined(OMR_GC_FULL_POINTERS)
+					vm->bytecodeLoop = debugBytecodeLoopFull;
+#endif /* defined(OMR_GC_FULL_POINTERS) */
+				}
+			} else
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 			if (vm->checkpointState.isCheckPointAllowed) {
 				if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
@@ -2875,17 +2887,7 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 				}
 			} else
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
-			if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_DEBUG_MODE)) {
-				if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
-#if defined(OMR_GC_COMPRESSED_POINTERS)
-					vm->bytecodeLoop = debugBytecodeLoopCompressed;
-#endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
-				} else {
-#if defined(OMR_GC_FULL_POINTERS)
-					vm->bytecodeLoop = debugBytecodeLoopFull;
-#endif /* defined(OMR_GC_FULL_POINTERS) */
-				}
-			} else {
+			{
 				if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
 #if defined(OMR_GC_COMPRESSED_POINTERS)
 					vm->bytecodeLoop = bytecodeLoopCompressed;
