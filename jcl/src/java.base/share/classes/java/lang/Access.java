@@ -600,6 +600,18 @@ final class Access implements JavaLangAccess {
 	public int countPositives(byte[] ba, int off, int len) {
 		return StringCoding.countPositives(ba, off, len);
 	}
+
+	public long stringConcatCoder(char value) {
+		return StringConcatHelper.coder(value);
+	}
+
+	public long stringBuilderConcatMix(long lengthCoder, StringBuilder sb) {
+		return sb.mix(lengthCoder);
+	}
+
+	public long stringBuilderConcatPrepend(long lengthCoder, byte[] buf, StringBuilder sb) {
+		return sb.prepend(lengthCoder, buf);
+	}
 /*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 /*[ELSE] JAVA_SPEC_VERSION >= 20 */
 	public Object[] extentLocalCache() {

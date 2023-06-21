@@ -2062,6 +2062,17 @@ exit:
 		return oldState;
 	}
 
+#if JAVA_SPEC_VERSION >= 20
+	static VMINLINE void
+	virtualThreadHideFrames(J9VMThread *currentThread, jboolean hide)
+	{
+		if (hide) {
+			currentThread->privateFlags |= J9_PRIVATE_FLAGS_VIRTUAL_THREAD_HIDDEN_FRAMES;
+		} else {
+			currentThread->privateFlags &= ~(UDATA)J9_PRIVATE_FLAGS_VIRTUAL_THREAD_HIDDEN_FRAMES;
+		}
+	}
+#endif /* JAVA_SPEC_VERSION >= 20 */
 };
 
 #endif /* VMHELPERS_HPP_ */
