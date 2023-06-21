@@ -481,6 +481,13 @@ UDATA walkFrame(J9StackWalkState * walkState)
 			return J9_STACKWALK_KEEP_ITERATING;
 		}
 
+		/* Skip methods with JvmtiMountTransition annotation */
+		if (J9_ARE_ALL_BITS_SET(walkState->flags, J9_STACKWALK_SKIP_JVMTI_MOUNT_TRANSITION_FRAMES)
+			&& J9_IS_JVMTI_MOUNT_TRANSITION(walkState->method)
+		) {
+			return J9_STACKWALK_KEEP_ITERATING;
+		}
+
 		if (walkState->skipCount) {
 			--walkState->skipCount;
 			return J9_STACKWALK_KEEP_ITERATING;

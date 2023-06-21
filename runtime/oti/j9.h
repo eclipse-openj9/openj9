@@ -374,6 +374,8 @@ static const struct { \
 
 #define J9VM_VIRTUALTHREAD_ROOT_NODE_STATE ((I_32)0xBAADF00D)
 
+#define J9_IS_JVMTI_MOUNT_TRANSITION(method) \
+	((NULL != (method)) && (J9_ARE_ANY_BITS_SET(getExtendedModifiersDataFromROMMethod(J9_ROM_METHOD_FROM_RAM_METHOD(method)), CFR_METHOD_EXT_JVMTIMOUNTTRANSITION_ANNOTATION)))
 #if defined(OPENJ9_BUILD)
 #define J9_SHARED_CACHE_DEFAULT_BOOT_SHARING(vm) TRUE
 #else /* defined(OPENJ9_BUILD) */
