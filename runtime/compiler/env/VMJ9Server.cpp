@@ -2228,6 +2228,17 @@ TR_J9ServerVM::targetMethodFromMethodHandle(TR::Compilation* comp, TR::KnownObje
    return NULL;
    }
 
+bool
+TR_J9ServerVM::isInvokeCacheEntryAnArray(uintptr_t *invokeCacheArray)
+   {
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(
+      JITServer::MessageType::VM_isInvokeCacheEntryAnArray,
+      invokeCacheArray
+      );
+   return std::get<0>(stream->read<bool>());
+   }
+
 TR::KnownObjectTable::Index
 TR_J9ServerVM::getKnotIndexOfInvokeCacheArrayAppendixElement(TR::Compilation *comp, uintptr_t *invokeCacheArray)
    {
