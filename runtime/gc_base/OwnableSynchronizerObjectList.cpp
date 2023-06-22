@@ -46,13 +46,22 @@ MM_OwnableSynchronizerObjectList::MM_OwnableSynchronizerObjectList()
 }
 
 MM_OwnableSynchronizerObjectList *
-MM_OwnableSynchronizerObjectList::newInstanceArray(MM_EnvironmentBase *env, uintptr_t arrayElements)
+MM_OwnableSynchronizerObjectList::newInstanceArray(MM_EnvironmentBase *env, uintptr_t arrayElementsTotal, MM_OwnableSynchronizerObjectList *listsToCopy, uintptr_t arrayElementsToCopy)
 {
-	MM_OwnableSynchronizerObjectList *ownableSynchronizerObjectLists;
+	MM_OwnableSynchronizerObjectList *ownableSynchronizerObjectLists = NULL;
 
-	ownableSynchronizerObjectLists = (MM_OwnableSynchronizerObjectList *)env->getForge()->allocate(sizeof(MM_OwnableSynchronizerObjectList) * arrayElements,  MM_AllocationCategory::FIXED, J9_GET_CALLSITE());
+	ownableSynchronizerObjectLists = (MM_OwnableSynchronizerObjectList *)env->getForge()->allocate(sizeof(MM_OwnableSynchronizerObjectList) * arrayElementsTotal,  MM_AllocationCategory::FIXED, J9_GET_CALLSITE());
 	if (NULL != ownableSynchronizerObjectLists) {
-		for (uintptr_t index = 0; index < arrayElements; index++) {
+		Assert_MM_true(arrayElementsTotal >= arrayElementsToCopy);
+		/* Check whether a new array instance in being created from an existing array. If so, copy over the elements first. */
+		if (arrayElementsToCopy > 0) {
+			for (uintptr_t index = 0; index < arrayElementsToCopy; index++) {
+				ownableSynchronizerObjectLists[index] = listsToCopy[index];
+				ownableSynchronizerObjectLists[index].initialize(env);
+			}
+		}
+
+		for (uintptr_t index = arrayElementsToCopy; index < arrayElementsTotal; index++) {
 			new(&ownableSynchronizerObjectLists[index]) MM_OwnableSynchronizerObjectList();
 			ownableSynchronizerObjectLists[index].initialize(env);
 		}
