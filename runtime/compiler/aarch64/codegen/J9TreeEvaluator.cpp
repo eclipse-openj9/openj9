@@ -1040,7 +1040,7 @@ VMCardCheckEvaluator(
    generateTrg1Src2Instruction(cg, TR::InstOpCode::subx, node, temp1Reg, dstReg, temp1Reg);
 
    // If we know the object is definitely in heap, then we skip the check.
-   if (!node->isHeapObjectWrtBar())
+   if (!node->chkHeapObjectWrtBar())
       {
       if (comp->getOptions()->isVariableHeapSizeForBarrierRange0() || comp->compileRelocatableCode())
          {
