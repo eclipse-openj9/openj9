@@ -378,7 +378,7 @@ checkIfSafeToCheckpoint(J9VMThread *currentThread)
 
 			vm->walkStackFrames(walkThread, &walkState);
 			if (0 != notSafeToCheckpoint) {
-				Trc_CRIU_checkpointJVMImpl_checkIfSafeToCheckpointBlockedVer2(currentThread, walkState.userData2, walkState.userData3, walkState.userData1);
+				Trc_CRIU_checkpointJVMImpl_checkIfSafeToCheckpointBlockedVer2(currentThread, walkState.userData2, walkState.userData3, *(UDATA*)walkState.userData1);
 				break;
 			}
 		}
