@@ -77,7 +77,7 @@ MM_ContinuationObjectBufferStandard::flushImpl(MM_EnvironmentBase *env)
 
 	list->addAll(env, _head, _tail);
 	_continuationObjectListIndex += 1;
-	if (regionExtension->_maxListIndex == _continuationObjectListIndex) {
+	if (_continuationObjectListIndex >= regionExtension->_maxListIndex) {
 		_continuationObjectListIndex = 0;
 	}
 }
@@ -92,6 +92,12 @@ MM_ContinuationObjectBufferStandard::reinitializeForRestore(MM_EnvironmentBase *
 	Assert_MM_true(extensions->objectListFragmentCount > 0);
 
 	_maxObjectCount = extensions->objectListFragmentCount;
+
+	flush(env);
+
+	/* This reset is necessary to ensure the object counter is reset based on the the new _maxObjectCount value.
+	 * Specifically to handle the case when the buffer was previously emptied and reset based on previous _maxObjectCount. */
+	reset();
 
 	return true;
 }

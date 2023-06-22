@@ -50,11 +50,6 @@ public:
 private:
 	
 	/**
-	 * Reset a flushed buffer to the empty state.
-	 */
-	void reset();
-
-	/**
 	 * Determine the type (weak/soft/phantom) of the specified reference object.
 	 * @param object[in] the object to examine
 	 * @return one of J9AccClassReferenceWeak, J9AccClassReferenceSoft or J9AccClassReferencePhantom
@@ -63,6 +58,11 @@ private:
 	
 protected:
 	
+	/**
+	 * Reset a flushed buffer to the empty state.
+	 */
+	void reset();
+
 	virtual bool initialize(MM_EnvironmentBase *env) = 0;
 	virtual void tearDown(MM_EnvironmentBase *env) = 0;
 
