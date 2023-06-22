@@ -647,6 +647,7 @@ class TR_EscapeAnalysis : public TR::Optimization
 
    void     makeContiguousLocalAllocation(Candidate *candidate);
    void     makeNonContiguousLocalAllocation(Candidate *candidate);
+   void     makeNewValueLocalAllocation(Candidate *candidate);
    void     heapifyForColdBlocks(Candidate *candidate);
 
    /**

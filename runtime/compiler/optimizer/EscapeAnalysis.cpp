@@ -6683,6 +6683,149 @@ bool TR_EscapeAnalysis::tryToZeroInitializeUsingArrayset(Candidate* candidate, T
    return false;
    }
 
+void TR_EscapeAnalysis::makeNewValueLocalAllocation(Candidate *candidate)
+   {
+   //
+   // Example of trees for a newvalue operation before stack allocation
+   //
+   //    112n     treetop
+   //    n111n       newvalue  jitNewValue
+   //    n108n         loadaddr  Pair
+   //    n109n         iload x
+   //    n119n         iconst 2 (X!=0 X>=0 )
+   //
+   // and after, for contiguous stack allocation, where #439 is aggregate storage on the stack.
+   // The field holding the vft for the object will be inserted in the method entry block.
+   //
+   // In method entry block:
+   //    n166n     astorei  <vft-symbol>[#345  Shadow]
+   //    n160n       loadaddr  <temp slot 7>[#439  Auto]
+   //    n165n       aiadd
+   //    n161n         loadaddr  Pair
+   //    n164n         iconst 0 (X==0 X>=0 X<=0 )
+   //
+   // Transformed IL for stack allocation of newvalue (contiguous)
+   //    n158n     treetop
+   //    n119n       iconst 2 (X!=0 X>=0 )
+   //    n110n     treetop
+   //    n109n       iload  x
+   //    n112n     treetop
+   //    n111n       loadaddr  <temp slot 7>[#439  Auto]
+   //    n157n     istorei  Pair.x I[#429  final Shadow +4]
+   //    n111n       ==>loadaddr
+   //    n109n       ==>iload
+   //    n159n     istorei  Pair.y I[#430  final Shadow +8]
+   //    n111n       ==>loadaddr
+   //    n119n       ==>iconst 2
+   //
+   // Or for non-contiguous stack allocation, #438 and #441 are local variables respectively
+   // representing the Pair.x and Pair.y fields of the stack allocated value type instance
+   //
+   // Transformed IL for stack allocation of newvalue (non-contiguous)
+   //    n110n     treetop
+   //    n109n       iload  x
+   //    n170n     istore  <temp slot 6>[#438  Auto]
+   //    n109n       ==>iload
+   //    n171n     istore  <temp slot 8>[#441  Auto]
+   //    n99n        ==>iconst 2
+
+   // TODO-VALUETYPE:  Can this code be commoned up with code in lowerNewValue?
+   //
+   TR_OpaqueClassBlock *valueClass = static_cast<TR_OpaqueClassBlock *>(candidate->_node->getFirstChild()->getSymbol()->getStaticSymbol()->getStaticAddress());
+   const TR::TypeLayout* typeLayout = comp()->typeLayout(valueClass);
+
+   TR::TreeTop *fieldValueTreeTopCursor = candidate->_treeTop->getPrevTreeTop();
+   TR::TreeTop *fieldStoreTreeTopCursor = candidate->_treeTop;
+
+   // If the value type candidate escapes, all fields must be known
+   // (i.e., candidate->_fields for newvalue must not be NULL or the newvalue
+   // must be known to have no fields) so that the values of all fields can be set
+   // properly for heapification at the escape point.
+   // Ensure symbol references for all the fields are included in the list
+   // associated with the candidate for stack allocation.
+   //
+   for (int i = 1; i < candidate->_node->getNumChildren(); i++)
+      {
+      TR::Node *fieldValueNode = candidate->_node->getChild(i);
+      TR::Node *ttNode = TR::Node::create(TR::treetop, 1);
+      ttNode->setAndIncChild(0, fieldValueNode);
+
+      fieldValueTreeTopCursor = TR::TreeTop::create(comp(), fieldValueTreeTopCursor, ttNode);
+
+      // generate store to the field
+      const TR::TypeLayoutEntry& fieldEntry = typeLayout->entry(i - 1);
+      TR::SymbolReference* symref = comp()->getSymRefTab()->findOrFabricateShadowSymbol(valueClass,
+                                                                       fieldEntry._datatype,
+                                                                       fieldEntry._offset,
+                                                                       fieldEntry._isVolatile,
+                                                                       fieldEntry._isPrivate,
+                                                                       fieldEntry._isFinal,
+                                                                       fieldEntry._fieldname,
+                                                                       fieldEntry._typeSignature
+                                                                       );
+
+      int32_t fieldSize = TR::Symbol::convertTypeToSize(fieldEntry._datatype);
+
+      if (fieldEntry._datatype.getDataType() == TR::Address && comp()->useCompressedPointers())
+         {
+         fieldSize = TR::Compiler->om.sizeofReferenceField();
+         }
+
+      TR::Node *completeFieldStoreNode = NULL;
+
+      FieldInfo &field = candidate->findOrSetFieldInfo(NULL, symref, fieldEntry._offset, fieldSize, fieldEntry._datatype, this);
+
+      if (candidate->isContiguousAllocation())
+         {
+         field._symRef = symref;
+         field._vectorElem = 0;
+
+         TR::DataType fieldDataType = fieldValueNode->getDataType();
+         const bool useWriteBarrier = ( (fieldDataType == TR::Address)
+                                        && (TR::Compiler->om.writeBarrierType() != gc_modron_wrtbar_none) )
+                                      || comp()->getOption(TR_EnableFieldWatch);
+         TR::Node *storeNode;
+
+         if (useWriteBarrier)
+            {
+            const TR::ILOpCodes storeOpCode = comp()->il.opCodeForIndirectWriteBarrier(fieldValueNode->getDataType());
+            storeNode = TR::Node::createWithSymRef(storeOpCode, 3, 3, candidate->_node, fieldValueNode, candidate->_node, symref);
+            }
+         else
+            {
+            const TR::ILOpCodes storeOpCode = comp()->il.opCodeForIndirectStore(fieldValueNode->getDataType());
+            storeNode = TR::Node::createWithSymRef(storeOpCode, 2, 2, candidate->_node, fieldValueNode, symref);
+            }
+
+         // if storing a ref, make sure it is compressed
+         if (comp()->useCompressedPointers() && fieldValueNode->getDataType() == TR::Address)
+            {
+            completeFieldStoreNode = TR::Node::createCompressedRefsAnchor(storeNode);
+            }
+         else
+            {
+            completeFieldStoreNode = storeNode;
+            }
+         }
+      else
+         {
+         TR::SymbolReference *autoSymRef = field._symRef;
+
+         if (autoSymRef == NULL || !autoSymRef->getSymbol()->isAuto())
+            {
+            autoSymRef = getSymRefTab()->createTemporary(comp()->getMethodSymbol(), fieldEntry._datatype);
+            autoSymRef->getSymbol()->setBehaveLikeNonTemp();
+            field.rememberFieldSymRef(symref, this);
+            field._symRef = autoSymRef;
+            }
+
+         TR::DataType type = autoSymRef->getSymbol()->getDataType();
+         completeFieldStoreNode = TR::Node::createWithSymRef(comp()->il.opCodeForDirectStore(type), 1, 1, fieldValueNode, autoSymRef);
+         }
+      fieldStoreTreeTopCursor = TR::TreeTop::create(comp(), fieldStoreTreeTopCursor, completeFieldStoreNode);
+      }
+   }
+
 void TR_EscapeAnalysis::makeContiguousLocalAllocation(Candidate *candidate)
    {
    int32_t             i,j;
@@ -6719,71 +6862,7 @@ void TR_EscapeAnalysis::makeContiguousLocalAllocation(Candidate *candidate)
 
    if (candidate->isExplicitlyInitialized() && (originalAllocationOpCode == TR::newvalue))
       {
-      // TODO:  Can this code be commoned up with code in lowerNewValue?
-      //
-      TR_OpaqueClassBlock *valueClass = static_cast<TR_OpaqueClassBlock *>(candidate->_node->getFirstChild()->getSymbol()->getStaticSymbol()->getStaticAddress());
-      const TR::TypeLayout* typeLayout = comp()->typeLayout(valueClass);
-
-      TR::TreeTop *fieldValueTreeTopCursor = candidate->_treeTop->getPrevTreeTop();
-      TR::TreeTop *fieldStoreTreeTopCursor = candidate->_treeTop;
-
-      for (int i = 1; i < candidate->_node->getNumChildren(); i++)
-         {
-         TR::Node *fieldValueNode = candidate->_node->getChild(i);
-         TR::Node *ttNode = TR::Node::create(TR::treetop, 1);
-         ttNode->setAndIncChild(0, fieldValueNode);
-
-         fieldValueTreeTopCursor = TR::TreeTop::create(comp(), fieldValueTreeTopCursor, ttNode);
-
-         // generate store to the field
-         const TR::TypeLayoutEntry& fieldEntry = typeLayout->entry(i - 1);
-         TR::SymbolReference* symref = comp()->getSymRefTab()->findOrFabricateShadowSymbol(valueClass,
-                                                                          fieldEntry._datatype,
-                                                                          fieldEntry._offset,
-                                                                          fieldEntry._isVolatile,
-                                                                          fieldEntry._isPrivate,
-                                                                          fieldEntry._isFinal,
-                                                                          fieldEntry._fieldname,
-                                                                          fieldEntry._typeSignature
-                                                                          );
-
-         int32_t fieldSize = TR::Symbol::convertTypeToSize(fieldEntry._datatype);
-
-         if (fieldEntry._datatype.getDataType() == TR::Address && comp()->useCompressedPointers())
-            {
-            fieldSize = TR::Compiler->om.sizeofReferenceField();
-            }
-
-         FieldInfo &field = candidate->findOrSetFieldInfo(NULL, symref, fieldEntry._offset, fieldSize, fieldEntry._datatype, this);
-
-         field._symRef = symref;
-         field._vectorElem = 0;
-
-         const TR::ILOpCodes storeOpCode = (fieldValueNode->getDataType() != TR::Address)
-                                              ? comp()->il.opCodeForIndirectStore(fieldValueNode->getDataType())
-                                              : comp()->il.opCodeForIndirectWriteBarrier(fieldValueNode->getDataType());
-         TR::Node *storeNode;
-
-         if (fieldValueNode->getDataType() == TR::Address)
-            {
-            storeNode = TR::Node::createWithSymRef(storeOpCode, 3, 3, candidate->_node, fieldValueNode, candidate->_node, symref);
-            }
-         else
-            {
-            storeNode = TR::Node::createWithSymRef(storeOpCode, 2, 2, candidate->_node, fieldValueNode, symref);
-            }
-
-         // if storing a ref, make sure it is compressed
-         if (comp()->useCompressedPointers() && fieldValueNode->getDataType() == TR::Address)
-            {
-            TR::Node *compressNode = TR::Node::createCompressedRefsAnchor(storeNode);
-            fieldStoreTreeTopCursor = TR::TreeTop::create(comp(), fieldStoreTreeTopCursor, compressNode);
-            }
-         else
-            {
-            fieldStoreTreeTopCursor = TR::TreeTop::create(comp(), fieldStoreTreeTopCursor, storeNode);
-            }
-         }
+      makeNewValueLocalAllocation(candidate);
       }
 
    makeLocalObject(candidate);
@@ -7038,66 +7117,7 @@ void TR_EscapeAnalysis::makeNonContiguousLocalAllocation(Candidate *candidate)
 
    if (candidate->_node->getOpCodeValue() == TR::newvalue)
       {
-      // TODO:  Can this code be commoned up with code in lowerNewValue?
-      //
-      TR_OpaqueClassBlock *valueClass = static_cast<TR_OpaqueClassBlock *>(candidate->_node->getFirstChild()->getSymbol()->getStaticSymbol()->getStaticAddress());
-      const TR::TypeLayout* typeLayout = comp()->typeLayout(valueClass);
-
-      // Initialize fields using the values from the newvalue opcode
-      //
-      TR::TreeTop *fieldValueTreeTopCursor = candidate->_treeTop->getPrevTreeTop();
-      TR::TreeTop *fieldStoreTreeTopCursor = candidate->_treeTop;
-
-
-      // If the non-contiguous value type candidate escapes, all fields must be known
-      // (i.e., candidate->_fields for newvalue must not be NULL or the newvalue
-      // must be known to have no fields) so that the values of all fields can be set
-      // properly for heapification at the escape point.
-      // Ensure symbol references for all the fields are included in the list
-      // associated with the candidate for stack allocation.
-      //
-      for (int i = 1; i < candidate->_node->getNumChildren(); i++)
-         {
-         TR::Node *fieldValueNode = candidate->_node->getChild(i);
-         TR::Node *ttNode = TR::Node::create(TR::treetop, 1);
-         ttNode->setAndIncChild(0, fieldValueNode);
-
-         fieldValueTreeTopCursor = TR::TreeTop::create(comp(), fieldValueTreeTopCursor, ttNode);
-
-         // generate store to the field
-         const TR::TypeLayoutEntry& fieldEntry = typeLayout->entry(i - 1);
-         TR::SymbolReference* symref = comp()->getSymRefTab()->findOrFabricateShadowSymbol(valueClass,
-                                                                          fieldEntry._datatype,
-                                                                          fieldEntry._offset,
-                                                                          fieldEntry._isVolatile,
-                                                                          fieldEntry._isPrivate,
-                                                                          fieldEntry._isFinal,
-                                                                          fieldEntry._fieldname,
-                                                                          fieldEntry._typeSignature
-                                                                          );
-
-         int32_t fieldSize = TR::Symbol::convertTypeToSize(fieldEntry._datatype);
-
-         if ((fieldEntry._datatype.getDataType() == TR::Address) && comp()->useCompressedPointers())
-            {
-            fieldSize = TR::Compiler->om.sizeofReferenceField();
-            }
-
-         FieldInfo &autoField = candidate->findOrSetFieldInfo(NULL, symref, fieldEntry._offset, fieldSize, fieldEntry._datatype, this);
-         TR::SymbolReference *autoSymRef = autoField._symRef;
-
-         if (autoSymRef == NULL || !autoSymRef->getSymbol()->isAuto())
-            {
-            autoSymRef = getSymRefTab()->createTemporary(comp()->getMethodSymbol(), fieldEntry._datatype);
-            autoSymRef->getSymbol()->setBehaveLikeNonTemp();
-            autoField.rememberFieldSymRef(symref, this);
-            autoField._symRef = autoSymRef;
-            }
-
-         TR::DataType type = autoSymRef->getSymbol()->getDataType();
-         TR::Node *storeNode = TR::Node::createWithSymRef(comp()->il.opCodeForDirectStore(type), 1, 1, fieldValueNode, autoSymRef);
-         fieldStoreTreeTopCursor = TR::TreeTop::create(comp(), fieldStoreTreeTopCursor, storeNode);
-         }
+      makeNewValueLocalAllocation(candidate);
       }
    else if (candidate->_fields)
       {
