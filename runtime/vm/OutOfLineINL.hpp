@@ -134,7 +134,6 @@ public:
  	restoreInternalNativeStackFrame(J9VMThread *currentThread)
  	{
  		J9SFNativeMethodFrame *nativeMethodFrame = (J9SFNativeMethodFrame*)currentThread->sp;
- 		currentThread->jitStackFrameFlags = nativeMethodFrame->specialFrameFlags & J9_SSF_JIT_NATIVE_TRANSITION_FRAME;
  		restoreSpecialStackFrameLeavingArgs(currentThread, ((UDATA*)(nativeMethodFrame + 1)) - 1);
  	}
 };

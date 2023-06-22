@@ -838,11 +838,6 @@ walkStackForExceptionThrow(J9VMThread * currentThread, j9object_t exception, UDA
 	if (!walkOnly) {
 		walkState->flags |= (J9_STACKWALK_INCLUDE_CALL_IN_FRAMES | J9_STACKWALK_INCLUDE_NATIVES | J9_STACKWALK_MAINTAIN_REGISTER_MAP);
 	}
-	/* PR 81484: Clear jitStackFrameFlags before the walk.
-	 * 1) It is not used by the stack walker.
-	 * 2) It could affect code that runs to load exception classes during the walk.
-	 */
-	currentThread->jitStackFrameFlags = 0;
 
 	currentThread->javaVM->walkStackFrames(currentThread, walkState);
 
