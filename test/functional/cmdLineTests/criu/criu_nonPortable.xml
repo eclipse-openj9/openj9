@@ -181,9 +181,12 @@
 
   <test id="Create Criu Checkpoint Image once and no restore - TestSingleThreadModeCheckpointException">
     <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_SINGLETHREADMODE_CHECKPOINT$ 1 1 true true</command>
-    <output type="success" caseSensitive="yes" regex="no">TestSingleThreadModeCheckpointException: PASSED</output>
-    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
-    <output type="failure" caseSensitive="no" regex="no">TestSingleThreadModeCheckpointException: FAILED</output>
+    <output type="success" caseSensitive="yes" regex="no">testSingleThreadModeCheckpointExceptionJUCLock: PASSED</output>
+    <output type="success" caseSensitive="yes" regex="no">testSingleThreadModeCheckpointExceptionSynMonitor: PASSED</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint JUC LOCK</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint synchronization</output>
+    <output type="failure" caseSensitive="no" regex="no">testSingleThreadModeCheckpointExceptionJUCLock: FAILED</output>
+    <output type="failure" caseSensitive="no" regex="no">testSingleThreadModeCheckpointExceptionSynMonitor: FAILED</output>
     <output type="failure" caseSensitive="no" regex="no">Killed</output>
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
     <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
@@ -197,9 +200,13 @@
 
   <test id="Create and Restore Criu Checkpoint Image once - TestSingleThreadModeRestoreException">
     <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_SINGLETHREADMODE_RESTORE$ 1 1 false false</command>
-    <output type="success" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException: Exception thrown when running user post-restore</output>
+    <output type="success" caseSensitive="yes" regex="no">testSingleThreadModeRestoreExceptionJUCLock: PASSED</output>
+    <output type="success" caseSensitive="yes" regex="no">testSingleThreadModeRestoreExceptionSynLock: PASSED</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint JUC LOCK</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint synchronization</output>
+    <output type="failure" caseSensitive="no" regex="no">testSingleThreadModeRestoreExceptionJUCLock: FAILED</output>
+    <output type="failure" caseSensitive="no" regex="no">testSingleThreadModeRestoreExceptionSynLock: FAILED</output>
     <output type="required" caseSensitive="no" regex="no">Killed</output>
-    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
     <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
     <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->

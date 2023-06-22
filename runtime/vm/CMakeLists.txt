@@ -168,7 +168,7 @@ set(main_sources
 	stringhelpers.cpp
 	swalk.c
 	threadhelp.cpp
-	threadpark.c
+	threadpark.cpp
 	throwexception.c
 	UpcallExceptionHandler.cpp
 	UpcallThunkMem.cpp

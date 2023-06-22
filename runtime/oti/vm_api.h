@@ -4772,7 +4772,7 @@ prepareClass(J9VMThread *currentThread, J9Class *clazz);
 void
 initializeClass(J9VMThread *currentThread, J9Class *clazz);
 
-/* -------------------- threadpark.c ------------ */
+/* -------------------- threadpark.cpp ------------ */
 
 /**
  * @param[in] vmThread the current thread
