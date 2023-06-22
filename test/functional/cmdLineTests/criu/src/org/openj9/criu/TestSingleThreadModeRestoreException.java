@@ -24,6 +24,7 @@ package org.openj9.criu;
 import org.eclipse.openj9.criu.CRIUSupport;
 import org.eclipse.openj9.criu.JVMRestoreException;
 
+import java.net.InetAddress;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.locks.Lock;
@@ -40,6 +41,10 @@ public class TestSingleThreadModeRestoreException {
 
 	void testAll() {
 		testSingleThreadModeRestoreExceptionSynLock();
+		testSingleThreadModeRestoreExceptionJUCLock();
+		// Initialize InetAddress and trigger SharedSecrets.setJavaNetInetAddressAccess().
+		InetAddress.getLoopbackAddress();
+		// Do another run.
 		testSingleThreadModeRestoreExceptionJUCLock();
 	}
 
@@ -74,8 +79,7 @@ public class TestSingleThreadModeRestoreException {
 	}
 
 	void testSingleThreadModeRestoreExceptionJUCLock() {
-		CRIUTestUtils
-				.showThreadCurrentTime("testSingleThreadModeRestoreExceptionJUCLock() before ReentrantLock.lock()");
+		CRIUTestUtils.showThreadCurrentTime("testSingleThreadModeRestoreExceptionJUCLock() before ReentrantLock.lock()");
 		jucLock.lock();
 		CRIUSupport criu = CRIUTestUtils.prepareCheckPointJVM(CRIUTestUtils.imagePath);
 		if (criu == null) {
