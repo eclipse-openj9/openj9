@@ -1473,7 +1473,7 @@ static bool getProfiledCallSiteInfo(TR::CodeGenerator *cg, TR::Node *callNode, u
          }
       return false;
       }
-   static const bool tracePIC = feGetEnv("TR_TracePIC") != NULL;
+   static const bool tracePIC = (feGetEnv("TR_TracePIC") != NULL) && comp->getOption(TR_TraceCG);
    if (tracePIC)
       {
       traceMsg(comp, "Value profile info for callNode %p in %s\n", callNode, comp->signature());
@@ -1547,12 +1547,14 @@ static bool getProfiledCallSiteInfo(TR::CodeGenerator *cg, TR::Node *callNode, u
  * @param[in] profiledMethod: method suggested by interpreter profiler
  * @param[in] vftReg:         register containing VFT
  * @param[in] tempReg:        temporary register
+ * @param[in] temp2Reg:       temporary register
+ * @param[in] slotCount:      pic slot count
  * @param[in] missLabel:      label for cache miss
  * @param[in] regMapForGC:    register map for GC
  * @returns instruction making direct call to the method
  */
 static TR::Instruction* buildStaticPICCall(TR::CodeGenerator *cg, TR::Node *callNode, TR_OpaqueClassBlock *profiledClass, TR_ResolvedMethod *profiledMethod,
-                                             TR::Register *vftReg, TR::Register *tempReg, TR::LabelSymbol *missLabel, uint32_t regMapForGC)
+                                             TR::Register *vftReg, TR::Register *tempReg, TR::Register *temp2Reg, int32_t slotCount, TR::LabelSymbol *missLabel, uint32_t regMapForGC)
    {
    TR::Compilation *comp = cg->comp();
    TR::SymbolReference *methodSymRef = callNode->getSymbolReference();
@@ -1582,6 +1584,23 @@ static TR::Instruction* buildStaticPICCall(TR::CodeGenerator *cg, TR::Node *call
    generateCompareInstruction(cg, callNode, vftReg, tempReg, true);
 
    generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, callNode, missLabel, TR::CC_NE);
+   if (comp->getOptions()->enableDebugCounters())
+      {
+      TR::MethodSymbol *methodSymbol = methodSymRef->getSymbol()->castToMethodSymbol();
+      if (methodSymbol->isInterface())
+         {
+         TR_ARM64ScratchRegisterManager *srm = cg->generateScratchRegisterManager(2);
+         srm->donateScratchRegister(tempReg);
+         srm->donateScratchRegister(temp2Reg);
+         cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "cg.callInterface/(%s)/%s/%d/%d/staticPIC/slot%d",
+                                                                           comp->signature(),
+                                                                           comp->getHotnessName(),
+                                                                           callNode->getByteCodeInfo().getCallerIndex(),
+                                                                           callNode->getByteCodeInfo().getByteCodeIndex(),
+                                                                           slotCount), *srm);
+         srm->stopUsingRegisters();
+         }
+      }
 
    TR::Instruction *gcPoint = generateImmSymInstruction(cg, TR::InstOpCode::bl, callNode, (uintptr_t)profiledMethod->startAddressForJittedMethod(),
                                                                                   NULL, profiledMethodSymRef, NULL);
@@ -1629,10 +1648,11 @@ static void buildVirtualCall(TR::CodeGenerator *cg, TR::Node *callNode, TR::Regi
  * @param[in] callNode:    node for the interface call
  * @param[in] vftReg:      vft register
  * @param[in] tmpReg:      temporary register
+ * @param[in] tmp2Reg:     temporary register
  * @param[in] ifcSnippet:  interface call snippet
  * @param[in] regMapForGC: register map for GC
  */
-static void buildInterfaceCall(TR::CodeGenerator *cg, TR::Node *callNode, TR::Register *vftReg, TR::Register *tmpReg, TR::ARM64InterfaceCallSnippet *ifcSnippet, uint32_t regMapForGC)
+static void buildInterfaceCall(TR::CodeGenerator *cg, TR::Node *callNode, TR::Register *vftReg, TR::Register *tmpReg, TR::Register *tmp2Reg, TR::ARM64InterfaceCallSnippet *ifcSnippet, uint32_t regMapForGC)
    {
    /*
     *  Generating following instruction sequence.
@@ -1660,19 +1680,107 @@ static void buildInterfaceCall(TR::CodeGenerator *cg, TR::Node *callNode, TR::Re
    generateCompareInstruction(cg, callNode, vftReg, tmpReg, true);
    TR::LabelSymbol *firstBranchAddressCacheSlotLabel = ifcSnippet->getFirstBranchAddressCacheSlotLabel();
 
-   generateTrg1ImmSymInstruction(cg, TR::InstOpCode::ldrx, callNode, tmpReg, 0, firstBranchAddressCacheSlotLabel);
-   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, callNode, hitLabel, TR::CC_EQ);
+   TR::Compilation *comp = cg->comp();
+   TR_Debug *debugObj = cg->getDebug();
+   TR_ARM64ScratchRegisterManager *srm = NULL;
+   bool isDebugCounterGenerated = false;
+   if (comp->getOptions()->enableDebugCounters())
+      {
+      srm = cg->generateScratchRegisterManager(2);
+      srm->donateScratchRegister(tmpReg);
+      srm->donateScratchRegister(tmp2Reg);
+      TR::Instruction *prevCursor = cg->getAppendInstruction();
+      /* Record if slot 1 hit */
+      TR::Instruction *cursor = cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "cg.callInterface/(%s)/%s/%d/%d/dynamicPIC/slot1",
+                                                                                            comp->signature(),
+                                                                                            comp->getHotnessName(),
+                                                                                            callNode->getByteCodeInfo().getCallerIndex(),
+                                                                                            callNode->getByteCodeInfo().getByteCodeIndex()), *srm);
+      if (prevCursor != cursor)
+         {
+         isDebugCounterGenerated = true;
+         /* Debug counter was generated. Generating instructions before debug counter instructions. */
+         TR::LabelSymbol *slot1MissedLabel = generateLabelSymbol(cg);
+         TR::Instruction *branchToSlot1MissedLabelInstr = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, callNode, slot1MissedLabel, TR::CC_NE, prevCursor);
+         generateTrg1ImmSymInstruction(cg, TR::InstOpCode::ldrx, callNode, tmpReg, 0, firstBranchAddressCacheSlotLabel);
+         TR::Instruction *branchToHitLabelInstr = generateLabelInstruction(cg, TR::InstOpCode::b, callNode, hitLabel);
+         TR::Instruction *slot1MissedLabelInstr = generateLabelInstruction(cg, TR::InstOpCode::label, callNode, slot1MissedLabel);
+         if (debugObj)
+            {
+            debugObj->addInstructionComment(branchToSlot1MissedLabelInstr, "Jumps to slot1MissedLabel");
+            debugObj->addInstructionComment(branchToHitLabelInstr, "Jumps to hitLabel");
+            debugObj->addInstructionComment(slot1MissedLabelInstr, "slot1MissedLabel");
+            }
+         }
+      }
+   if (!isDebugCounterGenerated)
+      {
+      generateTrg1ImmSymInstruction(cg, TR::InstOpCode::ldrx, callNode, tmpReg, 0, firstBranchAddressCacheSlotLabel);
+      TR::Instruction *branchToHitLabelInstr = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, callNode, hitLabel, TR::CC_EQ);
+      if (debugObj)
+         {
+         debugObj->addInstructionComment(branchToHitLabelInstr, "Jumps to hitLabel");
+         }
+      }
 
    TR::LabelSymbol *secondClassCacheSlotLabel = ifcSnippet->getSecondClassCacheSlotLabel();
 
    generateTrg1ImmSymInstruction(cg, TR::InstOpCode::ldrx, callNode, tmpReg, 0, secondClassCacheSlotLabel);
+
+   if (comp->getOptions()->enableDebugCounters())
+      {
+      TR::LabelSymbol *slot2MissedLabel = generateLabelSymbol(cg);
+      TR::LabelSymbol *slot2DoneLabel = generateLabelSymbol(cg);
+      TR::Instruction *prevCursor1 = cg->getAppendInstruction();
+      /* Record if slot 2 hit */
+      TR::Instruction *cursor1 = cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "cg.callInterface/(%s)/%s/%d/%d/dynamicPIC/slot2",
+                                                                                             comp->signature(),
+                                                                                             comp->getHotnessName(),
+                                                                                             callNode->getByteCodeInfo().getCallerIndex(),
+                                                                                             callNode->getByteCodeInfo().getByteCodeIndex()), *srm);
+      TR::Instruction *prevCursor2 = cg->getAppendInstruction();
+      /* Record if slot 2 missed */
+      TR::Instruction *cursor2 = cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "cg.callInterface/(%s)/%s/%d/%d/dynamicPIC/cachemiss",
+                                                                                             comp->signature(),
+                                                                                             comp->getHotnessName(),
+                                                                                             callNode->getByteCodeInfo().getCallerIndex(),
+                                                                                             callNode->getByteCodeInfo().getByteCodeIndex()), *srm);
+      if ((prevCursor1 != cursor1) || (prevCursor2 != cursor2))
+         {
+         /* Debug counter was generated. Generating instructions before debug counter instructions recording hit for second cache slot. */
+         TR::Instruction *cursor = generateCompareInstruction(cg, callNode, vftReg, tmpReg, true, prevCursor1);
+         TR::Instruction *branchToSlot2MissedLabelInstr = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, callNode, slot2MissedLabel, TR::CC_NE, cursor);
+
+         /* Generating instructions before debug counter instructions recording cache miss. */
+         cursor = generateLabelInstruction(cg, TR::InstOpCode::b, callNode, slot2DoneLabel, prevCursor2);
+         TR::Instruction *slot2MissedLabelInstr = generateLabelInstruction(cg, TR::InstOpCode::label, callNode, slot2MissedLabel, cursor);
+
+         /* Generating instructions after debug counter instructions. */
+         TR::Instruction *slot2DoneLabelInstr = generateLabelInstruction(cg, TR::InstOpCode::label, callNode, slot2DoneLabel);
+         generateTrg1ImmSymInstruction(cg, TR::InstOpCode::ldrx, callNode, tmpReg, 0, secondClassCacheSlotLabel);
+         if (debugObj)
+            {
+            debugObj->addInstructionComment(branchToSlot2MissedLabelInstr, "Jumps to slot2MissedLabel");
+            debugObj->addInstructionComment(cursor, "Jumps to slot2DoneLabel");
+            debugObj->addInstructionComment(slot2MissedLabelInstr, "slot2MissedLabel");
+            debugObj->addInstructionComment(slot2DoneLabelInstr, "slot2DoneLabel");
+            }
+         }
+      srm->stopUsingRegisters();
+      }
+
    generateCompareInstruction(cg, callNode, vftReg, tmpReg, true);
    TR::Instruction *gcPoint = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, callNode, ifcSnippetLabel, TR::CC_NE);
    gcPoint->ARM64NeedsGCMap(cg, regMapForGC);
    TR::LabelSymbol *secondBranchAddressCacheSlotLabel = ifcSnippet->getSecondBranchAddressCacheSlotLabel();
 
    generateTrg1ImmSymInstruction(cg, TR::InstOpCode::ldrx, callNode, tmpReg, 0, secondBranchAddressCacheSlotLabel);
-   generateLabelInstruction(cg, TR::InstOpCode::label, callNode, hitLabel);
+   TR::Instruction *hitLabelInstr = generateLabelInstruction(cg, TR::InstOpCode::label, callNode, hitLabel);
+   if (debugObj)
+      {
+      debugObj->addInstructionComment(gcPoint, "Jumps to snippet");
+      debugObj->addInstructionComment(hitLabelInstr, "hitLabel");
+      }
    gcPoint = generateRegBranchInstruction(cg, TR::InstOpCode::blr, callNode, tmpReg);
    gcPoint->ARM64NeedsGCMap(cg, regMapForGC);
    }
@@ -1696,6 +1804,7 @@ void J9::ARM64::PrivateLinkage::buildVirtualDispatch(TR::Node *callNode,
    {
    TR::Register *x0 = dependencies->searchPreConditionRegister(TR::RealRegister::x0);
    TR::Register *x9 = dependencies->searchPreConditionRegister(TR::RealRegister::x9);
+   TR::Register *x10 = dependencies->searchPreConditionRegister(TR::RealRegister::x10);
 
    TR::SymbolReference *methodSymRef = callNode->getSymbolReference();
    TR::MethodSymbol *methodSymbol = methodSymRef->getSymbol()->castToMethodSymbol();
@@ -1946,7 +2055,7 @@ void J9::ARM64::PrivateLinkage::buildVirtualDispatch(TR::Node *callNode,
             TR::LabelSymbol *slowCallLabel = generateLabelSymbol(cg());
 
             TR::Instruction *gcPoint = buildStaticPICCall(cg(), callNode, pic->_clazz, pic->_method,
-                                                            vftReg, x9, slowCallLabel, regMapForGC);
+                                                            vftReg, x9, x10, 1, slowCallLabel, regMapForGC);
             generateLabelInstruction(cg(), TR::InstOpCode::label, callNode, doneLabel, dependencies);
 
             // Out of line virtual/interface call
@@ -1974,7 +2083,7 @@ void J9::ARM64::PrivateLinkage::buildVirtualDispatch(TR::Node *callNode,
                                                                                                               argSize, doneOOLLabel, firstClassCacheSlotLabel, secondClassCacheSlotLabel,
                                                                                                               firstBranchAddressCacheSlotLabel, secondBranchAddressCacheSlotLabel, static_cast<uint8_t *>(thunk));
                cg()->addSnippet(ifcSnippet);
-               buildInterfaceCall(cg(), callNode, vftReg, x9, ifcSnippet, regMapForGC);
+               buildInterfaceCall(cg(), callNode, vftReg, x9, x10, ifcSnippet, regMapForGC);
                }
             else
                {
@@ -1995,12 +2104,13 @@ void J9::ARM64::PrivateLinkage::buildVirtualDispatch(TR::Node *callNode,
                traceMsg(comp(), "Generating %d static PIC calls\n", values.getSize());
                }
             // Build multiple static PIC calls
+            int32_t slotCount = 1;
             while (pic)
                {
                TR::LabelSymbol *nextLabel = generateLabelSymbol(cg());
 
                buildStaticPICCall(cg(), callNode, pic->_clazz, pic->_method,
-                                  vftReg, x9, nextLabel, regMapForGC);
+                                  vftReg, x9, x10, slotCount++, nextLabel, regMapForGC);
                generateLabelInstruction(cg(), TR::InstOpCode::b, callNode, doneLabel);
                generateLabelInstruction(cg(), TR::InstOpCode::label, callNode, nextLabel);
                pic = i.getNext();
@@ -2027,7 +2137,7 @@ void J9::ARM64::PrivateLinkage::buildVirtualDispatch(TR::Node *callNode,
          TR::ARM64InterfaceCallSnippet(cg(), callNode, ifcSnippetLabel, argSize, doneLabel, firstClassCacheSlotLabel, firstBranchAddressCacheSlotLabel, secondClassCacheSlotLabel, secondBranchAddressCacheSlotLabel, static_cast<uint8_t *>(thunk));
       cg()->addSnippet(ifcSnippet);
 
-      buildInterfaceCall(cg(), callNode, vftReg, x9, ifcSnippet, regMapForGC);
+      buildInterfaceCall(cg(), callNode, vftReg, x9, x10, ifcSnippet, regMapForGC);
       }
    else
       {
