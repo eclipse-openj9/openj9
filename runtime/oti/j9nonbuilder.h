@@ -88,6 +88,7 @@
 #define J9ClassEnsureHashed 0x100000
 #define J9ClassHasOffloadAllowSubtasksNatives 0x200000
 #define J9ClassIsPrimitiveValueType 0x400000
+#define J9ClassAllowsNonAtomicCreation 0x800000
 
 /* @ddr_namespace: map_to_type=J9FieldFlags */
 
@@ -257,6 +258,9 @@
 #define J9_ROMCLASS_OPTINFO_RECORD_ATTRIBUTE 0x800000
 #define J9_ROMCLASS_OPTINFO_PERMITTEDSUBCLASSES_ATTRIBUTE 0x1000000
 #define J9_ROMCLASS_OPTINFO_INJECTED_INTERFACE_INFO 0x2000000
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#define J9_ROMCLASS_OPTINFO_PRELOAD_ATTRIBUTE 0x4000000
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 /* Constants for checkVisibility return results */
 #define J9_VISIBILITY_ALLOWED 1

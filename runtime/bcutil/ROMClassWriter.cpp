@@ -321,6 +321,7 @@ ROMClassWriter::ROMClassWriter(BufferManager *bufferManager, ClassFileOracle *cl
 #endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	_injectedInterfaceInfoSRPKey(srpKeyProducer->generateKey()),
+	_preloadInfoSRPKey(srpKeyProducer->generateKey()),
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 	_permittedSubclassesInfoSRPKey(srpKeyProducer->generateKey())
 {
@@ -456,6 +457,7 @@ ROMClassWriter::writeROMClass(Cursor *cursor,
 	writePermittedSubclasses(cursor, markAndCountOnly);
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	writeInjectedInterfaces(cursor, markAndCountOnly);
+	writePreload(cursor, markAndCountOnly);
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 	writeOptionalInfo(cursor);
 	writeCallSiteData(cursor, markAndCountOnly);
@@ -1877,6 +1879,36 @@ ROMClassWriter::writePermittedSubclasses(Cursor *cursor, bool markAndCountOnly)
 }
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+/*
+ * Preload ROM class layout:
+ * 4 bytes for number of classes (actually takes up two, but use 4 for alignment)
+ * for number of classes:
+ *   4 byte SRP to class name
+ */
+void
+ROMClassWriter::writePreload(Cursor *cursor, bool markAndCountOnly)
+{
+	if (_classFileOracle->hasPreloadClasses()) {
+		cursor->mark(_preloadInfoSRPKey);
+
+		U_16 classCount = _classFileOracle->getPreloadClassCount();
+		if (markAndCountOnly) {
+			cursor->skip(sizeof(U_32));
+		} else {
+			cursor->writeU32(classCount, Cursor::GENERIC);
+		}
+
+		for (U_16 index = 0; index < classCount; index++) {
+			if (markAndCountOnly) {
+				cursor->skip(sizeof(J9SRP));
+			} else {
+				U_16 classNameCpIndex = _classFileOracle->getPreloadClassNameAtIndex(index);
+				cursor->writeSRP(_srpKeyProducer->mapCfrConstantPoolIndexToKey(classNameCpIndex), Cursor::SRP_TO_UTF8);
+			}
+		}
+	}
+}
+
 void
 ROMClassWriter::writeInjectedInterfaces(Cursor *cursor, bool markAndCountOnly)
 {
@@ -1928,6 +1960,7 @@ ROMClassWriter::writeOptionalInfo(Cursor *cursor)
 	 * SRP to record class component attributes
 	 * SRP to PermittedSubclasses attribute
 	 * SRP to injected interfaces info
+	 * SRP to Preload attribute
 	 */
 	cursor->mark(_optionalInfoSRPKey);
 
@@ -1972,6 +2005,9 @@ ROMClassWriter::writeOptionalInfo(Cursor *cursor)
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	if (_interfaceInjectionInfo->numOfInterfaces > 0) {
 		cursor->writeSRP(_injectedInterfaceInfoSRPKey, Cursor::SRP_TO_GENERIC);
+	}
+	if (_classFileOracle->hasPreloadClasses()) {
+		cursor->writeSRP(_preloadInfoSRPKey, Cursor::SRP_TO_GENERIC);
 	}
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 }
