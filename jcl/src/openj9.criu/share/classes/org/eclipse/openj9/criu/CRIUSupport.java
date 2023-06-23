@@ -257,7 +257,7 @@ public final class CRIUSupport {
 	public CRIUSupport setImageDir(Path imageDir) {
 		Objects.requireNonNull(imageDir, "Image directory cannot be null"); //$NON-NLS-1$
 		if (!Files.isDirectory(imageDir)) {
-			throw new IllegalArgumentException("imageDir is not a valid directory"); //$NON-NLS-1$
+			throw new IllegalArgumentException(imageDir.toAbsolutePath() + " is not a valid directory"); //$NON-NLS-1$
 		}
 		String dir = imageDir.toAbsolutePath().toString();
 

@@ -51,6 +51,9 @@ extern "C" {
 #define RESTORE_ARGS_RETURN_OPTIONS_FILE_FAILED 2
 #define RESTORE_ARGS_RETURN_ENV_VAR_FILE_FAILED 3
 
+#define J9VM_DELAYCHECKPOINT_NOTCHECKPOINTSAFE 0x1
+#define J9VM_DELAYCHECKPOINT_CLINIT 0x2
+
 #define OPENJ9_RESTORE_OPTS_VAR "OPENJ9_RESTORE_JAVA_OPTIONS="
 
 static bool
@@ -149,8 +152,11 @@ setupJNIFieldIDsAndCRIUAPI(JNIEnv *env, jclass *currentExceptionClass, IDATA *sy
 		goto done;
 	}
 
-	vm->checkpointState.isJdwpEnabled = (FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, MAPOPT_AGENTLIB_JDWP_EQUALS, NULL) >= 0)
-		|| (FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, MAPOPT_XRUNJDWP, NULL) >= 0);
+	if ((FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, MAPOPT_AGENTLIB_JDWP_EQUALS, NULL) >= 0)
+		|| (FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, MAPOPT_XRUNJDWP, NULL) >= 0)
+	) {
+		vm->checkpointState.flags |= J9VM_CRIU_IS_JDWP_ENABLED;
+	}
 
 done:
 	return returnCode;
@@ -269,7 +275,7 @@ shouldToggleJavaThread(J9VMThread *currentThread, BOOLEAN toggleDebugThreads)
 {
 	J9JavaVM *vm = currentThread->javaVM;
 	bool result = true;
-	if (vm->checkpointState.isJdwpEnabled) {
+	if (J9_ARE_ALL_BITS_SET(vm->checkpointState.flags, J9VM_CRIU_IS_JDWP_ENABLED)) {
 		char *threadName = getOMRVMThreadName(currentThread->omrVMThread);
 		releaseOMRVMThreadName(currentThread->omrVMThread);
 		/* all threads started by JDWP begin with "JDWP" in their name */
@@ -313,33 +319,47 @@ toggleSuspendOnJavaThreads(J9VMThread *currentThread, BOOLEAN suspend, BOOLEAN t
 }
 
 static UDATA
-notCheckpointSafeFrameWalkFunction(J9VMThread *vmThread, J9StackWalkState *walkState)
+notCheckpointSafeOrClinitFrameWalkFunction(J9VMThread *vmThread, J9StackWalkState *walkState)
 {
 	J9Method *method = walkState->method;
+	UDATA returnCode = J9_STACKWALK_KEEP_ITERATING;
+
 	if (NULL != method) {
+		J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
 		J9ClassLoader *methodLoader = J9_CLASS_FROM_METHOD(method)->classLoader;
+		J9UTF8 *romMethodName = J9ROMMETHOD_NAME(romMethod);
+		/* only method names that start with '<' are <init>, <vnew> and <clinit>  */
+		if (0 == strncmp((char*)J9UTF8_DATA(romMethodName), "<c", 2)) {
+			*(UDATA*)walkState->userData1 = J9VM_DELAYCHECKPOINT_CLINIT;
+			goto fail;
+		}
+
 		/* we only enforce this in methods loaded by the bootloader */
 		if (methodLoader == vmThread->javaVM->systemClassLoader) {
-			J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
 			if (J9ROMMETHOD_HAS_EXTENDED_MODIFIERS(romMethod)) {
 				U_32 extraModifiers = getExtendedModifiersDataFromROMMethod(romMethod);
 				if (J9ROMMETHOD_HAS_NOT_CHECKPOINT_SAFE_ANNOTATION(extraModifiers)) {
-					*(bool *)walkState->userData1 = false;
-					walkState->userData2 = (void *)vmThread;
-					walkState->userData3 = (void *)method;
-					return J9_STACKWALK_STOP_ITERATING;
+					*(UDATA*)walkState->userData1 = J9VM_DELAYCHECKPOINT_NOTCHECKPOINTSAFE;
+					goto fail;
 				}
 			}
 		}
 	}
 
-	return J9_STACKWALK_KEEP_ITERATING;
+done:
+	return returnCode;
+
+fail:
+	walkState->userData2 = (void *)vmThread;
+	walkState->userData3 = (void *)method;
+	returnCode = J9_STACKWALK_STOP_ITERATING;
+	goto done;
 }
 
 static bool
 checkIfSafeToCheckpoint(J9VMThread *currentThread)
 {
-	bool isSafe = true;
+	UDATA notSafeToCheckpoint = 0;
 	J9JavaVM *vm = currentThread->javaVM;
 
 	Assert_CRIU_true((J9_XACCESS_EXCLUSIVE == vm->exclusiveAccessState) || (J9_XACCESS_EXCLUSIVE == vm->safePointState));
@@ -353,19 +373,19 @@ checkIfSafeToCheckpoint(J9VMThread *currentThread)
 			walkState.walkThread = walkThread;
 			walkState.flags = J9_STACKWALK_ITERATE_FRAMES | J9_STACKWALK_INCLUDE_NATIVES;
 			walkState.skipCount = 0;
-			walkState.userData1 = (void *)&isSafe;
-			walkState.frameWalkFunction = notCheckpointSafeFrameWalkFunction;
+			walkState.userData1 = (void *)&notSafeToCheckpoint;
+			walkState.frameWalkFunction = notCheckpointSafeOrClinitFrameWalkFunction;
 
 			vm->walkStackFrames(walkThread, &walkState);
-			if (!isSafe) {
-				Trc_CRIU_checkpointJVMImpl_checkIfSafeToCheckpointBlocked(currentThread, walkState.userData2, walkState.userData3);
+			if (0 != notSafeToCheckpoint) {
+				Trc_CRIU_checkpointJVMImpl_checkIfSafeToCheckpointBlockedVer2(currentThread, walkState.userData2, walkState.userData3, *(UDATA*)walkState.userData1);
 				break;
 			}
 		}
 		walkThread = J9_LINKED_LIST_NEXT_DO(vm->mainThread, walkThread);
 	}
 
-	return isSafe;
+	return notSafeToCheckpoint;
 }
 
 static VMINLINE void
@@ -654,11 +674,12 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 		U_64 restoreNanoUTCTime = 0;
 		UDATA success = 0;
 		bool safePoint = J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_OSR_SAFE_POINT);
-		bool retryPermitted = vm->checkpointState.maxRetryForNotCheckpointSafe > 0;
+		UDATA maxRetries = vm->checkpointState.maxRetryForNotCheckpointSafe;
 		BOOLEAN syslogFlagNone = TRUE;
 		char *syslogOptions = NULL;
 		I_32 syslogBufferSize = 0;
 		UDATA oldVMState = VM_VMHelpers::setVMState(currentThread, J9VMSTATE_CRIU_SUPPORT_CHECKPOINT_PHASE_START);
+		UDATA notSafeToCheckpoint = 0;
 
 		vmFuncs->internalEnterVMFromJNI(currentThread);
 
@@ -803,18 +824,27 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 
 		acquireSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
 
-		for (UDATA i = 0; !checkIfSafeToCheckpoint(currentThread) && retryPermitted; i++) {
+		notSafeToCheckpoint = checkIfSafeToCheckpoint(currentThread);
+
+		for (UDATA i = 0; (0 != notSafeToCheckpoint) && (i <= maxRetries); i++) {
 			releaseSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
 			vmFuncs->internalExitVMToJNI(currentThread);
-			omrthread_nanosleep(1000);
+			omrthread_nanosleep(10000);
 			vmFuncs->internalEnterVMFromJNI(currentThread);
-			if (i == vm->checkpointState.maxRetryForNotCheckpointSafe) {
-				currentExceptionClass = vm->checkpointState.criuJVMCheckpointExceptionClass;
-				systemReturnCode = vm->checkpointState.maxRetryForNotCheckpointSafe;
-				nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_JCL_CRIU_MAX_RETRY_FOR_NOTCHECKPOINTSAFE_REACHED, NULL);
-				goto closeWorkDirFD;
-			}
 			acquireSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
+			notSafeToCheckpoint = checkIfSafeToCheckpoint(currentThread);
+		}
+
+		if ((J9VM_DELAYCHECKPOINT_NOTCHECKPOINTSAFE == notSafeToCheckpoint)
+			|| ((J9VM_DELAYCHECKPOINT_CLINIT == notSafeToCheckpoint) && J9_ARE_ALL_BITS_SET(vm->checkpointState.flags, J9VM_CRIU_IS_THROW_ON_DELAYED_CHECKPOINT_ENABLED))
+		) {
+			releaseSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
+			currentExceptionClass = vm->checkpointState.criuJVMCheckpointExceptionClass;
+			systemReturnCode = vm->checkpointState.maxRetryForNotCheckpointSafe;
+			nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_JCL_CRIU_MAX_RETRY_FOR_NOTCHECKPOINTSAFE_REACHED, NULL);
+			goto closeWorkDirFD;
+		} else {
+			Trc_CRIU_checkpointJVMImpl_checkpointWithActiveCLinit(currentThread);
 		}
 
 		toggleSuspendOnJavaThreads(currentThread, TRUE, FALSE);
@@ -856,7 +886,7 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 			goto wakeJavaThreadsWithExclusiveVMAccess;
 		}
 
-		if (vm->checkpointState.isJdwpEnabled) {
+		if (J9_ARE_ALL_BITS_SET(vm->checkpointState.flags, J9VM_CRIU_IS_JDWP_ENABLED)) {
 			toggleSuspendOnJavaThreads(currentThread, TRUE, TRUE);
 		}
 
@@ -954,7 +984,7 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 			goto wakeJavaThreadsWithExclusiveVMAccess;
 		}
 
-		if (vm->checkpointState.isJdwpEnabled) {
+		if (J9_ARE_ALL_BITS_SET(vm->checkpointState.flags, J9VM_CRIU_IS_JDWP_ENABLED)) {
 			toggleSuspendOnJavaThreads(currentThread, FALSE, TRUE);
 		}
 

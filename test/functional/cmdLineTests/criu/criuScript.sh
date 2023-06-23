@@ -36,7 +36,7 @@ echo "export GLIBC_TUNABLES=glibc.cpu.hwcaps=-XSAVEC,-XSAVE,-AVX2,-ERMS,-AVX,-AV
 export GLIBC_TUNABLES=glibc.pthread.rseq=0:glibc.cpu.hwcaps=-XSAVEC,-XSAVE,-AVX2,-ERMS,-AVX,-AVX_Fast_Unaligned_Load
 echo "export LD_BIND_NOT=on";
 export LD_BIND_NOT=on
-
+echo "$2 -XX:+EnableCRIUSupport $3 -cp "$1/criu.jar" $4 $5 $6"
 $2 -XX:+EnableCRIUSupport $3 -cp "$1/criu.jar" $4 $5 $6 >testOutput 2>&1;
 
 if [ "$7" != true ]; then
