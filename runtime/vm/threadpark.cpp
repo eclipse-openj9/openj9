@@ -28,7 +28,11 @@
 #include "omrthread.h"
 #include "ut_j9vm.h"
 
+#include "VMHelpers.hpp"
+
 #include <string.h>
+
+extern "C" {
 
 void
 threadParkImpl(J9VMThread *vmThread, BOOLEAN timeoutIsEpochRelative, I_64 timeout)
@@ -62,6 +66,20 @@ threadParkImpl(J9VMThread *vmThread, BOOLEAN timeoutIsEpochRelative, I_64 timeou
 		}
 		thrstate |= J9_PUBLIC_FLAGS_THREAD_TIMED;
 	}
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	else {
+		/* timeoutIsEpochRelative is false and timeout = 0 */
+		if (J9_IS_SINGLE_THREAD_MODE(vm)
+			&& VM_VMHelpers::threadCanRunJavaCode(vmThread)
+			&& (vmThread == vm->checkpointState.checkpointThread)
+			&& J9_ARE_NO_BITS_SET(vmThread->publicFlags, J9_PUBLIC_FLAGS_HALT_THREAD_FOR_CHECKPOINT)
+		) {
+			/* This is the checkpoint/restore thread, can't park indefinitely. */
+			setCRIUSingleThreadModeJVMCRIUException(vmThread, 0, 0);
+			return;
+		}
+	}
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 #ifdef J9VM_OPT_SIDECAR
 	/* Increment the wait count even if the deadline is past. */
@@ -140,4 +158,6 @@ threadUnparkImpl(J9VMThread *vmThread, j9object_t threadObject)
 			/*Trc_JCL_unpark_Exit(vmThread);*/
 		}
 	}
+}
+
 }
