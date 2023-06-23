@@ -527,6 +527,33 @@
 		</impls>
 	</test>
 	<test>
+		<testCaseName>BNDCHKImplicitNullTest</testCaseName>
+		<variations>
+			<variation>-Xjit:count=1000,limit={*C.shouldThrowNullPointerException*},optLevel=noopt,disableAsyncCompilation</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jitt.jar$(Q) \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
+	-testnames \
+	BNDCHKImplicitNullTest \
+	-groups $(TEST_GROUP) \
+	-excludegroups $(DEFAULT_EXCLUDE); \
+	$(TEST_STATUS)</command>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<features>
+			<feature>AOT:nonapplicable</feature>
+		</features>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
+	</test>
+	<test>
 		<testCaseName>BNDCHKSimplifyTest</testCaseName>
 		<variations>
 			<variation>-Xjit:count=100,limit={*checkIndex*},optLevel=scorching,disableAsyncCompilation</variation>

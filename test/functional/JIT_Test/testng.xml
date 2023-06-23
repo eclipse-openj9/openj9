@@ -450,6 +450,11 @@
 	   <class name="jit.test.tr.SIMDOpts.SIMDOptTest" />
 	 </classes>
   </test>
+  <test name="BNDCHKImplicitNullTest">
+    <classes>
+      <class name="jit.test.tr.BNDCHKImplicitNull.BNDCHKImplicitNullTest" />
+    </classes>
+  </test>
   <test name="BNDCHKSimplifyTest">
 	 <classes>
 	   <class name="jit.test.tr.BNDCHKSimplify.BNDCHKSimplifyTest" />
