@@ -50,13 +50,13 @@ protected:
 public:
 	
 private:
-	
+
+protected:
+
 	/**
 	 * Reset a flushed buffer to the empty state.
 	 */
 	void reset();
-
-protected:
 
 	virtual bool initialize(MM_EnvironmentBase *env) = 0;
 	virtual void tearDown(MM_EnvironmentBase *env) = 0;
