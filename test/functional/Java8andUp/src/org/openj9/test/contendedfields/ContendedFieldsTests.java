@@ -91,8 +91,7 @@ public class ContendedFieldsTests {
 	/**
 	 * Run with both:
 	 * -Xlockword:none,mode=all
-	 * -Xlockword:none,mode=minimizeFootprint
-	 * 
+	 *
 	 */
 
 	@AfterMethod
