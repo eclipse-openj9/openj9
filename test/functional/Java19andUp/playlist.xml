@@ -28,6 +28,8 @@
 			<variation>--enable-preview -Xgcpolicy:gencon</variation>
 			<variation>--enable-preview -Xgcpolicy:balanced</variation>
 			<variation>--enable-preview -Xgcpolicy:optavgpause</variation>
+			<variation>--enable-preview -Xgcpolicy:metronome -Xmx32m</variation>
+			<variation>--enable-preview -Xgcpolicy:gencon -Xgc:concurrentScavenge</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) \
 			--add-opens java.base/java.lang=ALL-UNNAMED \
@@ -53,6 +55,41 @@
 		</impls>
 		<versions>
 			<version>19</version>
+		</versions>
+	</test>
+
+	<test>
+		<testCaseName>Jep425Tests_testContinuationGC</testCaseName>
+		<variations>
+			<variation>--enable-preview -Xgcpolicy:optthruput -Xcompactgc</variation>
+			<variation>--enable-preview -Xgcpolicy:gencon</variation>
+			<variation>--enable-preview -Xgcpolicy:balanced</variation>
+			<variation>--enable-preview -Xgcpolicy:optavgpause</variation>
+			<!--  default initial size of heap for Metronome was too large to trigger GC, set Xmx for guaranteed GC involvement for metronome case. -->
+			<variation>--enable-preview -Xgcpolicy:metronome -Xmx48m</variation>
+			<variation>--enable-preview -Xgcpolicy:gencon -Xgc:concurrentScavenge</variation>
+		</variations>
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) \
+			--add-opens java.base/java.lang=ALL-UNNAMED \
+			-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng_190.xml$(Q) \
+			-testnames Jep425Tests_testContinuationGC \
+			-groups $(TEST_GROUP) \
+			-excludegroups $(DEFAULT_EXCLUDE); \
+			$(TEST_STATUS)
+		</command>
+		<platformRequirements>bits.64,^os.zos,^os.sunos</platformRequirements>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<impls>
+			<impl>openj9</impl>
+		</impls>
+		<versions>
+			<version>19+</version>
 		</versions>
 	</test>
 

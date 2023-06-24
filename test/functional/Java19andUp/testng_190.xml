@@ -29,7 +29,12 @@ Copyright IBM Corp. and others 2022
 			<class name="org.openj9.test.jep425.VirtualThreadTests"/>
 		</classes>
 	</test>
-		<test name="Jep424Tests_testLinkerFfi_DownCall">
+	<test name="Jep425Tests_testContinuationGC">
+		<classes>
+			<class name="org.openj9.test.jep425.ContinuationGCTests"/>
+		</classes>
+	</test>
+	<test name="Jep424Tests_testLinkerFfi_DownCall">
 		<classes>
 			<class name="org.openj9.test.jep424.downcall.InvalidDownCallTests"/>
 			<class name="org.openj9.test.jep424.downcall.MultiCallTests"/>
