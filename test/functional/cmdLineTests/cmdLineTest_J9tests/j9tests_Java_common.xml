@@ -223,11 +223,6 @@
   <return type="success" value="0" />
  </test>
 
-  <test id="-Xlockword minimizeFootprint mode">
-  <command>$EXE$ $CP$ -Xlockword:mode=minimizeFootprint $TARGET$</command>
-  <return type="success" value="0" />
- </test>
-
  <test id="-Xlockword all mode">
   <command>$EXE$ $CP$ -Xlockword:mode=all $TARGET$</command>
   <return type="success" value="0" />

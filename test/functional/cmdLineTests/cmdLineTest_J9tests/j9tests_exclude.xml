@@ -31,7 +31,6 @@
 <exclude id="Xnoclassgc" platform=".*_hrt.*" shouldFix="true"><reason>unsupported command line option</reason></exclude>
 <exclude id="-Xlockword bad mode" platform=".*_hrt.*" shouldFix="false"><reason>-Xlockword not supported on hard realtime</reason></exclude>
 <exclude id="-Xlockword default mode" platform=".*_hrt.*" shouldFix="false"><reason>-Xlockword not supported on hard realtime</reason></exclude>
-<exclude id="-Xlockword minimizeFootprint mode" platform=".*_hrt.*" shouldFix="false"><reason>-Xlockword not supported on hard realtime</reason></exclude>
 <exclude id="-Xlockword all mode" platform=".*_hrt.*" shouldFix="false"><reason>-Xlockword not supported on hard realtime</reason></exclude>
 <exclude id="-Xlockword bad option" platform=".*_hrt.*" shouldFix="false"><reason>-Xlockword not supported on hard realtime</reason></exclude>
 <exclude id="-Xlockword bad option trailing separator" platform=".*_hrt.*" shouldFix="false"><reason>-Xlockword not supported on hard realtime</reason></exclude>
