@@ -341,6 +341,7 @@ static void testBackupAndRestoreLibpath(void);
 
 /* Defined in j9memcategories.c */
 extern OMRMemCategorySet j9MainMemCategorySet;
+extern void resetThreadCategories(void);
 
 void exitHook(J9JavaVM *vm);
 static jint JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITServer);
@@ -789,6 +790,8 @@ static void freeGlobals(void)
 
 	free(j9Buffer);
 	j9Buffer = NULL;
+
+	resetThreadCategories();
 }
 
 static J9StringBuffer* jvmBufferEnsure(J9StringBuffer* buffer, UDATA len) {
