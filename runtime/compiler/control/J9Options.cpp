@@ -1639,19 +1639,17 @@ void J9::Options::preProcessCodeCacheIncreaseTotalSize(J9JavaVM *vm, J9JITConfig
       codecachetotalAlreadyParsed = true;
 
       UDATA ccTotalSize = jitConfig->codeCacheTotalKB;
-#if !defined(J9ZTPF)
-      // The z/TPF OS reserves code cache memory differently
-      bool incomplete;
-      uint64_t freePhysicalMemoryB = getCompilationInfo(jitConfig)->computeAndCacheFreePhysicalMemory(incomplete);
-      if (freePhysicalMemoryB != OMRPORT_MEMINFO_NOT_AVAILABLE && !incomplete)
+#if !defined(J9ZTPF)  // The z/TPF OS reserves code cache memory differently
+      uint64_t freePhysicalMemoryB = omrsysinfo_get_addressable_physical_memory();
+      if (freePhysicalMemoryB != 0)
          {
          // If the available memory is less than the default code cache total value
-	 // then use only the user specified percentage(default 25%) of the free memory as code cache total
+         // then use only the user specified percentage(default 25%) of the free memory as code cache total
          uint64_t proposedCodeCacheTotalKB = ((uint64_t)(((double)freePhysicalMemoryB / 100.0) * getCodeCacheMaxPercentageOfAvailableMemory(vm))) >> 10;
          if (proposedCodeCacheTotalKB < jitConfig->codeCacheTotalKB)
             {
             ccTotalSize = static_cast<UDATA>(proposedCodeCacheTotalKB);
-	    _overrideCodecachetotal = true;
+            _overrideCodecachetotal = true;
             }
          }
 #endif
