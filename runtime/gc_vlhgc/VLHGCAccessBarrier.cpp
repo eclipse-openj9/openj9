@@ -480,7 +480,7 @@ MM_VLHGCAccessBarrier::jniGetStringCritical(J9VMThread* vmThread, jstring str, j
 	J9Object *stringObject = (J9Object*)J9_JNI_UNWRAP_REFERENCE(str);
 	J9IndexableObject *valueObject = (J9IndexableObject*)J9VMJAVALANGSTRING_VALUE(vmThread, stringObject);
 	/* If the string bytes are in compressed UNICODE, then we need to copy to decompress */	
-	bool isCompressed = IS_STRING_COMPRESSED(vmThread, stringObject);
+	bool isCompressed = IS_STRING_COMPRESSION_ENABLED_VM(javaVM) && IS_STRING_COMPRESSED(vmThread, stringObject);
 
 	if (NULL != isCopy) {
 		*isCopy = JNI_FALSE;
@@ -569,7 +569,9 @@ MM_VLHGCAccessBarrier::jniReleaseStringCritical(J9VMThread* vmThread, jstring st
 	J9IndexableObject *valueObject = (J9IndexableObject*)J9VMJAVALANGSTRING_VALUE(vmThread, stringObject);
 
 	bool alwaysCopyInCritical = (javaVM->runtimeFlags & J9_RUNTIME_ALWAYS_COPY_JNI_CRITICAL) == J9_RUNTIME_ALWAYS_COPY_JNI_CRITICAL;
-	if (alwaysCopyInCritical || IS_STRING_COMPRESSION_ENABLED_VM(javaVM)) {
+	bool isCompressed = IS_STRING_COMPRESSION_ENABLED_VM(javaVM) && IS_STRING_COMPRESSED(vmThread, stringObject);
+
+	if (alwaysCopyInCritical || isCompressed) {
 		freeStringCritical(vmThread, functions, elems);
 	} else if (!indexableObjectModel->isInlineContiguousArraylet(valueObject)) {
 		/* an array having discontiguous extents can use double mapping if enabled in the critical section */
