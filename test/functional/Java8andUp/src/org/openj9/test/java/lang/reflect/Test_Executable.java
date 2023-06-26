@@ -185,7 +185,6 @@ public class Test_Executable {
 			 * Enum class should have following two synthetic methods
 			 *   - values()
 			 *   - valueOf(synthetic String name)
-			 *
 			 */
 
 			/* Test the first synthetic method: values ()*/
@@ -210,7 +209,7 @@ public class Test_Executable {
 			checkParameterName(methods[1], parameters[0], "name");
 			checkParameterModifiers(methods[1], parameters[0], ACC_MANDATED);
 			checkParameterType(methods[1], parameters[0], String.class);
-			
+
 			if (enumMethods >= 3) {
 				/* For jdk15+, test the third synthetic method: $values() */
 				checkExecutableName(methods[2], "$values");
@@ -301,7 +300,8 @@ public class Test_Executable {
 			/*
 			 * If there is no parameter attribute, then getModifiers always returns default.
 			 */
-			checkParameterModifiers(constructors[0], parameters[0], ACC_DEFAULT);
+			int outerThisFlags = (javaVersion >= 21) ? (ACC_FINAL | ACC_MANDATED) : ACC_DEFAULT;
+			checkParameterModifiers(constructors[0], parameters[0], outerThisFlags);
 			checkParameterType(constructors[0], parameters[0], withoutParamsClass);
 
 			/*************** TESTING WITHOUTPARAMS$MOOD.JAVA ************************************/
@@ -323,14 +323,16 @@ public class Test_Executable {
 				Assert.fail("Wrong number of parameters for enum constructor. Expected 2. Got: " + parameters.length);
 			}
 
+			int enumCtorFlags = (javaVersion >= 21) ? ACC_SYNTHETIC : ACC_DEFAULT;
+
 			checkDeclaringExecutable(parameters[0], constructors[0]);
 			checkParameterName(constructors[0], parameters[0], "arg0");
-			checkParameterModifiers(constructors[0], parameters[0], ACC_DEFAULT);
+			checkParameterModifiers(constructors[0], parameters[0], enumCtorFlags);
 			checkParameterType(constructors[0], parameters[0], String.class);
 
 			checkDeclaringExecutable(parameters[1], constructors[0]);
 			checkParameterName(constructors[0], parameters[1], "arg1");
-			checkParameterModifiers(constructors[0], parameters[1], ACC_DEFAULT);
+			checkParameterModifiers(constructors[0], parameters[1], enumCtorFlags);
 			checkParameterType(constructors[0], parameters[1], int.class);
 
 			/*
@@ -360,7 +362,7 @@ public class Test_Executable {
 
 			checkDeclaringExecutable(parameters[0], methods[1]);
 			checkParameterName(methods[1], parameters[0], "arg0");
-			checkParameterModifiers(methods[1], parameters[0], ACC_DEFAULT);
+			checkParameterModifiers(methods[1], parameters[0], (javaVersion >= 21) ? ACC_MANDATED : ACC_DEFAULT);
 			checkParameterType(methods[1], parameters[0], String.class);
 
 			if (enumMethods >= 3) {
@@ -373,10 +375,9 @@ public class Test_Executable {
 							"Wrong number of parameters for enum method $values(). Expected 0. Got: " + parameters.length);
 				}
 			}
-
+		} catch (RuntimeException e) {
+			throw e;
 		} catch (Exception e) {
-			if (e instanceof RuntimeException)
-				throw (RuntimeException)e;
 			Assert.fail("unexpected exception: " + e);
 		}
 	}
@@ -391,21 +392,21 @@ public class Test_Executable {
 	private void checkExecutableName(Executable executable, String expectedName) {
 		if (!executable.getName().equals(expectedName)) {
 			Assert.fail(
-					"Method/Constructor name is wrong. Expected : " + expectedName + "Got: " + executable.getName());
+					"Method/Constructor name is wrong. Expected : " + expectedName + " Got: " + executable.getName());
 		}
 	}
 
 	private void checkParameterType(Executable executable, Parameter parameter, Class expectedTypeClass) {
 		if (parameter.getType() != expectedTypeClass) {
 			Assert.fail("Executable (method or constructor) " + executable.getName()
-					+ " parameter type is wrong. Expected: " + expectedTypeClass + "Got: " + parameter.getType());
+					+ " parameter type is wrong. Expected: " + expectedTypeClass + " Got: " + parameter.getType());
 		}
 	}
 
 	private void checkParameterModifiers(Executable executable, Parameter parameter, int expectedModifiers) {
 		if (parameter.getModifiers() != expectedModifiers) {
 			Assert.fail("Executable (method or constructor) " + executable.getName()
-					+ " parameter modifier is wrong. Expected: " + expectedModifiers + "Got: "
+					+ " parameter modifier is wrong. Expected: " + expectedModifiers + " Got: "
 					+ parameter.getModifiers());
 		}
 	}
@@ -413,13 +414,13 @@ public class Test_Executable {
 	private void checkParameterName(Executable executable, Parameter parameter, String expectedName) {
 		if (!parameter.getName().equals(expectedName)) {
 			Assert.fail("Executable (method or constructor) " + executable.getName()
-					+ " parameter name is wrong. Expected: " + expectedName + "Got: " + parameter.getName());
+					+ " parameter name is wrong. Expected: " + expectedName + " Got: " + parameter.getName());
 		}
 	}
 
 	private void checkDeclaringExecutable(Parameter parameter, Executable expectedExecutable) {
 		if (parameter.getDeclaringExecutable() != expectedExecutable) {
-			Assert.fail("Parameter's declaring executable is wrong. Expected: " + expectedExecutable.getName() + "Got: "
+			Assert.fail("Parameter's declaring executable is wrong. Expected: " + expectedExecutable.getName() + " Got: "
 					+ parameter.getDeclaringExecutable().getName());
 		}
 	}
