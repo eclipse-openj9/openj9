@@ -64,6 +64,8 @@ exports com.ibm.gpu.spi to
 /*[IF JAVA_SPEC_VERSION >= 17]*/
 exports jdk.internal.access to
     openj9.criu;
+opens jdk.internal.access to
+    openj9.criu;
 /*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 exports jdk.internal.misc to
     openj9.criu;
