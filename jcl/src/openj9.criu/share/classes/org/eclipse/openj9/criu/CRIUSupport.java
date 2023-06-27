@@ -633,7 +633,25 @@ public final class CRIUSupport {
 	}
 
 	private static void clearInetAddressCache() {
-		SharedSecrets.getJavaNetInetAddressAccess().clearInetAddressCache();
+		Field jniaa = AccessController.doPrivileged((PrivilegedAction<Field>) () -> {
+			Field jniaaTmp = null;
+			try {
+				jniaaTmp = SharedSecrets.class.getDeclaredField("javaNetInetAddressAccess"); //$NON-NLS-1$
+				jniaaTmp.setAccessible(true);
+			} catch (NoSuchFieldException | SecurityException e) {
+				// ignore exceptions
+			}
+			return jniaaTmp;
+		});
+		try {
+			if ((jniaa != null) && (jniaa.get(null) != null)) {
+				// InetAddress static initializer invokes SharedSecrets.setJavaNetInetAddressAccess().
+				// There is no need to clear the cache if InetAddress hasn't been initialized yet.
+				SharedSecrets.getJavaNetInetAddressAccess().clearInetAddressCache();
+			}
+		} catch (IllegalArgumentException | IllegalAccessException e) {
+			// ignore exceptions
+		}
 	}
 
 	/**
@@ -660,8 +678,8 @@ public final class CRIUSupport {
 					registerRestoreEnvVariables();
 				}
 
-				J9InternalCheckpointHookAPI.registerPostRestoreHook(RESTORE_CLEAR_INETADDRESS_CACHE_PRIORITY, "Clear InetAddress cache on restore", CRIUSupport::clearInetAddressCache);
-				J9InternalCheckpointHookAPI.registerPostRestoreHook(RESTORE_ENVIRONMENT_VARIABLES_PRIORITY, "Restore system properties", CRIUSupport::setRestoreJavaProperties);
+				J9InternalCheckpointHookAPI.registerPostRestoreHook(RESTORE_CLEAR_INETADDRESS_CACHE_PRIORITY, "Clear InetAddress cache on restore", CRIUSupport::clearInetAddressCache); //$NON-NLS-1$
+				J9InternalCheckpointHookAPI.registerPostRestoreHook(RESTORE_ENVIRONMENT_VARIABLES_PRIORITY, "Restore system properties", CRIUSupport::setRestoreJavaProperties); //$NON-NLS-1$
 
 				/* Add security provider hooks. */
 				SecurityProviders.registerResetCRIUState();
