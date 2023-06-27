@@ -955,7 +955,7 @@ J9NLS_GC_OPTIONS_PREFERREDHEAPBASE_NOT_SUPPORTED_ON_ZOS_WARN.user_response=Refer
 # END NON-TRANSLATABLE
 
 # Note %s gc policy ("balanced" or "metronome")
-J9NLS_GC_POLICY_NOT_SUPPOURTED_CRIU=Az -Xgcpolicy:%s jelenleg nem t\u00e1mogatott a k\u00f6vetkez\u0151vel: -XX:+EnableCRIUSupport
+J9NLS_GC_POLICY_NOT_SUPPOURTED_CRIU=-Xgcpolicy:%s jelenleg nem t\u00e1mogatott a k\u00f6vetkez\u0151vel: -XX:+EnableCRIUSupport
 # START NON-TRANSLATABLE
 J9NLS_GC_POLICY_NOT_SUPPOURTED_CRIU.explanation=The specified GC policy is currently unsuppourted with CRIU
 J9NLS_GC_POLICY_NOT_SUPPOURTED_CRIU.system_action=The JVM will terminate
@@ -980,7 +980,7 @@ J9NLS_GC_THREAD_VALUE_MUST_BE_ABOVE_WARN.sample_input_1=4
 
 # END NON-TRANSLATABLE
 
-J9NLS_GC_OPTIONS_HIERARCHICAL_SCAN_ORDERING_NOT_SUPPORTED_WARN=A nem t\u00e1mogatott -Xgc:hierarchicalScanOrdering be\u00e1ll\u00edt\u00e1s -Xgcpolicy:%s mellett figyelmen k\u00edv\u00fcl marad.
+J9NLS_GC_OPTIONS_HIERARCHICAL_SCAN_ORDERING_NOT_SUPPORTED_WARN=Nem t\u00e1mogatott -Xgc:hierarchicalScanOrdering be\u00e1ll\u00edt\u00e1s -Xgcpolicy:%s mellett figyelmen k\u00edv\u00fcl marad.
 # START NON-TRANSLATABLE
 J9NLS_GC_OPTIONS_HIERARCHICAL_SCAN_ORDERING_NOT_SUPPORTED_WARN.explanation=-Xgc:hierarchicalScanOrdering is currently only supported with -Xgcpolicy:gencon.
 J9NLS_GC_OPTIONS_HIERARCHICAL_SCAN_ORDERING_NOT_SUPPORTED_WARN.system_action=The JVM ignores the -Xgc:hierarchicalScanOrdering option.

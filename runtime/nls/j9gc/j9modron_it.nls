@@ -980,7 +980,7 @@ J9NLS_GC_THREAD_VALUE_MUST_BE_ABOVE_WARN.sample_input_1=4
 
 # END NON-TRANSLATABLE
 
-J9NLS_GC_OPTIONS_HIERARCHICAL_SCAN_ORDERING_NOT_SUPPORTED_WARN=-Xgc non supportato:hierarchicalScanL'opzione di ordinamento con -Xgcpolicy:%s verr\u00e0 ignorata.
+J9NLS_GC_OPTIONS_HIERARCHICAL_SCAN_ORDERING_NOT_SUPPORTED_WARN=L'opzione -Xgc:hierarchicalScanOrdering non supportata con -Xgcpolicy:%s verr\u00e0 ignorata.
 # START NON-TRANSLATABLE
 J9NLS_GC_OPTIONS_HIERARCHICAL_SCAN_ORDERING_NOT_SUPPORTED_WARN.explanation=-Xgc:hierarchicalScanOrdering is currently only supported with -Xgcpolicy:gencon.
 J9NLS_GC_OPTIONS_HIERARCHICAL_SCAN_ORDERING_NOT_SUPPORTED_WARN.system_action=The JVM ignores the -Xgc:hierarchicalScanOrdering option.

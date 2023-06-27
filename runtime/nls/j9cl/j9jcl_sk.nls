@@ -581,7 +581,7 @@ J9NLS_JCL_CRIU_LOADING_OPTIONS_FILE_FAILED.system_action=The JVM will throw a JV
 J9NLS_JCL_CRIU_LOADING_OPTIONS_FILE_FAILED.user_response=Check the arguments to CRIUSupport::registerRestoreOptionsFile.
 # END NON-TRANSLATABLE
 
-J9NLS_JCL_CRIU_FAILED_TO_ENABLE_ALL_RESTORE_OPTIONS=JVM nemohol povoli\u0165 v\u0161etky zadan\u00e9 mo\u017enosti obnovenia
+J9NLS_JCL_CRIU_FAILED_TO_ENABLE_ALL_RESTORE_OPTIONS=JVM nedok\u00e1zal zapn\u00fa\u0165 v\u0161etky zadan\u00e9 mo\u017enosti obnovenia
 # START NON-TRANSLATABLE
 J9NLS_JCL_CRIU_FAILED_TO_ENABLE_ALL_RESTORE_OPTIONS.sample_input_1=1
 J9NLS_JCL_CRIU_FAILED_TO_ENABLE_ALL_RESTORE_OPTIONS.explanation=CRIUSupport::checkpointJVM failed.

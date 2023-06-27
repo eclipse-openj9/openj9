@@ -2106,7 +2106,7 @@ J9NLS_VM_CRIU_SINGLETHREADMODE_JVMCRIUEXCEPTION.system_action=The JVM will throw
 J9NLS_VM_CRIU_SINGLETHREADMODE_JVMCRIUEXCEPTION.user_response=View CRIU documentation to determine how to resolve the exception.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_CRIU_RESTORE_INITIALIZE_TRACE_FAILED=La machine virtuelle Java n'a pas pu initialiser Xtrace lors de sa restauration
+J9NLS_VM_CRIU_RESTORE_INITIALIZE_TRACE_FAILED=La machine virtuelle Java n'a pas pu initialiser Xtrace lors de la restauration de la JVM
 # START NON-TRANSLATABLE
 J9NLS_VM_CRIU_RESTORE_INITIALIZE_TRACE_FAILED.sample_input_1=1
 J9NLS_VM_CRIU_RESTORE_INITIALIZE_TRACE_FAILED.explanation=CRIUSupport::checkpointJVM failed.
@@ -2138,7 +2138,7 @@ J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_VALUEOFFSET.system_action=The JVM will thro
 J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_VALUEOFFSET.user_response=View CRIU documentation to determine how to resolve the exception.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_CRIU_RESTORE_INITIALIZE_DUMP_FAILED=La machine virtuelle Java n'a pas pu initialiser Xdump lors de sa restauration
+J9NLS_VM_CRIU_RESTORE_INITIALIZE_DUMP_FAILED=La machine virtuelle Java n'a pas pu initialiser Xdump lors de la restauration de la JVM
 # START NON-TRANSLATABLE
 J9NLS_VM_CRIU_RESTORE_INITIALIZE_DUMP_FAILED.sample_input_1=1
 J9NLS_VM_CRIU_RESTORE_INITIALIZE_DUMP_FAILED.explanation=CRIUSupport::checkpointJVM failed.

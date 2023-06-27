@@ -406,7 +406,7 @@ J9NLS_JIT_CHECKPOINT_RESTORE_CODE_INVALIDATED.system_action=The compiler will in
 J9NLS_JIT_CHECKPOINT_RESTORE_CODE_INVALIDATED.user_response=Remove any (post-restore) option that would have resulted in this behaviour.
 # END NON-TRANSLATABLE
 
-J9NLS_RELOCATABLE_CODE_ARRAY_HEADER_SHAPE_MISMATCH=Dizi \u00fcstbilgisi \u015fekil \u00f6zelli\u011fi uyu\u015fmazl\u0131\u011f\u0131. Payla\u015f\u0131lan s\u0131n\u0131f \u00f6nbelle\u011findeki AOT kodu yoksay\u0131l\u0131yor.
+J9NLS_RELOCATABLE_CODE_ARRAY_HEADER_SHAPE_MISMATCH=Dizi \u00fcstbilgisi \u015fekil \u00f6zelli\u011fi uyu\u015fmazl\u0131\u011f\u0131. Payla\u015f\u0131lan s\u0131n\u0131f \u00f6nbelle\u011findeki AOT kodu yok say\u0131l\u0131yor.
 # START NON-TRANSLATABLE
 J9NLS_RELOCATABLE_CODE_ARRAY_HEADER_SHAPE_MISMATCH.explanation=The JVM is not running with the same header shape as the one that generated the code in the SCC.
 J9NLS_RELOCATABLE_CODE_ARRAY_HEADER_SHAPE_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
@@ -414,7 +414,7 @@ J9NLS_RELOCATABLE_CODE_ARRAY_HEADER_SHAPE_MISMATCH.user_response=Destroy and rec
 J9NLS_RELOCATABLE_CODE_ARRAY_HEADER_SHAPE_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
 # END NON-TRANSLATABLE
 
-J9NLS_RELOCATABLE_CODE_CH_TABLE_MISMATCH=CH \u00c7izelgesi uyu\u015fmazl\u0131\u011f\u0131. Payla\u015f\u0131lan s\u0131n\u0131f \u00f6nbelle\u011findeki AOT kodu yoksay\u0131l\u0131yor.
+J9NLS_RELOCATABLE_CODE_CH_TABLE_MISMATCH=CH \u00c7izelgesi uyu\u015fmazl\u0131\u011f\u0131. Payla\u015f\u0131lan s\u0131n\u0131f \u00f6nbelle\u011findeki AOT kodu yok say\u0131l\u0131yor.
 # START NON-TRANSLATABLE
 J9NLS_RELOCATABLE_CODE_CH_TABLE_MISMATCH.explanation=The JVM is not running in the same CH Table configuration as the one that generated the code in the SCC.
 J9NLS_RELOCATABLE_CODE_CH_TABLE_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
