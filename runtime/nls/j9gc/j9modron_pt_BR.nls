@@ -971,7 +971,7 @@ J9NLS_GC_FAILED_TO_REINITIALIZE_PARSING_RESTORE_OPTIONS.user_response=Check that
 
 # END NON-TRANSLATABLE
 
-J9NLS_GC_THREAD_VALUE_MUST_BE_ABOVE_WARN=-Xgcthreads ser\u00e3o ignorados A contagem de encadeamentos GC especificada deve ser maior que a contagem de encadeamentos GC do ponto de verifica\u00e7\u00e3o %1$zu
+J9NLS_GC_THREAD_VALUE_MUST_BE_ABOVE_WARN=-Xgcthreads ser\u00e3o ignorados. A contagem de encadeamentos GC especificada deve ser maior que a contagem de encadeamentos GC do ponto de verifica\u00e7\u00e3o %1$zu
 # START NON-TRANSLATABLE
 J9NLS_GC_THREAD_VALUE_MUST_BE_ABOVE_WARN.explanation=-Xgcthreads must be greater than the specified value
 J9NLS_GC_THREAD_VALUE_MUST_BE_ABOVE_WARN.system_action=The JVM will terminate
@@ -980,7 +980,7 @@ J9NLS_GC_THREAD_VALUE_MUST_BE_ABOVE_WARN.sample_input_1=4
 
 # END NON-TRANSLATABLE
 
-J9NLS_GC_OPTIONS_HIERARCHICAL_SCAN_ORDERING_NOT_SUPPORTED_WARN=-Xgc n\u00e3o suportado:hierarchicalScanA op\u00e7\u00e3o de pedido com -Xgcpolicy:%s ser\u00e1 ignorada.
+J9NLS_GC_OPTIONS_HIERARCHICAL_SCAN_ORDERING_NOT_SUPPORTED_WARN=A op\u00e7\u00e3o -Xgc:hierarchicalScanOrdering n\u00e3o suportada com -Xgcpolicy:%s ser\u00e1 ignorada.
 # START NON-TRANSLATABLE
 J9NLS_GC_OPTIONS_HIERARCHICAL_SCAN_ORDERING_NOT_SUPPORTED_WARN.explanation=-Xgc:hierarchicalScanOrdering is currently only supported with -Xgcpolicy:gencon.
 J9NLS_GC_OPTIONS_HIERARCHICAL_SCAN_ORDERING_NOT_SUPPORTED_WARN.system_action=The JVM ignores the -Xgc:hierarchicalScanOrdering option.
