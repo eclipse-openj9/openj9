@@ -971,7 +971,7 @@ J9NLS_GC_FAILED_TO_REINITIALIZE_PARSING_RESTORE_OPTIONS.user_response=Check that
 
 # END NON-TRANSLATABLE
 
-J9NLS_GC_THREAD_VALUE_MUST_BE_ABOVE_WARN=-Xgcthreads s'ignorar\u00e0. El recompte de fils GC especificat ha de ser m\u00e9s gran que el recompte de fils GC del punt de comprovaci\u00f3 %1$zu
+J9NLS_GC_THREAD_VALUE_MUST_BE_ABOVE_WARN=-Xgcthreads s'ignorar\u00e0. El nombre de fils GC especificat ha de ser m\u00e9s gran que el nombre de fils GC del punt de comprovaci\u00f3 %1$zu
 # START NON-TRANSLATABLE
 J9NLS_GC_THREAD_VALUE_MUST_BE_ABOVE_WARN.explanation=-Xgcthreads must be greater than the specified value
 J9NLS_GC_THREAD_VALUE_MUST_BE_ABOVE_WARN.system_action=The JVM will terminate

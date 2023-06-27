@@ -2106,7 +2106,7 @@ J9NLS_VM_CRIU_SINGLETHREADMODE_JVMCRIUEXCEPTION.system_action=The JVM will throw
 J9NLS_VM_CRIU_SINGLETHREADMODE_JVMCRIUEXCEPTION.user_response=View CRIU documentation to determine how to resolve the exception.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_CRIU_RESTORE_INITIALIZE_TRACE_FAILED=\u015arodowisko JVM nie mog\u0142o zainicjowa\u0107 Xtrace przy odtwarzaniu JVM
+J9NLS_VM_CRIU_RESTORE_INITIALIZE_TRACE_FAILED=\u015arodowisko JVM nie mog\u0142o zainicjowa\u0107 Xtrace po odtworzeniu JVM.
 # START NON-TRANSLATABLE
 J9NLS_VM_CRIU_RESTORE_INITIALIZE_TRACE_FAILED.sample_input_1=1
 J9NLS_VM_CRIU_RESTORE_INITIALIZE_TRACE_FAILED.explanation=CRIUSupport::checkpointJVM failed.
@@ -2114,7 +2114,7 @@ J9NLS_VM_CRIU_RESTORE_INITIALIZE_TRACE_FAILED.system_action=The JVM will throw a
 J9NLS_VM_CRIU_RESTORE_INITIALIZE_TRACE_FAILED.user_response=Check documentation for CRIUSupport restore options.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_SEEDOFFSET=\u015arodowisko JVM nie mog\u0142o ponownie zainicjowa\u0107 j.u.Random.seed.value z powodu niepoprawnego przesuni\u0119cia zarodka
+J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_SEEDOFFSET=\u015arodowisko JVM nie mog\u0142o ponownie zainicjowa\u0107 j.u.Random.seed.value z powodu niepoprawnego przesuni\u0119cia zarodka.
 # START NON-TRANSLATABLE
 J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_SEEDOFFSET.sample_input_1=1
 J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_SEEDOFFSET.explanation=CRIUSupport::checkpointJVM failed.
@@ -2122,7 +2122,7 @@ J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_SEEDOFFSET.system_action=The JVM will throw
 J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_SEEDOFFSET.user_response=View CRIU documentation to determine how to resolve the exception.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_CRIU_RESTORE_RESEED_ATOMICLONG_CNF=\u015arodowisko JVM nie mog\u0142o ponownie zainicjowa\u0107 j.u.Random.seed.value z powodu nieznalezienia j.u.c.a.AtomicLong
+J9NLS_VM_CRIU_RESTORE_RESEED_ATOMICLONG_CNF=\u015arodowisko JVM nie mog\u0142o ponownie zainicjowa\u0107 j.u.Random.seed.value z powodu nieznalezienia j.u.c.a.AtomicLong.
 # START NON-TRANSLATABLE
 J9NLS_VM_CRIU_RESTORE_RESEED_ATOMICLONG_CNF.sample_input_1=1
 J9NLS_VM_CRIU_RESTORE_RESEED_ATOMICLONG_CNF.explanation=CRIUSupport::checkpointJVM failed.
@@ -2130,7 +2130,7 @@ J9NLS_VM_CRIU_RESTORE_RESEED_ATOMICLONG_CNF.system_action=The JVM will throw a J
 J9NLS_VM_CRIU_RESTORE_RESEED_ATOMICLONG_CNF.user_response=View CRIU documentation to determine how to resolve the exception.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_VALUEOFFSET=\u015arodowisko JVM nie mog\u0142o ponownie zainicjowa\u0107 j.u.Random.seed.value z powodu niepoprawnego przesuni\u0119cia warto\u015bci
+J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_VALUEOFFSET=\u015arodowisko JVM nie mog\u0142o ponownie zainicjowa\u0107 j.u.Random.seed.value z powodu niepoprawnego przesuni\u0119cia warto\u015bci.
 # START NON-TRANSLATABLE
 J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_VALUEOFFSET.sample_input_1=1
 J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_VALUEOFFSET.explanation=CRIUSupport::checkpointJVM failed.
@@ -2138,7 +2138,7 @@ J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_VALUEOFFSET.system_action=The JVM will thro
 J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_VALUEOFFSET.user_response=View CRIU documentation to determine how to resolve the exception.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_CRIU_RESTORE_INITIALIZE_DUMP_FAILED=\u015arodowisko JVM nie mog\u0142o zainicjowa\u0107 Xdump podczas odtwarzania JVM.
+J9NLS_VM_CRIU_RESTORE_INITIALIZE_DUMP_FAILED=\u015arodowisko JVM nie mog\u0142o zainicjowa\u0107 Xdump po odtworzeniu JVM.
 # START NON-TRANSLATABLE
 J9NLS_VM_CRIU_RESTORE_INITIALIZE_DUMP_FAILED.sample_input_1=1
 J9NLS_VM_CRIU_RESTORE_INITIALIZE_DUMP_FAILED.explanation=CRIUSupport::checkpointJVM failed.

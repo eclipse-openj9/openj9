@@ -1042,7 +1042,7 @@ J9NLS_JNICHK_HELP_15.user_response=
 # END NON-TRANSLATABLE
 
 # JNI, -Xcheck:jni:nonfatal and JVM are not translatable
-J9NLS_JNICHK_THREAD_NOT_ATTACHED_TO_VM=Error de JNI en %s: actualmente no hay ninguna hebra conectada a la m\u00e1quina virtual
+J9NLS_JNICHK_THREAD_NOT_ATTACHED_TO_VM=Error de JNI en %s: Actualmente no hay ninguna hebra conectada a la m\u00e1quina virtual
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_THREAD_NOT_ATTACHED_TO_VM.sample_input_1=methodName
 J9NLS_JNICHK_THREAD_NOT_ATTACHED_TO_VM.explanation=There is no Java thread running.

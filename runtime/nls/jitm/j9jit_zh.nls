@@ -422,7 +422,7 @@ J9NLS_RELOCATABLE_CODE_CH_TABLE_MISMATCH.user_response=Destroy and recreate the 
 J9NLS_RELOCATABLE_CODE_CH_TABLE_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
 # END NON-TRANSLATABLE
 
-J9NLS_JIT_OPTIONS_PERCENT_OUT_OF_RANGE=\u503c\u201c%1$s%2$f\u201d\u5fc5\u987b\u4ecb\u4e8e 1.0 \u4e0e 100.0\u4e4b\u95f4\uff1b\u8bf7\u6539\u4e3a\u4f7f\u7528\u7f3a\u7701\u767e\u5206\u6bd4\u201c%3$d\u201d\u3002
+J9NLS_JIT_OPTIONS_PERCENT_OUT_OF_RANGE=\u503c\u201c%1$s%2$f\u201d\u5fc5\u987b\u4ecb\u4e8e 1.0 \u4e0e 100.0 \u4e4b\u95f4\uff1b\u6539\u4e3a\u4f7f\u7528\u7f3a\u7701\u767e\u5206\u6bd4\u201c%3$d\u201d\u3002
 # START NON-TRANSLATABLE
 J9NLS_JIT_OPTIONS_PERCENT_OUT_OF_RANGE.explanation=The specified option is not within the permitted range.
 J9NLS_JIT_OPTIONS_PERCENT_OUT_OF_RANGE.system_action=The default percentage value will be used instead.

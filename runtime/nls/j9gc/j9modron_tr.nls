@@ -971,7 +971,7 @@ J9NLS_GC_FAILED_TO_REINITIALIZE_PARSING_RESTORE_OPTIONS.user_response=Check that
 
 # END NON-TRANSLATABLE
 
-J9NLS_GC_THREAD_VALUE_MUST_BE_ABOVE_WARN=-Xgcthreads yoksay\u0131lacak. Belirtilen GC i\u015f par\u00e7ac\u0131\u011f\u0131 say\u0131s\u0131, %1$zu denetim noktas\u0131 GC i\u015f par\u00e7ac\u0131\u011f\u0131 say\u0131s\u0131ndan b\u00fcy\u00fck olmal\u0131d\u0131r
+J9NLS_GC_THREAD_VALUE_MUST_BE_ABOVE_WARN=-Xgcthreads yok say\u0131lacak. Belirtilen GC i\u015f par\u00e7ac\u0131\u011f\u0131 say\u0131s\u0131, %1$zu denetim noktas\u0131 GC i\u015f par\u00e7ac\u0131\u011f\u0131 say\u0131s\u0131ndan b\u00fcy\u00fck olmal\u0131d\u0131r
 # START NON-TRANSLATABLE
 J9NLS_GC_THREAD_VALUE_MUST_BE_ABOVE_WARN.explanation=-Xgcthreads must be greater than the specified value
 J9NLS_GC_THREAD_VALUE_MUST_BE_ABOVE_WARN.system_action=The JVM will terminate
@@ -980,7 +980,7 @@ J9NLS_GC_THREAD_VALUE_MUST_BE_ABOVE_WARN.sample_input_1=4
 
 # END NON-TRANSLATABLE
 
-J9NLS_GC_OPTIONS_HIERARCHICAL_SCAN_ORDERING_NOT_SUPPORTED_WARN=-Xgcpolicy:%s ilkesini i\u00e7eren, desteklenmeyen -Xgc:hierarchicalScanS\u0131ralama se\u00e7ene\u011fi yoksay\u0131lacak.
+J9NLS_GC_OPTIONS_HIERARCHICAL_SCAN_ORDERING_NOT_SUPPORTED_WARN=-Xgcpolicy:%s ilkesini i\u00e7eren, desteklenmeyen -Xgc:hierarchicalScanS\u0131ralama se\u00e7ene\u011fi yok say\u0131lacak.
 # START NON-TRANSLATABLE
 J9NLS_GC_OPTIONS_HIERARCHICAL_SCAN_ORDERING_NOT_SUPPORTED_WARN.explanation=-Xgc:hierarchicalScanOrdering is currently only supported with -Xgcpolicy:gencon.
 J9NLS_GC_OPTIONS_HIERARCHICAL_SCAN_ORDERING_NOT_SUPPORTED_WARN.system_action=The JVM ignores the -Xgc:hierarchicalScanOrdering option.
