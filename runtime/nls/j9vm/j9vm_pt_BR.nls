@@ -2114,7 +2114,7 @@ J9NLS_VM_CRIU_RESTORE_INITIALIZE_TRACE_FAILED.system_action=The JVM will throw a
 J9NLS_VM_CRIU_RESTORE_INITIALIZE_TRACE_FAILED.user_response=Check documentation for CRIUSupport restore options.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_SEEDOFFSET=A JVM n\u00e3o p\u00f4de recriar o valor inicial de j.u.Random.seed.value devido ao deslocamento de valor inicial inv\u00e1lido
+J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_SEEDOFFSET=A JVM n\u00e3o p\u00f4de recriar o valor inicial de j.u.Random.seed.value devido a um deslocamento de valor inicial inv\u00e1lido
 # START NON-TRANSLATABLE
 J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_SEEDOFFSET.sample_input_1=1
 J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_SEEDOFFSET.explanation=CRIUSupport::checkpointJVM failed.

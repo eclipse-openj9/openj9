@@ -392,7 +392,7 @@ J9NLS_JIT_CHECKPOINT_RESTORE_JIT_COMPILATION_DISABLED.system_action=The compiler
 J9NLS_JIT_CHECKPOINT_RESTORE_JIT_COMPILATION_DISABLED.user_response=Remove any (post-restore) option that would have resulted in this behaviour.
 # END NON-TRANSLATABLE
 
-J9NLS_JIT_CHECKPOINT_RESTORE_AOT_DISABLED=AOT \ub85c\ub4dc \ubc0f \ucef4\ud30c\uc77c\uc774 \ubcf5\uc6d0 \ud6c4 \ube44\ud65c\uc131\ud654\ub418\uc5c8\uc2b5\ub2c8\ub2e4.
+J9NLS_JIT_CHECKPOINT_RESTORE_AOT_DISABLED=AOT \ub85c\ub4dc \ubc0f \ucef4\ud30c\uc77c\uc774 \uc0ac\ud6c4 \ubcf5\uc6d0\uc744 \ube44\ud65c\uc131\ud654\ud588\uc2b5\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_JIT_CHECKPOINT_RESTORE_AOT_DISABLED.explanation=The JVM is running in a mode post-restore that prevents further AOT load and compilation.
 J9NLS_JIT_CHECKPOINT_RESTORE_AOT_DISABLED.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
