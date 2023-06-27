@@ -123,6 +123,7 @@ TR_EscapeAnalysis::TR_EscapeAnalysis(TR::OptimizationManager *manager)
      _inlineCallSites(manager->comp()->trMemory()),
      _dememoizedAllocs(manager->comp()->trMemory()),
      _devirtualizedCallSites(manager->comp()->trMemory()),
+     _initializedHeapifiedTemps(NULL),
      _aNewArrayNoZeroInitSymRef(NULL)
    {
 
@@ -378,7 +379,9 @@ int32_t TR_EscapeAnalysis::perform()
             if (storeNode
                 && storeNode->getOpCodeValue() == TR::astore
                 && nodeLookup->second.first->get(storeNode->getFirstChild()->getGlobalIndex()))
-               nodeLookup->second.second->push_back(TR::Node::createWithSymRef(TR::aload, 0, storeNode->getSymbolReference()));
+               {
+               nodeLookup->second.second->set(storeNode->getSymbolReference()->getReferenceNumber());
+               }
             }
 
          TR::Node *guard = TR_VirtualGuard::createHCRGuard(comp(),
@@ -401,7 +404,7 @@ int32_t TR_EscapeAnalysis::perform()
          cfg->addEdge(heapificationBlock, callBlock);
 
          heapificationBlock->getExit()->insertBefore(TR::TreeTop::create(comp(), TR::Node::create(node, TR::Goto, 0, callBlock->getEntry())));
-         tools.insertFakeEscapeForLoads(heapificationBlock, node, nodeLookup->second.second);
+         tools.insertFakeEscapeForLoads(heapificationBlock, node, *nodeLookup->second.second);
          traceMsg(comp(), "Created heapification block_%d\n", heapificationBlock->getNumber());
 
          ((TR_EscapeAnalysis::PersistentData*)manager()->getOptData())->_peekableCalls->set(node->getGlobalIndex());
@@ -663,6 +666,7 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
    _aliasesOfOtherAllocNode = NULL;
    _notOptimizableLocalObjectsValueNumbers = NULL;
    _notOptimizableLocalStringObjectsValueNumbers = NULL;
+   _initializedHeapifiedTemps = NULL;
 
    // Walk the trees and find the "new" nodes.
    // Any that are candidates for local allocation or desynchronization are
@@ -1342,6 +1346,61 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
 
             if (candidate->escapesInColdBlocks())
                {
+               // _initializedHeapifiedTemps will contain any autos that are initialized in the entry block of
+               // the method.  When the first candidate that escapes in a cold block is encountered, sweep
+               // through the entry block looking for autos that are null initialized up until any potential
+               // GC point or point at which an exception might be thrown, and record their sym refs in
+               // _initializedHeapifiedTemps.  Then any autos that are associated with candidates that need to
+               // be heapified will be explicitly null initialized in the entry block by heapifyForColdBlocks
+               // if they have not already been found to be initialized there (i.e., not already listed in
+               // _initializedHeapifiedTemps).  heapifyForColdBlocks will also add a new entry to
+               // _initializedHeapifiedTemps for each sym ref it is obliged to explicitly null initialize.
+               //
+               if (_initializedHeapifiedTemps == NULL)
+                  {
+                  _initializedHeapifiedTemps = new(trStackMemory()) TR_BitVector(0, trMemory(), stackAlloc, growable);
+
+                  TR::Block *entryBlock = comp()->getStartBlock();
+                  const bool entryHasExceptionSuccessors = entryBlock->hasExceptionSuccessors();
+
+                  // Anything that might hold a reference to a potentially heapified object must be initialized
+                  // on method entry.  Keep track of what is already null initialized in the first block on
+                  // method entry to avoid redundant initializations that might occur in a large method that
+                  // has many points at which heapification might occur.
+                  //
+                  for (TR::TreeTop *tt = comp()->getStartTree();
+                       tt != NULL && tt->getNode()->getOpCodeValue() != TR::BBEnd;
+                       tt = tt->getNextTreeTop())
+                     {
+                     TR::Node *node = tt->getNode();
+
+                     // If the entry block has exception successors, any null initializations that follow
+                     // a node that might raise an exception is not guaranteed to be executed, so stop
+                     // recording entries in _initializedHeapifiedTemps.  Similarly, we need to ensure that
+                     // all local initializations of autos that might hold a reference to a potentially
+                     // heapified object are initialized before any GC might happen, so stop considering
+                     // local initializations that follow a potential GC point.
+                     //
+                     if (node->canCauseGC() || entryHasExceptionSuccessors && node->exceptionsRaised())
+                        {
+                        break;
+                        }
+
+                     if (node->getOpCode().isStoreDirect()
+                         && (node->getFirstChild()->getOpCodeValue() == TR::aconst)
+                         && (node->getFirstChild()->getConstValue() == 0))
+                        {
+                        TR::SymbolReference *storeSymRef = node->getSymbolReference();
+
+                        if (storeSymRef->getSymbol()->isAuto()
+                            && !_initializedHeapifiedTemps->get(storeSymRef->getReferenceNumber()))
+                           {
+                           _initializedHeapifiedTemps->set(storeSymRef->getReferenceNumber());
+                           }
+                        }
+                     }
+                  }
+
                heapifyForColdBlocks(candidate);
                if (candidate->_fields)
                   {
@@ -5100,7 +5159,8 @@ int32_t TR_EscapeAnalysis::sniffCall(TR::Node *callNode, TR::ResolvedMethodSymbo
             {
             dumpOptDetails(comp(), "%sAdding call [%p] n%dn to list of calls to protect for peeking to increase opportunities for stack allocation\n", OPT_DETAILS, callNode, callNode->getGlobalIndex());
             TR_BitVector *candidateNodes = new (comp()->trStackMemory()) TR_BitVector(0, trMemory(), stackAlloc);
-            NodeDeque *loads = new (comp()->trMemory()->currentStackRegion()) NodeDeque(NodeDequeAllocator(comp()->trMemory()->currentStackRegion()));
+            TR_BitVector *symRefsToLoad = new (comp()->trStackMemory()) TR_BitVector(0, trMemory(), stackAlloc);
+
             for (int32_t arg = callNode->getFirstArgumentIndex(); arg < callNode->getNumChildren(); ++arg)
                {
                TR::Node *child = callNode->getChild(arg);
@@ -5112,11 +5172,14 @@ int32_t TR_EscapeAnalysis::sniffCall(TR::Node *callNode, TR::ResolvedMethodSymbo
                      candidateNodes->set(candidate->_node->getGlobalIndex());
                      ListIterator<TR::SymbolReference> itr(candidate->getSymRefs());
                      for (TR::SymbolReference *symRef = itr.getFirst(); symRef; symRef = itr.getNext())
-                        loads->push_back(TR::Node::createWithSymRef(TR::aload, 0, symRef));
+                        {
+                        symRefsToLoad->set(symRef->getReferenceNumber());
+                        }
                      }
                   }
                }
-            (*_callsToProtect)[callNode] = std::make_pair(candidateNodes, loads);
+
+            (*_callsToProtect)[callNode] = std::make_pair(candidateNodes, symRefsToLoad);
             }
          return 0;
          }
@@ -7634,7 +7697,7 @@ TR::TreeTop *TR_EscapeAnalysis::storeHeapifiedToTemp(Candidate *candidate, TR::N
       }
    storeNode->setHeapificationStore(true);
 
-   if (!symRef->getSymbol()->isParm())
+   if (!symRef->getSymbol()->isParm() && !_initializedHeapifiedTemps->get(symRef->getReferenceNumber()))
       {
       TR::Node *initStoreNode = TR::Node::createWithSymRef(TR::astore, 1, 1, TR::Node::aconst(candidate->_node, 0), symRef);
       if (symRef->getSymbol()->holdsMonitoredObject())
@@ -7644,6 +7707,7 @@ TR::TreeTop *TR_EscapeAnalysis::storeHeapifiedToTemp(Candidate *candidate, TR::N
       TR::TreeTop *nextToStart = startTree->getNextTreeTop();
            startTree->join(initStoreTree);
       initStoreTree->join(nextToStart);
+      _initializedHeapifiedTemps->set(symRef->getReferenceNumber());
       }
 
    return storeTree;
