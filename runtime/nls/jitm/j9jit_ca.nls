@@ -406,7 +406,7 @@ J9NLS_JIT_CHECKPOINT_RESTORE_CODE_INVALIDATED.system_action=The compiler will in
 J9NLS_JIT_CHECKPOINT_RESTORE_CODE_INVALIDATED.user_response=Remove any (post-restore) option that would have resulted in this behaviour.
 # END NON-TRANSLATABLE
 
-J9NLS_RELOCATABLE_CODE_ARRAY_HEADER_SHAPE_MISMATCH=Discrep\u00e0ncia de caracter\u00edstica de forma de cap\u00e7alera de matriu S'ignorar\u00e0 el codi AOT de la mem\u00f2ria cau de classes compartides.
+J9NLS_RELOCATABLE_CODE_ARRAY_HEADER_SHAPE_MISMATCH=Discrep\u00e0ncia de caracter\u00edstiques de forma de cap\u00e7alera de matriu S'ignorar\u00e0 el codi AOT de la mem\u00f2ria cau de classes compartides.
 # START NON-TRANSLATABLE
 J9NLS_RELOCATABLE_CODE_ARRAY_HEADER_SHAPE_MISMATCH.explanation=The JVM is not running with the same header shape as the one that generated the code in the SCC.
 J9NLS_RELOCATABLE_CODE_ARRAY_HEADER_SHAPE_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
@@ -414,7 +414,7 @@ J9NLS_RELOCATABLE_CODE_ARRAY_HEADER_SHAPE_MISMATCH.user_response=Destroy and rec
 J9NLS_RELOCATABLE_CODE_ARRAY_HEADER_SHAPE_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
 # END NON-TRANSLATABLE
 
-J9NLS_RELOCATABLE_CODE_CH_TABLE_MISMATCH=Discrep\u00e0ncia de taula de CH. S'ignorar\u00e0 el codi AOT de la mem\u00f2ria cau de classes compartides.
+J9NLS_RELOCATABLE_CODE_CH_TABLE_MISMATCH=Discrep\u00e0ncia de taules de CH. S'ignorar\u00e0 el codi AOT de la mem\u00f2ria cau de classes compartides.
 # START NON-TRANSLATABLE
 J9NLS_RELOCATABLE_CODE_CH_TABLE_MISMATCH.explanation=The JVM is not running in the same CH Table configuration as the one that generated the code in the SCC.
 J9NLS_RELOCATABLE_CODE_CH_TABLE_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.

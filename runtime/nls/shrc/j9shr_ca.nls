@@ -6917,7 +6917,7 @@ J9NLS_CC_MSYNC_UNSUPPORTED.system_action=The JVM won't force the operating syste
 J9NLS_CC_MSYNC_UNSUPPORTED.user_response=No action required.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_MAP31=Mapeu la mem\u00f2ria cau de classe compartida sota l'abast d'encaminament 2G.
+J9NLS_SHRC_SHRINIT_HELPTEXT_MAP31=Mapeu la mem\u00f2ria cau de classes compartides sota l'interval d'encaminament de 2G.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_MAP31.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_MAP31.system_action=

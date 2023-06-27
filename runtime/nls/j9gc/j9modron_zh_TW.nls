@@ -971,7 +971,7 @@ J9NLS_GC_FAILED_TO_REINITIALIZE_PARSING_RESTORE_OPTIONS.user_response=Check that
 
 # END NON-TRANSLATABLE
 
-J9NLS_GC_THREAD_VALUE_MUST_BE_ABOVE_WARN=\u5c07\u5ffd\u7565 -Xgcthreads\u3002 \u6307\u5b9a\u7684 GC \u57f7\u884c\u7dd2\u8a08\u6578\u5fc5\u9808\u5927\u65bc\u6aa2\u67e5\u9ede GC \u57f7\u884c\u7dd2\u8a08\u6578 %1$zu
+J9NLS_GC_THREAD_VALUE_MUST_BE_ABOVE_WARN=-Xgcthreads \u5c07\u88ab\u5ffd\u7565\u3002 \u6307\u5b9a\u7684 GC \u57f7\u884c\u7dd2\u8a08\u6578\u5fc5\u9808\u5927\u65bc\u6aa2\u67e5\u9ede GC \u57f7\u884c\u7dd2\u8a08\u6578 %1$zu
 # START NON-TRANSLATABLE
 J9NLS_GC_THREAD_VALUE_MUST_BE_ABOVE_WARN.explanation=-Xgcthreads must be greater than the specified value
 J9NLS_GC_THREAD_VALUE_MUST_BE_ABOVE_WARN.system_action=The JVM will terminate
@@ -980,7 +980,7 @@ J9NLS_GC_THREAD_VALUE_MUST_BE_ABOVE_WARN.sample_input_1=4
 
 # END NON-TRANSLATABLE
 
-J9NLS_GC_OPTIONS_HIERARCHICAL_SCAN_ORDERING_NOT_SUPPORTED_WARN=\u4e0d\u53d7\u652f\u63f4\u7684 -Xgc:hierarchicalScan\u5c07\u5ffd\u7565\u5177\u6709 -Xgcpolicy:%s \u7684\u6392\u5e8f\u9078\u9805\u3002
+J9NLS_GC_OPTIONS_HIERARCHICAL_SCAN_ORDERING_NOT_SUPPORTED_WARN=\u4e0d\u53d7\u652f\u63f4\u7684 -Xgc:hierarchicalScanOrdering \u9078\u9805\uff08\u542b -Xgcpolicy:%s\uff09\u5c07\u88ab\u5ffd\u7565\u3002
 # START NON-TRANSLATABLE
 J9NLS_GC_OPTIONS_HIERARCHICAL_SCAN_ORDERING_NOT_SUPPORTED_WARN.explanation=-Xgc:hierarchicalScanOrdering is currently only supported with -Xgcpolicy:gencon.
 J9NLS_GC_OPTIONS_HIERARCHICAL_SCAN_ORDERING_NOT_SUPPORTED_WARN.system_action=The JVM ignores the -Xgc:hierarchicalScanOrdering option.

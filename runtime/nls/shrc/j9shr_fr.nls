@@ -6939,14 +6939,14 @@ J9NLS_CC_MSYNC_UNSUPPORTED.system_action=The JVM won't force the operating syste
 J9NLS_CC_MSYNC_UNSUPPORTED.user_response=No action required.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_MAP31=Mappez le cache de classes partag\u00e9es sous la plage d'adressage 2G.
+J9NLS_SHRC_SHRINIT_HELPTEXT_MAP31=Mappez le cache de classe partag\u00e9e sous la plage d'adressage 2G.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_MAP31.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_MAP31.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_MAP31.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_MMAP_MSYNC_ERROR=Erreur lors de la synchronisation de la m\u00e9moire.
+J9NLS_SHRC_OSCACHE_MMAP_MSYNC_ERROR=Erreur de synchronisation de la m\u00e9moire.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_MMAP_MSYNC_ERROR.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_MSYNC_ERROR.system_action=The JVM terminates, unless you have specified the non-fatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using shared classes.

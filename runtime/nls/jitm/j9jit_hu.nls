@@ -406,7 +406,7 @@ J9NLS_JIT_CHECKPOINT_RESTORE_CODE_INVALIDATED.system_action=The compiler will in
 J9NLS_JIT_CHECKPOINT_RESTORE_CODE_INVALIDATED.user_response=Remove any (post-restore) option that would have resulted in this behaviour.
 # END NON-TRANSLATABLE
 
-J9NLS_RELOCATABLE_CODE_ARRAY_HEADER_SHAPE_MISMATCH=A t\u00f6mbfejl\u00e9c alakj\u00e1ban szolg\u00e1ltat\u00e1selt\u00e9r\u00e9s van. A megosztott oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1rban l\u00e9v\u0151 AOT k\u00f3d figyelmen k\u00edv\u00fcl lesz hagyva.
+J9NLS_RELOCATABLE_CODE_ARRAY_HEADER_SHAPE_MISMATCH=T\u00f6mbfejl\u00e9c alakzatjellemz\u0151i nem egyeznek. A megosztott oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1rban l\u00e9v\u0151 AOT k\u00f3d figyelmen k\u00edv\u00fcl lesz hagyva.
 # START NON-TRANSLATABLE
 J9NLS_RELOCATABLE_CODE_ARRAY_HEADER_SHAPE_MISMATCH.explanation=The JVM is not running with the same header shape as the one that generated the code in the SCC.
 J9NLS_RELOCATABLE_CODE_ARRAY_HEADER_SHAPE_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
