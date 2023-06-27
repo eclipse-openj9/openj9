@@ -63,7 +63,7 @@ public class TestSingleThreadModeRestoreException {
 				});
 
 				try {
-					System.out.println("Pre-checkpoint JUC LOCK");
+					System.out.println("Pre-checkpoint");
 					CRIUTestUtils.checkPointJVMNoSetup(criu, CRIUTestUtils.imagePath, false);
 				} catch (JVMRestoreException jvmre) {
 					result = true;
@@ -119,7 +119,7 @@ public class TestSingleThreadModeRestoreException {
 				});
 
 				try {
-					System.out.println("Pre-checkpoint synchronization");
+					System.out.println("Pre-checkpoint");
 					CRIUTestUtils.checkPointJVMNoSetup(criu, CRIUTestUtils.imagePath, false);
 				} catch (JVMRestoreException jvmre) {
 					result = true;
