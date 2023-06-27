@@ -137,11 +137,24 @@ CATEGORY_TABLE_ENTRY(J9MEM_CATEGORY_SUN_MISC_UNSAFE_ALLOCATEDBB),
 #if defined(OMR_OPT_CUDA)
 CATEGORY_TABLE_ENTRY(OMRMEM_CATEGORY_CUDA),
 #endif /* OMR_OPT_CUDA */
-NULL, /* OMRMEM_CATEGORY_THREADS populated by thread library */
-NULL, /* OMRMEM_CATEGORY_THREADS_NATIVE_STACK populated by thread library */
 #if JAVA_SPEC_VERSION >= 16
 CATEGORY_TABLE_ENTRY(J9MEM_CATEGORY_VM_FFI),
 #endif /* JAVA_SPEC_VERSION >= 16 */
+
+/* Only NULLs allowed from now on and resetThreadCategories below must be updated if any new NULLs are added.
+ * New static categories must be added before the NULLs.
+ */
+
+NULL, /* OMRMEM_CATEGORY_THREADS populated by thread library */
+NULL, /* OMRMEM_CATEGORY_THREADS_NATIVE_STACK populated by thread library */
 };
+
+void
+resetThreadCategories(void)
+{
+	UDATA categoryCount = sizeof(categories) / sizeof(*categories);
+	categories[categoryCount - 2] = NULL;
+	categories[categoryCount - 1] = NULL;
+}
 
 OMRMemCategorySet j9MainMemCategorySet = { sizeof(categories) / sizeof(OMRMemCategory *), categories };
