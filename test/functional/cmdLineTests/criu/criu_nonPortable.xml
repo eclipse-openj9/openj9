@@ -208,6 +208,8 @@
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
     <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
     <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
@@ -238,6 +240,8 @@
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
     <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
     <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <output type="failure" caseSensitive="yes" regex="no">TEST FAILED</output>
     <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
