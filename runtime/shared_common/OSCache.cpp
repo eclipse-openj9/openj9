@@ -625,7 +625,6 @@ SH_OSCache::getAllCacheStatistics(J9JavaVM* vm, const char* ctrlDirName, UDATA g
 	char persistentCacheDir[J9SH_MAXPATH];
 	char nonpersistentCacheDir[J9SH_MAXPATH];
 	char* nameWithVGen = NULL;
-	IDATA cntr = 0;
 	J9Pool* incompatibleList = NULL;
 	SH_OSCache_Info tempInfo;
 	SH_OSCache_Info* newElement = NULL;
@@ -760,7 +759,6 @@ SH_OSCache::getAllCacheStatistics(J9JavaVM* vm, const char* ctrlDirName, UDATA g
 											goto done;
 										}
 										memcpy(newElement, anElement, sizeof(SH_OSCache_Info));
-										++cntr;
 									} while ((anElement = (SH_OSCache_Info*)pool_nextDo(&poolState)) != NULL);
 								}
 							}
@@ -789,7 +787,6 @@ SH_OSCache::getAllCacheStatistics(J9JavaVM* vm, const char* ctrlDirName, UDATA g
 					memcpy(newElement, &tempInfo, sizeof(SH_OSCache_Info));
 				}
 			}
-			++cntr;
 		}
 		
 		if (NULL != lowerLayerList) {
