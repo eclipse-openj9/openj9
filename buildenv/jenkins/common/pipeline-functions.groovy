@@ -440,7 +440,7 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
                 if (!SPEC.contains("valhalla")) {
                     DYNAMIC_COMPILE = true
                 }
-            } else if (testJobName.contains("sanity.system") || testJobName.contains("extended.system")) {
+            } else if (testJobName.contains("sanity.system") || testJobName.contains("extended.system") || testJobName.contains("sanity.openjdk")) {
                 PARALLEL = "Dynamic"
                 NUM_MACHINES = "3"
             } else if (testJobName.contains("special.system")) {
