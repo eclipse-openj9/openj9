@@ -24,6 +24,7 @@ package com.ibm.java.lang.management.internal;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -208,7 +209,7 @@ public class RuntimeMXBeanImpl implements RuntimeMXBean {
 	@Override
 	public final List<String> getInputArguments() {
 		checkMonitorPermission();
-		return ManagementUtils.convertStringArrayToList(VM.getVMArgs());
+		return Collections.unmodifiableList(ManagementUtils.convertStringArrayToList(VM.getVMArgs()));
 	}
 
 	/**
