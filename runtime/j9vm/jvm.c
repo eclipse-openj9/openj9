@@ -303,7 +303,11 @@ static jmethodID currentLoadedClassMID = NULL;
 static jmethodID getNameMID = NULL;
 
 static jclass jlThread = NULL;
+#if JAVA_SPEC_VERSION < 21
 static jmethodID sleepMID = NULL;
+#else /* JAVA_SPEC_VERSION < 21 */
+static jmethodID sleepNanosMID = NULL;
+#endif /* JAVA_SPEC_VERSION < 21 */
 
 static jmethodID waitMID = NULL;
 static jmethodID notifyMID = NULL;
@@ -1738,10 +1742,17 @@ static jint initializeReflectionGlobals(JNIEnv * env, BOOLEAN includeAccessors) 
 		return JNI_ERR;
 	}
 
+#if JAVA_SPEC_VERSION < 21
 	sleepMID = (*env)->GetStaticMethodID(env, clazz, "sleep", "(J)V");
 	if (!sleepMID) {
 		return JNI_ERR;
 	}
+#else /* JAVA_SPEC_VERSION < 21 */
+	sleepNanosMID = (*env)->GetStaticMethodID(env, clazz, "sleep", "(JI)V");
+	if (!sleepNanosMID) {
+		return JNI_ERR;
+	}
+#endif /* JAVA_SPEC_VERSION < 21 */
 
 	clazz = (*env)->FindClass(env, "java/lang/Object");
 	if (!clazz) {
@@ -5911,7 +5922,15 @@ JVM_Sleep(JNIEnv* env, jclass thread, jlong timeout)
 {
 	Trc_SC_Sleep_Entry(env, thread, timeout);
 
+#if JAVA_SPEC_VERSION < 21
 	(*env)->CallStaticVoidMethod(env, jlThread, sleepMID, timeout);
+#else /* JAVA_SPEC_VERSION < 21 */
+	{
+		jlong millis = timeout / 1000000;
+		jint nanos = (jint)(timeout % 1000000);
+		(*env)->CallStaticVoidMethod(env, jlThread, sleepNanosMID, millis, nanos);
+	}
+#endif /* JAVA_SPEC_VERSION < 21 */
 
 	Trc_SC_Sleep_Exit(env);
 }
