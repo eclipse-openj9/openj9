@@ -121,6 +121,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<flag id="opt_useOmrDdr" value="false"/>
 		<flag id="opt_veeSupport" value="false"/>
 		<flag id="opt_vmLocalStorage" value="true"/>
+		<flag id="prof_continuationAllocation" value="false"/>
 		<flag id="prof_countArgsTemps" value="false"/>
 		<flag id="prof_jvmti" value="false"/>
 		<flag id="thr_extraChecks" value="false"/>

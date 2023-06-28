@@ -6345,6 +6345,21 @@ runExitStages(J9JavaVM* vm, J9VMThread* vmThread)
 	}
 #endif
 
+#if defined(J9VM_PROF_CONTINUATION_ALLOCATION)
+	if (0 < (vm->t1CacheHit + vm->t2CacheHit + vm->fastAlloc + vm->slowAlloc)) {
+		printf("\nTotal Continuation entries: %u\n", vm->t1CacheHit + vm->t2CacheHit + vm->fastAlloc + vm->slowAlloc);
+		printf("\nCache Hits:                 %u", vm->t1CacheHit + vm->t2CacheHit);
+		printf("\n     T1 Cache Hits:             %u", vm->t1CacheHit);
+		printf("\n     T2 Cache Hits:             %u", vm->t2CacheHit);
+		printf("\nCache Miss:                 %u", vm->fastAlloc + vm->slowAlloc);
+		printf("\n     Fast Alloc (<10000ns):     %u", vm->fastAlloc);
+		printf("\n     Avg Fast Alloc Time:       %ldns", (vm->fastAlloc > 0 ? (vm->fastAllocAvgTime / (I_64)vm->fastAlloc) : 0));
+		printf("\n     Slow Alloc (>10000ns):     %u", vm->slowAlloc);
+		printf("\n     Avg Slow Alloc Time:       %ldns", (vm->slowAlloc > 0 ? (vm->slowAllocAvgTime / (I_64)vm->slowAlloc) : 0));
+		printf("\nAvg Cache Lookup Time:      %ldns\n", (vm->avgCacheLookupTime / (I_64)(vm->t1CacheHit + vm->t2CacheHit + vm->fastAlloc + vm->slowAlloc)));
+	}
+#endif /* defined(J9VM_PROF_CONTINUATION_ALLOCATION) */
+
 	/* Unload before trace engine exits */
 	UT_MODULE_UNLOADED(J9_UTINTERFACE_FROM_VM(vm));
 
