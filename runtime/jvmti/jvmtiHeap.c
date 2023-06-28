@@ -1580,7 +1580,6 @@ wrap_primitiveFieldCallback(J9JavaVM * vm, J9JVMTIHeapData * iteratorData, IDATA
 	J9ROMFieldShape * field;
 	jvmtiError rc;
 	jvmtiIterationControl visitRc = JVMTI_ITERATION_ABORT;
-	jint fieldIndex = 0;
 	UDATA const objectHeaderSize = J9JAVAVM_OBJECT_HEADER_SIZE(vm);
 
 	/* Check if the referee was already visited and had its primitive fields callback issued. Duplicate SUN behavior
@@ -1727,8 +1726,6 @@ wrap_primitiveFieldCallback(J9JavaVM * vm, J9JVMTIHeapData * iteratorData, IDATA
 
 
 nextField:
-		fieldIndex++;
-
 		/* Go look at the next field */
 		field = vm->internalVMFunctions->fullTraversalFieldOffsetsNextDo(&state);
 	}
