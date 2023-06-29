@@ -544,6 +544,8 @@ enum INIT_STAGE {
 #define VMOPT_XXDYNAMICHEAPIFICATION "-XX:+DynamicHeapification"
 #define VMOPT_XXNODYNAMICHEAPIFICATION "-XX:-DynamicHeapification"
 
+#define VMOPT_XXCONTINUATIONCACHE "-XX:ContinuationCache:"
+
 #define MAPOPT_AGENTLIB_JDWP_EQUALS "-agentlib:jdwp="
 #define MAPOPT_XRUNJDWP "-Xrunjdwp:"
 
