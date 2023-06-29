@@ -1473,8 +1473,8 @@ static bool getProfiledCallSiteInfo(TR::CodeGenerator *cg, TR::Node *callNode, u
          }
       return false;
       }
-   static const bool tracePIC = (feGetEnv("TR_TracePIC") != NULL) && comp->getOption(TR_TraceCG);
-   if (tracePIC)
+   static const bool tracePIC = (feGetEnv("TR_TracePIC") != NULL);
+   if (tracePIC && comp->getOption(TR_TraceCG))
       {
       traceMsg(comp, "Value profile info for callNode %p in %s\n", callNode, comp->signature());
       info->getProfiler()->dumpInfo(comp->getOutFile());
