@@ -29,11 +29,15 @@
 UDATA 
 isSameOrSuperClassOf(J9Class *superClass, J9Class *baseClass)
 {
-	UDATA superClassDepth = J9RAMCLASS_DEPTH(superClass);
-	
-	return ((baseClass == superClass)
-					|| ((J9RAMCLASS_DEPTH(baseClass) > superClassDepth)
-					   && ((J9RAMCLASS_SUPERCLASSES(baseClass)[superClassDepth]) == superClass)));
+	UDATA ret = TRUE;
+
+	if (!J9_ARE_J9CLASSES_EQUIVALENT(baseClass, superClass)) {
+		UDATA superClassDepth = J9RAMCLASS_DEPTH(superClass);
+		ret = ((J9RAMCLASS_DEPTH(baseClass) > superClassDepth)
+				&& ((J9RAMCLASS_SUPERCLASSES(baseClass)[superClassDepth]) == superClass));
+	}
+
+	return ret;
 }
 
 

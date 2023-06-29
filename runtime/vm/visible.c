@@ -118,7 +118,7 @@ checkVisibility(J9VMThread *currentThread, J9Class* sourceClass, J9Class* destCl
 #endif /* JAVA_SPEC_VERSION >= 11 */
 		} else if (modifiers & J9AccPrivate) {
 			/* Private */
-			if (sourceClass != destClass) {
+			if (!J9_ARE_J9CLASSES_EQUIVALENT(sourceClass, destClass)) {
 #if JAVA_SPEC_VERSION >= 11
 				if (J9_ARE_NO_BITS_SET(lookupOptions, J9_LOOK_NO_NESTMATES)) {
 					/* loadAndVerifyNestHost returns an error code if setting the

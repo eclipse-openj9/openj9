@@ -323,6 +323,7 @@ static const struct { \
 #define J9_CLASS_DISALLOWS_LOCKING_FLAGS (J9ClassIsValueType | J9ClassIsValueBased)
 #define J9_CLASS_ALLOWS_LOCKING(clazz) J9_ARE_NO_BITS_SET((clazz)->classFlags, J9_CLASS_DISALLOWS_LOCKING_FLAGS)
 #define J9_IS_J9CLASS_VALUEBASED(clazz) J9_ARE_ALL_BITS_SET((clazz)->classFlags, J9ClassIsValueBased)
+#define J9_IS_J9CLASS_GENERATED(clazz) J9_ARE_ALL_BITS_SET((clazz)->classFlags, J9ClassGenerated)
 #ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
 #define J9_IS_J9CLASS_VALUETYPE(clazz) J9_ARE_ALL_BITS_SET((clazz)->classFlags, J9ClassIsValueType)
 #else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
@@ -332,7 +333,9 @@ static const struct { \
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 #define J9CLASS_UNPADDED_INSTANCE_SIZE(clazz) J9_VALUETYPE_FLATTENED_SIZE(clazz)
 #define J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(clazz) J9_ARE_ALL_BITS_SET((clazz)->classFlags, J9ClassIsPrimitiveValueType)
+#define J9_IS_J9CLASS_GENERATED_VT_LTYPE(clazz) (J9_IS_J9CLASS_VALUETYPE(clazz) && J9_IS_J9CLASS_GENERATED(clazz))
 #define J9_IS_J9CLASS_FLATTENED(clazz) J9_ARE_ALL_BITS_SET((clazz)->classFlags, J9ClassIsFlattened)
+#define J9_ARE_J9CLASSES_EQUIVALENT(c1, c2) (((c1) == (c2)) || ((c2) == (c1)->Ltype) || ((c2) == (c1)->Qtype))
 /**
  * Disable flattening of volatile field that is > 8 bytes for now, as the current implementation of copyObjectFields() will tear this field.
  */
@@ -345,11 +348,13 @@ static const struct { \
 #else /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 #define J9CLASS_UNPADDED_INSTANCE_SIZE(clazz) ((clazz)->totalInstanceSize)
 #define J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(clazz) FALSE
+#define J9_IS_J9CLASS_GENERATED_VT_LTYPE(clazz) FALSE
 #define J9_IS_J9CLASS_FLATTENED(clazz) FALSE
 #define J9_IS_FIELD_FLATTENED(fieldClazz, romFieldShape) FALSE
 #define J9_VALUETYPE_FLATTENED_SIZE(clazz)((UDATA) 0) /* It is not possible for this macro to be used since we always check J9_IS_J9CLASS_FLATTENED before ever using it. */
 #define IS_REF_OR_VAL_SIGNATURE(firstChar) ('L' == (firstChar))
 #define IS_QTYPE(firstChar) FALSE
+#define J9_ARE_J9CLASSES_EQUIVALENT(c1, c2) ((c1) == (c2))
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
 #define IS_LTYPE(firstChar) ('L' == (firstChar))
