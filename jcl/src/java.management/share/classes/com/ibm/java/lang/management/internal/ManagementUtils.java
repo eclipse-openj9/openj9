@@ -770,10 +770,6 @@ public final class ManagementUtils {
 				.addInterface(com.ibm.lang.management.JvmCpuMonitorMXBean.class)
 				.validateAndRegister();
 
-			create(OPENJ9_DIAGNOSTICS_MXBEAN_NAME, openj9.lang.management.internal.OpenJ9DiagnosticsMXBeanImpl.getInstance())
-				.addInterface(openj9.lang.management.OpenJ9DiagnosticsMXBean.class)
-				.validateAndRegister();
-
 			// register standard optional beans
 			create(ManagementFactory.COMPILATION_MXBEAN_NAME, CompilationMXBeanImpl.getInstance())
 				.addInterface(java.lang.management.CompilationMXBean.class)
