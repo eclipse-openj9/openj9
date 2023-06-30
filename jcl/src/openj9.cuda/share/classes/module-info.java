@@ -24,7 +24,7 @@
 /**
  * Provides access to CUDA-capable devices from Java.
  * <p>
- * A wealth of background information on CUDA is available <a href="http://www.nvidia.com/object/cuda_home.html">here</a>.
+ * A wealth of background information on CUDA is available <a href="https://www.nvidia.com/object/cuda_home.html">here</a>.
  */
 @SuppressWarnings("module")
 module openj9.cuda {
