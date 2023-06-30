@@ -5924,6 +5924,15 @@ typedef struct J9JavaVM {
 	J9VMContinuation **continuationT2Cache;
 	U_32 continuationT1Size;
 	U_32 continuationT2Size;
+#if defined(J9VM_PROF_CONTINUATION_ALLOCATION)
+	volatile U_32 t1CacheHit;
+	volatile U_32 t2CacheHit;
+	volatile I_64 avgCacheLookupTime;
+	volatile U_32 fastAlloc;
+	volatile U_32 slowAlloc;
+	volatile I_64 fastAllocAvgTime;
+	volatile I_64 slowAllocAvgTime;
+#endif /* defined(J9VM_PROF_CONTINUATION_ALLOCATION) */
 #endif /* JAVA_SPEC_VERSION >= 19 */
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 	omrthread_monitor_t delayedLockingOperationsMutex;

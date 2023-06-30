@@ -42,6 +42,9 @@ createContinuation(J9VMThread *currentThread, j9object_t continuationObject)
 	PORT_ACCESS_FROM_VMC(currentThread);
 	BOOLEAN result = TRUE;
 	J9VMContinuation *continuation = NULL;
+#if defined(J9VM_PROF_CONTINUATION_ALLOCATION)
+	I_64 start = j9time_nano_time();
+#endif /* defined(J9VM_PROF_CONTINUATION_ALLOCATION) */
 
 	/* First check if local cache is available. */
 	if (NULL != currentThread->continuationT1Cache) {
@@ -49,6 +52,9 @@ createContinuation(J9VMThread *currentThread, j9object_t continuationObject)
 			if (NULL != currentThread->continuationT1Cache[i]) {
 				continuation = currentThread->continuationT1Cache[i];
 				currentThread->continuationT1Cache[i] = NULL;
+#if defined(J9VM_PROF_CONTINUATION_ALLOCATION)
+				vm->t1CacheHit += 1;
+#endif /* defined(J9VM_PROF_CONTINUATION_ALLOCATION) */
 				break;
 			}
 		}
@@ -63,14 +69,23 @@ createContinuation(J9VMThread *currentThread, j9object_t continuationObject)
 																		(uintptr_t)continuation,
 																		(uintptr_t)NULL))
 			) {
+#if defined(J9VM_PROF_CONTINUATION_ALLOCATION)
+				vm->t2CacheHit += 1;
+#endif /* defined(J9VM_PROF_CONTINUATION_ALLOCATION) */
 				break;
 			}
 			continuation = NULL;
 		}
 	}
+#if defined(J9VM_PROF_CONTINUATION_ALLOCATION)
+		vm->avgCacheLookupTime += j9time_nano_time() - start;
+#endif /* defined(J9VM_PROF_CONTINUATION_ALLOCATION) */
 
 	/* No cache found, allocate new continuation structure. */
 	if (NULL == continuation) {
+#if defined(J9VM_PROF_CONTINUATION_ALLOCATION)
+		start = j9time_nano_time();
+#endif /* defined(J9VM_PROF_CONTINUATION_ALLOCATION) */
 		J9JavaStack *stack = NULL;
 		J9SFJNINativeMethodFrame *frame = NULL;
 		continuation = (J9VMContinuation*)j9mem_allocate_memory(sizeof(J9VMContinuation), OMRMEM_CATEGORY_THREADS);
@@ -112,6 +127,17 @@ createContinuation(J9VMThread *currentThread, j9object_t continuationObject)
 		continuation->pc = (U_8*)J9SF_FRAME_TYPE_JNI_NATIVE_METHOD;
 		continuation->arg0EA = (UDATA*)&frame->savedA0;
 		continuation->stackObject->isVirtual = TRUE;
+
+#if defined(J9VM_PROF_CONTINUATION_ALLOCATION)
+		I_64 totalTime = (I_64)j9time_nano_time() - start;
+		if (totalTime > 10000) {
+			vm->slowAlloc += 1;
+			vm->slowAllocAvgTime += totalTime;
+		} else {
+			vm->fastAlloc += 1;
+			vm->fastAllocAvgTime += totalTime;
+		}
+#endif /* defined(J9VM_PROF_CONTINUATION_ALLOCATION) */
 	}
 
 	J9VMJDKINTERNALVMCONTINUATION_SET_VMREF(currentThread, continuationObject, continuation);
