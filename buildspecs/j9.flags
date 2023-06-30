@@ -1958,6 +1958,10 @@ Pass J9PORT_SIG_OPTIONS_ZOS_USE_CEEHDLR into j9sig_set_options() before the firs
 			<require flag="port_signalSupport"/>
 		</requires>
 	</flag>
+	<flag id="prof_continuationAllocation">
+		<description>display Continuation cache usage and timing</description>
+		<ifRemoved>no report of Continuation allocation timing</ifRemoved>
+	</flag>
 	<flag id="prof_countArgsTemps">
 		<description>display a count of args/temps usage for loaded methods</description>
 		<ifRemoved>no report of args/temps usage</ifRemoved>
