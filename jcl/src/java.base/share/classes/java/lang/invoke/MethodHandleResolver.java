@@ -22,6 +22,8 @@
  *******************************************************************************/
 package java.lang.invoke;
 
+import static java.lang.invoke.MethodHandles.Lookup.IMPL_LOOKUP;
+
 import java.lang.invoke.MethodHandles.Lookup;
 import java.util.ArrayList;
 import java.util.Objects;
@@ -129,7 +131,7 @@ final class MethodHandleResolver {
 		 */
 		if (bsmTypeArgCount < 1 || MethodHandles.Lookup.class != bsm.type().parameterType(0)) {
 			/*[MSG "K0A01", "Constant_Dynamic references bootstrap method '{0}' does not have java.lang.invoke.MethodHandles.Lookup as first parameter."]*/
-			throw new BootstrapMethodError(Msg.getString("K0A01", Lookup.IMPL_LOOKUP.revealDirect(bsm).getName())); //$NON-NLS-1$
+			throw new BootstrapMethodError(Msg.getString("K0A01", IMPL_LOOKUP.revealDirect(bsm).getName())); //$NON-NLS-1$
 		}
 
 /*[IF OPENJDK_METHODHANDLES]*/
@@ -237,7 +239,7 @@ final class MethodHandleResolver {
 		MethodType type;
 /*[IF JAVA_SPEC_VERSION >= 11]*/
 		type = MethodTypeHelper.vmResolveFromMethodDescriptorString(methodDescriptor, access.getClassloader(classObject), null);
-		final MethodHandles.Lookup lookup = new MethodHandles.Lookup(classObject);
+		final MethodHandles.Lookup lookup = IMPL_LOOKUP.in(classObject);
 		inaccessibleTypeCheck(lookup, type);
 /*[ELSE] JAVA_SPEC_VERSION >= 11*/
 		try {
@@ -362,7 +364,7 @@ final class MethodHandleResolver {
 			/* create an exceptionHandle with appropriate drop adapter and install that */
 			try {
 				MethodHandle thrower = MethodHandles.throwException(type.returnType(), BootstrapMethodError.class);
-				MethodHandle constructor = MethodHandles.Lookup.IMPL_LOOKUP.findConstructor(BootstrapMethodError.class, MethodType.methodType(void.class, Throwable.class));
+				MethodHandle constructor = IMPL_LOOKUP.findConstructor(BootstrapMethodError.class, MethodType.methodType(void.class, Throwable.class));
 				result = MethodHandles.foldArguments(thrower, constructor.bindTo(e));
 				result = MethodHandles.dropArguments(result, 0, type.parameterList()); 
 			} catch (IllegalAccessException iae) {
@@ -440,7 +442,7 @@ final class MethodHandleResolver {
 		}
 
 /*[IF JAVA_SPEC_VERSION >= 11]*/
-		final MethodHandles.Lookup lookup = new MethodHandles.Lookup(currentClass);
+		final MethodHandles.Lookup lookup = IMPL_LOOKUP.in(currentClass);
 		inaccessibleTypeCheck(lookup, mt);
 /*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 
