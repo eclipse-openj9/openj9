@@ -253,9 +253,11 @@ final class Access implements JavaLangAccess {
 	}
 /*[ENDIF] JAVA_SPEC_VERSION < 10 */
 
+/*[IF JAVA_SPEC_VERSION < 22]*/
 	public String fastUUID(long param1, long param2) {
 		return Long.fastUUID(param1, param2);
 	}
+/*[ENDIF] JAVA_SPEC_VERSION < 22 */
 
 	public Package definePackage(ClassLoader classLoader, String name, Module module) {
 		if (null == classLoader) {
