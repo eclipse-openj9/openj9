@@ -236,7 +236,7 @@
 		<classpathentry kind="lib" path="/binaries/common/ibm/ibmjzos.jar"/>
 		<classpathentry kind="lib" path="/binaries/vm/third/rt-compressed.sunJava21.jar"/>
 		<source path="src"/>
-		<parameter name="macro:define" value="JAVA_SPEC_VERSION=21"/>
+		<parameter name="macro:define" value="JAVA_SPEC_VERSION=22"/>
 		<parameter name="msg:outputdir" value="java.base/share/classes/com/ibm/oti/util"/>
 		<parameter name="jxerules:outputdir" value="java/lang"/>
 	</configuration>
