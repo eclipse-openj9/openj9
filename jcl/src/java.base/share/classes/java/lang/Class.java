@@ -4078,6 +4078,11 @@ private native String getSimpleNameImpl();
  * @see #isAnonymousClass()
  */
 public String getSimpleName() {
+/*[IF JAVA_SPEC_VERSION >= 21]*/
+	if (isUnnamedClass()) {
+		return "";
+	}
+/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 	MetadataCache cache = getMetadataCache();
 	if (cache.cachedSimpleName != null) {
 		String cachedSimpleName = cache.cachedSimpleName.get();
@@ -4166,6 +4171,11 @@ public String getSimpleName() {
  * @see #isLocalClass()
  */
 public String getCanonicalName() {
+/*[IF JAVA_SPEC_VERSION >= 21]*/
+	if (isUnnamedClass()) {
+		return null;
+	}
+/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 	MetadataCache cache = getMetadataCache();
 	if (cache.cachedCanonicalName != null) {
 		String cachedCanonicalName = cache.cachedCanonicalName.get();
@@ -5763,4 +5773,23 @@ SecurityException {
 		return AccessFlag.maskToAccessFlags(rawModifiers, location);
 	}
 /*[ENDIF] JAVA_SPEC_VERSION >= 20 */
+/*[IF JAVA_SPEC_VERSION >= 21]*/
+	/**
+	 * Answers true if the class is an unnamed class.
+	 * @return	true if the class is an unnamed class, and false otherwise.
+	 *
+	 * @since 21
+	 */
+	public boolean isUnnamedClass() {
+		boolean rc = false;
+		if ((null == getEnclosingObjectClass())
+			&& (null == getDeclaringClass())
+			&& isSynthetic()
+			&& (Modifier.FINAL == (getModifiers() & Modifier.FINAL))
+		) {
+			rc = true;
+		}
+		return rc;
+	}
+/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 }
