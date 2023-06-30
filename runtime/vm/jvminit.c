@@ -4042,6 +4042,16 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 		}
 	}
 
+#if JAVA_SPEC_VERSION >= 19
+	{
+		IDATA showCarrierFrames = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXSHOWCARRIERFRAMES, NULL);
+		IDATA noShowCarrierFrames = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXNOSHOWCARRIERFRAMES, NULL);
+		if (showCarrierFrames > noShowCarrierFrames) {
+			vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_SHOW_CARRIER_FRAMES;
+		}
+	}
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
 	return JNI_OK;
 }
 

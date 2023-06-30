@@ -3198,10 +3198,29 @@ done:
 				walkState->walkThread = _currentThread;
 				updateVMStruct(REGISTER_ARGS);
 				UDATA walkRC = _vm->walkStackFrames(_currentThread, walkState);
+#if JAVA_SPEC_VERSION >= 19
+				UDATA continuationWalkRC = J9_STACKWALK_RC_NONE;
+				J9StackWalkState continuationWalkState= {0};
+				if (J9_ARE_ALL_BITS_SET(_vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_SHOW_CARRIER_FRAMES)
+					&& IS_JAVA_LANG_VIRTUALTHREAD(_currentThread, _currentThread->threadObject)
+				) {
+					continuationWalkState.flags = walkFlags;
+					continuationWalkRC = _vm->internalVMFunctions->walkContinuationStackFrames(
+							_currentThread, _currentThread->currentContinuation, &continuationWalkState);
+				}
+#endif /* JAVA_SPEC_VERSION >= 19 */
 				/* No need for VMStructHasBeenUpdated as the above walk cannot change the roots */
 				UDATA framesWalked = walkState->framesWalked;
 				UDATA *cachePointer = walkState->cache;
-				if (J9_STACKWALK_RC_NONE != walkRC) {
+#if JAVA_SPEC_VERSION >= 19
+				UDATA continuationFramesWalked = continuationWalkState.framesWalked;
+				UDATA *continuationCachePointer = continuationWalkState.cache;
+#endif /* JAVA_SPEC_VERSION >= 19 */
+				if (J9_STACKWALK_RC_NONE != walkRC
+#if JAVA_SPEC_VERSION >= 19
+					|| J9_STACKWALK_RC_NONE != continuationWalkRC
+#endif /* JAVA_SPEC_VERSION >= 19 */
+				) {
 					/* Avoid infinite recursion if already throwing OOM */
 					if (_currentThread->privateFlags & J9_PRIVATE_FLAGS_OUT_OF_MEMORY) {
 						goto recursiveOOM;
@@ -3221,7 +3240,14 @@ done:
 #else
 					J9Class *arrayClass = _vm->intArrayClass;
 #endif
-					walkback = allocateIndexableObject(REGISTER_ARGS, arrayClass, (U_32)framesWalked, false);
+					walkback = allocateIndexableObject(
+							REGISTER_ARGS, arrayClass,
+#if JAVA_SPEC_VERSION >= 19
+							(U_32)framesWalked + (U_32)continuationFramesWalked,
+#else /* JAVA_SPEC_VERSION >= 19 */
+							(U_32)framesWalked,
+#endif /* JAVA_SPEC_VERSION >= 19 */
+							false);
 					if (J9_UNEXPECTED(NULL == walkback)) {
 						rc = THROW_HEAP_OOM;
 						goto done;
@@ -3232,14 +3258,29 @@ done:
 					if (framesWalked > maxSize) {
 						framesWalked = maxSize;
 					}
+#if JAVA_SPEC_VERSION >= 19
+					if ((framesWalked + continuationFramesWalked) > maxSize) {
+						continuationFramesWalked = maxSize - framesWalked;
+					}
+#endif /* JAVA_SPEC_VERSION >= 19 */
 				}
 				for (UDATA i = 0; i < framesWalked; ++i) {
 #if defined(J9VM_ENV_DATA64)
 					_objectAccessBarrier.inlineIndexableObjectStoreI64(_currentThread, walkback, i, cachePointer[i]);
-#else
+#else /* defined(J9VM_ENV_DATA64) */
 					_objectAccessBarrier.inlineIndexableObjectStoreI32(_currentThread, walkback, i, cachePointer[i]);
-#endif
+#endif /* defined(J9VM_ENV_DATA64) */
 				}
+#if JAVA_SPEC_VERSION >= 19
+				for (UDATA i = 0; i < continuationFramesWalked; ++i) {
+#if defined(J9VM_ENV_DATA64)
+					_objectAccessBarrier.inlineIndexableObjectStoreI64(_currentThread, walkback, framesWalked + i, continuationCachePointer[i]);
+#else /* defined(J9VM_ENV_DATA64) */
+					_objectAccessBarrier.inlineIndexableObjectStoreI32(_currentThread, walkback, framesWalked + i, continuationCachePointer[i]);
+#endif /* defined(J9VM_ENV_DATA64) */
+				}
+				freeStackWalkCaches(_currentThread, &continuationWalkState);
+#endif /* JAVA_SPEC_VERSION >= 19 */
 				freeStackWalkCaches(_currentThread, walkState);
 recursiveOOM:
 				restoreInternalNativeStackFrame(REGISTER_ARGS);

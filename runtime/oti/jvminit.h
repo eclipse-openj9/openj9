@@ -331,6 +331,8 @@ enum INIT_STAGE {
 #define VMOPT_X142BOOSTGCTHRPRIO "-X142BoostGCThrPrio"
 #define VMOPT_XREALTIME "-Xrealtime"
 #define VMOPT_XNORTSJ "-Xnortsj"
+#define VMOPT_XXNOSHOWCARRIERFRAMES "-XX:-ShowCarrierFrames"
+#define VMOPT_XXSHOWCARRIERFRAMES "-XX:+ShowCarrierFrames"
 #define VMOPT_XXNOSHOWHIDDENFRAMES "-XX:-ShowHiddenFrames"
 #define VMOPT_XXSHOWHIDDENFRAMES "-XX:+ShowHiddenFrames"
 #define VMOPT_XXNOSTACKTRACEINTHROWABLE "-XX:-StackTraceInThrowable"
