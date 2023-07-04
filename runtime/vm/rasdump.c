@@ -573,12 +573,14 @@ populateRASNetData(J9JavaVM *javaVM, J9RAS *rasStruct)
 {
 	j9addrinfo_struct addrinfo;
 	j9addrinfo_t hints;
-	U_64 startTime, endTime;
+	uint64_t startTime = 0;
+	uint64_t endTime = 0;
+	uint64_t timeDiff = 0;
 	PORT_ACCESS_FROM_JAVAVM(javaVM);
 	OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
 
 	/* measure the time taken to call the socket APIs, so we can issue a warning */
-	startTime = j9time_current_time_millis();
+	startTime = omrtime_hires_clock();
 
 	/* get the host name and IP addresses */
 	if (0 != omrsysinfo_get_hostname((char*)rasStruct->hostname,  sizeof(rasStruct->hostname) )) {
@@ -628,9 +630,10 @@ populateRASNetData(J9JavaVM *javaVM, J9RAS *rasStruct)
 		j9sock_freeaddrinfo( &addrinfo );
 	}
 
-	endTime = j9time_current_time_millis();
-	if (endTime - startTime > RAS_NETWORK_WARNING_TIME) {
-		j9nls_printf(PORTLIB, J9NLS_INFO, J9NLS_VM_RAS_SLOW_NEWORK_RESPONSE, (int)(endTime - startTime)/1000);
+	endTime = omrtime_hires_clock();
+	timeDiff = omrtime_hires_delta(startTime, endTime, OMRPORT_TIME_DELTA_IN_MILLISECONDS);
+	if (timeDiff > RAS_NETWORK_WARNING_TIME) {
+		j9nls_printf(PORTLIB, J9NLS_INFO, J9NLS_VM_RAS_SLOW_NEWORK_RESPONSE, (int)(timeDiff / 1000));
 	}
 }
 
