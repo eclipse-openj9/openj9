@@ -5782,12 +5782,13 @@ SecurityException {
 	 */
 	public boolean isUnnamedClass() {
 		boolean rc = false;
-		if ((null == getEnclosingObjectClass())
-			&& (null == getDeclaringClass())
-			&& isSynthetic()
-			&& (Modifier.FINAL == (getModifiers() & Modifier.FINAL))
-		) {
-			rc = true;
+		if (!isArray()) {
+			int rawModifiers = getModifiersImpl();
+			if ((Modifier.FINAL | SYNTHETIC) == (rawModifiers & (Modifier.FINAL | SYNTHETIC))) {
+				if ((null == getEnclosingObjectClass()) && (null == getDeclaringClass())) {
+					rc = true;
+				}
+			}
 		}
 		return rc;
 	}
