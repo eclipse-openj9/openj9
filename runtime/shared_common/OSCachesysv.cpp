@@ -1208,7 +1208,6 @@ SH_OSCachesysv::acquireWriteLock(UDATA lockID)
 			OSC_ERR_TRACE1(J9NLS_SHRC_CC_ACQUIRE_LOCK_FAILED_ENTER_MUTEX, myerror);
 #endif /* !defined(WIN32) */
 			Trc_SHR_OSC_enterMutex_Exit3(myerror);
-			Trc_SHR_Assert_ShouldNeverHappen();
 			return -1;
 		}
 	}
