@@ -40,18 +40,7 @@ OutOfLineINL_openj9_internal_foreign_abi_UpcallMHMetaData_resolveUpcallDataInfo(
 	J9ConstantPool *jclConstantPool = (J9ConstantPool *)vm->jclConstantPool;
 	J9ROMClass * jclROMClass = jclConstantPool->ramClass->romClass;
 	U_32 * cpShapeDescription = J9ROMCLASS_CPSHAPEDESCRIPTION(jclROMClass);
-#if JAVA_SPEC_VERSION >= 20
-	const int cpEntryNum = 10;
-#else /* JAVA_SPEC_VERSION >= 20 */
-	const int cpEntryNum = 12;
-#endif /* JAVA_SPEC_VERSION >= 20 */
-	U_16 cpIndex[cpEntryNum] = {
-#if JAVA_SPEC_VERSION >= 20
-			J9VMCONSTANTPOOL_OPENJ9INTERNALFOREIGNABIUPCALLMHMETADATA_GETNATIVEARGRETSEGMENTOFPTR,
-#else /* JAVA_SPEC_VERSION >= 20 */
-			J9VMCONSTANTPOOL_OPENJ9INTERNALFOREIGNABIUPCALLMHMETADATA_GETNATIVEARGRETADDROFPTR,
-#endif /* JAVA_SPEC_VERSION >= 20 */
-			J9VMCONSTANTPOOL_OPENJ9INTERNALFOREIGNABIUPCALLMHMETADATA_GETNATIVEARGRETSEGMENT,
+	static const U_16 cpIndex[] = {
 			J9VMCONSTANTPOOL_OPENJ9INTERNALFOREIGNABIUPCALLMHMETADATA_CALLEEMH,
 			J9VMCONSTANTPOOL_OPENJ9INTERNALFOREIGNABIUPCALLMHMETADATA_CALLEETYPE,
 			J9VMCONSTANTPOOL_OPENJ9INTERNALFOREIGNABIUPCALLMHMETADATA_INVOKECACHE,
@@ -65,16 +54,15 @@ OutOfLineINL_openj9_internal_foreign_abi_UpcallMHMetaData_resolveUpcallDataInfo(
 			J9VMCONSTANTPOOL_JDKINTERNALFOREIGNNATIVEMEMORYSEGMENTIMPL_LENGTH,
 			J9VMCONSTANTPOOL_JDKINTERNALFOREIGNNATIVEMEMORYSEGMENTIMPL_SCOPE
 			};
+	const size_t cpEntryNum = sizeof(cpIndex) / sizeof(cpIndex[0]);
 
 	VM_OutOfLineINL_Helpers::buildInternalNativeStackFrame(currentThread, method);
-	for (int i = 0; i < cpEntryNum; i++) {
+	for (size_t i = 0; i < cpEntryNum; i++) {
 		UDATA offset = cpIndex[i];
 		UDATA cpType = J9_CP_TYPE(cpShapeDescription, offset);
 		UDATA resolveFlags = J9_RESOLVE_FLAG_NO_THROW_ON_FAIL | J9_RESOLVE_FLAG_JCL_CONSTANT_POOL;
 
-		if (J9CPTYPE_STATIC_METHOD == cpType) {
-			resolveStaticMethodRef(currentThread, jclConstantPool, offset, resolveFlags);
-		} else if (J9CPTYPE_FIELD == cpType) {
+		if (J9CPTYPE_FIELD == cpType) {
 			J9RAMFieldRef *cpFieldRef = ((J9RAMFieldRef*)jclConstantPool) + offset;
 			UDATA const flags = cpFieldRef->flags;
 			UDATA const valueOffset = cpFieldRef->valueOffset;

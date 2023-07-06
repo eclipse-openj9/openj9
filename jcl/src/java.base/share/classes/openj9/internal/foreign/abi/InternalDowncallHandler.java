@@ -32,7 +32,6 @@ import java.util.Set;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
-import static java.lang.invoke.MethodHandles.*;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.invoke.MethodType;
 import static java.lang.invoke.MethodType.methodType;
@@ -271,21 +270,27 @@ public class InternalDowncallHandler {
 	 * of the passed-in pointer argument to long.
 	 */
 	private final long memSegmtOfPtrToLongArg(MemorySegment argValue) throws IllegalStateException {
+		UpcallMHMetaData.validateNativeArgRetSegmentOfPtr(argValue);
 		addMemArgScope(argValue.scope());
-		return UpcallMHMetaData.getNativeArgRetSegmentOfPtr(argValue);
+		return argValue.address();
 	}
 	/*[ELSE] JAVA_SPEC_VERSION >= 20 */
 	/* Intended for memAddrToLongArgFilter that converts the memory address to long. */
 	private final long memAddrToLongArg(MemoryAddress argValue) throws IllegalStateException {
+		UpcallMHMetaData.validateNativeArgRetAddrOfPtr(argValue);
 		addMemArgScope(argValue.scope());
-		return UpcallMHMetaData.getNativeArgRetAddrOfPtr(argValue);
+		return argValue.toRawLongValue();
 	}
 	/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 
 	/* Intended for memSegmtToLongArgFilter that converts the memory segment to long. */
 	private final long memSegmtToLongArg(MemorySegment argValue) throws IllegalStateException {
 		addMemArgScope(argValue.scope());
-		return UpcallMHMetaData.getNativeArgRetSegment(argValue);
+		/*[IF JAVA_SPEC_VERSION >= 20]*/
+		return UpcallMHMetaData.getNativeArgRetSegment(argValue).address();
+		/*[ELSE] JAVA_SPEC_VERSION >= 20 */
+		return UpcallMHMetaData.getNativeArgRetSegment(argValue).address().toRawLongValue();
+		/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 	}
 
 	/* Intended for longObjToVoidRetFilter that converts the Long object to void. */
@@ -341,11 +346,10 @@ public class InternalDowncallHandler {
 	private MemorySegment longObjToMemSegmtRet(Object retValue) {
 		long tmpValue = ((Long)retValue).longValue();
 		/*[IF JAVA_SPEC_VERSION >= 21]*/
-		/* MemorySegment.reinterpret() is introduced in JDK21 to create a segment with the specified layout
-		 * size computed by Utils.pointeeByteSize() given MemorySegment.ofAddress() is modified to create
-		 * a zero-sized segment.
+		/* Return the created segment with the given pointer address when the address is valid
+		 * against the specified target layout if exists.
 		 */
-		return MemorySegment.ofAddress(tmpValue).reinterpret(Utils.pointeeByteSize((AddressLayout)realReturnLayout));
+		return UpcallMHMetaData.getArgRetAlignedSegmentOfPtr(tmpValue, realReturnLayout);
 		/*[ELSE] JAVA_SPEC_VERSION >= 21 */
 		/* Utils.pointeeSize() introduced in JDK20 calls isUnbounded() for the ADDRESS layout
 		 * to determine whether the specified address layout is an unbounded address or not.
@@ -551,18 +555,18 @@ public class InternalDowncallHandler {
 		for (int argIndex = 0; argIndex < nativeArgCount; argIndex++) {
 			argFilters[argIndex] = getArgumentFilter(argTypeClasses[argIndex], argLayoutArray[argIndex]);
 		}
-		resultHandle = filterArguments(resultHandle, argPosition, argFilters);
+		resultHandle = MethodHandles.filterArguments(resultHandle, argPosition, argFilters);
 
 		/* Convert the return value to the specified type via filterReturnValue() after the native call. */
 		MethodHandle retFilter = getReturnValFilter(nativeMethodType.returnType());
-		resultHandle = filterReturnValue(resultHandle, retFilter);
+		resultHandle = MethodHandles.filterReturnValue(resultHandle, retFilter);
 
 		/*[IF JAVA_SPEC_VERSION >= 20]*/
 		/* Set a placeholder with a NULL segment if there is no request
 		 * for the execution state from downcall in the linker options.
 		 */
 		if (!linkerOpts.hasCapturedCallState()) {
-			resultHandle = insertArguments(resultHandle, 2, MemorySegment.NULL);
+			resultHandle = MethodHandles.insertArguments(resultHandle, 2, MemorySegment.NULL);
 		}
 		/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 		return resultHandle;
@@ -771,14 +775,6 @@ public class InternalDowncallHandler {
 		{
 			throw new IllegalArgumentException("A non-null memory address is expected for downcall");
 		}
-
-		/*[IF JAVA_SPEC_VERSION >= 20]*/
-		/* The scope of the downcall function address needs to be validated in OpenJ9
-		 * since the related code and APIs were adjusted in JDK20 in which case the
-		 * validity check on the address's scope in OpenJDK was entirely removed.
-		 */
-		validateMemScope(downcallAddr.scope());
-		/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 
 		long retMemAddr = 0;
 		MemorySegment retStruSegmt = null;
