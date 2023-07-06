@@ -801,12 +801,16 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 					 * jitHookClassPreinitialize will process initialization events for String compression sideEffectGuards
 					 * so we must initialize the class if this is the first time we are loading it
 					 */
+					PUSH_OBJECT_IN_SPECIAL_FRAME(vmThread, result);
 					J9Class* flagClass = vmFuncs->internalFindKnownClass(vmThread, J9VMCONSTANTPOOL_JAVALANGSTRINGSTRINGCOMPRESSIONFLAG, J9_FINDKNOWNCLASS_FLAG_INITIALIZE);
+					result = POP_OBJECT_IN_SPECIAL_FRAME(vmThread);
 
 					if (NULL == flagClass) {
 						goto nomem;
 					} else {
+						PUSH_OBJECT_IN_SPECIAL_FRAME(vmThread, result);
 						j9object_t flag = J9AllocateObject(vmThread, flagClass, allocateFlags);
+						result = POP_OBJECT_IN_SPECIAL_FRAME(vmThread);
 
 						if (NULL == flag) {
 							goto nomem;
