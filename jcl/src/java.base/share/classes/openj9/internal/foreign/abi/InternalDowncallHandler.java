@@ -1,4 +1,4 @@
-/*[INCLUDE-IF JAVA_SPEC_VERSION == 20]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 20]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2022
  *
@@ -39,16 +39,21 @@ import static java.lang.invoke.MethodType.methodType;
 import java.lang.invoke.WrongMethodTypeException;
 
 /*[IF JAVA_SPEC_VERSION >= 20]*/
+/*[IF JAVA_SPEC_VERSION >= 21]*/
+import java.lang.foreign.AddressLayout;
+/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 import java.lang.foreign.Arena;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.GroupLayout;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
+/*[IF JAVA_SPEC_VERSION >= 21]*/
+import java.lang.foreign.MemorySegment.Scope;
+/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 import java.lang.foreign.SegmentAllocator;
 /*[IF JAVA_SPEC_VERSION == 20]*/
 import java.lang.foreign.SegmentScope;
 /*[ENDIF] JAVA_SPEC_VERSION == 20 */
-import java.lang.foreign.VaList;
 import java.lang.foreign.ValueLayout;
 import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.LinkerOptions;
@@ -68,6 +73,9 @@ import jdk.incubator.foreign.ValueLayout;
 
 /*[IF JAVA_SPEC_VERSION >= 20]*/
 import static java.lang.foreign.ValueLayout.*;
+/*[IF JAVA_SPEC_VERSION >= 21]*/
+import static jdk.internal.foreign.abi.SharedUtils.*;
+/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 /*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 
 /**
@@ -91,11 +99,13 @@ public class InternalDowncallHandler {
 	 * the same downcall handler might hold various sessions/scopes being used by
 	 * different threads in downcall.
 	 */
-	/*[IF JAVA_SPEC_VERSION >= 20]*/
+	/*[IF JAVA_SPEC_VERSION >= 21]*/
+	private Set<Scope> memArgScopeSet;
+	/*[ELSEIF JAVA_SPEC_VERSION == 20]*/
 	private Set<SegmentScope> memArgScopeSet;
-	/*[ELSE] JAVA_SPEC_VERSION >= 20 */
+	/*[ELSE] JAVA_SPEC_VERSION >= 21 */
 	private Set<ResourceScope> memArgScopeSet;
-	/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 
 	/*[IF JAVA_SPEC_VERSION == 17]*/
 	private final ConcurrentHashMap<ResourceScope, Handle> scopeHandleMap;
@@ -228,11 +238,13 @@ public class InternalDowncallHandler {
 	/* Save the active session of the specified passed-in memory specific argument in the downcall handler
 	 * given the argument might be created within different sessions/scopes.
 	 */
-	/*[IF JAVA_SPEC_VERSION >= 20]*/
+	/*[IF JAVA_SPEC_VERSION >= 21]*/
+	private final void addMemArgScope(Scope memArgScope) throws IllegalStateException
+	/*[ELSEIF JAVA_SPEC_VERSION == 20]*/
 	private final void addMemArgScope(SegmentScope memArgScope) throws IllegalStateException
-	/*[ELSE] JAVA_SPEC_VERSION >= 20 */
+	/*[ELSE] JAVA_SPEC_VERSION >= 21 */
 	private final void addMemArgScope(ResourceScope memArgScope) throws IllegalStateException
-	/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 	{
 		validateMemScope(memArgScope);
 		if (!memArgScopeSet.contains(memArgScope)) {
@@ -241,11 +253,13 @@ public class InternalDowncallHandler {
 	}
 
 	/* Validate the memory related scope to ensure that it is kept alive during the downcall. */
-	/*[IF JAVA_SPEC_VERSION >= 20]*/
+	/*[IF JAVA_SPEC_VERSION >= 21]*/
+	private void validateMemScope(Scope memScope) throws IllegalStateException
+	/*[ELSEIF JAVA_SPEC_VERSION == 20]*/
 	private void validateMemScope(SegmentScope memScope) throws IllegalStateException
-	/*[ELSE] JAVA_SPEC_VERSION >= 20 */
+	/*[ELSE] JAVA_SPEC_VERSION >= 21 */
 	private void validateMemScope(ResourceScope memScope) throws IllegalStateException
-	/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 	{
 		if (!memScope.isAlive()) {
 			throw new IllegalStateException("Already closed: attempted to access the memory value in a closed scope");
@@ -326,12 +340,20 @@ public class InternalDowncallHandler {
 	/* Intended for longObjToMemSegmtRetFilter that converts the Long object to the memory segment. */
 	private MemorySegment longObjToMemSegmtRet(Object retValue) {
 		long tmpValue = ((Long)retValue).longValue();
+		/*[IF JAVA_SPEC_VERSION >= 21]*/
+		/* MemorySegment.reinterpret() is introduced in JDK21 to create a segment with the specified layout
+		 * size computed by Utils.pointeeByteSize() given MemorySegment.ofAddress() is modified to create
+		 * a zero-sized segment.
+		 */
+		return MemorySegment.ofAddress(tmpValue).reinterpret(Utils.pointeeByteSize((AddressLayout)realReturnLayout));
+		/*[ELSE] JAVA_SPEC_VERSION >= 21 */
 		/* Utils.pointeeSize() introduced in JDK20 calls isUnbounded() for the ADDRESS layout
 		 * to determine whether the specified address layout is an unbounded address or not.
 		 * For an unbounded address, it returns Long.MAX_VALUE for direct access; otherwise,
 		 * it returns zero in which case the address can't be directly accessed.
 		 */
 		return MemorySegment.ofAddress(tmpValue, Utils.pointeeSize(realReturnLayout));
+		/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 	}
 	/*[ELSE] JAVA_SPEC_VERSION >= 20 */
 	/* Intended for longObjToMemAddrRetFilter that converts the Long object to the memory address. */
@@ -355,9 +377,9 @@ public class InternalDowncallHandler {
 	 * The internal constructor is responsible for mapping the preprocessed layouts
 	 * of return type & argument types to the underlying prep_cif in native.
 	 *
-	 * @param functionMethodType The MethodType of the specified native function
-	 * @param funcDesc The function descriptor of the specified native function
-	 * @param options The linker options indicating additional linking requirements to the linker
+	 * @param functionMethodType the MethodType of the specified native function
+	 * @param funcDesc the function descriptor of the specified native function
+	 * @param options the linker options indicating additional linking requirements to the linker
 	 */
 	public InternalDowncallHandler(MethodType functionMethodType, FunctionDescriptor functionDescriptor, LinkerOptions options)
 	/*[ELSE] JAVA_SPEC_VERSION >= 20 */
@@ -365,8 +387,8 @@ public class InternalDowncallHandler {
 	 * The internal constructor is responsible for mapping the preprocessed layouts
 	 * of return type & argument types to the underlying prep_cif in native.
 	 *
-	 * @param functionMethodType The MethodType of the specified native function
-	 * @param funcDesc The function descriptor of the specified native function
+	 * @param functionMethodType the MethodType of the specified native function
+	 * @param funcDesc the function descriptor of the specified native function
 	 */
 	public InternalDowncallHandler(MethodType functionMethodType, FunctionDescriptor functionDescriptor)
 	/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
@@ -574,8 +596,16 @@ public class InternalDowncallHandler {
 		/*[ENDIF] JAVA_SPEC_VERSION == 17 */
 		if (argTypeClass == MemorySegment.class) {
 			/*[IF JAVA_SPEC_VERSION >= 20]*/
+			/*[IF JAVA_SPEC_VERSION >= 21]*/
+			/* The address layout for pointer might come with different representations of ADDRESS.
+			 * Note: AddressLayout is introduced in JDK21 to replace OfAddress.
+			 */
+			if (argLayout instanceof AddressLayout)
+			/*[ELSE] JAVA_SPEC_VERSION >= 21 */
 			/* The address layout for pointer might come with different representations of ADDRESS. */
-			if (argLayout instanceof OfAddress) {
+			if (argLayout instanceof OfAddress)
+			/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
+			{
 				filterMH = memSegmtOfPtrToLongArgFilter;
 			} else
 			/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
@@ -622,7 +652,16 @@ public class InternalDowncallHandler {
 			 * MemoryAdress related classes are removed against the latest APIs as
 			 * specified in JDK20+.
 			 */
-			if ((realReturnLayout != null) && (realReturnLayout instanceof ValueLayout)) {
+			/*[IF JAVA_SPEC_VERSION >= 21]*/
+			/* The address layout for pointer might come with different representations of ADDRESS.
+			 * Note: AddressLayout is introduced in JDK21 to replace OfAddress.
+			 */
+			if ((realReturnLayout != null) && (realReturnLayout instanceof AddressLayout))
+			/*[ELSE] JAVA_SPEC_VERSION >= 21 */
+			/* The address layout for pointer might come with different representations of ADDRESS. */
+			if ((realReturnLayout != null) && (realReturnLayout instanceof OfAddress))
+			/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
+			{
 				filterMH = longObjToMemSegmtRetFilter;
 			} else
 			/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
@@ -638,9 +677,19 @@ public class InternalDowncallHandler {
 	/* Set up the dependency from the sessions of memory related arguments to the specified session
 	 * so as to keep these arguments' session alive till the specified session is closed.
 	 */
-	private void SetDependency(SegmentScope session) {
+	/*[IF JAVA_SPEC_VERSION >= 21]*/
+	private void SetDependency(Scope session)
+	/*[ELSE] JAVA_SPEC_VERSION >= 21 */
+	private void SetDependency(SegmentScope session)
+	/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
+	{
 		Objects.requireNonNull(session);
-		for (SegmentScope memArgSession : memArgScopeSet) {
+		/*[IF JAVA_SPEC_VERSION >= 21]*/
+		for (Scope memArgSession : memArgScopeSet)
+		/*[ELSE] JAVA_SPEC_VERSION >= 21 */
+		for (SegmentScope memArgSession : memArgScopeSet)
+		/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
+		{
 			if (memArgSession.isAlive()) {
 				MemorySessionImpl memArgSessionImpl = (MemorySessionImpl)memArgSession;
 				Thread owner = memArgSessionImpl.ownerThread();
@@ -690,19 +739,20 @@ public class InternalDowncallHandler {
 	}
 	/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 
-	/* Return the valid downcall address by doing the validity check on the address's scope
-	 * in OpenJ9 since the related code and APIs were adjusted in JDK20 in which case the
-	 * scope check on the downcall in address() in OpenJDK was entirely removed.
+	/* Return the valid downcall related memory address by doing the validity check
+	 * on the address's scope in OpenJ9 since the related code and APIs were adjusted
+	 * in JDK20 in which case the scope check on the downcall in address() in OpenJDK
+	 * was entirely removed.
 	 */
 	/*[IF JAVA_SPEC_VERSION >= 20]*/
-	private long getValidDowncallAddr(MemorySegment downcallAddr) {
-		validateMemScope(downcallAddr.scope());
-		return downcallAddr.address();
+	private long getValidDowncallMemAddr(MemorySegment memAddr) {
+		validateMemScope(memAddr.scope());
+		return memAddr.address();
 	}
 	/*[ELSE] JAVA_SPEC_VERSION >= 20 */
-	private long getValidDowncallAddr(Addressable downcallAddr) {
-		validateMemScope(downcallAddr.address().scope());
-		return downcallAddr.address().toRawLongValue();
+	private long getValidDowncallMemAddr(Addressable memAddr) {
+		validateMemScope(memAddr.address().scope());
+		return memAddr.address().toRawLongValue();
 	}
 	/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 
@@ -721,6 +771,14 @@ public class InternalDowncallHandler {
 		{
 			throw new IllegalArgumentException("A non-null memory address is expected for downcall");
 		}
+
+		/*[IF JAVA_SPEC_VERSION >= 20]*/
+		/* The scope of the downcall function address needs to be validated in OpenJ9
+		 * since the related code and APIs were adjusted in JDK20 in which case the
+		 * validity check on the address's scope in OpenJDK was entirely removed.
+		 */
+		validateMemScope(downcallAddr.scope());
+		/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 
 		long retMemAddr = 0;
 		MemorySegment retStruSegmt = null;
@@ -744,11 +802,12 @@ public class InternalDowncallHandler {
 			/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 		}
 
-		/* Add the scope of the downcall address to the set to ensure it is kept alive
-		 * till the downcall is finished.
+		/* Add the scopes of the downcall related memory addresses to the set
+		 * to ensure they are kept alive till the downcall is finished.
 		 */
 		/*[IF JAVA_SPEC_VERSION >= 20]*/
 		addMemArgScope(downcallAddr.scope());
+		addMemArgScope(stateSegmt.scope());
 		/*[ELSE] JAVA_SPEC_VERSION >= 20 */
 		addMemArgScope(downcallAddr.address().scope());
 		/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
@@ -760,13 +819,18 @@ public class InternalDowncallHandler {
 		 *Note: memArgScopeSet is not empty with the downcall address added to the set.
 		 */
 		/*[IF JAVA_SPEC_VERSION >= 20]*/
-		try (Arena arena = Arena.openConfined()) {
+		/*[IF JAVA_SPEC_VERSION >= 21]*/
+		try (Arena arena = Arena.ofConfined())
+		/*[ELSE] JAVA_SPEC_VERSION >= 21 */
+		try (Arena arena = Arena.openConfined())
+		/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
+		{
 			SetDependency(arena.scope());
-			returnVal = invokeNative(stateSegmt.address(), retMemAddr, getValidDowncallAddr(downcallAddr), cifNativeThunkAddr, args);
+			returnVal = invokeNative(getValidDowncallMemAddr(stateSegmt), retMemAddr, getValidDowncallMemAddr(downcallAddr), cifNativeThunkAddr, args);
 		}
 		/*[ELSE] JAVA_SPEC_VERSION >= 20 */
 		acquireScope();
-		returnVal = invokeNative(retMemAddr, getValidDowncallAddr(downcallAddr), cifNativeThunkAddr, args);
+		returnVal = invokeNative(retMemAddr, getValidDowncallMemAddr(downcallAddr), cifNativeThunkAddr, args);
 		releaseScope();
 		/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 

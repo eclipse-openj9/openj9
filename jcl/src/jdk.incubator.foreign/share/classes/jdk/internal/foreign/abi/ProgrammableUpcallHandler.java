@@ -60,10 +60,10 @@ public final class ProgrammableUpcallHandler implements UpcallHandler
 	 * a native symbol that holds an entry point to the native function
 	 * intended for the requested java method in upcall.
 	 *
-	 * @param target The upcall method handle to the requested java method
-	 * @param mt The MethodType of the upcall method handle
-	 * @param cDesc The FunctionDescriptor of the upcall method handle
-	 * @param scope The ResourceScope of the upcall method handle
+	 * @param target the upcall method handle to the requested java method
+	 * @param mt the MethodType of the upcall method handle
+	 * @param cDesc the FunctionDescriptor of the upcall method handle
+	 * @param scope the ResourceScope of the upcall method handle
 	 * @return the upcall hander in upcall
 	 */
 	public static UpcallHandler makeUpcall(MethodHandle target, MethodType mt, FunctionDescriptor cDesc, ResourceScope scope) {

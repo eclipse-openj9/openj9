@@ -38,9 +38,9 @@ public class ProgrammableInvoker {
 	 * The method is ultimately invoked by Clinker on the specific platforms to generate the requested
 	 * method handle to the underlying C function.
 	 *
-	 * @param downcallAddr The downcall symbol
-	 * @param functionMethodType The MethodType of the specified native function
-	 * @param funcDesc The function descriptor of the specified native function
+	 * @param downcallAddr the downcall symbol
+	 * @param functionMethodType the MethodType of the specified native function
+	 * @param funcDesc the function descriptor of the specified native function
 	 * @return a method handle bound to the native method
 	 */
 	public static MethodHandle getBoundMethodHandle(MethodType functionMethodType, FunctionDescriptor funcDesc) {

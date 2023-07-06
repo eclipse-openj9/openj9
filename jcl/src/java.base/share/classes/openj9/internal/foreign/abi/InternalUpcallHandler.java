@@ -1,4 +1,4 @@
-/*[INCLUDE-IF JAVA_SPEC_VERSION == 20]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 20]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2022
  *
@@ -29,10 +29,17 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 
 /*[IF JAVA_SPEC_VERSION >= 20]*/
+/*[IF JAVA_SPEC_VERSION >= 21]*/
+import java.lang.foreign.Arena;
+/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
+/*[IF JAVA_SPEC_VERSION >= 21]*/
+import jdk.internal.foreign.abi.LinkerOptions;
+/*[ELSE] JAVA_SPEC_VERSION >= 21 */
 import java.lang.foreign.SegmentScope;
+/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 /*[ELSE] JAVA_SPEC_VERSION >= 20 */
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryLayout;
@@ -51,29 +58,44 @@ public final class InternalUpcallHandler {
 	private final long thunkAddr;
 	private UpcallMHMetaData metaData;
 
-	/*[IF JAVA_SPEC_VERSION >= 20]*/
+	/*[IF JAVA_SPEC_VERSION >= 21]*/
 	/**
 	 * The constructor creates an upcall handler specific to the requested java method
 	 * by generating a native thunk in upcall on a given platform.
 	 *
-	 * @param target The target method handle in upcall
-	 * @param mt The method type of the target method handle
-	 * @param cDesc The function descriptor of the target method handle
-	 * @param session The segment scope related to the upcall handler
+	 * @param target the target method handle in upcall
+	 * @param mt the method type of the target method handle
+	 * @param cDesc the function descriptor of the target method handle
+	 * @param arena the Arena related to the upcall handler
+	 * @param options the LinkerOptions indicating additional linking requirements to the linker
+	 * @return an internal upcall handler with the thunk address
 	 */
-	public InternalUpcallHandler(MethodHandle target, MethodType mt, FunctionDescriptor cDesc, SegmentScope session)
-	/*[ELSE] JAVA_SPEC_VERSION >= 20 */
+	public InternalUpcallHandler(MethodHandle target, MethodType mt, FunctionDescriptor cDesc, Arena arena, LinkerOptions options)
+	/*[ELSEIF JAVA_SPEC_VERSION == 20]*/
 	/**
 	 * The constructor creates an upcall handler specific to the requested java method
 	 * by generating a native thunk in upcall on a given platform.
 	 *
-	 * @param target The target method handle in upcall
-	 * @param mt The method type of the target method handle
-	 * @param cDesc The function descriptor of the target method handle
-	 * @param scope The resource scope related to the upcall handler
+	 * @param target the target method handle in upcall
+	 * @param mt the method type of the target method handle
+	 * @param cDesc the function descriptor of the target method handle
+	 * @param scope the segment scope related to the upcall handler
+	 * @return an internal upcall handler with the thunk address
+	 */
+	public InternalUpcallHandler(MethodHandle target, MethodType mt, FunctionDescriptor cDesc, SegmentScope scope)
+	/*[ELSE] JAVA_SPEC_VERSION >= 21 */
+	/**
+	 * The constructor creates an upcall handler specific to the requested java method
+	 * by generating a native thunk in upcall on a given platform.
+	 *
+	 * @param target the target method handle in upcall
+	 * @param mt the method type of the target method handle
+	 * @param cDesc the function descriptor of the target method handle
+	 * @param scope the resource scope related to the upcall handler
+	 * @return an internal upcall handler with the thunk address
 	 */
 	public InternalUpcallHandler(MethodHandle target, MethodType mt, FunctionDescriptor cDesc, ResourceScope scope)
-	/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 	{
 		List<MemoryLayout> argLayouts = cDesc.argumentLayouts();
 		argLayoutArray = argLayouts.toArray(new MemoryLayout[argLayouts.size()]);
@@ -86,11 +108,11 @@ public final class InternalUpcallHandler {
 		TypeLayoutCheckHelper.checkIfValidLayoutAndType(mt, argLayoutArray, realReturnLayout);
 		/*[ENDIF] JAVA_SPEC_VERSION == 17 */
 
-		/*[IF JAVA_SPEC_VERSION >= 20]*/
-		thunkAddr = getUpcallThunkAddr(target, session);
-		/*[ELSE] JAVA_SPEC_VERSION >= 20 */
+		/*[IF JAVA_SPEC_VERSION >= 21]*/
+		thunkAddr = getUpcallThunkAddr(target, arena, options);
+		/*[ELSE] JAVA_SPEC_VERSION >= 21 */
 		thunkAddr = getUpcallThunkAddr(target, scope);
-		/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
+		/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 	}
 
 	/**
@@ -106,11 +128,13 @@ public final class InternalUpcallHandler {
 	 * otherwise, call the native to request the JIT to generate an upcall thunk for this
 	 * java method.
 	 */
-	/*[IF JAVA_SPEC_VERSION >= 20]*/
-	private long getUpcallThunkAddr(MethodHandle target, SegmentScope sessionOrScope)
-	/*[ELSE] JAVA_SPEC_VERSION >= 20 */
-	private long getUpcallThunkAddr(MethodHandle target, ResourceScope sessionOrScope)
-	/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
+	/*[IF JAVA_SPEC_VERSION >= 21]*/
+	private long getUpcallThunkAddr(MethodHandle target, Arena arena, LinkerOptions options)
+	/*[ELSEIF JAVA_SPEC_VERSION == 20]*/
+	private long getUpcallThunkAddr(MethodHandle target, SegmentScope scope)
+	/*[ELSE] JAVA_SPEC_VERSION >= 21 */
+	private long getUpcallThunkAddr(MethodHandle target, ResourceScope scope)
+	/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 	{
 		int argLayoutCount = argLayoutArray.length;
 		/* The last element of the native signature array is for the return type. */
@@ -131,11 +155,15 @@ public final class InternalUpcallHandler {
 		}
 
 		/* The thunk must be created for each upcall handler given the UpcallMHMetaData object uniquely
-		 * bound to the thunk is only alive for a SegmentScope(JDK20+)/ResourceScope(JDK17) specified in
-		 * java, which means the upcall handler and its UpcallMHMetaData object will be cleaned up
-		 * automatically once their session/scope is closed.
+		 * bound to the thunk is only alive for a Scope (JDK21+)/SegmentScope (JDK20)/ResourceScope (JDK17)
+		 * specified in java, which means the upcall handler and its UpcallMHMetaData object will be
+		 * cleaned up automatically once their session/scope is closed.
 		 */
-		metaData = new UpcallMHMetaData(target, argLayoutCount, sessionOrScope);
+		/*[IF JAVA_SPEC_VERSION >= 21]*/
+		metaData = new UpcallMHMetaData(target, argLayoutCount, arena.scope(), options);
+		/*[ELSE] JAVA_SPEC_VERSION >= 21 */
+		metaData = new UpcallMHMetaData(target, argLayoutCount, scope);
+		/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 		return allocateUpcallStub(metaData, nativeSignatureStrs);
 	}
 
