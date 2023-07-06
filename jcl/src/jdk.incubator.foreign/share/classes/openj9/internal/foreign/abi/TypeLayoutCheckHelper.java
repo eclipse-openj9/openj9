@@ -38,10 +38,10 @@ import jdk.incubator.foreign.ValueLayout;
  * The Class is a collection of helper methods to validate the method types
  * against the corresponding layouts in the function descriptor.
  */
+@SuppressWarnings("nls")
 final class TypeLayoutCheckHelper {
 
 	/* Verify whether the specified layout and the corresponding type are valid and match each other. */
-	@SuppressWarnings("nls")
 	static void checkIfValidLayoutAndType(MethodType targetMethodType, MemoryLayout[] argumentLayouts, MemoryLayout returnLayout) {
 		Class<?> retType = targetMethodType.returnType();
 		if (!validateArgRetTypeClass(retType) && (retType != void.class)) {
@@ -79,7 +79,6 @@ final class TypeLayoutCheckHelper {
 	}
 
 	/* Check the validity of the layout against the corresponding type. */
-	@SuppressWarnings("nls")
 	private static void validateLayoutAgainstType(MemoryLayout targetLayout, Class<?> targetType) {
 		if (targetLayout != null) {
 			if (!targetLayout.hasSize()) {
@@ -113,7 +112,6 @@ final class TypeLayoutCheckHelper {
 	}
 
 	/* Check the size of the specified primitive layout to determine whether it matches the specified type. */
-	@SuppressWarnings("nls")
 	private static void validateValueLayoutSize(MemoryLayout TypeLayout, Class<?> targetType) {
 		int layoutSize = (int)TypeLayout.bitSize();
 		boolean mismatchedSize = false;
@@ -166,7 +164,6 @@ final class TypeLayoutCheckHelper {
 	}
 
 	/* Check the kind (type) of the specified primitive layout to determine whether it matches the specified type. */
-	@SuppressWarnings("nls")
 	private static void validateValueLayoutKind(MemoryLayout targetLayout, Class<?> targetType) {
 		boolean kindAttrFound = false;
 		List<String> layoutAttrList = targetLayout.attributes().toList();

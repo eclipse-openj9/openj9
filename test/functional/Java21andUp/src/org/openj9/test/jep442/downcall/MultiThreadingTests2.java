@@ -71,16 +71,15 @@ public class MultiThreadingTests2 implements Thread.UncaughtExceptionHandler {
 					VarHandle intHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));
 					VarHandle intHandle2 = structLayout.varHandle(PathElement.groupElement("elem2"));
 
-					try (Arena arena = Arena.openConfined()) {
-						SegmentAllocator allocator = SegmentAllocator.nativeAllocator(arena.scope());
-						MemorySegment structSegmt1 = allocator.allocate(structLayout);
+					try (Arena arena = Arena.ofConfined()) {
+						MemorySegment structSegmt1 = arena.allocate(structLayout);
 						intHandle1.set(structSegmt1, 11223344);
 						intHandle2.set(structSegmt1, 55667788);
-						MemorySegment structSegmt2 = allocator.allocate(structLayout);
+						MemorySegment structSegmt2 = arena.allocate(structLayout);
 						intHandle1.set(structSegmt2, 99001122);
 						intHandle2.set(structSegmt2, 33445566);
 
-						MemorySegment resultSegmt = (MemorySegment)mh.invokeExact(allocator, structSegmt1, structSegmt2);
+						MemorySegment resultSegmt = (MemorySegment)mh.invokeExact((SegmentAllocator)arena, structSegmt1, structSegmt2);
 						Assert.assertEquals(intHandle1.get(resultSegmt), 110224466);
 						Assert.assertEquals(intHandle2.get(resultSegmt), 89113354);
 					}
@@ -97,16 +96,15 @@ public class MultiThreadingTests2 implements Thread.UncaughtExceptionHandler {
 					VarHandle intHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));
 					VarHandle intHandle2 = structLayout.varHandle(PathElement.groupElement("elem2"));
 
-					try (Arena arena = Arena.openConfined()) {
-						SegmentAllocator allocator = SegmentAllocator.nativeAllocator(arena.scope());
-						MemorySegment structSegmt1 = allocator.allocate(structLayout);
+					try (Arena arena = Arena.ofConfined()) {
+						MemorySegment structSegmt1 = arena.allocate(structLayout);
 						intHandle1.set(structSegmt1, 11223344);
 						intHandle2.set(structSegmt1, 55667788);
-						MemorySegment structSegmt2 = allocator.allocate(structLayout);
+						MemorySegment structSegmt2 = arena.allocate(structLayout);
 						intHandle1.set(structSegmt2, 99001123);
 						intHandle2.set(structSegmt2, 33445567);
 
-						MemorySegment resultSegmt = (MemorySegment)mh.invokeExact(allocator, structSegmt1, structSegmt2);
+						MemorySegment resultSegmt = (MemorySegment)mh.invokeExact((SegmentAllocator)arena, structSegmt1, structSegmt2);
 						Assert.assertEquals(intHandle1.get(resultSegmt), 110224467);
 						Assert.assertEquals(intHandle2.get(resultSegmt), 89113355);
 					}

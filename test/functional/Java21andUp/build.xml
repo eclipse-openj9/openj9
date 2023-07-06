@@ -77,11 +77,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	<target name="build">
 		<if>
 			<not>
-				<!--
-				The test suites are temporarily disabled in JDK21 as the related code
-				has not yet been updated to support the latest APIs for JDK21.
-				-->
-				<matches string="${JDK_VERSION}" pattern="^(8|9|1[0-9]|20|21)$$" />
+				<matches string="${JDK_VERSION}" pattern="^(8|9|1[0-9]|20)$$" />
 			</not>
 			<then>
 				<antcall target="clean" inheritall="true" />

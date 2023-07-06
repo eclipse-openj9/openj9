@@ -1,4 +1,4 @@
-/*[INCLUDE-IF JAVA_SPEC_VERSION == 20]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 20]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2022
  *
@@ -28,7 +28,12 @@ import java.lang.invoke.MethodType;
 /*[IF JAVA_SPEC_VERSION >= 20]*/
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
+/*[IF JAVA_SPEC_VERSION >= 21]*/
+import java.lang.foreign.MemorySegment.Scope;
+import jdk.internal.foreign.abi.LinkerOptions;
+/*[ELSE] JAVA_SPEC_VERSION >= 21 */
 import java.lang.foreign.SegmentScope;
+/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 import jdk.internal.foreign.MemorySessionImpl;
 /*[ELSE] JAVA_SPEC_VERSION >= 20 */
 import jdk.incubator.foreign.Addressable;
@@ -63,11 +68,13 @@ final class UpcallMHMetaData {
 	 */
 	private Object[] nativeArgArray;
 
-	/*[IF JAVA_SPEC_VERSION >= 20]*/
+	/*[IF JAVA_SPEC_VERSION >= 21]*/
+	private Scope scope;
+	/*[ELSEIF JAVA_SPEC_VERSION == 20]*/
 	private SegmentScope scope;
-	/*[ELSE] JAVA_SPEC_VERSION >= 20 */
+	/*[ELSE] JAVA_SPEC_VERSION >= 21 */
 	private ResourceScope scope;
-	/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 
 	private static synchronized native void resolveUpcallDataInfo();
 
@@ -79,24 +86,29 @@ final class UpcallMHMetaData {
 		resolveUpcallDataInfo();
 	}
 
-	/*[IF JAVA_SPEC_VERSION >= 20]*/
+	/*[IF JAVA_SPEC_VERSION >= 21]*/
+	UpcallMHMetaData(MethodHandle targetHandle, int nativeArgCount, Scope scope, LinkerOptions options)
+	/*[ELSEIF JAVA_SPEC_VERSION == 20]*/
 	UpcallMHMetaData(MethodHandle targetHandle, int nativeArgCount, SegmentScope scope)
-	/*[ELSE] JAVA_SPEC_VERSION >= 20 */
+	/*[ELSE] JAVA_SPEC_VERSION >= 21 */
 	UpcallMHMetaData(MethodHandle targetHandle, int nativeArgCount, ResourceScope scope)
-	/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 	{
 		calleeMH = targetHandle;
 		calleeType = targetHandle.type();
 		nativeArgArray = new Object[nativeArgCount];
-		/* Only hold the confined scope (owned by the current thread) or the shared scope
-		 * will be used to construct a MemorySegment object for argument in the upcall
-		 * dispatcher.
+		/* Only hold the confined scope (owned by the current thread) or
+		 * the global scope (created once and shared by any thread) will
+		 * be used to construct a MemorySegment object for argument in
+		 * the upcall dispatcher.
 		 */
-		/*[IF JAVA_SPEC_VERSION >= 20]*/
-		this.scope = ((scope != null) && (((MemorySessionImpl)scope).ownerThread() != null)) ? scope : Arena.openShared().scope();
-		/*[ELSE] JAVA_SPEC_VERSION >= 20 */
-		this.scope = ((scope != null) && (scope.ownerThread() != null)) ? scope : ResourceScope.newSharedScope();
-		/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
+		/*[IF JAVA_SPEC_VERSION >= 21]*/
+		this.scope = ((scope != null) && (((MemorySessionImpl)scope).ownerThread() != null)) ? scope : Arena.global().scope();
+		/*[ELSEIF JAVA_SPEC_VERSION == 20]*/
+		this.scope = ((scope != null) && (((MemorySessionImpl)scope).ownerThread() != null)) ? scope : SegmentScope.global();
+		/*[ELSE] JAVA_SPEC_VERSION >= 21 */
+		this.scope = ((scope != null) && (scope.ownerThread() != null)) ? scope : ResourceScope.globalScope();
+		/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 	}
 
 	/* Determine whether the memory segment of the passed-in/returned pointer is allocated
@@ -153,12 +165,16 @@ final class UpcallMHMetaData {
 		 * given a heap segment with a zero address can't be accessed in native.
 		 */
 		if (!argRetSegment.isNative()) {
-			/*[IF JAVA_SPEC_VERSION >= 20]*/
-			SegmentScope scope = SegmentScope.global();
-			/*[ELSE] JAVA_SPEC_VERSION >= 20 */
-			ResourceScope scope = ResourceScope.globalScope();
-			/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
-			nativeSegment = MemorySegment.allocateNative(argRetSegment.byteSize(), scope);
+			/*[IF JAVA_SPEC_VERSION >= 21]*/
+			/* Use Arena.allocate() to allocate the native segment given
+			 * MemorySegment.allocateNative() is removed since JDK21+.
+			 */
+			nativeSegment = Arena.global().allocate(argRetSegment.byteSize());
+			/*[ELSEIF JAVA_SPEC_VERSION == 20]*/
+			nativeSegment = MemorySegment.allocateNative(argRetSegment.byteSize(), SegmentScope.global());
+			/*[ELSE] JAVA_SPEC_VERSION >= 21 */
+			nativeSegment = MemorySegment.allocateNative(argRetSegment.byteSize(), ResourceScope.globalScope());
+			/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 			nativeSegment.copyFrom(argRetSegment);
 		}
 
