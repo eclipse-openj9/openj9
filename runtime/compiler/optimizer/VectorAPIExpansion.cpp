@@ -1250,13 +1250,20 @@ TR_VectorAPIExpansion::generateAddressNode(TR::Node *array, TR::Node *arrayIndex
    while ((elementSize = (elementSize >> 1)))
         ++shiftAmount;
 
-
-   TR::Node *lshlNode = TR::Node::create(TR::lshl, 2);
-   lshlNode->setAndIncChild(0, arrayIndex);
-   lshlNode->setAndIncChild(1, TR::Node::create(TR::iconst, 0, shiftAmount));
-
    TR::Node *laddNode = TR::Node::create(TR::ladd, 2);
-   laddNode->setAndIncChild(0, lshlNode);
+
+   if (shiftAmount != 0)
+      {
+      TR::Node *lshlNode = TR::Node::create(TR::lshl, 2);
+      lshlNode->setAndIncChild(0, arrayIndex);
+      lshlNode->setAndIncChild(1, TR::Node::create(TR::iconst, 0, shiftAmount));
+
+      laddNode->setAndIncChild(0, lshlNode);
+      }
+   else
+      {
+      laddNode->setAndIncChild(0, arrayIndex);
+      }
 
    int32_t arrayHeaderSize = TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
    laddNode->setAndIncChild(1, TR::Node::create(TR::lconst, 0, arrayHeaderSize));
