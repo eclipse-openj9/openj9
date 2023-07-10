@@ -115,24 +115,24 @@ typedef struct J9IndexableObject* mm_j9array_t;
 
 #define J9JAVAARRAYCONTIGUOUS_WITHOUT_DATAADDRESS_EA(vmThread, array, index, elemType) \
 	(J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) \
-		? (&((elemType*)((((J9IndexableObjectContiguousCompressed *)(array)) + 1)))[(index)]) \
-		: (&((elemType*)((((J9IndexableObjectContiguousFull *)(array)) + 1)))[(index)]))
+		? (&((elemType*)((((J9IndexableObjectContiguousCompressed *)(array)) + 1)))[index]) \
+		: (&((elemType*)((((J9IndexableObjectContiguousFull *)(array)) + 1)))[index]))
 
 #define J9JAVAARRAYCONTIGUOUS_WITHOUT_DATAADDRESS_EA_VM(javaVM, array, index, elemType) \
 	(J9JAVAVM_COMPRESS_OBJECT_REFERENCES(javaVM) \
-		? (&((elemType*)((((J9IndexableObjectContiguousCompressed *)(array)) + 1)))[(index)]) \
-		: (&((elemType*)((((J9IndexableObjectContiguousFull *)(array)) + 1)))[(index)]))
+		? (&((elemType*)((((J9IndexableObjectContiguousCompressed *)(array)) + 1)))[index]) \
+		: (&((elemType*)((((J9IndexableObjectContiguousFull *)(array)) + 1)))[index]))
 
 #if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
 #define J9JAVAARRAYCONTIGUOUS_WITH_DATAADDRESS_EA(vmThread, array, index, elemType) \
 	(J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) \
-		? (&((elemType*)((((J9IndexableObjectWithDataAddressContiguousCompressed *)(array))->dataAddr)))[(index)]) \
-		: (&((elemType*)((((J9IndexableObjectWithDataAddressContiguousFull *)(array))->dataAddr)))[(index)]))
+		? (&((elemType*)((((J9IndexableObjectWithDataAddressContiguousCompressed *)(array))->dataAddr)))[index]) \
+		: (&((elemType*)((((J9IndexableObjectWithDataAddressContiguousFull *)(array))->dataAddr)))[index]))
 
 #define J9JAVAARRAYCONTIGUOUS_WITH_DATAADDRESS_EA_VM(javaVM, array, index, elemType) \
 	(J9JAVAVM_COMPRESS_OBJECT_REFERENCES(javaVM) \
-		? (&((elemType*)((((J9IndexableObjectWithDataAddressContiguousCompressed *)(array))->dataAddr)))[(index)]) \
-		: (&((elemType*)((((J9IndexableObjectWithDataAddressContiguousFull *)(array))->dataAddr)))[(index)]))
+		? (&((elemType*)((((J9IndexableObjectWithDataAddressContiguousCompressed *)(array))->dataAddr)))[index]) \
+		: (&((elemType*)((((J9IndexableObjectWithDataAddressContiguousFull *)(array))->dataAddr)))[index]))
 
 #define J9JAVAARRAYCONTIGUOUS_EA(vmThread, array, index, elemType) \
 	(((vmThread)->isIndexableDataAddrPresent) \
