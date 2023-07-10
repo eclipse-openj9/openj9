@@ -584,8 +584,12 @@ done:
 	}
 
 	VMINLINE VM_BytecodeAction
-	j2iTransition(REGISTER_ARGS_LIST, bool immediatelyRunCompiledMethod = false)
-	{
+	j2iTransition(
+		REGISTER_ARGS_LIST
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+		, bool immediatelyRunCompiledMethod = false
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
+	) {
 		VM_JITInterface::disableRuntimeInstrumentation(_currentThread);
 		VM_BytecodeAction rc = GOTO_RUN_METHOD;
 		void* const jitReturnAddress = VM_JITInterface::fetchJITReturnAddress(_currentThread, _sp);
@@ -620,13 +624,15 @@ done:
 			UDATA result = 0;
 			do {
 				preCount = (UDATA)_sendMethod->extra;
-				if (startAddressIsCompiled(preCount)) {
+				if (J9_ARE_NO_BITS_SET(preCount, J9_STARTPC_NOT_TRANSLATED)) {
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
 					if (immediatelyRunCompiledMethod) {
 						if (methodCanBeRunCompiled(_sendMethod)) {
 							rc = promotedMethodOnTransitionFromJIT(REGISTER_ARGS, (void*)_pc, (void*)preCount);
 							goto done;
 						}
 					}
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 					break;
 				}
 				if ((IDATA)preCount < 0) {
