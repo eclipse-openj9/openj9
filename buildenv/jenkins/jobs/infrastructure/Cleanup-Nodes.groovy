@@ -169,7 +169,7 @@ timeout(time: TIMEOUT_TIME.toInteger(), unit: TIMEOUT_UNITS) {
                                     sh "rm -fr ${cleanDirsStr}"
 
                                     // Cleanup OSX shared memory and content in /cores
-                                    if (nodeLabels.contains('sw.os.osx')) {
+                                    if (nodeLabels.contains('sw.os.mac')) {
                                         retry(2) {
                                             sh """
                                                 ipcs -ma
