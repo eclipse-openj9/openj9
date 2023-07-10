@@ -204,6 +204,11 @@ public:
 	};
 	ContinuationListOption continuationListOption;
 
+	enum TimingAddContinuationInList {
+		onCreated = 0,
+		onStarted = 1,
+	};
+	TimingAddContinuationInList timingAddContinuationInList;
 protected:
 private:
 protected:
@@ -381,6 +386,7 @@ public:
 		, freeSizeThresholdForSurvivor(DEFAULT_SURVIVOR_THRESHOLD)
 		, recycleRemainders(true)
 		, continuationListOption(enable_continuation_list)
+		, timingAddContinuationInList(onStarted)
 	{
 		_typeId = __FUNCTION__;
 	}

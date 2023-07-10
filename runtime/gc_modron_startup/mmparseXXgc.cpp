@@ -1547,6 +1547,15 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 			continue;
 		}
 
+		if (try_scan(&scan_start, "AddContinuationInListOnStarted")) {
+			extensions->timingAddContinuationInList = MM_GCExtensions::onStarted;
+			continue;
+		}
+
+		if (try_scan(&scan_start, "AddContinuationInListOnCreated")) {
+			extensions->timingAddContinuationInList = MM_GCExtensions::onCreated;
+			continue;
+		}
 		/* Couldn't find a match for arguments */
 		j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTION_UNKNOWN, error_scan);
 		returnValue = JNI_EINVAL;

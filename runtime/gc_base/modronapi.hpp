@@ -33,6 +33,8 @@
 #include "j9cfg.h"
 #include "modronapicore.hpp"
 
+class MM_EnvironmentBase;
+
 extern "C" {
 /* define constant memory pool name and garbage collector name here -- the name should not be over 31 characters */
 #define J9_GC_MANAGEMENT_POOL_NAME_HEAP_OLD				"Java heap"
@@ -102,6 +104,9 @@ J9HookInterface** j9gc_get_private_hook_interface(J9JavaVM *javaVM);
 UDATA ownableSynchronizerObjectCreated(J9VMThread *vmThread, j9object_t object);
 
 UDATA continuationObjectCreated(J9VMThread *vmThread, j9object_t object);
+UDATA continuationObjectStarted(J9VMThread *vmThread, j9object_t object);
+UDATA continuationObjectFinished(J9VMThread *vmThread, j9object_t object);
+void addContinuationObjectInList(MM_EnvironmentBase *env, j9object_t object);
 void preMountContinuation(J9VMThread *vmThread, j9object_t object);
 void postUnmountContinuation(J9VMThread *vmThread, j9object_t object);
 

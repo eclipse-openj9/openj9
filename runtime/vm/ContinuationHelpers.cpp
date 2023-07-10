@@ -216,6 +216,8 @@ enterContinuation(J9VMThread *currentThread, j9object_t continuationObject)
 			/* Directly return result if the create code failed, exception is already set. */
 			return result;
 		}
+		currentThread->javaVM->memoryManagerFunctions->continuationObjectStarted(currentThread, continuationObject);
+
 		continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(currentThread, continuationObject);
 	}
 	Assert_VM_notNull(continuation);
