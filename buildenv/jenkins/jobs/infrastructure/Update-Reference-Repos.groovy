@@ -123,7 +123,7 @@ timeout(time: 6, unit: 'HOURS') {
                         def nodeName = aNode.getDisplayName()
                         buildNodesNames.add(nodeName)
 
-                        def osLabels = ['sw.os.aix', 'sw.os.linux', 'sw.os.osx', 'sw.os.windows']
+                        def osLabels = ['sw.os.aix', 'sw.os.linux', 'sw.os.mac', 'sw.os.windows']
                         def foundLabel = false
                         def nodeLabels = aNode.getLabelString().tokenize(' ')
                         for (osLabel in osLabels) {
