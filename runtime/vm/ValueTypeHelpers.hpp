@@ -616,7 +616,9 @@ done:
 				*/
 				if ((NULL == copyObject) && J9_IS_J9CLASS_FLATTENED(srcClazz)) {
 					VM_VMHelpers::pushObjectInSpecialFrame(currentThread, srcObject);
+					VM_VMHelpers::pushObjectInSpecialFrame(currentThread, destObject);
 					copyObject = loadFlattenableArrayElement(currentThread, objectAccessBarrier, objectAllocate, srcObject, srcIndex, false);
+					destObject = VM_VMHelpers::popObjectInSpecialFrame(currentThread);
 					srcObject = VM_VMHelpers::popObjectInSpecialFrame(currentThread);
 				}
 
@@ -639,7 +641,9 @@ done:
 				*/
 				if ((NULL == copyObject) && J9_IS_J9CLASS_FLATTENED(srcClazz)) {
 					VM_VMHelpers::pushObjectInSpecialFrame(currentThread, srcObject);
+					VM_VMHelpers::pushObjectInSpecialFrame(currentThread, destObject);
 					copyObject = loadFlattenableArrayElement(currentThread, objectAccessBarrier, objectAllocate, srcObject, srcIndex, false);
+					destObject = VM_VMHelpers::popObjectInSpecialFrame(currentThread);
 					srcObject = VM_VMHelpers::popObjectInSpecialFrame(currentThread);
 				}
 
