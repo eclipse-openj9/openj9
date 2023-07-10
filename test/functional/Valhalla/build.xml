@@ -56,7 +56,7 @@
 			<src path="${src}"/>
 			<src path="${transformerListener}" />
 			<compilerarg line='--add-exports java.base/jdk.internal.misc=ALL-UNNAMED --add-exports java.base/jdk.internal.value=ALL-UNNAMED' />
-			<compilerarg line='-source 20 -XDenablePrimitiveClasses' />
+			<compilerarg line='-source 22 -XDenablePrimitiveClasses' />
 			<classpath>
 				<pathelement location="${LIB_DIR}/testng.jar"/>
 				<pathelement location="${LIB_DIR}/jcommander.jar"/>
