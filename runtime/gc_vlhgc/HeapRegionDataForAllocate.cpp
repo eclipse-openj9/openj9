@@ -27,7 +27,7 @@
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 #include <sys/mman.h>
 #include <errno.h>
-#endif
+#endif /* defined(J9VM_GC_ENABLE_DOUBLE_MAP) */
 #include "AllocationContext.hpp"
 #include "CycleState.hpp"
 #include "EnvironmentVLHGC.hpp"
@@ -194,7 +194,7 @@ MM_HeapRegionDataForAllocate::removeFromArrayletLeafList(MM_EnvironmentVLHGC *en
 	Assert_MM_true(NULL != previous);
 
 	/**
-	 * Restore/Recommit arraylet leaves that have been previously decommited
+	 * Restore/Recommit arraylet leaves that have been previously decommitted.
 	 */
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
 	const UDATA arrayletLeafSize = env->getOmrVM()->_arrayletLeafSize;

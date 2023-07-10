@@ -322,7 +322,7 @@ public abstract class GCArrayletObjectModelBase extends GCArrayObjectModel
 	 * @throws NoSuchFieldException if the indexable object dataAddr field does not exist on the build that generated the core file
 	 * @return true if the data address of arrayPtr is valid, false otherwise
 	 */
-	public abstract boolean hasCorrectDataAddrPointer(J9IndexableObjectPointer arrayPtr) throws CorruptDataException, NoSuchFieldException;
+	public abstract boolean hasCorrectDataAddrPointer(J9IndexableObjectPointer arrayPtr) throws CorruptDataException;
 
 	@Override
 	public UDATA getHashcodeOffset(J9IndexableObjectPointer array) throws CorruptDataException
@@ -375,7 +375,10 @@ public abstract class GCArrayletObjectModelBase extends GCArrayObjectModel
 		MM_GCExtensionsPointer extensions = GCBase.getExtensions();
 		UDATA minimumSpineSizeAfterGrowing = new UDATA(ObjectModel.getObjectAlignmentInBytes());
 
-		return (largestDesirableArraySpineSize.eq(UDATA.MAX) || dataSizeInBytes.lte(largestDesirableArraySpineSize.sub(minimumSpineSizeAfterGrowing).sub(J9IndexableObjectHelper.contiguousHeaderSize())));
+		return largestDesirableArraySpineSize.eq(UDATA.MAX) ||
+        dataSizeInBytes.lte(largestDesirableArraySpineSize
+							.sub(minimumSpineSizeAfterGrowing)
+							.sub(J9IndexableObjectHelper.contiguousHeaderSize()));
 	}
 
 	/**
@@ -388,8 +391,7 @@ public abstract class GCArrayletObjectModelBase extends GCArrayObjectModel
 	public boolean isIndexableObjectDoubleMapped(VoidPointer indexableDataAddr, UDATA dataSizeInBytes) throws CorruptDataException
 	{
 		boolean isObjectWithinHeap = isAddressWithinHeap(indexableDataAddr);
-		//return (!isObjectWithinHeap && !indexableDataAddr.equals(null));
-		return (!isObjectWithinHeap && dataSizeInBytes.gte(arrayletLeafSize));
+		return !isObjectWithinHeap && dataSizeInBytes.gte(arrayletLeafSize);
 	}
 
 	/**
@@ -407,7 +409,7 @@ public abstract class GCArrayletObjectModelBase extends GCArrayObjectModel
 		UDATA heapBase = UDATA.cast(extensions.cardTable()._heapBase());
 		UDATA heapTop = UDATA.cast(extensions.cardTable()._heapAlloc());
 
-		return (heapAddr.gte(heapBase) && heapAddr.lte(heapTop));
+		return heapAddr.gte(heapBase) && heapAddr.lte(heapTop);
 	}
 
 	/**
