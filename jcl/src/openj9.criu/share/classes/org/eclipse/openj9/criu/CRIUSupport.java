@@ -112,7 +112,7 @@ public final class CRIUSupport {
 		if (!nativeLoaded) {
 			try {
 				AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
-					System.loadLibrary("j9criu29"); //$NON-NLS-1$
+					System.loadLibrary("criu"); //$NON-NLS-1$
 					nativeLoaded = true;
 					return null;
 				});
