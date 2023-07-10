@@ -755,6 +755,9 @@ def set_test_misc() {
         // Only add extra test labels if the user has not specified a specific TEST_NODE
         TESTS.each { id, target ->
             target['extraTestLabels'] = buildspec.getVectorField("extra_test_labels", SDK_VERSION).join('&&') ?: ''
+            if (target['extraTestLabels'].endsWith('&&')){
+                target['extraTestLabels'] = target['extraTestLabels'].substring(0, target['extraTestLabels'].length() - 2)
+            }
         }
     } else {
         TESTS.each { id, target ->
