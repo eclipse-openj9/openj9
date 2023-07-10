@@ -318,10 +318,9 @@ public abstract class GCObjectModel extends GCBase
 	 *
 	 * @param arrayPtr array object who's data address validity we are checking
 	 * @throws CorruptDataException if there's a problem accessing the indexable object dataAddr field
-	 * @throws NoSuchFieldException if the indexable object dataAddr field does not exist on the build that generated the core file
 	 * @return true if the data address of arrayPtr is valid, false otherwise
 	 */
-	public boolean hasCorrectDataAddrPointer(J9IndexableObjectPointer arrayPtr) throws CorruptDataException, NoSuchFieldException
+	public boolean hasCorrectDataAddrPointer(J9IndexableObjectPointer arrayPtr) throws CorruptDataException
 	{
 		return indexableObjectModel.hasCorrectDataAddrPointer(arrayPtr);
 	}
