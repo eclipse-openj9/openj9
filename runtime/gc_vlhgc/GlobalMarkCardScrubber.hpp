@@ -190,7 +190,7 @@ class MM_ParallelScrubCardTableTask : public MM_ParallelTask
 private:
 	MM_CycleState * const _cycleState; /**< Current cycle state information */
 	bool _timeLimitWasHit;	/**< true if any requests to check the time came in after we had hit our time threshold */
-	const I_64 _timeThreshold;	/**< The millisecond which represents the end of this increment */
+	const U_64 _timeThreshold;	/**< The ticks which represents the end of this increment */
 	
 public:
 
@@ -216,7 +216,7 @@ public:
 	 */
 	MM_ParallelScrubCardTableTask(MM_EnvironmentBase *env,
 			MM_ParallelDispatcher *dispatcher, 
-			I_64 timeThreshold,
+			U_64 timeThreshold,
 			MM_CycleState *cycleState) :
 		MM_ParallelTask(env, dispatcher)
 		,_cycleState(cycleState)

@@ -425,7 +425,7 @@ MM_IncrementalGenerationalGC::globalMarkPhase(MM_EnvironmentVLHGC *env, bool inc
 
 	if (incrementalMark) {
 		reportGMPMarkStart(env);
-		I_64 endTime = j9time_current_time_millis() + _schedulingDelegate.currentGlobalMarkIncrementTimeMillis(env);
+		U_64 endTime = j9time_hires_clock() + _schedulingDelegate.currentGlobalMarkIncrementTimeMillis(env) * j9time_hires_frequency() / 1000;
 		if (env->_cycleState->_markDelegateState == MM_CycleState::state_mark_idle) {
 			_globalMarkDelegate.performMarkSetInitialState(env);
 		}

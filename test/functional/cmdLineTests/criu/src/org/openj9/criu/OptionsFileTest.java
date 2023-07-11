@@ -59,6 +59,12 @@ public class OptionsFileTest {
 		case "DumpOptionsTest":
 			dumpOptionsTest();
 			break;
+		case "criuDumpOptionsTest":
+			criuDumpOptionsTest();
+			break;
+		case "criuRestoreDumpOptionsTest":
+			criuRestoreDumpOptionsTest();
+			break;
 		case "dumpOptionsTestRequireDynamic":
 			dumpOptionsTestRequireDynamic();
 			break;
@@ -247,6 +253,30 @@ public class OptionsFileTest {
 		} catch (OutOfMemoryError ome) {
 			ome.printStackTrace();
 		}
+		System.out.println("Post-checkpoint");
+	}
+
+	static void criuDumpOptionsTest() {
+		Path imagePath = Paths.get("cpData");
+		CRIUTestUtils.createCheckpointDirectory(imagePath);
+		CRIUSupport criuSupport = new CRIUSupport(imagePath);
+
+		System.out.println("Pre-checkpoint");
+		CRIUTestUtils.checkPointJVM(criuSupport, imagePath, true);
+		System.out.println("Post-checkpoint");
+	}
+
+	static void criuRestoreDumpOptionsTest() {
+		String optionsContents = "-Xdump:java:events=criuRestore";
+		Path optionsFilePath = CRIUTestUtils.createOptionsFile("options", optionsContents);
+
+		Path imagePath = Paths.get("cpData");
+		CRIUTestUtils.createCheckpointDirectory(imagePath);
+		CRIUSupport criuSupport = new CRIUSupport(imagePath);
+		criuSupport.registerRestoreOptionsFile(optionsFilePath);
+
+		System.out.println("Pre-checkpoint");
+		CRIUTestUtils.checkPointJVM(criuSupport, imagePath, true);
 		System.out.println("Post-checkpoint");
 	}
 
