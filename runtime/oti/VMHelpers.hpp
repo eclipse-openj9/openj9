@@ -1965,7 +1965,6 @@ exit:
 		currentThread->arg0EA = sp - 1;
 		currentThread->pc = (U_8 *)J9SF_FRAME_TYPE_JIT_RESOLVE;
 		currentThread->literals = NULL;
-		currentThread->jitStackFrameFlags = 0;
 		return oldPC;
 	}
 

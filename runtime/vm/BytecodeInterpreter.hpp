@@ -467,7 +467,6 @@ retry:
 	restoreInternalNativeStackFrame(REGISTER_ARGS_LIST)
 	{
 		J9SFNativeMethodFrame *nativeMethodFrame = (J9SFNativeMethodFrame*)_sp;
-		_currentThread->jitStackFrameFlags = nativeMethodFrame->specialFrameFlags & J9_SSF_JIT_NATIVE_TRANSITION_FRAME;
 		restoreSpecialStackFrameLeavingArgs(REGISTER_ARGS, ((UDATA*)(nativeMethodFrame + 1)) - 1);
 	}
 
@@ -551,7 +550,6 @@ retry:
 			}
 			/* If we got here straight from JIT, jump directly to the method - do not follow the interpreter path */
 			if (0 != _currentThread->jitStackFrameFlags) {
-				_currentThread->jitStackFrameFlags = 0;
 				rc = promotedMethodOnTransitionFromJIT(REGISTER_ARGS, (void*)_literals, jitStartAddress);
 				goto done;
 			}
@@ -677,7 +675,6 @@ done:
 				/* If count updates, run method interpreted, else loop around and try again */
 			} while (result != preCount);
 			/* Run the method interpreted */
-			_currentThread->jitStackFrameFlags = 0;
 			{
 				UDATA stackUse = VM_VMHelpers::calculateStackUse(romMethod, sizeof(J9SFJ2IFrame));
 				UDATA *checkSP = _sp - stackUse;
@@ -781,7 +778,6 @@ done:
 		/* Fixed frame - reset sp to it's value when the call occurred */
 		_sp = _arg0EA;
 #endif /* J9SW_NEEDS_JIT_2_INTERP_CALLEE_ARG_POP */
-		_currentThread->jitStackFrameFlags = 0;
 		_currentThread->floatTemp1 = (void*)_literals;
 		_currentThread->tempSlot = (UDATA)jitReturn;
 		_nextAction = J9_BCLOOP_LOAD_PRESERVED_AND_BRANCH;
@@ -811,7 +807,6 @@ done:
 		_literals= i2jState->literals;
 		_pc = i2jState->pc + 3;
 		memmove(_sp, &_currentThread->floatTemp1, sizeof(UDATA) * slotCount);
-		_currentThread->jitStackFrameFlags = 0;
 #if defined(TRACE_TRANSITIONS)
 		char currentMethodName[1024];
 		PORT_ACCESS_FROM_JAVAVM(_vm);
@@ -955,7 +950,6 @@ obj:
 		J9SFJ2IFrame* const j2iFrame = ((J9SFJ2IFrame*)(_currentThread->j2iFrame + 1)) - 1;
 		restoreJ2IValues(j2iFrame);
 		_sp = UNTAG2(j2iFrame->taggedReturnSP, UDATA*);
-		_currentThread->jitStackFrameFlags = 0;
 		_currentThread->floatTemp1 = (void*)j2iFrame->returnAddress;
 		_currentThread->tempSlot = (UDATA)j2iFrame->exitPoint;
 		_nextAction = J9_BCLOOP_LOAD_PRESERVED_AND_BRANCH;
@@ -1021,7 +1015,6 @@ obj:
 		_arg0EA = _currentThread->j2iFrame;
 		_pc = (U_8*)bcReturnFromJ2I;
 		_literals = NULL;
-		_currentThread->jitStackFrameFlags = 0;
 		/* Protect the pending args to the MH */
 		UDATA *spPriorToMethodTypeFrame = _sp;
 		updateVMStruct(REGISTER_ARGS);
@@ -2336,8 +2329,7 @@ done:
 			}
 		}
 		{
-			J9SFJNINativeMethodFrame *nativeMethodFrame = recordJNIReturn(REGISTER_ARGS, bp);
-			_currentThread->jitStackFrameFlags = nativeMethodFrame->specialFrameFlags & J9_SSF_JIT_NATIVE_TRANSITION_FRAME;
+			recordJNIReturn(REGISTER_ARGS, bp);
 			J9SFStackFrame *frame = (((J9SFStackFrame*)(bp + 1)) - 1);
 			_sp = _arg0EA;
 			_literals = frame->savedCP;
@@ -4896,8 +4888,7 @@ done:
 #endif /* JAVA_SPEC_VERSION >= 19 */
 		VMStructHasBeenUpdated(REGISTER_ARGS);
 		bp = _arg0EA - 5;
-		J9SFJNINativeMethodFrame *nativeMethodFrame = recordJNIReturn(REGISTER_ARGS, bp);
-		_currentThread->jitStackFrameFlags = nativeMethodFrame->specialFrameFlags & J9_SSF_JIT_NATIVE_TRANSITION_FRAME;
+		recordJNIReturn(REGISTER_ARGS, bp);
 		restoreSpecialStackFrameLeavingArgs(REGISTER_ARGS, bp);
 		returnSingleFromINL(REGISTER_ARGS, status, 5);
 		return EXECUTE_BYTECODE;
@@ -5073,12 +5064,9 @@ nativeOOM:
 			}
 		}
 		bp = _arg0EA - 3;
-		{
-			J9SFJNINativeMethodFrame *nativeMethodFrame = recordJNIReturn(REGISTER_ARGS, bp);
-			_currentThread->jitStackFrameFlags = nativeMethodFrame->specialFrameFlags & J9_SSF_JIT_NATIVE_TRANSITION_FRAME;
-			restoreSpecialStackFrameLeavingArgs(REGISTER_ARGS, bp);
-			returnObjectFromINL(REGISTER_ARGS, errorBytes, 3);
-		}
+		recordJNIReturn(REGISTER_ARGS, bp);
+		restoreSpecialStackFrameLeavingArgs(REGISTER_ARGS, bp);
+		returnObjectFromINL(REGISTER_ARGS, errorBytes, 3);
 done:
 		j9mem_free_memory(errBuf);
 		j9mem_free_memory(cLibPath);
@@ -5281,12 +5269,9 @@ done:
 		if (VM_VMHelpers::exceptionPending(_currentThread)) {
 			rc = GOTO_THROW_CURRENT_EXCEPTION;
 		}
-		{
-			bp = _arg0EA - argSlots;
-			J9SFJNINativeMethodFrame *nativeMethodFrame = recordJNIReturn(REGISTER_ARGS, bp);
-			_currentThread->jitStackFrameFlags = nativeMethodFrame->specialFrameFlags & J9_SSF_JIT_NATIVE_TRANSITION_FRAME;
-			restoreSpecialStackFrameLeavingArgs(REGISTER_ARGS, bp);
-		}
+		bp = _arg0EA - argSlots;
+		recordJNIReturn(REGISTER_ARGS, bp);
+		restoreSpecialStackFrameLeavingArgs(REGISTER_ARGS, bp);
 
 #if JAVA_SPEC_VERSION >= 20
 		/* Set the execution state after the downcall as required in the linker options. */
@@ -9756,6 +9741,7 @@ public:
 #endif
 
 		DEBUG_MUST_HAVE_VM_ACCESS(vmThread);
+		vmThread->jitStackFrameFlags = 0;
 
 #if defined(COUNT_BYTECODE_PAIRS)
 		U_8 previousBytecode = JBinvokedynamic;

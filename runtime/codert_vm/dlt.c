@@ -198,8 +198,6 @@ retry:
 		elsState->returnSP = returnSP;
 	}
 
-	currentThread->jitStackFrameFlags = 0;
-
 	/* Drop any monitor enter records for the frame which is being DLTed */
 
 	enterRecord = currentThread->monitorEnterRecords;
