@@ -104,7 +104,7 @@ void
 MM_GlobalMarkDelegate::performMarkInit(MM_EnvironmentVLHGC *env)
 {
 	Assert_MM_true (MM_CycleState::state_mark_map_init == env->_cycleState->_markDelegateState);
-	bool didTimeout = markInit(env, I_64_MAX);
+	bool didTimeout = markInit(env, U_64_MAX);
 	Assert_MM_false(didTimeout);
 	env->_cycleState->_markDelegateState = MM_CycleState::state_initial_mark_roots;
 }
@@ -122,7 +122,7 @@ MM_GlobalMarkDelegate::performMarkForGlobalGC(MM_EnvironmentVLHGC *env)
 	
 	case MM_CycleState::state_mark_map_init:
 	{
-		bool didTimeout = markInit(env, I_64_MAX);
+		bool didTimeout = markInit(env, U_64_MAX);
 		Assert_MM_false(didTimeout);
 	}
 		/* continue in next case - no break here */
@@ -133,7 +133,7 @@ MM_GlobalMarkDelegate::performMarkForGlobalGC(MM_EnvironmentVLHGC *env)
 	{
 		/* re-mark the roots, clean any dirty cards, process all work packets, and then perform final mark operations */
 		markRoots(env);
-		bool didTimeout = markScan(env, I_64_MAX);
+		bool didTimeout = markScan(env, U_64_MAX);
 		Assert_MM_false(didTimeout);
 		markComplete(env);
 	}
@@ -221,7 +221,7 @@ MM_GlobalMarkDelegate::performMarkForGlobalGC(MM_EnvironmentVLHGC *env)
  *
  */
 bool 
-MM_GlobalMarkDelegate::performMarkIncremental(MM_EnvironmentVLHGC *env, I_64 markIncrementEndTime)
+MM_GlobalMarkDelegate::performMarkIncremental(MM_EnvironmentVLHGC *env, U_64 markIncrementEndTime)
 {
 	PORT_ACCESS_FROM_ENVIRONMENT(env);
 	Trc_MM_GlobalMarkDelegate_performMarkIncremental_Entry(env->getLanguageVMThread(), markIncrementEndTime);
@@ -253,7 +253,7 @@ MM_GlobalMarkDelegate::performMarkIncremental(MM_EnvironmentVLHGC *env, I_64 mar
 			/* initialize all the roots */
 			markRoots(env);
 
-			timeout = j9time_current_time_millis() >= markIncrementEndTime;
+			timeout = j9time_hires_clock() >= markIncrementEndTime;
 			if (timeout) {
 				/* Process work packets at the next incremental mark step */
 				cycleState->_markDelegateState = MM_CycleState::state_process_work_packets_after_initial_mark;
@@ -299,7 +299,7 @@ MM_GlobalMarkDelegate::performMarkIncremental(MM_EnvironmentVLHGC *env, I_64 mar
 			/* final mark increment - mark roots and complete*/
 			/* re-mark the roots and then perform final mark operations */
 			markRoots(env);
-			bool finalScanDidTimeout = markScan(env, I_64_MAX);
+			bool finalScanDidTimeout = markScan(env, U_64_MAX);
 			Assert_MM_false(finalScanDidTimeout);
 			markComplete(env);
 
@@ -349,7 +349,7 @@ MM_GlobalMarkDelegate::markAll(MM_EnvironmentVLHGC *env)
 {
 	_markingScheme->mainSetupForGC(env);
 	/* run the mark */
-	MM_ParallelGlobalMarkTask markTask(env, _dispatcher, _markingScheme, MARK_ALL, I_64_MAX, env->_cycleState);
+	MM_ParallelGlobalMarkTask markTask(env, _dispatcher, _markingScheme, MARK_ALL, U_64_MAX, env->_cycleState);
 	_dispatcher->run(env, &markTask);
 
 	/* Do any post mark checks */
@@ -357,7 +357,7 @@ MM_GlobalMarkDelegate::markAll(MM_EnvironmentVLHGC *env)
 }
 
 bool
-MM_GlobalMarkDelegate::markInit(MM_EnvironmentVLHGC *env, I_64 timeThreshold)
+MM_GlobalMarkDelegate::markInit(MM_EnvironmentVLHGC *env, U_64 timeThreshold)
 {
 	_markingScheme->mainSetupForGC(env);
 	/* run the mark */
@@ -370,12 +370,12 @@ MM_GlobalMarkDelegate::markInit(MM_EnvironmentVLHGC *env, I_64 timeThreshold)
 void
 MM_GlobalMarkDelegate::markRoots(MM_EnvironmentVLHGC *env)
 {
-	MM_ParallelGlobalMarkTask markTask(env, _dispatcher, _markingScheme, MARK_ROOTS, I_64_MAX, env->_cycleState);
+	MM_ParallelGlobalMarkTask markTask(env, _dispatcher, _markingScheme, MARK_ROOTS, U_64_MAX, env->_cycleState);
 	_dispatcher->run(env, &markTask);
 }
 
 bool
-MM_GlobalMarkDelegate::markScan(MM_EnvironmentVLHGC *env, I_64 timeThreshold)
+MM_GlobalMarkDelegate::markScan(MM_EnvironmentVLHGC *env, U_64 timeThreshold)
 {
 	MM_ParallelGlobalMarkTask markTask(env, _dispatcher, _markingScheme, MARK_SCAN, timeThreshold, env->_cycleState);
 	_dispatcher->run(env, &markTask);
@@ -384,7 +384,7 @@ MM_GlobalMarkDelegate::markScan(MM_EnvironmentVLHGC *env, I_64 timeThreshold)
 }
 
 bool
-MM_GlobalMarkDelegate::markScrubCardTable(MM_EnvironmentVLHGC *env, I_64 timeThreshold)
+MM_GlobalMarkDelegate::markScrubCardTable(MM_EnvironmentVLHGC *env, U_64 timeThreshold)
 {
 	MM_ParallelScrubCardTableTask scrubTask(env, _dispatcher, timeThreshold, env->_cycleState);
 	_dispatcher->run(env, &scrubTask);
@@ -395,7 +395,7 @@ MM_GlobalMarkDelegate::markScrubCardTable(MM_EnvironmentVLHGC *env, I_64 timeThr
 void
 MM_GlobalMarkDelegate::markComplete(MM_EnvironmentVLHGC *env)
 {
-	MM_ParallelGlobalMarkTask markTask(env, _dispatcher, _markingScheme, MARK_COMPLETE, I_64_MAX, env->_cycleState);
+	MM_ParallelGlobalMarkTask markTask(env, _dispatcher, _markingScheme, MARK_COMPLETE, U_64_MAX, env->_cycleState);
 	_dispatcher->run(env, &markTask);
 
 	/* Do any post mark checks */

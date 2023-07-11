@@ -222,7 +222,7 @@ MM_ParallelGlobalMarkTask::shouldYieldFromTask(MM_EnvironmentBase *env)
 {
 	if (!_timeLimitWasHit) {
 		PORT_ACCESS_FROM_ENVIRONMENT(env);
-		I_64 currentTime = j9time_current_time_millis();
+		U_64 currentTime = j9time_hires_clock();
 						
 		if (currentTime >= _timeThreshold) {
 			_timeLimitWasHit = true;
