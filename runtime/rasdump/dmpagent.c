@@ -145,28 +145,32 @@ J9RASprotectedDumpData;
  */
 static const J9RASdumpEvent rasDumpEvents[] =
 {
-	{ "gpf",         "ON_GP_FAULT",             J9RAS_DUMP_ON_GP_FAULT },
-	{ "user2",       "ON_USER2_SIGNAL",         J9RAS_DUMP_ON_USER2_SIGNAL },
-	{ "user",        "ON_USER_SIGNAL",          J9RAS_DUMP_ON_USER_SIGNAL },
-	{ "abort",       "ON_ABORT_SIGNAL",         J9RAS_DUMP_ON_ABORT_SIGNAL },
-	{ "vmstart",     "ON_VM_STARTUP",           J9RAS_DUMP_ON_VM_STARTUP },
-	{ "vmstop",      "ON_VM_SHUTDOWN",          J9RAS_DUMP_ON_VM_SHUTDOWN },
-	{ "load",        "ON_CLASS_LOAD",           J9RAS_DUMP_ON_CLASS_LOAD },
-	{ "unload",      "ON_CLASS_UNLOAD",         J9RAS_DUMP_ON_CLASS_UNLOAD },
-	{ "throw",       "ON_EXCEPTION_THROW",      J9RAS_DUMP_ON_EXCEPTION_THROW },
-	{ "catch",       "ON_EXCEPTION_CATCH",      J9RAS_DUMP_ON_EXCEPTION_CATCH },
-	{ "thrstart",    "ON_THREAD_START",         J9RAS_DUMP_ON_THREAD_START },
-	{ "blocked",     "ON_THREAD_BLOCKED",       J9RAS_DUMP_ON_THREAD_BLOCKED },
-	{ "thrstop",     "ON_THREAD_END",           J9RAS_DUMP_ON_THREAD_END },
-	{ "fullgc",      "ON_GLOBAL_GC",            J9RAS_DUMP_ON_GLOBAL_GC },
-	{ "uncaught",    "ON_EXCEPTION_DESCRIBE",   J9RAS_DUMP_ON_EXCEPTION_DESCRIBE },
-	{ "slow",        "ON_SLOW_EXCLUSIVE_ENTER", J9RAS_DUMP_ON_SLOW_EXCLUSIVE_ENTER },
-	{ "systhrow",    "ON_EXCEPTION_SYSTHROW",   J9RAS_DUMP_ON_EXCEPTION_SYSTHROW },
-	{ "traceassert", "ON_TRACE_ASSERT",         J9RAS_DUMP_ON_TRACE_ASSERT },
+	{ "gpf",            "ON_GP_FAULT",             J9RAS_DUMP_ON_GP_FAULT },
+	{ "user2",          "ON_USER2_SIGNAL",         J9RAS_DUMP_ON_USER2_SIGNAL },
+	{ "user",           "ON_USER_SIGNAL",          J9RAS_DUMP_ON_USER_SIGNAL },
+	{ "abort",          "ON_ABORT_SIGNAL",         J9RAS_DUMP_ON_ABORT_SIGNAL },
+	{ "vmstart",        "ON_VM_STARTUP",           J9RAS_DUMP_ON_VM_STARTUP },
+	{ "vmstop",         "ON_VM_SHUTDOWN",          J9RAS_DUMP_ON_VM_SHUTDOWN },
+	{ "load",           "ON_CLASS_LOAD",           J9RAS_DUMP_ON_CLASS_LOAD },
+	{ "unload",         "ON_CLASS_UNLOAD",         J9RAS_DUMP_ON_CLASS_UNLOAD },
+	{ "throw",          "ON_EXCEPTION_THROW",      J9RAS_DUMP_ON_EXCEPTION_THROW },
+	{ "catch",          "ON_EXCEPTION_CATCH",      J9RAS_DUMP_ON_EXCEPTION_CATCH },
+	{ "thrstart",       "ON_THREAD_START",         J9RAS_DUMP_ON_THREAD_START },
+	{ "blocked",        "ON_THREAD_BLOCKED",       J9RAS_DUMP_ON_THREAD_BLOCKED },
+	{ "thrstop",        "ON_THREAD_END",           J9RAS_DUMP_ON_THREAD_END },
+	{ "fullgc",         "ON_GLOBAL_GC",            J9RAS_DUMP_ON_GLOBAL_GC },
+	{ "uncaught",       "ON_EXCEPTION_DESCRIBE",   J9RAS_DUMP_ON_EXCEPTION_DESCRIBE },
+	{ "slow",           "ON_SLOW_EXCLUSIVE_ENTER", J9RAS_DUMP_ON_SLOW_EXCLUSIVE_ENTER },
+	{ "systhrow",       "ON_EXCEPTION_SYSTHROW",   J9RAS_DUMP_ON_EXCEPTION_SYSTHROW },
+	{ "traceassert",    "ON_TRACE_ASSERT",         J9RAS_DUMP_ON_TRACE_ASSERT },
 	/* J9RAS_DUMP_ON_USER_REQUEST cannot be triggered via the command-line */
-	{ "allocation",  "ON_OBJECT_ALLOCATION",    J9RAS_DUMP_ON_OBJECT_ALLOCATION },
-	{ "corruptcache","ON_CORRUPT_CACHE",        J9RAS_DUMP_ON_CORRUPT_CACHE },
-	{ "excessivegc", "ON_EXCESSIVE_GC",         J9RAS_DUMP_ON_EXCESSIVE_GC },
+	{ "allocation",     "ON_OBJECT_ALLOCATION",    J9RAS_DUMP_ON_OBJECT_ALLOCATION },
+	{ "corruptcache",   "ON_CORRUPT_CACHE",        J9RAS_DUMP_ON_CORRUPT_CACHE },
+	{ "excessivegc",    "ON_EXCESSIVE_GC",         J9RAS_DUMP_ON_EXCESSIVE_GC },
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	{ "criuCheckpoint", "ON_VM_CRIU_CHECKPOINT",   J9RAS_DUMP_ON_VM_CRIU_CHECKPOINT },
+	{ "criuRestore",    "ON_VM_CRIU_RESTORE",      J9RAS_DUMP_ON_VM_CRIU_RESTORE },
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 };
 #define J9RAS_DUMP_KNOWN_EVENTS  ( sizeof(rasDumpEvents) / sizeof(J9RASdumpEvent) )
 

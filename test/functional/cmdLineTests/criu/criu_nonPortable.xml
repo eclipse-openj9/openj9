@@ -741,6 +741,54 @@
     <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
   </test>
+  <test id="criuCheckpoint dump options test with no dump options specified before checkpoint">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -Xdump:java:events=criuCheckpoint" $MAINCLASS_OPTIONSFILE_TEST$ criuDumpOptionsTest 1</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="success" caseSensitive="yes" regex="no">Processing dump event "criuCheckpoint"</output>
+    <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
+    <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+  </test>
+  <test id="criuCheckpoint dump options test with no dump options specified before checkpoint">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -Xdump:java:events=criuRestore" $MAINCLASS_OPTIONSFILE_TEST$ criuDumpOptionsTest 1</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="success" caseSensitive="yes" regex="no">Processing dump event "criuRestore"</output>
+    <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
+    <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+  </test>
+  <test id="criuRestore dump options test with no dump options specified before checkpoint">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ criuRestoreDumpOptionsTest 1</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="success" caseSensitive="yes" regex="no">Processing dump event "criuRestore"</output>
+    <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
+    <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+  </test>
   <test id="Restore dump options test with no dump options specified before checkpoint and -Xdump:dynamic required">
     <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ $XDUMP_DYNAMIC$" $MAINCLASS_OPTIONSFILE_TEST$ dumpOptionsTestRequireDynamic 1</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>

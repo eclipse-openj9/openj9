@@ -910,6 +910,8 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 			syslogFlagNone = FALSE;
 		}
 
+		TRIGGER_J9HOOK_VM_CRIU_CHECKPOINT(vm->hookInterface, currentThread);
+
 		malloc_trim(0);
 		Trc_CRIU_before_checkpoint(currentThread, j9time_nano_time(), j9time_current_time_nanos(&success));
 		VM_VMHelpers::setVMState(currentThread, J9VMSTATE_CRIU_SUPPORT_CHECKPOINT_PHASE_END);
@@ -983,6 +985,7 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 			currentExceptionClass = vm->checkpointState.criuJVMRestoreExceptionClass;
 			goto wakeJavaThreadsWithExclusiveVMAccess;
 		}
+		TRIGGER_J9HOOK_VM_CRIU_RESTORE(vm->hookInterface, currentThread);
 
 		if (J9_ARE_ALL_BITS_SET(vm->checkpointState.flags, J9VM_CRIU_IS_JDWP_ENABLED)) {
 			toggleSuspendOnJavaThreads(currentThread, FALSE, TRUE);

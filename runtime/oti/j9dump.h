@@ -94,7 +94,9 @@ typedef struct J9RASdumpAgent {
 #define J9RAS_DUMP_ON_CORRUPT_CACHE  0x400000
 #define J9RAS_DUMP_ON_EXCESSIVE_GC 0x800000
 #define J9RAS_DUMP_ON_USER2_SIGNAL  0x1000000
-#define J9RAS_DUMP_ON_ANY 0x1FFFFFF /* mask of all bit flags above */
+#define J9RAS_DUMP_ON_VM_CRIU_CHECKPOINT  0x2000000
+#define J9RAS_DUMP_ON_VM_CRIU_RESTORE  0x4000000
+#define J9RAS_DUMP_ON_ANY 0x7FFFFFF /* mask of all bit flags above */
 
 /* ...additional VM requests... */
 #define J9RAS_DUMP_DO_EXCLUSIVE_VM_ACCESS  0x01

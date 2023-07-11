@@ -106,6 +106,10 @@ static void rasDumpHookExceptionCatch (J9HookInterface** hookInterface, UDATA ev
 static void rasDumpHookMonitorContendedEnter (J9HookInterface** hookInterface, UDATA eventNum, void* eventData, void* userData);
 static void rasDumpHookCorruptCache(J9HookInterface** hookInterface, UDATA eventNum, void* eventData, void* userData);
 static void rasDumpHookExcessiveGC(J9HookInterface** hookInterface, UDATA eventNum, void* eventData, void* userData);
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+static void rasDumpHookCRIUCheckpoint(J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData);
+static void rasDumpHookCRIURestore(J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData);
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 extern omr_error_t doHeapDump(J9RASdumpAgent *agent, char *label, J9RASdumpContext *context);
 extern omr_error_t doSilentDump(J9RASdumpAgent *agent, char *label, J9RASdumpContext *context);
@@ -1144,6 +1148,14 @@ rasDumpEnableHooks(J9JavaVM *vm, UDATA eventFlags)
 		if (eventFlags & J9RAS_DUMP_ON_EXCESSIVE_GC) {
 			rc = (*gcOmrHooks)->J9HookRegisterWithCallSite(gcOmrHooks, J9HOOK_MM_OMR_EXCESSIVEGC_RAISED, rasDumpHookExcessiveGC, OMR_GET_CALLSITE(), NULL);
 		}
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+		if (eventFlags & J9RAS_DUMP_ON_VM_CRIU_CHECKPOINT) {
+			rc = (*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_CRIU_CHECKPOINT, rasDumpHookCRIUCheckpoint, OMR_GET_CALLSITE(), NULL);
+		}
+		if (eventFlags & J9RAS_DUMP_ON_VM_CRIU_RESTORE) {
+			rc = (*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_CRIU_RESTORE, rasDumpHookCRIURestore, OMR_GET_CALLSITE(), NULL);
+		}
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 		if ( rc == -1 ) {
 			j9nls_printf(PORTLIB, J9NLS_WARNING | J9NLS_STDERR, J9NLS_DMP_HOOK_IS_DISABLED_STR);
 		}
@@ -1583,3 +1595,43 @@ rasDumpHookExcessiveGC(J9HookInterface** hookInterface, UDATA eventNum, void* ev
 		J9RAS_DUMP_ON_EXCESSIVE_GC,
 		NULL);
 }
+
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+/**
+ * rasDumpHookCRIUCheckpoint() hook registration function for CRIU checkpoint event.
+ * If the CRIU checkpoint event is triggered, this calls into the RAS dump support to generate the required dumps.
+ *
+ * @param hookInterface[in] pointer to the hook interface function table
+ * @param eventNum[in] hook event number (not used)
+ * @param eventData[in] pointer to CRIU checkpoint event data structure, specific to the CRIU checkpoint event
+ * @param userData[in] pointer to additional callee data (not used)
+ */
+static void
+rasDumpHookCRIUCheckpoint(J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData)
+{
+	J9VMThread *vmThread = ((J9VMInitEvent*)eventData)->vmThread;
+	J9JavaVM *vm = vmThread->javaVM;
+
+	vm->j9rasDumpFunctions->triggerDumpAgents(
+		vm, vmThread, J9RAS_DUMP_ON_VM_CRIU_CHECKPOINT, NULL);
+}
+
+/**
+ * rasDumpHookCRIURestore() hook registration function for CRIU restore event.
+ * If the CRIU restore event is triggered, this calls into the RAS dump support to generate the required dumps.
+ *
+ * @param hookInterface[in] pointer to the hook interface function table
+ * @param eventNum[in] hook event number (not used)
+ * @param eventData[in] pointer to CRIU restore event data structure, specific to the CRIU restore event
+ * @param userData[in] pointer to additional callee data (not used)
+ */
+static void
+rasDumpHookCRIURestore(J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData)
+{
+	J9VMThread *vmThread = ((J9VMInitEvent*)eventData)->vmThread;
+	J9JavaVM *vm = vmThread->javaVM;
+
+	vm->j9rasDumpFunctions->triggerDumpAgents(
+		vm, vmThread, J9RAS_DUMP_ON_VM_CRIU_RESTORE, NULL);
+}
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
