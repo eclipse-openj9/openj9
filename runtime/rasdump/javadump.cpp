@@ -1341,7 +1341,7 @@ JavaCoreDumpWriter::writeEnvironmentSection(void)
 		switch (systemInfo->key) {
 		case J9RAS_SYSTEMINFO_SCHED_COMPAT_YIELD:
 			{
-				char *sched_compat_yield = (char *)&systemInfo->data;
+				const char *sched_compat_yield = (const char *)&systemInfo->data;
 				_OutputStream.writeCharacters("2CISYSINFO     " J9RAS_SCHED_COMPAT_YIELD_FILE " = ");
 				_OutputStream.writeVPrintf("%c ", sched_compat_yield[0]);
 				_OutputStream.writeCharacters("\n");
@@ -1350,7 +1350,7 @@ JavaCoreDumpWriter::writeEnvironmentSection(void)
 
 		case J9RAS_SYSTEMINFO_HYPERVISOR:
 			{
-				char *hypervisorName = (char *)systemInfo->data;
+				const char *hypervisorName = (const char *)systemInfo->data;
 				_OutputStream.writeCharacters("2CISYSINFO     Hypervisor name = ");
 				_OutputStream.writeCharacters(hypervisorName);
 				_OutputStream.writeCharacters("\n");
@@ -1358,7 +1358,7 @@ JavaCoreDumpWriter::writeEnvironmentSection(void)
 			break;
 		case J9RAS_SYSTEMINFO_CORE_PATTERN:
 			{
-				char *corepattern = (char *)systemInfo->data;
+				const char *corepattern = (const char *)systemInfo->data;
 				_OutputStream.writeCharacters("2CISYSINFO     " J9RAS_CORE_PATTERN_FILE " = ");
 				_OutputStream.writeCharacters(corepattern);
 				_OutputStream.writeCharacters("\n");
@@ -1366,9 +1366,17 @@ JavaCoreDumpWriter::writeEnvironmentSection(void)
 			break;
 		case J9RAS_SYSTEMINFO_CORE_USES_PID:
 			{
-				char *coreusespid = (char *)systemInfo->data;
+				const char *coreusespid = (const char *)systemInfo->data;
 				_OutputStream.writeCharacters("2CISYSINFO     " J9RAS_CORE_USES_PID_FILE " = ");
 				_OutputStream.writeCharacters(coreusespid);
+				_OutputStream.writeCharacters("\n");
+			}
+			break;
+		case J9RAS_SYSTEMINFO_CORE_ORIGINAL_PATTERN:
+			{
+				const char *coreOriginalPattern = (const char *)systemInfo->data;
+				_OutputStream.writeCharacters("2CISYSINFO     " J9RAS_CORE_ORIGINAL_PATTERN " = ");
+				_OutputStream.writeCharacters(coreOriginalPattern);
 				_OutputStream.writeCharacters("\n");
 			}
 			break;
