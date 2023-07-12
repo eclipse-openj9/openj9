@@ -350,7 +350,16 @@ def archive_sdk() {
                     sh "tar --exclude=${CODE_COVERAGE_FILENAME} -zcvf ${CODE_COVERAGE_FILENAME} ${codeCoverageDir}"
                 }
             }
-
+            if (SPEC.contains('zos')) {
+                def libDir = "${buildDir}${JDK_FOLDER}/lib"
+                def srcDir = "${libDir}/src"
+                // Set the extended attributes for binaries and libraries.
+                sh "cd ${buildDir} && extattr +p -F BIN ${JDK_FOLDER}/bin/* && extattr +lap -F BIN `find ${JDK_FOLDER} -name '*.so'`"
+                // Make sure src.zip doesn't contain files with GPLv2 header.
+                sh "cd ${libDir} && mkdir src && cd src && unzip -n ../src.zip"
+                sh "find ${srcDir} -type f | xargs sed -i -e '/DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER/,/questions\\./s/^.*\$//'"
+                sh "cd ${srcDir} && zip -r src.zip * && mv -f src.zip .. && cd .. && rm -rf src/"
+            }
             // The archiver receives pathnames on stdin and writes to stdout.
             def archiveCmd = SPEC.contains('zos') ? 'pax -wvz -p x' : 'tar -cvz -T -'
             // Filter out unwanted files (most of which are available in the debug-image).
