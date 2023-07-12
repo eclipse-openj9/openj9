@@ -46,6 +46,9 @@
  * */
 #define UTF8_INDEX_FROM_CLASS_INDEX(cp, cpIndex)  ((U_16)((cpIndex == 0)? 0 : cp[cpIndex].slot1))
 
+#define IMPLICIT_CREATION_FLAGS_DEFAULT 1
+#define IMPLICIT_CREATION_FLAGS_NON_ATOMIC 2
+
 class BufferManager;
 class ConstantPoolMap;
 class ROMClassCreationContext;
@@ -1017,6 +1020,21 @@ class RecordComponentIterator
 	bool needsIdentityFlag() const { return _isIdentityFlagNeeded; }
 	bool hasIdentityFlagSet() const { return _hasIdentityFlagSet; }
 	bool isValueType() const { return _isValueType; }
+	bool hasImplicitCreation() const { return NULL != _implicitCreation; }
+	U_16 getImplicitCreationFlags() const { return hasImplicitCreation() ? _implicitCreation->implicitCreationFlags : 0; }
+	bool isImplicitCreationHasDefaultValue() const { return J9_ARE_ALL_BITS_SET(getImplicitCreationFlags(), IMPLICIT_CREATION_FLAGS_DEFAULT); }
+	bool isImplicitCreationNonAtomic() const { return J9_ARE_ALL_BITS_SET(getImplicitCreationFlags(), IMPLICIT_CREATION_FLAGS_NON_ATOMIC); }
+	bool hasPreloadClasses() const { return NULL != _preloadAttribute; }
+	U_16 getPreloadClassCount() const { return  hasPreloadClasses() ? _preloadAttribute->numberOfClasses : 0; }
+
+	U_16 getPreloadClassNameAtIndex(U_16 index) const {
+		U_16 result = 0;
+		if (hasPreloadClasses()) {
+			U_16 classCpIndex = _preloadAttribute->classes[index];
+			result = _classFile->constantPool[classCpIndex].slot1;
+		}
+		return result;
+	}
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
 	U_16 getPermittedSubclassesClassNameAtIndex(U_16 index) const {
@@ -1146,6 +1164,10 @@ private:
 	J9CfrAttributeInnerClasses *_innerClasses;
 	J9CfrAttributeBootstrapMethods *_bootstrapMethodsAttribute;
 	J9CfrAttributePermittedSubclasses *_permittedSubclassesAttribute;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	J9CfrAttributeImplicitCreation *_implicitCreation;
+	J9CfrAttributePreload *_preloadAttribute;
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 #if JAVA_SPEC_VERSION >= 11
 	J9CfrAttributeNestMembers *_nestMembers;
 #endif /* JAVA_SPEC_VERSION >= 11 */

@@ -230,6 +230,8 @@ ClassFileOracle::ClassFileOracle(BufferManager *bufferManager, J9CfrClassFile *c
 	_hasNonStaticSynchronizedMethod(false),
 	_hasNonStaticFields(false),
 	_hasNonEmptyConstructor(false),
+	_preloadAttribute(NULL),
+	_implicitCreation(NULL),
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 	_recordComponentCount(0),
 	_permittedSubclassesAttribute(NULL),
@@ -604,6 +606,20 @@ ClassFileOracle::walkAttributes()
 			}
 			break;
 		}
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		case CFR_ATTRIBUTE_Preload: {
+			_preloadAttribute = (J9CfrAttributePreload *)attrib;
+			for (U_16 numberOfClasses = 0; numberOfClasses < _preloadAttribute->numberOfClasses; numberOfClasses++) {
+				U_16 classCpIndex = _preloadAttribute->classes[numberOfClasses];
+				markClassAsReferenced(classCpIndex);
+			}
+			break;
+		}
+		case CFR_ATTRIBUTE_ImplicitCreation: {
+			_implicitCreation = (J9CfrAttributeImplicitCreation *)attrib;
+			break;
+		}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 #if JAVA_SPEC_VERSION >= 11
 		case CFR_ATTRIBUTE_NestMembers:
 			/* ignore CFR_ATTRIBUTE_NestMembers for hidden classes, as the nest members never know the name of hidden classes */
