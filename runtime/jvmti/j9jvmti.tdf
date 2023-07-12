@@ -658,3 +658,5 @@ TraceExit=Trc_JVMTI_jvmtiHookVirtualThreadUnmount_Exit Overhead=1 Level=5 Noenv 
 
 TraceEntry=Trc_JVMTI_jvmtiHookVirtualThreadMount_Entry Overhead=1 Level=5 Noenv Template="HookVirtualThreadMount"
 TraceExit=Trc_JVMTI_jvmtiHookVirtualThreadMount_Exit Overhead=1 Level=5 Noenv Template="HookVirtualThreadMount"
+
+TraceEvent=Trc_JVMTI_loadAgentLibraryOnAttach_agentLoadingDisabled Overhead=1 Level=5 Noenv Template="loadAgentLibraryOnAttach: Dynamic agent loading is disabled"
