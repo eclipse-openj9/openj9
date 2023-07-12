@@ -715,6 +715,25 @@ getNumberOfInjectedInterfaces(J9ROMClass *romClass) {
 
 	return *SRP_PTR_GET(ptr, U_32*);
 }
+
+U_32*
+getNumberOfPreloadClassesPtr(J9ROMClass *romClass)
+{
+	U_32 *ptr = getSRPPtr(J9ROMCLASS_OPTIONALINFO(romClass), romClass->optionalFlags, J9_ROMCLASS_OPTINFO_PRELOAD_ATTRIBUTE);
+
+	Assert_VMUtil_true(ptr != NULL);
+
+	return SRP_PTR_GET(ptr, U_32*);
+}
+
+J9UTF8*
+preloadClassNameAtIndex(U_32* preloadClassesCountPtr, U_32 index)
+{
+	/* SRPs to Preload name constant pool entries start after the preloadClassesCountPtr */
+	U_32* preloadClassesPtr = preloadClassesCountPtr + 1 + index;
+
+	return NNSRP_PTR_GET(preloadClassesPtr, J9UTF8*);
+}
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
 BOOLEAN

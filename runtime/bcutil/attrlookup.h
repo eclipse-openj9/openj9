@@ -59,7 +59,7 @@ struct AttribType
 	U_8 strippedAttribCode;
 };
 
-#define TOTAL_KEYWORDS 28
+#define TOTAL_KEYWORDS 30
 #define MIN_WORD_LENGTH 4
 #define MAX_WORD_LENGTH 36
 #define MIN_HASH_VALUE 4
@@ -88,8 +88,8 @@ attributeHash (register const char *str, register unsigned int len)
       51, 51, 51, 51, 51, 51, 51, 51, 51, 51,
       51, 51, 51, 51, 51, 51, 51, 51, 51, 51,
       51, 51, 51, 51, 51, 51, 51, 51, 51, 51,
-      51, 31, 51, 51, 51, 15, 51, 51, 51, 51,
-       0,  0, 51, 51, 51, 51, 15,  0, 51, 51,
+      51, 31, 51, 51, 51, 15, 51, 51, 51,  5,
+       0,  0, 51, 51,  0, 51, 15,  0, 51, 51,
       25,  0, 51, 51, 51, 51, 51, 51, 51, 51,
       51, 51, 51, 51, 51, 51, 51, 51, 51, 51,
       51, 51, 51, 51, 51, 51, 51, 51, 51, 51,
@@ -121,6 +121,8 @@ lookupKnownAttribute (register const char *str, register unsigned int len)
     {
 #line 47 "attrlookup.gperf"
       {"Code", CFR_ATTRIBUTE_Code, CFR_ATTRIBUTE_Code},
+#line 76 "attrlookup.gperf"
+      {"Preload", CFR_ATTRIBUTE_Preload, CFR_ATTRIBUTE_Preload},
 #line 49 "attrlookup.gperf"
       {"Synthetic", CFR_ATTRIBUTE_Synthetic, CFR_ATTRIBUTE_Synthetic},
 #line 53 "attrlookup.gperf"
@@ -139,6 +141,8 @@ lookupKnownAttribute (register const char *str, register unsigned int len)
       {"LocalVariableTable", CFR_ATTRIBUTE_LocalVariableTable, CFR_ATTRIBUTE_StrippedLocalVariableTable},
 #line 62 "attrlookup.gperf"
       {"SourceDebugExtension", CFR_ATTRIBUTE_SourceDebugExtension, CFR_ATTRIBUTE_StrippedSourceDebugExtension},
+#line 75 "attrlookup.gperf"
+      {"ImplicitCreation", CFR_ATTRIBUTE_ImplicitCreation, CFR_ATTRIBUTE_ImplicitCreation},
 #line 63 "attrlookup.gperf"
       {"LocalVariableTypeTable", CFR_ATTRIBUTE_LocalVariableTypeTable, CFR_ATTRIBUTE_StrippedLocalVariableTypeTable},
 #line 48 "attrlookup.gperf"
@@ -179,10 +183,10 @@ lookupKnownAttribute (register const char *str, register unsigned int len)
 
   static const signed char lookup[] =
     {
-      -1, -1, -1, -1,  0, -1, -1, -1, -1,  1,  2, -1,  3,  4,
-      -1,  5,  6,  7,  8, -1,  9, -1, 10, 11, 12, 13, -1, 14,
-      15, 16, 17, 18, -1, -1, 19, 20, 21, 22, -1, 23, -1, 24,
-      25, -1, -1, -1, -1, 26, -1, -1, 27
+      -1, -1, -1, -1,  0, -1, -1,  1, -1,  2,  3, -1,  4,  5,
+      -1,  6,  7,  8,  9, -1, 10, 11, 12, 13, 14, 15, -1, 16,
+      17, 18, 19, 20, -1, -1, 21, 22, 23, 24, -1, 25, -1, 26,
+      27, -1, -1, -1, -1, 28, -1, -1, 29
     };
 
   if (len <= MAX_WORD_LENGTH && len >= MIN_WORD_LENGTH)

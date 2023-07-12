@@ -1944,16 +1944,32 @@ loadFlattenableFieldValueClasses(J9VMThread *currentThread, J9ClassLoader *class
 	UDATA flattenableFieldCount = 0;
 	bool eligibleForFastSubstitutability = true;
 
+	/* Preload classes marked for preloading */
+	/* Currently classes are preloaded if they are mentioned in the preload attribute or if they are a Q type. In the future (when javac is updated with better support for the preload attribute) the Q type check will be removed. */
+	if (J9_ARE_ALL_BITS_SET(romClass->optionalFlags, J9_ROMCLASS_OPTINFO_PRELOAD_ATTRIBUTE)) {
+		U_32 *numberOfPreloadClassesPtr = getNumberOfPreloadClassesPtr(romClass);
+
+		for (U_32 i = 0; i < *numberOfPreloadClassesPtr; i++) {
+			J9UTF8 *preloadClassNameUtf8 = preloadClassNameAtIndex(numberOfPreloadClassesPtr, i);
+
+			U_8 *preloadClassName = J9UTF8_DATA(preloadClassNameUtf8);
+			U_16 preloadClassLength = J9UTF8_LENGTH(preloadClassNameUtf8);
+
+			internalFindClassUTF8(currentThread, preloadClassName, preloadClassLength, classLoader, classPreloadFlags);
+		}
+	}
+
 	/* iterate over fields and load classes of fields marked as QTypes */
 	while (NULL != field) {
 		const U_32 modifiers = field->modifiers;
 		J9UTF8 *signature = J9ROMFIELDSHAPE_SIGNATURE(field);
 		U_8 *signatureChars = J9UTF8_DATA(signature);
+		UDATA signatureLength = J9UTF8_LENGTH(signature);
 		if (J9_ARE_NO_BITS_SET(modifiers, J9AccStatic)) {
 			switch (signatureChars[0]) {
 			case 'Q':
 			{
-				J9Class *valueClass = internalFindClassUTF8(currentThread, signatureChars + 1, J9UTF8_LENGTH(signature) - 2, classLoader, classPreloadFlags);
+				J9Class *valueClass = internalFindClassUTF8(currentThread, signatureChars + 1, signatureLength - 2, classLoader, classPreloadFlags);
 				if (NULL == valueClass) {
 					result = FALSE;
 					goto done;
@@ -2014,6 +2030,7 @@ loadFlattenableFieldValueClasses(J9VMThread *currentThread, J9ClassLoader *class
 				flattenableFieldCount += 1;
 			}
 		}
+
 		field = romFieldsNextDo(&fieldWalkState);
 	}
 	if (eligibleForFastSubstitutability) {
@@ -2281,6 +2298,14 @@ nativeOOM:
 			if (J9ROMCLASS_HAS_IDENTITY(romClass)) {
 				classFlags |= J9ClassHasIdentity;
 			}
+		}
+
+		if (J9ROMCLASS_ALLOWS_NON_ATOMIC_CREATION(romClass)) {
+			classFlags |= J9ClassAllowsNonAtomicCreation;
+		}
+		if (J9ROMCLASS_HAS_DEFAULT(romClass)) {
+			/* J9ClassIsValueType is being reused here intentionally */
+			classFlags |= J9ClassIsValueType;
 		}
 
 		if (J9ROMCLASS_IS_VALUE(romClass)) {
@@ -3161,7 +3186,7 @@ fail:
 			 *              + J9ClassEnsureHashed (inherited)
 			 *             + J9ClassHasOffloadAllowSubtasksNatives
 			 *            + J9ClassIsPrimitiveValueType
-			 *           + Unused
+			 *           + J9ClassAllowsNonAtomicCreation
 			 *
 			 *         + Unused
 			 *        + Unused

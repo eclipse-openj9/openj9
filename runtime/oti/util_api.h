@@ -1351,6 +1351,27 @@ permittedSubclassesNameAtIndex(U_32* permittedSubclassesCountPtr, U_32 index);
  */
 U_32
 getNumberOfInjectedInterfaces(J9ROMClass *romClass);
+
+/**
+ * Retrieves number of preload classes in this class. Assumes that
+ * ROM class parameter references a class with preloaded classes.
+ *
+ * @param J9ROMClass class
+ * @return U_32 number of preload classes in optionalinfo
+ */
+U_32*
+getNumberOfPreloadClassesPtr(J9ROMClass *romClass);
+
+/**
+ * Find the preload class name constant pool entry at index in the optional data of the ROM class parameter.
+ * This method assumes there is at least one preloaded class in the ROM class.
+ *
+ * @param U_32* the pointer returned by getNumberOfPreloadClassesPtr
+ * @param U_32 class index
+ * @return the preload class name at index from ROM class
+ */
+J9UTF8*
+preloadClassNameAtIndex(U_32* permittedSubclassesCountPtr, U_32 index);
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
 /**
