@@ -21,6 +21,8 @@
  *******************************************************************************/
 package org.openj9.test.jep389.upcall;
 
+import org.testng.Assert;
+
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
@@ -274,6 +276,9 @@ public class UpcallMethodHandles {
 	public static final MethodHandle MH_return254BytesFromStruct;
 	public static final MethodHandle MH_return4KBytesFromStruct;
 
+	public static final MethodHandle MH_addNegBytesFromStruct;
+	public static final MethodHandle MH_addNegShortsFromStruct;
+
 	private static CLinker clinker = CLinker.getInstance();
 
 	static {
@@ -482,6 +487,9 @@ public class UpcallMethodHandles {
 			MH_addDoubleAndIntDoubleLongFromStruct = lookup.findStatic(UpcallMethodHandles.class, "addDoubleAndIntDoubleLongFromStruct", MT_Double_Double_MemSegmt); //$NON-NLS-1$
 			MH_return254BytesFromStruct = lookup.findStatic(UpcallMethodHandles.class, "return254BytesFromStruct", MT_MemSegmt); //$NON-NLS-1$
 			MH_return4KBytesFromStruct = lookup.findStatic(UpcallMethodHandles.class, "return4KBytesFromStruct", MT_MemSegmt); //$NON-NLS-1$
+
+			MH_addNegBytesFromStruct = lookup.findStatic(UpcallMethodHandles.class, "addNegBytesFromStruct", MT_Byte_Byte_MemSegmt.appendParameterTypes(byte.class, byte.class)); //$NON-NLS-1$
+			MH_addNegShortsFromStruct = lookup.findStatic(UpcallMethodHandles.class, "addNegShortsFromStruct", MT_Short_Short_MemSegmt.appendParameterTypes(short.class, short.class)); //$NON-NLS-1$
 
 		} catch (IllegalAccessException | NoSuchMethodException e) {
 			throw new InternalError(e);
@@ -2520,5 +2528,39 @@ public class UpcallMethodHandles {
 			MemoryAccess.setByteAtOffset(byteArrStruSegment, i, (byte)i);
 		}
 		return byteArrStruSegment;
+	}
+
+	public static byte addNegBytesFromStruct(byte arg1, MemorySegment arg2, byte arg3, byte arg4) {
+		GroupLayout structLayout = MemoryLayout.structLayout(C_CHAR.withName("elem1"), C_CHAR.withName("elem2"));
+		VarHandle byteHandle1 = structLayout.varHandle(byte.class, PathElement.groupElement("elem1"));
+		VarHandle byteHandle2 = structLayout.varHandle(byte.class, PathElement.groupElement("elem2"));
+		byte arg2_elem1 = (byte)byteHandle1.get(arg2);
+		byte arg2_elem2 = (byte)byteHandle2.get(arg2);
+
+		Assert.assertEquals((byte)-6, ((Byte)arg1).byteValue());
+		Assert.assertEquals((byte)-8, ((Byte)arg2_elem1).byteValue());
+		Assert.assertEquals((byte)-9, ((Byte)arg2_elem2).byteValue());
+		Assert.assertEquals((byte)-8, ((Byte)arg3).byteValue());
+		Assert.assertEquals((byte)-9, ((Byte)arg4).byteValue());
+
+		byte byteSum = (byte)(arg1 + arg2_elem1 + arg2_elem2 + arg3 + arg4);
+		return byteSum;
+	}
+
+	public static short addNegShortsFromStruct(short arg1,  MemorySegment arg2, short arg3, short arg4) {
+		GroupLayout structLayout = MemoryLayout.structLayout(C_SHORT.withName("elem1"), C_SHORT.withName("elem2"));
+		VarHandle shortHandle1 = structLayout.varHandle(short.class, PathElement.groupElement("elem1"));
+		VarHandle shortHandle2 = structLayout.varHandle(short.class, PathElement.groupElement("elem2"));
+		short arg2_elem1 = (short)shortHandle1.get(arg2);
+		short arg2_elem2 = (short)shortHandle2.get(arg2);
+
+		Assert.assertEquals((short)-777, ((Short)arg1).shortValue());
+		Assert.assertEquals((short)-888, ((Short)arg2_elem1).shortValue());
+		Assert.assertEquals((short)-999, ((Short)arg2_elem2).shortValue());
+		Assert.assertEquals((short)-888, ((Short)arg3).shortValue());
+		Assert.assertEquals((short)-999, ((Short)arg4).shortValue());
+
+		short shortSum = (short)(arg1 + arg2_elem1 + arg2_elem2 + arg3 + arg4);
+		return shortSum;
 	}
 }

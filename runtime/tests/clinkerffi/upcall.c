@@ -2866,3 +2866,33 @@ validateReturnNullAddrByUpcallMH(stru_Int_Int *arg1, stru_Int_Int arg2, stru_Int
 	(*upcallMH)(arg1, arg2);
 	return arg1;
 }
+
+/**
+ * Add negative bytes from a struct by invoking an upcall method.
+ *
+ * @param arg1 a negative byte
+ * @param arg2 a struct with two negative bytes
+ * @param upcallMH the function pointer to the upcall method
+ * @return the sum
+ */
+char
+addNegBytesFromStructByUpcallMH(char arg1, stru_Byte_Byte arg2, char (*upcallMH)(char, stru_Byte_Byte, char, char))
+{
+	char byteSum = (*upcallMH)(arg1, arg2, arg2.elem1, arg2.elem2);
+	return byteSum;
+}
+
+/**
+ * Add negative shorts from a struct by invoking an upcall method.
+ *
+ * @param arg1 a negative short
+ * @param arg2 a struct with two negative shorts
+ * @param upcallMH the function pointer to the upcall method
+ * @return the sum
+ */
+short
+addNegShortsFromStructByUpcallMH(short arg1, stru_Short_Short arg2, short (*upcallMH)(short, stru_Short_Short, short, short))
+{
+	short shortSum = (*upcallMH)(arg1, arg2, arg2.elem1, arg2.elem2);
+	return shortSum;
+}
