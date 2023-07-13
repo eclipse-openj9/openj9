@@ -45,3 +45,8 @@ TraceEvent=Trc_CRIU_after_checkpoint Overhead=1 Level=2 Template="After checkpoi
 TraceEvent=Trc_CRIU_restoreArg Overhead=1 Level=5 Test Template="Restore arg: %s"
 TraceEvent=Trc_CRIU_checkpointJVMImpl_checkIfSafeToCheckpointBlockedVer2 Overhead=1 Level=2 Template="Checkpoint blocked because thread=%p is in method=%p due to delay code %zu"
 TraceEvent=Trc_CRIU_checkpointJVMImpl_checkpointWithActiveCLinit Overhead=1 Level=2 Template="Taking a checkpoint with active clinit"
+
+TraceException=Trc_CRIU_setupJNIFieldIDsAndCRIUAPI_null_init Overhead=1 Level=1 Template="setupJNIFieldIDsAndCRIUAPI() criuSystemRestoreExceptionInit(%p) criuJVMRestoreExceptionInit(%p) criuSystemCheckpointExceptionInit(%p) criuJVMCheckpointExceptionInit(%p)"
+TraceException=Trc_CRIU_setupJNIFieldIDsAndCRIUAPI_null_exception_class Overhead=1 Level=1 Template="setupJNIFieldIDsAndCRIUAPI() criuJVMCheckpointExceptionClass(%p) criuSystemCheckpointExceptionClass(%p) criuJVMRestoreExceptionClass(%p) criuSystemRestoreExceptionClass(%p)"
+TraceException=Trc_CRIU_setupJNIFieldIDsAndCRIUAPI_load_criu_failure Overhead=1 Level=1 Template="setupJNIFieldIDsAndCRIUAPI() The JVM attempted to load libcriu.so but was unable to: %zi"
+TraceException=Trc_CRIU_setupJNIFieldIDsAndCRIUAPI_not_find_criu_methods Overhead=1 Level=1 Template="setupJNIFieldIDsAndCRIUAPI() The JVM could not find critical criu functions in libcriu.so: %zi"
