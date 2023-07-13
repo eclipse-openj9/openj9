@@ -91,6 +91,7 @@ public final class CRIUSupport {
 			boolean unprivileged,
 			String optionsFile,
 			String envFile);
+	private static native boolean setupJNIFieldIDsAndCRIUAPI();
 
 	private static native String[] getRestoreSystemProperites();
 
@@ -113,9 +114,11 @@ public final class CRIUSupport {
 			try {
 				AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
 					System.loadLibrary("j9criu29"); //$NON-NLS-1$
-					nativeLoaded = true;
 					return null;
 				});
+				if (setupJNIFieldIDsAndCRIUAPI()) {
+					nativeLoaded = true;
+				}
 			} catch (UnsatisfiedLinkError e) {
 				errorMsg = e.getMessage();
 				Properties internalProperties = com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties();

@@ -34,6 +34,8 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env, jclass u
 jobject JNICALL
 Java_org_eclipse_openj9_criu_CRIUSupport_getRestoreSystemProperites(JNIEnv *env, jclass unused);
 
+jboolean JNICALL
+Java_org_eclipse_openj9_criu_CRIUSupport_setupJNIFieldIDsAndCRIUAPI(JNIEnv *env, jclass unused);
 } /* extern "C" */
 
 #endif
