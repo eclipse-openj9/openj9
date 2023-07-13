@@ -22,17 +22,23 @@
  *******************************************************************************/
 package openj9.internal.foreign.abi;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodHandles.Lookup;
+import java.lang.invoke.MethodType;
+import static java.lang.invoke.MethodType.methodType;
+import java.lang.invoke.WrongMethodTypeException;
 import java.util.HashMap;
 import java.util.List;
-
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodType;
+import java.util.Set;
 
 /*[IF JAVA_SPEC_VERSION >= 20]*/
 /*[IF JAVA_SPEC_VERSION >= 21]*/
+import java.lang.foreign.AddressLayout;
 import java.lang.foreign.Arena;
 /*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 import java.lang.foreign.FunctionDescriptor;
+import java.lang.foreign.GroupLayout;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 /*[IF JAVA_SPEC_VERSION >= 21]*/
@@ -40,10 +46,18 @@ import jdk.internal.foreign.abi.LinkerOptions;
 /*[ELSE] JAVA_SPEC_VERSION >= 21 */
 import java.lang.foreign.SegmentScope;
 /*[ENDIF] JAVA_SPEC_VERSION >= 21 */
+import java.lang.foreign.ValueLayout;
+/*[IF JAVA_SPEC_VERSION == 20]*/
+import java.lang.foreign.ValueLayout.OfAddress;
+/*[ENDIF] JAVA_SPEC_VERSION == 20 */
 /*[ELSE] JAVA_SPEC_VERSION >= 20 */
 import jdk.incubator.foreign.FunctionDescriptor;
+import jdk.incubator.foreign.GroupLayout;
+import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
+import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
+import jdk.incubator.foreign.ValueLayout;
 /*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 
 /**
@@ -58,6 +72,58 @@ public final class InternalUpcallHandler {
 	private final long thunkAddr;
 	private UpcallMHMetaData metaData;
 
+	static final Lookup lookup = MethodHandles.lookup();
+
+	/* The argument filters intended to validate the pointer/struct arguments/return value of the upcall method. */
+	/*[IF JAVA_SPEC_VERSION >= 20]*/
+	private static final MethodHandle argRetSegmtOfPtrFilter;
+	/*[ELSE] JAVA_SPEC_VERSION >= 20 */
+	private static final MethodHandle argRetAddrOfPtrFilter;
+	/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
+	private static final MethodHandle argRetSegmtFilter;
+
+	static {
+		try {
+			/*[IF JAVA_SPEC_VERSION >= 21]*/
+			argRetSegmtOfPtrFilter = lookup.findStatic(InternalUpcallHandler.class, "argRetSegmtOfPtr", methodType(MemorySegment.class, MemorySegment.class, MemoryLayout.class));
+			/*[ELSEIF JAVA_SPEC_VERSION == 20]*/
+			argRetSegmtOfPtrFilter = lookup.findStatic(InternalUpcallHandler.class, "argRetSegmtOfPtr", methodType(MemorySegment.class, MemorySegment.class));
+			/*[ELSE] JAVA_SPEC_VERSION >= 21 */
+			argRetAddrOfPtrFilter = lookup.findStatic(InternalUpcallHandler.class, "argRetAddrOfPtr", methodType(MemoryAddress.class, MemoryAddress.class));
+			/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
+			argRetSegmtFilter = lookup.findStatic(InternalUpcallHandler.class, "argRetSegmt", methodType(MemorySegment.class, MemorySegment.class));
+		} catch (IllegalAccessException | NoSuchMethodException e) {
+			throw new InternalError(e);
+		}
+	}
+
+	/* Intended for argRetSegmtOfPtrFilter that validates the memory segment
+	 * of the passed-in pointer argument.
+	 */
+	/*[IF JAVA_SPEC_VERSION >= 21]*/
+	private static MemorySegment argRetSegmtOfPtr(MemorySegment argValue, MemoryLayout layout) throws IllegalStateException {
+		UpcallMHMetaData.validateNativeArgRetSegmentOfPtr(argValue);
+		return UpcallMHMetaData.getArgRetAlignedSegmentOfPtr(argValue.address(), layout);
+	}
+	/*[ELSEIF JAVA_SPEC_VERSION == 20]*/
+	private static MemorySegment argRetSegmtOfPtr(MemorySegment argValue) throws IllegalStateException {
+		UpcallMHMetaData.validateNativeArgRetSegmentOfPtr(argValue);
+		return argValue;
+	}
+	/*[ELSE] JAVA_SPEC_VERSION >= 21 */
+	private static MemoryAddress argRetAddrOfPtr(MemoryAddress argValue) throws IllegalStateException {
+		UpcallMHMetaData.validateNativeArgRetAddrOfPtr(argValue);
+		return argValue;
+	}
+	/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
+
+	/* Intended for argRetSegmtFilter to determine whether the segment is allocated on heap or not
+	 * and return the newly allocated segment without all values copied from the heap segment.
+	 */
+	private static MemorySegment argRetSegmt(MemorySegment argValue) throws IllegalStateException {
+		return UpcallMHMetaData.getNativeArgRetSegment(argValue);
+	}
+
 	/*[IF JAVA_SPEC_VERSION >= 21]*/
 	/**
 	 * The constructor creates an upcall handler specific to the requested java method
@@ -68,7 +134,6 @@ public final class InternalUpcallHandler {
 	 * @param cDesc the function descriptor of the target method handle
 	 * @param arena the Arena related to the upcall handler
 	 * @param options the LinkerOptions indicating additional linking requirements to the linker
-	 * @return an internal upcall handler with the thunk address
 	 */
 	public InternalUpcallHandler(MethodHandle target, MethodType mt, FunctionDescriptor cDesc, Arena arena, LinkerOptions options)
 	/*[ELSEIF JAVA_SPEC_VERSION == 20]*/
@@ -80,7 +145,6 @@ public final class InternalUpcallHandler {
 	 * @param mt the method type of the target method handle
 	 * @param cDesc the function descriptor of the target method handle
 	 * @param scope the segment scope related to the upcall handler
-	 * @return an internal upcall handler with the thunk address
 	 */
 	public InternalUpcallHandler(MethodHandle target, MethodType mt, FunctionDescriptor cDesc, SegmentScope scope)
 	/*[ELSE] JAVA_SPEC_VERSION >= 21 */
@@ -92,7 +156,6 @@ public final class InternalUpcallHandler {
 	 * @param mt the method type of the target method handle
 	 * @param cDesc the function descriptor of the target method handle
 	 * @param scope the resource scope related to the upcall handler
-	 * @return an internal upcall handler with the thunk address
 	 */
 	public InternalUpcallHandler(MethodHandle target, MethodType mt, FunctionDescriptor cDesc, ResourceScope scope)
 	/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
@@ -108,10 +171,13 @@ public final class InternalUpcallHandler {
 		TypeLayoutCheckHelper.checkIfValidLayoutAndType(mt, argLayoutArray, realReturnLayout);
 		/*[ENDIF] JAVA_SPEC_VERSION == 17 */
 
+		/* Replace the original handle with the specified types of the C function. */
+		MethodHandle boundHandle = getUpcallMHWithFilters(target);
+
 		/*[IF JAVA_SPEC_VERSION >= 21]*/
-		thunkAddr = getUpcallThunkAddr(target, arena, options);
+		thunkAddr = getUpcallThunkAddr(boundHandle, arena, options);
 		/*[ELSE] JAVA_SPEC_VERSION >= 21 */
-		thunkAddr = getUpcallThunkAddr(target, scope);
+		thunkAddr = getUpcallThunkAddr(boundHandle, scope);
 		/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 	}
 
@@ -154,10 +220,10 @@ public final class InternalUpcallHandler {
 			nativeSignatureStrs[argLayoutCount] = LayoutStrPreprocessor.getSimplifiedLayoutString(realReturnLayout, false);
 		}
 
-		/* The thunk must be created for each upcall handler given the UpcallMHMetaData object uniquely
-		 * bound to the thunk is only alive for a Scope (JDK21+)/SegmentScope (JDK20)/ResourceScope (JDK17)
-		 * specified in java, which means the upcall handler and its UpcallMHMetaData object will be
-		 * cleaned up automatically once their session/scope is closed.
+		/* The thunk must be created for each upcall handler given the UpcallMHMetaData object
+		 * uniquely bound to the thunk is only alive for a memory scope specified in java, which
+		 * means the upcall handler and its UpcallMHMetaData related resources will be cleaned up
+		 * automatically once the scope is closed.
 		 */
 		/*[IF JAVA_SPEC_VERSION >= 21]*/
 		metaData = new UpcallMHMetaData(target, argLayoutCount, arena.scope(), options);
@@ -165,6 +231,64 @@ public final class InternalUpcallHandler {
 		metaData = new UpcallMHMetaData(target, argLayoutCount, scope);
 		/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 		return allocateUpcallStub(metaData, nativeSignatureStrs);
+	}
+
+	/* Process the upcall method handle by setting the filters for the passed-in arguments and the return value. */
+	private MethodHandle getUpcallMHWithFilters(MethodHandle targetHandle) throws NullPointerException, WrongMethodTypeException {
+		Class<?>[] argTypeClasses = targetHandle.type().parameterArray();
+		int upcallArgCount = argTypeClasses.length;
+
+		/* Set the filters for the passed-in arguments of the upcall method via
+		 * filterArguments() to validate the arguments prior to the upcall.
+		 */
+		MethodHandle[] argFilters = new MethodHandle[upcallArgCount];
+		for (int argIndex = 0; argIndex < upcallArgCount; argIndex++) {
+			argFilters[argIndex] = getUpcallArgRetValFilter(argTypeClasses[argIndex], argLayoutArray[argIndex]);
+		}
+		MethodHandle boundHandle = MethodHandles.filterArguments(targetHandle, 0, argFilters);
+
+		/* Set the filter for return value of the upcall method via filterReturnValue()
+		 * to validate the return value from the upcall before returning back to the
+		 * upcall dispatcher in native.
+		 */
+		MethodHandle retFilter = getUpcallArgRetValFilter(targetHandle.type().returnType(), realReturnLayout);
+		boundHandle = MethodHandles.filterReturnValue(boundHandle, retFilter);
+
+		return boundHandle;
+	}
+
+	/* Obtain the filter that validates the passed-in argument or the return value of the upcall method. */
+	private MethodHandle getUpcallArgRetValFilter(Class<?> argTypeClass, MemoryLayout argLayout) {
+		MethodHandle filterMH = null;
+
+		/* The filter for primitive is a placeholder without any conversion involved. */
+		if (argTypeClass == void.class) {
+			filterMH = MethodHandles.empty(methodType(argTypeClass));
+		}
+		/*[IF JAVA_SPEC_VERSION == 17]*/
+		else if (argTypeClass == MemoryAddress.class) {
+			filterMH = argRetAddrOfPtrFilter;
+		}
+		/*[ENDIF] JAVA_SPEC_VERSION == 17 */
+		else if (argLayout instanceof ValueLayout) {
+			/*[IF JAVA_SPEC_VERSION >= 21]*/
+			if (argLayout instanceof AddressLayout) {
+				filterMH = MethodHandles.insertArguments(argRetSegmtOfPtrFilter, 1, argLayout);
+			} else
+			/*[ELSEIF JAVA_SPEC_VERSION == 20]*/
+			if (argLayout instanceof OfAddress) {
+				filterMH = argRetSegmtOfPtrFilter;
+			} else
+			/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
+			{
+				/* The filter for primitive is a placeholder without any conversion involved. */
+				filterMH = MethodHandles.identity(argTypeClass);
+			}
+		} else if (argLayout instanceof GroupLayout) {
+			filterMH = argRetSegmtFilter;
+		}
+
+		return filterMH;
 	}
 
 	/* This native requests the JIT to generate an upcall thunk of the specified java method

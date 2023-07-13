@@ -24,12 +24,20 @@ package openj9.internal.foreign.abi;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
+/*[IF JAVA_SPEC_VERSION >= 21]*/
+import java.util.Optional;
+/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 
 /*[IF JAVA_SPEC_VERSION >= 20]*/
+/*[IF JAVA_SPEC_VERSION >= 21]*/
+import java.lang.foreign.AddressLayout;
+/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 /*[IF JAVA_SPEC_VERSION >= 21]*/
+import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment.Scope;
+import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.LinkerOptions;
 /*[ELSE] JAVA_SPEC_VERSION >= 21 */
 import java.lang.foreign.SegmentScope;
@@ -111,48 +119,62 @@ final class UpcallMHMetaData {
 		/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 	}
 
-	/* Determine whether the memory segment of the passed-in/returned pointer is allocated
-	 * in the native memory or not and return its native address if valid.
+	/*[IF JAVA_SPEC_VERSION >= 21]*/
+	/* Determine whether or not the native address of the passed-in/returned pointer is aligned against
+	 * its target layout's alignment and return its segment object if valid.
 	 *
 	 * Note:
-	 * The method is shared in java (downcall) and in native (upcall) via the calling-in from the dispatcher.
+	 * The method is shared in downcall and upcall.
 	 */
-	static long getNativeArgRetSegmentOfPtr(MemorySegment argRetSegmentOfPtr) {
+	static MemorySegment getArgRetAlignedSegmentOfPtr(long addrValue, MemoryLayout layout) {
+		AddressLayout addrLayout = (AddressLayout)layout;
+		Optional<MemoryLayout> targetLayout = addrLayout.targetLayout();
+		if (!targetLayout.isEmpty()
+			&& !Utils.isAligned(addrValue, targetLayout.get().byteAlignment())
+		) {
+			throw new IllegalArgumentException("The alignment constraint for address (" + addrValue + ") is invalid.");
+		}
+		return MemorySegment.ofAddress(addrValue).reinterpret(Utils.pointeeByteSize(addrLayout));
+	}
+	/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
+
+	/* Determine whether the memory segment (JDK20+) or the memory address (JDK17)
+	 * of the passed-in/returned pointer is allocated in the native memory or not.
+	 *
+	 * Note:
+	 * The method is shared in downcall and upcall.
+	 */
+	/*[IF JAVA_SPEC_VERSION >= 20]*/
+	static void validateNativeArgRetSegmentOfPtr(MemorySegment argRetSegmentOfPtr) {
+		if (argRetSegmentOfPtr == null) {
+			throw new NullPointerException("A null pointer is not allowed.");
+		}
 		if (!argRetSegmentOfPtr.isNative()) {
 			throw new IllegalArgumentException("Heap segment not allowed: " + argRetSegmentOfPtr);
 		}
-
-		/*[IF JAVA_SPEC_VERSION >= 20]*/
-		return argRetSegmentOfPtr.address();
-		/*[ELSE] JAVA_SPEC_VERSION >= 20 */
-		return argRetSegmentOfPtr.address().toRawLongValue();
-		/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 	}
-
-	/*[IF JAVA_SPEC_VERSION == 17]*/
-	/* Determine whether the memory address of the passed-in/returned pointer is allocated
-	 * in the native memory or not and return its native address if valid.
-	 *
-	 * Note:
-	 * The method is shared in java (downcall) and in native (upcall) via the calling-in from the dispatcher.
-	 */
-	static long getNativeArgRetAddrOfPtr(MemoryAddress argRetAddrOfPtr) {
+	/*[ELSE] JAVA_SPEC_VERSION >= 20 */
+	static void validateNativeArgRetAddrOfPtr(MemoryAddress argRetAddrOfPtr) {
+		if (argRetAddrOfPtr == null) {
+			throw new NullPointerException("A null pointer is not allowed.");
+		}
 		if (!argRetAddrOfPtr.isNative()) {
 			throw new IllegalArgumentException("A heap address is not allowed: " + argRetAddrOfPtr);
 		}
-
-		return argRetAddrOfPtr.toRawLongValue();
 	}
-	/*[ENDIF] JAVA_SPEC_VERSION == 17 */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 
 	/* Determine whether the passed-in/returned segment is allocated in the native memory or not
-	 * and return its native address if valid; otherwise, return the address of an newly allocated
-	 * native segment with all values copied from the heap segment.
+	 * and return the segment if valid; otherwise, return the newly allocated native segment with
+	 * all values copied from the heap segment.
 	 *
 	 * Note:
-	 * The method is shared in java (downcall) and in native (upcall) via the calling-in from the dispatcher.
+	 * The method is shared in downcall and upcall.
 	 */
-	static long getNativeArgRetSegment(MemorySegment argRetSegment) {
+	static MemorySegment getNativeArgRetSegment(MemorySegment argRetSegment) {
+		if (argRetSegment == null) {
+			throw new NullPointerException("A null value is not allowed for struct.");
+		}
 		/*[IF JAVA_SPEC_VERSION >= 20]*/
 		/* MemorySegment.NULL is introduced since JDK20+. */
 		if (argRetSegment == MemorySegment.NULL) {
@@ -178,10 +200,6 @@ final class UpcallMHMetaData {
 			nativeSegment.copyFrom(argRetSegment);
 		}
 
-		/*[IF JAVA_SPEC_VERSION >= 20]*/
-		return nativeSegment.address();
-		/*[ELSE] JAVA_SPEC_VERSION >= 20 */
-		return nativeSegment.address().toRawLongValue();
-		/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
+		return nativeSegment;
 	}
 }
