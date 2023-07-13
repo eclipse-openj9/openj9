@@ -734,6 +734,17 @@ preloadClassNameAtIndex(U_32* preloadClassesCountPtr, U_32 index)
 
 	return NNSRP_PTR_GET(preloadClassesPtr, J9UTF8*);
 }
+
+BOOLEAN
+hasImplicitCreation(J9ROMClass *romClass) {
+	return J9_ARE_ANY_BITS_SET(romClass->extraModifiers, J9AccImplicitCreateNonAtomic | J9AccImplicitCreateHasDefaultValue);
+}
+
+U_16
+getImplicitCreationFlags(J9ROMClass *romClass) {
+	return (J9_ARE_ALL_BITS_SET(romClass->extraModifiers, J9AccImplicitCreateNonAtomic) << 1)
+		| J9_ARE_ALL_BITS_SET(romClass->extraModifiers, J9AccImplicitCreateHasDefaultValue);
+}
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
 BOOLEAN

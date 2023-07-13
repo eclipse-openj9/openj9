@@ -1372,6 +1372,24 @@ getNumberOfPreloadClassesPtr(J9ROMClass *romClass);
  */
 J9UTF8*
 preloadClassNameAtIndex(U_32* permittedSubclassesCountPtr, U_32 index);
+
+/**
+ * Checks if the ImplicitCreaton attribute is present in the romClass
+ *
+ * @param romClass* the pointer to the J9ROMClass to inspect
+ * @return true if the ImplicitCreaton attribute is present in the romClass, false otherwise
+*/
+BOOLEAN
+hasImplicitCreation(J9ROMClass *romClass);
+
+/**
+ * Retrieves the flags associated with the ImplicitCreation attribute of the specified romClass
+ *
+ * @param romClass* the pointer to the J9ROMClass to inspect
+ * @return the flags associated with the ImplicitCreation attribute of the specified romClass
+*/
+U_16
+getImplicitCreationFlags(J9ROMClass *romClass);
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
 /**
