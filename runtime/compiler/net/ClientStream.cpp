@@ -55,6 +55,8 @@ int ClientStream::static_init(TR::CompilationInfo *compInfo)
    if (!CommunicationStream::useSSL())
       return 0;
 
+   TR_ASSERT_FATAL(_sslCtx == NULL, "SSL context already initialized");
+
    CommunicationStream::initSSL();
 
    SSL_CTX *ctx = (*OSSL_CTX_new)((*OSSLv23_client_method)());
@@ -124,6 +126,15 @@ int ClientStream::static_init(TR::CompilationInfo *compInfo)
    return 0;
    }
 
+void ClientStream::freeSSLContext()
+   {
+   if (_sslCtx)
+      {
+      (*OSSL_CTX_free)(_sslCtx);
+      _sslCtx = NULL;
+      }
+   }
+
 SSL_CTX *ClientStream::_sslCtx = NULL;
 
 static int
@@ -149,7 +160,7 @@ openConnection(const std::string &address, uint32_t port, uint32_t timeoutMs)
 
    struct addrinfo *pAddr;
    int sockfd = -1;
-   for (pAddr = addrList; pAddr; pAddr = pAddr->ai_next) 
+   for (pAddr = addrList; pAddr; pAddr = pAddr->ai_next)
       {
       sockfd = socket(pAddr->ai_family, pAddr->ai_socktype, pAddr->ai_protocol);
       if (sockfd >= 0)
