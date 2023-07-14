@@ -162,7 +162,6 @@ J9::AliasBuilder::createAliasInfo()
    nonIntPrimitiveStaticSymRefs().pack();
    methodSymRefs().pack();
    unsafeSymRefNumbers().pack();
-   unsafeArrayElementSymRefs().pack();
    gcSafePointSymRefNumbers().pack();
 
    self()->tenantDataMetaSymRefs().pack();

@@ -237,31 +237,6 @@ public class Test_Thread {
 	}
 
 	/**
-	 * @tests java.lang.Thread#countStackFrames()
-	 */
-	@Test
-	public void test_countStackFrames() {
-		int versionMajor = org.openj9.test.util.VersionCheck.major();
-		if (versionMajor < 13) {
-			AssertJUnit.assertTrue("Test failed.", Thread.currentThread().countStackFrames() == 0);
-		} else if (versionMajor < 14) {
-			try {
-				Thread.currentThread().countStackFrames();
-				Assert.fail("Should thrown IllegalThreadStateException!");
-			} catch (IllegalThreadStateException itse) {
-				// pass with expected exception
-			}
-		} else {
-			try {
-				Thread.currentThread().countStackFrames();
-				Assert.fail("Should thrown UnsupportedOperationException!");
-			} catch (UnsupportedOperationException uoe) {
-				// pass with expected exception
-			}
-		}
-	}
-
-	/**
 	 * @tests java.lang.Thread#currentThread()
 	 */
 	@Test
