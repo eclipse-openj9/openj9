@@ -2296,13 +2296,10 @@ C|J9AccClassRAMArray
 C|J9AccClassRAMShapeShift
 C|J9AccClassReferenceMask
 C|J9AccClassReferencePhantom
-C|J9AccClassReferenceShift
 C|J9AccClassReferenceSoft
 C|J9AccClassReferenceWeak
 C|J9AccClassRomToRamMask
 C|J9AccClassUnsafe
-C|J9AccClassUnused200
-C|J9AccClassUnused400
 C|J9AccClassUseBisectionSearch
 C|J9AccEmptyMethod
 C|J9AccEnum
@@ -2310,7 +2307,6 @@ C|J9AccFinal
 C|J9AccForwarderMethod
 C|J9AccGetterMethod
 C|J9AccInterface
-C|J9AccMandated
 C|J9AccMethodCallerSensitive
 C|J9AccMethodFrameIteratorSkip
 C|J9AccMethodHasBackwardBranches
