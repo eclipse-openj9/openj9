@@ -575,6 +575,7 @@ typedef struct J9JITExceptionTable {
 #define JIT_METADATA_IS_REMOTE_COMP 0x10
 #define JIT_METADATA_IS_DESERIALIZED_COMP 0x20
 #define JIT_METADATA_IS_PRECHECKPOINT_COMP 0x40
+#define JIT_METADATA_IS_FSD_COMP 0x80
 
 typedef struct J9JIT16BitExceptionTableEntry {
 	U_16 startPC;
