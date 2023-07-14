@@ -55,14 +55,7 @@ If you want to build a binary for Linux on a different architecture, such as Pow
 :penguin:
 Instructions are provided for preparing your system with and without the use of Docker technology.
 
-Skip to [Setting up your build environment without Docker](#setting-up-your-build-environment-without-docker).
-
-#### Setting up your build environment with Docker :whale:
-If you want to build a binary by using a Docker container, follow these steps to prepare your system:
-
-1. The first thing you need to do is install Docker. You can download the free Community edition from [here](https://docs.docker.com/engine/installation/), which also contains instructions for installing Docker on your system.  You should also read the [Getting started](https://docs.docker.com/get-started/) guide to familiarise yourself with the basic Docker concepts and terminology.
-
-2. Obtain the [docker build script](https://github.com/eclipse-openj9/openj9/blob/master/buildenv/docker/mkdocker.sh) to build and run a container that has all the correct software pre-requisites.
+Obtain the [docker build script](https://github.com/eclipse-openj9/openj9/blob/master/buildenv/docker/mkdocker.sh) to determine the correct software pre-requisites for both.
 
 Download the docker build script to your local system or copy and paste the following command:
 
@@ -70,12 +63,19 @@ Download the docker build script to your local system or copy and paste the foll
 wget https://raw.githubusercontent.com/eclipse-openj9/openj9/master/buildenv/docker/mkdocker.sh
 ```
 
-3. Next, run the following command to build a Docker image, called **openj9**:
+Optionally, skip to [Setting up your build environment without Docker](#setting-up-your-build-environment-without-docker).
+
+#### Setting up your build environment with Docker :whale:
+If you want to build a binary by using a Docker container, follow these steps to prepare your system:
+
+1. The first thing you need to do is install Docker. You can download the free Community edition from [here](https://docs.docker.com/engine/installation/), which also contains instructions for installing Docker on your system.  You should also read the [Getting started](https://docs.docker.com/get-started/) guide to familiarise yourself with the basic Docker concepts and terminology.
+
+2. Next, run the following command to build a Docker image, called **openj9**:
 ```
 bash mkdocker.sh --tag=openj9 --dist=ubuntu --version=18 --gitcache=no --jdk=20 --build
 ```
 
-4. Start a Docker container from the **openj9** image with the following command, where `-v` maps any directory, `<host_directory>`,
+3. Start a Docker container from the **openj9** image with the following command, where `-v` maps any directory, `<host_directory>`,
 on your local system to the containers `/root/hostdir` directory so that you can store the binaries, once they are built:
 ```
 docker run -v <host_directory>:/root/hostdir -it openj9
