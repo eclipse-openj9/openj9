@@ -165,6 +165,7 @@ omr_add_exports(clinkerffitests
 	add2DoubleStructs_returnStructPointer
 	add3DoubleStructs_returnStruct
 	validateNullAddrArgument
+	validateTrivialOption
 	add2BoolsWithOrByUpcallMH
 	addBoolAndBoolFromPointerWithOrByUpcallMH
 	addBoolAndBoolFromNativePtrWithOrByUpcallMH
@@ -407,6 +408,7 @@ omr_add_exports(clinkerffitests
 	addDoubleFloatOfStructsFromVaListByUpcallMH
 	addNegBytesFromStructByUpcallMH
 	addNegShortsFromStructByUpcallMH
+	captureTrivialOptionByUpcallMH
 )
 
 install(

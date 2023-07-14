@@ -291,7 +291,7 @@ public class InvalidUpCallTests {
 	}
 
 	@Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Not supported for upcall.*")
-	public void test_InvalidLinkerOptions_isTrivial() throws Throwable {
+	public void test_InvalidLinkerOptions_isTrivial_1() throws Throwable {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_INT.withName("elem1"), JAVA_INT.withName("elem2"));
 		VarHandle intHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));
 		VarHandle intHandle2 = structLayout.varHandle(PathElement.groupElement("elem2"));
@@ -304,6 +304,20 @@ public class InvalidUpCallTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_add2IntStructs_returnStruct,
 					FunctionDescriptor.of(structLayout, structLayout, structLayout), arena, Linker.Option.isTrivial());
 			fail("Failed to throw out IllegalArgumentException in the case of the invalid linker option for upcall.");
+		}
+	}
+
+	@Test(expectedExceptions = IllegalThreadStateException.class, expectedExceptionsMessageRegExp = ".* wrong thread state for upcall")
+	public void test_InvalidLinkerOptions_isTrivial_2() throws Throwable {
+		FunctionDescriptor fd = FunctionDescriptor.of(JAVA_INT, JAVA_INT, ADDRESS);
+		MemorySegment functionSymbol = nativeLibLookup.find("captureTrivialOptionByUpcallMH").get();
+		MethodHandle mh = linker.downcallHandle(functionSymbol, fd, Linker.Option.isTrivial());
+
+		try (Arena arena = Arena.ofConfined()) {
+			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_captureTrivialOption,
+					FunctionDescriptor.of(JAVA_INT, JAVA_INT), arena);
+			int result = (int)mh.invoke(111, upcallFuncAddr);
+			fail("Failed to throw out IllegalThreadStateException in the case of the invalid upcall during the trivial downcall.");
 		}
 	}
 }

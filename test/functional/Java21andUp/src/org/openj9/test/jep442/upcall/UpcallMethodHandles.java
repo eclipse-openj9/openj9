@@ -273,6 +273,7 @@ public class UpcallMethodHandles {
 
 	public static final MethodHandle MH_addNegBytesFromStruct;
 	public static final MethodHandle MH_addNegShortsFromStruct;
+	public static final MethodHandle MH_captureTrivialOption;
 
 	private static Linker linker = Linker.nativeLinker();
 
@@ -486,6 +487,7 @@ public class UpcallMethodHandles {
 
 			MH_addNegBytesFromStruct = lookup.findStatic(UpcallMethodHandles.class, "addNegBytesFromStruct", MT_Byte_Byte_MemSegmt.appendParameterTypes(byte.class, byte.class)); //$NON-NLS-1$
 			MH_addNegShortsFromStruct = lookup.findStatic(UpcallMethodHandles.class, "addNegShortsFromStruct", MT_Short_Short_MemSegmt.appendParameterTypes(short.class, short.class)); //$NON-NLS-1$
+			MH_captureTrivialOption = lookup.findStatic(UpcallMethodHandles.class, "captureTrivialOption", methodType(int.class, int.class)); //$NON-NLS-1$
 
 		} catch (IllegalAccessException | NoSuchMethodException e) {
 			throw new InternalError(e);
@@ -2066,5 +2068,10 @@ public class UpcallMethodHandles {
 
 		short shortSum = (short)(arg1 + arg2_elem1 + arg2_elem2 + arg3 + arg4);
 		return shortSum;
+	}
+
+	public static int captureTrivialOption(int intArg1) {
+		Assert.fail("The method shouldn't be invoked during the trivial downcall.");
+		return intArg1;
 	}
 }

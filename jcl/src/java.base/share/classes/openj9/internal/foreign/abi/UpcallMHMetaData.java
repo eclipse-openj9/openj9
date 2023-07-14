@@ -1,4 +1,4 @@
-/*[INCLUDE-IF JAVA_SPEC_VERSION >= 20]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 21]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2022
  *
@@ -28,27 +28,21 @@ import java.lang.invoke.MethodType;
 import java.util.Optional;
 /*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 
-/*[IF JAVA_SPEC_VERSION >= 20]*/
 /*[IF JAVA_SPEC_VERSION >= 21]*/
 import java.lang.foreign.AddressLayout;
-/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
-/*[IF JAVA_SPEC_VERSION >= 21]*/
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment.Scope;
 import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.LinkerOptions;
-/*[ELSE] JAVA_SPEC_VERSION >= 21 */
-import java.lang.foreign.SegmentScope;
-/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 import jdk.internal.foreign.MemorySessionImpl;
-/*[ELSE] JAVA_SPEC_VERSION >= 20 */
+/*[ELSE] JAVA_SPEC_VERSION >= 21 */
 import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
-/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 
 /**
  * The meta data consists of the callee MH and a cache of 2 elements for MH resolution,
@@ -78,8 +72,6 @@ final class UpcallMHMetaData {
 
 	/*[IF JAVA_SPEC_VERSION >= 21]*/
 	private Scope scope;
-	/*[ELSEIF JAVA_SPEC_VERSION == 20]*/
-	private SegmentScope scope;
 	/*[ELSE] JAVA_SPEC_VERSION >= 21 */
 	private ResourceScope scope;
 	/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
@@ -96,8 +88,6 @@ final class UpcallMHMetaData {
 
 	/*[IF JAVA_SPEC_VERSION >= 21]*/
 	UpcallMHMetaData(MethodHandle targetHandle, int nativeArgCount, Scope scope, LinkerOptions options)
-	/*[ELSEIF JAVA_SPEC_VERSION == 20]*/
-	UpcallMHMetaData(MethodHandle targetHandle, int nativeArgCount, SegmentScope scope)
 	/*[ELSE] JAVA_SPEC_VERSION >= 21 */
 	UpcallMHMetaData(MethodHandle targetHandle, int nativeArgCount, ResourceScope scope)
 	/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
@@ -112,8 +102,6 @@ final class UpcallMHMetaData {
 		 */
 		/*[IF JAVA_SPEC_VERSION >= 21]*/
 		this.scope = ((scope != null) && (((MemorySessionImpl)scope).ownerThread() != null)) ? scope : Arena.global().scope();
-		/*[ELSEIF JAVA_SPEC_VERSION == 20]*/
-		this.scope = ((scope != null) && (((MemorySessionImpl)scope).ownerThread() != null)) ? scope : SegmentScope.global();
 		/*[ELSE] JAVA_SPEC_VERSION >= 21 */
 		this.scope = ((scope != null) && (scope.ownerThread() != null)) ? scope : ResourceScope.globalScope();
 		/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
@@ -144,7 +132,7 @@ final class UpcallMHMetaData {
 	 * Note:
 	 * The method is shared in downcall and upcall.
 	 */
-	/*[IF JAVA_SPEC_VERSION >= 20]*/
+	/*[IF JAVA_SPEC_VERSION >= 21]*/
 	static void validateNativeArgRetSegmentOfPtr(MemorySegment argRetSegmentOfPtr) {
 		if (argRetSegmentOfPtr == null) {
 			throw new NullPointerException("A null pointer is not allowed.");
@@ -153,7 +141,7 @@ final class UpcallMHMetaData {
 			throw new IllegalArgumentException("Heap segment not allowed: " + argRetSegmentOfPtr);
 		}
 	}
-	/*[ELSE] JAVA_SPEC_VERSION >= 20 */
+	/*[ELSE] JAVA_SPEC_VERSION >= 21 */
 	static void validateNativeArgRetAddrOfPtr(MemoryAddress argRetAddrOfPtr) {
 		if (argRetAddrOfPtr == null) {
 			throw new NullPointerException("A null pointer is not allowed.");
@@ -162,7 +150,7 @@ final class UpcallMHMetaData {
 			throw new IllegalArgumentException("A heap address is not allowed: " + argRetAddrOfPtr);
 		}
 	}
-	/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 
 	/* Determine whether the passed-in/returned segment is allocated in the native memory or not
 	 * and return the segment if valid; otherwise, return the newly allocated native segment with
@@ -175,12 +163,12 @@ final class UpcallMHMetaData {
 		if (argRetSegment == null) {
 			throw new NullPointerException("A null value is not allowed for struct.");
 		}
-		/*[IF JAVA_SPEC_VERSION >= 20]*/
+		/*[IF JAVA_SPEC_VERSION >= 21]*/
 		/* MemorySegment.NULL is introduced since JDK20+. */
 		if (argRetSegment == MemorySegment.NULL) {
 			throw new NullPointerException("A NULL memory segment is not allowed for struct.");
 		}
-		/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
+		/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 		MemorySegment nativeSegment = argRetSegment;
 
 		/* Copy all values in the heap segment to a newly allocated native segment
@@ -192,8 +180,6 @@ final class UpcallMHMetaData {
 			 * MemorySegment.allocateNative() is removed since JDK21+.
 			 */
 			nativeSegment = Arena.global().allocate(argRetSegment.byteSize());
-			/*[ELSEIF JAVA_SPEC_VERSION == 20]*/
-			nativeSegment = MemorySegment.allocateNative(argRetSegment.byteSize(), SegmentScope.global());
 			/*[ELSE] JAVA_SPEC_VERSION >= 21 */
 			nativeSegment = MemorySegment.allocateNative(argRetSegment.byteSize(), ResourceScope.globalScope());
 			/*[ENDIF] JAVA_SPEC_VERSION >= 21 */

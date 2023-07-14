@@ -2896,3 +2896,18 @@ addNegShortsFromStructByUpcallMH(short arg1, stru_Short_Short arg2, short (*upca
 	short shortSum = (*upcallMH)(arg1, arg2, arg2.elem1, arg2.elem2);
 	return shortSum;
 }
+
+/**
+ * Capture the linker option for the trivial downcall during the upcall.
+ *
+ * @param arg1 an integer
+ * @return the passed-in argument
+ *
+ * Note:
+ * The upcall is invalid in the case of the trivial downcall.
+ */
+int
+captureTrivialOptionByUpcallMH(int arg1, int (*upcallMH)(int))
+{
+	return (*upcallMH)(arg1);
+}

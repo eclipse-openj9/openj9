@@ -2145,3 +2145,10 @@ J9NLS_VM_CRIU_RESTORE_INITIALIZE_DUMP_FAILED.explanation=CRIUSupport::checkpoint
 J9NLS_VM_CRIU_RESTORE_INITIALIZE_DUMP_FAILED.system_action=The JVM will throw a JVMRestoreException.
 J9NLS_VM_CRIU_RESTORE_INITIALIZE_DUMP_FAILED.user_response=Check documentation for CRIUSupport restore options.
 # END NON-TRANSLATABLE
+
+J9NLS_VM_ILLEGAL_THREAD_STATE_UPCALL=The JVM failed to proceed due to the wrong thread state for upcall
+# START NON-TRANSLATABLE
+J9NLS_VM_ILLEGAL_THREAD_STATE_UPCALL.explanation=An error occurred when the JVM attempted to perform upcall in the trivial downcall
+J9NLS_VM_ILLEGAL_THREAD_STATE_UPCALL.system_action=The JVM will throw a IllegalThreadStateException.
+J9NLS_VM_ILLEGAL_THREAD_STATE_UPCALL.user_response=Ensure the specified linker options for downcall are valid.
+# END NON-TRANSLATABLE

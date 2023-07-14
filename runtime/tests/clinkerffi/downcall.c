@@ -2007,3 +2007,15 @@ validateNullAddrArgument(int arg1, stru_Int_Int *arg2)
 {
 	return arg1;
 }
+
+/**
+ * Validate the linker option for the trivial downcall.
+ *
+ * @param arg1 an integer
+ * @return the passed-in argument
+ */
+int
+validateTrivialOption(int arg1)
+{
+	return arg1;
+}

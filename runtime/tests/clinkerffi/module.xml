@@ -156,6 +156,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<export name="add2DoubleStructs_returnStructPointer"/>
 		<export name="add3DoubleStructs_returnStruct"/>
 		<export name="validateNullAddrArgument"/>
+		<export name="validateTrivialOption"/>
 		<export name="add2BoolsWithOrByUpcallMH"/>
 		<export name="addBoolAndBoolFromPointerWithOrByUpcallMH"/>
 		<export name="addBoolAndBoolFromNativePtrWithOrByUpcallMH"/>
@@ -398,6 +399,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<export name="addDoubleFloatOfStructsFromVaListByUpcallMH"/>
 		<export name="addNegBytesFromStructByUpcallMH"/>
 		<export name="addNegShortsFromStructByUpcallMH"/>
+		<export name="captureTrivialOptionByUpcallMH"/>
 	</exports>
 
 	<artifact type="shared" name="clinkerffitests" appendrelease="false">
