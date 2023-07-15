@@ -66,6 +66,7 @@ public:
        Returns 0 if successful;; Otherwise, returns -1.
    */
    static int static_init(TR::CompilationInfo *compInfo);
+   static void freeSSLContext();
 
    explicit ClientStream(TR::PersistentInfo *info);
    virtual ~ClientStream()

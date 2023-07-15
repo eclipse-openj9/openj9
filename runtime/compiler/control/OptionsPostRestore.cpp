@@ -45,6 +45,9 @@
 #include "env/VerboseLog.hpp"
 #include "env/TRMemory.hpp"
 #include "env/VMJ9.h"
+#if defined(J9VM_OPT_JITSERVER)
+#include "net/ClientStream.hpp"
+#endif
 #include "runtime/CodeRuntime.hpp"
 
 #define FIND_AND_CONSUME_RESTORE_ARG(match, optionName, optionValue) FIND_AND_CONSUME_ARG(vm->checkpointState.restoreArgsList, match, optionName, optionValue)
@@ -325,6 +328,16 @@ J9::OptionsPostRestore::processJitServerOptions()
       _compInfo->getPersistentInfo()->setClientUID(clientUID);
       _compInfo->getPersistentInfo()->setServerUID(0);
       _compInfo->setCanPerformRemoteCompilationInCRIUMode(true);
+
+      // If encryption is desired, load and initialize the SSL
+      if (_compInfo->useSSL())
+         {
+         bool loaded = JITServer::loadLibsslAndFindSymbols();
+         TR_ASSERT_FATAL(loaded, "Terminating the JVM because it failed to load the SSL library");
+
+         int rc = JITServer::ClientStream::static_init(_compInfo);
+         TR_ASSERT_FATAL(rc == 0, "Terminating the JVM because it failed to initialize the SSL library");
+         }
       }
    else
       {

@@ -1283,6 +1283,7 @@ public:
    void  addJITServerSslCert(const std::string &cert) { _sslCerts.push_back(cert); }
    const std::string &getJITServerSslRootCerts() const { return _sslRootCerts; }
    void  setJITServerSslRootCerts(const std::string &cert) { _sslRootCerts = cert; }
+   void  freeClientSslCertificates() { _sslRootCerts.clear(); }
    const PersistentVector<std::string> &getJITServerMetricsSslKeys() const { return _metricsSslKeys; }
    void  addJITServerMetricsSslKey(const std::string &key) { _metricsSslKeys.push_back(key); }
    const PersistentVector<std::string> &getJITServerMetricsSslCerts() const { return _metricsSslCerts; }
