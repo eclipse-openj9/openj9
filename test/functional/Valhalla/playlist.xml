@@ -208,4 +208,84 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
+	<test>
+		<testCaseName>ValueTypeOptTests</testCaseName>
+		<variations>
+			<variation>-Xint</variation>
+			<variation>-Xint -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999</variation>
+			<variation>-Xint -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
+			<variation>-XX:+EnableHCR -Xjit:count=0</variation>
+			<variation>-XX:+EnableHCR -Xjit:count=1,disableAsyncCompilation,initialOptLevel=warm -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999</variation>
+			<variation>-XX:+EnableHCR -Xjit:count=1,disableAsyncCompilation,initialOptLevel=warm -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
+			<variation>-XX:+EnableHCR -Xgcpolicy:optthruput</variation>
+			<variation>-XX:+EnableHCR -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999</variation>
+			<variation>-XX:+EnableHCR -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
+			<variation>-XX:-EnableHCR -Xjit:count=0</variation>
+			<variation>-XX:-EnableHCR -Xjit:count=1,disableAsyncCompilation,initialOptLevel=warm -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999</variation>
+			<variation>-XX:-EnableHCR -Xjit:count=1,disableAsyncCompilation,initialOptLevel=warm -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
+			<variation>-XX:-EnableHCR -Xgcpolicy:optthruput</variation>
+			<variation>-XX:-EnableHCR -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999</variation>
+			<variation>-XX:-EnableHCR -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+		--add-opens java.base/jdk.internal.misc=ALL-UNNAMED \
+		-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)ValhallaTests.jar$(Q) \
+		org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames ValueTypeOptTests \
+		-groups $(TEST_GROUP) \
+		-excludegroups $(DEFAULT_EXCLUDE); \
+		$(TEST_STATUS)</command>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<versions>
+			<version>Valhalla</version>
+		</versions>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
+	</test>
+	<test>
+		<testCaseName>NullRestrictedTypeOptTests</testCaseName>
+		<variations>
+			<variation>-Xint</variation>
+			<variation>-Xint -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999</variation>
+			<variation>-Xint -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
+			<variation>-XX:+EnableHCR -Xjit:count=0</variation>
+			<variation>-XX:+EnableHCR -Xjit:count=1,disableAsyncCompilation,initialOptLevel=warm -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999</variation>
+			<variation>-XX:+EnableHCR -Xjit:count=1,disableAsyncCompilation,initialOptLevel=warm -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
+			<variation>-XX:+EnableHCR -Xgcpolicy:optthruput</variation>
+			<variation>-XX:+EnableHCR -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999</variation>
+			<variation>-XX:+EnableHCR -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
+			<variation>-XX:-EnableHCR -Xjit:count=0</variation>
+			<variation>-XX:-EnableHCR -Xjit:count=1,disableAsyncCompilation,initialOptLevel=warm -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999</variation>
+			<variation>-XX:-EnableHCR -Xjit:count=1,disableAsyncCompilation,initialOptLevel=warm -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
+			<variation>-XX:-EnableHCR -Xgcpolicy:optthruput</variation>
+			<variation>-XX:-EnableHCR -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999</variation>
+			<variation>-XX:-EnableHCR -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+		--add-opens java.base/jdk.internal.misc=ALL-UNNAMED \
+		-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)ValhallaTests.jar$(Q) \
+		org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames NullRestrictedTypeOptTests \
+		-groups $(TEST_GROUP) \
+		-excludegroups $(DEFAULT_EXCLUDE); \
+		$(TEST_STATUS)</command>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<versions>
+			<version>Valhalla</version>
+		</versions>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
+	</test>
 </playlist>
