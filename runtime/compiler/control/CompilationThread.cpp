@@ -2935,6 +2935,18 @@ void TR::CompilationInfo::prepareForCheckpoint()
    if (!suspendCompThreadsForCheckpoint(vmThread))
       return;
 
+#if defined(J9VM_OPT_JITSERVER)
+   // If this is a JITServer client that has an SSL context, free that context now
+   if (getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
+      {
+      if (JITServer::CommunicationStream::useSSL())
+         {
+         freeClientSslCertificates();
+         JITServer::ClientStream::freeSSLContext();
+         }
+      }
+#endif
+
    setReadyForCheckpointRestore();
    }
 
