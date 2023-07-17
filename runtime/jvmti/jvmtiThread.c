@@ -391,21 +391,39 @@ jvmtiStopThread(jvmtiEnv *env,
 
 		rc = getVMThread(
 				currentThread, thread, &targetThread,
-#if JAVA_SPEC_VERSION >= 19
-				JVMTI_ERROR_UNSUPPORTED_OPERATION,
-#else /* JAVA_SPEC_VERSION >= 19 */
 				JVMTI_ERROR_NONE,
-#endif /* JAVA_SPEC_VERSION >= 19 */
-				J9JVMTI_GETVMTHREAD_ERROR_ON_NULL_JTHREAD | J9JVMTI_GETVMTHREAD_ERROR_ON_DEAD_THREAD | J9JVMTI_GETVMTHREAD_ERROR_ON_VIRTUALTHREAD);
+				J9JVMTI_GETVMTHREAD_ERROR_ON_NULL_JTHREAD | J9JVMTI_GETVMTHREAD_ERROR_ON_DEAD_THREAD);
 		if (JVMTI_ERROR_NONE == rc) {
+#if JAVA_SPEC_VERSION >= 21
+			j9object_t threadObject = (NULL == thread) ? currentThread->threadObject : J9_JNI_UNWRAP_REFERENCE(thread);
+
+			/* Error if a virtual thread is not suspended and not the current thread. */
+			if ((currentThread != targetThread)
+			&& (0 == J9OBJECT_U32_LOAD(currentThread, threadObject, vm->isSuspendedInternalOffset))
+			&& IS_JAVA_LANG_VIRTUALTHREAD(currentThread, threadObject)
+			) {
+				rc = JVMTI_ERROR_THREAD_NOT_SUSPENDED;
+				goto release;
+			}
+
+			/* Error if a virtual thread is unmounted since it won't be able to throw an
+			 * asynchronous exception from the current frame.
+			 */
+			if (NULL == targetThread) {
+				rc = JVMTI_ERROR_OPAQUE_FRAME;
+				goto release;
+			}
+#endif /* JAVA_SPEC_VERSION >= 21 */
 			omrthread_monitor_enter(targetThread->publicFlagsMutex);
 			if (OMR_ARE_NO_BITS_SET(targetThread->publicFlags, J9_PUBLIC_FLAGS_STOPPED)) {
 				omrthread_priority_interrupt(targetThread->osThread);
 				targetThread->stopThrowable = J9_JNI_UNWRAP_REFERENCE(exception);
-				clearHaltFlag(targetThread, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND);
 				setHaltFlag(targetThread, J9_PUBLIC_FLAGS_STOP);
 			}
 			omrthread_monitor_exit(targetThread->publicFlagsMutex);
+#if JAVA_SPEC_VERSION >= 21
+release:
+#endif /* JAVA_SPEC_VERSION >= 21 */
 			releaseVMThread(currentThread, targetThread, thread);
 		}
 done:
