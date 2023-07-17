@@ -170,6 +170,7 @@ class TR_J9InlinerPolicy : public OMR_InlinerPolicy
    friend class TR_J9InlinerUtil;
    friend class TR_InlinerBase;
    friend class TR_MultipleCallTargetInliner;
+   friend class TR_J9EstimateCodeSize;
    public:
       TR_J9InlinerPolicy(TR::Compilation *comp);
       virtual bool inlineRecognizedMethod(TR::RecognizedMethod method);
