@@ -5995,10 +5995,6 @@ typedef struct J9JavaVM {
 /* The mask for the signature type identifier */
 #define J9_FFI_UPCALL_SIG_TYPE_MASK 0xF
 
-/* The mask for the normalized type identifier */
-#define J9_FFI_UPCALL_BYTE_TYPE_MASK 0xFF
-#define J9_FFI_UPCALL_SHORT_TYPE_MASK 0xFFFF
-
 /* The signature types intended for upcall */
 #define J9_FFI_UPCALL_SIG_TYPE_VOID    0x1
 #define J9_FFI_UPCALL_SIG_TYPE_CHAR    0x2

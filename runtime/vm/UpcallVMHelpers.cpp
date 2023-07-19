@@ -227,28 +227,38 @@ getInternalTypeFromSignature(J9JavaVM *vm, J9Class *typeClass, U_8 sigType)
  *
  * @param argType the predefined signature type
  * @param argValue the requested argument value
- * @return a U_32 value for the normalized argument
+ * @return a I_32 value for the normalized argument
  *
  * Note:
- * The argument normalization is only intended for the type less then 4 bytes
+ * The argument normalization is only required for types less than 4 bytes
  * in java, which include boolean (1 byte), byte, char (2 bytes), short.
  */
-static U_32
+static I_32
 getNormalizedArgValue(U_8 argType, I_32 argValue)
 {
 	I_32 realValue = argValue;
 
 	switch (argType) {
 	case J9NtcBoolean:
-		realValue = ((realValue & J9_FFI_UPCALL_BYTE_TYPE_MASK) > 0) ? 0x1 : 0x0;
+		realValue = J9_ARE_ANY_BITS_SET(realValue, 0xFF) ? 0x1 : 0x0;
 		break;
 	case J9NtcByte:
-		realValue &= J9_FFI_UPCALL_BYTE_TYPE_MASK;
+	{
+		/* Sign extend to 32 bits ensure the negative value is accessed correctly in upcall. */
+		I_8 byteValue = (I_8)realValue;
+		realValue = byteValue;
 		break;
-	case J9NtcChar: /* Fall through */
+	}
+	case J9NtcChar:
+		realValue &= 0xFFFF;
+		break;
 	case J9NtcShort:
-		realValue &= J9_FFI_UPCALL_SHORT_TYPE_MASK;
+	{
+		/* Sign extend to 32 bits ensure the negative value is accessed correctly in upcall. */
+		I_16 shortValue = (I_16)realValue;
+		realValue = shortValue;
 		break;
+	}
 	default:
 		/* Do nothing for the int/float type. */
 		break;
