@@ -2738,4 +2738,48 @@ public class UpcallMHWithStructTests {
 			Assert.assertEquals((double)doubleHandle3.get(resultSegmt), 88.579D, 0.001D);
 		}
 	}
+
+	@Test
+	public void test_addNegBytesFromStructByUpcallMH() throws Throwable {
+		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_BYTE.withName("elem1"), JAVA_BYTE.withName("elem2"));
+		VarHandle byteHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));
+		VarHandle byteHandle2 = structLayout.varHandle(PathElement.groupElement("elem2"));
+
+		FunctionDescriptor fd = FunctionDescriptor.of(JAVA_BYTE, JAVA_BYTE, structLayout, ADDRESS);
+		MemorySegment functionSymbol = nativeLibLookup.find("addNegBytesFromStructByUpcallMH").get();
+		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
+
+		try (Arena arena = Arena.ofConfined()) {
+			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addNegBytesFromStruct,
+					FunctionDescriptor.of(JAVA_BYTE, JAVA_BYTE, structLayout, JAVA_BYTE, JAVA_BYTE), arena);
+			MemorySegment structSegmt = arena.allocate(structLayout);
+			byteHandle1.set(structSegmt, (byte)-8);
+			byteHandle2.set(structSegmt, (byte)-9);
+
+			byte result = (byte)mh.invoke((byte)-6, structSegmt, upcallFuncAddr);
+			Assert.assertEquals(result, (byte)-40);
+		}
+	}
+
+	@Test
+	public void test_addNegShortsFromStructByUpcallMH() throws Throwable {
+		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_SHORT.withName("elem1"), JAVA_SHORT.withName("elem2"));
+		VarHandle shortHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));
+		VarHandle shortHandle2 = structLayout.varHandle(PathElement.groupElement("elem2"));
+
+		FunctionDescriptor fd = FunctionDescriptor.of(JAVA_SHORT, JAVA_SHORT, structLayout, ADDRESS);
+		MemorySegment functionSymbol = nativeLibLookup.find("addNegShortsFromStructByUpcallMH").get();
+		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
+
+		try (Arena arena = Arena.ofConfined()) {
+			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addNegShortsFromStruct,
+					FunctionDescriptor.of(JAVA_SHORT, JAVA_SHORT, structLayout, JAVA_SHORT, JAVA_SHORT), arena);
+			MemorySegment structSegmt = arena.allocate(structLayout);
+			shortHandle1.set(structSegmt, (short)-888);
+			shortHandle2.set(structSegmt, (short)-999);
+
+			short result = (short)mh.invoke((short)-777, structSegmt, upcallFuncAddr);
+			Assert.assertEquals(result, (short)-4551);
+		}
+	}
 }

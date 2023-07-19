@@ -405,6 +405,8 @@ omr_add_exports(clinkerffitests
 	addLongIntOfStructsFromVaListByUpcallMH
 	addFloatDoubleOfStructsFromVaListByUpcallMH
 	addDoubleFloatOfStructsFromVaListByUpcallMH
+	addNegBytesFromStructByUpcallMH
+	addNegShortsFromStructByUpcallMH
 )
 
 install(

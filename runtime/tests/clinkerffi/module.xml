@@ -396,6 +396,8 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<export name="addLongIntOfStructsFromVaListByUpcallMH"/>
 		<export name="addFloatDoubleOfStructsFromVaListByUpcallMH"/>
 		<export name="addDoubleFloatOfStructsFromVaListByUpcallMH"/>
+		<export name="addNegBytesFromStructByUpcallMH"/>
+		<export name="addNegShortsFromStructByUpcallMH"/>
 	</exports>
 
 	<artifact type="shared" name="clinkerffitests" appendrelease="false">
