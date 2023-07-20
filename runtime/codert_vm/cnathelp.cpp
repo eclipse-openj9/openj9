@@ -3204,6 +3204,8 @@ old_slow_jitNewInstanceImplAccessCheck(J9VMThread *currentThread)
  	J9InternalVMFunctions *vmFuncs = currentThread->javaVM->internalVMFunctions;
 	void *oldPC = buildJITResolveFrame(currentThread, J9_SSF_JIT_RESOLVE_RUNTIME_HELPER, parmCount);
 	IDATA checkResult = vmFuncs->checkVisibility(currentThread, callerClass, thisClass, thisClass->romClass->modifiers, J9_LOOK_REFLECT_CALL);
+	thisClass = VM_VMHelpers::currentClass(thisClass);
+	callerClass = VM_VMHelpers::currentClass(callerClass);
 	if (checkResult < J9_VISIBILITY_ALLOWED) {
 illegalAccess:
 		if (VM_VMHelpers::immediateAsyncPending(currentThread)) {
@@ -3240,17 +3242,20 @@ illegalAccess:
 			 * unless the two classes are in the same nest (JDK11 and beyond).
 			 */
 #if JAVA_SPEC_VERSION >= 11
-			if (NULL == thisClass->nestHost) {
-				if (J9_VISIBILITY_ALLOWED != vmFuncs->loadAndVerifyNestHost(currentThread, thisClass, 0)) {
+			J9Class *thisClassNestHost = thisClass->nestHost;
+			J9Class *callerClassNestHost = NULL;
+			if (NULL == thisClassNestHost) {
+				if (J9_VISIBILITY_ALLOWED != vmFuncs->loadAndVerifyNestHost(currentThread, thisClass, 0, &thisClassNestHost)) {
 					goto illegalAccess;
 				}
 			}
-			if (NULL == callerClass->nestHost) {
-				if (J9_VISIBILITY_ALLOWED != vmFuncs->loadAndVerifyNestHost(currentThread, callerClass, 0)) {
+			callerClassNestHost = callerClass->nestHost;
+			if (NULL == callerClassNestHost) {
+				if (J9_VISIBILITY_ALLOWED != vmFuncs->loadAndVerifyNestHost(currentThread, callerClass, 0, &callerClassNestHost)) {
 					goto illegalAccess;
 				}
 			}
-			if (thisClass->nestHost != callerClass->nestHost)
+			if (thisClassNestHost != callerClassNestHost)
 #endif /* JAVA_SPEC_VERSION >= 11 */
 			{
 				if (thisClass != callerClass) {

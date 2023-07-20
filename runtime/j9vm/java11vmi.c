@@ -1613,20 +1613,22 @@ JVM_AreNestMates(JNIEnv *env, jclass jClassOne, jclass jClassTwo)
 		} else {
 			J9Class *clazzOne = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, clazzObjectOne);
 			J9Class *clazzTwo = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, clazzObjectTwo);
+			J9Class *clazzOneNestHost = clazzOne->nestHost;
+			J9Class *clazzTwoNestHost = NULL;
 
-			if (NULL == clazzOne->nestHost) {
-				if (J9_VISIBILITY_ALLOWED != vmFuncs->loadAndVerifyNestHost(currentThread, clazzOne, J9_LOOK_NO_THROW)) {
+			if (NULL == clazzOneNestHost) {
+				if (J9_VISIBILITY_ALLOWED != vmFuncs->loadAndVerifyNestHost(currentThread, clazzOne, J9_LOOK_NO_THROW, &clazzOneNestHost)) {
+					goto done;
+				}
+			}
+			clazzTwoNestHost = clazzTwo->nestHost;
+			if (NULL == clazzTwoNestHost) {
+				if (J9_VISIBILITY_ALLOWED != vmFuncs->loadAndVerifyNestHost(currentThread, clazzTwo, J9_LOOK_NO_THROW, &clazzTwoNestHost)) {
 					goto done;
 				}
 			}
 
-			if (NULL == clazzTwo->nestHost) {
-				if (J9_VISIBILITY_ALLOWED != vmFuncs->loadAndVerifyNestHost(currentThread, clazzTwo, J9_LOOK_NO_THROW)) {
-					goto done;
-				}
-			}
-
-			if (clazzOne->nestHost == clazzTwo->nestHost) {
+			if (clazzOneNestHost == clazzTwoNestHost) {
 				result = JNI_TRUE;
 			}
 		}

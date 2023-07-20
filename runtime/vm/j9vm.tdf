@@ -353,7 +353,7 @@ TraceEvent=Trc_VM_objectMonitorEnterBlocking_gotFlatLockInLoop Overhead=1 Level=
 TraceExit=Trc_VM_objectMonitorEnterBlocking_Exit Overhead=1 Level=4 Template="objectMonitorEnterBlocking -- result = %p"
 
 TraceEntry=Trc_VM_checkVisibility_Entry Overhead=1 Level=3 Template="checkVisibility from %p to %p modifiers=%zx"
-TraceException=Trc_VM_checkVisibility_Failed Overhead=1 Level=1 Template="checkVisibility from %p (%.*s) to %p (%.*s) modifiers=%zx failed"
+TraceException=Trc_VM_checkVisibility_Failed Obsolete Overhead=1 Level=1 Template="checkVisibility from %p (%.*s) to %p (%.*s) modifiers=%zx failed"
 TraceExit=Trc_VM_checkVisibility_Exit Overhead=1 Level=3 Template="checkVisibility result=%x"
 
 TraceEntry=Trc_VM_resolveKnownClass_Entry Overhead=1 Level=1 Template="resolveKnownClass(index=%zu)"
@@ -928,3 +928,5 @@ TraceEvent=Trc_VM_allocateThunkHeap_allocate_thunk_heap_node_failed NoEnv Overhe
 
 TraceExit=Trc_VM_criu_initHooks_Exit Overhead=1 Level=5 Template="initializeCriuHooks - checkpointState.hookRecords (%p), classIterationRestoreHookRecords (%p), delayedLockingOperationsRecords (%p)"
 TraceException=Trc_VM_criu_setSingleThreadModeJVMCRIUException_triggerOneOffJavaDump Overhead=1 Level=1 Template="setCRIUSingleThreadModeJVMCRIUException triggerOneOffDump() returns %d"
+
+TraceException=Trc_VM_checkVisibility_Failed Overhead=1 Level=1 Template="checkVisibility from %p (%.*s) to %p (%.*s) modifiers=%zx lookupOptions=%zx failed"
