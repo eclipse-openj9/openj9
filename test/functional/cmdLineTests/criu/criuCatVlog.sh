@@ -48,12 +48,12 @@ else
         echo ""
 
         cat_prev_output
-
-        $(grep -q "Thread pid mismatch\|do not match expected\|Unable to create a thread:" testOutput criuOutput)
-        if [ $? -eq 0 ]; then
-            echo "CAT VLOG FORCE PASS"
-        fi
     fi
+fi
+
+$(grep -q "Thread pid mismatch\|do not match expected\|Unable to create a thread:" testOutput criuOutput)
+if [ $? -eq 0 ]; then
+    echo "CAT VLOG FORCE PASS"
 fi
 
 if [ "$3" == true ]; then
