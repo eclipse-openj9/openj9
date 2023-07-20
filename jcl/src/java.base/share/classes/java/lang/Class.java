@@ -5793,4 +5793,31 @@ SecurityException {
 		return rc;
 	}
 /*[ENDIF] JAVA_SPEC_VERSION >= 21 */
+/*[IF JAVA_SPEC_VERSION >= 22]*/
+	/**
+	 * Returns the Class object with the given primitive type name.
+	 * If the name is not associated with a primitive type, null is returned.
+	 *
+	 * @param typeName the primitive type name
+	 *
+	 * @return the Class object associated with the type name, and null otherwise.
+	 * @throws NullPointerException if the typeName is null
+	 *
+	 * @since 22
+	 */
+	public static Class<?> forPrimitiveName(String typeName) {
+		return switch(typeName) {
+		case "boolean" -> boolean.class; //$NON-NLS-1$
+		case "byte" -> byte.class; //$NON-NLS-1$
+		case "char" -> char.class; //$NON-NLS-1$
+		case "double" -> double.class; //$NON-NLS-1$
+		case "float" -> float.class; //$NON-NLS-1$
+		case "int" -> int.class; //$NON-NLS-1$
+		case "long" -> long.class; //$NON-NLS-1$
+		case "short" -> short.class; //$NON-NLS-1$
+		case "void" -> void.class; //$NON-NLS-1$
+		default -> null;
+		};
+	}
+/*[ENDIF] JAVA_SPEC_VERSION >= 22 */
 }
