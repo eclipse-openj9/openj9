@@ -323,19 +323,32 @@ jvmtiGetOrSetLocal(jvmtiEnv *env,
 			J9VMThread stackThread = {0};
 			J9VMEntryLocalStorage els = {0};
 			j9object_t threadObject = (NULL == thread) ? currentThread->threadObject : J9_JNI_UNWRAP_REFERENCE(thread);
-			J9VMContinuation *continuation = getJ9VMContinuationToWalk(currentThread, targetThread, threadObject);
+			J9VMContinuation *continuation = NULL;
+
+#if JAVA_SPEC_VERSION >= 20
+			if ((currentThread != targetThread)
+			&& (0 == J9OBJECT_U32_LOAD(currentThread, threadObject, vm->isSuspendedInternalOffset))
+			) {
+				rc = JVMTI_ERROR_THREAD_NOT_SUSPENDED;
+				goto release;
+			}
+#endif /* JAVA_SPEC_VERSION >= 20 */
+
+			continuation = getJ9VMContinuationToWalk(currentThread, targetThread, threadObject);
 			if (NULL != continuation) {
 				vm->internalVMFunctions->copyFieldsFromContinuation(currentThread, &stackThread, &els, continuation);
 				threadToWalk = &stackThread;
 			}
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
+#if JAVA_SPEC_VERSION < 20
 #if JAVA_SPEC_VERSION >= 19
 			if (NULL != targetThread)
 #endif /* JAVA_SPEC_VERSION >= 19 */
 			{
 				vm->internalVMFunctions->haltThreadForInspection(currentThread, targetThread);
 			}
+#endif /* JAVA_SPEC_VERSION < 20 */
 
 			rc = findDecompileInfo(currentThread, threadToWalk, (UDATA)depth, &walkState);
 			if (JVMTI_ERROR_NONE == rc) {
@@ -445,12 +458,19 @@ jvmtiGetOrSetLocal(jvmtiEnv *env,
 				rc = JVMTI_ERROR_NO_MORE_FRAMES;
 			}
 
+#if JAVA_SPEC_VERSION >= 20
+release:
+#endif /* JAVA_SPEC_VERSION >= 20 */
+
+#if JAVA_SPEC_VERSION < 20
 #if JAVA_SPEC_VERSION >= 19
 			if (NULL != targetThread)
 #endif /* JAVA_SPEC_VERSION >= 19 */
 			{
 				vm->internalVMFunctions->resumeThreadForInspection(currentThread, targetThread);
 			}
+#endif /* JAVA_SPEC_VERSION < 20 */
+
 			if (objectFetched) {
 				j9object_t obj = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
 				*((jobject *)value_ptr) = vm->internalVMFunctions->j9jni_createLocalRef((JNIEnv *)currentThread, obj);
