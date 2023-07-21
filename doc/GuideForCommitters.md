@@ -131,7 +131,7 @@ possible between them.
     build.  This ensures that the two changes put together would pass
     an OMR Acceptance build if one were launched.
     ```
-    Jenkins test sanity.functional,sanity.openjdk all jdk8,jdk11,jdk17,jdk20 depends eclipse/omr#{OMR PR number}
+    Jenkins test sanity.functional,sanity.openjdk all jdk8,jdk11,jdk17,jdk21 depends eclipse/omr#{OMR PR number}
     ```
     Before proceeding with the coordinated merge, you must ensure that
     the build is successful and that it was performed relatively
