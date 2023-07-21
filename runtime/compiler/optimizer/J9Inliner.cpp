@@ -29,6 +29,7 @@
 #include "compile/ResolvedMethod.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/CHTable.hpp"
+#include "env/HeuristicRegion.hpp"
 #include "env/PersistentCHTable.hpp"
 #include "env/VMJ9.h"
 #include "env/jittypes.h"
@@ -862,8 +863,11 @@ bool TR_J9InterfaceCallSite::findCallSiteTargetImpl(
          // heuristic because in that case we can be certain that the class
          // won't be extended later.
          bool useVftTestHeuristics = true;
-         TR::PersistentInfo *persistInfo = comp()->getPersistentInfo();
-         if (TR::Compiler->vm.isVMInStartupPhase(comp()->fej9()->getJ9JITConfig()))
+         if (comp()->compileRelocatableCode() && !comp()->getOption(TR_UseSymbolValidationManager))
+            {
+            useVftTestHeuristics = false;
+            }
+         else if (TR::Compiler->vm.isVMInStartupPhase(comp()->fej9()->getJ9JITConfig()))
             {
             const static bool useVftTestHeuristicsDuringStartup =
                feGetEnv("TR_useInterfaceVftTestHeuristicsDuringStartup") != NULL;
@@ -924,27 +928,36 @@ bool TR_J9InterfaceCallSite::findCallSiteTargetImpl(
                 && valueInfo != NULL
                 && !comp()->getOption(TR_DisableProfiledInlining))
                {
+               TR_ASSERT_FATAL(!comp()->compileRelocatableCode() || comp()->getOption(TR_UseSymbolValidationManager),
+                               "Cannot use VFT Test Heuristics in non-SVM AOT!\n");
+
                TR_ScratchList<TR_ExtraAddressInfo> byFreqDesc(comp()->trMemory());
                valueInfo->getSortedList(comp(), &byFreqDesc);
                ListIterator<TR_ExtraAddressInfo> it(&byFreqDesc);
                uint32_t remainingTotalFreq = valueInfo->getTotalFrequency();
                TR_OpaqueClassBlock *topProfiledClass = NULL;
                uint32_t topProfiledFreq = 0;
-               TR_ExtraAddressInfo *cur = it.getFirst();
-               for (; cur != NULL; cur = it.getNext())
-                  {
-                  auto *curClass =
-                     reinterpret_cast<TR_OpaqueClassBlock*>(cur->_value);
 
-                  if (persistInfo->isObsoleteClass(curClass, comp()->fe())
-                      || fe()->isInstanceOf(curClass, iface, true, true, true) != TR_yes)
+                  {
+                  TR::HeuristicRegion heuristicRegion(comp());
+
+                  TR::PersistentInfo *persistInfo = comp()->getPersistentInfo();
+                  TR_ExtraAddressInfo *cur = it.getFirst();
+                  for (; cur != NULL; cur = it.getNext())
                      {
-                     remainingTotalFreq -= cur->_frequency;
-                     }
-                  else if (topProfiledClass == NULL)
-                     {
-                     topProfiledClass = curClass;
-                     topProfiledFreq = cur->_frequency;
+                     auto *curClass =
+                        reinterpret_cast<TR_OpaqueClassBlock*>(cur->_value);
+
+                     if (persistInfo->isObsoleteClass(curClass, comp()->fe())
+                        || fe()->isInstanceOf(curClass, iface, true, true, true) != TR_yes)
+                        {
+                        remainingTotalFreq -= cur->_frequency;
+                        }
+                     else if (topProfiledClass == NULL)
+                        {
+                        topProfiledClass = curClass;
+                        topProfiledFreq = cur->_frequency;
+                        }
                      }
                   }
 
@@ -952,8 +965,20 @@ bool TR_J9InterfaceCallSite::findCallSiteTargetImpl(
                    && remainingTotalFreq >= 32
                    && topProfiledFreq == remainingTotalFreq)
                   {
-                  testType = TR_VftTest;
-                  thisClass = topProfiledClass;
+                  bool valid = true;
+
+                  if (comp()->compileRelocatableCode())
+                     {
+                     TR::SymbolValidationManager *svm = comp()->getSymbolValidationManager();
+                     valid = svm->addProfiledClassRecord(topProfiledClass)
+                             && svm->addClassInstanceOfClassRecord(topProfiledClass, iface, true, true, true);
+                     }
+
+                  if (valid)
+                     {
+                     testType = TR_VftTest;
+                     thisClass = topProfiledClass;
+                     }
                   }
                }
             }
