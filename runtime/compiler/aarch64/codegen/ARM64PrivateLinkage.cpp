@@ -353,7 +353,7 @@ void J9::ARM64::PrivateLinkage::mapStack(TR::ResolvedMethodSymbol *method)
    while (localCursor != NULL)
       {
       if (localCursor->getGCMapIndex() < 0 &&
-          localCursor->getSize() != 8)
+          localCursor->getSize() < 8)
          {
          mapSingleAutomatic(localCursor, stackIndex);
          }
@@ -369,13 +369,26 @@ void J9::ARM64::PrivateLinkage::mapStack(TR::ResolvedMethodSymbol *method)
       if (localCursor->getGCMapIndex() < 0 &&
           localCursor->getSize() == 8)
          {
-         stackIndex -= (stackIndex & 0x4)?4:0;
          mapSingleAutomatic(localCursor, stackIndex);
          }
 
       localCursor = automaticIterator.getNext();
       }
 
+   automaticIterator.reset();
+   localCursor = automaticIterator.getFirst();
+
+   while (localCursor != NULL)
+      {
+      if (localCursor->getGCMapIndex() < 0 &&
+          localCursor->getSize() > 8)
+         {
+         /* vectors and stack allocated objects */
+         mapSingleAutomatic(localCursor, stackIndex);
+         }
+
+      localCursor = automaticIterator.getNext();
+      }
    method->setLocalMappingCursor(stackIndex);
 
    mapIncomingParms(method);
@@ -391,17 +404,25 @@ void J9::ARM64::PrivateLinkage::mapSingleAutomatic(TR::AutomaticSymbol *p, uint3
 
 void J9::ARM64::PrivateLinkage::mapSingleAutomatic(TR::AutomaticSymbol *p, uint32_t size, uint32_t &stackIndex)
    {
-   /*
-    * Align stack-allocated objects that don't have GC map index > 0.
-    */
-   if (comp()->useCompressedPointers() && p->isLocalObject() && (p->getGCMapIndex() == -1))
+   stackIndex -= size;
+   if (p->isLocalObject() && (p->getGCMapIndex() == -1))
       {
+      /*
+       * Align stack-allocated objects without GC map index to local object alignment boundary.
+       * Stack-allocated objects with GC map index are already aligned when GC map index was assigned.
+       */
       int32_t roundup = TR::Compiler->om.getObjectAlignmentInBytes() - 1;
-
-      size = (size  + roundup) & (~roundup);
+      stackIndex &= (~roundup);
       }
-
-   p->setOffset(stackIndex -= size);
+   else if (size == 8)
+      {
+      stackIndex &= (~7);
+      }
+   else if (p->getDataType().isVector() || p->getDataType().isMask())
+      {
+      stackIndex &= (~15);
+      }
+   p->setOffset(stackIndex);
    }
 
 static void lockRegister(TR::RealRegister *regToAssign)
