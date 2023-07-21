@@ -36,10 +36,6 @@ openjdk:
     default:
       repoUrl: 'https://github.com/ibmruntimes/openj9-openjdk-jdk17.git'
       branch: 'openj9'
-  18:
-    default:
-      repoUrl: 'https://github.com/ibmruntimes/openj9-openjdk-jdk18.git'
-      branch: 'openj9'
   20:
     default:
       repoUrl: 'https://github.com/ibmruntimes/openj9-openjdk-jdk20.git'
@@ -156,13 +152,12 @@ boot_jdk_default:
       8: '8'
       11: '11'
       17: '17'
-      20: '18'
+      20: '19'
       next: '20'
     dir_strip:
       all: '1'
     url:
       all: 'https://api.adoptopenjdk.net/v3/binary/latest/${bootJDKVersion}/ga/${os}/${arch}/jdk/openj9/normal/adoptopenjdk?project=jdk'
-      20: 'https://api.adoptium.net/v3/binary/latest/20/ga/${os}/${arch}/jdk/hotspot/normal/eclipse?project=jdk'
 #========================================#
 # CRIU
 #========================================#
@@ -228,8 +223,6 @@ s390x_linux:
   boot_jdk:
     arch: 's390x'
     os: 'linux'
-    url:
-      20: 'https://openj9-artifactory.osuosl.org/artifactory/ci-openj9/Build_JDK20_s390x_linux_OMR/14/OpenJ9-JDK20-s390x_linux-20230505-063521.tar.gz'
   release:
     all: 'linux-s390x-server-release'
     8: 'linux-s390x-normal-server-release'
@@ -261,8 +254,6 @@ ppc64_aix:
     location: '/opt/bootjdks'
     arch: 'ppc64'
     os: 'aix'
-    url:
-      20: 'https://openj9-artifactory.osuosl.org/artifactory/ci-openj9/Build_JDK20_ppc64_aix_OMR/14/OpenJ9-JDK20-ppc64_aix-20230505-133657.tar.gz'
   release:
     all: 'aix-ppc64-server-release'
     8: 'aix-ppc64-normal-server-release'
