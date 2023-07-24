@@ -1367,7 +1367,7 @@ void J9::ARM64::PrivateLinkage::buildDirectCall(TR::Node *callNode,
    TR::Instruction *gcPoint;
    TR::MethodSymbol *callSymbol = callSymRef->getSymbol()->castToMethodSymbol();
 
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp()->fe());
+   TR_J9VMBase *fej9 = comp()->fej9();
 
    if (callSymRef->getReferenceNumber() >= TR_ARM64numRuntimeHelpers)
       fej9->reserveTrampolineIfNecessary(comp(), callSymRef, false);
@@ -1376,7 +1376,7 @@ void J9::ARM64::PrivateLinkage::buildDirectCall(TR::Node *callNode,
 
    if (callSymbol->isJITInternalNative() ||
        (!callSymRef->isUnresolved() && !callSymbol->isInterpreted() &&
-        ((forceUnresolvedDispatch && callSymbol->isHelper()) || !forceUnresolvedDispatch)))
+        (callSymbol->isHelper() || !forceUnresolvedDispatch)))
       {
       bool isMyself = comp()->isRecursiveMethodTarget(callSymbol);
 
@@ -1391,7 +1391,7 @@ void J9::ARM64::PrivateLinkage::buildDirectCall(TR::Node *callNode,
       TR::LabelSymbol *label = generateLabelSymbol(cg());
       TR::Snippet *snippet;
 
-      if (callSymRef->isUnresolved() || comp()->compileRelocatableCode())
+      if (callSymRef->isUnresolved() || forceUnresolvedDispatch)
          {
          snippet = new (trHeapMemory()) TR::ARM64UnresolvedCallSnippet(cg(), callNode, label, argSize);
          }

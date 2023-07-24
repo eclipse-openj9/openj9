@@ -187,6 +187,7 @@ TR_RuntimeHelper TR::ARM64CallSnippet::getHelper()
    TR::Node *callNode = getNode();
    TR::SymbolReference *methodSymRef = callNode->getSymbolReference();
    TR::MethodSymbol    *methodSymbol = methodSymRef->getSymbol()->castToMethodSymbol();
+   TR_J9VMBase *fej9 = comp->fej9();
    TR::SymbolReference *glueRef = NULL;
    bool isJitInduceOSRCall = false;
    if (methodSymbol->isHelper() &&
@@ -195,7 +196,8 @@ TR_RuntimeHelper TR::ARM64CallSnippet::getHelper()
       isJitInduceOSRCall = true;
       }
 
-   if (methodSymRef->isUnresolved() || comp->compileRelocatableCode())
+   bool forceUnresolvedDispatch = !fej9->isResolvedDirectDispatchGuaranteed(comp);
+   if (methodSymRef->isUnresolved() || forceUnresolvedDispatch)
       {
       if (methodSymbol->isSpecial())
          return TR_ARM64interpreterUnresolvedSpecialGlue;
@@ -242,6 +244,7 @@ uint8_t *TR::ARM64CallSnippet::emitSnippetBody()
    TR::SymbolReference *glueRef;
    TR::Compilation *comp = cg()->comp();
    void               *trmpln = NULL;
+   TR_J9VMBase *fej9 = comp->fej9();
 
    getSnippetLabel()->setCodeLocation(cursor);
 
@@ -272,8 +275,10 @@ uint8_t *TR::ARM64CallSnippet::emitSnippetBody()
    //continue execution in interpreted mode. Therefore, it doesn't need the method pointer.
    if (!glueRef->isOSRInductionHelper())
       {
+      bool forceUnresolvedDispatch = !fej9->isResolvedDirectDispatchGuaranteed(comp);
+
       // Store the method pointer: it is NULL for unresolved
-      if (methodSymRef->isUnresolved() || comp->compileRelocatableCode())
+      if (methodSymRef->isUnresolved() || forceUnresolvedDispatch)
          {
          *(intptr_t *)cursor = 0;
          if (comp->getOption(TR_EnableHCR))
@@ -297,16 +302,32 @@ uint8_t *TR::ARM64CallSnippet::emitSnippetBody()
          if (comp->getOption(TR_EnableHCR))
             {
             cg()->jitAddPicToPatchOnClassRedefinition((void *)methodSymbol->getMethodAddress(), (void *)cursor);
+            }
+         if (comp->compileRelocatableCode())
+            {
+            /*
+             * If we reach here, SymbolValidationManager is enabled because isResolvedDirectDispatchGuaranteed() returns
+             * false if it is AOT-compilation and SymbolValidationManger is disabled.
+             */
             cg()->addExternalRelocation(
                TR::ExternalRelocation::create(
                   cursor,
-                  (uint8_t *)methodSymRef,
-                  getNode() ? (uint8_t *)(intptr_t)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
-                  TR_MethodObject,
+                  reinterpret_cast<uint8_t *>(methodSymbol->getMethodAddress()),
+                  reinterpret_cast<uint8_t *>(TR::SymbolType::typeMethod),
+                  TR_SymbolFromManager,
                   cg()),
                __FILE__,
                __LINE__,
-               callNode);
+               getNode());
+            cg()->addExternalRelocation(
+               TR::ExternalRelocation::create(
+                  cursor,
+                  reinterpret_cast<uint8_t *>(methodSymbol->getMethodAddress()),
+                  TR_ResolvedTrampolines,
+                  cg()),
+               __FILE__,
+               __LINE__,
+               getNode());
             }
          }
       }
