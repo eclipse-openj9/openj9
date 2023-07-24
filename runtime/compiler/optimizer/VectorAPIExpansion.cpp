@@ -1269,6 +1269,7 @@ TR_VectorAPIExpansion::generateAddressNode(TR::Node *array, TR::Node *arrayIndex
    laddNode->setAndIncChild(1, TR::Node::create(TR::lconst, 0, arrayHeaderSize));
 
    TR::Node *aladdNode = TR::Node::create(TR::aladd, 2);
+   aladdNode->setIsInternalPointer(true);
    aladdNode->setAndIncChild(0, array);
    aladdNode->setAndIncChild(1, laddNode);
 
@@ -1489,6 +1490,7 @@ TR::Node *TR_VectorAPIExpansion::transformLoadFromArray(TR_VectorAPIExpansion *o
          {
          TR::Node *newLoadNode = TR::Node::createWithSymRef(node, loadOpCode, 1, scalarShadow);
          TR::Node *newAddressNode = TR::Node::create(TR::aladd, 2, aladdNode, TR::Node::create(TR::lconst, 0, i*elementSize));
+         newAddressNode->setIsInternalPointer(true);
          newLoadNode->setAndIncChild(0, newAddressNode);
 
          // keep Byte and Short as Int after it's loaded from array
@@ -1703,6 +1705,7 @@ TR::Node *TR_VectorAPIExpansion::transformStoreToArray(TR_VectorAPIExpansion *op
          {
          TR::Node *newStoreNode = TR::Node::createWithSymRef(node, storeOpCode, 2, scalarShadow);
          TR::Node *newAddressNode = TR::Node::create(TR::aladd, 2, aladdNode, TR::Node::create(TR::lconst, 0, i*elementSize));
+         newAddressNode->setIsInternalPointer(true);
          newStoreNode->setAndIncChild(0, newAddressNode);
          TR::Node *newValueToWrite = getScalarNode(opt, valueToWrite, i);
 
