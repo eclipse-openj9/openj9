@@ -2001,6 +2001,7 @@ initStackFromMethodSignature(J9VMThread *vmThread, J9ROMMethod *romMethod, UDATA
 	UDATA *stackTop = *stackTopPtr;
 	UDATA argCount = 0;
 	UDATA i = 0;
+	bool isArray = false;
 
 	/* if this is a virtual method, push the receiver */
 	if ((!(romMethod->modifiers & J9AccStatic)) && (argMax > 0)) {
@@ -2016,6 +2017,7 @@ initStackFromMethodSignature(J9VMThread *vmThread, J9ROMMethod *romMethod, UDATA
 
 		while ('[' == args[i]) {
 			i++;
+			isArray = true;
 		}
 		PUSH(argCount); /* push the argCount as the argument */
 		if ('L' == args[i]) {
@@ -2024,7 +2026,7 @@ initStackFromMethodSignature(J9VMThread *vmThread, J9ROMMethod *romMethod, UDATA
 				i++;
 			}
 		} else {
-			if (('J' == args[i]) || ('D' == args[i])) {
+			if (!isArray && (('J' == args[i]) || ('D' == args[i]))) {
 				PUSH(argCount);
 			}
 		}
