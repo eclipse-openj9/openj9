@@ -247,11 +247,6 @@ public:
 				&& (isClassAnon() || isClassHidden())
 			) {
 				unmodifiable = true;
-			} else if (NULL == J9VMJAVALANGOBJECT_OR_NULL(_javaVM)) {
-				/* Object is currently only allowed to be redefined in fast HCR */
-				if (areExtensionsEnabled(_javaVM)) {
-					unmodifiable = true;
-				}
 			}
 		}
 		return unmodifiable;
