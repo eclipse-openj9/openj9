@@ -440,17 +440,43 @@ jvmtiPopFrame(jvmtiEnv* env,
 		ENSURE_CAPABILITY(env, can_pop_frame);
 
 		rc = getVMThread(
-				currentThread, thread, &targetThread, JVMTI_ERROR_OPAQUE_FRAME,
-				J9JVMTI_GETVMTHREAD_ERROR_ON_NULL_JTHREAD | J9JVMTI_GETVMTHREAD_ERROR_ON_DEAD_THREAD | J9JVMTI_GETVMTHREAD_ERROR_ON_VIRTUALTHREAD);
+				currentThread, thread, &targetThread, JVMTI_ERROR_NONE,
+				J9JVMTI_GETVMTHREAD_ERROR_ON_NULL_JTHREAD | J9JVMTI_GETVMTHREAD_ERROR_ON_DEAD_THREAD);
 		if (rc == JVMTI_ERROR_NONE) {
-			/* Does this thread need to be suspended at an event? */
-			vm->internalVMFunctions->haltThreadForInspection(currentThread, targetThread);
-			if ((currentThread == targetThread) || !(targetThread->publicFlags & J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND))  {
+#if JAVA_SPEC_VERSION >= 21
+			j9object_t threadObject = NULL;
+			/* Error if a virtual thread is unmounted since it won't be able to
+			 * pop the current frame.
+			 */
+			if (NULL == targetThread) {
+				rc = JVMTI_ERROR_OPAQUE_FRAME;
+				goto release;
+			}
+			threadObject = (NULL == thread) ? currentThread->threadObject : J9_JNI_UNWRAP_REFERENCE(thread);
+#endif /* JAVA_SPEC_VERSION >= 21 */
+
+			/* Error if the thread is not suspended and not the current thread. */
+			if ((currentThread != targetThread)
+#if JAVA_SPEC_VERSION >= 21
+			&& (0 == J9OBJECT_U32_LOAD(currentThread, threadObject, vm->isSuspendedInternalOffset))
+#else /* JAVA_SPEC_VERSION >= 21 */
+			&& OMR_ARE_NO_BITS_SET(targetThread->publicFlags, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND)
+#endif /* JAVA_SPEC_VERSION >= 21 */
+			)  {
 				rc = JVMTI_ERROR_THREAD_NOT_SUSPENDED;
 			} else {
-				J9StackWalkState walkState;
-
-				walkState.walkThread = targetThread;
+				J9StackWalkState walkState = {0};
+				J9VMThread *threadToWalk = targetThread;
+#if JAVA_SPEC_VERSION >= 21
+				J9VMThread stackThread = {0};
+				J9VMEntryLocalStorage els = {0};
+				J9VMContinuation *continuation = getJ9VMContinuationToWalk(currentThread, targetThread, threadObject);
+				if (NULL != continuation) {
+						vm->internalVMFunctions->copyFieldsFromContinuation(currentThread, &stackThread, &els, continuation);
+						threadToWalk = &stackThread;
+				}
+#endif /* JAVA_SPEC_VERSION >= 21 */
+				walkState.walkThread = threadToWalk;
 				walkState.userData1 = (void *) JVMTI_ERROR_NO_MORE_FRAMES;
 				walkState.userData2 = (void *) 0;
 				walkState.frameWalkFunction = popFrameCheckIterator;
@@ -462,7 +488,9 @@ jvmtiPopFrame(jvmtiEnv* env,
 					vm->internalVMFunctions->setHaltFlag(targetThread, J9_PUBLIC_FLAGS_POP_FRAMES_INTERRUPT);
 				}
 			}
-			vm->internalVMFunctions->resumeThreadForInspection(currentThread, targetThread);
+#if JAVA_SPEC_VERSION >= 21
+release:
+#endif /* JAVA_SPEC_VERSION >= 21 */
 			releaseVMThread(currentThread, targetThread, thread);
 		}
 done:
