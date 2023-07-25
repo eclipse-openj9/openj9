@@ -84,8 +84,8 @@ static UDATA classPairEquals(void* left, void* right, void* userData);
 static UDATA findMethodInVTable(J9Method *method, UDATA *vTable);
 static jvmtiError addClassesRequiringNewITables(J9JavaVM *vm, J9HashTable *classHashTable, UDATA *addedMethodCountPtr, UDATA *addedClassCountPtr, BOOLEAN fastHCR);
 static jvmtiError verifyFieldsAreSame (J9VMThread * currentThread, UDATA fieldType, J9ROMClass * originalROMClass, J9ROMClass * replacementROMClass,
-									   UDATA extensionsEnabled, UDATA * extensionsUsed);
-static jvmtiError verifyMethodsAreSame (J9VMThread * currentThread, J9JVMTIClassPair * classPair, UDATA extensionsEnabled, UDATA * extensionsUsed);
+									   UDATA extensionsEnabled, jvmtiError *extensionError);
+static jvmtiError verifyMethodsAreSame (J9VMThread * currentThread, J9JVMTIClassPair * classPair, UDATA extensionsEnabled, jvmtiError *extensionError);
 static int compareClassDepth (const void *leftPair, const void *rightPair);
 static UDATA utfsAreIdentical(J9UTF8 * utf1, J9UTF8 * utf2);
 static UDATA areUTFPairsIdentical(J9UTF8 * leftUtf1, J9UTF8 * leftUtf2, J9UTF8 * rightUtf1, J9UTF8 * rightUtf2);
@@ -2975,7 +2975,7 @@ determineClassesToRecreate(J9VMThread * currentThread, jint classCount,
 
 static jvmtiError
 verifyFieldsAreSame(J9VMThread * currentThread, UDATA fieldType, J9ROMClass * originalROMClass, J9ROMClass * replacementROMClass,
-					UDATA extensionsEnabled, UDATA * extensionsUsed)
+					UDATA extensionsEnabled, jvmtiError *extensionError)
 {
     jvmtiError rc = JVMTI_ERROR_NONE;
 	UDATA originalFieldCount;
@@ -3040,7 +3040,7 @@ done:
 
     if ((fieldType == J9AccStatic) && (rc != JVMTI_ERROR_NONE)) {
 		if (extensionsEnabled) {
-			*extensionsUsed = 1;
+			*extensionError = rc;
 			rc = JVMTI_ERROR_NONE;
 		}
 	}
@@ -3073,9 +3073,9 @@ getOldestClassVersion(J9Class * clazz)
  * \brief	Verify that the methods follow allowed schema change rules
  * \ingroup
  *
- * @param[in] currentThread
- * @param[in] classPair			old and replacing class
- * @param[in] extensionsEnabled boolean indicating if the extensions are enabled
+ * @param[in]  currentThread
+ * @param[in]  classPair	       old and replacing class
+ * @param[out] extensionError  error which would occur if extensions are not enabled
  * @return error code
  *
  * If extensions are enabled then none of the schema verification errors matter as they are all allowed.
@@ -3092,7 +3092,7 @@ getOldestClassVersion(J9Class * clazz)
  *
  */
 static jvmtiError
-verifyMethodsAreSame(J9VMThread * currentThread, J9JVMTIClassPair * classPair, UDATA extensionsEnabled, UDATA * extensionsUsed)
+verifyMethodsAreSame(J9VMThread * currentThread, J9JVMTIClassPair * classPair, UDATA extensionsEnabled, jvmtiError *extensionError)
 {
 	jvmtiError rc = JVMTI_ERROR_NONE;
 	J9Class * oldestRAMClass;
@@ -3105,7 +3105,6 @@ verifyMethodsAreSame(J9VMThread * currentThread, J9JVMTIClassPair * classPair, U
 	}
 
 	originalROMClass = oldestRAMClass->romClass;
-
 
 	/* Verify that the methods are the same */
 
@@ -3244,7 +3243,7 @@ done:
     /* If extensions are enabled, any error aside of OOM (returned with earlier) is a hint that extensions have been used
 	 * and should not be treated as an error */
     if (rc != JVMTI_ERROR_NONE) {
-		*extensionsUsed = 1;
+		*extensionError = rc;
 	}
 
 	return JVMTI_ERROR_NONE;
@@ -3354,7 +3353,7 @@ verifyClassesAreCompatible(J9VMThread * currentThread, jint class_count, J9JVMTI
 	jint i;
 
 	for (i = 0; i < class_count; ++i) {
-		UDATA classUsesExtensions = 0;
+		jvmtiError extensionError = JVMTI_ERROR_NONE;
 		J9ROMClass * originalROMClass = classPairs[i].originalRAMClass->romClass;
 		J9ROMClass * replacementROMClass = classPairs[i].replacementClass.romClass;
 		jvmtiError rc;
@@ -3429,24 +3428,30 @@ verifyClassesAreCompatible(J9VMThread * currentThread, jint class_count, J9JVMTI
 
 		/* Verify that instance fields are the same */
 
-		rc = verifyFieldsAreSame(currentThread, 0, originalROMClass, replacementROMClass, extensionsEnabled, &classUsesExtensions);
+		rc = verifyFieldsAreSame(currentThread, 0, originalROMClass, replacementROMClass, extensionsEnabled, &extensionError);
 		if (rc != JVMTI_ERROR_NONE) {
 			return rc;
 		}
 
-
 		/* Verify that static fields are the same */
 
-		rc = verifyFieldsAreSame(currentThread, J9AccStatic, originalROMClass, replacementROMClass, extensionsEnabled, &classUsesExtensions);
+		rc = verifyFieldsAreSame(currentThread, J9AccStatic, originalROMClass, replacementROMClass, extensionsEnabled, &extensionError);
 		if (rc != JVMTI_ERROR_NONE) {
 			return rc;
 		}
 
 		/* Verify that the methods are the same */
 
-		rc = verifyMethodsAreSame(currentThread, &classPairs[i], extensionsEnabled, &classUsesExtensions);
+		rc = verifyMethodsAreSame(currentThread, &classPairs[i], extensionsEnabled, &extensionError);
 		if (rc != JVMTI_ERROR_NONE) {
 			return rc;
+		}
+
+		/* Disallow extensions for java.lang.Object */
+		if (JVMTI_ERROR_NONE != extensionError) {
+			if (NULL == J9ROMCLASS_SUPERCLASSNAME(originalROMClass)){
+				return extensionError;
+			}
 		}
 
 #if JAVA_SPEC_VERSION >= 15
@@ -3497,7 +3502,7 @@ verifyClassesAreCompatible(J9VMThread * currentThread, jint class_count, J9JVMTI
 		}
 #endif /* JAVA_SPEC_VERSION >= 11 */
 
-		if (0 != classUsesExtensions) {
+		if (JVMTI_ERROR_NONE != extensionError) {
 			classPairs[i].flags |= J9JVMTI_CLASS_PAIR_FLAG_USES_EXTENSIONS;
 			*extensionsUsed = 1;
 		}
