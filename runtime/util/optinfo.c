@@ -717,7 +717,7 @@ getNumberOfInjectedInterfaces(J9ROMClass *romClass) {
 }
 
 U_32*
-getNumberOfPreloadClassesPtr(J9ROMClass *romClass)
+getPreloadInfoPtr(J9ROMClass *romClass)
 {
 	U_32 *ptr = getSRPPtr(J9ROMCLASS_OPTIONALINFO(romClass), romClass->optionalFlags, J9_ROMCLASS_OPTINFO_PRELOAD_ATTRIBUTE);
 
@@ -727,10 +727,10 @@ getNumberOfPreloadClassesPtr(J9ROMClass *romClass)
 }
 
 J9UTF8*
-preloadClassNameAtIndex(U_32* preloadClassesCountPtr, U_32 index)
+preloadClassNameAtIndex(U_32* preloadInfoPtr, U_32 index)
 {
 	/* SRPs to Preload name constant pool entries start after the preloadClassesCountPtr */
-	U_32* preloadClassesPtr = preloadClassesCountPtr + 1 + index;
+	U_32* preloadClassesPtr = preloadInfoPtr + 1 + index;
 
 	return NNSRP_PTR_GET(preloadClassesPtr, J9UTF8*);
 }

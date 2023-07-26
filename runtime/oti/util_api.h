@@ -1357,16 +1357,17 @@ getNumberOfInjectedInterfaces(J9ROMClass *romClass);
  * ROM class parameter references a class with preloaded classes.
  *
  * @param J9ROMClass class
- * @return U_32 number of preload classes in optionalinfo
+ * @return U_32* the first U_32 is the number of classes, followed by that number
+ * of constant pool indices.
  */
 U_32*
-getNumberOfPreloadClassesPtr(J9ROMClass *romClass);
+getPreloadInfoPtr(J9ROMClass *romClass);
 
 /**
  * Find the preload class name constant pool entry at index in the optional data of the ROM class parameter.
  * This method assumes there is at least one preloaded class in the ROM class.
  *
- * @param U_32* the pointer returned by getNumberOfPreloadClassesPtr
+ * @param U_32* the pointer returned by getPreloadInfoPtr
  * @param U_32 class index
  * @return the preload class name at index from ROM class
  */
