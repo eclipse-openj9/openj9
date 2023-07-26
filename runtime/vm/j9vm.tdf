@@ -927,3 +927,4 @@ TraceExit=Trc_VM_allocateThunkHeap_Exit NoEnv Overhead=1 Level=3 Template="Exit 
 TraceEvent=Trc_VM_allocateThunkHeap_allocate_thunk_heap_node_failed NoEnv Overhead=1 Level=3 Template="allocateThunkHeap - Failed to allocate memory for the thunk heap node"
 
 TraceExit=Trc_VM_criu_initHooks_Exit Overhead=1 Level=5 Template="initializeCriuHooks - checkpointState.hookRecords (%p), classIterationRestoreHookRecords (%p), delayedLockingOperationsRecords (%p)"
+TraceException=Trc_VM_criu_setSingleThreadModeJVMCRIUException_triggerOneOffJavaDump Overhead=1 Level=1 Template="setCRIUSingleThreadModeJVMCRIUException triggerOneOffDump() returns %d"

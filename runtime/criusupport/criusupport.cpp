@@ -856,6 +856,8 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 			currentExceptionClass = vm->checkpointState.criuJVMCheckpointExceptionClass;
 			systemReturnCode = vm->checkpointState.maxRetryForNotCheckpointSafe;
 			nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_JCL_CRIU_MAX_RETRY_FOR_NOTCHECKPOINTSAFE_REACHED, NULL);
+			omr_error_t rc = vm->j9rasDumpFunctions->triggerOneOffDump(vm, (char*)"java", (char*)"org.eclipse.openj9.criu.CRIUSupport.checkpointJVMImpl", NULL, 0);
+			Trc_CRIU_checkpointJVMImpl_triggerOneOffJavaDump(currentThread, rc);
 			goto closeWorkDirFD;
 		} else {
 			Trc_CRIU_checkpointJVMImpl_checkpointWithActiveCLinit(currentThread);
