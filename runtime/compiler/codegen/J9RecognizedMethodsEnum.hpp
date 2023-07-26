@@ -122,6 +122,7 @@
    java_lang_Math_tanh,
    java_lang_Math_fma_D,
    java_lang_Math_fma_F,
+   java_lang_Math_multiplyHigh,
    java_lang_Object_init,
    java_lang_Object_getClass,
    java_lang_Object_clone,

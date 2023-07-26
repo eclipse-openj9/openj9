@@ -67,6 +67,7 @@ J9::MethodSymbol::isPureFunction()
       case TR::java_lang_Math_min_L:
       case TR::java_lang_Math_min_F:
       case TR::java_lang_Math_min_D:
+      case TR::java_lang_Math_multiplyHigh:
       case TR::java_lang_Math_nextAfter_F:
       case TR::java_lang_Math_nextAfter_D:
       case TR::java_lang_Math_pow:
