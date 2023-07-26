@@ -121,21 +121,6 @@ typedef struct TR_InlinedSiteHastTableEntry
    TR_InlinedSiteLinkedListEntry *last;
    } TR_InlinedSiteHastTableEntry;
 
-
-typedef enum
-   {
-   inlinedMethodIsStatic = 1,
-   inlinedMethodIsSpecial = 2,
-   inlinedMethodIsVirtual = 3
-   } TR_InlinedMethodKind;
-
-
-typedef enum
-   {
-   needsFullSizeRuntimeAssumption = 1
-   } TR_HCRAssumptionFlags;
-
-
 typedef enum
    {
    noPerfAssumptions = 0,
@@ -144,7 +129,15 @@ typedef enum
    tooManyFailedInlinedAllocRelos = 3
    } TR_FailedPerfAssumptionCode;
 
-
+typedef enum
+   {
+   inlinedMethodIsStatic            = 0x01,
+   inlinedMethodIsSpecial           = 0x02,
+   inlinedMethodIsVirtual           = 0x04,
+   staticSpecialMethodFromCpIsSplit = 0x08,
+   needsFullSizeRuntimeAssumption   = 0x10,
+   methodTracingEnabled             = 0x20,
+   } TR_RelocationFlags;
 
 /* TR_AOTMethodHeader Versions:
 *     1.0    Java6 GA
@@ -181,8 +174,8 @@ typedef struct TR_AOTMethodHeader {
 
 /* AOT Method flags */
 #define TR_AOTMethodHeader_NeedsRecursiveMethodTrampolineReservation 0x00000001
-#define TR_AOTMethodHeader_IsNotCapableOfMethodEnterTracing          0x00000002
-#define TR_AOTMethodHeader_IsNotCapableOfMethodExitTracing           0x00000004
+#define TR_AOTMethodHeader_MethodEnterEventCanBeHooked               0x00000002
+#define TR_AOTMethodHeader_MethodExitEventCanBeHooked                0x00000004
 #define TR_AOTMethodHeader_UsesEnableStringCompressionFolding        0x00000008
 #define TR_AOTMethodHeader_StringCompressionEnabled                  0x00000010
 #define TR_AOTMethodHeader_UsesSymbolValidationManager               0x00000020
@@ -190,8 +183,7 @@ typedef struct TR_AOTMethodHeader {
 #define TR_AOTMethodHeader_CompressedMethodInCache                   0x00000080
 #define TR_AOTMethodHeader_IsNotCapableOfExceptionHook               0x00000100
 #define TR_AOTMethodHeader_UsesOSR                                   0x00000200
-
-
+#define TR_AOTMethodHeader_MethodTracingEnabled                      0x00000400
 
 
 typedef struct TR_AOTInliningStats

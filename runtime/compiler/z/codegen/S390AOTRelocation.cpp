@@ -234,6 +234,19 @@ void TR::S390EncodingRelocation::addRelocation(TR::CodeGenerator *cg, uint8_t *c
                                            node,
                                            counter);
       }
+   else if (_reloType==TR_MethodEnterExitHookAddress)
+      {
+      cg->addExternalRelocation(
+         TR::ExternalRelocation::create(
+            cursor,
+            (uint8_t *)_symbolReference,
+            NULL,
+            TR_MethodEnterExitHookAddress,
+            cg),
+         file,
+         line,
+         node);
+      }
    else
       {
       TR_ASSERT(0,"relocation type [%d] not handled yet", _reloType);

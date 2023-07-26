@@ -2146,6 +2146,7 @@ bool isOrderedPair(U_8 recordType)
       case TR_StartPC:
       case TR_DataAddress:
       case TR_DebugCounter:
+      case TR_MethodEnterExitHookAddress:
 #endif
          isOrderedPair = true;
          break;

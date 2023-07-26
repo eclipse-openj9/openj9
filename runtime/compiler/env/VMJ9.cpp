@@ -2998,99 +2998,20 @@ TR_J9VMBase::lowerMethodHook(TR::Compilation * comp, TR::Node * root, TR::TreeTo
 
    TR::Node * methodCall;
    if (root->getNumChildren() == 0)
+      {
       methodCall = TR::Node::createWithSymRef(TR::call, 1, 1, ramMethod, root->getSymbolReference());
+      }
    else
       {
       TR::Node * child = root->getChild(0);
-      if (isAOT_DEPRECATED_DO_NOT_USE() || (!isTrace && comp->cg()->getSupportsPartialInlineOfMethodHooks()))
+      if (!isTrace && comp->cg()->getSupportsPartialInlineOfMethodHooks())
          child = child->duplicateTree();
 
       methodCall = TR::Node::createWithSymRef(TR::call, 2, 2, child, ramMethod, root->getSymbolReference());
       root->getChild(0)->recursivelyDecReferenceCount();
       }
 
-   if (isAOT_DEPRECATED_DO_NOT_USE())
-      {
-      // Add an ifcmpne branch for AOT
-      TR::TreeTop *ifTree = TR::TreeTop::create(comp, TR::Node::create(TR::treetop, 1, methodCall));
-
-      TR::Node *cmp = comp->createAOTGuard(comp, methodCall->getInlinedSiteIndex(), root, 0, TR_MethodEnterExitGuard);
-      TR::TreeTop *cmpTree = TR::TreeTop::create(comp, cmp);
-
-      root->setNumChildren(0);
-
-      TR::Block * followOnBlock = NULL;
-      TR::Block *enclosingBlock = treeTop->getEnclosingBlock();
-      TR::Block *remainderBlock = enclosingBlock->createConditionalBlocksBeforeTree(treeTop, cmpTree, ifTree, 0, comp->getFlowGraph());
-
-      TR::Block *ifBlock = ifTree->getEnclosingBlock();
-
-      bool enableDupTree = comp->getOption(TR_EnableDupRetTree);
-      if ((root->getOpCodeValue() == TR::MethodExitHook) && enableDupTree)
-         {
-         // Remove the goto block
-         TR::TransformUtil::removeTree(comp, ifBlock->getLastRealTreeTop());
-
-         // remove the edge
-         comp->getFlowGraph()->removeEdge(ifBlock, remainderBlock);
-
-         // to create dup tree
-         TR::TreeTop *dupTree = remainderBlock->getFirstRealTreeTop()->duplicateTree();
-
-         // append the duplicated tree
-         ifBlock->append(dupTree);
-
-         TR::TreeTop *exitTree = remainderBlock->getLastRealTreeTop();
-         TR::TreeTop *curTree = remainderBlock->getFirstRealTreeTop();
-         TR::TreeTop *nextTree = curTree->getNextRealTreeTop();
-         while (curTree != exitTree)
-            {
-            curTree = nextTree;
-            ifBlock->append(curTree->duplicateTree());
-            nextTree = curTree->getNextRealTreeTop();
-            }
-
-         // mark return block as extension of prev block
-         //remainderBlock->setIsExtensionOfPreviousBlock(true);
-
-         // do I need to add edge from ifBlock to out?  what is the Out Block?
-         comp->getFlowGraph()->addEdge(ifBlock, comp->getFlowGraph()->getEnd());
-         }
-
-      if (methodCall->getNumChildren() != 0)
-         {
-         //enclosingBlock->getNextBlock()->setIsExtensionOfPreviousBlock();
-
-         TR::Node *child = methodCall->getChild(0);
-         if (child->getOpCodeValue() == TR::aRegLoad)
-            {
-            TR::Node *ifNode = ifTree->getNode();
-            ifNode->setNumChildren(3);
-            TR::Node *glRegDeps = enclosingBlock->getEntry()->getNode()->getChild(0);
-
-            TR::Node *duplicateGlRegDeps = glRegDeps->duplicateTree();
-            TR::Node *originalDuplicateGlRegDeps = duplicateGlRegDeps;
-            duplicateGlRegDeps = TR::Node::copy(glRegDeps);
-            ifNode->setChild(2, duplicateGlRegDeps);
-
-            for (int32_t i = glRegDeps->getNumChildren() - 1; i >= 0; --i)
-               {
-               TR::Node * dep = glRegDeps->getChild(i);
-               duplicateGlRegDeps->setAndIncChild(i, dep);
-               if (dep->getGlobalRegisterNumber() == child->getGlobalRegisterNumber())
-                  originalDuplicateGlRegDeps->setAndIncChild(i, child);
-               }
-
-            TR::Block *callTreeBlock = ifTree->getEnclosingBlock();
-            TR::Node *bbstartNode = callTreeBlock->getEntry()->getNode();
-            bbstartNode->setNumChildren(1);
-            bbstartNode->setChild(0, originalDuplicateGlRegDeps);
-            }
-         }
-
-      return cmpTree;
-      }
-   else if (!isTrace && comp->cg()->getSupportsPartialInlineOfMethodHooks())
+   if (!isTrace && comp->cg()->getSupportsPartialInlineOfMethodHooks())
       {
       // The method enter and exit hooks must be modified to check to see if the event is hooked
       // in the new interface rather than the old. This is a simple bit test at a known address.
@@ -3103,9 +3024,18 @@ TR_J9VMBase::lowerMethodHook(TR::Compilation * comp, TR::Node * root, TR::TreeTo
       //      bload &vmThread()->javaVM->hookInterface->flags[J9HOOK_VM_METHOD_ENTER/J9HOOK_VM_METHOD_RETURN];
       //    iconst J9HOOK_FLAG_HOOKED
       //
-      int32_t event = root->getOpCodeValue() == TR::MethodEnterHook ? J9HOOK_VM_METHOD_ENTER : J9HOOK_VM_METHOD_RETURN;
       TR::StaticSymbol * addressSym = TR::StaticSymbol::create(comp->trHeapMemory(),TR::Address);
-      addressSym->setStaticAddress(getStaticHookAddress(event));
+      addressSym->setNotDataAddress();
+      if (root->getOpCodeValue() == TR::MethodEnterHook)
+         {
+         addressSym->setStaticAddress(getStaticHookAddress(J9HOOK_VM_METHOD_ENTER));
+         addressSym->setIsEnterEventHookAddress();
+         }
+      else
+         {
+         addressSym->setStaticAddress(getStaticHookAddress(J9HOOK_VM_METHOD_RETURN));
+         addressSym->setIsExitEventHookAddress();
+         }
 
       TR::TreeTop * hookedTest =  TR::TreeTop::create(comp,
          TR::Node::createif(TR::ificmpne,
@@ -3122,7 +3052,7 @@ TR_J9VMBase::lowerMethodHook(TR::Compilation * comp, TR::Node * root, TR::TreeTo
       root->setNumChildren(0);
 
       TR::Block *enclosingBlock = treeTop->getEnclosingBlock();
-      if (comp->getOption(TR_EnableSelectiveEnterExitHooks))
+      if (comp->getOption(TR_EnableSelectiveEnterExitHooks) && !comp->compileRelocatableCode())
          {
          // Mainline test is whether this method has been selected for entry/exit hooks
 
