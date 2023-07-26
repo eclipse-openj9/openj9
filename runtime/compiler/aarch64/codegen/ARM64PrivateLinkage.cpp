@@ -1599,7 +1599,7 @@ static TR::Instruction* buildStaticPICCall(TR::CodeGenerator *cg, TR::Node *call
          }
       else
          {
-         loadAddressConstant(cg, callNode, reinterpret_cast<intptr_t>(profiledClass), tempReg, NULL, true);
+         loadAddressConstant(cg, false, callNode, reinterpret_cast<intptr_t>(profiledClass), tempReg);
          }
       }
    generateCompareInstruction(cg, callNode, vftReg, tempReg, true);
