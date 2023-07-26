@@ -28,6 +28,7 @@ import java.util.function.Supplier;
 import jdk.internal.access.JavaLangAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.misc.Unsafe;
+import jdk.internal.vm.annotation.JvmtiMountTransition;
 
 /**
  * Continuation class performing the mount/unmount operation for VirtualThread
@@ -277,7 +278,9 @@ public class Continuation {
 	}
 
 	/* Continuation Native APIs */
+	@JvmtiMountTransition
 	private native boolean enterImpl();
-	private static native boolean yieldImpl(boolean isFinished);
 
+	@JvmtiMountTransition
+	private static native boolean yieldImpl(boolean isFinished);
 }

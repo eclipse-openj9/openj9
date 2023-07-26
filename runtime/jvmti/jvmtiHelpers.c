@@ -1791,21 +1791,43 @@ static UDATA
 findDecompileInfoFrameIterator(J9VMThread *currentThread, J9StackWalkState *walkState)
 {
 	UDATA rc = J9_STACKWALK_KEEP_ITERATING;
+	J9Method *method = walkState->method;
+
+#if JAVA_SPEC_VERSION >= 20
+	J9ROMMethod *romMethod = NULL;
+	U_32 extendedModifiers = 0;
+
+	/* walkState->method can never be NULL since the J9_STACKWALK_VISIBLE_ONLY flag is set. */
+	Assert_JVMTI_true(NULL != method);
+
+	romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+	extendedModifiers = getExtendedModifiersDataFromROMMethod(romMethod);
+
+	if (J9_ARE_ANY_BITS_SET(extendedModifiers, CFR_METHOD_EXT_JVMTIMOUNTTRANSITION_ANNOTATION)) {
+		goto skip;
+	}
+#endif /* JAVA_SPEC_VERSION >= 20 */
+
 	if (JVMTI_ERROR_NONE != (UDATA)walkState->userData1) {
 		/* The current frame is the requested frame.  Record the inline depth for the decompiler
 		 * and the method and bytecodePCOffset for the slot validator.
 		 */
 		walkState->userData1 = (void*)JVMTI_ERROR_NONE;
 		walkState->userData2 = (void*)walkState->inlineDepth;
-		walkState->userData3 = walkState->method;
+		walkState->userData3 = method;
 		walkState->userData4 = (void*)(UDATA)walkState->bytecodePCOffset;
 	}
+
 	/* Keep walking until the outer method is reached (the inline decompiler requires that
 	 * the walkState be at this point).
 	 */
 	if (0 == walkState->inlineDepth) {
 		rc = J9_STACKWALK_STOP_ITERATING;
 	}
+
+#if JAVA_SPEC_VERSION >= 20
+skip:
+#endif /* JAVA_SPEC_VERSION >= 20 */
 	return rc;
 }
 
