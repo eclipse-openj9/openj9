@@ -20,7 +20,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
-/* ANSI-C code produced by gperf version 3.0.4 */
+/* ANSI-C code produced by gperf version 3.1 */
 /* Command-line: gperf -CD -t --output-file=attrlookup.h attrlookup.gperf  */
 /* Computed positions: -k'2' */
 
@@ -48,7 +48,7 @@
       && ('w' == 119) && ('x' == 120) && ('y' == 121) && ('z' == 122) \
       && ('{' == 123) && ('|' == 124) && ('}' == 125) && ('~' == 126))
 /* The character set is not based on ISO-646.  */
-#error "gperf generated tables don't work with this execution character set. Please report a bug to <bug-gnu-gperf@gnu.org>."
+#error "gperf generated tables don't work with this execution character set. Please report a bug to <bug-gperf@gnu.org>."
 #endif
 
 #line 39 "attrlookup.gperf"
@@ -59,7 +59,7 @@ struct AttribType
 	U_8 strippedAttribCode;
 };
 
-#define TOTAL_KEYWORDS 30
+#define TOTAL_KEYWORDS 31
 #define MIN_WORD_LENGTH 4
 #define MAX_WORD_LENGTH 36
 #define MIN_HASH_VALUE 4
@@ -131,6 +131,8 @@ lookupKnownAttribute (register const char *str, register unsigned int len)
       {"InnerClasses", CFR_ATTRIBUTE_InnerClasses, CFR_ATTRIBUTE_InnerClasses},
 #line 55 "attrlookup.gperf"
       {"ConstantValue", CFR_ATTRIBUTE_ConstantValue, CFR_ATTRIBUTE_ConstantValue},
+#line 77 "attrlookup.gperf"
+      {"NullRestricted", CFR_ATTRIBUTE_NullRestricted, CFR_ATTRIBUTE_NullRestricted},
 #line 57 "attrlookup.gperf"
       {"EnclosingMethod", CFR_ATTRIBUTE_EnclosingMethod, CFR_ATTRIBUTE_EnclosingMethod},
 #line 59 "attrlookup.gperf"
@@ -184,9 +186,9 @@ lookupKnownAttribute (register const char *str, register unsigned int len)
   static const signed char lookup[] =
     {
       -1, -1, -1, -1,  0, -1, -1,  1, -1,  2,  3, -1,  4,  5,
-      -1,  6,  7,  8,  9, -1, 10, 11, 12, 13, 14, 15, -1, 16,
-      17, 18, 19, 20, -1, -1, 21, 22, 23, 24, -1, 25, -1, 26,
-      27, -1, -1, -1, -1, 28, -1, -1, 29
+       6,  7,  8,  9, 10, -1, 11, 12, 13, 14, 15, 16, -1, 17,
+      18, 19, 20, 21, -1, -1, 22, 23, 24, 25, -1, 26, -1, 27,
+      28, -1, -1, -1, -1, 29, -1, -1, 30
     };
 
   if (len <= MAX_WORD_LENGTH && len >= MIN_WORD_LENGTH)
