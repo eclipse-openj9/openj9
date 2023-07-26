@@ -264,7 +264,6 @@ J9::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedExternalReloca
    uint8_t *cursor         = relocation->getRelocationData();
    uint8_t targetKind      = relocation->getTargetKind();
    uint16_t sizeOfReloData = relocation->getSizeOfRelocationData();
-   uint8_t wideOffsets     = relocation->needsWideOffsets() ? RELOCATION_TYPE_WIDE_OFFSET : 0;
 
    // Zero-initialize header
    memset(cursor, 0, sizeOfReloData);
@@ -272,9 +271,10 @@ J9::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedExternalReloca
    TR_RelocationRecord storage;
    TR_RelocationRecord *reloRecord = TR_RelocationRecord::create(&storage, reloRuntime, targetKind, reinterpret_cast<TR_RelocationRecordBinaryTemplate *>(cursor));
 
-   reloRecord->setSize(reloTarget, sizeOfReloData);
    reloRecord->setType(reloTarget, static_cast<TR_RelocationRecordType>(targetKind));
-   reloRecord->setFlag(reloTarget, wideOffsets);
+   reloRecord->setSize(reloTarget, sizeOfReloData);
+   if (relocation->needsWideOffsets())
+      reloRecord->setWideOffsets(reloTarget);
 
    if (!self()->initializePlatformSpecificAOTRelocationHeader(relocation, reloTarget, reloRecord, targetKind))
       self()->initializeCommonAOTRelocationHeader(relocation, reloTarget, reloRecord, targetKind);
@@ -508,14 +508,6 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          uintptr_t destinationAddress    = info->data4;
 
          uint8_t flags = 0;
-         // Setup flags field with type of method that needs to be validated at relocation time
-         if (callSymRef->getSymbol()->getMethodSymbol()->isStatic())
-            flags = inlinedMethodIsStatic;
-         else if (callSymRef->getSymbol()->getMethodSymbol()->isSpecial())
-            flags = inlinedMethodIsSpecial;
-         else if (callSymRef->getSymbol()->getMethodSymbol()->isVirtual())
-            flags = inlinedMethodIsVirtual;
-         TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
 
          TR_ResolvedMethod *resolvedMethod;
          if (kind == TR_InlinedInterfaceMethodWithNopGuard ||
@@ -530,11 +522,12 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
             resolvedMethod = callSymRef->getSymbol()->getResolvedMethodSymbol()->getResolvedMethod();
             }
 
+         TR_OpaqueMethodBlock *method = resolvedMethod->getPersistentIdentifier();
+
          // Ugly; this will be cleaned up in a future PR
          uintptr_t cpIndexOrData = 0;
          if (comp->getOption(TR_UseSymbolValidationManager))
             {
-            TR_OpaqueMethodBlock *method = resolvedMethod->getPersistentIdentifier();
             uint16_t methodID = symValManager->getSymbolIDFromValue(static_cast<void *>(method));
             uint16_t receiverClassID = symValManager->getSymbolIDFromValue(static_cast<void *>(thisClass));
 
@@ -544,6 +537,19 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
             {
             cpIndexOrData = static_cast<uintptr_t>(callSymRef->getCPIndex());
             }
+
+         // Setup flags field with type of method that needs to be validated at relocation time
+         if (callSymRef->getSymbol()->getMethodSymbol()->isStatic())
+            flags = inlinedMethodIsStatic;
+         else if (callSymRef->getSymbol()->getMethodSymbol()->isSpecial())
+            flags = inlinedMethodIsSpecial;
+         else if (callSymRef->getSymbol()->getMethodSymbol()->isVirtual())
+            flags = inlinedMethodIsVirtual;
+
+         if (fej9->isMethodTracingEnabled(reinterpret_cast<J9Method *>(method)))
+            flags |= methodTracingEnabled;
+
+         TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
 
          TR_OpaqueClassBlock *inlinedMethodClass = resolvedMethod->containingClass();
          J9ROMClass *romClass = reinterpret_cast<J9ROMClass *>(fej9->getPersistentClassPointerFromClassPointer(inlinedMethodClass));
@@ -628,6 +634,12 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
 
          uintptr_t methodIndex = fej9->getMethodIndexInClass(inlinedCodeClass, inlinedMethod->getNonPersistentIdentifier());
 
+         uint8_t flags = 0;
+         TR_OpaqueMethodBlock *method = inlinedMethod->getPersistentIdentifier();
+         if (fej9->isMethodTracingEnabled(reinterpret_cast<J9Method *>(method)))
+            flags = methodTracingEnabled;
+         TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
+
          // Ugly; this will be cleaned up in a future PR
          uintptr_t cpIndexOrData = 0;
          if (comp->getOption(TR_UseSymbolValidationManager))
@@ -640,6 +652,7 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
             cpIndexOrData = static_cast<uintptr_t>(callSymRef->getCPIndex());
             }
 
+         pRecord->setReloFlags(reloTarget, flags);
          pRecord->setInlinedSiteIndex(reloTarget, inlinedSiteIndex);
          pRecord->setConstantPool(reloTarget, reinterpret_cast<uintptr_t>(owningMethod->constantPool()));
          pRecord->setCpIndex(reloTarget, cpIndexOrData);
@@ -957,7 +970,7 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
             "static method cpIndex has special split table flag set");
 
          if ((svmRecord->_cpIndex & J9_STATIC_SPLIT_TABLE_INDEX_FLAG) != 0)
-            smfcpRecord->setReloFlags(reloTarget, TR_VALIDATE_STATIC_OR_SPECIAL_METHOD_FROM_CP_IS_SPLIT);
+            smfcpRecord->setReloFlags(reloTarget, staticSpecialMethodFromCpIsSplit);
 
          smfcpRecord->setMethodID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_method));
          smfcpRecord->setDefiningClassID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_definingClass));
@@ -977,7 +990,7 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
             "special method cpIndex has static split table flag set");
 
          if ((svmRecord->_cpIndex & J9_SPECIAL_SPLIT_TABLE_INDEX_FLAG) != 0)
-            smfcpRecord->setReloFlags(reloTarget, TR_VALIDATE_STATIC_OR_SPECIAL_METHOD_FROM_CP_IS_SPLIT);
+            smfcpRecord->setReloFlags(reloTarget, staticSpecialMethodFromCpIsSplit);
 
          smfcpRecord->setMethodID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_method));
          smfcpRecord->setDefiningClassID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_definingClass));
@@ -1320,6 +1333,22 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          icvRecord->setSourceClassID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_sourceClass));
          icvRecord->setDestClassID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_destClass));
          icvRecord->setIsVisible(reloTarget, svmRecord->_isVisible);
+         }
+         break;
+
+      case TR_MethodEnterExitHookAddress:
+         {
+         TR_RelocationRecordMethodEnterExitHookAddress *mehaRecord = reinterpret_cast<TR_RelocationRecordMethodEnterExitHookAddress *>(reloRecord);
+
+         TR::SymbolReference *symRef = reinterpret_cast<TR::SymbolReference *>(relocation->getTargetAddress());
+         uint8_t flags = static_cast<uint8_t>(reinterpret_cast<uintptr_t>(relocation->getTargetAddress2()));
+
+         TR::Symbol *sym = symRef->getSymbol();
+         TR_ASSERT_FATAL((sym->isEnterEventHookAddress() || sym->isExitEventHookAddress()),
+                         "TR_MethodEnterExitHookAddress: symbol %p is neither enter nor exit hook address\n");
+
+         mehaRecord->setReloFlags(reloTarget, flags);
+         mehaRecord->setIsEnterHookAddr(reloTarget, sym->isEnterEventHookAddress());
          }
          break;
 
@@ -2247,6 +2276,21 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
                      (uint32_t)icvRecord->sourceClassID(reloTarget),
                      (uint32_t)icvRecord->destClassID(reloTarget),
                      icvRecord->isVisible(reloTarget) ? "true" : "false");
+            }
+         }
+         break;
+
+      case TR_MethodEnterExitHookAddress:
+         {
+         TR_RelocationRecordMethodEnterExitHookAddress *mehaRecord = reinterpret_cast<TR_RelocationRecordMethodEnterExitHookAddress *>(reloRecord);
+
+         self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
+         if (isVerbose)
+            {
+            traceMsg(
+               self()->comp(),
+               "\n Method Enter/Exit Hook Address: isEnterHookAddr=%s ",
+               mehaRecord->isEnterHookAddr(reloTarget) ? "true" : "false");
             }
          }
          break;

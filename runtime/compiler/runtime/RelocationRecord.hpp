@@ -41,9 +41,6 @@ typedef TR_ExternalRelocationTargetKind TR_RelocationRecordType;
 namespace TR { class AheadOfTimeCompile; }
 class AOTCacheClassChainRecord;
 
-
-#define TR_VALIDATE_STATIC_OR_SPECIAL_METHOD_FROM_CP_IS_SPLIT 0x01
-
 class TR_RelocationRecordGroup
    {
    public:
@@ -174,6 +171,11 @@ struct TR_RelocationRecordBreakpointGuardPrivateData
    uint8_t *_destinationAddress;
    };
 
+struct TR_RelocationRecordMethodEnterExitHookAddressPrivateData
+   {
+   bool _isEnterHookAddr;
+   };
+
 union TR_RelocationRecordPrivateData
    {
    TR_RelocationRecordHelperAddressPrivateData helperAddress;
@@ -192,6 +194,7 @@ union TR_RelocationRecordPrivateData
    TR_RelocationRecordBlockFrequencyPrivateData blockFrequency;
    TR_RelocationRecordRecompQueuedFlagPrivateData recompQueuedFlag;
    TR_RelocationRecordBreakpointGuardPrivateData breakpointGuard;
+   TR_RelocationRecordMethodEnterExitHookAddressPrivateData hookAddress;
    };
 
 enum TR_RelocationRecordAction
@@ -1973,6 +1976,24 @@ class TR_RelocationRecordStartPC : public TR_RelocationRecord
       virtual char *name();
 
       virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget);
+      virtual TR_RelocationErrorCode applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
+      virtual TR_RelocationErrorCode applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocationHigh, uint8_t *reloLocationLow);
+   };
+
+class TR_RelocationRecordMethodEnterExitHookAddress : public TR_RelocationRecord
+   {
+   public:
+      TR_RelocationRecordMethodEnterExitHookAddress() {}
+      TR_RelocationRecordMethodEnterExitHookAddress(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record) : TR_RelocationRecord(reloRuntime, record) {}
+
+      virtual char *name() { return "TR_RelocationRecordMethodEnterExitHookAddress"; }
+      virtual void print(TR_RelocationRuntime *reloRuntime);
+
+      void setIsEnterHookAddr(TR_RelocationTarget *reloTarget, bool isEnterHookAddr);
+      bool isEnterHookAddr(TR_RelocationTarget *reloTarget);
+
+      virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget);
+
       virtual TR_RelocationErrorCode applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
       virtual TR_RelocationErrorCode applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocationHigh, uint8_t *reloLocationLow);
    };

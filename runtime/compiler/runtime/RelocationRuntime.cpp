@@ -132,21 +132,25 @@ char *TR_RelocationRuntime::_reloErrorCodeNames[] =
    "isClassVisibleValidationFailure",                  // 44
    "svmValidationFailure",                             // 45
    "wkcValidationFailure",                             // 46
+   "methodTracingValidationFailure",                   // 47
 
-   "classAddressRelocationFailure",                    // 47
-   "inlinedMethodRelocationFailure",                   // 48
-   "symbolFromManagerRelocationFailure",               // 49
-   "thunkRelocationFailure",                           // 50
-   "trampolineRelocationFailure",                      // 51
-   "picTrampolineRelocationFailure",                   // 52
-   "cacheFullRelocationFailure",                       // 53
-   "blockFrequencyRelocationFailure",                  // 54
-   "recompQueuedFlagRelocationFailure",                // 55
-   "debugCounterRelocationFailure",                    // 56
-   "directJNICallRelocationFailure",                   // 57
-   "ramMethodConstRelocationFailure",                  // 58
+   "classAddressRelocationFailure",                    // 48
+   "inlinedMethodRelocationFailure",                   // 49
+   "symbolFromManagerRelocationFailure",               // 50
+   "thunkRelocationFailure",                           // 51
+   "trampolineRelocationFailure",                      // 52
+   "picTrampolineRelocationFailure",                   // 53
+   "cacheFullRelocationFailure",                       // 54
+   "blockFrequencyRelocationFailure",                  // 55
+   "recompQueuedFlagRelocationFailure",                // 56
+   "debugCounterRelocationFailure",                    // 57
+   "directJNICallRelocationFailure",                   // 58
+   "ramMethodConstRelocationFailure",                  // 59
+   "catchBlockCounterRelocationFailure",               // 60
+   "staticDefaultValueInstanceRelocationFailure",      // 61
 
-   "maxRelocationError"                                // 59
+   "maxRelocationError"                                // 62
+
    };
 
 TR_RelocationRuntime::TR_RelocationRuntime(J9JITConfig *jitCfg)
@@ -277,19 +281,24 @@ TR_RelocationRuntime::prepareRelocateAOTCodeAndData(J9VMThread* vmThread,
 
    // If we want to trace this method but the AOT body is not prepared to handle it
    // we must fail this AOT load with an error code that will force retrial
-   if ((fej9->isMethodTracingEnabled((TR_OpaqueMethodBlock*)theMethod) || fej9->canMethodExitEventBeHooked())
-      &&
-       (_aotMethodHeaderEntry->flags & TR_AOTMethodHeader_IsNotCapableOfMethodExitTracing))
+   if (fej9->canMethodEnterEventBeHooked()
+       && !(_aotMethodHeaderEntry->flags & TR_AOTMethodHeader_MethodEnterEventCanBeHooked))
+      {
+      setReloErrorCode(TR_RelocationErrorCode::methodEnterValidationFailure);
+      setReturnCode(compilationRelocationFailure);
+      return NULL; // fail
+      }
+   if (fej9->canMethodExitEventBeHooked()
+       && !(_aotMethodHeaderEntry->flags & TR_AOTMethodHeader_MethodExitEventCanBeHooked))
       {
       setReloErrorCode(TR_RelocationErrorCode::methodExitValidationFailure);
       setReturnCode(compilationRelocationFailure);
       return NULL; // fail
       }
-   if ((fej9->isMethodTracingEnabled((TR_OpaqueMethodBlock*)theMethod) || fej9->canMethodEnterEventBeHooked())
-      &&
-       (_aotMethodHeaderEntry->flags & TR_AOTMethodHeader_IsNotCapableOfMethodEnterTracing))
+   if (fej9->isMethodTracingEnabled((TR_OpaqueMethodBlock *)theMethod)
+       && !(_aotMethodHeaderEntry->flags & TR_AOTMethodHeader_MethodTracingEnabled))
       {
-      setReloErrorCode(TR_RelocationErrorCode::methodEnterValidationFailure);
+      setReloErrorCode(TR_RelocationErrorCode::methodTracingValidationFailure);
       setReturnCode(compilationRelocationFailure);
       return NULL; // fail
       }

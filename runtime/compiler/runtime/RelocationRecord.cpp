@@ -81,59 +81,20 @@ struct TR_RelocationRecordBinaryTemplate
    {
    uint8_t type(TR_RelocationTarget *reloTarget);
 
-   uint16_t _size;
    uint8_t _type;
-   uint8_t _flags;
-
-#if defined(TR_HOST_64BIT)
-   uint32_t _extra;
-#endif
+   uint16_t _size;
+   uint16_t _flags;
    };
 
-// Generating 32-bit code on a 64-bit machine or vice-versa won't work because the alignment won't
-// be right.  Relying on inheritance in the structures here means padding is automatically inserted
-// at each inheritance boundary: this inserted padding won't match across 32-bit and 64-bit platforms.
-// Making as many fields as possible UDATA should minimize the differences and gives the most freedom
-// in the hierarchy of binary relocation record structures, but the header definitely has an inheritance
-// boundary at offset 4B.
-
-// This struct must be identical to TR_RelocationRecordBinaryTemplate
-// in at least the first three (_size, _type, and _flags) fields
-struct TR_RelocationRecordHelperAddressBinaryTemplate
+struct TR_RelocationRecordHelperAddressBinaryTemplate : public TR_RelocationRecordBinaryTemplate
    {
-   uint16_t _size;
-   uint8_t _type;
-   uint8_t _flags;
    uint32_t _helperID;
    };
-static_assert(offsetof(TR_RelocationRecordBinaryTemplate, _size)
-              == offsetof(TR_RelocationRecordHelperAddressBinaryTemplate, _size),
-              "TR_RelocationRecordHelperAddressBinaryTemplate::_size not the same offset as TR_RelocationRecordBinaryTemplate::_size");
-static_assert(offsetof(TR_RelocationRecordBinaryTemplate, _type)
-              == offsetof(TR_RelocationRecordHelperAddressBinaryTemplate, _type),
-              "TR_RelocationRecordHelperAddressBinaryTemplate::_type not the same offset as TR_RelocationRecordBinaryTemplate::_type");
-static_assert(offsetof(TR_RelocationRecordBinaryTemplate, _flags)
-              == offsetof(TR_RelocationRecordHelperAddressBinaryTemplate, _flags),
-              "TR_RelocationRecordHelperAddressBinaryTemplate::_flags not the same offset as TR_RelocationRecordBinaryTemplate::_flags");
 
-// This struct must be identical to TR_RelocationRecordBinaryTemplate
-// in at least the first three (_size, _type, and _flags) fields
-struct TR_RelocationRecordPicTrampolineBinaryTemplate
+struct TR_RelocationRecordPicTrampolineBinaryTemplate : public TR_RelocationRecordBinaryTemplate
    {
-   uint16_t _size;
-   uint8_t _type;
-   uint8_t _flags;
    uint32_t _numTrampolines;
    };
-static_assert(offsetof(TR_RelocationRecordBinaryTemplate, _size)
-              == offsetof(TR_RelocationRecordPicTrampolineBinaryTemplate, _size),
-              "TR_RelocationRecordPicTrampolineBinaryTemplate::_size not the offset same as TR_RelocationRecordBinaryTemplate::_size");
-static_assert(offsetof(TR_RelocationRecordBinaryTemplate, _type)
-              == offsetof(TR_RelocationRecordPicTrampolineBinaryTemplate, _type),
-              "TR_RelocationRecordPicTrampolineBinaryTemplate::_type not the offset same as TR_RelocationRecordBinaryTemplate::_type");
-static_assert(offsetof(TR_RelocationRecordBinaryTemplate, _flags)
-              == offsetof(TR_RelocationRecordPicTrampolineBinaryTemplate, _flags),
-              "TR_RelocationRecordPicTrampolineBinaryTemplate::_flags not the offset same as TR_RelocationRecordBinaryTemplate::_flags");
 
 struct TR_RelocationRecordWithInlinedSiteIndexBinaryTemplate : public TR_RelocationRecordBinaryTemplate
    {
@@ -434,6 +395,11 @@ struct TR_RelocationRecordValidateIsClassVisibleBinaryTemplate : public TR_Reloc
    uint16_t _sourceClassID;
    uint16_t _destClassID;
    uint8_t _isVisible;
+   };
+
+struct TR_RelocationRecordMethodEnterExitHookAddressBinaryTemplate : public TR_RelocationRecordBinaryTemplate
+   {
+   uint8_t _isEnterHookAddr;
    };
 
 // END OF BINARY TEMPLATES
@@ -866,6 +832,9 @@ TR_RelocationRecord::create(TR_RelocationRecord *storage, TR_RelocationRuntime *
       case TR_StartPC:
          reloRecord = new (storage) TR_RelocationRecordStartPC(reloRuntime, record);
          break;
+      case TR_MethodEnterExitHookAddress:
+         reloRecord = new (storage) TR_RelocationRecordMethodEnterExitHookAddress(reloRuntime, record);
+         break;
       default:
          // TODO: error condition
          printf("Unexpected relo record: %d\n", reloType);fflush(stdout);
@@ -968,29 +937,32 @@ TR_RelocationRecord::eipRelative(TR_RelocationTarget *reloTarget)
 void
 TR_RelocationRecord::setFlag(TR_RelocationTarget *reloTarget, uint8_t flag)
    {
-   uint8_t flags = reloTarget->loadUnsigned8b((uint8_t *) &_record->_flags) | (flag & RELOCATION_CROSS_PLATFORM_FLAGS_MASK);
-   reloTarget->storeUnsigned8b(flags, (uint8_t *) &_record->_flags);
+   TR_ASSERT_FATAL((flag >> RELOCATION_RELOC_FLAGS_SHIFT) == 0, "flag %d is larger than %d bits", flag, RELOCATION_RELOC_FLAGS_SHIFT);
+   uint16_t flags = reloTarget->loadUnsigned16b((uint8_t *) &_record->_flags) | (flag & RELOCATION_CROSS_PLATFORM_FLAGS_MASK);
+   reloTarget->storeUnsigned16b(flags, (uint8_t *) &_record->_flags);
    }
 
 uint8_t
 TR_RelocationRecord::flags(TR_RelocationTarget *reloTarget)
    {
-   return reloTarget->loadUnsigned8b((uint8_t *) &_record->_flags) & RELOCATION_CROSS_PLATFORM_FLAGS_MASK;
+   return reloTarget->loadUnsigned16b((uint8_t *) &_record->_flags) & RELOCATION_CROSS_PLATFORM_FLAGS_MASK;
    }
 
 void
 TR_RelocationRecord::setReloFlags(TR_RelocationTarget *reloTarget, uint8_t reloFlags)
    {
+   reloFlags <<= RELOCATION_RELOC_FLAGS_SHIFT;
    TR_ASSERT_FATAL((reloFlags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
+
    uint8_t crossPlatFlags = flags(reloTarget);
    uint8_t flags = crossPlatFlags | (reloFlags & RELOCATION_RELOC_FLAGS_MASK);
-   reloTarget->storeUnsigned8b(flags, (uint8_t *) &_record->_flags);
+   reloTarget->storeUnsigned16b(flags, (uint8_t *) &_record->_flags);
    }
 
 uint8_t
 TR_RelocationRecord::reloFlags(TR_RelocationTarget *reloTarget)
    {
-   return reloTarget->loadUnsigned8b((uint8_t *) &_record->_flags) & RELOCATION_RELOC_FLAGS_MASK;
+   return (reloTarget->loadUnsigned16b((uint8_t *) &_record->_flags) & RELOCATION_RELOC_FLAGS_MASK) >> RELOCATION_RELOC_FLAGS_SHIFT;
    }
 
 void
@@ -2754,10 +2726,8 @@ TR_RelocationRecordInlinedMethod::inlinedSiteCanBeActivated(TR_RelocationRuntime
       return false;
       }
 
-   if (reloRuntime->fej9()->isAnyMethodTracingEnabled((TR_OpaqueMethodBlock *) currentMethod)
-       || (!reloRuntime->comp()->getOption(TR_FullSpeedDebug)
-           && (reloRuntime->fej9()->canMethodEnterEventBeHooked()
-               || reloRuntime->fej9()->canMethodExitEventBeHooked())))
+   if (reloRuntime->fej9()->isMethodTracingEnabled((TR_OpaqueMethodBlock *)currentMethod)
+       && !(reloFlags(reloTarget) & methodTracingEnabled))
       {
       RELO_LOG(reloRuntime->reloLogger(), 6, "\tinlinedSiteCanBeActivated: target may need enter/exit tracing so disabling inline site\n");
       return false;
@@ -2816,7 +2786,8 @@ TR_RelocationRecordInlinedMethod::inlinedSiteValid(TR_RelocationRuntime *reloRun
          else
             reloPrivateData->_receiverClass = NULL;
 
-         if (reloFlags(reloTarget) != inlinedMethodIsStatic && reloFlags(reloTarget) != inlinedMethodIsSpecial)
+         if (((reloFlags(reloTarget) & inlinedMethodIsStatic) == 0)
+             && ((reloFlags(reloTarget) & inlinedMethodIsSpecial) == 0))
             {
             TR_ResolvedMethod *calleeResolvedMethod = reloRuntime->fej9()->createResolvedMethod(reloRuntime->comp()->trMemory(),
                                                                                                 (TR_OpaqueMethodBlock *)currentMethod,
@@ -4596,7 +4567,7 @@ TR_RelocationRecordValidateStaticMethodFromCP::applyRelocation(TR_RelocationRunt
    uint16_t beholderID = this->beholderID(reloTarget);
    uint32_t cpIndex = this->cpIndex(reloTarget);
 
-   if ((reloFlags(reloTarget) & TR_VALIDATE_STATIC_OR_SPECIAL_METHOD_FROM_CP_IS_SPLIT) != 0)
+   if ((reloFlags(reloTarget) & staticSpecialMethodFromCpIsSplit) != 0)
       cpIndex |= J9_STATIC_SPLIT_TABLE_INDEX_FLAG;
 
    if (reloRuntime->comp()->getSymbolValidationManager()->validateStaticMethodFromCPRecord(methodID, definingClassID, beholderID, cpIndex))
@@ -4613,7 +4584,7 @@ TR_RelocationRecordValidateSpecialMethodFromCP::applyRelocation(TR_RelocationRun
    uint16_t beholderID = this->beholderID(reloTarget);
    uint32_t cpIndex = this->cpIndex(reloTarget);
 
-   if ((reloFlags(reloTarget) & TR_VALIDATE_STATIC_OR_SPECIAL_METHOD_FROM_CP_IS_SPLIT) != 0)
+   if ((reloFlags(reloTarget) & staticSpecialMethodFromCpIsSplit) != 0)
       cpIndex |= J9_SPECIAL_SPLIT_TABLE_INDEX_FLAG;
 
    if (reloRuntime->comp()->getSymbolValidationManager()->validateSpecialMethodFromCPRecord(methodID, definingClassID, beholderID, cpIndex))
@@ -6521,6 +6492,61 @@ TR_RelocationRecordStartPC::applyRelocation(TR_RelocationRuntime *reloRuntime, T
    return TR_RelocationErrorCode::relocationOK;
    }
 
+// TR_RelocationRecordMethodEnterExitHookAddress
+//
+void
+TR_RelocationRecordMethodEnterExitHookAddress::print(TR_RelocationRuntime *reloRuntime)
+   {
+   TR_RelocationTarget *reloTarget = reloRuntime->reloTarget();
+   TR_RelocationRuntimeLogger *reloLogger = reloRuntime->reloLogger();
+   TR_RelocationRecord::print(reloRuntime);
+   reloLogger->printf("\tisEnterHookAddr %s\n", isEnterHookAddr(reloTarget) ? "true" : "false");
+   }
+
+void
+TR_RelocationRecordMethodEnterExitHookAddress::setIsEnterHookAddr(TR_RelocationTarget *reloTarget, bool isEnterHookAddr)
+   {
+   reloTarget->storeUnsigned8b((uint8_t)isEnterHookAddr, (uint8_t *) &((TR_RelocationRecordMethodEnterExitHookAddressBinaryTemplate *)_record)->_isEnterHookAddr);
+   }
+
+bool
+TR_RelocationRecordMethodEnterExitHookAddress::isEnterHookAddr(TR_RelocationTarget *reloTarget)
+   {
+   return (bool)reloTarget->loadUnsigned8b((uint8_t *) &((TR_RelocationRecordMethodEnterExitHookAddressBinaryTemplate *)_record)->_isEnterHookAddr);
+   }
+
+void
+TR_RelocationRecordMethodEnterExitHookAddress::preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget)
+   {
+   TR_RelocationRecordMethodEnterExitHookAddressPrivateData *reloPrivateData = &(privateData()->hookAddress);
+
+   reloPrivateData->_isEnterHookAddr = isEnterHookAddr(reloTarget);
+   }
+
+TR_RelocationErrorCode
+TR_RelocationRecordMethodEnterExitHookAddress::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
+   {
+   TR_RelocationRecordMethodEnterExitHookAddressPrivateData *reloPrivateData = &(privateData()->hookAddress);
+   int32_t event = reloPrivateData->_isEnterHookAddr ? J9HOOK_VM_METHOD_ENTER : J9HOOK_VM_METHOD_RETURN;
+   void *hookAddr = reloRuntime->fej9()->getStaticHookAddress(event);
+
+   reloTarget->storeAddressSequence((uint8_t *)hookAddr, reloLocation, reloFlags(reloTarget));
+
+   return TR_RelocationErrorCode::relocationOK;
+   }
+
+TR_RelocationErrorCode
+TR_RelocationRecordMethodEnterExitHookAddress::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocationHigh, uint8_t *reloLocationLow)
+   {
+   TR_RelocationRecordMethodEnterExitHookAddressPrivateData *reloPrivateData = &(privateData()->hookAddress);
+   int32_t event = reloPrivateData->_isEnterHookAddr ? J9HOOK_VM_METHOD_ENTER : J9HOOK_VM_METHOD_RETURN;
+   void *hookAddr = reloRuntime->fej9()->getStaticHookAddress(event);
+
+   reloTarget->storeAddress((uint8_t *)hookAddr, reloLocationHigh, reloLocationLow, reloFlags(reloTarget));
+
+   return TR_RelocationErrorCode::relocationOK;
+   }
+
 // The _relocationRecordHeaderSizeTable table should be the last thing in this file
 uint32_t TR_RelocationRecord::_relocationRecordHeaderSizeTable[TR_NumExternalRelocationKinds] =
    {
@@ -6639,5 +6665,6 @@ uint32_t TR_RelocationRecord::_relocationRecordHeaderSizeTable[TR_NumExternalRel
    sizeof(TR_RelocationRecordValidateIsClassVisibleBinaryTemplate),                  // TR_ValidateIsClassVisible                       = 112
    sizeof(TR_RelocationRecordBinaryTemplate),                                        // TR_CatchBlockCounter                            = 113
    sizeof(TR_RelocationRecordBinaryTemplate),                                        // TR_StartPC                                      = 114
+   sizeof(TR_RelocationRecordMethodEnterExitHookAddressBinaryTemplate),              // TR_MethodEnterExitHookAddress                   = 115
    };
 // The _relocationRecordHeaderSizeTable table should be the last thing in this file
