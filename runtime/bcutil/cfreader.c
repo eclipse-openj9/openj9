@@ -110,7 +110,7 @@ utf8Equal(J9CfrConstantPoolInfo* utf8, char* string, UDATA length)
 static U_8 
 attributeTagFor(J9CfrConstantPoolInfo *utf8, BOOLEAN stripDebugAttributes)
 {
-	const struct AttribType *attribType = lookupKnownAttribute((const char *)utf8->bytes, (unsigned int)utf8->slot1);
+	const struct AttribType *attribType = lookupKnownAttribute((const char *)utf8->bytes, (size_t)utf8->slot1);
 
 	if (NULL != attribType) {
 		return (stripDebugAttributes ? attribType->strippedAttribCode : attribType->attribCode);
