@@ -1836,9 +1836,7 @@ Java_java_lang_Class_getNestHostImpl(JNIEnv *env, jobject recv)
 	J9Class *nestHost = clazz->nestHost;
 
 	if (NULL == nestHost) {
-		if (J9_VISIBILITY_ALLOWED == vmFuncs->loadAndVerifyNestHost(currentThread, clazz, J9_LOOK_NO_THROW)) {
-			nestHost = clazz->nestHost;
-		} else {
+		if (J9_VISIBILITY_ALLOWED != vmFuncs->loadAndVerifyNestHost(currentThread, clazz, J9_LOOK_NO_THROW, &nestHost)) {
 			/* If there is a failure loading or accessing the nest host, or if this class or interface does
 			 * not specify a nest, then it is considered to belong to its own nest and this is returned as
 			 * the host */
@@ -1882,10 +1880,9 @@ Java_java_lang_Class_getNestMembersImpl(JNIEnv *env, jobject recv)
 	J9Class *nestHost = clazz->nestHost;
 
 	if (NULL == nestHost) {
-		if (J9_VISIBILITY_ALLOWED != vmFuncs->loadAndVerifyNestHost(currentThread, clazz, 0)) {
+		if (J9_VISIBILITY_ALLOWED != vmFuncs->loadAndVerifyNestHost(currentThread, clazz, 0, &nestHost)) {
 			goto _done;
 		}
-		nestHost = clazz->nestHost;
 	}
 	romHostClass = nestHost->romClass;
 	nestMemberCount = romHostClass->nestMemberCount;
@@ -1920,18 +1917,20 @@ Java_java_lang_Class_getNestMembersImpl(JNIEnv *env, jobject recv)
 			PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, resultObject);
 			J9Class *nestMember = vmFuncs->internalFindClassUTF8(currentThread, J9UTF8_DATA(nestMemberName), J9UTF8_LENGTH(nestMemberName), classLoader, J9_FINDCLASS_FLAG_THROW_ON_FAIL);
 			resultObject = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
-
 			if (NULL == nestMember) {
 				/* If internalFindClassUTF8 fails to find the nest member, it sets
 				 * a NoClassDefFoundError
 				 */
 				goto _done;
-			} else if (NULL == nestMember->nestHost) {
-				if (J9_VISIBILITY_ALLOWED != vmFuncs->loadAndVerifyNestHost(currentThread, nestMember, 0)) {
+			}
+			nestMember = VM_VMHelpers::currentClass(nestMember);
+			J9Class *memberNestHost = nestMember->nestHost;
+			if (NULL == memberNestHost) {
+				if (J9_VISIBILITY_ALLOWED != vmFuncs->loadAndVerifyNestHost(currentThread, nestMember, 0, &memberNestHost)) {
 					goto _done;
 				}
 			}
-			if (nestMember->nestHost != nestHost) {
+			if (memberNestHost != nestHost) {
 				vmFuncs->setNestmatesError(currentThread, nestMember, nestHost, J9_VISIBILITY_NEST_MEMBER_NOT_CLAIMED_ERROR);
 				goto _done;
 			}

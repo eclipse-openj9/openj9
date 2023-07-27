@@ -3657,16 +3657,17 @@ trace(J9VMThread *vmStruct);
  * to the same runtime package as the class. This function requires
  * VMAccess
  *
- * @param vmThread handle to vmThread
- * @param clazz the class to search the nest host
- * @param options lookup options
+ * @param[in] vmThread handle to vmThread
+ * @param[in] clazz the class to search the nest host
+ * @param[in] options lookup options
+ * @param[out] nestHostFound the nest host of clazz
  *
  * @return 	J9_VISIBILITY_ALLOWED if success,
  * 			J9_VISIBILITY_NEST_HOST_LOADING_FAILURE_ERROR if failed to load nesthost,
  * 			J9_VISIBILITY_NEST_HOST_DIFFERENT_PACKAGE_ERROR if nesthost is not in the same runtime package
  */
 UDATA
-loadAndVerifyNestHost(J9VMThread *vmThread, J9Class *clazz, UDATA options);
+loadAndVerifyNestHost(J9VMThread *vmThread, J9Class *clazz, UDATA options, J9Class **nestHostFound);
 
 /**
  * Sets the nestmates error based on the errorCode
