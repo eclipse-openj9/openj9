@@ -472,8 +472,8 @@ jvmtiPopFrame(jvmtiEnv* env,
 				J9VMEntryLocalStorage els = {0};
 				J9VMContinuation *continuation = getJ9VMContinuationToWalk(currentThread, targetThread, threadObject);
 				if (NULL != continuation) {
-						vm->internalVMFunctions->copyFieldsFromContinuation(currentThread, &stackThread, &els, continuation);
-						threadToWalk = &stackThread;
+					vm->internalVMFunctions->copyFieldsFromContinuation(currentThread, &stackThread, &els, continuation);
+					threadToWalk = &stackThread;
 				}
 #endif /* JAVA_SPEC_VERSION >= 21 */
 				walkState.walkThread = threadToWalk;
