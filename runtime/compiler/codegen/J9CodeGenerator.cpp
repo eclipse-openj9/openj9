@@ -2735,7 +2735,7 @@ static TR_ExternalRelocationTargetKind getReloKindFromGuardSite(TR::CodeGenerato
    return type;
    }
 
-static void processAOTGuardSites(TR::CodeGenerator *cg, uint32_t inlinedCallSize, TR_InlinedSiteHastTableEntry *orderedInlinedSiteListTable)
+static void processAOTGuardSites(TR::CodeGenerator *cg, uint32_t inlinedCallSize, TR_InlinedSiteHashTableEntry *orderedInlinedSiteListTable)
    {
    TR::list<TR_AOTGuardSite*> *aotGuardSites = cg->comp()->getAOTGuardPatchSites();
    for(auto it = aotGuardSites->begin(); it != aotGuardSites->end(); ++it)
@@ -2845,7 +2845,7 @@ static void addInlinedSiteRelocation(TR::CodeGenerator *cg,
       NULL);
    }
 
-static void addInliningTableRelocations(TR::CodeGenerator *cg, uint32_t inlinedCallSize, TR_InlinedSiteHastTableEntry *orderedInlinedSiteListTable)
+static void addInliningTableRelocations(TR::CodeGenerator *cg, uint32_t inlinedCallSize, TR_InlinedSiteHashTableEntry *orderedInlinedSiteListTable)
    {
    // If have inlined calls, now add the relocation records in descending order
    // of inlined site index (at relocation time, the order is reverse)
@@ -2891,11 +2891,11 @@ J9::CodeGenerator::processRelocations()
       uint32_t inlinedCallSize = self()->comp()->getNumInlinedCallSites();
 
       // Create temporary hashtable for ordering AOT guard relocations
-      TR_InlinedSiteHastTableEntry *orderedInlinedSiteListTable = NULL;
+      TR_InlinedSiteHashTableEntry *orderedInlinedSiteListTable = NULL;
       if (inlinedCallSize > 0)
          {
-         orderedInlinedSiteListTable= (TR_InlinedSiteHastTableEntry*)self()->comp()->trMemory()->allocateMemory(sizeof(TR_InlinedSiteHastTableEntry) * inlinedCallSize, heapAlloc);
-         memset(orderedInlinedSiteListTable, 0, sizeof(TR_InlinedSiteHastTableEntry)*inlinedCallSize);
+         orderedInlinedSiteListTable= (TR_InlinedSiteHashTableEntry*)self()->comp()->trMemory()->allocateMemory(sizeof(TR_InlinedSiteHashTableEntry) * inlinedCallSize, heapAlloc);
+         memset(orderedInlinedSiteListTable, 0, sizeof(TR_InlinedSiteHashTableEntry)*inlinedCallSize);
          }
 
       // Traverse list of AOT-specific guards and create relocation records
