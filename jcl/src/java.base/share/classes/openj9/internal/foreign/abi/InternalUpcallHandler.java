@@ -1,4 +1,4 @@
-/*[INCLUDE-IF JAVA_SPEC_VERSION >= 20]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 21]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2022
  *
@@ -32,25 +32,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
-/*[IF JAVA_SPEC_VERSION >= 20]*/
 /*[IF JAVA_SPEC_VERSION >= 21]*/
 import java.lang.foreign.AddressLayout;
 import java.lang.foreign.Arena;
-/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.GroupLayout;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
-/*[IF JAVA_SPEC_VERSION >= 21]*/
 import jdk.internal.foreign.abi.LinkerOptions;
-/*[ELSE] JAVA_SPEC_VERSION >= 21 */
-import java.lang.foreign.SegmentScope;
-/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 import java.lang.foreign.ValueLayout;
-/*[IF JAVA_SPEC_VERSION == 20]*/
-import java.lang.foreign.ValueLayout.OfAddress;
-/*[ENDIF] JAVA_SPEC_VERSION == 20 */
-/*[ELSE] JAVA_SPEC_VERSION >= 20 */
+/*[ELSE] JAVA_SPEC_VERSION >= 21 */
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryAddress;
@@ -58,7 +49,7 @@ import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.ValueLayout;
-/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 
 /**
  * The internal implementation of upcall handler wraps up an upcall handle
@@ -75,19 +66,17 @@ public final class InternalUpcallHandler {
 	static final Lookup lookup = MethodHandles.lookup();
 
 	/* The argument filters intended to validate the pointer/struct arguments/return value of the upcall method. */
-	/*[IF JAVA_SPEC_VERSION >= 20]*/
+	/*[IF JAVA_SPEC_VERSION >= 21]*/
 	private static final MethodHandle argRetSegmtOfPtrFilter;
-	/*[ELSE] JAVA_SPEC_VERSION >= 20 */
+	/*[ELSE] JAVA_SPEC_VERSION >= 21 */
 	private static final MethodHandle argRetAddrOfPtrFilter;
-	/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 	private static final MethodHandle argRetSegmtFilter;
 
 	static {
 		try {
 			/*[IF JAVA_SPEC_VERSION >= 21]*/
 			argRetSegmtOfPtrFilter = lookup.findStatic(InternalUpcallHandler.class, "argRetSegmtOfPtr", methodType(MemorySegment.class, MemorySegment.class, MemoryLayout.class));
-			/*[ELSEIF JAVA_SPEC_VERSION == 20]*/
-			argRetSegmtOfPtrFilter = lookup.findStatic(InternalUpcallHandler.class, "argRetSegmtOfPtr", methodType(MemorySegment.class, MemorySegment.class));
 			/*[ELSE] JAVA_SPEC_VERSION >= 21 */
 			argRetAddrOfPtrFilter = lookup.findStatic(InternalUpcallHandler.class, "argRetAddrOfPtr", methodType(MemoryAddress.class, MemoryAddress.class));
 			/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
@@ -104,11 +93,6 @@ public final class InternalUpcallHandler {
 	private static MemorySegment argRetSegmtOfPtr(MemorySegment argValue, MemoryLayout layout) throws IllegalStateException {
 		UpcallMHMetaData.validateNativeArgRetSegmentOfPtr(argValue);
 		return UpcallMHMetaData.getArgRetAlignedSegmentOfPtr(argValue.address(), layout);
-	}
-	/*[ELSEIF JAVA_SPEC_VERSION == 20]*/
-	private static MemorySegment argRetSegmtOfPtr(MemorySegment argValue) throws IllegalStateException {
-		UpcallMHMetaData.validateNativeArgRetSegmentOfPtr(argValue);
-		return argValue;
 	}
 	/*[ELSE] JAVA_SPEC_VERSION >= 21 */
 	private static MemoryAddress argRetAddrOfPtr(MemoryAddress argValue) throws IllegalStateException {
@@ -136,17 +120,6 @@ public final class InternalUpcallHandler {
 	 * @param options the LinkerOptions indicating additional linking requirements to the linker
 	 */
 	public InternalUpcallHandler(MethodHandle target, MethodType mt, FunctionDescriptor cDesc, Arena arena, LinkerOptions options)
-	/*[ELSEIF JAVA_SPEC_VERSION == 20]*/
-	/**
-	 * The constructor creates an upcall handler specific to the requested java method
-	 * by generating a native thunk in upcall on a given platform.
-	 *
-	 * @param target the target method handle in upcall
-	 * @param mt the method type of the target method handle
-	 * @param cDesc the function descriptor of the target method handle
-	 * @param scope the segment scope related to the upcall handler
-	 */
-	public InternalUpcallHandler(MethodHandle target, MethodType mt, FunctionDescriptor cDesc, SegmentScope scope)
 	/*[ELSE] JAVA_SPEC_VERSION >= 21 */
 	/**
 	 * The constructor creates an upcall handler specific to the requested java method
@@ -196,8 +169,6 @@ public final class InternalUpcallHandler {
 	 */
 	/*[IF JAVA_SPEC_VERSION >= 21]*/
 	private long getUpcallThunkAddr(MethodHandle target, Arena arena, LinkerOptions options)
-	/*[ELSEIF JAVA_SPEC_VERSION == 20]*/
-	private long getUpcallThunkAddr(MethodHandle target, SegmentScope scope)
 	/*[ELSE] JAVA_SPEC_VERSION >= 21 */
 	private long getUpcallThunkAddr(MethodHandle target, ResourceScope scope)
 	/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
@@ -274,10 +245,6 @@ public final class InternalUpcallHandler {
 			/*[IF JAVA_SPEC_VERSION >= 21]*/
 			if (argLayout instanceof AddressLayout) {
 				filterMH = MethodHandles.insertArguments(argRetSegmtOfPtrFilter, 1, argLayout);
-			} else
-			/*[ELSEIF JAVA_SPEC_VERSION == 20]*/
-			if (argLayout instanceof OfAddress) {
-				filterMH = argRetSegmtOfPtrFilter;
 			} else
 			/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 			{

@@ -5384,6 +5384,9 @@ typedef struct J9VMThread {
 	j9object_t scopedValueCache;
 	J9VMContinuation **continuationT1Cache;
 #endif /* JAVA_SPEC_VERSION >= 19 */
+#if JAVA_SPEC_VERSION >= 21
+	BOOLEAN isInTrivialDownCall;
+#endif /* JAVA_SPEC_VERSION >= 21 */
 } J9VMThread;
 
 #define J9VMTHREAD_ALIGNMENT  0x100

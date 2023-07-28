@@ -289,6 +289,17 @@ native2InterpJavaUpcallImpl(J9UpcallMetaData *data, void *argsListPointer)
 	bool isCurThrdAllocated = false;
 	U_64 returnStorage = 0;
 
+#if JAVA_SPEC_VERSION >= 21
+		/* Capture the invalid linker option (intended for the trivial downcall as specified in JDK21) in upcall
+		 * by throwing out an exception so as to remind users of the incorrect behavior in applications rather
+		 * than ending up with an assertion failure by crashing the JVM in the RI implementation.
+		 */
+		if (downCallThread->isInTrivialDownCall) {
+			setCurrentExceptionNLS(downCallThread, J9VMCONSTANTPOOL_JAVALANGILLEGALTHREADSTATEEXCEPTION, J9NLS_VM_ILLEGAL_THREAD_STATE_UPCALL);
+			goto illegalState;
+		}
+#endif /* JAVA_SPEC_VERSION => 21 */
+
 	/* Determine whether to use the current thread or create a new one
 	 * when there is no java thread attached to the native thread
 	 * created directly in native.
@@ -435,6 +446,9 @@ done:
 		currentThread = NULL;
 	}
 
+#if JAVA_SPEC_VERSION >= 21
+illegalState:
+#endif /* JAVA_SPEC_VERSION => 21 */
 	/* Restore back to the setjump site in the call-out native
 	 * to handle the captured exception.
 	 *

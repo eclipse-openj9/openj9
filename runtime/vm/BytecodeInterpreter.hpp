@@ -5109,15 +5109,15 @@ done:
 	}
 
 #if JAVA_SPEC_VERSION >= 16
-#if JAVA_SPEC_VERSION >= 20
+#if JAVA_SPEC_VERSION >= 21
 	/* openj9.internal.foreign.abi.InternalDowncallHandler:
-	 * private native long invokeNative(long returnStateMemAddr, long returnStructMemAddr, long functionAddr, long calloutThunk, long[] argValues);
+	 * private native long invokeNative(boolean isInTrivialDownCall, long returnStateMemAddr, long returnStructMemAddr, long functionAddr, long calloutThunk, long[] argValues);
 	 */
-#else /* JAVA_SPEC_VERSION >= 20 */
+#else /* JAVA_SPEC_VERSION >= 21 */
 	/* openj9.internal.foreign.abi.InternalDowncallHandler:
 	 * private native long invokeNative(long returnStructMemAddr, long functionAddr, long calloutThunk, long[] argValues);
 	 */
-#endif /* JAVA_SPEC_VERSION >= 20 */
+#endif /* JAVA_SPEC_VERSION >= 21 */
 	VMINLINE VM_BytecodeAction
 	inlInternalDowncallHandlerInvokeNative(REGISTER_ARGS_LIST)
 	{
@@ -5146,12 +5146,12 @@ done:
 		UDATA *returnStorage = &(_currentThread->returnValue);
 		U_64 *ffiArgs = _currentThread->ffiArgs;
 		U_64 sFfiArgs[16];
-#if JAVA_SPEC_VERSION >= 20
-		UDATA argSlots = 10;
+#if JAVA_SPEC_VERSION >= 21
+		UDATA argSlots = 11;
 		I_32 *returnState = NULL;
-#else /* JAVA_SPEC_VERSION >= 20 */
+#else /* JAVA_SPEC_VERSION >= 21 */
 		UDATA argSlots = 8;
-#endif /* JAVA_SPEC_VERSION >= 20 */
+#endif /* JAVA_SPEC_VERSION >= 21 */
 
 		j9object_t argValues = *(j9object_t *)_sp; /* argValues */
 		ffi_cif *cif = (ffi_cif *)(UDATA)*(I_64 *)(_sp + 1); /* calloutThunk */
@@ -5174,6 +5174,11 @@ done:
 		/* The native memory is allocated at java level to save the execution state after performing the downcall. */
 		returnState = (I_32 *)(UDATA)*(I_64 *)(_sp + 7); /* returnStateMemAddr */
 #endif /* JAVA_SPEC_VERSION >= 20 */
+
+#if JAVA_SPEC_VERSION >= 21
+		/* Set the linker option to the current thread for the trivial downcall. */
+		_currentThread->isInTrivialDownCall = (0 == *(U_32*)(_sp + 9)) ? FALSE : TRUE;
+#endif /* JAVA_SPEC_VERSION >= 21 */
 
 		if (isMinimal) {
 			values = sValues;
@@ -5253,7 +5258,13 @@ done:
 		_currentThread->callOutCount += 1;
 #endif /* JAVA_SPEC_VERSION >= 19 */
 		updateVMStruct(REGISTER_ARGS);
-		VM_VMAccess::inlineExitVMToJNI(_currentThread);
+#if JAVA_SPEC_VERSION >= 21
+		/* Only exit to JNI for non-trivial downcalls for better performance. */
+		if (!_currentThread->isInTrivialDownCall)
+#endif /* JAVA_SPEC_VERSION >= 21 */
+		{
+			VM_VMAccess::inlineExitVMToJNI(_currentThread);
+		}
 		VM_VMHelpers::beforeJNICall(_currentThread);
 #if FFI_NATIVE_RAW_API
 		ffiCallWithSetJmpForUpcall(_currentThread, cif, function, returnStorage, values, values_raw);
@@ -5261,7 +5272,13 @@ done:
 		ffiCallWithSetJmpForUpcall(_currentThread, cif, function, returnStorage, values);
 #endif /* FFI_NATIVE_RAW_API */
 		VM_VMHelpers::afterJNICall(_currentThread);
-		VM_VMAccess::inlineEnterVMFromJNI(_currentThread);
+#if JAVA_SPEC_VERSION >= 21
+		/* Re-enter VM after non-trivial downcalls. */
+		if (!_currentThread->isInTrivialDownCall)
+#endif /* JAVA_SPEC_VERSION >= 21 */
+		{
+			VM_VMAccess::inlineEnterVMFromJNI(_currentThread);
+		}
 		VMStructHasBeenUpdated(REGISTER_ARGS);
 #if JAVA_SPEC_VERSION >= 19
 		_currentThread->callOutCount -= 1;
@@ -5283,6 +5300,11 @@ done:
 		returnDoubleFromINL(REGISTER_ARGS, _currentThread->returnValue, argSlots);
 
 done:
+#if JAVA_SPEC_VERSION >= 21
+		/* Clear the trivial downcall flag. */
+		_currentThread->isInTrivialDownCall = FALSE;
+#endif /* JAVA_SPEC_VERSION >= 21 */
+
 		if (!isMinimal) {
 			j9mem_free_memory(values);
 			j9mem_free_memory(pointerValues);

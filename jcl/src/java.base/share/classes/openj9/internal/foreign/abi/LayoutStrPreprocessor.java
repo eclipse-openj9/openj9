@@ -1,4 +1,4 @@
-/*[INCLUDE-IF JAVA_SPEC_VERSION >= 20]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 21]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2022
  *
@@ -24,7 +24,7 @@ package openj9.internal.foreign.abi;
 
 import java.util.List;
 
-/*[IF JAVA_SPEC_VERSION >= 20]*/
+/*[IF JAVA_SPEC_VERSION >= 21]*/
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.GroupLayout;
 import java.lang.foreign.MemoryLayout;
@@ -33,7 +33,7 @@ import java.lang.foreign.PaddingLayout;
 import java.lang.foreign.SequenceLayout;
 import java.lang.foreign.ValueLayout;
 import jdk.internal.foreign.abi.LinkerOptions;
-/*[ELSE] JAVA_SPEC_VERSION >= 20 */
+/*[ELSE] JAVA_SPEC_VERSION >= 21 */
 import jdk.incubator.foreign.CLinker.TypeKind;
 import static jdk.incubator.foreign.CLinker.TypeKind.*;
 import jdk.incubator.foreign.FunctionDescriptor;
@@ -42,7 +42,7 @@ import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.SequenceLayout;
 import jdk.incubator.foreign.ValueLayout;
-/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 
 /**
  * The methods of the class are used to preprocess the layout specified in the function
@@ -87,11 +87,11 @@ final class LayoutStrPreprocessor {
 	/*[ENDIF] JAVA_SPEC_VERSION == 17 */
 
 	/* Get the index of the variadic argument layout in the function descriptor if exists. */
-	/*[IF JAVA_SPEC_VERSION >= 20]*/
+	/*[IF JAVA_SPEC_VERSION >= 21]*/
 	static int getVarArgIndex(FunctionDescriptor funcDesc, LinkerOptions options)
-	/*[ELSE] JAVA_SPEC_VERSION >= 20 */
+	/*[ELSE] JAVA_SPEC_VERSION >= 21 */
 	static int getVarArgIndex(FunctionDescriptor funcDesc)
-	/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 	{
 		List<MemoryLayout> argLayouts = funcDesc.argumentLayouts();
 		int argLayoutsSize = argLayouts.size();
@@ -101,11 +101,11 @@ final class LayoutStrPreprocessor {
 		int varArgIdx = -1;
 
 		for (int argIndex = 0; argIndex < argLayoutsSize; argIndex++) {
-			/*[IF JAVA_SPEC_VERSION >= 20]*/
+			/*[IF JAVA_SPEC_VERSION >= 21]*/
 			if (options.isVarargsIndex(argIndex))
-			/*[ELSE] JAVA_SPEC_VERSION >= 20 */
+			/*[ELSE] JAVA_SPEC_VERSION >= 21 */
 			if (argLayouts.get(argIndex).attribute(VARARGS_ATTR_NAME).isPresent())
-			/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
+			/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 			{
 				varArgIdx = argIndex;
 				break;
@@ -201,11 +201,11 @@ final class LayoutStrPreprocessor {
 			targetLayoutString.append(getPrimitiveTypeSymbol(valueLayout));
 		} else if (targetLayout instanceof SequenceLayout arrayLayout) { /* Intended for nested arrays. */
 			MemoryLayout elementLayout = arrayLayout.elementLayout();
-			/*[IF JAVA_SPEC_VERSION >= 20]*/
+			/*[IF JAVA_SPEC_VERSION >= 21]*/
 			long elementCount = arrayLayout.elementCount();
-			/*[ELSE] JAVA_SPEC_VERSION >= 20 */
+			/*[ELSE] JAVA_SPEC_VERSION >= 21 */
 			long elementCount = arrayLayout.elementCount().getAsLong();
-			/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
+			/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 
 			/* The padding bytes is required in the native signature for upcall thunk generation. */
 			if (isPaddingLayout(elementLayout) && !isDownCall) {
@@ -243,15 +243,15 @@ final class LayoutStrPreprocessor {
 
 	/* Determine whether the specfied layout is a padding layout or not. */
 	private static boolean isPaddingLayout(MemoryLayout targetLayout) {
-		/*[IF JAVA_SPEC_VERSION >= 20]*/
+		/*[IF JAVA_SPEC_VERSION >= 21]*/
 		return targetLayout instanceof PaddingLayout;
-		/*[ELSE] JAVA_SPEC_VERSION >= 20 */
+		/*[ELSE] JAVA_SPEC_VERSION >= 21 */
 		return targetLayout.isPadding();
-		/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
+		/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 	}
 
 	/* Map the specified primitive layout's kind to the symbol for primitive type in VM Spec. */
-	/*[IF JAVA_SPEC_VERSION >= 20]*/
+	/*[IF JAVA_SPEC_VERSION >= 21]*/
 	private static String getPrimitiveTypeSymbol(ValueLayout targetLayout) {
 		Class<?> javaType = targetLayout.carrier();
 		String typeSymbol = "";
@@ -274,7 +274,7 @@ final class LayoutStrPreprocessor {
 
 		return typeSymbol;
 	}
-	/*[ELSE] JAVA_SPEC_VERSION >= 20 */
+	/*[ELSE] JAVA_SPEC_VERSION >= 21 */
 	private static String getPrimitiveTypeSymbol(ValueLayout targetLayout) {
 		/* Extract the kind from the specified layout with the ATTR_NAME "abi/kind".
 		 * e.g. b32[abi/kind=INT]
@@ -313,5 +313,5 @@ final class LayoutStrPreprocessor {
 
 		return typeSymbol;
 	}
-	/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 }
