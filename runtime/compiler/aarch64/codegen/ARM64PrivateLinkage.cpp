@@ -1862,8 +1862,8 @@ void J9::ARM64::PrivateLinkage::buildVirtualDispatch(TR::Node *callNode,
          default:
             if (fej9->needsInvokeExactJ2IThunk(callNode, comp()))
                {
-               comp()->getPersistentInfo()->getInvokeExactJ2IThunkTable()->addThunk(
-                  TR::ARM64CallSnippet::generateInvokeExactJ2IThunk(callNode, argSize, cg(), methodSymbol->getMethod()->signatureChars()), fej9);
+               TR_MHJ2IThunk *thunk = TR::ARM64CallSnippet::generateInvokeExactJ2IThunk(callNode, argSize, cg(), methodSymbol->getMethod()->signatureChars());
+               fej9->setInvokeExactJ2IThunk(thunk, comp());
                }
             break;
          }
