@@ -42,6 +42,10 @@ import sun.misc.SharedSecrets;
 /*[ENDIF]*/
 /*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 
+/*[IF CRIU_SUPPORT]*/
+import openj9.internal.criu.NotCheckpointSafe;
+/*[ENDIF] CRIU_SUPPORT */
+
 /**
  * Abstract class which describes behavior common to all reference objects.
  *
@@ -192,6 +196,9 @@ public abstract sealed class Reference<T> extends Object permits PhantomReferenc
 	 * @return	true if the Reference was successfully
 	 *			enqueued, false otherwise.
 	 */
+	/* [IF CRIU_SUPPORT] */
+	@NotCheckpointSafe
+	/* [ENDIF] CRIU_SUPPORT */
 	boolean enqueueImpl() {
 		final ReferenceQueue tempQueue;
 		boolean result;
