@@ -117,6 +117,8 @@ public:
     * @return true if inlining of the method should be suppressed
     */
    bool suppressInliningOfRecognizedMethod(TR::RecognizedMethod method);
+
+   bool callUsesHelperImplementation(TR::Symbol *sym);
    };
 
 }
