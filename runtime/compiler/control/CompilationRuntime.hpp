@@ -1045,6 +1045,9 @@ public:
    bool              isInShutdownMode() {return _isInShutdownMode;}
    void              setIsInShutdownMode() {_isInShutdownMode = true;}
 
+   bool              isSwapMemoryDisabled() {return _isSwapMemoryDisabled;}
+   void              setIsSwapMemoryDisabled(bool b) {_isSwapMemoryDisabled = b;}
+
    TR_LinkHead0<TR_ClassHolder> *getListOfClassesToCompile() { return &_classesToCompileList; }
    int32_t getCompilationLag();
    int32_t getCompilationLagUnlocked() { return getCompilationLag(); } // will go away
@@ -1486,6 +1489,7 @@ private:
    bool                   _traceCompiling;
 #endif
    bool                   _isInShutdownMode;
+   bool                   _isSwapMemoryDisabled;
    int32_t                _numCompThreads; // Number of usable compilation threads that does not include the diagnostic thread
    int32_t                _numDiagnosticThreads;
    int32_t                _numAllocatedCompThreads; // Number of allocated compilation threads that does not include the diagnostic thread

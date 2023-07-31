@@ -70,6 +70,7 @@ public:
 
    TR::CodeCache *initialize(bool useConsolidatedCache, uint32_t numberOfCodeCachesToCreateAtStartup);
 
+   bool isSufficientPhysicalMemoryAvailableForAllocation(size_t requestedCodeCacheSize);
    void addCodeCache(TR::CodeCache *codeCache);
 
    TR::CodeCacheMemorySegment *allocateCodeCacheSegment(size_t segmentSize,
