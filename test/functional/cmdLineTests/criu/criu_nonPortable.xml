@@ -51,6 +51,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
 
   <test id="Create and Restore Criu Checkpoint Image twice">
@@ -68,6 +69,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
 
 <!--
@@ -80,6 +82,7 @@
     <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
     <output type="failure" caseSensitive="yes" regex="no">FAILED: System.nanoTime() after CRIU restore:</output>
     <output type="required" caseSensitive="yes" regex="no">Error</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
  -->
 
@@ -97,6 +100,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
 
   <test id="Create CRIU checkpoint image and restore three times - testSystemNanoTimeJitPostCheckpointCompile">
@@ -113,6 +117,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
 
   <test id="Create CRIU checkpoint image and restore three times - testMillisDelayBeforeCheckpointDone">
@@ -129,6 +134,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
 
   <test id="Create CRIU checkpoint image and restore three times - testMillisDelayBeforeCheckpointDone">
@@ -145,6 +151,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
 
   <test id="Create CRIU checkpoint image and restore three times - testDateScheduledBeforeCheckpointDone">
@@ -161,6 +168,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
 
   <test id="Create CRIU checkpoint image and restore three times - testDateScheduledAfterCheckpointDone">
@@ -177,6 +185,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
 
   <test id="Create Criu Checkpoint Image once and no restore - TestSingleThreadModeCheckpointException">
@@ -323,6 +332,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="Properties test1">
     <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ PropertiesTest1 1</command>
@@ -340,6 +350,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="Properties test2">
     <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ PropertiesTest2 1</command>
@@ -357,6 +368,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="Properties test3">
     <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ PropertiesTest3 1</command>
@@ -374,6 +386,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="Properties test4">
     <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ PropertiesTest4 1</command>
@@ -389,6 +402,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="Test setting SecurityManager via -Djava.security.manager">
     <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $OPTION_SET_SECURITYMANAGER$ $MAINCLASS_TEST_SECURITYMANAGER$ setSMCommandOption 1</command>
@@ -402,6 +416,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="Test setting SecurityManager programmatically">
     <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_TEST_SECURITYMANAGER$ setSMProgrammatically 1</command>
@@ -415,6 +430,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
 
   <test id="Envvar test1">
@@ -431,6 +447,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="Envvar test2">
     <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest2 1</command>
@@ -446,6 +463,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="Envvar test3">
     <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest3 1</command>
@@ -461,6 +479,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="Envvar test4">
     <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest4 1</command>
@@ -476,6 +495,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="Envvar test5">
     <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -Xtrace:print=j9criu.16" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest5 1</command>
@@ -494,6 +514,7 @@
     <output type="success" caseSensitive="yes" regex="no">Restore arg: -Dprop1=val1</output>
     <output type="success" caseSensitive="yes" regex="no">Restore arg: -Dprop2=val2</output>
     <output type="success" caseSensitive="yes" regex="no">Restore arg: -Dprop3=val3</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="Envvar test6">
     <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -Xtrace:print=j9criu.16" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest6 1</command>
@@ -512,6 +533,7 @@
     <output type="failure" caseSensitive="yes" regex="no">Restore arg: -Dprop1=val1</output>
     <output type="failure" caseSensitive="yes" regex="no">Restore arg: -Dprop2=val2</output>
     <output type="failure" caseSensitive="yes" regex="no">Restore arg: -Dprop3=val3</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="Envvar test7">
     <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -Xtrace:print=j9criu.16" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest7 1</command>
@@ -530,6 +552,7 @@
     <output type="failure" caseSensitive="yes" regex="no">Restore arg: -Dprop1=val1</output>
     <output type="failure" caseSensitive="yes" regex="no">Restore arg: -Dprop2=val2</output>
     <output type="failure" caseSensitive="yes" regex="no">Restore arg: -Dprop3=val3</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="Envvar test8">
     <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -Xtrace:print=j9criu.16" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest8 1</command>
@@ -548,6 +571,7 @@
     <output type="success" caseSensitive="yes" regex="no">Restore arg: -Dprop1=val1</output>
     <output type="success" caseSensitive="yes" regex="no">Restore arg: -Dprop2=val2</output>
     <output type="success" caseSensitive="yes" regex="no">Restore arg: -Dprop3=val3</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="Envvar test9">
     <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest9 1</command>
@@ -563,6 +587,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="Envvar test10">
     <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest10 1</command>
@@ -578,6 +603,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="Envvar test11">
     <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest11 1</command>
@@ -593,6 +619,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="Envvar test12">
     <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -Xtrace:print=j9criu.16" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest12 1</command>
@@ -611,6 +638,7 @@
     <output type="success" caseSensitive="yes" regex="no">Restore arg: -Dprop1=val1</output>
     <output type="success" caseSensitive="yes" regex="no">Restore arg: -Dprop2=val2</output>
     <output type="success" caseSensitive="yes" regex="no">Restore arg: -Dprop3=val3</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="Envvar test13">
     <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest13 1</command>
@@ -627,6 +655,7 @@
     <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
     <output type="success" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="Envvar test14">
     <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest14 1</command>
@@ -643,6 +672,7 @@
     <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
     <output type="success" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="Envvar test15">
     <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest15 1</command>
@@ -659,6 +689,7 @@
     <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
     <output type="success" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="Envvar test16">
     <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest16 1</command>
@@ -675,6 +706,7 @@
     <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
     <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="Restore trace options test with no trace options specified before checkpoint - 1">
     <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ TraceOptionsTest1 1</command>
@@ -713,6 +745,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="Restore trace options test with no trace options specified before checkpoint - 3">
     <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ TraceOptionsTest3 1</command>
@@ -729,6 +762,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="Restore dump options test with no dump options specified before checkpoint">
     <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ DumpOptionsTest 1</command>
@@ -745,6 +779,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="criuCheckpoint dump options test with no dump options specified before checkpoint">
     <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -Xdump:java:events=criuCheckpoint" $MAINCLASS_OPTIONSFILE_TEST$ criuDumpOptionsTest 1</command>
@@ -761,6 +796,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="criuCheckpoint dump options test with no dump options specified before checkpoint">
     <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -Xdump:java:events=criuRestore" $MAINCLASS_OPTIONSFILE_TEST$ criuDumpOptionsTest 1</command>
@@ -777,6 +813,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="criuRestore dump options test with no dump options specified before checkpoint">
     <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ criuRestoreDumpOptionsTest 1</command>
@@ -793,6 +830,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="Restore dump options test with no dump options specified before checkpoint and -Xdump:dynamic required">
     <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ $XDUMP_DYNAMIC$" $MAINCLASS_OPTIONSFILE_TEST$ dumpOptionsTestRequireDynamic 1</command>
@@ -812,6 +850,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
 
   <test id="Username test">
@@ -827,5 +866,6 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
 </suite>

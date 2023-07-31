@@ -63,6 +63,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="Restore trace options test with -Xtrace before checkpoint - 3">
     <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ TraceOptionsTest3 1</command>
@@ -79,6 +80,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="Restore dump options test with no dump options specified before checkpoint">
     <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ DumpOptionsTest 1</command>
@@ -95,6 +97,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="Restore dump options test with no dump options specified before checkpoint and -Xdump:dynamic required">
     <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ $XDUMP_DYNAMIC$" $MAINCLASS_OPTIONSFILE_TEST$ dumpOptionsTestRequireDynamic 1</command>
@@ -114,5 +117,6 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
 </suite>
