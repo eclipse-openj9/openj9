@@ -1077,7 +1077,8 @@ TR_MHJ2IThunk *TR::ARM64CallSnippet::generateInvokeExactJ2IThunk(TR::Node *callN
 
    omrthread_jit_write_protect_disable();
 
-   dispatcher = (intptr_t)cg->symRefTab()->findOrCreateRuntimeHelper(helper)->getMethodAddress();
+   TR::SymbolReference *dispatcherSymbol = cg->symRefTab()->findOrCreateRuntimeHelper(helper);
+   dispatcher = reinterpret_cast<intptr_t>(cg->fej9()->getInvokeExactThunkHelperAddress(comp, dispatcherSymbol, callNode->getDataType()));
 
    buffer = flushArgumentsToStack(buffer, callNode, argSize, cg);
 
