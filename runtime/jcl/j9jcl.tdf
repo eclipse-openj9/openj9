@@ -704,3 +704,6 @@ TraceEntry=Trc_JCL_J9SigUsr2Shutdown_Entry noEnv Overhead=1 Level=1 Template="J9
 TraceExit=Trc_JCL_J9SigUsr2Shutdown_Exit noEnv Overhead=1 Level=1 Template="J9SigUsr2Shutdown"
 
 TraceEvent=Trc_JCL_MXBean_getUptimeImpl Overhead=1 Level=3 Template="RuntimeMXBeanImpl_getUptimeImpl timeNow (%lld) vmStartTime (%lld) criuTimeDeltaMillis (%lld)"
+
+TraceException=Trc_JCL_memoryManagement_verifyMemoryUsageAfterGC_memoryUsageError Test NoEnv Overhead=1 Level=1 Template="JCL: verifyMemoryUsageAfterGC memoryUsageError: GcName=%s, MemoryPool=%s, initialSize=%lld, preUsedSize=%llu, preCommittedSize==%llu, preMaxSize=%lld, postUsedSize=%llu, postCommittedSize==%llu, postMaxSize=%lld"
+TraceEvent=Trc_JCL_memoryManagement_verifyMemoryUsageAfterGC_memoryUsage Test NoEnv Overhead=1 Level=6 Template="JCL: verifyMemoryUsageAfterGC memoryUsage: GcName=%s, MemoryPool=%s, initialSize=%lld, preUsedSize=%llu, preCommittedSize==%llu, preMaxSize=%lld, postUsedSize=%llu, postCommittedSize==%llu, postMaxSize=%lld"

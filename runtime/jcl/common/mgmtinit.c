@@ -602,6 +602,54 @@ gcStartEvent(J9JavaVM *vm, UDATA heapSize, UDATA heapUsed, UDATA *totals, UDATA 
 	updateNonHeapMemoryPoolSizes(vm, mgmt, FALSE);
 }
 
+static void
+verifyMemoryUsageAfterGC(
+		const char *gcName,
+		const char *poolName,
+		I_64 initialSize,
+		U_64 preUsed,
+		U_64 preCommitted,
+		I_64 preMax,
+		U_64 postUsed,
+		U_64 postCommitted,
+		I_64 postMax)
+{
+	/* Error tracepoint for the cases
+	 * the value of init or max is negative but not -1; or
+	 * used is greater than the value of committed; or
+	 * committed is greater than the value of max if max is not -1.
+	 */
+	if ((preUsed > preCommitted)
+	|| ((-1 != preMax) && ((I_64)preCommitted > preMax))
+	|| (-1 > preMax)
+	|| (postUsed > postCommitted)
+	|| ((-1 != postMax) && ((I_64)postCommitted > postMax))
+	|| (-1 > postMax)
+	|| (-1 > initialSize)
+	) {
+		Trc_JCL_memoryManagement_verifyMemoryUsageAfterGC_memoryUsageError(
+				gcName,
+				poolName,
+				initialSize,
+				preUsed,
+				preCommitted,
+				preMax,
+				postUsed,
+				postCommitted,
+				postMax);
+	}
+	Trc_JCL_memoryManagement_verifyMemoryUsageAfterGC_memoryUsage(
+			gcName,
+			poolName,
+			initialSize,
+			preUsed,
+			preCommitted,
+			preMax,
+			postUsed,
+			postCommitted,
+			postMax);
+}
+
 /* Updates java.lang.management data for the end of a GC. */
 static void
 gcEndEvent(J9JavaVM *vm, UDATA heapSize, UDATA heapUsed, UDATA *totals, UDATA *frees, UDATA *maxs, UDATA collectorID, OMR_VMThread *omrVMThread)
@@ -772,6 +820,21 @@ gcEndEvent(J9JavaVM *vm, UDATA heapSize, UDATA heapUsed, UDATA *totals, UDATA *f
 			memoryPool->postCollectionSize = gcInfo->postCommitted[idx];
 			memoryPool->postCollectionMaxSize = (U_64)gcInfo->postMax[idx];
 		}
+
+		if (TrcEnabled_Trc_JCL_memoryManagement_verifyMemoryUsageAfterGC_memoryUsageError
+		|| TrcEnabled_Trc_JCL_memoryManagement_verifyMemoryUsageAfterGC_memoryUsage
+		) {
+			verifyMemoryUsageAfterGC(
+					gcData->name,
+					memoryPool->name,
+					gcInfo->initialSize[idx],
+					gcInfo->preUsed[idx],
+					gcInfo->preCommitted[idx],
+					gcInfo->preMax[idx],
+					gcInfo->postUsed[idx],
+					gcInfo->postCommitted[idx],
+					gcInfo->postMax[idx]);
+		}
 	}
 	/* non heap memory pools */
 	for (; supportedMemoryPools + supportedNonHeapMemoryPools > idx; ++idx) {
@@ -783,6 +846,21 @@ gcEndEvent(J9JavaVM *vm, UDATA heapSize, UDATA heapUsed, UDATA *totals, UDATA *f
 		gcInfo->postUsed[idx] = nonHeapMemory->postCollectionUsed;
 		gcInfo->postCommitted[idx] = nonHeapMemory->postCollectionSize;
 		gcInfo->postMax[idx] = nonHeapMemory->maxSize;
+
+		if (TrcEnabled_Trc_JCL_memoryManagement_verifyMemoryUsageAfterGC_memoryUsageError
+		|| TrcEnabled_Trc_JCL_memoryManagement_verifyMemoryUsageAfterGC_memoryUsage
+		) {
+			verifyMemoryUsageAfterGC(
+					gcData->name,
+					nonHeapMemory->name,
+					gcInfo->initialSize[idx],
+					gcInfo->preUsed[idx],
+					gcInfo->preCommitted[idx],
+					gcInfo->preMax[idx],
+					gcInfo->postUsed[idx],
+					gcInfo->postCommitted[idx],
+					gcInfo->postMax[idx]);
+		}
 	}
 
 	/* garbage collection notification */
