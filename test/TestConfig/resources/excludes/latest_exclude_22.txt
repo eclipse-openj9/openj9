@@ -1,0 +1,51 @@
+##############################################################################
+# Copyright IBM Corp. and others 2023
+#
+# This program and the accompanying materials are made available under
+# the terms of the Eclipse Public License 2.0 which accompanies this
+# distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+# or the Apache License, Version 2.0 which accompanies this distribution and
+# is available at https://www.apache.org/licenses/LICENSE-2.0.
+#
+# This Source Code may also be made available under the following
+# Secondary Licenses when the conditions for such availability set
+# forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+# General Public License, version 2 with the GNU Classpath
+# Exception [1] and GNU General Public License, version 2 with the
+# OpenJDK Assembly Exception [2].
+#
+# [1] https://www.gnu.org/software/classpath/license.html
+# [2] https://openjdk.org/legal/assembly-exception.html
+#
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
+##############################################################################
+
+# Exclude tests temporarily
+
+org.openj9.test.vm.Test_MsgHelp:test_loadMessages_EN AN-https://github.ibm.com/runtimes/test/issues/46 generic-all
+org.openj9.test.vmArguments.VmArgumentTests:testCrNocr 244 generic-all
+org.openj9.test.nestmates.NestAttributeTest:testGetNestMembersAPIInValidMembers NA generic-all
+org.openj9.test.nestmates.NestAttributeTest:testGetNestMembersAPIInValidHost NA generic-all
+org.openj9.test.nestmates.NestAttributeTest:testGetNestMembersAPIInValidHostWrongPackage NA generic-all
+org.openj9.test.nestmates.NestAttributeTest:testGetNestMembersAPINestMemberWrongPackage NA generic-all
+org.openj9.test.nestmates.NestAttributeTest:testGetNestMembersAPINestMemberWrongNestHost NA generic-all
+org.openj9.test.nestmates.NestAttributeTest:testGetNestMembersAPINestMemberWrongNestHost2 NA generic-all
+
+# Exclude Java 19 Thread related failures
+
+org.openj9.test.java.lang.Test_ThreadGroup:test_activeCount NA generic-all
+org.openj9.test.java.lang.Test_ThreadGroup:test_Constructor2 NA generic-all
+org.openj9.test.java.lang.Test_ThreadGroup:test_destroy NA generic-all
+org.openj9.test.java.lang.Test_ThreadGroup:test_destroy2 NA generic-all
+org.openj9.test.java.lang.Test_ThreadGroup:test_destroy3 NA generic-all
+org.openj9.test.java.lang.Test_ThreadGroup:test_list NA generic-all
+org.openj9.test.java.lang.Test_ThreadGroup:test_remove NA generic-all
+org.openj9.test.java.lang.Test_ThreadGroup:test_resume NA generic-all
+org.openj9.test.java.lang.Test_ThreadGroup:test_setDaemon2 NA generic-all
+org.openj9.test.java.lang.Test_ThreadGroup:test_stop NA generic-all
+org.openj9.test.java.lang.Test_ThreadGroup:test_suspend NA generic-all
+org.openj9.test.java.lang.Test_ThreadGroup:test_uncaughtException NA generic-all
+org.openj9.test.java.lang.Test_Thread:test_start_WeakReference NA generic-all
+org.openj9.test.java.lang.Test_Thread:test_currentThread NA generic-all
+org.openj9.test.java.lang.Test_Thread:test_toString NA generic-all
+org.openj9.test.java.lang.management.TestManagementFactory:testGetPlatformMXBeans NA generic-all
