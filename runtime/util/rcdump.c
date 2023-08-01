@@ -79,6 +79,9 @@ static I_32 dumpPermittedSubclasses(J9PortLibrary *portLib, J9ROMClass *romClass
 #if JAVA_SPEC_VERSION >= 11
 static I_32 dumpNest (J9PortLibrary *portLib, J9ROMClass *romClass, U_32 flags);
 #endif /* JAVA_SPEC_VERSION >= 11 */
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+static I_32 dumpPreloadClasses (J9PortLibrary *portLib, J9ROMClass *romClass);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 static I_32 dumpSimpleName (J9PortLibrary *portLib, J9ROMClass *romClass, U_32 flags);
 static I_32 dumpUTF ( J9UTF8 *utfString, J9PortLibrary *portLib, U_32 flags);
 static I_32 dumpSourceDebugExtension (J9PortLibrary *portLib, J9ROMClass *romClass, U_32 flags);
@@ -189,6 +192,10 @@ IDATA j9bcutil_dumpRomClass( J9ROMClass *romClass, J9PortLibrary *portLib, J9Tra
 	/* dump the nest members or nest host, if defined */
 	dumpNest(portLib, romClass, flags);
 #endif /* JAVA_SPEC_VERSION >= 11 */
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	dumpPreloadClasses(portLib, romClass);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 	j9tty_printf( PORTLIB, "Fields (%i):\n", romClass->romFieldCount);
 	currentField = romFieldsStartDo(romClass, &state);
@@ -870,6 +877,24 @@ dumpNest(J9PortLibrary *portLib, J9ROMClass *romClass, U_32 flags)
 	return BCT_ERR_NO_ERROR;
 }
 #endif /* JAVA_SPEC_VERSION >= 11 */
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+static I_32
+dumpPreloadClasses(J9PortLibrary *portLib, J9ROMClass *romClass)
+{
+	PORT_ACCESS_FROM_PORT(portLib);
+	U_32* preloadInfoPtr = getPreloadInfoPtr(romClass);
+	U_32 preloadClassCount = *preloadInfoPtr;
+	U_16 i = 0;
+
+	j9tty_printf(PORTLIB, "Preload classes (%i):\n", preloadClassCount);
+	for (; i < preloadClassCount; i++) {
+		J9UTF8* preloadClassNameUtf8 = preloadClassNameAtIndex(preloadInfoPtr, i);
+		j9tty_printf(PORTLIB, "  %.*s\n", J9UTF8_LENGTH(preloadClassNameUtf8), J9UTF8_DATA(preloadClassNameUtf8));
+	}
+	return BCT_ERR_NO_ERROR;
+}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 static I_32
 dumpSimpleName(J9PortLibrary *portLib, J9ROMClass *romClass, U_32 flags)

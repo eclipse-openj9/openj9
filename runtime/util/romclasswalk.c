@@ -838,6 +838,36 @@ allSlotsInPermittedSubclassesDo(J9ROMClass* romClass, U_32* permittedSubclassesP
 	callbacks->sectionCallback(romClass, permittedSubclassesPointer, (UDATA)cursor - (UDATA)permittedSubclassesPointer, "permittedSubclassesInfo", userData);
 }
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+static void
+allSlotsInPreloadAttributeDo(J9ROMClass* romClass, U_32* preloadAttributePointer, J9ROMClassWalkCallbacks* callbacks, void* userData)
+{
+	BOOLEAN rangeValid = FALSE;
+	U_32 *cursor = preloadAttributePointer;
+	U_32 preloadAttributeCount = 0;
+
+	rangeValid = callbacks->validateRangeCallback(romClass, cursor, sizeof(U_32), userData);
+	if (FALSE == rangeValid) {
+		return;
+	}
+
+	callbacks->slotCallback(romClass, J9ROM_U32, cursor, "preloadAttributeCount", userData);
+	cursor += 1;
+	preloadAttributeCount = *preloadAttributePointer;
+
+	for (; preloadAttributeCount > 0; preloadAttributeCount--) {
+		rangeValid = callbacks->validateRangeCallback(romClass, cursor, sizeof(U_32), userData);
+		if (FALSE == rangeValid) {
+			return;
+		}
+		callbacks->slotCallback(romClass, J9ROM_UTF8, cursor, "className", userData);
+		cursor += 1;
+	}
+
+	callbacks->sectionCallback(romClass, preloadAttributePointer, (UDATA)cursor - (UDATA)preloadAttributePointer, "preloadAttributeInfo", userData);
+}
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+
 /*
  * See ROMClassWriter::writeOptionalInfo for illustration of the layout.
  */
@@ -932,6 +962,15 @@ allSlotsInOptionalInfoDo(J9ROMClass* romClass, J9ROMClassWalkCallbacks* callback
 		rangeValid = callbacks->validateRangeCallback(romClass, cursor, sizeof(J9SRP), userData);
 		if (rangeValid) {
 			callbacks->slotCallback(romClass, J9ROM_SRP, cursor, "optionalInjectedInterfaces", userData);
+		}
+		cursor++;
+	}
+
+	if (J9_ARE_ANY_BITS_SET(romClass->optionalFlags, J9_ROMCLASS_OPTINFO_PRELOAD_ATTRIBUTE)) {
+		rangeValid = callbacks->validateRangeCallback(romClass, cursor, sizeof(J9SRP), userData);
+		if (rangeValid) {
+			callbacks->slotCallback(romClass, J9ROM_SRP, cursor, "preloadAttributeSRP", userData);
+			allSlotsInPreloadAttributeDo(romClass, SRP_PTR_GET(cursor, U_32*), callbacks, userData);
 		}
 		cursor++;
 	}
