@@ -1179,18 +1179,15 @@ obj:
 		VM_BytecodeAction rc = EXECUTE_BYTECODE;
 
 		if (elementCount < 0) {
-			buildInternalNativeStackFrame(REGISTER_ARGS);
 			_currentThread->tempSlot = (UDATA)elementCount;
 			rc = THROW_AIOB;
 		} else {
 			I_32 invalidIndex = 0;
 			if (!VM_ArrayCopyHelpers::rangeCheck(_currentThread, srcObject, srcStart, elementCount, &invalidIndex)) {
-				buildInternalNativeStackFrame(REGISTER_ARGS);
 				_currentThread->tempSlot = (UDATA)invalidIndex;
 				rc = THROW_AIOB;
 			} else {
 				if (!VM_ArrayCopyHelpers::rangeCheck(_currentThread, destObject, destStart, elementCount, &invalidIndex)) {
-					buildInternalNativeStackFrame(REGISTER_ARGS);
 					_currentThread->tempSlot = (UDATA)invalidIndex;
 					rc = THROW_AIOB;
 				} else {
@@ -1210,17 +1207,13 @@ obj:
 						}
 					} else if (J9_IS_J9CLASS_FLATTENED(srcClazz) || J9_IS_J9CLASS_FLATTENED(destClazz) || J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(destComponentClass)) {
 						/* VM_ArrayCopyHelpers::referenceArrayCopy cannot handle flattened arrays or null elements being copied into arrays of primitive value types, so for those cases use copyFlattenableArray instead */
-						buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
 						updateVMStruct(REGISTER_ARGS);
 						I_32 value = VM_ValueTypeHelpers::copyFlattenableArray(_currentThread, _objectAccessBarrier, _objectAllocate, srcObject, destObject, srcStart, destStart, elementCount);
 						VMStructHasBeenUpdated(REGISTER_ARGS);
-						restoreGenericSpecialStackFrame(REGISTER_ARGS);
 
 						if (-1 == value) {
-							buildInternalNativeStackFrame(REGISTER_ARGS);
 							rc = THROW_ARRAY_STORE;
 						} else if (-2 == value) {
-							buildInternalNativeStackFrame(REGISTER_ARGS);
 							rc = THROW_NPE;
 						}
 					} else
@@ -1228,7 +1221,6 @@ obj:
 					{
 						I_32 errorIndex = VM_ArrayCopyHelpers::referenceArrayCopy(_currentThread, srcObject, srcStart, destObject, destStart, elementCount);
 						if (-1 != errorIndex) {
-							buildInternalNativeStackFrame(REGISTER_ARGS);
 							rc = THROW_ARRAY_STORE;
 						}
 					}
@@ -1245,18 +1237,15 @@ obj:
 		VM_BytecodeAction rc = EXECUTE_BYTECODE;
 		/* Primitive array */
 		if (elementCount < 0) {
-			buildInternalNativeStackFrame(REGISTER_ARGS);
 			_currentThread->tempSlot = (UDATA)elementCount;
 			rc = THROW_AIOB;
 		} else {
 			I_32 invalidIndex = 0;
 			if (!VM_ArrayCopyHelpers::rangeCheck(_currentThread, srcObject, srcStart, elementCount, &invalidIndex)) {
-				buildInternalNativeStackFrame(REGISTER_ARGS);
 				_currentThread->tempSlot = (UDATA)invalidIndex;
 				rc = THROW_AIOB;
 			} else {
 				if (!VM_ArrayCopyHelpers::rangeCheck(_currentThread, destObject, destStart, elementCount, &invalidIndex)) {
-					buildInternalNativeStackFrame(REGISTER_ARGS);
 					_currentThread->tempSlot = (UDATA)invalidIndex;
 					rc = THROW_AIOB;
 				} else {
@@ -2738,6 +2727,7 @@ done:
 		if (!VM_ObjectMonitor::inlineFastObjectMonitorEnter(_currentThread, threadLock)) {
 			UDATA monitorRC = objectMonitorEnterNonBlocking(_currentThread, threadLock);
 			if (J9_OBJECT_MONITOR_ENTER_FAILED(monitorRC)) {
+				buildInternalNativeStackFrame(REGISTER_ARGS);
 				rc = THROW_MONITOR_ALLOC_FAIL;
 				goto done;
 			} else if (J9_OBJECT_MONITOR_BLOCKING == monitorRC) {
@@ -3053,8 +3043,9 @@ done:
 		I_32 destPos = *(I_32*)(_sp + 1);
 		I_32 length = *(I_32*)_sp;
 
+		buildInternalNativeStackFrame(REGISTER_ARGS);
+
 		if ((NULL == src) || (NULL == dest)) {
-			buildInternalNativeStackFrame(REGISTER_ARGS);
 			rc = THROW_NPE;
 		} else {
 			J9Class *srcClass = J9OBJECT_CLAZZ(_currentThread, src);
@@ -3063,20 +3054,17 @@ done:
 				J9Class *destClass = J9OBJECT_CLAZZ(_currentThread, dest);
 				J9ROMClass *destRom = destClass->romClass;
 				if (!J9ROMCLASS_IS_ARRAY(destRom)) {
-					buildInternalNativeStackFrame(REGISTER_ARGS);
 					rc = THROW_ARRAY_STORE;
 				} else {
 					if (OBJECT_HEADER_SHAPE_POINTERS == J9CLASS_SHAPE(srcClass)) {
 						/* Reference array */
 						if (OBJECT_HEADER_SHAPE_POINTERS != J9CLASS_SHAPE(destClass)) {
-							buildInternalNativeStackFrame(REGISTER_ARGS);
 							rc = THROW_ARRAY_STORE;
 						} else {
 							rc = doReferenceArrayCopy(REGISTER_ARGS, src, srcPos, dest, destPos, length);
 						}
 					} else {
 						if (srcClass != destClass) {
-							buildInternalNativeStackFrame(REGISTER_ARGS);
 							rc = THROW_ARRAY_STORE;
 						} else {
 							rc = doPrimitiveArrayCopy(REGISTER_ARGS, src, srcPos, dest, destPos, ((J9ROMArrayClass*)srcClass->romClass)->arrayShape & 0x0000FFFF, length);
@@ -3084,12 +3072,12 @@ done:
 					}
 				}
 			} else {
-				buildInternalNativeStackFrame(REGISTER_ARGS);
 				rc = THROW_ARRAY_STORE;
 			}
 		}
 
 		if (EXECUTE_BYTECODE == rc) {
+			restoreInternalNativeStackFrame(REGISTER_ARGS);
 			returnVoidFromINL(REGISTER_ARGS, 5);
 		}
 
