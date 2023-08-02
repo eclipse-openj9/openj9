@@ -89,6 +89,7 @@ SH_TimestampManagerImpl::localCheckTimeStamp(J9VMThread* currentThread, Classpat
 	if (doFreeBuffer) {
 		j9mem_free_memory(pathBufPtr);
 	}
+	Trc_SHR_TMI_LocalCheckTimestamp_Timestamps(currentThread, current, test);
 	if (current == -1) {
 		if (test == -1) {
 			return TIMESTAMP_DOES_NOT_EXIST;
