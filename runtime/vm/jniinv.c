@@ -701,8 +701,8 @@ protectedInternalAttachCurrentThread(J9PortLibrary* portLibrary, void * userData
 		}
 	}
 
-
-	if ((env = allocateVMThread(vm, args->osThread, threadType, memorySpace, NULL)) == NULL) {
+	env = allocateVMThread(vm, args->osThread, threadType, memorySpace, NULL);
+	if (NULL == env) {
 		return JNI_ENOMEM;
 	}
 	env->gpProtected = TRUE;

@@ -152,6 +152,10 @@ static void jvmtiHookVirtualThreadMount (J9HookInterface** hook, UDATA eventNum,
 static void jvmtiHookVirtualThreadUnmount (J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
 #endif /* JAVA_SPEC_VERSION >= 19 */
 static BOOLEAN shouldPostEvent(J9VMThread *currentThread, J9Method *method);
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+static void jvmtiHookVMCheckpoint(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
+static void jvmtiHookVMRestore(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 static void
 jvmtiHookThreadEnd(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData)
@@ -508,6 +512,56 @@ jvmtiHookVirtualThreadUnmount(J9HookInterface **hook, UDATA eventNum, void *even
 
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+static void
+jvmtiHookVMCheckpoint(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData)
+{
+	J9CheckpointEvent *data = eventData;
+	J9JVMTIEnv *j9env = userData;
+	jvmtiExtensionEvent callback = *J9JVMTI_EXTENSION_CALLBACK(j9env, J9JVMTI_EVENT_OPENJ9_VM_CHECKPOINT);
+
+	Trc_JVMTI_jvmtiHookVMCheckpoint_Entry();
+
+	if (NULL != callback) {
+		J9VMThread *currentThread = data->currentThread;
+		jthread threadRef = NULL;
+		UDATA hadVMAccess = 0;
+		UDATA javaOffloadOldState = 0;
+
+		if (prepareForEvent(j9env, currentThread, currentThread, J9JVMTI_EVENT_OPENJ9_VM_CHECKPOINT, &threadRef, &hadVMAccess, FALSE, 0, &javaOffloadOldState)) {
+			callback((jvmtiEnv *)j9env, (JNIEnv *)currentThread, threadRef);
+			finishedEvent(currentThread, J9JVMTI_EVENT_OPENJ9_VM_CHECKPOINT, hadVMAccess, javaOffloadOldState);
+		}
+	}
+
+	TRACE_JVMTI_EVENT_RETURN(jvmtiHookVMCheckpoint);
+}
+
+static void
+jvmtiHookVMRestore(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData)
+{
+	J9RestoreEvent *data = eventData;
+	J9JVMTIEnv *j9env = userData;
+	jvmtiExtensionEvent callback = *J9JVMTI_EXTENSION_CALLBACK(j9env, J9JVMTI_EVENT_OPENJ9_VM_RESTORE);
+
+	Trc_JVMTI_jvmtiHookVMRestore_Entry();
+
+	if (NULL != callback) {
+		J9VMThread *currentThread = data->currentThread;
+		jthread threadRef = NULL;
+		UDATA hadVMAccess = 0;
+		UDATA javaOffloadOldState = 0;
+
+		if (prepareForEvent(j9env, currentThread, currentThread, J9JVMTI_EVENT_OPENJ9_VM_RESTORE, &threadRef, &hadVMAccess, FALSE, 0, &javaOffloadOldState)) {
+			callback((jvmtiEnv *)j9env, (JNIEnv *)currentThread, threadRef);
+			finishedEvent(currentThread, J9JVMTI_EVENT_OPENJ9_VM_RESTORE, hadVMAccess, javaOffloadOldState);
+		}
+	}
+
+	TRACE_JVMTI_EVENT_RETURN(jvmtiHookVMRestore);
+}
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT)*/
+
 static IDATA
 hookRegister(J9JVMTIHookInterfaceWithID* hookInterfaceWithID, UDATA eventNum, J9HookFunction function, const char *callsite, void *userData)
 {
@@ -710,6 +764,14 @@ processEvent(J9JVMTIEnv* j9env, jint event, J9HookRedirectorFunction redirectorF
 		case J9JVMTI_EVENT_COM_SUN_HOTSPOT_EVENTS_VIRTUAL_THREAD_UNMOUNT:
 			return redirectorFunction(vmHook, J9HOOK_VM_VIRTUAL_THREAD_UNMOUNT, jvmtiHookVirtualThreadUnmount, OMR_GET_CALLSITE(), j9env);
 #endif /* JAVA_SPEC_VERSION >= 19 */
+
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+		case J9JVMTI_EVENT_OPENJ9_VM_CHECKPOINT:
+			return redirectorFunction(vmHook, J9HOOK_VM_PREPARING_FOR_CHECKPOINT, jvmtiHookVMCheckpoint, OMR_GET_CALLSITE(), j9env);
+
+		case J9JVMTI_EVENT_OPENJ9_VM_RESTORE:
+			return redirectorFunction(vmHook, J9HOOK_VM_PREPARING_FOR_RESTORE, jvmtiHookVMRestore, OMR_GET_CALLSITE(), j9env);
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 	}
 

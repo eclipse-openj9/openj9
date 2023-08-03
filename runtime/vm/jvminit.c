@@ -3901,7 +3901,15 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 			vm->checkpointState.flags |= J9VM_CRIU_IS_THROW_ON_DELAYED_CHECKPOINT_ENABLED;
 		}
 	}
-
+	{
+		if ((FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, MAPOPT_AGENTLIB_JDWP_EQUALS, NULL) >= 0)
+			|| (FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, MAPOPT_XRUNJDWP, NULL) >= 0)
+		) {
+			vm->checkpointState.flags |= J9VM_CRIU_IS_JDWP_ENABLED;
+		}
+		memset(vm->checkpointState.javaDebugThreads, 0, sizeof(vm->checkpointState.javaDebugThreads));
+		vm->checkpointState.javaDebugThreadCount = 0;
+	}
 	/* Its unclear if we need an option for this, so we can keep the init here for the time being */
 	vm->checkpointState.maxRetryForNotCheckpointSafe = 100;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */

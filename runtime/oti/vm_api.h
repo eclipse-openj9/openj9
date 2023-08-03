@@ -4258,10 +4258,11 @@ fatalRecursiveStackOverflow(J9VMThread *currentThread);
 * @param privateFlags
 * @param memorySpace
 * @param threadObject the object associated with this thread, or NULL
+* @param threadName string representing thread name, or NULL
 * @return J9VMThread *
 */
 J9VMThread *
-allocateVMThread(J9JavaVM * vm, omrthread_t osThread, UDATA privateFlags, void * memorySpace, J9Object * threadObject);
+allocateVMThread(J9JavaVM *vm, omrthread_t osThread, UDATA privateFlags, void *memorySpace, J9Object *threadObject);
 
 
 /**

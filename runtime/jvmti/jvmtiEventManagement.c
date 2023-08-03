@@ -100,7 +100,8 @@ jvmtiSetEventNotificationMode(jvmtiEnv* env,
 		/* Ensure the required capabilities are enabled for the event if the event is being enabled */
 
 		if (mode == JVMTI_ENABLE) {
-			switch((int)event_type) {
+			/* Cast event_type to int to use enum value since we mix normal and extension event types in the cases. */
+			switch ((int)event_type) {
 				case JVMTI_EVENT_FIELD_MODIFICATION:
 					ENSURE_CAPABILITY(env, can_generate_field_modification_events);
 					break;
@@ -146,12 +147,12 @@ jvmtiSetEventNotificationMode(jvmtiEnv* env,
 					ENSURE_CAPABILITY(env, can_generate_monitor_events);
 					break;
 
-				case  JVMTI_EVENT_VM_OBJECT_ALLOC:
+				case JVMTI_EVENT_VM_OBJECT_ALLOC:
 					ENSURE_CAPABILITY(env, can_generate_vm_object_alloc_events);
 					break;
 
 #if JAVA_SPEC_VERSION >= 11
-				case  JVMTI_EVENT_SAMPLED_OBJECT_ALLOC:
+				case JVMTI_EVENT_SAMPLED_OBJECT_ALLOC:
 					ENSURE_CAPABILITY(env, can_generate_sampled_object_alloc_events);
 					break;
 #endif /* JAVA_SPEC_VERSION >= 11 */
@@ -193,7 +194,7 @@ jvmtiSetEventNotificationMode(jvmtiEnv* env,
 
 		/* Disallow certain events at the thread level */
 
-		switch(event_type) {
+		switch (event_type) {
 			case JVMTI_EVENT_VM_INIT:
 			case JVMTI_EVENT_VM_START:
 			case JVMTI_EVENT_VM_DEATH:
@@ -203,7 +204,7 @@ jvmtiSetEventNotificationMode(jvmtiEnv* env,
 			case JVMTI_EVENT_DYNAMIC_CODE_GENERATED:
 			case JVMTI_EVENT_DATA_DUMP_REQUEST:
 #if JAVA_SPEC_VERSION >= 11
-			case  JVMTI_EVENT_SAMPLED_OBJECT_ALLOC:
+			case JVMTI_EVENT_SAMPLED_OBJECT_ALLOC:
 #endif /* JAVA_SPEC_VERSION >= 11 */
 				if (event_thread != NULL) {
 					JVMTI_ERROR(JVMTI_ERROR_ILLEGAL_ARGUMENT);
