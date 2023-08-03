@@ -651,6 +651,11 @@ ROMClassWriter::writeFields(Cursor *cursor, bool markAndCountOnly)
 			if (iterator.hasTypeAnnotation()) {
 				modifiers |= J9FieldFlagHasTypeAnnotations;
 			}
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+			if (iterator.isNullRestricted()) {
+				modifiers |= J9FieldFlagIsNullRestricted;
+			}
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
 			cursor->writeU32(modifiers, Cursor::GENERIC);
 		}

@@ -2300,6 +2300,7 @@ nativeOOM:
 			}
 		}
 
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 		if (J9ROMCLASS_ALLOWS_NON_ATOMIC_CREATION(romClass)) {
 			classFlags |= J9ClassAllowsNonAtomicCreation;
 		}
@@ -2307,6 +2308,7 @@ nativeOOM:
 			/* J9ClassIsValueType is being reused here intentionally */
 			classFlags |= J9ClassIsValueType;
 		}
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
 		if (J9ROMCLASS_IS_VALUE(romClass)) {
 			classFlags |= J9ClassIsValueType;

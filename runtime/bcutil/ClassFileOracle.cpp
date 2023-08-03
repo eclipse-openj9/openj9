@@ -231,8 +231,10 @@ ClassFileOracle::ClassFileOracle(BufferManager *bufferManager, J9CfrClassFile *c
 	_hasNonStaticFields(false),
 	_hasNonEmptyConstructor(false),
 	_preloadAttribute(NULL),
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	_implicitCreation(NULL),
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 	_recordComponentCount(0),
 	_permittedSubclassesAttribute(NULL),
 	_isSealed(false),
@@ -457,6 +459,11 @@ ClassFileOracle::walkFields()
 			case CFR_ATTRIBUTE_Deprecated:
 				/* Do nothing */
 				break;
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+			case CFR_ATTRIBUTE_NullRestricted:
+				_fieldsInfo[fieldIndex].isNullRestricted = true;
+				break;
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 			default:
 				Trc_BCU_ClassFileOracle_walkFields_UnknownAttribute((U_32)attrib->tag, (U_32)getUTF8Length(attrib->nameIndex), getUTF8Data(attrib->nameIndex), attrib->length);
 				break;
@@ -615,11 +622,13 @@ ClassFileOracle::walkAttributes()
 			}
 			break;
 		}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 		case CFR_ATTRIBUTE_ImplicitCreation: {
 			_implicitCreation = (J9CfrAttributeImplicitCreation *)attrib;
 			break;
 		}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 #if JAVA_SPEC_VERSION >= 11
 		case CFR_ATTRIBUTE_NestMembers:
 			/* ignore CFR_ATTRIBUTE_NestMembers for hidden classes, as the nest members never know the name of hidden classes */

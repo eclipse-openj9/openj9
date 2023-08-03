@@ -753,6 +753,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
             compInfoPT->getCompilation()->failCompilation<TR::CodeCacheError>("Failed to allocate space in the code cache");
 
          void *thunkAddress = reinterpret_cast<void *>(thunkStart);
+         compInfoPT->reloRuntime()->reloTarget()->flushCache(reinterpret_cast<uint8_t *>(thunkAddress), serializedThunk.size());
          fe->setInvokeExactJ2IThunk(thunkAddress, comp);
          client->write(response, JITServer::Void());
          }
