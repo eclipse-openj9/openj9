@@ -24,7 +24,7 @@
 
 <module>
 	<artifact type="shared" name="j9jitbuilder">
-		<include-if condition="spec.flags.J9VM_OPT_PANAMA"/>
+		
 		<phase>core</phase>
 		<includes>
 			<include path="j9include"/>

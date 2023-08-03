@@ -75,10 +75,6 @@ computeJCLRuntimeFlags(J9JavaVM *vm)
 	flags |= JCL_RTFLAG_OPT_METHOD_HANDLE;
 #endif /* J9VM_OPT_METHOD_HANDLE */
 
-#ifdef J9VM_OPT_PANAMA
-	flags |= JCL_RTFLAG_OPT_PANAMA;
-#endif /* J9VM_OPT_PANAMA */
-
 #ifdef J9VM_OPT_REFLECT
 	flags |= JCL_RTFLAG_OPT_REFLECT;
 #endif /* J9VM_OPT_REFLECT */
