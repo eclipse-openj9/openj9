@@ -1180,7 +1180,7 @@ ROMClassBuilder::finishPrepareAndLaydown(
  *                           + AccRecord
  *                          + AccClassAnonClass
  *
- *                        + AccSynthetic (matches Oracle modifier position)
+ *                        + UNUSED
  *                       + AccClassUseBisectionSearch
  *                      + AccClassInnerClass
  *                     + J9AccClassHidden
@@ -1297,12 +1297,6 @@ ROMClassBuilder::computeExtraModifiers(ClassFileOracle *classFileOracle, ROMClas
 				break;
 			}
 		}
-	}
-
-	if ( classFileOracle->isSynthetic() ) {
-		/* handle the synthetic attribute. In java 1.5 synthetic may be specified in the access flags as well so do not unset bit here */
-		// Trc_BCU_createRomClassEndian_Synthetic(romClass);
-		modifiers |= J9AccSynthetic;
 	}
 
 	if (classFileOracle->hasClinit()) {
