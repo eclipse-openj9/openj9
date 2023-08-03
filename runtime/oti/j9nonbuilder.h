@@ -100,7 +100,7 @@
 #define J9FieldFlagIsContended 0x10000000
 #define J9FieldFlagObject 0x20000
 #define J9FieldFlagFlattened 0x1000000
-#define J9FieldFlagUnused_2000000 0x2000000
+#define J9FieldFlagIsNullRestricted 0x2000000
 #define J9FieldFlagUnused_4000000 0x4000000
 #define J9FieldFlagPutResolved 0x8000000
 #define J9FieldFlagResolved 0x80000000

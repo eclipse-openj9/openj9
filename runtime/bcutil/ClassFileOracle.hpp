@@ -46,9 +46,6 @@
  * */
 #define UTF8_INDEX_FROM_CLASS_INDEX(cp, cpIndex)  ((U_16)((cpIndex == 0)? 0 : cp[cpIndex].slot1))
 
-#define IMPLICIT_CREATION_FLAGS_DEFAULT 1
-#define IMPLICIT_CREATION_FLAGS_NON_ATOMIC 2
-
 class BufferManager;
 class ConstantPoolMap;
 class ROMClassCreationContext;
@@ -68,6 +65,9 @@ public:
 		J9CfrAttributeRuntimeVisibleAnnotations *annotationsAttribute;
 		J9CfrAttributeRuntimeVisibleTypeAnnotations *typeAnnotationsAttribute;
 		bool isFieldContended;
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+		bool isNullRestricted;
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 	};
 
 	struct StackMapFrameInfo
@@ -345,7 +345,9 @@ class FieldIterator
 		bool hasAnnotation() const { return _fieldsInfo[_index].annotationsAttribute != NULL;}
 		bool hasTypeAnnotation() const { return _fieldsInfo[_index].typeAnnotationsAttribute != NULL;}
 		bool isFieldContended() const { return _fieldsInfo[_index].isFieldContended; }
-
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+		bool isNullRestricted() const { return _fieldsInfo[_index].isNullRestricted; }
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
 		U_32 getConstantValueSlot1() const { return _classFile->constantPool[getConstantValueConstantPoolIndex()].slot1; }
 		U_32 getConstantValueSlot2() const { return _classFile->constantPool[getConstantValueConstantPoolIndex()].slot2; }
@@ -1020,10 +1022,6 @@ class RecordComponentIterator
 	bool needsIdentityFlag() const { return _isIdentityFlagNeeded; }
 	bool hasIdentityFlagSet() const { return _hasIdentityFlagSet; }
 	bool isValueType() const { return _isValueType; }
-	bool hasImplicitCreation() const { return NULL != _implicitCreation; }
-	U_16 getImplicitCreationFlags() const { return hasImplicitCreation() ? _implicitCreation->implicitCreationFlags : 0; }
-	bool isImplicitCreationHasDefaultValue() const { return J9_ARE_ALL_BITS_SET(getImplicitCreationFlags(), IMPLICIT_CREATION_FLAGS_DEFAULT); }
-	bool isImplicitCreationNonAtomic() const { return J9_ARE_ALL_BITS_SET(getImplicitCreationFlags(), IMPLICIT_CREATION_FLAGS_NON_ATOMIC); }
 	bool hasPreloadClasses() const { return NULL != _preloadAttribute; }
 	U_16 getPreloadClassCount() const { return  hasPreloadClasses() ? _preloadAttribute->numberOfClasses : 0; }
 
@@ -1035,7 +1033,16 @@ class RecordComponentIterator
 		}
 		return result;
 	}
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+	#define IMPLICIT_CREATION_FLAGS_DEFAULT 1
+	#define IMPLICIT_CREATION_FLAGS_NON_ATOMIC 2
+
+	bool hasImplicitCreation() const { return NULL != _implicitCreation; }
+	U_16 getImplicitCreationFlags() const { return hasImplicitCreation() ? _implicitCreation->implicitCreationFlags : 0; }
+	bool isImplicitCreationHasDefaultValue() const { return J9_ARE_ALL_BITS_SET(getImplicitCreationFlags(), IMPLICIT_CREATION_FLAGS_DEFAULT); }
+	bool isImplicitCreationNonAtomic() const { return J9_ARE_ALL_BITS_SET(getImplicitCreationFlags(), IMPLICIT_CREATION_FLAGS_NON_ATOMIC); }
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
 	U_16 getPermittedSubclassesClassNameAtIndex(U_16 index) const {
 		U_16 result = 0;
@@ -1165,9 +1172,11 @@ private:
 	J9CfrAttributeBootstrapMethods *_bootstrapMethodsAttribute;
 	J9CfrAttributePermittedSubclasses *_permittedSubclassesAttribute;
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-	J9CfrAttributeImplicitCreation *_implicitCreation;
 	J9CfrAttributePreload *_preloadAttribute;
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+	J9CfrAttributeImplicitCreation *_implicitCreation;
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 #if JAVA_SPEC_VERSION >= 11
 	J9CfrAttributeNestMembers *_nestMembers;
 #endif /* JAVA_SPEC_VERSION >= 11 */
