@@ -6001,6 +6001,21 @@ static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
             TR_VerboseLog::writeLine(TR_Vlog_INFO, "\tAOT header compressedRefs shiftAmount=%u", hdrInCache->compressedPointerShift);
             }
 #endif /* OMR_GC_COMPRESSED_POINTERS */
+#if defined(J9VM_OPT_JITSERVER)
+         if (javacoreData->usingJITServerAOTCacheLayer)
+            {
+            TR_VerboseLog::writeLine(TR_Vlog_INFO, "\tUsing temporary top SCC layer for JITServer AOT cache");
+            }
+#endif /* J9VM_OPT_JITSERVER */
+         }
+      else
+         {
+#if defined(J9VM_OPT_JITSERVER)
+         if (javacoreData->usingJITServerAOTCacheLayer)
+            {
+            TR_VerboseLog::writeLine(TR_Vlog_INFO, "Using temporary top SCC layer for JITServer AOT cache");
+            }
+#endif /* J9VM_OPT_JITSERVER */
          }
 #endif
       if (TR::Options::isAnyVerboseOptionSet(TR_VerboseHWProfiler))

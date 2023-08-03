@@ -3120,6 +3120,18 @@ JavaCoreDumpWriter::writeSharedClassSectionTopLayerStatsHelper(J9SharedClassJava
 
 	_OutputStream.writeInteger(javacoreData->otherBytes, "%zu");
 
+#if defined(J9VM_OPT_JITSERVER)
+	if (javacoreData->usingJITServerAOTCacheLayer) {
+		_OutputStream.writeCharacters(
+				"\n2SCLTEXTUJL            Temporary JITServer Layer             = true"
+		);
+	} else {
+		_OutputStream.writeCharacters(
+				"\n2SCLTEXTUJL            Temporary JITServer Layer             = false"
+		);
+	}
+#endif /* defined(J9VM_OPT_JITSERVER) */
+
 	_OutputStream.writeCharacters(
 			"\n2SCLTEXTDAS            Class debug area size                     = "
 	);

@@ -3431,7 +3431,14 @@ j9shr_init(J9JavaVM *vm, UDATA loadFlags, UDATA* nonfatal)
 		if (-1 == maxLayer) {
 			/* There is no existing layers under cacheName. This JVM can create a new cache layer 0. */
 			vm->sharedClassConfig->layer = 0;
-		} else {
+		}
+#if defined(J9VM_OPT_JITSERVER)
+		else if (vm->sharedCacheAPI->usingJITServerAOTCacheLayer) {
+			/* a temporary new layer must be created */
+			vm->sharedClassConfig->layer = maxLayer + 1;
+		}
+#endif /* defined(J9VM_OPT_JITSERVER) */
+		else {
 			/* There are existing layers under cacheName, use the existing maximum layer, but do not create new layer.
 			 * J9SHR_RUNTIMEFLAG_DO_NOT_CREATE_CACHE is not set here, so if maxLayer cache has a different build ID,
 			 * it will be deleted and a new one will be created.

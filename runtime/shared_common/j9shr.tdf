@@ -3000,3 +3000,7 @@ TraceEvent=Trc_SHR_CC_enterWriteMutex_writerCountInc Overhead=1 Level=9 Template
 TraceEvent=Trc_SHR_CC_exitWriteMutex_writerCountDec Overhead=1 Level=9 Template="CC exitWriteMutex writerCount decremented to %zu"
 TraceExit=Trc_SHR_OSC_Mmap_syncUpdates_badmsync1 NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::syncUpdates: j9mmap_msync failed with error number: %d, error message %s"
 TraceEvent=Trc_SHR_TMI_LocalCheckTimestamp_Timestamps Overhead=1 Level=6 Template="TMI localCheckTimestamp: timestamp checked, current is %lld, test is %lld"
+
+TraceEvent=Trc_SHR_VMInitStages_Event_UsingJITServerAOTCacheLayer Overhead=1 Level=1 Template="The shared cache is using a temporary top layer for the JITServer AOT cache"
+TraceEvent=Trc_SHR_OSC_Mmap_startup_jitserverlayergooddelete NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::startup: deleteCacheFile succeeded for cache path name = %s, file handle %d"
+TraceException=Trc_SHR_OSC_Mmap_startup_jitserverlayerbaddelete NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::startup: deleteCacheFile failed for cache path name = %s, file handle %d"

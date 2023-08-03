@@ -2843,7 +2843,7 @@ remoteCompilationEnd(J9VMThread *vmThread, TR::Compilation *comp, TR_ResolvedMet
                      J9Method *method, TR::CompilationInfoPerThreadBase *compInfoPT,
                      const std::string &codeCacheStr, const std::string &dataCacheStr)
    {
-   static const bool shouldStoreRemoteAOTMethods = !feGetEnv("TR_disableRemoteAOTMethodStorage");
+   static const bool shouldStoreRemoteAOTMethods = feGetEnv("TR_enableRemoteAOTMethodStorage");
 
    TR_MethodMetaData *metaData = NULL;
    TR_J9VM *fe = comp->fej9vm();
