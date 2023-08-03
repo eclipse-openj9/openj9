@@ -170,7 +170,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<exclude-if condition="spec.java20"/>
 		</export>
 		<export name="_JVM_IsThreadAlive@8">
-			<exclude-if condition="spec.java21"/>
+			<exclude-if condition="spec.java17"/>
 		</export>
 		<export name="_JVM_SuspendThread@8">
 			<exclude-if condition="spec.java20"/>

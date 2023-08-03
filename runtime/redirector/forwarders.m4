@@ -185,7 +185,7 @@ _X(JVM_IsInterface,JNICALL,true,jboolean,JNIEnv *env, jclass clazz)
 _X(JVM_IsInterrupted,JNICALL,true,jboolean,JNIEnv *env, jobject thread, jboolean unknown)
 _X(JVM_IsPrimitiveClass,JNICALL,true,jboolean,JNIEnv *env, jclass clazz)
 _X(JVM_IsSupportedJNIVersion,JNICALL,true,jboolean,jint jniVersion)
-_IF([JAVA_SPEC_VERSION < 21],
+_IF([JAVA_SPEC_VERSION < 17],
 	[_X(JVM_IsThreadAlive,JNICALL,true,jboolean,JNIEnv *env, jobject targetThread)])
 _X(JVM_NewArray,JNICALL,true,jobject,JNIEnv *env, jclass componentType, jint dimension)
 _X(JVM_NewMultiArray,JNICALL,true,jobject,JNIEnv *env, jclass eltClass, jintArray dim)
