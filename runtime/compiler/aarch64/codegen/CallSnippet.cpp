@@ -967,8 +967,9 @@ uint8_t *TR::ARM64CallSnippet::generateVIThunk(TR::Node *callNode, int32_t argSi
    int32_t codeSize = 4 * (instructionCountForArguments(callNode, cg) + 5) + 8; // 5 instructions for branch, Additional 8 bytes to hold size of thunk
    uint8_t *thunk, *buffer, *returnValue;
    uintptr_t dispatcher;
+   TR_J9VMBase *fej9 = cg->fej9();
 
-   if (cg->comp()->compileRelocatableCode())
+   if (fej9->storeOffsetToArgumentsInVirtualIndirectThunks())
       thunk = (uint8_t *)cg->comp()->trMemory()->allocateMemory(codeSize, heapAlloc);
    else
       thunk = (uint8_t *)cg->allocateCodeMemory(codeSize, true, false);
