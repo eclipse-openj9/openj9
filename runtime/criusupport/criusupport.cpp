@@ -865,8 +865,7 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 
 		toggleSuspendOnJavaThreads(currentThread, TRUE, FALSE);
 
-		vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_CRIU_SINGLE_THREAD_MODE;
-
+		vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_CRIU_SINGLE_THREAD_MODE|J9_EXTENDED_RUNTIME2_CRIU_SINGLE_THROW_BLOCKING_EXCEPTIONS;
 		releaseSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
 
 		VM_VMHelpers::setVMState(currentThread, J9VMSTATE_CRIU_SUPPORT_CHECKPOINT_PHASE_JAVA_HOOKS);
@@ -890,7 +889,13 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 		Trc_CRIU_checkpoint_nano_times(currentThread, checkpointNanoTimeMonotonic, checkpointNanoUTCTime);
 		TRIGGER_J9HOOK_VM_PREPARING_FOR_CHECKPOINT(vm->hookInterface, currentThread);
 
+		/* GC releases threads in a multi-thread fashion. Threads will need to remove
+		 * themselves from the threadgroup which requires a lock. Disable deadlock detection
+		 * temporarily while this happens.
+		 */
+		vm->extendedRuntimeFlags2 &= ~J9_EXTENDED_RUNTIME2_CRIU_SINGLE_THROW_BLOCKING_EXCEPTIONS;
 		vm->memoryManagerFunctions->j9gc_prepare_for_checkpoint(currentThread);
+		vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_CRIU_SINGLE_THROW_BLOCKING_EXCEPTIONS;
 
 		acquireSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
 
@@ -1051,8 +1056,7 @@ wakeJavaThreads:
 
 wakeJavaThreadsWithExclusiveVMAccess:
 
-		vm->extendedRuntimeFlags2 &= ~J9_EXTENDED_RUNTIME2_CRIU_SINGLE_THREAD_MODE;
-
+		vm->extendedRuntimeFlags2 &= ~(J9_EXTENDED_RUNTIME2_CRIU_SINGLE_THROW_BLOCKING_EXCEPTIONS|J9_EXTENDED_RUNTIME2_CRIU_SINGLE_THREAD_MODE);
 		toggleSuspendOnJavaThreads(currentThread, FALSE, FALSE);
 
 		releaseSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);

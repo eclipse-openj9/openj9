@@ -69,7 +69,7 @@ threadParkImpl(J9VMThread *vmThread, BOOLEAN timeoutIsEpochRelative, I_64 timeou
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 	else {
 		/* timeoutIsEpochRelative is false and timeout = 0 */
-		if (J9_IS_SINGLE_THREAD_MODE(vm)
+		if (J9_THROW_BLOCKING_EXCEPTION_IN_SINGLE_THREAD_MODE(vm)
 			&& VM_VMHelpers::threadCanRunJavaCode(vmThread)
 			&& (vmThread == vm->checkpointState.checkpointThread)
 			&& J9_ARE_NO_BITS_SET(vmThread->publicFlags, J9_PUBLIC_FLAGS_HALT_THREAD_FOR_CHECKPOINT)

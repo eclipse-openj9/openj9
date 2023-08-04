@@ -358,6 +358,7 @@ static const struct { \
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 #define J9_IS_SINGLE_THREAD_MODE(vm) (J9_ARE_ALL_BITS_SET((vm)->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_CRIU_SINGLE_THREAD_MODE))
+#define J9_THROW_BLOCKING_EXCEPTION_IN_SINGLE_THREAD_MODE(vm) (J9_ARE_ALL_BITS_SET((vm)->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_CRIU_SINGLE_THROW_BLOCKING_EXCEPTIONS))
 #define J9_IS_CRIU_RESTORED(vm) (0 != vm->checkpointState.checkpointRestoreTimeDelta)
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
