@@ -22,6 +22,7 @@
 package com.ibm.j9ddr.vm29.pointer.helper;
 
 import static com.ibm.j9ddr.vm29.structure.J9JavaAccessFlags.*;
+import static com.ibm.j9ddr.vm29.structure.J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_PRELOAD_ATTRIBUTE;
 
 import com.ibm.j9ddr.CorruptDataException;
 import com.ibm.j9ddr.vm29.pointer.U32Pointer;
@@ -135,5 +136,9 @@ public class J9ROMClassHelper {
 
 	public static boolean isSealed(J9ROMClassPointer romclass) throws CorruptDataException {
 		return romclass.extraModifiers().allBitsIn(J9AccSealed);
+	}
+
+	public static boolean hasPreloadAttribute(J9ROMClassPointer romclass) throws CorruptDataException {
+		return romclass.optionalFlags().allBitsIn(J9_ROMCLASS_OPTINFO_PRELOAD_ATTRIBUTE);
 	}
 }
