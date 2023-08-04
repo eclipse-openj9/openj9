@@ -603,11 +603,11 @@ public class J9BCUtil {
 		long innerClassCount = romClass.innerClassCount().longValue();
 		if (innerClassCount != 0) {
 			SelfRelativePointer innerClasses = romClass.innerClasses();
-			out.append(String.format("Declared Classes (%d):" + nl, innerClassCount));
+			out.format("Declared Classes (%d):%n", innerClassCount);
 
 			for (int i = 0; i < innerClassCount; i++) {
 				J9UTF8Pointer innerClassName = J9UTF8Pointer.cast(innerClasses.get());
-				out.append("   " + J9UTF8Helper.stringValue(innerClassName));
+				out.format("   %s%n", J9UTF8Helper.stringValue(innerClassName));
 				innerClasses = innerClasses.add(1);
 			}
 		}
@@ -620,6 +620,16 @@ public class J9BCUtil {
 			for (int i = 0; i < permittedSubclassCount; i++) {
 				J9UTF8Pointer permittedSubclassName = OptInfo.getPermittedSubclassNameAtIndex(romClass, i);
 				out.format("   %s%n", J9UTF8Helper.stringValue(permittedSubclassName));
+			}
+		}
+
+		if (J9ROMClassHelper.hasPreloadAttribute(romClass)) {
+			int preloadClassCount = OptInfo.getPreloadClassCount(romClass);
+			out.format("Preload classes (%d):%n", preloadClassCount);
+
+			for (int i = 0; i < preloadClassCount; i++) {
+				J9UTF8Pointer preloadClassName = OptInfo.getPreloadClassNameAtIndex(romClass, i);
+				out.format("   %s%n", J9UTF8Helper.stringValue(preloadClassName));
 			}
 		}
 
