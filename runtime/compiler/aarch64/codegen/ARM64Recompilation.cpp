@@ -24,6 +24,7 @@
 #include "codegen/ARM64RecompilationSnippet.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/GenerateInstructions.hpp"
+#include "env/j9method.h"
 
 TR_ARM64Recompilation::TR_ARM64Recompilation(TR::Compilation * comp)
    : TR::Recompilation(comp)
@@ -45,9 +46,8 @@ TR::Recompilation *TR_ARM64Recompilation::allocate(TR::Compilation *comp)
 
 TR_PersistentMethodInfo *TR_ARM64Recompilation::getExistingMethodInfo(TR_ResolvedMethod *method)
    {
-   int8_t *startPC = (int8_t *)method->startAddressForInterpreterOfJittedMethod();
-   TR_PersistentMethodInfo *info = getJittedBodyInfoFromPC(startPC)->getMethodInfo();
-   return info;
+   TR_PersistentJittedBodyInfo *bodyInfo = (static_cast<TR_ResolvedJ9Method *>(method))->getExistingJittedBodyInfo();
+   return bodyInfo ? bodyInfo->getMethodInfo() : NULL;
    }
 
 TR::Instruction *TR_ARM64Recompilation::generatePrePrologue()
