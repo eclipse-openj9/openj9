@@ -196,7 +196,7 @@ public abstract sealed class Reference<T> extends Object permits PhantomReferenc
 	 * @return	true if the Reference was successfully
 	 *			enqueued, false otherwise.
 	 */
-	/* [IF CRIU_SUPPORT] */
+	/*[IF CRIU_SUPPORT]*/
 	@NotCheckpointSafe
 	/* [ENDIF] CRIU_SUPPORT */
 	boolean enqueueImpl() {
