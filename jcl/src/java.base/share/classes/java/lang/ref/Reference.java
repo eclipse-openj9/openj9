@@ -198,7 +198,7 @@ public abstract sealed class Reference<T> extends Object permits PhantomReferenc
 	 */
 	/*[IF CRIU_SUPPORT]*/
 	@NotCheckpointSafe
-	/* [ENDIF] CRIU_SUPPORT */
+	/*[ENDIF] CRIU_SUPPORT */
 	boolean enqueueImpl() {
 		final ReferenceQueue tempQueue;
 		boolean result;
