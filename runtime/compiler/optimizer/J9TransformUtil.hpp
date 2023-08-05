@@ -106,7 +106,91 @@ public:
          TR::Compilation *comp,
          TR::Node *object);
 
-   static bool transformDirectLoad(TR::Compilation *, TR::Node *node);
+#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+   /**
+    * \brief
+    *    Generate IL to load dataAddr pointer from the array header
+    *
+    * \param comp
+    *    The compilation object
+    *
+    * \param arrayObject
+    *    The array object node
+    *
+    * \return
+    *    IL for loading dataAddr pointer
+    */
+   static TR::Node *generateDataAddrLoadTrees(TR::Compilation *comp, TR::Node *arrayObject);
+#endif /* J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION */
+
+   /**
+    * \brief
+    *    Generate array element access IL for on and off heap contiguous arrays
+    *
+    * \param comp
+    *    The compilation object
+    *
+    * \param arrayNode
+    *    The array object node
+    *
+    * \param offsetNode
+    *    The offset node (in bytes)
+    *
+    * \return
+    *    IL to access array element at offset provided by offsetNode or
+    *    first array element if no offset node is provided
+    */
+   static TR::Node *generateArrayAddressTrees(
+      TR::Compilation *comp,
+      TR::Node *arrayNode,
+      TR::Node *offsetNode = NULL);
+
+   /**
+    * \brief
+    *    Generate IL to access first array element
+    *
+    * \param comp
+    *    The compilation object
+    *
+    * \param arrayObject
+    *    The array object node
+    *
+    * \return
+    *    IL for accessing first array element
+    */
+   static TR::Node *generateArrayStartTrees(TR::Compilation *comp, TR::Node *arrayObject);
+
+   /**
+    * \brief
+    *    Generates IL to convert element index to offset in bytes using element
+    *    size (node or integer)
+    *
+    * \param comp
+    *    The compilation object
+    *
+    * \param indexNode
+    *    Array element index node
+    *
+    * \param elementSizeNode
+    *    Array element size tree (ex: const node containing element size)
+    *
+    * \param elementSize
+    *    Array element size
+    *
+    * \param useShiftOpCode
+    *    Use left shift instead of multiplication
+    *
+    * \return
+    *    IL to convert array element index to offset in bytes
+    */
+   static TR::Node *generateArrayOffsetTrees(
+      TR::Compilation *comp,
+      TR::Node *indexNode,
+      TR::Node *elementSizeNode = NULL,
+      int32_t elementSize = 0,
+      bool useShiftOpCode = false);
+
+   static bool transformDirectLoad(TR::Compilation *comp, TR::Node *node);
 
    /**
     * \brief
