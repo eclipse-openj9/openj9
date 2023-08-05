@@ -43,8 +43,6 @@ ifeq (linux_x86-64_cmprssptrs, $(SPEC))
 		OMR_GC_POINTER_MODE=compressed
 endif
 
-
-
 ifeq (linux_x86-64, $(SPEC))
 	CONFIGURE_ARGS += \
 		--enable-OMRTHREAD_LIB_UNIX \

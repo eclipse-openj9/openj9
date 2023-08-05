@@ -23,25 +23,5 @@
 -->
 
 <module>
-	<artifact type="shared" name="j9jitbuilder">
-		
-		<phase>core</phase>
-		<includes>
-			<include path="j9include"/>
-			<include path="j9oti"/>
-			<include path="j9util"/>
-			<include path="$(OMR_DIR)/include_core" type="relativepath"/>
-			<include path="$(OMR_DIR)/compiler" type="relativepath"/>
-			<include path="$(OMR_DIR)/jitbuilder/release/include" type="relativepath"/>	
-			<include path="$(OMR_DIR)" type="relativepath"/>
-		</includes>
-		<makefilestubs>
-			<makefilestub data="DLL_LD=g++"/>
-			<makefilestub data="UMA_LINK_PATH+=-L$(OMR_DIR)/jitbuilder/release"/>
-			<makefilestub data="CXXFLAGS+=-std=c++0x -fno-rtti -fno-threadsafe-statics"/>		
-		</makefilestubs>
-		<libraries>
-			<library name="jitbuilder" type="external"/>
-		</libraries>
-	</artifact>
+	
 </module>

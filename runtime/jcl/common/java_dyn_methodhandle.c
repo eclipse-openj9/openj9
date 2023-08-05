@@ -788,8 +788,6 @@ Java_java_lang_invoke_MethodHandle_vmRefFieldOffset(JNIEnv *env, jclass clazz, j
 	return (jint) J9VMJAVALANGCLASS_VMREF_OFFSET(((J9VMThread *) env));
 }
 
-
-
 void JNICALL
 Java_java_lang_invoke_MutableCallSite_freeGlobalRef(JNIEnv *env, jclass mutableCallSite, jlong bypassOffset)
 {
