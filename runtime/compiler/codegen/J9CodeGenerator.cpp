@@ -446,28 +446,35 @@ J9::CodeGenerator::lowerCompressedRefs(
       // generate a compression sequence
       //
       TR::Node *a2lNode = TR::Node::create(TR::a2l, 1, address);
-      bool isNonNull = false;
-      if (address->isNonNull())
-         isNonNull = true;
+      bool isNonNull = address->isNonNull();
 
-      TR::Node *addNode = NULL;
-      addNode = a2lNode;
+      // This will be the compressed value in the low half and zero in the high
+      // half (once it's been shifted if necessary).
+      TR::Node *longCompressedNode = a2lNode;
 
-      if (shftOffset)
+      bool isNull = address->isNull();
+      if (shftOffset != NULL && !isNull) // the shift does nothing to zero (null)
          {
-         addNode = TR::Node::create(TR::lushr, 2, addNode, shftOffset);
-         addNode->setContainsCompressionSequence(true);
+         longCompressedNode = TR::Node::create(TR::lushr, 2, longCompressedNode, shftOffset);
+         longCompressedNode->setContainsCompressionSequence(true);
          }
 
-      if (isNonNull)
-         addNode->setIsNonZero(true);
+      longCompressedNode->setIsHighWordZero(true);
 
-      TR::Node *l2iNode = TR::Node::create(TR::l2i, 1, addNode);
+      TR::Node *l2iNode = TR::Node::create(TR::l2i, 1, longCompressedNode);
+
       if (isNonNull)
+         {
+         a2lNode->setIsNonZero(true);
+         longCompressedNode->setIsNonZero(true);
          l2iNode->setIsNonZero(true);
-
-      if (address->isNull())
-         l2iNode->setIsNull(true);
+         }
+      else if (isNull)
+         {
+         a2lNode->setIsZero(true);
+         longCompressedNode->setIsZero(true);
+         l2iNode->setIsZero(true);
+         }
 
       // recreating an arrayset node will replace the TR::arrayset with an istorei, which is undesired
       // as arrayset nodes can set indirect references
