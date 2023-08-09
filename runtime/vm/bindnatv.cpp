@@ -195,7 +195,7 @@ static inlMapping mappings[] = {
 	{ "Java_com_ibm_oti_vm_VM_getClassPathEntryType__Ljava_lang_Object_2I", J9_BCLOOP_SEND_TARGET_INL_VM_GET_CLASS_PATH_ENTRY_TYPE },
 	{ "Java_com_ibm_oti_vm_VM_isBootstrapClassLoader__Ljava_lang_ClassLoader_2", J9_BCLOOP_SEND_TARGET_INL_VM_IS_BOOTSTRAP_CLASS_LOADER },
 	{ "Java_sun_misc_Unsafe_allocateInstance__Ljava_lang_Class_2", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ALLOCATE_INSTANCE },
-	{ "Java_openj9_internal_tools_attach_target_Attachment_loadAgentLibraryImpl__Ljava_lang_ClassLoader_2Ljava_lang_String_2Ljava_lang_String_2Z", J9_BCLOOP_SEND_TARGET_INL_ATTACHMENT_LOADAGENTLIBRARYIMPL },
+	{ "Java_openj9_internal_tools_attach_target_Attachment_loadAgentLibraryImpl__ZLjava_lang_ClassLoader_2Ljava_lang_String_2Ljava_lang_String_2Z", J9_BCLOOP_SEND_TARGET_INL_ATTACHMENT_LOADAGENTLIBRARYIMPL },
 	{ "Java_com_ibm_oti_vm_VM_getStackClass__I", J9_BCLOOP_SEND_TARGET_INL_VM_GETSTACKCLASS },
 	/* Forward duplicated getStackClass natives to the same target */
 	{ "Java_java_lang_invoke_MethodHandles_getStackClass__I", J9_BCLOOP_SEND_TARGET_INL_VM_GETSTACKCLASS },

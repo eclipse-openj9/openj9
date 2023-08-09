@@ -370,7 +370,7 @@ final class Attachment extends Thread implements Response {
 			boolean decorate) {
 		IPC.logMessage("loadAgentLibrary " + agentLibrary + ':' + options + " decorate=" + decorate); //$NON-NLS-1$ //$NON-NLS-2$
 		ClassLoader loader = java.lang.ClassLoader.getSystemClassLoader();
-		int status = loadAgentLibraryImpl(true, loader, agentLibrary,  options, decorate);
+		int status = loadAgentLibraryImpl(true, loader, agentLibrary, options, decorate);
 		if (0 != status) {
 			if (-1 == status) {
 				return Response.EXCEPTION_AGENT_LOAD_EXCEPTION + ' '
@@ -384,9 +384,12 @@ final class Attachment extends Thread implements Response {
 	}
 
 	/**
-	 * @param agentLibrary
-	 *            a dummy arg to ensure that current native method has the ClassLoader instance
-	 *            as it's second argument required by jnimisc.cpp:getCurrentClassLoader()
+	 * @param dummy
+	 *            a dummy arg to ensure that current native method has the
+	 *            ClassLoader instance as its second argument required by
+	 *            jnimisc.cpp:getCurrentClassLoader()
+	 * @param loader
+	 *            the ClassLoader instance
 	 * @param agentLibrary
 	 *            name of the agent library
 	 * @param options
@@ -395,7 +398,7 @@ final class Attachment extends Thread implements Response {
 	 *            add prefixes and suffixes to the library name
 	 * @return 0 if all went well
 	 */
-	private static native int loadAgentLibraryImpl(boolean dummy, ClassLoader loader,String agentLibrary,
+	private static native int loadAgentLibraryImpl(boolean dummy, ClassLoader loader, String agentLibrary,
 			String options, boolean decorate);
 
 	private int getPortNumber() {
