@@ -54,6 +54,7 @@ TR_ResolvedJ9JITServerMethodInfoStruct
    bool isLambdaFormGeneratedMethod;
    bool isForceInline;
    bool isDontInline;
+   bool isIntrinsicCandidate;
    };
 
 
@@ -219,6 +220,7 @@ public:
    virtual bool isFieldFlattened(TR::Compilation *comp, int32_t cpIndex, bool isStatic) override;
    bool isForceInline() const { return _isForceInline; }
    bool isDontInline() const { return _isDontInline; }
+   bool isIntrinsicCandidate() const { return _isIntrinsicCandidate; }
 
    TR_ResolvedJ9Method *getRemoteMirror() const { return _remoteMirror; }
    static void createResolvedMethodMirror(TR_ResolvedJ9JITServerMethodInfo &methodInfo, TR_OpaqueMethodBlock *method, uint32_t vTableSlot, TR_ResolvedMethod *owningMethod, TR_FrontEnd *fe, TR_Memory *trMemory);
@@ -258,6 +260,7 @@ private:
    bool _isLambdaFormGeneratedMethod;
    bool _isForceInline;
    bool _isDontInline;
+   bool _isIntrinsicCandidate;
 
    void unpackMethodInfo(TR_OpaqueMethodBlock *aMethod, TR_FrontEnd *fe, TR_Memory *trMemory, uint32_t vTableSlot,
                          TR::CompilationInfoPerThread *threadCompInfo, const TR_ResolvedJ9JITServerMethodInfo &methodInfo);

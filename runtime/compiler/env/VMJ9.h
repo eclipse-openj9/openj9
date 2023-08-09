@@ -1056,6 +1056,13 @@ public:
     */
    virtual bool isDontInline(TR_ResolvedMethod *method);
 
+   /**
+    * \brief Determine whether a method is annotated with @IntrinsicCandidate.
+    * \param method method
+    * \return true if a @IntrinsicCandidate annotation is present, false otherwise
+    */
+   virtual bool isIntrinsicCandidate(TR_ResolvedMethod *method);
+
    /*
     * \brief
     *    tell whether it's possible to dereference a field given the field symbol at compile time
