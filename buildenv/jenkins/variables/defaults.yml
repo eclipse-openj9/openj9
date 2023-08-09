@@ -343,6 +343,11 @@ aarch64_linux:
       8: 'CC=/usr/local/gcc/bin/gcc-7.5 CXX=/usr/local/gcc/bin/g++-7.5'
       11: 'CC=/usr/local/gcc/bin/gcc-7.5 CXX=/usr/local/gcc/bin/g++-7.5'
 #========================================#
+# Linux Aarch 64bits /w JITSERVER
+#========================================#
+aarch64_linux_jit:
+  extends: ['aarch64_linux', 'jitserver']
+#========================================#
 # Windows x86 64bits
 #========================================#
 x86-64_windows:
