@@ -4841,7 +4841,7 @@ done:
 		return rc;
 	}
 
-	/* openj9.internal.tools.attach.target.Attachment: private native int loadAgentLibraryImpl(ClassLoader loader, String agentLibrary, String options, boolean decorate); */
+	/* openj9.internal.tools.attach.target.Attachment: private static native int loadAgentLibraryImpl(boolean dummy, ClassLoader loader, String agentLibrary, String options, boolean decorate); */
 	VMINLINE VM_BytecodeAction
 	inlAttachmentLoadAgentLibraryImpl(REGISTER_ARGS_LIST)
 	{
