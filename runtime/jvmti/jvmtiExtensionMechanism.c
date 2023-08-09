@@ -1864,76 +1864,90 @@ jvmtiInternalGetStackTraceExtended(jvmtiEnv* env,
 
 
 static UDATA
-jvmtiInternalGetStackTraceIteratorExtended(J9VMThread * currentThread, J9StackWalkState * walkState)
+jvmtiInternalGetStackTraceIteratorExtended(J9VMThread *currentThread, J9StackWalkState *walkState)
 {
-	J9JVMTIStackTraceType type;
-	jmethodID methodID;
-	jvmtiFrameInfoExtended * frame_buffer;
-	UDATA frameCount;
+	jmethodID methodID = NULL;
+	jvmtiFrameInfoExtended *frame_buffer = NULL;
+	UDATA frameCount = 0;
+	J9JVMTIStackTraceType type = (J9JVMTIStackTraceType)(UDATA)walkState->userData2;
+	J9Method *method = walkState->method;
 
-	/* In extra info mode when method enter is enabled, exclude natives which have not had method enter reported for them */
+#if JAVA_SPEC_VERSION >= 20
+	J9ROMMethod *romMethod = NULL;
+	U_32 extendedModifiers = 0;
 
-	type = (J9JVMTIStackTraceType) (UDATA) walkState->userData2;
-	if (type & J9JVMTI_STACK_TRACE_PRUNE_UNREPORTED_METHODS) {
-		if ((UDATA)walkState->pc == J9SF_FRAME_TYPE_NATIVE_METHOD) {
-			/* INL natives never have enter/exit reported */
+	/* walkState->method can never be NULL since the J9_STACKWALK_VISIBLE_ONLY flag is set. */
+	Assert_JVMTI_true(NULL != method);
+
+	romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+	extendedModifiers = getExtendedModifiersDataFromROMMethod(romMethod);
+
+	if (J9_ARE_ANY_BITS_SET(extendedModifiers, CFR_METHOD_EXT_JVMTIMOUNTTRANSITION_ANNOTATION)) {
+		goto skip;
+	}
+#endif /* JAVA_SPEC_VERSION >= 20 */
+
+	/* In extra info mode when method enter is enabled, exclude natives which have not had method enter reported for them. */
+	if (J9_ARE_ANY_BITS_SET(type, J9JVMTI_STACK_TRACE_PRUNE_UNREPORTED_METHODS)) {
+		if (J9SF_FRAME_TYPE_NATIVE_METHOD == (UDATA)walkState->pc) {
+			/* INL natives never have enter/exit reported. */
 			return J9_STACKWALK_KEEP_ITERATING;
 		}
 #if defined(J9VM_INTERP_NATIVE_SUPPORT)
-		if ((UDATA)walkState->pc == J9SF_FRAME_TYPE_JNI_NATIVE_METHOD) {
-			if (walkState->frameFlags & J9_STACK_FLAGS_JIT_JNI_CALL_OUT_FRAME) {
-				/* Direct JNI inlined into JIT method */
+		if (J9SF_FRAME_TYPE_JNI_NATIVE_METHOD == (UDATA)walkState->pc) {
+			if (J9_ARE_ANY_BITS_SET(walkState->frameFlags, J9_STACK_FLAGS_JIT_JNI_CALL_OUT_FRAME)) {
+				/* Direct JNI inlined into JIT method. */
 				return J9_STACKWALK_KEEP_ITERATING;
 			}
 		}
-		/* Direct JNI thunks (method is native, jitInfo != NULL) do have enter/exit reported */
-#endif
+		/* Direct JNI thunks (method is native, jitInfo != NULL) do have enter/exit reported. */
+#endif /* defined(J9VM_INTERP_NATIVE_SUPPORT) */
 	}
 
 	frame_buffer = walkState->userData1;
-	if (frame_buffer != NULL) {
-		methodID = getCurrentMethodID(currentThread, walkState->method);
-		if (methodID == NULL) {
+	if (NULL != frame_buffer) {
+		methodID = getCurrentMethodID(currentThread, method);
+		if (NULL == methodID) {
 			walkState->userData1 = NULL;
 			return J9_STACKWALK_STOP_ITERATING;
 		} 
 
 		frame_buffer->method = methodID;
 		
-		if (type & J9JVMTI_STACK_TRACE_EXTRA_FRAME_INFO) {
-			/* Fill in the extended data  */
-#ifdef J9VM_INTERP_NATIVE_SUPPORT 
-			if (walkState->jitInfo == NULL) {
+		if (J9_ARE_ANY_BITS_SET(type, J9JVMTI_STACK_TRACE_EXTRA_FRAME_INFO)) {
+			/* Fill in the extended data. */
+#if defined(J9VM_INTERP_NATIVE_SUPPORT)
+			if (NULL == walkState->jitInfo) {
 				frame_buffer->type = COM_IBM_STACK_FRAME_EXTENDED_NOT_JITTED;
 			} else if (J9_ARE_ANY_BITS_SET(type, J9JVMTI_STACK_TRACE_MARK_INLINED_FRAMES) && (walkState->inlineDepth > 0)) {
 				frame_buffer->type = COM_IBM_STACK_FRAME_EXTENDED_INLINED;
 			} else {
 				frame_buffer->type = COM_IBM_STACK_FRAME_EXTENDED_JITTED;
 			}	
-#else
+#else /* defined(J9VM_INTERP_NATIVE_SUPPORT) */
 			frame_buffer->type = COM_IBM_STACK_FRAME_EXTENDED_NOT_JITTED;			
-#endif
+#endif /* defined(J9VM_INTERP_NATIVE_SUPPORT) */
 			frame_buffer->machinepc = -1; /* not supported yet */
-	}			
+		}
 
-		if (type & J9JVMTI_STACK_TRACE_ENTRY_LOCAL_STORAGE) {
-#ifdef J9VM_INTERP_NATIVE_SUPPORT 
-			if ((jlocation) walkState->bytecodePCOffset == -1) {
-				frame_buffer->nativeFrameAddress = (void *) walkState->walkedEntryLocalStorage;
+		if (J9_ARE_ANY_BITS_SET(type, J9JVMTI_STACK_TRACE_ENTRY_LOCAL_STORAGE)) {
+#if defined(J9VM_INTERP_NATIVE_SUPPORT)
+			if (-1 == (jlocation)walkState->bytecodePCOffset) {
+				frame_buffer->nativeFrameAddress = (void *)walkState->walkedEntryLocalStorage;
 			} else {
 				frame_buffer->nativeFrameAddress = NULL;	
 			}
-#else
+#else /* defined(J9VM_INTERP_NATIVE_SUPPORT) */
 			frame_buffer->nativeFrameAddress = NULL;	
-#endif
+#endif /* defined(J9VM_INTERP_NATIVE_SUPPORT) */
 		}	
 
-		/* The location = -1 for native method case is handled in the stack walker */		
-		frame_buffer->location = (jlocation) walkState->bytecodePCOffset;
+		/* The location = -1 for native method case is handled in the stack walker. */
+		frame_buffer->location = (jlocation)walkState->bytecodePCOffset;
 	
-		/* If the location specifies a JBinvokeinterface, back it up to the JBinvokeinterface2 */
+		/* If the location specifies a JBinvokeinterface, back it up to the JBinvokeinterface2. */
 		if (!IS_SPECIAL_FRAME_PC(walkState->pc)) {
-			if (*(walkState->pc) == JBinvokeinterface) {
+			if (JBinvokeinterface == *(walkState->pc)) {
 				frame_buffer->location -= 2;
 			}
 		}
@@ -1941,12 +1955,16 @@ jvmtiInternalGetStackTraceIteratorExtended(J9VMThread * currentThread, J9StackWa
 		walkState->userData1 = frame_buffer + 1;
 	}
 
-	frameCount = (UDATA) walkState->userData3;
+	frameCount = (UDATA)walkState->userData3;
 	++frameCount;
-	walkState->userData3 = (void *) frameCount;
-	if (frameCount == (UDATA) walkState->userData4) {
+	walkState->userData3 = (void *)frameCount;
+	if (frameCount == (UDATA)walkState->userData4) {
 		return J9_STACKWALK_STOP_ITERATING;
 	}
+
+#if JAVA_SPEC_VERSION >= 20
+skip:
+#endif /* JAVA_SPEC_VERSION >= 20 */
 	return J9_STACKWALK_KEEP_ITERATING;
 }
 
