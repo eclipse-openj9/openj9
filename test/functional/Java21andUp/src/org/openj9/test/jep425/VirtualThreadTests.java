@@ -51,6 +51,16 @@ public class VirtualThreadTests {
 
 	public static native boolean lockSupportPark();
 
+	private void incrementalWait(Thread t) throws InterruptedException {
+		/* Incrementally wait for 10000 ms. */
+		for (int i = 0; i < 200; i++) {
+			Thread.sleep(50);
+			if (Thread.State.WAITING == t.getState()) {
+				break;
+			}
+		}
+	}
+
 	@Test
 	public void test_basicVirtualthread() {
 		var wrapper = new Object(){ boolean executed = false; };
@@ -113,24 +123,23 @@ public class VirtualThreadTests {
 		}
 	}
 
-	private static volatile boolean testSyncThread_ready;
+	private static volatile boolean testSyncThreadReady = false;
 
 	@Test
 	public void test_synchronizedBlockFromVirtualthread() {
 		try {
-			Thread t = Thread.ofVirtual().name("synchronized").unstarted(() -> {
+			Thread t = Thread.ofVirtual().name("synchronized").start(() -> {
 				synchronized (VirtualThreadTests.class) {
-					testSyncThread_ready = true;
+					testSyncThreadReady = true;
 					LockSupport.park();
 				}
 			});
 
-			t.start();
-			while (!testSyncThread_ready) {
-				Thread.sleep(1);
+			while (!testSyncThreadReady) {
+				Thread.sleep(10);
 			}
-			/* Let virtual thread park */
-			Thread.sleep(500);
+			/* Incrementally wait for 10000 ms to let the virtual thread park. */
+			incrementalWait(t);
 			Assert.assertEquals(t.getState(), Thread.State.WAITING);
 			LockSupport.unpark(t);
 			t.join();
@@ -139,22 +148,21 @@ public class VirtualThreadTests {
 		}
 	}
 
-	private static volatile boolean testJNIThread_ready;
+	private static volatile boolean testJNIThreadReady = false;
 
 	@Test
 	public void test_jniFromVirtualthread() {
 		try {
-			Thread t = Thread.ofVirtual().name("native").unstarted(() -> {
-				testJNIThread_ready = true;
+			Thread t = Thread.ofVirtual().name("native").start(() -> {
+				testJNIThreadReady = true;
 				lockSupportPark();
 			});
 
-			t.start();
-			while (!testJNIThread_ready) {
-				Thread.sleep(1);
+			while (!testJNIThreadReady) {
+				Thread.sleep(10);
 			}
-			/* Let virtual thread park */
-			Thread.sleep(500);
+			/* Incrementally wait for 10000 ms to let the virtual thread park. */
+			incrementalWait(t);
 			Assert.assertEquals(t.getState(), Thread.State.WAITING);
 			LockSupport.unpark(t);
 			t.join();
@@ -182,14 +190,8 @@ public class VirtualThreadTests {
 				Thread.sleep(10);
 			}
 
-			/* Incrementally wait for 10000 ms. */
-			for (int i = 0; i < 20; i++) {
-				/* Let the virtual thread park. */
-				Thread.sleep(500);
-				if (Thread.State.WAITING == t.getState()) {
-					break;
-				}
-			}
+			/* Incrementally wait for 10000 ms to let the virtual thread park. */
+			incrementalWait(t);
 
 			StackTraceElement[] ste = t.getStackTrace();
 
