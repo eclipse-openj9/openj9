@@ -27,26 +27,27 @@
 #include <errno.h>
 #endif /* JAVA_SPEC_VERSION >= 20 */
 
-#include "j9.h"
-#include "j9cfg.h"
-#include "j9protos.h"
-#include "j9consts.h"
-#include "j9vmnls.h"
-#include "j9jclnls.h"
-#include "j9bcvnls.h"
 #include "bcnames.h"
+#define FFI_BUILDING /* Needed on Windows to link libffi statically */
+#include "ffi.h"
+#include "j2sever.h"
+#include "j9.h"
+#include "j9bcvnls.h"
+#include "j9cfg.h"
+#include "j9consts.h"
+#include "j9jclnls.h"
+#include "j9protos.h"
+#include "j9vmnls.h"
+#include "jitregmap.h"
+#include "jni.h"
+#include "jvminit.h"
+#include "objhelp.h"
 #include "rommeth.h"
 #include "stackwalk.h"
 #include "ut_j9vm.h"
 #include "util_api.h"
 #include "vm_internal.h"
-#include "jni.h"
-#define FFI_BUILDING /* Needed on Windows to link libffi statically */
-#include "ffi.h"
-#include "jitregmap.h"
-#include "j2sever.h"
 #include "vmaccess.h"
-#include "objhelp.h"
 
 #include "ArrayCopyHelpers.hpp"
 #include "AtomicSupport.hpp"
@@ -4863,8 +4864,24 @@ done:
 //			Trc_JCL_attach_loadAgentLibrary(env, agentLibraryUTF, agentOptions, decorate);
 			const char *agentOptionsUTF = env->GetStringUTFChars(agentOptions, NULL);
 			if (NULL != agentOptionsUTF) {
+				if (J9_ARE_ANY_BITS_SET(_vm->runtimeFlags, J9_RUNTIME_ALLOW_DYNAMIC_AGENT)) {
+#if JAVA_SPEC_VERSION >= 21
+					/* The name "vm" is used by FIND_ARG_IN_VMARGS(). */
+					J9JavaVM *vm = _vm;
+					/* No warning if -XX:+EnableDynamicAgentLoading is specified. */
+					if (0 > FIND_ARG_IN_VMARGS(EXACT_MATCH, VMOPT_XXENABLEDYNAMICAGENTLOADING, NULL)) {
+						/* No warning if the same agent is already loaded. */
+						if (!vm->isAgentLibraryLoaded(vm, agentLibraryUTF)) {
+							fprintf(stderr, "WARNING: A JVM TI agent has been loaded dynamically (%s)\n", agentOptionsUTF);
+							fprintf(stderr, "WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning\n");
+							fprintf(stderr, "WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information\n");
+							fprintf(stderr, "WARNING: Dynamic loading of agents will be disallowed by default in a future release\n");
+						}
+					}
+#endif /* JAVA_SPEC_VERSION >= 21 */
 					status = (_vm->loadAgentLibraryOnAttach)(_vm, agentLibraryUTF, agentOptionsUTF, decorate);
-					env->ReleaseStringUTFChars(agentOptions, agentOptionsUTF);
+				}
+				env->ReleaseStringUTFChars(agentOptions, agentOptionsUTF);
 			}
 			env->ReleaseStringUTFChars(agentLibrary, agentLibraryUTF);
 		}
