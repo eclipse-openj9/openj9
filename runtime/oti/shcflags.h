@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #ifndef SHCFLAGS_H
@@ -78,7 +78,7 @@
 #define J9SHR_RUNTIMEFLAG_ENABLE_NONFATAL  0x2000
 #define J9SHR_RUNTIMEFLAG_DO_DESTROY_CONFIG  0x4000
 #define J9SHR_RUNTIMEFLAG_BLOCK_SPACE_FULL  0x8000
-// Available  0x10000
+#define J9SHR_RUNTIMEFLAG_MAP31  0x10000
 #define J9SHR_RUNTIMEFLAG_ENABLE_AOT  0x20000
 #define J9SHR_RUNTIMEFLAG_ENABLE_PERSISTENT_CACHE  0x40000
 #define J9SHR_RUNTIMEFLAG_ENABLE_GROUP_ACCESS  0x80000

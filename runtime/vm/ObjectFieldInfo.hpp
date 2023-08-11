@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #ifndef OBJECTFIELDINFO_HPP_
@@ -57,7 +57,7 @@ private:
 	U_32 _contendedSingleCount;
 	U_32 _contendedDoubleCount;
 
-#ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
+#ifdef J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES
 	bool _isValue;
 	J9FlattenedClassCache *_flattenedClassCache;
 	U_32 _totalFlatFieldDoubleBytes;
@@ -69,7 +69,7 @@ private:
 	U_32 _flatUnAlignedSingleInstanceBackfill;
 	bool _classRequiresPrePadding;
 	bool _isBackFillPostPadded;
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
 
 	bool _hiddenFieldOffsetResolutionRequired;
 	bool _instanceFieldBackfillEligible; /* use this to give instance fields priority over the hidden fields for backfill slots */
@@ -99,11 +99,11 @@ public:
 		OBJECT_SIZE_INCREMENT_IN_BYTES = 8
 	};
 
-#ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
+#ifdef J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES
 	ObjectFieldInfo(J9JavaVM *vm, J9ROMClass *romClass, J9FlattenedClassCache *flattenedClassCache):
 #else
 	ObjectFieldInfo(J9JavaVM *vm, J9ROMClass *romClass):
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
 		_objectHeaderSize(J9JAVAVM_OBJECT_HEADER_SIZE(vm)),
 		_referenceSize(J9JAVAVM_REFERENCE_SIZE(vm)),
 		_cacheLineSize(0),
@@ -120,7 +120,7 @@ public:
 		_contendedObjectCount(0),
 		_contendedSingleCount(0),
 		_contendedDoubleCount(0),
-#ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
+#ifdef J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES
 		_isValue(J9ROMCLASS_IS_VALUE(romClass)),
 		_flattenedClassCache(flattenedClassCache),
 		_totalFlatFieldDoubleBytes(0),
@@ -132,7 +132,7 @@ public:
 		_flatUnAlignedSingleInstanceBackfill(0),
 		_classRequiresPrePadding(false),
 		_isBackFillPostPadded(false),
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
 		_hiddenFieldOffsetResolutionRequired(false),
 		_instanceFieldBackfillEligible(false),
 		_hiddenFieldCount(0),
@@ -204,9 +204,9 @@ public:
 		if (isBackfillSuitableObjectAvailable()
 			&& !isBackfillSuitableInstanceSingleAvailable()
 			&& isMyBackfillSlotAvailable()
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 			&& (0 != nonBackfilledObjects)
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 		) {
 			nonBackfilledObjects -= 1;
 		}
@@ -219,9 +219,9 @@ public:
 		U_32 nonBackfilledSingle = _totalSingleCount;
 		if (isBackfillSuitableSingleAvailable()
 			&& isMyBackfillSlotAvailable()
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 			&& (0 != nonBackfilledSingle)
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 		) {
 			nonBackfilledSingle -= 1;
 		}
@@ -235,9 +235,9 @@ public:
 		if (isBackfillSuitableInstanceObjectAvailable()
 			&& !isBackfillSuitableInstanceSingleAvailable()
 			&& isMyBackfillSlotAvailable()
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 			&& (0 != nonBackfilledObjects)
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 		) {
 			nonBackfilledObjects -= 1;
 		}
@@ -250,9 +250,9 @@ public:
 		U_32 nonBackfilledSingle = _instanceSingleCount;
 		if (isBackfillSuitableInstanceSingleAvailable()
 		&& isMyBackfillSlotAvailable()
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 		&& (0 != nonBackfilledSingle)
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 		) {
 			nonBackfilledSingle -= 1;
 		}
@@ -287,10 +287,10 @@ public:
 	isBackfillSuitableSingleAvailable(void) const
 	{
 		return ((0 != getTotalSingleCount())
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 				|| (0 != getFlatAlignedSingleInstanceBackfillSize())
 				|| (0 != getFlatUnAlignedSingleInstanceBackfillSize())
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 		);
 	}
 
@@ -298,10 +298,10 @@ public:
 	isBackfillSuitableObjectAvailable(void) const
 	{
 		return ((_objectCanUseBackfill && (0 != getTotalObjectCount()))
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 				|| (0 != getFlatAlignedObjectInstanceBackfillSize())
 				|| (0 != getFlatUnAlignedObjectInstanceBackfillSize())
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 		);
 	}
 
@@ -315,12 +315,12 @@ public:
 	isBackfillSuitableFlatInstanceSingleAvailable(void) const
 	{
 		
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 		return ((0 != getFlatAlignedSingleInstanceBackfillSize())
 				|| (0 != getFlatUnAlignedSingleInstanceBackfillSize()));
-#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#else /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 		return false;
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 		
 	}
 
@@ -328,10 +328,10 @@ public:
 	isBackfillSuitableInstanceObjectAvailable(void) const
 	{
 		return ((_objectCanUseBackfill && (0 != getInstanceObjectCount()))
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 				|| (0 != getFlatAlignedObjectInstanceBackfillSize())
 				|| (0 != getFlatUnAlignedObjectInstanceBackfillSize())
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 				);
 	}
 
@@ -357,7 +357,7 @@ public:
 	getBackfillSize()
 	{
 		U_32 backFillSize = BACKFILL_SIZE;
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 		if ((0 != getInstanceSingleCount()) || (_objectCanUseBackfill && (0 != getInstanceObjectCount()))) {
 			/* BACKFILL_SIZE */
 		} else if (0 != getFlatAlignedSingleInstanceBackfillSize()) {
@@ -370,9 +370,9 @@ public:
 			backFillSize = getFlatUnAlignedObjectInstanceBackfillSize();
 		}
 		return backFillSize;
-#else /* if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#else /* if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 		return backFillSize;
-#endif /* if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 	}
 
 	/**
@@ -436,20 +436,20 @@ public:
 		if (!isContendedClassLayout()) {
 			bool doubleAlignment = (_totalDoubleCount > 0);
 			bool hasObjects = _totalObjectCount > 0;
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 
 			/* If the type has double field the doubles need to start on an 8-byte boundary. In the case of valuetypes
 			 * there is no lockword so the super class field size will be zero. This means that valueTypes in compressedrefs
 			 * mode with double alignment fields need to be pre-padded.
 			 */
 			doubleAlignment = (doubleAlignment || (_totalFlatFieldDoubleBytes > 0));
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
 			fieldDataStart = getSuperclassFieldsSize();
 			if (((getSuperclassObjectSize() % OBJECT_SIZE_INCREMENT_IN_BYTES) != 0) /* superclass is not end-aligned */
 				&& (doubleAlignment || (!_objectCanUseBackfill && hasObjects))
 			) {
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 				fieldDataStart += getBackfillSize();
 				/* If a flat type is used up as backfill and its size is not 4, 12, 20, ... this
 				 * means that the starting point for doubles will not be on an 8byte boundary. To
@@ -460,9 +460,9 @@ public:
 					fieldDataStart += BACKFILL_SIZE;
 					_isBackFillPostPadded = true;
 				}
-#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#else /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 				fieldDataStart += BACKFILL_SIZE;
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 			}
 		} else {
 			if (TrcEnabled_Trc_VM_contendedClass) {
@@ -498,7 +498,7 @@ public:
 		return start + (isContendedClassLayout() ? _contendedObjectCount: getNonBackfilledObjectCount()) * _referenceSize;
 	}
 
-#ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
+#ifdef J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES
 	/**
 	 * @param start end of previous field area, which should be the first field area
 	 * @return offset to end of the flat doubles area
@@ -791,7 +791,7 @@ public:
 	{
 		return _isBackFillPostPadded;
 	}
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
 
 	VMINLINE bool
 	isHiddenFieldOffsetResolutionRequired(void) const

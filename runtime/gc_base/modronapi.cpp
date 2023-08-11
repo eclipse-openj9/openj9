@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include "j9.h"
@@ -471,6 +471,9 @@ j9gc_get_collector_id(OMR_VMThread *omrVMThread)
 		break;
 	case OMR_GC_CYCLE_TYPE_VLHGC_PARTIAL_GARBAGE_COLLECT :
 		id = J9_GC_MANAGEMENT_COLLECTOR_PGC;
+		break;
+	case OMR_GC_CYCLE_TYPE_VLHGC_GLOBAL_MARK_PHASE :
+		id = J9_GC_MANAGEMENT_COLLECTOR_GGC;
 		break;
 	case OMR_GC_CYCLE_TYPE_VLHGC_GLOBAL_GARBAGE_COLLECT :
 		id = J9_GC_MANAGEMENT_COLLECTOR_GGC;
@@ -1041,16 +1044,41 @@ continuationObjectCreated(J9VMThread *vmThread, j9object_t object)
 	Assert_MM_true(NULL != object);
 	MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread);
 
-	if (MM_GCExtensions::disable_continuation_list != MM_GCExtensions::getExtensions(env)->continuationListOption) {
+	if (MM_GCExtensions::onCreated == MM_GCExtensions::getExtensions(env)->timingAddContinuationInList) {
+		addContinuationObjectInList(env, object);
+	}
+	MM_ObjectAllocationInterface *objectAllocation = env->_objectAllocationInterface;
 
-		env->getGCEnvironment()->_continuationObjectBuffer->add(env, object);
-		MM_ObjectAllocationInterface *objectAllocation = env->_objectAllocationInterface;
-
-		if (NULL != objectAllocation) {
-			objectAllocation->getAllocationStats()->_continuationObjectCount += 1;
-		}
+	if (NULL != objectAllocation) {
+		objectAllocation->getAllocationStats()->_continuationObjectCount += 1;
 	}
 	return 0;
+}
+
+UDATA
+continuationObjectStarted(J9VMThread *vmThread, j9object_t object)
+{
+	Assert_MM_true(NULL != object);
+	MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread);
+	if (MM_GCExtensions::onStarted == MM_GCExtensions::getExtensions(env)->timingAddContinuationInList) {
+		addContinuationObjectInList(env, object);
+	}
+	return 0;
+}
+
+UDATA
+continuationObjectFinished(J9VMThread *vmThread, j9object_t object)
+{
+	Assert_MM_true(NULL != object);
+	return 0;
+}
+
+void
+addContinuationObjectInList(MM_EnvironmentBase *env, j9object_t object)
+{
+	if (MM_GCExtensions::disable_continuation_list != MM_GCExtensions::getExtensions(env)->continuationListOption) {
+		env->getGCEnvironment()->_continuationObjectBuffer->add(env, object);
+	}
 }
 
 void

@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #ifndef SYMBOL_VALIDATION_MANAGER_INCL
@@ -862,8 +862,6 @@ public:
    static int getSystemClassesNotWorthRememberingCount();
 
 #if defined(J9VM_OPT_JITSERVER)
-   std::string serializeValueToSymbolMap();
-   void deserializeValueToSymbolMap(const std::string &valueToSymbolStr);
    static void populateSystemClassesNotWorthRemembering(ClientSessionData *clientData);
 #endif /* defined(J9VM_OPT_JITSERVER) */
 

@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 /**
@@ -1989,4 +1989,33 @@ add3DoubleStructs_returnStruct(stru_Double_Double_Double arg1, stru_Double_Doubl
 	doubleStruct.elem2 = arg1.elem2 + arg2.elem2;
 	doubleStruct.elem3 = arg1.elem3 + arg2.elem3;
 	return doubleStruct;
+}
+
+/**
+ * Validate that a null pointer of struct is successfully passed
+ * from java to native in downcall.
+ *
+ * @param arg1 an integer
+ * @param arg2 a pointer to struct with two integers
+ * @return the value of arg1
+ *
+ * Note:
+ * arg2 is a null pointer passed from java to native.
+ */
+int
+validateNullAddrArgument(int arg1, stru_Int_Int *arg2)
+{
+	return arg1;
+}
+
+/**
+ * Validate the linker option for the trivial downcall.
+ *
+ * @param arg1 an integer
+ * @return the passed-in argument
+ */
+int
+validateTrivialOption(int arg1)
+{
+	return arg1;
 }

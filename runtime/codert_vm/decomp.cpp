@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include <string.h>
@@ -938,9 +938,9 @@ decompileOuterFrame(J9VMThread * currentThread, J9JITDecompileState * decompileS
 #ifdef J9VM_ENV_DATA64
 			case '[':
 			case 'L':
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 			case 'Q':
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 #endif /* J9VM_ENV_DATA64 */
 				j2iFrame->exitPoint = J9_BUILDER_SYMBOL(jitExitInterpreterJ);
 				break;
@@ -1078,9 +1078,9 @@ fixStackForNewDecompilation(J9VMThread * currentThread, J9StackWalkState * walkS
 #ifdef J9VM_ENV_DATA64
 			case '[':
 			case 'L':
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 			case 'Q':
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 				*pcStoreAddress = (U_8 *) J9_BUILDER_SYMBOL(jitDecompileOnReturnL);
 				break;
 #endif /* J9VM_ENV_DATA64 */

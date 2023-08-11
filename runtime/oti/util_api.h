@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #ifndef util_api_h
@@ -1351,6 +1351,28 @@ permittedSubclassesNameAtIndex(U_32* permittedSubclassesCountPtr, U_32 index);
  */
 U_32
 getNumberOfInjectedInterfaces(J9ROMClass *romClass);
+
+/**
+ * Retrieves number of preload classes in this class. Assumes that
+ * ROM class parameter references a class with preloaded classes.
+ *
+ * @param J9ROMClass class
+ * @return U_32* the first U_32 is the number of classes, followed by that number
+ * of constant pool indices.
+ */
+U_32*
+getPreloadInfoPtr(J9ROMClass *romClass);
+
+/**
+ * Find the preload class name constant pool entry at index in the optional data of the ROM class parameter.
+ * This method assumes there is at least one preloaded class in the ROM class.
+ *
+ * @param U_32* the pointer returned by getPreloadInfoPtr
+ * @param U_32 class index
+ * @return the preload class name at index from ROM class
+ */
+J9UTF8*
+preloadClassNameAtIndex(U_32* permittedSubclassesCountPtr, U_32 index);
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
 /**
@@ -2489,31 +2511,6 @@ const char* props_file_get(j9props_file_t file, const char* key);
  * @return The associated value, or NULL if the key does not exist.
  */
 void props_file_do(j9props_file_t file, j9props_file_iterator iterator, void* userData);
-
-
-
-/* ----------------- zosversion.c ---------------- */
-
-/**
- * Function to determine if the zos version is at least a given
- * release and version.  The implementation is based on uname(),
- * NOT on __osname() as the __osname() release numbers are not
- * guaranteed to increase.
- *
- * For release and version numbers, see
- * 	http://publib.boulder.ibm.com/infocenter/zos/v1r10/index.jsp?topic=/com.ibm.zos.r10.bpxbd00/osnm.htm
- *
- * Operating System 	Sysname 	Release 	Version
- * z/OS V1.10			OS/390		20.00		03
- * z/OS 1.9				OS/390		19.00		03
- * z/OS 1.8 or z/OS.e 1.8 	OS/390		18.00		03
- * z/OS 1.7 or z/OS.e 1.7 	OS/390 		17.00 		03
- * z/OS 1.6 or z/OS.e 1.6 	OS/390 		16.00 		03
- */
-BOOLEAN
-zos_version_at_least(double min_release, double min_version);
-
-
 
 /* ----------------- ObjectHash.cpp ---------------- */
 /**

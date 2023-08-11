@@ -17,13 +17,14 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include "codegen/ARM64Recompilation.hpp"
 #include "codegen/ARM64RecompilationSnippet.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/GenerateInstructions.hpp"
+#include "env/j9method.h"
 
 TR_ARM64Recompilation::TR_ARM64Recompilation(TR::Compilation * comp)
    : TR::Recompilation(comp)
@@ -45,9 +46,8 @@ TR::Recompilation *TR_ARM64Recompilation::allocate(TR::Compilation *comp)
 
 TR_PersistentMethodInfo *TR_ARM64Recompilation::getExistingMethodInfo(TR_ResolvedMethod *method)
    {
-   int8_t *startPC = (int8_t *)method->startAddressForInterpreterOfJittedMethod();
-   TR_PersistentMethodInfo *info = getJittedBodyInfoFromPC(startPC)->getMethodInfo();
-   return info;
+   TR_PersistentJittedBodyInfo *bodyInfo = (static_cast<TR_ResolvedJ9Method *>(method))->getExistingJittedBodyInfo();
+   return bodyInfo ? bodyInfo->getMethodInfo() : NULL;
    }
 
 TR::Instruction *TR_ARM64Recompilation::generatePrePrologue()

@@ -18,7 +18,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 package org.eclipse.openj9.criu;
 
@@ -44,6 +44,14 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+
+/*[IF JAVA_SPEC_VERSION >= 17]*/
+import jdk.internal.access.JavaNetInetAddressAccess;
+import jdk.internal.access.SharedSecrets;
+/*[ELSE] JAVA_SPEC_VERSION >= 17
+import jdk.internal.misc.JavaNetInetAddressAccess;
+import jdk.internal.misc.SharedSecrets;
+/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 
 import openj9.internal.criu.InternalCRIUSupport;
 
@@ -83,6 +91,7 @@ public final class CRIUSupport {
 			boolean unprivileged,
 			String optionsFile,
 			String envFile);
+	private static native boolean setupJNIFieldIDsAndCRIUAPI();
 
 	private static native String[] getRestoreSystemProperites();
 
@@ -105,9 +114,11 @@ public final class CRIUSupport {
 			try {
 				AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
 					System.loadLibrary("j9criu29"); //$NON-NLS-1$
-					nativeLoaded = true;
 					return null;
 				});
+				if (setupJNIFieldIDsAndCRIUAPI()) {
+					nativeLoaded = true;
+				}
 			} catch (UnsatisfiedLinkError e) {
 				errorMsg = e.getMessage();
 				Properties internalProperties = com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties();
@@ -211,6 +222,7 @@ public final class CRIUSupport {
 	/* Higher priority hooks are run last in pre-checkoint hooks, and are run
 	 * first in post restore hooks.
 	 */
+	private static final int RESTORE_CLEAR_INETADDRESS_CACHE_PRIORITY = 100;
 	private static final int RESTORE_ENVIRONMENT_VARIABLES_PRIORITY = 100;
 	private static final int RESTORE_SYSTEM_PROPERTIES_PRIORITY = 100;
 	private static final int USER_HOOKS_PRIORITY = 1;
@@ -248,7 +260,7 @@ public final class CRIUSupport {
 	public CRIUSupport setImageDir(Path imageDir) {
 		Objects.requireNonNull(imageDir, "Image directory cannot be null"); //$NON-NLS-1$
 		if (!Files.isDirectory(imageDir)) {
-			throw new IllegalArgumentException("imageDir is not a valid directory"); //$NON-NLS-1$
+			throw new IllegalArgumentException(imageDir.toAbsolutePath() + " is not a valid directory"); //$NON-NLS-1$
 		}
 		String dir = imageDir.toAbsolutePath().toString();
 
@@ -623,6 +635,28 @@ public final class CRIUSupport {
 		}
 	}
 
+	private static void clearInetAddressCache() {
+		Field jniaa = AccessController.doPrivileged((PrivilegedAction<Field>) () -> {
+			Field jniaaTmp = null;
+			try {
+				jniaaTmp = SharedSecrets.class.getDeclaredField("javaNetInetAddressAccess"); //$NON-NLS-1$
+				jniaaTmp.setAccessible(true);
+			} catch (NoSuchFieldException | SecurityException e) {
+				// ignore exceptions
+			}
+			return jniaaTmp;
+		});
+		try {
+			if ((jniaa != null) && (jniaa.get(null) != null)) {
+				// InetAddress static initializer invokes SharedSecrets.setJavaNetInetAddressAccess().
+				// There is no need to clear the cache if InetAddress hasn't been initialized yet.
+				SharedSecrets.getJavaNetInetAddressAccess().clearInetAddressCache();
+			}
+		} catch (IllegalArgumentException | IllegalAccessException e) {
+			// ignore exceptions
+		}
+	}
+
 	/**
 	 * Checkpoint the JVM. This operation will use the CRIU options set by the
 	 * options setters.
@@ -647,7 +681,8 @@ public final class CRIUSupport {
 					registerRestoreEnvVariables();
 				}
 
-				J9InternalCheckpointHookAPI.registerPostRestoreHook(RESTORE_ENVIRONMENT_VARIABLES_PRIORITY, "Restore system properties", CRIUSupport::setRestoreJavaProperties);
+				J9InternalCheckpointHookAPI.registerPostRestoreHook(RESTORE_CLEAR_INETADDRESS_CACHE_PRIORITY, "Clear InetAddress cache on restore", CRIUSupport::clearInetAddressCache); //$NON-NLS-1$
+				J9InternalCheckpointHookAPI.registerPostRestoreHook(RESTORE_ENVIRONMENT_VARIABLES_PRIORITY, "Restore system properties", CRIUSupport::setRestoreJavaProperties); //$NON-NLS-1$
 
 				/* Add security provider hooks. */
 				SecurityProviders.registerResetCRIUState();

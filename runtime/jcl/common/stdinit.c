@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include <string.h>
@@ -316,12 +316,12 @@ standardInit(J9JavaVM *vm, char *dllName)
 
 		{
 			PORT_ACCESS_FROM_JAVAVM(vm);
-			vm->continuationArraySize = (U_32)j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_TARGET);
-			vm->globalContinuationCacheArray = (J9VMContinuation**)j9mem_allocate_memory(sizeof(J9VMContinuation*) * vm->continuationArraySize, J9MEM_CATEGORY_VM);
-			if (NULL == vm->globalContinuationCacheArray) {
+			UDATA cacheSize = sizeof(J9VMContinuation*) * vm->continuationT2Size;
+			vm->continuationT2Cache = (J9VMContinuation**)j9mem_allocate_memory(cacheSize, J9MEM_CATEGORY_VM);
+			if (NULL == vm->continuationT2Cache) {
 				goto _fail;
 			}
-			memset(vm->globalContinuationCacheArray, 0, sizeof(J9VMContinuation*) * vm->continuationArraySize);
+			memset(vm->continuationT2Cache, 0, cacheSize);
 		}
 #endif /* JAVA_SPEC_VERSION >= 19 */
 #endif /* !J9VM_IVE_RAW_BUILD */

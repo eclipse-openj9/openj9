@@ -18,7 +18,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 package java.lang.ref;
 
@@ -41,6 +41,10 @@ import sun.misc.SharedSecrets;
 /*[ENDIF]*/
 /*[ENDIF]*/
 /*[ENDIF] JAVA_SPEC_VERSION >= 12 */
+
+/*[IF CRIU_SUPPORT]*/
+import openj9.internal.criu.NotCheckpointSafe;
+/*[ENDIF] CRIU_SUPPORT */
 
 /**
  * Abstract class which describes behavior common to all reference objects.
@@ -192,6 +196,9 @@ public abstract sealed class Reference<T> extends Object permits PhantomReferenc
 	 * @return	true if the Reference was successfully
 	 *			enqueued, false otherwise.
 	 */
+	/*[IF CRIU_SUPPORT]*/
+	@NotCheckpointSafe
+	/*[ENDIF] CRIU_SUPPORT */
 	boolean enqueueImpl() {
 		final ReferenceQueue tempQueue;
 		boolean result;

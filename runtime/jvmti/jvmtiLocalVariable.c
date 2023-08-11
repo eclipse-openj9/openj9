@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include "jvmtiHelpers.h"
@@ -323,19 +323,32 @@ jvmtiGetOrSetLocal(jvmtiEnv *env,
 			J9VMThread stackThread = {0};
 			J9VMEntryLocalStorage els = {0};
 			j9object_t threadObject = (NULL == thread) ? currentThread->threadObject : J9_JNI_UNWRAP_REFERENCE(thread);
-			J9VMContinuation *continuation = getJ9VMContinuationToWalk(currentThread, targetThread, threadObject);
+			J9VMContinuation *continuation = NULL;
+
+#if JAVA_SPEC_VERSION >= 20
+			if ((currentThread != targetThread)
+			&& (0 == J9OBJECT_U32_LOAD(currentThread, threadObject, vm->isSuspendedInternalOffset))
+			) {
+				rc = JVMTI_ERROR_THREAD_NOT_SUSPENDED;
+				goto release;
+			}
+#endif /* JAVA_SPEC_VERSION >= 20 */
+
+			continuation = getJ9VMContinuationToWalk(currentThread, targetThread, threadObject);
 			if (NULL != continuation) {
 				vm->internalVMFunctions->copyFieldsFromContinuation(currentThread, &stackThread, &els, continuation);
 				threadToWalk = &stackThread;
 			}
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
+#if JAVA_SPEC_VERSION < 20
 #if JAVA_SPEC_VERSION >= 19
 			if (NULL != targetThread)
 #endif /* JAVA_SPEC_VERSION >= 19 */
 			{
 				vm->internalVMFunctions->haltThreadForInspection(currentThread, targetThread);
 			}
+#endif /* JAVA_SPEC_VERSION < 20 */
 
 			rc = findDecompileInfo(currentThread, threadToWalk, (UDATA)depth, &walkState);
 			if (JVMTI_ERROR_NONE == rc) {
@@ -385,9 +398,9 @@ jvmtiGetOrSetLocal(jvmtiEnv *env,
 										memcpy(slotAddress - 1, value_ptr, sizeof(U_64));
 										break;
 									case 'L':
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 									case 'Q':
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 										/* Perform type check? */
 										*((j9object_t *)slotAddress) = (NULL == value_ptr) ? NULL : *((j9object_t *)value_ptr);
 										break;
@@ -412,9 +425,9 @@ jvmtiGetOrSetLocal(jvmtiEnv *env,
 									}
 									break;
 								case 'L':
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 								case 'Q':
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 									/* CMVC 109592 - Must not modify the stack while a thread is halted for inspection - this includes creation of JNI local refs */
 									objectFetched = TRUE;
 									PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, slotValid ? *((j9object_t *)slotAddress) : NULL);
@@ -445,12 +458,19 @@ jvmtiGetOrSetLocal(jvmtiEnv *env,
 				rc = JVMTI_ERROR_NO_MORE_FRAMES;
 			}
 
+#if JAVA_SPEC_VERSION >= 20
+release:
+#endif /* JAVA_SPEC_VERSION >= 20 */
+
+#if JAVA_SPEC_VERSION < 20
 #if JAVA_SPEC_VERSION >= 19
 			if (NULL != targetThread)
 #endif /* JAVA_SPEC_VERSION >= 19 */
 			{
 				vm->internalVMFunctions->resumeThreadForInspection(currentThread, targetThread);
 			}
+#endif /* JAVA_SPEC_VERSION < 20 */
+
 			if (objectFetched) {
 				j9object_t obj = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
 				*((jobject *)value_ptr) = vm->internalVMFunctions->j9jni_createLocalRef((JNIEnv *)currentThread, obj);

@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #ifndef _J9MODIFIERS_API_H
@@ -75,6 +75,8 @@
 #define J9ROMCLASS_IS_RECORD(romClass)			(_J9ROMCLASS_J9MODIFIER_IS_SET((romClass), J9AccRecord) && J9ROMCLASS_IS_FINAL(romClass) && !J9ROMCLASS_IS_ABSTRACT(romClass))
 #define J9ROMCLASS_IS_SEALED(romClass)			_J9ROMCLASS_J9MODIFIER_IS_SET((romClass), J9AccSealed)
 #define J9ROMCLASS_IS_VALUEBASED(romClass)			_J9ROMCLASS_J9MODIFIER_IS_SET((romClass), J9AccClassIsValueBased)
+#define J9ROMCLASS_ALLOWS_NON_ATOMIC_CREATION(romClass)	_J9ROMCLASS_J9MODIFIER_IS_SET((romClass), J9AccImplicitCreateNonAtomic)
+#define J9ROMCLASS_HAS_DEFAULT(romClass)		_J9ROMCLASS_J9MODIFIER_IS_SET((romClass), J9AccImplicitCreateHasDefaultValue)
 
 /* 
  * Note that resolvefield ignores this flag if the cache line size cannot be determined.
@@ -89,11 +91,15 @@
  * Some exiting places using J9ROMCLASS_IS_VALUE() may need to check J9ROMCLASS_IS_PRIMITIVE_VALUE_TYPE().
  */
 #define J9ROMCLASS_IS_VALUE(romClass)	_J9ROMCLASS_SUNMODIFIER_IS_SET((romClass), J9AccValueType)
-#define J9ROMCLASS_IS_PRIMITIVE_VALUE_TYPE(romClass)	_J9ROMCLASS_SUNMODIFIER_IS_SET((romClass), J9AccPrimitiveValueType)
 #else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 #define J9ROMCLASS_IS_VALUE(romClass)	FALSE
-#define J9ROMCLASS_IS_PRIMITIVE_VALUE_TYPE(romClass)	FALSE
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+#define J9ROMCLASS_IS_PRIMITIVE_VALUE_TYPE(romClass)	_J9ROMCLASS_SUNMODIFIER_IS_SET((romClass), J9AccPrimitiveValueType)
+#else /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+#define J9ROMCLASS_IS_PRIMITIVE_VALUE_TYPE(romClass)	FALSE
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
 #define J9ROMMETHOD_IS_GETTER(romMethod)				_J9ROMMETHOD_J9MODIFIER_IS_SET((romMethod), J9AccGetterMethod)
 #define J9ROMMETHOD_IS_FORWARDER(romMethod)				_J9ROMMETHOD_J9MODIFIER_IS_SET((romMethod), J9AccForwarderMethod)

@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #if defined(J9ZOS390)
@@ -122,6 +122,45 @@ J9::ObjectModel::areValueTypesEnabled()
    return javaVM->internalVMFunctions->areValueTypesEnabled(javaVM);
    }
 
+bool
+J9::ObjectModel::areFlattenableValueTypesEnabled()
+   {
+#if defined(J9VM_OPT_JITSERVER)
+   if (auto stream = TR::CompilationInfo::getStream())
+      {
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+      return true;
+#else /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+      return false;
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+      }
+#endif /* defined(J9VM_OPT_JITSERVER) */
+
+   J9JavaVM * javaVM = TR::Compiler->javaVM;
+   return javaVM->internalVMFunctions->areFlattenableValueTypesEnabled(javaVM);
+   }
+
+bool
+J9::ObjectModel::isQDescriptorForValueTypesSupported()
+   {
+   // TODO: Implementation is required to determine under which case 'Q' descriptor is removed
+#if defined(J9VM_OPT_JITSERVER)
+   if (auto stream = TR::CompilationInfo::getStream())
+      {
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+      return true;
+#else /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+      return false;
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+      }
+#endif /* defined(J9VM_OPT_JITSERVER) */
+
+   J9JavaVM * javaVM = TR::Compiler->javaVM;
+   if (javaVM->internalVMFunctions->areFlattenableValueTypesEnabled(javaVM))
+     return true;
+
+   return false;
+   }
 
 bool
 J9::ObjectModel::areValueBasedMonitorChecksEnabled()
@@ -144,13 +183,21 @@ J9::ObjectModel::isValueTypeArrayFlatteningEnabled()
 #if defined(J9VM_OPT_JITSERVER)
    if (auto stream = TR::CompilationInfo::getStream())
       {
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
       auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
-	   return J9_ARE_ANY_BITS_SET(vmInfo->_extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_VT_ARRAY_FLATTENING);
+      return J9_ARE_ANY_BITS_SET(vmInfo->_extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_VT_ARRAY_FLATTENING);
+#else /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+      return false;
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
       }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    J9JavaVM *javaVM = TR::Compiler->javaVM;
-   return J9_ARE_ALL_BITS_SET(javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_VT_ARRAY_FLATTENING);
+
+   if (javaVM->internalVMFunctions->areFlattenableValueTypesEnabled(javaVM))
+      return J9_ARE_ALL_BITS_SET(javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_VT_ARRAY_FLATTENING);
+   else
+      return false;
    }
 
 int32_t

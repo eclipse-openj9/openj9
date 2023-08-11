@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include "env/j9method.h"
@@ -2081,6 +2081,9 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::java_lang_Class_newInstance,          "newInstance",          "()Ljava/lang/Object;")},
       {x(TR::java_lang_Class_isArray,              "isArray",              "()Z")},
       {x(TR::java_lang_Class_isPrimitive,          "isPrimitive",          "()Z")},
+      {x(TR::java_lang_Class_isValue,              "isValue",              "()Z")},
+      {x(TR::java_lang_Class_isPrimitiveClass,     "isPrimitiveClass",     "()Z")},
+      {x(TR::java_lang_Class_isIdentity,           "isIdentity",           "()Z")},
       {x(TR::java_lang_Class_getComponentType,     "getComponentType",     "()Ljava/lang/Class;")},
       {x(TR::java_lang_Class_getModifiersImpl,     "getModifiersImpl",     "()I")},
       {x(TR::java_lang_Class_isAssignableFrom,     "isAssignableFrom",     "(Ljava/lang/Class;)Z")},
@@ -3013,7 +3016,9 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::jdk_internal_vm_vector_VectorSupport_load, "load", "(Ljava/lang/Class;Ljava/lang/Class;ILjava/lang/Object;JLjava/lang/Object;JLjdk/internal/vm/vector/VectorSupport$VectorSpecies;Ljdk/internal/vm/vector/VectorSupport$LoadOperation;)Ljdk/internal/vm/vector/VectorSupport$VectorPayload;")},
       {x(TR::jdk_internal_vm_vector_VectorSupport_binaryOp, "binaryOp", "(ILjava/lang/Class;Ljava/lang/Class;Ljava/lang/Class;ILjdk/internal/vm/vector/VectorSupport$VectorPayload;Ljdk/internal/vm/vector/VectorSupport$VectorPayload;Ljdk/internal/vm/vector/VectorSupport$VectorMask;Ljdk/internal/vm/vector/VectorSupport$BinaryOperation;)Ljdk/internal/vm/vector/VectorSupport$VectorPayload;" )},
       {x(TR::jdk_internal_vm_vector_VectorSupport_blend, "blend", "(Ljava/lang/Class;Ljava/lang/Class;Ljava/lang/Class;ILjdk/internal/vm/vector/VectorSupport$Vector;Ljdk/internal/vm/vector/VectorSupport$Vector;Ljdk/internal/vm/vector/VectorSupport$VectorMask;Ljdk/internal/vm/vector/VectorSupport$VectorBlendOp;)Ljdk/internal/vm/vector/VectorSupport$Vector;")},
+      {x(TR::jdk_internal_vm_vector_VectorSupport_broadcastInt, "broadcastInt", "(ILjava/lang/Class;Ljava/lang/Class;Ljava/lang/Class;ILjdk/internal/vm/vector/VectorSupport$Vector;ILjdk/internal/vm/vector/VectorSupport$VectorMask;Ljdk/internal/vm/vector/VectorSupport$VectorBroadcastIntOp;)Ljdk/internal/vm/vector/VectorSupport$Vector;")},
       {x(TR::jdk_internal_vm_vector_VectorSupport_compare, "compare", "(ILjava/lang/Class;Ljava/lang/Class;Ljava/lang/Class;ILjdk/internal/vm/vector/VectorSupport$Vector;Ljdk/internal/vm/vector/VectorSupport$Vector;Ljdk/internal/vm/vector/VectorSupport$VectorMask;Ljdk/internal/vm/vector/VectorSupport$VectorCompareOp;)Ljdk/internal/vm/vector/VectorSupport$VectorMask;")},
+      {x(TR::jdk_internal_vm_vector_VectorSupport_compressExpandOp, "compressExpandOp", "(ILjava/lang/Class;Ljava/lang/Class;Ljava/lang/Class;ILjdk/internal/vm/vector/VectorSupport$Vector;Ljdk/internal/vm/vector/VectorSupport$VectorMask;Ljdk/internal/vm/vector/VectorSupport$CompressExpandOperation;)Ljdk/internal/vm/vector/VectorSupport$VectorPayload;")},
       {x(TR::jdk_internal_vm_vector_VectorSupport_convert, "convert", "(ILjava/lang/Class;Ljava/lang/Class;ILjava/lang/Class;Ljava/lang/Class;ILjdk/internal/vm/vector/VectorSupport$VectorPayload;Ljdk/internal/vm/vector/VectorSupport$VectorSpecies;Ljdk/internal/vm/vector/VectorSupport$VectorConvertOp;)Ljdk/internal/vm/vector/VectorSupport$VectorPayload;")},
       {x(TR::jdk_internal_vm_vector_VectorSupport_fromBitsCoerced, "fromBitsCoerced", "(Ljava/lang/Class;Ljava/lang/Class;IJILjdk/internal/vm/vector/VectorSupport$VectorSpecies;Ljdk/internal/vm/vector/VectorSupport$FromBitsCoercedOperation;)Ljdk/internal/vm/vector/VectorSupport$VectorPayload;")},
       {x(TR::jdk_internal_vm_vector_VectorSupport_maskReductionCoerced, "maskReductionCoerced", "(ILjava/lang/Class;Ljava/lang/Class;ILjdk/internal/vm/vector/VectorSupport$VectorMask;Ljdk/internal/vm/vector/VectorSupport$VectorMaskOp;)J")},
@@ -3376,27 +3381,6 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::java_lang_ref_Reference_reachabilityFence, "reachabilityFence", "(Ljava/lang/Object;)V")},
       {x(TR::java_lang_ref_Reference_refersTo, "refersTo", "(Ljava/lang/Object;)Z")},
       {TR::unknownMethod}
-      };
-
-   static X JavaUtilConcurrentAtomicFencesMethods[] =
-      {
-      {x(TR::java_util_concurrent_atomic_Fences_postLoadFence,                            "postLoadFence",         "()V")},
-      {x(TR::java_util_concurrent_atomic_Fences_preStoreFence,                            "preStoreFence",         "()V")},
-      {x(TR::java_util_concurrent_atomic_Fences_postStorePreLoadFence,                    "postStorePreLoadFence", "()V")},
-      {x(TR::java_util_concurrent_atomic_Fences_postLoadFence_jlObject,                   "postLoadFence",         "(Ljava/lang/Object;)V")},
-      {x(TR::java_util_concurrent_atomic_Fences_preStoreFence_jlObject,                   "preStoreFence",         "(Ljava/lang/Object;)V")},
-      {x(TR::java_util_concurrent_atomic_Fences_postStorePreLoadFence_jlObject,           "postStorePreLoadFence", "(Ljava/lang/Object;)V")},
-      {x(TR::java_util_concurrent_atomic_Fences_postLoadFence_jlObjectjlrField,           "postLoadFence",         "(Ljava/lang/Object;Ljava/lang/reflect/Field;)V")},
-      {x(TR::java_util_concurrent_atomic_Fences_preStoreFence_jlObjectjlrField,           "preStoreFence",         "(Ljava/lang/Object;Ljava/lang/reflect/Field;)V")},
-      {x(TR::java_util_concurrent_atomic_Fences_postStorePreLoadFence_jlObjectjlrField,   "postStorePreLoadFence", "(Ljava/lang/Object;Ljava/lang/reflect/Field;)V")},
-      {x(TR::java_util_concurrent_atomic_Fences_postLoadFence_jlObjectI,                  "postLoadFence",         "([Ljava/lang/Object;I)V")},
-      {x(TR::java_util_concurrent_atomic_Fences_preStoreFence_jlObjectI,                  "preStoreFence",         "([Ljava/lang/Object;I)V")},
-      {x(TR::java_util_concurrent_atomic_Fences_postStorePreLoadFence_jlObjectI,          "postStorePreLoadFence", "([Ljava/lang/Object;I)V")},
-      {x(TR::java_util_concurrent_atomic_Fences_orderAccesses,                            "orderAccesses",         "(Ljava/lang/Object;)V")},
-      {x(TR::java_util_concurrent_atomic_Fences_orderReads,                               "orderReads",            "(Ljava/lang/Object;)V")},
-      {x(TR::java_util_concurrent_atomic_Fences_orderWrites,                              "orderWrites",           "(Ljava/lang/Object;)V")},
-      {x(TR::java_util_concurrent_atomic_Fences_reachabilityFence,                        "reachabilityFence",     "(Ljava/lang/Object;)V")},
-      {  TR::unknownMethod}
       };
 
    //1421
@@ -4135,7 +4119,6 @@ void TR_ResolvedJ9Method::construct()
    static Y class34[] =
       {
       { "java/util/Hashtable$HashEnumerator", HashtableHashEnumeratorMethods },
-      { "java/util/concurrent/atomic/Fences", JavaUtilConcurrentAtomicFencesMethods },
       { "com/ibm/Compiler/Internal/Prefetch", PrefetchMethods },
       { "java/lang/invoke/VarHandleInternal", VarHandleMethods },
       { 0 }
@@ -4642,11 +4625,6 @@ TR_ResolvedJ9Method::setRecognizedMethodInfo(TR::RecognizedMethod rm)
             case TR::java_lang_Long_reverseBytes:
             case TR::java_lang_Integer_reverseBytes:
             case TR::java_lang_Short_reverseBytes:
-
-            case TR::java_util_concurrent_atomic_Fences_reachabilityFence:
-            case TR::java_util_concurrent_atomic_Fences_orderAccesses:
-            case TR::java_util_concurrent_atomic_Fences_orderReads:
-            case TR::java_util_concurrent_atomic_Fences_orderWrites:
 
             case TR::java_util_concurrent_atomic_AtomicBoolean_getAndSet:
             case TR::java_util_concurrent_atomic_AtomicInteger_addAndGet:
@@ -6628,6 +6606,16 @@ TR_ResolvedJ9Method::getResolvedDynamicMethod(TR::Compilation * comp, I_32 callS
       {
       TR_OpaqueMethodBlock * targetJ9MethodBlock = NULL;
       uintptr_t * invokeCacheArray = (uintptr_t *) callSiteTableEntryAddress(callSiteIndex);
+      // invokedynamic resolution can either result in a valid entry in the corresponding CallSite table slot if successful,
+      // or an exception object otherwise. The CallSite table entry is a two-element array containing the MemberName
+      // and appendix objects necessary for constructing a resolved invokedynamic adapter method call.
+      // The exception object would not be an array type object, and therefore it is sufficient to check if
+      // the entry obtained from the CallSite table is an array instance to determine if the resolution was successful.
+      if (!fej9()->isInvokeCacheEntryAnArray(invokeCacheArray))
+         {
+         comp->failCompilation<TR::CompilationException>("Invalid CallSite table entry for invokedynamic");
+         }
+
          {
          TR::VMAccessCriticalSection getResolvedDynamicMethod(fej9());
          targetJ9MethodBlock = fej9()->targetMethodFromMemberName((uintptr_t) fej9()->getReferenceElement(*invokeCacheArray, JSR292_invokeCacheArrayMemberNameIndex)); // this will not work in AOT or JITServer
@@ -9204,6 +9192,9 @@ uintptr_t
 TR_J9ByteCodeIlGenerator::walkReferenceChain(TR::Node *node, uintptr_t receiver)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp()->fe());
+#if defined(J9VM_OPT_JITSERVER)
+   TR_ASSERT_FATAL(!comp()->isOutOfProcessCompilation(), "walkReferenceChain() should not be called by JITServer because of getReferenceFieldAt() call");
+#endif
    uintptr_t result = 0;
    if (node->getOpCode().isLoadDirect() && node->getType() == TR::Address)
       {
@@ -9287,7 +9278,7 @@ TR_J9ByteCodeIlGenerator::packReferenceChainOffsets(TR::Node *node, std::vector<
 bool
 TR_ResolvedJ9Method::isFieldQType(int32_t cpIndex)
    {
-   if (!TR::Compiler->om.areValueTypesEnabled() ||
+   if (!TR::Compiler->om.areFlattenableValueTypesEnabled() ||
       (-1 == cpIndex))
       return false;
 
@@ -9302,7 +9293,7 @@ TR_ResolvedJ9Method::isFieldQType(int32_t cpIndex)
 bool
 TR_ResolvedJ9Method::isFieldFlattened(TR::Compilation *comp, int32_t cpIndex, bool isStatic)
    {
-   if (!TR::Compiler->om.areValueTypesEnabled() ||
+   if (!TR::Compiler->om.areFlattenableValueTypesEnabled() ||
       (-1 == cpIndex))
       return false;
 
@@ -9310,7 +9301,7 @@ TR_ResolvedJ9Method::isFieldFlattened(TR::Compilation *comp, int32_t cpIndex, bo
    J9ROMFieldShape *fieldShape = NULL;
    TR_OpaqueClassBlock *containingClass = definingClassAndFieldShapeFromCPFieldRef(comp, cp(), cpIndex, isStatic, &fieldShape);
 
-   // No lock is required here. Entires in J9Class::flattenedClassCache are only written during classload.
+   // No lock is required here. Entries in J9Class::flattenedClassCache are only written during classload.
    // They are effectively read only when being exposed to the JIT.
    return vmThread->javaVM->internalVMFunctions->isFlattenableFieldFlattened(reinterpret_cast<J9Class *>(containingClass), fieldShape);
    }

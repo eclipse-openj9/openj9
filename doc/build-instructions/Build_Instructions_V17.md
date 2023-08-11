@@ -17,7 +17,7 @@ OpenJDK Assembly Exception [2].
 [1] https://www.gnu.org/software/classpath/license.html
 [2] https://openjdk.org/legal/assembly-exception.html
 
-SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 -->
 
 Building OpenJDK Version 17 with OpenJ9
@@ -55,14 +55,7 @@ If you want to build a binary for Linux on a different architecture, such as Pow
 :penguin:
 Instructions are provided for preparing your system with and without the use of Docker technology.
 
-Skip to [Setting up your build environment without Docker](#setting-up-your-build-environment-without-docker).
-
-#### Setting up your build environment with Docker :whale:
-If you want to build a binary by using a Docker container, follow these steps to prepare your system:
-
-1. The first thing you need to do is install Docker. You can download the free Community edition from [here](https://docs.docker.com/engine/installation/), which also contains instructions for installing Docker on your system.  You should also read the [Getting started](https://docs.docker.com/get-started/) guide to familiarise yourself with the basic Docker concepts and terminology.
-
-2. Obtain the [docker build script](https://github.com/eclipse-openj9/openj9/blob/master/buildenv/docker/mkdocker.sh) to build and run a container that has all the correct software pre-requisites.
+Obtain the [docker build script](https://github.com/eclipse-openj9/openj9/blob/master/buildenv/docker/mkdocker.sh) to determine the correct software pre-requisites for both.
 
 Download the docker build script to your local system or copy and paste the following command:
 
@@ -70,12 +63,19 @@ Download the docker build script to your local system or copy and paste the foll
 wget https://raw.githubusercontent.com/eclipse-openj9/openj9/master/buildenv/docker/mkdocker.sh
 ```
 
-3. Next, run the following command to build a Docker image, called **openj9**:
+Optionally, skip to [Setting up your build environment without Docker](#setting-up-your-build-environment-without-docker).
+
+#### Setting up your build environment with Docker :whale:
+If you want to build a binary by using a Docker container, follow these steps to prepare your system:
+
+1. The first thing you need to do is install Docker. You can download the free Community edition from [here](https://docs.docker.com/engine/installation/), which also contains instructions for installing Docker on your system.  You should also read the [Getting started](https://docs.docker.com/get-started/) guide to familiarise yourself with the basic Docker concepts and terminology.
+
+2. Next, run the following command to build a Docker image, called **openj9**:
 ```
 bash mkdocker.sh --tag=openj9 --dist=ubuntu --version=18 --gitcache=no --jdk=17 --build
 ```
 
-4. Start a Docker container from the **openj9** image with the following command, where `-v` maps any directory, `<host_directory>`,
+3. Start a Docker container from the **openj9** image with the following command, where `-v` maps any directory, `<host_directory>`,
 on your local system to the containers `/root/hostdir` directory so that you can store the binaries, once they are built:
 ```
 docker run -v <host_directory>:/root/hostdir -it openj9
@@ -218,7 +218,7 @@ JCL      - b6c1a570c77 based on jdk-17+35)
 
 :pencil: **OpenSSL support:** If you built an OpenJDK with OpenJ9 that includes OpenSSL support, the following acknowledgements apply in accordance with the license terms:
 
-  - *This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit. (http://www.openssl.org/).*
+  - *This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit. (https://www.openssl.org/).*
   - *This product includes cryptographic software written by Eric Young (eay@cryptsoft.com).*
 
 :penguin: *Congratulations!* :tada:
@@ -360,7 +360,7 @@ JCL      - b6c1a570c77 based on jdk-17+35)
 
 :pencil: **OpenSSL support:** If you built an OpenJDK with OpenJ9 that includes OpenSSL support, the following acknowledgements apply in accordance with the license terms:
 
-  - *This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit. (http://www.openssl.org/).*
+  - *This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit. (https://www.openssl.org/).*
   - *This product includes cryptographic software written by Eric Young (eay@cryptsoft.com).*
 
 :blue_book: *Congratulations!* :tada:
@@ -380,7 +380,7 @@ You must install a number of software dependencies to create a suitable build en
 - [Windows JDK 17](https://api.adoptopenjdk.net/v3/binary/latest/17/ga/windows/x64/jdk/openj9/normal/adoptopenjdk), which is used as the boot JDK.
 - [Microsoft Visual Studio 2019](https://aka.ms/vs/16/release/vs_community.exe), which is the default compiler level used by OpenJDK17.
 - [Freemarker V2.3.8](https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download) - only when building with `--with-cmake=no`
-- [LLVM/Clang](http://releases.llvm.org/7.0.0/LLVM-7.0.0-win64.exe)
+- [LLVM/Clang](https://releases.llvm.org/7.0.0/LLVM-7.0.0-win64.exe)
 - [NASM Assembler v2.13.03 or newer](https://www.nasm.us/pub/nasm/releasebuilds/?C=M;O=D)
 
 Add the binary path of Clang to the `PATH` environment variable to override the older version of clang integrated in Cygwin. e.g.
@@ -393,14 +393,7 @@ Add the path to `nasm.exe` to the `PATH` environment variable to override the ol
 export PATH="/cygdrive/c/Program Files/NASM:$PATH" (in Cygwin)
 ```
 
-Update your `LIB` and `INCLUDE` environment variables to provide a path to the Windows debugging tools with the following commands:
-
-```
-set INCLUDE=C:\Program Files\Debugging Tools for Windows (x64)\sdk\inc;%INCLUDE%
-set LIB=C:\Program Files\Debugging Tools for Windows (x64)\sdk\lib;%LIB%
-```
-
-   You can download Visual Studio manually or obtain it using the [wget](http://www.gnu.org/software/wget/faq.html#download) utility. If you choose to use `wget`, follow these steps:
+   You can download Visual Studio manually or obtain it using the [wget](https://www.gnu.org/software/wget/faq.html#download) utility. If you choose to use `wget`, follow these steps:
 
 - Open a cygwin terminal and change to the `/temp` directory:
 ```
@@ -534,7 +527,7 @@ JCL      - b6c1a570c77 based on jdk-17+35)
 
 :pencil: **OpenSSL support:** If you built an OpenJDK with OpenJ9 that includes OpenSSL support, the following acknowledgements apply in accordance with the license terms:
 
-  - *This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit. (http://www.openssl.org/).*
+  - *This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit. (https://www.openssl.org/).*
   - *This product includes cryptographic software written by Eric Young (eay@cryptsoft.com).*
 
 :ledger: *Congratulations!* :tada:
@@ -682,7 +675,7 @@ JCL      - b6c1a570c77 based on jdk-17+35)
 
 :pencil: **OpenSSL support:** If you built an OpenJDK with OpenJ9 that includes OpenSSL support, the following acknowledgements apply in accordance with the license terms:
 
-- *This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit. (http://www.openssl.org/).*
+- *This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit. (https://www.openssl.org/).*
 - *This product includes cryptographic software written by Eric Young (eay@cryptsoft.com).*
 
 :ledger: *Congratulations!* :tada:
@@ -843,7 +836,7 @@ JCL      - b6c1a570c77 based on jdk-17+35)
 
 :pencil: **OpenSSL support:** If you built an OpenJDK with OpenJ9 that includes OpenSSL v1.1.1 support, the following acknowledgements apply in accordance with the license terms:
 
-  - *This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit. (http://www.openssl.org/).*
+  - *This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit. (https://www.openssl.org/).*
   - *This product includes cryptographic software written by Eric Young (eay@cryptsoft.com).*
 
 :penguin: *Congratulations!* :tada:

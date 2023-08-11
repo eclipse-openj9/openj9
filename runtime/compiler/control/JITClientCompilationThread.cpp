@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include "j9cfg.h"
@@ -553,13 +553,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, fe->getObjectClassFromKnownObjectIndex(comp, idx));
          }
          break;
-      case MessageType::VM_getStaticReferenceFieldAtAddress:
-         {
-         TR::VMAccessCriticalSection getStaticReferenceFieldAtAddress(fe);
-         uintptr_t fieldAddress = std::get<0>(client->getRecvData<uintptr_t>());
-         client->write(response, fe->getStaticReferenceFieldAtAddress(fieldAddress));
-         }
-         break;
       case MessageType::VM_stackWalkerMaySkipFrames:
          {
          client->getRecvData<JITServer::Void>();
@@ -608,29 +601,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          {
          J9ROMClass *clazz = std::get<0>(client->getRecvData<J9ROMClass *>());
          client->write(response, fe->matchRAMclassFromROMclass(clazz, comp));
-         }
-         break;
-      case MessageType::VM_getReferenceFieldAtAddress:
-         {
-         TR::VMAccessCriticalSection getReferenceFieldAtAddress(fe);
-         uintptr_t fieldAddress = std::get<0>(client->getRecvData<uintptr_t>());
-         client->write(response, fe->getReferenceFieldAtAddress(fieldAddress));
-         }
-         break;
-      case MessageType::VM_getReferenceFieldAt:
-         {
-         auto recv = client->getRecvData<uintptr_t, uintptr_t>();
-         uintptr_t objectPointer = std::get<0>(recv);
-         uintptr_t fieldOffset = std::get<1>(recv);
-         client->write(response, fe->getReferenceFieldAt(objectPointer, fieldOffset));
-         }
-         break;
-      case MessageType::VM_getVolatileReferenceFieldAt:
-         {
-         auto recv = client->getRecvData<uintptr_t, uintptr_t>();
-         uintptr_t objectPointer = std::get<0>(recv);
-         uintptr_t fieldOffset = std::get<1>(recv);
-         client->write(response, fe->getVolatileReferenceFieldAt(objectPointer, fieldOffset));
          }
          break;
       case MessageType::VM_getInt32FieldAt:
@@ -783,6 +753,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
             compInfoPT->getCompilation()->failCompilation<TR::CodeCacheError>("Failed to allocate space in the code cache");
 
          void *thunkAddress = reinterpret_cast<void *>(thunkStart);
+         compInfoPT->reloRuntime()->reloTarget()->flushCache(thunkStart, serializedThunk.size());
          fe->setInvokeExactJ2IThunk(thunkAddress, comp);
          client->write(response, JITServer::Void());
          }
@@ -1128,6 +1099,11 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, fe->targetMethodFromMethodHandle(comp, std::get<0>(recv)));
          }
          break;
+      case MessageType::VM_isInvokeCacheEntryAnArray:
+         {
+         auto recv = client->getRecvData<uintptr_t *>();
+         client->write(response, fe->isInvokeCacheEntryAnArray(std::get<0>(recv)));
+         }
       case MessageType::VM_getKnotIndexOfInvokeCacheArrayAppendixElement:
          {
          auto recv = client->getRecvData<uintptr_t *>();
@@ -2864,7 +2840,9 @@ remoteCompilationEnd(J9VMThread *vmThread, TR::Compilation *comp, TR_ResolvedMet
                      J9Method *method, TR::CompilationInfoPerThreadBase *compInfoPT,
                      const std::string &codeCacheStr, const std::string &dataCacheStr)
    {
-   TR_MethodMetaData *relocatedMetaData = NULL;
+   static const bool shouldStoreRemoteAOTMethods = !feGetEnv("TR_disableRemoteAOTMethodStorage");
+
+   TR_MethodMetaData *metaData = NULL;
    TR_J9VM *fe = comp->fej9vm();
    TR_MethodToBeCompiled *entry = compInfoPT->getMethodBeingCompiled();
    J9JITConfig *jitConfig = compInfoPT->getJitConfig();
@@ -2876,12 +2854,12 @@ remoteCompilationEnd(J9VMThread *vmThread, TR::Compilation *comp, TR_ResolvedMet
       {
       compInfoPT->reloRuntime()->setReloStartTime(compInfoPT->getTimeWhenCompStarted());
 
-      relocatedMetaData = compInfoPT->reloRuntime()->prepareRelocateAOTCodeAndData(
+      metaData = compInfoPT->reloRuntime()->prepareRelocateAOTCodeAndData(
          vmThread, fe, comp->cg()->getCodeCache(), (J9JITDataCacheHeader *)dataCacheStr.data(),
          method, false, comp->getOptions(), comp, compilee, (uint8_t *)codeCacheStr.data()
       );
 
-      if (!relocatedMetaData)
+      if (!metaData)
          {
          if (TR::Options::getVerboseOption(TR_VerboseJITServer))
             {
@@ -2901,11 +2879,6 @@ remoteCompilationEnd(J9VMThread *vmThread, TR::Compilation *comp, TR_ResolvedMet
       TR_ASSERT(entry->_useAotCompilation || comp->isDeserializedAOTMethod(),
                 "entry must be an AOT compilation or a deserialized AOT method");
       TR_ASSERT(entry->isRemoteCompReq(), "entry must be a remote compilation");
-      J9ROMMethod *romMethod = comp->fej9()->getROMMethodFromRAMMethod(method);
-      TR::CompilationInfo::storeAOTInSharedCache(
-         vmThread, romMethod, (uint8_t *)dataCacheStr.data(), dataCacheStr.size(),
-         (uint8_t *)codeCacheStr.data(), codeCacheStr.size(), comp, jitConfig, entry
-      );
 
 #if defined(J9VM_INTERP_AOT_RUNTIME_SUPPORT)
       bool canRelocateMethod = TR::CompilationInfo::canRelocateMethod(comp);
@@ -2928,7 +2901,7 @@ remoteCompilationEnd(J9VMThread *vmThread, TR::Compilation *comp, TR_ResolvedMet
             {
             // Need to get a non-shared cache VM to relocate
             TR_J9VMBase *fe = TR_J9VMBase::get(jitConfig, vmThread);
-            relocatedMetaData = entry->_compInfoPT->reloRuntime()->prepareRelocateAOTCodeAndData(
+            metaData = entry->_compInfoPT->reloRuntime()->prepareRelocateAOTCodeAndData(
                vmThread, fe, comp->cg()->getCodeCache(), (J9JITDataCacheHeader *)dataCacheStr.data(),
                method, false, comp->getOptions(), comp, compilee, (uint8_t *)codeCacheStr.data()
             );
@@ -2940,7 +2913,7 @@ remoteCompilationEnd(J9VMThread *vmThread, TR::Compilation *comp, TR_ResolvedMet
             returnCode = compilationAotRelocationInterrupted;
             }
 
-         if (relocatedMetaData)
+         if (metaData)
             {
             if (TR::Options::getVerboseOption(TR_VerboseJITServer))
                {
@@ -2949,7 +2922,7 @@ remoteCompilationEnd(J9VMThread *vmThread, TR::Compilation *comp, TR_ResolvedMet
 
             if (J9_EVENT_IS_HOOKED(jitConfig->javaVM->hookInterface, J9HOOK_VM_DYNAMIC_CODE_LOAD))
                {
-               TR::CompilationInfo::addJ9HookVMDynamicCodeLoadForAOT(vmThread, method, jitConfig, relocatedMetaData);
+               TR::CompilationInfo::addJ9HookVMDynamicCodeLoadForAOT(vmThread, method, jitConfig, metaData);
                }
             }
          else
@@ -2984,18 +2957,26 @@ remoteCompilationEnd(J9VMThread *vmThread, TR::Compilation *comp, TR_ResolvedMet
          // We still need metadata, because metaData->startPC != 0 indicates that compilation
          // didn't actually fail.
          J9JITDataCacheHeader *dataCacheHeader = (J9JITDataCacheHeader *)dataCacheStr.data();
-         J9JITExceptionTable *metaData = compInfoPT->reloRuntime()->copyMethodMetaData(dataCacheHeader);
+         metaData = compInfoPT->reloRuntime()->copyMethodMetaData(dataCacheHeader);
          // Temporarily store meta data pointer.
          // This is not exactly how it's used in baseline, but in remote AOT we do not use
          // AOT method data start for anything else, so should be fine.
          comp->setAotMethodDataStart(metaData);
          TR::CompilationInfo::replenishInvocationCount(method, comp);
-         return metaData;
          }
 #endif /* J9VM_INTERP_AOT_RUNTIME_SUPPORT */
+
+      if (shouldStoreRemoteAOTMethods)
+         {
+         J9ROMMethod *romMethod = comp->fej9()->getROMMethodFromRAMMethod(method);
+         TR::CompilationInfo::storeAOTInSharedCache(
+            vmThread, romMethod, (uint8_t *)dataCacheStr.data(), dataCacheStr.size(),
+            (uint8_t *)codeCacheStr.data(), codeCacheStr.size(), comp, jitConfig, entry
+         );
+         }
       }
 #endif // defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
-   return relocatedMetaData;
+   return metaData;
    }
 
 void
@@ -3211,7 +3192,6 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
    CHTableCommitData chTableData;
    std::vector<TR_OpaqueClassBlock *> classesThatShouldNotBeNewlyExtended;
    std::string logFileStr;
-   std::string svmValueToSymbolStr;
    std::vector<TR_ResolvedJ9Method *> resolvedMirrorMethodsPersistIPInfo;
    TR_OptimizationPlan modifiedOptPlan;
    std::vector<SerializedRuntimeAssumption> serializedRuntimeAssumptions;
@@ -3251,7 +3231,7 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
       if (JITServer::MessageType::compilationCode == response)
          {
          auto recv = client->getRecvData<
-            std::string, std::string, CHTableCommitData, std::vector<TR_OpaqueClassBlock*>, std::string, std::string,
+            std::string, std::string, CHTableCommitData, std::vector<TR_OpaqueClassBlock*>, std::string,
             std::vector<TR_ResolvedJ9Method*>, TR_OptimizationPlan, std::vector<SerializedRuntimeAssumption>,
             JITServer::ServerMemoryState, JITServer::ServerActiveThreadsState, std::vector<TR_OpaqueMethodBlock *>
          >();
@@ -3261,13 +3241,12 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
          chTableData = std::get<2>(recv);
          classesThatShouldNotBeNewlyExtended = std::get<3>(recv);
          logFileStr = std::get<4>(recv);
-         svmValueToSymbolStr = std::get<5>(recv);
-         resolvedMirrorMethodsPersistIPInfo = std::get<6>(recv);
-         modifiedOptPlan = std::get<7>(recv);
-         serializedRuntimeAssumptions = std::get<8>(recv);
-         JITServer::ServerMemoryState nextMemoryState = std::get<9>(recv);
-         JITServer::ServerActiveThreadsState nextActiveThreadState = std::get<10>(recv);
-         methodsRequiringTrampolines = std::get<11>(recv);
+         resolvedMirrorMethodsPersistIPInfo = std::get<5>(recv);
+         modifiedOptPlan = std::get<6>(recv);
+         serializedRuntimeAssumptions = std::get<7>(recv);
+         JITServer::ServerMemoryState nextMemoryState = std::get<8>(recv);
+         JITServer::ServerActiveThreadsState nextActiveThreadState = std::get<9>(recv);
+         methodsRequiringTrampolines = std::get<10>(recv);
 
          updateCompThreadActivationPolicy(compInfoPT, nextMemoryState, nextActiveThreadState);
 
@@ -3498,8 +3477,6 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
             // Compilation is done, now we need client to validate all of the records accumulated by the server,
             // so need to exit heuristic region.
             compiler->exitHeuristicRegion();
-            // Populate symbol to id map
-            compiler->getSymbolValidationManager()->deserializeValueToSymbolMap(svmValueToSymbolStr);
             }
 
          TR_ASSERT(codeCacheStr.size(), "must have code cache");

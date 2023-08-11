@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include "j9comp.h"
@@ -162,13 +162,13 @@ checkForFieldOverlaps(J9JavaVM *vm, J9ROMClass *romClass, J9Class *superClass, U
 	for (i = 0; i < objectHeaderSize; i++) {
 		buf[i] = 0xff;
 	}
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	walkResult = fieldOffsetsStartDo(vm, romClass, superClass, &walkState,
 			J9VM_FIELD_OFFSET_WALK_INCLUDE_INSTANCE | J9VM_FIELD_OFFSET_WALK_INCLUDE_HIDDEN, NULL);
-#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#else /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 	walkResult = fieldOffsetsStartDo(vm, romClass, superClass, &walkState,
 			J9VM_FIELD_OFFSET_WALK_INCLUDE_INSTANCE | J9VM_FIELD_OFFSET_WALK_INCLUDE_HIDDEN);
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 	while (NULL != walkResult->field) {
 
 		fieldSize = calculateFieldSize(vm, walkResult->field->modifiers);
@@ -214,13 +214,13 @@ checkForPresenceOfField(J9JavaVM *vm, J9ROMClass *romClass, J9Class *superClass,
 	J9ROMFieldOffsetWalkResult *walkResult;
 	J9ROMFieldOffsetWalkState walkState;
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	walkResult = fieldOffsetsStartDo(vm, romClass, superClass, &walkState,
 			J9VM_FIELD_OFFSET_WALK_INCLUDE_INSTANCE | J9VM_FIELD_OFFSET_WALK_INCLUDE_HIDDEN, NULL);
-#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#else /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 	walkResult = fieldOffsetsStartDo(vm, romClass, superClass, &walkState,
 			J9VM_FIELD_OFFSET_WALK_INCLUDE_INSTANCE | J9VM_FIELD_OFFSET_WALK_INCLUDE_HIDDEN);
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
 	while (NULL != walkResult->field) {
 		J9UTF8 *resultFieldName = SRP_GET(walkResult->field->nameAndSignature.name, J9UTF8*);
@@ -292,11 +292,11 @@ testAddHiddenInstanceFields(J9PortLibrary *portLib, const char *testName,
 		outputErrorMessage(TEST_ERROR_ARGS, "createFakeROMClass() failed!\n");
 		goto _exit_test;
 	}
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	walkResult = fieldOffsetsStartDo(&javaVM, fakeROMClass, NULL, &walkState, J9VM_FIELD_OFFSET_WALK_CALCULATE_INSTANCE_SIZE, NULL);
-#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#else /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 	walkResult = fieldOffsetsStartDo(&javaVM, fakeROMClass, NULL, &walkState, J9VM_FIELD_OFFSET_WALK_CALCULATE_INSTANCE_SIZE);
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 	if (NULL == walkResult) {
 		outputErrorMessage(TEST_ERROR_ARGS, "fieldOffsetsStartDo() returned NULL!\n");
 		goto _exit_test;
@@ -325,11 +325,11 @@ testAddHiddenInstanceFields(J9PortLibrary *portLib, const char *testName,
 				javaVM.hiddenInstanceFields->offsetReturnPtr != &fieldOffset);
 			goto _exit_test;
 		}
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 		walkResult = fieldOffsetsStartDo(&javaVM, fakeROMClass, NULL, &walkState, J9VM_FIELD_OFFSET_WALK_CALCULATE_INSTANCE_SIZE, NULL);
-#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#else /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 		walkResult = fieldOffsetsStartDo(&javaVM, fakeROMClass, NULL, &walkState, J9VM_FIELD_OFFSET_WALK_CALCULATE_INSTANCE_SIZE);
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 		if (NULL == walkResult) {
 			outputErrorMessage(TEST_ERROR_ARGS, "fieldOffsetsStartDo() returned NULL!\n");
 			goto _exit_test;

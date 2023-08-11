@@ -19,7 +19,7 @@ package org.openj9.test.jep358;
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 import org.testng.annotations.Test;
@@ -1550,5 +1550,59 @@ public class NPEMessageTests {
 			checkMessage(npe.getMessage(), "Cannot store to object array because \"objsTwoDimen[...]\" is null",
 					"Cannot store to object array because \"<local1>[...]\" is null");
 		}
+	}
+
+	private void longArrayParametersLess(long[] l1, long[] l2, long[] l3) {
+		nullField.nullField = new NPEMessageTests();
+	}
+	private void longArrayParametersMore(
+			long[] l1, long[] l2, long[] l3, long[] l4, long[] l5, long[] l6, long[] l7, long[] l8, long[] l9, long[] l10,
+			long[] l11, long[] l12, long[] l13, long[] l14, long[] l15, long[] l16, long[] l17, long[] l18, long[] l19, long[] l20,
+			long[] l21, long[] l22, long[] l23, long[] l24, long[] l25, long[] l26, long[] l27, long[] l28, long[] l29, long[] l30,
+			long[] l31, long[] l32, long[] l33, long[] l34, long[] l35, long[] l36, long[] l37, long[] l38, long[] l39, long[] l40,
+			long[] l41, long[] l42, long[] l43, long[] l44, long[] l45, long[] l46, long[] l47, long[] l48, long[] l49, long[] l50,
+			long[] l51, long[] l52, long[] l53, long[] l54, long[] l55, long[] l56, long[] l57, long[] l58, long[] l59, long[] l60) {
+		nullField.nullField = new NPEMessageTests();
+	}
+	private void doubleArrayParametersLess(double[] d1, double[] d2, double[] d3) {
+		nullField.nullField = new NPEMessageTests();
+	}
+	private void doubleArrayParametersMore(
+			double[] d1, double[] d2, double[] d3, double[] d4, double[] d5, double[] d6, double[] d7, double[] d8, double[] d9, double[] d10,
+			double[] d11, double[] d12, double[] d13, double[] d14, double[] d15, double[] d16, double[] d17, double[] d18, double[] d19, double[] d20,
+			double[] d21, double[] d22, double[] d23, double[] d24, double[] d25, double[] d26, double[] d27, double[] d28, double[] d29, double[] d30,
+			double[] d31, double[] d32, double[] d33, double[] d34, double[] d35, double[] d36, double[] d37, double[] d38, double[] d39, double[] d40,
+			double[] d41, double[] d42, double[] d43, double[] d44, double[] d45, double[] d46, double[] d47, double[] d48, double[] d49, double[] d50,
+			double[] d51, double[] d52, double[] d53, double[] d54, double[] d55, double[] d56, double[] d57, double[] d58, double[] d59, double[] d60) {
+		nullField.nullField = new NPEMessageTests();
+	}
+
+	@Test(expectedExceptions = NullPointerException.class, expectedExceptionsMessageRegExp = "Cannot assign field \"nullField\" because \"this.nullField\" is null")
+	public void test_longArrayParametersLess() {
+		longArrayParametersLess(new long[1], new long[2], new long[3]);
+	}
+	@Test(expectedExceptions = NullPointerException.class, expectedExceptionsMessageRegExp = "Cannot assign field \"nullField\" because \"this.nullField\" is null")
+	public void test_longArrayParametersMore() {
+		longArrayParametersMore(
+				new long[1], new long[2], new long[3], new long[4], new long[5], new long[6], new long[7], new long[8], new long[9], new long[10],
+				new long[11], new long[12], new long[13], new long[14], new long[15], new long[16], new long[17], new long[18], new long[19], new long[20],
+				new long[21], new long[22], new long[23], new long[24], new long[25], new long[26], new long[27], new long[28], new long[29], new long[30],
+				new long[31], new long[32], new long[33], new long[34], new long[35], new long[36], new long[37], new long[38], new long[39], new long[40],
+				new long[41], new long[42], new long[43], new long[44], new long[45], new long[46], new long[47], new long[48], new long[49], new long[50],
+				new long[51], new long[52], new long[53], new long[54], new long[55], new long[56], new long[57], new long[58], new long[59], new long[60]);
+	}
+	@Test(expectedExceptions = NullPointerException.class, expectedExceptionsMessageRegExp = "Cannot assign field \"nullField\" because \"this.nullField\" is null")
+	public void test_doubleArrayParametersLess() {
+		doubleArrayParametersLess(new double[1], new double[2], new double[3]);
+	}
+	@Test(expectedExceptions = NullPointerException.class, expectedExceptionsMessageRegExp = "Cannot assign field \"nullField\" because \"this.nullField\" is null")
+	public void test_doubleArrayParametersMore() {
+		doubleArrayParametersMore(
+				new double[1], new double[2], new double[3], new double[4], new double[5], new double[6], new double[7], new double[8], new double[9], new double[10],
+				new double[11], new double[12], new double[13], new double[14], new double[15], new double[16], new double[17], new double[18], new double[19], new double[20],
+				new double[21], new double[22], new double[23], new double[24], new double[25], new double[26], new double[27], new double[28], new double[29], new double[30],
+				new double[31], new double[32], new double[33], new double[34], new double[35], new double[36], new double[37], new double[38], new double[39], new double[40],
+				new double[41], new double[42], new double[43], new double[44], new double[45], new double[46], new double[47], new double[48], new double[49], new double[50],
+				new double[51], new double[52], new double[53], new double[54], new double[55], new double[56], new double[57], new double[58], new double[59], new double[60]);
 	}
 }

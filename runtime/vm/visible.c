@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 #include "j2sever.h"
 #include "j9.h"
@@ -129,24 +129,26 @@ checkVisibility(J9VMThread *currentThread, J9Class* sourceClass, J9Class* destCl
 					 * host is loaded first and the class being accessed loads its
 					 * nest host after.
 					 */
-					if (NULL == sourceClass->nestHost) {
-						result = loadAndVerifyNestHost(currentThread, sourceClass, lookupOptions);
+					J9Class *sourceClassNestHost = sourceClass->nestHost;
+					J9Class *destClassNestHost = NULL;
+					if (NULL == sourceClassNestHost) {
+						result = loadAndVerifyNestHost(currentThread, sourceClass, lookupOptions, &sourceClassNestHost);
 						if (J9_VISIBILITY_ALLOWED != result) {
 							goto _exit;
 						}
 						sourceClass = J9_CURRENT_CLASS(sourceClass);
 						destClass = J9_CURRENT_CLASS(destClass);
 					}
-					if (NULL == destClass->nestHost) {
-						result = loadAndVerifyNestHost(currentThread, destClass, lookupOptions);
+					destClassNestHost = destClass->nestHost;
+					if (NULL == destClassNestHost) {
+						result = loadAndVerifyNestHost(currentThread, destClass, lookupOptions, &destClassNestHost);
 						if (J9_VISIBILITY_ALLOWED != result) {
 							goto _exit;
 						}
 						sourceClass = J9_CURRENT_CLASS(sourceClass);
 						destClass = J9_CURRENT_CLASS(destClass);
 					}
-	
-					if (sourceClass->nestHost != destClass->nestHost) {
+					if (sourceClassNestHost != destClassNestHost) {
 						result = J9_VISIBILITY_NON_MODULE_ACCESS_ERROR;
 					}
 				} else
@@ -182,11 +184,11 @@ checkVisibility(J9VMThread *currentThread, J9Class* sourceClass, J9Class* destCl
 _exit:
 #endif /* JAVA_SPEC_VERSION >= 11 */
 	if (J9_VISIBILITY_NON_MODULE_ACCESS_ERROR == result) {
-		/* "checkVisibility from %p (%.*s) to %p (%.*s) modifiers=%zx failed" */
+		/* "checkVisibility from %p (%.*s) to %p (%.*s) modifiers=%zx lookupOptions=%zx failed" */
 		Trc_VM_checkVisibility_Failed(currentThread,
 			sourceClass, J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(sourceClass->romClass)), J9UTF8_DATA(J9ROMCLASS_CLASSNAME(sourceClass->romClass)),
 			destClass, J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(destClass->romClass)), J9UTF8_DATA(J9ROMCLASS_CLASSNAME(destClass->romClass)),
-			modifiers);
+			modifiers, lookupOptions);
 	}
 
 	Trc_VM_checkVisibility_Exit(currentThread, result);
@@ -271,29 +273,42 @@ setNestmatesError(J9VMThread *vmThread, J9Class *nestMember, J9Class *nestHost, 
 /*
  * Loads and verifies the nesthost
  *
- * @param vmThread vmthread token
- * @param clazz the j9lass requesting the nesthost
- * @param options loading options (e.g. J9_LOOK_NO_THROW)
+ * @param[in] vmThread vmthread token
+ * @param[in] clazz the j9lass requesting the nesthost
+ * @param[in] options loading options (e.g. J9_LOOK_NO_THROW)
+ * @param[out] nestHostFound the nest host of clazz
  * @return 	J9_VISIBILITY_ALLOWED if nest host is loaded, otherwise
  * 			J9_VISIBILITY_NEST_HOST_LOADING_FAILURE_ERROR
  * 			J9_VISIBILITY_NEST_HOST_DIFFERENT_PACKAGE_ERROR
  * 			J9_VISIBILITY_NEST_MEMBER_NOT_CLAIMED_ERROR
  */
 UDATA
-loadAndVerifyNestHost(J9VMThread *vmThread, J9Class *clazz, UDATA options)
+loadAndVerifyNestHost(J9VMThread *vmThread, J9Class *clazz, UDATA options, J9Class **nestHostFound)
 {
 	UDATA result = J9_VISIBILITY_ALLOWED;
-	if (NULL == clazz->nestHost) {
-		J9Class *nestHost = NULL;
+	J9Class *nestHost = clazz->nestHost;
+	if (NULL != nestHost) {
+		*nestHostFound = nestHost;
+	} else {
 		J9ROMClass *romClass = clazz->romClass;
 		J9UTF8 *nestHostName = J9ROMCLASS_NESTHOSTNAME(romClass);
 		BOOLEAN canRunJavaCode = J9_ARE_NO_BITS_SET(options, J9_LOOK_NO_JAVA);
 		BOOLEAN throwException = canRunJavaCode && J9_ARE_NO_BITS_SET(options, J9_LOOK_NO_THROW);
 		BOOLEAN hiddenNestMate = J9ROMCLASS_IS_OPTIONNESTMATE_SET(romClass);
-		J9Class* curClazz = clazz;
+		BOOLEAN cacheNestHostInClass = TRUE;
+		J9Class *curClazz = clazz;
 
 		if (hiddenNestMate) {
 			BOOLEAN isCurClassHiddenNestMate = hiddenNestMate;
+			if (areExtensionsEnabled(vmThread->javaVM)) {
+				/*
+				 * Hidden class is not in the nestmember attribute of the nest host. So nest host cannot find hidden class nest members.
+				 * Class redefinition cannot update the nest host of hidden class in fixNestMembers()(hshelp.c).
+				 * So do not set cache nest host in clazz->nestHost, as the host might have been redefined.
+				 * Always using the class name to get the nest host from the class table.
+				 */
+				cacheNestHostInClass = FALSE;
+			}
 			while ((isCurClassHiddenNestMate) 
 					&& (curClazz != curClazz->hostClass)
 			) {
@@ -302,15 +317,21 @@ loadAndVerifyNestHost(J9VMThread *vmThread, J9Class *clazz, UDATA options)
 				isCurClassHiddenNestMate = J9ROMCLASS_IS_OPTIONNESTMATE_SET(curClazz->romClass);
 				nestHostName = J9ROMCLASS_NESTHOSTNAME(curClazz->romClass);
 			}
-
-			if (NULL != curClazz->nestHost) {
-				/* 
-				 * hidden class defined with ClassOption.NESTMATE has the same nest host as its hostClass (curClazz). 
-				 * The nest host of curClass is already found, return directly. 
-				 */ 
-				clazz->nestHost = curClazz->nestHost;
-				result = J9_VISIBILITY_ALLOWED;
-				goto done;
+			if (cacheNestHostInClass) {
+				if (NULL != curClazz->nestHost) {
+					/*
+					 * hidden class defined with ClassOption.NESTMATE has the same nest host as its hostClass (curClazz).
+					 * The nest host of curClass is already found, return directly.
+					 */
+					*nestHostFound = curClazz->nestHost;
+					clazz->nestHost = *nestHostFound;
+					result = J9_VISIBILITY_ALLOWED;
+					goto done;
+				}
+			} else {
+				if (NULL == nestHostName) {
+					nestHostName = J9ROMCLASS_CLASSNAME(curClazz->romClass);
+				}
 			}
 		}
 
@@ -360,7 +381,10 @@ loadAndVerifyNestHost(J9VMThread *vmThread, J9Class *clazz, UDATA options)
 
 		/* If a problem occurred in nest host verification then the nest host value is invalid */
 		if (J9_VISIBILITY_ALLOWED == result) {
-			clazz->nestHost = nestHost;
+			*nestHostFound = nestHost;
+			if (cacheNestHostInClass) {
+				clazz->nestHost = nestHost;
+			}
 		} else if ((JAVA_SPEC_VERSION >= 15) && canRunJavaCode) {
 			/**
 			 * JVM spec updated in Java 15:
@@ -371,7 +395,10 @@ loadAndVerifyNestHost(J9VMThread *vmThread, J9Class *clazz, UDATA options)
 			 * which tries to find the nest host in loaded classes only. It is possible that nest host is not loaded yet. 
 			 * So set clazz->nestHost only when canRunJavaCode is TRUE.
 			 */
-			clazz->nestHost = curClazz;
+			*nestHostFound = curClazz;
+			if (cacheNestHostInClass) {
+				clazz->nestHost = curClazz;
+			}
 			vmThread->currentException = NULL;
 			vmThread->privateFlags &= ~(UDATA)J9_PRIVATE_FLAGS_REPORT_EXCEPTION_THROW;
 			result = J9_VISIBILITY_ALLOWED;

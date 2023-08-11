@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include "j9protos.h"
@@ -374,6 +374,7 @@ J9InternalVMFunctions J9InternalFunctions = {
 	setNestmatesError,
 #endif /* JAVA_SPEC_VERSION >= 11 */
 	areValueTypesEnabled,
+	areFlattenableValueTypesEnabled,
 	peekClassHashTable,
 #if defined(J9VM_OPT_JITSERVER)
 	isJITServerEnabled,
@@ -441,4 +442,7 @@ J9InternalVMFunctions J9InternalFunctions = {
 	releaseVThreadInspector,
 #endif /* JAVA_SPEC_VERSION >= 19 */
 	checkArgsConsumed,
+#if defined(J9VM_ZOS_3164_INTEROPERABILITY) && (JAVA_SPEC_VERSION >= 17)
+	invoke31BitJNI_OnXLoad,
+#endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) && (JAVA_SPEC_VERSION >= 17) */
 };

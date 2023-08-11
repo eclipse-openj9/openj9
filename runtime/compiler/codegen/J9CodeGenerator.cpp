@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #if defined(J9ZOS390)
@@ -2601,11 +2601,16 @@ static void addValidationRecords(TR::CodeGenerator *cg)
 
          TR_ASSERT(siteIndex < (int32_t) cg->comp()->getNumInlinedCallSites(), "did not find AOTClassInfo %p method in inlined site table", *info);
 
-         cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation(NULL,
-                                                                          (uint8_t *)(intptr_t)siteIndex,
-                                                                          (uint8_t *)(*info),
-                                                                          (*info)->_reloKind, cg),
-                                                                          __FILE__, __LINE__, NULL);
+         cg->addExternalRelocation(
+            TR::ExternalRelocation::create(
+               NULL,
+               (uint8_t *)(intptr_t)siteIndex,
+               (uint8_t *)(*info),
+               (*info)->_reloKind,
+               cg),
+            __FILE__,
+            __LINE__,
+            NULL);
          }
       }
    }
@@ -2621,10 +2626,15 @@ static void addSVMValidationRecords(TR::CodeGenerator *cg)
 
       for (auto it = validationRecords.begin(); it != validationRecords.end(); it++)
          {
-         cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation(NULL,
-                                                                          (uint8_t *)(*it),
-                                                                          (*it)->_kind, cg),
-                                                                          __FILE__, __LINE__, NULL);
+         cg->addExternalRelocation(
+            TR::ExternalRelocation::create(
+               NULL,
+               (uint8_t *)(*it),
+               (*it)->_kind,
+               cg),
+            __FILE__,
+            __LINE__,
+            NULL);
          }
       }
    }
@@ -2725,7 +2735,7 @@ static TR_ExternalRelocationTargetKind getReloKindFromGuardSite(TR::CodeGenerato
    return type;
    }
 
-static void processAOTGuardSites(TR::CodeGenerator *cg, uint32_t inlinedCallSize, TR_InlinedSiteHastTableEntry *orderedInlinedSiteListTable)
+static void processAOTGuardSites(TR::CodeGenerator *cg, uint32_t inlinedCallSize, TR_InlinedSiteHashTableEntry *orderedInlinedSiteListTable)
    {
    TR::list<TR_AOTGuardSite*> *aotGuardSites = cg->comp()->getAOTGuardPatchSites();
    for(auto it = aotGuardSites->begin(); it != aotGuardSites->end(); ++it)
@@ -2772,18 +2782,28 @@ static void processAOTGuardSites(TR::CodeGenerator *cg, uint32_t inlinedCallSize
          case TR_CheckMethodEnter:
          case TR_CheckMethodExit:
          case TR_HCR:
-            cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation((uint8_t *)(*it)->getLocation(),
-                                                                             (uint8_t *)(*it)->getDestination(),
-                                                                             type, cg),
-                             __FILE__, __LINE__, NULL);
+            cg->addExternalRelocation(
+               TR::ExternalRelocation::create(
+                  (uint8_t *)(*it)->getLocation(),
+                  (uint8_t *)(*it)->getDestination(),
+                  type,
+                  cg),
+               __FILE__,
+               __LINE__,
+               NULL);
             break;
 
          case TR_Breakpoint:
-            cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation((uint8_t *)(*it)->getLocation(),
-                                                                             (uint8_t *)(intptr_t)(*it)->getGuard()->getCurrentInlinedSiteIndex(),
-                                                                             (uint8_t *)(*it)->getDestination(),
-                                                                             type, cg),
-                             __FILE__, __LINE__, NULL);
+            cg->addExternalRelocation(
+               TR::ExternalRelocation::create(
+                  (uint8_t *)(*it)->getLocation(),
+                  (uint8_t *)(intptr_t)(*it)->getGuard()->getCurrentInlinedSiteIndex(),
+                  (uint8_t *)(*it)->getDestination(),
+                  type,
+                  cg),
+               __FILE__,
+               __LINE__,
+               NULL);
             break;
 
          case TR_NoRelocation:
@@ -2814,11 +2834,18 @@ static void addInlinedSiteRelocation(TR::CodeGenerator *cg,
    info->data3 = reinterpret_cast<uintptr_t>(receiver);
    info->data4 = reinterpret_cast<uintptr_t>(destinationAddress);
 
-   cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation(reloLocation, (uint8_t *)info, reloType, cg),
-                   __FILE__,__LINE__, NULL);
+   cg->addExternalRelocation(
+      TR::ExternalRelocation::create(
+         reloLocation,
+         (uint8_t *)info,
+         reloType,
+         cg),
+      __FILE__,
+      __LINE__,
+      NULL);
    }
 
-static void addInliningTableRelocations(TR::CodeGenerator *cg, uint32_t inlinedCallSize, TR_InlinedSiteHastTableEntry *orderedInlinedSiteListTable)
+static void addInliningTableRelocations(TR::CodeGenerator *cg, uint32_t inlinedCallSize, TR_InlinedSiteHashTableEntry *orderedInlinedSiteListTable)
    {
    // If have inlined calls, now add the relocation records in descending order
    // of inlined site index (at relocation time, the order is reverse)
@@ -2864,11 +2891,11 @@ J9::CodeGenerator::processRelocations()
       uint32_t inlinedCallSize = self()->comp()->getNumInlinedCallSites();
 
       // Create temporary hashtable for ordering AOT guard relocations
-      TR_InlinedSiteHastTableEntry *orderedInlinedSiteListTable = NULL;
+      TR_InlinedSiteHashTableEntry *orderedInlinedSiteListTable = NULL;
       if (inlinedCallSize > 0)
          {
-         orderedInlinedSiteListTable= (TR_InlinedSiteHastTableEntry*)self()->comp()->trMemory()->allocateMemory(sizeof(TR_InlinedSiteHastTableEntry) * inlinedCallSize, heapAlloc);
-         memset(orderedInlinedSiteListTable, 0, sizeof(TR_InlinedSiteHastTableEntry)*inlinedCallSize);
+         orderedInlinedSiteListTable= (TR_InlinedSiteHashTableEntry*)self()->comp()->trMemory()->allocateMemory(sizeof(TR_InlinedSiteHashTableEntry) * inlinedCallSize, heapAlloc);
+         memset(orderedInlinedSiteListTable, 0, sizeof(TR_InlinedSiteHashTableEntry)*inlinedCallSize);
          }
 
       // Traverse list of AOT-specific guards and create relocation records
@@ -2946,10 +2973,25 @@ void J9::CodeGenerator::addProjectSpecializedRelocation(uint8_t *location, uint8
       TR_ExternalRelocationTargetKind kind, char *generatingFileName, uintptr_t generatingLineNumber, TR::Node *node)
    {
    (target2 == NULL) ?
-         self()->addExternalRelocation(new (self()->trHeapMemory()) TR::ExternalRelocation(location, target, kind, self()),
-               generatingFileName, generatingLineNumber, node) :
-         self()->addExternalRelocation(new (self()->trHeapMemory()) TR::ExternalRelocation(location, target, target2, kind, self()),
-               generatingFileName, generatingLineNumber, node);
+         self()->addExternalRelocation(
+            TR::ExternalRelocation::create(
+               location,
+               target,
+               kind,
+               self()),
+            generatingFileName,
+            generatingLineNumber,
+            node) :
+         self()->addExternalRelocation(
+            TR::ExternalRelocation::create(
+               location,
+               target,
+               target2,
+               kind,
+               self()),
+            generatingFileName,
+            generatingLineNumber,
+            node);
    }
 
 void J9::CodeGenerator::addProjectSpecializedRelocation(TR::Instruction *instr, uint8_t *target, uint8_t *target2,
@@ -3000,8 +3042,15 @@ J9::CodeGenerator::jitAddUnresolvedAddressMaterializationToPatchOnClassRedefinit
    if (self()->comp()->compileRelocatableCode())
 #endif /* defined(J9VM_OPT_JITSERVER) */
       {
-      self()->addExternalRelocation(new (self()->trHeapMemory()) TR::ExternalRelocation((uint8_t *)firstInstruction, 0, TR_HCR, self()),
-                                 __FILE__,__LINE__, NULL);
+      self()->addExternalRelocation(
+         TR::ExternalRelocation::create(
+            (uint8_t *)firstInstruction,
+            0,
+            TR_HCR,
+            self()),
+         __FILE__,
+         __LINE__,
+         NULL);
       }
    else
       {
@@ -4884,6 +4933,12 @@ bool
 J9::CodeGenerator::needRelocationsForCurrentMethodPC()
    {
    return self()->fej9()->needRelocationsForCurrentMethodPC();
+   }
+
+bool
+J9::CodeGenerator::needRelocationsForCurrentMethodStartPC()
+   {
+   return self()->fej9()->needRelocationsForCurrentMethodStartPC();
    }
 
 bool

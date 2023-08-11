@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include "ValueTypeHelpers.hpp"
@@ -251,6 +251,16 @@ areValueTypesEnabled(J9JavaVM *vm)
 #else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	return FALSE;
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+}
+
+BOOLEAN
+areFlattenableValueTypesEnabled(J9JavaVM *vm)
+{
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+	return TRUE;
+#else /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+	return FALSE;
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 }
 
 j9object_t*

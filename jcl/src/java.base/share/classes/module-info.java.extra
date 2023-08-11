@@ -18,7 +18,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 exports com.ibm.sharedclasses.spi to
@@ -61,11 +61,17 @@ uses com.ibm.gpu.spi.GPUAssist.Provider;
 exports com.ibm.gpu.spi to
     openj9.gpu;
 /*[IF CRIU_SUPPORT]*/
+/*[IF JAVA_SPEC_VERSION >= 17]*/
+exports jdk.internal.access to
+    openj9.criu;
+opens jdk.internal.access to
+    openj9.criu;
+/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
+exports jdk.internal.misc to
+    openj9.criu;
 exports openj9.internal.criu to
     openj9.criu;
 exports openj9.internal.criu.security to
-    openj9.criu;
-exports jdk.internal.misc to
     openj9.criu;
 opens jdk.internal.misc to
     openj9.criu;

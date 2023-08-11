@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include "p/codegen/ForceRecompilationSnippet.hpp"
@@ -47,6 +47,10 @@ uint8_t *TR::PPCForceRecompilationSnippet::emitSnippetBody()
    uint8_t             *buffer = cg()->getBinaryBufferCursor();
    TR::SymbolReference  *induceRecompilationSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_PPCinduceRecompilation);
    intptr_t startPC = (intptr_t)((uint8_t*)cg()->getCodeStart());
+   // The relo runtime expects this kind of address to be zero in a relocatable binary, since it uses
+   // |= to update the address chunks. See TR_PPC64RelocationTarget::storeAddressSequence.
+   intptr_t startPCRegValue = cg()->needRelocationsForCurrentMethodStartPC() &&
+                              !cg()->canEmitDataForExternallyRelocatableInstructions() ? 0 : startPC;
 
    getSnippetLabel()->setCodeLocation(buffer);
 
@@ -57,12 +61,14 @@ uint8_t *TR::PPCForceRecompilationSnippet::emitSnippetBody()
 
    if (cg()->comp()->target().is64Bit())
       {
+      uint8_t *firstInstruction = buffer;
+
       // put jit entry point address in startPCReg
       uint32_t hhval, hlval, lhval, llval;
-      hhval = startPC >> 48 & 0xffff;
-      hlval = (startPC >>32) & 0xffff;
-      lhval = (startPC >>16) & 0xffff;
-      llval = startPC & 0xffff;
+      hhval = startPCRegValue >> 48 & 0xffff;
+      hlval = (startPCRegValue >>32) & 0xffff;
+      lhval = (startPCRegValue >>16) & 0xffff;
+      llval = startPCRegValue & 0xffff;
 
       opcode.setOpCodeValue(TR::InstOpCode::lis);
       buffer = opcode.copyBinaryToBuffer(buffer);
@@ -100,22 +106,57 @@ uint8_t *TR::PPCForceRecompilationSnippet::emitSnippetBody()
       startPCReg->setRegisterFieldRS((uint32_t *)buffer);
       *(uint32_t *)buffer |= llval;
       buffer += PPC_INSTRUCTION_LENGTH;
+
+      if (cg()->needRelocationsForCurrentMethodStartPC())
+         {
+         TR::Relocation *startPCRelo = new (cg()->trHeapMemory()) TR::ExternalRelocation(firstInstruction,
+                                                                                        NULL,
+                                                                                        (uint8_t *)fixedSequence1,
+                                                                                        TR_StartPC,
+                                                                                        cg());
+         cg()->addExternalRelocation(startPCRelo,
+                                     __FILE__,
+                                     __LINE__,
+                                     getNode());
+         }
       }
    else
       {
+      uint8_t *firstInstruction = buffer;
+
       // put jit entry point address in startPCReg
       opcode.setOpCodeValue(TR::InstOpCode::lis);
       buffer = opcode.copyBinaryToBuffer(buffer);
       startPCReg->setRegisterFieldRS((uint32_t *)buffer);
-      *(uint32_t *)buffer |= (uint32_t) (startPC >> 16 & 0xffff);
+      *(uint32_t *)buffer |= (uint32_t) (startPCRegValue >> 16 & 0xffff);
       buffer += PPC_INSTRUCTION_LENGTH;
+
+      uint8_t *secondInstruction = buffer;
 
       opcode.setOpCodeValue(TR::InstOpCode::ori);
       buffer = opcode.copyBinaryToBuffer(buffer);
       startPCReg->setRegisterFieldRT((uint32_t *)buffer);
       startPCReg->setRegisterFieldRA((uint32_t *)buffer);
-      *(uint32_t *)buffer |= (uint32_t) (startPC & 0xffff);
+      *(uint32_t *)buffer |= (uint32_t) (startPCRegValue & 0xffff);
       buffer += PPC_INSTRUCTION_LENGTH;
+
+      if (cg()->needRelocationsForCurrentMethodStartPC())
+         {
+         TR_RelocationRecordInformation *recordInfo =
+            (TR_RelocationRecordInformation *)cg()->comp()->trMemory()->allocateMemory(sizeof(TR_RelocationRecordInformation), heapAlloc);
+         recordInfo->data1 = (uintptr_t)NULL;
+         recordInfo->data3 = orderedPairSequence2;
+         TR::Relocation *startPCRelo = new (cg()->trHeapMemory()) TR::ExternalOrderedPair32BitRelocation(firstInstruction,
+                                                                                                         secondInstruction,
+                                                                                                         (uint8_t *)recordInfo,
+                                                                                                         TR_StartPC,
+                                                                                                         cg());
+         cg()->addExternalRelocation(startPCRelo,
+                                     __FILE__,
+                                     __LINE__,
+                                     getNode());
+         }
+
       }
 
    intptr_t helperAddress = (intptr_t)induceRecompilationSymRef->getMethodAddress();
@@ -129,10 +170,15 @@ uint8_t *TR::PPCForceRecompilationSnippet::emitSnippetBody()
    // b distance
    *(int32_t *)buffer = 0x48000000 | ((helperAddress - (intptr_t)buffer) & 0x03ffffff);
 
-   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(buffer,(uint8_t *)induceRecompilationSymRef,TR_HelperAddress, cg()),
-                          __FILE__,
-                          __LINE__,
-                          getNode());
+   cg()->addExternalRelocation(
+      TR::ExternalRelocation::create(
+         buffer,
+         (uint8_t *)induceRecompilationSymRef,
+         TR_HelperAddress,
+         cg()),
+      __FILE__,
+      __LINE__,
+      getNode());
 
    buffer += PPC_INSTRUCTION_LENGTH;
 

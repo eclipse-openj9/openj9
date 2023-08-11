@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include "z/codegen/S390J9CallSnippet.hpp"
@@ -324,14 +324,28 @@ TR::S390J9CallSnippet::emitSnippetBody()
 
    // Method address
    *(uintptr_t *) cursor = (uintptr_t) glueRef->getMethodAddress();
-   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *)glueRef, TR_AbsoluteHelperAddress, cg()),
-                             __FILE__, __LINE__, callNode);
+   cg()->addExternalRelocation(
+      TR::ExternalRelocation::create(
+         cursor,
+         (uint8_t *)glueRef,
+         TR_AbsoluteHelperAddress,
+         cg()),
+      __FILE__,
+      __LINE__,
+      callNode);
    cursor += sizeof(uintptr_t);
 
    // Store the code cache RA
    *(uintptr_t *) cursor = (uintptr_t) getCallRA();
-   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, NULL, TR_AbsoluteMethodAddress, cg()),
-                          __FILE__, __LINE__, callNode);
+   cg()->addExternalRelocation(
+      TR::ExternalRelocation::create(
+         cursor,
+         NULL,
+         TR_AbsoluteMethodAddress,
+         cg()),
+      __FILE__,
+      __LINE__,
+      callNode);
    cursor += sizeof(uintptr_t);
 
    //induceOSRAtCurrentPC is implemented in the VM, and it knows, by looking at the current PC, what method it needs to
@@ -349,8 +363,15 @@ TR::S390J9CallSnippet::emitSnippetBody()
             {
             //TODO check what happens when we pass -1 to jitAddPicToPatchOnClassRedefinition an dif it's correct in this case
             cg()->jitAddPicToPatchOnClassRedefinition((void*)-1, (void *)cursor, true);
-            cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation((uint8_t *)cursor, NULL,
-                                    TR_HCR, cg()),__FILE__, __LINE__, getNode());
+            cg()->addExternalRelocation(
+               TR::ExternalRelocation::create(
+                  (uint8_t *)cursor,
+                  NULL,
+                  TR_HCR,
+                  cg()),
+               __FILE__,
+               __LINE__,
+               getNode());
             }
          }
       else
@@ -362,13 +383,17 @@ TR::S390J9CallSnippet::emitSnippetBody()
 
          if (comp->getOption(TR_UseSymbolValidationManager))
             {
-            TR_ASSERT_FATAL(ramMethod, "cursor = %x, ramMehtod can not be null", cursor);
-            cg()->addExternalRelocation( new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
-                                                                        (uint8_t *)ramMethod,
-                                                                        (uint8_t *)TR::SymbolType::typeMethod,
-                                                                        TR_SymbolFromManager,
-                                                                        cg()),
-                                                                     __FILE__, __LINE__, callNode);
+            TR_ASSERT_FATAL(ramMethod, "cursor = %x, ramMethod can not be null", cursor);
+            cg()->addExternalRelocation(
+               TR::ExternalRelocation::create(
+                  cursor,
+                  (uint8_t *)ramMethod,
+                  (uint8_t *)TR::SymbolType::typeMethod,
+                  TR_SymbolFromManager,
+                  cg()),
+               __FILE__,
+               __LINE__,
+               callNode);
             }
 #if defined(J9VM_OPT_JITSERVER)
          else if (!comp->isOutOfProcessCompilation()) // Since we query this information from the client, remote compilations don't need to add relocation records for TR_MethodObject
@@ -376,8 +401,16 @@ TR::S390J9CallSnippet::emitSnippetBody()
          else
 #endif /* defined(J9VM_OPT_JITSERVER) */
             {
-            cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *) callNode->getSymbolReference(), getNode() ? (uint8_t *)(intptr_t)getNode()->getInlinedSiteIndex() : (uint8_t *)-1, TR_MethodObject, cg()),
-                                    __FILE__, __LINE__, callNode);
+            cg()->addExternalRelocation(
+               TR::ExternalRelocation::create(
+                  cursor,
+                  (uint8_t *) callNode->getSymbolReference(),
+                  getNode() ? (uint8_t *)(intptr_t)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
+                  TR_MethodObject,
+                  cg()),
+               __FILE__,
+               __LINE__,
+               callNode);
             }
          }
       }
@@ -661,20 +694,43 @@ TR::S390UnresolvedCallSnippet::emitSnippetBody()
    if (comp->getOption(TR_EnableRMODE64))
 #endif
       {
-      cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, *(uint8_t **)cursor, getNode() ? (uint8_t *)(intptr_t)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
-         TR_Trampolines, cg()),
-         __FILE__, __LINE__,getNode());
+      cg()->addExternalRelocation(
+         TR::ExternalRelocation::create(
+            cursor,
+            *(uint8_t **)cursor,
+            getNode() ? (uint8_t *)(intptr_t)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
+            TR_Trampolines,
+            cg()),
+         __FILE__,
+         __LINE__,
+         getNode());
       }
 #if defined(J9ZOS390)
    else
       {
-      cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, *(uint8_t **)cursor, getNode() ? (uint8_t *)getNode()->getInlinedSiteIndex() : (uint8_t *)-1, TR_ConstantPool, cg()),
-         __FILE__, __LINE__, getNode());
+      cg()->addExternalRelocation(
+         TR::ExternalRelocation::create(
+            cursor,
+            *(uint8_t **)cursor,
+            getNode() ? (uint8_t *)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
+            TR_ConstantPool,
+            cg()),
+         __FILE__,
+         __LINE__,
+         getNode());
       }
 #endif
 #else
-   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, *(uint8_t **)cursor, getNode() ? (uint8_t *)getNode()->getInlinedSiteIndex() : (uint8_t *)-1, TR_ConstantPool, cg()),
-      __FILE__, __LINE__, getNode());
+   cg()->addExternalRelocation(
+      TR::ExternalRelocation::create(
+         cursor,
+         *(uint8_t **)cursor,
+         getNode() ? (uint8_t *)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
+         TR_ConstantPool,
+         cg()),
+      __FILE__,
+      __LINE__,
+      getNode());
 #endif
 
    cursor += sizeof(uintptr_t);
@@ -739,14 +795,28 @@ TR::S390VirtualUnresolvedSnippet::emitSnippetBody()
 
    // Method address
    *(uintptr_t *) cursor = (uintptr_t) glueRef->getMethodAddress();
-   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *)glueRef, TR_AbsoluteHelperAddress, cg()),
-                             __FILE__, __LINE__, callNode);
+   cg()->addExternalRelocation(
+      TR::ExternalRelocation::create(
+         cursor,
+         (uint8_t *)glueRef,
+         TR_AbsoluteHelperAddress,
+         cg()),
+      __FILE__,
+      __LINE__,
+      callNode);
    cursor += sizeof(uintptr_t);
 
    // Store the code cache RA
    *(uintptr_t *) cursor = (uintptr_t) getCallRA();
-   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, NULL, TR_AbsoluteMethodAddress, cg()),
-                             __FILE__, __LINE__, callNode);
+   cg()->addExternalRelocation(
+      TR::ExternalRelocation::create(
+         cursor,
+         NULL,
+         TR_AbsoluteMethodAddress,
+         cg()),
+      __FILE__,
+      __LINE__,
+      callNode);
    cursor += sizeof(uintptr_t);
 
    // CP addr
@@ -765,8 +835,15 @@ TR::S390VirtualUnresolvedSnippet::emitSnippetBody()
 
    // instruction to be patched
    *(uintptr_t *) cursor = (uintptr_t) (getPatchVftInstruction()->getBinaryEncoding());
-   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, NULL, TR_AbsoluteMethodAddress, cg()),
-                          __FILE__, __LINE__, callNode);
+   cg()->addExternalRelocation(
+      TR::ExternalRelocation::create(
+         cursor,
+         NULL,
+         TR_AbsoluteMethodAddress,
+         cg()),
+      __FILE__,
+      __LINE__,
+      callNode);
    cursor += sizeof(uintptr_t);
 
    // Field used by nestmate private calls
@@ -779,9 +856,16 @@ TR::S390VirtualUnresolvedSnippet::emitSnippetBody()
    // No explicit call to `addExternalRelocation` because its relocation info is passed to CP_addr `addExternalRelocation` call.
    *(uintptr_t *) cursor = (uintptr_t) thunkAddress;
    j2iRelocInfo->data3 = (uintptr_t)cursor - cpAddrPosition;    // data3 is the offset of CP_addr to J2I thunk
-   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation((uint8_t*)cpAddrPosition, (uint8_t*)j2iRelocInfo, NULL,
-                                                                                 TR_J2IVirtualThunkPointer, cg()),
-                               __FILE__, __LINE__, callNode);
+   cg()->addExternalRelocation(
+      TR::ExternalRelocation::create(
+         (uint8_t*)cpAddrPosition,
+         (uint8_t*)j2iRelocInfo,
+         NULL,
+         TR_J2IVirtualThunkPointer,
+         cg()),
+      __FILE__,
+      __LINE__,
+      callNode);
    cursor += sizeof(uintptr_t);
 
    // Field used by nestmate private calls
@@ -792,8 +876,15 @@ TR::S390VirtualUnresolvedSnippet::emitSnippetBody()
                    "Unexpected branch instruction in VirtualUnresolvedSnippet.\n");
 
    *(uintptr_t *) cursor = (uintptr_t) (getIndirectCallInstruction()->getBinaryEncoding() + getIndirectCallInstruction()->getBinaryLength());
-   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, NULL, TR_AbsoluteMethodAddress, cg()),
-                          __FILE__, __LINE__, callNode);
+   cg()->addExternalRelocation(
+      TR::ExternalRelocation::create(
+         cursor,
+         NULL,
+         TR_AbsoluteMethodAddress,
+         cg()),
+      __FILE__,
+      __LINE__,
+      callNode);
 
    cursor += sizeof(uintptr_t);
 
@@ -892,8 +983,15 @@ TR::S390InterfaceCallSnippet::emitSnippetBody()
    this->setSnippetDestAddr(destAddr);
 
    *(int32_t *) cursor = (int32_t)((destAddr - (intptr_t)(cursor - 2)) / 2);
-   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t*) glueRef, TR_HelperAddress, cg()),
-            __FILE__, __LINE__, getNode());
+   cg()->addExternalRelocation(
+      TR::ExternalRelocation::create(
+         cursor,
+         (uint8_t*) glueRef,
+         TR_HelperAddress,
+         cg()),
+      __FILE__,
+      __LINE__,
+      getNode());
    cursor += sizeof(int32_t);
 
    // Set up the code RA to the data snippet.
@@ -1262,8 +1360,15 @@ TR::J9S390InterfaceCallDataSnippet::emitSnippetBody()
    // code cache RA
    TR_ASSERT_FATAL(_codeRA != NULL, "Interface Call Data Constant's code return address not initialized.\n");
    *(uintptr_t *) cursor = (uintptr_t)_codeRA;
-   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, NULL, TR_AbsoluteMethodAddress, cg()),
-                             __FILE__, __LINE__, callNode);
+   cg()->addExternalRelocation(
+      TR::ExternalRelocation::create(
+         cursor,
+         NULL,
+         TR_AbsoluteMethodAddress,
+         cg()),
+      __FILE__,
+      __LINE__,
+      callNode);
 
    cursor += TR::Compiler->om.sizeofReferenceAddress();
 
@@ -1296,9 +1401,16 @@ TR::J9S390InterfaceCallDataSnippet::emitSnippetBody()
    *(intptr_t *) cursor = (intptr_t)_thunkAddress;
    j2iRelocInfo->data3 = (uintptr_t)cursor - cpAddrPosition;  // data3 is the offset of CP_addr to J2I thunk
 
-   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation((uint8_t*)cpAddrPosition, (uint8_t*)j2iRelocInfo, NULL,
-                                                                                 TR_J2IVirtualThunkPointer, cg()),
-                               __FILE__, __LINE__, callNode);
+   cg()->addExternalRelocation(
+      TR::ExternalRelocation::create(
+         (uint8_t*)cpAddrPosition,
+         (uint8_t*)j2iRelocInfo,
+         NULL,
+         TR_J2IVirtualThunkPointer,
+         cg()),
+      __FILE__,
+      __LINE__,
+      callNode);
 
    cursor += TR::Compiler->om.sizeofReferenceAddress();
 
@@ -1321,21 +1433,42 @@ TR::J9S390InterfaceCallDataSnippet::emitSnippetBody()
       // lastCachedSlot
       cursorlastCachedSlot = cursor;
       *(intptr_t *) (cursor) =  snippetStart + getFirstSlotOffset() - (2 * TR::Compiler->om.sizeofReferenceAddress());
-      cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, NULL, TR_AbsoluteMethodAddress, cg()),
-                                __FILE__, __LINE__, callNode);
+      cg()->addExternalRelocation(
+         TR::ExternalRelocation::create(
+            cursor,
+            NULL,
+            TR_AbsoluteMethodAddress,
+            cg()),
+         __FILE__,
+         __LINE__,
+         callNode);
 
       cursor += TR::Compiler->om.sizeofReferenceAddress();
 
       // firstSlot
       *(intptr_t *) (cursor) = snippetStart + getFirstSlotOffset();
-      cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, NULL, TR_AbsoluteMethodAddress, cg()),
-                                __FILE__, __LINE__, callNode);
+      cg()->addExternalRelocation(
+         TR::ExternalRelocation::create(
+            cursor,
+            NULL,
+            TR_AbsoluteMethodAddress,
+            cg()),
+         __FILE__,
+         __LINE__,
+         callNode);
       cursor += TR::Compiler->om.sizeofReferenceAddress();
 
       // lastSlot
       *(intptr_t *) (cursor) =  snippetStart + getLastSlotOffset();
-      cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, NULL, TR_AbsoluteMethodAddress, cg()),
-                                __FILE__, __LINE__, callNode);
+      cg()->addExternalRelocation(
+         TR::ExternalRelocation::create(
+            cursor,
+            NULL,
+            TR_AbsoluteMethodAddress,
+            cg()),
+         __FILE__,
+         __LINE__,
+         callNode);
       cursor += TR::Compiler->om.sizeofReferenceAddress();
       }
 
@@ -1617,10 +1750,16 @@ TR::S390JNICallDataSnippet::emitSnippetBody()
 
       if (cg()->needClassAndMethodPointerRelocations())
          {
-         cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *) callNode->getSymbolReference(),
+         cg()->addExternalRelocation(
+            TR::ExternalRelocation::create(
+               cursor,
+               (uint8_t *) callNode->getSymbolReference(),
                callNode  ? (uint8_t *)(intptr_t)callNode->getInlinedSiteIndex() : (uint8_t *)-1,
-                     reloType, cg()),
-                     __FILE__, __LINE__, callNode);
+               reloType,
+               cg()),
+            __FILE__,
+            __LINE__,
+            callNode);
          }
 
       cursor += TR::Compiler->om.sizeofReferenceAddress();
@@ -1632,8 +1771,15 @@ TR::S390JNICallDataSnippet::emitSnippetBody()
        *(intptr_t *) cursor = (intptr_t) (_returnFromJNICallLabel->getCodeLocation());
 
        cg()->addRelocation(new (cg()->trHeapMemory()) TR::LabelAbsoluteRelocation(cursor, _returnFromJNICallLabel));
-       cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, NULL, TR_AbsoluteMethodAddress, cg()),
-             __FILE__, __LINE__, getNode());
+       cg()->addExternalRelocation(
+          TR::ExternalRelocation::create(
+             cursor,
+             NULL,
+             TR_AbsoluteMethodAddress,
+             cg()),
+          __FILE__,
+          __LINE__,
+          getNode());
 
        cursor += TR::Compiler->om.sizeofReferenceAddress();
        // _savedPC
@@ -1700,12 +1846,14 @@ TR::S390JNICallDataSnippet::emitSnippetBody()
          info->data3 = static_cast<uintptr_t>(inlinedSiteIndex);
 
          cg()->addExternalRelocation(
-            new (cg()->trHeapMemory()) TR::ExternalRelocation(
+            TR::ExternalRelocation::create(
                cursor,
                reinterpret_cast<uint8_t *>(info),
                reloType,
                cg()),
-            __FILE__, __LINE__, callNode);
+            __FILE__,
+            __LINE__,
+            callNode);
          }
 
       cursor += TR::Compiler->om.sizeofReferenceAddress();

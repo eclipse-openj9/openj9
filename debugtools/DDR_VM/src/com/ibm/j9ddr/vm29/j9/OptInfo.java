@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 package com.ibm.j9ddr.vm29.j9;
 
@@ -27,6 +27,7 @@ import static com.ibm.j9ddr.vm29.structure.J9NonbuilderConstants.J9_ROMCLASS_OPT
 import static com.ibm.j9ddr.vm29.structure.J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_ENCLOSING_METHOD;
 import static com.ibm.j9ddr.vm29.structure.J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_GENERIC_SIGNATURE;
 import static com.ibm.j9ddr.vm29.structure.J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_PERMITTEDSUBCLASSES_ATTRIBUTE;
+import static com.ibm.j9ddr.vm29.structure.J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_PRELOAD_ATTRIBUTE;
 import static com.ibm.j9ddr.vm29.structure.J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_SIMPLE_NAME;
 import static com.ibm.j9ddr.vm29.structure.J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_SOURCE_DEBUG_EXTENSION;
 import static com.ibm.j9ddr.vm29.structure.J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_SOURCE_FILE_NAME;
@@ -266,4 +267,30 @@ public class OptInfo {
 		return J9UTF8Pointer.NULL;
 	}
 
+	public static int getPreloadClassCount(J9ROMClassPointer romClass) throws CorruptDataException {
+		U32Pointer preloadClassInfoPointer = getPreloadClassInfoPointer(romClass);
+		if (preloadClassInfoPointer.notNull()) {
+			return preloadClassInfoPointer.at(0).intValue();
+		}
+		return 0;
+	}
+
+	private static U32Pointer getPreloadClassInfoPointer(J9ROMClassPointer romClass) throws CorruptDataException {
+		SelfRelativePointer srpPtr = getSRPPtr(J9ROMClassHelper.optionalInfo(romClass), romClass.optionalFlags(),
+			J9_ROMCLASS_OPTINFO_PRELOAD_ATTRIBUTE);
+		if (srpPtr.notNull()) {
+			return U32Pointer.cast(srpPtr.get());
+		}
+		return U32Pointer.NULL;
+	}
+
+	public static J9UTF8Pointer getPreloadClassNameAtIndex(J9ROMClassPointer romClass, int index) throws CorruptDataException {
+		U32Pointer preloadClassInfoPointer = getPreloadClassInfoPointer(romClass);
+		if (preloadClassInfoPointer.notNull()) {
+			/* extra 1 is to move past the preload class count */
+			SelfRelativePointer nameSrp = SelfRelativePointer.cast(preloadClassInfoPointer.add(index + 1));
+			return J9UTF8Pointer.cast(nameSrp.get());
+		}
+		return J9UTF8Pointer.NULL;
+	}
 }

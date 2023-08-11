@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 /* #define J9VM_DBG */
@@ -80,9 +80,9 @@ UDATA initializeVMThreading(J9JavaVM *vm)
 
 		omrthread_monitor_init_with_name(&vm->constantDynamicMutex, 0, "Wait mutex for constantDynamic during resolve") ||
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 		omrthread_monitor_init_with_name(&vm->valueTypeVerificationMutex, 0, "Wait mutex for verifying valuetypes") ||
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
 #if JAVA_SPEC_VERSION >= 16
 		omrthread_monitor_init_with_name(&vm->cifNativeCalloutDataCacheMutex, 0, "CIF cache mutex") ||
@@ -175,9 +175,9 @@ void terminateVMThreading(J9JavaVM *vm)
 	if (vm->nativeLibraryMonitor) omrthread_monitor_destroy(vm->nativeLibraryMonitor);
 	if (vm->vmRuntimeStateListener.runtimeStateListenerMutex) omrthread_monitor_destroy(vm->vmRuntimeStateListener.runtimeStateListenerMutex);
 	if (vm->constantDynamicMutex) omrthread_monitor_destroy(vm->constantDynamicMutex);
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	if (vm->valueTypeVerificationMutex) omrthread_monitor_destroy(vm->valueTypeVerificationMutex);
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 #if JAVA_SPEC_VERSION >= 16
 	if (NULL != vm->cifNativeCalloutDataCacheMutex) {
 		omrthread_monitor_destroy(vm->cifNativeCalloutDataCacheMutex);

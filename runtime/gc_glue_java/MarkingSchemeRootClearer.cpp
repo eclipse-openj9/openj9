@@ -18,12 +18,13 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include "j9.h"
 #include "j9cfg.h"
 #include "j9consts.h"
+#include "ModronAssertions.h"
 
 #if defined(J9VM_GC_FINALIZATION)
 #include "CollectorLanguageInterfaceImpl.hpp"
@@ -42,13 +43,15 @@
 #include "ModronAssertions.h"
 #include "OwnableSynchronizerObjectBuffer.hpp"
 #include "ContinuationObjectBuffer.hpp"
-#include "VMHelpers.hpp"
 #include "ParallelDispatcher.hpp"
 #include "ReferenceObjectBuffer.hpp"
 #include "ReferenceStats.hpp"
 #include "RootScanner.hpp"
 #include "StackSlotValidator.hpp"
 #include "UnfinalizedObjectBuffer.hpp"
+#if JAVA_SPEC_VERSION >= 19
+#include "ContinuationHelpers.hpp"
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
 void
 MM_MarkingSchemeRootClearer::doSlot(omrobjectptr_t *slotPtr)
@@ -308,6 +311,7 @@ MM_MarkingSchemeRootClearer::scanOwnableSynchronizerObjects(MM_EnvironmentBase *
 void
 MM_MarkingSchemeRootClearer::scanContinuationObjects(MM_EnvironmentBase *env)
 {
+#if JAVA_SPEC_VERSION >= 19
 	if (_markingDelegate->shouldScanContinuationObjects()) {
 		/* allow the marking scheme to handle this */
 		reportScanningStarted(RootScannerEntity_ContinuationObjects);
@@ -325,7 +329,7 @@ MM_MarkingSchemeRootClearer::scanContinuationObjects(MM_EnvironmentBase *env)
 						while (NULL != object) {
 							gcEnv->_markJavaStats._continuationCandidates += 1;
 							omrobjectptr_t next = _extensions->accessBarrier->getContinuationLink(object);
-							if (_markingScheme->isMarked(object)) {
+							if (_markingScheme->isMarked(object) && !VM_ContinuationHelpers::isFinished(*VM_ContinuationHelpers::getContinuationStateAddress((J9VMThread *)env->getLanguageVMThread() , object))) {
 								/* object was already marked. */
 								gcEnv->_continuationObjectBuffer->add(env, object);
 							} else {
@@ -344,6 +348,7 @@ MM_MarkingSchemeRootClearer::scanContinuationObjects(MM_EnvironmentBase *env)
 		gcEnv->_continuationObjectBuffer->flush(env);
 		reportScanningEnded(RootScannerEntity_ContinuationObjects);
 	}
+#endif /* JAVA_SPEC_VERSION >= 19 */
 }
 
 void

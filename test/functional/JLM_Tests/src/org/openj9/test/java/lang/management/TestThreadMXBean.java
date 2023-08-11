@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 package org.openj9.test.java.lang.management;
@@ -91,6 +91,9 @@ public class TestThreadMXBean {
 		attribs.put("ThreadCpuTimeEnabled", new AttributeData(Boolean.TYPE.getName(), true, true, true));
 		attribs.put("ThreadCpuTimeSupported", new AttributeData(Boolean.TYPE.getName(), true, false, true));
 		attribs.put("TotalStartedThreadCount", new AttributeData(Long.TYPE.getName(), true, false, false));
+		if (VersionCheck.major() >= 21) {
+			attribs.put("TotalThreadAllocatedBytes", new AttributeData(Long.TYPE.getName(), true, false, false));
+		}
 	} // end static initializer
 
 	private ThreadMXBean tb;
@@ -1439,7 +1442,7 @@ public class TestThreadMXBean {
 			numAttributes = 17;
 		} else {
 			numOperations = 20;
-			numAttributes = 18;
+			numAttributes = (VersionCheck.major() >= 21) ? 19 : 18;
 		}
 		MBeanOperationInfo[] operations = mbi.getOperations();
 		AssertJUnit.assertNotNull(operations);

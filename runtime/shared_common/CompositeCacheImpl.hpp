@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #if !defined(COMPOSITECACHEIMPL_H_INCLUDED)
@@ -464,11 +464,11 @@ private:
 	bool _doMetaProtect;
 	bool _doPartialPagesProtect;
 	bool _readOnlyOSCache;
-#if defined (J9SHR_MSYNC_SUPPORT)
+#if defined(J9VM_OPT_SHR_MSYNC_SUPPORT)
 	bool _doMetaSync;
 	bool _doHeaderSync;
 	bool _doSegmentSync;
-#endif
+#endif /* defined(J9VM_OPT_SHR_MSYNC_SUPPORT) */
 	
 	IDATA _headerProtectCntr;
 	IDATA _readWriteProtectCntr;

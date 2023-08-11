@@ -17,13 +17,13 @@ OpenJDK Assembly Exception [2].
 [1] https://www.gnu.org/software/classpath/license.html
 [2] https://openjdk.org/legal/assembly-exception.html
 
-SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 -->
 
 This document describes at a high level what the various relocation records
 are used for. The exact data stored into the SCC can be found in
-`initializeCommonAOTRelocationHeader` and the various 
-`initializePlatformSpecificAOTRelocationHeader` functions. Similarly, the 
+`initializeCommonAOTRelocationHeader` and the various
+`initializePlatformSpecificAOTRelocationHeader` functions. Similarly, the
 exact type of the API class for each relocation kind can be found in
 `TR_RelocationRecord::create`.
 
@@ -134,4 +134,6 @@ exact type of the API class for each relocation kind can be found in
 |`TR_SymbolFromManager`|Relocates a pointer materialized by using its SVM ID.|
 |`TR_DiscontiguousSymbolFromManager`|Relocates a discontiguous pointer materialized by using its SVM ID.|
 |`TR_MethodCallAddress`|Relocates the address of a call target. Only used in JitServer (in AOT, all other methods are assumed to be interpreted).|
-
+|`TR_CatchBlockCounter`|Relocates the address of the catch block counter in the `TR_PersistentMethodInfo` of the method being compiled.|
+|`TR_StartPC`|Relocates the startPC of the method being compiled. Only implemented and used on Power.|
+|`TR_MethodEnterExitHookAddress`|Relocates the address of the method enter or exit hook.|

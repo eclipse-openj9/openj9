@@ -1,0 +1,16 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: daily
+
+  - package-ecosystem: docker
+    directory: /buildenv/docker/aarch64-linux_CC
+    schedule:
+      interval: daily
+
+  - package-ecosystem: docker
+    directory: /buildenv/docker/test
+    schedule:
+      interval: daily

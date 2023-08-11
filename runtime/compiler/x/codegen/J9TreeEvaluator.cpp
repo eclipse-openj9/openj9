@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include <assert.h>
@@ -1457,15 +1457,22 @@ TR::Register *J9::X86::TreeEvaluator::newEvaluator(TR::Node *node, TR::CodeGener
    return targetRegister;
    }
 
-TR::Register *J9::X86::TreeEvaluator::multianewArrayEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+/**
+ * Generate code for multianewarray
+ *
+ * Includes inline allocation for arrays where the size of the first or second dimension is 0.
+ *
+ * NB Must only be used for arrays of at least two dimensions
+*/
+static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node, TR::CodeGenerator *cg)
    {
-   TR::Node *firstChild = node->getFirstChild();
-   TR::Node *secondChild = node->getSecondChild();
-   TR::Node *thirdChild = node->getThirdChild();
+   TR::Compilation *comp = cg->comp();
+
+   TR::Node *firstChild = node->getFirstChild();      // ptr to array of sizes, one for each dimension. Array construction stops at the outermost zero size
+   TR::Node *secondChild = node->getSecondChild();    // Number of dimensions - this is fixed in the bytecode, so compile time constant
+   TR::Node *thirdChild = node->getThirdChild();      // class of the outermost dimension
 
    // 2-dimensional MultiANewArray
-   TR::Compilation *comp = cg->comp();
-   TR_ASSERT_FATAL(comp->target().is64Bit(), "multianewArrayEvaluator is only supported on 64-bit JVMs!");
    TR_J9VMBase *fej9 = comp->fej9();
 
    TR::Register *dimsPtrReg = NULL;
@@ -1478,8 +1485,8 @@ TR::Register *J9::X86::TreeEvaluator::multianewArrayEvaluator(TR::Node *node, TR
    TR::Register *temp2Reg = NULL;
    TR::Register *temp3Reg = NULL;
    TR::Register *componentClassReg = NULL;
-
    TR::Register *vmThreadReg = cg->getVMThreadRegister();
+
    targetReg = cg->allocateRegister();
    firstDimLenReg = cg->allocateRegister();
    secondDimLenReg = cg->allocateRegister();
@@ -1510,10 +1517,10 @@ TR::Register *J9::X86::TreeEvaluator::multianewArrayEvaluator(TR::Node *node, TR
    cg->getOutlinedInstructionsList().push_front(outlinedHelperCall);
 
    dimReg = cg->evaluate(secondChild);
-
    dimsPtrReg = cg->evaluate(firstChild);
-
    classReg = cg->evaluate(thirdChild);
+
+   // inlined code for allocating zero length arrays where the zero len is in either the first or second dimension
 
    generateRegMemInstruction(TR::InstOpCode::L4RegMem, node, secondDimLenReg,
                              generateX86MemoryReference(dimsPtrReg, 0, cg), cg);
@@ -1585,7 +1592,7 @@ TR::Register *J9::X86::TreeEvaluator::multianewArrayEvaluator(TR::Node *node, TR
    generateLabelInstruction(TR::InstOpCode::label, node, nonZeroFirstDimLabel, cg);
 
    generateRegMemInstruction(TR::InstOpCode::LRegMem(), node, componentClassReg,
-             generateX86MemoryReference(classReg, offsetof(J9ArrayClass, componentType), cg), cg);
+            generateX86MemoryReference(classReg, offsetof(J9ArrayClass, componentType), cg), cg);
 
    int32_t elementSize = TR::Compiler->om.sizeofReferenceField();
 
@@ -1787,6 +1794,45 @@ TR::Register *J9::X86::TreeEvaluator::multianewArrayEvaluator(TR::Node *node, TR
 
    node->setRegister(targetReg);
    return targetReg;
+}
+
+/**
+ * Generate code for multianewarray
+ *
+ * Checks the number of dimensions. For 1 dimensional arrays call the helper, for >1 call
+ * generateMultianewArrayWithInlineAllocators.
+*/
+TR::Register *J9::X86::TreeEvaluator::multianewArrayEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+
+   TR::Compilation *comp = cg->comp();
+   TR_ASSERT_FATAL(comp->target().is64Bit(), "multianewArrayEvaluator is only supported on 64-bit JVMs!");
+
+   TR::Node *secondChild = node->getSecondChild();    // Number of dimensions - this is fixed in the bytecode, so compile time constant
+
+   // The number of dimensions should always be an iconst
+   TR_ASSERT_FATAL(secondChild->getOpCodeValue() == TR::iconst, "dims of multianewarray must be iconst");
+
+   // Only generate inline code if nDims > 1
+   uint32_t nDims = secondChild->get32bitIntegralValue();
+   if (nDims > 1)
+      {
+      return generateMultianewArrayWithInlineAllocators(node, cg);
+      }
+   else
+      {
+      // trace a message to indicate that inline allocation is disabled for nDims < 2
+      if (comp->getOption(TR_TraceCG))
+         {
+         traceMsg(comp, "Disabling inline allocations for multianewarray of dim %d\n", nDims);
+         }
+      TR::ILOpCodes opCode = node->getOpCodeValue();
+      TR::Node::recreate(node, TR::acall);
+      TR::Register *targetRegister = directCallEvaluator(node, cg);
+      TR::Node::recreate(node, opCode);
+      return targetRegister;
+      }
+
    }
 
 TR::Register *J9::X86::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::CodeGenerator *cg)
@@ -2679,6 +2725,46 @@ bool isConditionCodeSetForCompare(TR::Node *node, bool *jumpOnOppositeCondition)
    return false;
    }
 
+void setImplicitNULLCHKExceptionInfo(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR_ASSERT_FATAL(node->hasFoldedImplicitNULLCHK(), "Attempt to set exception info on BNDCHK without implicit NULLCHK");
+
+   TR::Compilation *comp = cg->comp();
+   bool isTraceCG = comp->getOption(TR_TraceCG);
+
+   TR::Instruction *faultingInstruction = cg->getImplicitExceptionPoint();
+   if (faultingInstruction)
+      {
+      // Check and correctly set the implicit exception point
+      //
+      // The compare analyzer may have generated a secondary load to
+      // resolved a compressed pointer and incorrectly set the exception point.
+      // If that is the case, correctly set the exception point on
+      // the comparison that actually throws the null pointer exception.
+      //
+      // The last instruction is a branch, the comparison is before.
+      TR::Instruction *cmpInstruction = cg->getAppendInstruction()->getPrev();
+      TR::InstOpCode::Mnemonic mnemonic = cmpInstruction->getOpCodeValue();
+      bool isComparisonMemForm = mnemonic == TR::InstOpCode::CMP4MemReg ||
+                                 mnemonic == TR::InstOpCode::CMP4RegMem;
+      if (comp->useCompressedPointers() &&
+          faultingInstruction != cmpInstruction &&
+          isComparisonMemForm)
+         {
+         if (isTraceCG)
+            traceMsg(comp,"Faulting instruction (previously %p) updated to %p\n",faultingInstruction,cmpInstruction);
+
+         faultingInstruction = cmpInstruction;
+         cg->setImplicitExceptionPoint(faultingInstruction);
+         }
+
+      faultingInstruction->setNeedsGCMap(0xFF00FFFF);
+      faultingInstruction->setNode(node);
+      }
+
+   if (isTraceCG)
+      traceMsg(comp,"Node %p has foldedimplicitNULLCHK, and a faulting instruction of %p\n",node,faultingInstruction);
+   }
 
 TR::Register *J9::X86::TreeEvaluator::BNDCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
@@ -2745,21 +2831,8 @@ TR::Register *J9::X86::TreeEvaluator::BNDCHKEvaluator(TR::Node *node, TR::CodeGe
                                                      instr,
                                                      false
                                                      ));
-
    if (node->hasFoldedImplicitNULLCHK())
-      {
-      TR::Instruction *faultingInstruction = cg->getImplicitExceptionPoint();
-      if (comp->getOption(TR_TraceCG))
-         {
-         traceMsg(comp,"Node %p has foldedimplicitNULLCHK, and a faulting instruction of %p\n",node,faultingInstruction);
-         }
-
-      if (faultingInstruction)
-         {
-         faultingInstruction->setNeedsGCMap(0xFF00FFFF);
-         faultingInstruction->setNode(node);
-         }
-      }
+      setImplicitNULLCHKExceptionInfo(node, cg);
 
    firstChild->setIsNonNegative(true);
    secondChild->setIsNonNegative(true);
@@ -10041,52 +10114,6 @@ bool J9::X86::TreeEvaluator::VMinlineCallEvaluator(
             }
             break;
 
-         case TR::java_util_concurrent_atomic_Fences_reachabilityFence:
-            {
-            cg->decReferenceCount(node->getChild(0));
-            break;
-            }
-
-         case TR::java_util_concurrent_atomic_Fences_orderAccesses:
-            {
-            if (comp->target().cpu.supportsMFence())
-               {
-               TR::InstOpCode fenceOp;
-               fenceOp.setOpCodeValue(TR::InstOpCode::MFENCE);
-               generateInstruction(fenceOp.getOpCodeValue(), node, cg);
-               }
-
-            cg->decReferenceCount(node->getChild(0));
-            break;
-            }
-
-         case TR::java_util_concurrent_atomic_Fences_orderReads:
-            {
-            if (comp->target().cpu.requiresLFence() &&
-                comp->target().cpu.supportsLFence())
-               {
-               TR::InstOpCode fenceOp;
-               fenceOp.setOpCodeValue(TR::InstOpCode::LFENCE);
-               generateInstruction(fenceOp.getOpCodeValue(), node, cg);
-               }
-
-            cg->decReferenceCount(node->getChild(0));
-            break;
-            }
-
-         case TR::java_util_concurrent_atomic_Fences_orderWrites:
-            {
-            if (comp->target().cpu.supportsSFence())
-               {
-               TR::InstOpCode fenceOp;
-               fenceOp.setOpCodeValue(TR::InstOpCode::SFENCE);
-               generateInstruction(fenceOp.getOpCodeValue(), node, cg);
-               }
-
-            cg->decReferenceCount(node->getChild(0));
-            break;
-            }
-
         case TR::java_lang_Object_clone:
            {
            return (objectCloneEvaluator(node, cg) != NULL);
@@ -11337,14 +11364,15 @@ VMgenerateCatchBlockBBStartPrologue(
    TR::Block *block = node->getBlock();
    if (fej9->shouldPerformEDO(block, comp))
       {
+      TR_ASSERT_FATAL(cg->comp()->getRecompilationInfo(), "Recompilation info should be available");
+
       TR::LabelSymbol *snippetLabel = generateLabelSymbol(cg);
       TR::LabelSymbol *restartLabel = generateLabelSymbol(cg);
 
-      generateMemInstruction(TR::InstOpCode::DEC4Mem, node, generateX86MemoryReference((intptr_t)comp->getRecompilationInfo()->getCounterAddress(), cg), cg);
+      generateMemInstruction(TR::InstOpCode::DEC4Mem, node, generateX86MemoryReference(comp->getRecompilationInfo()->getCounterSymRef(), cg), cg);
       generateLabelInstruction(TR::InstOpCode::JE4, node, snippetLabel, cg);
       generateLabelInstruction(TR::InstOpCode::label, node, restartLabel, cg);
       cg->addSnippet(new (cg->trHeapMemory()) TR::X86ForceRecompilationSnippet(cg, node, restartLabel, snippetLabel));
-      TR_ASSERT_FATAL(cg->comp()->getRecompilationInfo(), "Recompilation info should be available");
       cg->comp()->getRecompilationInfo()->getJittedBodyInfo()->setHasEdoSnippet();
       }
 
@@ -11703,10 +11731,6 @@ J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::CodeGenerator *c
       case TR::java_lang_Math_sqrt:
       case TR::java_lang_StrictMath_sqrt:
       case TR::java_lang_System_nanoTime:
-      case TR::java_util_concurrent_atomic_Fences_orderAccesses:
-      case TR::java_util_concurrent_atomic_Fences_orderReads:
-      case TR::java_util_concurrent_atomic_Fences_orderWrites:
-      case TR::java_util_concurrent_atomic_Fences_reachabilityFence:
       case TR::sun_nio_ch_NativeThread_current:
          if (TR::TreeEvaluator::VMinlineCallEvaluator(node, false, cg))
             {

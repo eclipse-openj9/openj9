@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include "bcvcfr.h"
@@ -1082,7 +1082,7 @@ static void getNameAndLengthFromClassNameList (J9BytecodeVerificationData *verif
 		J9ROMClass * romClass = verifyData->romClass;
 		*name = (U_8 *) ((UDATA) offset[0] + (UDATA) romClass);
 	}
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	if (IS_QTYPE(*(char *)*name)
 		&& (';' == *(char *)(*name + (*length - 1)))
 	) {
@@ -1090,7 +1090,7 @@ static void getNameAndLengthFromClassNameList (J9BytecodeVerificationData *verif
 		*name += 1;
 		*length -= 2;
 	}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 }
 
 /* return BCV_SUCCESS if field is found

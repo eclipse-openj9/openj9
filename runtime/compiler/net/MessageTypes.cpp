@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include "net/MessageTypes.hpp"
@@ -95,7 +95,6 @@ const char *messageNames[] =
    "VM_isClassLibraryMethod",
    "VM_isClassArray",
    "VM_transformJlrMethodInvoke",
-   "VM_getStaticReferenceFieldAtAddress",
    "VM_getSystemClassFromClassName",
    "VM_isMethodTracingEnabled",
    "VM_getClassClassPointer",
@@ -122,8 +121,6 @@ const char *messageNames[] =
    "VM_getClassFromNewArrayType",
    "VM_getArrayClassFromComponentClass",
    "VM_matchRAMclassFromROMclass",
-   "VM_getReferenceFieldAtAddress",
-   "VM_getVolatileReferenceFieldAt",
    "VM_getInt32FieldAt",
    "VM_getInt64FieldAt",
    "VM_setInt64FieldAt",
@@ -167,7 +164,6 @@ const char *messageNames[] =
    "VM_dereferenceStaticAddress",
    "VM_getClassFromCP",
    "VM_getROMMethodFromRAMMethod",
-   "VM_getReferenceFieldAt",
    "VM_getJ2IThunk",
    "VM_needsInvokeExactJ2IThunk",
    "VM_instanceOfOrCheckCastNoCacheUpdate",
@@ -191,6 +187,7 @@ const char *messageNames[] =
    "VM_getVMTargetOffset",
    "VM_getVMIndexOffset",
    "VM_inSnapshotMode",
+   "VM_isInvokeCacheEntryAnArray",
    "CompInfo_isCompiled",
    "CompInfo_getPCIfCompiled",
    "CompInfo_getInvocationCount",

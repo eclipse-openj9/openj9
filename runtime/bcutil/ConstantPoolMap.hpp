@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 /*
@@ -284,7 +284,7 @@ public:
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	void markClassAsUsedByAconst_init(U_16 classCfrCPIndex)    { mark(classCfrCPIndex, ACONST_INIT); }
 	void markFieldRefAsUsedByWithField(U_16 fieldRefCfrCPIndex) { mark(fieldRefCfrCPIndex, WITH_FIELD); }
-#endif
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 	void markFieldRefAsUsedByGetStatic(U_16 fieldRefCfrCPIndex) { mark(fieldRefCfrCPIndex, GET_STATIC); }
 	void markFieldRefAsUsedByPutStatic(U_16 fieldRefCfrCPIndex) { mark(fieldRefCfrCPIndex, PUT_STATIC); }

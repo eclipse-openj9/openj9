@@ -18,7 +18,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include "j9.h"
@@ -43,6 +43,46 @@ MM_OwnableSynchronizerObjectList::MM_OwnableSynchronizerObjectList()
 #endif /* defined(J9VM_GC_VLHGC) */
 {
 	_typeId = __FUNCTION__;
+}
+
+MM_OwnableSynchronizerObjectList *
+MM_OwnableSynchronizerObjectList::newInstanceArray(MM_EnvironmentBase *env, uintptr_t arrayElementsTotal, MM_OwnableSynchronizerObjectList *listsToCopy, uintptr_t arrayElementsToCopy)
+{
+	MM_OwnableSynchronizerObjectList *ownableSynchronizerObjectLists = NULL;
+
+	ownableSynchronizerObjectLists = (MM_OwnableSynchronizerObjectList *)env->getForge()->allocate(sizeof(MM_OwnableSynchronizerObjectList) * arrayElementsTotal,  MM_AllocationCategory::FIXED, J9_GET_CALLSITE());
+	if (NULL != ownableSynchronizerObjectLists) {
+		Assert_MM_true(arrayElementsTotal >= arrayElementsToCopy);
+		/* Check whether a new array instance in being created from an existing array. If so, copy over the elements first. */
+		if (arrayElementsToCopy > 0) {
+			for (uintptr_t index = 0; index < arrayElementsToCopy; index++) {
+				ownableSynchronizerObjectLists[index] = listsToCopy[index];
+				ownableSynchronizerObjectLists[index].initialize(env);
+			}
+		}
+
+		for (uintptr_t index = arrayElementsToCopy; index < arrayElementsTotal; index++) {
+			new(&ownableSynchronizerObjectLists[index]) MM_OwnableSynchronizerObjectList();
+			ownableSynchronizerObjectLists[index].initialize(env);
+		}
+	}
+
+	return ownableSynchronizerObjectLists;
+}
+
+bool
+MM_OwnableSynchronizerObjectList::initialize(MM_EnvironmentBase *env)
+{
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
+
+	setNextList(extensions->getOwnableSynchronizerObjectLists());
+	setPreviousList(NULL);
+	if (NULL != extensions->getOwnableSynchronizerObjectLists()) {
+		extensions->getOwnableSynchronizerObjectLists()->setPreviousList(this);
+	}
+	extensions->setOwnableSynchronizerObjectLists(this);
+
+	return true;
 }
 
 void 

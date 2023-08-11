@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
  
 /**
@@ -37,6 +37,7 @@
 
 #include "mmparse.h"
 
+#include "Configuration.hpp"
 #include "GCExtensions.hpp"
 #if defined(J9VM_GC_REALTIME)
 #include "Scheduler.hpp"
@@ -641,6 +642,7 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 				returnValue = JNI_EINVAL;
 				break;
 			}
+			extensions->configuration->_packetListSplitForced = true;
 			continue;
 		}
 		
@@ -655,6 +657,7 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 				returnValue = JNI_EINVAL;
 				break;
 			}
+			extensions->configuration->_cacheListSplitForced = true;
 			continue;
 		}
 #endif /* J9VM_GC_MODRON_SCAVENGER */
@@ -698,6 +701,7 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 				break;
 			}
 			extensions->enableHybridMemoryPool = true;
+			extensions->configuration->_splitFreeListAmountForced = true;
 			continue;
 		}
 
@@ -712,6 +716,7 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 				returnValue = JNI_EINVAL;
 				break;
 			}
+			extensions->configuration->_splitFreeListAmountForced = true;
 			continue;
 		}
 
@@ -1542,6 +1547,15 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 			continue;
 		}
 
+		if (try_scan(&scan_start, "AddContinuationInListOnStarted")) {
+			extensions->timingAddContinuationInList = MM_GCExtensions::onStarted;
+			continue;
+		}
+
+		if (try_scan(&scan_start, "AddContinuationInListOnCreated")) {
+			extensions->timingAddContinuationInList = MM_GCExtensions::onCreated;
+			continue;
+		}
 		/* Couldn't find a match for arguments */
 		j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTION_UNKNOWN, error_scan);
 		returnValue = JNI_EINVAL;

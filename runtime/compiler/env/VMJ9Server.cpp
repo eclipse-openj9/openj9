@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 #include "jitprotos.h"
 #include "net/ServerStream.hpp"
@@ -924,9 +924,7 @@ TR_J9ServerVM::getObjectClassFromKnownObjectIndex(TR::Compilation *comp, TR::Kno
 uintptr_t
 TR_J9ServerVM::getStaticReferenceFieldAtAddress(uintptr_t fieldAddress)
    {
-   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITServer::MessageType::VM_getStaticReferenceFieldAtAddress, fieldAddress);
-   return std::get<0>(stream->read<uintptr_t>());
+   TR_ASSERT_FATAL(false, "getStaticReferenceFieldAtAddress() should not be called by JITServer");
    }
 
 bool
@@ -1172,25 +1170,19 @@ TR_J9ServerVM::getCurrentLocalsMapForDLT(TR::Compilation *comp)
 uintptr_t
 TR_J9ServerVM::getReferenceFieldAtAddress(uintptr_t fieldAddress)
    {
-   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITServer::MessageType::VM_getReferenceFieldAtAddress, fieldAddress);
-   return std::get<0>(stream->read<uintptr_t>());
+   TR_ASSERT_FATAL(false, "getReferenceFieldAtAddress() should not be called by JITServer");
    }
 
 uintptr_t
 TR_J9ServerVM::getReferenceFieldAt(uintptr_t objectPointer, uintptr_t fieldOffset)
    {
-   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITServer::MessageType::VM_getReferenceFieldAt, objectPointer, fieldOffset);
-   return std::get<0>(stream->read<uintptr_t>());
+   TR_ASSERT_FATAL(false, "getReferenceFieldAt() should not be called by JITServer");
    }
 
 uintptr_t
 TR_J9ServerVM::getVolatileReferenceFieldAt(uintptr_t objectPointer, uintptr_t fieldOffset)
    {
-   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITServer::MessageType::VM_getVolatileReferenceFieldAt, objectPointer, fieldOffset);
-   return std::get<0>(stream->read<uintptr_t>());
+   TR_ASSERT_FATAL(false, "getVolatileReferenceFieldAt() should not be called by JITServer");
    }
 
 int32_t
@@ -2236,6 +2228,17 @@ TR_J9ServerVM::targetMethodFromMethodHandle(TR::Compilation* comp, TR::KnownObje
    return NULL;
    }
 
+bool
+TR_J9ServerVM::isInvokeCacheEntryAnArray(uintptr_t *invokeCacheArray)
+   {
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(
+      JITServer::MessageType::VM_isInvokeCacheEntryAnArray,
+      invokeCacheArray
+      );
+   return std::get<0>(stream->read<bool>());
+   }
+
 TR::KnownObjectTable::Index
 TR_J9ServerVM::getKnotIndexOfInvokeCacheArrayAppendixElement(TR::Compilation *comp, uintptr_t *invokeCacheArray)
    {
@@ -2424,6 +2427,12 @@ bool
 TR_J9ServerVM::isForceInline(TR_ResolvedMethod *method)
    {
    return static_cast<TR_ResolvedJ9JITServerMethod *>(method)->isForceInline();
+   }
+
+bool
+TR_J9ServerVM::isIntrinsicCandidate(TR_ResolvedMethod *method)
+   {
+   return static_cast<TR_ResolvedJ9JITServerMethod *>(method)->isIntrinsicCandidate();
    }
 
 bool

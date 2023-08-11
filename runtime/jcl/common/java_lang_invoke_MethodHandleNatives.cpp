@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include "j9.h"
@@ -138,13 +138,13 @@ initImpl(J9VMThread *currentThread, j9object_t membernameObject, j9object_t refO
 		if (VM_VMHelpers::isTrustedFinalField(fieldID->field, fieldID->declaringClass->romClass)) {
 			flags |= MN_TRUSTED_FINAL;
 		}
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 		if (vmFuncs->isNameOrSignatureQtype(J9ROMFIELDSHAPE_SIGNATURE(romField))
 			&& vmFuncs->isFlattenableFieldFlattened(fieldID->declaringClass, fieldID->field)
 		) {
 			flags |= MN_FLATTENED;
 		}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
 		nameObject = J9VMJAVALANGREFLECTFIELD_NAME(currentThread, refObject);
 		typeObject = J9VMJAVALANGREFLECTFIELD_TYPE(currentThread, refObject);

@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #ifndef COMPILATION_RUNTIME_HPP
@@ -1045,6 +1045,9 @@ public:
    bool              isInShutdownMode() {return _isInShutdownMode;}
    void              setIsInShutdownMode() {_isInShutdownMode = true;}
 
+   bool              isSwapMemoryDisabled() {return _isSwapMemoryDisabled;}
+   void              setIsSwapMemoryDisabled(bool b) {_isSwapMemoryDisabled = b;}
+
    TR_LinkHead0<TR_ClassHolder> *getListOfClassesToCompile() { return &_classesToCompileList; }
    int32_t getCompilationLag();
    int32_t getCompilationLagUnlocked() { return getCompilationLag(); } // will go away
@@ -1283,6 +1286,7 @@ public:
    void  addJITServerSslCert(const std::string &cert) { _sslCerts.push_back(cert); }
    const std::string &getJITServerSslRootCerts() const { return _sslRootCerts; }
    void  setJITServerSslRootCerts(const std::string &cert) { _sslRootCerts = cert; }
+   void  freeClientSslCertificates() { _sslRootCerts.clear(); }
    const PersistentVector<std::string> &getJITServerMetricsSslKeys() const { return _metricsSslKeys; }
    void  addJITServerMetricsSslKey(const std::string &key) { _metricsSslKeys.push_back(key); }
    const PersistentVector<std::string> &getJITServerMetricsSslCerts() const { return _metricsSslCerts; }
@@ -1485,6 +1489,7 @@ private:
    bool                   _traceCompiling;
 #endif
    bool                   _isInShutdownMode;
+   bool                   _isSwapMemoryDisabled;
    int32_t                _numCompThreads; // Number of usable compilation threads that does not include the diagnostic thread
    int32_t                _numDiagnosticThreads;
    int32_t                _numAllocatedCompThreads; // Number of allocated compilation threads that does not include the diagnostic thread

@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #ifndef TR_J9_COMPILATIONBASE_INCL
@@ -134,7 +134,7 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
 
    bool isShortRunningMethod(int32_t callerIndex);
 
-   int32_t getDltBcIndex() { return (uint32_t)_dltBcIndex;}
+   int32_t getDltBcIndex() { return _dltBcIndex;}
    void setDltBcIndex(int32_t ix) { _dltBcIndex=ix;}
 
    int32_t *getDltSlotDescription() { return _dltSlotDescription;}
@@ -431,7 +431,7 @@ private:
 
    bool _needsClassLookahead;
 
-   uint16_t _dltBcIndex;
+   int32_t _dltBcIndex;
 
    int32_t * _dltSlotDescription;
 

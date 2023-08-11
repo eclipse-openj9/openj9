@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #ifndef J9CONSTS_H
@@ -286,7 +286,7 @@ extern "C" {
 #define J9_RUNTIME_ARGENCODING_UNICODE 0x2000
 #define J9_RUNTIME_ARGENCODING_LATIN 0x4000
 #define J9_RUNTIME_ARGENCODING_UTF8 0x8000
-#define J9_RUNTIME_UNUSED_0x10000 0x10000
+#define J9_RUNTIME_ALLOW_DYNAMIC_AGENT 0x10000
 #define J9_RUNTIME_UNUSED_0x20000 0x20000
 #define J9_RUNTIME_UNUSED_0x40000 0x40000
 #define J9_RUNTIME_UNUSED_0x80000 0x80000
@@ -360,6 +360,8 @@ extern "C" {
 #define J9_EXTENDED_RUNTIME2_DISABLE_FINALIZATION 0x80000
 #define J9_EXTENDED_RUNTIME2_CRIU_SINGLE_THREAD_MODE 0x100000
 #define J9_EXTENDED_RUNTIME2_USE_CONTAINER_SUPPORT 0x200000
+#define J9_EXTENDED_RUNTIME2_SHOW_CARRIER_FRAMES 0x400000
+#define J9_EXTENDED_RUNTIME2_CRIU_SINGLE_THROW_BLOCKING_EXCEPTIONS 0x800000
 
 #define J9_OBJECT_HEADER_AGE_DEFAULT 0xA /* OBJECT_HEADER_AGE_DEFAULT */
 #define J9_OBJECT_HEADER_SHAPE_MASK 0xE /* OBJECT_HEADER_SHAPE_MASK */

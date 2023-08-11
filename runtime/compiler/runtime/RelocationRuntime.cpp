@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include <algorithm>
@@ -51,6 +51,7 @@
 #include "runtime/DataCache.hpp"
 #include "env/FrontEnd.hpp"
 #include "infra/Monitor.hpp"
+#include "env/PersistentCHTable.hpp"
 #include "env/PersistentInfo.hpp"
 #include "env/VMAccessCriticalSection.hpp"
 #include "env/CompilerEnv.hpp"
@@ -131,21 +132,25 @@ char *TR_RelocationRuntime::_reloErrorCodeNames[] =
    "isClassVisibleValidationFailure",                  // 44
    "svmValidationFailure",                             // 45
    "wkcValidationFailure",                             // 46
+   "methodTracingValidationFailure",                   // 47
 
-   "classAddressRelocationFailure",                    // 47
-   "inlinedMethodRelocationFailure",                   // 48
-   "symbolFromManagerRelocationFailure",               // 49
-   "thunkRelocationFailure",                           // 50
-   "trampolineRelocationFailure",                      // 51
-   "picTrampolineRelocationFailure",                   // 52
-   "cacheFullRelocationFailure",                       // 53
-   "blockFrequencyRelocationFailure",                  // 54
-   "recompQueuedFlagRelocationFailure",                // 55
-   "debugCounterRelocationFailure",                    // 56
-   "directJNICallRelocationFailure",                   // 57
-   "ramMethodConstRelocationFailure",                  // 58
+   "classAddressRelocationFailure",                    // 48
+   "inlinedMethodRelocationFailure",                   // 49
+   "symbolFromManagerRelocationFailure",               // 50
+   "thunkRelocationFailure",                           // 51
+   "trampolineRelocationFailure",                      // 52
+   "picTrampolineRelocationFailure",                   // 53
+   "cacheFullRelocationFailure",                       // 54
+   "blockFrequencyRelocationFailure",                  // 55
+   "recompQueuedFlagRelocationFailure",                // 56
+   "debugCounterRelocationFailure",                    // 57
+   "directJNICallRelocationFailure",                   // 58
+   "ramMethodConstRelocationFailure",                  // 59
+   "catchBlockCounterRelocationFailure",               // 60
+   "staticDefaultValueInstanceRelocationFailure",      // 61
 
-   "maxRelocationError"                                // 59
+   "maxRelocationError"                                // 62
+
    };
 
 TR_RelocationRuntime::TR_RelocationRuntime(J9JITConfig *jitCfg)
@@ -212,6 +217,7 @@ TR_RelocationRuntime::TR_RelocationRuntime(J9JITConfig *jitCfg)
       }
 
       _isLoading = false;
+      _isRelocating = false;
 
 #if defined(DEBUG) || defined(PROD_WITH_ASSUMES)
       _numValidations = 0;
@@ -262,6 +268,8 @@ TR_RelocationRuntime::prepareRelocateAOTCodeAndData(J9VMThread* vmThread,
    TR_ASSERT(_options, "Options were not correctly initialized.");
    _reloLogger->setupOptions(_options);
 
+   TR_RelocationRuntime::IsRelocating startRelocating(this);
+
    uint8_t *tempCodeStart, *tempDataStart;
    uint8_t *oldDataStart, *oldCodeStart, *newCodeStart;
    tempDataStart = (uint8_t *)cacheEntry;
@@ -273,19 +281,24 @@ TR_RelocationRuntime::prepareRelocateAOTCodeAndData(J9VMThread* vmThread,
 
    // If we want to trace this method but the AOT body is not prepared to handle it
    // we must fail this AOT load with an error code that will force retrial
-   if ((fej9->isMethodTracingEnabled((TR_OpaqueMethodBlock*)theMethod) || fej9->canMethodExitEventBeHooked())
-      &&
-       (_aotMethodHeaderEntry->flags & TR_AOTMethodHeader_IsNotCapableOfMethodExitTracing))
+   if (fej9->canMethodEnterEventBeHooked()
+       && !(_aotMethodHeaderEntry->flags & TR_AOTMethodHeader_MethodEnterEventCanBeHooked))
+      {
+      setReloErrorCode(TR_RelocationErrorCode::methodEnterValidationFailure);
+      setReturnCode(compilationRelocationFailure);
+      return NULL; // fail
+      }
+   if (fej9->canMethodExitEventBeHooked()
+       && !(_aotMethodHeaderEntry->flags & TR_AOTMethodHeader_MethodExitEventCanBeHooked))
       {
       setReloErrorCode(TR_RelocationErrorCode::methodExitValidationFailure);
       setReturnCode(compilationRelocationFailure);
       return NULL; // fail
       }
-   if ((fej9->isMethodTracingEnabled((TR_OpaqueMethodBlock*)theMethod) || fej9->canMethodEnterEventBeHooked())
-      &&
-       (_aotMethodHeaderEntry->flags & TR_AOTMethodHeader_IsNotCapableOfMethodEnterTracing))
+   if (fej9->isMethodTracingEnabled((TR_OpaqueMethodBlock *)theMethod)
+       && !(_aotMethodHeaderEntry->flags & TR_AOTMethodHeader_MethodTracingEnabled))
       {
-      setReloErrorCode(TR_RelocationErrorCode::methodEnterValidationFailure);
+      setReloErrorCode(TR_RelocationErrorCode::methodTracingValidationFailure);
       setReturnCode(compilationRelocationFailure);
       return NULL; // fail
       }
@@ -1085,6 +1098,8 @@ TR_SharedCacheRelocationRuntime::checkAOTHeaderFlags(const TR_AOTHeader *hdrInCa
       defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_ACTIVE_CARD_TABLE_BASE_MISMATCH, "AOT header validation failed: Active Card Table Base feature mismatch.");
    if ((featureFlags & TR_FeatureFlag_ArrayHeaderShape) != (hdrInCache->featureFlags & TR_FeatureFlag_ArrayHeaderShape))
       defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_ARRAY_HEADER_SHAPE_MISMATCH, "AOT header validation failed: Array header shape mismatch.");
+   if ((featureFlags & TR_FeatureFlag_CHTableEnabled) != (hdrInCache->featureFlags & TR_FeatureFlag_CHTableEnabled))
+      defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_CH_TABLE_MISMATCH, "AOT header validation failed: CH Table mismatch.");
    if ((featureFlags & TR_FeatureFlag_SanityCheckEnd) != (hdrInCache->featureFlags & TR_FeatureFlag_SanityCheckEnd))
       defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_HEADER_END_SANITY_BIT_MANGLED, "AOT header validation failed: Trailing sanity bit mismatch.");
 
@@ -1419,6 +1434,14 @@ TR_SharedCacheRelocationRuntime::generateFeatureFlags(TR_FrontEnd *fe)
 
    if (TR::Options::getCmdLineOptions()->isVariableActiveCardTableBase())
       featureFlags |= TR_FeatureFlag_IsVariableActiveCardTableBase;
+
+   TR::CompilationInfo *compInfo = TR::CompilationInfo::get();
+   TR_PersistentCHTable *cht = compInfo->getPersistentInfo()->getPersistentCHTable();
+   if (!TR::Options::getAOTCmdLineOptions()->getOption(TR_DisableCHOpts)
+       && cht && cht->isActive())
+      {
+      featureFlags |= TR_FeatureFlag_CHTableEnabled;
+      }
 
    return featureFlags;
    }

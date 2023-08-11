@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 /*
  * ROMClassWriter.cpp
@@ -321,6 +321,7 @@ ROMClassWriter::ROMClassWriter(BufferManager *bufferManager, ClassFileOracle *cl
 #endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	_injectedInterfaceInfoSRPKey(srpKeyProducer->generateKey()),
+	_preloadInfoSRPKey(srpKeyProducer->generateKey()),
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 	_permittedSubclassesInfoSRPKey(srpKeyProducer->generateKey())
 {
@@ -456,6 +457,7 @@ ROMClassWriter::writeROMClass(Cursor *cursor,
 	writePermittedSubclasses(cursor, markAndCountOnly);
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	writeInjectedInterfaces(cursor, markAndCountOnly);
+	writePreload(cursor, markAndCountOnly);
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 	writeOptionalInfo(cursor);
 	writeCallSiteData(cursor, markAndCountOnly);
@@ -649,6 +651,11 @@ ROMClassWriter::writeFields(Cursor *cursor, bool markAndCountOnly)
 			if (iterator.hasTypeAnnotation()) {
 				modifiers |= J9FieldFlagHasTypeAnnotations;
 			}
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+			if (iterator.isNullRestricted()) {
+				modifiers |= J9FieldFlagIsNullRestricted;
+			}
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
 			cursor->writeU32(modifiers, Cursor::GENERIC);
 		}
@@ -1877,6 +1884,36 @@ ROMClassWriter::writePermittedSubclasses(Cursor *cursor, bool markAndCountOnly)
 }
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+/*
+ * Preload ROM class layout:
+ * 4 bytes for number of classes (actually takes up two, but use 4 for alignment)
+ * for number of classes:
+ *   4 byte SRP to class name
+ */
+void
+ROMClassWriter::writePreload(Cursor *cursor, bool markAndCountOnly)
+{
+	if (_classFileOracle->hasPreloadClasses()) {
+		cursor->mark(_preloadInfoSRPKey);
+
+		U_16 classCount = _classFileOracle->getPreloadClassCount();
+		if (markAndCountOnly) {
+			cursor->skip(sizeof(U_32));
+		} else {
+			cursor->writeU32(classCount, Cursor::GENERIC);
+		}
+
+		for (U_16 index = 0; index < classCount; index++) {
+			if (markAndCountOnly) {
+				cursor->skip(sizeof(J9SRP));
+			} else {
+				U_16 classNameCpIndex = _classFileOracle->getPreloadClassNameAtIndex(index);
+				cursor->writeSRP(_srpKeyProducer->mapCfrConstantPoolIndexToKey(classNameCpIndex), Cursor::SRP_TO_UTF8);
+			}
+		}
+	}
+}
+
 void
 ROMClassWriter::writeInjectedInterfaces(Cursor *cursor, bool markAndCountOnly)
 {
@@ -1928,6 +1965,7 @@ ROMClassWriter::writeOptionalInfo(Cursor *cursor)
 	 * SRP to record class component attributes
 	 * SRP to PermittedSubclasses attribute
 	 * SRP to injected interfaces info
+	 * SRP to Preload attribute
 	 */
 	cursor->mark(_optionalInfoSRPKey);
 
@@ -1972,6 +2010,9 @@ ROMClassWriter::writeOptionalInfo(Cursor *cursor)
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	if (_interfaceInjectionInfo->numOfInterfaces > 0) {
 		cursor->writeSRP(_injectedInterfaceInfoSRPKey, Cursor::SRP_TO_GENERIC);
+	}
+	if (_classFileOracle->hasPreloadClasses()) {
+		cursor->writeSRP(_preloadInfoSRPKey, Cursor::SRP_TO_GENERIC);
 	}
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 }

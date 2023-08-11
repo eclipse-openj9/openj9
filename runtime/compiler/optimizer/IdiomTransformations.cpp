@@ -17,13 +17,14 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <map>
 #include "codegen/CodeGenerator.hpp"
 #include "env/FrontEnd.hpp"
 #include "compile/Compilation.hpp"
@@ -54,6 +55,7 @@
 #include "optimizer/IdiomRecognitionUtils.hpp"
 #include "optimizer/Optimization_inlines.hpp"
 #include "optimizer/Optimizer.hpp"
+#include "optimizer/Structure.hpp"
 #include "optimizer/UseDefInfo.hpp"
 #include "ras/Debug.hpp"
 
@@ -1017,6 +1019,199 @@ areArraysInvariant(TR::Compilation *comp, TR::Node *inputNode, TR::Node *outputN
    return true;
    }
 
+namespace { // file-local
+
+class AutoLoopInvarianceInfo
+   {
+   TR::Compilation * const _comp;
+   TR::Region &_region;
+   TR_UseDefInfo * const _useDefInfo;
+   TR_BitVector _storedAutos; // autos defined in the loop
+   TR::NodeChecklist _autoStores; // stores to autos in the loop
+   TR::NodeChecklist _autoLoads; // loads of autos in the loop
+   TR::NodeChecklist _defsOnStack; // to check for cyclic definition chasing
+
+   // Memoize successful results of invariantExprImpl() to avoid exponential walks.
+   // This is reset for every top-level call to invariantExpr().
+   typedef TR::typed_allocator<std::pair<TR::Node * const, TR::Node*>, TR::Region&> MemoMapAlloc;
+   std::map<TR::Node*, TR::Node*, std::less<TR::Node*>, MemoMapAlloc> _invariantExprMemo;
+
+   public:
+   AutoLoopInvarianceInfo(
+      TR::Compilation *comp, TR_UseDefInfo *ud, TR_RegionStructure *loop);
+
+   TR::Node *invariantExpr(TR::Node *node);
+
+   private:
+   void findAutoStoresAndLoads(TR_RegionStructure *region, TR::NodeChecklist &visited);
+   void findAutoLoads(TR::Node *node, TR::NodeChecklist &visited);
+   TR::Node *invariantExprImpl(TR::Node *node);
+   TR::Node *invariantExprFromDef(TR::Node *defNode);
+   };
+
+AutoLoopInvarianceInfo::AutoLoopInvarianceInfo(
+   TR::Compilation *comp, TR_UseDefInfo *ud, TR_RegionStructure *loop)
+   : _comp(comp)
+   , _region(comp->trMemory()->currentStackRegion())
+   , _useDefInfo(ud)
+   , _storedAutos(comp->getSymRefCount(), _region)
+   , _autoStores(comp)
+   , _autoLoads(comp)
+   , _defsOnStack(comp)
+   , _invariantExprMemo(std::less<TR::Node*>(), _region)
+   {
+   TR::NodeChecklist visited(comp);
+   findAutoStoresAndLoads(loop, visited);
+   }
+
+void AutoLoopInvarianceInfo::findAutoStoresAndLoads(
+   TR_RegionStructure *region, TR::NodeChecklist &visited)
+   {
+   TR_RegionStructure::Cursor it(*region);
+   for (auto *subNode = it.getFirst(); subNode != NULL; subNode = it.getNext())
+      {
+      TR_Structure *structure = subNode->getStructure();
+      TR_RegionStructure *childRegion = structure->asRegion();
+      if (childRegion != NULL)
+         {
+         findAutoStoresAndLoads(childRegion, visited);
+         continue;
+         }
+
+      TR::Block *block = structure->asBlock()->getBlock();
+      TR::TreeTop *entry = block->getEntry();
+      TR::TreeTop *exit = block->getExit();
+      for (TR::TreeTop *tt = entry; tt != exit; tt = tt->getNextTreeTop())
+         {
+         TR::Node *node = tt->getNode();
+         findAutoLoads(node, visited);
+         if (node->getOpCode().isStoreDirect() && node->getSymbol()->isAutoOrParm())
+            {
+            _storedAutos.set(node->getSymbolReference()->getReferenceNumber());
+            _autoStores.add(node);
+            }
+         }
+      }
+   }
+
+void AutoLoopInvarianceInfo::findAutoLoads(TR::Node *node, TR::NodeChecklist &visited)
+   {
+   if (visited.contains(node))
+      return;
+
+   visited.add(node);
+   if (node->getOpCode().isLoadVarDirect() && node->getSymbol()->isAutoOrParm())
+      _autoLoads.add(node);
+
+   int32_t numChildren = node->getNumChildren();
+   for (int32_t i = 0; i < numChildren; i++)
+      findAutoLoads(node->getChild(i), visited);
+   }
+
+TR::Node *AutoLoopInvarianceInfo::invariantExpr(TR::Node *node)
+   {
+   _invariantExprMemo.clear();
+   if (node->getOpCode().isStore())
+      return invariantExprFromDef(node);
+   else
+      return invariantExprImpl(node);
+   }
+
+TR::Node *AutoLoopInvarianceInfo::invariantExprImpl(TR::Node *node)
+   {
+
+   if (node->getOpCode().isLoadVarDirect() && node->getSymbol()->isAutoOrParm())
+      {
+      TR_ASSERT_FATAL_WITH_NODE(
+         node, _autoLoads.contains(node), "expected auto load to be in the loop");
+
+      if (_storedAutos.isSet(node->getSymbolReference()->getReferenceNumber()))
+         {
+         // Because the auto is defined within the loop, and because node is
+         // within the loop, at least one definition from inside the loop
+         // reaches node. But node is still invariant if there is exactly one
+         // such definition and if its RHS is invariant.
+
+         uint16_t useIndex = node->getUseDefIndex();
+         if (useIndex == 0 || !_useDefInfo->isUseIndex(useIndex))
+            return NULL;
+
+         TR_UseDefInfo::BitVector defs(_comp->allocator());
+         if (!_useDefInfo->getUseDef(defs, useIndex) || defs.PopulationCount() != 1)
+            return NULL;
+
+         TR_UseDefInfo::BitVector::Cursor cursor(defs);
+         cursor.SetToFirstOne();
+         TR_ASSERT_FATAL_WITH_NODE(
+            node, cursor.Valid(), "single def missing from cursor");
+
+         int32_t defIndex = cursor;
+         TR_ASSERT_FATAL_WITH_NODE(
+            node,
+            defIndex >= _useDefInfo->getFirstRealDefIndex(),
+            "despite in-loop definition, param reaches this use");
+
+         return invariantExprFromDef(_useDefInfo->getNode(defIndex));
+         }
+      }
+   else if (node->getOpCode().hasSymbolReference()
+            && node->getOpCodeValue() != TR::loadaddr)
+      {
+      return NULL; // not handled - treat as non-invariant
+      }
+
+   static const int32_t maxChildren = 3;
+   int32_t numChildren = node->getNumChildren();
+   if (numChildren > maxChildren)
+      return NULL; // not handled - treat as non-invariant
+
+   auto memoInsertResult = _invariantExprMemo.insert(
+      std::make_pair(node, (TR::Node*)NULL));
+
+   auto memoEntry = memoInsertResult.first;
+   if (!memoInsertResult.second) // already present in the map
+      return memoEntry->second;
+
+   TR::Node *children[maxChildren] = {};
+   for (int32_t i = 0; i < numChildren; i++)
+      {
+      children[i] = invariantExprImpl(node->getChild(i));
+      if (children[i] == NULL)
+         return NULL;
+      }
+
+   bool duplicateChildren = false;
+   TR::Node *result = node->duplicateTree(duplicateChildren);
+   for (int32_t i = 0; i < numChildren; i++)
+      {
+      node->getChild(i)->decReferenceCount(); // undo duplicateTree() increment
+      result->setAndIncChild(i, children[i]);
+      }
+
+   memoEntry->second = result;
+   return result;
+   }
+
+TR::Node *AutoLoopInvarianceInfo::invariantExprFromDef(TR::Node *defNode)
+   {
+   TR_ASSERT_FATAL_WITH_NODE(
+      defNode,
+      _autoStores.contains(defNode),
+      "expected an auto store in the loop");
+
+   TR_ASSERT_FATAL_WITH_NODE(
+      defNode,
+      !_defsOnStack.contains(defNode),
+      "circular single-definition dependency");
+
+   _defsOnStack.add(defNode);
+   TR::Node *result = invariantExprImpl(defNode->getChild(0));
+   _defsOnStack.remove(defNode);
+   return result;
+   }
+
+
+} // anonymous namespace
 
 // used for a TRTO reduction in java/io/DataOutputStream.writeUTF(String)
 //
@@ -1572,8 +1767,22 @@ CISCTransform2FindBytes(TR_CISCTransformer *trans)
 
    if (count == -1)           // single delimiter which is not constant value
       {
+      AutoLoopInvarianceInfo inv(
+         trans->comp(), trans->optimizer()->getUseDefInfo(), trans->getCurrentLoop());
+
       TR_CISCNode *tableCISCNode = tBoolTable->getChild(1);
-      tableNode = createLoad(tableCISCNode->getHeadOfTrNodeInfo()->_node);
+      TR::Node *origComparand = tableCISCNode->getHeadOfTrNodeInfo()->_node;
+      tableNode = inv.invariantExpr(origComparand);
+      if (tableNode == NULL)
+         {
+         traceMsg(
+            comp,
+            "Abandoning reduction: failed to create loop-invariant expression for n%un [%p]\n",
+            origComparand->getGlobalIndex(),
+            origComparand);
+         return false;
+         }
+
       if (disptrace) traceMsg(comp, "Single non-constant delimiter found.  Setting %p as tableNode.\n", comp->getDebug()->getName(tableCISCNode->getHeadOfTrNodeInfo()->_node));
       }
    else if (count == 1)      // single delimiter

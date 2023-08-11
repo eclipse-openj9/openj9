@@ -18,7 +18,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #ifndef REFERENCEOBJECTLIST_HPP_
@@ -51,6 +51,19 @@ public:
 private:
 protected:
 public:
+	/**
+	 * Allocate and initialize an array of MM_ReferenceObjectList instances, resembling the functionality of operator new[].
+	 *
+	 * @param env the current thread
+	 * @param arrayElementsTotal the number of lists to create
+	 * @param listsToCopy existing MM_ReferenceObjectList array to use to construct a new array of lists
+	 * @param arrayElementsToCopy the size of the list array to be copied
+	 *
+	 * @return a pointer to the first list in the array, or NULL if we failed to allocate/init the array
+	 */
+	static MM_ReferenceObjectList *newInstanceArray(MM_EnvironmentBase *env, uintptr_t arrayElementsTotal, MM_ReferenceObjectList *listsToCopy, uintptr_t arrayElementsToCopy);
+	bool initialize(MM_EnvironmentBase *env) { return true; }
+
 	/**
 	 * Add the specified linked list of objects to the buffer.
 	 * The objects are expected to be in a NULL terminated linked

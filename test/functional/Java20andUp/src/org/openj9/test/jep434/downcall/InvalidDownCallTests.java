@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 package org.openj9.test.jep434.downcall;
 
@@ -119,18 +119,17 @@ public class InvalidDownCallTests {
 		}
 	}
 
-	@Test(expectedExceptions = NullPointerException.class)
 	public void test_nullSegmentForPtrArgument() throws Throwable {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_INT.withName("elem1"), JAVA_INT.withName("elem2"));
 		VarHandle intHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));
 		VarHandle intHandle2 = structLayout.varHandle(PathElement.groupElement("elem2"));
 
 		FunctionDescriptor fd = FunctionDescriptor.of(JAVA_INT, JAVA_INT, ADDRESS);
-		MemorySegment functionSymbol = nativeLibLookup.find("addIntAndIntsFromStructPointer").get();
+		MemorySegment functionSymbol = nativeLibLookup.find("validateNullAddrArgument").get();
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 
 		int result = (int)mh.invoke(19202122, MemorySegment.NULL);
-		fail("Failed to throw out NullPointerException in the case of the null segment");
+		Assert.assertEquals(result, 19202122);
 	}
 
 	@Test(expectedExceptions = NullPointerException.class)

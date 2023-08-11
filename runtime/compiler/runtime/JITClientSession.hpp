@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #ifndef JIT_CLIENT_SESSION_H
@@ -602,7 +602,7 @@ class ClientSessionHT
    private:
    PersistentUnorderedMap<uint64_t, ClientSessionData*> _clientSessionMap;
 
-   uint64_t _timeOfLastPurge;
+   int64_t _timeOfLastPurge;
    TR::CompilationInfo *_compInfo;
    const int64_t TIME_BETWEEN_PURGES; // ms; this defines how often we are willing to scan for old entries to be purged
    const int64_t OLD_AGE;// ms; this defines what an old entry means

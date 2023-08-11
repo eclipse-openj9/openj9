@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 package org.openj9.test.jep442.upcall;
 
@@ -32,7 +32,6 @@ import java.lang.foreign.Linker;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.SegmentAllocator;
 import java.lang.foreign.SymbolLookup;
 import java.lang.foreign.ValueLayout;
 import static java.lang.foreign.ValueLayout.*;
@@ -40,7 +39,7 @@ import static java.lang.foreign.ValueLayout.*;
 /**
  * Test cases for JEP 442: Foreign Linker API (Third Preview) intended for
  * the situations when the multiple primitive specific upcalls happen within
- * the same memory arena.scope() or from different memory arena.scope()s.
+ * the same memory arena or from different memory arenas.
  */
 @Test(groups = { "level.sanity" })
 public class MultiUpcallMHTests {
@@ -57,19 +56,19 @@ public class MultiUpcallMHTests {
 		MemorySegment functionSymbol = nativeLibLookup.find("add2BoolsWithOrByUpcallMH").get();
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 
-		try (Arena arena = Arena.openConfined()) {
+		try (Arena arena = Arena.ofConfined()) {
 			MemorySegment upcallFuncAddr1 = linker.upcallStub(UpcallMethodHandles.MH_add2BoolsWithOr,
-					FunctionDescriptor.of(JAVA_BOOLEAN, JAVA_BOOLEAN, JAVA_BOOLEAN), arena.scope());
+					FunctionDescriptor.of(JAVA_BOOLEAN, JAVA_BOOLEAN, JAVA_BOOLEAN), arena);
 			boolean result = (boolean)mh.invoke(true, false, upcallFuncAddr1);
 			Assert.assertEquals(result, true);
 
 			MemorySegment upcallFuncAddr2 = linker.upcallStub(UpcallMethodHandles.MH_add2BoolsWithOr,
-					FunctionDescriptor.of(JAVA_BOOLEAN, JAVA_BOOLEAN, JAVA_BOOLEAN), arena.scope());
+					FunctionDescriptor.of(JAVA_BOOLEAN, JAVA_BOOLEAN, JAVA_BOOLEAN), arena);
 			result = (boolean)mh.invoke(true, false, upcallFuncAddr2);
 			Assert.assertEquals(result, true);
 
 			MemorySegment upcallFuncAddr3 = linker.upcallStub(UpcallMethodHandles.MH_add2BoolsWithOr,
-					FunctionDescriptor.of(JAVA_BOOLEAN, JAVA_BOOLEAN, JAVA_BOOLEAN), arena.scope());
+					FunctionDescriptor.of(JAVA_BOOLEAN, JAVA_BOOLEAN, JAVA_BOOLEAN), arena);
 			result = (boolean)mh.invoke(true, false, upcallFuncAddr3);
 			Assert.assertEquals(result, true);
 		}
@@ -81,23 +80,23 @@ public class MultiUpcallMHTests {
 		MemorySegment functionSymbol = nativeLibLookup.find("add2BoolsWithOrByUpcallMH").get();
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 
-		try (Arena arena = Arena.openConfined()) {
+		try (Arena arena = Arena.ofConfined()) {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_add2BoolsWithOr,
-					FunctionDescriptor.of(JAVA_BOOLEAN, JAVA_BOOLEAN, JAVA_BOOLEAN), arena.scope());
+					FunctionDescriptor.of(JAVA_BOOLEAN, JAVA_BOOLEAN, JAVA_BOOLEAN), arena);
 			boolean result = (boolean)mh.invoke(true, false, upcallFuncAddr);
 			Assert.assertEquals(result, true);
 		}
 
-		try (Arena arena = Arena.openConfined()) {
+		try (Arena arena = Arena.ofConfined()) {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_add2BoolsWithOr,
-					FunctionDescriptor.of(JAVA_BOOLEAN, JAVA_BOOLEAN, JAVA_BOOLEAN), arena.scope());
+					FunctionDescriptor.of(JAVA_BOOLEAN, JAVA_BOOLEAN, JAVA_BOOLEAN), arena);
 			boolean result = (boolean)mh.invoke(true, false, upcallFuncAddr);
 			Assert.assertEquals(result, true);
 		}
 
-		try (Arena arena = Arena.openConfined()) {
+		try (Arena arena = Arena.ofConfined()) {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_add2BoolsWithOr,
-					FunctionDescriptor.of(JAVA_BOOLEAN, JAVA_BOOLEAN, JAVA_BOOLEAN), arena.scope());
+					FunctionDescriptor.of(JAVA_BOOLEAN, JAVA_BOOLEAN, JAVA_BOOLEAN), arena);
 			boolean result = (boolean)mh.invoke(true, false, upcallFuncAddr);
 			Assert.assertEquals(result, true);
 		}
@@ -109,24 +108,22 @@ public class MultiUpcallMHTests {
 		MemorySegment functionSymbol = nativeLibLookup.find("createNewCharFromCharAndCharFromPointerByUpcallMH").get();
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 
-		try (Arena arena = Arena.openConfined()) {
-			SegmentAllocator allocator = SegmentAllocator.nativeAllocator(arena.scope());
-
+		try (Arena arena = Arena.ofConfined()) {
 			MemorySegment upcallFuncAddr1 = linker.upcallStub(UpcallMethodHandles.MH_createNewCharFromCharAndCharFromPointer,
-					FunctionDescriptor.of(JAVA_CHAR, ADDRESS, JAVA_CHAR), arena.scope());
-			MemorySegment charSegmt1 = allocator.allocate(JAVA_CHAR, 'B');
+					FunctionDescriptor.of(JAVA_CHAR, ADDRESS, JAVA_CHAR), arena);
+			MemorySegment charSegmt1 = arena.allocate(JAVA_CHAR, 'B');
 			char result = (char)mh.invoke(charSegmt1, 'D', upcallFuncAddr1);
 			Assert.assertEquals(result, 'C');
 
 			MemorySegment upcallFuncAddr2 = linker.upcallStub(UpcallMethodHandles.MH_createNewCharFromCharAndCharFromPointer,
-					FunctionDescriptor.of(JAVA_CHAR, ADDRESS, JAVA_CHAR), arena.scope());
-			MemorySegment charSegmt2 = allocator.allocate(JAVA_CHAR, 'B');
+					FunctionDescriptor.of(JAVA_CHAR, ADDRESS, JAVA_CHAR), arena);
+			MemorySegment charSegmt2 = arena.allocate(JAVA_CHAR, 'B');
 			result = (char)mh.invoke(charSegmt2, 'D', upcallFuncAddr2);
 			Assert.assertEquals(result, 'C');
 
 			MemorySegment upcallFuncAddr3 = linker.upcallStub(UpcallMethodHandles.MH_createNewCharFromCharAndCharFromPointer,
-					FunctionDescriptor.of(JAVA_CHAR, ADDRESS, JAVA_CHAR), arena.scope());
-			MemorySegment charSegmt3 = allocator.allocate(JAVA_CHAR, 'B');
+					FunctionDescriptor.of(JAVA_CHAR, ADDRESS, JAVA_CHAR), arena);
+			MemorySegment charSegmt3 = arena.allocate(JAVA_CHAR, 'B');
 			result = (char)mh.invoke(charSegmt3, 'D', upcallFuncAddr3);
 			Assert.assertEquals(result, 'C');
 		}
@@ -138,29 +135,26 @@ public class MultiUpcallMHTests {
 		MemorySegment functionSymbol = nativeLibLookup.find("createNewCharFromCharAndCharFromPointerByUpcallMH").get();
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 
-		try (Arena arena = Arena.openConfined()) {
+		try (Arena arena = Arena.ofConfined()) {
 			MemorySegment upcallFuncAddr1 = linker.upcallStub(UpcallMethodHandles.MH_createNewCharFromCharAndCharFromPointer,
-					FunctionDescriptor.of(JAVA_CHAR, ADDRESS, JAVA_CHAR), arena.scope());
-			SegmentAllocator allocator = SegmentAllocator.nativeAllocator(arena.scope());
-			MemorySegment charSegmt = allocator.allocate(JAVA_CHAR, 'B');
+					FunctionDescriptor.of(JAVA_CHAR, ADDRESS, JAVA_CHAR), arena);
+			MemorySegment charSegmt = arena.allocate(JAVA_CHAR, 'B');
 			char result = (char)mh.invoke(charSegmt, 'D', upcallFuncAddr1);
 			Assert.assertEquals(result, 'C');
 		}
 
-		try (Arena arena = Arena.openConfined()) {
+		try (Arena arena = Arena.ofConfined()) {
 			MemorySegment upcallFuncAddr1 = linker.upcallStub(UpcallMethodHandles.MH_createNewCharFromCharAndCharFromPointer,
-					FunctionDescriptor.of(JAVA_CHAR, ADDRESS, JAVA_CHAR), arena.scope());
-			SegmentAllocator allocator = SegmentAllocator.nativeAllocator(arena.scope());
-			MemorySegment charSegmt = allocator.allocate(JAVA_CHAR, 'B');
+					FunctionDescriptor.of(JAVA_CHAR, ADDRESS, JAVA_CHAR), arena);
+			MemorySegment charSegmt = arena.allocate(JAVA_CHAR, 'B');
 			char result = (char)mh.invoke(charSegmt, 'D', upcallFuncAddr1);
 			Assert.assertEquals(result, 'C');
 		}
 
-		try (Arena arena = Arena.openConfined()) {
+		try (Arena arena = Arena.ofConfined()) {
 			MemorySegment upcallFuncAddr1 = linker.upcallStub(UpcallMethodHandles.MH_createNewCharFromCharAndCharFromPointer,
-					FunctionDescriptor.of(JAVA_CHAR, ADDRESS, JAVA_CHAR), arena.scope());
-			SegmentAllocator allocator = SegmentAllocator.nativeAllocator(arena.scope());
-			MemorySegment charSegmt = allocator.allocate(JAVA_CHAR, 'B');
+					FunctionDescriptor.of(JAVA_CHAR, ADDRESS, JAVA_CHAR), arena);
+			MemorySegment charSegmt = arena.allocate(JAVA_CHAR, 'B');
 			char result = (char)mh.invoke(charSegmt, 'D', upcallFuncAddr1);
 			Assert.assertEquals(result, 'C');
 		}
@@ -172,19 +166,19 @@ public class MultiUpcallMHTests {
 		MemorySegment functionSymbol = nativeLibLookup.find("addByteAndByteFromNativePtrByUpcallMH").get();
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 
-		try (Arena arena = Arena.openConfined()) {
+		try (Arena arena = Arena.ofConfined()) {
 			MemorySegment upcallFuncAddr1 = linker.upcallStub(UpcallMethodHandles.MH_addByteAndByteFromPointer,
-					FunctionDescriptor.of(JAVA_BYTE, JAVA_BYTE, ADDRESS), arena.scope());
+					FunctionDescriptor.of(JAVA_BYTE, JAVA_BYTE, ADDRESS), arena);
 			byte result = (byte)mh.invoke((byte)33, upcallFuncAddr1);
 			Assert.assertEquals(result, (byte)88);
 
 			MemorySegment upcallFuncAddr2 = linker.upcallStub(UpcallMethodHandles.MH_addByteAndByteFromPointer,
-					FunctionDescriptor.of(JAVA_BYTE, JAVA_BYTE, ADDRESS), arena.scope());
+					FunctionDescriptor.of(JAVA_BYTE, JAVA_BYTE, ADDRESS), arena);
 			result = (byte)mh.invoke((byte)33, upcallFuncAddr2);
 			Assert.assertEquals(result, (byte)88);
 
 			MemorySegment upcallFuncAddr3 = linker.upcallStub(UpcallMethodHandles.MH_addByteAndByteFromPointer,
-					FunctionDescriptor.of(JAVA_BYTE, JAVA_BYTE, ADDRESS), arena.scope());
+					FunctionDescriptor.of(JAVA_BYTE, JAVA_BYTE, ADDRESS), arena);
 			result = (byte)mh.invoke((byte)33, upcallFuncAddr3);
 			Assert.assertEquals(result, (byte)88);
 		}
@@ -196,23 +190,23 @@ public class MultiUpcallMHTests {
 		MemorySegment functionSymbol = nativeLibLookup.find("addByteAndByteFromNativePtrByUpcallMH").get();
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 
-		try (Arena arena = Arena.openConfined()) {
+		try (Arena arena = Arena.ofConfined()) {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addByteAndByteFromPointer,
-					FunctionDescriptor.of(JAVA_BYTE, JAVA_BYTE, ADDRESS), arena.scope());
+					FunctionDescriptor.of(JAVA_BYTE, JAVA_BYTE, ADDRESS), arena);
 			byte result = (byte)mh.invoke((byte)33, upcallFuncAddr);
 			Assert.assertEquals(result, (byte)88);
 		}
 
-		try (Arena arena = Arena.openConfined()) {
+		try (Arena arena = Arena.ofConfined()) {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addByteAndByteFromPointer,
-					FunctionDescriptor.of(JAVA_BYTE, JAVA_BYTE, ADDRESS), arena.scope());
+					FunctionDescriptor.of(JAVA_BYTE, JAVA_BYTE, ADDRESS), arena);
 			byte result = (byte)mh.invoke((byte)33, upcallFuncAddr);
 			Assert.assertEquals(result, (byte)88);
 		}
 
-		try (Arena arena = Arena.openConfined()) {
+		try (Arena arena = Arena.ofConfined()) {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addByteAndByteFromPointer,
-					FunctionDescriptor.of(JAVA_BYTE, JAVA_BYTE, ADDRESS), arena.scope());
+					FunctionDescriptor.of(JAVA_BYTE, JAVA_BYTE, ADDRESS), arena);
 			byte result = (byte)mh.invoke((byte)33, upcallFuncAddr);
 			Assert.assertEquals(result, (byte)88);
 		}
@@ -224,28 +218,26 @@ public class MultiUpcallMHTests {
 		MemorySegment functionSymbol = nativeLibLookup.find("addShortAndShortFromPtr_RetPtr_ByUpcallMH").get();
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 
-		try (Arena arena = Arena.openConfined()) {
-			SegmentAllocator allocator = SegmentAllocator.nativeAllocator(arena.scope());
-
+		try (Arena arena = Arena.ofConfined()) {
 			MemorySegment upcallFuncAddr1 = linker.upcallStub(UpcallMethodHandles.MH_addShortAndShortFromPtr_RetPtr,
-					FunctionDescriptor.of(ADDRESS, ADDRESS, JAVA_SHORT), arena.scope());
-			MemorySegment shortSegmt1 = allocator.allocate(JAVA_SHORT, (short)444);
+					FunctionDescriptor.of(ADDRESS, ADDRESS, JAVA_SHORT), arena);
+			MemorySegment shortSegmt1 = arena.allocate(JAVA_SHORT, (short)444);
 			MemorySegment resultAddr1 = (MemorySegment)mh.invoke(shortSegmt1, (short)555, upcallFuncAddr1);
-			MemorySegment resultSegmt1 = MemorySegment.ofAddress(resultAddr1.address(), JAVA_SHORT.byteSize(), arena.scope());
+			MemorySegment resultSegmt1 = resultAddr1.reinterpret(JAVA_SHORT.byteSize());
 			Assert.assertEquals(resultSegmt1.get(JAVA_SHORT, 0), (short)999);
 
 			MemorySegment upcallFuncAddr2 = linker.upcallStub(UpcallMethodHandles.MH_addShortAndShortFromPtr_RetPtr,
-					FunctionDescriptor.of(ADDRESS, ADDRESS, JAVA_SHORT), arena.scope());
-			MemorySegment shortSegmt2 = allocator.allocate(JAVA_SHORT, (short)444);
+					FunctionDescriptor.of(ADDRESS, ADDRESS, JAVA_SHORT), arena);
+			MemorySegment shortSegmt2 = arena.allocate(JAVA_SHORT, (short)444);
 			MemorySegment resultAddr2 = (MemorySegment)mh.invoke(shortSegmt2, (short)555, upcallFuncAddr2);
-			MemorySegment resultSegmt2 = MemorySegment.ofAddress(resultAddr2.address(), JAVA_SHORT.byteSize(), arena.scope());
+			MemorySegment resultSegmt2 = resultAddr2.reinterpret(JAVA_SHORT.byteSize());
 			Assert.assertEquals(resultSegmt2.get(JAVA_SHORT, 0), (short)999);
 
 			MemorySegment upcallFuncAddr3 = linker.upcallStub(UpcallMethodHandles.MH_addShortAndShortFromPtr_RetPtr,
-					FunctionDescriptor.of(ADDRESS, ADDRESS, JAVA_SHORT), arena.scope());
-			MemorySegment shortSegmt3 = allocator.allocate(JAVA_SHORT, (short)444);
+					FunctionDescriptor.of(ADDRESS, ADDRESS, JAVA_SHORT), arena);
+			MemorySegment shortSegmt3 = arena.allocate(JAVA_SHORT, (short)444);
 			MemorySegment resultAddr3 = (MemorySegment)mh.invoke(shortSegmt3, (short)555, upcallFuncAddr3);
-			MemorySegment resultSegmt3 = MemorySegment.ofAddress(resultAddr3.address(), JAVA_SHORT.byteSize(), arena.scope());
+			MemorySegment resultSegmt3 = resultAddr3.reinterpret(JAVA_SHORT.byteSize());
 			Assert.assertEquals(resultSegmt3.get(JAVA_SHORT, 0), (short)999);
 		}
 	}
@@ -256,33 +248,30 @@ public class MultiUpcallMHTests {
 		MemorySegment functionSymbol = nativeLibLookup.find("addShortAndShortFromPtr_RetPtr_ByUpcallMH").get();
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 
-		try (Arena arena = Arena.openConfined()) {
+		try (Arena arena = Arena.ofConfined()) {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addShortAndShortFromPtr_RetPtr,
-					FunctionDescriptor.of(ADDRESS, ADDRESS, JAVA_SHORT), arena.scope());
-			SegmentAllocator allocator = SegmentAllocator.nativeAllocator(arena.scope());
-			MemorySegment shortSegmt = allocator.allocate(JAVA_SHORT, (short)444);
+					FunctionDescriptor.of(ADDRESS, ADDRESS, JAVA_SHORT), arena);
+			MemorySegment shortSegmt = arena.allocate(JAVA_SHORT, (short)444);
 			MemorySegment resultAddr = (MemorySegment)mh.invoke(shortSegmt, (short)555, upcallFuncAddr);
-			MemorySegment resultSegmt = MemorySegment.ofAddress(resultAddr.address(), JAVA_SHORT.byteSize(), arena.scope());
+			MemorySegment resultSegmt = resultAddr.reinterpret(JAVA_SHORT.byteSize());
 			Assert.assertEquals(resultSegmt.get(JAVA_SHORT, 0), (short)999);
 		}
 
-		try (Arena arena = Arena.openConfined()) {
+		try (Arena arena = Arena.ofConfined()) {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addShortAndShortFromPtr_RetPtr,
-					FunctionDescriptor.of(ADDRESS, ADDRESS, JAVA_SHORT), arena.scope());
-			SegmentAllocator allocator = SegmentAllocator.nativeAllocator(arena.scope());
-			MemorySegment shortSegmt = allocator.allocate(JAVA_SHORT, (short)444);
+					FunctionDescriptor.of(ADDRESS, ADDRESS, JAVA_SHORT), arena);
+			MemorySegment shortSegmt = arena.allocate(JAVA_SHORT, (short)444);
 			MemorySegment resultAddr = (MemorySegment)mh.invoke(shortSegmt, (short)555, upcallFuncAddr);
-			MemorySegment resultSegmt = MemorySegment.ofAddress(resultAddr.address(), JAVA_SHORT.byteSize(), arena.scope());
+			MemorySegment resultSegmt = resultAddr.reinterpret(JAVA_SHORT.byteSize());
 			Assert.assertEquals(resultSegmt.get(JAVA_SHORT, 0), (short)999);
 		}
 
-		try (Arena arena = Arena.openConfined()) {
+		try (Arena arena = Arena.ofConfined()) {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addShortAndShortFromPtr_RetPtr,
-					FunctionDescriptor.of(ADDRESS, ADDRESS, JAVA_SHORT), arena.scope());
-			SegmentAllocator allocator = SegmentAllocator.nativeAllocator(arena.scope());
-			MemorySegment shortSegmt = allocator.allocate(JAVA_SHORT, (short)444);
+					FunctionDescriptor.of(ADDRESS, ADDRESS, JAVA_SHORT), arena);
+			MemorySegment shortSegmt = arena.allocate(JAVA_SHORT, (short)444);
 			MemorySegment resultAddr = (MemorySegment)mh.invoke(shortSegmt, (short)555, upcallFuncAddr);
-			MemorySegment resultSegmt = MemorySegment.ofAddress(resultAddr.address(), JAVA_SHORT.byteSize(), arena.scope());
+			MemorySegment resultSegmt = resultAddr.reinterpret(JAVA_SHORT.byteSize());
 			Assert.assertEquals(resultSegmt.get(JAVA_SHORT, 0), (short)999);
 		}
 	}
@@ -293,19 +282,19 @@ public class MultiUpcallMHTests {
 		MemorySegment functionSymbol = nativeLibLookup.find("add2IntsByUpcallMH").get();
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 
-		try (Arena arena = Arena.openConfined()) {
+		try (Arena arena = Arena.ofConfined()) {
 			MemorySegment upcallFuncAddr1 = linker.upcallStub(UpcallMethodHandles.MH_add2Ints,
-					FunctionDescriptor.of(JAVA_INT, JAVA_INT, JAVA_INT), arena.scope());
+					FunctionDescriptor.of(JAVA_INT, JAVA_INT, JAVA_INT), arena);
 			int result = (int)mh.invoke(111112, 111123, upcallFuncAddr1);
 			Assert.assertEquals(result, 222235);
 
 			MemorySegment upcallFuncAddr2 = linker.upcallStub(UpcallMethodHandles.MH_add2Ints,
-					FunctionDescriptor.of(JAVA_INT, JAVA_INT, JAVA_INT), arena.scope());
+					FunctionDescriptor.of(JAVA_INT, JAVA_INT, JAVA_INT), arena);
 			result = (int)mh.invoke(111112, 111123, upcallFuncAddr2);
 			Assert.assertEquals(result, 222235);
 
 			MemorySegment upcallFuncAddr3 = linker.upcallStub(UpcallMethodHandles.MH_add2Ints,
-					FunctionDescriptor.of(JAVA_INT, JAVA_INT, JAVA_INT), arena.scope());
+					FunctionDescriptor.of(JAVA_INT, JAVA_INT, JAVA_INT), arena);
 			result = (int)mh.invoke(111112, 111123, upcallFuncAddr3);
 			Assert.assertEquals(result, 222235);
 		}
@@ -317,23 +306,23 @@ public class MultiUpcallMHTests {
 		MemorySegment functionSymbol = nativeLibLookup.find("add2IntsByUpcallMH").get();
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 
-		try (Arena arena = Arena.openConfined()) {
+		try (Arena arena = Arena.ofConfined()) {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_add2Ints,
-					FunctionDescriptor.of(JAVA_INT, JAVA_INT, JAVA_INT), arena.scope());
+					FunctionDescriptor.of(JAVA_INT, JAVA_INT, JAVA_INT), arena);
 			int result = (int)mh.invoke(111112, 111123, upcallFuncAddr);
 			Assert.assertEquals(result, 222235);
 		}
 
-		try (Arena arena = Arena.openConfined()) {
+		try (Arena arena = Arena.ofConfined()) {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_add2Ints,
-					FunctionDescriptor.of(JAVA_INT, JAVA_INT, JAVA_INT), arena.scope());
+					FunctionDescriptor.of(JAVA_INT, JAVA_INT, JAVA_INT), arena);
 			int result = (int)mh.invoke(111112, 111123, upcallFuncAddr);
 			Assert.assertEquals(result, 222235);
 		}
 
-		try (Arena arena = Arena.openConfined()) {
+		try (Arena arena = Arena.ofConfined()) {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_add2Ints,
-					FunctionDescriptor.of(JAVA_INT, JAVA_INT, JAVA_INT), arena.scope());
+					FunctionDescriptor.of(JAVA_INT, JAVA_INT, JAVA_INT), arena);
 			int result = (int)mh.invoke(111112, 111123, upcallFuncAddr);
 			Assert.assertEquals(result, 222235);
 		}
@@ -345,17 +334,17 @@ public class MultiUpcallMHTests {
 		MemorySegment functionSymbol = nativeLibLookup.find("add2IntsReturnVoidByUpcallMH").get();
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 
-		try (Arena arena = Arena.openConfined()) {
+		try (Arena arena = Arena.ofConfined()) {
 			MemorySegment upcallFuncAddr1 = linker.upcallStub(UpcallMethodHandles.MH_add2IntsReturnVoid,
-					FunctionDescriptor.ofVoid(JAVA_INT, JAVA_INT), arena.scope());
+					FunctionDescriptor.ofVoid(JAVA_INT, JAVA_INT), arena);
 			mh.invoke(111454, 111398, upcallFuncAddr1);
 
 			MemorySegment upcallFuncAddr2 = linker.upcallStub(UpcallMethodHandles.MH_add2IntsReturnVoid,
-					FunctionDescriptor.ofVoid(JAVA_INT, JAVA_INT), arena.scope());
+					FunctionDescriptor.ofVoid(JAVA_INT, JAVA_INT), arena);
 			mh.invoke(111454, 111398, upcallFuncAddr2);
 
 			MemorySegment upcallFuncAddr3 = linker.upcallStub(UpcallMethodHandles.MH_add2IntsReturnVoid,
-					FunctionDescriptor.ofVoid(JAVA_INT, JAVA_INT), arena.scope());
+					FunctionDescriptor.ofVoid(JAVA_INT, JAVA_INT), arena);
 			mh.invoke(111454, 111398, upcallFuncAddr3);
 		}
 	}
@@ -366,21 +355,21 @@ public class MultiUpcallMHTests {
 		MemorySegment functionSymbol = nativeLibLookup.find("add2IntsReturnVoidByUpcallMH").get();
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 
-		try (Arena arena = Arena.openConfined()) {
+		try (Arena arena = Arena.ofConfined()) {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_add2IntsReturnVoid,
-					FunctionDescriptor.ofVoid(JAVA_INT, JAVA_INT), arena.scope());
+					FunctionDescriptor.ofVoid(JAVA_INT, JAVA_INT), arena);
 			mh.invoke(111454, 111398, upcallFuncAddr);
 		}
 
-		try (Arena arena = Arena.openConfined()) {
+		try (Arena arena = Arena.ofConfined()) {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_add2IntsReturnVoid,
-					FunctionDescriptor.ofVoid(JAVA_INT, JAVA_INT), arena.scope());
+					FunctionDescriptor.ofVoid(JAVA_INT, JAVA_INT), arena);
 			mh.invoke(111454, 111398, upcallFuncAddr);
 		}
 
-		try (Arena arena = Arena.openConfined()) {
+		try (Arena arena = Arena.ofConfined()) {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_add2IntsReturnVoid,
-					FunctionDescriptor.ofVoid(JAVA_INT, JAVA_INT), arena.scope());
+					FunctionDescriptor.ofVoid(JAVA_INT, JAVA_INT), arena);
 			mh.invoke(111454, 111398, upcallFuncAddr);
 		}
 	}
@@ -391,24 +380,22 @@ public class MultiUpcallMHTests {
 		MemorySegment functionSymbol = nativeLibLookup.find("addLongAndLongFromPointerByUpcallMH").get();
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 
-		try (Arena arena = Arena.openConfined()) {
-			SegmentAllocator allocator = SegmentAllocator.nativeAllocator(arena.scope());
-
+		try (Arena arena = Arena.ofConfined()) {
 			MemorySegment upcallFuncAddr1 = linker.upcallStub(UpcallMethodHandles.MH_addLongAndLongFromPointer,
-					FunctionDescriptor.of(JAVA_LONG, ADDRESS, JAVA_LONG), arena.scope());
-			MemorySegment longSegmt1 = allocator.allocate(JAVA_LONG, 5742457424L);
+					FunctionDescriptor.of(JAVA_LONG, ADDRESS, JAVA_LONG), arena);
+			MemorySegment longSegmt1 = arena.allocate(JAVA_LONG, 5742457424L);
 			long result = (long)mh.invoke(longSegmt1, 6666698235L, upcallFuncAddr1);
 			Assert.assertEquals(result, 12409155659L);
 
 			MemorySegment upcallFuncAddr2 = linker.upcallStub(UpcallMethodHandles.MH_addLongAndLongFromPointer,
-					FunctionDescriptor.of(JAVA_LONG, ADDRESS, JAVA_LONG), arena.scope());
-			MemorySegment longSegmt2 = allocator.allocate(JAVA_LONG, 5742457424L);
+					FunctionDescriptor.of(JAVA_LONG, ADDRESS, JAVA_LONG), arena);
+			MemorySegment longSegmt2 = arena.allocate(JAVA_LONG, 5742457424L);
 			result = (long)mh.invoke(longSegmt2, 6666698235L, upcallFuncAddr2);
 			Assert.assertEquals(result, 12409155659L);
 
 			MemorySegment upcallFuncAddr3 = linker.upcallStub(UpcallMethodHandles.MH_addLongAndLongFromPointer,
-					FunctionDescriptor.of(JAVA_LONG, ADDRESS, JAVA_LONG), arena.scope());
-			MemorySegment longSegmt3 = allocator.allocate(JAVA_LONG, 5742457424L);
+					FunctionDescriptor.of(JAVA_LONG, ADDRESS, JAVA_LONG), arena);
+			MemorySegment longSegmt3 = arena.allocate(JAVA_LONG, 5742457424L);
 			result = (long)mh.invoke(longSegmt3, 6666698235L, upcallFuncAddr3);
 			Assert.assertEquals(result, 12409155659L);
 		}
@@ -420,29 +407,26 @@ public class MultiUpcallMHTests {
 		MemorySegment functionSymbol = nativeLibLookup.find("addLongAndLongFromPointerByUpcallMH").get();
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 
-		try (Arena arena = Arena.openConfined()) {
+		try (Arena arena = Arena.ofConfined()) {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addLongAndLongFromPointer,
-					FunctionDescriptor.of(JAVA_LONG, ADDRESS, JAVA_LONG), arena.scope());
-			SegmentAllocator allocator = SegmentAllocator.nativeAllocator(arena.scope());
-			MemorySegment longSegmt = allocator.allocate(JAVA_LONG, 5742457424L);
+					FunctionDescriptor.of(JAVA_LONG, ADDRESS, JAVA_LONG), arena);
+			MemorySegment longSegmt = arena.allocate(JAVA_LONG, 5742457424L);
 			long result = (long)mh.invoke(longSegmt, 6666698235L, upcallFuncAddr);
 			Assert.assertEquals(result, 12409155659L);
 		}
 
-		try (Arena arena = Arena.openConfined()) {
+		try (Arena arena = Arena.ofConfined()) {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addLongAndLongFromPointer,
-					FunctionDescriptor.of(JAVA_LONG, ADDRESS, JAVA_LONG), arena.scope());
-			SegmentAllocator allocator = SegmentAllocator.nativeAllocator(arena.scope());
-			MemorySegment longSegmt = allocator.allocate(JAVA_LONG, 5742457424L);
+					FunctionDescriptor.of(JAVA_LONG, ADDRESS, JAVA_LONG), arena);
+			MemorySegment longSegmt = arena.allocate(JAVA_LONG, 5742457424L);
 			long result = (long)mh.invoke(longSegmt, 6666698235L, upcallFuncAddr);
 			Assert.assertEquals(result, 12409155659L);
 		}
 
-		try (Arena arena = Arena.openConfined()) {
+		try (Arena arena = Arena.ofConfined()) {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addLongAndLongFromPointer,
-					FunctionDescriptor.of(JAVA_LONG, ADDRESS, JAVA_LONG), arena.scope());
-			SegmentAllocator allocator = SegmentAllocator.nativeAllocator(arena.scope());
-			MemorySegment longSegmt = allocator.allocate(JAVA_LONG, 5742457424L);
+					FunctionDescriptor.of(JAVA_LONG, ADDRESS, JAVA_LONG), arena);
+			MemorySegment longSegmt = arena.allocate(JAVA_LONG, 5742457424L);
 			long result = (long)mh.invoke(longSegmt, 6666698235L, upcallFuncAddr);
 			Assert.assertEquals(result, 12409155659L);
 		}
@@ -454,19 +438,19 @@ public class MultiUpcallMHTests {
 		MemorySegment functionSymbol = nativeLibLookup.find("addFloatAndFloatFromNativePtrByUpcallMH").get();
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 
-		try (Arena arena = Arena.openConfined()) {
+		try (Arena arena = Arena.ofConfined()) {
 			MemorySegment upcallFuncAddr1 = linker.upcallStub(UpcallMethodHandles.MH_addFloatAndFloatFromPointer,
-					FunctionDescriptor.of(JAVA_FLOAT, JAVA_FLOAT, ADDRESS), arena.scope());
+					FunctionDescriptor.of(JAVA_FLOAT, JAVA_FLOAT, ADDRESS), arena);
 			float result = (float)mh.invoke(5.74F, upcallFuncAddr1);
 			Assert.assertEquals(result, 12.53F, 0.01F);
 
 			MemorySegment upcallFuncAddr2 = linker.upcallStub(UpcallMethodHandles.MH_addFloatAndFloatFromPointer,
-					FunctionDescriptor.of(JAVA_FLOAT, JAVA_FLOAT, ADDRESS), arena.scope());
+					FunctionDescriptor.of(JAVA_FLOAT, JAVA_FLOAT, ADDRESS), arena);
 			result = (float)mh.invoke(5.74F, upcallFuncAddr2);
 			Assert.assertEquals(result, 12.53F, 0.01F);
 
 			MemorySegment upcallFuncAddr3 = linker.upcallStub(UpcallMethodHandles.MH_addFloatAndFloatFromPointer,
-					FunctionDescriptor.of(JAVA_FLOAT, JAVA_FLOAT, ADDRESS), arena.scope());
+					FunctionDescriptor.of(JAVA_FLOAT, JAVA_FLOAT, ADDRESS), arena);
 			result = (float)mh.invoke(5.74F, upcallFuncAddr3);
 			Assert.assertEquals(result, 12.53F, 0.01F);
 		}
@@ -478,23 +462,23 @@ public class MultiUpcallMHTests {
 		MemorySegment functionSymbol = nativeLibLookup.find("addFloatAndFloatFromNativePtrByUpcallMH").get();
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 
-		try (Arena arena = Arena.openConfined()) {
+		try (Arena arena = Arena.ofConfined()) {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addFloatAndFloatFromPointer,
-					FunctionDescriptor.of(JAVA_FLOAT, JAVA_FLOAT, ADDRESS), arena.scope());
+					FunctionDescriptor.of(JAVA_FLOAT, JAVA_FLOAT, ADDRESS), arena);
 			float result = (float)mh.invoke(5.74F, upcallFuncAddr);
 			Assert.assertEquals(result, 12.53F, 0.01F);
 		}
 
-		try (Arena arena = Arena.openConfined()) {
+		try (Arena arena = Arena.ofConfined()) {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addFloatAndFloatFromPointer,
-					FunctionDescriptor.of(JAVA_FLOAT, JAVA_FLOAT, ADDRESS), arena.scope());
+					FunctionDescriptor.of(JAVA_FLOAT, JAVA_FLOAT, ADDRESS), arena);
 			float result = (float)mh.invoke(5.74F, upcallFuncAddr);
 			Assert.assertEquals(result, 12.53F, 0.01F);
 		}
 
-		try (Arena arena = Arena.openConfined()) {
+		try (Arena arena = Arena.ofConfined()) {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addFloatAndFloatFromPointer,
-					FunctionDescriptor.of(JAVA_FLOAT, JAVA_FLOAT, ADDRESS), arena.scope());
+					FunctionDescriptor.of(JAVA_FLOAT, JAVA_FLOAT, ADDRESS), arena);
 			float result = (float)mh.invoke(5.74F, upcallFuncAddr);
 			Assert.assertEquals(result, 12.53F, 0.01F);
 		}
@@ -506,28 +490,26 @@ public class MultiUpcallMHTests {
 		MemorySegment functionSymbol = nativeLibLookup.find("addDoubleAndDoubleFromPtr_RetPtr_ByUpcallMH").get();
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 
-		try (Arena arena = Arena.openConfined()) {
-			SegmentAllocator allocator = SegmentAllocator.nativeAllocator(arena.scope());
-
+		try (Arena arena = Arena.ofConfined()) {
 			MemorySegment upcallFuncAddr1 = linker.upcallStub(UpcallMethodHandles.MH_addDoubleAndDoubleFromPtr_RetPtr,
-					FunctionDescriptor.of(ADDRESS, ADDRESS, JAVA_DOUBLE), arena.scope());
-			MemorySegment doubleSegmt1 = allocator.allocate(JAVA_DOUBLE, 1159.748D);
+					FunctionDescriptor.of(ADDRESS, ADDRESS, JAVA_DOUBLE), arena);
+			MemorySegment doubleSegmt1 = arena.allocate(JAVA_DOUBLE, 1159.748D);
 			MemorySegment resultAddr1 = (MemorySegment)mh.invoke(doubleSegmt1, 1262.795D, upcallFuncAddr1);
-			MemorySegment resultSegmt1 = MemorySegment.ofAddress(resultAddr1.address(), JAVA_DOUBLE.byteSize(), arena.scope());
+			MemorySegment resultSegmt1 = resultAddr1.reinterpret(JAVA_DOUBLE.byteSize());
 			Assert.assertEquals(resultSegmt1.get(JAVA_DOUBLE, 0), 2422.543D, 0.001D);
 
 			MemorySegment upcallFuncAddr2 = linker.upcallStub(UpcallMethodHandles.MH_addDoubleAndDoubleFromPtr_RetPtr,
-					FunctionDescriptor.of(ADDRESS, ADDRESS, JAVA_DOUBLE), arena.scope());
-			MemorySegment doubleSegmt2 = allocator.allocate(JAVA_DOUBLE, 1159.748D);
+					FunctionDescriptor.of(ADDRESS, ADDRESS, JAVA_DOUBLE), arena);
+			MemorySegment doubleSegmt2 = arena.allocate(JAVA_DOUBLE, 1159.748D);
 			MemorySegment resultAddr2 = (MemorySegment)mh.invoke(doubleSegmt2, 1262.795D, upcallFuncAddr2);
-			MemorySegment resultSegmt2 = MemorySegment.ofAddress(resultAddr2.address(), JAVA_DOUBLE.byteSize(), arena.scope());
+			MemorySegment resultSegmt2 = resultAddr2.reinterpret(JAVA_DOUBLE.byteSize());
 			Assert.assertEquals(resultSegmt2.get(JAVA_DOUBLE, 0), 2422.543D, 0.001D);
 
 			MemorySegment upcallFuncAddr3 = linker.upcallStub(UpcallMethodHandles.MH_addDoubleAndDoubleFromPtr_RetPtr,
-					FunctionDescriptor.of(ADDRESS, ADDRESS, JAVA_DOUBLE), arena.scope());
-			MemorySegment doubleSegmt3 = allocator.allocate(JAVA_DOUBLE, 1159.748D);
+					FunctionDescriptor.of(ADDRESS, ADDRESS, JAVA_DOUBLE), arena);
+			MemorySegment doubleSegmt3 = arena.allocate(JAVA_DOUBLE, 1159.748D);
 			MemorySegment resultAddr3 = (MemorySegment)mh.invoke(doubleSegmt3, 1262.795D, upcallFuncAddr3);
-			MemorySegment resultSegmt3 = MemorySegment.ofAddress(resultAddr3.address(), JAVA_DOUBLE.byteSize(), arena.scope());
+			MemorySegment resultSegmt3 = resultAddr3.reinterpret(JAVA_DOUBLE.byteSize());
 			Assert.assertEquals(resultSegmt3.get(JAVA_DOUBLE, 0), 2422.543D, 0.001D);
 		}
 	}
@@ -538,33 +520,30 @@ public class MultiUpcallMHTests {
 		MemorySegment functionSymbol = nativeLibLookup.find("addDoubleAndDoubleFromPtr_RetPtr_ByUpcallMH").get();
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 
-		try (Arena arena = Arena.openConfined()) {
+		try (Arena arena = Arena.ofConfined()) {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addDoubleAndDoubleFromPtr_RetPtr,
-					FunctionDescriptor.of(ADDRESS, ADDRESS, JAVA_DOUBLE), arena.scope());
-			SegmentAllocator allocator = SegmentAllocator.nativeAllocator(arena.scope());
-			MemorySegment doubleSegmt = allocator.allocate(JAVA_DOUBLE, 1159.748D);
+					FunctionDescriptor.of(ADDRESS, ADDRESS, JAVA_DOUBLE), arena);
+			MemorySegment doubleSegmt = arena.allocate(JAVA_DOUBLE, 1159.748D);
 			MemorySegment resultAddr = (MemorySegment)mh.invoke(doubleSegmt, 1262.795D, upcallFuncAddr);
-			MemorySegment resultSegmt = MemorySegment.ofAddress(resultAddr.address(), JAVA_DOUBLE.byteSize(), arena.scope());
+			MemorySegment resultSegmt = resultAddr.reinterpret(JAVA_DOUBLE.byteSize());
 			Assert.assertEquals(resultSegmt.get(JAVA_DOUBLE, 0), 2422.543D, 0.001D);
 		}
 
-		try (Arena arena = Arena.openConfined()) {
+		try (Arena arena = Arena.ofConfined()) {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addDoubleAndDoubleFromPtr_RetPtr,
-					FunctionDescriptor.of(ADDRESS, ADDRESS, JAVA_DOUBLE), arena.scope());
-			SegmentAllocator allocator = SegmentAllocator.nativeAllocator(arena.scope());
-			MemorySegment doubleSegmt = allocator.allocate(JAVA_DOUBLE, 1159.748D);
+					FunctionDescriptor.of(ADDRESS, ADDRESS, JAVA_DOUBLE), arena);
+			MemorySegment doubleSegmt = arena.allocate(JAVA_DOUBLE, 1159.748D);
 			MemorySegment resultAddr = (MemorySegment)mh.invoke(doubleSegmt, 1262.795D, upcallFuncAddr);
-			MemorySegment resultSegmt = MemorySegment.ofAddress(resultAddr.address(), JAVA_DOUBLE.byteSize(), arena.scope());
+			MemorySegment resultSegmt = resultAddr.reinterpret(JAVA_DOUBLE.byteSize());
 			Assert.assertEquals(resultSegmt.get(JAVA_DOUBLE, 0), 2422.543D, 0.001D);
 		}
 
-		try (Arena arena = Arena.openConfined()) {
+		try (Arena arena = Arena.ofConfined()) {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addDoubleAndDoubleFromPtr_RetPtr,
-					FunctionDescriptor.of(ADDRESS, ADDRESS, JAVA_DOUBLE), arena.scope());
-			SegmentAllocator allocator = SegmentAllocator.nativeAllocator(arena.scope());
-			MemorySegment doubleSegmt = allocator.allocate(JAVA_DOUBLE, 1159.748D);
+					FunctionDescriptor.of(ADDRESS, ADDRESS, JAVA_DOUBLE), arena);
+			MemorySegment doubleSegmt = arena.allocate(JAVA_DOUBLE, 1159.748D);
 			MemorySegment resultAddr = (MemorySegment)mh.invoke(doubleSegmt, 1262.795D, upcallFuncAddr);
-			MemorySegment resultSegmt = MemorySegment.ofAddress(resultAddr.address(), JAVA_DOUBLE.byteSize(), arena.scope());
+			MemorySegment resultSegmt = resultAddr.reinterpret(JAVA_DOUBLE.byteSize());
 			Assert.assertEquals(resultSegmt.get(JAVA_DOUBLE, 0), 2422.543D, 0.001D);
 		}
 	}

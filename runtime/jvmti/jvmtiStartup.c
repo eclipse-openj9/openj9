@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include <stdlib.h>
@@ -563,9 +563,9 @@ I_32 JNICALL
 loadAgentLibraryOnAttach(struct J9JavaVM * vm, const char * library, const char *options, UDATA decorate)
 {
 	PORT_ACCESS_FROM_JAVAVM(vm);
-	UDATA rc;
+	UDATA rc = JNI_OK;
 	UDATA optionsLength = 0;
-	UDATA libraryLength;
+	UDATA libraryLength = 0;
 	J9JVMTIAgentLibrary *agentLibrary = NULL;
 	J9JVMTIData * jvmtiData = J9JVMTI_DATA_FROM_VM(vm);
 	char loadFunctionName[J9JVMTI_BUFFER_LENGTH + 1] = {0};
@@ -574,6 +574,12 @@ loadAgentLibraryOnAttach(struct J9JavaVM * vm, const char * library, const char 
 	const char *errorMessage = NULL;
 
 	Trc_JVMTI_loadAgentLibraryOnAttach_Entry(library);
+
+	if (J9_ARE_NO_BITS_SET(vm->runtimeFlags, J9_RUNTIME_ALLOW_DYNAMIC_AGENT)) {
+		Trc_JVMTI_loadAgentLibraryOnAttach_agentLoadingDisabled();
+		rc = JNI_ERR;
+		goto exit;
+	}
 
 	Assert_JVMTI_true(NULL != library); /* Library name must be non-null. */
 
@@ -700,6 +706,16 @@ loadAgentLibrary(J9JavaVM * vm, J9JVMTIAgentLibrary * agentLibrary)
 	UDATA nameBufferLengh = 0;
 
 	Trc_JVMTI_loadAgentLibrary_Entry(agentLibrary->nativeLib.name);
+
+	/* If dynamic agent loading is disabled, the HCR/OSR flags default to off.
+	 * However, adding agents at launch is allowed. In this case we need to
+	 * enable the flags for proper functionality.
+	 */
+	if (J9_ARE_NO_BITS_SET(vm->runtimeFlags, J9_RUNTIME_ALLOW_DYNAMIC_AGENT)) {
+		omrthread_monitor_enter(vm->runtimeFlagsMutex);
+		vm->extendedRuntimeFlags |= J9_EXTENDED_RUNTIME_OSR_SAFE_POINT | J9_EXTENDED_RUNTIME_ENABLE_HCR;
+		omrthread_monitor_exit(vm->runtimeFlagsMutex);
+	}
 
 	/* Attempt linking the agent statically, looking for Agent_OnLoad_L.
 	 * If this is not found, fall back on the regular, dynamic linking way.

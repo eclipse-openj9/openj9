@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include <assert.h>
@@ -1372,7 +1372,7 @@ JVM_GetVmArguments(JNIEnv *env)
 					/* exit vm before calling jni method */
 					internalFunctions->internalExitVMToJNI(currentThread);
 
-					result = (jobjectArray)((*env)->CallObjectMethod(env, vmJniClass, mid));
+					result = (jobjectArray)((*env)->CallStaticObjectMethod(env, vmJniClass, mid));
 
 					internalFunctions->internalEnterVMFromJNI(currentThread);
 					internalFunctions->j9jni_deleteLocalRef(env, (jobject)vmJniClass);
@@ -1613,20 +1613,22 @@ JVM_AreNestMates(JNIEnv *env, jclass jClassOne, jclass jClassTwo)
 		} else {
 			J9Class *clazzOne = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, clazzObjectOne);
 			J9Class *clazzTwo = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, clazzObjectTwo);
+			J9Class *clazzOneNestHost = clazzOne->nestHost;
+			J9Class *clazzTwoNestHost = NULL;
 
-			if (NULL == clazzOne->nestHost) {
-				if (J9_VISIBILITY_ALLOWED != vmFuncs->loadAndVerifyNestHost(currentThread, clazzOne, J9_LOOK_NO_THROW)) {
+			if (NULL == clazzOneNestHost) {
+				if (J9_VISIBILITY_ALLOWED != vmFuncs->loadAndVerifyNestHost(currentThread, clazzOne, J9_LOOK_NO_THROW, &clazzOneNestHost)) {
+					goto done;
+				}
+			}
+			clazzTwoNestHost = clazzTwo->nestHost;
+			if (NULL == clazzTwoNestHost) {
+				if (J9_VISIBILITY_ALLOWED != vmFuncs->loadAndVerifyNestHost(currentThread, clazzTwo, J9_LOOK_NO_THROW, &clazzTwoNestHost)) {
 					goto done;
 				}
 			}
 
-			if (NULL == clazzTwo->nestHost) {
-				if (J9_VISIBILITY_ALLOWED != vmFuncs->loadAndVerifyNestHost(currentThread, clazzTwo, J9_LOOK_NO_THROW)) {
-					goto done;
-				}
-			}
-
-			if (clazzOne->nestHost == clazzTwo->nestHost) {
+			if (clazzOneNestHost == clazzTwoNestHost) {
 				result = JNI_TRUE;
 			}
 		}

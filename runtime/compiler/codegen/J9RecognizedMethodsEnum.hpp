@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #ifndef J9_RECOGNIZEDMETHODS_ENUM_INCL
@@ -58,6 +58,9 @@
    java_lang_Class_newInstancePrototype,
    java_lang_Class_isArray,
    java_lang_Class_isPrimitive,
+   java_lang_Class_isValue,
+   java_lang_Class_isPrimitiveClass,
+   java_lang_Class_isIdentity,
    java_lang_Class_getComponentType,
    java_lang_Class_getModifiersImpl,
    java_lang_Class_getSuperclass,
@@ -275,30 +278,6 @@
 
    java_nio_ByteOrder_nativeOrder,
 
-   // routines from the memory Fence library.  See JIT design 1598
-   java_util_concurrent_atomic_Fences_postLoadFence,
-   java_util_concurrent_atomic_Fences_preStoreFence,
-   java_util_concurrent_atomic_Fences_postStorePreLoadFence,
-   // same 3 with java.lang.Object parm
-   java_util_concurrent_atomic_Fences_postLoadFence_jlObject,
-   java_util_concurrent_atomic_Fences_preStoreFence_jlObject,
-   java_util_concurrent_atomic_Fences_postStorePreLoadFence_jlObject,
-   // as above, with java.lang.reflect.Field parm
-   java_util_concurrent_atomic_Fences_postLoadFence_jlObjectjlrField,
-   java_util_concurrent_atomic_Fences_preStoreFence_jlObjectjlrField,
-   java_util_concurrent_atomic_Fences_postStorePreLoadFence_jlObjectjlrField,
-   // for array element
-   java_util_concurrent_atomic_Fences_postLoadFence_jlObjectI,
-   java_util_concurrent_atomic_Fences_preStoreFence_jlObjectI,
-   java_util_concurrent_atomic_Fences_postStorePreLoadFence_jlObjectI,
-
-   // JSR 166y
-   //
-   java_util_concurrent_atomic_Fences_orderAccesses,
-   java_util_concurrent_atomic_Fences_orderReads,
-   java_util_concurrent_atomic_Fences_orderWrites,
-   java_util_concurrent_atomic_Fences_reachabilityFence,
-
    java_util_regex_Matcher_init,
    java_util_regex_Matcher_usePattern,
 
@@ -457,7 +436,9 @@
    jdk_internal_vm_vector_VectorSupport_store,
    jdk_internal_vm_vector_VectorSupport_binaryOp,
    jdk_internal_vm_vector_VectorSupport_blend,
+   jdk_internal_vm_vector_VectorSupport_broadcastInt,
    jdk_internal_vm_vector_VectorSupport_compare,
+   jdk_internal_vm_vector_VectorSupport_compressExpandOp,
    jdk_internal_vm_vector_VectorSupport_convert,
    jdk_internal_vm_vector_VectorSupport_fromBitsCoerced,
    jdk_internal_vm_vector_VectorSupport_maskReductionCoerced,
@@ -1126,9 +1107,10 @@
    java_lang_J9VMInternals_getInstanceDescriptionFromJ9Class64,
    java_lang_J9VMInternals_getDescriptionWordFromPtr64,
    java_lang_J9VMInternals_getSuperclass,
+   java_lang_J9VMInternals_primitiveClone,
+
    java_lang_J9VMInternals_identityHashCode,
    java_lang_J9VMInternals_fastIdentityHashCode,
-   java_lang_J9VMInternals_primitiveClone,
 
    java_util_GregorianCalendar_computeFields,
 

@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 
@@ -714,6 +714,25 @@ getNumberOfInjectedInterfaces(J9ROMClass *romClass) {
 	Assert_VMUtil_true(ptr != NULL);
 
 	return *SRP_PTR_GET(ptr, U_32*);
+}
+
+U_32*
+getPreloadInfoPtr(J9ROMClass *romClass)
+{
+	U_32 *ptr = getSRPPtr(J9ROMCLASS_OPTIONALINFO(romClass), romClass->optionalFlags, J9_ROMCLASS_OPTINFO_PRELOAD_ATTRIBUTE);
+
+	Assert_VMUtil_true(ptr != NULL);
+
+	return SRP_PTR_GET(ptr, U_32*);
+}
+
+J9UTF8*
+preloadClassNameAtIndex(U_32* preloadInfoPtr, U_32 index)
+{
+	/* SRPs to Preload name constant pool entries start after the preloadClassesCountPtr */
+	U_32* preloadClassesPtr = preloadInfoPtr + 1 + index;
+
+	return NNSRP_PTR_GET(preloadClassesPtr, J9UTF8*);
 }
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 

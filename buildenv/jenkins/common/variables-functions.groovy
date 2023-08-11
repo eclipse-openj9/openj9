@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 /*
@@ -755,6 +755,9 @@ def set_test_misc() {
         // Only add extra test labels if the user has not specified a specific TEST_NODE
         TESTS.each { id, target ->
             target['extraTestLabels'] = buildspec.getVectorField("extra_test_labels", SDK_VERSION).join('&&') ?: ''
+            if (target['extraTestLabels'].endsWith('&&')){
+                target['extraTestLabels'] = target['extraTestLabels'].substring(0, target['extraTestLabels'].length() - 2)
+            }
         }
     } else {
         TESTS.each { id, target ->

@@ -1,4 +1,4 @@
-/*[INCLUDE-IF JAVA_SPEC_VERSION >= 19]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 21]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2022
  *
@@ -18,34 +18,37 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 package openj9.internal.foreign.abi;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
+/*[IF JAVA_SPEC_VERSION >= 21]*/
+import java.util.Optional;
+/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 
-/*[IF JAVA_SPEC_VERSION >= 20]*/
+/*[IF JAVA_SPEC_VERSION >= 21]*/
+import java.lang.foreign.AddressLayout;
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.SegmentScope;
+import java.lang.foreign.MemoryLayout;
+import java.lang.foreign.MemorySegment.Scope;
+import jdk.internal.foreign.Utils;
+import jdk.internal.foreign.abi.LinkerOptions;
 import jdk.internal.foreign.MemorySessionImpl;
-/*[ELSEIF JAVA_SPEC_VERSION == 19]*/
-import java.lang.foreign.Addressable;
-import java.lang.foreign.MemoryAddress;
-import java.lang.foreign.MemorySegment;
-import java.lang.foreign.MemorySession;
-/*[ELSE] JAVA_SPEC_VERSION == 19 */
+/*[ELSE] JAVA_SPEC_VERSION >= 21 */
 import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
-/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 
 /**
  * The meta data consists of the callee MH and a cache of 2 elements for MH resolution,
  * which are used to generate an upcall handler to the requested java method.
  */
+@SuppressWarnings("nls")
 final class UpcallMHMetaData {
 
 	/* The target method handle intended for upcall which is placed on the java stack
@@ -67,13 +70,11 @@ final class UpcallMHMetaData {
 	 */
 	private Object[] nativeArgArray;
 
-	/*[IF JAVA_SPEC_VERSION >= 20]*/
-	private SegmentScope scope;
-	/*[ELSEIF JAVA_SPEC_VERSION == 19]*/
-	private MemorySession session;
-	/*[ELSE] JAVA_SPEC_VERSION == 19 */
+	/*[IF JAVA_SPEC_VERSION >= 21]*/
+	private Scope scope;
+	/*[ELSE] JAVA_SPEC_VERSION >= 21 */
 	private ResourceScope scope;
-	/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 
 	private static synchronized native void resolveUpcallDataInfo();
 
@@ -85,116 +86,106 @@ final class UpcallMHMetaData {
 		resolveUpcallDataInfo();
 	}
 
-	/*[IF JAVA_SPEC_VERSION >= 20]*/
-	UpcallMHMetaData(MethodHandle targetHandle, int nativeArgCount, SegmentScope scope)
-	/*[ELSEIF JAVA_SPEC_VERSION == 19]*/
-	UpcallMHMetaData(MethodHandle targetHandle, int nativeArgCount, MemorySession session)
-	/*[ELSE] JAVA_SPEC_VERSION == 19 */
+	/*[IF JAVA_SPEC_VERSION >= 21]*/
+	UpcallMHMetaData(MethodHandle targetHandle, int nativeArgCount, Scope scope, LinkerOptions options)
+	/*[ELSE] JAVA_SPEC_VERSION >= 21 */
 	UpcallMHMetaData(MethodHandle targetHandle, int nativeArgCount, ResourceScope scope)
-	/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 	{
 		calleeMH = targetHandle;
 		calleeType = targetHandle.type();
 		nativeArgArray = new Object[nativeArgCount];
-		/* Only hold the confined session/scope (owned by the current thread)
-		 * or the shared session/scope will be used to construct a MemorySegment
-		 * object for argument in the native dispatcher in upcall.
+		/* Only hold the confined scope (owned by the current thread) or
+		 * the global scope (created once and shared by any thread) will
+		 * be used to construct a MemorySegment object for argument in
+		 * the upcall dispatcher.
 		 */
-		/*[IF JAVA_SPEC_VERSION >= 20]*/
-		this.scope = ((scope != null) && (((MemorySessionImpl)scope).ownerThread() != null)) ? scope : Arena.openShared().scope();
-		/*[ELSEIF JAVA_SPEC_VERSION == 19]*/
-		this.session = ((session != null) && (session.ownerThread() != null)) ? session : MemorySession.openShared();
-		/*[ELSE] JAVA_SPEC_VERSION == 19 */
-		this.scope = ((scope != null) && (scope.ownerThread() != null)) ? scope : ResourceScope.newSharedScope();
-		/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
+		/*[IF JAVA_SPEC_VERSION >= 21]*/
+		this.scope = ((scope != null) && (((MemorySessionImpl)scope).ownerThread() != null)) ? scope : Arena.global().scope();
+		/*[ELSE] JAVA_SPEC_VERSION >= 21 */
+		this.scope = ((scope != null) && (scope.ownerThread() != null)) ? scope : ResourceScope.globalScope();
+		/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 	}
 
-	/* Determine whether the memory segment of the passed-in/returned pointer is allocated
-	 * in the native memory or not and return its native address if valid.
+	/*[IF JAVA_SPEC_VERSION >= 21]*/
+	/* Determine whether or not the native address of the passed-in/returned pointer is aligned against
+	 * its target layout's alignment and return its segment object if valid.
 	 *
 	 * Note:
-	 * The method is shared in java (downcall) and in native (upcall) via the calling-in from the dispatcher.
+	 * The method is shared in downcall and upcall.
 	 */
-	static long getNativeArgRetSegmentOfPtr(MemorySegment argRetSegmentOfPtr) {
-		/*[IF JAVA_SPEC_VERSION >= 20]*/
-		/* Verify MemorySegment.NULL as it is introduced since JDK20. */
-		if (argRetSegmentOfPtr == MemorySegment.NULL) {
-			throw new NullPointerException("A NULL memory segment is not allowed for pointer.");
+	static MemorySegment getArgRetAlignedSegmentOfPtr(long addrValue, MemoryLayout layout) {
+		AddressLayout addrLayout = (AddressLayout)layout;
+		Optional<MemoryLayout> targetLayout = addrLayout.targetLayout();
+		if (!targetLayout.isEmpty()
+			&& !Utils.isAligned(addrValue, targetLayout.get().byteAlignment())
+		) {
+			throw new IllegalArgumentException("The alignment constraint for address (" + addrValue + ") is invalid.");
 		}
-		/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
+		return MemorySegment.ofAddress(addrValue).reinterpret(Utils.pointeeByteSize(addrLayout));
+	}
+	/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
+
+	/* Determine whether the memory segment (JDK20+) or the memory address (JDK17)
+	 * of the passed-in/returned pointer is allocated in the native memory or not.
+	 *
+	 * Note:
+	 * The method is shared in downcall and upcall.
+	 */
+	/*[IF JAVA_SPEC_VERSION >= 21]*/
+	static void validateNativeArgRetSegmentOfPtr(MemorySegment argRetSegmentOfPtr) {
+		if (argRetSegmentOfPtr == null) {
+			throw new NullPointerException("A null pointer is not allowed.");
+		}
 		if (!argRetSegmentOfPtr.isNative()) {
 			throw new IllegalArgumentException("Heap segment not allowed: " + argRetSegmentOfPtr);
 		}
-
-		/*[IF JAVA_SPEC_VERSION >= 20]*/
-		return argRetSegmentOfPtr.address();
-		/*[ELSE] JAVA_SPEC_VERSION >= 20 */
-		return argRetSegmentOfPtr.address().toRawLongValue();
-		/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 	}
-
-	/*[IF JAVA_SPEC_VERSION <= 19]*/
-	/* Determine whether the memory address of the passed-in/returned pointer is allocated
-	 * in the native memory or not and return its native address if valid.
-	 *
-	 * Note:
-	 * The method is shared in java (downcall) and in native (upcall) via the calling-in from the dispatcher.
-	 */
-	static long getNativeArgRetAddrOfPtr(MemoryAddress argRetAddrOfPtr) {
-		if (argRetAddrOfPtr == MemoryAddress.NULL) {
-			throw new NullPointerException("A NULL memory address is not allowed for pointer.");
+	/*[ELSE] JAVA_SPEC_VERSION >= 21 */
+	static void validateNativeArgRetAddrOfPtr(MemoryAddress argRetAddrOfPtr) {
+		if (argRetAddrOfPtr == null) {
+			throw new NullPointerException("A null pointer is not allowed.");
 		}
-
-		/*[IF JAVA_SPEC_VERSION > 17]*/
-		/* Validate the native address as MemoryAddress.isNative() is removed in JDK18/19. */
-		if (argRetAddrOfPtr.toRawLongValue() == 0)
-		/*[ELSE] JAVA_SPEC_VERSION > 17 */
-		if (!argRetAddrOfPtr.isNative())
-		/*[ENDIF] JAVA_SPEC_VERSION > 17 */
-		{
+		if (!argRetAddrOfPtr.isNative()) {
 			throw new IllegalArgumentException("A heap address is not allowed: " + argRetAddrOfPtr);
 		}
-
-		return argRetAddrOfPtr.toRawLongValue();
 	}
-	/*[ENDIF] JAVA_SPEC_VERSION <= 19 */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 
 	/* Determine whether the passed-in/returned segment is allocated in the native memory or not
-	 * and return its native address if valid; otherwise, return the address of an newly allocated
-	 * native segment with all values copied from the heap segment.
+	 * and return the segment if valid; otherwise, return the newly allocated native segment with
+	 * all values copied from the heap segment.
 	 *
 	 * Note:
-	 * The method is shared in java (downcall) and in native (upcall) via the calling-in from the dispatcher.
+	 * The method is shared in downcall and upcall.
 	 */
-	static long getNativeArgRetSegment(MemorySegment argRetSegment) {
-		/*[IF JAVA_SPEC_VERSION >= 20]*/
+	static MemorySegment getNativeArgRetSegment(MemorySegment argRetSegment) {
+		if (argRetSegment == null) {
+			throw new NullPointerException("A null value is not allowed for struct.");
+		}
+		/*[IF JAVA_SPEC_VERSION >= 21]*/
 		/* MemorySegment.NULL is introduced since JDK20+. */
-		if (argRetSegment == MemorySegment.NULL)
-		{
+		if (argRetSegment == MemorySegment.NULL) {
 			throw new NullPointerException("A NULL memory segment is not allowed for struct.");
 		}
-		/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
+		/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 		MemorySegment nativeSegment = argRetSegment;
 
 		/* Copy all values in the heap segment to a newly allocated native segment
 		 * given a heap segment with a zero address can't be accessed in native.
 		 */
 		if (!argRetSegment.isNative()) {
-			/*[IF JAVA_SPEC_VERSION >= 20]*/
-			SegmentScope scope = SegmentScope.global();
-			/*[ELSEIF JAVA_SPEC_VERSION == 19]*/
-			MemorySession scope = MemorySession.global();
-			/*[ELSE] JAVA_SPEC_VERSION == 19 */
-			ResourceScope scope = ResourceScope.globalScope();
-			/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
-			nativeSegment = MemorySegment.allocateNative(argRetSegment.byteSize(), scope);
+			/*[IF JAVA_SPEC_VERSION >= 21]*/
+			/* Use Arena.allocate() to allocate the native segment given
+			 * MemorySegment.allocateNative() is removed since JDK21+.
+			 */
+			nativeSegment = Arena.global().allocate(argRetSegment.byteSize());
+			/*[ELSE] JAVA_SPEC_VERSION >= 21 */
+			nativeSegment = MemorySegment.allocateNative(argRetSegment.byteSize(), ResourceScope.globalScope());
+			/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 			nativeSegment.copyFrom(argRetSegment);
 		}
 
-		/*[IF JAVA_SPEC_VERSION >= 20]*/
-		return nativeSegment.address();
-		/*[ELSE] JAVA_SPEC_VERSION >= 20 */
-		return nativeSegment.address().toRawLongValue();
-		/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
+		return nativeSegment;
 	}
 }

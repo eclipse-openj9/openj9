@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #ifndef vm_api_h
@@ -669,11 +669,11 @@ getJimModules(J9VMThread *currentThread);
 * @return void
 */
 void
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 calculateInstanceDescription( J9VMThread *vmThread, J9Class *ramClass, J9Class *ramSuperClass, UDATA *storage, J9ROMFieldOffsetWalkState *walkState, J9ROMFieldOffsetWalkResult *walkResult, BOOLEAN hasReferences);
-#else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#else /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
 calculateInstanceDescription( J9VMThread *vmThread, J9Class *ramClass, J9Class *ramSuperClass, UDATA *storage, J9ROMFieldOffsetWalkState *walkState, J9ROMFieldOffsetWalkResult *walkResult);
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
 
 #define NO_LOCKWORD_NEEDED (UDATA) -1
 #define LOCKWORD_NEEDED		(UDATA) -2
@@ -1666,6 +1666,14 @@ BOOLEAN
 areValueTypesEnabled(J9JavaVM *vm);
 
 /**
+ * @brief Queries whether flattenable valueTypes are enable on the JVM
+ * @param vm A handle to the J9JavaVM
+ * @return TRUE if flattenable valueTypes are enabled, FALSE otherwise
+ */
+BOOLEAN
+areFlattenableValueTypesEnabled(J9JavaVM *vm);
+
+/**
  * Checks if args in specified args array have been consumed by the JVM, if not it outputs a warning message
  * and returns FALSE. This function consults the -XXvm:ignoreUnrecognized, -XX:[+|-]IgnoreUnrecognizedVMOptions
  * and -XX:[-|+]IgnoreUnrecognizedXXColonOptions to determine if args are consumed or not.
@@ -2508,11 +2516,11 @@ instanceFieldOffsetWithSourceClass(J9VMThread *vmStruct, J9Class *clazz, U_8 *fi
 * @return J9ROMFieldOffsetWalkResult *
 */
 J9ROMFieldOffsetWalkResult *
-#ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
+#ifdef J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES
 fieldOffsetsStartDo(J9JavaVM *vm, J9ROMClass *romClass, J9Class *superClazz, J9ROMFieldOffsetWalkState *state, U_32 flags, J9FlattenedClassCache *flattenedClassCache);
-#else
+#else /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
 fieldOffsetsStartDo(J9JavaVM *vm, J9ROMClass *romClass, J9Class *superClazz, J9ROMFieldOffsetWalkState *state, U_32 flags);
-#endif
+#endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
 
 /**
  * Initialize fields offsets into FCC
@@ -2649,7 +2657,7 @@ fullTraversalFieldOffsetsStartDo(J9JavaVM *vm, J9Class *clazz, J9ROMFullTraversa
 J9ROMFieldShape *
 fullTraversalFieldOffsetsNextDo(J9ROMFullTraversalFieldOffsetWalkState *state);
 
-#ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
+#ifdef J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES
 /**
  * @brief Search for ramClass in flattened class cache
  *
@@ -2668,11 +2676,11 @@ findJ9ClassInFlattenedClassCache(J9FlattenedClassCache *flattenedClassCache, U_8
  * @param flattenedClassCache[in]	A table of flattened instance field types
  * @param nameAndSignature[in]		The name and signature of field to look for
  *
- * @return index if found 0 otherwise
+ * @return index if found, UDATA_MAX otherwise
  */
 UDATA
 findIndexInFlattenedClassCache(J9FlattenedClassCache *flattenedClassCache, J9ROMNameAndSignature *nameAndSignature);
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
 
 /**
  * Returns the offset of a qtype field.
@@ -3649,16 +3657,17 @@ trace(J9VMThread *vmStruct);
  * to the same runtime package as the class. This function requires
  * VMAccess
  *
- * @param vmThread handle to vmThread
- * @param clazz the class to search the nest host
- * @param options lookup options
+ * @param[in] vmThread handle to vmThread
+ * @param[in] clazz the class to search the nest host
+ * @param[in] options lookup options
+ * @param[out] nestHostFound the nest host of clazz
  *
  * @return 	J9_VISIBILITY_ALLOWED if success,
  * 			J9_VISIBILITY_NEST_HOST_LOADING_FAILURE_ERROR if failed to load nesthost,
  * 			J9_VISIBILITY_NEST_HOST_DIFFERENT_PACKAGE_ERROR if nesthost is not in the same runtime package
  */
 UDATA
-loadAndVerifyNestHost(J9VMThread *vmThread, J9Class *clazz, UDATA options);
+loadAndVerifyNestHost(J9VMThread *vmThread, J9Class *clazz, UDATA options, J9Class **nestHostFound);
 
 /**
  * Sets the nestmates error based on the errorCode
@@ -3960,6 +3969,20 @@ registerNativeLibrary(J9VMThread *vmThread, J9ClassLoader *classLoader, const ch
  */
 UDATA
 initializeNativeLibrary(J9JavaVM * javaVM, J9NativeLibrary* library);
+
+
+#if defined(J9VM_ZOS_3164_INTEROPERABILITY) && (JAVA_SPEC_VERSION >= 17)
+/**
+ * Invoke JNI_OnLoad/JNI_OnUnload functions in 31-bit interoperability native target library.
+ * @param vm The J9JavaVM pointer passed as first parameter to JNI_OnXLoad function
+ * @param handle The target function pointer to invoke - should be a 31-bit interop target
+ * @param isOnLoad JNI_TRUE if invoking JNI_OnLoad, JNI_FALSE if invoking JNI_OnUnload
+ * @param reserved The reserved second parameter to JNI_OnXLoad function
+ * @return the return value for JNI_OnLoad, or 0 for JNI_OnUnload
+ */
+I_32
+invoke31BitJNI_OnXLoad(J9JavaVM *vm, void *handle, jboolean isOnLoad, void *reserved);
+#endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) && (JAVA_SPEC_VERSION >= 17) */
 
 
 /* ---------------- vmhook.c ---------------- */
@@ -4750,7 +4773,7 @@ prepareClass(J9VMThread *currentThread, J9Class *clazz);
 void
 initializeClass(J9VMThread *currentThread, J9Class *clazz);
 
-/* -------------------- threadpark.c ------------ */
+/* -------------------- threadpark.cpp ------------ */
 
 /**
  * @param[in] vmThread the current thread

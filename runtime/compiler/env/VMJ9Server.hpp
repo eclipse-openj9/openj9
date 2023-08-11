@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #ifndef VMJ9SERVER_H
@@ -54,7 +54,8 @@ public:
    virtual bool needRelocationsForBodyInfoData() override                { return true; }
    virtual bool needRelocationsForPersistentInfoData() override          { return true; }
    virtual bool needRelocationsForLookupEvaluationData() override        { return true; }
-   virtual bool needRelocationsForCurrentMethodPC() override                     { return true; }
+   virtual bool needRelocationsForCurrentMethodPC() override             { return true; }
+   virtual bool needRelocationsForCurrentMethodStartPC() override        { return true; }
    virtual bool isPortableSCCEnabled() override;
    virtual void markHotField(TR::Compilation *, TR::SymbolReference *, TR_OpaqueClassBlock *, bool) override { return; }
    virtual bool isClassLibraryMethod(TR_OpaqueMethodBlock *method, bool vettedForAOT) override;
@@ -160,6 +161,7 @@ public:
    virtual TR_OpaqueMethodBlock *getMethodFromClass(TR_OpaqueClassBlock *methodClass, char *methodName, char *signature, TR_OpaqueClassBlock *callingClass) override;
    virtual bool isStable(J9Class *fieldClass, int cpIndex) override;
    virtual bool isForceInline(TR_ResolvedMethod *method) override;
+   virtual bool isIntrinsicCandidate(TR_ResolvedMethod *method) override;
    virtual bool isDontInline(TR_ResolvedMethod *method) override;
    virtual bool isClassVisible(TR_OpaqueClassBlock *sourceClass, TR_OpaqueClassBlock *destClass) override;
    virtual void markClassForTenuredAlignment(TR::Compilation *comp, TR_OpaqueClassBlock *clazz, uint32_t alignFromStart) override;
@@ -234,6 +236,7 @@ public:
    virtual TR_ResolvedMethod *targetMethodFromInvokeCacheArrayMemberNameObj(TR::Compilation *comp, TR_ResolvedMethod *owningMethod, uintptr_t *invokeCacheArray) override;
    virtual TR::KnownObjectTable::Index getKnotIndexOfInvokeCacheArrayAppendixElement(TR::Compilation *comp, uintptr_t *invokeCacheArray) override;
    virtual TR::SymbolReference* refineInvokeCacheElementSymRefWithKnownObjectIndex(TR::Compilation *comp, TR::SymbolReference *originalSymRef, uintptr_t *invokeCacheArray) override;
+   virtual bool isInvokeCacheEntryAnArray(uintptr_t *invokeCacheArray) override;
 
    virtual J9JNIMethodID* jniMethodIdFromMemberName(uintptr_t memberName) override;
    virtual J9JNIMethodID* jniMethodIdFromMemberName(TR::Compilation* comp, TR::KnownObjectTable::Index objIndex) override;
@@ -289,6 +292,7 @@ public:
    virtual bool       supportsFastNanoTime() override                          { return false; }
    virtual bool       needRelocationsForStatics() override                     { return true; }
    virtual bool       needRelocationsForCurrentMethodPC() override             { return true; }
+   virtual bool       needRelocationsForCurrentMethodStartPC() override        { return true; }
    virtual bool       needRelocationsForLookupEvaluationData() override        { return true; }
    virtual bool       needRelocationsForBodyInfoData() override                { return true; }
    virtual bool       needRelocationsForPersistentInfoData() override          { return true; }
@@ -346,8 +350,6 @@ public:
    virtual bool sameClassLoaders(TR_OpaqueClassBlock *, TR_OpaqueClassBlock *) override { return false; }
    virtual bool isUnloadAssumptionRequired(TR_OpaqueClassBlock *, TR_ResolvedMethod *) override { return true; }
    virtual bool classHasBeenExtended(TR_OpaqueClassBlock *) override { return true; }
-   virtual bool isGetImplInliningSupported() override { return false; }
-   virtual bool isGetImplAndRefersToInliningSupported() override { return false; }
    virtual TR_ResolvedMethod * getObjectNewInstanceImplMethod(TR_Memory *) override { return NULL; }
    virtual TR::CodeCache * getResolvedTrampoline(TR::Compilation *, TR::CodeCache* curCache, J9Method * method, bool inBinaryEncoding) override { return 0; }
    virtual intptr_t methodTrampolineLookup(TR::Compilation *, TR::SymbolReference *symRef, void *callSite) override { TR_ASSERT_FATAL(0, "methodTrampolineLookup not implemented for AOT");  return 0; }

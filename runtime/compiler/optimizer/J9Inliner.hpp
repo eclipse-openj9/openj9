@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #ifndef INLINERTEMPFORJ9_INCL
@@ -170,6 +170,7 @@ class TR_J9InlinerPolicy : public OMR_InlinerPolicy
    friend class TR_J9InlinerUtil;
    friend class TR_InlinerBase;
    friend class TR_MultipleCallTargetInliner;
+   friend class TR_J9EstimateCodeSize;
    public:
       TR_J9InlinerPolicy(TR::Compilation *comp);
       virtual bool inlineRecognizedMethod(TR::RecognizedMethod method);
@@ -246,6 +247,7 @@ class TR_J9InlinerPolicy : public OMR_InlinerPolicy
       TR::Node *     genCompressedRefs(TR::Node *, bool genTT = true, int32_t isLoad = 1);
       void genCodeForUnsafeGetPut(TR::Node* unsafeAddress, TR::TreeTop* callNodeTreeTop, TR::TreeTop* prevTreeTop, TR::SymbolReference* newSymbolReferenceForAddress, TR::TreeTop* directAccessTreeTop, TR::TreeTop* lowTagCmpTree, bool needNullCheck, bool isUnsafeGet, bool conversionNeeded, TR::Block * joinBlock, TR_OpaqueClassBlock *javaLangClass, TR::Node* orderedCallNode);
       virtual bool callMustBeInlined(TR_CallTarget *calltarget);
+      virtual bool callMustBeInlinedInCold(TR_ResolvedMethod *method);
       bool mustBeInlinedEvenInDebug(TR_ResolvedMethod * calleeMethod, TR::TreeTop *callNodeTreeTop);
       bool _tryToGenerateILForMethod (TR::ResolvedMethodSymbol* calleeSymbol, TR::ResolvedMethodSymbol* callerSymbol, TR_CallTarget* calltarget);
       bool doCorrectnessAndSizeChecksForInlineCallTarget(TR_CallStack *callStack, TR_CallTarget *calltarget, bool inlinefromgraph, TR_PrexArgInfo *argInfo);

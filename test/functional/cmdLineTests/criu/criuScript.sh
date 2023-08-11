@@ -19,7 +19,7 @@
 # [1] https://www.gnu.org/software/classpath/license.html
 # [2] https://openjdk.org/legal/assembly-exception.html
 #
-# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 #
 
 echo "start running script";
@@ -31,26 +31,29 @@ echo "start running script";
 # $5 is the APP ARGS
 # $6 is the NUM_CHECKPOINT
 # $7 is the KEEP_CHECKPOINT
+# $8 is the KEEP_TEST_OUTPUT
 
 echo "export GLIBC_TUNABLES=glibc.cpu.hwcaps=-XSAVEC,-XSAVE,-AVX2,-ERMS,-AVX,-AVX_Fast_Unaligned_Load";
 export GLIBC_TUNABLES=glibc.pthread.rseq=0:glibc.cpu.hwcaps=-XSAVEC,-XSAVE,-AVX2,-ERMS,-AVX,-AVX_Fast_Unaligned_Load
 echo "export LD_BIND_NOT=on";
 export LD_BIND_NOT=on
-
+echo "$2 -XX:+EnableCRIUSupport $3 -cp "$1/criu.jar" $4 $5 $6"
 $2 -XX:+EnableCRIUSupport $3 -cp "$1/criu.jar" $4 $5 $6 >testOutput 2>&1;
 
 if [ "$7" != true ]; then
     NUM_CHECKPOINT=$6
     for ((i=0; i<$NUM_CHECKPOINT; i++)); do
         sleep 2;
-        criu restore -D ./cpData --shell-job;
+        criu restore -D ./cpData --shell-job >criuOutput 2>&1;
     done
 fi
 
-cat testOutput;
+cat testOutput criuOutput;
 
 if  [ "$7" != true ]; then
-    rm -rf testOutput
-    echo "Removed testOutput file"
+    if [ "$8" != true ]; then
+        rm -rf testOutput criuOutput
+        echo "Removed test output files"
+    fi
 fi
 echo "finished script";

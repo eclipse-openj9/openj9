@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include "codegen/AheadOfTimeCompile.hpp"
@@ -50,7 +50,8 @@
 extern void TEMPORARY_initJ9X86TreeEvaluatorTable(TR::CodeGenerator *cg);
 
 J9::X86::CodeGenerator::CodeGenerator(TR::Compilation *comp) :
-      J9::CodeGenerator(comp),
+   J9::CodeGenerator(comp),
+   _nanoTimeTemp(NULL),
    _stackFramePaddingSizeInBytes(0)
    {
    /**
@@ -190,6 +191,23 @@ TR::Recompilation *
 J9::X86::CodeGenerator::allocateRecompilationInfo()
    {
    return TR_X86Recompilation::allocate(self()->comp());
+   }
+
+TR::SymbolReference *
+J9::X86::CodeGenerator::getNanoTimeTemp()
+   {
+   if (_nanoTimeTemp == NULL)
+      {
+      TR::AutomaticSymbol *sym;
+#if defined(LINUX) || defined(OSX)
+      sym = TR::AutomaticSymbol::create(self()->trHeapMemory(),TR::Aggregate,sizeof(struct timeval));
+#else
+      sym = TR::AutomaticSymbol::create(self()->trHeapMemory(),TR::Aggregate,8);
+#endif
+      self()->comp()->getMethodSymbol()->addAutomatic(sym);
+      _nanoTimeTemp = new (self()->trHeapMemory()) TR::SymbolReference(self()->comp()->getSymRefTab(), sym);
+      }
+   return _nanoTimeTemp;
    }
 
 void

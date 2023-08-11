@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include "compile/Compilation.hpp"
@@ -520,8 +520,21 @@ static void addEntryForFieldImpl(TR_VMField *field, TR::TypeLayoutBuilder &tlb, 
    uint32_t mergedLength = 0;
    J9UTF8 *signature = J9ROMFIELDSHAPE_SIGNATURE(field->shape);
 
-   if (TR::Compiler->om.areValueTypesEnabled() &&
-       vm->internalVMFunctions->isNameOrSignatureQtype(signature) &&
+   bool isFieldPrimitiveValueType = false;
+
+   if (TR::Compiler->om.areFlattenableValueTypesEnabled())
+      {
+      if (TR::Compiler->om.isQDescriptorForValueTypesSupported())
+         {
+         isFieldPrimitiveValueType = vm->internalVMFunctions->isNameOrSignatureQtype(signature);
+         }
+      else
+         {
+         TR_ASSERT_FATAL(false, "Support for null-restricted types without Q descriptor is to be implemented!!!");
+         }
+      }
+
+   if (isFieldPrimitiveValueType &&
        vm->internalVMFunctions->isFlattenableFieldFlattened(definingClass, field->shape))
       {
       char *prefixForChild = buildTransitiveFieldNames(prefix, prefixLength, field->shape, comp->trMemory()->currentStackRegion(), mergedLength);
@@ -1043,7 +1056,11 @@ J9::ClassEnv::classNameToSignature(const char *name, int32_t &len, TR::Compilati
       {
       len += 2;
       sig = (char *)comp->trMemory()->allocateMemory(len+1, allocKind);
-      if (clazz && TR::Compiler->om.areValueTypesEnabled() && self()->isPrimitiveValueTypeClass(clazz))
+      if (clazz &&
+         TR::Compiler->om.areFlattenableValueTypesEnabled() &&
+         TR::Compiler->om.isQDescriptorForValueTypesSupported() &&
+         self()->isPrimitiveValueTypeClass(clazz)
+         )
          sig[0] = 'Q';
       else
          sig[0] = 'L';

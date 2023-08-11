@@ -17,9 +17,11 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 package org.openj9.test.jep442.upcall;
+
+import org.testng.Assert;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -36,7 +38,6 @@ import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemoryLayout.PathElement;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.SegmentAllocator;
-import java.lang.foreign.SegmentScope;
 import java.lang.foreign.SequenceLayout;
 import java.lang.foreign.SymbolLookup;
 import java.lang.foreign.ValueLayout;
@@ -50,8 +51,7 @@ import static java.lang.foreign.ValueLayout.*;
  */
 public class UpcallMethodHandles {
 	private static final Lookup lookup = MethodHandles.lookup();
-	private static SegmentScope scope = SegmentScope.auto();
-	private static SegmentAllocator allocator = SegmentAllocator.nativeAllocator(scope);
+	private static Arena arena = Arena.ofAuto();
 	private static boolean isAixOS = System.getProperty("os.name").toLowerCase().contains("aix");
 
 	static final MethodType MT_Bool_Bool_MemSegmt = methodType(boolean.class, boolean.class, MemorySegment.class);
@@ -271,6 +271,10 @@ public class UpcallMethodHandles {
 	public static final MethodHandle MH_return254BytesFromStruct;
 	public static final MethodHandle MH_return4KBytesFromStruct;
 
+	public static final MethodHandle MH_addNegBytesFromStruct;
+	public static final MethodHandle MH_addNegShortsFromStruct;
+	public static final MethodHandle MH_captureTrivialOption;
+
 	private static Linker linker = Linker.nativeLinker();
 
 	static {
@@ -481,6 +485,10 @@ public class UpcallMethodHandles {
 			MH_return254BytesFromStruct = lookup.findStatic(UpcallMethodHandles.class, "return254BytesFromStruct", MT_MemSegmt); //$NON-NLS-1$
 			MH_return4KBytesFromStruct = lookup.findStatic(UpcallMethodHandles.class, "return4KBytesFromStruct", MT_MemSegmt); //$NON-NLS-1$
 
+			MH_addNegBytesFromStruct = lookup.findStatic(UpcallMethodHandles.class, "addNegBytesFromStruct", MT_Byte_Byte_MemSegmt.appendParameterTypes(byte.class, byte.class)); //$NON-NLS-1$
+			MH_addNegShortsFromStruct = lookup.findStatic(UpcallMethodHandles.class, "addNegShortsFromStruct", MT_Short_Short_MemSegmt.appendParameterTypes(short.class, short.class)); //$NON-NLS-1$
+			MH_captureTrivialOption = lookup.findStatic(UpcallMethodHandles.class, "captureTrivialOption", methodType(int.class, int.class)); //$NON-NLS-1$
+
 		} catch (IllegalAccessException | NoSuchMethodException e) {
 			throw new InternalError(e);
 		}
@@ -493,21 +501,21 @@ public class UpcallMethodHandles {
 	}
 
 	public static boolean addBoolAndBoolFromPointerWithOr(boolean boolArg1, MemorySegment boolArg2Addr) {
-		MemorySegment boolArg2Segmt = MemorySegment.ofAddress(boolArg2Addr.address(), JAVA_BOOLEAN.byteSize(), scope);
+		MemorySegment boolArg2Segmt = boolArg2Addr.reinterpret(JAVA_BOOLEAN.byteSize());
 		boolean result = boolArg1 || boolArg2Segmt.get(JAVA_BOOLEAN, 0);
 		return result;
 	}
 
 	public static MemorySegment addBoolAndBoolFromPtrWithOr_RetPtr(boolean boolArg1, MemorySegment boolArg2Addr) {
-		MemorySegment boolArg2Segmt = MemorySegment.ofAddress(boolArg2Addr.address(), JAVA_BOOLEAN.byteSize(), scope);
+		MemorySegment boolArg2Segmt = boolArg2Addr.reinterpret(JAVA_BOOLEAN.byteSize());
 		boolean result = boolArg1 || boolArg2Segmt.get(JAVA_BOOLEAN, 0);
-		MemorySegment resultSegmt = MemorySegment.allocateNative(JAVA_BOOLEAN, scope);
+		MemorySegment resultSegmt = arena.allocate(JAVA_BOOLEAN);
 		resultSegmt.set(JAVA_BOOLEAN, 0, result);
 		return resultSegmt;
 	}
 
 	public static MemorySegment addBoolAndBoolFromPtrWithOr_RetArgPtr(boolean boolArg1, MemorySegment boolArg2Addr) {
-		MemorySegment boolArg2Segmt = MemorySegment.ofAddress(boolArg2Addr.address(), JAVA_BOOLEAN.byteSize(), scope);
+		MemorySegment boolArg2Segmt = boolArg2Addr.reinterpret(JAVA_BOOLEAN.byteSize());
 		boolean result = boolArg1 || boolArg2Segmt.get(JAVA_BOOLEAN, 0);
 		boolArg2Segmt.set(JAVA_BOOLEAN, 0, result);
 		return boolArg2Segmt;
@@ -521,7 +529,7 @@ public class UpcallMethodHandles {
 	}
 
 	public static char createNewCharFromCharAndCharFromPointer(MemorySegment charArg1Addr, char charArg2) {
-		MemorySegment charArg1Segmt = MemorySegment.ofAddress(charArg1Addr.address(), JAVA_CHAR.byteSize(), scope);
+		MemorySegment charArg1Segmt = charArg1Addr.reinterpret(JAVA_CHAR.byteSize());
 		char charArg1 = charArg1Segmt.get(JAVA_CHAR, 0);
 		int diff = (charArg2 >= charArg1) ? (charArg2 - charArg1) : (charArg1 - charArg2);
 		diff = (diff > 5) ? 5 : diff;
@@ -530,18 +538,18 @@ public class UpcallMethodHandles {
 	}
 
 	public static MemorySegment createNewCharFromCharAndCharFromPtr_RetPtr(MemorySegment charArg1Addr, char charArg2) {
-		MemorySegment charArg1Segmt = MemorySegment.ofAddress(charArg1Addr.address(), JAVA_CHAR.byteSize(), scope);
+		MemorySegment charArg1Segmt = charArg1Addr.reinterpret(JAVA_CHAR.byteSize());
 		char charArg1 = charArg1Segmt.get(JAVA_CHAR, 0);
 		int diff = (charArg2 >= charArg1) ? (charArg2 - charArg1) : (charArg1 - charArg2);
 		diff = (diff > 5) ? 5 : diff;
 		char result = (char)(diff + 'A');
-		MemorySegment resultSegmt = MemorySegment.allocateNative(JAVA_CHAR.byteSize(), scope);
+		MemorySegment resultSegmt = arena.allocate(JAVA_CHAR);
 		resultSegmt.set(JAVA_CHAR, 0, result);
 		return resultSegmt;
 	}
 
 	public static MemorySegment createNewCharFromCharAndCharFromPtr_RetArgPtr(MemorySegment charArg1Addr, char charArg2) {
-		MemorySegment charArg1Segmt = MemorySegment.ofAddress(charArg1Addr.address(), JAVA_CHAR.byteSize(), scope);
+		MemorySegment charArg1Segmt = charArg1Addr.reinterpret(JAVA_CHAR.byteSize());
 		char charArg1 = charArg1Segmt.get(JAVA_CHAR, 0);
 		int diff = (charArg2 >= charArg1) ? (charArg2 - charArg1) : (charArg1 - charArg2);
 		diff = (diff > 5) ? 5 : diff;
@@ -556,23 +564,23 @@ public class UpcallMethodHandles {
 	}
 
 	public static byte addByteAndByteFromPointer(byte byteArg1, MemorySegment byteArg2Addr) {
-		MemorySegment byteArg2Segmt = MemorySegment.ofAddress(byteArg2Addr.address(), JAVA_BYTE.byteSize(), scope);
+		MemorySegment byteArg2Segmt = byteArg2Addr.reinterpret(JAVA_BYTE.byteSize());
 		byte byteArg2 = byteArg2Segmt.get(JAVA_BYTE, 0);
 		byte byteSum = (byte)(byteArg1 + byteArg2);
 		return byteSum;
 	}
 
 	public static MemorySegment addByteAndByteFromPtr_RetPtr(byte byteArg1, MemorySegment byteArg2Addr) {
-		MemorySegment byteArg2Segmt = MemorySegment.ofAddress(byteArg2Addr.address(), JAVA_BYTE.byteSize(), scope);
+		MemorySegment byteArg2Segmt = byteArg2Addr.reinterpret(JAVA_BYTE.byteSize());
 		byte byteArg2 = byteArg2Segmt.get(JAVA_BYTE, 0);
 		byte byteSum = (byte)(byteArg1 + byteArg2);
-		MemorySegment resultSegmt = MemorySegment.allocateNative(JAVA_BYTE.byteSize(), scope);
+		MemorySegment resultSegmt = arena.allocate(JAVA_BYTE);
 		resultSegmt.set(JAVA_BYTE, 0, byteSum);
 		return resultSegmt;
 	}
 
 	public static MemorySegment addByteAndByteFromPtr_RetArgPtr(byte byteArg1, MemorySegment byteArg2Addr) {
-		MemorySegment byteArg2Segmt = MemorySegment.ofAddress(byteArg2Addr.address(), JAVA_BYTE.byteSize(), scope);
+		MemorySegment byteArg2Segmt = byteArg2Addr.reinterpret(JAVA_BYTE.byteSize());
 		byte byteArg2 = byteArg2Segmt.get(JAVA_BYTE, 0);
 		byte byteSum = (byte)(byteArg1 + byteArg2);
 		byteArg2Segmt.set(JAVA_BYTE, 0, byteSum);
@@ -585,23 +593,23 @@ public class UpcallMethodHandles {
 	}
 
 	public static short addShortAndShortFromPointer(MemorySegment shortArg1Addr, short shortArg2) {
-		MemorySegment shortArg1Segmt = MemorySegment.ofAddress(shortArg1Addr.address(), JAVA_SHORT.byteSize(), scope);
+		MemorySegment shortArg1Segmt = shortArg1Addr.reinterpret(JAVA_SHORT.byteSize());
 		short shortArg1 = shortArg1Segmt.get(JAVA_SHORT, 0);
 		short shortSum = (short)(shortArg1 + shortArg2);
 		return shortSum;
 	}
 
 	public static MemorySegment addShortAndShortFromPtr_RetPtr(MemorySegment shortArg1Addr, short shortArg2) {
-		MemorySegment shortArg1Segmt = MemorySegment.ofAddress(shortArg1Addr.address(), JAVA_SHORT.byteSize(), scope);
+		MemorySegment shortArg1Segmt = shortArg1Addr.reinterpret(JAVA_SHORT.byteSize());
 		short shortArg1 = shortArg1Segmt.get(JAVA_SHORT, 0);
 		short shortSum = (short)(shortArg1 + shortArg2);
-		MemorySegment resultSegmt = MemorySegment.allocateNative(JAVA_SHORT.byteSize(), scope);
+		MemorySegment resultSegmt = arena.allocate(JAVA_SHORT);
 		resultSegmt.set(JAVA_SHORT, 0, shortSum);
 		return resultSegmt;
 	}
 
 	public static MemorySegment addShortAndShortFromPtr_RetArgPtr(MemorySegment shortArg1Addr, short shortArg2) {
-		MemorySegment shortArg1Segmt = MemorySegment.ofAddress(shortArg1Addr.address(), JAVA_SHORT.byteSize(), scope);
+		MemorySegment shortArg1Segmt = shortArg1Addr.reinterpret(JAVA_SHORT.byteSize());
 		short shortArg1 = shortArg1Segmt.get(JAVA_SHORT, 0);
 		short shortSum = (short)(shortArg1 + shortArg2);
 		shortArg1Segmt.set(JAVA_SHORT, 0, shortSum);
@@ -614,23 +622,23 @@ public class UpcallMethodHandles {
 	}
 
 	public static int addIntAndIntFromPointer(int intArg1, MemorySegment intArg2Addr) {
-		MemorySegment intArg2Segmt = MemorySegment.ofAddress(intArg2Addr.address(), JAVA_INT.byteSize(), scope);
+		MemorySegment intArg2Segmt = intArg2Addr.reinterpret(JAVA_INT.byteSize());
 		int intArg2 = intArg2Segmt.get(JAVA_INT, 0);
 		int intSum = intArg1 + intArg2;
 		return intSum;
 	}
 
 	public static MemorySegment addIntAndIntFromPtr_RetPtr(int intArg1, MemorySegment intArg2Addr) {
-		MemorySegment intArg2Segmt = MemorySegment.ofAddress(intArg2Addr.address(), JAVA_INT.byteSize(), scope);
+		MemorySegment intArg2Segmt = intArg2Addr.reinterpret(JAVA_INT.byteSize());
 		int intArg2 = intArg2Segmt.get(JAVA_INT, 0);
 		int intSum = intArg1 + intArg2;
-		MemorySegment resultSegmt = MemorySegment.allocateNative(JAVA_INT.byteSize(), scope);
+		MemorySegment resultSegmt = arena.allocate(JAVA_INT);
 		resultSegmt.set(JAVA_INT, 0, intSum);
 		return resultSegmt;
 	}
 
 	public static MemorySegment addIntAndIntFromPtr_RetArgPtr(int intArg1, MemorySegment intArg2Addr) {
-		MemorySegment intArg2Segmt = MemorySegment.ofAddress(intArg2Addr.address(), JAVA_INT.byteSize(), scope);
+		MemorySegment intArg2Segmt = intArg2Addr.reinterpret(JAVA_INT.byteSize());
 		int intArg2 = intArg2Segmt.get(JAVA_INT, 0);
 		int intSum = intArg1 + intArg2;
 		intArg2Segmt.set(JAVA_INT, 0, intSum);
@@ -658,23 +666,23 @@ public class UpcallMethodHandles {
 	}
 
 	public static long addLongAndLongFromPointer(MemorySegment longArg1Addr, long longArg2) {
-		MemorySegment longArg1Segmt = MemorySegment.ofAddress(longArg1Addr.address(), JAVA_LONG.byteSize(), scope);
+		MemorySegment longArg1Segmt = longArg1Addr.reinterpret(JAVA_LONG.byteSize());
 		long longArg1 = longArg1Segmt.get(JAVA_LONG, 0);
 		long longSum = longArg1 + longArg2;
 		return longSum;
 	}
 
 	public static MemorySegment addLongAndLongFromPtr_RetPtr(MemorySegment longArg1Addr, long longArg2) {
-		MemorySegment longArg1Segmt = MemorySegment.ofAddress(longArg1Addr.address(), JAVA_LONG.byteSize(), scope);
+		MemorySegment longArg1Segmt = longArg1Addr.reinterpret(JAVA_LONG.byteSize());
 		long longArg1 = longArg1Segmt.get(JAVA_LONG, 0);
 		long longSum = longArg1 + longArg2;
-		MemorySegment resultSegmt = MemorySegment.allocateNative(JAVA_LONG.byteSize(), scope);
+		MemorySegment resultSegmt = arena.allocate(JAVA_LONG);
 		resultSegmt.set(JAVA_LONG, 0, longSum);
 		return resultSegmt;
 	}
 
 	public static MemorySegment addLongAndLongFromPtr_RetArgPtr(MemorySegment longArg1Addr, long longArg2) {
-		MemorySegment longArg1Segmt = MemorySegment.ofAddress(longArg1Addr.address(), JAVA_LONG.byteSize(), scope);
+		MemorySegment longArg1Segmt = longArg1Addr.reinterpret(JAVA_LONG.byteSize());
 		long longArg1 = longArg1Segmt.get(JAVA_LONG, 0);
 		long longSum = longArg1 + longArg2;
 		longArg1Segmt.set(JAVA_LONG, 0, longSum);
@@ -687,23 +695,23 @@ public class UpcallMethodHandles {
 	}
 
 	public static float addFloatAndFloatFromPointer(float floatArg1, MemorySegment floatArg2Addr) {
-		MemorySegment floatArg2Segmt = MemorySegment.ofAddress(floatArg2Addr.address(), JAVA_FLOAT.byteSize(), scope);
+		MemorySegment floatArg2Segmt = floatArg2Addr.reinterpret(JAVA_FLOAT.byteSize());
 		float floatArg2 = floatArg2Segmt.get(JAVA_FLOAT, 0);
 		float floatSum = floatArg1 + floatArg2;
 		return floatSum;
 	}
 
 	public static MemorySegment addFloatAndFloatFromPtr_RetPtr(float floatArg1, MemorySegment floatArg2Addr) {
-		MemorySegment floatArg2Segmt = MemorySegment.ofAddress(floatArg2Addr.address(), JAVA_FLOAT.byteSize(), scope);
+		MemorySegment floatArg2Segmt = floatArg2Addr.reinterpret(JAVA_FLOAT.byteSize());
 		float floatArg2 = floatArg2Segmt.get(JAVA_FLOAT, 0);
 		float floatSum = floatArg1 + floatArg2;
-		MemorySegment resultSegmt = MemorySegment.allocateNative(JAVA_FLOAT.byteSize(), scope);
+		MemorySegment resultSegmt = arena.allocate(JAVA_FLOAT);
 		resultSegmt.set(JAVA_FLOAT, 0, floatSum);
 		return resultSegmt;
 	}
 
 	public static MemorySegment addFloatAndFloatFromPtr_RetArgPtr(float floatArg1, MemorySegment floatArg2Addr) {
-		MemorySegment floatArg2Segmt = MemorySegment.ofAddress(floatArg2Addr.address(), JAVA_FLOAT.byteSize(), scope);
+		MemorySegment floatArg2Segmt = floatArg2Addr.reinterpret(JAVA_FLOAT.byteSize());
 		float floatArg2 = floatArg2Segmt.get(JAVA_FLOAT, 0);
 		float floatSum = floatArg1 + floatArg2;
 		floatArg2Segmt.set(JAVA_FLOAT, 0, floatSum);
@@ -716,23 +724,23 @@ public class UpcallMethodHandles {
 	}
 
 	public static double addDoubleAndDoubleFromPointer(MemorySegment doubleArg1Addr, double doubleArg2) {
-		MemorySegment doubleArg1Segmt = MemorySegment.ofAddress(doubleArg1Addr.address(), JAVA_DOUBLE.byteSize(), scope);
+		MemorySegment doubleArg1Segmt = doubleArg1Addr.reinterpret(JAVA_DOUBLE.byteSize());
 		double doubleArg1 = doubleArg1Segmt.get(JAVA_DOUBLE, 0);
 		double doubleSum = doubleArg1 + doubleArg2;
 		return doubleSum;
 	}
 
 	public static MemorySegment addDoubleAndDoubleFromPtr_RetPtr(MemorySegment doubleArg1Addr, double doubleArg2) {
-		MemorySegment doubleArg1Segmt = MemorySegment.ofAddress(doubleArg1Addr.address(), JAVA_DOUBLE.byteSize(), scope);
+		MemorySegment doubleArg1Segmt = doubleArg1Addr.reinterpret(JAVA_DOUBLE.byteSize());
 		double doubleArg1 = doubleArg1Segmt.get(JAVA_DOUBLE, 0);
 		double doubleSum = doubleArg1 + doubleArg2;
-		MemorySegment resultSegmt = MemorySegment.allocateNative(JAVA_DOUBLE.byteSize(), scope);
+		MemorySegment resultSegmt = arena.allocate(JAVA_DOUBLE);
 		resultSegmt.set(JAVA_DOUBLE, 0, doubleSum);
 		return resultSegmt;
 	}
 
 	public static MemorySegment addDoubleAndDoubleFromPtr_RetArgPtr(MemorySegment doubleArg1Addr, double doubleArg2) {
-		MemorySegment doubleArg1Segmt = MemorySegment.ofAddress(doubleArg1Addr.address(), JAVA_DOUBLE.byteSize(), scope);
+		MemorySegment doubleArg1Segmt = doubleArg1Addr.reinterpret(JAVA_DOUBLE.byteSize());
 		double doubleArg1 = doubleArg1Segmt.get(JAVA_DOUBLE, 0);
 		double doubleSum = doubleArg1 + doubleArg2;
 		doubleArg1Segmt.set(JAVA_DOUBLE, 0, doubleSum);
@@ -740,8 +748,8 @@ public class UpcallMethodHandles {
 	}
 
 	public static int compare(MemorySegment argAddr1, MemorySegment argAddr2) {
-		MemorySegment arg1Segmt = MemorySegment.ofAddress(argAddr1.address(), JAVA_INT.byteSize(), scope);
-		MemorySegment arg2Segmt = MemorySegment.ofAddress(argAddr2.address(), JAVA_INT.byteSize(), scope);
+		MemorySegment arg1Segmt = argAddr1.reinterpret(JAVA_INT.byteSize());
+		MemorySegment arg2Segmt = argAddr2.reinterpret(JAVA_INT.byteSize());
 		int intArg1 = arg1Segmt.get(JAVA_INT, 0);
 		int intArg2 = arg2Segmt.get(JAVA_INT, 0);
 		return (intArg1 - intArg2);
@@ -764,13 +772,13 @@ public class UpcallMethodHandles {
 	}
 
 	public static boolean addBoolFromPointerAndBoolsFromStructWithXor(MemorySegment arg1Addr, MemorySegment arg2) {
-		MemorySegment arg1Segmt = MemorySegment.ofAddress(arg1Addr.address(), JAVA_BOOLEAN.byteSize(), scope);
+		MemorySegment arg1Segmt = arg1Addr.reinterpret(JAVA_BOOLEAN.byteSize());
 		boolean boolSum = arg1Segmt.get(JAVA_BOOLEAN, 0) ^ arg2.get(JAVA_BOOLEAN, 0) ^ arg2.get(JAVA_BOOLEAN, 1);
 		return boolSum;
 	}
 
 	public static MemorySegment addBoolFromPointerAndBoolsFromStructWithXor_returnBoolPointer(MemorySegment arg1Addr, MemorySegment arg2) {
-		MemorySegment arg1Segmt = MemorySegment.ofAddress(arg1Addr.address(), JAVA_BOOLEAN.byteSize(), scope);
+		MemorySegment arg1Segmt = arg1Addr.reinterpret(JAVA_BOOLEAN.byteSize());
 		boolean boolSum = arg1Segmt.get(JAVA_BOOLEAN, 0) ^ arg2.get(JAVA_BOOLEAN, 0) ^ arg2.get(JAVA_BOOLEAN, 1);
 		arg1Segmt.set(JAVA_BOOLEAN, 0, boolSum);
 		return arg1Addr;
@@ -778,7 +786,7 @@ public class UpcallMethodHandles {
 
 	public static boolean addBoolAndBoolsFromStructPointerWithXor(boolean arg1, MemorySegment arg2Addr) {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_BOOLEAN.withName("elem1"), JAVA_BOOLEAN.withName("elem2"));
-		MemorySegment arg2Segmt = MemorySegment.ofAddress(arg2Addr.address(), structLayout.byteSize(), scope);
+		MemorySegment arg2Segmt = arg2Addr.reinterpret(structLayout.byteSize());
 		boolean boolSum = arg1 ^ arg2Segmt.get(JAVA_BOOLEAN, 0) ^ arg2Segmt.get(JAVA_BOOLEAN, 1);
 		return boolSum;
 	}
@@ -845,7 +853,7 @@ public class UpcallMethodHandles {
 
 	public static MemorySegment add2BoolStructsWithXor_returnStruct(MemorySegment arg1, MemorySegment arg2) {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_BOOLEAN.withName("elem1"), JAVA_BOOLEAN.withName("elem2"));
-		MemorySegment boolStructSegmt = MemorySegment.allocateNative(structLayout, scope);
+		MemorySegment boolStructSegmt = arena.allocate(structLayout);
 		boolean boolStruct_Elem1 = arg1.get(JAVA_BOOLEAN, 0) ^ arg2.get(JAVA_BOOLEAN, 0);
 		boolean boolStruct_Elem2 = arg1.get(JAVA_BOOLEAN, 1) ^ arg2.get(JAVA_BOOLEAN, 1);
 		boolStructSegmt.set(JAVA_BOOLEAN, 0, boolStruct_Elem1);
@@ -855,7 +863,7 @@ public class UpcallMethodHandles {
 
 	public static MemorySegment add2BoolStructsWithXor_returnStructPointer(MemorySegment arg1Addr, MemorySegment arg2) {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_BOOLEAN.withName("elem1"), JAVA_BOOLEAN.withName("elem2"));
-		MemorySegment arg1Segmt = MemorySegment.ofAddress(arg1Addr.address(), structLayout.byteSize(), scope);
+		MemorySegment arg1Segmt = arg1Addr.reinterpret(structLayout.byteSize());
 		boolean boolStruct_Elem1 = arg1Segmt.get(JAVA_BOOLEAN, 0) ^ arg2.get(JAVA_BOOLEAN, 0);
 		boolean boolStruct_Elem2 = arg1Segmt.get(JAVA_BOOLEAN, 1) ^ arg2.get(JAVA_BOOLEAN, 1);
 		arg1Segmt.set(JAVA_BOOLEAN, 0, boolStruct_Elem1);
@@ -865,8 +873,8 @@ public class UpcallMethodHandles {
 
 	public static MemorySegment add3BoolStructsWithXor_returnStruct(MemorySegment arg1, MemorySegment arg2) {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_BOOLEAN.withName("elem1"),
-				JAVA_BOOLEAN.withName("elem2"), JAVA_BOOLEAN.withName("elem3"), MemoryLayout.paddingLayout(8));
-		MemorySegment boolStructSegmt = MemorySegment.allocateNative(structLayout, scope);
+				JAVA_BOOLEAN.withName("elem2"), JAVA_BOOLEAN.withName("elem3"));
+		MemorySegment boolStructSegmt = arena.allocate(structLayout);
 		boolean boolStruct_Elem1 = arg1.get(JAVA_BOOLEAN, 0) ^ arg2.get(JAVA_BOOLEAN, 0);
 		boolean boolStruct_Elem2 = arg1.get(JAVA_BOOLEAN, 1) ^ arg2.get(JAVA_BOOLEAN, 1);
 		boolean boolStruct_Elem3 = arg1.get(JAVA_BOOLEAN, 2) ^ arg2.get(JAVA_BOOLEAN, 2);
@@ -893,13 +901,13 @@ public class UpcallMethodHandles {
 	}
 
 	public static byte addByteFromPointerAndBytesFromStruct(MemorySegment arg1Addr, MemorySegment arg2) {
-		MemorySegment arg1Segmt = MemorySegment.ofAddress(arg1Addr.address(), JAVA_BYTE.byteSize(), scope);
+		MemorySegment arg1Segmt = arg1Addr.reinterpret(JAVA_BYTE.byteSize());
 		byte byteSum = (byte)(arg1Segmt.get(JAVA_BYTE, 0) + arg2.get(JAVA_BYTE, 0) + arg2.get(JAVA_BYTE, 1));
 		return byteSum;
 	}
 
 	public static MemorySegment addByteFromPointerAndBytesFromStruct_returnBytePointer(MemorySegment arg1Addr, MemorySegment arg2) {
-		MemorySegment arg1Segmt = MemorySegment.ofAddress(arg1Addr.address(), JAVA_BYTE.byteSize(), scope);
+		MemorySegment arg1Segmt = arg1Addr.reinterpret(JAVA_BYTE.byteSize());
 		byte byteSum = (byte)(arg1Segmt.get(JAVA_BYTE, 0) + arg2.get(JAVA_BYTE, 0) + arg2.get(JAVA_BYTE, 1));
 		arg1Segmt.set(JAVA_BYTE, 0, byteSum);
 		return arg1Addr;
@@ -907,7 +915,7 @@ public class UpcallMethodHandles {
 
 	public static byte addByteAndBytesFromStructPointer(byte arg1, MemorySegment arg2Addr) {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_BYTE.withName("elem1"), JAVA_BYTE.withName("elem2"));
-		MemorySegment arg2Segmt = MemorySegment.ofAddress(arg2Addr.address(), structLayout.byteSize(), scope);
+		MemorySegment arg2Segmt = arg2Addr.reinterpret(structLayout.byteSize());
 		byte byteSum = (byte)(arg1 + arg2Segmt.get(JAVA_BYTE, 0) + arg2Segmt.get(JAVA_BYTE, 1));
 		return byteSum;
 	}
@@ -976,7 +984,7 @@ public class UpcallMethodHandles {
 
 	public static MemorySegment add1ByteStructs_returnStruct(MemorySegment arg1, MemorySegment arg2) {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_BYTE.withName("elem1"));
-		MemorySegment byteStructSegmt = MemorySegment.allocateNative(structLayout, scope);
+		MemorySegment byteStructSegmt = arena.allocate(structLayout);
 		byte byteStruct_Elem1 = (byte)(arg1.get(JAVA_BYTE, 0) + arg2.get(JAVA_BYTE, 0));
 		byteStructSegmt.set(JAVA_BYTE, 0, byteStruct_Elem1);
 		return byteStructSegmt;
@@ -984,7 +992,7 @@ public class UpcallMethodHandles {
 
 	public static MemorySegment add2ByteStructs_returnStruct(MemorySegment arg1, MemorySegment arg2) {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_BYTE.withName("elem1"), JAVA_BYTE.withName("elem2"));
-		MemorySegment byteStructSegmt = MemorySegment.allocateNative(structLayout, scope);
+		MemorySegment byteStructSegmt = arena.allocate(structLayout);
 		byte byteStruct_Elem1 = (byte)(arg1.get(JAVA_BYTE, 0) + arg2.get(JAVA_BYTE, 0));
 		byte byteStruct_Elem2 = (byte)(arg1.get(JAVA_BYTE, 1) + arg2.get(JAVA_BYTE, 1));
 		byteStructSegmt.set(JAVA_BYTE, 0, byteStruct_Elem1);
@@ -994,7 +1002,7 @@ public class UpcallMethodHandles {
 
 	public static MemorySegment add2ByteStructs_returnStructPointer(MemorySegment arg1Addr, MemorySegment arg2) {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_BYTE.withName("elem1"), JAVA_BYTE.withName("elem2"));
-		MemorySegment arg1Segmt = MemorySegment.ofAddress(arg1Addr.address(), structLayout.byteSize(), scope);
+		MemorySegment arg1Segmt = arg1Addr.reinterpret(structLayout.byteSize());
 		byte byteStruct_Elem1 = (byte)(arg1Segmt.get(JAVA_BYTE, 0) + arg2.get(JAVA_BYTE, 0));
 		byte byteStruct_Elem2 = (byte)(arg1Segmt.get(JAVA_BYTE, 1) + arg2.get(JAVA_BYTE, 1));
 		arg1Segmt.set(JAVA_BYTE, 0, byteStruct_Elem1);
@@ -1003,9 +1011,9 @@ public class UpcallMethodHandles {
 	}
 
 	public static MemorySegment add3ByteStructs_returnStruct(MemorySegment arg1, MemorySegment arg2) {
-		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_BYTE.withName("elem1"), JAVA_BYTE.withName("elem2"),
-				JAVA_BYTE.withName("elem3"), MemoryLayout.paddingLayout(8));
-		MemorySegment byteStructSegmt = MemorySegment.allocateNative(structLayout, scope);
+		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_BYTE.withName("elem1"),
+				JAVA_BYTE.withName("elem2"), JAVA_BYTE.withName("elem3"));
+		MemorySegment byteStructSegmt = arena.allocate(structLayout);
 		byte byteStruct_Elem1 = (byte)(arg1.get(JAVA_BYTE, 0) + arg2.get(JAVA_BYTE, 0));
 		byte byteStruct_Elem2 = (byte)(arg1.get(JAVA_BYTE, 1) + arg2.get(JAVA_BYTE, 1));
 		byte byteStruct_Elem3 = (byte)(arg1.get(JAVA_BYTE, 2) + arg2.get(JAVA_BYTE, 2));
@@ -1029,13 +1037,13 @@ public class UpcallMethodHandles {
 	}
 
 	public static char addCharFromPointerAndCharsFromStruct(MemorySegment arg1Addr, MemorySegment arg2) {
-		MemorySegment arg1Segmt = MemorySegment.ofAddress(arg1Addr.address(), JAVA_CHAR.byteSize(), scope);
+		MemorySegment arg1Segmt = arg1Addr.reinterpret(JAVA_CHAR.byteSize());
 		char result = (char)(arg1Segmt.get(JAVA_CHAR, 0) + arg2.get(JAVA_CHAR, 0) + arg2.get(JAVA_CHAR, 2) - 2 * 'A');
 		return result;
 	}
 
 	public static MemorySegment addCharFromPointerAndCharsFromStruct_returnCharPointer(MemorySegment arg1Addr, MemorySegment arg2) {
-		MemorySegment arg1Segmt = MemorySegment.ofAddress(arg1Addr.address(), JAVA_CHAR.byteSize(), scope);
+		MemorySegment arg1Segmt = arg1Addr.reinterpret(JAVA_CHAR.byteSize());
 		char result = (char)(arg1Segmt.get(JAVA_CHAR, 0) + arg2.get(JAVA_CHAR, 0) + arg2.get(JAVA_CHAR, 2) - 2 * 'A');
 		arg1Segmt.set(JAVA_CHAR, 0, result);
 		return arg1Addr;
@@ -1043,7 +1051,7 @@ public class UpcallMethodHandles {
 
 	public static char addCharAndCharsFromStructPointer(char arg1, MemorySegment arg2Addr) {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_CHAR.withName("elem1"), JAVA_CHAR.withName("elem2"));
-		MemorySegment arg2Segmt = MemorySegment.ofAddress(arg2Addr.address(), structLayout.byteSize(), scope);
+		MemorySegment arg2Segmt = arg2Addr.reinterpret(structLayout.byteSize());
 		char result = (char)(arg1 + arg2Segmt.get(JAVA_CHAR, 0) + arg2Segmt.get(JAVA_CHAR, 2) - 2 * 'A');
 		return result;
 	}
@@ -1112,7 +1120,7 @@ public class UpcallMethodHandles {
 
 	public static MemorySegment add2CharStructs_returnStruct(MemorySegment arg1, MemorySegment arg2) {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_CHAR.withName("elem1"), JAVA_CHAR.withName("elem2"));
-		MemorySegment charStructSegmt = MemorySegment.allocateNative(structLayout, scope);
+		MemorySegment charStructSegmt = arena.allocate(structLayout);
 		char charStruct_Elem1 = (char)(arg1.get(JAVA_CHAR, 0) + arg2.get(JAVA_CHAR, 0) - 'A');
 		char charStruct_Elem2 = (char)(arg1.get(JAVA_CHAR, 2) + arg2.get(JAVA_CHAR, 2) - 'A');
 		charStructSegmt.set(JAVA_CHAR, 0, charStruct_Elem1);
@@ -1122,7 +1130,7 @@ public class UpcallMethodHandles {
 
 	public static MemorySegment add2CharStructs_returnStructPointer(MemorySegment arg1Addr, MemorySegment arg2) {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_CHAR.withName("elem1"), JAVA_CHAR.withName("elem2"));
-		MemorySegment arg1Segmt = MemorySegment.ofAddress(arg1Addr.address(), structLayout.byteSize(), scope);
+		MemorySegment arg1Segmt = arg1Addr.reinterpret(structLayout.byteSize());
 		char charStruct_Elem1 = (char)(arg1Segmt.get(JAVA_CHAR, 0) + arg2.get(JAVA_CHAR, 0) - 'A');
 		char charStruct_Elem2 = (char)(arg1Segmt.get(JAVA_CHAR, 2) + arg2.get(JAVA_CHAR, 2) - 'A');
 		arg1Segmt.set(JAVA_CHAR, 0, charStruct_Elem1);
@@ -1131,9 +1139,9 @@ public class UpcallMethodHandles {
 	}
 
 	public static MemorySegment add3CharStructs_returnStruct(MemorySegment arg1, MemorySegment arg2) {
-		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_CHAR.withName("elem1"), JAVA_CHAR.withName("elem2"),
-				JAVA_CHAR.withName("elem3"), MemoryLayout.paddingLayout(16));
-		MemorySegment charStructSegmt = MemorySegment.allocateNative(structLayout, scope);
+		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_CHAR.withName("elem1"),
+				JAVA_CHAR.withName("elem2"), JAVA_CHAR.withName("elem3"));
+		MemorySegment charStructSegmt = arena.allocate(structLayout);
 		char charStruct_Elem1 = (char)(arg1.get(JAVA_CHAR, 0) + arg2.get(JAVA_CHAR, 0) - 'A');
 		char charStruct_Elem2 = (char)(arg1.get(JAVA_CHAR, 2) + arg2.get(JAVA_CHAR, 2) - 'A');
 		char charStruct_Elem3 = (char)(arg1.get(JAVA_CHAR, 4) + arg2.get(JAVA_CHAR, 4) - 'A');
@@ -1157,13 +1165,13 @@ public class UpcallMethodHandles {
 	}
 
 	public static short addShortFromPointerAndShortsFromStruct(MemorySegment arg1Addr, MemorySegment arg2) {
-		MemorySegment arg1Segmt = MemorySegment.ofAddress(arg1Addr.address(), JAVA_SHORT.byteSize(), scope);
+		MemorySegment arg1Segmt = arg1Addr.reinterpret(JAVA_SHORT.byteSize());
 		short shortSum = (short)(arg1Segmt.get(JAVA_SHORT, 0) + arg2.get(JAVA_SHORT, 0) + arg2.get(JAVA_SHORT, 2));
 		return shortSum;
 	}
 
 	public static MemorySegment addShortFromPointerAndShortsFromStruct_returnShortPointer(MemorySegment arg1Addr, MemorySegment arg2) {
-		MemorySegment arg1Segmt = MemorySegment.ofAddress(arg1Addr.address(), JAVA_SHORT.byteSize(), scope);
+		MemorySegment arg1Segmt = arg1Addr.reinterpret(JAVA_SHORT.byteSize());
 		short shortSum = (short)(arg1Segmt.get(JAVA_SHORT, 0) + arg2.get(JAVA_SHORT, 0) + arg2.get(JAVA_SHORT, 2));
 		arg1Segmt.set(JAVA_SHORT, 0, shortSum);
 		return arg1Addr;
@@ -1171,7 +1179,7 @@ public class UpcallMethodHandles {
 
 	public static short addShortAndShortsFromStructPointer(short arg1, MemorySegment arg2Addr) {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_SHORT.withName("elem1"), JAVA_SHORT.withName("elem2"));
-		MemorySegment arg2Segmt = MemorySegment.ofAddress(arg2Addr.address(), structLayout.byteSize(), scope);
+		MemorySegment arg2Segmt = arg2Addr.reinterpret(structLayout.byteSize());
 		short shortSum = (short)(arg1 + arg2Segmt.get(JAVA_SHORT, 0) + arg2Segmt.get(JAVA_SHORT, 2));
 		return shortSum;
 	}
@@ -1240,7 +1248,7 @@ public class UpcallMethodHandles {
 
 	public static MemorySegment add2ShortStructs_returnStruct(MemorySegment arg1, MemorySegment arg2) {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_SHORT.withName("elem1"), JAVA_SHORT.withName("elem2"));
-		MemorySegment shortStructSegmt = MemorySegment.allocateNative(structLayout, scope);
+		MemorySegment shortStructSegmt = arena.allocate(structLayout);
 		short shortStruct_Elem1 = (short)(arg1.get(JAVA_SHORT, 0) + arg2.get(JAVA_SHORT, 0));
 		short shortStruct_Elem2 = (short)(arg1.get(JAVA_SHORT, 2) + arg2.get(JAVA_SHORT, 2));
 		shortStructSegmt.set(JAVA_SHORT, 0, shortStruct_Elem1);
@@ -1250,7 +1258,7 @@ public class UpcallMethodHandles {
 
 	public static MemorySegment add2ShortStructs_returnStructPointer(MemorySegment arg1Addr, MemorySegment arg2) {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_SHORT.withName("elem1"), JAVA_SHORT.withName("elem2"));
-		MemorySegment arg1Segmt = MemorySegment.ofAddress(arg1Addr.address(), structLayout.byteSize(), scope);
+		MemorySegment arg1Segmt = arg1Addr.reinterpret(structLayout.byteSize());
 		short shortStruct_Elem1 = (short)(arg1Segmt.get(JAVA_SHORT, 0) + arg2.get(JAVA_SHORT, 0));
 		short shortStruct_Elem2 = (short)(arg1Segmt.get(JAVA_SHORT, 2) + arg2.get(JAVA_SHORT, 2));
 		arg1Segmt.set(JAVA_SHORT, 0, shortStruct_Elem1);
@@ -1259,9 +1267,9 @@ public class UpcallMethodHandles {
 	}
 
 	public static MemorySegment add3ShortStructs_returnStruct(MemorySegment arg1, MemorySegment arg2) {
-		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_SHORT.withName("elem1"), JAVA_SHORT.withName("elem2"),
-				JAVA_SHORT.withName("elem3"), MemoryLayout.paddingLayout(16));
-		MemorySegment shortStructSegmt = MemorySegment.allocateNative(structLayout, scope);
+		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_SHORT.withName("elem1"),
+				JAVA_SHORT.withName("elem2"), JAVA_SHORT.withName("elem3"));
+		MemorySegment shortStructSegmt = arena.allocate(structLayout);
 		short shortStruct_Elem1 = (short)(arg1.get(JAVA_SHORT, 0) + arg2.get(JAVA_SHORT, 0));
 		short shortStruct_Elem2 = (short)(arg1.get(JAVA_SHORT, 2) + arg2.get(JAVA_SHORT, 2));
 		short shortStruct_Elem3 = (short)(arg1.get(JAVA_SHORT, 4) + arg2.get(JAVA_SHORT, 4));
@@ -1283,13 +1291,13 @@ public class UpcallMethodHandles {
 	}
 
 	public static int addIntFromPointerAndIntsFromStruct(MemorySegment arg1Addr, MemorySegment arg2) {
-		MemorySegment arg1Segmt = MemorySegment.ofAddress(arg1Addr.address(), JAVA_INT.byteSize(), scope);
+		MemorySegment arg1Segmt = arg1Addr.reinterpret(JAVA_INT.byteSize());
 		int intSum = arg1Segmt.get(JAVA_INT, 0) + arg2.get(JAVA_INT, 0) + arg2.get(JAVA_INT, 4);
 		return intSum;
 	}
 
 	public static MemorySegment addIntFromPointerAndIntsFromStruct_returnIntPointer(MemorySegment arg1Addr, MemorySegment arg2) {
-		MemorySegment arg1Segmt = MemorySegment.ofAddress(arg1Addr.address(), JAVA_INT.byteSize(), scope);
+		MemorySegment arg1Segmt = arg1Addr.reinterpret(JAVA_INT.byteSize());
 		int intSum = arg1Segmt.get(JAVA_INT, 0) + arg2.get(JAVA_INT, 0) + arg2.get(JAVA_INT, 4);
 		arg1Segmt.set(JAVA_INT, 0, intSum);
 		return arg1Addr;
@@ -1297,7 +1305,7 @@ public class UpcallMethodHandles {
 
 	public static int addIntAndIntsFromStructPointer(int arg1, MemorySegment arg2Addr) {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_INT.withName("elem1"), JAVA_INT.withName("elem2"));
-		MemorySegment arg2Segmt = MemorySegment.ofAddress(arg2Addr.address(), structLayout.byteSize(), scope);
+		MemorySegment arg2Segmt = arg2Addr.reinterpret(structLayout.byteSize());
 		int intSum = arg1 + arg2Segmt.get(JAVA_INT, 0) + arg2Segmt.get(JAVA_INT, 4);
 		return intSum;
 	}
@@ -1366,7 +1374,7 @@ public class UpcallMethodHandles {
 
 	public static MemorySegment add2IntStructs_returnStruct(MemorySegment arg1, MemorySegment arg2) {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_INT.withName("elem1"), JAVA_INT.withName("elem2"));
-		MemorySegment intStructSegmt = MemorySegment.allocateNative(structLayout, scope);
+		MemorySegment intStructSegmt = arena.allocate(structLayout);
 		int intStruct_Elem1 = arg1.get(JAVA_INT, 0) + arg2.get(JAVA_INT, 0);
 		int intStruct_Elem2 = arg1.get(JAVA_INT, 4) + arg2.get(JAVA_INT, 4);
 		intStructSegmt.set(JAVA_INT, 0, intStruct_Elem1);
@@ -1384,10 +1392,10 @@ public class UpcallMethodHandles {
 		MemorySegment functionSymbol = nativeLibLookup.find("add2IntStructs_returnStructByUpcallMH").get();
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 		MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_add2IntStructs_returnStruct_throwException,
-				FunctionDescriptor.of(structLayout, structLayout, structLayout), scope);
+				FunctionDescriptor.of(structLayout, structLayout, structLayout), arena);
 		MemorySegment resultSegmt = null;
 		try {
-			resultSegmt = (MemorySegment)mh.invoke(allocator, arg1, arg2, upcallFuncAddr);
+			resultSegmt = (MemorySegment)mh.invoke((SegmentAllocator)arena, arg1, arg2, upcallFuncAddr);
 		} catch (Throwable e) {
 			throw (IllegalArgumentException)e;
 		}
@@ -1410,7 +1418,7 @@ public class UpcallMethodHandles {
 
 	public static MemorySegment add2IntStructs_returnStructPointer(MemorySegment arg1Addr, MemorySegment arg2) {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_INT.withName("elem1"), JAVA_INT.withName("elem2"));
-		MemorySegment arg1Segmt = MemorySegment.ofAddress(arg1Addr.address(), structLayout.byteSize(), scope);
+		MemorySegment arg1Segmt = arg1Addr.reinterpret(structLayout.byteSize());
 		int intSum_Elem1 = arg1Segmt.get(JAVA_INT, 0) + arg2.get(JAVA_INT, 0);
 		int intSum_Elem2 = arg1Segmt.get(JAVA_INT, 4) + arg2.get(JAVA_INT, 4);
 		arg1Segmt.set(JAVA_INT, 0, intSum_Elem1);
@@ -1428,7 +1436,7 @@ public class UpcallMethodHandles {
 
 	public static MemorySegment add2IntStructs_returnStructPointer_heapSegmt(MemorySegment arg1Addr, MemorySegment arg2) {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_INT.withName("elem1"), JAVA_INT.withName("elem2"));
-		MemorySegment arg1Segmt = MemorySegment.ofAddress(arg1Addr.address(), structLayout.byteSize(), scope);
+		MemorySegment arg1Segmt = arg1Addr.reinterpret(structLayout.byteSize());
 		int intSum_Elem1 = arg1Segmt.get(JAVA_INT, 0) + arg2.get(JAVA_INT, 0);
 		int intSum_Elem2 = arg1Segmt.get(JAVA_INT, 4) + arg2.get(JAVA_INT, 4);
 		return MemorySegment.ofArray(new int[]{intSum_Elem1, intSum_Elem2});
@@ -1436,7 +1444,7 @@ public class UpcallMethodHandles {
 
 	public static MemorySegment add3IntStructs_returnStruct(MemorySegment arg1, MemorySegment arg2) {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_INT.withName("elem1"), JAVA_INT.withName("elem2"), JAVA_INT.withName("elem3"));
-		MemorySegment intStructSegmt = MemorySegment.allocateNative(structLayout, scope);
+		MemorySegment intStructSegmt = arena.allocate(structLayout);
 		int intStruct_Elem1 = arg1.get(JAVA_INT, 0) + arg2.get(JAVA_INT, 0);
 		int intStruct_Elem2 = arg1.get(JAVA_INT, 4) + arg2.get(JAVA_INT, 4);
 		int intStruct_Elem3 = arg1.get(JAVA_INT, 8) + arg2.get(JAVA_INT, 8);
@@ -1452,13 +1460,13 @@ public class UpcallMethodHandles {
 	}
 
 	public static long addLongFromPointerAndLongsFromStruct(MemorySegment arg1Addr, MemorySegment arg2) {
-		MemorySegment arg1Segmt = MemorySegment.ofAddress(arg1Addr.address(), JAVA_LONG.byteSize(), scope);
+		MemorySegment arg1Segmt = arg1Addr.reinterpret(JAVA_LONG.byteSize());
 		long longSum = arg1Segmt.get(JAVA_LONG, 0) + arg2.get(JAVA_LONG, 0) + arg2.get(JAVA_LONG, 8);
 		return longSum;
 	}
 
 	public static MemorySegment addLongFromPointerAndLongsFromStruct_returnLongPointer(MemorySegment arg1Addr, MemorySegment arg2) {
-		MemorySegment arg1Segmt = MemorySegment.ofAddress(arg1Addr.address(), JAVA_LONG.byteSize(), scope);
+		MemorySegment arg1Segmt = arg1Addr.reinterpret(JAVA_LONG.byteSize());
 		long longSum = arg1Segmt.get(JAVA_LONG, 0) + arg2.get(JAVA_LONG, 0) + arg2.get(JAVA_LONG, 8);
 		arg1Segmt.set(JAVA_LONG, 0, longSum);
 		return arg1Addr;
@@ -1466,7 +1474,7 @@ public class UpcallMethodHandles {
 
 	public static long addLongAndLongsFromStructPointer(long arg1, MemorySegment arg2Addr) {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_LONG.withName("elem1"), JAVA_LONG.withName("elem2"));
-		MemorySegment arg2Segmt = MemorySegment.ofAddress(arg2Addr.address(), structLayout.byteSize(), scope);
+		MemorySegment arg2Segmt = arg2Addr.reinterpret(structLayout.byteSize());
 		long longSum = arg1 + arg2Segmt.get(JAVA_LONG, 0) + arg2Segmt.get(JAVA_LONG, 8);
 		return longSum;
 	}
@@ -1535,7 +1543,7 @@ public class UpcallMethodHandles {
 
 	public static MemorySegment add2LongStructs_returnStruct(MemorySegment arg1, MemorySegment arg2) {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_LONG.withName("elem1"), JAVA_LONG.withName("elem2"));
-		MemorySegment longStructSegmt = MemorySegment.allocateNative(structLayout, scope);
+		MemorySegment longStructSegmt = arena.allocate(structLayout);
 		long longStruct_Elem1 = arg1.get(JAVA_LONG, 0) + arg2.get(JAVA_LONG, 0);
 		long longStruct_Elem2 = arg1.get(JAVA_LONG, 8) + arg2.get(JAVA_LONG, 8);
 		longStructSegmt.set(JAVA_LONG, 0, longStruct_Elem1);
@@ -1545,7 +1553,7 @@ public class UpcallMethodHandles {
 
 	public static MemorySegment add2LongStructs_returnStructPointer(MemorySegment arg1Addr, MemorySegment arg2) {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_LONG.withName("elem1"), JAVA_LONG.withName("elem2"));
-		MemorySegment arg1Segmt = MemorySegment.ofAddress(arg1Addr.address(), structLayout.byteSize(), scope);
+		MemorySegment arg1Segmt = arg1Addr.reinterpret(structLayout.byteSize());
 		long longSum_Elem1 = arg1Segmt.get(JAVA_LONG, 0) + arg2.get(JAVA_LONG, 0);
 		long longSum_Elem2 = arg1Segmt.get(JAVA_LONG, 8) + arg2.get(JAVA_LONG, 8);
 		arg1Segmt.set(JAVA_LONG, 0, longSum_Elem1);
@@ -1555,7 +1563,7 @@ public class UpcallMethodHandles {
 
 	public static MemorySegment add3LongStructs_returnStruct(MemorySegment arg1, MemorySegment arg2) {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_LONG.withName("elem1"), JAVA_LONG.withName("elem2"), JAVA_LONG.withName("elem3"));
-		MemorySegment longStructSegmt = MemorySegment.allocateNative(structLayout, scope);
+		MemorySegment longStructSegmt = arena.allocate(structLayout);
 		long longStruct_Elem1 = arg1.get(JAVA_LONG, 0) + arg2.get(JAVA_LONG, 0);
 		long longStruct_Elem2 = arg1.get(JAVA_LONG, 8) + arg2.get(JAVA_LONG, 8);
 		long longStruct_Elem3 = arg1.get(JAVA_LONG, 16) + arg2.get(JAVA_LONG, 16);
@@ -1577,13 +1585,13 @@ public class UpcallMethodHandles {
 	}
 
 	public static float addFloatFromPointerAndFloatsFromStruct(MemorySegment arg1Addr, MemorySegment arg2) {
-		MemorySegment arg1Segmt = MemorySegment.ofAddress(arg1Addr.address(), JAVA_FLOAT.byteSize(), scope);
+		MemorySegment arg1Segmt = arg1Addr.reinterpret(JAVA_FLOAT.byteSize());
 		float floatSum = arg1Segmt.get(JAVA_FLOAT, 0) + arg2.get(JAVA_FLOAT, 0) + arg2.get(JAVA_FLOAT, 4);
 		return floatSum;
 	}
 
 	public static MemorySegment addFloatFromPointerAndFloatsFromStruct_returnFloatPointer(MemorySegment arg1Addr, MemorySegment arg2) {
-		MemorySegment arg1Segmt = MemorySegment.ofAddress(arg1Addr.address(), JAVA_FLOAT.byteSize(), scope);
+		MemorySegment arg1Segmt = arg1Addr.reinterpret(JAVA_FLOAT.byteSize());
 		float floatSum = arg1Segmt.get(JAVA_FLOAT, 0) + arg2.get(JAVA_FLOAT, 0) + arg2.get(JAVA_FLOAT, 4);
 		arg1Segmt.set(JAVA_FLOAT, 0, floatSum);
 		return arg1Addr;
@@ -1591,7 +1599,7 @@ public class UpcallMethodHandles {
 
 	public static float addFloatAndFloatsFromStructPointer(float arg1, MemorySegment arg2Addr) {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_FLOAT.withName("elem1"), JAVA_FLOAT.withName("elem2"));
-		MemorySegment arg2Segmt = MemorySegment.ofAddress(arg2Addr.address(), structLayout.byteSize(), scope);
+		MemorySegment arg2Segmt = arg2Addr.reinterpret(structLayout.byteSize());
 		float floatSum = arg1 + arg2Segmt.get(JAVA_FLOAT, 0) + arg2Segmt.get(JAVA_FLOAT, 4);
 		return floatSum;
 	}
@@ -1660,7 +1668,7 @@ public class UpcallMethodHandles {
 
 	public static MemorySegment add2FloatStructs_returnStruct(MemorySegment arg1, MemorySegment arg2) {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_FLOAT.withName("elem1"), JAVA_FLOAT.withName("elem2"));
-		MemorySegment floatStructSegmt = MemorySegment.allocateNative(structLayout, scope);
+		MemorySegment floatStructSegmt = arena.allocate(structLayout);
 		float floatStruct_Elem1 = arg1.get(JAVA_FLOAT, 0) + arg2.get(JAVA_FLOAT, 0);
 		float floatStruct_Elem2 = arg1.get(JAVA_FLOAT, 4) + arg2.get(JAVA_FLOAT, 4);
 		floatStructSegmt.set(JAVA_FLOAT, 0, floatStruct_Elem1);
@@ -1670,7 +1678,7 @@ public class UpcallMethodHandles {
 
 	public static MemorySegment add2FloatStructs_returnStructPointer(MemorySegment arg1Addr, MemorySegment arg2) {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_FLOAT.withName("elem1"), JAVA_FLOAT.withName("elem2"));
-		MemorySegment arg1Segmt = MemorySegment.ofAddress(arg1Addr.address(), structLayout.byteSize(), scope);
+		MemorySegment arg1Segmt = arg1Addr.reinterpret(structLayout.byteSize());
 		float floatSum_Elem1 = arg1Segmt.get(JAVA_FLOAT, 0) + arg2.get(JAVA_FLOAT, 0);
 		float floatSum_Elem2 = arg1Segmt.get(JAVA_FLOAT, 4) + arg2.get(JAVA_FLOAT, 4);
 		arg1Segmt.set(JAVA_FLOAT, 0, floatSum_Elem1);
@@ -1684,7 +1692,7 @@ public class UpcallMethodHandles {
 		VarHandle floatHandle2 = structLayout.varHandle(PathElement.groupElement("elem2"));
 		VarHandle floatHandle3 = structLayout.varHandle(PathElement.groupElement("elem3"));
 
-		MemorySegment floatStructSegmt = MemorySegment.allocateNative(structLayout, scope);
+		MemorySegment floatStructSegmt = arena.allocate(structLayout);
 		float floatStruct_Elem1 = arg1.get(JAVA_FLOAT, 0) + arg2.get(JAVA_FLOAT, 0);
 		float floatStruct_Elem2 = arg1.get(JAVA_FLOAT, 4) + arg2.get(JAVA_FLOAT, 4);
 		float floatStruct_Elem3 = arg1.get(JAVA_FLOAT, 8) + arg2.get(JAVA_FLOAT, 8);
@@ -1700,13 +1708,13 @@ public class UpcallMethodHandles {
 	}
 
 	public static double addDoubleFromPointerAndDoublesFromStruct(MemorySegment arg1Addr, MemorySegment arg2) {
-		MemorySegment arg1Segmt = MemorySegment.ofAddress(arg1Addr.address(), JAVA_DOUBLE.byteSize(), scope);
+		MemorySegment arg1Segmt = arg1Addr.reinterpret(JAVA_DOUBLE.byteSize());
 		double doubleSum = arg1Segmt.get(JAVA_DOUBLE, 0) + arg2.get(JAVA_DOUBLE, 0) + arg2.get(JAVA_DOUBLE, 8);
 		return doubleSum;
 	}
 
 	public static MemorySegment addDoubleFromPointerAndDoublesFromStruct_returnDoublePointer(MemorySegment arg1Addr, MemorySegment arg2) {
-		MemorySegment arg1Segmt = MemorySegment.ofAddress(arg1Addr.address(), JAVA_DOUBLE.byteSize(), scope);
+		MemorySegment arg1Segmt = arg1Addr.reinterpret(JAVA_DOUBLE.byteSize());
 		double doubleSum = arg1Segmt.get(JAVA_DOUBLE, 0) + arg2.get(JAVA_DOUBLE, 0) + arg2.get(JAVA_DOUBLE, 8);
 		arg1Segmt.set(JAVA_DOUBLE, 0, doubleSum);
 		return arg1Addr;
@@ -1714,7 +1722,7 @@ public class UpcallMethodHandles {
 
 	public static double addDoubleAndDoublesFromStructPointer(double arg1, MemorySegment arg2Addr) {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_DOUBLE.withName("elem1"), JAVA_DOUBLE.withName("elem2"));
-		MemorySegment arg2Segmt = MemorySegment.ofAddress(arg2Addr.address(), structLayout.byteSize(), scope);
+		MemorySegment arg2Segmt = arg2Addr.reinterpret(structLayout.byteSize());
 		double doubleSum = arg1 + arg2Segmt.get(JAVA_DOUBLE, 0) + arg2Segmt.get(JAVA_DOUBLE, 8);
 		return doubleSum;
 	}
@@ -1783,7 +1791,7 @@ public class UpcallMethodHandles {
 
 	public static MemorySegment add2DoubleStructs_returnStruct(MemorySegment arg1, MemorySegment arg2) {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_DOUBLE.withName("elem1"), JAVA_DOUBLE.withName("elem2"));
-		MemorySegment doubleStructSegmt = MemorySegment.allocateNative(structLayout, scope);
+		MemorySegment doubleStructSegmt = arena.allocate(structLayout);
 		double doubleStruct_Elem1 = arg1.get(JAVA_DOUBLE, 0) + arg2.get(JAVA_DOUBLE, 0);
 		double doubleStruct_Elem2 = arg1.get(JAVA_DOUBLE, 8) + arg2.get(JAVA_DOUBLE, 8);
 		doubleStructSegmt.set(JAVA_DOUBLE, 0, doubleStruct_Elem1);
@@ -1793,7 +1801,7 @@ public class UpcallMethodHandles {
 
 	public static MemorySegment add2DoubleStructs_returnStructPointer(MemorySegment arg1Addr, MemorySegment arg2) {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_DOUBLE.withName("elem1"), JAVA_DOUBLE.withName("elem2"));
-		MemorySegment arg1Segmt = MemorySegment.ofAddress(arg1Addr.address(), structLayout.byteSize(), scope);
+		MemorySegment arg1Segmt = arg1Addr.reinterpret(structLayout.byteSize());
 		double doubleSum_Elem1 = arg1Segmt.get(JAVA_DOUBLE, 0) + arg2.get(JAVA_DOUBLE, 0);
 		double doubleSum_Elem2 = arg1Segmt.get(JAVA_DOUBLE, 8) + arg2.get(JAVA_DOUBLE, 8);
 		arg1Segmt.set(JAVA_DOUBLE, 0, doubleSum_Elem1);
@@ -1803,7 +1811,7 @@ public class UpcallMethodHandles {
 
 	public static MemorySegment add3DoubleStructs_returnStruct(MemorySegment arg1, MemorySegment arg2) {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_DOUBLE.withName("elem1"), JAVA_DOUBLE.withName("elem2"), JAVA_DOUBLE.withName("elem3"));
-		MemorySegment doubleStructSegmt = MemorySegment.allocateNative(structLayout, scope);
+		MemorySegment doubleStructSegmt = arena.allocate(structLayout);
 		double doubleStruct_Elem1 = arg1.get(JAVA_DOUBLE, 0) + arg2.get(JAVA_DOUBLE, 0);
 		double doubleStruct_Elem2 = arg1.get(JAVA_DOUBLE, 8) + arg2.get(JAVA_DOUBLE, 8);
 		double doubleStruct_Elem3 = arg1.get(JAVA_DOUBLE, 16) + arg2.get(JAVA_DOUBLE, 16);
@@ -1838,7 +1846,7 @@ public class UpcallMethodHandles {
 		/* The size of [int, double] on AIX/PPC 64-bit is 12 bytes without padding by default
 		 * while the same struct is 16 bytes with padding on other platforms.
 		 */
-		double structElem2 = (isAixOS) ? arg2.get(JAVA_DOUBLE.withBitAlignment(32), 4) : arg2.get(JAVA_DOUBLE, 8);
+		double structElem2 = arg2.get(JAVA_DOUBLE, isAixOS ? 4 : 8);
 		double doubleSum = arg1 + structElem1 + structElem2;
 		return doubleSum;
 	}
@@ -1853,7 +1861,7 @@ public class UpcallMethodHandles {
 		/* The size of [float, double] on AIX/PPC 64-bit is 12 bytes without padding by default
 		 * while the same struct is 16 bytes with padding on other platforms.
 		 */
-		double structElem2 = (isAixOS) ? arg2.get(JAVA_DOUBLE.withBitAlignment(32), 4) : arg2.get(JAVA_DOUBLE, 8);
+		double structElem2 = arg2.get(JAVA_DOUBLE, isAixOS ? 4 : 8);
 		double doubleSum = arg1 + structElem1 + structElem2;
 		return doubleSum;
 	}
@@ -1960,7 +1968,7 @@ public class UpcallMethodHandles {
 		/* The size of [int, double, float] on AIX/PPC 64-bit is 16 bytes without padding by default
 		 * while the same struct is 20 bytes with padding on other platforms.
 		 */
-		double structElem2 = (isAixOS) ? arg2.get(JAVA_DOUBLE.withBitAlignment(32), 4) : arg2.get(JAVA_DOUBLE, 8);
+		double structElem2 = arg2.get(JAVA_DOUBLE, isAixOS ? 4 : 8);
 		float structElem3 = arg2.get(JAVA_FLOAT, isAixOS ? 12 : 16);
 		double doubleSum = arg1 + structElem1 + structElem2 + structElem3;
 		return doubleSum;
@@ -1971,7 +1979,7 @@ public class UpcallMethodHandles {
 		/* The size of [float, double, int] on AIX/PPC 64-bit is 16 bytes without padding by default
 		 * while the same struct is 20 bytes with padding on other platforms.
 		 */
-		double structElem2 = (isAixOS) ? arg2.get(JAVA_DOUBLE.withBitAlignment(32), 4) : arg2.get(JAVA_DOUBLE, 8);
+		double structElem2 = arg2.get(JAVA_DOUBLE, isAixOS ? 4 : 8);
 		int structElem3 = arg2.get(JAVA_INT, isAixOS ? 12 : 16);
 		double doubleSum = arg1 + structElem1 + structElem2 + structElem3;
 		return doubleSum;
@@ -1982,7 +1990,7 @@ public class UpcallMethodHandles {
 		/* The size of [int, double, int] on AIX/PPC 64-bit is 16 bytes without padding by default
 		 * while the same struct is 20 bytes with padding on other platforms.
 		 */
-		double structElem2 = (isAixOS) ? arg2.get(JAVA_DOUBLE.withBitAlignment(32), 4) : arg2.get(JAVA_DOUBLE, 8);
+		double structElem2 = arg2.get(JAVA_DOUBLE, isAixOS ? 4 : 8);
 		int structElem3 = arg2.get(JAVA_INT, isAixOS ? 12 : 16);
 		double doubleSum = arg1 + structElem1 + structElem2 + structElem3;
 		return doubleSum;
@@ -1993,7 +2001,7 @@ public class UpcallMethodHandles {
 		/* The size of [float, double, float] on AIX/PPC 64-bit is 16 bytes without padding by default
 		 * while the same struct is 20 bytes with padding on other platforms.
 		 */
-		double structElem2 = (isAixOS) ? arg2.get(JAVA_DOUBLE.withBitAlignment(32), 4) : arg2.get(JAVA_DOUBLE, 8);
+		double structElem2 = arg2.get(JAVA_DOUBLE, isAixOS ? 4 : 8);
 		float structElem3 = arg2.get(JAVA_FLOAT, isAixOS ? 12 : 16);
 		double doubleSum = arg1 + structElem1 + structElem2 + structElem3;
 		return doubleSum;
@@ -2006,7 +2014,7 @@ public class UpcallMethodHandles {
 		 * 1) there is no padding between int and double.
 		 * 2) there is a 4-byte padding between double and long.
 		 */
-		double structElem2 = (isAixOS) ? arg2.get(JAVA_DOUBLE.withBitAlignment(32), 4) : arg2.get(JAVA_DOUBLE, 8);
+		double structElem2 = arg2.get(JAVA_DOUBLE, isAixOS ? 4 : 8);
 		double structElem3 = arg2.get(JAVA_LONG, 16);
 		double doubleSum = arg1 + structElem1 + structElem2 + structElem3;
 		return doubleSum;
@@ -2015,7 +2023,7 @@ public class UpcallMethodHandles {
 	public static MemorySegment return254BytesFromStruct() {
 		SequenceLayout byteArray = MemoryLayout.sequenceLayout(254, JAVA_BYTE);
 		GroupLayout structLayout = MemoryLayout.structLayout(byteArray);
-		MemorySegment byteArrStruSegment = MemorySegment.allocateNative(structLayout, scope);
+		MemorySegment byteArrStruSegment = arena.allocate(structLayout);
 
 		for (int i = 0; i < 254; i++) {
 			byteArrStruSegment.set(JAVA_BYTE, i, (byte)i);
@@ -2026,11 +2034,44 @@ public class UpcallMethodHandles {
 	public static MemorySegment return4KBytesFromStruct() {
 		SequenceLayout byteArray = MemoryLayout.sequenceLayout(4096, JAVA_BYTE);
 		GroupLayout structLayout = MemoryLayout.structLayout(byteArray);
-		MemorySegment byteArrStruSegment = MemorySegment.allocateNative(structLayout, scope);
+		MemorySegment byteArrStruSegment = arena.allocate(structLayout);
 
 		for (int i = 0; i < 4096; i++) {
 			byteArrStruSegment.set(JAVA_BYTE, i, (byte)i);
 		}
 		return byteArrStruSegment;
+	}
+
+	public static byte addNegBytesFromStruct(byte arg1, MemorySegment arg2, byte arg3, byte arg4) {
+		byte arg2_elem1 = arg2.get(JAVA_BYTE, 0);
+		byte arg2_elem2 = arg2.get(JAVA_BYTE, 1);
+
+		Assert.assertEquals((byte)-6, ((Byte)arg1).byteValue());
+		Assert.assertEquals((byte)-8, ((Byte)arg2_elem1).byteValue());
+		Assert.assertEquals((byte)-9, ((Byte)arg2_elem2).byteValue());
+		Assert.assertEquals((byte)-8, ((Byte)arg3).byteValue());
+		Assert.assertEquals((byte)-9, ((Byte)arg4).byteValue());
+
+		byte byteSum = (byte)(arg1 + arg2_elem1 + arg2_elem2 + arg3 + arg4);
+		return byteSum;
+	}
+
+	public static short addNegShortsFromStruct(short arg1,  MemorySegment arg2, short arg3, short arg4) {
+		short arg2_elem1 = arg2.get(JAVA_SHORT, 0);
+		short arg2_elem2 = arg2.get(JAVA_SHORT, 2);
+
+		Assert.assertEquals((short)-777, ((Short)arg1).shortValue());
+		Assert.assertEquals((short)-888, ((Short)arg2_elem1).shortValue());
+		Assert.assertEquals((short)-999, ((Short)arg2_elem2).shortValue());
+		Assert.assertEquals((short)-888, ((Short)arg3).shortValue());
+		Assert.assertEquals((short)-999, ((Short)arg4).shortValue());
+
+		short shortSum = (short)(arg1 + arg2_elem1 + arg2_elem2 + arg3 + arg4);
+		return shortSum;
+	}
+
+	public static int captureTrivialOption(int intArg1) {
+		Assert.fail("The method shouldn't be invoked during the trivial downcall.");
+		return intArg1;
 	}
 }

@@ -19,7 +19,7 @@
   [1] https://www.gnu.org/software/classpath/license.html
   [2] https://openjdk.org/legal/assembly-exception.html
 
-  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 -->
 
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
@@ -53,13 +53,6 @@
 			<class name="org.openj9.test.jep442.upcall.UpcallMHWithMixedSigStruTests"/>
 			<class name="org.openj9.test.jep442.upcall.UpcallMHWithPrimTests"/>
 			<class name="org.openj9.test.jep442.upcall.UpcallMHWithStructTests"/>
-		</classes>
-	</test>
-	<test name="Jep442Tests_testLinkerFfi_VaList">
-		<classes>
-			<class name="org.openj9.test.jep442.valist.ApiTests"/>
-			<class name="org.openj9.test.jep442.valist.DowncallTests"/>
-			<class name="org.openj9.test.jep442.valist.UpcallTests"/>
 		</classes>
 	</test>
 </suite>

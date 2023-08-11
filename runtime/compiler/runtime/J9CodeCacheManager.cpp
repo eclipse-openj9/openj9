@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include <algorithm>
@@ -34,6 +34,7 @@
 #include "infra/Monitor.hpp"
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
+#include "control/CompilationRuntime.hpp"
 #include "env/FrontEnd.hpp"
 #include "env/ut_j9jit.h"
 #include "infra/CriticalSection.hpp"
@@ -74,6 +75,37 @@ J9::CodeCacheManager::initialize(bool useConsolidatedCache, uint32_t numberOfCod
    _javaVM = _jitConfig->javaVM;
 
    return self()->OMR::CodeCacheManager::initialize(useConsolidatedCache, numberOfCodeCachesToCreateAtStartup);
+   }
+
+bool
+J9::CodeCacheManager::isSufficientPhysicalMemoryAvailableForAllocation(size_t requestedCodeCacheSize)
+   {
+   TR::CodeCacheConfig &config = self()->codeCacheConfig();
+   TR::CompilationInfo * compInfo = getCompilationInfo(_jitConfig);
+   bool incomplete;
+   // If swap memory is not available then no need to do further check
+   if (!compInfo->isSwapMemoryDisabled())
+      {
+      return true;
+      }
+
+   // Read the amount of free physical memory currently, bypassing the caching mechanism
+   uint64_t freePhysicalMemoryB = compInfo->computeAndCacheFreePhysicalMemory(incomplete, 0);
+   // Avoid consuming the last drop of physical memory for JIT; leave some for emergency situations
+   uint64_t safeMemReserve = (uint64_t)TR::Options::getSafeReservePhysicalMemoryValue();
+   uint64_t desiredMemory = requestedCodeCacheSize + safeMemReserve;
+
+   if (!incomplete && freePhysicalMemoryB < desiredMemory)
+      {
+      if (config.verboseCodeCache() || config.verbosePerformance())
+         TR_VerboseLog::writeLineLocked(TR_Vlog_CODECACHE, "Warning: low physical memory detected during code cache allocation, requestedCodeCacheSize=%zu, freePhysicalMemory=%zu, safeMemReserve=%zu",
+                                       requestedCodeCacheSize, (size_t)freePhysicalMemoryB, (size_t)safeMemReserve);
+      return false;
+      }
+   else
+      {
+      return true;
+      }
    }
 
 void
@@ -296,6 +328,10 @@ J9::CodeCacheManager::allocateCodeCacheSegment(size_t segmentSize,
    // For virtual allocations the size must always be a multiple of the page size
    codeCacheSizeToAllocate = (codeCacheSizeToAllocate + (vmemParams.pageSize-1)) & (~(vmemParams.pageSize-1));
    vmemParams.byteAmount = codeCacheSizeToAllocate;
+
+   // Fail code cache allocation, if the available physical memory is low
+   if (!self()->isSufficientPhysicalMemoryAvailableForAllocation(codeCacheSizeToAllocate))
+      return 0;
 
    void *defaultEndAddress = vmemParams.endAddress;
 

@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include <string.h>
@@ -330,6 +330,18 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 				if (nonfatal) {
 					return J9VMDLLMAIN_OK;
 				} else {
+#if defined(J9ZOS390)
+					if ((J9VMDLLMAIN_SILENT_EXIT_VM == rc)
+						&& J9_ARE_ALL_BITS_SET(vm->sharedCacheAPI->runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_PERSISTENT_CACHE)
+						&& J9_ARE_NO_BITS_SET(vm->sharedCacheAPI->runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_READONLY)
+					) {
+						/**
+						 * Call j9shr_guaranteed_exit() to ensure any modification to the cache is flushed to the file on disk.
+						 * For utility option printStats and its variants, J9SHR_RUNTIMEFLAG_ENABLE_READONLY is always set.
+						 */
+						j9shr_guaranteed_exit(vm, FALSE);
+					}
+#endif /* defined(J9ZOS390) */
 					return rc;
 				}
 			}

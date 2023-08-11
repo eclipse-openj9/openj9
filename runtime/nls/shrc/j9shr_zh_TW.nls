@@ -17,7 +17,7 @@
 # [1] https://www.gnu.org/software/classpath/license.html
 # [2] https://openjdk.org/legal/assembly-exception.html
 #
-# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 #
 
 # j9shr.nls
@@ -6932,4 +6932,25 @@ J9NLS_SHRC_CM_PRINTSTATS_PROCESSOR_FEATURES.sample_input_1=default
 J9NLS_SHRC_CM_PRINTSTATS_PROCESSOR_FEATURES.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_PROCESSOR_FEATURES.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_PROCESSOR_FEATURES.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_CC_MSYNC_UNSUPPORTED=\u7cfb\u7d71\u4e0d\u652f\u63f4\u5c07\u8a18\u61b6\u9ad4\u8207\u5be6\u9ad4\u5132\u5b58\u9ad4\u540c\u6b65\u5316\u3002
+# START NON-TRANSLATABLE
+J9NLS_CC_MSYNC_UNSUPPORTED.explanation=Synchronization between memory and physical storage is not supported on the runtime platform, so the feature is disabled.
+J9NLS_CC_MSYNC_UNSUPPORTED.system_action=The JVM won't force the operating system to flush changes in memory to the physical storage.
+J9NLS_CC_MSYNC_UNSUPPORTED.user_response=No action required.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_HELPTEXT_MAP31=\u5c0d\u6620 2G \u5b9a\u5740\u7bc4\u570d\u4e0b\u7684\u5171\u7528\u985e\u5225\u5feb\u53d6\u3002
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_HELPTEXT_MAP31.explanation=NOTAG
+J9NLS_SHRC_SHRINIT_HELPTEXT_MAP31.system_action=
+J9NLS_SHRC_SHRINIT_HELPTEXT_MAP31.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_OSCACHE_MMAP_MSYNC_ERROR=\u540c\u6b65\u5316\u8a18\u61b6\u9ad4\u6642\u767c\u751f\u932f\u8aa4\u3002
+# START NON-TRANSLATABLE
+J9NLS_SHRC_OSCACHE_MMAP_MSYNC_ERROR.explanation=An error has occurred in shared class processing.
+J9NLS_SHRC_OSCACHE_MMAP_MSYNC_ERROR.system_action=The JVM terminates, unless you have specified the non-fatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using shared classes.
+J9NLS_SHRC_OSCACHE_MMAP_MSYNC_ERROR.user_response=Contact your service representative.
 # END NON-TRANSLATABLE

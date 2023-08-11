@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 /**
@@ -66,7 +66,7 @@
  *   ENABLE_SUMMARY_AUTO_REFRESH: Boolean - flag to enable the downstream summary auto-refresh, default: false
  */
 
-CURRENT_RELEASES = ['8', '11', '17', '19', '20', 'next']
+CURRENT_RELEASES = ['8', '11', '17', '20', '21', 'next']
 
 SPECS = ['ppc64_aix' : CURRENT_RELEASES,
          'ppc64le_linux'  : CURRENT_RELEASES,
@@ -90,6 +90,7 @@ SPECS = ['ppc64_aix' : CURRENT_RELEASES,
          'aarch64_linux' : CURRENT_RELEASES,
          'aarch64_linux_criu': CURRENT_RELEASES,
          'aarch64_linux_gcc11' : CURRENT_RELEASES,
+         'aarch64_linux_jit' : CURRENT_RELEASES,
          'aarch64_mac' : CURRENT_RELEASES - '8',
          'ppc64_aix_ojdk292' : ['8', '11'],
          'ppc64le_linux_ojdk292' : ['8', '11'],
@@ -146,6 +147,7 @@ SHORT_NAMES = ['all' : ['ppc64le_linux','s390x_linux','x86-64_linux','ppc64_aix'
             'alinux64' : ['aarch64_linux'],
             'alinux64criu' : ['aarch64_linux_criu'],
             'alinux64gcc11' : ['aarch64_linux_gcc11'],
+            'alinux64jit' : ['aarch64_linux_jit'],
             'amac' : ['aarch64_mac'],
             'zos' : ['s390x_zos'],
             'aixojdk292' : ['ppc64_aix_ojdk292'],

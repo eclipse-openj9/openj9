@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #ifndef CONFIGURATIONDELEGATE_HPP_
@@ -37,23 +37,12 @@
 #include "GlobalAllocationManager.hpp"
 #include "Heap.hpp"
 #include "HeapRegionDescriptor.hpp"
+#include "HeapRegionDescriptorStandardExtension.hpp"
 #include "HeapRegionManager.hpp"
+#include "HeapRegionIterator.hpp"
 #include "ObjectAccessBarrier.hpp"
 #include "ObjectAllocationInterface.hpp"
 #include "StringTable.hpp"
-
-#include "OwnableSynchronizerObjectList.hpp"
-#include "ContinuationObjectList.hpp"
-#include "ReferenceObjectList.hpp"
-#include "UnfinalizedObjectList.hpp"
-
-typedef struct MM_HeapRegionDescriptorStandardExtension {
-	uintptr_t _maxListIndex; /**< Max index for _*ObjectLists[index] */
-	MM_UnfinalizedObjectList *_unfinalizedObjectLists; /**< An array of lists of unfinalized objects in this region */
-	MM_OwnableSynchronizerObjectList *_ownableSynchronizerObjectLists; /**< An array of lists of ownable synchronizer objects in this region */
-	MM_ContinuationObjectList *_continuationObjectLists; /**< An array of lists of continuation objects in this region */
-	MM_ReferenceObjectList *_referenceObjectLists; /**< An array of lists of reference objects (i.e. weak/soft/phantom) in this region */
-} MM_HeapRegionDescriptorStandardExtension;
 
 class MM_ConfigurationDelegate
 {
@@ -72,68 +61,7 @@ public:
  * Member functions
  */
 private:
-	MM_HeapRegionDescriptorStandardExtension *
-	allocateHeapRegionDescriptorExtension(MM_EnvironmentBase *env, uintptr_t listCount) {
-		uintptr_t allocSize = sizeof(MM_HeapRegionDescriptorStandardExtension) + (listCount * (sizeof(MM_UnfinalizedObjectList) + sizeof(MM_OwnableSynchronizerObjectList) + sizeof(MM_ContinuationObjectList) + sizeof(MM_ReferenceObjectList)));
-
-		MM_HeapRegionDescriptorStandardExtension *regionExtension = (MM_HeapRegionDescriptorStandardExtension *)env->getForge()->allocate(allocSize, MM_AllocationCategory::FIXED, J9_GET_CALLSITE());
-
-		if (NULL == regionExtension) {
-			return NULL;
-		}
-
-		regionExtension->_maxListIndex = listCount;
-		regionExtension->_unfinalizedObjectLists = (MM_UnfinalizedObjectList *) ((uintptr_t)regionExtension + sizeof(MM_HeapRegionDescriptorStandardExtension));
-		regionExtension->_ownableSynchronizerObjectLists = (MM_OwnableSynchronizerObjectList *) (regionExtension->_unfinalizedObjectLists + listCount);
-		regionExtension->_continuationObjectLists = (MM_ContinuationObjectList *) (regionExtension->_ownableSynchronizerObjectLists + listCount);
-		regionExtension->_referenceObjectLists = (MM_ReferenceObjectList *) (regionExtension->_continuationObjectLists + listCount);
-
-		return regionExtension;
-	}
-
-	void
-	initalizeUnfinalizedObjectList(MM_EnvironmentBase *env, MM_UnfinalizedObjectList *list)
-	{
-		new(list) MM_UnfinalizedObjectList();
-		list->setNextList(_extensions->unfinalizedObjectLists);
-		list->setPreviousList(NULL);
-		if (NULL != _extensions->unfinalizedObjectLists) {
-			_extensions->unfinalizedObjectLists->setPreviousList(list);
-		}
-		_extensions->unfinalizedObjectLists = list;
-	}
-
-	void
-	initalizeOwnableSynchronizerObjectList(MM_EnvironmentBase *env, MM_OwnableSynchronizerObjectList *list)
-	{
-		new(list) MM_OwnableSynchronizerObjectList();
-		list->setNextList(_extensions->getOwnableSynchronizerObjectLists());
-		list->setPreviousList(NULL);
-		if (NULL != _extensions->getOwnableSynchronizerObjectLists()) {
-			_extensions->getOwnableSynchronizerObjectLists()->setPreviousList(list);
-		}
-		_extensions->setOwnableSynchronizerObjectLists(list);
-	}
-
-	void
-	initalizeContinuationObjectList(MM_EnvironmentBase *env, MM_ContinuationObjectList *list)
-	{
-		new(list) MM_ContinuationObjectList();
-		list->setNextList(_extensions->getContinuationObjectLists());
-		list->setPreviousList(NULL);
-		if (NULL != _extensions->getContinuationObjectLists()) {
-			_extensions->getContinuationObjectLists()->setPreviousList(list);
-		}
-		_extensions->setContinuationObjectLists(list);
-	}
-
-	void
-	initalizeReferenceObjectList(MM_EnvironmentBase *env, MM_ReferenceObjectList *list)
-	{
-		new(list) MM_ReferenceObjectList();
-	}
 protected:
-
 public:
 	bool
 	initialize(MM_EnvironmentBase *env, MM_GCWriteBarrierType writeBarrierType, MM_GCAllocationType allocationType)
@@ -227,25 +155,50 @@ public:
 		return regionExtension;
 	}
 
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	void
+	reinitializeGCParameters(MM_EnvironmentBase* env)
+	{
+		/* reinitialize the size of Local Object Buffers */
+		uintptr_t objectListFragmentCount = (4 * _extensions->gcThreadCount) + 4;
+		_extensions->objectListFragmentCount = OMR_MAX(_extensions->objectListFragmentCount, objectListFragmentCount);
+	}
+
+	bool
+	reinitializeForRestore(MM_EnvironmentBase* env)
+	{
+		Assert_MM_true(_extensions->isStandardGC());
+
+		reinitializeGCParameters(env);
+
+		MM_HeapRegionDescriptor *region = NULL;
+		GC_HeapRegionIterator regionIterator(_extensions->heap->getHeapRegionManager());
+
+		_extensions->unfinalizedObjectLists = NULL;
+		_extensions->setOwnableSynchronizerObjectLists(NULL);
+		_extensions->setContinuationObjectLists(NULL);
+
+		while (NULL != (region = regionIterator.nextRegion())) {
+			MM_HeapRegionDescriptorStandardExtension *regionExtension = getHeapRegionDescriptorStandardExtension(env, region);
+			if (!regionExtension->reinitializeForRestore(env)) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+
 	bool
 	initializeHeapRegionDescriptorExtension(MM_EnvironmentBase *env, MM_HeapRegionDescriptor *region)
 	{
 		if (_extensions->isStandardGC()) {
 			uintptr_t listCount = _extensions->gcThreadCount;
 
-			MM_HeapRegionDescriptorStandardExtension *regionExtension = allocateHeapRegionDescriptorExtension(env, listCount);
-			if (NULL == regionExtension) {
+			region->_heapRegionDescriptorExtension = MM_HeapRegionDescriptorStandardExtension::newInstance(env, listCount);
+			if (NULL == region->_heapRegionDescriptorExtension) {
 				return false;
 			}
-
-			for (uintptr_t list = 0; list < listCount; list++) {
-				initalizeUnfinalizedObjectList(env, &regionExtension->_unfinalizedObjectLists[list]);
-				initalizeOwnableSynchronizerObjectList(env, &regionExtension->_ownableSynchronizerObjectLists[list]);
-				initalizeContinuationObjectList(env, &regionExtension->_continuationObjectLists[list]);
-				initalizeReferenceObjectList(env, &regionExtension->_referenceObjectLists[list]);
-			}
-
-			region->_heapRegionDescriptorExtension = regionExtension;
 		}
 
 		return true;
@@ -255,8 +208,9 @@ public:
 	teardownHeapRegionDescriptorExtension(MM_EnvironmentBase *env, MM_HeapRegionDescriptor *region)
 	{
 		if (env->getExtensions()->isStandardGC()) {
-			if (NULL != region->_heapRegionDescriptorExtension) {
-				env->getForge()->free(region->_heapRegionDescriptorExtension);
+			MM_HeapRegionDescriptorStandardExtension *regionExtension = (MM_HeapRegionDescriptorStandardExtension *)region->_heapRegionDescriptorExtension;
+			if (NULL != regionExtension) {
+				regionExtension->kill(env);
 				region->_heapRegionDescriptorExtension = NULL;
 			}
 		}

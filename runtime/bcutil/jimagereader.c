@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include "bcutil_api.h"
@@ -25,11 +25,6 @@
 #include "jimagereader.h"
 #include "ut_j9bcu.h"
 #include "util_api.h"
-
-
-#if !defined(OMRPORT_MMAP_FLAG_ZOS_READ_MAPFILE)
-#define OMRPORT_MMAP_FLAG_ZOS_READ_MAPFILE 0
-#endif /* !defined(OMRPORT_MMAP_FLAG_ZOS_READ_MAPFILE) */
 
 VMINLINE static U_32 hashFn(const char *name, I_32 baseValue);
 VMINLINE static I_32 getRedirectTableValue(const char *name, I_32 *redirectTable, U_32 redirectTableSize);
@@ -189,7 +184,7 @@ j9bcutil_loadJImage(J9PortLibrary *portlib, const char *fileName, J9JImage **pji
 	/*
 	 * With OMRPORT_MMAP_FLAG_ZOS_READ_MAPFILE, j9mmap_map_file() has the old bahaviour that reads the file content into allocated private memory.
 	 */
-	mmapflag |= OMRPORT_MMAP_FLAG_ZOS_READ_MAPFILE;
+	mmapflag = OMRPORT_MMAP_FLAG_ZOS_READ_MAPFILE;
 #endif /* defined(J9ZOS390) */
 	jimage->jimageMmap = j9mmap_map_file(jimagefd, 0, mapSize, fileName, mmapflag, J9MEM_CATEGORY_CLASSES);
 	if (NULL == jimage->jimageMmap) {

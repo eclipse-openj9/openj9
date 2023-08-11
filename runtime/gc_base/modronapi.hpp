@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 /**
@@ -32,6 +32,8 @@
 #include "j9.h"
 #include "j9cfg.h"
 #include "modronapicore.hpp"
+
+class MM_EnvironmentBase;
 
 extern "C" {
 /* define constant memory pool name and garbage collector name here -- the name should not be over 31 characters */
@@ -102,6 +104,9 @@ J9HookInterface** j9gc_get_private_hook_interface(J9JavaVM *javaVM);
 UDATA ownableSynchronizerObjectCreated(J9VMThread *vmThread, j9object_t object);
 
 UDATA continuationObjectCreated(J9VMThread *vmThread, j9object_t object);
+UDATA continuationObjectStarted(J9VMThread *vmThread, j9object_t object);
+UDATA continuationObjectFinished(J9VMThread *vmThread, j9object_t object);
+void addContinuationObjectInList(MM_EnvironmentBase *env, j9object_t object);
 void preMountContinuation(J9VMThread *vmThread, j9object_t object);
 void postUnmountContinuation(J9VMThread *vmThread, j9object_t object);
 

@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include "ClientStream.hpp"
@@ -54,6 +54,8 @@ int ClientStream::static_init(TR::CompilationInfo *compInfo)
    {
    if (!CommunicationStream::useSSL())
       return 0;
+
+   TR_ASSERT_FATAL(_sslCtx == NULL, "SSL context already initialized");
 
    CommunicationStream::initSSL();
 
@@ -124,6 +126,15 @@ int ClientStream::static_init(TR::CompilationInfo *compInfo)
    return 0;
    }
 
+void ClientStream::freeSSLContext()
+   {
+   if (_sslCtx)
+      {
+      (*OSSL_CTX_free)(_sslCtx);
+      _sslCtx = NULL;
+      }
+   }
+
 SSL_CTX *ClientStream::_sslCtx = NULL;
 
 static int
@@ -149,7 +160,7 @@ openConnection(const std::string &address, uint32_t port, uint32_t timeoutMs)
 
    struct addrinfo *pAddr;
    int sockfd = -1;
-   for (pAddr = addrList; pAddr; pAddr = pAddr->ai_next) 
+   for (pAddr = addrList; pAddr; pAddr = pAddr->ai_next)
       {
       sockfd = socket(pAddr->ai_family, pAddr->ai_socktype, pAddr->ai_protocol);
       if (sockfd >= 0)

@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 /* Includes */
@@ -1077,12 +1077,12 @@ JavaCoreDumpWriter::writeEnvironmentSection(void)
 	if (NULL != jitConfig) {
 		if (0 != jitConfig->clientUID) {
 			_OutputStream.writeCharacters("1CICLIENTID    Client UID ");
-			_OutputStream.writeInteger64(jitConfig->clientUID, "%" OMR_PRIu64);
+			_OutputStream.writeInteger64(jitConfig->clientUID, "%llu");
 			_OutputStream.writeCharacters("\n");
 		}
 		if (0 != jitConfig->serverUID) {
 			_OutputStream.writeCharacters("1CISERVERID    Server UID ");
-			_OutputStream.writeInteger64(jitConfig->serverUID, "%" OMR_PRIu64);
+			_OutputStream.writeInteger64(jitConfig->serverUID, "%llu");
 			_OutputStream.writeCharacters("\n");
 		}
 	}
@@ -1341,7 +1341,7 @@ JavaCoreDumpWriter::writeEnvironmentSection(void)
 		switch (systemInfo->key) {
 		case J9RAS_SYSTEMINFO_SCHED_COMPAT_YIELD:
 			{
-				char *sched_compat_yield = (char *)&systemInfo->data;
+				const char *sched_compat_yield = (const char *)&systemInfo->data;
 				_OutputStream.writeCharacters("2CISYSINFO     " J9RAS_SCHED_COMPAT_YIELD_FILE " = ");
 				_OutputStream.writeVPrintf("%c ", sched_compat_yield[0]);
 				_OutputStream.writeCharacters("\n");
@@ -1350,7 +1350,7 @@ JavaCoreDumpWriter::writeEnvironmentSection(void)
 
 		case J9RAS_SYSTEMINFO_HYPERVISOR:
 			{
-				char *hypervisorName = (char *)systemInfo->data;
+				const char *hypervisorName = (const char *)systemInfo->data;
 				_OutputStream.writeCharacters("2CISYSINFO     Hypervisor name = ");
 				_OutputStream.writeCharacters(hypervisorName);
 				_OutputStream.writeCharacters("\n");
@@ -1358,7 +1358,7 @@ JavaCoreDumpWriter::writeEnvironmentSection(void)
 			break;
 		case J9RAS_SYSTEMINFO_CORE_PATTERN:
 			{
-				char *corepattern = (char *)systemInfo->data;
+				const char *corepattern = (const char *)systemInfo->data;
 				_OutputStream.writeCharacters("2CISYSINFO     " J9RAS_CORE_PATTERN_FILE " = ");
 				_OutputStream.writeCharacters(corepattern);
 				_OutputStream.writeCharacters("\n");
@@ -1366,9 +1366,17 @@ JavaCoreDumpWriter::writeEnvironmentSection(void)
 			break;
 		case J9RAS_SYSTEMINFO_CORE_USES_PID:
 			{
-				char *coreusespid = (char *)systemInfo->data;
+				const char *coreusespid = (const char *)systemInfo->data;
 				_OutputStream.writeCharacters("2CISYSINFO     " J9RAS_CORE_USES_PID_FILE " = ");
 				_OutputStream.writeCharacters(coreusespid);
+				_OutputStream.writeCharacters("\n");
+			}
+			break;
+		case J9RAS_SYSTEMINFO_CORE_ORIGINAL_PATTERN:
+			{
+				const char *coreOriginalPattern = (const char *)systemInfo->data;
+				_OutputStream.writeCharacters("2CISYSINFO     " J9RAS_CORE_ORIGINAL_PATTERN " = ");
+				_OutputStream.writeCharacters(coreOriginalPattern);
 				_OutputStream.writeCharacters("\n");
 			}
 			break;
@@ -3431,8 +3439,8 @@ JavaCoreDumpWriter::writeTrailer(void)
 	uint64_t duration = (uint64_t)(now - _DumpStart);
 
 	_OutputStream.writeCharacters("1TIDMPDURATION Approximate time to produce this dump: ");
-	_OutputStream.writeInteger64(duration, "%" OMR_PRId64);
-	_OutputStream.writeCharacters(" ms\n");
+	_OutputStream.writeInteger64(duration, "%llu");
+	_OutputStream.writeCharacters("ms\n");
 
 	_OutputStream.writeCharacters(
 		"NULL           ---------------------- END OF DUMP -------------------------------------\n"

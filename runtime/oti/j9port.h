@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #if !defined(OTI_J9PORT_H_)
@@ -965,6 +965,9 @@ typedef struct J9CacheInfoQuery {
 #define J9PORT_MMAP_FLAG_SHARED OMRPORT_MMAP_FLAG_SHARED
 #define J9PORT_MMAP_FLAG_COPYONWRITE OMRPORT_MMAP_FLAG_COPYONWRITE
 #define J9PORT_MMAP_SYNC_WAIT OMRPORT_MMAP_SYNC_WAIT
+#if defined(J9ZOS39064)
+#define J9PORT_MMAP_FLAG_ZOS_64BIT OMRPORT_MMAP_FLAG_ZOS_64BIT
+#endif /* defined(J9ZOS39064) */
 
 #define J9PORT_RESOURCE_SHARED_MEMORY OMRPORT_RESOURCE_SHARED_MEMORY
 #define J9PORT_RESOURCE_ADDRESS_SPACE OMRPORT_RESOURCE_ADDRESS_SPACE

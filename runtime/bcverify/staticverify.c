@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include <string.h>
@@ -995,12 +995,14 @@ checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA len
 				errorDataIndex = index;
 				goto _verifyError;
 			}
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 			info = &(classfile->constantPool[classfile->constantPool[index].slot1]);
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 			if ((CFR_BC_new == bc) && bcvIsReferenceTypeDescriptor(info)) {
 				errorType = J9NLS_CFR_ERR_NEW_INVALID_REFERENCETYPE_DESCRIPTOR__ID;
 				goto _verifyError;
 			}
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 			if ((CFR_BC_aconst_init == bc) && ('[' == *info->bytes)) {
 				errorType = J9NLS_CFR_ERR_ACONST_INIT_INVALID_ARRAY__ID;
 				goto _verifyError;
@@ -1681,9 +1683,9 @@ j9bcv_verifyClassStructure (J9PortLibrary * portLib, J9CfrClassFile * classfile,
 
 				switch (utf8->bytes[arity]) {
 				case 'L':		/* object array */
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 				case 'Q':
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 					if (utf8->bytes[--end] != ';') {
 						errorType = J9NLS_CFR_ERR_BAD_CLASS_NAME__ID;
 						goto _formatError;

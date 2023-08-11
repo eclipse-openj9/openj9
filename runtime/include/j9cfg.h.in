@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #ifndef J9CFG_H
@@ -241,6 +241,7 @@ extern "C" {
 #cmakedefine J9VM_OPT_RESOURCE_MANAGED
 #cmakedefine J9VM_OPT_ROM_IMAGE_SUPPORT
 #cmakedefine J9VM_OPT_SHARED_CLASSES
+#cmakedefine J9VM_OPT_SHR_MSYNC_SUPPORT
 #cmakedefine J9VM_OPT_SIDECAR
 #cmakedefine J9VM_OPT_SRP_AVL_TREE_SUPPORT
 #cmakedefine J9VM_OPT_STRING_COMPRESSION
@@ -249,6 +250,7 @@ extern "C" {
 #cmakedefine J9VM_OPT_USE_FFI
 #cmakedefine J9VM_OPT_USE_FFI_ONLY
 #cmakedefine J9VM_OPT_VALHALLA_VALUE_TYPES
+#cmakedefine J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES
 #cmakedefine J9VM_OPT_VEE_SUPPORT
 #cmakedefine J9VM_OPT_VM_LOCAL_STORAGE
 #cmakedefine J9VM_OPT_ZERO
@@ -259,6 +261,7 @@ extern "C" {
 #cmakedefine J9VM_PORT_RUNTIME_INSTRUMENTATION
 #cmakedefine J9VM_PORT_SIGNAL_SUPPORT
 #cmakedefine J9VM_PORT_ZOS_CEEHDLRSUPPORT
+#cmakedefine J9VM_PROF_CONTINUATION_ALLOCATION
 #cmakedefine J9VM_PROF_COUNT_ARGS_TEMPS
 #cmakedefine J9VM_PROF_EVENT_REPORTING
 #cmakedefine J9VM_PROF_JVMTI

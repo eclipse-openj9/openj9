@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #ifndef REFERENCEOBJECTBUFFER_HPP_
@@ -50,11 +50,6 @@ public:
 private:
 	
 	/**
-	 * Reset a flushed buffer to the empty state.
-	 */
-	void reset();
-
-	/**
 	 * Determine the type (weak/soft/phantom) of the specified reference object.
 	 * @param object[in] the object to examine
 	 * @return one of J9AccClassReferenceWeak, J9AccClassReferenceSoft or J9AccClassReferencePhantom
@@ -63,6 +58,11 @@ private:
 	
 protected:
 	
+	/**
+	 * Reset a flushed buffer to the empty state.
+	 */
+	void reset();
+
 	virtual bool initialize(MM_EnvironmentBase *env) = 0;
 	virtual void tearDown(MM_EnvironmentBase *env) = 0;
 

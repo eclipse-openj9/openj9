@@ -17,7 +17,7 @@ rem
 rem [1] https://www.gnu.org/software/classpath/license.html
 rem [2] https://openjdk.org/legal/assembly-exception.html
 rem
-rem SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+rem SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 rem
 
 %1\java -DTESTBASE=%3 -DTESTSUITE=%8 -DTOOLSDIR=%2 -DEXTDIR=%5 -DNETDIR=%6 -DEXE=%4 -DVMOPTIONS=%9 -jar C:\j9test\cmdlinetester\cmdlinetester.jar -config %3\%8\%8_win.xml -xids all -xlist %3\%7

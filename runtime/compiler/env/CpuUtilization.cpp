@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include "control/CompilationRuntime.hpp"
@@ -316,7 +316,6 @@ int32_t CpuSelfThreadUtilization::computeThreadCpuUtilOverLastNns(int64_t validI
       int64_t totalCPU = _cpuTimeDuringLastInterval;
       int64_t totalTime = _lastIntervalLength;
 
-     
       // The interval between crtTimeNs and lastIntervalEndNs is not accounted for; if this interval
       // is larger than the measurement period the thread might have gone to sleep and not
       // had a chance to update its CPU utilization. Blindly assume a 0% duty cycle
@@ -334,6 +333,8 @@ int32_t CpuSelfThreadUtilization::computeThreadCpuUtilOverLastNns(int64_t validI
             totalTime += _secondLastIntervalLength;
             }
          }
+      if (totalTime == 0)
+         return -1; // A race condition can defeat our attempts to avoid DivByZero, so we need to check here and bailout rather then cause an exception
       return  (int32_t)(100 * totalCPU / totalTime);
       }
    }

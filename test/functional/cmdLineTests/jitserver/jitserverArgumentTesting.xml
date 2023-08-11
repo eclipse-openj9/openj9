@@ -19,20 +19,21 @@
   [1] https://www.gnu.org/software/classpath/license.html
   [2] https://openjdk.org/legal/assembly-exception.html
 
-  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 -->
 
 <!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
 <suite id="jitserverArgumentTesting.xml" timeout="1000">
 	<variable name="ENABLE_JITSERVER" value="-XX:+UseJITServer" />
 	<variable name="DISABLE_JITSERVER" value="-XX:-UseJITServer" />
-	<variable name="JITSERVER_VERBOSE" value="-Xjit:verbose={JITServer},verbose={JITServerConns}" />
+	<variable name="JITSERVER_VERBOSE" value="-Xjit:verbose={JITServer},verbose={JITServerConns},verbose={compilePerformance}" />
 	<variable name="DEFAULT_JITSERVER_OPTIONS" value="-Xjit" />
 
 	<test id="Test default configuration">
 		<command>bash $SCRIPPATH$ $TEST_RESROOT$ $TEST_JDK_BIN$ "$DEFAULT_JITSERVER_OPTIONS$" "$ENABLE_JITSERVER$ $JITSERVER_VERBOSE$" false</command>
 		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
-		<output type="required" caseSesnsitive="no" regex="no">Connected to a server</output>
+		<output type="required" caseSensitive="no" regex="no">JITServer Client Mode.</output>
+		<output type="success" caseSensitive="no" regex="no">Connected to a server</output>
 		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">(Fatal|Unhandled) Exception</output>
 		<output type="success" caseSensitive="yes" regex="no">JITSERVER EXISTS</output>
 		<output type="success" caseSensitive="yes" regex="no">JITSERVER STILL EXISTS</output>

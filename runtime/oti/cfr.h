@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #ifndef CFR_H
@@ -241,6 +241,9 @@ typedef struct J9CfrAttribute {
 #define CFR_ATTRIBUTE_NestHost 26
 #define CFR_ATTRIBUTE_Record 27
 #define CFR_ATTRIBUTE_PermittedSubclasses 28
+#define CFR_ATTRIBUTE_Preload 29
+#define CFR_ATTRIBUTE_ImplicitCreation 30
+#define CFR_ATTRIBUTE_NullRestricted 31
 #define CFR_ATTRIBUTE_StrippedLocalVariableTypeTable  122
 #define CFR_ATTRIBUTE_StrippedSourceDebugExtension  123
 #define CFR_ATTRIBUTE_StrippedInnerClasses  124
@@ -530,6 +533,33 @@ typedef struct J9CfrAttributePermittedSubclasses {
     U_16 numberOfClasses;
     U_16* classes;
 } J9CfrAttributePermittedSubclasses;
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+typedef struct J9CfrAttributePreload {
+    U_8 tag;
+    U_16 nameIndex;
+    U_32 length;
+    UDATA romAddress;
+    U_16 numberOfClasses;
+    U_16* classes;
+} J9CfrAttributePreload;
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+typedef struct J9CfrAttributeImplicitCreation {
+    U_8 tag;
+    U_16 nameIndex;
+    U_32 length;
+    UDATA romAddress;
+    U_16 implicitCreationFlags;
+} J9CfrAttributeImplicitCreation;
+
+typedef struct J9CfrAttributeNullRestricted {
+    U_8 tag;
+    U_16 nameIndex;
+    U_32 length;
+    UDATA romAddress;
+} J9CfrAttributeNullRestricted;
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
 /* @ddr_namespace: map_to_type=J9CfrConstantPoolInfo */
 
@@ -892,17 +922,23 @@ typedef struct J9CfrClassFile {
 #define CFR_MAJOR_VERSION  45
 #define CFR_MINOR_VERSION  3
 #define CFR_PUBLIC_PRIVATE_PROTECTED_MASK	(CFR_ACC_PUBLIC | CFR_ACC_PRIVATE | CFR_ACC_PROTECTED)
+
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 #define CFR_CLASS_ACCESS_MASK					(CFR_ACC_PUBLIC | CFR_ACC_FINAL | CFR_ACC_IDENTITY | CFR_ACC_INTERFACE | CFR_ACC_ABSTRACT | CFR_ACC_SYNTHETIC | CFR_ACC_ANNOTATION | CFR_ACC_ENUM | CFR_ACC_VALUE_TYPE | CFR_ACC_PRIMITIVE_VALUE_TYPE)
 #define J9_IS_CLASSFILE_VALUETYPE(classfile)     J9_ARE_ALL_BITS_SET((classfile)->accessFlags, CFR_ACC_VALUE_TYPE)
-#define J9_IS_CLASSFILE_PRIMITIVE_VALUETYPE(classfile)     J9_ARE_ALL_BITS_SET((classfile)->accessFlags, CFR_ACC_PRIMITIVE_VALUE_TYPE)
 #define CFR_INTERFACE_CLASS_ACCESS_MASK			(CFR_ACC_PUBLIC | CFR_ACC_INTERFACE | CFR_ACC_ABSTRACT | CFR_ACC_SYNTHETIC | CFR_ACC_ANNOTATION | CFR_ACC_VALUE_TYPE | CFR_ACC_IDENTITY)
 #else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 #define CFR_CLASS_ACCESS_MASK					(CFR_ACC_PUBLIC | CFR_ACC_FINAL | CFR_ACC_SUPER | CFR_ACC_INTERFACE | CFR_ACC_ABSTRACT | CFR_ACC_SYNTHETIC | CFR_ACC_ANNOTATION | CFR_ACC_ENUM)
 #define J9_IS_CLASSFILE_VALUETYPE(classfile)     FALSE
-#define J9_IS_CLASSFILE_PRIMITIVE_VALUETYPE(classfile) FALSE
 #define CFR_INTERFACE_CLASS_ACCESS_MASK			(CFR_ACC_PUBLIC | CFR_ACC_INTERFACE | CFR_ACC_ABSTRACT | CFR_ACC_SYNTHETIC | CFR_ACC_ANNOTATION)
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+#define J9_IS_CLASSFILE_PRIMITIVE_VALUETYPE(classfile)     J9_ARE_ALL_BITS_SET((classfile)->accessFlags, CFR_ACC_PRIMITIVE_VALUE_TYPE)
+#else /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+#define J9_IS_CLASSFILE_PRIMITIVE_VALUETYPE(classfile) FALSE
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+
 #define CFR_FIELD_ACCESS_MASK  					(CFR_ACC_PUBLIC | CFR_ACC_PRIVATE | CFR_ACC_PROTECTED | CFR_ACC_STATIC | CFR_ACC_FINAL | CFR_ACC_VOLATILE | CFR_ACC_TRANSIENT | CFR_ACC_SYNTHETIC | CFR_ACC_ENUM)
 #define CFR_INTERFACE_FIELD_ACCESS_MASK  		(CFR_ACC_PUBLIC | CFR_ACC_STATIC | CFR_ACC_FINAL | CFR_ACC_SYNTHETIC)
 #define CFR_INTERFACE_FIELD_ACCESS_REQUIRED  	(CFR_ACC_PUBLIC | CFR_ACC_STATIC | CFR_ACC_FINAL)
@@ -968,9 +1004,9 @@ typedef struct J9CfrClassFile {
 
 #define CFR_FOUND_CHARS_IN_EXTENDED_MUE_FORM 0x1
 #define CFR_FOUND_SEPARATOR_IN_MUE_FORM 0x2
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-#define CFR_CLASS_FILE_VERSION_SUPPORT_VALUE_TYPE 0x4
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+#define CFR_CLASS_FILE_VERSION_SUPPORT_FLATTENABLE_VALUE_TYPE 0x4
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
 #ifdef __cplusplus
 }

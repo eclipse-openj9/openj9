@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #ifdef TR_HOST_X86
@@ -458,6 +458,8 @@ JIT_HELPER(__forwardQuadWordArrayCopy_vsx);
 JIT_HELPER(__postP10ForwardCopy);
 JIT_HELPER(__postP10GenericCopy);
 JIT_HELPER(crc32_vpmsum);
+JIT_HELPER(crc32_no_vpmsum);
+JIT_HELPER(crc32_oneByte);
 
 #ifdef J9VM_OPT_JAVA_CRYPTO_ACCELERATION
 #if defined(OMR_GC_FULL_POINTERS)
@@ -1391,6 +1393,8 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_PPCpostP10ForwardCopy,           (void *) __postP10ForwardCopy,           TR_Helper);
    SET(TR_PPCpostP10GenericCopy,           (void *) __postP10GenericCopy,           TR_Helper);
    SET(TR_PPCcrc32_vpmsum,                 (void *) crc32_vpmsum,                   TR_CHelper);
+   SET(TR_PPCcrc32_no_vpmsum,              (void *) crc32_no_vpmsum,                TR_CHelper);
+   SET(TR_PPCcrc32_oneByte,                (void *) crc32_oneByte,                  TR_CHelper);
 
 #ifdef J9VM_OPT_JAVA_CRYPTO_ACCELERATION
 #if defined(OMR_GC_COMPRESSED_POINTERS)
@@ -2138,8 +2142,11 @@ bool isOrderedPair(U_8 recordType)
       case TR_GlobalValue:
       case TR_RamMethodSequence:
       case TR_BodyInfoAddressLoad:
+      case TR_CatchBlockCounter:
+      case TR_StartPC:
       case TR_DataAddress:
       case TR_DebugCounter:
+      case TR_MethodEnterExitHookAddress:
 #endif
          isOrderedPair = true;
          break;

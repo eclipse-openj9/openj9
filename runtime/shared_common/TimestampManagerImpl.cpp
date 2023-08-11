@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include "TimestampManagerImpl.hpp"
@@ -89,6 +89,7 @@ SH_TimestampManagerImpl::localCheckTimeStamp(J9VMThread* currentThread, Classpat
 	if (doFreeBuffer) {
 		j9mem_free_memory(pathBufPtr);
 	}
+	Trc_SHR_TMI_LocalCheckTimestamp_Timestamps(currentThread, current, test);
 	if (current == -1) {
 		if (test == -1) {
 			return TIMESTAMP_DOES_NOT_EXIST;

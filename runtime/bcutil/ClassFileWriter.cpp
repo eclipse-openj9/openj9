@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 /*
  * ClassFileWriter.cpp
@@ -64,6 +64,9 @@ DECLARE_UTF8_ATTRIBUTE_NAME(ANNOTATION_DEFAULT, "AnnotationDefault");
 DECLARE_UTF8_ATTRIBUTE_NAME(BOOTSTRAP_METHODS, "BootstrapMethods");
 DECLARE_UTF8_ATTRIBUTE_NAME(RECORD, "Record");
 DECLARE_UTF8_ATTRIBUTE_NAME(PERMITTED_SUBCLASSES, "PermittedSubclasses");
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+DECLARE_UTF8_ATTRIBUTE_NAME(PRELOAD, "Preload");
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 #if JAVA_SPEC_VERSION >= 11
 DECLARE_UTF8_ATTRIBUTE_NAME(NEST_MEMBERS, "NestMembers");
 DECLARE_UTF8_ATTRIBUTE_NAME(NEST_HOST, "NestHost");
@@ -110,6 +113,18 @@ ClassFileWriter::analyzeROMClass()
 		}
 	}
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	if (J9_ARE_ALL_BITS_SET(_romClass->optionalFlags, J9_ROMCLASS_OPTINFO_PRELOAD_ATTRIBUTE)) {
+		addEntry((void*) &PRELOAD, 0, CFR_CONSTANT_Utf8);
+
+		U_32 *preloadInfoPtr = getPreloadInfoPtr(_romClass);
+		U_32 numberOfPreloadClasses = *preloadInfoPtr;
+		for (U_32 i = 0; i < numberOfPreloadClasses; i++) {
+			J9UTF8* preloadClassNameUtf8 = preloadClassNameAtIndex(preloadInfoPtr, i);
+			addEntry(preloadClassNameUtf8, 0, CFR_CONSTANT_Utf8);
+		}
+	}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	J9EnclosingObject * enclosingObject = getEnclosingMethodForROMClass(_javaVM, NULL, _romClass);
 	J9UTF8 * genericSignature = getGenericSignatureForROMClass(_javaVM, NULL, _romClass);
 	J9UTF8 * sourceFileName = getSourceFileNameForROMClass(_javaVM, NULL, _romClass);
@@ -1001,6 +1016,11 @@ ClassFileWriter::writeAttributes()
 		attributesCount += 1;
 	}
 #endif /* JAVA_SPEC_VERSION >= 11 */
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	if (J9_ARE_ALL_BITS_SET(_romClass->optionalFlags, J9_ROMCLASS_OPTINFO_PRELOAD_ATTRIBUTE)) {
+		attributesCount += 1;
+	}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	writeU16(attributesCount);
 
 	if ((0 != _romClass->innerClassCount)
@@ -1168,6 +1188,34 @@ ClassFileWriter::writeAttributes()
 			}
 		}
 	}
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	/* write Preload attribute */
+	if (J9_ARE_ALL_BITS_SET(_romClass->optionalFlags, J9_ROMCLASS_OPTINFO_PRELOAD_ATTRIBUTE)) {
+		U_32 *preloadInfoPtr = getPreloadInfoPtr(_romClass);
+		/* The first 32 bits of preloadInfoPtr contain the number of preload classes */
+		U_32 numberPreloadClasses = *preloadInfoPtr;
+		writeAttributeHeader((J9UTF8 *) &PRELOAD, sizeof(U_16) + (numberPreloadClasses * sizeof(U_16)));
+		writeU16(numberPreloadClasses);
+
+		for (U_32 i = 0; i < numberPreloadClasses; i++) {
+			J9UTF8* preloadClassNameUtf8 = preloadClassNameAtIndex(preloadInfoPtr, i);
+			/* CONSTANT_Class_info index should be written. Find class entry that references the preload class name in constant pool. */
+			J9HashTableState hashTableState;
+			HashTableEntry * entry = (HashTableEntry *) hashTableStartDo(_cpHashTable, &hashTableState);
+			while (NULL != entry) {
+				if (CFR_CONSTANT_Class == entry->cpType) {
+					J9UTF8* classNameCandidate = (J9UTF8*)entry->address;
+					if (J9UTF8_EQUALS(classNameCandidate, preloadClassNameUtf8)) {
+						writeU16(entry->cpIndex);
+						break;
+					}
+				}
+				entry = (HashTableEntry *) hashTableNextDo(&hashTableState);
+			}
+		}
+	}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 }
 
 void ClassFileWriter::writeRecordAttribute()
@@ -1255,9 +1303,9 @@ ClassFileWriter::computeArgsCount(U_16 methodRefIndex)
 			}
 			/* fall through */
 		case 'L':
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 		case 'Q':
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 			index += 1;
 			while ((index < count) && (';' != sig[index])) {
 				index += 1;

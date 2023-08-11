@@ -18,7 +18,7 @@ OpenJDK Assembly Exception [2].
 [1] https://www.gnu.org/software/classpath/license.html
 [2] https://openjdk.org/legal/assembly-exception.html
 
-SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 -->
 <flags xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.ibm.com/j9/builder/flags" xsi:schemaLocation="http://www.ibm.com/j9/builder/flags flags-v1.xsd">
 	<flag id="arch_aarch64">
@@ -1833,8 +1833,12 @@ Only available on zOS</description>
 		<ifRemoved>No support for Foreign Linker API</ifRemoved>
 	</flag>
 	<flag id="opt_valhallaValueTypes">
-		<description>Enables support for Project Valhalla L-World Value Types</description>
-		<ifRemoved>No support for Project Valhalla L-World Value Types</ifRemoved>
+		<description>Enables support for Project Valhalla Value Objects</description>
+		<ifRemoved>No support for Project Valhalla Value Objects</ifRemoved>
+	</flag>
+	<flag id="opt_valhallaFlattenableValueTypes">
+		<description>Enables support for Project Valhalla L-World Flattenable Value Types</description>
+		<ifRemoved>No support for Project Valhalla L-World Flattenable Value Types</ifRemoved>
 	</flag>
 	<flag id="opt_phpSupport">
 		<description>Support for PHP interpreter.</description>
@@ -1856,6 +1860,13 @@ Only available on zOS</description>
 		<ifRemoved>No support for class sharing</ifRemoved>
 		<requires>
 			<require flag="interp_jniSupport"/>
+		</requires>
+	</flag>
+	<flag id="opt_shrMsyncSupport">
+		<description>Support for synchronizing memory with physical storage in shared classes cache</description>
+		<ifRemoved>No support for synchronizing memory with physical storage in shared classes cache</ifRemoved>
+		<requires>
+			<require flag="opt_sharedClasses"/>
 		</requires>
 	</flag>
 	<flag id="opt_sidecar">
@@ -1946,6 +1957,10 @@ Pass J9PORT_SIG_OPTIONS_ZOS_USE_CEEHDLR into j9sig_set_options() before the firs
 		<requires>
 			<require flag="port_signalSupport"/>
 		</requires>
+	</flag>
+	<flag id="prof_continuationAllocation">
+		<description>display Continuation cache usage and timing</description>
+		<ifRemoved>no report of Continuation allocation timing</ifRemoved>
 	</flag>
 	<flag id="prof_countArgsTemps">
 		<description>display a count of args/temps usage for loaded methods</description>

@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 #include <string.h>
 
@@ -84,12 +84,12 @@ jvmRestoreHooks(J9VMThread *currentThread)
 	nas.name = (J9UTF8 *)&runPostRestoreHooks_name;
 	nas.signature = (J9UTF8 *)&runPostRestoreHooks_sig;
 
-	Assert_VM_true(vm->checkpointState.isCheckPointEnabled);
+	Assert_VM_true(isCRIUSupportEnabled_VM(vm));
 
-	if (vm->checkpointState.isNonPortableRestoreMode) {
+	if (J9_ARE_ALL_BITS_SET(vm->checkpointState.flags, J9VM_CRIU_IS_NON_PORTABLE_RESTORE_MODE)) {
 		PORT_ACCESS_FROM_JAVAVM(vm);
-		vm->checkpointState.isCheckPointAllowed = FALSE;
-		vm->portLibrary->finalRestore = TRUE;
+		vm->portLibrary->isCheckPointAllowed = FALSE;
+		vm->checkpointState.flags &= ~J9VM_CRIU_IS_CHECKPOINT_ALLOWED;
 		j9port_control(J9PORT_CTLDATA_CRIU_SUPPORT_FLAGS, OMRPORT_CRIU_SUPPORT_ENABLED | J9OMRPORT_CRIU_SUPPORT_FINAL_RESTORE);
 	}
 
@@ -114,7 +114,7 @@ isCRIUSupportEnabled(J9VMThread *currentThread)
 BOOLEAN
 isCRIUSupportEnabled_VM(J9JavaVM *vm)
 {
-	return vm->checkpointState.isCheckPointEnabled;
+	return J9_ARE_ALL_BITS_SET(vm->checkpointState.flags, J9VM_CRIU_IS_CHECKPOINT_ENABLED);
 }
 
 BOOLEAN
@@ -123,7 +123,7 @@ isCheckpointAllowed(J9VMThread *currentThread)
 	BOOLEAN result = FALSE;
 
 	if (isCRIUSupportEnabled(currentThread)) {
-		result = currentThread->javaVM->checkpointState.isCheckPointAllowed;
+		result = J9_ARE_ALL_BITS_SET(currentThread->javaVM->checkpointState.flags, J9VM_CRIU_IS_CHECKPOINT_ALLOWED);
 	}
 
 	return result;
@@ -132,7 +132,7 @@ isCheckpointAllowed(J9VMThread *currentThread)
 BOOLEAN
 isNonPortableRestoreMode(J9VMThread *currentThread)
 {
-	return currentThread->javaVM->checkpointState.isNonPortableRestoreMode;
+	return J9_ARE_ALL_BITS_SET(currentThread->javaVM->checkpointState.flags, J9VM_CRIU_IS_NON_PORTABLE_RESTORE_MODE);
 }
 
 /**
@@ -402,7 +402,7 @@ cleanupCriuHooks(J9VMThread *currentThread)
 			hookRecord = (J9InternalHookRecord*)pool_nextDo(&walkState);
 		}
 
-		if (vm->checkpointState.isNonPortableRestoreMode) {
+		if (J9_ARE_ALL_BITS_SET(vm->checkpointState.flags, J9VM_CRIU_IS_NON_PORTABLE_RESTORE_MODE)) {
 			/* No more checkpoint, cleanup hook records. */
 			pool_kill(vm->checkpointState.hookRecords);
 			vm->checkpointState.hookRecords = NULL;
@@ -410,7 +410,7 @@ cleanupCriuHooks(J9VMThread *currentThread)
 	}
 
 	J9Pool *classIterationRestoreHookRecords = vm->checkpointState.classIterationRestoreHookRecords;
-	if ((NULL != classIterationRestoreHookRecords) && (vm->checkpointState.isNonPortableRestoreMode)) {
+	if ((NULL != classIterationRestoreHookRecords) && J9_ARE_ALL_BITS_SET(vm->checkpointState.flags, J9VM_CRIU_IS_NON_PORTABLE_RESTORE_MODE)) {
 		/* No more checkpoint, cleanup hook records. */
 		pool_kill(vm->checkpointState.classIterationRestoreHookRecords);
 		vm->checkpointState.classIterationRestoreHookRecords = NULL;

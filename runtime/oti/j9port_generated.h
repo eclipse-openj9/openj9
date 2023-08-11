@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 /**
@@ -395,9 +395,10 @@ typedef struct J9PortLibrary {
 	int64_t nanoTimeMonotonicClockDelta;
 	/* Invoking j9sysinfo_get_username()/getpwuid() with SSSD enabled can cause checkpoint failure.
 	 * It is safe to call those methods if checkpoint is disallowed after a final restore.
+	 * This is equivalent to isCheckpointAllowed(), just for portlibrary access.
 	 * https://github.com/eclipse-openj9/openj9/issues/15800
 	 */
-	BOOLEAN finalRestore;
+	BOOLEAN isCheckPointAllowed;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 } J9PortLibrary;
 

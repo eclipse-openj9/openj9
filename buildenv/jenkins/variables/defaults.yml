@@ -17,7 +17,7 @@
 # [1] https://www.gnu.org/software/classpath/license.html
 # [2] https://openjdk.org/legal/assembly-exception.html
 #
-# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 ###############################################################################
 #========================================#
 # Git repositories
@@ -36,17 +36,13 @@ openjdk:
     default:
       repoUrl: 'https://github.com/ibmruntimes/openj9-openjdk-jdk17.git'
       branch: 'openj9'
-  18:
-    default:
-      repoUrl: 'https://github.com/ibmruntimes/openj9-openjdk-jdk18.git'
-      branch: 'openj9'
-  19:
-    default:
-      repoUrl: 'https://github.com/ibmruntimes/openj9-openjdk-jdk19.git'
-      branch: 'openj9'
   20:
     default:
       repoUrl: 'https://github.com/ibmruntimes/openj9-openjdk-jdk20.git'
+      branch: 'openj9'
+  21:
+    default:
+      repoUrl: 'https://github.com/ibmruntimes/openj9-openjdk-jdk21.git'
       branch: 'openj9'
   next:
     default:
@@ -114,8 +110,8 @@ build_discarder:
     OpenJDK8: 5
     OpenJDK11: 5
     OpenJDK17: 10
-    OpenJDK19: 10
     OpenJDK20: 10
+    OpenJDK21: 10
     OpenJDK: 10
     Personal: 30
     Pipeline: 100
@@ -138,7 +134,7 @@ jitserver:
 # OpenSSL
 #========================================#
 openssl:
-  extra_getsource_options: '--openssl-version=OpenSSL_1_1_1t+CVEs1 --openssl-repo=https://github.com/ibmruntimes/openssl.git'
+  extra_getsource_options: '--openssl-version=1.1.1v'
   extra_configure_options: '--with-openssl=fetched'
 #========================================#
 # OpenSSL Bundling
@@ -161,14 +157,13 @@ boot_jdk_default:
       8: '8'
       11: '11'
       17: '17'
-      19: '18'
-      20: '18'
+      20: '19'
+      21: '20'
       next: '20'
     dir_strip:
       all: '1'
     url:
       all: 'https://api.adoptopenjdk.net/v3/binary/latest/${bootJDKVersion}/ga/${os}/${arch}/jdk/openj9/normal/adoptopenjdk?project=jdk'
-      20: 'https://api.adoptium.net/v3/binary/latest/20/ga/${os}/${arch}/jdk/hotspot/normal/eclipse?project=jdk'
 #========================================#
 # CRIU
 #========================================#
@@ -234,8 +229,6 @@ s390x_linux:
   boot_jdk:
     arch: 's390x'
     os: 'linux'
-    url:
-      20: 'https://openj9-artifactory.osuosl.org/artifactory/ci-openj9/Build_JDK20_s390x_linux_OMR/14/OpenJ9-JDK20-s390x_linux-20230505-063521.tar.gz'
   release:
     all: 'linux-s390x-server-release'
     8: 'linux-s390x-normal-server-release'
@@ -245,8 +238,8 @@ s390x_linux:
   extra_test_labels:
     11: '!sw.os.rhel.8'
     17: '!sw.os.rhel.8'
-    19: '!sw.os.rhel.8'
     20: '!sw.os.rhel.8'
+    21: '!sw.os.rhel.8'
     next: '!sw.os.rhel.8'
   build_env:
     cmd:
@@ -268,8 +261,6 @@ ppc64_aix:
     location: '/opt/bootjdks'
     arch: 'ppc64'
     os: 'aix'
-    url:
-      20: 'https://openj9-artifactory.osuosl.org/artifactory/ci-openj9/Build_JDK20_ppc64_aix_OMR/14/OpenJ9-JDK20-ppc64_aix-20230505-133657.tar.gz'
   release:
     all: 'aix-ppc64-server-release'
     8: 'aix-ppc64-normal-server-release'
@@ -281,16 +272,16 @@ ppc64_aix:
     8: ' --disable-ccache'
     11: '--disable-warnings-as-errors'
     17: '--disable-warnings-as-errors'
-    19: '--disable-warnings-as-errors'
     20: '--disable-warnings-as-errors'
+    21: '--disable-warnings-as-errors'
     next: '--disable-warnings-as-errors'
   build_env:
     vars:
       8: 'PATH+XLC=/opt/IBM/xlC/13.1.3/bin:/opt/IBM/xlc/13.1.3/bin'
       11: 'PATH+XLC=/opt/IBM/xlC/16.1.0/bin:/opt/IBM/xlc/16.1.0/bin CC=xlclang CXX=xlclang++'
       17: 'PATH+XLC=/opt/IBM/xlC/16.1.0/bin:/opt/IBM/xlc/16.1.0/bin CC=xlclang CXX=xlclang++'
-      19: 'PATH+XLC=/opt/IBM/xlC/16.1.0/bin:/opt/IBM/xlc/16.1.0/bin CC=xlclang CXX=xlclang++'
       20: 'PATH+XLC=/opt/IBM/xlC/16.1.0/bin:/opt/IBM/xlc/16.1.0/bin CC=xlclang CXX=xlclang++'
+      21: 'PATH+XLC=/opt/IBM/xlC/16.1.0/bin:/opt/IBM/xlc/16.1.0/bin CC=xlclang CXX=xlclang++'
       next: 'PATH+XLC=/opt/IBM/xlC/16.1.0/bin:/opt/IBM/xlc/16.1.0/bin CC=xlclang CXX=xlclang++'
 #========================================#
 # Linux x86 64bits
@@ -323,8 +314,8 @@ x86-64_linux:
   extra_test_labels:
     11: '!sw.os.cent.6'
     17: '!sw.os.cent.6'
-    19: '!sw.os.cent.6'
     20: '!sw.os.cent.6'
+    21: '!sw.os.cent.6'
     next: '!sw.os.cent.6'
 #========================================#
 # Linux x86 64bits /w JITSERVER
@@ -345,12 +336,17 @@ aarch64_linux:
     11: 'linux-aarch64-normal-server-release'
   node_labels:
     build: 'ci.role.build && hw.arch.aarch64 && sw.tool.docker'
-    docker_image: 'adoptopenjdk/centos7_build_image@sha256:8ce0a5c8607e92aeb6aa6c5dd81643b47842e00adfdbde2730fb5f5237064d1a'
+    docker_image: 'adoptopenjdk/centos7_build_image@sha256:14254361f71a38b80d7f405c9de762fda780060589c070411b2c205b6ee26974'
   build_env:
     vars:
       all: 'CC=/usr/local/gcc10/bin/gcc-10.3 CXX=/usr/local/gcc10/bin/g++-10.3'
       8: 'CC=/usr/local/gcc/bin/gcc-7.5 CXX=/usr/local/gcc/bin/g++-7.5'
       11: 'CC=/usr/local/gcc/bin/gcc-7.5 CXX=/usr/local/gcc/bin/g++-7.5'
+#========================================#
+# Linux Aarch 64bits /w JITSERVER
+#========================================#
+aarch64_linux_jit:
+  extends: ['aarch64_linux', 'jitserver']
 #========================================#
 # Windows x86 64bits
 #========================================#
@@ -368,8 +364,8 @@ x86-64_windows:
     8: '--with-toolchain-version=2019'
     11: '--with-toolchain-version=2019'
     17: '--with-toolchain-version=2019'
-    19: '--with-toolchain-version=2022'
     20: '--with-toolchain-version=2022'
+    21: '--with-toolchain-version=2022'
     next: '--with-toolchain-version=2022'
   node_labels:
     build: 'ci.role.build && hw.arch.x86 && sw.os.windows'

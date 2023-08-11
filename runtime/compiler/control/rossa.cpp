@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include <stdio.h>
@@ -1374,6 +1374,16 @@ onLoadInternal(
 
    TR::CodeCacheConfig &codeCacheConfig = codeCacheManager->codeCacheConfig();
 
+   if (TR::Options::_overrideCodecachetotal && TR::Options::isAnyVerboseOptionSet(TR_VerbosePerformance,TR_VerboseCodeCache))
+      {
+      // Code cache total value defaults were overridden due to low memory available
+      bool incomplete;
+      uint64_t freePhysicalMemoryB = getCompilationInfo(jitConfig)->computeAndCacheFreePhysicalMemory(incomplete);
+      if (freePhysicalMemoryB != OMRPORT_MEMINFO_NOT_AVAILABLE)
+         TR_VerboseLog::writeLineLocked(TR_Vlog_CODECACHE, "Available freePhysicalMemory=%llu MB, allocating code cache total size=%lu MB", freePhysicalMemoryB >> 20, jitConfig->codeCacheTotalKB >> 10);
+      else
+         TR_VerboseLog::writeLineLocked(TR_Vlog_CODECACHE, "Allocating code cache total=%llu MB due to low available memory", jitConfig->codeCacheTotalKB >> 10);
+      }
    // Do not allow code caches smaller than 128KB
    if (jitConfig->codeCacheKB < 128)
       jitConfig->codeCacheKB = 128;

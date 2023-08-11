@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include <algorithm>
@@ -832,7 +832,7 @@ void DLTLogic(J9VMThread* vmThread, TR::CompilationInfo *compInfo)
        TR::Options::getCmdLineOptions()->getOption(TR_DisableDynamicLoopTransfer) )
       return;
    if (TR::Options::_compilationDelayTime > 0 && // feature enabled
-      TR::Options::_compilationDelayTime > compInfo->getPersistentInfo()->getElapsedTime())
+      TR::Options::_compilationDelayTime * 1000 > compInfo->getPersistentInfo()->getElapsedTime())
       return;
 
    J9StackWalkState walkState;
@@ -3238,7 +3238,7 @@ int32_t getAvailableVirtualMemoryMB(TR::CompilationInfo *compInfo, J9VMThread *v
    uint32_t totalVirtualMemoryMB = (uint32_t)TR::Options::_userSpaceVirtualMemoryMB;
 
    /*
-   See http://man7.org/linux/man-pages/man5/proc.5.html or run "man proc" for information on the
+   See https://man7.org/linux/man-pages/man5/proc.5.html or run "man proc" for information on the
    /proc pseudo filesystem. The file we're using to get the virtual memory information
    is /proc/self/status. A small glimpse into the file:
 
@@ -4833,8 +4833,8 @@ static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInf
       if (!compInfo->getLowPriorityCompQueue().isTrackingEnabled() && timeToAllocateTrackingHT == 0xffffffffffffffff)
          {
          uint64_t t = crtElapsedTime + TR::Options::_delayToEnableIdleCpuExploitation;
-         if (TR::Options::_compilationDelayTime > 0 && (uint64_t)TR::Options::_compilationDelayTime > t)
-            t = TR::Options::_compilationDelayTime;
+         if (TR::Options::_compilationDelayTime > 0 && (uint64_t)TR::Options::_compilationDelayTime * 1000 > t)
+            t = TR::Options::_compilationDelayTime * 1000;
          timeToAllocateTrackingHT = t;
          }
       }
@@ -4926,8 +4926,8 @@ static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInf
                   !compInfo->getLowPriorityCompQueue().isTrackingEnabled())
             {
             uint64_t t = crtElapsedTime + TR::Options::_delayToEnableIdleCpuExploitation;
-            if (TR::Options::_compilationDelayTime > 0 && (uint64_t)TR::Options::_compilationDelayTime > t)
-               t = TR::Options::_compilationDelayTime;
+            if (TR::Options::_compilationDelayTime > 0 && (uint64_t)TR::Options::_compilationDelayTime * 1000 > t)
+               t = TR::Options::_compilationDelayTime * 1000;
             timeToAllocateTrackingHT = t;
             }
 
@@ -5060,8 +5060,8 @@ static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInf
                !compInfo->getLowPriorityCompQueue().isTrackingEnabled())
                {
                uint64_t t = crtElapsedTime + TR::Options::_delayToEnableIdleCpuExploitation;
-               if (TR::Options::_compilationDelayTime > 0 && (uint64_t)TR::Options::_compilationDelayTime > t)
-                  t = TR::Options::_compilationDelayTime;
+               if (TR::Options::_compilationDelayTime > 0 && (uint64_t)TR::Options::_compilationDelayTime * 1000 > t)
+                  t = TR::Options::_compilationDelayTime * 1000;
                timeToAllocateTrackingHT = t;
                }
             }

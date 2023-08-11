@@ -18,12 +18,13 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 package com.ibm.java.lang.management.internal;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -208,7 +209,7 @@ public class RuntimeMXBeanImpl implements RuntimeMXBean {
 	@Override
 	public final List<String> getInputArguments() {
 		checkMonitorPermission();
-		return ManagementUtils.convertStringArrayToList(VM.getVMArgs());
+		return Collections.unmodifiableList(ManagementUtils.convertStringArrayToList(VM.getVMArgs()));
 	}
 
 	/**

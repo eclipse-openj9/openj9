@@ -18,7 +18,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 /**
@@ -106,10 +106,10 @@ public:
 	 * Execute one step of incremental Mark.
 	 * 
 	 * @param env[in] The thread which called driveGlobalCollectMainThread
-	 * @param markIncrementEndTime[in] end of time interval scheduled for step (as observed by current_time_millis)
+	 * @param markIncrementEndTime[in] end of time interval scheduled for step (as observed by time_hires_clock in ticks)
 	 * @return true if last step of incremental Mark has been executed
 	 */
-	bool performMarkIncremental(MM_EnvironmentVLHGC *env, I_64 markIncrementEndTime);
+	bool performMarkIncremental(MM_EnvironmentVLHGC *env, U_64 markIncrementEndTime);
 
 	/**
 	 * Execute one step of concurrent GMP Mark.
@@ -158,10 +158,10 @@ private:
 
 	/**
 	 *	Mark operation - Initialization.
-	 *	@param timeThreshold[in] The scheduled end time by which the operation is expected to end, expressed in system milliseconds
+	 *	@param timeThreshold[in] The scheduled end time by which the operation is expected to end, expressed in ticks
 	 *	@return True if the operation reached timeThreshold before it completed the operation 
 	 */
-	bool markInit(MM_EnvironmentVLHGC *env, I_64 timeThreshold);
+	bool markInit(MM_EnvironmentVLHGC *env, U_64 timeThreshold);
 
 	/**
 	 *	Mark operation - Marking Roots.
@@ -170,17 +170,17 @@ private:
 
 	/**
 	 *	Mark operation - Scan work packets.
-	 *	@param timeThreshold[in] The scheduled end time by which the operation is expected to end, expressed in system milliseconds 
+	 *	@param timeThreshold[in] The scheduled end time by which the operation is expected to end, expressed in ticks
 	 *	@return True if the operation reached timeThreshold before it completed the operation 
 	 */
-	bool markScan(MM_EnvironmentVLHGC *env, I_64 timeThreshold);
+	bool markScan(MM_EnvironmentVLHGC *env, U_64 timeThreshold);
 
 	/**
 	 *	Mark operation - Use any remaining increment time to scrub the card table.
-	 *	@param timeThreshold[in] The scheduled end time by which the operation is expected to end, expressed in system milliseconds 
+	 *	@param timeThreshold[in] The scheduled end time by which the operation is expected to end, expressed in ticks
 	 *	@return True if the operation reached timeThreshold before it completed the operation 
 	 */
-	bool markScrubCardTable(MM_EnvironmentVLHGC *env, I_64 timeThreshold);
+	bool markScrubCardTable(MM_EnvironmentVLHGC *env, U_64 timeThreshold);
 
 	/**
 	 *	Mark operation - Complete.

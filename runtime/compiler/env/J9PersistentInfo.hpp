@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #ifndef J9_PERSISTENTINFO_HPP
@@ -171,6 +171,7 @@ class PersistentInfo : public OMR::PersistentInfoConnector
          _JITServerAOTCacheName("default"),
          _JITServerUseAOTCachePersistence(false),
          _JITServerAOTCacheDir(),
+         _JITServerAOTCacheDelayMethodRelocation(false),
 #endif /* defined(J9VM_OPT_JITSERVER) */
       OMR::PersistentInfoConnector(pm)
       {}
@@ -363,6 +364,8 @@ class PersistentInfo : public OMR::PersistentInfoConnector
    void setJITServerUseAOTCachePersistence(bool use) { _JITServerUseAOTCachePersistence = use; }
    const std::string &getJITServerAOTCacheDir() const { return _JITServerAOTCacheDir; }
    void setJITServerAOTCacheDir(const char *dir) { _JITServerAOTCacheDir = dir; }
+   bool getJITServerAOTCacheDelayMethodRelocation() const { return _JITServerAOTCacheDelayMethodRelocation; }
+   void setJITServerAOTCacheDelayMethodRelocation(bool b) { _JITServerAOTCacheDelayMethodRelocation = b; }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    private:
@@ -460,6 +463,7 @@ class PersistentInfo : public OMR::PersistentInfoConnector
    std::string _JITServerAOTCacheName; // Name of the server AOT cache that this client is using
    bool        _JITServerUseAOTCachePersistence; // Whether to persist the JITServer AOT caches at the server
    std::string _JITServerAOTCacheDir;  // Directory where the JITServer persistent AOT caches are located
+   bool        _JITServerAOTCacheDelayMethodRelocation; // At the client, whether to delay deserialized method relocation or not
 #endif /* defined(J9VM_OPT_JITSERVER) */
    };
 

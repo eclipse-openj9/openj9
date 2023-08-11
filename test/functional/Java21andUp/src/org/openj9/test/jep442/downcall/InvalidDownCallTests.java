@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 package org.openj9.test.jep442.downcall;
 
@@ -60,26 +60,26 @@ public class InvalidDownCallTests {
 	private static final SymbolLookup nativeLibLookup = SymbolLookup.loaderLookup();
 	private static final SymbolLookup defaultLibLookup = linker.defaultLookup();
 
-	@Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Unsupported layout.*")
+	@Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Unsupported padding layout.*")
 	public void test_invalidMemoryLayoutForIntType() throws Throwable {
-		FunctionDescriptor fd = FunctionDescriptor.ofVoid(JAVA_INT, MemoryLayout.paddingLayout(32));
+		FunctionDescriptor fd = FunctionDescriptor.ofVoid(JAVA_INT, MemoryLayout.paddingLayout(JAVA_INT.byteSize()));
 		MemorySegment functionSymbol = nativeLibLookup.find("add2IntsReturnVoid").get();
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 		fail("Failed to throw out IllegalArgumentException in the case of the invalid MemoryLayout");
 	}
 
-	@Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Unsupported layout.*")
+	@Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Unsupported padding layout.*")
 	public void test_invalidMemoryLayoutForMemAddr() throws Throwable {
 		MemorySegment functionSymbol = defaultLibLookup.find("strlen").get();
-		FunctionDescriptor fd = FunctionDescriptor.of(JAVA_LONG, MemoryLayout.paddingLayout(64));
+		FunctionDescriptor fd = FunctionDescriptor.of(JAVA_LONG, MemoryLayout.paddingLayout(JAVA_LONG.byteSize()));
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 		fail("Failed to throw out IllegalArgumentException in the case of the invalid MemoryLayout");
 	}
 
-	@Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Unsupported layout.*")
+	@Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Unsupported padding layout.*")
 	public void test_invalidMemoryLayoutForReturnType() throws Throwable {
 		MemorySegment functionSymbol = defaultLibLookup.find("strlen").get();
-		FunctionDescriptor fd = FunctionDescriptor.of(MemoryLayout.paddingLayout(64), JAVA_LONG);
+		FunctionDescriptor fd = FunctionDescriptor.of(MemoryLayout.paddingLayout(JAVA_LONG.byteSize()), JAVA_LONG);
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 		fail("Failed to throw out IllegalArgumentException in the case of the invalid MemoryLayout");
 	}
@@ -108,29 +108,27 @@ public class InvalidDownCallTests {
 		MemorySegment functionSymbol = nativeLibLookup.find("add2IntStructs_returnStruct").get();
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 
-		try (Arena arena = Arena.openConfined()) {
-			SegmentAllocator allocator = SegmentAllocator.nativeAllocator(arena.scope());
-			MemorySegment structSegmt1 = allocator.allocate(structLayout);
+		try (Arena arena = Arena.ofConfined()) {
+			MemorySegment structSegmt1 = arena.allocate(structLayout);
 			intHandle1.set(structSegmt1, 11223344);
 			intHandle2.set(structSegmt1, 55667788);
 
-			MemorySegment resultSegmt = (MemorySegment)mh.invokeExact(allocator, structSegmt1, null);
+			MemorySegment resultSegmt = (MemorySegment)mh.invokeExact((SegmentAllocator)arena, structSegmt1, null);
 			fail("Failed to throw out WrongMethodTypeException in the case of the null value");
 		}
 	}
 
-	@Test(expectedExceptions = NullPointerException.class)
 	public void test_nullSegmentForPtrArgument() throws Throwable {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_INT.withName("elem1"), JAVA_INT.withName("elem2"));
 		VarHandle intHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));
 		VarHandle intHandle2 = structLayout.varHandle(PathElement.groupElement("elem2"));
 
 		FunctionDescriptor fd = FunctionDescriptor.of(JAVA_INT, JAVA_INT, ADDRESS);
-		MemorySegment functionSymbol = nativeLibLookup.find("addIntAndIntsFromStructPointer").get();
+		MemorySegment functionSymbol = nativeLibLookup.find("validateNullAddrArgument").get();
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 
 		int result = (int)mh.invoke(19202122, MemorySegment.NULL);
-		fail("Failed to throw out NullPointerException in the case of the null segment");
+		Assert.assertEquals(result, 19202122);
 	}
 
 	@Test(expectedExceptions = NullPointerException.class)
@@ -143,13 +141,12 @@ public class InvalidDownCallTests {
 		MemorySegment functionSymbol = nativeLibLookup.find("add2IntStructs_returnStruct").get();
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 
-		try (Arena arena = Arena.openConfined()) {
-			SegmentAllocator allocator = SegmentAllocator.nativeAllocator(arena.scope());
-			MemorySegment structSegmt1 = allocator.allocate(structLayout);
+		try (Arena arena = Arena.ofConfined()) {
+			MemorySegment structSegmt1 = arena.allocate(structLayout);
 			intHandle1.set(structSegmt1, 11223344);
 			intHandle2.set(structSegmt1, 55667788);
 
-			MemorySegment resultSegmt = (MemorySegment)mh.invokeExact(allocator, structSegmt1, MemorySegment.NULL);
+			MemorySegment resultSegmt = (MemorySegment)mh.invokeExact((SegmentAllocator)arena, structSegmt1, MemorySegment.NULL);
 			fail("Failed to throw out NullPointerException in the case of the null segment");
 		}
 	}
@@ -178,14 +175,13 @@ public class InvalidDownCallTests {
 		MemorySegment functionSymbol = nativeLibLookup.find("add2IntStructs_returnStruct").get();
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 
-		try (Arena arena = Arena.openConfined()) {
-			SegmentAllocator allocator = SegmentAllocator.nativeAllocator(arena.scope());
-			MemorySegment structSegmt1 = allocator.allocate(structLayout);
+		try (Arena arena = Arena.ofConfined()) {
+			MemorySegment structSegmt1 = arena.allocate(structLayout);
 			intHandle1.set(structSegmt1, 11223344);
 			intHandle2.set(structSegmt1, 55667788);
 			MemorySegment structSegmt2 = MemorySegment.ofArray(new int[]{99001122, 33445566});
 
-			MemorySegment resultSegmt = (MemorySegment)mh.invokeExact(allocator, structSegmt1, structSegmt2);
+			MemorySegment resultSegmt = (MemorySegment)mh.invokeExact((SegmentAllocator)arena, structSegmt1, structSegmt2);
 			Assert.assertEquals(intHandle1.get(resultSegmt), 110224466);
 			Assert.assertEquals(intHandle2.get(resultSegmt), 89113354);
 		}

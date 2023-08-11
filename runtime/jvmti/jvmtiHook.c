@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include "jvmtiHelpers.h"
@@ -1321,11 +1321,11 @@ findFieldIndexFromOffset(J9VMThread *currentThread, J9Class *clazz, UDATA offset
 		J9ROMFieldOffsetWalkState state;
 		J9ROMFieldOffsetWalkResult *result = NULL;
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 		result = vmFuncs->fieldOffsetsStartDo(vm, romClass, superclazz, &state, walkFlags, clazz->flattenedClassCache);
-#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#else /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 		result = vmFuncs->fieldOffsetsStartDo(vm, romClass, superclazz, &state, walkFlags);
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
 		while (NULL != result->field) {
 			if (staticBit == (result->field->modifiers & J9AccStatic)) {
@@ -2046,9 +2046,11 @@ jvmtiHookMonitorWaited(J9HookInterface** hook, UDATA eventNum, void* eventData, 
 static void
 jvmtiHookFramePop(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData)
 {
-	J9JVMTIEnv * j9env = userData;
-	J9VMFramePopEvent * data = eventData;
+	J9JVMTIEnv *j9env = userData;
+	J9VMFramePopEvent *data = eventData;
 	jvmtiEventFramePop callback = j9env->callbacks.FramePop;
+	J9VMThread *currentThread = data->currentThread;
+	J9Method *method = data->method;
 
 	Trc_JVMTI_jvmtiHookFramePop_Entry();
 
@@ -2056,15 +2058,12 @@ jvmtiHookFramePop(J9HookInterface** hook, UDATA eventNum, void* eventData, void*
 
 	/* Call the event callback */
 
-	if (callback != NULL) {
-		J9VMThread * currentThread= data->currentThread;
+	if ((NULL != callback) && shouldPostEvent(currentThread, method)) {
 		jthread threadRef;
 		UDATA hadVMAccess;
 		UDATA javaOffloadOldState = 0;
-
 		if (prepareForEvent(j9env, currentThread, currentThread, JVMTI_EVENT_FRAME_POP, &threadRef, &hadVMAccess, TRUE, 0, &javaOffloadOldState)) {
-			J9JavaVM * vm = currentThread->javaVM;
-			J9Method * method= data->method;
+			J9JavaVM *vm = currentThread->javaVM;
 			jmethodID methodID;
 
 			methodID = getCurrentMethodID(currentThread, method);

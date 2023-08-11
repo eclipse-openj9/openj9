@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include <string.h>
@@ -1616,41 +1616,6 @@ static void printClass(TR_OpaqueClassBlock *clazz)
       traceMsg(TR::comp(), "\tclassName=%.*s\n", J9UTF8_LENGTH(className), J9UTF8_DATA(className));
       }
    }
-
-#if defined(J9VM_OPT_JITSERVER)
-std::string
-TR::SymbolValidationManager::serializeValueToSymbolMap()
-   {
-   int32_t entrySize = sizeof(ValueToSymbolMap::key_type) + sizeof(ValueToSymbolMap::mapped_type);
-   std::string valueToSymbolStr(entrySize * _valueToSymbolMap.size(), '\0');
-   uint16_t idx = 0;
-   for (auto it : _valueToSymbolMap)
-      {
-      ValueToSymbolMap::key_type symbol = it.first;
-      ValueToSymbolMap::mapped_type id = it.second;
-      memcpy(&valueToSymbolStr[idx * entrySize], &symbol, sizeof(symbol));
-      memcpy(&valueToSymbolStr[idx * entrySize + sizeof(symbol)], &id, sizeof(id));
-      ++idx;
-      }
-   return valueToSymbolStr;
-   }
-
-void
-TR::SymbolValidationManager::deserializeValueToSymbolMap(const std::string &valueToSymbolStr)
-   {
-   _valueToSymbolMap.clear();
-
-   int32_t entrySize = sizeof(ValueToSymbolMap::key_type) + sizeof(ValueToSymbolMap::mapped_type);
-   int32_t numEntries = valueToSymbolStr.length() / entrySize;
-   for (int32_t idx = 0; idx < numEntries; idx++)
-      {
-      ValueToSymbolMap::key_type symbol;
-      memcpy(&symbol, &valueToSymbolStr[idx * entrySize], sizeof(symbol));
-      ValueToSymbolMap::mapped_type id = (uint16_t) valueToSymbolStr[idx * entrySize + sizeof(symbol)];
-      _valueToSymbolMap.insert(std::make_pair(symbol, id));
-      }
-   }
-#endif /* defined(J9VM_OPT_JITSERVER) */
 
 namespace // file-local
    {

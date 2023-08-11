@@ -16,7 +16,7 @@
 //[1] https://www.gnu.org/software/classpath/license.html
 //[2] https://openjdk.org/legal/assembly-exception.html
 //
-//SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+//SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 
 Executable=j9jvmti
 Submodules=j9vmutil,j9util,pool
@@ -658,3 +658,5 @@ TraceExit=Trc_JVMTI_jvmtiHookVirtualThreadUnmount_Exit Overhead=1 Level=5 Noenv 
 
 TraceEntry=Trc_JVMTI_jvmtiHookVirtualThreadMount_Entry Overhead=1 Level=5 Noenv Template="HookVirtualThreadMount"
 TraceExit=Trc_JVMTI_jvmtiHookVirtualThreadMount_Exit Overhead=1 Level=5 Noenv Template="HookVirtualThreadMount"
+
+TraceEvent=Trc_JVMTI_loadAgentLibraryOnAttach_agentLoadingDisabled Overhead=1 Level=5 Noenv Template="loadAgentLibraryOnAttach: Dynamic agent loading is disabled"

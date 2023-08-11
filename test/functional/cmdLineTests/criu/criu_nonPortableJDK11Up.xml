@@ -19,7 +19,7 @@
   [1] https://www.gnu.org/software/classpath/license.html
   [2] https://openjdk.org/legal/assembly-exception.html
 
-  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 -->
 
 <!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
@@ -30,7 +30,7 @@
   <variable name="TRACECRIU" value="-Xtrace:print={j9criu}" />
 
   <test id="Create CRIU checkpoint image and restore once - testThreadPark">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ $TRACECRIU$ $EXPORTS$" "$MAINCLASS_TIMEOUTADJUSTMENT$ testThreadPark" 1 1 false</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ $TRACECRIU$ $EXPORTS$" "$MAINCLASS_TIMEOUTADJUSTMENT$ testThreadPark" 1 1 false false</command>
     <output type="success" caseSensitive="yes" regex="no">PASSED: expected park time</output>
     <output type="required" caseSensitive="no" regex="no">Killed</output>
     <output type="required" caseSensitive="yes" regex="no">Start test name: testThreadPark</output>
@@ -46,7 +46,7 @@
   </test>
 
   <test id="Create CRIU checkpoint image and restore once - testThreadSleep">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ $TRACECRIU$ $EXPORTS$" "$MAINCLASS_TIMEOUTADJUSTMENT$ testThreadSleep" 1 1 false</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ $TRACECRIU$ $EXPORTS$" "$MAINCLASS_TIMEOUTADJUSTMENT$ testThreadSleep" 1 1 false false</command>
     <output type="success" caseSensitive="yes" regex="no">PASSED: expected sleep time</output>
     <output type="required" caseSensitive="no" regex="no">Killed</output>
     <output type="required" caseSensitive="yes" regex="no">Start test name: testThreadSleep</output>
@@ -63,7 +63,7 @@
   </test>
 
   <test id="Create CRIU checkpoint image and restore once - testObjectWaitNotify">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ $TRACECRIU$ $EXPORTS$" "$MAINCLASS_TIMEOUTADJUSTMENT$ testObjectWaitNotify" 1 1 false</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ $TRACECRIU$ $EXPORTS$" "$MAINCLASS_TIMEOUTADJUSTMENT$ testObjectWaitNotify" 1 1 false false</command>
     <output type="success" caseSensitive="yes" regex="no">PASSED: expected wait time</output>
     <output type="required" caseSensitive="no" regex="no">Killed</output>
     <output type="required" caseSensitive="yes" regex="no">Start test name: testObjectWaitNotify</output>
@@ -79,11 +79,11 @@
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
   </test>
 
-  <test id="Create CRIU checkpoint image and restore once - testObjectWaitTimedV1">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ $TRACECRIU$ $EXPORTS$" "$MAINCLASS_TIMEOUTADJUSTMENT$ testObjectWaitTimedV1" 1 1 false</command>
+  <test id="Create CRIU checkpoint image and restore once - testObjectWaitTimedNoNanoSecond">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ $TRACECRIU$ $EXPORTS$" "$MAINCLASS_TIMEOUTADJUSTMENT$ testObjectWaitTimedNoNanoSecond" 1 1 false false</command>
     <output type="success" caseSensitive="yes" regex="no">PASSED: expected wait time</output>
     <output type="required" caseSensitive="no" regex="no">Killed</output>
-    <output type="required" caseSensitive="yes" regex="no">Start test name: testObjectWaitTimedV1</output>
+    <output type="required" caseSensitive="yes" regex="no">Start test name: testObjectWaitTimedNoNanoSecond</output>
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
     <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
     <output type="failure" caseSensitive="yes" regex="no">FAILED: expected wait time</output>
@@ -96,11 +96,11 @@
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
   </test>
 
-  <test id="Create CRIU checkpoint image and restore once - testObjectWaitTimedV2">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ $TRACECRIU$ $EXPORTS$" "$MAINCLASS_TIMEOUTADJUSTMENT$ testObjectWaitTimedV2" 1 1 false</command>
+  <test id="Create CRIU checkpoint image and restore once - testObjectWaitTimedWithNanoSecond">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ $TRACECRIU$ $EXPORTS$" "$MAINCLASS_TIMEOUTADJUSTMENT$ testObjectWaitTimedWithNanoSecond" 1 1 false false</command>
     <output type="success" caseSensitive="yes" regex="no">PASSED: expected wait time</output>
     <output type="required" caseSensitive="no" regex="no">Killed</output>
-    <output type="required" caseSensitive="yes" regex="no">Start test name: testObjectWaitTimedV2</output>
+    <output type="required" caseSensitive="yes" regex="no">Start test name: testObjectWaitTimedWithNanoSecond</output>
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
     <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
     <output type="failure" caseSensitive="yes" regex="no">FAILED: expected wait time</output>

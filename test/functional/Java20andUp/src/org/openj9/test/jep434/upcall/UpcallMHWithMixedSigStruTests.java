@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 package org.openj9.test.jep434.upcall;
 
@@ -162,7 +162,7 @@ public class UpcallMHWithMixedSigStruTests {
 		 * while the same struct is 16 bytes with padding on other platforms.
 		 */
 		GroupLayout structLayout = isAixOS ? MemoryLayout.structLayout(JAVA_INT.withName("elem1"),
-				JAVA_DOUBLE.withName("elem2").withBitAlignment(32)) : MemoryLayout.structLayout(JAVA_INT.withName("elem1"),
+				JAVA_DOUBLE.withName("elem2")) : MemoryLayout.structLayout(JAVA_INT.withName("elem1"),
 						MemoryLayout.paddingLayout(32), JAVA_DOUBLE.withName("elem2"));
 		VarHandle elemHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));
 		VarHandle elemHandle2 = structLayout.varHandle(PathElement.groupElement("elem2"));
@@ -213,7 +213,7 @@ public class UpcallMHWithMixedSigStruTests {
 		 * while the same struct is 16 bytes with padding on other platforms.
 		 */
 		GroupLayout structLayout = isAixOS ? MemoryLayout.structLayout(JAVA_FLOAT.withName("elem1"),
-				JAVA_DOUBLE.withName("elem2").withBitAlignment(32)) : MemoryLayout.structLayout(JAVA_FLOAT.withName("elem1"),
+				JAVA_DOUBLE.withName("elem2")) : MemoryLayout.structLayout(JAVA_FLOAT.withName("elem1"),
 						MemoryLayout.paddingLayout(32), JAVA_DOUBLE.withName("elem2"));
 		VarHandle elemHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));
 		VarHandle elemHandle2 = structLayout.varHandle(PathElement.groupElement("elem2"));
@@ -695,7 +695,7 @@ public class UpcallMHWithMixedSigStruTests {
 	@Test
 	public void test_addDoubleAndIntDoubleFloatFromStructByUpcallMH() throws Throwable {
 		GroupLayout structLayout = isAixOS ? MemoryLayout.structLayout(JAVA_INT.withName("elem1"),
-				JAVA_DOUBLE.withName("elem2").withBitAlignment(32), JAVA_FLOAT.withName("elem3"))
+				JAVA_DOUBLE.withName("elem2"), JAVA_FLOAT.withName("elem3"))
 				: MemoryLayout.structLayout(JAVA_INT.withName("elem1"),
 						MemoryLayout.paddingLayout(32), JAVA_DOUBLE.withName("elem2"),
 						JAVA_FLOAT.withName("elem3"));
@@ -727,7 +727,7 @@ public class UpcallMHWithMixedSigStruTests {
 		 * while the same struct is 20 bytes with padding on other platforms.
 		 */
 		GroupLayout structLayout = isAixOS ? MemoryLayout.structLayout(JAVA_FLOAT.withName("elem1"),
-				JAVA_DOUBLE.withName("elem2").withBitAlignment(32), JAVA_INT.withName("elem3"))
+				JAVA_DOUBLE.withName("elem2"), JAVA_INT.withName("elem3"))
 				: MemoryLayout.structLayout(JAVA_FLOAT.withName("elem1"),
 						MemoryLayout.paddingLayout(32), JAVA_DOUBLE.withName("elem2"),
 						JAVA_INT.withName("elem3"));
@@ -759,7 +759,7 @@ public class UpcallMHWithMixedSigStruTests {
 		 * while the same struct is 20 bytes with padding on other platforms.
 		 */
 		GroupLayout structLayout = isAixOS ? MemoryLayout.structLayout(JAVA_INT.withName("elem1"),
-				JAVA_DOUBLE.withName("elem2").withBitAlignment(32), JAVA_INT.withName("elem3"))
+				JAVA_DOUBLE.withName("elem2"), JAVA_INT.withName("elem3"))
 				: MemoryLayout.structLayout(JAVA_INT.withName("elem1"),
 						MemoryLayout.paddingLayout(32), JAVA_DOUBLE.withName("elem2"),
 						JAVA_INT.withName("elem3"));
@@ -791,7 +791,7 @@ public class UpcallMHWithMixedSigStruTests {
 		 * while the same struct is 20 bytes with padding on other platforms.
 		 */
 		GroupLayout structLayout = isAixOS ? MemoryLayout.structLayout(JAVA_FLOAT.withName("elem1"),
-				JAVA_DOUBLE.withName("elem2").withBitAlignment(32), JAVA_FLOAT.withName("elem3"))
+				JAVA_DOUBLE.withName("elem2"), JAVA_FLOAT.withName("elem3"))
 				: MemoryLayout.structLayout(JAVA_FLOAT.withName("elem1"),
 						MemoryLayout.paddingLayout(32), JAVA_DOUBLE.withName("elem2"),
 						JAVA_FLOAT.withName("elem3"));
@@ -825,7 +825,7 @@ public class UpcallMHWithMixedSigStruTests {
 		 * 2) there is a 4-byte padding between double and long.
 		 */
 		GroupLayout structLayout = isAixOS ? MemoryLayout.structLayout(JAVA_INT.withName("elem1"),
-				JAVA_DOUBLE.withName("elem2").withBitAlignment(32), MemoryLayout.paddingLayout(32), JAVA_LONG.withName("elem3"))
+				JAVA_DOUBLE.withName("elem2"), MemoryLayout.paddingLayout(32), JAVA_LONG.withName("elem3"))
 				: MemoryLayout.structLayout(JAVA_INT.withName("elem1"), MemoryLayout.paddingLayout(32),
 						JAVA_DOUBLE.withName("elem2"), JAVA_LONG.withName("elem3"));
 		VarHandle elemHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));

@@ -18,7 +18,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  */
 package java.lang;
 
@@ -253,9 +253,11 @@ final class Access implements JavaLangAccess {
 	}
 /*[ENDIF] JAVA_SPEC_VERSION < 10 */
 
+/*[IF JAVA_SPEC_VERSION < 22]*/
 	public String fastUUID(long param1, long param2) {
 		return Long.fastUUID(param1, param2);
 	}
+/*[ENDIF] JAVA_SPEC_VERSION < 22 */
 
 	public Package definePackage(ClassLoader classLoader, String name, Module module) {
 		if (null == classLoader) {
@@ -600,6 +602,18 @@ final class Access implements JavaLangAccess {
 	public int countPositives(byte[] ba, int off, int len) {
 		return StringCoding.countPositives(ba, off, len);
 	}
+
+	public long stringConcatCoder(char value) {
+		return StringConcatHelper.coder(value);
+	}
+
+	public long stringBuilderConcatMix(long lengthCoder, StringBuilder sb) {
+		return sb.mix(lengthCoder);
+	}
+
+	public long stringBuilderConcatPrepend(long lengthCoder, byte[] buf, StringBuilder sb) {
+		return sb.prepend(lengthCoder, buf);
+	}
 /*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 /*[ELSE] JAVA_SPEC_VERSION >= 20 */
 	public Object[] extentLocalCache() {
@@ -696,7 +710,8 @@ final class Access implements JavaLangAccess {
 	}
 /*[ENDIF] JAVA_SPEC_VERSION >= 19 */
 
-/*[IF (JAVA_SPEC_VERSION >= 11) & (JAVA_SPEC_VERSION != 20)]*/
+/*[IF JAVA_SPEC_VERSION >= 11]*/
+	@Override
 	public String getLoaderNameID(ClassLoader loader) {
 		StringBuilder buffer = new StringBuilder();
 		String name = loader.getName();
@@ -713,7 +728,7 @@ final class Access implements JavaLangAccess {
 
 		return buffer.toString();
 	}
-/*[ENDIF] (JAVA_SPEC_VERSION >= 11) & (JAVA_SPEC_VERSION != 20) */
+/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 
 /*[IF INLINE-TYPES]*/
 	@Override

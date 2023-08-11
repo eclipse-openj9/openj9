@@ -18,7 +18,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include "j9.h"
@@ -40,6 +40,46 @@ MM_UnfinalizedObjectList::MM_UnfinalizedObjectList()
 	, _previousList(NULL)
 {
 	_typeId = __FUNCTION__;
+}
+
+MM_UnfinalizedObjectList *
+MM_UnfinalizedObjectList::newInstanceArray(MM_EnvironmentBase *env, uintptr_t arrayElementsTotal, MM_UnfinalizedObjectList *listsToCopy, uintptr_t arrayElementsToCopy)
+{
+	MM_UnfinalizedObjectList *unfinalizedObjectLists = NULL;
+
+	unfinalizedObjectLists = (MM_UnfinalizedObjectList *)env->getForge()->allocate(sizeof(MM_UnfinalizedObjectList) * arrayElementsTotal,  MM_AllocationCategory::FIXED, J9_GET_CALLSITE());
+	if (NULL != unfinalizedObjectLists) {
+		Assert_MM_true(arrayElementsTotal >= arrayElementsToCopy);
+		/* Check whether a new array instance in being created from an existing array. If so, copy over the elements first. */
+		if (arrayElementsToCopy > 0) {
+			for (uintptr_t index = 0; index < arrayElementsToCopy; index++) {
+				unfinalizedObjectLists[index] = listsToCopy[index];
+				unfinalizedObjectLists[index].initialize(env);
+			}
+		}
+
+		for (uintptr_t index = arrayElementsToCopy; index < arrayElementsTotal; index++) {
+			new(&unfinalizedObjectLists[index]) MM_UnfinalizedObjectList();
+			unfinalizedObjectLists[index].initialize(env);
+		}
+	}
+
+	return unfinalizedObjectLists;
+}
+
+bool
+MM_UnfinalizedObjectList::initialize(MM_EnvironmentBase *env)
+{
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
+
+	setNextList(extensions->unfinalizedObjectLists);
+	setPreviousList(NULL);
+	if (NULL != extensions->unfinalizedObjectLists) {
+		extensions->unfinalizedObjectLists->setPreviousList(this);
+	}
+	extensions->unfinalizedObjectLists = this;
+
+	return true;
 }
 
 void 

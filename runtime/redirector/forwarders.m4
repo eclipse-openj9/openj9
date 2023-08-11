@@ -16,7 +16,7 @@ dnl
 dnl [1] https://www.gnu.org/software/classpath/license.html
 dnl [2] https://openjdk.org/legal/assembly-exception.html
 dnl
-dnl SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+dnl SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 dnl
 dnl        (name,cc, decorate, ret, args..)
 _X(jio_vfprintf,,false,int,FILE *stream, const char *format, va_list args)
@@ -83,6 +83,8 @@ _X(JVM_GetThreadInterruptEvent,JNICALL,true,void *,void)
 _X(JVM_Halt,JNICALL,true,void,jint exitCode)
 _X(JVM_InitializeSocketLibrary,JNICALL,true,jint,void)
 _X(JVM_InvokeMethod,JNICALL,true,jobject,JNIEnv *env, jobject method, jobject obj, jobjectArray args)
+_IF([defined(J9VM_ZOS_3164_INTEROPERABILITY) && (JAVA_SPEC_VERSION >= 17)],
+	_X(JVM_Invoke31BitJNI_OnXLoad,JNICALL,true,jint,JavaVM *vm,void *handle,jboolean isOnLoad,void *reserved))
 _X(JVM_IsNaN,JNICALL,true,jboolean,jdouble dbl)
 _X(JVM_LatestUserDefinedLoader,JNICALL,true,jobject,JNIEnv *env)
 _X(JVM_Listen,JNICALL,true,jint,jint descriptor, jint count)
@@ -112,7 +114,7 @@ _X(JVM_RegisterUnsafeMethods,JNICALL,true,void,JNIEnv *env, jclass unsafeClz)
 _X(JVM_Send,JNICALL,true,jint,jint descriptor, const char *buffer, jint numBytes, jint flags)
 _X(JVM_SendTo,JNICALL,true,jint,jint descriptor, const char *buffer, jint length, jint flags, const struct sockaddr *toAddr, int toLength)
 _X(JVM_SetLength,JNICALL,true,jint,jint fd, jlong length)
-_X(JVM_Sleep,JNICALL,true,jint,JNIEnv *env, jclass thread, jlong timeout)
+_X(JVM_Sleep,JNICALL,true,void,JNIEnv *env, jclass thread, jlong timeout)
 _X(JVM_Socket,JNICALL,true,jint,jint domain, jint type, jint protocol)
 _X(JVM_SocketAvailable,JNICALL,true,jint,jint descriptor, jint *result)
 _X(JVM_SocketClose,JNICALL,true,jint,jint descriptor)
@@ -408,8 +410,16 @@ _IF([JAVA_SPEC_VERSION >= 20],
 _IF([JAVA_SPEC_VERSION >= 20],
 	[_X(JVM_VirtualThreadHideFrames, JNICALL, false, void, JNIEnv *env, jobject vthread, jboolean hide)])
 _IF([JAVA_SPEC_VERSION >= 21],
-	[_X(JVM_VirtualThreadMount, JNICALL, false, void, JNIEnv *env, jobject vthread, jboolean hide, jboolean firstMount)])
+	[_X(JVM_IsForeignLinkerSupported, JNICALL, false, jboolean, void)])
 _IF([JAVA_SPEC_VERSION >= 21],
-	[_X(JVM_VirtualThreadUnmount, JNICALL, false, void, JNIEnv *env, jobject vthread, jboolean hide, jboolean lastUnmount)])
+	[_X(JVM_PrintWarningAtDynamicAgentLoad, JNICALL, false, jboolean, void)])
+_IF([JAVA_SPEC_VERSION >= 21],
+	[_X(JVM_VirtualThreadEnd, JNICALL, false, void, JNIEnv *env, jobject vthread)])
+_IF([JAVA_SPEC_VERSION >= 21],
+	[_X(JVM_VirtualThreadMount, JNICALL, false, void, JNIEnv *env, jobject vthread, jboolean hide)])
+_IF([JAVA_SPEC_VERSION >= 21],
+	[_X(JVM_VirtualThreadStart, JNICALL, false, void, JNIEnv *env, jobject vthread)])
+_IF([JAVA_SPEC_VERSION >= 21],
+	[_X(JVM_VirtualThreadUnmount, JNICALL, false, void, JNIEnv *env, jobject vthread, jboolean hide)])
 _IF([defined(J9VM_OPT_VALHALLA_VALUE_TYPES)],
 	[_X(JVM_IsValhallaEnabled, JNICALL, false, jboolean, void)])

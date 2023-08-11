@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include "j2sever.h"
@@ -331,7 +331,7 @@ tryAgain:
 		goto done;
 	}
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	if ((';' == *(char *)(classNameData + (classNameLength - 1)))
 		&& ('Q' == *(char *)classNameData)
 	) {
@@ -339,7 +339,7 @@ tryAgain:
 		classNameData += 1;
 		classNameLength -= 2;
 	}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
 	resolvedClass = internalFindClassUTF8(vmStruct, classNameData, classNameLength,
 			classLoader, findClassFlags);
@@ -933,12 +933,12 @@ resolveInstanceFieldRefInto(J9VMThread *vmStruct, J9Method *method, J9ConstantPo
 		J9Class *targetClass = NULL;
 		UDATA modifiers = 0;
 		char *nlsStr = NULL;
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 		UDATA fieldIndex = 0;
 		bool fccEntryFieldNotSet = true;
 		J9Class *flattenableClass = NULL;
 		J9FlattenedClassCache *flattenedClassCache = NULL;
-#endif		
+#endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
 		bool isWithField = false;
 		J9Class *currentTargetClass = NULL;
 		J9Class *currentSenderClass = NULL;
@@ -959,6 +959,7 @@ resolveInstanceFieldRefInto(J9VMThread *vmStruct, J9Method *method, J9ConstantPo
 		signature = J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSig);
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 		isWithField = J9_ARE_ANY_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_WITH_FIELD);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		/**
 		 * This is an optimization that searches for a field offset in the FCC. 
 		 * If the offset is found there is no need to repeat the process. 
@@ -966,6 +967,7 @@ resolveInstanceFieldRefInto(J9VMThread *vmStruct, J9Method *method, J9ConstantPo
 		 * the resolvedClass will always be the class that owns the field, 
 		 * since ValueType superclasses can not have fields.
 		 */
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 		if (J9_IS_J9CLASS_VALUETYPE(resolvedClass)) {
 			if ('Q' == J9UTF8_DATA(signature)[0]) {
 				flattenedClassCache = resolvedClass->flattenedClassCache;
@@ -982,7 +984,7 @@ resolveInstanceFieldRefInto(J9VMThread *vmStruct, J9Method *method, J9ConstantPo
 			}
 		}
 		if (fccEntryFieldNotSet) 
-#endif
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 		{
 			fieldOffset = instanceFieldOffsetWithSourceClass(vmStruct, resolvedClass, J9UTF8_DATA(name), J9UTF8_LENGTH(name), J9UTF8_DATA(signature), J9UTF8_LENGTH(signature), &definingClass, (UDATA *)&field, lookupOptions, classFromCP);
 		}
@@ -1069,7 +1071,7 @@ illegalAccess:
 		
 			if ((NULL != ramCPEntry) && J9_ARE_NO_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_NO_CP_UPDATE)) {
 				UDATA valueOffset = fieldOffset;
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 				if ('Q' == J9UTF8_DATA(signature)[0]) {
 					if (fccEntryFieldNotSet) {
 						flattenedClassCache = definingClass->flattenedClassCache;
@@ -1086,7 +1088,7 @@ illegalAccess:
 						issueWriteBarrier();
 					}
 				}
-#endif
+#endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
 				/* Sign extend the resolved constant to make sure that it is always larger than valueOffset field */
 				modifiers |= (UDATA)(IDATA)(I_32) J9FieldFlagResolved;
 				if (0 != (resolveFlags & J9_RESOLVE_FLAG_FIELD_SETTER)) {

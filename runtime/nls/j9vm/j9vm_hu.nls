@@ -17,7 +17,7 @@
 # [1] https://www.gnu.org/software/classpath/license.html
 # [2] https://openjdk.org/legal/assembly-exception.html
 #
-# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 #
 
 # Externalised messages for the VM module.
@@ -2104,4 +2104,44 @@ J9NLS_VM_CRIU_SINGLETHREADMODE_JVMCRIUEXCEPTION=CRIU egysz\u00e1las m\u00f3dban 
 J9NLS_VM_CRIU_SINGLETHREADMODE_JVMCRIUEXCEPTION.explanation=Blocking operation is not allowed in CRIU single thread mode.
 J9NLS_VM_CRIU_SINGLETHREADMODE_JVMCRIUEXCEPTION.system_action=The JVM will throw a JVMCRIUException.
 J9NLS_VM_CRIU_SINGLETHREADMODE_JVMCRIUEXCEPTION.user_response=View CRIU documentation to determine how to resolve the exception.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_CRIU_RESTORE_INITIALIZE_TRACE_FAILED=A JVM nem tudta inicializ\u00e1lni az Xtrace parancsot a JVM vissza\u00e1ll\u00edt\u00e1sakor
+# START NON-TRANSLATABLE
+J9NLS_VM_CRIU_RESTORE_INITIALIZE_TRACE_FAILED.sample_input_1=1
+J9NLS_VM_CRIU_RESTORE_INITIALIZE_TRACE_FAILED.explanation=CRIUSupport::checkpointJVM failed.
+J9NLS_VM_CRIU_RESTORE_INITIALIZE_TRACE_FAILED.system_action=The JVM will throw a JVMRestoreException.
+J9NLS_VM_CRIU_RESTORE_INITIALIZE_TRACE_FAILED.user_response=Check documentation for CRIUSupport restore options.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_SEEDOFFSET=A JVM nem tudta \u00fajra kezd\u0151\u00e9rt\u00e9kkel ell\u00e1tni a j.u.Random.seed.value \u00e9rt\u00e9ket \u00e9rv\u00e9nytelen kezd\u0151\u00e9rt\u00e9k-eltol\u00e1s miatt
+# START NON-TRANSLATABLE
+J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_SEEDOFFSET.sample_input_1=1
+J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_SEEDOFFSET.explanation=CRIUSupport::checkpointJVM failed.
+J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_SEEDOFFSET.system_action=The JVM will throw a JVMRestoreException.
+J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_SEEDOFFSET.user_response=View CRIU documentation to determine how to resolve the exception.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_CRIU_RESTORE_RESEED_ATOMICLONG_CNF=A JVM nem tudta \u00fajra kezd\u0151\u00e9rt\u00e9kkel ell\u00e1tni a j.u.Random.seed.value \u00e9rt\u00e9ket, mert a j.u.c.a.AtomicLong nem tal\u00e1lhat\u00f3
+# START NON-TRANSLATABLE
+J9NLS_VM_CRIU_RESTORE_RESEED_ATOMICLONG_CNF.sample_input_1=1
+J9NLS_VM_CRIU_RESTORE_RESEED_ATOMICLONG_CNF.explanation=CRIUSupport::checkpointJVM failed.
+J9NLS_VM_CRIU_RESTORE_RESEED_ATOMICLONG_CNF.system_action=The JVM will throw a JVMRestoreException.
+J9NLS_VM_CRIU_RESTORE_RESEED_ATOMICLONG_CNF.user_response=View CRIU documentation to determine how to resolve the exception.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_VALUEOFFSET=A JVM nem tudta \u00fajra kezd\u0151\u00e9rt\u00e9kkel ell\u00e1tni a j.u.Random.seed.value \u00e9rt\u00e9ket \u00e9rv\u00e9nytelen \u00e9rt\u00e9keltol\u00e1s miatt
+# START NON-TRANSLATABLE
+J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_VALUEOFFSET.sample_input_1=1
+J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_VALUEOFFSET.explanation=CRIUSupport::checkpointJVM failed.
+J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_VALUEOFFSET.system_action=The JVM will throw a JVMRestoreException.
+J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_VALUEOFFSET.user_response=View CRIU documentation to determine how to resolve the exception.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_CRIU_RESTORE_INITIALIZE_DUMP_FAILED=A JVM nem tudta inicializ\u00e1lni az Xdump parancsot a JVM vissza\u00e1ll\u00edt\u00e1sakor
+# START NON-TRANSLATABLE
+J9NLS_VM_CRIU_RESTORE_INITIALIZE_DUMP_FAILED.sample_input_1=1
+J9NLS_VM_CRIU_RESTORE_INITIALIZE_DUMP_FAILED.explanation=CRIUSupport::checkpointJVM failed.
+J9NLS_VM_CRIU_RESTORE_INITIALIZE_DUMP_FAILED.system_action=The JVM will throw a JVMRestoreException.
+J9NLS_VM_CRIU_RESTORE_INITIALIZE_DUMP_FAILED.user_response=Check documentation for CRIUSupport restore options.
 # END NON-TRANSLATABLE

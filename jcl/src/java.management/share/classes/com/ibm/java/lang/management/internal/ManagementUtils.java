@@ -18,7 +18,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 package com.ibm.java.lang.management.internal;
 
@@ -724,7 +724,7 @@ public final class ManagementUtils {
 		private static final String OPENJ9_DIAGNOSTICS_MXBEAN_NAME = "openj9.lang.management:type=OpenJ9Diagnostics"; //$NON-NLS-1$
 
 		static void registerAll() {
-			// register standard singleton beans
+			// Register standard singleton beans for JDK8.
 			create(ManagementFactory.CLASS_LOADING_MXBEAN_NAME, ClassLoadingMXBeanImpl.getInstance())
 				.addInterface(java.lang.management.ClassLoadingMXBean.class)
 				.validateAndRegister();
@@ -757,7 +757,7 @@ public final class ManagementUtils {
 				.addInterface(java.lang.management.ThreadMXBean.class)
 				.validateAndRegister();
 
-			// register OpenJ9-specific singleton beans
+			// Register OpenJ9-specific singleton beans for JDK8.
 			create(GUEST_OPERATING_SYSTEM_MXBEAN_NAME, com.ibm.virtualization.management.internal.GuestOS.getInstance())
 				.addInterface(com.ibm.virtualization.management.GuestOSMXBean.class)
 				.validateAndRegister();
@@ -774,12 +774,12 @@ public final class ManagementUtils {
 				.addInterface(openj9.lang.management.OpenJ9DiagnosticsMXBean.class)
 				.validateAndRegister();
 
-			// register standard optional beans
+			// Register standard optional beans for JDK8.
 			create(ManagementFactory.COMPILATION_MXBEAN_NAME, CompilationMXBeanImpl.getInstance())
 				.addInterface(java.lang.management.CompilationMXBean.class)
 				.validateAndRegister();
 
-			// register beans with zero or more instances
+			// Register beans with zero or more instances for JDK8.
 			create(BUFFERPOOL_MXBEAN_DOMAIN_TYPE, BufferPoolMXBeanImpl.getBufferPoolMXBeans())
 				.addInterface(java.lang.management.BufferPoolMXBean.class)
 				.validateAndRegister();
@@ -792,7 +792,7 @@ public final class ManagementUtils {
 				.validateAndRegister();
 
 			create(ManagementFactory.MEMORY_MANAGER_MXBEAN_DOMAIN_TYPE,
-					// exclude garbage collector beans handled above
+					// Exclude garbage collector beans handled above.
 					excluding(ExtendedMemoryMXBeanImpl.getInstance().getMemoryManagerMXBeans(false), java.lang.management.GarbageCollectorMXBean.class))
 				.addInterface(java.lang.management.MemoryManagerMXBean.class)
 				.validateAndRegister();

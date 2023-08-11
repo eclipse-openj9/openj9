@@ -19,7 +19,7 @@
   [1] https://www.gnu.org/software/classpath/license.html
   [2] https://openjdk.org/legal/assembly-exception.html
 
-  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 -->
 
 <!DOCTYPE suite SYSTEM "excludes.dtd">
@@ -31,7 +31,6 @@
 <exclude id="Xnoclassgc" platform=".*_hrt.*" shouldFix="true"><reason>unsupported command line option</reason></exclude>
 <exclude id="-Xlockword bad mode" platform=".*_hrt.*" shouldFix="false"><reason>-Xlockword not supported on hard realtime</reason></exclude>
 <exclude id="-Xlockword default mode" platform=".*_hrt.*" shouldFix="false"><reason>-Xlockword not supported on hard realtime</reason></exclude>
-<exclude id="-Xlockword minimizeFootprint mode" platform=".*_hrt.*" shouldFix="false"><reason>-Xlockword not supported on hard realtime</reason></exclude>
 <exclude id="-Xlockword all mode" platform=".*_hrt.*" shouldFix="false"><reason>-Xlockword not supported on hard realtime</reason></exclude>
 <exclude id="-Xlockword bad option" platform=".*_hrt.*" shouldFix="false"><reason>-Xlockword not supported on hard realtime</reason></exclude>
 <exclude id="-Xlockword bad option trailing separator" platform=".*_hrt.*" shouldFix="false"><reason>-Xlockword not supported on hard realtime</reason></exclude>

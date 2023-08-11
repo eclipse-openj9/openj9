@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include "control/J9Options.hpp"
@@ -58,7 +58,8 @@
 #endif
 
 #define SET_OPTION_BIT(x)   TR::Options::setBit,   offsetof(OMR::Options,_options[(x)&TR_OWM]), ((x)&~TR_OWM)
-
+//Default code cache total max memory percentage set to 25% of physical RAM for low memory systems
+#define CODECACHE_DEFAULT_MAXRAMPERCENTAGE 25
 // For use with TPROF only, disable JVMPI hooks even if -Xrun is specified.
 // The only hook that is required is J9HOOK_COMPILED_METHOD_LOAD.
 //
@@ -155,7 +156,6 @@ int32_t J9::Options::_compilationExpirationTime = -1;
 int32_t J9::Options::_minSamplingPeriod = 10; // ms
 int32_t J9::Options::_compilationBudget = 0;  // ms; 0 means disabled
 
-int32_t J9::Options::_catchSamplingSizeThreshold = -1; // measured in nodes; -1 means not initialized
 int32_t J9::Options::_compilationThreadPriorityCode = 4; // these codes are converted into
                                                          // priorities in startCompilationThread
 int32_t J9::Options::_disableIProfilerClassUnloadThreshold = 20000;// The usefulness of IProfiling is questionable at this point
@@ -265,6 +265,7 @@ int32_t J9::Options::_seriousCompFailureThreshold = 10; // above this threshold 
 
 bool J9::Options::_useCPUsToDetermineMaxNumberOfCompThreadsToActivate = false;
 int32_t J9::Options::_numCodeCachesToCreateAtStartup = 0; // 0 means no change from default which is 1
+bool J9::Options::_overrideCodecachetotal = false;
 
 int32_t J9::Options::_dataCacheQuantumSize = 64;
 int32_t J9::Options::_dataCacheMinQuanta = 2;
@@ -368,7 +369,10 @@ char * J9::Options::_externalOptionStrings[J9::ExternalOptions::TR_NumExternalOp
    "-XX:-JITServerAOTCachePersistence",   // = 64
    "-XX:JITServerAOTCacheDir=",           // = 65
    "-XX:JITServerAOTCacheName=",          // = 66
-   // TR_NumExternalOptions                  = 67
+   "-XX:codecachetotalMaxRAMPercentage=", // = 67
+   "-XX:+JITServerAOTCacheDelayMethodRelocation", // = 68
+   "-XX:-JITServerAOTCacheDelayMethodRelocation", // = 69
+   // TR_NumExternalOptions                  = 70
    };
 
 //************************************************************************
@@ -849,9 +853,6 @@ TR::OptionTable OMR::Options::_feOptions[] = {
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_countForLoopyBootstrapMethods, 250, "F%d", NOT_IN_SUBSET },
    {"bigAppSampleThresholdAdjust=", "O\tadjust the hot and scorching threshold for certain 'big' apps",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_bigAppSampleThresholdAdjust, 0, "F%d", NOT_IN_SUBSET},
-   {"catchSamplingSizeThreshold=", "R<nnn>\tThe sample counter will not be decremented in a catch block "
-                                   "if the number of nodes in the compiled method exceeds this threshold",
-        TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_catchSamplingSizeThreshold, 0, "F%d", NOT_IN_SUBSET},
    {"classLoadPhaseInterval=", "O<nnn>\tnumber of sampling ticks before we run "
                                "again the code for a class loading phase detection",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_classLoadingPhaseInterval, 0, "P%d", NOT_IN_SUBSET},
@@ -1436,6 +1437,8 @@ J9::Options::JITServerParseLocalSyncCompiles(J9VMInitArgs *vmArgsArray, J9JavaVM
    }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
+
+
 void J9::Options::preProcessMmf(J9JavaVM *vm, J9JITConfig *jitConfig)
    {
    J9MemoryManagerFunctions * mmf = vm->memoryManagerFunctions;
@@ -1599,6 +1602,31 @@ void J9::Options::preProcessJniAccelerator(J9JavaVM *vm)
       }
    }
 
+double getCodeCacheMaxPercentageOfAvailableMemory(J9JavaVM *vm)
+   {
+   PORT_ACCESS_FROM_JAVAVM(vm);
+   OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
+
+   double codeCacheTotalPercentage = CODECACHE_DEFAULT_MAXRAMPERCENTAGE;
+   char *xxccPercentOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXcodecachetotalMaxRAMPercentage];
+   int32_t XXcodeCacheTotalPercentArg = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxccPercentOption, 0);
+   if (XXcodeCacheTotalPercentArg >= 0)
+      {
+      IDATA returnCode = GET_DOUBLE_VALUE(XXcodeCacheTotalPercentArg, xxccPercentOption, codeCacheTotalPercentage);
+      if (OPTION_OK == returnCode)
+         {
+         if (!(codeCacheTotalPercentage >= 1.0 && codeCacheTotalPercentage <= 100.0))
+            {
+            j9nls_printf(PORTLIB, J9NLS_WARNING, J9NLS_JIT_OPTIONS_PERCENT_OUT_OF_RANGE, xxccPercentOption, codeCacheTotalPercentage, CODECACHE_DEFAULT_MAXRAMPERCENTAGE);
+            codeCacheTotalPercentage = CODECACHE_DEFAULT_MAXRAMPERCENTAGE;
+            }
+         }
+	 else
+            j9nls_printf(PORTLIB, J9NLS_WARNING, J9NLS_JIT_OPTIONS_INCORRECT_MEMORY_SIZE, xxccPercentOption);
+      }
+   return codeCacheTotalPercentage;
+   }
+
 void J9::Options::preProcessCodeCacheIncreaseTotalSize(J9JavaVM *vm, J9JITConfig *jitConfig)
    {
    PORT_ACCESS_FROM_JAVAVM(vm);
@@ -1609,6 +1637,22 @@ void J9::Options::preProcessCodeCacheIncreaseTotalSize(J9JavaVM *vm, J9JITConfig
    if (!codecachetotalAlreadyParsed) // avoid processing twice for AOT and JIT and produce duplicate messages
       {
       codecachetotalAlreadyParsed = true;
+
+      UDATA ccTotalSize = jitConfig->codeCacheTotalKB;
+#if !defined(J9ZTPF)  // The z/TPF OS reserves code cache memory differently
+      uint64_t freePhysicalMemoryB = omrsysinfo_get_addressable_physical_memory();
+      if (freePhysicalMemoryB != 0)
+         {
+         // If the available memory is less than the default code cache total value
+         // then use only the user specified percentage(default 25%) of the free memory as code cache total
+         uint64_t proposedCodeCacheTotalKB = ((uint64_t)(((double)freePhysicalMemoryB / 100.0) * getCodeCacheMaxPercentageOfAvailableMemory(vm))) >> 10;
+         if (proposedCodeCacheTotalKB < jitConfig->codeCacheTotalKB)
+            {
+            ccTotalSize = static_cast<UDATA>(proposedCodeCacheTotalKB);
+            _overrideCodecachetotal = true;
+            }
+         }
+#endif
       char *xccOption  = J9::Options::_externalOptionStrings[J9::ExternalOptions::Xcodecachetotal];
       char *xxccOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXcodecachetotal];
       int32_t codeCacheTotalArgIndex   = FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, xccOption, 0);
@@ -1628,35 +1672,11 @@ void J9::Options::preProcessCodeCacheIncreaseTotalSize(J9JavaVM *vm, J9JITConfig
             argIndex = codeCacheTotalArgIndex;
             ccTotalOption = xccOption;
             }
-         UDATA ccTotalSize;
          IDATA returnCode = GET_MEMORY_VALUE(argIndex, ccTotalOption, ccTotalSize);
          if (OPTION_OK == returnCode)
             {
             ccTotalSize >>= 10; // convert to KB
-
-            // Impose a minimum value of 2 MB
-            if (ccTotalSize < 2048)
-               ccTotalSize = 2048;
-
-            // Restriction: total size must be a multiple of the size of one code cache
-            UDATA fragmentSize = ccTotalSize % jitConfig->codeCacheKB;
-            if (fragmentSize > 0)   // TODO: do we want a message here?
-               ccTotalSize += jitConfig->codeCacheKB - fragmentSize; // round-up
-
-            // Proportionally increase the data cache as well
-            // Use 'double' to avoid truncation/overflow
-            UDATA dcTotalSize = (double)ccTotalSize / (double)(jitConfig->codeCacheTotalKB) *
-               (double)(jitConfig->dataCacheTotalKB);
-
-            // Round up to a multiple of the data cache size
-            fragmentSize = dcTotalSize % jitConfig->dataCacheKB;
-            if (fragmentSize > 0)
-               dcTotalSize += jitConfig->dataCacheKB - fragmentSize;
-            // Now write the values in jitConfig
-            jitConfig->codeCacheTotalKB = ccTotalSize;
-            // Make sure that the new value for dataCacheTotal doesn't shrink the default
-            if (dcTotalSize > jitConfig->dataCacheTotalKB)
-               jitConfig->dataCacheTotalKB = dcTotalSize;
+            _overrideCodecachetotal = false;  // User specified value takes precedence over defaults.
             }
          else // Error with the option
             {
@@ -1664,6 +1684,30 @@ void J9::Options::preProcessCodeCacheIncreaseTotalSize(J9JavaVM *vm, J9JITConfig
             j9nls_printf(PORTLIB, J9NLS_WARNING, J9NLS_JIT_OPTIONS_INCORRECT_MEMORY_SIZE, ccTotalOption);
             }
          }
+
+      // Impose a minimum value of 2 MB
+      if (ccTotalSize < 2048)
+         ccTotalSize = 2048;
+
+      // Restriction: total size must be a multiple of the size of one code cache
+      UDATA fragmentSize = ccTotalSize % jitConfig->codeCacheKB;
+      if (fragmentSize > 0)   // TODO: do we want a message here?
+         ccTotalSize -= fragmentSize; // round-down
+
+      // Proportionally increase the data cache as well
+      // Use 'double' to avoid truncation/overflow
+      UDATA dcTotalSize = (double)ccTotalSize / (double)(jitConfig->codeCacheTotalKB) *
+         (double)(jitConfig->dataCacheTotalKB);
+
+      // Round up to a multiple of the data cache size
+      fragmentSize = dcTotalSize % jitConfig->dataCacheKB;
+      if (fragmentSize > 0)
+         dcTotalSize += jitConfig->dataCacheKB - fragmentSize;
+      // Now write the values in jitConfig
+      jitConfig->codeCacheTotalKB = ccTotalSize;
+      // Make sure that the new value for dataCacheTotal doesn't shrink the default
+      if (dcTotalSize > jitConfig->dataCacheTotalKB)
+         jitConfig->dataCacheTotalKB = dcTotalSize;
       }
    }
 
@@ -2363,6 +2407,20 @@ bool J9::Options::preProcessJitServer(J9JavaVM *vm, J9JITConfig *jitConfig)
                GET_OPTION_VALUE(xxJITServerAOTCacheNameArgIndex, '=', &name);
                compInfo->getPersistentInfo()->setJITServerAOTCacheName(name);
                }
+
+            const char *xxJITServerAOTCacheDelayMethodRelocation =
+               J9::Options::_externalOptionStrings[J9::ExternalOptions::XXplusJITServerAOTCacheDelayMethodRelocation];
+            const char *xxDisableJITServerAOTCacheDelayMethodRelocation =
+               J9::Options::_externalOptionStrings[J9::ExternalOptions::XXminusJITServerAOTCacheDelayMethodRelocation];
+            int32_t xxJITServerAOTCacheDelayMethodRelocationArgIndex =
+               FIND_ARG_IN_VMARGS(EXACT_MATCH, xxJITServerAOTCacheDelayMethodRelocation, 0);
+            int32_t xxDisableJITServerAOTCacheDelayMethodRelocationArgIndex =
+               FIND_ARG_IN_VMARGS(EXACT_MATCH, xxDisableJITServerAOTCacheDelayMethodRelocation, 0);
+
+            if (xxJITServerAOTCacheDelayMethodRelocationArgIndex > xxDisableJITServerAOTCacheDelayMethodRelocationArgIndex)
+               {
+               compInfo->getPersistentInfo()->setJITServerAOTCacheDelayMethodRelocation(true);
+               }
             }
 #if defined(J9VM_OPT_CRIU_SUPPORT)
          else if (useJitServerExplicitlyDisabled)
@@ -2602,7 +2660,7 @@ J9::Options::fePreProcess(void * base)
 
    if (!self()->preProcessJitServer(vm, jitConfig))
       {
-         return false;
+      return false;
       }
 
 #if (defined(TR_HOST_X86) || defined(TR_HOST_S390) || defined(TR_HOST_POWER)) && defined(TR_TARGET_64BIT)
@@ -2635,7 +2693,9 @@ J9::Options::setupJITServerOptions()
       {
       self()->setOption(TR_DisableSamplingJProfiling);
       self()->setOption(TR_DisableProfiling); // JITServer limitation, JIT profiling data is not available to remote compiles yet
-      self()->setOption(TR_DisableEDO); // JITServer limitation, EDO counters are not relocatable yet
+#if defined(TR_HOST_ARM64)
+      self()->setOption(TR_DisableEDO); // Temporary JITServer limitation on aarch64
+#endif /* defined (TR_HOST_ARM64) */
       self()->setOption(TR_DisableMethodIsCold); // Shady heuristic; better to disable to reduce client/server traffic
       self()->setOption(TR_DisableJProfilerThread);
       self()->setOption(TR_EnableJProfiling, false);
@@ -3177,12 +3237,6 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
       TR::Options::_coldUpgradeSampleThreshold = 10;
       }
 
-   if (TR::Options::_catchSamplingSizeThreshold == -1) // not yet set
-      {
-      TR::Options::_catchSamplingSizeThreshold = 1100; // in number of nodes
-      if (TR::Compiler->target.numberOfProcessors() <= 2)
-         TR::Options::_catchSamplingSizeThreshold = 850;
-      }
    return true;
    }
 

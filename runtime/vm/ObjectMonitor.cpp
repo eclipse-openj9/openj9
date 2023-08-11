@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include "j9protos.h"
@@ -502,7 +502,7 @@ wouldBlock:
 	/* unable to get thin lock by spinning - follow blocking path */
 	J9VMTHREAD_SET_BLOCKINGENTEROBJECT(currentThread, currentThread, object);
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-	if (J9_IS_SINGLE_THREAD_MODE(vm)) {
+	if (J9_THROW_BLOCKING_EXCEPTION_IN_SINGLE_THREAD_MODE(vm)) {
 		if (OBJECT_HEADER_LOCK_RESERVED == (J9_LOAD_LOCKWORD(currentThread, lwEA) & (OBJECT_HEADER_LOCK_RESERVED + OBJECT_HEADER_LOCK_INFLATED)) && !retry) {
 			cancelLockReservation(currentThread);
 			retry = TRUE;

@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #ifndef ESCAPEANALYSISTOOLS_INCL
@@ -30,9 +30,6 @@
 #include "il/SymbolReference.hpp"
 
 namespace TR { class Block; class Node; }
-
-//typedef TR::typed_allocator<TR::Node *, TR::Region &> NodeDequeAllocator;
-//typedef std::deque<TR::Node *, NodeDequeAllocator> NodeDeque;
 
 class TR_EscapeAnalysisTools
    {
@@ -54,24 +51,17 @@ class TR_EscapeAnalysisTools
    void insertFakeEscapeForOSR(TR::Block *block, TR::Node *induceCall);
 
 
-   void insertFakeEscapeForLoads(TR::Block *block, TR::Node *node, NodeDeque *loads);
-   //static bool isFakeEscape(TR::Node *node) { return node->getSymbolReference()->getReferenceNumber() == TR_prepareForOSR;}
+   void insertFakeEscapeForLoads(TR::Block *block, TR::Node *node, TR_BitVector &symRefsToLoad);
    static bool isFakeEscape(TR::Node *node) { return node->isEAEscapeHelperCall(); }
    private:
    TR::Compilation *_comp;
 
    /**
-    * Used by \ref insertFakePrepareForOSR to gather \c aloads of autos and
-    * pending pushes.
-    */
-   NodeDeque *_loads;
-
-   /**
     * Gather live autos and pending pushes at the point of a call to the OSR
     * induction helper in the context of an inlined method or the outermost
-    * method.  Create an \c aload reference to each such auto or pending push.
+    * method.
     *
-    * \c aloads are gathered in \ref _loads.
+    * The symbol reference numbers are gathered in \ref symRefsToLoad.
     *
     * \param[in] rms The method whose live autos and pending pushes are to be
     *                processed
@@ -83,14 +73,16 @@ class TR_EscapeAnalysisTools
     *                relevant method
     * \param[in] byteCodeIndex The bytecode index at this point inside the
     *                relevant method
+    * \param[inout] symRefsToLoad A \ref TR_BitVector of the symbol reference
+    *                numbers of live autos and pending pushes
     */
-   void processAutosAndPendingPushes(TR::ResolvedMethodSymbol *rms, DefiningMap *induceDefiningMap, TR_OSRMethodData *methodData, int32_t byteCodeIndex);
+   void processAutosAndPendingPushes(TR::ResolvedMethodSymbol *rms, DefiningMap *induceDefiningMap, TR_OSRMethodData *methodData, int32_t byteCodeIndex, TR_BitVector &symRefsToLoad);
 
    /**
-    * Create \c aload references to each live symbol reference among those
-    * listed in the \c symbolReferences argument.
+    * Gather the set of live symbol reference among those listed in the
+    * \c symbolReferences argument.
     *
-    * \c aloads are gathered in \ref _loads.
+    * The symbol reference numbers are gathered in \ref symRefsToLoad.
     *
     * \param[in] symbolReferences \ref TR_Array<> of symbol references for
     *               autos or pending pushes
@@ -101,9 +93,10 @@ class TR_EscapeAnalysisTools
     * \param[in] deadSymRefs Liveness info for \c symbolReferences - a
     *               \ref TR_BitVector of symbols that are not live at the
     *               relevant point
+    * \param[inout] symRefsToLoad A \ref TR_BitVector of the symbol reference
+    *                numbers of live autos and pending pushes
     */
-   void processSymbolReferences(TR_Array<List<TR::SymbolReference>> *symbolReferences, DefiningMap *induceDefiningMap, TR_BitVector *deadSymRefs);
+   void processSymbolReferences(TR_Array<List<TR::SymbolReference>> *symbolReferences, DefiningMap *induceDefiningMap, TR_BitVector *deadSymRefs, TR_BitVector &symRefsToLoad);
    };
 
 #endif
-

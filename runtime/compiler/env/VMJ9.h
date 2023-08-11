@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #ifndef VMJ9_h
@@ -285,6 +285,7 @@ public:
    virtual bool needClassAndMethodPointerRelocations() { return false; }
    virtual bool needRelocationsForStatics() { return false; }
    virtual bool needRelocationsForCurrentMethodPC() { return false; }
+   virtual bool needRelocationsForCurrentMethodStartPC() { return false; }
    virtual bool needRelocationsForBodyInfoData() { return false; }
    virtual bool needRelocationsForPersistentInfoData() { return false; }
    virtual bool needRelocationsForLookupEvaluationData() { return false; }
@@ -898,6 +899,17 @@ public:
     *    VM access is not required
     */
    virtual uintptr_t vTableOrITableIndexFromMemberName(TR::Compilation* comp, TR::KnownObjectTable::Index objIndex);
+
+   /**
+    * \brief
+    *    invokedynamic resolution can either result in a valid entry in the corresponding CallSite table slot if successful,
+    *    or an exception object otherwise. The entry is considered valid when the object in the slot is an array type.
+    *    This helper must be used before trying to access elements of an invokeCacheArray corresponding to an invokedynamic bytecode
+    * \param invokeCacheArray the invokeCacheArray address
+    * \return true if entry is an array type; false otherwise
+    */
+   virtual bool isInvokeCacheEntryAnArray(uintptr_t *invokeCacheArray);
+
    /*
     * \brief
     *    Create and return a resolved method from member name index of an invoke cache array.
@@ -1043,6 +1055,13 @@ public:
     * \return true if a @DontInline annotation is present, false otherwise
     */
    virtual bool isDontInline(TR_ResolvedMethod *method);
+
+   /**
+    * \brief Determine whether a method is annotated with @IntrinsicCandidate.
+    * \param method method
+    * \return true if a @IntrinsicCandidate annotation is present, false otherwise
+    */
+   virtual bool isIntrinsicCandidate(TR_ResolvedMethod *method);
 
    /*
     * \brief
@@ -1225,6 +1244,15 @@ public:
     *         or zero otherwise
     */
    TR::Node * testIsClassPrimitiveValueType(TR::Node *j9ClassRefNode);
+
+   /**
+    * \brief Load class flags field of the specified class and test whether the hasIdentity
+    *        flag is set.
+    * \param j9ClassRefNode A node representing a reference to a \ref J9Class
+    * \return \ref TR::Node that evaluates to a non-zero integer if the class is an identity type,
+    *         or zero otherwise
+    */
+   TR::Node * testIsClassIdentityType(TR::Node *j9ClassRefNode);
 
    /**
     * \brief Test whether any of the specified flags is set on the array's component class
@@ -1497,6 +1525,7 @@ public:
    virtual bool               supportsFastNanoTime()                          { return false; }
    virtual bool               needRelocationsForStatics()                     { return true; }
    virtual bool               needRelocationsForCurrentMethodPC()             { return true; }
+   virtual bool               needRelocationsForCurrentMethodStartPC()        { return true; }
    virtual bool               needRelocationsForLookupEvaluationData()        { return true; }
    virtual bool               needRelocationsForBodyInfoData()                { return true; }
    virtual bool               needRelocationsForPersistentInfoData()          { return true; }
@@ -1544,8 +1573,6 @@ public:
    virtual bool               sameClassLoaders(TR_OpaqueClassBlock *, TR_OpaqueClassBlock *);
    virtual bool               isUnloadAssumptionRequired(TR_OpaqueClassBlock *, TR_ResolvedMethod *);
    virtual bool               classHasBeenExtended(TR_OpaqueClassBlock *);
-   virtual bool               isGetImplInliningSupported();
-   virtual bool               isGetImplAndRefersToInliningSupported();
    virtual bool               isPublicClass(TR_OpaqueClassBlock *clazz);
    virtual bool               hasFinalizer(TR_OpaqueClassBlock * classPointer);
    virtual uintptr_t         getClassDepthAndFlagsValue(TR_OpaqueClassBlock * classPointer);

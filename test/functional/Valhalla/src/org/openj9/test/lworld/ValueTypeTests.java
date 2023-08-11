@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 package org.openj9.test.lworld;
 
@@ -2506,8 +2506,11 @@ public class ValueTypeTests {
 	
 	/*
 	 * Ensure that casting null to a value type class will throw a null pointer exception
+	 * This test is disabled since the latest spec from
+	 * https://cr.openjdk.org/~dlsmith/jep401/jep401-20230519/specs/types-cleanup-jvms.html
+	 * no longer requires null check on the objectref for null restricted value type class
 	 */
-	@Test(priority=1, expectedExceptions=NullPointerException.class)
+	@Test(enabled=false, priority=1, expectedExceptions=NullPointerException.class)
 	static public void testCheckCastValueTypeOnNull() throws Throwable {
 		String fields[] = {"longField:J"};
 		Class valueClass = ValueTypeGenerator.generateValueClass("TestCheckCastValueTypeOnNull", fields);

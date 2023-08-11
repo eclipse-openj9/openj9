@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include "jvmtiHelpers.h"
@@ -96,17 +96,18 @@ jvmtiGetAllStackTraces(jvmtiEnv* env,
 	jvmtiStackInfo** stack_info_ptr,
 	jint* thread_count_ptr)
 {
-	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
-	jvmtiError rc;
-	J9VMThread * currentThread;
+	J9JavaVM *vm = JAVAVM_FROM_ENV(env);
 	PORT_ACCESS_FROM_JAVAVM(vm);
+
+	jvmtiError rc = JVMTI_ERROR_NONE;
+	J9VMThread *currentThread = NULL;
 	jvmtiStackInfo *rv_stack_info = NULL;
 	jint rv_thread_count = 0;
 
 	Trc_JVMTI_jvmtiGetAllStackTraces_Entry(env);
 
 	rc = getCurrentVMThread(vm, &currentThread);
-	if (rc == JVMTI_ERROR_NONE) {
+	if (JVMTI_ERROR_NONE == rc) {
 		UDATA threadCount;
 		jvmtiStackInfo * stackInfo;
 
@@ -122,40 +123,40 @@ jvmtiGetAllStackTraces(jvmtiEnv* env,
 
 		threadCount = vm->totalThreadCount;
 		stackInfo = j9mem_allocate_memory(((sizeof(jvmtiStackInfo) + (max_frame_count * sizeof(jvmtiFrameInfo))) * threadCount) + sizeof(jlocation), J9MEM_CATEGORY_JVMTI_ALLOCATE);
-		if (stackInfo == NULL) {
+		if (NULL == stackInfo) {
 			rc = JVMTI_ERROR_OUT_OF_MEMORY;
 		} else {
-			jvmtiFrameInfo * currentFrameInfo = (jvmtiFrameInfo *) ((((UDATA) (stackInfo + threadCount)) + sizeof(jlocation)) & ~sizeof(jlocation));
-			jvmtiStackInfo * currentStackInfo = stackInfo;
-			J9VMThread * targetThread;
+			jvmtiFrameInfo *currentFrameInfo = (jvmtiFrameInfo *)((((UDATA)(stackInfo + threadCount)) + sizeof(jlocation)) & ~sizeof(jlocation));
+			jvmtiStackInfo *currentStackInfo = stackInfo;
+			J9VMThread *targetThread = vm->mainThread;
 
-			targetThread = vm->mainThread;
 			do {
-				/* If threadObject is NULL, ignore this thread */
-
-				if (targetThread->threadObject == NULL) {
+				/* If threadObject is NULL, ignore this thread. */
+#if JAVA_SPEC_VERSION >= 19
+				j9object_t threadObject = targetThread->carrierThreadObject;
+#else /* JAVA_SPEC_VERSION >= 19 */
+				j9object_t threadObject = targetThread->threadObject;
+#endif /* JAVA_SPEC_VERSION >= 19 */
+				if (NULL == threadObject) {
 					--threadCount;
 				} else {
 					rc = jvmtiInternalGetStackTrace(
 						env,
 						currentThread,
 						targetThread,
-#if JAVA_SPEC_VERSION >= 19
-						targetThread->carrierThreadObject,
-#else /* JAVA_SPEC_VERSION >= 19 */
-						targetThread->threadObject,
-#endif /* JAVA_SPEC_VERSION >= 19 */
+						threadObject,
 						0,
-						(UDATA) max_frame_count,
-						(void *) currentFrameInfo,
+						(UDATA)max_frame_count,
+						(void *)currentFrameInfo,
 						&(currentStackInfo->frame_count));
-					if (rc != JVMTI_ERROR_NONE) {
+
+					if (JVMTI_ERROR_NONE != rc) {
 						j9mem_free_memory(stackInfo);
 						goto fail;
 					}
 
-					currentStackInfo->thread = (jthread) vm->internalVMFunctions->j9jni_createLocalRef((JNIEnv *) currentThread, (j9object_t) targetThread->threadObject);
-					currentStackInfo->state = getThreadState(currentThread, targetThread->threadObject);
+					currentStackInfo->thread = (jthread)vm->internalVMFunctions->j9jni_createLocalRef((JNIEnv *)currentThread, threadObject);
+					currentStackInfo->state = getThreadState(currentThread, threadObject);
 					currentStackInfo->frame_buffer = currentFrameInfo;
 
 					++currentStackInfo;
@@ -164,7 +165,7 @@ jvmtiGetAllStackTraces(jvmtiEnv* env,
 			} while ((targetThread = targetThread->linkNext) != vm->mainThread);
 
 			rv_stack_info = stackInfo;
-			rv_thread_count = (jint) threadCount;
+			rv_thread_count = (jint)threadCount;
 		}
 fail:
 		vm->internalVMFunctions->releaseExclusiveVMAccess(currentThread);
@@ -440,17 +441,43 @@ jvmtiPopFrame(jvmtiEnv* env,
 		ENSURE_CAPABILITY(env, can_pop_frame);
 
 		rc = getVMThread(
-				currentThread, thread, &targetThread, JVMTI_ERROR_OPAQUE_FRAME,
-				J9JVMTI_GETVMTHREAD_ERROR_ON_NULL_JTHREAD | J9JVMTI_GETVMTHREAD_ERROR_ON_DEAD_THREAD | J9JVMTI_GETVMTHREAD_ERROR_ON_VIRTUALTHREAD);
+				currentThread, thread, &targetThread, JVMTI_ERROR_NONE,
+				J9JVMTI_GETVMTHREAD_ERROR_ON_NULL_JTHREAD | J9JVMTI_GETVMTHREAD_ERROR_ON_DEAD_THREAD);
 		if (rc == JVMTI_ERROR_NONE) {
-			/* Does this thread need to be suspended at an event? */
-			vm->internalVMFunctions->haltThreadForInspection(currentThread, targetThread);
-			if ((currentThread == targetThread) || !(targetThread->publicFlags & J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND))  {
+#if JAVA_SPEC_VERSION >= 21
+			j9object_t threadObject = NULL;
+			/* Error if a virtual thread is unmounted since it won't be able to
+			 * pop the current frame.
+			 */
+			if (NULL == targetThread) {
+				rc = JVMTI_ERROR_OPAQUE_FRAME;
+				goto release;
+			}
+			threadObject = (NULL == thread) ? currentThread->threadObject : J9_JNI_UNWRAP_REFERENCE(thread);
+#endif /* JAVA_SPEC_VERSION >= 21 */
+
+			/* Error if the thread is not suspended and not the current thread. */
+			if ((currentThread != targetThread)
+#if JAVA_SPEC_VERSION >= 21
+			&& (0 == J9OBJECT_U32_LOAD(currentThread, threadObject, vm->isSuspendedInternalOffset))
+#else /* JAVA_SPEC_VERSION >= 21 */
+			&& OMR_ARE_NO_BITS_SET(targetThread->publicFlags, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND)
+#endif /* JAVA_SPEC_VERSION >= 21 */
+			)  {
 				rc = JVMTI_ERROR_THREAD_NOT_SUSPENDED;
 			} else {
-				J9StackWalkState walkState;
-
-				walkState.walkThread = targetThread;
+				J9StackWalkState walkState = {0};
+				J9VMThread *threadToWalk = targetThread;
+#if JAVA_SPEC_VERSION >= 21
+				J9VMThread stackThread = {0};
+				J9VMEntryLocalStorage els = {0};
+				J9VMContinuation *continuation = getJ9VMContinuationToWalk(currentThread, targetThread, threadObject);
+				if (NULL != continuation) {
+					vm->internalVMFunctions->copyFieldsFromContinuation(currentThread, &stackThread, &els, continuation);
+					threadToWalk = &stackThread;
+				}
+#endif /* JAVA_SPEC_VERSION >= 21 */
+				walkState.walkThread = threadToWalk;
 				walkState.userData1 = (void *) JVMTI_ERROR_NO_MORE_FRAMES;
 				walkState.userData2 = (void *) 0;
 				walkState.frameWalkFunction = popFrameCheckIterator;
@@ -462,7 +489,9 @@ jvmtiPopFrame(jvmtiEnv* env,
 					vm->internalVMFunctions->setHaltFlag(targetThread, J9_PUBLIC_FLAGS_POP_FRAMES_INTERRUPT);
 				}
 			}
-			vm->internalVMFunctions->resumeThreadForInspection(currentThread, targetThread);
+#if JAVA_SPEC_VERSION >= 21
+release:
+#endif /* JAVA_SPEC_VERSION >= 21 */
 			releaseVMThread(currentThread, targetThread, thread);
 		}
 done:

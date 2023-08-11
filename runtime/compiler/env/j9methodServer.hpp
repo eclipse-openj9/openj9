@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #ifndef J9METHODSERVER_H
@@ -54,6 +54,7 @@ TR_ResolvedJ9JITServerMethodInfoStruct
    bool isLambdaFormGeneratedMethod;
    bool isForceInline;
    bool isDontInline;
+   bool isIntrinsicCandidate;
    };
 
 
@@ -219,6 +220,7 @@ public:
    virtual bool isFieldFlattened(TR::Compilation *comp, int32_t cpIndex, bool isStatic) override;
    bool isForceInline() const { return _isForceInline; }
    bool isDontInline() const { return _isDontInline; }
+   bool isIntrinsicCandidate() const { return _isIntrinsicCandidate; }
 
    TR_ResolvedJ9Method *getRemoteMirror() const { return _remoteMirror; }
    static void createResolvedMethodMirror(TR_ResolvedJ9JITServerMethodInfo &methodInfo, TR_OpaqueMethodBlock *method, uint32_t vTableSlot, TR_ResolvedMethod *owningMethod, TR_FrontEnd *fe, TR_Memory *trMemory);
@@ -258,6 +260,7 @@ private:
    bool _isLambdaFormGeneratedMethod;
    bool _isForceInline;
    bool _isDontInline;
+   bool _isIntrinsicCandidate;
 
    void unpackMethodInfo(TR_OpaqueMethodBlock *aMethod, TR_FrontEnd *fe, TR_Memory *trMemory, uint32_t vTableSlot,
                          TR::CompilationInfoPerThread *threadCompInfo, const TR_ResolvedJ9JITServerMethodInfo &methodInfo);

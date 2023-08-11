@@ -18,7 +18,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 package jdk.internal.vm;
 
@@ -28,6 +28,7 @@ import java.util.function.Supplier;
 import jdk.internal.access.JavaLangAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.misc.Unsafe;
+import jdk.internal.vm.annotation.JvmtiMountTransition;
 
 /**
  * Continuation class performing the mount/unmount operation for VirtualThread
@@ -277,7 +278,9 @@ public class Continuation {
 	}
 
 	/* Continuation Native APIs */
+	@JvmtiMountTransition
 	private native boolean enterImpl();
-	private static native boolean yieldImpl(boolean isFinished);
 
+	@JvmtiMountTransition
+	private static native boolean yieldImpl(boolean isFinished);
 }

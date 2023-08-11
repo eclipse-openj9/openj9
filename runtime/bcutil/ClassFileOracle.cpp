@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 /*
  * ClassFileOracle.cpp
@@ -230,7 +230,11 @@ ClassFileOracle::ClassFileOracle(BufferManager *bufferManager, J9CfrClassFile *c
 	_hasNonStaticSynchronizedMethod(false),
 	_hasNonStaticFields(false),
 	_hasNonEmptyConstructor(false),
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+	_preloadAttribute(NULL),
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+	_implicitCreation(NULL),
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 	_recordComponentCount(0),
 	_permittedSubclassesAttribute(NULL),
 	_isSealed(false),
@@ -455,6 +459,11 @@ ClassFileOracle::walkFields()
 			case CFR_ATTRIBUTE_Deprecated:
 				/* Do nothing */
 				break;
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+			case CFR_ATTRIBUTE_NullRestricted:
+				_fieldsInfo[fieldIndex].isNullRestricted = true;
+				break;
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 			default:
 				Trc_BCU_ClassFileOracle_walkFields_UnknownAttribute((U_32)attrib->tag, (U_32)getUTF8Length(attrib->nameIndex), getUTF8Data(attrib->nameIndex), attrib->length);
 				break;
@@ -604,6 +613,22 @@ ClassFileOracle::walkAttributes()
 			}
 			break;
 		}
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		case CFR_ATTRIBUTE_Preload: {
+			_preloadAttribute = (J9CfrAttributePreload *)attrib;
+			for (U_16 numberOfClasses = 0; numberOfClasses < _preloadAttribute->numberOfClasses; numberOfClasses++) {
+				U_16 classCpIndex = _preloadAttribute->classes[numberOfClasses];
+				markClassAsReferenced(classCpIndex);
+			}
+			break;
+		}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+		case CFR_ATTRIBUTE_ImplicitCreation: {
+			_implicitCreation = (J9CfrAttributeImplicitCreation *)attrib;
+			break;
+		}
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 #if JAVA_SPEC_VERSION >= 11
 		case CFR_ATTRIBUTE_NestMembers:
 			/* ignore CFR_ATTRIBUTE_NestMembers for hidden classes, as the nest members never know the name of hidden classes */
@@ -1170,19 +1195,19 @@ ClassFileOracle::computeSendSlotCount(U_16 methodIndex)
 				++index;
 			}
 			if ((index >= count)
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 				|| (('L' != bytes[index]) && ('Q' != bytes[index]))
-#else
+#else /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
 				|| ('L' != bytes[index])
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
 			) {
 				break;
 			}
 			/* fall through */
 		case 'L':
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 		case 'Q':
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
 			++index;
 			while ((index < count) && (';' != bytes[index])) {
 				++index;

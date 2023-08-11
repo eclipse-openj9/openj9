@@ -18,7 +18,7 @@
   [1] https://www.gnu.org/software/classpath/license.html
   [2] https://openjdk.org/legal/assembly-exception.html
 
-  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 -->
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
 <suite name="Valhalla suite" parallel="none" verbose="2">
@@ -38,6 +38,16 @@
 	<test name="ValueTypeUnsafeTests">
 		<classes>
 			<class name="org.openj9.test.lworld.ValueTypeUnsafeTests"/>
+		</classes>
+	</test>
+	<test name="ValueTypeOptTests">
+		<classes>
+			<class name="org.openj9.test.lworld.ValueTypeOptTests"/>
+		</classes>
+	</test>
+	<test name="NullRestrictedTypeOptTests">
+		<classes>
+			<class name="org.openj9.test.lworld.NullRestrictedTypeOptTests"/>
 		</classes>
 	</test>
 </suite> <!-- Suite -->

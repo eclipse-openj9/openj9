@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 package org.openj9.test.jep425;
 
@@ -50,6 +50,16 @@ public class VirtualThreadTests {
 	}
 
 	public static native boolean lockSupportPark();
+
+	private void incrementalWait(Thread t) throws InterruptedException {
+		/* Incrementally wait for 10000 ms. */
+		for (int i = 0; i < 200; i++) {
+			Thread.sleep(50);
+			if (Thread.State.WAITING == t.getState()) {
+				break;
+			}
+		}
+	}
 
 	@Test
 	public void test_basicVirtualthread() {
@@ -113,24 +123,23 @@ public class VirtualThreadTests {
 		}
 	}
 
-	private static volatile boolean testSyncThread_ready;
+	private static volatile boolean testSyncThreadReady = false;
 
 	@Test
 	public void test_synchronizedBlockFromVirtualthread() {
 		try {
-			Thread t = Thread.ofVirtual().name("synchronized").unstarted(() -> {
+			Thread t = Thread.ofVirtual().name("synchronized").start(() -> {
 				synchronized (VirtualThreadTests.class) {
-					testSyncThread_ready = true;
+					testSyncThreadReady = true;
 					LockSupport.park();
 				}
 			});
 
-			t.start();
-			while (!testSyncThread_ready) {
-				Thread.sleep(1);
+			while (!testSyncThreadReady) {
+				Thread.sleep(10);
 			}
-			/* Let virtual thread park */
-			Thread.sleep(500);
+			/* Incrementally wait for 10000 ms to let the virtual thread park. */
+			incrementalWait(t);
 			Assert.assertEquals(t.getState(), Thread.State.WAITING);
 			LockSupport.unpark(t);
 			t.join();
@@ -139,22 +148,21 @@ public class VirtualThreadTests {
 		}
 	}
 
-	private static volatile boolean testJNIThread_ready;
+	private static volatile boolean testJNIThreadReady = false;
 
 	@Test
 	public void test_jniFromVirtualthread() {
 		try {
-			Thread t = Thread.ofVirtual().name("native").unstarted(() -> {
-				testJNIThread_ready = true;
+			Thread t = Thread.ofVirtual().name("native").start(() -> {
+				testJNIThreadReady = true;
 				lockSupportPark();
 			});
 
-			t.start();
-			while (!testJNIThread_ready) {
-				Thread.sleep(1);
+			while (!testJNIThreadReady) {
+				Thread.sleep(10);
 			}
-			/* Let virtual thread park */
-			Thread.sleep(500);
+			/* Incrementally wait for 10000 ms to let the virtual thread park. */
+			incrementalWait(t);
 			Assert.assertEquals(t.getState(), Thread.State.WAITING);
 			LockSupport.unpark(t);
 			t.join();
@@ -170,7 +178,7 @@ public class VirtualThreadTests {
 		/* The expected frame count is based on test's callstack and OpenJ9's implementation of
 		 * Continuation.yield().
 		 */
-		int expectedFrames = 12;
+		int expectedFrames = 10;
 		String expectedMethodName = "yieldImpl";
 
 		try {
@@ -182,14 +190,8 @@ public class VirtualThreadTests {
 				Thread.sleep(10);
 			}
 
-			/* Incrementally wait for 10000 ms. */
-			for (int i = 0; i < 20; i++) {
-				/* Let the virtual thread park. */
-				Thread.sleep(500);
-				if (Thread.State.WAITING == t.getState()) {
-					break;
-				}
-			}
+			/* Incrementally wait for 10000 ms to let the virtual thread park. */
+			incrementalWait(t);
 
 			StackTraceElement[] ste = t.getStackTrace();
 
@@ -231,7 +233,7 @@ public class VirtualThreadTests {
 			}
 
 			StackTraceElement[] ste = t.getStackTrace();
-			Assert.assertEquals(ste.length, 4);
+			Assert.assertEquals(ste.length, 3);
 			Assert.assertEquals(ste[0].getClassName(), "org.openj9.test.jep425.VirtualThreadTests");
 
 			testThread2_state = false;

@@ -17,9 +17,11 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 package org.openj9.test.jep434.upcall;
+
+import org.testng.Assert;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -271,6 +273,9 @@ public class UpcallMethodHandles {
 	public static final MethodHandle MH_return254BytesFromStruct;
 	public static final MethodHandle MH_return4KBytesFromStruct;
 
+	public static final MethodHandle MH_addNegBytesFromStruct;
+	public static final MethodHandle MH_addNegShortsFromStruct;
+
 	private static Linker linker = Linker.nativeLinker();
 
 	static {
@@ -480,6 +485,9 @@ public class UpcallMethodHandles {
 			MH_addDoubleAndIntDoubleLongFromStruct = lookup.findStatic(UpcallMethodHandles.class, "addDoubleAndIntDoubleLongFromStruct", MT_Double_Double_MemSegmt); //$NON-NLS-1$
 			MH_return254BytesFromStruct = lookup.findStatic(UpcallMethodHandles.class, "return254BytesFromStruct", MT_MemSegmt); //$NON-NLS-1$
 			MH_return4KBytesFromStruct = lookup.findStatic(UpcallMethodHandles.class, "return4KBytesFromStruct", MT_MemSegmt); //$NON-NLS-1$
+
+			MH_addNegBytesFromStruct = lookup.findStatic(UpcallMethodHandles.class, "addNegBytesFromStruct", MT_Byte_Byte_MemSegmt.appendParameterTypes(byte.class, byte.class)); //$NON-NLS-1$
+			MH_addNegShortsFromStruct = lookup.findStatic(UpcallMethodHandles.class, "addNegShortsFromStruct", MT_Short_Short_MemSegmt.appendParameterTypes(short.class, short.class)); //$NON-NLS-1$
 
 		} catch (IllegalAccessException | NoSuchMethodException e) {
 			throw new InternalError(e);
@@ -1838,7 +1846,7 @@ public class UpcallMethodHandles {
 		/* The size of [int, double] on AIX/PPC 64-bit is 12 bytes without padding by default
 		 * while the same struct is 16 bytes with padding on other platforms.
 		 */
-		double structElem2 = (isAixOS) ? arg2.get(JAVA_DOUBLE.withBitAlignment(32), 4) : arg2.get(JAVA_DOUBLE, 8);
+		double structElem2 = arg2.get(JAVA_DOUBLE, isAixOS ? 4 : 8);
 		double doubleSum = arg1 + structElem1 + structElem2;
 		return doubleSum;
 	}
@@ -1853,7 +1861,7 @@ public class UpcallMethodHandles {
 		/* The size of [float, double] on AIX/PPC 64-bit is 12 bytes without padding by default
 		 * while the same struct is 16 bytes with padding on other platforms.
 		 */
-		double structElem2 = (isAixOS) ? arg2.get(JAVA_DOUBLE.withBitAlignment(32), 4) : arg2.get(JAVA_DOUBLE, 8);
+		double structElem2 = arg2.get(JAVA_DOUBLE, isAixOS ? 4 : 8);
 		double doubleSum = arg1 + structElem1 + structElem2;
 		return doubleSum;
 	}
@@ -1960,7 +1968,7 @@ public class UpcallMethodHandles {
 		/* The size of [int, double, float] on AIX/PPC 64-bit is 16 bytes without padding by default
 		 * while the same struct is 20 bytes with padding on other platforms.
 		 */
-		double structElem2 = (isAixOS) ? arg2.get(JAVA_DOUBLE.withBitAlignment(32), 4) : arg2.get(JAVA_DOUBLE, 8);
+		double structElem2 = arg2.get(JAVA_DOUBLE, isAixOS ? 4 : 8);
 		float structElem3 = arg2.get(JAVA_FLOAT, isAixOS ? 12 : 16);
 		double doubleSum = arg1 + structElem1 + structElem2 + structElem3;
 		return doubleSum;
@@ -1971,7 +1979,7 @@ public class UpcallMethodHandles {
 		/* The size of [float, double, int] on AIX/PPC 64-bit is 16 bytes without padding by default
 		 * while the same struct is 20 bytes with padding on other platforms.
 		 */
-		double structElem2 = (isAixOS) ? arg2.get(JAVA_DOUBLE.withBitAlignment(32), 4) : arg2.get(JAVA_DOUBLE, 8);
+		double structElem2 = arg2.get(JAVA_DOUBLE, isAixOS ? 4 : 8);
 		int structElem3 = arg2.get(JAVA_INT, isAixOS ? 12 : 16);
 		double doubleSum = arg1 + structElem1 + structElem2 + structElem3;
 		return doubleSum;
@@ -1982,7 +1990,7 @@ public class UpcallMethodHandles {
 		/* The size of [int, double, int] on AIX/PPC 64-bit is 16 bytes without padding by default
 		 * while the same struct is 20 bytes with padding on other platforms.
 		 */
-		double structElem2 = (isAixOS) ? arg2.get(JAVA_DOUBLE.withBitAlignment(32), 4) : arg2.get(JAVA_DOUBLE, 8);
+		double structElem2 = arg2.get(JAVA_DOUBLE, isAixOS ? 4 : 8);
 		int structElem3 = arg2.get(JAVA_INT, isAixOS ? 12 : 16);
 		double doubleSum = arg1 + structElem1 + structElem2 + structElem3;
 		return doubleSum;
@@ -1993,7 +2001,7 @@ public class UpcallMethodHandles {
 		/* The size of [float, double, float] on AIX/PPC 64-bit is 16 bytes without padding by default
 		 * while the same struct is 20 bytes with padding on other platforms.
 		 */
-		double structElem2 = (isAixOS) ? arg2.get(JAVA_DOUBLE.withBitAlignment(32), 4) : arg2.get(JAVA_DOUBLE, 8);
+		double structElem2 = arg2.get(JAVA_DOUBLE, isAixOS ? 4 : 8);
 		float structElem3 = arg2.get(JAVA_FLOAT, isAixOS ? 12 : 16);
 		double doubleSum = arg1 + structElem1 + structElem2 + structElem3;
 		return doubleSum;
@@ -2006,7 +2014,7 @@ public class UpcallMethodHandles {
 		 * 1) there is no padding between int and double.
 		 * 2) there is a 4-byte padding between double and long.
 		 */
-		double structElem2 = (isAixOS) ? arg2.get(JAVA_DOUBLE.withBitAlignment(32), 4) : arg2.get(JAVA_DOUBLE, 8);
+		double structElem2 = arg2.get(JAVA_DOUBLE, isAixOS ? 4 : 8);
 		double structElem3 = arg2.get(JAVA_LONG, 16);
 		double doubleSum = arg1 + structElem1 + structElem2 + structElem3;
 		return doubleSum;
@@ -2032,5 +2040,33 @@ public class UpcallMethodHandles {
 			byteArrStruSegment.set(JAVA_BYTE, i, (byte)i);
 		}
 		return byteArrStruSegment;
+	}
+
+	public static byte addNegBytesFromStruct(byte arg1, MemorySegment arg2, byte arg3, byte arg4) {
+		byte arg2_elem1 = arg2.get(JAVA_BYTE, 0);
+		byte arg2_elem2 = arg2.get(JAVA_BYTE, 1);
+
+		Assert.assertEquals((byte)-6, ((Byte)arg1).byteValue());
+		Assert.assertEquals((byte)-8, ((Byte)arg2_elem1).byteValue());
+		Assert.assertEquals((byte)-9, ((Byte)arg2_elem2).byteValue());
+		Assert.assertEquals((byte)-8, ((Byte)arg3).byteValue());
+		Assert.assertEquals((byte)-9, ((Byte)arg4).byteValue());
+
+		byte byteSum = (byte)(arg1 + arg2_elem1 + arg2_elem2 + arg3 + arg4);
+		return byteSum;
+	}
+
+	public static short addNegShortsFromStruct(short arg1,  MemorySegment arg2, short arg3, short arg4) {
+		short arg2_elem1 = arg2.get(JAVA_SHORT, 0);
+		short arg2_elem2 = arg2.get(JAVA_SHORT, 2);
+
+		Assert.assertEquals((short)-777, ((Short)arg1).shortValue());
+		Assert.assertEquals((short)-888, ((Short)arg2_elem1).shortValue());
+		Assert.assertEquals((short)-999, ((Short)arg2_elem2).shortValue());
+		Assert.assertEquals((short)-888, ((Short)arg3).shortValue());
+		Assert.assertEquals((short)-999, ((Short)arg4).shortValue());
+
+		short shortSum = (short)(arg1 + arg2_elem1 + arg2_elem2 + arg3 + arg4);
+		return shortSum;
 	}
 }

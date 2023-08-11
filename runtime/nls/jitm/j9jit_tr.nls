@@ -17,7 +17,7 @@
 # [1] https://www.gnu.org/software/classpath/license.html
 # [2] https://openjdk.org/legal/assembly-exception.html
 #
-# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 #
 
 # Externalised messages for the JIT module.
@@ -383,4 +383,50 @@ J9NLS_RELOCATABLE_CODE_FSD_MISMATCH.explanation=The JVM is not running in the sa
 J9NLS_RELOCATABLE_CODE_FSD_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
 J9NLS_RELOCATABLE_CODE_FSD_MISMATCH.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
 J9NLS_RELOCATABLE_CODE_FSD_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+# END NON-TRANSLATABLE
+
+J9NLS_JIT_CHECKPOINT_RESTORE_JIT_COMPILATION_DISABLED=JIT derlemesi geri y\u00fckleme sonras\u0131nda devre d\u0131\u015f\u0131 b\u0131rak\u0131ld\u0131.
+# START NON-TRANSLATABLE
+J9NLS_JIT_CHECKPOINT_RESTORE_JIT_COMPILATION_DISABLED.explanation=The JVM is running in a mode post-restore that prevents further compilation.
+J9NLS_JIT_CHECKPOINT_RESTORE_JIT_COMPILATION_DISABLED.system_action=The compiler will not generate JIT code.
+J9NLS_JIT_CHECKPOINT_RESTORE_JIT_COMPILATION_DISABLED.user_response=Remove any (post-restore) option that would have resulted in this behaviour.
+# END NON-TRANSLATABLE
+
+J9NLS_JIT_CHECKPOINT_RESTORE_AOT_DISABLED=AOT y\u00fckleme ve derleme, geri y\u00fckleme sonras\u0131nda devre d\u0131\u015f\u0131 b\u0131rak\u0131ld\u0131.
+# START NON-TRANSLATABLE
+J9NLS_JIT_CHECKPOINT_RESTORE_AOT_DISABLED.explanation=The JVM is running in a mode post-restore that prevents further AOT load and compilation.
+J9NLS_JIT_CHECKPOINT_RESTORE_AOT_DISABLED.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_JIT_CHECKPOINT_RESTORE_AOT_DISABLED.user_response=Remove any (post-restore) option that would have resulted in this behaviour.
+# END NON-TRANSLATABLE
+
+J9NLS_JIT_CHECKPOINT_RESTORE_CODE_INVALIDATED=Kod \u00f6nbelle\u011findeki derlenmi\u015f kodlar\u0131n baz\u0131lar\u0131 ya da hepsi geri y\u00fckleme sonras\u0131nda ge\u00e7ersiz k\u0131l\u0131nd\u0131.
+# START NON-TRANSLATABLE
+J9NLS_JIT_CHECKPOINT_RESTORE_CODE_INVALIDATED.explanation=The JVM is running in a mode that results in some or all existing compiled being invalid.
+J9NLS_JIT_CHECKPOINT_RESTORE_CODE_INVALIDATED.system_action=The compiler will invalidate code as applicable.
+J9NLS_JIT_CHECKPOINT_RESTORE_CODE_INVALIDATED.user_response=Remove any (post-restore) option that would have resulted in this behaviour.
+# END NON-TRANSLATABLE
+
+J9NLS_RELOCATABLE_CODE_ARRAY_HEADER_SHAPE_MISMATCH=Dizi \u00fcstbilgisi \u015fekil \u00f6zelli\u011fi uyu\u015fmazl\u0131\u011f\u0131. Payla\u015f\u0131lan s\u0131n\u0131f \u00f6nbelle\u011findeki AOT kodu yok say\u0131l\u0131yor.
+# START NON-TRANSLATABLE
+J9NLS_RELOCATABLE_CODE_ARRAY_HEADER_SHAPE_MISMATCH.explanation=The JVM is not running with the same header shape as the one that generated the code in the SCC.
+J9NLS_RELOCATABLE_CODE_ARRAY_HEADER_SHAPE_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_ARRAY_HEADER_SHAPE_MISMATCH.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_ARRAY_HEADER_SHAPE_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+# END NON-TRANSLATABLE
+
+J9NLS_RELOCATABLE_CODE_CH_TABLE_MISMATCH=CH \u00c7izelgesi uyu\u015fmazl\u0131\u011f\u0131. Payla\u015f\u0131lan s\u0131n\u0131f \u00f6nbelle\u011findeki AOT kodu yok say\u0131l\u0131yor.
+# START NON-TRANSLATABLE
+J9NLS_RELOCATABLE_CODE_CH_TABLE_MISMATCH.explanation=The JVM is not running in the same CH Table configuration as the one that generated the code in the SCC.
+J9NLS_RELOCATABLE_CODE_CH_TABLE_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_CH_TABLE_MISMATCH.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_CH_TABLE_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+# END NON-TRANSLATABLE
+
+J9NLS_JIT_OPTIONS_PERCENT_OUT_OF_RANGE='%1$s%2$f' de\u011feri, 1.0 ile 100.0 aras\u0131nda olmal\u0131d\u0131r; bunun yerine varsay\u0131lan y\u00fczde '%3$d' kullan\u0131l\u0131yor.
+# START NON-TRANSLATABLE
+J9NLS_JIT_OPTIONS_PERCENT_OUT_OF_RANGE.explanation=The specified option is not within the permitted range.
+J9NLS_JIT_OPTIONS_PERCENT_OUT_OF_RANGE.system_action=The default percentage value will be used instead.
+J9NLS_JIT_OPTIONS_PERCENT_OUT_OF_RANGE.user_response=Correct the option.
+J9NLS_JIT_OPTIONS_PERCENT_OUT_OF_RANGE.sample_input_1=-XX:codecachetotalMaxRAMPercentage=
+J9NLS_JIT_OPTIONS_PERCENT_OUT_OF_RANGE.sample_input_2=25
 # END NON-TRANSLATABLE

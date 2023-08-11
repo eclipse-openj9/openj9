@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 /**
@@ -1208,7 +1208,6 @@ SH_OSCachesysv::acquireWriteLock(UDATA lockID)
 			OSC_ERR_TRACE1(J9NLS_SHRC_CC_ACQUIRE_LOCK_FAILED_ENTER_MUTEX, myerror);
 #endif /* !defined(WIN32) */
 			Trc_SHR_OSC_enterMutex_Exit3(myerror);
-			Trc_SHR_Assert_ShouldNeverHappen();
 			return -1;
 		}
 	}
@@ -1600,7 +1599,7 @@ SH_OSCachesysv::runExitCode(void)
 	/* No action required */
 }
 
-#if defined(J9SHR_MSYNC_SUPPORT)
+#if defined(J9VM_OPT_SHR_MSYNC_SUPPORT)
 /**
  * Synchronise cache updates to disk
  *
@@ -1613,7 +1612,7 @@ SH_OSCachesysv::syncUpdates(void* start, UDATA length, U_32 flags)
 {
 	return -1;
 }
-#endif /* defined(J9SHR_MSYNC_SUPPORT) */
+#endif /* defined(J9VM_OPT_SHR_MSYNC_SUPPORT) */
 
 /**
  * Return the locking capabilities of this shared classes cache implementation

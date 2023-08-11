@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include <algorithm>
@@ -1542,6 +1542,11 @@ createMethodMetaData(
       }
 #endif
 
+   if (comp->getOption(TR_FullSpeedDebug))
+      {
+      data->flags |= JIT_METADATA_IS_FSD_COMP;
+      }
+
 #if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT)
    if (vm->isAOT_DEPRECATED_DO_NOT_USE()
 #if defined(J9VM_OPT_JITSERVER)
@@ -1589,16 +1594,19 @@ createMethodMetaData(
 
       // Set some flags in the AOTMethodHeader
       //
-      if (!vm->isMethodTracingEnabled(vmMethod->getPersistentIdentifier()) &&
-          !vm->canMethodExitEventBeHooked())
+      if (vm->canMethodEnterEventBeHooked())
          {
-         aotMethodHeaderEntry->flags |= TR_AOTMethodHeader_IsNotCapableOfMethodExitTracing;
+         aotMethodHeaderEntry->flags |= TR_AOTMethodHeader_MethodEnterEventCanBeHooked;
          }
 
-      if (!vm->isMethodTracingEnabled(vmMethod->getPersistentIdentifier()) &&
-          !vm->canMethodEnterEventBeHooked())
+      if (vm->canMethodExitEventBeHooked())
          {
-         aotMethodHeaderEntry->flags |= TR_AOTMethodHeader_IsNotCapableOfMethodEnterTracing;
+         aotMethodHeaderEntry->flags |= TR_AOTMethodHeader_MethodExitEventCanBeHooked;
+         }
+
+      if (vm->isMethodTracingEnabled(vmMethod->getNonPersistentIdentifier()))
+         {
+         aotMethodHeaderEntry->flags |= TR_AOTMethodHeader_MethodTracingEnabled;
          }
 
       if (!vm->canExceptionEventBeHooked())

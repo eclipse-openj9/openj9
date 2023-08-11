@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include <cmath>
@@ -107,7 +107,7 @@ void VMgenerateCatchBlockBBStartPrologue(TR::Node *node, TR::Instruction *fenceI
       TR::Register *biAddrReg = cg->allocateRegister();
       TR::Register *recompCounterReg = cg->allocateRegister();
       intptr_t addr = (intptr_t)(comp->getRecompilationInfo()->getCounterAddress());
-      loadAddressConstant(cg, node, addr, biAddrReg);
+      loadAddressConstant(cg, cg->needRelocationsForBodyInfoData(), node, addr, biAddrReg, NULL, TR_BodyInfoAddressLoad);
       TR::MemoryReference *loadbiMR = TR::MemoryReference::createWithDisplacement(cg, biAddrReg, 0);
       TR::MemoryReference *storebiMR = TR::MemoryReference::createWithDisplacement(cg, biAddrReg, 0);
       generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, recompCounterReg, loadbiMR);
@@ -307,9 +307,9 @@ J9::ARM64::TreeEvaluator::generateTestAndReportFieldWatchInstructions(TR::CodeGe
          }
       else
          {
-         // For non-AOT compiles we don't need to use sideEffectRegister here as the class information is available to us at compile time.
+         // For non-AOT (JIT and JITServer) compiles we don't need to use sideEffectRegister here as the class information is available to us at compile time.
          J9Class * fieldClass = static_cast<TR::J9WatchedStaticFieldSnippet *>(dataSnippet)->getFieldClass();
-         loadAddressConstant(cg, node, reinterpret_cast<intptr_t>(fieldClass), fieldClassReg);
+         loadAddressConstant(cg, false, node, reinterpret_cast<intptr_t>(fieldClass), fieldClassReg);
          }
       }
    else
@@ -448,7 +448,7 @@ J9::ARM64::TreeEvaluator::generateFillInDataBlockSequenceForUnresolvedField(TR::
       }
    else
       {
-      loadAddressConstant(cg, node, constantPool, resultReg);
+      loadAddressConstant(cg, false, node, constantPool, resultReg);
       }
    loadConstant32(cg, node, symRef->getCPIndex(), cpIndexReg);
 
@@ -844,7 +844,7 @@ VMnonNullSrcWrtBarCardCheckEvaluator(
       else
          {
          uintptr_t heapBase = comp->getOptions()->getHeapBaseForBarrierRange0();
-         loadAddressConstant(cg, node, heapBase, temp1Reg);
+         loadAddressConstant(cg, false, node, heapBase, temp1Reg);
          }
       generateTrg1Src2Instruction(cg, TR::InstOpCode::subx, node, temp1Reg, dstReg, temp1Reg);
 
@@ -894,7 +894,7 @@ VMnonNullSrcWrtBarCardCheckEvaluator(
          else
             {
             uintptr_t activeCardTableBase = comp->getOptions()->getActiveCardTableBase();
-            loadAddressConstant(cg, node, activeCardTableBase, temp2Reg);
+            loadAddressConstant(cg, false, node, activeCardTableBase, temp2Reg);
             }
          generateTrg1Src2ShiftedInstruction(cg, TR::InstOpCode::addx, node, temp2Reg, temp2Reg, temp1Reg, TR::SH_LSR, card_size_shift);
          generateTrg1ImmInstruction(cg, TR::InstOpCode::movzx, node, temp1Reg, 1);
@@ -921,7 +921,7 @@ VMnonNullSrcWrtBarCardCheckEvaluator(
       else
          {
          uintptr_t heapBase = comp->getOptions()->getHeapBaseForBarrierRange0();
-         loadAddressConstant(cg, node, heapBase, temp1Reg);
+         loadAddressConstant(cg, false, node, heapBase, temp1Reg);
          }
       generateTrg1Src2Instruction(cg, TR::InstOpCode::subx, node, temp1Reg, srcReg, temp1Reg);
 
@@ -1035,12 +1035,12 @@ VMCardCheckEvaluator(
    else
       {
       uintptr_t heapBase = comp->getOptions()->getHeapBaseForBarrierRange0();
-      loadAddressConstant(cg, node, heapBase, temp1Reg);
+      loadAddressConstant(cg, false, node, heapBase, temp1Reg);
       }
    generateTrg1Src2Instruction(cg, TR::InstOpCode::subx, node, temp1Reg, dstReg, temp1Reg);
 
    // If we know the object is definitely in heap, then we skip the check.
-   if (!node->isHeapObjectWrtBar())
+   if (!node->chkHeapObjectWrtBar())
       {
       if (comp->getOptions()->isVariableHeapSizeForBarrierRange0() || comp->compileRelocatableCode())
          {
@@ -1074,7 +1074,7 @@ VMCardCheckEvaluator(
    else
       {
       uintptr_t activeCardTableBase = comp->getOptions()->getActiveCardTableBase();
-      loadAddressConstant(cg, node, activeCardTableBase, temp2Reg);
+      loadAddressConstant(cg, false, node, activeCardTableBase, temp2Reg);
       }
    generateTrg1Src2ShiftedInstruction(cg, TR::InstOpCode::addx, node, temp2Reg, temp2Reg, temp1Reg, TR::SH_LSR, card_size_shift);
    generateTrg1ImmInstruction(cg, TR::InstOpCode::movzx, node, temp1Reg, 1);
@@ -1805,6 +1805,7 @@ J9::ARM64::TreeEvaluator::instanceofEvaluator(TR::Node *node, TR::CodeGenerator 
  *    Here It sets up the condition code for callee to react on.
  *
  *  @param[in] node:                           node
+ *  @param[in] classNode:                      class node. NULL if called from ArrayStoreCHK
  *  @param[in] instanceClassReg:               register contains instance class
  *  @param[in] instanceClassRegCanBeReclaimed: if true, instanceClassReg is reclaimed
  *  @param[in] castClassReg:                   register contains cast class
@@ -1814,7 +1815,7 @@ J9::ARM64::TreeEvaluator::instanceofEvaluator(TR::Node *node, TR::CodeGenerator 
  *  @param[in] cg:                             code generator
  */
 static
-void genSuperClassTest(TR::Node *node, TR::Register *instanceClassReg, bool instanceClassRegCanBeReclaimed, TR::Register *castClassReg, int32_t castClassDepth,
+void genSuperClassTest(TR::Node *node, TR::Node *classNode, TR::Register *instanceClassReg, bool instanceClassRegCanBeReclaimed, TR::Register *castClassReg, int32_t castClassDepth,
                                             TR::LabelSymbol *falseLabel, TR_ARM64ScratchRegisterManager *srm, TR::CodeGenerator *cg)
    {
 
@@ -1825,7 +1826,7 @@ void genSuperClassTest(TR::Node *node, TR::Register *instanceClassReg, bool inst
       {
       TR::Register *scratchRegister1 = srm->findOrCreateScratchRegister();
       TR::Register *scratchRegister2 = srm->findOrCreateScratchRegister();
-      TR_ASSERT(node->getSecondChild()->getOpCodeValue() != TR::loadaddr,
+      TR_ASSERT_FATAL_WITH_NODE(node, (classNode == NULL) || (classNode->getOpCodeValue() != TR::loadaddr),
             "genSuperClassTest: castClassDepth == -1 is not supported for a loadaddr castClass");
 
       generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, scratchRegister1, TR::MemoryReference::createWithDisplacement(cg, castClassReg, offsetof(J9Class, romClass)));
@@ -1946,7 +1947,7 @@ void genInstanceOfOrCheckCastArbitraryClassTest(TR::Node *node, TR::Register *in
          }
       else
          {
-         loadAddressConstant(cg, node, reinterpret_cast<intptr_t>(arbitraryClass), arbitraryClassReg, NULL, true);
+         loadAddressConstant(cg, false, node, reinterpret_cast<intptr_t>(arbitraryClass), arbitraryClassReg);
          }
       }
    generateCompareInstruction(cg, node, instanceClassReg, arbitraryClassReg, true);
@@ -2128,7 +2129,7 @@ J9::ARM64::TreeEvaluator::VMinstanceofEvaluator(TR::Node *node, TR::CodeGenerato
 
             int32_t castClassDepth = castClassNode->getSymbolReference()->classDepth(comp);
             auto falseLabel = isNextItemGoToFalse(it, itEnd) ? doneLabel : (isNextItemHelperCall(it, itEnd) ? callHelperLabel : nextSequenceLabel);
-            genSuperClassTest(node, objectClassReg, false, castClassReg, castClassDepth, falseLabel, srm, cg);
+            genSuperClassTest(node, castClassNode, objectClassReg, false, castClassReg, castClassDepth, falseLabel, srm, cg);
             generateCSetInstruction(cg, node, resultReg, TR::CC_EQ);
             }
             break;
@@ -2425,7 +2426,7 @@ J9::ARM64::TreeEvaluator::VMcheckcastEvaluator(TR::Node *node, TR::CodeGenerator
 
             int32_t castClassDepth = castClassNode->getSymbolReference()->classDepth(comp);
             auto falseLabel = (isNextItemGoToFalse(it, itEnd) || isNextItemHelperCall(it, itEnd)) ? callHelperLabel : nextSequenceLabel;
-            genSuperClassTest(node, objectClassReg, false, castClassReg, castClassDepth, falseLabel, srm, cg);
+            genSuperClassTest(node, castClassNode, objectClassReg, false, castClassReg, castClassDepth, falseLabel, srm, cg);
             }
             break;
          /**
@@ -3184,7 +3185,7 @@ genInitObjectHeader(TR::Node *node, TR::CodeGenerator *cg, TR_OpaqueClassBlock *
          }
       else
          {
-         loadAddressConstant(cg, node, reinterpret_cast<intptr_t>(clazz), tempReg1);
+         loadAddressConstant(cg, false, node, reinterpret_cast<intptr_t>(clazz), tempReg1);
          }
       clzReg = tempReg1;
       }
@@ -4135,7 +4136,7 @@ static void VMarrayStoreCHKEvaluator(TR::Node *node, TR::Register *srcReg, TR::R
          }
       else
          {
-         loadAddressConstant(cg, node, reinterpret_cast<intptr_t>(objectClass), javaLangObjectClassReg);
+         loadAddressConstant(cg, false, node, reinterpret_cast<intptr_t>(objectClass), javaLangObjectClassReg);
          }
       generateCompareInstruction(cg, node, javaLangObjectClassReg, destComponentClassReg, true);
       instr = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, doneLabel, TR::CC_EQ);
@@ -4189,7 +4190,7 @@ static void VMarrayStoreCHKEvaluator(TR::Node *node, TR::Register *srcReg, TR::R
             }
          else
             {
-            loadAddressConstant(cg, node, reinterpret_cast<intptr_t>(arrayComponentClass), arrayComponentClassReg, NULL, true);
+            loadAddressConstant(cg, false, node, reinterpret_cast<intptr_t>(arrayComponentClass), arrayComponentClassReg);
             }
          }
       generateCompareInstruction(cg, node, arrayComponentClassReg, destComponentClassReg, true);
@@ -4204,7 +4205,7 @@ static void VMarrayStoreCHKEvaluator(TR::Node *node, TR::Register *srcReg, TR::R
       cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "ArrayStoreCHKEvaluator:010VMarrayStoreCHKEvaluator:06ArrayComponentClassCheckDone"), *srm);
       }
 
-   genSuperClassTest(node, sourceClassReg, true, destComponentClassReg, -1, helperCallLabel, srm, cg);
+   genSuperClassTest(node, NULL, sourceClassReg, true, destComponentClassReg, -1, helperCallLabel, srm, cg);
    srm->reclaimScratchRegister(destComponentClassReg);
 
    // prevent re-using these registers by error
@@ -4649,7 +4650,7 @@ J9::ARM64::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::CodeGenerator *
    generateLogicalShiftRightImmInstruction(cg, node, lengthReg, lengthReg, trailingZeroes(elementSize));
 
    intptr_t *funcdescrptr = (intptr_t *)fej9->getReferenceArrayCopyHelperAddress();
-   loadAddressConstant(cg, node, (intptr_t)funcdescrptr, tmp3Reg, NULL, false, TR_ArrayCopyHelper);
+   loadAddressConstant(cg, cg->needRelocationsForHelpers(), node, (intptr_t)funcdescrptr, tmp3Reg, NULL, TR_ArrayCopyHelper);
 
    // call the C routine
    TR::Instruction *gcPoint = generateRegBranchInstruction(cg, TR::InstOpCode::blr, node, tmp3Reg, deps);
@@ -4755,7 +4756,7 @@ J9::ARM64::TreeEvaluator::genArrayCopyWithArrayStoreCHK(TR::Node *node, TR::Code
    TR::addDependency(deps, NULL, TR::RealRegister::x18, TR_GPR, cg);
 
    intptr_t *funcdescrptr = (intptr_t *)fej9->getReferenceArrayCopyHelperAddress();
-   loadAddressConstant(cg, node, (intptr_t)funcdescrptr, tmpReg, NULL, false, TR_ArrayCopyHelper);
+   loadAddressConstant(cg, cg->needRelocationsForHelpers(), node, (intptr_t)funcdescrptr, tmpReg, NULL, TR_ArrayCopyHelper);
 
    // call the C routine
    TR::Instruction *gcPoint = generateRegBranchInstruction(cg, TR::InstOpCode::blr, node, tmpReg, deps);

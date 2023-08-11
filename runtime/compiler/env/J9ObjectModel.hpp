@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #ifndef J9_OBJECTMODEL_INCL
@@ -62,7 +62,19 @@ public:
 
    bool mayRequireSpineChecks();
 
+   /**
+   * @brief Whether or not value object is enabled
+   */
    bool areValueTypesEnabled();
+   /**
+   * @brief Whether or not flattenable value object (aka null restricted) type is enabled
+   */
+   bool areFlattenableValueTypesEnabled();
+   /**
+   * @brief Whether or not `Q` signature is supported
+   */
+   bool isQDescriptorForValueTypesSupported();
+
    /**
    * @brief Whether the check is enabled on monitor object being value based class type
    */

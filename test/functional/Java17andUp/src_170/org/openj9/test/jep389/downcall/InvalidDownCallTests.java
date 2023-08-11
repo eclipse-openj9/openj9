@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 package org.openj9.test.jep389.downcall;
 
@@ -436,7 +436,6 @@ public class InvalidDownCallTests {
 		}
 	}
 
-	@Test(expectedExceptions = NullPointerException.class)
 	public void test_nullSegmentForPtrArgument() throws Throwable {
 		GroupLayout structLayout = MemoryLayout.structLayout(C_INT.withName("elem1"), C_INT.withName("elem2"));
 		VarHandle intHandle1 = structLayout.varHandle(int.class, PathElement.groupElement("elem1"));
@@ -444,11 +443,11 @@ public class InvalidDownCallTests {
 
 		MethodType mt = MethodType.methodType(int.class, int.class, MemoryAddress.class);
 		FunctionDescriptor fd = FunctionDescriptor.of(C_INT, C_INT, C_POINTER);
-		Addressable functionSymbol = nativeLibLookup.lookup("addIntAndIntsFromStructPointer").get();
+		Addressable functionSymbol = nativeLibLookup.lookup("validateNullAddrArgument").get();
 		MethodHandle mh = clinker.downcallHandle(functionSymbol, mt, fd);
 
 		int result = (int)mh.invoke(19202122, MemoryAddress.NULL);
-		fail("Failed to throw out NullPointerException in the case of the null memory address");
+		Assert.assertEquals(result, 19202122);
 	}
 
 	@Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "A heap address is not allowed.*")

@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 #include "j9.h"
 #include "j9comp.h"
@@ -42,29 +42,50 @@ createContinuation(J9VMThread *currentThread, j9object_t continuationObject)
 	PORT_ACCESS_FROM_VMC(currentThread);
 	BOOLEAN result = TRUE;
 	J9VMContinuation *continuation = NULL;
+#if defined(J9VM_PROF_CONTINUATION_ALLOCATION)
+	I_64 start = j9time_nano_time();
+#endif /* defined(J9VM_PROF_CONTINUATION_ALLOCATION) */
 
 	/* First check if local cache is available. */
-	if (NULL != currentThread->cachedContinuation) {
-		continuation = currentThread->cachedContinuation;
-		currentThread->cachedContinuation = NULL;
-	} else {
+	if (NULL != currentThread->continuationT1Cache) {
+		for (U_32 i = 0; i < vm->continuationT1Size; i++) {
+			if (NULL != currentThread->continuationT1Cache[i]) {
+				continuation = currentThread->continuationT1Cache[i];
+				currentThread->continuationT1Cache[i] = NULL;
+#if defined(J9VM_PROF_CONTINUATION_ALLOCATION)
+				vm->t1CacheHit += 1;
+#endif /* defined(J9VM_PROF_CONTINUATION_ALLOCATION) */
+				break;
+			}
+		}
+	}
+	if (NULL == continuation) {
 		/* Greedily try to use first available cache from global array. */
-		for (U_32 i = 0; i < vm->continuationArraySize; i++) {
-			continuation = vm->globalContinuationCacheArray[i];
+		for (U_32 i = 0; i < vm->continuationT2Size; i++) {
+			continuation = vm->continuationT2Cache[i];
 			if ((NULL != continuation)
 			&& (continuation == (J9VMContinuation*)VM_AtomicSupport::lockCompareExchange(
-																		(uintptr_t*)&(vm->globalContinuationCacheArray[i]),
+																		(uintptr_t*)&(vm->continuationT2Cache[i]),
 																		(uintptr_t)continuation,
 																		(uintptr_t)NULL))
 			) {
+#if defined(J9VM_PROF_CONTINUATION_ALLOCATION)
+				vm->t2CacheHit += 1;
+#endif /* defined(J9VM_PROF_CONTINUATION_ALLOCATION) */
 				break;
 			}
 			continuation = NULL;
 		}
 	}
+#if defined(J9VM_PROF_CONTINUATION_ALLOCATION)
+		vm->avgCacheLookupTime += j9time_nano_time() - start;
+#endif /* defined(J9VM_PROF_CONTINUATION_ALLOCATION) */
 
 	/* No cache found, allocate new continuation structure. */
 	if (NULL == continuation) {
+#if defined(J9VM_PROF_CONTINUATION_ALLOCATION)
+		start = j9time_nano_time();
+#endif /* defined(J9VM_PROF_CONTINUATION_ALLOCATION) */
 		J9JavaStack *stack = NULL;
 		J9SFJNINativeMethodFrame *frame = NULL;
 		continuation = (J9VMContinuation*)j9mem_allocate_memory(sizeof(J9VMContinuation), OMRMEM_CATEGORY_THREADS);
@@ -106,6 +127,17 @@ createContinuation(J9VMThread *currentThread, j9object_t continuationObject)
 		continuation->pc = (U_8*)J9SF_FRAME_TYPE_JNI_NATIVE_METHOD;
 		continuation->arg0EA = (UDATA*)&frame->savedA0;
 		continuation->stackObject->isVirtual = TRUE;
+
+#if defined(J9VM_PROF_CONTINUATION_ALLOCATION)
+		I_64 totalTime = (I_64)j9time_nano_time() - start;
+		if (totalTime > 10000) {
+			vm->slowAlloc += 1;
+			vm->slowAllocAvgTime += totalTime;
+		} else {
+			vm->fastAlloc += 1;
+			vm->fastAllocAvgTime += totalTime;
+		}
+#endif /* defined(J9VM_PROF_CONTINUATION_ALLOCATION) */
 	}
 
 	J9VMJDKINTERNALVMCONTINUATION_SET_VMREF(currentThread, continuationObject, continuation);
@@ -184,6 +216,8 @@ enterContinuation(J9VMThread *currentThread, j9object_t continuationObject)
 			/* Directly return result if the create code failed, exception is already set. */
 			return result;
 		}
+		currentThread->javaVM->memoryManagerFunctions->continuationObjectStarted(currentThread, continuationObject);
+
 		continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(currentThread, continuationObject);
 	}
 	Assert_VM_notNull(continuation);
@@ -317,6 +351,8 @@ freeContinuation(J9VMThread *currentThread, j9object_t continuationObject, BOOLE
 void
 recycleContinuation(J9JavaVM *vm, J9VMThread *vmThread, J9VMContinuation* continuation, BOOLEAN skipLocalCache)
 {
+	PORT_ACCESS_FROM_JAVAVM(vm);
+	bool cached = false;
 	/* Prepare continuationState for recycle, and reset stack initial state. */
 	J9SFJNINativeMethodFrame *frame = ((J9SFJNINativeMethodFrame*)continuation->stackObject->end) - 1;
 	frame->method = NULL;
@@ -329,27 +365,44 @@ recycleContinuation(J9JavaVM *vm, J9VMThread *vmThread, J9VMContinuation* contin
 	continuation->pc = (U_8*)J9SF_FRAME_TYPE_JNI_NATIVE_METHOD;
 	continuation->arg0EA = (UDATA*)&frame->savedA0;
 
-	if (!skipLocalCache && (NULL == vmThread->cachedContinuation)) {
-		/* If called by carrier thread (not global), try to store in local cache first. */
-		vmThread->cachedContinuation = continuation;
-	} else {
-		BOOLEAN cached = FALSE;
+	if (!skipLocalCache && (0 < vm->continuationT1Size)) {
+		/* If called by carrier thread (not global), try to store in local cache first.
+		 * Allocate cacheArray if it doesn't exist.
+		 */
+		if (NULL == vmThread->continuationT1Cache) {
+			UDATA cacheSize = sizeof(J9VMContinuation*) * vm->continuationT1Size;
+			vmThread->continuationT1Cache = (J9VMContinuation**)j9mem_allocate_memory(cacheSize, J9MEM_CATEGORY_VM);
+			if (NULL == vmThread->continuationT1Cache) {
+				vm->internalVMFunctions->setNativeOutOfMemoryError(vmThread, 0, 0);
+				goto T2;
+			}
+			memset(vmThread->continuationT1Cache, 0, cacheSize);
+		}
+		for (U_32 i = 0; i < vm->continuationT1Size; i++) {
+			if (NULL == vmThread->continuationT1Cache[i]) {
+				vmThread->continuationT1Cache[i] = continuation;
+				cached = true;
+				break;
+			}
+		}
+	}
+T2:
+	if (!cached) {
 		/* Greedily try to cache continuation struct in global array. */
-		for (U_32 i = 0; i < vm->continuationArraySize; i++) {
-			if ((NULL == vm->globalContinuationCacheArray[i])
+		for (U_32 i = 0; i < vm->continuationT2Size; i++) {
+			if ((NULL == vm->continuationT2Cache[i])
 			&& (NULL == (UDATA*)VM_AtomicSupport::lockCompareExchange(
-													(uintptr_t*)&(vm->globalContinuationCacheArray[i]),
+													(uintptr_t*)&(vm->continuationT2Cache[i]),
 													(uintptr_t)NULL,
 													(uintptr_t)continuation))
 			) {
-				cached = TRUE;
+				cached = true;
 				break;
 			}
 		}
 
 		if (!cached) {
 			/* Caching failed, free the J9VMContinuation struct. */
-			PORT_ACCESS_FROM_JAVAVM(vm);
 			freeJavaStack(vm, continuation->stackObject);
 			j9mem_free_memory(continuation);
 		}

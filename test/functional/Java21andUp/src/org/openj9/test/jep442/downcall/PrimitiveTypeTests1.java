@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 package org.openj9.test.jep442.downcall;
 
@@ -32,9 +32,8 @@ import java.lang.foreign.Linker;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.SegmentAllocator;
-import java.lang.foreign.SegmentScope;
 import java.lang.foreign.SymbolLookup;
+import java.lang.foreign.ValueLayout;
 import static java.lang.foreign.ValueLayout.*;
 
 /**
@@ -46,8 +45,7 @@ import static java.lang.foreign.ValueLayout.*;
 @Test(groups = { "level.sanity" })
 public class PrimitiveTypeTests1 {
 	private static Linker linker = Linker.nativeLinker();
-	private static SegmentScope scope = SegmentScope.auto();
-	private static SegmentAllocator nativeAllocator = SegmentAllocator.nativeAllocator(scope);
+	private static Arena arena = Arena.ofAuto();
 
 	static {
 		System.loadLibrary("clinkerffitests");
@@ -70,7 +68,7 @@ public class PrimitiveTypeTests1 {
 		MemorySegment functionSymbol = nativeLibLookup.find("addBoolAndBoolFromPointerWithOr").get();
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 
-		MemorySegment boolSegmt = MemorySegment.allocateNative(JAVA_BOOLEAN, scope);
+		MemorySegment boolSegmt = arena.allocate(JAVA_BOOLEAN);
 		boolSegmt.set(JAVA_BOOLEAN, 0, true);
 		boolean result = (boolean)mh.invoke(false, boolSegmt);
 		Assert.assertEquals(result, true);
@@ -91,7 +89,7 @@ public class PrimitiveTypeTests1 {
 		MemorySegment functionSymbol = nativeLibLookup.find("createNewCharFromCharAndCharFromPointer").get();
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 
-		MemorySegment charSegmt = nativeAllocator.allocate(JAVA_CHAR, 'B');
+		MemorySegment charSegmt = arena.allocate(JAVA_CHAR, 'B');
 		char result = (char)mh.invoke(charSegmt, 'D');
 		Assert.assertEquals(result, 'C');
 	}
@@ -120,7 +118,7 @@ public class PrimitiveTypeTests1 {
 		MemorySegment functionSymbol = nativeLibLookup.find("addByteAndByteFromPointer").get();
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 
-		MemorySegment byteSegmt = nativeAllocator.allocate(JAVA_BYTE, (byte)3);
+		MemorySegment byteSegmt = arena.allocate(JAVA_BYTE, (byte)3);
 		byte result = (byte)mh.invoke((byte)6, byteSegmt);
 		Assert.assertEquals(result, (byte)9);
 	}
@@ -149,7 +147,7 @@ public class PrimitiveTypeTests1 {
 		MemorySegment functionSymbol = nativeLibLookup.find("addShortAndShortFromPointer").get();
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 
-		MemorySegment shortSegmt = nativeAllocator.allocate(JAVA_SHORT, (short)24);
+		MemorySegment shortSegmt = arena.allocate(JAVA_SHORT, (short)24);
 		short result = (short)mh.invoke(shortSegmt, (short)32);
 		Assert.assertEquals(result, (short)56);
 	}
@@ -178,7 +176,7 @@ public class PrimitiveTypeTests1 {
 		MemorySegment functionSymbol = nativeLibLookup.find("addIntAndIntFromPointer").get();
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 
-		MemorySegment intSegmt = nativeAllocator.allocate(JAVA_INT, 215);
+		MemorySegment intSegmt = arena.allocate(JAVA_INT, 215);
 		int result = (int)mh.invoke(321, intSegmt);
 		Assert.assertEquals(result, 536);
 	}
@@ -215,7 +213,7 @@ public class PrimitiveTypeTests1 {
 		MemorySegment functionSymbol = nativeLibLookup.find("addLongAndLongFromPointer").get();
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 
-		MemorySegment longSegmt = nativeAllocator.allocate(JAVA_LONG, 57424L);
+		MemorySegment longSegmt = arena.allocate(JAVA_LONG, 57424L);
 		long result = (long)mh.invoke(longSegmt, 698235L);
 		Assert.assertEquals(result, 755659L);
 	}
@@ -235,7 +233,7 @@ public class PrimitiveTypeTests1 {
 		MemorySegment functionSymbol = nativeLibLookup.find("addFloatAndFloatFromPointer").get();
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 
-		MemorySegment floatSegmt = nativeAllocator.allocate(JAVA_FLOAT, 6.79f);
+		MemorySegment floatSegmt = arena.allocate(JAVA_FLOAT, 6.79f);
 		float result = (float)mh.invoke(5.74f, floatSegmt);
 		Assert.assertEquals(result, 12.53f, 0.01f);
 	}
@@ -255,7 +253,7 @@ public class PrimitiveTypeTests1 {
 		MemorySegment functionSymbol = nativeLibLookup.find("addDoubleAndDoubleFromPointer").get();
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 
-		MemorySegment doubleSegmt = nativeAllocator.allocate(JAVA_DOUBLE, 159.748d);
+		MemorySegment doubleSegmt = arena.allocate(JAVA_DOUBLE, 159.748d);
 		double result = (double)mh.invoke(doubleSegmt, 262.795d);
 		Assert.assertEquals(result, 422.543d, 0.001d);
 	}
@@ -265,7 +263,7 @@ public class PrimitiveTypeTests1 {
 		MemorySegment strlenSymbol = defaultLibLookup.find("strlen").get();
 		FunctionDescriptor fd = FunctionDescriptor.of(JAVA_LONG, ADDRESS);
 		MethodHandle mh = linker.downcallHandle(strlenSymbol, fd);
-		MemorySegment funcSegmt = nativeAllocator.allocateUtf8String("JEP424 DOWNCALL TEST SUITES");
+		MemorySegment funcSegmt = arena.allocateUtf8String("JEP424 DOWNCALL TEST SUITES");
 		long strLength = (long)mh.invoke(funcSegmt);
 		Assert.assertEquals(strLength, 27);
 	}
@@ -276,7 +274,7 @@ public class PrimitiveTypeTests1 {
 		FunctionDescriptor allocFuncDesc = FunctionDescriptor.of(ADDRESS, JAVA_LONG);
 		MethodHandle allocHandle = linker.downcallHandle(allocSymbol, allocFuncDesc);
 		MemorySegment allocMemAddr = (MemorySegment)allocHandle.invokeExact(10L);
-		MemorySegment allocMemSegmt = MemorySegment.ofAddress(allocMemAddr.address(), 10L);
+		MemorySegment allocMemSegmt = allocMemAddr.reinterpret(10L);
 		allocMemSegmt.set(JAVA_INT, 0, 15);
 		Assert.assertEquals(allocMemSegmt.get(JAVA_INT, 0), 15);
 
@@ -291,7 +289,7 @@ public class PrimitiveTypeTests1 {
 		MemorySegment functionSymbol = defaultLibLookup.find("printf").get();
 		FunctionDescriptor fd = FunctionDescriptor.of(JAVA_INT, ADDRESS, JAVA_INT, JAVA_INT, JAVA_INT);
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
-		MemorySegment formatSegmt = nativeAllocator.allocateUtf8String("\n%d + %d = %d\n");
+		MemorySegment formatSegmt = arena.allocateUtf8String("\n%d + %d = %d\n");
 		mh.invoke(formatSegmt, 15, 27, 42);
 	}
 
@@ -300,7 +298,16 @@ public class PrimitiveTypeTests1 {
 		MemorySegment functionSymbol = defaultLibLookup.find("printf").get();
 		FunctionDescriptor fd = FunctionDescriptor.of(JAVA_INT, ADDRESS, JAVA_INT, JAVA_INT, JAVA_INT);
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd, Linker.Option.firstVariadicArg(1));
-		MemorySegment formatSegmt = nativeAllocator.allocateUtf8String("\n%d + %d = %d\n");
+		MemorySegment formatSegmt = arena.allocateUtf8String("\n%d + %d = %d\n");
 		mh.invoke(formatSegmt, 15, 27, 42);
+	}
+
+	@Test
+	public void test_validateTrivialOption_1() throws Throwable {
+		FunctionDescriptor fd = FunctionDescriptor.of(JAVA_INT, JAVA_INT);
+		MemorySegment functionSymbol = nativeLibLookup.find("validateTrivialOption").get();
+		MethodHandle mh = linker.downcallHandle(functionSymbol, fd, Linker.Option.isTrivial());
+		int result = (int)mh.invokeExact(111);
+		Assert.assertEquals(result, 111);
 	}
 }

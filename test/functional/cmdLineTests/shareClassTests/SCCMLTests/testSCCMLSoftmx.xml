@@ -19,7 +19,7 @@
   [1] https://www.gnu.org/software/classpath/license.html
   [2] https://openjdk.org/legal/assembly-exception.html
 
-  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 -->
 
 <!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
@@ -436,6 +436,53 @@
 		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
 		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
 		
+		<output type="failure" caseSensitive="no" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<test id="Test 14-a: Create a shared cache explicitly with sub-option persistent" timeout="600" runPath=".">
+		<!-- On z/OS, the default cache type is non-persistent. Use sub-option persistent to test the non-default cache type.-->
+		<command>$JAVA_EXE$ $currentMode$,persistent -Xscmx16m -version</command>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
+
+		<output type="failure" caseSensitive="no" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<test id="Test 14-b: adjust the softmx bytes to 10m" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,persistent,adjustsoftmx=10m</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">The softmx bytes is set to 10485760</output>
+
+		<output type="failure" caseSensitive="yes" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<test id="Test 14-c: check the cache statistics for the softmx value" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,persistent,printStats</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">softmx bytes\s+= 10485760</output>
+
+		<output type="failure" caseSensitive="no" regex="no">error</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<test id="Test 14-d : Cleanup" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,persistent,destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+
 		<output type="failure" caseSensitive="no" regex="no">error</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>

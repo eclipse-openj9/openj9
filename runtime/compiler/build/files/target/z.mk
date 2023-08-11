@@ -16,7 +16,7 @@
 # [1] https://www.gnu.org/software/classpath/license.html
 # [2] https://openjdk.org/legal/assembly-exception.html
 #
-# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 
 JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/z/codegen/BinaryAnalyser.cpp \
@@ -39,6 +39,7 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/z/codegen/OMRRegister.cpp \
     omr/compiler/z/codegen/OMRRegisterDependency.cpp \
     omr/compiler/z/codegen/OMRSnippet.cpp \
+    omr/compiler/z/codegen/OMRSnippetDelegate.cpp \
     omr/compiler/z/codegen/OMRTreeEvaluator.cpp \
     omr/compiler/z/codegen/OpMemToMem.cpp \
     omr/compiler/z/codegen/S390BranchCondNames.cpp \

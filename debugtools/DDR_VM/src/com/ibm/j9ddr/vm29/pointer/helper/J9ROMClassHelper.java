@@ -17,11 +17,12 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 package com.ibm.j9ddr.vm29.pointer.helper;
 
 import static com.ibm.j9ddr.vm29.structure.J9JavaAccessFlags.*;
+import static com.ibm.j9ddr.vm29.structure.J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_PRELOAD_ATTRIBUTE;
 
 import com.ibm.j9ddr.CorruptDataException;
 import com.ibm.j9ddr.vm29.pointer.U32Pointer;
@@ -135,5 +136,9 @@ public class J9ROMClassHelper {
 
 	public static boolean isSealed(J9ROMClassPointer romclass) throws CorruptDataException {
 		return romclass.extraModifiers().allBitsIn(J9AccSealed);
+	}
+
+	public static boolean hasPreloadAttribute(J9ROMClassPointer romclass) throws CorruptDataException {
+		return romclass.optionalFlags().allBitsIn(J9_ROMCLASS_OPTINFO_PRELOAD_ATTRIBUTE);
 	}
 }

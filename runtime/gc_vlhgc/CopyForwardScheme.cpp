@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include "j9.h"
@@ -64,7 +64,6 @@
 #include "FinalizableReferenceBuffer.hpp"
 #include "ContinuationObjectBuffer.hpp"
 #include "ContinuationObjectList.hpp"
-#include "VMHelpers.hpp"
 #include "FinalizeListManager.hpp"
 #include "ForwardedHeader.hpp"
 #include "GlobalAllocationManager.hpp"
@@ -102,6 +101,9 @@
 #include "SurvivorMemoryIterator.hpp"
 #include "WorkPacketsIterator.hpp"
 #include "WorkPacketsVLHGC.hpp"
+#if JAVA_SPEC_VERSION >= 19
+#include "ContinuationHelpers.hpp"
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
 #define INITIAL_FREE_HISTORY_WEIGHT ((float)0.8)
 #define TENURE_BYTES_HISTORY_WEIGHT ((float)0.8)
@@ -2002,7 +2004,7 @@ MM_CopyForwardScheme::copy(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *
 			newCacheAlloc = (void *)((uintptr_t)destinationObjectPtr + objectReserveSizeInBytes);
 
 			/* Try to swap the forwarding pointer to the destination copy array into the source object */
-			J9Object* originalDestinationObjectPtr = destinationObjectPtr;
+			J9Object *originalDestinationObjectPtr = destinationObjectPtr;
 			destinationObjectPtr = forwardedHeader->setForwardedObject(destinationObjectPtr);
 			Assert_MM_true(NULL != destinationObjectPtr);
 			if (destinationObjectPtr == originalDestinationObjectPtr) {
@@ -2087,7 +2089,7 @@ MM_CopyForwardScheme::copy(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *
 
 #if defined(J9VM_GC_LEAF_BITS)
 void
-MM_CopyForwardScheme::copyLeafChildren(MM_EnvironmentVLHGC* env, MM_AllocationContextTarok *reservingContext, J9Object* objectPtr)
+MM_CopyForwardScheme::copyLeafChildren(MM_EnvironmentVLHGC* env, MM_AllocationContextTarok *reservingContext, J9Object *objectPtr)
 {
 	J9Class *clazz = J9GC_J9OBJECT_CLAZZ(objectPtr, env);
 	if (GC_ObjectModel::SCAN_MIXED_OBJECT == _extensions->objectModel.getScanType(clazz)) {
@@ -2292,7 +2294,7 @@ MM_CopyForwardScheme::scanOwnableSynchronizerObjectSlots(MM_EnvironmentVLHGC *en
 }
 
 void
-MM_CopyForwardScheme::doStackSlot(MM_EnvironmentVLHGC *env, J9Object *fromObject, J9Object** slotPtr, J9StackWalkState *walkState, const void *stackLocation)
+MM_CopyForwardScheme::doStackSlot(MM_EnvironmentVLHGC *env, J9Object *fromObject, J9Object **slotPtr, J9StackWalkState *walkState, const void *stackLocation)
 {
 	if (isHeapObject(*slotPtr)) {
 		/* heap object - validate and copyforward */
@@ -3035,7 +3037,7 @@ MM_CopyForwardScheme::scanPointerArrayObjectSlots(MM_EnvironmentVLHGC *env, MM_A
 		/* make sure we only record stats for the object once -- note that this means we might
 		 * attribute the scanning cost to the wrong thread, but that's not really important
 		 */
-		updateScanStats(env, (J9Object*)arrayPtr, reason);
+		updateScanStats(env, (J9Object *)arrayPtr, reason);
 	}
 	
 	scanPointerArrayObjectSlotsSplit(env, reservingContext, arrayPtr, index, currentSplitUnitOnly);
@@ -3476,7 +3478,7 @@ MM_CopyForwardScheme::scanUnfinalizedObjects(MM_EnvironmentVLHGC *env)
 					 * 2. it was copied by this thread.
 					 */
 					MM_ForwardedHeader forwardedHeader(pointer, _extensions->compressObjectReferences());
-					J9Object* forwardedPtr = forwardedHeader.getForwardedObject();
+					J9Object *forwardedPtr = forwardedHeader.getForwardedObject();
 					if (NULL == forwardedPtr) {
 						if (_markMap->isBitSet(pointer)) {
 							forwardedPtr = pointer;
@@ -3496,7 +3498,7 @@ MM_CopyForwardScheme::scanUnfinalizedObjects(MM_EnvironmentVLHGC *env)
 						}
 					}
 
-					J9Object* next = _extensions->accessBarrier->getFinalizeLink(forwardedPtr);
+					J9Object *next = _extensions->accessBarrier->getFinalizeLink(forwardedPtr);
 					if (finalizable) {
 						/* object was not previously marked -- it is now finalizable so push it to the local buffer */
 						env->_copyForwardStats._unfinalizedEnqueued += 1;
@@ -3526,6 +3528,7 @@ MM_CopyForwardScheme::scanUnfinalizedObjects(MM_EnvironmentVLHGC *env)
 void
 MM_CopyForwardScheme::scanContinuationObjects(MM_EnvironmentVLHGC *env)
 {
+#if JAVA_SPEC_VERSION >= 19
 	MM_HeapRegionDescriptorVLHGC *region = NULL;
 	GC_HeapRegionIteratorVLHGC regionIterator(_regionManager);
 	while (NULL != (region = regionIterator.nextRegion())) {
@@ -3542,14 +3545,14 @@ MM_CopyForwardScheme::scanContinuationObjects(MM_EnvironmentVLHGC *env)
 					 * 2. it was copied by this thread.
 					 */
 					MM_ForwardedHeader forwardedHeader(pointer, _extensions->compressObjectReferences());
-					J9Object* forwardedPtr = forwardedHeader.getForwardedObject();
-					if (NULL == forwardedPtr) {
+					J9Object *forwardedPtr = forwardedHeader.getForwardedObject();
+					if ((NULL == forwardedPtr) || VM_ContinuationHelpers::isFinished(*VM_ContinuationHelpers::getContinuationStateAddress((J9VMThread *)env->getLanguageVMThread() , forwardedPtr))) {
 						if (_markMap->isBitSet(pointer)) {
 							forwardedPtr = pointer;
 						}
 					}
 
-					J9Object* next = _extensions->accessBarrier->getContinuationLink(pointer);
+					J9Object *next = _extensions->accessBarrier->getContinuationLink(pointer);
 					if (NULL == forwardedPtr) {
 						/* object was not previously marked, clean up */
 						env->_copyForwardStats._continuationCleared += 1;
@@ -3565,6 +3568,7 @@ MM_CopyForwardScheme::scanContinuationObjects(MM_EnvironmentVLHGC *env)
 
 	/* restore everything to a flushed state before exiting */
 	env->getGCEnvironment()->_continuationObjectBuffer->flush(env);
+#endif /* JAVA_SPEC_VERSION >= 19 */
 }
 
 void
@@ -3728,7 +3732,7 @@ MM_CopyForwardScheme::updateOrDeleteObjectsFromExternalCycle(MM_EnvironmentVLHGC
 								Assert_MM_true(!_markMap->isBitSet(forwardedObject));
 								deletedCount += 1;
 								slotIterator.resetSplitTagIndexForObject(object, PACKET_INVALID_OBJECT);
-								*slot = (J9Object*)PACKET_INVALID_OBJECT;
+								*slot = (J9Object *)PACKET_INVALID_OBJECT;
 							}
 						}
 					}
@@ -4722,7 +4726,7 @@ void
 MM_CopyForwardScheme::verifyReferenceObjectSlots(MM_EnvironmentVLHGC *env, J9Object *objectPtr)
 {
 	fj9object_t referentToken = J9GC_J9VMJAVALANGREFERENCE_REFERENT(env, objectPtr);
-	J9Object* referentPtr = _extensions->accessBarrier->convertPointerFromToken(referentToken);
+	J9Object *referentPtr = _extensions->accessBarrier->convertPointerFromToken(referentToken);
 	if (!_abortInProgress && !isObjectInNoEvacuationRegions(env, referentPtr) && verifyIsPointerInEvacute(env, referentPtr)) {
 		PORT_ACCESS_FROM_ENVIRONMENT(env);
 		j9tty_printf(PORTLIB, "RefMixed referent slot points to evacuate!  srcObj %p dstObj %p\n", objectPtr, referentPtr);
@@ -5174,7 +5178,7 @@ MM_CopyForwardScheme::scanPhantomReferenceObjects(MM_EnvironmentVLHGC *env)
 }
 
 void
-MM_CopyForwardScheme::processReferenceList(MM_EnvironmentVLHGC *env, MM_HeapRegionDescriptorVLHGC* region, J9Object* headOfList, MM_ReferenceStats *referenceStats)
+MM_CopyForwardScheme::processReferenceList(MM_EnvironmentVLHGC *env, MM_HeapRegionDescriptorVLHGC *region, J9Object *headOfList, MM_ReferenceStats *referenceStats)
 {
 	/* no list can possibly contain more reference objects than there are bytes in a region. */
 	const UDATA maxObjects = _regionManager->getRegionSize();
@@ -5182,7 +5186,7 @@ MM_CopyForwardScheme::processReferenceList(MM_EnvironmentVLHGC *env, MM_HeapRegi
 	GC_FinalizableReferenceBuffer buffer(_extensions);
 	bool const compressed = env->compressObjectReferences();
 
-	J9Object* referenceObj = headOfList;
+	J9Object *referenceObj = headOfList;
 	while (NULL != referenceObj) {
 		Assert_MM_true(isLiveObject(referenceObj));
 
@@ -5192,7 +5196,7 @@ MM_CopyForwardScheme::processReferenceList(MM_EnvironmentVLHGC *env, MM_HeapRegi
 		Assert_MM_true(region->isAddressInRegion(referenceObj));
 		Assert_MM_true(objectsVisited < maxObjects);
 
-		J9Object* nextReferenceObj = _extensions->accessBarrier->getReferenceLink(referenceObj);
+		J9Object *nextReferenceObj = _extensions->accessBarrier->getReferenceLink(referenceObj);
 
 		GC_SlotObject referentSlotObject(_extensions->getOmrVM(), J9GC_J9VMJAVALANGREFERENCE_REFERENT_ADDRESS(env, referenceObj));
 		J9Object *referent = referentSlotObject.readReferenceFromSlot();
@@ -5265,15 +5269,15 @@ MM_CopyForwardScheme::processReferenceList(MM_EnvironmentVLHGC *env, MM_HeapRegi
 }
 
 void
-MM_CopyForwardScheme::rememberReferenceList(MM_EnvironmentVLHGC *env, J9Object* headOfList)
+MM_CopyForwardScheme::rememberReferenceList(MM_EnvironmentVLHGC *env, J9Object *headOfList)
 {
 	Assert_MM_true((NULL == headOfList) || (NULL != env->_cycleState->_externalCycleState));
 	/* If phantom reference processing has already started this list will never be processed */
 	Assert_MM_true(0 == _phantomReferenceRegionsToProcess);
 
-	J9Object* referenceObj = headOfList;
+	J9Object *referenceObj = headOfList;
 	while (NULL != referenceObj) {
-		J9Object* next = _extensions->accessBarrier->getReferenceLink(referenceObj);
+		J9Object *next = _extensions->accessBarrier->getReferenceLink(referenceObj);
 		I_32 referenceState = J9GC_J9VMJAVALANGREFERENCE_STATE(env, referenceObj);
 		switch (referenceState) {
 		case  GC_ObjectModel::REF_STATE_INITIAL:
@@ -5332,7 +5336,7 @@ MM_CopyForwardScheme::rememberAndResetReferenceLists(MM_EnvironmentVLHGC *env, M
 
 	if (0 == (referenceObjectOptions & MM_CycleState::references_clear_weak)) {
 		referenceObjectList->startWeakReferenceProcessing();
-		J9Object* headOfList = referenceObjectList->getPriorWeakList();
+		J9Object *headOfList = referenceObjectList->getPriorWeakList();
 		if (NULL != headOfList) {
 			Trc_MM_CopyForwardScheme_rememberAndResetReferenceLists_rememberWeak(env->getLanguageVMThread(), region, headOfList);
 			rememberReferenceList(env, headOfList);
@@ -5341,7 +5345,7 @@ MM_CopyForwardScheme::rememberAndResetReferenceLists(MM_EnvironmentVLHGC *env, M
 
 	if (0 == (referenceObjectOptions & MM_CycleState::references_clear_soft)) {
 		referenceObjectList->startSoftReferenceProcessing();
-		J9Object* headOfList = referenceObjectList->getPriorSoftList();
+		J9Object *headOfList = referenceObjectList->getPriorSoftList();
 		if (NULL != headOfList) {
 			Trc_MM_CopyForwardScheme_rememberAndResetReferenceLists_rememberSoft(env->getLanguageVMThread(), region, headOfList);
 			rememberReferenceList(env, headOfList);
@@ -5350,7 +5354,7 @@ MM_CopyForwardScheme::rememberAndResetReferenceLists(MM_EnvironmentVLHGC *env, M
 
 	if (0 == (referenceObjectOptions & MM_CycleState::references_clear_phantom)) {
 		referenceObjectList->startPhantomReferenceProcessing();
-		J9Object* headOfList = referenceObjectList->getPriorPhantomList();
+		J9Object *headOfList = referenceObjectList->getPriorPhantomList();
 		if (NULL != headOfList) {
 			Trc_MM_CopyForwardScheme_rememberAndResetReferenceLists_rememberPhantom(env->getLanguageVMThread(), region, headOfList);
 			rememberReferenceList(env, headOfList);
@@ -5400,7 +5404,7 @@ MM_CopyForwardScheme::scanFinalizableObjects(MM_EnvironmentVLHGC *env)
 					next = _extensions->accessBarrier->getReferenceLink(referenceObject);
 
 					MM_AllocationContextTarok *reservingContext = getContextForHeapAddress(referenceObject);
-					J9Object* copyObject = copy(env, reservingContext, &forwardedHeader);
+					J9Object *copyObject = copy(env, reservingContext, &forwardedHeader);
 					if ( (NULL == copyObject) || (referenceObject == copyObject) ) {
 						referenceBuffer.add(env, referenceObject);
 					} else {
@@ -5441,7 +5445,7 @@ MM_CopyForwardScheme::scanFinalizableList(MM_EnvironmentVLHGC *env, j9object_t h
 				next = _extensions->accessBarrier->getFinalizeLink(headObject);
 
 				MM_AllocationContextTarok *reservingContext = getContextForHeapAddress(headObject);
-				J9Object* copyObject = copy(env, reservingContext, &forwardedHeader);
+				J9Object *copyObject = copy(env, reservingContext, &forwardedHeader);
 				if ( (NULL == copyObject) || (headObject == copyObject) ) {
 					objectBuffer.add(env, headObject);
 				} else {

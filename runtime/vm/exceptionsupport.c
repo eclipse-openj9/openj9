@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include <string.h>
@@ -838,11 +838,6 @@ walkStackForExceptionThrow(J9VMThread * currentThread, j9object_t exception, UDA
 	if (!walkOnly) {
 		walkState->flags |= (J9_STACKWALK_INCLUDE_CALL_IN_FRAMES | J9_STACKWALK_INCLUDE_NATIVES | J9_STACKWALK_MAINTAIN_REGISTER_MAP);
 	}
-	/* PR 81484: Clear jitStackFrameFlags before the walk.
-	 * 1) It is not used by the stack walker.
-	 * 2) It could affect code that runs to load exception classes during the walk.
-	 */
-	currentThread->jitStackFrameFlags = 0;
 
 	currentThread->javaVM->walkStackFrames(currentThread, walkState);
 
@@ -1297,7 +1292,9 @@ void
 setCRIUSingleThreadModeJVMCRIUException(J9VMThread *vmThread, U_32 moduleName, U_32 messageNumber)
 {
 	PORT_ACCESS_FROM_VMC(vmThread);
+	J9JavaVM *vm = vmThread->javaVM;
 	const char *msg = NULL;
+	omr_error_t rc = 0;
 
 	/* If no custom NLS message was specified, use the generic one */
 	if ((0 == moduleName) && (0 == messageNumber)) {
@@ -1307,12 +1304,14 @@ setCRIUSingleThreadModeJVMCRIUException(J9VMThread *vmThread, U_32 moduleName, U
 	msg = OMRPORT_FROM_J9PORT(PORTLIB)->nls_lookup_message(OMRPORT_FROM_J9PORT(PORTLIB), J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, moduleName, messageNumber, NULL);
 
 	/* set org.eclipse.openj9.criu.JVMCheckpointException or JVMRestoreException */
-	if (0 == vmThread->javaVM->checkpointState.checkpointRestoreTimeDelta) {
+	if (0 == vm->checkpointState.checkpointRestoreTimeDelta) {
 		/* throw JVMCheckpointException at checkpoint */
 		setCurrentExceptionUTF(vmThread, J9VMCONSTANTPOOL_ORGECLIPSEOPENJ9CRIUJVMCHECKPOINTEXCEPTION, msg);
 	} else {
 		/* throw JVMRestoreException at restore */
 		setCurrentExceptionUTF(vmThread, J9VMCONSTANTPOOL_ORGECLIPSEOPENJ9CRIUJVMRESTOREEXCEPTION, msg);
 	}
+	rc = vm->j9rasDumpFunctions->triggerOneOffDump(vm, "java", "CRIUSingleThreadModeJVMCRIUException", NULL, 0);
+	Trc_VM_criu_setSingleThreadModeJVMCRIUException_triggerOneOffJavaDump(vmThread, rc);
 }
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */

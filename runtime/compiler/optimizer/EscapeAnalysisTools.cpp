@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include "optimizer/EscapeAnalysisTools.hpp"
@@ -30,20 +30,21 @@
 
 TR_EscapeAnalysisTools::TR_EscapeAnalysisTools(TR::Compilation *comp)
   {
-  _loads = NULL;
   _comp = comp;
   }
 
-void TR_EscapeAnalysisTools::insertFakeEscapeForLoads(TR::Block *block, TR::Node *node, NodeDeque *loads)
+void TR_EscapeAnalysisTools::insertFakeEscapeForLoads(TR::Block *block, TR::Node *node, TR_BitVector &symRefsToLoad)
    {
-   //TR::Node *fakePrepare = TR::Node::createWithSymRef(node, TR::call, loads->size(), _comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_prepareForOSR, false, false, true));
-   TR::Node *fakePrepare = TR::Node::createEAEscapeHelperCall(node, loads->size());
+   TR::Node *fakePrepare = TR::Node::createEAEscapeHelperCall(node, symRefsToLoad.elementCount());
    int idx = 0;
-   for (auto itr = loads->begin(), end = loads->end(); itr != end; ++itr)
-       {
-       (*itr)->setByteCodeInfo(node->getByteCodeInfo());
-       fakePrepare->setAndIncChild(idx++, *itr);
-       }
+   TR_BitVectorIterator symRefIt(symRefsToLoad);
+
+   while (symRefIt.hasMoreElements())
+      {
+      TR::SymbolReference *symRef = _comp->getSymRefTab()->getSymRef(symRefIt.getNextElement());
+      fakePrepare->setAndIncChild(idx++, TR::Node::createWithSymRef(node, TR::aload, 0, symRef));
+      }
+
    dumpOptDetails(_comp, " Adding fake prepare n%dn to OSR induction block_%d\n", fakePrepare->getGlobalIndex(), block->getNumber());
    block->getLastRealTreeTop()->insertBefore(
       TR::TreeTop::create(_comp, TR::Node::create(node, TR::treetop, 1, fakePrepare)));
@@ -51,11 +52,6 @@ void TR_EscapeAnalysisTools::insertFakeEscapeForLoads(TR::Block *block, TR::Node
 
 void TR_EscapeAnalysisTools::insertFakeEscapeForOSR(TR::Block *block, TR::Node *induceCall)
    {
-   if (_loads == NULL)
-      _loads = new (_comp->trMemory()->currentStackRegion()) NodeDeque(NodeDequeAllocator(_comp->trMemory()->currentStackRegion()));
-   else
-      _loads->clear();
-
    TR_ByteCodeInfo &bci = induceCall->getByteCodeInfo();
 
    int32_t inlinedIndex = bci.getCallerIndex();
@@ -88,14 +84,16 @@ void TR_EscapeAnalysisTools::insertFakeEscapeForOSR(TR::Block *block, TR::Node *
       _comp->getOSRCompilationData()->printMap(induceDefiningMap);
       }
 
-   // Gather all live autos and pending pushes at this point for inlined methods in _loads
+   TR_BitVector symRefsToLoad(0, _comp->trMemory()->currentStackRegion(), growable);
+
+   // Gather all live autos and pending pushes at this point for inlined methods in symRefsToLoad.
    // This ensures objects that EA can stack allocate will be heapified if OSR is induced
    while (inlinedIndex > -1)
       {
       TR::ResolvedMethodSymbol *rms = _comp->getInlinedResolvedMethodSymbol(inlinedIndex);
       TR_ASSERT_FATAL(rms, "Unknown resolved method during escapetools");
       TR_OSRMethodData *methodData = osrCompilationData->findOSRMethodData(inlinedIndex, rms);
-      processAutosAndPendingPushes(rms, induceDefiningMap, methodData, byteCodeIndex);
+      processAutosAndPendingPushes(rms, induceDefiningMap, methodData, byteCodeIndex, symRefsToLoad);
       byteCodeIndex = _comp->getInlinedCallSite(inlinedIndex)._byteCodeInfo.getByteCodeIndex();
       inlinedIndex = _comp->getInlinedCallSite(inlinedIndex)._byteCodeInfo.getCallerIndex();
       }
@@ -103,18 +101,18 @@ void TR_EscapeAnalysisTools::insertFakeEscapeForOSR(TR::Block *block, TR::Node *
    // handle the outermost method
       {
       TR_OSRMethodData *methodData = osrCompilationData->findOSRMethodData(-1, _comp->getMethodSymbol());
-      processAutosAndPendingPushes(_comp->getMethodSymbol(), induceDefiningMap, methodData, byteCodeIndex);
+      processAutosAndPendingPushes(_comp->getMethodSymbol(), induceDefiningMap, methodData, byteCodeIndex, symRefsToLoad);
       }
-   insertFakeEscapeForLoads(block, induceCall, _loads);
+   insertFakeEscapeForLoads(block, induceCall, symRefsToLoad);
    }
 
-void TR_EscapeAnalysisTools::processAutosAndPendingPushes(TR::ResolvedMethodSymbol *rms, DefiningMap *induceDefiningMap, TR_OSRMethodData *methodData, int32_t byteCodeIndex)
+void TR_EscapeAnalysisTools::processAutosAndPendingPushes(TR::ResolvedMethodSymbol *rms, DefiningMap *induceDefiningMap, TR_OSRMethodData *methodData, int32_t byteCodeIndex, TR_BitVector &symRefsToLoad)
    {
-   processSymbolReferences(rms->getAutoSymRefs(), induceDefiningMap, methodData->getLiveRangeInfo(byteCodeIndex));
-   processSymbolReferences(rms->getPendingPushSymRefs(), induceDefiningMap, methodData->getPendingPushLivenessInfo(byteCodeIndex));
+   processSymbolReferences(rms->getAutoSymRefs(), induceDefiningMap, methodData->getLiveRangeInfo(byteCodeIndex), symRefsToLoad);
+   processSymbolReferences(rms->getPendingPushSymRefs(), induceDefiningMap, methodData->getPendingPushLivenessInfo(byteCodeIndex), symRefsToLoad);
    }
 
-void TR_EscapeAnalysisTools::processSymbolReferences(TR_Array<List<TR::SymbolReference>> *symbolReferences, DefiningMap *induceDefiningMap, TR_BitVector *deadSymRefs)
+void TR_EscapeAnalysisTools::processSymbolReferences(TR_Array<List<TR::SymbolReference>> *symbolReferences, DefiningMap *induceDefiningMap, TR_BitVector *deadSymRefs, TR_BitVector &symRefsToLoad)
    {
    for (int i = 0; symbolReferences && i < symbolReferences->size(); i++)
       {
@@ -125,6 +123,8 @@ void TR_EscapeAnalysisTools::processSymbolReferences(TR_Array<List<TR::SymbolRef
          TR::Symbol *p = symRef->getSymbol();
          if ((p->isAuto() || p->isParm()) && p->getDataType() == TR::Address)
             {
+            int32_t symRefNum = symRef->getReferenceNumber();
+
             // If no DefiningMap is available for the current sym ref, or the
             // DefiningMap is empty, simply use the sym ref on the
             // eaEscapeHelper if it's live.  Otherwise, walk through the
@@ -132,17 +132,18 @@ void TR_EscapeAnalysisTools::processSymbolReferences(TR_Array<List<TR::SymbolRef
             // whose definitions map to the sym ref from the OSR
             // liveness data that we're currently looking at.
             if (!induceDefiningMap
-                || induceDefiningMap->find(symRef->getReferenceNumber()) == induceDefiningMap->end())
+                || induceDefiningMap->find(symRefNum) == induceDefiningMap->end())
                {
-               if (deadSymRefs == NULL || !deadSymRefs->isSet(symRef->getReferenceNumber()))
+               if (deadSymRefs == NULL || !deadSymRefs->isSet(symRefNum))
                   {
-                  _loads->push_back(TR::Node::createWithSymRef(TR::aload, 0, symRef));
+                  symRefsToLoad.set(symRefNum);
                   }
                }
             else
                {
                TR_BitVector *definingSyms = (*induceDefiningMap)[symRef->getReferenceNumber()];
                TR_BitVectorIterator definingSymsIt(*definingSyms);
+
                while (definingSymsIt.hasMoreElements())
                   {
                   int32_t definingSymRefNum = definingSymsIt.getNextElement();
@@ -152,7 +153,7 @@ void TR_EscapeAnalysisTools::processSymbolReferences(TR_Array<List<TR::SymbolRef
                   if ((definingSym->isAuto() || definingSym->isParm())
                       && (deadSymRefs == NULL || !deadSymRefs->isSet(definingSymRefNum)))
                      {
-                     _loads->push_back(TR::Node::createWithSymRef(TR::aload, 0, definingSymRef));
+                     symRefsToLoad.set(symRefNum);
                      }
                   }
                }

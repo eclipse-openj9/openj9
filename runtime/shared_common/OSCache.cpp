@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 /**
@@ -625,7 +625,6 @@ SH_OSCache::getAllCacheStatistics(J9JavaVM* vm, const char* ctrlDirName, UDATA g
 	char persistentCacheDir[J9SH_MAXPATH];
 	char nonpersistentCacheDir[J9SH_MAXPATH];
 	char* nameWithVGen = NULL;
-	IDATA cntr = 0;
 	J9Pool* incompatibleList = NULL;
 	SH_OSCache_Info tempInfo;
 	SH_OSCache_Info* newElement = NULL;
@@ -760,7 +759,6 @@ SH_OSCache::getAllCacheStatistics(J9JavaVM* vm, const char* ctrlDirName, UDATA g
 											goto done;
 										}
 										memcpy(newElement, anElement, sizeof(SH_OSCache_Info));
-										++cntr;
 									} while ((anElement = (SH_OSCache_Info*)pool_nextDo(&poolState)) != NULL);
 								}
 							}
@@ -789,7 +787,6 @@ SH_OSCache::getAllCacheStatistics(J9JavaVM* vm, const char* ctrlDirName, UDATA g
 					memcpy(newElement, &tempInfo, sizeof(SH_OSCache_Info));
 				}
 			}
-			++cntr;
 		}
 		
 		if (NULL != lowerLayerList) {
@@ -1246,6 +1243,10 @@ SH_OSCache::getCacheStatsCommon(J9JavaVM* vm, const char* ctrlDirName, UDATA gro
 	if (cmStats == NULL) {
 		retval = false;
 		goto done;
+	}
+
+	if (J9PORT_SHR_CACHE_TYPE_PERSISTENT == cacheInfo->versionData.cacheType) {
+		runtimeflags |= J9SHR_RUNTIMEFLAG_ENABLE_PERSISTENT_CACHE;
 	}
 
 	startedForStats = cmStats->startupForStats(currentThread, ctrlDirName, groupPerm, cache, &runtimeflags, lowerLayerList);

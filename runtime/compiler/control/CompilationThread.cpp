@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #define J9_EXTERNAL_TO_VM
@@ -1176,6 +1176,8 @@ TR::CompilationInfo::CompilationInfo(J9JITConfig *jitConfig) :
    OMRPORT_ACCESS_FROM_J9PORT(jitConfig->javaVM->portLibrary);
    _cgroupMemorySubsystemEnabled = (OMR_CGROUP_SUBSYSTEM_MEMORY == omrsysinfo_cgroup_are_subsystems_enabled(OMR_CGROUP_SUBSYSTEM_MEMORY));
    _suspendThreadDueToLowPhysicalMemory = false;
+   J9MemoryInfo memInfo;
+   _isSwapMemoryDisabled = ((omrsysinfo_get_memory_info(&memInfo) == 0) && (0 == memInfo.totalSwap));
 
    // Initialize the compilation monitor
    //
@@ -2935,6 +2937,18 @@ void TR::CompilationInfo::prepareForCheckpoint()
    if (!suspendCompThreadsForCheckpoint(vmThread))
       return;
 
+#if defined(J9VM_OPT_JITSERVER)
+   // If this is a JITServer client that has an SSL context, free that context now
+   if (getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
+      {
+      if (JITServer::CommunicationStream::useSSL())
+         {
+         freeClientSslCertificates();
+         JITServer::ClientStream::freeSSLContext();
+         }
+      }
+#endif
+
    setReadyForCheckpointRestore();
    }
 
@@ -2946,6 +2960,9 @@ void TR::CompilationInfo::prepareForRestore()
    {
    J9JavaVM   *vm       = _jitConfig->javaVM;
    J9VMThread *vmThread = vm->internalVMFunctions->currentVMThread(vm);
+
+   PORT_ACCESS_FROM_JAVAVM(vm);
+   OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
 
    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestore))
       TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Preparing for restore");
@@ -2967,6 +2984,19 @@ void TR::CompilationInfo::prepareForRestore()
    // Resume suspended compilation threads.
    resumeCompilationThread();
    }
+
+   // Check if there is no swap memory post restore
+   J9MemoryInfo memInfo;
+   if ((omrsysinfo_get_memory_info(&memInfo) == 0) && (0 == memInfo.totalSwap))
+      {
+      setIsSwapMemoryDisabled(true);
+      }
+   else
+      {
+      setIsSwapMemoryDisabled(false);
+      }
+   if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCodeCache))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_CODECACHE, "At Checkpoint Restore:: Swap Memory is %s", isSwapMemoryDisabled()? "disabled":"enabled");
 
    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestore))
       TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Ready for restore");
@@ -8762,7 +8792,9 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                options->setOption(TR_DisableOnDemandLiteralPoolRegister);
 
                options->setOption(TR_DisableIPA);
-               options->setOption(TR_DisableEDO);
+#if defined(TR_HOST_ARM64)
+               options->setOption(TR_DisableEDO); // Temporary AOT limitation on aarch64
+#endif /* defined (TR_HOST_ARM64) */
                options->setDisabled(OMR::invariantArgumentPreexistence, true);
                options->setOption(TR_DisableHierarchyInlining);
                options->setOption(TR_DisableKnownObjectTable);
@@ -9459,6 +9491,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
 
    TR_MethodMetaData * metaData = NULL;
 
+   bool isEDOCompilation = false;
    if (compiler)
       {
       if (compiler->getRecompilationInfo())
@@ -9470,6 +9503,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
             bodyInfo->setStartPCAfterPreviousCompile(that->_methodBeingCompiled->_oldStartPC);
             if (reducedWarm && options->getOptLevel() == warm)
                bodyInfo->setReducedWarm();
+            isEDOCompilation = bodyInfo->getMethodInfo()->getReasonForRecompilation() == TR_PersistentMethodInfo::RecompDueToEdo;
             }
          }
 
@@ -9494,13 +9528,8 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
          TR_J9VMBase *fej9 = (TR_J9VMBase *)(compiler->fej9());
          if (!fej9->isAOT_DEPRECATED_DO_NOT_USE())
             {
-            bool isEDOCompilation = false;
-            TR_CatchBlockProfileInfo * profileInfo = TR_CatchBlockProfileInfo::get(compiler);
-            if (profileInfo && profileInfo->getCatchCounter() >= TR_CatchBlockProfileInfo::EDOThreshold)
-               {
-               isEDOCompilation = true;
+            if (isEDOCompilation)
                sc->addHint(method, TR_HintEDO);
-               }
 
             // There is the possibility that a hot/scorching compilation happened outside
             // startup and with hints we move this expensive compilation during startup
@@ -10994,6 +11023,7 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
             }
 
          char recompReason = '-';
+         uint32_t catchBlockCounter = 0;
          // For recompiled methods try to find the reason for recompilation
          if (_methodBeingCompiled->_oldStartPC)
             {
@@ -11032,6 +11062,7 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
                      _compInfo._statNumGCRInducedCompilations++;
                      break;
                   case TR_PersistentMethodInfo::RecompDueToEdo:
+                     catchBlockCounter = bodyInfo->getMethodInfo()->getCatchBlockCounter();
                      recompReason = 'E'; break;
                   } // end switch
                bodyInfo->getMethodInfo()->setReasonForRecompilation(0); // reset the flags
@@ -11064,6 +11095,9 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
             if (recompReason == 'T')
                TR_VerboseLog::write(" %.2f%%", optimizationPlan->getPerceivedCPUUtil() / 10.0);
 
+            if (recompReason == 'E')
+               TR_VerboseLog::write(" catchBlockCounter=%u", catchBlockCounter);
+
             TR_VerboseLog::write(" %c", recompReason);
             TR_VerboseLog::write(" Q_SZ=%d Q_SZI=%d QW=%d", _compInfo.getMethodQueueSize(),
                                  _compInfo.getNumQueuedFirstTimeCompilations(), _compInfo.getQueueWeight());
@@ -11093,6 +11127,10 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
 
             if (_methodBeingCompiled->_reqFromJProfilingQueue)
                TR_VerboseLog::write(" JPQ");
+
+            if (compiler->getRecompilationInfo() &&
+                compiler->getRecompilationInfo()->getJittedBodyInfo()->getHasEdoSnippet())
+               TR_VerboseLog::write(" EDO");
 
 #if defined(J9VM_OPT_JITSERVER)
             if (_methodBeingCompiled->isRemoteCompReq())
@@ -11940,14 +11978,6 @@ TR::CompilationInfo::replenishInvocationCount(J9Method *method, TR::Compilation 
    if ((methodVMExtra == 1) || (methodVMExtra == J9_JIT_QUEUED_FOR_COMPILATION))
       {
       int32_t count;
-#if defined(J9VM_OPT_JITSERVER)
-      // Even if the option to disable AOT relocation delay was specified, we need to delay relocation of deserialized
-      // AOT methods using SVM received from the JITServer AOT cache until the next interpreted invocation. Such methods
-      // cannot be immediately relocated in the current implementation; see CompilationInfo::canRelocateMethod().
-      if (comp->isDeserializedAOTMethodUsingSVM() && comp->getOption(TR_DisableDelayRelocationForAOTCompilations))
-         count = 0;
-      else
-#endif /* defined(J9VM_OPT_JITSERVER) */
       // We want to use high counts unless the user specified counts on the command line
       // or used useLowerMethodCounts (or -Xquickstart)
       if (TR::Options::getCountsAreProvidedByUser() || (TR::Options::startupTimeMatters() == TR_yes))
@@ -13156,16 +13186,7 @@ TR::CompilationInfo::canRelocateMethod(TR::Compilation *comp)
       return false;
 
 #if defined(J9VM_OPT_JITSERVER)
-   // Delay relocation if this is a deserialized AOT method using SVM received from the JITServer AOT cache.
-   // Such methods cannot be immediately relocated in the current implementation. An immediate AOT+SVM load
-   // uses the ID-symbol mapping created during compilation. This mapping is missing when the client receives
-   // a serialized AOT method from the server, and trying to load the deserialized method immediately
-   // triggers fatal assertions in SVM validation in certain cases. As a workaround, we delay the AOT load
-   // until the next interpreted invocation of the method; see CompilationInfo::replenishInvocationCounter().
-   //
-   //TODO: Avoid the overhead of rescheduling this compilation request by handling the deserialized AOT load as if
-   //      the method came from the local SCC, rather than as if it was freshly AOT-compiled at the JITServer.
-   if (comp->isDeserializedAOTMethodUsingSVM())
+   if (comp->isDeserializedAOTMethod() && comp->getPersistentInfo()->getJITServerAOTCacheDelayMethodRelocation())
       return false;
 #endif /* defined(J9VM_OPT_JITSERVER) */
 

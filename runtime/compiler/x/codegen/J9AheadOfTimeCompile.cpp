@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include "codegen/AheadOfTimeCompile.hpp"
@@ -51,12 +51,15 @@ void J9::X86::AheadOfTimeCompile::processRelocations()
        && TR::CodeCacheManager::instance()->codeCacheConfig().needsMethodTrampolines()
        && _cg->getPicSlotCount())
       {
-      _cg->addExternalRelocation(new (_cg->trHeapMemory()) TR::ExternalRelocation(NULL,
-                                                                                 (uint8_t *)(uintptr_t)_cg->getPicSlotCount(),
-                                                                                 TR_PicTrampolines, _cg),
-                            __FILE__,
-                            __LINE__,
-                            NULL);
+      _cg->addExternalRelocation(
+         TR::ExternalRelocation::create(
+            NULL,
+            (uint8_t *)(uintptr_t)_cg->getPicSlotCount(),
+            TR_PicTrampolines,
+            _cg),
+         __FILE__,
+         __LINE__,
+         NULL);
       }
 
    J9::AheadOfTimeCompile::processRelocations();

@@ -18,7 +18,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 package java.lang;
 
@@ -4078,6 +4078,11 @@ private native String getSimpleNameImpl();
  * @see #isAnonymousClass()
  */
 public String getSimpleName() {
+/*[IF JAVA_SPEC_VERSION >= 21]*/
+	if (isUnnamedClass()) {
+		return "";
+	}
+/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 	MetadataCache cache = getMetadataCache();
 	if (cache.cachedSimpleName != null) {
 		String cachedSimpleName = cache.cachedSimpleName.get();
@@ -4166,6 +4171,11 @@ public String getSimpleName() {
  * @see #isLocalClass()
  */
 public String getCanonicalName() {
+/*[IF JAVA_SPEC_VERSION >= 21]*/
+	if (isUnnamedClass()) {
+		return null;
+	}
+/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 	MetadataCache cache = getMetadataCache();
 	if (cache.cachedCanonicalName != null) {
 		String cachedCanonicalName = cache.cachedCanonicalName.get();
@@ -5763,4 +5773,51 @@ SecurityException {
 		return AccessFlag.maskToAccessFlags(rawModifiers, location);
 	}
 /*[ENDIF] JAVA_SPEC_VERSION >= 20 */
+/*[IF JAVA_SPEC_VERSION >= 21]*/
+	/**
+	 * Answers true if the class is an unnamed class.
+	 * @return	true if the class is an unnamed class, and false otherwise.
+	 *
+	 * @since 21
+	 */
+	public boolean isUnnamedClass() {
+		boolean rc = false;
+		if (!isArray()) {
+			int rawModifiers = getModifiersImpl();
+			if ((Modifier.FINAL | SYNTHETIC) == (rawModifiers & (Modifier.FINAL | SYNTHETIC))) {
+				if ((null == getEnclosingObjectClass()) && (null == getDeclaringClass())) {
+					rc = true;
+				}
+			}
+		}
+		return rc;
+	}
+/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
+/*[IF JAVA_SPEC_VERSION >= 22]*/
+	/**
+	 * Returns the Class object with the given primitive type name.
+	 * If the name is not associated with a primitive type, null is returned.
+	 *
+	 * @param typeName the primitive type name
+	 *
+	 * @return the Class object associated with the type name, and null otherwise.
+	 * @throws NullPointerException if the typeName is null
+	 *
+	 * @since 22
+	 */
+	public static Class<?> forPrimitiveName(String typeName) {
+		return switch(typeName) {
+		case "boolean" -> boolean.class; //$NON-NLS-1$
+		case "byte" -> byte.class; //$NON-NLS-1$
+		case "char" -> char.class; //$NON-NLS-1$
+		case "double" -> double.class; //$NON-NLS-1$
+		case "float" -> float.class; //$NON-NLS-1$
+		case "int" -> int.class; //$NON-NLS-1$
+		case "long" -> long.class; //$NON-NLS-1$
+		case "short" -> short.class; //$NON-NLS-1$
+		case "void" -> void.class; //$NON-NLS-1$
+		default -> null;
+		};
+	}
+/*[ENDIF] JAVA_SPEC_VERSION >= 22 */
 }

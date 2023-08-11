@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 #include "optimizer/InterpreterEmulator.hpp"
 #include "optimizer/J9EstimateCodeSize.hpp"
@@ -1256,6 +1256,12 @@ InterpreterEmulator::visitInvokedynamic()
          || comp()->compileRelocatableCode()
       ) return; // do nothing if unresolved, is AOT compilation
    uintptr_t * invokeCacheArray = (uintptr_t *) owningMethod->callSiteTableEntryAddress(callSiteIndex);
+   // CallSite table entry is expected to be an array object upon successful resolution, but this is not
+   // the case when an exception occurs during the invokedynamic resolution, in which case an exception
+   // object is placed in the slot instead.
+   if (!comp()->fej9()->isInvokeCacheEntryAnArray(invokeCacheArray))
+      return;
+
    updateKnotAndCreateCallSiteUsingInvokeCacheArray(owningMethod, invokeCacheArray, -1);
 #else
    bool isInterface = false;

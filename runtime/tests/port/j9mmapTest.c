@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 /*
@@ -155,15 +155,16 @@ exit:
  * processes read-only mapping
  * 
  * @param[in] portLibrary The port library under test
+ * @param[in] extraMmapFlags Extra J9PORT_MMAP_FLAG_XXX flags passing to j9mmap_map_file()
  * 
  * @return TEST_PASS on success, TEST_FAIL on error
  */
 int
-j9mmap_test1(struct J9PortLibrary *portLibrary) 
+j9mmap_test1(struct J9PortLibrary *portLibrary, U_32 extraMmapFlags)
 {
 	PORT_ACCESS_FROM_PORT(portLibrary);
-	const char* testName = "j9mmap_test1";
 
+	const char *testName = (0 == extraMmapFlags) ? "j9mmap_test1" : "j9mmap_test1_extraFlags";
 	const char *filename = "mmapTest1.tst";
 	IDATA fd;
 	IDATA rc;
@@ -230,7 +231,7 @@ j9mmap_test1(struct J9PortLibrary *portLibrary)
 		goto exit;
 	}
 
-	mmapHandle = (J9MmapHandle *)j9mmap_map_file(fd, 0, (UDATA)fileLength, NULL, J9PORT_MMAP_FLAG_READ, OMRMEM_CATEGORY_PORT_LIBRARY);
+	mmapHandle = (J9MmapHandle *)j9mmap_map_file(fd, 0, (UDATA)fileLength, NULL, J9PORT_MMAP_FLAG_READ | extraMmapFlags, OMRMEM_CATEGORY_PORT_LIBRARY);
 	if ((NULL == mmapHandle) || (NULL == mmapHandle->pointer)) {
 		lastErrorMessage = (char *)j9error_last_error_message();
 		lastErrorNumber = j9error_last_error_number();
@@ -264,15 +265,15 @@ exit:
  * processes write mapping
  * 
  * @param[in] portLibrary The port library under test
+ * @param[in] extraMmapFlags Extra J9PORT_MMAP_FLAG_XXX flags passing to j9mmap_map_file()
  * 
  * @return TEST_PASS on success, TEST_FAIL on error
  */
 int
-j9mmap_test2(struct J9PortLibrary *portLibrary) 
+j9mmap_test2(struct J9PortLibrary *portLibrary, U_32 extraMmapFlags)
 {
 	PORT_ACCESS_FROM_PORT(portLibrary);
-	const char* testName = "j9mmap_test2";
-
+	const char *testName = (0 == extraMmapFlags) ? "j9mmap_test2" : "j9mmap_test2_extraFlags";
 	const char *filename = "mmapTest2.tst";
 	IDATA fd;
 	IDATA rc;
@@ -346,7 +347,7 @@ j9mmap_test2(struct J9PortLibrary *portLibrary)
 		goto exit;
 	}
 
-	mmapHandle = (J9MmapHandle *)j9mmap_map_file(fd, 0, (UDATA)fileLength, NULL, J9PORT_MMAP_FLAG_WRITE, OMRMEM_CATEGORY_PORT_LIBRARY);
+	mmapHandle = (J9MmapHandle *)j9mmap_map_file(fd, 0, (UDATA)fileLength, NULL, J9PORT_MMAP_FLAG_WRITE | extraMmapFlags, OMRMEM_CATEGORY_PORT_LIBRARY);
 	if ((NULL == mmapHandle) || (NULL == mmapHandle->pointer)) {
 		lastErrorMessage = (char *)j9error_last_error_message();
 		lastErrorNumber = j9error_last_error_number();
@@ -2297,8 +2298,12 @@ j9mmap_runTests(struct J9PortLibrary *portLibrary, char *argv0, char *j9mmap_chi
 	 */
 	rc = j9mmap_test0(portLibrary);
 	if (TEST_PASS == rc) {
-		rc |= j9mmap_test1(portLibrary);
-		rc |= j9mmap_test2(portLibrary);
+		rc |= j9mmap_test1(portLibrary, 0);
+		rc |= j9mmap_test2(portLibrary, 0);
+#if defined(J9ZOS39064)
+		rc |= j9mmap_test1(portLibrary, J9PORT_MMAP_FLAG_ZOS_64BIT);
+		rc |= j9mmap_test2(portLibrary, J9PORT_MMAP_FLAG_ZOS_64BIT);
+#endif /* defined(J9ZOS39064) */
 		rc |= j9mmap_test3(portLibrary);
 		rc |= j9mmap_test4(portLibrary);
 		rc |= j9mmap_test5(portLibrary, argv0);

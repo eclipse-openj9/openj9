@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 /**
@@ -277,6 +277,9 @@ J9SharedClassesHelpText J9SHAREDCLASSESHELPTEXT[] = {
 	{OPTION_DISABLE_CORRUPT_CACHE_DUMPS, 0, 0, J9NLS_SHRC_SHRINIT_HELPTEXT_DISABLE_CORRUPT_CACHE_DUMPS},
 	{OPTION_CHECK_STRINGTABLE_RESET, 0, 0, J9NLS_SHRC_SHRINIT_HELPTEXT_CHECK_STRINGTABLE_RESET},
 	{OPTION_ADDTESTJITHINT, 0, 0, J9NLS_SHRC_SHRINIT_HELPTEXT_ADD_JIT_HINTS},
+#if defined(J9ZOS39064)
+	{OPTION_MAP31, 0, 0, J9NLS_SHRC_SHRINIT_HELPTEXT_MAP31},
+#endif /* defined(J9ZOS39064) */
 	{NULL, 0, 0, 0, 0}
 };
 
@@ -376,6 +379,9 @@ J9SharedClassesOptions J9SHAREDCLASSESOPTIONS[] = {
 	{ OPTION_CREATE_LAYER, PARSE_TYPE_EXACT, RESULT_DO_CREATE_LAYER, 0 },
 #endif /* defined(J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE) */
 	{ OPTION_NO_PERSISTENT_DISK_SPACE_CHECK, PARSE_TYPE_EXACT, RESULT_DO_ADD_RUNTIMEFLAG, J9SHR_RUNTIMEFLAG_NO_PERSISTENT_DISK_SPACE_CHECK},
+#if defined(J9ZOS39064)
+	{ OPTION_MAP31, PARSE_TYPE_EXACT, RESULT_DO_ADD_RUNTIMEFLAG, J9SHR_RUNTIMEFLAG_MAP31},
+#endif /* defined(J9ZOS39064) */
 	{ NULL, 0, 0 }
 };
 
@@ -1094,13 +1100,6 @@ parseArgs(J9JavaVM* vm, char* options, U_64* runtimeFlags, UDATA* verboseFlags, 
 
 		options += (strlen(J9SHAREDCLASSESOPTIONS[i].option)+1);
 	}
-
-
-#if defined(J9ZOS390)
-	/* Persistent shared classes caches not currently available */
-	/* on zOS due to level of memory mapped file support        */
-	*runtimeFlags &= ~(J9SHR_RUNTIMEFLAG_ENABLE_PERSISTENT_CACHE);
-#endif
 
 #if defined(AIXPPC)
 	if ((*runtimeFlags & J9SHR_RUNTIMEFLAG_ENABLE_PERSISTENT_CACHE) != 0) {
@@ -4329,9 +4328,6 @@ getDefaultRuntimeFlags(void)
 			J9SHR_RUNTIMEFLAG_ENABLE_SHAREANONYMOUSCLASSES |
 			J9SHR_RUNTIMEFLAG_ENABLE_SHAREUNSAFECLASSES |			
 			J9SHR_RUNTIMEFLAG_ENABLE_ROUND_TO_PAGE_SIZE |
-#if defined (J9SHR_MSYNC_SUPPORT)
-			J9SHR_RUNTIMEFLAG_ENABLE_MSYNC |
-#endif
 			J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT |
 #if !defined(J9ZOS390) && !defined(AIXPPC)
 			/* Calling mprotect on the RW when using persistent caches on AIX and ZOS

@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 def get_shas(OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, VENDOR_TEST_REPOS_MAP=null, VENDOR_TEST_BRANCHES_MAP=null, VENDOR_TEST_SHAS_MAP=null) {
@@ -440,7 +440,7 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
                 if (!SPEC.contains("valhalla")) {
                     DYNAMIC_COMPILE = true
                 }
-            } else if (testJobName.contains("sanity.system") || testJobName.contains("extended.system")) {
+            } else if (testJobName.contains("sanity.system") || testJobName.contains("extended.system") || testJobName.contains("sanity.openjdk")) {
                 PARALLEL = "Dynamic"
                 NUM_MACHINES = "3"
             } else if (testJobName.contains("special.system")) {
@@ -615,12 +615,6 @@ def generate_test_jobs(TESTS, SPEC, ARTIFACTORY_SERVER, ARTIFACTORY_REPO) {
         auto_detect = false
     }
 
-    // LIGHT_WEIGHT_CHECKOUT=false is needed for the releases in order for test jobs to consume ADOPTOPENJDK_REPO and ADOPTOPENJDK_BRANCH
-    def light_weight_checkout = true
-    if (BUILD_IDENTIFIER.toLowerCase() == "release") {
-        light_weight_checkout = false
-    }
-
     if (levels && groups) {
         def parameters = [
             string(name: 'LEVELS', value: levels.join(',')),
@@ -633,7 +627,7 @@ def generate_test_jobs(TESTS, SPEC, ARTIFACTORY_SERVER, ARTIFACTORY_REPO) {
             string(name: 'ARTIFACTORY_REPO', value: ARTIFACTORY_REPO),
             string(name: 'BUILDS_TO_KEEP', value: DISCARDER_NUM_BUILDS),
             booleanParam(name: 'AUTO_DETECT', value: auto_detect),
-            booleanParam(name: 'LIGHT_WEIGHT_CHECKOUT', value: light_weight_checkout)
+            booleanParam(name: 'LIGHT_WEIGHT_CHECKOUT', value: true)
         ]
         build job: 'Test_Job_Auto_Gen', parameters: parameters, propagate: false
     }

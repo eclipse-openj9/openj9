@@ -17,7 +17,7 @@
 # [1] https://www.gnu.org/software/classpath/license.html
 # [2] https://openjdk.org/legal/assembly-exception.html
 #
-# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 ################################################################################
 
 set(OMR_ENHANCED_WARNINGS OFF)
@@ -164,6 +164,8 @@ omr_add_exports(clinkerffitests
 	add2DoubleStructs_returnStruct
 	add2DoubleStructs_returnStructPointer
 	add3DoubleStructs_returnStruct
+	validateNullAddrArgument
+	validateTrivialOption
 	add2BoolsWithOrByUpcallMH
 	addBoolAndBoolFromPointerWithOrByUpcallMH
 	addBoolAndBoolFromNativePtrWithOrByUpcallMH
@@ -341,6 +343,7 @@ omr_add_exports(clinkerffitests
 	addDoubleAndIntDoubleLongFromStructByUpcallMH
 	return254BytesFromStructByUpcallMH
 	return4KBytesFromStructByUpcallMH
+	validateReturnNullAddrByUpcallMH
 	addIntsFromVaList
 	addLongsFromVaList
 	addDoublesFromVaList
@@ -403,6 +406,9 @@ omr_add_exports(clinkerffitests
 	addLongIntOfStructsFromVaListByUpcallMH
 	addFloatDoubleOfStructsFromVaListByUpcallMH
 	addDoubleFloatOfStructsFromVaListByUpcallMH
+	addNegBytesFromStructByUpcallMH
+	addNegShortsFromStructByUpcallMH
+	captureTrivialOptionByUpcallMH
 )
 
 install(

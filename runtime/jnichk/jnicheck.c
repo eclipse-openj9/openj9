@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include "j9.h"
@@ -478,9 +478,9 @@ jniCheckCallV(const char* function, JNIEnv* env, jobject receiver, UDATA methodT
 		}
 		switch (*sigArgs) {
 		case 'L':
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 		case 'Q':
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 		case '[':
 			sigArgs = jniCheckObjectArg(function, env, va_arg(args, jobject), sigArgs, argNum, trace);
 			break;
@@ -529,9 +529,9 @@ jniCheckCallA(const char* function, JNIEnv* env, jobject receiver, UDATA methodT
 		}
 		switch (*sigArgs) {
 		case 'L':
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 		case 'Q':
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 		case '[':
 			sigArgs = jniCheckObjectArg(function, env, args++->l, sigArgs, argNum, trace);
 			break;
@@ -1925,9 +1925,9 @@ jniDecodeValue(J9VMThread * vmThread, UDATA sigChar, void * valuePtr, char ** ou
 			written = j9str_printf(PORTLIB, *outputBuffer, *outputBufferLength, "(jboolean)%s", *((I_32 *) valuePtr) ? "true" : "false");
 			break;
 		case 'L':
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 		case 'Q':
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 			written = j9str_printf(PORTLIB, *outputBuffer, *outputBufferLength, "(jobject)0x%p", *((UDATA *) valuePtr));
 			break;
 		default:
@@ -1966,9 +1966,9 @@ static UDATA jniNextSigChar(U_8 ** utfData)
 			/* Fall through to consume type name, utfChar == 'L' for return value */
 
 		case 'L':
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 		case 'Q':
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 			while (*data++ != ';') ;
 	}
 
@@ -2461,9 +2461,9 @@ jniCheckObjectArg(const char* function, JNIEnv* env, jobject aJobject, char* sig
 
 	switch (*sigArgs) {
 	case 'L':
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	case 'Q':
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 		while (*sigArgs != ';') {
 			sigArgs++;
 		}

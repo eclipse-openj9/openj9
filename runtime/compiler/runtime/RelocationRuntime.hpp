@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #ifndef RELOCATION_RUNTIME_INCL
@@ -80,6 +80,7 @@ typedef enum TR_AOTFeatureFlags
    TR_FeatureFlag_IsVariableHeapBaseForBarrierRange0 = 0x00004000,
    TR_FeatureFlag_IsVariableHeapSizeForBarrierRange0 = 0x00008000,
    TR_FeatureFlag_IsVariableActiveCardTableBase      = 0x00010000,
+   TR_FeatureFlag_CHTableEnabled                     = 0x00020000,
    TR_FeatureFlag_SanityCheckEnd                     = 0x80000000
    } TR_AOTFeatureFlags;
 
@@ -137,6 +138,9 @@ struct TR_RelocationError
     * @brief The relocation error codes. Low tagging allows quick inference of
     *        the category of an error, and also does not require keeping all the
     *        error codes belonging to a category together.
+    *
+    * @remark When updating this enum, the associated string array
+    *         TR_RelocationRuntime::_reloErrorCodeNames[] should also be updated.
     */
    enum TR_RelocationErrorCode
       {
@@ -189,23 +193,24 @@ struct TR_RelocationError
       isClassVisibleValidationFailure                  = (44 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::VALIDATION,
       svmValidationFailure                             = (45 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::VALIDATION,
       wkcValidationFailure                             = (46 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::VALIDATION,
+      methodTracingValidationFailure                   = (47 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::VALIDATION,
 
-      classAddressRelocationFailure                    = (47 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::RELOCATION,
-      inlinedMethodRelocationFailure                   = (48 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::RELOCATION,
-      symbolFromManagerRelocationFailure               = (49 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::RELOCATION,
-      thunkRelocationFailure                           = (50 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::RELOCATION,
-      trampolineRelocationFailure                      = (51 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::RELOCATION,
-      picTrampolineRelocationFailure                   = (52 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::RELOCATION,
-      cacheFullRelocationFailure                       = (53 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::RELOCATION,
-      blockFrequencyRelocationFailure                  = (54 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::RELOCATION,
-      recompQueuedFlagRelocationFailure                = (55 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::RELOCATION,
-      debugCounterRelocationFailure                    = (56 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::RELOCATION,
-      directJNICallRelocationFailure                   = (57 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::RELOCATION,
-      ramMethodConstRelocationFailure                  = (58 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::RELOCATION,
+      classAddressRelocationFailure                    = (48 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::RELOCATION,
+      inlinedMethodRelocationFailure                   = (49 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::RELOCATION,
+      symbolFromManagerRelocationFailure               = (50 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::RELOCATION,
+      thunkRelocationFailure                           = (51 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::RELOCATION,
+      trampolineRelocationFailure                      = (52 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::RELOCATION,
+      picTrampolineRelocationFailure                   = (53 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::RELOCATION,
+      cacheFullRelocationFailure                       = (54 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::RELOCATION,
+      blockFrequencyRelocationFailure                  = (55 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::RELOCATION,
+      recompQueuedFlagRelocationFailure                = (56 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::RELOCATION,
+      debugCounterRelocationFailure                    = (57 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::RELOCATION,
+      directJNICallRelocationFailure                   = (58 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::RELOCATION,
+      ramMethodConstRelocationFailure                  = (59 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::RELOCATION,
+      catchBlockCounterRelocationFailure               = (60 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::RELOCATION,
+      staticDefaultValueInstanceRelocationFailure      = (61 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::RELOCATION,
 
-      staticDefaultValueInstanceRelocationFailure      = (59 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::RELOCATION,
-
-      maxRelocationError                               = (60 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::NO_RELO_ERROR
+      maxRelocationError                               = (62 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::NO_RELO_ERROR
       };
 
    static uint32_t decode(TR_RelocationErrorCode errorCode) { return static_cast<uint32_t>(errorCode >> RELO_ERRORCODE_SHIFT); }
@@ -216,6 +221,21 @@ typedef TR_RelocationError::TR_RelocationErrorCodeType TR_RelocationErrorCodeTyp
 
 class TR_RelocationRuntime {
    public:
+      // Used to track whether or not a relocation operation in prepareRelocateAOTCodeAndData is in progress
+      class IsRelocating
+         {
+         public:
+         IsRelocating(TR_RelocationRuntime *reloRuntime) : _reloRuntime(reloRuntime)
+            {
+            TR_ASSERT_FATAL(!_reloRuntime->isRelocating(), "Cannot already be relocating a method");
+            _reloRuntime->setIsRelocating();
+            }
+         ~IsRelocating() { _reloRuntime->resetIsRelocating(); }
+
+         private:
+         TR_RelocationRuntime *_reloRuntime;
+         };
+
       TR_ALLOC(TR_Memory::Relocation)
       void * operator new(size_t, J9JITConfig *);
       TR_RelocationRuntime(J9JITConfig *jitCfg);
@@ -297,9 +317,13 @@ class TR_RelocationRuntime {
          return _globalValueNames[g];
          }
 
-      bool isLoading() { return _isLoading; }
+      bool isLoading() const { return _isLoading; }
       void setIsLoading() { _isLoading = true; }
       void resetIsLoading() { _isLoading = false; }
+
+      bool isRelocating() const { return _isRelocating; }
+      void setIsRelocating() { _isRelocating = true; }
+      void resetIsRelocating() { _isRelocating = false; }
 
       void initializeHWProfilerRecords(TR::Compilation *comp);
       void addClazzRecord(uint8_t *ia, uint32_t bcIndex, TR_OpaqueMethodBlock *method);
@@ -417,6 +441,7 @@ class TR_RelocationRuntime {
       TR_ResolvedMethod *_currentResolvedMethod;
 
       bool _isLoading;
+      bool _isRelocating;
 
 #if 1 // defined(DEBUG) || defined(PROD_WITH_ASSUMES)
       // Detect unexpected scenarios when build has assumes

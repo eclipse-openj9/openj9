@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 SETUP_LABEL = params.SETUP_LABEL
 if (!SETUP_LABEL) {
@@ -123,7 +123,7 @@ timeout(time: 6, unit: 'HOURS') {
                         def nodeName = aNode.getDisplayName()
                         buildNodesNames.add(nodeName)
 
-                        def osLabels = ['sw.os.aix', 'sw.os.linux', 'sw.os.osx', 'sw.os.windows']
+                        def osLabels = ['sw.os.aix', 'sw.os.linux', 'sw.os.mac', 'sw.os.windows']
                         def foundLabel = false
                         def nodeLabels = aNode.getLabelString().tokenize(' ')
                         for (osLabel in osLabels) {

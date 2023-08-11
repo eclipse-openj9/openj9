@@ -17,7 +17,7 @@
 # [1] https://www.gnu.org/software/classpath/license.html
 # [2] https://openjdk.org/legal/assembly-exception.html
 #
-# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 ################################################################################
 
 # Wrapper around omr_add_exports which strips windows name mangling (except on 32-bit windows).
@@ -377,6 +377,11 @@ if(NOT JAVA_SPEC_VERSION LESS 17)
 		JVM_DumpClassListToFile
 		JVM_DumpDynamicArchive
 	)
+	if(J9VM_ZOS_3164_INTEROPERABILITY)
+		jvm_add_exports(jvm
+			JVM_Invoke31BitJNI_OnXLoad
+		)
+	endif()
 	if(J9VM_OPT_JAVA_OFFLOAD_SUPPORT)
 		jvm_add_exports(jvm
 			JVM_ValidateJNILibrary
@@ -427,7 +432,11 @@ if(JAVA_SPEC_VERSION LESS 21)
 	)
 else()
 	jvm_add_exports(jvm
+		JVM_IsForeignLinkerSupported
+		JVM_PrintWarningAtDynamicAgentLoad
+		JVM_VirtualThreadEnd
 		JVM_VirtualThreadMount
+		JVM_VirtualThreadStart
 		JVM_VirtualThreadUnmount
 	)
 endif()

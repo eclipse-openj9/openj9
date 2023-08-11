@@ -18,7 +18,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include "j9.h"
@@ -43,6 +43,46 @@ MM_ContinuationObjectList::MM_ContinuationObjectList()
 #endif /* defined(J9VM_GC_VLHGC) */
 {
 	_typeId = __FUNCTION__;
+}
+
+MM_ContinuationObjectList *
+MM_ContinuationObjectList::newInstanceArray(MM_EnvironmentBase *env, uintptr_t arrayElementsTotal, MM_ContinuationObjectList *listsToCopy, uintptr_t arrayElementsToCopy)
+{
+	MM_ContinuationObjectList *continuationObjectLists = NULL;
+
+	continuationObjectLists = (MM_ContinuationObjectList *)env->getForge()->allocate(sizeof(MM_ContinuationObjectList) * arrayElementsTotal,  MM_AllocationCategory::FIXED, J9_GET_CALLSITE());
+	if (NULL != continuationObjectLists) {
+		Assert_MM_true(arrayElementsTotal >= arrayElementsToCopy);
+		/* Check whether a new array instance in being created from an existing array. If so, copy over the elements first. */
+		if (arrayElementsToCopy > 0) {
+			for (uintptr_t index = 0; index < arrayElementsToCopy; index++) {
+				continuationObjectLists[index] = listsToCopy[index];
+				continuationObjectLists[index].initialize(env);
+			}
+		}
+
+		for (uintptr_t index = arrayElementsToCopy; index < arrayElementsTotal; index++) {
+			new(&continuationObjectLists[index]) MM_ContinuationObjectList();
+			continuationObjectLists[index].initialize(env);
+		}
+	}
+
+	return continuationObjectLists;
+}
+
+bool
+MM_ContinuationObjectList::initialize(MM_EnvironmentBase *env)
+{
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
+
+	setNextList(extensions->getContinuationObjectLists());
+	setPreviousList(NULL);
+	if (NULL != extensions->getContinuationObjectLists()) {
+		extensions->getContinuationObjectLists()->setPreviousList(this);
+	}
+	extensions->setContinuationObjectLists(this);
+
+	return true;
 }
 
 void

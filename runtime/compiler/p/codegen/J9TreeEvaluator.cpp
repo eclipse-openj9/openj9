@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include <limits.h>
@@ -11837,71 +11837,6 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
       case TR::x10JITHelpers_getCPU:
          break;
 
-      case TR::java_util_concurrent_atomic_Fences_reachabilityFence:
-         {
-         cg->decReferenceCount(node->getChild(0));
-         resultReg = NULL;
-         return true;
-         }
-
-      case TR::java_util_concurrent_atomic_Fences_orderReads:
-         if (performTransformation(comp, "O^O PPC Evaluator: Replacing read/read Fence with an lwsync [%p].\n", node))
-            {
-            // mark as seen and then just don't bother generating instructions
-            TR::Node *callNode = node;
-            int32_t numArgs = callNode->getNumChildren();
-            for (int32_t i = numArgs - 1; i >= 0; i--)
-               cg->decReferenceCount(callNode->getChild(i));
-            cg->decReferenceCount(callNode);
-            generateInstruction(cg, TR::InstOpCode::isync, node);
-            resultReg = NULL;
-            return true;
-            }
-         break;
-
-         // for now all preStores simply emit lwsync  See JIT design 1598
-      case TR::java_util_concurrent_atomic_Fences_preStoreFence:
-      case TR::java_util_concurrent_atomic_Fences_preStoreFence_jlObject:
-      case TR::java_util_concurrent_atomic_Fences_preStoreFence_jlObjectI:
-      case TR::java_util_concurrent_atomic_Fences_preStoreFence_jlObjectjlrField:
-      case TR::java_util_concurrent_atomic_Fences_postLoadFence:
-      case TR::java_util_concurrent_atomic_Fences_postLoadFence_jlObjectjlrField:
-      case TR::java_util_concurrent_atomic_Fences_postLoadFence_jlObject:
-      case TR::java_util_concurrent_atomic_Fences_postLoadFence_jlObjectI:
-      case TR::java_util_concurrent_atomic_Fences_orderWrites:
-         if (performTransformation(comp, "O^O PPC Evaluator: Replacing store/store Fence with an lwsync [%p].\n", node))
-            {
-            // mark as seen and then just don't bother generating instructions
-            TR::Node *callNode = node;
-            int32_t numArgs = callNode->getNumChildren();
-            for (int32_t i = numArgs - 1; i >= 0; i--)
-               cg->decReferenceCount(callNode->getChild(i));
-            cg->decReferenceCount(callNode);
-            generateInstruction(cg, TR::InstOpCode::lwsync, node);
-            resultReg = NULL;
-            return true;
-            }
-         break;
-
-         // for now just emit a sync.  See design 1598
-      case TR::java_util_concurrent_atomic_Fences_postStorePreLoadFence_jlObject:
-      case TR::java_util_concurrent_atomic_Fences_postStorePreLoadFence_jlObjectjlrField:
-      case TR::java_util_concurrent_atomic_Fences_postStorePreLoadFence:
-      case TR::java_util_concurrent_atomic_Fences_postStorePreLoadFence_jlObjectI:
-      case TR::java_util_concurrent_atomic_Fences_orderAccesses:
-         if (performTransformation(comp, "O^O PPC Evaluator: Replacing store/load Fence with a sync [%p].\n", node))
-            {
-            TR::Node *callNode = node;
-            int32_t numArgs = callNode->getNumChildren();
-            for (int32_t i = numArgs - 1; i >= 0; i--)
-               cg->decReferenceCount(callNode->getChild(i));
-            cg->decReferenceCount(callNode);
-            generateInstruction(cg, TR::InstOpCode::sync, node);
-            resultReg = NULL;
-            return true;
-            }
-         break;
-
       case TR::java_lang_Class_isAssignableFrom:
          {
          // Do not use an inline class check if the 'this' Class object is known to be an
@@ -11960,7 +11895,7 @@ void VMgenerateCatchBlockBBStartPrologue(TR::Node *node, TR::Instruction *fenceI
       TR::Register *biAddrReg = cg->allocateRegister();
       TR::Register *recompCounterReg = cg->allocateRegister();
       intptr_t addr = (intptr_t) (comp->getRecompilationInfo()->getCounterAddress());
-      TR::Instruction *cursor = loadAddressConstant(cg, comp->compileRelocatableCode(), node, addr, biAddrReg);
+      TR::Instruction *cursor = loadAddressConstant(cg, cg->needRelocationsForBodyInfoData(), node, addr, biAddrReg, NULL, false, TR_BodyInfoAddressLoad);
       TR::MemoryReference *loadbiMR = TR::MemoryReference::createWithDisplacement(cg, biAddrReg, 0, TR::Compiler->om.sizeofReferenceAddress());
       TR::MemoryReference *storebiMR = TR::MemoryReference::createWithDisplacement(cg, biAddrReg, 0, TR::Compiler->om.sizeofReferenceAddress());
       cursor = generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, node, recompCounterReg, loadbiMR);

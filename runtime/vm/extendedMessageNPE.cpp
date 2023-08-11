@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include "bcverify.h"
@@ -214,9 +214,9 @@ convertMethodSignature(J9VMThread *vmThread, J9UTF8 *methodSig)
 			bufferSize += 3;
 			break;
 		case 'L':
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 		case 'Q':
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 		{
 			i += 1;
 			UDATA objSize = 0;
@@ -2001,6 +2001,7 @@ initStackFromMethodSignature(J9VMThread *vmThread, J9ROMMethod *romMethod, UDATA
 	UDATA *stackTop = *stackTopPtr;
 	UDATA argCount = 0;
 	UDATA i = 0;
+	bool isArray = false;
 
 	/* if this is a virtual method, push the receiver */
 	if ((!(romMethod->modifiers & J9AccStatic)) && (argMax > 0)) {
@@ -2016,6 +2017,7 @@ initStackFromMethodSignature(J9VMThread *vmThread, J9ROMMethod *romMethod, UDATA
 
 		while ('[' == args[i]) {
 			i++;
+			isArray = true;
 		}
 		PUSH(argCount); /* push the argCount as the argument */
 		if ('L' == args[i]) {
@@ -2024,7 +2026,7 @@ initStackFromMethodSignature(J9VMThread *vmThread, J9ROMMethod *romMethod, UDATA
 				i++;
 			}
 		} else {
-			if (('J' == args[i]) || ('D' == args[i])) {
+			if (!isArray && (('J' == args[i]) || ('D' == args[i]))) {
 				PUSH(argCount);
 			}
 		}

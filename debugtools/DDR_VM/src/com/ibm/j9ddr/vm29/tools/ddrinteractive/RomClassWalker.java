@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 package com.ibm.j9ddr.vm29.tools.ddrinteractive;
 
@@ -748,6 +748,12 @@ public class RomClassWalker extends ClassWalker {
 				classWalkerCallback.addSlot(clazz, SlotType.J9_SRP, cursor, "optionalInjectedInterfaces");
 				cursor = cursor.add(1);
 			}
+
+			if (J9ROMClassHelper.hasPreloadAttribute(romClass)) {
+				classWalkerCallback.addSlot(clazz, SlotType.J9_SRP, cursor, "preloadAttributeSRP");
+				preloadAttributeDo(U32Pointer.cast(cursor.get()));
+				cursor = cursor.add(1);
+			}
 		}
 		classWalkerCallback.addSection(clazz, optionalInfo, cursor.getAddress() - optionalInfo.getAddress(), "optionalInfo", true);
 	}
@@ -981,6 +987,21 @@ public class RomClassWalker extends ClassWalker {
 			attribute = attribute.add(1);
 		}
 		classWalkerCallback.addSection(clazz, attributeStart, attribute.getAddress() - attributeStart.getAddress(), "permittedSubclass", true);
+	}
+
+	void preloadAttributeDo(U32Pointer attribute) throws CorruptDataException
+	{
+		if (attribute.isNull()) {
+			return;
+		}
+		U32Pointer attributeStart = attribute;
+		classWalkerCallback.addSlot(clazz, SlotType.J9_U32, attribute, "numberPreloadClasses");
+		for (int i = 0, numPreloadClasses = attribute.at(0).intValue(); i < numPreloadClasses; i++) {
+			attribute = attribute.add(1);
+			classWalkerCallback.addSlot(clazz, SlotType.J9_ROM_UTF8, attribute, "preloadClassName");
+		}
+		attribute = attribute.add(1);
+		classWalkerCallback.addSection(clazz, attributeStart, attribute.getAddress() - attributeStart.getAddress(), "preloadAttribute", true);
 	}
 
 	int allSlotsInAnnotationDo(U32Pointer annotation, String annotationSectionName) throws CorruptDataException

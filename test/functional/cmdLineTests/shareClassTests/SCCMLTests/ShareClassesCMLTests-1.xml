@@ -18,7 +18,7 @@ OpenJDK Assembly Exception [2].
 [1] https://www.gnu.org/software/classpath/license.html
 [2] https://openjdk.org/legal/assembly-exception.html
 
-SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 -->
 <!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
 
@@ -1430,6 +1430,44 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes" platforms=".*x86.*,.*ppc.*,.*390.*">Processor Features[\s]*= .*</output>
 		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes" platforms=".*aarch64.*">Processor Features[\s]*= .*</output>
 		<output type="success" caseSensitive="yes" regex="no" platforms=".*aarch64.*">Current statistics for cache</output>
+	</test>
+
+	<test id="Test 67-a: Test classes are being stored to the persistent shared cache" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,verboseIO,persistent -Xscmx4m $CP_HANOI$ $PROGRAM_HANOI$</command>
+		<output type="success" caseSensitive="yes" regex="no">Puzzle solved!</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Stored class java/.* in shared cache for class-loader id 0 with URL .* \(index</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Stored class org/openj9/test/ivj/.* in shared cache for class-loader id [2-9].*[\\/]utils.jar \(index 0\)</output>
+
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<test id="Test 67-b: Test classes are being found in the persistent shared cache" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,verboseIO,persistent $CP_HANOI$ $PROGRAM_HANOI$</command>
+		<output type="success" caseSensitive="yes" regex="no">Puzzle solved!</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Found class java/.* in shared cache for class-loader id 0</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Found class org/openj9/test/ivj/.* in shared cache for class-loader id [2-9]</output>
+
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<test id="Test 67-c: Clean up" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,persistent,destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+		<output type="failure" caseSensitive="yes" regex="no">JVM requested Java dump</output>
+		<output type="failure" caseSensitive="yes" regex="no">JVM requested Snap dump</output>
 	</test>
 
 	<test id="At end destroy cache for cleanup" timeout="600" runPath=".">

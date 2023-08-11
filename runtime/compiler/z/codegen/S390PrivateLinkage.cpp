@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include "codegen/S390PrivateLinkage.hpp"
@@ -1851,11 +1851,7 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
 
             if (useProfiledValues)
                {
-               TR::Instruction * unloadableConstInstr = generateRILInstruction(cg(), TR::InstOpCode::LARL, callNode, RegZero, reinterpret_cast<uintptr_t*>(profiledClass));
-               if (fej9->isUnloadAssumptionRequired(profiledClass, comp()->getCurrentMethod()))
-                  {
-                  comp()->getStaticPICSites()->push_front(unloadableConstInstr);
-                  }
+               genLoadProfiledClassAddressConstant(cg(), callNode, profiledClass, RegZero, NULL, dependencies, NULL);
                generateS390CompareAndBranchInstruction(cg(), TR::InstOpCode::getCmpLogicalRegOpCode(), callNode, vftReg, RegZero, TR::InstOpCode::COND_BNE, virtualLabel);
                }
 

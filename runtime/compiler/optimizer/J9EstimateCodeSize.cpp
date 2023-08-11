@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include <algorithm>
@@ -47,6 +47,10 @@ const float TR_J9EstimateCodeSize::STRING_COMPRESSION_ADJUSTMENT_FACTOR = 0.75f;
 // There was no analysis done to determine this factor. It was chosen by intuition.
 const float TR_J9EstimateCodeSize::METHOD_INVOKE_ADJUSTMENT_FACTOR = 0.20f;
 
+// Empirically determined value
+const float TR_J9EstimateCodeSize::CONST_ARG_IN_CALLEE_ADJUSTMENT_FACTOR = 0.75f;
+
+#define DEFAULT_KNOWN_OBJ_WEIGHT 10
 
 /*
 DEFINEs are ugly in general, but putting
@@ -409,6 +413,138 @@ TR_J9EstimateCodeSize::adjustEstimateForMethodInvoke(TR_ResolvedMethod* method, 
       }
 
    return false;
+   }
+
+bool
+TR_J9EstimateCodeSize::adjustEstimateForConstArgs(TR_CallTarget * target, int32_t& value, float factor)
+   {
+   static const char * disableConstArgWeightReduction = feGetEnv("TR_disableConstArgWeightReduction");
+   if (disableConstArgWeightReduction || !target->_calleeSymbol)
+      return false;
+
+   // Weight adjustments performed for load consts or boxed primitive arg types can still be beneficial but
+   // may require a different adjustment factor.
+   static const char * enableLoadConstArgWeightAdjustment = feGetEnv("TR_enableLoadConstArgWeightAdjustment");
+
+   // Weight reduction by numArgs * 4 is done in TR_MultipleCallTargetInliner::applyArgumentHeuristics, but
+   // doing this adjustment this early can have a negative impact on performance in some workloads
+   static const char * enableArgCountWeightAdjustment = feGetEnv("TR_enableArgCountWeightAdjustment");
+
+   // This for remaining consistent with TR_MultipleCallTargetInliner::applyArgumentHeuristics
+   static const char * envKnownObjWeight = feGetEnv("TR_constClassWeight");
+   int32_t knownObjWeight = envKnownObjWeight ? atoi(envKnownObjWeight) : DEFAULT_KNOWN_OBJ_WEIGHT;
+
+   // The less aggressive adjustment factor, which is just the factor increased by 15% is
+   // intended to be used in cases where we can distinguish different degree of benefit
+   // to be had, with the original factor applied for the more beneficial cases, and the
+   // less aggressive factor being applied for the less beneficial cases.
+
+   float lessAggressiveAdjustmentFactor = factor * 1.15f;
+
+   int32_t originalWeight = value;
+   TR_LinkHead<TR_ParameterMapping> argMap;
+   TR_PrexArgInfo *prexArgInfo = target->_ecsPrexArgInfo;
+   if (((TR_J9InlinerPolicy *)_inliner->getPolicy())->validateArguments(target,argMap))
+      {
+      int32_t argIndex = 0;
+      for (TR_ParameterMapping* parm = argMap.getFirst(); parm; parm = parm->getNext())
+         {
+         int32_t interimWeight = value;
+         TR::Node * parmNode = parm->_parameterNode;
+         TR::ParameterSymbol * parmSym = parm->_parmSymbol;
+         const char * parmClassName = NULL;
+         int32_t parmClassNameLen = 0;
+         char * argClassName = NULL;
+         TR_PrexArgument * prexArg = NULL;
+         if (prexArgInfo) prexArg = prexArgInfo->get(argIndex++);
+
+         if (parmSym)
+            parmClassName = parmSym->getTypeSignature(parmClassNameLen);
+
+         if (prexArg && prexArg->getClass())
+            argClassName = TR::Compiler->cls.classSignature(comp(), prexArg->getClass(), comp()->trMemory());
+
+         if (parmNode->getOpCode().hasSymbolReference()
+            && parmNode->getSymbolReference()->getSymbol()->isStatic()
+            && parmNode->getSymbolReference()->getSymbol()->castToStaticSymbol()->isConstString())
+            {
+            value *= factor;
+            heuristicTrace(tracer(),"Setting size from %d to %d because arg is constant string.", interimWeight, value);
+            }
+         else if (argClassName
+                 && parmClassName
+                 && strncmp(argClassName, parmClassName, parmClassNameLen) != 0 // arg type needs to be more specific than declared type to benefit from weight adjustment
+                 && strcmp(argClassName, "Ljava/lang/String;") == 0)
+            {
+            value *= lessAggressiveAdjustmentFactor;
+            heuristicTrace(tracer(),"Setting size from %d to %d because arg is a string.", interimWeight, value);
+            }
+         else if (parmNode->getOpCodeValue() == TR::aload
+                 && parmNode->getSymbolReference()
+                 && parmNode->getSymbolReference()->getSymbol()->isConstObjectRef())
+            {
+            value *= factor;
+            heuristicTrace(tracer(),"Setting size from %d to %d because arg is const object ref.", interimWeight, value);
+            }
+         else if (parmNode->getOpCodeValue() == TR::aloadi
+               && parmNode->getOpCode().hasSymbolReference()
+               && parmNode->getSymbolReference() == comp()->getSymRefTab()->findJavaLangClassFromClassSymbolRef()
+               && parmNode->getFirstChild()
+               && parmNode->getFirstChild()->getOpCodeValue() == TR::loadaddr
+               && parmNode->getFirstChild()->getSymbol()->isStatic()
+               && !parmNode->getFirstChild()->getSymbolReference()->isUnresolved()
+               && parmNode->getFirstChild()->getSymbol()->isClassObject())
+            {
+            value *= factor;
+            heuristicTrace(tracer(),"Setting size from %d to %d because arg is const class ref.", interimWeight, value);
+            }
+         else if (argClassName
+               && parmClassName
+               && strncmp(argClassName, parmClassName, parmClassNameLen) != 0
+               && strcmp(argClassName, "Ljava/lang/Class;") == 0)
+            {
+            value *= lessAggressiveAdjustmentFactor;
+            heuristicTrace(tracer(),"Setting size from %d to %d because arg is a class ref.", interimWeight, value);
+            }
+         else if (enableLoadConstArgWeightAdjustment
+               && parmNode->getOpCode().isLoadConst())
+            {
+            value *= factor;
+            heuristicTrace(tracer(),"Setting size from %d to %d because arg is load const.", interimWeight, value);
+            }
+         else if (enableLoadConstArgWeightAdjustment
+               && argClassName
+               && parmClassName
+               && strncmp(argClassName, parmClassName, parmClassNameLen) != 0
+               && (strcmp(argClassName, "Ljava/lang/Integer;") == 0
+                  || strcmp(argClassName, "Ljava/lang/Long;") == 0
+                  || strcmp(argClassName, "Ljava/lang/Byte;") == 0
+                  || strcmp(argClassName, "Ljava/lang/Double;") == 0
+                  || strcmp(argClassName, "Ljava/lang/Float;") == 0
+                  || strcmp(argClassName, "Ljava/lang/Short;") == 0
+                  || strcmp(argClassName, "Ljava/lang/Boolean;") == 0
+                  || strcmp(argClassName, "Ljava/lang/Character;") == 0))
+            {
+            value *= lessAggressiveAdjustmentFactor;
+            heuristicTrace(tracer(),"Setting size from %d to %d because arg is boxed primitive type.", interimWeight, value);
+            }
+         if (prexArg && prexArg->hasKnownObjectIndex())
+            {
+            value = knownObjWeight;
+            heuristicTrace(tracer(),"Setting size from %d to %d because arg is known object.", interimWeight, value);
+            break;
+            }
+         }
+      if (enableArgCountWeightAdjustment)
+         {
+         value -= (argMap.getSize() * 4);
+         heuristicTrace(tracer(),"Reduced size estimate to %d (subtract num args * 4)", value);
+         }
+      }
+      if (value < originalWeight)
+         return true;
+      else
+         return false;
    }
 
 bool
@@ -821,6 +957,12 @@ TR_J9EstimateCodeSize::processBytecodeAndGenerateCFG(TR_CallTarget *calltarget, 
       heuristicTrace(tracer(), "*** Depth %d: Adjusting size for %s because of java/lang/reflect/Method.invoke from %d to %d", _recursionDepth, callerName, sizeBeforeAdjustment, size);
       }
 
+   sizeBeforeAdjustment = size;
+   if (adjustEstimateForConstArgs(calltarget, size, CONST_ARG_IN_CALLEE_ADJUSTMENT_FACTOR))
+      {
+      heuristicTrace(tracer(), "*** Depth %d: Adjusting size for %s because of constants in args from %d to %d", _recursionDepth, callerName, sizeBeforeAdjustment, size);
+      }
+
    calltarget->_fullSize = size;
 
    if (calltarget->_calleeSymbol)
@@ -853,8 +995,7 @@ TR_J9EstimateCodeSize::processBytecodeAndGenerateCFG(TR_CallTarget *calltarget, 
       flags[end + 1].set(InterpreterEmulator::BytecodePropertyFlag::bbStart);
       flags[handler].set(InterpreterEmulator::BytecodePropertyFlag::bbStart);
 
-      tryCatchInfo[i].initialize((uint16_t) start, (uint16_t) end,
-            (uint16_t) handler, (uint32_t) type);
+      tryCatchInfo[i].initialize(start, end, handler, (uint32_t) type);
       }
 
       calltarget->_cfg = new (cfgRegion) TR::CFG(comp(), calltarget->_calleeSymbol, cfgRegion);
@@ -1098,12 +1239,6 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
    if (calltarget->_calleeMethod->numberOfExceptionHandlers() > 0)
       _hasExceptionHandlers = true;
 
-   if (_aggressivelyInlineThrows)
-      {
-      TR_CatchBlockProfileInfo * catchInfo = TR_CatchBlockProfileInfo::get(comp(), calltarget->_calleeMethod);
-      if (catchInfo)
-         _throwCount += catchInfo->getThrowCounter();
-      }
 
    //TR::Compilation * comp = _inliner->comp();
 
@@ -1605,7 +1740,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
                      //_optimisticSize = origOptimisticSize;
                      //_realSize = origRealSize;
                      calltargetSetTooBig = true;
-                        
+
                      }
                   }
 

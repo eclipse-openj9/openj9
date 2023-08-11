@@ -17,7 +17,7 @@
 # [1] https://www.gnu.org/software/classpath/license.html
 # [2] https://openjdk.org/legal/assembly-exception.html
 #
-# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 ################################################################################
 
 include(OmrAssert)
@@ -140,7 +140,8 @@ option(J9VM_OPT_MULTI_VM "Decides if multiple VMs can be created in the same add
 option(J9VM_OPT_OPENJDK_METHODHANDLE "Enables support for OpenJDK MethodHandles. J9VM_OPT_METHOD_HANDLE should be disabled.")
 
 option(J9VM_OPT_PANAMA "Enables support for Project Panama features such as native method handles")
-option(J9VM_OPT_VALHALLA_VALUE_TYPES "Enables support for Project Valhalla Value Types")
+option(J9VM_OPT_VALHALLA_VALUE_TYPES "Enables support for Project Valhalla Value Object")
+option(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES "Enables support for Project Valhalla Flattenable Value Types")
 
 option(J9VM_OPT_ROM_IMAGE_SUPPORT "Controls if the VM includes basic support for linked rom images")
 option(J9VM_OPT_SHARED_CLASSES "Support for class sharing")
@@ -151,6 +152,9 @@ option(J9VM_OPT_ZLIB_SUPPORT "Controls if the VM includes the zlib compression l
 
 option(J9VM_PORT_RUNTIME_INSTRUMENTATION "Controls whether runtime instrumentation support exists on this platform.")
 
+option(J9VM_PROF_CONTINUATION_ALLOCATION "Enables Profiling for Continuation allocations.")
+
 option(J9VM_USE_RDYNAMIC "Link using the -rdynamic option (Linux only)" OFF)
 
 option(J9VM_ZOS_3164_INTEROPERABILITY "Enables support for 64-bit zOS to interoperate with 31-bit JNI native targets.")
+option(J9VM_OPT_SHR_MSYNC_SUPPORT "Enables support for synchronizing memory with physical storage in shared classes cache.")

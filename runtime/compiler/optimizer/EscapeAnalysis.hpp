@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #ifndef ESCAPEANALYSIS_INCL
@@ -58,9 +58,9 @@ template <class T> class TR_Array;
 typedef TR::typed_allocator<TR::Node *, TR::Region &> NodeDequeAllocator;
 typedef std::deque<TR::Node *, NodeDequeAllocator> NodeDeque;
 
-typedef TR::typed_allocator<std::pair<TR::Node* const, std::pair<TR_BitVector *, NodeDeque*> >, TR::Region&> CallLoadMapAllocator;
+typedef TR::typed_allocator<std::pair<TR::Node* const, std::pair<TR_BitVector *, TR_BitVector*> >, TR::Region&> CallLoadMapAllocator;
 typedef std::less<TR::Node *> CallLoadMapComparator;
-typedef std::map<TR::Node *, std::pair<TR_BitVector *, NodeDeque *>, CallLoadMapComparator, CallLoadMapAllocator> CallLoadMap;
+typedef std::map<TR::Node *, std::pair<TR_BitVector *, TR_BitVector *>, CallLoadMapComparator, CallLoadMapAllocator> CallLoadMap;
 
 typedef TR::typed_allocator<std::pair<TR::Node *const, int32_t>, TR::Region&> RemainingUseCountMapAllocator;
 typedef std::less<TR::Node *> RemainingUseCountMapComparator;
@@ -119,7 +119,8 @@ struct FieldInfo
    TR_ScratchList<TR::SymbolReference> *_badFieldSymrefs;
    char                                  _vectorElem;
 
-   void                rememberFieldSymRef(TR::Node *node, int32_t fieldOffset, Candidate *candidate, TR_EscapeAnalysis *ea);
+   void                rememberFieldSymRef(TR::Node *node, Candidate *candidate, TR_EscapeAnalysis *ea);
+   void                rememberFieldSymRef(TR::SymbolReference *symRef, TR_EscapeAnalysis *ea);
    bool                symRefIsForFieldInAllocatedClass(TR::SymbolReference *symRef);
    bool                hasBadFieldSymRef();
    TR::SymbolReference *fieldSymRef(); // Any arbitrary good field symref
@@ -133,6 +134,7 @@ class Candidate : public TR_Link<Candidate>
       : _kind(node->getOpCodeValue()), _node(node), _treeTop(treeTop), _origKind(node->getOpCodeValue()), _stringCopyNode(NULL), _stringCopyCallTree(NULL),
         _block(block),
         _class(classInfo),
+        _origClass(classInfo),
         _size(size), _fieldSize(0), _valueNumbers(0), _fields(0), _origSize(size),
         _initializedWords(0),
         _maxInlineDepth(0), _inlineBytecodeSize(0), _seenFieldStore(false), _seenSelfStore(false), _seenStoreToLocalObject(false), _seenArrayCopy(false), _argToCall(false), _usedInNonColdBlock(false), _lockedInNonColdBlock(false),_isImmutable(false),
@@ -248,6 +250,8 @@ class Candidate : public TR_Link<Candidate>
          }
       }
 
+     FieldInfo & findOrSetFieldInfo(TR::Node *fieldRefNode, TR::SymbolReference *symRef, int32_t fieldOffset, int32_t fieldSize, TR::DataType fieldStoreType, TR_EscapeAnalysis *ea);
+
      void print();
 
      TR::ILOpCodes            _kind;
@@ -259,6 +263,7 @@ class Candidate : public TR_Link<Candidate>
      TR_Array<FieldInfo>    *_fields;
      TR_BitVector           *_initializedWords;
      void                   *_class;
+     void                   *_origClass;
      TR::Node                *_originalAllocationNode;
      TR::Compilation *        _comp;
      TR_Memory *             _trMemory;
@@ -502,6 +507,14 @@ class TR_EscapeAnalysis : public TR::Optimization
    virtual int32_t perform();
    virtual const char * optDetailString() const throw();
 
+   /**
+    * Indicates whether stack allocation of \c newvalue operations may be
+    * performed.  If the value is set to \c true, \c newvalue operations
+    * will not be considered as candidates for stack allocation; otherwise,
+    * they will be considered as candidates.
+    */
+   bool                       _disableValueTypeStackAllocation;
+
    protected:
 
    enum restrictionType { MakeNonLocal, MakeContiguous, MakeObjectReferenced };
@@ -634,6 +647,7 @@ class TR_EscapeAnalysis : public TR::Optimization
 
    void     makeContiguousLocalAllocation(Candidate *candidate);
    void     makeNonContiguousLocalAllocation(Candidate *candidate);
+   void     makeNewValueLocalAllocation(Candidate *candidate);
    void     heapifyForColdBlocks(Candidate *candidate);
 
    /**
@@ -703,6 +717,7 @@ class TR_EscapeAnalysis : public TR::Optimization
    bool findCallSiteFixed(TR::TreeTop * virtualCallSite);
 
    TR::SymbolReference        *_newObjectNoZeroInitSymRef;
+   TR::SymbolReference        *_newValueSymRef;
    TR::SymbolReference        *_newArrayNoZeroInitSymRef;
    TR::SymbolReference        *_aNewArrayNoZeroInitSymRef;
    TR_UseDefInfo             *_useDefInfo;
@@ -715,6 +730,7 @@ class TR_EscapeAnalysis : public TR::Optimization
    TR_BitVector              *_notOptimizableLocalStringObjectsValueNumbers;
    TR_BitVector              *_blocksWithFlushOnEntry;
    TR_BitVector              *_visitedNodes;
+   TR_BitVector              *_initializedHeapifiedTemps;
 
    CallLoadMap               *_callsToProtect;
 
@@ -788,6 +804,7 @@ class TR_EscapeAnalysis : public TR::Optimization
    friend class TR_FlowSensitiveEscapeAnalysis;
    friend class TR_LocalFlushElimination;
    friend struct FieldInfo;
+   friend class Candidate;
    };
 
 //class Candidate;
@@ -844,12 +861,3 @@ class TR_MonitorStructureChecker
 
 #endif
 #endif
-
-
-
-
-
-
-
-
-

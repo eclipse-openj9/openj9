@@ -18,7 +18,7 @@ OpenJDK Assembly Exception [2].
 [1] https://www.gnu.org/software/classpath/license.html
 [2] https://openjdk.org/legal/assembly-exception.html
 
-SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 -->
 <project name="Java20AndUp" default="build" basedir=".">
 	<taskdef resource='net/sf/antcontrib/antlib.xml' />
@@ -77,7 +77,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<target name="build">
 		<if>
 			<not>
-				<matches string="${JDK_VERSION}" pattern="^(8|9|10|11|12|13|14|15|16|17|18|19|21)$$" />
+				<matches string="${JDK_VERSION}" pattern="^(8|9|1[0-9]|2[1-2])$$" />
 			</not>
 			<then>
 				<antcall target="clean" inheritall="true" />

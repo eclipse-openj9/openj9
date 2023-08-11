@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 package org.openj9.test.jep442.upcall;
 
@@ -32,7 +32,6 @@ import java.lang.foreign.Linker;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.SegmentScope;
 import java.lang.foreign.SymbolLookup;
 import java.lang.foreign.ValueLayout;
 import static java.lang.foreign.ValueLayout.*;
@@ -40,7 +39,7 @@ import static java.lang.foreign.ValueLayout.*;
 /**
  * Test cases for JEP 442: Foreign Linker API (Third Preview) intended for
  * the situation when the multi-threading specific upcalls happen to the same
- * upcall method handle within the same memory scope, in which case the upcall
+ * upcall method handle within the same memory arena, in which case the upcall
  * metadata and the generated thunk are only allocated once and shared among
  * these threads.
  */
@@ -48,7 +47,7 @@ import static java.lang.foreign.ValueLayout.*;
 public class MultiUpcallThrdsMHTests2 implements Thread.UncaughtExceptionHandler {
 	private volatile Throwable initException;
 	private static Linker linker = Linker.nativeLinker();
-	private static SegmentScope scope = SegmentScope.auto();
+	private static Arena arena = Arena.ofAuto();
 
 	static {
 		System.loadLibrary("clinkerffitests");
@@ -71,7 +70,7 @@ public class MultiUpcallThrdsMHTests2 implements Thread.UncaughtExceptionHandler
 					MemorySegment functionSymbol = nativeLibLookup.find("add2IntsByUpcallMH").get();
 					MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 					MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_add2Ints,
-							FunctionDescriptor.of(JAVA_INT, JAVA_INT, JAVA_INT), scope);
+							FunctionDescriptor.of(JAVA_INT, JAVA_INT, JAVA_INT), arena);
 					int result = (int)mh.invoke(111112, 111123, upcallFuncAddr);
 					Assert.assertEquals(result, 222235);
 				} catch (Throwable t) {
@@ -90,7 +89,7 @@ public class MultiUpcallThrdsMHTests2 implements Thread.UncaughtExceptionHandler
 					MemorySegment functionSymbol = nativeLibLookup.find("add2IntsByUpcallMH").get();
 					MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 					MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_add2Ints,
-							FunctionDescriptor.of(JAVA_INT, JAVA_INT, JAVA_INT), scope);
+							FunctionDescriptor.of(JAVA_INT, JAVA_INT, JAVA_INT), arena);
 					int result = (int)mh.invoke(111113, 111124, upcallFuncAddr);
 					Assert.assertEquals(result, 222237);
 				} catch (Throwable t) {
@@ -109,7 +108,7 @@ public class MultiUpcallThrdsMHTests2 implements Thread.UncaughtExceptionHandler
 					MemorySegment functionSymbol = nativeLibLookup.find("add2IntsByUpcallMH").get();
 					MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 					MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_add2Ints,
-							FunctionDescriptor.of(JAVA_INT, JAVA_INT, JAVA_INT), scope);
+							FunctionDescriptor.of(JAVA_INT, JAVA_INT, JAVA_INT), arena);
 					int result = (int)mh.invoke(111114, 111125, upcallFuncAddr);
 					Assert.assertEquals(result, 222239);
 				} catch (Throwable t) {

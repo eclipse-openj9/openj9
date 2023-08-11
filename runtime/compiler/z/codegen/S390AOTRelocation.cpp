@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include "z/codegen/S390AOTRelocation.hpp"
@@ -56,19 +56,30 @@ void TR::S390EncodingRelocation::addRelocation(TR::CodeGenerator *cg, uint8_t *c
          {
          TR_OpaqueClassBlock *clazz = (TR_OpaqueClassBlock*)(*((uintptr_t*)cursor));
          TR_ASSERT_FATAL(clazz, "TR_ClassAddress relocation : cursor = %x, clazz can not be null", cursor);
-         cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation(cursor,
-                                                                           (uint8_t *)clazz,
-                                                                           (uint8_t *) TR::SymbolType::typeClass,
-                                                                           TR_SymbolFromManager,
-                                                                           cg),
-                                                                        file, line, node);
-
+         cg->addExternalRelocation(
+            TR::ExternalRelocation::create(
+               cursor,
+               (uint8_t *)clazz,
+               (uint8_t *) TR::SymbolType::typeClass,
+               TR_SymbolFromManager,
+               cg),
+            file,
+            line,
+            node);
          }
       else
          {
          *((uintptr_t*)cursor)=fej9->getPersistentClassPointerFromClassPointer((TR_OpaqueClassBlock*)(*((uintptr_t*)cursor)));
-         cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *) _symbolReference, (uint8_t *)_inlinedSiteIndex, TR_ClassAddress, cg),
-                           file, line, node);
+         cg->addExternalRelocation(
+            TR::ExternalRelocation::create(
+               cursor,
+               (uint8_t *) _symbolReference,
+               (uint8_t *)_inlinedSiteIndex,
+               TR_ClassAddress,
+               cg),
+            file,
+            line,
+            node);
          }
       }
    else if (_reloType==TR_RamMethod)
@@ -78,65 +89,137 @@ void TR::S390EncodingRelocation::addRelocation(TR::CodeGenerator *cg, uint8_t *c
          TR::ResolvedMethodSymbol *methodSym = (TR::ResolvedMethodSymbol*) _symbolReference->getSymbol();
          uint8_t * j9Method = (uint8_t *) (reinterpret_cast<intptr_t>(methodSym->getResolvedMethod()->resolvedMethodAddress()));
          TR_ASSERT_FATAL(j9Method, "TR_RamMethod relocation : cursor = %x, j9Method can not be null", cursor);
-         cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation(cursor,
-                                                                           j9Method,
-                                                                           (uint8_t *) TR::SymbolType::typeMethod,
-                                                                           TR_SymbolFromManager,
-                                                                           cg),
-                                                                        file, line, node);
+         cg->addExternalRelocation(
+            TR::ExternalRelocation::create(
+               cursor,
+               j9Method,
+               (uint8_t *) TR::SymbolType::typeMethod,
+               TR_SymbolFromManager,
+               cg),
+            file,
+            line,
+            node);
          }
       else
          {
-         cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation(cursor, NULL, TR_RamMethod, cg), file, line, node);
+         cg->addExternalRelocation(
+            TR::ExternalRelocation::create(
+               cursor,
+               NULL,
+               TR_RamMethod,
+               cg),
+            file,
+            line,
+            node);
          }
       }
    else if (_reloType==TR_HelperAddress)
       {
-      cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *) _symbolReference, TR_HelperAddress, cg),
-                           file, line, node);
+      cg->addExternalRelocation(
+         TR::ExternalRelocation::create(
+            cursor,
+            (uint8_t *) _symbolReference,
+            TR_HelperAddress,
+            cg),
+         file,
+         line,
+         node);
       }
    else if (_reloType==TR_AbsoluteHelperAddress)
       {
-      cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *) _symbolReference, TR_AbsoluteHelperAddress, cg),
-                              file, line, node);
+      cg->addExternalRelocation(
+         TR::ExternalRelocation::create(
+            cursor,
+            (uint8_t *) _symbolReference,
+            TR_AbsoluteHelperAddress,
+            cg),
+         file,
+         line,
+         node);
       }
    else if (_reloType==TR_ConstantPool)
       {
       if (comp->target().is64Bit())
          {
-         cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *) *((uint64_t*) cursor), (uint8_t *)_inlinedSiteIndex, TR_ConstantPool, cg),
-                              file, line, node);
+         cg->addExternalRelocation(
+            TR::ExternalRelocation::create(
+               cursor,
+               (uint8_t *) *((uint64_t*) cursor),
+               (uint8_t *)_inlinedSiteIndex,
+               TR_ConstantPool,
+               cg),
+            file,
+            line,
+            node);
          }
       else
          {
-         cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *)(intptr_t) *((uint32_t*) cursor), (uint8_t *)_inlinedSiteIndex, TR_ConstantPool, cg),
-                              file, line, node);
+         cg->addExternalRelocation(
+            TR::ExternalRelocation::create(
+               cursor,
+               (uint8_t *)(intptr_t) *((uint32_t*) cursor),
+               (uint8_t *)_inlinedSiteIndex,
+               TR_ConstantPool,
+               cg),
+            file,
+            line,
+            node);
          }
       }
    else if (_reloType==TR_MethodObject)
       {
-      cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *) _symbolReference, (uint8_t *)_inlinedSiteIndex, TR_MethodObject, cg),
-                              file, line, node);
+      cg->addExternalRelocation(
+         TR::ExternalRelocation::create(
+            cursor,
+            (uint8_t *) _symbolReference,
+            (uint8_t *)_inlinedSiteIndex,
+            TR_MethodObject,
+            cg),
+         file,
+         line,
+         node);
       }
    else if (_reloType==TR_DataAddress)
       {
       if (cg->needRelocationsForStatics())
          {
-         cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *) _symbolReference, (uint8_t *)_inlinedSiteIndex, TR_DataAddress, cg),
-                              file, line, node);
+         cg->addExternalRelocation(
+            TR::ExternalRelocation::create(
+               cursor,
+               (uint8_t *) _symbolReference,
+               (uint8_t *)_inlinedSiteIndex,
+               TR_DataAddress,
+               cg),
+            file,
+            line,
+            node);
          }
       }
    else if (_reloType==TR_BodyInfoAddress)
       {
       if (comp->target().is64Bit())
          {
-         cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *) *((uint64_t*) cursor), TR_BodyInfoAddress, cg),
-                              file, line, node);
+         cg->addExternalRelocation(
+            TR::ExternalRelocation::create(
+               cursor,
+               (uint8_t *) *((uint64_t*) cursor),
+               TR_BodyInfoAddress,
+               cg),
+            file,
+            line,
+            node);
          }
       else
          {
-         cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *)(intptr_t) *((uint32_t*) cursor), TR_BodyInfoAddress, cg),
-                           file, line, node);
+         cg->addExternalRelocation(
+            TR::ExternalRelocation::create(
+               cursor,
+               (uint8_t *)(intptr_t) *((uint32_t*) cursor),
+               TR_BodyInfoAddress,
+               cg),
+            file,
+            line,
+            node);
          }
       }
    else if (_reloType==TR_DebugCounter)
@@ -150,6 +233,19 @@ void TR::S390EncodingRelocation::addRelocation(TR::CodeGenerator *cg, uint8_t *c
                                            cursor,
                                            node,
                                            counter);
+      }
+   else if (_reloType==TR_MethodEnterExitHookAddress)
+      {
+      cg->addExternalRelocation(
+         TR::ExternalRelocation::create(
+            cursor,
+            (uint8_t *)_symbolReference,
+            NULL,
+            TR_MethodEnterExitHookAddress,
+            cg),
+         file,
+         line,
+         node);
       }
    else
       {

@@ -17,7 +17,7 @@ OpenJDK Assembly Exception [2].
 [1] https://www.gnu.org/software/classpath/license.html
 [2] https://openjdk.org/legal/assembly-exception.html
 
-SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 -->
 
 
@@ -131,7 +131,7 @@ possible between them.
     build.  This ensures that the two changes put together would pass
     an OMR Acceptance build if one were launched.
     ```
-    Jenkins test sanity.functional,sanity.openjdk all jdk8,jdk11,jdk17,jdk20 depends eclipse/omr#{OMR PR number}
+    Jenkins test sanity.functional,sanity.openjdk all jdk8,jdk11,jdk17,jdk21 depends eclipse/omr#{OMR PR number}
     ```
     Before proceeding with the coordinated merge, you must ensure that
     the build is successful and that it was performed relatively

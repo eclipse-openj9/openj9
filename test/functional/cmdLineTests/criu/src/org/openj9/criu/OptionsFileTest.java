@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 package org.openj9.criu;
 
@@ -58,6 +58,12 @@ public class OptionsFileTest {
 			break;
 		case "DumpOptionsTest":
 			dumpOptionsTest();
+			break;
+		case "criuDumpOptionsTest":
+			criuDumpOptionsTest();
+			break;
+		case "criuRestoreDumpOptionsTest":
+			criuRestoreDumpOptionsTest();
 			break;
 		case "dumpOptionsTestRequireDynamic":
 			dumpOptionsTestRequireDynamic();
@@ -247,6 +253,30 @@ public class OptionsFileTest {
 		} catch (OutOfMemoryError ome) {
 			ome.printStackTrace();
 		}
+		System.out.println("Post-checkpoint");
+	}
+
+	static void criuDumpOptionsTest() {
+		Path imagePath = Paths.get("cpData");
+		CRIUTestUtils.createCheckpointDirectory(imagePath);
+		CRIUSupport criuSupport = new CRIUSupport(imagePath);
+
+		System.out.println("Pre-checkpoint");
+		CRIUTestUtils.checkPointJVM(criuSupport, imagePath, true);
+		System.out.println("Post-checkpoint");
+	}
+
+	static void criuRestoreDumpOptionsTest() {
+		String optionsContents = "-Xdump:java:events=criuRestore";
+		Path optionsFilePath = CRIUTestUtils.createOptionsFile("options", optionsContents);
+
+		Path imagePath = Paths.get("cpData");
+		CRIUTestUtils.createCheckpointDirectory(imagePath);
+		CRIUSupport criuSupport = new CRIUSupport(imagePath);
+		criuSupport.registerRestoreOptionsFile(optionsFilePath);
+
+		System.out.println("Pre-checkpoint");
+		CRIUTestUtils.checkPointJVM(criuSupport, imagePath, true);
 		System.out.println("Post-checkpoint");
 	}
 

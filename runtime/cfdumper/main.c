@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include <stdlib.h>
@@ -917,6 +917,19 @@ static void dumpAttribute(J9CfrClassFile* classfile, J9CfrAttribute* attrib, U_3
 			}
 			break;
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		case CFR_ATTRIBUTE_Preload:
+			for(i = 0; i < ((J9CfrAttributePreload*)attrib)->numberOfClasses; i++) {
+				U_16 classIndex = ((J9CfrAttributePreload*)attrib)->classes[i];
+				U_16 nameIndex = classfile->constantPool[classIndex].slot1;
+
+				for(j = 0; j < tabLevel + 1; j++) {
+					j9tty_printf(PORTLIB, "  ");
+				}
+				j9tty_printf(PORTLIB, "Preload class index, name: %i, %i -> %s\n", classIndex, nameIndex, classfile->constantPool[nameIndex].bytes);
+			}
+			break;
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		case CFR_ATTRIBUTE_StrippedLineNumberTable:
 		case CFR_ATTRIBUTE_StrippedLocalVariableTable:
 		case CFR_ATTRIBUTE_StrippedLocalVariableTypeTable:
@@ -1107,9 +1120,9 @@ static void printMethod(J9CfrClassFile* classfile, J9CfrMethod* method)
 			break;
 
 		case 'L':
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 		case 'Q':
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 			i++;
 			while(string[i] != ';')
 			{
@@ -1166,9 +1179,9 @@ static void printMethod(J9CfrClassFile* classfile, J9CfrMethod* method)
 				break;
 
 			case 'L':
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 			case 'Q':
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 				i++;
 				while(string[i] != ';')
 				{
@@ -1284,9 +1297,9 @@ static void printField(J9CfrClassFile* classfile, J9CfrField* field)
 			j9tty_printf( PORTLIB, "long");
 			break;
 		case 'L':
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 		case 'Q':
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 			i++;
 			while(string[i] != ';')
 			{
@@ -1381,9 +1394,9 @@ static void printDisassembledMethod(J9CfrClassFile* classfile, J9CfrMethod* meth
 			break;
 
 		case 'L':
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 		case 'Q':
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 			i++;
 			while(string[i] != ';')
 			{
@@ -1440,9 +1453,9 @@ static void printDisassembledMethod(J9CfrClassFile* classfile, J9CfrMethod* meth
 				break;
 
 			case 'L':
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 			case 'Q':
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 				i++;
 				while(string[i] != ';')
 				{
@@ -4442,9 +4455,9 @@ static void sun_formatField(J9CfrClassFile* classfile, J9CfrField* field, char *
 						switch(string[j++])
 						{
 							case 'L':
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 							case 'Q':
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 								while((ch2 = string[j++]) != ';')
 								{
 									if(ch2 == '/') j9tty_output_char('.');
@@ -4692,9 +4705,9 @@ static void sun_formatMethod(J9CfrClassFile* classfile, J9CfrMethod* method, cha
 						switch(string[j++])
 						{
 							case 'L':
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 							case 'Q':
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 								while((ch2 = string[j++]) != ';')
 								{
 									if(ch2 == '/') j9tty_output_char('.');
@@ -4760,9 +4773,9 @@ static void sun_formatMethod(J9CfrClassFile* classfile, J9CfrMethod* method, cha
 							switch(string[j++])
 							{
 								case 'L':
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 								case 'Q':
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 									while((ch2 = string[j++]) != ';')
 									{
 										if(ch2 == '/') j9tty_output_char('.');
@@ -5216,9 +5229,9 @@ static void j9_formatField(J9ROMClass* romClass, J9ROMFieldShape* field, char *f
 						switch(string[j++])
 						{
 							case 'L':
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 							case 'Q':
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 								while((ch2 = string[j++]) != ';')
 								{
 									if(ch2 == '/') j9tty_output_char('.');
@@ -5491,9 +5504,9 @@ static void j9_formatMethod(J9ROMClass* romClass, J9ROMMethod* method, char *for
 						switch(string[j++])
 						{
 							case 'L':
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 							case 'Q':
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 								while((ch2 = string[j++]) != ';')
 								{
 									if(ch2 == '/') j9tty_output_char('.');
@@ -5560,9 +5573,9 @@ static void j9_formatMethod(J9ROMClass* romClass, J9ROMMethod* method, char *for
 							switch(string[j++])
 							{
 								case 'L':
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 								case 'Q':
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 									while((ch2 = string[j++]) != ';')
 									{
 										if(ch2 == '/') j9tty_output_char('.');

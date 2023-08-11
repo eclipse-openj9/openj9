@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include <string.h>
@@ -237,9 +237,13 @@ deallocateVMThread(J9VMThread * vmThread, UDATA decrementZombieCount, UDATA send
 	}
 
 	/* Cleanup Continuation cache */
-	if (NULL != vmThread->cachedContinuation) {
-		vm->internalVMFunctions->recycleContinuation(vm, NULL, vmThread->cachedContinuation, TRUE);
-		vmThread->cachedContinuation = NULL;
+	if (NULL != vmThread->continuationT1Cache) {
+		for (U_32 i = 0; i < vm->continuationT1Size; i++) {
+			if (NULL != vmThread->continuationT1Cache[i]) {
+				vm->internalVMFunctions->recycleContinuation(vm, NULL, vmThread->continuationT1Cache[i], TRUE);
+			}
+		}
+		j9mem_free_memory(vmThread->continuationT1Cache);
 	}
 #endif /* JAVA_SPEC_VERSION >= 19 */
 

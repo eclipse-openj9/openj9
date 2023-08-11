@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 package org.openj9.test.jep442.downcall;
 
@@ -32,7 +32,6 @@ import java.lang.foreign.Linker;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.SymbolLookup;
-import java.lang.foreign.SegmentAllocator;
 import static java.lang.foreign.ValueLayout.*;
 
 /**
@@ -66,9 +65,8 @@ public class MultiThreadingTests1 implements Thread.UncaughtExceptionHandler {
 					MemorySegment functionSymbol = nativeLibLookup.find("addIntAndIntFromPointer").get();
 					MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 
-					try (Arena arena = Arena.openConfined()) {
-						SegmentAllocator allocator = SegmentAllocator.nativeAllocator(arena.scope());
-						MemorySegment intSegmt = allocator.allocate(JAVA_INT, 215);
+					try (Arena arena = Arena.ofConfined()) {
+						MemorySegment intSegmt = arena.allocate(JAVA_INT, 215);
 						int result = (int)mh.invoke(321, intSegmt);
 						Assert.assertEquals(result, 536);
 					}
@@ -86,9 +84,8 @@ public class MultiThreadingTests1 implements Thread.UncaughtExceptionHandler {
 					MemorySegment functionSymbol = nativeLibLookup.find("addIntAndIntFromPointer").get();
 					MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 
-					try (Arena arena = Arena.openConfined()) {
-						SegmentAllocator allocator = SegmentAllocator.nativeAllocator(arena.scope());
-						MemorySegment intSegmt = allocator.allocate(JAVA_INT, 215);
+					try (Arena arena = Arena.ofConfined()) {
+						MemorySegment intSegmt = arena.allocate(JAVA_INT, 215);
 						int result = (int)mh.invoke(322, intSegmt);
 						Assert.assertEquals(result, 537);
 					}

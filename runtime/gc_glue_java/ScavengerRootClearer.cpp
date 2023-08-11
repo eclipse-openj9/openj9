@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include "j9cfg.h"
@@ -41,7 +41,9 @@
 #include "UnfinalizedObjectList.hpp"
 #include "ContinuationObjectBuffer.hpp"
 #include "ContinuationObjectList.hpp"
-#include "VMHelpers.hpp"
+#if JAVA_SPEC_VERSION >= 19
+#include "ContinuationHelpers.hpp"
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
 #include "ScavengerRootClearer.hpp"
 
@@ -221,6 +223,7 @@ MM_ScavengerRootClearer::scavengeUnfinalizedObjects(MM_EnvironmentStandard *env)
 void
 MM_ScavengerRootClearer::scavengeContinuationObjects(MM_EnvironmentStandard *env)
 {
+#if JAVA_SPEC_VERSION >= 19
 	MM_HeapRegionDescriptorStandard *region = NULL;
 	GC_HeapRegionIteratorStandard regionIterator(_extensions->heapRegionManager);
 	GC_Environment *gcEnv = env->getGCEnvironment();
@@ -238,13 +241,15 @@ MM_ScavengerRootClearer::scavengeContinuationObjects(MM_EnvironmentStandard *env
 							gcEnv->_scavengerJavaStats._continuationCandidates += 1;
 
 							MM_ForwardedHeader forwardedHeader(object, compressed);
-							if (!forwardedHeader.isForwardedPointer()) {
-								Assert_GC_true_with_message2(env, _scavenger->isObjectInEvacuateMemory(object), "Continuation object  %p should be a dead object, forwardedHeader=%p\n", object, &forwardedHeader);
-								gcEnv->_scavengerJavaStats._continuationCleared += 1;
-								_extensions->releaseNativesForContinuationObject(env, object);
-							} else {
-								omrobjectptr_t forwardedPtr = forwardedHeader.getForwardedObject();
+							omrobjectptr_t forwardedPtr = object;
+							if (forwardedHeader.isForwardedPointer()) {
+								forwardedPtr = forwardedHeader.getForwardedObject();
 								Assert_GC_true_with_message(env, NULL != forwardedPtr, "Continuation object  %p should be forwarded\n", object);
+							}
+							if (!forwardedHeader.isForwardedPointer() || VM_ContinuationHelpers::isFinished(*VM_ContinuationHelpers::getContinuationStateAddress((J9VMThread *)env->getLanguageVMThread() , forwardedPtr))) {
+								gcEnv->_scavengerJavaStats._continuationCleared += 1;
+								_extensions->releaseNativesForContinuationObject(env, forwardedPtr);
+							} else {
 								gcEnv->_continuationObjectBuffer->add(env, forwardedPtr);
 							}
 							object = next;
@@ -257,6 +262,7 @@ MM_ScavengerRootClearer::scavengeContinuationObjects(MM_EnvironmentStandard *env
 
 	/* restore everything to a flushed state before exiting */
 	gcEnv->_continuationObjectBuffer->flush(env);
+#endif /* JAVA_SPEC_VERSION >= 19 */
 }
 
 #endif /* defined(OMR_GC_MODRON_SCAVENGER) */

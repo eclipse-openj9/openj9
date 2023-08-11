@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 //On zOS XLC linker can't handle files with same name at link time
@@ -3428,14 +3428,8 @@ static bool generateInlineTest(TR::CodeGenerator * cg, TR::Node * node, TR::Node
    for (i = 0; i < num_PICs; i++)
       {
       dumpOptDetails(comp, "inline test with guess class address of %p\n", guessClassArray[i]);
-      if (cg->needClassAndMethodPointerRelocations())
-         unloadableConstInstr[i] = generateRegLitRefInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, scratchReg,(uintptr_t) guessClassArray[i], TR_ClassPointer, NULL, NULL, NULL);
-      else
-         unloadableConstInstr[i] = generateRILInstruction(cg, TR::InstOpCode::LARL, node, scratchReg, guessClassArray[i]);
 
-      if (fej9->isUnloadAssumptionRequired((TR_OpaqueClassBlock *)(guessClassArray[i]), comp->getCurrentMethod()))
-         comp->getStaticPICSites()->push_front(unloadableConstInstr[i]);
-
+      unloadableConstInstr[i] = genLoadProfiledClassAddressConstant(cg, node, guessClassArray[i], scratchReg, NULL, NULL, NULL);
       result_bool = fej9->instanceOfOrCheckCast((J9Class*)(guessClassArray[i]), (J9Class*)castClassAddr);
       result_label = (falseLabel != trueLabel ) ? (result_bool ? trueLabel : falseLabel) : doneLabel;
 
@@ -4400,15 +4394,7 @@ J9::Z::TreeEvaluator::checkcastEvaluator(TR::Node * node, TR::CodeGenerator * cg
             cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "checkCastStats/(%s)/Profiled", comp->signature()),1,TR::DebugCounter::Undetermined);
             while (numPICs < numberOfProfiledClass)
                {
-               if (cg->needClassAndMethodPointerRelocations())
-                  temp = generateRegLitRefInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, arbitraryClassReg1, (uintptr_t) profiledClassesList[numPICs].profiledClass, TR_ClassPointer, NULL, NULL, NULL);
-               else
-                  temp = generateRILInstruction(cg, TR::InstOpCode::LARL, node, arbitraryClassReg1, profiledClassesList[numPICs].profiledClass);
-
-               // Adding profiled classes to static PIC sites
-               if (fej9->isUnloadAssumptionRequired((TR_OpaqueClassBlock *)(profiledClassesList[numPICs].profiledClass), comp->getCurrentMethod()))
-                  comp->getStaticPICSites()->push_front(temp);
-
+               genLoadProfiledClassAddressConstant(cg, node, profiledClassesList[numPICs].profiledClass, arbitraryClassReg1, NULL, NULL, NULL);
                temp = generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpRegOpCode(), node, arbitraryClassReg1, objClassReg, TR::InstOpCode::COND_BE, resultLabel, false, false);
                numPICs++;
                }
@@ -4678,9 +4664,9 @@ J9::Z::TreeEvaluator::anewArrayEvaluator(TR::Node * node, TR::CodeGenerator * cg
 
 ///////////////////////////////////////////////////////////////////////////////////////
 // multianewArrayEvaluator:  multi-dimensional new array of objects
+// NB Must only be used for arrays of at least two dimensions
 ///////////////////////////////////////////////////////////////////////////////////////
-TR::Register *
-J9::Z::TreeEvaluator::multianewArrayEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node, TR::CodeGenerator *cg)
    {
    #define iComment(str) if (compDebug) compDebug->addInstructionComment(cursor, (const_cast<char*>(str)));
    TR::Compilation *comp = cg->comp();
@@ -4990,6 +4976,45 @@ J9::Z::TreeEvaluator::multianewArrayEvaluator(TR::Node * node, TR::CodeGenerator
    return targetRegisterFinal;
    #undef iComment
    }
+
+
+///////////////////////////////////////////////////////////////////////////////////////
+// Generate code for multianewarray
+// Checks the number of dimensions. For 1 dimensional arrays call the helper, for >1 call
+// generateMultianewArrayWithInlineAllocators.
+///////////////////////////////////////////////////////////////////////////////////////
+TR::Register *
+J9::Z::TreeEvaluator::multianewArrayEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   TR::Compilation *comp = cg->comp();
+   TR_ASSERT_FATAL(comp->target().is64Bit(), "multianewArrayEvaluator is only supported on 64-bit JVMs!");
+
+   TR::Node *secondChild = node->getSecondChild();    // Number of dimensions - this is fixed in the bytecode, so compile time constant
+
+   // The number of dimensions should always be an iconst
+   TR_ASSERT_FATAL(secondChild->getOpCodeValue() == TR::iconst, "dims of multianewarray must be iconst");
+
+   // Only generate inline code if nDims > 1
+   uint32_t nDims = secondChild->get32bitIntegralValue();
+   if (nDims > 1)
+      {
+      return generateMultianewArrayWithInlineAllocators(node, cg);
+      }
+   else
+      {
+      if (comp->getOption(TR_TraceCG))
+         {
+         traceMsg(comp, "Disabling inline allocations for multianewarray of dim %d\n", nDims);
+         }
+      TR::ILOpCodes opCode = node->getOpCodeValue();
+      TR::Node::recreate(node, TR::acall);
+      TR::Register *targetRegister = TR::TreeEvaluator::performCall(node, false, cg);
+      TR::Node::recreate(node, opCode);
+      return targetRegister;
+      }
+
+   }
+
 
 TR::Register *
 J9::Z::TreeEvaluator::arraylengthEvaluator(TR::Node *node, TR::CodeGenerator *cg)
@@ -7197,19 +7222,10 @@ J9::Z::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node * node, TR::CodeGenerator 
 
    // Store for case where we have a NULL ptr detected at runtime and
    // branches around the wrtbar
-   //
-   // For the non-NULL case we chose to simply exec the ST twice as this is
-   // cheaper than branching around the a single ST inst.
-   //
+
    if (!sourceChild->isNonNull() && (doWrtBar || doCrdMrk))
       {
-      // As we could hit a gc when doing the gencon wrtbar, we have to not
-      // re-do the ST.  We must branch around the second store.
-      //
-      if (doWrtBar)
-         {
-         generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, cFlowRegionEnd);
-         }
+      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, cFlowRegionEnd);
 
       generateS390LabelInstruction(cg, TR::InstOpCode::label, node, simpleStoreLabel);
 
@@ -8812,15 +8828,7 @@ J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator(TR::Node * node, TR::CodeGene
             cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "instanceOfStats/(%s)/Profile", comp->signature()),1,TR::DebugCounter::Undetermined);
             while (numPICs < numberOfProfiledClass)
                {
-               if (cg->needClassAndMethodPointerRelocations())
-                  temp = generateRegLitRefInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, arbitraryClassReg1, (uintptr_t) profiledClassesList[numPICs].profiledClass, TR_ClassPointer, NULL, NULL, NULL);
-               else
-                  temp = generateRILInstruction(cg, TR::InstOpCode::LARL, node, arbitraryClassReg1, profiledClassesList[numPICs].profiledClass);
-
-               // Adding profiled class to the static PIC slots.
-               if (fej9->isUnloadAssumptionRequired((TR_OpaqueClassBlock *)(profiledClassesList[numPICs].profiledClass), comp->getCurrentMethod()))
-                  comp->getStaticPICSites()->push_front(temp);
-
+               genLoadProfiledClassAddressConstant(cg, node, profiledClassesList[numPICs].profiledClass, arbitraryClassReg1, NULL, NULL, NULL);
                if (profiledClassesList[numPICs].isProfiledClassInstanceOfCastClass)
                   generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpRegOpCode(), node, arbitraryClassReg1, objClassReg, TR::InstOpCode::COND_BE, trueLabel, false, false);
                else
@@ -13253,7 +13261,15 @@ VMgenerateCatchBlockBBStartPrologue(
       TR::Register * biAddrReg = cg->allocateRegister();
 
       // Load address of counter into biAddrReg
-      genLoadAddressConstant(cg, node, (uintptr_t) comp->getRecompilationInfo()->getCounterAddress(), biAddrReg);
+      if (cg->needRelocationsForBodyInfoData())
+         {
+         generateRegLitRefInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, biAddrReg,
+                                      (uintptr_t)comp->getRecompilationInfo()->getCounterAddress(), TR_BodyInfoAddress);
+         }
+      else
+         {
+         genLoadAddressConstant(cg, node, (uintptr_t) comp->getRecompilationInfo()->getCounterAddress(), biAddrReg);
+         }
 
       // Counter is 32-bit, so only use 32-bit opcodes
       TR::MemoryReference * recompMR = generateS390MemoryReference(biAddrReg, 0, cg);

@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 #include <algorithm>
 #include "j9cfg.h"
@@ -428,6 +428,15 @@ TR_J9InlinerPolicy::alwaysWorthInlining(TR_ResolvedMethod * calleeMethod, TR::No
       {
       if (comp()->trace(OMR::inlining))
          traceMsg(comp(), "@ForceInline was specified for %s, in alwaysWorthInlining\n", calleeMethod->signature(comp()->trMemory()));
+      return true;
+      }
+
+   if (calleeMethod->getRecognizedMethod() == TR::unknownMethod &&
+       comp()->fej9()->isIntrinsicCandidate(calleeMethod) &&
+       !comp()->getOption(TR_DisableInliningUnrecognizedIntrinsics))
+      {
+      if (comp()->trace(OMR::inlining))
+         traceMsg(comp(), "@IntrinsicCandidate was specified for %s, in alwaysWorthInlining\n", calleeMethod->signature(comp()->trMemory()));
       return true;
       }
 
@@ -2177,6 +2186,15 @@ TR_J9InlinerPolicy::tryToInline(TR_CallTarget * calltarget, TR_CallStack * callS
             traceMsg(comp(), "@ForceInline was specified for %s, in tryToInline\n", method->signature(comp()->trMemory()));
          return true;
          }
+
+      if (method->getRecognizedMethod() == TR::unknownMethod &&
+          comp()->fej9()->isIntrinsicCandidate(method) &&
+          !comp()->getOption(TR_DisableInliningUnrecognizedIntrinsics))
+         {
+         if (comp()->trace(OMR::inlining))
+            traceMsg(comp(), "@IntrisicCandidate was specified for %s, in tryToInline\n", method->signature(comp()->trMemory()));
+         return true;
+         }
       }
    else
       {
@@ -2402,17 +2420,10 @@ TR_J9InlinerPolicy::adjustFanInSizeInExceedsSizeThreshold(int bytecodeSize,
    return false;
    }
 
+
 bool
-TR_J9InlinerPolicy::callMustBeInlined(TR_CallTarget *calltarget)
+TR_J9InlinerPolicy::callMustBeInlinedInCold(TR_ResolvedMethod *method)
    {
-   TR_ResolvedMethod *method = calltarget->_calleeMethod;
-
-   if (method->convertToMethod()->isArchetypeSpecimen())
-      return true;
-
-   if (comp()->fej9()->isLambdaFormGeneratedMethod(method))
-      return true;
-
    if (insideIntPipelineForEach(method, comp()))
       {
       if (comp()->trace(OMR::inlining))
@@ -2421,13 +2432,12 @@ TR_J9InlinerPolicy::callMustBeInlined(TR_CallTarget *calltarget)
       return true;
       }
 
-
    if (comp()->getOption(TR_EnableSIMDLibrary) &&
-       strncmp(calltarget->_calleeMethod->classNameChars(), "com/ibm/dataaccess/SIMD", 23) == 0)
+       strncmp(method->classNameChars(), "com/ibm/dataaccess/SIMD", 23) == 0)
       return true;
 
 #ifdef ENABLE_GPU
-   if (strncmp(calltarget->_calleeMethod->classNameChars(), "com/ibm/gpu/Kernel", 18) == 0)
+   if (strncmp(method->classNameChars(), "com/ibm/gpu/Kernel", 18) == 0)
       return true;
 #endif
 
@@ -2452,7 +2462,32 @@ TR_J9InlinerPolicy::callMustBeInlined(TR_CallTarget *calltarget)
          }
       }
 
+   if (method->getRecognizedMethod() == TR::unknownMethod &&
+       comp()->fej9()->isIntrinsicCandidate(method) &&
+       !comp()->getOption(TR_DisableInliningUnrecognizedIntrinsics))
+      {
+      if (comp()->trace(OMR::inlining))
+         traceMsg(comp(), "@IntrinsicCandidate was specified for %s, in callMustBeInlined\n", method->signature(comp()->trMemory()));
+      return true;
+      }
+
+
    return false;
+   }
+
+
+bool
+TR_J9InlinerPolicy::callMustBeInlined(TR_CallTarget *calltarget)
+   {
+   TR_ResolvedMethod *method = calltarget->_calleeMethod;
+
+   if (method->convertToMethod()->isArchetypeSpecimen())
+      return true;
+
+   if (comp()->fej9()->isLambdaFormGeneratedMethod(method))
+      return true;
+
+   return callMustBeInlinedInCold(method);
    }
 
 void
@@ -3025,7 +3060,16 @@ bool TR_MultipleCallTargetInliner::inlineCallTargets(TR::ResolvedMethodSymbol *c
             TR_CallStack::SetCurrentCallNode sccn(callStack, node);
 
             TR::Symbol *sym  = node->getSymbol();
-            if (!isCold && !node->isTheVirtualCallNodeForAGuardedInlinedCall())
+            bool forceInlineInCold = false;
+
+            if (sym->isResolvedMethod())
+               {
+               TR_J9InlinerPolicy *j9inlinerPolicy = (TR_J9InlinerPolicy *) getPolicy();
+               forceInlineInCold = j9inlinerPolicy->callMustBeInlinedInCold(sym->getResolvedMethodSymbol()->getResolvedMethod());
+               }
+
+            if ((!isCold || forceInlineInCold) &&
+                !node->isTheVirtualCallNodeForAGuardedInlinedCall())
                {
                TR::SymbolReference * symRef = node->getSymbolReference();
                TR::MethodSymbol * calleeSymbol = symRef->getSymbol()->castToMethodSymbol();
@@ -3204,7 +3248,7 @@ bool TR_MultipleCallTargetInliner::inlineCallTargets(TR::ResolvedMethodSymbol *c
          if ((uint32_t)(estimatedNumberOfNodes*factor) > _nodeCountThreshold)
             {
             callTargetToChop = calltarget;
-            debugTrace(tracer(),"estimate nodes exceeds _nodeCountThreshold, chopped off targets staring from %p, lastTargetToInline %p\n", callTargetToChop, prev);
+            debugTrace(tracer(),"estimate nodes exceeds _nodeCountThreshold, chopped off targets starting from %p, lastTargetToInline %p\n", callTargetToChop, prev);
             break;
             }
          }
@@ -3373,7 +3417,7 @@ void TR_MultipleCallTargetInliner::weighCallSite( TR_CallStack * callStack , TR_
 
          size = ecs->getSize();
 
-         if (!inlineit && !callMustBeInlinedRegardlessOfSize(callsite))
+         if (!inlineit)
             {
             if (isWarm(comp()))
                {
@@ -3413,13 +3457,6 @@ void TR_MultipleCallTargetInliner::weighCallSite( TR_CallStack * callStack , TR_
 
             heuristicTrace(tracer(),"Setting size to %d because current block has exception successors and want to aggressively inline throws 2",size);
             }
-         if (callMustBeInlinedRegardlessOfSize(calltarget->_myCallSite))
-            {
-            heuristicTrace(tracer(), "calltarget->_fullSize: %d size: %d", calltarget->_fullSize, size);
-            size = 0;
-            heuristicTrace(tracer(), "Setting size to %d because call is dominate hot based on PDF", size);
-            }
-
 
          wouldBenefitFromInlining = false;
          possiblyVeryHotLargeCallee = false;
@@ -6189,8 +6226,20 @@ TR_J9TransformInlinedFunction::wrapCalleeInTryRegion(bool isSynchronized, bool p
    TR::Block *block      = NULL;
    TR_ScratchList<TR::Block> newCatchBlocks(trMemory());
 
-   TR_CatchBlockProfileInfo * catchInfo = TR_CatchBlockProfileInfo::get(comp());
-   if (catchInfo && catchInfo->getCatchCounter() >= TR_CatchBlockProfileInfo::EDOThreshold)
+   bool doCreateExplicitCatchBlock = false;
+   if (comp()->getOption(TR_EnableOldEDO))
+      {
+      TR_CatchBlockProfileInfo * catchInfo = TR_CatchBlockProfileInfo::get(comp());
+      if (catchInfo && catchInfo->getCatchCounter() >= comp()->getOptions()->getCatchBlockCounterThreshold())
+         doCreateExplicitCatchBlock = true;
+      }
+   else
+      {
+      TR::Recompilation *recomp = comp()->getRecompilationInfo();
+      if (recomp && recomp->getMethodInfo()->getCatchBlockCounter() >= comp()->getOptions()->getCatchBlockCounterThreshold())
+         doCreateExplicitCatchBlock = true;
+      }
+   if (doCreateExplicitCatchBlock)
       {
       // For each explicit throw in the callee add an explicit catch block so that we have a chance
       // of converting throws to gotos.

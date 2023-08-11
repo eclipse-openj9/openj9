@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #ifndef J9_OPTIONS_INCL
@@ -120,7 +120,10 @@ enum ExternalOptions
    XXminusJITServerAOTCachePersistenceOption   = 64,
    XXJITServerAOTCacheDirOption                = 65,
    XXJITServerAOTCacheNameOption               = 66,
-   TR_NumExternalOptions                       = 67
+   XXcodecachetotalMaxRAMPercentage            = 67,
+   XXplusJITServerAOTCacheDelayMethodRelocation  = 68,
+   XXminusJITServerAOTCacheDelayMethodRelocation = 69,
+   TR_NumExternalOptions                         = 70
    };
 
 class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
@@ -257,7 +260,6 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    static int32_t _activeThreadsThreshold; // -1 means 'determine dynamically', 0 means feature disabled
    static int32_t _samplingThreadExpirationTime;
    static int32_t _compilationExpirationTime;
-   static int32_t _catchSamplingSizeThreshold;
    static int32_t _compilationThreadPriorityCode; // a number between 0 and 4
    static int32_t _disableIProfilerClassUnloadThreshold;
    static int32_t _iprofilerReactivateThreshold;
@@ -288,7 +290,7 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
 
    static int32_t _numCodeCachesToCreateAtStartup;
    static int32_t getNumCodeCachesToCreateAtStartup() { return _numCodeCachesToCreateAtStartup; }
-
+   static bool _overrideCodecachetotal;
    static int32_t _dataCacheQuantumSize;
    static int32_t _dataCacheMinQuanta;
    static int32_t getDataCacheQuantumSize() { return _dataCacheQuantumSize; }

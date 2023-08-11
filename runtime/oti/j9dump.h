@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #ifndef j9dump_h
@@ -94,7 +94,9 @@ typedef struct J9RASdumpAgent {
 #define J9RAS_DUMP_ON_CORRUPT_CACHE  0x400000
 #define J9RAS_DUMP_ON_EXCESSIVE_GC 0x800000
 #define J9RAS_DUMP_ON_USER2_SIGNAL  0x1000000
-#define J9RAS_DUMP_ON_ANY 0x1FFFFFF /* mask of all bit flags above */
+#define J9RAS_DUMP_ON_VM_CRIU_CHECKPOINT  0x2000000
+#define J9RAS_DUMP_ON_VM_CRIU_RESTORE  0x4000000
+#define J9RAS_DUMP_ON_ANY 0x7FFFFFF /* mask of all bit flags above */
 
 /* ...additional VM requests... */
 #define J9RAS_DUMP_DO_EXCLUSIVE_VM_ACCESS  0x01

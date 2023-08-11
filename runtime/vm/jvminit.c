@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #if defined(WIN32)
@@ -109,6 +109,10 @@
 #if defined(J9VM_OPT_SHARED_CLASSES)
 #include "SCAbstractAPI.h"
 #endif
+
+#if JAVA_SPEC_VERSION >= 19
+#include "omrutil.h"
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
 #if defined(AIXPPC) && !defined(J9OS_I5)
 #include <sys/systemcfg.h> /* for isPPC64bit() */
@@ -869,12 +873,12 @@ freeJavaVM(J9JavaVM * vm)
 		vm->classLoadingStackPool = NULL;
 	}
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	if (NULL != vm->valueTypeVerificationStackPool) {
 		pool_kill(vm->valueTypeVerificationStackPool);
 		vm->valueTypeVerificationStackPool = NULL;
 	}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
 #if JAVA_SPEC_VERSION >= 19
 	if (NULL != vm->tlsPool) {
@@ -882,14 +886,14 @@ freeJavaVM(J9JavaVM * vm)
 		vm->tlsPool = NULL;
 	}
 
-	if (NULL != vm->globalContinuationCacheArray) {
-		for (U_32 i = 0; i < vm->continuationArraySize; i++) {
-			if (NULL != vm->globalContinuationCacheArray[i]) {
-				freeJavaStack(vm, vm->globalContinuationCacheArray[i]->stackObject);
-				j9mem_free_memory(vm->globalContinuationCacheArray[i]);
+	if (NULL != vm->continuationT2Cache) {
+		for (U_32 i = 0; i < vm->continuationT2Size; i++) {
+			if (NULL != vm->continuationT2Cache[i]) {
+				freeJavaStack(vm, vm->continuationT2Cache[i]->stackObject);
+				j9mem_free_memory(vm->continuationT2Cache[i]);
 			}
 		}
-		j9mem_free_memory(vm->globalContinuationCacheArray);
+		j9mem_free_memory(vm->continuationT2Cache);
 	}
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
@@ -1822,6 +1826,45 @@ processMemoryInterleaveOptions(J9JavaVM * vm)
 	j9port_control(J9PORT_CTLDATA_VMEM_NUMA_INTERLEAVE_MEM, enabled? 1 : 0);
 }
 
+#if JAVA_SPEC_VERSION >= 19
+/**
+ * -XX:ContinuationCache:t1=<U_32>,t2=<U_32>
+ *
+ * This helper searches for and consumes the Continuation cache option,
+ * if option found, it is parsed based on the above syntax.
+ * if option not found, default values are set for T1 and T2 cache size.
+ *
+ * Returns 0 on success, -1 if option parsing failed.
+ */
+static VMINLINE IDATA
+processContinuationCacheOptions(J9JavaVM *vm)
+{
+	IDATA rc = -1;
+	IDATA argIndex = FIND_AND_CONSUME_VMARG(STARTSWITH_MATCH, VMOPT_XXCONTINUATIONCACHE, NULL);
+	if (-1 != argIndex) {
+		char *cursor = NULL;
+		U_32 cacheSize = 0;
+		GET_OPTION_OPTION(argIndex, ':', ':', &cursor);
+
+		if (try_scan(&cursor, "t1=") && (0 == omr_scan_u32(&cursor, &cacheSize))) {
+			vm->continuationT1Size = cacheSize;
+
+			if (try_scan(&cursor, ",t2=") && (0 == omr_scan_u32(&cursor, &cacheSize))){
+				vm->continuationT2Size = cacheSize;
+				rc = 0;
+			}
+		}
+	} else {
+		PORT_ACCESS_FROM_JAVAVM(vm);
+		vm->continuationT1Size = 1;
+		vm->continuationT2Size = (U_32)(j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_TARGET) * 2);
+		rc = 0;
+	}
+
+	return rc;
+}
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
 static VMINLINE void
 dumpClassLoader(J9JavaVM *vm, J9ClassLoader *loader, IDATA fd)
 {
@@ -2471,10 +2514,10 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 			if (NULL == (vm->classLoadingStackPool = pool_new(sizeof(J9StackElement),  0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(vm->portLibrary))))
 				goto _error;
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 			if (NULL == (vm->valueTypeVerificationStackPool = pool_new(sizeof(J9StackElement),  0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(vm->portLibrary))))
 				goto _error;
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES)*/
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)*/
 
 			if (NULL == (vm->classLoaderBlocks = pool_new(sizeof(J9ClassLoader),  0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(vm->portLibrary))))
 				goto _error;
@@ -2560,7 +2603,7 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 				}
 			}
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 			/* By default flattening is disabled */
 			vm->valueFlatteningThreshold = 0;
 			if ((argIndex = FIND_AND_CONSUME_VMARG(STARTSWITH_MATCH, VMOPT_VALUEFLATTENINGTHRESHOLD_EQUALS, NULL)) >= 0) {
@@ -2579,7 +2622,7 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 					vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_ENABLE_VT_ARRAY_FLATTENING;
 				}
 			}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 #if JAVA_SPEC_VERSION >= 16
 			if ((argIndex = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXDIAGNOSE_SYNC_ON_VALUEBASED_CLASSES_EQUALS1, NULL)) >= 0) {
 				vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_VALUE_BASED_EXCEPTION;
@@ -2587,7 +2630,13 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 				vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_VALUE_BASED_WARNING;
 			}
 #endif /* JAVA_SPEC_VERSION >= 16 */
-
+#if JAVA_SPEC_VERSION >= 19
+			if (0 != processContinuationCacheOptions(vm)) {
+				parseErrorOption = VMOPT_XXCONTINUATIONCACHE;
+				parseError = OPTION_MALFORMED;
+				goto _memParseError;
+			}
+#endif /* JAVA_SPEC_VERSION >= 19 */
 			if ((argIndex = FIND_AND_CONSUME_VMARG(STARTSWITH_MATCH, VMOPT_XXDUMPLOADEDCLASSLIST, NULL)) >= 0) {
 				J9HookInterface **vmHooks = vm->internalVMFunctions->getVMHookInterface(vm);
 				GET_OPTION_VALUE(argIndex, '=', &optionValue);
@@ -2862,8 +2911,20 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 #endif /* defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH) */
 			TRIGGER_J9HOOK_VM_ABOUT_TO_BOOTSTRAP(vm->hookInterface, vm->mainThread);
 			/* At this point, the decision about which interpreter to use has been made */
+
+			if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_DEBUG_MODE)) {
+				if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
+#if defined(OMR_GC_COMPRESSED_POINTERS)
+					vm->bytecodeLoop = debugBytecodeLoopCompressed;
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
+				} else {
+#if defined(OMR_GC_FULL_POINTERS)
+					vm->bytecodeLoop = debugBytecodeLoopFull;
+#endif /* defined(OMR_GC_FULL_POINTERS) */
+				}
+			} else
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-			if (vm->checkpointState.isCheckPointAllowed) {
+			if (J9_ARE_ALL_BITS_SET(vm->checkpointState.flags, J9VM_CRIU_IS_CHECKPOINT_ALLOWED)) {
 				if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
 #if defined(OMR_GC_COMPRESSED_POINTERS)
 					vm->bytecodeLoop = criuBytecodeLoopCompressed;
@@ -2875,17 +2936,7 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 				}
 			} else
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
-			if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_DEBUG_MODE)) {
-				if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
-#if defined(OMR_GC_COMPRESSED_POINTERS)
-					vm->bytecodeLoop = debugBytecodeLoopCompressed;
-#endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
-				} else {
-#if defined(OMR_GC_FULL_POINTERS)
-					vm->bytecodeLoop = debugBytecodeLoopFull;
-#endif /* defined(OMR_GC_FULL_POINTERS) */
-				}
-			} else {
+			{
 				if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
 #if defined(OMR_GC_COMPRESSED_POINTERS)
 					vm->bytecodeLoop = bytecodeLoopCompressed;
@@ -3569,9 +3620,19 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 	if (J2SE_VERSION(vm) >= J2SE_V11) {
 		vm->extendedRuntimeFlags |= (UDATA)J9_EXTENDED_RUNTIME_RESTRICT_IFA; /* Enable zAAP switching for Registered Natives and JVMTI callbacks by default in Java 9 and later. */
 	}
-	vm->extendedRuntimeFlags |= J9_EXTENDED_RUNTIME_OSR_SAFE_POINT; /* Enable OSR safe point by default */
-	vm->extendedRuntimeFlags |= (UDATA)J9_EXTENDED_RUNTIME_ENABLE_HCR; /* Enable HCR by default */
 	vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_ENABLE_UTF_CACHE; /* Enable UTF cache by default */
+
+	{
+		IDATA noDynamicAgentLoading = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXNOENABLEDYNAMICAGENTLOADING, NULL);
+		IDATA dynamicAgentLoading = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXENABLEDYNAMICAGENTLOADING, NULL);
+		if (noDynamicAgentLoading > dynamicAgentLoading) {
+			vm->runtimeFlags &= ~J9_RUNTIME_ALLOW_DYNAMIC_AGENT;
+			vm->extendedRuntimeFlags &= ~(J9_EXTENDED_RUNTIME_OSR_SAFE_POINT | J9_EXTENDED_RUNTIME_ENABLE_HCR);
+		} else {
+			vm->runtimeFlags |= J9_RUNTIME_ALLOW_DYNAMIC_AGENT;
+			vm->extendedRuntimeFlags |= (J9_EXTENDED_RUNTIME_OSR_SAFE_POINT | J9_EXTENDED_RUNTIME_ENABLE_HCR);
+		}
+	}
 
 #if defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_POWER) || defined(J9VM_ARCH_S390)
 	/* Enabled field watch by default on x86, Power, and S390 platforms */
@@ -3817,9 +3878,8 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 		IDATA disableCRIU = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXDISABLECRIU, NULL);
 		if (enableCRIU > disableCRIU) {
 			PORT_ACCESS_FROM_JAVAVM(vm);
-			vm->checkpointState.isCheckPointEnabled = TRUE;
-			vm->checkpointState.isCheckPointAllowed = TRUE;
-			vm->portLibrary->finalRestore = FALSE;
+			vm->checkpointState.flags |= J9VM_CRIU_IS_CHECKPOINT_ENABLED | J9VM_CRIU_IS_CHECKPOINT_ALLOWED;
+			vm->portLibrary->isCheckPointAllowed = TRUE;
 			j9port_control(J9PORT_CTLDATA_CRIU_SUPPORT_FLAGS, OMRPORT_CRIU_SUPPORT_ENABLED);
 		}
 	}
@@ -3828,9 +3888,17 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 		IDATA enableCRIUNonPortableMode = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXENABLECRIUNONPORTABLEMODE, NULL);
 		IDATA disableCRIUNonPortableMode = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXDISABLECRIUNONPORTABLEMODE, NULL);
 		if (enableCRIUNonPortableMode >= disableCRIUNonPortableMode) {
-			if (vm->checkpointState.isCheckPointEnabled) {
-				vm->checkpointState.isNonPortableRestoreMode = TRUE;
+			if (J9_ARE_ALL_BITS_SET(vm->checkpointState.flags, J9VM_CRIU_IS_CHECKPOINT_ENABLED)) {
+				vm->checkpointState.flags |= J9VM_CRIU_IS_NON_PORTABLE_RESTORE_MODE;
 			}
+		}
+	}
+
+	{
+		IDATA enableThrowOnDelayedCheckpointOperation = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXENABLETHROWONDELAYECHECKPOINTOPERATION, NULL);
+		IDATA disableThrowOnDelayedCheckpointOperation = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXDISABLETHROWONDELAYECHECKPOINTOPERATION, NULL);
+		if (disableThrowOnDelayedCheckpointOperation >= enableThrowOnDelayedCheckpointOperation) {
+			vm->checkpointState.flags |= J9VM_CRIU_IS_THROW_ON_DELAYED_CHECKPOINT_ENABLED;
 		}
 	}
 
@@ -3983,6 +4051,16 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 			vm->runtimeFlags &= ~(UDATA)J9_RUNTIME_DYNAMIC_HEAPIFICATION;
 		}
 	}
+
+#if JAVA_SPEC_VERSION >= 19
+	{
+		IDATA showCarrierFrames = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXSHOWCARRIERFRAMES, NULL);
+		IDATA noShowCarrierFrames = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXNOSHOWCARRIERFRAMES, NULL);
+		if (showCarrierFrames > noShowCarrierFrames) {
+			vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_SHOW_CARRIER_FRAMES;
+		}
+	}
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
 	return JNI_OK;
 }
@@ -6287,6 +6365,21 @@ runExitStages(J9JavaVM* vm, J9VMThread* vmThread)
 	}
 #endif
 
+#if defined(J9VM_PROF_CONTINUATION_ALLOCATION)
+	if (0 < (vm->t1CacheHit + vm->t2CacheHit + vm->fastAlloc + vm->slowAlloc)) {
+		printf("\nTotal Continuation entries: %u\n", vm->t1CacheHit + vm->t2CacheHit + vm->fastAlloc + vm->slowAlloc);
+		printf("\nCache Hits:                 %u", vm->t1CacheHit + vm->t2CacheHit);
+		printf("\n     T1 Cache Hits:             %u", vm->t1CacheHit);
+		printf("\n     T2 Cache Hits:             %u", vm->t2CacheHit);
+		printf("\nCache Miss:                 %u", vm->fastAlloc + vm->slowAlloc);
+		printf("\n     Fast Alloc (<10000ns):     %u", vm->fastAlloc);
+		printf("\n     Avg Fast Alloc Time:       %ldns", (vm->fastAlloc > 0 ? (vm->fastAllocAvgTime / (I_64)vm->fastAlloc) : 0));
+		printf("\n     Slow Alloc (>10000ns):     %u", vm->slowAlloc);
+		printf("\n     Avg Slow Alloc Time:       %ldns", (vm->slowAlloc > 0 ? (vm->slowAllocAvgTime / (I_64)vm->slowAlloc) : 0));
+		printf("\nAvg Cache Lookup Time:      %ldns\n", (vm->avgCacheLookupTime / (I_64)(vm->t1CacheHit + vm->t2CacheHit + vm->fastAlloc + vm->slowAlloc)));
+	}
+#endif /* defined(J9VM_PROF_CONTINUATION_ALLOCATION) */
+
 	/* Unload before trace engine exits */
 	UT_MODULE_UNLOADED(J9_UTINTERFACE_FROM_VM(vm));
 
@@ -6461,12 +6554,23 @@ processCompressionOptions(J9JavaVM *vm)
 	argIndex1 = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXCOMPACTSTRINGS, NULL);
 	argIndex2 = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXNOCOMPACTSTRINGS, NULL);
 
+#if JAVA_SPEC_VERSION >= 11
+	/* Default setting */
+	vm->strCompEnabled = TRUE;
+
+	// Default to enable string compression unless there's the option to disable string compression
+	// is explicitly defined.
+	if (argIndex2 > argIndex1) {
+		vm->strCompEnabled = FALSE;
+	}
+#else /* JAVA_SPEC_VERSION >= 11 */
 	/* Default setting */
 	vm->strCompEnabled = FALSE;
 
 	if (argIndex1 > argIndex2) {
 		vm->strCompEnabled = TRUE;
 	}
+#endif /* JAVA_SPEC_VERSION >= 11 */
 }
 
 /**

@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include "dmpsup.h"
@@ -55,6 +55,7 @@ UDATA rasDumpAgentEnabled = (UDATA)-1;
 char* dumpDirectoryPrefix = NULL;
 
 #define MAX_DUMP_OPTS  128
+#define MAX_INTERESTING_LENGTH 255
 
 #if defined(J9ZOS390)
 #if defined(J9VM_ENV_DATA64)
@@ -112,7 +113,7 @@ static void initRasDumpGlobalStorage(J9JavaVM *vm);
 static void freeRasDumpGlobalStorage(J9JavaVM *vm);
 static void hookVmInitialized PROTOTYPE((J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData));
 #if defined(LINUX)
-static void appendSystemInfoFromFile(J9JavaVM *vm, U_32 key, const char *fileName );
+static J9RASSystemInfo *appendSystemInfoFromFile(J9JavaVM *vm, U_32 key, const char *fileName);
 #endif /* defined(LINUX) */
 #ifdef J9ZOS390
 static IDATA processZOSDumpOptions(J9JavaVM *vm, J9RASdumpOption* agentOpts, int optIndex);
@@ -1365,7 +1366,46 @@ initSystemInfo(J9JavaVM *vm)
 			}
 		}
 	}
-	appendSystemInfoFromFile(vm, J9RAS_SYSTEMINFO_CORE_PATTERN, J9RAS_CORE_PATTERN_FILE);
+	{
+		J9RASSystemInfo *corePatternInfo = appendSystemInfoFromFile(vm, J9RAS_SYSTEMINFO_CORE_PATTERN, J9RAS_CORE_PATTERN_FILE);
+		if (NULL != corePatternInfo) {
+			/* A common core_pattern is Dynatrace; for example, |/opt/dynatrace/oneagent/agent/rdp
+			 * This program sends the core to the originally configured
+			 * core_pattern as stored in, for example,
+			 * /opt/dynatrace/oneagent/agent/conf/original_core_pattern
+			 *
+			 * If we find this Dynatrace core_pattern, extract its installation
+			 * directory and then read original_core_pattern relative to that.
+			 */
+			const char *corePattern = (const char *)corePatternInfo->data;
+			if ('|' == corePattern[0]) {
+				static const char search[] = "/oneagent/agent/rdp";
+				static const char replacement[] = "/oneagent/agent/conf/original_core_pattern";
+				const char *dynatracePath = strstr(corePattern, search);
+
+				/* Check if core_pattern includes the Dynatrace agent. */
+				if (NULL != dynatracePath) {
+					char namebuf[MAX_INTERESTING_LENGTH];
+					/* The length of the agent path prefix, minus the pipe character. */
+					size_t prefixLength = dynatracePath - corePattern - 1;
+
+					/* Ensure that the original_core_pattern path will fit in our buffer. */
+					if (prefixLength <= (sizeof(namebuf) - sizeof(replacement))) {
+						/* Copy the prefix starting after the pipe character. */
+						memcpy(namebuf, corePattern + 1, prefixLength);
+
+						/* Append the relative location of original_core_pattern. */
+						memcpy(namebuf + prefixLength, replacement, sizeof(replacement));
+
+						/* Finally, read the file contents, if available/accessible.
+						 * Note that in containers, this file will most likely be invisible.
+						 */
+						appendSystemInfoFromFile(vm, J9RAS_SYSTEMINFO_CORE_ORIGINAL_PATTERN, namebuf);
+					}
+				}
+			}
+		}
+	}
 	appendSystemInfoFromFile(vm, J9RAS_SYSTEMINFO_CORE_USES_PID, J9RAS_CORE_USES_PID_FILE);
 #endif /* defined(LINUX) */
 }
@@ -1407,41 +1447,43 @@ initDumpDirectory(J9JavaVM *vm)
 
 #if defined(LINUX)
 /* Adds a J9RASSystemInfo to the end of the system info list using the key
- * specified as the key and the data from the specified file in /proc if
+ * specified as the key and the first line from the specified file in fileName if
  * it exists.
  *
  * @param[in]	vm			pointer to J9JavaVM
- * @param[out]	key			J9RAS_SYSTEMINFO_ key from rasdump_internal.h
- * @param[in]	procFileName	the file in /proc to read the value from
+ * @param[in]	key			J9RAS_SYSTEMINFO_ key from rasdump_internal.h
+ * @param[in]	fileName	the file in fileName to read the value from
  *
- * @return:
- *	nothing
+ * @return return new J9RASSystemInfo* if success, otherwise NULL
  */
-static void
-appendSystemInfoFromFile(J9JavaVM *vm, U_32 key, const char *fileName )
+static J9RASSystemInfo *
+appendSystemInfoFromFile(J9JavaVM *vm, U_32 key, const char *fileName)
 {
-
+	J9RASSystemInfo *systemInfo = NULL;
 	IDATA fd = -1;
-	J9RAS* rasStruct = vm->j9ras;
+	J9RAS *rasStruct = vm->j9ras;
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
-	if( NULL == rasStruct ) {
-		return;
+	if (NULL == rasStruct) {
+		return NULL;
 	}
 
 	fd = j9file_open(fileName, EsOpenRead, 0);
-	if (fd != -1) {
-		/* Files in /proc report length as 0 but we don't expect the contents to be more than 1 line.
-		 * We take the first line or 80 characters that should be enough information to put in javacore */
-		char buf[80];
-		char* read = NULL;
-		read = j9file_read_text(fd, &buf[0], 80);
-		if( read == &buf[0] ) {
-			J9RASSystemInfo* systemInfo;
+	if (-1 != fd) {
+		/* We don't expect the contents to be more than 1 line.
+		 * The first MAX_INTERESTING_LENGTH characters should be enough information.
+		 */
+		char buf[MAX_INTERESTING_LENGTH];
+		char *read = j9file_read_text(fd, buf, sizeof(buf));
+		if (buf == read) {
 			size_t bufLen = 0;
-			/* Make sure the string is only one line and null terminated. */
-			for( bufLen = 0; bufLen < 80; bufLen++) {
-				if( read[bufLen] == '\n') {
+			/* Make sure the string is only one line.
+			 * If the string is longer than the size
+			 * of the buffer, it will be NULL-terminated
+			 * in the memset below.
+			 */
+			for (bufLen = 0; bufLen < sizeof(buf); bufLen++) {
+				if ('\n' == read[bufLen]) {
 					read[bufLen] = '\0';
 					break;
 				}
@@ -1450,17 +1492,19 @@ appendSystemInfoFromFile(J9JavaVM *vm, U_32 key, const char *fileName )
 			 * without having to track whether or not we did an allocation for systemInfo->data.
 			 */
 			systemInfo = (J9RASSystemInfo *) j9mem_allocate_memory(sizeof(J9RASSystemInfo) + bufLen + 1, OMRMEM_CATEGORY_VM);
-			if( systemInfo != NULL ) {
+			if (NULL != systemInfo) {
 				memset(systemInfo, '\0', sizeof(J9RASSystemInfo) + bufLen + 1);
 				systemInfo->key = key;
 				/* Allocated with systemInfo, data is right after systemInfo. */
 				systemInfo->data = &systemInfo[1];
-				memcpy(systemInfo->data, read, bufLen + 1 );
+				memcpy(systemInfo->data, read, bufLen);
 				J9_LINKED_LIST_ADD_LAST(rasStruct->systemInfo, systemInfo);
 			}
 		}
 		j9file_close(fd);
 	}
+
+	return systemInfo;
 }
 #endif /* defined(LINUX) */
 

@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 package org.openj9.test.jep389.upcall;
 
@@ -3066,6 +3066,54 @@ public class UpcallMHWithStructTests {
 			Assert.assertEquals((double)doubleHandle1.get(resultSegmt), 44.666D, 0.001D);
 			Assert.assertEquals((double)doubleHandle2.get(resultSegmt), 66.888D, 0.001D);
 			Assert.assertEquals((double)doubleHandle3.get(resultSegmt), 88.579D, 0.001D);
+		}
+	}
+
+	@Test
+	public void test_addNegBytesFromStructByUpcallMH() throws Throwable {
+		GroupLayout structLayout = MemoryLayout.structLayout(C_CHAR.withName("elem1"), C_CHAR.withName("elem2"));
+		VarHandle byteHandle1 = structLayout.varHandle(byte.class, PathElement.groupElement("elem1"));
+		VarHandle byteHandle2 = structLayout.varHandle(byte.class, PathElement.groupElement("elem2"));
+
+		MethodType mt = MethodType.methodType(byte.class, byte.class, MemorySegment.class, MemoryAddress.class);
+		FunctionDescriptor fd = FunctionDescriptor.of(C_CHAR, C_CHAR, structLayout, C_POINTER);
+		Addressable functionSymbol = nativeLibLookup.lookup("addNegBytesFromStructByUpcallMH").get();
+		MethodHandle mh = clinker.downcallHandle(functionSymbol, mt, fd);
+
+		try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+			MemoryAddress upcallFuncAddr = clinker.upcallStub(UpcallMethodHandles.MH_addNegBytesFromStruct,
+					FunctionDescriptor.of(C_CHAR, C_CHAR, structLayout, C_CHAR, C_CHAR), scope);
+			SegmentAllocator allocator = SegmentAllocator.ofScope(scope);
+			MemorySegment structSegmt = allocator.allocate(structLayout);
+			byteHandle1.set(structSegmt, (byte)-8);
+			byteHandle2.set(structSegmt, (byte)-9);
+
+			byte result = (byte)mh.invoke((byte)-6, structSegmt, upcallFuncAddr);
+			Assert.assertEquals(result, (byte)-40);
+		}
+	}
+
+	@Test
+	public void test_addNegShortsFromStructByUpcallMH() throws Throwable {
+		GroupLayout structLayout = MemoryLayout.structLayout(C_SHORT.withName("elem1"), C_SHORT.withName("elem2"));
+		VarHandle shortHandle1 = structLayout.varHandle(short.class, PathElement.groupElement("elem1"));
+		VarHandle shortHandle2 = structLayout.varHandle(short.class, PathElement.groupElement("elem2"));
+
+		MethodType mt = MethodType.methodType(short.class, short.class, MemorySegment.class, MemoryAddress.class);
+		FunctionDescriptor fd = FunctionDescriptor.of(C_SHORT, C_SHORT, structLayout, C_POINTER);
+		Addressable functionSymbol = nativeLibLookup.lookup("addNegShortsFromStructByUpcallMH").get();
+		MethodHandle mh = clinker.downcallHandle(functionSymbol, mt, fd);
+
+		try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+			MemoryAddress upcallFuncAddr = clinker.upcallStub(UpcallMethodHandles.MH_addNegShortsFromStruct,
+					FunctionDescriptor.of(C_SHORT, C_SHORT, structLayout, C_SHORT, C_SHORT), scope);
+			SegmentAllocator allocator = SegmentAllocator.ofScope(scope);
+			MemorySegment structSegmt = allocator.allocate(structLayout);
+			shortHandle1.set(structSegmt, (short)-888);
+			shortHandle2.set(structSegmt, (short)-999);
+
+			short result = (short)mh.invoke((short)-777, structSegmt, upcallFuncAddr);
+			Assert.assertEquals(result, (short)-4551);
 		}
 	}
 }

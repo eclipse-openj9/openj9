@@ -17,10 +17,10 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
-/* ANSI-C code produced by gperf version 3.0.4 */
+/* ANSI-C code produced by gperf version 3.1 */
 /* Command-line: gperf -CD -t --output-file=attrlookup.h attrlookup.gperf  */
 /* Computed positions: -k'2' */
 
@@ -48,10 +48,10 @@
       && ('w' == 119) && ('x' == 120) && ('y' == 121) && ('z' == 122) \
       && ('{' == 123) && ('|' == 124) && ('}' == 125) && ('~' == 126))
 /* The character set is not based on ISO-646.  */
-#error "gperf generated tables don't work with this execution character set. Please report a bug to <bug-gnu-gperf@gnu.org>."
+#error "gperf generated tables don't work with this execution character set. Please report a bug to <bug-gperf@gnu.org>."
 #endif
 
-#line 39 "attrlookup.gperf"
+#line 42 "attrlookup.gperf"
 struct AttribType
 {
 	const char *name;
@@ -59,7 +59,7 @@ struct AttribType
 	U_8 strippedAttribCode;
 };
 
-#define TOTAL_KEYWORDS 28
+#define TOTAL_KEYWORDS 31
 #define MIN_WORD_LENGTH 4
 #define MAX_WORD_LENGTH 36
 #define MIN_HASH_VALUE 4
@@ -73,8 +73,8 @@ __inline
 inline
 #endif
 #endif
-static unsigned int
-attributeHash (register const char *str, register unsigned int len)
+static size_t
+attributeHash (register const char *str, register size_t len)
 {
   static const unsigned char asso_values[] =
     {
@@ -88,8 +88,8 @@ attributeHash (register const char *str, register unsigned int len)
       51, 51, 51, 51, 51, 51, 51, 51, 51, 51,
       51, 51, 51, 51, 51, 51, 51, 51, 51, 51,
       51, 51, 51, 51, 51, 51, 51, 51, 51, 51,
-      51, 31, 51, 51, 51, 15, 51, 51, 51, 51,
-       0,  0, 51, 51, 51, 51, 15,  0, 51, 51,
+      51, 31, 51, 51, 51, 15, 51, 51, 51,  5,
+       0,  0, 51, 51,  0, 51, 15,  0, 51, 51,
       25,  0, 51, 51, 51, 51, 51, 51, 51, 51,
       51, 51, 51, 51, 51, 51, 51, 51, 51, 51,
       51, 51, 51, 51, 51, 51, 51, 51, 51, 51,
@@ -115,81 +115,87 @@ __attribute__ ((__gnu_inline__))
 #endif
 #endif
 const struct AttribType *
-lookupKnownAttribute (register const char *str, register unsigned int len)
+lookupKnownAttribute (register const char *str, register size_t len)
 {
   static const struct AttribType wordlist[] =
     {
-#line 47 "attrlookup.gperf"
-      {"Code", CFR_ATTRIBUTE_Code, CFR_ATTRIBUTE_Code},
-#line 49 "attrlookup.gperf"
-      {"Synthetic", CFR_ATTRIBUTE_Synthetic, CFR_ATTRIBUTE_Synthetic},
-#line 53 "attrlookup.gperf"
-      {"SourceFile", CFR_ATTRIBUTE_SourceFile, CFR_ATTRIBUTE_SourceFile},
-#line 54 "attrlookup.gperf"
-      {"InnerClasses", CFR_ATTRIBUTE_InnerClasses, CFR_ATTRIBUTE_InnerClasses},
-#line 55 "attrlookup.gperf"
-      {"ConstantValue", CFR_ATTRIBUTE_ConstantValue, CFR_ATTRIBUTE_ConstantValue},
-#line 57 "attrlookup.gperf"
-      {"EnclosingMethod", CFR_ATTRIBUTE_EnclosingMethod, CFR_ATTRIBUTE_EnclosingMethod},
-#line 59 "attrlookup.gperf"
-      {"BootstrapMethods", CFR_ATTRIBUTE_BootstrapMethods, CFR_ATTRIBUTE_BootstrapMethods},
-#line 60 "attrlookup.gperf"
-      {"AnnotationDefault", CFR_ATTRIBUTE_AnnotationDefault, CFR_ATTRIBUTE_AnnotationDefault},
-#line 61 "attrlookup.gperf"
-      {"LocalVariableTable", CFR_ATTRIBUTE_LocalVariableTable, CFR_ATTRIBUTE_StrippedLocalVariableTable},
-#line 62 "attrlookup.gperf"
-      {"SourceDebugExtension", CFR_ATTRIBUTE_SourceDebugExtension, CFR_ATTRIBUTE_StrippedSourceDebugExtension},
-#line 63 "attrlookup.gperf"
-      {"LocalVariableTypeTable", CFR_ATTRIBUTE_LocalVariableTypeTable, CFR_ATTRIBUTE_StrippedLocalVariableTypeTable},
-#line 48 "attrlookup.gperf"
-      {"StackMap", CFR_ATTRIBUTE_StackMap, CFR_ATTRIBUTE_StackMap},
 #line 50 "attrlookup.gperf"
-      {"Signature", CFR_ATTRIBUTE_Signature, CFR_ATTRIBUTE_Signature},
-#line 64 "attrlookup.gperf"
-      {"RuntimeVisibleAnnotations", CFR_ATTRIBUTE_RuntimeVisibleAnnotations, CFR_ATTRIBUTE_RuntimeVisibleAnnotations},
-#line 65 "attrlookup.gperf"
-      {"RuntimeInvisibleAnnotations", CFR_ATTRIBUTE_RuntimeInvisibleAnnotations, CFR_ATTRIBUTE_RuntimeInvisibleAnnotations},
-#line 56 "attrlookup.gperf"
-      {"StackMapTable", CFR_ATTRIBUTE_StackMapTable, CFR_ATTRIBUTE_StackMapTable},
-#line 66 "attrlookup.gperf"
-      {"RuntimeVisibleTypeAnnotations", CFR_ATTRIBUTE_RuntimeVisibleTypeAnnotations, CFR_ATTRIBUTE_RuntimeVisibleTypeAnnotations},
-#line 58 "attrlookup.gperf"
-      {"LineNumberTable", CFR_ATTRIBUTE_LineNumberTable, CFR_ATTRIBUTE_StrippedLineNumberTable},
-#line 67 "attrlookup.gperf"
-      {"RuntimeInvisibleTypeAnnotations", CFR_ATTRIBUTE_RuntimeInvisibleTypeAnnotations, CFR_ATTRIBUTE_RuntimeInvisibleTypeAnnotations},
-#line 68 "attrlookup.gperf"
-      {"RuntimeVisibleParameterAnnotations", CFR_ATTRIBUTE_RuntimeVisibleParameterAnnotations, CFR_ATTRIBUTE_RuntimeVisibleParameterAnnotations},
+      {"Code", CFR_ATTRIBUTE_Code, CFR_ATTRIBUTE_Code},
+#line 79 "attrlookup.gperf"
+      {"Preload", CFR_ATTRIBUTE_Preload, CFR_ATTRIBUTE_Preload},
 #line 52 "attrlookup.gperf"
-      {"Exceptions", CFR_ATTRIBUTE_Exceptions, CFR_ATTRIBUTE_Exceptions},
-#line 69 "attrlookup.gperf"
-      {"RuntimeInvisibleParameterAnnotations", CFR_ATTRIBUTE_RuntimeInvisibleParameterAnnotations, CFR_ATTRIBUTE_RuntimeInvisibleParameterAnnotations},
-#line 73 "attrlookup.gperf"
-      {"Record", CFR_ATTRIBUTE_Record, CFR_ATTRIBUTE_Record},
-#line 72 "attrlookup.gperf"
-      {"NestHost", CFR_ATTRIBUTE_NestHost, CFR_ATTRIBUTE_NestHost},
+      {"Synthetic", CFR_ATTRIBUTE_Synthetic, CFR_ATTRIBUTE_Synthetic},
+#line 56 "attrlookup.gperf"
+      {"SourceFile", CFR_ATTRIBUTE_SourceFile, CFR_ATTRIBUTE_SourceFile},
+#line 57 "attrlookup.gperf"
+      {"InnerClasses", CFR_ATTRIBUTE_InnerClasses, CFR_ATTRIBUTE_InnerClasses},
+#line 58 "attrlookup.gperf"
+      {"ConstantValue", CFR_ATTRIBUTE_ConstantValue, CFR_ATTRIBUTE_ConstantValue},
+#line 80 "attrlookup.gperf"
+      {"NullRestricted", CFR_ATTRIBUTE_NullRestricted, CFR_ATTRIBUTE_NullRestricted},
+#line 60 "attrlookup.gperf"
+      {"EnclosingMethod", CFR_ATTRIBUTE_EnclosingMethod, CFR_ATTRIBUTE_EnclosingMethod},
+#line 62 "attrlookup.gperf"
+      {"BootstrapMethods", CFR_ATTRIBUTE_BootstrapMethods, CFR_ATTRIBUTE_BootstrapMethods},
+#line 63 "attrlookup.gperf"
+      {"AnnotationDefault", CFR_ATTRIBUTE_AnnotationDefault, CFR_ATTRIBUTE_AnnotationDefault},
+#line 64 "attrlookup.gperf"
+      {"LocalVariableTable", CFR_ATTRIBUTE_LocalVariableTable, CFR_ATTRIBUTE_StrippedLocalVariableTable},
+#line 65 "attrlookup.gperf"
+      {"SourceDebugExtension", CFR_ATTRIBUTE_SourceDebugExtension, CFR_ATTRIBUTE_StrippedSourceDebugExtension},
+#line 78 "attrlookup.gperf"
+      {"ImplicitCreation", CFR_ATTRIBUTE_ImplicitCreation, CFR_ATTRIBUTE_ImplicitCreation},
+#line 66 "attrlookup.gperf"
+      {"LocalVariableTypeTable", CFR_ATTRIBUTE_LocalVariableTypeTable, CFR_ATTRIBUTE_StrippedLocalVariableTypeTable},
 #line 51 "attrlookup.gperf"
-      {"Deprecated", CFR_ATTRIBUTE_Deprecated, CFR_ATTRIBUTE_Deprecated},
-#line 71 "attrlookup.gperf"
-      {"NestMembers", CFR_ATTRIBUTE_NestMembers, CFR_ATTRIBUTE_NestMembers},
+      {"StackMap", CFR_ATTRIBUTE_StackMap, CFR_ATTRIBUTE_StackMap},
+#line 53 "attrlookup.gperf"
+      {"Signature", CFR_ATTRIBUTE_Signature, CFR_ATTRIBUTE_Signature},
+#line 67 "attrlookup.gperf"
+      {"RuntimeVisibleAnnotations", CFR_ATTRIBUTE_RuntimeVisibleAnnotations, CFR_ATTRIBUTE_RuntimeVisibleAnnotations},
+#line 68 "attrlookup.gperf"
+      {"RuntimeInvisibleAnnotations", CFR_ATTRIBUTE_RuntimeInvisibleAnnotations, CFR_ATTRIBUTE_RuntimeInvisibleAnnotations},
+#line 59 "attrlookup.gperf"
+      {"StackMapTable", CFR_ATTRIBUTE_StackMapTable, CFR_ATTRIBUTE_StackMapTable},
+#line 69 "attrlookup.gperf"
+      {"RuntimeVisibleTypeAnnotations", CFR_ATTRIBUTE_RuntimeVisibleTypeAnnotations, CFR_ATTRIBUTE_RuntimeVisibleTypeAnnotations},
+#line 61 "attrlookup.gperf"
+      {"LineNumberTable", CFR_ATTRIBUTE_LineNumberTable, CFR_ATTRIBUTE_StrippedLineNumberTable},
 #line 70 "attrlookup.gperf"
-      {"MethodParameters", CFR_ATTRIBUTE_MethodParameters, CFR_ATTRIBUTE_MethodParameters},
+      {"RuntimeInvisibleTypeAnnotations", CFR_ATTRIBUTE_RuntimeInvisibleTypeAnnotations, CFR_ATTRIBUTE_RuntimeInvisibleTypeAnnotations},
+#line 71 "attrlookup.gperf"
+      {"RuntimeVisibleParameterAnnotations", CFR_ATTRIBUTE_RuntimeVisibleParameterAnnotations, CFR_ATTRIBUTE_RuntimeVisibleParameterAnnotations},
+#line 55 "attrlookup.gperf"
+      {"Exceptions", CFR_ATTRIBUTE_Exceptions, CFR_ATTRIBUTE_Exceptions},
+#line 72 "attrlookup.gperf"
+      {"RuntimeInvisibleParameterAnnotations", CFR_ATTRIBUTE_RuntimeInvisibleParameterAnnotations, CFR_ATTRIBUTE_RuntimeInvisibleParameterAnnotations},
+#line 76 "attrlookup.gperf"
+      {"Record", CFR_ATTRIBUTE_Record, CFR_ATTRIBUTE_Record},
+#line 75 "attrlookup.gperf"
+      {"NestHost", CFR_ATTRIBUTE_NestHost, CFR_ATTRIBUTE_NestHost},
+#line 54 "attrlookup.gperf"
+      {"Deprecated", CFR_ATTRIBUTE_Deprecated, CFR_ATTRIBUTE_Deprecated},
 #line 74 "attrlookup.gperf"
+      {"NestMembers", CFR_ATTRIBUTE_NestMembers, CFR_ATTRIBUTE_NestMembers},
+#line 73 "attrlookup.gperf"
+      {"MethodParameters", CFR_ATTRIBUTE_MethodParameters, CFR_ATTRIBUTE_MethodParameters},
+#line 77 "attrlookup.gperf"
       {"PermittedSubclasses", CFR_ATTRIBUTE_PermittedSubclasses, CFR_ATTRIBUTE_PermittedSubclasses}
     };
 
   static const signed char lookup[] =
     {
-      -1, -1, -1, -1,  0, -1, -1, -1, -1,  1,  2, -1,  3,  4,
-      -1,  5,  6,  7,  8, -1,  9, -1, 10, 11, 12, 13, -1, 14,
-      15, 16, 17, 18, -1, -1, 19, 20, 21, 22, -1, 23, -1, 24,
-      25, -1, -1, -1, -1, 26, -1, -1, 27
+      -1, -1, -1, -1,  0, -1, -1,  1, -1,  2,  3, -1,  4,  5,
+       6,  7,  8,  9, 10, -1, 11, 12, 13, 14, 15, 16, -1, 17,
+      18, 19, 20, 21, -1, -1, 22, 23, 24, 25, -1, 26, -1, 27,
+      28, -1, -1, -1, -1, 29, -1, -1, 30
     };
 
   if (len <= MAX_WORD_LENGTH && len >= MIN_WORD_LENGTH)
     {
-      register int key = attributeHash (str, len);
+      register size_t key = attributeHash (str, len);
 
-      if (key <= MAX_HASH_VALUE && key >= 0)
+      if (key <= MAX_HASH_VALUE)
         {
           register int index = lookup[key];
 

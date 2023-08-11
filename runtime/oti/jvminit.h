@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #ifndef JVMINIT_H
@@ -331,6 +331,8 @@ enum INIT_STAGE {
 #define VMOPT_X142BOOSTGCTHRPRIO "-X142BoostGCThrPrio"
 #define VMOPT_XREALTIME "-Xrealtime"
 #define VMOPT_XNORTSJ "-Xnortsj"
+#define VMOPT_XXNOSHOWCARRIERFRAMES "-XX:-ShowCarrierFrames"
+#define VMOPT_XXSHOWCARRIERFRAMES "-XX:+ShowCarrierFrames"
 #define VMOPT_XXNOSHOWHIDDENFRAMES "-XX:-ShowHiddenFrames"
 #define VMOPT_XXSHOWHIDDENFRAMES "-XX:+ShowHiddenFrames"
 #define VMOPT_XXNOSTACKTRACEINTHROWABLE "-XX:-StackTraceInThrowable"
@@ -425,6 +427,8 @@ enum INIT_STAGE {
 #define VMOPT_XXENABLECRIUNONPORTABLEMODE "-XX:+CRIURestoreNonPortableMode"
 #define VMOPT_XXDISABLECRIUNONPORTABLEMODE "-XX:-CRIURestoreNonPortableMode"
 #define VMOPT_XSHARECLASSES_DISABLEONRESTORE "-Xshareclasses:disableOnRestore"
+#define VMOPT_XXENABLETHROWONDELAYECHECKPOINTOPERATION "-XX:+ThrowOnDelayedCheckpointOperation"
+#define VMOPT_XXDISABLETHROWONDELAYECHECKPOINTOPERATION "-XX:-ThrowOnDelayedCheckpointOperation"
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 /*
@@ -542,6 +546,8 @@ enum INIT_STAGE {
 #define VMOPT_XXDYNAMICHEAPIFICATION "-XX:+DynamicHeapification"
 #define VMOPT_XXNODYNAMICHEAPIFICATION "-XX:-DynamicHeapification"
 
+#define VMOPT_XXCONTINUATIONCACHE "-XX:ContinuationCache:"
+
 #define MAPOPT_AGENTLIB_JDWP_EQUALS "-agentlib:jdwp="
 #define MAPOPT_XRUNJDWP "-Xrunjdwp:"
 
@@ -617,6 +623,9 @@ enum INIT_STAGE {
 #define MAPOPT_XLOG_OPT_COLON "-Xlog:"
 #define VMOPT_XSYSLOG_OPT "-Xsyslog"
 #define MAPOPT_XSYSLOG_OPT_COLON "-Xsyslog:"
+
+#define VMOPT_XXENABLEDYNAMICAGENTLOADING "-XX:+EnableDynamicAgentLoading"
+#define VMOPT_XXNOENABLEDYNAMICAGENTLOADING "-XX:-EnableDynamicAgentLoading"
 
 /* Modularity command line options */
 #define VMOPT_MODULE_UPGRADE_PATH "--upgrade-module-path"

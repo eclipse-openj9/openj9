@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #if !defined(VMHELPERS_HPP_)
@@ -74,8 +74,10 @@ typedef enum {
 	J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_ASSIGNABLE_FROM,
 	J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_ARRAY,
 	J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_PRIMITIVE,
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_PRIMITIVE_CLASS,
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_VALUE,
 	J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_IDENTITY,
 	J9_BCLOOP_SEND_TARGET_INL_INTERNALS_POSITIVE_ONLY_HASHCODES,
@@ -158,15 +160,17 @@ typedef enum {
 	J9_BCLOOP_SEND_TARGET_INL_UNSAFE_COMPAREANDSWAPLONG,
 	J9_BCLOOP_SEND_TARGET_INL_UNSAFE_COMPAREANDSWAPINT,
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-	J9_BCLOOP_SEND_TARGET_INL_UNSAFE_GETVALUE,
-	J9_BCLOOP_SEND_TARGET_INL_UNSAFE_PUTVALUE,
 	J9_BCLOOP_SEND_TARGET_INL_UNSAFE_UNINITIALIZEDDEFAULTVALUE,
 	J9_BCLOOP_SEND_TARGET_INL_UNSAFE_VALUEHEADERSIZE,
+	J9_BCLOOP_SEND_TARGET_INL_UNSAFE_GETOBJECTSIZE,
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+	J9_BCLOOP_SEND_TARGET_INL_UNSAFE_GETVALUE,
+	J9_BCLOOP_SEND_TARGET_INL_UNSAFE_PUTVALUE,
 	J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ISFLATTENEDARRAY,
 	J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ISFLATTENED,
-	J9_BCLOOP_SEND_TARGET_INL_UNSAFE_GETOBJECTSIZE,
 	J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ISFIELDATOFFSETFLATTENED,
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
 	J9_BCLOOP_SEND_TARGET_INL_INTERNALS_GET_INTERFACES,
 	J9_BCLOOP_SEND_TARGET_INL_ARRAY_NEW_ARRAY_IMPL,
 	J9_BCLOOP_SEND_TARGET_INL_CLASSLOADER_FIND_LOADED_CLASS_IMPL,
@@ -852,11 +856,11 @@ done:
 	{
 		j9object_t instance = NULL;
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 		if (J9_IS_J9CLASS_FLATTENED(arrayClass)) {
 			instance = objectAllocate->inlineAllocateIndexableValueTypeObject(currentThread, arrayClass, size, initializeSlots, memoryBarrier, sizeCheck);
 		} else if (J9_ARE_NO_BITS_SET(arrayClass->classFlags, J9ClassContainsUnflattenedFlattenables))
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
 		{
 			instance = objectAllocate->inlineAllocateIndexableObject(currentThread, arrayClass, size, initializeSlots, memoryBarrier, sizeCheck);
 		}
@@ -1961,7 +1965,6 @@ exit:
 		currentThread->arg0EA = sp - 1;
 		currentThread->pc = (U_8 *)J9SF_FRAME_TYPE_JIT_RESOLVE;
 		currentThread->literals = NULL;
-		currentThread->jitStackFrameFlags = 0;
 		return oldPC;
 	}
 
@@ -2058,6 +2061,17 @@ exit:
 		return oldState;
 	}
 
+#if JAVA_SPEC_VERSION >= 20
+	static VMINLINE void
+	virtualThreadHideFrames(J9VMThread *currentThread, jboolean hide)
+	{
+		if (hide) {
+			currentThread->privateFlags |= J9_PRIVATE_FLAGS_VIRTUAL_THREAD_HIDDEN_FRAMES;
+		} else {
+			currentThread->privateFlags &= ~(UDATA)J9_PRIVATE_FLAGS_VIRTUAL_THREAD_HIDDEN_FRAMES;
+		}
+	}
+#endif /* JAVA_SPEC_VERSION >= 20 */
 };
 
 #endif /* VMHELPERS_HPP_ */

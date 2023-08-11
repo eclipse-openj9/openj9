@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include "j9cfg.h"
@@ -45,6 +45,9 @@
 #include "env/VerboseLog.hpp"
 #include "env/TRMemory.hpp"
 #include "env/VMJ9.h"
+#if defined(J9VM_OPT_JITSERVER)
+#include "net/ClientStream.hpp"
+#endif
 #include "runtime/CodeRuntime.hpp"
 
 #define FIND_AND_CONSUME_RESTORE_ARG(match, optionName, optionValue) FIND_AND_CONSUME_ARG(vm->checkpointState.restoreArgsList, match, optionName, optionValue)
@@ -168,6 +171,9 @@ J9::OptionsPostRestore::iterateOverExternalOptions()
          case J9::ExternalOptions::XXplusJITServerAOTCachePersistenceOption:
          case J9::ExternalOptions::XXminusJITServerAOTCachePersistenceOption:
          case J9::ExternalOptions::XXJITServerAOTCacheDirOption:
+         case J9::ExternalOptions::XXcodecachetotalMaxRAMPercentage:
+         case J9::ExternalOptions::XXplusJITServerAOTCacheDelayMethodRelocation:
+         case J9::ExternalOptions::XXminusJITServerAOTCacheDelayMethodRelocation:
             {
             // do nothing, consume them to prevent errors
             FIND_AND_CONSUME_RESTORE_ARG(OPTIONAL_LIST_MATCH, optString, 0);
@@ -322,6 +328,16 @@ J9::OptionsPostRestore::processJitServerOptions()
       _compInfo->getPersistentInfo()->setClientUID(clientUID);
       _compInfo->getPersistentInfo()->setServerUID(0);
       _compInfo->setCanPerformRemoteCompilationInCRIUMode(true);
+
+      // If encryption is desired, load and initialize the SSL
+      if (_compInfo->useSSL())
+         {
+         bool loaded = JITServer::loadLibsslAndFindSymbols();
+         TR_ASSERT_FATAL(loaded, "Terminating the JVM because it failed to load the SSL library");
+
+         int rc = JITServer::ClientStream::static_init(_compInfo);
+         TR_ASSERT_FATAL(rc == 0, "Terminating the JVM because it failed to initialize the SSL library");
+         }
       }
    else
       {

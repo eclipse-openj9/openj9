@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include <string.h>
@@ -339,7 +339,14 @@ J9RASInitialize(J9JavaVM* javaVM)
 	j9rasSetServiceLevel(javaVM, NULL);
 
 #if defined(J9PRODUCT_NAME)
-	javaVM->j9ras->productName = J9PRODUCT_NAME;
+	/* copy product name to allocated memory */
+	{
+		char *productName = j9mem_allocate_memory(strlen(J9PRODUCT_NAME) + 1, OMRMEM_CATEGORY_VM);
+		if (NULL != productName) {
+			strcpy(productName, J9PRODUCT_NAME);
+		}
+		javaVM->j9ras->productName = productName;
+	}
 #endif /* defined(J9PRODUCT_NAME) */
 }
 
@@ -529,31 +536,36 @@ freeRASStruct(J9JavaVM *javaVM, J9RAS* rasStruct)
 void
 J9RASShutdown(J9JavaVM *javaVM)
 {
-	J9RASSystemInfo *systemInfo = NULL;
 	PORT_ACCESS_FROM_JAVAVM(javaVM);
+	J9RAS *j9ras = javaVM->j9ras;
 
-	if (NULL == javaVM->j9ras) {
+	if (NULL == j9ras) {
 		return;
 	}
 
-	j9mem_free_memory(javaVM->j9ras->ddrData);
-	javaVM->j9ras->ddrData = NULL;
+	javaVM->j9ras = NULL;
 
-	j9mem_free_memory(javaVM->j9ras->serviceLevel);
-	javaVM->j9ras->serviceLevel = NULL;
+	j9mem_free_memory(j9ras->productName);
+	j9ras->productName = NULL;
 
-	while (!J9_LINKED_LIST_IS_EMPTY(javaVM->j9ras->systemInfo)) {
+	j9mem_free_memory(j9ras->ddrData);
+	j9ras->ddrData = NULL;
+
+	j9mem_free_memory(j9ras->serviceLevel);
+	j9ras->serviceLevel = NULL;
+
+	while (!J9_LINKED_LIST_IS_EMPTY(j9ras->systemInfo)) {
+		J9RASSystemInfo *systemInfo = NULL;
 		/* Assume that systemInfo->data either doesn't need freeing or was
 		 * allocated by the same j9mem_allocate_memory call that created
 		 * systemInfo itself.
 		 * See initSystemInfo and appendSystemInfoFromFile in dmpsup.c
 		 */
-		J9_LINKED_LIST_REMOVE_FIRST(javaVM->j9ras->systemInfo, systemInfo);
+		J9_LINKED_LIST_REMOVE_FIRST(j9ras->systemInfo, systemInfo);
 		j9mem_free_memory(systemInfo);
 	}
 
-	freeRASStruct(javaVM, javaVM->j9ras);
-	javaVM->j9ras = NULL;
+	freeRASStruct(javaVM, j9ras);
 }
 
 void
@@ -561,12 +573,14 @@ populateRASNetData(J9JavaVM *javaVM, J9RAS *rasStruct)
 {
 	j9addrinfo_struct addrinfo;
 	j9addrinfo_t hints;
-	U_64 startTime, endTime;
+	uint64_t startTime = 0;
+	uint64_t endTime = 0;
+	uint64_t timeDiff = 0;
 	PORT_ACCESS_FROM_JAVAVM(javaVM);
 	OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
 
 	/* measure the time taken to call the socket APIs, so we can issue a warning */
-	startTime = j9time_current_time_millis();
+	startTime = omrtime_hires_clock();
 
 	/* get the host name and IP addresses */
 	if (0 != omrsysinfo_get_hostname((char*)rasStruct->hostname,  sizeof(rasStruct->hostname) )) {
@@ -616,9 +630,10 @@ populateRASNetData(J9JavaVM *javaVM, J9RAS *rasStruct)
 		j9sock_freeaddrinfo( &addrinfo );
 	}
 
-	endTime = j9time_current_time_millis();
-	if (endTime - startTime > RAS_NETWORK_WARNING_TIME) {
-		j9nls_printf(PORTLIB, J9NLS_INFO, J9NLS_VM_RAS_SLOW_NEWORK_RESPONSE, (int)(endTime - startTime)/1000);
+	endTime = omrtime_hires_clock();
+	timeDiff = omrtime_hires_delta(startTime, endTime, OMRPORT_TIME_DELTA_IN_MILLISECONDS);
+	if (timeDiff > RAS_NETWORK_WARNING_TIME) {
+		j9nls_printf(PORTLIB, J9NLS_INFO, J9NLS_VM_RAS_SLOW_NEWORK_RESPONSE, (int)(timeDiff / 1000));
 	}
 }
 

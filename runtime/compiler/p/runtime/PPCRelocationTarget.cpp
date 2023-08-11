@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include "p/runtime/PPCRelocationTarget.hpp"
@@ -308,8 +308,11 @@ TR_PPC32RelocationTarget::isOrderedPairRelocation(TR_RelocationRecord *reloRecor
       case TR_GlobalValue:
       case TR_RamMethodSequence:
       case TR_BodyInfoAddressLoad:
+      case TR_CatchBlockCounter:
+      case TR_StartPC:
       case TR_DataAddress:
       case TR_DebugCounter:
+      case TR_MethodEnterExitHookAddress:
          return true;
       }
 

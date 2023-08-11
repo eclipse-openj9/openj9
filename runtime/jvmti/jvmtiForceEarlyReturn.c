@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
 #include "jvmtiHelpers.h"
@@ -146,18 +146,43 @@ jvmtiForceEarlyReturn(jvmtiEnv* env,
 		ENSURE_CAPABILITY(env, can_force_early_return);
 
 		rc = getVMThread(
-				currentThread, thread, &targetThread, JVMTI_ERROR_OPAQUE_FRAME,
-				J9JVMTI_GETVMTHREAD_ERROR_ON_DEAD_THREAD | J9JVMTI_GETVMTHREAD_ERROR_ON_VIRTUALTHREAD);
+				currentThread, thread, &targetThread, JVMTI_ERROR_NONE,
+				J9JVMTI_GETVMTHREAD_ERROR_ON_DEAD_THREAD);
 		if (rc == JVMTI_ERROR_NONE) {
-			/* Does this thread need to be suspended at an event? */
-			vm->internalVMFunctions->haltThreadForInspection(currentThread, targetThread);
-			if ((currentThread != targetThread) && !(targetThread->publicFlags & J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND))  {
-				/* A thread other then current must be suspended in order to force early return */
+#if JAVA_SPEC_VERSION >= 21
+			j9object_t threadObject = NULL;
+			/* Error if a virtual thread is unmounted since it won't be able to
+			 * force an early return.
+			 */
+			if (NULL == targetThread) {
+				rc = JVMTI_ERROR_OPAQUE_FRAME;
+				goto release;
+			}
+			threadObject = (NULL == thread) ? currentThread->threadObject : J9_JNI_UNWRAP_REFERENCE(thread);
+#endif /* JAVA_SPEC_VERSION >= 21 */
+
+			if ((currentThread != targetThread)
+#if JAVA_SPEC_VERSION >= 21
+			&& (0 == J9OBJECT_U32_LOAD(currentThread, threadObject, vm->isSuspendedInternalOffset))
+#else /* JAVA_SPEC_VERSION >= 21 */
+			&& OMR_ARE_NO_BITS_SET(targetThread->publicFlags, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND)
+#endif /* JAVA_SPEC_VERSION >= 21 */
+			)  {
+				/* All threads except the current thread must be suspended in order to force an early return. */
 				rc = JVMTI_ERROR_THREAD_NOT_SUSPENDED;
 			} else {
-				J9StackWalkState walkState;
-
-				rc = findDecompileInfo(currentThread, targetThread, 0, &walkState);
+				J9StackWalkState walkState = {0};
+				J9VMThread *threadToWalk = targetThread;
+#if JAVA_SPEC_VERSION >= 21
+				J9VMThread stackThread = {0};
+				J9VMEntryLocalStorage els = {0};
+				J9VMContinuation *continuation = getJ9VMContinuationToWalk(currentThread, targetThread, threadObject);
+				if (NULL != continuation) {
+					vm->internalVMFunctions->copyFieldsFromContinuation(currentThread, &stackThread, &els, continuation);
+					threadToWalk = &stackThread;
+				}
+#endif /* JAVA_SPEC_VERSION >= 21 */
+				rc = findDecompileInfo(currentThread, threadToWalk, 0, &walkState);
   				if (JVMTI_ERROR_NONE == rc) {
   					J9Method *method = walkState.userData3;
   					J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
@@ -191,9 +216,9 @@ jvmtiForceEarlyReturn(jvmtiEnv* env,
 							methodReturnType = JVMTI_TYPE_JDOUBLE;
 							break;
 						case 'L':
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 						case 'Q':
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 							methodReturnType = JVMTI_TYPE_JOBJECT;
 							break;
   						}
@@ -201,7 +226,7 @@ jvmtiForceEarlyReturn(jvmtiEnv* env,
   							if (NULL != walkState.jitInfo) {
   								if (NULL == vm->jitConfig->jitAddDecompilationForFramePop(currentThread, &walkState)) {
   									rc = JVMTI_ERROR_OUT_OF_MEMORY;
-  									goto resume;
+									goto release;
   								}
   							}
   							vm->internalVMFunctions->setHaltFlag(targetThread, J9_PUBLIC_FLAGS_POP_FRAMES_INTERRUPT);
@@ -231,8 +256,7 @@ jvmtiForceEarlyReturn(jvmtiEnv* env,
 					}
 				}
 			}
-resume:
-			vm->internalVMFunctions->resumeThreadForInspection(currentThread, targetThread);
+release:
 			releaseVMThread(currentThread, targetThread, thread);
 		}
 done:
