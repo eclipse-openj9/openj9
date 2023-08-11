@@ -326,11 +326,21 @@ jvmtiGetOrSetLocal(jvmtiEnv *env,
 			J9VMContinuation *continuation = NULL;
 
 #if JAVA_SPEC_VERSION >= 20
-			if ((currentThread != targetThread)
-			&& (0 == J9OBJECT_U32_LOAD(currentThread, threadObject, vm->isSuspendedInternalOffset))
-			) {
-				rc = JVMTI_ERROR_THREAD_NOT_SUSPENDED;
-				goto release;
+			if (0 == J9OBJECT_U32_LOAD(currentThread, threadObject, vm->isSuspendedInternalOffset)) {
+				if (currentThread != targetThread) {
+					/* Error if the thread is not suspended and not the current thread. */
+					rc = JVMTI_ERROR_THREAD_NOT_SUSPENDED;
+					goto release;
+				}
+			} else {
+				if (isSet && (0 != depth) && IS_JAVA_LANG_VIRTUALTHREAD(currentThread, threadObject)) {
+					/* For suspended virtual threads, the JVMTI spec only allows to set the value of a
+					 * local variable in the topmost frame. Otherwise, it expects JVMTI_ERROR_OPAQUE_FRAME
+					 * to be returned.
+					 */
+					rc = JVMTI_ERROR_OPAQUE_FRAME;
+					goto release;
+				}
 			}
 #endif /* JAVA_SPEC_VERSION >= 20 */
 
