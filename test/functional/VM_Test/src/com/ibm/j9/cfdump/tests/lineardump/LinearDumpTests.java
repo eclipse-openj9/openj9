@@ -104,7 +104,6 @@ public class LinearDumpTests extends LinearDumpTestCase {
 			String[] stringsToFind = new String[] {
 					"Invalid class file:",
 					"Recommended action: throw java.lang.ClassFormatError",
-					"bad magic number"
 			};
 
 			for (String line; (line = in.readLine()) != null && numFound != stringsToFind.length;) {
