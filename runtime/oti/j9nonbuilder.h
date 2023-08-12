@@ -5804,6 +5804,7 @@ typedef struct J9JavaVM {
 	omrthread_monitor_t statisticsMutex;
 	struct J9Statistic* nextStatistic;
 	I_32  (JNICALL *loadAgentLibraryOnAttach)(struct J9JavaVM * vm, const char * library, const char *options, UDATA decorate) ;
+	BOOLEAN (*isAgentLibraryLoaded)(struct J9JavaVM *vm, const char *library);
 	struct J9AttachContext attachContext;
 	UDATA hotSwapCount;
 	UDATA zombieThreadCount;

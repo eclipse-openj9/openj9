@@ -46,7 +46,7 @@ public class DiagnosticUtils {
 	private static final String FORMAT_PREFIX = " Format: "; //$NON-NLS-1$
 
 	@SuppressWarnings("nls")
-	private static final String HEAP_DUMP_OPTION_HELP = " [request=<options>] [opts=<options] [<file path>]%n"
+	private static final String HEAP_DUMP_OPTION_HELP = " [request=<options>] [opts=<options>] [<file path>]%n"
 			+ " Set optional request= and opts= -Xdump options. The order of the parameters does not matter.%n";
 
 	@SuppressWarnings("nls")
@@ -100,7 +100,10 @@ public class DiagnosticUtils {
 	 * Get JVM statistics
 	 */
 	private static final String DIAGNOSTICS_STAT_CLASS = "jstat.class"; //$NON-NLS-1$
-	
+
+	// load JVMTI agent
+	private static final String DIAGNOSTICS_LOAD_JVMTI_AGENT = "JVMTI.agent_load"; //$NON-NLS-1$
+
 	/**
 	 * Key for the command sent to executeDiagnosticCommand()
 	 */
@@ -354,7 +357,27 @@ public class DiagnosticUtils {
 		bufferPrinter.flush();
 		return DiagnosticProperties.makeStringResult(buffer.toString());
 	}
-	
+
+	@SuppressWarnings("nls")
+	private static DiagnosticProperties loadJVMTIAgent(String diagnosticCommand) {
+		DiagnosticProperties result;
+		String[] parts = diagnosticCommand.split(DIAGNOSTICS_OPTION_SEPARATOR);
+		// parts[0] is already verified as DIAGNOSTICS_LOAD_JVMTI_AGENT since we are here
+		if (parts.length < 2) {
+			result = DiagnosticProperties.makeErrorProperties("Too few arguments, the absolute path of the agent is required: " + diagnosticCommand);
+		} else if (parts.length > 3) {
+			result = DiagnosticProperties.makeErrorProperties("Command not recognized due to more than 3 arguments: " + diagnosticCommand);
+		} else {
+			String attachError = Attachment.loadAgentLibrary(parts[1], (parts.length == 3) ? parts[2] : "", false);
+			if (attachError == null) {
+				result = DiagnosticProperties.makeStringResult(DIAGNOSTICS_LOAD_JVMTI_AGENT + " succeeded");
+			} else {
+				result = DiagnosticProperties.makeStatusProperties(true, attachError);
+			}
+		}
+		return result;
+	}
+
 	private static DiagnosticProperties doHelp(String diagnosticCommand) {
 		String[] parts = diagnosticCommand.split(DIAGNOSTICS_OPTION_SEPARATOR);
 		/* print a list of the available commands */
@@ -416,7 +439,13 @@ public class DiagnosticUtils {
 	private static final String DIAGNOSTICS_JSTAT_CLASS_HELP = "Show JVM classloader statistics.%n" //$NON-NLS-1$
 			+ FORMAT_PREFIX + DIAGNOSTICS_STAT_CLASS + "%n" //$NON-NLS-1$
 			+ "NOTE: this utility might significantly affect the performance of the target VM.%n"; //$NON-NLS-1$
-	
+
+	@SuppressWarnings("nls")
+	private static final String DIAGNOSTICS_LOAD_JVMTI_AGENT_HELP = "Load JVMTI agent.%n"
+			+ FORMAT_PREFIX + DIAGNOSTICS_LOAD_JVMTI_AGENT + " <agentLibrary> [<agent option>]%n"
+			+ "          agentLibrary: the absolute path of the agent%n"
+			+ "          agent option: (Optional) the agent option string%n";
+
 	/* Initialize the command and help text tables */
 	static {
 		commandTable = new HashMap<>();
@@ -451,5 +480,8 @@ public class DiagnosticUtils {
 		
 		commandTable.put(DIAGNOSTICS_STAT_CLASS, DiagnosticUtils::getJstatClass);
 		helpTable.put(DIAGNOSTICS_STAT_CLASS, DIAGNOSTICS_JSTAT_CLASS_HELP);
+
+		commandTable.put(DIAGNOSTICS_LOAD_JVMTI_AGENT, DiagnosticUtils::loadJVMTIAgent);
+		helpTable.put(DIAGNOSTICS_LOAD_JVMTI_AGENT, DIAGNOSTICS_LOAD_JVMTI_AGENT_HELP);
 	}
 }

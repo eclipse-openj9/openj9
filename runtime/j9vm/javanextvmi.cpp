@@ -24,6 +24,7 @@
 #include "bcverify_api.h"
 #include "j9.h"
 #include "j9cfg.h"
+#include "jvminit.h"
 #include "rommeth.h"
 #include "ut_j9scar.h"
 #include "util_api.h"
@@ -548,10 +549,14 @@ JVM_VirtualThreadHideFrames(JNIEnv *env, jobject vthread, jboolean hide)
 JNIEXPORT jboolean JNICALL
 JVM_PrintWarningAtDynamicAgentLoad()
 {
-	/* A temporary implementation, an actual solution is provided via
-	 * https://github.com/eclipse-openj9/openj9/issues/17500
-	 */
-	return JNI_TRUE;
+	jboolean result = JNI_TRUE;
+	J9JavaVM *vm = BFUjavaVM;
+	if (J9_ARE_ANY_BITS_SET(vm->runtimeFlags, J9_RUNTIME_ALLOW_DYNAMIC_AGENT)
+		&& (0 <= FIND_ARG_IN_VMARGS(EXACT_MATCH, VMOPT_XXENABLEDYNAMICAGENTLOADING, NULL))
+	) {
+		result = JNI_FALSE;
+	}
+	return result;
 }
 
 JNIEXPORT void JNICALL
