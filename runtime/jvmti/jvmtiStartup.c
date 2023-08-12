@@ -52,8 +52,8 @@ static jint loadAgentLibrary (J9JavaVM * vm, J9JVMTIAgentLibrary * agentLibrary)
 static jint createXrunLibraries (J9JavaVM * vm);
 static J9JVMTIAgentLibrary * findAgentLibrary(J9JavaVM * vm, const char *libraryAndOptions, UDATA libraryLength);
 static jint issueAgentOnLoadAttach(J9JavaVM * vm, J9JVMTIAgentLibrary * agentLibrary, const char* options, char *loadFunctionName, BOOLEAN * foundLoadFn);
-I_32 JNICALL loadAgentLibraryOnAttach(struct J9JavaVM * vm, const char * library, const char *options, UDATA decorate) ;
-
+I_32 JNICALL loadAgentLibraryOnAttach(struct J9JavaVM *vm, const char *library, const char *options, UDATA decorate);
+static BOOLEAN isAgentLibraryLoaded(J9JavaVM *vm, const char *library);
 
 #define INSTRUMENT_LIBRARY "instrument"
 
@@ -212,6 +212,7 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 			}
 
 			vm->loadAgentLibraryOnAttach = &loadAgentLibraryOnAttach;
+			vm->isAgentLibraryLoaded = &isAgentLibraryLoaded;
 
 			break;
 		}
@@ -446,27 +447,32 @@ closeLibrary:
 }
 
 /**
- * Load a JVMTI agent and call the agent's initialization function
- * @param vm Java VM
- * @param agentLibrary environment for the agent
- * @param name of the initialization function
- * @return JNI_ERR, JNI_OK
+ * Load a JVMTI agent and call the agent's initialization function.
+ *
+ * @param[in] vm Java VM
+ * @param[in] agentLibrary environment for the agent
+ * @param[in] loadFunctionName name of the initialization function
+ * @param[in] loadStatically a boolean indicating if the library is to be loaded statically
+ * @param[in/out] found a pointer to a boolean indicating whether the load function was found
+ * @param[in/out] errorMessage a pointer to the error message when opening the shared library
+ *
+ * @return JNI_ERR if failed, otherwise JNI_OK
  */
 static jint
-loadAgentLibraryGeneric(J9JavaVM * vm, J9JVMTIAgentLibrary * agentLibrary, char *loadFunctionName, BOOLEAN loadStatically, BOOLEAN * found, const char **errorMessage)
+loadAgentLibraryGeneric(J9JavaVM *vm, J9JVMTIAgentLibrary *agentLibrary, char *loadFunctionName, BOOLEAN loadStatically, BOOLEAN *found, const char **errorMessage)
 {
 	PORT_ACCESS_FROM_JAVAVM(vm);
-	jint rc;
-	J9JVMTIData * jvmtiData = J9JVMTI_DATA_FROM_VM(vm);
-	J9NativeLibrary * nativeLib = &(agentLibrary->nativeLib);
+	jint rc = JNI_OK;
+	J9JVMTIData *jvmtiData = J9JVMTI_DATA_FROM_VM(vm);
+	J9NativeLibrary *nativeLib = &(agentLibrary->nativeLib);
 
 	Trc_JVMTI_loadAgentLibraryGeneric_Entry(agentLibrary->nativeLib.name);
 	if (NULL == agentLibrary->xRunLibrary) {
 		jint i = 0;
-		char * fullLibName = NULL;
-		const char * systemAgentName;
+		char *fullLibName = NULL;
+		const char *systemAgentName = NULL;
 		UDATA openFlags = agentLibrary->decorate ? J9PORT_SLOPEN_DECORATE | J9PORT_SLOPEN_LAZY : J9PORT_SLOPEN_LAZY;
-		char * agentPath = NULL; /* Don't free agentPath; may point at persistent, system areas. */
+		char *agentPath = NULL; /* Don't free agentPath; may point at persistent, system areas. */
 
 		if (loadStatically) {
 			/* If flag is set, the agent library ought to be opened statically, that is, the executable itself. */
@@ -474,8 +480,8 @@ loadAgentLibraryGeneric(J9JavaVM * vm, J9JVMTIAgentLibrary * agentLibrary, char 
 				openFlags |= J9PORT_SLOPEN_OPEN_EXECUTABLE;
 			} else {
 				/* Report failure to obtain executable name; caller will proceed with dynamic linking. */
-				Trc_JVMTI_loadAgentLibraryGeneric_execNameNotFound(j9error_last_error_number());
-				Trc_JVMTI_loadAgentLibraryGeneric_Exit(agentLibrary->nativeLib.name);
+				I_32 errorno = j9error_last_error_number();
+				Trc_JVMTI_loadAgentLibraryGeneric_execNameNotFound_Exit(errorno, agentLibrary->nativeLib.name);
 				return JNI_ERR;
 			}
 		} else {
@@ -483,8 +489,8 @@ loadAgentLibraryGeneric(J9JavaVM * vm, J9JVMTIAgentLibrary * agentLibrary, char 
 			 * is loaded from our current jre tree. This avoids picking up stray agents that might
 			 * be found on the library path. See CMVC 144382.
 			 */
-			while ((systemAgentName = systemAgentNames[i++]) != NULL) {
-				if (strcmp(nativeLib->name, systemAgentName) == 0) {
+			while (NULL != (systemAgentName = systemAgentNames[i++])) {
+				if (0 == strcmp(nativeLib->name, systemAgentName)) {
 					fullLibName = prependSystemAgentPath(vm, agentLibrary, nativeLib->name);
 					Trc_JVMTI_loadAgentLibraryGeneric_loadingAgentAs(fullLibName);
 					break;
@@ -493,9 +499,7 @@ loadAgentLibraryGeneric(J9JavaVM * vm, J9JVMTIAgentLibrary * agentLibrary, char 
 			agentPath = (NULL != fullLibName) ? fullLibName : nativeLib->name;
 		}
 
-		if (j9sl_open_shared_library(agentPath, &(nativeLib->handle), openFlags) != 0) {
-			Trc_JVMTI_loadAgentLibraryGeneric_failedOpeningAgentLibrary(agentPath);
-
+		if (0 != j9sl_open_shared_library(agentPath, &(nativeLib->handle), openFlags)) {
 			/* We may attempt to open the shared library again so save the error message
 			 * and print it once we know it is the final attempt */
 			*errorMessage = j9error_last_error_message();
@@ -503,7 +507,7 @@ loadAgentLibraryGeneric(J9JavaVM * vm, J9JVMTIAgentLibrary * agentLibrary, char 
 			if (NULL != fullLibName) {
 				j9mem_free_memory(fullLibName);
 			}
-			Trc_JVMTI_loadAgentLibraryGeneric_Exit(agentPath);
+			Trc_JVMTI_loadAgentLibraryGeneric_failedOpeningAgentLibrary_Exit(agentPath, *errorMessage);
 			return JNI_ERR;
 		}
 		Trc_JVMTI_loadAgentLibraryGeneric_openedAgentLibrary(agentPath,
@@ -519,15 +523,13 @@ loadAgentLibraryGeneric(J9JavaVM * vm, J9JVMTIAgentLibrary * agentLibrary, char 
 	rc = issueAgentOnLoadAttach(vm, agentLibrary, agentLibrary->options, loadFunctionName, found);
 	if (!(*found)) {
 		/* If the load function wasn't found, issueAgentOnLoadAttach already closed the library. */
-		Trc_JVMTI_loadAgentLibraryGeneric_agentAttachFailed1(loadFunctionName);
-		Trc_JVMTI_loadAgentLibraryGeneric_Exit(agentLibrary->nativeLib.name);
+		Trc_JVMTI_loadAgentLibraryGeneric_agentAttachFailed1_Exit(agentLibrary->nativeLib.name, loadFunctionName);
 		return rc;
 	}
 
 	/* For errors other than load function not found ... */
 	if (JNI_OK != rc) {
-		Trc_JVMTI_loadAgentLibraryGeneric_agentAttachFailed2(rc);
-		Trc_JVMTI_loadAgentLibraryGeneric_Exit(agentLibrary->nativeLib.name);
+		Trc_JVMTI_loadAgentLibraryGeneric_agentAttachFailed2_Exit(agentLibrary->nativeLib.name, loadFunctionName, rc);
 		return rc;
 	}
 
@@ -540,14 +542,14 @@ loadAgentLibraryGeneric(J9JavaVM * vm, J9JVMTIAgentLibrary * agentLibrary, char 
 	/* Add the library to the linked list */
 	issueWriteBarrier();
 	omrthread_monitor_enter(jvmtiData->mutex);
-	if (jvmtiData->agentLibrariesTail == NULL) {
+	if (NULL == jvmtiData->agentLibrariesTail) {
 		jvmtiData->agentLibrariesHead = jvmtiData->agentLibrariesTail = nativeLib;
 	} else {
 		jvmtiData->agentLibrariesTail->next = nativeLib;
 		jvmtiData->agentLibrariesTail = nativeLib;
 	}
 	omrthread_monitor_exit(jvmtiData->mutex);
-	Trc_JVMTI_loadAgentLibraryGeneric_Exit(agentLibrary->nativeLib.name);
+	Trc_JVMTI_loadAgentLibraryGeneric_succeed_Exit(agentLibrary->nativeLib.name, loadFunctionName);
 
 	return JNI_OK;
 }
@@ -1060,6 +1062,11 @@ createXrunLibraries(J9JavaVM * vm)
 	return JNI_OK;
 }
 
+static BOOLEAN
+isAgentLibraryLoaded(J9JavaVM *vm, const char *library)
+{
+	return NULL != findAgentLibrary(vm, library, strlen(library));
+}
 
 static J9JVMTIAgentLibrary *
 findAgentLibrary(J9JavaVM * vm, const char *libraryAndOptions, UDATA libraryLength)
@@ -1087,4 +1094,3 @@ findAgentLibrary(J9JavaVM * vm, const char *libraryAndOptions, UDATA libraryLeng
 
 	return NULL;
 }
-

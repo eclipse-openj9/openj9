@@ -563,7 +563,7 @@ TraceExit=Trc_JVMTI_issueAgentOnLoadAttach_Exit Overhead=1 Level=1 Noenv Templat
 TraceEvent=Trc_JVMTI_issueAgentOnLoadAttach_close_shared_library Overhead=1 Level=1 Noenv Template="issueAgentOnLoadAttach unloading %s"
 
 TraceEntry=Trc_JVMTI_loadAgentLibraryGeneric_Entry Overhead=1 Level=1 Noenv Template="loadAgentLibraryGeneric loading library %s"
-TraceExit=Trc_JVMTI_loadAgentLibraryGeneric_Exit Overhead=1 Level=1 Noenv Template="loadAgentLibraryGeneric successfully loaded library %s"
+TraceExit=Trc_JVMTI_loadAgentLibraryGeneric_Exit Obsolete Overhead=1 Level=1 Noenv Template="loadAgentLibraryGeneric successfully loaded library %s"
 
 TraceEntry=Trc_JVMTI_loadAgentLibraryOnAttach_Entry Overhead=1 Level=1 Noenv Template="loadAgentLibraryOnAttach loading library %s"
 TraceExit=Trc_JVMTI_loadAgentLibraryOnAttach_Exit Overhead=1 Level=1 Noenv Template="loadAgentLibraryOnAttach loaded library %s, status=%d"
@@ -602,11 +602,11 @@ TraceException=Trc_JVMTI_issueAgentOnLoadAttach_loadFunctionFailed Overhead=1 Le
 TraceEvent=Trc_JVMTI_issueAgentOnLoadAttach_loadFunctionSucceeded Overhead=1 Level=5 Noenv Template="issueAgentOnLoadAttach: Load function %s succeeded"
 
 TraceEvent=Trc_JVMTI_loadAgentLibraryGeneric_loadingAgentAs Overhead=1 Level=5 Noenv Template="loadAgentLibraryGeneric: Loading agent as %s"
-TraceException=Trc_JVMTI_loadAgentLibraryGeneric_execNameNotFound Overhead=1 Level=1 Noenv Template="loadAgentLibraryGeneric: failed obtaining executable name; error code=%d"
-TraceException=Trc_JVMTI_loadAgentLibraryGeneric_failedOpeningAgentLibrary Overhead=1 Level=1 Noenv Template="loadAgentLibraryGeneric: Failed opening agent library %s"
+TraceException=Trc_JVMTI_loadAgentLibraryGeneric_execNameNotFound Obsolete Overhead=1 Level=1 Noenv Template="loadAgentLibraryGeneric: failed obtaining executable name; error code=%d"
+TraceException=Trc_JVMTI_loadAgentLibraryGeneric_failedOpeningAgentLibrary Obsolete Overhead=1 Level=1 Noenv Template="loadAgentLibraryGeneric: Failed opening agent library %s"
 TraceEvent=Trc_JVMTI_loadAgentLibraryGeneric_openedAgentLibrary Overhead=1 Level=5 Noenv Template="loadAgentLibraryGeneric: Opened agent %s (address=%p) %s"
-TraceException=Trc_JVMTI_loadAgentLibraryGeneric_agentAttachFailed1 Overhead=1 Level=1 Noenv Template="loadAgentLibraryGeneric: Failed attaching agent library; load function %s not found"
-TraceException=Trc_JVMTI_loadAgentLibraryGeneric_agentAttachFailed2 Overhead=1 Level=1 Noenv Template="loadAgentLibraryGeneric: Failed attaching agent library; load function failed with error code %zd"
+TraceException=Trc_JVMTI_loadAgentLibraryGeneric_agentAttachFailed1 Obsolete Overhead=1 Level=1 Noenv Template="loadAgentLibraryGeneric: Failed attaching agent library; load function %s not found"
+TraceException=Trc_JVMTI_loadAgentLibraryGeneric_agentAttachFailed2 Obsolete Overhead=1 Level=1 Noenv Template="loadAgentLibraryGeneric: Failed attaching agent library; load function failed with error code %zd"
 TraceEvent=Trc_JVMTI_loadAgentLibraryGeneric_agentAttachedSuccessfully Overhead=1 Level=5 Noenv Template="loadAgentLibraryGeneric: Attached agent %s successfully"
 
 TraceEvent=Trc_JVMTI_loadAgentLibraryOnAttach_attachingAgentDynamically Overhead=1 Level=5 Noenv Template="loadAgentLibraryOnAttach: Attached agent %s dynamically"
@@ -660,3 +660,8 @@ TraceEntry=Trc_JVMTI_jvmtiHookVirtualThreadMount_Entry Overhead=1 Level=5 Noenv 
 TraceExit=Trc_JVMTI_jvmtiHookVirtualThreadMount_Exit Overhead=1 Level=5 Noenv Template="HookVirtualThreadMount"
 
 TraceEvent=Trc_JVMTI_loadAgentLibraryOnAttach_agentLoadingDisabled Overhead=1 Level=5 Noenv Template="loadAgentLibraryOnAttach: Dynamic agent loading is disabled"
+TraceExit-Exception=Trc_JVMTI_loadAgentLibraryGeneric_execNameNotFound_Exit Overhead=1 Level=1 Noenv Template="loadAgentLibraryGeneric failed to obtain executable name with error code=%d while loading library %s"
+TraceExit-Exception=Trc_JVMTI_loadAgentLibraryGeneric_failedOpeningAgentLibrary_Exit Overhead==1 Level=1 Noenv Template="loadAgentLibraryGeneric failed to open agent library %s with error message %s"
+TraceExit-Exception=Trc_JVMTI_loadAgentLibraryGeneric_agentAttachFailed1_Exit Overhead==1 Level=1 Noenv Template="loadAgentLibraryGeneric failed attaching agent library %s; load function %s not found"
+TraceExit-Exception=Trc_JVMTI_loadAgentLibraryGeneric_agentAttachFailed2_Exit Overhead==1 Level=1 Noenv Template="loadAgentLibraryGeneric failed attaching agent library %s; load function %s failed with error code=%d"
+TraceExit=Trc_JVMTI_loadAgentLibraryGeneric_succeed_Exit Overhead=1 Level=1 Noenv Template="loadAgentLibraryGeneric successfully loaded library %s and function %s"
