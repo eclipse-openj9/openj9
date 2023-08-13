@@ -1104,6 +1104,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          auto recv = client->getRecvData<uintptr_t *>();
          client->write(response, fe->isInvokeCacheEntryAnArray(std::get<0>(recv)));
          }
+         break;
       case MessageType::VM_getKnotIndexOfInvokeCacheArrayAppendixElement:
          {
          auto recv = client->getRecvData<uintptr_t *>();
