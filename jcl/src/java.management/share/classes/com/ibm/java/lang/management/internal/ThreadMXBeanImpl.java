@@ -34,6 +34,7 @@ import java.util.Arrays;
 
 import javax.management.ObjectName;
 
+import openj9.management.internal.IDCacheInitializer;
 import openj9.management.internal.ThreadInfoBase;
 
 /**
@@ -46,6 +47,9 @@ import openj9.management.internal.ThreadInfoBase;
 /*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 public class ThreadMXBeanImpl implements ThreadMXBean {
 
+	static {
+		IDCacheInitializer.init();
+	}
 	private static final ThreadMXBeanImpl instance = new ThreadMXBeanImpl();
 	private static Boolean isThreadCpuTimeEnabled = null;
 	private static Boolean isThreadCpuTimeSupported = null;
