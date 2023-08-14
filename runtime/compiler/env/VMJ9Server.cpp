@@ -2289,44 +2289,35 @@ TR_J9ServerVM::refineInvokeCacheElementSymRefWithKnownObjectIndex(TR::Compilatio
    return comp->getSymRefTab()->findOrCreateSymRefWithKnownObject(originalSymRef, idx);
    }
 
-J9JNIMethodID*
-TR_J9ServerVM::jniMethodIdFromMemberName(uintptr_t memberName)
+bool
+TR_J9ServerVM::getMemberNameMethodInfo(
+   TR::Compilation* comp,
+   TR::KnownObjectTable::Index objIndex,
+   MemberNameMethodInfo *out)
    {
-   TR_ASSERT_FATAL(false, "jniMethodIdFromMemberName must not be called on JITServer");
-   return NULL;
-   }
+   *out = {};
 
-J9JNIMethodID*
-TR_J9ServerVM::jniMethodIdFromMemberName(TR::Compilation* comp, TR::KnownObjectTable::Index objIndex)
-   {
-   // This could be made to work on JITServer, however we would need to receive a copy of J9JNIMethodID
-   // and put it in some sort of cache, to avoid memory allocation every time this method is called.
-   // Since the only parameter of J9JNIMethodID currently accessed is vTableIndex, we just use
-   // vTableOrITableIndexFromMemberName to get the index from the client directly.
-   TR_ASSERT_FATAL(false, "jniMethodIdFromMemberName must not be called on JITServer");
-   return NULL;
-   }
-
-uintptr_t
-TR_J9ServerVM::vTableOrITableIndexFromMemberName(uintptr_t memberName)
-   {
-   TR_ASSERT_FATAL(false, "vTableOrITableIndexFromMemberName must not be called on JITServer");
-   return 0;
-   }
-
-uintptr_t
-TR_J9ServerVM::vTableOrITableIndexFromMemberName(TR::Compilation* comp, TR::KnownObjectTable::Index objIndex)
-   {
    auto knot = comp->getKnownObjectTable();
-   if (objIndex != TR::KnownObjectTable::UNKNOWN &&
-       knot &&
-       !knot->isNull(objIndex))
+   if (objIndex == TR::KnownObjectTable::UNKNOWN
+       || knot == NULL
+       || knot->isNull(objIndex))
       {
-      JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-      stream->write(JITServer::MessageType::VM_vTableOrITableIndexFromMemberName, objIndex);
-      return std::get<0>(stream->read<uintptr_t>());
+      return false;
       }
-   return (uintptr_t)-1;
+
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JITServer::MessageType::VM_getMemberNameMethodInfo, objIndex);
+   auto recv = stream->read<bool, TR_OpaqueMethodBlock*, uintptr_t, TR_OpaqueClassBlock*, int32_t>();
+   bool ok = std::get<0>(recv);
+   if (ok)
+      {
+      out->vmtarget = std::get<1>(recv);
+      out->vmindex = std::get<2>(recv);
+      out->clazz = std::get<3>(recv);
+      out->refKind = std::get<4>(recv);
+      }
+
+   return ok;
    }
 
 TR::KnownObjectTable::Index

@@ -875,30 +875,28 @@ public:
     *    VM access is not required
     */
    virtual TR_OpaqueMethodBlock* targetMethodFromMethodHandle(TR::Compilation* comp, TR::KnownObjectTable::Index objIndex);
+
+   /// A summary of the method dispatch information in a MemberName.
+   struct MemberNameMethodInfo
+      {
+      TR_OpaqueMethodBlock *vmtarget; ///< the target J9Method
+      uintptr_t vmindex; ///< the interpreter vtable offset, itable index, or -1
+      TR_OpaqueClassBlock *clazz; ///< the relevant subtype of the defining class of vmtarget
+      int32_t refKind; ///< one of the MH_REF_* constants (JVMS table 5.4.3.5-A)
+      };
+
    /*
-    * \brief
-    *    Return MemberName.vmindex, a J9JNIMethodID pointer containing vtable/itable offset for the MemberName method
-    *    Caller must acquire VM access
+    * \brief Summarize a MemberName representing a method or constructor.
+    *
+    * \param comp the compilation object
+    * \param objIndex the known object index of the MemberName object
+    * \param[out] out filled on success, zeroed on failure
+    * \return true on success, false on error (e.g. not a MemberName)
     */
-   virtual J9JNIMethodID* jniMethodIdFromMemberName(uintptr_t memberName);
-   /*
-    * \brief
-    *    Return MemberName.vmindex, a J9JNIMethodID pointer containing vtable/itable offset for the MemberName method
-    *    VM access is not required
-    */
-   virtual J9JNIMethodID* jniMethodIdFromMemberName(TR::Compilation* comp, TR::KnownObjectTable::Index objIndex);
-   /*
-    * \brief
-    *    Return vtable or itable index of a method represented by MemberName
-    *    Caller must acquire VM access
-    */
-   virtual uintptr_t vTableOrITableIndexFromMemberName(uintptr_t memberName);
-   /*
-    * \brief
-    *    Return vtable or itable index of a method represented by MemberName
-    *    VM access is not required
-    */
-   virtual uintptr_t vTableOrITableIndexFromMemberName(TR::Compilation* comp, TR::KnownObjectTable::Index objIndex);
+   virtual bool getMemberNameMethodInfo(
+      TR::Compilation* comp,
+      TR::KnownObjectTable::Index objIndex,
+      MemberNameMethodInfo *out);
 
    /**
     * \brief

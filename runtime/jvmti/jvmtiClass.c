@@ -1129,6 +1129,9 @@ redefineClassesCommon(jvmtiEnv* env,
 	J9HashTable * methodPairs = NULL;
 	J9HashTable * classPairs = NULL;
 	J9HashTable * methodEquivalences = NULL;
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	j9object_t memberNamesToFix = NULL;
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 #ifdef J9VM_INTERP_NATIVE_SUPPORT
 	J9JVMTIHCRJitEventData jitEventData;
 #endif
@@ -1210,12 +1213,17 @@ redefineClassesCommon(jvmtiEnv* env,
 	rc = determineClassesToRecreate(currentThread, class_count, specifiedClasses, &classPairs,
 			&methodPairs, jitEventDataPtr, !extensionsEnabled);
 	if (rc == JVMTI_ERROR_NONE) {
-		/* Recreate the RAM classes for all classes */
+		/* Identify the MemberNames needing fix-up based on classPairs. */
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+		memberNamesToFix = prepareToFixMemberNames(currentThread, classPairs);
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
+		/* Recreate the RAM classes for all classes */
 		rc = recreateRAMClasses(currentThread, classPairs, methodPairs, extensionsUsed, !extensionsEnabled);
 		if (rc != JVMTI_ERROR_NONE) {
 			goto failedWithVMAccess;
 		}
+
 		if (!extensionsEnabled) {
 			/* Fast HCR path - where the J9Class is redefined in place. */
 
@@ -1237,7 +1245,7 @@ redefineClassesCommon(jvmtiEnv* env,
 
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
 			/* Fix MemberNames (vmtarget) */
-			fixMemberNames(currentThread, classPairs);
+			fixMemberNames(currentThread, &memberNamesToFix);
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 			/* Fix resolved constant pool references to point to new methods. */
@@ -1256,7 +1264,6 @@ redefineClassesCommon(jvmtiEnv* env,
 			jitClassRedefineEvent(currentThread, &jitEventData, FALSE, FALSE);
 
 		} else {
-
 			/* Clear/suspend all breakpoints in the classes being replaced */
 			clearBreakpointsInClasses(currentThread, classPairs);
 
@@ -1301,7 +1308,7 @@ redefineClassesCommon(jvmtiEnv* env,
 
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
 			/* Fix MemberNames (vmtarget) */
-			fixMemberNames(currentThread, classPairs);
+			fixMemberNames(currentThread, &memberNamesToFix);
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 			/* Restore breakpoints in the implicitly replaced classes */
@@ -1336,6 +1343,11 @@ redefineClassesCommon(jvmtiEnv* env,
 	}
 
 failedWithVMAccess:
+
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	/* Once the MemberNames have been prepared, they need to be fixed even on error. */
+	fixMemberNames(currentThread, &memberNamesToFix);
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 	hashTableFree(classPairs);
 

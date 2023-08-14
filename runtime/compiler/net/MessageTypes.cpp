@@ -179,7 +179,7 @@ const char *messageNames[] =
    "VM_targetMethodFromInvokeCacheArrayMemberNameObj",
    "VM_refineInvokeCacheElementSymRefWithKnownObjectIndex",
    "VM_isLambdaFormGeneratedMethod",
-   "VM_vTableOrITableIndexFromMemberName",
+   "VM_getMemberNameMethodInfo",
    "VM_isMethodHandleExpectedType",
    "VM_getMemberNameFieldKnotIndexFromMethodHandleKnotIndex",
    "VM_isStable",

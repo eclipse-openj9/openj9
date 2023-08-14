@@ -1623,19 +1623,7 @@ old_fast_jitLookupInterfaceMethod(J9VMThread *currentThread)
 	return slowPath;
 }
 
-void J9FASTCALL
-old_fast_jitLookupDynamicInterfaceMethod(J9VMThread *currentThread)
-{
-	OLD_JIT_HELPER_PROLOGUE(3);
-	DECLARE_JIT_CLASS_PARM(receiverClass, 1);
-	DECLARE_JIT_CLASS_PARM(interfaceClass, 2);
-	DECLARE_JIT_PARM(UDATA, iTableIndex, 3);
-	UDATA iTableOffset = sizeof(struct J9ITable) + (iTableIndex * sizeof(UDATA));
-	UDATA vTableOffset = convertITableOffsetToVTableOffset(currentThread, receiverClass, interfaceClass, iTableOffset);
-	Assert_CodertVM_false(0 == vTableOffset);
-	JIT_RETURN_UDATA(vTableOffset);
-}
-
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
 void* J9FASTCALL
 old_slow_jitLookupDynamicPublicInterfaceMethod(J9VMThread *currentThread)
 {
@@ -1651,10 +1639,13 @@ void* J9FASTCALL
 old_fast_jitLookupDynamicPublicInterfaceMethod(J9VMThread *currentThread)
 {
 	void *slowPath = (void*)old_slow_jitLookupDynamicPublicInterfaceMethod;
-	OLD_JIT_HELPER_PROLOGUE(3);
+	OLD_JIT_HELPER_PROLOGUE(2);
 	DECLARE_JIT_CLASS_PARM(receiverClass, 1);
-	DECLARE_JIT_CLASS_PARM(interfaceClass, 2);
-	DECLARE_JIT_PARM(UDATA, iTableIndex, 3);
+	DECLARE_JIT_PARM(j9object_t, memberName, 2);
+	J9JavaVM *vm = currentThread->javaVM;
+	J9Method *interfaceMethod = (J9Method *)(UDATA)J9OBJECT_U64_LOAD(currentThread, memberName, vm->vmtargetOffset);
+	J9Class *interfaceClass = J9_CLASS_FROM_METHOD(interfaceMethod);
+	UDATA iTableIndex = (UDATA)J9OBJECT_U64_LOAD(currentThread, memberName, vm->vmindexOffset);
 	UDATA iTableOffset = sizeof(struct J9ITable) + (iTableIndex * sizeof(UDATA));
 	UDATA vTableOffset = convertITableOffsetToVTableOffset(currentThread, receiverClass, interfaceClass, iTableOffset);
 	Assert_CodertVM_false(0 == vTableOffset);
@@ -1668,6 +1659,7 @@ old_fast_jitLookupDynamicPublicInterfaceMethod(J9VMThread *currentThread)
 	}
 	return slowPath;
 }
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 void J9FASTCALL
 old_fast_jitMethodIsNative(J9VMThread *currentThread)
@@ -3961,9 +3953,10 @@ initPureCFunctionTable(J9JavaVM *vm)
 	jitConfig->old_fast_jitInstanceOf = (void*)old_fast_jitInstanceOf;
 	jitConfig->old_fast_jitLookupInterfaceMethod = (void*)old_fast_jitLookupInterfaceMethod;
 	jitConfig->old_slow_jitLookupInterfaceMethod = (void*)old_slow_jitLookupInterfaceMethod;
-	jitConfig->old_fast_jitLookupDynamicInterfaceMethod = (void*)old_fast_jitLookupDynamicInterfaceMethod;
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
 	jitConfig->old_fast_jitLookupDynamicPublicInterfaceMethod = (void*)old_fast_jitLookupDynamicPublicInterfaceMethod;
 	jitConfig->old_slow_jitLookupDynamicPublicInterfaceMethod = (void*)old_slow_jitLookupDynamicPublicInterfaceMethod;
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 	jitConfig->old_fast_jitMethodIsNative = (void*)old_fast_jitMethodIsNative;
 	jitConfig->old_fast_jitMethodIsSync = (void*)old_fast_jitMethodIsSync;
 	jitConfig->old_fast_jitMethodMonitorEntry = (void*)old_fast_jitMethodMonitorEntry;

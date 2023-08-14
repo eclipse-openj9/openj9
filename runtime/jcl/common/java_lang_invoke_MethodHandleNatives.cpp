@@ -47,9 +47,6 @@ extern "C" {
  * method when Java assertions are enabled
  */
 
-#define MN_REFERENCE_KIND_SHIFT	24
-#define MN_REFERENCE_KIND_MASK	0xF		/* (flag >> MN_REFERENCE_KIND_SHIFT) & MN_REFERENCE_KIND_MASK */
-
 #define MN_SEARCH_SUPERCLASSES	0x00100000
 #define MN_SEARCH_INTERFACES	0x00200000
 
@@ -94,7 +91,7 @@ isPolymorphicMHMethod(J9JavaVM *vm, J9Class *declaringClass, J9UTF8 *methodName)
  *		set vmindex to the fieldID pointer and target to the field offset.
  *		set MN.clazz to declaring class in the fieldID struct.
  * For j.l.reflect.Method or j.l.reflect.Constructor:
- *		find JNIMethodID, set vmindex to the methodID pointer and target to the J9Method struct.
+ *		find JNIMethodID, set target to the J9Method and vmindex as appropriate for dispatch.
  *		set MN.clazz to the refObject's declaring class.
  *
  * Then for both, compute the MN.flags using access flags and invocation type based on the JNI-id.
@@ -152,7 +149,6 @@ initImpl(J9VMThread *currentThread, j9object_t membernameObject, j9object_t refO
 		clazzObject = J9VM_J9CLASS_TO_HEAPCLASS(fieldID->declaringClass);
 	} else if (refClass == J9VMJAVALANGREFLECTMETHOD(vm)) {
 		J9JNIMethodID *methodID = vm->reflectFunctions.idFromMethodObject(currentThread, refObject);
-		vmindex = (jlong)methodID;
 		target = (jlong)methodID->method;
 
 		J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(methodID->method);
@@ -186,9 +182,11 @@ initImpl(J9VMThread *currentThread, j9object_t membernameObject, j9object_t refO
 
 		nameObject = J9VMJAVALANGREFLECTMETHOD_NAME(currentThread, refObject);
 		clazzObject = J9VMJAVALANGREFLECTMETHOD_CLAZZ(currentThread, refObject);
+		J9Class *clazz = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, clazzObject);
+		vmindex = vmindexValueForMethodMemberName(methodID, clazz, flags);
 	} else if (refClass == J9VMJAVALANGREFLECTCONSTRUCTOR(vm)) {
 		J9JNIMethodID *methodID = vm->reflectFunctions.idFromConstructorObject(currentThread, refObject);
-		vmindex = (jlong)methodID;
+		vmindex = -1;
 		target = (jlong)methodID->method;
 
 		J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(methodID->method);
@@ -668,14 +666,12 @@ Java_java_lang_invoke_MethodHandleNatives_expand(JNIEnv *env, jclass clazz, jobj
 				vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, NULL);
 			}
 		} else if (J9_ARE_ANY_BITS_SET(flags, MN_IS_METHOD | MN_IS_CONSTRUCTOR)) {
-			if (NULL != (void*)vmindex) {
-				/* For method/constructor MemberName, the vmindex field is required for expand.*/
-				J9JNIMethodID *methodID = (J9JNIMethodID*)vmindex;
-				J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(methodID->method);
-
-				/* Retrieve method info using JNIMethodID, store to MN fields. */
+			J9Method *method = (J9Method *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, membernameObject, vm->vmtargetOffset);
+			if (NULL != method) {
+				/* Retrieve method info using the J9Method and store to MN fields. */
+				J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
 				if (NULL == J9VMJAVALANGINVOKEMEMBERNAME_CLAZZ(currentThread, membernameObject)) {
-					j9object_t newClassObject = J9VM_J9CLASS_TO_HEAPCLASS(J9_CLASS_FROM_METHOD(methodID->method));
+					j9object_t newClassObject = J9VM_J9CLASS_TO_HEAPCLASS(J9_CLASS_FROM_METHOD(method));
 					J9VMJAVALANGINVOKEMEMBERNAME_SET_CLAZZ(currentThread, membernameObject, newClassObject);
 				}
 				if (NULL == J9VMJAVALANGINVOKEMEMBERNAME_NAME(currentThread, membernameObject)) {
@@ -912,7 +908,6 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(
 					}
 				} else if (NULL != method) {
 					J9JNIMethodID *methodID = vmFuncs->getJNIMethodID(currentThread, method);
-					vmindex = (jlong)(UDATA)methodID;
 					target = (jlong)(UDATA)method;
 
 					J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(methodID->method);
@@ -961,6 +956,9 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(
 					} else {
 						Assert_JCL_unreachable();
 					}
+
+					J9Class *newJ9Clazz = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, new_clazz);
+					vmindex = vmindexValueForMethodMemberName(methodID, newJ9Clazz, new_flags);
 				}
 			} if (J9_ARE_ANY_BITS_SET(flags, MN_IS_FIELD)) {
 				J9Class *declaringClass;
@@ -1075,7 +1073,7 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(
 				}
 			}
 
-			if ((0 != vmindex) && (0 != target)) {
+			if ((0 != target) && ((0 != vmindex) || J9_ARE_ANY_BITS_SET(flags, MN_IS_METHOD | MN_IS_CONSTRUCTOR))) {
 				/* Refetch reference after GC point */
 				membernameObject = J9_JNI_UNWRAP_REFERENCE(self);
 				J9VMJAVALANGINVOKEMEMBERNAME_SET_FLAGS(currentThread, membernameObject, new_flags);
@@ -1581,8 +1579,9 @@ Java_java_lang_invoke_MethodHandleNatives_getMemberVMInfo(JNIEnv *env, jclass cl
 				j9object_t target = NULL;
 
 				/* For fields, vmindexOffset (J9JNIFieldID) is initialized using the field offset in
-				 * jnicsup.cpp::getJNIFieldID. For methods, vmindexOffset (J9JNIMethodID) is initialized
-				 * using jnicsup.cpp::initializeMethodID.
+				 * jnicsup.cpp::getJNIFieldID. For methods, vmindexOffset already has the right value
+				 * (vTable offset for MH_REF_INVOKEVIRTUAL, iTable index for MH_REF_INVOKEINTERFACE,
+				 * and -1 for other ref kinds).
 				 */
 				jlong vmindex = (jlong)(UDATA)J9OBJECT_U64_LOAD(currentThread, membernameObject, vm->vmindexOffset);
 
@@ -1591,28 +1590,6 @@ Java_java_lang_invoke_MethodHandleNatives_getMemberVMInfo(JNIEnv *env, jclass cl
 					vmindex = ((J9JNIFieldID*)vmindex)->offset;
 					target = J9VMJAVALANGINVOKEMEMBERNAME_CLAZZ(currentThread, membernameObject);
 				} else {
-					jint refKind = (flags >> MN_REFERENCE_KIND_SHIFT) & MN_REFERENCE_KIND_MASK;
-					if ((MH_REF_INVOKEVIRTUAL == refKind) || (MH_REF_INVOKEINTERFACE == refKind)) {
-						J9JNIMethodID *methodID = (J9JNIMethodID*)vmindex;
-						if (J9_ARE_ANY_BITS_SET(methodID->vTableIndex, J9_JNI_MID_INTERFACE)) {
-							/* vmindex points to an iTable index. */
-							vmindex = (jlong)(methodID->vTableIndex & ~J9_JNI_MID_INTERFACE);
-						} else if (0 == methodID->vTableIndex) {
-							/* initializeMethodID will set J9JNIMethodID->vTableIndex to 0 for private interface
-							 * methods and j.l.Object methods. Reference implementation (RI) expects vmindex to
-							 * be 0 in such cases.
-							 */
-							vmindex = 0;
-						} else {
-							/* vmindex points to a vTable index. */
-							vmindex = (jlong)methodID->vTableIndex;
-						}
-					} else {
-						/* RI expects direct invocation, i.e. !invokevirtual and !invokeinterface ref kinds,
-						 * to have a negative vmindex.
-						 */
-						vmindex = -1;
-					}
 					target = membernameObject;
 				}
 

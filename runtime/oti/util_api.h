@@ -2226,8 +2226,67 @@ void
 fixJNIRefs (J9VMThread * currentThread, J9HashTable* classHashTable, BOOLEAN fastHCR, UDATA extensionsUsed);
 
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+/**
+ * @brief Identify MemberName objects that are (potentially) affected by class
+ * redefinition and put them into a state suitable for fix-up.
+ *
+ * This must be done before java/lang/Class objects are updated to point to
+ * replacement RAM classes.
+ *
+ * vmtarget is temporarily repurposed as the next pointer for an intrusive
+ * linked list of all MemberName objects to fix up. This list allows the same
+ * MemberNames to be processed again by fixMemberNames() without needing to
+ * iterate over all objects a second time and without needing to identify the
+ * same MemberNames after java/lang/Class instances and JNI method/field IDs
+ * have been updated.
+ *
+ * For MemberNames representing methods (MN_IS_METHOD, MN_IS_CONSTRUCTOR),
+ * vmindex is temporarily set to point to the corresponding J9JNIMethodID,
+ * which will be used in fixMemberNames() to complete the fix-up.
+ *
+ * Note that classHashTable is expected to contain an entry for every affected
+ * class, in particular including classes whose vTable layouts or iTables
+ * change due to redefinition of a supertype.
+ *
+ * Once preparation completes, it's necessary to fixMemberNames() even if class
+ * redefinition later fails, since vmtarget and vmindex need to be restored to
+ * their usual meanings.
+ *
+ * @param[in] currentThread the J9VMThread of the current thread
+ * @param[in] classHashTable the hash table of J9JVMTIClassPairs for redefinition
+ * @return the first MemberName in the list, or NULL if there are none
+ */
+j9object_t
+prepareToFixMemberNames(J9VMThread *currentThread, J9HashTable *classPairs);
+
+/**
+ * @brief Update MemberNames based on their JNI field/method IDs.
+ *
+ * memberNamesToFix will be set to NULL so that multiple calls with the same
+ * list are idempotent.
+ *
+ * @param[in] currentThread the J9VMThread of the current thread
+ * @param[in,out] memberNamesToFix the list of MemberNames from prepareToFixMemberNames()
+ */
 void
-fixMemberNames(J9VMThread * currentThread, J9HashTable * classHashTable);
+fixMemberNames(J9VMThread *currentThread, j9object_t *memberNamesToFix);
+
+/**
+ * @brief Determine the value of MemberName.vmindex for a method.
+ *
+ * This is the vTable offset for virtual dispatch (MH_REF_INVOKEVIRTUAL), the
+ * iTable index for interface dispatch (MH_REF_INVOKEINTERFACE), and -1 for
+ * direct dispatch (MH_REF_INVOKESTATIC, MH_REF_INVOKESPECIAL).
+ *
+ * clazz can differ from the defining class of the method when doing virtual
+ * dispatch of a method inherited from an interface, in which case the defining
+ * class is the interface but clazz is the inheriting (non-interface) class.
+ *
+ * @param[in] clazz the class (that will be) represented by MemberName.clazz
+ * @return the value that MemberName.vmindex should take on
+ */
+jlong
+vmindexValueForMethodMemberName(J9JNIMethodID *methodID, J9Class *clazz, jint flags);
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 void

@@ -321,8 +321,10 @@ OLD_DUAL_MODE_HELPER_NO_RETURN_VALUE(jitPutFlattenableStaticField,3)
 OLD_DUAL_MODE_HELPER(jitLoadFlattenableArrayElement,2)
 OLD_DUAL_MODE_HELPER_NO_RETURN_VALUE(jitStoreFlattenableArrayElement,3)
 SLOW_PATH_ONLY_HELPER_NO_RETURN_VALUE(jitResolveFlattenableField,3)
-FAST_PATH_ONLY_HELPER(jitLookupDynamicInterfaceMethod,3)
-OLD_DUAL_MODE_HELPER(jitLookupDynamicPublicInterfaceMethod,3)
+
+ifdef({ASM_J9VM_OPT_OPENJDK_METHODHANDLE},{
+OLD_DUAL_MODE_HELPER(jitLookupDynamicPublicInterfaceMethod,2)
+}) dnl ASM_J9VM_OPT_OPENJDK_METHODHANDLE
 
 dnl Trap handlers
 
