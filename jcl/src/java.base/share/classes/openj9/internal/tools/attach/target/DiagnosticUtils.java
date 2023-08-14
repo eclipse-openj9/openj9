@@ -33,6 +33,7 @@ import java.util.function.Function;
 import com.ibm.oti.vm.VM;
 
 import openj9.internal.management.ClassLoaderInfoBaseImpl;
+import openj9.management.internal.IDCacheInitializer;
 import openj9.management.internal.InvalidDumpOptionExceptionBase;
 import openj9.management.internal.LockInfoBase;
 import openj9.management.internal.ThreadInfoBase;
@@ -448,6 +449,7 @@ public class DiagnosticUtils {
 
 	/* Initialize the command and help text tables */
 	static {
+		IDCacheInitializer.init();
 		commandTable = new HashMap<>();
 		helpTable = new HashMap<>();
 

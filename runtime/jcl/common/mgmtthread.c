@@ -118,9 +118,6 @@ static jlong getThreadID(J9VMThread *currentThread, j9object_t threadObj);
 static J9VMThread *getThread(JNIEnv *env, jlong threadID);
 static jlong getThreadUserTime(omrthread_t thread);
 static jlong getCurrentThreadUserTime(omrthread_t self);
-
-static jint initIDCache(JNIEnv *env);
-
 static ThreadInfo *getArrayOfThreadInfo(JNIEnv *env, jlong *threadIDs, jint numThreads, jboolean getLockedMonitors, jboolean getLockedSynchronizers);
 static IDATA getThreadInfo(J9VMThread *currentThread, J9VMThread *targetThread, ThreadInfo *info, jboolean getLockedMonitors);
 static void getContentionStats(J9VMThread *currentThread, J9VMThread *vmThread, ThreadInfo *tinfo);
@@ -672,10 +669,6 @@ Java_openj9_internal_tools_attach_target_DiagnosticUtils_dumpAllThreadsImpl(JNIE
 
 	Trc_JCL_threadmxbean_dumpAllThreads_Entry(env, getLockedMonitors, getLockedSynchronizers);
 
-	if (initIDCache(env) != JNI_OK) {
-		return NULL;
-	}
-
 	vmfns->internalEnterVMFromJNI(currentThread);
 	vmfns->acquireExclusiveVMAccess(currentThread);
 
@@ -803,10 +796,6 @@ getArrayOfThreadInfo(JNIEnv *env, jlong *threadIDs, jint numThreads,
 	ThreadInfo *allinfo = NULL;
 	IDATA exc = 0;
 	UDATA i;
-
-	if (initIDCache(env) != JNI_OK) {
-		return NULL;
-	}
 
 	vmfns->internalEnterVMFromJNI(currentThread);
 	vmfns->acquireExclusiveVMAccess(currentThread);
@@ -1114,42 +1103,30 @@ handlerMonitorWaited(J9HookInterface** hook, UDATA eventNum, void* eventData, vo
  * These classes should be loaded only if ThreadMXBean is used.
  * @pre must not have VM access
  * @todo When should these references be deleted?
- * @param[in] env
- * @return error status
- * @retval JNI_OK success
- * @retval JNI_ENOMEM OutOfMemoryError is set
- * @retval JNI_ERR FindClass() or GetMethodID() failed, an exception is set
+ * @param[in] env The JNI env
+ * @param[in] jcls The Class (static method)
  */
-static jint
-initIDCache(JNIEnv *env)
+void JNICALL
+Java_openj9_management_internal_IDCacheInitializer_initIDCache(JNIEnv *env, jclass jcls)
 {
-	jclass oom;
-	jclass cls;
-	jclass gcls;
-	jmethodID mid;
-	jint err = JNI_OK;
+	jclass oom = NULL;
+	jclass cls = NULL;
+	jclass gcls = NULL;
+	jmethodID mid = NULL;
 	
-	/* isNativeMethod is the last cache member to be set */
-	if (JCL_CACHE_GET(env, MID_java_lang_StackTraceElement_isNativeMethod) != NULL) 
-		return JNI_OK;
-
 	/* cache OutOfMemoryError */
 	oom = (*env)->FindClass(env, "java/lang/OutOfMemoryError");
 	if (!oom) {
-		err = JNI_ERR;
 		goto initIDCache_fail;
 	}
 	
 	cls = (*env)->FindClass(env, "openj9/management/internal/ThreadInfoBase");
 	if (!cls) {
-		err = JNI_ERR;
 		goto initIDCache_fail;
 	}
 	if (!(gcls = (*env)->NewGlobalRef(env, cls))) {
-		err = JNI_ENOMEM;
 		goto initIDCache_fail;
 	}
-	(*env)->DeleteLocalRef(env, cls);
 	JCL_CACHE_SET(env, CLS_openj9_management_internal_ThreadInfoBase, gcls);
 
 	mid = (*env)->GetMethodID(env, gcls, "<init>", 
@@ -1159,83 +1136,66 @@ initIDCache(JNIEnv *env)
 		JCL_CACHE_SET(env, MID_openj9_management_internal_ThreadInfoBase_init_nolocks, NULL);
 	}
 	if (!mid) {
-		err = JNI_ERR;
 		goto initIDCache_fail;
 	}
 
 	cls = (*env)->FindClass(env, "openj9/management/internal/MonitorInfoBase");
 	if (!cls) {
-		err = JNI_ERR;
 		goto initIDCache_fail;
 	}
 	if (!(gcls = (*env)->NewGlobalRef(env, cls))) {
-		err = JNI_ENOMEM;
 		goto initIDCache_fail;
 	}
-	(*env)->DeleteLocalRef(env, cls);
 	JCL_CACHE_SET(env, CLS_openj9_management_internal_MonitorInfoBase, gcls);
 
 	mid = (*env)->GetMethodID(env, gcls, "<init>",
 			"(Ljava/lang/String;IILjava/lang/StackTraceElement;)V");
 	if (!mid) {
-		err = JNI_ERR;
 		goto initIDCache_fail;
 	}
 	JCL_CACHE_SET(env, MID_openj9_management_internal_MonitorInfoBase_init, mid);
 
 	cls = (*env)->FindClass(env, "java/lang/Class");
 	if (!cls) {
-		err = JNI_ERR;
 		goto initIDCache_fail;
 	}
 	mid = (*env)->GetMethodID(env, cls, "getName", "()Ljava/lang/String;");		
 	if (!mid) {
-		err = JNI_ERR;
 		goto initIDCache_fail;
 	}
-	(*env)->DeleteLocalRef(env, cls);
 	JCL_CACHE_SET(env, MID_java_lang_Class_getName, mid);
 
 	cls = (*env)->FindClass(env, "openj9/management/internal/LockInfoBase");
 	if (!cls) {
-		err = JNI_ERR;
 		goto initIDCache_fail;
 	}
 	if (!(gcls = (*env)->NewGlobalRef(env, cls))) {
-		err = JNI_ENOMEM;
 		goto initIDCache_fail;
 	}
-	(*env)->DeleteLocalRef(env, cls);
 	JCL_CACHE_SET(env, CLS_openj9_management_internal_LockInfoBase, gcls);
 
 	mid = (*env)->GetMethodID(env, gcls, "<init>", "(Ljava/lang/Object;)V");
 	if (!mid) {
-		err = JNI_ERR;
 		goto initIDCache_fail;
 	}
 	JCL_CACHE_SET(env, MID_openj9_management_internal_LockInfoBase_init, mid);
 
 	cls = (*env)->FindClass(env, "java/lang/StackTraceElement");
 	if (!cls) {
-		err = JNI_ERR;
 		goto initIDCache_fail;
 	}
 	if (!(gcls = (*env)->NewGlobalRef(env, cls))) {
-		err = JNI_ENOMEM;
 		goto initIDCache_fail;
 	}
-	(*env)->DeleteLocalRef(env, cls);
 	JCL_CACHE_SET(env, CLS_java_lang_StackTraceElement, gcls);
 
 	mid = (*env)->GetMethodID(env, gcls, "isNativeMethod", "()Z");
 	if (!mid) {
-		err = JNI_ERR;
 		goto initIDCache_fail;
 	}
 	JCL_CACHE_SET(env, MID_java_lang_StackTraceElement_isNativeMethod, mid);
 
-	(*env)->DeleteLocalRef(env, oom);
-	return JNI_OK;
+	return;
 
 initIDCache_fail:
 	gcls = JCL_CACHE_GET(env, CLS_java_lang_StackTraceElement);
@@ -1254,10 +1214,10 @@ initIDCache_fail:
 	if (NULL != gcls) {
 		(*env)->DeleteGlobalRef(env, gcls);
 	}
-	if (JNI_ENOMEM == err) {
+	/* If we reach this far without any exceptions, the only possibility is allocation failure. Throw OOM. */
+	if (!(*env)->ExceptionCheck(env)) {
 		(*env)->ThrowNew(env, oom, "initIDCache failed");
 	}
-	return err;
 }
 
 /**
