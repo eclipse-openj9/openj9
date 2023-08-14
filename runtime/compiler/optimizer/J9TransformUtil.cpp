@@ -33,6 +33,7 @@
 #include "il/Node_inlines.hpp"
 #include "infra/Assert.hpp"
 #include "infra/Cfg.hpp"
+#include "infra/String.hpp"
 #include "il/StaticSymbol.hpp"
 #include "il/StaticSymbol_inlines.hpp"
 #include "il/Symbol.hpp"
@@ -2322,15 +2323,21 @@ J9::TransformUtil::refineMethodHandleLinkTo(TR::Compilation* comp, TR::TreeTop* 
    auto symRef = node->getSymbolReference();
    auto rm = node->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod();
    const char *missingResolvedDispatch = NULL;
+   const char *whichLinkTo = NULL;
    switch (rm)
       {
       case TR::java_lang_invoke_MethodHandle_linkToStatic:
+         whichLinkTo = "Static";
+         // fall through
       case TR::java_lang_invoke_MethodHandle_linkToSpecial:
+         if (rm == TR::java_lang_invoke_MethodHandle_linkToSpecial)
+            whichLinkTo = "Special";
          if (!fej9->isResolvedDirectDispatchGuaranteed(comp))
             missingResolvedDispatch = "Direct";
          break;
 
       case TR::java_lang_invoke_MethodHandle_linkToVirtual:
+         whichLinkTo = "Virtual";
          if (!fej9->isResolvedVirtualDispatchGuaranteed(comp))
             missingResolvedDispatch = "Virtual";
          break;
@@ -2339,15 +2346,23 @@ J9::TransformUtil::refineMethodHandleLinkTo(TR::Compilation* comp, TR::TreeTop* 
         TR_ASSERT_FATAL(false, "Unsupported method %s", symRef->getSymbol()->getResolvedMethodSymbol()->getResolvedMethod()->signature(comp->trMemory()));
       }
 
+   char nodeStr[64];
+   TR::snprintfNoTrunc(
+      nodeStr,
+      sizeof(nodeStr),
+      "linkTo%s n%un [%p]",
+      whichLinkTo,
+      node->getGlobalIndex(),
+      node);
+
    if (missingResolvedDispatch != NULL)
       {
       if (trace)
          {
          traceMsg(
             comp,
-            "Cannot refine linkToXXX n%un %p without isResolved%sDispatchGuaranteed()\n",
-            node->getGlobalIndex(),
-            node,
+            "Cannot refine %s without isResolved%sDispatchGuaranteed()\n",
+            nodeStr,
             missingResolvedDispatch);
          }
       return false;
@@ -2359,13 +2374,19 @@ J9::TransformUtil::refineMethodHandleLinkTo(TR::Compilation* comp, TR::TreeTop* 
        knot->isNull(mnIndex))
       {
       if (trace)
-         traceMsg(comp, "MethodName for linkToXXX n%dn %p is unknown or null\n", node->getGlobalIndex(), node);
+         traceMsg(comp, "%s: MemberName is unknown or null\n", nodeStr);
+
       return false;
       }
 
-   auto targetMethod = fej9->targetMethodFromMemberName(comp, mnIndex);
+   TR_J9VMBase::MemberNameMethodInfo info = {};
+   if (!fej9->getMemberNameMethodInfo(comp, mnIndex, &info) || info.vmtarget == NULL)
+      {
+      if (trace)
+         traceMsg(comp, "%s: Failed to get MemberName method info\n", nodeStr);
 
-   TR_ASSERT(targetMethod, "Can't get target method from MethodName obj%d\n", mnIndex);
+      return false;
+      }
 
    TR::MethodSymbol::Kinds callKind = getTargetMethodCallKind(rm);
    TR::ILOpCodes callOpCode = getTargetMethodCallOpCode(rm, node->getDataType());
@@ -2375,24 +2396,17 @@ J9::TransformUtil::refineMethodHandleLinkTo(TR::Compilation* comp, TR::TreeTop* 
    int32_t jitVTableOffset = 0;
    if (rm == TR::java_lang_invoke_MethodHandle_linkToVirtual)
       {
-      uintptr_t slot = fej9->vTableOrITableIndexFromMemberName(comp, mnIndex);
-      if ((slot & J9_JNI_MID_INTERFACE) != 0)
+      if (info.refKind != MH_REF_INVOKEVIRTUAL)
          {
-         // TODO: Refine this to an interface call to the method identified by
-         // the itable slot and the method's defining (interface) class from
-         // the MemberName.
-         //
-         // Unfortunately, such a call will not be representable until
-         // interface calls are allowed to be resolved. As it stands, code
-         // generation requires a CP index for the dispatch.
-         //
-         // For the moment, just leave the call unrefined.
-         //
+         if (trace)
+            traceMsg(comp, "%s: wrong MemberName kind %d\n", nodeStr, info.refKind);
+
          return false;
          }
 
-      vTableSlot = (uint32_t)slot;
+      vTableSlot = (uint32_t)info.vmindex;
       jitVTableOffset = fej9->vTableSlotToVirtualCallOffset(vTableSlot);
+
       // For private virtual methods and java/lang/Object; type virtual methods, there is no corresponding
       // entry in the vtable, and for such methods the interpreter vtable index is 0.
       // The dispatch is not performed through the vtable entry, but directly dispatched to the J9Method
@@ -2400,13 +2414,13 @@ J9::TransformUtil::refineMethodHandleLinkTo(TR::Compilation* comp, TR::TreeTop* 
       // jitVTableOffset is obtained using sizeof(J9Class) - interpreter vtable offset, resulting in a positive
       // value when the interpreter vtable index we get (from MemberName.vmindex.vtableoffset) is set as 0.
       if (jitVTableOffset > 0)
-         callKind = TR::MethodSymbol::Static;
+         callKind = TR::MethodSymbol::Special;
       }
 
-   if (!performTransformation(comp, "O^O Refine linkToXXX n%dn [%p] with known MemberName object\n", node->getGlobalIndex(), node))
+   if (!performTransformation(comp, "O^O Refine %s with known MemberName\n", nodeStr))
       return false;
 
-   auto resolvedMethod = fej9->createResolvedMethodWithVTableSlot(comp->trMemory(), vTableSlot, targetMethod, symRef->getOwningMethod(comp));
+   auto resolvedMethod = fej9->createResolvedMethodWithVTableSlot(comp->trMemory(), vTableSlot, info.vmtarget, symRef->getOwningMethod(comp));
    newSymRef = comp->getSymRefTab()->findOrCreateMethodSymbol(symRef->getOwningMethodIndex(), -1, resolvedMethod, callKind);
    if (callKind == TR::MethodSymbol::Virtual)
       newSymRef->setOffset(jitVTableOffset);

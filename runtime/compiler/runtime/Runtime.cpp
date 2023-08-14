@@ -662,8 +662,9 @@ JIT_HELPER(_jitResolveConstantDynamic);
 JIT_HELPER(_nativeStaticHelper);
 JIT_HELPER(_interpreterStaticSpecialCallGlue);
 JIT_HELPER(jitLookupInterfaceMethod);
-JIT_HELPER(jitLookupDynamicInterfaceMethod);
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
 JIT_HELPER(jitLookupDynamicPublicInterfaceMethod);
+#endif
 JIT_HELPER(jitMethodIsNative);
 JIT_HELPER(jitMethodIsSync);
 JIT_HELPER(jitPreJNICallOffloadCheck);
@@ -1086,8 +1087,9 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_multiANewArray,             (void *)jitAMultiNewArray, TR_Helper);
    SET(TR_aThrow,                     (void *)jitThrowException, TR_Helper);
 
-   SET(TR_jitLookupDynamicInterfaceMethod, (void *)jitLookupDynamicInterfaceMethod, TR_Helper);
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
    SET(TR_jitLookupDynamicPublicInterfaceMethod, (void *)jitLookupDynamicPublicInterfaceMethod, TR_Helper);
+#endif
 
    SET(TR_nullCheck,                  (void *)jitThrowNullPointerException,          TR_Helper);
    SET(TR_methodTypeCheck,            (void *)jitThrowWrongMethodTypeException,      TR_Helper);

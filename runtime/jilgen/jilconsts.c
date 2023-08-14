@@ -316,6 +316,9 @@ writeConstants(OMRPortLibrary *OMRPORTLIB, IDATA fd)
 #if defined(J9VM_JIT_FREE_SYSTEM_STACK_POINTER)
 			writeConstant(OMRPORTLIB, fd, "ASM_J9VM_JIT_FREE_SYSTEM_STACK_POINTER", 1) |
 #endif /* J9VM_JIT_FREE_SYSTEM_STACK_POINTER */
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+			writeConstant(OMRPORTLIB, fd, "ASM_J9VM_OPT_OPENJDK_METHODHANDLE", 1) |
+#endif /* J9VM_OPT_OPENJDK_METHODHANDLE */
 #if defined(J9VM_PORT_ZOS_CEEHDLRSUPPORT)
 			writeConstant(OMRPORTLIB, fd, "ASM_J9VM_PORT_ZOS_CEEHDLRSUPPORT", 1) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_ELS_ceehdlrGPRBase", offsetof(J9VMEntryLocalStorage, ceehdlrGPRBase)) |
@@ -579,9 +582,10 @@ writeConstants(OMRPortLibrary *OMRPORTLIB, IDATA fd)
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_fast_jitInstanceOf", offsetof(J9JITConfig, old_fast_jitInstanceOf)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_fast_jitLookupInterfaceMethod", offsetof(J9JITConfig, old_fast_jitLookupInterfaceMethod)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_slow_jitLookupInterfaceMethod", offsetof(J9JITConfig, old_slow_jitLookupInterfaceMethod)) |
-			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_fast_jitLookupDynamicInterfaceMethod", offsetof(J9JITConfig, old_fast_jitLookupDynamicInterfaceMethod)) |
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_fast_jitLookupDynamicPublicInterfaceMethod", offsetof(J9JITConfig, old_fast_jitLookupDynamicPublicInterfaceMethod)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_slow_jitLookupDynamicPublicInterfaceMethod", offsetof(J9JITConfig, old_slow_jitLookupDynamicPublicInterfaceMethod)) |
+#endif /* J9VM_OPT_OPENJDK_METHODHANDLE */
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_fast_jitMethodIsNative", offsetof(J9JITConfig, old_fast_jitMethodIsNative)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_fast_jitMethodIsSync", offsetof(J9JITConfig, old_fast_jitMethodIsSync)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_fast_jitMethodMonitorEntry", offsetof(J9JITConfig, old_fast_jitMethodMonitorEntry)) |

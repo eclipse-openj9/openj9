@@ -1031,8 +1031,15 @@ InterpreterEmulator::getReturnValue(TR_ResolvedMethod *callee)
    }
 
 void
-InterpreterEmulator::refineResolvedCalleeForInvokestatic(TR_ResolvedMethod *&callee, TR::KnownObjectTable::Index & mcsIndex, TR::KnownObjectTable::Index & mhIndex, bool &isIndirectCall)
+InterpreterEmulator::refineResolvedCalleeForInvokestatic(
+   TR_ResolvedMethod *&callee,
+   TR::KnownObjectTable::Index & mcsIndex,
+   TR::KnownObjectTable::Index & mhIndex,
+   bool &isIndirectCall,
+   TR_OpaqueClassBlock *&receiverClass)
    {
+   receiverClass = NULL;
+
    TR_ASSERT_FATAL(_iteratorWithState, "has to be called when the iterator has state!");
    if (!comp()->getOrCreateKnownObjectTable())
       return;
@@ -1098,36 +1105,26 @@ InterpreterEmulator::refineResolvedCalleeForInvokestatic(TR_ResolvedMethod *&cal
          {
          TR::KnownObjectTable::Index memberNameIndex = top()->getKnownObjectIndex();
          TR_J9VMBase* fej9 = comp()->fej9();
-         auto targetMethod = fej9->targetMethodFromMemberName(comp(), memberNameIndex);
-         if (!targetMethod)
+         TR_J9VMBase::MemberNameMethodInfo info = {};
+         if (!fej9->getMemberNameMethodInfo(comp(), memberNameIndex, &info))
+            return;
+
+         if (info.vmtarget == NULL)
             return;
 
          uint32_t vTableSlot = 0;
          if (rm == TR::java_lang_invoke_MethodHandle_linkToVirtual)
             {
-            uintptr_t slot = fej9->vTableOrITableIndexFromMemberName(comp(), memberNameIndex);
-            if ((slot & J9_JNI_MID_INTERFACE) == 0)
-               {
-               vTableSlot = (uint32_t)slot;
-               }
-            else
-               {
-               // TODO: Refine to the method identified by the itable slot
-               // together with the defining (interface) class of the method
-               // from the MemberName. For such a refinement to matter,
-               // TR_J9InterfaceCallSite will need to be able to find call
-               // targets without a CP index.
-               //
-               // For the moment, just leave the call unrefined.
-               //
+            if (info.refKind != MH_REF_INVOKEVIRTUAL)
                return;
-               }
+
+            vTableSlot = info.vmindex;
             }
 
          // Direct or virtual dispatch. A vTableSlot of 0 indicates a direct
          // call, in which case vTableSlot won't really be used as such.
-         callee = fej9->createResolvedMethodWithVTableSlot(comp()->trMemory(), vTableSlot, targetMethod, _calltarget->_calleeMethod);
-
+         callee = fej9->createResolvedMethodWithVTableSlot(comp()->trMemory(), vTableSlot, info.vmtarget, _calltarget->_calleeMethod);
+         receiverClass = info.clazz;
          isIndirectCall = vTableSlot != 0;
          TR_ASSERT_FATAL(
             !isIndirectCall
@@ -1602,9 +1599,20 @@ InterpreterEmulator::visitInvokestatic()
 
       TR::KnownObjectTable::Index mhIndex = TR::KnownObjectTable::UNKNOWN;
       TR::KnownObjectTable::Index mcsIndex = TR::KnownObjectTable::UNKNOWN;
+      TR_OpaqueClassBlock *receiverClass = NULL;
       bool isIndirectCall = false;
       if (_iteratorWithState)
-         refineResolvedCalleeForInvokestatic(_currentCallMethod, mcsIndex, mhIndex, isIndirectCall);
+         {
+         refineResolvedCalleeForInvokestatic(
+            _currentCallMethod,
+            mcsIndex,
+            mhIndex,
+            isIndirectCall,
+            receiverClass);
+         }
+
+      if (receiverClass == NULL)
+         receiverClass = _currentCallMethod->classOfMethod();
 
       bool isInterface = false;
       TR_CallSite *callsite = NULL;
@@ -1619,7 +1627,7 @@ InterpreterEmulator::visitInvokestatic()
             mcsIndex == TR::KnownObjectTable::UNKNOWN)
          {
          callsite = new (comp()->trHeapMemory()) TR_J9MethodHandleCallSite( _calltarget->_calleeMethod, callNodeTreeTop,   parent,
-               callNode, interfaceMethod, _currentCallMethod->classOfMethod(),
+               callNode, interfaceMethod, receiverClass,
                -1, cpIndex, _currentCallMethod,
                resolvedSymbol, isIndirectCall, isInterface, *_newBCInfo, comp(),
                _recursionDepth, allconsts);
@@ -1629,7 +1637,7 @@ InterpreterEmulator::visitInvokestatic()
             mcsIndex != TR::KnownObjectTable::UNKNOWN)
          {
          TR_J9MutableCallSite *mcs = new (comp()->trHeapMemory()) TR_J9MutableCallSite( _calltarget->_calleeMethod, callNodeTreeTop,   parent,
-               callNode, interfaceMethod, _currentCallMethod->classOfMethod(),
+               callNode, interfaceMethod, receiverClass,
                (int32_t) _currentCallMethod->virtualCallSelector(cpIndex), cpIndex, _currentCallMethod,
                resolvedSymbol, isIndirectCall, isInterface, *_newBCInfo, comp(),
                _recursionDepth, allconsts);
@@ -1645,14 +1653,14 @@ InterpreterEmulator::visitInvokestatic()
          int32_t noCPIndex = -1; // The method is not referenced via the constant pool
          callsite = new (comp()->trHeapMemory()) TR_J9VirtualCallSite(
                _calltarget->_calleeMethod, callNodeTreeTop, parent, callNode,
-               interfaceMethod, _currentCallMethod->classOfMethod(), (int32_t) _currentCallMethod->virtualCallSelector(cpIndex), noCPIndex,
+               interfaceMethod, receiverClass, (int32_t) _currentCallMethod->virtualCallSelector(cpIndex), noCPIndex,
                _currentCallMethod, resolvedSymbol, isIndirectCall, isInterface,
                *_newBCInfo, comp(), _recursionDepth, allconsts);
          }
       else
          {
          callsite = new (comp()->trHeapMemory()) TR_DirectCallSite(_calltarget->_calleeMethod, callNodeTreeTop, parent, callNode, interfaceMethod,
-               _currentCallMethod->classOfMethod(), -1, cpIndex, _currentCallMethod, resolvedSymbol,
+               receiverClass, -1, cpIndex, _currentCallMethod, resolvedSymbol,
                isIndirectCall, isInterface, *_newBCInfo, comp(),
                _recursionDepth, allconsts);
          }

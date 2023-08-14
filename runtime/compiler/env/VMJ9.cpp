@@ -4755,49 +4755,44 @@ TR_J9VMBase::targetMethodFromMethodHandle(TR::Compilation* comp, TR::KnownObject
    return NULL;
    }
 
-J9JNIMethodID*
-TR_J9VMBase::jniMethodIdFromMemberName(uintptr_t memberName)
+bool
+TR_J9VMBase::getMemberNameMethodInfo(
+   TR::Compilation* comp,
+   TR::KnownObjectTable::Index objIndex,
+   MemberNameMethodInfo *out)
    {
-   TR_ASSERT(haveAccess(), "jniMethodIdFromMemberName requires VM access");
-   return (J9JNIMethodID *)J9OBJECT_U64_LOAD(vmThread(), memberName, vmThread()->javaVM->vmindexOffset);
-   }
+   *out = {};
 
-J9JNIMethodID*
-TR_J9VMBase::jniMethodIdFromMemberName(TR::Compilation* comp, TR::KnownObjectTable::Index objIndex)
-   {
+   if (objIndex == TR::KnownObjectTable::UNKNOWN)
+      return false;
+
    auto knot = comp->getKnownObjectTable();
-   if (objIndex != TR::KnownObjectTable::UNKNOWN &&
-       knot &&
-       !knot->isNull(objIndex))
-      {
-      TR::VMAccessCriticalSection jniMethodId(this);
-      uintptr_t object = knot->getPointer(objIndex);
-      return jniMethodIdFromMemberName(object);
-      }
-   return NULL;
-   }
+   if (knot == NULL || knot->isNull(objIndex))
+      return false;
 
-uintptr_t
-TR_J9VMBase::vTableOrITableIndexFromMemberName(uintptr_t memberName)
-   {
-   TR_ASSERT(haveAccess(), "vTableOrITableIndexFromMemberName requires VM access");
-   auto methodID = jniMethodIdFromMemberName(memberName);
-   return methodID->vTableIndex;
-   }
+   TR::VMAccessCriticalSection getMemberNameMethodInfo(this);
+   uintptr_t object = knot->getPointer(objIndex);
+   const char *mnClassName = "java/lang/invoke/MemberName";
+   int32_t mnClassNameLen = (int32_t)strlen(mnClassName);
+   TR_OpaqueClassBlock *mnClass =
+      getSystemClassFromClassName(mnClassName, mnClassNameLen);
 
-uintptr_t
-TR_J9VMBase::vTableOrITableIndexFromMemberName(TR::Compilation* comp, TR::KnownObjectTable::Index objIndex)
-   {
-   auto knot = comp->getKnownObjectTable();
-   if (objIndex != TR::KnownObjectTable::UNKNOWN &&
-       knot &&
-       !knot->isNull(objIndex))
-      {
-      TR::VMAccessCriticalSection vTableOrITableIndex(this);
-      uintptr_t object = knot->getPointer(objIndex);
-      return vTableOrITableIndexFromMemberName(object);
-      }
-   return (uintptr_t)-1;
+   if (getObjectClass(object) != mnClass)
+      return false;
+
+   int32_t flags = getInt32Field(object, "flags");
+   if ((flags & (MN_IS_METHOD | MN_IS_CONSTRUCTOR)) == 0)
+      return false;
+
+   auto tgt = J9OBJECT_U64_LOAD(vmThread(), object, vmThread()->javaVM->vmtargetOffset);
+   auto ix = J9OBJECT_U64_LOAD(vmThread(), object, vmThread()->javaVM->vmindexOffset);
+   uintptr_t jlClass = getReferenceField(object, "clazz", "Ljava/lang/Class;");
+
+   out->vmtarget = (TR_OpaqueMethodBlock*)(uintptr_t)tgt;
+   out->vmindex = (uintptr_t)ix;
+   out->clazz = getClassFromJavaLangClass(jlClass);
+   out->refKind = (flags >> MN_REFERENCE_KIND_SHIFT) & MN_REFERENCE_KIND_MASK;
+   return true;
    }
 
 bool

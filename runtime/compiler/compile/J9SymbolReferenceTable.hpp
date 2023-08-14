@@ -159,16 +159,13 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
 
    // This helper walks the iTables to find the VFT offset for an interface
    // method that is not known until runtime (and therefore does not have an
-   // IPIC data snippet). The parameters are the receiver class, interface
-   // class, and iTable index (though in the trees they must appear as
-   // children in the opposite order), and the return value is the VFT offset.
+   // IPIC data snippet). The parameters are the receiver class and MemberName
+   // (though in the trees they must appear as children in the opposite order),
+   // and the return value is the VFT offset.
    //
    // The given receiver class must implement the given interface class.
+   // IllegalAccessError is thrown if the dispatched callee is not public.
    //
-   TR::SymbolReference * findOrCreateLookupDynamicInterfaceMethodSymbolRef();
-
-   // This helper is a variant of jitLookupDynamicInterfaceMethod that requires
-   // the dispatched callee to be public, otherwise throwing IllegalAccessError.
    TR::SymbolReference * findOrCreateLookupDynamicPublicInterfaceMethodSymbolRef();
 
    TR::SymbolReference * findOrCreateShadowSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t cpIndex, bool isStore);
@@ -200,6 +197,11 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
     *     Returns a symbol reference fabricated for the field.
     */
    TR::SymbolReference * findOrFabricateShadowSymbol(TR_OpaqueClassBlock *containingClass, TR::DataType type, uint32_t offset, bool isVolatile, bool isPrivate, bool isFinal,  const char *name, const char *signature);
+
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+   /// Find or fabricate the shadow symref for MemberName.vmtarget
+   TR::SymbolReference * findOrFabricateMemberNameVmTargetShadow();
+#endif
 
    /** \brief
     *     Returns an array shadow symbol reference fabricated for the field of a flattened array element.

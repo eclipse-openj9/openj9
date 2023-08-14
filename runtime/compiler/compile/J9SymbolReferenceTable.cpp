@@ -307,13 +307,6 @@ J9::SymbolReferenceTable::findOrCreateStoreFlattenableArrayElementSymbolRef(TR::
 
 
 TR::SymbolReference *
-J9::SymbolReferenceTable::findOrCreateLookupDynamicInterfaceMethodSymbolRef()
-   {
-   return findOrCreateRuntimeHelper(TR_jitLookupDynamicInterfaceMethod, false, false, true);
-   }
-
-
-TR::SymbolReference *
 J9::SymbolReferenceTable::findOrCreateLookupDynamicPublicInterfaceMethodSymbolRef()
    {
    return findOrCreateRuntimeHelper(TR_jitLookupDynamicPublicInterfaceMethod, false, true, true);
@@ -859,6 +852,28 @@ J9::SymbolReferenceTable::findOrFabricateShadowSymbol(
    _resolvedFieldShadows.insert(std::make_pair(key, symRef));
    return symRef;
    }
+
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+TR::SymbolReference *
+J9::SymbolReferenceTable::findOrFabricateMemberNameVmTargetShadow()
+   {
+   bool isVolatile = false;
+   bool isPrivate = false;
+   bool isFinal = true;
+   TR::SymbolReference *symRef = self()->findOrFabricateShadowSymbol(
+      comp()->getMethodSymbol(),
+      TR::Symbol::Java_lang_invoke_MemberName_vmtarget,
+      TR::Address,
+      comp()->fej9()->getVMTargetOffset(),
+      isVolatile,
+      isPrivate,
+      isFinal,
+      "java/lang/invoke/MemberName.vmtarget J");
+
+   symRef->getSymbol()->setNotCollected();
+   return symRef;
+   }
+#endif
 
 TR::SymbolReference *
 J9::SymbolReferenceTable::findFlattenedArrayElementFieldShadow(

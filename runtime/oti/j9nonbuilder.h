@@ -2279,6 +2279,9 @@ typedef struct J9ROMMethodHandleRef {
 #define MN_FLATTENED		0x00400000
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
+#define MN_REFERENCE_KIND_SHIFT	24
+#define MN_REFERENCE_KIND_MASK	0xF		/* (flag >> MN_REFERENCE_KIND_SHIFT) & MN_REFERENCE_KIND_MASK */
+
 typedef struct J9ROMMethodRef {
 	U_32 classRefCPIndex;
 	J9SRP nameAndSignature;
@@ -3846,9 +3849,10 @@ typedef struct J9JITConfig {
 	void *old_fast_jitInstanceOf;
 	void *old_fast_jitLookupInterfaceMethod;
 	void *old_slow_jitLookupInterfaceMethod;
-	void *old_fast_jitLookupDynamicInterfaceMethod;
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
 	void *old_fast_jitLookupDynamicPublicInterfaceMethod;
 	void *old_slow_jitLookupDynamicPublicInterfaceMethod;
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 	void *old_fast_jitMethodIsNative;
 	void *old_fast_jitMethodIsSync;
 	void *old_fast_jitMethodMonitorEntry;
