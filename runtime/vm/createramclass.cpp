@@ -2301,13 +2301,16 @@ nativeOOM:
 		}
 
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-		if (J9ROMCLASS_ALLOWS_NON_ATOMIC_CREATION(romClass)) {
+	if (J9_ARE_ALL_BITS_SET(romClass->optionalFlags, J9_ROMCLASS_OPTINFO_IMPLICITCREATION_ATTRIBUTE)) {
+		U_16 implicitCreationFlags = getImplicitCreationFlags(romClass);
+		if (J9_ARE_ALL_BITS_SET(implicitCreationFlags, J9AccImplicitCreateNonAtomic)) {
 			classFlags |= J9ClassAllowsNonAtomicCreation;
 		}
-		if (J9ROMCLASS_HAS_DEFAULT(romClass)) {
+		if (J9_ARE_ALL_BITS_SET(implicitCreationFlags, J9AccImplicitCreateHasDefaultValue)) {
 			/* J9ClassIsValueType is being reused here intentionally */
 			classFlags |= J9ClassIsValueType;
 		}
+	}
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
 		if (J9ROMCLASS_IS_VALUE(romClass)) {

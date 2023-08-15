@@ -1170,8 +1170,8 @@ ROMClassBuilder::finishPrepareAndLaydown(
  *                                     + UNUSED
  *                                    + UNUSED
  *
- *                                  + AccImplicitCreateHasDefaultValue
- *                                 + AccImplicitCreateNonAtomic
+ *                                  + UNUSED
+ *                                 + UNUSED
  *                                + J9AccClassIsValueBased
  *                              + J9AccClassHiddenOptionNestmate
  *
@@ -1337,15 +1337,6 @@ ROMClassBuilder::computeExtraModifiers(ClassFileOracle *classFileOracle, ROMClas
 		modifiers |= J9AccSealed;
 	}
 
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-	if (classFileOracle->isImplicitCreationNonAtomic()) {
-		modifiers |= J9AccImplicitCreateNonAtomic;
-	}
-	if (classFileOracle->isImplicitCreationHasDefaultValue()) {
-		modifiers |= J9AccImplicitCreateHasDefaultValue;
-	}
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
-
 	return modifiers;
 }
 
@@ -1394,6 +1385,11 @@ ROMClassBuilder::computeOptionalFlags(ClassFileOracle *classFileOracle, ROMClass
 		optionalFlags |= J9_ROMCLASS_OPTINFO_PRELOAD_ATTRIBUTE;
 	}
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+	if (classFileOracle->hasImplicitCreation()) {
+		optionalFlags |= J9_ROMCLASS_OPTINFO_IMPLICITCREATION_ATTRIBUTE;
+	}
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 	return optionalFlags;
 }
 

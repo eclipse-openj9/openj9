@@ -156,6 +156,9 @@ private:
 	void writeInjectedInterfaces(Cursor *cursor, bool markAndCountOnly);
 	void writePreload(Cursor *cursor, bool markAndCountOnly);
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+	void writeImplicitCreation(Cursor *cursor, bool markAndCountOnly);
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
 	BufferManager *_bufferManager;
 	ClassFileOracle *_classFileOracle;
@@ -195,7 +198,10 @@ private:
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	UDATA _injectedInterfaceInfoSRPKey;
 	UDATA _preloadInfoSRPKey;
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+	UDATA _implicitCreationSRPKey;
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 };
 
 #endif /* ROMCLASSWRITER_HPP_ */
