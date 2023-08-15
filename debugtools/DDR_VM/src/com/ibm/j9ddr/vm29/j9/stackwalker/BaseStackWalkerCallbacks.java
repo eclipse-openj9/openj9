@@ -24,7 +24,6 @@ package com.ibm.j9ddr.vm29.j9.stackwalker;
 import com.ibm.j9ddr.vm29.pointer.ObjectReferencePointer;
 import com.ibm.j9ddr.vm29.pointer.PointerPointer;
 import com.ibm.j9ddr.vm29.pointer.VoidPointer;
-import com.ibm.j9ddr.vm29.pointer.generated.J9VMThreadPointer;
 
 /**
  * Base implementation of IStackWalkerCallbacks that does performs no-ops 
@@ -41,22 +40,22 @@ public class BaseStackWalkerCallbacks implements IStackWalkerCallbacks
 	/* (non-Javadoc)
 	 * @see com.ibm.j9ddr.vm.j9.stackwalker.IStackWalkerCallbacks#frameWalkFunction(com.ibm.j9ddr.vm.j9.stackwalker.WalkState)
 	 */
-	public FrameCallbackResult frameWalkFunction(J9VMThreadPointer walkThread,
-			WalkState walkState)
+	@Override
+	public FrameCallbackResult frameWalkFunction(WalkState walkState)
 	{
 		// Deliberately do nothing
 		return FrameCallbackResult.KEEP_ITERATING;
 	}
 
-	public void objectSlotWalkFunction(J9VMThreadPointer walkThread,
-			WalkState walkState, PointerPointer objectSlot,
+	@Override
+	public void objectSlotWalkFunction(WalkState walkState, PointerPointer objectSlot,
 			VoidPointer stackLocation)
 	{
 		// Deliberately do nothing
 	}
 
-	public void fieldSlotWalkFunction(J9VMThreadPointer walkThread,
-			WalkState walkState, ObjectReferencePointer objectSlot,
+	@Override
+	public void fieldSlotWalkFunction(WalkState walkState, ObjectReferencePointer objectSlot,
 			VoidPointer stackLocation)
 	{
 		// Deliberately do nothing
