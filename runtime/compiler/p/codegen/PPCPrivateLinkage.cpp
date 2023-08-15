@@ -880,6 +880,18 @@ static int32_t calculateFrameSize(TR::RealRegister::RegNum &intSavedFirst,
    while (intSavedFirst<=TR::RealRegister::LastGPR && !machine->getRealRegister(intSavedFirst)->getHasBeenAssignedInMethod())
       intSavedFirst=(TR::RealRegister::RegNum)((uint32_t)intSavedFirst+1);
 
+   if (comp->target().is64Bit() && comp->compilePortableCode() &&
+      !comp->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P10) && cg->getSavesNonVolatileGPRsForGC())
+      {
+      // When compiling code that contains a Direct-to-JNI call, we need to save all the non-volatile registers
+      // so the GC will have access to them. If we are compiling portable code (CRIU or PortableAOT) then we
+      // might be compiling code that will run on PWR10 which allows for R16 to be marked collectible. Therefore
+      // we need to save&restore R16 for portable code containing a Direct-to-JNI call in case a GC cycle occurs
+      // while some non-portable code down the stack is using R16 to hold a collectible object.
+      TR_ASSERT_FATAL( intSavedFirst == TR::RealRegister::gr17, "Portable compile expected first saved GPR to be R17" );
+      intSavedFirst = TR::RealRegister::gr16;
+      }
+
    // the registerSaveDescription is emitted as follows:
    // 0000 0000 0000 000 0 0000 0000 0000 0000
    //                    <----           ---->
@@ -1354,6 +1366,13 @@ void J9::Power::PrivateLinkage::createEpilogue(TR::Instruction *cursor)
 
    while (savedFirst<=TR::RealRegister::LastGPR && !machine->getRealRegister(savedFirst)->getHasBeenAssignedInMethod())
       savedFirst=(TR::RealRegister::RegNum)((uint32_t)savedFirst+1);
+
+   if (comp()->target().is64Bit() && comp()->compilePortableCode() &&
+      !comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P10) && cg()->getSavesNonVolatileGPRsForGC())
+      {
+      TR_ASSERT_FATAL( savedFirst == TR::RealRegister::gr17, "Portable compile expected first saved GPR to be R17" );
+      savedFirst = TR::RealRegister::gr16;
+      }
 
    if (savedFirst <= TR::RealRegister::LastGPR)
       {

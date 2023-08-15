@@ -623,6 +623,16 @@ public:
     */
    bool guaranteesResolvedVirtualDispatchForSVM() { return false; } // safe default
 
+   /** \brief
+   *    Determines if this method is saving all Non Volatile registers for the GC
+   */
+   bool getSavesNonVolatileGPRsForGC() { return _j9Flags.testAny(SavesNonVolatileGPRsForGC); }
+
+   /** \brief
+   *    Set the flag specifying that this method is saving all Non Volatile registers for the GC
+   */
+   void setSavesNonVolatileGPRsForGC() {_j9Flags.set(SavesNonVolatileGPRsForGC); }
+
 private:
 
    enum // Flags
@@ -638,6 +648,7 @@ private:
       SupportsIntegerStringSize                           = 0x00000100,
       SupportsIntegerToChars                              = 0x00000200,
       SupportsInlineEncodeASCII                           = 0x00000400,
+      SavesNonVolatileGPRsForGC                           = 0x00000800,
       };
 
    flags32_t _j9Flags;
