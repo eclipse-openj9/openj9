@@ -110,12 +110,14 @@ public abstract class RootScanner
 	
 	private class RootScannerStackWalkerCallbacks implements IStackWalkerCallbacks
 	{
-		public FrameCallbackResult frameWalkFunction(J9VMThreadPointer walkThread, WalkState walkState)
+		@Override
+		public FrameCallbackResult frameWalkFunction(WalkState walkState)
 		{
 			return FrameCallbackResult.KEEP_ITERATING;
 		}
 	
-		public void objectSlotWalkFunction(J9VMThreadPointer walkThread, WalkState walkState, PointerPointer objectSlot, VoidPointer stackLocation)
+		@Override
+		public void objectSlotWalkFunction(WalkState walkState, PointerPointer objectSlot, VoidPointer stackLocation)
 		{	
 			try {
 				J9ObjectPointer object = J9ObjectPointer.cast(objectSlot.at(0));
@@ -127,8 +129,8 @@ public abstract class RootScanner
 			}
 		}
 
-		public void fieldSlotWalkFunction(J9VMThreadPointer walkThread,
-				WalkState walkState, ObjectReferencePointer objectSlot,
+		@Override
+		public void fieldSlotWalkFunction(WalkState walkState, ObjectReferencePointer objectSlot,
 				VoidPointer stackLocation)
 		{
 			try {
