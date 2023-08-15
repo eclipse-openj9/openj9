@@ -112,17 +112,12 @@ public class JitstackCommand extends Command
 			}
 
 			walkState.walkThread = thread;
-			walkState.sp = sp;
-			walkState.arg0EA = arg0EA;
-			walkState.pc = pc;
-			walkState.literals = literals;
 			walkState.callBacks = new BaseStackWalkerCallbacks();
 			walkState.frameFlags = new UDATA(0);
-			walkState.fillElsFields(entryLocalStorage);
 
-			StackWalkResult result = StackWalker.walkStackFrames(walkState);
+			StackWalkResult result = StackWalker.walkStackFrames(walkState, sp, arg0EA, pc, literals, entryLocalStorage);
 
-			if (result != StackWalkResult.NONE) {
+			if (result != StackWalkResult.NONE ) {
 				out.println("Stack walk result: " + result);
 			}
 
