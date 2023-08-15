@@ -42,11 +42,9 @@ import com.ibm.j9ddr.vm29.pointer.PointerPointer;
 import com.ibm.j9ddr.vm29.pointer.UDATAPointer;
 import com.ibm.j9ddr.vm29.pointer.VoidPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9BuildFlags;
-import com.ibm.j9ddr.vm29.pointer.generated.J9I2JStatePointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9MethodPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMMethodPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9UTF8Pointer;
-import com.ibm.j9ddr.vm29.pointer.generated.J9VMEntryLocalStoragePointer;
 import com.ibm.j9ddr.vm29.pointer.helper.J9UTF8Helper;
 import com.ibm.j9ddr.vm29.types.UDATA;
 
@@ -131,7 +129,7 @@ public class StackWalkerUtils
 		// Print output for !stack debugging commands to the printstream.
 		if( messageLevel >= level && messageStream != null ) {
 			String output = MessageFormat.format("<"
-					+ Long.toHexString(walkState.threadAddress)
+					+ Long.toHexString(walkState.walkThread.getAddress())
 					+ "> " + message, args);
 			messageStream.println(output);
 		}
@@ -143,7 +141,7 @@ public class StackWalkerUtils
 		/* Initial check to avoid marshalling the arguments if we don't have to */
 		if (logger.isLoggable(utilLoggingLevel)) {
 			logger.logp(utilLoggingLevel, null, null, "<"
-					+ Long.toHexString(walkState.threadAddress)
+					+ Long.toHexString(walkState.walkThread.getAddress())
 					+ "> " + message, args);
 		}
 	}
@@ -198,7 +196,7 @@ public class StackWalkerUtils
 					objectSlot.getHexAddress(), 
 					value.getHexValue());
 		}
-		walkState.callBacks.objectSlotWalkFunction(walkState, objectSlot, VoidPointer.cast(objectSlot));
+		walkState.callBacks.objectSlotWalkFunction(walkState.walkThread, walkState, objectSlot, VoidPointer.cast(objectSlot));
 	}
 
 	public static void WALK_NAMED_INDIRECT_I_SLOT(WalkState walkState,
@@ -265,7 +263,7 @@ public class StackWalkerUtils
 		if (J9BuildFlags.arch_x86 && !J9BuildFlags.env_data64) {
 			return walkState.bp.at(parmNumber);
 		} else {
-			return walkState.jitGlobalStorageBase.at(jitArgumentRegisterNumbers[parmNumber - 1]);
+			return walkState.walkedEntryLocalStorage.jitGlobalStorageBase().at(jitArgumentRegisterNumbers[parmNumber - 1]);
 		}
 	}
 
@@ -291,11 +289,11 @@ public class StackWalkerUtils
 	{
 		if (oslotsCorruptionThreshold > 0) {
 			oslotsCorruptionThreshold--;
-			raiseCorruptDataEvent("CorruptData encountered iterating o-slots. walkThread = " + walkState.getThreadHexAddress(), ex, false);
+			raiseCorruptDataEvent("CorruptData encountered iterating o-slots. walkThread = " + walkState.walkThread.getHexAddress(), ex, false);
 		}
 		
 		if (oslotsCorruptionThreshold == 0) {
-			raiseCorruptDataEvent("Corruption threshold hit. Will stop walking object slots on this thread. walkThread = " + walkState.getThreadHexAddress(), ex, false);
+			raiseCorruptDataEvent("Corruption threshold hit. Will stop walking object slots on this thread. walkThread = " + walkState.walkThread.getHexAddress(), ex, false);
 			walkState.flags &= ~(J9_STACKWALK_ITERATE_O_SLOTS | J9_STACKWALK_MAINTAIN_REGISTER_MAP);
 			oslotsCorruptionThreshold = -1;
 		}

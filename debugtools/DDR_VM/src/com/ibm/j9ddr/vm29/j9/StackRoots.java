@@ -51,14 +51,12 @@ public class StackRoots
 
 	private class StackWalkerCallbacks implements IStackWalkerCallbacks
 	{
-		@Override
-		public FrameCallbackResult frameWalkFunction(WalkState walkState)
+		public FrameCallbackResult frameWalkFunction(J9VMThreadPointer walkThread, WalkState walkState)
 		{
 			return FrameCallbackResult.KEEP_ITERATING;
 		}
-
-		@Override
-		public void objectSlotWalkFunction(WalkState walkState, PointerPointer objectSlot, VoidPointer stackAddress)
+	
+		public void objectSlotWalkFunction(J9VMThreadPointer walkThread, WalkState walkState, PointerPointer objectSlot, VoidPointer stackAddress)
 		{
 			if (walkState.method.isNull()){
 				/* adding an object slot iterator causes us to be called for
@@ -78,9 +76,10 @@ public class StackRoots
 				throw new UnsupportedOperationException("Corrupt objectSlot detected");
 			}
 		}
-
-		@Override
-		public void fieldSlotWalkFunction(WalkState walkState, ObjectReferencePointer objectSlot,
+		
+	
+		public void fieldSlotWalkFunction(J9VMThreadPointer walkThread,
+				WalkState walkState, ObjectReferencePointer objectSlot,
 				VoidPointer stackLocation)
 		{
 			if (walkState.method.isNull()){

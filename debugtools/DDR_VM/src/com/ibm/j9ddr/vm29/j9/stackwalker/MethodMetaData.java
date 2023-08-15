@@ -1234,7 +1234,7 @@ public class MethodMetaData
 						oldPinningArrayAddress.getHexAddress(), 
 						walkState.bp.getHexAddress(), 
 						offsetOfFirstInternalPtr);
-				walkState.callBacks.objectSlotWalkFunction(walkState, currPinningArrayCursor, VoidPointer.cast(currPinningArrayCursor));
+				walkState.callBacks.objectSlotWalkFunction(walkState.walkThread, walkState, currPinningArrayCursor, VoidPointer.cast(currPinningArrayCursor));
 				newPinningArrayAddress = J9ObjectPointer.cast( currPinningArrayCursor.at(0) );
 				displacement = new IDATA( UDATA.cast(newPinningArrayAddress).sub(UDATA.cast(oldPinningArrayAddress)));
 				walkState.slotIndex++;
