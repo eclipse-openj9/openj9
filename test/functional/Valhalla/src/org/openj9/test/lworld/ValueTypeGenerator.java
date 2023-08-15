@@ -196,11 +196,11 @@ public class ValueTypeGenerator extends ClassLoader {
 		String[] fields = config.getFields();
 		int extraClassFlags = config.getExtraClassFlags();
 		/**
-		 * Currently value type is built on JDK20, so use java file major version 64 for now.
-		 * If moved to JDK21, this needs to be incremented to 65. The check in j9bcutil_readClassFileBytes()
-		 * against BCT_JavaMajorVersionShifted(20) needs to be updated as well.
+		 * Currently value type is built on JDK22, so use java file major version 66 for now.
+		 * If moved this needs to be incremented to the next class file version. The check in j9bcutil_readClassFileBytes()
+		 * against BCT_JavaMajorVersionShifted needs to be updated as well.
 		 */
-		int classFileVersion = 64;
+		int classFileVersion = 66;
 
 		String nestHost = config.getNestHost();
 

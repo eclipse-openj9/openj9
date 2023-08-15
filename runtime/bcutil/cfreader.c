@@ -3140,8 +3140,8 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 	}
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-	/* Currently value type is built on JDK20, so compare with JDK20 for now. Eventually it may need to compare to JDK21. */
-	if ((flags & BCT_MajorClassFileVersionMask) < BCT_JavaMajorVersionShifted(20)) {
+	/* Currently value type is built on JDK22, so compare with JDK22 for now. */
+	if ((flags & BCT_MajorClassFileVersionMask) < BCT_JavaMajorVersionShifted(22)) {
 		classfile->accessFlags &= ~(CFR_ACC_VALUE_TYPE | CFR_ACC_PRIMITIVE_VALUE_TYPE | CFR_ACC_IDENTITY);
 	}
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
