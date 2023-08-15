@@ -58,8 +58,7 @@ class CheckVMThreadStacks extends Check
 
 				walkState.callBacks = new BaseStackWalkerCallbacks()
 				{
-					@Override
-					public void objectSlotWalkFunction(WalkState walkState, PointerPointer objectSlot, VoidPointer stackAddress)
+					public void objectSlotWalkFunction(J9VMThreadPointer walkThread, WalkState walkState, PointerPointer objectSlot, VoidPointer stackAddress)
 					{
 						_engine.checkSlotStack(objectSlot, walkThread, stackAddress);
 					}
@@ -94,8 +93,7 @@ class CheckVMThreadStacks extends Check
 
 				walkState.callBacks = new BaseStackWalkerCallbacks()
 				{
-					@Override
-					public void objectSlotWalkFunction(WalkState walkState, PointerPointer objectSlot, VoidPointer stackAddress)
+					public void objectSlotWalkFunction(J9VMThreadPointer walkThread, WalkState walkState, PointerPointer objectSlot, VoidPointer stackAddress)
 					{
 						try {
 							formatter.entry(objectSlot.at(0));
@@ -127,8 +125,7 @@ class CheckVMThreadStacks extends Check
 
 		walkState.callBacks = new BaseStackWalkerCallbacks()
 		{
-			@Override
-			public FrameCallbackResult frameWalkFunction(WalkState walkState)
+			public FrameCallbackResult frameWalkFunction(J9VMThreadPointer walkThread, WalkState walkState)
 			{
 				String className = "(unknown class)";
 				if(walkState.constantPool.notNull()) {

@@ -29,11 +29,11 @@ import com.ibm.j9ddr.CorruptDataException;
 import com.ibm.j9ddr.InvalidDataTypeException;
 import com.ibm.j9ddr.corereaders.osthread.IOSThread;
 import com.ibm.j9ddr.corereaders.osthread.IRegister;
+import com.ibm.j9ddr.vm29.pointer.generated.J9JITDecompilationInfoPointer;
 import com.ibm.j9ddr.vm29.j9.AlgorithmPicker;
 import com.ibm.j9ddr.vm29.j9.AlgorithmVersion;
 import com.ibm.j9ddr.vm29.j9.BaseAlgorithm;
 import com.ibm.j9ddr.vm29.j9.ConstantPoolHelpers;
-import com.ibm.j9ddr.vm29.j9.DataType;
 import com.ibm.j9ddr.vm29.j9.IAlgorithm;
 import com.ibm.j9ddr.vm29.pointer.PointerPointer;
 import com.ibm.j9ddr.vm29.pointer.U32Pointer;
@@ -42,7 +42,7 @@ import com.ibm.j9ddr.vm29.pointer.UDATAPointer;
 import com.ibm.j9ddr.vm29.pointer.VoidPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9BuildFlags;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ConstantPoolPointer;
-import com.ibm.j9ddr.vm29.pointer.generated.J9JITDecompilationInfoPointer;
+import com.ibm.j9ddr.vm29.pointer.generated.J9I2JStatePointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9JITExceptionTablePointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9JavaVMPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9MethodPointer;
@@ -55,10 +55,7 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9SFMethodFramePointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9SFMethodTypeFramePointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9SFSpecialFramePointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9SFStackFramePointer;
-import com.ibm.j9ddr.vm29.pointer.generated.J9VMContinuationPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9VMEntryLocalStoragePointer;
-import com.ibm.j9ddr.vm29.pointer.generated.J9VMThreadPointer;
-import com.ibm.j9ddr.vm29.pointer.helper.J9RASHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ROMMethodHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ThreadHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9UTF8Helper;
@@ -84,9 +81,9 @@ import static com.ibm.j9ddr.vm29.structure.J9StackWalkState.*;
 
 /**
  * StackWalker
- *
+ * 
  * @author andhall
- *
+ * 
  */
 public class StackWalker
 {
@@ -98,15 +95,14 @@ public class StackWalker
 	{
 		return getImpl().walkStackFrames(walkState);
 	}
-
+	
 	/**
-	 * use continuation's sp, arg0ea, pc, literal and entryLocalStorage.
+	 *  use user provided sp, arg0ea, pc, literal and entryLocalStorage
 	 */
-	public static StackWalkResult walkStackFrames(WalkState walkState, long continuationAddress)
-	{
-		return getImpl().walkStackFrames(walkState, continuationAddress);
+	public static StackWalkResult walkStackFrames(WalkState walkState, UDATAPointer sp, UDATAPointer arg0ea, U8Pointer pc, J9MethodPointer literals, J9VMEntryLocalStoragePointer entryLocalStorage) {
+		return getImpl().walkStackFrames(walkState, sp, arg0ea, pc, literals, entryLocalStorage);
 	}
-
+	
 	/* Callback from JIT stack walker */
 	static FrameCallbackResult walkFrame(WalkState walkState) throws CorruptDataException
 	{
@@ -121,7 +117,7 @@ public class StackWalker
 	}
 
 	private static IStackWalker impl;
-
+	
 	private static final AlgorithmPicker<IStackWalker> picker = new AlgorithmPicker<IStackWalker>(AlgorithmVersion.STACK_WALKER_VERSION){
 
 		@Override
@@ -131,7 +127,7 @@ public class StackWalker
 			toReturn.add(new StackWalker_29_V0());
 			return toReturn;
 		}};
-
+	
 	private static IStackWalker getImpl()
 	{
 		if (impl == null) {
@@ -143,146 +139,116 @@ public class StackWalker
 	private static interface IStackWalker extends IAlgorithm
 	{
 		public StackWalkResult walkStackFrames(WalkState walkState);
-
-		public StackWalkResult walkStackFrames(WalkState walkState, long continuationAddress);
-
+		
 		public void walkBytecodeFrameSlots(WalkState walkState,
 				J9MethodPointer method, UDATA offsetPC,
 				UDATAPointer pendingBase, UDATA pendingStackHeight,
 				UDATAPointer localBase, UDATA numberOfLocals) throws CorruptDataException;
 
+		public StackWalkResult walkStackFrames(WalkState walkState, UDATAPointer sp, UDATAPointer arg0ea, U8Pointer pc, J9MethodPointer literals, J9VMEntryLocalStoragePointer entryLocalStorage);
+
 		FrameCallbackResult walkFrame(WalkState walkState) throws CorruptDataException;
 	}
-
-
+	
+	
 	private static class StackWalker_29_V0 extends BaseAlgorithm implements IStackWalker
 	{
-
+	
 		protected StackWalker_29_V0()
 		{
 			super(90, 0);
 		}
 
-		@Override
-		public StackWalkResult walkStackFrames(WalkState walkState) {
-			J9VMThreadPointer walkThread = walkState.walkThread;
+		public StackWalkResult walkStackFrames(WalkState walkState)
+		{
 			try {
-				walkState.javaVM = walkThread.javaVM();
-				walkState.threadAddress = walkThread.getAddress();
-				walkState.osThread = J9ThreadHelper.getOSThread(walkThread.osThread());
-				walkState.privateFlags = walkThread.privateFlags();
-				if (walkState.arg0EA == null) {
-					walkState.arg0EA = walkThread.arg0EA();
-				}
-				if (walkState.pc == null) {
-					walkState.pc = walkThread.pc();
-				}
-				walkState.pcAddress = walkThread.pcEA();
-				if (walkState.walkSP == null) {
-					walkState.walkSP = walkThread.sp();
-				}
-				if (walkState.literals == null) {
-					walkState.literals = walkThread.literals();
-				}
-				J9VMEntryLocalStoragePointer els = walkThread.entryLocalStorage();
-				if (walkState.oldEntryLocalStorage == null) {
-					walkState.fillElsFields(els);
-				}
-				walkState.j2iFrame = walkThread.j2iFrame();
-				walkState.decompilationStack = walkThread.decompilationStack();
+				return walkStackFrames(walkState, 
+						walkState.walkThread.sp(), 
+						walkState.walkThread.arg0EA(), 
+						walkState.walkThread.pc(), 
+						walkState.walkThread.literals(),
+						walkState.walkThread.entryLocalStorage());
 			} catch (CorruptDataException ex) {
-				raiseCorruptDataEvent("CDE thrown extracting initial stack walk state. walkThread = " + walkThread.getHexAddress(), ex, true);
+				raiseCorruptDataEvent("CDE thrown extracting initial stack walk state. walkThread = " + walkState.walkThread.getHexAddress(), ex, true);
 				return StackWalkResult.STACK_CORRUPT;
 			}
-			return commonWalker(walkState);
 		}
-
-		@Override
-		public StackWalkResult walkStackFrames(WalkState walkState, long continuationAddress) {
-			try {
-				J9VMContinuationPointer continuation = J9VMContinuationPointer.cast(continuationAddress);
-
-				walkState.javaVM = J9RASHelper.getVM(DataType.getJ9RASPointer());
-				walkState.threadAddress = continuation.getAddress();
-				walkState.arg0EA = continuation.arg0EA();
-				walkState.pc = continuation.pc();
-				walkState.pcAddress = continuation.pcEA();
-				walkState.walkSP = continuation.sp();
-				walkState.literals = continuation.literals();
-				walkState.privateFlags = new UDATA(0);
-				walkState.j2iFrame = continuation.j2iFrame();
-				walkState.decompilationStack = continuation.decompilationStack();
-
-				walkState.i2jState = continuation.i2jState();
-				walkState.jitGlobalStorageBase = UDATAPointer.cast(continuation.jitGPRs());
-				walkState.jitFPRegisterStorageBase = UDATAPointer.NULL;
-				walkState.oldEntryLocalStorage = continuation.oldEntryLocalStorage();
-			} catch (NoClassDefFoundError | NoSuchFieldException e) {
-				/* The exception will be thrown if the related classes or fields cannot be found in the core file.
-				 * This could be caused by either that the Java version of the core file is below 19 or that the
-				 * core file is corrupted. Since the version has been checked in the continuation stackwalk command,
-				 * we can conclude that the core file is corrupted.
-				 */
-				return StackWalkResult.STACK_CORRUPT;
-			} catch (CorruptDataException ex) {
-				raiseCorruptDataEvent("CDE thrown extracting initial stack walk state. walkThread = " + String.format("0x%0" + (UDATA.SIZEOF * 2) + "X", continuationAddress), ex, true);
-				return StackWalkResult.STACK_CORRUPT;
-			}
-			return commonWalker(walkState);
-		}
-
-		private StackWalkResult commonWalker(WalkState walkState)
+		
+		public StackWalkResult walkStackFrames(WalkState walkState, UDATAPointer sp, UDATAPointer arg0ea,  U8Pointer pc, J9MethodPointer literals, J9VMEntryLocalStoragePointer entryLocalStorage) 
 		{
 			UDATAPointer nextA0 = null;
 			U8Pointer nextPC = null;
 			J9MethodPointer nextLiterals;
-
-			StackWalkResult rc = walkState.privateFlags.anyBitsIn(J9_PRIVATE_FLAGS_STACK_CORRUPT)
-							? StackWalkResult.STACK_CORRUPT
-							: StackWalkResult.NONE;
-
+			
+			StackWalkResult rc = null;
+			try {
+				rc = walkState.walkThread.privateFlags().anyBitsIn(J9_PRIVATE_FLAGS_STACK_CORRUPT) ? StackWalkResult.STACK_CORRUPT : StackWalkResult.NONE;
+			} catch (CorruptDataException e) {
+				raiseCorruptDataEvent("CDE thrown extracting walkThread privateFlags. walkThread = " + walkState.walkThread.getHexAddress(), e, true);
+				return StackWalkResult.STACK_CORRUPT;
+			}
+	
 			/* Java-implementation specific variables start */
 			boolean endOfStackReached = false;
 			boolean keepWalking = true;
 			boolean startAtJITFrame = false;
-
+			
 			resetOSlotsCorruptionThreshold();
-
+			
 			/* End of Java-implementation-specific variables */
-
+	
 			if ((walkState.flags & J9_STACKWALK_SAVE_STACKED_REGISTERS) != 0) {
 				throw new UnsupportedOperationException("J9_STACKWALK_SAVE_STACKED_REGISTERS not supported by offline walker");
 			}
-
-			walkState.framesWalked = 0;
-			walkState.previousFrameFlags = new UDATA(0);
-			walkState.searchFrameFound = false;
-			walkState.argCount = new UDATA(0);
-			walkState.frameFlags = new UDATA(0);
-
-			if (J9BuildFlags.interp_nativeSupport) {
-				walkState.jitInfo = J9JITExceptionTablePointer.NULL;
-				walkState.inlineDepth = 0;
-				walkState.inlinerMap = null;
-
-				if (J9BuildFlags.jit_fullSpeedDebug) {
-					walkState.decompilationRecord = J9JITDecompilationInfoPointer.NULL;
-					walkState.resolveFrameFlags = new UDATA(0);
+	
+			try {
+				walkState.framesWalked = 0;
+				walkState.previousFrameFlags = new UDATA(0);
+				walkState.searchFrameFound = false;
+				walkState.arg0EA = arg0ea;				
+				walkState.pc = pc;
+				walkState.pcAddress = walkState.walkThread.pcEA();
+				walkState.walkSP = sp;
+				walkState.literals = literals;
+				walkState.argCount = new UDATA(0);
+				walkState.frameFlags = new UDATA(0);
+	
+				if (J9BuildFlags.interp_nativeSupport) {
+					walkState.jitInfo = J9JITExceptionTablePointer.NULL;
+					walkState.inlineDepth = 0;
+					walkState.inlinerMap = null;
+					walkState.walkedEntryLocalStorage = entryLocalStorage;					
+					//TODO this is &i2jState in the C code. Find out why it's different
+					walkState.i2jState = walkState.walkedEntryLocalStorage.notNull() ? walkState.walkedEntryLocalStorage
+							.i2jState()
+							: null;
+					walkState.j2iFrame = walkState.walkThread.j2iFrame();
+	
+					if (J9BuildFlags.jit_fullSpeedDebug) {
+						walkState.decompilationStack = walkState.walkThread
+								.decompilationStack();
+						walkState.decompilationRecord = J9JITDecompilationInfoPointer.NULL;
+						walkState.resolveFrameFlags = new UDATA(0);
+					}
 				}
+	
+			} catch (CorruptDataException ex) {
+				raiseCorruptDataEvent("CDE thrown extracting initial stack walk state. walkThread = " + walkState.walkThread.getHexAddress(), ex, true);
+				return StackWalkResult.STACK_CORRUPT;
 			}
 
 			/* fix up walkState values if we're starting in an inflight frame */
 			try {
-				IOSThread nativeThread = walkState.osThread;
-
+				IOSThread nativeThread = J9ThreadHelper.getOSThread(walkState.walkThread.osThread());
+				
 				if (nativeThread != null) {
 					/* TODO: the jit map code subtracts 1 from this value because it expects the trap handlers to have added one
 					 * to move the instruction to the target of the return from a child procedure. Do we need to alter it here on z/OS?
 					 */
 					/* does the current eip correspond to a jit exception table? */
 					long eip = nativeThread.getInstructionPointer();
-
-					J9JITExceptionTablePointer table = jitGetExceptionTableFromPC(walkState.javaVM, U8Pointer.cast(eip));
+					
+					J9JITExceptionTablePointer table = jitGetExceptionTableFromPC(walkState.walkThread, U8Pointer.cast(eip));
 
 					if (!table.isNull()) {
 						/* there's an exception table associated with this address so we're in jitted code. Let's try fixing it up */
@@ -341,7 +307,7 @@ public class StackWalker
 
 			swPrintf(walkState, 1,
 					"*** BEGIN STACK WALK, flags = {0} walkThread = {1} ***",
-					String.format("%08X", walkState.flags), walkState.threadAddress);
+					String.format("%08X", walkState.flags), walkState.walkThread.getHexAddress());
 
 			if ((walkState.flags & J9_STACKWALK_START_AT_JIT_FRAME) != 0)
 				swPrintf(walkState, 2, "\tSTART_AT_JIT_FRAME");
@@ -369,7 +335,7 @@ public class StackWalker
 				swPrintf(walkState, 2, "\tHIDE_EXCEPTION_FRAMES");
 			if ((walkState.flags & J9_STACKWALK_RECORD_BYTECODE_PC_OFFSET) != 0)
 				swPrintf(walkState, 2, "\tRECORD_BYTECODE_PC_OFFSET");
-
+	
 			//TODO why is the throwing exception stuff left out?
 			swPrintf(
 					walkState,
@@ -384,11 +350,13 @@ public class StackWalker
 					+ walkState.arg0EA.getHexAddress()
 					+ ", j2iFrame = "
 					+ (J9BuildFlags.interp_nativeSupport ? walkState.j2iFrame.getHexAddress() : "0")
+					+ ", ELS = "
+					+ (J9BuildFlags.interp_nativeSupport ? walkState.walkedEntryLocalStorage.getHexAddress() : "0")
 					+ ", decomp = "
 					+ (J9BuildFlags.jit_fullSpeedDebug ? walkState.decompilationStack.getHexAddress() : "0")
 			);
 
-
+	
 			if (((walkState.flags & J9_STACKWALK_COUNT_SPECIFIED) != 0)
 					&& (walkState.maxFrames == 0)) {
 				keepWalking = false;
@@ -396,35 +364,35 @@ public class StackWalker
 			}
 
 			//TODO missing initializeObjectSlotBitVector
-
+	
 			if (J9BuildFlags.interp_nativeSupport) {
 				if (walkState.flags == J9_STACKWALK_ITERATE_O_SLOTS) {
 					walkState.flags |= J9_STACKWALK_SKIP_INLINES;
 				}
-
+	
 				if ((walkState.flags & J9_STACKWALK_ITERATE_O_SLOTS) != 0) {
 					walkState.flags |= J9_STACKWALK_MAINTAIN_REGISTER_MAP;
 				}
-
+	
 				if ((walkState.flags & J9_STACKWALK_START_AT_JIT_FRAME) != 0) {
 					// goto jitFrame
 					startAtJITFrame = true;
 				}
 			}
-
+	
 			// Check callbacks have been provided if required
 			if ((walkState.flags & (J9_STACKWALK_ITERATE_FRAMES | J9_STACKWALK_ITERATE_O_SLOTS)) != 0
 					&& walkState.callBacks == null) {
 				throw new NullPointerException(
 						"User requested iterate frames or slots and didn't provide a callback. See WalkState.callBacks.");
 			}
-
+	
 			try {
 				WALKING_LOOP: while (keepWalking) {
 					J9SFStackFramePointer fixedStackFrame;
-
+	
 					swPrintf(walkState, 200, "Top of WALKING_LOOP");
-
+	
 					if (!startAtJITFrame) {
 						walkState.constantPool = J9ConstantPoolPointer.NULL;
 						walkState.unwindSP = UDATAPointer.NULL;
@@ -432,7 +400,7 @@ public class StackWalker
 						walkState.sp = walkState.walkSP.sub(walkState.argCount);
 						walkState.outgoingArgCount = walkState.argCount;
 						walkState.bytecodePCOffset = U8Pointer.cast(-1);
-
+	
 						if (walkState.pc.getAddress() == J9SF_FRAME_TYPE_END_OF_STACK) {
 							// goto endOfStack;
 							swPrintf(walkState, 200, "PC Switch: End of Stack");
@@ -466,10 +434,11 @@ public class StackWalker
 										"Aborting walk due to unknown special frame type");
 								break WALKING_LOOP;
 							}
-
-							if ((walkState.pc.eq(walkState.javaVM.callInReturnPC()))
+	
+							if ((walkState.pc.eq(walkState.walkThread.javaVM()
+									.callInReturnPC()))
 									|| (walkState.pc
-											.eq(walkState.javaVM
+											.eq(walkState.walkThread.javaVM()
 													.callInReturnPC().addOffset(3)))) {
 								swPrintf(walkState, 200,
 										"PC Switch: default: walkJNICallInFrame");
@@ -480,13 +449,13 @@ public class StackWalker
 								walkBytecodeFrame(walkState);
 							}
 						}
-
+	
 						/*
 						 * Fetch the PC value before calling the frame walker since
 						 * the debugger modifies PC values when breakpointing
 						 * methods
 						 */
-
+	
 						{
 							UDATA nextPCUDATA = new UDATA(walkState.bp.getAddress());
 							nextPCUDATA = nextPCUDATA.sub(J9SFStackFrame.SIZEOF);
@@ -495,17 +464,17 @@ public class StackWalker
 									.cast(nextPCUDATA);
 							nextPC = tmpFrame.savedPC();
 						}
-
+	
 						/* Walk the frame */
-
+	
 						if (walkFrame(walkState) != FrameCallbackResult.KEEP_ITERATING) {
 							break WALKING_LOOP;
 						}
 						walkState.previousFrameFlags = walkState.frameFlags;
 						walkState.resolveFrameFlags = new UDATA(0);
-
+	
 					} // End of (! startAtJITFrame)
-
+	
 					/*
 					 * Call the JIT walker if the current frame is a transition from
 					 * the JIT to the interpreter
@@ -521,18 +490,18 @@ public class StackWalker
 							continue WALKING_LOOP;
 						}
 					}
-
+	
 					/*
 					 * Fetch the remaining frame values after calling the frame
 					 * walker since the stack could grow during the iterator,
 					 * changing all stack pointer values
 					 */
 					fixedStackFrame = J9SFStackFramePointer.cast(walkState.bp.subOffset(J9SFStackFrame.SIZEOF).addOffset(UDATA.SIZEOF));
-
+					
 					nextLiterals = fixedStackFrame.savedCP();
 					// See definition for UNTAG2 and UNTAGGED_A0
 					nextA0 = UDATAPointer.cast(fixedStackFrame.savedA0()).untag();
-
+	
 					/* Move to next frame */
 					walkState.pcAddress = fixedStackFrame.savedPCEA();
 					walkState.walkSP = walkState.arg0EA.add(1);
@@ -541,39 +510,39 @@ public class StackWalker
 					walkState.arg0EA = nextA0;
 				}
 			} catch (CorruptDataException ex) {
-				raiseCorruptDataEvent("CorruptDataException thrown walking stack. walkThread = "+ walkState.getThreadHexAddress(), ex, false);
+				raiseCorruptDataEvent("CorruptDataException thrown walking stack. walkThread = "+ walkState.walkThread.getHexAddress(), ex, false);
 				return StackWalkResult.STACK_CORRUPT;
 			}
-
+	
 			// endOfStack:
 			if (endOfStackReached) {
 				swPrintf(walkState, 2, "<end of stack>");
 			}
-
+	
 			//If we disabled o-slots walking because it kept throwing CorruptDataException, reset the rc here
 			if (oSlotsCorruptionThresholdReached() && rc == StackWalkResult.NONE) {
 				rc = StackWalkResult.STACK_CORRUPT;
 			}
-
+			
 			// terminationPoint:
-
+	
 			swPrintf(walkState, 1, "*** END STACK WALK (rc = {0}) ***", rc);
-
+	
 			return rc;
 		}
-
+	
 		private void walkMethodFrame(WalkState walkState)
 				throws CorruptDataException
 		{
 			J9SFMethodFramePointer methodFrame = J9SFMethodFramePointer
 					.cast(walkState.walkSP
 							.addOffset(UDATA.cast(walkState.literals)));
-
+	
 			walkState.bp = UDATAPointer.cast(methodFrame.savedA0EA());
 			walkState.frameFlags = methodFrame.specialFrameFlags();
 			walkState.method = methodFrame.method();
 			walkState.unwindSP = UDATAPointer.cast(methodFrame);
-
+	
 			try {
 				if (walkState.pc.getAddress() == J9SF_FRAME_TYPE_METHOD) {
 					printFrameType(
@@ -600,7 +569,7 @@ public class StackWalker
 									.anyBitsIn(J9_STACK_FLAGS_JIT_NATIVE_TRANSITION) ? "JIT unknown transition"
 									: "Unknown method");
 				}
-
+		
 				if (((walkState.flags & J9_STACKWALK_ITERATE_O_SLOTS) != 0)
 						&& walkState.literals.notNull()) {
 						if (walkState.frameFlags.anyBitsIn(J9_SSF_JNI_REFS_REDIRECTED)) {
@@ -612,24 +581,24 @@ public class StackWalker
 			} catch (CorruptDataException ex) {
 				handleOSlotsCorruption(walkState, "StackWalker_29_V0", "walkMethodFrame", ex);
 			}
-
+	
 			if (walkState.method.notNull()) {
 				J9ROMMethodPointer romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(walkState.method);
-
+	
 				walkState.constantPool = ConstantPoolHelpers.J9_CP_FROM_METHOD(walkState.method);
 				walkState.argCount = new UDATA(romMethod.argCount());
-
+					
 				if ((walkState.flags & J9_STACKWALK_ITERATE_O_SLOTS) != 0) {
 					try {
 						WALK_METHOD_CLASS(walkState);
-
+	
 						if (walkState.argCount.longValue() != 0) {
 							/* Max size as argCount always <= 255 */
 							int[] result = new int[8];
-
+	
 							swPrintf(walkState, 4, "\tUsing signature mapper");
 							j9localmap_ArgBitsForPC0(romMethod, result);
-
+	
 							swPrintf(walkState, 4,
 									"\tArguments starting at {0} for {1} slots",
 									walkState.arg0EA.getHexAddress(),
@@ -666,9 +635,9 @@ public class StackWalker
 				walkState.constantPool = null;
 				walkState.argCount = new UDATA(0);
 			}
-
+	
 		}
-
+	
 		private void walkMethodTypeFrame(WalkState walkState)
 				throws CorruptDataException
 		{
@@ -694,25 +663,25 @@ public class StackWalker
 				walkState.slotIndex = 0;
 				walkDescribedPushes(walkState, walkState.arg0EA, walkState.argCount.intValue(), descriptionSlots, walkState.argCount.intValue());
 			}
-
+			
 		}
-
+		
 		private void walkJNIRefs(WalkState walkState, UDATAPointer currentRef,
 				int refCount) throws CorruptDataException
 		{
 			swPrintf(walkState, 4,
 					"\tJNI local ref pushes starting at {0} for {1} slots",
 					currentRef.getHexAddress(), refCount);
-
+	
 			walkState.slotType = (int)J9_STACKWALK_SLOT_TYPE_JNI_LOCAL;
 			walkState.slotIndex = 0;
-
+	
 			do {
 				if (currentRef.at(0).anyBitsIn(1)) {
 					// J9Object **realRef = (J9Object **) (*currentRef & ~1);
 					PointerPointer realRef = PointerPointer.cast(currentRef.at(0)
 							.bitAnd(new UDATA(1).bitNot()));
-
+	
 					/*
 					 * There's no need to mark indirect slots as object since they
 					 * will never point to valid objects (so will not be whacked)
@@ -725,7 +694,7 @@ public class StackWalker
 				walkState.slotIndex++;
 			} while (--refCount > 0);
 		}
-
+	
 		private void walkIndirectDescribedPushes(WalkState walkState,
 				UDATAPointer highestIndirectSlot, int slotCount,
 				int[] descriptionSlots) throws CorruptDataException
@@ -733,7 +702,7 @@ public class StackWalker
 			int descriptionBitsRemaining = 0;
 			int description = 0;
 			int descriptionSlotPointer = 0;
-
+	
 			while (slotCount > 0) {
 				if (descriptionBitsRemaining == 0) {
 					description = descriptionSlots[descriptionSlotPointer++];
@@ -761,7 +730,7 @@ public class StackWalker
 								.cast(highestIndirectSlot));
 					}
 				}
-
+	
 				description >>= 1;
 				--descriptionBitsRemaining;
 				highestIndirectSlot = highestIndirectSlot.sub(1);
@@ -769,29 +738,29 @@ public class StackWalker
 				++(walkState.slotIndex);
 			}
 		}
-
+	
 		private void walkObjectPushes(WalkState walkState)
 				throws CorruptDataException
 		{
 			UDATA byteCount = UDATA.cast(walkState.literals);
 			PointerPointer currentSlot = PointerPointer.cast(walkState.walkSP);
-
+	
 			swPrintf(walkState, 4, "\tObject pushes starting at {0} for {1} slots",
 					currentSlot.getHexAddress(), byteCount.longValue()
 							/ UDATA.SIZEOF);
-
+	
 			walkState.slotType = (int)J9_STACKWALK_SLOT_TYPE_INTERNAL;
 			walkState.slotIndex = 0;
-
+	
 			while (!byteCount.eq(0)) {
 				WALK_NAMED_O_SLOT(walkState, currentSlot, "Push");
 				currentSlot = currentSlot.add(1);
 				byteCount = byteCount.sub(UDATA.SIZEOF);
 				++(walkState.slotIndex);
 			}
-
+	
 		}
-
+	
 		private void walkPushedJNIRefs(WalkState walkState)
 				throws CorruptDataException
 		{
@@ -800,50 +769,50 @@ public class StackWalker
 			// TODO think about unsigned 64 bit divide
 			UDATA pushCount = new UDATA(walkState.literals.getAddress()
 					/ UDATA.SIZEOF).sub(refCount);
-
+	
 			if (!pushCount.eq(0)) {
 				walkState.literals = J9MethodPointer.cast(pushCount.longValue()
 						* UDATA.SIZEOF);
 				walkObjectPushes(walkState);
 			}
-
+	
 			if (!refCount.eq(0)) {
 				walkJNIRefs(walkState, walkState.walkSP.add(pushCount), refCount
 						.intValue());
 			}
 		}
-
+	
 		public FrameCallbackResult walkFrame(WalkState walkState)
 				throws CorruptDataException
 		{
 			if ((walkState.flags & J9_STACKWALK_VISIBLE_ONLY) != 0) {
-				if ((UDATA.cast(walkState.pc).eq(J9SF_FRAME_TYPE_NATIVE_METHOD) ||
+				if ((UDATA.cast(walkState.pc).eq(J9SF_FRAME_TYPE_NATIVE_METHOD) || 
 						UDATA.cast(walkState.pc).eq(J9SF_FRAME_TYPE_JNI_NATIVE_METHOD))
 						&& ((walkState.flags & J9_STACKWALK_INCLUDE_NATIVES) == 0)) {
 					return FrameCallbackResult.KEEP_ITERATING;
 				}
-
+	
 				if ((!J9BuildFlags.interp_nativeSupport)
 						|| walkState.jitInfo.isNull()) {
-
+	
 					if (walkState.bp.at(0).anyBitsIn(J9SF_A0_INVISIBLE_TAG)) {
 						if ((walkState.flags & J9_STACKWALK_INCLUDE_CALL_IN_FRAMES) == 0
-								|| !walkState.pc.eq(walkState.javaVM
+								|| !walkState.pc.eq(walkState.walkThread.javaVM()
 										.callInReturnPC())) {
 							return FrameCallbackResult.KEEP_ITERATING;
 						}
 					}
-
+	
 				}
-
+				
 				if (walkState.skipCount > 0) {
 					--walkState.skipCount;
 					return FrameCallbackResult.KEEP_ITERATING;
 				}
-
+	
 				if ((walkState.flags & J9_STACKWALK_HIDE_EXCEPTION_FRAMES) != 0) {
 					J9ROMMethodPointer romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(walkState.method);
-
+	
 					if (!romMethod.modifiers().anyBitsIn(J9AccStatic)) {
 						if (J9UTF8Helper.stringValue(romMethod.nameAndSignature().name())
 								.charAt(0) == '<') {
@@ -856,9 +825,9 @@ public class StackWalker
 					}
 				}
 			}
-
+	
 			// Caching code not reproduced in offline walker
-
+	
 			++walkState.framesWalked;
 			// Named block to imitate goto behaviour
 			walkIt: do {
@@ -867,27 +836,28 @@ public class StackWalker
 						break walkIt;
 					}
 				}
-
+	
 				if ((walkState.flags & J9_STACKWALK_ITERATE_FRAMES) != 0) {
 					break walkIt;
 				}
-
+	
 				return FrameCallbackResult.KEEP_ITERATING;
 			} while (false);
-
+	
 			// walkIt:
 			if ((walkState.flags & J9_STACKWALK_ITERATE_FRAMES) != 0) {
-				FrameCallbackResult rc = walkState.callBacks.frameWalkFunction(walkState);
-
+				FrameCallbackResult rc = walkState.callBacks.frameWalkFunction(
+						walkState.walkThread, walkState);
+	
 				if ((walkState.flags & J9_STACKWALK_COUNT_SPECIFIED) != 0) {
 					if (walkState.framesWalked == walkState.maxFrames) {
 						rc = FrameCallbackResult.STOP_ITERATING;
 					}
 				}
-
+	
 				return rc;
 			}
-
+	
 			return FrameCallbackResult.STOP_ITERATING;
 		}
 
@@ -905,7 +875,7 @@ public class StackWalker
 			 * / result logic here.
 			 */
 			int[] result;
-
+	
 			swPrintf(walkState, 3, "\tBytecode index = {0}", offsetPC.longValue());
 
 			if (romMethod.modifiers().anyBitsIn(J9AccSynchronized)) {
@@ -922,10 +892,10 @@ public class StackWalker
 				WALK_NAMED_O_SLOT(walkState, PointerPointer.cast(bp.add(1)), "Receiver O-Slot");
 				numberOfMappedLocals = numberOfMappedLocals.sub(1);
 			}
-
+	
 			swPrintf(walkState, 200, "numberOfMappedLocals={0}, pendingStackHeight={1}",
 					numberOfMappedLocals.getHexValue(), pendingStackHeight.getHexValue());
-
+	
 			int resultArraySize = 0;
 			if (numberOfMappedLocals.gt(32) || pendingStackHeight.gt(32)) {
 				UDATA maxCount = numberOfMappedLocals.gt(pendingStackHeight) ? numberOfMappedLocals
@@ -940,7 +910,7 @@ public class StackWalker
 			}
 			swPrintf(walkState, 200, "Result array size = {0}", resultArraySize);
 			result = new int[resultArraySize];
-
+	
 			if (numberOfMappedLocals.intValue() != 0) {
 				getLocalsMap(walkState, romClass, romMethod, U8Pointer.cast(offsetPC), result, numberOfMappedLocals);
 				swPrintf(walkState, 4, "\tLocals starting at {0} for {1} slots",
@@ -949,7 +919,7 @@ public class StackWalker
 				walkState.slotIndex = 0;
 				walkDescribedPushes(walkState, localBase, numberOfMappedLocals.intValue(), result, romMethod.argCount().intValue());
 			}
-
+	
 			if (pendingStackHeight.intValue() != 0) {
 				getStackMap(walkState, romClass, romMethod, offsetPC, pendingStackHeight, result);
 				swPrintf(walkState, 4,
@@ -982,13 +952,13 @@ public class StackWalker
 					walkState.unwindSP = UDATAPointer.NULL;
 					walkState.frameFlags = new UDATA(0);
 					// TODO can we avoid crashing?
-					printFrameType(walkState, "BAD bytecode (expect crash)");
+					printFrameType(walkState, "BAD bytecode (expect crash)");					
 				}
 			} else {
 				UDATA argTempCount;
 				J9ROMMethodPointer romMethod;
-				J9JavaVMPointer vm = walkState.javaVM;
-
+				J9JavaVMPointer vm = walkState.walkThread.javaVM();
+				
 				walkState.constantPool = ConstantPoolHelpers.J9_CP_FROM_METHOD(walkState.method);
 				boolean isImpdep1 = false;
 				try {
@@ -997,18 +967,18 @@ public class StackWalker
 					// impdep1PC field is disabled for OJDK method handles
 				}
 				if (!isImpdep1) {
-					walkState.bytecodePCOffset = walkState.pc.sub(walkState.method.bytecodes().getAddress());
+					walkState.bytecodePCOffset = walkState.pc.sub(walkState.method.bytecodes().getAddress());	
 				} else {
 					walkState.bytecodePCOffset = U8Pointer.NULL;
 				}
 
 				romMethod = getOriginalROMMethod(walkState.method);
-
+		
 				walkState.argCount = new UDATA(J9_ARG_COUNT_FROM_ROM_METHOD(romMethod));
 				argTempCount = new UDATA(J9_TEMP_COUNT_FROM_ROM_METHOD(romMethod))
 						.add(walkState.argCount);
 				walkState.bp = UDATAPointer.cast(walkState.arg0EA).sub(argTempCount);
-
+		
 				if (romMethod.modifiers().anyBitsIn(J9AccSynchronized)) {
 					argTempCount = argTempCount.add(1);
 					walkState.bp = walkState.bp.sub(1);
@@ -1016,7 +986,7 @@ public class StackWalker
 					argTempCount = argTempCount.add(1);
 					walkState.bp = walkState.bp.sub(1);
 				}
-
+		
 				if (J9BuildFlags.interp_nativeSupport
 						&& walkState.bp.eq(walkState.j2iFrame)) {
 					walkState.unwindSP = walkState.bp.subOffset(J9SFJ2IFrame.SIZEOF)
@@ -1029,7 +999,7 @@ public class StackWalker
 							.addOffset(UDATA.SIZEOF);
 					walkState.frameFlags = new UDATA(0);
 				}
-
+		
 				try {
 					printFrameType(walkState, walkState.frameFlags.intValue() != 0 ? "J2I"
 							: "Bytecode");
@@ -1042,16 +1012,16 @@ public class StackWalker
 					}
 				} catch (CorruptDataException ex) {
 					handleOSlotsCorruption(walkState, "StackWalker_29_V0", "walkBytecodeFrame", ex);
-				}
+				}	
 			}
 		}
-
+	
 		private void getStackMap(WalkState walkState, J9ROMClassPointer romClass,
 				J9ROMMethodPointer romMethod, UDATA offsetPC, UDATA pushCount,
 				int[] result) throws CorruptDataException
 		{
 			int errorCode;
-
+	
 			errorCode = j9stackmap_StackBitsForPC(offsetPC, romClass, romMethod,
 					result, pushCount.intValue());
 			if (errorCode < 0) {
@@ -1060,7 +1030,7 @@ public class StackWalker
 			}
 			return;
 		}
-
+	
 		private void walkDescribedPushes(WalkState walkState,
 				UDATAPointer highestSlot, int slotCount, int[] descriptionSlots, int argCount)
 				throws CorruptDataException
@@ -1068,7 +1038,7 @@ public class StackWalker
 			int descriptionBitsRemaining = 0;
 			int description = 0;
 			int descriptionSlotPointer = 0;
-
+	
 			while (slotCount > 0) {
 				if (descriptionBitsRemaining == 0) {
 					description = descriptionSlots[descriptionSlotPointer++];
@@ -1081,14 +1051,14 @@ public class StackWalker
 					} else {
 						indexedTag = String.format("%s-Slot: p%d", ((description & 1) != 0) ? "O" : "I" ,walkState.slotIndex);
 					}
-
+					
 					if ((description & 1) != 0) {
 						WALK_NAMED_O_SLOT(walkState, PointerPointer.cast(highestSlot), indexedTag);
 					} else {
 						WALK_NAMED_I_SLOT(walkState, PointerPointer.cast(highestSlot), indexedTag);
 					}
 				}
-
+	
 				description >>= 1;
 				--descriptionBitsRemaining;
 				highestSlot = highestSlot.sub(1);
@@ -1096,14 +1066,14 @@ public class StackWalker
 				++(walkState.slotIndex);
 			}
 		}
-
+	
 		private static void getLocalsMap(WalkState walkState,
 				J9ROMClassPointer romClass, J9ROMMethodPointer romMethod,
 				U8Pointer offsetPC, int[] result, UDATA argTempCount)
 				throws CorruptDataException
 		{
 			int errorCode;
-
+	
 			/*
 			 * Detect method entry vs simply executing at PC 0. If the bytecode
 			 * frame is invisible (method monitor enter or stack growth) or the
@@ -1113,7 +1083,7 @@ public class StackWalker
 			 * enter events, even if the receiver is never used (in which case the
 			 * local mapper would mark it as int).
 			 */
-
+	
 			if ((walkState.bp.at(0).anyBitsIn(J9SF_A0_INVISIBLE_TAG))
 					|| (walkState.previousFrameFlags.anyBitsIn(J9_SSF_METHOD_ENTRY))) {
 				if ((walkState.bp.at(0).anyBitsIn(J9SF_A0_INVISIBLE_TAG))) {
@@ -1127,7 +1097,7 @@ public class StackWalker
 							4,
 							"\tAt method entry (previous frame = report monitor enter), using signature mapper");
 				}
-
+	
 				/*
 				 * j9localmap_ArgBitsForPC0 only deals with args, so zero out the
 				 * result array to make sure the temps are non-object
@@ -1141,7 +1111,7 @@ public class StackWalker
 				canAccessLocalsBit = J9JavaVM.J9VM_DEBUG_ATTRIBUTE_CAN_ACCESS_LOCALS;
 			}
 
-			if (walkState.javaVM.requiredDebugAttributes().anyBitsIn(canAccessLocalsBit)) {
+			if (walkState.walkThread.javaVM().requiredDebugAttributes().anyBitsIn(canAccessLocalsBit)) {
 				swPrintf(walkState, 4, "\tUsing debug local mapper");
 				errorCode = j9localmap_DebugLocalBitsForPC(romMethod, UDATA
 						.cast(offsetPC), result);
@@ -1150,35 +1120,35 @@ public class StackWalker
 				errorCode = j9localmap_LocalBitsForPC(romMethod, UDATA
 						.cast(offsetPC), result);
 			}
-
+	
 			if (errorCode < 0) {
 				swPrintf(walkState, 3, "Local map failed, result = {0}", errorCode);
 				/*
 				 * Local map failed, result = %p - aborting VM - needs new message
 				 * TBD
 				 */
-				throw new CorruptDataException("Local map failed thread " + walkState.getThreadHexAddress() + ", romMethod = " + romMethod.getHexAddress() + ", result - " + errorCode);
+				throw new CorruptDataException("Local map failed thread " + walkState.walkThread.getHexAddress() + ", romMethod = " + romMethod.getHexAddress() + ", result - " + errorCode);
 			}
-
+	
 			return;
 		}
-
+	
 		private void walkJNICallInFrame(WalkState walkState)
 				throws CorruptDataException
 		{
 			J9SFJNICallInFramePointer callInFrame;
-
+	
 			walkState.bp = walkState.arg0EA;
 			callInFrame = J9SFJNICallInFramePointer.cast(walkState.bp.subOffset(
 					J9SFJNICallInFrame.SIZEOF).addOffset(UDATA.SIZEOF));
-
+	
 			/*
 			 * Retain any non-argument object pushes after the call-in frame (the
 			 * exit point may want them)
 			 */
 			walkState.unwindSP = UDATAPointer.cast(callInFrame.subOffset(UDATA
 					.cast(walkState.literals)));
-
+	
 			walkState.frameFlags = callInFrame.specialFrameFlags();
 			printFrameType(walkState, "JNI call-in");
 
@@ -1188,15 +1158,17 @@ public class StackWalker
 					 * The following can only be true if the call-in method has returned
 					 * (removed args and pushed return value)
 					 */
-
+		
 					if (!(walkState.walkSP.eq(walkState.unwindSP))) {
-						if (!walkState.pc.eq(walkState.javaVM.callInReturnPC().add(3))) {
+						if (!walkState.pc.eq(walkState.walkThread.javaVM()
+								.callInReturnPC().add(3))) {
 							swPrintf(
 									walkState,
 									0,
 									"Error: PC should have been advanced in order to push return value, pc = {0}, cipc = {1} !!!",
 									walkState.pc.getHexAddress(),
-									walkState.javaVM.callInReturnPC().getHexAddress());
+									walkState.walkThread.javaVM()
+											.callInReturnPC().getHexAddress());
 						}
 						if (walkState.frameFlags.anyBitsIn(J9_SSF_RETURNS_OBJECT)) {
 							swPrintf(walkState, 4,
@@ -1212,13 +1184,13 @@ public class StackWalker
 											UDATA.cast(walkState.walkSP)),
 									walkState.walkSP.getHexAddress());
 						}
-
+		
 						walkState.walkSP = walkState.unwindSP; /*
 																 * so walkObjectPushes
 																 * works correctly
 																 */
 					}
-
+		
 					if (walkState.literals.notNull()) {
 						walkObjectPushes(walkState);
 					}
@@ -1226,16 +1198,20 @@ public class StackWalker
 					handleOSlotsCorruption(walkState, "StackWalker_29_V0", "walkJNICallInFrame", ex);
 				}
 			}
-
+	
 			if (J9BuildFlags.interp_nativeSupport) {
-				J9VMEntryLocalStoragePointer els = walkState.oldEntryLocalStorage;
-				walkState.fillElsFields(els);
-
-				swPrintf(walkState, 2, "\tNew ELS = {0}", els.getHexAddress());
+				walkState.walkedEntryLocalStorage = walkState.walkedEntryLocalStorage
+						.oldEntryLocalStorage();
+				walkState.i2jState = walkState.walkedEntryLocalStorage.getAddress() != 0 ? J9I2JStatePointer
+						.cast(walkState.walkedEntryLocalStorage.i2jStateEA())
+						: J9I2JStatePointer.cast(0);
+	
+				swPrintf(walkState, 2, "\tNew ELS = {0}",
+						walkState.walkedEntryLocalStorage.getHexAddress());
 			}
 			walkState.argCount = new UDATA(0);
 		}
-
+	
 		private void printFrameType(WalkState walkState, String frameType)
 				throws CorruptDataException
 		{
@@ -1243,31 +1219,31 @@ public class StackWalker
 					walkState,
 					2,
 					"{0} frame: bp = {1}, sp = {2}, pc = {3}, cp = {4}, arg0EA = {5}, flags = {6}",
-					frameType,
+					frameType, 
 					walkState.bp.getHexAddress(),
-					walkState.walkSP.getHexAddress(),
+					walkState.walkSP.getHexAddress(), 
 					walkState.pc.getHexAddress(),
 					walkState.constantPool.getHexAddress(),
-					walkState.arg0EA.getHexAddress(),
+					walkState.arg0EA.getHexAddress(), 
 					walkState.frameFlags.getHexValue());
 			swPrintMethod(walkState);
 		}
-
+	
 		private void walkJITJNICalloutFrame(WalkState walkState)
 				throws CorruptDataException
 		{
 			J9SFMethodFramePointer methodFrame = J9SFMethodFramePointer
 					.cast(walkState.walkSP
 							.addOffset(UDATA.cast(walkState.literals)));
-
+	
 			walkState.argCount = new UDATA(0);
 			walkState.bp = UDATAPointer.cast(methodFrame.savedA0EA());
 			walkState.frameFlags = methodFrame.specialFrameFlags();
 			walkState.method = methodFrame.method();
 			walkState.constantPool = ConstantPoolHelpers.J9_CP_FROM_METHOD(walkState.method);
-
+	
 			printFrameType(walkState, "JIT JNI call-out");
-
+	
 			if ((walkState.flags & J9_STACKWALK_ITERATE_O_SLOTS) != 0) {
 				try {
 					WALK_METHOD_CLASS(walkState);
@@ -1279,14 +1255,14 @@ public class StackWalker
 				}
 			}
 		}
-
+	
 		private void walkJITResolveFrame(WalkState walkState)
 				throws CorruptDataException
 		{
 			J9SFJITResolveFramePointer jitResolveFrame = J9SFJITResolveFramePointer
 					.cast(walkState.walkSP
 							.addOffset(UDATA.cast(walkState.literals)));
-
+	
 			walkState.argCount = new UDATA(0);
 			walkState.bp = UDATAPointer.cast(jitResolveFrame
 					.taggedRegularReturnSPEA());
@@ -1294,14 +1270,14 @@ public class StackWalker
 
 			try {
 				printFrameType(walkState, "JIT resolve");
-
+		
 				if ((walkState.flags & J9_STACKWALK_ITERATE_O_SLOTS) != 0) {
 					PointerPointer savedJITExceptionSlot = jitResolveFrame
 							.savedJITExceptionEA();
-
+		
 					swPrintf(walkState, 4, "\tObject push (savedJITException)");
 					WALK_O_SLOT(walkState, savedJITExceptionSlot);
-
+		
 					if (walkState.literals.notNull()) {
 						walkObjectPushes(walkState);
 					}
@@ -1309,16 +1285,16 @@ public class StackWalker
 			} catch (CorruptDataException ex) {
 				handleOSlotsCorruption(walkState, "StackWalker_29_V0", "walkJITResolveFrame", ex);
 			}
-
+	
 		}
-
+	
 		private void walkGenericSpecialFrame(WalkState walkState)
 				throws CorruptDataException
 		{
 			J9SFSpecialFramePointer specialFrame = J9SFSpecialFramePointer
 					.cast(walkState.walkSP
 							.addOffset(UDATA.cast(walkState.literals)));
-
+	
 			walkState.bp = UDATAPointer.cast(specialFrame.savedA0EA());
 			walkState.frameFlags = specialFrame.specialFrameFlags();
 
@@ -1332,8 +1308,9 @@ public class StackWalker
 					handleOSlotsCorruption(walkState, "StackWalker_29_V0", "walkGenericSpecialFrame", ex);
 				}
 			}
-
+	
 			walkState.argCount = new UDATA(0);
 		}
+
 	}
 }
