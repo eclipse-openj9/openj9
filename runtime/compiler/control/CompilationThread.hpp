@@ -1,4 +1,4 @@
-/*******************************************************************************
+/****************************************************************************
  * Copyright IBM Corp. and others 2000
  *
  * This program and the accompanying materials are made available under
@@ -283,8 +283,10 @@ class CompilationInfoPerThreadBase
    private:
       TR::CompilationInfoPerThreadBase & _compThread;
 
-      /// Represents the original value of whether the compilation can be interrupted before executing the
-      /// uninterruptable operation
+      /**
+       *Represents the original value of whether the compilation can be interrupted before executing the
+       *uninterruptable operation
+       */
       bool _originalValue;
       };
 
@@ -376,7 +378,6 @@ class CompilationInfoPerThreadBase
 #endif /* defined(J9VM_OPT_JITSERVER) */
    int32_t const                _compThreadId; // unique number starting from 0; Only used for compilation on separate thread
    bool const                   _onSeparateThread;
-
    TR_J9VMBase *                _vm;
    TR_MethodToBeCompiled *      _methodBeingCompiled;
    TR::Compilation *            _compiler;
@@ -385,14 +386,17 @@ class CompilationInfoPerThreadBase
    uintptr_t                    _timeWhenCompStarted;
    int32_t                      _numJITCompilations; // num JIT compilations this thread has performed; AOT loads not counted
    int32_t                      _qszWhenCompStarted; // size of compilation queue and compilation starts
+   /**
+   * Determines whether this compilation thread can be interrupted the compile at the next yield point. A different
+   * thread may still request that the compilation _should_ be interrupted, however we may not be in a state at
+   * which we _can_ interrupt.
+   */
+    bool _compilationCanBeInterrupted;
 
-   /// Determines whether this compilation thread can be interrupted the compile at the next yield point. A different
-   /// thread may still request that the compilation _should_ be interrupted, however we may not be in a state at
-   /// which we _can_ interrupt.
-   bool _compilationCanBeInterrupted;
-
-   /// Counts the number of nested \see UninterruptibleOperation in the stack. An \see InterruptibleOperation can only
-   /// be issued if the depth of uninterruptable operations is 0.
+   /**
+    * Counts the number of nested \see UninterruptibleOperation in the stack. An \see InterruptibleOperation can only
+    * be issued if the depth of uninterruptable operations is 0.
+    */
    int32_t _uninterruptableOperationDepth;
 
    bool                         _addToJProfilingQueue;

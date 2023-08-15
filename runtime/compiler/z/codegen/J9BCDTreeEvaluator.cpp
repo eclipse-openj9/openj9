@@ -3818,7 +3818,7 @@ TR::Register* J9::Z::TreeEvaluator::pdstoreEvaluatorHelper(TR::Node *node, TR::C
       //       izdload "A" p = 6
       //          =>addr1
       //       iconst 5    // shift
-      ///      iconst 15   // setSign
+      //       iconst 15   // setSign
       //
       // In this case have to move from offset +0 to offset +5 and then clear the top 5 bytes (starting at offset +0)
       // If copyIsRedundant is incorrectly set to true then only the clear of the top 5 bytes happens and the one surviving

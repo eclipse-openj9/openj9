@@ -1004,7 +1004,7 @@ J9::Compilation::verifyCompressedRefsAnchors(bool anchorize)
                TR::TreeTop *newTT = TR::TreeTop::create(self(),
                                                       TR::Node::createCompressedRefsAnchor( n),
                                                       NULL, NULL);
-#if 0 ///#ifdef DEBUG
+#if 0 //#ifdef DEBUG
                TR_ASSERT(0, "No anchor found for load/store [%p]", n);
 #else
                // For the child of null check or resolve check, the side effect doesn't rely on the

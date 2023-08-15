@@ -537,7 +537,7 @@ void J9::SetMonitorStateOnBlockEntry::set(bool& lmmdFailed, bool traceIt)
             blockHasMonexit = true;
             callerIndex = node->getByteCodeInfo().getCallerIndex();
 
-            ///traceMsg(comp(), "blockHasMonexit = %d isSyncMethodMonitor = %d\n", blockHasMonexit, isSyncMethodMonitor);
+            //traceMsg(comp(), "blockHasMonexit = %d isSyncMethodMonitor = %d\n", blockHasMonexit, isSyncMethodMonitor);
             // process all the exception successors at this point
             // the normal successors will be processed at the end of the block
             //

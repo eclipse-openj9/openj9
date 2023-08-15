@@ -4455,11 +4455,11 @@ break
       if (strstr(s, "java/lang/reflect/Array") &&
             !strncmp(calledMethod->nameChars(), "getLength", calledMethod->nameLength()))
          isCallGetLength = true;
-      ///else if (strstr(s, "com/ibm/jit/JITHelpers") && resolvedMethodSymbol)
+      //else if (strstr(s, "com/ibm/jit/JITHelpers") && resolvedMethodSymbol)
       else if (resolvedMethodSymbol)
          {
-         ///         (!strncmp(calledMethod->nameChars(), "getAddressAsPrimitive32", calledMethod->nameLength()) ||
-         ///          !strncmp(calledMethod->nameChars(), "getAddressAsPrimitive64", calledMethod->nameLength())))
+         /*         (!strncmp(calledMethod->nameChars(), "getAddressAsPrimitive32", calledMethod->nameLength()) ||
+                     !strncmp(calledMethod->nameChars(), "getAddressAsPrimitive64", calledMethod->nameLength())))*/
          if (resolvedMethodSymbol->getRecognizedMethod() == TR::com_ibm_jit_JITHelpers_getAddressAsPrimitive32)
             isCallAddressAsPrimitive32 = true;
          else if (resolvedMethodSymbol->getRecognizedMethod() == TR::com_ibm_jit_JITHelpers_getAddressAsPrimitive64)
@@ -6075,7 +6075,6 @@ TR_J9ByteCodeIlGenerator::genMonitorExit(bool isReturn)
 
    bool isStatic = (node->getOpCodeValue() == TR::loadaddr && node->getSymbol()->isClassObject());
    ///bool isStatic = _methodSymbol->isStatic();
-
    if (isStatic)
       node = TR::Node::createWithSymRef(TR::aloadi, 1, 1, node, symRefTab()->findOrCreateJavaLangClassFromClassSymbolRef());
 
@@ -6564,9 +6563,10 @@ TR_J9ByteCodeIlGenerator::genAconst_init(TR_OpaqueClassBlock *valueTypeClass, in
                // If the field's signature begins with a Q, it is a value type and should be initialized with a default value
                // for that value type.  That's handled with a recursive call to genAconst_init.
                // If the signature does not begin with a Q, the field is an identity type whose default value is a Java null
-               /// reference.
+               // reference.
                bool isNullRestricted = false;
                if (TR::Compiler->om.areFlattenableValueTypesEnabled())
+
                   {
                   if (!TR::Compiler->om.isQDescriptorForValueTypesSupported())
                      {
@@ -7405,7 +7405,7 @@ TR_J9ByteCodeIlGenerator::storeAuto(TR::DataType type, int32_t slot, bool isAdju
           !_methodSymbol->getThisTempForObjectCtor())
       {
       TR::SymbolReference *tempSymRef = symRefTab()->createTemporary(_methodSymbol, TR::Address);
-      ///traceMsg(comp(), "created tempSymRef = %d\n", tempSymRef->getReferenceNumber());
+      //traceMsg(comp(), "created tempSymRef = %d\n", tempSymRef->getReferenceNumber());
       _methodSymbol->setThisTempForObjectCtor(tempSymRef);
       // iterate through other returns in this method to make sure all the calls to jitCheckIfFinalizeObject
       // use this particular symref

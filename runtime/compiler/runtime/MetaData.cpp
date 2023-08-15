@@ -109,6 +109,7 @@ static uint8_t * allocateGCData(TR_J9VMBase * vm, uint32_t numBytes, TR::Compila
 //  Meta Data Creation
 ///////////////////////////////////////////////////////////////////////////
 
+
 #if defined(DEBUG)
 TR_StackAtlasStats::~TR_StackAtlasStats()
    {
@@ -530,7 +531,7 @@ createStackMap(
    memcpy(location, &byteCodeInfo, sizeof(TR_ByteCodeInfo));
    location += sizeof(int32_t);
 
-   ///traceMsg(comp, "map %p rsd %x location %p\n", map, location, map->getRegisterSaveDescription());
+   //traceMsg(comp, "map %p rsd %x location %p\n", map, location, map->getRegisterSaveDescription());
    *(int32_t *)location = map->getRegisterSaveDescription();
    location += sizeof(int32_t);
 
