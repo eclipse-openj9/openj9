@@ -34,58 +34,55 @@
  * Modifiers of ROM classes, fields or methods.
  * When a given modifier is defined by the JVM specification,
  * the value is taken from that specification.
+ *
+ * See map in ROMClassWriter::writeMethods to confirm available slots for methods.
  */
-#define J9AccPublic 0x1
-#define J9AccPrivate 0x2
-#define J9AccProtected 0x4
-#define J9AccStatic 0x8
-#define J9AccFinal 0x10
-/* Project Valhalla repurposes 0x20 as ACC_IDENTITY since ACC_SUPER has no effect after Java 8. */
-#define J9AccSuper 0x20
-#define J9AccClassHasIdentity 0x20
-#define J9AccValueType 0x40
-#define J9AccInterface 0x200
-#define J9AccAbstract 0x400
-#define J9AccPrimitiveValueType 0x800
-#define J9AccSynthetic 0x1000
-#define J9AccAnnotation 0x2000
-#define J9AccEnum 0x4000
-#define J9AccClassArray 0x10000
-#define J9AccClassInternalPrimitiveType 0x20000
+#define J9AccPublic                        0x00000001 /* class method field */
+#define J9AccPrivate                       0x00000002 /* class(nested) method field */
+#define J9AccProtected                     0x00000004 /* class(nested) method field */
+#define J9AccStatic                        0x00000008 /* class(nested) method field */
+#define J9AccFinal                         0x00000010 /* class method field */
+/* Project Valhalla repurposes 0x00000020 as ACC_IDENTITY since ACC_SUPER has no effect after Java 8. */
+#define J9AccSuper                         0x00000020 /* class */
+#define J9AccClassHasIdentity              0x00000020 /* class */
+#define J9AccSynchronized                  0x00000020 /* method */
+#define J9AccValueType                     0x00000040 /* class(Valhalla) */
+#define J9AccBridge                        0x00000040 /* method */
+#define J9AccVolatile                      0x00000040 /* field */
+#define J9AccVarArgs                       0x00000080 /* method */
+#define J9AccTransient                     0x00000080 /* field */
+#define J9AccNative                        0x00000100 /* method */
+#define J9AccInterface                     0x00000200 /* class */
+#define J9AccGetterMethod                  0x00000200 /* method */
+#define J9AccAbstract                      0x00000400 /* class method */
+#define J9AccPrimitiveValueType            0x00000800 /* class(Valhalla) */
+#define J9AccStrict                        0x00000800 /* method */
+#define J9AccSynthetic                     0x00001000 /* class method field */
+#define J9AccAnnotation                    0x00002000 /* class */
+#define J9AccForwarderMethod               0x00002000 /* method */
+#define J9AccEnum                          0x00004000 /* class field */
+#define J9AccEmptyMethod                   0x00004000 /* method */
+/* ACC_MODULE reserves 0x00008000 for classes */
+#define J9AccClassArray                    0x00010000 /* class */
+#define J9AccMethodVTable                  0x00010000 /* method */
+#define J9AccClassInternalPrimitiveType    0x00020000 /* class */
+#define J9AccMethodHasExceptionInfo        0x00020000 /* method */
+#define J9AccMethodHasDebugInfo            0x00040000 /* method */
+#define J9AccMethodFrameIteratorSkip       0x00080000 /* method */
+#define J9AccMethodCallerSensitive         0x00100000 /* method */
+#define J9AccMethodHasBackwardBranches     0x00200000 /* method */
+#define J9AccMethodObjectConstructor       0x00400000 /* method */
+#define J9AccMethodHasMethodParameters     0x00800000 /* method */
+#define J9AccMethodAllowFinalFieldWrites   0x01000000 /* method */
+#define J9AccMethodHasGenericSignature     0x02000000 /* method */
+#define J9AccMethodHasExtendedModifiers    0x04000000 /* method */
+#define J9AccMethodHasMethodHandleInvokes  0x08000000 /* method */
+#define J9AccMethodHasStackMap             0x10000000 /* method */
+#define J9AccMethodHasMethodAnnotations    0x20000000 /* method */
+#define J9AccMethodHasParameterAnnotations 0x40000000 /* method */
+#define J9AccMethodHasDefaultAnnotation    0x80000000 /* method */
 /* Masks and helpers */
 #define J9AccClassCompatibilityMask 0x7FFF
-
-/*
- * Modifiers of ROM methods.
- * When a given modifier is defined by the JVM specification,
- * the value is taken from that specification.
- * See map in ROMClassWriter::writeMethods to confirm available slots.
- */
-#define J9AccSynchronized 0x20
-#define J9AccBridge 0x40
-#define J9AccVarArgs 0x80
-#define J9AccNative 0x100
-#define J9AccGetterMethod 0x200
-#define J9AccStrict 0x800
-#define J9AccForwarderMethod 0x2000
-#define J9AccEmptyMethod 0x4000
-#define J9AccMethodVTable 0x10000
-#define J9AccMethodHasExceptionInfo 0x20000
-#define J9AccMethodHasDebugInfo 0x40000
-#define J9AccMethodFrameIteratorSkip 0x80000
-#define J9AccMethodCallerSensitive 0x100000
-#define J9AccMethodHasBackwardBranches 0x200000
-#define J9AccMethodObjectConstructor 0x400000
-#define J9AccMethodHasMethodParameters 0x800000
-#define J9AccMethodAllowFinalFieldWrites 0x1000000
-#define J9AccMethodHasGenericSignature 0x2000000
-#define J9AccMethodHasExtendedModifiers 0x4000000
-#define J9AccMethodHasMethodHandleInvokes 0x8000000
-#define J9AccMethodHasStackMap 0x10000000
-#define J9AccMethodHasMethodAnnotations 0x20000000
-#define J9AccMethodHasParameterAnnotations 0x40000000
-#define J9AccMethodHasDefaultAnnotation 0x80000000
-/* Masks and helpers */
 #define J9AccMethodReturnMask 0x1C0000
 #define J9AccMethodReturnShift 0x12
 /* Used in HookedByTheJit.cpp */
@@ -97,14 +94,6 @@
 #define J9AccMethodReturnF 0xC0000
 /* DDR flags */
 #define J9AccMethodHasTypeAnnotations 0x4000000
-
-/*
- * Modifiers of ROM fields.
- * When a given modifier is defined by the JVM specification,
- * the value is taken from that specification.
- */
-#define J9AccVolatile 0x40
-#define J9AccTransient 0x80
 
 /* Extra modifiers of ROM classes.
  * When a given modifier is defined by the JVM specification,

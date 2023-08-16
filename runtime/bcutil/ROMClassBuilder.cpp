@@ -1173,7 +1173,7 @@ ROMClassBuilder::finishPrepareAndLaydown(
  *                                  + AccImplicitCreateHasDefaultValue
  *                                 + AccImplicitCreateNonAtomic
  *                                + J9AccClassIsValueBased
- *                              + J9AccClassHiddenOptionNestmate
+ *                               + J9AccClassHiddenOptionNestmate
  *
  *                             + J9AccClassHiddenOptionStrong
  *                            + AccSealed
