@@ -148,12 +148,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	</test>
 	<test>
 		<testCaseName>CFdumptest</testCaseName>
-		<disables>
-			<disable>
-				<comment>excluded OpenJ9 tests</comment>
-			</disable>
-		</disables>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(TEST_RESROOT)$(D)VM_Test.jar$(P)$(LIB_DIR)$(D)junit4.jar$(Q) \
 	junit.textui.TestRunner com.ibm.j9.cfdump.tests.CfdumpTestSuite; \
 	$(TEST_STATUS)</command>
