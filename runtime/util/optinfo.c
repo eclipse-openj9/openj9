@@ -735,6 +735,19 @@ preloadClassNameAtIndex(U_32* preloadInfoPtr, U_32 index)
 	return NNSRP_PTR_GET(preloadClassesPtr, J9UTF8*);
 }
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+U_16
+getImplicitCreationFlags(J9ROMClass *romClass)
+{
+	U_32 *ptr = getSRPPtr(J9ROMCLASS_OPTIONALINFO(romClass), romClass->optionalFlags, J9_ROMCLASS_OPTINFO_IMPLICITCREATION_ATTRIBUTE);
+	U_32* implicitCreationInfo = NULL;
+
+	Assert_VMUtil_true(ptr != NULL);
+	implicitCreationInfo = SRP_PTR_GET(ptr, U_32*);
+
+	return (U_16)*implicitCreationInfo;
+}
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
 BOOLEAN
 recordComponentHasSignature(J9ROMRecordComponentShape* recordComponent)

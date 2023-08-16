@@ -50,4 +50,9 @@
 			<class name="org.openj9.test.lworld.NullRestrictedTypeOptTests"/>
 		</classes>
 	</test>
+	<test name="ValhallaAttributeTests">
+		<classes>
+			<class name="org.openj9.test.lworld.ValhallaAttributeTests"/>
+		</classes>
+	</test>
 </suite> <!-- Suite -->
