@@ -170,7 +170,7 @@
 			fi; \
 			$(TEST_STATUS)
 		</command>
-		<platformRequirements>os.linux,^arch.arm,^arch.aarch64,bits.64</platformRequirements>
+		<platformRequirements>os.linux,^arch.arm,bits.64</platformRequirements>
 		<features>
 			<feature>CRIU:required</feature>
 			<feature>JITAAS:nonapplicable</feature>
@@ -208,7 +208,7 @@
 			fi; \
 			$(TEST_STATUS)
 		</command>
-		<platformRequirements>os.linux,^arch.arm,^arch.aarch64,bits.64</platformRequirements>
+		<platformRequirements>os.linux,^arch.arm,bits.64</platformRequirements>
 		<features>
 			<feature>CRIU:required</feature>
 		</features>

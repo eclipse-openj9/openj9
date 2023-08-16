@@ -775,7 +775,7 @@
 		echo $(Q)$(TEST_JDK_BIN)$(D)jitserver doesn't exist; assuming this JDK does not support JITServer and trivially passing the test.$(Q); \
 	fi; \
 	$(TEST_STATUS)</command>
-		<platformRequirements>os.linux,^arch.arm,^arch.aarch64,bits.64</platformRequirements>
+		<platformRequirements>os.linux,^arch.arm,bits.64</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>
