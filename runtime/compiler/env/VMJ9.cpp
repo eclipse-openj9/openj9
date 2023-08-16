@@ -6731,22 +6731,6 @@ TR_J9VMBase::isInterfaceClass(TR_OpaqueClassBlock * clazzPointer)
    }
 
 bool
-TR_J9VMBase::isEnumClass(TR_OpaqueClassBlock * clazzPointer, TR_ResolvedMethod *method)
-   {
-   int32_t modifiersForClass = 0;
-   if (isClassArray(clazzPointer))
-      return false;
-   bool success = javaLangClassGetModifiersImpl(clazzPointer, modifiersForClass);
-   if (!success)
-      return false;
-   bool isModFlagSet = (modifiersForClass & J9AccEnum) ? true : false;
-   TR_OpaqueClassBlock *enumClass = getClassFromSignature("java/lang/Enum", 14, method);
-   TR_OpaqueClassBlock *superClass = getSuperClass(clazzPointer);
-   return (isModFlagSet && (enumClass == superClass));
-   }
-
-
-bool
 TR_J9VMBase::isAbstractClass(TR_OpaqueClassBlock * clazzPointer)
    {
    return ((TR::Compiler->cls.romClassOf(clazzPointer)->modifiers & (J9AccInterface | J9AccAbstract)) == J9AccAbstract) ? true : false;
