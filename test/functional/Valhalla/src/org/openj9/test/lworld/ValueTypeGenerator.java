@@ -195,12 +195,6 @@ public class ValueTypeGenerator extends ClassLoader {
 		String superName = config.getSuperName();
 		String[] fields = config.getFields();
 		int extraClassFlags = config.getExtraClassFlags();
-		/**
-		 * Currently value type is built on JDK22, so use java file major version 66 for now.
-		 * If moved this needs to be incremented to the next class file version. The check in j9bcutil_readClassFileBytes()
-		 * against BCT_JavaMajorVersionShifted needs to be updated as well.
-		 */
-		int classFileVersion = 66;
 
 		String nestHost = config.getNestHost();
 
@@ -222,9 +216,9 @@ public class ValueTypeGenerator extends ClassLoader {
 		String classFileName = className + ".class";
 
 		if (isRef) {
-			cw.visit(classFileVersion, ACC_PUBLIC + ACC_FINAL + extraClassFlags, className, null, superName, null);
+			cw.visit(ValhallaUtils.CLASS_FILE_MAJOR_VERSION, ACC_PUBLIC + ACC_FINAL + extraClassFlags, className, null, superName, null);
 		} else {
-			cw.visit(classFileVersion, ACC_PUBLIC + ACC_FINAL + ACC_VALUE_TYPE + ACC_PRIMITIVE + extraClassFlags, className, null, superName, null);
+			cw.visit(ValhallaUtils.CLASS_FILE_MAJOR_VERSION, ACC_PUBLIC + ACC_FINAL + ACC_VALUE_TYPE + ACC_PRIMITIVE + extraClassFlags, className, null, superName, null);
 		}
 
 		cw.visitSource(className + ".java", null);
