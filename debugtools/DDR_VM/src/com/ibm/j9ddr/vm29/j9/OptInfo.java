@@ -26,6 +26,7 @@ import static com.ibm.j9ddr.vm29.j9.ROMHelp.J9_ROM_METHOD_FROM_RAM_METHOD;
 import static com.ibm.j9ddr.vm29.structure.J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_CLASS_ANNOTATION_INFO;
 import static com.ibm.j9ddr.vm29.structure.J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_ENCLOSING_METHOD;
 import static com.ibm.j9ddr.vm29.structure.J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_GENERIC_SIGNATURE;
+import static com.ibm.j9ddr.vm29.structure.J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_IMPLICITCREATION_ATTRIBUTE;
 import static com.ibm.j9ddr.vm29.structure.J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_PERMITTEDSUBCLASSES_ATTRIBUTE;
 import static com.ibm.j9ddr.vm29.structure.J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_PRELOAD_ATTRIBUTE;
 import static com.ibm.j9ddr.vm29.structure.J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_SIMPLE_NAME;
@@ -292,5 +293,15 @@ public class OptInfo {
 			return J9UTF8Pointer.cast(nameSrp.get());
 		}
 		return J9UTF8Pointer.NULL;
+	}
+
+	public static U32 getImplicitCreationFlags(J9ROMClassPointer romClass) throws CorruptDataException {
+		SelfRelativePointer srpPtr = getSRPPtr(J9ROMClassHelper.optionalInfo(romClass), romClass.optionalFlags(),
+			J9_ROMCLASS_OPTINFO_IMPLICITCREATION_ATTRIBUTE);
+		if (srpPtr.notNull()) {
+			U32Pointer u32Ptr = U32Pointer.cast(srpPtr.get());
+			return u32Ptr.at(0);
+		}
+		return U32.MIN;
 	}
 }
