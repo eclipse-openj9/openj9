@@ -1375,6 +1375,19 @@ J9UTF8*
 preloadClassNameAtIndex(U_32* permittedSubclassesCountPtr, U_32 index);
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+/**
+ * Retrieves flags stored in ImplicitCreation attribute. This method assumes
+ * there is an ImplicitCreation attribute in the ROM class (J9_ROMCLASS_OPTINFO_IMPLICITCREATION_ATTRIBUTE
+ * is set in romClass->optionalFlags).
+ *
+ * @param J9ROMClass class
+ * @return ImplicitCreation flags
+ */
+U_16
+getImplicitCreationFlags(J9ROMClass *romClass);
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+
 /**
  * Retrieves number of record components in this record. Assumes that 
  * ROM class parameter references a record class.

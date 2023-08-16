@@ -1035,13 +1035,8 @@ class RecordComponentIterator
 	}
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-	#define IMPLICIT_CREATION_FLAGS_DEFAULT 1
-	#define IMPLICIT_CREATION_FLAGS_NON_ATOMIC 2
-
 	bool hasImplicitCreation() const { return NULL != _implicitCreation; }
 	U_16 getImplicitCreationFlags() const { return hasImplicitCreation() ? _implicitCreation->implicitCreationFlags : 0; }
-	bool isImplicitCreationHasDefaultValue() const { return J9_ARE_ALL_BITS_SET(getImplicitCreationFlags(), IMPLICIT_CREATION_FLAGS_DEFAULT); }
-	bool isImplicitCreationNonAtomic() const { return J9_ARE_ALL_BITS_SET(getImplicitCreationFlags(), IMPLICIT_CREATION_FLAGS_NON_ATOMIC); }
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
 	U_16 getPermittedSubclassesClassNameAtIndex(U_16 index) const {

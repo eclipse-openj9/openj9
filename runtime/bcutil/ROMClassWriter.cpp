@@ -322,7 +322,10 @@ ROMClassWriter::ROMClassWriter(BufferManager *bufferManager, ClassFileOracle *cl
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	_injectedInterfaceInfoSRPKey(srpKeyProducer->generateKey()),
 	_preloadInfoSRPKey(srpKeyProducer->generateKey()),
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+	_implicitCreationSRPKey(srpKeyProducer->generateKey()),
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 	_permittedSubclassesInfoSRPKey(srpKeyProducer->generateKey())
 {
 	_methodNotes = (MethodNotes *) _bufferManager->alloc(classFileOracle->getMethodsCount() * sizeof(MethodNotes));
@@ -459,6 +462,9 @@ ROMClassWriter::writeROMClass(Cursor *cursor,
 	writeInjectedInterfaces(cursor, markAndCountOnly);
 	writePreload(cursor, markAndCountOnly);
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+	writeImplicitCreation(cursor, markAndCountOnly);
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 	writeOptionalInfo(cursor);
 	writeCallSiteData(cursor, markAndCountOnly);
 #if defined(J9VM_OPT_METHOD_HANDLE)
@@ -1883,6 +1889,27 @@ ROMClassWriter::writePermittedSubclasses(Cursor *cursor, bool markAndCountOnly)
 	}
 }
 
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+/*
+ * ImplicitCreation ROM class layout:
+ * 4 bytes for flags (actually takes up two, but use 4 for alignment)
+ */
+void
+ROMClassWriter::writeImplicitCreation(Cursor *cursor, bool markAndCountOnly)
+{
+	if (_classFileOracle->hasImplicitCreation()) {
+		cursor->mark(_implicitCreationSRPKey);
+
+		U_16 flags = _classFileOracle->getImplicitCreationFlags();
+		if (markAndCountOnly) {
+			cursor->skip(sizeof(U_32));
+		} else {
+			cursor->writeU32(flags, Cursor::GENERIC);
+		}
+	}
+}
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 /*
  * Preload ROM class layout:
@@ -1966,6 +1993,7 @@ ROMClassWriter::writeOptionalInfo(Cursor *cursor)
 	 * SRP to PermittedSubclasses attribute
 	 * SRP to injected interfaces info
 	 * SRP to Preload attribute
+	 * SRP to ImplicitCreation attribute
 	 */
 	cursor->mark(_optionalInfoSRPKey);
 
@@ -2014,7 +2042,12 @@ ROMClassWriter::writeOptionalInfo(Cursor *cursor)
 	if (_classFileOracle->hasPreloadClasses()) {
 		cursor->writeSRP(_preloadInfoSRPKey, Cursor::SRP_TO_GENERIC);
 	}
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+	if (_classFileOracle->hasImplicitCreation()) {
+		cursor->writeSRP(_implicitCreationSRPKey, Cursor::SRP_TO_GENERIC);
+	}
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 }
 
 void
