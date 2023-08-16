@@ -53,7 +53,7 @@ static jint createXrunLibraries (J9JavaVM * vm);
 static J9JVMTIAgentLibrary * findAgentLibrary(J9JavaVM * vm, const char *libraryAndOptions, UDATA libraryLength);
 static jint issueAgentOnLoadAttach(J9JavaVM * vm, J9JVMTIAgentLibrary * agentLibrary, const char* options, char *loadFunctionName, BOOLEAN * foundLoadFn);
 I_32 JNICALL loadAgentLibraryOnAttach(struct J9JavaVM *vm, const char *library, const char *options, UDATA decorate);
-static BOOLEAN isAgentLibraryLoaded(J9JavaVM *vm, const char *library);
+static BOOLEAN isAgentLibraryLoaded(J9JavaVM *vm, const char *library, BOOLEAN decorate);
 
 #define INSTRUMENT_LIBRARY "instrument"
 
@@ -274,7 +274,6 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
  * \ingroup jvmti
  *
  * @param[in] vm			J9JavaVM structure
- * @param[in] agentLibrary	Current agent library
  * @param[in] dllName		Agent library name
  * @return full agent path
  *
@@ -284,7 +283,7 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
  *  NOTE: Caller is responsible for freeing the returned buffer
  */
 static char *
-prependSystemAgentPath(J9JavaVM * vm, J9JVMTIAgentLibrary * agentLibrary, char * dllName)
+prependSystemAgentPath(J9JavaVM *vm, const char *dllName)
 {
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	char *localBuffer = NULL;
@@ -491,7 +490,7 @@ loadAgentLibraryGeneric(J9JavaVM *vm, J9JVMTIAgentLibrary *agentLibrary, char *l
 			 */
 			while (NULL != (systemAgentName = systemAgentNames[i++])) {
 				if (0 == strcmp(nativeLib->name, systemAgentName)) {
-					fullLibName = prependSystemAgentPath(vm, agentLibrary, nativeLib->name);
+					fullLibName = prependSystemAgentPath(vm, nativeLib->name);
 					Trc_JVMTI_loadAgentLibraryGeneric_loadingAgentAs(fullLibName);
 					break;
 				}
@@ -1062,10 +1061,59 @@ createXrunLibraries(J9JavaVM * vm)
 	return JNI_OK;
 }
 
+/**
+ * Test if an agent library was already loaded.
+ *
+ * @param vm Java VM
+ * @param library library name
+ * @param decorate a boolean indicating if the prefix/suffix to the library name is to be added
+ *
+ * @return TRUE if the agent library was loaded successfully, FALSE otherwise
+ */
 static BOOLEAN
-isAgentLibraryLoaded(J9JavaVM *vm, const char *library)
+isAgentLibraryLoaded(J9JavaVM *vm, const char *library, BOOLEAN decorate)
 {
-	return NULL != findAgentLibrary(vm, library, strlen(library));
+	BOOLEAN result = FALSE;
+
+	if (NULL != findAgentLibrary(vm, library, strlen(library))) {
+		result = TRUE;
+	} else {
+		/* J9PORT_SLOPEN_NO_LOAD is only supported on Linux/OSX/Win32 platforms. */
+#if defined(LINUX) || defined(OSX) || defined(WIN32)
+		UDATA i = 0;
+		UDATA handle = 0;
+		/* One of RTLD_LAZY and RTLD_NOW must be included in the flag. */
+		UDATA openFlags = J9PORT_SLOPEN_NO_LOAD | OMRPORT_SLOPEN_LAZY;
+		char *agentPath = (char*)library;
+		PORT_ACCESS_FROM_JAVAVM(vm);
+
+		if (decorate) {
+			openFlags |= J9PORT_SLOPEN_DECORATE;
+		}
+		for (i = 0;; ++i) {
+			const char *systemAgentName = systemAgentNames[i];
+			if (NULL == systemAgentName) {
+				break;
+			}
+			if (0 == strcmp(library, systemAgentName)) {
+				agentPath = prependSystemAgentPath(vm, library);
+				break;
+			}
+		}
+		if (0 == j9sl_open_shared_library(agentPath, &handle, openFlags)) {
+			if (0 != handle) {
+				result = TRUE;
+				j9sl_close_shared_library(handle);
+			}
+		}
+		if (library != (const char*)agentPath) {
+			j9mem_free_memory(agentPath);
+		}
+		Trc_JVMTI_isAgentLibraryLoaded_result(library, agentPath, result);
+#endif /* defined(LINUX) || defined(OSX) || defined(WIN32) */
+	}
+
+	return result;
 }
 
 static J9JVMTIAgentLibrary *
