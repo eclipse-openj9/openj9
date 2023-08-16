@@ -1173,7 +1173,7 @@ ROMClassBuilder::finishPrepareAndLaydown(
  *                                  + UNUSED
  *                                 + UNUSED
  *                                + J9AccClassIsValueBased
- *                              + J9AccClassHiddenOptionNestmate
+ *                               + J9AccClassHiddenOptionNestmate
  *
  *                             + J9AccClassHiddenOptionStrong
  *                            + AccSealed
