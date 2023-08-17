@@ -866,8 +866,26 @@ allSlotsInPreloadAttributeDo(J9ROMClass* romClass, U_32* preloadAttributePointer
 
 	callbacks->sectionCallback(romClass, preloadAttributePointer, (UDATA)cursor - (UDATA)preloadAttributePointer, "preloadAttributeInfo", userData);
 }
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+static void
+allSlotsInImplicitCreationAttributeDo(J9ROMClass* romClass, U_32* implicitCreationAttributePointer, J9ROMClassWalkCallbacks* callbacks, void* userData)
+{
+	BOOLEAN rangeValid = FALSE;
+	U_32 *cursor = implicitCreationAttributePointer;
+
+	rangeValid = callbacks->validateRangeCallback(romClass, cursor, sizeof(U_32), userData);
+	if (FALSE == rangeValid) {
+		return;
+	}
+
+	callbacks->slotCallback(romClass, J9ROM_U32, cursor, "implicitCreationFlags", userData);
+	cursor += 1;
+
+	callbacks->sectionCallback(romClass, implicitCreationAttributePointer, (UDATA)cursor - (UDATA)implicitCreationAttributePointer, "implicitCreationAttributeInfo", userData);
+}
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 /*
  * See ROMClassWriter::writeOptionalInfo for illustration of the layout.
  */
@@ -974,7 +992,17 @@ allSlotsInOptionalInfoDo(J9ROMClass* romClass, J9ROMClassWalkCallbacks* callback
 		}
 		cursor++;
 	}
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+	if (J9_ARE_ANY_BITS_SET(romClass->optionalFlags, J9_ROMCLASS_OPTINFO_IMPLICITCREATION_ATTRIBUTE)) {
+		rangeValid = callbacks->validateRangeCallback(romClass, cursor, sizeof(J9SRP), userData);
+		if (rangeValid) {
+			callbacks->slotCallback(romClass, J9ROM_SRP, cursor, "implicitCreationAttributeSRP", userData);
+			allSlotsInImplicitCreationAttributeDo(romClass, SRP_PTR_GET(cursor, U_32*), callbacks, userData);
+		}
+		cursor++;
+	}
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 	callbacks->sectionCallback(romClass, optionalInfo, (UDATA)cursor - (UDATA)optionalInfo, "optionalInfo", userData);
 }
 
