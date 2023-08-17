@@ -2632,6 +2632,17 @@ checkAttributes(J9PortLibrary* portLib, J9CfrClassFile* classfile, J9CfrAttribut
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 		case CFR_ATTRIBUTE_ImplicitCreation:
+			/* JVMS: The ImplicitCreation attribute authorizes implicit instance creation of a non-abstract
+			 * value class... There must not be an ImplicitCreation attribute in the attributes table of any
+			 * other ClassFile structure representing a class, interface, or module.
+			 */
+			if (J9_ARE_NO_BITS_SET(classfile->accessFlags, CFR_ACC_VALUE_TYPE)
+			 || J9_ARE_ANY_BITS_SET(classfile->accessFlags, CFR_ACC_INTERFACE | CFR_ACC_ABSTRACT | CFR_ACC_MODULE)
+			) {
+				errorCode = J9NLS_CFR_ERR_IMPLICITCREATION_ILLEGAL_CLASS_MODIFIERS__ID;
+				goto _errorFound;
+				break;
+			}
 			value = ((J9CfrAttributeImplicitCreation*)attrib)->nameIndex;
 			if ((0 == value) || (value >= cpCount)) {
 				errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
