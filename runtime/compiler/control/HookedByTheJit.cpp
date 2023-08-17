@@ -2327,12 +2327,6 @@ void jitClassesRedefined(J9VMThread * currentThread, UDATA classCount, J9JITRede
    void* startPC;
    int i, j;
 
-   // JIT compilation thread could be running without exclusive access so we need to explicitly stop it
-   if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableNoVMAccess))
-      {
-      TR::MonitorTable::get()->getClassUnloadMonitor()->enter_write();
-      }
-
    // need to get the compilation lock before updating the queue
    fe->acquireCompilationLock();
    compInfo->setAllCompilationsShouldBeInterrupted();
@@ -2491,11 +2485,6 @@ void jitClassesRedefined(J9VMThread * currentThread, UDATA classCount, J9JITRede
       compInfo->getUnloadedClassesTempList()->push_back(ClientSessionData::mustClearCachesFlag);
       }
 #endif
-
-   if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableNoVMAccess))
-      {
-      TR::MonitorTable::get()->getClassUnloadMonitor()->exit_write();
-      }
 
    // In extended HCR, empty classList means methods are being added or removed from classes
    // Fall back to TR_MimicInterpreterFrameShape in this case because it's not properly

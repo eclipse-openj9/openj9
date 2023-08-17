@@ -1198,6 +1198,18 @@ redefineClassesCommon(jvmtiEnv* env,
 		vm->internalVMFunctions->acquireExclusiveVMAccess(currentThread);
 	}
 
+#if defined(J9VM_JIT_CLASS_UNLOAD_RWMONITOR)
+	omrthread_rwmutex_enter_write(vm->classUnloadMutex);
+#else /* defined(J9VM_JIT_CLASS_UNLOAD_RWMONITOR) */
+	omrthread_monitor_enter(vm->classUnloadMutex);
+#endif /* defined(J9VM_JIT_CLASS_UNLOAD_RWMONITOR) */
+
+	/* All compilations are paused waiting for either the class unload mutex or VM access.
+	 * We can update the VM data structures without any inconsistencies being observed by
+	 * concurrently running compilations. Afterward, resuming compilations will be interrupted
+	 * if necessary before they can observe an inconsistency.
+	 */
+
 	if (J9_ARE_ANY_BITS_SET(vm->runtimeFlags, J9_RUNTIME_DYNAMIC_HEAPIFICATION)) {
 		/* Look for stack-allocated objects only if the JIT is enabled and not running in FSD mode */
 		if ((NULL != vm->jitConfig) && !J9_FSD_ENABLED(vm)) {
@@ -1350,6 +1362,12 @@ failedWithVMAccess:
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 	hashTableFree(classPairs);
+
+#if defined(J9VM_JIT_CLASS_UNLOAD_RWMONITOR)
+	omrthread_rwmutex_exit_write(vm->classUnloadMutex);
+#else /* defined(J9VM_JIT_CLASS_UNLOAD_RWMONITOR) */
+	omrthread_monitor_exit(vm->classUnloadMutex);
+#endif /* defined(J9VM_JIT_CLASS_UNLOAD_RWMONITOR) */
 
 	if (safePoint) {
 		vm->internalVMFunctions->releaseSafePointVMAccess(currentThread);
