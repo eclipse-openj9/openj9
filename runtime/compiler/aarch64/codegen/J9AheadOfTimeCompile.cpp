@@ -69,7 +69,6 @@ J9::ARM64::AheadOfTimeCompile::initializePlatformSpecificAOTRelocationHeader(TR:
          uintptr_t gv = reinterpret_cast<uintptr_t>(relocation->getTargetAddress());
          uint8_t flags = static_cast<uint8_t>(reinterpret_cast<uintptr_t>(relocation->getTargetAddress2()));
 
-         TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
          hcrRecord->setReloFlags(reloTarget, flags);
          hcrRecord->setOffset(reloTarget, gv);
          }
