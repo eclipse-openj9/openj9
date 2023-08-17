@@ -231,6 +231,7 @@ TR::Register *J9::Power::JNILinkage::buildDirectDispatch(TR::Node *callNode)
       {
       // We need to kill all the non-volatiles so that they'll be in a stack frame in case
       // gc needs to find them.
+      cg()->setSavesNonVolatileGPRsForGC();
       if (comp()->target().is64Bit())
          {
          if (comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P10))

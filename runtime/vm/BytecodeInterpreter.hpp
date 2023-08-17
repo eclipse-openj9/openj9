@@ -23,9 +23,16 @@
 #if !defined(BYTECODEINTERPRETER_HPP_)
 #define BYTECODEINTERPRETER_HPP_
 
-#if JAVA_SPEC_VERSION >= 20
+#if JAVA_SPEC_VERSION >= 21
 #include <errno.h>
-#endif /* JAVA_SPEC_VERSION >= 20 */
+#if defined(WIN32)
+/* Ignore the definition of UDATA as it is defined in <windows.h>. */
+#define UDATA UDATA_win32_
+#include <windows.h>
+#undef UDATA /* This is safe because our UDATA is a typedef rather than a macro. */
+#include <winsock2.h>
+#endif /* defined(WIN32) */
+#endif /* JAVA_SPEC_VERSION >= 21 */
 
 #include "bcnames.h"
 #define FFI_BUILDING /* Needed on Windows to link libffi statically */
@@ -5175,12 +5182,10 @@ done:
 			returnStorage = (UDATA *)(UDATA)*(I_64 *)(_sp + 5); /* returnStructMemAddr */
 		}
 
-#if JAVA_SPEC_VERSION >= 20
+#if JAVA_SPEC_VERSION >= 21
 		/* The native memory is allocated at java level to save the execution state after performing the downcall. */
 		returnState = (I_32 *)(UDATA)*(I_64 *)(_sp + 7); /* returnStateMemAddr */
-#endif /* JAVA_SPEC_VERSION >= 20 */
 
-#if JAVA_SPEC_VERSION >= 21
 		/* Set the linker option to the current thread for the trivial downcall. */
 		_currentThread->isInTrivialDownCall = (0 == *(U_32*)(_sp + 9)) ? FALSE : TRUE;
 #endif /* JAVA_SPEC_VERSION >= 21 */
@@ -5295,12 +5300,21 @@ done:
 		recordJNIReturn(REGISTER_ARGS, bp);
 		restoreSpecialStackFrameLeavingArgs(REGISTER_ARGS, bp);
 
-#if JAVA_SPEC_VERSION >= 20
+#if JAVA_SPEC_VERSION >= 21
 		/* Set the execution state after the downcall as required in the linker options. */
 		if (NULL != returnState) {
+			/* The error code layout on Windows in JDK21 is changed to a segment for an array of integers
+			 * which saves the return value of GetLastError(), WSAGetLastError() and errno.
+			 */
+#if defined(WIN32)
+			returnState[0] = GetLastError();
+			returnState[1] = WSAGetLastError();
+			returnState[2] = (I_32)errno;
+#else /* defined(WIN32) */
 			*returnState = (I_32)errno;
+#endif /* defined(WIN32) */
 		}
-#endif /* JAVA_SPEC_VERSION >= 20 */
+#endif /* JAVA_SPEC_VERSION >= 21 */
 		VM_VMHelpers::convertFFIReturnValue(_currentThread, returnType, returnTypeSize, returnStorage);
 		returnDoubleFromINL(REGISTER_ARGS, _currentThread->returnValue, argSlots);
 
