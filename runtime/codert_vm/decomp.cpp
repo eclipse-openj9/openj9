@@ -1408,7 +1408,20 @@ jitDataBreakpointAdded(J9VMThread * currentThread)
 			/* Make all future compilations inline the field watch code */
 			jitConfig->inlineFieldWatches = TRUE;
 		} else {
+			/* jitClassesRedefined expects the caller to hold the class unload mutex exclusively. */
+#if defined(J9VM_JIT_CLASS_UNLOAD_RWMONITOR)
+			omrthread_rwmutex_enter_write(vm->classUnloadMutex);
+#else /* defined(J9VM_JIT_CLASS_UNLOAD_RWMONITOR) */
+			omrthread_monitor_enter(vm->classUnloadMutex);
+#endif /* defined(J9VM_JIT_CLASS_UNLOAD_RWMONITOR) */
+
 			jitConfig->jitClassesRedefined(currentThread, 0, NULL, 0);
+
+#if defined(J9VM_JIT_CLASS_UNLOAD_RWMONITOR)
+			omrthread_rwmutex_exit_write(vm->classUnloadMutex);
+#else /* defined(J9VM_JIT_CLASS_UNLOAD_RWMONITOR) */
+			omrthread_monitor_exit(vm->classUnloadMutex);
+#endif /* defined(J9VM_JIT_CLASS_UNLOAD_RWMONITOR) */
 		}
 
 		/* Find every method which has been translated and mark it for retranslation */
