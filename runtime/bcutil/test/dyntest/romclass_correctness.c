@@ -40,8 +40,6 @@ typedef struct RCCorrectnessConfig {
 	RCcorrectenessMethodConfig *methodInfo;
 } RCCorrectnessConfig;
 
-#define TEST_ALL_MASK                   ((UDATA)0xFFFFFFFF)
-#define TEST_NONE_MASK                  ((UDATA)0x00000000)
 /* class flags */
 #define TEST_J9AccClassHasFinalFields   ((UDATA)0x00000001)
 #define TEST_J9AccClassCloneable        ((UDATA)0x00000002)
@@ -52,16 +50,9 @@ typedef struct RCCorrectnessConfig {
 #define TEST_J9AccClassFinalizeNeeded   ((UDATA)0x00000040)
 #define TEST_J9AccClassHasVerifyData    ((UDATA)0x00000080)
 #define TEST_J9AccClassUnsafe           ((UDATA)0x00000100)
-/* method flags */
-#define TEST_J9AccMethodHasBackwardBranches    ((UDATA)0x00000200)
-#define TEST_J9AccSynthetic                    ((UDATA)0x00000800)
-#define TEST_J9AccMethodHasGenericSignature    ((UDATA)0x00001000)
-#define TEST_J9AccMethodHasExceptionInfo       ((UDATA)0x00002000)
-#define TEST_J9AccEmptyMethod                  ((UDATA)0x00008000)
-#define TEST_J9AccForwarderMethod              ((UDATA)0x00010000)
-#define TEST_J9AccGetterMethod                 ((UDATA)0x00020000)
-#define TEST_J9AccMethodVTable                 ((UDATA)0x00040000)
 
+/* method flags */
+#define TEST_J9AccSynthetic             ((UDATA)0x00000800)
 
 static void
 verifyClassFlags(J9PortLibrary *portLib, const char *testName, J9ROMClass *romClass, RCCorrectnessConfig *testData )
@@ -379,4 +370,3 @@ j9dyn_testROMClassCorrectness(J9PortLibrary *portLib)
 	rc |= testClass(PORTLIB, &test7);
 	return rc;
 }
-
