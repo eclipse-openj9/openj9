@@ -9444,7 +9444,6 @@ static TR::Register* inlineIntrinsicIndexOf(TR::Node* node, TR::CodeGenerator* c
 static TR::Register* inlineCompareAndSwapObjectNative(TR::Node* node, TR::CodeGenerator* cg)
    {
    TR::Compilation *comp = cg->comp();
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
 
    TR_ASSERT(!TR::Compiler->om.canGenerateArraylets() || node->isUnsafeGetPutCASCallOnNonArray(), "This evaluator does not support arraylets.");
 
@@ -9454,74 +9453,15 @@ static TR::Register* inlineCompareAndSwapObjectNative(TR::Node* node, TR::CodeGe
    TR::Node* oldValueNode = node->getChild(3);
    TR::Node* newValueNode = node->getChild(4);
 
-   TR::Register* object           = cg->evaluate(objectNode);
-   // evaluation of offset is determined by if we are dealing with an array operation or not
-   TR::Register* offset           = NULL;
-   TR::Register* oldValue         = cg->evaluate(oldValueNode);
-   TR::Register* newValue         = cg->evaluate(newValueNode);
-   TR::Register* result           = cg->allocateRegister();
-   TR::Register* EAX              = cg->allocateRegister();
-   TR::Register* tmp              = cg->allocateRegister();
-   TR::Register* firstDataElement = NULL;
-
-   TR::ResolvedMethodSymbol *methodSymbol = comp->getMethodSymbol();
-   bool isArrayOperation = false;
-   // Check for array operation
-   switch (methodSymbol->getRecognizedMethod())
-      {
-      case TR::java_util_concurrent_ConcurrentHashMap_casTabAt:
-         isArrayOperation = true;
-      default:
-         break;
-      }
+   TR::Register* object   = cg->evaluate(objectNode);
+   TR::Register* offset   = cg->evaluate(offsetNode);
+   TR::Register* oldValue = cg->evaluate(oldValueNode);
+   TR::Register* newValue = cg->evaluate(newValueNode);
+   TR::Register* result   = cg->allocateRegister();
+   TR::Register* EAX      = cg->allocateRegister();
+   TR::Register* tmp      = cg->allocateRegister();
 
    bool use64BitClasses = comp->target().is64Bit() && !comp->useCompressedPointers();
-
-   TR::MemoryReference *objectFieldMR = NULL;
-#if defined(TR_TARGET_64BIT)
-   if (isArrayOperation && fej9->isOffHeapAllocationEnabled())
-      {
-      TR::Node *lshl = offsetNode->getFirstChild();
-      TR::Node *i2l = lshl->getFirstChild();
-      TR::Node *iRegLoad = i2l->getFirstChild();
-
-      if (offsetNode->getReferenceCount() == 1
-         && lshl->getReferenceCount() == 1
-         && i2l->getReferenceCount() == 1
-         && iRegLoad->getReferenceCount() == 1
-         && lshl->getSecondChild()->getReferenceCount() == 1
-         && offsetNode->getSecondChild()->getReferenceCount() == 1)
-         {
-         /* Since it is an array operation we are probably deaing with
-          * n1 ladd
-          * n2   lshl
-          * n3     i2l
-          * n4        ==>iRegLoad ; actual offset
-          * n5     iload  java/util/concurrent/ConcurrentHashMap.ASHIFT I
-          * n6   lload  java/util/concurrent/ConcurrentHashMap.ABASE J
-          *
-          * we can get away by evaluating just n2
-          */
-         offset = cg->evaluate(lshl);
-         firstDataElement = cg->allocateRegister();
-
-         TR::MemoryReference *dataAddrSlotMR = generateX86MemoryReference(object, fej9->getOffsetOfContiguousDataAddrField(), cg);
-         // load dataAddr field into a reg
-         generateRegMemInstruction(TR::InstOpCode::LRegMem(), node, firstDataElement, dataAddrSlotMR, cg);
-         // create memory refernce the normal way using dataAddr pointer as base
-         objectFieldMR = generateX86MemoryReference(firstDataElement, offset, 0, cg);
-
-         // Decrement refernce counts, this would have been done during
-         // evaluation of offsetNode.
-         cg->recursivelyDecReferenceCount(offsetNode->getSecondChild());
-         }
-      }
-   else
-#endif /* TR_TARGET_64BIT */
-      {
-      offset = cg->evaluate(offsetNode);
-      objectFieldMR = generateX86MemoryReference(object, offset, 0, cg);
-      }
 
    if (comp->target().is32Bit())
       {
