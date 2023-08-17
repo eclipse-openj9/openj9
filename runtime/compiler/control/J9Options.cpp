@@ -2667,6 +2667,9 @@ J9::Options::fePreProcess(void * base)
    self()->setOption(TR_EnableSymbolValidationManager);
 #endif
 
+   // Forcing inlining of unrecognized intrinsics needs more performance investigation
+   self()->setOption(TR_DisableInliningUnrecognizedIntrinsics);
+
    return true;
    }
 
