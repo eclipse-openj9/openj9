@@ -186,6 +186,7 @@ MM_ScavengerDelegate::mainSetupForGC(MM_EnvironmentBase * envBase)
 	private_setupForOwnableSynchronizerProcessing(MM_EnvironmentStandard::getEnvironment(envBase));
 
 	_shouldScavengeContinuationObjects = false;
+	_shouldIterateContinuationObjects = false;
 
 	/* Sort all hot fields for all classes if scavenger dynamicBreadthFirstScanOrdering is enabled */
 	if (MM_GCExtensions::OMR_GC_SCAVENGER_SCANORDERING_DYNAMIC_BREADTH_FIRST == _extensions->scavengerScanOrdering) {
@@ -890,6 +891,7 @@ MM_ScavengerDelegate::MM_ScavengerDelegate(MM_EnvironmentBase* env)
 	, _shouldScavengeFinalizableObjects(false)
 	, _shouldScavengeUnfinalizedObjects(false)
 	, _shouldScavengeContinuationObjects(false)
+	, _shouldIterateContinuationObjects(false)
 	, _shouldScavengeSoftReferenceObjects(false)
 	, _shouldScavengeWeakReferenceObjects(false)
 	, _shouldScavengePhantomReferenceObjects(false)

@@ -48,7 +48,7 @@
 #include "FinalizableReferenceBuffer.hpp"
 #include "FinalizeListManager.hpp"
 #endif /* J9VM_GC_FINALIZATION*/
-#include "ContinuationObjectBuffer.hpp"
+#include "ContinuationObjectBufferVLHGC.hpp"
 #include "ContinuationObjectList.hpp"
 #include "GCExtensions.hpp"
 #include "GlobalCollectionCardCleaner.hpp"
@@ -1313,6 +1313,12 @@ private:
 		reportScanningStarted(RootScannerEntity_ContinuationObjects);
 		_markingScheme->scanContinuationObjects(MM_EnvironmentVLHGC::getEnvironment(env));
 		reportScanningEnded(RootScannerEntity_ContinuationObjects);
+	}
+
+	virtual void iterateAllContinuationObjects(MM_EnvironmentBase *env) {
+		reportScanningStarted(RootScannerEntity_ContinuationObjectsComplete);
+		MM_ContinuationObjectBufferVLHGC::iterateAllContinuationObjects(env);
+		reportScanningEnded(RootScannerEntity_ContinuationObjectsComplete);
 	}
 
 	virtual void doMonitorReference(J9ObjectMonitor *objectMonitor, GC_HashTableIterator *monitorReferenceIterator) {

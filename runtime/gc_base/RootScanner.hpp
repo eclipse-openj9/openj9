@@ -72,7 +72,7 @@ class MM_RootScanner : public MM_BaseVirtual
 	 * Data members
 	 */
 private:
-
+	bool _isContinuationListEmpty;
 protected:
 	MM_EnvironmentBase *_env;
 	MM_GCExtensions *_extensions;
@@ -121,6 +121,7 @@ private:
 	 */
 	void scanArrayObject(MM_EnvironmentBase *env, J9Object *objectPtr, MM_MemoryPool *memoryPool, MM_HeapRegionManager *manager, uintptr_t memoryType);
 
+	bool isContinuationListEmpty(MM_EnvironmentBase *env);
 protected:
 	/* Family of yielding methods to be overridden by incremental scanners such
 	 * as the RealtimeRootScanner. The default implementations of these do
@@ -291,6 +292,7 @@ public:
 
 	MM_RootScanner(MM_EnvironmentBase *env, bool singleThread = false)
 		: MM_BaseVirtual()
+		, _isContinuationListEmpty(false)
 		, _env(env)
 		, _extensions(MM_GCExtensions::getExtensions(env))
 		, _clij((MM_CollectorLanguageInterfaceImpl *)_extensions->collectorLanguageInterface)
@@ -434,7 +436,16 @@ public:
 	 * which modifies elements within the list.
 	 */
 	virtual void scanOwnableSynchronizerObjects(MM_EnvironmentBase *env);
+	/**
+	 * scanContinuationObjects() is for removing continuation objects, which are dead or last unmounted,
+	 * from the continuation lists within a scope of current GC(for example just for Nursery in Scavenge).
+	 */
 	virtual void scanContinuationObjects(MM_EnvironmentBase *env);
+	/**
+	 * iterateAllContinuationObjects() is for iterating all live continuation objects in the heap and doing any processing
+	 * that other parties may register through a hook [J9HOOK_MM_WALKCONTINUATION].
+	 */
+	virtual void iterateAllContinuationObjects(MM_EnvironmentBase *env) {}
 
 	virtual void scanStringTable(MM_EnvironmentBase *env);
 	void scanJNIGlobalReferences(MM_EnvironmentBase *env);

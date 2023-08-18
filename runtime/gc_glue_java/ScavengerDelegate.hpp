@@ -69,7 +69,8 @@ private:
 	MM_GCExtensions *_extensions;
 	volatile bool _shouldScavengeFinalizableObjects; /**< Set to true at the beginning of a collection if there are any pending finalizable objects */
 	volatile bool _shouldScavengeUnfinalizedObjects; /**< Set to true at the beginning of a collection if there are any unfinalized objects */
-	volatile bool _shouldScavengeContinuationObjects; /**< Set to true at the beginning of a collection if there are any unfinalized objects */
+	volatile bool _shouldScavengeContinuationObjects; /**< Set to true at the beginning of a collection if there are any continuation objects in new space */
+	volatile bool _shouldIterateContinuationObjects; /**< Set to true at the beginning of a collection if there are any continuation objects */
 	volatile bool _shouldScavengeSoftReferenceObjects; /**< Set to true if there are any SoftReference objects discovered */
 	volatile bool _shouldScavengeWeakReferenceObjects; /**< Set to true if there are any WeakReference objects discovered */
 	volatile bool _shouldScavengePhantomReferenceObjects; /**< Set to true if there are any PhantomReference objects discovered */
@@ -156,11 +157,13 @@ public:
 
 	void setShouldScavengeUnfinalizedObjects(bool shouldScavenge) { _shouldScavengeUnfinalizedObjects = shouldScavenge; }
 	void setShouldScavengeContinuationObjects(bool shouldScavenge) { _shouldScavengeContinuationObjects = shouldScavenge; }
+	void setShouldIterateContinuationObjects(bool shouldIterate) { _shouldIterateContinuationObjects = shouldIterate; }
 	bool scanContinuationNativeSlots(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr, MM_ScavengeScanReason reason, bool beingMounted = false);
 
 	volatile bool getShouldScavengeFinalizableObjects() { return _shouldScavengeFinalizableObjects; }
 	volatile bool getShouldScavengeUnfinalizedObjects() { return _shouldScavengeUnfinalizedObjects; }
 	volatile bool getShouldScavengeContinuationObjects() { return _shouldScavengeContinuationObjects; }
+	volatile bool getShouldIterateContinuationObjects() { return _shouldIterateContinuationObjects; }
 	volatile bool getShouldScavengeSoftReferenceObjects() { return _shouldScavengeSoftReferenceObjects; }
 	volatile bool getShouldScavengeWeakReferenceObjects() { return _shouldScavengeWeakReferenceObjects; }
 	volatile bool getShouldScavengePhantomReferenceObjects() { return _shouldScavengePhantomReferenceObjects; }

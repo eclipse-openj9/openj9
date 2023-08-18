@@ -42,7 +42,7 @@
 #include "MarkingSchemeRootClearer.hpp"
 #include "ModronAssertions.h"
 #include "OwnableSynchronizerObjectBuffer.hpp"
-#include "ContinuationObjectBuffer.hpp"
+#include "ContinuationObjectBufferStandard.hpp"
 #include "ParallelDispatcher.hpp"
 #include "ReferenceObjectBuffer.hpp"
 #include "ReferenceStats.hpp"
@@ -349,6 +349,16 @@ MM_MarkingSchemeRootClearer::scanContinuationObjects(MM_EnvironmentBase *env)
 		reportScanningEnded(RootScannerEntity_ContinuationObjects);
 	}
 #endif /* JAVA_SPEC_VERSION >= 19 */
+}
+
+void
+MM_MarkingSchemeRootClearer::iterateAllContinuationObjects(MM_EnvironmentBase *env)
+{
+	if (_markingDelegate->shouldScanContinuationObjects()) {
+		reportScanningStarted(RootScannerEntity_ContinuationObjectsComplete);
+		MM_ContinuationObjectBufferStandard::iterateAllContinuationObjects(env);
+		reportScanningEnded(RootScannerEntity_ContinuationObjectsComplete);
+	}
 }
 
 void
