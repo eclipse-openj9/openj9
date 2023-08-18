@@ -154,24 +154,24 @@ MM_IndexableObjectAllocationModel::initializeIndexableObject(MM_EnvironmentBase 
 		/* Set the array size */
 		if (getAllocateDescription()->isChunkedArray()) {
 			indexableObjectModel->setSizeInElementsForDiscontiguous(spine, _numberOfIndexedFields);
-#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+#if defined(J9VM_ENV_DATA64)
 			if (((J9JavaVM *)env->getLanguageVM())->isIndexableDataAddrPresent) {
 				indexableObjectModel->setDataAddrForDiscontiguous(spine, NULL);
 			}
-#endif /* defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */
+#endif /* defined(J9VM_ENV_DATA64) */
 		} else {
 			indexableObjectModel->setSizeInElementsForContiguous(spine, _numberOfIndexedFields);
 			isArrayletDataAdjacentToHeader = indexableObjectModel->isArrayletDataAdjacentToHeader(spine);
 			if (isArrayletDataAdjacentToHeader) {
-#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
-			if (((J9JavaVM *)env->getLanguageVM())->isIndexableDataAddrPresent) {
-				indexableObjectModel->setDataAddrForContiguous(spine);
-			}
-#endif /* defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */
+#if defined(J9VM_ENV_DATA64)
+				if (((J9JavaVM *)env->getLanguageVM())->isIndexableDataAddrPresent) {
+					indexableObjectModel->setDataAddrForContiguous(spine);
+				}
+#endif /* defined(J9VM_ENV_DATA64) */
 			} else if (isAllIndexableDataContiguousEnabled) {
-#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+#if defined(J9VM_ENV_DATA64)
 				indexableObjectModel->setDataAddrForContiguous(spine, NULL);
-#endif /* defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */
+#endif /* defined(J9VM_ENV_DATA64) */
 			}
 		}
 	}
@@ -429,7 +429,9 @@ MM_IndexableObjectAllocationModel::reserveLeavesForContiguousArraylet(MM_Environ
 
 		void *contiguousAddress = doubleMapArraylets(env, (J9Object *)spine, arrayletLeaveAddrs, firstLeafRegionDescriptor, NULL);
 		if (NULL != contiguousAddress) {
+#if defined(J9VM_ENV_DATA64)
 			indexableObjectModel->setDataAddrForContiguous((J9IndexableObject *)spine, contiguousAddress);
+#endif /* defined(J9VM_ENV_DATA64) */
 		}
 
 		/* Free arraylet leaf addresses if dynamically allocated */
@@ -440,7 +442,7 @@ MM_IndexableObjectAllocationModel::reserveLeavesForContiguousArraylet(MM_Environ
 
 	return spine;
 }
-#endif
+#endif /* defined(J9VM_GC_ENABLE_DOUBLE_MAP) */
 
 #if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
 MMINLINE J9IndexableObject *

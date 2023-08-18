@@ -158,8 +158,9 @@ MM_ConfigurationIncrementalGenerational::createHeapWithManager(MM_EnvironmentBas
 	}
 #endif /* defined(OMR_GC_VLHGC_CONCURRENT_COPY_FORWARD) */
 
-#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+#if defined(J9VM_ENV_DATA64)
 	extensions->indexableObjectModel.setIsDataAddressPresent(true);
+#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
 	if (extensions->isVirtualLargeObjectHeapRequested) {
 		/* Create off-heap */
 		MM_SparseVirtualMemory *largeObjectVirtualMemory = MM_SparseVirtualMemory::newInstance(env, OMRMEM_CATEGORY_MM_RUNTIME_HEAP, heap);
@@ -181,6 +182,7 @@ MM_ConfigurationIncrementalGenerational::createHeapWithManager(MM_EnvironmentBas
 		}
 	}
 #endif /* defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */
+#endif /* defined(J9VM_ENV_DATA64) */
 
 	return heap;
 }
