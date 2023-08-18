@@ -851,7 +851,6 @@ public:
 	}
 
 #if defined(J9VM_ENV_DATA64)
-
 	/**
 	 * Gets data pointer of a contiguous indexable object.
 	 * Helper to get dataAddr field of contiguous indexable objects.
@@ -970,11 +969,9 @@ public:
 	getDataAddrForContiguous(J9IndexableObject *arrayPtr)
 	{
 		void *dataAddr = NULL;
-
 		if (_isIndexableDataAddrPresent) {
 			dataAddr = *dataAddrSlotForContiguous(arrayPtr);
 		}
-
 		return dataAddr;
 	}
 
@@ -1034,12 +1031,10 @@ public:
 	isValidDataAddr(J9IndexableObject *arrayPtr, bool isValidDataAddrForDoubleMappedObject)
 	{
 		bool isValidDataAddress = true;
-
 		if (_isIndexableDataAddrPresent) {
 			void *dataAddr = getDataAddrForIndexableObject(arrayPtr);
 			isValidDataAddress = isValidDataAddr(arrayPtr, dataAddr, isValidDataAddrForDoubleMappedObject);
 		}
-
 		return isValidDataAddress;
 	}
 
@@ -1097,7 +1092,7 @@ public:
 				setDataAddrForContiguous(j9ArrayPtr);
 			}
 		}
-#endif /* J9VM_ENV_DATA64 */
+#endif /* defined(J9VM_ENV_DATA64) */
 	}
 
 	/**
@@ -1249,7 +1244,15 @@ public:
 	MMINLINE void *
 	getDataPointerForContiguous(J9IndexableObject *arrayPtr)
 	{
-		return (void *)((uintptr_t)arrayPtr + contiguousIndexableHeaderSize());
+		void *dataAddr = (void *)((uintptr_t)arrayPtr + contiguousIndexableHeaderSize());;
+		if (isVirtualLargeObjectHeapEnabled()
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+			|| isDoubleMappingEnabled()
+#endif /* defined(J9VM_GC_ENABLE_DOUBLE_MAP) */
+		) {
+			dataAddr = *dataAddrSlotForContiguous(arrayPtr);
+		}
+		return dataAddr;
 	}
 
 	/**

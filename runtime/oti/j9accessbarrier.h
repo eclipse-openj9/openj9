@@ -123,7 +123,7 @@ typedef struct J9IndexableObject* mm_j9array_t;
 		? (&((elemType*)((((J9IndexableObjectContiguousCompressed *)(array)) + 1)))[index]) \
 		: (&((elemType*)((((J9IndexableObjectContiguousFull *)(array)) + 1)))[index]))
 
-#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+#if defined(J9VM_ENV_DATA64)
 #define J9JAVAARRAYCONTIGUOUS_WITH_DATAADDRESS_EA(vmThread, array, index, elemType) \
 	(J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) \
 		? (&((elemType*)((((J9IndexableObjectWithDataAddressContiguousCompressed *)(array))->dataAddr)))[index]) \
@@ -144,14 +144,14 @@ typedef struct J9IndexableObject* mm_j9array_t;
 		? J9JAVAARRAYCONTIGUOUS_WITH_DATAADDRESS_EA_VM(javaVM, array, index, elemType) \
 		: J9JAVAARRAYCONTIGUOUS_WITHOUT_DATAADDRESS_EA_VM(javaVM, array, index, elemType))
 
-#else /* defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */
+#else /* defined(J9VM_ENV_DATA64) */
 #define J9JAVAARRAYCONTIGUOUS_EA(vmThread, array, index, elemType) \
 	J9JAVAARRAYCONTIGUOUS_WITHOUT_DATAADDRESS_EA(vmThread, array, index, elemType)
 
 #define J9JAVAARRAYCONTIGUOUS_EA_VM(javaVM, array, index, elemType) \
 	J9JAVAARRAYCONTIGUOUS_WITHOUT_DATAADDRESS_EA_VM(javaVM, array, index, elemType)
 
-#endif /* defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */
+#endif /* defined(J9VM_ENV_DATA64) */
 
 #define J9ISCONTIGUOUSARRAY(vmThread, array) \
 	(J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) \

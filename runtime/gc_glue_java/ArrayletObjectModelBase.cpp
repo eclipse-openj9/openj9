@@ -39,8 +39,10 @@ GC_ArrayletObjectModelBase::initialize(MM_GCExtensionsBase * extensions)
 	_largestDesirableArraySpineSize = UDATA_MAX;
 #if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
 	_enableVirtualLargeObjectHeap = false;
-	_isIndexableDataAddrPresent = false;
 #endif /* defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */
+#if defined(J9VM_ENV_DATA64)
+	_isIndexableDataAddrPresent = false;
+#endif /* defined(J9VM_ENV_DATA64) */
 	_contiguousIndexableHeaderSize = 0;
 	_discontiguousIndexableHeaderSize = 0;
 

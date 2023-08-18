@@ -562,7 +562,7 @@ public:
 	{
 		GC_ObjectModelBase::fixupForwardedObject(forwardedHeader, destinationObjectPtr, objectAge);
 
-#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+#if defined(J9VM_ENV_DATA64)
 		if (_javaVM->isIndexableDataAddrPresent) {
 			if (isIndexable(forwardedHeader)) {
 				/**
@@ -574,7 +574,7 @@ public:
 				_indexableObjectModel->fixupDataAddr(forwardedHeader, destinationObjectPtr);
 			}
 		}
-#endif /* defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */
+#endif /* defined(J9VM_ENV_DATA64) */
 
 		fixupHashFlagsAndSlot(forwardedHeader, destinationObjectPtr);
 	}

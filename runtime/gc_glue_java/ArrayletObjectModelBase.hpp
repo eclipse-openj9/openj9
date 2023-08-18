@@ -53,8 +53,10 @@ protected:
 	void * _arrayletRangeTop; /**< The top heap range of where discontiguous arraylets are allowed. */
 	MM_MemorySubSpace * _arrayletSubSpace; /**< The only subspace that is allowed to have discontiguous arraylets. */
 	uintptr_t _largestDesirableArraySpineSize; /**< A cached copy of the subspace's _largestDesirableArraySpineSize to be used when we don't have access to a subspace. */
-#if defined(J9VM_ENV_DATA64)
+#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
 	bool _enableVirtualLargeObjectHeap;
+#endif /* defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */
+#if defined(J9VM_ENV_DATA64)
 	bool _isIndexableDataAddrPresent;
 #endif /* defined(J9VM_ENV_DATA64) */
 	uintptr_t _contiguousIndexableHeaderSize;
@@ -230,7 +232,9 @@ public:
 	{
 		_enableVirtualLargeObjectHeap = enableVirtualLargeObjectHeap;
 	}
+#endif /* defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */
 
+#if defined(J9VM_ENV_DATA64)
 	/**
 	 * Set whether the indexable header field dataAddr is present in the header of the indexable object.
 	 */
@@ -239,7 +243,7 @@ public:
 	{
 		_isIndexableDataAddrPresent = isDataAddressPresent;
 	}
-#endif /* defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */
+#endif /* defined(J9VM_ENV_DATA64) */
 
 	/**
 	 * Query if virtual large object heap (off-heap) allocation for large objects is enabled.
