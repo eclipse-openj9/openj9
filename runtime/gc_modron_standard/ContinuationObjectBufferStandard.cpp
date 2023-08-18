@@ -109,6 +109,7 @@ MM_ContinuationObjectBufferStandard::reinitializeForRestore(MM_EnvironmentBase *
 void
 MM_ContinuationObjectBufferStandard::iterateAllContinuationObjects(MM_EnvironmentBase *env)
 {
+#if JAVA_SPEC_VERSION >= 19
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
 	MM_HeapRegionDescriptorStandard *region = NULL;
 	GC_HeapRegionIteratorStandard regionIterator(extensions->heapRegionManager);
@@ -136,4 +137,5 @@ MM_ContinuationObjectBufferStandard::iterateAllContinuationObjects(MM_Environmen
 			}
 		}
 	}
+#endif /* JAVA_SPEC_VERSION >= 19 */
 }
