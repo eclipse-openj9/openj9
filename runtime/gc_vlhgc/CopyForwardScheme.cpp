@@ -62,7 +62,7 @@
 #include "EnvironmentVLHGC.hpp"
 #include "FinalizableObjectBuffer.hpp"
 #include "FinalizableReferenceBuffer.hpp"
-#include "ContinuationObjectBuffer.hpp"
+#include "ContinuationObjectBufferVLHGC.hpp"
 #include "ContinuationObjectList.hpp"
 #include "FinalizeListManager.hpp"
 #include "ForwardedHeader.hpp"
@@ -3986,6 +3986,12 @@ private:
 		reportScanningStarted(RootScannerEntity_ContinuationObjects);
 		_copyForwardScheme->scanContinuationObjects(MM_EnvironmentVLHGC::getEnvironment(env));
 		reportScanningEnded(RootScannerEntity_ContinuationObjects);
+	}
+
+	virtual void iterateAllContinuationObjects(MM_EnvironmentBase *env) {
+		reportScanningStarted(RootScannerEntity_ContinuationObjectsComplete);
+		MM_ContinuationObjectBufferVLHGC::iterateAllContinuationObjects(env);
+		reportScanningEnded(RootScannerEntity_ContinuationObjectsComplete);
 	}
 
 	virtual void scanPhantomReferenceObjects(MM_EnvironmentBase *env) {

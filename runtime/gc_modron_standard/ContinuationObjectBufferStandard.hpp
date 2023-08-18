@@ -72,5 +72,6 @@ public:
 	 */
 	virtual bool reinitializeForRestore(MM_EnvironmentBase *env);
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+	static void iterateAllContinuationObjects(MM_EnvironmentBase *env);
 };
 #endif /* CONTINUATIONOBJECTBUFFERSTANDARD_HPP_ */

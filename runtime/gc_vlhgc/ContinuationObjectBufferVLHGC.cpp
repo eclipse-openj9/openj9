@@ -25,11 +25,13 @@
 #include "j9cfg.h"
 #include "ModronAssertions.h"
 
-#include "ContinuationObjectBufferVLHGC.hpp"
 #include "HeapRegionManager.hpp"
-
 #include "HeapRegionDescriptorVLHGC.hpp"
+#include "HeapRegionIteratorVLHGC.hpp"
+
+#include "ContinuationObjectBufferVLHGC.hpp"
 #include "ContinuationObjectList.hpp"
+#include "ParallelTask.hpp"
 
 MM_ContinuationObjectBufferVLHGC::MM_ContinuationObjectBufferVLHGC(MM_GCExtensions *extensions, uintptr_t maxObjectCount)
 	: MM_ContinuationObjectBuffer(extensions, maxObjectCount)
@@ -104,6 +106,37 @@ MM_ContinuationObjectBufferVLHGC::addForOnlyCompactedRegion(MM_EnvironmentBase* 
 			_objectCount = 1;
 			/* record the region which contains this object. Other objects will be permitted in the buffer if they are in the same region */
 			_region = region;
+		}
+	}
+}
+
+void
+MM_ContinuationObjectBufferVLHGC::iterateAllContinuationObjects(MM_EnvironmentBase *env)
+{
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
+	MM_HeapRegionManager *regionManager = extensions->getHeap()->getHeapRegionManager();
+	MM_HeapRegionDescriptorVLHGC *region = NULL;
+	GC_HeapRegionIteratorVLHGC regionIterator(regionManager);
+
+	/* to make sure that previous pruning phase of continuation list(scanContinuationObjects()) is complete */
+	env->_currentTask->synchronizeGCThreads(env, UNIQUE_ID);
+
+	while (NULL != (region = regionIterator.nextRegion())) {
+		if (region->containsObjects()) {
+			if (NULL != region->getContinuationObjectList()->getHeadOfList()) {
+				if (J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
+					omrobjectptr_t object = region->getContinuationObjectList()->getHeadOfList();
+					while (NULL != object) {
+						Assert_MM_true(region->isAddressInRegion(object));
+						omrobjectptr_t next = extensions->accessBarrier->getContinuationLink(object);
+						J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF((J9VMThread *)env->getLanguageVMThread(), object);
+						if (NULL != continuation) {
+							TRIGGER_J9HOOK_MM_WALKCONTINUATION(extensions->hookInterface, (J9VMThread *)env->getLanguageVMThread(), object);
+						}
+						object = next;
+					}
+				}
+			}
 		}
 	}
 }

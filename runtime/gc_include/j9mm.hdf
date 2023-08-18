@@ -77,4 +77,13 @@ struct J9VMThread;
 		<data type="uintptr_t" name="objectSize" description="the size of the object just allocated" />
 	</event>
 
+	<event>
+		<name>J9HOOK_MM_WALKCONTINUATION</name>
+		<description>
+			Triggered when iterating live continuation from continuation Object List during GC clearable phase.
+		</description>
+		<struct>MM_ContinuationIteratingEvent</struct>
+		<data type="struct J9VMThread*" name="vmThread" description="current thread" />
+		<data type="j9object_t" name="object" description="continuation Object" />
+	</event>
 </interface>

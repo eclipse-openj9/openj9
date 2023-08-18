@@ -1043,6 +1043,13 @@ MM_RootScanner::scanClearable(MM_EnvironmentBase *env)
 
 	scanOwnableSynchronizerObjects(env);
 	scanContinuationObjects(env);
+#if JAVA_SPEC_VERSION >= 19
+	J9JavaVM *vm = (J9JavaVM*)env->getOmrVM()->_language_vm;
+	J9JITConfig *jitConfig = vm->jitConfig;
+	if ((NULL != jitConfig) && (NULL != jitConfig->methodsToDelete)) {
+		iterateAllContinuationObjects(env);
+	}
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
 #if defined(J9VM_GC_MODRON_SCAVENGER)
 	/* Remembered set is clearable in a generational system -- if an object in old

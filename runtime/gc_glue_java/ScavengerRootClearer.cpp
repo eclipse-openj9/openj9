@@ -39,7 +39,7 @@
 #include "SlotObject.hpp"
 #include "UnfinalizedObjectBuffer.hpp"
 #include "UnfinalizedObjectList.hpp"
-#include "ContinuationObjectBuffer.hpp"
+#include "ContinuationObjectBufferStandard.hpp"
 #include "ContinuationObjectList.hpp"
 #if JAVA_SPEC_VERSION >= 19
 #include "ContinuationHelpers.hpp"
@@ -263,6 +263,16 @@ MM_ScavengerRootClearer::scavengeContinuationObjects(MM_EnvironmentStandard *env
 	/* restore everything to a flushed state before exiting */
 	gcEnv->_continuationObjectBuffer->flush(env);
 #endif /* JAVA_SPEC_VERSION >= 19 */
+}
+
+void
+MM_ScavengerRootClearer::iterateAllContinuationObjects(MM_EnvironmentBase *env)
+{
+	if (_scavenger->getDelegate()->getShouldIterateContinuationObjects()) {
+		reportScanningStarted(RootScannerEntity_ContinuationObjectsComplete);
+		MM_ContinuationObjectBufferStandard::iterateAllContinuationObjects(env);
+		reportScanningEnded(RootScannerEntity_ContinuationObjectsComplete);
+	}
 }
 
 #endif /* defined(OMR_GC_MODRON_SCAVENGER) */

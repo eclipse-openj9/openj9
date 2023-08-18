@@ -117,6 +117,7 @@ public:
 	 */
 	bool wasEmpty() { return NULL == _priorHead; }
 
+	bool isEmpty() { return NULL == _head; }
 	/**
 	 * Fetch the head of the linked list, as it appeared at the beginning of Continuation object processing.
 	 * @return the head object, or NULL if the list is empty
