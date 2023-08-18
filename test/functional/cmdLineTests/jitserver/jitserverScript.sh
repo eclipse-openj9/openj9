@@ -40,12 +40,22 @@ source $TEST_ROOT/jitserverconfig.sh
 
 JITSERVER_PORT=$(random_port)
 
+JITSERVER_SSL="-XX:JITServerSSLRootCerts"
+
+if grep -q -- "$JITSERVER_SSL" <<< "$JVM_OPTS"; then
+    echo "Generate SSL certificates"
+    source $TEST_ROOT/jitserversslconfig.sh
+    if ! grep -q "nosslserverCert.pem" <<< "$JVM_OPTS"; then
+	SSL_OPTS="-XX:JITServerSSLKey=key.pem -XX:JITServerSSLCert=cert.pem -Xjit:verbose={JITServer}"
+    fi
+fi
+
 if [ "$METRICS" == true ]; then
     METRICS_PORT=$(random_port)
     METRICS_OPTS="-XX:+JITServerMetrics -XX:JITServerMetricsPort=$METRICS_PORT"
 fi
 
-JITSERVER_OPTIONS="-XX:JITServerPort=$JITSERVER_PORT $METRICS_OPTS $JITSERVER_OPTS"
+JITSERVER_OPTIONS="-XX:JITServerPort=$JITSERVER_PORT $METRICS_OPTS $JITSERVER_OPTS $SSL_OPTS"
 
 echo "Starting $TEST_JDK_BIN/jitserver $JITSERVER_OPTIONS"
 $TEST_JDK_BIN/jitserver $JITSERVER_OPTIONS &
@@ -77,6 +87,11 @@ if [ "$JITSERVER_EXISTS" == 0 ]; then
     # Running pkill seems to cause a hang...
     #pkill -9 -xf "$TEST_JDK_BIN/jitserver $JITSERVER_OPTIONS"
     sleep 2
+
+    if grep -q "nosslserverCert.pem" <<< "$APP_ARGS"; then
+        rm -f *.pem
+    fi
+
 else
     echo "JITSERVER DOES NOT EXIST"
 fi
