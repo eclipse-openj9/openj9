@@ -113,6 +113,7 @@ MM_ContinuationObjectBufferVLHGC::addForOnlyCompactedRegion(MM_EnvironmentBase* 
 void
 MM_ContinuationObjectBufferVLHGC::iterateAllContinuationObjects(MM_EnvironmentBase *env)
 {
+#if JAVA_SPEC_VERSION >= 19
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
 	MM_HeapRegionManager *regionManager = extensions->getHeap()->getHeapRegionManager();
 	MM_HeapRegionDescriptorVLHGC *region = NULL;
@@ -139,4 +140,5 @@ MM_ContinuationObjectBufferVLHGC::iterateAllContinuationObjects(MM_EnvironmentBa
 			}
 		}
 	}
+#endif /* JAVA_SPEC_VERSION >= 19 */
 }
