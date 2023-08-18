@@ -38,12 +38,14 @@
 		<output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
 		<output type="success" caseSensitive="yes" regex="no">do not match expected</output>
 		<output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+		<output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
 	</test>
 
 	<test id="Check Verbose Log">
 		<command>bash $CATSCRIPPATH$ vlog true true</command>
 		<output regex="no" type="success">CHECKPOINT RESTORE: Ready for restore</output>
 		<output regex="no" type="success">CAT VLOG FORCE PASS</output>
+		<output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
 	</test>
 
 	<test id="Test -Xnojit -Xnoaot">
@@ -60,6 +62,7 @@
 		<output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
 		<output type="success" caseSensitive="yes" regex="no">do not match expected</output>
 		<output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+		<output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
 	</test>
 
 	<test id="Test -Xnoaot">
@@ -76,6 +79,7 @@
 		<output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
 		<output type="success" caseSensitive="yes" regex="no">do not match expected</output>
 		<output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+		<output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
 	</test>
 
 	<test id="Test -Xjit:exclude={*}">
@@ -92,6 +96,7 @@
 		<output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
 		<output type="success" caseSensitive="yes" regex="no">do not match expected</output>
 		<output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+		<output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
 	</test>
 
 </suite>
