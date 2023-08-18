@@ -33,7 +33,7 @@ import static java.lang.StackWalker.Option.*;
 /**
  * Prints the stack trace of Pinned Thread that is attempting to yield.
  */
-public class PinnedThreadPrinter {
+class PinnedThreadPrinter {
     private static StackWalker STACKWALKER;
 
     static {

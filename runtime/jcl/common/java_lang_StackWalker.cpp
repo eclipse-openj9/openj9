@@ -111,8 +111,7 @@ Java_java_lang_StackWalker_walkWrapperImpl(JNIEnv *env, jclass clazz, jint flags
 		if (infoLen > 0) {
 			info = (J9ObjectMonitorInfo *)j9mem_allocate_memory(infoLen * sizeof(J9ObjectMonitorInfo), J9MEM_CATEGORY_VM_JCL);
 			if (NULL != info) {
-				IDATA rc = 0;
-				rc = vmFuncs->getOwnedObjectMonitors(vmThread, vmThread, info, infoLen);
+				IDATA rc = vmFuncs->getOwnedObjectMonitors(vmThread, vmThread, info, infoLen);
 				if (rc >= 0) {
 					walkState->userData3 = info;
 					walkState->userData4 = (void *)infoLen;
