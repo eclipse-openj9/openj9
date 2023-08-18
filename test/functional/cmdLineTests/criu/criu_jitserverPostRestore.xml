@@ -27,6 +27,10 @@
 <suite id="J9 Criu Command-Line Post Restore JITServer Option Tests" timeout="300">
 	<variable name="MAINCLASS_OPTIONSFILE_TEST" value="org.openj9.criu.OptionsFileTest" />
 	<variable name="ENABLE_JITSERVER" value="-XX:+UseJITServer" />
+	<variable name="JITSERVER_SSL1" value="-XX:JITServerSSLRootCerts=cert.pem" />
+	<variable name="JITSERVER_SSL2" value="-XX:JITServerSSLRootCerts=wrongCert.pem" />
+	<variable name="JITSERVER_SSL3" value="-XX:JITServerSSLRootCerts=nosslserverCert.pem" />
+	<variable name="SSL_VERBOSE" value="-Xjit:verbose={compilePerformance},verbose={CheckpointRestore},verbose={JITServer},verbose={JITServerConns},vlog=sslVlog" />
 	<variable name="CRIU_VERBOSE" value="-Xjit:verbose={compilePerformance},verbose={CheckpointRestore},verbose={JITServer},verbose={JITServerConns},vlog=vlog" />
 
 	<test id="Generate Verbose Log">
@@ -116,5 +120,84 @@
 		<output type="failure" caseSensitive="yes" regex="no">JITSERVER DOES NOT EXIST</output>
 		<output type="failure" caseSensitive="yes" regex="no">JITSERVER NO LONGER EXISTS</output>
 		<output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+	</test>
+
+	<test id="Test SSL Success Case">
+		<command>bash $SCRIPPATH$ $TEST_RESROOT$ $TEST_JDK_BIN$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ "JitOptionsTest $ENABLE_JITSERVER$ $JITSERVER_SSL1$ $SSL_VERBOSE$1" 1 false true</command>
+		<output type="success" caseSensitive="no" regex="no">Killed</output>
+		<output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+		<output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
+		<output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+		<output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+		<output type="required" caseSensitive="yes" regex="no">Successfully initialized SSL context</output>
+		<!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
+		<output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+		<output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+		<output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+		<output type="success" caseSensitive="yes" regex="no">JITSERVER EXISTS</output>
+		<output type="success" caseSensitive="yes" regex="no">JITSERVER STILL EXISTS</output>
+		<output type="failure" caseSensitive="yes" regex="no">JITSERVER DOES NOT EXIST</output>
+		<output type="failure" caseSensitive="yes" regex="no">JITSERVER NO LONGER EXISTS</output>
+	</test>
+
+	<test id="Check SSL Verbose Log for successful connection">
+		<command>bash $CATSCRIPPATH$ sslVlog1 true true</command>
+		<output regex="no" type="success">CHECKPOINT RESTORE: Ready for restore</output>
+		<output regex="no" type="success">SSL connection on socket</output>
+		<output regex="no" type="required">Connected to a server</output>
+		<output regex="no" type="success">CAT VLOG FORCE PASS</output>
+	</test>
+
+	<test id="Test SSL Failure Case with mismatched certificate">
+		<command>bash $SCRIPPATH$ $TEST_RESROOT$ $TEST_JDK_BIN$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ "JitOptionsTest $ENABLE_JITSERVER$ $JITSERVER_SSL2$ $SSL_VERBOSE$2" 1 false true</command>
+		<output type="success" caseSensitive="no" regex="no">Killed</output>
+		<output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+		<output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
+		<output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+		<output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+		<output type="required" caseSensitive="yes" regex="no">Successfully initialized SSL context</output>
+		<output type="required" caseSensitive="yes" regex="no">certificate verify failed</output>
+		<!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
+		<output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+		<output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+		<output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+		<output type="success" caseSensitive="yes" regex="no">JITSERVER EXISTS</output>
+		<output type="success" caseSensitive="yes" regex="no">JITSERVER STILL EXISTS</output>
+		<output type="failure" caseSensitive="yes" regex="no">JITSERVER DOES NOT EXIST</output>
+		<output type="failure" caseSensitive="yes" regex="no">JITSERVER NO LONGER EXISTS</output>
+	</test>
+
+	<test id="Check SSL Verbose Log for connection failure with mismatched certificate">
+		<command>bash $CATSCRIPPATH$ sslVlog2 true true</command>
+		<output regex="no" type="success">CHECKPOINT RESTORE: Ready for restore</output>
+		<output regex="no" type="success">JITServer::StreamFailure: Failed to SSL_connect</output>
+		<output regex="no" type="required">Could not connect to a server</output>
+		<output regex="no" type="success">CAT VLOG FORCE PASS</output>
+	</test>
+
+	<test id="Test SSL Failure Case with connection to Non-SSL Server">
+		<command>bash $SCRIPPATH$ $TEST_RESROOT$ $TEST_JDK_BIN$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ "JitOptionsTest $ENABLE_JITSERVER$ $JITSERVER_SSL3$ $SSL_VERBOSE$3" 1 false true</command>
+		<output type="success" caseSensitive="no" regex="no">Killed</output>
+		<output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+		<output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
+		<output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+		<output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+		<output type="failure" caseSensitive="yes" regex="no">Successfully initialized SSL context</output>
+		<!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
+		<output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+		<output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+		<output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+		<output type="success" caseSensitive="yes" regex="no">JITSERVER EXISTS</output>
+		<output type="success" caseSensitive="yes" regex="no">JITSERVER STILL EXISTS</output>
+		<output type="failure" caseSensitive="yes" regex="no">JITSERVER DOES NOT EXIST</output>
+		<output type="failure" caseSensitive="yes" regex="no">JITSERVER NO LONGER EXISTS</output>
+	</test>
+
+	<test id="Check SSL Verbose Log for connection failure with Non SSL Server">
+		<command>bash $CATSCRIPPATH$ sslVlog3 true true</command>
+		<output regex="no" type="success">CHECKPOINT RESTORE: Ready for restore</output>
+		<output regex="no" type="success">JITServer::StreamFailure: Failed to SSL_connect</output>
+		<output regex="no" type="required">Could not connect to a server</output>
+		<output regex="no" type="success">CAT VLOG FORCE PASS</output>
 	</test>
 </suite>
