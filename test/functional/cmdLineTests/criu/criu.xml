@@ -38,6 +38,7 @@
     <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
     <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
 
   <test id="Create and Restore Criu Checkpoint Image twice">
@@ -52,6 +53,7 @@
     <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
     <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
 
   <test id="Create and Restore Criu Checkpoint Image three times">
@@ -67,6 +69,7 @@
     <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
     <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
 
 </suite>

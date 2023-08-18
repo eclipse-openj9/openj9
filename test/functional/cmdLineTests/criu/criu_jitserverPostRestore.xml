@@ -44,6 +44,7 @@
 		<output type="success" caseSensitive="yes" regex="no">JITSERVER STILL EXISTS</output>
 		<output type="failure" caseSensitive="yes" regex="no">JITSERVER DOES NOT EXIST</output>
 		<output type="failure" caseSensitive="yes" regex="no">JITSERVER NO LONGER EXISTS</output>
+		<output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
 	</test>
 
 	<test id="Check Verbose Log">
@@ -51,6 +52,7 @@
 		<output regex="no" type="success">CHECKPOINT RESTORE: Ready for restore</output>
 		<output regex="no" type="success">Connected to a server</output>
 		<output regex="no" type="success">CAT VLOG FORCE PASS</output>
+		<output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
 	</test>
 
 	<test id="Test -Xnojit -Xnoaot">
@@ -71,6 +73,7 @@
 		<output type="success" caseSensitive="yes" regex="no">JITSERVER STILL EXISTS</output>
 		<output type="failure" caseSensitive="yes" regex="no">JITSERVER DOES NOT EXIST</output>
 		<output type="failure" caseSensitive="yes" regex="no">JITSERVER NO LONGER EXISTS</output>
+		<output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
 	</test>
 
 	<test id="Test -Xnoaot">
@@ -91,6 +94,7 @@
 		<output type="success" caseSensitive="yes" regex="no">JITSERVER STILL EXISTS</output>
 		<output type="failure" caseSensitive="yes" regex="no">JITSERVER DOES NOT EXIST</output>
 		<output type="failure" caseSensitive="yes" regex="no">JITSERVER NO LONGER EXISTS</output>
+		<output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
 	</test>
 
 	<test id="Test -Xjit:exclude={*}">
@@ -111,5 +115,6 @@
 		<output type="success" caseSensitive="yes" regex="no">JITSERVER STILL EXISTS</output>
 		<output type="failure" caseSensitive="yes" regex="no">JITSERVER DOES NOT EXIST</output>
 		<output type="failure" caseSensitive="yes" regex="no">JITSERVER NO LONGER EXISTS</output>
+		<output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
 	</test>
 </suite>

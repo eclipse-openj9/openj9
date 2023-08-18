@@ -46,12 +46,14 @@
 		<output type="success" caseSensitive="yes" regex="no">JITSERVER STILL EXISTS</output>
 		<output type="failure" caseSensitive="yes" regex="no">JITSERVER DOES NOT EXIST</output>
 		<output type="failure" caseSensitive="yes" regex="no">JITSERVER NO LONGER EXISTS</output>
+		<output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
 	</test>
 
 	<test id="Check Connection in Pre-Checkpoint Verbose Log">
 		<command>bash $CATSCRIPPATH$ preCheckpointVlog false false</command>
 		<output regex="no" type="success">JITServer: JITServer Client Mode.</output>
 		<output regex="no" type="failure">Connected to a server</output>
+		<output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
 	</test>
 
 	<test id="Check Connection in Post-Restore Verbose Log">
@@ -59,6 +61,7 @@
 		<output regex="no" type="success">CHECKPOINT RESTORE: Ready for restore</output>
 		<output regex="no" type="success">Connected to a server</output>
 		<output regex="no" type="success">CAT VLOG FORCE PASS</output>
+		<output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
 	</test>
 
 	<test id="JITServer not explicitly enabled Post-Restore">
@@ -76,6 +79,7 @@
 		<output type="success" caseSensitive="yes" regex="no">JITSERVER STILL EXISTS</output>
 		<output type="failure" caseSensitive="yes" regex="no">JITSERVER DOES NOT EXIST</output>
 		<output type="failure" caseSensitive="yes" regex="no">JITSERVER NO LONGER EXISTS</output>
+		<output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
 	</test>
 
 	<test id="JITServer not explicitly enabled Post-Restore: Check no connection in Post-Restore Verbose Log">
@@ -83,6 +87,7 @@
 		<output regex="no" type="success">CHECKPOINT RESTORE: Ready for restore</output>
 		<output regex="no" type="success">CAT VLOG FORCE PASS</output>
 		<output regex="no" type="failure">Connected to a server</output>
+		<output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
 	</test>
 
 	<test id="Portable CRIU Mode: JITServer not explicitly enabled Post-Restore">
@@ -100,6 +105,7 @@
 		<output type="success" caseSensitive="yes" regex="no">JITSERVER STILL EXISTS</output>
 		<output type="failure" caseSensitive="yes" regex="no">JITSERVER DOES NOT EXIST</output>
 		<output type="failure" caseSensitive="yes" regex="no">JITSERVER NO LONGER EXISTS</output>
+		<output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
 	</test>
 
 	<test id="Portable CRIU Mode; JITServer not explicitly enabled Post-Restore: Check no connection in Post-Restore Verbose Log">
@@ -107,6 +113,7 @@
 		<output regex="no" type="success">CHECKPOINT RESTORE: Ready for restore</output>
 		<output regex="no" type="success">CAT VLOG FORCE PASS</output>
 		<output regex="no" type="failure">Connected to a server</output>
+		<output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
 	</test>
 
 	<test id="Enable JITServer specified Pre-Checkpoint but not explicitly enabled Post-Restore">
@@ -124,12 +131,14 @@
 		<output type="success" caseSensitive="yes" regex="no">JITSERVER STILL EXISTS</output>
 		<output type="failure" caseSensitive="yes" regex="no">JITSERVER DOES NOT EXIST</output>
 		<output type="failure" caseSensitive="yes" regex="no">JITSERVER NO LONGER EXISTS</output>
+		<output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
 	</test>
 
 	<test id="Enable JITServer specified Pre-Checkpoint: Check no connection in Pre-Checkpoint Verbose Log">
 		<command>bash $CATSCRIPPATH$ preCheckpointVlog false false</command>
 		<output regex="no" type="success">JITServer: JITServer Client Mode.</output>
 		<output regex="no" type="failure">Connected to a server</output>
+		<output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
 	</test>
 
 	<test id="Enable JITServer specified Pre-Checkpoint: Check connection in Post-Restore Verbose Log">
@@ -137,6 +146,7 @@
 		<output regex="no" type="success">CHECKPOINT RESTORE: Ready for restore</output>
 		<output regex="no" type="success">Connected to a server</output>
 		<output regex="no" type="success">CAT VLOG FORCE PASS</output>
+		<output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
 	</test>
 
 	<test id="Portable CRIU Mode: Enable JITServer specified Pre-Checkpoint but not explicitly enabled Post-Restore">
@@ -154,12 +164,14 @@
 		<output type="success" caseSensitive="yes" regex="no">JITSERVER STILL EXISTS</output>
 		<output type="failure" caseSensitive="yes" regex="no">JITSERVER DOES NOT EXIST</output>
 		<output type="failure" caseSensitive="yes" regex="no">JITSERVER NO LONGER EXISTS</output>
+		<output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
 	</test>
 
 	<test id="Portable CRIU Mode; Enable JITServer specified Pre-Checkpoint: Check connection in Pre-Checkpoint Verbose Log">
 		<command>bash $CATSCRIPPATH$ preCheckpointVlog false false</command>
 		<output regex="no" type="required">JITServer: JITServer Client Mode.</output>
 		<output regex="no" type="success">Connected to a server</output>
+		<output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
 	</test>
 
 	<test id="Portable CRIU Mode; Enable JITServer specified Pre-Checkpoint: Check connection in Post-Restore Verbose Log">
@@ -167,5 +179,6 @@
 		<output regex="no" type="success">CHECKPOINT RESTORE: Ready for restore</output>
 		<output regex="no" type="success">Connected to a server</output>
 		<output regex="no" type="success">CAT VLOG FORCE PASS</output>
+		<output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
 	</test>
 </suite>

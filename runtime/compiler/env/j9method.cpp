@@ -6107,33 +6107,6 @@ TR_ResolvedJ9Method::isCompilable(TR_Memory * trMemory)
    if (J9_BYTECODE_SIZE_FROM_ROM_METHOD(romMethod()) == 0)
       return false;
 
-   // The following methods are magic and require reaches for arg2 (hence require a stack frame)
-   // java/security/AccessController.doPrivileged(Ljava/security/PrivilegedAction;Ljava/security/AccessControlContext;)Ljava/lang/Object;
-   // java/security/AccessController.doPrivileged(Ljava/security/PrivilegedExceptionAction;Ljava/security/AccessControlContext;)Ljava/lang/Object;
-
-   /* AOT handles this by having the names in the string compare list */
-   J9JavaVM * javaVM = _fe->_jitConfig->javaVM;
-   J9JNIMethodID * magic = (J9JNIMethodID *) javaVM->doPrivilegedWithContextMethodID1;
-   if (magic && ramMethod() == magic->method)
-      return false;
-
-   magic = (J9JNIMethodID *) javaVM->doPrivilegedWithContextMethodID2;
-   if (magic && ramMethod() == magic->method)
-      return false;
-
-   magic = (J9JNIMethodID *) javaVM->doPrivilegedWithContextPermissionMethodID1;
-   if (magic && ramMethod() == magic->method)
-      return false;
-
-   magic = (J9JNIMethodID *) javaVM->doPrivilegedWithContextPermissionMethodID2;
-   if (magic && ramMethod() == magic->method)
-      return false;
-
-   magic = (J9JNIMethodID *) javaVM->nativeLibrariesLoadMethodID;
-   if (magic && ramMethod() == magic->method) {
-      return false;
-   }
-
    return true;
    }
 

@@ -43,6 +43,7 @@
     <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
     <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
 
   <test id="Create CRIU checkpoint image and restore once - testThreadSleep">
@@ -60,6 +61,7 @@
     <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
     <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
 
   <test id="Create CRIU checkpoint image and restore once - testObjectWaitNotify">
@@ -77,6 +79,7 @@
     <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
     <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
 
   <test id="Create CRIU checkpoint image and restore once - testObjectWaitTimedNoNanoSecond">
@@ -94,6 +97,7 @@
     <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
     <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
 
   <test id="Create CRIU checkpoint image and restore once - testObjectWaitTimedWithNanoSecond">
@@ -111,5 +115,6 @@
     <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
     <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
 </suite>
