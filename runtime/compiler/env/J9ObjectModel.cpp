@@ -406,15 +406,19 @@ J9::ObjectModel::maxContiguousArraySizeInBytes()
 bool
 J9::ObjectModel::isDiscontiguousArray(int32_t sizeInBytes)
    {
-   if (sizeInBytes > TR::Compiler->om.maxContiguousArraySizeInBytes())
+   /* When off heap allocation is enabled both large and small arrays are
+    * treated as contiguous. Only different among the two is that large
+    * arrays are contiguous off heap and small arrays are contiguous on
+    * heap. Hence, in addition to array size we must check if off heap
+    * allocation is enabled.
+    */
+   J9JavaVM *vm = TR::Compiler->javaVM;
+   if ((!TR::Compiler->om.isOffHeapAllocationEnabled()
+         && sizeInBytes > TR::Compiler->om.maxContiguousArraySizeInBytes())
+      || (TR::Compiler->om.useHybridArraylets() && sizeInBytes == 0))
       return true;
-   else
-      {
-      if (TR::Compiler->om.useHybridArraylets() && sizeInBytes == 0)
-         return true;
-      else
-         return false;
-      }
+
+   return false;
    }
 
 
@@ -426,15 +430,18 @@ J9::ObjectModel::isDiscontiguousArray(int32_t sizeInElements, int32_t elementSiz
    int32_t shift = trailingZeroes(elementSize);
    int32_t maxContiguousArraySizeInElements = TR::Compiler->om.maxContiguousArraySizeInBytes() >> shift;
 
-   if (sizeInElements > maxContiguousArraySizeInElements)
+   /* When off heap allocation is enabled both large and small arrays are
+    * treated as contiguous. Only different among the two is that large
+    * arrays are contiguous off heap and small arrays are contiguous on
+    * heap. Hence, in addition to array size we must check if off heap
+    * allocation is enabled.
+    */
+   if ((!TR::Compiler->om.isOffHeapAllocationEnabled()
+         && sizeInElements > maxContiguousArraySizeInElements)
+      || (TR::Compiler->om.useHybridArraylets() && sizeInElements == 0))
       return true;
-   else
-      {
-      if (TR::Compiler->om.useHybridArraylets() && sizeInElements == 0)
-         return true;
-      else
-         return false;
-      }
+
+   return false;
    }
 
 
