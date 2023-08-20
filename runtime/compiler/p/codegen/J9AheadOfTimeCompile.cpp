@@ -85,7 +85,6 @@ J9::Power::AheadOfTimeCompile::initializePlatformSpecificAOTRelocationHeader(TR:
          void *constantPool = symRef->getOwningMethod(comp)->constantPool();
          inlinedSiteIndex = self()->findCorrectInlinedSiteIndex(constantPool, inlinedSiteIndex);
 
-         TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
          caRecord->setReloFlags(reloTarget, flags);
          caRecord->setInlinedSiteIndex(reloTarget, inlinedSiteIndex);
          caRecord->setConstantPool(reloTarget, reinterpret_cast<uintptr_t>(constantPool));
@@ -105,7 +104,6 @@ J9::Power::AheadOfTimeCompile::initializePlatformSpecificAOTRelocationHeader(TR:
          void *constantPool = symRef->getOwningMethod(comp)->constantPool();
          inlinedSiteIndex = self()->findCorrectInlinedSiteIndex(constantPool, inlinedSiteIndex);
 
-         TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
          daRecord->setReloFlags(reloTarget, flags);
          daRecord->setInlinedSiteIndex(reloTarget, inlinedSiteIndex);
          daRecord->setConstantPool(reloTarget, reinterpret_cast<uintptr_t>(constantPool));
@@ -132,7 +130,6 @@ J9::Power::AheadOfTimeCompile::initializePlatformSpecificAOTRelocationHeader(TR:
          TR_RelocationRecordInformation *recordInfo = (TR_RelocationRecordInformation *) relocation->getTargetAddress();
          uint8_t flags = static_cast<uint8_t>(reinterpret_cast<uintptr_t>(recordInfo->data3));
 
-         TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
          maRecord->setReloFlags(reloTarget, flags);
          }
          break;
@@ -145,7 +142,6 @@ J9::Power::AheadOfTimeCompile::initializePlatformSpecificAOTRelocationHeader(TR:
          uint8_t flags = static_cast<uint8_t>(reinterpret_cast<uintptr_t>(relocation->getTargetAddress2()));
          uint8_t *codeLocation = table->getCodeLocation();
 
-         TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
          rwoRecord->setReloFlags(reloTarget, flags);
          if (comp->target().is64Bit())
             {
@@ -163,7 +159,6 @@ J9::Power::AheadOfTimeCompile::initializePlatformSpecificAOTRelocationHeader(TR:
          TR_RelocationRecordWithOffset *rwoRecord = reinterpret_cast<TR_RelocationRecordWithOffset *>(reloRecord);
          uint8_t flags = static_cast<uint8_t>(reinterpret_cast<uintptr_t>(relocation->getTargetAddress2()));
 
-         TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
          rwoRecord->setReloFlags(reloTarget, flags);
          if (comp->target().is64Bit())
             {
@@ -202,7 +197,6 @@ J9::Power::AheadOfTimeCompile::initializePlatformSpecificAOTRelocationHeader(TR:
             flags = static_cast<uint8_t>(recordInfo->data3);
             }
 
-         TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
          rRecord->setReloFlags(reloTarget, flags);
          }
          break;
@@ -232,7 +226,6 @@ J9::Power::AheadOfTimeCompile::initializePlatformSpecificAOTRelocationHeader(TR:
             // Skip Offset
             }
 
-         TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
          rsRecord->setReloFlags(reloTarget, flags);
          }
          break;
@@ -254,7 +247,6 @@ J9::Power::AheadOfTimeCompile::initializePlatformSpecificAOTRelocationHeader(TR:
          const AOTCacheClassChainRecord *classChainRecord = NULL;
          uintptr_t classChainOffsetInSharedCache = self()->getClassChainOffset(j9class, classChainRecord);
 
-         TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0, "reloFlags bits overlap cross-platform flags bits");
          acaRecord->setReloFlags(reloTarget, flags);
          acaRecord->setInlinedSiteIndex(reloTarget, inlinedSiteIndex);
          acaRecord->setClassChainIdentifyingLoaderOffsetInSharedCache(reloTarget, classChainIdentifyingLoaderOffsetInSharedCache,
@@ -282,7 +274,6 @@ J9::Power::AheadOfTimeCompile::initializePlatformSpecificAOTRelocationHeader(TR:
             flags = static_cast<uint8_t>(recordInfo->data3);
             }
 
-         TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
          gvRecord->setReloFlags(reloTarget, flags);
          gvRecord->setOffset(reloTarget, gv);
          }
@@ -300,7 +291,6 @@ J9::Power::AheadOfTimeCompile::initializePlatformSpecificAOTRelocationHeader(TR:
          uint16_t symbolType = (uint16_t)recordInfo->data2;
 
          uint8_t flags = (uint8_t) recordInfo->data3;
-         TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
 
          dsfmRecord->setSymbolID(reloTarget, symbolID);
          dsfmRecord->setSymbolType(reloTarget, static_cast<TR::SymbolType>(symbolType));
@@ -315,7 +305,6 @@ J9::Power::AheadOfTimeCompile::initializePlatformSpecificAOTRelocationHeader(TR:
          uintptr_t gv = reinterpret_cast<uintptr_t>(relocation->getTargetAddress());
          uint8_t flags = static_cast<uint8_t>(reinterpret_cast<uintptr_t>(relocation->getTargetAddress2()));
 
-         TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
          hcrRecord->setReloFlags(reloTarget, flags);
          hcrRecord->setOffset(reloTarget, gv);
          }
