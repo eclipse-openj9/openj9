@@ -124,8 +124,6 @@ J9::ARM::AheadOfTimeCompile::initializePlatformSpecificAOTRelocationHeader(TR::I
          uintptr_t inlinedSiteIndex = self()->findCorrectInlinedSiteIndex(symRef->getOwningMethod(comp)->constantPool(), recordInfo->data2);
          uint8_t flags = static_cast<uint8_t>(reinterpret_cast<uintptr_t>(recordInfo->data3));
 
-         TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
-
          moRecord->setInlinedSiteIndex(reloTarget, reinterpret_cast<uintptr_t>(inlinedSiteIndex));
          moRecord->setConstantPool(reloTarget, reinterpret_cast<uintptr_t>(symRef->getOwningMethod(comp)->constantPool()));
          moRecord->setReloFlags(reloTarget, flags);
@@ -144,7 +142,6 @@ J9::ARM::AheadOfTimeCompile::initializePlatformSpecificAOTRelocationHeader(TR::I
          void *constantPool = symRef->getOwningMethod(comp)->constantPool();
          inlinedSiteIndex = self()->findCorrectInlinedSiteIndex(constantPool, inlinedSiteIndex);
 
-         TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
          caRecord->setReloFlags(reloTarget, flags);
          caRecord->setInlinedSiteIndex(reloTarget, inlinedSiteIndex);
          caRecord->setConstantPool(reloTarget, reinterpret_cast<uintptr_t>(constantPool));
@@ -164,7 +161,6 @@ J9::ARM::AheadOfTimeCompile::initializePlatformSpecificAOTRelocationHeader(TR::I
          void *constantPool = symRef->getOwningMethod(comp)->constantPool();
          inlinedSiteIndex = self()->findCorrectInlinedSiteIndex(constantPool, inlinedSiteIndex);
 
-         TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
          daRecord->setReloFlags(reloTarget, flags);
          daRecord->setInlinedSiteIndex(reloTarget, inlinedSiteIndex);
          daRecord->setConstantPool(reloTarget, reinterpret_cast<uintptr_t>(constantPool));
@@ -178,7 +174,6 @@ J9::ARM::AheadOfTimeCompile::initializePlatformSpecificAOTRelocationHeader(TR::I
          TR_RelocationRecordWithOffset *rwoRecord = reinterpret_cast<TR_RelocationRecordWithOffset *>(reloRecord);
          uint8_t flags = static_cast<uint8_t>(reinterpret_cast<uintptr_t>(relocation->getTargetAddress2()));
 
-         TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
          rwoRecord->setReloFlags(reloTarget, flags);
 
          uintptr_t offset = relocation->getTargetAddress()
@@ -194,7 +189,6 @@ J9::ARM::AheadOfTimeCompile::initializePlatformSpecificAOTRelocationHeader(TR::I
          TR_RelocationRecord *rRecord = reinterpret_cast<TR_RelocationRecord *>(reloRecord);
 
          uint8_t flags = flags = static_cast<uint8_t>(reinterpret_cast<uintptr_t>(relocation->getTargetAddress2()));
-         TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
          rRecord->setReloFlags(reloTarget, flags);
          }
          break;
@@ -204,7 +198,6 @@ J9::ARM::AheadOfTimeCompile::initializePlatformSpecificAOTRelocationHeader(TR::I
          TR_RelocationRecordRamSequence *rsRecord = reinterpret_cast<TR_RelocationRecordRamSequence *>(reloRecord);
          uint8_t flags = static_cast<uint8_t>(reinterpret_cast<uintptr_t>(relocation->getTargetAddress2()));
 
-         TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
          rsRecord->setReloFlags(reloTarget, flags);
 
          // Skip Offset
@@ -219,7 +212,6 @@ J9::ARM::AheadOfTimeCompile::initializePlatformSpecificAOTRelocationHeader(TR::I
          uintptr_t gv = reinterpret_cast<uintptr_t>(relocation->getTargetAddress());
          uint8_t flags = static_cast<uint8_t>(reinterpret_cast<uintptr_t>(relocation->getTargetAddress2()));
 
-         TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
          rwoRecord->setReloFlags(reloTarget, flags);
          rwoRecord->setOffset(reloTarget, gv);
          }

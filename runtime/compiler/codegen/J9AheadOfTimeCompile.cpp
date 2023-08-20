@@ -549,8 +549,6 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          if (fej9->isMethodTracingEnabled(reinterpret_cast<J9Method *>(method)))
             flags |= methodTracingEnabled;
 
-         TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
-
          TR_OpaqueClassBlock *inlinedMethodClass = resolvedMethod->containingClass();
          J9ROMClass *romClass = reinterpret_cast<J9ROMClass *>(fej9->getPersistentClassPointerFromClassPointer(inlinedMethodClass));
          uintptr_t romClassOffsetInSharedCache = self()->offsetInSharedCacheFromROMClass(sharedCache, romClass);
@@ -638,7 +636,6 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          TR_OpaqueMethodBlock *method = inlinedMethod->getPersistentIdentifier();
          if (fej9->isMethodTracingEnabled(reinterpret_cast<J9Method *>(method)))
             flags = methodTracingEnabled;
-         TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
 
          // Ugly; this will be cleaned up in a future PR
          uintptr_t cpIndexOrData = 0;
@@ -1260,7 +1257,6 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          uintptr_t offsetOfNameString = fej9->sharedCache()->rememberDebugCounterName(counter->getName());
          uint8_t flags = counterReloData->_seqKind;
 
-         TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
          dcRecord->setReloFlags(reloTarget, flags);
          dcRecord->setInlinedSiteIndex(reloTarget, static_cast<uintptr_t>(counterReloData->_callerIndex));
          dcRecord->setBCIndex(reloTarget, counterReloData->_bytecodeIndex);
@@ -1279,7 +1275,6 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          TR::StaticSymbol *staticSym = tempSR->getSymbol()->getStaticSymbol();
 
          uint8_t flags = (uint8_t) recordInfo->data2;
-         TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
          bfRecord->setReloFlags(reloTarget, flags);
 
          TR_PersistentProfileInfo *profileInfo = comp->getRecompilationInfo()->getProfileInfo();
