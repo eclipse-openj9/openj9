@@ -38,6 +38,7 @@
 #include "infra/HashTab.hpp"
 #include "infra/Link.hpp"
 #include "infra/List.hpp"
+#include "infra/String.hpp"
 #include "infra/TRlist.hpp"
 #include "optimizer/LoopCanonicalizer.hpp"
 #include "optimizer/OptimizationManager.hpp"
@@ -1469,6 +1470,9 @@ class TR_CISCTransformer : public TR_LoopTransformer
    TR_RegionStructure *getCurrentLoop() { return _loopStructure; }
    void setCurrentLoop(TR_RegionStructure *loop) { _loopStructure = loop; }
 
+   void countFail(const char *fmt, ...) TR_PRINTF_FORMAT_ATTR(2, 3);
+   void countUnhandledOpcode(const char *where, uint32_t opcode);
+
 private:
    List<TR::Block> _bblistPred;
    List<TR::Block> _bblistBody;
@@ -1510,6 +1514,8 @@ private:
    uint8_t *_DE;        // just for working
    bool _isGenerateI2L;
    bool _showMesssagesStdout;
+
+   TR::StringBuf _countFailBuf;
    };
 
 #endif
