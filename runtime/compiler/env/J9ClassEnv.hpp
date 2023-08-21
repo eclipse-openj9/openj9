@@ -155,7 +155,6 @@ public:
     *    been inlined)
     */
    bool isZeroInitializable(TR_OpaqueClassBlock *clazz);
-   bool isEnumClass(TR::Compilation *comp, TR_OpaqueClassBlock *clazzPointer, TR_ResolvedMethod *method);
    bool isPrimitiveClass(TR::Compilation *comp, TR_OpaqueClassBlock *clazz);
    bool isAnonymousClass(TR::Compilation *comp, TR_OpaqueClassBlock *clazz);
    bool isPrimitiveArray(TR::Compilation *comp, TR_OpaqueClassBlock *);

@@ -268,7 +268,6 @@ public:
    virtual bool isCloneable(TR_OpaqueClassBlock *);
    virtual bool isInterfaceClass(TR_OpaqueClassBlock * clazzPointer);
    virtual bool isConcreteClass(TR_OpaqueClassBlock * clazzPointer);
-   virtual bool isEnumClass(TR_OpaqueClassBlock * clazzPointer, TR_ResolvedMethod *method);
    virtual bool isPrimitiveClass(TR_OpaqueClassBlock *clazz);
    virtual bool isPrimitiveArray(TR_OpaqueClassBlock *);
    virtual bool isReferenceArray(TR_OpaqueClassBlock *);

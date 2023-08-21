@@ -298,12 +298,6 @@ J9::ClassEnv::isConcreteClass(TR::Compilation *comp, TR_OpaqueClassBlock * clazz
    }
 
 bool
-J9::ClassEnv::isEnumClass(TR::Compilation *comp, TR_OpaqueClassBlock *clazzPointer, TR_ResolvedMethod *method)
-   {
-   return comp->fej9()->isEnumClass(clazzPointer, method);
-   }
-
-bool
 J9::ClassEnv::isPrimitiveClass(TR::Compilation *comp, TR_OpaqueClassBlock *clazz)
    {
    return comp->fej9()->isPrimitiveClass(clazz);

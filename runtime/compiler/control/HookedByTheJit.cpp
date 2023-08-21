@@ -2809,7 +2809,6 @@ static void updateOverriddenFlag( J9VMThread *vm , J9Class *cl)
             if(subROM->modifiers & J9AccAnnotation)                     printf("\tsubMethod is J9AccAnnotation\n");
             if(subROM->modifiers & J9AccBridge)                         printf("\tsubMethod is J9AccBridge\n");
             if(subROM->modifiers & J9AccEmptyMethod)                    printf("\tsubMethod is J9AccEmptyMethod\n");
-            if(subROM->modifiers & J9AccEnum)                           printf("\tsubMethod is J9AccEnum\n");
             if(subROM->modifiers & J9AccFinal)                          printf("\tsubMethod is J9AccFinal\n");
             if(subROM->modifiers & J9AccForwarderMethod)                printf("\tsubMethod is J9AccForwarderMethod\n");
             if(subROM->modifiers & J9AccGetterMethod)                   printf("\tsubMethod is J9AccGetterMethod\n");
@@ -2853,7 +2852,6 @@ static void updateOverriddenFlag( J9VMThread *vm , J9Class *cl)
             if(superROM->modifiers & J9AccAnnotation)                   printf("\tsuperMethod is J9AccAnnotationt\n");
             if(superROM->modifiers & J9AccBridge)                       printf("\tsuperMethod is J9AccBridge\n");
             if(superROM->modifiers & J9AccEmptyMethod)                  printf("\tsuperMethod is J9AccEmptyMethod\n");
-            if(superROM->modifiers & J9AccEnum)                         printf("\tsuperMethod is J9AccEnum\n");
             if(superROM->modifiers & J9AccFinal)                        printf("\tsuperMethod is J9AccFinal\n");
             if(superROM->modifiers & J9AccForwarderMethod)              printf("\tsuperMethod is J9AccForwarderMethod\n");
             if(superROM->modifiers & J9AccGetterMethod)                 printf("\tsuperMethod is J9AccGetterMethod\n");
