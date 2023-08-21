@@ -36,7 +36,7 @@ We're not sure which route you might have taken on your way here, but we're real
 - Build instructions for [JDK8](https://github.com/eclipse-openj9/openj9/blob/master/doc/build-instructions/Build_Instructions_V8.md), [JDK11](https://github.com/eclipse-openj9/openj9/blob/master/doc/build-instructions/Build_Instructions_V11.md), and [More](https://github.com/eclipse-openj9/openj9/blob/master/doc/build-instructions) - Here's how you can build an OpenJDK with OpenJ9 yourself.
 
 If you're looking for ways to help out at the project (thanks!), we have:
-- [Beginner issues](https://github.com/eclipse-openj9/openj9/issues?q=is%3Aopen+is%3Aissue+label%3Abeginner)
+- [Beginner issues](https://github.com/eclipse-openj9/openj9/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22)
 - [Help Wanted issues](https://github.com/eclipse-openj9/openj9/issues?utf8=%E2%9C%93&q=is%3Aopen+is%3Aissue+label%3A%22help+wanted%22)
 
 If you're here to learn more about the project, read on ...
