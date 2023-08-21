@@ -1945,7 +1945,8 @@ TR_CISCTransformer::TR_CISCTransformer(TR::OptimizationManager *manager)
      _bblistSucc(manager->trMemory()),
      _candidatesForRegister(manager->trMemory()),
      _useTreeTopMap(manager->comp(), manager->optimizer()),
-     _BitsKeepAliveList(manager->trMemory())
+     _BitsKeepAliveList(manager->trMemory()),
+     _countFailBuf(manager->trMemory()->currentStackRegion())
    {
    _afterInsertionsIdiom = (ListHeadAndTail<TR::Node> *) trMemory()->allocateHeapMemory(sizeof(ListHeadAndTail<TR::Node>)*2);
    memset(_afterInsertionsIdiom, 0, sizeof(ListHeadAndTail<TR::Node>)*2);
@@ -6689,8 +6690,8 @@ TR_CISCTransformer::analyzeBoolTable(TR_BitVector **bv, TR::TreeTop **retSameExi
                      ntakenBV -= tmpBV;
                      break;
                   default:
-                     TR_ASSERT(false, "not implemented yet");
                      // not implemented yet
+                     countUnhandledOpcode(__FUNCTION__, n->getOpcode());
                      return false;
                   }
 
@@ -6814,7 +6815,8 @@ TR_CISCTransformer::analyzeByteBoolTable(TR_CISCNode *boolTable, uint8_t *table2
    bv = (TR_BitVector **)trMemory()->allocateMemory(size, stackAlloc);
    memset(bv, 0, size);
 
-   switch((defTargetNode ? defTargetNode : defNode)->getOpcode())
+   uint32_t opcode = (defTargetNode ? defTargetNode : defNode)->getOpcode();
+   switch (opcode)
       {
       case TR::b2i:
          if (defNode->isOptionalNode()) defNode = defNode->getChild(0);
@@ -6826,8 +6828,8 @@ TR_CISCTransformer::analyzeByteBoolTable(TR_CISCNode *boolTable, uint8_t *table2
          defBV.setAll(   0+BYTEBVOFFSET, 255+BYTEBVOFFSET);
          break;
       default:
-         TR_ASSERT(false, "not implemented yet");
          // not implemented yet
+         countUnhandledOpcode(__FUNCTION__, opcode);
          return -1;     // error
       }
 
@@ -6903,7 +6905,8 @@ TR_CISCTransformer::analyzeCharBoolTable(TR_CISCNode *boolTable, uint8_t *table6
    bv = (TR_BitVector **)trMemory()->allocateMemory(size, stackAlloc);
    memset(bv, 0, size);
 
-   switch((defTargetNode ? defTargetNode : defNode)->getOpcode())
+   uint32_t opcode = (defTargetNode ? defTargetNode : defNode)->getOpcode();
+   switch (opcode)
       {
       case TR::su2i:
          if (defNode->isOptionalNode()) defNode = defNode->getChild(0);
@@ -6912,8 +6915,8 @@ TR_CISCTransformer::analyzeCharBoolTable(TR_CISCNode *boolTable, uint8_t *table6
          defBV.setAll(0, 65535);
          break;
       default:
-         TR_ASSERT(false, "not implemented yet");
          // not implemented yet
+         countUnhandledOpcode(__FUNCTION__, opcode);
          return -1;     // error
       }
 
@@ -7650,7 +7653,7 @@ TR_CISCTransformer::computeTopologicalEmbedding(TR_CISCGraph *P, TR_CISCGraph *T
    if (performTransformation(comp(), "%sReducing loop %d to %s\n", OPT_DETAILS, _bblistBody.getListHead()->getData()->getNumber(),
                                          P->getTitle()) && !transformer(this))
       {
-      if (trace()) traceMsg(comp(), "computeTopologicalEmbedding: IL Transformer failed. (step 4)\n\n");
+      dumpOptDetails(comp(), "computeTopologicalEmbedding: IL Transformer failed. (step 4)\n\n");
       registerCandidates();
       _T->restoreListsDuplicator();
       return false;             // The transformation fails
@@ -7913,5 +7916,47 @@ TR_CISCTransformer::restoreBitsKeepAliveCalls()
       if (trace())
          traceMsg(comp(), "\t\tInserting KeepAlive call found in block %d [%p] @ Node: %p\n",block->getNumber(), block, tt->getNode());
       prev->insertAfter(tt);
+      }
+   }
+
+void
+TR_CISCTransformer::countFail(const char *fmt, ...)
+   {
+   _countFailBuf.clear();
+
+   va_list args;
+   va_start(args, fmt);
+   _countFailBuf.vappendf(fmt, args);
+   va_end(args);
+
+   // This isn't the best trace message, but it signals that something happened
+   // in the log even when the debug counters aren't enabled, and it avoids
+   // making call sites too cumbersome.
+   if (trace())
+      traceMsg(comp(), "failed: %s\n", _countFailBuf.text());
+
+   TR::DebugCounter::incStaticDebugCounter(
+      comp(),
+      TR::DebugCounter::debugCounterName(
+         comp(),
+         "idiomRecognition.failed/%s/%s/(%s)/%s/loop=%d",
+         _countFailBuf.text(),
+         _P->getTitle(),
+         comp()->signature(),
+         comp()->getHotnessName(comp()->getMethodHotness()),
+         _bblistBody.getListHead()->getData()->getNumber()));
+   }
+
+void
+TR_CISCTransformer::countUnhandledOpcode(const char *where, uint32_t opcode)
+   {
+   if (opcode < TR::NumAllIlOps)
+      {
+      const char *name = TR::ILOpCode((TR::ILOpCodes)opcode).getName();
+      countFail("%s/unhandledOpcode/%s", where, name);
+      }
+   else
+      {
+      countFail("%s/unhandledOpcode/%u", where, opcode);
       }
    }

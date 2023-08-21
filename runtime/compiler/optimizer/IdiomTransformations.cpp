@@ -2245,8 +2245,11 @@ CISCTransform2NestedArrayFindBytes(TR_CISCTransformer *trans)
 
    TR_ASSERT(trans->getP()->getVersionLength() == 0, "Versioning code is not implemented yet");
 
-   TR_ASSERT(trans->isEmptyAfterInsertionIdiomList(0) && trans->isEmptyAfterInsertionIdiomList(1), "Not implemented yet!");
-   if (!trans->isEmptyAfterInsertionIdiomList(0) || !trans->isEmptyAfterInsertionIdiomList(1)) return false;
+   if (!trans->isEmptyAfterInsertionIdiomList(0) || !trans->isEmptyAfterInsertionIdiomList(1))
+      {
+      trans->countFail("%s/nonemptyAfterInsertionIdiomList", __FUNCTION__);
+      return false;
+      }
 
    trans->findFirstNode(&trTreeTop, &trNode, &block);
    if (!block) return false;    // cannot find
@@ -3625,8 +3628,11 @@ CISCTransform2TROTArray(TR_CISCTransformer *trans)
    List<TR_CISCNode> *P2T = trans->getP2T();
    TR::Compilation *comp = trans->comp();
 
-   TR_ASSERT(trans->isEmptyAfterInsertionIdiomList(0) && trans->isEmptyAfterInsertionIdiomList(1), "Not implemented yet!");
-   if (!trans->isEmptyAfterInsertionIdiomList(0) || !trans->isEmptyAfterInsertionIdiomList(1)) return false;
+   if (!trans->isEmptyAfterInsertionIdiomList(0) || !trans->isEmptyAfterInsertionIdiomList(1))
+      {
+      trans->countFail("%s/nonemptyAfterInsertionIdiomList", __FUNCTION__);
+      return false;
+      }
 
    trans->findFirstNode(&trTreeTop, &trNode, &block);
    if (!block) return false;    // cannot find
@@ -5035,8 +5041,11 @@ CISCTransform2TRTOArray(TR_CISCTransformer *trans)
    List<TR_CISCNode> *P2T = trans->getP2T();
    TR::Compilation *comp = trans->comp();
 
-   TR_ASSERT(trans->isEmptyAfterInsertionIdiomList(0) && trans->isEmptyAfterInsertionIdiomList(1), "Not implemented yet!");
-   if (!trans->isEmptyAfterInsertionIdiomList(0) || !trans->isEmptyAfterInsertionIdiomList(1)) return false;
+   if (!trans->isEmptyAfterInsertionIdiomList(0) || !trans->isEmptyAfterInsertionIdiomList(1))
+      {
+      trans->countFail("%s/nonemptyAfterInsertionIdiomList", __FUNCTION__);
+      return false;
+      }
 
    trans->findFirstNode(&trTreeTop, &trNode, &block);
    if (!block) return false;    // cannot find
@@ -5832,8 +5841,11 @@ CISCTransform2ArrayCopySub(TR_CISCTransformer *trans, TR::Node *indexRepNode, TR
    bool isDecrement = trans->isMEMCPYDec();
    const bool disptrace = DISPTRACE(trans);
 
-   TR_ASSERT(trans->isEmptyAfterInsertionIdiomList(0) && trans->isEmptyAfterInsertionIdiomList(1), "Not implemented yet!");
-   if (!trans->isEmptyAfterInsertionIdiomList(0) || !trans->isEmptyAfterInsertionIdiomList(1)) return false;
+   if (!trans->isEmptyAfterInsertionIdiomList(0) || !trans->isEmptyAfterInsertionIdiomList(1))
+      {
+      trans->countFail("%s/nonemptyAfterInsertionIdiomList", __FUNCTION__);
+      return false;
+      }
 
    trans->findFirstNode(&trTreeTop, &trNode, &block);
    if (!block) return false;    // cannot find
@@ -6347,8 +6359,11 @@ CISCTransform2ArrayCopyB2CorC2B(TR_CISCTransformer *trans)
 
    TR_ASSERT(trans->getP()->getVersionLength() == 0, "Versioning code is not implemented yet");
 
-   TR_ASSERT(trans->isEmptyAfterInsertionIdiomList(0) && trans->isEmptyAfterInsertionIdiomList(1), "Not implemented yet!");
-   if (!trans->isEmptyAfterInsertionIdiomList(0) || !trans->isEmptyAfterInsertionIdiomList(1)) return false;
+   if (!trans->isEmptyAfterInsertionIdiomList(0) || !trans->isEmptyAfterInsertionIdiomList(1))
+      {
+      trans->countFail("%s/nonemptyAfterInsertionIdiomList", __FUNCTION__);
+      return false;
+      }
 
    trans->findFirstNode(&trTreeTop, &trNode, &block);
    if (!block) return false;    // cannot find
@@ -6703,8 +6718,11 @@ CISCTransform2ArrayCopyB2CBndchk(TR_CISCTransformer *trans)
    List<TR_CISCNode> *P2T = trans->getP2T();
    TR::Compilation *comp = trans->comp();
 
-   TR_ASSERT(trans->isEmptyAfterInsertionIdiomList(0) && trans->isEmptyAfterInsertionIdiomList(1), "Not implemented yet!");
-   if (!trans->isEmptyAfterInsertionIdiomList(0) || !trans->isEmptyAfterInsertionIdiomList(1)) return false;
+   if (!trans->isEmptyAfterInsertionIdiomList(0) || !trans->isEmptyAfterInsertionIdiomList(1))
+      {
+      trans->countFail("%s/nonemptyAfterInsertionIdiomList", __FUNCTION__);
+      return false;
+      }
 
    trans->findFirstNode(&trTreeTop, &trNode, &block);
    if (!block) return false;    // cannot find
@@ -6919,8 +6937,11 @@ CISCTransform2ArrayCopyC2BMixed(TR_CISCTransformer *trans)
    List<TR_CISCNode> *P2T = trans->getP2T();
    TR::Compilation *comp = trans->comp();
 
-   TR_ASSERT(trans->isEmptyAfterInsertionIdiomList(0) && trans->isEmptyAfterInsertionIdiomList(1), "Not implemented yet!");
-   if (!trans->isEmptyAfterInsertionIdiomList(0) || !trans->isEmptyAfterInsertionIdiomList(1)) return false;
+   if (!trans->isEmptyAfterInsertionIdiomList(0) || !trans->isEmptyAfterInsertionIdiomList(1))
+      {
+      trans->countFail("%s/nonemptyAfterInsertionIdiomList", __FUNCTION__);
+      return false;
+      }
 
    trans->findFirstNode(&trTreeTop, &trNode, &block);
    if (!block) return false;    // cannot find
@@ -7249,8 +7270,11 @@ CISCTransform2ArrayCopyC2BIf2(TR_CISCTransformer *trans)
 
    TR_ASSERT(trans->getP()->getVersionLength() == 0, "Versioning code is not implemented yet");
 
-   TR_ASSERT(trans->isEmptyAfterInsertionIdiomList(0) && trans->isEmptyAfterInsertionIdiomList(1), "Not implemented yet!");
-   if (!trans->isEmptyAfterInsertionIdiomList(0) || !trans->isEmptyAfterInsertionIdiomList(1)) return false;
+   if (!trans->isEmptyAfterInsertionIdiomList(0) || !trans->isEmptyAfterInsertionIdiomList(1))
+      {
+      trans->countFail("%s/nonemptyAfterInsertionIdiomList", __FUNCTION__);
+      return false;
+      }
 
    trans->findFirstNode(&trTreeTop, &trNode, &block);
    if (!block) return false;    // cannot find
@@ -7533,8 +7557,11 @@ CISCTransform2ArrayCopyB2I(TR_CISCTransformer *trans)
 
    TR_ASSERT(trans->getP()->getVersionLength() == 0, "Versioning code is not implemented yet");
 
-   TR_ASSERT(trans->isEmptyAfterInsertionIdiomList(0) && trans->isEmptyAfterInsertionIdiomList(1), "Not implemented yet!");
-   if (!trans->isEmptyAfterInsertionIdiomList(0) || !trans->isEmptyAfterInsertionIdiomList(1)) return false;
+   if (!trans->isEmptyAfterInsertionIdiomList(0) || !trans->isEmptyAfterInsertionIdiomList(1))
+      {
+      trans->countFail("%s/nonemptyAfterInsertionIdiomList", __FUNCTION__);
+      return false;
+      }
 
    trans->findFirstNode(&trTreeTop, &trNode, &block);
    if (!block) return false;    // cannot find
@@ -8010,8 +8037,11 @@ CISCTransform2ArraySet(TR_CISCTransformer *trans)
    TR::Compilation *comp = trans->comp();
    bool ctrl = trans->isGenerateI2L();
 
-   TR_ASSERT(trans->isEmptyAfterInsertionIdiomList(0) && trans->isEmptyAfterInsertionIdiomList(1), "Not implemented yet!");
-   if (!trans->isEmptyAfterInsertionIdiomList(0) || !trans->isEmptyAfterInsertionIdiomList(1)) return false;
+   if (!trans->isEmptyAfterInsertionIdiomList(0) || !trans->isEmptyAfterInsertionIdiomList(1))
+      {
+      trans->countFail("%s/nonemptyAfterInsertionIdiomList", __FUNCTION__);
+      return false;
+      }
 
    trans->findFirstNode(&trTreeTop, &trNode, &block);
    if (!block) return false;    // cannot find
@@ -8678,8 +8708,11 @@ CISCTransform2MixedArraySet(TR_CISCTransformer *trans)
 
    TR_ASSERT(trans->getP()->getVersionLength() == 0, "Versioning code is not implemented yet");
 
-   TR_ASSERT(trans->isEmptyAfterInsertionIdiomList(0) && trans->isEmptyAfterInsertionIdiomList(1), "Not implemented yet!");
-   if (!trans->isEmptyAfterInsertionIdiomList(0) || !trans->isEmptyAfterInsertionIdiomList(1)) return false;
+   if (!trans->isEmptyAfterInsertionIdiomList(0) || !trans->isEmptyAfterInsertionIdiomList(1))
+      {
+      trans->countFail("%s/nonemptyAfterInsertionIdiomList", __FUNCTION__);
+      return false;
+      }
 
    trans->findFirstNode(&trTreeTop, &trNode, &block);
    if (!block) return false;    // cannot find
@@ -10270,8 +10303,11 @@ CISCTransform2BitOpMem(TR_CISCTransformer *trans)
    TR::Compilation *comp = trans->comp();
    bool ctrl = trans->isGenerateI2L();
 
-   TR_ASSERT(trans->isEmptyAfterInsertionIdiomList(0) && trans->isEmptyAfterInsertionIdiomList(1), "Not implemented yet!");
-   if (!trans->isEmptyAfterInsertionIdiomList(0) || !trans->isEmptyAfterInsertionIdiomList(1)) return false;
+   if (!trans->isEmptyAfterInsertionIdiomList(0) || !trans->isEmptyAfterInsertionIdiomList(1))
+      {
+      trans->countFail("%s/nonemptyAfterInsertionIdiomList", __FUNCTION__);
+      return false;
+      }
 
    trans->findFirstNode(&trTreeTop, &trNode, &block);
    if (!block) return false;    // cannot find
@@ -10805,8 +10841,11 @@ CISCTransform2CountDecimalDigit(TR_CISCTransformer *trans)
 
    TR_ASSERT(trans->getP()->getVersionLength() == 0, "Versioning code is not implemented yet");
 
-   TR_ASSERT(trans->isEmptyAfterInsertionIdiomList(0) && trans->isEmptyAfterInsertionIdiomList(1), "Not implemented yet!");
-   if (!trans->isEmptyAfterInsertionIdiomList(0) || !trans->isEmptyAfterInsertionIdiomList(1)) return false;
+   if (!trans->isEmptyAfterInsertionIdiomList(0) || !trans->isEmptyAfterInsertionIdiomList(1))
+      {
+      trans->countFail("%s/nonemptyAfterInsertionIdiomList", __FUNCTION__);
+      return false;
+      }
 
    trans->findFirstNode(&trTreeTop, &trNode, &block);
    if (!block) return false;    // cannot find
@@ -11114,8 +11153,11 @@ CISCTransform2LongToStringDigit(TR_CISCTransformer *trans)
 
    TR_ASSERT(trans->getP()->getVersionLength() == 0, "Versioning code is not implemented yet");
 
-   TR_ASSERT(trans->isEmptyAfterInsertionIdiomList(0) && trans->isEmptyAfterInsertionIdiomList(1), "Not implemented yet!");
-   if (!trans->isEmptyAfterInsertionIdiomList(0) || !trans->isEmptyAfterInsertionIdiomList(1)) return false;
+   if (!trans->isEmptyAfterInsertionIdiomList(0) || !trans->isEmptyAfterInsertionIdiomList(1))
+      {
+      trans->countFail("%s/nonemptyAfterInsertionIdiomList", __FUNCTION__);
+      return false;
+      }
 
    trans->findFirstNode(&trTreeTop, &trNode, &block);
    if (!block) return false;    // cannot find
