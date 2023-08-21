@@ -970,7 +970,7 @@ uint8_t *TR::PPCCallSnippet::generateVIThunk(TR::Node *callNode, int32_t argSize
    if (comp->target().is32Bit() && (((dispatcher&0x80008000) == 0x80008000) || comp->compileRelocatableCode()) )
       codeSize += 4;
 
-   if (comp->compileRelocatableCode())
+   if (fej9->storeOffsetToArgumentsInVirtualIndirectThunks())
       thunk = (uint8_t *)comp->trMemory()->allocateMemory(codeSize, heapAlloc);
    else
       thunk = (uint8_t *)cg->allocateCodeMemory(codeSize, true, false);
