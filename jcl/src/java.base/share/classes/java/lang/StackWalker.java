@@ -59,11 +59,6 @@ public final class StackWalker {
 	private final static int J9_SHOW_REFLECT_FRAMES = 2;
 	private final static int J9_SHOW_HIDDEN_FRAMES = 4;
 
-	/*[IF JAVA_SPEC_VERSION >= 21]*/
-	/* Internal flag for retrieving monitor info for stack frames. */
-	private final static int J9_GET_MONITORS = 0x10;
-	/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
-
 	final Set<Option> walkerOptions;
 
 	private final int bufferSize;
@@ -101,15 +96,6 @@ public final class StackWalker {
 			flags |= J9_SHOW_HIDDEN_FRAMES;
 		}
 	}
-
-	/*[IF JAVA_SPEC_VERSION >= 21]*/
-	/**
-	 * Set the J9_GET_MONITORS flag.
-	 */
-	protected final void setGetMontiorFlag() {
-		flags |= J9_GET_MONITORS;
-	}
-	/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 
 	/**
 	 * Factory method to create a StackWalker instance with no options set.
@@ -404,9 +390,6 @@ public final class StackWalker {
 		private Module frameModule;
 		private String methodName;
 		private String methodSignature;
-		/*[IF JAVA_SPEC_VERSION >= 21]*/
-		private Object[] monitors;
-		/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 		boolean callerSensitive;
 
 		@Override
@@ -509,11 +492,6 @@ public final class StackWalker {
 		}
 		/*[ENDIF] JAVA_SPEC_VERSION >= 10 */
 
-		/*[IF JAVA_SPEC_VERSION >= 21]*/
-		protected Object[] getMonitors() {
-			return monitors;
-		}
-		/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 	}
 
 	static class PermissionSingleton {
