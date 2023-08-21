@@ -35,12 +35,7 @@ extern "C" {
 #define SHOW_REFLECT_FRAMES 2
 #define SHOW_HIDDEN_FRAMES 4
 #define FRAME_VALID 8
-#if JAVA_SPEC_VERSION >= 21
-#define GET_MONITORS 0x10
-#define FRAME_FILTER_MASK (RETAIN_CLASS_REFERENCE | SHOW_REFLECT_FRAMES | SHOW_HIDDEN_FRAMES | GET_MONITORS)
-#else /* JAVA_SPEC_VERSION >= 21 */
 #define FRAME_FILTER_MASK (RETAIN_CLASS_REFERENCE | SHOW_REFLECT_FRAMES | SHOW_HIDDEN_FRAMES)
-#endif /* JAVA_SPEC_VERSION >= 21 */
 
 static UDATA stackFrameFilter(J9VMThread * currentThread, J9StackWalkState * walkState);
 
@@ -101,32 +96,6 @@ Java_java_lang_StackWalker_walkWrapperImpl(JNIEnv *env, jclass clazz, jint flags
 	) {
 		walkState->flags |= J9_STACKWALK_SKIP_HIDDEN_FRAMES;
 	}
-
-#if JAVA_SPEC_VERSION >= 21
-	J9ObjectMonitorInfo *info = NULL;
-	PORT_ACCESS_FROM_JAVAVM(vm);
-	if (J9_ARE_ALL_BITS_SET((UDATA)flags, GET_MONITORS)) {
-		J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
-		IDATA infoLen = vmFuncs->getOwnedObjectMonitors(vmThread, vmThread, NULL, 0);
-		if (infoLen > 0) {
-			info = (J9ObjectMonitorInfo *)j9mem_allocate_memory(infoLen * sizeof(J9ObjectMonitorInfo), J9MEM_CATEGORY_VM_JCL);
-			if (NULL != info) {
-				IDATA rc = 0;
-				rc = vmFuncs->getOwnedObjectMonitors(vmThread, vmThread, info, infoLen);
-				if (rc >= 0) {
-					walkState->userData3 = info;
-					walkState->userData4 = (void *)infoLen;
-				} else {
-					j9mem_free_memory(info);
-				}
-			} else {
-				vmFuncs->setNativeOutOfMemoryError(vmThread, 0, 0);
-				return NULL;
-			}
-		}
-	}
-#endif /* JAVA_SPEC_VERSION >= 21 */
-
 	walkState->frameWalkFunction = stackFrameFilter;
 	const char * walkerMethodChars = env->GetStringUTFChars(stackWalkerMethod, NULL);
 	if (NULL == walkerMethodChars) { /* native out of memory exception pending */
@@ -153,13 +122,6 @@ Java_java_lang_StackWalker_walkWrapperImpl(JNIEnv *env, jclass clazz, jint flags
 	if (NULL != walkerMethodChars) {
 		env->ReleaseStringUTFChars(stackWalkerMethod, walkerMethodChars);
 	}
-
-#if JAVA_SPEC_VERSION >= 21
-	if (NULL != info) {
-		j9mem_free_memory(info);
-	}
-#endif /* JAVA_SPEC_VERSION >= 21 */
-
 	vmThread->stackWalkState = newWalkState.previous;
 
 	return result;
@@ -316,39 +278,6 @@ Java_java_lang_StackWalker_getImpl(JNIEnv *env, jobject clazz, jlong walkStateP)
 			if (J9ROMMETHOD_IS_CALLER_SENSITIVE(romMethod)) {
 				J9VMJAVALANGSTACKWALKERSTACKFRAMEIMPL_SET_CALLERSENSITIVE(vmThread, PEEK_OBJECT_IN_SPECIAL_FRAME(vmThread, 0), TRUE);
 			}
-
-#if JAVA_SPEC_VERSION >= 21
-			if (J9_ARE_ALL_BITS_SET(walkState->flags, GET_MONITORS)) {
-				J9ObjectMonitorInfo *monitorInfo = (J9ObjectMonitorInfo *)walkState->userData3;
-				IDATA *monitorCount = (IDATA *)(&walkState->userData4);
-
-				/* Temp fields to find the number of monitors hold by this frame. */
-				J9ObjectMonitorInfo *tempInfo = monitorInfo;
-				U_32 count = 0;
-				/* Use a while loop as there may be more than one lock taken in a stack frame. */
-				while ((0 != *monitorCount) && ((UDATA)tempInfo->depth == walkState->framesWalked)) {
-					count++;
-					tempInfo++;
-					(*monitorCount)--;
-				}
-				if (count > 0) {
-					J9Class *arrayClass = fetchArrayClass(vmThread, J9VMJAVALANGOBJECT(vm));
-					j9object_t monitorArray = mmFuncs->J9AllocateIndexableObject(vmThread, arrayClass, count, J9_GC_ALLOCATE_OBJECT_INSTRUMENTABLE);
-					if (NULL == monitorArray) {
-						vmFuncs->setHeapOutOfMemoryError(vmThread);
-						goto _pop_frame;
-					}
-					J9VMJAVALANGSTACKWALKERSTACKFRAMEIMPL_SET_MONITORS(vmThread, PEEK_OBJECT_IN_SPECIAL_FRAME(vmThread, 0), monitorArray);
-					for (U_32 i = 0; i < count; i++) {
-						J9JAVAARRAYOFOBJECT_STORE(vmThread, monitorArray, i, monitorInfo->object);
-						monitorInfo++;
-					}
-
-					/* Store the updated progress back in userData for the next callback */
-					walkState->userData3 = monitorInfo;
-				}
-			}
-#endif /* JAVA_SPEC_VERSION >= 21 */
 
 _pop_frame:
 			DROP_OBJECT_IN_SPECIAL_FRAME(vmThread);
