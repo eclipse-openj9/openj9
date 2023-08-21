@@ -219,7 +219,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	<fieldref class="java/lang/StackWalker$StackFrameImpl" name="methodName" signature="Ljava/lang/String;" versions="9-"/>
 	<fieldref class="java/lang/StackWalker$StackFrameImpl" name="methodSignature" signature="Ljava/lang/String;" versions="9-"/>
 	<fieldref class="java/lang/StackWalker$StackFrameImpl" name="frameModule" signature="Ljava/lang/Module;" versions="9-"/>
-	<fieldref class="java/lang/StackWalker$StackFrameImpl" name="monitors" signature="[Ljava/lang/Object;" versions="21-"/>
 
 	<!-- Common field references shared between OpenJ9 and OpenJDK Thread. -->
 	<fieldref class="java/lang/Thread" name="contextClassLoader" signature="Ljava/lang/ClassLoader;"/>
