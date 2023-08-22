@@ -6201,11 +6201,30 @@ TR_J9ByteCodeIlGenerator::genWithField(int32_t fieldCpIndex)
          {
          TR_ASSERT_FATAL(false, "Support for null-restricted types without Q descriptor is to be implemented!!!");
          }
-      else if (owningMethod->isFieldQType(fieldCpIndex) && owningMethod->isFieldFlattened(comp(), fieldCpIndex, _methodSymbol->isStatic()))
+      else if (owningMethod->isFieldQType(fieldCpIndex))
          {
-         return comp()->getOption(TR_UseFlattenedFieldRuntimeHelpers) ?
+         if (owningMethod->isFieldFlattened(comp(), fieldCpIndex, _methodSymbol->isStatic()))
+            {
+            return comp()->getOption(TR_UseFlattenedFieldRuntimeHelpers) ?
                   genFlattenableWithFieldWithHelper(fieldCpIndex) :
                   genFlattenableWithField(fieldCpIndex, valueClass);
+            }
+         else
+            {
+            TR::Node *newFieldValue = pop();
+            if (comp()->getOption(TR_TraceILGen))
+               {
+               traceMsg(comp(), "%s: fieldCpIndex %d isFieldFlattened 0 newFieldValue n%dn isNonNull %d\n", __FUNCTION__, fieldCpIndex, newFieldValue->getGlobalIndex(), newFieldValue->isNonNull());
+               }
+
+            if (!newFieldValue->isNonNull())
+               {
+               TR::Node *passThruNode = TR::Node::create(TR::PassThrough, 1, newFieldValue);
+               genTreeTop(genNullCheck(passThruNode));
+               }
+
+            push(newFieldValue);
+            }
          }
       }
 
@@ -6972,6 +6991,22 @@ TR_J9ByteCodeIlGenerator::storeInstance(int32_t cpIndex)
                      storeFlattenableInstanceWithHelper(cpIndex) :
                      storeFlattenableInstance(cpIndex);
             }
+         else
+            {
+            TR::Node *value = pop();
+            if (comp()->getOption(TR_TraceILGen))
+               {
+               traceMsg(comp(), "%s: cpIndex %d isFieldFlattened 0 value n%dn isNonNull %d\n", __FUNCTION__, cpIndex, value->getGlobalIndex(), value->isNonNull());
+               }
+
+            if (!value->isNonNull())
+               {
+               TR::Node *passThruNode = TR::Node::create(TR::PassThrough, 1, value);
+               genTreeTop(genNullCheck(passThruNode));
+               }
+
+            push(value);
+            }
          }
       }
 
@@ -7230,6 +7265,29 @@ TR_J9ByteCodeIlGenerator::storeStatic(int32_t cpIndex)
 
    _staticFieldReferenceEncountered = true;
    TR::Node * value = pop();
+
+   if (TR::Compiler->om.areFlattenableValueTypesEnabled())
+      {
+      TR_ResolvedJ9Method * owningMethod = static_cast<TR_ResolvedJ9Method*>(_methodSymbol->getResolvedMethod());
+
+      if (!TR::Compiler->om.isQDescriptorForValueTypesSupported())
+         {
+         TR_ASSERT_FATAL(false, "Support for null-restricted types without Q descriptor is to be implemented!!!");
+         }
+      else if (owningMethod->isFieldQType(cpIndex))
+         {
+         if (comp()->getOption(TR_TraceILGen))
+            {
+            traceMsg(comp(), "%s: cpIndex %d isFieldQType 1 value %d isNonNull %d\n", __FUNCTION__, cpIndex, value->getGlobalIndex(), value->isNonNull());
+            }
+
+         if (!value->isNonNull())
+            {
+            TR::Node *passThruNode = TR::Node::create(TR::PassThrough, 1, value);
+            genTreeTop(genNullCheck(passThruNode));
+            }
+         }
+      }
 
    TR::SymbolReference * symRef = symRefTab()->findOrCreateStaticSymbol(_methodSymbol, cpIndex, true);
    TR::StaticSymbol * symbol = symRef->getSymbol()->castToStaticSymbol();

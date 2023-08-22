@@ -255,12 +255,14 @@
 			<variation>-Xint -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999</variation>
 			<variation>-Xint -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
 			<variation>-XX:+EnableHCR -Xjit:count=0</variation>
+			<variation>-XX:+EnableHCR -Xjit:count=1,disableAsyncCompilation,initialOptLevel=warm -Xgcpolicy:optthruput</variation>
 			<variation>-XX:+EnableHCR -Xjit:count=1,disableAsyncCompilation,initialOptLevel=warm -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999</variation>
 			<variation>-XX:+EnableHCR -Xjit:count=1,disableAsyncCompilation,initialOptLevel=warm -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
 			<variation>-XX:+EnableHCR -Xgcpolicy:optthruput</variation>
 			<variation>-XX:+EnableHCR -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999</variation>
 			<variation>-XX:+EnableHCR -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
 			<variation>-XX:-EnableHCR -Xjit:count=0</variation>
+			<variation>-XX:-EnableHCR -Xjit:count=1,disableAsyncCompilation,initialOptLevel=warm -Xgcpolicy:optthruput</variation>
 			<variation>-XX:-EnableHCR -Xjit:count=1,disableAsyncCompilation,initialOptLevel=warm -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999</variation>
 			<variation>-XX:-EnableHCR -Xjit:count=1,disableAsyncCompilation,initialOptLevel=warm -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
 			<variation>-XX:-EnableHCR -Xgcpolicy:optthruput</variation>
