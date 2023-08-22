@@ -137,6 +137,14 @@ typedef enum
    staticSpecialMethodFromCpIsSplit = 0x08,
    needsFullSizeRuntimeAssumption   = 0x10,
    methodTracingEnabled             = 0x20,
+
+   // Relo Flags cannot be more than 12 bits
+   // unless the _flags field of the
+   // TR_RelocationRecordBinaryTemplate
+   // is appropriately updated. This is because
+   // the lowest 4 bits are used for the (poorly
+   // named) Cross Platform Flags.
+   highestBit                       = 0x800,
    } TR_RelocationFlags;
 
 /* TR_AOTMethodHeader Versions:

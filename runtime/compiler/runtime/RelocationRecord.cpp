@@ -935,11 +935,19 @@ TR_RelocationRecord::eipRelative(TR_RelocationTarget *reloTarget)
    }
 
 void
+TR_RelocationRecord::updateFlags(TR_RelocationTarget *reloTarget, uint16_t flagsToSet)
+   {
+   flagsToSet |= reloTarget->loadUnsigned16b((uint8_t *) &_record->_flags);
+   reloTarget->storeUnsigned16b(flagsToSet, (uint8_t *) &_record->_flags);
+   }
+
+void
 TR_RelocationRecord::setFlag(TR_RelocationTarget *reloTarget, uint8_t flag)
    {
-   TR_ASSERT_FATAL((flag >> RELOCATION_RELOC_FLAGS_SHIFT) == 0, "flag %d is larger than %d bits", flag, RELOCATION_RELOC_FLAGS_SHIFT);
-   uint16_t flags = reloTarget->loadUnsigned16b((uint8_t *) &_record->_flags) | (flag & RELOCATION_CROSS_PLATFORM_FLAGS_MASK);
-   reloTarget->storeUnsigned16b(flags, (uint8_t *) &_record->_flags);
+   uint16_t flagsToSet = static_cast<uint16_t>(flag);
+   TR_ASSERT_FATAL((flagsToSet & RELOCATION_RELOC_FLAGS_MASK) == 0,  "flag %x bits overlap relo flags bits\n", flag);
+
+   updateFlags(reloTarget, flagsToSet);
    }
 
 uint8_t
@@ -951,12 +959,10 @@ TR_RelocationRecord::flags(TR_RelocationTarget *reloTarget)
 void
 TR_RelocationRecord::setReloFlags(TR_RelocationTarget *reloTarget, uint8_t reloFlags)
    {
-   reloFlags <<= RELOCATION_RELOC_FLAGS_SHIFT;
-   TR_ASSERT_FATAL((reloFlags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
+   uint16_t flagsToSet = static_cast<uint16_t>(reloFlags) << RELOCATION_RELOC_FLAGS_SHIFT;
+   TR_ASSERT_FATAL((flagsToSet & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags %x bits overlap cross-platform flags bits\n", reloFlags);
 
-   uint8_t crossPlatFlags = flags(reloTarget);
-   uint8_t flags = crossPlatFlags | (reloFlags & RELOCATION_RELOC_FLAGS_MASK);
-   reloTarget->storeUnsigned16b(flags, (uint8_t *) &_record->_flags);
+   updateFlags(reloTarget, flagsToSet);
    }
 
 uint8_t
