@@ -55,9 +55,16 @@ import jdk.internal.vm.ContinuationScope;
 public final class StackWalker {
 
 	private static final int DEFAULT_BUFFER_SIZE = 1;
-	private final static int J9_RETAIN_CLASS_REFERENCE = 1;
-	private final static int J9_SHOW_REFLECT_FRAMES = 2;
-	private final static int J9_SHOW_HIDDEN_FRAMES = 4;
+
+	/* Java StackWalker flag constants cloned from java_lang_StackWalker.cpp. */
+	private static final int J9_RETAIN_CLASS_REFERENCE = 0x1;
+	private static final int J9_SHOW_REFLECT_FRAMES = 0x2;
+	private static final int J9_SHOW_HIDDEN_FRAMES = 0x4;
+	/* 0x8 flag used by VM constant J9_FRAME_VALID */
+	/*[IF JAVA_SPEC_VERSION >= 21]*/
+	/* Internal flag for retrieving monitor info for stack frames. */
+	private static final int J9_GET_MONITORS = 0x10;
+	/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 
 	final Set<Option> walkerOptions;
 
@@ -96,6 +103,15 @@ public final class StackWalker {
 			flags |= J9_SHOW_HIDDEN_FRAMES;
 		}
 	}
+
+	/*[IF JAVA_SPEC_VERSION >= 21]*/
+	/**
+	 * Set the J9_GET_MONITORS flag.
+	 */
+	void setGetMonitorsFlag() {
+		flags |= J9_GET_MONITORS;
+	}
+	/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 
 	/**
 	 * Factory method to create a StackWalker instance with no options set.
@@ -201,7 +217,7 @@ public final class StackWalker {
 		return clientsCaller.getDeclaringClass();
 	}
 
-	private native static <T> T walkWrapperImpl(int flags, String walkerMethod,
+	private static native <T> T walkWrapperImpl(int flags, String walkerMethod,
 			Function<? super Stream<StackFrame>, ? extends T> function);
 
 	/**
@@ -255,7 +271,7 @@ public final class StackWalker {
 	private ContinuationScope scope;
 	private Continuation cont;
 
-	private native static <T> T walkContinuationImpl(int flags, Function<? super Stream<StackFrame>, ? extends T> function, Continuation cont);
+	private static native <T> T walkContinuationImpl(int flags, Function<? super Stream<StackFrame>, ? extends T> function, Continuation cont);
 
 	static StackWalker newInstance(Set<Option> options, ExtendedOption extendedOption) {
 		return newInstance(options, extendedOption, null, null);
@@ -379,7 +395,7 @@ public final class StackWalker {
 		/*[ENDIF] JAVA_SPEC_VERSION >= 10 */
 	}
 
-	final static class StackFrameImpl implements StackFrame {
+	static final class StackFrameImpl implements StackFrame {
 
 		private Class<?> declaringClass;
 		private String fileName;
@@ -390,6 +406,9 @@ public final class StackWalker {
 		private Module frameModule;
 		private String methodName;
 		private String methodSignature;
+		/*[IF JAVA_SPEC_VERSION >= 21]*/
+		private Object[] monitors;
+		/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 		boolean callerSensitive;
 
 		@Override
@@ -492,6 +511,11 @@ public final class StackWalker {
 		}
 		/*[ENDIF] JAVA_SPEC_VERSION >= 10 */
 
+		/*[IF JAVA_SPEC_VERSION >= 21]*/
+		protected Object[] getMonitors() {
+			return monitors;
+		}
+		/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 	}
 
 	static class PermissionSingleton {
