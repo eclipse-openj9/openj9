@@ -38,13 +38,6 @@ public class ValueTypeGenerator extends ClassLoader {
 	
 	private static boolean DEBUG = false;
 	
-	/* workaround till the new ASM is released */
-	public static final int ACONST_INIT = 203;
-	public static final int WITHFIELD = 204;
-	public static final int ACC_IDENTITY = 0x20;
-	private static final int ACC_VALUE_TYPE = 0x040;
-	private static final int ACC_PRIMITIVE = 0x800;
-	
 	static {
 		generator = new ValueTypeGenerator();
 	}
@@ -218,7 +211,7 @@ public class ValueTypeGenerator extends ClassLoader {
 		if (isRef) {
 			cw.visit(ValhallaUtils.CLASS_FILE_MAJOR_VERSION, ACC_PUBLIC + ACC_FINAL + extraClassFlags, className, null, superName, null);
 		} else {
-			cw.visit(ValhallaUtils.CLASS_FILE_MAJOR_VERSION, ACC_PUBLIC + ACC_FINAL + ACC_VALUE_TYPE + ACC_PRIMITIVE + extraClassFlags, className, null, superName, null);
+			cw.visit(ValhallaUtils.CLASS_FILE_MAJOR_VERSION, ACC_PUBLIC + ACC_FINAL + ValhallaUtils.ACC_VALUE_TYPE + ValhallaUtils.ACC_PRIMITIVE + extraClassFlags, className, null, superName, null);
 		}
 
 		cw.visitSource(className + ".java", null);
@@ -374,7 +367,7 @@ public class ValueTypeGenerator extends ClassLoader {
 		mv.visitInsn(DUP);
 		mv.visitMethodInsn(INVOKESPECIAL, className, "<init>", "()V", false);
 		mv.visitLdcInsn(Long.valueOf(123L));
-		mv.visitFieldInsn(WITHFIELD, className, "longField", "J");
+		mv.visitFieldInsn(ValhallaUtils.WITHFIELD, className, "longField", "J");
 		mv.visitInsn(ARETURN);
 		mv.visitMaxs(3, 2);
 		mv.visitEnd();
@@ -389,7 +382,7 @@ public class ValueTypeGenerator extends ClassLoader {
 		mv.visitCode();
 		mv.visitInsn(ACONST_NULL);
 		mv.visitLdcInsn(Long.valueOf(123L));
-		mv.visitFieldInsn(WITHFIELD, className, "longField", "J");
+		mv.visitFieldInsn(ValhallaUtils.WITHFIELD, className, "longField", "J");
 		mv.visitInsn(ARETURN);
 		mv.visitMaxs(3, 2);
 		mv.visitEnd();
@@ -406,7 +399,7 @@ public class ValueTypeGenerator extends ClassLoader {
 		mv.visitInsn(DUP);
 		mv.visitMethodInsn(INVOKESPECIAL, className, "<init>", "()V", false);
 		mv.visitLdcInsn(Long.valueOf(123L));
-		mv.visitFieldInsn(WITHFIELD, "NonExistentClass", "longField", "J");
+		mv.visitFieldInsn(ValhallaUtils.WITHFIELD, "NonExistentClass", "longField", "J");
 		mv.visitInsn(ARETURN);
 		mv.visitMaxs(3, 2);
 		mv.visitEnd();
@@ -447,7 +440,7 @@ public class ValueTypeGenerator extends ClassLoader {
 		boolean doubleDetected = false;
 		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC + ACC_STATIC, "makeValue", "(" + makeValueSig + ")" + getSigFromSimpleName(valueName, false), null, null);
 		mv.visitCode();
-		mv.visitTypeInsn(ACONST_INIT, getSigFromSimpleName(valueName, false));
+		mv.visitTypeInsn(ValhallaUtils.ACONST_INIT, getSigFromSimpleName(valueName, false));
 		for (int i = 0, count = 0; i <  fields.length; i++) {
 			String nameAndSig[] = fields[i].split(":");
 			if ((nameAndSig.length < 3) ||  !(nameAndSig[2].equals("static"))) {
@@ -479,7 +472,7 @@ public class ValueTypeGenerator extends ClassLoader {
 					count++;
 					break;
 				}
-				mv.visitFieldInsn(WITHFIELD, valueName, nameAndSig[0], nameAndSig[1]);
+				mv.visitFieldInsn(ValhallaUtils.WITHFIELD, valueName, nameAndSig[0], nameAndSig[1]);
 			}
 		}
 		mv.visitInsn(ARETURN);
@@ -491,7 +484,7 @@ public class ValueTypeGenerator extends ClassLoader {
 	private static void makeValueTypeDefaultValue(ClassWriter cw, String valueName, String makeValueSig, String[] fields, int makeMaxLocal, boolean isRef) {
 		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC  + ACC_STATIC, "makeValueTypeDefaultValue", "()Ljava/lang/Object;", null, null);
 		mv.visitCode();
-		mv.visitTypeInsn(ACONST_INIT, getSigFromSimpleName(valueName, isRef));
+		mv.visitTypeInsn(ValhallaUtils.ACONST_INIT, getSigFromSimpleName(valueName, isRef));
 		mv.visitInsn(ARETURN);
 		mv.visitMaxs(1, 0);
 		mv.visitEnd();
@@ -500,7 +493,7 @@ public class ValueTypeGenerator extends ClassLoader {
 	private static void testCheckCastValueTypeOnNonNullType(ClassWriter cw, String className, String[] fields) {
 		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC  + ACC_STATIC, "testCheckCastValueTypeOnNonNullType", "()Ljava/lang/Object;", null, null);
 		mv.visitCode();
-		mv.visitTypeInsn(ACONST_INIT, getSigFromSimpleName(className, false));
+		mv.visitTypeInsn(ValhallaUtils.ACONST_INIT, getSigFromSimpleName(className, false));
 		mv.visitTypeInsn(CHECKCAST, className);
 		mv.visitInsn(ARETURN);
 		mv.visitMaxs(1, 2);
@@ -554,7 +547,7 @@ public class ValueTypeGenerator extends ClassLoader {
 		Label falseLabel = new Label();
 		Label endLabel = new Label();
 		mv.visitJumpInsn(IFEQ, falseLabel);
-		mv.visitTypeInsn(ACONST_INIT, getSigFromSimpleName(valueUsedInCode, false));
+		mv.visitTypeInsn(ValhallaUtils.ACONST_INIT, getSigFromSimpleName(valueUsedInCode, false));
 		mv.visitJumpInsn(GOTO, endLabel);
 		mv.visitLabel(falseLabel);
 		mv.visitFrame(F_SAME, 1, new Object[] {INTEGER}, 0, new Object[]{});
@@ -578,7 +571,7 @@ public class ValueTypeGenerator extends ClassLoader {
 		for (int i = 0; i < valueFields.length; i++) {
 			String[] nameAndSig = valueFields[i].split(":");
 			mv.visitLdcInsn(Integer.valueOf(i+1));
-			mv.visitFieldInsn(WITHFIELD, valueUsedInCode, nameAndSig[0], nameAndSig[1]);
+			mv.visitFieldInsn(ValhallaUtils.WITHFIELD, valueUsedInCode, nameAndSig[0], nameAndSig[1]);
 		}
 		mv.visitJumpInsn(GOTO, endLabel);
 		mv.visitLabel(falseLabel);
@@ -976,7 +969,7 @@ public class ValueTypeGenerator extends ClassLoader {
 			mv.visitVarInsn(ALOAD, 1);
 			break;
 		}
-		mv.visitFieldInsn(WITHFIELD, className, nameAndSigValue[0], nameAndSigValue[1]);
+		mv.visitFieldInsn(ValhallaUtils.WITHFIELD, className, nameAndSigValue[0], nameAndSigValue[1]);
 		mv.visitInsn(ARETURN);
 		int maxStackAndLocals = (doubleDetected ? 3 : 2);
 		mv.visitMaxs(maxStackAndLocals, maxStackAndLocals);

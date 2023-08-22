@@ -29,14 +29,31 @@ public class ValhallaAttributeGenerator extends ClassLoader {
 	private static ValhallaAttributeGenerator generator = new ValhallaAttributeGenerator();
 
 	public static Class<?> generateClassWithTwoPreloadAttributes(String name, String[] classList1, String[] classList2) throws Throwable {
-		byte[] bytes = generateClass(name, new Attribute[] {
+		byte[] bytes = generateClass(name, ACC_PUBLIC, new Attribute[] {
 			new PreloadAttribute(classList1),
 			new PreloadAttribute(classList2)});
 		return generator.defineClass(name, bytes, 0, bytes.length);
 	}
 
 	public static Class<?> generateClassWithPreloadAttribute(String name, String[] classList) throws Throwable {
-		byte[] bytes = generateClass(name, new Attribute[] {new PreloadAttribute(classList)});
+		byte[] bytes = generateClass(name, ACC_PUBLIC, new Attribute[] {new PreloadAttribute(classList)});
+		return generator.defineClass(name, bytes, 0, bytes.length);
+	}
+
+	public static Class<?> generateClassWithTwoImplicitCreationAttributes(String name) throws Throwable {
+		byte[] bytes = generateClass(name, ACC_PUBLIC + ACC_FINAL + ValhallaUtils.ACC_VALUE_TYPE,
+			new Attribute[] {new ImplicitCreationAttribute(0), new ImplicitCreationAttribute(0)});
+		return generator.defineClass(name, bytes, 0, bytes.length);
+	}
+
+	public static Class<?> generateNonValueTypeClassWithImplicitCreationAttribute(String name) throws Throwable {
+		byte[] bytes = generateClass(name, ACC_PUBLIC, new Attribute[] {new ImplicitCreationAttribute(0)});
+		return generator.defineClass(name, bytes, 0, bytes.length);
+	}
+
+	public static Class<?> generateValidClassWithImplicitCreationAttribute(String name) throws Throwable {
+		byte[] bytes = generateClass(name, ACC_PUBLIC + ACC_FINAL + ValhallaUtils.ACC_VALUE_TYPE,
+			new Attribute[] {new ImplicitCreationAttribute(0)});
 		return generator.defineClass(name, bytes, 0, bytes.length);
 	}
 
@@ -44,18 +61,9 @@ public class ValhallaAttributeGenerator extends ClassLoader {
 		return generator.findLoadedClass(name);
 	}
 
-	public static byte[] generateClass(String name, Attribute[] attributes) {
+	public static byte[] generateClass(String name, int classFlags, Attribute[] attributes) {
 		ClassWriter classWriter = new ClassWriter(0);
-		classWriter.visit(ValhallaUtils.CLASS_FILE_MAJOR_VERSION, ACC_PUBLIC | ACC_FINAL, name, null, "java/lang/Object", null);
-
-		/* Generate base constructor which just calls super.<init>() */
-		MethodVisitor methodVisitor = classWriter.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
-		methodVisitor.visitCode();
-		methodVisitor.visitVarInsn(ALOAD, 0);
-		methodVisitor.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
-		methodVisitor.visitInsn(RETURN);
-		methodVisitor.visitMaxs(1, 1);
-		methodVisitor.visitEnd();
+		classWriter.visit(ValhallaUtils.CLASS_FILE_MAJOR_VERSION, classFlags, name, null, "java/lang/Object", null);
 
 		/* Generate passed in attributes if there are any */
 		if (null != attributes) {

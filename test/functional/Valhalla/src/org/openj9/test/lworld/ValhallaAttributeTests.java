@@ -30,7 +30,7 @@ public class ValhallaAttributeTests {
 	class MultiPreloadTest {}
 
 	/* A class may have no more than one Preload attribute. */
-	@Test(expectedExceptions = java.lang.ClassFormatError.class)
+	@Test(expectedExceptions = java.lang.ClassFormatError.class, expectedExceptionsMessageRegExp = ".*Multiple Preload attributes.*")
 	static public void testMultiplePreloadAttributes() throws Throwable {
 		String className = MultiPreloadTest.class.getName();
 		ValhallaAttributeGenerator.generateClassWithTwoPreloadAttributes("MultiPreloadAttributes",
@@ -61,5 +61,27 @@ public class ValhallaAttributeTests {
 		ValhallaAttributeGenerator.generateClassWithPreloadAttribute("PreloadValueClassBehavior", new String[]{className});
 		/* Verify that PreloadValueClass is loaded */
 		Assert.assertNotNull(ValhallaAttributeGenerator.findLoadedTestClass(className));
+	}
+
+	/* A class may have no more than one ImplicitCreation attribute. */
+	@Test(expectedExceptions = java.lang.ClassFormatError.class, expectedExceptionsMessageRegExp = ".*Multiple ImplicitCreation attributes.*")
+	static public void testMultipleImplicitCreationAttributes() throws Throwable {
+		ValhallaAttributeGenerator.generateClassWithTwoImplicitCreationAttributes("MultiImplicitCreationAttributes");
+	}
+
+	/* There must not be an ImplicitCreation attribute in the attributes table of any other ClassFile structure representing a class, interface, or module.
+	 * In other words any non value class.
+	 */
+	@Test(expectedExceptions = java.lang.ClassFormatError.class, expectedExceptionsMessageRegExp = ".*The ImplicitCreation attribute is only allowed in a non-abstract value class.*")
+	static public void testNonValueTypeClassWithImplicitCreationAttribute() throws Throwable {
+		ValhallaAttributeGenerator.generateNonValueTypeClassWithImplicitCreationAttribute("NonValueTypeImplicitCreationAttribute");
+	}
+
+	/* ImplicitCreation smoke test. The attribute doesn't do anything in the vm right now, make sure
+	 * it passes class validation.
+	 */
+	@Test
+	static public void testValueTypeClassWithImplicitCreationAttribute() throws Throwable {
+		ValhallaAttributeGenerator.generateValidClassWithImplicitCreationAttribute("ValueTypeClassWithImplicitCreationAttribute");
 	}
 }
