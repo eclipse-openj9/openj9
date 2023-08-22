@@ -290,6 +290,9 @@ class TR_RelocationRecord
       TR_RelocationRecordPrivateData _privateData;
 
       static uint32_t _relocationRecordHeaderSizeTable[TR_NumExternalRelocationKinds];
+
+   private:
+      void updateFlags(TR_RelocationTarget *reloTarget, uint16_t flagsToSet);
    };
 
 // No class that derives from TR_RelocationRecord should define any state: all state variables should be declared
