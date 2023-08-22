@@ -479,6 +479,7 @@ static bool checkForRemainingInlineableJSR292(TR::Compilation *comp, TR::Resolve
 void
 TR_J9InlinerUtil::requestAdditionalOptimizations(TR_CallTarget *calltarget)
    {
+#if !defined(J9VM_OPT_OPENJDK_METHODHANDLE)
    if (calltarget->_myCallSite->getDepth() == -1 // only do this for top level callee to prevent exponential walk of inlined trees
       && checkForRemainingInlineableJSR292(comp(), calltarget->_calleeSymbol))
       {
@@ -486,6 +487,7 @@ TR_J9InlinerUtil::requestAdditionalOptimizations(TR_CallTarget *calltarget)
       if (comp()->trace(OMR::inlining))
          heuristicTrace(tracer(),"Requesting one more pass of targeted inlining due to method handle invoke in %s\n", tracer()->traceSignature(calltarget->_calleeSymbol));
       }
+#endif
    }
 
 void
@@ -5218,6 +5220,15 @@ bool TR_J9InlinerPolicy::isJSR292SmallHelperMethod(TR_ResolvedMethod *resolvedMe
       case TR::java_lang_invoke_ConvertHandleFilterHelpers_number2J:
       case TR::java_lang_invoke_MethodHandle_doCustomizationLogic:
       case TR::java_lang_invoke_MethodHandle_undoCustomizationLogic:
+      case TR::java_lang_invoke_MethodHandleImpl_ArrayAccessor_setElementI:
+      case TR::java_lang_invoke_MethodHandleImpl_ArrayAccessor_setElementJ:
+      case TR::java_lang_invoke_MethodHandleImpl_ArrayAccessor_setElementF:
+      case TR::java_lang_invoke_MethodHandleImpl_ArrayAccessor_setElementD:
+      case TR::java_lang_invoke_MethodHandleImpl_ArrayAccessor_setElementZ:
+      case TR::java_lang_invoke_MethodHandleImpl_ArrayAccessor_setElementB:
+      case TR::java_lang_invoke_MethodHandleImpl_ArrayAccessor_setElementS:
+      case TR::java_lang_invoke_MethodHandleImpl_ArrayAccessor_setElementC:
+      case TR::java_lang_invoke_MethodHandleImpl_ArrayAccessor_setElementL:
          return true;
 
       default:
@@ -5236,6 +5247,26 @@ bool TR_J9InlinerPolicy::isJSR292SmallGetterMethod(TR_ResolvedMethod *resolvedMe
       case TR::java_lang_invoke_MethodHandle_type:
       case TR::java_lang_invoke_DirectMethodHandle_internalMemberName:
       case TR::java_lang_invoke_MethodHandleImpl_CountingWrapper_getTarget:
+      case TR::java_lang_invoke_DirectMethodHandle_checkCast:
+      case TR::java_lang_invoke_DirectMethodHandle_Accessor_checkCast:
+      case TR::java_lang_invoke_MethodHandleImpl_ArrayAccessor_getElementI:
+      case TR::java_lang_invoke_MethodHandleImpl_ArrayAccessor_getElementJ:
+      case TR::java_lang_invoke_MethodHandleImpl_ArrayAccessor_getElementF:
+      case TR::java_lang_invoke_MethodHandleImpl_ArrayAccessor_getElementD:
+      case TR::java_lang_invoke_MethodHandleImpl_ArrayAccessor_getElementZ:
+      case TR::java_lang_invoke_MethodHandleImpl_ArrayAccessor_getElementB:
+      case TR::java_lang_invoke_MethodHandleImpl_ArrayAccessor_getElementS:
+      case TR::java_lang_invoke_MethodHandleImpl_ArrayAccessor_getElementC:
+      case TR::java_lang_invoke_MethodHandleImpl_ArrayAccessor_getElementL:
+      case TR::java_lang_invoke_MethodHandleImpl_ArrayAccessor_lengthI:
+      case TR::java_lang_invoke_MethodHandleImpl_ArrayAccessor_lengthJ:
+      case TR::java_lang_invoke_MethodHandleImpl_ArrayAccessor_lengthF:
+      case TR::java_lang_invoke_MethodHandleImpl_ArrayAccessor_lengthD:
+      case TR::java_lang_invoke_MethodHandleImpl_ArrayAccessor_lengthZ:
+      case TR::java_lang_invoke_MethodHandleImpl_ArrayAccessor_lengthB:
+      case TR::java_lang_invoke_MethodHandleImpl_ArrayAccessor_lengthS:
+      case TR::java_lang_invoke_MethodHandleImpl_ArrayAccessor_lengthC:
+      case TR::java_lang_invoke_MethodHandleImpl_ArrayAccessor_lengthL:
          return true;
 
       default:
@@ -5622,9 +5653,11 @@ bool TR_J9InlinerUtil::needTargetedInlining(TR::ResolvedMethodSymbol *callee)
    // Tactically, we also inline again based on hasMethodHandleInvokes because EstimateCodeSize
    // doesn't yet cope with invokeHandle, invokeHandleGeneric, and invokeDynamic (but it should).
    //
+#if !defined(J9VM_OPT_OPENJDK_METHODHANDLE)
    if (callee->getMethod()->isArchetypeSpecimen() ||
        callee->hasMethodHandleInvokes())
       return true;
+#endif
    return false;
    }
 
