@@ -32,16 +32,33 @@ suspendThread(J9VMThread *currentThread, jthread thread, BOOLEAN allowNull, BOOL
 	J9VMThread *targetThread = NULL;
 	jvmtiError rc = JVMTI_ERROR_NONE;
 	UDATA flags = J9JVMTI_GETVMTHREAD_ERROR_ON_DEAD_THREAD;
+	J9JavaVM *vm = currentThread->javaVM;
 
 	*currentThreadSuspended = FALSE;
 	if (!allowNull) {
 		flags |= J9JVMTI_GETVMTHREAD_ERROR_ON_NULL_JTHREAD;
 	}
+
+#if JAVA_SPEC_VERSION >= 19
+	j9object_t threadObject = (NULL == thread) ? currentThread->threadObject : J9_JNI_UNWRAP_REFERENCE(thread);
+	/* getVMThread can cause a deadlock for a virutal thread if the thread is already suspended.
+	 * The suspended virtual thread halts during the mount or unmount phase while the
+	 * virtualThreadInspectorCount is set to -1. Meanwhile, acquireVThreadInspector waits
+	 * indefinitely for the virtualThreadInspectorCount to be set to 0 in the mount or unmount
+	 * phase. To prevent the deadlock, jvmtiSuspendThread should return an error for already
+	 * suspended threads without invoking getVMThread -> acquireVThreadInspector. This approach
+	 * can be taken for both platform and virtual threads.
+	 */
+	if (0 != J9OBJECT_U32_LOAD(currentThread, threadObject, vm->isSuspendedInternalOffset)) {
+		rc = JVMTI_ERROR_THREAD_SUSPENDED;
+		goto done;
+	}
+#endif /* JAVA_SPEC_VERSION >= 19 */
 	rc = getVMThread(currentThread, thread, &targetThread, JVMTI_ERROR_NONE, flags);
 	if (rc == JVMTI_ERROR_NONE) {
-		J9JavaVM *vm = currentThread->javaVM;
 #if JAVA_SPEC_VERSION >= 19
-		j9object_t threadObject = (NULL == thread) ? currentThread->threadObject : J9_JNI_UNWRAP_REFERENCE(thread);
+		/* Re-fetch object since VM access can be re-acquired in getVMThread. */
+		threadObject = (NULL == thread) ? currentThread->threadObject : J9_JNI_UNWRAP_REFERENCE(thread);
 		/* The J9 PUBLIC FLAGS HALT THREAD JAVA SUSPEND flag will be set
 		 * if the thread is mounted.
 		 */
@@ -84,6 +101,9 @@ suspendThread(J9VMThread *currentThread, jthread thread, BOOLEAN allowNull, BOOL
 #endif /* JAVA_SPEC_VERSION >= 19 */
 		releaseVMThread(currentThread, targetThread, thread);
 	}
+#if JAVA_SPEC_VERSION >= 19
+done:
+#endif /* JAVA_SPEC_VERSION >= 19 */
 	return rc;
 }
 
