@@ -4873,20 +4873,26 @@ done:
 			if (NULL != agentOptionsUTF) {
 				if (J9_ARE_ANY_BITS_SET(_vm->runtimeFlags, J9_RUNTIME_ALLOW_DYNAMIC_AGENT)) {
 #if JAVA_SPEC_VERSION >= 21
+					bool printWarning = false;
 					/* The name "vm" is used by FIND_ARG_IN_VMARGS(). */
 					J9JavaVM *vm = _vm;
 					/* No warning if -XX:+EnableDynamicAgentLoading is specified. */
 					if (0 > FIND_ARG_IN_VMARGS(EXACT_MATCH, VMOPT_XXENABLEDYNAMICAGENTLOADING, NULL)) {
 						/* No warning if the same agent is already loaded. */
-						if (!vm->isAgentLibraryLoaded(vm, agentLibraryUTF)) {
-							fprintf(stderr, "WARNING: A JVM TI agent has been loaded dynamically (%s)\n", agentOptionsUTF);
-							fprintf(stderr, "WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning\n");
-							fprintf(stderr, "WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information\n");
-							fprintf(stderr, "WARNING: Dynamic loading of agents will be disallowed by default in a future release\n");
+						if (!vm->isAgentLibraryLoaded(vm, agentLibraryUTF, JNI_FALSE != decorate)) {
+							printWarning = true;
 						}
 					}
 #endif /* JAVA_SPEC_VERSION >= 21 */
 					status = (_vm->loadAgentLibraryOnAttach)(_vm, agentLibraryUTF, agentOptionsUTF, decorate);
+#if JAVA_SPEC_VERSION >= 21
+					if ((JNI_OK == status) && printWarning) {
+						fprintf(stderr, "WARNING: A JVM TI agent has been loaded dynamically (%s)\n", agentOptionsUTF);
+						fprintf(stderr, "WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning\n");
+						fprintf(stderr, "WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information\n");
+						fprintf(stderr, "WARNING: Dynamic loading of agents will be disallowed by default in a future release\n");
+					}
+#endif /* JAVA_SPEC_VERSION >= 21 */
 				}
 				env->ReleaseStringUTFChars(agentOptions, agentOptionsUTF);
 			}
