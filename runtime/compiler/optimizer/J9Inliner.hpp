@@ -245,7 +245,7 @@ class TR_J9InlinerPolicy : public OMR_InlinerPolicy
 
       void createAnchorNodesForUnsafeGetPut(TR::TreeTop* treeTop, TR::DataType type, bool isUnsafeGet);
       TR::Node *     genCompressedRefs(TR::Node *, bool genTT = true, int32_t isLoad = 1);
-      void genCodeForUnsafeGetPut(TR::Node* unsafeAddress, TR::TreeTop* callNodeTreeTop, TR::TreeTop* prevTreeTop, TR::SymbolReference* newSymbolReferenceForAddress, TR::TreeTop* directAccessTreeTop, TR::TreeTop* lowTagCmpTree, bool needNullCheck, bool isUnsafeGet, bool conversionNeeded, TR::Block * joinBlock, TR_OpaqueClassBlock *javaLangClass, TR::Node* orderedCallNode);
+      void genCodeForUnsafeGetPut(TR::Node* unsafeAddress, TR::TreeTop* callNodeTreeTop, TR::TreeTop* prevTreeTop, TR::SymbolReference* newSymbolReferenceForAddress, TR::TreeTop* directAccessTreeTop, TR::TreeTop* lowTagCmpTree, bool needNullCheck, bool isUnsafeGet, bool conversionNeeded, bool arrayCheckNeeded, bool arrayBlockNeeded, bool checksNeeded, TR::Block * joinBlock, TR_OpaqueClassBlock *javaLangClass, TR::Node* orderedCallNode);
       virtual bool callMustBeInlined(TR_CallTarget *calltarget);
       virtual bool callMustBeInlinedInCold(TR_ResolvedMethod *method);
       bool mustBeInlinedEvenInDebug(TR_ResolvedMethod * calleeMethod, TR::TreeTop *callNodeTreeTop);
