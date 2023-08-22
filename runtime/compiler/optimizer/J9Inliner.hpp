@@ -305,6 +305,10 @@ class TR_J9InlinerPolicy : public OMR_InlinerPolicy
        * \param indirectAccessTreeTop A pointer to a \ref TR::TreeTop for the IL
        *           needed to perform a more "indirect" reference loading or storing a
        *           static field value for the \c Unsafe method call
+       * \param directAccessWithConversionTreeTop A pointer to a \ref TR::TreeTop for
+       *           the IL needed to perform a nearly "direct" reference loading or 
+       *           storing a value for the \c Unsafe method call, with a conversion
+       *           for one or two byte values
        * \param needNullCheck A \bool value indicating whether a \ref TR::NULLCHK
        *           needs to be generated for the value of \c unsafeAddress
        * \param isUnsafeGet A \bool value indicating whether the call represents an
@@ -313,14 +317,19 @@ class TR_J9InlinerPolicy : public OMR_InlinerPolicy
        * \param conversionNeeded Indicates whether the call reprents an \c Unsafe
        *           method call involving any of Java \c char, \c short, \c byte or
        *           \c boolean.
+       * \param arrayBlockNeeded Indicates whether a separate access block needs to be
+       *           generated to handle the case where the \c Object is an array
+       * \param typeTestsNeeded Indicates whether any type tests for \c Object need to
+       *           be generated (i.e.: if the type of the \c Object is unknown)
        * \param orderedCallNode Indicates whether the call represents an \c Unsafe
        *           ordered method
        */
       void genCodeForUnsafeGetPut(TR::Node* unsafeAddress, TR::Node *unsafeOffset, TR::DataType type, TR::TreeTop* callNodeTreeTop,
                                   TR::TreeTop* prevTreeTop, TR::SymbolReference* newSymbolReferenceForAddress,
                                   TR::TreeTop* directAccessTreeTop, TR::TreeTop* arraydirectAccessTreeTop,
-                                  TR::TreeTop* indirectAccessTreeTop, bool needNullCheck, bool isUnsafeGet,
-                                  bool conversionNeeded, TR::Node* orderedCallNode);
+                                  TR::TreeTop* indirectAccessTreeTop, TR::TreeTop* directAccessWithConversionTreeTop,
+                                  bool needNullCheck, bool isUnsafeGet, bool conversionNeeded, 
+                                  bool arrayBlockNeeded, bool typeTestsNeeded, TR::Node* orderedCallNode);
       virtual bool callMustBeInlined(TR_CallTarget *calltarget);
       virtual bool callMustBeInlinedInCold(TR_ResolvedMethod *method);
       bool mustBeInlinedEvenInDebug(TR_ResolvedMethod * calleeMethod, TR::TreeTop *callNodeTreeTop);
