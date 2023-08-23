@@ -29,30 +29,30 @@ public class ValhallaAttributeGenerator extends ClassLoader {
 	private static ValhallaAttributeGenerator generator = new ValhallaAttributeGenerator();
 
 	public static Class<?> generateClassWithTwoPreloadAttributes(String name, String[] classList1, String[] classList2) throws Throwable {
-		byte[] bytes = generateClass(name, ACC_PUBLIC, new Attribute[] {
+		byte[] bytes = generateClass(name, ValhallaUtils.ACC_IDENTITY, new Attribute[] {
 			new PreloadAttribute(classList1),
 			new PreloadAttribute(classList2)});
 		return generator.defineClass(name, bytes, 0, bytes.length);
 	}
 
 	public static Class<?> generateClassWithPreloadAttribute(String name, String[] classList) throws Throwable {
-		byte[] bytes = generateClass(name, ACC_PUBLIC, new Attribute[] {new PreloadAttribute(classList)});
+		byte[] bytes = generateClass(name, ValhallaUtils.ACC_IDENTITY, new Attribute[] {new PreloadAttribute(classList)});
 		return generator.defineClass(name, bytes, 0, bytes.length);
 	}
 
 	public static Class<?> generateClassWithTwoImplicitCreationAttributes(String name) throws Throwable {
-		byte[] bytes = generateClass(name, ACC_PUBLIC + ACC_FINAL + ValhallaUtils.ACC_VALUE_TYPE,
+		byte[] bytes = generateClass(name, ACC_FINAL + ValhallaUtils.ACC_VALUE_TYPE,
 			new Attribute[] {new ImplicitCreationAttribute(0), new ImplicitCreationAttribute(0)});
 		return generator.defineClass(name, bytes, 0, bytes.length);
 	}
 
 	public static Class<?> generateNonValueTypeClassWithImplicitCreationAttribute(String name) throws Throwable {
-		byte[] bytes = generateClass(name, ACC_PUBLIC, new Attribute[] {new ImplicitCreationAttribute(0)});
+		byte[] bytes = generateClass(name, ValhallaUtils.ACC_IDENTITY, new Attribute[] {new ImplicitCreationAttribute(0)});
 		return generator.defineClass(name, bytes, 0, bytes.length);
 	}
 
 	public static Class<?> generateValidClassWithImplicitCreationAttribute(String name) throws Throwable {
-		byte[] bytes = generateClass(name, ACC_PUBLIC + ACC_FINAL + ValhallaUtils.ACC_VALUE_TYPE,
+		byte[] bytes = generateClass(name, ACC_FINAL + ValhallaUtils.ACC_VALUE_TYPE,
 			new Attribute[] {new ImplicitCreationAttribute(0)});
 		return generator.defineClass(name, bytes, 0, bytes.length);
 	}
