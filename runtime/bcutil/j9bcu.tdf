@@ -76,7 +76,7 @@ TraceException=Trc_BCU_createRomClassEndian_CopyMethodsError Noenv Overhead=1 Le
 TraceException=Trc_BCU_createRomClassEndian_CopyCPShapeError Noenv Overhead=1 Level=3 Template="BCU j9bcutil_createROMClassEndian: error occurred during copyCPShapeAndPreinitDataToROM. error=%d"
 TraceException=Trc_BCU_createRomClassEndian_AnnotationError2 Noenv Overhead=1 Level=3 Template="BCU j9bcutil_createROMClassEndian: error occurred during buildAnnotationInfo. error=%d"
 TraceException=Trc_BCU_createRomClassEndian_DebugInfoError2 Noenv Overhead=1 Level=3 Template="BCU j9bcutil_createROMClassEndian: error occurred during buildDebugInfo. error=%d"
-TraceEvent=Trc_BCU_createRomClassEndian_Synthetic Noenv Overhead=1 Level=3 Template="BCU j9bcutil_createROMClassEndian: Setting J9AccSynthetic flag on ROMClass %p"
+TraceEvent=Trc_BCU_createRomClassEndian_Synthetic Obsolete Noenv Overhead=1 Level=3 Template="BCU j9bcutil_createROMClassEndian: Setting J9AccSynthetic flag on ROMClass %p"
 TraceException=Trc_BCU_createRomClassEndian_StoreOptionalError Noenv Overhead=1 Level=3 Template="BCU j9bcutil_createROMClassEndian: error occurred during storeOptionalData. error=%d"
 
 TraceEntry=Trc_BCU_allocTranslationBuffers_Entry Noenv Overhead=1 Level=3 Template="BCU j9bcutil_allocTranslationBuffers: entering with maxInternTreeSize=%d"
