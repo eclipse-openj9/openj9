@@ -633,6 +633,11 @@ public class J9BCUtil {
 			}
 		}
 
+		if (J9ROMClassHelper.hasImplicitCreationAttribute(romClass)) {
+			U32 implicitCreationFlags = OptInfo.getImplicitCreationFlags(romClass);
+			out.format("ImplicitCreation flags: %s%n", implicitCreationFlags.getHexValue());
+		}
+
 		UDATA romFieldCount = romClass.romFieldCount();
 		out.append(String.format("Fields (%d):" + nl, romFieldCount.longValue()));
 
