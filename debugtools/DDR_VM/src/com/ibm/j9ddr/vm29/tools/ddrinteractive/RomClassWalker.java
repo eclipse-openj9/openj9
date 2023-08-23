@@ -755,6 +755,11 @@ public class RomClassWalker extends ClassWalker {
 				cursor = cursor.add(1);
 			}
 		}
+		if (J9ROMClassHelper.hasImplicitCreationAttribute(romClass)) {
+			classWalkerCallback.addSlot(clazz, SlotType.J9_SRP, cursor, "implicitCreationAttributeSRP");
+			implicitCreationAttributeDo(U32Pointer.cast(cursor.get()));
+			cursor = cursor.add(1);
+		}
 		classWalkerCallback.addSection(clazz, optionalInfo, cursor.getAddress() - optionalInfo.getAddress(), "optionalInfo", true);
 	}
 
@@ -1002,6 +1007,17 @@ public class RomClassWalker extends ClassWalker {
 		}
 		attribute = attribute.add(1);
 		classWalkerCallback.addSection(clazz, attributeStart, attribute.getAddress() - attributeStart.getAddress(), "preloadAttribute", true);
+	}
+
+	void implicitCreationAttributeDo(U32Pointer attribute) throws CorruptDataException
+	{
+		if (attribute.isNull()) {
+			return;
+		}
+		U32Pointer attributeStart = attribute;
+		classWalkerCallback.addSlot(clazz, SlotType.J9_U32, attribute, "implicitCreationFlags");
+		attribute = attribute.add(1);
+		classWalkerCallback.addSection(clazz, attributeStart, attribute.getAddress() - attributeStart.getAddress(), "implicitCreationAttribute", true);
 	}
 
 	int allSlotsInAnnotationDo(U32Pointer annotation, String annotationSectionName) throws CorruptDataException
