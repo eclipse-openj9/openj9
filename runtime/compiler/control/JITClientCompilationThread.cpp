@@ -2876,7 +2876,7 @@ remoteCompilationEnd(J9VMThread *vmThread, TR::Compilation *comp, TR_ResolvedMet
          comp->failCompilation<J9::AOTRelocationFailed>("Failed to relocate");
          }
       }
-#if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
+#if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM64))
    else // For relocating received AOT compilations
       {
       TR_ASSERT(entry->_useAotCompilation || comp->isDeserializedAOTMethod(),
@@ -2978,7 +2978,7 @@ remoteCompilationEnd(J9VMThread *vmThread, TR::Compilation *comp, TR_ResolvedMet
          );
          }
       }
-#endif // defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
+#endif // defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM64))
    return metaData;
    }
 
