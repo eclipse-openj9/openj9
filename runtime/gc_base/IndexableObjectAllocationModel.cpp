@@ -145,7 +145,13 @@ MM_IndexableObjectAllocationModel::initializeIndexableObject(MM_EnvironmentBase 
 	/* Lay out arraylet and arrayoid pointers */
 	switch (_layout) {
 	case GC_ArrayletObjectModel::InlineContiguous:
-		Assert_MM_true(1 == _numberOfArraylets);
+		/**
+		* _numberOfArraylets is set to 0 for 0-stride flattened array, and we
+		* can recognize this case by checking if _dataSize is 0.
+		* Note there are two cases that _dataSize is 0: 0-stride flattened array or 0-length array
+		* But the latter is treated as discontiguous and not following this path
+		*/
+		Assert_MM_true((0 == _dataSize) || (1 == _numberOfArraylets));
 		break;
 
 	case GC_ArrayletObjectModel::Discontiguous:
