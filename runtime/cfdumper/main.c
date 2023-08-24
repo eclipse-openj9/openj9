@@ -520,7 +520,7 @@ static void dumpMethod(J9CfrClassFile* classfile, J9CfrMethod* method)
 	if (classfile->accessFlags & CFR_ACC_VALUE_TYPE) {
 		J9CfrConstantPoolInfo name = classfile->constantPool[method->nameIndex];
 		if (J9UTF8_LITERAL_EQUALS(name.bytes, name.slot1, "<vnew>")) {
-			for (int i = 0; i < classfile->attributesCount; i++) {
+			for (i = 0; i < classfile->attributesCount; i++) {
 				J9CfrAttribute* attr = classfile->attributes[i];
 				if (attr->tag == CFR_ATTRIBUTE_ImplicitCreation) {
 					j9tty_printf( PORTLIB, " implicit");
@@ -1116,7 +1116,7 @@ static void printMethod(J9CfrClassFile* classfile, J9CfrMethod* method)
 	if (classfile->accessFlags & CFR_ACC_VALUE_TYPE) {
 		J9CfrConstantPoolInfo name = classfile->constantPool[method->nameIndex];
 		if (J9UTF8_LITERAL_EQUALS(name.bytes, name.slot1, "<vnew>")) {
-			for (int i = 0; i < classfile->attributesCount; i++) {
+			for (i = 0; i < classfile->attributesCount; i++) {
 				J9CfrAttribute* attr = classfile->attributes[i];
 				if (attr->tag == CFR_ATTRIBUTE_ImplicitCreation) {
 					j9tty_printf( PORTLIB, "implicit ");
