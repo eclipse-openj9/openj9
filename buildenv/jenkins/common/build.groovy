@@ -543,7 +543,10 @@ def archive_diagnostics(javaVersionJdkImageDir = null) {
     findCrashDataCmd += " -o -name 'jitdump.*.dmp'"
     findCrashDataCmd += " -o -name 'Snap.*.trc'"
 
-    if (SPEC.contains('zos')) {
+    if (SPEC.contains('win')) {
+        // collect *.pdb files to help diagnose omr_ddrgen failures
+        findCrashDataCmd += " -o -name '*.pdb'"
+    } else if (SPEC.contains('zos')) {
         def logContent = currentBuild.rawBuild.getLog()
         // search for each occurrence of IEATDUMP success for DSN=
         def matches = logContent =~ /IEATDUMP success for DSN=.*/
