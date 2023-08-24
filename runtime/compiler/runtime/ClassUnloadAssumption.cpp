@@ -498,13 +498,7 @@ void TR_RuntimeAssumptionTable::markAssumptionsAndDetach(void * md, bool reclaim
             entriesRemain = true;
             #if defined(PROD_WITH_ASSUMES) || defined(DEBUG)
             TR_RuntimeAssumptionKind kind = cursor->getAssumptionKind();
-
-            // It is possible that an entry of TR_UnloadedClassPicSite (kind = RuntimeAssumptionOnClassUnload)
-            // remains if the TR_UnloadedClassPicSite references a J9Method in the pre-prolog. The J9Method in
-            // the pre-prolog is for the helper to know what method to execute for a revert to the interpreter.
-            // This address needs to be patched on a redefinition.
-            TR_ASSERT(kind == RuntimeAssumptionOnClassUnload ||
-                      kind == RuntimeAssumptionOnClassRedefinitionPIC ||
+            TR_ASSERT(kind == RuntimeAssumptionOnClassRedefinitionPIC ||
                       kind == RuntimeAssumptionOnClassRedefinitionUPIC ||
                       kind == RuntimeAssumptionOnClassRedefinitionNOP,
                "non redefinition assumption (RA=%p kind=%d key=%p) left after metadata reclamation\n",
