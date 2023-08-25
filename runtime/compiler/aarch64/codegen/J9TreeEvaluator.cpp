@@ -2733,9 +2733,9 @@ genHeapAlloc(TR::Node *node, TR::CodeGenerator *cg, bool isVariableLen, uint32_t
    static const char *pTLHPrefetchType = feGetEnv("TR_AArch64PrefetchType");
    static const char *pTLHPrefetchTarget = feGetEnv("TR_AArch64PrefetchTarget");
    static const char *pTLHPrefetchPolicy = feGetEnv("TR_AArch64PrefetchPolicy");
-   static const int cacheLineSize = (TR::Options::_TLHPrefetchLineSize > 0) ? TR::Options::_TLHPrefetchLineSize : 64;
-   static const int tlhPrefetchLineCount = (TR::Options::_TLHPrefetchLineCount > 0) ? TR::Options::_TLHPrefetchLineCount : 1;
-   static const int tlhPrefetchStaggeredLineCount = (TR::Options::_TLHPrefetchStaggeredLineCount > 0) ? TR::Options::_TLHPrefetchStaggeredLineCount : 4;
+   const int cacheLineSize = (TR::Options::_TLHPrefetchLineSize > 0) ? TR::Options::_TLHPrefetchLineSize : 64;
+   const int tlhPrefetchLineCount = (TR::Options::_TLHPrefetchLineCount > 0) ? TR::Options::_TLHPrefetchLineCount : 1;
+   const int tlhPrefetchStaggeredLineCount = (TR::Options::_TLHPrefetchStaggeredLineCount > 0) ? TR::Options::_TLHPrefetchStaggeredLineCount : 4;
    static const int tlhPrefetchThresholdSize = (pTLHPrefetchThresholdSize) ? atoi(pTLHPrefetchThresholdSize) : 64;
    static const int tlhPrefetchArrayLineCount = (pTLHPrefetchArrayLineCount) ? atoi(pTLHPrefetchArrayLineCount) : 4;
    static const ARM64PrefetchType tlhPrefetchType = (pTLHPrefetchType) ? clamp(atoi(pTLHPrefetchType), ARM64PrefetchType::LOAD, ARM64PrefetchType::STORE)
@@ -2808,7 +2808,7 @@ genHeapAlloc(TR::Node *node, TR::CodeGenerator *cg, bool isVariableLen, uint32_t
 
       // calculate variable size, rounding up if necessary to a intptr_t multiple boundary
       //
-      static const int32_t objectAlignmentInBytes = TR::Compiler->om.getObjectAlignmentInBytes();
+      const int32_t objectAlignmentInBytes = TR::Compiler->om.getObjectAlignmentInBytes();
       bool headerAligned = (allocSize % objectAlignmentInBytes) == 0;
       // zero indicates no rounding is necessary
       const int32_t round = ((elementSize >= objectAlignmentInBytes) && headerAligned) ? 0 : objectAlignmentInBytes;
@@ -2847,7 +2847,7 @@ genHeapAlloc(TR::Node *node, TR::CodeGenerator *cg, bool isVariableLen, uint32_t
             {
             generateLogicalImmInstruction(cg, TR::InstOpCode::andimmx, node, tempReg, tempReg, maskN, alignmentMaskEncoding);
             }
-         static const int32_t zeroArraySizeAligned = OMR::align(TR::Compiler->om.discontiguousArrayHeaderSizeInBytes(), objectAlignmentInBytes);
+         const int32_t zeroArraySizeAligned = OMR::align(TR::Compiler->om.discontiguousArrayHeaderSizeInBytes(), objectAlignmentInBytes);
          loadConstant64(cg, node, zeroArraySizeAligned, heapTopReg);
 
          generateCondTrg1Src2Instruction(cg, TR::InstOpCode::cselx, node, dataSizeReg, tempReg, heapTopReg, TR::CC_NE);
@@ -4251,7 +4251,7 @@ J9::ARM64::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, TR::CodeGenerat
 
    if (!sourceChild->isNull())
       {
-      static const bool disableArrayStoreCHKOpts = comp->getOption(TR_DisableArrayStoreCheckOpts);
+      const bool disableArrayStoreCHKOpts = comp->getOption(TR_DisableArrayStoreCheckOpts);
       TR_J9VM *fej9 = reinterpret_cast<TR_J9VM *>(cg->fe());
       TR::LabelSymbol *helperCallLabel = generateLabelSymbol(cg);
       // Since ArrayStoreCHK doesn't have the shape of the corresponding helper call we have to create this tree
@@ -4935,7 +4935,7 @@ VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *cg, bool isLong)
       offsetReg = cg->evaluate(thirdChild);
 
    static const bool disableLSE = feGetEnv("TR_aarch64DisableLSE") != NULL;
-   static const bool useLSE = comp->target().cpu.supportsFeature(OMR_FEATURE_ARM64_LSE) && (!disableLSE);
+   const bool useLSE = comp->target().cpu.supportsFeature(OMR_FEATURE_ARM64_LSE) && (!disableLSE);
    // Obtain values to be checked for, and swapped in:
    if ((!useLSE) && fourthChild->getOpCode().isLoadConst() && fourthChild->getRegister() == NULL)
       {
