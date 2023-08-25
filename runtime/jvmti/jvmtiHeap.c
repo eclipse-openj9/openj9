@@ -118,7 +118,7 @@ static jvmtiError getArrayPrimitiveElements(J9JVMTIHeapData * iteratorData, jvmt
 static jvmtiIterationControl followReferencesCallback(j9object_t * slotPtr, j9object_t referrer, void *userData, IDATA type, IDATA referrerIndex, IDATA wasReportedBefore);
 static void mapEventType(J9JVMTIHeapData * data, IDATA type, jint index, j9object_t referrer, j9object_t object);
 static void jvmtiFollowRefs_getTags(J9JVMTIHeapData * iteratorData, j9object_t  referrer, j9object_t  object); 
-static UDATA jvmtiHeapFollowRefs_getStackData(J9JVMTIHeapData * iteratorData, J9StackWalkState *walkState);
+static BOOLEAN jvmtiHeapFollowRefs_getStackData(J9JVMTIHeapData *iteratorData, J9StackWalkState *walkState);
 static IDATA heapReferenceFilter(J9JVMTIHeapData * iteratorData);
 
 
@@ -756,7 +756,7 @@ wrap_heapReferenceCallback(J9JavaVM * vm, J9JVMTIHeapData * iteratorData)
         case JVMTI_HEAP_REFERENCE_JNI_LOCAL:
             if (iteratorData->referrer) {
                 /* fill in the stack local and jni local data */
-                if (jvmtiHeapFollowRefs_getStackData(iteratorData, (J9StackWalkState *) iteratorData->referrer) == 0)
+                if (jvmtiHeapFollowRefs_getStackData(iteratorData, (J9StackWalkState *)iteratorData->referrer))
                     return JVMTI_ITERATION_IGNORE;
             } else {
 				/* No reference info available for heap roots, slime some bogus values 
@@ -830,91 +830,91 @@ wrap_heapReferenceCallback(J9JavaVM * vm, J9JVMTIHeapData * iteratorData)
 
 
 /** 
- * \brief     Obtain callback data required for JNI or Stack Local references
- * \ingroup   jvmti.heap
+ * \brief Obtain callback data required for JNI or Stack Local references
+ * \ingroup jvmti.heap
  * 
- * @param[in] iteratorData	iteration structure containing misc data
- * @param[in] e                 helper structure containing reference details
- * @param[in] walkState         stack walker structure for the frame containing the reference
- * @return			none
- *
+ * @param[in] iteratorData iteration structure containing misc data
+ * @param[in] e helper structure containing reference details
+ * @param[in] walkState stack walker structure for the frame containing the reference
+ * @return TRUE to ignore, otherwise FALSE
  */
-static UDATA
-jvmtiHeapFollowRefs_getStackData(J9JVMTIHeapData * iteratorData, J9StackWalkState *walkState)
+static BOOLEAN
+jvmtiHeapFollowRefs_getStackData(J9JVMTIHeapData *iteratorData, J9StackWalkState *walkState)
 {
-	J9JVMTIHeapEvent * e = &iteratorData->event;
-	jint slot = (jint) walkState->slotIndex;
-	jint depth = (jint) walkState->framesWalked;
-	J9Method * ramMethod = walkState->method;
-	jmethodID method;
-	J9JVMTIObjectTag search;
-	J9JVMTIObjectTag * result;
-	jlong threadID;
-
+	J9JVMTIHeapEvent *e = &iteratorData->event;
+	jint slot = (jint)walkState->slotIndex;
+	jint depth = (jint)walkState->framesWalked;
+	J9Method *ramMethod = walkState->method;
+	jmethodID method = NULL;
+	J9JVMTIObjectTag search = {0};
+	J9JVMTIObjectTag *result = NULL;
+	jlong threadID = 0;
+	J9VMThread *currentThread = iteratorData->currentThread;
+	j9object_t threadObject = walkState->walkThread->threadObject;
+	BOOLEAN ignore = TRUE;
 
 	/* Convert internal slot type to JVMTI type */
 	switch (walkState->slotType) {
-		case J9_STACKWALK_SLOT_TYPE_JNI_LOCAL:
-			e->refKind = JVMTI_HEAP_REFERENCE_JNI_LOCAL;
-			break;
-		case J9_STACKWALK_SLOT_TYPE_METHOD_LOCAL:
-			e->refKind = JVMTI_HEAP_REFERENCE_STACK_LOCAL;
-			break;
-		default:
-			/* Do not callback with stack slot types other then JNI or STACK Local */
-			return 0;
+	case J9_STACKWALK_SLOT_TYPE_JNI_LOCAL:
+		e->refKind = JVMTI_HEAP_REFERENCE_JNI_LOCAL;
+		if (NULL == threadObject) {
+			/* Ignore unmounted virtual threads since they cannot have a JNI frame */
+			goto done;
+		}
+		break;
+	case J9_STACKWALK_SLOT_TYPE_METHOD_LOCAL:
+		e->refKind = JVMTI_HEAP_REFERENCE_STACK_LOCAL;
+		break;
+	default:
+		/* Do not callback with stack slot types other then JNI or STACK Local */
+		goto done;
 	}
 
 	/* If there's no method, set slot, method and depth to -1 */
-
-	if (ramMethod == NULL) {
+	if (NULL == ramMethod) {
 		slot = -1;
 		depth = -1;
-		method = (jmethodID) -1;
+		method = (jmethodID)-1;
 	} else {
-		/* Cheating here - should be current thread, but the walk thread will do */
-		method = getCurrentMethodID(walkState->walkThread, ramMethod);
+		method = getCurrentMethodID(currentThread, ramMethod);
 		if (method == NULL) {
 			slot = -1;
 			depth = -1;
-			method = (jmethodID) -1;
+			method = (jmethodID)-1;
 		}
 	}
 
-	/* Find thread tag */
-	
-	search.ref = (j9object_t ) walkState->walkThread->threadObject;
-	result = hashTableFind(iteratorData->env->objectTagTable, &search);
+	if (NULL != threadObject) {
+		/* Find thread tag */
+		search.ref = (j9object_t )threadObject;
+		result = hashTableFind(iteratorData->env->objectTagTable, &search);
 
-	/* Figure out the Thread ID */
-
-	threadID = J9VMJAVALANGTHREAD_TID(iteratorData->currentThread, walkState->walkThread->threadObject);
-	
-
-	switch (e->refKind) {
-		case JVMTI_HEAP_REFERENCE_STACK_LOCAL:
-			e->refInfo.stack_local.thread_tag = (result) ? result->tag : 0;
-			e->refInfo.stack_local.thread_id = threadID;
-			e->refInfo.stack_local.depth = depth;
-			e->refInfo.stack_local.method = method;
-			e->refInfo.stack_local.location = (jlocation) walkState->bytecodePCOffset;
-			e->refInfo.stack_local.slot = slot;
-			break;
-
-		case JVMTI_HEAP_REFERENCE_JNI_LOCAL:
-
-			e->refInfo.jni_local.thread_tag = (result) ? result->tag : 0;
-			e->refInfo.jni_local.thread_id = threadID;
-			e->refInfo.jni_local.depth = depth;
-			e->refInfo.jni_local.method = method;
-			break;
-
-		default:
-			break;
+		/* Figure out the Thread ID */
+		threadID = J9VMJAVALANGTHREAD_TID(currentThread, threadObject);
 	}
 
+	switch (e->refKind) {
+	case JVMTI_HEAP_REFERENCE_STACK_LOCAL:
+		e->refInfo.stack_local.thread_tag = (NULL != result) ? result->tag : 0;
+		e->refInfo.stack_local.thread_id = threadID;
+		e->refInfo.stack_local.depth = depth;
+		e->refInfo.stack_local.method = method;
+		e->refInfo.stack_local.location = (jlocation) walkState->bytecodePCOffset;
+		e->refInfo.stack_local.slot = slot;
+		break;
+	case JVMTI_HEAP_REFERENCE_JNI_LOCAL:
+		e->refInfo.jni_local.thread_tag = (NULL != result) ? result->tag : 0;
+		e->refInfo.jni_local.thread_id = threadID;
+		e->refInfo.jni_local.depth = depth;
+		e->refInfo.jni_local.method = method;
+		break;
+	default:
+		break;
+	}
 
-	return 1;
+	ignore = FALSE;
+done:
+	return ignore;
 }
 
 
