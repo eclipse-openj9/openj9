@@ -263,7 +263,7 @@ public class StackWalkerUtils
 		if (J9BuildFlags.arch_x86 && !J9BuildFlags.env_data64) {
 			return walkState.bp.at(parmNumber);
 		} else {
-			return walkState.walkedEntryLocalStorage.jitGlobalStorageBase().at(jitArgumentRegisterNumbers[parmNumber - 1]);
+			return walkState.jitGlobalStorageBase.at(jitArgumentRegisterNumbers[parmNumber - 1]);
 		}
 	}
 

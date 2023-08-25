@@ -3660,7 +3660,7 @@ JavaCoreDumpWriter::writeJitMethod(J9VMThread* vmThread)
 
 			switch (kind) {
 			case J9PORT_SIG_VALUE_ADDRESS:
-				table = jitConfig->jitGetExceptionTableFromPC(vmThread, *(UDATA*)value);
+				table = jitConfig->jitGetExceptionTableFromPC(vmThread, *(UDATA*)value, vmThread->javaVM);
 				if (NULL != table) {
 					ramMethod = table->ramMethod;
 					insideJitMethod = true;

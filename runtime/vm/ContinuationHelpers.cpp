@@ -463,13 +463,43 @@ walkContinuationStackFrames(J9VMThread *currentThread, J9VMContinuation *continu
 	UDATA rc = J9_STACKWALK_RC_NONE;
 
 	if (NULL != continuation) {
-		J9VMThread stackThread = {0};
-		J9VMEntryLocalStorage els = {0};
+		walkState->javaVM = currentThread->javaVM;
+		walkState->currentThread = currentThread;
+		walkState->cache = NULL;
+		walkState->framesWalked = 0;
+		walkState->previousFrameFlags = 0;
+		walkState->arg0EA = continuation->arg0EA;
+		walkState->pcAddress = &(continuation->pc);
+		walkState->pc = continuation->pc;
+		walkState->nextPC = NULL;
+		walkState->walkSP = continuation->sp;
+		walkState->literals = continuation->literals;
+		walkState->argCount = 0;
+		walkState->linearSlotWalker = NULL;
+		walkState->stackMap = NULL;
+		walkState->inlineMap = NULL;
+		walkState->inlinedCallSite = NULL;
+		walkState->stackObject = continuation->stackObject;
+		walkState->walkThread = NULL;
+		walkState->loopBreaker = 0;
+#ifdef J9VM_INTERP_NATIVE_SUPPORT
+		walkState->jitInfo = NULL;
+		walkState->inlineDepth = 0;
+		walkState->inlinerMap = NULL;
+		walkState->walkedEntryLocalStorage = NULL;
+		walkState->j2iFrame = continuation->j2iFrame;
+		walkState->i2jState = &(continuation->i2jState);
+		walkState->jitGlobalStorageBase = (UDATA*)&continuation->jitGPRs;
+		walkState->jitFPRegisterStorageBase = NULL;
+		walkState->oldEntryLocalStorage = continuation->oldEntryLocalStorage;
+#ifdef J9VM_JIT_FULL_SPEED_DEBUG
+		walkState->decompilationStack = continuation->decompilationStack;
+		walkState->decompilationRecord = NULL;
+		walkState->resolveFrameFlags = 0;
+#endif /* J9VM_JIT_FULL_SPEED_DEBUG */
+#endif /* J9VM_INTERP_NATIVE_SUPPORT */
 
-		copyFieldsFromContinuation(currentThread, &stackThread, &els, continuation);
-
-		walkState->walkThread = &stackThread;
-		rc = currentThread->javaVM->walkStackFrames(currentThread, walkState);
+		rc = currentThread->javaVM->internalVMFunctions->commonWalker(currentThread, walkState);
 	}
 
 	return rc;

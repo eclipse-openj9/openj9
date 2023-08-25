@@ -121,7 +121,7 @@ getOwnedObjectMonitorsIterator(J9VMThread *currentThread, J9StackWalkState *walk
 	UDATA rc = J9_STACKWALK_KEEP_ITERATING;
 
 	/* Take the J9JavaVM from the targetThread as currentThread may be null. */
-	J9JavaVM* javaVM = walkState->walkThread->javaVM;
+	J9JavaVM* javaVM = walkState->javaVM;
 #ifdef J9VM_INTERP_NATIVE_SUPPORT
 	if (walkState->jitInfo) {
 		/* The jit walk may increment/decrement the stack depth */

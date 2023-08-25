@@ -135,16 +135,12 @@ Java_java_lang_StackWalker_walkContinuationImpl(JNIEnv *env, jclass clazz, jint 
 	J9JavaVM *vm = vmThread->javaVM;
 
 	J9StackWalkState walkState = {0};
-	J9VMThread stackThread = {0};
-	J9VMEntryLocalStorage els = {0};
 
 	enterVMFromJNI(vmThread);
 	j9object_t continuationObject = J9_JNI_UNWRAP_REFERENCE(cont);
 	J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(vmThread, continuationObject);
-	vm->internalVMFunctions->copyFieldsFromContinuation(vmThread, &stackThread, &els, continuation);
 	exitVMToJNI(vmThread);
 
-	walkState.walkThread = &stackThread;
 	walkState.flags = J9_STACKWALK_ITERATE_FRAMES | J9_STACKWALK_WALK_TRANSLATE_PC
 			|  J9_STACKWALK_INCLUDE_NATIVES | J9_STACKWALK_VISIBLE_ONLY;
 	/* If -XX:+ShowHiddenFrames and StackWalker.SHOW_HIDDEN_FRAMES option has not been set, skip hidden method frames */
@@ -157,7 +153,7 @@ Java_java_lang_StackWalker_walkContinuationImpl(JNIEnv *env, jclass clazz, jint 
 
 	/* walking unmounted Continuation will not require skipping StackWalker methods */
 	walkState.userData2 = NULL;
-	UDATA walkStateResult = vm->walkStackFrames(vmThread, &walkState);
+	UDATA walkStateResult = vm->internalVMFunctions->walkContinuationStackFrames(vmThread, continuation, &walkState);
 	Assert_JCL_true(walkStateResult == J9_STACKWALK_RC_NONE);
 	walkState.flags |= J9_STACKWALK_RESUME;
 	walkState.userData1 = (void *)(UDATA)flags;

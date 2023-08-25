@@ -723,7 +723,7 @@ TR_HWProfiler::getBytecodePCFromIA(J9VMThread *vmThread, uint8_t *IA)
    {
    if (vmThread)
       {
-      J9JITExceptionTable *metaData = _jitConfig->jitGetExceptionTableFromPC(vmThread, (UDATA) IA);
+      J9JITExceptionTable *metaData = _jitConfig->jitGetExceptionTableFromPC(vmThread, (UDATA) IA, vmThread->javaVM);
       if (metaData &&
           metaData->riData &&
           ((TR_HWPBytecodePCToIAMap *)metaData->riData)->_bytecodePC == reinterpret_cast<void *>(static_cast<intptr_t>(METADATA_MAPPING_EYECATCHER)))

@@ -123,7 +123,7 @@ lswInitialize(J9JavaVM * vm, J9StackWalkState * walkState)
 
 
 	slotWalker->sp = walkState->walkSP;
-	slotWalker->stackBottom = walkState->walkThread->stackObject->end;
+	slotWalker->stackBottom = walkState->stackObject->end;
 	slotArraySize = sizeof(J9SWSlot) * (slotWalker->stackBottom - slotWalker->sp);
 
 	slots = j9mem_allocate_memory(slotArraySize, OMRMEM_CATEGORY_VM);

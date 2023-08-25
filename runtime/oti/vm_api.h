@@ -3602,6 +3602,16 @@ invalidJITReturnAddress(J9StackWalkState *walkState);
 void
 walkBytecodeFrameSlots(J9StackWalkState *walkState, J9Method *method, UDATA offsetPC, UDATA *pendingBase, UDATA pendingStackHeight, UDATA *localBase, UDATA numberOfLocals, UDATA alwaysLocalMap);
 
+/**
+ * @brief Walk the stackframes specified by a walkState.
+ *
+ * @param currentThread current thread
+ * @param walkState the walkState specifying the stackframes
+ * @return 0 on success and non-zero on failure
+ */
+UDATA
+commonWalker(J9VMThread *currentThread, J9StackWalkState *walkState);
+
 
 /* ---------------- trace.c ---------------- */
 

@@ -107,15 +107,15 @@ UDATA   growJavaStack(J9VMThread * vmThread, UDATA newStackSize)
 static UDATA internalGrowJavaStack(J9VMThread * vmThread, UDATA newStackSize)
 {
 	PORT_ACCESS_FROM_VMC(vmThread);
-	J9JavaStack * oldStack = vmThread->stackObject;
-	J9JavaStack * newStack;
-	UDATA delta;
-	J9StackWalkState walkState;
-	UDATA usedBytes = ((U_8 *) oldStack->end) - ((U_8 *) vmThread->sp);
-	J9StackWalkState * currentWalkState;
-	UDATA oldStackStart = (UDATA) (oldStack +1);
-	UDATA oldStackEnd = (UDATA) (oldStack->end);
-	UDATA oldState;
+	J9JavaStack *oldStack = vmThread->stackObject;
+	J9JavaStack *newStack = NULL;
+	UDATA delta = 0;
+	J9StackWalkState walkState = {0};
+	UDATA usedBytes = ((U_8 *)oldStack->end) - ((U_8 *)vmThread->sp);
+	J9StackWalkState *currentWalkState = NULL;
+	UDATA oldStackStart = (UDATA)(oldStack + 1);
+	UDATA oldStackEnd = (UDATA)(oldStack->end);
+	UDATA oldState = 0;
 	UDATA rc = 0;
 
 	oldState = vmThread->omrVMThread->vmState;
@@ -145,7 +145,6 @@ static UDATA internalGrowJavaStack(J9VMThread * vmThread, UDATA newStackSize)
 #ifdef PAINT_OLD_STACK
 	vmThread->tempSlot = (UDATA) vmThread->sp;
 #endif
-
 	walkState.walkThread = vmThread;
 	walkState.flags = J9_STACKWALK_ITERATE_FRAMES | J9_STACKWALK_SKIP_INLINES;
 	walkState.frameWalkFunction = growFrameIterator;
@@ -169,7 +168,7 @@ static UDATA internalGrowJavaStack(J9VMThread * vmThread, UDATA newStackSize)
 	}
 #endif
 
-	vmThread->javaVM->walkStackFrames(vmThread, &walkState);
+	vmThread->javaVM->walkStackFrames(vmThread, & walkState);
 
 #ifdef J9VM_INTERP_NATIVE_SUPPORT
 	if (vmThread->javaVM->jitConfig) {
@@ -410,7 +409,7 @@ static UDATA growFrameIterator(J9VMThread * vmThread, J9StackWalkState * walkSta
 					if ((UDATA) walkState->pc > J9SF_MAX_SPECIAL_FRAME_TYPE) {
 						if (*walkState->pc == 0xFF) { /* impdep2 = 0xFF - indicates a JNI call-in frame */
 							if (walkState->walkedEntryLocalStorage) {
-								if (addI2J(walkState, &(walkState->walkedEntryLocalStorage->i2jState))) {
+								if (addI2J(walkState, walkState->i2jState)) {
 addFailed:
 									walkState->restartException = (void *) 1;
 									return J9_STACKWALK_STOP_ITERATING;

@@ -106,9 +106,9 @@ public class JITStackWalker
 		getImpl().jitPrintRegisterMapArray(walkState,description);
 	}
 	
-	static J9JITExceptionTablePointer jitGetExceptionTableFromPC(J9VMThreadPointer walkThread, U8Pointer pc) throws CorruptDataException
+	static J9JITExceptionTablePointer jitGetExceptionTableFromPC(J9VMThreadPointer walkThread, U8Pointer pc, J9JavaVMPointer javaVM) throws CorruptDataException
 	{
-		return getImpl().jitGetExceptionTableFromPC(walkThread, pc);
+		return getImpl().jitGetExceptionTableFromPC(walkThread, pc, javaVM);
 	}
 	
 	private static IJITStackWalker impl;
@@ -137,7 +137,7 @@ public class JITStackWalker
 
 		public void jitPrintRegisterMapArray(WalkState walkState, String description) throws CorruptDataException;
 		
-		public J9JITExceptionTablePointer jitGetExceptionTableFromPC(J9VMThreadPointer walkThread, U8Pointer pc) throws CorruptDataException;
+		public J9JITExceptionTablePointer jitGetExceptionTableFromPC(J9VMThreadPointer walkThread, U8Pointer pc, J9JavaVMPointer javaVM) throws CorruptDataException;
 	}
 
 	/**
@@ -309,11 +309,11 @@ public class JITStackWalker
 		{
 			/* this is done with a macro in C */
 			if (! J9BuildFlags.jit_fullSpeedDebug) {
-				return jitGetExceptionTableFromPC(walkState.walkThread, walkState.pc);
+				return jitGetExceptionTableFromPC(walkState.walkThread, walkState.pc, walkState.javaVM);
 			}
 			
 			J9JITDecompilationInfoPointer stack;
-			J9JITExceptionTablePointer result = jitGetExceptionTableFromPC(walkState.walkThread, walkState.pc);
+			J9JITExceptionTablePointer result = jitGetExceptionTableFromPC(walkState.walkThread, walkState.pc, walkState.javaVM);
 
 			walkState.decompilationRecord = J9JITDecompilationInfoPointer.NULL;
 			if (result.notNull()) return result;
@@ -333,7 +333,7 @@ public class JITStackWalker
 					}
 					walkState.decompilationRecord = walkState.decompilationStack;
 					walkState.decompilationStack = walkState.decompilationStack.next();
-					return jitGetExceptionTableFromPC(walkState.walkThread,walkState.pc);
+					return jitGetExceptionTableFromPC(walkState.walkThread, walkState.pc, walkState.javaVM);
 				}
 
 				stack = walkState.decompilationStack;
@@ -348,9 +348,9 @@ public class JITStackWalker
 		}
 
 		public J9JITExceptionTablePointer jitGetExceptionTableFromPC(
-				J9VMThreadPointer walkThread, U8Pointer pc) throws CorruptDataException
+				J9VMThreadPointer walkThread, U8Pointer pc, J9JavaVMPointer javaVM) throws CorruptDataException
 		{
-			J9JITConfigPointer jitConfig = walkThread.javaVM().jitConfig();
+			J9JITConfigPointer jitConfig = javaVM.jitConfig();
 			
 			if (jitConfig.isNull()) {
 				return J9JITExceptionTablePointer.NULL;
@@ -646,7 +646,10 @@ public class JITStackWalker
 
 		private U64Pointer jitFPRParmAddress(WalkState walkState, UDATA fpParmNumber) throws CorruptDataException
 		{
-			U64Pointer base = U64Pointer.cast(walkState.walkedEntryLocalStorage.jitFPRegisterStorageBase());
+			if (walkState.jitFPRegisterStorageBase.isNull()) {
+				throw new CorruptDataException("jitFPRegisterStorageBase should not be NULL.");
+			}
+			U64Pointer base = U64Pointer.cast(walkState.jitFPRegisterStorageBase);
 
 			if (J9BuildFlags.arch_s390) {
 				/* 390 uses FPR0/2/4/6 for arguments, so double fpParmNumber to get the right register */
@@ -983,7 +986,7 @@ public class JITStackWalker
 		private void jitAddSpilledRegistersForResolve(WalkState walkState) throws CorruptDataException
 		{
 			try {
-				UDATAPointer slotCursor = walkState.walkedEntryLocalStorage.jitGlobalStorageBase();
+				UDATAPointer slotCursor = walkState.jitGlobalStorageBase;
 				int mapCursor = 0;
 				int i;
 
@@ -1000,7 +1003,7 @@ public class JITStackWalker
 
 		private void jitAddSpilledRegistersForINL(WalkState walkState) throws CorruptDataException
 		{
-			UDATAPointer slotCursor = walkState.walkedEntryLocalStorage.jitGlobalStorageBase();
+			UDATAPointer slotCursor = walkState.jitGlobalStorageBase;
 			int i;
 		
 			for (i = 0; i < J9SW_JIT_CALLEE_PRESERVED_SIZE; ++i) {

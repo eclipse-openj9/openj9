@@ -250,7 +250,7 @@ extern J9_CFUNC UtInterface * getTraceInterfaceFromVM(J9JavaVM *j9vm);
 #define PORT_ACCESS_FROM_VMC(vmContext) J9PortLibrary *privatePortLibrary = (vmContext)->javaVM->portLibrary
 #define PORT_ACCESS_FROM_GINFO(javaVM) J9PortLibrary *privatePortLibrary = (javaVM)->portLibrary
 #define PORT_ACCESS_FROM_JITCONFIG(jitConfig) J9PortLibrary *privatePortLibrary = (jitConfig)->javaVM->portLibrary
-#define PORT_ACCESS_FROM_WALKSTATE(walkState) J9PortLibrary *privatePortLibrary = (walkState)->walkThread->javaVM->portLibrary
+#define PORT_ACCESS_FROM_WALKSTATE(walkState) J9PortLibrary *privatePortLibrary = (walkState)->javaVM->portLibrary
 #define OMRPORT_ACCESS_FROM_J9VMTHREAD(vmContext) OMRPORT_ACCESS_FROM_J9PORT((vmContext)->javaVM->portLibrary)
 #define PORT_ACCESS_FROM_VMI(vmi) J9PortLibrary *privatePortLibrary = (*vmi)->GetPortLibrary(vmi)
 /** @} */

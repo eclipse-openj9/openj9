@@ -784,7 +784,7 @@ UDATA jitExceptionHandlerSearch(J9VMThread * currentThread, J9StackWalkState * w
       UDATA deltaPC;
       J9Class * thrownClass = (J9Class *) walkState->userData4;
       UDATA (* isExceptionTypeCaughtByHandler) (J9VMThread *, J9Class *, J9ConstantPool *, UDATA, J9StackWalkState *) =
-         walkState->walkThread->javaVM->internalVMFunctions->isExceptionTypeCaughtByHandler;
+         walkState->javaVM->internalVMFunctions->isExceptionTypeCaughtByHandler;
 
       /* we subtract one from the jitPC as jitPCs that come in are always pointing at the beginning of the next instruction
        * (ie: the return address from the child call).  In the case of trap handlers, the GP handler has already bumped the PC
@@ -814,7 +814,7 @@ UDATA jitExceptionHandlerSearch(J9VMThread * currentThread, J9StackWalkState * w
                   if (bytecodePCBytes)
                      walkState->userData1 = (void *)(intptr_t)*get32BitByteCodeIndexFromExceptionTable(walkState->jitInfo);
                   walkState->userData2 = (void *) (getJittedMethodStartPC(walkState->jitInfo) + getJit32BitTableEntryHandlerPC(handlerCursor));
-                  walkState->restartPoint = walkState->walkThread->javaVM->jitConfig->runJITHandler;
+                  walkState->restartPoint = walkState->javaVM->jitConfig->runJITHandler;
                   walkState->userData3 = (void *) J9_EXCEPT_SEARCH_JIT_HANDLER;
                   walkState->userData4 = (void *) synthetic;
                   return J9_STACKWALK_STOP_ITERATING;
@@ -845,7 +845,7 @@ UDATA jitExceptionHandlerSearch(J9VMThread * currentThread, J9StackWalkState * w
                   if (bytecodePCBytes)
                      walkState->userData1 = (void *)(intptr_t)*get16BitByteCodeIndexFromExceptionTable(walkState->jitInfo);
                   walkState->userData2 = (void *) (getJittedMethodStartPC(walkState->jitInfo) + getJit16BitTableEntryHandlerPC(handlerCursor));
-                  walkState->restartPoint = walkState->walkThread->javaVM->jitConfig->runJITHandler;
+                  walkState->restartPoint = walkState->javaVM->jitConfig->runJITHandler;
                   walkState->userData3 = (void *) J9_EXCEPT_SEARCH_JIT_HANDLER;
                   walkState->userData4 = (void *) synthetic;
                   return J9_STACKWALK_STOP_ITERATING;
@@ -1426,7 +1426,7 @@ void walkJITFrameSlotsForInternalPointers(J9StackWalkState * walkState,  U_8 ** 
        /* If base array was moved by a non zero displacement
        */
 #if defined(J9VM_INTERP_STACKWALK_TRACING)
-      if ((displacement != 0) || (walkState->walkThread->javaVM->runtimeFlags & J9_RUNTIME_SNIFF_AND_WHACK))
+      if ((displacement != 0) || (walkState->javaVM->runtimeFlags & J9_RUNTIME_SNIFF_AND_WHACK))
 #else
       if (displacement != 0)
 #endif
@@ -2506,5 +2506,5 @@ UDATA osrScratchBufferSize(J9VMThread* currentThread, J9JITExceptionTable *metaD
 J9JITExceptionTable *
 jitGetMetaDataFromPC(J9VMThread* currentThread, UDATA pc)
    {
-   return jitGetExceptionTableFromPC(currentThread, pc);
+   return jitGetExceptionTableFromPC(currentThread, pc, currentThread->javaVM);
    }

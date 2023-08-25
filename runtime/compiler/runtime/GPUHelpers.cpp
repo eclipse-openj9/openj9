@@ -1096,7 +1096,7 @@ initCUDA(J9VMThread *vmThread, int tracing, const char *ptxSource, int deviceId,
 static GpuMetaData* getGPUMetaData(uint8_t* startPC)
    {
       J9VMThread *vmThread = jitConfig->javaVM->internalVMFunctions->currentVMThread(jitConfig->javaVM);
-      TR_MethodMetaData * metaData = jitConfig->jitGetExceptionTableFromPC(vmThread, (UDATA)startPC);
+      TR_MethodMetaData * metaData = jitConfig->jitGetExceptionTableFromPC(vmThread, (UDATA)startPC, vmThread->javaVM);
       return (GpuMetaData*)metaData->gpuCode;
    }
 

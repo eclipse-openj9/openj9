@@ -27,6 +27,7 @@ import com.ibm.j9ddr.vm29.pointer.U8Pointer;
 import com.ibm.j9ddr.vm29.pointer.UDATAPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ConstantPoolPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9I2JStatePointer;
+import com.ibm.j9ddr.vm29.pointer.generated.J9JavaVMPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9JITDecompilationInfoPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9JITExceptionTablePointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9MethodPointer;
@@ -44,9 +45,10 @@ import static com.ibm.j9ddr.vm29.structure.J9StackWalkConstants.*;
  */
 public class WalkState
 {
-	
 	/** Thread to be walked */
-	public J9VMThreadPointer walkThread;
+	public J9VMThreadPointer walkThread = J9VMThreadPointer.NULL;
+
+	public J9JavaVMPointer javaVM = J9JavaVMPointer.NULL;
 	
 	/** Flags controlling the walk
 	 * @see StackWalkerConstants 
@@ -54,36 +56,36 @@ public class WalkState
 	public long flags;
 	
 	/** Base pointer */
-	public UDATAPointer bp;
+	public UDATAPointer bp = UDATAPointer.NULL;
 	
-	public UDATAPointer unwindSP;
+	public UDATAPointer unwindSP = UDATAPointer.NULL;
 	
 	/** Program counter */
-	public U8Pointer pc;
+	public U8Pointer pc = U8Pointer.NULL;
 	
 	/** Top-of-stack pointer */
-	public UDATAPointer sp;
+	public UDATAPointer sp = UDATAPointer.NULL;
 	
 	/** Address of argument 0 */
-	public UDATAPointer arg0EA;
+	public UDATAPointer arg0EA = UDATAPointer.NULL;
 	
-	public J9MethodPointer literals;
+	public J9MethodPointer literals = J9MethodPointer.NULL;
 	
-	public UDATAPointer walkSP;
+	public UDATAPointer walkSP = UDATAPointer.NULL;
 	
-	public UDATA argCount;
+	public UDATA argCount = new UDATA(0);
 	
-	public J9ConstantPoolPointer constantPool;
+	public J9ConstantPoolPointer constantPool = J9ConstantPoolPointer.NULL;
 	
-	public J9MethodPointer method;
+	public J9MethodPointer method = J9MethodPointer.NULL;
 	
 	public J9JITExceptionTablePointer jitInfo = J9JITExceptionTablePointer.NULL;
 	
-	public UDATA frameFlags;
+	public UDATA frameFlags = new UDATA(0);
 	
-	public UDATA resolveFrameFlags;
+	public UDATA resolveFrameFlags = new UDATA(0);
 	
-	public UDATAPointer searchValue;
+	public UDATAPointer searchValue = UDATAPointer.NULL;
 	
 	public int skipCount;
 	
@@ -105,9 +107,9 @@ public class WalkState
 	
 	public long inlineDepth;
 	
-	public UDATAPointer cacheCursor;
+	public UDATAPointer cacheCursor = UDATAPointer.NULL;
 	
-	public J9JITDecompilationInfoPointer decompilationRecord;
+	public J9JITDecompilationInfoPointer decompilationRecord = J9JITDecompilationInfoPointer.NULL;
 	
 	public boolean searchFrameFound;
 	
@@ -121,27 +123,35 @@ public class WalkState
 		}
 	}
 	
-	public J9VMEntryLocalStoragePointer walkedEntryLocalStorage;
+	public J9VMEntryLocalStoragePointer walkedEntryLocalStorage = J9VMEntryLocalStoragePointer.NULL;
 	
-	public J9I2JStatePointer i2jState;
+	public J9I2JStatePointer i2jState = J9I2JStatePointer.NULL;
 	
-	public J9JITDecompilationInfoPointer decompilationStack;
+	public J9JITDecompilationInfoPointer decompilationStack = J9JITDecompilationInfoPointer.NULL;
 	
-	public PointerPointer pcAddress;
+	public PointerPointer pcAddress = PointerPointer.NULL;
 	
-	public UDATA outgoingArgCount;
+	public UDATA outgoingArgCount = new UDATA(0);
 	
-	public U8Pointer objectSlotBitVector;
+	public U8Pointer objectSlotBitVector = U8Pointer.NULL;
 	
-	public UDATA elsBitVector;
+	public UDATA elsBitVector = new UDATA(0);
 	
-	public U8Pointer bytecodePCOffset;
+	public U8Pointer bytecodePCOffset = U8Pointer.NULL;
 	
-	public UDATAPointer j2iFrame;
+	public UDATAPointer j2iFrame = UDATAPointer.NULL;
 	
-	public UDATA previousFrameFlags;
+	public UDATA previousFrameFlags = new UDATA(0);
 	
 	public int slotIndex;
 	
 	public int slotType;
+
+	public UDATA privateFlags = new UDATA(0);
+
+	public UDATAPointer jitGlobalStorageBase = UDATAPointer.NULL;
+
+	public UDATAPointer jitFPRegisterStorageBase = UDATAPointer.NULL;
+
+	public J9VMEntryLocalStoragePointer oldEntryLocalStorage = J9VMEntryLocalStoragePointer.NULL;
 }

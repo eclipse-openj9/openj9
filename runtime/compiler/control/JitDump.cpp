@@ -473,7 +473,7 @@ runJitdump(char *label, J9RASdumpContext *context, J9RASdumpAgent *agent)
             J9Method *userMethod = allMethodsFromSignatureStartDo(&state, context->javaVM, 0, className, classNameLength, methodName, methodNameLength, methodSig, methodSigLength);
             while (NULL != userMethod)
                {
-               J9JITExceptionTable *metadata = jitConfig->jitGetExceptionTableFromPC(crashedThread, reinterpret_cast<UDATA>(userMethod->extra));
+               J9JITExceptionTable *metadata = jitConfig->jitGetExceptionTableFromPC(crashedThread, reinterpret_cast<UDATA>(userMethod->extra), crashedThread->javaVM);
                if (NULL != metadata)
                   {
                   auto *bodyInfo = reinterpret_cast<TR_PersistentJittedBodyInfo *>(metadata->bodyInfo);
@@ -542,7 +542,7 @@ runJitdump(char *label, J9RASdumpContext *context, J9RASdumpAgent *agent)
 
             if (J9PORT_SIG_VALUE_ADDRESS == infoType)
                {
-               J9JITExceptionTable *metadata = jitConfig->jitGetExceptionTableFromPC(crashedThread, *reinterpret_cast<UDATA*>(value));
+               J9JITExceptionTable *metadata = jitConfig->jitGetExceptionTableFromPC(crashedThread, *reinterpret_cast<UDATA*>(value), crashedThread->javaVM);
                if (NULL != metadata)
                   {
                   auto *bodyInfo = reinterpret_cast<TR_PersistentJittedBodyInfo *>(metadata->bodyInfo);

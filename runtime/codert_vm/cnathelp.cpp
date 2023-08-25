@@ -79,7 +79,7 @@ fixStackForSyntheticHandler(J9VMThread *currentThread)
 	if (NULL != decomp) {
 		J9SFJITResolveFrame *resolveFrame = (J9SFJITResolveFrame*)currentThread->sp;
 		void *jitPC = MASK_PC(resolveFrame->returnAddress);
-		J9JITExceptionTable *metaData = jitGetExceptionTableFromPC(currentThread, (UDATA)jitPC);
+		J9JITExceptionTable *metaData = jitGetExceptionTableFromPC(currentThread, (UDATA)jitPC, currentThread->javaVM);
 		Assert_CodertVM_false(NULL == metaData);
 		UDATA *oldSP = (UDATA*)(resolveFrame + 1);
 		UDATA *bp = oldSP + getJitTotalFrameSize(metaData);
@@ -1714,7 +1714,7 @@ slow_jitMonitorEnterImpl(J9VMThread *currentThread, bool forMethod)
 			void * stackMap = NULL;
 			void * inlineMap = NULL;
 			J9JavaVM *vm = currentThread->javaVM;
-			J9JITExceptionTable *metaData = vm->jitConfig->jitGetExceptionTableFromPC(currentThread, (UDATA)oldPC);
+			J9JITExceptionTable *metaData = vm->jitConfig->jitGetExceptionTableFromPC(currentThread, (UDATA)oldPC, currentThread->javaVM);
 			Assert_CodertVM_false(NULL == metaData);
 			jitGetMapsFromPC(currentThread, vm, metaData, (UDATA)oldPC, &stackMap, &inlineMap);
 			Assert_CodertVM_false(NULL == inlineMap);
@@ -2642,7 +2642,7 @@ old_slow_jitRetranslateMethod(J9VMThread *currentThread)
 	 *		- a decompile point
 	 */
 	bool callerAlreadyBeingDecompiled  = false;
-	if (NULL == jitGetExceptionTableFromPC(currentThread, (UDATA)jitEIP)) {
+	if (NULL == jitGetExceptionTableFromPC(currentThread, (UDATA)jitEIP, currentThread->javaVM)) {
 		U_8 **returnTable = (U_8**)jitConfig->i2jReturnTable;
 		callerAlreadyBeingDecompiled = true;
 		for (UDATA i = 0; i < J9SW_JIT_RETURN_TABLE_SIZE; ++i) {

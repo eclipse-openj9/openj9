@@ -265,7 +265,7 @@ jitResetAllMethods(J9VMThread *currentThread)
 			if (0 == (extra & J9_STARTPC_NOT_TRANSLATED)) {
 				/* Do not reset JIT INLs (currently in FSD there are no compiled JNI natives) */
 				if (0 == (J9_ROM_METHOD_FROM_RAM_METHOD(method)->modifiers & J9AccNative)) {
-					J9JITExceptionTable *metaData = vm->jitConfig->jitGetExceptionTableFromPC(currentThread, extra);
+					J9JITExceptionTable *metaData = vm->jitConfig->jitGetExceptionTableFromPC(currentThread, extra, currentThread->javaVM);
 					if (NULL != metaData) {
 						/* 0xCC is the "int3" instruction on x86.
 						 * This will cause a crash if this instruction is executed.

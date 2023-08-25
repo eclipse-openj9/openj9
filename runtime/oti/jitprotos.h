@@ -102,7 +102,7 @@ extern J9_CFUNC UDATA  jitWalkStackFrames (J9StackWalkState *walkState);
  *
  * @note           If jitPC is NULL this function will return NULL.
  */
-extern J9_CFUNC J9JITExceptionTable * jitGetExceptionTableFromPC (J9VMThread * vmThread, UDATA jitPC);
+extern J9_CFUNC J9JITExceptionTable * jitGetExceptionTableFromPC(J9VMThread *vmThread, UDATA jitPC, J9JavaVM *javaVM);
 extern J9_CFUNC UDATA  jitGetOwnedObjectMonitors(J9StackWalkState *state);
 #if (defined(J9VM_INTERP_STACKWALK_TRACING)) /* priv. proto (autogen) */
 extern J9_CFUNC void jitPrintRegisterMapArray (J9StackWalkState * walkState, char * description);
