@@ -1064,8 +1064,8 @@ TR_CISCGraph::initializeGraphs(TR::Compilation *c)
    bool genMemcpy = c->cg()->getSupportsReferenceArrayCopy() || c->cg()->getSupportsPrimitiveArrayCopy();
    bool genMemset = c->cg()->getSupportsArraySet();
    bool genMemcmp = c->cg()->getSupportsArrayCmp();
-   bool genIDiv2Mul = c->cg()->getSupportsLoweringConstIDiv();
-   bool genLDiv2Mul = c->cg()->getSupportsLoweringConstLDiv();
+   bool genIDiv2Mul = c->cg()->getSupportsIMulHigh();
+   bool genLDiv2Mul = c->cg()->getSupportsLMulHigh();
    // FIXME: We need getSupportsCountDecimalDigit() like interface
    // this idiom is only enabled on 390 for the moment
 
