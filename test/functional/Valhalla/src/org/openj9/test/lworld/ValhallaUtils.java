@@ -35,4 +35,9 @@ public class ValhallaUtils {
 	static final int ACC_IDENTITY = 0x20;
 	static final int ACC_VALUE_TYPE = 0x040;
 	static final int ACC_PRIMITIVE = 0x800;
+
+	/* ImplicitCreation flags */
+	static final int ACC_DEFAULT = 0x1;
+	static final int ACC_NON_ATOMIC = 0x2;
+
 }
