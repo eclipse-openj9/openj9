@@ -57,6 +57,36 @@ public class ValhallaAttributeGenerator extends ClassLoader {
 		return generator.defineClass(name, bytes, 0, bytes.length);
 	}
 
+	public static Class<?> generateFieldWithMultipleNullRestrictedAttributes(String className, String fieldClassName) throws Throwable {
+		/* Generate field class - value class with ImplicitCreation attribute and ACC_DEFAULT flag set  */
+		byte[] fieldClassBytes = generateClass(fieldClassName, ACC_FINAL + ValhallaUtils.ACC_VALUE_TYPE,
+			new Attribute[] {new ImplicitCreationAttribute(ValhallaUtils.ACC_DEFAULT)});
+		Class<?> fieldClass = generator.defineClass(fieldClassName, fieldClassBytes, 0, fieldClassBytes.length);
+
+		/* Generate class with field and multiple NullRestricted attributes */
+		byte[] classBytes = generateClassWithField(className, ValhallaUtils.ACC_IDENTITY,
+			"field", fieldClass.descriptorString(), new Attribute[]{new NullRestrictedAttribute(), new NullRestrictedAttribute()});
+		return generator.defineClass(className, classBytes, 0, classBytes.length);
+	}
+
+	public static Class<?> generateNullRestrictedAttributeInPrimitiveField(String className) throws Throwable {
+		/* Generate class with primitive field and a NullRestricted attribute */
+		byte[] classBytes = generateClassWithField(className, ValhallaUtils.ACC_IDENTITY,
+			"field", "I", new Attribute[]{new NullRestrictedAttribute()});
+		return generator.defineClass(className, classBytes, 0, classBytes.length);
+	}
+
+	public static Class<?> generateNullRestrictedAttributeInArrayField(String className, String fieldClassName) throws Throwable {
+		/* Generate field class - value class with ImplicitCreation attribute and ACC_DEFAULT flag set.  */
+		byte[] fieldClassBytes = generateClass(fieldClassName, ACC_FINAL + ValhallaUtils.ACC_VALUE_TYPE,
+			new Attribute[] {new ImplicitCreationAttribute(ValhallaUtils.ACC_DEFAULT)});
+		Class<?> fieldClass = generator.defineClass(fieldClassName, fieldClassBytes, 0, fieldClassBytes.length);
+
+		/* Generate class field field that is an array with a NullRestricted attribute */
+		byte[] classBytes = generateClassWithField(className, ValhallaUtils.ACC_IDENTITY,
+			"field", "[" + fieldClass.descriptorString(), new Attribute[]{new NullRestrictedAttribute()});
+		return generator.defineClass(className, classBytes, 0, classBytes.length);
+	}
 	public static Class<?> findLoadedTestClass(String name) {
 		return generator.findLoadedClass(name);
 	}
@@ -69,6 +99,21 @@ public class ValhallaAttributeGenerator extends ClassLoader {
 		if (null != attributes) {
 			for (Attribute attr : attributes) {
 				classWriter.visitAttribute(attr);
+			}
+		}
+
+		classWriter.visitEnd();
+		return classWriter.toByteArray();
+	}
+
+	public static byte[] generateClassWithField(String name, int classFlags, String fieldName, String fieldDescriptor, Attribute[] fieldAttributes) {
+		ClassWriter classWriter = new ClassWriter(0);
+		classWriter.visit(ValhallaUtils.CLASS_FILE_MAJOR_VERSION, classFlags, name, null, "java/lang/Object", null);
+
+		FieldVisitor fieldVisitor = classWriter.visitField(0, fieldName, fieldDescriptor, null, null);
+		if (null != fieldAttributes) {
+			for (Attribute attr : fieldAttributes) {
+				fieldVisitor.visitAttribute(attr);
 			}
 		}
 

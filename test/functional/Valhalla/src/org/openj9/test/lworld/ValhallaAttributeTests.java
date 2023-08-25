@@ -84,4 +84,22 @@ public class ValhallaAttributeTests {
 	static public void testValueTypeClassWithImplicitCreationAttribute() throws Throwable {
 		ValhallaAttributeGenerator.generateValidClassWithImplicitCreationAttribute("ValueTypeClassWithImplicitCreationAttribute");
 	}
+
+	/* There must be no more than one NullRestricted attribute in the attributes table of a field_info structure */
+	@Test(expectedExceptions = java.lang.ClassFormatError.class, expectedExceptionsMessageRegExp = ".*Multiple NullRestricted attributes present.*")
+	static public void testMultipleNullRestrictedAttributes() throws Throwable {
+		ValhallaAttributeGenerator.generateFieldWithMultipleNullRestrictedAttributes("TestMultipleNullRestrictedAttributes", "TestMultipleNullRestrictedAttributesField");
+	}
+
+	/* There must not be a NullRestricted attribute in the attributes table of a field_info structure whose descriptor_index references a primitive type. */
+	@Test(expectedExceptions = java.lang.ClassFormatError.class, expectedExceptionsMessageRegExp = ".*A field with a primitive type cannot have a NullRestricted attribute.*")
+	static public void testNullRestrictedNotAllowedInPrimitiveField() throws Throwable {
+		ValhallaAttributeGenerator.generateNullRestrictedAttributeInPrimitiveField("TestNullRestrictedNotAllowedInPrimitiveField");
+	}
+
+	/* There must not be a NullRestricted attribute in the attributes table of a field_info structure whose descriptor_index references an array type */
+	@Test(expectedExceptions = java.lang.ClassFormatError.class, expectedExceptionsMessageRegExp = ".*A field with an array type cannot have a NullRestricted attribute.*")
+	static public void testNullRestrictedNotAllowedInArrayTypeField() throws Throwable {
+		ValhallaAttributeGenerator.generateNullRestrictedAttributeInArrayField("TestNullRestrictedNotAllowedInArrayTypeField", "TestNullRestrictedNotAllowedInArrayTypeFieldField");
+	}
 }
