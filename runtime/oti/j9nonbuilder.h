@@ -1109,6 +1109,9 @@ typedef struct J9SharedClassJavacoreDataDescriptor {
 	UDATA corruptValue;
 	UDATA softMaxBytes;
 	UDATA otherBytes;
+#if defined(J9VM_OPT_JITSERVER)
+	UDATA usingJITServerAOTCacheLayer;
+#endif /* defined(J9VM_OPT_JITSERVER) */
 	/* The fields above are stats for the top layer, and the fields below are the summary for all layers */
 	UDATA ccCount;
 	UDATA ccStartedCount;
@@ -1270,6 +1273,9 @@ typedef struct J9SharedCacheAPI {
 	U_8 inContainer; /* It is TRUE only when xShareClassesPresent is FALSE and J9_SHARED_CACHE_DEFAULT_BOOT_SHARING(vm) is TRUE and the JVM is running in container */
 	I_8 layer;
 	U_8 xShareClassCacheDisabledOnCRIURestore;
+#if defined(J9VM_OPT_JITSERVER)
+	U_8 usingJITServerAOTCacheLayer;
+#endif /* defined(J9VM_OPT_JITSERVER) */
 } J9SharedCacheAPI;
 
 typedef struct J9SharedClassConfig {

@@ -43,7 +43,7 @@
  * CACHE AREAS
  *
  * Cache areas consists of a header followed by a series of segment entries
- * followed by free space followed by a series of cache entries. 
+ * followed by free space followed by a series of cache entries.
  * The layout of a cache entry is described later.
  *
  * *-----------------------------*---------*-------*-------*-------------------*-------*-------*-------------------*
@@ -60,7 +60,7 @@
  * ^                             ^                         ^                   ^               ^                   ^
  * _theca				   readWriteSRP                segmentSRP          updateSRP      CADEBUGSTART         CAEND
  */
- 
+
 #define CASTART(ca)  (((BlockPtr)(ca)) + (ca)->readWriteBytes)
 #define CADEBUGSTART(ca) (((BlockPtr)(ca)) + (ca)->totalBytes - (ca)->debugRegionSize)
 #define CAEND(ca) (((BlockPtr)(ca)) + (ca)->totalBytes)
@@ -127,7 +127,7 @@ SH_CompositeCacheImpl::SH_SharedCacheHeaderInit::newInstance(SH_SharedCacheHeade
 	return memForConstructor;
 }
 
-void 
+void
 SH_CompositeCacheImpl::SH_SharedCacheHeaderInit::init(BlockPtr data, U_32 len, I_32 minAOT, I_32 maxAOT, I_32 minJIT, I_32 maxJIT, U_32 readWriteLen, U_32 softMaxBytes)
 {
 	J9SharedCacheHeader* ca = (J9SharedCacheHeader*)data;
@@ -167,7 +167,7 @@ SH_CompositeCacheImpl::SH_SharedCacheHeaderInit::init(BlockPtr data, U_32 len, I
 
 /**
  * Constructs a new instance of SH_CompositeCache.
- * 
+ *
  * @param [in] vm A Java VM
  * @param [in] memForConstructor Memory for building this object as
  *       returned by @ref getRequiredConstrBytes
@@ -351,7 +351,7 @@ SH_CompositeCacheImpl::initialize(J9JavaVM* vm, BlockPtr memForConstructor, J9Sh
 	_parent = NULL;
 	_sharedClassConfig = sharedClassConfig;
 	_layer = layer;
-	
+
 	Trc_SHR_CC_initialize_Exit();
 }
 
@@ -388,7 +388,7 @@ SH_CompositeCacheImpl::getRequiredConstrBytes(bool isNested, bool startupForStat
  *
  * @return Number of bytes required for getRequiredConstrBytesWithCommonInfo
  */
-UDATA 
+UDATA
 SH_CompositeCacheImpl::getRequiredConstrBytesWithCommonInfo(bool isNested, bool startupForStats)
 {
 	UDATA reqBytes = SH_CompositeCacheImpl::getRequiredConstrBytes(isNested, startupForStats);
@@ -396,7 +396,7 @@ SH_CompositeCacheImpl::getRequiredConstrBytesWithCommonInfo(bool isNested, bool 
 	return reqBytes;
 }
 
-/** 
+/**
  * Clean up resources used by the cache
  *
  * @param [in] currentThread  Pointer to J9VMThread structure for the current thread
@@ -405,7 +405,7 @@ void
 SH_CompositeCacheImpl::cleanup(J9VMThread* currentThread)
 {
 	Trc_SHR_CC_cleanup_Entry(currentThread);
-	
+
 	if (_oscache) {
 		_oscache->cleanup();
 		if (_headerProtectMutex) {
@@ -424,11 +424,11 @@ SH_CompositeCacheImpl::cleanup(J9VMThread* currentThread)
 		omrthread_tls_free(_commonCCInfo->writeMutexEntryCount);
 		_commonCCInfo->writeMutexEntryCount = 0;
 	}
-	
+
 	Trc_SHR_CC_cleanup_Exit(currentThread);
 }
 
-/** 
+/**
  * Check whether a crash has been detected while updating the shared classes cache
  *
  * @param [in,out] localCrashCntr  Pointer to field containing expected crash counter value.  On return, this
@@ -490,7 +490,7 @@ bool
 SH_CompositeCacheImpl::isCacheCorrupt(void)
 {
 	SH_CompositeCacheImpl *ccToUse;
-	
+
 	/* If read-only cache discovers corruption, the local flag will be set */
 	if (_commonCCInfo->cacheIsCorrupt == 1) {
 		return true;
@@ -530,7 +530,7 @@ SH_CompositeCacheImpl::setCorruptCache(J9VMThread* currentThread)
 
 	if ( !((UnitTest::CORRUPT_CACHE_TEST == UnitTest::unitTest) && (0 != (*_runtimeFlags & J9SHR_RUNTIMEFLAG_ENABLE_STATS))) ) {
 		/* This function may be called during shrtest with J9SHR_RUNTIMEFLAG_ENABLE_STATS. In this case
-		 * if the cache is corrupt we skip marking the cache header, which allows the next test use the 
+		 * if the cache is corrupt we skip marking the cache header, which allows the next test use the
 		 * same cache and find the same problems on its own.
 		 */
 		ccToUse->_theca->corruptFlag = 1;
@@ -591,8 +591,8 @@ SH_CompositeCacheImpl::setCorruptCache(J9VMThread *currentThread, IDATA corrupti
 }
 
 /* Set the various boundaries on the cache areas to ensure that they meet with the requirements
- * Should only be called for a new cache 
- * Prereq: Cache header should be unprotected - this is only done during initialization 
+ * Should only be called for a new cache
+ * Prereq: Cache header should be unprotected - this is only done during initialization
  * Don't derive the piConfig from currentThread as we need to be able to pass it through in the unit tests */
 void
 SH_CompositeCacheImpl::setCacheAreaBoundaries(J9VMThread* currentThread, J9SharedClassPreinitConfig* piConfig)
@@ -602,9 +602,9 @@ SH_CompositeCacheImpl::setCacheAreaBoundaries(J9VMThread* currentThread, J9Share
 	BlockPtr finalSegmentStart;
 	U_32 numOfSharedNodes;
 	U_32 maxSharedStringTableSize;
-	
+
 	PORT_ACCESS_FROM_JAVAVM(vm);
-	
+
 	if (_readOnlyOSCache) {
 		Trc_SHR_Assert_ShouldNeverHappen();
 		return;
@@ -657,7 +657,7 @@ SH_CompositeCacheImpl::setCacheAreaBoundaries(J9VMThread* currentThread, J9Share
 
 	/* Work out where the segment area will now start from */
 	finalSegmentStart = (BlockPtr)SHC_PAD(((UDATA)((BlockPtr)_theca) + finalReadWriteSize + sizeof(J9SharedCacheHeader)), SHC_WORDALIGN);
-	
+
 	/* If we're rounding to page sizes, the segment area and cache end will need to be reset onto page boundaries */
 	if (*_runtimeFlags & J9SHR_RUNTIMEFLAG_ENABLE_ROUND_TO_PAGE_SIZE) {
 		BlockPtr origCacheEnd = CAEND(_theca);
@@ -667,10 +667,10 @@ SH_CompositeCacheImpl::setCacheAreaBoundaries(J9VMThread* currentThread, J9Share
 
 		/* Reset the segment start area onto a page boundary */
 		finalSegmentStart = (BlockPtr)ROUND_UP_TO(_osPageSize, (UDATA)finalSegmentStart);
-		
+
 		/* Now, adjust the end of the cache so that it is on a page boundary */
 		newCacheEnd = (BlockPtr)ROUND_DOWN_TO(_osPageSize, (UDATA)origCacheEnd);
-		
+
 		_theca->totalBytes -= (U_32)(origCacheEnd - newCacheEnd);
 		_theca->roundedPagesFlag = 1;
 
@@ -697,7 +697,7 @@ SH_CompositeCacheImpl::setCacheAreaBoundaries(J9VMThread* currentThread, J9Share
 	 * if user requested specific size of shared string intern table,
 	 * using all readWrite area for shared intern table might return bigger shared string intern table
 	 * because of extra space gained by page rounding up.
-	 * 
+	 *
 	 * Currently -Xitsn option is not restricted by SHRINIT_MAX_SHARED_STRING_TABLE_NODE_COUNT
 	 *
 	 */
@@ -715,7 +715,7 @@ SH_CompositeCacheImpl::setCacheAreaBoundaries(J9VMThread* currentThread, J9Share
 
 	/*
 	 * Set up the 'debug' region of the cache header
-	 */	
+	 */
 	if (NULL == this->_parent) {
 		/* The size of the cache will be rounded down to a multiple of 'align' which normally the osPageSize.
 		 * On some AIX boxes _osPageSize is zero, in this case we set align to be 4KB.
@@ -727,7 +727,7 @@ SH_CompositeCacheImpl::setCacheAreaBoundaries(J9VMThread* currentThread, J9Share
 		if (0 != _osPageSize) {
 			align = (U_32)_osPageSize;
 		}
-		
+
 		/* If the cache was created with -Xnolinenumbers then the debug area is not created by default.
 		 * If -Xscdmx is used then we will still reserve the debug area.
 		 */
@@ -745,7 +745,7 @@ SH_CompositeCacheImpl::setCacheAreaBoundaries(J9VMThread* currentThread, J9Share
 				debugsize = ROUND_DOWN_TO(align, debugsize);
 			}
 		}
-		
+
 		/* If -Xscdmx is too large, or -Xscdmx was not used then use default size.*/
 		if ( (piConfig->sharedClassDebugAreaBytes == -1) || (debugsize > freeBlockBytes) ) {
 			U_32 newdebugsize = ClassDebugDataProvider::recommendedSize(freeBlockBytes, align);
@@ -753,8 +753,8 @@ SH_CompositeCacheImpl::setCacheAreaBoundaries(J9VMThread* currentThread, J9Share
 				CC_INFO_TRACE3(J9NLS_SHRC_SHRINIT_SCDMX_GRTHAN_SCMX, debugsize, FREEBYTES(_theca), newdebugsize);
 			}
 			debugsize = newdebugsize;
-		}		
-		
+		}
+
 		Trc_SHR_CC_setCacheAreaBoundaries_Event_CreateDebugAreaSize(currentThread, debugsize);
 		ClassDebugDataProvider::HeaderInit(_theca, debugsize);
 		_theca->updateSRP -= (UDATA)debugsize;
@@ -781,7 +781,7 @@ SH_CompositeCacheImpl::setCacheAreaBoundaries(J9VMThread* currentThread, J9Share
 		j9tty_printf(PORTLIB, "   Cache ends at %p\n", CAEND(_theca));
 		j9tty_printf(PORTLIB, "   Cache soft max bytes is %d\n", (IDATA)_theca->softMaxBytes);
 	}
-	
+
 	Trc_SHR_CC_setCacheAreaBoundaries_Exit(currentThread, finalReadWriteSize, _theca->readWriteBytes);
 }
 
@@ -801,7 +801,7 @@ SH_CompositeCacheImpl::setIsLocked(bool value)
 	SH_CompositeCacheImpl *ccToUse;
 
 	ccToUse = ((_ccHead == NULL) ? ((_parent == NULL) ? this : _parent) : _ccHead);
-	
+
 	ccToUse->_theca->locked = (U_32)value;
 }
 
@@ -820,7 +820,7 @@ SH_CompositeCacheImpl::notifyPagesRead(BlockPtr start, BlockPtr end, UDATA expec
 			Trc_SHR_Assert_ShouldNeverHappen();
 			return;
 		}
-		
+
 		Trc_SHR_CC_notifyPagesRead_Entry(start, end, expectedDirection, actualDirection);
 
 		if (actualDirection == DIRECTION_FORWARD) {
@@ -857,7 +857,7 @@ SH_CompositeCacheImpl::notifyPagesRead(BlockPtr start, BlockPtr end, UDATA expec
 		Trc_SHR_CC_notifyPagesRead_Exit(protectStart, protectEnd, doProtect);
 	}
 }
-	
+
 void
 SH_CompositeCacheImpl::notifyPagesCommitted(BlockPtr start, BlockPtr end, UDATA expectedDirection)
 {
@@ -868,11 +868,11 @@ SH_CompositeCacheImpl::notifyPagesCommitted(BlockPtr start, BlockPtr end, UDATA 
 }
 
 /**
- * Starts the SH_CompositeCache. 
+ * Starts the SH_CompositeCache.
  *
- * The method tries to connect to an existing shared cache of rootName and if one 
+ * The method tries to connect to an existing shared cache of rootName and if one
  * cannot be found, a new one is created
- * 
+ *
  * @param [in] currentThread Pointer to J9VMThread structure for the current thread
  * @param [in] sharedClassConfig
  * @param [in] config A pre-init config used for specifying values such as -Xscmx
@@ -895,14 +895,14 @@ SH_CompositeCacheImpl::notifyPagesCommitted(BlockPtr start, BlockPtr end, UDATA 
  * @retval CC_STARTUP_SOFT_RESET (-4)
  * @retval CC_STARTUP_NO_CACHE (-5)
  */
-IDATA 
+IDATA
 SH_CompositeCacheImpl::startup(J9VMThread* currentThread, J9SharedClassPreinitConfig* piconfig, BlockPtr cacheMemory,
 		U_64* runtimeFlags, UDATA verboseFlags, const char* rootName, const char* ctrlDirName, UDATA cacheDirPerm, U_32* actualSize,
 		UDATA* localCrashCntr, bool isFirstStart, bool *cacheHasIntegrity)
 {
 	IDATA rc = 0;
 	const char* fnName = "CC startup";
-	/* _commonCCInfo must be set before startup is called. All composite caches within 
+	/* _commonCCInfo must be set before startup is called. All composite caches within
 	 * a JVM should point to the same _commonCCInfo structure.
 	 */
 	Trc_SHR_Assert_True(_commonCCInfo != NULL);
@@ -952,17 +952,23 @@ SH_CompositeCacheImpl::startup(J9VMThread* currentThread, J9SharedClassPreinitCo
 			createFlags = J9SH_OSCACHE_OPEXIST_DO_NOT_CREATE;
 		}
 	}
-		
+
+#if defined(J9VM_OPT_JITSERVER)
+	if ((NULL == _previous) && isFirstStart && vm->sharedCacheAPI->usingJITServerAOTCacheLayer) {
+		openMode |= J9OSCACHE_OPEN_MODE_JITSERVER_AOT_LAYER;
+	}
+#endif /* defined(J9VM_OPT_JITSERVER) */
+
 	if (0 != omrthread_monitor_init(&_headerProtectMutex, 0)) {
 		Trc_SHR_CC_startup_Exit10(currentThread);
 		return CC_STARTUP_FAILED;
 	}
-	
+
 	if (0 != omrthread_monitor_init(&_runtimeFlagsProtectMutex, 0)) {
 		Trc_SHR_CC_startup_Exit11(currentThread);
 		return CC_STARTUP_FAILED;
 	}
-	
+
 	if (isFirstStart) {
 		_commonCCInfo->cacheIsCorrupt = 0;
 		if (_osPageSize == 0) {
@@ -1099,13 +1105,13 @@ SH_CompositeCacheImpl::startup(J9VMThread* currentThread, J9SharedClassPreinitCo
 	}
 	if (!hasWriteMutex) {
 		IDATA result;
-		
+
 		if (_parent == NULL) {
 			result = enterWriteMutex(currentThread, false, fnName);
 		} else {
 			result = _parent->enterWriteMutex(currentThread, false, fnName);
 		}
-		
+
 		if (result == 0) {
 			hasWriteMutex = doReleaseWriteMutex = true;
 		}
@@ -1135,7 +1141,7 @@ SH_CompositeCacheImpl::startup(J9VMThread* currentThread, J9SharedClassPreinitCo
 				setCorruptCache(currentThread, CACHE_BAD_CC_INIT, _theca->ccInitComplete);
 				goto releaseLockCheck;
 			}
-			
+
 			if (isCacheInitComplete() == true) {
 				if (_theca->osPageSize != _osPageSize) {
 					/* For some reason, the osPageSize supported by this platform is different to the one on which
@@ -1162,7 +1168,7 @@ SH_CompositeCacheImpl::startup(J9VMThread* currentThread, J9SharedClassPreinitCo
 				 * Doing this call to setRegionPermissions() on the entire cache during 'startup'
 				 * has the fortunate effect of avoiding this issue without paging in extra memory
 				 * into the process.
-				 * 
+				 *
 				 * Note: The first calls to mprotect the cache readonly are:
 				 * 	- COLD CACHE: The call to 'SH_CompositeCacheImpl::notifyPagesRead()' below in this function
 				 * 	- WARM CACHE: From j9shr_init when it calls 'SH_CacheMap::enterStringTableMutex()'
@@ -1203,7 +1209,7 @@ SH_CompositeCacheImpl::startup(J9VMThread* currentThread, J9SharedClassPreinitCo
 					setCorruptCache(currentThread, CACHE_CRC_INVALID, crcValue);
 				}
 			} else {
-				/* If the vm is run with -Xshareclasses:forceDumpIfCorrupt, then fire the 
+				/* If the vm is run with -Xshareclasses:forceDumpIfCorrupt, then fire the
 				 * corrupt cache hook to generate a dump.
 				 */
 				if (*_runtimeFlags & J9SHR_RUNTIMEFLAG_FORCE_DUMP_IF_CORRUPT) {
@@ -1212,7 +1218,7 @@ SH_CompositeCacheImpl::startup(J9VMThread* currentThread, J9SharedClassPreinitCo
 			}
 			if (!isCacheCorrupt()) {
 				IDATA retryCntr = 0;
-				
+
 				/* If we're running read-only, we have no write mutex. Resolve this race by waiting for ccInitComplete flag */
 				if (!_readOnlyOSCache) {
 					/* The cache is about to undergo change, so mark the CRC as invalid */
@@ -1242,7 +1248,7 @@ SH_CompositeCacheImpl::startup(J9VMThread* currentThread, J9SharedClassPreinitCo
 				if (isCacheInitComplete() == false) {
 					_initializingNewCache = true;
 					UDATA extraFlags = 0;
-					
+
 					Trc_SHR_CC_startup_Event_InitializingNewCache(currentThread);
 
 					if (J9_ARE_NO_BITS_SET(currentThread->javaVM->requiredDebugAttributes, (J9VM_DEBUG_ATTRIBUTE_LINE_NUMBER_TABLE | J9VM_DEBUG_ATTRIBUTE_SOURCE_FILE))) {
@@ -1275,7 +1281,7 @@ SH_CompositeCacheImpl::startup(J9VMThread* currentThread, J9SharedClassPreinitCo
 					}
 
 					setCacheHeaderExtraFlags(currentThread, extraFlags);
-					
+
 					setCacheAreaBoundaries(currentThread, piconfig);
 
 					_canStoreClasspaths = true;
@@ -1441,7 +1447,7 @@ SH_CompositeCacheImpl::startup(J9VMThread* currentThread, J9SharedClassPreinitCo
 				_doHeaderProtect = J9_ARE_ALL_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT_ALL);
 				_doHeaderReadWriteProtect = J9_ARE_ALL_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT_RW);
 				_doPartialPagesProtect = J9_ARE_ALL_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT_PARTIAL_PAGES);
-				
+
 				if (J9_ARE_ALL_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT_ALL)) {
 					CC_TRACE(J9SHR_VERBOSEFLAG_ENABLE_VERBOSE, J9NLS_INFO, J9NLS_CC_PAGE_PROTECTION_ALLENABLED_INFO);
 				}
@@ -1463,12 +1469,12 @@ SH_CompositeCacheImpl::startup(J9VMThread* currentThread, J9SharedClassPreinitCo
 				} else if (_theca->roundedPagesFlag) {
 					CC_TRACE(J9SHR_VERBOSEFLAG_ENABLE_VERBOSE, J9NLS_INFO, J9NLS_CC_PAGE_PROTECTION_NONE_INFO);
 				}
-				
+
 				/* Calculate the page boundaries for the CC header and readWrite areas, used for page protection.
 				 * Note that on platforms with 1MB page boundaries, the header and readWrite areas will all be in one page */
 				if (*_runtimeFlags & J9SHR_RUNTIMEFLAG_ENABLE_ROUND_TO_PAGE_SIZE) {
 					U_32 roundedHeaderAndRWSize = (U_32)ROUND_UP_TO(_osPageSize, ((UDATA)CASTART(_theca) - (UDATA)_theca));
-					
+
 					_cacheHeaderPageStart = (BlockPtr)ROUND_DOWN_TO(_osPageSize, (UDATA)_theca);
 					_cacheHeaderPageBytes = (U_32)ROUND_UP_TO(_osPageSize, (UDATA)sizeof(J9SharedCacheHeader));
 					if (_readWriteAreaStart != NULL) {
@@ -1476,7 +1482,7 @@ SH_CompositeCacheImpl::startup(J9VMThread* currentThread, J9SharedClassPreinitCo
 						_readWriteAreaPageBytes = (U_32)ROUND_UP_TO(_osPageSize, (UDATA)_readWriteAreaBytes);
 						if (_readWriteAreaPageStart == _cacheHeaderPageStart) {
 							if (roundedHeaderAndRWSize == _osPageSize) {
-								/* Entire header and readWrite area is within the same page - treat as just header */ 
+								/* Entire header and readWrite area is within the same page - treat as just header */
 								_readWriteAreaPageStart = NULL;
 								_readWriteAreaPageBytes = 0;
 							} else {
@@ -1501,7 +1507,7 @@ SH_CompositeCacheImpl::startup(J9VMThread* currentThread, J9SharedClassPreinitCo
 				 * For a non-readonly cache '_localReadWriteCrashCntr' must be set holding the string table lock.
 				 * If the lock is not held it is possible that '_theca->readWriteCrashCntr' may be incremented by
 				 * another JVM holding the lock.
-				 * 
+				 *
 				 * Note: when running ./shrtest _oscache may be null, during composite cache testing.
 				 */
 				 if ((_parent == NULL) && (_oscache != NULL)) {
@@ -1512,33 +1518,33 @@ SH_CompositeCacheImpl::startup(J9VMThread* currentThread, J9SharedClassPreinitCo
 					}
 					if ((hasReadWriteMutex) || (_commonCCInfo->readWriteAreaMutexID == CC_READONLY_LOCK_VALUE)) {
 						_localReadWriteCrashCntr = _theca->readWriteCrashCntr;
-	
+
 						if (doReleaseReadWriteMutex) {
 							if (_oscache->releaseWriteLock(_commonCCInfo->readWriteAreaMutexID) != 0) {
 								rc = CC_STARTUP_FAILED;
 							}
 						}
 					} else {
-						/* Should only enter here when obtaining the readWriteArea lock failed: 
+						/* Should only enter here when obtaining the readWriteArea lock failed:
 						 * 	((!hasReadWriteMutex) && (_commonCCInfo->readWriteAreaMutexID != CC_READONLY_LOCK_VALUE))
-						 * 
-						 * If entering 'readWriteAreaMutex' failed then it should be safe to 
+						 *
+						 * If entering 'readWriteAreaMutex' failed then it should be safe to
 						 * continue to use this cache without the string table. This will likely only
 						 * occur with persistent caches using fcntl.
-						 * 
+						 *
 						 * Because this JVM will never enter the string table lock, or reset the string table,
 						 *  we can set _localReadWriteCrashCntr to any old value.
 						 */
 						_commonCCInfo->readWriteAreaMutexID = CC_READONLY_LOCK_VALUE;
 						_localReadWriteCrashCntr = CC_COULD_NOT_ENTER_STRINGTABLE_ON_STARTUP;
-					} 		
+					}
 				}
 
 				if (_doSegmentProtect && (SEGUPDATEPTR(_theca) != CASTART(_theca))) {
 					/* If the cache has ROMClass data, notify that the area exists and will be read */
 					notifyPagesRead(CASTART(_theca), SEGUPDATEPTR(_theca), DIRECTION_FORWARD, true);
 				}
-				/* Update romClassProtectEnd regardless of protect being enabled. This value is 
+				/* Update romClassProtectEnd regardless of protect being enabled. This value is
 				 * used by shrtest which doesn't enable protection until after startup
 				 */
 				setRomClassProtectEnd(SEGUPDATEPTR(_theca));
@@ -1577,7 +1583,7 @@ SH_CompositeCacheImpl::startup(J9VMThread* currentThread, J9SharedClassPreinitCo
 		 */
 		if ((CC_STARTUP_OK == rc) && (hasWriteMutex)) {
 			Trc_SHR_CC_startup_Event_DebugDataInit(currentThread);
-			/* Note: if '_parent != NULL' then this is a nested cache and _debugData was 
+			/* Note: if '_parent != NULL' then this is a nested cache and _debugData was
 			 * already initialized during _parent startup. Else _debugData needs to be initialized
 			 */
 			if (this->_parent == NULL) {
@@ -1706,7 +1712,7 @@ SH_CompositeCacheImpl::next(J9VMThread* currentThread)
 
 	Trc_SHR_CC_next_Entry(currentThread, _scan);
 	Trc_SHR_Assert_True((currentThread == _commonCCInfo->hasRefreshMutexThread) || hasWriteMutex(currentThread));
-	
+
 	/* THREADING: It is possible (but unlikely) that commitBytes() will be being called by another thread
 	 * as this is being calculated. This is not a problem. nextEntry() in most cases
 	 * is only called when it is known that there is data to read. It only matters that free is calculated correctly
@@ -1737,7 +1743,7 @@ SH_CompositeCacheImpl::next(J9VMThread* currentThread)
 			*ih = CCITEMNEXT(*ih);
 		}
 		if (_doMetaProtect) {
-			/* Note that _scan always points to the next available ShcItemHdr, 
+			/* Note that _scan always points to the next available ShcItemHdr,
 			 * so the memory between _scan and (_scan + sizeof(ShcItemHdr)) can be modified */
 			notifyPagesRead((BlockPtr)_prevScan, (BlockPtr)_scan + sizeof(ShcItemHdr), DIRECTION_BACKWARD, true);
 		}
@@ -1757,8 +1763,8 @@ SH_CompositeCacheImpl::next(J9VMThread* currentThread)
  * @param [in] dataLen  Data length to be stored in item
  * @param [in] dataType  Data type to be stored in item
  */
-void 
-SH_CompositeCacheImpl::initBlockData(ShcItem** itemBuf, U_32 dataLen, U_16 dataType) 
+void
+SH_CompositeCacheImpl::initBlockData(ShcItem** itemBuf, U_32 dataLen, U_16 dataType)
 {
 	if (_readOnlyOSCache) {
 		Trc_SHR_Assert_ShouldNeverHappen();
@@ -1781,7 +1787,7 @@ SH_CompositeCacheImpl::initBlockData(ShcItem** itemBuf, U_32 dataLen, U_16 dataT
  *
  * @return The number of cache updates since last nextEntry() call.
  */
-UDATA 
+UDATA
 SH_CompositeCacheImpl::checkUpdates(J9VMThread* currentThread)
 {
 	IDATA result;
@@ -1797,7 +1803,7 @@ SH_CompositeCacheImpl::checkUpdates(J9VMThread* currentThread)
 
 	Trc_SHR_CC_checkUpdates_Event_result(result, returnVal);
 
-	return returnVal; 
+	return returnVal;
 }
 
 /**
@@ -1807,11 +1813,11 @@ SH_CompositeCacheImpl::checkUpdates(J9VMThread* currentThread)
  *
  * @pre The caller must hold the shared classes cache write mutex
  */
-void 
+void
 SH_CompositeCacheImpl::doneReadUpdates(J9VMThread* currentThread, IDATA updates)
 {
 	UDATA* updateCountAddress = WSRP_GET(_theca->updateCountPtr, UDATA*);
-	
+
 	if (!_started) {
 		Trc_SHR_Assert_ShouldNeverHappen();
 		return;
@@ -1833,16 +1839,16 @@ SH_CompositeCacheImpl::doneReadUpdates(J9VMThread* currentThread, IDATA updates)
 
 /**
  * Reads the next entry in the cache (since an update).
- * 
+ *
  * @param [in] currentThread  The current thread
- * @param [in] staleItems  If staleItems is NULL, nextEntry returns all items, including stale. 
+ * @param [in] staleItems  If staleItems is NULL, nextEntry returns all items, including stale.
  *								Otherwise, it skips stale items but counts the number skipped.
  *
  * @return block found if one exists, NULL otherwise.
  *
  * @pre Local or cache mutex must be obtained to use this function
  */
-SH_CompositeCacheImpl::BlockPtr 
+SH_CompositeCacheImpl::BlockPtr
 SH_CompositeCacheImpl::nextEntry(J9VMThread* currentThread, UDATA* staleItems)
 {
 	BlockPtr result = 0;
@@ -1883,22 +1889,22 @@ SH_CompositeCacheImpl::nextEntry(J9VMThread* currentThread, UDATA* staleItems)
  * Allows only single-threaded writing to the cache.
  * Write mutex allows multiple concurrent readers, unless lockCache
  * is set to true, in which case it blocks until all readers have finished.
- * 
+ *
  * @param [in] currentThread  Point to the J9VMThread struct for the current thread
  * @param [in] lockCache  Set to true if whole cache should be locked for this write
  * @param [in] caller String to identify the calling thread
  *
  * @return 0 if call succeeded and -1 for failure
  */
-IDATA 
+IDATA
 SH_CompositeCacheImpl::enterWriteMutex(J9VMThread* currentThread, bool lockCache, const char* caller)
 {
 	IDATA rc;
-	SH_OSCache* oscacheToUse = ((_ccHead == NULL) ? _oscache : _ccHead->_oscache); 
+	SH_OSCache* oscacheToUse = ((_ccHead == NULL) ? _oscache : _ccHead->_oscache);
 	const char *fname = "enterWriteMutex";
 
 	Trc_SHR_CC_enterWriteMutex_Enter(currentThread, lockCache, caller);
-	
+
 	if (_commonCCInfo->writeMutexID == CC_READONLY_LOCK_VALUE) {
 		omrthread_t self = omrthread_self();
 		IDATA entryCount;
@@ -2036,7 +2042,7 @@ SH_CompositeCacheImpl::doLockCache(J9VMThread* currentThread)
 		omrthread_sleep(5);
 		++patienceCntr;
 	}
-	if ((CACHE_LOCK_PATIENCE_COUNTER == patienceCntr) 
+	if ((CACHE_LOCK_PATIENCE_COUNTER == patienceCntr)
 		&& (_theca->readerCount > 0)
 	) {
 		/* Reader has almost certainly died. Cannot wait forever. Whack to zero and proceed. */
@@ -2081,14 +2087,14 @@ SH_CompositeCacheImpl::doUnlockCache(J9VMThread* currentThread)
 /**
  * Check whether to use writeHash when loading classes
  *
- * This method helps answer the question: Is it worth us using writeHash when loading classes? 
- * The answer is: Yes if another VM has connected since us or if a VM previous to us has detected us 
+ * This method helps answer the question: Is it worth us using writeHash when loading classes?
+ * The answer is: Yes if another VM has connected since us or if a VM previous to us has detected us
  * and started writeHashing
- * 
+ *
  * Current thread should hold refresh mutex when entering this method.
  *
  * @param [in] currentThread  Points to the J9VMThread struct for the current thread
- * 
+ *
  * @return true if this VM should use writeHash while loading classes, false otherwise
  */
 bool
@@ -2112,7 +2118,7 @@ SH_CompositeCacheImpl::peekForWriteHash(J9VMThread *currentThread)
  * If the hash field in the cache field is free (0), it is set, indicating that the JVM is going to load the class.
  * If the hash field has already been set, then this means that another JVM is loading the class.
  * If it is the same class, 1 is returned which indicates that it would be wise to wait. Otherwise, 0 is returned.
- * 
+ *
  * @param [in] hashValue  Hash value of the name of the class which could not be found
  *
  * @return 1 if the JVM should wait, 0 otherwise.
@@ -2157,7 +2163,7 @@ SH_CompositeCacheImpl::testAndSetWriteHash(J9VMThread *currentThread, UDATA hash
  * Once a class has been loaded from disk, this function is called. If the class being loaded is the
  * one that was originally registered in the field, the field is reset (regardless of the JVM ID).
  * The field is also reset if it has remained unchanged for too long.
- * 
+ *
  * @param [in]  hashValue  Hash value of the name of the class which has just been loaded
  *
  * @return 1 if the field was reset, 0 otherwise.
@@ -2186,8 +2192,8 @@ SH_CompositeCacheImpl::tryResetWriteHash(J9VMThread *currentThread, UDATA hashVa
 	}
 
 	/* If a FIND is called for a class which could not be found on disk, no STORE is called and the writeHash field therefore
-	 * does not get reset. To mitigate against this, count the number of times the writeHash value has remained unchanged. 
-	 * Thread safety of the _lastFailedWHCount is not important as it does not have to be exact 
+	 * does not get reset. To mitigate against this, count the number of times the writeHash value has remained unchanged.
+	 * Thread safety of the _lastFailedWHCount is not important as it does not have to be exact
 	 */
 	if (cacheValue != 0) {
 		if (_lastFailedWriteHash == cacheValue) {
@@ -2204,7 +2210,7 @@ SH_CompositeCacheImpl::tryResetWriteHash(J9VMThread *currentThread, UDATA hashVa
 
 /**
  * Explicitly set the writeHash field to a value
- * 
+ *
  * @param [in] hashValue  Hash value of the name of the class which has just been loaded
  */
 void
@@ -2300,7 +2306,7 @@ SH_CompositeCacheImpl::decReaderCount(J9VMThread* currentThread)
  * @param [in] caller  A string representing the caller of this method
  *
  * @return 0 if call succeeded and -1 for failure
- * 
+ *
  * THREADING: Do not acquire class segment mutex inside read mutex.
  */
 IDATA
@@ -2388,7 +2394,7 @@ SH_CompositeCacheImpl::enterReadMutex(J9VMThread* currentThread, const char* cal
  *
  * @param [in] currentThread  Pointer to J9VMThread structure for the current thread
  * @param [in] caller  A string representing the caller of this method
- * 
+ *
  * THREADING: Do not acquire class segment mutex inside read mutex.
  */
 void
@@ -2487,7 +2493,7 @@ SH_CompositeCacheImpl::endCriticalUpdate(J9VMThread *currentThread)
  *
  * Allocates a block of memory in the cache. Memory is of len size
  * and memory is allocated backwards from end of the cache.
- * 
+ *
  * @param [in] currentThread  The current thread
  * @param [in] itemToWrite  ShcItem struct describing the data, including the length which will be written as a header to the data
  * @param [in] align Bytes alignment for the start of the data
@@ -2505,9 +2511,9 @@ SH_CompositeCacheImpl::allocateBlock(J9VMThread* currentThread, ShcItem* itemToW
  * Allocate a block of AOT memory in the shared classes cache
  *
  * Allocates a block of memory in the cache. Memory is of len total size
- * and memory is allocated backwards from end of the cache. 
+ * and memory is allocated backwards from end of the cache.
  * The dataLength should be the length of the code data, for reporting purposes.
- * 
+ *
  * @param [in] currentThread  The current thread
  * @param [in] itemToWrite  ShcItem struct describing the data, including the length which will be written as a header to the data
  * @param [in] dataBytes Size of code data
@@ -2547,7 +2553,7 @@ SH_CompositeCacheImpl::allocateJIT(J9VMThread* currentThread, ShcItem* itemToWri
  * Providing a segmentBufferSize will cause a segment block to
  * also be allocated, which is returned in placeholder segmentBuffer.
  * Segment blocks are allocated sequentially from the start of the cache.
- * 
+ *
  * @param [in] currentThread  The current thread
  * @param [in] itemToWrite  ShcItem struct describing the data, including the length which will be written as a header to the data
  * @param [in] segBufSize  Size of segment buffer to allocate
@@ -2569,7 +2575,7 @@ SH_CompositeCacheImpl::allocateWithSegment(J9VMThread* currentThread, ShcItem* i
  * Providing a readWriteBufferSize will cause a block in the readWrite area to
  * also be allocated, which is returned in placeholder readWriteBuffer.
  * ReadWrite blocks are allocated sequentially in the readWrite area.
- * 
+ *
  * @param [in] currentThread  The current thread
  * @param [in] itemToWrite  ShcItem struct describing the data, including the length which will be written as a header to the data
  * @param [in] segBufSize  Size of readWrite buffer to allocate
@@ -2685,7 +2691,7 @@ SH_CompositeCacheImpl::allocate(J9VMThread* currentThread, U_8 type, ShcItem* it
 	}
 	if (!readWriteBuffer) {
 		/* Ensure there is always a 1K gap between the classes and metadata.
-		 * If modifying this code, see also CC_MIN_SPACE_BEFORE_CACHE_FULL. 
+		 * If modifying this code, see also CC_MIN_SPACE_BEFORE_CACHE_FULL.
 		 */
 		if (freeBytes > J9SHR_MIN_GAP_BEFORE_METADATA) {
 			freeBytes -= J9SHR_MIN_GAP_BEFORE_METADATA;
@@ -2740,8 +2746,8 @@ SH_CompositeCacheImpl::allocate(J9VMThread* currentThread, U_8 type, ShcItem* it
 		Trc_SHR_CC_allocate_softMaxBytesReached(currentThread, softMaxValue);
 		if (ALLOCATE_TYPE_BLOCK == type) {
 			/* Similar to the behaviour when setting J9SHR_BLOCK_SPACE_FULL,
-			 * if available bytes < CC_MIN_SPACE_BEFORE_CACHE_FULL, J9SHR_AVAILABLE_SPACE_FULL is set in the previous commit. J9SHR_RUNTIMEFLAG_AVAILABLE_SPACE_FULL is checked in 
-			 * higher level APIs in SH_CacheMap. If it is set, higher level APIs will return directly and we would not reach here. 
+			 * if available bytes < CC_MIN_SPACE_BEFORE_CACHE_FULL, J9SHR_AVAILABLE_SPACE_FULL is set in the previous commit. J9SHR_RUNTIMEFLAG_AVAILABLE_SPACE_FULL is checked in
+			 * higher level APIs in SH_CacheMap. If it is set, higher level APIs will return directly and we would not reach here.
 			 * if available bytes >= CC_MIN_SPACE_BEFORE_CACHE_FULL, do not set J9SHR_AVAILABLE_SPACE_FULL here as it is above the threshold.
 			 */
 			Trc_SHR_Assert_True((softMaxValue - usedBytes) >= CC_MIN_SPACE_BEFORE_CACHE_FULL);
@@ -2814,7 +2820,7 @@ SH_CompositeCacheImpl::allocateMetadataEntry(J9VMThread* currentThread, BlockPtr
 			this->changePartialPageProtection(currentThread, SEGUPDATEPTR(_theca), false);
 		}
 	}
-	
+
 	CCSETITEMLEN(ih, itemLen);
 	result = (BlockPtr)CCITEM(ih);
 	itemToWrite->dataLen = (itemLen - sizeof(ShcItemHdr));
@@ -2855,7 +2861,7 @@ SH_CompositeCacheImpl::fillCacheIfNearlyFull(J9VMThread* currentThread)
 
 	if (freeBlockBytes < (I_32) CC_MIN_SPACE_BEFORE_CACHE_FULL) {
 		cacheFullFlags = J9SHR_BLOCK_SPACE_FULL | J9SHR_AVAILABLE_SPACE_FULL;
-	
+
 		if (freeBlockBytes > (I_32) J9SHR_MIN_GAP_BEFORE_METADATA) {
 			freeBlockBytes -= J9SHR_MIN_GAP_BEFORE_METADATA;
 		} else {
@@ -2920,7 +2926,7 @@ SH_CompositeCacheImpl::fillCacheIfNearlyFull(J9VMThread* currentThread)
 
 /**
  * Rollback shared classes cache update.
- * 
+ *
  * Called after an allocate and before a commit if the update is to be discarded.
  *
  * @param [in] currentThread  Pointer to J9VMThread structure for the current thread
@@ -3006,7 +3012,7 @@ SH_CompositeCacheImpl::commitUpdateHelper(J9VMThread* currentThread, bool isCach
 				|| _doSegmentSync
 #endif /* defined(J9VM_OPT_SHR_MSYNC_SUPPORT) */
 		) {
-			if ((J9_ARE_ALL_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_MPROTECT_PARTIAL_PAGES_ON_STARTUP) || (J9VM_PHASE_NOT_STARTUP == vm->phase)) 
+			if ((J9_ARE_ALL_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_MPROTECT_PARTIAL_PAGES_ON_STARTUP) || (J9VM_PHASE_NOT_STARTUP == vm->phase))
 				&& (true == _doPartialPagesProtect)
 			) {
 				/* Add 1 page size so that last partially filled page also gets protected,
@@ -3028,9 +3034,9 @@ SH_CompositeCacheImpl::commitUpdateHelper(J9VMThread* currentThread, bool isCach
 		_theca->readWriteSRP += _storedReadWriteUsedBytes;
 	}
 
-	/* If we crash here, romclass/readwrite will exist without any reference to it. 
+	/* If we crash here, romclass/readwrite will exist without any reference to it.
 	Result: Duplicate ROMClass in ROMClass segment or node data which can't be found by other VMs */
-	
+
 	oldNum = _theca->updateSRP;
 	/* Store the ShcItem->dataType and jvmID */
 	_theca->lastMetadataType = *(U_32 *)&((ShcItem *)((UDATA)_theca + oldNum - (_storedMetaUsedBytes + _storedAOTUsedBytes + _storedJITUsedBytes)))->dataType;
@@ -3041,7 +3047,7 @@ SH_CompositeCacheImpl::commitUpdateHelper(J9VMThread* currentThread, bool isCach
 
 	Trc_SHR_CC_CRASH4_commitUpdate_Event2(currentThread, oldNum, _theca->updateSRP);
 
-	/* If we crash here, metadata and romclass will exist, but no update count change, so other VMs not aware of update 
+	/* If we crash here, metadata and romclass will exist, but no update count change, so other VMs not aware of update
 	Result: JVMs should re-populate their hashtables */
 
 	UDATA* updateCountAddress = WSRP_GET(_theca->updateCountPtr, UDATA*);
@@ -3063,9 +3069,9 @@ SH_CompositeCacheImpl::commitUpdateHelper(J9VMThread* currentThread, bool isCach
 			|| _doMetaSync
 #endif /* defined(J9VM_OPT_SHR_MSYNC_SUPPORT) */
 	) {
-		/* Note that _scan always points to the next available ShcItemHdr, 
+		/* Note that _scan always points to the next available ShcItemHdr,
 		 * so the memory between _scan and (_scan + sizeof(ShcItemHdr)) can be modified */
-		if ((J9_ARE_ALL_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_MPROTECT_PARTIAL_PAGES_ON_STARTUP) || (J9VM_PHASE_NOT_STARTUP == vm->phase)) 
+		if ((J9_ARE_ALL_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_MPROTECT_PARTIAL_PAGES_ON_STARTUP) || (J9VM_PHASE_NOT_STARTUP == vm->phase))
 			&& (true == _doPartialPagesProtect)
 		) {
 			/* Subtract 1 page size so that last partially filled page also gets protected,
@@ -3124,7 +3130,7 @@ SH_CompositeCacheImpl::commitUpdate(J9VMThread* currentThread, bool isCachelet)
 
 /**
  * Mark a block stale.
- * 
+ *
  * @param [in] blockEnd  Address of block to mark stale.  Need to pass pointer to first byte after end of block.
  * @param [in] isCacheLocked  Should be true if cache is locked
  *
@@ -3170,7 +3176,7 @@ SH_CompositeCacheImpl::markStale(J9VMThread* currentThread, BlockPtr blockEnd, b
 
 	CCSETITEMSTALE(ih);
 
-	/* If the cache is locked, don't re-protect the page as the whole area remains unprotected. 
+	/* If the cache is locked, don't re-protect the page as the whole area remains unprotected.
 	 * Also, don't re-protect the page if we're not done modifying it. */
 	if (_doMetaProtect && !isCacheLocked && ((UDATA)areaStart > (UDATA)_prevScan)) {
 		if (setRegionPermissions(_portlib, (void*)areaStart, areaLength, J9PORT_PAGE_PROTECT_READ) != 0) {
@@ -3184,7 +3190,7 @@ SH_CompositeCacheImpl::markStale(J9VMThread* currentThread, BlockPtr blockEnd, b
 
 /**
  * Test to see if a block is stale.
- * 
+ *
  * @param [in] block  Pointer to block to test
  *
  * @return 1 if a block is stale, 0 otherwise.
@@ -3205,7 +3211,7 @@ SH_CompositeCacheImpl::stale(BlockPtr blockEnd)
 /**
  * Sets nextEntry pointer back to the start of the cache.
  *
- * This is used for walking the cache, for example if many entries need 
+ * This is used for walking the cache, for example if many entries need
  * to be marked stale: Call @ref findStart and then loop on @ref nextEntry.
  *
  * @note Start of cache is actually end of cache!
@@ -3558,7 +3564,7 @@ SH_CompositeCacheImpl::getFreeAvailableBytes(void)
 		 * keep ret to 0 in this case.
 		 */
 	}
-	
+
 	/* Compared against free block bytes, as reserved AOT/JIT bytes are considered as used bytes */
 	return (freeBlockBytes < ret) ? freeBlockBytes : ret;
 }
@@ -3820,11 +3826,11 @@ SH_CompositeCacheImpl::setInternCacheHeaderFields(J9SRP** sharedTail, J9SRP** sh
  * Note If the cache is readonly this function will return -1.
  *	    doRebuildLocalData is always 0 when a cache is readonly.
  *	    doRebuildCacheData is always 0 when a cache is readonly.
- * 
+ *
  * @param [in] currentThread  Point to the J9VMThread struct for the current thread
- * @param [out] doRebuildLocalData  If not null, the readWrite cache area has potentially been 
+ * @param [out] doRebuildLocalData  If not null, the readWrite cache area has potentially been
  *              corrupted and any local data pointing to data in the readWrite area therefore be rebuilt by the caller.
- * @param [out] doRebuildCacheData  If not null, the readWrite cache area has potentially been 
+ * @param [out] doRebuildCacheData  If not null, the readWrite cache area has potentially been
  *              corrupted and this is the first JVM to be notified. The caller is responsible for rebuilding the cached data.
  *
  * @return 0 if call succeeded and -1 for failure
@@ -3865,13 +3871,13 @@ SH_CompositeCacheImpl::enterReadWriteAreaMutex(J9VMThread* currentThread, BOOLEA
 				}
 
 				if (!readOnly) {
-					/* When the cache is full 'SH_CacheMap::enterStringTableMutex' will 
-					 * set 'J9AVLTREE_DISABLE_SHARED_TREE_UPDATES' which will prevent any 
+					/* When the cache is full 'SH_CacheMap::enterStringTableMutex' will
+					 * set 'J9AVLTREE_DISABLE_SHARED_TREE_UPDATES' which will prevent any
 					 * 'unsafe' operations from occurring on the string table.
-					 * 
-					 * Due to this there is no need to increment '_theca->readWriteCrashCnt'. 
-					 * Not incrementing this counter means if ctrl+c, or kill -9, is executed 
-					 * on the JVM then there will be no need to reset the string table.  
+					 *
+					 * Due to this there is no need to increment '_theca->readWriteCrashCnt'.
+					 * Not incrementing this counter means if ctrl+c, or kill -9, is executed
+					 * on the JVM then there will be no need to reset the string table.
 					 */
 					 _incrementedRWCrashCntr = true;
 					unprotectHeaderReadWriteArea(currentThread, true);
@@ -3895,10 +3901,10 @@ SH_CompositeCacheImpl::enterReadWriteAreaMutex(J9VMThread* currentThread, BOOLEA
 					if ((0 != (*_runtimeFlags & J9SHR_RUNTIMEFLAG_CHECK_STRINGTABLE_RESET_READONLY))) {
 						/* CMVC 176498 : Set conditions to force string table reset with readOnly = FALSE.
 						 * This block is executed during first call.
-						 * 
-						 * Note: b/c _incrementedRWCrashCntr is false _theca->readWriteCrashCntr will not 
+						 *
+						 * Note: b/c _incrementedRWCrashCntr is false _theca->readWriteCrashCntr will not
 						 * be decremented on exit.
-						 * 
+						 *
 						 * Here variable state is:
 						 * 		_theca->readWriteCrashCntr = 1
 						 * 		oldReadWriteCrashCntr = 0
@@ -3908,7 +3914,7 @@ SH_CompositeCacheImpl::enterReadWriteAreaMutex(J9VMThread* currentThread, BOOLEA
 						*_runtimeFlags &= (~J9SHR_RUNTIMEFLAG_CHECK_STRINGTABLE_RESET_READONLY);
 						/* Here variable state is:
 						 * 		_theca->readWriteCrashCntr = 1
-						 * 		oldReadWriteCrashCntr =  -1 or UDATA_MAX 
+						 * 		oldReadWriteCrashCntr =  -1 or UDATA_MAX
 						 * 		_theca->readWriteRebuildCntr = 0 (This gets set to oldReadWriteCrashCntr (-1) down the line as the two are unequal).
 						 */
 					}
@@ -4400,7 +4406,7 @@ SH_CompositeCacheImpl::getCacheAreaCRC(U_8* areaStart, U_32 areaSize)
 
 	Trc_SHR_CC_getCacheAreaCRC_Entry(areaStart, areaSize);
 
-	/* 
+	/*
 	 * 1535=1.5k - 1.  Chosen so that we aren't stepping on exact power of two boundaries through
 	 * the cache and yet we use a decent number of samples through the cache.
 	 * For a 16Meg cache this will cause us to take 10000 samples.
@@ -4420,7 +4426,7 @@ SH_CompositeCacheImpl::getCacheAreaCRC(U_8* areaStart, U_32 areaSize)
 	return value;
 }
 
-/* THREADING: Pre-req holds the cache write mutex 
+/* THREADING: Pre-req holds the cache write mutex
  * Pre-req: The header is unprotected */
 void
 SH_CompositeCacheImpl::updateCacheCRC(void)
@@ -4462,7 +4468,7 @@ SH_CompositeCacheImpl::checkCacheCRC(bool* cacheHasIntegrity, UDATA *crcValue)
 			 */
 			if ((true == *cacheHasIntegrity) && (0 != (*_runtimeFlags & J9SHR_RUNTIMEFLAG_FAKE_CORRUPTION))) {
 				*cacheHasIntegrity = false;
-				return false;	
+				return false;
 			}
 			return *cacheHasIntegrity;
 		}
@@ -4473,11 +4479,11 @@ SH_CompositeCacheImpl::checkCacheCRC(bool* cacheHasIntegrity, UDATA *crcValue)
 
 /**
  * Returns the size of the cache memory in bytes.
- * 
+ *
  * Return value of this function is not derived from the cache header itself, so
  * it should be reliable even if the cache is corrupted
  *
- * Returns size of the cache in bytes 
+ * Returns size of the cache in bytes
  */
 U_32
 SH_CompositeCacheImpl::getTotalSize(void)
@@ -4522,7 +4528,9 @@ SH_CompositeCacheImpl::getJavacoreData(J9JavaVM *vm, J9SharedClassJavacoreDataDe
 		descriptor->minJIT = _theca->minJIT;
 		descriptor->maxJIT = _theca->maxJIT;
 		descriptor->softMaxBytes = (UDATA)((U_32)-1 == _theca->softMaxBytes ? descriptor->cacheSize : _theca->softMaxBytes);
-
+#if defined(J9VM_OPT_JITSERVER)
+		descriptor->usingJITServerAOTCacheLayer = vm->sharedCacheAPI->usingJITServerAOTCacheLayer;
+#endif /* defined(J9VM_OPT_JITSERVER) */
 		if ((NULL != _debugData) && !_debugData->getJavacoreData(vm, descriptor, _theca)) {
 			return 0;
 		}
@@ -4676,7 +4684,7 @@ SH_CompositeCacheImpl::isStarted(void)
 bool
 SH_CompositeCacheImpl::getIsNoLineNumberEnabled(void)
 {
-	/*_start is not checked because this method is called during startup 
+	/*_start is not checked because this method is called during startup
 	 * from SH_CompositeCacheImpl::setCacheAreaBoundaries
 	 */
 	if(NULL == this->_theca) {
@@ -4752,9 +4760,9 @@ SH_CompositeCacheImpl::getIsBCIEnabled(void)
 /**
  * This function sets a bit in extraFlags in cache header indicating AOT Header has been added to the cache.
  * This function should only be called once when the AOT Header is first added to the cache.
- * 
+ *
  * @param [in] currentThread Pointer to J9VMThread structure for the current thread
- * 
+ *
  * @pre The caller must hold the shared classes cache write mutex
  */
 void
@@ -4768,7 +4776,7 @@ SH_CompositeCacheImpl::setAOTHeaderPresent(J9VMThread *currentThread)
  * This function returns whether AOT Header has been added to the cache or not.
  *
  * @param [in] currentThread Pointer to J9VMThread structure for the current thread
- * 
+ *
  * @return 	true if AOT Header has been added to the cache,
  * 			false otherwise.
  *
@@ -5035,7 +5043,7 @@ SH_CompositeCacheImpl::startupForStats(J9VMThread* currentThread, SH_OSCache * o
 	}
 
 	/* _verboseFlags = J9SHR_VERBOSEFLAG_ENABLE_VERBOSE_PAGES; */
-			
+
 	if (!oscache->isRunningReadOnly() && _theca->roundedPagesFlag && ((currentThread->javaVM->sharedCacheAPI->runtimeFlags & J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT) != 0)) {
 		/* If mprotection is globally enabled, protect the entire cache body. Although
 		 * we have the write lock, the header may still be written by other JVMs to
@@ -5053,10 +5061,10 @@ SH_CompositeCacheImpl::startupForStats(J9VMThread* currentThread, SH_OSCache * o
 		notifyPagesRead(CASTART(_theca), CAEND(_theca), DIRECTION_FORWARD, true);
 	}
 
-	/* _started is set to true if the write area mutex was entered. Because _started 
+	/* _started is set to true if the write area mutex was entered. Because _started
 	 * is used in ::shutdownForStats() to decide if '::exitWriteMutex()' needs to be called,
 	 * _started will still be set if any of the below code finds the cache to be corrupt.
-	 * 
+	 *
 	 * All other failures after this point are a result of a corrupt cache.
 	 */
 	_started = true;
@@ -5084,7 +5092,7 @@ done:
 
 /**
  * Starts up a non-top layer cache to get cache statistics.
- * 
+ *
  * @param[in] currentThread Pointer to J9VMThread structure for the current thread
  * @param[in] ctrlDirName The cache control directory
  * @param[in] cacheName The cache name
@@ -5110,7 +5118,7 @@ SH_CompositeCacheImpl::startupNonTopLayerForStats(J9VMThread* currentThread, con
 	bool osCacheStarted = false;
 
 	Trc_SHR_CC_startupNonTopLayerForStats_Entry(currentThread, ctrlDirName, cacheName, cacheType, layer, *runtimeFlags, verboseFlags);
-	
+
 	if (_started == true) {
 		goto done;
 	}
@@ -5133,7 +5141,7 @@ SH_CompositeCacheImpl::startupNonTopLayerForStats(J9VMThread* currentThread, con
 			osCacheStarted = true;
 		}
 	}
-	
+
 	if (!osCacheStarted) {
 		/* try to open the cache read-only */
 		if (!_oscache->startup(vm, ctrlDirName, vm->sharedCacheAPI->cacheDirPerm, cacheName, &piconfig, 0, J9SH_OSCACHE_OPEXIST_STATS, 0, 0/*runtime flags*/, J9OSCACHE_OPEN_MODE_DO_READONLY, 0, &versionData, NULL, SHR_STARTUP_REASON_NORMAL)) {
@@ -5142,7 +5150,7 @@ SH_CompositeCacheImpl::startupNonTopLayerForStats(J9VMThread* currentThread, con
 			goto done;
 		}
 	}
-	
+
 	_osPageSize = _oscache->getPermissionsRegionGranularity(_portlib);
 
 	_readOnlyOSCache = _oscache->isRunningReadOnly();
@@ -5191,10 +5199,10 @@ SH_CompositeCacheImpl::startupNonTopLayerForStats(J9VMThread* currentThread, con
 		*_runtimeFlags |= J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT;
 		notifyPagesRead(CASTART(_theca), CAEND(_theca), DIRECTION_FORWARD, true);
 	}
-	/* _started is set to true if the write area mutex was entered. Because _started 
+	/* _started is set to true if the write area mutex was entered. Because _started
 	 * is used in ::shutdownForStats() to decide if '::exitWriteMutex()' needs to be called,
 	 * _started will still be set if any of the below code finds the cache to be corrupt.
-	 * 
+	 *
 	 * All other failures after this point are a result of a corrupt cache.
 	 */
 	_started = true;
@@ -5236,7 +5244,7 @@ SH_CompositeCacheImpl::shutdownForStats(J9VMThread* currentThread)
 {
 	const char* fnName = "CC shutdownForStats";
 	IDATA retval = 0;
-	/* _started is only set to true if enterWriteMutex() was called successfully. 
+	/* _started is only set to true if enterWriteMutex() was called successfully.
 	 * It may be set even if the cache is corrupt, see comments in ::startupForStats for more info.
 	 */
 	if (_started == true) {
@@ -5268,7 +5276,7 @@ SH_CompositeCacheImpl::shutdownForStats(J9VMThread* currentThread)
 		/* detach non-top layers only, top layer is detached in SH_OSCachemmap::getCacheStats()/SH_OSCachesysv::getCacheStats() */
 		_oscache->detach();
 	}
-	
+
 	return retval;
 }
 
@@ -5468,7 +5476,7 @@ SH_CompositeCacheImpl::setRuntimeCacheFullFlags(J9VMThread* currentThread)
  * along with any unused pages page between the two regions.
  *
  * It should hold either of write mutex or refresh mutex.
- * 
+ *
  * @param [in] currentThread Pointer to J9VMThread structure for the current thread
  *
  * @return void
@@ -5733,7 +5741,7 @@ SH_CompositeCacheImpl::canStoreClasspaths(void) const
  * @param[in] vm The current J9JavaVM
  * @param[in] cacheName The name of the cache
  * @param[in, out] cacheExist True if the cache to be restored already exits, false otherwise
- * 
+ *
  * @return IDATA -1 on failure, 0 on success
  */
 IDATA
@@ -5840,7 +5848,7 @@ SH_CompositeCacheImpl::protectPartiallyFilledPages(J9VMThread *currentThread,  b
 		 */
 		BlockPtr segmentPtrPage = (BlockPtr)ROUND_DOWN_TO(_osPageSize, (UDATA)SEGUPDATEPTR(_theca));
 		BlockPtr updatePtrPage = (BlockPtr)ROUND_DOWN_TO(_osPageSize, (UDATA)UPDATEPTR(_theca));
-		
+
 		/* Do not protect last partially filled metadata page when cache is locked.
 		 * During lock state, whole of metadata in the cache is unprotected.
 		 */
@@ -5931,7 +5939,7 @@ SH_CompositeCacheImpl::setSoftMaxBytes(J9VMThread *currentThread, U_32 softMaxBy
 						);
 
 	_theca->softMaxBytes = softMaxBytes;
-	
+
 	Trc_SHR_CC_setSoftMaxBytes(currentThread, softMaxBytes);
 	CC_INFO_TRACE1(J9NLS_SHRC_CC_SOFTMX_SET, softMaxBytes, isJCLCall);
 	return;
@@ -5942,7 +5950,7 @@ SH_CompositeCacheImpl::setSoftMaxBytes(J9VMThread *currentThread, U_32 softMaxBy
  *
  * @param[in] currentThread The current vm thread
  * @param [in] isJCLCall True if JCL is invoking this function
- * 
+ *
  * @return I_32	J9SHR_SOFTMX_ADJUSTED is set if softmx has been adjusted
  *				J9SHR_MIN_AOT_ADJUSTED is set if minAOT has been adjusted
  *				J9SHR_MAX_AOT_ADJUSTED is set if maxAOT has been adjusted
@@ -6201,15 +6209,15 @@ SH_CompositeCacheImpl::updateRuntimeFullFlags(J9VMThread *currentThread)
 	bool resetSoftmxUnstoredBytes = false;
 
 	Trc_SHR_CC_updateRuntimeFullFlags_Entry(currentThread);
-	
+
 	if (_readOnlyOSCache || J9_ARE_ALL_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_READONLY)) {
 		goto done;
 	}
-	
+
 	if (_cacheFullFlags == _theca->cacheFullFlags) {
 		goto done;
 	}
-	
+
 	/* It is possible we take _headerProtectMutex inside _runtimeFlagsProtectMutex.
 	 * So assert we do not hold _headerProtectMutex before taking _runtimeFlagsProtectMutex.
 	 */
@@ -6239,7 +6247,7 @@ SH_CompositeCacheImpl::updateRuntimeFullFlags(J9VMThread *currentThread)
 				flagSet |= J9SHR_RUNTIMEFLAG_BLOCK_SPACE_FULL;
 			}
 		}
-	
+
 		if (J9_ARE_NO_BITS_SET(_cacheFullFlags, J9SHR_AVAILABLE_SPACE_FULL)) {
 			if (J9_ARE_ALL_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_AVAILABLE_SPACE_FULL)) {
 				if (J9_ARE_NO_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_BLOCK_SPACE_FULL)) {
@@ -6258,7 +6266,7 @@ SH_CompositeCacheImpl::updateRuntimeFullFlags(J9VMThread *currentThread)
 			if (J9_ARE_NO_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_AVAILABLE_SPACE_FULL)) {
 				Trc_SHR_CC_updateRuntimeFullFlags_flagSet(currentThread, J9SHR_RUNTIMEFLAG_AVAILABLE_SPACE_FULL);
 				flagSet |= J9SHR_RUNTIMEFLAG_AVAILABLE_SPACE_FULL;
-				
+
 				if ((true == _useWriteHash) && (0 != (*_runtimeFlags & J9SHR_RUNTIMEFLAG_ENABLE_REDUCE_STORE_CONTENTION))) {
 					this->setWriteHash(currentThread, 0);
 					_reduceStoreContentionDisabled = true;
@@ -6267,7 +6275,7 @@ SH_CompositeCacheImpl::updateRuntimeFullFlags(J9VMThread *currentThread)
 				_useWriteHash = false;
 			}
 		}
-	
+
 		if (J9_ARE_NO_BITS_SET(_cacheFullFlags, J9SHR_AOT_SPACE_FULL)) {
 			if (J9_ARE_ALL_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_AOT_SPACE_FULL)) {
 				Trc_SHR_CC_updateRuntimeFullFlags_flagUnset(currentThread, J9SHR_RUNTIMEFLAG_AOT_SPACE_FULL);
@@ -6287,7 +6295,7 @@ SH_CompositeCacheImpl::updateRuntimeFullFlags(J9VMThread *currentThread)
 				flagSet |= J9SHR_RUNTIMEFLAG_AOT_SPACE_FULL;
 			}
 		}
-	
+
 		if (J9_ARE_NO_BITS_SET(_cacheFullFlags, J9SHR_JIT_SPACE_FULL)) {
 			if (J9_ARE_ALL_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_JIT_SPACE_FULL)) {
 				Trc_SHR_CC_updateRuntimeFullFlags_flagUnset(currentThread, J9SHR_RUNTIMEFLAG_JIT_SPACE_FULL);
@@ -6300,17 +6308,17 @@ SH_CompositeCacheImpl::updateRuntimeFullFlags(J9VMThread *currentThread)
 					_maxJIT = _theca->maxJIT;
 					Trc_SHR_CC_updateRuntimeFullFlags_maxJITIncreased(currentThread, _maxJIT);
 				}
-			}	
+			}
 		} else {
 			if (J9_ARE_NO_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_JIT_SPACE_FULL)) {
 				Trc_SHR_CC_updateRuntimeFullFlags_flagSet(currentThread, J9SHR_RUNTIMEFLAG_JIT_SPACE_FULL);
 				flagSet |= J9SHR_RUNTIMEFLAG_JIT_SPACE_FULL;
 			}
 		}
-	
+
 		*_runtimeFlags &= ~flagUnset;
 		*_runtimeFlags |= flagSet;
-		/* JAZZ103 108287 Add write barrier to ensure the setting/unsetting of runtime flags happens before resetting 
+		/* JAZZ103 108287 Add write barrier to ensure the setting/unsetting of runtime flags happens before resetting
 		 * _maxAOTUnstoredBytes/_maxJITUnstoredBytes/_softmxUnstoredBytes to 0.
 		 */
 		VM_AtomicSupport::writeBarrier();
@@ -6323,7 +6331,7 @@ SH_CompositeCacheImpl::updateRuntimeFullFlags(J9VMThread *currentThread)
 		if (resetSoftmxUnstoredBytes) {
 			_softmxUnstoredBytes = 0;
 		}
-	
+
 		omrthread_monitor_exit(_runtimeFlagsProtectMutex);
 		if (flagSet > 0) {
 			if (true == isAllRuntimeCacheFullFlagsSet()) {
@@ -6426,7 +6434,7 @@ SH_CompositeCacheImpl::getMinMaxBytes(U_32 *softmx, I_32 *minAOT, I_32 *maxAOT, 
 }
 
 /* Increase the unstored bytes.
- * 
+ *
  * @param [in] blockBytes Unstored block bytes.
  * @param [in] aotBytes Unstored aot bytes.
  * @param [in] jitBytes Unstored jit bytes.
@@ -6682,23 +6690,23 @@ SH_CompositeCacheImpl::getLayer(void) const
 /**
  * Return the cache file name.
  */
-const char* 
+const char*
 SH_CompositeCacheImpl::getCacheNameWithVGen(void) const
 {
 	return _oscache->getCacheNameWithVGen();
 }
 
 /* Get a SH_OSCache_Info of a non-top layer cache.
- * 
+ *
  * @param[in] vm The current J9JavaVM
- * @param[in] ctrlDirName The cache control directory 
+ * @param[in] ctrlDirName The cache control directory
  * @param[in] groupPerm Group permissions to open the cache directory
  * @param[out] SH_OSCache_Info of the non-top layer cache
- * 
+ *
  * @return 0 on success and -1 on failure
  */
 IDATA
-SH_CompositeCacheImpl::getNonTopLayerCacheInfo(J9JavaVM* vm, const char* ctrlDirName, UDATA groupPerm, SH_OSCache_Info *cacheInfo) 
+SH_CompositeCacheImpl::getNonTopLayerCacheInfo(J9JavaVM* vm, const char* ctrlDirName, UDATA groupPerm, SH_OSCache_Info *cacheInfo)
 {
 	return SH_OSCache::getCacheStatistics(vm, ctrlDirName, _oscache->getCacheNameWithVGen(), groupPerm, 0, J2SE_VERSION(vm), cacheInfo, SHR_STATS_REASON_ITERATE, true, false, NULL, _oscache);
 }

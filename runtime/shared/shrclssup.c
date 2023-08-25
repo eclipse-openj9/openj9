@@ -31,6 +31,67 @@
 #define SHRCLSSUP_ERR_TRACE(verbose, var) if (verbose) j9nls_printf(PORTLIB, J9NLS_ERROR, var)
 #define SHRCLSSUP_ERR_TRACE1(verbose, var, p1) if (verbose) j9nls_printf(PORTLIB, J9NLS_ERROR, var, p1)
 
+#if defined(J9VM_OPT_JITSERVER)
+static BOOLEAN
+shouldEnableJITServerAOTCacheLayer(J9JavaVM* vm, U_64 runtimeFlags)
+{
+	OMRPORT_ACCESS_FROM_J9PORT(vm->portLibrary);
+	IDATA argIndex1 = -1;
+	IDATA argIndex2 = -1;
+
+	if (J9PORT_SHR_CACHE_TYPE_PERSISTENT != vm->sharedCacheAPI->cacheType) {
+		return FALSE;
+	}
+
+	// If AOT is explicitly disabled, then we do not need the layer
+	argIndex1 = FIND_ARG_IN_VMARGS(OPTIONAL_LIST_MATCH, "-Xaot", NULL);
+	argIndex2 = FIND_ARG_IN_VMARGS(OPTIONAL_LIST_MATCH, "-Xnoaot", NULL);
+	if (argIndex2 > argIndex1) {
+		return FALSE;
+	}
+
+	// If JIT is explicitly disabled, then we do not need the layer
+	argIndex1 = FIND_ARG_IN_VMARGS(OPTIONAL_LIST_MATCH, "-Xjit", NULL);
+	argIndex2 = FIND_ARG_IN_VMARGS(OPTIONAL_LIST_MATCH, "-Xnojit", NULL);
+	IDATA argIndex3 = FIND_ARG_IN_VMARGS(EXACT_MATCH, "-Xint", NULL);
+	if ((argIndex2 > argIndex1) || (argIndex3 > argIndex1)) {
+		return FALSE;
+	}
+
+	// If JITServer is not explicitly enabled, then we do not need the layer
+	argIndex1 = FIND_ARG_IN_VMARGS(EXACT_MATCH, "-XX:+UseJITServer", NULL);
+	argIndex2 = FIND_ARG_IN_VMARGS(EXACT_MATCH, "-XX:-UseJITServer", NULL);
+	if (argIndex2 >= argIndex1) {
+		return FALSE;
+	}
+
+	// If JITServer AOT cache is not explicitly enabled, then we do not need the layer
+	argIndex1 = FIND_ARG_IN_VMARGS(EXACT_MATCH, "-XX:+JITServerUseAOTCache", NULL);
+	argIndex2 = FIND_ARG_IN_VMARGS(EXACT_MATCH, "-XX:-JITServerUseAOTCache", NULL);
+	if (argIndex2 >= argIndex1) {
+		return FALSE;
+	}
+
+	argIndex1 = FIND_ARG_IN_VMARGS(EXACT_MATCH, "-XX:+JITServerAOTCacheUseTemporaryLayer", NULL);
+	argIndex2 = FIND_ARG_IN_VMARGS(EXACT_MATCH, "-XX:-JITServerAOTCacheUseTemporaryLayer", NULL);
+	// We skip a couple of checks if the layer is explicitly requested - useful
+	// for testing.
+	if (argIndex1 > argIndex2) {
+		return TRUE;
+	}
+	if (argIndex2 > argIndex1) {
+		return FALSE;
+	}
+
+	if (J9_ARE_NO_BITS_SET(runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_READONLY) ||
+		!omrsysinfo_is_running_in_container()) {
+		return FALSE;
+	}
+
+	return TRUE;
+}
+#endif /* defined(J9VM_OPT_JITSERVER) */
+
 IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 {
 	IDATA returnVal = J9VMDLLMAIN_OK;
@@ -203,6 +264,15 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 				} else {
 					vm->sharedCacheAPI->cacheType = J9PORT_SHR_CACHE_TYPE_NONPERSISTENT;
 				}
+
+#if defined(J9VM_OPT_JITSERVER)
+				/* Check if a new layer needs to be created for the JITServer AOT cache */
+				if (shouldEnableJITServerAOTCacheLayer(vm, runtimeFlags)) {
+					runtimeFlags &= ~J9SHR_RUNTIMEFLAG_ENABLE_READONLY;
+					vm->sharedCacheAPI->usingJITServerAOTCacheLayer = TRUE;
+				}
+#endif /* defined(J9VM_OPT_JITSERVER) */
+
 				/* set runtimeFlags and verboseFlags here as they will be used later in j9shr_getCacheDir() */
 				vm->sharedCacheAPI->runtimeFlags = runtimeFlags;
 				vm->sharedCacheAPI->verboseFlags = verboseFlags;
@@ -323,6 +393,11 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 		if (vm->sharedCacheAPI->inContainer) {
 			Trc_SHR_VMInitStages_Event_RunningInContainer(vm->mainThread);
 		}
+#if defined(J9VM_OPT_JITSERVER)
+		if (vm->sharedCacheAPI->usingJITServerAOTCacheLayer) {
+			Trc_SHR_VMInitStages_Event_UsingJITServerAOTCacheLayer(vm->mainThread);
+		}
+#endif /* defined(J9VM_OPT_JITSERVER) */
 		if ((vm->sharedCacheAPI->sharedCacheEnabled == TRUE) && (vm->sharedCacheAPI->parseResult != RESULT_DO_UTILITIES) ) {
 			/* Modules wishing to determine whether shared classes initialized correctly or not should query
 			 * vm->sharedClassConfig->runtimeFlags for J9SHR_RUNTIMEFLAG_CACHE_INITIALIZATION_COMPLETE */
