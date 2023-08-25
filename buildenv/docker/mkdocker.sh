@@ -51,7 +51,6 @@ fi
 if [ $arch = x86_64 -o $arch = ppc64le ] ; then
   echo "  bash mkdocker.sh --tag=openj9/cent7 --dist=centos --version=7  --build"
 fi
-  echo "  bash mkdocker.sh --tag=openj9/ub16  --dist=ubuntu --version=16 --build"
   echo "  bash mkdocker.sh --tag=openj9/ub18  --dist=ubuntu --version=18 --build"
   echo "  bash mkdocker.sh --tag=openj9/ub20  --dist=ubuntu --version=20 --build"
   exit 1
@@ -62,7 +61,8 @@ action=print
 all_versions=
 arch=
 criu=no
-cuda=no
+cuda_src=
+cuda_tag=
 dist=unspecified
 engine=docker
 engine_specified=0
@@ -99,7 +99,8 @@ parse_options() {
         criu=3.17.1
         ;;
       --cuda)
-        cuda=9.0
+        cuda_src=/usr/local/cuda-12.0
+        cuda_tag=12.0.0-devel-ubuntu18.04
         ;;
       --dist=*)
         dist="${arg#*=}"
@@ -188,10 +189,10 @@ validate_options() {
       ;;
     ubuntu)
       case $version in
-        16 | 18 | 20)
+        18 | 20)
           version=$version.04
           ;;
-        16.04 | 18.04 | 20.04)
+        18.04 | 20.04)
           ;;
         unspecified)
           echo "Unspecified Ubuntu version: use '--version' option" >&2
@@ -242,7 +243,7 @@ validate_options() {
   fi
 
   # If CUDA is requested, validate the architecture.
-  if [ $cuda != no ] ; then
+  if [ "x$cuda_tag" != x ] ; then
     case "$arch" in
       ppc64le | x86_64)
         ;;
@@ -253,7 +254,7 @@ validate_options() {
     esac
   fi
 
-  all_versions="8 11 17 19 20 next"
+  all_versions="8 11 17 21 next"
   local -A known_version
   local version
   for version in $all_versions ; do
@@ -311,8 +312,8 @@ for tag in ${tags[@]} ; do
 done
 fi
   echo ""
-if [ $cuda != no ] ; then
-  echo "FROM nvidia/cuda:${cuda}-devel-ubuntu16.04 AS cuda-dev"
+if [ "x$cuda_tag" != x ] ; then
+  echo "FROM nvidia/cuda:$cuda_tag AS cuda-dev"
   echo ""
 fi
   echo "FROM $dist:$version AS base"
@@ -511,9 +512,6 @@ install_ubuntu_packages() {
   echo "RUN apt-get update \\"
   echo " && apt-get install -qq -y --no-install-recommends \\"
   echo "    software-properties-common \\"
-if [ $version = 16.04 ] ; then
-  echo "    python-software-properties \\"
-fi
   echo " && add-apt-repository ppa:ubuntu-toolchain-r/test \\"
   echo " && apt-get update \\"
   echo " && apt-get install -qq -y --no-install-recommends \\"
@@ -526,9 +524,12 @@ fi
   echo "    cpio \\"
   echo "    curl \\"
   echo "    file \\"
-if [ $arch != s390x ] ; then
-  echo "    g++-7 \\"
-  echo "    gcc-7 \\"
+if [ $version = 18.04 ] ; then
+  echo "    g++-8 \\"
+  echo "    gcc-8 \\"
+else
+  echo "    g++-10 \\"
+  echo "    gcc-10 \\"
 fi
   echo "    gdb \\"
   echo "    git \\"
@@ -562,9 +563,6 @@ fi
   echo "    openssh-server \\"
   echo "    perl \\"
   echo "    pkg-config \\"
-if [ $version = 16.04 ] ; then
-  echo "    realpath \\"
-fi
   echo "    ssh \\"
   echo "    systemtap-sdt-dev \\"
   echo "    unzip \\"
@@ -582,11 +580,7 @@ if [ $version = 20.04 ] ; then
   echo "    libnftables1 \\"
 fi
   echo "    libprotobuf-c1 \\"
-if [ $version != 16.04 ] ; then
   echo "    python3-protobuf \\"
-else
-  echo "    python-protobuf \\"
-fi
 fi
   echo " && rm -rf /var/lib/apt/lists/*"
 }
@@ -599,34 +593,6 @@ if [ $dist = centos ] ; then
   install_centos_packages
 else
   install_ubuntu_packages
-fi
-}
-
-install_compilers() {
-if [ $arch = s390x ] ; then
-  echo ""
-  local gcc_version=7.5
-  echo "# Install gcc."
-  echo "RUN cd /usr/local \\"
-  echo " && $wget_O gcc.tar.xz 'https://ci.adoptopenjdk.net/userContent/gcc/gcc750+ccache.$arch.tar.xz' \\"
-  echo " && tar -xJf gcc.tar.xz --strip-components=1 \\"
-  echo " && rm -f gcc.tar.xz"
-  echo ""
-  echo "# Create various symbolic links."
-  echo "RUN ln -s lib/$arch-linux-gnu /usr/lib64 \\"
-if [ $dist:$version = ubuntu:18.04 ] ; then
-  # On s390x perl needs version 4 of mpfr, but we only have version 6.
-  echo " && ln -s libmpfr.so.6 /usr/lib64/libmpfr.so.4 \\"
-fi
-  # /usr/local/include/c++ is a directory that already exists so we create these symbolic links in two steps.
-  echo " && ( cd /usr/local/include && for f in \$(ls /usr/include/s390x-linux-gnu/c++) ; do test -e \$f || ln -s /usr/include/s390x-linux-gnu/c++/\$f . ; done ) \\"
-  echo " && ln -s \$(ls -d /usr/include/s390x-linux-gnu/* | grep -v '/c++\$') /usr/local/include \\"
-  echo " && ln -sf ../local/bin/g++-$gcc_version /usr/bin/g++-7 \\"
-  echo " && ln -sf ../local/bin/gcc-$gcc_version /usr/bin/gcc-7"
-fi
-if [ $dist != centos ] ; then
-  echo ""
-  echo "ENV CC=gcc-7 CXX=g++-7"
 fi
 }
 
@@ -695,7 +661,7 @@ bootjdk_dirs() {
 bootjdk_url() {
   local jdk_arch=${arch/x86_64/x64}
   local jdk_version=$1
-  if [ $jdk_version -lt 19 ] ; then
+  if [ $jdk_version -lt 21 ] ; then
     echo https://api.adoptopenjdk.net/v3/binary/latest/$jdk_version/ga/linux/$jdk_arch/jdk/openj9/normal/adoptopenjdk
   else
     echo https://api.adoptium.net/v3/binary/latest/$jdk_version/ga/linux/$jdk_arch/jdk/hotspot/normal/eclipse
@@ -708,8 +674,8 @@ bootjdk_version() {
     8 | 11 | 17)
       echo $jdk_version
       ;;
-    19 | 20 | next)
-      echo "18"
+    21 | next)
+      echo "20"
       ;;
     *)
       echo "Unsupported JDK version: '$jdk_version'" >&2
@@ -795,10 +761,10 @@ fi
 install_cuda() {
   echo ""
   echo "# Copy header files necessary to build a VM with CUDA support."
-  echo "RUN mkdir -p /usr/local/cuda-${cuda}/nvvm"
-  echo "COPY --from=cuda-dev /usr/local/cuda-${cuda}/include      /usr/local/cuda-${cuda}/include"
-  echo "COPY --from=cuda-dev /usr/local/cuda-${cuda}/nvvm/include /usr/local/cuda-${cuda}/nvvm/include"
-  echo "ENV CUDA_HOME=/usr/local/cuda-${cuda}"
+  echo "RUN mkdir -p /usr/local/cuda/nvvm"
+  echo "COPY --from=cuda-dev $cuda_src/include      /usr/local/cuda/include"
+  echo "COPY --from=cuda-dev $cuda_src/nvvm/include /usr/local/cuda/nvvm/include"
+  echo "ENV CUDA_HOME=/usr/local/cuda"
 }
 
 install_python() {
@@ -892,14 +858,12 @@ if [ $criu != no ] ; then
   install_criu
 fi
   create_user
-if [ $cuda != no ] ; then
+if [ "x$cuda_tag" != x ] ; then
   install_cuda
 fi
 if [ $freemarker = yes ] ; then
   install_freemarker
 fi
-  install_compilers
-
   install_cmake
   install_python
 
