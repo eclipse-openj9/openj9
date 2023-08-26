@@ -1974,6 +1974,30 @@ jvmtiTLSGet(J9VMThread *vmThread, j9object_t thread, UDATA key)
 #endif /* JAVA_SPEC_VERSION >= 19 */
 }
 
+#if JAVA_SPEC_VERSION >= 20
+UDATA
+genericFrameIterator(J9VMThread *currentThread, J9StackWalkState *walkState)
+{
+	J9Method *method = walkState->method;
+	J9ROMMethod *romMethod = NULL;
+	U_32 extendedModifiers = 0;
+
+	/* walkState->method can never be NULL since the J9_STACKWALK_VISIBLE_ONLY flag is set. */
+	Assert_JVMTI_true(NULL != method);
+
+	romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+	extendedModifiers = getExtendedModifiersDataFromROMMethod(romMethod);
+
+	if (J9_ARE_ANY_BITS_SET(extendedModifiers, CFR_METHOD_EXT_JVMTIMOUNTTRANSITION_ANNOTATION)) {
+		/* The number of frames skipped is stored in userData1. */
+		UDATA framesSkipped = (UDATA)walkState->userData1;
+		walkState->userData1 = (void *)(framesSkipped + 1);
+	}
+
+	return J9_STACKWALK_KEEP_ITERATING;
+}
+#endif /* JAVA_SPEC_VERSION >= 20 */
+
 UDATA
 genericWalkStackFramesHelper(J9VMThread *currentThread, J9VMThread *targetThread, j9object_t threadObject, J9StackWalkState *walkState)
 {
