@@ -1352,6 +1352,17 @@ suspendAgentBreakpoint(J9VMThread * currentThread, J9JVMTIAgentBreakpoint * agen
 UDATA
 findDecompileInfo(J9VMThread *currentThread, J9VMThread *targetThread, UDATA depth, J9StackWalkState *walkState);
 
+#if JAVA_SPEC_VERSION >= 20
+/**
+ * A helper to iterate through the frames of a thread.
+ * @param[in] currentThread current thread
+ * @param[in] walkState a stack walk state
+ * @return 0 on success and non-zero on failure
+ */
+UDATA
+genericFrameIterator(J9VMThread *currentThread, J9StackWalkState *walkState);
+#endif /* JAVA_SPEC_VERSION >= 20 */
+
 /**
  * A helper to walk a platform thread or virtual thread
  * @param[in] currentThread current thread

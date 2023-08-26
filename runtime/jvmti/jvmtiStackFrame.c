@@ -383,6 +383,11 @@ jvmtiGetFrameCount(jvmtiEnv* env,
 			J9StackWalkState walkState;
 			walkState.flags = J9_STACKWALK_INCLUDE_NATIVES | J9_STACKWALK_VISIBLE_ONLY;
 			walkState.skipCount = 0;
+			/* The number of frames skipped is stored in userData1. */
+			walkState.userData1 = (void *)0;
+#if JAVA_SPEC_VERSION >= 20
+			walkState.frameWalkFunction = genericFrameIterator;
+#endif /* JAVA_SPEC_VERSION >= 20 */
 
 #if JAVA_SPEC_VERSION >= 19
 			if (NULL != targetThread)
@@ -398,7 +403,7 @@ jvmtiGetFrameCount(jvmtiEnv* env,
 				vmFuncs->resumeThreadForInspection(currentThread, targetThread);
 			}
 
-			rv_count = (jint) walkState.framesWalked;
+			rv_count = (jint)(walkState.framesWalked - (UDATA)walkState.userData1);
 
 			releaseVMThread(currentThread, targetThread, thread);
 		}
@@ -683,32 +688,56 @@ done:
 
 
 static UDATA
-jvmtiInternalGetStackTraceIterator(J9VMThread * currentThread, J9StackWalkState * walkState)
+jvmtiInternalGetStackTraceIterator(J9VMThread *currentThread, J9StackWalkState *walkState)
 {
-	jmethodID methodID;
+	jmethodID methodID = NULL;
+	UDATA rc = J9_STACKWALK_KEEP_ITERATING;
+	J9Method *method = walkState->method;
 
-	methodID = getCurrentMethodID(currentThread, walkState->method);
-	if (methodID == NULL) {
+#if JAVA_SPEC_VERSION >= 20
+	J9ROMMethod *romMethod = NULL;
+	U_32 extendedModifiers = 0;
+
+	/* walkState->method can never be NULL since the J9_STACKWALK_VISIBLE_ONLY flag is set. */
+	Assert_JVMTI_true(NULL != method);
+
+	romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+	extendedModifiers = getExtendedModifiersDataFromROMMethod(romMethod);
+
+	if (J9_ARE_ANY_BITS_SET(extendedModifiers, CFR_METHOD_EXT_JVMTIMOUNTTRANSITION_ANNOTATION)) {
+		/* The number of frames skipped is stored in userData2. */
+		UDATA framesSkipped = (UDATA)walkState->userData2;
+		walkState->userData2 = (void *)(framesSkipped + 1);
+		goto skip;
+	}
+#endif /* JAVA_SPEC_VERSION >= 20 */
+
+	methodID = getCurrentMethodID(currentThread, method);
+	if (NULL == methodID) {
 		walkState->userData1 = NULL;
-		return J9_STACKWALK_STOP_ITERATING;
+		rc = J9_STACKWALK_STOP_ITERATING;
 	} else {
-		jvmtiFrameInfo * frame_buffer = walkState->userData1;
+		jvmtiFrameInfo *frame_buffer = walkState->userData1;
 
 		frame_buffer->method = methodID;
-		/* The location = -1 for native method case is handled in the stack walker */
-		frame_buffer->location = (jlocation) walkState->bytecodePCOffset;
+		/* The location = -1 for native method case is handled in the stack walker. */
+		frame_buffer->location = (jlocation)walkState->bytecodePCOffset;
 
-		/* If the location specifies a JBinvokeinterface, back it up to the JBinvokeinterface2 */
+		/* If the location specifies a JBinvokeinterface, back it up to the JBinvokeinterface2. */
 
 		if (!IS_SPECIAL_FRAME_PC(walkState->pc)) {
-			if (*(walkState->pc) == JBinvokeinterface) {
+			if (JBinvokeinterface == *(walkState->pc)) {
 				frame_buffer->location -= 2;
 			}
 		}
 
 		walkState->userData1 = frame_buffer + 1;
-		return J9_STACKWALK_KEEP_ITERATING;
 	}
+
+#if JAVA_SPEC_VERSION >= 20
+skip:
+#endif /* JAVA_SPEC_VERSION >= 20 */
+	return rc;
 }
 
 
@@ -780,36 +809,45 @@ jvmtiInternalGetStackTrace(
 	jint *count_ptr)
 {
 	J9StackWalkState walkState = {0};
-
+	UDATA framesWalked = 0;
 	walkState.flags = J9_STACKWALK_INCLUDE_NATIVES | J9_STACKWALK_VISIBLE_ONLY;
 	walkState.skipCount = 0;
-
+	/* The number of frames skipped is stored in userData1. */
+	walkState.userData1 = (void *)0;
+#if JAVA_SPEC_VERSION >= 20
+	walkState.frameWalkFunction = genericFrameIterator;
+#endif /* JAVA_SPEC_VERSION >= 20 */
 	genericWalkStackFramesHelper(currentThread, targetThread, threadObject, &walkState);
+	framesWalked = walkState.framesWalked - (UDATA)walkState.userData1;
 	if (start_depth == 0) {
 		/* This violates the spec, but matches JDK behaviour - allows querying an empty stack with start_depth == 0 */
 		walkState.skipCount = 0;
 	} else if (start_depth > 0) {
-		if (((UDATA) start_depth) >= walkState.framesWalked) {
+		if (((UDATA)start_depth) >= framesWalked) {
 			return JVMTI_ERROR_ILLEGAL_ARGUMENT;
 		}
 		walkState.skipCount = (UDATA) start_depth;
 	} else {
-		if (((UDATA) -start_depth) > walkState.framesWalked) {
+		if (((UDATA)-start_depth) > framesWalked) {
 			return JVMTI_ERROR_ILLEGAL_ARGUMENT;
 		}
-		walkState.skipCount = walkState.framesWalked + start_depth;
+		walkState.skipCount = framesWalked + start_depth;
 	}
 	walkState.maxFrames = max_frame_count;
 	walkState.flags = J9_STACKWALK_INCLUDE_NATIVES | J9_STACKWALK_VISIBLE_ONLY
 		| J9_STACKWALK_RECORD_BYTECODE_PC_OFFSET | J9_STACKWALK_COUNT_SPECIFIED
 		| J9_STACKWALK_ITERATE_FRAMES;
 	walkState.userData1 = frame_buffer;
+	/* The number of frames skipped is stored in userData2. */
+	walkState.userData2 = (void *)0;
 	walkState.frameWalkFunction = jvmtiInternalGetStackTraceIterator;
 
 	genericWalkStackFramesHelper(currentThread, targetThread, threadObject, &walkState);
+	framesWalked = walkState.framesWalked - (UDATA)walkState.userData2;
+
 	if (NULL == walkState.userData1) {
 		return JVMTI_ERROR_OUT_OF_MEMORY;
 	}
-	*count_ptr = (jint) walkState.framesWalked;
+	*count_ptr = (jint)framesWalked;
 	return JVMTI_ERROR_NONE;
 }
