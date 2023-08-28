@@ -102,6 +102,8 @@ possession, or use, and re-export of encryption software, to see if this is perm
 
 ## Third-party Content
 
+This project may leverage the following third party content when building and at runtime.
+
 Checkpoint/Restore In Userspace (CRIU) (3.17.1)
 
 * License: GPL v2, LGPL v2.1 [https://github.com/checkpoint-restore/criu/blob/criu-dev/COPYING](https://github.com/checkpoint-restore/criu/blob/criu-dev/COPYING)
@@ -119,3 +121,80 @@ OpenSSL 3.x
 * License: https://www.openssl.org/source/apache-license-2.0.txt
 * Project: https://www.openssl.org/
 * Source: https://github.com/openssl/openssl or https://github.com/ibmruntimes/openssl
+
+This project leverages the following third party content for testing.
+
+Apache Ant
+
+* License: Apache-2.0, W3C License, Public Domain
+
+Apache Commons Exec (1.1)
+
+* License: Apache-2.0
+
+Apache commons-cli (1.2)
+
+* License: Apache-2.0
+
+Apache Log4J (2.16)
+
+* License: Apache-2.0
+
+apache-ant-contrib (1.0)
+
+* License: Apache-1.1 AND Apache-2.0
+* Project: http://ant-contrib.sourceforge.net/
+
+ASM (9.0)
+
+* License: New BSD License
+
+asmtools (7.0)
+
+* License: GPL-2.0-only WITH Classpath-exception-2.0
+* Project: http://openjdk.java.net/projects/code-tools/
+* Source: https://github.com/openjdk/asmtools/
+
+java assist (3.20)
+
+* License: MPL-1.1 OR LGPL-2.1+
+* Project: https://github.com/jboss-javassist/javassist/
+* Source: https://github.com/jboss-javassist/javassist/archive/rel_3_12_1_ga.zip
+
+Java Hamcrest
+
+* License: BSD-3-Clause
+* Project: https://hamcrest.org/JavaHamcrest/
+* Source: https://github.com/hamcrest/JavaHamcrest
+
+JAXB API (2.3)
+
+* License: CDDL-1.1
+
+jcommander (1.48)
+
+* License: Apache-2.0
+
+junit (4.10)
+
+* License: Common Public License 1.0
+
+JSON.simple (1.1.1)
+
+* License: Apache-2.0
+
+Jython (2.7.2)
+
+* License: CNRI-Jython
+
+Mauve
+
+* Project: https://www.sourceware.org/mauve/
+
+OSGi (3.16.100)
+
+* License: EPL-1.0
+
+testng (6.14)
+
+* License: Apache-2.0 AND MIT
