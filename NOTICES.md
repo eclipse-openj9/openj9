@@ -110,17 +110,23 @@ Checkpoint/Restore In Userspace (CRIU) (3.17.1)
 * Project: https://criu.org/Main_Page
 * Source: https://github.com/ibmruntimes/criu
 
-OpenSSL 1.1.1
+OpenSSL (1.1.1)
 
 * License: https://github.com/openssl/openssl/blob/OpenSSL_1_1_1-stable/LICENSE
 * Project: https://www.openssl.org/
 * Source: https://github.com/openssl/openssl or https://github.com/ibmruntimes/openssl
 
-OpenSSL 3.x
+OpenSSL (3.x)
 
 * License: https://www.openssl.org/source/apache-license-2.0.txt
 * Project: https://www.openssl.org/
 * Source: https://github.com/openssl/openssl or https://github.com/ibmruntimes/openssl
+
+protobuf-c (prereq of CRIU)
+
+* License: BSD-3-Clause
+* Project: https://developers.google.com/protocol-buffers/
+* Source: https://github.com/google/protobuf
 
 This project leverages the following third party content for testing.
 
