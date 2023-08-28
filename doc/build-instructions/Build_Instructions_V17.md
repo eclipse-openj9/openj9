@@ -45,7 +45,7 @@ documentation for the next release of OpenJ9 can be found [here](https://eclipse
 
 ## Linux
 :penguin:
-This build process provides detailed instructions for building a Linux x86-64 binary of **OpenJDK V17** with OpenJ9 on Ubuntu 18. The binary can be built directly on your system, in a virtual machine, or in a Docker container :whale:.
+This build process provides detailed instructions for building a Linux x86-64 binary of **OpenJDK V17** with OpenJ9 on Ubuntu 20. The binary can be built directly on your system, in a virtual machine, or in a Docker container :whale:.
 
 If you are using a different Linux distribution, you might have to review the list of libraries that are bundled with your distribution and/or modify the instructions to use equivalent commands to the Advanced Packaging Tool (APT). For example, for Centos, substitute the `apt-get` command with `yum`.
 
@@ -72,7 +72,7 @@ If you want to build a binary by using a Docker container, follow these steps to
 
 2. Next, run the following command to build a Docker image, called **openj9**:
 ```
-bash mkdocker.sh --tag=openj9 --dist=ubuntu --version=18 --gitcache=no --jdk=17 --build
+bash mkdocker.sh --tag=openj9 --dist=ubuntu --version=20 --gitcache=no --jdk=17 --build
 ```
 
 3. Start a Docker container from the **openj9** image with the following command, where `-v` maps any directory, `<host_directory>`,
@@ -90,7 +90,7 @@ Now that you have the Docker image running, you are ready to move to the next st
 If you don't want to user Docker, you can still build directly on your Ubuntu system or in a Ubuntu virtual machine. Use the output of the following command like a recipe card to determine the software dependencies that must be installed on the system, plus a few configuration steps.
 
 ```
-bash mkdocker.sh --tag=openj9 --dist=ubuntu --version=18 --gitcache=no --jdk=17 --print
+bash mkdocker.sh --tag=openj9 --dist=ubuntu --version=20 --gitcache=no --jdk=17 --print
 ```
 
 1. Install the list of dependencies that can be obtained with the `apt-get` command from the following section of the Dockerfile:
@@ -100,11 +100,11 @@ apt-get update \
     ...
 ```
 
-2. The previous step installed g++-7 and gcc-7 packages, which might be different
+2. The previous step installed g++-10 and gcc-10 packages, which might be different
 than the default version installed on your system. Export variables to set the
 version used in the build.
 ```
-export CC=gcc-7 CXX=g++-7
+export CC=gcc-10 CXX=g++-10
 ```
 
 3. Download and setup the boot JDK using the latest AdoptOpenJDK v17 build.
