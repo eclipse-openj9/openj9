@@ -1281,8 +1281,8 @@ gcParseXXArguments(J9JavaVM *vm)
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(vm);
 
 	{
-		IDATA heapManagementMXBeanCompatibilityIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, "-XX:+HeapManagementMXBeanCompatibility", NULL);
-		IDATA noHheapManagementMXBeanCompatibilityIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, "-XX:-HeapManagementMXBeanCompatibility", NULL);
+		IDATA heapManagementMXBeanCompatibilityIndex = FIND_AND_CONSUME_VMARG(EXACT_MATCH, "-XX:+HeapManagementMXBeanCompatibility", NULL);
+		IDATA noHheapManagementMXBeanCompatibilityIndex = FIND_AND_CONSUME_VMARG(EXACT_MATCH, "-XX:-HeapManagementMXBeanCompatibility", NULL);
 		if (heapManagementMXBeanCompatibilityIndex != noHheapManagementMXBeanCompatibilityIndex) {
 			/* At least one option is set. Find the right most one. */
 			if (heapManagementMXBeanCompatibilityIndex > noHheapManagementMXBeanCompatibilityIndex) {
@@ -1294,8 +1294,8 @@ gcParseXXArguments(J9JavaVM *vm)
 	}
 
 	{
-		IDATA useGCStartupHintsIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, "-XX:+UseGCStartupHints", NULL);
-		IDATA noUseGCStartupHintsIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, "-XX:-UseGCStartupHints", NULL);
+		IDATA useGCStartupHintsIndex = FIND_AND_CONSUME_VMARG(EXACT_MATCH, "-XX:+UseGCStartupHints", NULL);
+		IDATA noUseGCStartupHintsIndex = FIND_AND_CONSUME_VMARG(EXACT_MATCH, "-XX:-UseGCStartupHints", NULL);
 		if (useGCStartupHintsIndex != noUseGCStartupHintsIndex) {
 			/* At least one option is set. Find the right most one. */
 			if (useGCStartupHintsIndex > noUseGCStartupHintsIndex) {
@@ -1307,8 +1307,8 @@ gcParseXXArguments(J9JavaVM *vm)
 	}
 
 	{
-		IDATA alwaysPreTouchIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, "-XX:+AlwaysPreTouch", NULL);
-		IDATA notAlwaysPreTouchIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, "-XX:-AlwaysPreTouch", NULL);
+		IDATA alwaysPreTouchIndex = FIND_AND_CONSUME_VMARG(EXACT_MATCH, "-XX:+AlwaysPreTouch", NULL);
+		IDATA notAlwaysPreTouchIndex = FIND_AND_CONSUME_VMARG(EXACT_MATCH, "-XX:-AlwaysPreTouch", NULL);
 		if (alwaysPreTouchIndex != notAlwaysPreTouchIndex) {
 			/* At least one option is set. Find the right most one. */
 			if (alwaysPreTouchIndex > notAlwaysPreTouchIndex) {
@@ -1320,8 +1320,8 @@ gcParseXXArguments(J9JavaVM *vm)
 	}
 
 	{
-		IDATA adaptiveGCThreadingIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, "-XX:+AdaptiveGCThreading", NULL);
-		IDATA noAdaptiveGCThreadingIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, "-XX:-AdaptiveGCThreading", NULL);
+		IDATA adaptiveGCThreadingIndex = FIND_AND_CONSUME_VMARG(EXACT_MATCH, "-XX:+AdaptiveGCThreading", NULL);
+		IDATA noAdaptiveGCThreadingIndex = FIND_AND_CONSUME_VMARG(EXACT_MATCH, "-XX:-AdaptiveGCThreading", NULL);
 		if (adaptiveGCThreadingIndex != noAdaptiveGCThreadingIndex) {
 			/* At least one option is set. Find the right most one. */
 			if (adaptiveGCThreadingIndex > noAdaptiveGCThreadingIndex) {
