@@ -1011,9 +1011,68 @@ TR_J9InlinerPolicy::genCodeForUnsafeGetPut(TR::Node* unsafeAddress,
          traceMsg(comp(),"\t\t Generating an isArray test as j9class of java/lang/Class is NULL");
          directAccessBlock->getEntry()->insertTreeTopsBeforeMe(lowTagCmpBlock->getEntry(), lowTagCmpBlock->getExit());
          lowTagCmpTree->getNode()->setBranchDestination(indirectAccessBlock->getEntry());
-         }
+         }     
+
       lowTagCmpBlock->getEntry()->insertTreeTopsBeforeMe(isArrayBlock->getEntry(),
                                                          isArrayBlock->getExit());
+
+      //reorder directAccess, arrayDirectAccess, and indirectAccess blocks to optimize fallthrough paths
+      // (want directAccess (i.e.: non array and non class object) case on fallthrough path)
+      if (arrayBlockNeeded)
+      {
+         //switch indirectAccessBlock and directAccessBlock
+	      TR::TreeTop *indirectPrevTreeTop = indirectAccessBlock->getEntry()->getPrevTreeTop();
+         TR::TreeTop *indirectNextTreeTop = indirectAccessBlock->getExit()->getNextTreeTop();
+         TR::TreeTop *directPrevTreeTop = directAccessBlock->getEntry()->getPrevTreeTop();
+         TR::TreeTop *directNextTreeTop = directAccessBlock->getExit()->getNextTreeTop();
+
+         if (directPrevTreeTop)
+         {
+            indirectAccessBlock->getEntry()->setPrevTreeTop(directPrevTreeTop->getEnclosingBlock()->getExit());
+            directPrevTreeTop->getEnclosingBlock()->getExit()->setNextTreeTop(indirectAccessBlock->getEntry());
+         }
+         else
+            indirectAccessBlock->getEntry()->setPrevTreeTop(NULL);
+               
+         if (directNextTreeTop)
+         {
+            indirectAccessBlock->getExit()->setNextTreeTop(directNextTreeTop->getEnclosingBlock()->getEntry());
+            directNextTreeTop->getEnclosingBlock()->getEntry()->setPrevTreeTop(indirectAccessBlock->getExit());
+         }
+         else
+            indirectAccessBlock->getExit()->setNextTreeTop(NULL);
+
+         if (indirectPrevTreeTop)
+         {
+            directAccessBlock->getEntry()->setPrevTreeTop(indirectPrevTreeTop->getEnclosingBlock()->getExit());
+            indirectPrevTreeTop->getEnclosingBlock()->getExit()->setNextTreeTop(directAccessBlock->getEntry());
+         }
+         else
+            directAccessBlock->getEntry()->setPrevTreeTop(NULL);
+
+         if (indirectNextTreeTop)
+         {
+            directAccessBlock->getExit()->setNextTreeTop(indirectNextTreeTop->getEnclosingBlock()->getEntry());
+            indirectNextTreeTop->getEnclosingBlock()->getEntry()->setPrevTreeTop(directAccessBlock->getExit());
+         }
+         else
+            directAccessBlock->getExit()->setNextTreeTop(NULL);
+
+         if (indirectPrevTreeTop && indirectPrevTreeTop->getEnclosingBlock() == lowTagCmpTree->getEnclosingBlock())
+         {
+            //add goto to the end of indirectAccessBlock, since it's no longer on the fallthrough path
+            indirectAccessBlock->append(TR::TreeTop::create(comp(), TR::Node::create(indirectAccessBlock->getEntry()->getNode(), TR::Goto, 0, directAccessBlock->getExit()->getNextTreeTop())));
+
+            //since the directAccessBlock is now accessible via fallthrough, we need change the condition/destination
+            //of the conditional branch in the lowTagCmp block so that it can reach the indirectAccessBlock
+            TR::ILOpCodes lowTagCmpOpCode = lowTagCmpTree->getNode()->getOpCodeValue();
+            TR::ILOpCodes newOpCode = lowTagCmpOpCode == TR::ificmpne ? TR::ificmpeq : TR::iflcmpeq;
+            
+            lowTagCmpTree->getNode()->getOpCode().setOpCodeValue(newOpCode);
+            lowTagCmpTree->getNode()->setBranchDestination(indirectAccessBlock->getEntry());
+         }
+      }
+
       cfg->addEdge(TR::CFGEdge::createEdge(isArrayBlock,  lowTagCmpBlock, trMemory()));
       cfg->addEdge(TR::CFGEdge::createEdge(lowTagCmpBlock, indirectAccessBlock, trMemory()));
       cfg->addEdge(TR::CFGEdge::createEdge(isArrayBlock, arrayBlockNeeded ? arrayDirectAccessBlock : directAccessBlock, trMemory()));
