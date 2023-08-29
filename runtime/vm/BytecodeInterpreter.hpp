@@ -7286,6 +7286,16 @@ done:
 		}
 #endif
 		{
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+			/* NullRestricted field cannot be set to null. */
+			if (J9_ARE_ALL_BITS_SET(classAndFlags, J9StaticFieldIsNullRestricted)) {
+				j9object_t valueref = *(j9object_t*)_sp;
+				if (NULL == valueref) {
+					rc = THROW_NPE;
+					goto done;
+				}
+			}
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 			J9Class *fieldClass = (J9Class*)(classAndFlags & ~(UDATA)J9StaticFieldRefFlagBits);
 			bool isVolatile = (0 != (classAndFlags & J9StaticFieldRefVolatile));
 			if (classAndFlags & J9StaticFieldRefBaseType) {
@@ -7482,6 +7492,14 @@ done:
 					goto done;
 				}
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+				/* NullRestricted field cannot be set to null. */
+				if (J9_ARE_ALL_BITS_SET(flags, J9FieldFlagIsNullRestricted)) {
+					j9object_t valueref = *(j9object_t*)_sp;
+					if (NULL == valueref) {
+						rc = THROW_NPE;
+						goto done;
+					}
+				}
 				if (flags & J9FieldFlagFlattened) {
 					VM_ValueTypeHelpers::putFlattenableField(_currentThread, _objectAccessBarrier, ramFieldRef, objectref, *(j9object_t*)_sp);
 				} else

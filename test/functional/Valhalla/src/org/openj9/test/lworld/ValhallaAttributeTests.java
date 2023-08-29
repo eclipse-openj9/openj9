@@ -102,4 +102,31 @@ public class ValhallaAttributeTests {
 	static public void testNullRestrictedNotAllowedInArrayTypeField() throws Throwable {
 		ValhallaAttributeGenerator.generateNullRestrictedAttributeInArrayField("TestNullRestrictedNotAllowedInArrayTypeField", "TestNullRestrictedNotAllowedInArrayTypeFieldField");
 	}
+
+	/* Instance field with NullRestricted attribute cannot be set to null. */
+	@Test(expectedExceptions = java.lang.NullPointerException.class)
+	static public void testNullRestrictedInstanceFieldCannotBeAssignedNull() throws Throwable {
+		Class<?> c = ValhallaAttributeGenerator.generateInstanceNullRestrictedFieldAssignedToNull("TestNullRestrictedInstanceFieldCannotBeAssignedNull", "TestNullRestrictedInstanceFieldCannotBeAssignedNullField");
+		c.newInstance();
+	}
+
+	/* Static field with NullRestricted attribute cannot be set to null.
+	 * putstatic should throw NPE if field with NullRestricted attribute is assigned null.
+	 * JVMS 5.5 says if putstatic casuses a class to initialize and fails with an exception
+	 * it should be wrapped in ExceptionInInitializerError.
+	 * Since value fields are implicitly final this will always be the case.
+	 */
+	@Test
+	static public void testNullRestrictedStaticFieldCannotBeAssignedNull() throws Throwable {
+		try {
+			Class<?> c = ValhallaAttributeGenerator.generateStaticNullRestrictedFieldAssignedToNull("testNullRestrictedStaticFieldCannotBeAssignedNull", "testNullRestrictedStaticFieldCannotBeAssignedNullField");
+			c.newInstance();
+		} catch(java.lang.ExceptionInInitializerError e) {
+			if (e.getCause() instanceof NullPointerException) {
+				return; /* pass */
+			}
+			throw e;
+		}
+		Assert.fail("Test expected a NullPointerException wrapped in ExceptionInInitializerError.");
+	}
 }
