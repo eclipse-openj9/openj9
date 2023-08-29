@@ -547,17 +547,28 @@ configureDumpAgents(J9JavaVM *vm, J9VMInitArgs *j9vm_args, BOOLEAN isBootup)
 		IDATA allSymbols = FIND_AND_CONSUME_ARG(j9vm_args, EXACT_MATCH, VMOPT_XXSHOWNATIVESTACKSYMBOLS_ALL, NULL);
 		IDATA basicSymbols = FIND_AND_CONSUME_ARG(j9vm_args, EXACT_MATCH, VMOPT_XXSHOWNATIVESTACKSYMBOLS_BASIC, NULL);
 
-		/* set default */
-		dumpGlobal->showNativeSymbols = J9RAS_JAVADUMP_SHOW_NATIVE_STACK_SYMBOLS_BASIC;
-
-		if ((noSymbols > allSymbols) && (noSymbols > basicSymbols)) {
-			/* no symbols requested */
-			dumpGlobal->showNativeSymbols = J9RAS_JAVADUMP_SHOW_NATIVE_STACK_SYMBOLS_NONE;
-		} else if ((allSymbols > basicSymbols) && (allSymbols > noSymbols)) {
+		if ((allSymbols > basicSymbols) && (allSymbols > noSymbols)) {
 			/* all symbols requested */
-			dumpGlobal->showNativeSymbols = J9RAS_JAVADUMP_SHOW_NATIVE_STACK_SYMBOLS_ALL;
+			dumpGlobal->dumpFlags |= J9RAS_JAVADUMP_SHOW_NATIVE_STACK_SYMBOLS_ALL;
+		} else if (!((noSymbols > allSymbols) && (noSymbols > basicSymbols))) {
+			/* no symbols not requested, default to basic symbols */
+			dumpGlobal->dumpFlags |= J9RAS_JAVADUMP_SHOW_NATIVE_STACK_SYMBOLS_BASIC;
 		}
 	}
+
+#if JAVA_SPEC_VERSION >= 21
+	/* -XX:[+/-]ShowUnmountedThreadStacks */
+	{
+		IDATA showUnmountedThreadStacks = FIND_AND_CONSUME_ARG(j9vm_args, EXACT_MATCH, VMOPT_XXSHOWUNMOUNTEDTHREADSTACKS, NULL);
+		IDATA noShowUnmountedThreadStacks = FIND_AND_CONSUME_ARG(j9vm_args, EXACT_MATCH, VMOPT_XXNOSHOWUNMOUNTEDTHREADSTACKS, NULL);
+
+		if (showUnmountedThreadStacks > noShowUnmountedThreadStacks) {
+			/* Unmounted thread stacktrace requested. */
+			dumpGlobal->dumpFlags |= J9RAS_JAVADUMP_SHOW_UNMOUNTED_THREAD_STACKS;
+		}
+		/* Do not show unmounted thread stacktrace in javadump by default. */
+	}
+#endif /* JAVA_SPEC_VERSION >= 21 */
 
 	agentOpts = j9mem_allocate_memory(sizeof(J9RASdumpOption)*MAX_DUMP_OPTS, OMRMEM_CATEGORY_VM);
 	if( NULL == agentOpts ) {
