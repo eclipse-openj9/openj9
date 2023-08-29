@@ -693,7 +693,7 @@ TR_RelocationRuntime::relocateAOTCodeAndData(U_8 *tempDataStart,
             excptEntry32->ramMethod = actualMethod;
 
             excptEntry32++;
-            if (_comp->getOption(TR_FullSpeedDebug))
+            if (_aotMethodHeaderEntry->flags & TR_AOTMethodHeader_UsesFSD)
                excptEntry32 = (J9JIT32BitExceptionTableEntry *) ((uint8_t *) excptEntry32 + 4);
 
             numExcptionRanges--;

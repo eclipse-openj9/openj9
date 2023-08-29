@@ -702,6 +702,16 @@ J9::OptionsPostRestore::postProcessInternalCompilerOptions()
       disableAOT = true;
       }
 
+   bool doAOT = !disableAOT;
+   TR::Options::FSDInitStatus fsdStatus = TR::Options::resetFSD(vm, _vmThread, doAOT);
+   disableAOT = !doAOT;
+
+   if (fsdStatus == TR::Options::FSDInitStatus::FSDInit_Error)
+      {
+      invalidateAll = true;
+      disableAOT = true;
+      }
+
    // Invalidate method bodies if needed
    invalidateCompiledMethodsIfNeeded(invalidateAll);
 
