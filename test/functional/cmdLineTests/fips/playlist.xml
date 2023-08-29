@@ -33,7 +33,7 @@
         </command>
         <platformRequirements>os.linux,arch.x86,bits.64</platformRequirements>
         <features>
-            <feature>FIPS:required</feature>
+            <feature>FIPS140_2:required</feature>
         </features>
         <levels>
             <level>sanity</level>
