@@ -220,10 +220,11 @@ JVM_ReportFinalizationComplete(JNIEnv *env, jobject obj)
 #endif /* JAVA_SPEC_VERSION >= 18 */
 
 #if JAVA_SPEC_VERSION >= 19
-JNIEXPORT void JNICALL
+JNIEXPORT void * JNICALL
 JVM_LoadZipLibrary(void)
 {
 	Assert_SC_true(!"JVM_LoadZipLibrary unimplemented");
+	return NULL;
 }
 
 JNIEXPORT void JNICALL
