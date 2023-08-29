@@ -1362,6 +1362,14 @@ static void printField(J9CfrClassFile* classfile, J9CfrField* field)
 	for(i = 0; i < arity; i++)
 		j9tty_printf( PORTLIB, "[]");
 
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+	for(i = 0; i < field->attributesCount; i++) {
+		if (CFR_ATTRIBUTE_NullRestricted == field->attributes[i]->tag) {
+			j9tty_printf(PORTLIB, "!");
+		}
+	}
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+
 	j9tty_printf( PORTLIB, " %s;\n", classfile->constantPool[field->nameIndex].bytes);
 
 	return;
