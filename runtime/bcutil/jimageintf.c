@@ -194,8 +194,8 @@ initJImageIntf(J9JImageIntf **jimageIntf, J9JavaVM *vm, J9PortLibrary *portLibra
 	Trc_BCU_Assert_True(NULL != jimageIntf);
 
 	/* Check for -XX:+UseJ9JImageReader and -XX:-UseJ9JImageReader; whichever comes later wins. */
-	argIndex1 = FIND_ARG_IN_VMARGS(EXACT_MATCH, VMOPT_XXUSEJ9JIMAGEREADER, NULL);
-	argIndex2 = FIND_ARG_IN_VMARGS(EXACT_MATCH, VMOPT_XXNOUSEJ9JIMAGEREADER, NULL);
+	argIndex1 = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXUSEJ9JIMAGEREADER, NULL);
+	argIndex2 = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXNOUSEJ9JIMAGEREADER, NULL);
 
 	if (argIndex1 > argIndex2) {
 		vm->extendedRuntimeFlags |= (UDATA)J9_EXTENDED_RUNTIME_USE_J9JIMAGE_READER;
