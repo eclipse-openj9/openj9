@@ -39,7 +39,7 @@
 			<group>functional</group>
 		</groups>
 		<features>
-			<feature>FIPS:nonapplicable</feature>
+			<feature>FIPS140_2:nonapplicable</feature>
 		</features>
 		<impls>
 			<impl>openj9</impl>
@@ -63,7 +63,7 @@
 			<group>functional</group>
 		</groups>
 		<features>
-			<feature>FIPS:nonapplicable</feature>
+			<feature>FIPS140_2:nonapplicable</feature>
 		</features>
 		<versions>
 			<version>11+</version>
