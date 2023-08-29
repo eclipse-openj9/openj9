@@ -369,6 +369,7 @@ if(JAVA_SPEC_VERSION LESS 17)
 		_JVM_DTraceIsProbeEnabled@8
 		_JVM_DTraceIsSupported@4
 		_JVM_GetInterfaceVersion@0
+		_JVM_IsThreadAlive@8
 	)
 endif()
 
@@ -426,11 +427,7 @@ else()
 	)
 endif()
 
-if(JAVA_SPEC_VERSION LESS 21)
-	jvm_add_exports(jvm
-		_JVM_IsThreadAlive@8
-	)
-else()
+if(NOT JAVA_SPEC_VERSION LESS 21)
 	jvm_add_exports(jvm
 		JVM_IsForeignLinkerSupported
 		JVM_PrintWarningAtDynamicAgentLoad
