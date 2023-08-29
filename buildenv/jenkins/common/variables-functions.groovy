@@ -1005,13 +1005,6 @@ def add_string_params(PARAMETERS_TO_ADD) {
     }
 }
 
-def add_pr_to_description() {
-    if (params.ghprbPullId) {
-        def TMP_DESC = (currentBuild.description) ? currentBuild.description + "<br>" : ""
-        currentBuild.description = TMP_DESC + "<a href=https://github.com/${params.ghprbGhRepository}/pull/${params.ghprbPullId}>PR #${params.ghprbPullId}</a>"
-    }
-}
-
 def setup() {
     set_job_variables(params.JOB_TYPE)
 
@@ -1075,10 +1068,9 @@ def set_job_variables(job_type) {
             set_node(job_type)
             // set variables for a build job
             set_build_variables()
-            add_pr_to_description()
             break
         case "pipeline":
-            currentBuild.description = "<a href=\"${RUN_DISPLAY_URL}\">Blue Ocean</a>"
+            currentBuild.description += "<br><a href=\"${RUN_DISPLAY_URL}\">Blue Ocean</a>"
             // set variables for a pipeline job
             set_repos_variables()
             set_adoptopenjdk_tests_repository()
@@ -1088,7 +1080,6 @@ def set_job_variables(job_type) {
             set_test_misc()
             set_slack_channel()
             set_restart_timeout()
-            add_pr_to_description()
             break
         case "wrapper":
             //set variable for pipeline all/personal
