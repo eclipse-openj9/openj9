@@ -150,13 +150,21 @@
 #define J9_JAVA_CLASS_FINALIZER_CHECK_MASK (J9AccClassFinalizeNeeded | J9AccClassOwnableSynchronizer | J9AccClassContinuation)
 #define J9_JAVA_MODIFIERS_SPECIAL_OBJECT (J9AccClassFinalizeNeeded | J9AccClassReferenceMask)
 
-/* static field helpers*/
+/* static field flags (classAndFlags) */
 #define J9StaticFieldRefBaseType 0x1
 #define J9StaticFieldRefDouble 0x2
 #define J9StaticFieldRefVolatile 0x4
 #define J9StaticFieldRefBoolean 0x8
 #define J9StaticFieldRefPutResolved 0x10
-#define J9StaticFieldRefFlagBits 0x3F
 #define J9StaticFieldRefFinal 0x20
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+#define J9StaticFieldIsNullRestricted 0x40
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+/* flag mask for classAndFlags*/
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+#define J9StaticFieldRefFlagBits 0x7F
+#else /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+#define J9StaticFieldRefFlagBits 0x3F
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
 #endif /*J9JAVAACCESSFLAGS_H */

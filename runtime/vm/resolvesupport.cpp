@@ -851,6 +851,11 @@ illegalAccess:
 				if (0 != (resolveFlags & J9_RESOLVE_FLAG_FIELD_SETTER)) {
 					localClassAndFlagsData |= J9StaticFieldRefPutResolved;
 				}
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+				if (J9_ARE_ALL_BITS_SET(modifiers, J9FieldFlagIsNullRestricted)) {
+					localClassAndFlagsData |= J9StaticFieldIsNullRestricted;
+				}
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 				/* Swap the class address bits and the flag bits. */
 				ramCPEntry->flagsAndClass = J9FLAGSANDCLASS_FROM_CLASSANDFLAGS(localClassAndFlagsData);
 				/* Set the high bit in valueOffset to ensure that a resolved static field ref is always interpreted as an unresolved instance fieldref. */
