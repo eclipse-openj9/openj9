@@ -307,6 +307,7 @@ public:
       void *_helperAddresses[TR_numRuntimeHelpers];
 #endif
       bool _isHotReferenceFieldRequired;
+      bool _isOffHeapAllocationEnabled;
       UDATA _osrGlobalBufferSize;
       bool _needsMethodTrampolines;
       int32_t _objectAlignmentInBytes;

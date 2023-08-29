@@ -2409,6 +2409,27 @@ TR_J9VMBase::isHotReferenceFieldRequired()
    }
 
 bool
+TR_J9VMBase::isIndexableDataAddrPresent()
+   {
+#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+   return FALSE != _jitConfig->javaVM->isIndexableDataAddrPresent;
+#else
+   return false;
+#endif /* defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */
+   }
+
+/**
+ * Query if off-heap large array allocation is enabled
+ *
+ * @return true if off-heap large array allocation is enabled, false otherwise
+ */
+bool
+TR_J9VMBase::isOffHeapAllocationEnabled()
+   {
+   return TR::Compiler->om.isOffHeapAllocationEnabled();
+   }
+
+bool
 TR_J9VMBase::scanReferenceSlotsInClassForOffset(TR::Compilation * comp, TR_OpaqueClassBlock * classPointer, int32_t offset)
    {
    if (isAOT_DEPRECATED_DO_NOT_USE())

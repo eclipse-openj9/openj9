@@ -65,6 +65,18 @@ private:
 	void outputOwnableSynchronizerInfo(MM_EnvironmentBase *env, UDATA indent, UDATA ownableSynchronizerCandidates, UDATA ownableSynchronizerCleared);
 	void outputContinuationInfo(MM_EnvironmentBase *env, UDATA indent, UDATA continuationCandidates, UDATA continuationCleared);
 
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP) || defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+	/**
+	 *
+	 * Output off-heap processing summary.
+	 * @param env GC thread used for output.
+	 * @param indent base level of indentation for the summary.
+	 * @param offHeapRegionCandidates number of off-heap regions encountered.
+	 * @param offHeapRegionsCleared number of off-heap regions cleared.
+	 */
+	void outputOffHeapInfo(MM_EnvironmentBase *env, UDATA indent, UDATA offHeapRegionCandidates, UDATA offHeapRegionsCleared);
+#endif /* defined(J9VM_GC_ENABLE_DOUBLE_MAP) || defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */
+
 	/**
 	 * Output reference processing summary.
 	 * @param env GC thread used for output.

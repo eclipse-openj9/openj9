@@ -78,6 +78,7 @@
 #include "RegionBasedOverflowVLHGC.hpp"
 #include "RootScanner.hpp"
 #include "SegmentIterator.hpp"
+#include "SparseVirtualMemory.hpp"
 #include "StackSlotValidator.hpp"
 #include "SublistIterator.hpp"
 #include "SublistPool.hpp"
@@ -1367,14 +1368,28 @@ private:
 
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 	virtual void doDoubleMappedObjectSlot(J9Object *objectPtr, struct J9PortVmemIdentifier *identifier) {
-		MM_EnvironmentVLHGC::getEnvironment(_env)->_markVLHGCStats._doubleMappedArrayletsCandidates += 1;
+		MM_EnvironmentVLHGC::getEnvironment(_env)->_markVLHGCStats._offHeapRegionCandidates += 1;
 		if (!_markingScheme->isMarked(objectPtr)) {
-			MM_EnvironmentVLHGC::getEnvironment(_env)->_markVLHGCStats._doubleMappedArrayletsCleared += 1;
+			MM_EnvironmentVLHGC::getEnvironment(_env)->_markVLHGCStats._offHeapRegionsCleared += 1;
 			OMRPORT_ACCESS_FROM_OMRVM(_omrVM);
 			omrvmem_release_double_mapped_region(identifier->address, identifier->size, identifier);
 		}
     }
-#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
+#endif /* defined(J9VM_GC_ENABLE_DOUBLE_MAP) */
+
+#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+	virtual void doObjectInVirtualLargeObjectHeap(J9Object *objectPtr) {
+		MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(_env);
+		env->_markVLHGCStats._offHeapRegionCandidates += 1;
+		if (!_markingScheme->isMarked(objectPtr)) {
+			env->_markVLHGCStats._offHeapRegionsCleared += 1;
+			void *dataAddr = _extensions->indexableObjectModel.getDataAddrForContiguous((J9IndexableObject *)objectPtr);
+			if (NULL != dataAddr) {
+				_extensions->largeObjectVirtualMemory->freeSparseRegionAndUnmapFromHeapObject(_env, dataAddr);
+			}
+		}
+	}
+#endif /* defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */
 
 	/**
 	 * @Clear the string table cache slot if the object is not marked

@@ -27,6 +27,7 @@
 
 #include "omr.h"
 #include "omrcfg.h"
+#include "modronnls.h"
 
 #include "ConfigurationRealtime.hpp"
 
@@ -106,7 +107,26 @@ MM_ConfigurationRealtime::tearDown(MM_EnvironmentBase* env)
 MM_Heap *
 MM_ConfigurationRealtime::createHeapWithManager(MM_EnvironmentBase *env, uintptr_t heapBytesRequested, MM_HeapRegionManager *regionManager)
 {
-	return MM_HeapVirtualMemory::newInstance(env, env->getExtensions()->heapAlignment, heapBytesRequested, regionManager);
+	MM_GCExtensionsBase *extensions = env->getExtensions();
+
+#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) || defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+	PORT_ACCESS_FROM_ENVIRONMENT(env);
+
+#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+	if (extensions->isVirtualLargeObjectHeapRequested) {
+		j9nls_printf(PORTLIB, J9NLS_WARNING, J9NLS_GC_OPTIONS_VIRTUAL_LARGE_OBJECT_HEAP_NOT_SUPPORTED_WARN, "metronome");
+	}
+#endif /* defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */
+
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+	if (extensions->isArrayletDoubleMapRequested) {
+		j9nls_printf(PORTLIB, J9NLS_WARNING, J9NLS_GC_OPTIONS_ARRAYLET_DOUBLE_MAPPING_NOT_SUPPORTED_WARN, "metronome");
+	}
+#endif /* defined(J9VM_GC_ENABLE_DOUBLE_MAP) */
+
+#endif /* defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) || defined(J9VM_GC_ENABLE_DOUBLE_MAP) */
+
+	return MM_HeapVirtualMemory::newInstance(env, extensions->heapAlignment, heapBytesRequested, regionManager);
 }
 
 MM_MemorySpace *

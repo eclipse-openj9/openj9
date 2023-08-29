@@ -4449,6 +4449,7 @@ typedef struct J9MemoryManagerFunctions {
 	UDATA  ( *j9gc_concurrent_scavenger_enabled)(struct J9JavaVM *javaVM) ;
 	UDATA  ( *j9gc_software_read_barrier_enabled)(struct J9JavaVM *javaVM) ;
 	BOOLEAN  ( *j9gc_hot_reference_field_required)(struct J9JavaVM *javaVM) ;
+	BOOLEAN  ( *j9gc_off_heap_allocation_enabled)(struct J9JavaVM *javaVM) ;
 	uint32_t  ( *j9gc_max_hot_field_list_length)(struct J9JavaVM *javaVM) ;
 #if defined(J9VM_GC_HEAP_CARD_TABLE)
 	UDATA  ( *j9gc_concurrent_getCardSize)(struct J9JavaVM *javaVM) ;

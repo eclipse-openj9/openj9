@@ -86,6 +86,7 @@ public:
 
    int32_t sizeofReferenceField();
    bool isHotReferenceFieldRequired();
+   bool isOffHeapAllocationEnabled();
    uintptr_t elementSizeOfBooleanArray();
    uint32_t getSizeOfArrayElement(TR::Node *node);
    int64_t maxArraySizeInElementsForAllocation(TR::Node *newArray, TR::Compilation *comp);
