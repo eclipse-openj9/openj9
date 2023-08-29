@@ -54,6 +54,9 @@
 #include "vendor_version.h"
 #include "jvminit.h"
 #include "zip_api.h"
+#if JAVA_SPEC_VERSION >= 21
+#include "ContinuationHelpers.hpp"
+#endif /* JAVA_SPEC_VERSION >= 21 */
 
 #include <limits.h>
 #include "ute.h"
@@ -90,6 +93,9 @@ static UDATA innerMemCategoryCallBack (U_32 categoryCode, const char * categoryN
 static jvmtiIterationControl heapIteratorCallback   (J9JavaVM* vm, J9MM_IterateHeapDescriptor*   heapDescriptor,    void* userData);
 static jvmtiIterationControl spaceIteratorCallback  (J9JavaVM* vm, J9MM_IterateSpaceDescriptor*  spaceDescriptor,   void* userData);
 static jvmtiIterationControl regionIteratorCallback (J9JavaVM* vm, J9MM_IterateRegionDescriptor* regionDescription, void* userData);
+#if JAVA_SPEC_VERSION >= 21
+static jvmtiIterationControl continuationIteratorCallback(J9VMThread *vmThread, J9MM_IterateObjectDescriptor *object, void *userData);
+#endif /* JAVA_SPEC_VERSION >= 21 */
 static UDATA getObjectMonitorCount(J9JavaVM *vm);
 static UDATA getAllocatedVMThreadCount (J9JavaVM *vm);
 
@@ -117,6 +123,10 @@ UDATA protectedWriteJavaLangThreadInfo (struct J9PortLibrary *, void *);
 UDATA protectedWriteThreadsWithNativeStacks (struct J9PortLibrary *, void *);
 UDATA protectedWriteThreadsJavaOnly (struct J9PortLibrary *, void *);
 UDATA protectedWriteThreadsUsageSummary (struct J9PortLibrary *, void *);
+#if JAVA_SPEC_VERSION >= 21
+UDATA protectedWriteUnmountedThreads(struct J9PortLibrary *, void *);
+UDATA handlerWriteUnmountedThreads  (struct J9PortLibrary *, U_32, void *, void *);
+#endif /* JAVA_SPEC_VERSION >= 21 */
 UDATA handlerWriteThreadBlockers    (struct J9PortLibrary *, U_32, void *, void *);
 UDATA handlerGetThreadsUsageInfo    (struct J9PortLibrary *, U_32, void *, void *);
 UDATA handlerGetOwnedObjectMonitors (struct J9PortLibrary *, U_32, void *, void *);
@@ -236,6 +246,9 @@ private :
 	friend jvmtiIterationControl heapIteratorCallback   (J9JavaVM* vm, J9MM_IterateHeapDescriptor*   heapDescriptor,    void* userData);
 	friend jvmtiIterationControl spaceIteratorCallback  (J9JavaVM* vm, J9MM_IterateSpaceDescriptor*  spaceDescriptor,   void* userData);
 	friend jvmtiIterationControl regionIteratorCallback (J9JavaVM* vm, J9MM_IterateRegionDescriptor* regionDescription, void* userData);
+#if JAVA_SPEC_VERSION >= 21
+	friend jvmtiIterationControl continuationIteratorCallback(J9VMThread *vmThread, J9MM_IterateObjectDescriptor *object, void *userData);
+#endif /* JAVA_SPEC_VERSION >= 21 */
 
 	/* sig_protect wrappers functions and handlers */
 	friend UDATA protectedWriteSection       (struct J9PortLibrary *, void *);
@@ -250,6 +263,10 @@ private :
 	friend UDATA protectedWriteThreadsWithNativeStacks(J9PortLibrary*, void*);
 	friend UDATA protectedWriteThreadsJavaOnly(J9PortLibrary*, void*);
 	friend UDATA protectedWriteThreadsUsageSummary(J9PortLibrary*, void*);
+#if JAVA_SPEC_VERSION >= 21
+	friend UDATA protectedWriteUnmountedThreads(struct J9PortLibrary *, void *);
+	friend UDATA handlerWriteUnmountedThreads  (struct J9PortLibrary *, U_32, void *, void *);
+#endif /* JAVA_SPEC_VERSION >= 21 */
 	friend UDATA handlerWriteThreadBlockers  (struct J9PortLibrary *, U_32, void *, void *);
 	friend UDATA handlerGetThreadsUsageInfo  (struct J9PortLibrary *, U_32, void *, void *);
 	friend UDATA handlerGetOwnedObjectMonitors(struct J9PortLibrary *, U_32, void *, void *);
@@ -337,6 +354,9 @@ private :
 	void        writeThreadsJavaOnly(void);
 	void        writeThreadTime              (const char * timerName, I_64 nanoTime);
 	void        writeThreadsUsageSummary     (void);
+#if JAVA_SPEC_VERSION >= 21
+	void        writeUnmountedThreads        (void);
+#endif /* JAVA_SPEC_VERSION >= 21 */
 	void        writeHookInfo                (struct OMRHookInfo4Dump *hookInfo);
 	void        writeHookInterface           (struct J9HookInterface **hookInterface);
 	/* Other internal methods */
@@ -2025,7 +2045,8 @@ JavaCoreDumpWriter::writeThreadSection(void)
 	}
 
 	/* avoidLocks is set if a thread is holding the vmThreadListMutex, if that is the case, not a good
-	 * idea to be walking the list of threads */
+	 * idea to be walking the list of threads.
+	 */
 	if (!avoidLocks()) {
 		struct walkClosure closure;
 		UDATA sink = 0;
@@ -2036,6 +2057,19 @@ JavaCoreDumpWriter::writeThreadSection(void)
 					  J9PORT_SIG_FLAG_SIGALLSYNC | J9PORT_SIG_FLAG_MAY_RETURN, &sink);
 	}
 
+#if JAVA_SPEC_VERSION >= 21
+	RasDumpGlobalStorage *dumpGlobals = (RasDumpGlobalStorage *)_VirtualMachine->j9rasdumpGlobalStorage;
+	if (J9_ARE_ANY_BITS_SET(dumpGlobals->dumpFlags, J9RAS_JAVADUMP_SHOW_UNMOUNTED_THREAD_STACKS)) {
+		/* Show unmounted thread stacktraces. */
+		struct walkClosure closure;
+		UDATA sink = 0;
+		closure.jcw = this;
+		closure.state = NULL;
+		j9sig_protect(protectedWriteUnmountedThreads,
+					  &closure, handlerWriteUnmountedThreads, this,
+					  J9PORT_SIG_FLAG_SIGALLSYNC | J9PORT_SIG_FLAG_MAY_RETURN, &sink);
+	}
+#endif /* JAVA_SPEC_VERSION >= 21 */
 	// End the threads section here.
 	_OutputStream.writeCharacters(
 			"NULL           ------------------------------------------------------------------------\n"
@@ -2120,6 +2154,23 @@ JavaCoreDumpWriter::writeThreadsUsageSummary(void)
 	}
 	_OutputStream.writeCharacters("\nNULL\n");
 }
+
+#if JAVA_SPEC_VERSION >= 21
+void
+JavaCoreDumpWriter::writeUnmountedThreads(void)
+{
+	PORT_ACCESS_FROM_JAVAVM(_VirtualMachine);
+
+	_OutputStream.writeCharacters(
+			"1XMVTHDINFO    Unmounted Threads\n"
+			"NULL           =================\n"
+			"NULL\n"
+		);
+
+	_VirtualMachine->memoryManagerFunctions->j9mm_iterate_all_continuation_objects(_VirtualMachine->mainThread, PORTLIB, 0, continuationIteratorCallback, this);
+	_OutputStream.writeCharacters("NULL\n");
+}
+#endif /* JAVA_SPEC_VERSION >= 21 */
 
 void
 JavaCoreDumpWriter::writeHookInfo(struct OMRHookInfo4Dump *hookInfo)
@@ -2384,7 +2435,7 @@ JavaCoreDumpWriter::writeThreadsWithNativeStacks(void)
 		if (NULL != nativeThread) {
 			RasDumpGlobalStorage *dumpGlobals = (RasDumpGlobalStorage *)_VirtualMachine->j9rasdumpGlobalStorage;
 
-			if (J9RAS_JAVADUMP_SHOW_NATIVE_STACK_SYMBOLS_NONE != dumpGlobals->showNativeSymbols) {
+			if (J9_ARE_ANY_BITS_SET(dumpGlobals->dumpFlags, J9RAS_JAVADUMP_SHOW_NATIVE_STACK_SYMBOLS_BASIC | J9RAS_JAVADUMP_SHOW_NATIVE_STACK_SYMBOLS_ALL)) {
 				/* do full symbol resolution for the faulting thread */
 				omrintrospect_backtrace_symbols_ex(nativeThread, heap, 0);
 			}
@@ -2435,17 +2486,12 @@ JavaCoreDumpWriter::writeThreadsWithNativeStacks(void)
 
 			RasDumpGlobalStorage *dumpGlobals = (RasDumpGlobalStorage *)_VirtualMachine->j9rasdumpGlobalStorage;
 
-			switch (dumpGlobals->showNativeSymbols) {
-			case J9RAS_JAVADUMP_SHOW_NATIVE_STACK_SYMBOLS_ALL:
+			if (J9_ARE_ANY_BITS_SET(dumpGlobals->dumpFlags, J9RAS_JAVADUMP_SHOW_NATIVE_STACK_SYMBOLS_ALL)) {
 				/* do full symbol resolution */
 				omrintrospect_backtrace_symbols_ex(nativeThread, heap, 0);
-				break;
-			case J9RAS_JAVADUMP_SHOW_NATIVE_STACK_SYMBOLS_BASIC:
+			} else if (J9_ARE_ANY_BITS_SET(dumpGlobals->dumpFlags, J9RAS_JAVADUMP_SHOW_NATIVE_STACK_SYMBOLS_BASIC)) {
 				/* just do basic symbol resolution for other threads */
 				omrintrospect_backtrace_symbols_ex(nativeThread, heap, OMR_BACKTRACE_SYMBOLS_BASIC);
-				break;
-			default:
-				break;
 			}
 
 			writeThread(javaThread, nativeThread, vmstate, javaState, javaPriority, lockObject, lockOwnerThread);
@@ -4603,8 +4649,19 @@ JavaCoreDumpWriter::writeThread(J9VMThread* vmThread, J9PlatformThread *nativeTh
 #else /* defined(J9ZOS390) || defined(J9ZTPF) */
 		_OutputStream.writeCharacters("3XMTHREADINFO3           No native callstack available for this thread\n");
 #endif /* defined(J9ZOS390) || defined(J9ZTPF) */
-		_OutputStream.writeCharacters("NULL\n");
 	}
+#if JAVA_SPEC_VERSION >= 21
+	if ((NULL != vmThread) && (NULL != vmThread->threadObject)) {
+		_OutputStream.writeCharacters("3XMTHREADINFO4           Type: ");
+		if (IS_JAVA_LANG_VIRTUALTHREAD(vmThread, vmThread->threadObject)) {
+			_OutputStream.writeCharacters("Virtual, java/lang/CarrierThread:");
+			_OutputStream.writePointer(vmThread->carrierThreadObject);
+			_OutputStream.writeCharacters("\n");
+		} else {
+			_OutputStream.writeCharacters("Platform\n");
+		}
+	}
+#endif /* JAVA_SPEC_VERSION >= 21 */
 
 	_OutputStream.writeCharacters("NULL\n");
 }
@@ -4619,18 +4676,28 @@ JavaCoreDumpWriter::writeThreadName(J9VMThread* vmThread)
 {
 	PORT_ACCESS_FROM_PORT(_PortLibrary);
 	if (NULL != vmThread) {
-		void *args[] = { _VirtualMachine, vmThread };
+#if JAVA_SPEC_VERSION >= 21
+		BOOLEAN isVThread = FALSE;
+		void *args[] = { vmThread, &isVThread };
+#else /* JAVA_SPEC_VERSION >= 21 */
+		void *args[] = { vmThread };
+#endif /* JAVA_SPEC_VERSION >= 21 */
 		const char *nameClean = "";
 		const char *nameFault = nameClean;
 
 		/* This can crash if the thread object is being moved around while we're trying to get the
 		 * name out of it (i.e. we're sharing exclusive with GC). If we fault while trying to get the
-		 * name we return "<name unavailable>" instead
+		 * name we return "<name unavailable>" instead.
 		 */
-		if (j9sig_protect(protectedGetVMThreadName, args, handlerGetVMThreadName, (UDATA*)&nameFault, J9PORT_SIG_FLAG_SIGALLSYNC | J9PORT_SIG_FLAG_MAY_RETURN, (UDATA*)&nameClean) == J9PORT_SIG_EXCEPTION_OCCURRED) {
+		if (j9sig_protect(protectedGetVMThreadName, args, handlerGetVMThreadName, (UDATA *)&nameFault, J9PORT_SIG_FLAG_SIGALLSYNC | J9PORT_SIG_FLAG_MAY_RETURN, (UDATA *)&nameClean) == J9PORT_SIG_EXCEPTION_OCCURRED) {
 			_OutputStream.writeCharacters(nameFault);
 		} else if (NULL != nameClean) {
 			_OutputStream.writeCharacters(nameClean);
+#if JAVA_SPEC_VERSION >= 21
+			if (isVThread) {
+				j9mem_free_memory((void *)nameClean);
+			}
+#endif /* JAVA_SPEC_VERSION >= 21 */
 		} else {
 			_OutputStream.writeCharacters("<name locked>");
 		}
@@ -5692,6 +5759,79 @@ regionIteratorCallback(J9JavaVM* virtualMachine, J9MM_IterateRegionDescriptor* r
 	return JVMTI_ITERATION_CONTINUE;
 }
 
+#if JAVA_SPEC_VERSION >= 21
+static jvmtiIterationControl
+continuationIteratorCallback(J9VMThread *vmThread, J9MM_IterateObjectDescriptor *object, void *userData)
+{
+	PORT_ACCESS_FROM_VMC(vmThread);
+	JavaCoreDumpWriter *jcw = (JavaCoreDumpWriter *)userData;
+	J9InternalVMFunctions *vmFuncs = vmThread->javaVM->internalVMFunctions;
+	j9object_t vthread = J9VMJDKINTERNALVMCONTINUATION_VTHREAD(vmThread, object->object);
+	J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(vmThread, object->object);
+	if (NULL != continuation) {
+		j9object_t threadObj = vthread;
+		ContinuationState continuationState = *VM_ContinuationHelpers::getContinuationStateAddress(vmThread, object->object);
+		BOOLEAN isMounted = VM_ContinuationHelpers::isFullyMounted(continuationState);
+		if (isMounted) {
+			threadObj = J9VMJAVALANGVIRTUALTHREAD_CARRIERTHREAD(vmThread, vthread);
+		}
+		j9object_t nameObject = J9VMJAVALANGTHREAD_NAME(vmThread, threadObj);
+		char *threadName = getVMThreadNameFromString(vmThread, nameObject);
+		/* Write the first thread descriptor word. */
+		jcw->_OutputStream.writeCharacters("3XMVTHDINFO        \"");
+		jcw->_OutputStream.writeCharacters(threadName);
+		jcw->_OutputStream.writeCharacters("\" [");
+		jcw->_OutputStream.writeCharacters(isMounted ? "mounted" : "unmounted");
+		jcw->_OutputStream.writeCharacters("] J9VMContinuation:");
+		jcw->_OutputStream.writePointer(continuation);
+		jcw->_OutputStream.writeCharacters(", java/lang/Thread:");
+		jcw->_OutputStream.writePointer(threadObj);
+		jcw->_OutputStream.writeCharacters("\n3XMVTHDINFO1             Type: ");
+		if (isMounted) {
+			jcw->_OutputStream.writeCharacters("Carrier, J9VMThread:");
+			jcw->_OutputStream.writePointer(VM_ContinuationHelpers::getCarrierThread(continuationState));
+			jcw->_OutputStream.writeCharacters(", java/lang/VirtualThread:");
+			jcw->_OutputStream.writePointer(vthread);
+		} else {
+			jcw->_OutputStream.writeCharacters("Virtual");
+		}
+		jcw->_OutputStream.writeCharacters("\n");
+		j9mem_free_memory(threadName);
+
+		J9StackWalkState walkState;
+		struct walkClosure closure;
+		UDATA sink = 0;
+		UDATA depth = 0;
+		J9VMThread stackThread = {0};
+		J9VMEntryLocalStorage els = {0};
+
+		vmFuncs->copyFieldsFromContinuation(vmThread, &stackThread, &els, continuation);
+		walkState.walkThread = &stackThread;
+
+		walkState.flags =
+				J9_STACKWALK_ITERATE_FRAMES
+				| J9_STACKWALK_INCLUDE_NATIVES
+				| J9_STACKWALK_VISIBLE_ONLY
+				| J9_STACKWALK_RECORD_BYTECODE_PC_OFFSET
+				| J9_STACKWALK_NO_ERROR_REPORT;
+		walkState.skipCount = 0;
+		walkState.userData1 = (void *)jcw;
+		walkState.userData2 = &depth; /* Use this for a depth count. */
+		walkState.frameWalkFunction = writeFrameCallBack;
+		walkState.userData3 = NULL;
+		walkState.userData4 = 0;
+
+		closure.jcw = jcw;
+		closure.state = &walkState;
+		if (j9sig_protect(protectedWalkJavaStack, &closure, handlerJavaThreadWalk, jcw, J9PORT_SIG_FLAG_SIGALLSYNC | J9PORT_SIG_FLAG_MAY_RETURN, &sink) != 0) {
+			jcw->_OutputStream.writeCharacters("3XMTHREADINFO3           No Java callstack associated with this thread\n");
+		}
+	}
+	jcw->_OutputStream.writeCharacters("NULL\n");
+	return JVMTI_ITERATION_CONTINUE;
+}
+#endif /* JAVA_SPEC_VERSION >= 21 */
+
 extern "C" {
 UDATA
 protectedWriteSection(struct J9PortLibrary *portLibrary, void *arg)
@@ -5747,8 +5887,18 @@ UDATA
 protectedGetVMThreadName(struct J9PortLibrary *portLibrary, void *args)
 {
 	void **parameters = (void**)args;
-
-	return (UDATA)tryGetOMRVMThreadName(((J9VMThread*)parameters[1])->omrVMThread);
+	J9VMThread *vmThread = (J9VMThread *)parameters[0];
+#if JAVA_SPEC_VERSION >= 21
+	if ((NULL != vmThread->threadObject) && IS_JAVA_LANG_VIRTUALTHREAD(vmThread, vmThread->threadObject)) {
+		/* For VirtualThread, get name from threadObject directly. */
+		j9object_t nameObject = J9VMJAVALANGTHREAD_NAME(vmThread, vmThread->threadObject);
+		char *threadName = getVMThreadNameFromString(vmThread, nameObject);
+		BOOLEAN *isVThread = (BOOLEAN *)parameters[1];
+		*isVThread = TRUE;
+		return (UDATA)threadName;
+	}
+#endif /* JAVA_SPEC_VERSION >= 21 */
+	return (UDATA)tryGetOMRVMThreadName(vmThread->omrVMThread);
 }
 
 UDATA
@@ -5900,6 +6050,34 @@ protectedWriteThreadsUsageSummary(struct J9PortLibrary *portLibrary, void *args)
 	closure->jcw->writeThreadsUsageSummary();
 	return 0;
 }
+
+#if JAVA_SPEC_VERSION >= 21
+/**
+ * Wrapper function for writeUnmountedThreads.
+ * If the call to writeUnmountedThreads fails, handlerWriteUnmountedThreads
+ * will be called and return J9PORT_SIG_EXCEPTION_RETURN instead.
+ * @param portLibrary[in] pointer to the port library
+ * @param args[in,out] pointer to the arguments to unpack for writeUnmountedThreads
+ * @return 0
+ */
+UDATA
+protectedWriteUnmountedThreads(struct J9PortLibrary *portLibrary, void *args)
+{
+	struct walkClosure *closure = (struct walkClosure *)args;
+	closure->jcw->writeUnmountedThreads();
+	return 0;
+}
+
+UDATA
+handlerWriteUnmountedThreads(struct J9PortLibrary *portLibrary, U_32 gpType, void *gpInfo, void *userData)
+{
+	JavaCoreDumpWriter *jcw = (JavaCoreDumpWriter *)userData;
+
+	jcw->_OutputStream.writeCharacters("1INTERNAL                    Unable to obtain unmounted thread information\n");
+
+	return J9PORT_SIG_EXCEPTION_RETURN;
+}
+#endif /* JAVA_SPEC_VERSION >= 21 */
 
 UDATA
 handlerJavaThreadWalk(struct J9PortLibrary *portLibrary, U_32 gpType, void* gpInfo, void* userData)
