@@ -1308,9 +1308,12 @@ static void populateInlineCalls(
    }
 
 
+
+// The routine that sequences the creation of the meta-data for the method
 //
-//the routine that sequences the creation of the meta-data for the method
-//
+// The layout, specifically the variable length section, is described in
+// J9JITExceptionTable.md; this doc should be updated when changes are
+// made to the layout.
 TR_MethodMetaData *
 createMethodMetaData(
    TR_J9VMBase & vmArg,
