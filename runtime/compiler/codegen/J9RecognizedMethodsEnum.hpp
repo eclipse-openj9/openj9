@@ -804,6 +804,9 @@
    java_math_BigInteger_add,
    java_math_BigInteger_subtract,
    java_math_BigInteger_multiply,
+   java_math_BigInteger_squareToLen,
+   java_math_BigInteger_implSquareToLen,
+   java_math_BigInteger_implSquareToLenChecks,
 
    java_text_NumberFormat_format,
 
