@@ -46,33 +46,33 @@ package com.ibm.lang.management;
  * <th style="text-align:left">Return Value</th>
  * </tr>
  * <tr>
- * <td>{@link getCommittedVirtualMemorySize()}</td>
+ * <td>{@link #getCommittedVirtualMemorySize()}</td>
  * <td>{@code -1}</td>
  * </tr>
 /*[IF JAVA_SPEC_VERSION >= 14]
  * <tr>
- * <td>{@link getCpuLoad()}</td>
+ * <td>{@link #getCpuLoad()}</td>
  * <td>{@code -3.0} ({@link com.ibm.lang.management.CpuLoadCalculationConstants#UNSUPPORTED_VALUE CpuLoadCalculationConstants.UNSUPPORTED_VALUE})</td>
  * </tr>
  * <tr>
- * <td>{@link getFreeMemorySize()}</td>
+ * <td>{@link #getFreeMemorySize()}</td>
  * <td>{@code -1}</td>
  * </tr>
 /*[ENDIF] JAVA_SPEC_VERSION >= 14
  * <tr>
- * <td>{@link getFreePhysicalMemorySize()}</td>
+ * <td>{@link #getFreePhysicalMemorySize()}</td>
  * <td>{@code -1}</td>
  * </tr>
  * <tr>
- * <td>{@link getProcessPhysicalMemorySize()}</td>
+ * <td>{@link #getProcessPhysicalMemorySize()}</td>
  * <td>{@code -1}</td>
  * </tr>
  * <tr>
- * <td>{@link getProcessPrivateMemorySize()}</td>
+ * <td>{@link #getProcessPrivateMemorySize()}</td>
  * <td>{@code -1}</td>
  * </tr>
  * <tr>
- * <td>{@link getSystemCpuLoad()}</td>
+ * <td>{@link #getSystemCpuLoad()}</td>
  * <td>{@code -3.0} ({@link com.ibm.lang.management.CpuLoadCalculationConstants#UNSUPPORTED_VALUE CpuLoadCalculationConstants.UNSUPPORTED_VALUE})</td>
  * </tr>
  * </table>
