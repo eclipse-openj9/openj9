@@ -22,10 +22,10 @@
 
 /**
  * @brief  This file contains implementations of the Sun VM interface (JVM_ functions).
- * 
+ *
  * In a VM-Proxy environment all functions in this file are expected to run VM-side,
- * and are compiled into the offload services via vpath.  
- * 
+ * and are compiled into the offload services via vpath.
+ *
  * On the launcher-side we compile in forwarders for JVM_ by reusing code declared
  * in the redirector.
  */
@@ -69,7 +69,7 @@ typedef struct SunVMGlobals {
 	/* Thread library functions looked up dynamically */
 	IDATA (*monitorEnter)(omrthread_monitor_t monitor);
 	IDATA (*monitorExit)(omrthread_monitor_t monitor);
-	
+
 	/* stores the current_time_millis at the last GLOBAL_GC_END event */
 	I_64 lastGCTime;
 
@@ -169,7 +169,7 @@ static UDATA
 getCallerClassIterator(J9VMThread * currentThread, J9StackWalkState * walkState)
 {
 	J9JavaVM * vm = currentThread->javaVM;
-	
+
 
 	if (J9_ARE_ALL_BITS_SET(J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method)->modifiers, J9AccMethodFrameIteratorSkip)) {
 		/* Skip methods with java.lang.invoke.FrameIteratorSkip / jdk.internal.vm.annotation.Hidden / java.lang.invoke.LambdaForm$Hidden annotation */
@@ -214,7 +214,7 @@ getCallerClassJEP176Iterator(J9VMThread * currentThread, J9StackWalkState * walk
 	J9JavaVM * vm = currentThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	J9Class * currentClass = J9_CLASS_FROM_CP(walkState->constantPool);
-	
+
 	Assert_SunVMI_mustHaveVMAccess(currentThread);
 
 	if (J9_ARE_ALL_BITS_SET(J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method)->modifiers, J9AccMethodFrameIteratorSkip)) {
@@ -274,9 +274,9 @@ JVM_GetCallerClass_Impl(JNIEnv *env, jint depth)
 	/* Java 11 removed getCallerClass(depth), and getCallerClass() is equivalent to getCallerClass(-1) */
 	jint depth = -1;
 #endif /* JAVA_SPEC_VERSION >= 11 */
-	
+
 	Trc_SunVMI_GetCallerClass_Entry(env, depth);
-	
+
 	walkState.frameWalkFunction = getCallerClassIterator;
 
 	if (-1 == depth) {
@@ -352,7 +352,7 @@ JVM_NewInstanceFromConstructor_Impl(JNIEnv * env, jobject c, jobjectArray args)
 /**
  * JVM_InvokeMethod
  */
-JNIEXPORT jobject JNICALL 
+JNIEXPORT jobject JNICALL
 JVM_InvokeMethod_Impl(JNIEnv * env, jobject method, jobject obj, jobjectArray args)
 {
 	J9VMThread *vmThread = (J9VMThread *) env;
@@ -382,7 +382,7 @@ JVM_GetClassAccessFlags_Impl(JNIEnv * env, jclass clazzRef)
 	Trc_SunVMI_GetClassAccessFlags_Entry(env, clazzRef);
 
 	vmFuncs->internalEnterVMFromJNI(vmThread);
-	
+
 	if (clazzRef == NULL) {
 		Trc_SunVMI_GetClassAccessFlags_NullClassRef(env);
 		vmFuncs->setCurrentException(vmThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
@@ -394,7 +394,7 @@ JVM_GetClassAccessFlags_Impl(JNIEnv * env, jclass clazzRef)
 		} else {
 			modifiers = romClass->modifiers & 0xFFFF;
 		}
-	}	
+	}
 	vmFuncs->internalExitVMToJNI(vmThread);
 
 	Trc_SunVMI_GetClassAccessFlags_Exit(env, modifiers);
@@ -403,7 +403,7 @@ JVM_GetClassAccessFlags_Impl(JNIEnv * env, jclass clazzRef)
 }
 
 
-static jint 
+static jint
 initializeReflectionGlobals(JNIEnv * env,BOOLEAN includeAccessors) {
 	J9VMThread *vmThread = (J9VMThread *) env;
 	J9JavaVM * vm = vmThread->javaVM;
@@ -429,7 +429,7 @@ initializeReflectionGlobals(JNIEnv * env,BOOLEAN includeAccessors) {
 		return JNI_ERR;
 	}
 #endif /* defined(J9VM_OPT_METHOD_HANDLE) && !defined(J9VM_IVE_RAW_BUILD) */
-	
+
 	if (J2SE_VERSION(vm) >= J2SE_V11) {
 		clazzConstructorAccessorImpl = (*env)->FindClass(env, "jdk/internal/reflect/ConstructorAccessorImpl");
 		clazzMethodAccessorImpl = (*env)->FindClass(env, "jdk/internal/reflect/MethodAccessorImpl");
@@ -450,7 +450,7 @@ initializeReflectionGlobals(JNIEnv * env,BOOLEAN includeAccessors) {
 	if (NULL == vm->srMethodAccessor) {
 		return JNI_ERR;
 	}
-	
+
 	return JNI_OK;
 }
 
@@ -612,13 +612,30 @@ getClassContextIterator(J9VMThread * currentThread, J9StackWalkState * walkState
 JNIEXPORT void JNICALL
 JVM_GC_Impl(void)
 {
-	J9VMThread *currentThread = VM.javaVM->internalVMFunctions->currentVMThread(VM.javaVM);
+	J9InternalVMFunctions *vmFuncs = VM.javaVM->internalVMFunctions;
+	J9VMThread *currentThread = vmFuncs->currentVMThread(VM.javaVM);
+	J9MemoryManagerFunctions *mmFuncs = VM.javaVM->memoryManagerFunctions;
 
 	Trc_SunVMI_GC_Entry(currentThread);
 
-	VM.javaVM->internalVMFunctions->internalEnterVMFromJNI(currentThread);
-	VM.javaVM->memoryManagerFunctions->j9gc_modron_global_collect(currentThread);
-	VM.javaVM->internalVMFunctions->internalExitVMToJNI(currentThread);
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+#else /* J9VM_INTERP_ATOMIC_FREE_JNI */
+	vmFuncs->internalAcquireVMAccess(currentThread);
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
+
+	mmFuncs->j9gc_modron_global_collect(currentThread);
+	mmFuncs->j9gc_modron_global_collect(currentThread);
+
+	/* make sure we actually release VMAccess as finalization cannot be run with it */
+	vmFuncs->internalReleaseVMAccess(currentThread);
+
+	mmFuncs->runFinalization(currentThread);
+
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
+	vmFuncs->internalAcquireVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
 
 	Trc_SunVMI_GC_Exit(currentThread);
 }
@@ -1088,7 +1105,7 @@ internalFindClassFromClassLoader(JNIEnv* env, char* className, jboolean init, jo
 
 				initializeSent = TRUE;
 
-				/* Check for a pending exception directly, do not use ExceptionCheck as it will 
+				/* Check for a pending exception directly, do not use ExceptionCheck as it will
 				   cause jnichk to dump an error since we are calling it with vm access */
 				if (currentThread->currentException != NULL) {
 					clazz = NULL;
@@ -1125,7 +1142,7 @@ typedef struct {
 
 /**
  * This is an helper function to call internalFindClassFromClassLoader indirectly from gpProtectAndRun function.
- * 
+ *
  * @param entryArg	Argument structure (J9RedirectedFindClassFromClassLoaderArgs).
  */
 static UDATA
@@ -1145,14 +1162,14 @@ gpProtectedInternalFindClassFromClassLoader(void * entryArg)
  * @param throwError   set to true in order to throw errors
  * @return Assumed to be a jclass.
  *
- * 
+ *
  */
 JNIEXPORT jobject JNICALL
 JVM_FindClassFromClassLoader_Impl(JNIEnv* env, char* className, jboolean init, jobject classLoader, jboolean throwError)
 {
 	if (NULL == env) {
 		return NULL;
-	} 
+	}
 
 	if (((J9VMThread*) env)->gpProtected) {
 		return internalFindClassFromClassLoader(env, className, init, classLoader, throwError);
@@ -1180,13 +1197,13 @@ static BOOLEAN
 initializeThreadFunctions(J9JavaVM *vm)
 {
 	PORT_ACCESS_FROM_PORT(vm->portLibrary);
-	
+
 	if (0 != j9sl_lookup_name(vm->threadDllHandle, "omrthread_monitor_enter", (UDATA*)&VM.monitorEnter, NULL)) {
-		return FALSE;		
+		return FALSE;
 	}
 
 	if (0 != j9sl_lookup_name(vm->threadDllHandle, "omrthread_monitor_exit", (UDATA*)&VM.monitorExit, NULL)) {
-		return FALSE;		
+		return FALSE;
 	}
 
 	return TRUE;
