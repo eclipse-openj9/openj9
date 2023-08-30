@@ -165,6 +165,7 @@ In the end code generators perform binary encoding to write the appropriate bits
   * [ELF Generator (OMR)](https://github.com/eclipse/omr/blob/master/doc/compiler/runtime/ELFGenerator.md#elfgenerator)
   * [Dynamic Loop Transfer (DLT) (OpenJ9)](https://github.com/eclipse-openj9/openj9/issues/12505)
   * Stack Walker
+  * [J9JITExceptionTable (OpenJ9)](runtime/J9JITExceptionTable.md)
 </details>
 
 * <details><summary><b>8. Memory</b></summary>
