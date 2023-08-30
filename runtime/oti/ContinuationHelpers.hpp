@@ -51,7 +51,7 @@ protected:
 public:
 
 	static VMINLINE void
-	swapFieldsWithContinuation(J9VMThread *vmThread, J9VMContinuation *continuation, bool swapJ9VMthreadSavedRegisters = true)
+	swapFieldsWithContinuation(J9VMThread *vmThread, J9VMContinuation *continuation, j9object_t continuationObject, bool swapJ9VMthreadSavedRegisters = true)
 	{
 	/* Helper macro to swap fields between the two J9Class structs. */
 #define SWAP_MEMBER(fieldName, fieldType, class1, class2) \
@@ -84,6 +84,10 @@ public:
 		}
 		threadELS->i2jState = tempI2J;
 		SWAP_MEMBER(oldEntryLocalStorage, J9VMEntryLocalStorage*, threadELS, continuation);
+
+		j9object_t scopedValueCache = J9VMJDKINTERNALVMCONTINUATION_SCOPEDVALUECACHE(vmThread, continuationObject);
+		J9VMJDKINTERNALVMCONTINUATION_SET_SCOPEDVALUECACHE(vmThread, continuationObject, vmThread->scopedValueCache);
+		vmThread->scopedValueCache = scopedValueCache;
 	}
 
 	static VMINLINE ContinuationState volatile *

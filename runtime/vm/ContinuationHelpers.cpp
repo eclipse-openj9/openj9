@@ -233,7 +233,7 @@ enterContinuation(J9VMThread *currentThread, j9object_t continuationObject)
 		currentThread->javaVM->memoryManagerFunctions->preMountContinuation(currentThread, continuationObject);
 	}
 
-	VM_ContinuationHelpers::swapFieldsWithContinuation(currentThread, continuation, started);
+	VM_ContinuationHelpers::swapFieldsWithContinuation(currentThread, continuation, continuationObject, started);
 
 	currentThread->currentContinuation = continuation;
 	/* Reset counters which determine if the current continuation is pinned. */
@@ -285,7 +285,7 @@ yieldContinuation(J9VMThread *currentThread, BOOLEAN isFinished)
 	}
 
 	currentThread->currentContinuation = NULL;
-	VM_ContinuationHelpers::swapFieldsWithContinuation(currentThread, continuation);
+	VM_ContinuationHelpers::swapFieldsWithContinuation(currentThread, continuation, continuationObject);
 
 	/* We need a full fence here to preserve happens-before relationship on PPC and other weakly
 	 * ordered architectures since learning/reservation is turned on by default. Since we have the
