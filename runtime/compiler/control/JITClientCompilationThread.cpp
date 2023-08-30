@@ -2969,7 +2969,7 @@ remoteCompilationEnd(J9VMThread *vmThread, TR::Compilation *comp, TR_ResolvedMet
          }
 #endif /* J9VM_INTERP_AOT_RUNTIME_SUPPORT */
 
-      if (shouldStoreRemoteAOTMethods)
+      if (!compInfo->getPersistentInfo()->getJITServerUseAOTCache() || shouldStoreRemoteAOTMethods)
          {
          J9ROMMethod *romMethod = comp->fej9()->getROMMethodFromRAMMethod(method);
          TR::CompilationInfo::storeAOTInSharedCache(
