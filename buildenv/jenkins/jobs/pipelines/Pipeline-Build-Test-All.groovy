@@ -300,6 +300,12 @@ try {
                         buildFile.setup_pull_request()
                     }
 
+                    // Add link of PullRequest in description, if it is set
+                    if (ghprbPullLink) {
+                        def ghprbPullLink_hyperlink_tag = "<a href='${ghprbPullLink}'>PR #${ghprbPullId}</a>: ${ghprbPullTitle}"
+                        CUSTOM_DESCRIPTION = ((CUSTOM_DESCRIPTION) ? CUSTOM_DESCRIPTION + "<br>" : "") + ghprbPullLink_hyperlink_tag
+                    }
+
                     BUILD_SPECS.putAll(variableFile.get_specs(SPECS))
 
                     // parse variables file and initialize variables
