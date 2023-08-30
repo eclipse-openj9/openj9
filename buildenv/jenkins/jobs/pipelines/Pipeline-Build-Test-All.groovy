@@ -228,6 +228,8 @@ ghprbTargetBranch = (params.ghprbTargetBranch) ? params.ghprbTargetBranch : ""
 echo "ghprbTargetBranch:'${ghprbTargetBranch}'"
 ghprbActualCommit = (params.ghprbActualCommit) ? params.ghprbActualCommit : ""
 echo "ghprbActualCommit:'${ghprbActualCommit}'"
+ghprbPullLink = (params.ghprbPullLink) ? params.ghprbPullLink : ""
+echo "ghprbPullLink:'${ghprbPullLink}'"
 
 // If custom repo/branch/refspec is passed, use it,
 // elif build is OpenJ9 PR, use pr merge-ref/refspec,
