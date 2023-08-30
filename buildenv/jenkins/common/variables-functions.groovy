@@ -1410,13 +1410,18 @@ def set_build_extra_options(build_specs=null) {
                 if (releases.contains(release)) {
                     ['EXTRA_GETSOURCE_OPTIONS', 'EXTRA_CONFIGURE_OPTIONS', 'EXTRA_MAKE_OPTIONS'].each { it ->
                         buildspec = buildspec_manager.getSpec(spec)
-                        // look up extra options by release and spec/platform provided as build parameters:
-                        // e.g. EXTRA_GETSOURCE_OPTIONS_JDK<release>_<spec>
-                        //      EXTRA_CONFIGURE_OPTIONS_JDK<release>_<spec>
-                        //      EXTRA_MAKE_OPTIONS_JDK<release>_<spec>
+
+                        // lookup default options passed in from top-level Pipeline jobs
                         def extraOptions = params."${it}_JDK${release}_${spec}"
+                        // use options from spec when no options have been provided
                         if (!extraOptions && buildspec) {
                             extraOptions = buildspec.getVectorField("${it.toLowerCase()}", release).join(" ")
+                        }
+                        // look up extra options provided as build parameters from user and append to end
+                        def buildExtraOptions = params."${it}"
+                        if (buildExtraOptions) {
+                            extraOptions = "${extraOptions} ${buildExtraOptions}"
+                            echo "Using ${it} = ${extraOptions}"
                         }
 
                         if (extraOptions) {
