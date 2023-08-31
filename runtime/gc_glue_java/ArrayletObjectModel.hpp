@@ -366,7 +366,7 @@ public:
 		uintptr_t stride = J9ARRAYCLASS_GET_STRIDE(clazzPtr);
 		uintptr_t size = numberOfElements * stride;
 		uintptr_t alignedSize = UDATA_MAX;
-		if ((size / stride) == numberOfElements) {
+		if ((0 == stride) || ((size / stride) == numberOfElements)) {
 			alignedSize = MM_Math::roundToSizeofUDATA(size);
 			if (alignedSize < size) {
 				alignedSize = UDATA_MAX;
@@ -478,6 +478,9 @@ public:
 			void* srcData = getDataPointerForContiguous(srcObject);
 			switch(elementSize)
 			{
+			case 0:
+				break;
+
 			case 1:
 				// byte/boolean
 				{
@@ -637,6 +640,9 @@ public:
 			void* destData = getDataPointerForContiguous(destObject);
 			switch(elementSize)
 			{
+			case 0:
+				break;
+
 			case 1:
 				// byte/boolean
 				{
