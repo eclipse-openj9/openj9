@@ -40,4 +40,8 @@ Java_java_lang_ref_Finalizer_runFinalizationImpl(JNIEnv *env, jclass recv)
 	vmFuncs->internalReleaseVMAccess(currentThread);
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
 	mmFuncs->runFinalization(currentThread);
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
+	vmFuncs->internalAcquireVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
 }
