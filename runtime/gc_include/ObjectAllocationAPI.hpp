@@ -447,10 +447,11 @@ public:
 	VMINLINE j9object_t
 	inlineAllocateIndexableValueTypeObject(J9VMThread *currentThread, J9Class *arrayClass, uint32_t size, bool initializeSlots = true, bool memoryBarrier = true, bool sizeCheck = true)
 	{
-		uintptr_t dataSize = ((uintptr_t)size) * J9ARRAYCLASS_GET_STRIDE(arrayClass);
+		uintptr_t stride = J9ARRAYCLASS_GET_STRIDE(arrayClass);
+		uintptr_t dataSize = ((uintptr_t)size) * stride;
 		bool validSize = true;
 #if !defined(J9VM_ENV_DATA64)
-		validSize = !sizeCheck || (size < ((uint32_t)J9_MAXIMUM_INDEXABLE_DATA_SIZE / J9ARRAYCLASS_GET_STRIDE(arrayClass)));
+		validSize = (!sizeCheck) || (0 == stride) || (size < ((uint32_t)J9_MAXIMUM_INDEXABLE_DATA_SIZE / stride));
 #endif /* J9VM_ENV_DATA64 */
 		return inlineAllocateIndexableObjectImpl(currentThread, arrayClass, size, dataSize, validSize, initializeSlots, memoryBarrier);
 	}

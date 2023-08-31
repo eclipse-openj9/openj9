@@ -91,6 +91,9 @@ public:
 	 */
 	MMINLINE UDATA getIndex()
 	{
+		if (0 == _elementStride) {
+			return 0;
+		}
 		return ((uintptr_t)_scanPtr - (uintptr_t)_basePtr) / _elementStride;
 	}
 

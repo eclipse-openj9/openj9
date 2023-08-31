@@ -94,7 +94,7 @@ GC_ArrayletObjectModel::getArrayletLayout(J9Class* clazz, UDATA dataSizeInBytes,
 	/* CMVC 135307 : when checking for InlineContiguous layout, perform subtraction as adding to dataSizeInBytes could trigger overflow. */
 	if ((largestDesirableSpine == UDATA_MAX) || (dataSizeInBytes <= (largestDesirableSpine - minimumSpineSizeAfterGrowing - contiguousIndexableHeaderSize()))) {
 		layout = InlineContiguous;
-		if(0 == dataSizeInBytes) {
+		if ((0 == dataSizeInBytes) && (0 < J9ARRAYCLASS_GET_STRIDE(clazz))) {
 			/* Zero sized NUA uses the discontiguous shape */
 			layout = Discontiguous;
 		}
