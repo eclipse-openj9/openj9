@@ -1117,6 +1117,8 @@ bool J9::RecognizedCallTransformer::isInlineable(TR::TreeTop* treetop)
          case TR::java_lang_Math_max_L:
          case TR::java_lang_Math_min_L:
             return !comp()->getOption(TR_DisableMaxMinOptimization);
+         case TR::java_lang_Math_multiplyHigh:
+            return cg()->getSupportsLMulHigh();
          case TR::java_lang_StringUTF16_toBytes:
             return !comp()->compileRelocatableCode();
          case TR::java_lang_StrictMath_sqrt:
@@ -1240,6 +1242,9 @@ void J9::RecognizedCallTransformer::transform(TR::TreeTop* treetop)
             break;
          case TR::java_lang_Math_min_L:
             processIntrinsicFunction(treetop, node, TR::lmin);
+            break;
+         case TR::java_lang_Math_multiplyHigh:
+            processIntrinsicFunction(treetop, node, TR::lmulh);
             break;
          case TR::java_lang_StringUTF16_toBytes:
             process_java_lang_StringUTF16_toBytes(treetop, node);

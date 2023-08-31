@@ -2254,6 +2254,7 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::java_lang_Math_tanh,             "tanh",           "(D)D")},
       {x(TR::java_lang_Math_fma_D,            "fma",            "(DDD)D")},
       {x(TR::java_lang_Math_fma_F,            "fma",            "(FFF)F")},
+      {x(TR::java_lang_Math_multiplyHigh,     "multiplyHigh",   "(JJ)J")},
       {  TR::unknownMethod}
       };
 
@@ -4667,6 +4668,7 @@ TR_ResolvedJ9Method::setRecognizedMethodInfo(TR::RecognizedMethod rm)
             case TR::java_lang_Math_abs_L:
             case TR::java_lang_Math_abs_F:
             case TR::java_lang_Math_abs_D:
+            case TR::java_lang_Math_multiplyHigh:
             case TR::java_lang_Long_reverseBytes:
             case TR::java_lang_Integer_reverseBytes:
             case TR::java_lang_Short_reverseBytes:
