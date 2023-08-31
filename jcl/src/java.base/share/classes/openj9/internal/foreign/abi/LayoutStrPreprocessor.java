@@ -31,7 +31,10 @@ import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.PaddingLayout;
 import java.lang.foreign.SequenceLayout;
+import java.lang.foreign.StructLayout;
+import java.lang.foreign.UnionLayout;
 import java.lang.foreign.ValueLayout;
+import static java.lang.foreign.ValueLayout.*;
 import jdk.internal.foreign.abi.LinkerOptions;
 /*[ELSE] JAVA_SPEC_VERSION >= 21 */
 import jdk.incubator.foreign.CLinker.TypeKind;
@@ -51,16 +54,17 @@ import jdk.incubator.foreign.ValueLayout;
  */
 @SuppressWarnings("nls")
 final class LayoutStrPreprocessor {
+	private static final String osName = System.getProperty("os.name").toLowerCase();
+	private static final String arch = System.getProperty("os.arch").toLowerCase();
+	private static final boolean isX86_64 = arch.equals("amd64") || arch.equals("x86_64");
+	private static final boolean isLinuxS390x = arch.equals("s390x") && osName.startsWith("linux");
 
 	/*[IF JAVA_SPEC_VERSION == 17]*/
 	private static final String VARARGS_ATTR_NAME;
 
 	static {
-		final String osName = System.getProperty("os.name").toLowerCase();
-		final String arch = System.getProperty("os.arch").toLowerCase();
-
 		/* Note: the attributes intended for the layout with variadic argument are defined in OpenJDK. */
-		if ((arch.equals("amd64") || arch.equals("x86_64"))) {
+		if (isX86_64) {
 			if (osName.startsWith("windows")) {
 				VARARGS_ATTR_NAME = "abi/windows/varargs";
 			} else {
@@ -78,7 +82,7 @@ final class LayoutStrPreprocessor {
 			} else {
 				VARARGS_ATTR_NAME = "abi/ppc64/aix/varargs";
 			}
-		} else if (arch.equals("s390x") && osName.startsWith("linux")) {
+		} else if (isLinuxS390x) {
 			VARARGS_ATTR_NAME = "abi/s390x/sysv/varargs";
 		} else {
 			throw new InternalError("Unsupported platform: " + arch + "_" + osName);
@@ -133,7 +137,12 @@ final class LayoutStrPreprocessor {
 	private static long getTotalPaddingBytesOfStruct(MemoryLayout targetLayout) {
 		long paddingBytes = 0;
 
-		if (targetLayout instanceof GroupLayout structLayout) {
+		/*[IF JAVA_SPEC_VERSION >= 21]*/
+		if (targetLayout instanceof StructLayout structLayout)
+		/*[ELSE] JAVA_SPEC_VERSION >= 21 */
+		if (targetLayout instanceof GroupLayout structLayout)
+		/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
+		{
 			List<MemoryLayout> elementLayoutList = structLayout.memberLayouts();
 			for (MemoryLayout structElement : elementLayoutList) {
 				if (isPaddingLayout(structElement)) {
@@ -190,15 +199,15 @@ final class LayoutStrPreprocessor {
 	 *
 	 *  Note:
 	 *  The prefix "ByteSize#CountOfElmemnt" and "#CountOfElmemnt" are not required in
-	 *  the upcall given the converted layout stirngs are further parsed for the generated
+	 *  the upcall given the converted layout strings are further parsed for the generated
 	 *  thunk in native, which is logically different from downcall.
 	 */
 	private static StringBuilder preprocessLayout(MemoryLayout targetLayout, boolean isDownCall) {
-		StringBuilder targetLayoutString = new StringBuilder("");
+		StringBuilder targetLayoutStr = new StringBuilder();
 
 		/* Directly obtain the kind symbol of the primitive layout. */
 		if (targetLayout instanceof ValueLayout valueLayout) {
-			targetLayoutString.append(getPrimitiveTypeSymbol(valueLayout));
+			targetLayoutStr.append(getPrimitiveTypeSymbol(valueLayout));
 		} else if (targetLayout instanceof SequenceLayout arrayLayout) { /* Intended for nested arrays. */
 			MemoryLayout elementLayout = arrayLayout.elementLayout();
 			/*[IF JAVA_SPEC_VERSION >= 21]*/
@@ -209,37 +218,151 @@ final class LayoutStrPreprocessor {
 
 			/* The padding bytes is required in the native signature for upcall thunk generation. */
 			if (isPaddingLayout(elementLayout) && !isDownCall) {
-				targetLayoutString.append('(').append(arrayLayout.byteSize()).append(')');
+				targetLayoutStr.append('(').append(arrayLayout.byteSize()).append(')');
 			} else {
-				targetLayoutString.append(elementCount).append(':').append(preprocessLayout(elementLayout, isDownCall));
+				targetLayoutStr.append(elementCount).append(':').append(preprocessLayout(elementLayout, isDownCall));
 			}
-		} else if (targetLayout instanceof GroupLayout structLayout) { /* Intended for the nested structs. */
-			List<MemoryLayout> elementLayoutList = structLayout.memberLayouts();
-			int structElementCount = elementLayoutList.size();
-			StringBuilder elementLayoutStrs = new StringBuilder("");
-			int paddingElements = 0;
-			for (int elemIndex = 0; elemIndex < structElementCount; elemIndex++) {
-				MemoryLayout structElement = elementLayoutList.get(elemIndex);
-				/* Ignore any padding element in the struct as it is handled by ffi_call by default. */
-				if (isPaddingLayout(structElement)) {
-					paddingElements += 1;
-					/* The padding bytes is required in the native signature for upcall thunk generation. */
-					if (!isDownCall) {
-						elementLayoutStrs.append('(').append(structElement.byteSize()).append(')');
-					}
-				} else {
-					elementLayoutStrs.append(preprocessLayout(structElement, isDownCall));
-				}
-			}
-			/* Prefix "#" to denote the start of this layout string in the case of downcall. */
-			if (isDownCall) {
-				targetLayoutString.append('#').append(structElementCount - paddingElements);
-			}
-			targetLayoutString.append('[').append(elementLayoutStrs).append(']');
+		/*[IF JAVA_SPEC_VERSION >= 21]*/
+		} else if (targetLayout instanceof UnionLayout unionLayout) { /* Intended for the nested union since JDK21. */
+			targetLayoutStr = encodeUnionLayoutStr(unionLayout, targetLayoutStr, isDownCall);
+		/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
+		} else if (targetLayout instanceof GroupLayout groupLayout) { /* Intended for the nested struct. */
+			targetLayoutStr = encodeStructLayoutStr(groupLayout, targetLayoutStr, isDownCall);
 		}
 
-		return targetLayoutString;
+		return targetLayoutStr;
 	}
+
+	/* Encode the types in the struct layout to a symbol string to simplify the further processing in native. */
+	private static StringBuilder encodeStructLayoutStr(GroupLayout structLayout, StringBuilder targetLayoutStr, boolean isDownCall) {
+		List<MemoryLayout> elementLayoutList = structLayout.memberLayouts();
+		int structElementCount = elementLayoutList.size();
+		StringBuilder elementLayoutStrs = new StringBuilder();
+		int paddingElements = 0;
+
+		for (MemoryLayout structElement : elementLayoutList) {
+			/* Ignore any padding element in the struct as it is handled by ffi_call by default. */
+			if (isPaddingLayout(structElement)) {
+				paddingElements += 1;
+				/* The padding bytes is required in the native signature for upcall thunk generation. */
+				if (!isDownCall) {
+					elementLayoutStrs.append('(').append(structElement.byteSize()).append(')');
+				}
+			} else {
+				elementLayoutStrs.append(preprocessLayout(structElement, isDownCall));
+			}
+		}
+
+		/* Prefix "#" to denote the start of this layout string in the case of downcall. */
+		if (isDownCall) {
+			targetLayoutStr.append('#').append(structElementCount - paddingElements);
+		}
+		targetLayoutStr.append('[').append(elementLayoutStrs).append(']');
+
+		return targetLayoutStr;
+	}
+
+	/*[IF JAVA_SPEC_VERSION >= 21]*/
+	/* Encode the types in the union layout to a symbol string to simplify the further processing in native. */
+	private static StringBuilder encodeUnionLayoutStr(UnionLayout unionLayout, StringBuilder targetLayoutStr, boolean isDownCall) {
+		long unionByteSize = unionLayout.byteSize();
+		StringBuilder elementLayoutStrs = new StringBuilder();
+		int byteAlignment = (int)unionLayout.byteAlignment();
+		ValueLayout sequenceElement;
+
+		/* The idea is to select the primitive type with the biggest alignment of the union
+		 * (obtained via unionLayout.byteAlignment()) to be laid out as a sequence which is
+		 * correctly mappped onto the given GPRs/FPRs/stack on the hardware.
+		 */
+		switch (byteAlignment) {
+		case 1: /* 1 Byte. */
+			sequenceElement = JAVA_BYTE;
+			break;
+		case 2: /* 2 Bytes. */
+			sequenceElement = JAVA_SHORT;
+			break;
+		case 4: /* 4 Bytes. */
+			if (validatePrimTypesOfUnionForGPROrStack(unionLayout, byteAlignment)) {
+				sequenceElement = JAVA_INT;
+			} else {
+				sequenceElement = JAVA_FLOAT;
+			}
+			break;
+		case 8: /* 8 Bytes. */
+			if (validatePrimTypesOfUnionForGPROrStack(unionLayout, byteAlignment)) {
+				sequenceElement = JAVA_LONG;
+			} else {
+				sequenceElement = JAVA_DOUBLE;
+			}
+			break;
+		default:
+			throw new IllegalArgumentException("Invalid alignment of the union layout: " + unionLayout);
+		}
+
+		long elementByteSize = sequenceElement.byteSize();
+		long sequenceCount = (unionByteSize / elementByteSize)
+				+ ((0 == (unionByteSize % elementByteSize)) ? 0 : 1);
+
+		/* There is no need to create a sequence layout for a single element. */
+		MemoryLayout sequenceLayout = (sequenceCount != 1)
+				? MemoryLayout.sequenceLayout(sequenceCount, sequenceElement)
+				: sequenceElement;
+		elementLayoutStrs.append(preprocessLayout(sequenceLayout, isDownCall));
+
+		/* Prefix "#" to denote the start of this layout string in the case of downcall. */
+		if (isDownCall) {
+			targetLayoutStr.append('#').append(1);
+		}
+		targetLayoutStr.append('[').append(elementLayoutStrs).append(']');
+
+		return targetLayoutStr;
+	}
+
+	/* Check whether the specified 4/8-byte aligned group layout (struct/union) layout contains
+	 * non-floating-point primitives so as to determine whether the elements of union can be safely
+	 * mapped to GPRs/stack which is uniquely determined by the underlying libffi/compiler.
+	 */
+	private static boolean validatePrimTypesOfUnionForGPROrStack(GroupLayout groupLayout, int byteAlignment) {
+		List<MemoryLayout> elementLayoutList = groupLayout.memberLayouts();
+		boolean arePrimTypesForGPROrStack = false;
+		for (MemoryLayout elementLayout : elementLayoutList) {
+			if (((elementLayout instanceof ValueLayout elemValueLayout)
+					&& validatePrimTypeForGPROrStack(elemValueLayout, byteAlignment))
+			|| ((elementLayout instanceof GroupLayout elemGroupLayout)
+					&& validatePrimTypesOfUnionForGPROrStack(elemGroupLayout, byteAlignment))
+			) {
+				arePrimTypesForGPROrStack = true;
+				break;
+			}
+		}
+
+		return arePrimTypesForGPROrStack;
+	}
+
+	/* Check whether the primitive type can be safely mappped to GPR/stack when it is not float/double
+	 * in the struct/union including some exceptions due to the platform restrictions.
+	 *
+	 * Note:
+	 * The primitive type is mappped to GPR/stack as long as it is not float/double on most platforms
+	 * with a couple of exceptions that:
+	 * 1) the biggest alignment is 8 bytes on the non-X86_64 platforms even though the type is float.
+	 * 2) it is always mapped onto GPR/stack in any case on zLinux.
+	 */
+	private static boolean validatePrimTypeForGPROrStack(ValueLayout primLayout, int byteAlignment) {
+		Class<?> carrier = primLayout.carrier();
+		boolean isPrimTypeForGPROrStack;
+
+		if (carrier == float.class) {
+			isPrimTypeForGPROrStack = isLinuxS390x || ((8 == byteAlignment) && !isX86_64);
+		} else if (carrier == double.class) {
+			isPrimTypeForGPROrStack = isLinuxS390x;
+		} else {
+			isPrimTypeForGPROrStack = true;
+		}
+
+		return isPrimTypeForGPROrStack;
+	}
+	/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 
 	/* Determine whether the specfied layout is a padding layout or not. */
 	private static boolean isPaddingLayout(MemoryLayout targetLayout) {
@@ -254,7 +377,7 @@ final class LayoutStrPreprocessor {
 	/*[IF JAVA_SPEC_VERSION >= 21]*/
 	private static String getPrimitiveTypeSymbol(ValueLayout targetLayout) {
 		Class<?> javaType = targetLayout.carrier();
-		String typeSymbol = "";
+		String typeSymbol;
 
 		if (javaType == byte.class) {
 			/* JAVA_BYTE corresponds to C_CHAR (1 byte) in native. */
@@ -281,7 +404,7 @@ final class LayoutStrPreprocessor {
 		 */
 		TypeKind kind = (TypeKind)targetLayout.attribute(TypeKind.ATTR_NAME)
 				.orElseThrow(() -> new IllegalArgumentException("The layout's ABI class is empty"));
-		String typeSymbol = "";
+		String typeSymbol;
 
 		switch (kind) {
 		case CHAR:
