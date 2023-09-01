@@ -546,7 +546,6 @@ if(NOT JAVA_SPEC_VERSION LESS 9)
 			Java_java_lang_invoke_FieldVarHandle_lookupField
 			Java_java_lang_invoke_FieldVarHandle_unreflectField
 		)
-		
 	endif()
 
 	omr_add_exports(jclse
