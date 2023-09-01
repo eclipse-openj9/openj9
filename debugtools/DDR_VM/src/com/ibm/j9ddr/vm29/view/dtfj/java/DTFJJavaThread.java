@@ -227,7 +227,8 @@ public class DTFJJavaThread implements JavaThread
 	{
 		private Object frame = null;
 		
-		public FrameCallbackResult frameWalkFunction(J9VMThreadPointer walkThread, WalkState walkState)
+		@Override
+		public FrameCallbackResult frameWalkFunction(WalkState walkState)
 		{
 			if (walkState.method.isNull()){
 				return FrameCallbackResult.KEEP_ITERATING;
@@ -243,7 +244,8 @@ public class DTFJJavaThread implements JavaThread
 			return FrameCallbackResult.KEEP_ITERATING;
 		}
 
-		public void objectSlotWalkFunction(J9VMThreadPointer walkThread, WalkState walkState, PointerPointer objectSlot, VoidPointer stackAddress)
+		@Override
+		public void objectSlotWalkFunction(WalkState walkState, PointerPointer objectSlot, VoidPointer stackAddress)
 		{
 			if (walkState.method.isNull()){
 				/* adding an object slot iterator causes us to be called for
@@ -268,9 +270,8 @@ public class DTFJJavaThread implements JavaThread
 			}
 		}
 		
-
-		public void fieldSlotWalkFunction(J9VMThreadPointer walkThread,
-				WalkState walkState, ObjectReferencePointer objectSlot,
+		@Override
+		public void fieldSlotWalkFunction(WalkState walkState, ObjectReferencePointer objectSlot,
 				VoidPointer stackLocation)
 		{
 			if (walkState.method.isNull()){
@@ -375,7 +376,7 @@ public class DTFJJavaThread implements JavaThread
 		unregister((IEventListener)walkState.callBacks);
 
 		if(result != StackWalkResult.NONE) {
-			frames.add(J9DDRDTFJUtils.newCorruptData(DTFJContext.getProcess(), "Bad return from stack walker walking thread 0x" + Long.toHexString(walkState.walkThread.getAddress()) + ". Some stack frames may be missing. Final state = " + result));
+			frames.add(J9DDRDTFJUtils.newCorruptData(DTFJContext.getProcess(), "Bad return from stack walker walking thread 0x" + Long.toHexString(walkState.threadAddress) + ". Some stack frames may be missing. Final state = " + result));
 		}
 	}
 

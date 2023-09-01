@@ -21,6 +21,8 @@
  *******************************************************************************/
 package com.ibm.j9ddr.vm29.j9.stackwalker;
 
+import com.ibm.j9ddr.CorruptDataException;
+import com.ibm.j9ddr.corereaders.osthread.IOSThread;
 import com.ibm.j9ddr.vm29.pointer.Pointer;
 import com.ibm.j9ddr.vm29.pointer.PointerPointer;
 import com.ibm.j9ddr.vm29.pointer.U8Pointer;
@@ -29,16 +31,17 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9ConstantPoolPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9I2JStatePointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9JITDecompilationInfoPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9JITExceptionTablePointer;
+import com.ibm.j9ddr.vm29.pointer.generated.J9JavaVMPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9MethodPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9VMEntryLocalStoragePointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9VMThreadPointer;
 import com.ibm.j9ddr.vm29.types.UDATA;
 
-import static com.ibm.j9ddr.vm29.structure.J9StackWalkConstants.*;
+import static com.ibm.j9ddr.vm29.structure.J9StackWalkConstants.J9SW_POTENTIAL_SAVED_REGISTERS;
 
 /**
  * Mutable java equivalent of J9StackWalkState
- * 
+ *
  * @author andhall
  *
  */
@@ -48,100 +51,130 @@ public class WalkState
 	/** Thread to be walked */
 	public J9VMThreadPointer walkThread;
 	
+	public J9JavaVMPointer javaVM;
+
+	public long threadAddress;
+
+	public IOSThread osThread;
+
+	public UDATA privateFlags;
+
 	/** Flags controlling the walk
-	 * @see StackWalkerConstants 
+	 * @see StackWalkerConstants
 	 */
 	public long flags;
-	
+
 	/** Base pointer */
 	public UDATAPointer bp;
-	
+
 	public UDATAPointer unwindSP;
-	
+
 	/** Program counter */
 	public U8Pointer pc;
-	
+
 	/** Top-of-stack pointer */
 	public UDATAPointer sp;
-	
+
 	/** Address of argument 0 */
 	public UDATAPointer arg0EA;
-	
+
 	public J9MethodPointer literals;
-	
+
 	public UDATAPointer walkSP;
-	
+
 	public UDATA argCount;
-	
+
 	public J9ConstantPoolPointer constantPool;
-	
+
 	public J9MethodPointer method;
-	
+
 	public J9JITExceptionTablePointer jitInfo = J9JITExceptionTablePointer.NULL;
-	
+
 	public UDATA frameFlags;
-	
+
 	public UDATA resolveFrameFlags;
-	
+
 	public UDATAPointer searchValue;
-	
+
 	public int skipCount;
-	
+
 	public long maxFrames;
-	
+
 	/* User data excluded. If you want to add your own fields, create a subclass */
-	
+
 	public long framesWalked;
-	
+
 	public IStackWalkerCallbacks callBacks;
-	
+
 	/* Cache isn't duplicated in offline walker */
-	
+
 	public Pointer restartPoint;
-	
+
 	public Pointer restartException;
-	
+
 	public Pointer inlinerMap;
-	
+
 	public long inlineDepth;
-	
+
 	public UDATAPointer cacheCursor;
-	
+
 	public J9JITDecompilationInfoPointer decompilationRecord;
-	
+
 	public boolean searchFrameFound;
-	
+
 	public UDATAPointer registerEAs[];
-	
+
 	{
 		registerEAs = new UDATAPointer[(int) J9SW_POTENTIAL_SAVED_REGISTERS];
-		
+
 		for (int i=0; i < registerEAs.length; i++) {
 			registerEAs[i] = UDATAPointer.NULL;
 		}
 	}
-	
-	public J9VMEntryLocalStoragePointer walkedEntryLocalStorage;
-	
+
+	public J9VMEntryLocalStoragePointer oldEntryLocalStorage;
+
+	public UDATAPointer jitGlobalStorageBase;
+
+	public UDATAPointer jitFPRegisterStorageBase;
+
 	public J9I2JStatePointer i2jState;
-	
+
 	public J9JITDecompilationInfoPointer decompilationStack;
-	
+
 	public PointerPointer pcAddress;
-	
+
 	public UDATA outgoingArgCount;
-	
+
 	public U8Pointer objectSlotBitVector;
-	
+
 	public UDATA elsBitVector;
-	
+
 	public U8Pointer bytecodePCOffset;
-	
+
 	public UDATAPointer j2iFrame;
-	
+
 	public UDATA previousFrameFlags;
-	
+
 	public int slotIndex;
-	
+
 	public int slotType;
+
+	public String getThreadHexAddress() {
+		return String.format("0x%0" + (UDATA.SIZEOF * 2) + "X", threadAddress);
+	}
+
+	public void fillElsFields(J9VMEntryLocalStoragePointer els) throws CorruptDataException {
+		if (els.notNull()) {
+			i2jState = els.i2jState();
+			jitGlobalStorageBase = els.jitGlobalStorageBase();
+			jitFPRegisterStorageBase = els.jitFPRegisterStorageBase();
+			oldEntryLocalStorage = els.oldEntryLocalStorage();
+		} else {
+			i2jState = J9I2JStatePointer.NULL;
+			jitGlobalStorageBase = UDATAPointer.NULL;
+			jitFPRegisterStorageBase = UDATAPointer.NULL;
+			oldEntryLocalStorage = J9VMEntryLocalStoragePointer.NULL;
+		}
+	}
 }
