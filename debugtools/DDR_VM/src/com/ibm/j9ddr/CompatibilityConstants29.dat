@@ -62,6 +62,7 @@ J9JavaAccessFlags.J9AccClassIsUnmodifiable = 0
 J9JavaAccessFlags.J9AccRecord = 0
 J9JavaAccessFlags.J9AccSealed = 0
 J9JavaAccessFlags.J9AccValueType = 0
+J9JavaAccessFlags.J9StaticFieldIsNullRestricted = 0
 
 J9JavaClassFlags.J9ClassIsFlattened = 0
 J9JavaClassFlags.J9ClassIsPrimitiveValueType = 0
