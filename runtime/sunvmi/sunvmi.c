@@ -624,6 +624,7 @@ JVM_GC_Impl(void)
 	vmFuncs->internalAcquireVMAccess(currentThread);
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
 
+	/* Two GC requests are required to guarantee a GC actually occurs. */
 	mmFuncs->j9gc_modron_global_collect(currentThread);
 	mmFuncs->j9gc_modron_global_collect(currentThread);
 
