@@ -390,7 +390,7 @@ _IF([JAVA_SPEC_VERSION >= 18],
 _IF([JAVA_SPEC_VERSION >= 18],
 	[_X(JVM_ReportFinalizationComplete, JNICALL, false, void, JNIEnv *env, jobject obj)])
 _IF([JAVA_SPEC_VERSION >= 19],
-	[_X(JVM_LoadZipLibrary, JNICALL, false, void, void)])
+	[_X(JVM_LoadZipLibrary, JNICALL, false, void *, void)])
 _IF([JAVA_SPEC_VERSION >= 19],
 	[_X(JVM_RegisterContinuationMethods, JNICALL, false, void, JNIEnv *env, jclass clz)])
 _IF([JAVA_SPEC_VERSION >= 19],
