@@ -2969,7 +2969,12 @@ remoteCompilationEnd(J9VMThread *vmThread, TR::Compilation *comp, TR_ResolvedMet
          }
 #endif /* J9VM_INTERP_AOT_RUNTIME_SUPPORT */
 
-      if (!compInfo->getPersistentInfo()->getJITServerUseAOTCache() || shouldStoreRemoteAOTMethods)
+      // If we're not using the AOT cache, we still store by default. This avoids certain test failures in the short term.
+      // Also, if we've explicitly been requested by the user to delay method relocations then we need to store methods
+      // in the SCC to support that option.
+      if (comp->getPersistentInfo()->getJITServerAOTCacheDelayMethodRelocation() ||
+          !compInfo->getPersistentInfo()->getJITServerUseAOTCache() ||
+          shouldStoreRemoteAOTMethods)
          {
          J9ROMMethod *romMethod = comp->fej9()->getROMMethodFromRAMMethod(method);
          TR::CompilationInfo::storeAOTInSharedCache(
