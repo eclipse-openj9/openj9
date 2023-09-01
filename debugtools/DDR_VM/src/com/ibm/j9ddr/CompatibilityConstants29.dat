@@ -56,6 +56,8 @@ J9Consts.J9_ITABLE_OFFSET_VIRTUAL = 0
 
 J9DescriptionBits.J9DescriptionCpBsmIndexMask = 0
 
+J9FieldFlags.J9FieldFlagIsNullRestricted = 0
+
 J9JavaAccessFlags.J9AccClassIsUnmodifiable = 0
 J9JavaAccessFlags.J9AccRecord = 0
 J9JavaAccessFlags.J9AccSealed = 0
