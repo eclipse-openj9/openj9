@@ -24,7 +24,6 @@ package com.ibm.j9ddr.vm29.j9.stackwalker;
 import com.ibm.j9ddr.vm29.pointer.ObjectReferencePointer;
 import com.ibm.j9ddr.vm29.pointer.PointerPointer;
 import com.ibm.j9ddr.vm29.pointer.VoidPointer;
-import com.ibm.j9ddr.vm29.pointer.generated.J9VMThreadPointer;
 
 /**
  * Interface for stack-walker callback routines.
@@ -35,14 +34,14 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9VMThreadPointer;
 public interface IStackWalkerCallbacks
 {
 
-	public FrameCallbackResult frameWalkFunction(J9VMThreadPointer walkThread, WalkState walkState);
+	public FrameCallbackResult frameWalkFunction(WalkState walkState);
 
-	public void objectSlotWalkFunction(J9VMThreadPointer walkThread, WalkState walkState, PointerPointer objectSlot, VoidPointer stackLocation);
+	public void objectSlotWalkFunction(WalkState walkState, PointerPointer objectSlot, VoidPointer stackLocation);
 	
 	/**
 	 * This callback doesn't exist in the native C.
 	 * 
 	 * It's purpose in DDR is passing back field slots in stack-allocated objects (which would be incorrectly handled by a PointerPointer)
 	 */
-	public void fieldSlotWalkFunction(J9VMThreadPointer walkThread, WalkState walkState, ObjectReferencePointer objectSlot, VoidPointer stackLocation);
+	public void fieldSlotWalkFunction(WalkState walkState, ObjectReferencePointer objectSlot, VoidPointer stackLocation);
 }
