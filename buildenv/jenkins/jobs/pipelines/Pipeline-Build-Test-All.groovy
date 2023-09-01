@@ -66,7 +66,7 @@
  *   ENABLE_SUMMARY_AUTO_REFRESH: Boolean - flag to enable the downstream summary auto-refresh, default: false
  */
 
-CURRENT_RELEASES = ['8', '11', '17', '20', '21', 'next']
+CURRENT_RELEASES = ['8', '11', '17', '21', 'next']
 
 SPECS = ['ppc64_aix' : CURRENT_RELEASES,
          'ppc64le_linux'  : CURRENT_RELEASES,
@@ -124,7 +124,7 @@ SPECS = ['ppc64_aix' : CURRENT_RELEASES,
 
 // SHORT_NAMES is used for PullRequest triggers
 // TODO Combine SHORT_NAMES and SPECS
-SHORT_NAMES = ['all' : ['ppc64le_linux','s390x_linux','x86-64_linux','ppc64_aix','x86-64_windows','x86-32_windows','x86-64_mac', 'aarch64_linux', 'aarch64_mac'],
+SHORT_NAMES = ['all' : ['ppc64le_linux', 's390x_linux', 'x86-64_linux', 'ppc64_aix', 'x86-64_windows', 'x86-32_windows', 'x86-64_mac', 'aarch64_linux', 'aarch64_mac'],
             'aix' : ['ppc64_aix'],
             'zlinux' : ['s390x_linux'],
             'zlinuxcriu' : ['s390x_linux_criu'],
@@ -144,6 +144,7 @@ SHORT_NAMES = ['all' : ['ppc64le_linux','s390x_linux','x86-64_linux','ppc64_aix'
             'win' : ['x86-64_windows'],
             'osx' : ['x86-64_mac'],
             'xmac' : ['x86-64_mac'],
+            'alinux' : ['aarch64_linux'],
             'alinux64' : ['aarch64_linux'],
             'alinux64criu' : ['aarch64_linux_criu'],
             'alinux64gcc11' : ['aarch64_linux_gcc11'],
@@ -501,7 +502,7 @@ def get_node_labels(NODE_LABELS, SPECS) {
         NODE_LABELS.trim().split(",").each { ITEM ->
             def ENTRY = ITEM.trim().split("=")
             if (ENTRY.size() != 2) {
-                error("Invalid format for node labels: ${ITEM}! Expected value: spec1=labels1,spec2=labels2,...,specNe=labelsN e.g. aix_ppc-64_cmprssptrs=csp70027,linux_x86-64=(ci.project.openj9 && hw.arch.x86 && sw.os.ubuntu.14)")
+                error("Invalid format for node labels: ${ITEM}! Expected value: spec1=labels1,spec2=labels2,...,specN=labelsN e.g. aix_ppc-64_cmprssptrs=csp70027,linux_x86-64=(ci.project.openj9 && hw.arch.x86 && sw.os.ubuntu.14)")
             }
 
             if (!SPECS.contains(ENTRY[0].trim())) {
@@ -687,10 +688,10 @@ def draw_summary_table() {
         if (ENABLE_SUMMARY_AUTO_REFRESH) {
             def actions = manager.build.actions
             for (int i = 0; i < actions.size(); i++) {
-                 def action = actions.get(i)
-                 if (action.metaClass && action.metaClass.hasProperty(action, "text") && action.text.contains("Downstream Jobs Status")) {
-                     actions.remove(action)
-                 }
+                def action = actions.get(i)
+                if (action.metaClass && action.metaClass.hasProperty(action, "text") && action.text.contains("Downstream Jobs Status")) {
+                    actions.remove(action)
+                }
             }
         }
 
