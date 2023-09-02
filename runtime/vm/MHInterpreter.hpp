@@ -41,7 +41,6 @@
 #include "AtomicSupport.hpp"
 #include "VMHelpers.hpp"
 #include "BytecodeAction.hpp"
-#include "FFITypeHelpers.hpp"
 #include "ObjectAllocationAPI.hpp"
 #include "ObjectAccessBarrierAPI.hpp"
 
@@ -383,6 +382,7 @@ foundITable:
 		}
 		return methodHandle;
 	}
+
 	/**
 	* @brief
 	* Perform argument conversion for AsTypeHandle.
@@ -514,8 +514,6 @@ foundITable:
 	*/
 	void
 	mhStackValidator(j9object_t methodhandle);
-
-
 
 #if defined(ENABLE_DEBUG_FUNCTIONS)
 	void

@@ -62,7 +62,6 @@ static const char * const names[] = {
 
 };
 #endif /* defined(MH_TRACE) */
-
 VM_BytecodeAction
 VM_MHInterpreter::dispatchLoop(j9object_t methodHandle)
 {
@@ -198,7 +197,6 @@ VM_MHInterpreter::dispatchLoop(j9object_t methodHandle)
 			nextAction = THROW_NPE;
 			goto done;
 		}
-
 		case J9_METHOD_HANDLE_KIND_BOUND: {
 			j9object_t type = getMethodHandleMethodType(methodHandle);
 			U_32 slotCount = getMethodTypeArgSlots(type);

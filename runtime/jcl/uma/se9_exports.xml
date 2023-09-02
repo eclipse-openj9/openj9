@@ -63,7 +63,5 @@
 	<export name="Java_jdk_internal_reflect_ConstantPool_getNameAndTypeRefInfoAt0" />
 	<export name="Java_jdk_internal_reflect_ConstantPool_getTagAt0" />
 	<export name="Java_java_lang_StackWalker_walkWrapperImpl" />
-	<export name="Java_java_lang_StackWalker_getImpl" />
-	<export name="Java_java_lang_invoke_MethodHandles_findNativeAddress">
-	</export>
+	<export name="Java_java_lang_StackWalker_getImpl" />	
 </exports>
