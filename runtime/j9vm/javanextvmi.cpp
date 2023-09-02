@@ -220,10 +220,29 @@ JVM_ReportFinalizationComplete(JNIEnv *env, jobject obj)
 #endif /* JAVA_SPEC_VERSION >= 18 */
 
 #if JAVA_SPEC_VERSION >= 19
-JNIEXPORT void JNICALL
+JNIEXPORT void * JNICALL
 JVM_LoadZipLibrary(void)
 {
-	Assert_SC_true(!"JVM_LoadZipLibrary unimplemented");
+	void *zipHandle = NULL;
+	J9JavaVM *vm = BFUjavaVM;
+
+	if (NULL != vm) {
+		PORT_ACCESS_FROM_JAVAVM(vm);
+		uintptr_t handle = 0;
+
+		if (J9PORT_SL_FOUND == j9sl_open_shared_library(
+				(char *)"zip",
+				&handle,
+				OMRPORT_SLOPEN_DECORATE | OMRPORT_SLOPEN_LAZY)
+		) {
+			zipHandle = (void *)handle;
+		}
+	}
+
+	/* We may as well assert here: we won't make much progress without the library. */
+	Assert_SC_notNull(zipHandle);
+
+	return zipHandle;
 }
 
 JNIEXPORT void JNICALL
