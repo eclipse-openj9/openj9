@@ -308,7 +308,7 @@ x86-64_linux:
       all: 'source /home/jenkins/set_gcc_11.2.0_env'
       # use default gcc for 8, 11 (v7.5)
       8: ''
-      11: ''
+      11: 'source /home/jenkins/set_gcc_10.3.0_env'
       17: 'source /home/jenkins/set_gcc_10.3.0_env'
     vars: 'OPENJ9_JAVA_OPTIONS=-Xdump:system+java:events=systhrow,filter=java/lang/ClassCastException,request=exclusive+prepwalk+preempt'
   extra_test_labels:
