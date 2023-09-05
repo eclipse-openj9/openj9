@@ -38,7 +38,7 @@ import java.util.List;
  * </li>
  * <li>Using a javax.management.MBeanServerConnection.</li>
  * <li>Obtaining a proxy MXBean from the static
- * {@link ManagementFactory#newPlatformMXBeanProxy}method, passing in
+ * {@link java.lang.management.ManagementFactory#newPlatformMXBeanProxy}method, passing in
  * &quot;java.util.logging:type=Logging&quot; for the value of the second parameter.
  * </li>
  * </ol>

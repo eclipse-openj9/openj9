@@ -627,7 +627,7 @@ public abstract class MethodHandle
 	 * exactly match the underlying MethodType.
 	 * <p>
 	 * <i>invoke</i> acts as normally unless the arities differ.  In that case, the trailing
-	 * arguments are converted as though by a call to {@link #asCollector(Class<?>, int)} before invoking the underlying
+	 * arguments are converted as though by a call to {@link #asCollector(Class, int)} before invoking the underlying
 	 * methodhandle.
 	 * 
 	 * @param arrayParameter - the type of the array to collect the arguments into
