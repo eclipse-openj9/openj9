@@ -5462,7 +5462,9 @@ TR_RelocationRecordSymbolFromManager::activatePointer(TR_RelocationRuntime *relo
       clazz = (TR_OpaqueClassBlock *)J9_CLASS_FROM_METHOD((J9Method *)(reloPrivateData->_symbol));
       }
 
-   if (needsUnloadAssumptions(symbolType))
+   TR::Compilation *comp = reloRuntime->comp();
+   if (needsUnloadAssumptions(symbolType) &&
+       comp->fej9()->isUnloadAssumptionRequired(clazz, comp->getCurrentMethod()))
       {
       SVM_ASSERT(clazz != NULL, "clazz must exist to add Unload Assumptions!");
       reloTarget->addPICtoPatchPtrOnClassUnload(clazz, reloLocation);
@@ -5470,8 +5472,8 @@ TR_RelocationRecordSymbolFromManager::activatePointer(TR_RelocationRuntime *relo
    if (needsRedefinitionAssumption(reloRuntime, reloLocation, clazz, symbolType))
       {
       SVM_ASSERT(clazz != NULL, "clazz must exist to add Redefinition Assumptions!");
-      createClassRedefinitionPicSite((void *)reloPrivateData->_symbol, (void *) reloLocation, sizeof(uintptr_t), false, reloRuntime->comp()->getMetadataAssumptionList());
-      reloRuntime->comp()->setHasClassRedefinitionAssumptions();
+      createClassRedefinitionPicSite((void *)reloPrivateData->_symbol, (void *) reloLocation, sizeof(uintptr_t), false, comp->getMetadataAssumptionList());
+      comp->setHasClassRedefinitionAssumptions();
       }
    }
 
