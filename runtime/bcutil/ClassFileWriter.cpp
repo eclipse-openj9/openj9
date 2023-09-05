@@ -69,6 +69,7 @@ DECLARE_UTF8_ATTRIBUTE_NAME(PRELOAD, "Preload");
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 DECLARE_UTF8_ATTRIBUTE_NAME(IMPLICITCREATION, "ImplicitCreation");
+DECLARE_UTF8_ATTRIBUTE_NAME(NULLRESTRICTED, "NullRestricted");
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 #if JAVA_SPEC_VERSION >= 11
 DECLARE_UTF8_ATTRIBUTE_NAME(NEST_MEMBERS, "NestMembers");
@@ -434,6 +435,12 @@ ClassFileWriter::analyzeFields()
 				addEntry(value, 0, cpType);
 			}
 		}
+
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+		if (J9_ARE_ALL_BITS_SET(fieldShape->modifiers, J9FieldFlagIsNullRestricted)) {
+			addEntry((void *) &NULLRESTRICTED, 0, CFR_CONSTANT_Utf8);
+		}
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
 		fieldShape = romFieldsNextDo(&fieldWalkState);
 	}
@@ -805,6 +812,11 @@ ClassFileWriter::writeField(J9ROMFieldShape * fieldShape)
 	if (NULL != typeAnnotationsData) {
 		attributesCount += 1;
 	}
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+	if (J9_ARE_ALL_BITS_SET(fieldShape->modifiers, J9FieldFlagIsNullRestricted)) {
+		attributesCount += 1;
+	}
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
 	writeU16(U_16(fieldShape->modifiers & CFR_FIELD_ACCESS_MASK));
 	writeU16(indexForUTF8(name));
@@ -844,6 +856,11 @@ ClassFileWriter::writeField(J9ROMFieldShape * fieldShape)
 	if (NULL != typeAnnotationsData) {
 		writeTypeAnnotationsAttribute(typeAnnotationsData);
 	}
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+	if (J9_ARE_ALL_BITS_SET(fieldShape->modifiers, J9FieldFlagIsNullRestricted)) {
+		writeAttributeHeader((J9UTF8 *) &NULLRESTRICTED, 0);
+	}
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 }
 
 void
