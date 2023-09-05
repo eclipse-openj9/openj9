@@ -3346,10 +3346,9 @@ TR::Register *J9::X86::TreeEvaluator::BNDCHKwithSpineCHKEvaluator(TR::Node *node
                   {
                   cg->evaluate(indexChild);
                   }
-               else
-                  {
-                  cg->decReferenceCount(indexChild);
-                  }
+
+               cg->decReferenceCount(indexChild);
+
                faultingInstruction = cg->getImplicitExceptionPoint();
                }
             else
