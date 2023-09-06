@@ -2597,6 +2597,16 @@ BOOLEAN
 isClassRefQtype(J9Class *cpContextClass, U_16 cpIndex);
 
 /**
+ * Determines if null restricted attribute is set on a field or not.
+ *
+ * @param[in] field The field to be checked
+ *
+ * @return TRUE if the field has null restricted attribute set, FALSE otherwise
+ */
+BOOLEAN
+isFieldNullRestricted(J9ROMFieldShape *field);
+
+/**
  * Performs an aaload operation on an object. Handles flattened and non-flattened cases.
  *
  * Assumes recieverObject is not null.
