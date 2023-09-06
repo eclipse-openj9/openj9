@@ -811,12 +811,8 @@ uint8_t *TR::X86CallSnippet::emitSnippetBody()
    bool needToSetCodeLocation = true;
    bool isJitInduceOSRCall    = false;
 
-   if (comp->target().is64Bit() &&
-       methodSymbol->isHelper() &&
-       methodSymRef->isOSRInductionHelper())
-      {
+   if (methodSymbol->isHelper() && methodSymRef->isOSRInductionHelper())
       isJitInduceOSRCall = true;
-      }
 
    if (comp->target().is64Bit())
       {
@@ -1033,9 +1029,9 @@ uint8_t *TR::X86CallSnippet::emitSnippetBody()
       //
       *cursor = 0xe9;
 
-      TR::SymbolReference* dispatchSymRef =
-          methodSymbol->isHelper() && methodSymRef->isOSRInductionHelper() ? methodSymRef :
-                                                                             cg()->symRefTab()->findOrCreateRuntimeHelper(TR_X86interpreterStaticAndSpecialGlue);
+      TR::SymbolReference *dispatchSymRef = isJitInduceOSRCall
+         ? methodSymRef
+         : cg()->symRefTab()->findOrCreateRuntimeHelper(TR_X86interpreterStaticAndSpecialGlue);
 
       int32_t disp32 = cg()->branchDisplacementToHelperOrTrampoline(cursor, dispatchSymRef);
       *(int32_t *)(++cursor) = disp32;
