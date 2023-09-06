@@ -38,9 +38,9 @@
 extern "C" {
 
 J9_DECLARE_CONSTANT_UTF8(runPostRestoreHooks_sig, "()V");
-J9_DECLARE_CONSTANT_UTF8(runPostRestoreHooks_name, "runPostRestoreHooks");
+J9_DECLARE_CONSTANT_UTF8(runPostRestoreHooks_name, "runPostRestoreHooksSingleThread");
 J9_DECLARE_CONSTANT_UTF8(runPreCheckpointHooks_sig, "()V");
-J9_DECLARE_CONSTANT_UTF8(runPreCheckpointHooks_name, "runPreCheckpointHooks");
+J9_DECLARE_CONSTANT_UTF8(runPreCheckpointHooks_name, "runPreCheckpointHooksSingleThread");
 J9_DECLARE_CONSTANT_UTF8(j9InternalCheckpointHookAPI_name, "org/eclipse/openj9/criu/J9InternalCheckpointHookAPI");
 
 static void addInternalJVMCheckpointHook(J9VMThread *currentThread, BOOLEAN isRestore, J9Class *instanceType, BOOLEAN includeSubClass, hookFunc hookFunc);

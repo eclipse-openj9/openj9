@@ -26,10 +26,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.eclipse.openj9.criu.CRIUSupport.HookMode;
+
 final class J9InternalCheckpointHookAPI {
 
-	private static List<J9InternalCheckpointHook> postRestoreHooks = new ArrayList<>();
-	private static List<J9InternalCheckpointHook> preCheckpointHooks = new ArrayList<>();
+	private static List<J9InternalCheckpointHook> postRestoreHooksSingleThread = new ArrayList<>();
+	private static List<J9InternalCheckpointHook> preCheckpointHooksSingleThread = new ArrayList<>();
+	private static List<J9InternalCheckpointHook> postRestoreHooksConcurrentThread = new ArrayList<>();
+	private static List<J9InternalCheckpointHook> preCheckpointHooksConcurrentThread = new ArrayList<>();
 
 	/**
 	 * This is an internal API
@@ -44,8 +48,15 @@ final class J9InternalCheckpointHookAPI {
 	 * @param name     the name of the hook
 	 * @param hook     the runnable hook
 	 */
-	static synchronized void registerPostRestoreHook(int priority, String name, Runnable hook) {
-		postRestoreHooks.add(new J9InternalCheckpointHook(priority, name, hook));
+	static synchronized void registerPostRestoreHook(HookMode mode, int priority, String name, Runnable hook)
+			throws UnsupportedOperationException {
+		// The hook mode and priority have been verified  by the caller.
+		J9InternalCheckpointHook internalHook = new J9InternalCheckpointHook(mode, priority, name, hook);
+		if (mode == CRIUSupport.HookMode.SINGLE_THREAD_MODE) {
+			postRestoreHooksSingleThread.add(internalHook);
+		} else if (mode == CRIUSupport.HookMode.CONCURRENT_MODE) {
+			postRestoreHooksConcurrentThread.add(internalHook);
+		}
 	}
 
 	/**
@@ -60,8 +71,15 @@ final class J9InternalCheckpointHookAPI {
 	 * @param name     the name of the hook
 	 * @param hook     the runnable hook
 	 */
-	static synchronized void registerPreCheckpointHook(int priority, String name, Runnable hook) {
-		preCheckpointHooks.add(new J9InternalCheckpointHook(priority, name, hook));
+	static synchronized void registerPreCheckpointHook(HookMode mode, int priority, String name, Runnable hook)
+			throws UnsupportedOperationException {
+		// The hook mode and priority have been verified  by the caller.
+		J9InternalCheckpointHook internalHook = new J9InternalCheckpointHook(mode, priority, name, hook);
+		if (CRIUSupport.HookMode.SINGLE_THREAD_MODE == mode) {
+			preCheckpointHooksSingleThread.add(internalHook);
+		} else if (CRIUSupport.HookMode.CONCURRENT_MODE == mode) {
+			preCheckpointHooksConcurrentThread.add(internalHook);
+		}
 	}
 
 	private static void runHooks(List<J9InternalCheckpointHook> hooks, boolean reverse) {
@@ -86,20 +104,29 @@ final class J9InternalCheckpointHookAPI {
 	 * Only called by the VM
 	 */
 	@SuppressWarnings("unused")
-	private static void runPreCheckpointHooks() {
-		runHooks(preCheckpointHooks, true);
+	private static void runPreCheckpointHooksSingleThread() {
+		runHooks(preCheckpointHooksSingleThread, true);
 	}
 
 	/*
 	 * Only called by the VM
 	 */
 	@SuppressWarnings("unused")
-	private static void runPostRestoreHooks() {
-		runHooks(postRestoreHooks, false);
+	private static void runPostRestoreHooksSingleThread() {
+		runHooks(postRestoreHooksSingleThread, false);
+	}
+
+	static void runPreCheckpointHooksConcurrentThread() {
+		runHooks(preCheckpointHooksConcurrentThread, true);
+	}
+
+	static void runPostRestoreHooksConcurrentThread() {
+		runHooks(postRestoreHooksConcurrentThread, false);
 	}
 
 	final private static class J9InternalCheckpointHook implements Comparable<J9InternalCheckpointHook> {
 
+		private final CRIUSupport.HookMode hookMode;
 		private final int priority;
 		private final Runnable hook;
 		private final String name;
@@ -117,7 +144,8 @@ final class J9InternalCheckpointHookAPI {
 			hook.run();
 		}
 
-		J9InternalCheckpointHook(int priority, String name, Runnable hook) {
+		J9InternalCheckpointHook(CRIUSupport.HookMode hookMode, int priority, String name, Runnable hook) {
+			this.hookMode = hookMode;
 			this.priority = priority;
 			this.hook = hook;
 			this.name = name;
@@ -125,7 +153,9 @@ final class J9InternalCheckpointHookAPI {
 
 		@Override
 		public String toString() {
-			return "[J9InternalCheckpointHook: [" + name + "], priority:[" + priority + "], runnable:[" + hook + "]]"; //$NON-NLS-1$//$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+			String hookModeStr = CRIUSupport.HookMode.SINGLE_THREAD_MODE == hookMode ? "single-threaded" : "concurrent"; //$NON-NLS-1$ //$NON-NLS-2$
+			return "[J9InternalCheckpointHook(" + hookModeStr + " mode): [" + name + "], priority:[" + priority //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+					+ "], runnable:[" + hook + "]]"; //$NON-NLS-1$ //$NON-NLS-2$
 		}
 
 		@Override
@@ -133,7 +163,8 @@ final class J9InternalCheckpointHookAPI {
 			J9InternalCheckpointHook o = (J9InternalCheckpointHook) obj;
 			if (this == o) {
 				return true;
-			} else if ((this.priority == o.priority) && (this.hook.equals(o.hook)) && (this.name.equals(o.name))) {
+			} else if ((this.hookMode == o.hookMode) && (this.priority == o.priority) && (this.hook.equals(o.hook))
+					&& (this.name.equals(o.name))) {
 				return true;
 			}
 
@@ -144,6 +175,5 @@ final class J9InternalCheckpointHookAPI {
 		public int hashCode() {
 			return super.hashCode();
 		}
-
 	}
 }
