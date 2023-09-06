@@ -668,4 +668,49 @@ public class ValueTypeArrayTests {
       writeArrayElementWithSomeVTClassImplIf(holder);
       writeArrayElementWithSomeIdentityClassImplIf(holder);
    }
+
+	public static primitive class EmptyPrim {
+	}
+
+	public static value class EmptyVal {
+	}
+
+	static void copyBetweenEmptyPrimArrays(EmptyPrim[] arr1, EmptyPrim[] arr2) {
+		for (int i = 0; i < arr1.length; i++) {
+			arr1[i] = arr2[i];
+		}
+	}
+
+	static void compareEmptyPrimArrays(EmptyPrim[] arr1, EmptyPrim[] arr2) {
+		for (int i = 0; i < arr1.length; i++) {
+			assertEquals(arr1[i], arr2[i]);
+		}
+	}
+
+	static void copyBetweenEmptyValArrays(EmptyVal[] arr1, EmptyVal[] arr2) {
+		for (int i = 0; i < arr1.length; i++) {
+			arr1[i] = arr2[i];
+		}
+	}
+
+	static void compareEmptyValArrays(EmptyVal[] arr1, EmptyVal[] arr2) {
+		for (int i = 0; i < arr1.length; i++) {
+			assertEquals(arr1[i], arr2[i]);
+		}
+	}
+
+	@Test(priority=1,invocationCount=2)
+	static public void testEmptyValueArrayElement() {
+		EmptyPrim[] primArr1 = new EmptyPrim[4];
+		EmptyPrim[] primArr2 = new EmptyPrim[4];
+
+		copyBetweenEmptyPrimArrays(primArr1, primArr2);
+		compareEmptyPrimArrays(primArr1, primArr2);
+
+		EmptyVal[] valArr1 = new EmptyVal[4];
+		EmptyVal[] valArr2 = new EmptyVal[4];
+
+		copyBetweenEmptyValArrays(valArr1, valArr2);
+		compareEmptyValArrays(valArr1, valArr2);
+	}
 }
