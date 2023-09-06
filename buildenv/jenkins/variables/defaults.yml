@@ -36,10 +36,6 @@ openjdk:
     default:
       repoUrl: 'https://github.com/ibmruntimes/openj9-openjdk-jdk17.git'
       branch: 'openj9'
-  20:
-    default:
-      repoUrl: 'https://github.com/ibmruntimes/openj9-openjdk-jdk20.git'
-      branch: 'openj9'
   21:
     default:
       repoUrl: 'https://github.com/ibmruntimes/openj9-openjdk-jdk21.git'
@@ -110,7 +106,6 @@ build_discarder:
     OpenJDK8: 5
     OpenJDK11: 5
     OpenJDK17: 10
-    OpenJDK20: 10
     OpenJDK21: 10
     OpenJDK: 10
     Personal: 30
@@ -157,7 +152,6 @@ boot_jdk_default:
       8: '8'
       11: '11'
       17: '17'
-      20: '19'
       21: '20'
       next: '20'
     dir_strip:
@@ -238,7 +232,6 @@ s390x_linux:
   extra_test_labels:
     11: '!sw.os.rhel.8'
     17: '!sw.os.rhel.8'
-    20: '!sw.os.rhel.8'
     21: '!sw.os.rhel.8'
     next: '!sw.os.rhel.8'
   build_env:
@@ -272,7 +265,6 @@ ppc64_aix:
     8: ' --disable-ccache'
     11: '--disable-warnings-as-errors'
     17: '--disable-warnings-as-errors'
-    20: '--disable-warnings-as-errors'
     21: '--disable-warnings-as-errors'
     next: '--disable-warnings-as-errors'
   build_env:
@@ -280,7 +272,6 @@ ppc64_aix:
       8: 'PATH+XLC=/opt/IBM/xlC/13.1.3/bin:/opt/IBM/xlc/13.1.3/bin'
       11: 'PATH+XLC=/opt/IBM/xlC/16.1.0/bin:/opt/IBM/xlc/16.1.0/bin CC=xlclang CXX=xlclang++'
       17: 'PATH+XLC=/opt/IBM/xlC/16.1.0/bin:/opt/IBM/xlc/16.1.0/bin CC=xlclang CXX=xlclang++'
-      20: 'PATH+XLC=/opt/IBM/xlC/16.1.0/bin:/opt/IBM/xlc/16.1.0/bin CC=xlclang CXX=xlclang++'
       21: 'PATH+XLC=/opt/IBM/xlC/16.1.0/bin:/opt/IBM/xlc/16.1.0/bin CC=xlclang CXX=xlclang++'
       next: 'PATH+XLC=/opt/IBM/xlC/16.1.0/bin:/opt/IBM/xlc/16.1.0/bin CC=xlclang CXX=xlclang++'
 #========================================#
@@ -314,7 +305,6 @@ x86-64_linux:
   extra_test_labels:
     11: '!sw.os.cent.6'
     17: '!sw.os.cent.6'
-    20: '!sw.os.cent.6'
     21: '!sw.os.cent.6'
     next: '!sw.os.cent.6'
 #========================================#
@@ -364,7 +354,6 @@ x86-64_windows:
     8: '--with-toolchain-version=2019'
     11: '--with-toolchain-version=2019'
     17: '--with-toolchain-version=2019'
-    20: '--with-toolchain-version=2022'
     21: '--with-toolchain-version=2022'
     next: '--with-toolchain-version=2022'
   node_labels:
