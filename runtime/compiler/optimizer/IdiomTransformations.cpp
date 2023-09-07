@@ -9003,7 +9003,7 @@ makeMixedMemSetGraph(TR::Compilation *c, int32_t ctrl)
 //////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////
 //*****************************************************************************************
-// IL code generation for 2 if-statement version of comparing memory (using CLCL)
+// IL code generation for 2 if-statement version of comparing memory (using arraycmplen)
 // Input: ImportantNode(0) - array load for src1
 //        ImportantNode(1) - array load for src2
 //        ImportantNode(2) - exit-if for checking the length
@@ -9011,9 +9011,6 @@ makeMixedMemSetGraph(TR::Compilation *c, int32_t ctrl)
 //        ImportantNode(4) - increment the array index for src1
 //        ImportantNode(5) - increment the array index for src2
 //        ImportantNode(6) - the size of elements (NULL for byte arrays)
-//
-// Note: If we need to know the position where characters are different (flag generateArraycmplen),
-//       we generate the CLCL instruction. Otherwise, we generate the CLC instruction.
 //*****************************************************************************************
 bool
 CISCTransform2ArrayCmp2Ifs(TR_CISCTransformer *trans)
@@ -9230,18 +9227,15 @@ CISCTransform2ArrayCmp2Ifs(TR_CISCTransformer *trans)
    TR::TreeTop * newFirstTreeTop[2];
    TR::TreeTop * newLastTreeTop[2];
 
-   // Using the CLCL instruction
-   lengthNode = createI2LIfNecessary(comp, trans->isGenerateI2L(), lengthNode);
-   TR::Node * arraycmplen = TR::Node::create(TR::arraycmp, 3, input1Node, input2Node, lengthNode);
-   arraycmplen->setArrayCmpLen(true);
-   arraycmplen->setSymbolReference(comp->getSymRefTab()->findOrCreateArrayCmpSymbol());
+   // Using arraycmplen
+   lengthNode = TR::Node::create(TR::iu2l, 1, lengthNode);
+   TR::Node * arraycmplen = TR::Node::create(TR::arraycmplen, 3, input1Node, input2Node, lengthNode);
+   arraycmplen->setSymbolReference(comp->getSymRefTab()->findOrCreateArrayCmpLenSymbol());
 
-   TR::SymbolReference * resultSymRef = comp->getSymRefTab()->
-      createTemporary(comp->getMethodSymbol(), TR::Int32);
+   arraycmplen = TR::Node::create(TR::l2i, 1, arraycmplen);
+   TR::SymbolReference * resultSymRef = comp->getSymRefTab()->createTemporary(comp->getMethodSymbol(), TR::Int32);
    topArraycmp = TR::Node::createStore(resultSymRef, arraycmplen);
-
-   TR::Node * resultLoad = TR::Node::createLoad(topArraycmp, resultSymRef);
-   TR::Node * equalLen = resultLoad;
+   TR::Node *equalLen = TR::Node::createLoad(topArraycmp, resultSymRef);
    if (shrCount != 0)
       {
       equalLen = TR::Node::create(TR::ishr, 2,
@@ -9365,7 +9359,7 @@ CISCTransform2ArrayCmp2Ifs(TR_CISCTransformer *trans)
 
 
 //*****************************************************************************************
-// IL code generation for comparing memory (using CLC or CLCL)
+// IL code generation for comparing memory (using arraycmp or arraycmplen)
 // Input: ImportantNode(0) - array load for src1
 //        ImportantNode(1) - array load for src2
 //        ImportantNode(2) - exit-if for checking the length
@@ -9375,8 +9369,8 @@ CISCTransform2ArrayCmp2Ifs(TR_CISCTransformer *trans)
 //        ImportantNode(6) - the size of elements (NULL for byte arrays)
 //        ImportantNode(7) - additional node for analyzing MEMCMPCompareTo. Not used for the others.
 //
-// Note: If we need to know the position where characters are different (flag generateArraycmplen),
-//       we generate the CLCL instruction. Otherwise, we generate the CLC instruction.
+// Note: If we need to know the position where characters are different, we generate arraycmplen.
+//       Otherwise, we generate arraycmp.
 //*****************************************************************************************
 bool
 CISCTransform2ArrayCmp(TR_CISCTransformer *trans)
@@ -9593,6 +9587,14 @@ CISCTransform2ArrayCmp(TR_CISCTransformer *trans)
          generateArraycmplen = true;
          }
       }
+   if (generateArraycmplen)
+      {
+      if (!comp->cg()->getSupportsArrayCmpLen())
+         {
+         dumpOptDetails(comp, "Bailing CISCTransform2ArrayCmp. Arraycmplen is needed to continue this transformation, but codgen does not support arraycmplen.\n");
+         return false;
+         }
+      }
 
    // check the indices used in the array loads and
    // the store nodes
@@ -9792,17 +9794,15 @@ CISCTransform2ArrayCmp(TR_CISCTransformer *trans)
 
    if (generateArraycmplen)
       {
-      // Using the CLCL instruction
+      // Using arraycmplen
+      TR::Node * arraycmplen = TR::Node::create(TR::arraycmplen, 3, input1Node, input2Node, TR::Node::create(lengthNode, TR::iu2l, 1, lengthNode));
+      arraycmplen->setSymbolReference(comp->getSymRefTab()->findOrCreateArrayCmpLenSymbol());
 
-      TR::Node * arraycmplen = TR::Node::create(TR::arraycmp, 3, input1Node, input2Node, createI2LIfNecessary(comp, trans->isGenerateI2L(), lengthNode));
-      arraycmplen->setArrayCmpLen(true);
-      arraycmplen->setSymbolReference(comp->getSymRefTab()->findOrCreateArrayCmpSymbol());
-
+      arraycmplen = TR::Node::create(TR::l2i, 1, arraycmplen);
       TR::SymbolReference * resultSymRef = comp->getSymRefTab()->createTemporary(comp->getMethodSymbol(), TR::Int32);
       topArraycmp = TR::Node::createStore(resultSymRef, arraycmplen);
-
-      TR::Node * resultLoad = TR::Node::createLoad(topArraycmp, resultSymRef);
-      TR::Node * equalLen = resultLoad;
+      TR::Node *resultLoad = TR::Node::createLoad(topArraycmp, resultSymRef);
+      TR::Node *equalLen = resultLoad;
       if (shrCount != 0)
          {
          equalLen = TR::Node::create(TR::ishr, 2,
@@ -9823,17 +9823,15 @@ CISCTransform2ArrayCmp(TR_CISCTransformer *trans)
          newLastTreeTop = tmpTreeTop;
          }
 
-      tmpNode = TR::Node::createif(TR::ificmpeq,
-                                  lengthNode,
-                                  resultLoad,
-                                  okDest);
+      tmpNode = TR::Node::createif(TR::ificmpeq, lengthNode, resultLoad, okDest);
+
       tmpTreeTop = TR::TreeTop::create(comp, tmpNode);
       newLastTreeTop->join(tmpTreeTop);
       newLastTreeTop = tmpTreeTop;
       }
    else
       {
-      // Using the CLC instruction
+      // Using arraycmp
       TR::Node * arraycmp = TR::Node::create(TR::arraycmp, 3, input1Node, input2Node, createI2LIfNecessary(comp, trans->isGenerateI2L(), lengthNode));
       arraycmp->setSymbolReference(comp->getSymRefTab()->findOrCreateArrayCmpSymbol());
 
