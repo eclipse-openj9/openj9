@@ -7898,8 +7898,9 @@ predefinedHandlerWrapper(struct J9PortLibrary *portLibrary, U_32 gpType, void *g
 	J9JavaVMAttachArgs attachArgs = {0};
 	J9VMThread *vmThread = NULL;
 	IDATA result = JNI_ERR;
-	BOOLEAN shutdownStarted = FALSE;
+	BOOLEAN invokeHandler = TRUE;
 	I_32 signal = 0;
+	U_32 runtimeFlags = 0;
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
 	signal = j9sig_map_portlib_signal_to_os_signal(gpType);
@@ -7908,14 +7909,16 @@ predefinedHandlerWrapper(struct J9PortLibrary *portLibrary, U_32 gpType, void *g
 		return 1;
 	}
 
-	/* Don't invoke handler if JVM exit has started. */
-	omrthread_monitor_enter(vm->runtimeFlagsMutex);
-	if (J9_ARE_ANY_BITS_SET(vm->runtimeFlags, J9_RUNTIME_EXIT_STARTED)) {
-		shutdownStarted = TRUE;
+	/* Don't invoke handler if JVM hasn't initialized or JVM exit has started. */
+	issueReadBarrier();
+	runtimeFlags = vm->runtimeFlags;
+	if (J9_ARE_NO_BITS_SET(runtimeFlags, J9_RUNTIME_INITIALIZED)
+	|| J9_ARE_ANY_BITS_SET(runtimeFlags, J9_RUNTIME_EXIT_STARTED)
+	) {
+		invokeHandler = FALSE;
 	}
-	omrthread_monitor_exit(vm->runtimeFlagsMutex);
 
-	if (shutdownStarted) {
+	if (!invokeHandler) {
 		return 1;
 	}
 
