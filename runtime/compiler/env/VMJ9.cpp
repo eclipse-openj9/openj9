@@ -4761,7 +4761,8 @@ TR_J9VMBase::getMemberNameMethodInfo(
    TR::KnownObjectTable::Index objIndex,
    MemberNameMethodInfo *out)
    {
-   *out = {};
+   MemberNameMethodInfo zero = {0};
+   *out = zero;
 
    if (objIndex == TR::KnownObjectTable::UNKNOWN)
       return false;
