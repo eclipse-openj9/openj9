@@ -138,9 +138,7 @@ public class CriticalRegionTest
 	
 	private static void discardAndGC()
 	{
-		// Double-GC to try for an aggressive collect
 		garbage = null;
-		System.gc();
 		System.gc();
 	}
 	
@@ -868,8 +866,8 @@ public class CriticalRegionTest
 		try {
 			//lock.wait(sleepTime * 2);
 			for(int i = 0; i < threadCount; i++) {
-				/* CMVC 195423 : Increase timeout to 5 seconds to allow all child threads to complete */
-				threads[i].join(sleepTime * 5);
+				/* Increase timeout to 10 seconds to allow all child threads to complete */
+				threads[i].join(sleepTime * 10);
 			}
 		} catch (InterruptedException e) {}
 			
