@@ -1064,6 +1064,7 @@ TR_CISCGraph::initializeGraphs(TR::Compilation *c)
    bool genMemcpy = c->cg()->getSupportsReferenceArrayCopy() || c->cg()->getSupportsPrimitiveArrayCopy();
    bool genMemset = c->cg()->getSupportsArraySet();
    bool genMemcmp = c->cg()->getSupportsArrayCmp();
+   bool genMemcmpidx = c->cg()->getSupportsArrayCmpLen();
    bool genIDiv2Mul = c->cg()->getSupportsIMulHigh();
    bool genLDiv2Mul = c->cg()->getSupportsLMulHigh();
    // FIXME: We need getSupportsCountDecimalDigit() like interface
@@ -1087,10 +1088,13 @@ TR_CISCGraph::initializeGraphs(TR::Compilation *c)
       {
       preparedCISCGraphs[num] =  makeMemCmpGraph(c, ctrl);
       setEssentialNodes(preparedCISCGraphs[num++]);
-      preparedCISCGraphs[num] =  makeMemCmpIndexOfGraph(c, ctrl);
-      setEssentialNodes(preparedCISCGraphs[num++]);
-      preparedCISCGraphs[num] =  makeMemCmpSpecialGraph(c, ctrl);
-      setEssentialNodes(preparedCISCGraphs[num++]);
+      if (genMemcmpidx)
+         {
+         preparedCISCGraphs[num] =  makeMemCmpIndexOfGraph(c, ctrl);
+         setEssentialNodes(preparedCISCGraphs[num++]);
+         preparedCISCGraphs[num] =  makeMemCmpSpecialGraph(c, ctrl);
+         setEssentialNodes(preparedCISCGraphs[num++]);
+         }
       }
    if (genTRT)
       {
