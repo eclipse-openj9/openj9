@@ -9703,11 +9703,24 @@ static TR::Register* inlineCompareAndSwapObjectNative(TR::Node* node, TR::CodeGe
    generateRegInstruction(TR::InstOpCode::SETE1Reg, node, result, cg);
    generateRegRegInstruction(TR::InstOpCode::MOVZXReg4Reg1, node, result, result, cg);
 
-   // We could insert a runtime test for whether the write actually succeeded or not.
-   // However, since in practice it will almost always succeed we do not want to
-   // penalize general runtime performance especially if it is still correct to do
-   // a write barrier even if the store never actually happened.
-   TR::TreeEvaluator::VMwrtbarWithoutStoreEvaluator(node, objectNode, newValueNode, NULL, cg->generateScratchRegisterManager(), cg);
+   // Non-realtime: Generate a write barrier for this kind of object.
+   //
+   if (!comp->getOptions()->realTimeGC())
+      {
+      // We could insert a runtime test for whether the write actually succeeded or not.
+      // However, since in practice it will almost always succeed we do not want to
+      // penalize general runtime performance especially if it is still correct to do
+      // a write barrier even if the store never actually happened.
+      TR_X86ScratchRegisterManager *scratchRegisterManager = cg->generateScratchRegisterManager();
+
+      TR::TreeEvaluator::VMwrtbarWithoutStoreEvaluator(
+         node,
+         objectNode,
+         newValueNode,
+         NULL,
+         scratchRegisterManager,
+         cg);
+      }
 
    cg->stopUsingRegister(tmp);
    cg->stopUsingRegister(EAX);
