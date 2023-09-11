@@ -43,7 +43,7 @@ createContinuation(J9VMThread *currentThread, j9object_t continuationObject)
 	BOOLEAN result = TRUE;
 	J9VMContinuation *continuation = NULL;
 #if defined(J9VM_PROF_CONTINUATION_ALLOCATION)
-	I_64 start = j9time_nano_time();
+	I_64 start = j9time_hires_clock();
 #endif /* defined(J9VM_PROF_CONTINUATION_ALLOCATION) */
 
 	/* First check if local cache is available. */
@@ -78,13 +78,13 @@ createContinuation(J9VMThread *currentThread, j9object_t continuationObject)
 		}
 	}
 #if defined(J9VM_PROF_CONTINUATION_ALLOCATION)
-		vm->avgCacheLookupTime += j9time_nano_time() - start;
+		vm->avgCacheLookupTime += (I_64)j9time_hires_delta(start, j9time_hires_clock(), OMRPORT_TIME_DELTA_IN_NANOSECONDS);
 #endif /* defined(J9VM_PROF_CONTINUATION_ALLOCATION) */
 
 	/* No cache found, allocate new continuation structure. */
 	if (NULL == continuation) {
 #if defined(J9VM_PROF_CONTINUATION_ALLOCATION)
-		start = j9time_nano_time();
+		start = j9time_hires_clock();
 #endif /* defined(J9VM_PROF_CONTINUATION_ALLOCATION) */
 		J9JavaStack *stack = NULL;
 		J9SFJNINativeMethodFrame *frame = NULL;
@@ -129,7 +129,7 @@ createContinuation(J9VMThread *currentThread, j9object_t continuationObject)
 		continuation->stackObject->isVirtual = TRUE;
 
 #if defined(J9VM_PROF_CONTINUATION_ALLOCATION)
-		I_64 totalTime = (I_64)j9time_nano_time() - start;
+		I_64 totalTime = (I_64)j9time_hires_delta(start, j9time_hires_clock(), OMRPORT_TIME_DELTA_IN_NANOSECONDS);
 		if (totalTime > 10000) {
 			vm->slowAlloc += 1;
 			vm->slowAllocAvgTime += totalTime;
