@@ -1465,16 +1465,23 @@ gcParseXgcArguments(J9JavaVM *vm, char *optArg)
 			continue;
 		}
 
-#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+		/*
+		 * This feature is not supported for all platforms.
+		 * Ignore options silently if feature is not supported
+		 * to allow to use the same Java command line across platforms.
+		 */
 		if (try_scan(&scan_start, "enableArrayletDoubleMapping")) {
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 			extensions->isArrayletDoubleMapRequested = true;
+#endif /* defined(J9VM_GC_ENABLE_DOUBLE_MAP) */
 			continue;
 		}
 		if (try_scan(&scan_start, "disableArrayletDoubleMapping")) {
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 			extensions->isArrayletDoubleMapRequested = false;
+#endif /* defined(J9VM_GC_ENABLE_DOUBLE_MAP) */
 			continue;
 		}
-#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
 
 #if defined (J9VM_GC_VLHGC)
 		if (try_scan(&scan_start, "fvtest_tarokForceNUMANode=")) {
