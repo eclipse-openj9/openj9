@@ -41,6 +41,7 @@
 #include "p/codegen/PPCInstruction.hpp"
 #include "p/codegen/PPCRecompilationSnippet.hpp"
 #include "env/CompilerEnv.hpp"
+#include "env/j9method.h"
 
 // Allocate a machine-specific recompilation processor for this compilation
 //
@@ -64,9 +65,8 @@ TR_PPCRecompilation::TR_PPCRecompilation(TR::Compilation * comp)
 
 TR_PersistentMethodInfo *TR_PPCRecompilation::getExistingMethodInfo(TR_ResolvedMethod *method)
    {
-   int8_t *startPC = (int8_t *)method->startAddressForInterpreterOfJittedMethod();
-   TR_PersistentMethodInfo *info = getJittedBodyInfoFromPC(startPC)->getMethodInfo();
-   return(info);
+   TR_PersistentJittedBodyInfo *bodyInfo = (static_cast<TR_ResolvedJ9Method *>(method))->getExistingJittedBodyInfo();
+   return bodyInfo ? bodyInfo->getMethodInfo() : NULL;
    }
 
 TR::Instruction *TR_PPCRecompilation::generatePrePrologue()
