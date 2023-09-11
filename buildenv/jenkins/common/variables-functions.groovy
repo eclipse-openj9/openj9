@@ -208,14 +208,9 @@ pipelineFunctions = load 'buildenv/jenkins/common/pipeline-functions.groovy'
  * platforms.
  */
 def parse_variables_file() {
-    DEFAULT_VARIABLE_FILE = "buildenv/jenkins/variables/defaults.yml"
-
     // check if a variable file is passed as a Jenkins build parameter
     // if not use default configuration settings
     VARIABLE_FILE = get_variables_file()
-    if (!VARIABLE_FILE) {
-        VARIABLE_FILE = "${DEFAULT_VARIABLE_FILE}"
-    }
 
     if (!fileExists("${VARIABLE_FILE}")) {
         error("Missing variable file: ${VARIABLE_FILE}")
@@ -230,13 +225,13 @@ def parse_variables_file() {
  * Fetch the user provided variable file.
  */
 def get_variables_file() {
-    VARIABLE_FILE = (params.VARIABLE_FILE) ? params.VARIABLE_FILE : ""
+    VARIABLE_FILE = params.VARIABLE_FILE ?: "buildenv/jenkins/variables/defaults.yml"
     echo "VARIABLE_FILE:'${VARIABLE_FILE}'"
-    VENDOR_REPO = (params.VENDOR_REPO) ? params.VENDOR_REPO : ""
+    VENDOR_REPO = params.VENDOR_REPO ?: ""
     echo "VENDOR_REPO:'${VENDOR_REPO}'"
-    VENDOR_BRANCH = (params.VENDOR_BRANCH) ? params.VENDOR_BRANCH : ""
+    VENDOR_BRANCH = params.VENDOR_BRANCH ?: ""
     echo "VENDOR_BRANCH:'${VENDOR_BRANCH}'"
-    VENDOR_CREDENTIALS_ID = (params.VENDOR_CREDENTIALS_ID) ? params.VENDOR_CREDENTIALS_ID : ""
+    VENDOR_CREDENTIALS_ID = params.VENDOR_CREDENTIALS_ID ?: ""
     echo "VENDOR_CREDENTIALS_ID:'${VENDOR_CREDENTIALS_ID}'"
     if (VARIABLE_FILE && VENDOR_REPO && VENDOR_BRANCH) {
         if (VENDOR_CREDENTIALS_ID) {
