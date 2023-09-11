@@ -286,6 +286,20 @@ public:
 	}
 
 	/**
+	 * Determines if null restricted attribute is set on a field or not.
+	 *
+	 * @param[in] field The field to be checked
+	 *
+	 * @return TRUE if the field has null restricted attribute set, FALSE otherwise
+	 */
+	static VMINLINE bool
+	isFieldNullRestricted(J9ROMFieldShape *field)
+	{
+		Assert_VM_notNull(field);
+		return J9_ARE_ALL_BITS_SET(field->modifiers, J9FieldFlagIsNullRestricted);
+	}
+
+	/**
 	 * Performs a getfield operation on an object. Handles flattened and non-flattened cases.
 	 * This helper assumes that the cpIndex points to the fieldRef of a resolved Qtype. This helper
 	 * also assumes that the cpIndex points to an instance field.

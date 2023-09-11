@@ -121,6 +121,12 @@ isClassRefQtype(J9Class *cpContextClass, U_16 cpIndex)
 	return VM_ValueTypeHelpers::isClassRefQtype(cpContextClass->ramConstantPool, cpIndex);
 }
 
+BOOLEAN
+isFieldNullRestricted(J9ROMFieldShape *field)
+{
+	return VM_ValueTypeHelpers::isFieldNullRestricted(field);
+}
+
 UDATA
 findIndexInFlattenedClassCache(J9FlattenedClassCache *flattenedClassCache, J9ROMNameAndSignature *nameAndSignature)
 {

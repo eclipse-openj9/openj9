@@ -383,6 +383,7 @@ J9InternalVMFunctions J9InternalFunctions = {
 	valueTypeCapableAcmp,
 	isNameOrSignatureQtype,
 	isClassRefQtype,
+	isFieldNullRestricted,
 	getFlattenableFieldOffset,
 	isFlattenableFieldFlattened,
 	getFlattenableFieldType,
