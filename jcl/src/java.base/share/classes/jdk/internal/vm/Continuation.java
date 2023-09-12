@@ -28,6 +28,7 @@ import java.util.function.Supplier;
 import jdk.internal.access.JavaLangAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.misc.Unsafe;
+import jdk.internal.vm.annotation.Hidden;
 import jdk.internal.vm.annotation.JvmtiMountTransition;
 
 /**
@@ -180,6 +181,7 @@ public class Continuation {
 		isAccessible = true;
 	}
 
+	@Hidden
 	private static void enter(Continuation cont) {
 		try {
 			cont.runnable.run();
@@ -226,6 +228,7 @@ public class Continuation {
 	 * @param scope the scope to lookup/suspend
 	 * @return {@link true} or {@link false} based on success/failure
 	 */
+	@Hidden
 	public static boolean yield(ContinuationScope scope) {
 		/* TODO find matching scope to yield */
 		Thread carrierThread = JLA.currentCarrierThread();
@@ -234,6 +237,7 @@ public class Continuation {
 		return cont.yield0();
 	}
 
+	@Hidden
 	private boolean yield0() {
 		int rcPinned = isPinnedImpl();
 		if (rcPinned != 0) {
@@ -285,9 +289,11 @@ public class Continuation {
 	}
 
 	/* Continuation Native APIs */
+	@Hidden
 	@JvmtiMountTransition
 	private native boolean enterImpl();
 
+	@Hidden
 	@JvmtiMountTransition
 	private static native boolean yieldImpl(boolean isFinished);
 }
