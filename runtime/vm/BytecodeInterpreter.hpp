@@ -1818,13 +1818,7 @@ throwStackOverflow:
 			}
 #if defined(DEBUG_VERSION)
 			if (J9_CHECK_ASYNC_POP_FRAMES == action) {
-				UDATA executeAsyncCheck = FALSE;
-				updateVMStruct(REGISTER_ARGS);
-				ALWAYS_TRIGGER_J9HOOK_VM_POP_FRAMES_INTERRUPT(_vm->hookInterface, _currentThread, executeAsyncCheck);
-				VMStructHasBeenUpdated(REGISTER_ARGS);
-				if (executeAsyncCheck) {
-					rc = GOTO_ASYNC_CHECK;
-				}
+				rc = GOTO_ASYNC_CHECK;
 				goto done;
 			}
 #endif
