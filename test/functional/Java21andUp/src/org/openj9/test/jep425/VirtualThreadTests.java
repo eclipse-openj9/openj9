@@ -175,11 +175,9 @@ public class VirtualThreadTests {
 
 	@Test
 	public void test_YieldedVirtualThreadGetStackTrace() {
-		/* The expected frame count is based on test's callstack and OpenJ9's implementation of
-		 * Continuation.yield().
-		 */
-		int expectedFrames = 10;
-		String expectedMethodName = "yieldImpl";
+		/* The expected frame count is based on test's callstack */
+		int expectedFrames = 6;
+		String expectedMethodName = "park";
 
 		try {
 			Thread t = Thread.ofVirtual().name("yielded-stackwalker").start(() -> {
@@ -209,7 +207,7 @@ public class VirtualThreadTests {
 					(expectedFrames == ste.length));
 
 			AssertJUnit.assertTrue(
-					"Expected top frame to be yieldImpl, got " + ste[0].getMethodName(),
+					"Expected top frame to be " + expectedMethodName + ", got " + ste[0].getMethodName(),
 					ste[0].getMethodName().equals(expectedMethodName));
 
 			LockSupport.unpark(t);
@@ -224,6 +222,10 @@ public class VirtualThreadTests {
 	@Test
 	public void test_RunningVirtualThreadGetStackTrace() {
 		try {
+			/* The expected frame count is based on test's callstack */
+			int expectedFrames = 2;
+			String expectedClassName = "org.openj9.test.jep425.VirtualThreadTests";
+
 			Thread t = Thread.ofVirtual().name("running-stackwalker").start(() -> {
 					testThread2_state = true;
 					while (testThread2_state);
@@ -233,8 +235,18 @@ public class VirtualThreadTests {
 			}
 
 			StackTraceElement[] ste = t.getStackTrace();
-			Assert.assertEquals(ste.length, 3);
-			Assert.assertEquals(ste[0].getClassName(), "org.openj9.test.jep425.VirtualThreadTests");
+
+			/* If the stacktrace doesn't match the expected result, then print out the stacktrace
+			 * for debuggging.
+			 */
+			if ((expectedFrames != ste.length) || !ste[0].getClassName().equals(expectedClassName)) {
+				for (StackTraceElement st : ste) {
+					System.out.println(st);
+				}
+			}
+
+			Assert.assertEquals(ste.length, expectedFrames);
+			Assert.assertEquals(ste[0].getClassName(), expectedClassName);
 
 			testThread2_state = false;
 			t.join();
