@@ -446,4 +446,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<export name="JVM_VirtualThreadStart"/>
 		<export name="JVM_VirtualThreadUnmount"/>
 	</exports>
+
+	<exports group="jdk22">
+		<!-- Additions for Java 22 (General) -->
+		<export name="JVM_ExpandStackFrameInfo"/>
+	</exports>
 </exportlists>

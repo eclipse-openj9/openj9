@@ -316,8 +316,10 @@ _IF([JAVA_SPEC_VERSION >= 11],
 	[_X(JVM_SetMethodInfo,JNICALL,false,void,JNIEnv *env, jobject arg1)])
 _IF([JAVA_SPEC_VERSION >= 11],
 	[_X(JVM_ConstantPoolGetNameAndTypeRefIndexAt,JNICALL,false,jint,JNIEnv *env, jobject arg1, jobject arg2, jint arg3)])
-_IF([JAVA_SPEC_VERSION >= 11],
+_IF([(11 <= JAVA_SPEC_VERSION) && (JAVA_SPEC_VERSION < 22)],
 	[_X(JVM_MoreStackWalk,JNICALL,false,jint,JNIEnv *env, jobject arg1, jlong arg2, jlong arg3, jint arg4, jint arg5, jobjectArray arg6, jobjectArray arg7)])
+_IF([JAVA_SPEC_VERSION >= 22],
+	[_X(JVM_MoreStackWalk,JNICALL,false,jint,JNIEnv *env, jobject arg1, jint arg2, jlong arg3, jint arg4, jint arg5, jobjectArray arg6, jobjectArray arg7)])
 _IF([JAVA_SPEC_VERSION >= 11],
 	[_X(JVM_ConstantPoolGetClassRefIndexAt,JNICALL,false,jint,JNIEnv *env, jobject arg1, jlong arg2, jint arg3)])
 _IF([JAVA_SPEC_VERSION >= 11],
@@ -330,8 +332,10 @@ _IF([JAVA_SPEC_VERSION >= 11],
 	[_X(JVM_ConstantPoolGetNameAndTypeRefInfoAt,JNICALL,false,jobjectArray,JNIEnv *env, jobject arg1, jobject arg2, jint arg3)])
 _IF([JAVA_SPEC_VERSION >= 11],
 	[_X(JVM_ConstantPoolGetTagAt,JNICALL,false,jbyte,JNIEnv *env, jobject arg1, jobject arg2, jint arg3)])
-_IF([JAVA_SPEC_VERSION >= 11],
+_IF([(11 <= JAVA_SPEC_VERSION) && (JAVA_SPEC_VERSION < 22)],
 	[_X(JVM_CallStackWalk,JNICALL,false,jobject,JNIEnv *env, jobject arg1, jlong arg2, jint arg3, jint arg4, jint arg5, jobjectArray arg6, jobjectArray arg7)])
+_IF([JAVA_SPEC_VERSION >= 22],
+	[_X(JVM_CallStackWalk,JNICALL,false,jobject,JNIEnv *env, jobject arg1, jint arg2, jint arg3, jint arg4, jint arg5, jobjectArray arg6, jobjectArray arg7)])
 _IF([JAVA_SPEC_VERSION >= 11],
 	[_X(JVM_SetBootLoaderUnnamedModule,JNICALL,false,void,JNIEnv *env, jobject arg1)])
 _IF([JAVA_SPEC_VERSION >= 11],
@@ -423,3 +427,5 @@ _IF([JAVA_SPEC_VERSION >= 21],
 	[_X(JVM_VirtualThreadUnmount, JNICALL, false, void, JNIEnv *env, jobject vthread, jboolean hide)])
 _IF([defined(J9VM_OPT_VALHALLA_VALUE_TYPES)],
 	[_X(JVM_IsValhallaEnabled, JNICALL, false, jboolean, void)])
+_IF([JAVA_SPEC_VERSION >= 22],
+	[_X(JVM_ExpandStackFrameInfo, JNICALL, false, void, JNIEnv *env, jobject object)])

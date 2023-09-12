@@ -19,6 +19,8 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
+
+#include <assert.h>
 #include <jni.h>
 
 #include "bcverify_api.h"
@@ -675,5 +677,13 @@ JVM_IsValhallaEnabled()
 	return JNI_TRUE;
 }
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
+#if JAVA_SPEC_VERSION >= 22
+JNIEXPORT void JNICALL
+JVM_ExpandStackFrameInfo(JNIEnv *env, jobject object)
+{
+	assert(!"JVM_ExpandStackFrameInfo unimplemented");
+}
+#endif /* JAVA_SPEC_VERSION >= 22 */
 
 } /* extern "C" */
