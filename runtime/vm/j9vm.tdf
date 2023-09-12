@@ -930,3 +930,9 @@ TraceExit=Trc_VM_criu_initHooks_Exit Overhead=1 Level=5 Template="initializeCriu
 TraceException=Trc_VM_criu_setSingleThreadModeJVMCRIUException_triggerOneOffJavaDump Overhead=1 Level=1 Template="setCRIUSingleThreadModeJVMCRIUException triggerOneOffDump() returns %d"
 
 TraceException=Trc_VM_checkVisibility_Failed Overhead=1 Level=1 Template="checkVisibility from %p (%.*s) to %p (%.*s) modifiers=%zx lookupOptions=%zx failed"
+
+TraceEvent=Trc_VM_criu_initializeCriuHooks_checkpointCPUCount Overhead=1 Level=3 Template="initializeCriuHooks() checkpoint CPU count (%zu)"
+TraceEvent=Trc_VM_criu_jlVirtualThreadForkJoinPoolResetParallelism_same_cpucount Overhead=1 Level=5 Template="Reset j.l.VirtualThread.ForkJoinPool.parallelism: same cpu count (%zu) between C/R"
+TraceEvent=Trc_VM_criu_jlVirtualThreadForkJoinPoolResetParallelism_reset_parallelism Overhead=1 Level=5 Template="Reset j.l.VirtualThread.ForkJoinPool.parallelism: fjpObject(0x%p) parallelism(%zu) after restore"
+TraceException=Trc_VM_criu_initializeCriuHooks_Random_CNF Overhead=1 Level=3 Template="initializeCriuHooks() j.u.Random class not found"
+TraceException=Trc_VM_criu_jlVirtualThreadForkJoinPoolResetParallelism_DEFAULT_SCHEDULER_NULL Overhead=1 Level=3 Template="Reset j.l.VirtualThread.ForkJoinPool.parallelism: DEFAULT_SCHEDULER is NULL"
