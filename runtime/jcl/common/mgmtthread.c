@@ -1296,7 +1296,32 @@ getThreadInfo(J9VMThread *currentThread, J9VMThread *targetThread, ThreadInfo *i
 	info->thread = vmfns->j9jni_createLocalRef((JNIEnv *)currentThread, threadObject);
 	/* Set the native thread ID available through the thread library. */
 	info->nativeTID = (jlong) omrthread_get_osId(targetThread->osThread);
-	info->vmstate = getVMThreadObjectState(targetThread, &monitorObject, &monitorOwner, NULL);
+
+#if JAVA_SPEC_VERSION >= 19
+	if (NULL != continuation) {
+		j9object_t vThreadObject = targetThread->threadObject;
+		info->blocker = vmfns->j9jni_createLocalRef((JNIEnv *)currentThread, vThreadObject);
+		info->blockerOwner = info->blocker;
+		info->vmstate = J9VMTHREAD_STATE_WAITING;
+	} else
+#endif /* JAVA_SPEC_VERSION >= 19 */
+	{
+		info->vmstate = getVMThreadObjectState(targetThread, &monitorObject, &monitorOwner, NULL);
+		monitorOwnerObject = monitorOwner? (j9object_t)monitorOwner->threadObject : NULL;
+
+		/* The monitorOwner thread could have exited before we read it.
+		* Force the thread to be RUNNABLE in this case.
+		*/
+		if ((J9VMTHREAD_STATE_BLOCKED == info->vmstate)
+		&& (NULL != monitorOwner) && (NULL == monitorOwnerObject)
+		) {
+			info->vmstate = J9VMTHREAD_STATE_RUNNING;
+			monitorObject = NULL;
+		}
+		info->blocker = vmfns->j9jni_createLocalRef((JNIEnv *)currentThread, monitorObject);
+		info->blockerOwner = vmfns->j9jni_createLocalRef((JNIEnv *)currentThread, monitorOwnerObject);
+	}
+
 	if (NULL != threadObject) {
 		info->jclThreadState = getJclThreadState(
 						info->vmstate,
@@ -1304,18 +1329,6 @@ getThreadInfo(J9VMThread *currentThread, J9VMThread *targetThread, ThreadInfo *i
 	} else {
 		info->jclThreadState = getJclThreadState(info->vmstate, JNI_TRUE);
 	}
-	monitorOwnerObject = monitorOwner? (j9object_t)monitorOwner->threadObject : NULL;
-
-	/* The monitorOwner thread could have exited before we read it.
-	 * Force the thread to be RUNNABLE in this case.
-	 */
-	if ((J9VMTHREAD_STATE_BLOCKED == info->vmstate) && 
-		(NULL != monitorOwner) && (NULL == monitorOwnerObject)) {
-		info->vmstate = J9VMTHREAD_STATE_RUNNING;
-		monitorObject = NULL;
-	}
-	info->blocker = vmfns->j9jni_createLocalRef((JNIEnv *)currentThread, monitorObject);
-	info->blockerOwner = vmfns->j9jni_createLocalRef((JNIEnv *)currentThread, monitorOwnerObject);
 
 	/* this may block on vm->managementDataLock */
 	getContentionStats(currentThread, targetThread, info);
