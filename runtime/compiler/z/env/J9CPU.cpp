@@ -57,7 +57,8 @@ J9::Z::CPU::detectRelocatable(OMRPortLibrary * const omrPortLib)
       processorDescription.physicalProcessor = OMR_PROCESSOR_S390_Z10;
       }
 
-   const uint32_t disabledFeatures [] = { OMR_FEATURE_S390_TE };
+   const uint32_t disabledFeatures [] = {OMR_FEATURE_S390_TRANSACTIONAL_EXECUTION_FACILITY,
+                                         OMR_FEATURE_S390_CONSTRAINED_TRANSACTIONAL_EXECUTION_FACILITY};
    for (size_t i = 0; i < sizeof(disabledFeatures)/sizeof(uint32_t); i++)
       {
       omrsysinfo_processor_set_feature(&processorDescription, disabledFeatures[i], FALSE);
@@ -82,7 +83,8 @@ J9::Z::CPU::customize(OMRProcessorDesc processorDescription)
 
    if (processorDescription.processor < OMR_PROCESSOR_S390_ZEC12)
       {
-      omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_S390_TE, FALSE);
+      omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_S390_CONSTRAINED_TRANSACTIONAL_EXECUTION_FACILITY, FALSE);
+      omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_S390_TRANSACTIONAL_EXECUTION_FACILITY, FALSE);
       omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_S390_RI, FALSE);
       }
 
@@ -149,7 +151,8 @@ void
 J9::Z::CPU::enableFeatureMasks()
    {
    // Only enable the features that compiler currently uses
-   const uint32_t utilizedFeatures [] = {OMR_FEATURE_S390_DFP, OMR_FEATURE_S390_TE, OMR_FEATURE_S390_FPE,
+   const uint32_t utilizedFeatures [] = {OMR_FEATURE_S390_DFP, OMR_FEATURE_S390_TRANSACTIONAL_EXECUTION_FACILITY,
+                                         OMR_FEATURE_S390_CONSTRAINED_TRANSACTIONAL_EXECUTION_FACILITY, OMR_FEATURE_S390_FPE,
                                          OMR_FEATURE_S390_RI, OMR_FEATURE_S390_VECTOR_FACILITY, OMR_FEATURE_S390_HIGH_WORD,
                                          OMR_FEATURE_S390_MISCELLANEOUS_INSTRUCTION_EXTENSION_2,
                                          OMR_FEATURE_S390_GUARDED_STORAGE, OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL,
