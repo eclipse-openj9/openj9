@@ -9703,6 +9703,16 @@ retry:
 				goto done;
 			}
 
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+			if (J9_ARE_ALL_BITS_SET(flags, J9FieldFlagIsNullRestricted)) {
+				j9object_t valueref = *(j9object_t*)_sp;
+				if (NULL == valueref) {
+					rc = THROW_NPE;
+					goto done;
+				}
+			}
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+
 			/* need to zero memset the memory so padding bytes are zeroed for memcmp-like comparisons */
 			copyObjectRef = VM_ValueTypeHelpers::cloneValueType(_currentThread, _objectAccessBarrier, _objectAllocate, objectRefClass, originalObjectRef, true);
 			if (NULL == copyObjectRef) {
