@@ -4202,6 +4202,9 @@ typedef struct J9DelayedLockingOpertionsRecord {
 
 typedef struct J9CRIUCheckpointState {
 	U_32 flags;
+#if JAVA_SPEC_VERSION >= 20
+	UDATA checkpointCPUCount;
+#endif /* JAVA_SPEC_VERSION >= 20 */
 	struct J9DelayedLockingOpertionsRecord *delayedLockingOperationsRoot;
 	struct J9Pool *hookRecords;
 	struct J9Pool *classIterationRestoreHookRecords;
@@ -4238,6 +4241,7 @@ typedef struct J9CRIUCheckpointState {
 	UDATA libCRIUHandle;
 	struct J9VMInitArgs *restoreArgsList;
 	char *restoreArgsChars;
+	IDATA jucForkJoinPoolParallelismOffset;
 } J9CRIUCheckpointState;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 

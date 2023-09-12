@@ -46,7 +46,6 @@ J9_DECLARE_CONSTANT_UTF8(j9InternalCheckpointHookAPI_name, "org/eclipse/openj9/c
 static void addInternalJVMCheckpointHook(J9VMThread *currentThread, BOOLEAN isRestore, J9Class *instanceType, BOOLEAN includeSubClass, hookFunc hookFunc);
 static void cleanupCriuHooks(J9VMThread *currentThread);
 static BOOLEAN fillinHookRecords(J9VMThread *currentThread, j9object_t object);
-static IDATA findinstanceFieldOffsetHelper(J9VMThread *currentThread, J9Class *instanceType, const char *fieldName, const char *fieldSig);
 static void initializeCriuHooks(J9VMThread *currentThread);
 static BOOLEAN juRandomReseed(J9VMThread *currentThread, void *userData, const char **nlsMsgFormat);
 static BOOLEAN criuRestoreInitializeTrace(J9VMThread *currentThread, void *userData, const char **nlsMsgFormat);
@@ -162,22 +161,6 @@ addInternalJVMCheckpointHook(J9VMThread *currentThread, BOOLEAN isRestore, J9Cla
 	}
 }
 
-static IDATA
-findinstanceFieldOffsetHelper(J9VMThread *currentThread, J9Class *instanceType, const char *fieldName, const char *fieldSig)
-{
-	IDATA offset = (UDATA)instanceFieldOffset(
-		currentThread, instanceType,
-		(U_8*)fieldName, strlen(fieldName),
-		(U_8*)fieldSig, strlen(fieldSig),
-		NULL, NULL, 0);
-
-	if (-1 != offset) {
-		offset += J9VMTHREAD_OBJECT_HEADER_SIZE(currentThread);
-	}
-
-	return offset;
-}
-
 /**
  * An internal JVM checkpoint hook is to re-seed java.util.Random.seed.value.
  *
@@ -197,13 +180,13 @@ juRandomReseed(J9VMThread *currentThread, void *userData, const char **nlsMsgFor
 	PORT_ACCESS_FROM_VMC(currentThread);
 
 	/* Assuming this hook record is to re-seed java.util.Random.seed.value. */
-	IDATA seedOffset = findinstanceFieldOffsetHelper(currentThread, hookRecord->instanceType, "seed", "Ljava/util/concurrent/atomic/AtomicLong;");
+	IDATA seedOffset = VM_VMHelpers::findinstanceFieldOffset(currentThread, hookRecord->instanceType, "seed", "Ljava/util/concurrent/atomic/AtomicLong;");
 	if (-1 != seedOffset) {
 #define JUCA_ATOMICLONG "java/util/concurrent/atomic/AtomicLong"
-		J9Class *jucaAtomicLongClass = hashClassTableAt(vm->systemClassLoader, (U_8 *)JUCA_ATOMICLONG, LITERAL_STRLEN(JUCA_ATOMICLONG));
+		J9Class *jucaAtomicLongClass = peekClassHashTable(currentThread, vm->systemClassLoader, (U_8 *)JUCA_ATOMICLONG, LITERAL_STRLEN(JUCA_ATOMICLONG));
 #undef JUCA_ATOMICLONG
 		if (NULL != jucaAtomicLongClass) {
-			IDATA valueOffset = findinstanceFieldOffsetHelper(currentThread, jucaAtomicLongClass, "value", "J");
+			IDATA valueOffset = VM_VMHelpers::findinstanceFieldOffset(currentThread, jucaAtomicLongClass, "value", "J");
 			if (-1 != valueOffset) {
 				PORT_ACCESS_FROM_JAVAVM(vm);
 				pool_state walkState = {0};
@@ -456,6 +439,22 @@ initializeCriuHooks(J9VMThread *currentThread)
 		}
 	}
 
+#if JAVA_SPEC_VERSION >= 20
+	{
+		J9VMSystemProperty *vtParallelism = NULL;
+		PORT_ACCESS_FROM_VMC(currentThread);
+		if (J9SYSPROP_ERROR_NONE != getSystemProperty(vm, "jdk.virtualThreadScheduler.parallelism", &vtParallelism)) {
+			/* This system property only affects j.l.VirtualThread.ForkJoinPool.parallelism at VM startup. */
+			UDATA cpuCount = j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_TARGET);
+			if (cpuCount < 1) {
+				cpuCount = 1;
+			}
+			vm->checkpointState.checkpointCPUCount = cpuCount;
+			Trc_VM_criu_initializeCriuHooks_checkpointCPUCount(currentThread, cpuCount);
+		}
+	}
+#endif /* JAVA_SPEC_VERSION >= 20 */
+
 	{
 		/* Add restore hook to re-seed java.uti.Random.seed.value */
 #define JAVA_UTIL_RANDOM "java/util/Random"
@@ -463,6 +462,8 @@ initializeCriuHooks(J9VMThread *currentThread)
 #undef JAVA_UTIL_RANDOM
 		if (NULL != juRandomClass) {
 			addInternalJVMCheckpointHook(currentThread, TRUE, juRandomClass, FALSE, juRandomReseed);
+		} else {
+			Trc_VM_criu_initializeCriuHooks_Random_CNF(currentThread);
 		}
 		addInternalJVMCheckpointHook(currentThread, TRUE, NULL, FALSE, criuRestoreInitializeTrace);
 		addInternalJVMCheckpointHook(currentThread, TRUE, NULL, FALSE, criuRestoreInitializeXrs);
@@ -495,8 +496,8 @@ fillinHookRecords(J9VMThread *currentThread, j9object_t object)
 	BOOLEAN result = TRUE;
 
 	J9InternalHookRecord *hookRecord = (J9InternalHookRecord*)pool_startDo(hookRecords, &walkState);
+	J9Class *clazz = J9OBJECT_CLAZZ_VM(vm, object);
 	while (NULL != hookRecord) {
-		J9Class *clazz = J9OBJECT_CLAZZ_VM(vm, object);
 		if ((clazz == hookRecord->instanceType)
 			|| (hookRecord->includeSubClass && isSameOrSuperClassOf(hookRecord->instanceType, clazz))
 		) {
@@ -601,6 +602,29 @@ runInternalJVMRestoreHooks(J9VMThread *currentThread, const char **nlsMsgFormat)
 			vm->internalVMFunctions->allClassesEndDo(&j9ClassWalkState);
 		}
 	}
+
+#if JAVA_SPEC_VERSION >= 20
+	if (0 != vm->checkpointState.checkpointCPUCount) {
+		/* Only reset j.l.VirtualThread.ForkJoinPool.parallelism if jdk.virtualThreadScheduler.parallelism is not set. */
+		PORT_ACCESS_FROM_VMC(currentThread);
+		UDATA cpuCount = j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_TARGET);
+		if (cpuCount < 1) {
+			/* This matches ForkJoinPool default constructor with Runtime.getRuntime().availableProcessors(). */
+			cpuCount = 1;
+		}
+		if (cpuCount != vm->checkpointState.checkpointCPUCount) {
+			j9object_t fjpObject = VM_VMHelpers::getStaticFieldObject(currentThread, "java/lang/VirtualThread", "DEFAULT_SCHEDULER", "Ljava/util/concurrent/ForkJoinPool;");
+			if (NULL != fjpObject) {
+				result = VM_VMHelpers::resetJUCForkJoinPoolParallelism(currentThread, fjpObject, cpuCount);
+				Trc_VM_criu_jlVirtualThreadForkJoinPoolResetParallelism_reset_parallelism(currentThread, fjpObject, cpuCount);
+			} else {
+				Trc_VM_criu_jlVirtualThreadForkJoinPoolResetParallelism_DEFAULT_SCHEDULER_NULL(currentThread);
+			}
+		} else {
+			Trc_VM_criu_jlVirtualThreadForkJoinPoolResetParallelism_same_cpucount(currentThread, cpuCount);
+		}
+	}
+#endif /* JAVA_SPEC_VERSION >= 20 */
 
 	/* Cleanup at restore. */
 	cleanupCriuHooks(currentThread);

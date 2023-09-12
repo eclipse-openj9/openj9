@@ -41,8 +41,6 @@
 	</target>
 
 	<target name="compile" depends="init" description="Using java ${JDK_VERSION} to compile the source ">
-		<property name="addExports" value="--add-exports java.base/openj9.internal.criu=ALL-UNNAMED --add-exports java.base/jdk.internal.misc=ALL-UNNAMED" />
-		<echo>===addExports:        ${addExports}</echo>
 		<echo>Ant version is ${ant.version}</echo>
 		<echo>============COMPILER SETTINGS============</echo>
 		<echo>===fork:                         yes</echo>
@@ -50,17 +48,34 @@
 		<echo>===debug:                        on</echo>
 		<echo>===destdir:                      ${DEST}</echo>
 		<if>
+			<not>
+				<matches string="${JDK_VERSION}" pattern="^(8|9|1[0-9])$$" />
+			</not>
+			<then>
+				<property name="enablePreview" value="--enable-preview -source ${JDK_VERSION}" />
+			</then>
+			<else>
+				<property name="enablePreview" value="" />
+				<property name="excludeTestMachineResourceChange" value="org/openj9/criu/TestMachineResourceChange.java" />
+			</else>
+		</if>
+		<if>
 			<equals arg1="${JDK_VERSION}" arg2="8" />
 			<then>
-				<property name="excludeFile" value="org/openj9/criu/JDK11UpTimeoutAdjustmentTest.java" />
+				<property name="excludeJDK11UpTimeoutAdjustmentTest" value="org/openj9/criu/JDK11UpTimeoutAdjustmentTest.java" />
 				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
-					<exclude name="${excludeFile}" />
+					<exclude name="${excludeJDK11UpTimeoutAdjustmentTest}" />
+					<exclude name="${excludeTestMachineResourceChange}" />
 				</javac>
 			</then>
 			<else>
-				<property name="addExports" value="--add-exports=java.base/jdk.internal.misc=ALL-UNNAMED --add-exports=java.base/openj9.internal.criu=ALL-UNNAMED" />
+				<property name="addExports" value="--add-exports java.base/openj9.internal.criu=ALL-UNNAMED --add-exports java.base/jdk.internal.misc=ALL-UNNAMED" />
+				<echo>===addExports:        ${addExports}</echo>
+				<echo>===enablePreview:     ${enablePreview}</echo>
 				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
 					<compilerarg line="${addExports}" />
+					<compilerarg line="${enablePreview}" />
+					<exclude name="${excludeTestMachineResourceChange}" />
 				</javac>
 			</else>
 		</if>
