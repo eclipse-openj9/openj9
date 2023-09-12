@@ -343,4 +343,65 @@ public class NullRestrictedTypeOptTests {
 			escape8 = p;
 		}
 	}
+
+	public static class TestStoreToNullRestrictedField {
+		public PrimPair nullRestrictedInstanceField;
+		public static PrimPair nullRestrictedStaticField;
+
+		public void replaceInstanceField(Object val) {
+			nullRestrictedInstanceField = (PrimPair) val;
+		}
+
+		public static void replaceStaticField(Object val) {
+			nullRestrictedStaticField = (PrimPair) val;
+		}
+	}
+
+	public static primitive class TestWithFieldStoreToNullRestrictedField {
+		public PrimPair nullRestrictedInstanceField;
+
+		public TestWithFieldStoreToNullRestrictedField(Object val) {
+			this.nullRestrictedInstanceField = (PrimPair) val;
+		}
+	}
+
+	@Test
+	static public void testStoreNullValueToNullRestrictedInstanceField() throws Throwable {
+		TestStoreToNullRestrictedField storeFieldObj = new TestStoreToNullRestrictedField();
+		storeFieldObj.replaceInstanceField(new PrimPair(1, 2));
+
+		try {
+			storeFieldObj.replaceInstanceField(null);
+		} catch (NullPointerException npe) {
+			return; /* pass */
+		}
+
+		Assert.fail("Expect a NullPointerException. No exception or wrong kind of exception thrown");
+	}
+
+	@Test
+	static public void testStoreNullValueToNullRestrictedStaticField() throws Throwable {
+		TestStoreToNullRestrictedField.replaceStaticField(new PrimPair(1, 2));
+
+		try {
+			TestStoreToNullRestrictedField.replaceStaticField(null);
+		} catch (NullPointerException npe) {
+			return; /* pass */
+		}
+
+		Assert.fail("Expect a NullPointerException. No exception or wrong kind of exception thrown");
+	}
+
+	@Test
+	static public void testWithFieldStoreToNullRestrictedField() throws Throwable {
+		TestWithFieldStoreToNullRestrictedField withFieldObj = new TestWithFieldStoreToNullRestrictedField(new PrimPair(1, 2));
+
+		try {
+			withFieldObj = new TestWithFieldStoreToNullRestrictedField(null);
+		} catch (NullPointerException npe) {
+			return; /* pass */
+		}
+
+		Assert.fail("Expect a NullPointerException. No exception or wrong kind of exception thrown");
+	}
 }
