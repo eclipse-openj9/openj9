@@ -62,6 +62,7 @@
 #include "infra/Annotations.hpp"
 #include "infra/ILWalk.hpp"
 #include "infra/Bit.hpp"
+#include "optimizer/J9TransformUtil.hpp"
 #include "optimizer/VectorAPIExpansion.hpp"
 #include "p/codegen/ForceRecompilationSnippet.hpp"
 #include "p/codegen/GenerateInstructions.hpp"
@@ -11658,12 +11659,106 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
             TR::Node *destOffset = node->getChild(2);
             TR::Node *len = node->getChild(3);
             TR::Node *byteValue = node->getChild(4);
-            dest = TR::Node::create(TR::aladd, 2, dest, destOffset);
 
-            TR::Node * copyMemNode = TR::Node::createWithSymRef(TR::arrayset, 3, 3, dest, len, byteValue, node->getSymbolReference());
+            // When using balanced GC policy with offheap allocation enabled, there are three possible cases:
+            //
+            // 1.) The object at dest is known to be a non-array object at compile time. In this scenario, the final destination address
+            //     can be calculated right away as dest += destOffset. The IL node passed in to setmemoryEvaluator will have three
+            //     children: dest, len, and byteValue.
+            // 2.) The object at dest is known to be an array at compile time. In this scenario, we must load dataAddr from dest
+            //     to account for the way arrays are allocated when offheap is enabled. Once this adjustment is made, the final
+            //     destination address can be calculated dest += destOffset. Similar to case (1), the IL node passed in to
+            //     setmemoryEvaluator() will have three children: dest, len, and byteValue.
+            // 3.) The type of the object at dest is unknown at compile time. In this scenario, a runtime array check must be generated to
+            //     determine whether dataAddr needs to be loaded before calculating the final destination address. This means that we
+            //     cannot determine the final destination address right away, and thus need to keep dest and destOffset separate. In this
+            //     case, the node passed in to setmemoryEvaluator() will have four children: dest, destOffset, len, and byteValue.
+            //
+            // Note that if the default (gencon) GC policy is being used, dataAddr will never need to be loaded no matter
+            // the type of the object at dest, so all of the above cases will be treated like case (1).
+
+            //if offheap is not enabled, we will never need to load dataAddr. So we know for sure that we can calculate the final
+            //destination address right away and only pass in three children to setmemoryEvaluator() (dest, len, byteValue)
+            bool loadDataAddr = false;
+            bool separateDestAndOffset = false;
+
+         #if defined (J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+            if (TR::Compiler->om.isOffHeapAllocationEnabled() && comp->target().is64Bit())
+               {
+               if (dest->getSymbolReference() != NULL)
+                  {
+                  //check dstBaseAddrNode type at compile time
+                  int length;
+                  const char *objTypeSig = dest->getSymbolReference()->getTypeSignature(length);
+
+                  // There are four cases where we cannot be sure of the Object type at compile time:
+                  // 1.) The object's type signature is unavailable/unknown
+                  // 2.) The signature names java/lang/Object
+                  // 3.) The signature names some interface type, wich is a problem because interface types are
+                  //     not checked by the verifier
+                  // 4.) The signature belongs to a parameter of the calling method, which is a problem because
+                  //     parameters can share slots with variables of other, potentially incompatible types
+                  bool objTypeUnknown;
+                  TR_OpaqueClasBlock *objClass = NULL;
+
+                  if (objTypeSig == NULL)
+                     {
+                     objTypeUnknown = true;
+                     }
+                  else
+                     {
+                     objClass = fej9->getClassFromSignature(objTypeSig, length, dest->getSymbolReference()->getOwningMethod(comp));
+                     bool isParameter = dest->getSymbolReference()->getSymbol()->isParm();
+
+                     objTypeUnknown = objClass == NULL || objClass == comp->getObjectClassPointer() ||
+                                      TR::Compiler->cls.isInterfaceClass(comp, objClass) || isParameter;
+                     }
+
+                  //need to generate code to loadDataAddr in cases (2) and (3) (unless the object is known to be NULL)
+                  loadDataAddr = !dest->isNull() && (objTypeUnknown || objTypeSig[0] == '[');
+
+                  //pass in dest and destOffset separately in case (3) only
+                  separateDestAndOffset = loadDataAddr && objTypeUnknown;
+                  }
+               else
+                  {
+                  //if for some reason we cannot get the symbol reference (and thus, the type signature)
+                  //of dest, we'll need to take the conservative approach and pass dest and destOffset to
+                  //setmemoryEvaluator() separately
+                  separateDestAndOffset = true;
+                  loadDataAddr = true;
+                  }
+            }
+         #endif /* J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION */
+
+            TR::Node *copyMemNode;
+
+            //setting up IL trees to be passed along to setmemoryEvaluator()
+            if (separateDestAndOffset) // CASE (3): dest and destOffset passed in separately
+               {
+               //four child setup
+               copyMemNode = TR::Node::createWithSymRef(TR::arrayset, 4, 4, dest, destOffset, len, byteValue, node->getSymbolReference());
+               }
+            else // CASE (1) and (2): dest += destoffset, then pass in to evaluator
+               {
+            #if defined (J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+
+               if (loadDataAddr) // CASE (2) only
+                  {
+                  //load dataAddr and use as object base address (previously dest)
+                  TR::Node *dataAddrNode = J9::TransformUtil::generateDataAddrLoadTrees(comp, dest);
+                  dest = dataAddrNode;
+                  }
+
+            #endif /* J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION */
+
+               //three child setup
+               dest = TR::Node::create(TR::aladd, 2, dest, destOffset); //dest += destOffset
+               copyMemNode = TR::Node::createWithSymRef(TR::arrayset, 3, 3, dest, len, byteValue, node->getSymbolReference());
+               }
+
             copyMemNode->setByteCodeInfo(node->getByteCodeInfo());
-
-            TR::TreeEvaluator::setmemoryEvaluator(copyMemNode,cg);
+            TR::TreeEvaluator::setmemoryEvaluator(copyMemNode, cg, separateDestAndOffset);
 
             if (node->getChild(0)->getRegister())
                cg->decReferenceCount(node->getChild(0));
