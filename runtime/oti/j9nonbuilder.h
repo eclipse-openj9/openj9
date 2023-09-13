@@ -4616,7 +4616,9 @@ typedef struct J9MemoryManagerFunctions {
 	UDATA  ( *j9gc_objaccess_staticCompareAndSwapLongSplit)(struct J9VMThread *vmThread, J9Class *destClass, U_64 *destAddress, U_32 compareValueSlot0, U_32 compareValueSlot1, U_32 swapValueSlot0, U_32 swapValueSlot1) ;
 #endif /* !J9VM_ENV_DATA64 */
 #endif /* J9VM_GC_OBJECT_ACCESS_BARRIER */
-	UDATA  ( *j9gc_get_bytes_allocated_by_thread)(struct J9VMThread* vmThread) ;
+	UDATA  ( *j9gc_get_bytes_allocated_by_thread)(struct J9VMThread *vmThread) ;
+	BOOLEAN ( *j9gc_get_cumulative_bytes_allocated_by_thread)(struct J9VMThread *vmThread, UDATA *cumulativeValue) ;
+
 	jvmtiIterationControl  ( *j9mm_iterate_all_ownable_synchronizer_objects)(struct J9VMThread *vmThread, J9PortLibrary *portLibrary, UDATA flags, jvmtiIterationControl (*func)(struct J9VMThread *vmThread, struct J9MM_IterateObjectDescriptor *object, void *userData), void *userData) ;
 	jvmtiIterationControl  ( *j9mm_iterate_all_continuation_objects)(struct J9VMThread *vmThread, J9PortLibrary *portLibrary, UDATA flags, jvmtiIterationControl (*func)(struct J9VMThread *vmThread, struct J9MM_IterateObjectDescriptor *object, void *userData), void *userData) ;
 	UDATA ( *ownableSynchronizerObjectCreated)(struct J9VMThread *vmThread, j9object_t object) ;
