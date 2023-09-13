@@ -505,9 +505,9 @@ aarch64_linux_valhalla:
 aarch64_linux_vt_standard:
   extends: ['aarch64_linux', 'valhalla_standard']
 ppc64_aix_valhalla:
-  extends: ['ppc64_aix_linux', 'valhalla']
+  extends: ['ppc64_aix', 'valhalla']
 ppc64_aix_vt_standard:
-  extends: ['ppc64_aix_linux', 'valhalla_standard']
+  extends: ['ppc64_aix', 'valhalla_standard']
 s390x_linux_valhalla:
   extends: ['s390x_linux', 'valhalla']
 s390x_linux_vt_standard:
