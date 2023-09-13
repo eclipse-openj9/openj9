@@ -209,7 +209,6 @@ ppc64le_linux:
       all: 'source /home/jenkins/set_gcc_11.2.0_env'
       8: 'source /home/jenkins/set_gcc7.5.0_env'
       11: 'source /home/jenkins/set_gcc7.5.0_env'
-      17: 'source /home/jenkins/set_gcc_10.3.0_env'
 #========================================#
 # Linux PPCLE 64bits /w JITSERVER
 #========================================#
@@ -239,7 +238,6 @@ s390x_linux:
       all: 'source /home/jenkins/set_gcc_11.2.0_env'
       8: 'source /home/jenkins/set_gcc7.5.0_env'
       11: 'source /home/jenkins/set_gcc7.5.0_env'
-      17: 'source /home/jenkins/set_gcc_10.3.0_env'
 #========================================#
 # Linux S390 64bits /w JITSERVER
 #========================================#
@@ -300,7 +298,6 @@ x86-64_linux:
       # use default gcc for 8, 11 (v7.5)
       8: ''
       11: ''
-      17: 'source /home/jenkins/set_gcc_10.3.0_env'
     vars: 'OPENJ9_JAVA_OPTIONS=-Xdump:system+java:events=systhrow,filter=java/lang/ClassCastException,request=exclusive+prepwalk+preempt'
   extra_test_labels:
     11: '!sw.os.cent.6'
@@ -350,12 +347,7 @@ x86-64_windows:
     8: 'windows-x86_64-normal-server-release'
     11: 'windows-x86_64-normal-server-release'
   extra_configure_options:
-    all: '--disable-ccache --with-cuda="C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v9.0"'
-    8: '--with-toolchain-version=2019'
-    11: '--with-toolchain-version=2019'
-    17: '--with-toolchain-version=2019'
-    21: '--with-toolchain-version=2022'
-    next: '--with-toolchain-version=2022'
+    all: '--with-toolchain-version=2022 --disable-ccache --with-cuda="C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v9.0"'
   node_labels:
     build: 'ci.role.build && hw.arch.x86 && sw.os.windows'
   build_env:
@@ -372,7 +364,7 @@ x86-32_windows:
   release:
     8: 'windows-x86-normal-server-release'
   extra_configure_options:
-    8: '--with-toolchain-version=2019 --with-target-bits=32 --disable-ccache'
+    8: '--with-toolchain-version=2022 --with-target-bits=32 --disable-ccache'
   node_labels:
     build:
       8: 'ci.role.build && hw.arch.x86 && sw.os.windows'
@@ -523,12 +515,6 @@ x86-64_linux_criu:
     docker_image:
       8: ''
       11: ''
-  build_env:
-    cmd:
-      all: 'source /home/jenkins/set_gcc_11.2.0_env'
-      8: 'source /home/jenkins/set_gcc7.5.0_env'
-      11: 'source /home/jenkins/set_gcc7.5.0_env'
-      17: 'source /home/jenkins/set_gcc_10.3.0_env'
 ppc64le_linux_criu:
   extends: ['ppc64le_linux', 'criu']
 s390x_linux_criu:
