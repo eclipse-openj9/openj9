@@ -21,6 +21,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 -->
 <exports group="criu">
 	<export name="Java_openj9_internal_criu_InternalCRIUSupport_getCheckpointRestoreNanoTimeDeltaImpl" />
+	<export name="Java_openj9_internal_criu_InternalCRIUSupport_getLastRestoreTimeImpl" />
 	<export name="Java_openj9_internal_criu_InternalCRIUSupport_isCheckpointAllowedImpl" />
 	<export name="Java_openj9_internal_criu_InternalCRIUSupport_isCRIUSupportEnabledImpl" />
 </exports>

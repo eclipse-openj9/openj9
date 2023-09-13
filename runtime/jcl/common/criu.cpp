@@ -38,6 +38,14 @@ Java_openj9_internal_criu_InternalCRIUSupport_getCheckpointRestoreNanoTimeDeltaI
 	return currentThread->javaVM->checkpointState.checkpointRestoreTimeDelta;
 }
 
+jlong JNICALL
+Java_openj9_internal_criu_InternalCRIUSupport_getLastRestoreTimeImpl(JNIEnv *env, jclass unused)
+{
+	J9VMThread *currentThread = (J9VMThread *)env;
+
+	return currentThread->javaVM->checkpointState.lastRestoreTimeMillis;
+}
+
 jboolean JNICALL
 Java_openj9_internal_criu_InternalCRIUSupport_isCheckpointAllowedImpl(JNIEnv *env, jclass unused)
 {
@@ -63,7 +71,5 @@ Java_openj9_internal_criu_InternalCRIUSupport_isCRIUSupportEnabledImpl(JNIEnv *e
 
 	return res;
 }
-
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
-
 }
