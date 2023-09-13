@@ -386,6 +386,7 @@ jvmtiGetFrameCount(jvmtiEnv* env,
 			/* The number of frames skipped is stored in userData1. */
 			walkState.userData1 = (void *)0;
 #if JAVA_SPEC_VERSION >= 20
+			walkState.flags |= J9_STACKWALK_ITERATE_FRAMES;
 			walkState.frameWalkFunction = genericFrameIterator;
 #endif /* JAVA_SPEC_VERSION >= 20 */
 
@@ -815,6 +816,7 @@ jvmtiInternalGetStackTrace(
 	/* The number of frames skipped is stored in userData1. */
 	walkState.userData1 = (void *)0;
 #if JAVA_SPEC_VERSION >= 20
+	walkState.flags |= J9_STACKWALK_ITERATE_FRAMES;
 	walkState.frameWalkFunction = genericFrameIterator;
 #endif /* JAVA_SPEC_VERSION >= 20 */
 	genericWalkStackFramesHelper(currentThread, targetThread, threadObject, &walkState);
