@@ -159,12 +159,7 @@ boot_jdk_default:
     url:
       all: 'https://api.adoptopenjdk.net/v3/binary/latest/${bootJDKVersion}/ga/${os}/${arch}/jdk/openj9/normal/adoptopenjdk?project=jdk'
 #========================================#
-# CRIU
-#========================================#
-criu:
-  extra_configure_options: '--enable-criu-support'
-#========================================#
-# Cuda
+# CUDA
 #========================================#
 cuda:
   extra_configure_options: '--enable-cuda'
@@ -504,23 +499,6 @@ s390x_linux_valhalla:
   extends: ['s390x_linux', 'valhalla']
 s390x_linux_vt_standard:
   extends: ['s390x_linux', 'valhalla_standard']
-#========================================#
-# CRIU
-#========================================#
-x86-64_linux_criu:
-  extends: ['x86-64_linux', 'criu']
-  node_labels:
-    build:
-      all: 'ci.role.build && hw.arch.x86 && sw.os.cent.7'
-    docker_image:
-      8: ''
-      11: ''
-ppc64le_linux_criu:
-  extends: ['ppc64le_linux', 'criu']
-s390x_linux_criu:
-  extends: ['s390x_linux', 'criu']
-aarch64_linux_criu:
-  extends: ['aarch64_linux', 'criu']
 #========================================#
 # Linux x86 64bits compiled with GCC 11
 #========================================#
