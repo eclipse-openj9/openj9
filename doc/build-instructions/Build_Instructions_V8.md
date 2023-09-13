@@ -152,7 +152,7 @@ bash configure --with-boot-jdk=/home/jenkins/bootjdks/jdk8
 :warning: The path in the example --with-boot-jdk= option is appropriate for the Docker installation. If not using the Docker environment, set the path appropriate for your setup, such as "<my_home_dir>/bootjdk8" as setup in the previous instructions.
 
 :pencil: Configuring and building is not specific to OpenJ9 but uses the OpenJDK build infrastructure with OpenJ9 added.
-Many other configuration options are available, including options to increase the verbosity of the build output to include command lines (`LOG=cmdlines`), more info or debug information.
+Many other configuration options are available, including options to increase the verbosity of the build output to include command lines (`LOG=debug`).
 For more information see [OpenJDK build troubleshooting](https://htmlpreview.github.io/?https://raw.githubusercontent.com/openjdk/jdk8u/master/README-builds.html#troubleshooting).
 
 :pencil: **Mixed and compressed references support:** Different types of 64-bit builds can be created:
