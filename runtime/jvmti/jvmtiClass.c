@@ -1225,8 +1225,17 @@ redefineClassesCommon(jvmtiEnv* env,
 	rc = determineClassesToRecreate(currentThread, class_count, specifiedClasses, &classPairs,
 			&methodPairs, jitEventDataPtr, !extensionsEnabled);
 	if (rc == JVMTI_ERROR_NONE) {
-		/* Identify the MemberNames needing fix-up based on classPairs. */
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+		/* Eliminate dark matter so that none will be encountered in prepareToFixMemberNames(). */
+		UDATA savedAllowUserHeapWalkFlag = vm->requiredDebugAttributes & J9VM_DEBUG_ATTRIBUTE_ALLOW_USER_HEAP_WALK;
+		vm->requiredDebugAttributes |= J9VM_DEBUG_ATTRIBUTE_ALLOW_USER_HEAP_WALK;
+		vm->memoryManagerFunctions->j9gc_modron_global_collect_with_overrides(currentThread, J9MMCONSTANT_EXPLICIT_GC_EXCLUSIVE_VMACCESS_ALREADY_ACQUIRED);
+		if (0 == savedAllowUserHeapWalkFlag) {
+			/* Clear the flag to restore its original value. */
+			vm->requiredDebugAttributes &= ~J9VM_DEBUG_ATTRIBUTE_ALLOW_USER_HEAP_WALK;
+		}
+
+		/* Identify the MemberNames needing fix-up based on classPairs. */
 		memberNamesToFix = prepareToFixMemberNames(currentThread, classPairs);
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
