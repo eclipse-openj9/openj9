@@ -424,9 +424,6 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
             def keepReportDir = target['keepReportDir']
             def buildList = target['buildList']
 
-            if (SPEC.contains("_criu")) {
-                extraTestLabels = extraTestLabels ? extraTestLabels + "&&ci.role.test.criu" : "ci.role.test.criu"
-            }
             echo "Test:'${id}' testFlag:'${testFlag}' extraTestLabels:'${extraTestLabels}', keepReportDir:'${keepReportDir}'"
 
             def testJobName = get_test_job_name(id, SPEC, SDK_VERSION, BUILD_IDENTIFIER)
@@ -803,7 +800,7 @@ def move_spec_suffix_to_id(spec, id) {
     def spec_id = [:]
     spec_id['spec'] = spec
     spec_id['id'] = id
-    for (suffix in ['aot', 'cm', 'criu', 'jit', 'ojdk292', 'uma', 'valhalla', 'vt_standard']) {
+    for (suffix in ['aot', 'cm', 'jit', 'ojdk292', 'uma', 'valhalla', 'vt_standard']) {
         if (spec.contains("_${suffix}")) {
             spec_id['spec'] = spec - "_${suffix}"
             spec_id['id'] = "${suffix}_" + id

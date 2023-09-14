@@ -105,8 +105,8 @@ public class ValhallaAttributeTests {
 
 	/* Instance field with NullRestricted attribute cannot be set to null. */
 	@Test(expectedExceptions = java.lang.NullPointerException.class)
-	static public void testNullRestrictedInstanceFieldCannotBeAssignedNull() throws Throwable {
-		Class<?> c = ValhallaAttributeGenerator.generateInstanceNullRestrictedFieldAssignedToNull("TestNullRestrictedInstanceFieldCannotBeAssignedNull", "TestNullRestrictedInstanceFieldCannotBeAssignedNullField");
+	static public void testPutFieldNullToNullRestrictedField() throws Throwable {
+		Class<?> c = ValhallaAttributeGenerator.generatePutFieldNullToNullRestrictedField("TestPutFieldNullToNullRestrictedField", "TestPutFieldNullToNullRestrictedFieldField");
 		c.newInstance();
 	}
 
@@ -117,9 +117,9 @@ public class ValhallaAttributeTests {
 	 * Since value fields are implicitly final this will always be the case.
 	 */
 	@Test
-	static public void testNullRestrictedStaticFieldCannotBeAssignedNull() throws Throwable {
+	static public void testPutStaticNullToNullRestrictedField() throws Throwable {
 		try {
-			Class<?> c = ValhallaAttributeGenerator.generateStaticNullRestrictedFieldAssignedToNull("testNullRestrictedStaticFieldCannotBeAssignedNull", "testNullRestrictedStaticFieldCannotBeAssignedNullField");
+			Class<?> c = ValhallaAttributeGenerator.generatePutStaticNullToNullRestrictedField("TestPutStaticNullToNullRestrictedField", "TestPutStaticNullToNullRestrictedFieldField");
 			c.newInstance();
 		} catch(java.lang.ExceptionInInitializerError e) {
 			if (e.getCause() instanceof NullPointerException) {
@@ -128,5 +128,11 @@ public class ValhallaAttributeTests {
 			throw e;
 		}
 		Assert.fail("Test expected a NullPointerException wrapped in ExceptionInInitializerError.");
+	}
+
+	@Test(expectedExceptions = java.lang.NullPointerException.class)
+	static public void testWithFieldStoreNullToNullRestrictedField() throws Throwable {
+		Class<?> c = ValhallaAttributeGenerator.generateWithFieldStoreNullToNullRestrictedField("TestWithFieldStoreNullToNullRestrictedField", "TestWithFieldStoreNullToNullRestrictedFieldField");
+		c.newInstance();
 	}
 }
