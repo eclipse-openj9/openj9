@@ -546,7 +546,7 @@ MM_RootScanner::scanOneThread(MM_EnvironmentBase *env, J9VMThread* walkThread, v
 	{
 		/* At this point we know that a virtual thread is mounted. We previously scanned its stack,
 		 * and now we will scan carrier's stack, that continuation struct is currently pointing to. */
-		GC_VMThreadStackSlotIterator::scanSlots(currentThread, walkThread->currentContinuation, localData, stackSlotIterator, isStackFrameClassWalkNeeded(), _trackVisibleStackFrameDepth);
+		GC_VMThreadStackSlotIterator::scanSlots(currentThread, walkThread, walkThread->currentContinuation, localData, stackSlotIterator, isStackFrameClassWalkNeeded(), _trackVisibleStackFrameDepth);
 	}
 #endif /* JAVA_SPEC_VERSION >= 19 */
 	return false;

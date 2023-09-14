@@ -71,6 +71,7 @@ public:
 #if JAVA_SPEC_VERSION >= 19
 	static void scanSlots(
 			J9VMThread *vmThread,
+			J9VMThread *walkThread,
 			J9VMContinuation *continuation,
 			void *userData,
 			J9MODRON_OSLOTITERATOR *oSlotIterator,

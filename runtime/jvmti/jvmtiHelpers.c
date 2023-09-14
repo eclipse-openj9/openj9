@@ -2035,7 +2035,7 @@ genericWalkStackFramesHelper(J9VMThread *currentThread, J9VMThread *targetThread
 		} else {
 			j9object_t contObject = (j9object_t)J9VMJAVALANGVIRTUALTHREAD_CONT(currentThread, threadObject);
 			J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(currentThread, contObject);
-			vm->internalVMFunctions->walkContinuationStackFrames(currentThread, continuation, walkState);
+			vm->internalVMFunctions->walkContinuationStackFrames(currentThread, continuation, threadObject, walkState);
 		}
 	} else
 #endif /* JAVA_SPEC_VERSION >= 19 */
@@ -2043,7 +2043,7 @@ genericWalkStackFramesHelper(J9VMThread *currentThread, J9VMThread *targetThread
 #if JAVA_SPEC_VERSION >= 19
 		J9VMContinuation *currentContinuation = targetThread->currentContinuation;
 		if (NULL != currentContinuation) {
-			rc = vm->internalVMFunctions->walkContinuationStackFrames(currentThread, currentContinuation, walkState);
+			rc = vm->internalVMFunctions->walkContinuationStackFrames(currentThread, currentContinuation, threadObject, walkState);
 		} else
 #endif /* JAVA_SPEC_VERSION >= 19 */
 		{

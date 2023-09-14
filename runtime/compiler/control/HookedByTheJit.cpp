@@ -36,6 +36,7 @@
 #include "vmaccess.h"
 #if JAVA_SPEC_VERSION >= 19
 #include "HeapIteratorAPI.h"
+#include "ContinuationHelpers.hpp"
 #endif /* JAVA_SPEC_VERSION >= 19 */
 #include "codegen/CodeGenerator.hpp"
 #include "compile/CompilationTypes.hpp"
@@ -6604,25 +6605,29 @@ static UDATA jitReleaseCodeStackWalkFrame(J9VMThread *vmThread, J9StackWalkState
 
 #if JAVA_SPEC_VERSION >= 19
 static void jitWalkContinuationStackFrames(J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData)
-{
-	MM_ContinuationIteratingEvent *continuationIteratingEvent = (MM_ContinuationIteratingEvent *)eventData;
-	J9VMThread * vmThread = continuationIteratingEvent->vmThread;
-	J9InternalVMFunctions *vmFuncs = vmThread->javaVM->internalVMFunctions;
-	J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(vmThread, continuationIteratingEvent->object);
-	if (NULL != continuation) {
-		J9StackWalkState walkState;
-		walkState.flags     = J9_STACKWALK_ITERATE_HIDDEN_JIT_FRAMES | J9_STACKWALK_ITERATE_FRAMES | J9_STACKWALK_SKIP_INLINES;
-		walkState.skipCount = 0;
-		walkState.frameWalkFunction = jitReleaseCodeStackWalkFrame;
+   {
+   MM_ContinuationIteratingEvent *continuationIteratingEvent = (MM_ContinuationIteratingEvent *)eventData;
+   J9VMThread * vmThread = continuationIteratingEvent->vmThread;
+   J9InternalVMFunctions *vmFuncs = vmThread->javaVM->internalVMFunctions;
+   j9object_t continuationObj = continuationIteratingEvent->object;
+   J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(vmThread, continuationObj);
+   if (NULL != continuation)
+      {
+      J9StackWalkState walkState;
+      walkState.flags     = J9_STACKWALK_ITERATE_HIDDEN_JIT_FRAMES | J9_STACKWALK_ITERATE_FRAMES | J9_STACKWALK_SKIP_INLINES;
+      walkState.skipCount = 0;
+      walkState.frameWalkFunction = jitReleaseCodeStackWalkFrame;
 
-		vmFuncs->walkContinuationStackFrames(vmThread, continuation, &walkState);
-	}
-}
+      j9object_t threadObject = VM_ContinuationHelpers::getThreadObjectForContinuation(vmThread, continuation, continuationObj);
+      vmFuncs->walkContinuationStackFrames(vmThread, continuation, threadObject, &walkState);
+      }
+   }
 
 static jvmtiIterationControl jitWalkContinuationCallBack(J9VMThread *vmThread, J9MM_IterateObjectDescriptor *object, void *userData)
    {
    J9InternalVMFunctions *vmFuncs = vmThread->javaVM->internalVMFunctions;
-   J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(vmThread, object->object);
+   j9object_t continuationObj = object->object;
+   J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(vmThread, continuationObj);
    if (NULL != continuation)
       {
       bool yieldHappened = false;
@@ -6632,7 +6637,10 @@ static jvmtiIterationControl jitWalkContinuationCallBack(J9VMThread *vmThread, J
          walkState.flags     = J9_STACKWALK_ITERATE_HIDDEN_JIT_FRAMES | J9_STACKWALK_ITERATE_FRAMES | J9_STACKWALK_SKIP_INLINES;
          walkState.skipCount = 0;
          walkState.frameWalkFunction = jitReleaseCodeStackWalkFrame;
-         vmFuncs->walkContinuationStackFrames(vmThread, continuation, &walkState);
+
+         j9object_t threadObject = VM_ContinuationHelpers::getThreadObjectForContinuation(vmThread, continuation, continuationObj);
+         vmFuncs->walkContinuationStackFrames(vmThread, continuation, threadObject, &walkState);
+
          continuation->dropFlags = 0x1;
          condYieldFromGCFunctionPtr condYield = (condYieldFromGCFunctionPtr)userData;
          yieldHappened = condYield(vmThread->omrVMThread, J9_GC_METRONOME_UTILIZATION_COMPONENT_JIT);
@@ -6695,14 +6703,14 @@ static void jitReleaseCodeStackWalk(OMR_VMThread *omrVMThread, condYieldFromGCFu
                thread->dropFlags |= 0x1;
                }
 
-            if ((NULL!= thread->currentContinuation) && ((thread->currentContinuation->dropFlags & 0x1) ? false : true))
+            if ((NULL != thread->currentContinuation) && ((thread->currentContinuation->dropFlags & 0x1) ? false : true))
                /* If a continuation is mounted, always walk the continuation as that represent the CarrierThread */
                {
                   J9StackWalkState walkState;
                   walkState.flags     = J9_STACKWALK_ITERATE_HIDDEN_JIT_FRAMES | J9_STACKWALK_ITERATE_FRAMES | J9_STACKWALK_SKIP_INLINES;
                   walkState.skipCount = 0;
                   walkState.frameWalkFunction = jitReleaseCodeStackWalkFrame;
-                  vmFuncs->walkContinuationStackFrames(vmThread, thread->currentContinuation, &walkState);
+                  vmFuncs->walkContinuationStackFrames(vmThread, thread->currentContinuation, thread->carrierThreadObject, &walkState);
                   thread->currentContinuation->dropFlags |= 0x1;
                }
 

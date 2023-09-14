@@ -223,6 +223,32 @@ public:
 	{
 		*continuationStatePtr &= ~J9_GC_CONTINUATION_STATE_CARRIERID_MASK;
 	}
+
+	/**
+	 * Return the thread object whose state is stored in the J9VMContinuation.
+	 *
+	 * @param[in] vmThread the current thread
+	 * @param[in] continuation the native continuation structure
+	 * @param[in] continuationObject the continuation object
+	 * @return the thread object whose state is stored in the continuation
+	 */
+	static VMINLINE j9object_t
+	getThreadObjectForContinuation(J9VMThread *vmThread, J9VMContinuation *continuation, j9object_t continuationObject)
+	{
+		/* threadObject points to the virtual thread. */
+		j9object_t threadObject = (j9object_t)J9VMJDKINTERNALVMCONTINUATION_VTHREAD(vmThread, continuationObject);
+		ContinuationState volatile *continuationStatePtr = getContinuationStateAddress(vmThread, continuationObject);
+		ContinuationState continuationState = *continuationStatePtr;
+
+		if (isFullyMounted(continuationState)) {
+			/* If the continuation is fully mounted, then the continuation stores the state of the carrier thread.
+			 * Below, threadObject points to the carrier thread.
+			 */
+			threadObject = (j9object_t)J9VMJAVALANGVIRTUALTHREAD_CARRIERTHREAD(vmThread, threadObject);
+		}
+
+		return threadObject;
+	}
 };
 
 #endif /* CONTINUATIONHELPERS_HPP_ */
