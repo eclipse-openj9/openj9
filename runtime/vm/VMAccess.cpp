@@ -128,7 +128,6 @@ acquireExclusiveVMAccess(J9VMThread * vmThread)
 		Assert_VM_true(currentVMThread(vm) == vmThread);
 	}
 	Assert_VM_mustHaveVMAccess(vmThread);
-	Assert_VM_true(0 == vmThread->safePointCount);
 #if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
 	// Current thread must have entered the VM before acquiring exclusive
 	Assert_VM_false(vmThread->inNative);
@@ -138,6 +137,9 @@ acquireExclusiveVMAccess(J9VMThread * vmThread)
 	 * the thread already has exclusive access
 	 */
 	if ( ++(vmThread->omrVMThread->exclusiveCount) == 1 ) {
+		/* If we have safe-point access then exclusiveCount should have already been positive. */
+		Assert_VM_true(0 == vmThread->safePointCount);
+
 		omrthread_monitor_enter(vmThread->publicFlagsMutex);
 		if (J9_ARE_NO_BITS_SET(vmThread->publicFlags, J9_PUBLIC_FLAGS_NOT_AT_SAFE_POINT)) {
 			VM_VMAccess::setPublicFlags(vmThread, J9_PUBLIC_FLAGS_NOT_AT_SAFE_POINT | J9_PUBLIC_FLAGS_EXCLUSIVE_SET_NOT_SAFE);
@@ -327,7 +329,7 @@ acquireExclusiveVMAccess(J9VMThread * vmThread)
 
 		vm->omrVM->exclusiveVMAccessStats.endTime = j9time_hires_clock();
 	}
-	Assert_VM_true(J9_XACCESS_EXCLUSIVE == vm->exclusiveAccessState);
+	Assert_VM_true((J9_XACCESS_EXCLUSIVE == vm->exclusiveAccessState) || (J9_XACCESS_EXCLUSIVE == vm->safePointState));
 	Trc_VM_acquireExclusiveVMAccess_Exit(vmThread);
 }
 
@@ -487,6 +489,21 @@ void  internalReleaseVMAccessSetStatus(J9VMThread * vmThread, UDATA flags)
 	VM_VMAccess::inlineReleaseVMAccessSetStatus(vmThread, flags);
 }
 
+/** @brief Free any cached decompilation record and empty the UTF cache.
+ *
+ * @param[in] currentThread the J9VMThread in which to clear caches
+ */
+static void clearThreadLocalCachesPostExclusive(J9VMThread *currentThread)
+{
+	PORT_ACCESS_FROM_JAVAVM(currentThread->javaVM);
+	j9mem_free_memory(currentThread->lastDecompilation);
+	currentThread->lastDecompilation = NULL;
+	J9HashTable *utfCache = currentThread->utfCache;
+	if (NULL != utfCache) {
+		currentThread->utfCache = NULL;
+		hashTableFree(utfCache);
+	}
+}
 
 void releaseExclusiveVMAccess(J9VMThread * vmThread)
 {
@@ -498,9 +515,12 @@ void releaseExclusiveVMAccess(J9VMThread * vmThread)
 	}
 	Assert_VM_mustHaveVMAccess(vmThread);
 	Assert_VM_false(vmThread->omrVMThread->exclusiveCount == 0);
-	Assert_VM_true(J9_XACCESS_EXCLUSIVE == vm->exclusiveAccessState);
+	Assert_VM_true((J9_XACCESS_EXCLUSIVE == vm->exclusiveAccessState) || (J9_XACCESS_EXCLUSIVE == vm->safePointState));
 
 	if (--(vmThread->omrVMThread->exclusiveCount) == 0) {
+		/* If we have safe-point access then non-recursive release should happen in releaseSafePointVMAccess(). */
+		Assert_VM_true(0 == vmThread->safePointCount);
+
 		/* Acquire these monitors in the same order as in allocateVMThread to prevent deadlock */
 
 		/* Check the exclusive access queue */
@@ -598,25 +618,13 @@ void releaseExclusiveVMAccess(J9VMThread * vmThread)
 			/* Make sure stale thread pointers don't exist in the stats */
 			vm->omrVM->exclusiveVMAccessStats.requester = NULL;
 			vm->omrVM->exclusiveVMAccessStats.lastResponder = NULL;
-			/* Free any cached decompilation records and empty the UTF cache */
-			PORT_ACCESS_FROM_JAVAVM(vm);
-			j9mem_free_memory(currentThread->lastDecompilation);
-			currentThread->lastDecompilation = NULL;
-			J9HashTable *utfCache = currentThread->utfCache;
-			if (NULL != utfCache) {
-				currentThread->utfCache = NULL;
-				hashTableFree(utfCache);
-			}
+
+			clearThreadLocalCachesPostExclusive(currentThread);
 			while ((currentThread = currentThread->linkNext) != vmThread) {
-				j9mem_free_memory(currentThread->lastDecompilation);
-				currentThread->lastDecompilation = NULL;
-				J9HashTable *utfCache = currentThread->utfCache;
-				if (NULL != utfCache) {
-					currentThread->utfCache = NULL;
-					hashTableFree(utfCache);
-				}
+				clearThreadLocalCachesPostExclusive(currentThread);
 				VM_VMAccess::clearPublicFlags(currentThread, J9_PUBLIC_FLAGS_HALT_THREAD_EXCLUSIVE | J9_PUBLIC_FLAGS_NOT_COUNTED_BY_EXCLUSIVE);
 			}
+
 			omrthread_monitor_notify_all(vm->exclusiveAccessMutex);
 			omrthread_monitor_exit(vm->exclusiveAccessMutex);
 			omrthread_monitor_exit(vmThread->publicFlagsMutex);
@@ -1114,7 +1122,15 @@ acquireSafePointVMAccess(J9VMThread * vmThread)
 	 * the thread already has exclusive access
 	 */
 	if ( ++(vmThread->safePointCount) == 1 ) {
+		/* When first acquiring safe-point access, we had better not already have exclusive access.
+		 * If we do, then all threads are stopped, but they're not necessarily all stopped at safe
+		 * points, and getting them all to safe points would require releasing exclusive.
+		 */
 		Assert_VM_true(0 == vmThread->omrVMThread->exclusiveCount);
+
+		/* On the other hand, once we acquire safe-point access, we'll also have exclusive access. */
+		vmThread->omrVMThread->exclusiveCount = 1;
+
 		internalReleaseVMAccess(vmThread);
 		omrthread_monitor_enter(vm->exclusiveAccessMutex);
 		while(J9_XACCESS_NONE != vm->safePointState) {
@@ -1231,8 +1247,13 @@ releaseSafePointVMAccess(J9VMThread * vmThread)
 	if (--(vmThread->safePointCount) == 0) {
 		J9VMThread *currentThread = vmThread;
 		do {
+			clearThreadLocalCachesPostExclusive(currentThread);
 			VM_VMAccess::clearPublicFlags(currentThread, J9_PUBLIC_FLAGS_HALTED_AT_SAFE_POINT | J9_PUBLIC_FLAGS_NOT_COUNTED_BY_SAFE_POINT, true);
 		} while ((currentThread = currentThread->linkNext) != vmThread);
+
+		Assert_VM_true(1 == vmThread->omrVMThread->exclusiveCount);
+		vmThread->omrVMThread->exclusiveCount = 0;
+
 		omrthread_monitor_enter(vm->exclusiveAccessMutex);
 		vm->safePointState = J9_XACCESS_NONE;
 		omrthread_monitor_notify_all(vm->exclusiveAccessMutex);
