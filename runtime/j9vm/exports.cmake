@@ -438,6 +438,12 @@ if(NOT JAVA_SPEC_VERSION LESS 21)
 	)
 endif()
 
+if(NOT JAVA_SPEC_VERSION LESS 22)
+	jvm_add_exports(jvm
+		JVM_ExpandStackFrameInfo
+	)
+endif()
+
 if(J9VM_OPT_JITSERVER)
 	jvm_add_exports(jvm
 		JITServer_CreateServer

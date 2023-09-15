@@ -82,6 +82,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<group name="jdk21">
 				<include-if condition="spec.java21"/>
 			</group>
+			<group name="jdk22">
+				<include-if condition="spec.java22"/>
+			</group>
 		</exports>
 		<includes>
 			<include path="j9include"/>

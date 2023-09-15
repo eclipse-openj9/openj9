@@ -1333,7 +1333,11 @@ JVM_ConstantPoolGetNameAndTypeRefIndexAt(JNIEnv *env, jobject arg1, jobject arg2
 }
 
 jint JNICALL
+#if JAVA_SPEC_VERSION >= 22
+JVM_MoreStackWalk(JNIEnv *env, jobject arg1, jint arg2, jlong arg3, jint arg4, jint arg5, jobjectArray arg6, jobjectArray arg7)
+#else /* JAVA_SPEC_VERSION >= 22 */
 JVM_MoreStackWalk(JNIEnv *env, jobject arg1, jlong arg2, jlong arg3, jint arg4, jint arg5, jobjectArray arg6, jobjectArray arg7)
+#endif /* JAVA_SPEC_VERSION >= 22 */
 {
 	assert(!"JVM_MoreStackWalk unimplemented"); /* Jazz 108925: Revive J9JCL raw pConfig build */
 	return -1;
@@ -1417,7 +1421,11 @@ JVM_ConstantPoolGetTagAt(JNIEnv *env, jobject arg1, jobject arg2, jint arg3)
 }
 
 jobject JNICALL
+#if JAVA_SPEC_VERSION >= 22
+JVM_CallStackWalk(JNIEnv *env, jobject arg1, jint arg2, jint arg3, jint arg4, jint arg5, jobjectArray arg6, jobjectArray arg7)
+#else /* JAVA_SPEC_VERSION >= 22 */
 JVM_CallStackWalk(JNIEnv *env, jobject arg1, jlong arg2, jint arg3, jint arg4, jint arg5, jobjectArray arg6, jobjectArray arg7)
+#endif /* JAVA_SPEC_VERSION >= 22 */
 {
 	assert(!"JVM_CallStackWalk unimplemented"); /* Jazz 108925: Revive J9JCL raw pConfig build */
 	return NULL;

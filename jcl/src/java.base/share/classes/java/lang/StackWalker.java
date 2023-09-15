@@ -22,7 +22,6 @@
  *******************************************************************************/
 package java.lang;
 
-import java.lang.StackWalker.StackFrameImpl;
 /*[IF JAVA_SPEC_VERSION >= 10]*/
 import java.lang.invoke.MethodType;
 /*[ENDIF] JAVA_SPEC_VERSION >= 10 */
@@ -30,7 +29,6 @@ import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Version;
 import java.security.Permission;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -57,81 +55,119 @@ public final class StackWalker {
 	private static final int DEFAULT_BUFFER_SIZE = 1;
 
 	/* Java StackWalker flag constants cloned from java_lang_StackWalker.cpp. */
-	private static final int J9_RETAIN_CLASS_REFERENCE = 0x1;
-	private static final int J9_SHOW_REFLECT_FRAMES = 0x2;
-	private static final int J9_SHOW_HIDDEN_FRAMES = 0x4;
-	/* 0x8 flag used by VM constant J9_FRAME_VALID */
+	private static final int J9_RETAIN_CLASS_REFERENCE = 0x01;
+	private static final int J9_SHOW_REFLECT_FRAMES    = 0x02;
+	private static final int J9_SHOW_HIDDEN_FRAMES     = 0x04;
 	/*[IF JAVA_SPEC_VERSION >= 21]*/
-	/* Internal flag for retrieving monitor info for stack frames. */
-	private static final int J9_GET_MONITORS = 0x10;
+	private static final int J9_GET_MONITORS           = 0x08;
 	/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
+	/*[IF JAVA_SPEC_VERSION >= 22]*/
+	private static final int J9_DROP_METHOD_INFO       = 0x10;
+	/*[ENDIF] JAVA_SPEC_VERSION >= 22 */
 
-	final Set<Option> walkerOptions;
+	/* Map the given options to the corresponding set of flags. */
+	private static int flagsFor(Set<Option> options) {
+		int flags = 0;
+
+		if (options.contains(Option.RETAIN_CLASS_REFERENCE)) {
+			flags |= J9_RETAIN_CLASS_REFERENCE;
+		}
+
+		if (options.contains(Option.SHOW_REFLECT_FRAMES)) {
+			flags |= J9_SHOW_REFLECT_FRAMES;
+		}
+
+		if (options.contains(Option.SHOW_HIDDEN_FRAMES)) {
+			flags |= J9_SHOW_HIDDEN_FRAMES;
+		}
+
+		/* There is no option corresponding to J9_GET_MONITORS. */
+
+		/*[IF JAVA_SPEC_VERSION >= 22]*/
+		if (options.contains(Option.DROP_METHOD_INFO)) {
+			flags |= J9_DROP_METHOD_INFO;
+		}
+		/*[ENDIF] JAVA_SPEC_VERSION >= 22 */
+
+		return flags;
+	}
 
 	private final int bufferSize;
-	private int flags;
+	private final int flags;
 
-	private StackWalker(Set<Option> options, int estimatedDepth) {
+	/*[IF JAVA_SPEC_VERSION >= 19]*/
+	private StackWalker(int flags, int estimatedDepth) {
+		this(flags, null, null, null, estimatedDepth);
+	}
+	/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
+
+	private StackWalker(
+			int flags,
+			/*[IF JAVA_SPEC_VERSION >= 19]*/
+			ExtendedOption extendedOption,
+			ContinuationScope contScope,
+			Continuation continuation,
+			/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
+			int estimatedDepth) {
 		super();
-		/* Caller is responsible for copying the client set (if any) */
-		walkerOptions = options; 
-		bufferSize = estimatedDepth;
+		this.flags = flags;
+		/*[IF JAVA_SPEC_VERSION >= 19]*/
+		this.extendedOption = extendedOption;
+		this.scope = contScope;
+		this.cont = continuation;
+		/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
+		this.bufferSize = estimatedDepth;
+
 		if (estimatedDepth <= 0) {
 			/*[MSG "K0641", "estimatedDepth must be greater than 0"]*/
 			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0641")); //$NON-NLS-1$
 		}
-		if (options.contains(Option.RETAIN_CLASS_REFERENCE)) {
+
+		if ((flags & J9_RETAIN_CLASS_REFERENCE) != 0) {
 			@SuppressWarnings("removal")
 			SecurityManager securityMgr = System.getSecurityManager();
 			if (null != securityMgr) {
 				securityMgr.checkPermission(PermissionSingleton.perm);
 			}
-		}
-		flags = 0;
-		if (walkerOptions.contains(Option.RETAIN_CLASS_REFERENCE)) {
-			flags |= J9_RETAIN_CLASS_REFERENCE;
-		/*[IF JAVA_SPEC_VERSION >= 19]*/
-			retainClassRef = true;
+			/*[IF JAVA_SPEC_VERSION >= 19]*/
+			this.retainClassRef = true;
 		} else {
-			retainClassRef = false;
-		/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
-		}
-		if (walkerOptions.contains(Option.SHOW_REFLECT_FRAMES)) {
-			flags |= J9_SHOW_REFLECT_FRAMES;
-		}
-		if (walkerOptions.contains(Option.SHOW_HIDDEN_FRAMES)) {
-			flags |= J9_SHOW_HIDDEN_FRAMES;
+			this.retainClassRef = false;
+			/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
 		}
 	}
 
 	/*[IF JAVA_SPEC_VERSION >= 21]*/
 	/**
-	 * Set the J9_GET_MONITORS flag.
+	 * Return a new StackWalker suitable for use by PinnedThreadPrinter
+	 * with appropriate flags set (including J9_GET_MONITORS).
 	 */
-	void setGetMonitorsFlag() {
-		flags |= J9_GET_MONITORS;
+	static StackWalker newInstanceWithMonitors() {
+		int flags = J9_GET_MONITORS | J9_SHOW_REFLECT_FRAMES | J9_RETAIN_CLASS_REFERENCE;
+
+		return new StackWalker(flags, DEFAULT_BUFFER_SIZE);
 	}
 	/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 
 	/**
 	 * Factory method to create a StackWalker instance with no options set.
-	 * 
+	 *
 	 * @return StackWalker StackWalker object
 	 */
 	public static StackWalker getInstance() {
-		return getInstance(Collections.emptySet(), DEFAULT_BUFFER_SIZE);
+		return new StackWalker(0, DEFAULT_BUFFER_SIZE);
 	}
 
 	/**
 	 * Factory method to create a StackWalker with one option. This is provided
 	 * for the case where only a single option is required.
-	 * 
+	 *
 	 * @param option
 	 *            select the type of information to include
 	 * @return StackWalker instance configured with the value of option
 	 * @throws SecurityException
 	 *             if option is RETAIN_CLASS_REFERENCE and the security manager
-	 *             check fails.
+	 *             check fails
 	 */
 	public static StackWalker getInstance(Option option) {
 		Objects.requireNonNull(option);
@@ -140,33 +176,34 @@ public final class StackWalker {
 
 	/**
 	 * Factory method to create a StackWalker with any number of options.
-	 * 
+	 *
 	 * @param options
-	 *            select the types of information to include.
+	 *            select the types of information to include
 	 * @return StackWalker instance configured with the given options
 	 * @throws SecurityException
 	 *             if RETAIN_CLASS_REFERENCE is requested and not permitted by
 	 *             the security manager
 	 */
 	public static StackWalker getInstance(Set<Option> options) {
-		return getInstance(new HashSet<>(options), DEFAULT_BUFFER_SIZE);
+		return getInstance(options, DEFAULT_BUFFER_SIZE);
 	}
 
 	/**
 	 * Factory method to create a StackWalker.
-	 * 
+	 *
 	 * @param options
-	 *            select the types of information to include.
+	 *            select the types of information to include
 	 * @param estimatedDepth
-	 *            Hint for the size of buffer to use. Must be 1 or greater.
+	 *            hint for the size of buffer to use. Must be 1 or greater
 	 * @return StackWalker instance with the given options specifying the stack
-	 *         frame information it can access.
+	 *         frame information it can access
 	 * @throws SecurityException
 	 *             if RETAIN_CLASS_REFERENCE is requested and not permitted by
 	 *             the security manager
 	 */
 	public static StackWalker getInstance(Set<Option> options, int estimatedDepth) {
-		return new StackWalker(new HashSet<>(options), estimatedDepth);
+		Objects.requireNonNull(options);
+		return new StackWalker(flagsFor(options), estimatedDepth);
 	}
 
 	/**
@@ -185,16 +222,16 @@ public final class StackWalker {
 	/**
 	 * Get the caller of the caller of this function, eliding any reflection or
 	 * hidden frames.
-	 * 
+	 *
 	 * @return Class object for the method calling the current method.
 	 * @throws UnsupportedOperationException
 	 *             if the StackWalker was not created with
 	 *             {@link Option#RETAIN_CLASS_REFERENCE}
 	 * @throws IllegalStateException
-	 *             if the caller is at the bottom of the stack.
+	 *             if the caller is at the bottom of the stack
 	 */
 	public Class<?> getCallerClass() {
-		if (!walkerOptions.contains(Option.RETAIN_CLASS_REFERENCE)) {
+		if ((flags & J9_RETAIN_CLASS_REFERENCE) == 0) {
 			/*[MSG "K0639", "Stack walker not configured with RETAIN_CLASS_REFERENCE"]*/
 			throw new UnsupportedOperationException(com.ibm.oti.util.Msg.getString("K0639")); //$NON-NLS-1$
 		}
@@ -223,11 +260,11 @@ public final class StackWalker {
 	/**
 	 * Traverse the calling thread's stack at the time this method is called and
 	 * apply {@code function} to each stack frame.
-	 * 
-	 * @param <T> the type of the return value from applying function to the stream 
+	 *
+	 * @param <T> the type of the return value from applying function to the stream
 	 * @param function operation to apply to the stream
 	 * @param walkState Pointer to a J9StackWalkState struct
-	 * @return the value returned by {@code function}.
+	 * @return the value returned by {@code function}
 	 */
 	private static <T> T walkImpl(Function<? super Stream<StackFrame>, ? extends T> function, long walkState) {
 		T result;
@@ -242,10 +279,10 @@ public final class StackWalker {
 	/**
 	 * Traverse the calling thread's stack at the time this method is called and
 	 * apply {@code function} to each stack frame.
-	 * 
-	 * @param <T> the type of the return value from applying function to the stream 
+	 *
+	 * @param <T> the type of the return value from applying function to the stream
 	 * @param function operation to apply to the stream
-	 * @return the value returned by {@code function}.
+	 * @return the value returned by {@code function}
 	 */
 	public <T> T walk(Function<? super Stream<StackFrame>, ? extends T> function) {
 		/*[IF JAVA_SPEC_VERSION >= 19]*/
@@ -267,9 +304,9 @@ public final class StackWalker {
 	/*[IF JAVA_SPEC_VERSION >= 19]*/
 	final boolean retainClassRef;
 
-	private ExtendedOption extendedOption;
-	private ContinuationScope scope;
-	private Continuation cont;
+	private final ExtendedOption extendedOption;
+	private final ContinuationScope scope;
+	private final Continuation cont;
 
 	private static native <T> T walkContinuationImpl(int flags, Function<? super Stream<StackFrame>, ? extends T> function, Continuation cont);
 
@@ -280,13 +317,10 @@ public final class StackWalker {
 	static StackWalker newInstance(Set<Option> options, ExtendedOption extendedOption, ContinuationScope contScope) {
 		return newInstance(options, extendedOption, contScope, null);
 	}
-	static StackWalker newInstance(Set<Option> options, ExtendedOption extendedOption, ContinuationScope contScope, Continuation continuation) {
-		StackWalker result = getInstance(options);
-		result.extendedOption = extendedOption;
-		result.scope = contScope;
-		result.cont = continuation;
 
-		return result;
+	static StackWalker newInstance(Set<Option> options, ExtendedOption extendedOption, ContinuationScope contScope, Continuation continuation) {
+		Objects.requireNonNull(options);
+		return new StackWalker(flagsFor(options), extendedOption, contScope, continuation, DEFAULT_BUFFER_SIZE);
 	}
 
 	enum ExtendedOption {
@@ -296,10 +330,16 @@ public final class StackWalker {
 
 	/**
 	 * Selects what type of stack and method information is provided by the
-	 * StackWalker
-	 *
+	 * StackWalker.
 	 */
 	public static enum Option {
+		/*[IF JAVA_SPEC_VERSION >= 22]*/
+		/**
+		 * A client may use this option to signal that method information is not
+		 * required (OpenJ9 ignores this option collects that information anyway).
+		 */
+		DROP_METHOD_INFO,
+		/*[ENDIF] JAVA_SPEC_VERSION >= 22 */
 		/**
 		 * Allow clients to obtain a method's Class object.
 		 */
@@ -322,19 +362,19 @@ public final class StackWalker {
 
 		/**
 		 * @return the offset of the current bytecode in the method represented
-		 *         by this frame.
+		 *         by this frame
 		 */
 		int getByteCodeIndex();
 
 		/**
 		 * @return the binary name of the declaring class of this frame's
-		 *         method.
+		 *         method
 		 */
 		String getClassName();
 
 		/**
 		 * @return the Class object of the declaring class of this frame's
-		 *         method.
+		 *         method
 		 * @throws UnsupportedOperationException
 		 *             if the StackWalker was not created with
 		 *             Option.RETAIN_CLASS_REFERENCE
@@ -342,15 +382,15 @@ public final class StackWalker {
 		Class<?> getDeclaringClass();
 
 		/**
-		 * @return File name of the class containing the current method. May be
-		 *         null.
+		 * @return file name of the class containing the current method (may be
+		 *         null)
 		 */
 		String getFileName();
 
 		/**
-		 * @return Location of the current point of execution in the source
+		 * @return location of the current point of execution in the source
 		 *         file, or a negative number if this information is unavailable
-		 *         or the method is native.
+		 *         or the method is native
 		 */
 		int getLineNumber();
 
@@ -367,7 +407,7 @@ public final class StackWalker {
 
 		/**
 		 * Converts this StackFrame into a StackTraceElement.
-		 * 
+		 *
 		 * @return StackTraceElement
 		 */
 		StackTraceElement toStackTraceElement();
@@ -375,7 +415,7 @@ public final class StackWalker {
 		/*[IF JAVA_SPEC_VERSION >= 10]*/
 		/**
 		 * @throws UnsupportedOperationException if this method is not overridden
-		 * @return MethodType containing the parameter and return types for the associated method.
+		 * @return MethodType containing the parameter and return types for the associated method
 		 * @since 10
 		 */
 		default MethodType getMethodType() {
@@ -384,14 +424,13 @@ public final class StackWalker {
 
 		/**
 		 * @throws UnsupportedOperationException if this method is not overridden or the StackWalker
-		 * instance is not configured with RETAIN_CLASS_REFERENCE.
-		 * @return method descriptor string representing the type of this frame's method.
+		 * instance is not configured with RETAIN_CLASS_REFERENCE
+		 * @return method descriptor string representing the type of this frame's method
 		 * @since 10
 		 */
 		default String getDescriptor() {
 			throw new UnsupportedOperationException();
 		}
-
 		/*[ENDIF] JAVA_SPEC_VERSION >= 10 */
 	}
 
@@ -409,7 +448,7 @@ public final class StackWalker {
 		/*[IF JAVA_SPEC_VERSION >= 21]*/
 		private Object[] monitors;
 		/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
-		boolean callerSensitive;
+		private boolean callerSensitive;
 
 		@Override
 		public int getByteCodeIndex() {
@@ -464,7 +503,8 @@ public final class StackWalker {
 				}
 			}
 
-			StackTraceElement element = new StackTraceElement(classLoaderName, moduleName, moduleVersion, className, methodName, fileName,
+			StackTraceElement element = new StackTraceElement(classLoaderName,
+					moduleName, moduleVersion, className, methodName, fileName,
 					lineNumber);
 
 			/**
@@ -477,7 +517,7 @@ public final class StackWalker {
 
 			return element;
 		}
-		
+
 		@Override
 		public String toString() {
 			StackTraceElement stackTraceElement = toStackTraceElement();
@@ -506,19 +546,19 @@ public final class StackWalker {
 		 * @since 10
 		 */
 		@Override
-		public java.lang.String getDescriptor() {
+		public String getDescriptor() {
 			return methodSignature;
 		}
 		/*[ENDIF] JAVA_SPEC_VERSION >= 10 */
 
 		/*[IF JAVA_SPEC_VERSION >= 21]*/
-		protected Object[] getMonitors() {
+		Object[] getMonitors() {
 			return monitors;
 		}
 		/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 	}
 
-	static class PermissionSingleton {
+	static final class PermissionSingleton {
 		static final Permission perm =
 				new RuntimePermission("getStackWalkerWithClassReference"); //$NON-NLS-1$
 	}
