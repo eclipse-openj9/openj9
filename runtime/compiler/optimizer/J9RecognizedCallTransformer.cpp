@@ -324,7 +324,14 @@ void J9::RecognizedCallTransformer::process_java_lang_StringUTF16_toBytes(TR::Tr
    newCallNode->setAndIncChild(3, TR::Node::iconst(0));
    newCallNode->setAndIncChild(4, lenNode);
 
-   treetop->insertAfter(TR::TreeTop::create(comp(), TR::Node::create(node, TR::treetop, 1, newCallNode)));
+   TR::TreeTop* newTT = treetop->insertAfter(TR::TreeTop::create(comp(), TR::Node::create(node, TR::treetop, 1, newCallNode)));
+   // Insert the allocationFence after the arraycopy because the array can be allocated from the non-zeroed TLH
+   // and therefore we need to make sure no other thread sees stale memory from the array element section.
+   if (cg()->getEnforceStoreOrder())
+      {
+      TR::Node *allocationFence = TR::Node::createAllocationFence(newByteArrayNode, newByteArrayNode);
+      newTT->insertAfter(TR::TreeTop::create(comp(), allocationFence));
+      }
    }
 
 void J9::RecognizedCallTransformer::process_java_lang_StrictMath_and_Math_sqrt(TR::TreeTop* treetop, TR::Node* node)
