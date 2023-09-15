@@ -26,26 +26,20 @@ import java.io.PrintStream;
 import java.lang.StackWalker.StackFrame;
 import java.lang.StackWalker.StackFrameImpl;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
-import static java.lang.StackWalker.Option.*;
 
 /**
- * Prints the stack trace of Pinned Thread that is attempting to yield.
+ * Prints the stack trace of a pinned thread that is attempting to yield.
  */
 final class PinnedThreadPrinter {
-	private static final StackWalker STACKWALKER;
 
-	static {
-		STACKWALKER = StackWalker.getInstance(Set.of(SHOW_REFLECT_FRAMES, RETAIN_CLASS_REFERENCE));
-		STACKWALKER.setGetMonitorsFlag();
-	}
+	private static final StackWalker STACKWALKER = StackWalker.newInstanceWithMonitors();
 
 	static void printStackTrace(PrintStream out, boolean printAll) {
 		out.println(Thread.currentThread());
 		List<StackFrame> stackFrames = STACKWALKER.walk(s -> s.collect(Collectors.toList()));
 		for (int i = 0; i < stackFrames.size(); i++) {
-			StackFrameImpl sti = (StackFrameImpl)stackFrames.get(i);
+			StackFrameImpl sti = (StackFrameImpl) stackFrames.get(i);
 			Object[] monitors = sti.getMonitors();
 
 			if (monitors != null) {
