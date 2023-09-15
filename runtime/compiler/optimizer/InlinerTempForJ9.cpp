@@ -5106,6 +5106,23 @@ TR_InlinerFailureReason
          break;
    }
 
+#if JAVA_SPEC_VERSION >= 20
+   /**
+    * Prevent inlining of *.runWith methods because Thread.findScopedValueBindings implementation
+    * relies on iterating the O-slots of these methods to find the most recent ScopedValue binding.
+    * The scoped value binding is the first argument in runWith, and if runWith is compiled, the
+    * O-slot walker would rely on iterating through the O-slots until an object that is an instance
+    * of java/lang/ScopedValue$Snapshot is found. If we were to allow inlining of
+    * runWith, this slot walking mechanism would be unreliable, such as when there are more than one
+    * runWith calls in the same caller, and iterating through the O-slots and relying on instanceof
+    * checks could then yield the wrong bindings.
+    */
+   if (rm == TR::java_lang_Thread_runWith
+      || rm == TR::java_lang_VirtualThread_runWith
+      || rm == TR::java_lang_ScopedValue_runWith)
+      return DontInline_Callee;
+#endif
+
    if (comp->getOptions()->getEnableGPU(TR_EnableGPU))
       {
       switch (rm)
