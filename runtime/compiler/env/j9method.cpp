@@ -2843,6 +2843,7 @@ void TR_ResolvedJ9Method::construct()
    static X ThreadMethods[] =
       {
       {x(TR::java_lang_Thread_currentThread,     "currentThread",   "()Ljava/lang/Thread;")},
+      {  TR::java_lang_Thread_runWith,       7,  "runWith",         (int16_t)-1, "*"},
       {  TR::unknownMethod}
       };
 
@@ -3957,6 +3958,18 @@ void TR_ResolvedJ9Method::construct()
       {TR::unknownMethod}
       };
 
+   static X VirtualThreadMethods [] =
+      {
+      {  TR::java_lang_VirtualThread_runWith, 7,  "runWith", (int16_t)-1, "*"},
+      {  TR::unknownMethod},
+      };
+
+   static X ScopedValueMethods [] =
+      {
+      {  TR::java_lang_ScopedValue_runWith, 7,  "runWith", (int16_t)-1, "*"},
+      {  TR::unknownMethod},
+      };
+
    struct Y { const char * _class; X * _methods; };
 
    /* classXX where XX is the number of characters in the class name */
@@ -4062,6 +4075,7 @@ void TR_ResolvedJ9Method::construct()
       { "java/nio/HeapByteBuffer", HeapByteBufferMethods},
       { "sun/nio/ch/NativeThread", NativeThreadMethods},
       { "java/util/regex/Matcher", JavaUtilRegexMatcherMethods },
+      { "java/lang/VirtualThread", VirtualThreadMethods},
       { 0 }
       };
 
@@ -4115,6 +4129,7 @@ void TR_ResolvedJ9Method::construct()
       { "sun/nio/cs/ISO_8859_1$Encoder", EncodeMethods },
       { "sun/nio/cs/ISO_8859_1$Decoder", EncodeMethods },
       { "java/io/ByteArrayOutputStream", ByteArrayOutputStreamMethods },
+      { "java/lang/ScopedValue$Carrier", ScopedValueMethods },
       { 0 }
       };
 
