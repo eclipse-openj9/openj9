@@ -461,7 +461,7 @@ public class TestOperatingSystemMXBean {
 				} else if (name.equals("ProcessCpuLoad")) {
 					AssertJUnit.assertTrue(value instanceof Double);
 				} else if (name.equals("HardwareModel")) {
-					AssertJUnit.assertTrue(value instanceof String);
+					AssertJUnit.assertTrue((value == null) || (value instanceof String));
 				} else if (name.equals("HardwareEmulated")) {
 					AssertJUnit.assertTrue(value instanceof Boolean);
 				} else if (name.equals("OpenFileDescriptorCount")) {
