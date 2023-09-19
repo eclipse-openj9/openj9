@@ -24,6 +24,7 @@ package org.eclipse.openj9.criu;
 
 import openj9.internal.criu.InternalCRIUSupport;
 import openj9.internal.criu.security.CRIUConfigurator;
+import org.eclipse.openj9.criu.CRIUSupport.HookMode;
 
 /**
  * Handles the security providers.
@@ -46,7 +47,7 @@ public final class SecurityProviders {
 	 */
 	public static void registerResetCRIUState() {
 		J9InternalCheckpointHookAPI.registerPreCheckpointHook(
-				CRIUSupport.RESET_CRIUSEC_PRIORITY,
+				CRIUSupport.HookMode.SINGLE_THREAD_MODE, CRIUSupport.RESET_CRIUSEC_PRIORITY,
 				"Reset the digests", //$NON-NLS-1$
 				() -> openj9.internal.criu.CRIUSECProvider.resetCRIUSEC()
 		);
@@ -57,7 +58,7 @@ public final class SecurityProviders {
 	 */
 	public static void registerRestoreSecurityProviders() {
 		J9InternalCheckpointHookAPI.registerPostRestoreHook(
-				CRIUSupport.RESTORE_SECURITY_PROVIDERS_PRIORITY,
+				CRIUSupport.HookMode.SINGLE_THREAD_MODE, CRIUSupport.RESTORE_SECURITY_PROVIDERS_PRIORITY,
 				"Restore the security providers", //$NON-NLS-1$
 				() -> {
 					if (!InternalCRIUSupport.isCheckpointAllowed()) {

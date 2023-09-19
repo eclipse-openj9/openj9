@@ -29,6 +29,7 @@
   <variable name="MAINCLASS_TIMECHANGE" value="org.openj9.criu.TimeChangeTest" />
   <variable name="MAINCLASS_SINGLETHREADMODE_CHECKPOINT" value="org.openj9.criu.TestSingleThreadModeCheckpointException" />
   <variable name="MAINCLASS_SINGLETHREADMODE_RESTORE" value="org.openj9.criu.TestSingleThreadModeRestoreException" />
+  <variable name="MAINCLASS_CONCURRENT_MODE_HOOK" value="org.openj9.criu.TestConcurrentMode" />
   <variable name="MAINCLASS_DEADLOCK_TEST" value="org.openj9.criu.DeadlockTest" />
   <variable name="MAINCLASS_DELAYEDOPERATIONS" value="org.openj9.criu.TestDelayedOperations" />
   <variable name="MAINCLASS_OPTIONSFILE_TEST" value="org.openj9.criu.OptionsFileTest" />
@@ -858,6 +859,135 @@
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="success" caseSensitive="yes" regex="no">SUCCESS</output>
     <output type="failure" caseSensitive="yes" regex="no">FAILURE</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+  </test>
+
+  <test id="Create Criu Checkpoint Image once and no restore - TestConcurrentModePreCheckpointHookThrowException">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_CONCURRENT_MODE_HOOK$ TestConcurrentModePreCheckpointHookThrowException 1 false false</command>
+    <output type="success" caseSensitive="yes" regex="no">RuntimeException: TestConcurrentModePreCheckpointHookThrowException() within preCheckpointHook</output>
+    <output type="success" caseSensitive="yes" regex="no">JVMCheckpointException: Exception thrown when running user pre-checkpoint</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="failure" caseSensitive="no" regex="no">Killed</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+  </test>
+
+  <test id="Create Criu Checkpoint Image once and no restore - TestConcurrentModePreCheckpointHookThrowExceptionPriority">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_CONCURRENT_MODE_HOOK$ TestConcurrentModePreCheckpointHookThrowExceptionPriority 1 false false</command>
+    <output type="success" caseSensitive="yes" regex="no">UnsupportedOperationException: The user hook priority must be between</output>
+    <output type="failure" caseSensitive="no" regex="no">TestConcurrentModePreCheckpointHookThrowExceptionPriority() Pre-checkpoint</output>
+    <output type="failure" caseSensitive="no" regex="no">Killed</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+  </test>
+
+  <test id="Create Criu Checkpoint Image once and no restore - TestConcurrentModePreCheckpointHookRunOnce">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_CONCURRENT_MODE_HOOK$ TestConcurrentModePreCheckpointHookRunOnce 1 false false</command>
+    <output type="success" caseSensitive="yes" regex="no">TestConcurrentModePreCheckpointHookRunOnce() within preCheckpointHook</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+  </test>
+
+  <test id="Create Criu Checkpoint Image once and no restore - TestConcurrentModePreCheckpointHookPriorities">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_CONCURRENT_MODE_HOOK$ TestConcurrentModePreCheckpointHookPriorities 1 false false</command>
+    <output type="success" caseSensitive="yes" regex="no">TestConcurrentModePreCheckpointHookPriorities() PASSED</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="failure" caseSensitive="yes" regex="no">TestConcurrentModePreCheckpointHookPriorities() FAILED</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+  </test>
+
+  <test id="Create and Restore Criu Checkpoint Image once - TestConcurrentModePostRestoreHookThrowException">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_CONCURRENT_MODE_HOOK$ TestConcurrentModePostRestoreHookThrowException 1 false false</command>
+    <output type="success" caseSensitive="yes" regex="no">RuntimeException: TestConcurrentModePostRestoreHookThrowException() within postRestoreHook</output>
+    <output type="success" caseSensitive="yes" regex="no">JVMRestoreException: Exception thrown when running user post-restore hook multi-threaded hook</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="required" caseSensitive="no" regex="no">Killed</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+  </test>
+
+  <test id="Create and Restore Criu Checkpoint Image once - TestConcurrentModePostRestoreHookThrowExceptionPriority">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_CONCURRENT_MODE_HOOK$ TestConcurrentModePostRestoreHookThrowExceptionPriority 1 false false</command>
+    <output type="success" caseSensitive="yes" regex="no">UnsupportedOperationException: The user hook priority must be between</output>
+    <output type="failure" caseSensitive="no" regex="no">TestConcurrentModePostRestoreHookThrowExceptionPriority() Pre-checkpoint</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+  </test>
+
+  <test id="Create and Restore Criu Checkpoint Image once - TestConcurrentModePostRestoreHookRunOnce">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_CONCURRENT_MODE_HOOK$ TestConcurrentModePostRestoreHookRunOnce 1 false false</command>
+    <output type="success" caseSensitive="yes" regex="no">TestConcurrentModePostRestoreHookRunOnce() within postRestoreHook</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="required" caseSensitive="no" regex="no">Killed</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+  </test>
+
+  <test id="Create and Restore Criu Checkpoint Image once - TestConcurrentModePostRestoreHookPriorities">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_CONCURRENT_MODE_HOOK$ TestConcurrentModePostRestoreHookPriorities 1 false false</command>
+    <output type="success" caseSensitive="yes" regex="no">TestConcurrentModePostRestoreHookPriorities() PASSED</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="required" caseSensitive="no" regex="no">Killed</output>
+    <output type="failure" caseSensitive="yes" regex="no">TestConcurrentModePostRestoreHookPriorities() FAILED</output>
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
     <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
     <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
