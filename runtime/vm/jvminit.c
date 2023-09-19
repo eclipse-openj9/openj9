@@ -2658,7 +2658,11 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 			if (FIND_AND_CONSUME_VMARG(STARTSWITH_MATCH, VMOPT_XXSETHWPREFETCH_EQUALS, NULL) >= 0) {
 				vm->extendedRuntimeFlags |= J9_EXTENDED_RUNTIME_SET_HW_PREFETCH;
 			}
-#endif
+#if defined(OPENJ9_BUILD)
+			FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXUSEZLIBNX, NULL);
+			FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXNOUSEZLIBNX, NULL);
+#endif /* defined(OPENJ9_BUILD) */
+#endif /* defined(AIXPPC) */
 
 			/* set the default mode */
 			vm->lockwordMode =LOCKNURSERY_ALGORITHM_ALL_BUT_ARRAY;
