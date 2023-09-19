@@ -2237,7 +2237,7 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 				|| (J9SYSPROP_ERROR_NONE != setSystemProperty(vm, prop, "true"))
 				) {
 					loadInfo = FIND_DLL_TABLE_ENTRY( FUNCTION_VM_INIT );
-					loadInfo->fatalErrorStr = "cannot set system property sun.nio.PageAlignDirectMemory=true";
+					setErrorJ9dll(PORTLIB, loadInfo, "cannot set system property sun.nio.PageAlignDirectMemory=true", FALSE);
 					goto _error;
 				}
 			}
@@ -2763,7 +2763,7 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 				rc = initializeModulesPath(vm);
 				if (0 != rc) {
 					loadInfo = FIND_DLL_TABLE_ENTRY( FUNCTION_VM_INIT );
-					loadInfo->fatalErrorStr = "cannot initialize modules path";
+					setErrorJ9dll(PORTLIB, loadInfo, "cannot initialize modules path", FALSE);
 					goto _error;
 				}
 			}
@@ -2774,7 +2774,7 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 
 			loadInfo = FIND_DLL_TABLE_ENTRY( FUNCTION_VM_INIT );
 			if (NULL == (vm->systemClassLoader = allocateClassLoader(vm))) {
-				loadInfo->fatalErrorStr = "cannot allocate system classloader";
+				setErrorJ9dll(PORTLIB, loadInfo, "cannot allocate system classloader", FALSE);
 				goto _error;
 			}
 
@@ -2783,21 +2783,21 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 
 				vm->javaBaseModule = pool_newElement(vm->modularityPool);
 				if (NULL == vm->javaBaseModule) {
-					loadInfo->fatalErrorStr = "cannot allocate java.base module";
+					setErrorJ9dll(PORTLIB, loadInfo, "cannot allocate java.base module", FALSE);
 					goto _error;
 				}
 				vm->javaBaseModule->classLoader = vm->systemClassLoader;
 
 				vm->unamedModuleForSystemLoader = pool_newElement(vm->modularityPool);
 				if (NULL == vm->unamedModuleForSystemLoader) {
-					loadInfo->fatalErrorStr = "cannot allocate unnamed module for bootloader";
+					setErrorJ9dll(PORTLIB, loadInfo, "cannot allocate unnamed module for bootloader", FALSE);
 					goto _error;
 				}
 				vm->unamedModuleForSystemLoader->classLoader = vm->systemClassLoader;
 
 				patchPathResult = setBootLoaderModulePatchPaths(vm, vm->javaBaseModule, JAVA_BASE_MODULE);
 				if (FALSE == patchPathResult) {
-					loadInfo->fatalErrorStr = "cannot set patch paths for java.base module";
+					setErrorJ9dll(PORTLIB, loadInfo, "cannot set patch paths for java.base module", FALSE);
 					goto _error;
 				}
 			}
@@ -3111,12 +3111,7 @@ checkDllInfo(void* dllLoadInfo, void* userDataTemp)
 		if ( (entry->loadFlags & FAILED_TO_UNLOAD) || ((entry->loadFlags & FAILED_TO_LOAD) && !(entry->loadFlags & FATAL_NO_DLL)) ) {
 			userData->success = JNI_OK;
 		}
-		/* free string buffer if necessary */
-		if ((entry->loadFlags & FREE_ERROR_STRING) && entry->fatalErrorStr) {
-			j9mem_free_memory(entry->fatalErrorStr);
-			entry->loadFlags &= ~FREE_ERROR_STRING;
-		}
-		entry->fatalErrorStr = NULL;			/* ensure that error is not reported more than once */
+		setErrorJ9dll(PORTLIB, entry, NULL, FALSE); /* ensure that error is not reported more than once */
 	}
 }
 
@@ -4131,7 +4126,7 @@ runJ9VMDllMain(void* dllLoadInfo, void* userDataTemp)
 		/* Loaded libraries are guaranteed to have a descriptor. NOT_A_LIBRARY entries will already have a j9vmdllmain entry */
 		if (!entry->j9vmdllmain && entry->descriptor) {
 			if (j9sl_lookup_name (entry->descriptor , "J9VMDllMain", (void *) &J9VMDllMainFunc, "PLpL")) {
-				entry->fatalErrorStr = (char*)j9nls_lookup_message(J9NLS_DO_NOT_APPEND_NEWLINE|J9NLS_ERROR, J9NLS_VM_J9VMDLLMAIN_NOT_FOUND, NULL);
+				setErrorJ9dll(PORTLIB, entry, j9nls_lookup_message(J9NLS_DO_NOT_APPEND_NEWLINE | J9NLS_ERROR, J9NLS_VM_J9VMDLLMAIN_NOT_FOUND, NULL), FALSE);
 				return;
 			} else {
 				entry->j9vmdllmain = J9VMDllMainFunc;
@@ -4155,10 +4150,10 @@ runJ9VMDllMain(void* dllLoadInfo, void* userDataTemp)
 			}
 
 			if (rc==J9VMDLLMAIN_FAILED && (entry->fatalErrorStr==NULL || strlen(entry->fatalErrorStr)==0)) {
-				entry->fatalErrorStr = (char*)j9nls_lookup_message(J9NLS_DO_NOT_APPEND_NEWLINE|J9NLS_ERROR, J9NLS_VM_J9VMDLLMAIN_FAILED, NULL);
+				setErrorJ9dll(PORTLIB, entry, j9nls_lookup_message(J9NLS_DO_NOT_APPEND_NEWLINE | J9NLS_ERROR, J9NLS_VM_J9VMDLLMAIN_FAILED, NULL), FALSE);
 			}
 			if (rc==J9VMDLLMAIN_SILENT_EXIT_VM) {
-				entry->fatalErrorStr = SILENT_EXIT_STRING;
+				setErrorJ9dll(PORTLIB, entry, SILENT_EXIT_STRING, FALSE);
 			}
 			/* Only COMPLETE_STAGE for initialization stages */
 			if (userData->stage >=0) {
@@ -4411,6 +4406,8 @@ threadInitStages(J9JavaVM* vm, IDATA stage, void* reserved)
 	char* thrOptions = NULL;
 	char* jniOptions = NULL;
 
+	PORT_ACCESS_FROM_JAVAVM(vm);
+
 	switch(stage) {
 		case PORT_LIBRARY_GUARANTEED :
 			/* default stack size for forked Java threads */
@@ -4469,12 +4466,12 @@ threadInitStages(J9JavaVM* vm, IDATA stage, void* reserved)
 				GET_OPTION_VALUE( xThrIndex, ':', &thrOptions);
 			}
 			if (threadParseArguments(vm, thrOptions) != 0) {
-				loadInfo->fatalErrorStr = "cannot parse -Xthr:";
+				setErrorJ9dll(PORTLIB, loadInfo, "cannot parse -Xthr:", FALSE);
 				goto _error;
 			}
 
 			if (initializeVMThreading(vm) != 0) {
-				loadInfo->fatalErrorStr = "cannot initialize VM threading";
+				setErrorJ9dll(PORTLIB, loadInfo, "cannot initialize VM threading", FALSE);
 				goto _error;
 			}
 
@@ -4483,7 +4480,7 @@ threadInitStages(J9JavaVM* vm, IDATA stage, void* reserved)
 			}
 			returnVal = jniParseArguments(vm, jniOptions);
 			if (returnVal != J9VMDLLMAIN_OK) {
-				loadInfo->fatalErrorStr = "cannot parse -Xjni:";
+				setErrorJ9dll(PORTLIB, loadInfo, "cannot parse -Xjni:", FALSE);
 				return returnVal;
 			}
 			break;
@@ -4504,7 +4501,7 @@ threadInitStages(J9JavaVM* vm, IDATA stage, void* reserved)
 			vm->threadNameHandlerKey = J9RegisterAsyncEvent(vm, setThreadNameAsyncHandler, vm);
 			if (vm->threadNameHandlerKey < 0) {
 				loadInfo = FIND_DLL_TABLE_ENTRY( FUNCTION_THREAD_INIT );
-				loadInfo->fatalErrorStr = "cannot initialize threadNameHandlerKey";
+				setErrorJ9dll(PORTLIB, loadInfo, "cannot initialize threadNameHandlerKey", FALSE);
 				goto _error;
 			}
 #endif /* J9VM_THR_ASYNC_NAME_UPDATE */
@@ -4614,7 +4611,7 @@ zeroInitStages(J9JavaVM* vm, IDATA stage, void* reserved)
 										j9mem_free_memory(errorBuffer);
 									} else {
 										loadInfo = FIND_DLL_TABLE_ENTRY( FUNCTION_ZERO_INIT );
-										loadInfo->fatalErrorStr = "Cannot allocate memory for error message";
+										setErrorJ9dll(PORTLIB, loadInfo, "Cannot allocate memory for error message", FALSE);
 									}
 									goto _error;
 								}
@@ -4622,7 +4619,7 @@ zeroInitStages(J9JavaVM* vm, IDATA stage, void* reserved)
 						}
 					} else {
 						loadInfo = FIND_DLL_TABLE_ENTRY( FUNCTION_ZERO_INIT );
-						loadInfo->fatalErrorStr = "Error parsing " VMOPT_XZERO_COLON " options";
+						setErrorJ9dll(PORTLIB, loadInfo, "Error parsing " VMOPT_XZERO_COLON " options", FALSE);
 					}
 					argIndex1 = FIND_NEXT_ARG_IN_VMARGS_FORWARD( STARTSWITH_MATCH, VMOPT_XZERO, NULL, argIndex1);
 				}
@@ -4691,11 +4688,11 @@ runJVMOnLoad(J9JavaVM* vm, J9VMDllLoadInfo* loadInfo, char* options)
 
 	if (loadInfo->descriptor) {
 		if (j9sl_lookup_name ( loadInfo->descriptor , "JVM_OnLoad", (void *) &jvmOnLoadFunc, "iLLL")) {
-			loadInfo->fatalErrorStr = "JVM_OnLoad not found";
+			setErrorJ9dll(PORTLIB, loadInfo, "JVM_OnLoad not found", FALSE);
 		} else {
 			JVMINIT_VERBOSE_INIT_VM_TRACE1(vm, "Running JVM_OnLoad for %s\n", loadInfo->dllName);
 			if ((rc = (*jvmOnLoadFunc) ((JavaVM*)vm, options, NULL)) != JNI_OK)
-				loadInfo->fatalErrorStr = "JVM_OnLoad failed";
+				setErrorJ9dll(PORTLIB, loadInfo, "JVM_OnLoad failed", FALSE);
 			return (rc == JNI_OK);
 		}
 	}
@@ -6325,12 +6322,9 @@ createMapping(J9JavaVM* vm, char* j9Name, char* mapName, UDATA flags, IDATA atIn
 static void
 generateMemoryOptionParseError(J9JavaVM* vm, J9VMDllLoadInfo* loadInfo, UDATA errorType, char* optionWithError)
 {
-	char *errorBuffer;
-
 	PORT_ACCESS_FROM_JAVAVM(vm);
-
-	errorBuffer = (char*)j9mem_allocate_memory(LARGE_STRING_BUF_SIZE, OMRMEM_CATEGORY_VM);
-	if (errorBuffer) {
+	char *errorBuffer = (char *)j9mem_allocate_memory(LARGE_STRING_BUF_SIZE, OMRMEM_CATEGORY_VM);
+	if (NULL != errorBuffer) {
 		strcpy(errorBuffer, "Parse error for ");
 		safeCat(errorBuffer, optionWithError, LARGE_STRING_BUF_SIZE);
 		if (OPTION_MALFORMED == errorType) {
@@ -6340,10 +6334,9 @@ generateMemoryOptionParseError(J9JavaVM* vm, J9VMDllLoadInfo* loadInfo, UDATA er
 		} else if (OPTION_OUTOFRANGE == errorType) {
 			safeCat(errorBuffer, " - value out of range.", LARGE_STRING_BUF_SIZE);
 		}
-		loadInfo->fatalErrorStr = errorBuffer;
-		loadInfo->loadFlags |= FREE_ERROR_STRING;
+		setErrorJ9dll(PORTLIB, loadInfo, errorBuffer, TRUE);
 	} else {
-		loadInfo->fatalErrorStr = "Cannot allocate memory for error message";
+		setErrorJ9dll(PORTLIB, loadInfo, "Cannot allocate memory for error message", FALSE);
 	}
 }
 

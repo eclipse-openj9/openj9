@@ -173,6 +173,7 @@ J9InternalVMFunctions J9InternalFunctions = {
 	optionValueOperations,
 	dumpStackTrace,
 	loadJ9DLL,
+	setErrorJ9dll,
 	runJVMOnLoad,
 	checkRomClassForError,
 	setExceptionForErroredRomClass,

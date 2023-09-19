@@ -119,7 +119,7 @@ typedef struct J9VerboseSettings {
 * This may be called multiple times. 
 */
 
-IDATA setVerboseState ( J9JavaVM *vm, J9VerboseSettings *verboseOptions, char **errorString );
+IDATA setVerboseState ( J9JavaVM *vm, J9VerboseSettings *verboseOptions, const char **errorString );
 
 BOOLEAN checkOptsAndInitVerbosegclog(J9JavaVM* vm, J9VMInitArgs* args);
 #ifdef __cplusplus

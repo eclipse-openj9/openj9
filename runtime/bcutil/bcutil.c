@@ -137,14 +137,14 @@ bcutil_J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 			if (J2SE_VERSION(vm) >= J2SE_V11) {
 				rc = initJImageIntf(&jimageIntf, vm, PORTLIB);
 				if (J9JIMAGE_NO_ERROR != rc) {
-					loadInfo->fatalErrorStr = "failed to initialize JImage interface";
+					vm->internalVMFunctions->setErrorJ9dll(PORTLIB, loadInfo, "failed to initialize JImage interface", FALSE);
 					returnVal = J9VMDLLMAIN_FAILED;
 					break;
 				}
 			}
 			translationBuffers = j9bcutil_allocTranslationBuffers(vm->portLibrary);
 			if (translationBuffers == NULL) {
-				loadInfo->fatalErrorStr = "j9bcutil_allocTranslationBuffers failed";
+				vm->internalVMFunctions->setErrorJ9dll(PORTLIB, loadInfo, "j9bcutil_allocTranslationBuffers failed", FALSE);
 				returnVal = J9VMDLLMAIN_FAILED;
 				break;
 			}
@@ -165,7 +165,7 @@ bcutil_J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 			if (omrthread_monitor_init_with_name(&vm->mapMemoryBufferMutex, 0, "global mapMemoryBuffer mutex")
 			|| (vm->mapMemoryResultsBuffer == NULL)
 			) {
-				loadInfo->fatalErrorStr = "initial global mapMemoryBuffer or mapMemoryBufferMutex allocation failed";
+				vm->internalVMFunctions->setErrorJ9dll(PORTLIB, loadInfo, "initial global mapMemoryBuffer or mapMemoryBufferMutex allocation failed", FALSE);
 				returnVal = J9VMDLLMAIN_FAILED;
 			}
 			vm->mapMemoryBuffer = vm->mapMemoryResultsBuffer + MAP_MEMORY_RESULTS_BUFFER_SIZE;
@@ -173,7 +173,7 @@ bcutil_J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 
 		case AGENTS_STARTED :
 			break;
-			
+
 		case JCL_INITIALIZED :
 			break;
 

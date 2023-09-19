@@ -32,7 +32,8 @@
 #include "vm_internal.h"
 #include "j2sever.h"
 
-IDATA shutdownDLL(J9JavaVM * vm, UDATA descriptor, UDATA shutdownDueToExit)
+IDATA
+shutdownDLL(J9JavaVM *vm, UDATA descriptor, UDATA shutdownDueToExit)
 {
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	jint (JNICALL * j9OnUnLoadFunc)(J9JavaVM *, void*);
@@ -51,7 +52,9 @@ IDATA shutdownDLL(J9JavaVM * vm, UDATA descriptor, UDATA shutdownDueToExit)
 	return 0;
 }
 
-UDATA loadJ9DLLWithPath(J9JavaVM * vm, J9VMDllLoadInfo* info, char *dllName) {
+UDATA
+loadJ9DLLWithPath(J9JavaVM *vm, J9VMDllLoadInfo *info, char *dllName)
+{
 	BOOLEAN loadFailed = FALSE;
 	char *localBuffer = NULL;
 	char *dllDirectory = NULL;
@@ -85,7 +88,7 @@ UDATA loadJ9DLLWithPath(J9JavaVM * vm, J9VMDllLoadInfo* info, char *dllName) {
 		localBuffer = j9mem_allocate_memory(bufferSize, OMRMEM_CATEGORY_VM);
 
 		if(!localBuffer) {
-			info->fatalErrorStr = "cannot allocate memory in loadJ9DLL";
+			setErrorJ9dll(PORTLIB, info, "cannot allocate memory in loadJ9DLL", FALSE);
 			info->loadFlags |= FAILED_TO_LOAD;
 			return FALSE;
 		}
@@ -123,7 +126,10 @@ UDATA loadJ9DLLWithPath(J9JavaVM * vm, J9VMDllLoadInfo* info, char *dllName) {
 
 	return loadFailed;
 }
-UDATA loadJ9DLL(J9JavaVM * vm, J9VMDllLoadInfo* info) {
+
+UDATA
+loadJ9DLL(J9JavaVM *vm, J9VMDllLoadInfo *info)
+{
 	BOOLEAN loadFailed = FALSE;
 
 	PORT_ACCESS_FROM_JAVAVM(vm);
@@ -139,12 +145,12 @@ UDATA loadJ9DLL(J9JavaVM * vm, J9VMDllLoadInfo* info) {
 	if ( loadFailed ) {
 		if ( !(info->loadFlags & SILENT_NO_DLL) ) {
 			const char *errorStr = j9error_last_error_message();
-			info->fatalErrorStr = j9mem_allocate_memory(strlen(errorStr)+1, OMRMEM_CATEGORY_VM);
-			if (info->fatalErrorStr) {
-				strcpy(info->fatalErrorStr, errorStr);
-				info->loadFlags |= FREE_ERROR_STRING;			/* indicates that buffer should be freed later */
+			char *buffer = j9mem_allocate_memory(strlen(errorStr) + 1, OMRMEM_CATEGORY_VM);
+			if (NULL != buffer) {
+				strcpy(buffer, errorStr);
+				setErrorJ9dll(PORTLIB, info, buffer, TRUE);
 			} else {
-				info->fatalErrorStr = "cannot allocate memory in loadJ9DLL";
+				setErrorJ9dll(PORTLIB, info, "cannot allocate memory in loadJ9DLL", FALSE);
 			}
 		}
 		info->loadFlags |= FAILED_TO_LOAD;
@@ -152,6 +158,23 @@ UDATA loadJ9DLL(J9JavaVM * vm, J9VMDllLoadInfo* info) {
 	} else {
 		info->loadFlags |= LOADED;
 		return TRUE;
+	}
+}
+
+void
+setErrorJ9dll(J9PortLibrary *portLib, J9VMDllLoadInfo *info, const char *error, BOOLEAN errorIsAllocated)
+{
+	/* If fatalErrorStr already points to a heap-allocated string, we need to free it before we can point it to a new string. */
+	if ((NULL != info->fatalErrorStr) && J9_ARE_ANY_BITS_SET(info->loadFlags, FREE_ERROR_STRING)) {
+		PORT_ACCESS_FROM_PORT(portLib);
+		j9mem_free_memory((char *)info->fatalErrorStr);
+	}
+
+	info->fatalErrorStr = error;
+	if ((NULL != error) && errorIsAllocated) {
+		info->loadFlags |= FREE_ERROR_STRING; /* Indicates that buffer should be freed later. */
+	} else {
+		info->loadFlags &= ~FREE_ERROR_STRING;
 	}
 }
 
