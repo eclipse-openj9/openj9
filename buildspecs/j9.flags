@@ -1705,6 +1705,10 @@ Only available on zOS</description>
 		<description>Enables support for CRIU Java API's</description>
 		<ifRemoved>No support for CRIU Java API's</ifRemoved>
 	</flag>
+	<flag id="opt_openjdkCracSupport">
+		<description>Enables support for OpenJDK CRAC</description>
+		<ifRemoved>No support for OpenJDK CRAC</ifRemoved>
+	</flag>
 	<flag id="opt_cuda">
 		<description>Add support for CUDA</description>
 		<ifRemoved></ifRemoved>
