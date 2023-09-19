@@ -165,6 +165,22 @@ j9gc_hot_reference_field_required(J9JavaVM *javaVM)
 }
 
 /**
+ * Query if off heap allocation for large objects is enabled.
+ *
+ * @param javaVM pointer to J9JavaVM
+ * @return true if extensions flag isVirtualLargeObjectHeapEnabled is set, 0 otherwise
+ */
+BOOLEAN
+j9gc_off_heap_allocation_enabled(J9JavaVM *javaVM)
+{
+#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+	return MM_GCExtensions::getExtensions(javaVM)->isVirtualLargeObjectHeapEnabled;
+#else /* defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */
+	return FALSE;
+#endif /* defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */
+}
+
+/**
  * Query for the max hot field list length that a class is allowed to have.
  * Valid if dynamicBreadthFirstScanOrdering is enabled.
  */
