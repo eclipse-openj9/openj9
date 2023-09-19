@@ -109,6 +109,23 @@ public final class CRIUSupport {
 		});
 	}
 
+	/**
+	 * A hook can be one of the following states:
+	 *
+	 * SINGLE_THREAD_MODE - a mode in which only the Java thread that requested a
+	 * checkpoint is permitted to run. This means that global state changes are
+	 * permitted without the risk of race conditions. It also implies that if one
+	 * attempts to acquire a resource held by another Java thread a deadlock might
+	 * occur, or a JVMCheckpointException or JVMRestoreException to be thrown if
+	 * such an attempt is detected by JVM.
+	 *
+	 * CONCURRENT_MODE - a hook running when the SINGLE_THREAD_MODE is NOT enabled
+	 */
+	public static enum HookMode {
+		SINGLE_THREAD_MODE,
+		CONCURRENT_MODE
+	}
+
 	private static boolean loadNativeLibrary() {
 		if (!nativeLoaded) {
 			try {
@@ -222,15 +239,21 @@ public final class CRIUSupport {
 	/* Higher priority hooks are run last in pre-checkoint hooks, and are run
 	 * first in post restore hooks.
 	 */
-	private static final int RESTORE_CLEAR_INETADDRESS_CACHE_PRIORITY = 100;
-	private static final int RESTORE_ENVIRONMENT_VARIABLES_PRIORITY = 100;
-	private static final int RESTORE_SYSTEM_PROPERTIES_PRIORITY = 100;
-	private static final int USER_HOOKS_PRIORITY = 1;
+	// the lowest priority of a user hook
+	public static int LOWEST_USER_HOOK_PRIORITY = 0;
+	// the highest priority of a user hook
+	public static int HIGHEST_USER_HOOK_PRIORITY = 99;
+	// the default SINGLE_THREAD_MODE hook priority
+	private static final int DEFAULT_SINGLE_THREAD_MODE_HOOK_PRIORITY = LOWEST_USER_HOOK_PRIORITY;
+	// other SINGLE_THREAD_MODE hook priority
+	private static final int RESTORE_CLEAR_INETADDRESS_CACHE_PRIORITY = HIGHEST_USER_HOOK_PRIORITY + 1;
+	private static final int RESTORE_ENVIRONMENT_VARIABLES_PRIORITY = HIGHEST_USER_HOOK_PRIORITY + 1;
+	private static final int RESTORE_SYSTEM_PROPERTIES_PRIORITY = HIGHEST_USER_HOOK_PRIORITY + 1;
 	/* RESET_CRIUSEC_PRIORITY and RESTORE_SECURITY_PROVIDERS_PRIORITY need to
 	 * be higher than any other JVM hook that may require security providers.
 	 */
-	static final int RESET_CRIUSEC_PRIORITY = 100;
-	static final int RESTORE_SECURITY_PROVIDERS_PRIORITY = 100;
+	static final int RESET_CRIUSEC_PRIORITY = HIGHEST_USER_HOOK_PRIORITY + 1;
+	static final int RESTORE_SECURITY_PROVIDERS_PRIORITY = HIGHEST_USER_HOOK_PRIORITY + 1;
 
 	private String imageDir;
 	private boolean leaveRunning;
@@ -487,7 +510,9 @@ public final class CRIUSupport {
 	}
 
 	/**
-	 * User hook that is run after restoring a checkpoint image.
+	 * User hook that is run after restoring a checkpoint image. This is equivalent
+	 * to registerPostRestoreHook(hook, HookMode.SINGLE_THREAD_MODE,
+	 * DEFAULT_SINGLE_THREAD_MODE_HOOK_PRIORITY);
 	 *
 	 * Hooks will be run in single threaded mode, no other application threads
 	 * will be active. Users should avoid synchronization of objects that are not owned
@@ -500,20 +525,53 @@ public final class CRIUSupport {
 	 * @return this
 	 */
 	public CRIUSupport registerPostRestoreHook(Runnable hook) {
-		if (hook != null) {
-			J9InternalCheckpointHookAPI.registerPostRestoreHook(USER_HOOKS_PRIORITY, "User post-restore hook", ()->{ //$NON-NLS-1$
-				try {
-					hook.run();
-				} catch (Throwable t) {
-					throw new JVMRestoreException("Exception thrown when running user post-restore hook", 0, t); //$NON-NLS-1$
-				}
-			});
-		}
-		return this;
+		return registerPostRestoreHook(hook, HookMode.SINGLE_THREAD_MODE, DEFAULT_SINGLE_THREAD_MODE_HOOK_PRIORITY);
 	}
 
 	/**
-	 * User hook that is run before checkpointing the JVM.
+	 * User hook that is run after restoring a checkpoint image.
+	 *
+	 * If SINGLE_THREAD_MODE is requested, no other application threads will be
+	 * active. Users should avoid synchronization of objects that are not owned by
+	 * the thread, terminally blocking operations and launching new threads in the
+	 * hook. If the thread attempts to acquire a lock that it doesn't own, an
+	 * exception will be thrown.
+	 *
+	 * If CONCURRENT_MODE is requested, the hook will be run alongside all other
+	 * active Java threads.
+	 *
+	 * High-priority hooks are run first after restore, and vice-versa for
+	 * low-priority hooks. The priority of the hook is with respect to the other
+	 * hooks run within that mode. CONCURRENT_MODE hooks are implicitly lower
+	 * priority than SINGLE_THREAD_MODE hooks. Ie. the lowest priority
+	 * SINGLE_THREAD_MODE hook is a higher priority than the highest priority
+	 * CONCURRENT_MODE hook. The hooks of the same mode with the same priority are
+	 * run in random order.
+	 *
+	 * @param hook     user hook
+	 * @param mode     the mode in which the hook is run, either CONCURRENT_MODE or
+	 *                 SINGLE_THREAD_MODE
+	 * @param priority the priority of the hook, between LOWEST_USER_HOOK_PRIORITY -
+	 *                 HIGHEST_USER_HOOK_PRIORITY. Throws
+	 *                 UnsupportedOperationException otherwise.
+	 *
+	 * @return this
+	 *
+	 * @throws UnsupportedOperationException if the hook mode is not
+	 *                                       SINGLE_THREAD_MODE or CONCURRENT_MODE
+	 *                                       or the priority is not between
+	 *                                       LOWEST_USER_HOOK_PRIORITY and
+	 *                                       HIGHEST_USER_HOOK_PRIORITY.
+	 */
+	public CRIUSupport registerPostRestoreHook(Runnable hook, HookMode mode, int priority)
+			throws UnsupportedOperationException {
+		return registerCheckpointHookHelper(hook, mode, priority, false);
+	}
+
+	/**
+	 * User hook that is run before checkpointing the JVM. This is equivalent to
+	 * registerPreCheckpointHook(hook, HookMode.SINGLE_THREAD_MODE,
+	 * DEFAULT_SINGLE_THREAD_MODE_HOOK_PRIORITY).
 	 *
 	 * Hooks will be run in single threaded mode, no other application threads
 	 * will be active. Users should avoid synchronization of objects that are not owned
@@ -527,14 +585,86 @@ public final class CRIUSupport {
 	 *
 	 */
 	public CRIUSupport registerPreCheckpointHook(Runnable hook) {
+		return registerPreCheckpointHook(hook, HookMode.SINGLE_THREAD_MODE, DEFAULT_SINGLE_THREAD_MODE_HOOK_PRIORITY);
+	}
+
+	/**
+	 * User hook that is run before checkpointing the JVM.
+	 *
+	 * If SINGLE_THREAD_MODE is requested, no other application threads will be
+	 * active. Users should avoid synchronization of objects that are not owned by
+	 * the thread, terminally blocking operations and launching new threads in the
+	 * hook. If the thread attempts to acquire a lock that it doesn't own, an
+	 * exception will be thrown.
+	 *
+	 * If CONCURRENT_MODE is requested, the hook will be run alongside all other
+	 * active Java threads.
+	 *
+	 * High-priority hooks are run last before checkpoint, and vice-versa for
+	 * low-priority hooks. The priority of the hook is with respect to the other
+	 * hooks run within that mode. CONCURRENT_MODE hooks are implicitly lower
+	 * priority than SINGLE_THREAD_MODEd hooks. Ie. the lowest priority
+	 * SINGLE_THREAD_MODE hook is a higher priority than the highest priority
+	 * CONCURRENT_MODE hook. The hooks of the same mode with the same priority are
+	 * run in random order.
+	 *
+	 * @param hook     user hook
+	 * @param mode     the mode in which the hook is run, either CONCURRENT_MODE or
+	 *                 SINGLE_THREAD_MODE
+	 * @param priority the priority of the hook, between LOWEST_USER_HOOK_PRIORITY -
+	 *                 HIGHEST_USER_HOOK_PRIORITY. Throws
+	 *                 UnsupportedOperationException otherwise.
+	 *
+	 * @return this
+	 *
+	 * @throws UnsupportedOperationException if the hook mode is not
+	 *                                       SINGLE_THREAD_MODE or CONCURRENT_MODE
+	 *                                       or the priority is not between
+	 *                                       LOWEST_USER_HOOK_PRIORITY and
+	 *                                       HIGHEST_USER_HOOK_PRIORITY.
+	 */
+	public CRIUSupport registerPreCheckpointHook(Runnable hook, HookMode mode, int priority)
+			throws UnsupportedOperationException {
+		return registerCheckpointHookHelper(hook, mode, priority, true);
+	}
+
+	private CRIUSupport registerCheckpointHookHelper(Runnable hook, HookMode mode, int priority,
+			boolean isPreCheckpoint) throws UnsupportedOperationException {
 		if (hook != null) {
-			J9InternalCheckpointHookAPI.registerPreCheckpointHook(USER_HOOKS_PRIORITY, "User pre-checkpoint hook", ()->{ //$NON-NLS-1$
-				try {
-					hook.run();
-				} catch (Throwable t) {
-					throw new JVMCheckpointException("Exception thrown when running user pre-checkpoint hook", 0, t); //$NON-NLS-1$
-				}
-			});
+			if ((priority < LOWEST_USER_HOOK_PRIORITY) || (priority > HIGHEST_USER_HOOK_PRIORITY)) {
+				throw new UnsupportedOperationException("The user hook priority must be between " //$NON-NLS-1$
+						+ LOWEST_USER_HOOK_PRIORITY + " and " + HIGHEST_USER_HOOK_PRIORITY + "."); //$NON-NLS-1$ //$NON-NLS-2$
+			}
+			String threadModeMsg;
+			if (HookMode.SINGLE_THREAD_MODE == mode) {
+				threadModeMsg = "single-threaded mode"; //$NON-NLS-1$
+			} else if (HookMode.CONCURRENT_MODE == mode) {
+				threadModeMsg = "concurrent mode"; //$NON-NLS-1$
+			} else {
+				throw new UnsupportedOperationException("The hook mode must be SINGLE_THREAD_MODE or CONCURRENT_MODE."); //$NON-NLS-1$
+			}
+
+			String checkpointMsg = isPreCheckpoint ? "pre-checkpoint " : "post-restore hook "; //$NON-NLS-1$ //$NON-NLS-2$
+			String commMsg = isPreCheckpoint ? "pre-checkpoint " : "post-restore hook " + threadModeMsg + " hook"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+			String hookName = "User " + commMsg; //$NON-NLS-1$
+			String exceptionMsg = "Exception thrown when running user " + commMsg; //$NON-NLS-1$
+			if (isPreCheckpoint) {
+				J9InternalCheckpointHookAPI.registerPreCheckpointHook(mode, priority, hookName, () -> {
+					try {
+						hook.run();
+					} catch (Throwable t) {
+						throw new JVMCheckpointException(exceptionMsg, 0, t);
+					}
+				});
+			} else {
+				J9InternalCheckpointHookAPI.registerPostRestoreHook(mode, priority, hookName, () -> {
+					try {
+						hook.run();
+					} catch (Throwable t) {
+						throw new JVMRestoreException(exceptionMsg, 0, t);
+					}
+				});
+			}
 		}
 		return this;
 	}
@@ -545,7 +675,7 @@ public final class CRIUSupport {
 			return;
 		}
 
-		J9InternalCheckpointHookAPI.registerPostRestoreHook(RESTORE_ENVIRONMENT_VARIABLES_PRIORITY,
+		J9InternalCheckpointHookAPI.registerPostRestoreHook(HookMode.SINGLE_THREAD_MODE, RESTORE_ENVIRONMENT_VARIABLES_PRIORITY,
 				"Restore environment variables via env file: " + envFile, () -> { //$NON-NLS-1$
 					if (!Files.exists(this.envFile)) {
 						throw throwSetEnvException(new IllegalArgumentException(
@@ -681,13 +811,14 @@ public final class CRIUSupport {
 					registerRestoreEnvVariables();
 				}
 
-				J9InternalCheckpointHookAPI.registerPostRestoreHook(RESTORE_CLEAR_INETADDRESS_CACHE_PRIORITY, "Clear InetAddress cache on restore", CRIUSupport::clearInetAddressCache); //$NON-NLS-1$
-				J9InternalCheckpointHookAPI.registerPostRestoreHook(RESTORE_ENVIRONMENT_VARIABLES_PRIORITY, "Restore system properties", CRIUSupport::setRestoreJavaProperties); //$NON-NLS-1$
+				J9InternalCheckpointHookAPI.registerPostRestoreHook(HookMode.SINGLE_THREAD_MODE, RESTORE_CLEAR_INETADDRESS_CACHE_PRIORITY, "Clear InetAddress cache on restore", CRIUSupport::clearInetAddressCache); //$NON-NLS-1$
+				J9InternalCheckpointHookAPI.registerPostRestoreHook(HookMode.SINGLE_THREAD_MODE, RESTORE_ENVIRONMENT_VARIABLES_PRIORITY, "Restore system properties", CRIUSupport::setRestoreJavaProperties); //$NON-NLS-1$
 
 				/* Add security provider hooks. */
 				SecurityProviders.registerResetCRIUState();
 				SecurityProviders.registerRestoreSecurityProviders();
 
+				J9InternalCheckpointHookAPI.runPreCheckpointHooksConcurrentThread();
 				try {
 					checkpointJVMImpl(imageDir, leaveRunning, shellJob, extUnixSupport, logLevel, logFile, fileLocks,
 							workDir, tcpEstablished, autoDedup, trackMemory, unprivileged, optionsFile, envFilePath);
@@ -695,6 +826,7 @@ public final class CRIUSupport {
 					errorMsg = ule.getMessage();
 					throw new InternalError("There is a problem with libj9criu in the JDK"); //$NON-NLS-1$
 				}
+				J9InternalCheckpointHookAPI.runPostRestoreHooksConcurrentThread();
 			} else {
 				throw new UnsupportedOperationException(
 						"Running in non-portable mode (only one checkpoint is allowed), and we have already checkpointed once"); //$NON-NLS-1$
