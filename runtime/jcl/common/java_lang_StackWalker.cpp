@@ -79,7 +79,7 @@ stackFrameFilter(J9VMThread *currentThread, J9StackWalkState *walkState)
 				walkState->userData2 = NULL; /* Iteration will skip hidden frames and stop at the true caller of stackWalkerMethod. */
 			}
 		}
-	} else if (J9_ARE_NO_BITS_SET((UDATA)(walkState->userData1), J9_SHOW_REFLECT_FRAMES | J9_SHOW_HIDDEN_FRAMES)
+	} else if (J9_ARE_NO_BITS_SET((UDATA)walkState->userData1, J9_SHOW_REFLECT_FRAMES | J9_SHOW_HIDDEN_FRAMES)
 			&& VM_VMHelpers::isReflectionMethod(currentThread, walkState->method)
 	) {
 		/* skip reflection/MethodHandleInvoke frames */
@@ -111,7 +111,7 @@ Java_java_lang_StackWalker_walkWrapperImpl(JNIEnv *env, jclass clazz, jint flags
 	 * has been specified, skip hidden method frames.
 	 */
 	if (J9_ARE_NO_BITS_SET(vm->runtimeFlags, J9_RUNTIME_SHOW_HIDDEN_FRAMES)
-	&& J9_ARE_NO_BITS_SET((UDATA)flags, J9_SHOW_HIDDEN_FRAMES)
+			&& J9_ARE_NO_BITS_SET((UDATA)flags, J9_SHOW_HIDDEN_FRAMES)
 	) {
 		walkState->flags |= J9_STACKWALK_SKIP_HIDDEN_FRAMES;
 	}
@@ -119,7 +119,7 @@ Java_java_lang_StackWalker_walkWrapperImpl(JNIEnv *env, jclass clazz, jint flags
 #if JAVA_SPEC_VERSION >= 21
 	J9ObjectMonitorInfo *info = NULL;
 	PORT_ACCESS_FROM_JAVAVM(vm);
-	if (J9_ARE_ALL_BITS_SET((UDATA)flags, J9_GET_MONITORS)) {
+	if (J9_ARE_ANY_BITS_SET((UDATA)flags, J9_GET_MONITORS)) {
 		J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 		IDATA infoLen = vmFuncs->getOwnedObjectMonitors(vmThread, vmThread, NULL, 0);
 		if (infoLen > 0) {
@@ -159,7 +159,7 @@ Java_java_lang_StackWalker_walkWrapperImpl(JNIEnv *env, jclass clazz, jint flags
 		Assert_JCL_notNull(walkImplMID);
 		JCL_CACHE_SET(env, MID_java_lang_StackWalker_walkImpl, walkImplMID);
 	}
-	jobject result = env->CallStaticObjectMethod(clazz, walkImplMID, function, (jlong)(UDATA)walkState);
+	jobject result = env->CallStaticObjectMethod(clazz, walkImplMID, function, (jlong)(IDATA)walkState);
 
 	if (NULL != walkerMethodChars) {
 		env->ReleaseStringUTFChars(stackWalkerMethod, walkerMethodChars);
@@ -241,7 +241,7 @@ Java_java_lang_StackWalker_getImpl(JNIEnv *env, jobject clazz, jlong walkStateP)
 
 	enterVMFromJNI(vmThread);
 
-	if (J9_ARE_NO_BITS_SET((UDATA)(walkState->userData1), J9_FRAME_VALID)) {
+	if (J9_ARE_NO_BITS_SET((UDATA)walkState->userData1, J9_FRAME_VALID)) {
 		/* skip over the current frame */
 		walkState->userData1 = (void *)((UDATA)walkState->userData1 & J9_FRAME_FILTER_MASK);
 		if (J9_STACKWALK_RC_NONE != vm->walkStackFrames(vmThread, walkState)) {
@@ -274,17 +274,27 @@ Java_java_lang_StackWalker_getImpl(JNIEnv *env, jobject clazz, jlong walkStateP)
 				J9VMJAVALANGSTACKWALKERSTACKFRAMEIMPL_SET_DECLARINGCLASS(vmThread, frame, classObject);
 			}
 
-			/* set bytecode index */
-			J9VMJAVALANGSTACKWALKERSTACKFRAMEIMPL_SET_BYTECODEINDEX(vmThread, frame, (U_32)bytecodeOffset);
+#if JAVA_SPEC_VERSION < 22
+			bool const includeMethodInfo = true;
+#else /* JAVA_SPEC_VERSION < 22 */
+			bool const includeMethodInfo = J9_ARE_NO_BITS_SET((UDATA)walkState->userData1, J9_DROP_METHOD_INFO);
 
-			/* Fill in line number - Java wants -2 for natives, -1 for no line number (which will be 0 coming in from the iterator). */
+			J9VMJAVALANGSTACKWALKERSTACKFRAMEIMPL_SET_FLAGS(vmThread, frame, (I_32)(IDATA)walkState->userData1);
+#endif /* JAVA_SPEC_VERSION < 22 */
 
-			if (J9_ARE_ANY_BITS_SET(romMethod->modifiers, J9AccNative)) {
-				lineNumber = -2;
-			} else if (lineNumber == 0) {
-				lineNumber = -1;
+			if (includeMethodInfo) {
+				/* set bytecode index */
+				J9VMJAVALANGSTACKWALKERSTACKFRAMEIMPL_SET_BYTECODEINDEX(vmThread, frame, (U_32)bytecodeOffset);
+
+				/* Fill in line number - Java wants -2 for natives, -1 for no line number (which will be 0 coming in from the iterator). */
+
+				if (J9_ARE_ANY_BITS_SET(romMethod->modifiers, J9AccNative)) {
+					lineNumber = -2;
+				} else if (lineNumber == 0) {
+					lineNumber = -1;
+				}
+				J9VMJAVALANGSTACKWALKERSTACKFRAMEIMPL_SET_LINENUMBER(vmThread, frame, (I_32)lineNumber);
 			}
-			J9VMJAVALANGSTACKWALKERSTACKFRAMEIMPL_SET_LINENUMBER(vmThread, frame, (I_32)lineNumber);
 
 			j9object_t stringObject = J9VMJAVALANGCLASSLOADER_CLASSLOADERNAME(vmThread, classLoader->classLoaderObject);
 			J9VMJAVALANGSTACKWALKERSTACKFRAMEIMPL_SET_CLASSLOADERNAME(vmThread, frame, stringObject);
@@ -300,38 +310,40 @@ Java_java_lang_StackWalker_getImpl(JNIEnv *env, jobject clazz, jlong walkStateP)
 			}
 			J9VMJAVALANGSTACKWALKERSTACKFRAMEIMPL_SET_CLASSNAME(vmThread, PEEK_OBJECT_IN_SPECIAL_FRAME(vmThread, 0), stringObject);
 
-			stringObject = mmFuncs->j9gc_createJavaLangStringWithUTFCache(vmThread, J9ROMMETHOD_NAME(romMethod));
-			if (VM_VMHelpers::exceptionPending(vmThread)) {
-				goto _pop_frame;
-			}
-			J9VMJAVALANGSTACKWALKERSTACKFRAMEIMPL_SET_METHODNAME(vmThread, PEEK_OBJECT_IN_SPECIAL_FRAME(vmThread, 0), stringObject);
-
-			stringObject = mmFuncs->j9gc_createJavaLangStringWithUTFCache(vmThread, J9ROMMETHOD_SIGNATURE(romMethod));
-			if (VM_VMHelpers::exceptionPending(vmThread)) {
-				goto _pop_frame;
-			}
-			J9VMJAVALANGSTACKWALKERSTACKFRAMEIMPL_SET_METHODSIGNATURE(vmThread, PEEK_OBJECT_IN_SPECIAL_FRAME(vmThread, 0), stringObject);
-
-			stringObject = J9VMJAVALANGCLASS_FILENAMESTRING(vmThread, J9VM_J9CLASS_TO_HEAPCLASS(ramClass));
-			if (NULL == stringObject) {
-				J9UTF8 *fileName = getSourceFileNameForROMClass(vm, classLoader, romClass);
-				if (NULL != fileName) {
-					stringObject = mmFuncs->j9gc_createJavaLangString(vmThread, J9UTF8_DATA(fileName), J9UTF8_LENGTH(fileName), J9_STR_TENURE);
-					if (VM_VMHelpers::exceptionPending(vmThread)) {
-						goto _pop_frame;
-					}
-					/* Update the cached fileNameString on the class so subsequent calls will find it */
-					J9VMJAVALANGCLASS_SET_FILENAMESTRING(vmThread, J9VM_J9CLASS_TO_HEAPCLASS(ramClass), stringObject);
+			if (includeMethodInfo) {
+				stringObject = mmFuncs->j9gc_createJavaLangStringWithUTFCache(vmThread, J9ROMMETHOD_NAME(romMethod));
+				if (VM_VMHelpers::exceptionPending(vmThread)) {
+					goto _pop_frame;
 				}
+				J9VMJAVALANGSTACKWALKERSTACKFRAMEIMPL_SET_METHODNAME(vmThread, PEEK_OBJECT_IN_SPECIAL_FRAME(vmThread, 0), stringObject);
+
+				stringObject = mmFuncs->j9gc_createJavaLangStringWithUTFCache(vmThread, J9ROMMETHOD_SIGNATURE(romMethod));
+				if (VM_VMHelpers::exceptionPending(vmThread)) {
+					goto _pop_frame;
+				}
+				J9VMJAVALANGSTACKWALKERSTACKFRAMEIMPL_SET_METHODSIGNATURE(vmThread, PEEK_OBJECT_IN_SPECIAL_FRAME(vmThread, 0), stringObject);
+
+				stringObject = J9VMJAVALANGCLASS_FILENAMESTRING(vmThread, J9VM_J9CLASS_TO_HEAPCLASS(ramClass));
+				if (NULL == stringObject) {
+					J9UTF8 *fileName = getSourceFileNameForROMClass(vm, classLoader, romClass);
+					if (NULL != fileName) {
+						stringObject = mmFuncs->j9gc_createJavaLangString(vmThread, J9UTF8_DATA(fileName), J9UTF8_LENGTH(fileName), J9_STR_TENURE);
+						if (VM_VMHelpers::exceptionPending(vmThread)) {
+							goto _pop_frame;
+						}
+						/* Update the cached fileNameString on the class so subsequent calls will find it. */
+						J9VMJAVALANGCLASS_SET_FILENAMESTRING(vmThread, J9VM_J9CLASS_TO_HEAPCLASS(ramClass), stringObject);
+					}
+				}
+				J9VMJAVALANGSTACKWALKERSTACKFRAMEIMPL_SET_FILENAME(vmThread, PEEK_OBJECT_IN_SPECIAL_FRAME(vmThread, 0), stringObject);
 			}
-			J9VMJAVALANGSTACKWALKERSTACKFRAMEIMPL_SET_FILENAME(vmThread, PEEK_OBJECT_IN_SPECIAL_FRAME(vmThread, 0), stringObject);
 
 			if (J9ROMMETHOD_IS_CALLER_SENSITIVE(romMethod)) {
 				J9VMJAVALANGSTACKWALKERSTACKFRAMEIMPL_SET_CALLERSENSITIVE(vmThread, PEEK_OBJECT_IN_SPECIAL_FRAME(vmThread, 0), TRUE);
 			}
 
 #if JAVA_SPEC_VERSION >= 21
-			if (J9_ARE_ALL_BITS_SET((UDATA)walkState->userData1, J9_GET_MONITORS)) {
+			if (J9_ARE_ANY_BITS_SET((UDATA)walkState->userData1, J9_GET_MONITORS)) {
 				J9ObjectMonitorInfo *monitorInfo = (J9ObjectMonitorInfo *)walkState->userData3;
 				IDATA *monitorCount = (IDATA *)(&walkState->userData4);
 
