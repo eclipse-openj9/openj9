@@ -334,7 +334,10 @@ heapifyStackAllocatedObjects(J9VMThread *currentThread, UDATA safePoint)
 		walkState.objectSlotWalkFunction = addStackAllocatedObjectsIterator;
 		do {
 			if (VM_VMHelpers::threadCanRunJavaCode(walkThread)) {
-				VM_VMAccess::setPublicFlags(walkThread, J9_PUBLIC_FLAGS_HALT_THREAD_HCR);
+				/* Do not mark the current thread */
+				if (walkThread != currentThread) {
+					VM_VMAccess::setPublicFlags(walkThread, J9_PUBLIC_FLAGS_HALT_THREAD_HCR);
+				}
 				walkState.walkThread = walkThread;
 				vm->walkStackFrames(currentThread, &walkState);
 				rc = (jvmtiError)(UDATA)walkState.userData2;
