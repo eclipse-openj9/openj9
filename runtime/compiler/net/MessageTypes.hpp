@@ -92,6 +92,7 @@ enum MessageType : uint16_t
    ResolvedMethod_dynamicConstant,
    ResolvedMethod_definingClassFromCPFieldRef,
    ResolvedMethod_getResolvedImplementorMethods,
+   ResolvedMethod_isFieldNullRestricted,
    ResolvedMethod_isFieldFlattened,
 
    ResolvedRelocatableMethod_createResolvedRelocatableJ9Method,
@@ -220,7 +221,6 @@ enum MessageType : uint16_t
    ClassEnv_iTableRomClass,
    ClassEnv_getITable,
    ClassEnv_enumerateFields,
-   ClassEnv_isClassRefPrimitiveValueType,
    ClassEnv_flattenedArrayElementSize,
    ClassEnv_getDefaultValueSlotAddress,
 

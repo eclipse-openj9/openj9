@@ -1845,6 +1845,16 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, methodInfos, ramMethods, implCount);
          }
          break;
+      case MessageType::ResolvedMethod_isFieldNullRestricted:
+         {
+         auto recv = client->getRecvData<TR_ResolvedJ9Method *, int32_t, bool, bool>();
+         auto mirror = std::get<0>(recv);
+         int32_t cpIndex = std::get<1>(recv);
+         bool isStatic = std::get<2>(recv);
+         bool isStore = std::get<3>(recv);
+         client->write(response, mirror->isFieldNullRestricted(comp, cpIndex, isStatic, isStore));
+         }
+         break;
       case MessageType::ResolvedMethod_isFieldFlattened:
          {
          auto recv = client->getRecvData<TR_ResolvedJ9Method *, int32_t, bool>();
@@ -2058,14 +2068,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          auto clazz = std::get<0>(recv);
          size_t index = std::get<1>(recv);
          client->write(response, TR::Compiler->cls.superClassesOf(clazz)[index]);
-         }
-         break;
-      case MessageType::ClassEnv_isClassRefPrimitiveValueType:
-         {
-         auto recv = client->getRecvData<TR_OpaqueClassBlock *, int32_t>();
-         auto clazz = std::get<0>(recv);
-         auto cpIndex = std::get<1>(recv);
-         client->write(response, TR::Compiler->cls.isClassRefPrimitiveValueType(comp, clazz, cpIndex));
          }
          break;
       case MessageType::ClassEnv_flattenedArrayElementSize:

@@ -470,6 +470,13 @@ protected:
    TR_ResolvedMethod *             aotMaskResolvedPossiblyPrivateVirtualMethod(TR::Compilation *comp, TR_ResolvedMethod *method);
    TR_ResolvedMethod *             aotMaskResolvedImproperInterfaceMethod(TR::Compilation *comp, TR_ResolvedMethod *method);
 
+   /**
+    * @brief Check if a field is a QType or not.
+    *
+    * @param[in] cpIndex : the constant pool index of the field
+    */
+   virtual bool isFieldQType(int32_t cpIndex);
+
 public:
    virtual bool                    virtualMethodIsOverridden();
    virtual void                    setVirtualMethodIsOverridden();
@@ -518,17 +525,21 @@ public:
    virtual void makeParameterList(TR::ResolvedMethodSymbol *methodSym);
 
    /**
-    * @brief Check if a field is a QType or not.
+    * @brief Check if a field has the NullRestricted attribute.
     *
+    * @param[in] comp : The current compilation object
     * @param[in] cpIndex : the constant pool index of the field
+    * @param[in] isStatic: whether the field is static
+    * @param[in] isStore : whether the field is being used in the context of a store into the field
     */
-   virtual bool isFieldQType(int32_t cpIndex);
+   virtual bool isFieldNullRestricted(TR::Compilation *comp, int32_t cpIndex, bool isStatic, bool isStore);
+
    /**
     * @brief Check if a field is flattened or not by calling the VM API.
     *
     * @param[in] comp : The current compilation object
     * @param[in] cpIndex : the constant pool index of the field
-    * @param[in] isStatic : whether the field is static 
+    * @param[in] isStatic : whether the field is static
     */
    virtual bool isFieldFlattened(TR::Compilation *comp, int32_t cpIndex, bool isStatic);
 

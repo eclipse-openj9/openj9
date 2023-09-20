@@ -216,7 +216,7 @@ public:
    virtual void getFaninInfo(uint32_t *count, uint32_t *weight, uint32_t *otherBucketWeight = NULL) override;
    virtual bool getCallerWeight(TR_ResolvedJ9Method *caller, uint32_t *weight, uint32_t pcIndex=~0) override;
    virtual uint16_t archetypeArgPlaceholderSlot() override;
-   virtual bool isFieldQType(int32_t cpIndex) override;
+   virtual bool isFieldNullRestricted(TR::Compilation *comp, int32_t cpIndex, bool isStatic, bool isStore) override;
    virtual bool isFieldFlattened(TR::Compilation *comp, int32_t cpIndex, bool isStatic) override;
    bool isForceInline() const { return _isForceInline; }
    bool isDontInline() const { return _isDontInline; }
@@ -241,6 +241,8 @@ protected:
    virtual TR_FieldAttributesCache &getAttributesCache(bool isStatic, bool unresolvedInCP=false);
    virtual bool validateMethodFieldAttributes(const TR_J9MethodFieldAttributes &attributes, bool isStatic, int32_t cpIndex, bool isStore, bool needAOTValidation);
    virtual bool canCacheFieldAttributes(int32_t cpIndex, const TR_J9MethodFieldAttributes &attributes, bool isStatic);
+
+   virtual bool isFieldQType(int32_t cpIndex) override;
 
 private:
 

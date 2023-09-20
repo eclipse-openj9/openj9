@@ -154,11 +154,24 @@ public class ValhallaAttributeTests {
 		c.newInstance();
 	}
 
+	static public Class<?> testPutFieldNullToNullRestrictedFieldClass = null;
+	static public Class<?> testPutStaticNullToNullRestrictedFieldClass = null;
+	static public Class<?> testWithFieldStoreNullToNullRestrictedFieldClass = null;
+
+	@Test(priority=1)
+	static public void testCreateTestPutFieldNullToNullRestrictedField() throws Throwable {
+		testPutFieldNullToNullRestrictedFieldClass = ValhallaAttributeGenerator.generatePutFieldNullToNullRestrictedField("TestPutFieldNullToNullRestrictedField", "TestPutFieldNullToNullRestrictedFieldField");
+	}
+
 	/* Instance field with NullRestricted attribute cannot be set to null. */
-	@Test(expectedExceptions = java.lang.NullPointerException.class)
+	@Test(priority=2, invocationCount=2, expectedExceptions = java.lang.NullPointerException.class)
 	static public void testPutFieldNullToNullRestrictedField() throws Throwable {
-		Class<?> c = ValhallaAttributeGenerator.generatePutFieldNullToNullRestrictedField("TestPutFieldNullToNullRestrictedField", "TestPutFieldNullToNullRestrictedFieldField");
-		c.newInstance();
+		testPutFieldNullToNullRestrictedFieldClass.newInstance();
+	}
+
+	@Test(priority=1)
+	static public void testCreateTestPutStaticNullToNullRestrictedField() throws Throwable {
+		testPutStaticNullToNullRestrictedFieldClass = ValhallaAttributeGenerator.generatePutStaticNullToNullRestrictedField("TestPutStaticNullToNullRestrictedField", "TestPutStaticNullToNullRestrictedFieldField");
 	}
 
 	/* Static field with NullRestricted attribute cannot be set to null.
@@ -167,13 +180,19 @@ public class ValhallaAttributeTests {
 	 * it should be wrapped in ExceptionInInitializerError.
 	 * Since value fields are implicitly final this will always be the case.
 	 */
-	@Test
+	@Test(priority=2, invocationCount=2)
 	static public void testPutStaticNullToNullRestrictedField() throws Throwable {
 		try {
-			Class<?> c = ValhallaAttributeGenerator.generatePutStaticNullToNullRestrictedField("TestPutStaticNullToNullRestrictedField", "TestPutStaticNullToNullRestrictedFieldField");
-			c.newInstance();
+			testPutStaticNullToNullRestrictedFieldClass.newInstance();
 		} catch(java.lang.ExceptionInInitializerError e) {
 			if (e.getCause() instanceof NullPointerException) {
+				return; /* pass */
+			}
+			throw e;
+		} catch (java.lang.NoClassDefFoundError e) {
+			// In the second invocation, java.lang.NoClassDefFoundError should be thrown
+			// because the initialization of Class has previously failed initialization
+			if (e.getCause() instanceof java.lang.ExceptionInInitializerError) {
 				return; /* pass */
 			}
 			throw e;
@@ -181,9 +200,13 @@ public class ValhallaAttributeTests {
 		Assert.fail("Test expected a NullPointerException wrapped in ExceptionInInitializerError.");
 	}
 
-	@Test(expectedExceptions = java.lang.NullPointerException.class)
+	@Test(priority=1)
+	static public void testCreateTestWithFieldStoreNullToNullRestrictedField() throws Throwable {
+		testWithFieldStoreNullToNullRestrictedFieldClass = ValhallaAttributeGenerator.generateWithFieldStoreNullToNullRestrictedField("TestWithFieldStoreNullToNullRestrictedField", "TestWithFieldStoreNullToNullRestrictedFieldField");
+	}
+
+	@Test(priority=2, invocationCount=2, expectedExceptions = java.lang.NullPointerException.class)
 	static public void testWithFieldStoreNullToNullRestrictedField() throws Throwable {
-		Class<?> c = ValhallaAttributeGenerator.generateWithFieldStoreNullToNullRestrictedField("TestWithFieldStoreNullToNullRestrictedField", "TestWithFieldStoreNullToNullRestrictedFieldField");
-		c.newInstance();
+		testWithFieldStoreNullToNullRestrictedFieldClass.newInstance();
 	}
 }
