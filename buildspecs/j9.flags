@@ -1701,13 +1701,13 @@ Only available on zOS</description>
 		<description>Controls if the VM includes support for java.math.BigInteger natives.</description>
 		<ifRemoved>No java.math.BigInteger natives available.</ifRemoved>
 	</flag>
-	<flag id="opt_criuSupport">
-		<description>Enables support for CRIU Java API's</description>
-		<ifRemoved>No support for CRIU Java API's</ifRemoved>
+	<flag id="opt_cracSupport">
+		<description>Enables support for CRAC Java APIs</description>
+		<ifRemoved>No support for CRAC Java APIs</ifRemoved>
 	</flag>
-	<flag id="opt_openjdkCracSupport">
-		<description>Enables support for OpenJDK CRAC</description>
-		<ifRemoved>No support for OpenJDK CRAC</ifRemoved>
+	<flag id="opt_criuSupport">
+		<description>Enables support for CRIU Java APIs</description>
+		<ifRemoved>No support for CRIU Java APIs</ifRemoved>
 	</flag>
 	<flag id="opt_cuda">
 		<description>Add support for CUDA</description>
