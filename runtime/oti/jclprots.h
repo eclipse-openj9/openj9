@@ -1092,6 +1092,7 @@ jint JNICALL Java_jdk_internal_reflect_ConstantPool_getClassRefIndexAt0(JNIEnv *
 jint JNICALL Java_jdk_internal_reflect_ConstantPool_getNameAndTypeRefIndexAt0(JNIEnv *env, jobject unusedObject, jobject constantPoolOop, jint cpIndex);
 jobject JNICALL Java_jdk_internal_reflect_ConstantPool_getNameAndTypeRefInfoAt0(JNIEnv *env, jobject unusedObject, jobject constantPoolOop, jint cpIndex);
 jbyte JNICALL Java_jdk_internal_reflect_ConstantPool_getTagAt0(JNIEnv *env, jobject unusedObject, jobject constantPoolOop, jint cpIndex);
+void JNICALL Java_jdk_internal_reflect_ConstantPool_registerNatives(JNIEnv *env, jclass unused);
 jint registerJdkInternalReflectConstantPoolNatives(JNIEnv *env);
 
 /* java_lang_Access.c */
