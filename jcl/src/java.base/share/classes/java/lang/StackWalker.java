@@ -336,7 +336,8 @@ public final class StackWalker {
 		/*[IF JAVA_SPEC_VERSION >= 22]*/
 		/**
 		 * A client may use this option to signal that method information is not
-		 * required (OpenJ9 ignores this option collects that information anyway).
+		 * required. UnsupportedOperationException is thrown if an attempt is
+		 * made to access that suppressed information.
 		 */
 		DROP_METHOD_INFO,
 		/*[ENDIF] JAVA_SPEC_VERSION >= 22 */
@@ -448,10 +449,27 @@ public final class StackWalker {
 		/*[IF JAVA_SPEC_VERSION >= 21]*/
 		private Object[] monitors;
 		/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
+		/*[IF JAVA_SPEC_VERSION >= 22]*/
+		private int flags; /* a copy of StackWalker.flags */
+		/*[ENDIF] JAVA_SPEC_VERSION >= 22 */
 		private boolean callerSensitive;
+
+		/*
+		 * Throw UnsupportedOperationException if Option.DROP_METHOD_INFO
+		 * was specified when the StackWalker was created (Java 22+).
+		 */
+		private void ensureMethodInfo() {
+			/*[IF JAVA_SPEC_VERSION >= 22]*/
+			if ((flags & J9_DROP_METHOD_INFO) != 0) {
+				/*[MSG "K0639D","Stack walker configured with DROP_METHOD_INFO"]*/
+				throw new UnsupportedOperationException(com.ibm.oti.util.Msg.getString("K0639D")); //$NON-NLS-1$
+			}
+			/*[ENDIF] JAVA_SPEC_VERSION >= 22 */
+		}
 
 		@Override
 		public int getByteCodeIndex() {
+			ensureMethodInfo();
 			return bytecodeIndex;
 		}
 
@@ -472,26 +490,32 @@ public final class StackWalker {
 
 		@Override
 		public String getFileName() {
+			ensureMethodInfo();
 			return fileName;
 		}
 
 		@Override
 		public int getLineNumber() {
+			ensureMethodInfo();
 			return lineNumber;
 		}
 
 		@Override
 		public String getMethodName() {
+			ensureMethodInfo();
 			return methodName;
 		}
 
 		@Override
 		public boolean isNativeMethod() {
+			ensureMethodInfo();
 			return -2 == lineNumber;
 		}
 
 		@Override
 		public StackTraceElement toStackTraceElement() {
+			ensureMethodInfo();
+
 			String moduleName = null;
 			String moduleVersion = null;
 			if (null != frameModule && frameModule.isNamed()) {
@@ -537,6 +561,7 @@ public final class StackWalker {
 				/*[MSG "K0639","Stack walker not configured with RETAIN_CLASS_REFERENCE"]*/
 				throw new UnsupportedOperationException(com.ibm.oti.util.Msg.getString("K0639")); //$NON-NLS-1$
 			}
+			ensureMethodInfo();
 			return MethodType.fromMethodDescriptorString(methodSignature, declaringClass.internalGetClassLoader());
 		}
 
@@ -547,6 +572,7 @@ public final class StackWalker {
 		 */
 		@Override
 		public String getDescriptor() {
+			ensureMethodInfo();
 			return methodSignature;
 		}
 		/*[ENDIF] JAVA_SPEC_VERSION >= 10 */
