@@ -573,6 +573,8 @@ TR_PPCHWProfiler::processBufferRecords(J9VMThread *vmThread, uint8_t *bufferStar
             }
          break;
          }
+      default:
+         break;
       }
    if (bufferFilledSize >= size)
       _numBuffersCompletelyFilled++;
