@@ -292,7 +292,7 @@ getFieldAt(JNIEnv *env, jobject constantPoolOop, jint cpIndex, UDATA resolveFlag
 	if (NULL != constantPoolOop) {
 		J9RAMConstantRef *ramConstantRef = NULL;
 		jclass jlClass = NULL;
-		
+
 		vmFunctions->internalEnterVMFromJNI(vmThread);
 		resolveFlags |= (J9_RESOLVE_FLAG_NO_THROW_ON_FAIL | J9_RESOLVE_FLAG_NO_CLASS_INIT | J9_RESOLVE_FLAG_NO_CP_UPDATE);
 retry:
@@ -526,7 +526,7 @@ Java_sun_reflect_ConstantPool_getMemberRefInfoAt0(JNIEnv *env, jobject unusedObj
 	jobject nameObject = NULL;
 	jobject signatureObject = NULL;
 	J9VMThread *vmThread = (J9VMThread *) env;
-	J9InternalVMFunctions *vmFunctions = vmThread->javaVM->internalVMFunctions;	
+	J9InternalVMFunctions *vmFunctions = vmThread->javaVM->internalVMFunctions;
 	J9MemoryManagerFunctions *gcFunctions = vmThread->javaVM->memoryManagerFunctions;
 	SunReflectCPResult result = NULL_POINTER_EXCEPTION;
 
@@ -834,6 +834,12 @@ Java_jdk_internal_reflect_ConstantPool_getTagAt0(JNIEnv *env, jobject unusedObje
 	return 0;
 }
 
+void JNICALL
+Java_jdk_internal_reflect_ConstantPool_registerNatives(JNIEnv *env, jclass unused)
+{
+	registerJdkInternalReflectConstantPoolNatives(env);
+}
+
 /**
  * Registers natives for jdk.internal.reflect.ConstantPool.
  *
@@ -842,6 +848,8 @@ Java_jdk_internal_reflect_ConstantPool_getTagAt0(JNIEnv *env, jobject unusedObje
 jint
 registerJdkInternalReflectConstantPoolNatives(JNIEnv *env) {
 	jint result = 0;
+	J9JavaVM *vm = ((J9VMThread *)env)->javaVM;
+
 	JNINativeMethod natives[] = {
 		{
 			(char*)"getSize0",
@@ -918,6 +926,12 @@ registerJdkInternalReflectConstantPoolNatives(JNIEnv *env) {
 
 	/* jdk.internal.reflect.ConstantPool is currently cached in CLS_sun_reflect_ConstantPool */
 	jclass jdk_internal_reflect_ConstantPool = JCL_CACHE_GET(env, CLS_sun_reflect_ConstantPool);
+
+	/* This is temporary code, will be removed in the future. */
+	if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_REFLECT_CONSTANTPOOL_REGISTER_NATIVES_CALLED)) {
+		goto _end;
+	}
+	vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_REFLECT_CONSTANTPOOL_REGISTER_NATIVES_CALLED;
 
 	if (NULL == jdk_internal_reflect_ConstantPool) {
 		BOOLEAN rc = initializeSunReflectConstantPoolIDCache(env);
