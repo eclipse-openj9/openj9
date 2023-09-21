@@ -94,7 +94,7 @@ static UDATA hashEqualObjectTag (void *lhsEntry, void *rhsEntry, void *userData)
 static UDATA findDecompileInfoFrameIterator(J9VMThread *currentThread, J9StackWalkState *walkState);
 static UDATA watchedClassHash (void *entry, void *userData);
 static UDATA watchedClassEqual (void *lhsEntry, void *rhsEntry, void *userData);
-
+static jint getThreadStateHelper(J9VMThread *currentThread, j9object_t threadObject, J9VMThread *vmThread);
 
 jvmtiError
 getVMThread(J9VMThread *currentThread, jthread thread, J9VMThread **vmThreadPtr, jvmtiError vThreadError, UDATA flags)
@@ -699,11 +699,10 @@ javaOffloadSwitchOn(J9VMThread * currentThread, UDATA eventNumber, UDATA javaOff
 #endif /* J9VM_OPT_JAVA_OFFLOAD_SUPPORT */
 
 
-jint
-getThreadState(J9VMThread *currentThread, j9object_t threadObject)
+static jint
+getThreadStateHelper(J9VMThread *currentThread, j9object_t threadObject, J9VMThread *vmThread)
 {
 	jint state = 0;
-	J9VMThread * vmThread = J9VMJAVALANGTHREAD_THREADREF(currentThread, threadObject);
 	UDATA vmstate = getVMThreadObjectStatesAll(vmThread, NULL, NULL, NULL);
 	
 	/* Assumes that the current thread has VM access, and the thread is locked (will not die) */
@@ -781,6 +780,30 @@ getThreadState(J9VMThread *currentThread, j9object_t threadObject)
 	return state;
 }
 
+jint
+getThreadState(J9VMThread *currentThread, j9object_t threadObject)
+{
+	J9VMThread *vmThread = J9VMJAVALANGTHREAD_THREADREF(currentThread, threadObject);
+	jint state = getThreadStateHelper(currentThread, threadObject, vmThread);
+
+#if JAVA_SPEC_VERSION >= 19
+	if (J9_ARE_ANY_BITS_SET(state, JVMTI_THREAD_STATE_RUNNABLE)) {
+		if ((NULL != vmThread->currentContinuation)
+		&& (vmThread->threadObject != vmThread->carrierThreadObject)
+		) {
+			/* If a virtual thread is mounted on a carrier thread, then the carrier thread
+			 * is considered implicitly parked.
+			 */
+			state &= ~JVMTI_THREAD_STATE_RUNNABLE;
+			state |= JVMTI_THREAD_STATE_WAITING_INDEFINITELY;
+			state |= JVMTI_THREAD_STATE_WAITING;
+		}
+	}
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
+	return state;
+}
+
 #if JAVA_SPEC_VERSION >= 19
 jint
 getVirtualThreadState(J9VMThread *currentThread, jthread thread)
@@ -797,7 +820,7 @@ getVirtualThreadState(J9VMThread *currentThread, jthread thread)
 		j9object_t vThreadObject = J9_JNI_UNWRAP_REFERENCE(thread);
 		if (NULL != targetThread) {
 			vm->internalVMFunctions->haltThreadForInspection(currentThread, targetThread);
-			rc = getThreadState(currentThread, targetThread->carrierThreadObject);
+			rc = getThreadStateHelper(currentThread, targetThread->carrierThreadObject, targetThread);
 			vm->internalVMFunctions->resumeThreadForInspection(currentThread, targetThread);
 		} else {
 			jint vThreadState = (jint) J9VMJAVALANGVIRTUALTHREAD_STATE(currentThread, vThreadObject);
