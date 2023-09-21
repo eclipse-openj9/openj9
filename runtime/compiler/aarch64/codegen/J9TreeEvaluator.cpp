@@ -2226,6 +2226,8 @@ J9::ARM64::TreeEvaluator::VMinstanceofEvaluator(TR::Node *node, TR::CodeGenerato
                }
             }
             break;
+         default:
+            break;
          }
 
       switch (current)
@@ -2533,6 +2535,8 @@ J9::ARM64::TreeEvaluator::VMcheckcastEvaluator(TR::Node *node, TR::CodeGenerator
                generateLabelInstruction(cg, TR::InstOpCode::b, node, callHelperLabel);
                }
             }
+            break;
+         default:
             break;
          }
 

@@ -1075,6 +1075,8 @@ int32_t J9::ARM64::PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNode,
       case TR::com_ibm_jit_JITHelpers_dispatchVirtual:
          specialArgReg = getProperties().getVTableIndexArgumentRegister();
          break;
+      default:
+         break;
       }
    if (specialArgReg != TR::RealRegister::NoReg)
       {
