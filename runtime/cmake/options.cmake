@@ -123,7 +123,8 @@ option(J9VM_MODULE_WINDBG "Enables compilation of the windbg module.")
 option(J9VM_MODULE_ZIP "Enables compilation of the zip module.")
 option(J9VM_MODULE_ZLIB "Enables compilation of the zlib module.")
 
-option(J9VM_OPT_CRIU_SUPPORT "Enables support for CRIU Java API's")
+option(J9VM_OPT_CRAC_SUPPORT "Enables support for CRAC Java APIs")
+option(J9VM_OPT_CRIU_SUPPORT "Enables support for CRIU Java APIs")
 
 j9vm_shadowed_option(J9VM_OPT_CUDA "Add support for CUDA")
 
