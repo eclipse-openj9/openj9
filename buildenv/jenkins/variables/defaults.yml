@@ -223,11 +223,6 @@ s390x_linux:
     11: 'linux-s390x-normal-server-release'
   node_labels:
     build: 'ci.role.build && hw.arch.s390x && sw.os.rhel.7'
-  extra_test_labels:
-    11: '!sw.os.rhel.8'
-    17: '!sw.os.rhel.8'
-    21: '!sw.os.rhel.8'
-    next: '!sw.os.rhel.8'
   build_env:
     cmd:
       all: 'source /home/jenkins/set_gcc_11.2.0_env'
