@@ -2006,9 +2006,47 @@ loadFlattenableFieldValueClasses(J9VMThread *currentThread, J9ClassLoader *class
 				*valueTypeFlags |= J9ClassLargestAlignmentConstraintDouble;
 				break;
 			case 'L':
-				*valueTypeFlags |= (J9ClassLargestAlignmentConstraintReference | J9ClassHasReferences);
-				eligibleForFastSubstitutability = false;
+			{
+				if (J9_ARE_ALL_BITS_SET(modifiers, J9FieldFlagIsNullRestricted)) {
+					J9Class *valueClass = internalFindClassUTF8(currentThread, signatureChars + 1, signatureLength - 2, classLoader, classPreloadFlags);
+					if (NULL == valueClass) {
+						result = FALSE;
+						goto done;
+					} else {
+						J9ROMClass *valueROMClass = valueClass->romClass;
+
+						/* A NullRestricted field must be in a value class with an
+						* ImplicitCreation attribute. The attribute must have the ACC_DEFAULT flag set.
+						* Static fields will be checked during class preparation.
+						*/
+						if (J9_ARE_NO_BITS_SET(valueROMClass->modifiers, J9AccValueType)
+							|| J9_ARE_NO_BITS_SET(valueROMClass->optionalFlags, J9_ROMCLASS_OPTINFO_IMPLICITCREATION_ATTRIBUTE)
+							|| J9_ARE_NO_BITS_SET(getImplicitCreationFlags(valueROMClass), J9AccImplicitCreateHasDefaultValue)
+						) {
+							setCurrentExceptionForBadClass(currentThread, J9ROMCLASS_CLASSNAME(romClass), J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR,
+								J9NLS_VM_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS);
+						}
+
+						if (!J9_IS_NULL_RESTRICTED_FIELD_FLATTENED(valueClass, field)) {
+							*valueTypeFlags |= (J9ClassContainsUnflattenedFlattenables | J9ClassHasReferences);
+							eligibleForFastSubstitutability = false;
+						} else if (J9_ARE_NO_BITS_SET(valueClass->classFlags, J9ClassCanSupportFastSubstitutability)) {
+							eligibleForFastSubstitutability = false;
+						}
+
+						J9FlattenedClassCacheEntry *entry = J9_VM_FCC_ENTRY_FROM_FCC(flattenedClassCache, flattenableFieldCount);
+						entry->clazz = valueClass;
+						entry->field = field;
+						entry->offset = UDATA_MAX;
+						flattenableFieldCount += 1;
+					}
+					*valueTypeFlags |= (valueClass->classFlags & (J9ClassLargestAlignmentConstraintDouble | J9ClassLargestAlignmentConstraintReference | J9ClassHasReferences));
+				} else {
+					*valueTypeFlags |= (J9ClassLargestAlignmentConstraintReference | J9ClassHasReferences);
+					eligibleForFastSubstitutability = false;
+				}
 				break;
+			}
 			case 'F':
 				eligibleForFastSubstitutability = false;
 				break;
@@ -2059,7 +2097,7 @@ checkFlattenableFieldValueClasses(J9VMThread *currentThread, J9ClassLoader *clas
 	J9ROMFieldShape *field = romFieldsStartDo(romClass, &fieldWalkState);
 	BOOLEAN result = TRUE;
 
-	/* iterate over fields and load classes of fields marked as QTypes */
+	/* iterate over fields and load classes of fields marked as QTypes or NullRestricted */
 	while (NULL != field) {
 		const U_32 modifiers = field->modifiers;
 		J9UTF8 *signature = J9ROMFIELDSHAPE_SIGNATURE(field);
@@ -2082,20 +2120,6 @@ checkFlattenableFieldValueClasses(J9VMThread *currentThread, J9ClassLoader *clas
 					*badClassOut = valueROMClass;
 					result = FALSE;
 					break;
-				}
-
-				/* A NullRestricted field must be in a value class with an
-				 * ImplicitCreation attribute. The attribute must have the ACC_DEFAULT flag set.
-				 * Static fields will be checked during class preparation.
-				 */
-				if (J9_ARE_ALL_BITS_SET(modifiers, J9FieldFlagIsNullRestricted)) {
-					if (J9_ARE_NO_BITS_SET(valueROMClass->modifiers, J9AccValueType)
-						|| J9_ARE_NO_BITS_SET(valueROMClass->optionalFlags, J9_ROMCLASS_OPTINFO_IMPLICITCREATION_ATTRIBUTE)
-						|| J9_ARE_NO_BITS_SET(getImplicitCreationFlags(valueROMClass), J9AccImplicitCreateHasDefaultValue)
-					) {
-						setCurrentExceptionForBadClass(currentThread, J9ROMCLASS_CLASSNAME(romClass), J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR,
-							J9NLS_VM_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS);
-					}
 				}
 			}
 		}
