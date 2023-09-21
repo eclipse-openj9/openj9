@@ -483,6 +483,9 @@ enum INIT_STAGE {
 #define VMOPT_XXSETHWPREFETCH_OS_DEFAULT "-XXsetHWPrefetch:os-default"
 #define VMOPT_XXSETHWPREFETCH_EQUALS "-XXsetHWPrefetch="
 
+#define VMOPT_XXUSEZLIBNX "-XX:+UseZlibNX"
+#define VMOPT_XXNOUSEZLIBNX "-XX:-UseZlibNX"
+
 #define VMOPT_XXLAZYSYMBOLRESOLUTION "-XX:+LazySymbolResolution"
 #define VMOPT_XXNOLAZYSYMBOLRESOLUTION "-XX:-LazySymbolResolution"
 
