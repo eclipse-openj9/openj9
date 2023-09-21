@@ -591,6 +591,7 @@ if(NOT JAVA_SPEC_VERSION LESS 9)
 		Java_jdk_internal_reflect_ConstantPool_getNameAndTypeRefIndexAt0
 		Java_jdk_internal_reflect_ConstantPool_getNameAndTypeRefInfoAt0
 		Java_jdk_internal_reflect_ConstantPool_getTagAt0
+		Java_jdk_internal_reflect_ConstantPool_registerNatives
 	)
 endif()
 
