@@ -339,6 +339,11 @@ static const struct { \
 #define J9_IS_FIELD_FLATTENED(fieldClazz, romFieldShape) \
 		(J9_IS_J9CLASS_FLATTENED(fieldClazz) && \
 		(J9_ARE_NO_BITS_SET((romFieldShape)->modifiers, J9AccVolatile) || (J9CLASS_UNPADDED_INSTANCE_SIZE(fieldClazz) <= sizeof(U_64))))
+/* This will replace J9_IS_FIELD_FLATTENED when QTypes are removed. J9_IS_J9CLASS_FLATTENED will return false since the current check requires a primitive value type. */
+#define J9_IS_NULL_RESTRICTED_FIELD_FLATTENED(fieldClazz, romFieldShape) \
+		(J9_ARE_ALL_BITS_SET((romFieldShape)->modifiers, J9FieldFlagIsNullRestricted) && \
+		J9_IS_J9CLASS_FLATTENED(fieldClazz) && \
+		(J9_ARE_NO_BITS_SET((romFieldShape)->modifiers, J9AccVolatile) || (J9CLASS_UNPADDED_INSTANCE_SIZE(fieldClazz) <= sizeof(U_64))))
 #define J9_VALUETYPE_FLATTENED_SIZE(clazz) (J9CLASS_HAS_4BYTE_PREPADDING((clazz)) ? ((clazz)->totalInstanceSize - sizeof(U_32)) : (clazz)->totalInstanceSize)
 #define IS_REF_OR_VAL_SIGNATURE(firstChar) ('L' == (firstChar) || 'Q' == (firstChar))
 #define IS_QTYPE(firstChar) ('Q' == (firstChar))
@@ -347,6 +352,7 @@ static const struct { \
 #define J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(clazz) FALSE
 #define J9_IS_J9CLASS_FLATTENED(clazz) FALSE
 #define J9_IS_FIELD_FLATTENED(fieldClazz, romFieldShape) FALSE
+#define J9_IS_NULL_RESTRICTED_FIELD_FLATTENED(fieldClazz, romFieldShape) FALSE
 #define J9_VALUETYPE_FLATTENED_SIZE(clazz)((UDATA) 0) /* It is not possible for this macro to be used since we always check J9_IS_J9CLASS_FLATTENED before ever using it. */
 #define IS_REF_OR_VAL_SIGNATURE(firstChar) ('L' == (firstChar))
 #define IS_QTYPE(firstChar) FALSE
