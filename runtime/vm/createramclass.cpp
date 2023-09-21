@@ -2022,7 +2022,7 @@ loadFlattenableFieldValueClasses(J9VMThread *currentThread, J9ClassLoader *class
 				break;
 			}
 		} else {
-			if ('Q' == signatureChars[0]) {
+			if ('Q' == signatureChars[0] || J9_ARE_ALL_BITS_SET(modifiers, J9FieldFlagIsNullRestricted)) {
 				J9FlattenedClassCacheEntry *entry = J9_VM_FCC_ENTRY_FROM_FCC(flattenedClassCache, flattenableFieldCount);
 				entry->clazz = (J9Class *) J9_VM_FCC_CLASS_FLAGS_STATIC_FIELD;
 				entry->field = field;
@@ -2065,7 +2065,9 @@ checkFlattenableFieldValueClasses(J9VMThread *currentThread, J9ClassLoader *clas
 		J9UTF8 *signature = J9ROMFIELDSHAPE_SIGNATURE(field);
 		U_8 *signatureChars = J9UTF8_DATA(signature);
 		if (J9_ARE_NO_BITS_SET(modifiers, J9AccStatic)) {
-			if ('Q' == signatureChars[0]) {
+			if ('Q' == signatureChars[0]
+				|| J9_ARE_ALL_BITS_SET(modifiers, J9FieldFlagIsNullRestricted)
+			) {
 				J9Class *valueClass = internalFindClassUTF8(currentThread, signatureChars + 1, J9UTF8_LENGTH(signature) - 2, classLoader, J9_FINDCLASS_FLAG_EXISTING_ONLY);
 				Assert_VM_notNull(valueClass);
 				J9ROMClass *valueROMClass = valueClass->romClass;
@@ -2080,6 +2082,20 @@ checkFlattenableFieldValueClasses(J9VMThread *currentThread, J9ClassLoader *clas
 					*badClassOut = valueROMClass;
 					result = FALSE;
 					break;
+				}
+
+				/* A NullRestricted field must be in a value class with an
+				 * ImplicitCreation attribute. The attribute must have the ACC_DEFAULT flag set.
+				 * Static fields will be checked during class preparation.
+				 */
+				if (J9_ARE_ALL_BITS_SET(modifiers, J9FieldFlagIsNullRestricted)) {
+					if (J9_ARE_NO_BITS_SET(valueROMClass->modifiers, J9AccValueType)
+						|| J9_ARE_NO_BITS_SET(valueROMClass->optionalFlags, J9_ROMCLASS_OPTINFO_IMPLICITCREATION_ATTRIBUTE)
+						|| J9_ARE_NO_BITS_SET(getImplicitCreationFlags(valueROMClass), J9AccImplicitCreateHasDefaultValue)
+					) {
+						setCurrentExceptionForBadClass(currentThread, J9ROMCLASS_CLASSNAME(romClass), J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR,
+							J9NLS_VM_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS);
+					}
 				}
 			}
 		}
