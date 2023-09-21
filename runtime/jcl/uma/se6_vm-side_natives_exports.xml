@@ -1,19 +1,19 @@
-<!-- 
+<!--
 	Copyright IBM Corp. and others 2009
-	
+
 	This program and the accompanying materials are made available under
 	the terms of the Eclipse Public License 2.0 which accompanies this
 	distribution and is available at https://www.eclipse.org/legal/epl-2.0/
 	or the Apache License, Version 2.0 which accompanies this distribution and
 	is available at https://www.apache.org/licenses/LICENSE-2.0.
-	
+
 	This Source Code may also be made available under the following
 	Secondary Licenses when the conditions for such availability set
 	forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
 	General Public License, version 2 with the GNU Classpath
 	Exception [1] and GNU General Public License, version 2 with the
 	OpenJDK Assembly Exception [2].
-	
+
 	[1] https://www.gnu.org/software/classpath/license.html
 	[2] https://openjdk.org/legal/assembly-exception.html
 
@@ -39,8 +39,8 @@
 	<export name="Java_com_ibm_jvm_Dump_isToolDump" />
 	<export name="Java_com_ibm_jvm_Log_QueryOptionsImpl" />
 	<export name="Java_com_ibm_jvm_Log_SetOptionsImpl" />
-	
-	
+
+
 	<export name="Java_com_ibm_jvm_Trace_initTraceImpl" />
 	<export name="Java_com_ibm_jvm_Trace_registerApplicationImpl" />
 	<export name="Java_com_ibm_jvm_Trace_traceImpl__II" />
@@ -102,7 +102,7 @@
 	<export name="Java_com_ibm_jvm_Trace_suspendThisImpl" />
 	<export name="Java_com_ibm_jvm_Trace_resumeThisImpl" />
 	<export name="Java_com_ibm_jvm_Trace_getMicros" />
-	
+
 	<export name="Java_openj9_internal_management_ClassLoaderInfoBaseImpl_getLoadedClassCountImpl" />
 	<export name="Java_com_ibm_java_lang_management_internal_ClassLoadingMXBeanImpl_getTotalLoadedClassCountImpl" />
 	<export name="Java_openj9_internal_management_ClassLoaderInfoBaseImpl_getUnloadedClassCountImpl" />
@@ -119,7 +119,7 @@
 	<export name="Java_com_ibm_java_lang_management_internal_GarbageCollectorMXBeanImpl_getTotalCompactsImpl" />
 	<export name="Java_com_ibm_java_lang_management_internal_GarbageCollectorMXBeanImpl_getMemoryUsedImpl" />
 	<export name="Java_com_ibm_lang_management_internal_ExtendedGarbageCollectorMXBeanImpl_getLastGcInfoImpl" />
-	<export name="Java_com_ibm_java_lang_management_internal_MemoryManagerMXBeanImpl_isManagedPoolImpl" />	
+	<export name="Java_com_ibm_java_lang_management_internal_MemoryManagerMXBeanImpl_isManagedPoolImpl" />
 	<export name="Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_createMemoryManagers" />
 	<export name="Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_createMemoryPools" />
 	<export name="Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getGCModeImpl" />
@@ -196,6 +196,7 @@
 	<export name="Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_findDeadlockedThreadsImpl" />
 	<export name="Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_getMultiThreadInfoImpl" />
 	<export name="Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_dumpAllThreadsImpl" />
+	<export name="Java_com_ibm_lang_management_internal_ExtendedThreadMXBeanImpl_getThreadAllocatedBytesImpl" />
 	<export name="Java_openj9_internal_tools_attach_target_DiagnosticUtils_getHeapClassStatisticsImpl" />
 	<export name="Java_openj9_internal_tools_attach_target_DiagnosticUtils_triggerDumpsImpl" />
 	<export name="Java_openj9_management_internal_IDCacheInitializer_initIDCache" />
@@ -304,7 +305,7 @@
 
 	<export name="Java_com_ibm_virtualization_management_internal_HypervisorMXBeanImpl_isEnvironmentVirtualImpl"/>
 	<export name="Java_com_ibm_virtualization_management_internal_HypervisorMXBeanImpl_getVendorImpl"/>
-	
+
 	<export name="Java_sun_reflect_ConstantPool_getSize0" />
 	<export name="Java_sun_reflect_ConstantPool_getClassAt0" />
 	<export name="Java_sun_reflect_ConstantPool_getClassAtIfLoaded0" />
@@ -322,8 +323,8 @@
 
 	<export name="Java_com_ibm_virtualization_management_internal_GuestOS_retrieveProcessorUsageImpl"/>
 	<export name="Java_com_ibm_virtualization_management_internal_GuestOS_retrieveMemoryUsageImpl"/>
-	
+
 	<export name="Java_com_ibm_jvm_Stats_getStats" />
 	<export name="Java_openj9_internal_tools_attach_target_DiagnosticUtils_dumpAllThreadsImpl" />
-	
+
 </exports>
