@@ -46,6 +46,7 @@ private:
 #if defined(J9VM_GC_VLHGC)
 	uintptr_t _objectCount; /**< the number of objects in the list */
 #endif /* defined(J9VM_GC_VLHGC) */
+	MM_LightweightNonReentrantLock _lock;
 protected:
 public:
 
@@ -65,6 +66,7 @@ public:
 	 */
 	static MM_ContinuationObjectList *newInstanceArray(MM_EnvironmentBase *env, uintptr_t arrayElementsTotal, MM_ContinuationObjectList *listsToCopy, uintptr_t arrayElementsToCopy);
 	bool initialize(MM_EnvironmentBase *env);
+	void tearDown(MM_EnvironmentBase *env);
 
 	/**
 	 * Add the specified linked list of objects to the buffer.
@@ -78,6 +80,7 @@ public:
 	 */
 	void addAll(MM_EnvironmentBase* env, j9object_t head, j9object_t tail);
 
+	void remove(MM_EnvironmentBase* env, j9object_t object);
 	/**
 	 * Fetch the head of the linked list, as it appeared at the beginning of Continuation object processing.
 	 * @return the head object, or NULL if the list is empty
@@ -159,6 +162,11 @@ public:
 	MMINLINE void incrementObjectCount(uintptr_t count)
 	{
 		MM_AtomicOperations::add((volatile uintptr_t *)&_objectCount, count);
+	}
+
+	MMINLINE void decrementObjectCount(uintptr_t count)
+	{
+		MM_AtomicOperations::subtract((volatile uintptr_t *)&_objectCount, count);
 	}
 #endif /* defined(J9VM_GC_VLHGC) */
 

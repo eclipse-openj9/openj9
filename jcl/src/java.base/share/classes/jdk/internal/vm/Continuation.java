@@ -55,7 +55,7 @@ public class Continuation {
 	 * the state should not be directly accessed from Java, instead using get methods(such as isDone()).
 	 */
 	private volatile long state;
-
+	private int idxSublist;
 	private static JavaLangAccess JLA = SharedSecrets.getJavaLangAccess();
 
 	private volatile boolean isAccessible = true;

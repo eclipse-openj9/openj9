@@ -84,12 +84,14 @@ MM_ContinuationObjectBufferVLHGC::addForOnlyCompactedRegion(MM_EnvironmentBase* 
 	Assert_MM_true(object != _head);
 	Assert_MM_true(object != _tail);
 
+	_extensions->accessBarrier->setContinuationLinkPrevious(object, NULL);
 	if ( (_objectCount < _maxObjectCount) && _region->isAddressInRegion(object) ) {
 		/* object is permitted in this buffer */
 		Assert_MM_true(NULL != _head);
 		Assert_MM_true(NULL != _tail);
 
 		_extensions->accessBarrier->setContinuationLink(object, _head);
+		_extensions->accessBarrier->setContinuationLinkPrevious(_head, object);
 		_head = object;
 		_objectCount += 1;
 	} else {
@@ -141,4 +143,14 @@ MM_ContinuationObjectBufferVLHGC::iterateAllContinuationObjects(MM_EnvironmentBa
 		}
 	}
 #endif /* JAVA_SPEC_VERSION >= 19 */
+}
+
+void
+MM_ContinuationObjectBufferVLHGC::remove(MM_EnvironmentBase *env, j9object_t object)
+{
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
+	MM_HeapRegionManager *regionManager = extensions->getHeap()->getHeapRegionManager();
+	MM_HeapRegionDescriptorVLHGC *region = (MM_HeapRegionDescriptorVLHGC*)regionManager->regionDescriptorForAddress(object);
+	region->getContinuationObjectList()->remove(env, object);
+	region->getContinuationObjectList()->decrementObjectCount(1);
 }

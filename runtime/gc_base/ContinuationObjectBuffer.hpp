@@ -76,7 +76,6 @@ public:
 	 * @param object[in] the object to add
 	 */
 	void add(MM_EnvironmentBase *env, j9object_t object);
-
 	/**
 	 * Flush the contents of the buffer to the appropriate global buffers.
 	 * @param env[in] the current thread
@@ -106,5 +105,6 @@ public:
 		return false;
 	}
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+	virtual void remove(MM_EnvironmentBase *env, j9object_t object) = 0;
 };
 #endif /* CONTINUATIONOBJECTBUFFER_HPP_ */
