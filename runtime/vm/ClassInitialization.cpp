@@ -33,6 +33,7 @@
 #include "VMHelpers.hpp"
 #include "AtomicSupport.hpp"
 #include "ObjectMonitor.hpp"
+#include "util_api.h"
 
 extern "C" {
 
@@ -600,6 +601,22 @@ doVerify:
 						bool isStatic = J9_VM_FCC_ENTRY_IS_STATIC_FIELD(entry);
 
 						if (isStatic) {
+							U_32 fieldModifiers = entry->field->modifiers;
+							if (J9_ARE_ALL_BITS_SET(fieldModifiers, J9FieldFlagIsNullRestricted)) {
+								J9ROMClass *entryRomClass = entryClazz->romClass;
+								/* A NullRestricted field must be in a value class with an
+								* ImplicitCreation attribute. The attribute must have the ACC_DEFAULT flag set.
+								*/
+								if (J9_ARE_NO_BITS_SET(entryRomClass->modifiers, J9AccValueType)
+									|| J9_ARE_NO_BITS_SET(entryRomClass->optionalFlags, J9_ROMCLASS_OPTINFO_IMPLICITCREATION_ATTRIBUTE)
+									|| J9_ARE_NO_BITS_SET(getImplicitCreationFlags(entryRomClass), J9AccImplicitCreateHasDefaultValue)
+								) {
+									J9UTF8 *romClassName = J9ROMCLASS_CLASSNAME(entryRomClass);
+									setCurrentExceptionNLSWithArgs(currentThread, J9NLS_VM_STATIC_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, J9UTF8_LENGTH(romClassName), J9UTF8_DATA(romClassName));
+									goto done;
+								}
+							}
+
 							initializationLock = enterInitializationLock(currentThread, initializationLock);
 							if (J9_OBJECT_MONITOR_ENTER_FAILED(initializationLock)) {
 								goto done;

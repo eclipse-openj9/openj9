@@ -101,8 +101,6 @@
  * See map in ROMClassBuilder::computeExtraModifiers for
  * available slots.
  */
-#define J9AccImplicitCreateHasDefaultValue 0x10
-#define J9AccImplicitCreateNonAtomic 0x20
 #define J9AccClassIsValueBased 0x40
 #define J9AccClassHiddenOptionNestmate 0x80
 #define J9AccClassHiddenOptionStrong 0x100
@@ -166,5 +164,9 @@
 #else /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 #define J9StaticFieldRefFlagBits 0x3F
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+
+/* ImplicitCreation attribute flags */
+#define J9AccImplicitCreateHasDefaultValue 0x1
+#define J9AccImplicitCreateNonAtomic 0x2
 
 #endif /*J9JAVAACCESSFLAGS_H */

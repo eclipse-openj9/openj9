@@ -42,36 +42,36 @@ public class ValhallaAttributeGenerator extends ClassLoader {
 
 	public static Class<?> generateClassWithTwoImplicitCreationAttributes(String name) throws Throwable {
 		byte[] bytes = generateClass(name, ACC_FINAL + ValhallaUtils.ACC_VALUE_TYPE,
-			new Attribute[] {new ImplicitCreationAttribute(0), new ImplicitCreationAttribute(0)});
+			new Attribute[] {new ImplicitCreationAttribute(), new ImplicitCreationAttribute()});
 		return generator.defineClass(name, bytes, 0, bytes.length);
 	}
 
 	public static Class<?> generateNonValueTypeClassWithImplicitCreationAttribute(String name) throws Throwable {
-		byte[] bytes = generateClass(name, ValhallaUtils.ACC_IDENTITY, new Attribute[] {new ImplicitCreationAttribute(0)});
+		byte[] bytes = generateClass(name, ValhallaUtils.ACC_IDENTITY, new Attribute[] {new ImplicitCreationAttribute()});
 		return generator.defineClass(name, bytes, 0, bytes.length);
 	}
 
 	public static Class<?> generateValidClassWithImplicitCreationAttribute(String name) throws Throwable {
 		byte[] bytes = generateClass(name, ACC_FINAL + ValhallaUtils.ACC_VALUE_TYPE,
-			new Attribute[] {new ImplicitCreationAttribute(0)});
+			new Attribute[] {new ImplicitCreationAttribute()});
 		return generator.defineClass(name, bytes, 0, bytes.length);
 	}
 
 	public static Class<?> generateFieldWithMultipleNullRestrictedAttributes(String className, String fieldClassName) throws Throwable {
 		/* Generate field class - value class with ImplicitCreation attribute and ACC_DEFAULT flag set  */
 		byte[] fieldClassBytes = generateClass(fieldClassName, ACC_FINAL + ValhallaUtils.ACC_VALUE_TYPE,
-			new Attribute[] {new ImplicitCreationAttribute(ValhallaUtils.ACC_DEFAULT)});
+			new Attribute[] {new ImplicitCreationAttribute()});
 		Class<?> fieldClass = generator.defineClass(fieldClassName, fieldClassBytes, 0, fieldClassBytes.length);
 
 		/* Generate class with field and multiple NullRestricted attributes */
-		byte[] classBytes = generateClassWithField(className, ValhallaUtils.ACC_IDENTITY,
+		byte[] classBytes = generateIdentityClassWithField(className, 0,
 			"field", fieldClass.descriptorString(), new Attribute[]{new NullRestrictedAttribute(), new NullRestrictedAttribute()});
 		return generator.defineClass(className, classBytes, 0, classBytes.length);
 	}
 
 	public static Class<?> generateNullRestrictedAttributeInPrimitiveField(String className) throws Throwable {
 		/* Generate class with primitive field and a NullRestricted attribute */
-		byte[] classBytes = generateClassWithField(className, ValhallaUtils.ACC_IDENTITY,
+		byte[] classBytes = generateIdentityClassWithField(className, 0,
 			"field", "I", new Attribute[]{new NullRestrictedAttribute()});
 		return generator.defineClass(className, classBytes, 0, classBytes.length);
 	}
@@ -79,11 +79,11 @@ public class ValhallaAttributeGenerator extends ClassLoader {
 	public static Class<?> generateNullRestrictedAttributeInArrayField(String className, String fieldClassName) throws Throwable {
 		/* Generate field class - value class with ImplicitCreation attribute and ACC_DEFAULT flag set.  */
 		byte[] fieldClassBytes = generateClass(fieldClassName, ACC_FINAL + ValhallaUtils.ACC_VALUE_TYPE,
-			new Attribute[] {new ImplicitCreationAttribute(ValhallaUtils.ACC_DEFAULT)});
+			new Attribute[] {new ImplicitCreationAttribute()});
 		Class<?> fieldClass = generator.defineClass(fieldClassName, fieldClassBytes, 0, fieldClassBytes.length);
 
 		/* Generate class field field that is an array with a NullRestricted attribute */
-		byte[] classBytes = generateClassWithField(className, ValhallaUtils.ACC_IDENTITY,
+		byte[] classBytes = generateIdentityClassWithField(className, 0,
 			"field", "[" + fieldClass.descriptorString(), new Attribute[]{new NullRestrictedAttribute()});
 		return generator.defineClass(className, classBytes, 0, classBytes.length);
 	}
@@ -93,7 +93,7 @@ public class ValhallaAttributeGenerator extends ClassLoader {
 
 		/* Generate field class - value class with ImplicitCreation attribute and ACC_DEFAULT flag set.  */
 		byte[] fieldClassBytes = generateClass(fieldClassName, ACC_PUBLIC + ACC_FINAL + ValhallaUtils.ACC_VALUE_TYPE,
-			new Attribute[] {new ImplicitCreationAttribute(ValhallaUtils.ACC_DEFAULT)});
+			new Attribute[] {new ImplicitCreationAttribute()});
 		Class<?> fieldClass = generator.defineClass(fieldClassName, fieldClassBytes, 0, fieldClassBytes.length);
 
 		ClassWriter classWriter = new ClassWriter(0);
@@ -131,7 +131,7 @@ public class ValhallaAttributeGenerator extends ClassLoader {
 
 		/* Generate field class - value class with ImplicitCreation attribute and ACC_DEFAULT flag set.  */
 		byte[] fieldClassBytes = generateClass(fieldClassName, ACC_PUBLIC + ACC_FINAL + ValhallaUtils.ACC_VALUE_TYPE,
-			new Attribute[] {new ImplicitCreationAttribute(ValhallaUtils.ACC_DEFAULT)});
+			new Attribute[] {new ImplicitCreationAttribute()});
 		Class<?> fieldClass = generator.defineClass(fieldClassName, fieldClassBytes, 0, fieldClassBytes.length);
 
 		ClassWriter classWriter = new ClassWriter(0);
@@ -155,6 +155,40 @@ public class ValhallaAttributeGenerator extends ClassLoader {
 
 		classWriter.visitEnd();
 		byte[] classBytes = classWriter.toByteArray();
+		return generator.defineClass(className, classBytes, 0, classBytes.length);
+	}
+
+	public static Class<?> generateNullRestrictedAttributeInIdentityClass(boolean isStatic, String className, String fieldClassName) throws Throwable {
+		/* Generate field class - identity class */
+		byte[] fieldClassBytes = generateClass(fieldClassName, ValhallaUtils.ACC_IDENTITY, null);
+		Class<?> fieldClass = generator.defineClass(fieldClassName, fieldClassBytes, 0, fieldClassBytes.length);
+
+		/* Generate class with field that is an identity class with a NullRestricted attribute */
+		byte[] classBytes = generateIdentityClassWithField(className, isStatic ? ACC_STATIC : 0,
+			"field", fieldClass.descriptorString(), new Attribute[]{new NullRestrictedAttribute()});
+		return generator.defineClass(className, classBytes, 0, classBytes.length);
+	}
+
+	public static Class<?> generateNullRestrictedAttributeInValueClassWithoutIC(boolean isStatic, String className, String fieldClassName) throws Throwable {
+		/* Generate field class - value class with no attributes */
+		byte[] fieldClassBytes = generateClass(fieldClassName, ACC_FINAL + ValhallaUtils.ACC_VALUE_TYPE, null);
+		Class<?> fieldClass = generator.defineClass(fieldClassName, fieldClassBytes, 0, fieldClassBytes.length);
+
+		/* Generate class with field that has a NullRestricted attribute */
+		byte[] classBytes = generateIdentityClassWithField(className, isStatic ? ACC_STATIC : 0,
+			"field", fieldClass.descriptorString(), new Attribute[]{new NullRestrictedAttribute()});
+		return generator.defineClass(className, classBytes, 0, classBytes.length);
+	}
+
+	public static Class<?> generateNullRestrictedFieldWhereICHasNoDefaultFlag(boolean isStatic, String className, String fieldClassName) throws Throwable {
+		/* Generate field class - value type with ImplicitCreation attribute, no flags */
+		byte[] fieldClassBytes = generateClass(fieldClassName, ACC_FINAL + ValhallaUtils.ACC_VALUE_TYPE,
+			new Attribute[] {new ImplicitCreationAttribute(0)});
+		Class<?> fieldClass = generator.defineClass(fieldClassName, fieldClassBytes, 0, fieldClassBytes.length);
+
+		/* Generate class with field with NullRestricted attribute */
+		byte[] classBytes = generateIdentityClassWithField(className, isStatic ? ACC_STATIC : 0,
+			"field", fieldClass.descriptorString(), new Attribute[]{new NullRestrictedAttribute()});
 		return generator.defineClass(className, classBytes, 0, classBytes.length);
 	}
 
@@ -212,16 +246,25 @@ public class ValhallaAttributeGenerator extends ClassLoader {
 		return classWriter.toByteArray();
 	}
 
-	public static byte[] generateClassWithField(String name, int classFlags, String fieldName, String fieldDescriptor, Attribute[] fieldAttributes) {
+	public static byte[] generateIdentityClassWithField(String name, int fieldFlags, String fieldName, String fieldDescriptor, Attribute[] fieldAttributes) {
 		ClassWriter classWriter = new ClassWriter(0);
-		classWriter.visit(ValhallaUtils.CLASS_FILE_MAJOR_VERSION, classFlags, name, null, "java/lang/Object", null);
+		classWriter.visit(ValhallaUtils.CLASS_FILE_MAJOR_VERSION, ValhallaUtils.ACC_IDENTITY, name, null, "java/lang/Object", null);
 
-		FieldVisitor fieldVisitor = classWriter.visitField(0, fieldName, fieldDescriptor, null, null);
+		FieldVisitor fieldVisitor = classWriter.visitField(fieldFlags, fieldName, fieldDescriptor, null, null);
 		if (null != fieldAttributes) {
 			for (Attribute attr : fieldAttributes) {
 				fieldVisitor.visitAttribute(attr);
 			}
 		}
+
+		/* <init> */
+		MethodVisitor mvInit = classWriter.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
+		mvInit.visitCode();
+		mvInit.visitVarInsn(ALOAD, 0);
+		mvInit.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V");
+		mvInit.visitInsn(RETURN);
+		mvInit.visitMaxs(1, 1);
+		mvInit.visitEnd();
 
 		classWriter.visitEnd();
 		return classWriter.toByteArray();
@@ -263,6 +306,12 @@ public class ValhallaAttributeGenerator extends ClassLoader {
 
 	final static class ImplicitCreationAttribute extends Attribute {
 		private final int flags;
+
+		public ImplicitCreationAttribute() {
+			super("ImplicitCreation");
+			/* this is the default flag generated by the compiler for the implicit modifier. */
+			this.flags = ValhallaUtils.ACC_DEFAULT;
+		}
 
 		public ImplicitCreationAttribute(int flags) {
 			super("ImplicitCreation");
