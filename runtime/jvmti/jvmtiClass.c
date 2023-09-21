@@ -1208,7 +1208,11 @@ redefineClassesCommon(jvmtiEnv* env,
 	 * We can update the VM data structures without any inconsistencies being observed by
 	 * concurrently running compilations. Afterward, resuming compilations will be interrupted
 	 * if necessary before they can observe an inconsistency.
+	 *
+	 * NOTE: The logic below can cause GC to run, and GC could decide to unload classes.
+	 * To avoid deadlock, prevent GC from redundantly entering the class unload mutex.
 	 */
+	vm->isClassUnloadMutexHeldForRedefinition = TRUE;
 
 	if (J9_ARE_ANY_BITS_SET(vm->runtimeFlags, J9_RUNTIME_DYNAMIC_HEAPIFICATION)) {
 		/* Look for stack-allocated objects only if the JIT is enabled and not running in FSD mode */
@@ -1371,6 +1375,8 @@ failedWithVMAccess:
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 	hashTableFree(classPairs);
+
+	vm->isClassUnloadMutexHeldForRedefinition = FALSE;
 
 #if defined(J9VM_JIT_CLASS_UNLOAD_RWMONITOR)
 	omrthread_rwmutex_exit_write(vm->classUnloadMutex);

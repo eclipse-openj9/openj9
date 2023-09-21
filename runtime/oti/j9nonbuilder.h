@@ -5773,6 +5773,16 @@ typedef struct J9JavaVM {
 #else
 	omrthread_monitor_t classUnloadMutex;
 #endif
+	/* When GC runs as part of class redefinition, it could unload classes and
+	 * therefore try to acquire the class unload mutex, which is already held
+	 * to prevent JIT compilation from running concurrently with redefinition.
+	 * Such an acquisition attempt could deadlock if it occurs on a different
+	 * thread, even though the acquisition would be morally recursive.
+	 *
+	 * isClassUnloadMutexHeldForRedefinition allows GC to detect this situation
+	 * and skip acquiring the mutex.
+	 */
+	BOOLEAN isClassUnloadMutexHeldForRedefinition;
 	UDATA java2J9ThreadPriorityMap[11];
 	UDATA j9Thread2JavaPriorityMap[12];
 	UDATA priorityAsyncEventDispatch;
