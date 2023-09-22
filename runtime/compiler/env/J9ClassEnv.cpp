@@ -597,9 +597,10 @@ static void addEntryForFieldImpl(TR_VMField *field, TR::TypeLayoutBuilder &tlb, 
 
       char *fieldName = mergeFieldNames(prefix, prefixLength, field->shape, region, mergedLength);
       int32_t offset = offsetBase + field->offset + TR::Compiler->om.objectHeaderSizeInBytes();
-      bool isVolatile = (field->modifiers & J9AccVolatile) ? true : false;
-      bool isPrivate = (field->modifiers & J9AccPrivate) ? true : false;
-      bool isFinal = (field->modifiers & J9AccFinal) ? true : false;
+      bool isVolatile = J9_ARE_ALL_BITS_SET(field->modifiers, J9AccVolatile);
+      bool isPrivate = J9_ARE_ALL_BITS_SET(field->modifiers, J9AccPrivate);
+      bool isFinal = J9_ARE_ALL_BITS_SET(field->modifiers, J9AccFinal);
+      bool isFieldNullRestricted = J9_ARE_ALL_BITS_SET(field->modifiers, J9FieldFlagIsNullRestricted);
 
       int sigLen = strlen(signature);
       char *fieldSignature = new (region) char[sigLen+1];
@@ -608,7 +609,7 @@ static void addEntryForFieldImpl(TR_VMField *field, TR::TypeLayoutBuilder &tlb, 
 
       if (trace)
          traceMsg(comp, "type layout definingClass %p field: %s signature: %s field offset: %d offsetBase %d\n", definingClass, fieldName, fieldSignature, field->offset, offsetBase);
-      tlb.add(TR::TypeLayoutEntry(dataType, offset, fieldName, isVolatile, isPrivate, isFinal, fieldSignature));
+      tlb.add(TR::TypeLayoutEntry(dataType, offset, fieldName, isVolatile, isPrivate, isFinal, isFieldNullRestricted, fieldSignature));
       }
    }
 
