@@ -1334,7 +1334,7 @@ JVM_ConstantPoolGetNameAndTypeRefIndexAt(JNIEnv *env, jobject arg1, jobject arg2
 
 jint JNICALL
 #if JAVA_SPEC_VERSION >= 22
-JVM_MoreStackWalk(JNIEnv *env, jobject arg1, jint arg2, jlong arg3, jint arg4, jint arg5, jobjectArray arg6, jobjectArray arg7)
+JVM_MoreStackWalk(JNIEnv *env, jobject arg1, jint arg2, jlong arg3, jint arg4, jint arg5, jint arg6, jobjectArray arg7, jobjectArray arg8)
 #else /* JAVA_SPEC_VERSION >= 22 */
 JVM_MoreStackWalk(JNIEnv *env, jobject arg1, jlong arg2, jlong arg3, jint arg4, jint arg5, jobjectArray arg6, jobjectArray arg7)
 #endif /* JAVA_SPEC_VERSION >= 22 */
