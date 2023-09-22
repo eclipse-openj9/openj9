@@ -119,6 +119,9 @@
 	.set	J9TR_ICSnippet_SecondTarget,	64
 	.set	J9TR_ICSnippet_J2IThunk,	72
 
+	.set	J9TR_ICCodeCacheRA_Sub,		-12
+	.set	J9TR_ICCodeCacheRA_BCond,	-24
+
 // Unresolved virtual call snippet
 
 	.set	J9TR_UVCSnippet_codeCacheReturnAddress,	0
@@ -1033,10 +1036,36 @@ L_tryToCompleteSlot2:
 	ldr	x3, [x1, J9TR_J9Class_classLoader]
 	ldr	x4, [x2, J9TR_J9Class_classLoader]
 	cmp	x3, x4						// Same classLoader?
-	beq	L_commonJitDispatch
+	beq	L_patchBranchInstIfLastITableCacheIsUsed	// Skip pic registration
 	mov	x6, #J9TR_ICSnippet_SecondClass			// slot2 class offset
 	bl	L_picRegistration
+
+L_patchBranchInstIfLastITableCacheIsUsed:
+	ldr	w1, [x10, J9TR_ICCodeCacheRA_Sub]		// Load instruction at 12 bytes before code cache RA
+	ldr	w2, const_InstructionLastITableCache
+	cmp	w1, w2
+	bne	L_commonJitDispatch				// If lastITableCache check is not generated, goto L_commonJitDispatch
+	ldr	w1, [x10, J9TR_ICCodeCacheRA_BCond]		// Load instruction at 24 bytes before code cache RA
+	lsr	w2, w1, #24
+	cmp	w2, 0x54					// Test if the bit 24-31 is 0x54 (b.cond)
+	and	w2, w1, #0x1f
+	ccmp	w2, #0xe, #1, eq				// Test if condition code is AL and bit 4 is 0
+	bne	L_commonJitDispatch
+
+	bfxil	w1, wzr, #0, #4					// Clear condition code
+	orr	w1, w1, #1					// Set condition code to NE
+	START_MODIFYING_CODE
+	str	w1, [x10, J9TR_ICCodeCacheRA_BCond]		// Update b.al to b.ne
+	FINISH_MODIFYING_CODE
+	mov	x8, x0						// Preserve x0 (vtable offset) in x8
+	add	x0, x10, #J9TR_ICCodeCacheRA_BCond		// Address of B.cond instruction
+	mov	x1, #4						// 1 instruction to flush
+	bl	flushICache
+	mov	x0, x8
 	b	L_commonJitDispatch
+
+const_InstructionLastITableCache:
+	sub x9, x9, x11						// The instruction to be compared
 
 L_exitTryToCompleteSlot2:
 	FINISH_MODIFYING_CODE

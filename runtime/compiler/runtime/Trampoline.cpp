@@ -1006,59 +1006,110 @@ static bool isInterfaceCallSite(uint8_t *callSite, intptr_t& addrOfFirstClassSlo
    {
    /*
     *  Following instruction sequence is used for interface call.
-    *  We can assume tmpReg is x9.
+    *  We can assume tmpReg is x10.
     *  Searching for the last 4 instructions
     *
-    *  ldrx tmpReg, L_firstClassCacheSlot
-    *  cmpx vftReg, tmpReg
-    *  ldrx tmpReg, L_firstBranchAddressCacheSlot
-    *  beq  hitLabel
-    *  ldrx tmpReg, L_secondClassCacheSlot
-    *  cmpx vftReg, tmpReg
-    *  bne  snippetLabel
-    *  ldrx tmpReg, L_secondBranchAddressCacheSlot
-    * hitLabel:
-    *  blr  tmpReg
-    * doneLabel:
+    *  If the instruction before `blr tmpReg` is `ldr tmpReg, label`,
+    *  then the lastITable cache is not used.
+    *  In that case, we expect the below instructions before the call site.
+    *  We obtain the address of the secondBranchAddressCacheSlot from `ldrx` instruction.
+    *
+    *      cmpx vftReg, tmpReg
+    *      bne  snippetLabel
+    *      ldrx tmpReg, L_secondBranchAddressCacheSlot
+    *     hitLabel:
+    *      blr  tmpReg
+    *     doneLabel:
+    *
+    *  If the instruction before `blr tmpReg` is `ldr tmpReg, [vftReg, x9]`,
+    *  then the lastITable cache is used.
+    *  In that case, we expect the below instructions before the call site.
+    *  We get the address of the interface call snippet from `bal snippetLabel` instruction.
+    *
+    *      bal  snippetLabel                           ; probably already patched to bne
+    *      mov  w9, sizeof(J9Class)
+    *      ldr  tmp2Reg, [tmpReg, iTableOffset]        ; load vTableOffset
+    *      sub  x9, x9, tmp2Reg                        ; icallVMprJavaSendPatchupVirtual expects x9 to hold vTable index
+    *      ldr  tmpReg, [vftReg, x9]
+    *     hitLabel:
+    *      blr  tmpReg
+    *     doneLabel:
     */
 
    int32_t blrInstr = *reinterpret_cast<int32_t *>(callSite);
-   /* Check if the instruction at the callSite is 'blr x9' */
-   if (blrInstr != 0xd63f0120)
+   /* Check if the instruction at the callSite is 'blr x10' */
+   if (blrInstr != 0xd63f0140)
       {
       return false;
       }
 
-   int32_t ldrInst = *reinterpret_cast<int32_t *>(callSite - ARM64_INSTRUCTION_LENGTH);
-   /* Check if the instruction before blr is 'ldrx x9, label' */
-   if ((ldrInst & 0xff00001f) != 0x58000009)
+   intptr_t ldrInstAddr = reinterpret_cast<intptr_t>(callSite) - ARM64_INSTRUCTION_LENGTH;
+   int32_t ldrInst = *reinterpret_cast<int32_t *>(ldrInstAddr);
+   /* Check if the instruction before blr is 'ldrx x10, label' */
+   if ((ldrInst & 0xff00001f) == 0x5800000a)
       {
-      return false;
-      }
-   /* distance is encoded in bit 5-23 */
-   int64_t distance = ((ldrInst << 8) >> 13) * 4;
-   intptr_t secondBranchAddressSlotAddr = reinterpret_cast<intptr_t>(callSite) - ARM64_INSTRUCTION_LENGTH + distance;
-   //     The layout of the cache slots is as follows:
-   //     +---------+---------------+---------+---------------+
-   //     |  class1 |method address1|  class2 |method address2|
-   //     +---------+---------------+---------+---------------+
-   addrOfFirstClassSlot = secondBranchAddressSlotAddr - sizeof(intptr_t) * 3;
+      /* distance is encoded in bit 5-23 */
+      int64_t distance = ((ldrInst << 8) >> 13) * 4;
+      intptr_t secondBranchAddressSlotAddr = ldrInstAddr + distance;
+      //     The layout of the cache slots is as follows:
+      //     +---------+---------------+---------+---------------+
+      //     |  class1 |method address1|  class2 |method address2|
+      //     +---------+---------------+---------+---------------+
+      addrOfFirstClassSlot = secondBranchAddressSlotAddr - sizeof(intptr_t) * 3;
 
-   int32_t bneInst = *reinterpret_cast<int32_t *>(callSite - ARM64_INSTRUCTION_LENGTH * 2);
-   /* Check if the instruction before ldr is 'bne' */
-   if ((bneInst & 0xff00001f) != 0x54000001)
+      int32_t bneInst = *reinterpret_cast<int32_t *>(ldrInstAddr - ARM64_INSTRUCTION_LENGTH);
+      /* Check if the instruction before ldr is 'bne' */
+      if ((bneInst & 0xff00001f) != 0x54000001)
+         {
+         return false;
+         }
+
+      int32_t cmpInst = *reinterpret_cast<int32_t *>(ldrInstAddr - ARM64_INSTRUCTION_LENGTH * 2);
+      /* Check if the instruction before bne is 'cmp vftReg, x10' */
+      if ((cmpInst & 0xfffffc1f) != 0xeb0a001f)
+         {
+         return false;
+         }
+
+      return true;
+      }
+   else if ((ldrInst & 0xfffffc1f) == 0xf869680a) /* Check if lastITable cache sequence is generated. The instruction before blr should be `ldr x10, [vftReg, x9]` */
       {
-      return false;
+      int32_t subInst = *reinterpret_cast<int32_t *>(callSite - ARM64_INSTRUCTION_LENGTH * 2);
+      /* Check if the instruction before ldr is `sub x9, x9, x11` */
+      if (subInst != 0xcb0b0129)
+         {
+         return false;
+         }
+      ldrInst = *reinterpret_cast<int32_t *>(callSite - ARM64_INSTRUCTION_LENGTH * 3);
+      /* Check if the instruction before sub is `ldr x11, [x10, #offset]` */
+      if ((ldrInst & 0xffc003ff) != 0xf940014b)
+         {
+         return false;
+         }
+      int32_t movInst = *reinterpret_cast<int32_t *>(callSite - ARM64_INSTRUCTION_LENGTH * 4);
+      /* Check if the instruction before ldr is `mov w9, sizeof(J9Class)` */
+      if ((movInst & 0xffe0001f) != 0x52800009)
+         {
+         return false;
+         }
+      intptr_t bcondInstAddr = reinterpret_cast<intptr_t>(callSite - ARM64_INSTRUCTION_LENGTH * 5);
+      int32_t bcondInst = *reinterpret_cast<int32_t *>(bcondInstAddr);
+      /* check if the instruction before mov is `b.cond snippetLabel` */
+      if ((bcondInst & 0xff000010) != 0x54000000)
+         {
+         return false;
+         }
+      /* distance is encoded in bit 5-23 */
+      int64_t distance = ((bcondInst << 8) >> 13) * 4;
+      /* offset of the fist class slot in interface call snippet */
+      static const int64_t firstClassSlotOffset = 44;
+      addrOfFirstClassSlot = bcondInstAddr + distance + firstClassSlotOffset;
+
+      return true;
       }
 
-   int32_t cmpInst = *reinterpret_cast<int32_t *>(callSite - ARM64_INSTRUCTION_LENGTH * 3);
-   /* Check if the instruction before bne is 'cmp vftReg, x9' */
-   if ((cmpInst & 0xfffffc1f) != 0xeb09001f)
-      {
-      return false;
-      }
-
-   return true;
+   return false;
    }
 
 bool arm64CodePatching(void *callee, void *callSite, void *currentPC, void *currentTramp, void *newAddrOfCallee, void *extra)

@@ -1667,51 +1667,141 @@ static void buildVirtualCall(TR::CodeGenerator *cg, TR::Node *callNode, TR::Regi
 /**
  * @brief Generates instruction sequence for interface call
  *
- * @param[in] cg:          code generator
- * @param[in] callNode:    node for the interface call
- * @param[in] vftReg:      vft register
- * @param[in] tmpReg:      temporary register
- * @param[in] tmp2Reg:     temporary register
- * @param[in] ifcSnippet:  interface call snippet
- * @param[in] regMapForGC: register map for GC
+ * @param[in] cg:                 code generator
+ * @param[in] callNode:           node for the interface call
+ * @param[in] vftReg:             vft register
+ * @param[in] x9Reg:              temporary register
+ * @param[in] x10Reg:             temporary register
+ * @param[in] x11Reg:             temporary register
+ * @param[in] useLastITableCache: if true, use last iTable cache
+ * @param[in] ifcSnippet:         interface call snippet
+ * @param[in] regMapForGC:        register map for GC
  */
-static void buildInterfaceCall(TR::CodeGenerator *cg, TR::Node *callNode, TR::Register *vftReg, TR::Register *tmpReg, TR::Register *tmp2Reg, TR::ARM64InterfaceCallSnippet *ifcSnippet, uint32_t regMapForGC)
+static void buildInterfaceCall(TR::CodeGenerator *cg, TR::Node *callNode, TR::Register *vftReg, TR::Register *x9Reg, TR::Register *x10Reg, TR::Register *x11Reg,
+                               bool useLastITableCache, TR::ARM64InterfaceCallSnippet *ifcSnippet, uint32_t regMapForGC)
    {
    /*
     *  Generating following instruction sequence.
     *  Recompilation is dependent on this instruction sequence.
     *  Please do not modify without changing recompilation code.
     *
-    *  ldrx tmpReg, L_firstClassCacheSlot
-    *  cmpx vftReg, tmpReg
-    *  ldrx tmpReg, L_firstBranchAddressCacheSlot
-    *  beq  hitLabel
-    *  ldrx tmpReg, L_secondClassCacheSlot
-    *  cmpx vftReg, tmpReg
-    *  bne  snippetLabel
-    *  ldrx tmpReg, L_secondBranchAddressCacheSlot
-    * hitLabel:
-    *  blr  tmpReg
-    * doneLabel:
+    *  if useLastITableCache is false:
+    *    if debug counters are disabled:
+    *      ldrx x10Reg, L_firstClassCacheSlot
+    *      cmpx vftReg, x10Reg
+    *      ldrx x10Reg, L_firstBranchAddressCacheSlot
+    *      beq  hitLabel
+    *      ldrx x10Reg, L_secondClassCacheSlot
+    *      cmpx vftReg, x10Reg
+    *      bne  snippetLabel
+    *      ldrx x10Reg, L_secondBranchAddressCacheSlot
+    *     hitLabel:
+    *      blr  x10Reg
+    *     doneLabel:
+    *
+    *    if debug counters are enabled:
+    *      ldrx x10Reg, L_firstClassCacheSlot
+    *      cmpx vftReg, x10Reg
+    *      bne  slot1MissedLabel
+    *      ; debug counter, trashes x9 and x11Reg
+    *      ldrx x10Reg, L_firstBranchAddressCacheSlot
+    *      b    hitLabel
+    *     slot1MissedLabel:
+    *      beq  hitLabel
+    *      ldrx x10Reg, L_secondClassCacheSlot
+    *      cmpx vftReg, x10Reg
+    *      bne  slot2MissedLabel
+    *      ; debug counter, trashes x9 and x11Reg
+    *      b    slot2DoneLabel
+    *     slot2MissedLabel:
+    *      ; debug counter, trashes x9 and x11Reg
+    *     slot2DoneLabel:
+    *      cmpx vftReg, x10Reg
+    *      bne  snippetLabel
+    *      ldrx x10Reg, L_secondBranchAddressCacheSlot
+    *     hitLabel:
+    *      blr  x10Reg
+    *     doneLabel:
+    *
+    *  if useLastITableCache is true:
+    *    if debug counters are disabled:
+    *      ldrx x10Reg, L_firstClassCacheSlot
+    *      cmpx vftReg, x10Reg
+    *      ldrx x10Reg, L_firstBranchAddressCacheSlot
+    *      beq  hitLabel
+    *      ldrx x10Reg, L_secondClassCacheSlot
+    *      cmpx vftReg, x10Reg
+    *      ldrx x10Reg, L_secondBranchAddressCacheSlot
+    *      beq  hitLabel
+    *      ldr  x10Reg, [vftReg, lastITableOffset]     ; cached iTable
+    *      ldrx x9, L_interfaceClassSlot               ; actual interfaceClass
+    *      ldr  x11Reg, [x10Reg, interfaceClassOffset]; interfaceClass in lastITable
+    *      cmpx x9, x11Reg
+    *      bal  snippetLabel                           ; will be patched to bne
+    *      mov  w9, sizeof(J9Class)
+    *      ldr  x11Reg, [x10Reg, iTableOffset]        ; load vTableOffset
+    *      sub  x9, x9, x11Reg                        ; icallVMprJavaSendPatchupVirtual expects x9 to hold vTable index
+    *      ldr  x10Reg, [vftReg, x9]
+    *     hitLabel:
+    *      blr  x10Reg
+    *     doneLabel:
+    *
+    *    if debug counters are enabled:
+    *      ldrx x10Reg, L_firstClassCacheSlot
+    *      cmpx vftReg, x10Reg
+    *      bne  slot1MissedLabel
+    *      ; debug counter, trashes x9 and x11Reg
+    *      ldrx x10Reg, L_firstBranchAddressCacheSlot
+    *      b    hitLabel
+    *     slot1MissedLabel:
+    *      ldrx x10Reg, L_secondClassCacheSlot
+    *      cmpx vftReg, x10Reg
+    *      bne  slot2DoneLabel
+    *      ; debug counter, trashes x9 and x11Reg
+    *     slot2DoneLabel:
+    *      cmpx vftReg, x10Reg
+    *      ldrx x10Reg, L_secondBranchAddressCacheSlot
+    *      beq  hitLabel
+    *      ldr  x10Reg, [vftReg, lastITableOffset]     ; cached iTable
+    *      ldrx x9, L_interfaceClassSlot               ; actual interfaceClass
+    *      ldr  x11Reg, [x10Reg, interfaceClassOffset]; interfaceClass in lastITable
+    *      cmpx x9, x11Reg
+    *      bne  lastITableMissedLabel
+    *      ; debug counter, trashes x9 and x11Reg
+    *      cmpx x9, x9                                 ; to set Z flag
+    *      b    lastITableDoneLabel
+    *     lastITableMissedLabel:
+    *      ; debug counter, trashes x9 and x11Reg
+    *      cmp  x10Reg, #0                             ; to unset Z flag
+    *     lastITableDoneLabel:
+    *      bal  snippetLabel                           ; will be patched to bne
+    *      mov  w9, sizeof(J9Class)
+    *      ldr  x11Reg, [x10Reg, iTableOffset]        ; load vTableOffset
+    *      sub  x9, x9, x11Reg                        ; icallVMprJavaSendPatchupVirtual expects x9 to hold vTable index
+    *      ldr  x10Reg, [vftReg, x9]
+    *     hitLabel:
+    *      blr  x10Reg
+    *     doneLabel:
     */
 
    TR::LabelSymbol *ifcSnippetLabel = ifcSnippet->getSnippetLabel();
    TR::LabelSymbol *firstClassCacheSlotLabel = ifcSnippet->getFirstClassCacheSlotLabel();
-   generateTrg1ImmSymInstruction(cg, TR::InstOpCode::ldrx, callNode, tmpReg, 0, firstClassCacheSlotLabel);
+   generateTrg1ImmSymInstruction(cg, TR::InstOpCode::ldrx, callNode, x10Reg, 0, firstClassCacheSlotLabel);
 
    TR::LabelSymbol *hitLabel = generateLabelSymbol(cg);
-   generateCompareInstruction(cg, callNode, vftReg, tmpReg, true);
+   generateCompareInstruction(cg, callNode, vftReg, x10Reg, true);
    TR::LabelSymbol *firstBranchAddressCacheSlotLabel = ifcSnippet->getFirstBranchAddressCacheSlotLabel();
 
    TR::Compilation *comp = cg->comp();
    TR_Debug *debugObj = cg->getDebug();
    TR_ARM64ScratchRegisterManager *srm = NULL;
    bool isDebugCounterGenerated = false;
-   if (comp->getOptions()->enableDebugCounters())
+   const bool enableDebugCounters = comp->getOptions()->enableDebugCounters();
+   if (enableDebugCounters)
       {
       srm = cg->generateScratchRegisterManager(2);
-      srm->donateScratchRegister(tmpReg);
-      srm->donateScratchRegister(tmp2Reg);
+      srm->donateScratchRegister(x9Reg);
+      srm->donateScratchRegister(x11Reg);
       TR::Instruction *prevCursor = cg->getAppendInstruction();
       /* Record if slot 1 hit */
       TR::Instruction *cursor = cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "cg.callInterface/(%s)/%s/%d/%d/dynamicPIC/slot1",
@@ -1725,7 +1815,7 @@ static void buildInterfaceCall(TR::CodeGenerator *cg, TR::Node *callNode, TR::Re
          /* Debug counter was generated. Generating instructions before debug counter instructions. */
          TR::LabelSymbol *slot1MissedLabel = generateLabelSymbol(cg);
          TR::Instruction *branchToSlot1MissedLabelInstr = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, callNode, slot1MissedLabel, TR::CC_NE, prevCursor);
-         generateTrg1ImmSymInstruction(cg, TR::InstOpCode::ldrx, callNode, tmpReg, 0, firstBranchAddressCacheSlotLabel);
+         generateTrg1ImmSymInstruction(cg, TR::InstOpCode::ldrx, callNode, x10Reg, 0, firstBranchAddressCacheSlotLabel);
          TR::Instruction *branchToHitLabelInstr = generateLabelInstruction(cg, TR::InstOpCode::b, callNode, hitLabel);
          TR::Instruction *slot1MissedLabelInstr = generateLabelInstruction(cg, TR::InstOpCode::label, callNode, slot1MissedLabel);
          if (debugObj)
@@ -1738,7 +1828,7 @@ static void buildInterfaceCall(TR::CodeGenerator *cg, TR::Node *callNode, TR::Re
       }
    if (!isDebugCounterGenerated)
       {
-      generateTrg1ImmSymInstruction(cg, TR::InstOpCode::ldrx, callNode, tmpReg, 0, firstBranchAddressCacheSlotLabel);
+      generateTrg1ImmSymInstruction(cg, TR::InstOpCode::ldrx, callNode, x10Reg, 0, firstBranchAddressCacheSlotLabel);
       TR::Instruction *branchToHitLabelInstr = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, callNode, hitLabel, TR::CC_EQ);
       if (debugObj)
          {
@@ -1748,12 +1838,10 @@ static void buildInterfaceCall(TR::CodeGenerator *cg, TR::Node *callNode, TR::Re
 
    TR::LabelSymbol *secondClassCacheSlotLabel = ifcSnippet->getSecondClassCacheSlotLabel();
 
-   generateTrg1ImmSymInstruction(cg, TR::InstOpCode::ldrx, callNode, tmpReg, 0, secondClassCacheSlotLabel);
+   generateTrg1ImmSymInstruction(cg, TR::InstOpCode::ldrx, callNode, x10Reg, 0, secondClassCacheSlotLabel);
 
-   if (comp->getOptions()->enableDebugCounters())
+   if (enableDebugCounters)
       {
-      TR::LabelSymbol *slot2MissedLabel = generateLabelSymbol(cg);
-      TR::LabelSymbol *slot2DoneLabel = generateLabelSymbol(cg);
       TR::Instruction *prevCursor1 = cg->getAppendInstruction();
       /* Record if slot 2 hit */
       TR::Instruction *cursor1 = cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "cg.callInterface/(%s)/%s/%d/%d/dynamicPIC/slot2",
@@ -1761,51 +1849,158 @@ static void buildInterfaceCall(TR::CodeGenerator *cg, TR::Node *callNode, TR::Re
                                                                                              comp->getHotnessName(),
                                                                                              callNode->getByteCodeInfo().getCallerIndex(),
                                                                                              callNode->getByteCodeInfo().getByteCodeIndex()), *srm);
-      TR::Instruction *prevCursor2 = cg->getAppendInstruction();
-      /* Record if slot 2 missed */
-      TR::Instruction *cursor2 = cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "cg.callInterface/(%s)/%s/%d/%d/dynamicPIC/cachemiss",
+
+      if (!useLastITableCache)
+         {
+         TR::Instruction *prevCursor2 = cg->getAppendInstruction();
+         /* Record if slot 2 missed */
+         TR::Instruction *cursor2 = cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "cg.callInterface/(%s)/%s/%d/%d/dynamicPIC/cachemiss",
                                                                                              comp->signature(),
                                                                                              comp->getHotnessName(),
                                                                                              callNode->getByteCodeInfo().getCallerIndex(),
                                                                                              callNode->getByteCodeInfo().getByteCodeIndex()), *srm);
-      if ((prevCursor1 != cursor1) || (prevCursor2 != cursor2))
-         {
-         /* Debug counter was generated. Generating instructions before debug counter instructions recording hit for second cache slot. */
-         TR::Instruction *cursor = generateCompareInstruction(cg, callNode, vftReg, tmpReg, true, prevCursor1);
-         TR::Instruction *branchToSlot2MissedLabelInstr = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, callNode, slot2MissedLabel, TR::CC_NE, cursor);
-
-         /* Generating instructions before debug counter instructions recording cache miss. */
-         cursor = generateLabelInstruction(cg, TR::InstOpCode::b, callNode, slot2DoneLabel, prevCursor2);
-         TR::Instruction *slot2MissedLabelInstr = generateLabelInstruction(cg, TR::InstOpCode::label, callNode, slot2MissedLabel, cursor);
-
-         /* Generating instructions after debug counter instructions. */
-         TR::Instruction *slot2DoneLabelInstr = generateLabelInstruction(cg, TR::InstOpCode::label, callNode, slot2DoneLabel);
-         generateTrg1ImmSymInstruction(cg, TR::InstOpCode::ldrx, callNode, tmpReg, 0, secondClassCacheSlotLabel);
-         if (debugObj)
+         if ((prevCursor1 != cursor1) || (prevCursor2 != cursor2))
             {
-            debugObj->addInstructionComment(branchToSlot2MissedLabelInstr, "Jumps to slot2MissedLabel");
-            debugObj->addInstructionComment(cursor, "Jumps to slot2DoneLabel");
-            debugObj->addInstructionComment(slot2MissedLabelInstr, "slot2MissedLabel");
-            debugObj->addInstructionComment(slot2DoneLabelInstr, "slot2DoneLabel");
+            TR::LabelSymbol *slot2MissedLabel = generateLabelSymbol(cg);
+            TR::LabelSymbol *slot2DoneLabel = generateLabelSymbol(cg);
+            /* Debug counter was generated. Generating instructions before debug counter instructions recording hit for second cache slot. */
+            TR::Instruction *cursor = generateCompareInstruction(cg, callNode, vftReg, x10Reg, true, prevCursor1);
+            TR::Instruction *branchToSlot2MissedLabelInstr = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, callNode, slot2MissedLabel, TR::CC_NE, cursor);
+
+            /* Generating instructions before debug counter instructions recording cache miss. */
+            cursor = generateLabelInstruction(cg, TR::InstOpCode::b, callNode, slot2DoneLabel, prevCursor2);
+            TR::Instruction *slot2MissedLabelInstr = generateLabelInstruction(cg, TR::InstOpCode::label, callNode, slot2MissedLabel, cursor);
+
+            /* Generating instructions after debug counter instructions. */
+            TR::Instruction *slot2DoneLabelInstr = generateLabelInstruction(cg, TR::InstOpCode::label, callNode, slot2DoneLabel);
+            if (debugObj)
+               {
+               debugObj->addInstructionComment(branchToSlot2MissedLabelInstr, "Jumps to slot2MissedLabel");
+               debugObj->addInstructionComment(cursor, "Jumps to slot2DoneLabel");
+               debugObj->addInstructionComment(slot2MissedLabelInstr, "slot2MissedLabel");
+               debugObj->addInstructionComment(slot2DoneLabelInstr, "slot2DoneLabel");
+               }
             }
          }
-      srm->stopUsingRegisters();
+      else
+         {
+         if (prevCursor1 != cursor1)
+            {
+            TR::LabelSymbol *slot2DoneLabel = generateLabelSymbol(cg);
+            /* Debug counter was generated. Generating instructions before debug counter instructions recording hit for second cache slot. */
+            TR::Instruction *cursor = generateCompareInstruction(cg, callNode, vftReg, x10Reg, true, prevCursor1);
+            TR::Instruction *branchToSlot2DoneLabelInstr = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, callNode, slot2DoneLabel, TR::CC_NE, cursor);
+            /* Generating instructions after debug counter instructions. */
+            TR::Instruction *slot2DoneLabelInstr = generateLabelInstruction(cg, TR::InstOpCode::label, callNode, slot2DoneLabel);
+            if (debugObj)
+               {
+               debugObj->addInstructionComment(branchToSlot2DoneLabelInstr, "Jumps to slot2DoneLabel");
+               debugObj->addInstructionComment(slot2DoneLabelInstr, "slot2DoneLabel");
+               }
+            }
+         }
       }
 
-   generateCompareInstruction(cg, callNode, vftReg, tmpReg, true);
-   TR::Instruction *gcPoint = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, callNode, ifcSnippetLabel, TR::CC_NE);
-   gcPoint->ARM64NeedsGCMap(cg, regMapForGC);
-   TR::LabelSymbol *secondBranchAddressCacheSlotLabel = ifcSnippet->getSecondBranchAddressCacheSlotLabel();
+   generateCompareInstruction(cg, callNode, vftReg, x10Reg, true);
 
-   generateTrg1ImmSymInstruction(cg, TR::InstOpCode::ldrx, callNode, tmpReg, 0, secondBranchAddressCacheSlotLabel);
+   TR::SymbolReference  *methodSymRef = callNode->getSymbolReference();
+   TR_ResolvedMethod    *owningMethod = methodSymRef->getOwningMethod(comp);
+   uintptr_t            itableIndex;
+   TR_OpaqueClassBlock  *interfaceClassOfMethod = owningMethod->getResolvedInterfaceMethod(methodSymRef->getCPIndex(), &itableIndex);
+
+   TR::Instruction *gcPoint;
+   if (useLastITableCache && (interfaceClassOfMethod != NULL))
+      {
+      TR_J9VMBase *fej9 = cg->fej9();
+
+      TR::LabelSymbol *secondBranchAddressCacheSlotLabel = ifcSnippet->getSecondBranchAddressCacheSlotLabel();
+      generateTrg1ImmSymInstruction(cg, TR::InstOpCode::ldrx, callNode, x10Reg, 0, secondBranchAddressCacheSlotLabel);
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, callNode, hitLabel, TR::CC_EQ);
+
+      generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, callNode, x10Reg, TR::MemoryReference::createWithDisplacement(cg, vftReg, fej9->getOffsetOfLastITableFromClassField()));
+      TR::LabelSymbol *interfacedClassSlotLabel = ifcSnippet->getInterfaceClassSlotLabel();
+      generateTrg1ImmSymInstruction(cg, TR::InstOpCode::ldrx, callNode, x9Reg, 0, interfacedClassSlotLabel);
+      generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, callNode, x11Reg, TR::MemoryReference::createWithDisplacement(cg, x10Reg, fej9->getOffsetOfInterfaceClassFromITableField()));
+      generateCompareInstruction(cg, callNode, x9Reg, x11Reg, true);
+
+      if (enableDebugCounters)
+         {
+         TR::Instruction *prevCursor1 = cg->getAppendInstruction();
+         /* Record if lastITable cache hit */
+         TR::Instruction *cursor1 = cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "cg.callInterface/(%s)/%s/%d/%d/dynamicPIC/lastITable",
+                                                                                             comp->signature(),
+                                                                                             comp->getHotnessName(),
+                                                                                             callNode->getByteCodeInfo().getCallerIndex(),
+                                                                                             callNode->getByteCodeInfo().getByteCodeIndex()), *srm);
+         TR::Instruction *prevCursor2 = cg->getAppendInstruction();
+         /* Record if lastITable cache missed */
+         TR::Instruction *cursor2 = cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "cg.callInterface/(%s)/%s/%d/%d/dynamicPIC/cachemiss",
+                                                                                             comp->signature(),
+                                                                                             comp->getHotnessName(),
+                                                                                             callNode->getByteCodeInfo().getCallerIndex(),
+                                                                                             callNode->getByteCodeInfo().getByteCodeIndex()), *srm);
+         if ((prevCursor1 != cursor1) || (prevCursor2 != cursor2))
+            {
+            TR::LabelSymbol *lastITableMissedLabel = generateLabelSymbol(cg);
+            TR::LabelSymbol *lastITableDoneLabel = generateLabelSymbol(cg);
+            /* Debug counter was generated. Generating instructions before debug counter instructions recording hit for lastITable cache. */
+            TR::Instruction *branchToLastITableMissedLabelInstr = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, callNode, lastITableMissedLabel, TR::CC_NE, prevCursor1);
+
+            /* Generating instructions before debug counter instructions recording cache miss. */
+            TR::Instruction *cmpInstr1 = generateCompareInstruction(cg, callNode, x9Reg, x9Reg, true, prevCursor2); /* to set Z flag */
+            TR::Instruction *cursor = generateLabelInstruction(cg, TR::InstOpCode::b, callNode, lastITableDoneLabel, cmpInstr1);
+            TR::Instruction *lastITableMissedLabelInstr = generateLabelInstruction(cg, TR::InstOpCode::label, callNode, lastITableMissedLabel, cursor);
+
+            /* Generating instructions after debug counter instructions. */
+            generateCompareImmInstruction(cg, callNode, x10Reg, 0, true); /* to unset Z flag */
+            TR::Instruction *lastITableDoneLabelInstr = generateLabelInstruction(cg, TR::InstOpCode::label, callNode, lastITableDoneLabel);
+            if (debugObj)
+               {
+               debugObj->addInstructionComment(branchToLastITableMissedLabelInstr, "Jumps to lastITableMissedLabel");
+               debugObj->addInstructionComment(cursor, "Jumps to lastITableDoneLabel");
+               debugObj->addInstructionComment(lastITableMissedLabelInstr, "lastITable2MissedLabel");
+               debugObj->addInstructionComment(lastITableDoneLabelInstr, "lastITableDoneLabel");
+               }
+            }
+         }
+
+      /* This conditional branch instruction with "always" condition code will be patched to b.ne instruction after second cache slot is filled. */
+      gcPoint = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, callNode, ifcSnippetLabel, TR::CC_AL);
+      loadConstant32(cg, callNode, fej9->getITableEntryJitVTableOffset(), x9Reg);
+      generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, callNode, x11Reg, TR::MemoryReference::createWithDisplacement(cg, x10Reg, fej9->convertITableIndexToOffset(itableIndex)));
+      /* PicBuilder.spp checks this instruction. It needs to be 'sub x9, x9, x11'. */
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::subx, callNode, x9Reg, x9Reg, x11Reg);
+      generateTrg1MemInstruction(cg, TR::InstOpCode::ldroffx, callNode, x10Reg, TR::MemoryReference::createWithIndexReg(cg, vftReg, x9Reg));
+      if (debugObj)
+         {
+         debugObj->addInstructionComment(gcPoint, "Jumps to Snippet. Will be patched to b.ne");
+         }
+      }
+   else
+      {
+      gcPoint = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, callNode, ifcSnippetLabel, TR::CC_NE);
+      TR::LabelSymbol *secondBranchAddressCacheSlotLabel = ifcSnippet->getSecondBranchAddressCacheSlotLabel();
+
+      generateTrg1ImmSymInstruction(cg, TR::InstOpCode::ldrx, callNode, x10Reg, 0, secondBranchAddressCacheSlotLabel);
+      if (debugObj)
+         {
+         debugObj->addInstructionComment(gcPoint, "Jumps to snippet");
+         }
+      }
+   gcPoint->ARM64NeedsGCMap(cg, regMapForGC);
+
+   if (enableDebugCounters)
+      {
+      srm->stopUsingRegisters();
+      }
    TR::Instruction *hitLabelInstr = generateLabelInstruction(cg, TR::InstOpCode::label, callNode, hitLabel);
    if (debugObj)
       {
-      debugObj->addInstructionComment(gcPoint, "Jumps to snippet");
       debugObj->addInstructionComment(hitLabelInstr, "hitLabel");
       }
-   gcPoint = generateRegBranchInstruction(cg, TR::InstOpCode::blr, callNode, tmpReg);
+   gcPoint = generateRegBranchInstruction(cg, TR::InstOpCode::blr, callNode, x10Reg);
    gcPoint->ARM64NeedsGCMap(cg, regMapForGC);
+
    }
 
 static TR::Register *evaluateUpToVftChild(TR::Node *callNode, TR::CodeGenerator *cg)
@@ -1828,6 +2023,7 @@ void J9::ARM64::PrivateLinkage::buildVirtualDispatch(TR::Node *callNode,
    TR::Register *x0 = dependencies->searchPreConditionRegister(TR::RealRegister::x0);
    TR::Register *x9 = dependencies->searchPreConditionRegister(TR::RealRegister::x9);
    TR::Register *x10 = dependencies->searchPreConditionRegister(TR::RealRegister::x10);
+   TR::Register *x11 = dependencies->searchPreConditionRegister(TR::RealRegister::x11);
 
    TR::SymbolReference *methodSymRef = callNode->getSymbolReference();
    TR::MethodSymbol *methodSymbol = methodSymRef->getSymbol()->castToMethodSymbol();
@@ -2047,6 +2243,8 @@ void J9::ARM64::PrivateLinkage::buildVirtualDispatch(TR::Node *callNode,
          }
       }
 
+   bool useLastITableCache = !comp()->getOption(TR_DisableLastITableCache);
+
    // Profile-driven virtual and interface calls
    //
    // If the top value dominates everything else, generate a single static
@@ -2068,6 +2266,32 @@ void J9::ARM64::PrivateLinkage::buildVirtualDispatch(TR::Node *callNode,
          ListIterator<J9::ARM64PICItem>  i(&values);
          J9::ARM64PICItem               *pic = i.getFirst();
 
+         if (useLastITableCache && methodSymbol->isInterface())
+            {
+            // Find the class pointer to the interface class if it is already loaded.
+            //
+            TR::Method *interfaceMethod = methodSymbol->getMethod();
+            int32_t len = interfaceMethod->classNameLength();
+            char *s = TR::Compiler->cls.classNameToSignature(interfaceMethod->classNameChars(), len, comp());
+            auto interfaceClassOfMethod = fej9->getClassFromSignature(s, len, methodSymRef->getOwningMethod(comp()));
+            int32_t numStaticPICSlots = (pic->_frequency > MAX_PROFILED_CALL_FREQUENCY) ? 1 : values.getSize();
+
+            // Disable lastITable logic if all the implementers can fit into the pic slots during non-startup state
+            if (interfaceClassOfMethod && comp()->getPersistentInfo()->getJitState() != STARTUP_STATE)
+               {
+               int32_t numPICSlots = numStaticPICSlots + 2;
+               TR_ResolvedMethod **implArray = new (comp()->trStackMemory()) TR_ResolvedMethod *[numPICSlots+1];
+               TR_PersistentCHTable *chTable = comp()->getPersistentInfo()->getPersistentCHTable();
+               int32_t cpIndex = methodSymRef->getCPIndex();
+               int32_t numImplementers = chTable->findnInterfaceImplementers(interfaceClassOfMethod, numPICSlots+1, implArray, cpIndex, methodSymRef->getOwningMethod(comp()), comp());
+               if (numImplementers <= numPICSlots)
+                  {
+                  useLastITableCache = false;
+                  if (comp()->getOption(TR_TraceCG))
+                     traceMsg(comp(),"Found %d implementers for call to %s, can be fit into %d pic slots, disabling lastITable cache\n", numImplementers, methodSymbol->getMethod()->signature(comp()->trMemory()), numPICSlots);
+                  }
+               }
+            }
          // If this value is dominant, optimize exclusively for it
          if (pic->_frequency > MAX_PROFILED_CALL_FREQUENCY)
             {
@@ -2102,11 +2326,13 @@ void J9::ARM64::PrivateLinkage::buildVirtualDispatch(TR::Node *callNode,
                TR::LabelSymbol               *firstBranchAddressCacheSlotLabel = generateLabelSymbol(cg());
                TR::LabelSymbol               *secondClassCacheSlotLabel = generateLabelSymbol(cg());
                TR::LabelSymbol               *secondBranchAddressCacheSlotLabel = generateLabelSymbol(cg());
+               TR::LabelSymbol               *interfaceClassSlotLabel = generateLabelSymbol(cg());
                TR::ARM64InterfaceCallSnippet *ifcSnippet = new (trHeapMemory()) TR::ARM64InterfaceCallSnippet(cg(), callNode, ifcSnippetLabel,
                                                                                                               argSize, doneOOLLabel, firstClassCacheSlotLabel, secondClassCacheSlotLabel,
-                                                                                                              firstBranchAddressCacheSlotLabel, secondBranchAddressCacheSlotLabel, static_cast<uint8_t *>(thunk));
+                                                                                                              firstBranchAddressCacheSlotLabel, secondBranchAddressCacheSlotLabel,
+                                                                                                              interfaceClassSlotLabel, static_cast<uint8_t *>(thunk));
                cg()->addSnippet(ifcSnippet);
-               buildInterfaceCall(cg(), callNode, vftReg, x9, x10, ifcSnippet, regMapForGC);
+               buildInterfaceCall(cg(), callNode, vftReg, x9, x10, x11, useLastITableCache, ifcSnippet, regMapForGC);
                }
             else
                {
@@ -2155,12 +2381,14 @@ void J9::ARM64::PrivateLinkage::buildVirtualDispatch(TR::Node *callNode,
       TR::LabelSymbol *firstBranchAddressCacheSlotLabel = generateLabelSymbol(cg());
       TR::LabelSymbol *secondClassCacheSlotLabel = generateLabelSymbol(cg());
       TR::LabelSymbol *secondBranchAddressCacheSlotLabel = generateLabelSymbol(cg());
+      TR::LabelSymbol *interfaceClassSlotLabel = generateLabelSymbol(cg());
       TR::ARM64InterfaceCallSnippet *ifcSnippet =
          new (trHeapMemory())
-         TR::ARM64InterfaceCallSnippet(cg(), callNode, ifcSnippetLabel, argSize, doneLabel, firstClassCacheSlotLabel, firstBranchAddressCacheSlotLabel, secondClassCacheSlotLabel, secondBranchAddressCacheSlotLabel, static_cast<uint8_t *>(thunk));
+         TR::ARM64InterfaceCallSnippet(cg(), callNode, ifcSnippetLabel, argSize, doneLabel, firstClassCacheSlotLabel, firstBranchAddressCacheSlotLabel,
+                                       secondClassCacheSlotLabel, secondBranchAddressCacheSlotLabel, interfaceClassSlotLabel, static_cast<uint8_t *>(thunk));
       cg()->addSnippet(ifcSnippet);
 
-      buildInterfaceCall(cg(), callNode, vftReg, x9, x10, ifcSnippet, regMapForGC);
+      buildInterfaceCall(cg(), callNode, vftReg, x9, x10, x11, useLastITableCache, ifcSnippet, regMapForGC);
       }
    else
       {

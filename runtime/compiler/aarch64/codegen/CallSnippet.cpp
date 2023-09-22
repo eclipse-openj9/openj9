@@ -811,6 +811,7 @@ uint8_t *TR::ARM64InterfaceCallSnippet::emitSnippetBody()
    cursor += sizeof(intptr_t);
 
    // 2 slots for resolved values (interface class and iTable index)
+   _interfaceClassSlotLabel->setCodeLocation(cursor);
    *reinterpret_cast<intptr_t *>(cursor) = 0;
    cursor += sizeof(intptr_t);
    *reinterpret_cast<intptr_t *>(cursor) = 0;
