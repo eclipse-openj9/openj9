@@ -1697,13 +1697,12 @@ JVM_IsUseContainerSupport(JNIEnv *env)
 {
 	J9VMThread *const currentThread = (J9VMThread *)env;
 	J9JavaVM *vm = currentThread->javaVM;
-	BOOLEAN inContainer = FALSE;
+	jboolean result = JNI_FALSE;
 
 	if (J9_ARE_ALL_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_USE_CONTAINER_SUPPORT)) {
-		PORT_ACCESS_FROM_ENV(env);
-		OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
-		inContainer = omrsysinfo_is_running_in_container();
+		/* Return true if -XX:+UseContainerSupport is specified. This option is enabled by default. */
+		result = JNI_TRUE;
 	}
 
-	return inContainer ? JNI_TRUE : JNI_FALSE;
+	return result;
 }
