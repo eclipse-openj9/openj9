@@ -3213,7 +3213,6 @@ gcReinitializeDefaultsForRestore(J9VMThread* vmThread)
 			}
 		}
 	}
-	
 	extensions->gcThreadCountForced = false;
 	extensions->parSweepChunkSize = 0;
 
