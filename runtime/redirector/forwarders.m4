@@ -319,7 +319,7 @@ _IF([JAVA_SPEC_VERSION >= 11],
 _IF([(11 <= JAVA_SPEC_VERSION) && (JAVA_SPEC_VERSION < 22)],
 	[_X(JVM_MoreStackWalk,JNICALL,false,jint,JNIEnv *env, jobject arg1, jlong arg2, jlong arg3, jint arg4, jint arg5, jobjectArray arg6, jobjectArray arg7)])
 _IF([JAVA_SPEC_VERSION >= 22],
-	[_X(JVM_MoreStackWalk,JNICALL,false,jint,JNIEnv *env, jobject arg1, jint arg2, jlong arg3, jint arg4, jint arg5, jobjectArray arg6, jobjectArray arg7)])
+	[_X(JVM_MoreStackWalk,JNICALL,false,jint,JNIEnv *env, jobject arg1, jint arg2, jlong arg3, jint arg4, jint arg5, jint arg6, jobjectArray arg7, jobjectArray arg8)])
 _IF([JAVA_SPEC_VERSION >= 11],
 	[_X(JVM_ConstantPoolGetClassRefIndexAt,JNICALL,false,jint,JNIEnv *env, jobject arg1, jlong arg2, jint arg3)])
 _IF([JAVA_SPEC_VERSION >= 11],
