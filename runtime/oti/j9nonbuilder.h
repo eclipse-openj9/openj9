@@ -875,7 +875,7 @@ typedef struct J9VMDllLoadInfo {
 	U_32 completedBits;
 	UDATA descriptor;
 	IDATA  ( *j9vmdllmain)(struct J9JavaVM *vm, IDATA stage, void *reserved) ;
-	char* fatalErrorStr;
+	const char* fatalErrorStr;
 	void* reserved;
 } J9VMDllLoadInfo;
 
@@ -4778,6 +4778,7 @@ typedef struct J9InternalVMFunctions {
 	IDATA  ( *optionValueOperations)(J9PortLibrary *portLibrary, struct J9VMInitArgs* j9vm_args, IDATA element, IDATA action, char** valuesBuffer, UDATA bufSize, char delim, char separator, void* reserved) ;
 	void  ( *dumpStackTrace)(struct J9VMThread *currentThread) ;
 	UDATA  ( *loadJ9DLL)(struct J9JavaVM * vm, struct J9VMDllLoadInfo* info) ;
+	void  ( *setErrorJ9dll)(J9PortLibrary *portLib, struct J9VMDllLoadInfo *info, const char *error, BOOLEAN errorIsAllocated) ;
 	UDATA  ( *runJVMOnLoad)(struct J9JavaVM* vm, struct J9VMDllLoadInfo* loadInfo, char* options) ;
 	struct J9ROMClass*  ( *checkRomClassForError)( struct J9ROMClass *romClass, struct J9VMThread *vmThread ) ;
 	void  ( *setExceptionForErroredRomClass)( struct J9ROMClass *romClass, struct J9VMThread *vmThread ) ;
@@ -5755,7 +5756,7 @@ typedef struct J9JavaVM {
 	UDATA requiredDebugAttributes;
 	UDATA stackSizeIncrement;
 	struct J9JavaLangManagementData *managementData;
-	IDATA  ( *setVerboseState)(struct J9JavaVM *vm, struct J9VerboseSettings *verboseOptions, char **errorString) ;
+	IDATA  ( *setVerboseState)(struct J9JavaVM *vm, struct J9VerboseSettings *verboseOptions, const char **errorString) ;
 	omrthread_monitor_t verboseStateMutex;
 	struct J9SharedClassPreinitConfig* sharedClassPreinitConfig;
 	omrthread_monitor_t runtimeFlagsMutex;

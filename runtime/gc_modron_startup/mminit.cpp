@@ -350,14 +350,17 @@ j9gc_initialize_heap(J9JavaVM *vm, IDATA *memoryParameterTable, UDATA heapBytesR
 			const char* qualifier = NULL;
 			qualifiedSize(&size, &qualifier);
 
-			char *format = (char *)j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_GC_FAILED_TO_INSTANTIATE_LOW_MEMORY_RESERVE_SIZE_REQUESTED, "Failed to instantiate compressed references metadata.  %zu%s requested");
+			const char *format = j9nls_lookup_message(
+				J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+				J9NLS_GC_FAILED_TO_INSTANTIATE_LOW_MEMORY_RESERVE_SIZE_REQUESTED,
+				"Failed to instantiate compressed references metadata; %zu%s requested");
 			UDATA formatLength = strlen(format) + 32; /* 2^64 is 20 digits, so have a few extra */
 
-			loadInfo->fatalErrorStr = (char *)j9mem_allocate_memory(formatLength, OMRMEM_CATEGORY_MM);
-			if (loadInfo->fatalErrorStr) {
-				j9str_printf(PORTLIB, loadInfo->fatalErrorStr, formatLength, format, size, qualifier);
-				loadInfo->loadFlags |= FREE_ERROR_STRING; /* indicates that buffer should be freed later */
+			char *buffer = (char *)j9mem_allocate_memory(formatLength, OMRMEM_CATEGORY_MM);
+			if (NULL != buffer) {
+				j9str_printf(PORTLIB, buffer, formatLength, format, size, qualifier);
 			}
+			vm->internalVMFunctions->setErrorJ9dll(PORTLIB, loadInfo, buffer, TRUE);
 			break;
 		}
 
@@ -369,14 +372,17 @@ j9gc_initialize_heap(J9JavaVM *vm, IDATA *memoryParameterTable, UDATA heapBytesR
 			const char* qualifier = NULL;
 			qualifiedSize(&size, &qualifier);
 
-			char *format = (char *)j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_GC_FAILED_TO_INSTANTIATE_HEAP_SIZE_REQUESTED, "Failed to instantiate heap.  %zu%s requested");
+			const char *format = j9nls_lookup_message(
+				J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+				J9NLS_GC_FAILED_TO_INSTANTIATE_HEAP_SIZE_REQUESTED,
+				"Failed to instantiate heap; %zu%s requested");
 			UDATA formatLength = strlen(format) + 32; /* 2^64 is 20 digits, so have a few extra */
 
-			loadInfo->fatalErrorStr = (char *)j9mem_allocate_memory(formatLength, OMRMEM_CATEGORY_MM);
-			if (loadInfo->fatalErrorStr) {
-				j9str_printf(PORTLIB, loadInfo->fatalErrorStr, formatLength, format, size, qualifier);
-				loadInfo->loadFlags |= FREE_ERROR_STRING; /* indicates that buffer should be freed later */
+			char *buffer = (char *)j9mem_allocate_memory(formatLength, OMRMEM_CATEGORY_MM);
+			if (NULL != buffer) {
+				j9str_printf(PORTLIB, buffer, formatLength, format, size, qualifier);
 			}
+			vm->internalVMFunctions->setErrorJ9dll(PORTLIB, loadInfo, buffer, TRUE);
 			break;
 		}
 
@@ -392,14 +398,17 @@ j9gc_initialize_heap(J9JavaVM *vm, IDATA *memoryParameterTable, UDATA heapBytesR
 			const char* pageSizeQualifier = NULL;
 			qualifiedSize(&pageSize, &pageSizeQualifier);
 
-			char *format = (char *)j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_GC_OPTIONS_XLP_PAGE_NOT_AVAILABLE_STRICT, "Unable to satisfy heap size %zu%s with page size %zu%s. Heap size can be specified with -Xmx");
+			const char *format = j9nls_lookup_message(
+				J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+				J9NLS_GC_OPTIONS_XLP_PAGE_NOT_AVAILABLE_STRICT,
+				"Unable to satisfy heap size %zu%s with page size %zu%s. Heap size can be specified with -Xmx");
 			UDATA formatLength = strlen(format) + 32; /* 2^64 is 20 digits, so have a few extra */
 
-			loadInfo->fatalErrorStr = (char *)j9mem_allocate_memory(formatLength, OMRMEM_CATEGORY_MM);
-			if (loadInfo->fatalErrorStr) {
-				j9str_printf(PORTLIB, loadInfo->fatalErrorStr, formatLength, format, heapSize, heapSizeQualifier, pageSize, pageSizeQualifier);
-				loadInfo->loadFlags |= FREE_ERROR_STRING; /* indicates that buffer should be freed later */
+			char *buffer = (char *)j9mem_allocate_memory(formatLength, OMRMEM_CATEGORY_MM);
+			if (NULL != buffer) {
+				j9str_printf(PORTLIB, buffer, formatLength, format, heapSize, heapSizeQualifier, pageSize, pageSizeQualifier);
 			}
+			vm->internalVMFunctions->setErrorJ9dll(PORTLIB, loadInfo, buffer, TRUE);
 			extensions->largePageFailedToSatisfy = true;
 			break;
 		}
@@ -413,7 +422,10 @@ j9gc_initialize_heap(J9JavaVM *vm, IDATA *memoryParameterTable, UDATA heapBytesR
 
 		/* Handle split heap failures cases */
 		if (NULL != splitFailure) {
-			const char *format = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_GC_FAILED_TO_INSTANTIATE_SPLIT_HEAP, "Failed to instantiate split heap: %s (new size %zu%s, old size %zu%s)");
+			const char *format = j9nls_lookup_message(
+				J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+				J9NLS_GC_FAILED_TO_INSTANTIATE_SPLIT_HEAP,
+				"Failed to instantiate split heap: %s (new size %zu%s, old size %zu%s)");
 			UDATA oldSpaceSize = extensions->oldSpaceSize;
 			const char* oldQualifier = NULL;
 			qualifiedSize(&oldSpaceSize, &oldQualifier);
@@ -422,16 +434,23 @@ j9gc_initialize_heap(J9JavaVM *vm, IDATA *memoryParameterTable, UDATA heapBytesR
 			qualifiedSize(&newSpaceSize, &newQualifier);
 			UDATA formatLength = j9str_printf(PORTLIB, NULL, 0, format, splitFailure, newSpaceSize, newQualifier, oldSpaceSize, oldQualifier);
 
-			loadInfo->fatalErrorStr = (char *)j9mem_allocate_memory(formatLength, OMRMEM_CATEGORY_MM);
-			if (loadInfo->fatalErrorStr) {
-				j9str_printf(PORTLIB, loadInfo->fatalErrorStr, formatLength, format, splitFailure, newSpaceSize, newQualifier, oldSpaceSize, oldQualifier);
-				loadInfo->loadFlags |= FREE_ERROR_STRING; /* indicates that buffer should be freed later */
+			char *buffer = (char *)j9mem_allocate_memory(formatLength, OMRMEM_CATEGORY_MM);
+			if (NULL != buffer) {
+				j9str_printf(PORTLIB, buffer, formatLength, format, splitFailure, newSpaceSize, newQualifier, oldSpaceSize, oldQualifier);
 			}
+			vm->internalVMFunctions->setErrorJ9dll(PORTLIB, loadInfo, buffer, TRUE);
 		}
 
 		/* failed to generate error string - use default */
-		if(NULL == loadInfo->fatalErrorStr) {
-			loadInfo->fatalErrorStr = (char *)j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_GC_FAILED_TO_INSTANTIATE_HEAP, "Failed to instantiate heap.");
+		if (NULL == loadInfo->fatalErrorStr) {
+			vm->internalVMFunctions->setErrorJ9dll(
+				PORTLIB,
+				loadInfo,
+				j9nls_lookup_message(
+					J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+					J9NLS_GC_FAILED_TO_INSTANTIATE_HEAP,
+					"Failed to instantiate heap."),
+				FALSE);
 		}
 
 		goto error_no_memory;
@@ -439,7 +458,14 @@ j9gc_initialize_heap(J9JavaVM *vm, IDATA *memoryParameterTable, UDATA heapBytesR
 
 	extensions->dispatcher = extensions->configuration->createParallelDispatcher(&env, (omrsig_handler_fn)vm->internalVMFunctions->structuredSignalHandlerVM, vm, vm->defaultOSStackSize);
 	if (NULL == extensions->dispatcher) {
-		loadInfo->fatalErrorStr = (char *)j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_GC_FAILED_TO_INSTANTIATE_TASK_DISPATCHER, "Failed to instantiate task dispatcher.");
+		vm->internalVMFunctions->setErrorJ9dll(
+			PORTLIB,
+			loadInfo,
+			j9nls_lookup_message(
+				J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+				J9NLS_GC_FAILED_TO_INSTANTIATE_TASK_DISPATCHER,
+				"Failed to instantiate task dispatcher."),
+			FALSE);
 		goto error_no_memory;
 	}
 
@@ -452,7 +478,14 @@ j9gc_initialize_heap(J9JavaVM *vm, IDATA *memoryParameterTable, UDATA heapBytesR
 		if(MM_GCExtensionsBase::HEAP_INITIALIZATION_FAILURE_REASON_METRONOME_DOES_NOT_SUPPORT_4BIT_SHIFT == extensions->heapInitializationFailureReason) {
 			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTION_OVERFLOW, displayXmxOrMaxRAMPercentage(memoryParameterTable));
 		}
-		loadInfo->fatalErrorStr = (char *)j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_GC_FAILED_TO_INSTANTIATE_GLOBAL_GARBAGE_COLLECTOR, "Failed to instantiate global garbage collector.");
+		vm->internalVMFunctions->setErrorJ9dll(
+			PORTLIB,
+			loadInfo,
+			j9nls_lookup_message(
+				J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+				J9NLS_GC_FAILED_TO_INSTANTIATE_GLOBAL_GARBAGE_COLLECTOR,
+				"Failed to instantiate global garbage collector."),
+			FALSE);
 		goto error_no_memory;
 	}
 	/* Mark this collector as a global collector so that we will check for excessive gc after it collects */
@@ -477,7 +510,14 @@ j9gc_initialize_heap(J9JavaVM *vm, IDATA *memoryParameterTable, UDATA heapBytesR
 
 	/* Initialize statistic locks */
 	if (omrthread_monitor_init_with_name(&extensions->gcStatsMutex, 0, "MM_GCExtensions::gcStats")) {
-		loadInfo->fatalErrorStr = (char *)j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_GC_FAILED_TO_INITIALIZE_MUTEX, "Failed to initialize mutex for GC statistics.");
+		vm->internalVMFunctions->setErrorJ9dll(
+			PORTLIB,
+			loadInfo,
+			j9nls_lookup_message(
+				J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+				J9NLS_GC_FAILED_TO_INITIALIZE_MUTEX,
+				"Failed to initialize mutex for GC statistics."),
+			FALSE);
 		goto error_no_memory;
 	}
 
@@ -516,13 +556,27 @@ gcInitializeHeapStructures(J9JavaVM *vm)
 
 	/* For now, number of segments to default in pool */
 	if ((vm->memorySegments = vm->internalVMFunctions->allocateMemorySegmentList(vm, 10, OMRMEM_CATEGORY_VM)) == NULL) {
-		loadInfo->fatalErrorStr = (char *)j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_GC_FAILED_TO_ALLOCATE_VM_MEMORY_SEGMENTS, "Failed to allocate VM memory segments.");
+		vm->internalVMFunctions->setErrorJ9dll(
+			PORTLIB,
+			loadInfo,
+			j9nls_lookup_message(
+				J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+				J9NLS_GC_FAILED_TO_ALLOCATE_VM_MEMORY_SEGMENTS,
+				"Failed to allocate VM memory segments."),
+			FALSE);
 		goto error;
 	}
 
 	/* For now, number of segments to default in pool */
 	if ((vm->classMemorySegments = vm->internalVMFunctions->allocateMemorySegmentListWithFlags(vm, 10, MEMORY_SEGMENT_LIST_FLAG_SORT, J9MEM_CATEGORY_CLASSES)) == NULL) {
-		loadInfo->fatalErrorStr = (char *)j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_GC_FAILED_TO_ALLOCATE_VM_CLASS_MEMORY_SEGMENTS, "Failed to allocate VM class memory segments.");
+		vm->internalVMFunctions->setErrorJ9dll(
+			PORTLIB,
+			loadInfo,
+			j9nls_lookup_message(
+				J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+				J9NLS_GC_FAILED_TO_ALLOCATE_VM_CLASS_MEMORY_SEGMENTS,
+				"Failed to allocate VM class memory segments."),
+			FALSE);
 		goto error;
 	}
 
@@ -531,7 +585,14 @@ gcInitializeHeapStructures(J9JavaVM *vm)
 	/* Create and initialize the default memory space */
 	defaultMemorySpace = internalAllocateMemorySpaceWithMaximum(vm, extensions->initialMemorySize, extensions->minNewSpaceSize, extensions->newSpaceSize, extensions->maxNewSpaceSize, extensions->minOldSpaceSize, extensions->oldSpaceSize, extensions->maxOldSpaceSize, extensions->maxSizeDefaultMemorySpace, 0, MEMORY_TYPE_DISCARDABLE);
 	if (defaultMemorySpace == NULL) {
-		loadInfo->fatalErrorStr = (char *)j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_GC_FAILED_TO_ALLOCATE_DEFAULT_MEMORY_SPACE, "Failed to allocate default memory space.");
+		vm->internalVMFunctions->setErrorJ9dll(
+			PORTLIB,
+			loadInfo,
+			j9nls_lookup_message(
+				J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+				J9NLS_GC_FAILED_TO_ALLOCATE_DEFAULT_MEMORY_SPACE,
+				"Failed to allocate default memory space."),
+			FALSE);
 		goto error;
 	}
 
@@ -539,7 +600,14 @@ gcInitializeHeapStructures(J9JavaVM *vm)
 
 #if defined(J9VM_GC_FINALIZATION)
 		if(!(extensions->finalizeListManager = GC_FinalizeListManager::newInstance(&env))) {
-			loadInfo->fatalErrorStr = (char *)j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_GC_FAILED_TO_INITIALIZE_FINALIZER_MANAGEMENT, "Failed to initialize finalizer management.");
+			vm->internalVMFunctions->setErrorJ9dll(
+				PORTLIB,
+				loadInfo,
+				j9nls_lookup_message(
+					J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+					J9NLS_GC_FAILED_TO_INITIALIZE_FINALIZER_MANAGEMENT,
+					"Failed to initialize finalizer management."),
+				FALSE);
 			goto error;
 		}
 #endif /* J9VM_GC_FINALIZATION */
@@ -2855,7 +2923,14 @@ gcInitializeDefaults(J9JavaVM* vm)
 
 	memoryParameterTable = (IDATA *)j9mem_allocate_memory(tableSize, OMRMEM_CATEGORY_MM);
 	if (!memoryParameterTable) {
-		loadInfo->fatalErrorStr = (char *)j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_GC_FAILED_TO_INITIALIZE_OUT_OF_MEMORY, "Failed to initialize, out of memory.");
+		vm->internalVMFunctions->setErrorJ9dll(
+			PORTLIB,
+			loadInfo,
+			j9nls_lookup_message(
+				J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+				J9NLS_GC_FAILED_TO_INITIALIZE_OUT_OF_MEMORY,
+				"Failed to initialize, out of memory."),
+			FALSE);
 		goto error;
 	}
 	memset(memoryParameterTable, -1, tableSize);
@@ -2866,7 +2941,14 @@ gcInitializeDefaults(J9JavaVM* vm)
 	//gcOmrInitializeDefaults(vm->omrVM);
 	extensions = MM_GCExtensions::newInstance(&env);
 	if (NULL == extensions) {
-		loadInfo->fatalErrorStr = (char *)j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_GC_FAILED_TO_INITIALIZE_OUT_OF_MEMORY, "Failed to initialize, out of memory.");
+		vm->internalVMFunctions->setErrorJ9dll(
+			PORTLIB,
+			loadInfo,
+			j9nls_lookup_message(
+				J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+				J9NLS_GC_FAILED_TO_INITIALIZE_OUT_OF_MEMORY,
+				"Failed to initialize, out of memory."),
+			FALSE);
 		goto error;
 	}
 	extensions->setOmrVM(vm->omrVM);
@@ -2891,7 +2973,14 @@ gcInitializeDefaults(J9JavaVM* vm)
 	initializeVerboseFunctionTableWithDummies(&extensions->verboseFunctionTable);
 
 	if (JNI_OK != gcParseCommandLineAndInitializeWithValues(vm, memoryParameterTable)) {
-		loadInfo->fatalErrorStr = (char *)j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_GC_FAILED_TO_INITIALIZE_PARSING_COMMAND_LINE, "Failed to initialize, parsing command line.");
+		vm->internalVMFunctions->setErrorJ9dll(
+			PORTLIB,
+			loadInfo,
+			j9nls_lookup_message(
+				J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+				J9NLS_GC_FAILED_TO_INITIALIZE_PARSING_COMMAND_LINE,
+				"Failed to initialize, parsing command line."),
+			FALSE);
 		goto error;
 	}
 
@@ -2912,7 +3001,14 @@ gcInitializeDefaults(J9JavaVM* vm)
 
 		vm->realtimeSizeClasses = (J9VMGCSizeClasses *)j9mem_allocate_memory(realtimeSizeClassesAllocationSize, OMRMEM_CATEGORY_VM);
 		if (NULL == vm->realtimeSizeClasses) {
-			loadInfo->fatalErrorStr = (char *)j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_GC_FAILED_TO_INITIALIZE_OUT_OF_MEMORY, "Failed to initialize, out of memory.");
+			vm->internalVMFunctions->setErrorJ9dll(
+				PORTLIB,
+				loadInfo,
+				j9nls_lookup_message(
+					J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+					J9NLS_GC_FAILED_TO_INITIALIZE_OUT_OF_MEMORY,
+					"Failed to initialize, out of memory."),
+				FALSE);
 			goto error;
 		}
 	}
@@ -2963,14 +3059,28 @@ gcInitializeDefaults(J9JavaVM* vm)
 	extensions->indexableObjectModel.setIsIndexableDataAddrPresent(vm);
 #endif /* defined(J9VM_ENV_DATA64) */
 	if (NULL == extensions->configuration) {
-		loadInfo->fatalErrorStr = (char *)j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_GC_FAILED_TO_INITIALIZE, "Failed to initialize.");
+		vm->internalVMFunctions->setErrorJ9dll(
+			PORTLIB,
+			loadInfo,
+			j9nls_lookup_message(
+				J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+				J9NLS_GC_FAILED_TO_INITIALIZE,
+				"Failed to initialize."),
+			FALSE);
 		goto error;
 	}
 
 	extensions->trackMutatorThreadCategory = J9_ARE_NO_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_REDUCE_CPU_MONITOR_OVERHEAD);
 
 	if (!gcParseTGCCommandLine(vm)) {
-		loadInfo->fatalErrorStr = (char *)j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_GC_FAILED_TO_INITIALIZE_PARSING_COMMAND_LINE, "Failed to initialize, parsing command line.");
+		vm->internalVMFunctions->setErrorJ9dll(
+			PORTLIB,
+			loadInfo,
+			j9nls_lookup_message(
+				J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+				J9NLS_GC_FAILED_TO_INITIALIZE_PARSING_COMMAND_LINE,
+				"Failed to initialize, parsing command line."),
+			FALSE);
 		goto error;
 	}
 
@@ -2983,19 +3093,40 @@ gcInitializeDefaults(J9JavaVM* vm)
 	while (true) {
 		/* Verify Xmx and Xmdx before using the Xmdx value to calculate further values */
 		if (JNI_OK != gcInitializeXmxXmdxVerification(vm, memoryParameterTable, flatConfiguration, minimumVMSize, NULL, NULL)) {
-			loadInfo->fatalErrorStr = (char *)j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_GC_FAILED_TO_INITIALIZE, "Failed to initialize.");
+			vm->internalVMFunctions->setErrorJ9dll(
+				PORTLIB,
+				loadInfo,
+				j9nls_lookup_message(
+					J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+					J9NLS_GC_FAILED_TO_INITIALIZE,
+					"Failed to initialize."),
+				FALSE);
 			goto error;
 		}
 
 		/* Calculate memory parameters based on Xmx/Xmdx */
 		if (JNI_OK != gcInitializeCalculatedValues(vm, memoryParameterTable)) {
-			loadInfo->fatalErrorStr = (char *)j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_GC_FAILED_TO_INITIALIZE, "Failed to initialize.");
+			vm->internalVMFunctions->setErrorJ9dll(
+				PORTLIB,
+				loadInfo,
+				j9nls_lookup_message(
+					J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+					J9NLS_GC_FAILED_TO_INITIALIZE,
+					"Failed to initialize."),
+				FALSE);
 			goto error;
 		}
 
 		/* Verify all memory parameters */
 		if (JNI_OK != gcInitializeVerification(vm, memoryParameterTable, flatConfiguration)) {
-			loadInfo->fatalErrorStr = (char *)j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_GC_FAILED_TO_INITIALIZE, "Failed to initialize.");
+			vm->internalVMFunctions->setErrorJ9dll(
+				PORTLIB,
+				loadInfo,
+				j9nls_lookup_message(
+					J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+					J9NLS_GC_FAILED_TO_INITIALIZE,
+					"Failed to initialize."),
+				FALSE);
 			goto error;
 		}
 
@@ -3015,12 +3146,8 @@ gcInitializeDefaults(J9JavaVM* vm)
 			goto error;
 		}
 
-		/* We are going to try again -- free any buffer we already have from j9gc_initialize_heap */
-		if  ((loadInfo->loadFlags & FREE_ERROR_STRING) && (NULL != loadInfo->fatalErrorStr)) {
-			j9mem_free_memory(loadInfo->fatalErrorStr);
-			loadInfo->loadFlags &= ~FREE_ERROR_STRING;
-		}
-		loadInfo->fatalErrorStr = NULL;
+		/* We are going to try again -- free any buffer we already have from j9gc_initialize_heap. */
+		vm->internalVMFunctions->setErrorJ9dll(PORTLIB, loadInfo, NULL, FALSE);
 	}
 
 	/* initialize largeObjectAllocationProfilingVeryLargeObjectThreshold, largeObjectAllocationProfilingVeryLargeObjectSizeClass and freeMemoryProfileMaxSizeClasses for non segregated memoryPool case */

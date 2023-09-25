@@ -68,7 +68,7 @@ static IDATA initializeCompilerArgs(J9JavaVM* vm,
    char* xCommandLineOptions = NULL;
 
    char *VMOPT_WITH_COLON;
-   char *fatalErrorStr;
+   const char *fatalErrorStr = NULL;
    if (isXjit)
       {
       VMOPT_WITH_COLON = J9::Options::_externalOptionStrings[J9::ExternalOptions::Xjitcolon];
@@ -178,7 +178,7 @@ static IDATA initializeCompilerArgs(J9JavaVM* vm,
       /* If sizeOfOption is 0 then there have been no arguments for (potentially multiple) -Xjit: / -Xaot: */
       else
          {
-         loadInfo->fatalErrorStr = fatalErrorStr;
+         vm->internalVMFunctions->setErrorJ9dll(PORTLIB, loadInfo, fatalErrorStr, FALSE);
          return J9VMDLLMAIN_FAILED;
          }
       }
@@ -198,7 +198,7 @@ static IDATA initializeCompilerArgs(J9JavaVM* vm,
       if (!* xCommandLineOptions)
          {
          j9mem_free_memory(xCommandLineOptions);
-         loadInfo->fatalErrorStr = fatalErrorStr;
+         vm->internalVMFunctions->setErrorJ9dll(PORTLIB, loadInfo, fatalErrorStr, FALSE);
          return J9VMDLLMAIN_FAILED;
          }
       }
@@ -454,7 +454,7 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
 
                if (!jitConfig)
                   {
-                  loadInfo->fatalErrorStr = "cannot initialize JIT: no jitconfig";
+                  vm->internalVMFunctions->setErrorJ9dll(PORTLIB, loadInfo, "cannot initialize JIT: no jitconfig", FALSE);
                   return J9VMDLLMAIN_FAILED;
                   }
 
@@ -493,7 +493,7 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
             _abort:
             freeJITConfig(jitConfig);
             if (!loadInfo->fatalErrorStr || strlen(loadInfo->fatalErrorStr)==0)
-               loadInfo->fatalErrorStr = "cannot initialize JIT";
+               vm->internalVMFunctions->setErrorJ9dll(PORTLIB, loadInfo, "cannot initialize JIT", FALSE);
             return J9VMDLLMAIN_FAILED;
             }
          break;
@@ -590,7 +590,7 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
                // cannot free JIT config because shutdown stage expects it to exist
                vm->runtimeFlags &= ~J9_RUNTIME_JIT_ACTIVE;
                if (!loadInfo->fatalErrorStr || strlen(loadInfo->fatalErrorStr)==0)
-                  loadInfo->fatalErrorStr = "cannot initialize JIT";
+                  vm->internalVMFunctions->setErrorJ9dll(PORTLIB, loadInfo, "cannot initialize JIT", FALSE);
                return J9VMDLLMAIN_FAILED;
                }
 
@@ -649,8 +649,8 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
 
                if ((curThread->currentException != NULL) || (curThread->threadObject == NULL))
                   {
-                  if (!loadInfo->fatalErrorStr || strlen(loadInfo->fatalErrorStr)==0)
-                     loadInfo->fatalErrorStr = "cannot create the jit Thread object";
+                  if ((NULL == loadInfo->fatalErrorStr) || ('\0' == loadInfo->fatalErrorStr[0]))
+                     vm->internalVMFunctions->setErrorJ9dll(PORTLIB, loadInfo, "cannot create the jit Thread object", FALSE);
                   return J9VMDLLMAIN_FAILED;
                   }
 
@@ -675,8 +675,8 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
                   );
                if ((curThread->currentException != NULL) || (curThread->threadObject == NULL))
                   {
-                  if (!loadInfo->fatalErrorStr || strlen(loadInfo->fatalErrorStr)==0)
-                     loadInfo->fatalErrorStr = "cannot create the jit Sampler Thread object";
+                  if ((NULL == loadInfo->fatalErrorStr) || ('\0' == loadInfo->fatalErrorStr[0]))
+                     vm->internalVMFunctions->setErrorJ9dll(PORTLIB, loadInfo, "cannot create the jit Sampler Thread object", FALSE);
                   return J9VMDLLMAIN_FAILED;
                   }
                compInfo->setSamplingThreadLifetimeState(TR::CompilationInfo::SAMPLE_THR_INITIALIZED);
@@ -701,8 +701,8 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
                       iProfilerThread);
                   if ((curThread->currentException != NULL) || (curThread->threadObject == NULL))
                      {
-                     if (!loadInfo->fatalErrorStr || strlen(loadInfo->fatalErrorStr)==0)
-                        loadInfo->fatalErrorStr = "cannot create the iProfiler Thread object";
+                     if ((NULL == loadInfo->fatalErrorStr) || ('\0' == loadInfo->fatalErrorStr[0]))
+                        vm->internalVMFunctions->setErrorJ9dll(PORTLIB, loadInfo, "cannot create the iProfiler Thread object", FALSE);
                      return J9VMDLLMAIN_FAILED;
                      }
                   TRIGGER_J9HOOK_VM_THREAD_STARTED(vm->hookInterface, curThread, iProfilerThread);
@@ -722,8 +722,8 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
                       jProfilerThread);
                   if ((curThread->currentException != NULL) || (curThread->threadObject == NULL))
                      {
-                     if (!loadInfo->fatalErrorStr || strlen(loadInfo->fatalErrorStr)==0)
-                        loadInfo->fatalErrorStr = "cannot create the jProfiler Thread object";
+                     if ((NULL == loadInfo->fatalErrorStr) || ('\0' == loadInfo->fatalErrorStr[0]))
+                        vm->internalVMFunctions->setErrorJ9dll(PORTLIB, loadInfo, "cannot create the jProfiler Thread object", FALSE);
                      return J9VMDLLMAIN_FAILED;
                      }
                   TRIGGER_J9HOOK_VM_THREAD_STARTED(vm->hookInterface, curThread, jProfilerThread);

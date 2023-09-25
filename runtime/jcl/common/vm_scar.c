@@ -118,10 +118,10 @@ static U_8 *allocatedFipsHome = NULL;
 
 jint scarInit(J9JavaVM *vm);
 jint scarPreconfigure(J9JavaVM *vm);
-static UDATA addBFUSystemProperties(J9JavaVM* vm);
+static UDATA addBFUSystemProperties(J9JavaVM *vm);
 static IDATA addVMSpecificDirectories(J9JavaVM *vm, UDATA *cursor, char *subdirName);
 static IDATA loadClasslibPropertiesFile(J9JavaVM *vm, UDATA *cursor);
-static void setFatalErrorStringInDLLTableEntry(J9JavaVM* vm, char *errorString);
+static void setFatalErrorStringInDLLTableEntry(J9JavaVM *vm, const char *errorString);
 
 jint
 JNICALL JVM_OnLoad(JavaVM * jvm, char *options, void *reserved)
@@ -136,7 +136,7 @@ JNICALL JVM_OnLoad(JavaVM * jvm, char *options, void *reserved)
  * @return J9SYSPROP_ERROR_NONE on success, or a J9SYSPROP_ERROR_* value on failure.
  */
 static UDATA
-addBFUSystemProperties(J9JavaVM* vm)
+addBFUSystemProperties(J9JavaVM *vm)
 {
 	int fontPathSize = 0;
 	char* fontPathBuffer = "";
@@ -371,7 +371,7 @@ addBFUSystemProperties(J9JavaVM* vm)
 
 
 jint
-scarInit(J9JavaVM * vm)
+scarInit(J9JavaVM *vm)
 {
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	UDATA handle = 0;
@@ -441,7 +441,7 @@ scarInit(J9JavaVM * vm)
 
 
 IDATA
-J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
+J9VMDllMain(J9JavaVM *vm, IDATA stage, void *reserved)
 {
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	IDATA returnVal = J9VMDLLMAIN_OK;
@@ -546,23 +546,24 @@ J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 
 /**
  * Helper function which looks up the entry for this DLL
- * in the VM's table and sets the fatalErrorString specified
+ * in the VM's table and sets the error string specified
  * if the entry is found.
  *
  * @param[in] vm			A pointer to the Java VM
  * @param[in] errorString	The error string to set in the VM's dll entry
  */
 static void
-setFatalErrorStringInDLLTableEntry(J9JavaVM* vm, char *errorString)
+setFatalErrorStringInDLLTableEntry(J9JavaVM *vm, const char *errorString)
 {
 	J9VMDllLoadInfo *loadInfo = FIND_DLL_TABLE_ENTRY(J9_DLL_NAME);
 	if (NULL != loadInfo) {
-		loadInfo->fatalErrorStr = errorString;
+		PORT_ACCESS_FROM_JAVAVM(vm);
+		vm->internalVMFunctions->setErrorJ9dll(PORTLIB, loadInfo, errorString, FALSE);
 	}
 }
 
 jint
-scarPreconfigure(J9JavaVM * vm)
+scarPreconfigure(J9JavaVM *vm)
 {
 	/* There are a fixed number of entries in jclBootstrapClassPath, ensure that you don't exceed the maximum number */
 	UDATA i = 0;
@@ -702,7 +703,7 @@ loadClasslibPropertiesFile(J9JavaVM *vm, UDATA *cursor)
 }
 
 static IDATA
-addVMSpecificDirectories(J9JavaVM *vm, UDATA *cursor, char * subdirName)
+addVMSpecificDirectories(J9JavaVM *vm, UDATA *cursor, char *subdirName)
 {
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	int javaHomePathLength = (int)strlen((char*)vm->javaHome);

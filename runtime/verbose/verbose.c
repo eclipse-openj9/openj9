@@ -586,7 +586,8 @@ printClass(J9VMThread* vmThread, J9Class* clazz, char* message, UDATA bootLoader
  */
 
 static UDATA
-parseVerboseArgument(char* options, J9VerboseSettings* verboseOptions, char** errorString) {
+parseVerboseArgument(char *options, J9VerboseSettings *verboseOptions, const char **errorString)
+{
 	UDATA result = TRUE;
 
 	if (!options || !*options) {
@@ -668,7 +669,7 @@ parseVerboseArgument(char* options, J9VerboseSettings* verboseOptions, char** er
 
 #define VERBOSE_OPTION_BUF_SIZE 256
 UDATA
-parseVerboseArgumentList(J9JavaVM* vm, J9VMDllLoadInfo* loadInfo, char **errorString) {
+parseVerboseArgumentList(J9JavaVM* vm, J9VMDllLoadInfo* loadInfo, const char **errorString) {
 	char valuesBuffer[VERBOSE_OPTION_BUF_SIZE];				/* Should be long enough to cope with all possible options */
 	char* valuesBufferPtr = valuesBuffer;
 	IDATA bufEmptySpace = VERBOSE_OPTION_BUF_SIZE;
@@ -716,12 +717,12 @@ parseVerboseArgumentList(J9JavaVM* vm, J9VMDllLoadInfo* loadInfo, char **errorSt
 		J9VerboseStruct* verboseStruct;
 		verboseStruct = (J9VerboseStruct* ) j9mem_allocate_memory(sizeof(J9VerboseStruct), OMRMEM_CATEGORY_VM);
 		if (verboseStruct == NULL) {
-			loadInfo->fatalErrorStr = "cannot allocate verboseStruct in verbose init";
+			vm->internalVMFunctions->setErrorJ9dll(PORTLIB, loadInfo, "cannot allocate verboseStruct in verbose init", FALSE);
 			return 0;
 		}
 		vm->verboseStruct = verboseStruct;
 		if (!setVerboseState( vm, &verboseOptions, errorString ) ) {
-			return FALSE;
+			return 0;
 		}
 	}
 	return 1;
@@ -780,7 +781,7 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved) {
 			vm->setVerboseState = &setVerboseState;
 			omrthread_monitor_init( &vm->verboseStateMutex, 0 );
 			if( vm->verboseStateMutex == NULL ) {
-				loadInfo->fatalErrorStr = "cannot allocate verboseStateMutex in verbose init";
+				vm->internalVMFunctions->setErrorJ9dll(PORTLIB, loadInfo, "cannot allocate verboseStateMutex in verbose init", FALSE);
 				goto _error;
 			}
 
@@ -788,11 +789,22 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved) {
 			initializeVerboseFunctionTable(vm);
 
 			if (!checkOptsAndInitVerbosegclog(vm, vm->vmArgsArray)) {
-				loadInfo->fatalErrorStr =  (char*)j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG|J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_VERB_FAILED_TO_INITIALIZE,"Failed to initialize.");
+				vm->internalVMFunctions->setErrorJ9dll(
+					PORTLIB,
+					loadInfo,
+					j9nls_lookup_message(
+						J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+						J9NLS_VERB_FAILED_TO_INITIALIZE,
+						"Failed to initialize."),
+					FALSE);
 				goto _error;
 			}
-			if (!parseVerboseArgumentList(vm, loadInfo, &loadInfo->fatalErrorStr)) {
-				goto _error;
+			{
+				const char *errorString = NULL;
+				if (!parseVerboseArgumentList(vm, loadInfo, &errorString)) {
+					vm->internalVMFunctions->setErrorJ9dll(PORTLIB, loadInfo, errorString, FALSE);
+					goto _error;
+				}
 			}
 
 			if (FIND_AND_CONSUME_VMARG(EXACT_MATCH, OPT_XSNW, NULL) >= 0) {
@@ -1018,7 +1030,7 @@ verboseHookGC(J9HookInterface** hook, UDATA eventNum, void* eventData, void* use
 	This method holds the verboseStateMutex to prevent multiple threads from modifying
 	verbose options simultaneously. */
 IDATA
-setVerboseState( J9JavaVM *vm, J9VerboseSettings *verboseOptions, char **errorString )
+setVerboseState( J9JavaVM *vm, J9VerboseSettings *verboseOptions, const char **errorString )
 {
 	J9HookInterface **vmHooks, **gcOmrHooks, **vmZipCachePoolHooks;
 	J9MemoryManagerVerboseInterface *mmFuncTable = (J9MemoryManagerVerboseInterface *)vm->memoryManagerFunctions->getVerboseGCFunctionTable(vm);

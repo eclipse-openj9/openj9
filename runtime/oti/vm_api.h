@@ -709,6 +709,17 @@ UDATA loadJ9DLL(J9JavaVM * vm, J9VMDllLoadInfo* info);
 */
 IDATA shutdownDLL(J9JavaVM * vm, UDATA descriptor, UDATA shutdownDueToExit);
 
+/**
+ * Update the fatalErrorStr field of the supplied J9VMDllLoadInfo object,
+ * freeing as necessary any allocated string owned by that object.
+ *
+ * @param portLib the port library
+ * @param info the J9VMDllLoadInfo object
+ * @param error the new string (may be NULL)
+ * @param errorIsAllocated indicates whether error (if not NULL) must eventually be freed
+ */
+void setErrorJ9dll(J9PortLibrary *portLib, J9VMDllLoadInfo *info, const char *error, BOOLEAN errorIsAllocated);
+
 
 /* ---------------- exceptiondescribe.c ---------------- */
 
