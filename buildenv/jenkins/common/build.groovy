@@ -543,7 +543,10 @@ def archive_diagnostics(javaVersionJdkImageDir = null) {
     findCrashDataCmd += " -o -name 'jitdump.*.dmp'"
     findCrashDataCmd += " -o -name 'Snap.*.trc'"
 
-    if (SPEC.contains('win')) {
+    if (SPEC.contains('linux')) {
+        // collect *.debuginfo files to help diagnose omr_ddrgen failures
+        findCrashDataCmd += " -o -name '*.debuginfo'"
+    } else if (SPEC.contains('win')) {
         // collect *.pdb files to help diagnose omr_ddrgen failures
         findCrashDataCmd += " -o -name '*.pdb'"
     } else if (SPEC.contains('zos')) {
