@@ -168,6 +168,7 @@ public:
 		MM_UserSpecifiedParameterUDATA _Xmn; /**< Initial value of -Xmn specified by the user */
 		MM_UserSpecifiedParameterUDATA _Xmns; /**< Initial value of -Xmns specified by the user */
 		MM_UserSpecifiedParameterUDATA _Xmnx; /**< Initial value of -Xmnx specified by the user */
+		MM_UserSpecifiedParameterUDATA _Xmx; /**< Initial value of -Xmx specified by the user */
 	} userSpecifiedParameters;
 
 	/**

@@ -3190,26 +3190,30 @@ gcReinitializeDefaultsForRestore(J9VMThread* vmThread)
 	/* We use false here for computeDefaultMaxHeapForJava(), since the restore
 	 * path is only active for releases after Java 8
 	 */
-	uintptr_t candidateSoftMx = extensions->computeDefaultMaxHeapForJava(false);
-	/* we will set softMx value only if maxHeap calculation returned us a smaller
-	 * value than existing maxHeap or softMx values and a larger value than existing
-	 * minHeap value as inherited from/established at snapshot run, this max/minHeap
-	 * is checked by j9gc_set_softmx()
-	 */
-	if (extensions->memoryMax > candidateSoftMx) {
-		if ((0 == extensions->softMx) || (extensions->softMx > candidateSoftMx)) {
-			if (extensions->initialMemorySize > candidateSoftMx) {
-				uintptr_t minimumSizeValue = extensions->initialMemorySize;
-				const char *qualifier = NULL;
-				qualifiedSize(&minimumSizeValue, &qualifier);
-				j9nls_printf(PORTLIB,J9NLS_ERROR,J9NLS_GC_SUBSPACE_TOO_SMALL_FOR_VALUE, "-Xsoftmx", minimumSizeValue, qualifier);
-				goto _error;
-			}
-			else{
-				extensions->softMx = candidateSoftMx;
+
+	if(!extensions->userSpecifiedParameters._Xmx._wasSpecified){
+		uintptr_t candidateSoftMx = extensions->computeDefaultMaxHeapForJava(false);
+		/* we will set softMx value only if maxHeap calculation returned us a smaller
+		* value than existing maxHeap or softMx values and a larger value than existing
+		* minHeap value as inherited from/established at snapshot run, this max/minHeap
+		* is checked by j9gc_set_softmx()
+		*/
+		if (extensions->memoryMax > candidateSoftMx) {
+			if ((0 == extensions->softMx) || (extensions->softMx > candidateSoftMx)) {
+				if (extensions->initialMemorySize > candidateSoftMx) {
+					uintptr_t minimumSizeValue = extensions->initialMemorySize;
+					const char *qualifier = NULL;
+					qualifiedSize(&minimumSizeValue, &qualifier);
+					j9nls_printf(PORTLIB,J9NLS_ERROR,J9NLS_GC_SUBSPACE_TOO_SMALL_FOR_VALUE, "-Xsoftmx", minimumSizeValue, qualifier);
+					goto _error;
+				}
+				else{
+					extensions->softMx = candidateSoftMx;
+				}
 			}
 		}
 	}
+	
 	extensions->gcThreadCountForced = false;
 	extensions->parSweepChunkSize = 0;
 
