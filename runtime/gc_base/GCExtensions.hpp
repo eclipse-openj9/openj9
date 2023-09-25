@@ -98,8 +98,8 @@ public:
 	J9MemoryManagerVerboseInterface verboseFunctionTable;
 
 #if defined(J9VM_GC_FINALIZATION)
-	IDATA finalizeCycleInterval;
-	IDATA finalizeCycleLimit;
+	intptr_t finalizeCycleInterval;
+	intptr_t finalizeCycleLimit;
 #endif /* J9VM_GC_FINALIZATION */
 
 	MM_HookInterface hookInterface;
@@ -121,11 +121,11 @@ public:
 
 	bool dynamicClassUnloadingSet; /**< is true if value for dynamicClassUnloading was specified in command line */
 
-	UDATA runtimeCheckDynamicClassUnloading;
+	uintptr_t runtimeCheckDynamicClassUnloading;
 	bool dynamicClassUnloadingKickoffThresholdForced; /**< true if classUnloadingKickoffThreshold is specified in java options. */
 	bool dynamicClassUnloadingThresholdForced; /**< true if classUnloadingThresholdForced is specified in java options. */
-	UDATA dynamicClassUnloadingKickoffThreshold; /**< the threshold to kickoff a concurrent global GC from a scavenge */
-	UDATA dynamicClassUnloadingThreshold; /**< the threshold to trigger class unloading during a global GC */
+	uintptr_t dynamicClassUnloadingKickoffThreshold; /**< the threshold to kickoff a concurrent global GC from a scavenge */
+	uintptr_t dynamicClassUnloadingThreshold; /**< the threshold to trigger class unloading during a global GC */
 	double classUnloadingAnonymousClassWeight; /**< The weight factor to apply to anonymous classes for threshold comparisons */
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 
@@ -135,8 +135,8 @@ public:
 	bool fvtest_forceFinalizeClassLoaders;
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 
-	UDATA maxSoftReferenceAge; /**< The fixed age specified as the soft reference threshold which acts as our baseline for the dynamicMaxSoftReferenceAge */
-	UDATA dynamicMaxSoftReferenceAge; /**< The age which represents the clearing age of soft references for a globalGC cycle.  At the end of a GC cycle, it will be updated for the following cycle by taking the percentage of free heap in the oldest generation as a fraction of the maxSoftReferenceAge */
+	uintptr_t maxSoftReferenceAge; /**< The fixed age specified as the soft reference threshold which acts as our baseline for the dynamicMaxSoftReferenceAge */
+	uintptr_t dynamicMaxSoftReferenceAge; /**< The age which represents the clearing age of soft references for a globalGC cycle.  At the end of a GC cycle, it will be updated for the following cycle by taking the percentage of free heap in the oldest generation as a fraction of the maxSoftReferenceAge */
 #if defined(J9VM_GC_FINALIZATION)
 	GC_FinalizeListManager* finalizeListManager;
 #endif /* J9VM_GC_FINALIZATION */
@@ -149,18 +149,18 @@ public:
 	MM_ObjectAccessBarrier* accessBarrier;
 
 #if defined(J9VM_GC_FINALIZATION)
-	UDATA finalizeMainPriority; /**< cmd line option to set finalize main thread priority */
-	UDATA finalizeWorkerPriority; /**< cmd line option to set finalize worker thread priority */
+	uintptr_t finalizeMainPriority; /**< cmd line option to set finalize main thread priority */
+	uintptr_t finalizeWorkerPriority; /**< cmd line option to set finalize worker thread priority */
 #endif /* J9VM_GC_FINALIZATION */
 
 	MM_ClassLoaderManager* classLoaderManager; /**< Pointer to the gc's classloader manager to process classloaders/classes */
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
-	UDATA deadClassLoaderCacheSize;
+	uintptr_t deadClassLoaderCacheSize;
 #endif /*defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING) */
 
 	MM_UnfinalizedObjectList* unfinalizedObjectLists; /**< The global linked list of unfinalized object lists. */
 	
-	UDATA objectListFragmentCount; /**< the size of Local Object Buffer(per gc thread), used by referenceObjectBuffer, UnfinalizedObjectBuffer and OwnableSynchronizerObjectBuffer */
+	uintptr_t objectListFragmentCount; /**< the size of Local Object Buffer(per gc thread), used by referenceObjectBuffer, UnfinalizedObjectBuffer and OwnableSynchronizerObjectBuffer */
 
 	MM_Wildcard* numaCommonThreadClassNamePatterns; /**< A linked list of thread class names which should be associated with the common context */
 
@@ -182,8 +182,8 @@ public:
 	};
 	JitStringDeDupPolicy stringDedupPolicy;
 
-	IDATA _asyncCallbackKey;
-	IDATA _TLHAsyncCallbackKey;
+	intptr_t _asyncCallbackKey;
+	intptr_t _TLHAsyncCallbackKey;
 
 	bool _HeapManagementMXBeanBackCompatibilityEnabled;
 
@@ -193,8 +193,8 @@ public:
 
 	double maxRAMPercent; /**< Value of -XX:MaxRAMPercentage specified by the user */
 	double initialRAMPercent; /**< Value of -XX:InitialRAMPercentage specified by the user */
-	UDATA minimumFreeSizeForSurvivor; /**< minimum free size can be reused by collector as survivor, for balanced GC only */
-	UDATA freeSizeThresholdForSurvivor; /**< if average freeSize(freeSize/freeCount) of the region is smaller than the Threshold, the region would not be reused by collector as survivor, for balanced GC only */
+	uintptr_t minimumFreeSizeForSurvivor; /**< minimum free size can be reused by collector as survivor, for balanced GC only */
+	uintptr_t freeSizeThresholdForSurvivor; /**< if average freeSize(freeSize/freeCount) of the region is smaller than the Threshold, the region would not be reused by collector as survivor, for balanced GC only */
 	bool recycleRemainders; /**< true if need to recycle TLHRemainders at the end of PGC, for balanced GC only */
 
 	enum ContinuationListOption {
@@ -218,8 +218,16 @@ protected:
 public:
 	static MM_GCExtensions* newInstance(MM_EnvironmentBase* env);
 	virtual void kill(MM_EnvironmentBase* env);
-
-	void computeDefaultMaxHeapForJava(bool enableOriginalJDK8HeapSizeCompatibilityOption);
+	/**
+	 * compute the default max heap size for java based on physical memory and other metrics
+	 * Note this function is used to adjust the max heap size during gc initialization
+	 * and to adjust the soft max value during the gc restore initialization in case the
+	 * available memory in the environment reduces
+	 * @param[in] enableOriginalJDK8HeapSizeCompatibilityOption boolean value indicates if
+	 * we enable original heap size compatibility option for JDK under JDK8
+	 * @return the computed max heap size
+	 */
+	uintptr_t computeDefaultMaxHeapForJava(bool enableOriginalJDK8HeapSizeCompatibilityOption);
 
 	MMINLINE J9HookInterface** getHookInterface() { return J9_HOOK_INTERFACE(hookInterface); };
 
@@ -229,27 +237,27 @@ public:
 	 */
 	MMINLINE MM_StringTable* getStringTable() { return stringTable; }
 
-	MMINLINE UDATA getDynamicMaxSoftReferenceAge()
+	MMINLINE uintptr_t getDynamicMaxSoftReferenceAge()
 	{
 		return dynamicMaxSoftReferenceAge;
 	}
 
-	MMINLINE UDATA getMaxSoftReferenceAge()
+	MMINLINE uintptr_t getMaxSoftReferenceAge()
 	{
 		return maxSoftReferenceAge;
 	}
 
-	virtual void identityHashDataAddRange(MM_EnvironmentBase* env, MM_MemorySubSpace* subspace, UDATA size, void* lowAddress, void* highAddress);
-	virtual void identityHashDataRemoveRange(MM_EnvironmentBase* env, MM_MemorySubSpace* subspace, UDATA size, void* lowAddress, void* highAddress);
+	virtual void identityHashDataAddRange(MM_EnvironmentBase* env, MM_MemorySubSpace* subspace, uintptr_t size, void* lowAddress, void* highAddress);
+	virtual void identityHashDataRemoveRange(MM_EnvironmentBase* env, MM_MemorySubSpace* subspace, uintptr_t size, void* lowAddress, void* highAddress);
 
-	void updateIdentityHashDataForSaltIndex(UDATA index);
+	void updateIdentityHashDataForSaltIndex(uintptr_t index);
 
 	/**
 	 * Set Tenure address range
 	 * @param base low address of Old subspace range
 	 * @param size size of Old subspace in bytes
 	 */
-	virtual void setTenureAddressRange(void* base, UDATA size)
+	virtual void setTenureAddressRange(void* base, uintptr_t size)
 	{
 		_tenureBase = base;
 		_tenureSize = size;
@@ -262,7 +270,7 @@ public:
 		GC_OMRVMThreadListIterator omrVMThreadListIterator(_omrVM);
 		while (OMR_VMThread* walkThread = omrVMThreadListIterator.nextOMRVMThread()) {
 			walkThread->lowTenureAddress = heapBaseForBarrierRange0;
-			walkThread->highTenureAddress = (void*)((UDATA)heapBaseForBarrierRange0 + heapSizeForBarrierRange0);
+			walkThread->highTenureAddress = (void*)((uintptr_t)heapBaseForBarrierRange0 + heapSizeForBarrierRange0);
 			walkThread->heapBaseForBarrierRange0 = heapBaseForBarrierRange0;
 			walkThread->heapSizeForBarrierRange0 = heapSizeForBarrierRange0;
 		}
@@ -270,7 +278,7 @@ public:
 		GC_VMThreadListIterator vmThreadListIterator((J9JavaVM*)_omrVM->_language_vm);
 		while (J9VMThread* walkThread = vmThreadListIterator.nextVMThread()) {
 			walkThread->lowTenureAddress = heapBaseForBarrierRange0;
-			walkThread->highTenureAddress = (void*)((UDATA)heapBaseForBarrierRange0 + heapSizeForBarrierRange0);
+			walkThread->highTenureAddress = (void*)((uintptr_t)heapBaseForBarrierRange0 + heapSizeForBarrierRange0);
 			walkThread->heapBaseForBarrierRange0 = heapBaseForBarrierRange0;
 			walkThread->heapSizeForBarrierRange0 = heapSizeForBarrierRange0;
 		}

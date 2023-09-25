@@ -189,44 +189,44 @@ MM_GCExtensions::tearDown(MM_EnvironmentBase *env)
 }
 
 void
-MM_GCExtensions::identityHashDataAddRange(MM_EnvironmentBase *env, MM_MemorySubSpace* subspace, UDATA size, void* lowAddress, void* highAddress)
+MM_GCExtensions::identityHashDataAddRange(MM_EnvironmentBase *env, MM_MemorySubSpace* subspace, uintptr_t size, void* lowAddress, void* highAddress)
 {
 	J9IdentityHashData* hashData = getJavaVM()->identityHashData;
 	if (J9_IDENTITY_HASH_SALT_POLICY_STANDARD == hashData->hashSaltPolicy) {
 		if (MEMORY_TYPE_NEW == (subspace->getTypeFlags() & MEMORY_TYPE_NEW)) {
-			if (hashData->hashData1 == (UDATA)highAddress) {
+			if (hashData->hashData1 == (uintptr_t)highAddress) {
 				/* Expanding low bound */
-				hashData->hashData1 = (UDATA)lowAddress;
-			} else if (hashData->hashData2 == (UDATA)lowAddress) {
+				hashData->hashData1 = (uintptr_t)lowAddress;
+			} else if (hashData->hashData2 == (uintptr_t)lowAddress) {
 				/* Expanding high bound */
-				hashData->hashData2 = (UDATA)highAddress;
+				hashData->hashData2 = (uintptr_t)highAddress;
 			} else {
 				/* First expand */
 				Assert_MM_true(UDATA_MAX == hashData->hashData1);
 				Assert_MM_true(0 == hashData->hashData2);
-				hashData->hashData1 = (UDATA)lowAddress;
-				hashData->hashData2 = (UDATA)highAddress;
+				hashData->hashData1 = (uintptr_t)lowAddress;
+				hashData->hashData2 = (uintptr_t)highAddress;
 			}
 		}
 	}
 }
 
 void
-MM_GCExtensions::identityHashDataRemoveRange(MM_EnvironmentBase *env, MM_MemorySubSpace* subspace, UDATA size, void* lowAddress, void* highAddress)
+MM_GCExtensions::identityHashDataRemoveRange(MM_EnvironmentBase *env, MM_MemorySubSpace* subspace, uintptr_t size, void* lowAddress, void* highAddress)
 {
 	J9IdentityHashData* hashData = getJavaVM()->identityHashData;
 	if (J9_IDENTITY_HASH_SALT_POLICY_STANDARD == hashData->hashSaltPolicy) {
 		if (MEMORY_TYPE_NEW == (subspace->getTypeFlags() & MEMORY_TYPE_NEW)) {
-			if (hashData->hashData1 == (UDATA)lowAddress) {
+			if (hashData->hashData1 == (uintptr_t)lowAddress) {
 				/* Contracting low bound */
-				Assert_MM_true(hashData->hashData1 <= (UDATA)highAddress);
-				Assert_MM_true((UDATA)highAddress <= hashData->hashData2);
-				hashData->hashData1 = (UDATA)highAddress;
-			} else if (hashData->hashData2 == (UDATA)highAddress) {
+				Assert_MM_true(hashData->hashData1 <= (uintptr_t)highAddress);
+				Assert_MM_true((uintptr_t)highAddress <= hashData->hashData2);
+				hashData->hashData1 = (uintptr_t)highAddress;
+			} else if (hashData->hashData2 == (uintptr_t)highAddress) {
 				/* Contracting high bound */
-				Assert_MM_true(hashData->hashData1 <= (UDATA)lowAddress);
-				Assert_MM_true((UDATA)lowAddress <= hashData->hashData2);
-				hashData->hashData2 = (UDATA)lowAddress;
+				Assert_MM_true(hashData->hashData1 <= (uintptr_t)lowAddress);
+				Assert_MM_true((uintptr_t)lowAddress <= hashData->hashData2);
+				hashData->hashData2 = (uintptr_t)lowAddress;
 			} else {
 				Assert_MM_unreachable();
 			}
@@ -235,7 +235,7 @@ MM_GCExtensions::identityHashDataRemoveRange(MM_EnvironmentBase *env, MM_MemoryS
 }
 
 void
-MM_GCExtensions::updateIdentityHashDataForSaltIndex(UDATA index)
+MM_GCExtensions::updateIdentityHashDataForSaltIndex(uintptr_t index)
 {
 	getJavaVM()->identityHashData->hashSaltTable[index] = (U_32)convertValueToHash(getJavaVM(), getJavaVM()->identityHashData->hashSaltTable[index]);
 }
@@ -244,11 +244,11 @@ MM_GCExtensions::updateIdentityHashDataForSaltIndex(UDATA index)
  * computeDefaultMaxHeapForJava is for Java only, it will be called during gcParseCommandLineAndInitializeWithValues(),
  *  computeDefaultMaxHeap() will still be called during MM_GCExtensionsBase::initialize(), computeDefaultMaxHeapForJava() can overwrite value of memoryMax.
  */
-void
+uintptr_t
 MM_GCExtensions::computeDefaultMaxHeapForJava(bool enableOriginalJDK8HeapSizeCompatibilityOption)
 {
 	OMRPORT_ACCESS_FROM_OMRVM(_omrVM);
-
+	uintptr_t maxMemoryValue = memoryMax;
 	if (OMR_CGROUP_SUBSYSTEM_MEMORY == omrsysinfo_cgroup_are_subsystems_enabled(OMR_CGROUP_SUBSYSTEM_MEMORY)) {
 		if (omrsysinfo_cgroup_is_memlimit_set()) {
 			/* If running in a cgroup with memory limit > 1G, reserve at-least 512M for JVM's internal requirements
@@ -256,9 +256,9 @@ MM_GCExtensions::computeDefaultMaxHeapForJava(bool enableOriginalJDK8HeapSizeCom
 			 * The value reserved for JVM's internal requirements excludes heap. This value is a conservative
 			 * estimate of the JVM's internal requirements, given that one compilation thread can use up to 256M.
 			 */
-#define OPENJ9_IN_CGROUP_NATIVE_FOOTPRINT_EXCLUDING_HEAP ((U_64)512 * 1024 * 1024)
-			memoryMax = (uintptr_t)OMR_MAX((int64_t)(usablePhysicalMemory / 2), (int64_t)(usablePhysicalMemory - OPENJ9_IN_CGROUP_NATIVE_FOOTPRINT_EXCLUDING_HEAP));
-			memoryMax = (uintptr_t)OMR_MIN(memoryMax, (usablePhysicalMemory / 4) * 3);
+#define OPENJ9_IN_CGROUP_NATIVE_FOOTPRINT_EXCLUDING_HEAP ((uint64_t)512 * 1024 * 1024)
+			maxMemoryValue = (uintptr_t)OMR_MAX((int64_t)(usablePhysicalMemory / 2), (int64_t)(usablePhysicalMemory - OPENJ9_IN_CGROUP_NATIVE_FOOTPRINT_EXCLUDING_HEAP));
+			maxMemoryValue = (uintptr_t)OMR_MIN(maxMemoryValue, (usablePhysicalMemory / 4) * 3);
 #undef OPENJ9_IN_CGROUP_NATIVE_FOOTPRINT_EXCLUDING_HEAP
 		}
 	}
@@ -266,15 +266,15 @@ MM_GCExtensions::computeDefaultMaxHeapForJava(bool enableOriginalJDK8HeapSizeCom
 #if defined(OMR_ENV_DATA64)
 	if (!enableOriginalJDK8HeapSizeCompatibilityOption) {
 		/* extend java default max memory to 25% of usable RAM */
-		memoryMax = OMR_MAX(memoryMax, usablePhysicalMemory / 4);
+		maxMemoryValue = OMR_MAX(maxMemoryValue, usablePhysicalMemory / 4);
 	}
 
 	/* limit maxheapsize up to MAXIMUM_HEAP_SIZE_RECOMMENDED_FOR_3BIT_SHIFT_COMPRESSEDREFS, then can set 3bit compressedrefs as the default */
-	memoryMax = OMR_MIN(memoryMax, MAXIMUM_HEAP_SIZE_RECOMMENDED_FOR_3BIT_SHIFT_COMPRESSEDREFS);
+	maxMemoryValue = OMR_MIN(maxMemoryValue, MAXIMUM_HEAP_SIZE_RECOMMENDED_FOR_3BIT_SHIFT_COMPRESSEDREFS);
 #endif /* OMR_ENV_DATA64 */
 
-	memoryMax = MM_Math::roundToFloor(heapAlignment, memoryMax);
-	maxSizeDefaultMemorySpace = memoryMax;
+	maxMemoryValue = MM_Math::roundToFloor(heapAlignment, maxMemoryValue);
+	return maxMemoryValue;
 }
 
 MM_OwnableSynchronizerObjectList *

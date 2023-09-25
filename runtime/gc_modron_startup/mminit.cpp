@@ -3178,15 +3178,43 @@ gcReinitializeDefaultsForRestore(J9VMThread* vmThread)
 {
 	MM_GCExtensions* extensions = MM_GCExtensions::getExtensions(vmThread);
 	J9JavaVM *vm = vmThread->javaVM;
-	bool result = true;
 
 	PORT_ACCESS_FROM_JAVAVM(vm);
-
+	OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
+	/* Note here we update this parameter which represents the machine physical memory,
+	 * but not the original heap geometry from the snapshot run. We just force the heap
+	 * not to go beyond a certain thereshold calculated based on the new (restore) memory
+	 * availalibity through setting SoftMx.
+	 */
+	extensions->usablePhysicalMemory = omrsysinfo_get_addressable_physical_memory();
+	/* We use false here for computeDefaultMaxHeapForJava(), since the restore
+	 * path is only active for releases after Java 8
+	 */
+	uintptr_t candidateSoftMx = extensions->computeDefaultMaxHeapForJava(false);
+	/* we will set softMx value only if maxHeap calculation returned us a smaller
+	 * value than existing maxHeap or softMx values and a larger value than existing
+	 * minHeap value as inherited from/established at snapshot run, this max/minHeap
+	 * is checked by j9gc_set_softmx()
+	 */
+	if (extensions->memoryMax > candidateSoftMx) {
+		if ((0 == extensions->softMx) || (extensions->softMx > candidateSoftMx)) {
+			if (extensions->initialMemorySize > candidateSoftMx) {
+				uintptr_t minimumSizeValue = extensions->initialMemorySize;
+				const char *qualifier = NULL;
+				qualifiedSize(&minimumSizeValue, &qualifier);
+				j9nls_printf(PORTLIB,J9NLS_ERROR,J9NLS_GC_SUBSPACE_TOO_SMALL_FOR_VALUE, "-Xsoftmx", minimumSizeValue, qualifier);
+				goto _error;
+			}
+			else{
+				extensions->softMx = candidateSoftMx;
+			}
+		}
+	}
 	extensions->gcThreadCountForced = false;
 	extensions->parSweepChunkSize = 0;
 
 	if (!gcParseReconfigurableArguments(vm, vm->checkpointState.restoreArgsList)) {
-		result = false;
+		goto _error;
 	}
 
 	/* If the thread count is being forced, check its validity and display a warning message if it is invalid, then mark it as invalid. */
@@ -3195,7 +3223,9 @@ gcReinitializeDefaultsForRestore(J9VMThread* vmThread)
 		extensions->gcThreadCountForced = false;
 	}
 
-	return result;
+	return true;
+_error:
+	return false;
 }
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
