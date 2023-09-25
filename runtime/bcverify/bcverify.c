@@ -83,8 +83,8 @@ static void bcvHookClassesUnload (J9HookInterface** hook, UDATA eventNum, void* 
 static void printMethod (J9BytecodeVerificationData * verifyData);
 static IDATA simulateStack (J9BytecodeVerificationData * verifyData);
 
-static IDATA parseOptions (J9JavaVM *vm, char *optionValues, char **errorString);
-static IDATA setVerifyState ( J9JavaVM *vm, char *option, char **errorString );
+static IDATA parseOptions (J9JavaVM *vm, char *optionValues, const char **errorString);
+static IDATA setVerifyState ( J9JavaVM *vm, char *option, const char **errorString );
 
 
 /**
@@ -2688,7 +2688,7 @@ j9bcv_J9VMDllMain (J9JavaVM* vm, IDATA stage, void* reserved)
 			loadInfo = FIND_DLL_TABLE_ENTRY( THIS_DLL_NAME );
 			verifyData = j9bcv_initializeVerificationData(vm);
 			if( !verifyData ) {
-				loadInfo->fatalErrorStr = "j9bcv_initializeVerificationData failed";
+				vm->internalVMFunctions->setErrorJ9dll(PORTLIB, loadInfo, "j9bcv_initializeVerificationData failed", FALSE);
 				returnVal = J9VMDLLMAIN_FAILED;
 				break;
 			}
@@ -2722,12 +2722,14 @@ j9bcv_J9VMDllMain (J9JavaVM* vm, IDATA stage, void* reserved)
 					/* Deal with possible -Xverify:<opt>,<opt> case */
 					GET_OPTION_VALUES( xVerifyColonIndex, ':', ',', &optionValuesBufferPtr, 128 );
 
-					if(*optionValuesBuffer) {
-						if (!parseOptions(vm, optionValuesBuffer, &loadInfo->fatalErrorStr)) {
+					if ('\0' != *optionValuesBuffer) {
+						const char *errorString = NULL;
+						if (!parseOptions(vm, optionValuesBuffer, &errorString)) {
+							vm->internalVMFunctions->setErrorJ9dll(PORTLIB, loadInfo, errorString, FALSE);
 							returnVal = J9VMDLLMAIN_FAILED;
 						}
 					} else {
-						loadInfo->fatalErrorStr = "No options specified for -Xverify:<opt>";
+						vm->internalVMFunctions->setErrorJ9dll(PORTLIB, loadInfo, "No options specified for -Xverify:<opt>", FALSE);
 						returnVal = J9VMDLLMAIN_FAILED;
 					}
 				}
@@ -2752,7 +2754,7 @@ j9bcv_J9VMDllMain (J9JavaVM* vm, IDATA stage, void* reserved)
 			noClassRelationshipVerifierIndex = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXNOCLASSRELATIONSHIPVERIFIER, NULL);
 			if (classRelationshipVerifierIndex > noClassRelationshipVerifierIndex) {
 				if (J9_ARE_ANY_BITS_SET(vm->runtimeFlags, J9_RUNTIME_XFUTURE)) {
-					loadInfo->fatalErrorStr = "-XX:+ClassRelationshipVerifier cannot be used if -Xfuture or if -Xverify:all is enabled";
+					vm->internalVMFunctions->setErrorJ9dll(PORTLIB, loadInfo, "-XX:+ClassRelationshipVerifier cannot be used if -Xfuture or if -Xverify:all is enabled", FALSE);
 					returnVal = J9VMDLLMAIN_FAILED;
 				} else {
 					vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_ENABLE_CLASS_RELATIONSHIP_VERIFIER;
@@ -2775,7 +2777,7 @@ j9bcv_J9VMDllMain (J9JavaVM* vm, IDATA stage, void* reserved)
 
 
 static IDATA
-setVerifyState(J9JavaVM *vm, char *option, char **errorString)
+setVerifyState(J9JavaVM *vm, char *option, const char **errorString)
 {
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
@@ -2823,7 +2825,7 @@ setVerifyState(J9JavaVM *vm, char *option, char **errorString)
 
 
 static IDATA
-parseOptions(J9JavaVM *vm, char *optionValues, char **errorString)
+parseOptions(J9JavaVM *vm, char *optionValues, const char **errorString)
 {
 	char *optionValue = optionValues;			/* Values are separated by single NULL characters. */
 
