@@ -1594,7 +1594,7 @@ typedef struct J9ROMFieldOffsetWalkResult {
 	UDATA superTotalInstanceSize;
 	UDATA index;
 	IDATA backfillOffset;
-#ifdef J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	struct J9Class* flattenedClass;
 #endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
 } J9ROMFieldOffsetWalkResult;
@@ -1632,7 +1632,7 @@ typedef struct J9ROMFieldOffsetWalkState {
 	struct J9HiddenInstanceField* hiddenInstanceFields[J9VM_MAX_HIDDEN_FIELDS_PER_CLASS];
 	UDATA hiddenInstanceFieldCount;
 	UDATA hiddenInstanceFieldWalkIndex;
-#ifdef J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	struct J9FlattenedClassCache *flattenedClassCache;
 	UDATA firstFlatSingleOffset;
 	UDATA firstFlatObjectOffset;
@@ -4832,7 +4832,7 @@ typedef struct J9InternalVMFunctions {
 	UDATA  ( *structuredSignalHandlerVM)(struct J9PortLibrary* portLibrary, U_32 gpType, void* gpInfo, void* userData) ;
 	UDATA  ( *addHiddenInstanceField)(struct J9JavaVM *vm, const char *className, const char *fieldName, const char *fieldSignature, UDATA *offsetReturn) ;
 	void  ( *reportHotField)(struct J9JavaVM *javaVM, int32_t reducedCpuUtil, J9Class* clazz, uint8_t fieldOffset,  uint32_t reducedFrequency) ;
-#ifdef J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	struct J9ROMFieldOffsetWalkResult*  ( *fieldOffsetsStartDo)(struct J9JavaVM *vm, struct J9ROMClass *romClass, struct J9Class *superClazz, struct J9ROMFieldOffsetWalkState *state, U_32 flags, J9FlattenedClassCache *flattenedClassCache) ;
 #else /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
 	struct J9ROMFieldOffsetWalkResult*  ( *fieldOffsetsStartDo)(struct J9JavaVM *vm, struct J9ROMClass *romClass, struct J9Class *superClazz, struct J9ROMFieldOffsetWalkState *state, U_32 flags) ;
@@ -5900,7 +5900,7 @@ typedef struct J9JavaVM {
 #endif /* WIN32 */
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
 	omrthread_monitor_t constantDynamicMutex;
-#ifdef J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	UDATA valueFlatteningThreshold;
 	omrthread_monitor_t valueTypeVerificationMutex;
 	struct J9Pool* valueTypeVerificationStackPool;
