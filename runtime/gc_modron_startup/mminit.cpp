@@ -3211,8 +3211,7 @@ gcReinitializeDefaultsForRestore(J9VMThread* vmThread)
 					qualifiedSize(&minimumSizeValue, &qualifier);
 					j9nls_printf(PORTLIB,J9NLS_ERROR,J9NLS_GC_SUBSPACE_TOO_SMALL_FOR_VALUE, "-Xsoftmx", minimumSizeValue, qualifier);
 					goto _error;
-				}
-				else{
+				} else {
 					extensions->softMx = candidateSoftMx;
 				}
 			}
