@@ -231,14 +231,6 @@ standardInit(J9JavaVM *vm, char *dllName)
 		goto _fail;
 	}
 
-	if (J2SE_VERSION(vm) >= J2SE_V11) {
-		result = registerJdkInternalReflectConstantPoolNatives((JNIEnv*)vmThread);
-		if (JNI_OK != result) {
-			fprintf(stderr, "Failed to register natives for jdk.internal.reflect.ConstantPool\n");
-			goto _fail;
-		}
-	}
-
 #ifdef J9VM_OPT_REFLECT
 	if (NULL != vm->reflectFunctions.idToReflectMethod) {
 		jmethodID invokeMethod = NULL;
@@ -1033,11 +1025,11 @@ completeInitialization(J9JavaVM * vm)
 	jint result = JNI_OK;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	J9VMThread *currentThread = vm->mainThread;
-	
+
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 	vmFuncs->sendCompleteInitialization(currentThread);
 	vmFuncs->internalReleaseVMAccess(currentThread);
-	
+
 	if (NULL == currentThread->currentException) {
 		/* ensure ClassLoader.applicationClassLoader updated via system property java.system.class.loader is updated in VM as well */
 		internalInitializeJavaLangClassLoader((JNIEnv*)currentThread);

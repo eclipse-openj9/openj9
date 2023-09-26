@@ -848,7 +848,6 @@ Java_jdk_internal_reflect_ConstantPool_registerNatives(JNIEnv *env, jclass unuse
 jint
 registerJdkInternalReflectConstantPoolNatives(JNIEnv *env) {
 	jint result = 0;
-	J9JavaVM *vm = ((J9VMThread *)env)->javaVM;
 
 	JNINativeMethod natives[] = {
 		{
@@ -926,12 +925,6 @@ registerJdkInternalReflectConstantPoolNatives(JNIEnv *env) {
 
 	/* jdk.internal.reflect.ConstantPool is currently cached in CLS_sun_reflect_ConstantPool */
 	jclass jdk_internal_reflect_ConstantPool = JCL_CACHE_GET(env, CLS_sun_reflect_ConstantPool);
-
-	/* This is temporary code, will be removed in the future. */
-	if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_REFLECT_CONSTANTPOOL_REGISTER_NATIVES_CALLED)) {
-		goto _end;
-	}
-	vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_REFLECT_CONSTANTPOOL_REGISTER_NATIVES_CALLED;
 
 	if (NULL == jdk_internal_reflect_ConstantPool) {
 		BOOLEAN rc = initializeSunReflectConstantPoolIDCache(env);
