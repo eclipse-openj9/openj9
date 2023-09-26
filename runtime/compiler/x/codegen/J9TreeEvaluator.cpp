@@ -1574,7 +1574,7 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
          "or same if using full refs. But was %d bytes for discontiguous and %d bytes for contiguous array.\n",
          fej9->getOffsetOfDiscontiguousDataAddrField(), fej9->getOffsetOfContiguousDataAddrField());
 
-      generateRegImm64Instruction(TR::InstOpCode::MOV8RegImm4,
+      generateRegImmInstruction(TR::InstOpCode::MOV8RegImm4,
          node,
          temp3Reg,
          static_cast<int32_t>(fej9->getOffsetOfDiscontiguousDataAddrField() - fej9->getOffsetOfContiguousDataAddrField()),
