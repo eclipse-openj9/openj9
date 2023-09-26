@@ -389,7 +389,7 @@ public:
 #if defined(OMR_GC_IDLE_HEAP_MANAGER)
 		, idleGCManager(NULL)
 #endif
-		, maxRAMPercent(0.0) /* this would get overwritten by user specified value */
+		, maxRAMPercent(-1.0) /* this would get overwritten by user specified value */
 		, initialRAMPercent(0.0) /* this would get overwritten by user specified value */
 		, minimumFreeSizeForSurvivor(DEFAULT_SURVIVOR_MINIMUM_FREESIZE)
 		, freeSizeThresholdForSurvivor(DEFAULT_SURVIVOR_THRESHOLD)
