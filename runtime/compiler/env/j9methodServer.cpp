@@ -1845,10 +1845,6 @@ TR_ResolvedJ9JITServerMethod::archetypeArgPlaceholderSlot()
 bool
 TR_ResolvedJ9JITServerMethod::isFieldQType(int32_t cpIndex)
    {
-   if (!TR::Compiler->om.areFlattenableValueTypesEnabled() ||
-      (-1 == cpIndex))
-      return false;
-
    auto comp = _fe->_compInfoPT->getCompilation();
    int32_t sigLen;
    char *sig = fieldOrStaticSignatureChars(cpIndex, sigLen);
@@ -1856,6 +1852,22 @@ TR_ResolvedJ9JITServerMethod::isFieldQType(int32_t cpIndex)
 
    J9VMThread *vmThread = comp->j9VMThread();
    return vmThread->javaVM->internalVMFunctions->isNameOrSignatureQtype(utfWrapper);
+   }
+
+bool
+TR_ResolvedJ9JITServerMethod::isFieldNullRestricted(TR::Compilation *comp, int32_t cpIndex, bool isStatic, bool isStore)
+   {
+   if (!TR::Compiler->om.areFlattenableValueTypesEnabled() ||
+      (-1 == cpIndex))
+      return false;
+
+   if (TR::Compiler->om.isQDescriptorForValueTypesSupported())
+      {
+      return isFieldQType(cpIndex);
+      }
+
+   _stream->write(JITServer::MessageType::ResolvedMethod_isFieldNullRestricted, _remoteMirror, cpIndex, isStatic, isStore);
+   return std::get<0>(_stream->read<bool>());
    }
 
 bool
