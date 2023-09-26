@@ -1593,14 +1593,14 @@ gcParseCommandLineAndInitializeWithValues(J9JavaVM *vm, IDATA *memoryParameters)
 
 	memoryParameters[opt_Xmcrs] = index;
 
-	result = option_set_to_opt(vm, OPT_XMX, &index, EXACT_MEMORY_MATCH, &extensions->userSpecifiedParameters._Xmx._valueSpecified);
+	result = option_set_to_opt(vm, OPT_XMX, &index, EXACT_MEMORY_MATCH, &extensions->memoryMax);
 	if (OPTION_OK != result) {
 		goto _error;
 	}
 	memoryParameters[opt_Xmx] = index;
 	if (-1 != memoryParameters[opt_Xmx]) {
 		extensions->userSpecifiedParameters._Xmx._wasSpecified = true;
-		extensions->memoryMax = extensions->userSpecifiedParameters._Xmx._valueSpecified;
+		extensions->userSpecifiedParameters._Xmx._valueSpecified = extensions->memoryMax;
 	}
 	result = option_set_to_opt(vm, OPT_SOFTMX, &index, EXACT_MEMORY_MATCH, &extensions->softMx);
 	if (OPTION_OK != result) {

@@ -382,6 +382,7 @@ public:
 		, unfinalizedObjectLists(NULL)
 		, objectListFragmentCount(0)
 		, numaCommonThreadClassNamePatterns(NULL)
+		, userSpecifiedParameters()
 		, stringDedupPolicy(J9_JIT_STRING_DEDUP_POLICY_UNDEFINED)
 		, _asyncCallbackKey(-1)
 		, _TLHAsyncCallbackKey(-1)

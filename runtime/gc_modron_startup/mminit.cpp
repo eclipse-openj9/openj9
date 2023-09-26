@@ -3189,7 +3189,7 @@ gcReinitializeDefaultsForRestore(J9VMThread* vmThread)
 	extensions->usablePhysicalMemory = omrsysinfo_get_addressable_physical_memory();
 	if (!extensions->userSpecifiedParameters._Xmx._wasSpecified){
 		uintptr_t candidateSoftMx = 0;
-		if (0.0 >= extensions->maxRAMPercent){
+		if (0.0 >= extensions->maxRAMPercent) {
 			/* We use false here for computeDefaultMaxHeapForJava(), since the restore
 			* path is only active for releases after Java 8 releases
 			*/
