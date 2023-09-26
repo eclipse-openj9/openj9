@@ -183,21 +183,6 @@ public:
    bool isString(TR::Compilation *comp, TR_OpaqueClassBlock *clazz);
    bool jitStaticsAreSame(TR::Compilation *comp, TR_ResolvedMethod * method1, int32_t cpIndex1, TR_ResolvedMethod * method2, int32_t cpIndex2);
    bool jitFieldsAreSame(TR::Compilation *comp, TR_ResolvedMethod * method1, int32_t cpIndex1, TR_ResolvedMethod * method2, int32_t cpIndex2, int32_t isStatic);
-   /*
-    * \brief
-    *    Tells whether a class reference entry in the constant pool represents a primitive value type class.
-    *
-    * \param cpContextClass
-    *    The class whose constant pool contains the class reference entry being looked at. In another words,
-    *    it's the class of the method referring to the class reference entry.
-    *
-    * \param cpIndex
-    *    The constant pool index of the class reference entry.
-    *
-    * \note
-    *    The class reference entry doesn't need to be resolved because the information is encoded in class name string
-    */
-   bool isClassRefPrimitiveValueType(TR::Compilation *comp, TR_OpaqueClassBlock *cpContextClass, int32_t cpIndex);
 
    /** \brief
     *	    Populates a TypeLayout object.

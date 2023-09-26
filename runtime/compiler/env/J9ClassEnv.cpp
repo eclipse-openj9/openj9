@@ -524,7 +524,7 @@ static void addEntryForFieldImpl(TR_VMField *field, TR::TypeLayoutBuilder &tlb, 
          }
       else
          {
-         TR_ASSERT_FATAL(false, "Support for null-restricted types without Q descriptor is to be implemented!!!");
+         isFieldPrimitiveValueType = vm->internalVMFunctions->isFieldNullRestricted(field->shape);
          }
       }
 
@@ -1016,24 +1016,6 @@ J9::ClassEnv::containsZeroOrOneConcreteClass(TR::Compilation *comp, List<TR_Pers
          }
       }
    return true;
-   }
-
-bool
-J9::ClassEnv::isClassRefPrimitiveValueType(TR::Compilation *comp, TR_OpaqueClassBlock *cpContextClass, int32_t cpIndex)
-   {
-#if defined(J9VM_OPT_JITSERVER)
-   if (auto stream = comp->getStream())
-      {
-      stream->write(JITServer::MessageType::ClassEnv_isClassRefPrimitiveValueType, cpContextClass, cpIndex);
-      return std::get<0>(stream->read<bool>());
-      }
-   else // non-jitserver
-#endif /* defined(J9VM_OPT_JITSERVER) */
-      {
-      J9Class * j9class = reinterpret_cast<J9Class *>(cpContextClass);
-      J9JavaVM *vm = comp->fej9()->getJ9JITConfig()->javaVM;
-      return vm->internalVMFunctions->isClassRefQtype(j9class, cpIndex);
-      }
    }
 
 char *

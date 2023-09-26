@@ -9313,16 +9313,57 @@ TR_J9ByteCodeIlGenerator::packReferenceChainOffsets(TR::Node *node, std::vector<
 bool
 TR_ResolvedJ9Method::isFieldQType(int32_t cpIndex)
    {
-   if (!TR::Compiler->om.areFlattenableValueTypesEnabled() ||
-      (-1 == cpIndex))
-      return false;
-
-   J9VMThread *vmThread = fej9()->vmThread();
    J9ROMFieldRef *ref = (J9ROMFieldRef *) (&romCPBase()[cpIndex]);
    J9ROMNameAndSignature *nameAndSignature = J9ROMFIELDREF_NAMEANDSIGNATURE(ref);
    J9UTF8 *signature = J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSignature);
 
+   J9VMThread *vmThread = fej9()->vmThread();
    return vmThread->javaVM->internalVMFunctions->isNameOrSignatureQtype(signature);
+   }
+
+bool
+TR_ResolvedJ9Method::isFieldNullRestricted(TR::Compilation *comp, int32_t cpIndex, bool isStatic, bool isStore)
+   {
+   if (!TR::Compiler->om.areFlattenableValueTypesEnabled() ||
+      (-1 == cpIndex))
+      return false;
+
+   if (TR::Compiler->om.isQDescriptorForValueTypesSupported())
+      {
+      if (isFieldQType(cpIndex)) // Temporary until javac supports NullRestricted attribute
+         return true;
+      }
+
+   J9VMThread *vmThread = fej9()->vmThread();
+   J9ROMFieldShape *fieldShape = NULL;
+
+   bool failCompilation = false;
+   {
+   TR::VMAccessCriticalSection isFieldNullRestricted(fej9());
+   if (isStatic)
+      {
+      void *staticAddress = jitCTResolveStaticFieldRefWithMethod(vmThread, ramMethod(), cpIndex, isStore, &fieldShape);
+      if (!staticAddress)
+         {
+         failCompilation = true;
+         }
+      }
+   else
+      {
+      IDATA fieldOffset = jitCTResolveInstanceFieldRefWithMethod(vmThread, ramMethod(), cpIndex, isStore, &fieldShape);
+      if (fieldOffset == -1)
+         {
+         failCompilation = true;
+         }
+      }
+   }
+
+   if (failCompilation)
+      {
+      comp->failCompilation<TR::CompilationException>(isStatic ? "jitCTResolveStaticFieldRefWithMethod failed" : "jitCTResolveInstanceFieldRefWithMethod failed");
+      }
+
+   return vmThread->javaVM->internalVMFunctions->isFieldNullRestricted(fieldShape);
    }
 
 bool
