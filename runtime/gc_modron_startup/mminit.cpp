@@ -3199,20 +3199,13 @@ gcReinitializeDefaultsForRestore(J9VMThread* vmThread)
 			candidateSoftMx = extensions->computeDefaultMaxHeapForJava(false);
 		}
 		/* We will set softMx value only if maxHeap calculation returned us a smaller
-		 * value than existing maxHeap or softMx values, and a larger value than existing
-		 * minHeap value as inherited from/established at snapshot run.
+		 * value than existing maxHeap or softMx values (or softMx isn't previously set),
+		 * and set the softMx to be the maximum of -Xms (initial memory size) and the 
+		 * candidateSoftMx
 		 */
 		if (extensions->memoryMax > candidateSoftMx) {
 			if ((0 == extensions->softMx) || (extensions->softMx > candidateSoftMx)) {
-				if (extensions->initialMemorySize > candidateSoftMx) {
-					uintptr_t minimumSizeValue = extensions->initialMemorySize;
-					const char *qualifier = NULL;
-					qualifiedSize(&minimumSizeValue, &qualifier);
-					j9nls_printf(PORTLIB,J9NLS_ERROR,J9NLS_GC_SUBSPACE_TOO_SMALL_FOR_VALUE, "-Xsoftmx", minimumSizeValue, qualifier);
-					goto _error;
-				} else {
-					extensions->softMx = candidateSoftMx;
-				}
+				extensions->softMx = max(candidateSoftMx, extensions->initialMemorySize);
 			}
 		}
 	}
