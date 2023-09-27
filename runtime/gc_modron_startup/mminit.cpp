@@ -3182,7 +3182,7 @@ gcReinitializeDefaultsForRestore(J9VMThread* vmThread)
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
 	/* Note here we update this parameter which represents the machine physical memory,
-	 * and we don't change the original heap geometry from snapshot run. 
+	 * and we don't change the original heap geometry from snapshot run.
 	 */
 	extensions->usablePhysicalMemory = omrsysinfo_get_addressable_physical_memory();
 	/* We re-use the softMx logic here to adjust default maximum heap size in restore path
@@ -3206,7 +3206,11 @@ gcReinitializeDefaultsForRestore(J9VMThread* vmThread)
 		 */
 		if (extensions->memoryMax > candidateSoftMx) {
 			if ((0 == extensions->softMx) || (extensions->softMx > candidateSoftMx)) {
-				extensions->softMx = max(candidateSoftMx, extensions->initialMemorySize);
+				if (candidateSoftMx > extensions->initialMemorySize) {
+					extensions->softMx = candidateSoftMx;
+				} else {
+					extensions->softMx = extensions->initialMemorySize;
+				}
 			}
 		}
 	}
