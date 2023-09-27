@@ -204,12 +204,6 @@
 	</test>
 	<test>
 		<testCaseName>jit_jitt_openj9_none_SCC</testCaseName>
-		<disables>
-			<disable>
-				<comment>https://github.com/eclipse-openj9/openj9/issues/15152</comment>
-				<version>19+</version>
-			</disable>
-		</disables>
 		<variations>
 			<variation>-Xjit:noJitUntilMain,count=0,optlevel=warm,gcOnResolve,rtResolve -verbose:stackwalk=0 -Xdump</variation>
 			<variation>-Xrs -Xjit:noJitUntilMain,count=0,optlevel=warm,gcOnResolve,rtResolve -verbose:stackwalk=0 -Xdump</variation>
