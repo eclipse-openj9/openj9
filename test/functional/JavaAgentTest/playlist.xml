@@ -23,13 +23,6 @@
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../TKG/playlist.xsd">
 	<test>
 		<testCaseName>TestFlushReflectionCache</testCaseName>
-		<disables>
-			<disable>
-				<comment>https://github.com/eclipse-openj9/openj9/issues/15152</comment>
-				<version>19+</version>
-				<variation>Mode107</variation>
-			</disable>
-		</disables>
 		<variations>
 			<variation>NoOptions</variation>
 			<variation>Mode100</variation>
