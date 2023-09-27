@@ -3185,27 +3185,41 @@ gcReinitializeDefaultsForRestore(J9VMThread* vmThread)
 	 * and we don't change the original heap geometry from snapshot run.
 	 */
 	extensions->usablePhysicalMemory = omrsysinfo_get_addressable_physical_memory();
-	/* We re-use the softMx logic here to adjust default maximum heap size in restore path
-	 * temporarily.
+	/* While ideally we would want to change the heap geometry (parameters such as
+	 * extensions->maxMemory, virtual memory reserved, etc), it would be too complex
+	 * and slow. As an alternative, we leave the geometry as it is, but utilize
+	 * existing softmx functionality to limit the maximum size of heap.
+	 * Note here we obey explicit -Xmx so to simply let the user overrides
+	 * the behavior that uses on softmx.
 	 */
+
 	if (!extensions->userSpecifiedParameters._Xmx._wasSpecified){
 		uintptr_t candidateSoftMx = 0;
-		/* if the user have set maxRAMPercent through -XX:MaxRAMPercentage */
+		/* If the user have set maxRAMPercent through -XX:MaxRAMPercentage, we will
+		 * use it to calculate the proposed softmx.
+		 */
 		if (0.0 <= extensions->maxRAMPercent) {
 			candidateSoftMx = extensions->maxRAMPercent * extensions->usablePhysicalMemory / 100.0;
 		} else {
-			/* We use false here for computeDefaultMaxHeapForJava(), since the restore
-			 * path is only active for releases after Java 8 releases
+			/* We use false here for computeDefaultMaxHeapForJava(), since in restore
+			 * scenario enableOriginalJDK8HeapSizeCompatibilityOption is always false.
 			 */
 			candidateSoftMx = extensions->computeDefaultMaxHeapForJava(false);
 		}
-		/* We will set softMx value only if maxHeap calculation returned us a smaller
-		 * value than existing maxHeap or softMx values (or softMx isn't previously set).
-		 * And set the softMx to be the maximum of -Xms (initial memory size) and the
-		 * candidateSoftMx.
+		/* We compare against the previous heap size, and only perform the update
+		 * if proposed heap size on restore side is smaller than the snapshot one.
 		 */
 		if (extensions->memoryMax > candidateSoftMx) {
+			/* We don't want to override the user-specified softmx value unless
+			 * the proposed softmx is smaller than that.
+			 */
 			if ((0 == extensions->softMx) || (extensions->softMx > candidateSoftMx)) {
+				/* We don't go below initialMemorySize because:
+				 * 1. for default values, the heap will be way too small
+				 * 2. for user-specified -Xms, the heap size should stay consistent
+				 * with that, so we pick the maximum of proposed softmx and
+				 * initialMemorySize
+				 */
 				if (candidateSoftMx > extensions->initialMemorySize) {
 					extensions->softMx = candidateSoftMx;
 				} else {
