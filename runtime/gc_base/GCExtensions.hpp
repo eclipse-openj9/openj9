@@ -220,13 +220,13 @@ public:
 	static MM_GCExtensions* newInstance(MM_EnvironmentBase* env);
 	virtual void kill(MM_EnvironmentBase* env);
 	/**
-	 * compute the default max heap size for java based on physical memory and other metrics
-	 * Note this function is used to adjust the max heap size during gc initialization
+	 * Compute the default max heap size for java based on physical memory and other metrics.
+	 * Note this function is used to adjust the max heap size during gc initialization,
 	 * and to adjust the soft max value during the gc restore initialization in case the
 	 * available memory in the environment reduces
-	 * @param[in] enableOriginalJDK8HeapSizeCompatibilityOption boolean value indicates if
+	 * @param[in] enableOriginalJDK8HeapSizeCompatibilityOption Boolean value indicates if
 	 * we enable original heap size compatibility option for JDK under JDK8
-	 * @return the computed max heap size
+	 * @return Computed max heap size
 	 */
 	uintptr_t computeDefaultMaxHeapForJava(bool enableOriginalJDK8HeapSizeCompatibilityOption);
 
