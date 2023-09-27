@@ -3191,18 +3191,17 @@ gcReinitializeDefaultsForRestore(J9VMThread* vmThread)
 		uintptr_t candidateSoftMx = 0;
 		if (0.0 >= extensions->maxRAMPercent) {
 			/* We use false here for computeDefaultMaxHeapForJava(), since the restore
-			* path is only active for releases after Java 8 releases
-			*/
+			 * path is only active for releases after Java 8 releases
+			 */
 			candidateSoftMx = extensions->computeDefaultMaxHeapForJava(false);
 		} else {
 			/* if the user have set maxRAMPercent through -XX:MaxRAMPercentage */
 			candidateSoftMx = extensions->maxRAMPercent * extensions->usablePhysicalMemory / 100.0;
 		}
-		/* we will set softMx value only if maxHeap calculation returned us a smaller
-		* value than existing maxHeap or softMx values and a larger value than existing
-		* minHeap value as inherited from/established at snapshot run, this max/minHeap
-		* is checked by j9gc_set_softmx()
-		*/
+		/* We will set softMx value only if maxHeap calculation returned us a smaller
+		 * value than existing maxHeap or softMx values, and a larger value than existing
+		 * minHeap value as inherited from/established at snapshot run.
+		 */
 		if (extensions->memoryMax > candidateSoftMx) {
 			if ((0 == extensions->softMx) || (extensions->softMx > candidateSoftMx)) {
 				if (extensions->initialMemorySize > candidateSoftMx) {
