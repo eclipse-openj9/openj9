@@ -9654,7 +9654,7 @@ portLibCall_sysinfo_has_fixed_frame_C_calling_convention()
 
    /* AArch64 */
    #if defined(TR_HOST_ARM64) && defined(TR_TARGET_ARM64)
-      return false;
+      return true;
    #endif
 
    /* X86 */

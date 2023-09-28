@@ -76,6 +76,9 @@ J9::ARM64::CodeGenerator::initialize()
       {
       comp->setOption(TR_EnableMonitorCacheLookup);
       }
+
+   if (comp->fej9()->hasFixedFrameC_CallingConvention())
+      cg->setHasFixedFrameC_CallingConvention();
    }
 
 TR::Linkage *
