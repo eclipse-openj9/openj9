@@ -179,6 +179,35 @@ option_set(J9JavaVM* vm, const char* option, IDATA match)
 /**
  * Find, consume and record an option from the argument list.
  * Given an option string and the match type, find the argument in the to be consumed list.
+ * If not found, return success.
+ * If found, consume it, verify the memory value.
+ *
+ * @return OPTION_OK if option is found and consumed or option not present, OPTION_MALFORMED  if the option was malformed, OPTION_OVERFLOW if the option overflowed.
+ * @note value stored at address is invalid if failure returned
+ * @note optionIndex contains position of argument on command line if success returned, else -1
+ */
+static IDATA
+option_set_to_opt_args(J9JavaVM* vm, const char* option, IDATA* optionIndex, IDATA match, UDATA* address, J9VMInitArgs* args)
+{
+	IDATA element;
+	IDATA returnCode = OPTION_OK;
+	IDATA value;
+
+	element = FIND_AND_CONSUME_ARG2(args, match, option, NULL);
+	*optionIndex = element;
+
+	if (element >= 0) {
+		returnCode = GET_MEMORY_VALUE_ARGS(args, element, option, value);
+		if (OPTION_OK == returnCode) {
+			*address = value;
+		}
+	}
+	return returnCode;
+}
+
+/**
+ * Find, consume and record an option from the argument list.
+ * Given an option string and the match type, find the argument in the to be consumed list.
  * If found, consume it, verify the memory value.
  *
  * @return OPTION_OK if option is found and consumed or option not present, OPTION_MALFORMED  if the option was malformed, OPTION_OVERFLOW if the option overflowed.
@@ -1268,7 +1297,15 @@ gcParseReconfigurableArguments(J9JavaVM* vm, J9VMInitArgs* args)
 
 		extensions->gcThreadCountForced = true;
 	}
-
+	if (-1 != FIND_ARG_IN_ARGS(args, EXACT_MEMORY_MATCH, VMOPT_XSOFTMX, NULL)) {
+		result = option_set_to_opt_args(vm, VMOPT_XSOFTMX, &index, EXACT_MEMORY_MATCH, &extensions->softMx, args);
+		if (OPTION_OK != result) {
+			if (OPTION_MALFORMED == result) {
+				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_MUST_BE_NUMBER, VMOPT_XGCTHREADS);
+			}
+			goto _error;
+		}
+	}
 	return true;
 
 _error:
