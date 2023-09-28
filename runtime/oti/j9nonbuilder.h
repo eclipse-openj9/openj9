@@ -6288,6 +6288,7 @@ typedef struct J9CInterpreterStackFrame {
 	U_8 jitFPRs[16 * 8]; /* fpr0-15 */
 #endif /* J9VM_ENV_DATA64 */
 #elif defined(J9VM_ARCH_AARCH64) /* J9VM_ARCH_ARM */
+	UDATA outgoingArguments[J9_INLINE_JNI_MAX_ARG_COUNT];
 	UDATA preservedGPRs[12]; /* x19-x30 */
 	U_8 preservedFPRs[8 * 8]; /* v8-15 */
 	J9JITGPRSpillArea jitGPRs;
