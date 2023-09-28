@@ -73,9 +73,6 @@ import jdk.internal.vm.ContinuationScope;
 import jdk.internal.vm.StackableScope;
 import jdk.internal.vm.ThreadContainer;
 /*[ENDIF] JAVA_SPEC_VERSION >= 19 */
-/*[IF JAVA_SPEC_VERSION >= 20]*/
-import jdk.internal.misc.CarrierThreadLocal;
-/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 /*[ELSE] Sidecar19-SE */
 import sun.misc.JavaLangAccess;
 import sun.reflect.ConstantPool;

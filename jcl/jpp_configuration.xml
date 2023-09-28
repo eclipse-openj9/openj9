@@ -161,7 +161,7 @@
 		  label="JAVA21"
 		  outputpath="JAVA21/src"
 		  dependencies="JAVA17"
-		  jdkcompliance="19">
+		  jdkcompliance="21">
 		<classpathentry kind="src" path="src/java.base/share/classes"/>
 		<classpathentry kind="src" path="src/java.management/share/classes"/>
 		<classpathentry kind="src" path="src/jdk.attach/share/classes"/>
@@ -189,7 +189,7 @@
 		  label="JAVA22"
 		  outputpath="JAVA22/src"
 		  dependencies="JAVA21"
-		  jdkcompliance="19">
+		  jdkcompliance="21">
 		<classpathentry kind="src" path="src/java.base/share/classes"/>
 		<classpathentry kind="src" path="src/java.management/share/classes"/>
 		<classpathentry kind="src" path="src/jdk.attach/share/classes"/>
