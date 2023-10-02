@@ -5121,6 +5121,12 @@ TR_InlinerFailureReason
       || rm == TR::java_lang_VirtualThread_runWith
       || rm == TR::java_lang_ScopedValue_runWith)
       return DontInline_Callee;
+
+   /**
+    * Workaround for openj9#16965
+    */
+   if (rm == TR::java_lang_Thread_setScopedValueBindings)
+      return DontInline_Callee;
 #endif
 
    if (comp->getOptions()->getEnableGPU(TR_EnableGPU))

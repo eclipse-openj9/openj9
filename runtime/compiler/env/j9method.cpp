@@ -2842,8 +2842,9 @@ void TR_ResolvedJ9Method::construct()
 
    static X ThreadMethods[] =
       {
-      {x(TR::java_lang_Thread_currentThread,     "currentThread",   "()Ljava/lang/Thread;")},
-      {  TR::java_lang_Thread_runWith,       7,  "runWith",         (int16_t)-1, "*"},
+      {x(TR::java_lang_Thread_currentThread,          "currentThread",          "()Ljava/lang/Thread;")},
+      {  TR::java_lang_Thread_runWith,       7,       "runWith",                (int16_t)-1, "*"},
+      {x(TR::java_lang_Thread_setScopedValueBindings, "setScopedValueBindings", "(Ljava/lang/Object;)V")},
       {  TR::unknownMethod}
       };
 

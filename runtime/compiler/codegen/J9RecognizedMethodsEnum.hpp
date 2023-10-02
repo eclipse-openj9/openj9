@@ -134,6 +134,7 @@
    java_lang_ref_SoftReference_get,
    java_lang_Thread_currentThread,
    java_lang_Thread_runWith,
+   java_lang_Thread_setScopedValueBindings,
    java_lang_VirtualThread_runWith,
    java_lang_ScopedValue_runWith,
    java_lang_System_arraycopy,
