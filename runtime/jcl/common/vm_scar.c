@@ -628,35 +628,3 @@ addVMSpecificDirectories(J9JavaVM *vm, UDATA *cursor, char *subdirName)
 
 	return 0;
 }
-
-#if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT)
-/**
- * Clear the non-ZAAP eligible bit for JCL natives to allow them to run on zAAP.
- *
- * @param[in] env                 The JNI interface pointer
- * @param[in] nativeClass         The class containing the native method
- * @param[in] nativeMethods       The JNI native method pointer
- * @param[in] nativeMethodCount  The count of native methods
- */
-void
-clearNonZAAPEligibleBit(JNIEnv *env, jclass nativeClass, const JNINativeMethod *nativeMethods, jint nativeMethodCount)
-{
-	J9VMThread *vmThread = (J9VMThread *) env;
-	J9JavaVM *vm = vmThread->javaVM;
-	J9InternalVMFunctions* vmFuncs = vm->internalVMFunctions;
-	const JNINativeMethod *nativeMethod = nativeMethods;
-	jint count = nativeMethodCount;
-	J9Class *j9clazz = NULL;
-
-	vmFuncs->internalEnterVMFromJNI(vmThread);
-	j9clazz = J9VM_J9CLASS_FROM_HEAPCLASS(vmThread, J9_JNI_UNWRAP_REFERENCE(nativeClass));
-
-	while (0 < count) {
-		J9Method *jniMethod = vmFuncs->findJNIMethod(vmThread, j9clazz, nativeMethod->name, nativeMethod->signature);
-		vmFuncs->atomicAndIntoConstantPool(vm, jniMethod, ~(UDATA)J9_STARTPC_NATIVE_REQUIRES_SWITCHING);
-		count -= 1;
-		nativeMethod +=1;
-	}
-	vmFuncs->internalExitVMToJNI(vmThread);
-}
-#endif /* J9VM_OPT_JAVA_OFFLOAD_SUPPORT */
