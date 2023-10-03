@@ -47,7 +47,19 @@
 		<echo>===executable:                   ${compiler.javac}</echo>
 		<echo>===debug:                        on</echo>
 		<echo>===destdir:                      ${DEST}</echo>
-		<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" />
+		<if>
+			<equals arg1="${JDK_VERSION}" arg2="8"/>
+			<then>
+				<property name="addExports" value="" />
+			</then>
+			<else>
+				<property name="addExports" value='--add-exports java.desktop/sun.font=ALL-UNNAMED' />
+			</else>
+		</if>
+
+		<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" >
+			<compilerarg line='${addExports}' />
+		</javac>
 	</target>
 
 	<target name="dist" depends="compile" description="generate the distribution">
