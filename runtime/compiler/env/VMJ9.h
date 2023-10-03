@@ -399,6 +399,11 @@ public:
    // resolved interface calls are implemented in order to allow for such
    // transformations, this query should be defined as well.
 
+   // Get the length needed to contain the class chain associated with this class
+   uintptr_t necessaryClassChainLength(J9Class *clazz) { return 2 + numInterfacesImplemented(clazz) + numSuperclasses(clazz); }
+   uint32_t numInterfacesImplemented(J9Class *clazz);
+   uintptr_t numSuperclasses(J9Class *clazz) { return TR::Compiler->cls.classDepthOf(convertClassPtrToClassOffset(clazz)); }
+
 protected:
    // Shared logic for both TR_J9SharedCacheVM and TR_J9SharedCacheServerVM
    bool isAotResolvedDirectDispatchGuaranteed(TR::Compilation *comp);

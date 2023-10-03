@@ -388,8 +388,6 @@ private:
    void convertUnsignedOffsetToASCII(UDATA offset, char *myBuffer);
    void createClassKey(UDATA classOffsetInCache, char *key, uint32_t & keyLength);
 
-   uint32_t numInterfacesImplemented(J9Class *clazz);
-
    bool writeClassToChain(J9ROMClass *romClass, UDATA * & chainPtr);
    bool writeClassesToChain(J9Class *clazz, int32_t numSuperclasses, UDATA * & chainPtr);
    bool writeInterfacesToChain(J9Class *clazz, UDATA * & chainPtr);

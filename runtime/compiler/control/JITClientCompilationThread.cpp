@@ -2147,8 +2147,9 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          std::vector<JITServerHelpers::ClassInfoTuple> uncachedClassInfos;
          if (create && getClasses && classChain)
             {
-            // The first word of the class chain data stores the size of the whole record in bytes
-            uintptr_t numClasses = classChain[0] / sizeof(classChain[0]) - 1;
+            // The first word of the class chain data stores the size of the whole record in bytes, so the number of classes
+            // is 1 less than the necessary class chain length.
+            uintptr_t numClasses = fe->necessaryClassChainLength(clazz) - 1;
             ramClassChain = JITServerHelpers::getRAMClassChain(clazz, numClasses, vmThread, trMemory, compInfo,
                                                                uncachedRAMClasses, uncachedClassInfos);
             }
@@ -3167,8 +3168,9 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
       classChain = compiler->fej9vm()->sharedCache()->rememberClass(clazz);
       if (classChain)
          {
-         // The first word of the class chain data stores the size of the whole record in bytes
-         uintptr_t numClasses = classChain[0] / sizeof(classChain[0]) - 1;
+         // The first word of the class chain data stores the size of the whole record in bytes, so the number of classes
+         // is 1 less than the necessary class chain length.
+         uintptr_t numClasses = compiler->fej9vm()->necessaryClassChainLength(clazz) - 1;
          ramClassChain = JITServerHelpers::getRAMClassChain(clazz, numClasses, vmThread, compiler->trMemory(),
                                                             compInfo, uncachedRAMClasses, uncachedClassInfos);
          }

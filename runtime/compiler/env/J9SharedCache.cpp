@@ -897,8 +897,8 @@ TR_J9SharedCache::rememberClass(J9Class *clazz, const AOTCacheClassChainRecord *
       return chainData;
       }
 
-   int32_t numSuperclasses = TR::Compiler->cls.classDepthOf(fe()->convertClassPtrToClassOffset(clazz));
-   int32_t numInterfaces = numInterfacesImplemented(clazz);
+   int32_t numSuperclasses = fe()->numSuperclasses(clazz);
+   int32_t numInterfaces = fe()->numInterfacesImplemented(clazz);
 
    LOG(3, "\tcreating chain now: 1 + 1 + %d superclasses + %d interfaces\n", numSuperclasses, numInterfaces);
    uintptr_t chainLength = (2 + numSuperclasses + numInterfaces) * sizeof(uintptr_t);
@@ -985,19 +985,6 @@ TR_J9SharedCache::getDebugCounterName(UDATA offset)
    //printf("\ngetDebugCounterName: Tried to find %p, name=%s (%p)\n", offset, (name ? name : ""), name);
 
    return name;
-   }
-
-uint32_t
-TR_J9SharedCache::numInterfacesImplemented(J9Class *clazz)
-   {
-   uint32_t count=0;
-   J9ITable *element = TR::Compiler->cls.iTableOf(fe()->convertClassPtrToClassOffset(clazz));
-   while (element != NULL)
-      {
-      count++;
-      element = TR::Compiler->cls.iTableNext(element);
-      }
-   return count;
    }
 
 bool
