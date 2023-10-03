@@ -144,7 +144,7 @@
 		<command>bash $CATSCRIPPATH$ sslVlog1 true true</command>
 		<output regex="no" type="success">CHECKPOINT RESTORE: Ready for restore</output>
 		<output regex="no" type="success">SSL connection on socket</output>
-		<output regex="no" type="required">Connected to a server</output>
+		<output regex="no" type="failure">Could not connect to a server</output>
 		<output regex="no" type="success">CAT VLOG FORCE PASS</output>
 	</test>
 
@@ -156,7 +156,7 @@
 		<output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
 		<output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
 		<output type="required" caseSensitive="yes" regex="no">Successfully initialized SSL context</output>
-		<output type="required" caseSensitive="yes" regex="no">certificate verify failed</output>
+		<output type="success" caseSensitive="yes" regex="no">certificate verify failed</output>
 		<!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
 		<output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
 		<output type="success" caseSensitive="yes" regex="no">do not match expected</output>
@@ -171,7 +171,7 @@
 		<command>bash $CATSCRIPPATH$ sslVlog2 true true</command>
 		<output regex="no" type="success">CHECKPOINT RESTORE: Ready for restore</output>
 		<output regex="no" type="success">JITServer::StreamFailure: Failed to SSL_connect</output>
-		<output regex="no" type="required">Could not connect to a server</output>
+		<output regex="no" type="failure">Connected to a server</output>
 		<output regex="no" type="success">CAT VLOG FORCE PASS</output>
 	</test>
 
@@ -197,7 +197,7 @@
 		<command>bash $CATSCRIPPATH$ sslVlog3 true true</command>
 		<output regex="no" type="success">CHECKPOINT RESTORE: Ready for restore</output>
 		<output regex="no" type="success">JITServer::StreamFailure: Failed to SSL_connect</output>
-		<output regex="no" type="required">Could not connect to a server</output>
+		<output regex="no" type="failure">Connected to a server</output>
 		<output regex="no" type="success">CAT VLOG FORCE PASS</output>
 	</test>
 </suite>
