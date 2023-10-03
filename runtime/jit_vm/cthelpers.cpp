@@ -29,9 +29,9 @@
 
 extern "C" {
 
-#if JAVA_SPEC_VERSION >= 20
+#if JAVA_SPEC_VERSION >= 21
 J9_DECLARE_CONSTANT_UTF8(ojdk_changesCurrentThread, "Ljdk/internal/vm/annotation/ChangesCurrentThread");
-#endif /* JAVA_SPEC_VERSION >= 20 */
+#endif /* JAVA_SPEC_VERSION >= 21 */
 
 #if JAVA_SPEC_VERSION >= 16
 J9_DECLARE_CONSTANT_UTF8(ojdk_intrinsicCandidate, "Ljdk/internal/vm/annotation/IntrinsicCandidate;");
@@ -266,11 +266,11 @@ jitIsMethodTaggedWithIntrinsicCandidate(J9VMThread *currentThread, J9Method *met
 BOOLEAN
 jitIsMethodTaggedWithChangesCurrentThread(J9VMThread *currentThread, J9Method *method)
 {
-#if JAVA_SPEC_VERSION >= 20
+#if JAVA_SPEC_VERSION >= 21
 	return FALSE != methodContainsRuntimeAnnotation(currentThread, method, (J9UTF8 *)&ojdk_changesCurrentThread);
-#else /* JAVA_SPEC_VERSION >= 20 */
+#else /* JAVA_SPEC_VERSION >= 21 */
 	return FALSE;
-#endif /* JAVA_SPEC_VERSION >= 20 */
+#endif /* JAVA_SPEC_VERSION >= 21 */
 }
 
 }
