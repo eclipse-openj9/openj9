@@ -29,6 +29,10 @@
 
 extern "C" {
 
+#if JAVA_SPEC_VERSION >= 21
+J9_DECLARE_CONSTANT_UTF8(ojdk_changesCurrentThread, "Ljdk/internal/vm/annotation/ChangesCurrentThread");
+#endif /* JAVA_SPEC_VERSION >= 21 */
+
 #if JAVA_SPEC_VERSION >= 16
 J9_DECLARE_CONSTANT_UTF8(ojdk_intrinsicCandidate, "Ljdk/internal/vm/annotation/IntrinsicCandidate;");
 #endif /* JAVA_SPEC_VERSION >= 16 */
@@ -250,6 +254,23 @@ jitIsMethodTaggedWithIntrinsicCandidate(J9VMThread *currentThread, J9Method *met
 #else /* JAVA_SPEC_VERSION >= 16 */
 	return FALSE;
 #endif /* JAVA_SPEC_VERSION >= 16 */
+}
+
+/**
+ * Queries if the method is annotated with @ChangesCurrentThread
+ *
+ * @param currentThread the currentThread
+ * @param method the method to check for the annotation
+ * @return true if method is annotated with @ChangesCurrentThread, false otherwise
+ */
+BOOLEAN
+jitIsMethodTaggedWithChangesCurrentThread(J9VMThread *currentThread, J9Method *method)
+{
+#if JAVA_SPEC_VERSION >= 21
+	return FALSE != methodContainsRuntimeAnnotation(currentThread, method, (J9UTF8 *)&ojdk_changesCurrentThread);
+#else /* JAVA_SPEC_VERSION >= 21 */
+	return FALSE;
+#endif /* JAVA_SPEC_VERSION >= 21 */
 }
 
 }
