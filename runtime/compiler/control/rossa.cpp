@@ -1999,7 +1999,7 @@ aboutToBootstrap(J9JavaVM * javaVM, J9JITConfig * jitConfig)
     * is because, the restore run may not be on the same machine as the one that created
     * the snapshot; thus the JIT code must be portable.
     */
-   if (javaVM->internalVMFunctions->isCheckpointAllowed(curThread))
+   if (javaVM->internalVMFunctions->isJVMInPortableRestoreMode(curThread))
       {
       TR::Compiler->target.cpu = TR::CPU::detectRelocatable(TR::Compiler->omrPortLib);
       if (!J9_ARE_ANY_BITS_SET(javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_PORTABLE_SHARED_CACHE))
