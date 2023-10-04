@@ -32,6 +32,7 @@
 #include "vm_internal.h"
 #include "segment.h"
 #include "j9modron.h"
+#include "omrutilbase.h"
 
 #define ROUND_TO(granularity, number) (((number) + (granularity) - 1) & ~((UDATA)(granularity) - 1))
 
@@ -404,6 +405,13 @@ static J9MemorySegment * allocateVirtualMemorySegmentInListInternal(J9JavaVM *ja
 			freeMemorySegmentListEntry(segmentList, segment);
 			segment = NULL;
 		} else {
+			if (J9_ARE_ALL_BITS_SET(type, MEMORY_TYPE_CODE)) {
+				/* For CodeCache segments the JIT will later write a TR::CodeCache structure pointer at the begining of the segment.
+				 * Until then, make sure that a potential reader sees a NULL pointer.
+				 */
+				*((UDATA**)allocatedBase) = NULL;
+				issueWriteBarrier();
+			}
 			segment->baseAddress = allocatedBase;
 			segment->heapBase = allocatedBase;
 			segment->heapTop = (U_8 *)&(segment->heapBase)[size];
