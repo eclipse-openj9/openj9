@@ -352,10 +352,12 @@ MM_ReferenceChainWalker::scanObject(J9Object *objectPtr)
 	case GC_ObjectModel::SCAN_ATOMIC_MARKABLE_REFERENCE_OBJECT:
 	case GC_ObjectModel::SCAN_MIXED_OBJECT:
 	case GC_ObjectModel::SCAN_OWNABLESYNCHRONIZER_OBJECT:
-	case GC_ObjectModel::SCAN_CONTINUATION_OBJECT:
 	case GC_ObjectModel::SCAN_CLASS_OBJECT:
 	case GC_ObjectModel::SCAN_CLASSLOADER_OBJECT:
 		scanMixedObject(objectPtr);
+		break;
+	case GC_ObjectModel::SCAN_CONTINUATION_OBJECT:
+		scanContinuationObject(objectPtr);
 		break;
 	case GC_ObjectModel::SCAN_POINTER_ARRAY_OBJECT:
 		scanPointerArrayObject((J9IndexableObject *)objectPtr);
@@ -373,6 +375,44 @@ MM_ReferenceChainWalker::scanObject(J9Object *objectPtr)
 	if (J9GC_IS_INITIALIZED_HEAPCLASS((J9VMThread*)_env->getLanguageVMThread(), objectPtr)) {
 		scanClass(J9VM_J9CLASS_FROM_HEAPCLASS((J9VMThread*)_env->getLanguageVMThread(), objectPtr));
 	}
+}
+
+/**
+ * @todo Provide function documentation
+ */
+void
+stackSlotIteratorForReferenceChainWalker(J9JavaVM *javaVM, J9Object **slot, void *localData, J9StackWalkState *walkState, const void *stackLocation)
+{
+	StackIteratorData *data = (StackIteratorData *)localData;
+	data->rootScanner->doStackSlot(slot, walkState, stackLocation);
+}
+
+/**
+ * @todo Provide function documentation
+ */
+MMINLINE void
+MM_ReferenceChainWalker::scanContinuationNativeSlots(J9Object *objectPtr)
+{
+	J9VMThread *currentThread = (J9VMThread *)_env->getLanguageVMThread();
+	const bool isConcurrentGC = false;
+	const bool isGlobalGC = false;
+	const bool beingMounted = false;
+	if (MM_GCExtensions::needScanStacksForContinuationObject(currentThread, objectPtr, isConcurrentGC, isGlobalGC, beingMounted)) {
+		StackIteratorData localData;
+		localData.rootScanner = this;
+
+		GC_VMThreadStackSlotIterator::scanContinuationSlots(currentThread, objectPtr, (void *)&localData, stackSlotIteratorForReferenceChainWalker, false, false);
+	}
+}
+
+/**
+ * @todo Provide function documentation
+ */
+void
+MM_ReferenceChainWalker::scanContinuationObject(J9Object *objectPtr)
+{
+	scanContinuationNativeSlots(objectPtr);
+	scanMixedObject(objectPtr);
 }
 
 /**
