@@ -28,14 +28,14 @@ import com.ibm.j9ddr.tools.ddrinteractive.Context;
 import com.ibm.j9ddr.tools.ddrinteractive.DDRInteractiveCommandException;
 import com.ibm.j9ddr.tools.ddrinteractive.Command;
 
-public class JextractCommand extends Command 
+public class JextractCommand extends Command
 {
 	public JextractCommand()
 	{
 		addCommand("jextract", "<filename>", "dump a JExtract file to filename (or console)");
 	}
 
-	public void run(String command, String[] args, Context context, PrintStream out) throws DDRInteractiveCommandException 
+	public void run(String command, String[] args, Context context, PrintStream out) throws DDRInteractiveCommandException
 	{
 		try {
 			throw new CorruptDataException("command not implemented");
@@ -43,5 +43,4 @@ public class JextractCommand extends Command
 			throw new DDRInteractiveCommandException(e);
 		}
 	}
-
 }
