@@ -91,6 +91,8 @@
 		<variations>
 			<variation>-Xjit -XX:+CRIURestoreNonPortableMode</variation>
 			<variation>-Xint -XX:+CRIURestoreNonPortableMode</variation>
+			<variation>-XX:+JVMPortableRestoreMode</variation>
+			<variation>-Xjit:count=0 -XX:+JVMPortableRestoreMode</variation>
 			<variation>-Xjit:count=0 -XX:+CRIURestoreNonPortableMode</variation>
 			<variation>-Xgcpolicy:optthruput</variation>
 			<variation>-Xgcpolicy:optavgpause</variation>
@@ -191,6 +193,7 @@
 			<variation>-Xjit</variation>
 			<variation>-Xjit:count=0</variation>
 			<variation>-Xjit:vlog=vlog</variation>
+			<variation>-XX:+JVMPortableRestoreMode</variation>
 		</variations>
 		<command>
 			if [ -x $(Q)$(TEST_JDK_BIN)$(D)jitserver$(Q) ]; \
@@ -352,6 +355,7 @@
 			<variation>-Xjit -XX:+CRIURestoreNonPortableMode</variation>
 			<variation>-Xint -XX:+CRIURestoreNonPortableMode</variation>
 			<variation>-Xjit:count=0 -XX:+CRIURestoreNonPortableMode</variation>
+			<variation>-XX:+JVMPortableRestoreMode</variation>
 		</variations>
 		<command>
 			$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -Xdump \

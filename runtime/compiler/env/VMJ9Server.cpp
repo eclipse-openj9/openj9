@@ -2482,6 +2482,14 @@ TR_J9ServerVM::isSnapshotModeEnabled()
    }
 
 bool
+TR_J9ServerVM::isPortableRestoreModeEnabled()
+   {
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   auto *vmInfo = _compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+   return vmInfo->_isPortableRestoreMode;
+   }
+
+bool
 TR_J9SharedCacheServerVM::isClassLibraryMethod(TR_OpaqueMethodBlock *method, bool vettedForAOT)
    {
    TR_ASSERT(vettedForAOT, "The TR_J9SharedCacheServerVM version of this method is expected to be called only from isClassLibraryMethod.\n"
