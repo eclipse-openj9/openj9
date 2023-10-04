@@ -43,4 +43,52 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
+	<test>
+		<testCaseName>cmdLineTester_loadLibraryTestsAIX_JDK8</testCaseName>
+		<command>$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -DJAVA_COMMAND=$(JAVA_COMMAND) \
+	-DTESTSJARPATH=$(Q)$(TEST_RESROOT)$(D)loadLibraryTest.jar$(Q) \
+	-DADDEXPORTS= \
+	-DRESJAR=$(CMDLINETESTER_RESJAR) -jar $(CMDLINETESTER_JAR) \
+	-config $(Q)$(TEST_RESROOT)$(D)loadLibraryTestAIX.xml$(Q) \
+	-nonZeroExitWhenError; \
+	$(TEST_STATUS)</command>
+		<platformRequirements>os.aix</platformRequirements>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<versions>
+			<version>8</version>
+		</versions>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
+	</test>
+	<test>
+		<testCaseName>cmdLineTester_loadLibraryTestsAIX</testCaseName>
+		<command>$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -DJAVA_COMMAND=$(JAVA_COMMAND) \
+	-DTESTSJARPATH=$(Q)$(TEST_RESROOT)$(D)loadLibraryTest.jar$(Q) \
+	-DADDEXPORTS=$(Q)--add-exports java.desktop/sun.font=ALL-UNNAMED$(Q) \
+	-DRESJAR=$(CMDLINETESTER_RESJAR) -jar $(CMDLINETESTER_JAR) \
+	-config $(Q)$(TEST_RESROOT)$(D)loadLibraryTestAIX.xml$(Q) \
+	-nonZeroExitWhenError; \
+	$(TEST_STATUS)</command>
+		<platformRequirements>os.aix</platformRequirements>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<versions>
+			<version>11+</version>
+		</versions>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
+	</test>
 </playlist>
