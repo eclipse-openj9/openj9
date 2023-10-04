@@ -772,7 +772,14 @@ callDynamicLoader(J9VMThread *vmThread, J9LoadROMClassData *loadData, U_8 * inte
 			}
 		}
 
-		if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_RECREATE_CLASSFILE_ONLOAD)) {
+		/* Skip RecreateClassFileOnload if there is a non-NULL J9ClassPatchMap on the localBuffer.
+		 * j9bcutil_transformROMClass provides no guarantee to preserve the previous constant pool
+		 * and thus the size of the constant pool could change. This causes downstream errors when
+		 * attempting to patch the constant pool with the unchanged patchMap.
+		 */
+		if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_RECREATE_CLASSFILE_ONLOAD)
+			&& ((NULL == localBuffer) || (NULL == localBuffer->patchMap))
+		) {
 			U_8 * classFileBytes = NULL;
 			U_32 classFileBytesCount = 0;
 			U_8 * prevClassData = loadData->classData;
