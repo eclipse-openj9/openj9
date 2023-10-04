@@ -90,6 +90,9 @@ private:
 	virtual void scanMixedObject(J9Object *objectPtr);
 	virtual void scanPointerArrayObject(J9IndexableObject *objectPtr);
 	virtual void scanReferenceMixedObject(J9Object *objectPtr);
+
+	MMINLINE void scanContinuationNativeSlots(J9Object *objectPtr);
+	MMINLINE void scanContinuationObject(J9Object *objectPtr);
 	
 	virtual void doClassLoader(J9ClassLoader *classLoader);
 
