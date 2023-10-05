@@ -34,6 +34,10 @@
 #include "VMThreadStackSlotIterator.hpp"
 #include "VMHelpers.hpp"
 
+#if JAVA_SPEC_VERSION >= 19
+#include "ContinuationHelpers.hpp"
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
 extern "C" {
 	
 /**
@@ -144,7 +148,8 @@ GC_VMThreadStackSlotIterator::scanContinuationSlots(
 
 #if JAVA_SPEC_VERSION >= 19
 	J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(vmThread, continuationObjectPtr);
-	vmThread->javaVM->internalVMFunctions->walkContinuationStackFrames(vmThread, continuation, &stackWalkState);
+	j9object_t threadObject = VM_ContinuationHelpers::getThreadObjectForContinuation(vmThread, continuation, continuationObjectPtr);
+	vmThread->javaVM->internalVMFunctions->walkContinuationStackFrames(vmThread, continuation, threadObject, &stackWalkState);
 #endif /* JAVA_SPEC_VERSION >= 19 */
 }
 
@@ -152,6 +157,7 @@ GC_VMThreadStackSlotIterator::scanContinuationSlots(
 void
 GC_VMThreadStackSlotIterator::scanSlots(
 			J9VMThread *vmThread,
+			J9VMThread *walkThread,
 			J9VMContinuation *continuation,
 			void *userData,
 			J9MODRON_OSLOTITERATOR *oSlotIterator,
@@ -162,6 +168,6 @@ GC_VMThreadStackSlotIterator::scanSlots(
 	J9StackWalkState stackWalkState;
 	initializeStackWalkState(&stackWalkState, vmThread, userData, oSlotIterator, includeStackFrameClassReferences, trackVisibleFrameDepth);
 
-	vmThread->javaVM->internalVMFunctions->walkContinuationStackFrames(vmThread, continuation, &stackWalkState);
+	vmThread->javaVM->internalVMFunctions->walkContinuationStackFrames(vmThread, continuation, walkThread->carrierThreadObject, &stackWalkState);
 }
 #endif /* JAVA_SPEC_VERSION >= 19 */

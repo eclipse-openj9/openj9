@@ -4470,10 +4470,11 @@ copyFieldsFromContinuation(J9VMThread *currentThread, J9VMThread *vmThread, J9VM
  *
  * @param currentThread current thread
  * @param continuation the continuation to be walked
+ * @param threadObject the thread object whose state is stored in the continuation
  * @return 0 on success and non-zero on failure
  */
 UDATA
-walkContinuationStackFrames(J9VMThread *currentThread, J9VMContinuation *continuation, J9StackWalkState *walkState);
+walkContinuationStackFrames(J9VMThread *currentThread, J9VMContinuation *continuation, j9object_t threadObject, J9StackWalkState *walkState);
 
 /**
  * @brief Walk all stackframes in the VM.
