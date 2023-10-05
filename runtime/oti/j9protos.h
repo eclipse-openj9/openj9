@@ -1136,6 +1136,7 @@ extern J9_CFUNC BOOLEAN jitIsFieldStable(J9VMThread *currentThread, J9Class *cla
 extern J9_CFUNC BOOLEAN jitIsMethodTaggedWithForceInline(J9VMThread *currentThread, J9Method *method);
 extern J9_CFUNC BOOLEAN jitIsMethodTaggedWithDontInline(J9VMThread *currentThread, J9Method *method);
 extern J9_CFUNC BOOLEAN jitIsMethodTaggedWithIntrinsicCandidate(J9VMThread *currentThread, J9Method *method);
+extern J9_CFUNC BOOLEAN jitIsMethodTaggedWithChangesCurrentThread(J9VMThread *currentThread, J9Method *method);
 
 typedef struct J9MethodFromSignatureWalkState {
 	const char *className;
@@ -1399,4 +1400,3 @@ extern J9_CFUNC void  jitAddPicToPatchOnClassUnload (void *classPointer, void *a
 #endif
 
 #endif /* J9PROTOS_H */
-
