@@ -1060,6 +1060,16 @@ public:
     */
    virtual bool isIntrinsicCandidate(TR_ResolvedMethod *method);
 
+   /**
+    * \brief Determine whether a method is annotated with @ChangesCurrentThread.
+    * This annotation is only intended for use within JCL code, and will be ignored
+    * if the method is not part of JCL.
+    *
+    * \param method the method
+    * \return true if method is part of JCL AND annotated with @ChangesCurrentThread, false otherwise.
+    */
+   virtual bool isChangesCurrentThread(TR_ResolvedMethod *method);
+
    /*
     * \brief
     *    tell whether it's possible to dereference a field given the field symbol at compile time
