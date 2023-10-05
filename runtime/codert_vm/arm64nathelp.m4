@@ -36,7 +36,7 @@ define({CALL_SLOW_PATH_ONLY_HELPER_NO_RETURN_VALUE},{
 	ret x0
 .L_done_$1:
 	RESTORE_ALL_REGS
-	RESTORE_FPLR
+	RESTORE_LR
 	SWITCH_TO_JAVA_STACK
 })
 
@@ -46,7 +46,7 @@ define({CALL_SLOW_PATH_ONLY_HELPER_NO_EXCEPTION_NO_RETURN_VALUE},{
 	str x30,[J9VMTHREAD,{#}J9TR_VMThread_jitReturnAddress]
 	CALL_C_WITH_VMTHREAD(old_slow_$1)
 	RESTORE_ALL_REGS
-	RESTORE_FPLR
+	RESTORE_LR
 	SWITCH_TO_JAVA_STACK
 })
 
@@ -427,7 +427,7 @@ BEGIN_HELPER(jitAcquireVMAccess)
 	mov x0,J9VMTHREAD
 	CALL_DIRECT(fast_jitAcquireVMAccess)
 	RESTORE_ALL_REGS
-	RESTORE_FPLR
+	RESTORE_LR
 END_HELPER(jitAcquireVMAccess)
 
 BEGIN_HELPER(jitReleaseVMAccess)
@@ -435,7 +435,7 @@ BEGIN_HELPER(jitReleaseVMAccess)
 	mov x0,J9VMTHREAD
 	CALL_DIRECT(fast_jitReleaseVMAccess)
 	RESTORE_ALL_REGS
-	RESTORE_FPLR
+	RESTORE_LR
 END_HELPER(jitReleaseVMAccess)
 
 START_PROC(cInterpreterFromJIT)
@@ -513,7 +513,7 @@ dnl x0 contains the method to run
 START_PROC(j2iInvokeExact)
 	SWITCH_TO_C_STACK
 	SAVE_PRESERVED_REGS
-	SAVE_FPLR
+	SAVE_LR
 	mov x1,x0
 	mov x0,{#}J9TR_bcloop_j2i_invoke_exact
 	b FUNC_LABEL(cInterpreterFromJIT)
@@ -528,7 +528,7 @@ dnl x0 contains the method to run
 START_PROC(j2iTransition)
 	SWITCH_TO_C_STACK
 	SAVE_PRESERVED_REGS
-	SAVE_FPLR
+	SAVE_LR
 	mov x1,x0
 	mov x0,{#}J9TR_bcloop_j2i_transition
 	b FUNC_LABEL(cInterpreterFromJIT)
@@ -544,7 +544,7 @@ dnl x9 contains the vTable index
 START_PROC(j2iVirtual)
 	SWITCH_TO_C_STACK
 	SAVE_PRESERVED_REGS
-	SAVE_FPLR
+	SAVE_LR
 	str x9,[J9VMTHREAD,{#}J9TR_VMThread_tempSlot]
 	mov x1,x0
 	mov x0,{#}J9TR_bcloop_j2i_virtual

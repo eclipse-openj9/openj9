@@ -93,6 +93,14 @@ define({RESTORE_FPLR},{
 	ldr x30,JIT_GPR_SAVE_SLOT(30)
 })
 
+define({SAVE_LR},{
+	str x30,JIT_GPR_SAVE_SLOT(30)
+})
+
+define({RESTORE_LR},{
+	ldr x30,JIT_GPR_SAVE_SLOT(30)
+})
+
 define({BEGIN_HELPER},{
 	START_PROC($1)
 	SAVE_FPLR
