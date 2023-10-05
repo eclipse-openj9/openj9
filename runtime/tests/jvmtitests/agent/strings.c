@@ -202,9 +202,6 @@ getTypeString(agentEnv * env, jthread currentThread, JNIEnv * jni_env, char sign
 			sprintf(typeStr, "(jdouble) %f", jvaluePtr->d);
 			break;
 		case 'L':
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-		case 'Q':
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 			if (jvaluePtr->l == NULL) {
 				sprintf(typeStr, "(jobject) null");
 			} else {
