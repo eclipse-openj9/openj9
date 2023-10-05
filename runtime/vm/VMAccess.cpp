@@ -1242,6 +1242,7 @@ releaseSafePointVMAccess(J9VMThread * vmThread)
 	}
 	Assert_VM_mustHaveVMAccess(vmThread);
 	Assert_VM_false(vmThread->safePointCount == 0);
+	Assert_VM_true(1 == vmThread->omrVMThread->exclusiveCount);
 	Assert_VM_true(J9_XACCESS_EXCLUSIVE == vm->safePointState);
 
 	if (--(vmThread->safePointCount) == 0) {
@@ -1251,7 +1252,6 @@ releaseSafePointVMAccess(J9VMThread * vmThread)
 			VM_VMAccess::clearPublicFlags(currentThread, J9_PUBLIC_FLAGS_HALTED_AT_SAFE_POINT | J9_PUBLIC_FLAGS_NOT_COUNTED_BY_SAFE_POINT, true);
 		} while ((currentThread = currentThread->linkNext) != vmThread);
 
-		Assert_VM_true(1 == vmThread->omrVMThread->exclusiveCount);
 		vmThread->omrVMThread->exclusiveCount = 0;
 
 		omrthread_monitor_enter(vm->exclusiveAccessMutex);
