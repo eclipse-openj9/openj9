@@ -8035,7 +8035,7 @@ void J9::Power::TreeEvaluator::genArrayCopyWithArrayStoreCHK(TR::Node* node, TR:
       iCursor = loadAddressConstant(cg, doRelocation, node, (intptr_t) funcdescrptr, temp1Reg, NULL, false, TR_ArrayCopyHelper);
       }
 
-   iCursor = generateSrc1Instruction(cg, TR::InstOpCode::mtctr, node, temp1Reg, NULL, iCursor);
+   iCursor = generateSrc1Instruction(cg, TR::InstOpCode::mtctr, node, temp1Reg, 0, iCursor);
    // the C routine expects length measured by slots
    lengthReg = conditions->searchPreConditionRegister(TR::RealRegister::gr8);
    int32_t elementSize;
