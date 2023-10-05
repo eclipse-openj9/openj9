@@ -409,8 +409,10 @@ static J9MemorySegment * allocateVirtualMemorySegmentInListInternal(J9JavaVM *ja
 				/* For CodeCache segments the JIT will later write a TR::CodeCache structure pointer at the begining of the segment.
 				 * Until then, make sure that a potential reader sees a NULL pointer.
 				 */
+				omrthread_jit_write_protect_disable();
 				*((UDATA**)allocatedBase) = NULL;
 				issueWriteBarrier();
+				omrthread_jit_write_protect_enable();
 			}
 			segment->baseAddress = allocatedBase;
 			segment->heapBase = allocatedBase;
