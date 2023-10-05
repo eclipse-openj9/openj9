@@ -296,14 +296,15 @@ exitVThreadTransitionCritical(J9VMThread *currentThread, j9object_t vthread)
 }
 
 static void
-unsetParentVthread(J9VMThread *currentThread, jobject thread)
+setContinuationStateToLastUnmount(J9VMThread *currentThread, jobject thread)
 {
 	enterVThreadTransitionCritical(currentThread, thread);
 	/* Re-fetch reference as enterVThreadTransitionCritical may release VMAccess. */
 	j9object_t threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
 	j9object_t continuationObj = J9VMJAVALANGVIRTUALTHREAD_CONT(currentThread, threadObj);
-	/* Add reverse link from Continuation object to VirtualThread object, this let JVMTI code. */
-	J9VMJDKINTERNALVMCONTINUATION_SET_VTHREAD(currentThread, continuationObj, NULL);
+	ContinuationState volatile *continuationStatePtr = VM_ContinuationHelpers::getContinuationStateAddress(currentThread, continuationObj);
+	/* Used in JVMTI to not suspend the virtual thread once it enters the last unmount phase. */
+	VM_ContinuationHelpers::setLastUnmount(continuationStatePtr);
 	exitVThreadTransitionCritical(currentThread, threadObj);
 }
 
@@ -501,7 +502,7 @@ JVM_VirtualThreadUnmountBegin(JNIEnv *env, jobject thread, jboolean lastUnmount)
 
 	if (lastUnmount) {
 		TRIGGER_J9HOOK_VM_VIRTUAL_THREAD_END(vm->hookInterface, currentThread);
-		unsetParentVthread((J9VMThread *)env, thread);
+		setContinuationStateToLastUnmount((J9VMThread *)env, thread);
 	}
 	virtualThreadUnmountBegin(env, thread);
 
@@ -661,7 +662,7 @@ JVM_VirtualThreadEnd(JNIEnv *env, jobject vthread)
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 
 	TRIGGER_J9HOOK_VM_VIRTUAL_THREAD_END(vm->hookInterface, currentThread);
-	unsetParentVthread((J9VMThread *)env, vthread);
+	setContinuationStateToLastUnmount((J9VMThread *)env, vthread);
 	virtualThreadUnmountBegin(env, vthread);
 
 	vmFuncs->internalExitVMToJNI(currentThread);
