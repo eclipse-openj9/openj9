@@ -5047,7 +5047,7 @@ typedef struct J9InternalVMFunctions {
 	void (*freeContinuation)(struct J9VMThread *currentThread, j9object_t continuationObject, BOOLEAN skipLocalCache);
 	void (*recycleContinuation)(struct J9JavaVM *vm, struct J9VMThread *vmThread, struct J9VMContinuation *continuation, BOOLEAN skipLocalCache);
 	void (*freeTLS)(struct J9VMThread *currentThread, j9object_t threadObj);
-	UDATA (*walkContinuationStackFrames)(struct J9VMThread *currentThread, struct J9VMContinuation *continuation, J9StackWalkState *walkState);
+	UDATA (*walkContinuationStackFrames)(struct J9VMThread *currentThread, struct J9VMContinuation *continuation, j9object_t threadObject, J9StackWalkState *walkState);
 	UDATA (*walkAllStackFrames)(struct J9VMThread *currentThread, J9StackWalkState *walkState);
 	BOOLEAN (*acquireVThreadInspector)(struct J9VMThread *currentThread, jobject thread, BOOLEAN spin);
 	void (*releaseVThreadInspector)(struct J9VMThread *currentThread, jobject thread);

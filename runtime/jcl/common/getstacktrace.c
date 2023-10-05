@@ -79,7 +79,7 @@ getStackTraceForThread(J9VMThread *currentThread, J9VMThread *targetThread, UDAT
 		 * then the carrier thread's stacktrace is retrieved through the cached state in the continuation.
 		 */
 		walkState.skipCount = 0;
-		rc = vmfns->walkContinuationStackFrames(currentThread, targetThread->currentContinuation, &walkState);
+		rc = vmfns->walkContinuationStackFrames(currentThread, targetThread->currentContinuation, threadObject, &walkState);
 	} else if (isVirtual && (threadObject != targetThread->threadObject)) {
 		/* If the virtual thread object doesn't match the current thread object, it must have unmounted
 		 * from this carrier thread, return NULL and the JCL code will handle the retry.

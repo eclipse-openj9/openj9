@@ -3194,7 +3194,7 @@ done:
 				) {
 					continuationWalkState.flags = walkFlags;
 					continuationWalkRC = _vm->internalVMFunctions->walkContinuationStackFrames(
-							_currentThread, _currentThread->currentContinuation, &continuationWalkState);
+							_currentThread, _currentThread->currentContinuation, _currentThread->carrierThreadObject, &continuationWalkState);
 				}
 #endif /* JAVA_SPEC_VERSION >= 19 */
 				/* No need for VMStructHasBeenUpdated as the above walk cannot change the roots */
