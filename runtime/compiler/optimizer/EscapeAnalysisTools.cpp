@@ -29,9 +29,9 @@
 #include "il/AutomaticSymbol.hpp"
 
 TR_EscapeAnalysisTools::TR_EscapeAnalysisTools(TR::Compilation *comp)
-  {
-  _comp = comp;
-  }
+   {
+   _comp = comp;
+   }
 
 void TR_EscapeAnalysisTools::insertFakeEscapeForLoads(TR::Block *block, TR::Node *node, TR_BitVector &symRefsToLoad)
    {
@@ -78,10 +78,17 @@ void TR_EscapeAnalysisTools::insertFakeEscapeForOSR(TR::Block *block, TR::Node *
    static char *disableEADefiningMap = feGetEnv("TR_DisableEAEscapeHelperDefiningMap");
    DefiningMap *induceDefiningMap = !disableEADefiningMap ? osrMethodData->getDefiningMap() : NULL;
 
-   if (_comp->trace(OMR::escapeAnalysis) && induceDefiningMap)
+   if (_comp->trace(OMR::escapeAnalysis) || _comp->getOption(TR_TraceOSR))
       {
-      traceMsg(_comp, "definingMap at induceCall n%dn %d:%d\n", induceCall->getGlobalIndex(), induceCall->getByteCodeInfo().getCallerIndex(), induceCall->getByteCodeInfo().getByteCodeIndex());
-      _comp->getOSRCompilationData()->printMap(induceDefiningMap);
+      if (induceDefiningMap)
+         {
+         traceMsg(_comp, "insertFakeEscapeForOSR:  definingMap at induceCall n%dn %d:%d\n", induceCall->getGlobalIndex(), inlinedIndex, byteCodeIndex);
+         _comp->getOSRCompilationData()->printMap(induceDefiningMap);
+         }
+      else
+         {
+         traceMsg(_comp, "insertFakeEscapeForOSR:  definingMap at induceCall n%dn %d:%d is EMPTY\n", induceCall->getGlobalIndex(), inlinedIndex, byteCodeIndex);
+         }
       }
 
    TR_BitVector symRefsToLoad(0, _comp->trMemory()->currentStackRegion(), growable);
@@ -93,6 +100,12 @@ void TR_EscapeAnalysisTools::insertFakeEscapeForOSR(TR::Block *block, TR::Node *
       TR::ResolvedMethodSymbol *rms = _comp->getInlinedResolvedMethodSymbol(inlinedIndex);
       TR_ASSERT_FATAL(rms, "Unknown resolved method during escapetools");
       TR_OSRMethodData *methodData = osrCompilationData->findOSRMethodData(inlinedIndex, rms);
+
+      if (_comp->trace(OMR::escapeAnalysis) || _comp->getOption(TR_TraceOSR))
+         {
+         traceMsg(_comp, "Calling processAutosAndPendingPushes:  At %d:%d,  ResolvedMethodSymbol [%p] and OSRMethodData [%p]\n", inlinedIndex, byteCodeIndex, rms, methodData);
+         }
+
       processAutosAndPendingPushes(rms, induceDefiningMap, methodData, byteCodeIndex, symRefsToLoad);
       byteCodeIndex = _comp->getInlinedCallSite(inlinedIndex)._byteCodeInfo.getByteCodeIndex();
       inlinedIndex = _comp->getInlinedCallSite(inlinedIndex)._byteCodeInfo.getCallerIndex();
@@ -101,6 +114,12 @@ void TR_EscapeAnalysisTools::insertFakeEscapeForOSR(TR::Block *block, TR::Node *
    // handle the outermost method
       {
       TR_OSRMethodData *methodData = osrCompilationData->findOSRMethodData(-1, _comp->getMethodSymbol());
+
+      if (_comp->trace(OMR::escapeAnalysis) || _comp->getOption(TR_TraceOSR))
+         {
+         traceMsg(_comp, "Calling processAutosAndPendingPushes:  At %d:%d,  ResolvedMethodSymbol [%p] and OSRMethodData [%p]\n", -1, byteCodeIndex, _comp->getMethodSymbol(), methodData);
+         }
+
       processAutosAndPendingPushes(_comp->getMethodSymbol(), induceDefiningMap, methodData, byteCodeIndex, symRefsToLoad);
       }
    insertFakeEscapeForLoads(block, induceCall, symRefsToLoad);
@@ -108,8 +127,25 @@ void TR_EscapeAnalysisTools::insertFakeEscapeForOSR(TR::Block *block, TR::Node *
 
 void TR_EscapeAnalysisTools::processAutosAndPendingPushes(TR::ResolvedMethodSymbol *rms, DefiningMap *induceDefiningMap, TR_OSRMethodData *methodData, int32_t byteCodeIndex, TR_BitVector &symRefsToLoad)
    {
-   processSymbolReferences(rms->getAutoSymRefs(), induceDefiningMap, methodData->getLiveRangeInfo(byteCodeIndex), symRefsToLoad);
-   processSymbolReferences(rms->getPendingPushSymRefs(), induceDefiningMap, methodData->getPendingPushLivenessInfo(byteCodeIndex), symRefsToLoad);
+   TR_BitVector *deadSymRefs = methodData->getLiveRangeInfo(byteCodeIndex);
+
+   if (_comp->trace(OMR::escapeAnalysis) || _comp->getOption(TR_TraceOSR))
+      {
+      traceMsg(_comp, "Calling processSymbolReferences for auto symRefs and pending push symRefs.  deadSymRefs at this point:\n");
+
+      if (deadSymRefs)
+         {
+         deadSymRefs->print(_comp);
+         traceMsg(_comp, "\n");
+         }
+      else
+         {
+         traceMsg(_comp, "NULL\n");
+         }
+      }
+
+   processSymbolReferences(rms->getAutoSymRefs(), induceDefiningMap, deadSymRefs, symRefsToLoad);
+   processSymbolReferences(rms->getPendingPushSymRefs(), induceDefiningMap, deadSymRefs, symRefsToLoad);
    }
 
 void TR_EscapeAnalysisTools::processSymbolReferences(TR_Array<List<TR::SymbolReference>> *symbolReferences, DefiningMap *induceDefiningMap, TR_BitVector *deadSymRefs, TR_BitVector &symRefsToLoad)
@@ -121,6 +157,7 @@ void TR_EscapeAnalysisTools::processSymbolReferences(TR_Array<List<TR::SymbolRef
       for (TR::SymbolReference* symRef = autosIt.getFirst(); symRef; symRef = autosIt.getNext())
          {
          TR::Symbol *p = symRef->getSymbol();
+
          if ((p->isAuto() || p->isParm()) && p->getDataType() == TR::Address)
             {
             int32_t symRefNum = symRef->getReferenceNumber();
@@ -137,6 +174,18 @@ void TR_EscapeAnalysisTools::processSymbolReferences(TR_Array<List<TR::SymbolRef
                if (deadSymRefs == NULL || !deadSymRefs->isSet(symRefNum))
                   {
                   symRefsToLoad.set(symRefNum);
+
+                  if (_comp->trace(OMR::escapeAnalysis) || _comp->getOption(TR_TraceOSR))
+                     {
+                     traceMsg(_comp, "In processSymbolReferences, adding symRef #%d to symRefsToLoad\n", symRef->getReferenceNumber());
+                     }
+                  }
+               else
+                  {
+                  if (_comp->trace(OMR::escapeAnalysis) || _comp->getOption(TR_TraceOSR))
+                     {
+                     traceMsg(_comp, "In processSymbolReferences, symRef #%d is dead - not added to symRefsToLoad\n", symRef->getReferenceNumber());
+                     }
                   }
                }
             else
@@ -154,6 +203,18 @@ void TR_EscapeAnalysisTools::processSymbolReferences(TR_Array<List<TR::SymbolRef
                       && (deadSymRefs == NULL || !deadSymRefs->isSet(definingSymRefNum)))
                      {
                      symRefsToLoad.set(symRefNum);
+
+                     if (_comp->trace(OMR::escapeAnalysis) || _comp->getOption(TR_TraceOSR))
+                        {
+                        traceMsg(_comp, "In processSymbolReferences, adding definingSymRef #%d to symRefsToLoad\n", definingSymRefNum);
+                        }
+                     }
+                  else
+                     {
+                     if (_comp->trace(OMR::escapeAnalysis) || _comp->getOption(TR_TraceOSR))
+                        {
+                        traceMsg(_comp, "In processSymbolReferences, definingSymRef #%d - isAuto == %d; isParm == %d; dead == %d - not added to symRefsToLoad\n", definingSymRefNum, definingSym->isAuto(), definingSym->isParm(), (deadSymRefs != NULL && deadSymRefs->isSet(definingSymRefNum)));
+                        }
                      }
                   }
                }
