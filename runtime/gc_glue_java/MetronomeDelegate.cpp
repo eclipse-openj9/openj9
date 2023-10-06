@@ -740,20 +740,22 @@ void
 MM_MetronomeDelegate::lockClassUnloadMonitor(MM_EnvironmentRealtime *env)
 {
 	/* Grab the classUnloadMonitor so that the JIT and the GC will not interfere with each other */
+	if (!_javaVM->isClassUnloadMutexHeldForRedefinition) {
 #if defined(J9VM_JIT_CLASS_UNLOAD_RWMONITOR)
-	if (0 != omrthread_rwmutex_try_enter_write(_javaVM->classUnloadMutex)) {
-#else
-	if (0 != omrthread_monitor_try_enter(_javaVM->classUnloadMutex)) {
-#endif /* J9VM_JIT_CLASS_UNLOAD_RWMONITOR */
-		/* Failed acquire the monitor so interrupt the JIT.  This will allow the GC
-		 * to continue unloading classes.
-		 */
-		TRIGGER_J9HOOK_MM_INTERRUPT_COMPILATION(_extensions->hookInterface, (J9VMThread *)env->getLanguageVMThread());
+		if (0 != omrthread_rwmutex_try_enter_write(_javaVM->classUnloadMutex)) {
+#else /* defined(J9VM_JIT_CLASS_UNLOAD_RWMONITOR) */
+		if (0 != omrthread_monitor_try_enter(_javaVM->classUnloadMutex)) {
+#endif /* defined(J9VM_JIT_CLASS_UNLOAD_RWMONITOR) */
+			/* Failed acquire the monitor so interrupt the JIT.  This will allow the GC
+			 * to continue unloading classes.
+			 */
+			TRIGGER_J9HOOK_MM_INTERRUPT_COMPILATION(_extensions->hookInterface, (J9VMThread *)env->getLanguageVMThread());
 #if defined(J9VM_JIT_CLASS_UNLOAD_RWMONITOR)
-		omrthread_rwmutex_enter_write(_javaVM->classUnloadMutex);
-#else
-		omrthread_monitor_enter(_javaVM->classUnloadMutex);
-#endif /* J9VM_JIT_CLASS_UNLOAD_RWMONITOR */
+			omrthread_rwmutex_enter_write(_javaVM->classUnloadMutex);
+#else /* defined(J9VM_JIT_CLASS_UNLOAD_RWMONITOR) */
+			omrthread_monitor_enter(_javaVM->classUnloadMutex);
+#endif /* defined(J9VM_JIT_CLASS_UNLOAD_RWMONITOR) */
+		}
 	}
 }
 
@@ -763,11 +765,13 @@ MM_MetronomeDelegate::lockClassUnloadMonitor(MM_EnvironmentRealtime *env)
 void
 MM_MetronomeDelegate::unlockClassUnloadMonitor(MM_EnvironmentRealtime *env)
 {
+	if (!_javaVM->isClassUnloadMutexHeldForRedefinition) {
 #if defined(J9VM_JIT_CLASS_UNLOAD_RWMONITOR)
-	omrthread_rwmutex_exit_write(_javaVM->classUnloadMutex);
-#else
-	omrthread_monitor_exit(_javaVM->classUnloadMutex);
-#endif /* J9VM_JIT_CLASS_UNLOAD_RWMONITOR */
+		omrthread_rwmutex_exit_write(_javaVM->classUnloadMutex);
+#else /* defined(J9VM_JIT_CLASS_UNLOAD_RWMONITOR) */
+		omrthread_monitor_exit(_javaVM->classUnloadMutex);
+#endif /* defined(J9VM_JIT_CLASS_UNLOAD_RWMONITOR) */
+	}
 }
 
 void
