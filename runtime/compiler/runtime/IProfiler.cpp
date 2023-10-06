@@ -75,7 +75,6 @@
 #include "runtime/J9Profiler.hpp"
 #include "omrformatconsts.h"
 
-#define BC_HASH_TABLE_SIZE  34501 // 131071// 34501
 #undef  IPROFILER_CONTENDED_LOCKING
 #define ALLOC_HASH_TABLE_SIZE 1201
 #define TEST_verbose 0
@@ -85,7 +84,6 @@
 #define TEST_disableCSI 0
 #undef PERSISTENCE_VERBOSE
 
-#define IPMETHOD_HASH_TABLE_SIZE 12007
 #define MAX_THREE(X,Y,Z) ((X>Y)?((X>Z)?X:Z):((Y>Z)?Y:Z))
 
 
@@ -594,9 +592,9 @@ TR_IProfiler::TR_IProfiler(J9JITConfig *jitConfig)
    _hashTableMonitor = TR::Monitor::create("JIT-InterpreterProfilingMonitor");
 
    // bytecode hashtable
-   _bcHashTable = (TR_IPBytecodeHashTableEntry**)jitPersistentAlloc(BC_HASH_TABLE_SIZE*sizeof(TR_IPBytecodeHashTableEntry*));
+   _bcHashTable = (TR_IPBytecodeHashTableEntry**)jitPersistentAlloc(TR::Options::_iProfilerBcHashTableSize*sizeof(TR_IPBytecodeHashTableEntry*));
    if (_bcHashTable != NULL)
-      memset(_bcHashTable, 0, BC_HASH_TABLE_SIZE*sizeof(TR_IPBytecodeHashTableEntry*));
+      memset(_bcHashTable, 0, TR::Options::_iProfilerBcHashTableSize*sizeof(TR_IPBytecodeHashTableEntry*));
    else
       _isIProfilingEnabled = false;
 
@@ -605,9 +603,9 @@ TR_IProfiler::TR_IProfiler(J9JITConfig *jitConfig)
    if (_allocHashTable != NULL)
       memset(_allocHashTable, 0, ALLOC_HASH_TABLE_SIZE*sizeof(TR_IPBCDataAllocation*));
 #endif
-   _methodHashTable = (TR_IPMethodHashTableEntry **) jitPersistentAlloc(IPMETHOD_HASH_TABLE_SIZE * sizeof(TR_IPMethodHashTableEntry *));
+   _methodHashTable = (TR_IPMethodHashTableEntry **) jitPersistentAlloc(TR::Options::_iProfilerMethodHashTableSize * sizeof(TR_IPMethodHashTableEntry *));
    if (_methodHashTable != NULL)
-      memset(_methodHashTable, 0, IPMETHOD_HASH_TABLE_SIZE * sizeof(TR_IPMethodHashTableEntry *));
+      memset(_methodHashTable, 0, TR::Options::_iProfilerMethodHashTableSize * sizeof(TR_IPMethodHashTableEntry *));
    _readSampleRequestsHistory = (TR_ReadSampleRequestsHistory *) jitPersistentAlloc(sizeof (TR_ReadSampleRequestsHistory));
    if (!_readSampleRequestsHistory || !_readSampleRequestsHistory->init(TR::Options::_iprofilerFailHistorySize))
       {
@@ -649,7 +647,7 @@ TR_IProfiler::isCallGraphProfilingEnabled()
 inline int32_t
 TR_IProfiler::bcHash(uintptr_t pc)
    {
-   return (int32_t)((pc & 0x7FFFFFFF) % BC_HASH_TABLE_SIZE);
+   return (int32_t)((pc & 0x7FFFFFFF) % TR::Options::_iProfilerBcHashTableSize);
    }
 
 inline int32_t
@@ -661,7 +659,7 @@ TR_IProfiler::allocHash(uintptr_t pc)
 inline int32_t
 TR_IProfiler::methodHash(uintptr_t data)
    {
-   return (int32_t)((data & 0x7FFFFFFF) % IPMETHOD_HASH_TABLE_SIZE);
+   return (int32_t)((data & 0x7FFFFFFF) % TR::Options::_iProfilerMethodHashTableSize);
    }
 
 bool
@@ -3479,7 +3477,7 @@ uint32_t
 TR_IProfiler::releaseAllEntries()
    {
    uint32_t count = 0;
-   for (int32_t bucket = 0; bucket < BC_HASH_TABLE_SIZE; bucket++)
+   for (int32_t bucket = 0; bucket < TR::Options::_iProfilerBcHashTableSize; bucket++)
       {
       for (TR_IPBytecodeHashTableEntry *entry = _bcHashTable[bucket]; entry; entry = entry->getNext())
          {
@@ -3497,7 +3495,7 @@ uint32_t
 TR_IProfiler::countEntries()
    {
    uint32_t count = 0;
-   for (int32_t bucket = 0; bucket < BC_HASH_TABLE_SIZE; bucket++)
+   for (int32_t bucket = 0; bucket < TR::Options::_iProfilerBcHashTableSize; bucket++)
       for (TR_IPBytecodeHashTableEntry *entry = _bcHashTable[bucket]; entry; entry = entry->getNext())
          count++;
    return count;
@@ -3508,7 +3506,7 @@ TR_IProfiler::countEntries()
 //
 void TR_IProfiler::setupEntriesInHashTable(TR_IProfiler *ip)
    {
-   for (int32_t bucket = 0; bucket < BC_HASH_TABLE_SIZE; bucket++)
+   for (int32_t bucket = 0; bucket < TR::Options::_iProfilerBcHashTableSize; bucket++)
       {
       TR_IPBytecodeHashTableEntry *entry = _bcHashTable[bucket], *prevEntry = NULL;
 
@@ -3606,7 +3604,7 @@ void TR_IProfiler::checkMethodHashTable()
       }
 
    fprintf(fout, "printing method hash table\n");fflush(fout);
-   for (int32_t bucket = 0; bucket < IPMETHOD_HASH_TABLE_SIZE; bucket++)
+   for (int32_t bucket = 0; bucket < TR::Options::_iProfilerMethodHashTableSize; bucket++)
       {
       TR_IPMethodHashTableEntry *entry = _methodHashTable[bucket];
 
@@ -4790,7 +4788,7 @@ void TR_AggregationHT::sortByNameAndPrint(TR_J9VMBase *fe)
 void TR_IProfiler::dumpIPBCDataCallGraph(J9VMThread* vmThread)
    {
    fprintf(stderr, "Dumping info ...\n");
-   TR_AggregationHT aggregationHT(BC_HASH_TABLE_SIZE);
+   TR_AggregationHT aggregationHT(TR::Options::_iProfilerBcHashTableSize);
    if (aggregationHT.getSize() == 0) // OOM
       {
       fprintf(stderr, "Cannot allocate memory. Bailing out.\n");
@@ -4815,7 +4813,7 @@ void TR_IProfiler::dumpIPBCDataCallGraph(J9VMThread* vmThread)
    TR_J9VMBase * fe = TR_J9VMBase::get(javaVM->jitConfig, vmThread);
 
    fprintf(stderr, "Aggregating per method ...\n");
-   for (int32_t bucket = 0; bucket < BC_HASH_TABLE_SIZE; bucket++)
+   for (int32_t bucket = 0; bucket < TR::Options::_iProfilerBcHashTableSize; bucket++)
       {
       //fprintf(stderr, "Looking at bucket %d\n", bucket);
       for (TR_IPBytecodeHashTableEntry *entry = _bcHashTable[bucket]; entry; entry = entry->getNext())
