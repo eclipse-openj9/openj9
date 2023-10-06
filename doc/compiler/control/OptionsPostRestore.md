@@ -139,13 +139,14 @@ consequence of this is that if the same file name is specified then a
 new file will be opened. This can have the consequence of overwriting
 the previous file if the PID of the restored process is the same.
 
-### Start and Elapsed Time
+### Start Time
 
-The Checkpoint phase is conceptually part of building the application;
-therefore it does not make sense to expect a user who specifies an
-option such as `-XsamplingExpirationTime` to take into account the time
-spent executing in the Checkpoint phase. Therefore, on restore, both
-the start and elapsed time are reset.
+While the checkpoint phase is conceptually part of building the
+application, in order to ensure consistency with parts of the compiler
+that memoize elapsed time, the start time is reset to pretend like the
+JVM started `persistentInfo->getElapsedTime()` milliseconds ago. This
+will impact options such as `-XsamplingExpirationTime`. However, such
+an option may not make sense in the context of checkpoint/restore.
 
 ### `-Xrs`, `-Xtrace`, `-Xjit:disableTraps`, `-Xjit:noResumableTrapHandler`
 

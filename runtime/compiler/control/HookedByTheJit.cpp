@@ -6124,30 +6124,6 @@ static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
       while (!shutdownSamplerThread && // watch for shutdown signals
              j9thread_sleep_interruptable((IDATA) samplingPeriod, 0) == 0) // Anything non-0 is an error condition so we shouldn't do the sampling //!= J9THREAD_INTERRUPTED)
          {
-#if defined(J9VM_OPT_CRIU_SUPPORT)
-         // Post-restore, reset the start and elapsed time. The Checkpoint
-         // phase is conceptually part of building the application; therefore
-         // it does not make sense to expect a user who specifies an option such
-         // as -XsamplingExpirationTime  to take into account the time spent
-         // executing in the Checkpoint phase.
-         if (compInfo->resetStartAndElapsedTime())
-            {
-            if (TR::Options::isAnyVerboseOptionSet())
-               TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Start and elapsed time: startTime=%6u, elapsedTime=%6u",
-                                              (uint32_t)persistentInfo->getStartTime(), (uint32_t)persistentInfo->getElapsedTime());
-
-            persistentInfo->setStartTime(j9time_current_time_millis());
-            persistentInfo->setElapsedTime(0);
-
-            if (TR::Options::isAnyVerboseOptionSet())
-               TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Reset start and elapsed time: startTime=%6u, elapsedTime=%6u",
-                                              (uint32_t)persistentInfo->getStartTime(), (uint32_t)persistentInfo->getElapsedTime());
-
-            // Only reset the time once
-            compInfo->setResetStartAndElapsedTime(false);
-            }
-#endif // #if defined(J9VM_OPT_CRIU_SUPPORT)
-
          J9VMThread * currentThread;
 
          persistentInfo->updateElapsedTime(samplingPeriod);
