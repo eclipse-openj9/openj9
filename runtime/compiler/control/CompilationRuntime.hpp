@@ -374,6 +374,8 @@ public:
       SAMPLE_THR_FAILED_TO_ATTACH,
       SAMPLE_THR_ATTACHED,
       SAMPLE_THR_INITIALIZED,
+      SAMPLE_THR_SUSPENDED,
+      SAMPLE_THR_RESUMING,
       SAMPLE_THR_STOPPING,
       SAMPLE_THR_DESTROYED,
       SAMPLE_THR_LAST_STATE // must be the last one
@@ -1591,6 +1593,24 @@ private:
     * @return false false if the checkpoint is interrupted, true otherwise.
     */
    bool suspendCompThreadsForCheckpoint(J9VMThread *vmThread);
+
+   /**
+    * @brief Suspend all JIT threads such as
+    *        * Compilation Threads
+    *        * Sampler Thread
+    *
+    * @param vmThread The J9VMThread
+    *
+    * @return false if the checkpoint is interrupted, true otherwise.
+    */
+   bool suspendJITThreadsForCheckpoint(J9VMThread *vmThread);
+
+   /**
+    * @brief Resume all JIT threads suspended by suspendCompilerThreadsForCheckpoint
+    *
+    * @param vmThread The J9VMThread
+    */
+   void resumeJITThreadsForRestore(J9VMThread *vmThread);
 
    /**
     * @brief Reset Start Time post retore
