@@ -223,7 +223,7 @@ jitIsFieldStable(J9VMThread *currentThread, J9Class *clazz, UDATA cpIndex)
 BOOLEAN
 jitIsMethodTaggedWithForceInline(J9VMThread *currentThread, J9Method *method)
 {
-	return FALSE != methodContainsRuntimeAnnotation(currentThread, method, (J9UTF8 *)&ojdk_forceInline);
+	return methodContainsRuntimeAnnotation(currentThread, method, (J9UTF8 *)&ojdk_forceInline);
 }
 
 /**
@@ -236,7 +236,7 @@ jitIsMethodTaggedWithForceInline(J9VMThread *currentThread, J9Method *method)
 BOOLEAN
 jitIsMethodTaggedWithDontInline(J9VMThread *currentThread, J9Method *method)
 {
-	return FALSE != methodContainsRuntimeAnnotation(currentThread, method, (J9UTF8 *)&ojdk_dontInline);
+	return methodContainsRuntimeAnnotation(currentThread, method, (J9UTF8 *)&ojdk_dontInline);
 }
 
 /**
@@ -250,7 +250,7 @@ BOOLEAN
 jitIsMethodTaggedWithIntrinsicCandidate(J9VMThread *currentThread, J9Method *method)
 {
 #if JAVA_SPEC_VERSION >= 16
-	return FALSE != methodContainsRuntimeAnnotation(currentThread, method, (J9UTF8 *)&ojdk_intrinsicCandidate);
+	return methodContainsRuntimeAnnotation(currentThread, method, (J9UTF8 *)&ojdk_intrinsicCandidate);
 #else /* JAVA_SPEC_VERSION >= 16 */
 	return FALSE;
 #endif /* JAVA_SPEC_VERSION >= 16 */
@@ -267,10 +267,10 @@ BOOLEAN
 jitIsMethodTaggedWithChangesCurrentThread(J9VMThread *currentThread, J9Method *method)
 {
 #if JAVA_SPEC_VERSION >= 21
-	return FALSE != methodContainsRuntimeAnnotation(currentThread, method, (J9UTF8 *)&ojdk_changesCurrentThread);
+	return methodContainsRuntimeAnnotation(currentThread, method, (J9UTF8 *)&ojdk_changesCurrentThread);
 #else /* JAVA_SPEC_VERSION >= 21 */
 	return FALSE;
 #endif /* JAVA_SPEC_VERSION >= 21 */
 }
 
-}
+} /* extern "C" */
