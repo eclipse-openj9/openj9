@@ -277,6 +277,8 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    static int32_t _iprofilerFailRateThreshold; // will reactivate Iprofiler if failure rate exceeds this threshold
    static int32_t _iprofilerFailHistorySize;
    static int32_t _iProfilerMemoryConsumptionLimit;
+   static int32_t _iProfilerBcHashTableSize;
+   static int32_t _iProfilerMethodHashTableSize;
    static int32_t _IprofilerOffSubtractionFactor;
    static int32_t _IprofilerOffDivisionFactor;
 
