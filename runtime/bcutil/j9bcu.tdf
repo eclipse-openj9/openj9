@@ -261,7 +261,7 @@ TraceException=Trc_BCU_ClassFileOracle_walkMethodCodeAttributeAttributes_Duplica
 TraceAssert=Trc_BCU_Assert_SupportedByteCode NoEnv Overhead=1 Level=1 Assert="(0 != sunJavaInstructionSizeTable[P1])"
 TraceEntry=Trc_BCU_avl_intern_verify_EntryV2 Noenv Overhead=1 Level=3 Template="BCU avl_intern_verify Entry: tree=%p sharedPool=%p localPool=%p"
 
-TraceAssert=Trc_Assert_BCU_mustHaveExclusiveVMAccess NoEnv overhead=1 Level=1 Assert="(P1)->publicFlags & (J9_PUBLIC_FLAGS_VM_ACCESS | J9_PUBLIC_FLAGS_HALT_THREAD_EXCLUSIVE)"
+TraceAssert=Trc_Assert_BCU_mustHaveExclusiveVMAccess NoEnv overhead=1 Level=1 Assert="(0 != (P1)->omrVMThread->exclusiveCount)"
 
 TraceAssert=Trc_BCU_Assert_InternVerificationFailure NoEnv Overhead=1 Level=1 Assert="(0)"
 

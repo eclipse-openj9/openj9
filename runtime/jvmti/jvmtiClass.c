@@ -1208,7 +1208,11 @@ redefineClassesCommon(jvmtiEnv* env,
 	 * We can update the VM data structures without any inconsistencies being observed by
 	 * concurrently running compilations. Afterward, resuming compilations will be interrupted
 	 * if necessary before they can observe an inconsistency.
+	 *
+	 * NOTE: The logic below can cause GC to run, and GC could decide to unload classes.
+	 * To avoid deadlock, prevent GC from redundantly entering the class unload mutex.
 	 */
+	vm->isClassUnloadMutexHeldForRedefinition = TRUE;
 
 	if (J9_ARE_ANY_BITS_SET(vm->runtimeFlags, J9_RUNTIME_DYNAMIC_HEAPIFICATION)) {
 		/* Look for stack-allocated objects only if the JIT is enabled and not running in FSD mode */
@@ -1225,8 +1229,17 @@ redefineClassesCommon(jvmtiEnv* env,
 	rc = determineClassesToRecreate(currentThread, class_count, specifiedClasses, &classPairs,
 			&methodPairs, jitEventDataPtr, !extensionsEnabled);
 	if (rc == JVMTI_ERROR_NONE) {
-		/* Identify the MemberNames needing fix-up based on classPairs. */
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+		/* Eliminate dark matter so that none will be encountered in prepareToFixMemberNames(). */
+		UDATA savedAllowUserHeapWalkFlag = vm->requiredDebugAttributes & J9VM_DEBUG_ATTRIBUTE_ALLOW_USER_HEAP_WALK;
+		vm->requiredDebugAttributes |= J9VM_DEBUG_ATTRIBUTE_ALLOW_USER_HEAP_WALK;
+		vm->memoryManagerFunctions->j9gc_modron_global_collect_with_overrides(currentThread, J9MMCONSTANT_EXPLICIT_GC_EXCLUSIVE_VMACCESS_ALREADY_ACQUIRED);
+		if (0 == savedAllowUserHeapWalkFlag) {
+			/* Clear the flag to restore its original value. */
+			vm->requiredDebugAttributes &= ~J9VM_DEBUG_ATTRIBUTE_ALLOW_USER_HEAP_WALK;
+		}
+
+		/* Identify the MemberNames needing fix-up based on classPairs. */
 		memberNamesToFix = prepareToFixMemberNames(currentThread, classPairs);
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
@@ -1362,6 +1375,8 @@ failedWithVMAccess:
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 	hashTableFree(classPairs);
+
+	vm->isClassUnloadMutexHeldForRedefinition = FALSE;
 
 #if defined(J9VM_JIT_CLASS_UNLOAD_RWMONITOR)
 	omrthread_rwmutex_exit_write(vm->classUnloadMutex);
