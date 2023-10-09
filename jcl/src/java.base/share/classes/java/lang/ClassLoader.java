@@ -1239,7 +1239,22 @@ public Class<?> loadClass(String className) throws ClassNotFoundException {
 		throw new ClassNotFoundException(className);
 	}
 /*[ENDIF] JAVA_SPEC_VERSION > 8 */
+
+/*[IF OPENJDK_METHODHANDLES & (JAVA_SPEC_VERSION <= 11)]*/
+	try {
+		return java.security.AccessController.doPrivileged((java.security.PrivilegedExceptionAction<Class<?>>) () -> {
+			return loadClass(className, false);
+		});
+	} catch (java.security.PrivilegedActionException e) {
+		Throwable t = e.getCause();
+		if (t instanceof ClassNotFoundException) {
+			throw (ClassNotFoundException)t;
+		}
+		throw new InternalError(t);
+	}
+/*[ELSE] OPENJDK_METHODHANDLES & (JAVA_SPEC_VERSION <= 11)*/
 	return loadClass(className, false);
+/*[ENDIF] OPENJDK_METHODHANDLES & (JAVA_SPEC_VERSION <= 11)*/
 }
 
 /**
