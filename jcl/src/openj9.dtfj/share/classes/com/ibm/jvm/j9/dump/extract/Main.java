@@ -22,13 +22,11 @@
  *******************************************************************************/
 package com.ibm.jvm.j9.dump.extract;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
@@ -276,10 +274,8 @@ public class Main {
 		String outputName = null;
 		File virtualRootDirectory = null;
 		boolean ignoreOptions = false;
-		boolean interactive = false;
 		boolean verbose = false;
 		boolean throwExceptions = false;
-		boolean zip = true;
 		boolean disableBuildIdCheck = false;
 		boolean excludeCoreFile = false;
 
@@ -291,8 +287,6 @@ public class Main {
 			if (!ignoreOptions && args[i].startsWith("-")) { //$NON-NLS-1$
 				if ("--".equals(args[i])) { //$NON-NLS-1$
 					ignoreOptions = true;
-				} else if ("-interactive".equals(args[i])) { //$NON-NLS-1$
-					interactive = true;
 				} else if ("-help".equals(args[i])) { //$NON-NLS-1$
 					usageMessage(null, JEXTRACT_SUCCESS);
 				} else if ("-f".equals(args[i])) { //$NON-NLS-1$
@@ -338,14 +332,8 @@ public class Main {
 
 		Main dumper = new Main(dumpName, virtualRootDirectory, verbose, throwExceptions, disableBuildIdCheck, excludeCoreFile);
 
-		if (interactive) {
-			dumper.runInteractive();
-		} else {
-			if (zip) {
-				dumper.runZip(outputName);
-			}
-			report("jextract complete."); //$NON-NLS-1$
-		}
+		dumper.runZip(outputName);
+		report("jextract complete."); //$NON-NLS-1$
 
 		if (dumper._dump != null) {
 			try {
@@ -512,41 +500,6 @@ public class Main {
 		}
 	}
 
-	private void runInteractive() {
-		report("Jextract interactive mode."); //$NON-NLS-1$
-		report("Type '!j9help' for help."); //$NON-NLS-1$
-		report("Type 'quit' to quit."); //$NON-NLS-1$
-		report("(Commands must be prefixed with '!')"); //$NON-NLS-1$
-
-		IAbstractAddressSpace addressSpace = _dump.getAddressSpace();
-
-		if (addressSpace == null) {
-			report("Error. Address space not found in dump: " + _dumpName //$NON-NLS-1$
-					+ ". Dump is truncated, corrupted or does not contain a supported JVM."); //$NON-NLS-1$
-			return;
-		}
-
-		BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
-
-		try {
-			while (true) {
-				report("> "); //$NON-NLS-1$
-				String command = input.readLine().trim();
-				if ("quit".equalsIgnoreCase(command) || "q".equalsIgnoreCase(command)) { //$NON-NLS-1$ //$NON-NLS-2$
-					break;
-				}
-				try {
-					doCommand(addressSpace, command);
-				} catch (Throwable e) {
-					report(e.getMessage());
-					report("Failure detected during command execution, see previous message(s)."); //$NON-NLS-1$
-				}
-			}
-		} catch (IOException e) {
-			report("Error reading input."); //$NON-NLS-1$
-		}
-	}
-
 	private static void report(String message) {
 		System.err.println(message);
 	}
@@ -677,7 +630,4 @@ public class Main {
 	}
 
 	private native long getEnvironmentPointer(IAbstractAddressSpace dump, boolean disableBuildIdCheck) throws Exception;
-
-	private native void doCommand(IAbstractAddressSpace dump, String command) throws Exception;
-
 }

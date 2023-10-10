@@ -23,15 +23,12 @@
 set(OMR_ENHANCED_WARNINGS OFF)
 
 j9vm_add_library(j9jextract SHARED
-	jextractglue.c
 	jextractnatives.c
-	
 )
 
 target_link_libraries(j9jextract
 	PRIVATE
 		j9vm_interface
-
 		j9dbgext
 		j9util
 		j9utilcore
@@ -39,7 +36,6 @@ target_link_libraries(j9jextract
 )
 
 omr_add_exports(j9jextract
-	Java_com_ibm_jvm_j9_dump_extract_Main_doCommand
 	Java_com_ibm_jvm_j9_dump_extract_Main_getEnvironmentPointer
 )
 
