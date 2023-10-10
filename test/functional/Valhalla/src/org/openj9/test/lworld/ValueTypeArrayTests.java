@@ -357,26 +357,26 @@ public class ValueTypeArrayTests {
 		}
 	}
 
-   static primitive class SomeVTClassWithDoubleField{
+   static primitive class SomePrimitiveClassWithDoubleField{
       public double d;
 
-		SomeVTClassWithDoubleField(double x) {
+		SomePrimitiveClassWithDoubleField(double x) {
 			this.d = x;
 		}
    }
 
-   static primitive class SomeVTClassWithFloatField{
+   static primitive class SomePrimitiveClassWithFloatField{
       public float f;
 
-		SomeVTClassWithFloatField(float x) {
+		SomePrimitiveClassWithFloatField(float x) {
 			this.f = x;
 		}
    }
 
-   static primitive class SomeVTClassWithLongField{
+   static primitive class SomePrimitiveClassWithLongField{
       public long l;
 
-		SomeVTClassWithLongField(long x) {
+		SomePrimitiveClassWithLongField(long x) {
 			this.l = x;
 		}
    }
@@ -409,11 +409,11 @@ public class ValueTypeArrayTests {
 
    interface SomeInterface2WithSingleImplementer {}
 
-   static primitive class SomeVTClassImplIf implements SomeInterface1WithSingleImplementer {
+   static primitive class SomePrimitiveClassImplIf implements SomeInterface1WithSingleImplementer {
       public double d;
       public long l;
 
-		SomeVTClassImplIf(double val1, long val2) {
+		SomePrimitiveClassImplIf(double val1, long val2) {
 			this.d = val1;
 			this.l = val2;
 		}
@@ -439,8 +439,8 @@ public class ValueTypeArrayTests {
       SomeInterface2WithSingleImplementer   data_5;
 
 		SomeClassHolder() {
-         data_1 = new SomeVTClassImplIf[ARRAY_LENGTH];
-         data_2 = new SomeVTClassImplIf[ARRAY_LENGTH];
+         data_1 = new SomePrimitiveClassImplIf[ARRAY_LENGTH];
+         data_2 = new SomePrimitiveClassImplIf[ARRAY_LENGTH];
 
          data_3 = new SomeIdentityClassImplIf[ARRAY_LENGTH];
          data_4 = new SomeIdentityClassImplIf[ARRAY_LENGTH];
@@ -448,8 +448,8 @@ public class ValueTypeArrayTests {
          data_5 = new SomeIdentityClassImplIf((double)(12345), (long)(12345));
 
          for (int i = 0; i < ARRAY_LENGTH; i++) {
-            data_1[i] = new SomeVTClassImplIf((double)i, (long)i);
-            data_2[i] = new SomeVTClassImplIf((double)(i+1), (long)(i+1));
+            data_1[i] = new SomePrimitiveClassImplIf((double)i, (long)i);
+            data_2[i] = new SomePrimitiveClassImplIf((double)(i+1), (long)(i+1));
 
             data_3[i] = data_5;
             data_4[i] = new SomeIdentityClassImplIf((double)(i+1), (long)(i+1));
@@ -457,19 +457,19 @@ public class ValueTypeArrayTests {
       }
    }
 
-   static void readArrayElementWithDoubleField(SomeVTClassWithDoubleField[] data) throws Throwable {
+   static void readArrayElementWithDoubleField(SomePrimitiveClassWithDoubleField[] data) throws Throwable {
       for (int i=0; i<data.length; ++i) {
          assertEquals(data[i].d, (double)i);
       }
    }
 
-   static void readArrayElementWithFloatField(SomeVTClassWithFloatField[] data) throws Throwable {
+   static void readArrayElementWithFloatField(SomePrimitiveClassWithFloatField[] data) throws Throwable {
       for (int i=0; i<data.length; ++i) {
          assertEquals(data[i].f, (float)i);
       }
    }
 
-   static void readArrayElementWithLongField(SomeVTClassWithLongField[] data) throws Throwable {
+   static void readArrayElementWithLongField(SomePrimitiveClassWithLongField[] data) throws Throwable {
       for (int i=0; i<data.length; ++i) {
          assertEquals(data[i].l, (long)i);
       }
@@ -493,9 +493,9 @@ public class ValueTypeArrayTests {
       }
    }
 
-   static void readArrayElementWithSomeVTClassImplIf(SomeClassHolder holder) throws Throwable {
+   static void readArrayElementWithSomePrimitiveClassImplIf(SomeClassHolder holder) throws Throwable {
       for (int i=0; i<holder.data_1.length; ++i) {
-         assertEquals(holder.data_1[i], new SomeVTClassImplIf((double)i, (long)i));
+         assertEquals(holder.data_1[i], new SomePrimitiveClassImplIf((double)i, (long)i));
       }
    }
 
@@ -505,7 +505,7 @@ public class ValueTypeArrayTests {
       }
    }
 
-   static void writeArrayElementWithDoubleField(SomeVTClassWithDoubleField[] srcData, SomeVTClassWithDoubleField[] dstData) throws Throwable {
+   static void writeArrayElementWithDoubleField(SomePrimitiveClassWithDoubleField[] srcData, SomePrimitiveClassWithDoubleField[] dstData) throws Throwable {
       for (int i=0; i<dstData.length; ++i) {
          dstData[i] = srcData[i];
       }
@@ -515,7 +515,7 @@ public class ValueTypeArrayTests {
       }
    }
 
-   static void writeArrayElementWithFloatField(SomeVTClassWithFloatField[] srcData, SomeVTClassWithFloatField[] dstData) throws Throwable {
+   static void writeArrayElementWithFloatField(SomePrimitiveClassWithFloatField[] srcData, SomePrimitiveClassWithFloatField[] dstData) throws Throwable {
       for (int i=0; i<dstData.length; ++i) {
          dstData[i] = srcData[i];
       }
@@ -525,7 +525,7 @@ public class ValueTypeArrayTests {
       }
    }
 
-   static void writeArrayElementWithLongField(SomeVTClassWithLongField[] srcData, SomeVTClassWithLongField[] dstData) throws Throwable {
+   static void writeArrayElementWithLongField(SomePrimitiveClassWithLongField[] srcData, SomePrimitiveClassWithLongField[] dstData) throws Throwable {
       for (int i=0; i<dstData.length; ++i) {
          dstData[i] = srcData[i];
       }
@@ -565,13 +565,13 @@ public class ValueTypeArrayTests {
       }
    }
 
-   static void writeArrayElementWithSomeVTClassImplIf(SomeClassHolder holder) throws Throwable {
+   static void writeArrayElementWithSomePrimitiveClassImplIf(SomeClassHolder holder) throws Throwable {
       for (int i=0; i<holder.data_1.length; ++i) {
          holder.data_1[i] = holder.data_2[i];
       }
 
       for (int i=0; i<holder.data_1.length; ++i) {
-         assertEquals(holder.data_1[i], new SomeVTClassImplIf((double)(i+1), (long)(i+1)));
+         assertEquals(holder.data_1[i], new SomePrimitiveClassImplIf((double)(i+1), (long)(i+1)));
       }
    }
 
@@ -588,9 +588,9 @@ public class ValueTypeArrayTests {
    @Test(priority=1,invocationCount=2)
 	static public void testValueTypeAaload() throws Throwable {
       int ARRAY_LENGTH = 10;
-      SomeVTClassWithDoubleField[] data1  = new SomeVTClassWithDoubleField[ARRAY_LENGTH];
-      SomeVTClassWithFloatField[]  data2  = new SomeVTClassWithFloatField[ARRAY_LENGTH];
-      SomeVTClassWithLongField[]   data3  = new SomeVTClassWithLongField[ARRAY_LENGTH];
+      SomePrimitiveClassWithDoubleField[] data1  = new SomePrimitiveClassWithDoubleField[ARRAY_LENGTH];
+      SomePrimitiveClassWithFloatField[]  data2  = new SomePrimitiveClassWithFloatField[ARRAY_LENGTH];
+      SomePrimitiveClassWithLongField[]   data3  = new SomePrimitiveClassWithLongField[ARRAY_LENGTH];
 
       SomeIdentityClassWithDoubleField[] data4  = new SomeIdentityClassWithDoubleField[ARRAY_LENGTH];
       SomeIdentityClassWithFloatField[]  data5  = new SomeIdentityClassWithFloatField[ARRAY_LENGTH];
@@ -599,9 +599,9 @@ public class ValueTypeArrayTests {
       SomeClassHolder holder = new SomeClassHolder();
 
       for (int i=0; i<ARRAY_LENGTH; ++i) {
-         data1[i] = new SomeVTClassWithDoubleField((double)i);
-         data2[i] = new SomeVTClassWithFloatField((float)i);
-         data3[i] = new SomeVTClassWithLongField((long)i);
+         data1[i] = new SomePrimitiveClassWithDoubleField((double)i);
+         data2[i] = new SomePrimitiveClassWithFloatField((float)i);
+         data3[i] = new SomePrimitiveClassWithLongField((long)i);
 
          data4[i] = new SomeIdentityClassWithDoubleField((double)i);
          data5[i] = new SomeIdentityClassWithFloatField((float)i);
@@ -616,19 +616,19 @@ public class ValueTypeArrayTests {
       readArrayElementWithFloatField(data5);
       readArrayElementWithLongField(data6);
 
-      readArrayElementWithSomeVTClassImplIf(holder);
+      readArrayElementWithSomePrimitiveClassImplIf(holder);
       readArrayElementWithSomeIdentityClassImplIf(holder);
    }
 
    @Test(priority=1,invocationCount=2)
 	static public void testValueTypeAastore() throws Throwable {
       int ARRAY_LENGTH = 10;
-      SomeVTClassWithDoubleField[] srcData1 = new SomeVTClassWithDoubleField[ARRAY_LENGTH];
-      SomeVTClassWithDoubleField[] dstData1 = new SomeVTClassWithDoubleField[ARRAY_LENGTH];
-      SomeVTClassWithFloatField[]  srcData2 = new SomeVTClassWithFloatField[ARRAY_LENGTH];
-      SomeVTClassWithFloatField[]  dstData2 = new SomeVTClassWithFloatField[ARRAY_LENGTH];
-      SomeVTClassWithLongField[]   srcData3 = new SomeVTClassWithLongField[ARRAY_LENGTH];
-      SomeVTClassWithLongField[]   dstData3 = new SomeVTClassWithLongField[ARRAY_LENGTH];
+      SomePrimitiveClassWithDoubleField[] srcData1 = new SomePrimitiveClassWithDoubleField[ARRAY_LENGTH];
+      SomePrimitiveClassWithDoubleField[] dstData1 = new SomePrimitiveClassWithDoubleField[ARRAY_LENGTH];
+      SomePrimitiveClassWithFloatField[]  srcData2 = new SomePrimitiveClassWithFloatField[ARRAY_LENGTH];
+      SomePrimitiveClassWithFloatField[]  dstData2 = new SomePrimitiveClassWithFloatField[ARRAY_LENGTH];
+      SomePrimitiveClassWithLongField[]   srcData3 = new SomePrimitiveClassWithLongField[ARRAY_LENGTH];
+      SomePrimitiveClassWithLongField[]   dstData3 = new SomePrimitiveClassWithLongField[ARRAY_LENGTH];
 
       SomeIdentityClassWithDoubleField[] srcData4  = new SomeIdentityClassWithDoubleField[ARRAY_LENGTH];
       SomeIdentityClassWithDoubleField[] dstData4  = new SomeIdentityClassWithDoubleField[ARRAY_LENGTH];
@@ -640,13 +640,13 @@ public class ValueTypeArrayTests {
       SomeClassHolder holder   = new SomeClassHolder();
 
       for (int i=0; i<ARRAY_LENGTH; ++i) {
-         srcData1[i] = new SomeVTClassWithDoubleField((double)(i+1));
-         srcData2[i] = new SomeVTClassWithFloatField((float)(i+1));
-         srcData3[i] = new SomeVTClassWithLongField((long)(i+1));
+         srcData1[i] = new SomePrimitiveClassWithDoubleField((double)(i+1));
+         srcData2[i] = new SomePrimitiveClassWithFloatField((float)(i+1));
+         srcData3[i] = new SomePrimitiveClassWithLongField((long)(i+1));
 
-         dstData1[i] = new SomeVTClassWithDoubleField((double)i);
-         dstData2[i] = new SomeVTClassWithFloatField((float)i);
-         dstData3[i] = new SomeVTClassWithLongField((long)i);
+         dstData1[i] = new SomePrimitiveClassWithDoubleField((double)i);
+         dstData2[i] = new SomePrimitiveClassWithFloatField((float)i);
+         dstData3[i] = new SomePrimitiveClassWithLongField((long)i);
 
          srcData4[i] = new SomeIdentityClassWithDoubleField((double)(i+1));
          srcData5[i] = new SomeIdentityClassWithFloatField((float)(i+1));
@@ -665,7 +665,7 @@ public class ValueTypeArrayTests {
       writeArrayElementWithFloatField(srcData5, dstData5);
       writeArrayElementWithLongField(srcData6, dstData6);
 
-      writeArrayElementWithSomeVTClassImplIf(holder);
+      writeArrayElementWithSomePrimitiveClassImplIf(holder);
       writeArrayElementWithSomeIdentityClassImplIf(holder);
    }
 
@@ -712,5 +712,42 @@ public class ValueTypeArrayTests {
 
 		copyBetweenEmptyValArrays(valArr1, valArr2);
 		compareEmptyValArrays(valArr1, valArr2);
+	}
+
+	static void arrayElementStoreNull(Object[] arr, int index) {
+		arr[index] = null;
+	}
+
+	static void arrayElementStore(Object[] arr, int index, Object obj) {
+		arr[index] = obj;
+	}
+
+	@Test(priority=1,invocationCount=2)
+	static public void testStoreNullToNullRestrictedArrayElement1() throws Throwable {
+		int ARRAY_LENGTH = 10;
+		SomePrimitiveClassWithDoubleField[] dstData = new SomePrimitiveClassWithDoubleField[ARRAY_LENGTH];
+
+		try {
+			arrayElementStoreNull(dstData, ARRAY_LENGTH/2);
+		} catch (NullPointerException npe) {
+			return; /* pass */
+		}
+
+		Assert.fail("Expect a NullPointerException. No exception or wrong kind of exception thrown");
+	}
+
+	@Test(priority=1,invocationCount=2)
+	static public void testStoreNullToNullRestrictedArrayElement2() throws Throwable {
+		int ARRAY_LENGTH = 10;
+		SomePrimitiveClassWithDoubleField[] dstData = new SomePrimitiveClassWithDoubleField[ARRAY_LENGTH];
+		Object obj = null;
+
+		try {
+			arrayElementStore(dstData, ARRAY_LENGTH/2, obj);
+		} catch (NullPointerException npe) {
+			return; /* pass */
+		}
+
+		Assert.fail("Expect a NullPointerException. No exception or wrong kind of exception thrown");
 	}
 }

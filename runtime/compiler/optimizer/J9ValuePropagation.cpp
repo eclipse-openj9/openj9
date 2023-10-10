@@ -1182,8 +1182,10 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                      }
 
                    //TODO: Require the <nonNullableArrayNullStoreCheck> non-helper if !canSkipNonNullableArrayNullValueChecks(...)
-                   if (canTransformUnflattenedArrayElementLoadStore &&
-                      (isCompTypePrimVT != TR_no) &&
+                   // If the value being stored is NULL and the destination array component is null restricted in runtime,
+                   // a NPE is expected to throw. Therefore, when the array component type is not known to be identity type
+                   // in compilation time, a NULLCHK on store value is required
+                   if ((isCompTypePrimVT != TR_no) &&
                       (storeValueConstraint == NULL || !storeValueConstraint->isNonNullObject()))
                      {
                      flagsForTransform.set(ValueTypesHelperCallTransform::RequiresNullValueCheck);
