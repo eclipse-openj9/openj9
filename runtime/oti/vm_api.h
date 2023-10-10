@@ -542,6 +542,19 @@ BOOLEAN
 isNonPortableRestoreMode(J9VMThread *currentThread);
 
 /**
+ * @brief Queries if portable restore mode (specified via
+ * -XX:+JVMPortableRestoreMode) is enabled. If so, the JVM
+ * will remain in portable mode after restore. However, this
+ * will have no impact on the JCL and taking another checkpoint
+ * will still not be permitted.
+ *
+ * @param currentThread vmthread token
+ * @return TRUE if enabled, FALSE otherwise
+ */
+BOOLEAN
+isJVMInPortableRestoreMode(J9VMThread *currentThread);
+
+/**
  * @brief JVM hooks to run before performing a JVM checkpoint
  *
  * @param currentThread vmthread token

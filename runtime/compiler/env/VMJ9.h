@@ -1399,6 +1399,13 @@ public:
    virtual bool inSnapshotMode();
 
    /**
+    * \brief Answers whether the JIT should generate portable restore code.
+    *
+    * \return True if portable restore code should be generated, false otherwise.
+    */
+   virtual bool isPortableRestoreModeEnabled();
+
+   /**
     * \brief Answers whether checkpoint and restore mode is enabled (but not necessarily
     * whether snapshots can be taken or if any restores have already occurred).
     *
