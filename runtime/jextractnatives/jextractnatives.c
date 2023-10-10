@@ -25,7 +25,6 @@
 #include "j9dbgext.h"
 #include "j9protos.h"
 #include "j9port.h"
-#include "jextractnatives_internal.h"
 #include "j9version.h"
 
 #include <stdarg.h>
@@ -287,30 +286,6 @@ cacheIDs(JNIEnv* env, jobject dumpObj)
 	}
 
 	return 0;
-}
-
-void JNICALL
-Java_com_ibm_jvm_j9_dump_extract_Main_doCommand(JNIEnv *env, jobject obj, jobject dumpObj, jstring commandObject)
-{
-	const char *command = (*env)->GetStringUTFChars(env, commandObject, 0);
-	PORT_ACCESS_FROM_VMC((J9VMThread*)env);
-
-	if (command == NULL) {
-		return;
-	}
-
-	if (cacheIDs(env, dumpObj)) {
-		return;
-	}
-
-	/* hook the debug extension's malloc and free up to ours, so that it can benefit from -memorycheck */
-	OMRPORT_FROM_J9PORT(dbgGetPortLibrary())->mem_allocate_memory = OMRPORT_FROM_J9PORT(PORTLIB)->mem_allocate_memory;
-	OMRPORT_FROM_J9PORT(dbgGetPortLibrary())->mem_free_memory = OMRPORT_FROM_J9PORT(PORTLIB)->mem_free_memory;
-	OMRPORT_FROM_J9PORT(dbgGetPortLibrary())->port_control = OMRPORT_FROM_J9PORT(PORTLIB)->port_control;
-
-	run_command(command);
-
-	(*env)->ReleaseStringUTFChars(env, commandObject, command);
 }
 
 /**

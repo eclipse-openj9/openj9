@@ -49,17 +49,6 @@ extern "C" {
 * @param *env
 * @param obj
 * @param dumpObj
-* @param commandObject
-* @return void
-*/
-void JNICALL
-Java_com_ibm_jvm_j9_dump_extract_Main_doCommand(JNIEnv *env, jobject obj, jobject dumpObj, jstring commandObject);
-
-/**
-* @brief
-* @param *env
-* @param obj
-* @param dumpObj
 * @param disableBuildIdCheck
 * @return jlong environment pointer
 */
