@@ -1496,7 +1496,7 @@ void J9::Options::preProcessMmf(J9JavaVM *vm, J9JITConfig *jitConfig)
 
    if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_PORTABLE_SHARED_CACHE)
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-       || vm->internalVMFunctions->isCheckpointAllowed(vmThread)
+       || vm->internalVMFunctions->isJVMInPortableRestoreMode(vmThread)
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
        )
       {
@@ -2375,7 +2375,7 @@ bool J9::Options::preProcessJitServer(J9JavaVM *vm, J9JITConfig *jitConfig)
             if (implicitClientMode && useJitServerExplicitlySpecified)
                {
                compInfo->setRemoteCompilationRequestedAtBootstrap(true);
-               if (!ifuncs->isNonPortableRestoreMode(currentThread))
+               if (ifuncs->isJVMInPortableRestoreMode(currentThread))
                    compInfo->setCanPerformRemoteCompilationInCRIUMode(true);
                }
 #endif

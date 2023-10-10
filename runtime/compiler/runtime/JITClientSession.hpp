@@ -326,6 +326,7 @@ public:
       // Do not protect them with #if defined(J9VM_OPT_CRIU_SUPPORT) because we want JITServer to be
       // able to handle all clients whether or not they have CRIU support enabled
       bool _inSnapshotMode;
+      bool _isPortableRestoreMode;
       bool _isSnapshotModeEnabled;
       bool _isNonPortableRestoreMode;
       }; // struct VMInfo

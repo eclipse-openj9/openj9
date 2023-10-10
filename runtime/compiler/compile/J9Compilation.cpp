@@ -857,8 +857,9 @@ bool
 J9::Compilation::compilePortableCode()
    {
    return (self()->fej9()->inSnapshotMode() ||
-             (self()->compileRelocatableCode() &&
-                self()->fej9()->isPortableSCCEnabled()));
+             self()->fej9()->isPortableRestoreModeEnabled() ||
+                (self()->compileRelocatableCode() &&
+                   self()->fej9()->isPortableSCCEnabled()));
    }
 
 

@@ -3894,6 +3894,16 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 	}
 
 	{
+		IDATA enableJVMRestorePortableeMode = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXENABLEJVMRESTOREPORTABLEMODE, NULL);
+		IDATA disableJVMRestorePortableMode = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXDISABLEJVMRESTOREPORTABLEMODE, NULL);
+		if (enableJVMRestorePortableeMode > disableJVMRestorePortableMode) {
+			if (J9_ARE_ALL_BITS_SET(vm->checkpointState.flags, J9VM_CRIU_IS_CHECKPOINT_ENABLED)) {
+				vm->checkpointState.flags |= J9VM_CRIU_IS_PORTABLE_JVM_RESTORE_MODE;
+			}
+		}
+	}
+
+	{
 		IDATA enableThrowOnDelayedCheckpointOperation = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXENABLETHROWONDELAYECHECKPOINTOPERATION, NULL);
 		IDATA disableThrowOnDelayedCheckpointOperation = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXDISABLETHROWONDELAYECHECKPOINTOPERATION, NULL);
 		if (disableThrowOnDelayedCheckpointOperation >= enableThrowOnDelayedCheckpointOperation) {
