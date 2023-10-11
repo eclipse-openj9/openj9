@@ -88,6 +88,10 @@ public:
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 	J9PortVmemIdentifier _arrayletDoublemapID;	/**< Contiguous address identifier associate with double mapped region of arraylet */
 #endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
+#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+	bool _sparseHeapAllocation;		/**< indicates whether this region is related with sparse heap allocation(the first region has reserved for off-heap) */
+#endif /* defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */
+
 	bool _defragmentationTarget;		/**< indicates whether this region should be considered for defragmentation, currently this means the region has been GMPed but not collected yet */
 
 protected:
