@@ -62,29 +62,35 @@ void replaceFirstTwoBytesWithData(void *startPC, int32_t startPCToData);
 
 #if defined(TR_HOST_POWER)
 #define  OFFSET_REVERT_INTP_PRESERVED_FSD                (-4)
-#define  OFFSET_REVERT_INTP_FIXED_PORTION                (-12-2*sizeof(intptr_t))
+#define  OFFSET_REVERT_INTP_FIXED_PORTION                (-(12 + 2 * (int32_t)sizeof(intptr_t)))
 
-#define  OFFSET_SAMPLING_PREPROLOGUE_FROM_STARTPC        (-(16+sizeof(intptr_t)))
-#define  OFFSET_SAMPLING_BRANCH_FROM_STARTPC             (-(12+sizeof(intptr_t)))
-#define  OFFSET_SAMPLING_METHODINFO_FROM_STARTPC         (-(8+sizeof(intptr_t)))
+#define  OFFSET_SAMPLING_PREPROLOGUE_FROM_STARTPC        (-(16 + (int32_t)sizeof(intptr_t)))
+#define  OFFSET_SAMPLING_BRANCH_FROM_STARTPC             (-(12 + (int32_t)sizeof(intptr_t)))
+#define  OFFSET_SAMPLING_METHODINFO_FROM_STARTPC         (-(8 + (int32_t)sizeof(intptr_t)))
 #define  OFFSET_SAMPLING_PRESERVED_FROM_STARTPC          (-8)
 #endif
 
 #if defined(TR_HOST_ARM)
-#define  OFFSET_REVERT_INTP_FIXED_PORTION                (-12-2*sizeof(intptr_t))
-#define  OFFSET_SAMPLING_PREPROLOGUE_FROM_STARTPC        (-(16+sizeof(intptr_t)))
-#define  OFFSET_SAMPLING_BRANCH_FROM_STARTPC             (-(12+sizeof(intptr_t)))
-#define  OFFSET_METHODINFO_FROM_STARTPC                  (-(8+sizeof(intptr_t)))
+#define  OFFSET_REVERT_INTP_FIXED_PORTION                (-(12 + 2 * (int32_t)sizeof(intptr_t)))
+#define  OFFSET_SAMPLING_PREPROLOGUE_FROM_STARTPC        (-(16 + (int32_t)sizeof(intptr_t)))
+#define  OFFSET_SAMPLING_BRANCH_FROM_STARTPC             (-(12 + (int32_t)sizeof(intptr_t)))
+#define  OFFSET_METHODINFO_FROM_STARTPC                  (-(8 + (int32_t)sizeof(intptr_t)))
 #define  OFFSET_SAMPLING_PRESERVED_FROM_STARTPC          (-8)
 #define  START_PC_TO_METHOD_INFO_ADDRESS                  -8 // offset from startpc to jitted body info
 #define  OFFSET_COUNTING_BRANCH_FROM_JITENTRY             36
 #endif
 
 #if defined(TR_HOST_ARM64)
-#define  OFFSET_REVERT_INTP_FIXED_PORTION                (-12-2*sizeof(intptr_t)) // See generateSwitchToInterpreterPrePrologue()
-#define  OFFSET_SAMPLING_PREPROLOGUE_FROM_STARTPC        (-(16+sizeof(intptr_t)))
-#define  OFFSET_SAMPLING_BRANCH_FROM_STARTPC             (-(12+sizeof(intptr_t)))
-#define  OFFSET_SAMPLING_METHODINFO_FROM_STARTPC         (-(8+sizeof(intptr_t)))
+/**
+ * Prior to refactoring, the type of these expressions was an intptr_t, and
+ * some of the contexts in which these macros are currently used rely on them
+ * being that type.  Until those contexts are changed to handle int32_t
+ * types, explicitly cast these expressions to intptr_t for type correctness.
+ */
+#define  OFFSET_REVERT_INTP_FIXED_PORTION                ( (intptr_t)(-(12 + 2 * (int32_t)sizeof(intptr_t))) ) // See generateSwitchToInterpreterPrePrologue()
+#define  OFFSET_SAMPLING_PREPROLOGUE_FROM_STARTPC        ( (intptr_t)(-(16 + (int32_t)sizeof(intptr_t))) )
+#define  OFFSET_SAMPLING_BRANCH_FROM_STARTPC             ( (intptr_t)(-(12 + (int32_t)sizeof(intptr_t))) )
+#define  OFFSET_SAMPLING_METHODINFO_FROM_STARTPC         ( (intptr_t)(-(8 + (int32_t)sizeof(intptr_t))) )
 #define  OFFSET_SAMPLING_PRESERVED_FROM_STARTPC          (-8)
 #define  OFFSET_COUNTING_BRANCH_FROM_JITENTRY            (9*ARM64_INSTRUCTION_LENGTH)
 #endif
