@@ -51,7 +51,6 @@ import java.util.Set;
 import java.util.WeakHashMap;
 
 import com.ibm.oti.util.Msg;
-import com.ibm.oti.vm.VM;
 
 /*[IF CRIU_SUPPORT]*/
 import openj9.internal.criu.NotCheckpointSafe;
@@ -337,43 +336,7 @@ public final class MethodType implements Serializable
 	 */
 	@VMCONSTANTPOOL_METHOD
 	public static MethodType fromMethodDescriptorString(String methodDescriptor, ClassLoader loader) {
-		ClassLoader classLoader = loader; 
-		if (classLoader == null) {
-			/*[IF JAVA_SPEC_VERSION >= 14]*/
-			@SuppressWarnings("removal")
-			SecurityManager security = System.getSecurityManager();
-			if (security != null) {
-				security.checkPermission(sun.security.util.SecurityConstants.GET_CLASSLOADER_PERMISSION);
-			}
-			/*[ENDIF] JAVA_SPEC_VERSION >= 14 */
-			classLoader = ClassLoader.getSystemClassLoader();
-		}
-		
-		// Check cache
-		Map<String, MethodType> classLoaderMethodTypeCache = VM.getVMLangAccess().getMethodTypeCache(classLoader);
-		MethodType mt = classLoaderMethodTypeCache != null ? classLoaderMethodTypeCache.get(methodDescriptor) : null;
-
-		// MethodDescriptorString is not in cache
-		if (null == mt) {
-			// ensure '.' is not included in the descriptor
-			if (methodDescriptor.indexOf((int)'.') != -1) {
-				throw new IllegalArgumentException(methodDescriptor);
-			}
-			
-			// split descriptor into classes - last one is the return type
-			ArrayList<Class<?>> classes = parseIntoClasses(methodDescriptor, classLoader);
-			if (classes.size() == 0) {
-				throw new IllegalArgumentException(methodDescriptor);
-			}
-			
-			Class<?> returnType = classes.remove(classes.size() - 1);
-			mt = methodType(returnType, classes);
-			if (classLoaderMethodTypeCache != null) {
-				classLoaderMethodTypeCache.put(mt.methodDescriptor, mt);
-			}
-		}
-		
-		return mt;
+		return MethodTypeHelper.fromMethodDescriptorStringInternal(methodDescriptor, loader);
 	}
 	
 	/**
@@ -385,7 +348,7 @@ public final class MethodType implements Serializable
 	 */
 	@SuppressWarnings("unused")  /* Used by native code */
 	private static final MethodType fromMethodDescriptorStringAppendArg(String methodDescriptor, ClassLoader loader, Class<?> appendArgumentType) {
-		List<Class<?>> types = parseIntoClasses(methodDescriptor, loader);
+		List<Class<?>> types = MethodTypeHelper.parseIntoClasses(methodDescriptor, loader);
 		Class<?> returnType = types.remove(types.size() - 1);
 		types.add(appendArgumentType);
 		
@@ -412,49 +375,6 @@ public final class MethodType implements Serializable
 		}
 		throw e;
 	}
-
-	/*
-	 * Parse the MethodDescriptor string into a list of Class objects.  The last class in the list
-	 * is the return type.
-	 */
-	private static final ArrayList<Class<?>> parseIntoClasses(String methodDescriptor, ClassLoader classLoader) {
-		int length = methodDescriptor.length();
-		if (length == 0) {
-			/*[MSG "K05d3", "invalid descriptor: {0}"]*/
-			throw new IllegalArgumentException(Msg.getString("K05d3", methodDescriptor)); //$NON-NLS-1$
-		}
-		
-		char[] signature = new char[length];
-		methodDescriptor.getChars(0, length, signature, 0);
-		int index = 0;
-		boolean closeBracket = false;
-		
-		if (signature[index] != '(') {
-			/*[MSG "K05d4", "missing opening '(': {0}"]*/
-			throw new IllegalArgumentException(Msg.getString("K05d4", methodDescriptor)); //$NON-NLS-1$
-		}
-		index++;
-		
-		ArrayList<Class<?>> args = new ArrayList<Class<?>>();
-		
-		while(index < length) {
-			/* Ensure we only see one ')' closing bracket */
-			if ((signature[index] == ')')) {
-				if (closeBracket) {
-					/*[MSG "K05d5", "too many ')': {0}"]*/
-					throw new IllegalArgumentException(Msg.getString("K05d5", methodDescriptor)); //$NON-NLS-1$
-				}
-				closeBracket = true;
-				index++;
-				continue;
-			}
-
-			index = MethodTypeHelper.parseIntoClass(signature, index, args, classLoader, methodDescriptor);
-			index++;
-		}
-		return args;
-	}
-	
 	
 	/**
 	 * Convenience method to convert all types to Object. 
