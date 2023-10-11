@@ -1855,7 +1855,7 @@ static void jitHookPrepareRestore(J9HookInterface * * hookInterface, UDATA event
     * remove the portability restrictions on the target CPU (used
     * for JIT compiles) to allow optimal code generation
     */
-   if (!javaVM->internalVMFunctions->isCheckpointAllowed(vmThread))
+   if (!javaVM->internalVMFunctions->isJVMInPortableRestoreMode(vmThread))
       {
       TR::Compiler->target.cpu = TR::CPU::detect(TR::Compiler->omrPortLib);
       jitConfig->targetProcessor = TR::Compiler->target.cpu.getProcessorDescription();

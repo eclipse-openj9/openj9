@@ -25,6 +25,11 @@ package org.openj9.criu;
 import java.nio.file.Paths;
 import java.nio.file.Path;
 
+import javax.swing.SwingUtilities;
+import javax.swing.JFrame;
+import java.lang.management.*;
+
+
 public class CRIUSimpleTest {
 
 	public static void main(String args[]) {
@@ -36,12 +41,24 @@ public class CRIUSimpleTest {
 		}
 	}
 
+	private static void loadNewClasses() {
+		try {
+			SwingUtilities.isEventDispatchThread();
+			JFrame frame = new JFrame("Test code");
+		} catch (Throwable t) {
+			//ignore
+		}
+
+		ThreadMXBean mxb = ManagementFactory.getThreadMXBean();
+	}
+
 	public static void checkpoints(int num_checkpoints) {
 		Path path = Paths.get("cpData");
 		System.out.println("Total checkpoint(s) " + num_checkpoints + ":\nPre-checkpoint");
 		for (int cur_checkpint = 1; cur_checkpint <= num_checkpoints; ++cur_checkpint) {
 			CRIUTestUtils.checkPointJVM(path);
 			System.out.println("Post-checkpoint " + cur_checkpint);
+			loadNewClasses();
 		}
 	}
 }
