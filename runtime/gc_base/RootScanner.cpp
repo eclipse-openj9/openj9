@@ -955,7 +955,10 @@ MM_RootScanner::scanObjectsInVirtualLargeObjectHeap(MM_EnvironmentBase *env)
 			if (region->isArrayletLeaf()) {
 				J9Object *spineObject = (J9Object *)region->_allocateData.getSpine();
 				Assert_MM_true(NULL != spineObject);
-				doObjectInVirtualLargeObjectHeap(spineObject);
+				if (region->_sparseHeapAllocation) {
+					doObjectInVirtualLargeObjectHeap(spineObject);
+					region->_sparseHeapAllocation = false;
+				}
 			}
 		}
 		reportScanningEnded(RootScannerEntity_DoubleMappedOrVirtualLargeObjectHeapObjects);

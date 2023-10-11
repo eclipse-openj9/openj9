@@ -83,7 +83,7 @@ GC_ArrayletObjectModel::AssertDiscontiguousArrayletLayout(J9IndexableObject *obj
 }
 
 GC_ArrayletObjectModel::ArrayLayout
-GC_ArrayletObjectModel::getArrayletLayout(J9Class* clazz, uintptr_t dataSizeInBytes, uintptr_t largestDesirableSpine)
+GC_ArrayletObjectModel::getArrayletLayout(J9Class* clazz, uintptr_t numberOfElements, uintptr_t largestDesirableSpine)
 {
 	ArrayLayout layout = Illegal;
 	MM_GCExtensionsBase* extensions = MM_GCExtensionsBase::getExtensions(_omrVM);
