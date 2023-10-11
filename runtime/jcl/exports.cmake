@@ -670,6 +670,7 @@ endif()
 if(J9VM_OPT_CRIU_SUPPORT)
 	omr_add_exports(jclse
 		Java_openj9_internal_criu_InternalCRIUSupport_getCheckpointRestoreNanoTimeDeltaImpl
+		Java_openj9_internal_criu_InternalCRIUSupport_getLastRestoreTimeImpl
 		Java_openj9_internal_criu_InternalCRIUSupport_isCheckpointAllowedImpl
 		Java_openj9_internal_criu_InternalCRIUSupport_isCRIUSupportEnabledImpl
 	)
