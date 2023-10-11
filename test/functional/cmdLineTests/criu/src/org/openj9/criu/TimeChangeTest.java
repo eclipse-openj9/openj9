@@ -27,6 +27,8 @@ import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import openj9.internal.criu.InternalCRIUSupport;
+
 public class TimeChangeTest {
 
 	// maximum tardiness - 4 second
@@ -46,13 +48,21 @@ public class TimeChangeTest {
 		} else {
 			String testName = args[0];
 			TimeChangeTest tct = new TimeChangeTest();
-			if ("testSystemNanoTime".equalsIgnoreCase(testName)) {
+			switch (testName) {
+			case "testGetLastRestoreTime":
+				tct.testGetLastRestoreTime();
+				break;
+			case "testSystemNanoTime":
 				tct.testSystemNanoTime();
-			} else if ("testSystemNanoTimeJitPreCheckpointCompile".equalsIgnoreCase(testName)) {
+				break;
+			case "testSystemNanoTimeJitPreCheckpointCompile":
 				tct.testSystemNanoTimeJitPreCheckpointCompile();
-			} else if ("testSystemNanoTimeJitPostCheckpointCompile".equalsIgnoreCase(testName)) {
+				break;
+			case "testSystemNanoTimeJitPostCheckpointCompile":
 				tct.testSystemNanoTimeJitPostCheckpointCompile();
-			} else {
+				break;
+			default:
+				// timer related tests
 				tct.test(testName);
 			}
 		}
@@ -97,6 +107,24 @@ public class TimeChangeTest {
 		} else {
 			System.out.println("FAILED: System.nanoTime() after CRIU restore: " + afterRestore
 					+ ", the elapse time is: " + elapsedTime + " ns, w/ MAX_TARDINESS_NS : " + MAX_TARDINESS_NS);
+		}
+	}
+
+	private void testGetLastRestoreTime() {
+		long beforeCheckpoint = System.currentTimeMillis();
+		CRIUTestUtils.checkPointJVM(imagePath, false);
+		long lastRestoreTime = InternalCRIUSupport.getLastRestoreTime();
+		long afterRestore = System.currentTimeMillis();
+		if (beforeCheckpoint >= lastRestoreTime) {
+			System.out.println("FAILED: InternalCRIUSupport.getLastRestoreTime() - " + lastRestoreTime
+					+ " can't be less than the beforeCheckpoint time - " + beforeCheckpoint);
+		} else if (lastRestoreTime >= afterRestore) {
+			System.out.println("FAILED: InternalCRIUSupport.getLastRestoreTime() - " + lastRestoreTime
+					+ " can't be greater than the afterRestore time - " + afterRestore);
+		} else {
+			System.out.println("PASSED: InternalCRIUSupport.getLastRestoreTime() - " + lastRestoreTime
+					+ " is between beforeCheckpoint time - " + beforeCheckpoint + " and afterRestore time - "
+					+ afterRestore);
 		}
 	}
 

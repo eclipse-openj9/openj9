@@ -35,6 +35,7 @@ public final class InternalCRIUSupport {
 	private static native boolean isCRIUSupportEnabledImpl();
 	private static native boolean isCheckpointAllowedImpl();
 	private static native long getCheckpointRestoreNanoTimeDeltaImpl();
+	private static native long getLastRestoreTimeImpl();
 
 	/**
 	 * Retrieve the elapsed time between Checkpoint and Restore.
@@ -47,6 +48,17 @@ public final class InternalCRIUSupport {
 			checkpointRestoreNanoTimeDelta = getCheckpointRestoreNanoTimeDeltaImpl();
 		}
 		return checkpointRestoreNanoTimeDelta;
+	}
+
+	/**
+	 * Retrieve the time when the last restore occurred. In the case of multiple
+	 * restores the previous times are overwritten.
+	 *
+	 * @return the time in milliseconds since the start of the epoch, -1 if restore
+	 *         has not occurred.
+	 */
+	public static long getLastRestoreTime() {
+		return getLastRestoreTimeImpl();
 	}
 
 	/**

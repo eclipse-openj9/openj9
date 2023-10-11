@@ -43,6 +43,7 @@ extern "C" {
 #include "util_api.h"
 #include "vmargs_api.h"
 
+#define J9TIME_NANOSECONDS_PER_MILLIS 1000000
 #define STRING_BUFFER_SIZE 256
 #define ENV_FILE_BUFFER 1024
 
@@ -940,6 +941,7 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 		VM_VMHelpers::setVMState(currentThread, J9VMSTATE_CRIU_SUPPORT_RESTORE_PHASE_START);
 		restoreNanoTimeMonotonic = j9time_nano_time();
 		restoreNanoUTCTime = j9time_current_time_nanos(&success);
+		vm->checkpointState.lastRestoreTimeMillis = (I_64)(restoreNanoUTCTime/J9TIME_NANOSECONDS_PER_MILLIS);
 		Trc_CRIU_after_checkpoint(currentThread, restoreNanoTimeMonotonic, restoreNanoUTCTime);
 		if (!syslogFlagNone) {
 			/* Re-open the system logger, and set options with saved string value. */
