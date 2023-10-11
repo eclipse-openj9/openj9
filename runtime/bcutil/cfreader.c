@@ -20,6 +20,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
+#include <stdlib.h>
 #include "cfreader.h"
 #include "j9protos.h"
 #include "j9user.h"
@@ -3412,8 +3413,8 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 				if (!ALLOC_ARRAY(method->codeAttribute->code, method->codeAttribute->codeLength, U_8)) {
 					Trc_BCU_inlineJsrs_Exit();
 					return -2;
-				}
-				memcpy(method->codeAttribute->code, method->codeAttribute->originalCode, method->codeAttribute->codeLength);
+				}				
+				method->codeAttribute->code = reinterpret_cast<U_8*>(method->codeAttribute->originalCode);
 			}
 		}
 

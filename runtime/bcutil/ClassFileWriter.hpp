@@ -282,9 +282,8 @@ private:
 #endif /* J9VM_ENV_LITTLE_ENDIAN */
 	}
 
-	void writeData(U_32 length, void * bytes)
-	{
-		memcpy(_classFileCursor, bytes, length);
+	void writeData(U_32 length, void * bytes){		
+		_classFileCursor = reinterpret_cast<U_8*>(bytes)
 		_classFileCursor += length;
 	}
 

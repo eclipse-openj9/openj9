@@ -110,8 +110,8 @@ ClassFileParser::restoreOriginalMethodBytecodes()
 
 	for (J9CfrMethod *method = _j9CfrClassFile->methods; method != end; method++) {
 		J9CfrAttributeCode *codeAttribute = method->codeAttribute;
-		if (NULL != codeAttribute) {
-			memcpy(codeAttribute->code, codeAttribute->originalCode, codeAttribute->codeLength);
+		if (NULL != codeAttribute) {			
+			codeAttribute->code = reinterpret_cast<U_8 *>(codeAttribute->originalCode); 
 		}
 	}
 }
