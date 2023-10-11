@@ -57,7 +57,7 @@ private:
 	U_32 _contendedSingleCount;
 	U_32 _contendedDoubleCount;
 
-#ifdef J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	bool _isValue;
 	J9FlattenedClassCache *_flattenedClassCache;
 	U_32 _totalFlatFieldDoubleBytes;
@@ -99,7 +99,7 @@ public:
 		OBJECT_SIZE_INCREMENT_IN_BYTES = 8
 	};
 
-#ifdef J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	ObjectFieldInfo(J9JavaVM *vm, J9ROMClass *romClass, J9FlattenedClassCache *flattenedClassCache):
 #else
 	ObjectFieldInfo(J9JavaVM *vm, J9ROMClass *romClass):
@@ -120,7 +120,7 @@ public:
 		_contendedObjectCount(0),
 		_contendedSingleCount(0),
 		_contendedDoubleCount(0),
-#ifdef J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 		_isValue(J9ROMCLASS_IS_VALUE(romClass)),
 		_flattenedClassCache(flattenedClassCache),
 		_totalFlatFieldDoubleBytes(0),
@@ -498,7 +498,7 @@ public:
 		return start + (isContendedClassLayout() ? _contendedObjectCount: getNonBackfilledObjectCount()) * _referenceSize;
 	}
 
-#ifdef J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	/**
 	 * @param start end of previous field area, which should be the first field area
 	 * @return offset to end of the flat doubles area
