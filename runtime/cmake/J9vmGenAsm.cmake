@@ -20,24 +20,24 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 ################################################################################
 
-# Include once
+# Include once.
 if(COMMAND j9vm_gen_asm)
 	return()
 endif()
 
 # Helper function for generating assembly from m4
-# usage: j9vm_gen_asm(some_file.m4 .... DEFINES m4_def ...  INCLUDE_DIRECTORIES directory...)
+#   e.g.: j9vm_gen_asm(some_file.m4 ... DEFINES m4_def ... INCLUDE_DIRECTORIES directory ...)
 # converts 'some_file.m4' into 'some_file.s'.
 # Note: path is interpreted relative to CMAKE_CURRENT_SOURCE_DIR
 # .s file is put in CMAKE_CURRENT_BINARY_DIR
-# Directory names from the input are ignored. IE. foo/bar.m4 > bar.s
-# For each value of m4_def, a `-D` command line option is added to the m4 command
-# For each value of directory an '-I` command line option is added to the m4 command
+# Directory names from the input are ignored: e.g. foo/bar.m4 > bar.s.
+# For each value of m4_def, a `-D` command line option is added to the m4 command.
+# For each value of directory an '-I` command line option is added to the m4 command.
 function(j9vm_gen_asm)
 	set(options "")
 	set(oneValueArgs "")
 	set(multiValueArgs "DEFINES" "INCLUDE_DIRECTORIES")
-	cmake_parse_arguments(opt "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
+	cmake_parse_arguments(opt "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
 	set(m4_defines "")
 
@@ -77,7 +77,7 @@ function(j9vm_gen_asm)
 			VERBATIM
 		)
 		if(OMR_OS_WINDOWS)
-			# On windows we have to set the language, because we have ASM_MASM and ASM_NASM both enabled
+			# On Windows we have to set the language, because we have ASM_MASM and ASM_NASM both enabled.
 			set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/${base_name}.s PROPERTIES LANGUAGE ASM_MASM)
 		endif()
 	endforeach()
