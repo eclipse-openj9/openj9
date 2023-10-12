@@ -1504,6 +1504,10 @@ def create_job(JOB_NAME, SDK_VERSION, SPEC, downstreamJobType, id) {
     // Configuring the build discarder in the downstream project
 
     DISCARDER_NUM_BUILDS = get_value(VARIABLES.build_discarder.logs, id)
+    if ("${DISCARDER_NUM_BUILDS}" == "") {
+        println "Warning: DISCARDER_NUM_BUILDS not set in Variable file. Defaulting to '10'"
+        DISCARDER_NUM_BUILDS = "10"
+    }
 
     def params = [:]
     params.put('JOB_NAME', JOB_NAME)
