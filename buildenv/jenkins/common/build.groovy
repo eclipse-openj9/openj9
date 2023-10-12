@@ -690,9 +690,10 @@ def upload_artifactory_core(geo, uploadSpec) {
     buildInfo.env.capture = true
 
     //Retry uploading to Artifactory if errors occur
+    // Do not upload buildInfo if Server is behind a VPN as the Controller will not be able to talk to it.
     pipelineFunctions.retry_and_delay({
         server.upload spec: uploadSpec, buildInfo: buildInfo;
-        if (!ARTIFACTORY_CONFIG[geo]['vpn']) { server.publishBuildInfo buildInfo } },
+        if ("${ARTIFACTORY_CONFIG[geo]['vpn']}" == "false") { server.publishBuildInfo buildInfo } },
         3, 300)
 
     ARTIFACTORY_CONFIG[geo]['url'] = server.getUrl()
