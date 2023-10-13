@@ -376,31 +376,16 @@ public:
 	}
 
 	/**
-	 * Get the size from the header for the given indexable object,
-	 * assuming it is Contiguous
+	 * Get the size from the header for the given indexable object
 	 * @param objPtr Pointer to an array object
 	 * @return the size
 	 */
 	MMINLINE uintptr_t
-	getContiguousArraySize(J9IndexableObject *objPtr)
+	getArraySize(J9IndexableObject *objPtr)
 	{
 		return compressObjectReferences()
 			? ((J9IndexableObjectContiguousCompressed*)objPtr)->size
 			: ((J9IndexableObjectContiguousFull*)objPtr)->size;
-	}
-
-	/**
-	 * Get the size from the header for the given indexable object,
-	 * assuming it is Discontiguous
-	 * @param objPtr Pointer to an array object
-	 * @return the size
-	 */
-	MMINLINE uintptr_t
-	getDiscontiguousArraySize(J9IndexableObject *objPtr)
-	{
-		return compressObjectReferences()
-			? ((J9IndexableObjectDiscontiguousCompressed*)objPtr)->size
-			: ((J9IndexableObjectDiscontiguousFull*)objPtr)->size;
 	}
 
 	/**
@@ -413,31 +398,32 @@ public:
 	{
 		GC_ArrayletObjectModel::ArrayLayout layout = GC_ArrayletObjectModel::InlineContiguous;
 		/* Trivial check for InlineContiguous. */
-		if (0 != getContiguousArraySize(objPtr)) {
+		if (0 != getArraySize(objPtr)) {
 			return GC_ArrayletObjectModel::InlineContiguous;
 		}
 
 		/* Check if the objPtr is in the allowed arraylet range. */
 		if (((uintptr_t)objPtr >= (uintptr_t)_arrayletRangeBase) && ((uintptr_t)objPtr < (uintptr_t)_arrayletRangeTop)) {
+			uintptr_t dataSizeInBytes = getDataSizeInBytes(objPtr);
 			J9Class* clazz = J9GC_J9OBJECT_CLAZZ(objPtr, this);
-			layout = getArrayletLayout(clazz, getDiscontiguousArraySize(objPtr));
+			layout = getArrayletLayout(clazz, dataSizeInBytes);
 		}
 		return layout;
 	}
 
 	MMINLINE ArrayLayout
-	getArrayletLayout(J9Class* clazz, uintptr_t numberOfElements)
+	getArrayletLayout(J9Class* clazz, uintptr_t dataSizeInBytes)
 	{
-		return getArrayletLayout(clazz, numberOfElements, _largestDesirableArraySpineSize);
+		return getArrayletLayout(clazz, dataSizeInBytes, _largestDesirableArraySpineSize);
 	}
 
 	/**
 	 * Get the layout of an indexable object given it's class, data size in bytes and the subspace's largestDesirableSpine.
 	 * @param clazz The class of the object stored in the array.
-	 * @param numberOfElements number of indexed fields
+	 * @param dataSizeInBytes the size in bytes of the data of the array.
 	 * @param largestDesirableSpine The largest desirable spine of the arraylet.
 	 */
-	ArrayLayout getArrayletLayout(J9Class* clazz, uintptr_t numberOfElements, uintptr_t largestDesirableSpine);
+	ArrayLayout getArrayletLayout(J9Class* clazz, uintptr_t dataSizeInBytes, uintptr_t largestDesirableSpine);
 
 	/**
 	 * Perform a safe memcpy of one array to another.
@@ -1149,7 +1135,11 @@ public:
 
 		if (0 == size) {
 			/* Discontiguous */
-			size = getDiscontiguousArraySize((J9IndexableObject *)forwardedHeader->getObject());
+			if (compressObjectReferences()) {
+				size = ((J9IndexableObjectDiscontiguousCompressed *)forwardedHeader->getObject())->size;
+			} else {
+				size = ((J9IndexableObjectDiscontiguousFull *)forwardedHeader->getObject())->size;
+			}
 		}
 
 		return size;
@@ -1182,8 +1172,8 @@ public:
 
 		if (0 == size) {
 			/* we know we are dealing with heap object, so we don't need to check against _arrayletRangeBase/Top, like getArrayLayout does */
-			uintptr_t numberOfElements = (uintptr_t)getPreservedIndexableSize(forwardedHeader);
-			layout = getArrayletLayout(clazz, numberOfElements);
+			uintptr_t dataSizeInBytes = getDataSizeInBytes(clazz, getPreservedIndexableSize(forwardedHeader));
+			layout = getArrayletLayout(clazz, dataSizeInBytes);
 		}
 
 		return layout;
@@ -1202,7 +1192,8 @@ public:
 	{
 		J9Class* clazz = getPreservedClass(forwardedHeader);
 		uintptr_t numberOfElements = (uintptr_t)getPreservedIndexableSize(forwardedHeader);
-		ArrayLayout layout = getArrayletLayout(clazz, numberOfElements);
+		uintptr_t dataSizeInBytes = getDataSizeInBytes(clazz, numberOfElements);
+		ArrayLayout layout = getArrayletLayout(clazz, dataSizeInBytes);
 		*hashcodeOffset = getHashcodeOffset(clazz, layout, numberOfElements);
 		return getSizeInBytesWithHeader(clazz, layout, numberOfElements);
 	}
