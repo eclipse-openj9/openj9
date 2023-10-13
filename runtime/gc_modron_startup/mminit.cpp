@@ -3185,7 +3185,7 @@ gcReinitializeDefaultsForRestore(J9VMThread* vmThread)
 	extensions->gcThreadCountForced = false;
 	extensions->parSweepChunkSize = 0;
 
-	if (!gcParseReconfigurableArguments(vm, vm->checkpointState.restoreArgsList)) {
+	if (!gcParseReconfigurableCommandLine(vm, vm->checkpointState.restoreArgsList)) {
 		result = false;
 	}
 
