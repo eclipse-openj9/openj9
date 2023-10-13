@@ -502,6 +502,18 @@ class TR_IProfiler : public TR_ExternalProfiler
 public:
 
    TR_PERSISTENT_ALLOC(TR_Memory::IProfiler);
+
+   enum TR_IprofilerThreadLifetimeStates
+      {
+      IPROF_THR_NOT_CREATED = 0,
+      IPROF_THR_FAILED_TO_ATTACH,
+      IPROF_THR_INITIALIZED,
+      IPROF_THR_SUSPENDED,
+      IPROF_THR_STOPPING,
+      IPROF_THR_DESTROYED,
+      IPROF_THR_LAST_STATE // must be the last one
+      };
+
    static TR_IProfiler *allocate (J9JITConfig *);
    static uint32_t getProfilerMemoryFootprint();
 
@@ -577,14 +589,10 @@ public:
    j9thread_t getIProfilerOSThread() { return _iprofilerOSThread; }
    TR::Monitor* getIProfilerMonitor() { return _iprofilerMonitor; }
    bool processProfilingBuffer(J9VMThread *vmThread, const U_8* dataStart, UDATA size);
-   void setAttachAttempted(bool b) { _iprofilerThreadAttachAttempted = b; }
    void processWorkingQueue();
-   bool getAttachAttempted() const { return _iprofilerThreadAttachAttempted; }
    IProfilerBuffer *getCrtProfilingBuffer() const { return _crtProfilingBuffer; }
    void setCrtProfilingBuffer(IProfilerBuffer *b) { _crtProfilingBuffer = b; }
-   void setIProfilerThreadExitFlag() { _iprofilerThreadExitFlag = 1; }
    void jitProfileParseBuffer(J9VMThread *vmThread);
-   uint32_t getIProfilerThreadExitFlag() { return _iprofilerThreadExitFlag; }
    bool postIprofilingBufferToWorkingQueue(J9VMThread * vmThread, const U_8* dataStart, UDATA size);
    // this is wrapper of registered version, for the helper function, from JitRunTime
 
@@ -603,6 +611,10 @@ public:
    static uintptr_t getSearchPCFromMethodAndBCIndex(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, TR::Compilation * comp);
    virtual TR_IPBytecodeHashTableEntry *searchForSample(uintptr_t pc, int32_t bucket);
    virtual TR_IPMethodHashTableEntry *searchForMethodSample(TR_OpaqueMethodBlock *omb, int32_t bucket);
+
+   // Use _iprofilerMonitor for these two routines
+   TR_IprofilerThreadLifetimeStates getIProfilerThreadLifetimeState() const { return _iprofilerThreadLifetimeState; }
+   void setIProfilerThreadLifetimeState(TR_IprofilerThreadLifetimeStates s) { _iprofilerThreadLifetimeState = s; }
 
 protected:
    bool isCompact(U_8 byteCode);
@@ -677,6 +689,12 @@ private:
    uint32_t walkILTreeForEntries(uintptr_t *pcEntries, uint32_t &numEntries, TR_J9ByteCodeIterator *bcIterator, TR_OpaqueMethodBlock *method, TR::Compilation *comp,
                                  vcount_t visitCount, int32_t callerIndex, TR_BitVector *BCvisit, bool &abort);
 
+   /**
+    * @brief Moves buffers in the working queue to the free list.
+    *
+    * @note This method must be called with IProfiler Monitor in hand
+    */
+   void discardFilledIProfilerBuffers();
 
    // data members
    J9PortLibrary                  *_portLib;
@@ -716,8 +734,6 @@ private:
    uint64_t                        _numRequests;
    uint64_t                        _numRequestsSkipped;
    uint64_t                        _numRequestsHandedToIProfilerThread;
-   volatile uint32_t               _iprofilerThreadExitFlag;
-   volatile bool                   _iprofilerThreadAttachAttempted;
    uint64_t                        _iprofilerNumRecords; // info stats only
 
    TR_IPMethodHashTableEntry       **_methodHashTable;
@@ -725,6 +741,7 @@ private:
    uint32_t                        _iprofilerBufferSize;
    TR_ReadSampleRequestsHistory   *_readSampleRequestsHistory;
 
+   volatile TR_IprofilerThreadLifetimeStates _iprofilerThreadLifetimeState;
 
    public:
    static int32_t                  _STATS_noProfilingInfo;
