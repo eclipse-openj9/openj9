@@ -6589,9 +6589,9 @@ TR_J9VMBase::getInstanceFieldOffset(TR_OpaqueClassBlock * clazz, char * fieldNam
 TR_OpaqueClassBlock *
 TR_J9VM::getSuperClass(TR_OpaqueClassBlock * classPointer)
    {
-   J9Class * clazz = TR::Compiler->cls.convertClassOffsetToClassPtr(classPointer);
-   UDATA classDepth = J9CLASS_DEPTH(clazz) - 1;
-   return convertClassPtrToClassOffset(classDepth >= 0 ? clazz->superclasses[classDepth]: 0);
+   J9Class *clazz = TR::Compiler->cls.convertClassOffsetToClassPtr(classPointer);
+   UDATA classDepth = J9CLASS_DEPTH(clazz);
+   return convertClassPtrToClassOffset(classDepth >= 1 ? clazz->superclasses[classDepth - 1] : 0);
    }
 
 bool
