@@ -109,6 +109,18 @@ public:
 	}
 
 	static VMINLINE bool
+	isLastUnmount(ContinuationState continuationState)
+	{
+		return J9_ARE_ALL_BITS_SET(continuationState, J9_GC_CONTINUATION_STATE_LAST_UNMOUNT);
+	}
+
+	static VMINLINE void
+	setLastUnmount(ContinuationState volatile *continuationStatePtr)
+	{
+		*continuationStatePtr |= J9_GC_CONTINUATION_STATE_LAST_UNMOUNT;
+	}
+
+	static VMINLINE bool
 	isFinished(ContinuationState continuationState)
 	{
 		return J9_ARE_ALL_BITS_SET(continuationState, J9_GC_CONTINUATION_STATE_FINISHED);
