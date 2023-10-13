@@ -3907,8 +3907,11 @@ TR_IProfiler::postIprofilingBufferToWorkingQueue(J9VMThread * vmThread, const U_
    if (!_iprofilerMonitor || _iprofilerMonitor->try_enter())
       return false; // Monitor is contended; better let the app thread do the processing
 
-   // If the profiling thread has already been destroyed, delegate the processing to the java thread
-   if (getIProfilerThreadLifetimeState() == TR_IProfiler::IPROF_THR_DESTROYED)
+   // If the IProfiler Thread is not initialized or waiting for work, then it is either
+   // suspended, stopping, or stopped. In all cases, there's no point posting the buffer
+   // to the working queue as the IProfiler Thread will not be processing it.
+   if (getIProfilerThreadLifetimeState() != TR_IProfiler::IPROF_THR_WAITING_FOR_WORK
+       && getIProfilerThreadLifetimeState() != TR_IProfiler::IPROF_THR_INITIALIZED)
       {
       _iprofilerMonitor->exit();
       return false;
@@ -3947,6 +3950,7 @@ TR_IProfiler::postIprofilingBufferToWorkingQueue(J9VMThread * vmThread, const U_
 
    //--- signal the processing thread
    _iprofilerMonitor->notifyAll();
+
    _iprofilerMonitor->exit();
    return true;
    }
@@ -4013,18 +4017,25 @@ TR_IProfiler::processWorkingQueue()
       while (getIProfilerThreadLifetimeState() == TR_IProfiler::IPROF_THR_INITIALIZED
              && _workingBufferList.isEmpty())
          {
+         setIProfilerThreadLifetimeState(TR_IProfiler::IPROF_THR_WAITING_FOR_WORK);
+
          //fprintf(stderr, "IProfiler thread will wait for data outstanding=%d\n", numOutstandingBuffers);
          _iprofilerMonitor->wait();
+
+         // The state could have been changed either for checkpoint or shutdown, ensure
+         // consistency with the state before changing it to IPROF_THR_INITIALIZED
+         if (getIProfilerThreadLifetimeState() == TR_IProfiler::IPROF_THR_WAITING_FOR_WORK)
+            setIProfilerThreadLifetimeState(TR_IProfiler::IPROF_THR_INITIALIZED);
          }
 
-      // IProfiler thread should be shutdown,
+      // IProfiler thread should be shut down
       if (getIProfilerThreadLifetimeState() == TR_IProfiler::IPROF_THR_STOPPING)
          {
          discardFilledIProfilerBuffers();
          _iprofilerMonitor->exit();
          break;
          }
-      else
+      else if (!_workingBufferList.isEmpty())
          {
          // We have some buffer to process
          // Dequeue the buffer to be processed
@@ -4054,6 +4065,37 @@ TR_IProfiler::processWorkingQueue()
          _freeBufferList.add(_crtProfilingBuffer);
          _crtProfilingBuffer = NULL;
          _numOutstandingBuffers--;
+         }
+      else if (getIProfilerThreadLifetimeState() == TR_IProfiler::IPROF_THR_SUSPENDING)
+         {
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+         // Check if the IProfiler Thread should be suspended for checkpoint
+         if (_compInfo->getJITConfig()->javaVM->internalVMFunctions->isCheckpointAllowed(_iprofilerThread))
+            {
+            // The monitors must be acquired in the right order, therefore
+            // release the IProfiler monitor prior to attempting to suspend
+            // the IProfiler Thread for checkpoint
+            _iprofilerMonitor->exit();
+
+            // Because we no longer have the iprofiler monitor, shutdown can
+            // occur here. However, this is ok because the first thing
+            // suspendIProfilerThreadForCheckpoint does is acquire the comp
+            // monitor and check if we're still trying to suspend threads
+            // for checkpoint.
+            suspendIProfilerThreadForCheckpoint();
+
+            // Reacquire the IProfiler monitor
+            _iprofilerMonitor->enter();
+            }
+         else
+#endif // defined(J9VM_OPT_CRIU_SUPPORT)
+            {
+            TR_ASSERT_FATAL(false, "Iprofiler cannot be in state IPROF_THR_SUSPENDING if checkpoint is not allowed.\n");
+            }
+         }
+      else
+         {
+         TR_ASSERT_FATAL(false, "Iprofiler in invalid state %d\n", getIProfilerThreadLifetimeState());
          }
       } while(true);
    }
@@ -4853,3 +4895,81 @@ void TR_IProfiler::dumpIPBCDataCallGraph(J9VMThread* vmThread)
 
    fprintf(stderr, "Finished dumping info\n");
    }
+
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+void
+TR_IProfiler::suspendIProfilerThreadForCheckpoint()
+   {
+   _compInfo->acquireCompMonitor(_iprofilerThread);
+   if (_compInfo->shouldSuspendThreadsForCheckpoint())
+      {
+      // Must acquire this with the comp monitor in hand to ensure
+      // consistency with the checkpointing thread.
+      _iprofilerMonitor->enter();
+
+      // At this point the IProfiler Thread can only be in state IPROF_THR_SUSPENDING;
+      // the checkpointing thread will either have set this state while the iprofiler
+      // thread was waiting for work or when it was processing some buffer. It is not
+      // possible for the the Shutdown Thread to have set the state to
+      // IPROF_THR_STOPPING because shouldSuspendThreadsForCheckpoint() returned true.
+      TR_ASSERT_FATAL(getIProfilerThreadLifetimeState() == TR_IProfiler::IPROF_THR_SUSPENDING, "IProfiler Lifetime State is %d!", getIProfilerThreadLifetimeState());
+
+      // Update the IProfiler Lifetime State
+      setIProfilerThreadLifetimeState(TR_IProfiler::IPROF_THR_SUSPENDED);
+
+      // Notify the checkpointing thread about the state change.
+      //
+      // Note, unlike the checkpointing thread, this thread does NOT
+      // release the iprofiler monitor before acquring the CR monitor.
+      // This ensures that the IProfiler Thread Lifetime State does not
+      // change because of something like Shutdown. However, this
+      // can only cause a deadlock if the checkpointing thread
+      // decides to re-acquire the iprofiler monitor with the CR monitor
+      // in hand.
+      _compInfo->acquireCRMonitor();
+      _compInfo->getCRMonitor()->notifyAll();
+      _compInfo->releaseCRMonitor();
+
+      if (TR::Options::isAnyVerboseOptionSet())
+         TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Suspending IProfiler Thread for Checkpoint");
+
+      // Release the comp monitor before suspending.
+      _compInfo->releaseCompMonitor(_iprofilerThread);
+
+      // Wait until restore, at which point the lifetime state
+      // will be TR_IProfiler::IPROF_THR_RESUMING
+      while (getIProfilerThreadLifetimeState() == TR_IProfiler::IPROF_THR_SUSPENDED)
+         {
+         _iprofilerMonitor->wait();
+         }
+
+      if (TR::Options::isAnyVerboseOptionSet())
+         TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Resuming IProfiler Thread from Checkpoint");
+
+      // Release the iprofiler monitor before reacquring both the
+      // comp monitor and iprofiler monitor. This is necessary to
+      // ensure consistency with the checkpointing thread.
+      _iprofilerMonitor->exit();
+      _compInfo->acquireCompMonitor(_iprofilerThread);
+      _iprofilerMonitor->enter();
+
+      // Ensure the sampler thread was resumed because of a restore
+      // rather than something else (such as shutdown)
+      if (getIProfilerThreadLifetimeState() == TR_IProfiler::IPROF_THR_RESUMING)
+         {
+         if (TR::Options::isAnyVerboseOptionSet())
+            TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Resetting IProfier Thread Lifetime State");
+         setIProfilerThreadLifetimeState(TR_IProfiler::IPROF_THR_INITIALIZED);
+         }
+      else
+         {
+         if (TR::Options::isAnyVerboseOptionSet())
+            TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "IProfiler Thread Lifetime State is %p which is not %p!", getIProfilerThreadLifetimeState(), TR_IProfiler::IPROF_THR_RESUMING);
+         }
+
+      // Release the reacquired iprofier thread monitor.
+      _iprofilerMonitor->exit();
+      }
+   _compInfo->releaseCompMonitor(_iprofilerThread);
+   }
+#endif

@@ -508,7 +508,10 @@ public:
       IPROF_THR_NOT_CREATED = 0,
       IPROF_THR_FAILED_TO_ATTACH,
       IPROF_THR_INITIALIZED,
+      IPROF_THR_WAITING_FOR_WORK,
+      IPROF_THR_SUSPENDING,
       IPROF_THR_SUSPENDED,
+      IPROF_THR_RESUMING,
       IPROF_THR_STOPPING,
       IPROF_THR_DESTROYED,
       IPROF_THR_LAST_STATE // must be the last one
@@ -695,6 +698,15 @@ private:
     * @note This method must be called with IProfiler Monitor in hand
     */
    void discardFilledIProfilerBuffers();
+
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+   /**
+    * @brief Suspend the IProfiler Thread
+    *
+    * @note This method is called by the IProfiler Thread to suspend itself.
+    */
+   void suspendIProfilerThreadForCheckpoint();
+#endif
 
    // data members
    J9PortLibrary                  *_portLib;
