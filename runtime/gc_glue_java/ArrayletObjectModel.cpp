@@ -74,12 +74,11 @@ GC_ArrayletObjectModel::AssertDiscontiguousArrayletLayout(J9IndexableObject *obj
 }
 
 GC_ArrayletObjectModel::ArrayLayout
-GC_ArrayletObjectModel::getArrayletLayout(J9Class* clazz, UDATA numberOfElements, UDATA largestDesirableSpine)
+GC_ArrayletObjectModel::getArrayletLayout(J9Class* clazz, UDATA dataSizeInBytes, UDATA largestDesirableSpine)
 {
 	ArrayLayout layout = Illegal;
 	MM_GCExtensionsBase* extensions = MM_GCExtensionsBase::getExtensions(_omrVM);
 	UDATA objectAlignmentInBytes = extensions->getObjectAlignmentInBytes();
-	uintptr_t dataSizeInBytes = getDataSizeInBytes(clazz, numberOfElements);
 
 	/* the spine need not contain a pointer to the data */
 	const UDATA minimumSpineSize = 0;
@@ -95,7 +94,7 @@ GC_ArrayletObjectModel::getArrayletLayout(J9Class* clazz, UDATA numberOfElements
 	/* CMVC 135307 : when checking for InlineContiguous layout, perform subtraction as adding to dataSizeInBytes could trigger overflow. */
 	if ((largestDesirableSpine == UDATA_MAX) || (dataSizeInBytes <= (largestDesirableSpine - minimumSpineSizeAfterGrowing - contiguousIndexableHeaderSize()))) {
 		layout = InlineContiguous;
-		if (0 == numberOfElements) {
+		if ((0 == dataSizeInBytes) && (0 < J9ARRAYCLASS_GET_STRIDE(clazz))) {
 			/* Zero sized NUA uses the discontiguous shape */
 			layout = Discontiguous;
 		}

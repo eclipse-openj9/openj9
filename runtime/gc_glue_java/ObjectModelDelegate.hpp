@@ -368,7 +368,8 @@ public:
 				}
 			}
 
-			GC_ArrayletObjectModel::ArrayLayout layout = _arrayObjectModel->getArrayletLayout(clazz, elements);
+			uintptr_t dataSize = _arrayObjectModel->getDataSizeInBytes(clazz, elements);
+			GC_ArrayletObjectModel::ArrayLayout layout = _arrayObjectModel->getArrayletLayout(clazz, dataSize);
 			size = _arrayObjectModel->getSizeInBytesWithHeader(clazz, layout, elements);
 		} else {
 			size = _mixedObjectModel->getSizeInBytesWithoutHeader(clazz) + J9GC_OBJECT_HEADER_SIZE(this);
