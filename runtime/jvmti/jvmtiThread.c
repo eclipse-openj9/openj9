@@ -1324,8 +1324,11 @@ done:
 static jvmtiIterationControl
 jvmtiSuspendResumeCallBack(J9VMThread *vmThread, J9MM_IterateObjectDescriptor *object, void *userData)
 {
-	j9object_t vthread = J9VMJDKINTERNALVMCONTINUATION_VTHREAD(vmThread, object->object);
-	if (NULL != vthread) {
+	j9object_t continuationObj = object->object;
+	j9object_t vthread = J9VMJDKINTERNALVMCONTINUATION_VTHREAD(vmThread, continuationObj);
+	ContinuationState continuationState = J9VMJDKINTERNALVMCONTINUATION_STATE(vmThread, continuationObj);;
+
+	if ((NULL != vthread) && J9_ARE_NO_BITS_SET(continuationState, J9_GC_CONTINUATION_STATE_LAST_UNMOUNT)) {
 		jvmtiVThreadCallBackData *data = (jvmtiVThreadCallBackData*)userData;
 		BOOLEAN is_excepted = FALSE;
 		for (jint i = 0; i < data->except_count; ++i) {

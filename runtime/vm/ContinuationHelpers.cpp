@@ -343,6 +343,7 @@ freeContinuation(J9VMThread *currentThread, j9object_t continuationObject, BOOLE
 
 		/* Update Continuation object's vmRef field. */
 		J9VMJDKINTERNALVMCONTINUATION_SET_VMREF(currentThread, continuationObject, NULL);
+		J9VMJDKINTERNALVMCONTINUATION_SET_VTHREAD(currentThread, continuationObject, NULL);
 
 		recycleContinuation(currentThread->javaVM, currentThread, continuation, skipLocalCache);
 	}
