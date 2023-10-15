@@ -82,15 +82,23 @@ done:
 }
 
 UDATA
-cInterpGetStackClassJEP176Iterator(J9VMThread * currentThread, J9StackWalkState * walkState)
+cInterpGetStackClassJEP176Iterator(J9VMThread *currentThread, J9StackWalkState *walkState)
 {
-	J9JavaVM * vm = currentThread->javaVM;
-	J9Class * currentClass = J9_CLASS_FROM_CP(walkState->constantPool);
+	J9JavaVM *vm = currentThread->javaVM;
+	J9Class *currentClass = J9_CLASS_FROM_CP(walkState->constantPool);
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 
 	Assert_VM_mustHaveVMAccess(currentThread);
 
-	if (J9_ARE_ALL_BITS_SET(J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method)->modifiers, J9AccMethodFrameIteratorSkip)) {
+	if (J9_ARE_ALL_BITS_SET(J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method)->modifiers, J9AccMethodFrameIteratorSkip)
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE) && (JAVA_SPEC_VERSION <= 11)
+			/* Do not skip InjectedInvoker classes despite them having the J9AccMethodFrameIteratorSkip
+			 * modifier set via the @Hidden attribute. Skipping them causes incorrect, unexpected
+			 * behaviour when using OpenJDK method handles pre-hidden-class support.
+			 */
+			&& J9_ARE_NO_BITS_SET(currentClass->romClass->extraModifiers, J9AccClassIsInjectedInvoker)
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) && (JAVA_SPEC_VERSION <= 11) */
+	) {
 		/* Skip methods with java.lang.invoke.FrameIteratorSkip / jdk.internal.vm.annotation.Hidden / java.lang.invoke.LambdaForm$Hidden annotation */
 		return J9_STACKWALK_KEEP_ITERATING;
 	}
@@ -112,8 +120,8 @@ cInterpGetStackClassJEP176Iterator(J9VMThread * currentThread, J9StackWalkState 
 #if JAVA_SPEC_VERSION >= 18
 				|| (walkState->method == vm->jlrMethodInvokeMH)
 #endif /* JAVA_SPEC_VERSION >= 18 */
-				|| (vm->srMethodAccessor && vmFuncs->instanceOfOrCheckCast(currentClass, J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, *((j9object_t*) vm->srMethodAccessor))))
-				|| (vm->srConstructorAccessor && vmFuncs->instanceOfOrCheckCast(currentClass, J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, *((j9object_t*) vm->srConstructorAccessor))))
+				|| (vm->srMethodAccessor && vmFuncs->instanceOfOrCheckCast(currentClass, J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, *((j9object_t *)vm->srMethodAccessor))))
+				|| (vm->srConstructorAccessor && vmFuncs->instanceOfOrCheckCast(currentClass, J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, *((j9object_t *)vm->srConstructorAccessor))))
 		) {
 			/* skip reflection classes and MethodHandle.invokeWithArguments() when reaching depth 0 */
 			return J9_STACKWALK_KEEP_ITERATING;
