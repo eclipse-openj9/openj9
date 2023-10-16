@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar18-SE]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2020
  *
@@ -26,21 +26,18 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.lang.StringBuilder;
 /*[IF INLINE-TYPES]*/
 import jdk.internal.value.PrimitiveClass;
 /*[ENDIF] INLINE-TYPES */
 
-import java.util.Map;
-
 import com.ibm.oti.util.Msg;
 import com.ibm.oti.vm.VM;
 
 /**
- * MethodTypeHelper - static methods
- *
- * @since Java 11
+ * MethodTypeHelper - static methods.
  */
 final class MethodTypeHelper {
 	static final Set<Class<?>> WRAPPER_SET;
@@ -49,7 +46,7 @@ final class MethodTypeHelper {
 		WRAPPER_SET = Collections.unmodifiableSet(new HashSet<Class<?>>(Arrays.asList(wrappers)));
 	}
 
-	/*[IF ]*/
+	/*[IF]*/
 	/* Do not include 'primitives.put("V", void.class)' as void.class is not yet loaded when
 	 * MethodType gets loaded and this will cause the VM not to start.  See the code
 	 * in Class#getPrimitiveClass() for the issue. */
@@ -109,7 +106,7 @@ final class MethodTypeHelper {
 	 * @param wrapperClass The class to check for primitive classes.
 	 * @return The corresponding primitive class or the input class.
 	 */
-	/*[IF ]*/
+	/*[IF]*/
 	/* Note that Void.class is not handled by this method as it is only viewed as a
 	 * wrapper when it is the return class.
 	 */
