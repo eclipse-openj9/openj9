@@ -71,6 +71,9 @@ artifactory:
     default: 'ci-openj9'
   uploadDir:
     default: "${repo}/${JOB_NAME}/${BUILD_ID}"
+  buildNamePrefix:
+    osu: ''
+    unb: ''
   daysToKeepArtifacts:
     osu: 40
     unb: 30

@@ -44,6 +44,15 @@ extern "C" {
 #define TIMED_WAITING 4
 #define TERMINATED 5
 
+#if JAVA_SPEC_VERSION >= 20
+typedef struct J9ScopedValueBindingsWalkClasses {
+	J9Class *threadClass;
+	J9Class *virtualThreadClass;
+	J9Class *scopedValueCarrierClass;
+	J9Class *scopedValueSnapshotClass;
+} J9ScopedValueBindingsWalkClasses;
+#endif /* JAVA_SPEC_VERSION >= 20 */
+
 jint
 getJclThreadState(UDATA vmstate, jboolean started)
 {
@@ -604,27 +613,130 @@ Java_java_lang_Thread_setExtentLocalCache(JNIEnv *env, jclass unusedClass, jobje
 
 #if JAVA_SPEC_VERSION >= 20
 /**
+ * Frame walk iterator to find the most recent scoped value bindings on the stack.
+ *
+ * @param currentThread the current thread
+ * @param walkState the stack walk state
+ * @return J9_STACKWALK_KEEP_ITERATING or J9_STACKWALK_STOP_ITERATING
+ */
+static UDATA
+findScopedValueBindingsWalkFunction(J9VMThread *currentThread, J9StackWalkState *walkState)
+{
+	UDATA rc = J9_STACKWALK_KEEP_ITERATING;
+
+	if (NULL != walkState->userData1) {
+		J9Method *method = walkState->method;
+		J9Class *methodClass = J9_CLASS_FROM_METHOD(method);
+		J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+		J9UTF8 *methodName = J9ROMMETHOD_NAME(romMethod);
+		J9ScopedValueBindingsWalkClasses *classes = (J9ScopedValueBindingsWalkClasses *)walkState->userData3;
+
+		if (((classes->threadClass == methodClass)
+				|| (classes->virtualThreadClass == methodClass)
+				|| (classes->scopedValueCarrierClass == methodClass))
+			&& J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(methodName), J9UTF8_LENGTH(methodName), "runWith")
+		) {
+			UDATA count = (UDATA)walkState->userData2;
+			rc = J9_STACKWALK_STOP_ITERATING;
+			/* runWith method should only have one instance of java.lang.ScopedValue$Snapshot. */
+			Assert_JCL_true((NULL != walkState->userData1) && (1 == count));
+		} else if (0 == walkState->inlineDepth) {
+			/* Reset userData1 and userData2 after iterating all O-slots of a method. */
+			walkState->userData1 = NULL;
+			walkState->userData2 = (void *)0;
+		}
+	}
+
+	return rc;
+}
+
+/**
+ * O-slot iterator to find the most recent scoped value bindings in the object slots.
+ *
+ * @param currentThread the current thread
+ * @param walkState the stack walk state
+ * @param slot pointer to slot containing an object pointer
+ * @param stackLocation pointer to the slot in the stack containing possibly compressed object pointer
+ */
+static void
+findScopedValueBindingsOSlotWalkFunction(J9VMThread *currentThread, J9StackWalkState *walkState, j9object_t *slot, const void *stackLocation)
+{
+	j9object_t slotObject = *slot;
+	J9Class *clazz = J9OBJECT_CLAZZ(currentThread, slotObject);
+	J9ScopedValueBindingsWalkClasses *classes = (J9ScopedValueBindingsWalkClasses *)walkState->userData3;
+	J9Class *snapshotClass = (J9Class *)classes->scopedValueSnapshotClass;
+
+	if (0 != isSameOrSuperClassOf(snapshotClass, clazz)) {
+		UDATA count = (UDATA)walkState->userData2;
+		walkState->userData1 = (void *)slotObject;
+		walkState->userData2 = (void *)(count + 1);
+	}
+}
+
+/**
  * static native Object findScopedValueBindings();
  *
- * Find the most recent scoped value bindings in the stack.
- * TODO: Complete the function description.
+ * Find the most recent scoped value bindings on the stack.
  *
  * @param env instance of JNIEnv
  * @param unusedClass
- * @return jobject
+ * @return jobject the found scoped value bindings, or null if there are no
+ * scoped value bindings on the stack
  */
 jobject JNICALL
 Java_java_lang_Thread_findScopedValueBindings(JNIEnv *env, jclass unusedClass)
 {
-	/* Currently, this method is unused since there is no API or test that
-	 * invokes this method in OpenJ9. If the assertion ever triggers, the
-	 * draft implementation below should be completed and merged.
+	J9VMThread *currentThread = (J9VMThread *)env;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	J9StackWalkState walkState = {0};
+	J9ScopedValueBindingsWalkClasses classes = {0};
+	jobject bindings = NULL;
+
+	/* The goal is to find the first argument of the runWith method, which is an
+	 * instance of java.lang.ScopedValue$Snapshot. The first argument cannot be
+	 * reliably retrieved for compiled methods. There is supposed to be only one
+	 * argument, which is an instance of java.lang.ScopedValue$Snapshot.
 	 *
-	 * Issue: https://github.com/eclipse-openj9/openj9/issues/16677.
-	 * Implementation: https://github.com/eclipse-openj9/openj9/pull/17402.
+	 * The O-slot iterator is invoked before the frame iterator. So, all O-slots
+	 * are looked at until the runWith method is reached. For the runWith method,
+	 * there is an assertion which checks that only a single instance of
+	 * java.lang.ScopedValue$Snapshot is found. If the assertion triggers, it
+	 * will indicate that the Java implementation of the runWith method has been
+	 * modified.
 	 */
-	Assert_JCL_unimplemented();
-	return NULL;
+	walkState.walkThread = currentThread;
+	walkState.skipCount = 0;
+	walkState.userData1 = NULL;
+	/* Counter to keep track of the java.lang.ScopedValue$Snapshot instances
+	 * encountered for a method.
+	 */
+	walkState.userData2 = (void *)0;
+	walkState.frameWalkFunction = findScopedValueBindingsWalkFunction;
+	walkState.objectSlotWalkFunction = findScopedValueBindingsOSlotWalkFunction;
+	walkState.flags = J9_STACKWALK_ITERATE_FRAMES | J9_STACKWALK_MAINTAIN_REGISTER_MAP
+					| J9_STACKWALK_ITERATE_O_SLOTS | J9_STACKWALK_VISIBLE_ONLY;
+
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+
+	/* Preload classes once, before walking the stack. Better for performance in
+	 * comparison to loading them multiple times within the stackwalk callbacks.
+	 */
+	classes.threadClass = J9VMJAVALANGTHREAD(vm);
+	classes.virtualThreadClass = J9VMJAVALANGVIRTUALTHREAD(vm);
+	classes.scopedValueCarrierClass = J9VMJAVALANGSCOPEDVALUECARRIER(vm);
+	classes.scopedValueSnapshotClass = J9VMJAVALANGSCOPEDVALUESNAPSHOT(vm);
+
+	walkState.userData3 = (void *)&classes;
+
+	vm->walkStackFrames(currentThread, &walkState);
+
+	if (NULL != walkState.userData1) {
+		bindings = VM_VMHelpers::createLocalRef(env, (j9object_t)walkState.userData1);
+	}
+	vmFuncs->internalExitVMToJNI(currentThread);
+
+	return bindings;
 }
 
 /**
