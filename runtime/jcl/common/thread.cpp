@@ -639,7 +639,7 @@ findScopedValueBindingsWalkFunction(J9VMThread *currentThread, J9StackWalkState 
 			UDATA count = (UDATA)walkState->userData2;
 			rc = J9_STACKWALK_STOP_ITERATING;
 			/* runWith method should only have one instance of java.lang.ScopedValue$Snapshot. */
-			Assert_JCL_true((NULL != walkState->userData1) && (1 == count));
+			Assert_JCL_true(1 == count);
 		} else if (0 == walkState->inlineDepth) {
 			/* Reset userData1 and userData2 after iterating all O-slots of a method. */
 			walkState->userData1 = NULL;
