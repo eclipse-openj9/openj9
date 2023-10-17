@@ -30,15 +30,17 @@ import org.testng.annotations.BeforeClass;
 @Test(groups = { "level.sanity" })
 public class NullRestrictedTypeOptTests {
 
-	// A primitive (null-restricted) value class
-	public primitive static class PrimPair {
+	/* A value class with an implicit constructor is eligible to be NullRestricted. */
+	public value static class FlattenablePair {
 		public final int x, y;
 
-		public PrimPair(int x, int y) {
+		public implicit FlattenablePair();
+
+		public FlattenablePair(int x, int y) {
 			this.x = x; this.y = y;
 		}
 
-		public PrimPair(PrimPair p) {
+		public FlattenablePair(FlattenablePair p) {
 			this.x = p.x; this.y = p.y;
 		}
 	}
@@ -52,7 +54,14 @@ public class NullRestrictedTypeOptTests {
 	}
 
 	public static int result = 0;
-	public static PrimPair[] parr = new PrimPair[] { new PrimPair(3, 4), new PrimPair(0, 0), new PrimPair(0, 0) };
+	public static FlattenablePair![] parr = new FlattenablePair![3];
+	static {
+		/* This syntax is a workaround since initializing the values of a NullRestricted array during
+		 * its declaration throws an assertion error in the lw5 compiler. */
+		parr[0] = new FlattenablePair(3, 4);
+		parr[1] = new FlattenablePair(0, 0);
+		parr[2] = new FlattenablePair(0, 0);
+	}
 
 	@Test(priority=1)
 	static public void testEAOpportunity1() throws Throwable {
@@ -72,11 +81,11 @@ public class NullRestrictedTypeOptTests {
 	static private void evalTestEA1a(int iter) {
 		// Test situation where EA could apply to value p1,
 		// but might have to allocate contiguously
-		PrimPair p1 = new PrimPair(1, 2);
-		PrimPair p2 = parr[0];
+		FlattenablePair! p1 = new FlattenablePair(1, 2);
+		FlattenablePair! p2 = parr[0];
 
-		PrimPair p3;
-		PrimPair p4;
+		FlattenablePair! p3;
+		FlattenablePair! p4;
 
 		if (iter % 2 == 0) {
 			p3 = p2;
@@ -92,11 +101,11 @@ public class NullRestrictedTypeOptTests {
 		for (int j = 0; j < 100; j++) {
 			// Test situation where EA could apply to value p1,
 			// but might have to allocate contiguously
-			PrimPair p1 = new PrimPair(1, 2);
-			PrimPair p2 = parr[0];
+			FlattenablePair! p1 = new FlattenablePair(1, 2);
+			FlattenablePair! p2 = parr[0];
 
-			PrimPair p3;
-			PrimPair p4;
+			FlattenablePair! p3;
+			FlattenablePair! p4;
 
 			if (j % 2 == 0) {
 				p3 = p2;
@@ -109,7 +118,7 @@ public class NullRestrictedTypeOptTests {
 		}
 	}
 
-	public static PrimPair testEA2Field = new PrimPair(0,0);
+	public static FlattenablePair! testEA2Field = new FlattenablePair(0,0);
 
 	@Test(priority=1)
 	static public void testEAOpportunity2() throws Throwable {
@@ -117,12 +126,12 @@ public class NullRestrictedTypeOptTests {
 			result = 0;
 			evalTestEA2(-1);  // No escape
 			assertEquals(result, 200);
-			assertEquals(testEA2Field, new PrimPair(0,0));
+			assertEquals(testEA2Field, new FlattenablePair(0,0));
 		}
 		evalTestEA2(99);  // Escape for index 99
-		assertEquals(testEA2Field, new PrimPair(2,1));
+		assertEquals(testEA2Field, new FlattenablePair(2,1));
 		evalTestEA2(98);  // Escape for index 98
-		assertEquals(testEA2Field, new PrimPair(1,2));
+		assertEquals(testEA2Field, new FlattenablePair(1,2));
 	}
 
 	static private void evalTestEA2(int escapePoint) {
@@ -130,7 +139,7 @@ public class NullRestrictedTypeOptTests {
 		int[] nextVal = {0, 2, 1};
 
 		for (int i = 0; i < 100; i++) {
-			PrimPair p1 = new PrimPair(x, y);
+			FlattenablePair! p1 = new FlattenablePair(x, y);
 			int updatex = nextVal[x];
 			int updatey = nextVal[y];
 			x = updatex;
@@ -153,32 +162,41 @@ public class NullRestrictedTypeOptTests {
 	static private void evalTestEA3() {
 		for (int i = 0; i < 100; i++) {
 			// Test potential stack allocation of array of value type
-			PrimPair[] arr = new PrimPair[] {new PrimPair(1, 2), new PrimPair(3, 4)};
+			FlattenablePair![] arr = new FlattenablePair![2];
+			arr[0] = new FlattenablePair(1, 2);
+			arr[1] = new FlattenablePair(3, 4);
 			for (int j = 0; j < arr.length; j++) {
-				PrimPair val = arr[j%arr.length];
+				FlattenablePair! val = arr[j%arr.length];
 				result += val.x + val.y;
 			}
 		}
 	}
 
-	// A primitive (null-restricted) value class with primitive value class fields
-	public primitive static class NestedPrimPair {
-		public final PrimPair p1;
-		public final PrimPair p2;
+	/* A value class with an implicit constructor (eligible to be null restricted)
+	 * with null restricted value class fields.
+	 */
+	public value static class NestedFlattenablePair {
+		public final FlattenablePair! p1;
+		public final FlattenablePair! p2;
 
-		public NestedPrimPair(int i, int j, int m, int n) {
-			this.p1 = new PrimPair(i, j);
-			this.p2 = new PrimPair(m, n);
+		public implicit NestedFlattenablePair();
+
+		public NestedFlattenablePair(int i, int j, int m, int n) {
+			this.p1 = new FlattenablePair(i, j);
+			this.p2 = new FlattenablePair(m, n);
 		}
 
-		public NestedPrimPair(PrimPair p1, PrimPair p2) {
-			this.p1 = new PrimPair(p1);
-			this.p2 = new PrimPair(p2);
+		public NestedFlattenablePair(FlattenablePair p1, FlattenablePair p2) {
+			this.p1 = new FlattenablePair(p1);
+			this.p2 = new FlattenablePair(p2);
 		}
 	}
 
-	// An array whose component type is a primitive (null-restricted) value class
-	public static NestedPrimPair[] nestedprimarr = new NestedPrimPair[] { new NestedPrimPair(11, 12, 13, 14) };
+	// An array whose component type is a null-restricted value class
+	public static NestedFlattenablePair![] nestedflattenablearr = new NestedFlattenablePair![1];
+	static {
+		nestedflattenablearr[0] = new NestedFlattenablePair(11, 12, 13, 14);
+	}
 
 	@Test(priority=1)
 	static public void testEAOpportunity4() throws Throwable {
@@ -198,11 +216,11 @@ public class NullRestrictedTypeOptTests {
 	static private void evalTestEA4a(int iter) {
 		// Test situation where EA could apply to value p1,
 		// but might have to allocate contiguously
-		NestedPrimPair p1 = new NestedPrimPair(1, 2, 3, 4);
-		NestedPrimPair p2 = nestedprimarr[0];
+		NestedFlattenablePair! p1 = new NestedFlattenablePair(1, 2, 3, 4);
+		NestedFlattenablePair! p2 = nestedflattenablearr[0];
 
-		NestedPrimPair p3;
-		NestedPrimPair p4;
+		NestedFlattenablePair! p3;
+		NestedFlattenablePair! p4;
 
 		if (iter % 2 == 0) {
 			p3 = p2;
@@ -219,11 +237,11 @@ public class NullRestrictedTypeOptTests {
 			// Test situation where EA could apply to value p1,
 			// but might have to allocate contiguously.  Also,
 			// extra challenges for stack allocation in a loop
-			NestedPrimPair p1 = new NestedPrimPair(1, 2, 3, 4);
-			NestedPrimPair p2 = nestedprimarr[0];
+			NestedFlattenablePair! p1 = new NestedFlattenablePair(1, 2, 3, 4);
+			NestedFlattenablePair! p2 = nestedflattenablearr[0];
 
-			NestedPrimPair p3;
-			NestedPrimPair p4;
+			NestedFlattenablePair! p3;
+			NestedFlattenablePair! p4;
 
 			if (j % 2 == 0) {
 				p3 = p1;
@@ -237,7 +255,7 @@ public class NullRestrictedTypeOptTests {
 		}
 	}
 
-	public static NestedPrimPair testEA5Field = new NestedPrimPair(0,0,0,0);
+	public static NestedFlattenablePair! testEA5Field = new NestedFlattenablePair(0,0,0,0);
 
 	@Test(priority=1)
 	static public void testEAOpportunity5() throws Throwable {
@@ -245,7 +263,7 @@ public class NullRestrictedTypeOptTests {
 			result = 0;
 			evalTestEA5();
 			assertEquals(result, 2400);
-			assertEquals(testEA5Field, new NestedPrimPair(0,0,0,0));
+			assertEquals(testEA5Field, new NestedFlattenablePair(0,0,0,0));
 		}
 	}
 
@@ -253,7 +271,7 @@ public class NullRestrictedTypeOptTests {
 		int x = 1; int y = 2; int z = 3; int w = 4;
 
 		for (int i = 0; i < 100; i++) {
-			NestedPrimPair p = new NestedPrimPair(x, y, z, w);
+			NestedFlattenablePair! p = new NestedFlattenablePair(x, y, z, w);
 			int updatex = (x-y)*(x-y);
 			int updatey = y*(y-x);
 			int updatez = (z-w)*(z-w)*z;
@@ -280,16 +298,18 @@ public class NullRestrictedTypeOptTests {
 	static private void evalTestEA6() {
 		for (int i = 0; i < 100; i++) {
 			// Test potential stack allocation of array of value type
-			NestedPrimPair[] arr = new NestedPrimPair[] {new NestedPrimPair(1, 2, 3, 4), new NestedPrimPair(5, 6, 7, 8)};
+			NestedFlattenablePair![] arr = new NestedFlattenablePair![2];
+			arr[0] = new NestedFlattenablePair(1, 2, 3, 4);
+			arr[1] = new NestedFlattenablePair(5, 6, 7, 8);
 			for (int j = 0; j < arr.length; j++) {
-				NestedPrimPair val = arr[j%arr.length];
+				NestedFlattenablePair! val = arr[j%arr.length];
 				result += val.p1.x + val.p2.y;
 			}
 		}
 	}
 
 	public static int sval7 = 0;
-	public static PrimPair escape7 = new PrimPair(0,0);
+	public static FlattenablePair! escape7 = new FlattenablePair(0,0);
 
 	@Test(priority=1)
 	static public void testEAOpportunity7() throws Throwable {
@@ -298,16 +318,16 @@ public class NullRestrictedTypeOptTests {
 			evalTestEA7(i*sval7);
 		}
 		assertEquals(result, 500000);
-		assertEquals(escape7, new PrimPair(0,0));
+		assertEquals(escape7, new FlattenablePair(0,0));
 
 		evalTestEA7(sval7+99);
 		assertEquals(result, 500000);
-		assertEquals(escape7, new PrimPair(1,2));
+		assertEquals(escape7, new FlattenablePair(1,2));
 	}
 
 	static private void evalTestEA7(int i) {
 		// Test cold block escape for nested value object
-		PrimPair p = new PrimPair(1, 2);
+		FlattenablePair! p = new FlattenablePair(1, 2);
 
 		try {
 			result += p.x + parr[i].y;
@@ -317,7 +337,7 @@ public class NullRestrictedTypeOptTests {
 	}
 
 	public static int sval8 = 0;
-	public static NestedPrimPair escape8 = new NestedPrimPair(0,0,0,0);
+	public static NestedFlattenablePair! escape8 = new NestedFlattenablePair(0,0,0,0);
 
 	@Test(priority=1)
 	static public void testEAOpportunity8() throws Throwable {
@@ -326,49 +346,49 @@ public class NullRestrictedTypeOptTests {
 			evalTestEA8(i*sval8);
 		}
 		assertEquals(result, 1500000);
-		assertEquals(escape8, new NestedPrimPair(0,0,0,0));
+		assertEquals(escape8, new NestedFlattenablePair(0,0,0,0));
 
 		evalTestEA8(sval8+99);
 		assertEquals(result, 1500000);
-		assertEquals(escape8, new NestedPrimPair(1,2,3,4));
+		assertEquals(escape8, new NestedFlattenablePair(1,2,3,4));
 	}
 
 	static private void evalTestEA8(int i) {
-		// Test cold block escape for nested primitive value objects
-		NestedPrimPair p = new NestedPrimPair(1, 2, 3, 4);
+		// Test cold block escape for nested null-restricted value objects
+		NestedFlattenablePair! p = new NestedFlattenablePair(1, 2, 3, 4);
 
 		try {
-			result += p.p1.x + nestedprimarr[i].p2.y;
+			result += p.p1.x + nestedflattenablearr[i].p2.y;
 		} catch (ArrayIndexOutOfBoundsException aioobe) {
 			escape8 = p;
 		}
 	}
 
 	public static class TestStoreToNullRestrictedField {
-		public PrimPair nullRestrictedInstanceField;
-		public static PrimPair nullRestrictedStaticField;
+		public FlattenablePair! nullRestrictedInstanceField;
+		public static FlattenablePair! nullRestrictedStaticField;
 
 		public void replaceInstanceField(Object val) {
-			nullRestrictedInstanceField = (PrimPair) val;
+			nullRestrictedInstanceField = (FlattenablePair) val;
 		}
 
 		public static void replaceStaticField(Object val) {
-			nullRestrictedStaticField = (PrimPair) val;
+			nullRestrictedStaticField = (FlattenablePair) val;
 		}
 	}
 
-	public static primitive class TestWithFieldStoreToNullRestrictedField {
-		public PrimPair nullRestrictedInstanceField;
+	public static value class TestWithFieldStoreToNullRestrictedField {
+		public FlattenablePair! nullRestrictedInstanceField;
 
 		public TestWithFieldStoreToNullRestrictedField(Object val) {
-			this.nullRestrictedInstanceField = (PrimPair) val;
+			this.nullRestrictedInstanceField = (FlattenablePair) val;
 		}
 	}
 
 	@Test
 	static public void testStoreNullValueToNullRestrictedInstanceField() throws Throwable {
 		TestStoreToNullRestrictedField storeFieldObj = new TestStoreToNullRestrictedField();
-		storeFieldObj.replaceInstanceField(new PrimPair(1, 2));
+		storeFieldObj.replaceInstanceField(new FlattenablePair(1, 2));
 
 		try {
 			storeFieldObj.replaceInstanceField(null);
@@ -381,7 +401,7 @@ public class NullRestrictedTypeOptTests {
 
 	@Test
 	static public void testStoreNullValueToNullRestrictedStaticField() throws Throwable {
-		TestStoreToNullRestrictedField.replaceStaticField(new PrimPair(1, 2));
+		TestStoreToNullRestrictedField.replaceStaticField(new FlattenablePair(1, 2));
 
 		try {
 			TestStoreToNullRestrictedField.replaceStaticField(null);
@@ -394,7 +414,7 @@ public class NullRestrictedTypeOptTests {
 
 	@Test
 	static public void testWithFieldStoreToNullRestrictedField() throws Throwable {
-		TestWithFieldStoreToNullRestrictedField withFieldObj = new TestWithFieldStoreToNullRestrictedField(new PrimPair(1, 2));
+		TestWithFieldStoreToNullRestrictedField withFieldObj = new TestWithFieldStoreToNullRestrictedField(new FlattenablePair(1, 2));
 
 		try {
 			withFieldObj = new TestWithFieldStoreToNullRestrictedField(null);
