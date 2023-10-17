@@ -6577,12 +6577,15 @@ TR_J9ByteCodeIlGenerator::genAconst_init(TR_OpaqueClassBlock *valueTypeClass, in
                   {
                   if (!TR::Compiler->om.isQDescriptorForValueTypesSupported())
                      {
-                     TR_ASSERT_FATAL(false, "Support for null-restricted types without Q descriptor is to be implemented!!!");
+                     isNullRestricted = entry._isNullRestricted;
                      }
                   else if (fieldSignature[0] == 'Q')
                      {
                      isNullRestricted = true;
+                     }
 
+                  if (isNullRestricted)
+                     {
                      // In non-SVM AOT compilation, cpIndex is required for AOT relocation.
                      // In this case, cpindex is unknown for the field.
                      if (comp()->compileRelocatableCode() && !comp()->getOption(TR_UseSymbolValidationManager))
@@ -6594,7 +6597,7 @@ TR_J9ByteCodeIlGenerator::genAconst_init(TR_OpaqueClassBlock *valueTypeClass, in
                                                                                      comp()->getCurrentMethod());
                      if (comp()->getOption(TR_TraceILGen))
                         {
-                        traceMsg(comp(), "fieldSignature %s fieldClass %p\n", fieldSignature, fieldClass);
+                        traceMsg(comp(), "isNullRestricted 1 fieldSignature %s fieldClass %p\n", fieldSignature, fieldClass);
                         }
 
                      // Set cpIndex as -1 since it's unknown for the field class
