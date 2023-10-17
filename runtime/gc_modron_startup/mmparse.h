@@ -94,7 +94,8 @@ bool scan_udata_memory_size_helper(J9JavaVM *javaVM, char **cursor, uintptr_t *v
 bool scan_u64_memory_size_helper(J9JavaVM *javaVM, char **cursor, uint64_t *value, const char *argName);
 bool scan_hex_helper(J9JavaVM *javaVM, char **cursor, UDATA *value, const char *argName);
 void gcParseXgcpolicy(MM_GCExtensions *extensions);
-bool gcParseReconfigurableArguments(J9JavaVM *vm, J9VMInitArgs* args);
+bool gcParseReconfigurableSoverignArguments(J9JavaVM *vm, J9VMInitArgs* args);
+bool gcParseReconfigurableCommandLine(J9JavaVM *vm, J9VMInitArgs* args);
 
 #ifdef __cplusplus
 } /* extern "C" { */

@@ -179,6 +179,34 @@ option_set(J9JavaVM* vm, const char* option, IDATA match)
 /**
  * Find, consume and record an option from the argument list.
  * Given an option string and the match type, find the argument in the to be consumed list.
+ * If not found, return success.
+ * If found, consume it, verify the memory value.
+ *
+ * @return OPTION_OK if option is found and consumed or option not present, OPTION_MALFORMED  if the option was malformed, OPTION_OVERFLOW if the option overflowed.
+ * @note value stored at address is invalid if failure returned
+ * @note optionIndex contains position of argument on command line if success returned, else -1
+ */
+static IDATA
+option_set_to_opt_args(J9JavaVM* vm, const char* option, IDATA* optionIndex, IDATA match, UDATA* address, J9VMInitArgs* args)
+{
+	IDATA returnCode = OPTION_OK;
+	IDATA value = 0;
+
+	IDATA element = FIND_AND_CONSUME_ARG2(args, match, option, NULL);
+	*optionIndex = element;
+
+	if (element >= 0) {
+		returnCode = GET_MEMORY_VALUE_ARGS(args, element, option, value);
+		if (OPTION_OK == returnCode) {
+			*address = value;
+		}
+	}
+	return returnCode;
+}
+
+/**
+ * Find, consume and record an option from the argument list.
+ * Given an option string and the match type, find the argument in the to be consumed list.
  * If found, consume it, verify the memory value.
  *
  * @return OPTION_OK if option is found and consumed or option not present, OPTION_MALFORMED  if the option was malformed, OPTION_OVERFLOW if the option overflowed.
@@ -188,11 +216,10 @@ option_set(J9JavaVM* vm, const char* option, IDATA match)
 static IDATA
 option_set_to_opt(J9JavaVM* vm, const char* option, IDATA* optionIndex, IDATA match, UDATA* address)
 {
-	IDATA element;
 	IDATA returnCode = OPTION_OK;
-	UDATA value;
+	UDATA value = 0;
 
-	element = FIND_AND_CONSUME_VMARG2(match, option, NULL);
+	IDATA element = FIND_AND_CONSUME_VMARG2(match, option, NULL);
 	*optionIndex = element;
 
 	if (element >= 0) {
@@ -216,11 +243,10 @@ option_set_to_opt(J9JavaVM* vm, const char* option, IDATA* optionIndex, IDATA ma
 static IDATA
 option_set_to_opt_percent(J9JavaVM* vm, const char* option, IDATA* optionIndex, IDATA match, UDATA* address)
 {
-	IDATA element;
 	IDATA returnCode = OPTION_OK;
-	UDATA value;
+	UDATA value = 0;
 
-	element = FIND_AND_CONSUME_VMARG2(match, option, NULL);
+	IDATA element = FIND_AND_CONSUME_VMARG2(match, option, NULL);
 	*optionIndex = element;
 
 	if (element >= 0) {
@@ -245,11 +271,10 @@ option_set_to_opt_percent(J9JavaVM* vm, const char* option, IDATA* optionIndex, 
 static IDATA
 option_set_to_opt_integer_args(J9JavaVM* vm, const char* option, IDATA* optionIndex, IDATA match, UDATA* address, J9VMInitArgs* args)
 {
-	IDATA element;
 	IDATA returnCode = OPTION_OK;
-	IDATA value;
+	IDATA value = 0;
 
-	element = FIND_AND_CONSUME_ARG2(args, match, option, NULL);
+	IDATA element = FIND_AND_CONSUME_ARG2(args, match, option, NULL);
 	*optionIndex = element;
 
 	if (element >= 0) {
@@ -283,11 +308,10 @@ option_set_to_opt_integer(J9JavaVM* vm, const char* option, IDATA* optionIndex, 
 static IDATA
 option_set_to_opt_double(J9JavaVM* vm, const char* option, IDATA* optionIndex, IDATA match, double* address)
 {
-	IDATA element = -1;
 	IDATA returnCode = OPTION_OK;
 	double value = 0.0;
 
-	element = FIND_AND_CONSUME_VMARG2(match, option, NULL);
+	IDATA element = FIND_AND_CONSUME_VMARG2(match, option, NULL);
 	*optionIndex = element;
 
 	if (element >= 0) {
@@ -1230,7 +1254,7 @@ gcParseSovereignArguments(J9JavaVM *vm)
 		}
 	}
 
-	if (!gcParseReconfigurableArguments(vm, vm->vmArgsArray)) {
+	if (!gcParseReconfigurableSoverignArguments(vm, vm->vmArgsArray)) {
 		goto _error;
 	}
 
@@ -1241,8 +1265,13 @@ _error:
 
 }
 
+/**
+ * Parse Sovereign arguments used both for initialization and CRIU
+ *
+ * @return true if parsing was successful, false otherwise.
+ */
 bool
-gcParseReconfigurableArguments(J9JavaVM* vm, J9VMInitArgs* args)
+gcParseReconfigurableSoverignArguments(J9JavaVM* vm, J9VMInitArgs* args)
 {
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(vm);
 	IDATA index = -1;
@@ -1269,6 +1298,50 @@ gcParseReconfigurableArguments(J9JavaVM* vm, J9VMInitArgs* args)
 		extensions->gcThreadCountForced = true;
 	}
 
+	return true;
+
+_error:
+	return false;
+}
+/**
+ * Parse command line arguments used ONLY for CRIU restore. Note the arguments
+ * are now passed in through an option file.
+ *
+ * @return true if parsing was successful, false otherwise.
+ */
+bool
+gcParseReconfigurableCommandLine(J9JavaVM* vm, J9VMInitArgs* args)
+{
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(vm);
+	IDATA index = -1;
+	IDATA result = 0;
+	PORT_ACCESS_FROM_JAVAVM(vm);
+	if (-1 != FIND_ARG_IN_ARGS(args, EXACT_MEMORY_MATCH, OPT_SOFTMX, NULL)) {
+		result = option_set_to_opt_args(vm, OPT_SOFTMX, &index, EXACT_MEMORY_MATCH, &extensions->softMx, args);
+		if (OPTION_OK != result) {
+			if (OPTION_MALFORMED == result) {
+				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_MUST_BE_NUMBER, OPT_SOFTMX);
+			}
+			goto _error;
+		}
+		extensions->softMx = MM_Math::roundToFloor(extensions->heapAlignment, extensions->softMx);
+		extensions->softMx = MM_Math::roundToFloor(extensions->regionSize, extensions->softMx);
+		if (extensions->softMx > extensions->memoryMax) {
+			j9nls_printf(PORTLIB,J9NLS_ERROR,J9NLS_GC_SUBSPACE_TOO_LARGE_FOR_HEAP, OPT_SOFTMX);
+			goto _error;
+		}
+
+		if (extensions->softMx < extensions->initialMemorySize) {
+			UDATA minimumSizeValue = extensions->initialMemorySize;
+			const char *qualifier = NULL;
+			qualifiedSize(&minimumSizeValue, &qualifier);
+			j9nls_printf(PORTLIB,J9NLS_ERROR,J9NLS_GC_SUBSPACE_TOO_SMALL_FOR_VALUE, OPT_SOFTMX, minimumSizeValue, qualifier);
+			goto _error;
+		}
+	}
+	if (!gcParseReconfigurableSoverignArguments(vm, args)) {
+		goto _error;
+	}
 	return true;
 
 _error:
