@@ -1499,10 +1499,10 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *loopLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *nonZeroFirstDimLabel = generateLabelSymbol(cg);
-#if defined(TR_TARGET_64BIT)
+#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
    bool isIndexableDataAddrPresent = TR::Compiler->om.isIndexableDataAddrPresent();
    TR::LabelSymbol *populateFirstDimDataAddrSlot = isIndexableDataAddrPresent ? generateLabelSymbol(cg) : NULL;
-#endif /* defined(TR_TARGET_64BIT) */
+#endif /* defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */
 
    startLabel->setStartInternalControlFlow();
    doneLabel->setEndInternalControlFlow();
@@ -1557,7 +1557,7 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    generateMemImmInstruction(TR::InstOpCode::S4MemImm4, node, generateX86MemoryReference(targetReg, fej9->getOffsetOfContiguousArraySizeField(), cg), 0, cg);
    generateMemImmInstruction(TR::InstOpCode::S4MemImm4, node, generateX86MemoryReference(targetReg, fej9->getOffsetOfDiscontiguousArraySizeField(), cg), 0, cg);
 
-#if defined(TR_TARGET_64BIT)
+#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
    if (isIndexableDataAddrPresent)
       {
       // Load dataAddr slot offset difference since 0 size arrays are treated as discontiguous.
@@ -1583,7 +1583,7 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
       generateLabelInstruction(TR::InstOpCode::JMP4, node, populateFirstDimDataAddrSlot, cg);
       }
    else
-#endif /* TR_TARGET_64BIT */
+#endif /* J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION */
       {
       generateLabelInstruction(TR::InstOpCode::JMP4, node, doneLabel, cg);
       }
@@ -1650,7 +1650,7 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    generateMemImmInstruction(TR::InstOpCode::S4MemImm4, node, generateX86MemoryReference(temp2Reg, fej9->getOffsetOfContiguousArraySizeField(), cg), 0, cg);
    generateMemImmInstruction(TR::InstOpCode::S4MemImm4, node, generateX86MemoryReference(temp2Reg, fej9->getOffsetOfDiscontiguousArraySizeField(), cg), 0, cg);
 
-#if defined(TR_TARGET_64BIT)
+#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
    if (isIndexableDataAddrPresent)
       {
       // Populate dataAddr slot for 2nd dimension zero size array.
@@ -1665,7 +1665,7 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
          temp3Reg,
          cg);
       }
-#endif /* TR_TARGET_64BIT */
+#endif /* J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION */
 
    // Store 2nd dim element into 1st dim array slot, compress temp2 if needed
    if (comp->target().is64Bit() && comp->useCompressedPointers())
@@ -1690,7 +1690,7 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    generateRegInstruction(TR::InstOpCode::DEC4Reg, node, firstDimLenReg, cg);
    generateLabelInstruction(TR::InstOpCode::JA4, node, loopLabel, cg);
 
-#if defined(TR_TARGET_64BIT)
+#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
    if (isIndexableDataAddrPresent)
       {
       // No offset is needed since 1st dimension array is contiguous.
@@ -1698,7 +1698,7 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
       generateLabelInstruction(TR::InstOpCode::JMP4, node, populateFirstDimDataAddrSlot, cg);
       }
    else
-#endif /* TR_TARGET_64BIT */
+#endif /* J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION */
       {
       generateLabelInstruction(TR::InstOpCode::JMP4, node, doneLabel, cg);
       }
@@ -1748,7 +1748,7 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    generateLabelInstruction(TR::InstOpCode::label, node, oolJumpPoint, cg);
    generateLabelInstruction(TR::InstOpCode::JMP4, node, oolFailLabel, cg);
 
-#if defined(TR_TARGET_64BIT)
+#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
    if (isIndexableDataAddrPresent)
       {
       /* Populate dataAddr slot of 1st dimension array. Arrays of non-zero size
@@ -1766,7 +1766,7 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
          temp2Reg,
          cg);
       }
-#endif /* TR_TARGET_64BIT */
+#endif /* J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION */
 
    generateLabelInstruction(TR::InstOpCode::label, node, doneLabel, deps, cg);
 
@@ -8093,7 +8093,7 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
       }
 
    TR::Register *discontiguousDataAddrOffsetReg = NULL;
-#ifdef TR_TARGET_64BIT
+#ifdef J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION
    if (isArrayNew && TR::Compiler->om.isIndexableDataAddrPresent())
       {
       /* Here we'll update dataAddr slot for both fixed and variable length arrays. Fixed length arrays are
@@ -8161,7 +8161,7 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
       generateRegMemInstruction(TR::InstOpCode::LEARegMem(), node, tempReg, dataAddrMR, cg);
       generateMemRegInstruction(TR::InstOpCode::SMemReg(), node, dataAddrSlotMR, tempReg, cg);
       }
-#endif /* TR_TARGET_64BIT */
+#endif /* J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION */
 
    if (fej9->inlinedAllocationsMustBeVerified() && (node->getOpCodeValue() == TR::New ||
                                                         node->getOpCodeValue() == TR::anewarray) )
