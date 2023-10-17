@@ -1611,7 +1611,7 @@ public class VmArgumentTests {
 	private ProcessRunner runProcess(ProcessBuilder pb) {
 		List<String> cmd = pb.command();
 
-		dumpStrings(cmd);
+		logStrings(cmd);
 		ProcessRunner pr;
 		try {
 			pr = ProcessRunner.runAndGetOutputs(pb);
@@ -1625,12 +1625,11 @@ public class VmArgumentTests {
 			return null;
 		}
 		if (0 != pr.getExitStatus()) {
-			logger.debug("---------------------------------\nstdout");
+			System.out.println("---------------------------------\nstdout");
 			dumpStrings(pr.getStdout());
-			ArrayList<String> errLines = stderrReader.getOutputLines();
-			logger.debug("---------------------------------\nstderr");
+			System.out.println("---------------------------------\nstderr");
 			dumpStrings(pr.getStderr());
-			fail("Target process failed");
+			fail("Target process failed, " + pr.getExitStatus());
 
 		}
 		return pr;
@@ -1640,9 +1639,15 @@ public class VmArgumentTests {
 		return !l.startsWith(USERARG_TAG);
 	}
 
-	private void dumpStrings(List<String> cmd) {
+	private static void logStrings(List<String> cmd) {
 		for (String s: cmd) {
 			logger.debug(s);
+		}
+	}
+
+	private static void dumpStrings(List<String> cmd) {
+		for (String s: cmd) {
+			System.out.println(s);
 		}
 	}
 
@@ -1657,7 +1662,7 @@ public class VmArgumentTests {
 		try {
 			List<String> cmd = pb.command();
 
-			dumpStrings(cmd);
+			logStrings(cmd);
 			Process p = pb.start();
 			int rc = p.waitFor();
 			return rc;
