@@ -625,7 +625,7 @@ TR::Node* TR_DataAccessAccelerator::insertDecimalGetIntrinsic(TR::TreeTop* callT
          case 8: targetDataType = TR::Double; break;
          }
 
-      TR::Node* valueNode = TR::Node::createWithSymRef(op, 1, 1, createByteArrayElementAddress(callTreeTop, callNode, byteArrayNode, offsetNode), comp()->getSymRefTab()->findOrCreateGenericIntShadowSymbolReference(0));
+      TR::Node* valueNode = TR::Node::createWithSymRef(op, 1, 1, constructAddressNode(callNode, byteArrayNode, offsetNode), comp()->getSymRefTab()->findOrCreateGenericIntShadowSymbolReference(0));
 
       if (requiresByteSwap)
          {
@@ -737,7 +737,7 @@ TR::Node* TR_DataAccessAccelerator::insertDecimalSetIntrinsic(TR::TreeTop* callT
             }
          }
 
-      return TR::Node::createWithSymRef(op, 2, 2, createByteArrayElementAddress(callTreeTop, callNode, byteArrayNode, offsetNode), valueNode, comp()->getSymRefTab()->findOrCreateGenericIntShadowSymbolReference(0));
+      return TR::Node::createWithSymRef(op, 2, 2, constructAddressNode(callNode, byteArrayNode, offsetNode), valueNode, comp()->getSymRefTab()->findOrCreateGenericIntShadowSymbolReference(0));
       }
 
    return NULL;
@@ -957,7 +957,7 @@ TR::Node* TR_DataAccessAccelerator::insertIntegerGetIntrinsic(TR::TreeTop* callT
          case 8: targetDataType = TR::Int64; break;
          }
 
-      TR::Node* valueNode = TR::Node::createWithSymRef(op, 1, 1, createByteArrayElementAddress(callTreeTop, callNode, byteArrayNode, offsetNode), comp()->getSymRefTab()->findOrCreateGenericIntShadowSymbolReference(0));
+      TR::Node* valueNode = TR::Node::createWithSymRef(op, 1, 1, constructAddressNode(callNode, byteArrayNode, offsetNode), comp()->getSymRefTab()->findOrCreateGenericIntShadowSymbolReference(0));
 
       if (requiresByteSwap)
          {
@@ -1085,17 +1085,16 @@ TR::Node* TR_DataAccessAccelerator::insertIntegerSetIntrinsic(TR::TreeTop* callT
          valueNode = TR::Node::create(byteswapOp, 1, valueNode);
          }
 
-      return TR::Node::createWithSymRef(op, 2, 2, createByteArrayElementAddress(callTreeTop, callNode, byteArrayNode, offsetNode), valueNode, comp()->getSymRefTab()->findOrCreateGenericIntShadowSymbolReference(0));
+      return TR::Node::createWithSymRef(op, 2, 2, constructAddressNode(callNode, byteArrayNode, offsetNode), valueNode, comp()->getSymRefTab()->findOrCreateGenericIntShadowSymbolReference(0));
       }
 
    return NULL;
    }
 
-TR::Node* TR_DataAccessAccelerator::constructAddressNode(TR::Node* callNode, TR::Node* arrayNode, TR::Node* offsetNode)
+TR::Node* TR_DataAccessAccelerator::constructAddressNode(TR::Node* callNode, TR::Node* arrayNode, TR::Node* offsetNode, bool isUnicodeOrExternalDecimalInvolved, bool isSrcOrTargetUnicodeDecimal)
    {
-   TR::Node * arrayAddressNode;
-   TR::Node * headerConstNode;
-   TR::Node * totalOffsetNode;
+   TR::Node * arrayAddressNode = NULL;
+   TR::Node * totalOffsetNode = NULL;
 
    TR::Node * pdBufAddressNode = NULL;
    TR::Node * pdBufPositionNode = NULL;
@@ -1131,21 +1130,8 @@ TR::Node* TR_DataAccessAccelerator::constructAddressNode(TR::Node* callNode, TR:
          }
       }
 
-   if (comp()->target().is64Bit())
-      {
-      headerConstNode = TR::Node::create(callNode, TR::lconst, 0, 0);
-      headerConstNode->setLongInt(TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
-      totalOffsetNode = TR::Node::create(TR::ladd, 2, headerConstNode, TR::Node::create(TR::i2l, 1, offsetNode));
-      arrayAddressNode = TR::Node::create(TR::aladd, 2, arrayNode, totalOffsetNode);
-      }
-   else
-      {
-      headerConstNode = TR::Node::create(callNode, TR::iconst, 0,
-            TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
-
-      totalOffsetNode = TR::Node::create(TR::iadd, 2, headerConstNode, offsetNode);
-      arrayAddressNode = TR::Node::create(TR::aiadd, 2, arrayNode, totalOffsetNode);
-      }
+   totalOffsetNode = TR::TransformUtil::generateConvertArrayElementIndexToOffsetTrees(comp(), offsetNode, NULL, isSrcOrTargetUnicodeDecimal ? 2 : 1, false);
+   arrayAddressNode = TR::TransformUtil::generateArrayElementAddressTrees(comp(), arrayNode, totalOffsetNode);
    arrayAddressNode->setIsInternalPointer(true);
    return arrayAddressNode;
    }
@@ -1203,9 +1189,9 @@ bool TR_DataAccessAccelerator::genComparisionIntrinsic(TR::TreeTop* treeTop, TR:
    TR::SymbolReference* bcdChkSymRef = callNode->getSymbolReference();
    TR::Node * bcdchkNode = TR::Node::createWithSymRef(TR::BCDCHK, 7, 7,
                                                       pdOpNode,
-                                                      callNode->getChild(0), callNode->getChild(1),
-                                                      callNode->getChild(2), callNode->getChild(3),
-                                                      callNode->getChild(4), callNode->getChild(5),
+                                                      op1Node, offset1Node,
+                                                      prec1Node, op2Node,
+                                                      offset2Node, prec2Node,
                                                       bcdChkSymRef);
 
    pdOpNode->setNumChildren(2);
@@ -2329,7 +2315,7 @@ bool TR_DataAccessAccelerator::genShiftLeftIntrinsic(TR::TreeTop *treeTop, TR::N
    return printInliningStatus(true, callNode);
    }
 
-bool TR_DataAccessAccelerator::generateUD2PD(TR::TreeTop *treeTop, TR::Node *callNode, bool isUD2PD)
+bool TR_DataAccessAccelerator::generateUD2PD(TR::TreeTop *treeTop, TR::Node *callNode, bool isSrcUnicodeDecimal)
    {
    TR::Node *decimalNode = callNode->getChild(0);
    TR::Node *decimalOffsetNode = callNode->getChild(1);
@@ -2345,9 +2331,9 @@ bool TR_DataAccessAccelerator::generateUD2PD(TR::TreeTop *treeTop, TR::Node *cal
 
    if (!isChildConst(callNode, 4) || !isChildConst(callNode, 5))
       failMsg = "Child (4|5) is not constant";
-   else if (isUD2PD && type != 5 && type != 6 && type != 7)
+   else if (isSrcUnicodeDecimal && type != 5 && type != 6 && type != 7)
       failMsg = "Invalid decimal type. Supported types are (5|6|7)";
-   else if (!isUD2PD && (type < 1 || type > 4))
+   else if (!isSrcUnicodeDecimal && (type < 1 || type > 4))
       failMsg = "Invalid decimal type. Supported types are (1|2|3|4)";
    else if (prec < 1 || prec > 31)
       failMsg = "Invalid precision. Valid precision is in range [1, 31]";
@@ -2405,32 +2391,7 @@ bool TR_DataAccessAccelerator::generateUD2PD(TR::TreeTop *treeTop, TR::Node *cal
          }
 
       //create decimalload
-      TR::Node *decimalAddressNode;
-      int offset = decimalOffsetNode->getInt();
-      TR::Node *twoConstNode;
-      TR::Node *multipliedOffsetNode;
-      TR::Node *totalOffsetNode;
-      TR::Node *headerConstNode;
-      if (comp()->target().is64Bit())
-         {
-         headerConstNode = TR::Node::create(callNode, TR::lconst, 0, 0);
-         headerConstNode->setLongInt(TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
-         twoConstNode = TR::Node::create(callNode, TR::lconst, 0, 0);
-         twoConstNode->setLongInt(isUD2PD ? 2 : 1);
-         multipliedOffsetNode = TR::Node::create(TR::lmul, 2,
-                                                TR::Node::create(TR::i2l, 1, decimalOffsetNode), twoConstNode);
-         totalOffsetNode = TR::Node::create(TR::ladd, 2, headerConstNode, multipliedOffsetNode);
-         decimalAddressNode = TR::Node::create(TR::aladd, 2, decimalNode, totalOffsetNode);
-         }
-      else
-         {
-         headerConstNode = TR::Node::create(callNode, TR::iconst, 0,
-                                           TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
-         twoConstNode = TR::Node::create(callNode, TR::iconst, 0, isUD2PD ? 2 : 1);
-         multipliedOffsetNode = TR::Node::create(TR::imul, 2, decimalOffsetNode, twoConstNode);
-         totalOffsetNode = TR::Node::create(TR::iadd, 2, headerConstNode, multipliedOffsetNode);
-         decimalAddressNode = TR::Node::create(TR::aiadd, 2, decimalNode, totalOffsetNode);
-         }
+      TR::Node *decimalAddressNode = constructAddressNode(callNode, decimalNode, decimalOffsetNode, true, isSrcUnicodeDecimal);
 
       decimalAddressNode->setIsInternalPointer(true);
       TR::SymbolReference * symRef = comp()->getSymRefTab()->findOrCreateArrayShadowSymbolRef(dt, decimalAddressNode, 8, fe());
@@ -2443,7 +2404,7 @@ bool TR_DataAccessAccelerator::generateUD2PD(TR::TreeTop *treeTop, TR::Node *cal
       //create PDaddress
       TR::Node *pdAddressNode = constructAddressNode(callNode, pdNode, pdOffsetNode);
 
-      int elementSize = isUD2PD ? TR::DataType::getUnicodeElementSize() : TR::DataType::getZonedElementSize();
+      int elementSize = isSrcUnicodeDecimal ? TR::DataType::getUnicodeElementSize() : TR::DataType::getZonedElementSize();
 
       //bound values
       int pdPrecSize = TR::DataType::getSizeFromBCDPrecision(TR::PackedDecimal, prec) - 1;
@@ -2489,7 +2450,7 @@ bool TR_DataAccessAccelerator::generateUD2PD(TR::TreeTop *treeTop, TR::Node *cal
          }
 
       TR::Node *decimal2pdNode = NULL;
-      if (isUD2PD || type == 1)
+      if (isSrcUnicodeDecimal || type == 1)
          {
          //for converting zd to pd (here type == 1), dont need the additional intermediate conversion
          decimal2pdNode = TR::Node::create(op, 1, decimalload);
@@ -2560,7 +2521,7 @@ bool TR_DataAccessAccelerator::generateUD2PD(TR::TreeTop *treeTop, TR::Node *cal
    return false;
    }
 
-bool TR_DataAccessAccelerator::generatePD2UD(TR::TreeTop *treeTop, TR::Node *callNode, bool isPD2UD)
+bool TR_DataAccessAccelerator::generatePD2UD(TR::TreeTop *treeTop, TR::Node *callNode, bool isTargetUnicodeDecimal)
    {
    TR::Node *pdNode = callNode->getChild(0);
    TR::Node *pdOffsetNode = callNode->getChild(1);
@@ -2576,9 +2537,9 @@ bool TR_DataAccessAccelerator::generatePD2UD(TR::TreeTop *treeTop, TR::Node *cal
 
    if (!isChildConst(callNode, 4) || !isChildConst(callNode, 5))
       failMsg = "Child (4|5) is not constant";
-   else if (isPD2UD && type != 5 && type != 6 && type != 7)
+   else if (isTargetUnicodeDecimal && type != 5 && type != 6 && type != 7)
       failMsg = "Invalid decimal type. Supported types are (5|6|7)";
-   else if (!isPD2UD && (type < 1 || type > 4)) //PD2ED
+   else if (!isTargetUnicodeDecimal && (type < 1 || type > 4)) //PD2ED
       failMsg = "Invalid decimal type. Supported types are (1|2|3|4)";
    else if (prec < 1 || prec > 31)
       failMsg = "Invalid precision. Valid precision is in range [1, 31]";
@@ -2588,7 +2549,7 @@ bool TR_DataAccessAccelerator::generatePD2UD(TR::TreeTop *treeTop, TR::Node *cal
       TR::DebugCounter::incStaticDebugCounter(comp(),
                                               TR::DebugCounter::debugCounterName(comp(),
                                                                                  "DAA/rejected/%s",
-                                                                                 isPD2UD ? "pd2ud" : "pd2ed"));
+                                                                                 isTargetUnicodeDecimal ? "pd2ud" : "pd2ed"));
 
       return printInliningStatus(false, callNode, failMsg);
       }
@@ -2598,7 +2559,7 @@ bool TR_DataAccessAccelerator::generatePD2UD(TR::TreeTop *treeTop, TR::Node *cal
       TR::DebugCounter::incStaticDebugCounter(comp(),
                                               TR::DebugCounter::debugCounterName(comp(),
                                                                                  "DAA/inlined/%s",
-                                                                                 isPD2UD ? "pd2ud" : "pd2ed"));
+                                                                                 isTargetUnicodeDecimal ? "pd2ud" : "pd2ed"));
 
       //set up pdload:
       TR::Node *arrayAddressNode = constructAddressNode(callNode, pdNode, pdOffsetNode);
@@ -2612,34 +2573,7 @@ bool TR_DataAccessAccelerator::generatePD2UD(TR::TreeTop *treeTop, TR::Node *cal
       pdload->setDecimalPrecision(prec);
 
       //set up decimal arrayAddressNode
-      TR::Node *decimalAddressNode;
-         {
-         TR::Node *twoConstNode;
-         TR::Node *multipliedOffsetNode;
-         TR::Node *totalOffsetNode;
-         TR::Node *headerConstNode;
-         if (comp()->target().is64Bit())
-            {
-            headerConstNode = TR::Node::create(callNode, TR::lconst, 0, 0);
-            headerConstNode->setLongInt(TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
-            twoConstNode = TR::Node::create(callNode, TR::lconst, 0, 0);
-            twoConstNode->setLongInt(isPD2UD ? 2 : 1);
-            multipliedOffsetNode = TR::Node::create(TR::lmul, 2,
-                                                   TR::Node::create(TR::i2l, 1, decimalOffsetNode), twoConstNode);
-            totalOffsetNode = TR::Node::create(TR::ladd, 2, headerConstNode, multipliedOffsetNode);
-            decimalAddressNode = TR::Node::create(TR::aladd, 2, decimalNode, totalOffsetNode);
-            }
-         else
-            {
-            headerConstNode = TR::Node::create(callNode, TR::iconst, 0,
-                                              TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
-            twoConstNode = TR::Node::create(callNode, TR::iconst, 0, isPD2UD ? 2 : 1);
-            multipliedOffsetNode = TR::Node::create(TR::imul, 2, decimalOffsetNode, twoConstNode);
-            totalOffsetNode = TR::Node::create(TR::iadd, 2, headerConstNode, multipliedOffsetNode);
-            decimalAddressNode = TR::Node::create(TR::aiadd, 2, decimalNode, totalOffsetNode);
-            }
-         decimalAddressNode->setIsInternalPointer(true);
-         }
+      TR::Node *decimalAddressNode = constructAddressNode(callNode, decimalNode, decimalOffsetNode, true, isTargetUnicodeDecimal);
 
       //set up pd2decimal node
       TR::ILOpCodes op = TR::BadILOp;
@@ -2694,7 +2628,7 @@ bool TR_DataAccessAccelerator::generatePD2UD(TR::TreeTop *treeTop, TR::Node *cal
          }
 
       TR::Node *pd2decimalNode = NULL;
-      if (isPD2UD || type == 1)
+      if (isTargetUnicodeDecimal || type == 1)
          {
          pd2decimalNode = TR::Node::create(op, 1, pdload);
          }
@@ -2719,7 +2653,7 @@ bool TR_DataAccessAccelerator::generatePD2UD(TR::TreeTop *treeTop, TR::Node *cal
       //set up bndchks, and null chks
       TR::Node *pdPassThroughNode = TR::Node::create(TR::PassThrough, 1, pdNode);
       TR::Node *decimalPassThroughNode = TR::Node::create(TR::PassThrough, 1, decimalNode);
-      int elementSize = isPD2UD ? TR::DataType::getUnicodeElementSize() : TR::DataType::getZonedElementSize();
+      int elementSize = isTargetUnicodeDecimal ? TR::DataType::getUnicodeElementSize() : TR::DataType::getZonedElementSize();
       int pdPrecSize = TR::DataType::getSizeFromBCDPrecision(TR::PackedDecimal, prec) - 1;
       int decimalPrecSize = (TR::DataType::getSizeFromBCDPrecision(dt, prec) / elementSize) - 1;
       TR::Node *pdBndvalue = TR::Node::create(TR::iadd, 2, pdOffsetNode, TR::Node::create(callNode, TR::iconst, 0, pdPrecSize));
@@ -2789,25 +2723,4 @@ void TR_DataAccessAccelerator::insertByteArrayBNDCHK(TR::TreeTop* callTreeTop,  
    arraylengthNode->setArrayStride(TR::Symbol::convertTypeToSize(TR::Int8));
 
    callTreeTop->insertBefore(TR::TreeTop::create(comp, TR::Node::createWithSymRef(TR::BNDCHK, 2, 2, arraylengthNode, offsetNode, comp->getSymRefTab()->findOrCreateArrayBoundsCheckSymbolRef(callNode->getSymbol()->getResolvedMethodSymbol()))));
-   }
-
-TR::Node* TR_DataAccessAccelerator::createByteArrayElementAddress(TR::TreeTop* callTreeTop, TR::Node* callNode, TR::Node* byteArrayNode, TR::Node* offsetNode)
-   {
-   TR::CodeGenerator* cg = comp()->cg();
-
-   TR::Node* byteArrayElementAddressNode;
-
-   if (comp()->target().is64Bit())
-      {
-      byteArrayElementAddressNode = TR::Node::create(TR::aladd, 2, byteArrayNode, TR::Node::create(TR::ladd, 2, TR::Node::create(callNode, TR::lconst, 0, TR::Compiler->om.contiguousArrayHeaderSizeInBytes()), TR::Node::create(TR::i2l, 1, offsetNode)));
-      }
-   else
-      {
-      byteArrayElementAddressNode = TR::Node::create(TR::aiadd, 2, byteArrayNode, TR::Node::create(TR::iadd, 2, TR::Node::create(callNode, TR::iconst, 0, TR::Compiler->om.contiguousArrayHeaderSizeInBytes()), offsetNode));
-      }
-
-   // This node is pointing to an array element so we must mark it as such
-   byteArrayElementAddressNode->setIsInternalPointer(true);
-
-   return byteArrayElementAddressNode;
    }
