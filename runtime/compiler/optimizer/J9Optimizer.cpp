@@ -303,6 +303,106 @@ static const OptimizationStrategy coldStrategyOpts[] =
    { OMR::endOpts                                                               }
    };
 
+// ***************************************************************************
+//
+// Strategy for warm methods.
+//
+// ***************************************************************************
+//
+static const OptimizationStrategy warmStrategyOpts[] =
+   {
+   { OMR::trivialDeadTreeRemoval,                    OMR::IfEnabled             },
+   { OMR::coldBlockOutlining                                                    },
+   { OMR::stringBuilderTransformer                                              },
+   { OMR::stringPeepholes                                                       }, // need stringpeepholes to catch bigdecimal patterns
+   { OMR::inlining                                                              },
+   { OMR::methodHandleInvokeInliningGroup,           OMR::IfEnabled             },
+   { OMR::staticFinalFieldFolding,                                              },
+   { OMR::osrGuardInsertion,                         OMR::MustBeDone            },
+   { OMR::osrExceptionEdgeRemoval                                               }, // most inlining is done by now
+   { OMR::jProfilingBlock                                                       },
+   { OMR::virtualGuardTailSplitter                                              }, // merge virtual guards
+   { OMR::treeSimplification                                                    },
+#ifdef TR_HOST_S390
+   { OMR::sequentialLoadAndStoreWarmGroup,           OMR::IfEnabled                  },
+#endif
+   { OMR::cheapGlobalValuePropagationGroup                                      },
+   { OMR::localCSE,                                  OMR::IfVectorAPI           },
+   { OMR::dataAccessAccelerator                                                 },
+#ifdef TR_HOST_S390
+   { OMR::globalCopyPropagation,                     OMR::IfVoluntaryOSR        },
+#endif
+   { OMR::lastLoopVersionerGroup,                    OMR::IfLoops               },
+#ifdef TR_HOST_S390
+   { OMR::globalDeadStoreElimination,                OMR::IfEnabledAndLoops          },
+   { OMR::deadTreesElimination                                                       },
+   { OMR::recompilationModifier,                     OMR::IfEnabledAndNotProfiling   },
+   { OMR::localReordering,                           OMR::IfNoLoopsOREnabledAndLoops },
+   { OMR::basicBlockOrdering,                        OMR::IfLoops                    },
+   { OMR::treeSimplification                                                         },
+   { OMR::loopReduction                                                              },
+   { OMR::blockShuffling                                                             },
+#endif
+   { OMR::localCSE,                                  OMR::IfLoopsAndNotProfiling     },
+   { OMR::idiomRecognition,                          OMR::IfLoopsAndNotProfiling     },
+   { OMR::blockSplitter                                                         },
+   { OMR::treeSimplification                                                    }, // revisit; not really required ?
+   { OMR::virtualGuardHeadMerger                                                },
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+   { OMR::recognizedCallTransformer,                 OMR::MarkLastRun           },
+#endif
+   { OMR::basicBlockExtension,                       OMR::MarkLastRun                }, // extend blocks; move trees around if reqd
+   { OMR::localValuePropagationGroup                                            },
+   { OMR::explicitNewInitialization,                 OMR::IfNews                },
+   { OMR::arraycopyTransformation                                               },
+   { OMR::treeSimplification,                        OMR::IfEnabled                  },
+   { OMR::asyncCheckInsertion,                       OMR::IfNotJitProfiling          },
+   { OMR::localCSE                                                              },
+   { OMR::treeSimplification,                        OMR::MarkLastRun                },
+   { OMR::andSimplification,                         OMR::IfEnabled                  },  //clean up after versioner
+   { OMR::compactNullChecks                                                     }, // cleanup at the end
+   { OMR::deadTreesElimination,                      OMR::IfEnabled                  }, // cleanup at the end
+   { OMR::globalCopyPropagation,                     OMR::IfMethodHandleInvokes      }, // Does a lot of good after methodHandleInvokeInliningGroup
+   { OMR::treesCleansing,                            OMR::IfEnabled                  },
+   { OMR::deadTreesElimination,                      OMR::IfEnabled                  }, // cleanup at the end
+   { OMR::localCSE,                                  OMR::IfEnabled                  }, // common up expressions for sunk stores
+   { OMR::treeSimplification,                        OMR::IfEnabledMarkLastRun       }, // cleanup the trees after sunk store and localCSE
+
+   /** \breif
+    *      This optimization is performance critical on z Systems. On z Systems a literal pool register is blocked off
+    *      by default at the start of the compilation since materializing this address could be expensive depending on
+    *      the architecture level we are executing on. This optimization pass validates support for dynamically
+    *      materializing the literal pool address and frees up the literal pool register for register allocation.
+   */
+   { OMR::dynamicLiteralPool,                        OMR::IfNotProfiling             },
+   { OMR::samplingJProfiling                                                         },
+   { OMR::trivialBlockExtension                                                      },
+   { OMR::localCSE,                                  OMR::IfEnabled                  },  //common up lit pool refs in the same block
+   { OMR::deadTreesElimination,                      OMR::IfEnabled                  }, // cleanup at the end
+   { OMR::treeSimplification,                        OMR::IfEnabledMarkLastRun       }, // Simplify non-normalized address computations introduced by prefetch insertion
+   { OMR::trivialDeadTreeRemoval,                    OMR::IfEnabled                  }, // final cleanup before opcode expansion
+   { OMR::jProfilingRecompLoopTest,                  OMR::IfLoops                    },
+   { OMR::globalDeadStoreElimination,                OMR::IfVectorAPI                }, // global dead store removal
+   { OMR::deadTreesElimination,                      OMR::IfVectorAPI                }, // cleanup after dead store removal
+   { OMR::vectorAPIExpansion,                        OMR::IfVectorAPI                },
+   { OMR::osrGuardRemoval,                           OMR::IfVectorAPI                },
+   { OMR::cheapTacticalGlobalRegisterAllocatorGroup, OMR::IfEnabled                  },
+   { OMR::jProfilingValue,                           OMR::MustBeDone                 },
+   { OMR::treeLowering,                              OMR::MustBeDone                 },
+   { OMR::globalDeadStoreGroup,                                                      },
+   { OMR::compactNullChecks,                         OMR::IfEnabled                  }, // cleanup at the end
+   { OMR::deadTreesElimination,                      OMR::IfEnabled                  }, // remove dead anchors created by check/store removal
+   { OMR::deadTreesElimination,                      OMR::IfEnabled                  }, // remove dead RegStores produced by previous deadTrees pass
+   { OMR::redundantGotoElimination,                  OMR::IfEnabledAndNotJitProfiling }, // dead store and dead tree elimination may have left empty blocks
+   { OMR::compactLocals,                             OMR::IfNotJitProfiling          }, // analysis results are invalidated by jitProfilingGroup
+   { OMR::globalLiveVariablesForGC                                                   },
+   { OMR::jitProfilingGroup,                         OMR::IfJitProfiling             },
+   { OMR::catchBlockProfiler,                        OMR::IfExceptionHandlers        },
+   { OMR::regDepCopyRemoval                                                          },
+   { OMR::hotFieldMarking                                                            },
+   { OMR::endOpts                                                                    }
+   };
+
 
 // ***************************************************************************
 //
@@ -311,7 +411,7 @@ static const OptimizationStrategy coldStrategyOpts[] =
 //
 // ***************************************************************************
 //
-static const OptimizationStrategy warmStrategyOpts[] =
+static const OptimizationStrategy oldWarmStrategyOpts[] =
    {
    { OMR::trivialDeadTreeRemoval,                                      OMR::IfEnabled},
    { OMR::coldBlockOutlining                                                    },
@@ -698,106 +798,6 @@ static const OptimizationStrategy *j9CompilationStrategies[] =
    };
 
 
-// ***************************************************************************
-//
-// Cheaper strategy for warm methods.
-//
-// ***************************************************************************
-//
-static const OptimizationStrategy cheapWarmStrategyOpts[] =
-   {
-   { OMR::trivialDeadTreeRemoval,                    OMR::IfEnabled             },
-   { OMR::coldBlockOutlining                                                    },
-   { OMR::stringBuilderTransformer                                              },
-   { OMR::stringPeepholes                                                       }, // need stringpeepholes to catch bigdecimal patterns
-   { OMR::inlining                                                              },
-   { OMR::methodHandleInvokeInliningGroup,           OMR::IfEnabled             },
-   { OMR::staticFinalFieldFolding,                                              },
-   { OMR::osrGuardInsertion,                         OMR::MustBeDone            },
-   { OMR::osrExceptionEdgeRemoval                                               }, // most inlining is done by now
-   { OMR::jProfilingBlock                                                       },
-   { OMR::virtualGuardTailSplitter                                              }, // merge virtual guards
-   { OMR::treeSimplification                                                    },
-#ifdef TR_HOST_S390
-   { OMR::sequentialLoadAndStoreWarmGroup,           OMR::IfEnabled                  },
-#endif
-   { OMR::cheapGlobalValuePropagationGroup                                      },
-   { OMR::localCSE,                                  OMR::IfVectorAPI           },
-   { OMR::dataAccessAccelerator                                                 },
-#ifdef TR_HOST_S390
-   { OMR::globalCopyPropagation,                     OMR::IfVoluntaryOSR        },
-#endif
-   { OMR::lastLoopVersionerGroup,                    OMR::IfLoops               },
-#ifdef TR_HOST_S390
-   { OMR::globalDeadStoreElimination,                OMR::IfEnabledAndLoops          },
-   { OMR::deadTreesElimination                                                       },
-   { OMR::recompilationModifier,                     OMR::IfEnabledAndNotProfiling   },
-   { OMR::localReordering,                           OMR::IfNoLoopsOREnabledAndLoops },
-   { OMR::basicBlockOrdering,                        OMR::IfLoops                    },
-   { OMR::treeSimplification                                                         },
-   { OMR::loopReduction                                                              },
-   { OMR::blockShuffling                                                             },
-#endif
-   { OMR::localCSE,                                  OMR::IfLoopsAndNotProfiling     },
-   { OMR::idiomRecognition,                          OMR::IfLoopsAndNotProfiling     },
-   { OMR::blockSplitter                                                         },
-   { OMR::treeSimplification                                                    }, // revisit; not really required ?
-   { OMR::virtualGuardHeadMerger                                                },
-#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
-   { OMR::recognizedCallTransformer,                 OMR::MarkLastRun           },
-#endif
-   { OMR::basicBlockExtension,                       OMR::MarkLastRun                }, // extend blocks; move trees around if reqd
-   { OMR::localValuePropagationGroup                                            },
-   { OMR::explicitNewInitialization,                 OMR::IfNews                },
-   { OMR::arraycopyTransformation                                               },
-   { OMR::treeSimplification,                        OMR::IfEnabled                  },
-   { OMR::asyncCheckInsertion,                       OMR::IfNotJitProfiling          },
-   { OMR::localCSE                                                              },
-   { OMR::treeSimplification,                        OMR::MarkLastRun                },
-   { OMR::andSimplification,                         OMR::IfEnabled                  },  //clean up after versioner
-   { OMR::compactNullChecks                                                     }, // cleanup at the end
-   { OMR::deadTreesElimination,                      OMR::IfEnabled                  }, // cleanup at the end
-   { OMR::globalCopyPropagation,                     OMR::IfMethodHandleInvokes      }, // Does a lot of good after methodHandleInvokeInliningGroup
-   { OMR::treesCleansing,                            OMR::IfEnabled                  },
-   { OMR::deadTreesElimination,                      OMR::IfEnabled                  }, // cleanup at the end
-   { OMR::localCSE,                                  OMR::IfEnabled                  }, // common up expressions for sunk stores
-   { OMR::treeSimplification,                        OMR::IfEnabledMarkLastRun       }, // cleanup the trees after sunk store and localCSE
-
-   /** \breif
-    *      This optimization is performance critical on z Systems. On z Systems a literal pool register is blocked off
-    *      by default at the start of the compilation since materializing this address could be expensive depending on
-    *      the architecture level we are executing on. This optimization pass validates support for dynamically
-    *      materializing the literal pool address and frees up the literal pool register for register allocation.
-   */
-   { OMR::dynamicLiteralPool,                        OMR::IfNotProfiling             },
-   { OMR::samplingJProfiling                                                         },
-   { OMR::trivialBlockExtension                                                      },
-   { OMR::localCSE,                                  OMR::IfEnabled                  },  //common up lit pool refs in the same block
-   { OMR::deadTreesElimination,                      OMR::IfEnabled                  }, // cleanup at the end
-   { OMR::treeSimplification,                        OMR::IfEnabledMarkLastRun       }, // Simplify non-normalized address computations introduced by prefetch insertion
-   { OMR::trivialDeadTreeRemoval,                    OMR::IfEnabled                  }, // final cleanup before opcode expansion
-   { OMR::jProfilingRecompLoopTest,                  OMR::IfLoops                    },
-   { OMR::globalDeadStoreElimination,                OMR::IfVectorAPI                }, // global dead store removal
-   { OMR::deadTreesElimination,                      OMR::IfVectorAPI                }, // cleanup after dead store removal
-   { OMR::vectorAPIExpansion,                        OMR::IfVectorAPI                },
-   { OMR::osrGuardRemoval,                           OMR::IfVectorAPI                },
-   { OMR::cheapTacticalGlobalRegisterAllocatorGroup, OMR::IfEnabled                  },
-   { OMR::jProfilingValue,                           OMR::MustBeDone                 },
-   { OMR::treeLowering,                              OMR::MustBeDone                 },
-   { OMR::globalDeadStoreGroup,                                                      },
-   { OMR::compactNullChecks,                         OMR::IfEnabled                  }, // cleanup at the end
-   { OMR::deadTreesElimination,                      OMR::IfEnabled                  }, // remove dead anchors created by check/store removal
-   { OMR::deadTreesElimination,                      OMR::IfEnabled                  }, // remove dead RegStores produced by previous deadTrees pass
-   { OMR::redundantGotoElimination,                  OMR::IfEnabledAndNotJitProfiling }, // dead store and dead tree elimination may have left empty blocks
-   { OMR::compactLocals,                             OMR::IfNotJitProfiling          }, // analysis results are invalidated by jitProfilingGroup
-   { OMR::globalLiveVariablesForGC                                                   },
-   { OMR::jitProfilingGroup,                         OMR::IfJitProfiling             },
-   { OMR::catchBlockProfiler,                        OMR::IfExceptionHandlers        },
-   { OMR::regDepCopyRemoval                                                          },
-   { OMR::hotFieldMarking                                                            },
-   { OMR::endOpts                                                                    }
-   };
-
 
 // **********************************************************
 //
@@ -1027,14 +1027,7 @@ J9::Optimizer::optimizationStrategy(TR::Compilation *c)
       }
 
    TR_Hotness strategy = c->getMethodHotness();
-   if (strategy == warm && !c->getOption(TR_DisableCheapWarmOpts))
-      {
-      return cheapWarmStrategyOpts;
-      }
-   else
-      {
-      return j9CompilationStrategies[strategy];
-      }
+   return j9CompilationStrategies[strategy];
    }
 
 
