@@ -521,9 +521,17 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          vmInfo._useAOTCache = comp->getPersistentInfo()->getJITServerUseAOTCache();
          if (vmInfo._useAOTCache)
             {
-            auto header = compInfoPT->reloRuntime()->getStoredAOTHeader(vmThread);
-            TR_ASSERT_FATAL(header, "Must have valid AOT header stored in SCC by now");
-            vmInfo._aotHeader = *header;
+            // TODO: when the shared cache is fully ignored, this should be a fresh AOT header every time
+            if (fe->sharedCache())
+               {
+               const TR_AOTHeader *storedHeader = compInfoPT->reloRuntime()->getStoredAOTHeader(vmThread);
+               TR_ASSERT_FATAL(storedHeader, "Must have valid AOT header stored in SCC by now");
+               vmInfo._aotHeader = *storedHeader;
+               }
+            else
+               {
+               TR_RelocationRuntime::fillAOTHeader(javaVM, fe, &vmInfo._aotHeader);
+               }
             }
          vmInfo._inSnapshotMode = fe->inSnapshotMode();
          vmInfo._isPortableRestoreMode = fe->isPortableRestoreModeEnabled();
