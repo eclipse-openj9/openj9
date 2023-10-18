@@ -36,17 +36,17 @@ struct TR_ClassLoaderInfo
    {
    TR_PERSISTENT_ALLOC(TR_Memory::PersistentCHTable)
 
-   TR_ClassLoaderInfo(void *loader, void *chain) :
+   TR_ClassLoaderInfo(void *loader, void *chain, J9UTF8 *nameStr) :
       _loader(loader), _loaderTableNext(NULL),
-      _chain(chain), _chainTableNext(NULL)
+      _chain(chain), _chainTableNext(NULL),
 #if defined(J9VM_OPT_JITSERVER)
-      , _nameTableNext(NULL)
+      _nameStr(nameStr), _nameTableNext(NULL)
 #endif /* defined(J9VM_OPT_JITSERVER) */
       { }
 
-   const J9UTF8 *name(TR_J9SharedCache *sharedCache) const
+   const J9UTF8 *name() const
       {
-      return J9ROMCLASS_CLASSNAME(sharedCache->startingROMClassOfClassChain((uintptr_t *)_chain));
+      return _nameStr;
       }
 
    template<TableKind T> TR_ClassLoaderInfo *&next();
@@ -58,9 +58,25 @@ struct TR_ClassLoaderInfo
    TR_ClassLoaderInfo *_chainTableNext;
 #if defined(J9VM_OPT_JITSERVER)
    TR_ClassLoaderInfo *_nameTableNext;
+   // The ROM class name will either be in the local SCC or will be
+   // copied to persistent memory managed by this loader info entry.
+   // It is also tracked only if we might be a client of a JITServer
+   // AOT cache.
+   J9UTF8 *_nameStr;
 #endif /* defined(J9VM_OPT_JITSERVER) */
    };
 
+// Create a persistent copy of the given string
+static J9UTF8 *
+copyJ9UTF8(const J9UTF8 *nameStr, TR_PersistentMemory *persistentMemory)
+   {
+   size_t nameSize = J9UTF8_TOTAL_SIZE(nameStr);
+   void *ptr = persistentMemory->allocatePersistentMemory(nameSize);
+   if (!ptr)
+      throw std::bad_alloc();
+   memcpy(ptr, nameStr, nameSize);
+   return (J9UTF8 *)ptr;
+   }
 
 template<TableKind T> static size_t hash(const void *key);
 
@@ -117,14 +133,13 @@ struct NameKey
    {
    const uint8_t *_data;
    size_t _length;
-   TR_J9SharedCache *_sharedCache;
    };
 
 template<> bool
 TR_ClassLoaderInfo::equals<Name>(const void *keyPtr) const
    {
    auto key = (const NameKey *)keyPtr;
-   const J9UTF8 *str = name(key->_sharedCache);
+   const J9UTF8 *str = name();
    return J9UTF8_DATA_EQUALS(J9UTF8_DATA(str), J9UTF8_LENGTH(str), key->_data, key->_length);
    }
 
@@ -172,7 +187,13 @@ TR_PersistentClassLoaderTable::associateClassLoaderWithClass(J9VMThread *vmThrea
    // no other thread can be modifying the table at the same time.
    TR_ASSERT(hasSharedVMAccess(vmThread), "Must have shared VM access");
    TR_ASSERT(TR::MonitorTable::get()->getClassTableMutex()->owned_by_self(), "Must hold classTableMutex");
-   if (!_sharedCache)
+
+   bool useAOTCache = false;
+#if defined(J9VM_OPT_JITSERVER)
+   useAOTCache = _persistentMemory->getPersistentInfo()->getJITServerUseAOTCache();
+#endif /* defined(J9VM_OPT_JITSERVER) */
+
+   if (!_sharedCache && !useAOTCache)
       return;
 
    // Lookup by class loader and check if it already has an associated class
@@ -183,28 +204,57 @@ TR_PersistentClassLoaderTable::associateClassLoaderWithClass(J9VMThread *vmThrea
       return;
 
 #if defined(J9VM_OPT_JITSERVER)
-   bool useAOTCache = _persistentMemory->getPersistentInfo()->getJITServerUseAOTCache();
-   const J9UTF8 *nameStr = J9ROMCLASS_CLASSNAME(((J9Class *)clazz)->romClass);
-   const uint8_t *name = J9UTF8_DATA(nameStr);
-   uint16_t nameLength = J9UTF8_LENGTH(nameStr);
+   auto romClass = ((J9Class *)clazz)->romClass;
+   auto romName = J9ROMCLASS_CLASSNAME(romClass);
+   const uint8_t *name = J9UTF8_DATA(romName);
+   size_t nameLength = J9UTF8_LENGTH(romName);
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
-   uintptr_t classChainOffset = _sharedCache->rememberClass(clazz);
-   if (TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET == classChainOffset)
+   void *chain = NULL;
+   if (_sharedCache)
       {
+      uintptr_t chainOffset = _sharedCache->rememberClass(clazz);
+      if (TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET == chainOffset)
+         {
 #if defined(J9VM_OPT_JITSERVER)
-      if (useAOTCache && TR::Options::getVerboseOption(TR_VerboseJITServer))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
-            "ERROR: Failed to get class chain for %.*s loaded by %p",
-            nameLength, (const char *)name, loader
-         );
+         if (useAOTCache && TR::Options::getVerboseOption(TR_VerboseJITServer))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+               "ERROR: Failed to get class chain for %.*s loaded by %p",
+               nameLength, (const char *)name, loader
+            );
 #endif /* defined(J9VM_OPT_JITSERVER) */
+         // TODO: for now we bail out right here, but when we actually need to track names
+         // without the chains being present this return must be removed.
+         return;
+         }
+      else
+         {
+         chain = _sharedCache->pointerFromOffsetInSharedCache(chainOffset);
+         TR_ASSERT(_sharedCache->isPointerInSharedCache(chain), "Class chain must be in SCC");
+         }
+      }
+   else
+      {
+      // TODO: for now we bail out right here, but when we actually need to track names
+      // without an SCC being present at all this return must be removed.
       return;
       }
-   void *chain = _sharedCache->pointerFromOffsetInSharedCache(classChainOffset);
-   TR_ASSERT(_sharedCache->isPointerInSharedCache(chain), "Class chain must be in SCC");
 
-   info = new (_persistentMemory) TR_ClassLoaderInfo(loader, chain);
+   // If we are using the JITServer AOT cache, we need to remember the name of clazz with or without chain.
+   // If we aren't using it, there is no point in continuing.
+   if (!chain && !useAOTCache)
+      return;
+   TR_ASSERT(!_sharedCache || !chain || _sharedCache->isPointerInSharedCache(chain), "Class chain must be in SCC");
+
+   J9UTF8 *nameStr = NULL;
+#if defined(J9VM_OPT_JITSERVER)
+   if (useAOTCache)
+      {
+      nameStr = (_sharedCache && _sharedCache->isROMClassInSharedCache(romClass)) ? romName : copyJ9UTF8(romName, _persistentMemory);
+      }
+#endif /* defined(J9VM_OPT_JITSERVER) */
+
+   info = new (_persistentMemory) TR_ClassLoaderInfo(loader, chain, nameStr);
    if (!info)
       {
       // This is a bad situation because we can't associate the right class with this class loader.
@@ -222,31 +272,34 @@ TR_PersistentClassLoaderTable::associateClassLoaderWithClass(J9VMThread *vmThrea
    insert<Loader>(info, _loaderTable, index);
 
    // Lookup by class chain and check if was already associated with another class loader
-   TR_ClassLoaderInfo *otherInfo = lookup<Chain>(_chainTable, index, prev, chain);
-   if (otherInfo)
+   if (chain)
       {
-      // There is more than one class loader with identical first loaded class.
-      // Current heuristic doesn't work in this scenario, but it doesn't break
-      // correctness, and in the worst case can only result in failed AOT loads.
-      // We have added this loader to _classLoaderTable, which has a nice side
-      // benefit that we won't keep trying to add it, so leave it there.
+      TR_ClassLoaderInfo *otherInfo = lookup<Chain>(_chainTable, index, prev, chain);
+      if (otherInfo)
+         {
+         // There is more than one class loader with identical first loaded class.
+         // Current heuristic doesn't work in this scenario, but it doesn't break
+         // correctness, and in the worst case can only result in failed AOT loads.
+         // We have added this loader to _classLoaderTable, which has a nice side
+         // benefit that we won't keep trying to add it, so leave it there.
 #if defined(J9VM_OPT_JITSERVER)
-      if (useAOTCache && TR::Options::getVerboseOption(TR_VerboseJITServer))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
-            "ERROR: Class %.*s chain %p already associated with loader %p != %p",
-            nameLength, (const char *)name, chain, otherInfo->_loader, loader
-         );
+         if (useAOTCache && TR::Options::getVerboseOption(TR_VerboseJITServer))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+               "ERROR: Class %.*s chain %p already associated with loader %p != %p",
+               nameLength, (const char *)name, chain, otherInfo->_loader, loader
+            );
 #endif /* defined(J9VM_OPT_JITSERVER) */
-      return;
+         return;
+         }
+      insert<Chain>(info, _chainTable, index);
       }
-   insert<Chain>(info, _chainTable, index);
 
 #if defined(J9VM_OPT_JITSERVER)
    if (useAOTCache)
       {
       // Lookup by class name and check if it was already associated with another class loader
-      NameKey key { name, nameLength, _sharedCache };
-      otherInfo = lookup<Name>(_nameTable, index, prev, &key);
+      NameKey key { name, nameLength };
+      TR_ClassLoaderInfo *otherInfo = lookup<Name>(_nameTable, index, prev, &key);
       if (otherInfo)
          {
          // There is more than one class loader with the same name of the first loaded
@@ -317,10 +370,8 @@ std::pair<void *, void *>
 TR_PersistentClassLoaderTable::lookupClassLoaderAndChainAssociatedWithClassName(const uint8_t *data, size_t length) const
    {
    assertCurrentThreadCanRead();
-   if (!_sharedCache)
-      return { NULL, NULL };
 
-   NameKey key { data, length, _sharedCache };
+   NameKey key { data, length };
    size_t index;
    TR_ClassLoaderInfo *prev;
    TR_ClassLoaderInfo *info = lookup<Name>(_nameTable, index, prev, &key);
@@ -340,7 +391,13 @@ TR_PersistentClassLoaderTable::removeClassLoader(J9VMThread *vmThread, void *loa
    // no other thread can be modifying the table at the same time.
    TR_ASSERT((vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS) && vmThread->omrVMThread->exclusiveCount,
              "Must have exclusive VM access");
-   if (!_sharedCache)
+
+   bool useAOTCache = false;
+#if defined(J9VM_OPT_JITSERVER)
+   useAOTCache = _persistentMemory->getPersistentInfo()->getJITServerUseAOTCache();
+#endif /* defined(J9VM_OPT_JITSERVER) */
+
+   if (!_sharedCache && !useAOTCache)
       return;
 
    // Remove from the table indexed by class loader
@@ -352,20 +409,23 @@ TR_PersistentClassLoaderTable::removeClassLoader(J9VMThread *vmThread, void *loa
    remove<Loader>(info, prev, _loaderTable, index);
 
    // Remove from the table indexed by class chain
-   TR_ClassLoaderInfo *otherInfo = lookup<Chain>(_chainTable, index, prev, info->_chain);
-   if (otherInfo == info)// Otherwise the entry belongs to another class loader
-      remove<Chain>(info, prev, _chainTable, index);
+   if (info->_chain)
+      {
+      TR_ClassLoaderInfo *otherInfo = lookup<Chain>(_chainTable, index, prev, info->_chain);
+      if (otherInfo == info)// Otherwise the entry belongs to another class loader
+         remove<Chain>(info, prev, _chainTable, index);
+      }
 
 #if defined(J9VM_OPT_JITSERVER)
-   if (_persistentMemory->getPersistentInfo()->getJITServerUseAOTCache())
+   if (useAOTCache)
       {
       // Remove from the table indexed by class name
-      const J9UTF8 *nameStr = info->name(_sharedCache);
+      J9UTF8 *nameStr = info->_nameStr;
       const uint8_t *name = J9UTF8_DATA(nameStr);
       uint16_t nameLength = J9UTF8_LENGTH(nameStr);
 
-      NameKey key { name, nameLength, _sharedCache };
-      otherInfo = lookup<Name>(_nameTable, index, prev, &key);
+      NameKey key { name, nameLength };
+      TR_ClassLoaderInfo *otherInfo = lookup<Name>(_nameTable, index, prev, &key);
       if (otherInfo == info)// Otherwise the entry belongs to another class loader
          remove<Name>(info, prev, _nameTable, index);
 
@@ -374,6 +434,9 @@ TR_PersistentClassLoaderTable::removeClassLoader(J9VMThread *vmThread, void *loa
             "Removed class loader %p associated with class %.*s chain %p",
             loader, nameLength, (const char *)name, info->_chain
          );
+
+      if (!_sharedCache || !_sharedCache->isPointerInSharedCache(nameStr))
+         _persistentMemory->freePersistentMemory(nameStr);
       }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
