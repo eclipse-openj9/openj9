@@ -401,7 +401,7 @@ MM_ReferenceChainWalker::scanContinuationNativeSlots(J9Object *objectPtr)
 		StackIteratorData localData;
 		localData.rootScanner = this;
 
-		GC_VMThreadStackSlotIterator::scanContinuationSlots(currentThread, objectPtr, (void *)&localData, stackSlotIteratorForReferenceChainWalker, false, false);
+		GC_VMThreadStackSlotIterator::scanContinuationSlots(currentThread, objectPtr, (void *)&localData, stackSlotIteratorForReferenceChainWalker, false, _trackVisibleStackFrameDepth);
 	}
 }
 
