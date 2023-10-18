@@ -380,6 +380,18 @@ TR_PersistentClassLoaderTable::lookupClassLoaderAndChainAssociatedWithClassName(
    return { info->_loader, info->_chain };
    }
 
+const J9UTF8 *
+TR_PersistentClassLoaderTable::lookupClassNameAssociatedWithClassLoader(void *loader) const
+   {
+   assertCurrentThreadCanRead();
+
+   size_t index;
+   TR_ClassLoaderInfo *prev;
+   TR_ClassLoaderInfo *info = lookup<Loader>(_loaderTable, index, prev, loader);
+   if (!info)
+      return NULL;
+   return info->_nameStr;
+   }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
 
