@@ -3089,9 +3089,12 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
    TR::PersistentInfo *persistentInfo = compInfo->getPersistentInfo();
    bool useAotCompilation = entry->_useAotCompilation;
 
-   bool aotCacheStore = useAotCompilation && persistentInfo->getJITServerUseAOTCache() &&
+   bool aotCacheStore = useAotCompilation &&
+                        persistentInfo->getJITServerUseAOTCache() &&
                         compInfo->methodCanBeJITServerAOTCacheStored(compiler->signature(), compilee->convertToMethod()->methodType());
-   bool aotCacheLoad = aotCacheStore && !entry->_doNotLoadFromJITServerAOTCache &&
+   bool aotCacheLoad = persistentInfo->getJITServerUseAOTCache() &&
+                       !TR::CompilationInfo::isCompiled(method) &&
+                       !entry->_doNotLoadFromJITServerAOTCache &&
                        compInfo->methodCanBeJITServerAOTCacheLoaded(compiler->signature(), compilee->convertToMethod()->methodType());
    auto deserializer = compInfo->getJITServerAOTDeserializer();
    if (!aotCacheLoad && deserializer)
@@ -3181,24 +3184,27 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
    std::vector<JITServerHelpers::ClassInfoTuple> uncachedClassInfos;
    if (aotCacheStore || aotCacheLoad)
       {
-      classChainOffset = compiler->fej9vm()->sharedCache()->rememberClass(clazz);
-      if (TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET != classChainOffset)
+      // TODO: this check should omit the aotCacheStore part when we support ignoring the local SCC during AOT cache stores.
+      if (aotCacheStore || !compiler->getPersistentInfo()->getJITServerAOTCacheIgnoreLocalSCC())
          {
-         // The first word of the class chain data stores the size of the whole record in bytes, so the number of classes
-         // is 1 less than the necessary class chain length.
-         uintptr_t numClasses = compiler->fej9vm()->necessaryClassChainLength(clazz) - 1;
-         ramClassChain = JITServerHelpers::getRAMClassChain(clazz, numClasses, vmThread, compiler->trMemory(),
-                                                            compInfo, uncachedRAMClasses, uncachedClassInfos);
+         classChainOffset = compiler->fej9vm()->sharedCache()->rememberClass(clazz);
+         if (TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET == classChainOffset)
+            {
+            if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+               TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "ERROR: Failed to get defining class chain offset for method %s",
+                                              compiler->signature());
+
+            if (aotCacheLoad)
+               deserializer->incNumCacheBypasses();
+            aotCacheStore = false;
+            aotCacheLoad = false;
+            }
          }
-      else if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-         {
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "ERROR: Failed to get defining class chain for method %s",
-                                        compiler->signature());
-         if (aotCacheLoad)
-            deserializer->incNumCacheBypasses();
-         aotCacheStore = false;
-         aotCacheLoad = false;
-         }
+      // The first entry of the class chain data stores the size of the whole record in bytes, so the number of classes
+      // is 1 less than the necessary class chain length.
+      uintptr_t numClasses = compiler->fej9vm()->necessaryClassChainLength(clazz) - 1;
+      ramClassChain = JITServerHelpers::getRAMClassChain(clazz, numClasses, vmThread, compiler->trMemory(),
+                                                         compInfo, uncachedRAMClasses, uncachedClassInfos);
       }
 
    // This thread may have been notified at some point in the past that the deserializer was reset.
