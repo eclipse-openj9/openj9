@@ -1995,6 +1995,8 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 #if (defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390) || defined(J9VM_ARCH_POWER) || defined(J9VM_ARCH_AARCH64))
 				IDATA argIndexXXPortableSharedCache = 0;
 				IDATA argIndexXXNoPortableSharedCache = 0;
+				IDATA argIndexXXJITServerAOTCache = 0;
+				IDATA argIndexXXNoJITServerAOTCache = 0;
 #endif /* defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390) || defined(J9VM_ARCH_POWER) || defined(J9VM_ARCH_AARCH64) */
 
 				vm->sharedClassPreinitConfig = NULL;
@@ -2027,6 +2029,10 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 #if (defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390) || defined(J9VM_ARCH_POWER) || defined(J9VM_ARCH_AARCH64))
 				argIndexXXPortableSharedCache = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXPORTABLESHAREDCACHE, NULL);
 				argIndexXXNoPortableSharedCache = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXNOPORTABLESHAREDCACHE, NULL);
+#if defined(J9VM_OPT_JITSERVER)
+				argIndexXXJITServerAOTCache = FIND_ARG_IN_VMARGS(EXACT_MATCH, "-XX:+JITServerUseAOTCache", NULL);
+				argIndexXXNoJITServerAOTCache = FIND_ARG_IN_VMARGS(EXACT_MATCH, "-XX:-JITServerUseAOTCache", NULL);
+#endif /* defined(J9VM_OPT_JITSERVER) */
 #endif /* defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390) || defined(J9VM_ARCH_POWER) || defined(J9VM_ARCH_AARCH64) */
 
 				if (((!J9_SHARED_CACHE_DEFAULT_BOOT_SHARING(vm)) && (argIndex < 0))
@@ -2124,8 +2130,13 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 #endif /* defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390) || defined(J9VM_ARCH_POWER) || defined(J9VM_ARCH_AARCH64) */
 					}
 				}
-
-
+#if (defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390) || defined(J9VM_ARCH_POWER) || defined(J9VM_ARCH_AARCH64)) && defined(J9VM_OPT_JITSERVER)
+				// Regardless of whether or not the local SCC is enabled, we still need to enable portable AOT if
+				// the options suggest we're going to connect to a JITServer AOT cache.
+				if (argIndexXXJITServerAOTCache > argIndexXXNoJITServerAOTCache) {
+					vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_ENABLE_PORTABLE_SHARED_CACHE;
+				}
+#endif /* defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390) || defined(J9VM_ARCH_POWER) || defined(J9VM_ARCH_AARCH64) */
 			}
 #endif
 
