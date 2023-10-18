@@ -896,8 +896,7 @@ ClientSessionData::getClassRecord(J9Class *clazz, JITServer::ServerStream *strea
       auto recv = stream->read<uintptr_t, std::string>();
       uintptr_t offset = std::get<0>(recv);
       auto &name = std::get<1>(recv);
-
-      if (offset)
+      if (!name.empty())
          {
          OMR::CriticalSection cs(getROMMapMonitor());
          auto it = getROMClassMap().find((J9Class *)clazz);
