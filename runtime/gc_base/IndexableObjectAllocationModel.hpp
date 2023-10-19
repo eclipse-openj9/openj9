@@ -83,7 +83,7 @@ public:
 				0, allocateObjectFlags | OMR_GC_ALLOCATE_OBJECT_INDEXABLE)
 		, _numberOfIndexedFields(numberOfIndexedFields)
 		, _dataSize(env->getExtensions()->indexableObjectModel.getDataSizeInBytes(_class, _numberOfIndexedFields))
-		, _layout(env->getExtensions()->indexableObjectModel.getArrayletLayout(_class, _dataSize,
+		, _layout(env->getExtensions()->indexableObjectModel.getArrayletLayout(_class, _numberOfIndexedFields,
 				_allocateDescription.getMemorySpace()->getDefaultMemorySubSpace()->largestDesirableArraySpine()))
 		, _alignSpineDataSection(env->getExtensions()->indexableObjectModel.shouldAlignSpineDataSection(_class))
 		, _numberOfArraylets(env->getExtensions()->indexableObjectModel.numArraylets(_dataSize))
