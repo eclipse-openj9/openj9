@@ -455,6 +455,10 @@ void threadCleanup(J9VMThread * vmThread, UDATA forkedByVM)
 	/* Do the java dance to indicate thread death */
 	acquireVMAccess(vmThread);
 	cleanUpAttachedThread(vmThread);
+	/* Cleanup code is not guaranteed to run succesfully. Remove any connection
+	 * to the thread object before deallocating the j9vmthread.
+	 */
+	J9VMJAVALANGTHREAD_SET_THREADREF(vmThread, vmThread->threadObject, NULL);
 	releaseVMAccess(vmThread);
 
 
