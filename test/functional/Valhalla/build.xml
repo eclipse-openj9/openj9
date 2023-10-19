@@ -32,6 +32,9 @@
 
 	<!--Properties for this particular build-->
 	<property name="src" location="./src"/>
+	<!-- Tests that need the Valhalla lw5 branch to compile. Once this is merged to the main branch this seperation won't be required.-->
+	<property name="src_qtypes" location="./src_qtypes"/>
+	<property name="src_lw5" location="./src_lw5"/>
 	<property name="build" location="./bin"/>
 	<property name="transformerListener" location="${TEST_ROOT}/Utils/src"/>
 	<property name="LIB" value="asm,jcommander,testng"/>
@@ -54,6 +57,9 @@
 		<echo>===destdir:                      ${DEST}</echo>
 		<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" encoding="ISO-8859-1">
 			<src path="${src}"/>
+			<!-- uncomment when running with the latest Valhalla compiler (currently in lw5 branch but will eventually be merged)-->
+			<src path="${src_qtypes}"/>
+			<!-- <src path="${src_lw5}"/> -->
 			<src path="${transformerListener}" />
 			<compilerarg line='--add-exports java.base/jdk.internal.misc=ALL-UNNAMED --add-exports java.base/jdk.internal.value=ALL-UNNAMED' />
 			<compilerarg line='-source 22 -XDenablePrimitiveClasses' />
