@@ -1483,6 +1483,8 @@ int32_t J9::Power::PrivateLinkage::buildPrivateLinkageArgs(TR::Node             
       case TR::com_ibm_jit_JITHelpers_dispatchVirtual:
          specialArgReg = getProperties().getVTableIndexArgumentRegister();
          break;
+      default:
+         break;
       }
 
    if (specialArgReg != TR::RealRegister::NoReg)
@@ -2674,6 +2676,8 @@ void inlineCharacterIsMethod(TR::Node *node, TR::MethodSymbol* methodSymbol, TR:
          generateTrg1Src2Instruction(cg, TR::InstOpCode::cmpeqb, node, cnd2Reg, srcReg, rangeReg);
          generateTrg1Src2ImmInstruction(cg, TR::InstOpCode::cror, node, cnd1Reg, cnd2Reg, cnd1Reg, imm);
          break;
+      default:
+         break;
       }
    generateTrg1Src1Instruction(cg, TR::InstOpCode::setb, node, returnRegister, cnd1Reg);
 
@@ -2906,6 +2910,8 @@ TR::Register *J9::Power::PrivateLinkage::buildDirectDispatch(TR::Node *callNode)
          case TR::java_lang_Character_isAlphabetic:
             inlinedCharacterIsMethod = true;
             inlineCharacterIsMethod(callNode, callNode->getSymbol()->castToMethodSymbol(), cg(), doneLabel);
+            break;
+         default:
             break;
          }
       }
