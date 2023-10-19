@@ -5570,18 +5570,18 @@ J9NLS_SHRC_OSCACHE_ERROR_MAX_OPEN_FILES_REACHED.system_action=If -Xshareclasses:
 J9NLS_SHRC_OSCACHE_ERROR_MAX_OPEN_FILES_REACHED.user_response=Contact your system admin to increase the system limit on maximum open files or close any unused files and restart the JVM.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SEMAPHORE_OPFAILED_CONTROL_FILE_LOCK_FAILED=An error has occurred while opening semaphore. Control file could not be locked.
+J9NLS_SHRC_OSCACHE_SEMAPHORE_OPFAILED_CONTROL_FILE_LOCK_FAILED=An error has occurred while opening semaphore. Control file could not be open or locked. Please ensure the current user has right permissions on the cache directory and control file.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SEMAPHORE_OPFAILED_CONTROL_FILE_LOCK_FAILED.explanation=An error has occurred in shared class processing. Further messages may follow providing more detail.
 J9NLS_SHRC_OSCACHE_SEMAPHORE_OPFAILED_CONTROL_FILE_LOCK_FAILED.system_action=If -Xshareclasses:nonfatal is specified JVM will try to use an existing shared class cache in read-only mode. But if the cache does not exist, then JVM will continue without shared class cache. In absence of -Xshareclasses:nonfatal, JVM will terminate.
-J9NLS_SHRC_OSCACHE_SEMAPHORE_OPFAILED_CONTROL_FILE_LOCK_FAILED.user_response=Contact your service representative, unless subsequent messages indicate otherwise.
+J9NLS_SHRC_OSCACHE_SEMAPHORE_OPFAILED_CONTROL_FILE_LOCK_FAILED.user_response=Correct the permissions if they are set improperly and retry. If the situation persists, contact your service representative, unless subsequent messages indicate otherwise.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_CONTROL_FILE_LOCK_FAILED=An error has occurred while opening shared memory. Control file could not be locked.
+J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_CONTROL_FILE_LOCK_FAILED=An error has occurred while opening shared memory. Control file could not be open or locked. Please ensure the current user has right permissions on the cache directory and control file.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_CONTROL_FILE_LOCK_FAILED.explanation=An error has occurred in shared class processing. Further messages may follow providing more detail.
 J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_CONTROL_FILE_LOCK_FAILED.system_action=If -Xshareclasses:nonfatal is specified JVM will continue without shared class cache, otherwise it will terminate.
-J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_CONTROL_FILE_LOCK_FAILED.user_response=Contact your service representative, unless subsequent messages indicate otherwise.
+J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_CONTROL_FILE_LOCK_FAILED.user_response=Correct the permissions if they are set improperly and retry. If the situation persists, contact your service representative, unless subsequent messages indicate otherwise.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_SHRINIT_FAILED_NONFATAL_PRESENT=Failed to startup shared class cache. Continue without using it as -Xshareclasses:nonfatal is specified
