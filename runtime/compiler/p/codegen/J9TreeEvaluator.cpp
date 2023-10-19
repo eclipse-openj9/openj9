@@ -3893,6 +3893,8 @@ TR::Register *J9::Power::TreeEvaluator::VMcheckcastEvaluator(TR::Node *node, TR:
          case HelperCall:
             TR_ASSERT(false, "Doesn't make sense, HelperCall should be the terminal sequence");
             break;
+         default:
+            break;
          }
 
       genCheckCastTransitionToNextSequence(node, iter, nextSequenceLabel, doneLabel, cr0Reg, cg);
@@ -4066,6 +4068,8 @@ TR::Register *J9::Power::TreeEvaluator::VMinstanceOfEvaluator(TR::Node *node, TR
             break;
          case HelperCall:
             TR_ASSERT(false, "Doesn't make sense, HelperCall should be the terminal sequence");
+            break;
+         default:
             break;
          }
 
@@ -8718,54 +8722,56 @@ static TR::Register *inlineAtomicOps(TR::Node *node, TR::CodeGenerator *cg, int8
 
    switch (currentMethod)
       {
-   case TR::java_util_concurrent_atomic_AtomicBoolean_getAndSet:
-   case TR::java_util_concurrent_atomic_AtomicInteger_getAndSet:
-   case TR::java_util_concurrent_atomic_AtomicLong_getAndSet:
-   case TR::java_util_concurrent_atomic_AtomicReference_getAndSet:
-   case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndSet:
-   case TR::java_util_concurrent_atomic_AtomicLongArray_getAndSet:
-   case TR::java_util_concurrent_atomic_AtomicReferenceArray_getAndSet:
-      {
-      isAddOp = false;
-      break;
-      }
-   case TR::java_util_concurrent_atomic_AtomicInteger_addAndGet:
-   case TR::java_util_concurrent_atomic_AtomicIntegerArray_addAndGet:
-      {
-      isGetAndOp = false;
-      }
-   case TR::java_util_concurrent_atomic_AtomicInteger_getAndAdd:
-   case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndAdd:
-      {
-      break;
-      }
+      case TR::java_util_concurrent_atomic_AtomicBoolean_getAndSet:
+      case TR::java_util_concurrent_atomic_AtomicInteger_getAndSet:
+      case TR::java_util_concurrent_atomic_AtomicLong_getAndSet:
+      case TR::java_util_concurrent_atomic_AtomicReference_getAndSet:
+      case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndSet:
+      case TR::java_util_concurrent_atomic_AtomicLongArray_getAndSet:
+      case TR::java_util_concurrent_atomic_AtomicReferenceArray_getAndSet:
+         {
+         isAddOp = false;
+         break;
+         }
+      case TR::java_util_concurrent_atomic_AtomicInteger_addAndGet:
+      case TR::java_util_concurrent_atomic_AtomicIntegerArray_addAndGet:
+         {
+         isGetAndOp = false;
+         }
+      case TR::java_util_concurrent_atomic_AtomicInteger_getAndAdd:
+      case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndAdd:
+         {
+         break;
+         }
 
-   case TR::java_util_concurrent_atomic_AtomicInteger_incrementAndGet:
-   case TR::java_util_concurrent_atomic_AtomicIntegerArray_incrementAndGet:
-      {
-      isGetAndOp = false;
-      }
-   case TR::java_util_concurrent_atomic_AtomicInteger_getAndIncrement:
-   case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndIncrement:
-      {
-      delta = (int32_t) 1;
-      isArgConstant = true;
-      isArgImmediate = true;
-      break;
-      }
-   case TR::java_util_concurrent_atomic_AtomicInteger_decrementAndGet:
-   case TR::java_util_concurrent_atomic_AtomicIntegerArray_decrementAndGet:
-      {
-      isGetAndOp = false;
-      }
-   case TR::java_util_concurrent_atomic_AtomicInteger_getAndDecrement:
-   case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndDecrement:
-      {
-      delta = (int32_t) - 1;
-      isArgConstant = true;
-      isArgImmediate = true;
-      break;
-      }
+      case TR::java_util_concurrent_atomic_AtomicInteger_incrementAndGet:
+      case TR::java_util_concurrent_atomic_AtomicIntegerArray_incrementAndGet:
+         {
+         isGetAndOp = false;
+         }
+      case TR::java_util_concurrent_atomic_AtomicInteger_getAndIncrement:
+      case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndIncrement:
+         {
+         delta = (int32_t) 1;
+         isArgConstant = true;
+         isArgImmediate = true;
+         break;
+         }
+      case TR::java_util_concurrent_atomic_AtomicInteger_decrementAndGet:
+      case TR::java_util_concurrent_atomic_AtomicIntegerArray_decrementAndGet:
+         {
+         isGetAndOp = false;
+         }
+      case TR::java_util_concurrent_atomic_AtomicInteger_getAndDecrement:
+      case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndDecrement:
+         {
+         delta = (int32_t) - 1;
+         isArgConstant = true;
+         isArgImmediate = true;
+         break;
+         }
+      default:
+         break;
       }
 
    if (node->getNumChildren() > 1)
@@ -8817,42 +8823,42 @@ static TR::Register *inlineAtomicOps(TR::Node *node, TR::CodeGenerator *cg, int8
 
       switch (currentMethod)
          {
-      case TR::java_util_concurrent_atomic_AtomicBoolean_getAndSet:
-         className = "Ljava/util/concurrent/atomic/AtomicBoolean;";
-         classNameLen = 43;
-         fieldSig = "I"; // not a typo, the field is int
-         break;
-      case TR::java_util_concurrent_atomic_AtomicInteger_getAndSet:
-      case TR::java_util_concurrent_atomic_AtomicInteger_addAndGet:
-      case TR::java_util_concurrent_atomic_AtomicInteger_getAndAdd:
-      case TR::java_util_concurrent_atomic_AtomicInteger_incrementAndGet:
-      case TR::java_util_concurrent_atomic_AtomicInteger_getAndIncrement:
-      case TR::java_util_concurrent_atomic_AtomicInteger_decrementAndGet:
-      case TR::java_util_concurrent_atomic_AtomicInteger_getAndDecrement:
-         className = "Ljava/util/concurrent/atomic/AtomicInteger;";
-         classNameLen = 43;
-         fieldSig = "I";
-         break;
-      case TR::java_util_concurrent_atomic_AtomicLong_getAndSet:
-      case TR::java_util_concurrent_atomic_AtomicLong_addAndGet:
-      case TR::java_util_concurrent_atomic_AtomicLong_getAndAdd:
-      case TR::java_util_concurrent_atomic_AtomicLong_incrementAndGet:
-      case TR::java_util_concurrent_atomic_AtomicLong_getAndIncrement:
-      case TR::java_util_concurrent_atomic_AtomicLong_decrementAndGet:
-      case TR::java_util_concurrent_atomic_AtomicLong_getAndDecrement:
-         className = "Ljava/util/concurrent/atomic/AtomicLong;";
-         classNameLen = 40;
-         fieldSig = "J";
-         break;
-      case TR::java_util_concurrent_atomic_AtomicReference_getAndSet:
-         className = "Ljava/util/concurrent/atomic/AtomicReference;";
-         classNameLen = 45;
-         fieldSig = "Ljava/lang/Object;";
-         fieldSigLen = 18;
-         break;
-      default:
-         TR_ASSERT(0, "Unknown atomic operation method\n");
-         return NULL;
+         case TR::java_util_concurrent_atomic_AtomicBoolean_getAndSet:
+            className = "Ljava/util/concurrent/atomic/AtomicBoolean;";
+            classNameLen = 43;
+            fieldSig = "I"; // not a typo, the field is int
+            break;
+         case TR::java_util_concurrent_atomic_AtomicInteger_getAndSet:
+         case TR::java_util_concurrent_atomic_AtomicInteger_addAndGet:
+         case TR::java_util_concurrent_atomic_AtomicInteger_getAndAdd:
+         case TR::java_util_concurrent_atomic_AtomicInteger_incrementAndGet:
+         case TR::java_util_concurrent_atomic_AtomicInteger_getAndIncrement:
+         case TR::java_util_concurrent_atomic_AtomicInteger_decrementAndGet:
+         case TR::java_util_concurrent_atomic_AtomicInteger_getAndDecrement:
+            className = "Ljava/util/concurrent/atomic/AtomicInteger;";
+            classNameLen = 43;
+            fieldSig = "I";
+            break;
+         case TR::java_util_concurrent_atomic_AtomicLong_getAndSet:
+         case TR::java_util_concurrent_atomic_AtomicLong_addAndGet:
+         case TR::java_util_concurrent_atomic_AtomicLong_getAndAdd:
+         case TR::java_util_concurrent_atomic_AtomicLong_incrementAndGet:
+         case TR::java_util_concurrent_atomic_AtomicLong_getAndIncrement:
+         case TR::java_util_concurrent_atomic_AtomicLong_decrementAndGet:
+         case TR::java_util_concurrent_atomic_AtomicLong_getAndDecrement:
+            className = "Ljava/util/concurrent/atomic/AtomicLong;";
+            classNameLen = 40;
+            fieldSig = "J";
+            break;
+         case TR::java_util_concurrent_atomic_AtomicReference_getAndSet:
+            className = "Ljava/util/concurrent/atomic/AtomicReference;";
+            classNameLen = 45;
+            fieldSig = "Ljava/lang/Object;";
+            fieldSigLen = 18;
+            break;
+         default:
+            TR_ASSERT(0, "Unknown atomic operation method\n");
+            return NULL;
          }
 
       TR_ResolvedMethod *owningMethod = node->getSymbolReference()->getOwningMethod(comp);
@@ -8879,38 +8885,40 @@ static TR::Register *inlineAtomicOps(TR::Node *node, TR::CodeGenerator *cg, int8
 
          switch (currentMethod)
             {
-         case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndSet:
-         case TR::java_util_concurrent_atomic_AtomicIntegerArray_incrementAndGet:
-         case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndIncrement:
-         case TR::java_util_concurrent_atomic_AtomicIntegerArray_decrementAndGet:
-         case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndDecrement:
-         case TR::java_util_concurrent_atomic_AtomicIntegerArray_addAndGet:
-         case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndAdd:
-            className = "Ljava/util/concurrent/atomic/AtomicIntegerArray;";
-            classNameLen = 48;
-            fieldSig = "[I";
-            fieldSigLen = 2;
-            break;
+            case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndSet:
+            case TR::java_util_concurrent_atomic_AtomicIntegerArray_incrementAndGet:
+            case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndIncrement:
+            case TR::java_util_concurrent_atomic_AtomicIntegerArray_decrementAndGet:
+            case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndDecrement:
+            case TR::java_util_concurrent_atomic_AtomicIntegerArray_addAndGet:
+            case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndAdd:
+               className = "Ljava/util/concurrent/atomic/AtomicIntegerArray;";
+               classNameLen = 48;
+               fieldSig = "[I";
+               fieldSigLen = 2;
+               break;
 
-         case TR::java_util_concurrent_atomic_AtomicLongArray_getAndSet:
-         case TR::java_util_concurrent_atomic_AtomicLongArray_incrementAndGet:
-         case TR::java_util_concurrent_atomic_AtomicLongArray_getAndIncrement:
-         case TR::java_util_concurrent_atomic_AtomicLongArray_decrementAndGet:
-         case TR::java_util_concurrent_atomic_AtomicLongArray_getAndDecrement:
-         case TR::java_util_concurrent_atomic_AtomicLongArray_addAndGet:
-         case TR::java_util_concurrent_atomic_AtomicLongArray_getAndAdd:
-            className = "Ljava/util/concurrent/atomic/AtomicLongArray;";
-            classNameLen = 45;
-            fieldSig = "[J";
-            fieldSigLen = 2;
-            break;
+            case TR::java_util_concurrent_atomic_AtomicLongArray_getAndSet:
+            case TR::java_util_concurrent_atomic_AtomicLongArray_incrementAndGet:
+            case TR::java_util_concurrent_atomic_AtomicLongArray_getAndIncrement:
+            case TR::java_util_concurrent_atomic_AtomicLongArray_decrementAndGet:
+            case TR::java_util_concurrent_atomic_AtomicLongArray_getAndDecrement:
+            case TR::java_util_concurrent_atomic_AtomicLongArray_addAndGet:
+            case TR::java_util_concurrent_atomic_AtomicLongArray_getAndAdd:
+               className = "Ljava/util/concurrent/atomic/AtomicLongArray;";
+               classNameLen = 45;
+               fieldSig = "[J";
+               fieldSigLen = 2;
+               break;
 
-         case TR::java_util_concurrent_atomic_AtomicReferenceArray_getAndSet:
-            className = "Ljava/util/concurrent/atomic/AtomicReferenceArray;";
-            classNameLen = 50;
-            fieldSig = "Ljava/lang/Object;";
-            fieldSigLen = 18;
-            break;
+            case TR::java_util_concurrent_atomic_AtomicReferenceArray_getAndSet:
+               className = "Ljava/util/concurrent/atomic/AtomicReferenceArray;";
+               classNameLen = 50;
+               fieldSig = "Ljava/lang/Object;";
+               fieldSigLen = 18;
+               break;
+            default:
+               break;
             }
 
          TR_ResolvedMethod *owningMethod = node->getSymbolReference()->getOwningMethod(comp);
@@ -9211,76 +9219,78 @@ static TR::Register *inlineAtomicOperation(TR::Node *node, TR::CodeGenerator *cg
 
    switch (currentMethod)
       {
-   case TR::sun_misc_Unsafe_compareAndSwapLong_jlObjectJJJ_Z:
-      size = 8;
-      isUnsafe = true;
-      isCAS = true;
-      isAddOp = false;
-      break;
-   case TR::sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z:
-      size = TR::Compiler->om.sizeofReferenceAddress();
-      isRefWrite = true;
-   case TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z:
-      isUnsafe = true;
-      isCAS = true;
-      isAddOp = false;
-      break;
-   case TR::java_util_concurrent_atomic_AtomicBoolean_getAndSet:
-   case TR::java_util_concurrent_atomic_AtomicInteger_addAndGet:
-   case TR::java_util_concurrent_atomic_AtomicInteger_decrementAndGet:
-   case TR::java_util_concurrent_atomic_AtomicInteger_getAndAdd:
-   case TR::java_util_concurrent_atomic_AtomicInteger_getAndDecrement:
-   case TR::java_util_concurrent_atomic_AtomicInteger_getAndIncrement:
-   case TR::java_util_concurrent_atomic_AtomicInteger_getAndSet:
-   case TR::java_util_concurrent_atomic_AtomicInteger_incrementAndGet:
-   case TR::java_util_concurrent_atomic_AtomicIntegerArray_addAndGet:
-   case TR::java_util_concurrent_atomic_AtomicIntegerArray_decrementAndGet:
-   case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndAdd:
-   case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndDecrement:
-   case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndIncrement:
-   case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndSet:
-   case TR::java_util_concurrent_atomic_AtomicIntegerArray_incrementAndGet:
-      size = 4;
-      break;
-   case TR::java_util_concurrent_atomic_AtomicReference_getAndSet:
-   case TR::java_util_concurrent_atomic_AtomicReferenceArray_getAndSet:
-      size = TR::Compiler->om.sizeofReferenceAddress();
-      break;
-   default:
-      size = 8;
-      }
+      case TR::sun_misc_Unsafe_compareAndSwapLong_jlObjectJJJ_Z:
+         size = 8;
+         isUnsafe = true;
+         isCAS = true;
+         isAddOp = false;
+         break;
+      case TR::sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z:
+         size = TR::Compiler->om.sizeofReferenceAddress();
+         isRefWrite = true;
+      case TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z:
+         isUnsafe = true;
+         isCAS = true;
+         isAddOp = false;
+         break;
+      case TR::java_util_concurrent_atomic_AtomicBoolean_getAndSet:
+      case TR::java_util_concurrent_atomic_AtomicInteger_addAndGet:
+      case TR::java_util_concurrent_atomic_AtomicInteger_decrementAndGet:
+      case TR::java_util_concurrent_atomic_AtomicInteger_getAndAdd:
+      case TR::java_util_concurrent_atomic_AtomicInteger_getAndDecrement:
+      case TR::java_util_concurrent_atomic_AtomicInteger_getAndIncrement:
+      case TR::java_util_concurrent_atomic_AtomicInteger_getAndSet:
+      case TR::java_util_concurrent_atomic_AtomicInteger_incrementAndGet:
+      case TR::java_util_concurrent_atomic_AtomicIntegerArray_addAndGet:
+      case TR::java_util_concurrent_atomic_AtomicIntegerArray_decrementAndGet:
+      case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndAdd:
+      case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndDecrement:
+      case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndIncrement:
+      case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndSet:
+      case TR::java_util_concurrent_atomic_AtomicIntegerArray_incrementAndGet:
+         size = 4;
+         break;
+      case TR::java_util_concurrent_atomic_AtomicReference_getAndSet:
+      case TR::java_util_concurrent_atomic_AtomicReferenceArray_getAndSet:
+         size = TR::Compiler->om.sizeofReferenceAddress();
+         break;
+      default:
+         size = 8;
+         }
 
-   switch (currentMethod)
-      {
-   case TR::java_util_concurrent_atomic_AtomicBoolean_getAndSet:
-   case TR::java_util_concurrent_atomic_AtomicInteger_getAndSet:
-   case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndSet:
-   case TR::java_util_concurrent_atomic_AtomicLong_getAndSet:
-   case TR::java_util_concurrent_atomic_AtomicLongArray_getAndSet:
-   case TR::java_util_concurrent_atomic_AtomicReference_getAndSet:
-   case TR::java_util_concurrent_atomic_AtomicReferenceArray_getAndSet:
-      isAddOp = false;
-   case TR::java_util_concurrent_atomic_AtomicInteger_getAndAdd:
-   case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndAdd:
-   case TR::java_util_concurrent_atomic_AtomicLong_getAndAdd:
-   case TR::java_util_concurrent_atomic_AtomicLongArray_getAndAdd:
-      isDelta = true;
-   case TR::java_util_concurrent_atomic_AtomicInteger_getAndDecrement:
-   case TR::java_util_concurrent_atomic_AtomicInteger_getAndIncrement:
-   case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndDecrement:
-   case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndIncrement:
-   case TR::java_util_concurrent_atomic_AtomicLong_getAndDecrement:
-   case TR::java_util_concurrent_atomic_AtomicLong_getAndIncrement:
-   case TR::java_util_concurrent_atomic_AtomicLongArray_getAndDecrement:
-   case TR::java_util_concurrent_atomic_AtomicLongArray_getAndIncrement:
-      isGetAndOp = true;
-      break;
-   case TR::java_util_concurrent_atomic_AtomicInteger_addAndGet:
-   case TR::java_util_concurrent_atomic_AtomicIntegerArray_addAndGet:
-   case TR::java_util_concurrent_atomic_AtomicLong_addAndGet:
-   case TR::java_util_concurrent_atomic_AtomicLongArray_addAndGet:
-      isDelta = true;
-      break;
+      switch (currentMethod)
+         {
+      case TR::java_util_concurrent_atomic_AtomicBoolean_getAndSet:
+      case TR::java_util_concurrent_atomic_AtomicInteger_getAndSet:
+      case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndSet:
+      case TR::java_util_concurrent_atomic_AtomicLong_getAndSet:
+      case TR::java_util_concurrent_atomic_AtomicLongArray_getAndSet:
+      case TR::java_util_concurrent_atomic_AtomicReference_getAndSet:
+      case TR::java_util_concurrent_atomic_AtomicReferenceArray_getAndSet:
+         isAddOp = false;
+      case TR::java_util_concurrent_atomic_AtomicInteger_getAndAdd:
+      case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndAdd:
+      case TR::java_util_concurrent_atomic_AtomicLong_getAndAdd:
+      case TR::java_util_concurrent_atomic_AtomicLongArray_getAndAdd:
+         isDelta = true;
+      case TR::java_util_concurrent_atomic_AtomicInteger_getAndDecrement:
+      case TR::java_util_concurrent_atomic_AtomicInteger_getAndIncrement:
+      case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndDecrement:
+      case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndIncrement:
+      case TR::java_util_concurrent_atomic_AtomicLong_getAndDecrement:
+      case TR::java_util_concurrent_atomic_AtomicLong_getAndIncrement:
+      case TR::java_util_concurrent_atomic_AtomicLongArray_getAndDecrement:
+      case TR::java_util_concurrent_atomic_AtomicLongArray_getAndIncrement:
+         isGetAndOp = true;
+         break;
+      case TR::java_util_concurrent_atomic_AtomicInteger_addAndGet:
+      case TR::java_util_concurrent_atomic_AtomicIntegerArray_addAndGet:
+      case TR::java_util_concurrent_atomic_AtomicLong_addAndGet:
+      case TR::java_util_concurrent_atomic_AtomicLongArray_addAndGet:
+         isDelta = true;
+         break;
+      default:
+         break;
       }
 
    isDeltaImplied = isAddOp && !isDelta;

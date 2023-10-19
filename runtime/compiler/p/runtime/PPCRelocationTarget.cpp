@@ -290,9 +290,9 @@ TR_PPCRelocationTarget::isOrderedPairRelocation(TR_RelocationRecord *reloRecord,
       {
       case TR_AbsoluteMethodAddressOrderedPair:
          return true;
+      default:
+         return false;
       }
-
-   return false;
    }
 
 bool
@@ -314,9 +314,9 @@ TR_PPC32RelocationTarget::isOrderedPairRelocation(TR_RelocationRecord *reloRecor
       case TR_DebugCounter:
       case TR_MethodEnterExitHookAddress:
          return true;
+      default:
+         return false;
       }
-
-   return false;
    }
 
 bool TR_PPCRelocationTarget::useTrampoline(uint8_t * helperAddress, uint8_t *baseLocation)
