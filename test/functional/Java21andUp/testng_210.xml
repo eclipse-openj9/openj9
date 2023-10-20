@@ -23,36 +23,10 @@
 -->
 
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
-<suite name="Java21 test suite" parallel="none" verbose="2">
+<suite name="Java21+ test suite" parallel="none" verbose="2">
 	<test name="Jep425Tests_testVirtualThread">
 		<classes>
 			<class name="org.openj9.test.jep425.VirtualThreadTests"/>
-		</classes>
-	</test>
-	<test name="Jep442Tests_testLinkerFfi_DownCall">
-		<classes>
-			<class name="org.openj9.test.jep442.downcall.InvalidDownCallTests"/>
-			<class name="org.openj9.test.jep442.downcall.MultiCallTests"/>
-			<class name="org.openj9.test.jep442.downcall.MultiThreadingTests1"/>
-			<class name="org.openj9.test.jep442.downcall.MultiThreadingTests2"/>
-			<class name="org.openj9.test.jep442.downcall.MultiThreadingTests3"/>
-			<class name="org.openj9.test.jep442.downcall.MultiThreadingTests4"/>
-			<class name="org.openj9.test.jep442.downcall.MultiThreadingTests5"/>
-			<class name="org.openj9.test.jep442.downcall.PrimitiveTypeTests1"/>
-			<class name="org.openj9.test.jep442.downcall.PrimitiveTypeTests2"/>
-			<class name="org.openj9.test.jep442.downcall.StructTests1"/>
-			<class name="org.openj9.test.jep442.downcall.StructTests2"/>
-		</classes>
-	</test>
-	<test name="Jep442Tests_testLinkerFfi_UpCall">
-		<classes>
-			<class name="org.openj9.test.jep442.upcall.InvalidUpCallTests"/>
-			<class name="org.openj9.test.jep442.upcall.MultiUpcallMHTests"/>
-			<class name="org.openj9.test.jep442.upcall.MultiUpcallThrdsMHTests1"/>
-			<class name="org.openj9.test.jep442.upcall.MultiUpcallThrdsMHTests2"/>
-			<class name="org.openj9.test.jep442.upcall.UpcallMHWithMixedSigStruTests"/>
-			<class name="org.openj9.test.jep442.upcall.UpcallMHWithPrimTests"/>
-			<class name="org.openj9.test.jep442.upcall.UpcallMHWithStructTests"/>
 		</classes>
 	</test>
 </suite>

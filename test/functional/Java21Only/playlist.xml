@@ -22,37 +22,60 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 -->
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../TestConfig/playlist.xsd">
 	<test>
-		<testCaseName>Jep425Tests_testVirtualThread</testCaseName>
+		<testCaseName>Jep442Tests_testLinkerFfi_DownCall</testCaseName>
 		<variations>
-			<variation>--enable-preview -Xgcpolicy:optthruput</variation>
-			<variation>--enable-preview -Xgcpolicy:gencon</variation>
-			<variation>--enable-preview -Xgcpolicy:balanced</variation>
-			<variation>--enable-preview -Xgcpolicy:optavgpause</variation>
+			<variation>--enable-preview</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) \
-			--add-opens java.base/java.lang=ALL-UNNAMED \
-			-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
-			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng_210.xml$(Q) \
-			-testnames Jep425Tests_testVirtualThread \
+			--enable-native-access=ALL-UNNAMED \
+			-Dforeign.restricted=permit \
+			-cp $(Q)$(LIB_DIR)$(D)asm.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng_210.xml$(Q) -testnames Jep442Tests_testLinkerFfi_DownCall \
 			-groups $(TEST_GROUP) \
 			-excludegroups $(DEFAULT_EXCLUDE); \
 			$(TEST_STATUS)
 		</command>
-		<platformRequirements>bits.64,^os.zos,^os.sunos</platformRequirements>
+		<platformRequirements>bits.64,^arch.arm,^arch.riscv,^os.zos,^os.sunos</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>
 		<groups>
 			<group>functional</group>
 		</groups>
-		<types>
-			<type>native</type>
-		</types>
 		<impls>
 			<impl>openj9</impl>
 		</impls>
 		<versions>
-			<version>21+</version>
+			<version>21</version>
+		</versions>
+	</test>
+
+	<test>
+		<testCaseName>Jep442Tests_testLinkerFfi_UpCall</testCaseName>
+		<variations>
+			<variation>--enable-preview</variation>
+		</variations>
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) \
+			--enable-native-access=ALL-UNNAMED \
+			-Dforeign.restricted=permit \
+			-cp $(Q)$(LIB_DIR)$(D)asm.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng_210.xml$(Q) -testnames Jep442Tests_testLinkerFfi_UpCall \
+			-groups $(TEST_GROUP) \
+			-excludegroups $(DEFAULT_EXCLUDE); \
+			$(TEST_STATUS)
+		</command>
+		<platformRequirements>bits.64,^arch.arm,^arch.riscv,^os.zos,^os.sunos</platformRequirements>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<impls>
+			<impl>openj9</impl>
+		</impls>
+		<versions>
+			<version>21</version>
 		</versions>
 	</test>
 </playlist>

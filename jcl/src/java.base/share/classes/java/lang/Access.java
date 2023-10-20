@@ -23,6 +23,9 @@
 package java.lang;
 
 import java.lang.annotation.Annotation;
+/*[IF JAVA_SPEC_VERSION >= 22]*/
+import java.lang.foreign.MemorySegment;
+/*[ENDIF] JAVA_SPEC_VERSION >= 22 */
 /*[IF JAVA_SPEC_VERSION >= 15]*/
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
@@ -497,9 +500,16 @@ final class Access implements JavaLangAccess {
 	}
 
 /*[IF JAVA_SPEC_VERSION >= 20]*/
+	@Override
+/*[IF JAVA_SPEC_VERSION >= 22]*/
+	public void ensureNativeAccess(Module mod, Class<?> clsOwner, String methodName, Class<?> clsCaller) {
+		mod.ensureNativeAccess(clsOwner, methodName, clsCaller);
+	}
+/*[ELSE] JAVA_SPEC_VERSION >= 22 */
 	public void ensureNativeAccess(Module mod, Class<?> clsOwner, String methodName) {
 		mod.ensureNativeAccess(clsOwner, methodName);
 	}
+/*[ENDIF] JAVA_SPEC_VERSION >= 22 */
 
 	public void addEnableNativeAccessToAllUnnamed() {
 		Module.implAddEnableNativeAccessToAllUnnamed();
@@ -726,6 +736,18 @@ final class Access implements JavaLangAccess {
 		return buffer.toString();
 	}
 /*[ENDIF] JAVA_SPEC_VERSION >= 11 */
+
+/*[IF JAVA_SPEC_VERSION >= 22]*/
+	@Override
+	public boolean bytesCompatible(String string, Charset charset) {
+		return string.bytesCompatible(charset);
+	}
+
+	@Override
+	public void copyToSegmentRaw(String string, MemorySegment segment, long offset) {
+		string.copyToSegmentRaw(segment, offset);
+	}
+/*[ENDIF] JAVA_SPEC_VERSION >= 22 */
 
 /*[IF INLINE-TYPES]*/
 	@Override

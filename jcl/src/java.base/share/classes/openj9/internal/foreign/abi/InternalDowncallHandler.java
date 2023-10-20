@@ -764,7 +764,17 @@ public class InternalDowncallHandler {
 		/*[IF JAVA_SPEC_VERSION >= 21]*/
 		try (Arena arena = Arena.ofConfined()) {
 			SetDependency(arena.scope());
-			returnVal = invokeNative(linkerOpts.isTrivial(), getValidDowncallMemAddr(stateSegmt), retMemAddr, getValidDowncallMemAddr(downcallAddr), cifNativeThunkAddr, args);
+			returnVal = invokeNative(
+					/*[IF JAVA_SPEC_VERSION >= 22]*/
+					linkerOpts.isCritical(),
+					/*[ELSE] JAVA_SPEC_VERSION >= 22 */
+					linkerOpts.isTrivial(),
+					/*[ENDIF] JAVA_SPEC_VERSION >= 22 */
+					getValidDowncallMemAddr(stateSegmt),
+					retMemAddr,
+					getValidDowncallMemAddr(downcallAddr),
+					cifNativeThunkAddr,
+					args);
 		}
 		/*[ELSE] JAVA_SPEC_VERSION >= 21 */
 		acquireScope();
