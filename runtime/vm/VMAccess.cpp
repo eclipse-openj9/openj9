@@ -1139,6 +1139,7 @@ acquireSafePointVMAccess(J9VMThread * vmThread)
 		/* Grant safe point access to the thread now */
 		vm->safePointState = J9_XACCESS_PENDING;
 		vm->safePointResponseCount = 0;
+		initializeExclusiveVMAccessStats(vm, vmThread);
 		omrthread_monitor_exit(vm->exclusiveAccessMutex);
 
 		/* Post a safe point request to all threads */
@@ -1256,6 +1257,9 @@ releaseSafePointVMAccess(J9VMThread * vmThread)
 
 		omrthread_monitor_enter(vm->exclusiveAccessMutex);
 		vm->safePointState = J9_XACCESS_NONE;
+		/* Make sure stale thread pointers don't exist in the stats */
+		vm->omrVM->exclusiveVMAccessStats.requester = NULL;
+		vm->omrVM->exclusiveVMAccessStats.lastResponder = NULL;
 		omrthread_monitor_notify_all(vm->exclusiveAccessMutex);
 		omrthread_monitor_exit(vm->exclusiveAccessMutex);
 		omrthread_monitor_exit(vm->vmThreadListMutex);
