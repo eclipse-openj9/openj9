@@ -1074,17 +1074,14 @@ public static void load(String pathName) {
 		smngr.checkLink(pathName);
 	}
 /*[IF JAVA_SPEC_VERSION >= 15]*/
-	/*[IF PLATFORM-mz31 | PLATFORM-mz64]*/
-	ClassLoader.loadZOSLibrary(getCallerClass(), pathName);
-	/*[ELSE] PLATFORM-mz31 | PLATFORM-mz64 */
 	File fileName = new File(pathName);
-	if (!fileName.isAbsolute()) {
+	if (fileName.isAbsolute()) {
+		ClassLoader.loadLibrary(getCallerClass(), fileName);
+	} else {
 		/*[MSG "K0648", "Not an absolute path: {0}"]*/
 		throw new UnsatisfiedLinkError(Msg.getString("K0648", pathName));//$NON-NLS-1$
 	}
-	ClassLoader.loadLibrary(getCallerClass(), fileName);
-	/*[ENDIF] PLATFORM-mz31 | PLATFORM-mz64 */
-/*[ELSE] JAVA_SPEC_VERSION >= 15 */
+/*[ELSE]
 	ClassLoader.loadLibraryWithPath(pathName, ClassLoader.callerClassLoader(), null);
 /*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 }
