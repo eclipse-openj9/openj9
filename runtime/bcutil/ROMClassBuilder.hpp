@@ -164,6 +164,9 @@ private:
 			U_32 modifiers, U_32 extraModifiers, U_32 optionalFlags, ROMClassCreationContext * context, U_32 sizeToCompareForLambda, bool isLambda);
 	SharedCacheRangeInfo getSharedCacheSRPRangeInfo(void *address);
 	void getSizeInfo(ROMClassCreationContext *context, ROMClassWriter *romClassWriter, SRPOffsetTable *srpOffsetTable, bool *countDebugDataOutOfLine, SizeInformation *sizeInformation);
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	bool isInjectedInvoker(void) const;
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 };
 
 #endif /* ROMCLASSBUILDER_HPP_ */

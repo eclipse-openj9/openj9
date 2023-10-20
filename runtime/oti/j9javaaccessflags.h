@@ -107,6 +107,7 @@
 #define J9AccSealed 0x200
 #define J9AccRecord 0x400
 #define J9AccClassAnonClass 0x800
+#define J9AccClassIsInjectedInvoker 0x1000
 #define J9AccClassUseBisectionSearch 0x2000
 #define J9AccClassInnerClass 0x4000
 #define J9AccClassHidden 0x8000

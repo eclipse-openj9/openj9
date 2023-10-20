@@ -276,7 +276,7 @@ ROMClassBuilder::handleAnonClassName(J9CfrClassFile *classfile, bool *isLambda, 
 	UDATA hostPackageLength = context->hostPackageLength();
 	PORT_ACCESS_FROM_PORT(_portLibrary);
 
-#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE) && (JAVA_SPEC_VERSION >= 15)
 	/* InjectedInvoker is a hidden class without the strong attribute set. It
 	 * is created by MethodHandleImpl.makeInjectedInvoker on the OpenJDK side.
 	 * So, OpenJ9 does not have control over the implementation of InjectedInvoker.
@@ -321,7 +321,7 @@ ROMClassBuilder::handleAnonClassName(J9CfrClassFile *classfile, bool *isLambda, 
 		}
 #undef J9_INJECTED_INVOKER_CLASSNAME
 	}
-#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) && (JAVA_SPEC_VERSION >= 15) */
 
 	/* check if adding host package name to anonymous class is needed */
 	UDATA newHostPackageLength = 0;
@@ -1180,7 +1180,7 @@ ROMClassBuilder::finishPrepareAndLaydown(
  *                           + AccRecord
  *                          + AccClassAnonClass
  *
- *                        + UNUSED
+ *                        + J9AccClassIsInjectedInvoker
  *                       + AccClassUseBisectionSearch
  *                      + AccClassInnerClass
  *                     + J9AccClassHidden
@@ -1258,6 +1258,12 @@ ROMClassBuilder::computeExtraModifiers(ClassFileOracle *classFileOracle, ROMClas
 	if (classFileOracle->isValueBased()) {
 		modifiers |= J9AccClassIsValueBased;
 	}
+
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	if (isInjectedInvoker()) {
+		modifiers |= J9AccClassIsInjectedInvoker;
+	}
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 	U_32 classNameindex = classFileOracle->getClassNameIndex();
 
@@ -1558,3 +1564,27 @@ ROMClassBuilder::getSharedCacheSRPRangeInfo(void *address)
 }
 #endif
 #endif
+
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+bool
+ROMClassBuilder::isInjectedInvoker(void) const
+{
+#define J9_INJECTED_INVOKER_CLASSNAME "InjectedInvoker"
+	/* InjectedInvoker classes are anon or hidden */
+	bool result = false;
+	if (NULL != _anonClassNameBuffer) {
+		IDATA injectedInvokerLength = LITERAL_STRLEN(J9_INJECTED_INVOKER_CLASSNAME);
+		/* computeExtraModifiers is called after appending 0's to hidden and anoymous classes. */
+		IDATA startIndex = strlen((const char *)_anonClassNameBuffer) - injectedInvokerLength - ROM_ADDRESS_LENGTH - 1;
+		if (startIndex >= 0) {
+			/* start is the potential beginning of "InjectedInvoker", after the potential package name. */
+			U_8 *start = _anonClassNameBuffer + startIndex;
+			if (0 == memcmp(start, J9_INJECTED_INVOKER_CLASSNAME, injectedInvokerLength)) {
+				result = true;
+			}
+		}
+	}
+	return result;
+#undef J9_INJECTED_INVOKER_CLASSNAME
+}
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */

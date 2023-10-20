@@ -358,15 +358,10 @@ public:
 			U_16 originalNameLength = anonNameLength - ROM_ADDRESS_LENGTH - 1;
 			U_8 *anonClassNameData = J9UTF8_DATA(_anonClassName);
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
-			/* ROM class format: <HOST_NAME>/InjectedInvoker/<ROM_ADDRESS_LENGTH>.
-			 * Search for InjectedInvoker in _anonClassName using the above format.
-			 * If found, reset the class name to "InjectedInvoker" in the class file.
+			/* If the class is an InjectedInvoker, reset the class name to
+			 * "InjectedInvoker" in the class file.
 			 */
-			IDATA startIndex = anonNameLength - J9UTF8_LENGTH(&injectedInvokerClassname) - ROM_ADDRESS_LENGTH - 1;
-			U_8 *start = anonClassNameData + startIndex;
-			if ((startIndex >= 0)
-			&& (0 == memcmp(start, J9UTF8_DATA(&injectedInvokerClassname), J9UTF8_LENGTH(&injectedInvokerClassname)))
-			) {
+			if (J9_ARE_ALL_BITS_SET(_romClass->extraModifiers, J9AccClassIsInjectedInvoker)) {
 				_isInjectedInvoker = TRUE;
 				originalNameLength = J9UTF8_LENGTH(&injectedInvokerClassname);
 				anonClassNameData = J9UTF8_DATA(&injectedInvokerClassname);
