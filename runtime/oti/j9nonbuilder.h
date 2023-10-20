@@ -4412,6 +4412,8 @@ typedef struct J9MemoryManagerFunctions {
 	UDATA  ( *j9gc_heap_free_memory)(struct J9JavaVM *javaVM) ;
 	UDATA  ( *j9gc_heap_total_memory)(struct J9JavaVM *javaVM) ;
 	UDATA  ( *j9gc_is_garbagecollection_disabled)(struct J9JavaVM *javaVM) ;
+	UDATA  ( *j9gc_is_codecachereclamation_enabled)(struct J9VMThread *vmThread);
+
 	UDATA ( *j9gc_allsupported_memorypools)(struct J9JavaVM* javaVM);
 	UDATA ( *j9gc_allsupported_garbagecollectors)(struct J9JavaVM* javaVM);
 	const char* ( *j9gc_pool_name)(struct J9JavaVM* javaVM, UDATA poolID);

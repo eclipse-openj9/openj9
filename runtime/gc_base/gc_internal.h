@@ -71,6 +71,7 @@ extern J9_CFUNC void preMountContinuation(J9VMThread *vmThread, j9object_t objec
 extern J9_CFUNC void postUnmountContinuation(J9VMThread *vmThread, j9object_t object);
 extern J9_CFUNC UDATA j9gc_heap_total_memory(J9JavaVM *javaVM);
 extern J9_CFUNC UDATA j9gc_is_garbagecollection_disabled(J9JavaVM *javaVM);
+extern J9_CFUNC UDATA j9gc_is_codecachereclamation_enabled(J9VMThread *vmThread);
 extern J9_CFUNC UDATA j9gc_allsupported_memorypools(J9JavaVM* javaVM);
 extern J9_CFUNC UDATA j9gc_allsupported_garbagecollectors(J9JavaVM* javaVM);
 extern J9_CFUNC const char* j9gc_pool_name(J9JavaVM* javaVM, UDATA poolID);

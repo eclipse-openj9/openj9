@@ -209,6 +209,8 @@ public:
 		onStarted = 1,
 	};
 	TimingAddContinuationInList timingAddContinuationInList;
+	bool codeCacheReclamationOnLocalGCEnabled;
+	bool codeCacheReclamationOnGlobalGCEnabled;
 protected:
 private:
 protected:
@@ -387,6 +389,8 @@ public:
 		, recycleRemainders(true)
 		, continuationListOption(enable_continuation_list)
 		, timingAddContinuationInList(onCreated)
+		, codeCacheReclamationOnLocalGCEnabled(false)
+		, codeCacheReclamationOnGlobalGCEnabled(true)
 	{
 		_typeId = __FUNCTION__;
 	}

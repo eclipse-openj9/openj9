@@ -64,6 +64,7 @@ UDATA j9gc_modron_local_collect(J9VMThread *vmThread);
 UDATA j9gc_heap_total_memory(J9JavaVM *javaVM);
 UDATA j9gc_heap_free_memory(J9JavaVM *javaVM);
 UDATA j9gc_is_garbagecollection_disabled(J9JavaVM *javaVM);
+UDATA j9gc_is_codecachereclamation_enabled(J9VMThread *vmThread);
 
 UDATA j9gc_allsupported_memorypools(J9JavaVM *javaVM);
 UDATA j9gc_allsupported_garbagecollectors(J9JavaVM *javaVM);

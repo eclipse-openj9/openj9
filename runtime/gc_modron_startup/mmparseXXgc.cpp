@@ -1555,6 +1555,27 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 			extensions->timingAddContinuationInList = MM_GCExtensions::onCreated;
 			continue;
 		}
+
+		if (try_scan(&scan_start, "enableCodeCacheReclamationOnLocalGC")) {
+			extensions->codeCacheReclamationOnLocalGCEnabled = true;
+			continue;
+		}
+
+		if (try_scan(&scan_start, "disableCodeCacheReclamationOnLocalGC")) {
+			extensions->codeCacheReclamationOnLocalGCEnabled = false;
+			continue;
+		}
+
+		if (try_scan(&scan_start, "enableCodeCacheReclamationOnGlobalGC")) {
+			extensions->codeCacheReclamationOnGlobalGCEnabled = true;
+			continue;
+		}
+
+		if (try_scan(&scan_start, "disableCodeCacheReclamationOnGlobalGC")) {
+			extensions->codeCacheReclamationOnGlobalGCEnabled = false;
+			continue;
+		}
+
 		/* Couldn't find a match for arguments */
 		j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTION_UNKNOWN, error_scan);
 		returnValue = JNI_EINVAL;

@@ -149,6 +149,19 @@ j9gc_is_garbagecollection_disabled(J9JavaVM *javaVM)
 	 return ret;
 }
 
+UDATA j9gc_is_codecachereclamation_enabled(J9VMThread *vmThread)
+{
+	UDATA ret = 0;
+	MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread);
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(vmThread);
+	uintptr_t cycle_type = env->_cycleState->_type;
+	if ((extensions->codeCacheReclamationOnLocalGCEnabled && ((OMR_GC_CYCLE_TYPE_SCAVENGE == cycle_type) || (OMR_GC_CYCLE_TYPE_VLHGC_PARTIAL_GARBAGE_COLLECT == cycle_type))) ||
+		(extensions->codeCacheReclamationOnGlobalGCEnabled && ((OMR_GC_CYCLE_TYPE_GLOBAL == cycle_type) || (OMR_GC_CYCLE_TYPE_VLHGC_GLOBAL_GARBAGE_COLLECT == cycle_type)))) {
+		ret = 1;
+	}
+	return ret;
+}
+
 /**
  * VM API for determining the amount of free memory available on the heap.
  * The call returns the approximate free memory on the heap available for allocation.  An approximation is used
