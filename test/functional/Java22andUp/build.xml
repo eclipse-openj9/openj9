@@ -1,0 +1,90 @@
+<?xml version="1.0"?>
+<!--
+Copyright IBM Corp. and others 2023
+
+This program and the accompanying materials are made available under
+the terms of the Eclipse Public License 2.0 which accompanies this
+distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+or the Apache License, Version 2.0 which accompanies this distribution and
+is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+This Source Code may also be made available under the following
+Secondary Licenses when the conditions for such availability set
+forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+General Public License, version 2 with the GNU Classpath
+Exception [1] and GNU General Public License, version 2 with the
+OpenJDK Assembly Exception [2].
+
+[1] https://www.gnu.org/software/classpath/license.html
+[2] https://openjdk.org/legal/assembly-exception.html
+
+SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
+-->
+<project name="Java22AndUp" default="build" basedir=".">
+	<taskdef resource='net/sf/antcontrib/antlib.xml' />
+	<description>
+		Tests for Java 22 and up
+	</description>
+
+	<!-- set global properties for this build -->
+	<property name="DEST" value="${BUILD_ROOT}/functional/Java22andUp" />
+
+	<!--Properties for this particular build-->
+	<property name="src" location="src" />
+	<property name="build" location="bin" />
+	<property name="LIB" value="asm,testng,jcommander" />
+	<import file="${TEST_ROOT}/TKG/scripts/getDependencies.xml" />
+	<property name="TestUtilities" location="../TestUtilities/src"/>
+
+	<target name="init">
+		<mkdir dir="${DEST}" />
+		<mkdir dir="${build}" />
+	</target>
+
+	<target name="compile" depends="init,getDependentLibs" description="Using java ${JDK_VERSION} to compile the source">
+		<echo>Ant version is ${ant.version}</echo>
+		<echo>============COMPILER SETTINGS============</echo>
+		<echo>===fork:                         yes</echo>
+		<echo>===executable:                   ${compiler.javac}</echo>
+		<echo>===debug:                        on</echo>
+		<echo>===destdir:                      ${DEST}</echo>
+
+		<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
+			<src path="${src}" />
+			<src path="${TestUtilities}" />
+			<classpath>
+				<pathelement location="${LIB_DIR}/testng.jar" />
+				<pathelement location="${LIB_DIR}/jcommander.jar" />
+				<pathelement location="${LIB_DIR}/asm.jar" />
+				<pathelement location="${build}" />
+			</classpath>
+		</javac>
+	</target>
+
+	<target name="dist" depends="compile" description="generate the distribution">
+		<mkdir dir="${DEST}" />
+		<jar jarfile="${DEST}/GeneralTest.jar" filesonly="true">
+			<fileset dir="${build}" />
+			<fileset dir="${src}/../" includes="*.properties,*.xml" />
+		</jar>
+		<copy todir="${DEST}">
+			<fileset dir="${src}/../" includes="*.xml" />
+			<fileset dir="${src}/../" includes="*.mk" />
+		</copy>
+	</target>
+
+	<target name="build">
+		<if>
+			<not>
+				<matches string="${JDK_VERSION}" pattern="^(8|9|1[0-9]|2[0-1])$$" />
+			</not>
+			<then>
+				<antcall target="clean" inheritall="true" />
+			</then>
+		</if>
+	</target>
+
+	<target name="clean" depends="dist" description="clean up">
+		<delete dir="${build}" />
+	</target>
+</project>
