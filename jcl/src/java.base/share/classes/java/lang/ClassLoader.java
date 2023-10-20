@@ -2021,17 +2021,6 @@ static void loadLibrary(Class<?> caller, String name, boolean fullPath) {
 }
 
 /*[IF JAVA_SPEC_VERSION >= 15]*/
-/*[IF PLATFORM-mz31 | PLATFORM-mz64]*/
-static void loadZOSLibrary(Class<?> caller, String name) {
-	ClassLoader loader = (caller == null) ? null : caller.getClassLoader();
-	NativeLibraries nls = (loader == null) ? BootLoader.getNativeLibraries() : loader.nativelibs;
-	NativeLibrary nl = nls.loadZOSLibrary(caller, name);
-	if (nl == null) {
-		/*[MSG "K0647", "Can't load {0}"]*/
-		throw new UnsatisfiedLinkError(com.ibm.oti.util.Msg.getString("K0647", name));//$NON-NLS-1$
-	}
-}
-/*[ELSE] PLATFORM-mz31 | PLATFORM-mz64 */
 static void loadLibrary(Class<?> caller, File file) {
 	ClassLoader loader = (caller == null) ? null : caller.getClassLoader();
 	NativeLibraries nls = (loader == null) ? BootLoader.getNativeLibraries() : loader.nativelibs;
@@ -2041,8 +2030,6 @@ static void loadLibrary(Class<?> caller, File file) {
 		throw new UnsatisfiedLinkError(com.ibm.oti.util.Msg.getString("K0647", file));//$NON-NLS-1$
 	}
 }
-/*[ENDIF] PLATFORM-mz31 | PLATFORM-mz64 */
-
 static void loadLibrary(Class<?> caller, String libName) {
 	ClassLoader loader = (caller == null) ? null : caller.getClassLoader();
 	if (loader == null) {
@@ -2055,16 +2042,12 @@ static void loadLibrary(Class<?> caller, String libName) {
 		NativeLibraries nls = loader.nativelibs;
 		String libfilename = loader.findLibrary(libName);
 		if (libfilename != null) {
-			/*[IF PLATFORM-mz31 | PLATFORM-mz64]*/
-			NativeLibrary nl = nls.loadZOSLibrary(caller, libfilename);
-			/*[ELSE] PLATFORM-mz31 | PLATFORM-mz64 */
 			File libfile = new File(libfilename);
 			if (!libfile.isAbsolute()) {
 				/*[MSG "K0648", "Not an absolute path: {0}"]*/
 				throw new UnsatisfiedLinkError(com.ibm.oti.util.Msg.getString("K0648", libfilename));//$NON-NLS-1$
 			}
 			NativeLibrary nl = nls.loadLibrary(caller, libfile);
-			/*[ENDIF] PLATFORM-mz31 | PLATFORM-mz64 */
 			if (nl == null) {
 				/*[MSG "K0647", "Can't load {0}"]*/
 				throw new UnsatisfiedLinkError(com.ibm.oti.util.Msg.getString("K0647", libfilename));//$NON-NLS-1$
