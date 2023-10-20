@@ -581,7 +581,6 @@ oom:
 				*--currentThread->sp = (UDATA)threadName;
 #else /* J9VM_IVE_RAW_BUILD */
 				/* J9 constructor takes thread name, thread group, priority and isDaemon */
-				J9VMJAVALANGTHREAD_SET_STARTED(currentThread, threadObject, JNI_TRUE);
 				*--currentThread->sp = (UDATA)threadName;
 				*--currentThread->sp = (UDATA)threadGroup;
 				*(I_32*)--currentThread->sp = priority;
@@ -590,6 +589,7 @@ oom:
 				currentThread->returnValue = J9_BCLOOP_RUN_METHOD;
 				currentThread->returnValue2 = (UDATA)J9VMJAVALANGTHREAD_INIT_METHOD(vm);
 				c_cInterpreter(currentThread);
+				J9VMJAVALANGTHREAD_SET_STARTED(currentThread, initializee->threadObject, JNI_TRUE);
 			}
 		}
 done:
