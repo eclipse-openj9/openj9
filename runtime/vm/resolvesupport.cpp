@@ -974,10 +974,9 @@ resolveInstanceFieldRefInto(J9VMThread *vmStruct, J9Method *method, J9ConstantPo
 		 */
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 		if (J9_IS_J9CLASS_VALUETYPE(resolvedClass)) {
-			if ('Q' == J9UTF8_DATA(signature)[0]) {
-				flattenedClassCache = resolvedClass->flattenedClassCache;
-				fieldIndex = findIndexInFlattenedClassCache(flattenedClassCache, nameAndSig);
-				Assert_VM_false(UDATA_MAX == fieldIndex);
+			flattenedClassCache = resolvedClass->flattenedClassCache;
+			fieldIndex = findIndexInFlattenedClassCache(flattenedClassCache, nameAndSig);
+			if (UDATA_MAX != fieldIndex) {
 				J9FlattenedClassCacheEntry * flattenedClassCacheEntry = J9_VM_FCC_ENTRY_FROM_FCC(flattenedClassCache, fieldIndex);
 				fieldOffset = flattenedClassCacheEntry->offset;
 				if (-1 != fieldOffset) {
@@ -1077,7 +1076,9 @@ illegalAccess:
 			if ((NULL != ramCPEntry) && J9_ARE_NO_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_NO_CP_UPDATE)) {
 				UDATA valueOffset = fieldOffset;
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-				if ('Q' == J9UTF8_DATA(signature)[0]) {
+				if (('Q' == J9UTF8_DATA(signature)[0])
+					|| J9ROMFIELD_IS_NULL_RESTRICTED(field)
+				) {
 					if (fccEntryFieldNotSet) {
 						flattenedClassCache = definingClass->flattenedClassCache;
 						fieldIndex = findIndexInFlattenedClassCache(flattenedClassCache, nameAndSig);

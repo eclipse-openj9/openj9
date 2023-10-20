@@ -144,12 +144,24 @@ private:
 					}
 					break;
 				}
-				case 'L': { /* Nullable class type or interface type */
-					j9object_t lhsObject = objectAccessBarrier.inlineMixedObjectReadObject(currentThread, lhs, startOffset + result->offset);
-					j9object_t rhsObject = objectAccessBarrier.inlineMixedObjectReadObject(currentThread, rhs, startOffset + result->offset);
+				case 'L': {
+					bool flattened = false;
+					J9Class *fieldClass = NULL;
+					rc = false;
+					if (J9ROMFIELD_IS_NULL_RESTRICTED(result->field)) {
+						fieldClass = findJ9ClassInFlattenedClassCache(clazz->flattenedClassCache, sigChar + 1, J9UTF8_LENGTH(signature) - 2);
+						flattened = J9_IS_FIELD_FLATTENED(fieldClass, result->field);
+					}
+					if (flattened) {
+						rc = isSubstitutable(currentThread, objectAccessBarrier, lhs, rhs, startOffset + result->offset, fieldClass);
+					} else {
+						j9object_t lhsFieldObject = objectAccessBarrier.inlineMixedObjectReadObject(currentThread, lhs, startOffset + result->offset);
+						j9object_t rhsFieldObject = objectAccessBarrier.inlineMixedObjectReadObject(currentThread, rhs, startOffset + result->offset);
 
-					if (!VM_ValueTypeHelpers::acmp(currentThread, objectAccessBarrier, lhsObject, rhsObject)) {
-						rc = false;
+						/* When unflattened, we get our object from the specified offset, then increment past the header to the first field. */
+						rc = VM_ValueTypeHelpers::acmp(currentThread, objectAccessBarrier, lhsFieldObject, rhsFieldObject);
+					}
+					if (false == rc) {
 						goto done;
 					}
 					break;

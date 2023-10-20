@@ -178,7 +178,9 @@ calculateInstanceDescription( J9VMThread *vmThread, J9Class *ramClass, J9Class *
 				}
 
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-				if ('Q' == *fieldSigBytes) {
+				if (('Q' == *fieldSigBytes)
+					|| J9ROMFIELD_IS_NULL_RESTRICTED(walkResult->field)
+				) {
 					J9Class *fieldClass = walkResult->flattenedClass;
 					if ((NULL != fieldClass) 
 						&& J9_IS_FIELD_FLATTENED(fieldClass, walkResult->field)
