@@ -46,10 +46,16 @@ public class ValueTypeTests {
 	static int[] defaultPointPositions1 = {0xFFEEFFEE, 0xAABBAABB};
 	static int[] defaultPointPositions2 = {0xCCDDCCDD, 0x33443344};
 	static int[] defaultPointPositions3 = {0x43211234, 0xABCDDCBA};
+	static int[] defaultPointPositionsEmpty = {0, 0};
 	static int[][] defaultLinePositions1 = {defaultPointPositions1, defaultPointPositions2};
 	static int[][] defaultLinePositions2 = {defaultPointPositions2, defaultPointPositions3};
 	static int[][] defaultLinePositions3 = {defaultPointPositions1, defaultPointPositions3};
+	static int[][] defaultLinePositionsEmpty = {defaultPointPositionsEmpty, defaultPointPositionsEmpty};
 	static int[][][] defaultTrianglePositions = {defaultLinePositions1, defaultLinePositions2, defaultLinePositions3};
+	static int[] defaultPointPositionsNew = {0xFF112233, 0xFF332211};
+	static int[][] defaultLinePositionsNew = {defaultPointPositionsNew, defaultPointPositions1};
+	static int[][][] defaultTrianglePositionsNew = {defaultLinePositionsNew, defaultLinePositions3, defaultLinePositions1};
+	static int[][][] defaultTrianglePositionsEmpty = {defaultLinePositionsEmpty, defaultLinePositionsEmpty, defaultLinePositionsEmpty};
 
 	static value class Point2D {
 		int x;
@@ -186,6 +192,85 @@ public class ValueTypeTests {
 	static public void testCreateTriangle2D() throws Throwable {
 		Triangle2D triangle2D = new Triangle2D(defaultTrianglePositions);
 		checkEqualTriangle2D(triangle2D, defaultTrianglePositions);
+	}
+
+	@Test(priority=2)
+	static public void testCreateArrayPoint2D() throws Throwable {
+		int x1 = 0xFFEEFFEE;
+		int y1 = 0xAABBAABB;
+		int x2 = 0x00000011;
+		int y2 = 0xABCDEF00;
+
+		Point2D p1 = new Point2D(x1, y1);
+		Point2D p2 = new Point2D(x2, y2);
+
+		Point2D[] a = new Point2D[]{p1, p2};
+
+		assertEquals(a[0].x, p1.x);
+		assertEquals(a[0].y, p1.y);
+		assertEquals(a[1].x, p2.x);
+		assertEquals(a[1].y, p2.y);
+	}
+
+	@Test(priority=3, invocationCount=2)
+	static public void testCreateArrayFlattenedLine2D() throws Throwable {
+		int x = 0xFFEEFFEE;
+		int y = 0xAABBAABB;
+		int x2 = 0xCCDDCCDD;
+		int y2 = 0xAAFFAAFF;
+		int x3 = 0xFFABFFCD;
+		int y3 = 0xBBAABBAA;
+		int x4 = 0xCCBBAADD;
+		int y4 = 0xAABBAACC;
+
+		Point2D! st1 = new Point2D(x, y);
+		Point2D! en1 = new Point2D(x2, y2);
+		FlattenedLine2D line2D_1 = new FlattenedLine2D(st1, en1);
+
+		Point2D! st2 = new Point2D(x3, y3);
+		Point2D! en2 = new Point2D(x4, y4);
+		FlattenedLine2D line2D_2 = new FlattenedLine2D(st2, en2);
+
+		FlattenedLine2D[] array = new FlattenedLine2D[]{line2D_1, line2D_2};
+
+		assertEquals(array[0].st.x, line2D_1.st.x);
+		assertEquals(array[1].st.x, line2D_2.st.x);
+		assertEquals(array[0].st.y, line2D_1.st.y);
+		assertEquals(array[1].st.y, line2D_2.st.y);
+		assertEquals(array[0].en.x, line2D_1.en.x);
+		assertEquals(array[1].en.x, line2D_2.en.x);
+		assertEquals(array[0].en.y, line2D_1.en.y);
+		assertEquals(array[1].en.y, line2D_2.en.y);
+	}
+
+	@Test(priority=4, invocationCount=2)
+	static public void testCreateArrayTriangle2D() throws Throwable {
+		Triangle2D[] array = new Triangle2D[10];
+		Triangle2D triangle1 = new Triangle2D(defaultTrianglePositions);
+		Triangle2D triangle2 = new Triangle2D(defaultTrianglePositionsNew);
+		Triangle2D triangleEmpty = new Triangle2D(defaultTrianglePositionsEmpty);
+
+		array[0] = triangle1;
+		array[1] = triangleEmpty;
+		array[2] = triangle2;
+		array[3] = triangleEmpty;
+		array[4] = triangle1;
+		array[5] = triangleEmpty;
+		array[6] = triangle2;
+		array[7]  = triangleEmpty;
+		array[8] = triangle1;
+		array[9] = triangleEmpty;
+
+		checkEqualTriangle2D(array[0], defaultTrianglePositions);
+		checkEqualTriangle2D(array[1], defaultTrianglePositionsEmpty);
+		checkEqualTriangle2D(array[2], defaultTrianglePositionsNew);
+		checkEqualTriangle2D(array[3], defaultTrianglePositionsEmpty);
+		checkEqualTriangle2D(array[4], defaultTrianglePositions);
+		checkEqualTriangle2D(array[5], defaultTrianglePositionsEmpty);
+		checkEqualTriangle2D(array[6], defaultTrianglePositionsNew);
+		checkEqualTriangle2D(array[7], defaultTrianglePositionsEmpty);
+		checkEqualTriangle2D(array[8], defaultTrianglePositions);
+		checkEqualTriangle2D(array[9], defaultTrianglePositionsEmpty);
 	}
 
 	static void checkEqualPoint2D(Point2D point, int[] positions) throws Throwable {
