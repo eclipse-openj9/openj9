@@ -70,7 +70,7 @@ public class ValueTypeSystemArraycopyTests {
 		}
 	}
 
-	public primitive static class SomeValueClass2 implements SomeInterface {
+	public static class SomeValueClass2 implements SomeInterface {
 		long val1;
 		double val2;
 
