@@ -49,11 +49,15 @@ MM_VerboseEventGCStart::gcStartFormattedOutput(MM_VerboseOutputAgent *agent)
 	U_64 exclusiveAccessTimeMicros = omrtime_hires_delta(0, _gcStartData.exclusiveAccessTime, J9PORT_TIME_DELTA_IN_MICROSECONDS);
 	U_64 meanExclusiveAccessIdleTimeMicros = omrtime_hires_delta(0, _gcStartData.meanExclusiveAccessIdleTime, J9PORT_TIME_DELTA_IN_MICROSECONDS);
 
-	char* threadName = getOMRVMThreadName(_gcStartData.lastResponder);
-	char escapedThreadName[64];
+	OMR_VMThread* lastResponder = _gcStartData.lastResponder;
+	char escapedThreadName[64] = "";
 
-	escapeXMLString(OMRPORTLIB, escapedThreadName, sizeof(escapedThreadName), threadName, strlen(threadName));
-	releaseOMRVMThreadName(_gcStartData.lastResponder);
+	/* Last Responder thread can be passed NULL in the case of Safe Point Exclusive */
+	if (NULL != lastResponder) {
+		char* threadName = getOMRVMThreadName(lastResponder);
+		escapeXMLString(OMRPORTLIB, escapedThreadName, sizeof(escapedThreadName), threadName, strlen(threadName));
+		releaseOMRVMThreadName(lastResponder);
+	}
 
 	agent->formatAndOutput(static_cast<J9VMThread*>(_omrThread->_language_vmthread), indentLevel,  "<time exclusiveaccessms=\"%llu.%03.3llu\" meanexclusiveaccessms=\"%llu.%03.3llu\" threads=\"%zu\" lastthreadtid=\"0x%p\" lastthreadname=\"%s\" />",
 		exclusiveAccessTimeMicros / 1000,
@@ -61,7 +65,7 @@ MM_VerboseEventGCStart::gcStartFormattedOutput(MM_VerboseOutputAgent *agent)
 		meanExclusiveAccessIdleTimeMicros / 1000,
 		meanExclusiveAccessIdleTimeMicros % 1000,
 		_gcStartData.haltedThreads,
-		_gcStartData.lastResponder->_language_vmthread,
+		(NULL == lastResponder ? NULL : lastResponder->_language_vmthread),
 		escapedThreadName
 	);
 	if(_gcStartData.beatenByOtherThread) {
