@@ -501,15 +501,15 @@ final class Access implements JavaLangAccess {
 
 /*[IF JAVA_SPEC_VERSION >= 20]*/
 	@Override
-/*[IF JAVA_SPEC_VERSION >= 22]*/
+/*[IF (JAVA_SPEC_VERSION >= 22) & !INLINE-TYPES]*/
 	public void ensureNativeAccess(Module mod, Class<?> clsOwner, String methodName, Class<?> clsCaller) {
 		mod.ensureNativeAccess(clsOwner, methodName, clsCaller);
 	}
-/*[ELSE] JAVA_SPEC_VERSION >= 22 */
+/*[ELSE] (JAVA_SPEC_VERSION >= 22) & !INLINE-TYPES */
 	public void ensureNativeAccess(Module mod, Class<?> clsOwner, String methodName) {
 		mod.ensureNativeAccess(clsOwner, methodName);
 	}
-/*[ENDIF] JAVA_SPEC_VERSION >= 22 */
+/*[ENDIF] (JAVA_SPEC_VERSION >= 22) & !INLINE-TYPES */
 
 	public void addEnableNativeAccessToAllUnnamed() {
 		Module.implAddEnableNativeAccessToAllUnnamed();
@@ -737,7 +737,7 @@ final class Access implements JavaLangAccess {
 	}
 /*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 
-/*[IF JAVA_SPEC_VERSION >= 22]*/
+/*[IF (JAVA_SPEC_VERSION >= 22) & !INLINE-TYPES]*/
 	@Override
 	public boolean bytesCompatible(String string, Charset charset) {
 		return string.bytesCompatible(charset);
@@ -747,7 +747,7 @@ final class Access implements JavaLangAccess {
 	public void copyToSegmentRaw(String string, MemorySegment segment, long offset) {
 		string.copyToSegmentRaw(segment, offset);
 	}
-/*[ENDIF] JAVA_SPEC_VERSION >= 22 */
+/*[ENDIF] (JAVA_SPEC_VERSION >= 22) & !INLINE-TYPES */
 
 /*[IF INLINE-TYPES]*/
 	@Override

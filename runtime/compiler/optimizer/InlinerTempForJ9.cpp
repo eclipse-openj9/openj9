@@ -5050,6 +5050,21 @@ TR_InlinerFailureReason
          }
       }
 
+#if JAVA_SPEC_VERSION >= 21
+   // A method that is annotated with @ChangesCurrentThread is not inlinable
+   // unless the caller is also annotated with @ChangesCurrentThread
+   if (comp->fej9()->isChangesCurrentThread(resolvedMethod)
+    && !comp->fej9()->isChangesCurrentThread(callsite->_callerResolvedMethod))
+      {
+      if (comp->trace(OMR::inlining))
+         traceMsg(
+            comp,
+            "Preventing inlining of %s as it is a JCL method annotated with @ChangesCurrentThread without its caller sharing the same annotation.\n",
+            resolvedMethod->signature(comp->trMemory()));
+      return DontInline_Callee;
+      }
+#endif /* JAVA_SPEC_VERSION >= 21 */
+
    TR::RecognizedMethod rm = resolvedMethod->getRecognizedMethod();
 
    // Don't inline methods that are going to be reduced in ilgen or UnsafeFastPath

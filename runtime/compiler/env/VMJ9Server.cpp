@@ -2433,6 +2433,12 @@ TR_J9ServerVM::isDontInline(TR_ResolvedMethod *method)
    }
 
 bool
+TR_J9ServerVM::isChangesCurrentThread(TR_ResolvedMethod *method)
+   {
+   return static_cast<TR_ResolvedJ9JITServerMethod *>(method)->isChangesCurrentThread();
+   }
+
+bool
 TR_J9ServerVM::isPortableSCCEnabled()
    {
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;

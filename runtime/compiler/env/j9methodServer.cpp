@@ -1452,6 +1452,7 @@ TR_ResolvedJ9JITServerMethod::packMethodInfo(TR_ResolvedJ9JITServerMethodInfo &m
    methodInfoStruct.isForceInline = static_cast<TR_J9VMBase *>(fe)->isForceInline(resolvedMethod);
    methodInfoStruct.isDontInline = static_cast<TR_J9VMBase *>(fe)->isDontInline(resolvedMethod);
    methodInfoStruct.isIntrinsicCandidate = static_cast<TR_J9VMBase *>(fe)->isIntrinsicCandidate(resolvedMethod);
+   methodInfoStruct.isChangesCurrentThread = static_cast<TR_J9VMBase *>(fe)->isChangesCurrentThread(resolvedMethod);
 
    TR_PersistentJittedBodyInfo *bodyInfo = NULL;
    // Method may not have been compiled

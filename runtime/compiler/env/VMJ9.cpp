@@ -3872,6 +3872,19 @@ TR_J9VMBase::isDontInline(TR_ResolvedMethod *method)
    }
 
 bool
+TR_J9VMBase::isChangesCurrentThread(TR_ResolvedMethod *method)
+   {
+#if JAVA_SPEC_VERSION >= 21
+   TR_OpaqueMethodBlock* m = method->getPersistentIdentifier();
+   // @ChangesCurrentThread should be ignored if used outside the class library
+   if (isClassLibraryMethod(m))
+      return jitIsMethodTaggedWithChangesCurrentThread(vmThread(), (J9Method*)m);
+#endif /* JAVA_SPEC_VERSION >= 21 */
+
+   return false;
+   }
+
+bool
 TR_J9VMBase::isIntrinsicCandidate(TR_ResolvedMethod *method)
    {
    return jitIsMethodTaggedWithIntrinsicCandidate(vmThread(),
