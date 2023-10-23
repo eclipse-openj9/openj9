@@ -124,6 +124,56 @@ public class ValueTypeTests {
 		}
 	}
 
+	static value class ValueInt {
+		int i;
+
+		public implicit ValueInt();
+
+		ValueInt(int i) {
+			this.i = i;
+		}
+	}
+
+	static value class ValueLong {
+		long l;
+
+		public implicit ValueLong();
+
+		ValueLong(long l) {
+			this.l = l;
+		}
+	}
+
+	static value class ValueDouble {
+		double d;
+
+		public implicit ValueDouble();
+
+		ValueDouble(double d) {
+			this.d = d;
+		}
+	}
+
+	static value class ValueFloat {
+		float f;
+
+		public implicit ValueFloat();
+
+		ValueFloat(float f) {
+			this.f = f;
+		}
+	}
+
+	static value class ValueObject {
+		Object val;
+
+		public implicit ValueObject();
+
+		ValueObject(Object val) {
+			this.val = val;
+		}
+	 }
+
 	@Test(priority=1)
 	static public void testCreatePoint2D() throws Throwable {
 		int x = 0xFFEEFFEE;
@@ -271,6 +321,46 @@ public class ValueTypeTests {
 		checkEqualTriangle2D(array[7], defaultTrianglePositionsEmpty);
 		checkEqualTriangle2D(array[8], defaultTrianglePositions);
 		checkEqualTriangle2D(array[9], defaultTrianglePositionsEmpty);
+	}
+
+	@Test(priority=1)
+	static public void testCreateFlattenedValueInt() throws Throwable {
+		int i = Integer.MAX_VALUE;
+		ValueInt! valueInt = new ValueInt(i);
+		assertEquals(valueInt.i, i);
+		// TODO add putfield tests once withfield is replaced
+	}
+
+	@Test(priority=1)
+	static public void testCreateFlattenedValueLong() throws Throwable {
+		long l = Long.MAX_VALUE;
+		ValueLong! valueLong = new ValueLong(l);
+		assertEquals(valueLong.l, l);
+		// TODO add putfield tests once withfield is replaced
+	}
+
+	@Test(priority=1)
+	static public void testCreateFlattenedValueDouble() throws Throwable {
+		double d = Double.MAX_VALUE;
+		ValueDouble! valueDouble = new ValueDouble(d);
+		assertEquals(valueDouble.d, d);
+		// TODO add putfield tests once withfield is replaced
+	}
+
+	@Test(priority=1)
+	static public void testCreateFlattenedValueFloat() throws Throwable {
+		float f = Float.MAX_VALUE;
+		ValueFloat! valueFloat = new ValueFloat(f);
+		assertEquals(valueFloat.f, f);
+		// TODO add putfield tests once withfield is replaced
+	}
+
+	@Test(priority=1)
+	static public void testCreateFlattenedValueObject() throws Throwable {
+		Object val = (Object)0xEEFFEEFF;
+		ValueObject! valueObject = new ValueObject(val);
+		assertEquals(valueObject.val, val);
+		// TODO add putfield tests once withfield is replaced
 	}
 
 	static void checkEqualPoint2D(Point2D point, int[] positions) throws Throwable {
