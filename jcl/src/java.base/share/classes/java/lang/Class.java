@@ -2636,6 +2636,15 @@ public native boolean isValue();
 public native boolean isIdentity();
 
 /**
+ * Returns the Null-Restricted type of this class.
+ *
+ * @return Null-Restricted class
+ */
+public Class<?> asNullRestrictedType() {
+	return this;
+}
+
+/**
  * Return class file version (minorVersion << 16 + majorVersion) in an int.
  *
  * @return	the class file version
