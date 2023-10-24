@@ -375,6 +375,12 @@ public:
 private:
     // the following methods can only be called when the iterator has state
 
+    /**
+     * \brief Determine whether to maintain state during iteration.
+     * \return true if state should be used
+     */
+    bool shouldIterateWithState();
+
     /*
      * Initialize the data structures needed for iterator with state
      */
