@@ -292,6 +292,7 @@ public:
         , _tracer(tracer)
         , _ecs(ecs)
         , _iteratorWithState(false)
+        , _currentBcCanFallThrough(true)
     {
         TR_J9ByteCodeIterator::initialize(static_cast<TR_ResolvedJ9Method *>(methodSymbol->getResolvedMethod()), fe);
         _flags = NULL;
@@ -395,7 +396,11 @@ private:
      */
     bool maintainStack(TR_J9ByteCode bc);
     void maintainStackForIf(TR_J9ByteCode bc);
+    void maintainStackForTableSwitch();
     void maintainStackForGetField();
+    void maintainStackForArraylength();
+    void maintainStackForArrayLoad(TR::DataTypes type, TR_J9ByteCode bc);
+    Operand *foldArrayLoad(Operand *obj, IconstOperand *indexOperand, TR::DataTypes type, TR_J9ByteCode bc);
     void maintainStackForAload(int slotIndex);
     void maintainStackForReturn();
     /*
@@ -493,6 +498,8 @@ private:
     void debugUnresolvedOrCold(TR_ResolvedMethod *resolvedMethod);
     void maintainStackForAstore(int slotIndex);
     void maintainStackForldc(int32_t cpIndex);
+    void maintainStackForNew(int32_t cpIndex);
+    void maintainStackForInstanceof(int32_t cpIndex);
     void maintainStackForGetStatic();
     /*
      * \brief Check if a block has predecessors whose bytecodes haven't been visited
@@ -514,6 +521,7 @@ private:
     NullOperand *_nullOperand; // represents a null reference - no need for multiple instances
     TR_CallTarget *_calltarget; // the target method to inline
     bool _iteratorWithState;
+    bool _currentBcCanFallThrough;
     flags8_t *_InterpreterEmulatorFlags; // flags with bits to indicate property of each bytecode.
     TR_CallSite **_callSites;
     TR_CallSite *_currentCallSite; // Store created callsite if visiting invoke* bytecodes
