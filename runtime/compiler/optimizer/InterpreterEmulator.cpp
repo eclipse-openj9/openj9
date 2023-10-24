@@ -1304,8 +1304,61 @@ void InterpreterEmulator::refineResolvedCalleeForInvokestatic(TR_ResolvedMethod 
     }
 }
 
+bool InterpreterEmulator::shouldIterateWithState()
+{
+    if (comp()->compileRelocatableCode())
+        return false;
+
+    // Use state if any argument is a known object.
+    TR_PrexArgInfo *argInfo = _calltarget->_ecsPrexArgInfo;
+    if (argInfo != NULL) {
+        TR_ASSERT_FATAL(argInfo->getNumArgs() == method()->numberOfParameters(),
+            "wrong number of prex args %d, should be %d", argInfo->getNumArgs(), method()->numberOfParameters());
+
+        method()->makeParameterList(_methodSymbol);
+        ListIterator<TR::ParameterSymbol> parms(&_methodSymbol->getParameterList());
+        for (TR::ParameterSymbol *p = parms.getFirst(); p != NULL; p = parms.getNext()) {
+            TR_PrexArgument *prexArg = argInfo->get(p->getOrdinal());
+            if (prexArg != NULL && TR_PrexArgument::knowledgeLevel(prexArg) == KNOWN_OBJECT) {
+                heuristicTrace(tracer(), "known object argument found: iterating with state");
+                return true;
+            }
+        }
+    }
+
+    // Look for getstatic instructions loading from final static fields.
+    TR_J9ByteCode bc = first();
+    for (TR_J9ByteCode bc = first(); bc != J9BCunknown; bc = next()) {
+        if (bc != J9BCgetstatic)
+            continue;
+
+        int32_t cpIndex = next2Bytes();
+
+        void *dataAddress;
+        bool isVolatile, isPrivate, isUnresolvedInCP, isFinal;
+        TR::DataType type = TR::NoType;
+        auto owningMethod = _calltarget->_calleeMethod;
+        bool resolved = owningMethod->staticAttributes(comp(), cpIndex, &dataAddress, &type, &isVolatile, &isFinal,
+            &isPrivate, false, &isUnresolvedInCP);
+
+        if (resolved && isFinal && type == TR::Address) {
+            heuristicTrace(tracer(), "static final load found: iterating with state");
+            return true;
+        }
+    }
+
+    // Nothing interesting to propagate
+    return false;
+}
+
 bool InterpreterEmulator::findAndCreateCallsitesFromBytecodes(bool wasPeekingSuccessfull, bool withState)
 {
+    static const bool enableMore = feGetEnv("TR_moreInterpreterEmulator") != NULL;
+    if (enableMore) {
+        // ignore withState and determine on our own whether to use state
+        withState = shouldIterateWithState();
+    }
+
     heuristicTrace(tracer(), "Find and create callsite %s\n", withState ? "with state" : "without state");
 
     if (withState)
