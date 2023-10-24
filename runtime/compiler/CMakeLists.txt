@@ -237,11 +237,20 @@ if(OMR_OS_LINUX OR OMR_OS_OSX)
 		-Wno-deprecated
 		-Wno-enum-compare
 		-Wno-write-strings
-		-fomit-frame-pointer
 		-fasynchronous-unwind-tables
 		-Wreturn-type
 		-pthread
 	)
+	# Workaround for problem seen in x86_64-macOS builds for JDK 22.
+	if((NOT JAVA_SPEC_VERSION LESS 22) AND OMR_OS_OSX AND OMR_ARCH_X86)
+		list(APPEND J9_SHAREDFLAGS
+			-fno-omit-frame-pointer
+		)
+	else()
+		list(APPEND J9_SHAREDFLAGS
+			-fomit-frame-pointer
+		)
+	endif()
 
 	# Platform-specific CXX flags, also derived from the makefiles.
 	list(APPEND J9_CXXFLAGS
