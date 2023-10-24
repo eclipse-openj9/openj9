@@ -204,6 +204,17 @@ public final class CRIUSupport {
 	}
 
 	/**
+	 * Checks if the CRIUSecProvider is enabled when CRIU
+	 * checkpoints are allowed (checks whether -XX:-CRIUSecProvider
+	 * has been specified).
+	 *
+	 * @return true if CRIUSecProvider is enabled, otherwise false
+	 */
+	public static boolean enableCRIUSecProvider() {
+		return InternalCRIUSupport.enableCRIUSecProvider();
+	}
+
+	/**
 	 * Queries if CRIU Checkpoint is allowed. With -XX:+CRIURestoreNonPortableMode enabled
 	 * (default policy) only a single checkpoint is allowed.
 	 *
