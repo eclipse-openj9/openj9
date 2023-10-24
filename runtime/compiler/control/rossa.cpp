@@ -1180,27 +1180,27 @@ onLoadInternal(
    int32_t numCodeCachesToCreateAtStartup = 1;
 
 #if defined(J9ZOS390) && !defined(TR_TARGET_64BIT)
-    // zOS 31-bit
-    J9JavaVM * vm = javaVM; //macro FIND_AND_CONSUME_VMARG refers to javaVM as vm
-    if (isQuickstart)
-       {
-       jitConfig->codeCacheKB = 1024;
-       jitConfig->dataCacheKB = 1024;
-       }
+   // zOS 31-bit
+   J9JavaVM * vm = javaVM; //macro FIND_AND_CONSUME_VMARG refers to javaVM as vm
+   if (isQuickstart)
+      {
+      jitConfig->codeCacheKB = 1024;
+      jitConfig->dataCacheKB = 1024;
+      }
    else
-       {
-       jitConfig->codeCacheKB = 2048;
-       jitConfig->dataCacheKB = 2048;
-       }
-#else
-#if (defined(TR_HOST_POWER) || defined(TR_HOST_S390) || (defined(TR_HOST_X86) && defined(TR_HOST_64BIT)))
+      {
       jitConfig->codeCacheKB = 2048;
       jitConfig->dataCacheKB = 2048;
+      }
+#else
+#if (defined(TR_HOST_POWER) || defined(TR_HOST_S390) || (defined(TR_HOST_X86) && defined(TR_HOST_64BIT)))
+   jitConfig->codeCacheKB = 2048;
+   jitConfig->dataCacheKB = 2048;
 
-      //zOS will set the code cache to create at startup after options are enabled below
+   //zOS will set the code cache to create at startup after options are enabled below
 #if !defined(J9ZOS390)
-      if (!isQuickstart) // for -Xquickstart start with one code cache
-         numCodeCachesToCreateAtStartup = 4;
+   if (!isQuickstart) // for -Xquickstart start with one code cache
+      numCodeCachesToCreateAtStartup = 4;
 #endif
 #else
       jitConfig->codeCacheKB = 2048; // WAS-throughput guided change
@@ -1228,27 +1228,56 @@ onLoadInternal(
    else
       {
 #if defined(TR_TARGET_64BIT)
-         jitConfig->codeCacheTotalKB = 256 * 1024;
-         jitConfig->dataCacheTotalKB = 384 * 1024;
+      jitConfig->codeCacheTotalKB = 256 * 1024;
+      jitConfig->dataCacheTotalKB = 384 * 1024;
 #else
-         jitConfig->codeCacheTotalKB = 64 * 1024;
-         jitConfig->dataCacheTotalKB = 192 * 1024;
+      jitConfig->codeCacheTotalKB = 64 * 1024;
+      jitConfig->dataCacheTotalKB = 192 * 1024;
 #endif
 
 #if defined(J9ZTPF)
+
+#if defined(J9VM_OPT_JITSERVER)
+      if (!(javaVM->internalVMFunctions->isJITServerEnabled(javaVM)))
+#endif
+         {
          /*
-          * The z/TPF OS does not have the ability to reserve memory. It allocates whatever it
-          * is asked to allocate. Allocate the code cache based on a percentage (20%) of memory
-          * the process is allowed to have; cap the maximum using the default 256m and use a 1m floor.
-          * MAXXMMES is specified as the number of 1MB frames.
+          * Allocate the code cache based on 10% of the maximum size of the 64-bit heap region
+          * limited by z/TPF's MAXMMAP setting.
+          * Cap the maximum using the default 256m and use a 1m floor.
+          * MAXMMAP is specified as the maximum number of 1MB frames available to MMAP for a given Process.
+          * (z/TPF still supports allocating the code cache from a different 64-bit region limited by
+          * z/TPF's MAXXMMES region).
           * Use the default 2048 KB data cache. The default values for z/TPF can be
           * overridden via the command line interface.
           */
-         const uint16_t ZTPF_CODE_CACHE_DIVISOR = 5;
+         const uint16_t ZTPF_CODE_CACHE_DIVISOR = 10;
 
-         /* Retrieve the maximum number of 1MB frames that a z/TPF process can have and */
-         /* then take 20% of that value to use for the code cache size. */
-         const uint16_t physMemory = *(static_cast<uint16_t*>(cinfc_fast(CINFC_CMMMMES)) + 4) / ZTPF_CODE_CACHE_DIVISOR;
+         void *maxmmapReturnValue;
+         uint16_t physMemory;
+
+         /* We can move this define to a header (i.e., bits/mman.h) later on */
+         void *checkSupport = mmap(NULL, 0, 0, MAP_SUPPORTED|MAP_PRIVATE, 0, 0);
+
+         /* Retrieve the maximum number of 1MB frames allocated for the z/TPF Java Process (from MAXXMMES or MAXMMAP)  */
+         /* then take 10% of that value to use for the code cache size. */
+         if (checkSupport != MAP_FAILED)
+            {
+            checkSupport = mmap(&maxmmapReturnValue, 0, 0, MAP_SUPPORTED|MAP_MAXMMAP|MAP_PRIVATE, 0, 0);
+            if (checkSupport == MAP_FAILED)
+               {
+                 /* If that failed fall back to MAXXMMES */
+                 physMemory = *(static_cast<uint16_t*>(cinfc_fast(CINFC_CMMMMES)) + 4) / ZTPF_CODE_CACHE_DIVISOR;
+               }
+            else
+               {
+                 physMemory = (unsigned long int) maxmmapReturnValue / ZTPF_CODE_CACHE_DIVISOR;
+               }
+            }
+         else
+            {
+            physMemory = *(static_cast<uint16_t*>(cinfc_fast(CINFC_CMMMMES)) + 4) / ZTPF_CODE_CACHE_DIVISOR;
+            }
 
          /* Provide a 1MB floor and 256MB ceiling for the code cache size */
          if (physMemory <= 1)
@@ -1269,7 +1298,8 @@ onLoadInternal(
 
          jitConfig->dataCacheKB = 2048;
          jitConfig->dataCacheTotalKB = 384 * 1024;
-#endif
+         }
+#endif /* defined(J9ZTPF) */
       }
 
    TR::Options::setScratchSpaceLimit(DEFAULT_SCRATCH_SPACE_LIMIT_KB * 1024);
