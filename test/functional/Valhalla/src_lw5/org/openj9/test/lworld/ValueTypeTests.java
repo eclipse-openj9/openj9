@@ -174,6 +174,248 @@ public class ValueTypeTests {
 		}
 	 }
 
+	static value record AssortedValueWithLongAlignment
+		(Point2D! point, FlattenedLine2D! line, ValueObject! o, ValueLong! l, ValueDouble! d, ValueInt! i, Triangle2D! tri)
+	{
+	}
+
+	static record AssortedRefWithLongAlignment
+		(Point2D! point, FlattenedLine2D! line, ValueObject! o, ValueLong! l, ValueDouble! d, ValueInt! i, Triangle2D! tri)
+	{
+	}
+
+	static value record AssortedValueWithObjectAlignment
+		(Triangle2D! tri, Point2D! point, FlattenedLine2D! line, ValueObject! o, ValueInt! i, ValueFloat! f, Triangle2D! tri2)
+	{
+	}
+
+	static record AssortedRefWithObjectAlignment
+		(Triangle2D! tri, Point2D! point, FlattenedLine2D! line, ValueObject! o, ValueInt! i, ValueFloat! f, Triangle2D! tri2)
+	{
+	}
+
+	static value record AssortedValueWithSingleAlignment
+		(Triangle2D! tri, Point2D! point, FlattenedLine2D! line, ValueInt! i, ValueFloat! f, Triangle2D! tri2)
+	{
+	}
+
+	static record AssortedRefWithSingleAlignment
+		(Triangle2D! tri, Point2D! point, FlattenedLine2D! line, ValueInt! i, ValueFloat! f, Triangle2D! tri2)
+	{
+	}
+
+	static value class SingleBackfill {
+		long l;
+		Object o;
+		int i;
+
+		public implicit SingleBackfill();
+
+		SingleBackfill(long l, Object o, int i) {
+			this.l = l;
+			this.o = o;
+			this.i = i;
+		}
+	}
+
+	static value class ObjectBackfill {
+		long l;
+		Object o;
+
+		public implicit ObjectBackfill();
+
+		ObjectBackfill(long l, Object o) {
+			this.l = l;
+			this.o = o;
+		}
+	}
+
+	static value class FlatUnAlignedSingle {
+		ValueInt! i;
+		ValueInt! i2;
+
+		public implicit FlatUnAlignedSingle();
+
+		FlatUnAlignedSingle(ValueInt! i, ValueInt! i2) {
+			this.i = i;
+			this.i2 = i2;
+		}
+	}
+
+	static value class FlatUnAlignedSingleBackfill {
+		ValueLong! l;
+		FlatUnAlignedSingle! singles;
+		ValueObject! o;
+
+		public implicit FlatUnAlignedSingleBackfill();
+
+		FlatUnAlignedSingleBackfill(ValueLong! l, FlatUnAlignedSingle! singles, ValueObject! o) {
+			this.l = l;
+			this.singles = singles;
+			this.o = o;
+		}
+	}
+
+	static value class FlatUnAlignedSingleBackfill2 {
+		ValueLong! l;
+		FlatUnAlignedSingle! singles;
+		FlatUnAlignedSingle! singles2;
+
+		public implicit FlatUnAlignedSingleBackfill2();
+
+		FlatUnAlignedSingleBackfill2(ValueLong! l, FlatUnAlignedSingle! singles, FlatUnAlignedSingle! singles2) {
+			this.l = l;
+			this.singles = singles;
+			this.singles2 = singles2;
+
+		}
+	}
+
+	static value class FlatUnAlignedObject {
+		ValueObject! o;
+		ValueObject! o2;
+
+		public implicit FlatUnAlignedObject();
+
+		FlatUnAlignedObject(ValueObject! o, ValueObject! o2) {
+			this.o = o;
+			this.o2 = o2;
+		}
+	}
+
+	static value class FlatUnAlignedObjectBackfill {
+		FlatUnAlignedObject! objects;
+		FlatUnAlignedObject! objects2;
+		ValueLong! l;
+
+		public implicit FlatUnAlignedObjectBackfill();
+
+		FlatUnAlignedObjectBackfill(FlatUnAlignedObject! objects, FlatUnAlignedObject! objects2, ValueLong! l) {
+			this.objects = objects;
+			this.objects2 = objects2;
+			this.l = l;
+		}
+	}
+
+	static value class FlatUnAlignedObjectBackfill2 {
+		ValueObject! o;
+		FlatUnAlignedObject! objects;
+		ValueLong! l;
+
+		public implicit FlatUnAlignedObjectBackfill2();
+
+		FlatUnAlignedObjectBackfill2(ValueObject! o, FlatUnAlignedObject! objects, ValueLong! l) {
+			this.o = o;
+			this.objects = objects;
+			this.l = l;
+		}
+	}
+
+	static value class LargeValueObject {
+		/* 16 flattened valuetype members */
+		ValueObject! v1;
+		ValueObject! v2;
+		ValueObject! v3;
+		ValueObject! v4;
+		ValueObject! v5;
+		ValueObject! v6;
+		ValueObject! v7;
+		ValueObject! v8;
+		ValueObject! v9;
+		ValueObject! v10;
+		ValueObject! v11;
+		ValueObject! v12;
+		ValueObject! v13;
+		ValueObject! v14;
+		ValueObject! v15;
+		ValueObject! v16;
+
+		public implicit LargeValueObject();
+	 }
+
+	 static value class MegaValueObject {
+		/* 16 large flattenable valuetypes */
+		LargeValueObject! l1;
+		LargeValueObject! l2;
+		LargeValueObject! l3;
+		LargeValueObject! l4;
+		LargeValueObject! l5;
+		LargeValueObject! l6;
+		LargeValueObject! l7;
+		LargeValueObject! l8;
+		LargeValueObject! l9;
+		LargeValueObject! l10;
+		LargeValueObject! l11;
+		LargeValueObject! l12;
+		LargeValueObject! l13;
+		LargeValueObject! l14;
+		LargeValueObject! l15;
+		LargeValueObject! l16;
+
+		MegaValueObject(LargeValueObject! l1, LargeValueObject! l2, LargeValueObject! l3,
+			LargeValueObject! l4, LargeValueObject! l5, LargeValueObject! l6, LargeValueObject! l7,
+			LargeValueObject! l8, LargeValueObject! l9, LargeValueObject! l10, LargeValueObject! l11,
+			LargeValueObject! l12, LargeValueObject! l13, LargeValueObject! l14, LargeValueObject! l15,
+			LargeValueObject! l16) {
+				this.l1 = l1;
+				this.l2 = l2;
+				this.l3 = l3;
+				this.l4 = l4;
+				this.l5 = l5;
+				this.l6 = l6;
+				this.l7 = l7;
+				this.l8 = l8;
+				this.l9 = l9;
+				this.l10 = l10;
+				this.l11 = l11;
+				this.l12 = l12;
+				this.l13 = l13;
+				this.l14 = l14;
+				this.l15 = l15;
+				this.l16 = l16;
+			}
+	 }
+
+	static class LargeRefObject {
+		/* 16 flattened valuetype members */
+		ValueObject! v1;
+		ValueObject! v2;
+		ValueObject! v3;
+		ValueObject! v4;
+		ValueObject! v5;
+		ValueObject! v6;
+		ValueObject! v7;
+		ValueObject! v8;
+		ValueObject! v9;
+		ValueObject! v10;
+		ValueObject! v11;
+		ValueObject! v12;
+		ValueObject! v13;
+		ValueObject! v14;
+		ValueObject! v15;
+		ValueObject! v16;
+	 }
+
+	 static class MegaRefObject {
+		/* 16 large flattenable valuetypes */
+		LargeValueObject! l1;
+		LargeValueObject! l2;
+		LargeValueObject! l3;
+		LargeValueObject! l4;
+		LargeValueObject! l5;
+		LargeValueObject! l6;
+		LargeValueObject! l7;
+		LargeValueObject! l8;
+		LargeValueObject! l9;
+		LargeValueObject! l10;
+		LargeValueObject! l11;
+		LargeValueObject! l12;
+		LargeValueObject! l13;
+		LargeValueObject! l14;
+		LargeValueObject! l15;
+		LargeValueObject! l16;
+	 }
+
 	@Test(priority=1)
 	static public void testCreatePoint2D() throws Throwable {
 		int x = 0xFFEEFFEE;
