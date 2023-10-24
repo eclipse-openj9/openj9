@@ -340,7 +340,6 @@ public class ValueTypeTests {
 		}
 
 		System.gc();
-		System.gc();
 
 		Object value = Array.get(arrayObject, 0);
 	}
@@ -354,7 +353,6 @@ public class ValueTypeTests {
 			Array.set(array, i, object);
 		}
 
-		System.gc();
 		System.gc();
 
 		for (int i = 0; i < 4; i++) {
@@ -372,7 +370,6 @@ public class ValueTypeTests {
 		}
 
 		System.gc();
-		System.gc();
 
 		for (int i = 0; i < 4; i++) {
 			checkFieldAccessMHOfAssortedType(assortedValueWithObjectAlignmentGetterAndWither, Array.get(array, i), typeWithObjectAlignmentFields, true);
@@ -388,7 +385,6 @@ public class ValueTypeTests {
 			Array.set(array, i, object);
 		}
 
-		System.gc();
 		System.gc();
 
 		for (int i = 0; i < genericArraySize; i++) {
@@ -406,7 +402,6 @@ public class ValueTypeTests {
 		}
 
 		System.gc();
-		System.gc();
 
 		Object value = Array.get(arrayObject, 0);
 	}
@@ -417,12 +412,10 @@ public class ValueTypeTests {
 		Object megaObjectRef = createMegaObject(new Object());
 
 		System.gc();
-		System.gc();
 
 		for (int i = 0; i < 4; i++) {
 			Array.set(arrayObject, i, megaObjectRef);
 		}
-		System.gc();
 		System.gc();
 
 		Object value = Array.get(arrayObject, 0);
@@ -2188,7 +2181,6 @@ public class ValueTypeTests {
 			MethodHandle makePoint2DX = lookup.findStatic(point2DXClass, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class));
 			if (0 == (valueIndex % 100)) {
 				System.gc();
-				System.gc();
 			}
 		}
 	}
@@ -2557,7 +2549,6 @@ public class ValueTypeTests {
 		}
 
 		System.gc();
-		System.gc();
 
 		for (int i = 0; i < objectGCScanningIterationCount; i++) {
 			for (int j = 0; j < genericArraySize; j++) {
@@ -2583,7 +2574,6 @@ public class ValueTypeTests {
 		}
 
 		System.gc();
-		System.gc();
 
 		for (int i = 0; i < objectGCScanningIterationCount; i++) {
 			for (int j = 0; j < genericArraySize; j++) {
@@ -2608,7 +2598,6 @@ public class ValueTypeTests {
 			singleAlignmentArrayList.add(newSingleAlignmentArray);
 		}
 
-		System.gc();
 		System.gc();
 
 		for (int i = 0; i < objectGCScanningIterationCount; i++) {
