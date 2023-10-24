@@ -25,17 +25,15 @@ package openj9.internal.criu;
 /**
  * Internal CRIU Support API
  */
-/*[IF JAVA_SPEC_VERSION >= 17]*/
-@SuppressWarnings({ "deprecation", "removal" })
-/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 public final class InternalCRIUSupport {
 	private static final boolean criuSupportEnabled = isCRIUSupportEnabledImpl();
 	private static long checkpointRestoreNanoTimeDelta;
 
-	private static native boolean isCRIUSupportEnabledImpl();
-	private static native boolean isCheckpointAllowedImpl();
+	private static native boolean enableCRIUSecProviderImpl();
 	private static native long getCheckpointRestoreNanoTimeDeltaImpl();
 	private static native long getLastRestoreTimeImpl();
+	private static native boolean isCRIUSupportEnabledImpl();
+	private static native boolean isCheckpointAllowedImpl();
 
 	/**
 	 * Retrieve the elapsed time between Checkpoint and Restore.
@@ -68,6 +66,20 @@ public final class InternalCRIUSupport {
 	 */
 	public synchronized static boolean isCRIUSupportEnabled() {
 		return criuSupportEnabled;
+	}
+
+	/**
+	 * Checks if CRIU Security provider is enabled
+	 * when CRIU support is enabled.
+	 *
+	 * @return true if enabled, otherwise false
+	 */
+	public static boolean enableCRIUSecProvider() {
+		boolean isCRIUSecProviderEnabled = false;
+		if (criuSupportEnabled) {
+			isCRIUSecProviderEnabled = enableCRIUSecProviderImpl();
+		}
+		return isCRIUSecProviderEnabled;
 	}
 
 	/**
