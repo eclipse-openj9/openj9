@@ -29,6 +29,7 @@
 #include "ilgen/IlGenRequest.hpp"
 #include "jilconsts.h"
 #include "il/ParameterSymbol.hpp"
+#include "infra/ILWalk.hpp"
 #include "optimizer/PreExistence.hpp"
 #include "optimizer/TransformUtil.hpp"
 #include "il/Node_inlines.hpp"
@@ -297,21 +298,14 @@ void InterpreterEmulator::maintainStackForIf(TR_J9ByteCode bc)
         canFallThru = !canBranch;
     }
 
-    // The branch target can be successor of the fall through, so gen fall through block first such
-    // that the predecessor is interpreted before the successor in order to propagate the operand
-    // stack and local slots state.
-    // This doesn't work when the fall through contain control flow, but there is no functional issue
-    // as the object info won't be propagated if there exists unvisited predecessor. This will be
-    // fixed when we traverse the bytecodes in reverse post order at CFG level.
-    //
     if (canFallThru) {
         debugTrace(tracer(), "maintainStackForIf canFallThrough to bcIndex=%d\n", fallThruBC);
-        genTarget(fallThruBC);
+        saveStack(fallThruBC);
     }
 
     if (canBranch) {
         debugTrace(tracer(), "maintainStackForIf canBranch to bcIndex=%d\n", branchBC);
-        genTarget(branchBC);
+        saveStack(branchBC);
     }
 }
 
@@ -454,10 +448,6 @@ void InterpreterEmulator::initializeIteratorWithState()
 
     int32_t numParmSlots = method()->numberOfParameterSlots();
     _numSlots = numParmSlots + method()->numberOfTemps();
-
-    genBBStart(0);
-    setupBBStartContext(0);
-    this->setIndex(0);
 }
 
 void InterpreterEmulator::setupMethodEntryLocalObjectState()
@@ -534,22 +524,30 @@ void InterpreterEmulator::setupBBStartLocalObjectState(int32_t index)
     if (_numSlots == 0)
         return;
 
-    if (!_localObjectInfos[index]) {
+    bool localsAreUnknown = _localObjectInfos[index] == NULL;
+    if (localsAreUnknown) {
         _localObjectInfos[index] = new (trStackMemory()) OperandArray(trMemory(), _numSlots, false, stackAlloc);
-        for (int32_t i = 0; i < _numSlots; i++)
-            (*_localObjectInfos[index])[i] = _unknownOperand;
-    } else if (hasUnvisitedPred(blocks(index))) {
-        heuristicTrace(tracer(),
-            "block_%d at bc index %d has unvisited predecessor, setting local object info to unknown",
-            blocks(index)->getNumber(), index);
+    } else if (hasUnvisitedPred(_currentInlinedBlock)) {
+        localsAreUnknown = true;
+        heuristicTrace(tracer(), "block_%d at bc index %d has unvisited predecessor; conservative locals",
+            _currentInlinedBlock->getNumber(), index);
+    } else if (!_currentInlinedBlock->getExceptionPredecessors().empty()) {
+        localsAreUnknown = true;
+        heuristicTrace(tracer(), "block_%d at bc index %d is a catch block; conservative locals",
+            _currentInlinedBlock->getNumber(), index);
+    }
+
+    if (localsAreUnknown) {
         for (int32_t i = 0; i < _numSlots; i++)
             (*_localObjectInfos[index])[i] = _unknownOperand;
     }
 
     _currentLocalObjectInfo = _localObjectInfos[index];
 
-    if (index == 0)
+    if (index == 0 && _currentInlinedBlock->getPredecessors().size() == 1
+        && _currentInlinedBlock->getPredecessors().front()->getFrom() == _cfg->getStart()) {
         setupMethodEntryLocalObjectState();
+    }
 }
 
 int32_t InterpreterEmulator::setupBBStartContext(int32_t index)
@@ -558,7 +556,15 @@ int32_t InterpreterEmulator::setupBBStartContext(int32_t index)
         setupBBStartStackState(index);
         setupBBStartLocalObjectState(index);
     }
+
     Base::setupBBStartContext(index);
+
+    if (_iteratorWithState && !_currentInlinedBlock->getExceptionPredecessors().empty()) {
+        heuristicTrace(tracer(), "block_%d at bc index %d is a catch block; push unknown exception object",
+            _currentInlinedBlock->getNumber(), index);
+        pushUnknownOperand(); // exception object
+    }
+
     return index;
 }
 
@@ -637,7 +643,7 @@ bool InterpreterEmulator::maintainStack(TR_J9ByteCode bc)
             maintainStackForIf(J9BCificmpeq);
             break;
         case J9BCgoto:
-            genTarget(bcIndex() + next2BytesSigned());
+            saveStack(bcIndex() + next2BytesSigned());
             break;
         case J9BCpop:
         case J9BCputfield:
@@ -1304,89 +1310,105 @@ bool InterpreterEmulator::findAndCreateCallsitesFromBytecodes(bool wasPeekingSuc
 
     if (withState)
         initializeIteratorWithState();
+
     _wasPeekingSuccessfull = wasPeekingSuccessfull;
-    _currentInlinedBlock = NULL;
-    TR_J9ByteCode bc = first();
-    while (bc != J9BCunknown) {
-        heuristicTrace(tracer(), "%4d: %s\n", _bcIndex, comp()->fej9()->getByteCodeName(_code[_bcIndex]));
 
-        _currentCallSite = NULL;
-        _currentCallMethod = NULL;
-        _currentCallMethodUnrefined = NULL;
+    TR::ReversePostorderSnapshotBlockIterator blockIt(_cfg, comp());
+    _currentInlinedBlock = blockIt.currentBlock();
+    for (; blockIt.currentBlock() != NULL; blockIt.stepForward()) {
+        TR::Block *block = blockIt.currentBlock();
+        if (block == _cfg->getStart() || block == _cfg->getEnd())
+            continue; // no corresponding bytecode
 
-        if (_InterpreterEmulatorFlags[_bcIndex].testAny(InterpreterEmulator::BytecodePropertyFlag::bbStart)) {
-            _currentInlinedBlock
-                = TR_J9EstimateCodeSize::getBlock(comp(), _blocks, _calltarget->_calleeMethod, _bcIndex, *_cfg);
-            debugTrace(tracer(), "Found current block %p, number %d for bci %d\n", _currentInlinedBlock,
-                (_currentInlinedBlock) ? _currentInlinedBlock->getNumber() : -1, _bcIndex);
-        }
+        int32_t blockStartBci = block->getBlockBCIndex();
+        debugTrace(tracer(), "Start block_%d [%p], bci %+d\n", block->getNumber(), block, blockStartBci);
 
-        TR_ASSERT_FATAL(!isGenerated(_bcIndex),
-            "InterpreterEmulator::findCallsitesFromBytecodes bcIndex %d has been generated\n", _bcIndex);
-        _newBCInfo->setByteCodeIndex(_bcIndex);
-
-        switch (bc) {
-            case J9BCinvokedynamic:
-                visitInvokedynamic();
-                break;
-            case J9BCinvokevirtual:
-                visitInvokevirtual();
-                break;
-#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
-            case J9BCinvokehandle:
-                visitInvokehandle();
-                break;
-#endif
-            case J9BCinvokespecial:
-            case J9BCinvokespecialsplit:
-                visitInvokespecial();
-                break;
-            case J9BCinvokestatic:
-            case J9BCinvokestaticsplit:
-                visitInvokestatic();
-                break;
-            case J9BCinvokeinterface:
-                visitInvokeinterface();
-                break;
-
-            default:
-                break;
-        }
+        _currentInlinedBlock = block;
 
         if (_iteratorWithState) {
-            if (maintainStack(bc))
+            setupBBStartContext(blockStartBci);
+            if (tracer()->debugLevel()) {
+                debugTrace(tracer(), "      operand stack at start of block");
                 dumpStack();
-            else
-                return false;
+            }
         }
 
-        _pca.updateArg(bc);
-        bc = findNextByteCodeToVisit();
+        setIndex(blockStartBci);
+
+        TR_J9ByteCode bc = current();
+        while (true) {
+            heuristicTrace(tracer(), "%4d: %s\n", _bcIndex, comp()->fej9()->getByteCodeName(_code[_bcIndex]));
+
+            _currentCallSite = NULL;
+            _currentCallMethod = NULL;
+            _currentCallMethodUnrefined = NULL;
+
+            TR_ASSERT_FATAL(!isGenerated(_bcIndex),
+                "InterpreterEmulator::findCallsitesFromBytecodes bcIndex %d has been generated\n", _bcIndex);
+            _newBCInfo->setByteCodeIndex(_bcIndex);
+
+            switch (bc) {
+                case J9BCinvokedynamic:
+                    visitInvokedynamic();
+                    break;
+                case J9BCinvokevirtual:
+                    visitInvokevirtual();
+                    break;
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+                case J9BCinvokehandle:
+                    visitInvokehandle();
+                    break;
+#endif
+                case J9BCinvokespecial:
+                case J9BCinvokespecialsplit:
+                    visitInvokespecial();
+                    break;
+                case J9BCinvokestatic:
+                case J9BCinvokestaticsplit:
+                    visitInvokestatic();
+                    break;
+                case J9BCinvokeinterface:
+                    visitInvokeinterface();
+                    break;
+
+                default:
+                    break;
+            }
+
+            if (_iteratorWithState) {
+                if (!maintainStack(bc))
+                    return false;
+
+                if (tracer()->debugLevel()) {
+                    debugTrace(tracer(), "      operand stack after bytecode %+d : %s", _bcIndex,
+                        comp()->fej9()->getByteCodeName(nextByte(0)));
+
+                    dumpStack();
+                }
+
+                setIsGenerated(_bcIndex);
+            }
+
+            _pca.updateArg(bc);
+
+            bc = next();
+            if (bc == J9BCunknown) {
+                break;
+            } else if (_InterpreterEmulatorFlags[_bcIndex].testAny(
+                           InterpreterEmulator::BytecodePropertyFlag::bbStart)) {
+                if (_iteratorWithState && _currentInlinedBlock->hasSuccessor(blocks(_bcIndex))) {
+                    saveStack(_bcIndex);
+                }
+
+                break;
+            }
+        }
+
+        debugTrace(tracer(), "End of block_%d\n", _currentInlinedBlock->getNumber());
     }
 
     heuristicTrace(tracer(), "Finish findAndCreateCallsitesFromBytecodes\n");
     return true;
-}
-
-TR_J9ByteCode InterpreterEmulator::findNextByteCodeToVisit()
-{
-    if (!_iteratorWithState)
-        next();
-    else {
-        setIsGenerated(_bcIndex);
-        if (_InterpreterEmulatorFlags[_bcIndex].testAny(InterpreterEmulator::BytecodePropertyFlag::isBranch)) {
-            setIndex(Base::findNextByteCodeToGen());
-            debugTrace(tracer(), "current bc is branch next bytecode to generate is %d\n", _bcIndex);
-        } else
-            next();
-    }
-
-    if (_bcIndex < _maxByteCodeIndex
-        && _InterpreterEmulatorFlags[_bcIndex].testAny(InterpreterEmulator::BytecodePropertyFlag::bbStart)) {
-        if (isGenerated(_bcIndex))
-            setIndex(Base::findNextByteCodeToGen());
-    }
-    return current();
 }
 
 void InterpreterEmulator::prepareToFindAndCreateCallsites(TR::Block **blocks, flags8_t *flags, TR_CallSite **callSites,
