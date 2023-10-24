@@ -250,7 +250,6 @@ const char *messageNames[] =
    "KnownObjectTable_getOrCreateIndexAt",
    "KnownObjectTable_getPointer",
    "KnownObjectTable_getExistingIndexAt",
-   "KnownObjectTable_symbolReferenceTableCreateKnownObject",
    "KnownObjectTable_mutableCallSiteEpoch",
    "KnownObjectTable_dereferenceKnownObjectField",
    "KnownObjectTable_dereferenceKnownObjectField2",

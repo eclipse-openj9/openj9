@@ -395,6 +395,24 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
 
    TR::SymbolValidationManager *getSymbolValidationManager() { return _symbolValidationManager; }
 
+   /**
+    * \brief Determine whether it's currently expected to be possible to add
+    * OSR assumptions and corresponding fear points somewhere in the method.
+    *
+    * The result is independent of any particular program point. Even if the
+    * result is true, there may still be restrictions on the placement of fear
+    * points. However, if the result is false, then no fear points can be
+    * placed and no new assumptions can be made.
+    *
+    * \param comp the compilation object
+    * \return true if it's possible in general to add assumptions, false otherwise
+    */
+   bool canAddOSRAssumptions();
+
+   // Flag to record whether fear-point analysis has already been done.
+   void setFearPointAnalysisDone() { _wasFearPointAnalysisDone = true; }
+   bool wasFearPointAnalysisDone() { return _wasFearPointAnalysisDone; }
+
    // Flag to record if any optimization has prohibited OSR over a range of trees
    void setOSRProhibitedOverRangeOfTrees() { _osrProhibitedOverRangeOfTrees = true; }
    bool isOSRProhibitedOverRangeOfTrees() { return _osrProhibitedOverRangeOfTrees; }
@@ -530,6 +548,7 @@ private:
 
    TR::SymbolValidationManager *_symbolValidationManager;
    bool _osrProhibitedOverRangeOfTrees;
+   bool _wasFearPointAnalysisDone;
    };
 
 }

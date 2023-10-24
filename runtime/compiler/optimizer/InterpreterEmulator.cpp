@@ -742,11 +742,31 @@ InterpreterEmulator::maintainStackForGetStatic()
       false,
       &isUnresolvedInCP);
 
-   TR::KnownObjectTable::Index knownObjectIndex = TR::KnownObjectTable::UNKNOWN;
-   if (resolved && isFinal && type == TR::Address)
+   TR_YesNoMaybe canFold = TR_no;
+   TR::Symbol::RecognizedField recField = TR::Symbol::UnknownField;
+   if (resolved && isFinal)
       {
-      knownObjectIndex = TR::TransformUtil::knownObjectFromFinalStatic(
-          comp(), owningMethod, cpIndex, dataAddress);
+      bool isStatic = true;
+      recField =
+         TR::Symbol::searchRecognizedField(comp(), owningMethod, cpIndex, isStatic);
+
+      TR_OpaqueClassBlock *declaringClass =
+         owningMethod->getDeclaringClassFromFieldOrStatic(comp(), cpIndex);
+
+      canFold =
+         TR::TransformUtil::canFoldStaticFinalField(
+            comp(), declaringClass, recField, owningMethod, cpIndex);
+      }
+
+   TR::KnownObjectTable::Index knownObjectIndex = TR::KnownObjectTable::UNKNOWN;
+   if (canFold == TR_yes && type == TR::Address)
+      {
+      TR::AnyConst value = TR::AnyConst::makeAddress(0);
+      bool gotValue = TR::TransformUtil::staticFinalFieldValue(
+         comp(), owningMethod, cpIndex, dataAddress, TR::Address, recField, &value);
+
+      if (gotValue && value.isKnownObject())
+         knownObjectIndex = value.getKnownObjectIndex();
       }
 
    if (knownObjectIndex != TR::KnownObjectTable::UNKNOWN)
