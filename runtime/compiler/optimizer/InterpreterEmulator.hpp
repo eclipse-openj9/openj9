@@ -439,13 +439,6 @@ private:
     // the following methods can be used in both stateless and with state mode
 
     /*
-     * \brief look for and set the next bytecode index to visit
-     *
-     * \return the bytecode value to visit
-     */
-    TR_J9ByteCode findNextByteCodeToVisit();
-
-    /*
      * \brief tell whether the given bcIndex has been generated.
      *
      * \note This query is used to avoid regenerating bytecodes which shouldn't happen at stateless mode
