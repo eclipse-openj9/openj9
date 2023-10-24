@@ -947,14 +947,18 @@ void InterpreterEmulator::dumpStack()
     if (!tracer()->debugLevel())
         return;
 
-    debugTrace(tracer(), "operandStack after bytecode %d : %s ", _bcIndex,
-        comp()->fej9()->getByteCodeName(nextByte(0)));
-    for (int i = 0; i < _stack->size(); i++) {
-        Operand *x = (*_stack)[i];
-        _operandBuf->clear();
-        x->printToString(_operandBuf);
-        debugTrace(tracer(), "[%d]=%s", i, _operandBuf->text());
+    if (_stack->size() == 0) {
+        debugTrace(tracer(), "        (empty)");
+    } else {
+        for (int i = 0; i < _stack->size(); i++) {
+            Operand *x = (*_stack)[i];
+            _operandBuf->clear();
+            x->printToString(_operandBuf);
+            debugTrace(tracer(), "        [%d]=%s", i, _operandBuf->text());
+        }
     }
+
+    debugTrace(tracer(), ""); // blank line
 }
 
 Operand *InterpreterEmulator::getReturnValue(TR_ResolvedMethod *callee)
