@@ -265,48 +265,50 @@ TR::RequiredConst &InterpreterEmulator::addRequiredConst(TR::AnyConst value)
 void InterpreterEmulator::maintainStackForIf(TR_J9ByteCode bc)
 {
     assertHasState();
-    TR_ASSERT_FATAL(bc == J9BCificmpeq || bc == J9BCificmpne,
-        "InterpreterEmulator::maintainStackForIf can only be called with J9BCificmpeq and J9BCificmpne\n");
+
     int32_t branchBC = _bcIndex + next2BytesSigned();
-    int32_t fallThruBC = _bcIndex + 3;
-    IconstOperand *second = pop()->asIconst();
-    IconstOperand *first = pop()->asIconst();
-    bool canBranch = true;
-    bool canFallThru = true;
-    // Comment out the branch folding as all the paths have to be interpreted in order
-    // to propagate object info in operand stack or local slots. Since branch folding
-    // currently only affects thunk archetypes, with similar branch folding in ilgen,
-    // calls in dead path won't be inlined, disabling the following code doesn't affect
-    // performance
-    // TODO: add code to record dead path and ignore it in object info propagation, enable
-    // the following code if branch folding is possible in LambdaForm methods
-    //
-    if (false && second && first) {
-        switch (bc) {
-            case J9BCificmpeq:
-                canBranch = second->intValue == first->intValue;
-                debugTrace(tracer(), "maintainStackForIf ifcmpeq %d == %d\n", second->intValue, first->intValue);
-                break;
-            case J9BCificmpne:
-                canBranch = second->intValue != first->intValue;
-                debugTrace(tracer(), "maintainStackForIf ifcmpne %d != %d\n", second->intValue, first->intValue);
-                break;
 
-            default:
-                break;
-        }
-        canFallThru = !canBranch;
+    // The conditional is expected to pop and somehow compare two values from
+    // the stack. For unary comparisons (e.g. ifeq, ifnull), the caller should
+    // push the implied operand first. The values are irrelevant for now.
+    // TODO: branch folding
+    pop();
+    pop();
+
+    debugTrace(tracer(), "conditional can jump to +%d\n", branchBC);
+    saveStack(branchBC);
+
+    debugTrace(tracer(), "conditional can fall through\n");
+    // fallthrough stack will be saved in findAndCreateCallsitesFromBytecodes()
+    // in the same way as for blocks that don't end with control flow
+}
+
+void InterpreterEmulator::maintainStackForTableSwitch()
+{
+    assertHasState();
+
+    _currentBcCanFallThrough = false;
+
+    pop();
+
+    int32_t bcIndex = _bcIndex + 1; // skip opcode
+    while ((bcIndex & 3) != 0) // skip padding to align to a 4 byte boundary
+        bcIndex++;
+
+    int32_t defTarget = _bcIndex + nextSwitchValue(bcIndex);
+    int32_t lo = nextSwitchValue(bcIndex);
+    int32_t hi = nextSwitchValue(bcIndex);
+
+    TR_ASSERT_FATAL(lo <= hi, "tableswitch bounds out of order: [%d, %d]", lo, hi);
+
+    for (int32_t i = lo; i <= hi; i++) {
+        int32_t target = _bcIndex + nextSwitchValue(bcIndex);
+        debugTrace(tracer(), "case %d -> +%d", i, target);
+        saveStack(target);
     }
 
-    if (canFallThru) {
-        debugTrace(tracer(), "maintainStackForIf canFallThrough to bcIndex=%d\n", fallThruBC);
-        saveStack(fallThruBC);
-    }
-
-    if (canBranch) {
-        debugTrace(tracer(), "maintainStackForIf canBranch to bcIndex=%d\n", branchBC);
-        saveStack(branchBC);
-    }
+    debugTrace(tracer(), "default -> +%d", defTarget);
+    saveStack(defTarget);
 }
 
 void InterpreterEmulator::maintainStackForGetField()
@@ -410,10 +412,128 @@ void InterpreterEmulator::maintainStackForGetField()
     push(newOperand);
 }
 
+void InterpreterEmulator::maintainStackForArraylength()
+{
+    assertHasState();
+    Operand *obj = pop();
+    TR::KnownObjectTable::Index koi = obj->getKnownObjectIndex();
+    if (koi == TR::KnownObjectTable::UNKNOWN
+        || !TR::Compiler->cls.isClassArray(comp(), obj->asObjectOperand()->getClass())) {
+        pushUnknownOperand();
+    } else {
+        TR::KnownObjectTable *knot = comp()->getKnownObjectTable();
+        TR::VMAccessCriticalSection arrayLength(comp()->fej9());
+        uintptr_t objAddr = knot->getPointer(koi);
+        auto len = TR::Compiler->om.getArrayLengthInElements(comp(), objAddr);
+        push(new (trStackMemory()) IconstOperand((int32_t)len));
+    }
+}
+
+void InterpreterEmulator::maintainStackForArrayLoad(TR::DataTypes type, TR_J9ByteCode bc)
+{
+    assertHasState();
+    IconstOperand *index = pop()->asIconst();
+    Operand *obj = pop();
+    Operand *result = foldArrayLoad(obj, index, type, bc);
+    push(result == NULL ? _unknownOperand : result);
+}
+
+Operand *InterpreterEmulator::foldArrayLoad(Operand *obj, IconstOperand *indexOperand, TR::DataTypes type,
+    TR_J9ByteCode bc)
+{
+#if defined(J9VM_OPT_JITSERVER)
+    if (comp()->isOutOfProcessCompilation())
+        return NULL;
+#endif
+
+    if (type == TR::Int64 || type == TR::Float || type == TR::Double)
+        return NULL; // no Operand to represent the result
+
+    TR::KnownObjectTable::Index koi = obj->getKnownObjectIndex();
+    if (koi == TR::KnownObjectTable::UNKNOWN || indexOperand == NULL)
+        return NULL;
+
+    int32_t index = indexOperand->intValue;
+    if (index < 0)
+        return NULL;
+
+    TR::KnownObjectTable *knot = comp()->getKnownObjectTable();
+    bool constElems = knot->isArrayWithConstantElements(koi);
+    int32_t stableArrayRank = knot->getArrayWithStableElementsRank(koi);
+    if (!constElems && stableArrayRank == 0)
+        return NULL;
+
+    TR_OpaqueClassBlock *arrayClass = obj->asObjectOperand()->getClass();
+    bool arrayClassOk = type == TR::Address ? TR::Compiler->cls.isReferenceArray(comp(), arrayClass)
+                                            : type == TR::Compiler->cls.primitiveArrayComponentType(comp(), arrayClass);
+
+    if (!arrayClassOk)
+        return NULL;
+
+    TR::VMAccessCriticalSection foldArrayLoadCriticalSection(comp()->fej9());
+    uintptr_t objAddr = knot->getPointer(koi);
+    auto len = (int32_t)TR::Compiler->om.getArrayLengthInElements(comp(), objAddr);
+    if (index >= len)
+        return NULL;
+
+    int64_t offset = TR::Compiler->om.contiguousArrayHeaderSizeInBytes()
+        + index * TR::Compiler->om.getArrayElementWidthInBytes(type);
+
+    // TODO: on success, create a RequiredConst and add a provenance edge
+    uintptr_t elemAddr = TR::Compiler->om.getAddressOfElement(comp(), objAddr, offset);
+    switch (type) {
+        case TR::Address: {
+            uintptr_t value = comp()->fej9()->getReferenceFieldAtAddress(elemAddr);
+            if (!constElems && value == 0)
+                return NULL;
+
+            TR::KnownObjectTable::Index elemKoi = knot->getOrCreateIndex(value);
+            if (stableArrayRank >= 2)
+                knot->addStableArray(elemKoi, stableArrayRank - 1);
+
+            return knownObjOperand(elemKoi);
+        }
+
+        case TR::Int32: {
+            int32_t value = *(int32_t *)elemAddr;
+            if (!constElems && value == 0)
+                return NULL;
+
+            return new (trStackMemory()) IconstOperand(value);
+        }
+
+        case TR::Int16: {
+            int16_t value = *(int16_t *)elemAddr;
+            if (!constElems && value == 0)
+                return NULL;
+
+            int32_t value32 = bc == J9BCsaload ? (int32_t)value : (int32_t)(uint16_t)value;
+
+            return new (trStackMemory()) IconstOperand(value32);
+        }
+
+        case TR::Int8: {
+            int8_t value = *(int8_t *)elemAddr;
+            if (!constElems && value == 0)
+                return NULL;
+
+            return new (trStackMemory()) IconstOperand((int32_t)value);
+        }
+
+        default:
+            TR_ASSERT_FATAL(false, "unhandled type %d", type);
+            return NULL;
+    }
+}
+
 void InterpreterEmulator::saveStack(int32_t targetIndex)
 {
     if (!_iteratorWithState)
         return;
+
+    TR_ASSERT_FATAL(_currentInlinedBlock->hasSuccessor(blocks(targetIndex)),
+        "saving stack for edge %d -> %d which is not in CFG", _currentInlinedBlock->getNumber(),
+        blocks(_bcIndex)->getNumber());
 
     // Propagate stack state to successor
     if (!_stack->isEmpty()) {
@@ -573,8 +693,37 @@ bool InterpreterEmulator::maintainStack(TR_J9ByteCode bc)
     assertHasState();
     int slotIndex = -1;
     switch (bc) {
+        case J9BCnop:
+        case J9BCinvokeinterface2: // ilgen treats this the same way as nop
+            break;
+
         case J9BCgetfield:
             maintainStackForGetField();
+            break;
+        case J9BCarraylength:
+            maintainStackForArraylength();
+            break;
+        case J9BCaaload:
+            maintainStackForArrayLoad(TR::Address, bc);
+            break;
+        case J9BClaload:
+            maintainStackForArrayLoad(TR::Int64, bc);
+            break;
+        case J9BCiaload:
+            maintainStackForArrayLoad(TR::Int32, bc);
+            break;
+        case J9BCsaload: // fall through
+        case J9BCcaload:
+            maintainStackForArrayLoad(TR::Int16, bc);
+            break;
+        case J9BCbaload:
+            maintainStackForArrayLoad(TR::Int8, bc);
+            break;
+        case J9BCfaload:
+            maintainStackForArrayLoad(TR::Float, bc);
+            break;
+        case J9BCdaload:
+            maintainStackForArrayLoad(TR::Double, bc);
             break;
         case J9BCaload0:
             slotIndex = 0;
@@ -604,12 +753,14 @@ bool InterpreterEmulator::maintainStack(TR_J9ByteCode bc)
         case J9BCinvokespecial:
         case J9BCinvokespecialsplit:
         case J9BCinvokevirtual:
+        case J9BCinvokeinterface:
         case J9BCinvokestatic:
         case J9BCinvokestaticsplit:
         case J9BCinvokedynamic:
         case J9BCinvokehandle:
             maintainStackForCall();
             break;
+
         case J9BCiconstm1:
             push(new (trStackMemory()) IconstOperand(-1));
             break;
@@ -631,25 +782,51 @@ bool InterpreterEmulator::maintainStack(TR_J9ByteCode bc)
         case J9BCiconst5:
             push(new (trStackMemory()) IconstOperand(5));
             break;
+
         case J9BCaconstnull:
             push(_nullOperand);
             break;
+
         case J9BCifne:
             push(new (trStackMemory()) IconstOperand(0));
             maintainStackForIf(J9BCificmpne);
             break;
+
         case J9BCifeq:
             push(new (trStackMemory()) IconstOperand(0));
             maintainStackForIf(J9BCificmpeq);
             break;
+
+        case J9BCifnonnull:
+            push(_nullOperand);
+            maintainStackForIf(J9BCifacmpne);
+            break;
+
+        case J9BCifnull:
+            push(_nullOperand);
+            maintainStackForIf(J9BCifacmpeq);
+            break;
+
+        case J9BCificmpne:
+        case J9BCificmpeq:
+            maintainStackForIf(bc);
+            break;
+
+        case J9BCtableswitch:
+            maintainStackForTableSwitch();
+            break;
+
         case J9BCgoto:
             saveStack(bcIndex() + next2BytesSigned());
+            _currentBcCanFallThrough = false;
             break;
+
         case J9BCpop:
         case J9BCputfield:
         case J9BCputstatic:
             pop();
             break;
+
         case J9BCladd:
         case J9BCiadd:
         case J9BCisub:
@@ -657,6 +834,7 @@ bool InterpreterEmulator::maintainStack(TR_J9ByteCode bc)
             popn(2);
             pushUnknownOperand();
             break;
+
         case J9BCistore:
         case J9BClstore:
         case J9BCfstore:
@@ -683,6 +861,7 @@ bool InterpreterEmulator::maintainStack(TR_J9ByteCode bc)
         case J9BCdstore3:
             pop();
             break;
+
         // Maintain stack for object store
         case J9BCastorew:
             maintainStackForAstore(next2Bytes());
@@ -729,9 +908,15 @@ bool InterpreterEmulator::maintainStack(TR_J9ByteCode bc)
         case J9BCdload:
             pushUnknownOperand();
             break;
+
         case J9BCgetstatic:
             maintainStackForGetStatic();
             break;
+
+        // NOTE: athrow acts like return w.r.t. normal control flow edges.
+        // Exception successors will still be processed, which is OK because we
+        // get conservative at the start of catch blocks.
+        case J9BCathrow:
         case J9BCgenericReturn:
         case J9BCReturnC:
         case J9BCReturnS:
@@ -739,16 +924,29 @@ bool InterpreterEmulator::maintainStack(TR_J9ByteCode bc)
         case J9BCReturnZ:
             maintainStackForReturn();
             break;
+
         case J9BCi2l:
             break;
+
         case J9BCcheckcast:
             break;
+
         case J9BCdup:
             push(top());
             break;
+
         case J9BCldc:
             maintainStackForldc(nextByte());
             break;
+
+        case J9BCnew:
+            maintainStackForNew(next2Bytes());
+            break;
+
+        case J9BCinstanceof:
+            maintainStackForInstanceof(next2Bytes());
+            break;
+
         default:
             static const bool assertfatal
                 = feGetEnv("TR_AssertFatalForUnexpectedBytecodeInMethodHandleThunk") ? true : false;
@@ -774,8 +972,13 @@ bool InterpreterEmulator::maintainStack(TR_J9ByteCode bc)
 void InterpreterEmulator::maintainStackForReturn()
 {
     assertHasState();
-    if (method()->returnType() != TR::NoType)
-        pop();
+    TR_ASSERT_FATAL(_currentInlinedBlock->getSuccessors().size() == 1
+            && _currentInlinedBlock->getSuccessors().front()->getTo() == _cfg->getEnd(),
+        "block_%d returns and has incorrect successors", _currentInlinedBlock->getNumber());
+
+    // Because this method doesn't continue running past the return, it doesn't
+    // matter what happens to the stack.
+    _currentBcCanFallThrough = false;
 }
 
 void InterpreterEmulator::maintainStackForGetStatic()
@@ -864,6 +1067,46 @@ void InterpreterEmulator::maintainStackForldc(int32_t cpIndex)
     }
 
     pushUnknownOperand();
+}
+
+void InterpreterEmulator::maintainStackForNew(int32_t cpIndex)
+{
+    assertHasState();
+
+    TR_OpaqueClassBlock *clazz = method()->getClassFromConstantPool(comp(), cpIndex);
+    if (clazz != NULL)
+        push(new (trStackMemory()) FixedClassOperand(clazz));
+    else
+        pushUnknownOperand();
+}
+
+void InterpreterEmulator::maintainStackForInstanceof(int32_t cpIndex)
+{
+    assertHasState();
+
+    ObjectOperand *obj = pop()->asObjectOperand();
+    Operand *result = NULL;
+    if (obj != NULL) {
+        TR_OpaqueClassBlock *castClass = method()->getClassFromConstantPool(comp(), cpIndex);
+        TR_OpaqueClassBlock *objClass = obj->getClass();
+        if (castClass != NULL && objClass != NULL) {
+            Operand::KnowledgeLevel level = obj->getKnowledgeLevel();
+            bool fixedCast = true;
+            bool fixedObj = level == Operand::FIXED_CLASS || level == Operand::KNOWN_OBJECT;
+
+            TR_YesNoMaybe isInstance = comp()->fe()->isInstanceOf(objClass, castClass, fixedObj, fixedCast);
+
+            if (isInstance == TR_yes)
+                result = new (trStackMemory()) IconstOperand(1);
+            else if (isInstance == TR_no)
+                result = new (trStackMemory()) IconstOperand(0);
+        }
+    }
+
+    if (result != NULL)
+        push(result);
+    else
+        pushUnknownOperand();
 }
 
 void InterpreterEmulator::maintainStackForCall(Operand *result, int32_t numArgs, TR::DataType returnType)
@@ -1429,6 +1672,7 @@ bool InterpreterEmulator::findAndCreateCallsitesFromBytecodes(bool wasPeekingSuc
             }
 
             if (_iteratorWithState) {
+                _currentBcCanFallThrough = true; // may be reset by maintainStack()
                 if (!maintainStack(bc))
                     return false;
 
@@ -1449,9 +1693,8 @@ bool InterpreterEmulator::findAndCreateCallsitesFromBytecodes(bool wasPeekingSuc
                 break;
             } else if (_InterpreterEmulatorFlags[_bcIndex].testAny(
                            InterpreterEmulator::BytecodePropertyFlag::bbStart)) {
-                if (_iteratorWithState && _currentInlinedBlock->hasSuccessor(blocks(_bcIndex))) {
+                if (_iteratorWithState && _currentBcCanFallThrough)
                     saveStack(_bcIndex);
-                }
 
                 break;
             }
