@@ -56,6 +56,18 @@ public class ValueTypeTests {
 	static int[][] defaultLinePositionsNew = {defaultPointPositionsNew, defaultPointPositions1};
 	static int[][][] defaultTrianglePositionsNew = {defaultLinePositionsNew, defaultLinePositions3, defaultLinePositions1};
 	static int[][][] defaultTrianglePositionsEmpty = {defaultLinePositionsEmpty, defaultLinePositionsEmpty, defaultLinePositionsEmpty};
+	static int defaultInt = 0x12123434;
+	static long defaultLong = 0xFAFBFCFD11223344L;
+	static double defaultDouble = Double.MAX_VALUE;
+	static float defaultFloat = Float.MAX_VALUE;
+	static Object defaultObject = (Object)0xEEFFEEFF;
+	static int defaultIntNew = 0x45456767;
+	static long defaultLongNew = 0x11551155AAEEAAEEL;
+	static double defaultDoubleNew = -123412341.21341234d;
+	static float defaultFloatNew = -123423.12341234f;
+	static Object defaultObjectNew = (Object)0xFFEEFFEE;
+	/* miscellaneous constants */
+	static final int genericArraySize = 10;
 
 	static value class Point2D {
 		int x;
@@ -66,6 +78,10 @@ public class ValueTypeTests {
 		Point2D(int x, int y) {
 			this.x = x;
 			this.y = y;
+		}
+
+		Point2D(int[] position) {
+			this(position[0], position[1]);
 		}
 	}
 
@@ -98,6 +114,10 @@ public class ValueTypeTests {
 		FlattenedLine2D(Point2D! st, Point2D! en) {
 			this.st = st;
 			this.en = en;
+		}
+
+		FlattenedLine2D(int[][] positions) {
+			this(new Point2D(positions[0]), new Point2D(positions[1]));
 		}
 	}
 
@@ -174,34 +194,286 @@ public class ValueTypeTests {
 		}
 	 }
 
-	static value record AssortedValueWithLongAlignment
-		(Point2D! point, FlattenedLine2D! line, ValueObject! o, ValueLong! l, ValueDouble! d, ValueInt! i, Triangle2D! tri)
-	{
+	static value class AssortedValueWithLongAlignment {
+		Point2D! point;
+		FlattenedLine2D! line;
+		ValueObject! o;
+		ValueLong! l;
+		ValueDouble! d;
+		ValueInt! i;
+		Triangle2D! tri;
+
+		public implicit AssortedValueWithLongAlignment();
+
+		AssortedValueWithLongAlignment(Point2D! point, FlattenedLine2D! line, ValueObject! o, ValueLong! l, ValueDouble! d, ValueInt! i, Triangle2D! tri) {
+			this.point = point;
+			this.line = line;
+			this.o = o;
+			this.l = l;
+			this.d = d;
+			this.i = i;
+			this.tri = tri;
+		}
+
+		static AssortedValueWithLongAlignment createObjectWithDefaults() {
+			return new AssortedValueWithLongAlignment(new Point2D(defaultPointPositions1),
+				new FlattenedLine2D(defaultLinePositions1), new ValueObject(defaultObject),
+				new ValueLong(defaultLong), new ValueDouble(defaultDouble), new ValueInt(defaultInt),
+				new Triangle2D(defaultTrianglePositions));
+		}
+
+		void checkFieldsWithDefaults() throws Throwable {
+			checkEqualPoint2D(point, defaultPointPositions1);
+			checkEqualFlattenedLine2D(line, defaultLinePositions1);
+			assertEquals(o.val, defaultObject);
+			assertEquals(l.l, defaultLong);
+			assertEquals(d.d, defaultDouble);
+			assertEquals(i.i, defaultInt);
+			checkEqualTriangle2D(tri, defaultTrianglePositions);
+			// TODO add putfield tests once withfield is replaced
+		}
 	}
 
-	static record AssortedRefWithLongAlignment
-		(Point2D! point, FlattenedLine2D! line, ValueObject! o, ValueLong! l, ValueDouble! d, ValueInt! i, Triangle2D! tri)
-	{
+	static class AssortedRefWithLongAlignment {
+		Point2D! point;
+		FlattenedLine2D! line;
+		ValueObject! o;
+		ValueLong! l;
+		ValueDouble! d;
+		ValueInt! i;
+		Triangle2D! tri;
+
+		AssortedRefWithLongAlignment(Point2D! point, FlattenedLine2D! line, ValueObject! o, ValueLong! l, ValueDouble! d, ValueInt! i, Triangle2D! tri) {
+			this.point = point;
+			this.line = line;
+			this.o = o;
+			this.l = l;
+			this.d = d;
+			this.i = i;
+			this.tri = tri;
+		}
+
+		static AssortedRefWithLongAlignment createObjectWithDefaults() {
+			return new AssortedRefWithLongAlignment(new Point2D(defaultPointPositions1),
+				new FlattenedLine2D(defaultLinePositions1), new ValueObject(defaultObject),
+				new ValueLong(defaultLong), new ValueDouble(defaultDouble), new ValueInt(defaultInt),
+				new Triangle2D(defaultTrianglePositions));
+		}
+
+		void checkFieldsWithDefaults() throws Throwable {
+			checkEqualPoint2D(point, defaultPointPositions1);
+			point = new Point2D(defaultPointPositionsNew);
+			checkEqualPoint2D(point, defaultPointPositionsNew);
+
+			checkEqualFlattenedLine2D(line, defaultLinePositions1);
+			line = new FlattenedLine2D(defaultLinePositionsNew);
+			checkEqualFlattenedLine2D(line, defaultLinePositionsNew);
+
+			assertEquals(o.val, defaultObject);
+			o = new ValueObject(defaultObjectNew);
+			assertEquals(o.val, defaultObjectNew);
+
+			assertEquals(l.l, defaultLong);
+			l = new ValueLong(defaultLongNew);
+			assertEquals(l.l, defaultLongNew);
+
+			assertEquals(d.d, defaultDouble);
+			d = new ValueDouble(defaultDoubleNew);
+			assertEquals(d.d, defaultDoubleNew);
+
+			assertEquals(i.i, defaultInt);
+			i = new ValueInt(defaultIntNew);
+			assertEquals(i.i, defaultIntNew);
+
+			checkEqualTriangle2D(tri, defaultTrianglePositions);
+			tri = new Triangle2D(defaultTrianglePositionsNew);
+			checkEqualTriangle2D(tri, defaultTrianglePositionsNew);
+		}
 	}
 
-	static value record AssortedValueWithObjectAlignment
-		(Triangle2D! tri, Point2D! point, FlattenedLine2D! line, ValueObject! o, ValueInt! i, ValueFloat! f, Triangle2D! tri2)
-	{
+	static value class AssortedValueWithObjectAlignment {
+		Triangle2D! tri;
+		Point2D! point;
+		FlattenedLine2D! line;
+		ValueObject! o;
+		ValueInt! i;
+		ValueFloat! f;
+		Triangle2D! tri2;
+
+		public implicit AssortedValueWithObjectAlignment();
+
+		AssortedValueWithObjectAlignment(Triangle2D! tri, Point2D! point, FlattenedLine2D! line, ValueObject! o, ValueInt! i, ValueFloat! f, Triangle2D! tri2) {
+			this.tri = tri;
+			this.point = point;
+			this.line = line;
+			this.o = o;
+			this.i = i;
+			this.f = f;
+			this.tri2 = tri2;
+		}
+
+		static AssortedValueWithObjectAlignment createObjectWithDefaults() {
+			return new AssortedValueWithObjectAlignment(new Triangle2D(defaultTrianglePositions), new Point2D(defaultPointPositions1),
+				new FlattenedLine2D(defaultLinePositions1), new ValueObject(defaultObject),
+				new ValueInt(defaultInt), new ValueFloat(defaultFloat),
+				new Triangle2D(defaultTrianglePositions));
+		}
+
+		void checkFieldsWithDefaults() throws Throwable {
+			checkEqualTriangle2D(tri, defaultTrianglePositions);
+			checkEqualPoint2D(point, defaultPointPositions1);
+			checkEqualFlattenedLine2D(line, defaultLinePositions1);
+			assertEquals(o.val, defaultObject);
+			assertEquals(i.i, defaultInt);
+			assertEquals(f.f, defaultFloat);
+			checkEqualTriangle2D(tri2, defaultTrianglePositions);
+			// TODO add putfield tests once withfield is replaced
+		}
 	}
 
-	static record AssortedRefWithObjectAlignment
-		(Triangle2D! tri, Point2D! point, FlattenedLine2D! line, ValueObject! o, ValueInt! i, ValueFloat! f, Triangle2D! tri2)
-	{
+	static class AssortedRefWithObjectAlignment {
+		Triangle2D! tri;
+		Point2D! point;
+		FlattenedLine2D! line;
+		ValueObject! o;
+		ValueInt! i;
+		ValueFloat! f;
+		Triangle2D! tri2;
+
+		AssortedRefWithObjectAlignment(Triangle2D! tri, Point2D! point, FlattenedLine2D! line, ValueObject! o, ValueInt! i, ValueFloat! f, Triangle2D! tri2) {
+			this.tri = tri;
+			this.point = point;
+			this.line = line;
+			this.o = o;
+			this.i = i;
+			this.f = f;
+			this.tri2 = tri2;
+		}
+
+		static AssortedRefWithObjectAlignment createObjectWithDefaults() {
+			return new AssortedRefWithObjectAlignment(new Triangle2D(defaultTrianglePositions), new Point2D(defaultPointPositions1),
+				new FlattenedLine2D(defaultLinePositions1), new ValueObject(defaultObject),
+				new ValueInt(defaultInt), new ValueFloat(defaultFloat),
+				new Triangle2D(defaultTrianglePositions));
+		}
+
+		void checkFieldsWithDefaults() throws Throwable {
+			checkEqualTriangle2D(tri, defaultTrianglePositions);
+			tri = new Triangle2D(defaultTrianglePositionsNew);
+			checkEqualTriangle2D(tri, defaultTrianglePositionsNew);
+
+			checkEqualPoint2D(point, defaultPointPositions1);
+			point = new Point2D(defaultPointPositionsNew);
+			checkEqualPoint2D(point, defaultPointPositionsNew);
+
+			checkEqualFlattenedLine2D(line, defaultLinePositions1);
+			line = new FlattenedLine2D(defaultLinePositionsNew);
+			checkEqualFlattenedLine2D(line, defaultLinePositionsNew);
+
+			assertEquals(o.val, defaultObject);
+			o = new ValueObject(defaultObjectNew);
+			assertEquals(o.val, defaultObjectNew);
+
+			assertEquals(i.i, defaultInt);
+			i = new ValueInt(defaultIntNew);
+			assertEquals(i.i, defaultIntNew);
+
+			assertEquals(f.f, defaultFloat);
+			f = new ValueFloat(defaultFloatNew);
+			assertEquals(f.f, defaultFloatNew);
+
+			checkEqualTriangle2D(tri2, defaultTrianglePositions);
+			tri2 = new Triangle2D(defaultTrianglePositionsNew);
+			checkEqualTriangle2D(tri2, defaultTrianglePositionsNew);
+		}
 	}
 
-	static value record AssortedValueWithSingleAlignment
-		(Triangle2D! tri, Point2D! point, FlattenedLine2D! line, ValueInt! i, ValueFloat! f, Triangle2D! tri2)
-	{
+	static value class AssortedValueWithSingleAlignment {
+		Triangle2D! tri;
+		Point2D! point;
+		FlattenedLine2D! line;
+		ValueInt! i;
+		ValueFloat! f;
+		Triangle2D! tri2;
+
+		public implicit AssortedValueWithSingleAlignment();
+
+		AssortedValueWithSingleAlignment
+			(Triangle2D! tri, Point2D! point, FlattenedLine2D! line, ValueInt! i, ValueFloat! f, Triangle2D! tri2)
+		{
+			this.tri = tri;
+			this.point = point;
+			this.line = line;
+			this.i = i;
+			this.f = f;
+			this.tri2 = tri2;
+		}
+
+		static AssortedValueWithSingleAlignment createObjectWithDefaults() {
+			return new AssortedValueWithSingleAlignment(new Triangle2D(defaultTrianglePositions), new Point2D(defaultPointPositions1),
+				new FlattenedLine2D(defaultLinePositions1), new ValueInt(defaultInt), new ValueFloat(defaultFloat),
+				new Triangle2D(defaultTrianglePositions));
+		}
+
+		void checkFieldsWithDefaults() throws Throwable {
+			checkEqualTriangle2D(tri, defaultTrianglePositions);
+			checkEqualPoint2D(point, defaultPointPositions1);
+			checkEqualFlattenedLine2D(line, defaultLinePositions1);
+			assertEquals(i.i, defaultInt);
+			assertEquals(f.f, defaultFloat);
+			checkEqualTriangle2D(tri2, defaultTrianglePositions);
+			// TODO add putfield tests once withfield is replaced
+		}
 	}
 
-	static record AssortedRefWithSingleAlignment
-		(Triangle2D! tri, Point2D! point, FlattenedLine2D! line, ValueInt! i, ValueFloat! f, Triangle2D! tri2)
-	{
+	static class AssortedRefWithSingleAlignment {
+		Triangle2D! tri;
+		Point2D! point;
+		FlattenedLine2D! line;
+		ValueInt! i;
+		ValueFloat! f;
+		Triangle2D! tri2;
+
+		AssortedRefWithSingleAlignment(Triangle2D! tri, Point2D! point, FlattenedLine2D! line, ValueInt! i, ValueFloat! f, Triangle2D! tri2) {
+			this.tri = tri;
+			this.point = point;
+			this.line = line;
+			this.i = i;
+			this.f = f;
+			this.tri2 = tri2;
+		}
+
+		static AssortedRefWithSingleAlignment createObjectWithDefaults() {
+			return new AssortedRefWithSingleAlignment(new Triangle2D(defaultTrianglePositions), new Point2D(defaultPointPositions1),
+				new FlattenedLine2D(defaultLinePositions1), new ValueInt(defaultInt), new ValueFloat(defaultFloat),
+				new Triangle2D(defaultTrianglePositions));
+		}
+
+		void checkFieldsWithDefaults() throws Throwable {
+			checkEqualTriangle2D(tri, defaultTrianglePositions);
+			tri = new Triangle2D(defaultTrianglePositionsNew);
+			checkEqualTriangle2D(tri, defaultTrianglePositionsNew);
+
+			checkEqualPoint2D(point, defaultPointPositions1);
+			point = new Point2D(defaultPointPositionsNew);
+			checkEqualPoint2D(point, defaultPointPositionsNew);
+
+			checkEqualFlattenedLine2D(line, defaultLinePositions1);
+			line = new FlattenedLine2D(defaultLinePositionsNew);
+			checkEqualFlattenedLine2D(line, defaultLinePositionsNew);
+
+			assertEquals(i.i, defaultInt);
+			i = new ValueInt(defaultIntNew);
+			assertEquals(i.i, defaultIntNew);
+
+			assertEquals(f.f, defaultFloat);
+			f = new ValueFloat(defaultFloatNew);
+			assertEquals(f.f, defaultFloatNew);
+
+			checkEqualTriangle2D(tri2, defaultTrianglePositions);
+			tri2 = new Triangle2D(defaultTrianglePositionsNew);
+			checkEqualTriangle2D(tri2, defaultTrianglePositionsNew);
+		}
 	}
 
 	static value class SingleBackfill {
@@ -331,6 +603,67 @@ public class ValueTypeTests {
 		ValueObject! v16;
 
 		public implicit LargeValueObject();
+
+		LargeValueObject(ValueObject! v1, ValueObject! v2, ValueObject! v3, ValueObject! v4,
+			ValueObject! v5, ValueObject! v6, ValueObject! v7, ValueObject! v8,
+			ValueObject! v9, ValueObject! v10, ValueObject! v11, ValueObject! v12,
+			ValueObject! v13, ValueObject! v14, ValueObject! v15, ValueObject! v16
+		) {
+			this.v1 = v1;
+			this.v2 = v2;
+			this.v3 = v3;
+			this.v4 = v4;
+			this.v5 = v5;
+			this.v6 = v6;
+			this.v7 = v7;
+			this.v8 = v8;
+			this.v9 = v9;
+			this.v10 = v10;
+			this.v11 = v11;
+			this.v12 = v12;
+			this.v13 = v13;
+			this.v14 = v14;
+			this.v15 = v15;
+			this.v16 = v16;
+		}
+
+		static LargeValueObject createObjectWithDefaults() {
+			return createWith(defaultObject);
+		}
+
+		static LargeValueObject createObjectWithNewDefaults() {
+			return createWith(defaultObjectNew);
+		}
+
+		private static LargeValueObject createWith(Object obj) {
+			return new LargeValueObject(
+				new ValueObject(obj), new ValueObject(obj), new ValueObject(obj), new ValueObject(obj),
+				new ValueObject(obj), new ValueObject(obj), new ValueObject(obj), new ValueObject(obj),
+				new ValueObject(obj), new ValueObject(obj), new ValueObject(obj), new ValueObject(obj),
+				new ValueObject(obj), new ValueObject(obj), new ValueObject(obj), new ValueObject(obj)
+			);
+		}
+
+		void checkFieldsWithDefaults() {
+			ValueObject! obj = new ValueObject(defaultObject);
+			assertEquals(v1.val, defaultObject);
+			assertEquals(v2.val, defaultObject);
+			assertEquals(v3.val, defaultObject);
+			assertEquals(v4.val, defaultObject);
+			assertEquals(v5.val, defaultObject);
+			assertEquals(v6.val, defaultObject);
+			assertEquals(v7.val, defaultObject);
+			assertEquals(v8.val, defaultObject);
+			assertEquals(v9.val, defaultObject);
+			assertEquals(v10.val, defaultObject);
+			assertEquals(v11.val, defaultObject);
+			assertEquals(v12.val, defaultObject);
+			assertEquals(v13.val, defaultObject);
+			assertEquals(v14.val, defaultObject);
+			assertEquals(v15.val, defaultObject);
+			assertEquals(v16.val, defaultObject);
+			// TODO add putfield tests once withfield is replaced
+		}
 	 }
 
 	 static value class MegaValueObject {
@@ -352,27 +685,58 @@ public class ValueTypeTests {
 		LargeValueObject! l15;
 		LargeValueObject! l16;
 
+		public implicit MegaValueObject();
+
 		MegaValueObject(LargeValueObject! l1, LargeValueObject! l2, LargeValueObject! l3,
 			LargeValueObject! l4, LargeValueObject! l5, LargeValueObject! l6, LargeValueObject! l7,
 			LargeValueObject! l8, LargeValueObject! l9, LargeValueObject! l10, LargeValueObject! l11,
 			LargeValueObject! l12, LargeValueObject! l13, LargeValueObject! l14, LargeValueObject! l15,
-			LargeValueObject! l16) {
-				this.l1 = l1;
-				this.l2 = l2;
-				this.l3 = l3;
-				this.l4 = l4;
-				this.l5 = l5;
-				this.l6 = l6;
-				this.l7 = l7;
-				this.l8 = l8;
-				this.l9 = l9;
-				this.l10 = l10;
-				this.l11 = l11;
-				this.l12 = l12;
-				this.l13 = l13;
-				this.l14 = l14;
-				this.l15 = l15;
-				this.l16 = l16;
+			LargeValueObject! l16
+		) {
+			this.l1 = l1;
+			this.l2 = l2;
+			this.l3 = l3;
+			this.l4 = l4;
+			this.l5 = l5;
+			this.l6 = l6;
+			this.l7 = l7;
+			this.l8 = l8;
+			this.l9 = l9;
+			this.l10 = l10;
+			this.l11 = l11;
+			this.l12 = l12;
+			this.l13 = l13;
+			this.l14 = l14;
+			this.l15 = l15;
+			this.l16 = l16;
+		}
+
+			static MegaValueObject createObjectWithDefaults() {
+				return new MegaValueObject(LargeValueObject.createObjectWithDefaults(), LargeValueObject.createObjectWithDefaults(), LargeValueObject.createObjectWithDefaults(), LargeValueObject.createObjectWithDefaults(),
+					LargeValueObject.createObjectWithDefaults(), LargeValueObject.createObjectWithDefaults(), LargeValueObject.createObjectWithDefaults(), LargeValueObject.createObjectWithDefaults(),
+					LargeValueObject.createObjectWithDefaults(), LargeValueObject.createObjectWithDefaults(), LargeValueObject.createObjectWithDefaults(), LargeValueObject.createObjectWithDefaults(),
+					LargeValueObject.createObjectWithDefaults(), LargeValueObject.createObjectWithDefaults(), LargeValueObject.createObjectWithDefaults(), LargeValueObject.createObjectWithDefaults()
+				);
+			}
+
+			void checkFieldsWithDefaults() {
+				l1.checkFieldsWithDefaults();
+				l2.checkFieldsWithDefaults();
+				l3.checkFieldsWithDefaults();
+				l4.checkFieldsWithDefaults();
+				l5.checkFieldsWithDefaults();
+				l6.checkFieldsWithDefaults();
+				l7.checkFieldsWithDefaults();
+				l8.checkFieldsWithDefaults();
+				l9.checkFieldsWithDefaults();
+				l10.checkFieldsWithDefaults();
+				l11.checkFieldsWithDefaults();
+				l12.checkFieldsWithDefaults();
+				l13.checkFieldsWithDefaults();
+				l14.checkFieldsWithDefaults();
+				l15.checkFieldsWithDefaults();
+				l16.checkFieldsWithDefaults();
+				// TODO add putfield tests once withfield is replaced
 			}
 	 }
 
@@ -394,6 +758,80 @@ public class ValueTypeTests {
 		ValueObject! v14;
 		ValueObject! v15;
 		ValueObject! v16;
+
+		LargeRefObject(ValueObject! v1, ValueObject! v2, ValueObject! v3, ValueObject! v4,
+			ValueObject! v5, ValueObject! v6, ValueObject! v7, ValueObject! v8,
+			ValueObject! v9, ValueObject! v10, ValueObject! v11, ValueObject! v12,
+			ValueObject! v13, ValueObject! v14, ValueObject! v15, ValueObject! v16
+		){
+			this.v1 = v1;
+			this.v2 = v2;
+			this.v3 = v3;
+			this.v4 = v4;
+			this.v5 = v5;
+			this.v6 = v6;
+			this.v7 = v7;
+			this.v8 = v8;
+			this.v9 = v9;
+			this.v10 = v10;
+			this.v11 = v11;
+			this.v12 = v12;
+			this.v13 = v13;
+			this.v14 = v14;
+			this.v15 = v15;
+			this.v16 = v16;
+		}
+
+		static LargeRefObject createObjectWithDefaults() {
+			return new LargeRefObject(
+				new ValueObject(defaultObject), new ValueObject(defaultObject), new ValueObject(defaultObject), new ValueObject(defaultObject),
+				new ValueObject(defaultObject), new ValueObject(defaultObject), new ValueObject(defaultObject), new ValueObject(defaultObject),
+				new ValueObject(defaultObject), new ValueObject(defaultObject), new ValueObject(defaultObject), new ValueObject(defaultObject),
+				new ValueObject(defaultObject), new ValueObject(defaultObject), new ValueObject(defaultObject), new ValueObject(defaultObject)
+			);
+		}
+
+		void checkFieldsWithDefaults() {
+			checkFieldsWithObject(new ValueObject(defaultObject));
+
+			this.v1 = new ValueObject(defaultObjectNew);
+			this.v2 = new ValueObject(defaultObjectNew);
+			this.v3 = new ValueObject(defaultObjectNew);
+			this.v4 = new ValueObject(defaultObjectNew);
+			this.v5 = new ValueObject(defaultObjectNew);
+			this.v6 = new ValueObject(defaultObjectNew);
+			this.v7 = new ValueObject(defaultObjectNew);
+			this.v8 = new ValueObject(defaultObjectNew);
+			this.v9 = new ValueObject(defaultObjectNew);
+			this.v10 = new ValueObject(defaultObjectNew);
+			this.v11 = new ValueObject(defaultObjectNew);
+			this.v12 = new ValueObject(defaultObjectNew);
+			this.v13 = new ValueObject(defaultObjectNew);
+			this.v14 = new ValueObject(defaultObjectNew);
+			this.v15 = new ValueObject(defaultObjectNew);
+			this.v16 = new ValueObject(defaultObjectNew);
+
+			checkFieldsWithObject(new ValueObject(defaultObjectNew));
+		}
+
+		private void checkFieldsWithObject(ValueObject! obj) {
+			assertEquals(v1, obj);
+			assertEquals(v2, obj);
+			assertEquals(v3, obj);
+			assertEquals(v4, obj);
+			assertEquals(v5, obj);
+			assertEquals(v6, obj);
+			assertEquals(v7, obj);
+			assertEquals(v8, obj);
+			assertEquals(v9, obj);
+			assertEquals(v10, obj);
+			assertEquals(v11, obj);
+			assertEquals(v12, obj);
+			assertEquals(v13, obj);
+			assertEquals(v14, obj);
+			assertEquals(v15, obj);
+			assertEquals(v16, obj);
+		}
 	 }
 
 	 static class MegaRefObject {
@@ -414,7 +852,84 @@ public class ValueTypeTests {
 		LargeValueObject! l14;
 		LargeValueObject! l15;
 		LargeValueObject! l16;
+
+		MegaRefObject(LargeValueObject! l1, LargeValueObject! l2, LargeValueObject! l3,
+			LargeValueObject! l4, LargeValueObject! l5, LargeValueObject! l6, LargeValueObject! l7,
+			LargeValueObject! l8, LargeValueObject! l9, LargeValueObject! l10, LargeValueObject! l11,
+			LargeValueObject! l12, LargeValueObject! l13, LargeValueObject! l14, LargeValueObject! l15,
+			LargeValueObject! l16
+		) {
+			this.l1 = l1;
+			this.l2 = l2;
+			this.l3 = l3;
+			this.l4 = l4;
+			this.l5 = l5;
+			this.l6 = l6;
+			this.l7 = l7;
+			this.l8 = l8;
+			this.l9 = l9;
+			this.l10 = l10;
+			this.l11 = l11;
+			this.l12 = l12;
+			this.l13 = l13;
+			this.l14 = l14;
+			this.l15 = l15;
+			this.l16 = l16;
+		}
+
+
+		static MegaRefObject createObjectWithDefaults() {
+			return new MegaRefObject(LargeValueObject.createObjectWithDefaults(), LargeValueObject.createObjectWithDefaults(), LargeValueObject.createObjectWithDefaults(), LargeValueObject.createObjectWithDefaults(),
+				LargeValueObject.createObjectWithDefaults(), LargeValueObject.createObjectWithDefaults(), LargeValueObject.createObjectWithDefaults(), LargeValueObject.createObjectWithDefaults(),
+				LargeValueObject.createObjectWithDefaults(), LargeValueObject.createObjectWithDefaults(), LargeValueObject.createObjectWithDefaults(), LargeValueObject.createObjectWithDefaults(),
+				LargeValueObject.createObjectWithDefaults(), LargeValueObject.createObjectWithDefaults(), LargeValueObject.createObjectWithDefaults(), LargeValueObject.createObjectWithDefaults()
+			);
+		}
+
+		void checkFieldsWithDefaults() {
+			checkFieldsWithObject(LargeValueObject.createObjectWithDefaults());
+			this.l1 = LargeValueObject.createObjectWithNewDefaults();
+			this.l2 = LargeValueObject.createObjectWithNewDefaults();
+			this.l3 = LargeValueObject.createObjectWithNewDefaults();
+			this.l4 = LargeValueObject.createObjectWithNewDefaults();
+			this.l5 = LargeValueObject.createObjectWithNewDefaults();
+			this.l6 = LargeValueObject.createObjectWithNewDefaults();
+			this.l7 = LargeValueObject.createObjectWithNewDefaults();
+			this.l8 = LargeValueObject.createObjectWithNewDefaults();
+			this.l9 = LargeValueObject.createObjectWithNewDefaults();
+			this.l10 = LargeValueObject.createObjectWithNewDefaults();
+			this.l11 = LargeValueObject.createObjectWithNewDefaults();
+			this.l12 = LargeValueObject.createObjectWithNewDefaults();
+			this.l13 = LargeValueObject.createObjectWithNewDefaults();
+			this.l14 = LargeValueObject.createObjectWithNewDefaults();
+			this.l15 = LargeValueObject.createObjectWithNewDefaults();
+			this.l16 = LargeValueObject.createObjectWithNewDefaults();
+			checkFieldsWithObject(LargeValueObject.createObjectWithNewDefaults());
+		}
+
+		private void checkFieldsWithObject(LargeValueObject! obj) {
+			assertEquals(l1, obj);
+			assertEquals(l2, obj);
+			assertEquals(l3, obj);
+			assertEquals(l4, obj);
+			assertEquals(l5, obj);
+			assertEquals(l6, obj);
+			assertEquals(l7, obj);
+			assertEquals(l8, obj);
+			assertEquals(l9, obj);
+			assertEquals(l10, obj);
+			assertEquals(l11, obj);
+			assertEquals(l12, obj);
+			assertEquals(l13, obj);
+			assertEquals(l14, obj);
+			assertEquals(l15, obj);
+			assertEquals(l16, obj);
+		}
 	 }
+
+	//*******************************************************************************
+	// Create value objects and check getters/setters
+	//*******************************************************************************
 
 	@Test(priority=1)
 	static public void testCreatePoint2D() throws Throwable {
@@ -604,6 +1119,252 @@ public class ValueTypeTests {
 		assertEquals(valueObject.val, val);
 		// TODO add putfield tests once withfield is replaced
 	}
+
+	@Test(priority=2)
+	static public void testCreateLargeValueObjectAndMegaValueObject() throws Throwable {
+		LargeValueObject large = LargeValueObject.createObjectWithDefaults();
+		large.checkFieldsWithDefaults();
+		MegaValueObject mega = MegaValueObject.createObjectWithDefaults();
+		mega.checkFieldsWithDefaults();
+	}
+
+	@Test(priority=3)
+	static public void testCreateLargeRefObjectAndMegaRefObject() throws Throwable {
+		LargeRefObject large = LargeRefObject.createObjectWithDefaults();
+		large.checkFieldsWithDefaults();
+		MegaRefObject mega = MegaRefObject.createObjectWithDefaults();
+		mega.checkFieldsWithDefaults();
+	}
+
+	@Test(priority=5, invocationCount=2)
+	static public void testAssortedValueWithLongAlignment() throws Throwable {
+		AssortedValueWithLongAlignment a = AssortedValueWithLongAlignment.createObjectWithDefaults();
+		a.checkFieldsWithDefaults();
+	}
+
+	@Test(priority=5, invocationCount=2)
+	static public void testAssortedRefWithLongAlignment() throws Throwable {
+		AssortedRefWithLongAlignment a = AssortedRefWithLongAlignment.createObjectWithDefaults();
+		a.checkFieldsWithDefaults();
+	}
+
+	@Test(priority=5, invocationCount=2)
+	static public void testAssortedValueWithObjectAlignment() throws Throwable {
+		AssortedValueWithObjectAlignment a = AssortedValueWithObjectAlignment.createObjectWithDefaults();
+		a.checkFieldsWithDefaults();
+	}
+
+	@Test(priority=5, invocationCount=2)
+	static public void testAssortedRefWithObjectAlignment() throws Throwable {
+		AssortedRefWithObjectAlignment a = AssortedRefWithObjectAlignment.createObjectWithDefaults();
+		a.checkFieldsWithDefaults();
+	}
+
+	@Test(priority=5, invocationCount=2)
+	static public void testAssortedValueWithSingleAlignment() throws Throwable {
+		AssortedValueWithSingleAlignment a = AssortedValueWithSingleAlignment.createObjectWithDefaults();
+		a.checkFieldsWithDefaults();
+	}
+
+	@Test(priority=5, invocationCount=2)
+	static public void testAssortedRefWithSingleAlignment() throws Throwable {
+		AssortedRefWithSingleAlignment a = AssortedRefWithSingleAlignment.createObjectWithDefaults();
+		a.checkFieldsWithDefaults();
+	}
+
+	//*******************************************************************************
+	// Value type tests for static fields
+	//*******************************************************************************
+
+	static value class ClassWithOnlyStaticFieldsWithSingleAlignment {
+		static Triangle2D! tri;
+		static Point2D! point;
+		static FlattenedLine2D! line;
+		static ValueInt! i;
+		static ValueFloat! f;
+		static Triangle2D! tri2;
+	}
+
+	@Test(priority=4)
+	static public void testStaticFieldsWithSingleAlignment() throws Throwable {
+		ClassWithOnlyStaticFieldsWithSingleAlignment c = new ClassWithOnlyStaticFieldsWithSingleAlignment();
+		c.tri = new Triangle2D(defaultTrianglePositions);
+		c.point = new Point2D(defaultPointPositions1);
+		c.line = new FlattenedLine2D(defaultLinePositions1);
+		c.i = new ValueInt(defaultInt);
+		c.f = new ValueFloat(defaultFloat);
+		c.tri2 = new Triangle2D(defaultTrianglePositions);
+
+		checkEqualTriangle2D(c.tri, defaultTrianglePositions);
+		checkEqualPoint2D(c.point, defaultPointPositions1);
+		checkEqualFlattenedLine2D(c.line, defaultLinePositions1);
+		assertEquals(c.i.i, defaultInt);
+		assertEquals(c.f.f, defaultFloat);
+		checkEqualTriangle2D(c.tri2, defaultTrianglePositions);
+	}
+
+	static value class ClassWithOnlyStaticFieldsWithLongAlignment {
+		static Point2D! point;
+		static FlattenedLine2D! line;
+		static ValueObject! o;
+		static ValueLong! l;
+		static ValueDouble! d;
+		static ValueInt! i;
+		static Triangle2D! tri;
+	}
+
+	@Test(priority=4)
+	static public void testStaticFieldsWithLongAlignment() throws Throwable {
+		ClassWithOnlyStaticFieldsWithLongAlignment c = new ClassWithOnlyStaticFieldsWithLongAlignment();
+		c.point = new Point2D(defaultPointPositions1);
+		c.line = new FlattenedLine2D(defaultLinePositions1);
+		c.o = new ValueObject(defaultObject);
+		c.l = new ValueLong(defaultLong);
+		c.d = new ValueDouble(defaultDouble);
+		c.i = new ValueInt(defaultInt);
+		c.tri = new Triangle2D(defaultTrianglePositions);
+
+		checkEqualPoint2D(c.point, defaultPointPositions1);
+		checkEqualFlattenedLine2D(c.line, defaultLinePositions1);
+		assertEquals(c.o.val, defaultObject);
+		assertEquals(c.l.l, defaultLong);
+		assertEquals(c.d.d, defaultDouble);
+		assertEquals(c.i.i, defaultInt);
+		checkEqualTriangle2D(c.tri, defaultTrianglePositions);
+	}
+
+	static value class ClassWithOnlyStaticFieldsWithObjectAlignment {
+		static Triangle2D! tri;
+		static Point2D! point;
+		static FlattenedLine2D! line;
+		static ValueObject! o;
+		static ValueInt! i;
+		static ValueFloat! f;
+		static Triangle2D! tri2;
+	}
+
+	@Test(priority=4)
+	static public void testStaticFieldsWithObjectAlignment() throws Throwable {
+		ClassWithOnlyStaticFieldsWithObjectAlignment c = new ClassWithOnlyStaticFieldsWithObjectAlignment();
+		c.tri = new Triangle2D(defaultTrianglePositions);
+		c.point = new Point2D(defaultPointPositions1);
+		c.line = new FlattenedLine2D(defaultLinePositions1);
+		c.o = new ValueObject(defaultObject);
+		c.i = new ValueInt(defaultInt);
+		c.f = new ValueFloat(defaultFloat);
+		c.tri2 = new Triangle2D(defaultTrianglePositions);
+
+		checkEqualTriangle2D(c.tri, defaultTrianglePositions);
+		checkEqualPoint2D(c.point, defaultPointPositions1);
+		checkEqualFlattenedLine2D(c.line, defaultLinePositions1);
+		assertEquals(c.o.val, defaultObject);
+		assertEquals(c.i.i, defaultInt);
+		assertEquals(c.f.f, defaultFloat);
+		checkEqualTriangle2D(c.tri2, defaultTrianglePositions);
+	}
+
+	//*******************************************************************************
+	// GC tests
+	//*******************************************************************************
+
+	@Test(priority=5)
+	static public void testGCFlattenedPoint2DArray() throws Throwable {
+		int x1 = 0xFFEEFFEE;
+		int y1 = 0xAABBAABB;
+		Point2D! point2D = new Point2D(x1, y1);
+		Point2D![] array = new Point2D![8];
+
+		for (int i = 0; i < 8; i++) {
+			array[i] = point2D;
+		}
+
+		System.gc();
+
+		Point2D! value = array[0];
+	}
+
+	@Test(priority=5)
+	static public void testGCFlattenedValueArrayWithSingleAlignment() throws Throwable {
+		int size = 4;
+		AssortedValueWithSingleAlignment![] array = new AssortedValueWithSingleAlignment![size];
+
+		for (int i = 0; i < size; i++) {
+			array[i] = AssortedValueWithSingleAlignment.createObjectWithDefaults();
+		}
+
+		System.gc();
+
+		for (int i = 0; i < size; i++) {
+			array[i].checkFieldsWithDefaults();
+		}
+	}
+
+	@Test(priority=5)
+	static public void testGCFlattenedValueArrayWithObjectAlignment() throws Throwable {
+		int size = 4;
+		AssortedValueWithObjectAlignment![] array = new AssortedValueWithObjectAlignment![size];
+
+		for (int i = 0; i < size; i++) {
+			array[i] = AssortedValueWithObjectAlignment.createObjectWithDefaults();
+		}
+
+		System.gc();
+
+		for (int i = 0; i < size; i++) {
+			array[i].checkFieldsWithDefaults();
+		}
+	}
+
+	@Test(priority=5)
+	static public void testGCFlattenedValueArrayWithLongAlignment() throws Throwable {
+		AssortedValueWithLongAlignment![] array = new AssortedValueWithLongAlignment![genericArraySize];
+
+		for (int i = 0; i < genericArraySize; i++) {
+			array[i] = AssortedValueWithLongAlignment.createObjectWithDefaults();
+		}
+
+		System.gc();
+
+		for (int i = 0; i < genericArraySize; i++) {
+			array[i].checkFieldsWithDefaults();
+		}
+	}
+
+	@Test(priority=5)
+	static public void testGCFlattenedLargeObjectArray() throws Throwable {
+		int size = 4;
+		LargeValueObject![] array = new LargeValueObject![size];
+		LargeValueObject! obj = LargeValueObject.createObjectWithDefaults();
+
+		for (int i = 0; i < size; i++) {
+			array[i] = obj;
+		}
+
+		System.gc();
+
+		LargeValueObject! value = array[0];
+	}
+
+	@Test(priority=5)
+	static public void testGCFlattenedMegaObjectArray() throws Throwable {
+		int size = 4;
+		MegaValueObject![] array = new MegaValueObject![size];
+		MegaValueObject! obj = MegaValueObject.createObjectWithDefaults();
+
+		System.gc();
+
+		for (int i = 0; i < 4; i++) {
+			array[i] = obj;
+		}
+		System.gc();
+
+		MegaValueObject! value = array[0];
+	}
+
+	//*******************************************************************************
+	// Helper methods
+	//*******************************************************************************
+
 
 	static void checkEqualPoint2D(Point2D point, int[] position) throws Throwable {
 		assertEquals(point.x, position[0]);
