@@ -123,7 +123,9 @@ enum ExternalOptions
    XXcodecachetotalMaxRAMPercentage            = 67,
    XXplusJITServerAOTCacheDelayMethodRelocation  = 68,
    XXminusJITServerAOTCacheDelayMethodRelocation = 69,
-   TR_NumExternalOptions                         = 70
+   XXplusIProfileDuringStartupPhase            = 70,
+   XXminusIProfileDuringStartupPhase           = 71,
+   TR_NumExternalOptions                       = 72
    };
 
 class OMR_EXTENSIBLE Options : public OMR::OptionsConnector

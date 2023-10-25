@@ -375,7 +375,9 @@ char * J9::Options::_externalOptionStrings[J9::ExternalOptions::TR_NumExternalOp
    "-XX:codecachetotalMaxRAMPercentage=", // = 67
    "-XX:+JITServerAOTCacheDelayMethodRelocation", // = 68
    "-XX:-JITServerAOTCacheDelayMethodRelocation", // = 69
-   // TR_NumExternalOptions                  = 70
+   "-XX:+IProfileDuringStartupPhase",     // = 70
+   "-XX:-IProfileDuringStartupPhase",     // = 71
+   // TR_NumExternalOptions                  = 72
    };
 
 //************************************************************************
@@ -3142,24 +3144,37 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
          }
       else // do AOT
          {
-         if (!self()->getOption(TR_DisablePersistIProfile))
+         // Turn off Iprofiler for the warm runs, but not if we cache only bootstrap classes
+         // This is because we may be missing IProfiler information for non-bootstrap classes
+         // that could not be stored in SCC
+         if (!self()->getOption(TR_DisablePersistIProfile) &&
+            J9_ARE_ALL_BITS_SET(javaVM->sharedClassConfig->runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_CACHE_NON_BOOT_CLASSES))
             {
-            // Turn off Iprofiler for the warm runs, but not if we cache only bootstrap classes
-            // This is because we may be missing IProfiler information for non-bootstrap classes
-            // that could not be stored in SCC
-            if (J9_ARE_ALL_BITS_SET(javaVM->sharedClassConfig->runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_CACHE_NON_BOOT_CLASSES))
+            TR::CompilationInfo * compInfo = getCompilationInfo(jitConfig);
+            if (compInfo->isWarmSCC() == TR_yes)
                {
-               TR::CompilationInfo * compInfo = getCompilationInfo(jitConfig);
-               static char * dnipdsp = feGetEnv("TR_DisableNoIProfilerDuringStartupPhase");
-               if (compInfo->isWarmSCC() == TR_yes && !dnipdsp)
-                  {
-                  self()->setOption(TR_NoIProfilerDuringStartupPhase);
-                  }
+               self()->setOption(TR_NoIProfilerDuringStartupPhase);
                }
             }
          }
       }
 #endif
+
+   // The use of -XX:[+/-]IProfileDuringStartupPhase sets if we always/never IProfile
+   // during the startup phase
+   {
+   // The FIND_ARG_IN_VMARGS macro expect the J9JavaVM to be in the `vm` variable, instead of `javaVM`
+   // The method uses the `vm` variable for the TR_J9VMBase
+   J9JavaVM * vm = javaVM;
+   const char *xxIProfileDuringStartupPhase  = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXplusIProfileDuringStartupPhase];
+   const char *xxDisableIProfileDuringStartupPhase = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXminusIProfileDuringStartupPhase];
+   int32_t xxIProfileDuringStartupPhaseArgIndex  = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxIProfileDuringStartupPhase, 0);
+   int32_t xxDisableIProfileDuringStartupPhaseArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxDisableIProfileDuringStartupPhase, 0);
+   if (xxIProfileDuringStartupPhaseArgIndex > xxDisableIProfileDuringStartupPhaseArgIndex)
+      self()->setOption(TR_NoIProfilerDuringStartupPhase, false); // Override -Xjit:noIProfilerDuringStartupPhase
+   else if (xxDisableIProfileDuringStartupPhaseArgIndex >= 0)
+      self()->setOption(TR_NoIProfilerDuringStartupPhase);
+   }
 
    // Divide by 0 checks
    if (TR::Options::_LoopyMethodDivisionFactor == 0)
