@@ -365,6 +365,9 @@ private:
      * Initialize the data structures needed for iterator with state
      */
     void initializeIteratorWithState();
+
+    void assertHasState();
+
     /*
      * push and pop operands on stack according to given bytecode
      *
