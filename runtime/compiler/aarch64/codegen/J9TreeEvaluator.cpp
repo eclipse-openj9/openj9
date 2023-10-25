@@ -4642,7 +4642,9 @@ J9::ARM64::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::CodeGenerator *
       TR::addDependency(deps, NULL, (TR::RealRegister::RegNum)i, TR_GPR, cg);
       }
    // x16 and x17 are reserved registers
+#if !defined(OSX)
    TR::addDependency(deps, NULL, TR::RealRegister::x18, TR_GPR, cg);
+#endif // !defined(OSX)
 
    generateMovInstruction(cg, node, x0Reg, metaReg);
    generateMovInstruction(cg, node, tmp1Reg, srcObjReg);
@@ -4757,7 +4759,9 @@ J9::ARM64::TreeEvaluator::genArrayCopyWithArrayStoreCHK(TR::Node *node, TR::Code
       TR::addDependency(deps, NULL, (TR::RealRegister::RegNum)i, TR_GPR, cg);
       }
    // x16 and x17 are reserved registers
+#if !defined(OSX)
    TR::addDependency(deps, NULL, TR::RealRegister::x18, TR_GPR, cg);
+#endif // !defined(OSX)
 
    intptr_t *funcdescrptr = (intptr_t *)fej9->getReferenceArrayCopyHelperAddress();
    loadAddressConstant(cg, cg->needRelocationsForHelpers(), node, (intptr_t)funcdescrptr, tmpReg, NULL, TR_ArrayCopyHelper);
