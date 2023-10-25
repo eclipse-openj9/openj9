@@ -605,9 +605,9 @@ public class ValueTypeTests {
 		// TODO add putfield tests once withfield is replaced
 	}
 
-	static void checkEqualPoint2D(Point2D point, int[] positions) throws Throwable {
-		assertEquals(point.x, positions[0]);
-		assertEquals(point.y, positions[1]);
+	static void checkEqualPoint2D(Point2D point, int[] position) throws Throwable {
+		assertEquals(point.x, position[0]);
+		assertEquals(point.y, position[1]);
 	}
 
 	static void checkEqualFlattenedLine2D(FlattenedLine2D line, int[][] positions) throws Throwable {
