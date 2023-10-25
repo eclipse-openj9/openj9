@@ -46,10 +46,16 @@ public class ValueTypeTests {
 	static int[] defaultPointPositions1 = {0xFFEEFFEE, 0xAABBAABB};
 	static int[] defaultPointPositions2 = {0xCCDDCCDD, 0x33443344};
 	static int[] defaultPointPositions3 = {0x43211234, 0xABCDDCBA};
+	static int[] defaultPointPositionsEmpty = {0, 0};
 	static int[][] defaultLinePositions1 = {defaultPointPositions1, defaultPointPositions2};
 	static int[][] defaultLinePositions2 = {defaultPointPositions2, defaultPointPositions3};
 	static int[][] defaultLinePositions3 = {defaultPointPositions1, defaultPointPositions3};
+	static int[][] defaultLinePositionsEmpty = {defaultPointPositionsEmpty, defaultPointPositionsEmpty};
 	static int[][][] defaultTrianglePositions = {defaultLinePositions1, defaultLinePositions2, defaultLinePositions3};
+	static int[] defaultPointPositionsNew = {0xFF112233, 0xFF332211};
+	static int[][] defaultLinePositionsNew = {defaultPointPositionsNew, defaultPointPositions1};
+	static int[][][] defaultTrianglePositionsNew = {defaultLinePositionsNew, defaultLinePositions3, defaultLinePositions1};
+	static int[][][] defaultTrianglePositionsEmpty = {defaultLinePositionsEmpty, defaultLinePositionsEmpty, defaultLinePositionsEmpty};
 
 	static value class Point2D {
 		int x;
@@ -117,6 +123,298 @@ public class ValueTypeTests {
 						new Point2D(positions[2][1][0], positions[2][1][1])));
 		}
 	}
+
+	static value class ValueInt {
+		int i;
+
+		public implicit ValueInt();
+
+		ValueInt(int i) {
+			this.i = i;
+		}
+	}
+
+	static value class ValueLong {
+		long l;
+
+		public implicit ValueLong();
+
+		ValueLong(long l) {
+			this.l = l;
+		}
+	}
+
+	static value class ValueDouble {
+		double d;
+
+		public implicit ValueDouble();
+
+		ValueDouble(double d) {
+			this.d = d;
+		}
+	}
+
+	static value class ValueFloat {
+		float f;
+
+		public implicit ValueFloat();
+
+		ValueFloat(float f) {
+			this.f = f;
+		}
+	}
+
+	static value class ValueObject {
+		Object val;
+
+		public implicit ValueObject();
+
+		ValueObject(Object val) {
+			this.val = val;
+		}
+	 }
+
+	static value record AssortedValueWithLongAlignment
+		(Point2D! point, FlattenedLine2D! line, ValueObject! o, ValueLong! l, ValueDouble! d, ValueInt! i, Triangle2D! tri)
+	{
+	}
+
+	static record AssortedRefWithLongAlignment
+		(Point2D! point, FlattenedLine2D! line, ValueObject! o, ValueLong! l, ValueDouble! d, ValueInt! i, Triangle2D! tri)
+	{
+	}
+
+	static value record AssortedValueWithObjectAlignment
+		(Triangle2D! tri, Point2D! point, FlattenedLine2D! line, ValueObject! o, ValueInt! i, ValueFloat! f, Triangle2D! tri2)
+	{
+	}
+
+	static record AssortedRefWithObjectAlignment
+		(Triangle2D! tri, Point2D! point, FlattenedLine2D! line, ValueObject! o, ValueInt! i, ValueFloat! f, Triangle2D! tri2)
+	{
+	}
+
+	static value record AssortedValueWithSingleAlignment
+		(Triangle2D! tri, Point2D! point, FlattenedLine2D! line, ValueInt! i, ValueFloat! f, Triangle2D! tri2)
+	{
+	}
+
+	static record AssortedRefWithSingleAlignment
+		(Triangle2D! tri, Point2D! point, FlattenedLine2D! line, ValueInt! i, ValueFloat! f, Triangle2D! tri2)
+	{
+	}
+
+	static value class SingleBackfill {
+		long l;
+		Object o;
+		int i;
+
+		public implicit SingleBackfill();
+
+		SingleBackfill(long l, Object o, int i) {
+			this.l = l;
+			this.o = o;
+			this.i = i;
+		}
+	}
+
+	static value class ObjectBackfill {
+		long l;
+		Object o;
+
+		public implicit ObjectBackfill();
+
+		ObjectBackfill(long l, Object o) {
+			this.l = l;
+			this.o = o;
+		}
+	}
+
+	static value class FlatUnAlignedSingle {
+		ValueInt! i;
+		ValueInt! i2;
+
+		public implicit FlatUnAlignedSingle();
+
+		FlatUnAlignedSingle(ValueInt! i, ValueInt! i2) {
+			this.i = i;
+			this.i2 = i2;
+		}
+	}
+
+	static value class FlatUnAlignedSingleBackfill {
+		ValueLong! l;
+		FlatUnAlignedSingle! singles;
+		ValueObject! o;
+
+		public implicit FlatUnAlignedSingleBackfill();
+
+		FlatUnAlignedSingleBackfill(ValueLong! l, FlatUnAlignedSingle! singles, ValueObject! o) {
+			this.l = l;
+			this.singles = singles;
+			this.o = o;
+		}
+	}
+
+	static value class FlatUnAlignedSingleBackfill2 {
+		ValueLong! l;
+		FlatUnAlignedSingle! singles;
+		FlatUnAlignedSingle! singles2;
+
+		public implicit FlatUnAlignedSingleBackfill2();
+
+		FlatUnAlignedSingleBackfill2(ValueLong! l, FlatUnAlignedSingle! singles, FlatUnAlignedSingle! singles2) {
+			this.l = l;
+			this.singles = singles;
+			this.singles2 = singles2;
+
+		}
+	}
+
+	static value class FlatUnAlignedObject {
+		ValueObject! o;
+		ValueObject! o2;
+
+		public implicit FlatUnAlignedObject();
+
+		FlatUnAlignedObject(ValueObject! o, ValueObject! o2) {
+			this.o = o;
+			this.o2 = o2;
+		}
+	}
+
+	static value class FlatUnAlignedObjectBackfill {
+		FlatUnAlignedObject! objects;
+		FlatUnAlignedObject! objects2;
+		ValueLong! l;
+
+		public implicit FlatUnAlignedObjectBackfill();
+
+		FlatUnAlignedObjectBackfill(FlatUnAlignedObject! objects, FlatUnAlignedObject! objects2, ValueLong! l) {
+			this.objects = objects;
+			this.objects2 = objects2;
+			this.l = l;
+		}
+	}
+
+	static value class FlatUnAlignedObjectBackfill2 {
+		ValueObject! o;
+		FlatUnAlignedObject! objects;
+		ValueLong! l;
+
+		public implicit FlatUnAlignedObjectBackfill2();
+
+		FlatUnAlignedObjectBackfill2(ValueObject! o, FlatUnAlignedObject! objects, ValueLong! l) {
+			this.o = o;
+			this.objects = objects;
+			this.l = l;
+		}
+	}
+
+	static value class LargeValueObject {
+		/* 16 flattened valuetype members */
+		ValueObject! v1;
+		ValueObject! v2;
+		ValueObject! v3;
+		ValueObject! v4;
+		ValueObject! v5;
+		ValueObject! v6;
+		ValueObject! v7;
+		ValueObject! v8;
+		ValueObject! v9;
+		ValueObject! v10;
+		ValueObject! v11;
+		ValueObject! v12;
+		ValueObject! v13;
+		ValueObject! v14;
+		ValueObject! v15;
+		ValueObject! v16;
+
+		public implicit LargeValueObject();
+	 }
+
+	 static value class MegaValueObject {
+		/* 16 large flattenable valuetypes */
+		LargeValueObject! l1;
+		LargeValueObject! l2;
+		LargeValueObject! l3;
+		LargeValueObject! l4;
+		LargeValueObject! l5;
+		LargeValueObject! l6;
+		LargeValueObject! l7;
+		LargeValueObject! l8;
+		LargeValueObject! l9;
+		LargeValueObject! l10;
+		LargeValueObject! l11;
+		LargeValueObject! l12;
+		LargeValueObject! l13;
+		LargeValueObject! l14;
+		LargeValueObject! l15;
+		LargeValueObject! l16;
+
+		MegaValueObject(LargeValueObject! l1, LargeValueObject! l2, LargeValueObject! l3,
+			LargeValueObject! l4, LargeValueObject! l5, LargeValueObject! l6, LargeValueObject! l7,
+			LargeValueObject! l8, LargeValueObject! l9, LargeValueObject! l10, LargeValueObject! l11,
+			LargeValueObject! l12, LargeValueObject! l13, LargeValueObject! l14, LargeValueObject! l15,
+			LargeValueObject! l16) {
+				this.l1 = l1;
+				this.l2 = l2;
+				this.l3 = l3;
+				this.l4 = l4;
+				this.l5 = l5;
+				this.l6 = l6;
+				this.l7 = l7;
+				this.l8 = l8;
+				this.l9 = l9;
+				this.l10 = l10;
+				this.l11 = l11;
+				this.l12 = l12;
+				this.l13 = l13;
+				this.l14 = l14;
+				this.l15 = l15;
+				this.l16 = l16;
+			}
+	 }
+
+	static class LargeRefObject {
+		/* 16 flattened valuetype members */
+		ValueObject! v1;
+		ValueObject! v2;
+		ValueObject! v3;
+		ValueObject! v4;
+		ValueObject! v5;
+		ValueObject! v6;
+		ValueObject! v7;
+		ValueObject! v8;
+		ValueObject! v9;
+		ValueObject! v10;
+		ValueObject! v11;
+		ValueObject! v12;
+		ValueObject! v13;
+		ValueObject! v14;
+		ValueObject! v15;
+		ValueObject! v16;
+	 }
+
+	 static class MegaRefObject {
+		/* 16 large flattenable valuetypes */
+		LargeValueObject! l1;
+		LargeValueObject! l2;
+		LargeValueObject! l3;
+		LargeValueObject! l4;
+		LargeValueObject! l5;
+		LargeValueObject! l6;
+		LargeValueObject! l7;
+		LargeValueObject! l8;
+		LargeValueObject! l9;
+		LargeValueObject! l10;
+		LargeValueObject! l11;
+		LargeValueObject! l12;
+		LargeValueObject! l13;
+		LargeValueObject! l14;
+		LargeValueObject! l15;
+		LargeValueObject! l16;
+	 }
 
 	@Test(priority=1)
 	static public void testCreatePoint2D() throws Throwable {
@@ -188,9 +486,128 @@ public class ValueTypeTests {
 		checkEqualTriangle2D(triangle2D, defaultTrianglePositions);
 	}
 
-	static void checkEqualPoint2D(Point2D point, int[] positions) throws Throwable {
-		assertEquals(point.x, positions[0]);
-		assertEquals(point.y, positions[1]);
+	@Test(priority=2)
+	static public void testCreateArrayPoint2D() throws Throwable {
+		int x1 = 0xFFEEFFEE;
+		int y1 = 0xAABBAABB;
+		int x2 = 0x00000011;
+		int y2 = 0xABCDEF00;
+
+		Point2D p1 = new Point2D(x1, y1);
+		Point2D p2 = new Point2D(x2, y2);
+
+		Point2D[] a = new Point2D[]{p1, p2};
+
+		assertEquals(a[0].x, p1.x);
+		assertEquals(a[0].y, p1.y);
+		assertEquals(a[1].x, p2.x);
+		assertEquals(a[1].y, p2.y);
+	}
+
+	@Test(priority=3, invocationCount=2)
+	static public void testCreateArrayFlattenedLine2D() throws Throwable {
+		int x = 0xFFEEFFEE;
+		int y = 0xAABBAABB;
+		int x2 = 0xCCDDCCDD;
+		int y2 = 0xAAFFAAFF;
+		int x3 = 0xFFABFFCD;
+		int y3 = 0xBBAABBAA;
+		int x4 = 0xCCBBAADD;
+		int y4 = 0xAABBAACC;
+
+		Point2D! st1 = new Point2D(x, y);
+		Point2D! en1 = new Point2D(x2, y2);
+		FlattenedLine2D line2D_1 = new FlattenedLine2D(st1, en1);
+
+		Point2D! st2 = new Point2D(x3, y3);
+		Point2D! en2 = new Point2D(x4, y4);
+		FlattenedLine2D line2D_2 = new FlattenedLine2D(st2, en2);
+
+		FlattenedLine2D[] array = new FlattenedLine2D[]{line2D_1, line2D_2};
+
+		assertEquals(array[0].st.x, line2D_1.st.x);
+		assertEquals(array[1].st.x, line2D_2.st.x);
+		assertEquals(array[0].st.y, line2D_1.st.y);
+		assertEquals(array[1].st.y, line2D_2.st.y);
+		assertEquals(array[0].en.x, line2D_1.en.x);
+		assertEquals(array[1].en.x, line2D_2.en.x);
+		assertEquals(array[0].en.y, line2D_1.en.y);
+		assertEquals(array[1].en.y, line2D_2.en.y);
+	}
+
+	@Test(priority=4, invocationCount=2)
+	static public void testCreateArrayTriangle2D() throws Throwable {
+		Triangle2D[] array = new Triangle2D[10];
+		Triangle2D triangle1 = new Triangle2D(defaultTrianglePositions);
+		Triangle2D triangle2 = new Triangle2D(defaultTrianglePositionsNew);
+		Triangle2D triangleEmpty = new Triangle2D(defaultTrianglePositionsEmpty);
+
+		array[0] = triangle1;
+		array[1] = triangleEmpty;
+		array[2] = triangle2;
+		array[3] = triangleEmpty;
+		array[4] = triangle1;
+		array[5] = triangleEmpty;
+		array[6] = triangle2;
+		array[7]  = triangleEmpty;
+		array[8] = triangle1;
+		array[9] = triangleEmpty;
+
+		checkEqualTriangle2D(array[0], defaultTrianglePositions);
+		checkEqualTriangle2D(array[1], defaultTrianglePositionsEmpty);
+		checkEqualTriangle2D(array[2], defaultTrianglePositionsNew);
+		checkEqualTriangle2D(array[3], defaultTrianglePositionsEmpty);
+		checkEqualTriangle2D(array[4], defaultTrianglePositions);
+		checkEqualTriangle2D(array[5], defaultTrianglePositionsEmpty);
+		checkEqualTriangle2D(array[6], defaultTrianglePositionsNew);
+		checkEqualTriangle2D(array[7], defaultTrianglePositionsEmpty);
+		checkEqualTriangle2D(array[8], defaultTrianglePositions);
+		checkEqualTriangle2D(array[9], defaultTrianglePositionsEmpty);
+	}
+
+	@Test(priority=1)
+	static public void testCreateFlattenedValueInt() throws Throwable {
+		int i = Integer.MAX_VALUE;
+		ValueInt! valueInt = new ValueInt(i);
+		assertEquals(valueInt.i, i);
+		// TODO add putfield tests once withfield is replaced
+	}
+
+	@Test(priority=1)
+	static public void testCreateFlattenedValueLong() throws Throwable {
+		long l = Long.MAX_VALUE;
+		ValueLong! valueLong = new ValueLong(l);
+		assertEquals(valueLong.l, l);
+		// TODO add putfield tests once withfield is replaced
+	}
+
+	@Test(priority=1)
+	static public void testCreateFlattenedValueDouble() throws Throwable {
+		double d = Double.MAX_VALUE;
+		ValueDouble! valueDouble = new ValueDouble(d);
+		assertEquals(valueDouble.d, d);
+		// TODO add putfield tests once withfield is replaced
+	}
+
+	@Test(priority=1)
+	static public void testCreateFlattenedValueFloat() throws Throwable {
+		float f = Float.MAX_VALUE;
+		ValueFloat! valueFloat = new ValueFloat(f);
+		assertEquals(valueFloat.f, f);
+		// TODO add putfield tests once withfield is replaced
+	}
+
+	@Test(priority=1)
+	static public void testCreateFlattenedValueObject() throws Throwable {
+		Object val = (Object)0xEEFFEEFF;
+		ValueObject! valueObject = new ValueObject(val);
+		assertEquals(valueObject.val, val);
+		// TODO add putfield tests once withfield is replaced
+	}
+
+	static void checkEqualPoint2D(Point2D point, int[] position) throws Throwable {
+		assertEquals(point.x, position[0]);
+		assertEquals(point.y, position[1]);
 	}
 
 	static void checkEqualFlattenedLine2D(FlattenedLine2D line, int[][] positions) throws Throwable {
