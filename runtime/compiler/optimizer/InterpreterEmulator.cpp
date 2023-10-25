@@ -256,7 +256,7 @@ TR::RequiredConst &InterpreterEmulator::addRequiredConst(TR::AnyConst value)
 
 void InterpreterEmulator::maintainStackForIf(TR_J9ByteCode bc)
 {
-    TR_ASSERT_FATAL(_iteratorWithState, "has to be called when the iterator has state!");
+    assertHasState();
     TR_ASSERT_FATAL(bc == J9BCificmpeq || bc == J9BCificmpne,
         "InterpreterEmulator::maintainStackForIf can only be called with J9BCificmpeq and J9BCificmpne\n");
     int32_t branchBC = _bcIndex + next2BytesSigned();
@@ -310,7 +310,7 @@ void InterpreterEmulator::maintainStackForIf(TR_J9ByteCode bc)
 
 void InterpreterEmulator::maintainStackForGetField()
 {
-    TR_ASSERT_FATAL(_iteratorWithState, "has to be called when the iterator has state!");
+    assertHasState();
     TR::DataType type = TR::NoType;
     uint32_t fieldOffset;
     int32_t cpIndex = next2Bytes();
@@ -552,7 +552,7 @@ int32_t InterpreterEmulator::setupBBStartContext(int32_t index)
 
 bool InterpreterEmulator::maintainStack(TR_J9ByteCode bc)
 {
-    TR_ASSERT_FATAL(_iteratorWithState, "has to be called when the iterator has state!");
+    assertHasState();
     int slotIndex = -1;
     switch (bc) {
         case J9BCgetfield:
@@ -761,13 +761,14 @@ bool InterpreterEmulator::maintainStack(TR_J9ByteCode bc)
 
 void InterpreterEmulator::maintainStackForReturn()
 {
+    assertHasState();
     if (method()->returnType() != TR::NoType)
         pop();
 }
 
 void InterpreterEmulator::maintainStackForGetStatic()
 {
-    TR_ASSERT_FATAL(_iteratorWithState, "has to be called when the iterator has state!");
+    assertHasState();
     if (comp()->compileRelocatableCode()) {
         pushUnknownOperand();
         return;
@@ -814,19 +815,19 @@ void InterpreterEmulator::maintainStackForGetStatic()
 
 void InterpreterEmulator::maintainStackForAload(int slotIndex)
 {
-    TR_ASSERT_FATAL(_iteratorWithState, "has to be called when the iterator has state!");
-
+    assertHasState();
     push((*_currentLocalObjectInfo)[slotIndex]);
 }
 
 void InterpreterEmulator::maintainStackForAstore(int slotIndex)
 {
-    TR_ASSERT_FATAL(_iteratorWithState, "has to be called when the iterator has state!");
+    assertHasState();
     (*_currentLocalObjectInfo)[slotIndex] = pop();
 }
 
 void InterpreterEmulator::maintainStackForldc(int32_t cpIndex)
 {
+    assertHasState();
     TR::DataType type = method()->getLDCType(cpIndex);
     switch (type) {
         case TR::Address:
@@ -858,7 +859,7 @@ void InterpreterEmulator::maintainStackForldc(int32_t cpIndex)
 
 void InterpreterEmulator::maintainStackForCall(Operand *result, int32_t numArgs, TR::DataType returnType)
 {
-    TR_ASSERT_FATAL(_iteratorWithState, "has to be called when the iterator has state!");
+    assertHasState();
 
     for (int i = 1; i <= numArgs; i++)
         pop();
@@ -871,7 +872,8 @@ void InterpreterEmulator::maintainStackForCall(Operand *result, int32_t numArgs,
 
 void InterpreterEmulator::maintainStackForCall()
 {
-    TR_ASSERT_FATAL(_iteratorWithState, "has to be called when the iterator has state!");
+    assertHasState();
+
     int32_t numOfArgs = -1;
     TR::DataType returnType = TR::NoType;
     Operand *result = NULL;
@@ -1173,9 +1175,9 @@ void InterpreterEmulator::refineResolvedCalleeForInvokestatic(TR_ResolvedMethod 
     TR::KnownObjectTable::Index &mcsIndex, TR::KnownObjectTable::Index &mhIndex, bool &isIndirectCall,
     TR_OpaqueClassBlock *&receiverClass)
 {
+    assertHasState();
     receiverClass = NULL;
 
-    TR_ASSERT_FATAL(_iteratorWithState, "has to be called when the iterator has state!");
     if (!comp()->getOrCreateKnownObjectTable())
         return;
 
@@ -1561,7 +1563,7 @@ void InterpreterEmulator::debugUnresolvedOrCold(TR_ResolvedMethod *resolvedMetho
 
 void InterpreterEmulator::refineResolvedCalleeForInvokevirtual(TR_ResolvedMethod *&callee, bool &isIndirectCall)
 {
-    TR_ASSERT_FATAL(_iteratorWithState, "has to be called when the iterator has state!");
+    assertHasState();
     if (!comp()->getOrCreateKnownObjectTable())
         return;
 
@@ -2035,3 +2037,5 @@ void InterpreterEmulator::findTargetAndUpdateInfoForCallsite(TR_CallSite *callsi
         _calltarget->addDeadCallee(callsite);
     }
 }
+
+void InterpreterEmulator::assertHasState() { TR_ASSERT_FATAL(_iteratorWithState, "expected iteration with state"); }
