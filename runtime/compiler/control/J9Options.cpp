@@ -3150,8 +3150,7 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
             if (J9_ARE_ALL_BITS_SET(javaVM->sharedClassConfig->runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_CACHE_NON_BOOT_CLASSES))
                {
                TR::CompilationInfo * compInfo = getCompilationInfo(jitConfig);
-               static char * dnipdsp = feGetEnv("TR_DisableNoIProfilerDuringStartupPhase");
-               if (compInfo->isWarmSCC() == TR_yes && !dnipdsp)
+               if (compInfo->isWarmSCC() == TR_yes && !self()->getOption(TR_AlwaysIProfileDuringStartupPhase))
                   {
                   self()->setOption(TR_NoIProfilerDuringStartupPhase);
                   }
