@@ -284,7 +284,7 @@ MM_VLHGCAccessBarrier::jniGetPrimitiveArrayCritical(J9VMThread* vmThread, jarray
 			fj9object_t *arrayoidPtr = indexableObjectModel->getArrayoidPointer(arrayObject);
 			if (indexableObjectModel->isArrayletDataDiscontiguous(arrayObject)) {
 				data = indexableObjectModel->getDataAddrForContiguous(arrayObject);
-				if ((NULL == data) || indexableObjectModel->isAddressWithinHeap(_extensions, data)) {
+				if ((NULL == data) || _extensions->isAddressWithinHeap(data)) {
 					/* Doublemap failed, but we still need to continue execution; therefore fallback to previous approach */
 					copyArrayCritical(vmThread, indexableObjectModel, functions, &data, arrayObject, isCopy);
 				}
@@ -348,7 +348,7 @@ MM_VLHGCAccessBarrier::jniReleasePrimitiveArrayCritical(J9VMThread* vmThread, ja
 				void *data = NULL;
 				data = indexableObjectModel->getDataAddrForContiguous(arrayObject);
 
-				if ((NULL == data) || indexableObjectModel->isAddressWithinHeap(_extensions, data)) {
+				if ((NULL == data) || _extensions->isAddressWithinHeap(data)) {
 					/* Doublemap failed, but we still need to continue execution; therefore fallback to previous approach */
 					copyBackArrayCritical(vmThread, indexableObjectModel, functions, elems, &arrayObject, mode);
 				}

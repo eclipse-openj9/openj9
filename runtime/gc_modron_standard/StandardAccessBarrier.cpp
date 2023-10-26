@@ -367,7 +367,6 @@ MM_StandardAccessBarrier::jniGetPrimitiveArrayCritical(J9VMThread* vmThread, jar
 	void *data = NULL;
 	J9JavaVM *javaVM = vmThread->javaVM;
 	J9InternalVMFunctions *functions = javaVM->internalVMFunctions;
-	J9IndexableObject *arrayObject = (J9IndexableObject *)J9_JNI_UNWRAP_REFERENCE(array);
 	GC_ArrayObjectModel *indexableObjectModel = &_extensions->indexableObjectModel;
 
 	bool shouldCopy = false;
@@ -378,11 +377,13 @@ MM_StandardAccessBarrier::jniGetPrimitiveArrayCritical(J9VMThread* vmThread, jar
 
 	if (shouldCopy) {
 		VM_VMAccess::inlineEnterVMFromJNI(vmThread);
+		J9IndexableObject *arrayObject = (J9IndexableObject *)J9_JNI_UNWRAP_REFERENCE(array);
 		copyArrayCritical(vmThread, indexableObjectModel, functions, &data, arrayObject, isCopy);
 		VM_VMAccess::inlineExitVMToJNI(vmThread);
 	} else {
 		// acquire access and return a direct pointer
 		MM_JNICriticalRegion::enterCriticalRegion(vmThread, false);
+		J9IndexableObject *arrayObject = (J9IndexableObject *)J9_JNI_UNWRAP_REFERENCE(array);
 		data = (void *)indexableObjectModel->getDataPointerForContiguous(arrayObject);
 		if (NULL != isCopy) {
 			*isCopy = JNI_FALSE;
@@ -397,7 +398,6 @@ MM_StandardAccessBarrier::jniReleasePrimitiveArrayCritical(J9VMThread* vmThread,
 	J9JavaVM *javaVM = vmThread->javaVM;
 	J9InternalVMFunctions *functions = javaVM->internalVMFunctions;
 	GC_ArrayObjectModel *indexableObjectModel = &_extensions->indexableObjectModel;
-	J9IndexableObject *arrayObject = (J9IndexableObject *)J9_JNI_UNWRAP_REFERENCE(array);
 
 	bool shouldCopy = false;
 	bool alwaysCopyInCritical = (javaVM->runtimeFlags & J9_RUNTIME_ALWAYS_COPY_JNI_CRITICAL) == J9_RUNTIME_ALWAYS_COPY_JNI_CRITICAL;
@@ -407,9 +407,11 @@ MM_StandardAccessBarrier::jniReleasePrimitiveArrayCritical(J9VMThread* vmThread,
 
 	if (shouldCopy) {
 		VM_VMAccess::inlineEnterVMFromJNI(vmThread);
+		J9IndexableObject *arrayObject = (J9IndexableObject *)J9_JNI_UNWRAP_REFERENCE(array);
 		copyBackArrayCritical(vmThread, indexableObjectModel, functions, elems, &arrayObject, mode);
 		VM_VMAccess::inlineExitVMToJNI(vmThread);
 	} else {
+		J9IndexableObject *arrayObject = (J9IndexableObject *)J9_JNI_UNWRAP_REFERENCE(array);
 		/*
 		 * Objects can not be moved if critical section is active
 		 * This trace point will be generated if object has been moved or passed value of elems is corrupted

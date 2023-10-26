@@ -31,7 +31,9 @@
 #include "HeapRegionDescriptorVLHGC.hpp"
 #include "Heap.hpp"
 #endif /* defined(J9VM_GC_ENABLE_DOUBLE_MAP) || defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */
+#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
 #include "SparseVirtualMemory.hpp"
+#endif /* defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */
 
 /**
  * Allocation description and layout initialization. This is called before OMR allocates
@@ -65,6 +67,7 @@ MM_IndexableObjectAllocationModel::initializeAllocateDescription(MM_EnvironmentB
 #endif /* defined (J9VM_GC_ENABLE_DOUBLE_MAP) */
 
 	/* determine size of layout overhead (additional to spine bytes) and finalize allocation description */
+	/* it is used to track amount of array bytes not included to spine and set final total number of bytes allocated for array */
 	uintptr_t layoutSizeInBytes = 0;
 	switch (_layout) {
 	case GC_ArrayletObjectModel::Illegal:
@@ -123,6 +126,10 @@ MM_IndexableObjectAllocationModel::initializeAllocateDescription(MM_EnvironmentB
 
 	if (isAllocatable()) {
 		/* set total request size and layout metadata to finalize the description */
+		/* This logic mimics out-of-spine behaviour for Discontiguous/Hybrid.
+		 * allocDescription->getBytesRequested() is used across the code as total amount of memory required for this allocation.
+		 * For example, it is used to report amount failed to be allocated in case of OOM.
+		 */
 		_allocateDescription.setBytesRequested(spineBytes + layoutSizeInBytes);
 		_allocateDescription.setNumArraylets(_numberOfArraylets);
 		_allocateDescription.setSpineBytes(spineBytes);
@@ -151,6 +158,8 @@ MM_IndexableObjectAllocationModel::initializeIndexableObject(MM_EnvironmentBase 
 	if (NULL != spine) {
 		/* Set the array size */
 		if (getAllocateDescription()->isChunkedArray()) {
+			/* !off-heap or 0-length arrays */
+			Assert_MM_true((!isAllIndexableDataContiguousEnabled) || (0 == _numberOfIndexedFields));
 			indexableObjectModel->setSizeInElementsForDiscontiguous(spine, _numberOfIndexedFields);
 #if defined(J9VM_ENV_DATA64)
 			if (((J9JavaVM *)env->getLanguageVM())->isIndexableDataAddrPresent) {
@@ -168,6 +177,7 @@ MM_IndexableObjectAllocationModel::initializeIndexableObject(MM_EnvironmentBase 
 #endif /* defined(J9VM_ENV_DATA64) */
 			} else if (isAllIndexableDataContiguousEnabled) {
 #if defined(J9VM_ENV_DATA64)
+				/* set NULL temporarily to avoid possible complication with GC occurring while the object is partially initialized? */
 				indexableObjectModel->setDataAddrForContiguous(spine, NULL);
 #endif /* defined(J9VM_ENV_DATA64) */
 			}
@@ -208,7 +218,8 @@ MM_IndexableObjectAllocationModel::initializeIndexableObject(MM_EnvironmentBase 
 	case GC_ArrayletObjectModel::Discontiguous:
 	case GC_ArrayletObjectModel::Hybrid:
 		if (NULL != spine) {
-			indexableObjectModel->setSizeInElementsForDiscontiguous(spine, _numberOfIndexedFields);
+			/* The array size has been set earlier at line 163 */
+//			indexableObjectModel->setSizeInElementsForDiscontiguous(spine, _numberOfIndexedFields);
 			if(0 == _numberOfIndexedFields) {
 				/* Don't try to initialize the arrayoid for an empty NUA */
 				Trc_MM_allocateAndConnectNonContiguousArraylet_Exit(env->getLanguageVMThread(), spine);
@@ -334,10 +345,14 @@ MM_IndexableObjectAllocationModel::layoutDiscontiguousArraylet(MM_EnvironmentBas
 		case GC_ArrayletObjectModel::Hybrid:
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 			/* Unreachable if double map is enabled */
-			if (indexableObjectModel->isDoubleMappingEnabled() || indexableObjectModel->isVirtualLargeObjectHeapEnabled()) {
+			if (indexableObjectModel->isDoubleMappingEnabled()) {
 				Assert_MM_double_map_unreachable();
 			}
 #endif /* defined(J9VM_GC_ENABLE_DOUBLE_MAP) */
+			/* Unreachable if off-heap is enabled */
+			if (indexableObjectModel->isVirtualLargeObjectHeapEnabled()) {
+				Assert_MM_unreachable();
+			}
 			/* last arrayoid points to end of arrayoid array in spine header (object-aligned if
 			 * required). (data size % leaf size) bytes of data are stored here (may be empty).
 			 */
@@ -498,8 +513,6 @@ MM_IndexableObjectAllocationModel::getSparseAddressAndDecommitLeaves(MM_Environm
 			Trc_MM_VirtualMemory_decommitMemory_failure(leaf, arrayletLeafSize);
 		}
 
-//		arrayletLeaveAddrs[arrayoidIndex] = leaf;
-
 		/* refresh the spine -- it might move if we GC while allocating the leaf */
 		spine = _allocateDescription.getSpine();
 
@@ -551,7 +564,7 @@ MM_IndexableObjectAllocationModel::doubleMapArraylets(MM_EnvironmentBase *env, J
 	/* For now we double map the entire region of all arraylet leaves. This might change in the future if hybrid regions are introduced. */
 	uintptr_t byteAmount = arrayletLeafSize * arrayletLeafCount;
 
-	Trc_MM_double_map_Entry(env->getLanguageVMThread(), (void *)_dataSize, (void *)byteAmount, (void *)objectPtr, (void *)arrayletLeafSize, arrayletLeafCount);
+	Trc_MM_double_map_EntryNew(env->getLanguageVMThread(), (void *)_dataSize, (void *)byteAmount, (void *)objectPtr, (void *)arrayletLeafSize, arrayletLeafCount);
 
 	void *result = NULL;
 	if (NULL == arrayletLeaveAddrs) {
