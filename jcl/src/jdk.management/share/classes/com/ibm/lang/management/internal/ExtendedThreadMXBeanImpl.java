@@ -37,7 +37,7 @@ public final class ExtendedThreadMXBeanImpl extends ThreadMXBeanImpl implements 
 
 	/**
 	 * Singleton accessor method.
-	 * 
+	 *
 	 * @return the <code>ExtendedThreadMXBeanImpl</code> singleton.
 	 */
 	public static ThreadMXBean getInstance() {
@@ -67,12 +67,22 @@ public final class ExtendedThreadMXBeanImpl extends ThreadMXBeanImpl implements 
 		return resultArray;
 	}
 
+	private native static long getThreadAllocatedBytesImpl(long threadID);
+
 	/**
 	 * {@inheritDoc}
 	 */
 	@Override
 	public long getThreadAllocatedBytes(long threadId) {
-		throw new UnsupportedOperationException();
+		if (isThreadAllocatedMemorySupported()) {
+			if (isThreadAllocatedMemoryEnabled()) {
+				return getThreadAllocatedBytesImpl(threadId);
+			} else {
+				return -1;
+			}
+		} else {
+			throw new UnsupportedOperationException();
+		}
 	}
 
 	/**
@@ -80,7 +90,14 @@ public final class ExtendedThreadMXBeanImpl extends ThreadMXBeanImpl implements 
 	 */
 	@Override
 	public long[] getThreadAllocatedBytes(long[] threadIds) {
-		throw new UnsupportedOperationException();
+		int length = threadIds.length;
+		long[] allocatedBytes = new long[length];
+
+		for (int i = 0; i < length; i++) {
+			allocatedBytes[i] = getThreadAllocatedBytes(threadIds[i]);
+		}
+
+		return allocatedBytes;
 	}
 
 	/**
@@ -135,12 +152,15 @@ public final class ExtendedThreadMXBeanImpl extends ThreadMXBeanImpl implements 
 		return result;
 	}
 
+	private boolean isThreadAllocatedMemoryEnabled = true;
+
 	/**
 	 * {@inheritDoc}
 	 */
 	@Override
 	public boolean isThreadAllocatedMemorySupported() {
-		return false;
+		/* Currently, this capability is always supported. */
+		return true;
 	}
 
 	/**
@@ -148,7 +168,7 @@ public final class ExtendedThreadMXBeanImpl extends ThreadMXBeanImpl implements 
 	 */
 	@Override
 	public boolean isThreadAllocatedMemoryEnabled() {
-		throw new UnsupportedOperationException();
+		return isThreadAllocatedMemoryEnabled && isThreadAllocatedMemorySupported();
 	}
 
 	/**
@@ -156,6 +176,6 @@ public final class ExtendedThreadMXBeanImpl extends ThreadMXBeanImpl implements 
 	 */
 	@Override
 	public void setThreadAllocatedMemoryEnabled(boolean value) {
-		throw new UnsupportedOperationException();
+		isThreadAllocatedMemoryEnabled = value;
 	}
 }
