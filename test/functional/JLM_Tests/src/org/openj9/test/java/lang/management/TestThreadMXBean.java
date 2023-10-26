@@ -1068,8 +1068,9 @@ public class TestThreadMXBean {
 		com.sun.management.ThreadMXBean sunTB = (com.sun.management.ThreadMXBean)tb;
 		AssertJUnit.assertTrue(sunTB.isThreadAllocatedMemoryEnabled());
 		AssertJUnit.assertTrue(sunTB.isThreadAllocatedMemorySupported());
+		long tid = Thread.currentThread().getId();
 
-		long bytes1 = sunTB.getCurrentThreadAllocatedBytes();
+		long bytes1 = sunTB.getThreadAllocatedBytes(tid);
 		AssertJUnit.assertTrue(bytes1 > 0);
 		ArrayList list = new ArrayList<>();
 
@@ -1077,22 +1078,22 @@ public class TestThreadMXBean {
 			list.add(new Object[100]);
 		}
 
-		long bytes2 = sunTB.getCurrentThreadAllocatedBytes();
+		long bytes2 = sunTB.getThreadAllocatedBytes(tid);
 		AssertJUnit.assertTrue(bytes2 > bytes1);
 
 		sunTB.setThreadAllocatedMemoryEnabled(false);
-		long bytes3 = sunTB.getCurrentThreadAllocatedBytes();
+		long bytes3 = sunTB.getThreadAllocatedBytes(tid);
 		AssertJUnit.assertTrue(bytes3 == -1);
 
 		sunTB.setThreadAllocatedMemoryEnabled(false);
-		long bytes4 = sunTB.getCurrentThreadAllocatedBytes();
+		long bytes4 = sunTB.getThreadAllocatedBytes(tid);
 		AssertJUnit.assertTrue(bytes4 >= bytes3);
 
 		for (int i = 0; i < 1000; i++) {
 			list.add(new Object[100]);
 		}
 
-		long bytes5 = sunTB.getCurrentThreadAllocatedBytes();
+		long bytes5 = sunTB.getThreadAllocatedBytes(tid);
 		AssertJUnit.assertTrue(bytes5 >= bytes4);
 	}
 
