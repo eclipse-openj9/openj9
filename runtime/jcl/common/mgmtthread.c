@@ -465,7 +465,6 @@ Java_com_ibm_lang_management_internal_ExtendedThreadMXBeanImpl_getThreadAllocate
 
 	/* Shortcut for the current thread. */
 	if (getThreadID(currentThread, (j9object_t)currentThread->threadObject) == threadID) {
-		vmfns->internalExitVMToJNI(currentThread);
 		if (mmfns->j9gc_get_cumulative_bytes_allocated_by_thread(currentThread, &allocatedBytes)) {
 			result = (jlong) allocatedBytes;
 		}
