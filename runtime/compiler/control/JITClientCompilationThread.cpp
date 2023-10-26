@@ -1141,7 +1141,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          {
          auto recv = client->getRecvData<TR::KnownObjectTable::Index>();
          TR_J9VMBase::MemberNameMethodInfo info = {};
-         uintptr_t ok = fe->getMemberNameMethodInfo(comp, std::get<0>(recv), &info);
+         bool ok = fe->getMemberNameMethodInfo(comp, std::get<0>(recv), &info);
          client->write(response, ok, info.vmtarget, info.vmindex, info.clazz, info.refKind);
          }
          break;
