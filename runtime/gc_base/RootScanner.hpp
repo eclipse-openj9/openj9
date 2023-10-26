@@ -578,7 +578,7 @@ public:
 	 *
 	 * @param objectPtr[in] indexable object's spine
 	 */
-	virtual void doObjectInVirtualLargeObjectHeap(J9Object *objectPtr);
+	virtual void doObjectInVirtualLargeObjectHeap(J9Object *objectPtr, bool *sparseHeapAllocation);
 #endif /* defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */
 	
 	/**

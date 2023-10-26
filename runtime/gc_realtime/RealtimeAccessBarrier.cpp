@@ -463,11 +463,13 @@ MM_RealtimeAccessBarrier::jniGetPrimitiveArrayCritical(J9VMThread* vmThread, jar
 	if(shouldCopy) {
 		VM_VMAccess::inlineEnterVMFromJNI(vmThread);
 		GC_ArrayObjectModel *indexableObjectModel = &_extensions->indexableObjectModel;
+		arrayObject = (J9IndexableObject*)J9_JNI_UNWRAP_REFERENCE(array);
 		copyArrayCritical(vmThread, indexableObjectModel, functions, &data, arrayObject, isCopy);
 		VM_VMAccess::inlineExitVMToJNI(vmThread);
 	} else {
 		// acquire access and return a direct pointer
 		MM_JNICriticalRegion::enterCriticalRegion(vmThread, false);
+		arrayObject = (J9IndexableObject*)J9_JNI_UNWRAP_REFERENCE(array);
 		data = (void *)_extensions->indexableObjectModel.getDataPointerForContiguous(arrayObject);
 		if(NULL != isCopy) {
 			*isCopy = JNI_FALSE;
@@ -494,6 +496,7 @@ MM_RealtimeAccessBarrier::jniReleasePrimitiveArrayCritical(J9VMThread* vmThread,
 	if(shouldCopy) {
 		VM_VMAccess::inlineEnterVMFromJNI(vmThread);
 		GC_ArrayObjectModel *indexableObjectModel = &_extensions->indexableObjectModel;
+		arrayObject = (J9IndexableObject*)J9_JNI_UNWRAP_REFERENCE(array);
 		copyBackArrayCritical(vmThread, indexableObjectModel, functions, elems, &arrayObject, mode);
 		VM_VMAccess::inlineExitVMToJNI(vmThread);
 	} else {
