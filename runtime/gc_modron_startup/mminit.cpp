@@ -536,6 +536,7 @@ j9gc_initialize_heap(J9JavaVM *vm, IDATA *memoryParameterTable, UDATA heapBytesR
 	return JNI_OK;
 
 error_no_memory:
+	extensions->handleInitializeHeapError(vm, loadInfo->fatalErrorStr);
 	return JNI_ENOMEM;
 }
 
