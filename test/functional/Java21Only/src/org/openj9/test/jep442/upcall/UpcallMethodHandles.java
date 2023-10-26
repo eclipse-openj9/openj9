@@ -28,7 +28,6 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.invoke.MethodType;
 import static java.lang.invoke.MethodType.methodType;
-import java.lang.invoke.VarHandle;
 
 import java.lang.foreign.Arena;
 import java.lang.foreign.FunctionDescriptor;
@@ -1688,9 +1687,6 @@ public class UpcallMethodHandles {
 
 	public static MemorySegment add3FloatStructs_returnStruct(MemorySegment arg1, MemorySegment arg2) {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_FLOAT.withName("elem1"), JAVA_FLOAT.withName("elem2"), JAVA_FLOAT.withName("elem3"));
-		VarHandle floatHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));
-		VarHandle floatHandle2 = structLayout.varHandle(PathElement.groupElement("elem2"));
-		VarHandle floatHandle3 = structLayout.varHandle(PathElement.groupElement("elem3"));
 
 		MemorySegment floatStructSegmt = arena.allocate(structLayout);
 		float floatStruct_Elem1 = arg1.get(JAVA_FLOAT, 0) + arg2.get(JAVA_FLOAT, 0);

@@ -86,10 +86,6 @@ public class InvalidDownCallTests {
 
 	@Test(expectedExceptions = NullPointerException.class)
 	public void test_nullValueForPtrArgument() throws Throwable {
-		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_INT.withName("elem1"), JAVA_INT.withName("elem2"));
-		VarHandle intHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));
-		VarHandle intHandle2 = structLayout.varHandle(PathElement.groupElement("elem2"));
-
 		FunctionDescriptor fd = FunctionDescriptor.of(JAVA_INT, JAVA_INT, ADDRESS);
 		MemorySegment functionSymbol = nativeLibLookup.find("addIntAndIntsFromStructPointer").get();
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
@@ -119,10 +115,6 @@ public class InvalidDownCallTests {
 	}
 
 	public void test_nullSegmentForPtrArgument() throws Throwable {
-		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_INT.withName("elem1"), JAVA_INT.withName("elem2"));
-		VarHandle intHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));
-		VarHandle intHandle2 = structLayout.varHandle(PathElement.groupElement("elem2"));
-
 		FunctionDescriptor fd = FunctionDescriptor.of(JAVA_INT, JAVA_INT, ADDRESS);
 		MemorySegment functionSymbol = nativeLibLookup.find("validateNullAddrArgument").get();
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
@@ -153,10 +145,6 @@ public class InvalidDownCallTests {
 
 	@Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Heap segment not allowed.*")
 	public void test_heapSegmentForPtrArgument() throws Throwable {
-		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_INT.withName("elem1"), JAVA_INT.withName("elem2"));
-		VarHandle intHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));
-		VarHandle intHandle2 = structLayout.varHandle(PathElement.groupElement("elem2"));
-
 		FunctionDescriptor fd = FunctionDescriptor.of(JAVA_INT, JAVA_INT, ADDRESS);
 		MemorySegment functionSymbol = nativeLibLookup.find("addIntAndIntsFromStructPointer").get();
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
