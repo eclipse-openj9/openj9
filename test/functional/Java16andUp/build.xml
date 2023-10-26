@@ -39,17 +39,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	<property name="LIB" value="asm,testng,jcommander" />
 	<import file="${TEST_ROOT}/TKG/scripts/getDependencies.xml" />
 
-	<if>
-		<equals arg1="${JDK_VERSION}" arg2="16" />
-		<then>
-			<!-- Java APIs of JEP389 and related features in Java 16 is incompatible with the APIs in Java17 and beyond -->
-			<property name="src_160" value="src_160" />
-		</then>
-		<else>
-			<property name="src_160" value="" />
-		</else>
-	</if>
-
 	<target name="init">
 		<mkdir dir="${DEST}" />
 		<mkdir dir="${build}" />
@@ -99,46 +88,21 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<echo>===debug:                        on</echo>
 		<echo>===destdir:                      ${DEST}</echo>
 
-		<if>
-			<equals arg1="${JDK_VERSION}" arg2="16"/>
-			<then>
-				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
-					<src path="${src}" />
-					<src path="${src_160}" />
-					<src path="${TestUtilities}" />
-					<exclude name="**/modules/**" />
-					<compilerarg line='--enable-preview --source ${JDK_VERSION}' />
-					<compilerarg line='--add-modules jdk.incubator.foreign' />
-					<compilerarg line='--add-opens jdk.incubator.foreign/jdk.internal.foreign=ALL-UNNAMED' />
-					<compilerarg line='--add-exports java.base/jdk.internal.misc=ALL-UNNAMED' />
-					<compilerarg line='--add-opens java.base/jdk.internal.misc=ALL-UNNAMED' />
-					<compilerarg line='--add-opens java.base/java.lang=ALL-UNNAMED' />
-					<classpath>
-						<pathelement location="${LIB_DIR}/testng.jar" />
-						<pathelement location="${LIB_DIR}/jcommander.jar" />
-						<pathelement location="${LIB_DIR}/asm.jar" />
-						<pathelement location="${build}" />
-					</classpath>
-				</javac>
-			</then>
-			<else>
-				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
-					<src path="${src}" />
-					<src path="${TestUtilities}" />
-					<exclude name="**/modules/**" />
-					<compilerarg line='--enable-preview --source ${JDK_VERSION}' />
-					<compilerarg line='--add-exports java.base/jdk.internal.misc=ALL-UNNAMED' />
-					<compilerarg line='--add-opens java.base/jdk.internal.misc=ALL-UNNAMED' />
-					<compilerarg line='--add-opens java.base/java.lang=ALL-UNNAMED' />
-					<classpath>
-						<pathelement location="${LIB_DIR}/testng.jar" />
-						<pathelement location="${LIB_DIR}/jcommander.jar" />
-						<pathelement location="${LIB_DIR}/asm.jar" />
-						<pathelement location="${build}" />
-					</classpath>
-				</javac>
-			</else>
-		</if>
+		<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
+			<src path="${src}" />
+			<src path="${TestUtilities}" />
+			<exclude name="**/modules/**" />
+			<compilerarg line='--enable-preview --source ${JDK_VERSION}' />
+			<compilerarg line='--add-exports java.base/jdk.internal.misc=ALL-UNNAMED' />
+			<compilerarg line='--add-opens java.base/jdk.internal.misc=ALL-UNNAMED' />
+			<compilerarg line='--add-opens java.base/java.lang=ALL-UNNAMED' />
+			<classpath>
+				<pathelement location="${LIB_DIR}/testng.jar" />
+				<pathelement location="${LIB_DIR}/jcommander.jar" />
+				<pathelement location="${LIB_DIR}/asm.jar" />
+				<pathelement location="${build}" />
+			</classpath>
+		</javac>
 	</target>
 
 	<target name="dist" depends="compile,compile_modules" description="generate the distribution">
