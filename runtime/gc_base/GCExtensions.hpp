@@ -197,6 +197,8 @@ public:
 	UDATA freeSizeThresholdForSurvivor; /**< if average freeSize(freeSize/freeCount) of the region is smaller than the Threshold, the region would not be reused by collector as survivor, for balanced GC only */
 	bool recycleRemainders; /**< true if need to recycle TLHRemainders at the end of PGC, for balanced GC only */
 
+	bool forceGPFOnHeapInitializationError; /**< if set causes GPF generation on heap initialization error */
+
 	enum ContinuationListOption {
 		disable_continuation_list = 0,
 		enable_continuation_list = 1,
@@ -303,6 +305,13 @@ public:
 	void releaseNativesForContinuationObject(MM_EnvironmentBase* env, j9object_t objectPtr);
 
 	/**
+	 * Prints error message and forces GPF if -XXgc:forceGPFOnHeapInitializationError is provided
+	 * @param[in] vm the current J9JavaVM
+	 * @param[in] errorMessage error message set by GC heap initialization if available
+	 */
+	void handleInitializeHeapError(J9JavaVM *vm, const char *errorMessage);
+
+	/**
 	 * Check if we need to scan the java stack for the Continuation Object
 	 * Used during main scan phase of GC (object graph traversal) or heap object iteration (in sliding compact).
 	 * Not meant to be used during root scanning (neither strong roots nor weak roots)!
@@ -385,6 +394,7 @@ public:
 		, minimumFreeSizeForSurvivor(DEFAULT_SURVIVOR_MINIMUM_FREESIZE)
 		, freeSizeThresholdForSurvivor(DEFAULT_SURVIVOR_THRESHOLD)
 		, recycleRemainders(true)
+		, forceGPFOnHeapInitializationError(false)
 		, continuationListOption(enable_continuation_list)
 		, timingAddContinuationInList(onCreated)
 	{
