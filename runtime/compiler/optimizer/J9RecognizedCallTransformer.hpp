@@ -140,6 +140,88 @@ class RecognizedCallTransformer : public OMR::RecognizedCallTransformer
     */
    void process_java_lang_StringUTF16_toBytes(TR::TreeTop* treetop, TR::Node* node);
    /** \brief
+    *     Transforms jdk/internal/util/ArraysSupport.vectorizedMismatch(Ljava/lang/Object;JLjava/lang/Object;JII)I
+    *     into an arraycmplen, bit manipulation and iselect sequence with equivalent semantics.
+    *
+    *  \param treetop
+    *     The treetop which anchors the call node.
+    *
+    *  \param node
+    *     The call node representing a call to jdk/internal/util/ArraysSupport.vectorizedMismatch(Ljava/lang/Object;JLjava/lang/Object;JII)I
+    *     which has the following shape:
+    *
+    *     \code
+    *     icall  <jdk/internal/util/ArraysSupport.vectorizedMismatch(Ljava/lang/Object;JLjava/lang/Object;JII)I>
+    *       <a>
+    *       <aOffset>
+    *       <b>
+    *       <bOffset>
+    *       <length>
+    *       <log2ArrayIndexScale>
+    *     \endcode
+    *
+    *  \details
+    *     The call node is transformed to the following shape:
+    *
+    *     \code
+    *     iselect ()
+    *       lcmpeq
+    *         arraycmplen
+    *           aladd
+    *             <a>
+    *             <aOffset>
+    *           aladd
+    *             <b>
+    *             <bOffset>
+    *           land
+    *             lshl
+    *               i2l
+    *                 <length>
+    *               <log2ArrayIndexScale>
+    *             lxor
+    *               lor
+    *                 lshl
+    *                   ==>i2l
+    *                   iconst 1
+    *                 lconst 3
+    *               lconst -1
+    *         ==>land
+    *       ixor
+    *         l2i
+    *           lshr
+    *             land
+    *               ==>lshl
+    *               ==>lor
+    *             <log2ArrayIndexScale>
+    *         iconst -1
+    *       l2i
+    *         lshr
+    *           ==>arraycmplen
+    *           <log2ArrayIndexScale>
+    *     \endcode
+    *
+    *     This transformation is valid because vectorizedMismatch is functionally equivalent to the following pseudocode
+    *
+    *     \code
+    *     vectorizedMismatch(a, aOffset, b, bOffset, length, log2ArrayIndexScale) {
+    *         lengthInBytes = length << log2ArrayIndexScale
+    *
+    *         // the following mask calculation is equivalent to 'mask = (log2ArrayIndexScale<2) ? 3 : 7', assuming log2ArrayIndexScale <= 3
+    *         // the original java implementation checks multiple of 8B at a time, but for elements smaller than 4B it also checks another 4B at the end
+    *         // this mask serves to round down to nearest multiple of 8B (or 4B if the element is smaller than 4B) and get remainder
+    *         mask = (log2ArrayIndexScale<<1) | 3
+    *
+    *         lengthToCompare = lengthInBytes & ~(mask)                          // round down to nearest multiple of 8 (or 4)
+    *         mismatchIndex = arrayCmpLen(a+aOffset, b+bOffset, lengthToCompare)
+    *         if (mismatchIndex == lengthToCompare)                              // no mismatch found
+    *             return ~((lengthInBytes & mask) >> log2ArrayIndexScale)        // inverted remainder, converted from byte-wise index to element-wise index
+    *         else                                                               // mismatch found
+    *             return mismatchIndex >> log2ArrayIndexScale                    // convert byte-wise index to element-wise index
+    *     }
+    *     \endcode
+    */
+   void process_jdk_internal_util_ArraysSupport_vectorizedMismatch(TR::TreeTop* treetop, TR::Node* node);
+   /** \brief
     *     Transforms java/lang/StrictMath.sqrt(D)D and java/lang/Math.sqrt(D)D into a CodeGen inlined function with equivalent semantics.
     *
     *  \param treetop
