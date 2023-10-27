@@ -3097,6 +3097,10 @@ int32_t TR_CISCTransformer::perform()
 
       for (nextLoop = loopIt.getFirst(); nextLoop != 0; nextLoop = loopIt.getNext())
          {
+         if (comp()->getMethodHotness() <= warm &&
+             nextLoop->getEntryBlock()->getFrequency() < comp()->getOptions()->getIdiomRecognitionFrequencyThresholdAtWarm())
+            continue;
+
          // make bb list for each loop
          TR::Block *block;
          bblistPred.init();
