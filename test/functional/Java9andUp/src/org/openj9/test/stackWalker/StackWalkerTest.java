@@ -42,6 +42,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.openj9.test.util.VersionCheck;
+
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.testng.log4testng.Logger;
@@ -60,11 +62,12 @@ public class StackWalkerTest {
 
 	@Test
 	public void testOptions() {
+		int expected = (VersionCheck.major() >= 22) ? 4 : 3;
 		Option[] valueList = Option.values();
-		assertEquals(valueList.length, 3, "wrong number of values");
-		for (Option opt: valueList) {
+		assertEquals(valueList.length, expected, "wrong number of values");
+		for (Option opt : valueList) {
 			Option val = Option.valueOf(opt.toString());
-			logMessage("Option: "+opt.toString()+" value="+val);
+			logMessage("Option: " + opt.toString() + " value=" + val);
 		}
 	}
 
