@@ -333,6 +333,8 @@ static const struct { \
 #define J9CLASS_UNPADDED_INSTANCE_SIZE(clazz) J9_VALUETYPE_FLATTENED_SIZE(clazz)
 #define J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(clazz) J9_ARE_ALL_BITS_SET((clazz)->classFlags, J9ClassIsPrimitiveValueType)
 #define J9_IS_J9CLASS_FLATTENED(clazz) J9_ARE_ALL_BITS_SET((clazz)->classFlags, J9ClassIsFlattened)
+
+#define J9ROMFIELD_IS_NULL_RESTRICTED(romField)	J9_ARE_ALL_BITS_SET((romField)->modifiers, J9FieldFlagIsNullRestricted)
 /**
  * Disable flattening of volatile field that is > 8 bytes for now, as the current implementation of copyObjectFields() will tear this field.
  */
@@ -341,7 +343,7 @@ static const struct { \
 		(J9_ARE_NO_BITS_SET((romFieldShape)->modifiers, J9AccVolatile) || (J9CLASS_UNPADDED_INSTANCE_SIZE(fieldClazz) <= sizeof(U_64))))
 /* This will replace J9_IS_FIELD_FLATTENED when QTypes are removed. J9_IS_J9CLASS_FLATTENED will return false since the current check requires a primitive value type. */
 #define J9_IS_NULL_RESTRICTED_FIELD_FLATTENED(fieldClazz, romFieldShape) \
-		(J9_ARE_ALL_BITS_SET((romFieldShape)->modifiers, J9FieldFlagIsNullRestricted) && \
+		(J9ROMFIELD_IS_NULL_RESTRICTED(romFieldShape) && \
 		J9_IS_J9CLASS_FLATTENED(fieldClazz) && \
 		(J9_ARE_NO_BITS_SET((romFieldShape)->modifiers, J9AccVolatile) || (J9CLASS_UNPADDED_INSTANCE_SIZE(fieldClazz) <= sizeof(U_64))))
 #define J9_VALUETYPE_FLATTENED_SIZE(clazz) (J9CLASS_HAS_4BYTE_PREPADDING((clazz)) ? ((clazz)->totalInstanceSize - sizeof(U_32)) : (clazz)->totalInstanceSize)
@@ -351,6 +353,7 @@ static const struct { \
 #define J9CLASS_UNPADDED_INSTANCE_SIZE(clazz) ((clazz)->totalInstanceSize)
 #define J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(clazz) FALSE
 #define J9_IS_J9CLASS_FLATTENED(clazz) FALSE
+#define J9ROMFIELD_IS_NULL_RESTRICTED(romField) FALSE
 #define J9_IS_FIELD_FLATTENED(fieldClazz, romFieldShape) FALSE
 #define J9_IS_NULL_RESTRICTED_FIELD_FLATTENED(fieldClazz, romFieldShape) FALSE
 #define J9_VALUETYPE_FLATTENED_SIZE(clazz)((UDATA) 0) /* It is not possible for this macro to be used since we always check J9_IS_J9CLASS_FLATTENED before ever using it. */

@@ -137,9 +137,11 @@ initImpl(J9VMThread *currentThread, j9object_t membernameObject, j9object_t refO
 		}
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 		if (vmFuncs->isNameOrSignatureQtype(J9ROMFIELDSHAPE_SIGNATURE(romField))
-			&& vmFuncs->isFlattenableFieldFlattened(fieldID->declaringClass, fieldID->field)
+			|| J9ROMFIELD_IS_NULL_RESTRICTED(romField)
 		) {
-			flags |= MN_FLATTENED;
+			if (vmFuncs->isFlattenableFieldFlattened(fieldID->declaringClass, fieldID->field)) {
+				flags |= MN_FLATTENED;
+			}
 		}
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
