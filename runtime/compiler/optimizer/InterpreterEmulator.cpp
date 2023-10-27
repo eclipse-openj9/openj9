@@ -271,16 +271,49 @@ void InterpreterEmulator::maintainStackForIf(TR_J9ByteCode bc)
     // The conditional is expected to pop and somehow compare two values from
     // the stack. For unary comparisons (e.g. ifeq, ifnull), the caller should
     // push the implied operand first. The values are irrelevant for now.
-    // TODO: branch folding
-    pop();
-    pop();
+    Operand *rhs = pop();
+    Operand *lhs = pop();
 
-    debugTrace(tracer(), "conditional can jump to +%d\n", branchBC);
-    saveStack(branchBC);
+    if (tracer()->debugLevel()) {
+        _operandBuf->clear();
+        lhs->printToString(_operandBuf);
+        debugTrace(tracer(), "compare lhs %s", _operandBuf->text());
+        _operandBuf->clear();
+        rhs->printToString(_operandBuf);
+        debugTrace(tracer(), "     vs rhs %s\n", _operandBuf->text());
+    }
 
-    debugTrace(tracer(), "conditional can fall through\n");
-    // fallthrough stack will be saved in findAndCreateCallsitesFromBytecodes()
-    // in the same way as for blocks that don't end with control flow
+    TR_YesNoMaybe isTaken = TR_maybe;
+    switch (bc) {
+        case J9BCifacmpeq:
+        case J9BCifacmpne: {
+            bool lhsConstant = lhs->isNull() || lhs->asKnownObject() != NULL;
+            bool rhsConstant = rhs->isNull() || rhs->asKnownObject() != NULL;
+            if (lhsConstant && rhsConstant) {
+                bool equal = lhs->isNull() == rhs->isNull() && lhs->getKnownObjectIndex() == rhs->getKnownObjectIndex();
+
+                isTaken = (bc == J9BCifacmpeq) == equal ? TR_yes : TR_no;
+            }
+
+            break;
+        }
+    }
+
+    if (isTaken == TR_no) {
+        markEdgeUnreachable(branchBC);
+    } else {
+        debugTrace(tracer(), "conditional can jump to +%d\n", branchBC);
+        saveStack(branchBC);
+        _outEdgesStillReachable.insert(_currentInlinedBlock->getEdge(blocks(branchBC)));
+    }
+
+    if (isTaken == TR_yes) {
+        _currentBcCanFallThrough = false;
+    } else {
+        debugTrace(tracer(), "conditional can fall through\n");
+        // fallthrough stack will be saved in findAndCreateCallsitesFromBytecodes()
+        // in the same way as for blocks that don't end with control flow
+    }
 }
 
 void InterpreterEmulator::maintainStackForTableSwitch()
@@ -304,10 +337,12 @@ void InterpreterEmulator::maintainStackForTableSwitch()
     for (int32_t i = lo; i <= hi; i++) {
         int32_t target = _bcIndex + nextSwitchValue(bcIndex);
         debugTrace(tracer(), "case %d -> +%d", i, target);
+        _outEdgesStillReachable.insert(_currentInlinedBlock->getEdge(blocks(target)));
         saveStack(target);
     }
 
     debugTrace(tracer(), "default -> +%d", defTarget);
+    _outEdgesStillReachable.insert(_currentInlinedBlock->getEdge(blocks(defTarget)));
     saveStack(defTarget);
 }
 
@@ -568,6 +603,17 @@ void InterpreterEmulator::initializeIteratorWithState()
 
     int32_t numParmSlots = method()->numberOfParameterSlots();
     _numSlots = numParmSlots + method()->numberOfTemps();
+
+    TR::AllBlockIterator it(_cfg, comp());
+    for (; it.currentBlock() != NULL; it.stepForward()) {
+        TR::Block *block = it.currentBlock();
+        uint32_t rc = 0;
+        TR_PredecessorIterator preds(block);
+        for (auto *pred = preds.getFirst(); pred != NULL; pred = preds.getNext())
+            rc++;
+
+        _blockRc[block] = rc;
+    }
 }
 
 void InterpreterEmulator::setupMethodEntryLocalObjectState()
@@ -609,15 +655,23 @@ void InterpreterEmulator::setupMethodEntryLocalObjectState()
     }
 }
 
+bool InterpreterEmulator::hasVisitedPred(TR::Block *block)
+{
+    TR_PredecessorIterator pi(block);
+    for (TR::CFGEdge *edge = pi.getFirst(); edge != NULL; edge = pi.getNext()) {
+        if (!isEdgeUnreachable(edge) && _visitedBlocks.contains(toBlock(edge->getFrom())))
+            return true;
+    }
+
+    return false;
+}
+
 bool InterpreterEmulator::hasUnvisitedPred(TR::Block *block)
 {
     TR_PredecessorIterator pi(block);
     for (TR::CFGEdge *edge = pi.getFirst(); edge != NULL; edge = pi.getNext()) {
-        TR::Block *fromBlock = toBlock(edge->getFrom());
-        auto fromBCIndex = fromBlock->getEntry()->getNode()->getByteCodeIndex();
-        if (!isGenerated(fromBCIndex)) {
+        if (!isEdgeUnreachable(edge) && !_visitedBlocks.contains(toBlock(edge->getFrom())))
             return true;
-        }
     }
 
     return false;
@@ -816,10 +870,13 @@ bool InterpreterEmulator::maintainStack(TR_J9ByteCode bc)
             maintainStackForTableSwitch();
             break;
 
-        case J9BCgoto:
-            saveStack(bcIndex() + next2BytesSigned());
+        case J9BCgoto: {
+            int32_t target = bcIndex() + next2BytesSigned();
+            _outEdgesStillReachable.insert(_currentInlinedBlock->getEdge(blocks(target)));
+            saveStack(target);
             _currentBcCanFallThrough = false;
             break;
+        }
 
         case J9BCpop:
         case J9BCputfield:
@@ -1613,8 +1670,10 @@ bool InterpreterEmulator::findAndCreateCallsitesFromBytecodes(bool wasPeekingSuc
     _currentInlinedBlock = blockIt.currentBlock();
     for (; blockIt.currentBlock() != NULL; blockIt.stepForward()) {
         TR::Block *block = blockIt.currentBlock();
-        if (block == _cfg->getStart() || block == _cfg->getEnd())
+        if (block == _cfg->getStart() || block == _cfg->getEnd()) {
+            _visitedBlocks.add(block);
             continue; // no corresponding bytecode
+        }
 
         int32_t blockStartBci = block->getBlockBCIndex();
         debugTrace(tracer(), "Start block_%d [%p], bci %+d\n", block->getNumber(), block, blockStartBci);
@@ -1622,6 +1681,50 @@ bool InterpreterEmulator::findAndCreateCallsitesFromBytecodes(bool wasPeekingSuc
         _currentInlinedBlock = block;
 
         if (_iteratorWithState) {
+            _outEdgesStillReachable.clear();
+
+            if (_potentialCycleBlocks.contains(block)) {
+                // Some but not all of block's incoming edges have been found to be
+                // unreachable. Block could belong to an unreachable cycle.
+                //
+                // On the simplifying assumption that visited blocks are always
+                // reachable, block must also be reachable if it has a visited
+                // predecessor (from which the edge is not known to be unreachable).
+                //
+                if (!hasVisitedPred(block)) {
+                    // Do mark/sweep to determine precise reachability based on the
+                    // current state of the analysis. This will search through all
+                    // of the current CFG, but it shouldn't happen too often. If the
+                    // CFG is reducible - which it should almost always be - then
+                    // at this point block must be an unreachable loop header. To
+                    // see why, note that back-edges don't affect the order in which
+                    // blocks appear in a DFS, so reverse postorder is a topological
+                    // sort of the CFG after deleting back-edges. Furthermore, back-
+                    // edges are also irrelevant to reachability. So if block is
+                    // reachable, it has a visited predecessor, and otherwise only a
+                    // back-edge could prevent its refcount from reaching zero.
+                    //
+                    // Unfortunately we can't correctly conclude that block is
+                    // unreachable here without performing a search. It might still
+                    // be reachable if it's part of an improper loop.
+                    //
+                    markSweepCFG();
+                }
+            }
+
+            if (isBlockUnreachable(block)) {
+                debugTrace(tracer(), "unreachable block");
+
+                // Because it's not possible to enter block at all, all of its
+                // outgoing edges are unreachable, including exception edges.
+                markSuccessorsUnreachable(block->getSuccessors());
+                markSuccessorsUnreachable(block->getExceptionSuccessors());
+                debugTrace(tracer(), "skip\n");
+
+                continue;
+            }
+
+            _visitedBlocks.add(block);
             setupBBStartContext(blockStartBci);
             if (tracer()->debugLevel()) {
                 debugTrace(tracer(), "      operand stack at start of block");
@@ -1676,6 +1779,8 @@ bool InterpreterEmulator::findAndCreateCallsitesFromBytecodes(bool wasPeekingSuc
                 if (!maintainStack(bc))
                     return false;
 
+                setIsGenerated(_bcIndex);
+
                 if (tracer()->debugLevel()) {
                     debugTrace(tracer(), "      operand stack after bytecode %+d : %s", _bcIndex,
                         comp()->fej9()->getByteCodeName(nextByte(0)));
@@ -1683,7 +1788,13 @@ bool InterpreterEmulator::findAndCreateCallsitesFromBytecodes(bool wasPeekingSuc
                     dumpStack();
                 }
 
-                setIsGenerated(_bcIndex);
+                if (!_currentBcCanFallThrough) {
+                    debugTrace(tracer(), "instruction cannot fall through to next");
+                    // Only mark regular successors unreachable. There may have been
+                    // an exception point in the current block.
+                    markSuccessorsUnreachable(block->getSuccessors());
+                    break;
+                }
             }
 
             _pca.updateArg(bc);
@@ -1693,8 +1804,10 @@ bool InterpreterEmulator::findAndCreateCallsitesFromBytecodes(bool wasPeekingSuc
                 break;
             } else if (_InterpreterEmulatorFlags[_bcIndex].testAny(
                            InterpreterEmulator::BytecodePropertyFlag::bbStart)) {
-                if (_iteratorWithState && _currentBcCanFallThrough)
+                if (_iteratorWithState) {
                     saveStack(_bcIndex);
+                    debugTrace(tracer(), "fall through to block_%d at +%d", blocks(_bcIndex)->getNumber(), _bcIndex);
+                }
 
                 break;
             }
@@ -2356,3 +2469,109 @@ void InterpreterEmulator::findTargetAndUpdateInfoForCallsite(TR_CallSite *callsi
 }
 
 void InterpreterEmulator::assertHasState() { TR_ASSERT_FATAL(_iteratorWithState, "expected iteration with state"); }
+
+bool InterpreterEmulator::isEdgeUnreachable(TR::CFGEdge *edge) { return _unreachableEdges.count(edge) != 0; }
+
+bool InterpreterEmulator::isBlockUnreachable(TR::Block *block) { return _blockRc[block] == 0; }
+
+void InterpreterEmulator::markSuccessorsUnreachable(const TR::CFGEdgeList &edges)
+{
+    assertHasState();
+    auto end = edges.end();
+    for (auto it = edges.begin(); it != end; it++) {
+        TR::CFGEdge *edge = *it;
+        if (_outEdgesStillReachable.count(edge) == 0)
+            markEdgeUnreachable(edge);
+    }
+}
+
+void InterpreterEmulator::markEdgeUnreachable(TR::CFGEdge *edge)
+{
+    TR::Block *src = toBlock(edge->getFrom());
+    TR::Block *dest = toBlock(edge->getTo());
+    debugTrace(tracer(), "%sedge %d (bci +%d) -> %d (bci +%d) is unreachable", dest->isCatchBlock() ? "exception " : "",
+        src->getNumber(), src->getEntry()->getNode()->getByteCodeIndex(), dest->getNumber(),
+        dest->getEntry()->getNode()->getByteCodeIndex());
+
+    bool newlyAdded = _unreachableEdges.insert(edge).second;
+    TR_ASSERT_FATAL(newlyAdded, ".."); // TODO: message
+
+    uint32_t &rc = _blockRc[dest];
+    TR_ASSERT_FATAL(rc != 0, "dest block %d already unreachable", dest->getNumber());
+    rc--;
+    if (rc == 0)
+        _potentialCycleBlocks.remove(dest);
+    else
+        _potentialCycleBlocks.add(dest);
+}
+
+void InterpreterEmulator::markEdgeUnreachable(int32_t destBcIndex)
+{
+    markEdgeUnreachable(_currentInlinedBlock->getEdge(blocks(destBcIndex)));
+}
+
+void InterpreterEmulator::markSweepCFG()
+{
+    TR::BlockChecklist reachable(comp());
+    TR::list<TR::Block *, TR::Region &> queue(comp()->trMemory()->currentStackRegion());
+
+    TR::AllBlockIterator rootIt(_cfg, comp());
+    for (; rootIt.currentBlock() != NULL; rootIt.stepForward()) {
+        TR::Block *block = rootIt.currentBlock();
+        if (_visitedBlocks.contains(block)) {
+            reachable.add(block);
+            queue.push_back(block);
+        }
+    }
+
+    TR::Block *startBlock = toBlock(_cfg->getStart());
+    if (!reachable.contains(startBlock)) {
+        reachable.add(startBlock);
+        queue.push_back(startBlock);
+    }
+
+    while (!queue.empty()) {
+        TR::Block *block = queue.front();
+        queue.pop_front();
+
+        TR_SuccessorIterator succs(block);
+        for (auto *succ = succs.getFirst(); succ != NULL; succ = succs.getNext()) {
+            if (isEdgeUnreachable(succ))
+                continue;
+
+            TR::Block *dest = toBlock(succ->getTo());
+            if (!reachable.contains(dest)) {
+                reachable.add(dest);
+                queue.push_back(dest);
+            }
+        }
+    }
+
+    TR::AllBlockIterator sweepIt(_cfg, comp());
+    for (; sweepIt.currentBlock() != NULL; sweepIt.stepForward()) {
+        TR::Block *block = sweepIt.currentBlock();
+        if (reachable.contains(block))
+            continue;
+
+        // block is unreachable
+        uint32_t &rc = _blockRc[block];
+        if (rc == 0)
+            continue; // already known to be unreachable
+
+        rc = 0;
+
+        debugTrace(tracer(), "CFG mark/sweep: block %d is unreachable", block->getNumber());
+
+        TR_PredecessorIterator preds(block);
+        for (auto *edge = preds.getFirst(); edge != NULL; edge = preds.getNext())
+            _unreachableEdges.insert(edge); // might already be known to be unreachable
+
+        TR_SuccessorIterator succs(block);
+        for (auto *edge = succs.getFirst(); edge != NULL; edge = succs.getNext()) {
+            if (reachable.contains(toBlock(edge->getTo())))
+                markEdgeUnreachable(edge);
+        }
+    }
+
+    _potentialCycleBlocks.clear();
+}

@@ -53,10 +53,12 @@
 #include "il/Block.hpp"
 #include "ilgen/ByteCodeIteratorWithState.hpp"
 #include "ilgen/J9ByteCodeIterator.hpp"
+#include "infra/Checklist.hpp"
 #include "infra/String.hpp"
 #include "optimizer/Inliner.hpp"
 #include "optimizer/J9EstimateCodeSize.hpp"
 #include "optimizer/J9Inliner.hpp"
+#include <set>
 
 class IconstOperand;
 class KnownObjOperand;
@@ -293,6 +295,11 @@ public:
         , _ecs(ecs)
         , _iteratorWithState(false)
         , _currentBcCanFallThrough(true)
+        , _unreachableEdges(std::less<TR::CFGEdge *>(), comp->trMemory()->currentStackRegion())
+        , _outEdgesStillReachable(std::less<TR::CFGEdge *>(), comp->trMemory()->currentStackRegion())
+        , _blockRc(std::less<TR::Block *>(), comp->trMemory()->currentStackRegion())
+        , _potentialCycleBlocks(comp)
+        , _visitedBlocks(comp)
     {
         TR_J9ByteCodeIterator::initialize(static_cast<TR_ResolvedJ9Method *>(methodSymbol->getResolvedMethod()), fe);
         _flags = NULL;
@@ -506,6 +513,15 @@ private:
      */
     bool hasUnvisitedPred(TR::Block *block);
 
+    bool hasVisitedPred(TR::Block *block);
+
+    bool isEdgeUnreachable(TR::CFGEdge *edge);
+    bool isBlockUnreachable(TR::Block *block);
+    void markSuccessorsUnreachable(const TR::CFGEdgeList &edges);
+    void markEdgeUnreachable(TR::CFGEdge *edge);
+    void markEdgeUnreachable(int32_t destBcIndex);
+    void markSweepCFG();
+
     typedef TR_Array<Operand *> OperandArray;
     void printOperandArray(OperandArray *operands);
     /*
@@ -543,6 +559,40 @@ private:
     OperandArray **_localObjectInfos;
     // Number of local slots
     int32_t _numSlots;
+
+    typedef TR::typed_allocator<TR::CFGEdge *, TR::Region &> EdgePtrAlloc;
+    typedef std::set<TR::CFGEdge *, std::less<TR::CFGEdge *>, EdgePtrAlloc> EdgeSet;
+    EdgeSet _unreachableEdges;
+    EdgeSet _outEdgesStillReachable; // from current block when !_currentBcCanFallThrough
+
+    typedef TR::typed_allocator<std::pair<TR::Block * const, uint32_t>, TR::Region &> BlockRcAlloc;
+    typedef std::map<TR::Block *, uint32_t, std::less<TR::Block *>, BlockRcAlloc> BlockRcMap;
+    BlockRcMap _blockRc; // number of potentially reachable incoming edges
+
+    // Blocks whose refcount has dropped, but hasn't yet reached zero.
+    //
+    // If a cycle becomes unreachable (based on currently-known unreachable
+    // edges), then at least one of its blocks will be in this set. Further,
+    // if a proper loop becomes unreachable, exactly one of its blocks will
+    // be in this set, and that block will be its loop header.
+    //
+    // This helps in determining when the CFG should be searched to detect
+    // unreachable cycles.
+    //
+    TR::BlockChecklist _potentialCycleBlocks;
+
+    // Blocks that have been processed already, including the one currently
+    // being processed.
+    //
+    // These were considered to be potentially reachable when they were
+    // encountered by the reverse postorder traversal. Operand values have
+    // already been propagated along their outgoing edges, and some of their
+    // successors may have already been processed as well, so there's little
+    // benefit to recognizing after the fact that one of these blocks is
+    // actually unreachable. As such, they will be assumed reachable. This
+    // assumption helps to avoid unnecessary CFG searches.
+    //
+    TR::BlockChecklist _visitedBlocks;
 
     TR::StringBuf *_operandBuf; // for debug printing
 };
