@@ -257,7 +257,7 @@ readAttributes(J9CfrClassFile * classfile, J9CfrAttribute *** pAttributes, U_32 
 				return -2;
 			}
 			code->originalCode = index;
-			memcpy (code->code, index, code->codeLength);
+            code->code = index;
 			index += code->codeLength;
 
 			CHECK_EOF(2);
@@ -862,7 +862,7 @@ readAttributes(J9CfrClassFile * classfile, J9CfrAttribute *** pAttributes, U_32 
 			}
 
 			CHECK_EOF(stackMap->mapLength);
-			memcpy (stackMap->entries, index, stackMap->mapLength);
+            stackMap->entries = index;
 			index += stackMap->mapLength;
 			
 			break;
@@ -1080,7 +1080,7 @@ readAttributes(J9CfrClassFile * classfile, J9CfrAttribute *** pAttributes, U_32 
 				return -2;
 			}
 			CHECK_EOF(length);
-			memcpy (((J9CfrAttributeUnknown *) attrib)->value, index, length);
+            ((J9CfrAttributeUnknown *)attrib)->value = index;
 			index += length;
 			break;
 		}
@@ -3413,8 +3413,8 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 				if (!ALLOC_ARRAY(method->codeAttribute->code, method->codeAttribute->codeLength, U_8)) {
 					Trc_BCU_inlineJsrs_Exit();
 					return -2;
-				}				
-				method->codeAttribute->code = reinterpret_cast<U_8*>(method->codeAttribute->originalCode);
+				}
+                method->codeAttribute->code = method->codeAttribute->originalCode;
 			}
 		}
 

@@ -801,7 +801,7 @@ gcEndEvent(J9JavaVM *vm, UDATA heapSize, UDATA heapUsed, UDATA *totals, UDATA *f
 			}
 		}
 		if (NULL != notification) {
-			memcpy(notification->gcInfo, gcInfo, sizeof(*notification->gcInfo));
+            notification->gcInfo = gcInfo;
 
 			notification->type = END_OF_GARBAGE_COLLECTION;
 			notification->next = NULL;

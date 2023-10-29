@@ -644,7 +644,7 @@ decompileMethodFrameIterator(J9VMThread * currentThread, J9StackWalkState * walk
 		decompileState->literals = method;
 		decompileState->unwindSP = walkState->unwindSP;
 		decompileState->j2iFrame = walkState->j2iFrame;
-		memcpy(&(decompileState->i2jState), walkState->i2jState, sizeof(J9I2JState));
+        decompileState->i2jState = walkState->i2jState;
 		decompileState->resolveFrameFlags = walkState->resolveFrameFlags;
 
 		/* Walk the next frame regardless of its visibility */
@@ -685,7 +685,7 @@ buildBytecodeFrame(J9VMThread *currentThread, J9OSRFrame *osrFrame)
 
 	/* Push the locals */
 	sp -= numberOfLocals;
-	memcpy(sp, locals, numberOfLocals * sizeof(UDATA));
+    sp = locals;
 
 	/* Push the stack frame */
 	stackFrame = (J9SFStackFrame*)sp - 1;
@@ -695,7 +695,7 @@ buildBytecodeFrame(J9VMThread *currentThread, J9OSRFrame *osrFrame)
 
 	/* Push the pendings */
 	sp = (UDATA*)stackFrame - pendingStackHeight;
-	memcpy(sp, pending, pendingStackHeight * sizeof(UDATA));
+    sp = pending;
 
 	/* Update the root values in the J9VMThread */
 	currentThread->arg0EA = newA0;
@@ -806,14 +806,13 @@ performDecompile(J9VMThread *currentThread, J9JITDecompileState *decompileState,
 	}
 
 	/* Temporarily copy the outgoing arguments to the C stack */
-	memcpy(outgoingArgs, decompileState->sp, outgoingArgCount * sizeof(UDATA));
+    outgoingArgs = decompileState->sp;
 
 	/* Rebuild the interpreter stack frames */
 	buildInlineStackFrames(currentThread, decompileState, decompRecord, inlineDepth, osrFrame);
 
 	/* Push the outgoing arguments onto the java stack */
-	currentThread->sp -= outgoingArgCount;
-	memcpy(currentThread->sp, outgoingArgs, outgoingArgCount * sizeof(UDATA));
+    currentThread->sp -= outgoingArgs;
 
 	Trc_Decomp_performDecompile_Exit(currentThread, currentThread->sp, currentThread->literals, currentThread->pc);
 }
@@ -890,13 +889,12 @@ decompileOuterFrame(J9VMThread * currentThread, J9JITDecompileState * decompileS
 		}
 	} else {
 		/* Copy the temps to their new location */
-
-		memcpy(newTempBase, oldTempBase, tempCount * sizeof(UDATA));
+        newTempBase = oldTempBase;
 	}
 
 	/* Copy pending pushes */
 
-	memcpy(newPendingBase, oldPendingBase, pendingStackHeight * sizeof(UDATA));
+    newPendingBase = oldPendingBase;
 
 	/* Create the stack frame, either a pure bytecode frame or a J2I frame, depending on the previous frame. */
 
@@ -915,8 +913,8 @@ decompileOuterFrame(J9VMThread * currentThread, J9JITDecompileState * decompileS
 
 		Trc_Decomp_performDecompile_buildingJ2IFrame(currentThread, stackFrame);
 
-		memcpy(&(j2iFrame->i2jState), &(decompileState->i2jState), sizeof(J9I2JState));
-		memcpy(&(j2iFrame->J9SW_LOWEST_MEMORY_PRESERVED_REGISTER), decompileState->preservedRegisterValues, J9SW_JIT_CALLEE_PRESERVED_SIZE * sizeof(UDATA));
+        j2iFrame->i2jState = decompileState->i2jState;		
+        j2iFrame->J9SW_LOWEST_MEMORY_PRESERVED_REGISTER = *decompileState->preservedRegisterValues;
 		j2iFrame->specialFrameFlags = J9_STACK_FLAGS_JIT_CALL_IN_FRAME | J9_STACK_FLAGS_JIT_CALL_IN_TYPE_J2_I;
 		j2iFrame->returnAddress = jitReturnPC;
 		j2iFrame->previousJ2iFrame = currentJ2iFrame;
@@ -1926,7 +1924,7 @@ performOSR(J9VMThread *currentThread, J9StackWalkState *walkState, J9OSRBuffer *
 	 * (arguments + return address + totalFrameSize slots).
 	 */
 	Assert_CodertVM_true(jitStackFrameSize == ((J9_ARG_COUNT_FROM_ROM_METHOD(J9_ROM_METHOD_FROM_RAM_METHOD(metaData->ramMethod)) + 1 + metaData->totalFrameSize) * sizeof(UDATA)));
-	memcpy(osrJittedFrameCopy, walkState->unwindSP, jitStackFrameSize);
+    osrJittedFrameCopy = walkState->unwindSP;
 
 	/* Perform the OSR */
 	osrBlock = preOSR(currentThread, metaData, pc);

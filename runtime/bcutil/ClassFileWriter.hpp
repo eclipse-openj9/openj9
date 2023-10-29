@@ -282,8 +282,8 @@ private:
 #endif /* J9VM_ENV_LITTLE_ENDIAN */
 	}
 
-	void writeData(U_32 length, void * bytes){		
-		_classFileCursor = reinterpret_cast<U_8*>(bytes)
+	void writeData(U_32 length, void * bytes){
+        memcpy(_classFileCursor, bytes, length);
 		_classFileCursor += length;
 	}
 
@@ -377,7 +377,7 @@ public:
 				_buildResult = OutOfMemory;
 			} else {
 				J9UTF8_SET_LENGTH(_originalClassName, originalNameLength);
-				memcpy(((U_8 *)J9UTF8_DATA(_originalClassName)), anonClassNameData, originalNameLength);
+                memcpy(((U_8 *)J9UTF8_DATA(_originalClassName)), anonClassNameData, originalNameLength);
 				*(((U_8 *)J9UTF8_DATA(_originalClassName)) + originalNameLength) = '\0';
 			}
 		}

@@ -5195,7 +5195,7 @@ fetchStartupHintsFromSharedCache(J9VMThread* currentThread)
 			if (0 < j9shr_findSharedData(currentThread, key, strlen(key), J9SHR_DATA_TYPE_STARTUP_HINTS, 0, &dataDescriptor, NULL)) {
 				Trc_SHR_Assert_True(J9SHR_DATA_TYPE_STARTUP_HINTS == dataDescriptor.type);
 				Trc_SHR_Assert_True(sizeof(J9SharedStartupHintsDataDescriptor) == dataDescriptor.length);
-				memcpy(&vm->sharedClassConfig->localStartupHints.hintsData, dataDescriptor.address, sizeof(J9SharedStartupHintsDataDescriptor));
+                vm->sharedClassConfig->localStartupHints.hintsData = dataDescriptor;
 				vm->sharedClassConfig->localStartupHints.localStartupHintFlags |= J9SHR_LOCAL_STARTUPHINTS_FLAG_FETCHED;
 				Trc_SHR_INIT_fetchStartupHintsFromSharedCache_Hints_Found(currentThread, vm->sharedClassConfig->localStartupHints.hintsData.flags,
 						vm->sharedClassConfig->localStartupHints.hintsData.heapSize1, vm->sharedClassConfig->localStartupHints.hintsData.heapSize2);

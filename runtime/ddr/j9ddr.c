@@ -255,7 +255,7 @@ copyStringTable(J9DDRTranslationData * data)
 		size_t len = strlen(cString);
 
 		J9UTF8_SET_LENGTH(utf, (U_16)len);
-		cString = reinterpret_cast<char *>(J9UTF8_DATA(utf))
+        memcpy(J9UTF8_DATA(utf), cString, len);
 
 		entry = hashTableNextDo(&state);
 	}
