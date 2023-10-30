@@ -74,11 +74,11 @@ public class TestGroup {
 
 		subTestResult &= GetCallerClassTests.test_getCallerClass_fromBootExtWithAnnotation();
 		subTestResult &= GetCallerClassTests.test_ensureCalledFromBootstrapClass_fromBootWithAnnotation();
-		subTestResult &= RefectionMHTests.test_getCallerClass_Helper_Reflection_fromBootExtWithAnnotation();
-		subTestResult &= RefectionMHTests.test_getCallerClass_Direct_Reflection_fromBootExtClassLoader();
-		subTestResult &= RefectionMHTests.test_getCallerClass_Helper_MethodHandle_fromBootExtWithAnnotation();
-		subTestResult &= RefectionMHTests.test_getCallerClass_Direct_MethodHandle_fromBootExtClassLoader();
-		subTestResult &= RefectionMHTests.test_getCallerClass_MethodHandle_ArgumentHelper();
+		subTestResult &= ReflectionMHTests.test_getCallerClass_Helper_Reflection_fromBootExtWithAnnotation();
+		subTestResult &= ReflectionMHTests.test_getCallerClass_Direct_Reflection_fromBootExtClassLoader();
+		subTestResult &= ReflectionMHTests.test_getCallerClass_Helper_MethodHandle_fromBootExtWithAnnotation();
+		subTestResult &= ReflectionMHTests.test_getCallerClass_Direct_MethodHandle_fromBootExtClassLoader();
+		subTestResult &= ReflectionMHTests.test_getCallerClass_MethodHandle_ArgumentHelper();
 
 		subTestResult &= GetCallerClassTests.test_getCallerClass_fromBootExtWithoutAnnotation();
 		subTestResult &= GetCallerClassTests.test_ensureCalledFromBootstrapClass_fromBootExtWithoutAnnotation();
@@ -91,11 +91,11 @@ public class TestGroup {
 
 		subTestResult &= GetCallerClassTests.test_getCallerClass_fromBootExtWithAnnotation();
 		subTestResult &= GetCallerClassTests.test_ensureCalledFromBootstrapClass_fromExtWithAnnotation();
-		subTestResult &= RefectionMHTests.test_getCallerClass_Helper_Reflection_fromBootExtWithAnnotation();
-		subTestResult &= RefectionMHTests.test_getCallerClass_Direct_Reflection_fromBootExtClassLoader();
-		subTestResult &= RefectionMHTests.test_getCallerClass_Helper_MethodHandle_fromBootExtWithAnnotation();
-		subTestResult &= RefectionMHTests.test_getCallerClass_Direct_MethodHandle_fromBootExtClassLoader();
-		subTestResult &= RefectionMHTests.test_getCallerClass_MethodHandle_ArgumentHelper();
+		subTestResult &= ReflectionMHTests.test_getCallerClass_Helper_Reflection_fromBootExtWithAnnotation();
+		subTestResult &= ReflectionMHTests.test_getCallerClass_Direct_Reflection_fromBootExtClassLoader();
+		subTestResult &= ReflectionMHTests.test_getCallerClass_Helper_MethodHandle_fromBootExtWithAnnotation();
+		subTestResult &= ReflectionMHTests.test_getCallerClass_Direct_MethodHandle_fromBootExtClassLoader();
+		subTestResult &= ReflectionMHTests.test_getCallerClass_MethodHandle_ArgumentHelper();
 
 		subTestResult &= GetCallerClassTests.test_getCallerClass_fromBootExtWithoutAnnotation();
 		subTestResult &= GetCallerClassTests.test_ensureCalledFromBootstrapClass_fromBootExtWithoutAnnotation();
