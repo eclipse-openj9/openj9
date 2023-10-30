@@ -573,14 +573,29 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
                compInfo->setAotQueryTime(compInfo->getAotQueryTime() + (UDATA)sharedQueryTime);
                }
             }
-         else // ROM class not in shared class cache
+         else // ROM class not in shared class cache (no space or ineligible - maybe because of implicit SCC)
             {
+            // SCC is used, either explicit or implicit; this is a sign that start-up may be important
+            // If there is enough CPU power to compile sooner, do so by using lower counts
+            // but only for the classes loaded during startup
+            if (!TR::Options::getCountsAreProvidedByUser() && !countInOptionSet)
+               {
+               if (TR::Options::getCmdLineOptions()->getOption(TR_UseLowerCountsForNonSCCMethodsDuringStartup) &&
+                   (jitConfig->javaVM->phase != J9VM_PHASE_NOT_STARTUP) &&
+                   TR::Compiler->target.numberOfProcessors() >= TR_NUMPROC_FOR_LARGE_SMP)
+                  {
+                  count = getCount(romMethod, optionsJIT, optionsAOT); // counts are lower when SCC is enabled
+                  }
 #if !defined(J9ZOS390)  // Do not change the counts on zos at the moment since the
-            // shared cache capacity is higher on this platform and by
-            // increasing counts we could end up significantly impacting startup
-            if (TR::Options::getCmdLineOptions()->getOption(TR_UseHigherCountsForNonSCCMethods))
-               count = J9ROMMETHOD_HAS_BACKWARDS_BRANCHES(romMethod) ? TR_DEFAULT_INITIAL_BCOUNT : TR_DEFAULT_INITIAL_COUNT;
+                        // shared cache capacity is higher on this platform and by
+                        // increasing counts we could end up significantly impacting startup
+               else
+                  {
+                  if (TR::Options::getCmdLineOptions()->getOption(TR_UseHigherCountsForNonSCCMethods))
+                     count = J9ROMMETHOD_HAS_BACKWARDS_BRANCHES(romMethod) ? TR_DEFAULT_INITIAL_BCOUNT : TR_DEFAULT_INITIAL_COUNT;
+                  }
 #endif // !J9ZOS390
+               }
             }
 #endif // defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
          } // if (TR::Options::sharedClassCache())
