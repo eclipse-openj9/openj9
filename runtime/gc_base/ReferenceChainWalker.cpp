@@ -644,9 +644,12 @@ MM_ReferenceChainWalker::doStackSlot(J9Object **slotPtr, void *walkState, const 
 	J9Object *slotValue = *slotPtr;
 
 	/* Only report heap objects */
-
 	if (isHeapObject(slotValue) && !_heap->objectIsInGap(slotValue)) {
-		doSlot(slotPtr, J9GC_ROOT_TYPE_STACK_SLOT, -1, (J9Object *)walkState);
+		if (J9_STACKWALK_SLOT_TYPE_JNI_LOCAL == ((J9StackWalkState *)walkState)->slotType) {
+			doSlot(slotPtr, J9GC_ROOT_TYPE_JNI_LOCAL, -1, (J9Object *)walkState);
+		} else {
+			doSlot(slotPtr, J9GC_ROOT_TYPE_STACK_SLOT, -1, (J9Object *)walkState);
+		}
 	}
 }
 
