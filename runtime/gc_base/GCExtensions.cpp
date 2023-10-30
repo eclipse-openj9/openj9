@@ -425,3 +425,25 @@ MM_GCExtensions::exitContinuationConcurrentGCScan(J9VMThread *vmThread, j9object
 	MM_GCExtensions::exitConcurrentGCScan(continuationStatePtr, isGlobalGC);
 #endif /* JAVA_SPEC_VERSION >= 19 */
 }
+
+void
+MM_GCExtensions::handleInitializeHeapError(J9JavaVM *vm, const char *errorMessage)
+{
+	if (forceGPFOnHeapInitializationError) {
+		/* Print error message if it is available */
+		if (NULL != errorMessage) {
+			PORT_ACCESS_FROM_JAVAVM(vm);
+			j9tty_printf(PORTLIB, "\n--- %s\n\n", errorMessage);
+		}
+
+		/*
+		 * This function is called very early in JVM Startup.
+		 * Trace Engine might be not initialized fully yet.
+		 * So, instead of using Assert_MM_unreachable() just force GPF
+		 */
+
+		/* force GPF */
+		uintptr_t *p = NULL;
+		*p = 0x12345678;
+	}
+}

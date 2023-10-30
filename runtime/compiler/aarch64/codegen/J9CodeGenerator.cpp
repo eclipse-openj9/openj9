@@ -77,6 +77,12 @@ J9::ARM64::CodeGenerator::initialize()
       comp->setOption(TR_EnableMonitorCacheLookup);
       }
 
+   static bool disableInlineVectorizedMismatch = feGetEnv("TR_disableInlineVectorizedMismatch") != NULL;
+   if (cg->getSupportsArrayCmpLen() && !disableInlineVectorizedMismatch)
+      {
+      cg->setSupportsInlineVectorizedMismatch();
+      }
+
    if (comp->fej9()->hasFixedFrameC_CallingConvention())
       cg->setHasFixedFrameC_CallingConvention();
    }

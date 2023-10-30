@@ -259,8 +259,6 @@ public class InvalidUpCallTests {
 	@Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Not supported for upcall.*")
 	public void test_InvalidLinkerOptions_firstVariadicArg() throws Throwable {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_INT.withName("elem1"), JAVA_INT.withName("elem2"));
-		VarHandle intHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));
-		VarHandle intHandle2 = structLayout.varHandle(PathElement.groupElement("elem2"));
 
 		FunctionDescriptor fd = FunctionDescriptor.of(structLayout, structLayout, structLayout, ADDRESS);
 		MemorySegment functionSymbol = nativeLibLookup.find("add2IntStructs_returnStructByUpcallMH").get();
@@ -276,8 +274,6 @@ public class InvalidUpCallTests {
 	@Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Not supported for upcall.*")
 	public void test_InvalidLinkerOptions_captureCallState() throws Throwable {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_INT.withName("elem1"), JAVA_INT.withName("elem2"));
-		VarHandle intHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));
-		VarHandle intHandle2 = structLayout.varHandle(PathElement.groupElement("elem2"));
 
 		FunctionDescriptor fd = FunctionDescriptor.of(structLayout, structLayout, structLayout, ADDRESS);
 		MemorySegment functionSymbol = nativeLibLookup.find("add2IntStructs_returnStructByUpcallMH").get();
@@ -293,8 +289,6 @@ public class InvalidUpCallTests {
 	@Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Not supported for upcall.*")
 	public void test_InvalidLinkerOptions_isTrivial_1() throws Throwable {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_INT.withName("elem1"), JAVA_INT.withName("elem2"));
-		VarHandle intHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));
-		VarHandle intHandle2 = structLayout.varHandle(PathElement.groupElement("elem2"));
 
 		FunctionDescriptor fd = FunctionDescriptor.of(structLayout, structLayout, structLayout, ADDRESS);
 		MemorySegment functionSymbol = nativeLibLookup.find("add2IntStructs_returnStructByUpcallMH").get();

@@ -277,6 +277,8 @@ extern J9_CFUNC jlong JNICALL
 Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_getTotalStartedThreadCountImpl (JNIEnv *env, jobject beanInstance);
 extern J9_CFUNC jboolean JNICALL
 Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_isThreadContentionMonitoringSupportedImpl (JNIEnv *env, jobject beanInstance);
+extern J9_CFUNC jlong JNICALL
+Java_com_ibm_lang_management_internal_ExtendedThreadMXBeanImpl_getThreadAllocatedBytesImpl (JNIEnv *env, jobject unused, jlong threadID);
 
 extern J9_CFUNC jobject JNICALL
 Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_getThreadInfoImpl(JNIEnv *env, jobject beanInstance,

@@ -334,6 +334,60 @@ void J9::RecognizedCallTransformer::process_java_lang_StringUTF16_toBytes(TR::Tr
       }
    }
 
+void J9::RecognizedCallTransformer::process_jdk_internal_util_ArraysSupport_vectorizedMismatch(TR::TreeTop* treetop, TR::Node* node)
+   {
+   TR::Node* a = node->getChild(0);
+   TR::Node* aOffset = node->getChild(1);
+   TR::Node* b = node->getChild(2);
+   TR::Node* bOffset = node->getChild(3);
+   TR::Node* length = node->getChild(4);
+   TR::Node* log2ArrayIndexScale = node->getChild(5);
+   TR::Node* log2ArrayIndexScale64Bits = TR::Node::create(node, TR::iu2l, 1, log2ArrayIndexScale);
+
+   TR::Node* lengthInBytes = TR::Node::create(node, TR::lshl, 2,
+      TR::Node::create(node, TR::iu2l, 1, length),
+      log2ArrayIndexScale);
+
+   TR::Node* mask = TR::Node::create(node, TR::lor, 2,
+      TR::Node::create(node, TR::lshl, 2,
+         log2ArrayIndexScale64Bits,
+         TR::Node::iconst(node, 1)),
+      TR::Node::lconst(node, 3));
+
+   TR::Node* lengthToCompare = TR::Node::create(node, TR::land, 2,
+      lengthInBytes,
+      TR::Node::create(node, TR::lxor, 2, mask, TR::Node::lconst(node, -1)));
+
+   TR::Node* mismatchByteIndex = TR::Node::create(node, TR::arraycmplen, 3);
+   // TODO: replace the following aladd's with generateDataAddrLoadTrees when off-heap memory changes come in
+   // See OpenJ9 issue #16717 https://github.com/eclipse-openj9/openj9/issues/16717
+   mismatchByteIndex->setAndIncChild(0, TR::Node::create(node, TR::aladd, 2, a, aOffset));
+   mismatchByteIndex->setAndIncChild(1, TR::Node::create(node, TR::aladd, 2, b, bOffset));
+   mismatchByteIndex->setAndIncChild(2, lengthToCompare);
+   mismatchByteIndex->setSymbolReference(getSymRefTab()->findOrCreateArrayCmpLenSymbol());
+
+   TR::Node* invertedRemainder = TR::Node::create(node, TR::ixor, 2,
+      TR::Node::create(node, TR::l2i, 1,
+         TR::Node::create(node, TR::lshr, 2,
+            TR::Node::create(node, TR::land, 2, lengthInBytes, mask),
+            log2ArrayIndexScale)),
+      TR::Node::iconst(node, -1));
+
+   TR::Node* mismatchElementIndex = TR::Node::create(node, TR::l2i, 1, TR::Node::create(node, TR::lshr, 2, mismatchByteIndex, log2ArrayIndexScale));
+   TR::Node* noMismatchFound = TR::Node::create(node, TR::lcmpeq, 2, mismatchByteIndex, lengthToCompare);
+
+   anchorAllChildren(node, treetop);
+   prepareToReplaceNode(node);
+
+   TR::Node::recreate(node, TR::iselect);
+   node->setNumChildren(3);
+   node->setAndIncChild(0, noMismatchFound);
+   node->setAndIncChild(1, invertedRemainder);
+   node->setAndIncChild(2, mismatchElementIndex);
+
+   TR::TransformUtil::removeTree(comp(), treetop);
+   }
+
 void J9::RecognizedCallTransformer::process_java_lang_StrictMath_and_Math_sqrt(TR::TreeTop* treetop, TR::Node* node)
    {
    TR::Node* valueNode = node->getLastChild();
@@ -1138,6 +1192,8 @@ bool J9::RecognizedCallTransformer::isInlineable(TR::TreeTop* treetop)
          case TR::java_lang_StringCoding_encodeASCII:
          case TR::java_lang_String_encodeASCII:
             return comp()->cg()->getSupportsInlineEncodeASCII();
+         case TR::jdk_internal_util_ArraysSupport_vectorizedMismatch:
+            return comp()->cg()->getSupportsInlineVectorizedMismatch();
          default:
             return false;
          }
@@ -1272,6 +1328,9 @@ void J9::RecognizedCallTransformer::transform(TR::TreeTop* treetop)
             break;
          case TR::java_lang_Long_reverseBytes:
             processIntrinsicFunction(treetop, node, TR::lbyteswap);
+            break;
+         case TR::jdk_internal_util_ArraysSupport_vectorizedMismatch:
+            process_jdk_internal_util_ArraysSupport_vectorizedMismatch(treetop, node);
             break;
          default:
             break;

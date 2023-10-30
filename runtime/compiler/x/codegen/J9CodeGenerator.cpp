@@ -135,6 +135,12 @@ J9::X86::CodeGenerator::initialize()
       cg->setSupportsBDLLHardwareOverflowCheck();
       }
 
+   static bool disableInlineVectorizedMismatch = feGetEnv("TR_disableInlineVectorizedMismatch") != NULL;
+   if (cg->getSupportsArrayCmpLen() && !disableInlineVectorizedMismatch)
+      {
+      cg->setSupportsInlineVectorizedMismatch();
+      }
+
    // Disable fast gencon barriers for AOT compiles because relocations on
    // the inlined heap addresses are not available (yet).
    //
