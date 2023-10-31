@@ -1566,7 +1566,7 @@ void J9::Options::preProcessMode(J9JavaVM *vm, J9JITConfig *jitConfig)
             {
             UDATA aggressivenessValue = 0;
             IDATA ret = GET_INTEGER_VALUE(argIndex, aggressiveOption, aggressivenessValue);
-            if (ret == OPTION_OK && aggressivenessValue >= 0)
+            if (ret == OPTION_OK && aggressivenessValue < LAST_AGGRESSIVENESS_LEVEL)
                {
                _aggressivenessLevel = aggressivenessValue;
                }
