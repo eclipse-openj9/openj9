@@ -65,7 +65,9 @@ uint32_t J9::ARM64::PrivateLinkage::_globalRegisterNumberToRealRegisterMap[] =
    TR::RealRegister::x10,
    TR::RealRegister::x9,
    TR::RealRegister::x8, // indirect result location register
+#if !defined(OSX)
    TR::RealRegister::x18, // platform register
+#endif // !defined(OSX)
    // callee-saved registers
    TR::RealRegister::x28,
    TR::RealRegister::x27,
@@ -147,7 +149,11 @@ J9::ARM64::PrivateLinkage::PrivateLinkage(TR::CodeGenerator *cg)
    _properties._registerFlags[TR::RealRegister::x16]   = ARM64_Reserved; // IP0
    _properties._registerFlags[TR::RealRegister::x17]   = ARM64_Reserved; // IP1
 
+#if defined(OSX)
+   _properties._registerFlags[TR::RealRegister::x18]   = ARM64_Reserved; // Platform register
+#else
    _properties._registerFlags[TR::RealRegister::x18]   = 0;
+#endif // defined(OSX)
 
    _properties._registerFlags[TR::RealRegister::x19]   = Preserved|ARM64_Reserved; // vmThread
    _properties._registerFlags[TR::RealRegister::x20]   = Preserved|ARM64_Reserved; // Java SP
@@ -202,7 +208,11 @@ J9::ARM64::PrivateLinkage::PrivateLinkage(TR::CodeGenerator *cg)
    _properties._returnRegisters[0]  = TR::RealRegister::x0;
    _properties._returnRegisters[1]  = TR::RealRegister::v0;
 
-   _properties._numAllocatableIntegerRegisters = 25;
+#if defined(OSX)
+   _properties._numAllocatableIntegerRegisters = 24; // 0-15, 21-28
+#else
+   _properties._numAllocatableIntegerRegisters = 25; // 0-15, 18, 21-28
+#endif // defined(OSX)
    _properties._numAllocatableFloatRegisters   = 32;
 
    _properties._preservedRegisterMapForGC   = 0x1fe40000;
@@ -213,8 +223,14 @@ J9::ARM64::PrivateLinkage::PrivateLinkage(TR::CodeGenerator *cg)
    _properties._vtableIndexArgumentRegister = TR::RealRegister::x9;
    _properties._j9methodArgumentRegister    = TR::RealRegister::x0;
 
+#if defined(OSX)
+   // Volatile GPR (0-15) + FPR (0-31) + VFT Reg
+   _properties._numberOfDependencyGPRegisters = 16 + 32 + 1;
+#else
    // Volatile GPR (0-15, 18) + FPR (0-31) + VFT Reg
    _properties._numberOfDependencyGPRegisters = 17 + 32 + 1;
+#endif // defined(OSX)
+
    setOffsetToFirstParm(0);
    _properties._offsetToFirstLocal            = -8;
    }
@@ -442,6 +458,11 @@ void J9::ARM64::PrivateLinkage::initARM64RealRegisterLinkage()
 
    reg = machine->getRealRegister(TR::RealRegister::RegNum::x17); // IP1
    lockRegister(reg);
+
+#if defined(OSX)
+   reg = machine->getRealRegister(TR::RealRegister::RegNum::x18); // Platform register
+   lockRegister(reg);
+#endif // defined(OSX)
 
    reg = machine->getRealRegister(TR::RealRegister::RegNum::x19); // vmThread
    lockRegister(reg);
