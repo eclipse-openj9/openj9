@@ -5212,3 +5212,21 @@ J9::CodeGenerator::isProfiledClassAndCallSiteCompatible(TR_OpaqueClassBlock *pro
       }
    return false;
    }
+
+bool
+J9::CodeGenerator::enableJitDispatchJ9Method()
+   {
+   static const bool disable = feGetEnv("TR_disableJitDispatchJ9Method") != NULL;
+   return !disable
+      && self()->supportsNonHelper(TR::SymbolReferenceTable::jitDispatchJ9MethodSymbol);
+   }
+
+bool
+J9::CodeGenerator::stressJitDispatchJ9MethodJ2I()
+   {
+   if (!self()->enableJitDispatchJ9Method())
+      return false;
+
+   static const bool stress = feGetEnv("TR_stressJitDispatchJ9MethodJ2I") != NULL;
+   return stress;
+   }

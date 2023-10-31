@@ -367,6 +367,7 @@ public:
    void setSharedMemory(bool v);
 
    bool isArrayCopyCall();
+   bool isJitDispatchJ9MethodCall(TR::Compilation *comp);
 
    /**
     * Node flag functions end

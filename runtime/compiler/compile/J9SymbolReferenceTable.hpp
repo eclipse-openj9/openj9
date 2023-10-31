@@ -168,6 +168,13 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
    //
    TR::SymbolReference * findOrCreateLookupDynamicPublicInterfaceMethodSymbolRef();
 
+   // "Non-helper" that takes the callee J9Method as an extra (first) argument.
+   //
+   // This uses JIT private linkage with a small tweak so that the call will
+   // match the expected linkage for the actual callee.
+   //
+   TR::SymbolReference * findOrCreateDispatchJ9MethodSymbolRef();
+
    TR::SymbolReference * findOrCreateShadowSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t cpIndex, bool isStore);
    TR::SymbolReference * findOrFabricateShadowSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, TR::Symbol::RecognizedField recognizedField, TR::DataType type, uint32_t offset, bool isVolatile, bool isPrivate, bool isFinal, char* name = NULL);
 

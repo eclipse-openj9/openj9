@@ -804,19 +804,19 @@ uint8_t *TR::X86CallSnippet::emitSnippetBody()
    {
    TR::Compilation *comp = cg()->comp();
    TR_J9VMBase*         fej9         = (TR_J9VMBase *)(cg()->fe());
+   TR::SymbolReferenceTable *srTab   = cg()->symRefTab();
    TR::SymbolReference* methodSymRef = _realMethodSymbolReference ? _realMethodSymbolReference : getNode()->getSymbolReference();
    TR::MethodSymbol*    methodSymbol = methodSymRef->getSymbol()->castToMethodSymbol();
    uint8_t*             cursor       = cg()->getBinaryBufferCursor();
 
    bool needToSetCodeLocation = true;
    bool isJitInduceOSRCall    = false;
+   bool isJitDispatchJ9Method = false;
 
-   if (comp->target().is64Bit() &&
-       methodSymbol->isHelper() &&
-       methodSymRef->isOSRInductionHelper())
-      {
+   if (methodSymbol->isHelper() && methodSymRef->isOSRInductionHelper())
       isJitInduceOSRCall = true;
-      }
+   else if (getNode()->isJitDispatchJ9MethodCall(comp))
+      isJitDispatchJ9Method = true;
 
    if (comp->target().is64Bit())
       {
@@ -827,8 +827,9 @@ uint8_t *TR::X86CallSnippet::emitSnippetBody()
       cursor = linkage->storeArguments(getNode(), cursor, false, NULL);
       needToSetCodeLocation = false;
 
-      if (cg()->hasCodeCacheSwitched() &&
-          (methodSymRef->getReferenceNumber()>=TR_AMD64numRuntimeHelpers))
+      if (cg()->hasCodeCacheSwitched()
+          && methodSymRef->getReferenceNumber() >= TR_AMD64numRuntimeHelpers
+          && !isJitDispatchJ9Method)
          {
          fej9->reserveTrampolineIfNecessary(comp, methodSymRef, true);
          }
@@ -879,7 +880,7 @@ uint8_t *TR::X86CallSnippet::emitSnippetBody()
       TR_RuntimeHelper resolutionHelper = methodSymbol->isStatic() ?
          TR_X86interpreterUnresolvedStaticGlue : TR_X86interpreterUnresolvedSpecialGlue;
 
-      TR::SymbolReference *helperSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(resolutionHelper);
+      TR::SymbolReference *helperSymRef = srTab->findOrCreateRuntimeHelper(resolutionHelper);
 
       *cursor = 0xe8;    // CALL
       int32_t disp32 = cg()->branchDisplacementToHelperOrTrampoline(cursor, helperSymRef);
@@ -913,7 +914,7 @@ uint8_t *TR::X86CallSnippet::emitSnippetBody()
 
       // JMP interpreterStaticAndSpecialGlue
       //
-      helperSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_X86interpreterStaticAndSpecialGlue);
+      helperSymRef = srTab->findOrCreateRuntimeHelper(TR_X86interpreterStaticAndSpecialGlue);
 
       *cursor = 0xe9;    // JMP
       disp32 = cg()->branchDisplacementToHelperOrTrampoline(cursor, helperSymRef);
@@ -981,7 +982,11 @@ uint8_t *TR::X86CallSnippet::emitSnippetBody()
       //SD: for jitInduceOSR we don't need to set the RAM method (the method that the VM needs to start executing)
       //because VM is going to figure what method to execute by looking up the jitPC in the GC map and finding
       //the desired invoke bytecode.
-      if (!isJitInduceOSRCall)
+      //
+      // For <jitDispatchJ9Method>, the method is passed in at runtime.
+      // Private linkage has already put it into the correct register.
+      //
+      if (!isJitInduceOSRCall && !isJitDispatchJ9Method)
          {
 #if defined(J9VM_OPT_JITSERVER)
          intptr_t ramMethod = comp->isOutOfProcessCompilation() && !methodSymbol->isInterpreted() ?
@@ -1033,9 +1038,27 @@ uint8_t *TR::X86CallSnippet::emitSnippetBody()
       //
       *cursor = 0xe9;
 
-      TR::SymbolReference* dispatchSymRef =
-          methodSymbol->isHelper() && methodSymRef->isOSRInductionHelper() ? methodSymRef :
-                                                                             cg()->symRefTab()->findOrCreateRuntimeHelper(TR_X86interpreterStaticAndSpecialGlue);
+      TR::SymbolReference *dispatchSymRef = NULL;
+      if (isJitInduceOSRCall)
+         {
+         dispatchSymRef = methodSymRef;
+         }
+      else
+         {
+         // For <jitDispatchJ9Method>, jump directly to j2iTransition instead
+         // of using the interpreter glue. Most of the time the glue would also
+         // go to j2iTransition, but first it would check to see if the callee
+         // is compiled, and if so, it would patch the call to target the JIT
+         // body instead of this call snippet, which is incorrect if the callee
+         // varies at runtime. Testing for a JIT body is redundant anyway
+         // because <jitDispatchJ9Method> has already just done that, and there
+         // wasn't one.
+         TR_RuntimeHelper helper = isJitDispatchJ9Method
+            ? TR_j2iTransition
+            : TR_X86interpreterStaticAndSpecialGlue;
+
+         dispatchSymRef = srTab->findOrCreateRuntimeHelper(helper);
+         }
 
       int32_t disp32 = cg()->branchDisplacementToHelperOrTrampoline(cursor, dispatchSymRef);
       *(int32_t *)(++cursor) = disp32;

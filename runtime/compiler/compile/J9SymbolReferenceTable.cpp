@@ -314,6 +314,30 @@ J9::SymbolReferenceTable::findOrCreateLookupDynamicPublicInterfaceMethodSymbolRe
 
 
 TR::SymbolReference *
+J9::SymbolReferenceTable::findOrCreateDispatchJ9MethodSymbolRef()
+   {
+   TR_ASSERT_FATAL(comp()->cg()->enableJitDispatchJ9Method(), "not enabled");
+
+   TR::SymbolReference *symRef = element(jitDispatchJ9MethodSymbol);
+   if (symRef == NULL)
+      {
+      TR::MethodSymbol *sym = TR::MethodSymbol::create(trHeapMemory(), TR_None);
+      sym->setHelper();
+      sym->setIsInlinedByCG();
+      sym->setLinkage(TR_Private);
+      TR::SymbolReference *symRef = new (trHeapMemory()) TR::SymbolReference(
+         self(), jitDispatchJ9MethodSymbol, sym);
+
+      symRef->setCanGCandReturn();
+      symRef->setCanGCandExcept();
+      element(jitDispatchJ9MethodSymbol) = symRef;
+      }
+
+   return element(jitDispatchJ9MethodSymbol);
+   }
+
+
+TR::SymbolReference *
 J9::SymbolReferenceTable::findOrCreateFloatSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t cpIndex)
    {
    void * dataAddress = owningMethodSymbol->getResolvedMethod()->floatConstant(cpIndex);
