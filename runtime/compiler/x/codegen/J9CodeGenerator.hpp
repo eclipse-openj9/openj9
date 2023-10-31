@@ -98,6 +98,9 @@ public:
     */
    bool canEmitBreakOnDFSet();
 
+   // See OMR::CodeGenerator::supportsNonHelper
+   bool supportsNonHelper(TR::SymbolReferenceTable::CommonNonhelperSymbol symbol);
+
    // See J9::CodeGenerator::guaranteesResolvedDirectDispatchForSVM
    bool guaranteesResolvedDirectDispatchForSVM() { return true; }
 

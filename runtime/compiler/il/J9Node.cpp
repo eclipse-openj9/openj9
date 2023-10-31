@@ -2543,3 +2543,12 @@ J9::Node::canGCandReturn(TR::Compilation *comp)
       }
    return OMR::NodeConnector::canGCandReturn();
    }
+
+bool
+J9::Node::isJitDispatchJ9MethodCall(TR::Compilation *comp)
+   {
+   return self()->getOpCode().isCallDirect()
+      && comp->getSymRefTab()->isNonHelper(
+            self()->getSymbolReference(),
+            TR::SymbolReferenceTable::jitDispatchJ9MethodSymbol);
+   }

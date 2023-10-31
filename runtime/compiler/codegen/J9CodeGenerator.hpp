@@ -643,6 +643,12 @@ public:
    */
    void setSavesNonVolatileGPRsForGC() {_j9Flags.set(SavesNonVolatileGPRsForGC); }
 
+   /// Determine whether \c jitDispatchJ9Method is (supported and) enabled.
+   bool enableJitDispatchJ9Method();
+
+   /// Determine whether to stress the J2I path for \c jitDispatchJ9Method.
+   bool stressJitDispatchJ9MethodJ2I();
+
 private:
 
    enum // Flags
