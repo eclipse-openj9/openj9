@@ -31,7 +31,7 @@ import java.lang.reflect.Method;
 /**
  * Test cases intended for reflection and MethodHandle
  */
-public class RefectionMHTests {
+public class ReflectionMHTests {
 
 	/**
 	 * Call getCallerClass() with a helper method via reflection from the bootstrap/extension
@@ -46,7 +46,7 @@ public class RefectionMHTests {
 			method = GetCallerClassTests.class.getDeclaredMethod("test_getCallerClass_MethodHandle");
 			cls = (Class<?>) method.invoke(null, new Object[0]);
 
-			if (cls == RefectionMHTests.class) {
+			if (cls == ReflectionMHTests.class) {
 				System.out.println(TESTCASE_NAME + ": PASSED: return " + cls.getName());
 				return true;
 			} else {
