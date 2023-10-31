@@ -701,6 +701,7 @@ static void
 walkMethodFrame(J9StackWalkState * walkState)
 {
 	J9SFMethodFrame * methodFrame = (J9SFMethodFrame *) ((U_8*) walkState->walkSP + (UDATA) walkState->literals);
+	BOOLEAN isJNINative = (J9SF_FRAME_TYPE_JNI_NATIVE_METHOD == (UDATA)walkState->pc);
 
 	walkState->bp = (UDATA *) &(methodFrame->savedA0);
 	walkState->frameFlags = methodFrame->specialFrameFlags;
@@ -734,7 +735,7 @@ walkMethodFrame(J9StackWalkState * walkState)
 #endif
 
 	if ((walkState->flags & J9_STACKWALK_ITERATE_O_SLOTS) && walkState->literals) {
-		if (walkState->frameFlags & J9_SSF_JNI_REFS_REDIRECTED) {
+		if ((walkState->frameFlags & J9_SSF_JNI_REFS_REDIRECTED) || isJNINative) {
 			walkPushedJNIRefs(walkState);
 		} else {
 			walkObjectPushes(walkState);
