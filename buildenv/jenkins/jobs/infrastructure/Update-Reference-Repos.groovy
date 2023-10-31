@@ -173,7 +173,13 @@ timeout(time: 6, unit: 'HOURS') {
             }
         }
 
-        parallel jobs
+        if (params.PARALLEL) {
+            parallel jobs
+        } else {
+            jobs.each{ key, value ->
+                value()
+            }
+        }
     }
 }
 
