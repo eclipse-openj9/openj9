@@ -54,7 +54,7 @@ class X86MemImmSnippetInstruction : public TR::X86MemImmInstruction
                                TR::UnresolvedDataSnippet *us,
                                TR::CodeGenerator *cg);
 
-   virtual char *description() { return "X86MemImmSnippet"; }
+   virtual const char *description() { return "X86MemImmSnippet"; }
 
    virtual Kind getKind() { return IsMemImmSnippet; }
 
@@ -77,7 +77,7 @@ class X86CheckAsyncMessagesMemRegInstruction : public TR::X86MemRegInstruction
 
    X86CheckAsyncMessagesMemRegInstruction(TR::Node *node, TR::InstOpCode::Mnemonic op, TR::MemoryReference *mr, TR::Register *valueReg, TR::CodeGenerator *cg);
 
-   virtual char *description() { return "X86CheckAsyncMessagesMemReg"; }
+   virtual const char *description() { return "X86CheckAsyncMessagesMemReg"; }
 
    virtual uint8_t *generateBinaryEncoding();
 
@@ -90,7 +90,7 @@ class X86CheckAsyncMessagesMemImmInstruction : public TR::X86MemImmInstruction
 
    X86CheckAsyncMessagesMemImmInstruction(TR::Node *node, TR::InstOpCode::Mnemonic op, TR::MemoryReference *mr, int32_t value, TR::CodeGenerator *cg);
 
-   virtual char *description() { return "X86CheckAsyncMessagesMemImm"; }
+   virtual const char *description() { return "X86CheckAsyncMessagesMemImm"; }
 
    virtual uint8_t *generateBinaryEncoding();
 
@@ -108,7 +108,7 @@ class X86StackOverflowCheckInstruction : public TR::X86RegMemInstruction
       TR::MemoryReference *mr,
       TR::CodeGenerator      *cg);
 
-   virtual char *description() { return "X86StackOverflowCheck"; }
+   virtual const char *description() { return "X86StackOverflowCheck"; }
 
    virtual uint8_t *generateBinaryEncoding();
 
