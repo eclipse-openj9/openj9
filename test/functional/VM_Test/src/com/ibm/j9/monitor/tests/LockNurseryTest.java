@@ -72,6 +72,8 @@ public class LockNurseryTest extends TestCase {
 		}
 		System.out.println("Finished generating garbage, requesting gc");
 		System.gc();
+		System.gc();
+		System.gc();
 		System.out.println("GC complete ?");*/
 	}
 	
