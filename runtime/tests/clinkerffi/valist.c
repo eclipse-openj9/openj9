@@ -205,7 +205,7 @@ add2BytesOfStructsFromVaList(int argCount, va_list struVaList)
 {
 	char byteSum = 0;
 	while (argCount > 0) {
-		stru_Byte_Byte struArg = va_arg(struVaList, stru_Byte_Byte);
+		stru_2_Bytes struArg = va_arg(struVaList, stru_2_Bytes);
 		byteSum += struArg.elem1 + struArg.elem2;
 		argCount--;
 	}
@@ -224,7 +224,7 @@ add3BytesOfStructsFromVaList(int argCount, va_list struVaList)
 {
 	char byteSum = 0;
 	while (argCount > 0) {
-		stru_Byte_Byte_Byte struArg = va_arg(struVaList, stru_Byte_Byte_Byte);
+		stru_3_Bytes struArg = va_arg(struVaList, stru_3_Bytes);
 		byteSum += struArg.elem1 + struArg.elem2 + struArg.elem3;
 		argCount--;
 	}
@@ -301,7 +301,7 @@ add2ShortsOfStructsFromVaList(int argCount, va_list struVaList)
 {
 	short shortSum = 0;
 	while (argCount > 0) {
-		stru_Short_Short struArg = va_arg(struVaList, stru_Short_Short);
+		stru_2_Shorts struArg = va_arg(struVaList, stru_2_Shorts);
 		shortSum += struArg.elem1 + struArg.elem2;
 		argCount--;
 	}
@@ -320,7 +320,7 @@ add3ShortsOfStructsFromVaList(int argCount, va_list struVaList)
 {
 	short shortSum = 0;
 	while (argCount > 0) {
-		stru_Short_Short_Short struArg = va_arg(struVaList, stru_Short_Short_Short);
+		stru_3_Shorts struArg = va_arg(struVaList, stru_3_Shorts);
 		shortSum += struArg.elem1 + struArg.elem2 + struArg.elem3;
 		argCount--;
 	}
@@ -358,7 +358,7 @@ add2IntsOfStructsFromVaList(int argCount, va_list struVaList)
 {
 	int intSum = 0;
 	while (argCount > 0) {
-		stru_Int_Int struArg = va_arg(struVaList, stru_Int_Int);
+		stru_2_Ints struArg = va_arg(struVaList, stru_2_Ints);
 		intSum += struArg.elem1 + struArg.elem2;
 		argCount--;
 	}
@@ -377,7 +377,7 @@ add3IntsOfStructsFromVaList(int argCount, va_list struVaList)
 {
 	int intSum = 0;
 	while (argCount > 0) {
-		stru_Int_Int_Int struArg = va_arg(struVaList, stru_Int_Int_Int);
+		stru_3_Ints struArg = va_arg(struVaList, stru_3_Ints);
 		intSum += struArg.elem1 + struArg.elem2 + struArg.elem3;
 		argCount--;
 	}
@@ -396,7 +396,7 @@ add2LongsOfStructsFromVaList(int argCount, va_list struVaList)
 {
 	LONG longSum = 0;
 	while (argCount > 0) {
-		stru_Long_Long struArg = va_arg(struVaList, stru_Long_Long);
+		stru_2_Longs struArg = va_arg(struVaList, stru_2_Longs);
 		longSum += struArg.elem1 + struArg.elem2;
 		argCount--;
 	}
@@ -434,7 +434,7 @@ add2FloatsOfStructsFromVaList(int argCount, va_list struVaList)
 {
 	float floatSum = 0;
 	while (argCount > 0) {
-		stru_Float_Float struArg = va_arg(struVaList, stru_Float_Float);
+		stru_2_Floats struArg = va_arg(struVaList, stru_2_Floats);
 		floatSum += struArg.elem1 + struArg.elem2;
 		argCount--;
 	}
@@ -453,7 +453,7 @@ add3FloatsOfStructsFromVaList(int argCount, va_list struVaList)
 {
 	float floatSum = 0;
 	while (argCount > 0) {
-		stru_Float_Float_Float struArg = va_arg(struVaList, stru_Float_Float_Float);
+		stru_3_Floats struArg = va_arg(struVaList, stru_3_Floats);
 		floatSum += struArg.elem1 + struArg.elem2 + struArg.elem3;
 		argCount--;
 	}
@@ -491,7 +491,7 @@ add2DoublesOfStructsFromVaList(int argCount, va_list struVaList)
 {
 	double doubleSum = 0;
 	while (argCount > 0) {
-		stru_Double_Double struArg = va_arg(struVaList, stru_Double_Double);
+		stru_2_Doubles struArg = va_arg(struVaList, stru_2_Doubles);
 		doubleSum += struArg.elem1 + struArg.elem2;
 		argCount--;
 	}
