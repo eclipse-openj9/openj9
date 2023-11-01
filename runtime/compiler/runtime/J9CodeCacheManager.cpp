@@ -286,6 +286,8 @@ J9::CodeCacheManager::allocateCodeCacheSegment(size_t segmentSize,
 
    TR::CodeCacheConfig &config = self()->codeCacheConfig();
 
+   UDATA ccTotalSizeB = config.codeCacheTotalKB() << 10;
+
    size_t largeCodePageSize = config.largeCodePageSize();
 #if defined(TR_TARGET_POWER) && defined(TR_HOST_POWER)
    /* Use largeCodePageSize on PPC only if its 16M.
@@ -298,6 +300,19 @@ J9::CodeCacheManager::allocateCodeCacheSegment(size_t segmentSize,
       {
       vmemParams.pageSize = largeCodePageSize;
       vmemParams.pageFlags = config.largeCodePageFlags();
+
+      // Recalculate the page size if using large pages
+      UDATA *pageSizes = j9vmem_supported_page_sizes();
+      if(vmemParams.pageSize > ccTotalSizeB)
+         {
+         for (UDATA pageIndex = 0; 0 != pageSizes[pageIndex]; ++pageIndex)
+            {
+            if(pageSizes[pageIndex] <= ccTotalSizeB)
+               vmemParams.pageSize = pageSizes[pageIndex];
+            }
+         if (config.verboseCodeCache() || config.verbosePerformance())
+            TR_VerboseLog::writeLineLocked(TR_Vlog_CODECACHE,"Warning: Using page size %zu instead of large page size %zu", (size_t)vmemParams.pageSize, largeCodePageSize);
+         }
       }
 
    UDATA mode = J9PORT_VMEM_MEMORY_MODE_READ |
