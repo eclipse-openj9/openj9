@@ -401,7 +401,7 @@ aarch64_mac:
     8: 'macosx-aarch64-normal-server-release'
     11: 'macosx-aarch64-normal-server-release'
   extra_configure_options:
-    all: '--disable-warnings-as-errors --with-noncompressedrefs'
+    all: '--with-noncompressedrefs'
   openjdk_reference_repo: '/Users/jenkins/openjdk_cache'
   node_labels:
     build: 'ci.role.build && hw.arch.aarch64 && sw.os.mac'
