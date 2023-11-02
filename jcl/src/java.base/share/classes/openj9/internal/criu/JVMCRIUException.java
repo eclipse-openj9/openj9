@@ -1,5 +1,6 @@
+/*[INCLUDE-IF CRIU_SUPPORT]*/
 /*******************************************************************************
- * Copyright IBM Corp. and others 2021
+ * Copyright IBM Corp. and others 2023
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,23 +20,41 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
+package openj9.internal.criu;
 
-#ifndef _Included_org_eclipse_openj9_criu_CRIUSupport
-#define _Included_org_eclipse_openj9_criu_CRIUSupport
+/**
+ * Abstract CRIU exception superclass. Contains an error code returned from a
+ * failed operation.
+ */
+public abstract class JVMCRIUException extends RuntimeException {
+	private static final long serialVersionUID = -5260791367440432767L;
+	protected int errorCode;
 
-#include <jni.h>
-#include "j9.h"
+	protected JVMCRIUException(String message, int errorCode) {
+		super(message);
+		this.errorCode = errorCode;
+	}
 
-extern "C" {
+	protected JVMCRIUException(String message, int errorCode, Throwable causedBy) {
+		super(message, causedBy);
+		this.errorCode = errorCode;
+	}
 
-void JNICALL
-Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env, jclass unused, jstring imagesDir, jboolean leaveRunning, jboolean shellJob, jboolean extUnixSupport, jint logLevel, jstring logFile, jboolean fileLocks, jstring workDir, jboolean tcpEstablished, jboolean autoDedup, jboolean trackMemory, jboolean unprivileged, jstring optionsFile, jstring envFile);
+	/**
+	 * Returns the error code.
+	 *
+	 * @return errorCode
+	 */
+	public int getErrorCode() {
+		return errorCode;
+	}
 
-jobject JNICALL
-Java_org_eclipse_openj9_criu_CRIUSupport_getRestoreSystemProperites(JNIEnv *env, jclass unused);
-
-jboolean JNICALL
-Java_org_eclipse_openj9_criu_CRIUSupport_setupJNIFieldIDsAndCRIUAPI(JNIEnv *env, jclass unused);
-} /* extern "C" */
-
-#endif
+	/**
+	 * Sets the error code.
+	 *
+	 * @param errorCode the value to set to
+	 */
+	public void setErrorCode(int errorCode) {
+		this.errorCode = errorCode;
+	}
+}

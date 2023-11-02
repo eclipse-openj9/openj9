@@ -104,7 +104,24 @@ public class DeadlockTest {
 			CRIUTestUtils.checkPointJVM(criuSupport, path, true);
 			testResult.testPassed = false;
 		} catch (JVMCheckpointException e) {
-			if (!e.getCause().getMessage().contains("Blocking operation is not allowed in CRIU single thread mode")) {
+			/*
+			An expected exception:
+			org.eclipse.openj9.criu.JVMCheckpointException: Exception thrown when running user pre-checkpoint
+				at openj9.criu/org.eclipse.openj9.criu.CRIUSupport.checkpointJVM(CRIUSupport.java:526)
+				at org.openj9.criu.CRIUTestUtils.checkPointJVM(CRIUTestUtils.java:77)
+			Caused by: openj9.internal.criu.JVMCheckpointException: Exception thrown when running user pre-checkpoint
+				at java.base/openj9.internal.criu.InternalCRIUSupport.lambda$registerCheckpointHookHelper$2(InternalCRIUSupport.java:699)
+				at java.base/openj9.internal.criu.J9InternalCheckpointHookAPI$J9InternalCheckpointHook.runHook(J9InternalCheckpointHookAPI.java:143)
+				at java.base/openj9.internal.criu.J9InternalCheckpointHookAPI.runHooks(J9InternalCheckpointHookAPI.java:98)
+				at java.base/openj9.internal.criu.J9InternalCheckpointHookAPI.runPreCheckpointHooksSingleThread(J9InternalCheckpointHookAPI.java:107)
+				at java.base/openj9.internal.criu.InternalCRIUSupport.checkpointJVMImpl(Native Method)
+				at java.base/openj9.internal.criu.InternalCRIUSupport.checkpointJVM(InternalCRIUSupport.java:867)
+				at openj9.criu/org.eclipse.openj9.criu.CRIUSupport.checkpointJVM(CRIUSupport.java:524)
+			Caused by: openj9.internal.criu.JVMCheckpointException: Blocking operation is not allowed in CRIU single thread mode.
+				at org.openj9.criu.DeadlockTest.lambda$checkpointDeadlock$1(DeadlockTest.java:93)
+				at java.base/openj9.internal.criu.InternalCRIUSupport.lambda$registerCheckpointHookHelper$2(InternalCRIUSupport.java:697)
+			*/
+			if (!e.getCause().getCause().getMessage().contains("Blocking operation is not allowed in CRIU single thread mode")) {
 				testResult.testPassed = false;
 				e.printStackTrace();
 			}

@@ -21,9 +21,6 @@ OpenJDK Assembly Exception [2].
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 -->
 <module xmlns:xi="http://www.w3.org/2001/XInclude">
-	<xi:include href="uma/criusupport_exports.xml"></xi:include>
-	<xi:include href="uma/criusupport_objects.xml"></xi:include>
-
 	<artifact type="shared" name="j9criu" loadgroup="">
 		<include-if condition="spec.flags.opt_criuSupport"/>
 
@@ -33,16 +30,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 
 		<phase>core j2se</phase>
 		<exports>
-			<group name="criusupport" />
 		</exports>
-
-		<includes>
-			<include path="j9include"/>
-			<include path="j9oti"/>
-			<include path="j9util"/>
-			<include path="j9gcinclude"/>
-			<include path="$(OMR_DIR)/gc/include" type="relativepath"/>
-		</includes>
 
 		<makefilestubs>
 			<makefilestub data="UMA_ENABLE_ALL_WARNINGS=1"/>
@@ -50,19 +38,8 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		</makefilestubs>
 
 		<objects>
-			<group name="criusupport" />
 			<object name="ut_j9criu" />
 		</objects>
-
-		<libraries>
-			<library name="dl" type="external">
-				<include-if condition="spec.linux.*"/>
-			</library>
-			<library name="j9thr"/>
-			<library name="j9util"/>
-			<library name="j9utilcore"/>
-			<library name="j9pool" type="external"/>
-		</libraries>
 	</artifact>
 
 </module>

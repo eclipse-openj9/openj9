@@ -1,6 +1,6 @@
 /*[INCLUDE-IF CRIU_SUPPORT]*/
 /*******************************************************************************
- * Copyright IBM Corp. and others 2022
+ * Copyright IBM Corp. and others 2023
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,11 +20,11 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
-package org.eclipse.openj9.criu;
+package openj9.internal.criu;
 
 import openj9.internal.criu.InternalCRIUSupport;
 import openj9.internal.criu.security.CRIUConfigurator;
-import org.eclipse.openj9.criu.CRIUSupport.HookMode;
+import openj9.internal.criu.InternalCRIUSupport.HookMode;
 
 /**
  * Handles the security providers.
@@ -47,7 +47,7 @@ public final class SecurityProviders {
 	 */
 	public static void registerResetCRIUState() {
 		J9InternalCheckpointHookAPI.registerPreCheckpointHook(
-				CRIUSupport.HookMode.SINGLE_THREAD_MODE, CRIUSupport.RESET_CRIUSEC_PRIORITY,
+				InternalCRIUSupport.HookMode.SINGLE_THREAD_MODE, InternalCRIUSupport.RESET_CRIUSEC_PRIORITY,
 				"Reset the digests", //$NON-NLS-1$
 				() -> openj9.internal.criu.CRIUSECProvider.resetCRIUSEC()
 		);
@@ -58,7 +58,7 @@ public final class SecurityProviders {
 	 */
 	public static void registerRestoreSecurityProviders() {
 		J9InternalCheckpointHookAPI.registerPostRestoreHook(
-				CRIUSupport.HookMode.SINGLE_THREAD_MODE, CRIUSupport.RESTORE_SECURITY_PROVIDERS_PRIORITY,
+				InternalCRIUSupport.HookMode.SINGLE_THREAD_MODE, InternalCRIUSupport.RESTORE_SECURITY_PROVIDERS_PRIORITY,
 				"Restore the security providers", //$NON-NLS-1$
 				() -> {
 					if (!InternalCRIUSupport.isCheckpointAllowed()) {
