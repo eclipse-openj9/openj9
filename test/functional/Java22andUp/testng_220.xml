@@ -37,6 +37,8 @@
 			<class name="org.openj9.test.jep454.downcall.PrimitiveTypeTests2"/>
 			<class name="org.openj9.test.jep454.downcall.StructTests1"/>
 			<class name="org.openj9.test.jep454.downcall.StructTests2"/>
+			<class name="org.openj9.test.jep454.downcall.UnionStructTests"/>
+			<class name="org.openj9.test.jep454.downcall.UnionTests"/>
 		</classes>
 	</test>
 	<test name="Jep454Tests_testLinkerFfi_UpCall">
@@ -48,6 +50,8 @@
 			<class name="org.openj9.test.jep454.upcall.UpcallMHWithMixedSigStruTests"/>
 			<class name="org.openj9.test.jep454.upcall.UpcallMHWithPrimTests"/>
 			<class name="org.openj9.test.jep454.upcall.UpcallMHWithStructTests"/>
+			<class name="org.openj9.test.jep454.upcall.UpcallMHWithUnionStructTests"/>
+			<class name="org.openj9.test.jep454.upcall.UpcallMHWithUnionTests"/>
 		</classes>
 	</test>
 </suite>

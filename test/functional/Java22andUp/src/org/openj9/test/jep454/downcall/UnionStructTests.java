@@ -19,7 +19,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
-package org.openj9.test.jep442.downcall;
+package org.openj9.test.jep454.downcall;
 
 import org.testng.annotations.Test;
 import org.testng.Assert;
@@ -42,7 +42,7 @@ import java.lang.foreign.ValueLayout;
 import static java.lang.foreign.ValueLayout.*;
 
 /**
- * Test cases for JEP 442: Foreign Linker API (Third Preview) for argument/return struct/union
+ * Test cases for JEP 454: Foreign Linker API for argument/return struct/union
  * nested with struct/union in downcall.
  *
  * Note:
