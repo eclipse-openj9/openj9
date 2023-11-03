@@ -19,7 +19,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
-package org.openj9.test.jep442.upcall;
+package org.openj9.test.jep454.upcall;
 
 import org.testng.annotations.Test;
 import org.testng.Assert;
@@ -42,7 +42,7 @@ import java.lang.foreign.ValueLayout;
 import static java.lang.foreign.ValueLayout.*;
 
 /**
- * Test cases for JEP 442: Foreign Linker API (Third Preview) for argument/return union in upcall.
+ * Test cases for JEP 454: Foreign Linker API for argument/return union in upcall.
  */
 @Test(groups = { "level.sanity" })
 public class UpcallMHWithUnionTests {
@@ -66,7 +66,7 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addBoolAndBoolsFromUnionWithXor,
 					FunctionDescriptor.of(JAVA_BOOLEAN, JAVA_BOOLEAN, unionLayout), arena);
 			MemorySegment unionSegmt = arena.allocate(unionLayout);
-			boolHandle1.set(unionSegmt, true);
+			boolHandle1.set(unionSegmt, 0L, true);
 
 			boolean result = (boolean)mh.invoke(true, unionSegmt, upcallFuncAddr);
 			Assert.assertEquals(result, true);
@@ -86,7 +86,7 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addBoolAndBoolsFromUnionPtrWithXor,
 					FunctionDescriptor.of(JAVA_BOOLEAN, JAVA_BOOLEAN, ADDRESS), arena);
 			MemorySegment unionSegmt = arena.allocate(unionLayout);
-			boolHandle2.set(unionSegmt, false);
+			boolHandle2.set(unionSegmt, 0L, false);
 
 			boolean result = (boolean)mh.invoke(true, unionSegmt, upcallFuncAddr);
 			Assert.assertEquals(result, true);
@@ -227,13 +227,13 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_add2BoolUnionsWithXor_returnUnion,
 					FunctionDescriptor.of(unionLayout, unionLayout, unionLayout), arena);
 			MemorySegment unionSegmt1 = arena.allocate(unionLayout);
-			boolHandle1.set(unionSegmt1, true);
+			boolHandle1.set(unionSegmt1, 0L, true);
 			MemorySegment unionSegmt2 = arena.allocate(unionLayout);
-			boolHandle2.set(unionSegmt2, false);
+			boolHandle2.set(unionSegmt2, 0L, false);
 
 			MemorySegment resultSegmt = (MemorySegment)mh.invoke((SegmentAllocator)arena, unionSegmt1, unionSegmt2, upcallFuncAddr);
-			Assert.assertEquals(boolHandle1.get(resultSegmt), true);
-			Assert.assertEquals(boolHandle2.get(resultSegmt), true);
+			Assert.assertEquals(boolHandle1.get(resultSegmt, 0L), true);
+			Assert.assertEquals(boolHandle2.get(resultSegmt, 0L), true);
 		}
 	}
 
@@ -251,9 +251,9 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_add2BoolUnionsWithXor_returnUnionPtr,
 					FunctionDescriptor.of(ADDRESS, ADDRESS, unionLayout), arena);
 			MemorySegment unionSegmt1 = arena.allocate(unionLayout);
-			boolHandle1.set(unionSegmt1, true);
+			boolHandle1.set(unionSegmt1, 0L, true);
 			MemorySegment unionSegmt2 = arena.allocate(unionLayout);
-			boolHandle2.set(unionSegmt2, true);
+			boolHandle2.set(unionSegmt2, 0L, true);
 
 			MemorySegment resultAddr = (MemorySegment)mh.invoke(unionSegmt1, unionSegmt2, upcallFuncAddr);
 			MemorySegment resultSegmt = resultAddr.reinterpret(unionLayout.byteSize());
@@ -277,14 +277,14 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_add3BoolUnionsWithXor_returnUnion,
 					FunctionDescriptor.of(unionLayout, unionLayout, unionLayout), arena);
 			MemorySegment unionSegmt1 = arena.allocate(unionLayout);
-			boolHandle1.set(unionSegmt1, true);
+			boolHandle1.set(unionSegmt1, 0L, true);
 			MemorySegment unionSegmt2 = arena.allocate(unionLayout);
-			boolHandle2.set(unionSegmt2, false);
+			boolHandle2.set(unionSegmt2, 0L, false);
 
 			MemorySegment resultSegmt = (MemorySegment)mh.invoke((SegmentAllocator)arena, unionSegmt1, unionSegmt2, upcallFuncAddr);
-			Assert.assertEquals(boolHandle1.get(resultSegmt), true);
-			Assert.assertEquals(boolHandle2.get(resultSegmt), true);
-			Assert.assertEquals(boolHandle3.get(resultSegmt), true);
+			Assert.assertEquals(boolHandle1.get(resultSegmt, 0L), true);
+			Assert.assertEquals(boolHandle2.get(resultSegmt, 0L), true);
+			Assert.assertEquals(boolHandle3.get(resultSegmt, 0L), true);
 		}
 	}
 
@@ -301,7 +301,7 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addByteAndBytesFromUnion,
 					FunctionDescriptor.of(JAVA_BYTE, JAVA_BYTE, unionLayout), arena);
 			MemorySegment unionSegmt = arena.allocate(unionLayout);
-			byteHandle1.set(unionSegmt, (byte)8);
+			byteHandle1.set(unionSegmt, 0L, (byte)8);
 
 			byte result = (byte)mh.invokeExact((byte)6, unionSegmt, upcallFuncAddr);
 			Assert.assertEquals(result, 22);
@@ -322,7 +322,7 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addByteAndBytesFromUnionPtr,
 					FunctionDescriptor.of(JAVA_BYTE, JAVA_BYTE, ADDRESS), arena);
 			MemorySegment unionSegmt = arena.allocate(unionLayout);
-			byteHandle2.set(unionSegmt, (byte)12);
+			byteHandle2.set(unionSegmt, 0L, (byte)12);
 
 			byte result = (byte)mh.invoke((byte)13, unionSegmt, upcallFuncAddr);
 			Assert.assertEquals(result, 37);
@@ -463,15 +463,15 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_add2ByteUnions_returnUnion,
 					FunctionDescriptor.of(unionLayout, unionLayout, unionLayout), arena);
 			MemorySegment unionSegmt1 = arena.allocate(unionLayout);
-			byteHandle1.set(unionSegmt1, (byte)25);
-			byteHandle2.set(unionSegmt1, (byte)11);
+			byteHandle1.set(unionSegmt1, 0L, (byte)25);
+			byteHandle2.set(unionSegmt1, 0L, (byte)11);
 			MemorySegment unionSegmt2 = arena.allocate(unionLayout);
-			byteHandle1.set(unionSegmt2, (byte)24);
-			byteHandle2.set(unionSegmt2, (byte)13);
+			byteHandle1.set(unionSegmt2, 0L, (byte)24);
+			byteHandle2.set(unionSegmt2, 0L, (byte)13);
 
 			MemorySegment resultSegmt = (MemorySegment)mh.invokeExact((SegmentAllocator)arena, unionSegmt1, unionSegmt2, upcallFuncAddr);
-			Assert.assertEquals((byte)byteHandle1.get(resultSegmt), (byte)24);
-			Assert.assertEquals((byte)byteHandle2.get(resultSegmt), (byte)24);
+			Assert.assertEquals((byte)byteHandle1.get(resultSegmt, 0L), (byte)24);
+			Assert.assertEquals((byte)byteHandle2.get(resultSegmt, 0L), (byte)24);
 		}
 	}
 
@@ -489,16 +489,16 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_add2ByteUnions_returnUnionPtr,
 					FunctionDescriptor.of(ADDRESS, ADDRESS, unionLayout), arena);
 			MemorySegment unionSegmt1 = arena.allocate(unionLayout);
-			byteHandle1.set(unionSegmt1, (byte)25);
-			byteHandle2.set(unionSegmt1, (byte)11);
+			byteHandle1.set(unionSegmt1, 0L, (byte)25);
+			byteHandle2.set(unionSegmt1, 0L, (byte)11);
 			MemorySegment unionSegmt2 = arena.allocate(unionLayout);
-			byteHandle1.set(unionSegmt2, (byte)24);
-			byteHandle2.set(unionSegmt2, (byte)13);
+			byteHandle1.set(unionSegmt2, 0L, (byte)24);
+			byteHandle2.set(unionSegmt2, 0L, (byte)13);
 
 			MemorySegment resultAddr = (MemorySegment)mh.invoke(unionSegmt1, unionSegmt2, upcallFuncAddr);
 			MemorySegment resultSegmt = resultAddr.reinterpret(unionLayout.byteSize());
-			Assert.assertEquals((byte)byteHandle1.get(resultSegmt), (byte)37);
-			Assert.assertEquals((byte)byteHandle2.get(resultSegmt), (byte)37);
+			Assert.assertEquals((byte)byteHandle1.get(resultSegmt, 0L), (byte)37);
+			Assert.assertEquals((byte)byteHandle2.get(resultSegmt, 0L), (byte)37);
 		}
 	}
 
@@ -518,18 +518,18 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_add3ByteUnions_returnUnion,
 					FunctionDescriptor.of(unionLayout, unionLayout, unionLayout), arena);
 			MemorySegment unionSegmt1 = arena.allocate(unionLayout);
-			byteHandle1.set(unionSegmt1, (byte)25);
-			byteHandle2.set(unionSegmt1, (byte)11);
-			byteHandle3.set(unionSegmt1, (byte)12);
+			byteHandle1.set(unionSegmt1, 0L, (byte)25);
+			byteHandle2.set(unionSegmt1, 0L, (byte)11);
+			byteHandle3.set(unionSegmt1, 0L, (byte)12);
 			MemorySegment unionSegmt2 = arena.allocate(unionLayout);
-			byteHandle1.set(unionSegmt2, (byte)24);
-			byteHandle2.set(unionSegmt2, (byte)13);
-			byteHandle3.set(unionSegmt2, (byte)16);
+			byteHandle1.set(unionSegmt2, 0L, (byte)24);
+			byteHandle2.set(unionSegmt2, 0L, (byte)13);
+			byteHandle3.set(unionSegmt2, 0L, (byte)16);
 
 			MemorySegment resultSegmt = (MemorySegment)mh.invokeExact((SegmentAllocator)arena, unionSegmt1, unionSegmt2, upcallFuncAddr);
-			Assert.assertEquals((byte)byteHandle1.get(resultSegmt), (byte)28);
-			Assert.assertEquals((byte)byteHandle2.get(resultSegmt), (byte)28);
-			Assert.assertEquals((byte)byteHandle3.get(resultSegmt), (byte)28);
+			Assert.assertEquals((byte)byteHandle1.get(resultSegmt, 0L), (byte)28);
+			Assert.assertEquals((byte)byteHandle2.get(resultSegmt, 0L), (byte)28);
+			Assert.assertEquals((byte)byteHandle3.get(resultSegmt, 0L), (byte)28);
 		}
 	}
 
@@ -547,8 +547,8 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addCharAndCharsFromUnion,
 					FunctionDescriptor.of(JAVA_CHAR, JAVA_CHAR, unionLayout), arena);
 			MemorySegment unionSegmt = arena.allocate(unionLayout);
-			charHandle1.set(unionSegmt, 'A');
-			charHandle2.set(unionSegmt, 'B');
+			charHandle1.set(unionSegmt, 0L, 'A');
+			charHandle2.set(unionSegmt, 0L, 'B');
 
 			char result = (char)mh.invokeExact('C', unionSegmt, upcallFuncAddr);
 			Assert.assertEquals(result, 'E');
@@ -569,8 +569,8 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addCharAndCharsFromUnionPtr,
 					FunctionDescriptor.of(JAVA_CHAR, JAVA_CHAR, ADDRESS), arena);
 			MemorySegment unionSegmt = arena.allocate(unionLayout);
-			charHandle1.set(unionSegmt, 'H');
-			charHandle2.set(unionSegmt, 'I');
+			charHandle1.set(unionSegmt, 0L, 'H');
+			charHandle2.set(unionSegmt, 0L, 'I');
 
 			char result = (char)mh.invoke('G', unionSegmt, upcallFuncAddr);
 			Assert.assertEquals(result, 'W');
@@ -711,15 +711,15 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_add2CharUnions_returnUnion,
 					FunctionDescriptor.of(unionLayout, unionLayout, unionLayout), arena);
 			MemorySegment unionSegmt1 = arena.allocate(unionLayout);
-			charHandle1.set(unionSegmt1, 'A');
-			charHandle2.set(unionSegmt1, 'B');
+			charHandle1.set(unionSegmt1, 0L, 'A');
+			charHandle2.set(unionSegmt1, 0L, 'B');
 			MemorySegment unionSegmt2 = arena.allocate(unionLayout);
-			charHandle1.set(unionSegmt2, 'C');
-			charHandle2.set(unionSegmt2, 'D');
+			charHandle1.set(unionSegmt2, 0L, 'C');
+			charHandle2.set(unionSegmt2, 0L, 'D');
 
 			MemorySegment resultSegmt = (MemorySegment)mh.invokeExact((SegmentAllocator)arena, unionSegmt1, unionSegmt2, upcallFuncAddr);
-			Assert.assertEquals(charHandle1.get(resultSegmt), 'E');
-			Assert.assertEquals(charHandle2.get(resultSegmt), 'E');
+			Assert.assertEquals(charHandle1.get(resultSegmt, 0L), 'E');
+			Assert.assertEquals(charHandle2.get(resultSegmt, 0L), 'E');
 		}
 	}
 
@@ -737,16 +737,16 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_add2CharUnions_returnUnionPtr,
 					FunctionDescriptor.of(ADDRESS, ADDRESS, unionLayout), arena);
 			MemorySegment unionSegmt1 = arena.allocate(unionLayout);
-			charHandle1.set(unionSegmt1, 'A');
-			charHandle2.set(unionSegmt1, 'B');
+			charHandle1.set(unionSegmt1, 0L, 'A');
+			charHandle2.set(unionSegmt1, 0L, 'B');
 			MemorySegment unionSegmt2 = arena.allocate(unionLayout);
-			charHandle1.set(unionSegmt2, 'B');
-			charHandle2.set(unionSegmt2, 'C');
+			charHandle1.set(unionSegmt2, 0L, 'B');
+			charHandle2.set(unionSegmt2, 0L, 'C');
 
 			MemorySegment resultAddr = (MemorySegment)mh.invoke(unionSegmt1, unionSegmt2, upcallFuncAddr);
 			MemorySegment resultSegmt = resultAddr.reinterpret(unionLayout.byteSize());
-			Assert.assertEquals(charHandle1.get(resultSegmt), 'F');
-			Assert.assertEquals(charHandle2.get(resultSegmt), 'F');
+			Assert.assertEquals(charHandle1.get(resultSegmt, 0L), 'F');
+			Assert.assertEquals(charHandle2.get(resultSegmt, 0L), 'F');
 		}
 	}
 
@@ -766,18 +766,18 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_add3CharUnions_returnUnion,
 					FunctionDescriptor.of(unionLayout, unionLayout, unionLayout), arena);
 			MemorySegment unionSegmt1 = arena.allocate(unionLayout);
-			charHandle1.set(unionSegmt1, 'A');
-			charHandle2.set(unionSegmt1, 'B');
-			charHandle3.set(unionSegmt1, 'C');
+			charHandle1.set(unionSegmt1, 0L, 'A');
+			charHandle2.set(unionSegmt1, 0L, 'B');
+			charHandle3.set(unionSegmt1, 0L, 'C');
 			MemorySegment unionSegmt2 = arena.allocate(unionLayout);
-			charHandle1.set(unionSegmt2, 'B');
-			charHandle2.set(unionSegmt2, 'C');
-			charHandle3.set(unionSegmt2, 'D');
+			charHandle1.set(unionSegmt2, 0L, 'B');
+			charHandle2.set(unionSegmt2, 0L, 'C');
+			charHandle3.set(unionSegmt2, 0L, 'D');
 
 			MemorySegment resultSegmt = (MemorySegment)mh.invokeExact((SegmentAllocator)arena, unionSegmt1, unionSegmt2, upcallFuncAddr);
-			Assert.assertEquals(charHandle1.get(resultSegmt), 'F');
-			Assert.assertEquals(charHandle2.get(resultSegmt), 'F');
-			Assert.assertEquals(charHandle3.get(resultSegmt), 'F');
+			Assert.assertEquals(charHandle1.get(resultSegmt, 0L), 'F');
+			Assert.assertEquals(charHandle2.get(resultSegmt, 0L), 'F');
+			Assert.assertEquals(charHandle3.get(resultSegmt, 0L), 'F');
 		}
 	}
 
@@ -794,7 +794,7 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addShortAndShortsFromUnion,
 					FunctionDescriptor.of(JAVA_SHORT, JAVA_SHORT, unionLayout), arena);
 			MemorySegment unionSegmt = arena.allocate(unionLayout);
-			shortHandle2.set(unionSegmt, (short)9);
+			shortHandle2.set(unionSegmt, 0L, (short)9);
 
 			short result = (short)mh.invokeExact((short)6, unionSegmt, upcallFuncAddr);
 			Assert.assertEquals(result, 24);
@@ -814,7 +814,7 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addShortAndShortsFromUnionPtr,
 					FunctionDescriptor.of(JAVA_SHORT, JAVA_SHORT, ADDRESS), arena);
 			MemorySegment unionSegmt = arena.allocate(unionLayout);
-			shortHandle1.set(unionSegmt, (short)22);
+			shortHandle1.set(unionSegmt, 0L, (short)22);
 
 			short result = (short)mh.invoke((short)66, unionSegmt, upcallFuncAddr);
 			Assert.assertEquals(result, 110);
@@ -955,15 +955,15 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_add2ShortUnions_returnUnion,
 					FunctionDescriptor.of(unionLayout, unionLayout, unionLayout), arena);
 			MemorySegment unionSegmt1 = arena.allocate(unionLayout);
-			shortHandle1.set(unionSegmt1, (short)56);
-			shortHandle2.set(unionSegmt1, (short)45);
+			shortHandle1.set(unionSegmt1, 0L, (short)56);
+			shortHandle2.set(unionSegmt1, 0L, (short)45);
 			MemorySegment unionSegmt2 = arena.allocate(unionLayout);
-			shortHandle1.set(unionSegmt2, (short)78);
-			shortHandle2.set(unionSegmt2, (short)67);
+			shortHandle1.set(unionSegmt2, 0L, (short)78);
+			shortHandle2.set(unionSegmt2, 0L, (short)67);
 
 			MemorySegment resultSegmt = (MemorySegment)mh.invokeExact((SegmentAllocator)arena, unionSegmt1, unionSegmt2, upcallFuncAddr);
-			Assert.assertEquals((short)shortHandle1.get(resultSegmt), (short)112);
-			Assert.assertEquals((short)shortHandle2.get(resultSegmt), (short)112);
+			Assert.assertEquals((short)shortHandle1.get(resultSegmt, 0L), (short)112);
+			Assert.assertEquals((short)shortHandle2.get(resultSegmt, 0L), (short)112);
 		}
 	}
 
@@ -981,16 +981,16 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_add2ShortUnions_returnUnionPtr,
 					FunctionDescriptor.of(ADDRESS, ADDRESS, unionLayout), arena);
 			MemorySegment unionSegmt1 = arena.allocate(unionLayout);
-			shortHandle1.set(unionSegmt1, (short)56);
-			shortHandle2.set(unionSegmt1, (short)45);
+			shortHandle1.set(unionSegmt1, 0L, (short)56);
+			shortHandle2.set(unionSegmt1, 0L, (short)45);
 			MemorySegment unionSegmt2 = arena.allocate(unionLayout);
-			shortHandle1.set(unionSegmt2, (short)78);
-			shortHandle2.set(unionSegmt2, (short)67);
+			shortHandle1.set(unionSegmt2, 0L, (short)78);
+			shortHandle2.set(unionSegmt2, 0L, (short)67);
 
 			MemorySegment resultAddr = (MemorySegment)mh.invoke(unionSegmt1, unionSegmt2, upcallFuncAddr);
 			MemorySegment resultSegmt = resultAddr.reinterpret(unionLayout.byteSize());
-			Assert.assertEquals((short)shortHandle1.get(resultSegmt), (short)179);
-			Assert.assertEquals((short)shortHandle2.get(resultSegmt), (short)179);
+			Assert.assertEquals((short)shortHandle1.get(resultSegmt, 0L), (short)179);
+			Assert.assertEquals((short)shortHandle2.get(resultSegmt, 0L), (short)179);
 		}
 	}
 
@@ -1010,18 +1010,18 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_add3ShortUnions_returnUnion,
 					FunctionDescriptor.of(unionLayout, unionLayout, unionLayout), arena);
 			MemorySegment unionSegmt1 = arena.allocate(unionLayout);
-			shortHandle1.set(unionSegmt1, (short)25);
-			shortHandle2.set(unionSegmt1, (short)26);
-			shortHandle3.set(unionSegmt1, (short)27);
+			shortHandle1.set(unionSegmt1, 0L, (short)25);
+			shortHandle2.set(unionSegmt1, 0L, (short)26);
+			shortHandle3.set(unionSegmt1, 0L, (short)27);
 			MemorySegment unionSegmt2 = arena.allocate(unionLayout);
-			shortHandle1.set(unionSegmt2, (short)34);
-			shortHandle2.set(unionSegmt2, (short)35);
-			shortHandle3.set(unionSegmt2, (short)36);
+			shortHandle1.set(unionSegmt2, 0L, (short)34);
+			shortHandle2.set(unionSegmt2, 0L, (short)35);
+			shortHandle3.set(unionSegmt2, 0L, (short)36);
 
 			MemorySegment resultSegmt = (MemorySegment)mh.invokeExact((SegmentAllocator)arena, unionSegmt1, unionSegmt2, upcallFuncAddr);
-			Assert.assertEquals((short)shortHandle1.get(resultSegmt), (short)63);
-			Assert.assertEquals((short)shortHandle2.get(resultSegmt), (short)63);
-			Assert.assertEquals((short)shortHandle3.get(resultSegmt), (short)63);
+			Assert.assertEquals((short)shortHandle1.get(resultSegmt, 0L), (short)63);
+			Assert.assertEquals((short)shortHandle2.get(resultSegmt, 0L), (short)63);
+			Assert.assertEquals((short)shortHandle3.get(resultSegmt, 0L), (short)63);
 		}
 	}
 
@@ -1038,7 +1038,7 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addIntAndIntsFromUnion,
 					FunctionDescriptor.of(JAVA_INT, JAVA_INT, unionLayout), arena);
 			MemorySegment unionSegmt = arena.allocate(unionLayout);
-			intHandle2.set(unionSegmt, 1234567);
+			intHandle2.set(unionSegmt, 0L, 1234567);
 
 			int result = (int)mh.invokeExact(2244668, unionSegmt, upcallFuncAddr);
 			Assert.assertEquals(result, 4713802);
@@ -1059,8 +1059,8 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addIntAndIntsFromUnionPtr,
 					FunctionDescriptor.of(JAVA_INT, JAVA_INT, ADDRESS), arena);
 			MemorySegment unionSegmt = arena.allocate(unionLayout);
-			intHandle1.set(unionSegmt, 11121314);
-			intHandle2.set(unionSegmt, 15161718);
+			intHandle1.set(unionSegmt, 0L, 11121314);
+			intHandle2.set(unionSegmt, 0L, 15161718);
 
 			int result = (int)mh.invoke(19202122, unionSegmt, upcallFuncAddr);
 			Assert.assertEquals(result, 49525558);
@@ -1202,15 +1202,15 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_add2IntUnions_returnUnion,
 					FunctionDescriptor.of(unionLayout, unionLayout, unionLayout), arena);
 			MemorySegment unionSegmt1 = arena.allocate(unionLayout);
-			intHandle1.set(unionSegmt1, 11223344);
-			intHandle2.set(unionSegmt1, 55667788);
+			intHandle1.set(unionSegmt1, 0L, 11223344);
+			intHandle2.set(unionSegmt1, 0L, 55667788);
 			MemorySegment unionSegmt2 = arena.allocate(unionLayout);
-			intHandle1.set(unionSegmt2, 99001122);
-			intHandle2.set(unionSegmt2, 33445566);
+			intHandle1.set(unionSegmt2, 0L, 99001122);
+			intHandle2.set(unionSegmt2, 0L, 33445566);
 
 			MemorySegment resultSegmt = (MemorySegment)mh.invokeExact((SegmentAllocator)arena, unionSegmt1, unionSegmt2, upcallFuncAddr);
-			Assert.assertEquals(intHandle1.get(resultSegmt), 89113354);
-			Assert.assertEquals(intHandle2.get(resultSegmt), 89113354);
+			Assert.assertEquals(intHandle1.get(resultSegmt, 0L), 89113354);
+			Assert.assertEquals(intHandle2.get(resultSegmt, 0L), 89113354);
 		}
 	}
 
@@ -1228,16 +1228,16 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_add2IntUnions_returnUnionPtr,
 					FunctionDescriptor.of(ADDRESS, ADDRESS, unionLayout), arena);
 			MemorySegment unionSegmt1 = arena.allocate(unionLayout);
-			intHandle1.set(unionSegmt1, 11223344);
-			intHandle2.set(unionSegmt1, 55667788);
+			intHandle1.set(unionSegmt1, 0L, 11223344);
+			intHandle2.set(unionSegmt1, 0L, 55667788);
 			MemorySegment unionSegmt2 = arena.allocate(unionLayout);
-			intHandle1.set(unionSegmt2, 99001122);
-			intHandle2.set(unionSegmt2, 33445566);
+			intHandle1.set(unionSegmt2, 0L, 99001122);
+			intHandle2.set(unionSegmt2, 0L, 33445566);
 
 			MemorySegment resultAddr = (MemorySegment)mh.invoke(unionSegmt1, unionSegmt2, upcallFuncAddr);
 			MemorySegment resultSegmt = resultAddr.reinterpret(unionLayout.byteSize());
-			Assert.assertEquals(intHandle1.get(resultSegmt), 122558920);
-			Assert.assertEquals(intHandle2.get(resultSegmt), 122558920);
+			Assert.assertEquals(intHandle1.get(resultSegmt, 0L), 122558920);
+			Assert.assertEquals(intHandle2.get(resultSegmt, 0L), 122558920);
 		}
 	}
 
@@ -1257,18 +1257,18 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_add3IntUnions_returnUnion,
 					FunctionDescriptor.of(unionLayout, unionLayout, unionLayout), arena);
 			MemorySegment unionSegmt1 = arena.allocate(unionLayout);
-			intHandle1.set(unionSegmt1, 11223344);
-			intHandle2.set(unionSegmt1, 55667788);
-			intHandle3.set(unionSegmt1, 99001122);
+			intHandle1.set(unionSegmt1, 0L, 11223344);
+			intHandle2.set(unionSegmt1, 0L, 55667788);
+			intHandle3.set(unionSegmt1, 0L, 99001122);
 			MemorySegment unionSegmt2 = arena.allocate(unionLayout);
-			intHandle1.set(unionSegmt2, 33445566);
-			intHandle2.set(unionSegmt2, 77889900);
-			intHandle3.set(unionSegmt2, 44332211);
+			intHandle1.set(unionSegmt2, 0L, 33445566);
+			intHandle2.set(unionSegmt2, 0L, 77889900);
+			intHandle3.set(unionSegmt2, 0L, 44332211);
 
 			MemorySegment resultSegmt = (MemorySegment)mh.invokeExact((SegmentAllocator)arena, unionSegmt1, unionSegmt2, upcallFuncAddr);
-			Assert.assertEquals(intHandle1.get(resultSegmt), 143333333);
-			Assert.assertEquals(intHandle2.get(resultSegmt), 143333333);
-			Assert.assertEquals(intHandle3.get(resultSegmt), 143333333);
+			Assert.assertEquals(intHandle1.get(resultSegmt, 0L), 143333333);
+			Assert.assertEquals(intHandle2.get(resultSegmt, 0L), 143333333);
+			Assert.assertEquals(intHandle3.get(resultSegmt, 0L), 143333333);
 		}
 	}
 
@@ -1286,8 +1286,8 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addLongAndLongsFromUnion,
 					FunctionDescriptor.of(JAVA_LONG, JAVA_LONG, unionLayout), arena);
 			MemorySegment unionSegmt = arena.allocate(unionLayout);
-			longHandle1.set(unionSegmt, 1234567890L);
-			longHandle2.set(unionSegmt, 9876543210L);
+			longHandle1.set(unionSegmt, 0L, 1234567890L);
+			longHandle2.set(unionSegmt, 0L, 9876543210L);
 
 			long result = (long)mh.invokeExact(2468024680L, unionSegmt, upcallFuncAddr);
 			Assert.assertEquals(result, 22221111100L);
@@ -1308,8 +1308,8 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addLongAndLongsFromUnionPtr,
 					FunctionDescriptor.of(JAVA_LONG, JAVA_LONG, ADDRESS), arena);
 			MemorySegment unionSegmt = arena.allocate(unionLayout);
-			longHandle1.set(unionSegmt, 224466880022L);
-			longHandle2.set(unionSegmt, 446688002244L);
+			longHandle1.set(unionSegmt, 0L, 224466880022L);
+			longHandle2.set(unionSegmt, 0L, 446688002244L);
 
 			long result = (long)mh.invoke(668800224466L, unionSegmt, upcallFuncAddr);
 			Assert.assertEquals(result, 1562176228954L);
@@ -1450,15 +1450,15 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_add2LongUnions_returnUnion,
 					FunctionDescriptor.of(unionLayout, unionLayout, unionLayout), arena);
 			MemorySegment unionSegmt1 = arena.allocate(unionLayout);
-			longHandle1.set(unionSegmt1, 987654321987L);
-			longHandle2.set(unionSegmt1, 123456789123L);
+			longHandle1.set(unionSegmt1, 0L, 987654321987L);
+			longHandle2.set(unionSegmt1, 0L, 123456789123L);
 			MemorySegment unionSegmt2 = arena.allocate(unionLayout);
-			longHandle1.set(unionSegmt2, 224466880022L);
-			longHandle2.set(unionSegmt2, 113355779911L);
+			longHandle1.set(unionSegmt2, 0L, 224466880022L);
+			longHandle2.set(unionSegmt2, 0L, 113355779911L);
 
 			MemorySegment resultSegmt = (MemorySegment)mh.invokeExact((SegmentAllocator)arena, unionSegmt1, unionSegmt2, upcallFuncAddr);
-			Assert.assertEquals(longHandle1.get(resultSegmt), 236812569034L);
-			Assert.assertEquals(longHandle2.get(resultSegmt), 236812569034L);
+			Assert.assertEquals(longHandle1.get(resultSegmt, 0L), 236812569034L);
+			Assert.assertEquals(longHandle2.get(resultSegmt, 0L), 236812569034L);
 		}
 	}
 
@@ -1476,16 +1476,16 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_add2LongUnions_returnUnionPtr,
 					FunctionDescriptor.of(ADDRESS, ADDRESS, unionLayout), arena);
 			MemorySegment unionSegmt1 = arena.allocate(unionLayout);
-			longHandle1.set(unionSegmt1, 1122334455L);
-			longHandle2.set(unionSegmt1, 5566778899L);
+			longHandle1.set(unionSegmt1, 0L, 1122334455L);
+			longHandle2.set(unionSegmt1, 0L, 5566778899L);
 			MemorySegment unionSegmt2 = arena.allocate(unionLayout);
-			longHandle1.set(unionSegmt2, 9900112233L);
-			longHandle2.set(unionSegmt2, 3344556677L);
+			longHandle1.set(unionSegmt2, 0L, 9900112233L);
+			longHandle2.set(unionSegmt2, 0L, 3344556677L);
 
 			MemorySegment resultAddr = (MemorySegment)mh.invoke(unionSegmt1, unionSegmt2, upcallFuncAddr);
 			MemorySegment resultSegmt = resultAddr.reinterpret(unionLayout.byteSize());
-			Assert.assertEquals(longHandle1.get(resultSegmt), 12255892253L);
-			Assert.assertEquals(longHandle2.get(resultSegmt), 12255892253L);
+			Assert.assertEquals(longHandle1.get(resultSegmt, 0L), 12255892253L);
+			Assert.assertEquals(longHandle2.get(resultSegmt, 0L), 12255892253L);
 		}
 	}
 
@@ -1504,18 +1504,18 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_add3LongUnions_returnUnion,
 					FunctionDescriptor.of(unionLayout, unionLayout, unionLayout), arena);
 			MemorySegment unionSegmt1 = arena.allocate(unionLayout);
-			longHandle1.set(unionSegmt1, 987654321987L);
-			longHandle2.set(unionSegmt1, 123456789123L);
-			longHandle3.set(unionSegmt1, 112233445566L);
+			longHandle1.set(unionSegmt1, 0L, 987654321987L);
+			longHandle2.set(unionSegmt1, 0L, 123456789123L);
+			longHandle3.set(unionSegmt1, 0L, 112233445566L);
 			MemorySegment unionSegmt2 = arena.allocate(unionLayout);
-			longHandle1.set(unionSegmt2, 224466880022L);
-			longHandle2.set(unionSegmt2, 113355779911L);
-			longHandle3.set(unionSegmt2, 778899001122L);
+			longHandle1.set(unionSegmt2, 0L, 224466880022L);
+			longHandle2.set(unionSegmt2, 0L, 113355779911L);
+			longHandle3.set(unionSegmt2, 0L, 778899001122L);
 
 			MemorySegment resultSegmt = (MemorySegment)mh.invokeExact((SegmentAllocator)arena, unionSegmt1, unionSegmt2, upcallFuncAddr);
-			Assert.assertEquals(longHandle1.get(resultSegmt), 891132446688L);
-			Assert.assertEquals(longHandle2.get(resultSegmt), 891132446688L);
-			Assert.assertEquals(longHandle3.get(resultSegmt), 891132446688L);
+			Assert.assertEquals(longHandle1.get(resultSegmt, 0L), 891132446688L);
+			Assert.assertEquals(longHandle2.get(resultSegmt, 0L), 891132446688L);
+			Assert.assertEquals(longHandle3.get(resultSegmt, 0L), 891132446688L);
 		}
 	}
 
@@ -1533,8 +1533,8 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addFloatAndFloatsFromUnion,
 					FunctionDescriptor.of(JAVA_FLOAT, JAVA_FLOAT, unionLayout), arena);
 			MemorySegment unionSegmt = arena.allocate(unionLayout);
-			floatHandle1.set(unionSegmt, 8.12F);
-			floatHandle2.set(unionSegmt, 9.24F);
+			floatHandle1.set(unionSegmt, 0L, 8.12F);
+			floatHandle2.set(unionSegmt, 0L, 9.24F);
 
 			float result = (float)mh.invokeExact(6.56F, unionSegmt, upcallFuncAddr);
 			Assert.assertEquals(result, 25.04F, 0.01F);
@@ -1555,8 +1555,8 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addFloatAndFloatsFromUnionPtr,
 					FunctionDescriptor.of(JAVA_FLOAT, JAVA_FLOAT, ADDRESS), arena);
 			MemorySegment unionSegmt = arena.allocate(unionLayout);
-			floatHandle1.set(unionSegmt, 35.11F);
-			floatHandle2.set(unionSegmt, 46.22F);
+			floatHandle1.set(unionSegmt, 0L, 35.11F);
+			floatHandle2.set(unionSegmt, 0L, 46.22F);
 
 			float result = (float)mh.invoke(79.32F, unionSegmt, upcallFuncAddr);
 			Assert.assertEquals(result, 171.76F, 0.01F);
@@ -1697,15 +1697,15 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_add2FloatUnions_returnUnion,
 					FunctionDescriptor.of(unionLayout, unionLayout, unionLayout), arena);
 			MemorySegment unionSegmt1 = arena.allocate(unionLayout);
-			floatHandle1.set(unionSegmt1, 25.12F);
-			floatHandle2.set(unionSegmt1, 11.23F);
+			floatHandle1.set(unionSegmt1, 0L, 25.12F);
+			floatHandle2.set(unionSegmt1, 0L, 11.23F);
 			MemorySegment unionSegmt2 = arena.allocate(unionLayout);
-			floatHandle1.set(unionSegmt2, 24.34F);
-			floatHandle2.set(unionSegmt2, 13.45F);
+			floatHandle1.set(unionSegmt2, 0L, 24.34F);
+			floatHandle2.set(unionSegmt2, 0L, 13.45F);
 
 			MemorySegment resultSegmt = (MemorySegment)mh.invokeExact((SegmentAllocator)arena, unionSegmt1, unionSegmt2, upcallFuncAddr);
-			Assert.assertEquals((float)floatHandle1.get(resultSegmt), 24.68F, 0.01F);
-			Assert.assertEquals((float)floatHandle2.get(resultSegmt), 24.68F, 0.01F);
+			Assert.assertEquals((float)floatHandle1.get(resultSegmt, 0L), 24.68F, 0.01F);
+			Assert.assertEquals((float)floatHandle2.get(resultSegmt, 0L), 24.68F, 0.01F);
 		}
 	}
 
@@ -1723,16 +1723,16 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_add2FloatUnions_returnUnionPtr,
 					FunctionDescriptor.of(ADDRESS, ADDRESS, unionLayout), arena);
 			MemorySegment unionSegmt1 = arena.allocate(unionLayout);
-			floatHandle1.set(unionSegmt1, 25.12F);
-			floatHandle2.set(unionSegmt1, 11.23F);
+			floatHandle1.set(unionSegmt1, 0L, 25.12F);
+			floatHandle2.set(unionSegmt1, 0L, 11.23F);
 			MemorySegment unionSegmt2 = arena.allocate(unionLayout);
-			floatHandle1.set(unionSegmt2, 24.34F);
-			floatHandle2.set(unionSegmt2, 13.47F);
+			floatHandle1.set(unionSegmt2, 0L, 24.34F);
+			floatHandle2.set(unionSegmt2, 0L, 13.47F);
 
 			MemorySegment resultAddr = (MemorySegment)mh.invoke(unionSegmt1, unionSegmt2, upcallFuncAddr);
 			MemorySegment resultSegmt = resultAddr.reinterpret(unionLayout.byteSize());
-			Assert.assertEquals((float)floatHandle1.get(resultSegmt), 38.17F, 0.01F);
-			Assert.assertEquals((float)floatHandle2.get(resultSegmt), 38.17F, 0.01F);
+			Assert.assertEquals((float)floatHandle1.get(resultSegmt, 0L), 38.17F, 0.01F);
+			Assert.assertEquals((float)floatHandle2.get(resultSegmt, 0L), 38.17F, 0.01F);
 		}
 	}
 
@@ -1751,18 +1751,18 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_add3FloatUnions_returnUnion,
 					FunctionDescriptor.of(unionLayout, unionLayout, unionLayout), arena);
 			MemorySegment unionSegmt1 = arena.allocate(unionLayout);
-			floatHandle1.set(unionSegmt1, 25.12F);
-			floatHandle2.set(unionSegmt1, 11.23F);
-			floatHandle3.set(unionSegmt1, 45.67F);
+			floatHandle1.set(unionSegmt1, 0L, 25.12F);
+			floatHandle2.set(unionSegmt1, 0L, 11.23F);
+			floatHandle3.set(unionSegmt1, 0L, 45.67F);
 			MemorySegment unionSegmt2 = arena.allocate(unionLayout);
-			floatHandle1.set(unionSegmt2, 24.34F);
-			floatHandle2.set(unionSegmt2, 13.45F);
-			floatHandle3.set(unionSegmt2, 69.72F);
+			floatHandle1.set(unionSegmt2, 0L, 24.34F);
+			floatHandle2.set(unionSegmt2, 0L, 13.45F);
+			floatHandle3.set(unionSegmt2, 0L, 69.72F);
 
 			MemorySegment resultSegmt = (MemorySegment)mh.invokeExact((SegmentAllocator)arena, unionSegmt1, unionSegmt2, upcallFuncAddr);
-			Assert.assertEquals((float)floatHandle1.get(resultSegmt), 115.39F, 0.01F);
-			Assert.assertEquals((float)floatHandle2.get(resultSegmt), 115.39F, 0.01F);
-			Assert.assertEquals((float)floatHandle3.get(resultSegmt), 115.39F, 0.01F);
+			Assert.assertEquals((float)floatHandle1.get(resultSegmt, 0L), 115.39F, 0.01F);
+			Assert.assertEquals((float)floatHandle2.get(resultSegmt, 0L), 115.39F, 0.01F);
+			Assert.assertEquals((float)floatHandle3.get(resultSegmt, 0L), 115.39F, 0.01F);
 		}
 	}
 
@@ -1780,8 +1780,8 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addDoubleAndDoublesFromUnion,
 					FunctionDescriptor.of(JAVA_DOUBLE, JAVA_DOUBLE, unionLayout), arena);
 			MemorySegment unionSegmt = arena.allocate(unionLayout);
-			doubleHandle1.set(unionSegmt, 2228.111D);
-			doubleHandle2.set(unionSegmt, 2229.221D);
+			doubleHandle1.set(unionSegmt, 0L, 2228.111D);
+			doubleHandle2.set(unionSegmt, 0L, 2229.221D);
 
 			double result = (double)mh.invokeExact(3336.333D, unionSegmt, upcallFuncAddr);
 			Assert.assertEquals(result, 7794.775D, 0.001D);
@@ -1802,8 +1802,8 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addDoubleAndDoublesFromUnionPtr,
 					FunctionDescriptor.of(JAVA_DOUBLE, JAVA_DOUBLE, ADDRESS), arena);
 			MemorySegment unionSegmt = arena.allocate(unionLayout);
-			doubleHandle1.set(unionSegmt, 2228.111D);
-			doubleHandle2.set(unionSegmt, 2229.221D);
+			doubleHandle1.set(unionSegmt, 0L, 2228.111D);
+			doubleHandle2.set(unionSegmt, 0L, 2229.221D);
 
 			double result = (double)mh.invokeExact(3336.333D, unionSegmt, upcallFuncAddr);
 			Assert.assertEquals(result, 7794.775D, 0.001D);
@@ -1946,15 +1946,15 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_add2DoubleUnions_returnUnion,
 					FunctionDescriptor.of(unionLayout, unionLayout, unionLayout), arena);
 			MemorySegment unionSegmt1 = arena.allocate(unionLayout);
-			doubleHandle1.set(unionSegmt1, 11.222D);
-			doubleHandle2.set(unionSegmt1, 22.333D);
+			doubleHandle1.set(unionSegmt1, 0L, 11.222D);
+			doubleHandle2.set(unionSegmt1, 0L, 22.333D);
 			MemorySegment unionSegmt2 = arena.allocate(unionLayout);
-			doubleHandle1.set(unionSegmt2, 33.444D);
-			doubleHandle2.set(unionSegmt2, 44.555D);
+			doubleHandle1.set(unionSegmt2, 0L, 33.444D);
+			doubleHandle2.set(unionSegmt2, 0L, 44.555D);
 
 			MemorySegment resultSegmt = (MemorySegment)mh.invokeExact((SegmentAllocator)arena, unionSegmt1, unionSegmt2, upcallFuncAddr);
-			Assert.assertEquals((double)doubleHandle1.get(resultSegmt), 66.888D, 0.001D);
-			Assert.assertEquals((double)doubleHandle2.get(resultSegmt), 66.888D, 0.001D);
+			Assert.assertEquals((double)doubleHandle1.get(resultSegmt, 0L), 66.888D, 0.001D);
+			Assert.assertEquals((double)doubleHandle2.get(resultSegmt, 0L), 66.888D, 0.001D);
 		}
 	}
 
@@ -1972,16 +1972,16 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_add2DoubleUnions_returnUnionPtr,
 					FunctionDescriptor.of(ADDRESS, ADDRESS, unionLayout), arena);
 			MemorySegment unionSegmt1 = arena.allocate(unionLayout);
-			doubleHandle1.set(unionSegmt1, 11.222D);
-			doubleHandle2.set(unionSegmt1, 22.333D);
+			doubleHandle1.set(unionSegmt1, 0L, 11.222D);
+			doubleHandle2.set(unionSegmt1, 0L, 22.333D);
 			MemorySegment unionSegmt2 = arena.allocate(unionLayout);
-			doubleHandle1.set(unionSegmt2, 33.444D);
-			doubleHandle2.set(unionSegmt2, 44.555D);
+			doubleHandle1.set(unionSegmt2, 0L, 33.444D);
+			doubleHandle2.set(unionSegmt2, 0L, 44.555D);
 
 			MemorySegment resultAddr = (MemorySegment)mh.invoke(unionSegmt1, unionSegmt2, upcallFuncAddr);
 			MemorySegment resultSegmt = resultAddr.reinterpret(unionLayout.byteSize());
-			Assert.assertEquals((double)doubleHandle1.get(resultSegmt), 111.443D, 0.001D);
-			Assert.assertEquals((double)doubleHandle2.get(resultSegmt), 111.443D, 0.001D);
+			Assert.assertEquals((double)doubleHandle1.get(resultSegmt, 0L), 111.443D, 0.001D);
+			Assert.assertEquals((double)doubleHandle2.get(resultSegmt, 0L), 111.443D, 0.001D);
 		}
 	}
 
@@ -2000,18 +2000,18 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_add3DoubleUnions_returnUnion,
 					FunctionDescriptor.of(unionLayout, unionLayout, unionLayout), arena);
 			MemorySegment unionSegmt1 = arena.allocate(unionLayout);
-			doubleHandle1.set(unionSegmt1, 11.222D);
-			doubleHandle2.set(unionSegmt1, 22.333D);
-			doubleHandle3.set(unionSegmt1, 33.123D);
+			doubleHandle1.set(unionSegmt1, 0L, 11.222D);
+			doubleHandle2.set(unionSegmt1, 0L, 22.333D);
+			doubleHandle3.set(unionSegmt1, 0L, 33.123D);
 			MemorySegment unionSegmt2 = arena.allocate(unionLayout);
-			doubleHandle1.set(unionSegmt2, 33.444D);
-			doubleHandle2.set(unionSegmt2, 44.555D);
-			doubleHandle3.set(unionSegmt2, 55.456D);
+			doubleHandle1.set(unionSegmt2, 0L, 33.444D);
+			doubleHandle2.set(unionSegmt2, 0L, 44.555D);
+			doubleHandle3.set(unionSegmt2, 0L, 55.456D);
 
 			MemorySegment resultSegmt = (MemorySegment)mh.invokeExact((SegmentAllocator)arena, unionSegmt1, unionSegmt2, upcallFuncAddr);
-			Assert.assertEquals((double)doubleHandle1.get(resultSegmt), 88.579D, 0.001D);
-			Assert.assertEquals((double)doubleHandle2.get(resultSegmt), 88.579D, 0.001D);
-			Assert.assertEquals((double)doubleHandle3.get(resultSegmt), 88.579D, 0.001D);
+			Assert.assertEquals((double)doubleHandle1.get(resultSegmt, 0L), 88.579D, 0.001D);
+			Assert.assertEquals((double)doubleHandle2.get(resultSegmt, 0L), 88.579D, 0.001D);
+			Assert.assertEquals((double)doubleHandle3.get(resultSegmt, 0L), 88.579D, 0.001D);
 		}
 	}
 
@@ -2028,8 +2028,8 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addShortAndShortFromUnionWithByteShort,
 					FunctionDescriptor.of(JAVA_SHORT, JAVA_SHORT, unionLayout), arena);
 			MemorySegment unionSegmt = arena.allocate(unionLayout);
-			elemHandle2.set(unionSegmt, (short)10001);
-			Assert.assertEquals((short)elemHandle2.get(unionSegmt), 10001);
+			elemHandle2.set(unionSegmt, 0L, (short)10001);
+			Assert.assertEquals((short)elemHandle2.get(unionSegmt, 0L), 10001);
 
 			short result = (short)mh.invokeExact((short)10020, unionSegmt, upcallFuncAddr);
 			Assert.assertEquals(result, 20021);
@@ -2049,8 +2049,8 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addIntAndByteFromUnionWithIntByte,
 					FunctionDescriptor.of(JAVA_INT, JAVA_INT, unionLayout), arena);
 			MemorySegment unionSegmt = arena.allocate(unionLayout);
-			elemHandle2.set(unionSegmt, (byte)110);
-			Assert.assertEquals((byte)elemHandle2.get(unionSegmt), 110);
+			elemHandle2.set(unionSegmt, 0L, (byte)110);
+			Assert.assertEquals((byte)elemHandle2.get(unionSegmt, 0L), 110);
 
 			int result = (int)mh.invokeExact(22334455, unionSegmt, upcallFuncAddr);
 			Assert.assertEquals(result, 22334565);
@@ -2070,8 +2070,8 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addIntAndIntFromUnionWithByteInt,
 					FunctionDescriptor.of(JAVA_INT, JAVA_INT, unionLayout), arena);
 			MemorySegment unionSegmt = arena.allocate(unionLayout);
-			elemHandle2.set(unionSegmt, 1122334);
-			Assert.assertEquals((int)elemHandle2.get(unionSegmt), 1122334);
+			elemHandle2.set(unionSegmt, 0L, 1122334);
+			Assert.assertEquals((int)elemHandle2.get(unionSegmt, 0L), 1122334);
 
 			int result = (int)mh.invokeExact(11335577, unionSegmt, upcallFuncAddr);
 			Assert.assertEquals(result, 12457911);
@@ -2091,8 +2091,8 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addIntAndShortFromUnionWithIntShort,
 					FunctionDescriptor.of(JAVA_INT, JAVA_INT, unionLayout), arena);
 			MemorySegment unionSegmt = arena.allocate(unionLayout);
-			elemHandle2.set(unionSegmt, (short)32766);
-			Assert.assertEquals((short)elemHandle2.get(unionSegmt), 32766);
+			elemHandle2.set(unionSegmt, 0L, (short)32766);
+			Assert.assertEquals((short)elemHandle2.get(unionSegmt, 0L), 32766);
 
 			int result = (int)mh.invokeExact(22334455, unionSegmt, upcallFuncAddr);
 			Assert.assertEquals(result, 22367221);
@@ -2112,8 +2112,8 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addIntAndIntFromUnionWithShortInt,
 					FunctionDescriptor.of(JAVA_INT, JAVA_INT, unionLayout), arena);
 			MemorySegment unionSegmt = arena.allocate(unionLayout);
-			elemHandle2.set(unionSegmt, 1122334);
-			Assert.assertEquals((int)elemHandle2.get(unionSegmt), 1122334);
+			elemHandle2.set(unionSegmt, 0L, 1122334);
+			Assert.assertEquals((int)elemHandle2.get(unionSegmt, 0L), 1122334);
 
 			int result = (int)mh.invokeExact(11335577, unionSegmt, upcallFuncAddr);
 			Assert.assertEquals(result, 12457911);
@@ -2134,8 +2134,8 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addIntAndByteFromUnionWithIntShortByte,
 					FunctionDescriptor.of(JAVA_INT, JAVA_INT, unionLayout), arena);
 			MemorySegment unionSegmt = arena.allocate(unionLayout);
-			elemHandle3.set(unionSegmt, (byte)22);
-			Assert.assertEquals((byte)elemHandle3.get(unionSegmt), 22);
+			elemHandle3.set(unionSegmt, 0L, (byte)22);
+			Assert.assertEquals((byte)elemHandle3.get(unionSegmt, 0L), 22);
 
 			int result = (int)mh.invokeExact(22334455, unionSegmt, upcallFuncAddr);
 			Assert.assertEquals(result, 22334477);
@@ -2156,8 +2156,8 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addIntAndShortFromUnionWithByteShortInt,
 					FunctionDescriptor.of(JAVA_INT, JAVA_INT, unionLayout), arena);
 			MemorySegment unionSegmt = arena.allocate(unionLayout);
-			elemHandle2.set(unionSegmt, (short)32766);
-			Assert.assertEquals((short)elemHandle2.get(unionSegmt), 32766);
+			elemHandle2.set(unionSegmt, 0L, (short)32766);
+			Assert.assertEquals((short)elemHandle2.get(unionSegmt, 0L), 32766);
 
 			int result = (int)mh.invokeExact(11335577, unionSegmt, upcallFuncAddr);
 			Assert.assertEquals(result, 11368343);
@@ -2177,8 +2177,8 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addIntAndLongFromUnionWithIntLong,
 					FunctionDescriptor.of(JAVA_LONG, JAVA_INT, unionLayout), arena);
 			MemorySegment unionSegmt = arena.allocate(unionLayout);
-			elemHandle2.set(unionSegmt, 667788990011L);
-			Assert.assertEquals((long)elemHandle2.get(unionSegmt), 667788990011L);
+			elemHandle2.set(unionSegmt, 0L, 667788990011L);
+			Assert.assertEquals((long)elemHandle2.get(unionSegmt, 0L), 667788990011L);
 
 			long result = (long)mh.invokeExact(22446688, unionSegmt, upcallFuncAddr);
 			Assert.assertEquals(result, 667811436699L);
@@ -2198,8 +2198,8 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addIntAndLongFromUnionWithLongInt,
 					FunctionDescriptor.of(JAVA_LONG, JAVA_INT, unionLayout), arena);
 			MemorySegment unionSegmt = arena.allocate(unionLayout);
-			elemHandle1.set(unionSegmt, 667788990011L);
-			Assert.assertEquals((long)elemHandle1.get(unionSegmt), 667788990011L);
+			elemHandle1.set(unionSegmt, 0L, 667788990011L);
+			Assert.assertEquals((long)elemHandle1.get(unionSegmt, 0L), 667788990011L);
 
 			long result = (long)mh.invokeExact(1234567, unionSegmt, upcallFuncAddr);
 			Assert.assertEquals(result, 667790224578L);
@@ -2220,9 +2220,9 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addLongAndPtrValueFromUnion,
 					FunctionDescriptor.of(JAVA_LONG, JAVA_LONG, unionLayout), arena);
 			MemorySegment unionSegmt = arena.allocate(unionLayout);
-			MemorySegment longSegmt = arena.allocate(JAVA_LONG, 112233445566778899L);
-			elemHandle3.set(unionSegmt, longSegmt);
-			MemorySegment elemSegmt = ((MemorySegment)elemHandle3.get(unionSegmt)).reinterpret(JAVA_LONG.byteSize());
+			MemorySegment longSegmt = arena.allocateFrom(JAVA_LONG, 112233445566778899L);
+			elemHandle3.set(unionSegmt, 0L, longSegmt);
+			MemorySegment elemSegmt = ((MemorySegment)elemHandle3.get(unionSegmt, 0L)).reinterpret(JAVA_LONG.byteSize());
 			Assert.assertEquals(elemSegmt.get(JAVA_LONG, 0), 112233445566778899L);
 
 			long result = (long)mh.invokeExact(1020302010L, unionSegmt, upcallFuncAddr);
@@ -2244,8 +2244,8 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addLongAndIntFromUnionWithByteShortIntLong,
 					FunctionDescriptor.of(JAVA_LONG, JAVA_LONG, unionLayout), arena);
 			MemorySegment unionSegmt = arena.allocate(unionLayout);
-			elemHandle3.set(unionSegmt, 11223344);
-			Assert.assertEquals((int)elemHandle3.get(unionSegmt), 11223344);
+			elemHandle3.set(unionSegmt, 0L, 11223344);
+			Assert.assertEquals((int)elemHandle3.get(unionSegmt, 0L), 11223344);
 
 			long result = (long)mh.invokeExact(1020302010L, unionSegmt, upcallFuncAddr);
 			Assert.assertEquals(result, 1031525354L);
@@ -2266,8 +2266,8 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addLongAndIntFromUnionWithLongIntShortByte,
 					FunctionDescriptor.of(JAVA_LONG, JAVA_LONG, unionLayout), arena);
 			MemorySegment unionSegmt = arena.allocate(unionLayout);
-			elemHandle2.set(unionSegmt, 11223344);
-			Assert.assertEquals((int)elemHandle2.get(unionSegmt), 11223344);
+			elemHandle2.set(unionSegmt, 0L, 11223344);
+			Assert.assertEquals((int)elemHandle2.get(unionSegmt, 0L), 11223344);
 
 			long result = (long)mh.invokeExact(1020302010L, unionSegmt, upcallFuncAddr);
 			Assert.assertEquals(result, 1031525354L);
@@ -2287,8 +2287,8 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addLongAndLongFromUnionWithLongFloat,
 					FunctionDescriptor.of(JAVA_LONG, JAVA_LONG, unionLayout), arena);
 			MemorySegment unionSegmt = arena.allocate(unionLayout);
-			elemHandle1.set(unionSegmt, 100000000005L);
-			Assert.assertEquals((long)elemHandle1.get(unionSegmt), 100000000005L);
+			elemHandle1.set(unionSegmt, 0L, 100000000005L);
+			Assert.assertEquals((long)elemHandle1.get(unionSegmt, 0L), 100000000005L);
 
 			long result = (long)mh.invokeExact(1020302010L, unionSegmt, upcallFuncAddr);
 			Assert.assertEquals(result, 101020302015L);
@@ -2309,8 +2309,8 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addLongAndLongFromUnionWithIntFloatLong,
 					FunctionDescriptor.of(JAVA_LONG, JAVA_LONG, unionLayout), arena);
 			MemorySegment unionSegmt = arena.allocate(unionLayout);
-			elemHandle3.set(unionSegmt, 100000000005L);
-			Assert.assertEquals((long)elemHandle3.get(unionSegmt), 100000000005L);
+			elemHandle3.set(unionSegmt, 0L, 100000000005L);
+			Assert.assertEquals((long)elemHandle3.get(unionSegmt, 0L), 100000000005L);
 
 			long result = (long)mh.invokeExact(1020302010L, unionSegmt, upcallFuncAddr);
 			Assert.assertEquals(result, 101020302015L);
@@ -2331,8 +2331,8 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addLongAndLongFromUnionWithIntLongFloat,
 					FunctionDescriptor.of(JAVA_LONG, JAVA_LONG, unionLayout), arena);
 			MemorySegment unionSegmt = arena.allocate(unionLayout);
-			elemHandle2.set(unionSegmt, 100000000005L);
-			Assert.assertEquals((long)elemHandle2.get(unionSegmt), 100000000005L);
+			elemHandle2.set(unionSegmt, 0L, 100000000005L);
+			Assert.assertEquals((long)elemHandle2.get(unionSegmt, 0L), 100000000005L);
 
 			long result = (long)mh.invokeExact(1020302010L, unionSegmt, upcallFuncAddr);
 			Assert.assertEquals(result, 101020302015L);
@@ -2352,8 +2352,8 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addFloatAndFloatFromUnionWithShortFloat,
 					FunctionDescriptor.of(JAVA_FLOAT, JAVA_FLOAT, unionLayout), arena);
 			MemorySegment unionSegmt = arena.allocate(unionLayout);
-			elemHandle2.set(unionSegmt, 0.11F);
-			Assert.assertEquals((float)elemHandle2.get(unionSegmt), 0.11F);
+			elemHandle2.set(unionSegmt, 0L, 0.11F);
+			Assert.assertEquals((float)elemHandle2.get(unionSegmt, 0L), 0.11F);
 
 			float result = (float)mh.invokeExact(0.22F, unionSegmt, upcallFuncAddr);
 			Assert.assertEquals(result, 0.33F, 0.01F);
@@ -2373,8 +2373,8 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addFloatAndFloatFromUnionWithFloatShort,
 					FunctionDescriptor.of(JAVA_FLOAT, JAVA_FLOAT, unionLayout), arena);
 			MemorySegment unionSegmt = arena.allocate(unionLayout);
-			elemHandle1.set(unionSegmt, 0.11F);
-			Assert.assertEquals((float)elemHandle1.get(unionSegmt), 0.11F, 0.01F);
+			elemHandle1.set(unionSegmt, 0L, 0.11F);
+			Assert.assertEquals((float)elemHandle1.get(unionSegmt, 0L), 0.11F, 0.01F);
 
 			float result = (float)mh.invokeExact(0.22F, unionSegmt, upcallFuncAddr);
 			Assert.assertEquals(result, 0.33F, 0.01F);
@@ -2394,8 +2394,8 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addFloatAndFloatFromUnionWithIntFloat,
 					FunctionDescriptor.of(JAVA_FLOAT, JAVA_FLOAT, unionLayout), arena);
 			MemorySegment unionSegmt = arena.allocate(unionLayout);
-			elemHandle2.set(unionSegmt, 0.11F);
-			Assert.assertEquals((float)elemHandle2.get(unionSegmt), 0.11F, 0.01F);
+			elemHandle2.set(unionSegmt, 0L, 0.11F);
+			Assert.assertEquals((float)elemHandle2.get(unionSegmt, 0L), 0.11F, 0.01F);
 
 			float result = (float)mh.invokeExact(0.22F, unionSegmt, upcallFuncAddr);
 			Assert.assertEquals(result, 0.33F, 0.01F);
@@ -2415,8 +2415,8 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addFloatAndFloatFromUnionWithFloatInt,
 					FunctionDescriptor.of(JAVA_FLOAT, JAVA_FLOAT, unionLayout), arena);
 			MemorySegment unionSegmt = arena.allocate(unionLayout);
-			elemHandle1.set(unionSegmt, 0.11F);
-			Assert.assertEquals((float)elemHandle1.get(unionSegmt), 0.11F, 0.01F);
+			elemHandle1.set(unionSegmt, 0L, 0.11F);
+			Assert.assertEquals((float)elemHandle1.get(unionSegmt, 0L), 0.11F, 0.01F);
 
 			float result = (float)mh.invokeExact(0.22F, unionSegmt, upcallFuncAddr);
 			Assert.assertEquals(result, 0.33F, 0.01F);
@@ -2436,8 +2436,8 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addFloatAndFloatFromUnionWithFloatLong,
 					FunctionDescriptor.of(JAVA_FLOAT, JAVA_FLOAT, unionLayout), arena);
 			MemorySegment unionSegmt = arena.allocate(unionLayout);
-			elemHandle1.set(unionSegmt, 0.11F);
-			Assert.assertEquals((float)elemHandle1.get(unionSegmt), 0.11F, 0.1F);
+			elemHandle1.set(unionSegmt, 0L, 0.11F);
+			Assert.assertEquals((float)elemHandle1.get(unionSegmt, 0L), 0.11F, 0.1F);
 
 			float result = (float)mh.invokeExact(0.22F, unionSegmt, upcallFuncAddr);
 			Assert.assertEquals(result, 0.33F, 0.01F);
@@ -2458,9 +2458,9 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addDoubleAndPtrValueFromUnion,
 					FunctionDescriptor.of(JAVA_DOUBLE, JAVA_DOUBLE, unionLayout), arena);
 			MemorySegment unionSegmt = arena.allocate(unionLayout);
-			MemorySegment longSegmt = arena.allocate(JAVA_LONG, 112233445566778899L);
-			elemHandle3.set(unionSegmt, longSegmt);
-			MemorySegment elemSegmt = ((MemorySegment)elemHandle3.get(unionSegmt)).reinterpret(JAVA_LONG.byteSize());
+			MemorySegment longSegmt = arena.allocateFrom(JAVA_LONG, 112233445566778899L);
+			elemHandle3.set(unionSegmt, 0L, longSegmt);
+			MemorySegment elemSegmt = ((MemorySegment)elemHandle3.get(unionSegmt, 0L)).reinterpret(JAVA_LONG.byteSize());
 			Assert.assertEquals(elemSegmt.get(JAVA_LONG, 0), 112233445566778899L);
 
 			double result = (double)mh.invokeExact(222.44D, unionSegmt, upcallFuncAddr);
@@ -2481,8 +2481,8 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addDoubleAndIntFromUnionWithIntDouble,
 					FunctionDescriptor.of(JAVA_DOUBLE, JAVA_DOUBLE, unionLayout), arena);
 			MemorySegment unionSegmt = arena.allocate(unionLayout);
-			elemHandle1.set(unionSegmt, 1122334455);
-			Assert.assertEquals((int)elemHandle1.get(unionSegmt), 1122334455);
+			elemHandle1.set(unionSegmt, 0L, 1122334455);
+			Assert.assertEquals((int)elemHandle1.get(unionSegmt, 0L), 1122334455);
 
 			double result = (double)mh.invokeExact(113.567D, unionSegmt, upcallFuncAddr);
 			Assert.assertEquals(result, 1122334568.567D, 0.001D);
@@ -2502,8 +2502,8 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addDoubleAndLongFromUnionWithDoubleLong,
 					FunctionDescriptor.of(JAVA_DOUBLE, JAVA_DOUBLE, unionLayout), arena);
 			MemorySegment unionSegmt = arena.allocate(unionLayout);
-			elemHandle2.set(unionSegmt, 11223344556677L);
-			Assert.assertEquals((long)elemHandle2.get(unionSegmt), 11223344556677L);
+			elemHandle2.set(unionSegmt, 0L, 11223344556677L);
+			Assert.assertEquals((long)elemHandle2.get(unionSegmt, 0L), 11223344556677L);
 
 			double result = (double)mh.invokeExact(222.33D, unionSegmt, upcallFuncAddr);
 			Assert.assertEquals(result, 11223344556899.33D, 0.01D);
@@ -2524,8 +2524,8 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addDoubleAndLongFromUnionWithIntDoubleLong,
 					FunctionDescriptor.of(JAVA_DOUBLE, JAVA_DOUBLE, unionLayout), arena);
 			MemorySegment unionSegmt = arena.allocate(unionLayout);
-			elemHandle3.set(unionSegmt, 100000000001L);
-			Assert.assertEquals((long)elemHandle3.get(unionSegmt), 100000000001L);
+			elemHandle3.set(unionSegmt, 0L, 100000000001L);
+			Assert.assertEquals((long)elemHandle3.get(unionSegmt, 0L), 100000000001L);
 
 			double result = (double)mh.invokeExact(222.44D, unionSegmt, upcallFuncAddr);
 			Assert.assertEquals(result, 100000000223.44D, 0.01D);
@@ -2545,8 +2545,8 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addDoubleAndFloatFromUnionWithFloatDouble,
 					FunctionDescriptor.of(JAVA_DOUBLE, JAVA_DOUBLE, unionLayout), arena);
 			MemorySegment unionSegmt = arena.allocate(unionLayout);
-			elemHandle1.set(unionSegmt, 18.444F);
-			Assert.assertEquals((float)elemHandle1.get(unionSegmt), 18.444F, 001F);
+			elemHandle1.set(unionSegmt, 0L, 18.444F);
+			Assert.assertEquals((float)elemHandle1.get(unionSegmt, 0L), 18.444F, 001F);
 
 			double result = (double)mh.invokeExact(113.567D, unionSegmt, upcallFuncAddr);
 			Assert.assertEquals(result, 132.011D, 0.001D);
@@ -2566,8 +2566,8 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addDoubleAndFloatFromUnionWithDoubleFloat,
 					FunctionDescriptor.of(JAVA_DOUBLE, JAVA_DOUBLE, unionLayout), arena);
 			MemorySegment unionSegmt = arena.allocate(unionLayout);
-			elemHandle2.set(unionSegmt, 19.22F);
-			Assert.assertEquals((float)elemHandle2.get(unionSegmt), 19.22F, 0.01D);
+			elemHandle2.set(unionSegmt, 0L, 19.22F);
+			Assert.assertEquals((float)elemHandle2.get(unionSegmt, 0L), 19.22F, 0.01D);
 
 			double result = (double)mh.invokeExact(216.666D, unionSegmt, upcallFuncAddr);
 			Assert.assertEquals(result, 235.886D, 0.001D);
@@ -2588,8 +2588,8 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addDoubleAndFloatFromUnionWithIntFloatDouble,
 					FunctionDescriptor.of(JAVA_DOUBLE, JAVA_DOUBLE, unionLayout), arena);
 			MemorySegment unionSegmt = arena.allocate(unionLayout);
-			elemHandle2.set(unionSegmt, 18.444F);
-			Assert.assertEquals((float)elemHandle2.get(unionSegmt), 18.444F, 0.001F);
+			elemHandle2.set(unionSegmt, 0L, 18.444F);
+			Assert.assertEquals((float)elemHandle2.get(unionSegmt, 0L), 18.444F, 0.001F);
 
 			double result = (double)mh.invokeExact(113.567D, unionSegmt, upcallFuncAddr);
 			Assert.assertEquals(result, 132.011D, 0.001D);
@@ -2610,8 +2610,8 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addDoubleAndFloatFromUnionWithIntDoubleFloat,
 					FunctionDescriptor.of(JAVA_DOUBLE, JAVA_DOUBLE, unionLayout), arena);
 			MemorySegment unionSegmt = arena.allocate(unionLayout);
-			elemHandle3.set(unionSegmt, 18.444F);
-			Assert.assertEquals((float)elemHandle3.get(unionSegmt), 18.444F, 0.001F);
+			elemHandle3.set(unionSegmt, 0L, 18.444F);
+			Assert.assertEquals((float)elemHandle3.get(unionSegmt, 0L), 18.444F, 0.001F);
 
 			double result = (double)mh.invokeExact(113.567D, unionSegmt, upcallFuncAddr);
 			Assert.assertEquals(result, 132.011D, 0.001D);
@@ -2631,8 +2631,8 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addDoubleAndDoubleFromUnionWithDoubleInt,
 					FunctionDescriptor.of(JAVA_DOUBLE, JAVA_DOUBLE, unionLayout), arena);
 			MemorySegment unionSegmt = arena.allocate(unionLayout);
-			elemHandle1.set(unionSegmt, 218.555D);
-			Assert.assertEquals((double)elemHandle1.get(unionSegmt), 218.555D, 0.001D);
+			elemHandle1.set(unionSegmt, 0L, 218.555D);
+			Assert.assertEquals((double)elemHandle1.get(unionSegmt, 0L), 218.555D, 0.001D);
 
 			double result = (double)mh.invokeExact(216.666D, unionSegmt, upcallFuncAddr);
 			Assert.assertEquals(result, 435.221D, 0.001D);
@@ -2652,8 +2652,8 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addDoubleAndDoubleFromUnionWithLongDouble,
 					FunctionDescriptor.of(JAVA_DOUBLE, JAVA_DOUBLE, unionLayout), arena);
 			MemorySegment unionSegmt = arena.allocate(unionLayout);
-			elemHandle2.set(unionSegmt, 222.333D);
-			Assert.assertEquals((double)elemHandle2.get(unionSegmt), 222.333D, 0.001D);
+			elemHandle2.set(unionSegmt, 0L, 222.333D);
+			Assert.assertEquals((double)elemHandle2.get(unionSegmt, 0L), 222.333D, 0.001D);
 
 			double result = (double)mh.invokeExact(111.222D, unionSegmt, upcallFuncAddr);
 			Assert.assertEquals(result, 333.555D, 0.001D);
@@ -2674,8 +2674,8 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addDoubleAndDoubleFromUnionWithFloatLongDouble,
 					FunctionDescriptor.of(JAVA_DOUBLE, JAVA_DOUBLE, unionLayout), arena);
 			MemorySegment unionSegmt = arena.allocate(unionLayout);
-			elemHandle3.set(unionSegmt, 100.11D);
-			Assert.assertEquals((double)elemHandle3.get(unionSegmt), 100.11D, 01D);
+			elemHandle3.set(unionSegmt, 0L, 100.11D);
+			Assert.assertEquals((double)elemHandle3.get(unionSegmt, 0L), 100.11D, 01D);
 
 			double result = (double)mh.invokeExact(222.44D, unionSegmt, upcallFuncAddr);
 			Assert.assertEquals(result, 322.55D, 0.01D);
@@ -2696,8 +2696,8 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addDoubleAndShortFromUnionWithByteShortFloatDouble,
 					FunctionDescriptor.of(JAVA_DOUBLE, JAVA_DOUBLE, unionLayout), arena);
 			MemorySegment unionSegmt = arena.allocate(unionLayout);
-			elemHandle2.set(unionSegmt, (short)32766);
-			Assert.assertEquals((short)elemHandle2.get(unionSegmt), 32766);
+			elemHandle2.set(unionSegmt, 0L, (short)32766);
+			Assert.assertEquals((short)elemHandle2.get(unionSegmt, 0L), 32766);
 
 			double result = (double)mh.invokeExact(33333.57D, unionSegmt, upcallFuncAddr);
 			Assert.assertEquals(result, 66099.57D, 0.01D);
@@ -2718,8 +2718,8 @@ public class UpcallMHWithUnionTests {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_addDoubleAndFloatFromUnionWithDoubleFloatShortByte,
 					FunctionDescriptor.of(JAVA_DOUBLE, JAVA_DOUBLE, unionLayout), arena);
 			MemorySegment unionSegmt = arena.allocate(unionLayout);
-			elemHandle2.set(unionSegmt, 1.001F);
-			Assert.assertEquals((float)elemHandle2.get(unionSegmt), 1.001F, 0.001F);
+			elemHandle2.set(unionSegmt, 0L, 1.001F);
+			Assert.assertEquals((float)elemHandle2.get(unionSegmt, 0L), 1.001F, 0.001F);
 
 			double result = (double)mh.invokeExact(33333.567D, unionSegmt, upcallFuncAddr);
 			Assert.assertEquals(result, 33334.568D, 0.001D);
