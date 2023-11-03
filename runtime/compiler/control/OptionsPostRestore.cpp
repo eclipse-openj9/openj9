@@ -78,7 +78,9 @@ J9::OptionsPostRestore::OptionsPostRestore(J9VMThread *vmThread, J9JITConfig *ji
    _argIndexUseJITServer(-1),
    _argIndexDisableUseJITServer(-1),
    _argIndexJITServerAddress(-1),
-   _argIndexJITServerAOTCacheName(-1)
+   _argIndexJITServerAOTCacheName(-1),
+   _argIndexIProfileDuringStartupPhase(-1),
+   _argIndexDisableIProfileDuringStartupPhase(-1)
    {
    J9JavaVM *vm = jitConfig->javaVM;
    if (vm->sharedClassConfig)
@@ -273,6 +275,18 @@ J9::OptionsPostRestore::iterateOverExternalOptions()
          case J9::ExternalOptions::Xtuneelastic:
             {
             // TODO
+            }
+            break;
+
+         case J9::ExternalOptions::XXplusIProfileDuringStartupPhase:
+            {
+            _argIndexIProfileDuringStartupPhase = FIND_ARG_IN_RESTORE_ARGS(EXACT_MATCH, optString, 0);
+            }
+            break;
+
+         case J9::ExternalOptions::XXminusIProfileDuringStartupPhase:
+            {
+            _argIndexDisableIProfileDuringStartupPhase = FIND_ARG_IN_RESTORE_ARGS(EXACT_MATCH, optString, 0);
             }
             break;
 
@@ -713,6 +727,26 @@ J9::OptionsPostRestore::postProcessInternalCompilerOptions()
       if (TR::Options::getCmdLineOptions()->getOption(TR_DisableAsyncCompilation))
          TR::Options::getCmdLineOptions()->setOption(TR_DisableAsyncCompilation, false);
       }
+
+   // Set/Reset TR_NoIProfilerDuringStartupPhase if -XX:[+/-]IProfileDuringStartupPhase is used
+   // Otherwise use the default logic to determine if TR_NoIProfilerDuringStartupPhase is set
+   if ((_argIndexIProfileDuringStartupPhase >= 0) || (_argIndexDisableIProfileDuringStartupPhase >= 0))
+      {
+      bool IProfileDuringStartupPhase = (_argIndexIProfileDuringStartupPhase > _argIndexDisableIProfileDuringStartupPhase);
+      TR::Options::getCmdLineOptions()->setOption(TR_NoIProfilerDuringStartupPhase, !IProfileDuringStartupPhase);
+      }
+   else if (!disableAOT)
+      {
+      if (!TR::Options::getCmdLineOptions()->getOption(TR_DisablePersistIProfile) &&
+         J9_ARE_ALL_BITS_SET(vm->sharedClassConfig->runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_CACHE_NON_BOOT_CLASSES))
+         {
+         if (_compInfo->isWarmSCC() == TR_yes)
+            {
+            TR::Options::getCmdLineOptions()->setOption(TR_NoIProfilerDuringStartupPhase);
+            }
+         }
+      }
+
    }
 
 void
