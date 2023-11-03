@@ -647,6 +647,14 @@ static bool owningMethodDoesNotContainBoundChecks(OMR::ValuePropagation *vp, TR:
    return false;
    }
 
+static bool owningMethodDoesNotContainNonNullableArrayNullStoreCheck(OMR::ValuePropagation *vp, TR::Node *node)
+   {
+   TR::ResolvedMethodSymbol *method = vp->comp()->getOwningMethodSymbol(node->getOwningMethod());
+   if (method && method->skipNonNullableArrayNullStoreCheck())
+      return true;
+   return false;
+   }
+
 static TR::Node *getStoreValueBaseNode(TR::Node *storeValueNode, TR::SymbolReferenceTable *symRefTab)
    {
    TR::Node *storeValueBaseNode = NULL;
@@ -1181,14 +1189,21 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                      flagsForTransform.set(ValueTypesHelperCallTransform::RequiresStoreCheck);
                      }
 
-                   //TODO: Require the <nonNullableArrayNullStoreCheck> non-helper if !canSkipNonNullableArrayNullValueChecks(...)
                    // If the value being stored is NULL and the destination array component is null restricted in runtime,
                    // a NPE is expected to throw. Therefore, when the array component type is not known to be identity type
                    // in compilation time, a NULLCHK on store value is required
                    if ((isCompTypePrimVT != TR_no) &&
-                      (storeValueConstraint == NULL || !storeValueConstraint->isNonNullObject()))
+                      (storeValueConstraint == NULL || !storeValueConstraint->isNonNullObject()) &&
+                      !owningMethodDoesNotContainNonNullableArrayNullStoreCheck(this, node))
                      {
                      flagsForTransform.set(ValueTypesHelperCallTransform::RequiresNullValueCheck);
+
+                     const char *counterName = TR::DebugCounter::debugCounterName(comp(), "vt-helper/vp-nullvaluechk/aastore/(%s)/%s/block_%d",
+                                                     comp()->signature(),
+                                                     comp()->getHotnessName(comp()->getMethodHotness()),
+                                                     _curTree->getEnclosingBlock()->getNumber());
+
+                     TR::DebugCounter::prependDebugCounter(comp(), counterName, _curTree);
                      }
                   }
 
