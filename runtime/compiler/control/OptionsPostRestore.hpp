@@ -183,6 +183,8 @@ class OptionsPostRestore
    int32_t _argIndexDisableUseJITServer;
    int32_t _argIndexJITServerAddress;
    int32_t _argIndexJITServerAOTCacheName;
+   int32_t _argIndexIProfileDuringStartupPhase;
+   int32_t _argIndexDisableIProfileDuringStartupPhase;
    };
 
 }
