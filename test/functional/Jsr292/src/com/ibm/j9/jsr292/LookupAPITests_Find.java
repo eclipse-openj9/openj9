@@ -21,6 +21,7 @@
  *******************************************************************************/
 package com.ibm.j9.jsr292;
 
+import org.openj9.test.util.VersionCheck;
 import org.testng.annotations.Test;
 import org.testng.Assert;
 import org.testng.AssertJUnit;
@@ -2106,7 +2107,17 @@ public class LookupAPITests_Find {
 	 */
 	@Test(groups = { "level.extended" })
 	public void test_FindSpecial_Default_CrossPackage_Interface() throws Throwable {
-		MethodHandle example = MethodHandles.lookup().findSpecial(CrossPackageDefaultMethodInterface.class, "addDefault", MethodType.methodType(int.class, int.class, int.class), CrossPackageDefaultMethodInterface.class);
+		try {
+			Class<?> cls = CrossPackageDefaultMethodInterface.class;
+			MethodType mt = MethodType.methodType(int.class, int.class, int.class);
+			MethodHandles.lookup().findSpecial(cls, "addDefault", mt, cls);
+		} catch (IllegalAccessException e) {
+			// JEP 274 is implemented from Java 9 onwards; Java 8 with OpenJDK MethodHandles
+			// expects an IllegalAccessException.
+			if (VersionCheck.major() > 8) {
+				Assert.fail("[Java 9+] Since JEP 274, an IllegalAccessException should not be thrown ", e);
+			}
+		}
 	}
 	
 	/**
