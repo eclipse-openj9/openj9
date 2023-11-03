@@ -819,6 +819,7 @@ public final class CRIUSupport {
 				SecurityProviders.registerRestoreSecurityProviders();
 
 				J9InternalCheckpointHookAPI.runPreCheckpointHooksConcurrentThread();
+				System.gc();
 				try {
 					checkpointJVMImpl(imageDir, leaveRunning, shellJob, extUnixSupport, logLevel, logFile, fileLocks,
 							workDir, tcpEstablished, autoDedup, trackMemory, unprivileged, optionsFile, envFilePath);
