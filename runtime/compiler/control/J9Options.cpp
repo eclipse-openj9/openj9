@@ -302,7 +302,7 @@ bool J9::Options::_xrsSync = false;
  * This string array should be kept in sync with the
  * J9::ExternalOptions enum in J9Options.hpp
  */
-char * J9::Options::_externalOptionStrings[J9::ExternalOptions::TR_NumExternalOptions] =
+const char * J9::Options::_externalOptionStrings[J9::ExternalOptions::TR_NumExternalOptions] =
    {
    // TR_FirstExternalOption                 = 0
    "-Xnodfpbd",                           // = 0
@@ -400,7 +400,7 @@ enum TR_XlpCodeCacheOptions
    };
 
 // Returns large page flag type string for error handling.
-char *
+const char *
 getLargePageTypeString(UDATA pageFlags)
    {
    if (0 != (J9PORT_VMEM_PAGE_FLAG_PAGEABLE & pageFlags))
@@ -413,7 +413,7 @@ getLargePageTypeString(UDATA pageFlags)
 
 // Formats size to be in terms of X bytes to XX(K/M/G) for printing
 void
-qualifiedSize(UDATA *byteSize, char **qualifier)
+qualifiedSize(UDATA *byteSize, const char **qualifier)
 {
    UDATA size;
 
@@ -448,8 +448,8 @@ J9::Options::useCompressedPointers()
 #define BUILD_TYPE ""
 #endif
 
-char *
-J9::Options::versionOption(char * option, void * base, TR::OptionTable *entry)
+const char *
+J9::Options::versionOption(const char *option, void *base, TR::OptionTable *entry)
    {
    J9JITConfig * jitConfig = (J9JITConfig*)base;
    PORT_ACCESS_FROM_JAVAVM(jitConfig->javaVM);
@@ -460,8 +460,8 @@ J9::Options::versionOption(char * option, void * base, TR::OptionTable *entry)
 #undef BUILD_TYPE
 
 
-char *
-J9::Options::limitOption(char * option, void * base, TR::OptionTable *entry)
+const char *
+J9::Options::limitOption(const char *option, void *base, TR::OptionTable *entry)
    {
    if (!J9::Options::getDebug() && !J9::Options::createDebug())
       return 0;
@@ -479,8 +479,8 @@ J9::Options::limitOption(char * option, void * base, TR::OptionTable *entry)
    }
 
 
-char *
-J9::Options::limitfileOption(char * option, void * base, TR::OptionTable *entry)
+const char *
+J9::Options::limitfileOption(const char *option, void *base, TR::OptionTable *entry)
    {
    if (!J9::Options::getDebug() && !J9::Options::createDebug())
       return 0;
@@ -505,8 +505,8 @@ J9::Options::limitfileOption(char * option, void * base, TR::OptionTable *entry)
       }
    }
 
-char *
-J9::Options::inlinefileOption(char * option, void * base, TR::OptionTable *entry)
+const char *
+J9::Options::inlinefileOption(const char *option, void *base, TR::OptionTable *entry)
    {
    if (!J9::Options::getDebug() && !J9::Options::createDebug())
       return 0;
@@ -575,8 +575,8 @@ static const struct vmX vmStateArray[] =
 namespace J9
 {
 
-char *
-Options::gcOnResolveOption(char * option, void * base, TR::OptionTable *entry)
+const char *
+Options::gcOnResolveOption(const char *option, void *base, TR::OptionTable *entry)
    {
    J9JITConfig * jitConfig = (J9JITConfig*)base;
 
@@ -592,12 +592,12 @@ Options::gcOnResolveOption(char * option, void * base, TR::OptionTable *entry)
    }
 
 
-char *
-Options::vmStateOption(char * option, void * base, TR::OptionTable *entry)
+const char *
+Options::vmStateOption(const char *option, void *base, TR::OptionTable *entry)
    {
-   J9JITConfig * jitConfig = (J9JITConfig*)base;
+   J9JITConfig *jitConfig = (J9JITConfig*)base;
    PORT_ACCESS_FROM_JAVAVM(jitConfig->javaVM);
-   char *p = option;
+   char *p = (char *)option;
    int32_t state = strtol(option, &p, 16);
    if (state > 0)
       {
@@ -687,8 +687,8 @@ Options::vmStateOption(char * option, void * base, TR::OptionTable *entry)
    }
 
 
-char *
-Options::loadLimitOption(char * option, void * base, TR::OptionTable *entry)
+const char *
+Options::loadLimitOption(const char *option, void *base, TR::OptionTable *entry)
    {
    if (!TR::Options::getDebug() && !TR::Options::createDebug())
       return 0;
@@ -710,8 +710,8 @@ Options::loadLimitOption(char * option, void * base, TR::OptionTable *entry)
    }
 
 
-char *
-Options::loadLimitfileOption(char * option, void * base, TR::OptionTable *entry)
+const char *
+Options::loadLimitfileOption(const char *option, void *base, TR::OptionTable *entry)
    {
    if (!TR::Options::getDebug() && !TR::Options::createDebug())
       return 0;
@@ -740,8 +740,8 @@ Options::loadLimitfileOption(char * option, void * base, TR::OptionTable *entry)
    }
 
 #if defined(J9VM_OPT_JITSERVER)
-char *
-Options::JITServerAOTCacheLimitOption(char *option, void *base, TR::OptionTable *entry, TR::CompilationFilters *&filters, const char *optName)
+const char *
+Options::JITServerAOTCacheLimitOption(const char *option, void *base, TR::OptionTable *entry, TR::CompilationFilters *&filters, const char *optName)
    {
    if (!TR::Options::getDebug() && !TR::Options::createDebug())
       return NULL;
@@ -760,20 +760,20 @@ Options::JITServerAOTCacheLimitOption(char *option, void *base, TR::OptionTable 
       }
    }
 
-char *
-Options::JITServerAOTCacheStoreLimitOption(char *option, void *base, TR::OptionTable *entry)
+const char *
+Options::JITServerAOTCacheStoreLimitOption(const char *option, void *base, TR::OptionTable *entry)
    {
    return JITServerAOTCacheLimitOption(option, base, entry, _JITServerAOTCacheStoreFilters, "jitserverAOTCacheStoreExclude");
    }
 
-char *
-Options::JITServerAOTCacheLoadLimitOption(char *option, void *base, TR::OptionTable *entry)
+const char *
+Options::JITServerAOTCacheLoadLimitOption(const char *option, void *base, TR::OptionTable *entry)
    {
    return JITServerAOTCacheLimitOption(option, base, entry, _JITServerAOTCacheLoadFilters, "jitserverAOTCacheLoadExclude");
    }
 
-char *
-Options::JITServerRemoteExclude(char *option, void *base, TR::OptionTable *entry)
+const char *
+Options::JITServerRemoteExclude(const char *option, void *base, TR::OptionTable *entry)
    {
    if (!TR::Options::getDebug() && !TR::Options::createDebug())
       return 0;
@@ -793,8 +793,8 @@ Options::JITServerRemoteExclude(char *option, void *base, TR::OptionTable *entry
    }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
-char *
-Options::tprofOption(char * option, void * base, TR::OptionTable *entry)
+const char *
+Options::tprofOption(const char *option, void *base, TR::OptionTable *entry)
    {
    J9JITConfig * jitConfig = (J9JITConfig*)base;
    PORT_ACCESS_FROM_JAVAVM(jitConfig->javaVM);
@@ -802,24 +802,24 @@ Options::tprofOption(char * option, void * base, TR::OptionTable *entry)
    return option;
    }
 
-char *
-Options::setJitConfigRuntimeFlag(char *option, void *base, TR::OptionTable *entry)
+const char *
+Options::setJitConfigRuntimeFlag(const char *option, void *base, TR::OptionTable *entry)
    {
    J9JITConfig *jitConfig = (J9JITConfig*)_feBase;
    jitConfig->runtimeFlags |= entry->parm2;
    return option;
    }
 
-char *
-Options::resetJitConfigRuntimeFlag(char *option, void *base, TR::OptionTable *entry)
+const char *
+Options::resetJitConfigRuntimeFlag(const char *option, void *base, TR::OptionTable *entry)
    {
    J9JITConfig *jitConfig = (J9JITConfig*)_feBase;
    jitConfig->runtimeFlags &= ~(entry->parm2);
    return option;
    }
 
-char *
-Options::setJitConfigNumericValue(char *option, void *base, TR::OptionTable *entry)
+const char *
+Options::setJitConfigNumericValue(const char *option, void *base, TR::OptionTable *entry)
    {
    char *jitConfig = (char*)_feBase;
    // All numeric fields in jitConfig are declared as UDATA
@@ -1562,7 +1562,7 @@ void J9::Options::preProcessMode(J9JavaVM *vm, J9JITConfig *jitConfig)
          // The aggressivenessLevel can be set directly with -XaggressivenessLevel
          // This option is a second hand citizen option; if other options contradict it, this option is
          // ignored even if it appears later
-         char *aggressiveOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XaggressivenessLevel];
+         const char *aggressiveOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XaggressivenessLevel];
          int32_t argIndex = FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, aggressiveOption, 0);
          if (argIndex >= 0)
             {
@@ -1580,13 +1580,13 @@ void J9::Options::preProcessMode(J9JavaVM *vm, J9JITConfig *jitConfig)
 void J9::Options::preProcessJniAccelerator(J9JavaVM *vm)
    {
    static bool doneWithJniAcc = false;
-   char *jniAccOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XjniAcc];
+   const char *jniAccOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XjniAcc];
    if (!doneWithJniAcc)
       {
       int32_t argIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, jniAccOption, 0);
       if (argIndex >= 0)
          {
-         char *optValue;
+         const char *optValue;
          doneWithJniAcc = true;
          GET_OPTION_VALUE(argIndex, ':', &optValue);
          if (*optValue == '{')
@@ -1617,7 +1617,7 @@ double getCodeCacheMaxPercentageOfAvailableMemory(J9JavaVM *vm)
    OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
 
    double codeCacheTotalPercentage = CODECACHE_DEFAULT_MAXRAMPERCENTAGE;
-   char *xxccPercentOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXcodecachetotalMaxRAMPercentage];
+   const char *xxccPercentOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXcodecachetotalMaxRAMPercentage];
    int32_t XXcodeCacheTotalPercentArg = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxccPercentOption, 0);
    if (XXcodeCacheTotalPercentArg >= 0)
       {
@@ -1662,15 +1662,15 @@ void J9::Options::preProcessCodeCacheIncreaseTotalSize(J9JavaVM *vm, J9JITConfig
             }
          }
 #endif
-      char *xccOption  = J9::Options::_externalOptionStrings[J9::ExternalOptions::Xcodecachetotal];
-      char *xxccOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXcodecachetotal];
+      const char *xccOption  = J9::Options::_externalOptionStrings[J9::ExternalOptions::Xcodecachetotal];
+      const char *xxccOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXcodecachetotal];
       int32_t codeCacheTotalArgIndex   = FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, xccOption, 0);
       int32_t XXcodeCacheTotalArgIndex = FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, xxccOption, 0);
       int32_t argIndex = 0;
       // Check if option is at all specified
       if (codeCacheTotalArgIndex >= 0 || XXcodeCacheTotalArgIndex >= 0)
          {
-         char *ccTotalOption;
+         const char *ccTotalOption;
          if (XXcodeCacheTotalArgIndex > codeCacheTotalArgIndex)
             {
             argIndex = XXcodeCacheTotalArgIndex;
@@ -1984,7 +1984,7 @@ bool J9::Options::preProcessCodeCacheXlpCodeCache(J9JavaVM *vm, J9JITConfig *jit
       else if (xlpIndex >= 0)
          {
          // GET_MEMORY_VALUE macro casts it's second parameter to (char**)&, so a pointer to the option string is passed rather than the string literal.
-         char *lpOption = "-Xlp";
+         const char *lpOption = "-Xlp";
          GET_MEMORY_VALUE(xlpIndex, lpOption, requestedLargeCodePageSize);
          }
 
@@ -2003,9 +2003,9 @@ bool J9::Options::preProcessCodeCacheXlpCodeCache(J9JavaVM *vm, J9JITConfig *jit
          if (!isRequestedSizeSupported)
             {
             // Generate warning message for user that requested page sizes / type is not supported.
-            char *oldQualifier, *newQualifier;
-            char *oldPageType = NULL;
-            char *newPageType = NULL;
+            const char *oldQualifier, *newQualifier;
+            const char *oldPageType = NULL;
+            const char *newPageType = NULL;
             UDATA oldSize = requestedLargeCodePageSize;
             UDATA newSize = largePageSize;
 
@@ -2086,7 +2086,7 @@ bool J9::Options::preProcessCodeCache(J9JavaVM *vm, J9JITConfig *jitConfig)
    PORT_ACCESS_FROM_JAVAVM(vm);
    OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
 
-   char *ccOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::Xcodecache];
+   const char *ccOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::Xcodecache];
    int32_t argIndex = FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, ccOption, 0);
    if (argIndex >= 0)
       {
@@ -2110,7 +2110,7 @@ bool J9::Options::preProcessCodeCache(J9JavaVM *vm, J9JITConfig *jitConfig)
 
 void J9::Options::preProcessSamplingExpirationTime(J9JavaVM *vm)
    {
-   char *samplingOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XsamplingExpirationTime];
+   const char *samplingOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XsamplingExpirationTime];
    int32_t argIndex = FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, samplingOption, 0);
    if (argIndex >= 0)
       {
@@ -2128,7 +2128,7 @@ void J9::Options::preProcessCompilationThreads(J9JavaVM *vm, J9JITConfig *jitCon
       {
       notYetParsed = false;
       TR::CompilationInfo *compInfo = getCompilationInfo(jitConfig);
-      char *compThreadsOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XcompilationThreads];
+      const char *compThreadsOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XcompilationThreads];
       int32_t argIndex = FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, compThreadsOption, 0);
       if (argIndex >= 0)
          {
@@ -2224,7 +2224,7 @@ void J9::Options::preProcessDeterministicMode(J9JavaVM *vm)
    // Process the deterministic mode
    if (TR::Options::_deterministicMode == -1) // not yet set
       {
-      char *deterministicOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXdeterministic];
+      const char *deterministicOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXdeterministic];
       const UDATA MAX_DETERMINISTIC_MODE = 9; // only levels 0-9 are allowed
       int32_t argIndex = FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, deterministicOption, 0);
       if (argIndex >= 0)
@@ -2687,11 +2687,11 @@ J9::Options::openLogFiles(J9JITConfig *jitConfig)
    {
    char *vLogFileName = ((TR_JitPrivateConfig*)jitConfig->privateConfig)->vLogFileName;
    if (vLogFileName)
-      ((TR_JitPrivateConfig*)jitConfig->privateConfig)->vLogFile = fileOpen(self(), jitConfig, vLogFileName, "wb", true);
+      ((TR_JitPrivateConfig*)jitConfig->privateConfig)->vLogFile = fileOpen(self(), jitConfig, vLogFileName, (char *)"wb", true);
 
    char *rtLogFileName = ((TR_JitPrivateConfig*)jitConfig->privateConfig)->rtLogFileName;
    if (rtLogFileName)
-      ((TR_JitPrivateConfig*)jitConfig->privateConfig)->rtLogFile = fileOpen(self(), jitConfig, rtLogFileName, "wb", true);
+      ((TR_JitPrivateConfig*)jitConfig->privateConfig)->rtLogFile = fileOpen(self(), jitConfig, rtLogFileName, (char *)"wb", true);
    }
 
 #if defined(J9VM_OPT_JITSERVER)
@@ -3295,7 +3295,7 @@ unpackRegex(TR::SimpleRegex *&regexPtr)
    {
    if (!regexPtr)
       return;
-   char *str = (char*)((uintptr_t)&regexPtr + (uintptr_t)regexPtr);
+   const char *str = (const char *)((uintptr_t)&regexPtr + (uintptr_t)regexPtr);
    regexPtr = TR::SimpleRegex::create(str);
    }
 

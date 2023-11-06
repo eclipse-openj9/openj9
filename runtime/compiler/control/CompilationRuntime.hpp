@@ -1120,24 +1120,24 @@ public:
    int32_t computeDynamicDumbInlinerBytecodeSizeCutoff(TR::Options *options);
    TR_YesNoMaybe shouldActivateNewCompThread();
 #if DEBUG
-   void debugPrint(char *debugString);
-   void debugPrint(J9VMThread *, char *);
-   void debugPrint(char *, intptr_t);
-   void debugPrint(J9VMThread *, char *, IDATA);
+   void debugPrint(const char *debugString);
+   void debugPrint(J9VMThread *, const char *);
+   void debugPrint(const char *, intptr_t);
+   void debugPrint(J9VMThread *, const char *, IDATA);
    void debugPrint(J9Method*);
-   void debugPrint(char *, J9Method *);
-   void debugPrint(J9VMThread *, char *, TR_MethodToBeCompiled *);
-   void debugPrint(char * debugString, TR::IlGeneratorMethodDetails & details, J9VMThread * vmThread);
+   void debugPrint(const char *, J9Method *);
+   void debugPrint(J9VMThread *, const char *, TR_MethodToBeCompiled *);
+   void debugPrint(const char * debugString, TR::IlGeneratorMethodDetails & details, J9VMThread * vmThread);
    void printQueue();
 #else // !DEBUG
-   void debugPrint(char *debugString) {}
-   void debugPrint(J9VMThread *, char *) {}
-   void debugPrint(char *, intptr_t) {}
-   void debugPrint(J9VMThread *, char *, IDATA) {}
+   void debugPrint(const char *debugString) {}
+   void debugPrint(J9VMThread *, const char *) {}
+   void debugPrint(const char *, intptr_t) {}
+   void debugPrint(J9VMThread *, const char *, IDATA) {}
    void debugPrint(J9Method*) {}
-   void debugPrint(char *, J9Method *) {}
-   void debugPrint(J9VMThread *, char *, TR_MethodToBeCompiled *) {}
-   void debugPrint(char * debugString, TR::IlGeneratorMethodDetails & details, J9VMThread * vmThread) { }
+   void debugPrint(const char *, J9Method *) {}
+   void debugPrint(J9VMThread *, const char *, TR_MethodToBeCompiled *) {}
+   void debugPrint(const char * debugString, TR::IlGeneratorMethodDetails & details, J9VMThread * vmThread) { }
    void printQueue() {}
 #endif // DEBUG
    void debugPrint(TR_OpaqueMethodBlock *omb){ debugPrint((J9Method*)omb); }

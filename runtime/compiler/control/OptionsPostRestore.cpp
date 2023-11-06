@@ -394,7 +394,7 @@ J9::OptionsPostRestore::processInternalCompilerOptions(bool isAOT)
 
    if (commandLineOptions)
       {
-      char *remainder = TR::Options::processOptionSetPostRestore(_jitConfig, commandLineOptions, options, isAOT);
+      const char *remainder = TR::Options::processOptionSetPostRestore(_jitConfig, commandLineOptions, options, isAOT);
       if (*remainder)
          {
          // TODO: Error condition
