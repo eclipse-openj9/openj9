@@ -72,7 +72,7 @@ SymbolReference::SymbolReference(
    }
 
 
-static char * dataTypeToSig[] = {0,"B","Z","C","S","I","J","F","D",0,0,0};
+static const char *dataTypeToSig[] = {0, "B", "Z", "C", "S", "I", "J", "F", "D", 0, 0, 0};
 
 /**
  * This method is used when _cpIndex is to be used for resolution.
