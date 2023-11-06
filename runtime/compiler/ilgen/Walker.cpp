@@ -780,7 +780,7 @@ TR_J9ByteCodeIlGenerator::placeholderWithDummySignature()
    }
 
 TR::SymbolReference *
-TR_J9ByteCodeIlGenerator::placeholderWithSignature(char *prefix, int prefixLength, char *middle, int middleLength, char *suffix, int suffixLength)
+TR_J9ByteCodeIlGenerator::placeholderWithSignature(const char *prefix, int prefixLength, const char *middle, int middleLength, const char *suffix, int suffixLength)
    {
    return symRefWithArtificialSignature(placeholderWithDummySignature(),
       ".#.#.#",
@@ -790,7 +790,7 @@ TR_J9ByteCodeIlGenerator::placeholderWithSignature(char *prefix, int prefixLengt
    }
 
 TR::SymbolReference *
-TR_J9ByteCodeIlGenerator::symRefWithArtificialSignature(TR::SymbolReference *original, char *effectiveSigFormat, ...)
+TR_J9ByteCodeIlGenerator::symRefWithArtificialSignature(TR::SymbolReference *original, const char *effectiveSigFormat, ...)
    {
    TR::StackMemoryRegion stackMemoryRegion(*comp()->trMemory());
 
@@ -804,14 +804,14 @@ TR_J9ByteCodeIlGenerator::symRefWithArtificialSignature(TR::SymbolReference *ori
    return result;
    }
 
-static int32_t processArtificialSignature(char *result, char *format, va_list args)
+static int32_t processArtificialSignature(char *result, const char *format, va_list args)
    {
    int32_t resultLength = 0;
    char *cur = result;
    for (int32_t i = 0; format[i]; i++)
       {
-      int32_t length=-1;
-      char   *startChar=NULL;
+      int32_t length = -1;
+      const char *startChar = NULL;
       if (format[i] == '.') // period is the ONLY character (besides null) that can never appear in a method signature
          {
          // Formatting code
@@ -877,7 +877,7 @@ static int32_t processArtificialSignature(char *result, char *format, va_list ar
                // case, proceed on the assumption that the period was a literal character;
                // if TR has a bug, we will very likely crash soon enough anyway.
                //
-               startChar = format+i-1; // back up to the period
+               startChar = format + i - 1; // back up to the period
                length = 2;
                break;
             }
@@ -885,7 +885,7 @@ static int32_t processArtificialSignature(char *result, char *format, va_list ar
       else
          {
          // Literal character
-         startChar = format+i;
+         startChar = format + i;
          length = 1;
          }
 
@@ -901,7 +901,7 @@ static int32_t processArtificialSignature(char *result, char *format, va_list ar
    return resultLength;
    }
 
-char *TR_J9ByteCodeIlGenerator::artificialSignature(TR_AllocationKind allocKind, char *format, ...)
+char *TR_J9ByteCodeIlGenerator::artificialSignature(TR_AllocationKind allocKind, const char *format, ...)
    {
    va_list args;
    va_start(args, format);
@@ -910,7 +910,7 @@ char *TR_J9ByteCodeIlGenerator::artificialSignature(TR_AllocationKind allocKind,
    return result;
    }
 
-char *TR_J9ByteCodeIlGenerator::vartificialSignature(TR_AllocationKind allocKind, char *format, va_list args)
+char *TR_J9ByteCodeIlGenerator::vartificialSignature(TR_AllocationKind allocKind, const char *format, va_list args)
    {
    // Compute size
    //
@@ -5665,7 +5665,7 @@ TR_J9ByteCodeIlGenerator::loadFromCP(TR::DataType type, int32_t cpIndex)
             // for unresolved primitive the resolve helper only returns an autobox'd object).
             if (isCondyPrimitive)
                {
-               char *autoboxClassSig = NULL;
+               const char *autoboxClassSig = NULL;
                int32_t autoboxClassSigLength = 0;
                switch (returnTypeUtf8Data[0])
                   {
@@ -5777,7 +5777,7 @@ TR_J9ByteCodeIlGenerator::loadFromCP(TR::DataType type, int32_t cpIndex)
             // Condy is primitive type, emit indirect load of the value field from the autobox object.
             if (isCondyPrimitive)
                {
-               char *recogFieldName = NULL;
+               const char *recogFieldName = NULL;
                TR::Symbol::RecognizedField valueRecogField= TR::Symbol::UnknownField;
                TR::DataType dt = TR::NoType;
                switch (returnTypeUtf8Data[0])

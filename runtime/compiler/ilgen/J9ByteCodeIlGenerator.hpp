@@ -166,13 +166,13 @@ private:
    TR::SymbolReference *expandPlaceholderSignature(TR::SymbolReference *symRef, int32_t numArgs);
    TR::SymbolReference *expandPlaceholderSignature(TR::SymbolReference *symRef, int32_t numArgs, int32_t firstArgStackDepth);
    TR::SymbolReference *placeholderWithDummySignature();
-   TR::SymbolReference *placeholderWithSignature(char *prefix, int prefixLength, char *middle, int middleLength, char *suffix, int suffixLength);
+   TR::SymbolReference *placeholderWithSignature(const char *prefix, int prefixLength, const char *middle, int middleLength, const char *suffix, int suffixLength);
 
    void chopPlaceholder(TR::Node *placeholder, int32_t firstChild, int32_t numChildren);
 
-   char               *artificialSignature (TR_AllocationKind alloc, char *format, ...);
-   char               *vartificialSignature(TR_AllocationKind alloc, char *format, va_list args);
-   TR::SymbolReference *symRefWithArtificialSignature(TR::SymbolReference *original, char *effectiveSigFormat, ...);
+   char               *artificialSignature (TR_AllocationKind alloc, const char *format, ...);
+   char               *vartificialSignature(TR_AllocationKind alloc, const char *format, va_list args);
+   TR::SymbolReference *symRefWithArtificialSignature(TR::SymbolReference *original, const char *effectiveSigFormat, ...);
 
    // GenLoadStore
    //
@@ -363,8 +363,8 @@ private:
    bool replaceMembersOfFormat();
    bool replaceMethods(TR::TreeTop *tt, TR::Node *node);
    bool replaceFieldsAndStatics(TR::TreeTop *tt, TR::Node *node);
-   bool replaceField(TR::Node* node, char* destClass, char* destFieldName, char* destFieldSignature, int ParmIndex);
-   bool replaceStatic(TR::Node* node, char* dstClassName, char* staticName, char* type);
+   bool replaceField(TR::Node *node, const char* destClass, const char *destFieldName, const char *destFieldSignature, int ParmIndex);
+   bool replaceStatic(TR::Node *node, const char *dstClassName, const char *staticName, const char *type);
 
    uintptr_t walkReferenceChain(TR::Node *node, uintptr_t receiver);
 #if defined(J9VM_OPT_JITSERVER)
@@ -422,8 +422,8 @@ private:
 
    // DecimalFormatPeephole
    struct methodRenamePair{
-      char* srcMethodSignature;
-      char* dstMethodSignature;
+      const char *srcMethodSignature;
+      const char *dstMethodSignature;
    };
 
    static const int32_t              _numDecFormatRenames = 9;
