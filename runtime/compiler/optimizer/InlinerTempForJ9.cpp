@@ -173,7 +173,7 @@ static int32_t getJ9InitialBytecodeSize(TR_ResolvedMethod * feMethod, TR::Resolv
 
 static bool insideIntPipelineForEach(TR_ResolvedMethod *method, TR::Compilation *comp)
    {
-   char *sig = "accept";
+   const char *sig = "accept";
    bool returnValue = true; //default is true since if first method is IntPipeline.forEach true is returned
 
    //Searches up the owning method chain until IntPipeline.forEach is found
@@ -3490,7 +3490,7 @@ void TR_MultipleCallTargetInliner::weighCallSite( TR_CallStack * callStack , TR_
          if (isHot(comp()))
             {
             TR_ResolvedMethod *m = calltarget->_calleeSymbol->getResolvedMethod();
-            char *sig = "toString";
+            const char *sig = "toString";
             if (strncmp(m->nameChars(), sig, strlen(sig)) == 0)
                {
                size >>= 1;

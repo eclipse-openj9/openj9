@@ -8226,7 +8226,7 @@ void TR_EscapeAnalysis::scanForExtraCallsToInline()
 
          TR::TreeTop *callTreeToInline = NULL;
          TR::Node    *callNode = NULL;
-         char *reason = "??";
+         const char *reason = "??";
          if (  tt->getNode()->getNumChildren() >= 1
             && tt->getNode()->getFirstChild()->getOpCode().isCall()
             && tt->getNode()->getFirstChild()->getSymbol()->isResolvedMethod())
@@ -8360,7 +8360,7 @@ FieldInfo& Candidate::findOrSetFieldInfo(TR::Node *fieldRefNode, TR::SymbolRefer
    }
 
 
-void TR_EscapeAnalysis::printCandidates(char *title)
+void TR_EscapeAnalysis::printCandidates(const char *title)
    {
    if (title)
       traceMsg(comp(), "\n%s\n", title);
@@ -8376,7 +8376,7 @@ void TR_EscapeAnalysis::printCandidates(char *title)
 static void printSymRefList(TR_ScratchList<TR::SymbolReference> *list, TR::Compilation *comp)
    {
    ListIterator<TR::SymbolReference> iter(list);
-   char *sep = "";
+   const char *sep = "";
    for (TR::SymbolReference *symRef = iter.getFirst(); symRef; symRef = iter.getNext())
       {
       traceMsg(comp, "%s#%d", sep, symRef->getReferenceNumber());

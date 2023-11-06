@@ -60,7 +60,7 @@ extern int32_t          *InlinedSizes;       // Defined in Inliner.cpp
 
 
 //duplicated as long as there are two versions of findInlineTargets
-static uintptr_t *failMCS(char *reason, TR_CallSite *callSite, TR_InlinerBase* inliner)
+static uintptr_t *failMCS(const char *reason, TR_CallSite *callSite, TR_InlinerBase* inliner)
    {
    debugTrace(inliner->tracer(),"  Fail isMutableCallSiteTargetInvokeExact(%p): %s", callSite, reason);
    return NULL;
@@ -440,7 +440,7 @@ bool TR_InlinerBase::inlineCallTarget(TR_CallStack *callStack, TR_CallTarget *ca
 
    TR_InlinerDelimiter delimiter(tracer(),"TR_InlinerBase::inlineCallTarget");
 
-   char *sig = "multiLeafArrayCopy";
+   const char *sig = "multiLeafArrayCopy";
    if (strncmp(calltarget->_calleeMethod->nameChars(), sig, strlen(sig)) == 0)
       {
       _nodeCountThreshold = 8192;
