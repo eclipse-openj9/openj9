@@ -1350,7 +1350,7 @@ J9::CodeGenerator::lowerTreeIfNeeded(
    //Anchoring node to either extract register pressure(performance)
    //or ensure instanceof doesn't have a parent node of CALL (correctness)
    //
-   char *anchoringReason = "register hog";
+   const char *anchoringReason = "register hog";
    switch (node->getOpCodeValue())
       {
       // Extract heavy register pressure trees when dictated at the start of the walk
@@ -2977,7 +2977,7 @@ void J9::CodeGenerator::addExternalRelocation(TR::Relocation *r, TR::RelocationD
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
 void J9::CodeGenerator::addProjectSpecializedRelocation(uint8_t *location, uint8_t *target, uint8_t *target2,
-      TR_ExternalRelocationTargetKind kind, char *generatingFileName, uintptr_t generatingLineNumber, TR::Node *node)
+      TR_ExternalRelocationTargetKind kind, const char *generatingFileName, uintptr_t generatingLineNumber, TR::Node *node)
    {
    (target2 == NULL) ?
          self()->addExternalRelocation(
@@ -3002,7 +3002,7 @@ void J9::CodeGenerator::addProjectSpecializedRelocation(uint8_t *location, uint8
    }
 
 void J9::CodeGenerator::addProjectSpecializedRelocation(TR::Instruction *instr, uint8_t *target, uint8_t *target2,
-      TR_ExternalRelocationTargetKind kind, char *generatingFileName, uintptr_t generatingLineNumber, TR::Node *node)
+      TR_ExternalRelocationTargetKind kind, const char *generatingFileName, uintptr_t generatingLineNumber, TR::Node *node)
    {
    (target2 == NULL) ?
          self()->addExternalRelocation(new (self()->trHeapMemory()) TR::BeforeBinaryEncodingExternalRelocation(instr, target, kind, self()),
@@ -3012,7 +3012,7 @@ void J9::CodeGenerator::addProjectSpecializedRelocation(TR::Instruction *instr, 
    }
 
 void J9::CodeGenerator::addProjectSpecializedPairRelocation(uint8_t *location, uint8_t *location2, uint8_t *target,
-      TR_ExternalRelocationTargetKind kind, char *generatingFileName, uintptr_t generatingLineNumber, TR::Node *node)
+      TR_ExternalRelocationTargetKind kind, const char *generatingFileName, uintptr_t generatingLineNumber, TR::Node *node)
    {
    self()->addExternalRelocation(new (self()->trHeapMemory()) TR::ExternalOrderedPair32BitRelocation(location, location2, target, kind, self()),
          generatingFileName, generatingLineNumber, node);

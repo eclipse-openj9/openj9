@@ -490,7 +490,7 @@ static const char* getOpCodeName(TR::ILOpCodes opcode) {
 }
 
 
-char *nvvmTypeNames[TR::NumOMRTypes] =
+const char *nvvmTypeNames[TR::NumOMRTypes] =
    {
    "void",    // TR::NoType
    "i8",      // TR::Int8
@@ -515,7 +515,7 @@ static const char* getTypeName(TR::DataType type) {
        }
 }
 
-char *nvvmVarTypeNames[TR::NumOMRTypes] =
+const char *nvvmVarTypeNames[TR::NumOMRTypes] =
    {
    "void",    // TR::NoType
    "i8",      // TR::Int8
@@ -572,7 +572,7 @@ class NVVMIRBuffer
       buffer = (char*)m->allocateHeapMemory(size);
       s = buffer;
       }
-   void print(char *format, ...)
+   void print(const char *format, ...)
       {
       va_list args;
       va_start (args, format);
@@ -671,7 +671,7 @@ static void getNodeName(TR::Node* node, char * s, TR::Compilation *comp)
       }
    }
 
-char* getNVVMMathFunctionName(TR::Node *node)
+const char* getNVVMMathFunctionName(TR::Node *node)
    {
    switch (((TR::MethodSymbol*)node->getSymbolReference()->getSymbol())->getRecognizedMethod())
       {
@@ -1121,7 +1121,7 @@ bool isThisPointer(TR::SymbolReference * symRef)
           ((TR::ParameterSymbol *)symRef->getSymbol())->getSlot() == 0;
    }
 
-char * getTypeNameFromSignature(char* sig, int32_t sigLength)
+const char *getTypeNameFromSignature(char* sig, int32_t sigLength)
    {
    TR_ASSERT(sigLength == 2 && sig[0] == '[', "only handling static shared arrays");
    switch (sig[1])
