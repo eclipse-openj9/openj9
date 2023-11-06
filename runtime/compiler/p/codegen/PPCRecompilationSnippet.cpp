@@ -93,8 +93,8 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCRecompilationSnippet * snippet)
 
    printSnippetLabel(pOutFile, snippet->getSnippetLabel(), cursor, "Counting Recompilation Snippet");
 
-   char    *info = "";
-   int32_t  distance;
+   const char *info = "";
+   int32_t    distance;
    if (isBranchToTrampoline(_cg->getSymRef(TR_PPCcountingRecompileMethod), cursor, distance))
       info = " Through trampoline";
 
