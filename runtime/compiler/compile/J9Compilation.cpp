@@ -444,7 +444,7 @@ J9::Compilation::isConverterMethod(TR::RecognizedMethod rm)
       case TR::sun_nio_cs_UTF_16_Encoder_encodeUTF16Little:
          return true;
       default:
-      	return false;
+         return false;
       }
 
    return false;
@@ -1526,33 +1526,33 @@ J9::Compilation::notYetRunMeansCold()
                              self()->getOptions()->getInitialBCount() :
                              self()->getOptions()->getInitialCount();
 
-    switch (currentMethod->getRecognizedMethod())
-       {
-       case TR::com_ibm_jit_DecimalFormatHelper_formatAsDouble:
-       case TR::com_ibm_jit_DecimalFormatHelper_formatAsFloat:
-          initialCount = 0;
-          break;
-       default:
-          break;
-       }
+   switch (currentMethod->getRecognizedMethod())
+      {
+      case TR::com_ibm_jit_DecimalFormatHelper_formatAsDouble:
+      case TR::com_ibm_jit_DecimalFormatHelper_formatAsFloat:
+         initialCount = 0;
+         break;
+      default:
+         break;
+      }
 
-    if (currentMethod->containingClass() == self()->getStringClassPointer())
-       {
-       if (currentMethod->isConstructor())
-          {
-          char *sig = currentMethod->signatureChars();
-          if (!strncmp(sig, "([CIIII)", 8) ||
-              !strncmp(sig, "([CIICII)", 9) ||
-              !strncmp(sig, "(II[C)", 6))
-             initialCount = 0;
-          }
-       else
-          {
-          char *sig = "isRepeatedCharCacheHit";
-          if (strncmp(currentMethod->nameChars(), sig, strlen(sig)) == 0)
-             initialCount = 0;
-          }
-       }
+   if (currentMethod->containingClass() == self()->getStringClassPointer())
+      {
+      if (currentMethod->isConstructor())
+         {
+         const char *sig = currentMethod->signatureChars();
+         if (!strncmp(sig, "([CIIII)", 8) ||
+             !strncmp(sig, "([CIICII)", 9) ||
+             !strncmp(sig, "(II[C)", 6))
+            initialCount = 0;
+         }
+      else
+         {
+         const char *sig = "isRepeatedCharCacheHit";
+         if (strncmp(currentMethod->nameChars(), sig, strlen(sig)) == 0)
+            initialCount = 0;
+         }
+      }
 
    if (
       self()->isDLT()

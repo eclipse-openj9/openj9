@@ -175,8 +175,8 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
    //
    TR::SymbolReference * findOrCreateDispatchJ9MethodSymbolRef();
 
-   TR::SymbolReference * findOrCreateShadowSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t cpIndex, bool isStore);
-   TR::SymbolReference * findOrFabricateShadowSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, TR::Symbol::RecognizedField recognizedField, TR::DataType type, uint32_t offset, bool isVolatile, bool isPrivate, bool isFinal, char* name = NULL);
+   TR::SymbolReference * findOrCreateShadowSymbol(TR::ResolvedMethodSymbol *owningMethodSymbol, int32_t cpIndex, bool isStore);
+   TR::SymbolReference * findOrFabricateShadowSymbol(TR::ResolvedMethodSymbol *owningMethodSymbol, TR::Symbol::RecognizedField recognizedField, TR::DataType type, uint32_t offset, bool isVolatile, bool isPrivate, bool isFinal, const char *name = NULL);
 
    /** \brief
     *     Returns a symbol reference for an entity not present in the constant pool.
