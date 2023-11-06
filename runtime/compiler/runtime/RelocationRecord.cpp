@@ -1150,7 +1150,7 @@ TR_RelocationRecordWithOffset::applyRelocation(TR_RelocationRuntime *reloRuntime
 
 // TR_BlockFrequency
 //
-char *
+const char *
 TR_RelocationRecordBlockFrequency::name()
    {
    return "TR_BlockFrequency";
@@ -1222,7 +1222,7 @@ TR_RelocationRecordBlockFrequency::applyRelocation(TR_RelocationRuntime *reloRun
 
 // TR_RecompQueuedFlag
 //
-char *
+const char *
 TR_RelocationRecordRecompQueuedFlag::name()
    {
    return "TR_RecompQueuedFlag";
@@ -1273,7 +1273,7 @@ TR_RelocationRecordRecompQueuedFlag::applyRelocation(TR_RelocationRuntime *reloR
 
 // TR_GlobalValue
 //
-char *
+const char *
 TR_RelocationRecordGlobalValue::name()
    {
    return "TR_GlobalValue";
@@ -1288,7 +1288,7 @@ TR_RelocationRecordGlobalValue::preparePrivateData(TR_RelocationRuntime *reloRun
    }
 
 // TR_BodyInfoLoad
-char *
+const char *
 TR_RelocationRecordBodyInfoLoad::name()
    {
    return "TR_BodyInfoLoad";
@@ -1319,7 +1319,7 @@ TR_RelocationRecordBodyInfoLoad::applyRelocation(TR_RelocationRuntime *reloRunti
    }
 
 // TR_ArrayCopyHelper
-char *
+const char *
 TR_RelocationRecordArrayCopyHelper::name()
    {
    return "TR_ArrayCopyHelper";
@@ -1355,7 +1355,7 @@ TR_RelocationRecordArrayCopyHelper::applyRelocation(TR_RelocationRuntime *reloRu
    }
 
 // TR_ArrayCopyToc
-char *
+const char *
 TR_RelocationRecordArrayCopyToc::name()
    {
    return "TR_ArrayCopyToc";
@@ -1374,7 +1374,7 @@ TR_RelocationRecordArrayCopyToc::preparePrivateData(TR_RelocationRuntime *reloRu
    }
 
 // TR_RamMethodSequence
-char *
+const char *
 TR_RelocationRecordRamSequence::name()
    {
    return "TR_RamMethodSequence";
@@ -1471,7 +1471,7 @@ TR_RelocationRecordWithInlinedSiteIndex::action(TR_RelocationRuntime *reloRuntim
 
 
 // Constant Pool relocations
-char *
+const char *
 TR_RelocationRecordConstantPool::name()
    {
    return "TR_ConstantPool";
@@ -1772,7 +1772,7 @@ TR_RelocationRecordConstantPoolWithIndex::getAbstractMethodFromCP(TR_RelocationR
    }
 
 // TR_HelperAddress
-char *
+const char *
 TR_RelocationRecordHelperAddress::name()
    {
    return "TR_HelperAddress";
@@ -1848,7 +1848,7 @@ TR_RelocationRecordHelperAddress::applyRelocation(TR_RelocationRuntime *reloRunt
    return TR_RelocationErrorCode::relocationOK;
    }
 
-char *
+const char *
 TR_RelocationRecordAbsoluteHelperAddress::name()
    {
    return "TR_AbsoluteHelperAddress";
@@ -1877,7 +1877,7 @@ TR_RelocationRecordAbsoluteHelperAddress::applyRelocation(TR_RelocationRuntime *
 
 // Method Address Relocations
 //
-char *
+const char *
 TR_RelocationRecordMethodAddress::name()
    {
    return "TR_MethodAddress";
@@ -1927,7 +1927,7 @@ TR_RelocationRecordMethodAddress::applyRelocation(TR_RelocationRuntime *reloRunt
 
 // Direct JNI Address Relocations
 
-char *
+const char *
 TR_RelocationRecordDirectJNICall::name()
    {
    return "TR_JNITargetAddress";
@@ -2018,7 +2018,7 @@ TR_RelocationRecordRamMethodConst::applyRelocation(TR_RelocationRuntime *reloRun
 
 
 // Data Address Relocations
-char *
+const char *
 TR_RelocationRecordDataAddress::name()
    {
    return "TR_DataAddress";
@@ -2121,7 +2121,7 @@ TR_RelocationRecordDataAddress::applyRelocation(TR_RelocationRuntime *reloRuntim
    }
 
 // Class Object Relocations
-char *
+const char *
 TR_RelocationRecordClassAddress::name()
    {
    return "TR_ClassAddress";
@@ -2195,7 +2195,7 @@ TR_RelocationRecordClassAddress::applyRelocation(TR_RelocationRuntime *reloRunti
    }
 
 // MethodObject Relocations
-char *
+const char *
 TR_RelocationRecordMethodObject::name()
    {
    return "TR_MethodObject";
@@ -2220,7 +2220,7 @@ TR_RelocationRecordMethodObject::applyRelocation(TR_RelocationRuntime *reloRunti
    }
 
 // TR_BodyInfoAddress Relocation
-char *
+const char *
 TR_RelocationRecordBodyInfo::name()
    {
    return "TR_BodyInfo";
@@ -2240,7 +2240,7 @@ TR_RelocationRecordBodyInfo::applyRelocation(TR_RelocationRuntime *reloRuntime, 
    }
 
 // TR_Thunks Relocation
-char *
+const char *
 TR_RelocationRecordThunks::name()
    {
    return "TR_Thunks";
@@ -2370,7 +2370,7 @@ TR_RelocationRecordThunks::relocateAndRegisterThunk(
    }
 
 // TR_J2IVirtualThunkPointer Relocation
-char *
+const char *
 TR_RelocationRecordJ2IVirtualThunkPointer::name()
    {
    return "TR_J2IVirtualThunkPointer";
@@ -2413,7 +2413,7 @@ TR_RelocationRecordJ2IVirtualThunkPointer::offsetToJ2IVirtualThunkPointer(
    }
 
 // TR_PicTrampolines Relocation
-char *
+const char *
 TR_RelocationRecordPicTrampolines::name()
    {
    return "TR_PicTrampolines";
@@ -2454,7 +2454,7 @@ TR_RelocationRecordPicTrampolines::applyRelocation(TR_RelocationRuntime *reloRun
 
 // TR_Trampolines Relocation
 
-char *
+const char *
 TR_RelocationRecordTrampolines::name()
    {
    return "TR_Trampolines";
@@ -2575,7 +2575,7 @@ TR_RelocationRecordInlinedAllocation::applyRelocation(TR_RelocationRuntime *relo
    }
 
 // TR_VerifyRefArrayForAlloc Relocation
-char *
+const char *
 TR_RelocationRecordVerifyRefArrayForAlloc::name()
    {
    return "TR_VerifyRefArrayForAlloc";
@@ -2589,7 +2589,7 @@ TR_RelocationRecordVerifyRefArrayForAlloc::verifyClass(TR_RelocationRuntime *rel
 
 
 // TR_VerifyClassObjectForAlloc Relocation
-char *
+const char *
 TR_RelocationRecordVerifyClassObjectForAlloc::name()
    {
    return "TR_VerifyClassObjectForAlloc";
@@ -2949,7 +2949,7 @@ TR_RelocationRecordNopGuard::preparePrivateData(TR_RelocationRuntime *reloRuntim
    }
 
 // TR_InlinedStaticMethodWithNopGuard
-char *
+const char *
 TR_RelocationRecordInlinedStaticMethodWithNopGuard::name()
    {
    return "TR_InlinedStaticMethodWithNopGuard";
@@ -2975,7 +2975,7 @@ TR_RelocationRecordInlinedStaticMethodWithNopGuard::updateSucceededStats(TR_AOTS
 
 
 // TR_RelocationRecordInlinedStaticMethod
-char *
+const char *
 TR_RelocationRecordInlinedStaticMethod::name()
    {
    return "TR_InlinedStaticMethod";
@@ -2988,7 +2988,7 @@ TR_RelocationRecordInlinedStaticMethod::getMethodFromCP(TR_RelocationRuntime *re
    }
 
 // TR_InlinedSpecialMethodWithNopGuard
-char *
+const char *
 TR_RelocationRecordInlinedSpecialMethodWithNopGuard::name()
    {
    return "TR_InlinedSpecialMethodWithNopGuard";
@@ -3013,7 +3013,7 @@ TR_RelocationRecordInlinedSpecialMethodWithNopGuard::updateSucceededStats(TR_AOT
    }
 
 // TR_RelocationRecordInlinedSpecialMethod
-char *
+const char *
 TR_RelocationRecordInlinedSpecialMethod::name()
    {
    return "TR_InlinedSpecialMethod";
@@ -3026,7 +3026,7 @@ TR_RelocationRecordInlinedSpecialMethod::getMethodFromCP(TR_RelocationRuntime *r
    }
 
 // TR_InlinedVirtualMethodWithNopGuard
-char *
+const char *
 TR_RelocationRecordInlinedVirtualMethodWithNopGuard::name()
    {
    return "TR_InlinedVirtualMethodWithNopGuard";
@@ -3060,7 +3060,7 @@ TR_RelocationRecordInlinedVirtualMethodWithNopGuard::updateSucceededStats(TR_AOT
    }
 
 // TR_RelocationRecordInlinedVirtualMethod
-char *
+const char *
 TR_RelocationRecordInlinedVirtualMethod::name()
    {
    return "TR_InlinedVirtualMethod";
@@ -3073,7 +3073,7 @@ TR_RelocationRecordInlinedVirtualMethod::getMethodFromCP(TR_RelocationRuntime *r
    }
 
 // TR_InlinedInterfaceMethodWithNopGuard
-char *
+const char *
 TR_RelocationRecordInlinedInterfaceMethodWithNopGuard::name()
    {
    return "TR_InlinedInterfaceMethodWithNopGuard";
@@ -3113,7 +3113,7 @@ TR_RelocationRecordInlinedInterfaceMethodWithNopGuard::getMethodFromCP(TR_Reloca
    }
 
 // TR_RelocationRecordInlinedInterfaceMethod
-char *
+const char *
 TR_RelocationRecordInlinedInterfaceMethod::name()
    {
    return "TR_InlinedInterfaceMethod";
@@ -3126,7 +3126,7 @@ TR_RelocationRecordInlinedInterfaceMethod::getMethodFromCP(TR_RelocationRuntime 
    }
 
 // TR_InlinedAbstractMethodWithNopGuard
-char *
+const char *
 TR_RelocationRecordInlinedAbstractMethodWithNopGuard::name()
    {
    return "TR_InlinedAbstractMethodWithNopGuard";
@@ -3164,7 +3164,7 @@ TR_RelocationRecordInlinedAbstractMethodWithNopGuard::updateSucceededStats(TR_AO
    }
 
 // TR_RelocationRecordInlinedAbstractMethod
-char *
+const char *
 TR_RelocationRecordInlinedAbstractMethod::name()
    {
    return "TR_InlinedAbstractMethod";
@@ -3177,7 +3177,7 @@ TR_RelocationRecordInlinedAbstractMethod::getMethodFromCP(TR_RelocationRuntime *
    }
 
 // TR_ProfiledInlinedMethod
-char *
+const char *
 TR_RelocationRecordProfiledInlinedMethod::name()
    {
    return "TR_ProfiledInlinedMethod";
@@ -3382,7 +3382,7 @@ TR_RelocationRecordProfiledGuard::invalidateGuard(TR_RelocationRuntime *reloRunt
    }
 
 // TR_ProfileClassGuard
-char *
+const char *
 TR_RelocationRecordProfiledClassGuard::name()
    {
    return "TR_ProfiledClassGuard";
@@ -3416,7 +3416,7 @@ TR_RelocationRecordProfiledClassGuard::updateFailedStats(TR_AOTStats *aotStats)
 
 
 // TR_ProfiledMethodGuard
-char *
+const char *
 TR_RelocationRecordProfiledMethodGuard::name()
    {
    return "TR_ProfiledMethodGuard";
@@ -3451,7 +3451,7 @@ TR_RelocationRecordProfiledMethodGuard::updateFailedStats(TR_AOTStats *aotStats)
 
 
 // TR_RamMethod Relocation
-char *
+const char *
 TR_RelocationRecordRamMethod::name()
    {
    return "TR_RamMethod";
@@ -3515,7 +3515,7 @@ TR_RelocationRecordMethodTracingCheck::applyRelocation(TR_RelocationRuntime *rel
 
 
 // TR_MethodEnterCheck
-char *
+const char *
 TR_RelocationRecordMethodEnterCheck::name()
    {
    return "TR_MethodEnterCheck";
@@ -3531,7 +3531,7 @@ TR_RelocationRecordMethodEnterCheck::action(TR_RelocationRuntime *reloRuntime)
 
 
 // TR_MethodExitCheck
-char *
+const char *
 TR_RelocationRecordMethodExitCheck::name()
    {
    return "TR_MethodExitCheck";
@@ -3547,7 +3547,7 @@ TR_RelocationRecordMethodExitCheck::action(TR_RelocationRuntime *reloRuntime)
 
 
 // TR_RelocationRecordValidateClass
-char *
+const char *
 TR_RelocationRecordValidateClass::name()
    {
    return "TR_ValidateClass";
@@ -3653,7 +3653,7 @@ TR_RelocationRecordValidateClass::failureCode()
 
 
 // TR_VerifyInstanceField
-char *
+const char *
 TR_RelocationRecordValidateInstanceField::name()
    {
    return "TR_ValidateInstanceField";
@@ -3678,7 +3678,7 @@ TR_RelocationRecordValidateInstanceField::failureCode()
    }
 
 // TR_VerifyStaticField
-char *
+const char *
 TR_RelocationRecordValidateStaticField::name()
    {
    return "TR_ValidateStaticField";
@@ -3737,7 +3737,7 @@ TR_RelocationRecordValidateStaticField::validateClass(TR_RelocationRuntime *relo
 
 
 // TR_RelocationRecordValidateArbitraryClass
-char *
+const char *
 TR_RelocationRecordValidateArbitraryClass::name()
    {
    return "TR_ValidateArbitraryClass";
@@ -5537,7 +5537,7 @@ TR_RelocationRecordResolvedTrampolines::applyRelocation(TR_RelocationRuntime *re
 
 
 // TR_HCR
-char *
+const char *
 TR_RelocationRecordHCR::name()
    {
    return "TR_HCR";
@@ -5701,7 +5701,7 @@ TR_RelocationRecordPointer::applyRelocation(TR_RelocationRuntime *reloRuntime, T
    }
 
 // TR_ClassPointer
-char *
+const char *
 TR_RelocationRecordClassPointer::name()
    {
    return "TR_ClassPointer";
@@ -5722,7 +5722,7 @@ TR_RelocationRecordClassPointer::activatePointer(TR_RelocationRuntime *reloRunti
    }
 
 // TR_ArbitraryClassAddress
-char *
+const char *
 TR_RelocationRecordArbitraryClassAddress::name()
    {
    return "TR_ArbitraryClassAddress";
@@ -5778,7 +5778,7 @@ TR_RelocationRecordArbitraryClassAddress::assertBootstrapLoader(TR_RelocationRun
    }
 
 // TR_MethodPointer
-char *
+const char *
 TR_RelocationRecordMethodPointer::name()
    {
    return "TR_MethodPointer";
@@ -5834,7 +5834,7 @@ TR_RelocationRecordMethodPointer::activatePointer(TR_RelocationRuntime *reloRunt
       registerHCRAssumption(reloRuntime, reloLocation);
    }
 
-char *
+const char *
 TR_RelocationRecordInlinedMethodPointer::name()
    {
    return "TR_InlinedMethodPointer";
@@ -5937,7 +5937,7 @@ TR_RelocationRecordEmitClass::bcIndex(TR_RelocationTarget *reloTarget)
    return reloTarget->loadSigned32b((uint8_t *) &((TR_RelocationRecordEmitClassBinaryTemplate *)_record)->_bcIndex);
    }
 
-char *
+const char *
 TR_RelocationRecordDebugCounter::name()
    {
    return "TR_RelocationRecordDebugCounter";
@@ -6130,7 +6130,7 @@ TR_RelocationRecordDebugCounter::findOrCreateCounter(TR_RelocationRuntime *reloR
    }
 
 // ClassUnloadAssumption
-char *
+const char *
 TR_RelocationRecordClassUnloadAssumption::name()
    {
    return "TR_ClassUnloadAssumption";
@@ -6377,7 +6377,7 @@ TR_RelocationRecordValidateIsClassVisible::isVisible(TR_RelocationTarget *reloTa
    }
 
 
-char *
+const char *
 TR_RelocationRecordStaticDefaultValueInstance::name()
    {
    return "TR_StaticDefaultValueInstance";
@@ -6422,7 +6422,7 @@ TR_RelocationRecordStaticDefaultValueInstance::applyRelocation(TR_RelocationRunt
 
 // TR_CatchBlockCounter
 //
-char *
+const char *
 TR_RelocationRecordCatchBlockCounter::name()
    {
    return "TR_CatchBlockCounter";
@@ -6470,7 +6470,7 @@ TR_RelocationRecordCatchBlockCounter::applyRelocation(TR_RelocationRuntime *relo
 
 // TR_StartPC
 //
-char *
+const char *
 TR_RelocationRecordStartPC::name()
    {
    return "TR_StartPC";

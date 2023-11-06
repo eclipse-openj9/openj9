@@ -729,9 +729,9 @@ TR_ValueProfiler::addListOrArrayProfilingTrees(
          _bdClass = comp()->fe()->getClassFromSignature("Ljava/math/BigDecimal;", 22, owningMethod);
          }
       TR_OpaqueClassBlock * bdClass = _bdClass;
-      char *fieldName = "scale";
+      const char *fieldName = "scale";
       int32_t fieldNameLen = 5;
-      char *fieldSig = "I";
+      const char *fieldSig = "I";
       int32_t fieldSigLen = 1;
 
       scaleOffset = comp()->fej9()->getInstanceFieldOffset(bdClass, fieldName, fieldNameLen, fieldSig, fieldSigLen);
@@ -766,9 +766,9 @@ TR_ValueProfiler::addListOrArrayProfilingTrees(
          }
 
       TR_OpaqueClassBlock * stringClass = _stringClass;
-      char *fieldName = "count";
+      const char *fieldName = "count";
       int32_t fieldNameLen = 5;
-      char *fieldSig = "I";
+      const char *fieldSig = "I";
       int32_t fieldSigLen = 1;
 
       lengthOffset = comp()->fej9()->getInstanceFieldOffset(stringClass, fieldName, fieldNameLen, fieldSig, fieldSigLen);

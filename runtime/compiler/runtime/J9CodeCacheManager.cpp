@@ -473,7 +473,7 @@ J9::CodeCacheManager::allocateCodeCacheSegment(size_t segmentSize,
       mcc_printf("TR::CodeCache::allocated : codeCacheSegment is %p\n",codeCacheSegment);
       if (config.verboseCodeCache())
          {
-         char * verboseLogString = "The code cache repository was allocated between addresses %p and %p";
+         const char *verboseLogString = "The code cache repository was allocated between addresses %p and %p";
          if (preferredStartAddress && self()->isInRange((uintptr_t)(codeCacheSegment->baseAddress), someJitLibraryAddress, MAX_DISTANCE_NEAR_JITLIBRARY_TO_AVOID_TRAMPOLINE))
             {
             verboseLogString = "The code cache repository was allocated between addresses %p and %p to be near the VM/JIT modules to avoid trampolines";

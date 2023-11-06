@@ -1421,7 +1421,7 @@ static void printMethodHandleArgs(j9object_t methodHandle, void **stack, J9VMThr
       TR_VerboseLog::writeLine(TR_Vlog_FAILURE, "%p   Nearby stack slots:", vmThread);
       for (i = -9; i <= 9; i++)
          {
-         char *tag = "";
+         const char *tag = "";
          void *slotValue = stack[i];
          if (slotValue == methodHandle)
             tag = " <- target MethodHandle is here";
