@@ -3761,6 +3761,20 @@ J9::Z::CodeGenerator::suppressInliningOfRecognizedMethod(TR::RecognizedMethod me
       return true;
       }
 
+   static bool disableZNextCompressExpand = feGetEnv("TR_DisableZNextCompressExpand") != NULL;
+   if (!disableZNextCompressExpand &&
+       (self()->comp()->target().cpu.supportsFeature(OMR_FEATURE_S390_MISCELLANEOUS_INSTRUCTION_EXTENSION_4) ||
+        TR::InstOpCode(TR::InstOpCode::BEXTG).canEmulate() && TR::InstOpCode(TR::InstOpCode::BDEPG).canEmulate()))
+      {
+      if (method == TR::java_lang_Integer_compress ||
+          method == TR::java_lang_Integer_expand ||
+          method == TR::java_lang_Long_compress ||
+          method == TR::java_lang_Long_expand)
+         {
+         return true;
+         }
+      }
+
    if (method == TR::java_util_concurrent_atomic_AtomicBoolean_getAndSet ||
        method == TR::java_util_concurrent_atomic_AtomicInteger_getAndAdd ||
        method == TR::java_util_concurrent_atomic_AtomicInteger_getAndIncrement ||
@@ -4141,6 +4155,30 @@ J9::Z::CodeGenerator::inlineDirectCall(
          return true;
       default:
          break;
+      }
+
+   static bool disableZNextCompressExpand = feGetEnv("TR_DisableZNextCompressExpand") != NULL;
+   if (!disableZNextCompressExpand &&
+       (self()->comp()->target().cpu.supportsFeature(OMR_FEATURE_S390_MISCELLANEOUS_INSTRUCTION_EXTENSION_4) ||
+        TR::InstOpCode(TR::InstOpCode::BEXTG).canEmulate() && TR::InstOpCode(TR::InstOpCode::BDEPG).canEmulate()))
+      {
+      switch (methodSymbol->getRecognizedMethod())
+         {
+         case TR::java_lang_Integer_compress:
+            resultReg = TR::TreeEvaluator::inlineBitCompress(node, cg, false);
+            return true;
+         case TR::java_lang_Integer_expand:
+            resultReg = TR::TreeEvaluator::inlineBitExpand(node, cg, false);
+            return true;
+         case TR::java_lang_Long_compress:
+            resultReg = TR::TreeEvaluator::inlineBitCompress(node, cg, true);
+            return true;
+         case TR::java_lang_Long_expand:
+            resultReg = TR::TreeEvaluator::inlineBitExpand(node, cg, true);
+            return true;
+         default:
+            break;
+         }
       }
 
 #ifdef J9VM_OPT_JAVA_CRYPTO_ACCELERATION
