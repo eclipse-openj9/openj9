@@ -1038,9 +1038,9 @@ J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS2.user_response=Correct the JNI function ca
 # abortonerror is not translatable
 J9NLS_JNICHK_HELP_16=\tabortonerror   cause an abort on fatal errors
 # START NON-TRANSLATABLE
-J9NLS_JNICHK_HELP_15.explanation=NOTAG
-J9NLS_JNICHK_HELP_15.system_action=
-J9NLS_JNICHK_HELP_15.user_response=
+J9NLS_JNICHK_HELP_16.explanation=NOTAG
+J9NLS_JNICHK_HELP_16.system_action=
+J9NLS_JNICHK_HELP_16.user_response=
 # END NON-TRANSLATABLE
 
 # JNI, -Xcheck:jni:nonfatal and JVM are not translatable

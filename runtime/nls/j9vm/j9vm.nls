@@ -2151,6 +2151,7 @@ J9NLS_VM_ILLEGAL_THREAD_STATE_UPCALL=The JVM failed to proceed due to the wrong 
 J9NLS_VM_ILLEGAL_THREAD_STATE_UPCALL.explanation=An error occurred when the JVM attempted to perform upcall in the trivial downcall
 J9NLS_VM_ILLEGAL_THREAD_STATE_UPCALL.system_action=The JVM will throw a IllegalThreadStateException.
 J9NLS_VM_ILLEGAL_THREAD_STATE_UPCALL.user_response=Ensure the specified linker options for downcall are valid.
+# END NON-TRANSLATABLE
 
 J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_FORKJOINPOOL_CNF=The JVM could not reset java.lang.VirtualThread.ForkJoinPool.parallelism due to java.util.concurrent.ForkJoinPool class not found
 # START NON-TRANSLATABLE

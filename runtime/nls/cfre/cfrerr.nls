@@ -1623,6 +1623,7 @@ J9NLS_CFR_ERR_CATCH_IS_REFERENCETYPE_DESCRIPTOR=Exception handler type cannot be
 J9NLS_CFR_ERR_CATCH_IS_REFERENCETYPE_DESCRIPTOR.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_CATCH_IS_REFERENCETYPE_DESCRIPTOR.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_CATCH_IS_REFERENCETYPE_DESCRIPTOR.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
 
 # ReferenceType is not translatable
 J9NLS_CFR_ERR_EXCEPTION_IS_REFERENCETYPE_DESCRIPTOR=Exception type cannot be a ReferenceType descriptor
@@ -1630,6 +1631,7 @@ J9NLS_CFR_ERR_EXCEPTION_IS_REFERENCETYPE_DESCRIPTOR=Exception type cannot be a R
 J9NLS_CFR_ERR_EXCEPTION_IS_REFERENCETYPE_DESCRIPTOR.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_EXCEPTION_IS_REFERENCETYPE_DESCRIPTOR.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_EXCEPTION_IS_REFERENCETYPE_DESCRIPTOR.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
 
 # ReferenceType is not translatable
 # CONSTANT_Class_info is not translatable
@@ -1639,6 +1641,7 @@ J9NLS_CFR_ERR_INNER_CLASS_REFERENCETYPE=The CONSTANT_Class_info at the inner_cla
 J9NLS_CFR_ERR_INNER_CLASS_REFERENCETYPE.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_INNER_CLASS_REFERENCETYPE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_INNER_CLASS_REFERENCETYPE.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
 
 # ReferenceType is not translatable
 J9NLS_CFR_ERR_ENCLOSING_METHOD_CLASS_INDEX_IS_REFERENCETYPE=The class index of an enclosing method cannot be a ReferenceType descriptor
@@ -1646,6 +1649,7 @@ J9NLS_CFR_ERR_ENCLOSING_METHOD_CLASS_INDEX_IS_REFERENCETYPE=The class index of a
 J9NLS_CFR_ERR_ENCLOSING_METHOD_CLASS_INDEX_IS_REFERENCETYPE.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_ENCLOSING_METHOD_CLASS_INDEX_IS_REFERENCETYPE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_ENCLOSING_METHOD_CLASS_INDEX_IS_REFERENCETYPE.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
 
 # ReferenceType is not translatable
 # CONSTANT_Class_info is not translatable
@@ -1655,6 +1659,7 @@ J9NLS_CFR_ERR_NEST_HOST_INVALID_REFERENCETYPE_DESCRIPTOR=The CONSTANT_Class_info
 J9NLS_CFR_ERR_NEST_HOST_INVALID_REFERENCETYPE_DESCRIPTOR.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_NEST_HOST_INVALID_REFERENCETYPE_DESCRIPTOR.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_NEST_HOST_INVALID_REFERENCETYPE_DESCRIPTOR.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
 
 # ReferenceType is not translatable
 # new is not translatable
@@ -1663,6 +1668,7 @@ J9NLS_CFR_ERR_NEW_INVALID_REFERENCETYPE_DESCRIPTOR=The new instruction cannot op
 J9NLS_CFR_ERR_NEW_INVALID_REFERENCETYPE_DESCRIPTOR.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_NEW_INVALID_REFERENCETYPE_DESCRIPTOR.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_NEW_INVALID_REFERENCETYPE_DESCRIPTOR.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
 
 # aconst_init is not translatable
 J9NLS_CFR_ERR_ACONST_INIT_INVALID_ARRAY=The aconst_init instruction cannot operate on an array
@@ -1670,6 +1676,7 @@ J9NLS_CFR_ERR_ACONST_INIT_INVALID_ARRAY=The aconst_init instruction cannot opera
 J9NLS_CFR_ERR_ACONST_INIT_INVALID_ARRAY.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_ACONST_INIT_INVALID_ARRAY.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_ACONST_INIT_INVALID_ARRAY.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
 
 # ReferenceType is not translatable
 J9NLS_CFR_ERR_OUTER_CLASS_REFERENCETYPE_DESCRIPTOR=Outer class is a ReferenceType descriptor in an InnerClasses attribute
