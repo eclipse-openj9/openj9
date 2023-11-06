@@ -1793,13 +1793,22 @@ public abstract static class LoggerFinder {
 	 */
 	public static LoggerFinder getLoggerFinder() {
 		verifyPermissions();
-		if (loggerFinder == null) {
-			loggerFinder = AccessController.doPrivileged(
+		LoggerFinder localFinder = loggerFinder;
+		if (localFinder == null) {
+			localFinder = AccessController.doPrivileged(
 								(PrivilegedAction<LoggerFinder>) () -> jdk.internal.logger.LoggerFinderLoader.getLoggerFinder(),
 								AccessController.getContext(),
 								com.ibm.oti.util.RuntimePermissions.permissionLoggerFinder);
+			/*[IF JAVA_SPEC_VERSION >= 17]*/
+			/*[IF JAVA_SPEC_VERSION != 21] Temporary until jdk21 picks up the OpenJDK change */
+			if (localFinder instanceof jdk.internal.logger.LoggerFinderLoader.TemporaryLoggerFinder) {
+				return localFinder;
+			}
+			/*[ENDIF] JAVA_SPEC_VERSION != 21 */
+			/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
+			loggerFinder = localFinder;
 		}
-		return loggerFinder;
+		return localFinder;
 	}
 
 	private static void verifyPermissions() {
