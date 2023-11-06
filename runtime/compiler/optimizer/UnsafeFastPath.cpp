@@ -507,11 +507,12 @@ int32_t TR_UnsafeFastPath::perform()
             case TR::sun_misc_Unsafe_getObject_jlObjectJ_jlObject:
                switch (methodSymbol->getRecognizedMethod())
                   {
-               case TR::java_util_concurrent_ConcurrentHashMap_tabAt:
-               case TR::java_util_concurrent_ConcurrentHashMap_setTabAt:
-                  isArrayOperation = true;
-               default:
-                  break;
+                  case TR::java_util_concurrent_ConcurrentHashMap_tabAt:
+                  case TR::java_util_concurrent_ConcurrentHashMap_setTabAt:
+                     isArrayOperation = true;
+                     break;
+                  default:
+                     break;
                   }
                break;
             case TR::com_ibm_jit_JITHelpers_getByteFromArrayVolatile:
@@ -554,14 +555,14 @@ int32_t TR_UnsafeFastPath::perform()
             case TR::sun_misc_Unsafe_putObject_jlObjectJjlObject_V:
                switch (comp()->getMethodSymbol()->getRecognizedMethod())
                   {
-               case TR::java_util_concurrent_ConcurrentHashMap_setTabAt:
-                  type = TR::Address;
-                  value = node->getChild(3);
-                  break;
-               default:
-                  break;
-                  // by not setting type the call will not be recognized here and will
-                  // be left to the inliner since we need to generate control flow
+                  case TR::java_util_concurrent_ConcurrentHashMap_setTabAt:
+                     type = TR::Address;
+                     value = node->getChild(3);
+                     break;
+                  default:
+                     break;
+                     // by not setting type the call will not be recognized here and will
+                     // be left to the inliner since we need to generate control flow
                   }
                break;
             case TR::com_ibm_jit_JITHelpers_getByteFromArrayByIndex:
@@ -588,13 +589,13 @@ int32_t TR_UnsafeFastPath::perform()
             case TR::sun_misc_Unsafe_getObject_jlObjectJ_jlObject:
                switch (methodSymbol->getRecognizedMethod())
                   {
-               case TR::java_util_concurrent_ConcurrentHashMap_tabAt:
-                  type = TR::Address;
-                  break;
-               default:
-                  break;
-                  // by not setting type the call will not be recognized here and will
-                  // be left to the inliner since we need to generate control flow
+                  case TR::java_util_concurrent_ConcurrentHashMap_tabAt:
+                     type = TR::Address;
+                     break;
+                  default:
+                     break;
+                     // by not setting type the call will not be recognized here and will
+                     // be left to the inliner since we need to generate control flow
                   }
                break;
             case TR::sun_misc_Unsafe_putInt_jlObjectJI_V:
