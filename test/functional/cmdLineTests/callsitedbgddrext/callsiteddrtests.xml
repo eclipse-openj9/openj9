@@ -50,7 +50,7 @@
   <exec command="rm -f $DUMPFILE$" />
   <command>$EXE$ -Xmx4m -Xaot:forceaot,count=0 -Xshareclasses:name=$CACHENAME$ $CP$ $XDUMP$ $PROGRAM$</command>
   <output regex="no" type="success">Moved disk 0 to 1</output>
-  <output regex="no" type="success">System dump written</output>
+  <output regex="no" type="required">System dump written</output>
   <!-- check for unexpected core dumps -->
   <output regex="no" type="failure">0001.dmp</output>
  </test>
