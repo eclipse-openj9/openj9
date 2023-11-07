@@ -79,10 +79,14 @@ static TR::SymbolReferenceTable::CommonNonhelperSymbol equivalentAtomicIntrinsic
    {
    switch (rm)
       {
+      case TR::jdk_internal_misc_Unsafe_getAndSetByte:
+      case TR::jdk_internal_misc_Unsafe_getAndSetShort:
       case TR::sun_misc_Unsafe_getAndSetInt:
            return TR::SymbolReferenceTable::atomicSwapSymbol;
       case TR::sun_misc_Unsafe_getAndSetLong:
            return comp->target().is64Bit() ? TR::SymbolReferenceTable::atomicSwapSymbol : TR::SymbolReferenceTable::lastCommonNonhelperSymbol;
+      case TR::jdk_internal_misc_Unsafe_getAndAddByte:
+      case TR::jdk_internal_misc_Unsafe_getAndAddShort:
       case TR::sun_misc_Unsafe_getAndAddInt:
            return TR::SymbolReferenceTable::atomicFetchAndAddSymbol;
       case TR::sun_misc_Unsafe_getAndAddLong:

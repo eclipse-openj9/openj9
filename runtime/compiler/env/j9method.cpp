@@ -2960,6 +2960,11 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::sun_misc_Unsafe_staticFieldBase,               "staticFieldBase",   "(Ljava/lang/reflect/Field;)Ljava/lang/Object")},
       {x(TR::sun_misc_Unsafe_staticFieldOffset,             "staticFieldOffset", "(Ljava/lang/reflect/Field;)J")},
       {x(TR::sun_misc_Unsafe_objectFieldOffset,             "objectFieldOffset", "(Ljava/lang/reflect/Field;)J")},
+
+      {x(TR::jdk_internal_misc_Unsafe_getAndAddByte,        "getAndAddByte",     "(Ljava/lang/Object;JB)B")},
+      {x(TR::jdk_internal_misc_Unsafe_getAndSetByte,        "getAndSetByte",     "(Ljava/lang/Object;JB)B")},
+      {x(TR::jdk_internal_misc_Unsafe_getAndAddShort,       "getAndAddShort",    "(Ljava/lang/Object;JS)S")},
+      {x(TR::jdk_internal_misc_Unsafe_getAndSetShort,       "getAndSetShort",    "(Ljava/lang/Object;JS)S")},
       {x(TR::sun_misc_Unsafe_getAndAddInt,                  "getAndAddInt",      "(Ljava/lang/Object;JI)I")},
       {x(TR::sun_misc_Unsafe_getAndSetInt,                  "getAndSetInt",      "(Ljava/lang/Object;JI)I")},
       {x(TR::sun_misc_Unsafe_getAndAddLong,                 "getAndAddLong",     "(Ljava/lang/Object;JJ)J")},
@@ -4674,6 +4679,10 @@ TR_ResolvedJ9Method::setRecognizedMethodInfo(TR::RecognizedMethod rm)
             case TR::sun_misc_Unsafe_storeFence:
             case TR::sun_misc_Unsafe_fullFence:
             case TR::sun_misc_Unsafe_ensureClassInitialized:
+            case TR::jdk_internal_misc_Unsafe_getAndAddByte:
+            case TR::jdk_internal_misc_Unsafe_getAndSetByte:
+            case TR::jdk_internal_misc_Unsafe_getAndAddShort:
+            case TR::jdk_internal_misc_Unsafe_getAndSetShort:
             case TR::sun_misc_Unsafe_getAndAddInt:
             case TR::sun_misc_Unsafe_getAndSetInt:
             case TR::sun_misc_Unsafe_getAndAddLong:
@@ -5506,6 +5515,10 @@ TR_J9MethodBase::isUnsafePut(TR::RecognizedMethod rm)
       case TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z:
       case TR::sun_misc_Unsafe_compareAndSwapLong_jlObjectJJJ_Z:
       case TR::sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z:
+      case TR::jdk_internal_misc_Unsafe_getAndAddByte:
+      case TR::jdk_internal_misc_Unsafe_getAndSetByte:
+      case TR::jdk_internal_misc_Unsafe_getAndAddShort:
+      case TR::jdk_internal_misc_Unsafe_getAndSetShort:
       case TR::sun_misc_Unsafe_getAndAddInt:
       case TR::sun_misc_Unsafe_getAndAddLong:
       case TR::sun_misc_Unsafe_getAndSetInt:
