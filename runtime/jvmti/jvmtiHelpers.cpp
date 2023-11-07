@@ -24,6 +24,13 @@
 #include "jvmti_internal.h"
 #include "j9cp.h"
 
+#if JAVA_SPEC_VERSION >= 19
+#include "HeapIteratorAPI.h"
+#include "ContinuationHelpers.hpp"
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
+extern "C" {
+
 extern jvmtiNativeInterface jvmtiFunctionTable;
 
 /* Jazz 99339: Map JVMTI event number to the reason code for zAAP switching on zOS.
@@ -86,7 +93,7 @@ static jvmtiError createSingleBreakpoint (J9VMThread * currentThread, J9Method *
 static UDATA hashObjectTag (void *entry, void *userData);
 static void deleteBreakpointedMethodReference (J9VMThread * currentThread, J9JVMTIBreakpointedMethod * breakpointedMethod);
 static UDATA fixBytecodesFrameIterator (J9VMThread * currentThread, J9StackWalkState * walkState);
-static void fixBytecodesInAllStacks (J9JavaVM * vm, J9Method * method, UDATA delta);
+static void fixBytecodesInAllStacks (J9VMThread *currentThread, J9Method * method, UDATA delta);
 static void clearSingleBreakpoint (J9VMThread * currentThread, J9JVMTIGlobalBreakpoint * globalBreakpoint);
 static J9JVMTIGlobalBreakpoint * findGlobalBreakpoint (J9JVMTIData * jvmtiData, J9Method * ramMethod, IDATA location);
 static J9JVMTIBreakpointedMethod * createBreakpointedMethod (J9VMThread * currentThread, J9Method * ramMethod);
@@ -95,6 +102,9 @@ static UDATA findDecompileInfoFrameIterator(J9VMThread *currentThread, J9StackWa
 static UDATA watchedClassHash (void *entry, void *userData);
 static UDATA watchedClassEqual (void *lhsEntry, void *rhsEntry, void *userData);
 static jint getThreadStateHelper(J9VMThread *currentThread, j9object_t threadObject, J9VMThread *vmThread);
+#if JAVA_SPEC_VERSION >= 19
+static jvmtiIterationControl fixBytecodesCallBack(J9VMThread *currentThread, J9MM_IterateObjectDescriptor *object, void *userData);
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
 jvmtiError
 getVMThread(J9VMThread *currentThread, jthread thread, J9VMThread **vmThreadPtr, jvmtiError vThreadError, UDATA flags)
@@ -251,10 +261,10 @@ disposeEnvironment(J9JVMTIEnv * j9env, UDATA freeData)
 			pool_state poolState;
 			J9JVMTIAgentBreakpoint * agentBreakpoint = NULL;
 
-			agentBreakpoint = pool_startDo(j9env->breakpoints, &poolState);
+			agentBreakpoint = (J9JVMTIAgentBreakpoint*)pool_startDo(j9env->breakpoints, &poolState);
 			while (agentBreakpoint != NULL) {
 				deleteAgentBreakpoint(currentThread, j9env, agentBreakpoint);
-				agentBreakpoint = pool_nextDo(&poolState);
+				agentBreakpoint = (J9JVMTIAgentBreakpoint*)pool_nextDo(&poolState);
 			}
 		}
 
@@ -303,12 +313,12 @@ disposeEnvironment(J9JVMTIEnv * j9env, UDATA freeData)
 
 		if (NULL != j9env->watchedClasses) {
 			J9HashTableState walkState;
-			J9JVMTIWatchedClass *watchedClass = hashTableStartDo(j9env->watchedClasses, &walkState);
+			J9JVMTIWatchedClass *watchedClass = (J9JVMTIWatchedClass*)hashTableStartDo(j9env->watchedClasses, &walkState);
 			while (NULL != watchedClass) {
 				if (J9JVMTI_CLASS_REQUIRES_ALLOCATED_J9JVMTI_WATCHED_FIELD_ACCESS_BITS(watchedClass->clazz)) {
 					j9mem_free_memory(watchedClass->watchBits);
 				}
-				watchedClass = hashTableNextDo(&walkState);
+				watchedClass = (J9JVMTIWatchedClass*)hashTableNextDo(&walkState);
 			}
 			hashTableFree(j9env->watchedClasses);
 			j9env->watchedClasses = NULL;
@@ -348,7 +358,7 @@ allocateEnvironment(J9InvocationJavaVM * invocationJavaVM, jint version, void **
 
 		rc = JNI_ENOMEM;
 
-		j9env = pool_newElement(jvmtiData->environments);
+		j9env = (J9JVMTIEnv*)pool_newElement(jvmtiData->environments);
 		if (j9env != NULL) {
 			J9HookInterface ** vmHook = vm->internalVMFunctions->getVMHookInterface(vm);
 			J9HookInterface ** gcHook = vm->memoryManagerFunctions->j9gc_get_hook_interface(vm);
@@ -590,7 +600,7 @@ cStringFromUTFChars(jvmtiEnv * env, U_8 * data, UDATA length, char ** cString)
 	jvmtiError rc = JVMTI_ERROR_NONE;
 	PORT_ACCESS_FROM_JVMTI(env);
 
-	*cString = j9mem_allocate_memory(length + 1, J9MEM_CATEGORY_JVMTI_ALLOCATE);
+	*cString = (char*)j9mem_allocate_memory(length + 1, J9MEM_CATEGORY_JVMTI_ALLOCATE);
 	if (*cString == NULL) {
 		rc = JVMTI_ERROR_OUT_OF_MEMORY;
 	} else {
@@ -841,12 +851,12 @@ getVirtualThreadState(J9VMThread *currentThread, jthread thread)
 				jclass jlThread = NULL;
 
 				vm->internalVMFunctions->internalExitVMToJNI(currentThread);
-				jlThread = (*env)->FindClass(env, "java/lang/Thread");
+				jlThread = env->FindClass("java/lang/Thread");
 				if (NULL != jlThread) {
-					fid = (*env)->GetFieldID(env, jlThread, "container", "Ljdk/internal/vm/ThreadContainer;");
+					fid = env->GetFieldID(jlThread, "container", "Ljdk/internal/vm/ThreadContainer;");
 				}
 				if ((NULL != fid)
-					&& (NULL == (*env)->GetObjectField(env, thread, fid))
+					&& (NULL == env->GetObjectField(thread, fid))
 				) {
 					rc = JVMTI_JAVA_LANG_THREAD_STATE_NEW;
 				} else {
@@ -1037,12 +1047,12 @@ findAgentBreakpoint(J9VMThread * currentThread, J9JVMTIEnv * j9env, J9Method * r
 	jmethodID currentMethod;
 
 	currentMethod = getCurrentMethodID(currentThread, ramMethod);
-	agentBreakpoint = pool_startDo(j9env->breakpoints, &poolState);
+	agentBreakpoint = (J9JVMTIAgentBreakpoint*)pool_startDo(j9env->breakpoints, &poolState);
 	while (agentBreakpoint != NULL) {
 		if ((agentBreakpoint->method == currentMethod) && (agentBreakpoint->location == location)) {
 			break;
 		}
-		agentBreakpoint = pool_nextDo(&poolState);
+		agentBreakpoint = (J9JVMTIAgentBreakpoint*)pool_nextDo(&poolState);
 	}
 	return agentBreakpoint;
 }
@@ -1055,12 +1065,12 @@ findBreakpointedMethod(J9JVMTIData * jvmtiData, J9Method * ramMethod)
 	pool_state poolState;
 	J9JVMTIBreakpointedMethod * breakpointedMethod;
 
-	breakpointedMethod = pool_startDo(jvmtiData->breakpointedMethods, &poolState);
+	breakpointedMethod = (J9JVMTIBreakpointedMethod*)pool_startDo(jvmtiData->breakpointedMethods, &poolState);
 	while (breakpointedMethod != NULL) {
 		if (breakpointedMethod->method == ramMethod) {
 			break;
 		}
-		breakpointedMethod = pool_nextDo(&poolState);
+		breakpointedMethod = (J9JVMTIBreakpointedMethod*)pool_nextDo(&poolState);
 	}
 	return breakpointedMethod;
 }
@@ -1196,7 +1206,7 @@ createBreakpointedMethod(J9VMThread * currentThread, J9Method * ramMethod)
 	 * in the original ROMMethod and not the copy that is about to be made.
 	 */
 
-	breakpointedMethod = pool_newElement(jvmtiData->breakpointedMethods);
+	breakpointedMethod = (J9JVMTIBreakpointedMethod*)pool_newElement(jvmtiData->breakpointedMethods);
 	if (breakpointedMethod == NULL) {
 		return NULL;
 	}
@@ -1243,7 +1253,7 @@ createBreakpointedMethod(J9VMThread * currentThread, J9Method * ramMethod)
 		}
 	}
 #endif
-	copiedROMMethod = j9mem_allocate_memory(allocSize, J9MEM_CATEGORY_JVMTI);
+	copiedROMMethod = (J9ROMMethod*)j9mem_allocate_memory(allocSize, J9MEM_CATEGORY_JVMTI);
 	if (copiedROMMethod == NULL) {
 		pool_removeElement(jvmtiData->breakpointedMethods, breakpointedMethod);
 		return NULL;
@@ -1308,7 +1318,7 @@ createBreakpointedMethod(J9VMThread * currentThread, J9Method * ramMethod)
 
 	/* Fix the method and stacks to point to the new bytecodes */
 
-	fixBytecodesInAllStacks(vm, ramMethod, delta);
+	fixBytecodesInAllStacks(currentThread, ramMethod, delta);
 	
 	/* Add the delta to point at the copied bytecodes. This effectively changes this RAM Method's
 	   ROM Method to the copy when accessed using J9_ROM_METHOD_FROM_RAM_METHOD */
@@ -1347,7 +1357,7 @@ createSingleBreakpoint(J9VMThread * currentThread, J9Method * ramMethod, IDATA l
 	
 	/* Create a new breakpoint */
 
-	globalBreakpoint = pool_newElement(jvmtiData->breakpoints);
+	globalBreakpoint = (J9JVMTIGlobalBreakpoint*)pool_newElement(jvmtiData->breakpoints);
 	if (globalBreakpoint == NULL) {
 		deleteBreakpointedMethodReference(currentThread, breakpointedMethod);
 		return JVMTI_ERROR_OUT_OF_MEMORY;
@@ -1383,7 +1393,7 @@ deleteBreakpointedMethodReference(J9VMThread * currentThread, J9JVMTIBreakpointe
 		ramMethod = breakpointedMethod->method;
 		copiedROMMethod = breakpointedMethod->copiedROMMethod;
 		delta = ((UDATA) breakpointedMethod->originalROMMethod) - (UDATA) copiedROMMethod;
-		fixBytecodesInAllStacks(vm, ramMethod, delta);
+		fixBytecodesInAllStacks(currentThread, ramMethod, delta);
 		ramMethod->bytecodes += delta;
 
 		/* Free the copied method */
@@ -1410,12 +1420,12 @@ findGlobalBreakpoint(J9JVMTIData * jvmtiData, J9Method * ramMethod, IDATA locati
 	pool_state poolState;
 	J9JVMTIGlobalBreakpoint * globalBreakpoint;
 
-	globalBreakpoint = pool_startDo(jvmtiData->breakpoints, &poolState);
+	globalBreakpoint = (J9JVMTIGlobalBreakpoint*)pool_startDo(jvmtiData->breakpoints, &poolState);
 	while (globalBreakpoint != NULL) {
 		if ((globalBreakpoint->breakpointedMethod->method == ramMethod) && (globalBreakpoint->location == location)) {
 			break;
 		}
-		globalBreakpoint = pool_nextDo(&poolState);
+		globalBreakpoint = (J9JVMTIGlobalBreakpoint*)pool_nextDo(&poolState);
 	}
 	return globalBreakpoint;
 }
@@ -1442,24 +1452,47 @@ fixBytecodesFrameIterator(J9VMThread * currentThread, J9StackWalkState * walkSta
 }
 
 
+#if JAVA_SPEC_VERSION >= 19
+static jvmtiIterationControl
+fixBytecodesCallBack(J9VMThread *currentThread, J9MM_IterateObjectDescriptor *object, void *userData)
+{
+	J9JavaVM *vm = currentThread->javaVM;
+	j9object_t continuationObj = object->object;
+	j9object_t vthread = J9VMJDKINTERNALVMCONTINUATION_VTHREAD(currentThread, continuationObj);
+	ContinuationState continuationState = J9VMJDKINTERNALVMCONTINUATION_STATE(currentThread, continuationObj);
+
+	if ((NULL != vthread) && J9_ARE_NO_BITS_SET(continuationState, J9_GC_CONTINUATION_STATE_LAST_UNMOUNT)) {
+		J9StackWalkState *walkState = (J9StackWalkState*)userData;
+		J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(currentThread, continuationObj);
+		j9object_t threadObject = VM_ContinuationHelpers::getThreadObjectForContinuation(currentThread, continuation, continuationObj);
+
+		vm->internalVMFunctions->walkContinuationStackFrames(currentThread, continuation, threadObject, walkState);
+	}
+	return JVMTI_ITERATION_CONTINUE;
+}
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
 
 static void
-fixBytecodesInAllStacks(J9JavaVM * vm, J9Method * method, UDATA delta)
+fixBytecodesInAllStacks(J9VMThread *currentThread, J9Method * method, UDATA delta)
 {
-	J9VMThread * currentThread;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9VMThread *walkThread = currentThread;
+	J9StackWalkState walkState;
 
-	currentThread = vm->mainThread;
+	walkState.skipCount = 0;
+	walkState.flags = J9_STACKWALK_ITERATE_FRAMES;
+	walkState.frameWalkFunction = fixBytecodesFrameIterator;
+	walkState.userData1 = method;
+	walkState.userData2 = (void *) delta;
 	do {
-		J9StackWalkState walkState;
-
-		walkState.walkThread = currentThread;
-		walkState.skipCount = 0;
-		walkState.flags = J9_STACKWALK_ITERATE_FRAMES;
-		walkState.frameWalkFunction = fixBytecodesFrameIterator;
-		walkState.userData1 = method;
-		walkState.userData2 = (void *) delta;
+		walkState.walkThread = walkThread;
 		vm->walkStackFrames(currentThread, &walkState);
-	} while ((currentThread = currentThread->linkNext) != vm->mainThread);
+	} while ((walkThread = walkThread->linkNext) != currentThread);
+#if JAVA_SPEC_VERSION >= 19
+	vm->memoryManagerFunctions->j9gc_flush_nonAllocationCaches_for_walk(vm);
+	vm->memoryManagerFunctions->j9mm_iterate_all_continuation_objects(currentThread, vm->portLibrary, 0, fixBytecodesCallBack, (void*)&walkState);
+#endif /* JAVA_SPEC_VERSION >= 19 */
 }
 
 jmethodID
@@ -1503,13 +1536,13 @@ allAgentBreakpointsNextDo(J9JVMTIAgentBreakpointDoState * state)
 {
 	J9JVMTIAgentBreakpoint * agentBreakpoint;
 
-	agentBreakpoint = pool_nextDo(&(state->breakpointState));
+	agentBreakpoint = (J9JVMTIAgentBreakpoint*)pool_nextDo(&(state->breakpointState));
 	if (agentBreakpoint != NULL) {
 		return agentBreakpoint;
 	}
 
-	while ((state->j9env = pool_nextDo(&(state->environmentState))) != NULL) {
-		agentBreakpoint = pool_startDo(state->j9env->breakpoints, &(state->breakpointState));
+	while ((state->j9env = (J9JVMTIEnv*)pool_nextDo(&(state->environmentState))) != NULL) {
+		agentBreakpoint = (J9JVMTIAgentBreakpoint*)pool_startDo(state->j9env->breakpoints, &(state->breakpointState));
 		if (agentBreakpoint != NULL) {
 			return agentBreakpoint;
 		}
@@ -1523,30 +1556,29 @@ allAgentBreakpointsNextDo(J9JVMTIAgentBreakpointDoState * state)
 J9JVMTIAgentBreakpoint *
 allAgentBreakpointsStartDo(J9JVMTIData * jvmtiData, J9JVMTIAgentBreakpointDoState * state)
 {
-	state->j9env = pool_startDo(jvmtiData->environments, &(state->environmentState));
+	state->j9env = (J9JVMTIEnv*)pool_startDo(jvmtiData->environments, &(state->environmentState));
 	while (state->j9env != NULL) {
 		/* CMVC 196966: only inspect live (not disposed) environments */
 		if (0 == (state->j9env->flags & J9JVMTIENV_FLAG_DISPOSED)) {
 			J9JVMTIAgentBreakpoint * agentBreakpoint;
 
-			agentBreakpoint = pool_startDo(state->j9env->breakpoints, &(state->breakpointState));
+			agentBreakpoint = (J9JVMTIAgentBreakpoint*)pool_startDo(state->j9env->breakpoints, &(state->breakpointState));
 			if (agentBreakpoint != NULL) {
 				return agentBreakpoint;
 			}
 		}
-		state->j9env = pool_nextDo(&(state->environmentState));
+		state->j9env = (J9JVMTIEnv*)pool_nextDo(&(state->environmentState));
 	}
 
 	return NULL;
 }
 
 
-
 #if defined(J9VM_INTERP_NATIVE_SUPPORT)
 J9JVMTICompileEvent *
 queueCompileEvent(J9JVMTIData * jvmtiData, jmethodID methodID, void * startPC, UDATA length, void * metaData, UDATA isLoad)
 {
-	J9JVMTICompileEvent * compEvent = pool_newElement(jvmtiData->compileEvents);
+	J9JVMTICompileEvent * compEvent = (J9JVMTICompileEvent*)pool_newElement(jvmtiData->compileEvents);
 
 	if (compEvent != NULL) {
 		compEvent->methodID = methodID;
@@ -1602,9 +1634,9 @@ createThreadData(J9JVMTIEnv *j9env, J9VMThread *vmThread, j9object_t thread)
 	if (0 == j9env->tlsKey) {
 		omrthread_monitor_enter(j9env->threadDataPoolMutex);
 		if (0 == j9env->tlsKey) {
-			rc = jvmtiTLSAlloc(vmThread->javaVM, &j9env->tlsKey);
-			if (JVMTI_ERROR_NONE != rc) {
+			if (0 != jvmtiTLSAlloc(vmThread->javaVM, &j9env->tlsKey)) {
 				omrthread_monitor_exit(j9env->threadDataPoolMutex);
+				rc = JVMTI_ERROR_OUT_OF_MEMORY;
 				goto exit;
 			}
 			goto allocate_thread_data_locked;
@@ -1621,7 +1653,7 @@ check_thread_data_locked:
 		if (NULL == threadData) {
 			/* We are the first to access the thread data for the given thread. */
 allocate_thread_data_locked:
-			threadData = pool_newElement(j9env->threadDataPool);
+			threadData = (J9JVMTIThreadData*)pool_newElement(j9env->threadDataPool);
 			if (NULL == threadData) {
 				rc = JVMTI_ERROR_OUT_OF_MEMORY;
 			} else {
@@ -1940,10 +1972,10 @@ jvmtiTLSFree(J9JavaVM *vm, UDATA key)
 	J9JVMTIThreadData **each = NULL;
 
 	omrthread_monitor_enter(vm->tlsPoolMutex);
-	each = pool_startDo(vm->tlsPool, &state);
+	each = (J9JVMTIThreadData**)pool_startDo(vm->tlsPool, &state);
 	while (NULL != each) {
 		each[key - 1] = NULL;
-		each = pool_nextDo(&state);
+		each = (J9JVMTIThreadData**)pool_nextDo(&state);
 	}
 	omrthread_monitor_exit(vm->tlsPoolMutex);
 
@@ -2085,3 +2117,5 @@ getJ9VMContinuationToWalk(J9VMThread *currentThread, J9VMThread *targetThread, j
 	return continuation;
 }
 #endif /* JAVA_SPEC_VERSION >= 19 */
+
+} /* extern "C" */

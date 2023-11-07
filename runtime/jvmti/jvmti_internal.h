@@ -898,7 +898,7 @@ jvmtiIterateOverReachableObjects(jvmtiEnv* env,
 	const void * user_data);
 
 
-/* ---------------- jvmtiHelpers.c ---------------- */
+/* ---------------- jvmtiHelpers.cpp ---------------- */
 
 /**
  * @brief Allocate a thread local storage key (which represents a jvmtiEnv) to index into a thread
