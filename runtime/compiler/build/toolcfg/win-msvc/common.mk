@@ -214,11 +214,11 @@ SOLINK_LIBPATH+=$(PRODUCT_LIBPATH)
 SOLINK_SLINK+=$(PRODUCT_SLINK) j9thr j9hookable kernel32 oldnames msvcrt msvcprt ws2_32
 
 ifeq ($(origin MSVC_VERSION), undefined)
-    ifneq (,$(filter 14.0 15.0, $(VisualStudioVersion)))
+    ifneq (,$(filter 14.0 15.0 16.0 17.0, $(VisualStudioVersion)))
         SOLINK_SLINK+=ucrt vcruntime
     endif
 else
-    ifneq (,$(filter 2013 2015 2017 2019, $(MSVC_VERSION)))
+    ifneq (,$(filter 2013 2015 2017 2019 2022, $(MSVC_VERSION)))
         SOLINK_SLINK+=ucrt vcruntime
     endif
 endif
