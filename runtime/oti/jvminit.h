@@ -433,6 +433,13 @@ enum INIT_STAGE {
 #define VMOPT_XXDISABLETHROWONDELAYECHECKPOINTOPERATION "-XX:-ThrowOnDelayedCheckpointOperation"
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
+/* Compatibility options. */
+#define VMOPT_XXCOMPATIBILITY_EQUALS "-XX:Compatibility="
+
+/* Options recognized only in combination with -XX:Compatibility=elasticsearch. */
+#define VMOPT_XXCOMPATIBILITY_ENABLEG1GC "-XX:+UseG1GC"
+#define VMOPT_XXCOMPATIBILITY_DISABLEG1GC "-XX:-UseG1GC"
+
 /*
  * Options to control how much effort is expended
  * resolving native symbols in java dumps.
