@@ -392,6 +392,10 @@ typedef struct J9ROMClassCfrMember {
 	U_16 attributesCount;
 } J9ROMClassCfrMember;
 
+/* @ddr_namespace: map_to_type=J9Compatibility */
+
+#define J9COMPATIBILITY_ELASTICSEARCH 0x1 /* -XX:Compatibility=elasticsearch */
+
 /* @ddr_namespace: map_to_type=J9ContendedLoadTableEntry */
 
 typedef struct J9ContendedLoadTableEntry {
@@ -5989,6 +5993,7 @@ typedef struct J9JavaVM {
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 	omrthread_monitor_t delayedLockingOperationsMutex;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+	U_32 compatibilityFlags;
 } J9JavaVM;
 
 #define J9VM_PHASE_STARTUP  1

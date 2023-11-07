@@ -2996,7 +2996,9 @@ checkArgsConsumed(J9JavaVM * vm, J9PortLibrary* portLibrary, J9VMInitArgs* j9vm_
 	IDATA xxIgnoreUnrecognizedXXColonOptionsEnableIndex = -1;
 	IDATA xxIgnoreUnrecognizedXXColonOptionsDisableIndex = -1;
 
-	if (findArgInVMArgs( PORTLIB, j9vm_args, EXACT_MATCH, VMOPT_XXVM_IGNOREUNRECOGNIZED, NULL, TRUE) >= 0) {
+	if (J9_ARE_ANY_BITS_SET(vm->compatibilityFlags, J9COMPATIBILITY_ELASTICSEARCH)
+		|| (findArgInVMArgs(PORTLIB, j9vm_args, EXACT_MATCH, VMOPT_XXVM_IGNOREUNRECOGNIZED, NULL, TRUE) >= 0)
+	) {
 		ignoreUnrecognized = JNI_TRUE;
 	}
 
@@ -6898,6 +6900,30 @@ xlogret:
 	return rc;
 }
 
+/*
+ * Compute the heap region size that G1GC would use for the specified maximum
+ * heap size. G1GC aims for 2048 regions with the size of each region being a
+ * power of 2, no less than 1MB and no more than 32MB.
+ */
+static size_t
+computeG1HeapRegionSize(size_t maxHeapSize)
+{
+	size_t minSize = 1024 * 1024;
+	size_t maxSize = 32 * minSize;
+	size_t regionSize = (maxHeapSize + 2047) / 2048;
+	size_t result = minSize;
+
+	/* A simple loop is sufficient here. It clearly achieves our goal, and
+	 * the cost is low (we iterate at most 5 times and this function is used
+	 * at most once).
+	 */
+	while ((result < regionSize) && (result < maxSize)) {
+		result <<= 1;
+	}
+
+	return result;
+}
+
 static UDATA
 protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 {
@@ -6916,6 +6942,7 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 	int filter = -1;
 #endif
 	J9JavaVM** BFUjavaVM;
+	IDATA xxUseG1GC = 0; /* +1 if -XX:+UseG1GC used; -1 if -XX:-UseG1GC used */
 
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 	J9HookInterface** vmHooks;
@@ -7114,6 +7141,39 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 			}
 		} else {
 			doParseXlogForCompatibility = TRUE;
+		}
+	}
+
+	{
+		IDATA argIndex = FIND_AND_CONSUME_ARG_FORWARD(vm->vmArgsArray, STARTSWITH_MATCH, VMOPT_XXCOMPATIBILITY_EQUALS, NULL);
+		const char *mode = NULL;
+
+		if (argIndex >= 0) {
+			GET_OPTION_VALUE(argIndex, '=', &mode);
+
+			if (0 == j9_cmdla_stricmp(mode, "elasticsearch")) {
+				vm->compatibilityFlags |= J9COMPATIBILITY_ELASTICSEARCH;
+				doParseXlogForCompatibility = FALSE;
+			} else {
+				j9nls_printf(portLibrary, J9NLS_ERROR, J9NLS_VM_COMPATIBILITY_UNSUPPORTED, mode);
+				goto error;
+			}
+
+			if (FIND_AND_CONSUME_NEXT_ARG_FORWARD(vm->vmArgsArray, STARTSWITH_MATCH, VMOPT_XXCOMPATIBILITY_EQUALS, NULL, argIndex) >= 0) {
+				j9nls_printf(portLibrary, J9NLS_ERROR, J9NLS_VM_COMPATIBILITY_REPEATED);
+				goto error;
+			}
+		}
+	}
+
+	if (J9_ARE_ANY_BITS_SET(vm->compatibilityFlags, J9COMPATIBILITY_ELASTICSEARCH)) {
+		IDATA enabled = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXCOMPATIBILITY_ENABLEG1GC, NULL);
+		IDATA disabled = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXCOMPATIBILITY_DISABLEG1GC, NULL);
+
+		if (enabled > disabled) {
+			xxUseG1GC = 1;
+		} else if (disabled >= 0) {
+			xxUseG1GC = -1;
 		}
 	}
 
@@ -7449,7 +7509,6 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 		if (enabled > disabled) {
 			size_t maxHeapSize = (size_t) (vm->memoryManagerFunctions->j9gc_get_maximum_heap_size(vm));
 			uint64_t maxDirectMemorySize = (uint64_t) (((~(UDATA)0) == vm->directByteBufferMemoryMax) ? 0 : vm->directByteBufferMemoryMax);
-			const char *howset = NULL;
 
 			/*
 			 * Emulate Hotspot -XX:+PrintFlagsFinal output for two specific flags:
@@ -7458,29 +7517,50 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 			 *    size_t MaxHeapSize                              = 4294967296                                {product} {ergonomic}
 			 *  uint64_t MaxDirectMemorySize                      = 3758096384                                {product} {default}
 			 *
-			 * OpenJ9 stores both of these values as UDATA, so they will both be printed
-			 * as "size_t" type.
+			 * When -XX:Compatibility=elasticsearch is specified, four more flags are included:
+			 *
+			 *    size_t G1HeapRegionSize                         = 2097152                                   {product} {ergonomic}
+			 *     uintx G1ReservePercent                         = 10                                        {product} {default}
+			 *     uintx InitiatingHeapOccupancyPercent           = 45                                        {product} {default}
+			 *      bool UseG1GC                                  = true                                      {product} {ergonomic}
 			 *
 			 * NOTE that Hotspot produces this output on STDOUT, and applications
-			 * expect to parse it there, which means this code does not use j9tty_printf
-			 * like most of the VM (which prints to STDERR). Instead,
-			 * j9file_printf(PORTLIB, J9PORT_TTY_OUT, ...) is used.
+			 * expect to parse it there, which means this code does not use
+			 * j9tty_printf() like most of the VM (which prints to STDERR).
+			 * Instead, j9file_printf(PORTLIB, J9PORT_TTY_OUT, ...) is used.
 			 */
+
+#define PRINT_FLAG(fmt, type, name, value, howset) \
+	j9file_printf(PORTLIB, J9PORT_TTY_OUT, \
+			"%9s %-40s = %-41" fmt " {product} {%s}\n", \
+			(type), (name), (value), (howset))
 
 			j9file_printf(PORTLIB, J9PORT_TTY_OUT, "[Global flags]\n");
 
-			howset = "ergonomic";
-			if ((findArgInVMArgs( PORTLIB, vm->vmArgsArray, STARTSWITH_MATCH, VMOPT_XMX, NULL, 0) >= 0)) {
-				howset = "command line";
-			}
-			j9file_printf(PORTLIB, J9PORT_TTY_OUT, "   size_t MaxHeapSize                              = %-41zu {product} {%s}\n", maxHeapSize, howset);
+			PRINT_FLAG("zu", "size_t", "MaxHeapSize",
+					maxHeapSize,
+					(findArgInVMArgs(PORTLIB, vm->vmArgsArray, STARTSWITH_MATCH, VMOPT_XMX, NULL, 0) >= 0)
+							? "command line" : "ergonomic");
 
-			howset = "ergonomic";
-			if ((findArgInVMArgs( PORTLIB, vm->vmArgsArray, STARTSWITH_MATCH, VMOPT_XXMAXDIRECTMEMORYSIZEEQUALS, NULL, 0) >= 0)) {
-				howset = "command line";
+			PRINT_FLAG("llu", "uint64_t", "MaxDirectMemorySize",
+					maxDirectMemorySize,
+					(findArgInVMArgs(PORTLIB, vm->vmArgsArray, STARTSWITH_MATCH, VMOPT_XXMAXDIRECTMEMORYSIZEEQUALS, NULL, 0) >= 0)
+							?  "command line" : "ergonomic");
+
+			if (J9_ARE_ANY_BITS_SET(vm->compatibilityFlags, J9COMPATIBILITY_ELASTICSEARCH)) {
+				PRINT_FLAG("zu", "size_t", "G1HeapRegionSize",
+						computeG1HeapRegionSize(maxHeapSize), "ergonomic");
+				PRINT_FLAG("u", "uintx", "G1ReservePercent",
+						10, "default");
+				PRINT_FLAG("u", "uintx", "InitiatingHeapOccupancyPercent",
+						45, "default");
+				PRINT_FLAG("s", "bool", "UseG1GC",
+						(0 <= xxUseG1GC) ? "true" : "false",
+						(0 != xxUseG1GC) ? "command line" : "ergonomic");
 			}
-			j9file_printf(PORTLIB, J9PORT_TTY_OUT, " uint64_t MaxDirectMemorySize                      = %-41llu {product} {%s}\n", maxDirectMemorySize, howset);
 		}
+
+#undef PRINT_FLAG
 	}
 
 	return JNI_OK;
