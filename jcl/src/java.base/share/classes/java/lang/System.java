@@ -1185,18 +1185,21 @@ static void checkTmpDir() {
 
 static void initSecurityManager(ClassLoader applicationClassLoader) {
 	String javaSecurityManager = internalGetProperties().getProperty("java.security.manager"); //$NON-NLS-1$
-	/*[IF JAVA_SPEC_VERSION > 11]*/
-	if ("allow".equals(javaSecurityManager)) {
-		/* Do nothing. */
-	} else if ("disallow".equals(javaSecurityManager) //$NON-NLS-1$
+	if (null == javaSecurityManager) {
 		/*[IF JAVA_SPEC_VERSION >= 18]*/
-		|| (null == javaSecurityManager)
-		/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
-	) {
 		throwUOEFromSetSM = true;
-	} else
-	/*[ENDIF] JAVA_SPEC_VERSION > 11 */
-	if (null != javaSecurityManager) {
+		/*[ELSE] JAVA_SPEC_VERSION >= 18 */
+		/* Do nothing. */
+		/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
+	} else if ("allow".equals(javaSecurityManager)) { //$NON-NLS-1$
+		/* Do nothing. */
+	} else if ("disallow".equals(javaSecurityManager)) { //$NON-NLS-1$
+		/*[IF JAVA_SPEC_VERSION > 11]*/
+		throwUOEFromSetSM = true;
+		/*[ELSE] JAVA_SPEC_VERSION > 11 */
+		/* Do nothing. */
+		/*[ENDIF] JAVA_SPEC_VERSION > 11 */
+	} else {
 		/*[IF JAVA_SPEC_VERSION >= 17]*/
 		initialErr.println("WARNING: A command line option has enabled the Security Manager"); //$NON-NLS-1$
 		initialErr.println("WARNING: The Security Manager is deprecated and will be removed in a future release"); //$NON-NLS-1$
