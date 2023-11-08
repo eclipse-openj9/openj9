@@ -29,11 +29,12 @@
 	<variable name="JITSERVER_SSL1" value="-XX:JITServerSSLRootCerts=cert.pem" />
 	<variable name="JITSERVER_SSL2" value="-XX:JITServerSSLRootCerts=wrongCert.pem" />
 	<variable name="JITSERVER_SSL3" value="-XX:JITServerSSLRootCerts=nosslserverCert.pem" />
-	<variable name="JITSERVER_VERBOSE" value="-Xjit:verbose={JITServer},verbose={JITServerConns},verbose={compilePerformance}" />
+	<variable name="JITSERVER_CLIENT_OPTS" value="-Xjit:count=0,verbose={JITServer},verbose={JITServerConns},verbose={compilePerformance}" />
+	<variable name="NO_LOCAL_SYNC_COMPILE" value="-XX:-JITServerLocalSyncCompiles" />
 	<variable name="DEFAULT_JITSERVER_OPTIONS" value="-Xjit" />
 
 	<test id="Test default configuration">
-		<command>bash $SCRIPPATH$ $TEST_RESROOT$ $TEST_JDK_BIN$ "$DEFAULT_JITSERVER_OPTIONS$" "$ENABLE_JITSERVER$ $JITSERVER_VERBOSE$" false</command>
+		<command>bash $SCRIPPATH$ $TEST_RESROOT$ $TEST_JDK_BIN$ "$DEFAULT_JITSERVER_OPTIONS$" "$ENABLE_JITSERVER$ $JITSERVER_CLIENT_OPTS$ $NO_LOCAL_SYNC_COMPILE$" false</command>
 		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="required" caseSensitive="no" regex="no">JITServer Client Mode.</output>
 		<output type="success" caseSensitive="no" regex="no">Connected to a server</output>
@@ -45,7 +46,7 @@
 	</test>
 
 	<test id="Test JITServer disabled">
-		<command>bash $SCRIPPATH$ $TEST_RESROOT$ $TEST_JDK_BIN$ "$DEFAULT_JITSERVER_OPTIONS$" "$DISABLE_JITSERVER$ $JITSERVER_VERBOSE$" false</command>
+		<command>bash $SCRIPPATH$ $TEST_RESROOT$ $TEST_JDK_BIN$ "$DEFAULT_JITSERVER_OPTIONS$" "$DISABLE_JITSERVER$ $JITSERVER_CLIENT_OPTS$ $NO_LOCAL_SYNC_COMPILE$" false</command>
 		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSesnsitive="no" regex="no">Connected to a server</output>
 		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">(Fatal|Unhandled) Exception</output>
@@ -56,7 +57,7 @@
 	</test>
 
 	<test id="Test bad port">
-		<command>bash $SCRIPPATH$ $TEST_RESROOT$ $TEST_JDK_BIN$ "$DEFAULT_JITSERVER_OPTIONS$" "$ENABLE_JITSERVER$ $JITSERVER_VERBOSE$ -XX:JITServerPort=38399" false</command>
+		<command>bash $SCRIPPATH$ $TEST_RESROOT$ $TEST_JDK_BIN$ "$DEFAULT_JITSERVER_OPTIONS$" "$ENABLE_JITSERVER$ $JITSERVER_CLIENT_OPTS$ $NO_LOCAL_SYNC_COMPILE$ -XX:JITServerPort=38399" false</command>
 		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSesnsitive="no" regex="no">Connected to a server</output>
 		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">(Fatal|Unhandled) Exception</output>
@@ -67,7 +68,7 @@
 	</test>
 
 	<test id="Test bad hostname">
-		<command>bash $SCRIPPATH$ $TEST_RESROOT$ $TEST_JDK_BIN$ "$DEFAULT_JITSERVER_OPTIONS$" "$ENABLE_JITSERVER$ $JITSERVER_VERBOSE$ -XX:JITServerAddress=bad.address" false</command>
+		<command>bash $SCRIPPATH$ $TEST_RESROOT$ $TEST_JDK_BIN$ "$DEFAULT_JITSERVER_OPTIONS$" "$ENABLE_JITSERVER$ $JITSERVER_CLIENT_OPTS$ $NO_LOCAL_SYNC_COMPILE$ -XX:JITServerAddress=bad.address" false</command>
 		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSesnsitive="no" regex="no">Connected to a server</output>
 		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">(Fatal|Unhandled) Exception</output>
@@ -78,7 +79,7 @@
 	</test>
 
 	<test id="Test Metrics">
-		<command>bash $SCRIPPATH$ $TEST_RESROOT$ $TEST_JDK_BIN$ "$DEFAULT_JITSERVER_OPTIONS$" "$ENABLE_JITSERVER$ $JITSERVER_VERBOSE$" true</command>
+		<command>bash $SCRIPPATH$ $TEST_RESROOT$ $TEST_JDK_BIN$ "$DEFAULT_JITSERVER_OPTIONS$" "$ENABLE_JITSERVER$ $JITSERVER_CLIENT_OPTS$ $NO_LOCAL_SYNC_COMPILE$" true</command>
 		<output type="required" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="success" caseSensitive="no" regex="no">jitserver_cpu_utilization</output>
 		<output type="success" caseSensitive="no" regex="no">jitserver_available_memory</output>
@@ -93,12 +94,12 @@
 	</test>
 
 	<test id="Test SSL success condition">
-		<command>bash $SCRIPPATH$ $TEST_RESROOT$ $TEST_JDK_BIN$ "$DEFAULT_JITSERVER_OPTIONS$" "$ENABLE_JITSERVER$ $JITSERVER_VERBOSE$ $JITSERVER_SSL1$" false</command>
+		<command>bash $SCRIPPATH$ $TEST_RESROOT$ $TEST_JDK_BIN$ "$DEFAULT_JITSERVER_OPTIONS$" "$ENABLE_JITSERVER$ $JITSERVER_CLIENT_OPTS$ $NO_LOCAL_SYNC_COMPILE$ $JITSERVER_SSL1$" false</command>
 		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="required" caseSensitive="no" regex="no">JITServer Client Mode.</output>
 		<output type="success" caseSensitive="no" regex="no">Successfully initialized SSL context</output>
-		<output type="success" caseSensitive="no" regex="no">SSL connection on socket</output>
-		<output type="required" caseSensitive="no" regex="no">Connected to a server</output>
+		<output type="required" caseSensitive="no" regex="no">SSL connection on socket</output>
+		<output type="success" caseSensitive="no" regex="no">Connected to a server</output>
 		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">(Fatal|Unhandled) Exception</output>
 		<output type="success" caseSensitive="yes" regex="no">JITSERVER EXISTS</output>
 		<output type="success" caseSensitive="yes" regex="no">JITSERVER STILL EXISTS</output>
@@ -107,7 +108,7 @@
 	</test>
 
 	<test id="Test SSL Failure Case with mismatched certificate">
-		<command>bash $SCRIPPATH$ $TEST_RESROOT$ $TEST_JDK_BIN$ "$DEFAULT_JITSERVER_OPTIONS$" "$ENABLE_JITSERVER$ $JITSERVER_VERBOSE$ $JITSERVER_SSL2$" false</command>
+		<command>bash $SCRIPPATH$ $TEST_RESROOT$ $TEST_JDK_BIN$ "$DEFAULT_JITSERVER_OPTIONS$" "$ENABLE_JITSERVER$ $JITSERVER_CLIENT_OPTS$ $NO_LOCAL_SYNC_COMPILE$ $JITSERVER_SSL2$" false</command>
 		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="required" caseSensitive="no" regex="no">JITServer Client Mode.</output>
 		<output type="success" caseSensitive="no" regex="no">Successfully initialized SSL context</output>
@@ -121,7 +122,7 @@
 	</test>
 
 	<test id="Test SSL Failure Case with connection to Non-SSL Server">
-		<command>bash $SCRIPPATH$ $TEST_RESROOT$ $TEST_JDK_BIN$ "$DEFAULT_JITSERVER_OPTIONS$" "$ENABLE_JITSERVER$ $JITSERVER_VERBOSE$ $JITSERVER_SSL3$" false</command>
+		<command>bash $SCRIPPATH$ $TEST_RESROOT$ $TEST_JDK_BIN$ "$DEFAULT_JITSERVER_OPTIONS$" "$ENABLE_JITSERVER$ $JITSERVER_CLIENT_OPTS$ $NO_LOCAL_SYNC_COMPILE$ $JITSERVER_SSL3$" false</command>
 		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="required" caseSensitive="no" regex="no">JITServer Client Mode.</output>
 		<output type="success" caseSensitive="no" regex="no">Successfully initialized SSL context</output>
