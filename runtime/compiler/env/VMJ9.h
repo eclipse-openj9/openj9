@@ -1295,6 +1295,15 @@ public:
 
    virtual bool isAnonymousClass(TR_OpaqueClassBlock *j9clazz) { return (J9_ARE_ALL_BITS_SET(((J9Class*)j9clazz)->romClass->extraModifiers, J9AccClassAnonClass)); }
    virtual bool isAnonymousClass(J9ROMClass *romClass) { return (J9_ARE_ALL_BITS_SET(romClass->extraModifiers, J9AccClassAnonClass)); }
+
+   /**
+    * \brief Check whether or not the class object is a hidden class
+    *
+    * \param j9clazz the class location
+    * \return true if class is hidden class, false otherwise
+    */
+   virtual bool isHiddenClass(TR_OpaqueClassBlock *j9clazz) { return (J9_ARE_ALL_BITS_SET(((J9Class*)j9clazz)->romClass->extraModifiers, J9AccClassHidden)); }
+
    virtual int64_t getCpuTimeSpentInCompThread(TR::Compilation * comp); // resolution is 0.5 sec or worse. Returns -1 if unavailable
 
    virtual void * getClassLoader(TR_OpaqueClassBlock * classPointer);

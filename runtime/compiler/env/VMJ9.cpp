@@ -6988,6 +6988,17 @@ TR_J9VMBase::jitFieldsAreSame(TR_ResolvedMethod * method1, I_32 cpIndex1, TR_Res
    TR::VMAccessCriticalSection jitFieldsAreSame(this);
    bool result = false;
 
+   // Hidden classes generated within the same host class do not have distinct class names,
+   // but share the same field names with different field data types and offsets. Therefore,
+   // name-based check for whether fields are same can result in false positives when it comes
+   // to hidden classes unless the fields are from the same j9class objects.
+   if (method1->classOfMethod()
+       && method2->classOfMethod()
+       && (isHiddenClass(method1->classOfMethod())
+          || isHiddenClass(method2->classOfMethod()))
+       && method1->classOfMethod() != method2->classOfMethod())
+      return false;
+
    bool sigSame = true;
    if (method1->fieldsAreSame(cpIndex1, method2, cpIndex2, sigSame))
       result = true;
