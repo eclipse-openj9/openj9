@@ -1,6 +1,4 @@
-/*[INCLUDE-IF Sidecar16]*/
-package java.lang;
-
+/*[INCLUDE-IF JAVA_SPEC_VERSION < 21]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 1998
  *
@@ -22,7 +20,8 @@ package java.lang;
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
- 
+package java.lang;
+
 /**
  * This class is a placeholder for environments which
  * explicitly manage the action of a "Just In Time"
@@ -82,8 +81,8 @@ private static native boolean compileClassImpl(Class classToCompile);
 
 /**
  * Compiles all classes whose name matches the argument
- * using the JIT compiler. Answers true if the compilation 
- * was successful, or false if it failed or there was no 
+ * using the JIT compiler. Answers true if the compilation
+ * was successful, or false if it failed or there was no
  * JIT compiler available.
  *
  * @return		boolean
