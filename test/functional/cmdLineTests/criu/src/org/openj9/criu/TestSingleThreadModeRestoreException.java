@@ -82,10 +82,6 @@ public class TestSingleThreadModeRestoreException {
 		CRIUTestUtils.showThreadCurrentTime("testSingleThreadModeRestoreExceptionJUCLock() before ReentrantLock.lock()");
 		jucLock.lock();
 		CRIUSupport criu = CRIUTestUtils.prepareCheckPointJVM(CRIUTestUtils.imagePath);
-		if (criu == null) {
-			// "CRIU is not enabled" is to appear and cause the test failure.
-			return;
-		}
 
 		try {
 			// ensure the lock already taken before performing a checkpoint
@@ -139,10 +135,6 @@ public class TestSingleThreadModeRestoreException {
 				"testSingleThreadModeRestoreExceptionSynLock() before synchronized on " + synLock);
 		synchronized (synLock) {
 			CRIUSupport criu = CRIUTestUtils.prepareCheckPointJVM(CRIUTestUtils.imagePath);
-			if (criu == null) {
-				// "CRIU is not enabled" is to appear and cause the test failure.
-				return;
-			}
 
 			try {
 				// ensure the lock already taken before performing a checkpoint
