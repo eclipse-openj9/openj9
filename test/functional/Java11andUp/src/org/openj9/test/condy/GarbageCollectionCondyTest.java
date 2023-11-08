@@ -65,7 +65,6 @@ public class GarbageCollectionCondyTest {
 			 new RuntimeException("Error calling method: getCondy()" + e);
 		}
 		System.gc();
-		System.gc();
 		try {
 			Method condyMethod = condyClass.getDeclaredMethod("getCondy");
 			Object result2 = "Result2 initial value";

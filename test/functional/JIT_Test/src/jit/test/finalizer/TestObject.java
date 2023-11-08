@@ -67,12 +67,8 @@ public class TestObject {
 	
 	protected static void thoroughGCandFinalization() {
 		System.gc();
-		System.gc();
-		System.runFinalization();
 		System.runFinalization();
 		System.gc();
-		System.gc();
-		System.runFinalization();
 		System.runFinalization();
 	}
 	

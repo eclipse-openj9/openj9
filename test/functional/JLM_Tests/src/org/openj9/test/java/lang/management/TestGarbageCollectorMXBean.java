@@ -114,7 +114,6 @@ public class TestGarbageCollectorMXBean {
 	public final void testGetLastGcInfo() {
 		AssertJUnit.assertTrue(gcb instanceof com.sun.management.GarbageCollectorMXBean);
 		System.gc();
-		System.gc();
 		AssertJUnit.assertTrue(((com.sun.management.GarbageCollectorMXBean)gcb).getLastGcInfo() != null);
 	}
 

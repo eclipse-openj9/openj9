@@ -52,7 +52,6 @@ public abstract class HashCodeTestParent {
 		switch (mode) {
 		case MODE_SYSTEM_GC:
 			System.gc();
-			System.gc();
 			break;
 		case MODE_SCAVENGE:
 			long freeMemoryAtStart;
