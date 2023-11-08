@@ -143,10 +143,13 @@ getVMThread(J9VMThread *currentThread, jthread thread, J9VMThread **vmThreadPtr,
 #if JAVA_SPEC_VERSION >= 19
 	isVirtualThread = IS_JAVA_LANG_VIRTUALTHREAD(currentThread, threadObject);
 	if (isVirtualThread) {
+		jint vthreadState = 0;
+		j9object_t carrierThread = NULL;
 		vm->internalVMFunctions->acquireVThreadInspector(currentThread, thread, TRUE);
-
-		jint vthreadState = J9VMJAVALANGVIRTUALTHREAD_STATE(currentThread, threadObject);
-		j9object_t carrierThread = (j9object_t)J9VMJAVALANGVIRTUALTHREAD_CARRIERTHREAD(currentThread, threadObject);
+		/* Re-fetch threadObject since acquireVThreadInspector can release and reacquire VM access. */
+		threadObject = J9_JNI_UNWRAP_REFERENCE(thread);
+		vthreadState = J9VMJAVALANGVIRTUALTHREAD_STATE(currentThread, threadObject);
+		carrierThread = (j9object_t)J9VMJAVALANGVIRTUALTHREAD_CARRIERTHREAD(currentThread, threadObject);
 		if (NULL != carrierThread) {
 			targetThread = J9VMJAVALANGTHREAD_THREADREF(currentThread, carrierThread);
 		}
@@ -1659,7 +1662,7 @@ setEventNotificationMode(J9JVMTIEnv * j9env, J9VMThread * currentThread, jint mo
 	if (event_thread == NULL) {
 		eventMap = &(j9env->globalEventEnable);
 	} else {
-		j9object_t threadObject = J9_JNI_UNWRAP_REFERENCE(event_thread);
+		j9object_t threadObject = NULL;
 		J9VMThread *vmThreadForTLS = NULL;
 		rc = getVMThread(
 				currentThread, event_thread, &targetThread, JVMTI_ERROR_NONE,
@@ -1668,6 +1671,10 @@ setEventNotificationMode(J9JVMTIEnv * j9env, J9VMThread * currentThread, jint mo
 			goto done;
 		}
 		vmThreadForTLS = targetThread;
+		/* Fetch threadObject after getVMThread because getVMThread can release and
+		 * reacquire VM access.
+		 */
+		threadObject = J9_JNI_UNWRAP_REFERENCE(event_thread);
 #if JAVA_SPEC_VERSION >= 19
 		rc = allocateTLS(vm, threadObject);
 		if (JVMTI_ERROR_NONE != rc) {
