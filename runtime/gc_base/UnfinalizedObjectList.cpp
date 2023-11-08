@@ -50,12 +50,10 @@ MM_UnfinalizedObjectList::newInstanceArray(MM_EnvironmentBase *env, uintptr_t ar
 	unfinalizedObjectLists = (MM_UnfinalizedObjectList *)env->getForge()->allocate(sizeof(MM_UnfinalizedObjectList) * arrayElementsTotal,  MM_AllocationCategory::FIXED, J9_GET_CALLSITE());
 	if (NULL != unfinalizedObjectLists) {
 		Assert_MM_true(arrayElementsTotal >= arrayElementsToCopy);
-		/* Check whether a new array instance in being created from an existing array. If so, copy over the elements first. */
-		if (arrayElementsToCopy > 0) {
-			for (uintptr_t index = 0; index < arrayElementsToCopy; index++) {
-				unfinalizedObjectLists[index] = listsToCopy[index];
-				unfinalizedObjectLists[index].initialize(env);
-			}
+		/* When creating a new array instance from an existing array, start by copying the elements. */
+		for (uintptr_t index = 0; index < arrayElementsToCopy; index++) {
+			unfinalizedObjectLists[index] = listsToCopy[index];
+			unfinalizedObjectLists[index].initialize(env);
 		}
 
 		for (uintptr_t index = arrayElementsToCopy; index < arrayElementsTotal; index++) {
@@ -72,12 +70,12 @@ MM_UnfinalizedObjectList::initialize(MM_EnvironmentBase *env)
 {
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
 
-	setNextList(extensions->unfinalizedObjectLists);
+	setNextList(extensions->getUnfinalizedObjectLists());
 	setPreviousList(NULL);
-	if (NULL != extensions->unfinalizedObjectLists) {
-		extensions->unfinalizedObjectLists->setPreviousList(this);
+	if (NULL != extensions->getUnfinalizedObjectLists()) {
+		extensions->getUnfinalizedObjectLists()->setPreviousList(this);
 	}
-	extensions->unfinalizedObjectLists = this;
+	extensions->setUnfinalizedObjectLists(this);
 
 	return true;
 }

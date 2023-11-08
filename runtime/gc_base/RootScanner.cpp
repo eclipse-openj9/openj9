@@ -726,7 +726,7 @@ MM_RootScanner::scanUnfinalizedObjects(MM_EnvironmentBase *env)
 	reportScanningStarted(RootScannerEntity_UnfinalizedObjects);
 
 	MM_ObjectAccessBarrier *barrier = _extensions->accessBarrier;
-	MM_UnfinalizedObjectList *unfinalizedObjectList = _extensions->unfinalizedObjectLists;
+	MM_UnfinalizedObjectList *unfinalizedObjectList = _extensions->getUnfinalizedObjectLists();
 	while(NULL != unfinalizedObjectList) {
 		if(_singleThread || J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
 			J9Object *objectPtr = unfinalizedObjectList->getHeadOfList();

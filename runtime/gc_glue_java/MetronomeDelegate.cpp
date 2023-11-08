@@ -212,13 +212,15 @@ MM_MetronomeDelegate::allocateAndInitializeReferenceObjectLists(MM_EnvironmentBa
 {
 	const UDATA listCount = getReferenceObjectListCount(env);
 	Assert_MM_true(0 < listCount);
-	_extensions->referenceObjectLists = (MM_ReferenceObjectList *)env->getForge()->allocate((sizeof(MM_ReferenceObjectList) * listCount), MM_AllocationCategory::FIXED, J9_GET_CALLSITE());
-	if (NULL == _extensions->referenceObjectLists) {
+
+	MM_ReferenceObjectList *referenceObjectList = MM_ReferenceObjectList::newInstanceArray(env, listCount, NULL, 0);
+
+	if (NULL == referenceObjectList) {
 		return false;
 	}
-	for (UDATA index = 0; index < listCount; index++) {
-		new(&_extensions->referenceObjectLists[index]) MM_ReferenceObjectList();
-	}
+
+	_extensions->setReferenceObjectLists(referenceObjectList);
+
 	return true;
 }
 
@@ -242,7 +244,7 @@ MM_MetronomeDelegate::allocateAndInitializeUnfinalizedObjectLists(MM_Environment
 		unfinalizedObjectLists[index].setNextList(nextUnfinalizedObjectList);
 		unfinalizedObjectLists[index].setPreviousList(previousUnfinalizedObjectList);
 	}
-	_extensions->unfinalizedObjectLists = unfinalizedObjectLists;
+	_extensions->setUnfinalizedObjectLists(unfinalizedObjectLists);
 	return true;
 }
 
@@ -297,14 +299,14 @@ MM_MetronomeDelegate::allocateAndInitializeContinuationObjectLists(MM_Environmen
 void
 MM_MetronomeDelegate::tearDown(MM_EnvironmentBase *env)
 {
-	if (NULL != _extensions->referenceObjectLists) {
-		env->getForge()->free(_extensions->referenceObjectLists);
-		_extensions->referenceObjectLists = NULL;
+	if (NULL != _extensions->getReferenceObjectLists()) {
+		env->getForge()->free(_extensions->getReferenceObjectLists());
+		_extensions->setReferenceObjectLists(NULL);
 	}
 
-	if (NULL != _extensions->unfinalizedObjectLists) {
-		env->getForge()->free(_extensions->unfinalizedObjectLists);
-		_extensions->unfinalizedObjectLists = NULL;
+	if (NULL != _extensions->getUnfinalizedObjectLists()) {
+		env->getForge()->free(_extensions->getUnfinalizedObjectLists());
+		_extensions->setUnfinalizedObjectLists(NULL);
 	}
 
 	if (NULL != _extensions->getOwnableSynchronizerObjectLists()) {
@@ -1211,7 +1213,7 @@ MM_MetronomeDelegate::scanUnfinalizedObjects(MM_EnvironmentRealtime *env)
 		GC_OMRVMInterface::flushNonAllocationCaches(env);
 		UDATA listIndex;
 		for (listIndex = 0; listIndex < maxIndex; ++listIndex) {
-			MM_UnfinalizedObjectList *unfinalizedObjectList = &_extensions->unfinalizedObjectLists[listIndex];
+			MM_UnfinalizedObjectList *unfinalizedObjectList = &_extensions->getUnfinalizedObjectLists()[listIndex];
 			unfinalizedObjectList->startUnfinalizedProcessing();
 		}
 		env->_currentTask->releaseSynchronizedGCThreads(env);
@@ -1222,7 +1224,7 @@ MM_MetronomeDelegate::scanUnfinalizedObjects(MM_EnvironmentRealtime *env)
 	UDATA listIndex;
 	for (listIndex = 0; listIndex < maxIndex; ++listIndex) {
 		if(J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
-			MM_UnfinalizedObjectList *unfinalizedObjectList = &_extensions->unfinalizedObjectLists[listIndex];
+			MM_UnfinalizedObjectList *unfinalizedObjectList = &_extensions->getUnfinalizedObjectLists()[listIndex];
 			J9Object *object = unfinalizedObjectList->getPriorList();
 			UDATA objectsVisited = 0;
 
@@ -1372,7 +1374,7 @@ MM_MetronomeDelegate::scanWeakReferenceObjects(MM_EnvironmentRealtime *env)
 	UDATA listIndex;
 	for (listIndex = 0; listIndex < maxIndex; ++listIndex) {
 		if(J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
-			MM_ReferenceObjectList *referenceObjectList = &_extensions->referenceObjectLists[listIndex];
+			MM_ReferenceObjectList *referenceObjectList = &_extensions->getReferenceObjectLists()[listIndex];
 			referenceObjectList->startWeakReferenceProcessing();
 			processReferenceList(env, NULL, referenceObjectList->getPriorWeakList(), &gcEnv->_markJavaStats._weakReferenceStats);
 			_scheduler->condYieldFromGC(env);
@@ -1390,7 +1392,7 @@ MM_MetronomeDelegate::scanSoftReferenceObjects(MM_EnvironmentRealtime *env)
 	UDATA listIndex;
 	for (listIndex = 0; listIndex < maxIndex; ++listIndex) {
 		if(J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
-			MM_ReferenceObjectList *referenceObjectList = &_extensions->referenceObjectLists[listIndex];
+			MM_ReferenceObjectList *referenceObjectList = &_extensions->getReferenceObjectLists()[listIndex];
 			referenceObjectList->startSoftReferenceProcessing();
 			processReferenceList(env, NULL, referenceObjectList->getPriorSoftList(), &gcEnv->_markJavaStats._softReferenceStats);
 			_scheduler->condYieldFromGC(env);
@@ -1409,7 +1411,7 @@ MM_MetronomeDelegate::scanPhantomReferenceObjects(MM_EnvironmentRealtime *env)
 	UDATA listIndex;
 	for (listIndex = 0; listIndex < maxIndex; ++listIndex) {
 		if(J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
-			MM_ReferenceObjectList *referenceObjectList = &_extensions->referenceObjectLists[listIndex];
+			MM_ReferenceObjectList *referenceObjectList = &_extensions->getReferenceObjectLists()[listIndex];
 			referenceObjectList->startPhantomReferenceProcessing();
 			processReferenceList(env, NULL, referenceObjectList->getPriorPhantomList(), &gcEnv->_markJavaStats._phantomReferenceStats);
 			_scheduler->condYieldFromGC(env);

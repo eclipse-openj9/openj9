@@ -72,7 +72,7 @@ void
 MM_UnfinalizedObjectBufferRealtime::flushImpl(MM_EnvironmentBase* env)
 {
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
-	MM_UnfinalizedObjectList *unfinalizedObjectList = &extensions->unfinalizedObjectLists[_unfinalizedObjectListIndex];
+	MM_UnfinalizedObjectList *unfinalizedObjectList = &extensions->getUnfinalizedObjectLists()[_unfinalizedObjectListIndex];
 	unfinalizedObjectList->addAll(env, _head, _tail);
 	_unfinalizedObjectListIndex += 1;
 	if (extensions->realtimeGC->getRealtimeDelegate()->getUnfinalizedObjectListCount(env) == _unfinalizedObjectListIndex) {

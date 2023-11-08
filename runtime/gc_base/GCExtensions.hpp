@@ -87,8 +87,12 @@ class MM_IdleGCManager;
  */
 class MM_GCExtensions : public MM_GCExtensionsBase {
 private:
-	MM_OwnableSynchronizerObjectList* ownableSynchronizerObjectLists; /**< The global linked list of ownable synchronizer object lists. */
-	MM_ContinuationObjectList* continuationObjectLists; /**< The global linked list of continuation object lists. */
+	MM_OwnableSynchronizerObjectList* _ownableSynchronizerObjectLists; /**< The global linked list of ownable synchronizer object lists. */
+	MM_ContinuationObjectList* _continuationObjectLists; /**< The global linked list of continuation object lists. */
+#if defined(J9VM_GC_REALTIME)
+	MM_ReferenceObjectList* _referenceObjectLists; /**< A global array of lists of reference objects (i.e. weak/soft/phantom) */
+#endif /* J9VM_GC_REALTIME */
+	MM_UnfinalizedObjectList* _unfinalizedObjectLists; /**< The global linked list of unfinalized object lists. */
 public:
 	MM_StringTable* stringTable; /**< top level String Table structure (internally organized as a set of hash sub-tables */
 
@@ -143,9 +147,6 @@ public:
 
 	J9ReferenceArrayCopyTable referenceArrayCopyTable;
 
-#if defined(J9VM_GC_REALTIME)
-	MM_ReferenceObjectList* referenceObjectLists; /**< A global array of lists of reference objects (i.e. weak/soft/phantom) */
-#endif /* J9VM_GC_REALTIME */
 	MM_ObjectAccessBarrier* accessBarrier;
 
 #if defined(J9VM_GC_FINALIZATION)
@@ -158,8 +159,6 @@ public:
 	UDATA deadClassLoaderCacheSize;
 #endif /*defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING) */
 
-	MM_UnfinalizedObjectList* unfinalizedObjectLists; /**< The global linked list of unfinalized object lists. */
-	
 	UDATA objectListFragmentCount; /**< the size of Local Object Buffer(per gc thread), used by referenceObjectBuffer, UnfinalizedObjectBuffer and OwnableSynchronizerObjectBuffer */
 
 	MM_Wildcard* numaCommonThreadClassNamePatterns; /**< A linked list of thread class names which should be associated with the common context */
@@ -295,12 +294,18 @@ public:
 	 * @return Linked list of ownable synchronizer objects
 	 */
 	MM_OwnableSynchronizerObjectList* getOwnableSynchronizerObjectListsExternal(J9VMThread *vmThread);
-	MMINLINE MM_OwnableSynchronizerObjectList* getOwnableSynchronizerObjectLists() { return ownableSynchronizerObjectLists; }
-	MMINLINE void setOwnableSynchronizerObjectLists(MM_OwnableSynchronizerObjectList* newOwnableSynchronizerObjectLists) { ownableSynchronizerObjectLists = newOwnableSynchronizerObjectLists; }
+	MMINLINE MM_OwnableSynchronizerObjectList* getOwnableSynchronizerObjectLists() { return _ownableSynchronizerObjectLists; }
+	MMINLINE void setOwnableSynchronizerObjectLists(MM_OwnableSynchronizerObjectList* newOwnableSynchronizerObjectLists) { _ownableSynchronizerObjectLists = newOwnableSynchronizerObjectLists; }
 
 	MM_ContinuationObjectList* getContinuationObjectListsExternal(J9VMThread *vmThread);
-	MMINLINE MM_ContinuationObjectList* getContinuationObjectLists() { return continuationObjectLists; }
-	MMINLINE void setContinuationObjectLists(MM_ContinuationObjectList* newContinuationObjectLists) { continuationObjectLists = newContinuationObjectLists; }
+	MMINLINE MM_ContinuationObjectList* getContinuationObjectLists() { return _continuationObjectLists; }
+	MMINLINE void setContinuationObjectLists(MM_ContinuationObjectList* newContinuationObjectLists) { _continuationObjectLists = newContinuationObjectLists; }
+
+	MMINLINE MM_ReferenceObjectList* getReferenceObjectLists() { return _referenceObjectLists; }
+	MMINLINE void setReferenceObjectLists(MM_ReferenceObjectList* newReferenceObjectLists) { _referenceObjectLists = newReferenceObjectLists; }
+
+	MMINLINE MM_UnfinalizedObjectList* getUnfinalizedObjectLists() { return _unfinalizedObjectLists; }
+	MMINLINE void setUnfinalizedObjectLists(MM_UnfinalizedObjectList* newUnfinalizedObjectLists) { _unfinalizedObjectLists = newUnfinalizedObjectLists; }
 
 	void releaseNativesForContinuationObject(MM_EnvironmentBase* env, j9object_t objectPtr);
 
@@ -352,8 +357,10 @@ public:
 	 */
 	MM_GCExtensions()
 		: MM_GCExtensionsBase()
-		, ownableSynchronizerObjectLists(NULL)
-		, continuationObjectLists(NULL)
+		, _ownableSynchronizerObjectLists(NULL)
+		, _continuationObjectLists(NULL)
+		, _referenceObjectLists(NULL)
+		, _unfinalizedObjectLists(NULL)
 		, stringTable(NULL)
 		, gcchkExtensions(NULL)
 		, tgcExtensions(NULL)
@@ -379,7 +386,6 @@ public:
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 		, deadClassLoaderCacheSize(1024 * 1024) /* default is one MiB */
 #endif /* defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING) */
-		, unfinalizedObjectLists(NULL)
 		, objectListFragmentCount(0)
 		, numaCommonThreadClassNamePatterns(NULL)
 		, stringDedupPolicy(J9_JIT_STRING_DEDUP_POLICY_UNDEFINED)

@@ -52,12 +52,10 @@ MM_ReferenceObjectList::newInstanceArray(MM_EnvironmentBase *env, uintptr_t arra
 	referenceObjectLists = (MM_ReferenceObjectList *)env->getForge()->allocate(sizeof(MM_ReferenceObjectList) * arrayElementsTotal,  MM_AllocationCategory::FIXED, J9_GET_CALLSITE());
 	if (NULL != referenceObjectLists) {
 		Assert_MM_true(arrayElementsTotal >= arrayElementsToCopy);
-		/* Check whether a new array instance in being created from an existing array. If so, copy over the elements first. */
-		if (arrayElementsToCopy > 0) {
-			for (uintptr_t index = 0; index < arrayElementsToCopy; index++) {
-				referenceObjectLists[index] = listsToCopy[index];
-				referenceObjectLists[index].initialize(env);
-			}
+		/* When creating a new array instance from an existing array, start by copying the elements. */
+		for (uintptr_t index = 0; index < arrayElementsToCopy; index++) {
+			referenceObjectLists[index] = listsToCopy[index];
+			referenceObjectLists[index].initialize(env);
 		}
 
 		for (uintptr_t index = arrayElementsToCopy; index < arrayElementsTotal; index++) {

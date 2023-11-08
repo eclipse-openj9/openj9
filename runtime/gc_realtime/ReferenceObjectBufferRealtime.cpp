@@ -71,7 +71,7 @@ void
 MM_ReferenceObjectBufferRealtime::flushImpl(MM_EnvironmentBase* env)
 {
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
-	MM_ReferenceObjectList *referenceObjectList = &extensions->referenceObjectLists[_referenceObjectListIndex];
+	MM_ReferenceObjectList *referenceObjectList = &extensions->getReferenceObjectLists()[_referenceObjectListIndex];
 	referenceObjectList->addAll(env, _referenceObjectType, _head, _tail);
 	_referenceObjectListIndex += 1;
 	if (extensions->realtimeGC->getRealtimeDelegate()->getReferenceObjectListCount(env) == _referenceObjectListIndex) {

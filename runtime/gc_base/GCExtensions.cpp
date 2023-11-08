@@ -282,15 +282,14 @@ MM_GCExtensions::getOwnableSynchronizerObjectListsExternal(J9VMThread *vmThread)
 {
 	Assert_MM_true(!isConcurrentScavengerInProgress());
 
-	return ownableSynchronizerObjectLists;
+	return _ownableSynchronizerObjectLists;
 }
 
 MM_ContinuationObjectList *
 MM_GCExtensions::getContinuationObjectListsExternal(J9VMThread *vmThread)
 {
-	return continuationObjectLists;
+	return _continuationObjectLists;
 }
-
 
 void
 MM_GCExtensions::releaseNativesForContinuationObject(MM_EnvironmentBase* env, j9object_t objectPtr)

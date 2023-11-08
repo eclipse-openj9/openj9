@@ -53,12 +53,10 @@ MM_OwnableSynchronizerObjectList::newInstanceArray(MM_EnvironmentBase *env, uint
 	ownableSynchronizerObjectLists = (MM_OwnableSynchronizerObjectList *)env->getForge()->allocate(sizeof(MM_OwnableSynchronizerObjectList) * arrayElementsTotal,  MM_AllocationCategory::FIXED, J9_GET_CALLSITE());
 	if (NULL != ownableSynchronizerObjectLists) {
 		Assert_MM_true(arrayElementsTotal >= arrayElementsToCopy);
-		/* Check whether a new array instance in being created from an existing array. If so, copy over the elements first. */
-		if (arrayElementsToCopy > 0) {
-			for (uintptr_t index = 0; index < arrayElementsToCopy; index++) {
-				ownableSynchronizerObjectLists[index] = listsToCopy[index];
-				ownableSynchronizerObjectLists[index].initialize(env);
-			}
+		/* When creating a new array instance from an existing array, start by copying the elements. */
+		for (uintptr_t index = 0; index < arrayElementsToCopy; index++) {
+			ownableSynchronizerObjectLists[index] = listsToCopy[index];
+			ownableSynchronizerObjectLists[index].initialize(env);
 		}
 
 		for (uintptr_t index = arrayElementsToCopy; index < arrayElementsTotal; index++) {

@@ -52,7 +52,7 @@ void
 GC_CheckUnfinalizedList::check()
 {
 	MM_ObjectAccessBarrier *barrier = _extensions->accessBarrier;
-	MM_UnfinalizedObjectList *unfinalizedObjectList = _extensions->unfinalizedObjectLists;
+	MM_UnfinalizedObjectList *unfinalizedObjectList = _extensions->getUnfinalizedObjectLists();
 
 	while(NULL != unfinalizedObjectList) {
 		J9Object *objectPtr = unfinalizedObjectList->getHeadOfList();
@@ -70,7 +70,7 @@ void
 GC_CheckUnfinalizedList::print()
 {
 	MM_ObjectAccessBarrier *barrier = _extensions->accessBarrier;
-	MM_UnfinalizedObjectList *unfinalizedObjectList = _extensions->unfinalizedObjectLists;
+	MM_UnfinalizedObjectList *unfinalizedObjectList = _extensions->getUnfinalizedObjectLists();
 
 	GC_ScanFormatter formatter(_portLibrary, "unfinalizedObjectList");
 	while(NULL != unfinalizedObjectList) {
