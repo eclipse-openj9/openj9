@@ -33,6 +33,11 @@ import java.lang.reflect.Method;
  */
 public class ReflectionMHTests {
 
+	private static boolean isSecurityFrameOrInjectedInvoker(Class<?> cls) {
+		return ("java.lang.invoke.SecurityFrame" == cls.getName()
+			|| cls.getName().startsWith("java.lang.invoke.MethodHandleImpl$BindCaller$T/"));
+	}
+
 	/**
 	 * Call getCallerClass() with a helper method via reflection from the bootstrap/extension
 	 * classloader
@@ -108,7 +113,7 @@ public class ReflectionMHTests {
 			methodHandle = lookup.findStatic(GetCallerClassTests.class, "test_getCallerClass_MethodHandle", methodType);
 			cls = (Class<?>) methodHandle.invoke();
 
-			if ("java.lang.invoke.SecurityFrame" == cls.getName()) {
+			if (isSecurityFrameOrInjectedInvoker(cls)) {
 				System.out.println(TESTCASE_NAME + ": PASSED: return " + cls.getName());
 				return true;
 			} else {
@@ -174,7 +179,7 @@ public class ReflectionMHTests {
 			MethodHandle mhResult = MethodHandles.foldArguments(mhTarget, mhCombiner);
 			cls = (Class<?>) mhResult.invoke();
 
-			if ("java.lang.invoke.SecurityFrame" == cls.getName()) {
+			if (isSecurityFrameOrInjectedInvoker(cls)) {
 				System.out.println(TESTCASE_NAME + ": PASSED: return " + cls.getName());
 				return true;
 			} else {

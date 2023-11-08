@@ -468,7 +468,21 @@ TR_J9ServerVM::jitFieldsAreSame(TR_ResolvedMethod * method1, I_32 cpIndex1, TR_R
    {
    bool result = false;
    bool sigSame = true;
-   if (method1->fieldsAreSame(cpIndex1, method2, cpIndex2, sigSame))
+   TR_OpaqueClassBlock * classOfMethod1 = static_cast<TR_ResolvedJ9JITServerMethod *>(method1)->classOfMethod();
+   TR_OpaqueClassBlock * classOfMethod2 = static_cast<TR_ResolvedJ9JITServerMethod *>(method2)->classOfMethod();
+   // Hidden classes generated within the same host class do not have distinct class names,
+   // but share the same field names with different field data types and offsets. Therefore,
+   // name-based check for whether fields are same can result in false positives when it comes
+   // to hidden classes unless the fields are from the same j9class objects.
+   if (classOfMethod1
+       && classOfMethod2
+       && (isHiddenClass(classOfMethod1)
+          || isHiddenClass(classOfMethod2))
+       && classOfMethod1 != classOfMethod2)
+      {
+      result = false;
+      }
+   else if (method1->fieldsAreSame(cpIndex1, method2, cpIndex2, sigSame))
       {
       result = true;
       }
@@ -1941,6 +1955,16 @@ TR_J9ServerVM::isAnonymousClass(TR_OpaqueClassBlock *j9clazz)
    JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)j9clazz, _compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_ROMCLASS_EXTRAMODIFIERS, (void *)&extraModifiers);
 
    return (J9_ARE_ALL_BITS_SET(extraModifiers, J9AccClassAnonClass));
+   }
+
+bool
+TR_J9ServerVM::isHiddenClass(TR_OpaqueClassBlock *j9clazz)
+   {
+   uintptr_t extraModifiers = 0;
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)j9clazz, _compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_ROMCLASS_EXTRAMODIFIERS, (void *)&extraModifiers);
+
+   return (J9_ARE_ALL_BITS_SET(extraModifiers, J9AccClassHidden));
    }
 
 TR_IProfiler *
