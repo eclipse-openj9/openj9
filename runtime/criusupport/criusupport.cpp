@@ -656,13 +656,13 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 	bool setupCRIU = true;
 	PORT_ACCESS_FROM_VMC(currentThread);
 
+	Trc_CRIU_checkpointJVMImpl_Entry(currentThread);
 	if (NULL == vm->checkpointState.criuJVMCheckpointExceptionClass) {
 		setupCRIU = setupJNIFieldIDsAndCRIUAPI(env, &currentExceptionClass, &systemReturnCode, &nlsMsgFormat);
 	}
 
 	vm->checkpointState.checkpointThread = currentThread;
 
-	Trc_CRIU_checkpointJVMImpl_Entry(currentThread);
 	if (vmFuncs->isCheckpointAllowed(currentThread) && setupCRIU) {
 #if defined(LINUX)
 		j9object_t cpDir = NULL;
