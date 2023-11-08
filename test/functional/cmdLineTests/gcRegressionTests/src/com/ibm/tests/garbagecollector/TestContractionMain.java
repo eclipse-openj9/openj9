@@ -68,9 +68,7 @@ public class TestContractionMain
 			_array = null;
 			System.gc();
 			System.gc();
-			System.gc();
 			long tempMem = runtime.totalMemory();
-			System.gc();
 			System.gc();
 			System.gc();
 			long tempMem2 = runtime.totalMemory();

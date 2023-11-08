@@ -25,7 +25,6 @@ public class CreateDumps {
 
 	public static void main(String[] args) {
 		System.gc();
-		System.gc();
 		com.ibm.jvm.Dump.HeapDump();	
 		com.ibm.jvm.Dump.SystemDump();
 	}
