@@ -274,10 +274,10 @@ enterVThreadTransitionCritical(J9VMThread *currentThread, jobject thread)
 
 	while(!objectAccessBarrier.inlineMixedObjectCompareAndSwapU64(currentThread, threadObj, vm->virtualThreadInspectorCountOffset, 0, (U_64)-1)) {
 		/* Thread is being inspected or unmounted, wait. */
-		vmFuncs->internalExitVMToJNI(currentThread);
+		vmFuncs->internalReleaseVMAccess(currentThread);
 		VM_AtomicSupport::yieldCPU();
 		/* After wait, the thread may suspend here. */
-		vmFuncs->internalEnterVMFromJNI(currentThread);
+		vmFuncs->internalAcquireVMAccess(currentThread);
 		threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
 	}
 }
