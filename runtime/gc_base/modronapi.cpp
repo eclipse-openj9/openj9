@@ -968,6 +968,17 @@ j9gc_get_bytes_allocated_by_thread(J9VMThread *vmThread)
 }
 
 /**
+ * @param[in] vmThread the vmThread we are querying about
+ * @param[out] cumulativeValue pointer to a variable where to store cumulative number of bytes allocated by a thread since the start of VM
+ * @return false if the value just rolled over or if cumulativeValue pointer is null, otherwise true
+ */
+BOOLEAN
+j9gc_get_cumulative_bytes_allocated_by_thread(J9VMThread *vmThread, UDATA *cumulativeValue)
+{
+	return MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread)->_objectAllocationInterface->getAllocationStats()->bytesAllocatedCumulative(cumulativeValue);
+}
+
+/**
  * Return information about the total CPU time consumed by GC threads, as well
  * as the number of GC threads. The time for the main and worker threads is
  * reported separately, with the worker threads returned as a total.
