@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar18-SE]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 1998
  *
@@ -54,6 +54,11 @@ import static com.ibm.oti.util.Util.appendLnTo;
  */
 public class Throwable implements java.io.Serializable {
 	private static final long serialVersionUID = -3042686055658047285L;
+
+	/*[IF JAVA_SPEC_VERSION >= 22]*/
+	// The default value is false, JFR is not supported.
+	static final boolean jfrTracing = false;
+	/*[ENDIF] JAVA_SPEC_VERSION >= 22 */
 
 	/**
 	 * The message provided when the exception was created.
