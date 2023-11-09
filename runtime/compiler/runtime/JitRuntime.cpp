@@ -108,20 +108,20 @@ J9::Recompilation::isAlreadyBeingCompiled(
    return TR::Recompilation::isAlreadyPreparedForRecompile(startPC);
    }
 
-void setDllSlip(char*CodeStart,char*CodeEnd,char*dllName, TR::Compilation * comp)
+void setDllSlip(const char *CodeStart, const char *CodeEnd, const char *dllName, TR::Compilation *comp)
 {
 #if defined(J9ZOS390)
-   char  errBuf[512];
-   UDATA rc=0;
+   char errBuf[512];
+   UDATA rc = 0;
    J9PortLibrary *portLib = jitConfig->javaVM->portLibrary;
    PORT_ACCESS_FROM_PORT(portLib);
 
    TR_ASSERT(comp, "Logging requires a compilation object");
-   traceMsg(comp, "code start 0x%016p , code end 0x%016p ,size = %d\n",CodeStart,CodeEnd,CodeStart-CodeEnd);
+   traceMsg(comp, "code start 0x%016p , code end 0x%016p ,size = %d\n", CodeStart, CodeEnd, CodeStart - CodeEnd);
 
-   if (sliphandle==0)
+   if (sliphandle == 0)
       {
-      rc = j9sl_open_shared_library(dllName, &sliphandle, FALSE);
+      rc = j9sl_open_shared_library(const_cast<char *>(dllName), &sliphandle, FALSE);
       if (rc)
          {
          traceMsg(comp, "Failed to open SLIP DLL: %s (%s) %016p\n", dllName, j9error_last_error_message(), sliphandle);
@@ -131,17 +131,17 @@ void setDllSlip(char*CodeStart,char*CodeEnd,char*dllName, TR::Compilation * comp
    if (sliphandle != 0)
       {
       if (do_slip_func == 0)
-         j9sl_lookup_name(sliphandle, "do_slip", &do_slip_func, (char*)NULL);
+         j9sl_lookup_name(sliphandle, "do_slip", &do_slip_func, (char *)NULL);
       if (do_slip_func != 0)
          {
          fptrl=(void (*)(char *, char *, void *, void *, char *, char *, char *))do_slip_func;
-         (*fptrl)(CodeStart,
-                  CodeEnd,
-                  (void*)NULL,
-                  (void*)NULL,
-                  (char*)NULL,
-                  (char*)NULL,
-                  (char*)NULL
+         (*fptrl)(const_cast<char *>(CodeStart),
+                  const_cast<char *>(CodeEnd),
+                  (void *)NULL,
+                  (void *)NULL,
+                  (char *)NULL,
+                  (char *)NULL,
+                  (char *)NULL
                  );
          }
       else if (comp)

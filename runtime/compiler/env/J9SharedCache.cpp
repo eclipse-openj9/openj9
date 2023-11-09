@@ -194,7 +194,7 @@ TR_J9SharedCache::getCacheDescriptorList()
    }
 
 void
-TR_J9SharedCache::log(char *format, ...)
+TR_J9SharedCache::log(const char *format, ...)
    {
    PORT_ACCESS_FROM_PORT(_javaVM->portLibrary);
    char outputBuffer[512] = "TR_J9SC:";
