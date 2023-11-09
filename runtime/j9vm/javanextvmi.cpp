@@ -40,12 +40,6 @@ extern "C" {
 
 #if JAVA_SPEC_VERSION >= 19
 extern J9JavaVM *BFUjavaVM;
-
-/* These come from jvm.c */
-extern IDATA (*f_monitorEnter)(omrthread_monitor_t monitor);
-extern IDATA (*f_monitorExit)(omrthread_monitor_t monitor);
-extern IDATA (*f_monitorWait)(omrthread_monitor_t monitor);
-extern IDATA (*f_monitorNotifyAll)(omrthread_monitor_t monitor);
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
 /* Define for debug
