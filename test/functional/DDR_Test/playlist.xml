@@ -24,7 +24,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	<include>ddrSettings.mk</include>
 	<test>
 		<testCaseName>testDDRExt_General</testCaseName>
-		<command>cp $(TEST_RESROOT)$(D)tck_ddrext.xml .;  ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_ROOT=${TEST_ROOT} -DTEST_JDK_HOME=${TEST_JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
+		<command>cp $(TEST_RESROOT)$(D)tck_ddrext.xml .; \
+	$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
+	ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_LIB_PATH=$(Q)-Djava.library.path=$(TEST_LIB_PATH_VALUE)$(Q) -DTEST_ROOT=${TEST_ROOT} -DTEST_JDK_HOME=${TEST_JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
 	-DTEST_RESROOT=$(TEST_RESROOT) -DRESOURCES_DIR=${RESOURCES_DIR} -DREPORTDIR=${REPORTDIR} -DOS=${OS} -DBITS=$(BITS) -DLIB_DIR=${LIB_DIR} \
 	-Dtest.list=$(Q)TestDDRExtensionGeneral$(Q) -DADDITIONALEXPORTS=$(ADDEXPORTS_JDKASM_UNNAMED) -f $(Q)$(REPORTDIR)$(D)tck_ddrext.xml$(Q); \
 	$(TEST_STATUS)</command>
@@ -41,7 +43,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	</test>
 	<test>
 		<testCaseName>testDDRExt_Class</testCaseName>
-		<command>cp $(TEST_RESROOT)$(D)tck_ddrext.xml .; ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_ROOT=${TEST_ROOT} -DTEST_JDK_HOME=${TEST_JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
+		<command>cp $(TEST_RESROOT)$(D)tck_ddrext.xml .; \
+	$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
+	ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_LIB_PATH=$(Q)-Djava.library.path=$(TEST_LIB_PATH_VALUE)$(Q) -DTEST_ROOT=${TEST_ROOT} -DTEST_JDK_HOME=${TEST_JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
 	-DTEST_RESROOT=$(TEST_RESROOT) -DRESOURCES_DIR=${RESOURCES_DIR} -DREPORTDIR=${REPORTDIR} -DOS=${OS} -DBITS=$(BITS) -DLIB_DIR=${LIB_DIR} \
 	-Dtest.list=$(Q)TestClassExt$(Q) -DADDITIONALEXPORTS=$(ADDEXPORTS_JDKASM_UNNAMED) -f $(Q)$(REPORTDIR)$(D)tck_ddrext.xml$(Q); \
 	$(TEST_STATUS)</command>
@@ -58,7 +62,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	</test>
 	<test>
 		<testCaseName>testDDRExt_Callsites</testCaseName>
-		<command>cp $(TEST_RESROOT)$(D)tck_ddrext.xml .; ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_ROOT=${TEST_ROOT} -DTEST_JDK_HOME=${TEST_JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
+		<command>cp $(TEST_RESROOT)$(D)tck_ddrext.xml .; \
+	$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
+	ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_LIB_PATH=$(Q)-Djava.library.path=$(TEST_LIB_PATH_VALUE)$(Q) -DTEST_ROOT=${TEST_ROOT} -DTEST_JDK_HOME=${TEST_JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
 	-DTEST_RESROOT=$(TEST_RESROOT) -DRESOURCES_DIR=${RESOURCES_DIR} -DREPORTDIR=${REPORTDIR} -DOS=${OS} -DBITS=$(BITS) -DLIB_DIR=${LIB_DIR} \
 	-Dtest.list=$(Q)TestCallsites$(Q) -DADDITIONALEXPORTS=$(ADDEXPORTS_JDKASM_UNNAMED) -f $(Q)$(REPORTDIR)$(D)tck_ddrext.xml$(Q); \
 	$(TEST_STATUS)</command>
@@ -75,7 +81,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	</test>
 	<test>
 		<testCaseName>testDDRExt_JITExt</testCaseName>
-		<command>cp $(TEST_RESROOT)$(D)tck_ddrext.xml .; ant -v -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_ROOT=${TEST_ROOT} -DTEST_JDK_HOME=${TEST_JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
+		<command>cp $(TEST_RESROOT)$(D)tck_ddrext.xml .; \
+	$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
+	ant -v -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_LIB_PATH=$(Q)-Djava.library.path=$(TEST_LIB_PATH_VALUE)$(Q) -DTEST_ROOT=${TEST_ROOT} -DTEST_JDK_HOME=${TEST_JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
 	-DTEST_RESROOT=$(TEST_RESROOT) -DRESOURCES_DIR=${RESOURCES_DIR} -DREPORTDIR=${REPORTDIR} -DOS=${OS} -DBITS=$(BITS) -DLIB_DIR=${LIB_DIR} \
 	-Dtest.list=$(Q)TestJITExt$(Q) -DADDITIONALEXPORTS=$(ADDEXPORTS_JDKASM_UNNAMED) -DEXTRADUMPOPT=$(Q)-Xjit:count=0$(Q) -f $(Q)$(REPORTDIR)$(D)tck_ddrext.xml$(Q); \
 	$(TEST_STATUS)</command>
@@ -92,7 +100,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	</test>
 	<test>
 		<testCaseName>testDDRExt_SharedClasses</testCaseName>
-		<command>cp $(TEST_RESROOT)$(D)tck_ddrext.xml .; ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_ROOT=${TEST_ROOT} -DTEST_JDK_HOME=${TEST_JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
+		<command>cp $(TEST_RESROOT)$(D)tck_ddrext.xml .; \
+	$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
+	ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_LIB_PATH=$(Q)-Djava.library.path=$(TEST_LIB_PATH_VALUE)$(Q) -DTEST_ROOT=${TEST_ROOT} -DTEST_JDK_HOME=${TEST_JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
 	-DTEST_RESROOT=$(TEST_RESROOT) -DRESOURCES_DIR=${RESOURCES_DIR} -DREPORTDIR=${REPORTDIR} -DOS=${OS} -DBITS=$(BITS) -DLIB_DIR=${LIB_DIR} \
 	-Dtest.list=$(Q)TestSharedClassesExt$(Q) -DADDITIONALEXPORTS=$(ADDEXPORTS_JDKASM_UNNAMED) -f $(Q)$(REPORTDIR)$(D)tck_ddrext.xml$(Q); \
 	$(TEST_STATUS)</command>
@@ -109,7 +119,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	</test>
 	<test>
 		<testCaseName>testDDRExtJunit_CollisionResilientHashtable</testCaseName>
-		<command>cp $(TEST_RESROOT)$(D)tck_ddrext.xml .; ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_ROOT=${TEST_ROOT} -DTEST_JDK_HOME=${TEST_JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
+		<command>cp $(TEST_RESROOT)$(D)tck_ddrext.xml .; \
+	$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
+	ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_LIB_PATH=$(Q)-Djava.library.path=$(TEST_LIB_PATH_VALUE)$(Q) -DTEST_ROOT=${TEST_ROOT} -DTEST_JDK_HOME=${TEST_JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
 	-DTEST_RESROOT=$(TEST_RESROOT) -DRESOURCES_DIR=${RESOURCES_DIR} -DREPORTDIR=${REPORTDIR} -DOS=${OS} -DBITS=$(BITS) -DLIB_DIR=${LIB_DIR} \
 	-Dtest.list=$(Q)TestCollisionResilientHashtable$(Q) -DEXTRADUMPOPT=$(Q)-XX:stringTableListToTreeThreshold=64$(Q) -DADDITIONALEXPORTS=$(ADDEXPORTS_JDKASM_UNNAMED) -f $(Q)$(REPORTDIR)$(D)tck_ddrext.xml$(Q); \
 	$(TEST_STATUS)</command>
@@ -126,7 +138,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	</test>
 	<test>
 		<testCaseName>testDDRExtJunit_StackMap</testCaseName>
-		<command>cp $(TEST_RESROOT)$(D)tck_ddrext.xml .; ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DCOREGEN=$(Q)j9vm.test.corehelper.StackMapCoreGenerator$(Q) -DTEST_ROOT=${TEST_ROOT} -DTEST_JDK_HOME=${TEST_JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
+		<command>cp $(TEST_RESROOT)$(D)tck_ddrext.xml .; \
+	$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
+	ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_LIB_PATH=$(Q)-Djava.library.path=$(TEST_LIB_PATH_VALUE)$(Q) -DCOREGEN=$(Q)j9vm.test.corehelper.StackMapCoreGenerator$(Q) -DTEST_ROOT=${TEST_ROOT} -DTEST_JDK_HOME=${TEST_JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
 	-DTEST_RESROOT=$(TEST_RESROOT) -DRESOURCES_DIR=${RESOURCES_DIR} -DREPORTDIR=${REPORTDIR} -DOS=${OS} -DBITS=$(BITS) -DLIB_DIR=${LIB_DIR} \
 	-Dtest.list=$(Q)TestStackMap$(Q) -DEXTRADUMPOPT=$(Q)-Xdump:system:events=throw,filter=*HelperExceptionForCoreGeneration*$(Q) -DADDITIONALEXPORTS=$(ADDEXPORTS_JDKASM_UNNAMED) -f $(Q)$(REPORTDIR)$(D)tck_ddrext.xml$(Q); \
 	$(TEST_STATUS)</command>
@@ -147,7 +161,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<variation>Mode101</variation>
 			<variation>Mode601</variation>
 		</variations>
-		<command>cp $(TEST_RESROOT)$(D)tck_ddrext.xml .; $(ADD_JVM_LIB_DIR_TO_LIBPATH) ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_LIB_PATH=$(Q)-Djava.library.path=$(TEST_LIB_PATH_VALUE)$(Q) \
+		<command>cp $(TEST_RESROOT)$(D)tck_ddrext.xml .; \
+	$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
+	ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_LIB_PATH=$(Q)-Djava.library.path=$(TEST_LIB_PATH_VALUE)$(Q) \
 	-DJVM_OPTIONS=$(Q)$(JVM_OPTIONS)$(Q) -DTESTNUM=1 -DCOREGEN=$(Q)j9vm.test.corehelper.DeadlockCoreGenerator$(Q) -DTEST_ROOT=${TEST_ROOT} -DTEST_JDK_HOME=${TEST_JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
 	-DTEST_RESROOT=$(TEST_RESROOT) -DRESOURCES_DIR=${RESOURCES_DIR} -DREPORTDIR=${REPORTDIR} -DOS=${OS} -DBITS=$(BITS) -DLIB_DIR=${LIB_DIR} \
 	-Dtest.list=$(Q)TestDeadlockCase1$(Q) -DEXTRADUMPOPT=$(Q)-Xdump:system:events=throw,filter=*HelperExceptionForCoreGeneration*,request=exclusive$(Q) -DADDITIONALEXPORTS=$(ADDEXPORTS_JDKASM_UNNAMED) -f $(Q)$(REPORTDIR)$(D)tck_ddrext.xml$(Q); \
@@ -172,7 +188,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<variation>Mode101</variation>
 			<variation>Mode601</variation>
 		</variations>
-		<command>cp $(TEST_RESROOT)$(D)tck_ddrext.xml .; $(ADD_JVM_LIB_DIR_TO_LIBPATH) ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_LIB_PATH=$(Q)-Djava.library.path=$(TEST_LIB_PATH_VALUE)$(Q) \
+		<command>cp $(TEST_RESROOT)$(D)tck_ddrext.xml .; \
+	$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
+	ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_LIB_PATH=$(Q)-Djava.library.path=$(TEST_LIB_PATH_VALUE)$(Q) \
 	-DJVM_OPTIONS=$(Q)$(JVM_OPTIONS)$(Q) -DTESTNUM=2 -DCOREGEN=$(Q)j9vm.test.corehelper.DeadlockCoreGenerator$(Q) -DTEST_ROOT=${TEST_ROOT} -DTEST_JDK_HOME=${TEST_JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
 	-DTEST_RESROOT=$(TEST_RESROOT) -DRESOURCES_DIR=${RESOURCES_DIR} -DREPORTDIR=${REPORTDIR} -DOS=${OS} -DBITS=$(BITS) -DLIB_DIR=${LIB_DIR} \
 	-Dtest.list=$(Q)TestDeadlockCase2$(Q) -DEXTRADUMPOPT=$(Q)-Xdump:system:events=throw,filter=*HelperExceptionForCoreGeneration*,request=exclusive$(Q) -DADDITIONALEXPORTS=$(ADDEXPORTS_JDKASM_UNNAMED) -f $(Q)$(REPORTDIR)$(D)tck_ddrext.xml$(Q); \
@@ -197,7 +215,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<variation>Mode101</variation>
 			<variation>Mode601</variation>
 		</variations>
-		<command>cp $(TEST_RESROOT)$(D)tck_ddrext.xml .; $(ADD_JVM_LIB_DIR_TO_LIBPATH) ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_LIB_PATH=$(Q)-Djava.library.path=$(TEST_LIB_PATH_VALUE)$(Q) \
+		<command>cp $(TEST_RESROOT)$(D)tck_ddrext.xml .; \
+	$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
+	ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_LIB_PATH=$(Q)-Djava.library.path=$(TEST_LIB_PATH_VALUE)$(Q) \
 	-DJVM_OPTIONS=$(Q)$(JVM_OPTIONS)$(Q) -DTESTNUM=3 -DCOREGEN=$(Q)j9vm.test.corehelper.DeadlockCoreGenerator$(Q) -DTEST_ROOT=${TEST_ROOT} -DTEST_JDK_HOME=${TEST_JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
 	-DTEST_RESROOT=$(TEST_RESROOT) -DRESOURCES_DIR=${RESOURCES_DIR} -DREPORTDIR=${REPORTDIR} -DOS=${OS} -DBITS=$(BITS) -DLIB_DIR=${LIB_DIR} \
 	-Dtest.list=$(Q)TestDeadlockCase3$(Q) -DEXTRADUMPOPT=$(Q)-Xdump:system:events=throw,filter=*HelperExceptionForCoreGeneration*,request=exclusive$(Q) -DADDITIONALEXPORTS=$(ADDEXPORTS_JDKASM_UNNAMED) -f $(Q)$(REPORTDIR)$(D)tck_ddrext.xml$(Q); \
@@ -222,7 +242,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<variation>Mode101</variation>
 			<variation>Mode601</variation>
 		</variations>
-		<command>cp $(TEST_RESROOT)$(D)tck_ddrext.xml .; $(ADD_JVM_LIB_DIR_TO_LIBPATH) ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_LIB_PATH=$(Q)-Djava.library.path=$(TEST_LIB_PATH_VALUE)$(Q) \
+		<command>cp $(TEST_RESROOT)$(D)tck_ddrext.xml .; \
+	$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
+	ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_LIB_PATH=$(Q)-Djava.library.path=$(TEST_LIB_PATH_VALUE)$(Q) \
 	-DJVM_OPTIONS=$(Q)$(JVM_OPTIONS)$(Q) -DTESTNUM=4 -DCOREGEN=$(Q)j9vm.test.corehelper.DeadlockCoreGenerator$(Q) -DTEST_ROOT=${TEST_ROOT} -DTEST_JDK_HOME=${TEST_JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
 	-DTEST_RESROOT=$(TEST_RESROOT) -DRESOURCES_DIR=${RESOURCES_DIR} -DREPORTDIR=${REPORTDIR} -DOS=${OS} -DBITS=$(BITS) -DLIB_DIR=${LIB_DIR} \
 	-Dtest.list=$(Q)TestDeadlockCase4$(Q) -DEXTRADUMPOPT=$(Q)-Xdump:system:events=throw,filter=*HelperExceptionForCoreGeneration*,request=exclusive$(Q) -DADDITIONALEXPORTS=$(ADDEXPORTS_JDKASM_UNNAMED) -f $(Q)$(REPORTDIR)$(D)tck_ddrext.xml$(Q); \
@@ -247,7 +269,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<variation>Mode101</variation>
 			<variation>Mode601</variation>
 		</variations>
-		<command>cp $(TEST_RESROOT)$(D)tck_ddrext.xml .; $(ADD_JVM_LIB_DIR_TO_LIBPATH) ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_LIB_PATH=$(Q)-Djava.library.path=$(TEST_LIB_PATH_VALUE)$(Q) \
+		<command>cp $(TEST_RESROOT)$(D)tck_ddrext.xml .; \
+	$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
+	ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_LIB_PATH=$(Q)-Djava.library.path=$(TEST_LIB_PATH_VALUE)$(Q) \
 	-DJVM_OPTIONS=$(Q)$(JVM_OPTIONS)$(Q) -DTESTNUM=5 -DCOREGEN=$(Q)j9vm.test.corehelper.DeadlockCoreGenerator$(Q) -DTEST_ROOT=${TEST_ROOT} -DTEST_JDK_HOME=${TEST_JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
 	-DTEST_RESROOT=$(TEST_RESROOT) -DRESOURCES_DIR=${RESOURCES_DIR} -DREPORTDIR=${REPORTDIR} -DOS=${OS} -DBITS=$(BITS) -DLIB_DIR=${LIB_DIR} \
 	-Dtest.list=$(Q)TestDeadlockCase5$(Q) -DEXTRADUMPOPT=$(Q)-Xdump:system:events=throw,filter=*HelperExceptionForCoreGeneration*,request=exclusive$(Q) -DADDITIONALEXPORTS=$(ADDEXPORTS_JDKASM_UNNAMED) -f $(Q)$(REPORTDIR)$(D)tck_ddrext.xml$(Q); \
@@ -272,7 +296,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<variation>Mode101</variation>
 			<variation>Mode601</variation>
 		</variations>
-		<command>cp $(TEST_RESROOT)$(D)tck_ddrext.xml .; $(ADD_JVM_LIB_DIR_TO_LIBPATH) ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_LIB_PATH=$(Q)-Djava.library.path=$(TEST_LIB_PATH_VALUE)$(Q) \
+		<command>cp $(TEST_RESROOT)$(D)tck_ddrext.xml .; \
+	$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
+	ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_LIB_PATH=$(Q)-Djava.library.path=$(TEST_LIB_PATH_VALUE)$(Q) \
 	-DJVM_OPTIONS=$(Q)$(JVM_OPTIONS)$(Q) -DTESTNUM=6 -DCOREGEN=$(Q)j9vm.test.corehelper.DeadlockCoreGenerator$(Q) -DTEST_ROOT=${TEST_ROOT} -DTEST_JDK_HOME=${TEST_JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
 	-DTEST_RESROOT=$(TEST_RESROOT) -DRESOURCES_DIR=${RESOURCES_DIR} -DREPORTDIR=${REPORTDIR} -DOS=${OS} -DBITS=$(BITS) -DLIB_DIR=${LIB_DIR} \
 	-Dtest.list=$(Q)TestDeadlockCase6$(Q) -DEXTRADUMPOPT=$(Q)-Xdump:system:events=throw,filter=*HelperExceptionForCoreGeneration*,request=exclusive$(Q) -DADDITIONALEXPORTS=$(ADDEXPORTS_JDKASM_UNNAMED) -f $(Q)$(REPORTDIR)$(D)tck_ddrext.xml$(Q); \
@@ -293,7 +319,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	</test>
 	<test>
 		<testCaseName>testDDRExtJunit_FindExtThread</testCaseName>
-		<command>cp $(TEST_RESROOT)$(D)tck_ddrext.xml .; ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DCOREGEN=$(Q)j9vm.test.corehelper.FindExtCoreGenerator$(Q) -DTEST_ROOT=${TEST_ROOT} -DTEST_JDK_HOME=${TEST_JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
+		<command>cp $(TEST_RESROOT)$(D)tck_ddrext.xml .; \
+	$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
+	ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_LIB_PATH=$(Q)-Djava.library.path=$(TEST_LIB_PATH_VALUE)$(Q) -DCOREGEN=$(Q)j9vm.test.corehelper.FindExtCoreGenerator$(Q) -DTEST_ROOT=${TEST_ROOT} -DTEST_JDK_HOME=${TEST_JDK_HOME} -DJDK_VERSION=${JDK_VERSION} \
 	-DTEST_RESROOT=$(TEST_RESROOT) -DRESOURCES_DIR=${RESOURCES_DIR} -DREPORTDIR=${REPORTDIR} -DOS=${OS} -DBITS=$(BITS) -DLIB_DIR=${LIB_DIR} \
 	-Dtest.list=$(Q)TestFindExt$(Q) -DADDITIONALEXPORTS=$(ADDEXPORTS_JDKASM_UNNAMED) -f $(Q)$(REPORTDIR)$(D)tck_ddrext.xml$(Q); \
 	$(TEST_STATUS)</command>

@@ -22,22 +22,19 @@
 package org.openj9.test.unsafe;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Vector;
 
+import org.openj9.test.util.CompilerAccess;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Factory;
 import org.testng.log4testng.Logger;
 
 public class MainTester {
 
-	private static Logger logger = Logger.getLogger(MainTester.class);
-	public final static String REGULAR_RUN = "Regular";
-	public final static String COMPILED = "Compiled";
-	
+	private static final Logger logger = Logger.getLogger(MainTester.class);
+	public static final String REGULAR_RUN = "Regular";
+	public static final String COMPILED = "Compiled";
+
 	@Factory
 	public Object[] createInstances() {
 		String scenario = System.getProperty("Scenario");
@@ -61,7 +58,7 @@ public class MainTester {
 		result.add(new TestUnsafeGetAndOp(scenario));
 		return result.toArray();
 	}
-	
+
 	private static void compileClass() {
 		Class<?>[] classes = {MainTester.class, TestUnsafeAccess.class, TestUnsafeAccessOpaque.class,
 				TestUnsafeAccessOrdered.class, TestUnsafeAccessVolatile.class, TestUnsafeAllocateDirectByteBuffer.class,
@@ -69,14 +66,12 @@ public class MainTester {
 				TestUnsafeCompareAndExchange.class, TestUnsafeCompareAndSet.class, TestUnsafeSetMemory.class, UnsafeTestBase.class,
 				TestUnsafeAccessUnaligned.class };
 
-		for (int i = 0; i < classes.length; i++) {
-			Class clazz = classes[i];
-			if (Compiler.compileClass(clazz) == false) {
-				logger.error("Compilation of " + clazz.getName()
-						+ " failed or compiler is not available -- aborting");
+		for (Class<?> clazz : classes) {
+			if (CompilerAccess.compileClass(clazz)) {
+				logger.debug("Compiler.compileClass( " + clazz.getName() + " )");
+			} else {
+				logger.error("Compilation of " + clazz.getName() + " failed or compiler is not available -- aborting");
 				AssertJUnit.fail();
-			}else{
-				logger.debug("Compiler.compileClass( "+  clazz.getName() + " )");
 			}
 		}
 	}
