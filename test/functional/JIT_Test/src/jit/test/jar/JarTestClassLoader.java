@@ -21,22 +21,22 @@
  *******************************************************************************/
 package jit.test.jar;
 
-import java.util.zip.*;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+import org.openj9.test.util.CompilerAccess;
 import org.testng.Assert;
 
 class JarTestClassLoader extends ZipTestClassLoader {
 
-	protected Class defineClass(
-		ZipFile file,
-		ZipEntry entry,
-		String className) {
-		Class clazz = super.defineClass(file, entry, className);
-		if (clazz != null){
-			if (Compiler.compileClass(clazz) == false){
+	protected Class<?> defineClass(ZipFile file, ZipEntry entry, String className) {
+		Class<?> clazz = super.defineClass(file, entry, className);
+		if (clazz != null) {
+			if (CompilerAccess.compileClass(clazz) == false) {
 				Assert.fail("Compilation of " + className + " failed -- aborting");
-                System.exit(1);
-            }
-        }
+				System.exit(1);
+			}
+		}
 		return clazz;
 	}
+
 }
