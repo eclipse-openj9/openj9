@@ -531,9 +531,11 @@ acquireVThreadInspector(J9VMThread *currentThread, jobject thread, BOOLEAN spin)
 	J9JavaVM *vm = currentThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	MM_ObjectAccessBarrierAPI objectAccessBarrier = MM_ObjectAccessBarrierAPI(currentThread);
-	j9object_t threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
-	I_64 vthreadInspectorCount;
+	j9object_t threadObj = NULL;
+	I_64 vthreadInspectorCount = 0;
 retry:
+	/* Consistently re-fetch threadObj for all the cases below. */
+	threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
 	vthreadInspectorCount = J9OBJECT_I64_LOAD(currentThread, threadObj, vm->virtualThreadInspectorCountOffset);
 	if (vthreadInspectorCount < 0) {
 		/* Thread is in transition, wait. */
@@ -541,7 +543,6 @@ retry:
 		VM_AtomicSupport::yieldCPU();
 		/* After wait, the thread may suspend here. */
 		vmFuncs->internalEnterVMFromJNI(currentThread);
-		threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
 		if (spin) {
 			goto retry;
 		} else {
