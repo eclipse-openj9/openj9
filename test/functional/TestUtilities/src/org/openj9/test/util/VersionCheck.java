@@ -21,56 +21,47 @@
  *******************************************************************************/
 package org.openj9.test.util;
 
-import java.lang.reflect.*;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 /**
  * Utility class to check the Java version.
  * Checks for the Runtime.Version and uses that if available (JDK9+)
  * otherwise defaults to identifying the JDK as JDK8.
  */
-public class VersionCheck {
-	
-	static final Object versionInstance;
-	static final Method majorMethod;
-	
-	static {
-		Object versionInstanceTemp = null;
-		Method majorMethodTemp = null;
-		try { 
-			Method versionMethod = Runtime.class.getDeclaredMethod("version");
-			versionInstanceTemp = versionMethod.invoke(null);
-			majorMethodTemp = versionInstanceTemp.getClass().getDeclaredMethod("major");
-		} catch(NoSuchMethodException e) {
-			// Expected for Java 8
-		} catch(SecurityException | IllegalAccessException | InvocationTargetException e) {
-			throw new RuntimeException(e);
-		}
-		versionInstance = versionInstanceTemp;
-		majorMethod = majorMethodTemp;
-	}
-	
-	
+public final class VersionCheck {
+
+	private static Integer major;
+
 	/**
 	 * Get the Major version for the running JVM
 	 * 
 	 * @return The JDK major version, defaults to 8 if not available
 	 */
 	public static int major() {
-		if (versionInstance != null) {
+		if (major == null) {
 			try {
-				return ((Integer)majorMethod.invoke(versionInstance)).intValue();
-			} catch(IllegalAccessException | InvocationTargetException e) {
+				Method versionMethod = Runtime.class.getMethod("version");
+				Object versionInstance = versionMethod.invoke(null);
+				Method majorMethod = versionInstance.getClass().getMethod("major");
+
+				major = (Integer) majorMethod.invoke(versionInstance);
+			} catch (NoSuchMethodException e) {
+				// expected for Java 8
+				major = Integer.valueOf(8);
+			} catch (SecurityException | IllegalAccessException | InvocationTargetException e) {
 				throw new RuntimeException(e);
 			}
 		}
-		return 8;
+		return major.intValue();
 	}
 
 	/* Get the highest available class file version for this JDK.
 	 *
 	 * @return The highest available class file version
-	 */ 
+	 */
 	public static int classFile() {
 		return major() + 44;
 	}
+
 }

@@ -21,17 +21,18 @@
  *******************************************************************************/
 package j9vm.test.corehelper;
 
+import org.openj9.test.util.CompilerAccess;
 
- public class CoreGen {
+public class CoreGen {
 
- 	public static void main(String[] args) {
+	public static void main(String[] args) {
 		SimpleThread st = new SimpleThread();
 
 		/* Fork a thread for TestJITExt that is guaranteed to have a JIT frame
-		 * at the top of the stack. Fix until  https://github.com/eclipse-openj9/openj9/issues/5966 
+		 * at the top of the stack. Fix until https://github.com/eclipse-openj9/openj9/issues/5966
 		 * is resolved.
 		 */
-		Compiler.compileClass(j9vm.test.corehelper.TestJITExtHelperThread.class);
+		CompilerAccess.compileClass(TestJITExtHelperThread.class);
 		TestJITExtHelperThread tjet = new TestJITExtHelperThread();
 
 		tjet.configureJittedHelperThread();
