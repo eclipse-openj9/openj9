@@ -1527,52 +1527,60 @@ j9str_WinacpToMutf8(struct J9PortLibrary *portLibrary)
 
 #if defined(J9ZOS390)
 /**
- * Check whether a null/non-null terminated string is properly handled by fstring().
  * It calls atoe_vsnprintf() to verify the functionalities.
  * @param[in] portLibrary - The port library under test
  * @param[in] precision - flag for precision specifier
  * @param[in] buffer - pointer to the buffer intended for atoe_vsnprintf()
  * @param[in] bufferLength - the buffer length
  * @param[in] expectedOutput - The expected string
+ * @param[in] expectedCount - The expected response from atoe_vsnprintf()
  * @param[in] format - The string format
  *
  * @return TEST_PASS on success
  *         TEST_FAIL on error
  */
 static int
-printToBuffer(struct J9PortLibrary *portLibrary, BOOLEAN precision, char *buffer, size_t bufferLength, const char *expectedOutput, const char *format, ...)
+printToBuffer(struct J9PortLibrary *portLibrary, BOOLEAN precision, char *buffer, size_t bufferLength, const char *expectedOutput, int expectedCount, const char *format, ...)
 {
 	PORT_ACCESS_FROM_PORT(portLibrary);
+	static const char NULLCHARSTRING[] = "[null]";
 	int stringLength = 0;
+	int expectedLength = (NULL == expectedOutput) ? 0 : strlen(expectedOutput);
+	int actualCount = 0;
+	const char *nonNullExpectedOutput = (NULL == expectedOutput) ? NULLCHARSTRING : expectedOutput;
+	const char *nonNullBuffer = (NULL == buffer) ? NULLCHARSTRING : buffer;
 	va_list args;
 
 	va_start(args, format);
-	stringLength = atoe_vsnprintf(buffer, bufferLength, format, args);
-	va_end (args);
+	actualCount = atoe_vsnprintf(buffer, bufferLength, format, args);
+	stringLength = (NULL == buffer) ? 0 : strlen(buffer);
+	va_end(args);
 
-	if (stringLength >= 0) {
+	if (actualCount >= 0) {
 		if (precision) {
-			j9tty_printf(PORTLIB, "\n\tFinish Testing: String in buffer is: \"%s\", length = %d\n", buffer, stringLength);
+			j9tty_printf(PORTLIB, "\n\tFinish Testing: String in buffer is: \"%s\", length = %d\n", nonNullBuffer, stringLength);
 		} else {
-			j9tty_printf(PORTLIB, "\n\tFinish Testing without precision specifier: String in buffer is: \"%s\", length = %d\n", buffer, stringLength);
+			j9tty_printf(PORTLIB, "\n\tFinish Testing without precision specifier: String in buffer is: \"%s\", length = %d\n", nonNullBuffer, stringLength);
 		}
 
-		if ((stringLength == strlen(expectedOutput))
-			&& (0 == memcmp(buffer, expectedOutput, stringLength))
+		if ((stringLength == expectedLength)
+			&& (actualCount == expectedCount)
+			&& ((NULL == buffer) || (0 == memcmp(buffer, expectedOutput, stringLength + 1)))
 		) {
 			j9tty_printf(PORTLIB, "\n\tComparing against the expected output: PASSED.\n");
 			return TEST_PASS;
 		} else {
-			j9tty_printf(PORTLIB, "\n\tComparing against the expected output: FAILED. Expected string: \"%s\", length = %d\n", expectedOutput, strlen(expectedOutput));
+			j9tty_printf(PORTLIB, "\n\tComparing against the expected output: FAILED. Expected string: \"%s\", length = %d\n", nonNullExpectedOutput, expectedLength);
 			return TEST_FAIL;
 		}
 	} else {
-		j9tty_printf(PORTLIB, "\n\tComparing against the expected output: FAILED. stringLength < 0, Expected string: \"%s\", length = %d\n", expectedOutput, strlen(expectedOutput));
+		j9tty_printf(PORTLIB, "\n\tComparing against the expected output: FAILED. stringLength < 0, Expected string: \"%s\", length = %d\n", nonNullExpectedOutput, expectedLength);
 	}
 }
 
 /**
- * Verify that null/non-null terminated strings are properly handled in fstring().
+ * Verify that null/non-null terminated strings are properly handled.
+ * Also checks if number, long number, long long number, and float are properly handled.
  * It actually calls invoke atoe_vsnprintf() to run the tests through sub-functions
  * @param[in] portLibrary - The port library under test
  *
@@ -1604,35 +1612,71 @@ j9str_test_atoe_vsnprintf(struct J9PortLibrary *portLibrary)
 
 	/* Neither min_width nor precision is specified for a null terminated input string*/
 	j9tty_printf(PORTLIB, "\n\tTesting case 1\n");
-	rc |= printToBuffer(portLibrary, TRUE, buffer0, bufferLength0, expectedOutput1, "%s", nullTerminatedString);
+	rc |= printToBuffer(portLibrary, TRUE, buffer0, bufferLength0, expectedOutput1, strlen(expectedOutput1), "%s", nullTerminatedString);
 
 	/* min_width is less than the length of inputString */
 	j9tty_printf(PORTLIB, "\n\tTesting case 2\n");
-	rc |= printToBuffer(portLibrary, FALSE, buffer2, bufferLength2, expectedOutput2, "%*s", 2, nonNullTerminatedString);
+	rc |= printToBuffer(portLibrary, FALSE, buffer2, bufferLength2, expectedOutput2, strlen(nullTerminatedString), "%*s", 2, nullTerminatedString);
 
 	/* min_width is equal to the length of inputString (buffer length > min_width) */
 	j9tty_printf(PORTLIB, "\n\tTesting case 3\n");
-	rc |= printToBuffer(portLibrary, FALSE, buffer1, bufferLength1, expectedOutput1, "%*s", 4, nullTerminatedString);
+	rc |= printToBuffer(portLibrary, FALSE, buffer1, bufferLength1, expectedOutput1, strlen(expectedOutput1), "%*s", 4, nullTerminatedString);
 
 	/* min_width is greater than the length of inputString (buffer length > min_width) */
 	j9tty_printf(PORTLIB, "\n\tTesting case 4\n");
-	rc |= printToBuffer(portLibrary, FALSE, buffer3, bufferLength3, expectedOutput3, "%*s", 10, nullTerminatedString);
+	rc |= printToBuffer(portLibrary, FALSE, buffer3, bufferLength3, expectedOutput3, strlen(expectedOutput3), "%*s", 10, nullTerminatedString);
 
 	/* precision is equal to the length of inputString */
 	j9tty_printf(PORTLIB, "\n\tTesting case 5\n");
-	rc |= printToBuffer(portLibrary, TRUE, buffer0, bufferLength0, expectedOutput1, "%.*s", 4, nonNullTerminatedString);
+	rc |= printToBuffer(portLibrary, TRUE, buffer0, bufferLength0, expectedOutput1, strlen(expectedOutput1), "%.*s", 4, nonNullTerminatedString);
 
 	/* precision is less than the length of inputString */
 	j9tty_printf(PORTLIB, "\n\tTesting case 6\n");
-	rc |= printToBuffer(portLibrary, TRUE, buffer0, bufferLength0, expectedOutput4, "%.*s", 2, nonNullTerminatedString);
+	rc |= printToBuffer(portLibrary, TRUE, buffer0, bufferLength0, expectedOutput4, strlen(expectedOutput4), "%.*s", 2, nonNullTerminatedString);
 
 	/* both min_width and precision are equal to the length of inputString */
 	j9tty_printf(PORTLIB, "\n\tTesting case 7\n");
-	rc |= printToBuffer(portLibrary, TRUE, buffer0, bufferLength0, expectedOutput1, "%*.*s", 4, 4, nonNullTerminatedString);
+	rc |= printToBuffer(portLibrary, TRUE, buffer0, bufferLength0, expectedOutput1, strlen(expectedOutput1), "%*.*s", 4, 4, nonNullTerminatedString);
 
 	/* the length of inputString is equal to precision but less than min_width */
 	j9tty_printf(PORTLIB, "\n\tTesting case 8\n");
-	rc |= printToBuffer(portLibrary, TRUE, buffer0, bufferLength0, expectedOutput3, "%*.*s", 10, 4, nonNullTerminatedString);
+	rc |= printToBuffer(portLibrary, TRUE, buffer0, bufferLength0, expectedOutput3, strlen(expectedOutput3), "%*.*s", 10, 4, nonNullTerminatedString);
+
+	/* the buffer is NULL. expect to estimate the length */
+	j9tty_printf(PORTLIB, "\n\tTesting case 9\n");
+	rc |= printToBuffer(portLibrary, FALSE, NULL, 0, NULL, strlen(nullTerminatedString), "%s", nullTerminatedString);
+
+	/* number with min_width */
+	j9tty_printf(PORTLIB, "\n\tTesting case 10\n");
+	rc |= printToBuffer(portLibrary, FALSE, buffer0, bufferLength0, "  -123", 6, "%*d", 6, -123);
+
+	/* number with precision */
+	j9tty_printf(PORTLIB, "\n\tTesting case 11\n");
+	rc |= printToBuffer(portLibrary, TRUE, buffer0, bufferLength0, "-000123", 7, "%.*d", 6, -123);
+
+	/* long number with min_width */
+	j9tty_printf(PORTLIB, "\n\tTesting case 12\n");
+	rc |= printToBuffer(portLibrary, FALSE, buffer0, bufferLength0, "  -1234", 7, "%*ld", 7, -1234L);
+
+	/* long number with precision */
+	j9tty_printf(PORTLIB, "\n\tTesting case 13\n");
+	rc |= printToBuffer(portLibrary, TRUE, buffer0, bufferLength0, "-0001234", 8, "%.*ld", 7, -1234L);
+
+	/* long long number with min_width */
+	j9tty_printf(PORTLIB, "\n\tTesting case 14\n");
+	rc |= printToBuffer(portLibrary, FALSE, buffer0, bufferLength0, "  -12345", 8, "%*lld", 8, -12345LL);
+
+	/* long long number with precision */
+	j9tty_printf(PORTLIB, "\n\tTesting case 15\n");
+	rc |= printToBuffer(portLibrary, TRUE, buffer0, bufferLength0, "-00012345", 9, "%.*lld", 8, -12345LL);
+
+	/* float number with no precision */
+	j9tty_printf(PORTLIB, "\n\tTesting case 16\n");
+	rc |= printToBuffer(portLibrary, FALSE, buffer0, bufferLength0, "-123.456000", 11, "%f", -123.456);
+
+	/* float number with precision */
+	j9tty_printf(PORTLIB, "\n\tTesting case 17\n");
+	rc |= printToBuffer(portLibrary, TRUE, buffer0, bufferLength0, "-123.46", 7, "%.2f", -123.456);
 
 	if (TEST_PASS != rc) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "\n\tTEST FAILED.\n");
