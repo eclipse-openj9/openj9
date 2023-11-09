@@ -136,7 +136,7 @@ typedef struct TR_JitPrivateConfig
    TR_YesNoMaybe aotValidHeader;
    void          (*j9jitrt_lock_log)(void *voidConfig);
    void          (*j9jitrt_unlock_log)(void *voidConfig);
-   int           (*j9jitrt_printf)(void *voidConfig, char *format, ...) ;
+   int           (*j9jitrt_printf)(void *voidConfig, const char *format, ...) ;
 
    // Runtime phase profiling buffer
    //
@@ -164,31 +164,31 @@ extern "C" {
 
    J9VMThread * getJ9VMThreadFromTR_VM(void * vm);
    J9JITConfig * getJ9JitConfigFromFE(void *vm);
-   TR::FILE *j9jit_fopen(char *fileName, const char *mode, bool useJ9IO);
+   TR::FILE *j9jit_fopen(const char *fileName, const char *mode, bool useJ9IO);
    void j9jit_fclose(TR::FILE *pFile);
    void j9jit_seek(void *voidConfig, TR::FILE *pFile, IDATA offset, I_32 whence);
    IDATA j9jit_read(void *voidConfig, TR::FILE *pFile, void *buf, IDATA nbytes);
    void j9jit_fflush(TR::FILE *pFile);
    void j9jit_lock_vlog(void *voidConfig);
    void j9jit_unlock_vlog(void *voidConfig);
-   void j9jit_printf(void *voidConfig, char *format, ...);
-   I_32 j9jit_vprintf(void *voidConfig, char *format, va_list args);
-   I_32 j9jit_fprintf(TR::FILE *pFile, char *format, ...);
-   I_32 j9jit_vfprintf(TR::FILE *pFile, char *format, va_list args);
+   void j9jit_printf(void *voidConfig, const char *format, ...);
+   I_32 j9jit_vprintf(void *voidConfig, const char *format, va_list args);
+   I_32 j9jit_fprintf(TR::FILE *pFile, const char *format, ...);
+   I_32 j9jit_vfprintf(TR::FILE *pFile, const char *format, va_list args);
 
    void j9jitrt_lock_log(void *voidConfig);
    void j9jitrt_unlock_log(void *voidConfig);
-   I_32 j9jitrt_printf(void *voidConfig, char *format, ...);
+   I_32 j9jitrt_printf(void *voidConfig, const char *format, ...);
 
-   I_32 j9jit_fopenName(char *fileName);
-   I_32 j9jit_fopen_existing(char *fileName);
-   I_32 j9jit_fmove(char * pathExist, char * pathNew);
+   I_32 j9jit_fopenName(const char *fileName);
+   I_32 j9jit_fopen_existing(const char *fileName);
+   I_32 j9jit_fmove(const char * pathExist, const char * pathNew);
    void j9jit_fcloseId(I_32 fileId);
    I_32 j9jit_fread(I_32 fd, void * buf, IDATA nbytes);
    I_32 j9jit_fseek(I_32 fd, I_32 whence);
    I_64 j9jit_time_current_time_millis();
-   I_32 j9jit_vfprintfId(I_32 fileId, char *format, ...);
-   I_32 j9jit_fprintfId(I_32 fileId, char *format, ...);
+   I_32 j9jit_vfprintfId(I_32 fileId, const char *format, ...);
+   I_32 j9jit_fprintfId(I_32 fileId, const char *format, ...);
 
    void jitHookClassLoadHelper(J9VMThread *vmThread,
                                J9JITConfig * jitConfig,
