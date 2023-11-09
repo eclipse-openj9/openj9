@@ -119,7 +119,7 @@ J9AllocateObjectNoGC(J9VMThread *vmThread, J9Class *clazz, uintptr_t allocateFla
 				uintptr_t actuallyAllocatedBytes = mixedOAM.getAllocateDescription()->getContiguousBytes();
 				Assert_GC_true_with_message4(env, allocatedBytes == actuallyAllocatedBytes,
 						"Mixed object allocation sanity failure: object %p, requested %zu bytes, but read %zu, MM_MixedObjectAllocationModel %p\n",
-						objectPtr, allocatedBytes, actuallyAllocatedBytes, mixedOAM);
+						objectPtr, allocatedBytes, actuallyAllocatedBytes, &mixedOAM);
 
 				if (LN_HAS_LOCKWORD(vmThread, objectPtr)) {
 					j9objectmonitor_t initialLockword = VM_ObjectMonitor::getInitialLockword(vmThread->javaVM, clazz);
@@ -366,7 +366,7 @@ J9AllocateIndexableObjectNoGC(J9VMThread *vmThread, J9Class *clazz, uint32_t num
 				uintptr_t actuallyAllocatedBytes = indexableOAM.getAllocateDescription()->getContiguousBytes();
 				Assert_GC_true_with_message4(env, allocatedBytes == actuallyAllocatedBytes,
 						"Indexable object allocation sanity failure: object %p, requested %zu bytes, but read %zu, MM_IndexableObjectAllocationModel %p\n",
-						objectPtr, allocatedBytes, actuallyAllocatedBytes, indexableOAM);
+						objectPtr, allocatedBytes, actuallyAllocatedBytes, &indexableOAM);
 			}
 			env->_isInNoGCAllocationCall = false;
 		}
@@ -432,7 +432,7 @@ J9AllocateObject(J9VMThread *vmThread, J9Class *clazz, uintptr_t allocateFlags)
 			uintptr_t actuallyAllocatedBytes = mixedOAM.getAllocateDescription()->getContiguousBytes();
 			Assert_GC_true_with_message4(env, allocatedBytes == actuallyAllocatedBytes,
 					"Mixed object allocation sanity failure: object %p, requested %zu bytes, but read %zu, MM_MixedObjectAllocationModel %p\n",
-					objectPtr, allocatedBytes, actuallyAllocatedBytes, mixedOAM);
+					objectPtr, allocatedBytes, actuallyAllocatedBytes, &mixedOAM);
 
 			if (LN_HAS_LOCKWORD(vmThread, objectPtr)) {
 				j9objectmonitor_t initialLockword = VM_ObjectMonitor::getInitialLockword(vmThread->javaVM, clazz);
@@ -600,7 +600,7 @@ J9AllocateIndexableObject(J9VMThread *vmThread, J9Class *clazz, uint32_t numberO
 			uintptr_t actuallyAllocatedBytes = indexableOAM.getAllocateDescription()->getContiguousBytes();
 			Assert_GC_true_with_message4(env, allocatedBytes == actuallyAllocatedBytes,
 					"Indexable object allocation sanity failure: object %p, requested %zu bytes, but read %zu, MM_IndexableObjectAllocationModel %p\n",
-					objectPtr, allocatedBytes, actuallyAllocatedBytes, indexableOAM);
+					objectPtr, allocatedBytes, actuallyAllocatedBytes, &indexableOAM);
 		}
 	}
 	
