@@ -617,29 +617,25 @@ jvmtiNotifyFramePop(jvmtiEnv *env,
 				J9JVMTI_GETVMTHREAD_ERROR_ON_DEAD_THREAD);
 		if (JVMTI_ERROR_NONE == rc) {
 #if JAVA_SPEC_VERSION >= 19
-			BOOLEAN isVThreadSuspended = FALSE;
+			j9object_t threadObject = (NULL == thread) ? currentThread->threadObject : J9_JNI_UNWRAP_REFERENCE(thread);
 			if (NULL != targetThread)
 #endif /* JAVA_SPEC_VERSION >= 19 */
 			{
 				vm->internalVMFunctions->haltThreadForInspection(currentThread, targetThread);
 			}
-#if JAVA_SPEC_VERSION >= 19
-			if ((NULL != thread) && (NULL == targetThread)) {
-				/* The assert in getVMThread will assure that this is a virtual thread */
-				jint vthreadState = J9VMJAVALANGVIRTUALTHREAD_STATE(currentThread, J9_JNI_UNWRAP_REFERENCE(thread));
-				isVThreadSuspended = OMR_ARE_ANY_BITS_SET(vthreadState, JVMTI_VTHREAD_STATE_SUSPENDED);
-			}
-#endif /* JAVA_SPEC_VERSION >= 19 */
 
-			if ((currentThread == targetThread)
+			/* Error if the thread is not suspended and not the current thread. */
+			if ((currentThread != targetThread)
 #if JAVA_SPEC_VERSION >= 19
-			|| isVThreadSuspended
+			&& (0 == J9OBJECT_U32_LOAD(currentThread, threadObject, vm->isSuspendedInternalOffset))
+#else /* JAVA_SPEC_VERSION >= 19 */
+			&& OMR_ARE_NO_BITS_SET(targetThread->publicFlags, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND)
 #endif /* JAVA_SPEC_VERSION >= 19 */
-			|| ((NULL != targetThread) && OMR_ARE_ANY_BITS_SET(targetThread->publicFlags, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND))
-			) {
+			)  {
+				rc = JVMTI_ERROR_THREAD_NOT_SUSPENDED;
+			} else {
 				J9StackWalkState walkState = {0};
 				J9VMThread *threadToWalk = targetThread;
-
 #if JAVA_SPEC_VERSION >= 19
 				J9VMThread stackThread = {0};
 				J9VMEntryLocalStorage els = {0};
@@ -669,9 +665,8 @@ jvmtiNotifyFramePop(jvmtiEnv *env,
 						}
 					}
 				}
-			} else {
-				rc = JVMTI_ERROR_THREAD_NOT_SUSPENDED;
 			}
+
 #if JAVA_SPEC_VERSION >= 19
 			if (NULL != targetThread)
 #endif /* JAVA_SPEC_VERSION >= 19 */

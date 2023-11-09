@@ -209,11 +209,7 @@ typedef IDATA (*MonitorEnter)(omrthread_monitor_t monitor);
 typedef IDATA (*MonitorExit)(omrthread_monitor_t monitor);
 typedef IDATA (*MonitorInit)(omrthread_monitor_t* handle, UDATA flags, char* name);
 typedef IDATA (*MonitorDestroy)(omrthread_monitor_t monitor);
-typedef IDATA (*MonitorWait)(omrthread_monitor_t monitor);
-typedef IDATA (*MonitorWaitTimed)(omrthread_monitor_t monitor, I_64 millis, IDATA nanos);
-typedef IDATA (*MonitorNotify)(omrthread_monitor_t monitor);
-typedef IDATA (*MonitorNotifyAll)(omrthread_monitor_t monitor) ;
-typedef IDATA (* ThreadLibControl)(const char * key, UDATA value) ;
+typedef IDATA (* ThreadLibControl)(const char * key, UDATA value);
 typedef IDATA (*SetCategory)(omrthread_t thread, UDATA category, UDATA type);
 typedef IDATA (*LibEnableCPUMonitor)(omrthread_t thread);
 
@@ -270,12 +266,8 @@ static ThreadDetach f_threadDetach;
 /* Share these with the other *.c in the DLL */
 MonitorEnter f_monitorEnter;
 MonitorExit f_monitorExit;
-MonitorWait f_monitorWait;
-MonitorNotifyAll f_monitorNotifyAll;
 static MonitorInit f_monitorInit;
 static MonitorDestroy f_monitorDestroy;
-static MonitorWaitTimed f_monitorWaitTimed;
-static MonitorNotify f_monitorNotify;
 static PortInitLibrary portInitLibrary;
 static PortGetSize portGetSizeFn;
 static PortGetVersion portGetVersionFn;
@@ -1020,15 +1012,11 @@ preloadLibraries(void)
 	f_monitorExit = (MonitorExit) GetProcAddress (threadDLL, (LPCSTR) "omrthread_monitor_exit");
 	f_monitorInit = (MonitorInit) GetProcAddress (threadDLL, (LPCSTR) "omrthread_monitor_init_with_name");
 	f_monitorDestroy = (MonitorDestroy) GetProcAddress (threadDLL, (LPCSTR) "omrthread_monitor_destroy");
-	f_monitorWait = (MonitorWait) GetProcAddress (threadDLL, (LPCSTR) "omrthread_monitor_wait");
-	f_monitorWaitTimed = (MonitorWaitTimed) GetProcAddress (threadDLL, (LPCSTR) "omrthread_monitor_wait_timed");
-	f_monitorNotify = (MonitorNotify) GetProcAddress (threadDLL, (LPCSTR) "omrthread_monitor_notify");
-	f_monitorNotifyAll = (MonitorNotifyAll) GetProcAddress (threadDLL, (LPCSTR) "omrthread_monitor_notify_all");
 	f_threadLibControl = (ThreadLibControl) GetProcAddress (threadDLL, (LPCSTR) "omrthread_lib_control");
 	f_setCategory = (SetCategory) GetProcAddress (threadDLL, (LPCSTR) "omrthread_set_category");
 	f_libEnableCPUMonitor = (LibEnableCPUMonitor) GetProcAddress (threadDLL, (LPCSTR) "omrthread_lib_enable_cpu_monitor");
-	if (!f_threadGlobal || !f_threadAttachEx || !f_threadDetach || !f_monitorEnter || !f_monitorExit || !f_monitorInit || !f_monitorDestroy || !f_monitorWaitTimed
-		|| !f_monitorNotify || !f_monitorNotifyAll || !f_threadLibControl || !f_setCategory || !f_libEnableCPUMonitor || !f_monitorWait
+	if (!f_threadGlobal || !f_threadAttachEx || !f_threadDetach || !f_monitorEnter || !f_monitorExit || !f_monitorInit
+		|| !f_monitorDestroy || !f_threadLibControl || !f_setCategory || !f_libEnableCPUMonitor
 	) {
 		FreeLibrary(vmDLL);
 		FreeLibrary(threadDLL);
@@ -1451,15 +1439,11 @@ preloadLibraries(void)
 	f_monitorExit = (MonitorExit) dlsym (threadDLL, "omrthread_monitor_exit");
 	f_monitorInit = (MonitorInit) dlsym (threadDLL, "omrthread_monitor_init_with_name");
 	f_monitorDestroy = (MonitorDestroy) dlsym (threadDLL, "omrthread_monitor_destroy");
-	f_monitorWait = (MonitorWait) dlsym (threadDLL, "omrthread_monitor_wait");
-	f_monitorWaitTimed = (MonitorWaitTimed) dlsym (threadDLL, "omrthread_monitor_wait_timed");
-	f_monitorNotify = (MonitorNotify) dlsym (threadDLL, "omrthread_monitor_notify");
-	f_monitorNotifyAll = (MonitorNotifyAll) dlsym (threadDLL, "omrthread_monitor_notify_all");
 	f_threadLibControl = (ThreadLibControl) dlsym (threadDLL, "omrthread_lib_control");
 	f_setCategory = (SetCategory) dlsym (threadDLL, "omrthread_set_category");
 	f_libEnableCPUMonitor = (LibEnableCPUMonitor) dlsym (threadDLL, "omrthread_lib_enable_cpu_monitor");
-	if (!f_threadGlobal || !f_threadAttachEx || !f_threadDetach || !f_monitorEnter || !f_monitorExit || !f_monitorInit || !f_monitorDestroy || !f_monitorWaitTimed
-		|| !f_monitorNotify || !f_monitorNotifyAll || !f_threadLibControl || !f_setCategory || !f_libEnableCPUMonitor || !f_monitorWait
+	if (!f_threadGlobal || !f_threadAttachEx || !f_threadDetach || !f_monitorEnter || !f_monitorExit || !f_monitorInit
+		|| !f_monitorDestroy || !f_threadLibControl || !f_setCategory || !f_libEnableCPUMonitor
 	) {
 		dlclose(vmDLL);
 #ifdef J9ZOS390

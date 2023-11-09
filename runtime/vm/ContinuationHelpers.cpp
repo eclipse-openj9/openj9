@@ -539,10 +539,10 @@ retry:
 	vthreadInspectorCount = J9OBJECT_I64_LOAD(currentThread, threadObj, vm->virtualThreadInspectorCountOffset);
 	if (vthreadInspectorCount < 0) {
 		/* Thread is in transition, wait. */
-		vmFuncs->internalExitVMToJNI(currentThread);
+		vmFuncs->internalReleaseVMAccess(currentThread);
 		VM_AtomicSupport::yieldCPU();
 		/* After wait, the thread may suspend here. */
-		vmFuncs->internalEnterVMFromJNI(currentThread);
+		vmFuncs->internalAcquireVMAccess(currentThread);
 		if (spin) {
 			goto retry;
 		} else {
