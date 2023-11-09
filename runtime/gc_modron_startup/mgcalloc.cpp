@@ -114,7 +114,13 @@ J9AllocateObjectNoGC(J9VMThread *vmThread, J9Class *clazz, uintptr_t allocateFla
 			objectPtr = OMR_GC_AllocateObject(vmThread->omrVMThread, &mixedOAM);
 			if (NULL != objectPtr) {
 				uintptr_t allocatedBytes = env->getExtensions()->objectModel.getConsumedSizeInBytesWithHeader(objectPtr);
-				Assert_MM_true(allocatedBytes == mixedOAM.getAllocateDescription()->getContiguousBytes());
+
+				/* Do sanity check: size of actually allocated Mixed object should match requested */
+				uintptr_t actuallyAllocatedBytes = mixedOAM.getAllocateDescription()->getContiguousBytes();
+				Assert_GC_true_with_message4(env, allocatedBytes == actuallyAllocatedBytes,
+						"Mixed object allocation sanity failure: object %p, requested %zu bytes, but read %zu, MM_MixedObjectAllocationModel %p\n",
+						objectPtr, allocatedBytes, actuallyAllocatedBytes, mixedOAM);
+
 				if (LN_HAS_LOCKWORD(vmThread, objectPtr)) {
 					j9objectmonitor_t initialLockword = VM_ObjectMonitor::getInitialLockword(vmThread->javaVM, clazz);
 					if (0 != initialLockword) {
@@ -355,7 +361,12 @@ J9AllocateIndexableObjectNoGC(J9VMThread *vmThread, J9Class *clazz, uint32_t num
 			objectPtr = OMR_GC_AllocateObject(vmThread->omrVMThread, &indexableOAM);
 			if (NULL != objectPtr) {
 				uintptr_t allocatedBytes = env->getExtensions()->objectModel.getConsumedSizeInBytesWithHeader(objectPtr);
-				Assert_MM_true(allocatedBytes == indexableOAM.getAllocateDescription()->getContiguousBytes());
+
+				/* Do sanity check: size of actually allocated Indexable object should match requested */
+				uintptr_t actuallyAllocatedBytes = indexableOAM.getAllocateDescription()->getContiguousBytes();
+				Assert_GC_true_with_message4(env, allocatedBytes == actuallyAllocatedBytes,
+						"Indexable object allocation sanity failure: object %p, requested %zu bytes, but read %zu, MM_IndexableObjectAllocationModel %p\n",
+						objectPtr, allocatedBytes, actuallyAllocatedBytes, indexableOAM);
 			}
 			env->_isInNoGCAllocationCall = false;
 		}
@@ -416,7 +427,13 @@ J9AllocateObject(J9VMThread *vmThread, J9Class *clazz, uintptr_t allocateFlags)
 		objectPtr = OMR_GC_AllocateObject(vmThread->omrVMThread, &mixedOAM);
 		if (NULL != objectPtr) {
 			uintptr_t allocatedBytes = env->getExtensions()->objectModel.getConsumedSizeInBytesWithHeader(objectPtr);
-			Assert_MM_true(allocatedBytes == mixedOAM.getAllocateDescription()->getContiguousBytes());
+
+			/* Do sanity check: size of actually allocated Mixed object should match requested */
+			uintptr_t actuallyAllocatedBytes = mixedOAM.getAllocateDescription()->getContiguousBytes();
+			Assert_GC_true_with_message4(env, allocatedBytes == actuallyAllocatedBytes,
+					"Mixed object allocation sanity failure: object %p, requested %zu bytes, but read %zu, MM_MixedObjectAllocationModel %p\n",
+					objectPtr, allocatedBytes, actuallyAllocatedBytes, mixedOAM);
+
 			if (LN_HAS_LOCKWORD(vmThread, objectPtr)) {
 				j9objectmonitor_t initialLockword = VM_ObjectMonitor::getInitialLockword(vmThread->javaVM, clazz);
 				if (0 != initialLockword) {
@@ -578,7 +595,12 @@ J9AllocateIndexableObject(J9VMThread *vmThread, J9Class *clazz, uint32_t numberO
 		objectPtr = OMR_GC_AllocateObject(vmThread->omrVMThread, &indexableOAM);
 		if (NULL != objectPtr) {
 			uintptr_t allocatedBytes = env->getExtensions()->objectModel.getConsumedSizeInBytesWithHeader(objectPtr);
-			Assert_MM_true(allocatedBytes == indexableOAM.getAllocateDescription()->getContiguousBytes());
+
+			/* Do sanity check: size of actually allocated Indexable object should match requested */
+			uintptr_t actuallyAllocatedBytes = indexableOAM.getAllocateDescription()->getContiguousBytes();
+			Assert_GC_true_with_message4(env, allocatedBytes == actuallyAllocatedBytes,
+					"Indexable object allocation sanity failure: object %p, requested %zu bytes, but read %zu, MM_IndexableObjectAllocationModel %p\n",
+					objectPtr, allocatedBytes, actuallyAllocatedBytes, indexableOAM);
 		}
 	}
 	
