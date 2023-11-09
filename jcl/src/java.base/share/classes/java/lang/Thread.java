@@ -1550,29 +1550,32 @@ void uncaughtException(Throwable e) {
  * @see J9VMInternals#threadCleanup()
  */
 void exit() {
+	try {
 /*[IF JAVA_SPEC_VERSION >= 14]*/
-	/* Refresh deadInterrupt value so it is accurate when thread reference is removed. */
-	deadInterrupt = interrupted();
+		/* Refresh deadInterrupt value so it is accurate when thread reference is removed. */
+		deadInterrupt = interrupted();
 /*[ENDIF] JAVA_SPEC_VERSION >= 14 */
 
 /*[IF Sidecar18-SE-OpenJ9]*/
-	if ((threadLocals != null) && TerminatingThreadLocal.REGISTRY.isPresent()) {
-		TerminatingThreadLocal.threadTerminated();
-	}
+		if ((threadLocals != null) && TerminatingThreadLocal.REGISTRY.isPresent()) {
+			TerminatingThreadLocal.threadTerminated();
+		}
 /*[ENDIF] Sidecar18-SE-OpenJ9 */
 
-	/*[PR 97317]*/
-	group = null;
+		/*[PR 97317]*/
+		group = null;
 
-	/*[PR CVMC 118827] references are not removed in dead threads */
-	runnable = null;
-	inheritedAccessControlContext = null;
+		/*[PR CVMC 118827] references are not removed in dead threads. */
+		runnable = null;
+		inheritedAccessControlContext = null;
 
-	threadLocals = null;
-	inheritableThreadLocals = null;
-
-	synchronized(lock) {
-		threadRef = Thread.NO_REF;				// So that isAlive() can work
+		threadLocals = null;
+		inheritableThreadLocals = null;
+	} finally {
+		synchronized(lock) {
+			// So that isAlive() can work.
+			threadRef = Thread.NO_REF;
+		}
 	}
 }
 
