@@ -720,6 +720,9 @@ final class Access implements JavaLangAccess {
 /*[IF JAVA_SPEC_VERSION >= 11]*/
 	@Override
 	public String getLoaderNameID(ClassLoader loader) {
+		if (loader == null) {
+			return "null";
+		}
 		StringBuilder buffer = new StringBuilder();
 		String name = loader.getName();
 
