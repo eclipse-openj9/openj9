@@ -858,13 +858,9 @@ getVirtualThreadState(J9VMThread *currentThread, jthread thread)
 				break;
 			}
 			case JVMTI_VTHREAD_STATE_RUNNABLE:
-				/* Fall Through */
 			case JVMTI_VTHREAD_STATE_RUNNING:
-				/* Fall Through */
 			case JVMTI_VTHREAD_STATE_PARKING:
-				/* Fall Through */
 			case JVMTI_VTHREAD_STATE_TIMED_PARKING:
-				/* Fall Through */
 			case JVMTI_VTHREAD_STATE_YIELDING:
 				rc = JVMTI_JAVA_LANG_THREAD_STATE_RUNNABLE;
 				break;
