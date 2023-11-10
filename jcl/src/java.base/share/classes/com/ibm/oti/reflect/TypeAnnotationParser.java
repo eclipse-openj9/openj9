@@ -105,17 +105,10 @@ public class TypeAnnotationParser {
 	 */
 	public  static AnnotatedType[] buildAnnotatedInterfaces(Class clazz) {
 		byte[] attr = getAttributeData(clazz);
-		long offset = Unsafe.ARRAY_BYTE_BASE_OFFSET + ((attr.length * Unsafe.ARRAY_BYTE_INDEX_SCALE) - VM.FJ9OBJECT_SIZE);
-		long ramCPAddr = 0;
-		if (VM.FJ9OBJECT_SIZE == 4) {
-			/* Compressed object refs */
-			ramCPAddr = Integer.toUnsignedLong(Unsafe.getUnsafe().getInt(attr, offset));
-		} else {
-			ramCPAddr = Unsafe.getUnsafe().getLong(attr, offset);
-		}
-		Object internalConstantPool = VM.getVMLangAccess().createInternalConstantPool(ramCPAddr);
-
-		AnnotatedType[] annotatedInterfaces = sun.reflect.annotation.TypeAnnotationParser.buildAnnotatedInterfaces(attr, AnnotationParser.getConstantPool(internalConstantPool), clazz);
+		AnnotatedType[] annotatedInterfaces = sun.reflect.annotation.TypeAnnotationParser.buildAnnotatedInterfaces(
+			attr,
+			VM.getConstantPoolFromAnnotationBytes(clazz, attr),
+			clazz);
 		return annotatedInterfaces;
 	}
 	/**
@@ -125,17 +118,10 @@ public class TypeAnnotationParser {
 	 */
 	public  static AnnotatedType buildAnnotatedSupertype(Class clazz) {
 		byte[] attr = getAttributeData(clazz);
-		long offset = Unsafe.ARRAY_BYTE_BASE_OFFSET + ((attr.length * Unsafe.ARRAY_BYTE_INDEX_SCALE) - VM.FJ9OBJECT_SIZE);
-		long ramCPAddr = 0;
-		if (VM.FJ9OBJECT_SIZE == 4) {
-			/* Compressed object refs */
-			ramCPAddr = Integer.toUnsignedLong(Unsafe.getUnsafe().getInt(attr, offset));
-		} else {
-			ramCPAddr = Unsafe.getUnsafe().getLong(attr, offset);
-		}
-		Object internalConstantPool = VM.getVMLangAccess().createInternalConstantPool(ramCPAddr);
-
-		AnnotatedType annotatedSuperclass = sun.reflect.annotation.TypeAnnotationParser.buildAnnotatedSuperclass(attr, AnnotationParser.getConstantPool(internalConstantPool), clazz);
+		AnnotatedType annotatedSuperclass = sun.reflect.annotation.TypeAnnotationParser.buildAnnotatedSuperclass(
+			attr,
+			VM.getConstantPoolFromAnnotationBytes(clazz, attr),
+			clazz);
 		return annotatedSuperclass;
 	}
 }
