@@ -4113,6 +4113,14 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 	}
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
+	{
+		IDATA cpuLoadCompatibility = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXCPULOADCOMPATIBILITY, NULL);
+		IDATA noCpuLoadCompatibility = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXNOCPULOADCOMPATIBILITY, NULL);
+		if (cpuLoadCompatibility > noCpuLoadCompatibility) {
+			vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_CPU_LOAD_COMPATIBILITY;
+		}
+	}
+
 	return JNI_OK;
 }
 
