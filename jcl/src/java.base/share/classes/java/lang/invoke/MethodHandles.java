@@ -688,7 +688,12 @@ public class MethodHandles {
 			 * callerClass is not the same as the lookup class.
 			 */
 			if (isWeakenedLookup() 
+			/*[IF JAVA_SPEC_VERSION >= 9]*/
+			// JEP 274
 			|| ((accessClass != callerClass) && !(declaringClass.isInterface() && declaringClass.isAssignableFrom(callerClass)))
+			/*[ELSE] JAVA_SPEC_VERSION >= 9*/
+			|| (accessClass != callerClass)
+			/*[ENDIF] JAVA_SPEC_VERSION >= 9*/
 			) {
 				/*[MSG "K0585", "{0} could not access {1} - private access required"]*/
 				throw new IllegalAccessException(com.ibm.oti.util.Msg.getString("K0585", accessClass.getName(), callerClass.getName())); //$NON-NLS-1$

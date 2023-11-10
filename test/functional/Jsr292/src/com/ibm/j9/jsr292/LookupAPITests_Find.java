@@ -2111,6 +2111,9 @@ public class LookupAPITests_Find {
 			Class<?> cls = CrossPackageDefaultMethodInterface.class;
 			MethodType mt = MethodType.methodType(int.class, int.class, int.class);
 			MethodHandles.lookup().findSpecial(cls, "addDefault", mt, cls);
+			if (VersionCheck.major() <= 8) {
+				Assert.fail("[Java 8-] IllegalAccessException not thrown ");
+			}
 		} catch (IllegalAccessException e) {
 			// JEP 274 is implemented from Java 9 onwards; Java 8 with OpenJDK MethodHandles
 			// expects an IllegalAccessException.
