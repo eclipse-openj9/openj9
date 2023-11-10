@@ -830,7 +830,7 @@ getVirtualThreadState(J9VMThread *currentThread, jthread thread)
 			/* The mapping from JVMTI_VTHREAD_STATE_XXX to JVMTI_JAVA_LANG_THREAD_STATE_XXX is based
 			 * on j.l.VirtualThread.threadState().
 			 */
-			switch (vThreadState) {
+			switch (vThreadState & ~JVMTI_VTHREAD_STATE_SUSPENDED) {
 			case JVMTI_VTHREAD_STATE_NEW:
 				rc = JVMTI_JAVA_LANG_THREAD_STATE_NEW;
 				break;
@@ -858,15 +858,12 @@ getVirtualThreadState(J9VMThread *currentThread, jthread thread)
 				break;
 			}
 			case JVMTI_VTHREAD_STATE_RUNNABLE:
-				rc = JVMTI_JAVA_LANG_THREAD_STATE_RUNNABLE;
-				break;
-			case JVMTI_VTHREAD_STATE_RUNNABLE_SUSPENDED:
-				rc = JVMTI_JAVA_LANG_THREAD_STATE_RUNNABLE | JVMTI_THREAD_STATE_SUSPENDED;
-				break;
+				/* Fall Through */
 			case JVMTI_VTHREAD_STATE_RUNNING:
-				rc = JVMTI_JAVA_LANG_THREAD_STATE_RUNNABLE;
-				break;
+				/* Fall Through */
 			case JVMTI_VTHREAD_STATE_PARKING:
+				/* Fall Through */
+			case JVMTI_VTHREAD_STATE_TIMED_PARKING:
 				/* Fall Through */
 			case JVMTI_VTHREAD_STATE_YIELDING:
 				rc = JVMTI_JAVA_LANG_THREAD_STATE_RUNNABLE;
@@ -874,11 +871,14 @@ getVirtualThreadState(J9VMThread *currentThread, jthread thread)
 			case JVMTI_VTHREAD_STATE_PARKED:
 				rc = JVMTI_JAVA_LANG_THREAD_STATE_WAITING | JVMTI_THREAD_STATE_PARKED;
 				break;
-			case JVMTI_VTHREAD_STATE_PARKED_SUSPENDED:
-				rc = JVMTI_JAVA_LANG_THREAD_STATE_WAITING | JVMTI_THREAD_STATE_PARKED | JVMTI_THREAD_STATE_SUSPENDED;
+			case JVMTI_VTHREAD_STATE_TIMED_PARKED:
+				rc = JVMTI_JAVA_LANG_THREAD_STATE_TIMED_WAITING | JVMTI_THREAD_STATE_PARKED;
 				break;
 			case JVMTI_VTHREAD_STATE_PINNED:
 				rc = JVMTI_JAVA_LANG_THREAD_STATE_WAITING;
+				break;
+			case JVMTI_VTHREAD_STATE_TIMED_PINNED:
+				rc = JVMTI_JAVA_LANG_THREAD_STATE_TIMED_WAITING;
 				break;
 			case JVMTI_VTHREAD_STATE_TERMINATED:
 				rc = JVMTI_JAVA_LANG_THREAD_STATE_TERMINATED;
