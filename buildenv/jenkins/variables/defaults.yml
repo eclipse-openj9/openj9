@@ -205,8 +205,6 @@ ppc64le_linux:
   build_env:
     cmd:
       all: 'source /home/jenkins/set_gcc_11.2.0_env'
-      8: 'source /home/jenkins/set_gcc7.5.0_env'
-      11: 'source /home/jenkins/set_gcc7.5.0_env'
 #========================================#
 # Linux PPCLE 64bits /w JITSERVER
 #========================================#
@@ -229,8 +227,6 @@ s390x_linux:
   build_env:
     cmd:
       all: 'source /home/jenkins/set_gcc_11.2.0_env'
-      8: 'source /home/jenkins/set_gcc7.5.0_env'
-      11: 'source /home/jenkins/set_gcc7.5.0_env'
 #========================================#
 # Linux S390 64bits /w JITSERVER
 #========================================#
@@ -320,8 +316,6 @@ aarch64_linux:
   build_env:
     vars:
       all: 'CC=/usr/local/gcc10/bin/gcc-10.3 CXX=/usr/local/gcc10/bin/g++-10.3'
-      8: 'CC=/usr/local/gcc/bin/gcc-7.5 CXX=/usr/local/gcc/bin/g++-7.5'
-      11: 'CC=/usr/local/gcc/bin/gcc-7.5 CXX=/usr/local/gcc/bin/g++-7.5'
 #========================================#
 # Linux Aarch 64bits /w JITSERVER
 #========================================#
