@@ -4518,6 +4518,17 @@ acquireVThreadInspector(J9VMThread *currentThread, jobject thread, BOOLEAN spin)
  */
 void
 releaseVThreadInspector(J9VMThread *currentThread, jobject thread);
+
+/**
+ * @brief Check if the virtual thread is fully mounted. If a virtual thread
+ * is not provided, FALSE is returned.
+ *
+ * @param currentThread current thread
+ * @param vThread the virtual thread
+ * @return TRUE if it is mounted and FALSE if unmounted
+ */
+BOOLEAN
+isVThreadFullyMounted(J9VMThread *currentThread, j9object_t vThread);
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
 /* ---------------- hookableAsync.c ---------------- */

@@ -585,4 +585,17 @@ releaseVThreadInspector(J9VMThread *currentThread, jobject thread)
 		vthreadInspectorCount = J9OBJECT_I64_LOAD(currentThread, threadObj, vm->virtualThreadInspectorCountOffset);
 	}
 }
+
+BOOLEAN
+isVThreadFullyMounted(J9VMThread *currentThread, j9object_t vThread)
+{
+	if (IS_JAVA_LANG_VIRTUALTHREAD(currentThread, vThread)) {
+		/* Return FALSE if a virtual thread is not provided. */
+		return FALSE;
+	}
+
+	j9object_t continuationObj = (j9object_t)J9VMJAVALANGVIRTUALTHREAD_CONT(currentThread, vThread);
+	ContinuationState continuationState = J9VMJDKINTERNALVMCONTINUATION_STATE(currentThread, continuationObj);
+	return VM_ContinuationHelpers::isFullyMounted(continuationState);
+}
 } /* extern "C" */

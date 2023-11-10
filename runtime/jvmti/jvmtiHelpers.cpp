@@ -115,6 +115,7 @@ getVMThread(J9VMThread *currentThread, jthread thread, J9VMThread **vmThreadPtr,
 	BOOLEAN isThreadAlive = FALSE;
 #if JAVA_SPEC_VERSION >= 19
 	BOOLEAN isVirtualThread = FALSE;
+	J9InternalVMFunctions const * const vmfuncs = vm->internalVMFunctions;
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
 	if (NULL == thread) {
@@ -155,14 +156,20 @@ getVMThread(J9VMThread *currentThread, jthread thread, J9VMThread **vmThreadPtr,
 	if (isVirtualThread) {
 		jint vthreadState = 0;
 		j9object_t carrierThread = NULL;
-		vm->internalVMFunctions->acquireVThreadInspector(currentThread, thread, TRUE);
+
+		vmfuncs->acquireVThreadInspector(currentThread, thread, TRUE);
+
 		/* Re-fetch threadObject since acquireVThreadInspector can release and reacquire VM access. */
 		threadObject = J9_JNI_UNWRAP_REFERENCE(thread);
-		vthreadState = J9VMJAVALANGVIRTUALTHREAD_STATE(currentThread, threadObject);
 		carrierThread = (j9object_t)J9VMJAVALANGVIRTUALTHREAD_CARRIERTHREAD(currentThread, threadObject);
-		if (NULL != carrierThread) {
+
+		if ((NULL != carrierThread)
+		&& vmfuncs->isVThreadFullyMounted(currentThread, threadObject)
+		) {
 			targetThread = J9VMJAVALANGTHREAD_THREADREF(currentThread, carrierThread);
 		}
+
+		vthreadState = J9VMJAVALANGVIRTUALTHREAD_STATE(currentThread, threadObject);
 		isThreadAlive = (JVMTI_VTHREAD_STATE_NEW != vthreadState) && (JVMTI_VTHREAD_STATE_TERMINATED != vthreadState);
 	} else
 #endif /* JAVA_SPEC_VERSION >= 19 */
@@ -175,7 +182,7 @@ getVMThread(J9VMThread *currentThread, jthread thread, J9VMThread **vmThreadPtr,
 		if (OMR_ARE_ANY_BITS_SET(flags, J9JVMTI_GETVMTHREAD_ERROR_ON_DEAD_THREAD)) {
 #if JAVA_SPEC_VERSION >= 19
 			if (isVirtualThread) {
-				vm->internalVMFunctions->releaseVThreadInspector(currentThread, thread);
+				vmfuncs->releaseVThreadInspector(currentThread, thread);
 			}
 #endif /* JAVA_SPEC_VERSION >= 19 */
 			omrthread_monitor_exit(vm->vmThreadListMutex);

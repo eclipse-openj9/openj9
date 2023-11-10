@@ -1139,10 +1139,9 @@ resumeThread(J9VMThread *currentThread, jthread thread)
 		J9JavaVM *vm = currentThread->javaVM;
 		j9object_t threadObject = J9_JNI_UNWRAP_REFERENCE(thread);
 		/* The J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND will be cleared only
-		 * if the thread is resumed and it has been mounted
-		 * i.e. threadObject == targetThread->threadObject.
+		 * if the thread is resumed and it has been mounted.
 		 */
-		if ((NULL != targetThread) && (threadObject == targetThread->threadObject))
+		if (NULL != targetThread)
 #endif /* JAVA_SPEC_VERSION >= 19 */
 		{
 			if (OMR_ARE_ANY_BITS_SET(targetThread->publicFlags, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND)) {
@@ -1341,12 +1340,17 @@ jvmtiSuspendResumeCallBack(J9VMThread *vmThread, J9MM_IterateObjectDescriptor *o
 			J9JavaVM *vm = vmThread->javaVM;
 			J9VMThread *targetThread = NULL;
 			j9object_t carrierThread = (j9object_t)J9VMJAVALANGVIRTUALTHREAD_CARRIERTHREAD(vmThread, vthread);
+			BOOLEAN isFullyMounted = FALSE;
 			if (NULL != carrierThread) {
 				targetThread = J9VMJAVALANGTHREAD_THREADREF(vmThread, carrierThread);
+				if (NULL != targetThread) {
+					isFullyMounted = vm->internalVMFunctions->isVThreadFullyMounted(vmThread, vthread);
+				}
 				Assert_JVMTI_notNull(targetThread);
 			}
 			if (data->is_suspend) {
-				if ((NULL != targetThread) && (vthread == targetThread->threadObject)) {
+				/* Suspend the virtual thread. */
+				if ((NULL != targetThread) && isFullyMounted) {
 					if (OMR_ARE_NO_BITS_SET(targetThread->publicFlags, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND | J9_PUBLIC_FLAGS_STOPPED)) {
 						setHaltFlag(targetThread, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND);
 						Trc_JVMTI_threadSuspended(targetThread);
@@ -1355,7 +1359,7 @@ jvmtiSuspendResumeCallBack(J9VMThread *vmThread, J9MM_IterateObjectDescriptor *o
 				J9OBJECT_U32_STORE(vmThread, vthread, vm->isSuspendedInternalOffset, 1);
 			} else {
 				/* Resume the virtual thread. */
-				if ((NULL != targetThread) && (vthread == targetThread->threadObject)) {
+				if ((NULL != targetThread) && isFullyMounted) {
 					if (OMR_ARE_ANY_BITS_SET(targetThread->publicFlags, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND)) {
 						clearHaltFlag(targetThread, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND);
 						Trc_JVMTI_threadResumed(targetThread);

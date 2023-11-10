@@ -62,7 +62,7 @@ suspendThread(J9VMThread *currentThread, jthread thread, BOOLEAN allowNull, BOOL
 		/* The J9 PUBLIC FLAGS HALT THREAD JAVA SUSPEND flag will be set
 		 * if the thread is mounted.
 		 */
-		if ((NULL != targetThread) && (threadObject == targetThread->threadObject))
+		if (NULL != targetThread)
 #endif /* JAVA_SPEC_VERSION >= 19 */
 		{
 			if (OMR_ARE_ANY_BITS_SET(targetThread->publicFlags, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND)) {
