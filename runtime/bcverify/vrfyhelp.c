@@ -20,6 +20,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
+#include "bcnames.h"
 #include "bcvcfr.h"
 #include "bcverify.h"
 #include "bcverify_internal.h"
@@ -48,6 +49,7 @@ static IDATA findFieldFromRamClass (J9Class ** ramClass, J9ROMFieldRef * field, 
 static IDATA findMethodFromRamClass (J9BytecodeVerificationData * verifyData, J9Class ** ramClass, J9ROMNameAndSignature * method, UDATA firstSearch);
 static VMINLINE UDATA * pushType (J9BytecodeVerificationData *verifyData, U_8 * signature, UDATA * stackTop);
 static IDATA isRAMClassCompatible(J9BytecodeVerificationData *verifyData, U_8* parentClass, UDATA parentLength, U_8* childClass, UDATA childLength, IDATA *reasonCode);
+static IDATA findFieldFromCurrentRomClass(J9ROMClass *romClass, J9ROMFieldRef *field);
 
 J9_DECLARE_CONSTANT_UTF8(j9_vrfy_Object, "java/lang/Object");
 J9_DECLARE_CONSTANT_UTF8(j9_vrfy_String, "java/lang/String");
@@ -896,16 +898,16 @@ j9bcv_createVerifyErrorString(J9PortLibrary * portLib, J9BytecodeVerificationDat
  *			BCV_ERR_INSUFFICIENT_MEMORY :in OOM error case
  */
 IDATA 
-isFieldAccessCompatible(J9BytecodeVerificationData * verifyData, J9ROMFieldRef * fieldRef, UDATA bytecode, UDATA receiver, IDATA *reasonCode)
+isFieldAccessCompatible(J9BytecodeVerificationData *verifyData, J9ROMFieldRef *fieldRef, UDATA bytecode, UDATA receiver, IDATA *reasonCode)
 {
-	J9ROMClass * romClass = verifyData->romClass;
-	J9ROMConstantPoolItem * constantPool = (J9ROMConstantPoolItem *) (romClass + 1);
-	J9UTF8 * utf8string = J9ROMCLASSREF_NAME((J9ROMClassRef *) &constantPool[fieldRef->classRefCPIndex]);
+	J9ROMClass *romClass = verifyData->romClass;
+	J9ROMConstantPoolItem *constantPool = (J9ROMConstantPoolItem *)(romClass + 1);
+	J9UTF8 *utf8string = J9ROMCLASSREF_NAME((J9ROMClassRef *)&constantPool[fieldRef->classRefCPIndex]);
 
 	*reasonCode = 0;
 
-	if (bytecode == 181) {/* JBputfield */
-		if ((receiver & BCV_SPECIAL_INIT) == (UDATA) BCV_SPECIAL_INIT) {
+	if (JBputfield == bytecode) {
+		if (J9_ARE_ALL_BITS_SET(receiver, BCV_SPECIAL_INIT)) {
 			J9UTF8 *classString = ((J9UTF8 *) J9ROMCLASS_CLASSNAME(romClass));
 			if (utf8string != classString) {
 				/* The following test is not necessary if the class name is uniquely referenced in a class */
@@ -913,19 +915,28 @@ isFieldAccessCompatible(J9BytecodeVerificationData * verifyData, J9ROMFieldRef *
 					IDATA i;
 
 					/* Reversed scan typically faster for inequality - most classes share common prefixes */
-					for (i = (IDATA) (J9UTF8_LENGTH(utf8string) - 1); i >= 0; i--) {
+					for (i = (IDATA)(J9UTF8_LENGTH(utf8string) - 1); i >= 0; i--) {
 						if (J9UTF8_DATA(utf8string)[i] != J9UTF8_DATA(classString)[i]) {
 							break;
 						}
 					}
 					/* check for comparison success */
 					if (i < 0) {
-						return (IDATA) TRUE;
+						return (IDATA)TRUE;
 					}
 				}
-				return (IDATA) FALSE;
+				return (IDATA)FALSE;
 			} else {
-				return (IDATA) TRUE;
+				/* According to the explanation at https://bugs.openjdk.org/browse/JDK-8300585,
+				 * the specified field must exist in the current class rather than its superclass
+				 * to avoid allowing a hostile subclass C to modify its superclass's fields before
+				 * the superclass constructor; otherwise, the access to the superclass's field must
+				 * be delayed till the the superclass finishes doing initialization. That being said,
+				 * the field is accessible only when it exists in the subclass or the superclass's
+				 * initialization is completed in which case uninitializedThis is set to FALSE.
+				 */
+				J9BranchTargetStack *liveStack = (J9BranchTargetStack *)verifyData->liveStack;
+				return findFieldFromCurrentRomClass(romClass, fieldRef) || !liveStack->uninitializedThis;
 			}
 		}
 	}
@@ -1217,4 +1228,36 @@ storeVerifyErrorData (J9BytecodeVerificationData * verifyData, I_16 errorDetailC
 	 * info of the detailed error message.
 	 */
 	liveStack->pc =  (UDATA)currentPC;
+}
+
+/**
+ * @brief Determine whether the specified field belongs to the current ROM class.
+ *
+ * @param romClass a pointer to J9ROMClass
+ * @param field a pointer to J9ROMFieldRef
+ * @return TRUE if it exists in the current ROM class
+ *         FALSE when the field doesn't exist
+ */
+static IDATA
+findFieldFromCurrentRomClass(J9ROMClass *romClass, J9ROMFieldRef *field)
+{
+	J9UTF8 *searchName = J9ROMNAMEANDSIGNATURE_NAME(J9ROMFIELDREF_NAMEANDSIGNATURE(field));
+	J9UTF8 *searchSignature = J9ROMNAMEANDSIGNATURE_SIGNATURE(J9ROMFIELDREF_NAMEANDSIGNATURE(field));
+	J9ROMFieldShape *currentField = NULL;
+	J9ROMFieldWalkState state;
+	IDATA isFieldFound = (IDATA)FALSE;
+
+	currentField = romFieldsStartDo(romClass, &state);
+	while (NULL != currentField) {
+		if (J9_ARE_NO_BITS_SET(currentField->modifiers, J9AccStatic)
+			&& compareTwoUTF8s(searchName, J9ROMFIELDSHAPE_NAME(currentField))
+			&& compareTwoUTF8s(searchSignature, J9ROMFIELDSHAPE_SIGNATURE(currentField))
+		) {
+			isFieldFound = (IDATA)TRUE;
+			break;
+		}
+		currentField = romFieldsNextDo(&state);
+	}
+
+	return isFieldFound;
 }
