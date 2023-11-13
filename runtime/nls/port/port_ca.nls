@@ -488,7 +488,7 @@ J9NLS_PORT_SL_BUFFER_EXCEEDED_ERROR.system_action=Shared object is not loaded
 J9NLS_PORT_SL_BUFFER_EXCEEDED_ERROR.user_response=Reduce path length for the target shared object
 # END NON-TRANSLATABLE
 
-J9NLS_PORT_DUMP_PATH_EXISTS=No s'ha pogut crear cap abocament de mem\u00f2ria del sistema perqu\u00e8 hi ha un fitxer no habitual, \"%s\", amb el mateix nom que el fitxer d'abocament de mem\u00f2ria del sistema esperat
+J9NLS_PORT_DUMP_PATH_EXISTS=No s'ha pogut crear cap abocament de mem\u00f2ria del sistema perqu\u00e8 hi ha un fitxer no habitual, "%s", amb el mateix nom que el fitxer d'abocament de mem\u00f2ria del sistema esperat
 # START NON-TRANSLATABLE
 J9NLS_PORT_DUMP_PATH_EXISTS.sample_input_1=/home/user/core
 J9NLS_PORT_DUMP_PATH_EXISTS.explanation=The JVM was unable to produce a system dump because a non-regular file (for example a directory, symbolic link, pipe or socket) exists with the same name as the expected system dump file.
@@ -504,4 +504,12 @@ J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND.sample_input_3=|/usr/lib/systemd/system
 J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND.explanation=/proc/sys/kernel/core_pattern starting with | is used to redirect the core file to tools such as systemd-coredump which processes the core dump, for example to send it to a different directory and manage total core dump disk usage, or to suppress it.
 J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND.system_action=The VM could not find the core dump in the current directory most likely because the external program sent it elsewhere or suppressed it.
 J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND.user_response=Refer to the documentation for the external program specified in /proc/sys/kernel/core_pattern to find the core dump and review the program's configuration to ensure the dump is not truncated.
+# END NON-TRANSLATABLE
+
+J9NLS_PORT_RUNNING_IN_CONTAINER_FAILURE=No s'ha pogut identificar si la JVM s'est\u00e0 executant dins d'un contenidor; missatge d'error: %s.
+# START NON-TRANSLATABLE
+J9NLS_PORT_RUNNING_IN_CONTAINER_FAILURE.sample_input_1=fopen failed to open /proc/1/cgroup file with errno=2
+J9NLS_PORT_RUNNING_IN_CONTAINER_FAILURE.explanation=An error was encountered while evaluating if the JVM is running inside a container.
+J9NLS_PORT_RUNNING_IN_CONTAINER_FAILURE.system_action=The JVM continues, but performance might be impacted if the JVM is running inside a container.
+J9NLS_PORT_RUNNING_IN_CONTAINER_FAILURE.user_response=Take action to resolve the error if performance is impacted inside a container. Otherwise, ignore the error.
 # END NON-TRANSLATABLE

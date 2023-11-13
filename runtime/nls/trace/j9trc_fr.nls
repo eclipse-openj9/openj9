@@ -51,7 +51,7 @@ J9NLS_TRC_UNRECOGNISED_OPTION_STR=Option de trace non reconnue : -Xtrace:%s
 J9NLS_TRC_UNRECOGNISED_OPTION_STR.explanation=An unknown option was used with the -Xtrace parameter.
 J9NLS_TRC_UNRECOGNISED_OPTION_STR.system_action=The JVM ends.
 J9NLS_TRC_UNRECOGNISED_OPTION_STR.user_response=Use -Xtrace:help to find the correct syntax for the -Xtrace options and try again.
-J9NLS_TRC_UNRECOGNISED_OPTION_STR.sample_input_1=-Xtrace:bogus
+J9NLS_TRC_UNRECOGNISED_OPTION_STR.sample_input_1=bogus
 # END NON-TRANSLATABLE
 
 J9NLS_TRC_ERROR_IN_OPTION_STR=Erreur lors du traitement de l'option de trace : -Xtrace:%s
@@ -59,7 +59,7 @@ J9NLS_TRC_ERROR_IN_OPTION_STR=Erreur lors du traitement de l'option de trace : -
 J9NLS_TRC_ERROR_IN_OPTION_STR.explanation=An option used with the -Xtrace parameter could not be processed correctly due to a syntax error.
 J9NLS_TRC_ERROR_IN_OPTION_STR.system_action=The JVM ends.
 J9NLS_TRC_ERROR_IN_OPTION_STR.user_response=Use -Xtrace:help to find the correct syntax for the -Xtrace options and try again.
-J9NLS_TRC_ERROR_IN_OPTION_STR.sample_input_1=-Xtrace:buffers
+J9NLS_TRC_ERROR_IN_OPTION_STR.sample_input_1=buffers
 # END NON-TRANSLATABLE
 
 J9NLS_TRC_ERROR_IN_OPTION_WITH_ARG_STR=Erreur lors du traitement de l'option de trace : -Xtrace:%s=%s
@@ -67,7 +67,8 @@ J9NLS_TRC_ERROR_IN_OPTION_WITH_ARG_STR=Erreur lors du traitement de l'option de 
 J9NLS_TRC_ERROR_IN_OPTION_WITH_ARG_STR.explanation=An option used with the -Xtrace parameter could not be processed correctly due to a problem with the option or the arguments used.
 J9NLS_TRC_ERROR_IN_OPTION_WITH_ARG_STR.system_action=The JVM ends.
 J9NLS_TRC_ERROR_IN_OPTION_WITH_ARG_STR.user_response=Use -Xtrace:help to find the correct syntax for the -Xtrace options and try again.
-J9NLS_TRC_ERROR_IN_OPTION_WITH_ARG_STR.sample_input_1=-Xtrace:buffers=bogus
+J9NLS_TRC_ERROR_IN_OPTION_WITH_ARG_STR.sample_input_1=buffers
+J9NLS_TRC_ERROR_IN_OPTION_WITH_ARG_STR.sample_input_2=bogus
 # END NON-TRANSLATABLE
 
 J9NLS_TRC_ERROR_DETAIL_STR=Erreur lors du traitement de l'option de trace, d\u00e9tail : %s
@@ -75,7 +76,7 @@ J9NLS_TRC_ERROR_DETAIL_STR=Erreur lors du traitement de l'option de trace, d\u00
 J9NLS_TRC_ERROR_DETAIL_STR.explanation=An option used with the -Xtrace parameter could not be processed correctly due to the problem described in the detail string.
 J9NLS_TRC_ERROR_DETAIL_STR.system_action=The JVM ends.
 J9NLS_TRC_ERROR_DETAIL_STR.user_response=Use -Xtrace:help to find the correct syntax for the -Xtrace options and try again.
-J9NLS_TRC_ERROR_DETAIL_STR.sample_input_1=-Xtrace:buffers=bogus
+J9NLS_TRC_ERROR_DETAIL_STR.sample_input_1=Invalid option for -Xtrace:buffers - "bogus"
 # END NON-TRANSLATABLE
 
 J9NLS_TRC_FILE_OPEN_FAIL_STR=Erreur d'ouverture du fichier de trace : %s
@@ -83,7 +84,7 @@ J9NLS_TRC_FILE_OPEN_FAIL_STR=Erreur d'ouverture du fichier de trace : %s
 J9NLS_TRC_FILE_OPEN_FAIL_STR.explanation=The specified trace file could not be opened.
 J9NLS_TRC_FILE_OPEN_FAIL_STR.system_action=The JVM continues but trace data is not written to this file.
 J9NLS_TRC_FILE_OPEN_FAIL_STR.user_response=If you need to collect the trace data, restart the JVM specifying a trace file that can be opened.
-J9NLS_TRC_FILE_OPEN_FAIL_STR.sample_input_1=-Xtrace:output=C:\temp\trace.out
+J9NLS_TRC_FILE_OPEN_FAIL_STR.sample_input_1=C:\temp\trace.out
 # END NON-TRANSLATABLE
 
 J9NLS_TRC_HEADER_WRITE_FAIL_STR=Erreur d'\u00e9criture d'en-t\u00eate dans le fichier de trace : %s
@@ -91,7 +92,7 @@ J9NLS_TRC_HEADER_WRITE_FAIL_STR=Erreur d'\u00e9criture d'en-t\u00eate dans le fi
 J9NLS_TRC_HEADER_WRITE_FAIL_STR.explanation=The specified trace file could not be written to.
 J9NLS_TRC_HEADER_WRITE_FAIL_STR.system_action=The JVM continues but trace data is not written to this file.
 J9NLS_TRC_HEADER_WRITE_FAIL_STR.user_response=If you need to collect the trace data, restart the JVM specifying a trace file that can be opened.
-J9NLS_TRC_HEADER_WRITE_FAIL_STR.sample_input_1=-Xtrace:output=C:\temp\trace.out
+J9NLS_TRC_HEADER_WRITE_FAIL_STR.sample_input_1=C:\temp\trace.out
 # END NON-TRANSLATABLE
 
 J9NLS_TRC_TRACE_WRITE_FAIL_STR=Erreur d'\u00e9criture de %d octets dans le fichier de trace : %s cr : %d
@@ -99,7 +100,9 @@ J9NLS_TRC_TRACE_WRITE_FAIL_STR=Erreur d'\u00e9criture de %d octets dans le fichi
 J9NLS_TRC_TRACE_WRITE_FAIL_STR.explanation=The specified trace file could not be written to.
 J9NLS_TRC_TRACE_WRITE_FAIL_STR.system_action=The JVM continues but trace data is not written to this file.
 J9NLS_TRC_TRACE_WRITE_FAIL_STR.user_response=If you need to collect the trace data, restart the JVM specifying a trace file that can be opened.
-J9NLS_TRC_TRACE_WRITE_FAIL_STR.sample_input_1=-Xtrace:output=C:\temp\trace.out
+J9NLS_TRC_TRACE_WRITE_FAIL_STR.sample_input_1=5432
+J9NLS_TRC_TRACE_WRITE_FAIL_STR.sample_input_2=C:\temp\trace.out
+J9NLS_TRC_TRACE_WRITE_FAIL_STR.sample_input_3=-12
 # END NON-TRANSLATABLE
 
 J9NLS_TRC_NEXT_GEN_FILE_OPEN_FAIL_STR=Erreur d'ouverture de la prochaine g\u00e9n\u00e9ration de fichier de trace : %s
@@ -115,7 +118,7 @@ J9NLS_TRC_FILE_SEEK_FAIL_STR=Erreur lors de la recherche dans le fichier de trac
 J9NLS_TRC_FILE_SEEK_FAIL_STR.explanation=The JVM could not find an expected location in the specified trace file.
 J9NLS_TRC_FILE_SEEK_FAIL_STR.system_action=The JVM continues but trace data is not written to this file.
 J9NLS_TRC_FILE_SEEK_FAIL_STR.user_response=If you need to collect the trace data, restart the JVM specifying a trace file that can be opened.
-J9NLS_TRC_FILE_SEEK_FAIL_STR.sample_input_1=-Xtrace:output={C:\temp\trace.out}
+J9NLS_TRC_FILE_SEEK_FAIL_STR.sample_input_1=C:\temp\trace.out
 # END NON-TRANSLATABLE
 
 J9NLS_TRC_SNAP_WRITE_FAIL=Erreur d'\u00e9criture dans le fichier snap
@@ -123,7 +126,6 @@ J9NLS_TRC_SNAP_WRITE_FAIL=Erreur d'\u00e9criture dans le fichier snap
 J9NLS_TRC_SNAP_WRITE_FAIL.explanation=The JVM could not write trace data to a snap file while the JVM was running.
 J9NLS_TRC_SNAP_WRITE_FAIL.system_action=The JVM continues but trace data is not written to this file.
 J9NLS_TRC_SNAP_WRITE_FAIL.user_response=If you need to collect the trace data, restart the JVM specifying a trace file that can be opened.
-J9NLS_TRC_SNAP_WRITE_FAIL.sample_input_1=
 # END NON-TRANSLATABLE
 
 J9NLS_TRC_NODYNAMIC_FALLBACK=Incident d'allocation de m\u00e9moire native ; reprise des param\u00e8tres de trace nodynamic.
@@ -131,7 +133,6 @@ J9NLS_TRC_NODYNAMIC_FALLBACK=Incident d'allocation de m\u00e9moire native ; repr
 J9NLS_TRC_NODYNAMIC_FALLBACK.explanation=The JVM could not allocate space for another trace buffer.
 J9NLS_TRC_NODYNAMIC_FALLBACK.system_action=The JVM continues but trace reuses existing buffers. Trace points that are not written to disk before a new buffer is required might be lost.
 J9NLS_TRC_NODYNAMIC_FALLBACK.user_response=No action is required. However, to reduce the amount of trace points produced, change the trace options.
-J9NLS_TRC_NODYNAMIC_FALLBACK.sample_input_1=
 # END NON-TRANSLATABLE
 
 J9NLS_TRC_MODULE_NOT_LOADED=Module non configur\u00e9 pour la trace : %s
@@ -139,7 +140,7 @@ J9NLS_TRC_MODULE_NOT_LOADED=Module non configur\u00e9 pour la trace : %s
 J9NLS_TRC_MODULE_NOT_LOADED.explanation=The JVM could not configure trace for the specified module, typically due to a native out of memory situation.
 J9NLS_TRC_MODULE_NOT_LOADED.system_action=The JVM continues but there is no trace data generated for this module.
 J9NLS_TRC_MODULE_NOT_LOADED.user_response=Contact your service representative. You might need to obtain additional information by running with -Xtrace:debug=<n>.
-J9NLS_TRC_MODULE_NOT_LOADED.sample_input_1=
+J9NLS_TRC_MODULE_NOT_LOADED.sample_input_1=j9vm
 # END NON-TRANSLATABLE
 
 J9NLS_TRC_COUNTER_FILE_NOT_OPENED=Impossible d'ouvrir le fichier de compteur de trace %s ; compteurs redirig\u00e9s vers stderr.
@@ -147,7 +148,7 @@ J9NLS_TRC_COUNTER_FILE_NOT_OPENED=Impossible d'ouvrir le fichier de compteur de 
 J9NLS_TRC_COUNTER_FILE_NOT_OPENED.explanation=The JVM could not open the specified file for the trace point counts at shutdown.
 J9NLS_TRC_COUNTER_FILE_NOT_OPENED.system_action=The JVM writes the counter information to stderr at shutdown.
 J9NLS_TRC_COUNTER_FILE_NOT_OPENED.user_response=If you need to collect the trace data, restart the JVM specifying a trace file that can be written to.
-J9NLS_TRC_COUNTER_FILE_NOT_OPENED.sample_input_1=-Xtrace:count
+J9NLS_TRC_COUNTER_FILE_NOT_OPENED.sample_input_1=C:\temp\count.out
 # END NON-TRANSLATABLE
 
 J9NLS_TRC_COUNTER_BEING_WRITTEN=Consignation des informations de comptage de trace dans %s
@@ -155,7 +156,7 @@ J9NLS_TRC_COUNTER_BEING_WRITTEN=Consignation des informations de comptage de tra
 J9NLS_TRC_COUNTER_BEING_WRITTEN.explanation=The JVM is writing trace counter information to the specified location at shutdown.
 J9NLS_TRC_COUNTER_BEING_WRITTEN.system_action=The JVM writes the counter information to that location at shutdown.
 J9NLS_TRC_COUNTER_BEING_WRITTEN.user_response=No action required. This message is for information only.
-J9NLS_TRC_COUNTER_BEING_WRITTEN.sample_input_1=
+J9NLS_TRC_COUNTER_BEING_WRITTEN.sample_input_1=utTrcCounters
 # END NON-TRANSLATABLE
 
 J9NLS_TRC_TRACE_INIT_FAILED=Echec de l'initialisation du moteur de trace ; trace non activ\u00e9e
@@ -163,7 +164,6 @@ J9NLS_TRC_TRACE_INIT_FAILED=Echec de l'initialisation du moteur de trace ; trace
 J9NLS_TRC_TRACE_INIT_FAILED.explanation=The JVM cannot start the trace engine.
 J9NLS_TRC_TRACE_INIT_FAILED.system_action=The JVM ends.
 J9NLS_TRC_TRACE_INIT_FAILED.user_response=Contact your service representative. You might need to obtain additional information by running with -Xtrace:debug=<n>.
-J9NLS_TRC_TRACE_INIT_FAILED.sample_input_1=
 # END NON-TRANSLATABLE
 
 J9NLS_TRC_REGISTER_SUBSCRIBER_FAILED=Erreur d'enregistrement de l'abonn\u00e9 d'\u00e9criture de trace
@@ -171,7 +171,6 @@ J9NLS_TRC_REGISTER_SUBSCRIBER_FAILED=Erreur d'enregistrement de l'abonn\u00e9 d'
 J9NLS_TRC_REGISTER_SUBSCRIBER_FAILED.explanation=The JVM cannot start the trace subscriber thread that writes trace buffers to disk.
 J9NLS_TRC_REGISTER_SUBSCRIBER_FAILED.system_action=The JVM continues but trace data is not written to disk.
 J9NLS_TRC_REGISTER_SUBSCRIBER_FAILED.user_response=Contact your service representative. You might need to obtain additional information by running with -Xtrace:debug=<n>.
-J9NLS_TRC_REGISTER_SUBSCRIBER_FAILED.sample_input_1=
 # END NON-TRANSLATABLE
 
 J9NLS_TRC_RAS_GLOBAL_STORAGE=Stockage pour RasGlobalStorage non disponible ; trace non activ\u00e9e
@@ -179,7 +178,6 @@ J9NLS_TRC_RAS_GLOBAL_STORAGE=Stockage pour RasGlobalStorage non disponible ; tra
 J9NLS_TRC_RAS_GLOBAL_STORAGE.explanation=The JVM could not initialize.
 J9NLS_TRC_RAS_GLOBAL_STORAGE.system_action=The JVM ends.
 J9NLS_TRC_RAS_GLOBAL_STORAGE.user_response=Contact your service representative.
-J9NLS_TRC_RAS_GLOBAL_STORAGE.sample_input_1=
 # END NON-TRANSLATABLE
 
 J9NLS_TRC_RAS_TLS_ALLOC_FAILED=Impossible d'allouer une cl\u00e9 de m\u00e9moire locale d'unit\u00e9 d'ex\u00e9cution RAS
@@ -187,7 +185,6 @@ J9NLS_TRC_RAS_TLS_ALLOC_FAILED=Impossible d'allouer une cl\u00e9 de m\u00e9moire
 J9NLS_TRC_RAS_TLS_ALLOC_FAILED.explanation=The JVM could not initialize.
 J9NLS_TRC_RAS_TLS_ALLOC_FAILED.system_action=The JVM ends.
 J9NLS_TRC_RAS_TLS_ALLOC_FAILED.user_response=Contact your service representative.
-J9NLS_TRC_RAS_TLS_ALLOC_FAILED.sample_input_1=
 # END NON-TRANSLATABLE
 
 J9NLS_TRC_UTE_TLS_ALLC_FAILED=Impossible d'allouer une cl\u00e9 de m\u00e9moire locale d'unit\u00e9 d'ex\u00e9cution UTE
@@ -195,7 +192,6 @@ J9NLS_TRC_UTE_TLS_ALLC_FAILED=Impossible d'allouer une cl\u00e9 de m\u00e9moire 
 J9NLS_TRC_UTE_TLS_ALLC_FAILED.explanation=The JVM could not initialize.
 J9NLS_TRC_UTE_TLS_ALLC_FAILED.system_action=The JVM ends.
 J9NLS_TRC_UTE_TLS_ALLC_FAILED.user_response=Contact your service representative.
-J9NLS_TRC_UTE_TLS_ALLC_FAILED.sample_input_1=
 # END NON-TRANSLATABLE
 
 J9NLS_TRC_TRACE_INIT_FAILED_RC=Initialisation incorrecte du moteur de trace ; CR = %d
@@ -203,7 +199,7 @@ J9NLS_TRC_TRACE_INIT_FAILED_RC=Initialisation incorrecte du moteur de trace ; CR
 J9NLS_TRC_TRACE_INIT_FAILED_RC.explanation=The JVM could not initialize.
 J9NLS_TRC_TRACE_INIT_FAILED_RC.system_action=The JVM ends.
 J9NLS_TRC_TRACE_INIT_FAILED_RC.user_response=Contact your service representative.
-J9NLS_TRC_TRACE_INIT_FAILED_RC.sample_input_1=
+J9NLS_TRC_TRACE_INIT_FAILED_RC.sample_input_1=-1
 # END NON-TRANSLATABLE
 
 J9NLS_TRC_SHUTDOWN_TIMEOUT=D\u00e9passement du temps imparti lors de l'arr\u00eat du moteur de trace.

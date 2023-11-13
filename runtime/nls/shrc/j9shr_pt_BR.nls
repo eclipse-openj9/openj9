@@ -99,7 +99,7 @@ J9NLS_SHRC_CLCM_CACHE_EXPIRED.system_action=Processing continues.
 J9NLS_SHRC_CLCM_CACHE_EXPIRED.user_response=None required.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CLCM_FAILED_REMOVED=Falha em remover o cache de classe compartilhado \"%s\"
+J9NLS_SHRC_CLCM_FAILED_REMOVED=Falha em remover o cache de classe compartilhado "%s"
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CLCM_FAILED_REMOVED.sample_input_1=myCache
 J9NLS_SHRC_CLCM_FAILED_REMOVED.explanation=It has not been possible to remove the indicated shared class cache.
@@ -126,7 +126,7 @@ J9NLS_SHRC_OSCACHE_SHARED_CACHE_OPENED.system_action=The JVM continues.
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_OPENED.user_response=None required.  This is an information message issued when verbose shared class messages have been requested.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SHARED_CACHE_DESTROYED=O cache compartilhado \"%s\" foi destru\u00eddo
+J9NLS_SHRC_OSCACHE_SHARED_CACHE_DESTROYED=O cache compartilhado "%s" foi destru\u00eddo
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_DESTROYED.sample_input_1=myCache
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_DESTROYED.explanation=This is an information message notifying you that the named shared class cache has been destroyed as requested.
@@ -141,7 +141,7 @@ J9NLS_SHRC_OSCACHE_SHARED_CACHE_OPFAILED.system_action=
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_OPFAILED.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SHARED_CACHE_STILL_ATTACH=N\u00e3o \u00e9 poss\u00edvel remover o cache compartilhado \"%s\", pois ainda h\u00e1 JVMs conectados ao cache
+J9NLS_SHRC_OSCACHE_SHARED_CACHE_STILL_ATTACH=N\u00e3o \u00e9 poss\u00edvel remover o cache compartilhado "%s", pois ainda h\u00e1 JVMs conectados ao cache
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_STILL_ATTACH.sample_input_1=myCache
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_STILL_ATTACH.explanation=You have requested that the system destroy a shared class cache, but a process or processes are still attached to it.
@@ -149,7 +149,7 @@ J9NLS_SHRC_OSCACHE_SHARED_CACHE_STILL_ATTACH.system_action=The JVM terminates, u
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_STILL_ATTACH.user_response=Wait until any other processes using the shared class cache have terminated and then destroy it.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SHARED_CACHE_MEMORY_REMOVE_FAILED=A remo\u00e7\u00e3o de \"%s\" de mem\u00f3ria do cache compartilhado falhou
+J9NLS_SHRC_OSCACHE_SHARED_CACHE_MEMORY_REMOVE_FAILED=A remo\u00e7\u00e3o de "%s" de mem\u00f3ria do cache compartilhado falhou
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_MEMORY_REMOVE_FAILED.sample_input_1=myCache
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_MEMORY_REMOVE_FAILED.explanation=You have requested that the system destroy a shared class cache, but it has not been possible to remove the shared memory associated with the cache.
@@ -328,12 +328,7 @@ J9NLS_SHRC_SHRINIT_INCREMENTAL_UPDATE_DISABLED.system_action=
 J9NLS_SHRC_SHRINIT_INCREMENTAL_UPDATE_DISABLED.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELP_HEADER=Uso:\n\
-\n\
-java -Xshareclasses[:op\u00e7\u00e3o,...]\n\
-\n\
-\ As op\u00e7\u00f5es v\u00e1lidas inclu\u00eddas (com um breve resumo) s\u00e3o:\n\
-\n
+J9NLS_SHRC_SHRINIT_HELP_HEADER=Uso:\n\njava -Xshareclasses[:op\u00e7\u00e3o,...]\n\n As op\u00e7\u00f5es v\u00e1lidas inclu\u00eddas (com um breve resumo) s\u00e3o:\n\n
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELP_HEADER.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELP_HEADER.system_action=
@@ -368,9 +363,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALL.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALL.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_MODIFIEDEQUALS=Ativar compartilhamento de bytecode modificado\n\
-\ \t<modContext> \u00e9 um descritor de usu\u00e1rio que descreve o tipo de modifica\u00e7\u00e3o\n\
-\ \tOs JVMs que usam o mesmo <modContext> devem usar as mesmas modifica\u00e7\u00f5es
+J9NLS_SHRC_SHRINIT_HELPTEXT_MODIFIEDEQUALS=Ativar compartilhamento de bytecode modificado\n \t<modContext> \u00e9 um descritor de usu\u00e1rio que descreve o tipo de modifica\u00e7\u00e3o\n \tOs JVMs que usam o mesmo <modContext> devem usar as mesmas modifica\u00e7\u00f5es
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_MODIFIEDEQUALS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_MODIFIEDEQUALS.system_action=
@@ -461,7 +454,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_NO_INCREMENTAL_UPDATES.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_NO_INCREMENTAL_UPDATES.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_COMMAND_LINE_ERROR=A op\u00e7\u00e3o da linha de comandos \"%s\" n\u00e3o \u00e9 reconhecida
+J9NLS_SHRC_SHRINIT_HELPTEXT_COMMAND_LINE_ERROR=A op\u00e7\u00e3o da linha de comandos "%s" n\u00e3o \u00e9 reconhecida
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_COMMAND_LINE_ERROR.sample_input_1=foo
 J9NLS_SHRC_SHRINIT_HELPTEXT_COMMAND_LINE_ERROR.explanation=NOTISSUED
@@ -567,7 +560,7 @@ J9NLS_SHRC_SHRINIT_INCREMENTAL_DISABLED_INFO.system_action=The JVM continues.
 J9NLS_SHRC_SHRINIT_INCREMENTAL_DISABLED_INFO.user_response=None required.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_REQUIRES_SUBOPTION=A op\u00e7\u00e3o da linha de comandos \"%s\" requer a subop\u00e7\u00e3o
+J9NLS_SHRC_SHRINIT_REQUIRES_SUBOPTION=A op\u00e7\u00e3o da linha de comandos "%s" requer a subop\u00e7\u00e3o
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_REQUIRES_SUBOPTION.sample_input_1=name=
 J9NLS_SHRC_SHRINIT_REQUIRES_SUBOPTION.explanation=The specified command-line option requires further information.
@@ -575,7 +568,7 @@ J9NLS_SHRC_SHRINIT_REQUIRES_SUBOPTION.system_action=The JVM terminates, unless y
 J9NLS_SHRC_SHRINIT_REQUIRES_SUBOPTION.user_response=Specify the additional information required for the command-line option and rerun.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_OPTION_UNRECOGNISED=A op\u00e7\u00e3o da linha de comandos \"%s\" n\u00e3o \u00e9 reconhecida
+J9NLS_SHRC_SHRINIT_OPTION_UNRECOGNISED=A op\u00e7\u00e3o da linha de comandos "%s" n\u00e3o \u00e9 reconhecida
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_OPTION_UNRECOGNISED.sample_input_1=foo
 J9NLS_SHRC_SHRINIT_OPTION_UNRECOGNISED.explanation=The specified command-line option is not recognised.
@@ -620,8 +613,7 @@ J9NLS_SHRC_SHRINIT_FINDING_VERBOSE_MSG.user_response=
 # END NON-TRANSLATABLE
 
 # From: ClasspathManagerImpl2.cpp
-J9NLS_SHRC_CMI_FAILED_CREATE_LINKEDLISTIMPL=Falha ao criar o conjunto linkedListImpl em \
-SH_ClasspathManagerImpl2
+J9NLS_SHRC_CMI_FAILED_CREATE_LINKEDLISTIMPL=Falha ao criar o conjunto linkedListImpl em SH_ClasspathManagerImpl2
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CMI_FAILED_CREATE_LINKEDLISTIMPL.explanation=The system is unable to obtain sufficient native memory to allocate internal data structures.
 J9NLS_SHRC_CMI_FAILED_CREATE_LINKEDLISTIMPL.system_action=The JVM fails to complete operation of finding or storing classpath in shared class cache.
@@ -756,7 +748,7 @@ J9NLS_SHRC_CM_FAILED_MARKSTALE_ATTEMPTS.system_action=The JVM terminates, unless
 J9NLS_SHRC_CM_FAILED_MARKSTALE_ATTEMPTS.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_WARN_FULL_CACHE=O cache compartilhado \"%s\" est\u00e1 completo. Utilize -Xscmx para configurar o tamanho do cache.
+J9NLS_SHRC_CM_WARN_FULL_CACHE=O cache compartilhado "%s" est\u00e1 completo. Utilize -Xscmx para configurar o tamanho do cache.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_WARN_FULL_CACHE.sample_input_1=myCache
 J9NLS_SHRC_CM_WARN_FULL_CACHE.explanation=The named shared class cache is full and no further classes may be added to it.
@@ -764,8 +756,7 @@ J9NLS_SHRC_CM_WARN_FULL_CACHE.system_action=The JVM continues.  The named shared
 J9NLS_SHRC_CM_WARN_FULL_CACHE.user_response=To gain the full benefit of shared classes, delete the named cache and re-create it specifying a larger shared class cache size by the -Xscmx parameter.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_WARN_CORRUPT_CACHE=O cache compartilhado \"%s\" est\u00e1 corrompido. Nenhum novo JVM ser\u00e1 permitido para conex\u00e3o com o cache.\n\
-\ \tAs JVMs existentes podem continuar a funcionar, mas n\u00e3o podem atualizar o cache.
+J9NLS_SHRC_CM_WARN_CORRUPT_CACHE=O cache compartilhado "%s" est\u00e1 corrompido. Nenhum novo JVM ser\u00e1 permitido para conex\u00e3o com o cache.\n \tAs JVMs existentes podem continuar a funcionar, mas n\u00e3o podem atualizar o cache.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_WARN_CORRUPT_CACHE.sample_input_1=myCache
 J9NLS_SHRC_CM_WARN_CORRUPT_CACHE.explanation=The shared class cache named in the message is corrupt.
@@ -773,8 +764,7 @@ J9NLS_SHRC_CM_WARN_CORRUPT_CACHE.system_action=The JVM will attempt to automatic
 J9NLS_SHRC_CM_WARN_CORRUPT_CACHE.user_response=Destroy the shared class cache named in the message and rerun.  If the situation persists, contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_TITLE=\n\
-Estat\u00edsticas atuais para o cache %s: \n
+J9NLS_SHRC_CM_PRINTSTATS_TITLE=\nEstat\u00edsticas atuais para o cache %s: \n
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_TITLE.sample_input_1=myCache
 J9NLS_SHRC_CM_PRINTSTATS_TITLE.explanation=NOTAG
@@ -883,8 +873,7 @@ J9NLS_SHRC_CM_PRINTSTATS_STALE.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_STALE.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_BASEADDRESS=\n\
-endere\u00e7o base              = 0x%p
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_BASEADDRESS=\nendere\u00e7o base              = 0x%p
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_BASEADDRESS.sample_input_1=4263E000
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_BASEADDRESS.explanation=NOTAG
@@ -1113,8 +1102,7 @@ J9NLS_SHRC_RMI_MULTIPLE_ORPHAN.user_response=
 
 #Post-DCUT Additions:
 
-J9NLS_SHRC_RMI_SAFEMODE_HEADER=\n\
-\tROMClass sendo armazenado\tROMClass em cache
+J9NLS_SHRC_RMI_SAFEMODE_HEADER=\n\tROMClass sendo armazenado\tROMClass em cache
 # START NON-TRANSLATABLE
 J9NLS_SHRC_RMI_SAFEMODE_HEADER.explanation=NOTAG
 J9NLS_SHRC_RMI_SAFEMODE_HEADER.system_action=
@@ -1239,8 +1227,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_NONFATAL.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_NONFATAL.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_NAMEEQUALS2=Especifique o nome do cache compartilhado\n\
-\ \t(Use %%g para substituir nome do grupo e %%u para nome do usu\u00e1rio)
+J9NLS_SHRC_SHRINIT_HELPTEXT_NAMEEQUALS2=Especifique o nome do cache compartilhado\n \t(Use %%g para substituir nome do grupo e %%u para nome do usu\u00e1rio)
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_NAMEEQUALS2.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_NAMEEQUALS2.system_action=
@@ -1270,9 +1257,7 @@ J9NLS_SHRC_SHRINIT_FAILURE_COPYING_GROUPNAME.system_action=The JVM terminates, u
 J9NLS_SHRC_SHRINIT_FAILURE_COPYING_GROUPNAME.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SIZE_CHANGED=N\u00e3o \u00e9 poss\u00edvel alocar %1$d bytes de mem\u00f3ria compartilhada solicitada \n\
-\ \tM\u00e1ximo permitido de mem\u00f3ria compartilhada alocado com \u00eaxito (%2$d bytes) \n\
-\ \t(Para aumentar a mem\u00f3ria compartilhada dispon\u00edvel, modifique o valor SHMMAX do sistema)
+J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SIZE_CHANGED=N\u00e3o \u00e9 poss\u00edvel alocar %1$d bytes de mem\u00f3ria compartilhada solicitada \n \tM\u00e1ximo permitido de mem\u00f3ria compartilhada alocado com \u00eaxito (%2$d bytes) \n \t(Para aumentar a mem\u00f3ria compartilhada dispon\u00edvel, modifique o valor SHMMAX do sistema)
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SIZE_CHANGED.sample_input_1=99999999
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SIZE_CHANGED.sample_input_2=99999998
@@ -1281,7 +1266,7 @@ J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SIZE_CHANGED.system_action=The JVM continues.
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SIZE_CHANGED.user_response=If you require a larger cache, destroy this cache, increase the value of SHMMAX and re-create the cache.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SHARED_CACHE_CREATEDA=Cache de classe compartilhada \"%1$s\" criado
+J9NLS_SHRC_OSCACHE_SHARED_CACHE_CREATEDA=Cache de classe compartilhada "%1$s" criado
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_CREATEDA.sample_input_1=myCache
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_CREATEDA.explanation=This message informs you that a shared class cache with the given name has been created.  It is only issued if verbose shared classes messages have been requested with -Xshareclasses:verbose.
@@ -1289,7 +1274,7 @@ J9NLS_SHRC_OSCACHE_SHARED_CACHE_CREATEDA.system_action=The JVM continues.
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_CREATEDA.user_response=No action required, this is an information only message.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SHARED_CACHE_OPENEDA=Cache de classe compartilhada \"%1$s\" aberto
+J9NLS_SHRC_OSCACHE_SHARED_CACHE_OPENEDA=Cache de classe compartilhada "%1$s" aberto
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_OPENEDA.sample_input_1=myCache
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_OPENEDA.explanation=This message informs you that an existing shared class cache with the given name has been opened.  It is only issued if verbose shared classes messages have been requested with -Xshareclasses:verbose.
@@ -1339,7 +1324,7 @@ J9NLS_SHRC_SHRINIT_VERBOSE_HELPER_ENABLED_INFO.system_action=
 J9NLS_SHRC_SHRINIT_VERBOSE_HELPER_ENABLED_INFO.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_ATTACH_SUCCESS=Conectado ao cache \"%1$s\", size=%2$d bytes
+J9NLS_SHRC_OSCACHE_ATTACH_SUCCESS=Conectado ao cache "%1$s", size=%2$d bytes
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_ATTACH_SUCCESS.sample_input_1=myCache
 J9NLS_SHRC_OSCACHE_ATTACH_SUCCESS.sample_input_2=16337376
@@ -1364,8 +1349,7 @@ J9NLS_SHRC_CM_PRINTSHUTDOWNSTATS_READ_STORED.system_action=The JVM continues.
 J9NLS_SHRC_CM_PRINTSHUTDOWNSTATS_READ_STORED.user_response=No action required, this is an information only message.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_MARK_STALE=Altera\u00e7\u00e3o detectada em %2$.*1$s...\n\
-\ \t...%3$d classes armazenadas em cache marcadas como antigas
+J9NLS_SHRC_CM_MARK_STALE=Altera\u00e7\u00e3o detectada em %2$.*1$s...\n \t...%3$d classes armazenadas em cache marcadas como antigas
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_MARK_STALE.sample_input_1=23
 J9NLS_SHRC_CM_MARK_STALE.sample_input_2=java/net/URLClassLoader
@@ -1375,8 +1359,7 @@ J9NLS_SHRC_CM_MARK_STALE.system_action=The JVM continues.
 J9NLS_SHRC_CM_MARK_STALE.user_response=No action required, this is an information only message.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_NAMEEQUALS_WIN=Especifique o nome do cache compartilhado\n\
-\ \t(Use %%u para substituir nome do usu\u00e1rio)
+J9NLS_SHRC_SHRINIT_HELPTEXT_NAMEEQUALS_WIN=Especifique o nome do cache compartilhado\n \t(Use %%u para substituir nome do usu\u00e1rio)
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_NAMEEQUALS_WIN.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_NAMEEQUALS_WIN.system_action=
@@ -1811,9 +1794,7 @@ J9NLS_SHRC_OSCACHE_MMAP_STARTUP_FILEOPEN_ERROR.system_action=The JVM terminates,
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_FILEOPEN_ERROR.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ACQUIREHEADERWRITELOCK_ERROR=Erro ao \
-adquirir bloqueio de grava\u00e7\u00e3o do cabe\u00e7alho de arquivo do cache de classe \
-compartilhado
+J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ACQUIREHEADERWRITELOCK_ERROR=Erro ao adquirir bloqueio de grava\u00e7\u00e3o do cabe\u00e7alho de arquivo do cache de classe compartilhado
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ACQUIREHEADERWRITELOCK_ERROR.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ACQUIREHEADERWRITELOCK_ERROR.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
@@ -2019,7 +2000,7 @@ J9NLS_SHRC_OSCACHE_MMAP_RUNEXITCODE_ERROR_UPDATING_LAST_ATTACHED_TIME.system_act
 J9NLS_SHRC_OSCACHE_MMAP_RUNEXITCODE_ERROR_UPDATING_LAST_ATTACHED_TIME.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_MMAP_DESTROY_SUCCESS=O cache compartilhado persistente \"%1$s\" foi destru\u00eddo
+J9NLS_SHRC_OSCACHE_MMAP_DESTROY_SUCCESS=O cache compartilhado persistente "%1$s" foi destru\u00eddo
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_MMAP_DESTROY_SUCCESS.sample_input_1=myCache
 J9NLS_SHRC_OSCACHE_MMAP_DESTROY_SUCCESS.explanation=This message informs you that you have successfully destroyed the cache named 1$.  This message is only issued if verbose Shared Classes messages have been requested with "-Xshareclasses:verbose".
@@ -2162,7 +2143,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_CACHEDIR.system_action=The JVM looks in the director
 J9NLS_SHRC_SHRINIT_HELPTEXT_CACHEDIR.user_response=None
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_OTHER_PERS_TYPE_CACHE_EXISTS=Para executar o utilit\u00e1rio \"%s\" no cache de classes persistente \"%s\", n\u00e3o utilize a subop\u00e7\u00e3o \"nonpersistent\"
+J9NLS_SHRC_SHRINIT_OTHER_PERS_TYPE_CACHE_EXISTS=Para executar o utilit\u00e1rio "%s" no cache de classes persistente "%s", n\u00e3o utilize a subop\u00e7\u00e3o "nonpersistent"
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_OTHER_PERS_TYPE_CACHE_EXISTS.sample_input_1=myUtility
 J9NLS_SHRC_SHRINIT_OTHER_PERS_TYPE_CACHE_EXISTS.sample_input_2=myCache
@@ -2171,7 +2152,7 @@ J9NLS_SHRC_SHRINIT_OTHER_PERS_TYPE_CACHE_EXISTS.system_action=The JVM exits
 J9NLS_SHRC_SHRINIT_OTHER_PERS_TYPE_CACHE_EXISTS.user_response=Remove nonpersistent suboption
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_OTHER_NONPERS_TYPE_CACHE_EXISTS=Para executar o utilit\u00e1rio \"%s\" em um cache compartilhado n\u00e3o persistente \"%s\", tamb\u00e9m \u00e9 necess\u00e1rio usar a subop\u00e7\u00e3o \"nonpersistent\"
+J9NLS_SHRC_SHRINIT_OTHER_NONPERS_TYPE_CACHE_EXISTS=Para executar o utilit\u00e1rio "%s" em um cache compartilhado n\u00e3o persistente "%s", tamb\u00e9m \u00e9 necess\u00e1rio usar a subop\u00e7\u00e3o "nonpersistent"
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_OTHER_NONPERS_TYPE_CACHE_EXISTS.sample_input_1=myUtility
 J9NLS_SHRC_SHRINIT_OTHER_NONPERS_TYPE_CACHE_EXISTS.sample_input_2=myCache
@@ -2180,7 +2161,7 @@ J9NLS_SHRC_SHRINIT_OTHER_NONPERS_TYPE_CACHE_EXISTS.system_action=The JVM exits
 J9NLS_SHRC_SHRINIT_OTHER_NONPERS_TYPE_CACHE_EXISTS.user_response=Add nonpersistent suboption
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CLCM_NOT_DONE_FOR_CACHE=Observe que o utilit\u00e1rio \"%s\" n\u00e3o pode operar no cache de classes incompat\u00edvel \"%s\". Utilize uma JVM do n\u00edvel correto.
+J9NLS_SHRC_CLCM_NOT_DONE_FOR_CACHE=Observe que o utilit\u00e1rio "%s" n\u00e3o pode operar no cache de classes incompat\u00edvel "%s". Utilize uma JVM do n\u00edvel correto.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CLCM_NOT_DONE_FOR_CACHE.sample_input_1=myUtility
 J9NLS_SHRC_CLCM_NOT_DONE_FOR_CACHE.sample_input_2=myCache
@@ -2330,7 +2311,7 @@ J9NLS_SHRC_COREMMAP_REQUIRED.system_action=The JVM terminates
 J9NLS_SHRC_COREMMAP_REQUIRED.user_response=Set CORE_MMAP or use nonpersistent caches
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_OTHER_PERS_TYPE_CACHE_EXISTS2=Para executar o utilit\u00e1rio \"%s\" no cache de classe persistente \"%s\", use a subop\u00e7\u00e3o \"persistent\"
+J9NLS_SHRC_SHRINIT_OTHER_PERS_TYPE_CACHE_EXISTS2=Para executar o utilit\u00e1rio "%s" no cache de classe persistente "%s", use a subop\u00e7\u00e3o "persistent"
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_OTHER_PERS_TYPE_CACHE_EXISTS2.sample_input_1=myUtility
 J9NLS_SHRC_SHRINIT_OTHER_PERS_TYPE_CACHE_EXISTS2.sample_input_2=myCache
@@ -2339,7 +2320,7 @@ J9NLS_SHRC_SHRINIT_OTHER_PERS_TYPE_CACHE_EXISTS2.system_action=The JVM exits
 J9NLS_SHRC_SHRINIT_OTHER_PERS_TYPE_CACHE_EXISTS2.user_response=Add persistent suboption
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_NESTED_WITHOUT_CACHELETS=O cache de classe compartilhado \"%s\" n\u00e3o foi criado com a op\u00e7\u00e3o aninhada, n\u00e3o \u00e9 poss\u00edvel aumentar o cache
+J9NLS_SHRC_CM_NESTED_WITHOUT_CACHELETS=O cache de classe compartilhado "%s" n\u00e3o foi criado com a op\u00e7\u00e3o aninhada, n\u00e3o \u00e9 poss\u00edvel aumentar o cache
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_NESTED_WITHOUT_CACHELETS.sample_input_1=sharedcc
 J9NLS_SHRC_CM_NESTED_WITHOUT_CACHELETS.explanation=An error has occurred within Shared Classes processing.
@@ -2354,7 +2335,7 @@ J9NLS_SHRC_OSCACHE_NESTED_IN_USE.system_action=The JVM terminates, unless you ha
 J9NLS_SHRC_OSCACHE_NESTED_IN_USE.user_response=Shutdown all the vms using the cache, or remove the nested option from your command-line, and restart.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_NO_CACHE_FOR_HINTS=N\u00e3o \u00e9 poss\u00edvel aumentar o cache aninhado \"%s\", falha ao alocar o novo supercache para sugest\u00f5es
+J9NLS_SHRC_CM_NO_CACHE_FOR_HINTS=N\u00e3o \u00e9 poss\u00edvel aumentar o cache aninhado "%s", falha ao alocar o novo supercache para sugest\u00f5es
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_NO_CACHE_FOR_HINTS.sample_input_1=sharedcc
 J9NLS_SHRC_CM_NO_CACHE_FOR_HINTS.explanation=An error has occurred within Shared Classes processing.
@@ -2362,7 +2343,7 @@ J9NLS_SHRC_CM_NO_CACHE_FOR_HINTS.system_action=The JVM terminates, unless you ha
 J9NLS_SHRC_CM_NO_CACHE_FOR_HINTS.user_response=Verify that the system has enough native resources for the JVM to work properly. If the situation persists, contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_NO_BLOCK_FOR_HINTS=N\u00e3o \u00e9 poss\u00edvel aumentar o cache aninhado \"%s\", falha ao alocar o bloco para sugest\u00f5es
+J9NLS_SHRC_CM_NO_BLOCK_FOR_HINTS=N\u00e3o \u00e9 poss\u00edvel aumentar o cache aninhado "%s", falha ao alocar o bloco para sugest\u00f5es
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_NO_BLOCK_FOR_HINTS.sample_input_1=sharedcc
 J9NLS_SHRC_CM_NO_BLOCK_FOR_HINTS.explanation=An error has occurred within Shared Classes processing.
@@ -2370,7 +2351,7 @@ J9NLS_SHRC_CM_NO_BLOCK_FOR_HINTS.system_action=The JVM terminates, unless you ha
 J9NLS_SHRC_CM_NO_BLOCK_FOR_HINTS.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_COPY_CACHE_FAILURE=Falha ao criar o cache aninhado \"%s\"
+J9NLS_SHRC_CM_COPY_CACHE_FAILURE=Falha ao criar o cache aninhado "%s"
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_COPY_CACHE_FAILURE.sample_input_1=sharedcc
 J9NLS_SHRC_CM_COPY_CACHE_FAILURE.explanation=An error has occurred within Shared Classes processing.
@@ -2378,7 +2359,7 @@ J9NLS_SHRC_CM_COPY_CACHE_FAILURE.system_action=The JVM terminates, unless you ha
 J9NLS_SHRC_CM_COPY_CACHE_FAILURE.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_CACHE_REMOVAL_FAILURE=Falha ao substituir o cache \"%s\"
+J9NLS_SHRC_CM_CACHE_REMOVAL_FAILURE=Falha ao substituir o cache "%s"
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_CACHE_REMOVAL_FAILURE.sample_input_1=sharedcc
 J9NLS_SHRC_CM_CACHE_REMOVAL_FAILURE.explanation=An error has occurred within Shared Classes processing.
@@ -2415,7 +2396,7 @@ J9NLS_SHRC_CM_PRINTSTATS_ROMMETHOD_DISPLAY.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_ROMMETHOD_DISPLAY.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_SERIALIZE_CACHE_FAILURE_AOT_OFFSETS=Falha ao serializar o cache \"%s\". Falha ao atualizar os deslocamentos de Classe ROM em m\u00e9todos AOT.
+J9NLS_SHRC_CM_SERIALIZE_CACHE_FAILURE_AOT_OFFSETS=Falha ao serializar o cache "%s". Falha ao atualizar os deslocamentos de Classe ROM em m\u00e9todos AOT.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_SERIALIZE_CACHE_FAILURE_AOT_OFFSETS.sample_input_1=sharedcc
 J9NLS_SHRC_CM_SERIALIZE_CACHE_FAILURE_AOT_OFFSETS.explanation=An error has occurred within Shared Classes processing while updating ROM Class offsets in AOT methods.
@@ -2423,7 +2404,7 @@ J9NLS_SHRC_CM_SERIALIZE_CACHE_FAILURE_AOT_OFFSETS.system_action=Your cache will 
 J9NLS_SHRC_CM_SERIALIZE_CACHE_FAILURE_AOT_OFFSETS.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_CANT_GROW_READONLY=As op\u00e7\u00f5es \"grow\" e \"readonly\" n\u00e3o podem ser usadas juntas.
+J9NLS_SHRC_SHRINIT_CANT_GROW_READONLY=As op\u00e7\u00f5es "grow" e "readonly" n\u00e3o podem ser usadas juntas.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_CANT_GROW_READONLY.explanation=An invalid combination of command-line options has been specified.
 J9NLS_SHRC_SHRINIT_CANT_GROW_READONLY.system_action=The JVM terminates.
@@ -2986,9 +2967,7 @@ J9NLS_SHRC_CM_PRINTSTATS_ZIPCACHE_DISPLAY.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_ZIPCACHE_DISPLAY.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_SCDMX_GRTHAN_SCMX=O valor do -Xscdmx de %u bytes \u00e9 \
-maior que %u bytes de espa\u00e7o livre dispon\u00edvel. Um valor de %u bytes ser\u00e1 \
-usado para o -Xscdmx.
+J9NLS_SHRC_SHRINIT_SCDMX_GRTHAN_SCMX=O valor do -Xscdmx de %u bytes \u00e9 maior que %u bytes de espa\u00e7o livre dispon\u00edvel. Um valor de %u bytes ser\u00e1 usado para o -Xscdmx.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_SCDMX_GRTHAN_SCMX.explanation=It makes no sense for -Xscdmx to consume the entire cache. There must be room to store classes.
 J9NLS_SHRC_SHRINIT_SCDMX_GRTHAN_SCMX.system_action=The JVM continues
@@ -2998,16 +2977,14 @@ J9NLS_SHRC_SHRINIT_SCDMX_GRTHAN_SCMX.sample_input_3=49152
 J9NLS_SHRC_SHRINIT_SCDMX_GRTHAN_SCMX.user_response=The value has been changed automatically
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELP_OTHEROPTS_HEADER= \n Op\u00e7\u00f5es de linha de comandos \
-relacionadas:\n
+J9NLS_SHRC_SHRINIT_HELP_OTHEROPTS_HEADER= \n Op\u00e7\u00f5es de linha de comandos relacionadas:\n
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELP_OTHEROPTS_HEADER.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELP_OTHEROPTS_HEADER.system_action=
 J9NLS_SHRC_SHRINIT_HELP_OTHEROPTS_HEADER.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_SIZE=Tamanho da \u00e1rea de depura\u00e7\u00e3o da \
-classe               %*c= %u
+J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_SIZE=Tamanho da \u00e1rea de depura\u00e7\u00e3o da classe               %*c= %u
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_SIZE.sample_input_1=0
 J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_SIZE.sample_input_2=
@@ -3017,8 +2994,7 @@ J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_SIZE.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_SIZE.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_USED=\u00c1rea de depura\u00e7\u00e3o da classe %% \
-usada             %*c= %u%%
+J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_USED=\u00c1rea de depura\u00e7\u00e3o da classe %% usada             %*c= %u%%
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_USED.sample_input_1=0
 J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_USED.sample_input_2=
@@ -3029,8 +3005,7 @@ J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_USED.user_response=
 # END NON-TRANSLATABLE
 
 #This NLS message is no longer used for -Xshareclasses:printStats.
-J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_LINENUMBERTABLE_BYTES=Bytes da classe \
-LineNumberTable        %*c= %u
+J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_LINENUMBERTABLE_BYTES=Bytes da classe LineNumberTable        %*c= %u
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_LINENUMBERTABLE_BYTES.sample_input_1=0
 J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_LINENUMBERTABLE_BYTES.sample_input_2=
@@ -3041,8 +3016,7 @@ J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_LINENUMBERTABLE_BYTES.user_response=
 # END NON-TRANSLATABLE
 
 #This NLS message is no longer used for -Xshareclasses:printStats.
-J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_LOCALVARIABLETABLE_BYTES=Bytes da \u00e1rea \
-de depura\u00e7\u00e3o da classe LocalVariableTable %*c= %u\n
+J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_LOCALVARIABLETABLE_BYTES=Bytes da \u00e1rea de depura\u00e7\u00e3o da classe LocalVariableTable %*c= %u\n
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_LOCALVARIABLETABLE_BYTES.sample_input_1=0
 J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_LOCALVARIABLETABLE_BYTES.sample_input_2=
@@ -3052,8 +3026,7 @@ J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_LOCALVARIABLETABLE_BYTES.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_LOCALVARIABLETABLE_BYTES.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_BASEADDRESS_V2=\n endere\u00e7o de base \
-%*c= 0x%p
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_BASEADDRESS_V2=\n endere\u00e7o de base %*c= 0x%p
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_BASEADDRESS_V2.sample_input_1=0
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_BASEADDRESS_V2.sample_input_2=
@@ -3063,8 +3036,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_BASEADDRESS_V2.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_BASEADDRESS_V2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ENDADDRESS_V2=endere\u00e7o final \
-%*c= 0x%p
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ENDADDRESS_V2=endere\u00e7o final %*c= 0x%p
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ENDADDRESS_V2.sample_input_1=0
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ENDADDRESS_V2.sample_input_2=
@@ -3074,8 +3046,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ENDADDRESS_V2.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ENDADDRESS_V2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ALLOCPTR_V2=ponteiro de aloca\u00e7\u00e3o \
-%*c= 0x%p\n
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ALLOCPTR_V2=ponteiro de aloca\u00e7\u00e3o %*c= 0x%p\n
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ALLOCPTR_V2.sample_input_1=0
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ALLOCPTR_V2.sample_input_2=
@@ -3085,8 +3056,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ALLOCPTR_V2.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ALLOCPTR_V2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_CACHESIZE_V2=tamanho do cache \
-%*c= %d
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_CACHESIZE_V2=tamanho do cache %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_CACHESIZE_V2.sample_input_1=0
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_CACHESIZE_V2.sample_input_2=
@@ -3096,8 +3066,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_CACHESIZE_V2.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_CACHESIZE_V2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_FREEBYTES_V2=bytes livres \
-%*c= %d
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_FREEBYTES_V2=bytes livres %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_FREEBYTES_V2.sample_input_1=0
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_FREEBYTES_V2.sample_input_2=
@@ -3107,8 +3076,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_FREEBYTES_V2.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_FREEBYTES_V2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ROMCLASS_BYTES_V2=bytes de ROMClass \
-%*c= %d
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ROMCLASS_BYTES_V2=bytes de ROMClass %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ROMCLASS_BYTES_V2.sample_input_1=0
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ROMCLASS_BYTES_V2.sample_input_2=
@@ -3118,8 +3086,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ROMCLASS_BYTES_V2.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ROMCLASS_BYTES_V2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_META_BYTES_V2=Bytes de metadados \
-%*c= %d
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_META_BYTES_V2=Bytes de metadados %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_META_BYTES_V2.sample_input_1=0
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_META_BYTES_V2.sample_input_2=
@@ -3129,8 +3096,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_META_BYTES_V2.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_META_BYTES_V2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_META_PERCENT_V2=%% metadados usados \
-%*c= %d%%
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_META_PERCENT_V2=%% metadados usados %*c= %d%%
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_META_PERCENT_V2.sample_input_1=0
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_META_PERCENT_V2.sample_input_2=
@@ -3140,8 +3106,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_META_PERCENT_V2.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_META_PERCENT_V2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_ROMCLASSES_V2=# ROMClasses \
-%*c= %d
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_ROMCLASSES_V2=# ROMClasses %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_ROMCLASSES_V2.sample_input_1=0
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_ROMCLASSES_V2.sample_input_2=
@@ -3151,8 +3116,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_ROMCLASSES_V2.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_ROMCLASSES_V2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_CLASSPATHS_V2=# Classpaths \
-%*c= %d
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_CLASSPATHS_V2=# Classpaths %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_CLASSPATHS_V2.sample_input_1=0
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_CLASSPATHS_V2.sample_input_2=
@@ -3162,8 +3126,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_CLASSPATHS_V2.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_CLASSPATHS_V2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_URLS_V2=# URLs \
-%*c= %d
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_URLS_V2=# URLs %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_URLS_V2.sample_input_1=0
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_URLS_V2.sample_input_2=
@@ -3173,8 +3136,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_URLS_V2.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_URLS_V2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_TOKENS_V2=# Tokens \
-%*c= %d
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_TOKENS_V2=# Tokens %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_TOKENS_V2.sample_input_1=0
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_TOKENS_V2.sample_input_2=
@@ -3184,8 +3146,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_TOKENS_V2.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_TOKENS_V2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_STALE_CLASSES_V2=# Classes antigas \
-%*c= %d
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_STALE_CLASSES_V2=# Classes antigas %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_STALE_CLASSES_V2.sample_input_1=0
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_STALE_CLASSES_V2.sample_input_2=
@@ -3195,8 +3156,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_STALE_CLASSES_V2.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_STALE_CLASSES_V2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_PERC_STALE_CLASSES_V2=%% Classes antigas \
-%*c= %d%%\n
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_PERC_STALE_CLASSES_V2=%% Classes antigas %*c= %d%%\n
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_PERC_STALE_CLASSES_V2.sample_input_1=0
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_PERC_STALE_CLASSES_V2.sample_input_2=
@@ -3206,8 +3166,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_PERC_STALE_CLASSES_V2.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_PERC_STALE_CLASSES_V2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_BYTES_V2=Bytes de AOT \
-%*c= %d
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_BYTES_V2=Bytes de AOT %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_BYTES_V2.sample_input_1=0
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_BYTES_V2.sample_input_2=
@@ -3217,8 +3176,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_BYTES_V2.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_BYTES_V2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_AOT_V2=# M\u00e9todos de AOT \
-%*c= %d
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_AOT_V2=# M\u00e9todos de AOT %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_AOT_V2.sample_input_1=0
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_AOT_V2.sample_input_2=
@@ -3228,8 +3186,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_AOT_V2.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_AOT_V2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_DATA_BYTES_V2=Bytes de dados \
-%*c= %d
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_DATA_BYTES_V2=Bytes de dados %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_DATA_BYTES_V2.sample_input_1=0
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_DATA_BYTES_V2.sample_input_2=
@@ -3239,8 +3196,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_DATA_BYTES_V2.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_DATA_BYTES_V2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ZIP_CACHE_DATA_BYTES_V2=Bytes de cache de \
-Zip                     %*c= %d
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ZIP_CACHE_DATA_BYTES_V2=Bytes de cache de Zip                     %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ZIP_CACHE_DATA_BYTES_V2.sample_input_1=0
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ZIP_CACHE_DATA_BYTES_V2.sample_input_2=
@@ -3250,8 +3206,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ZIP_CACHE_DATA_BYTES_V2.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ZIP_CACHE_DATA_BYTES_V2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_ZIP_CACHES_V2=# Caches de Zip \
-%*c= %d
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_ZIP_CACHES_V2=# Caches de Zip %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_ZIP_CACHES_V2.sample_input_1=0
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_ZIP_CACHES_V2.sample_input_2=
@@ -3261,8 +3216,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_ZIP_CACHES_V2.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_ZIP_CACHES_V2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JIT_DATA_BYTES_V2=Bytes de dados de JIT \
-%*c= %d
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JIT_DATA_BYTES_V2=Bytes de dados de JIT %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JIT_DATA_BYTES_V2.sample_input_1=0
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JIT_DATA_BYTES_V2.sample_input_2=
@@ -3272,8 +3226,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JIT_DATA_BYTES_V2.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JIT_DATA_BYTES_V2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_USED_BYTES=Bytes usados da \u00e1rea de \
-depura\u00e7\u00e3o da classe         %*c= %u
+J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_USED_BYTES=Bytes usados da \u00e1rea de depura\u00e7\u00e3o da classe         %*c= %u
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_USED_BYTES.sample_input_1=0
 J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_USED_BYTES.sample_input_2=
@@ -3283,24 +3236,21 @@ J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_USED_BYTES.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_USED_BYTES.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_GETCACHEDIR_FAILED=Falha ao obter um diret\u00f3rio para o \
-cache
+J9NLS_SHRC_OSCACHE_GETCACHEDIR_FAILED=Falha ao obter um diret\u00f3rio para o cache
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_GETCACHEDIR_FAILED.explanation=The directory path requested is bigger than the internal buffer space
 J9NLS_SHRC_OSCACHE_GETCACHEDIR_FAILED.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_GETCACHEDIR_FAILED.user_response=Please try to use a shorter path or cache name.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_CREATECACHEDIR_FAILED=Falha ao criar um diret\u00f3rio para \
-o cache
+J9NLS_SHRC_OSCACHE_CREATECACHEDIR_FAILED=Falha ao criar um diret\u00f3rio para o cache
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_CREATECACHEDIR_FAILED.explanation=The directory specified for the shared cache could not be created
 J9NLS_SHRC_OSCACHE_CREATECACHEDIR_FAILED.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_CREATECACHEDIR_FAILED.user_response=Make sure you have the right permissions for the controldir or cachedir chosen.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_METADATA_STARTADDRESS=endere\u00e7o de in\u00edcio \
-dos metadados              %*c= 0x%p
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_METADATA_STARTADDRESS=endere\u00e7o de in\u00edcio dos metadados              %*c= 0x%p
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_METADATA_STARTADDRESS.sample_input_1=0
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_METADATA_STARTADDRESS.sample_input_2=
@@ -3310,8 +3260,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_METADATA_STARTADDRESS.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_METADATA_STARTADDRESS.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_RUNTIME_FLAGS=sinalizadores de tempo de execu\u00e7\u00e3o \
-%*.c= 0x%.16llX
+J9NLS_SHRC_CM_PRINTSTATS_RUNTIME_FLAGS=sinalizadores de tempo de execu\u00e7\u00e3o %*.c= 0x%.16llX
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_RUNTIME_FLAGS.sample_input_1=0
 J9NLS_SHRC_CM_PRINTSTATS_RUNTIME_FLAGS.sample_input_2=
@@ -3321,8 +3270,7 @@ J9NLS_SHRC_CM_PRINTSTATS_RUNTIME_FLAGS.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_RUNTIME_FLAGS.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_CACHE_GEN=gera\u00e7\u00e3o de cache \
-%*.c= %d\n
+J9NLS_SHRC_CM_PRINTSTATS_CACHE_GEN=gera\u00e7\u00e3o de cache %*.c= %d\n
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_CACHE_GEN.sample_input_1=0
 J9NLS_SHRC_CM_PRINTSTATS_CACHE_GEN.sample_input_2=
@@ -3332,8 +3280,7 @@ J9NLS_SHRC_CM_PRINTSTATS_CACHE_GEN.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_CACHE_GEN.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_CODE_BYTES=Bytes de c\u00f3digo de AOT \
-%*c= %d
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_CODE_BYTES=Bytes de c\u00f3digo de AOT %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_CODE_BYTES.sample_input_1=0
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_CODE_BYTES.sample_input_2=
@@ -3343,8 +3290,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_CODE_BYTES.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_CODE_BYTES.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_DATA_BYTES=Bytes de dados de AOT \
-%*c= %d
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_DATA_BYTES=Bytes de dados de AOT %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_DATA_BYTES.sample_input_1=0
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_DATA_BYTES.sample_input_2=
@@ -3354,8 +3300,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_DATA_BYTES.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_DATA_BYTES.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_CLASS_HIERARCHY_BYTES=Bytes de \
-hierarquia de classes de AOT                       %*c= %d
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_CLASS_HIERARCHY_BYTES=Bytes de hierarquia de classes de AOT                       %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_CLASS_HIERARCHY_BYTES.sample_input_1=0
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_CLASS_HIERARCHY_BYTES.sample_input_2=
@@ -3365,8 +3310,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_CLASS_HIERARCHY_BYTES.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_CLASS_HIERARCHY_BYTES.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_THUNK_BYTES=Bytes de thunk de AOT \
-%*c= %d
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_THUNK_BYTES=Bytes de thunk de AOT %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_THUNK_BYTES.sample_input_1=0
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_THUNK_BYTES.sample_input_2=
@@ -3376,8 +3320,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_THUNK_BYTES.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_THUNK_BYTES.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JIT_HINT_BYTES=Bytes de sugest\u00e3o de JIT \
-%*c= %d
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JIT_HINT_BYTES=Bytes de sugest\u00e3o de JIT %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JIT_HINT_BYTES.sample_input_1=0
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JIT_HINT_BYTES.sample_input_2=
@@ -3387,8 +3330,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JIT_HINT_BYTES.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JIT_HINT_BYTES.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JIT_PROFILE_BYTES=Bytes de perfil de JIT \
-%*c= %d
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JIT_PROFILE_BYTES=Bytes de perfil de JIT %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JIT_PROFILE_BYTES.sample_input_1=0
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JIT_PROFILE_BYTES.sample_input_2=
@@ -3398,8 +3340,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JIT_PROFILE_BYTES.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JIT_PROFILE_BYTES.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JAVA_OBJECT_BYTES=Bytes de Objeto Java \
-%*c= %d
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JAVA_OBJECT_BYTES=Bytes de Objeto Java %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JAVA_OBJECT_BYTES.sample_input_1=0
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JAVA_OBJECT_BYTES.sample_input_2=
@@ -3409,8 +3350,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JAVA_OBJECT_BYTES.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JAVA_OBJECT_BYTES.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_READWRITE_BYTES=Bytes de ReadWrite \
-%*c= %d
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_READWRITE_BYTES=Bytes de ReadWrite %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_READWRITE_BYTES.sample_input_1=0
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_READWRITE_BYTES.sample_input_2=
@@ -3420,8 +3360,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_READWRITE_BYTES.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_READWRITE_BYTES.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JCL_DATA_BYTES=Bytes de dados de JCL \
-%*c= %d
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JCL_DATA_BYTES=Bytes de dados de JCL %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JCL_DATA_BYTES.sample_input_1=0
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JCL_DATA_BYTES.sample_input_2=
@@ -3431,8 +3370,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JCL_DATA_BYTES.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JCL_DATA_BYTES.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_BYTE_DATA_BYTES=Bytes de dados de byte \
-%*c= %d
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_BYTE_DATA_BYTES=Bytes de dados de byte %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_BYTE_DATA_BYTES.sample_input_1=0
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_BYTE_DATA_BYTES.sample_input_2=
@@ -3442,8 +3380,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_BYTE_DATA_BYTES.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_BYTE_DATA_BYTES.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_LOCALVARIABLETABLE_BYTES_V2=Bytes da \
-classe LocalVariableTable      %*c= %u
+J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_LOCALVARIABLETABLE_BYTES_V2=Bytes da classe LocalVariableTable      %*c= %u
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_LOCALVARIABLETABLE_BYTES_V2.sample_input_1=0
 J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_LOCALVARIABLETABLE_BYTES_V2.sample_input_2=
@@ -3453,8 +3390,7 @@ J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_LOCALVARIABLETABLE_BYTES_V2.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_LOCALVARIABLETABLE_BYTES_V2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_AOT_DATA=# Entradas de Dados de AOT \
-%*c= %d
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_AOT_DATA=# Entradas de Dados de AOT %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_AOT_DATA.sample_input_1=0
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_AOT_DATA.sample_input_2=
@@ -3464,8 +3400,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_AOT_DATA.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_AOT_DATA.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_AOT_CLASS_HIERARCHY=# Hierarquia de \
-Classe de AOT               %*c= %d
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_AOT_CLASS_HIERARCHY=# Hierarquia de Classe de AOT               %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_AOT_CLASS_HIERARCHY.sample_input_1=0
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_AOT_CLASS_HIERARCHY.sample_input_2=
@@ -3475,8 +3410,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_AOT_CLASS_HIERARCHY.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_AOT_CLASS_HIERARCHY.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_AOT_THUNKS=# Thunks de AOT \
-%*c= %d
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_AOT_THUNKS=# Thunks de AOT %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_AOT_THUNKS.sample_input_1=0
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_AOT_THUNKS.sample_input_2=
@@ -3486,8 +3420,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_AOT_THUNKS.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_AOT_THUNKS.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_JIT_HINTS=# Hints de JIT \
-%*c= %d
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_JIT_HINTS=# Hints de JIT %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_JIT_HINTS.sample_input_1=0
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_JIT_HINTS.sample_input_2=
@@ -3497,8 +3430,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_JIT_HINTS.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_JIT_HINTS.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_JIT_PROFILES=# Perfis de JIT \
-%*c= %d
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_JIT_PROFILES=# Perfis de JIT %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_JIT_PROFILES.sample_input_1=0
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_JIT_PROFILES.sample_input_2=
@@ -3508,8 +3440,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_JIT_PROFILES.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_JIT_PROFILES.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_JAVA_OBJECTS=# Objetos Java \
-%*c= %d
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_JAVA_OBJECTS=# Objetos Java %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_JAVA_OBJECTS.sample_input_1=0
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_JAVA_OBJECTS.sample_input_2=
@@ -3519,8 +3450,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_JAVA_OBJECTS.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_JAVA_OBJECTS.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_JCL_ENTRIES=# Entradas de JCL \
-%*c= %d
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_JCL_ENTRIES=# Entradas de JCL %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_JCL_ENTRIES.sample_input_1=0
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_JCL_ENTRIES.sample_input_2=
@@ -3530,16 +3460,14 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_JCL_ENTRIES.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_JCL_ENTRIES.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTDETAILS=Modificador usado para imprimir \
-as estat\u00edsticas de cache detalhadas
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTDETAILS=Modificador usado para imprimir as estat\u00edsticas de cache detalhadas
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTDETAILS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTDETAILS.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTDETAILS.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CLCM_REMOVED_OLDER_GEN=Removida a gera\u00e7\u00e3o mais antiga do cache \
-de classe compartilhado \"%s\"
+J9NLS_SHRC_CLCM_REMOVED_OLDER_GEN=Removida a gera\u00e7\u00e3o mais antiga do cache de classe compartilhado "%s"
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CLCM_REMOVED_OLDER_GEN.sample_input_1=myCache
 J9NLS_SHRC_CLCM_REMOVED_OLDER_GEN.explanation=Successfully removed older generation of indicated shared class cache.
@@ -3547,8 +3475,7 @@ J9NLS_SHRC_CLCM_REMOVED_OLDER_GEN.system_action=Processing continues.
 J9NLS_SHRC_CLCM_REMOVED_OLDER_GEN.user_response=None required.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CLCM_FAILED_REMOVED_OLDER_GEN=Falha ao remover a gera\u00e7\u00e3o mais \
-antiga do cache de classe compartilhado \"%s\"
+J9NLS_SHRC_CLCM_FAILED_REMOVED_OLDER_GEN=Falha ao remover a gera\u00e7\u00e3o mais antiga do cache de classe compartilhado "%s"
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CLCM_FAILED_REMOVED_OLDER_GEN.sample_input_1=myCache
 J9NLS_SHRC_CLCM_FAILED_REMOVED_OLDER_GEN.explanation=It has not been possible to remove the older generation of indicated shared class cache.
@@ -3556,8 +3483,7 @@ J9NLS_SHRC_CLCM_FAILED_REMOVED_OLDER_GEN.system_action=Processing continues.
 J9NLS_SHRC_CLCM_FAILED_REMOVED_OLDER_GEN.user_response=Run with -Xshareclasses:verbose enabled to see other messages that may indicate the reason why the cache has not been destroyed.  Investigate these messages.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CLCM_FAILED_REMOVED_CURRENT_GEN=Falha ao remover a gera\u00e7\u00e3o \
-atual do cache de classe compartilhado\"%s\"
+J9NLS_SHRC_CLCM_FAILED_REMOVED_CURRENT_GEN=Falha ao remover a gera\u00e7\u00e3o atual do cache de classe compartilhado"%s"
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CLCM_FAILED_REMOVED_CURRENT_GEN.sample_input_1=myCache
 J9NLS_SHRC_CLCM_FAILED_REMOVED_CURRENT_GEN.explanation=It has not been possible to remove the current generation of indicated shared class cache.
@@ -3565,8 +3491,7 @@ J9NLS_SHRC_CLCM_FAILED_REMOVED_CURRENT_GEN.system_action=Processing continues.
 J9NLS_SHRC_CLCM_FAILED_REMOVED_CURRENT_GEN.user_response=Other messages may have been issued indicating the reason why the cache has not been destroyed.  Investigate these messages.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_JITPROFILE_DISPLAY=%1$d: 0x%2$p JITPROFILE: \
-%4$.*3$s
+J9NLS_SHRC_CM_PRINTSTATS_JITPROFILE_DISPLAY=%1$d: 0x%2$p JITPROFILE: %4$.*3$s
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_JITPROFILE_DISPLAY.sample_input_1=1
 J9NLS_SHRC_CM_PRINTSTATS_JITPROFILE_DISPLAY.sample_input_2=00FFAB00
@@ -3597,9 +3522,7 @@ J9NLS_SHRC_CM_PRINTSTATS_JITPROFILE_FROM_ROMCLASS.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_JITPROFILE_FROM_ROMCLASS.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_VALUE_IS_NOT_SUPPORTED_BY_PRIMENUMBERHELPER=O Value=%d \
-passado pela op\u00e7\u00e3o -Xitsn est\u00e1 fora do intervalo dos valores de n\u00fameros \
-primos suportados pela VM. Intervalo suportado = 0 - %u
+J9NLS_SHRC_SHRINIT_VALUE_IS_NOT_SUPPORTED_BY_PRIMENUMBERHELPER=O Value=%d passado pela op\u00e7\u00e3o -Xitsn est\u00e1 fora do intervalo dos valores de n\u00fameros primos suportados pela VM. Intervalo suportado = 0 - %u
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_VALUE_IS_NOT_SUPPORTED_BY_PRIMENUMBERHELPER.sample_input_1=150
 J9NLS_SHRC_SHRINIT_VALUE_IS_NOT_SUPPORTED_BY_PRIMENUMBERHELPER.sample_input_2=27000
@@ -3660,8 +3583,7 @@ J9NLS_SHRC_SHRINIT_MAXJIT_GRTHAN_SCMX.system_action=The JVM continues
 J9NLS_SHRC_SHRINIT_MAXJIT_GRTHAN_SCMX.user_response=The value has been changed automatically
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_WARN_CORRUPT_CACHE_V2=O cache compartilhado \"%s\" est\u00e1 corrompido. O c\u00f3digo de distor\u00e7\u00e3o \u00e9 %d. O valor corrompido \u00e9 0x%p. Nenhum novo JVM ser\u00e1 permitido para conex\u00e3o com o cache.\n\
-\ \tAs JVMs existentes podem continuar a funcionar, mas n\u00e3o podem atualizar o cache.
+J9NLS_SHRC_CM_WARN_CORRUPT_CACHE_V2=O cache compartilhado "%s" est\u00e1 corrompido. O c\u00f3digo de distor\u00e7\u00e3o \u00e9 %d. O valor corrompido \u00e9 0x%p. Nenhum novo JVM ser\u00e1 permitido para conex\u00e3o com o cache.\n \tAs JVMs existentes podem continuar a funcionar, mas n\u00e3o podem atualizar o cache.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_WARN_CORRUPT_CACHE_V2.sample_input_1=myCache
 J9NLS_SHRC_CM_WARN_CORRUPT_CACHE_V2.sample_input_2=-1
@@ -3778,7 +3700,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_TEST_BAD_BUILDID.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_TEST_BAD_BUILDID.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_FAILURE_NAME_ONLY_WHITESPACE=Nome de cache inv\u00e1lido, o nome de cache \"%.*s\" cont\u00e9m apenas espa\u00e7o em branco ou est\u00e1 vazio
+J9NLS_SHRC_SHRINIT_FAILURE_NAME_ONLY_WHITESPACE=Nome de cache inv\u00e1lido, o nome de cache "%.*s" cont\u00e9m apenas espa\u00e7o em branco ou est\u00e1 vazio
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_FAILURE_NAME_ONLY_WHITESPACE.sample_input_1=8
 J9NLS_SHRC_SHRINIT_FAILURE_NAME_ONLY_WHITESPACE.sample_input_2=sharedcc
@@ -4309,73 +4231,70 @@ J9NLS_SHRC_SHRCLSSUP_FAILURE_GET_DEFAULT_DIR_FAILED.system_action=The JVM termin
 J9NLS_SHRC_SHRCLSSUP_FAILURE_GET_DEFAULT_DIR_FAILED.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTALLSTATS_2=Listar todos os elementos em cache O di\u00e1logo \
-\u00e9 estendido para exibir mais op\u00e7\u00f5es.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTALLSTATS_2=Listar todos os elementos em cache O di\u00e1logo \u00e9 estendido para exibir mais op\u00e7\u00f5es.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTALLSTATS_2.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTALLSTATS_2.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTALLSTATS_2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_PRINTALLSTATS_UNRECOGNISED=Subop\u00e7\u00e3o n\u00e3o reconhecida para a op\u00e7\u00e3o printallstats= O di\u00e1logo \
-\u00e9 estendido para exibir mais op\u00e7\u00f5es.
+J9NLS_SHRC_SHRINIT_PRINTALLSTATS_UNRECOGNISED=Subop\u00e7\u00e3o n\u00e3o reconhecida para a op\u00e7\u00e3o printallstats= O di\u00e1logo \u00e9 estendido para exibir mais op\u00e7\u00f5es.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_PRINTALLSTATS_UNRECOGNISED.explanation=The sub-option provided for printallstats= was unrecognised
 J9NLS_SHRC_SHRINIT_PRINTALLSTATS_UNRECOGNISED.system_action=The JVM terminates
 J9NLS_SHRC_SHRINIT_PRINTALLSTATS_UNRECOGNISED.user_response=Provide a valid suboption
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTALLSTATS_HELP=Op\u00e7\u00f5es dispon\u00edveis para -Xshareclasses:printAllStats=<options>. O di\u00e1logo \
-\u00e9 estendido para exibir mais op\u00e7\u00f5es. Ou seja, printallstats=aot+url \n
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTALLSTATS_HELP=Op\u00e7\u00f5es dispon\u00edveis para -Xshareclasses:printAllStats=<options>. O di\u00e1logo \u00e9 estendido para exibir mais op\u00e7\u00f5es. Ou seja, printallstats=aot+url \n
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTALLSTATS_HELP.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTALLSTATS_HELP.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTALLSTATS_HELP.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ALL=\t all               Imprime todos os tipos a seguir no cache compartilhado.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ALL=\t\ all               Imprime todos os tipos a seguir no cache compartilhado.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ALL.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ALL.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ALL.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_CLASSPATH=\t classpath   Imprime apenas tipos de caminho de classe no cache compartilhado
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_CLASSPATH=\t\ classpath   Imprime apenas tipos de caminho de classe no cache compartilhado
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_CLASSPATH.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_CLASSPATH.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_CLASSPATH.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_URL=\t url               Imprime apenas tipos de URL no cache compartilhado.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_URL=\t\ url               Imprime apenas tipos de URL no cache compartilhado.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_URL.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_URL.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_URL.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_TOKEN=\t token           Imprime apenas tipos de tokens no cache compartilhado.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_TOKEN=\t\ token           Imprime apenas tipos de tokens no cache compartilhado.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_TOKEN.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_TOKEN.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_TOKEN.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ROMCLASS=\t romclass     Imprime apenas tipos romclass no cache compartilhado.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ROMCLASS=\t\ romclass     Imprime apenas tipos romclass no cache compartilhado.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ROMCLASS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ROMCLASS.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ROMCLASS.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ROMMETHOD=\t rommethod   Imprime apenas tipos rommethod no cache compartilhado.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ROMMETHOD=\t\ rommethod   Imprime apenas tipos rommethod no cache compartilhado.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ROMMETHOD.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ROMMETHOD.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ROMMETHOD.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOT=\t aot               Imprime apenas tipos aot no cache compartilhado.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOT=\t\ aot               Imprime apenas tipos aot no cache compartilhado.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOT.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOT.system_action=
@@ -4383,70 +4302,70 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOT.user_response=
 # END NON-TRANSLATABLE
 
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JITPROFILE=\t jitprofile Imprime apenas tipos jitprofile no cache compartilhado.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JITPROFILE=\t\ jitprofile Imprime apenas tipos jitprofile no cache compartilhado.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JITPROFILE.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JITPROFILE.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JITPROFILE.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ZIPCACHE=\t zipcache      Imprime somente tipos zipcache no cache compartilhado.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ZIPCACHE=\t\ zipcache      Imprime somente tipos zipcache no cache compartilhado.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ZIPCACHE.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ZIPCACHE.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ZIPCACHE.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_EXTRA=\t extra           Imprime todos os tipos privados a seguir no cache compartilhado.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_EXTRA=\t\ extra           Imprime todos os tipos privados a seguir no cache compartilhado.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_EXTRA.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_EXTRA.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_EXTRA.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ORPHAN=\t orphan         Imprime apenas tipos \u00f3rf\u00e3os no cache compartilhado.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ORPHAN=\t\ orphan         Imprime apenas tipos \u00f3rf\u00e3os no cache compartilhado.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ORPHAN.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ORPHAN.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ORPHAN.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JITHINT=\t jithint       Imprime apenas tipos jithint no cache compartilhado.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JITHINT=\t\ jithint       Imprime apenas tipos jithint no cache compartilhado.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JITHINT.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JITHINT.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JITHINT.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTCH=\t aotch           Imprime apenas tipos aotch no cache compartilhado.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTCH=\t\ aotch           Imprime apenas tipos aotch no cache compartilhado.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTCH.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTCH.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTCH.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTTHUNK=\t aotthunk     Imprime apenas tipos aotthunk no cache compartilhado.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTTHUNK=\t\ aotthunk     Imprime apenas tipos aotthunk no cache compartilhado.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTTHUNK.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTTHUNK.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTTHUNK.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTDATA=\t aotdata       Imprime apenas tipos aotdata no cache compartilhado.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTDATA=\t\ aotdata       Imprime apenas tipos aotdata no cache compartilhado.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTDATA.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTDATA.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTDATA.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JCL=\t jcl               Imprime apenas tipos jcl no cache compartilhado.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JCL=\t\ jcl               Imprime apenas tipos jcl no cache compartilhado.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JCL.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JCL.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JCL.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_BYTEDATA=\t bytedata     Imprime todos os outros tipos bytedata no cache compartilhado.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_BYTEDATA=\t\ bytedata     Imprime todos os outros tipos bytedata no cache compartilhado.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_BYTEDATA.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_BYTEDATA.system_action=
@@ -4612,6 +4531,8 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_CHECK_STRINGTABLE_RESET.user_response=
 
 J9NLS_SHRC_SHRINIT_CHECK_STRING_TABLE_RESET_MAY_FAIL=-Xshareclasses:checkStringTableReset pode falhar. A tabela da sequ\u00eancia n\u00e3o \u00e9 grande o bastante. Ela precisa ter mais que o tamanho de p\u00e1gina do S.O. Tamanho da tabela = %d, Tamanho da p\u00e1gina = %d
 # START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_CHECK_STRING_TABLE_RESET_MAY_FAIL.sample_input_1=256
+J9NLS_SHRC_SHRINIT_CHECK_STRING_TABLE_RESET_MAY_FAIL.sample_input_2=4096
 J9NLS_SHRC_SHRINIT_CHECK_STRING_TABLE_RESET_MAY_FAIL.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_SHRINIT_CHECK_STRING_TABLE_RESET_MAY_FAIL.system_action=The JVM terminates.
 J9NLS_SHRC_SHRINIT_CHECK_STRING_TABLE_RESET_MAY_FAIL.user_response=Contact your service representative.
@@ -4624,14 +4545,14 @@ J9NLS_SHRC_SHRINIT_CHECK_STRINGTABLE_RESET_MISSING_FLAG.system_action=The JVM te
 J9NLS_SHRC_SHRINIT_CHECK_STRINGTABLE_RESET_MISSING_FLAG.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_CACHE_FULL=O cache \"%s\" est\u00e1 marcado como cheio. Falha ao alocar o tamanho de bloco = %d.
+J9NLS_SHRC_CM_CACHE_FULL=
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_CACHE_FULL.explanation=The JVM failed to store requested data in the cache as it is marked as full.
 J9NLS_SHRC_CM_CACHE_FULL.system_action=The JVM terminates.
 J9NLS_SHRC_CM_CACHE_FULL.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_INSUFFICIENT_FREE_BLOCK=N\u00e3o \u00e9 poss\u00edvel alocar o tamanho de bloco solicitado para o cache \"%s\". Bytes dispon\u00edveis = %d, Bytes solicitados = %d
+J9NLS_SHRC_CM_INSUFFICIENT_FREE_BLOCK=
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_INSUFFICIENT_FREE_BLOCK.explanation=There is not enough free memory in shared class cache to store requested amount of data.
 J9NLS_SHRC_CM_INSUFFICIENT_FREE_BLOCK.system_action=The JVM terminates.
@@ -4659,32 +4580,30 @@ J9NLS_SHRC_CM_PRINTSTATS_CACHE_CONTAINS_CONTENT_WITH_AND_WITHOUT_LINE_NUMBERS.sy
 J9NLS_SHRC_CM_PRINTSTATS_CACHE_CONTAINS_CONTENT_WITH_AND_WITHOUT_LINE_NUMBERS.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_2=Imprimir resumo de estat\u00edsticas de cache. O di\u00e1logo \
-\u00e9 estendido para exibir mais op\u00e7\u00f5es.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_2=Imprimir resumo de estat\u00edsticas de cache. O di\u00e1logo \u00e9 estendido para exibir mais op\u00e7\u00f5es.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_2.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_2.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_PRINTSTATS_UNRECOGNISED=Subop\u00e7\u00e3o n\u00e3o reconhecida para a op\u00e7\u00e3o printstats= . O di\u00e1logo \
-\u00e9 estendido para exibir mais op\u00e7\u00f5es.
+J9NLS_SHRC_SHRINIT_PRINTSTATS_UNRECOGNISED=Subop\u00e7\u00e3o n\u00e3o reconhecida para a op\u00e7\u00e3o printstats= . O di\u00e1logo \u00e9 estendido para exibir mais op\u00e7\u00f5es.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_PRINTSTATS_UNRECOGNISED.explanation=The sub-option provided for printstats= was unrecognised
 J9NLS_SHRC_SHRINIT_PRINTSTATS_UNRECOGNISED.system_action=The JVM terminates
 J9NLS_SHRC_SHRINIT_PRINTSTATS_UNRECOGNISED.user_response=Provide a valid suboption
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP=Op\u00e7\u00f5es dispon\u00edveis para -Xshareclasses:printStats=<options>. O di\u00e1logo \
-\u00e9 estendido para exibir mais op\u00e7\u00f5es. Ou seja, printstats=aot+url \n
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP=Op\u00e7\u00f5es dispon\u00edveis para -Xshareclasses:printStats=<options>. O di\u00e1logo \u00e9 estendido para exibir mais op\u00e7\u00f5es. Ou seja, printstats=aot+url \n
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_CREATECACHEDIR_FAILED_V2=Falha ao criar um diret\u00f3rio \"%s\" para o cache de classe compartilhado
+J9NLS_SHRC_OSCACHE_CREATECACHEDIR_FAILED_V2=Falha ao criar um diret\u00f3rio "%s" para o cache de classe compartilhado
 # START NON-TRANSLATABLE
+J9NLS_SHRC_OSCACHE_CREATECACHEDIR_FAILED_V2.sample_input_1=/home/user/cachedir
 J9NLS_SHRC_OSCACHE_CREATECACHEDIR_FAILED_V2.explanation=The directory specified for the shared class cache could not be created
 J9NLS_SHRC_OSCACHE_CREATECACHEDIR_FAILED_V2.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_CREATECACHEDIR_FAILED_V2.user_response=Make sure you have the right permissions for the controldir or cachedir chosen.
@@ -4697,8 +4616,10 @@ J9NLS_SHRC_OSCACHE_BAD_CACHENAME_ERROR.system_action=The JVM terminates, unless 
 J9NLS_SHRC_OSCACHE_BAD_CACHENAME_ERROR.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_MMAP_DISK_FULL=Falha ao inicializar o cache de classes compartilhado, n\u00e3o h\u00e1 espa\u00e7o suficiente no sistema de arquivos. Bytes de espa\u00e7o livre em disco dispon\u00edveis = %lld, bytes solicitados = %lld.
+J9NLS_SHRC_OSCACHE_MMAP_DISK_FULL=Falha ao inicializar o cache de classes compartilhado, n\u00e3o h\u00e1 espa\u00e7o suficiente no sistema de arquivos. Bytes de espa\u00e7o livre em disco dispon\u00edveis = %llu e bytes solicitados = %llu
 # START NON-TRANSLATABLE
+J9NLS_SHRC_OSCACHE_MMAP_DISK_FULL.sample_input_1=157286400
+J9NLS_SHRC_OSCACHE_MMAP_DISK_FULL.sample_input_2=314572800
 J9NLS_SHRC_OSCACHE_MMAP_DISK_FULL.explanation=An error has occurred within Shared Classes.
 J9NLS_SHRC_OSCACHE_MMAP_DISK_FULL.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_MMAP_DISK_FULL.user_response=Clean the file system. If the file system doesn't support free space reporting, see the "-Xshareclasses:noPersistentDiskSpaceCheck" option.
@@ -4764,7 +4685,7 @@ J9NLS_SHRC_OSCACHE_VIRT_STARTUP_CREATED.system_action=The JVM continues.
 J9NLS_SHRC_OSCACHE_VIRT_STARTUP_CREATED.user_response=No action required.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_VIRT_DESTROY_SUCCESS=O cache compartilhado de convidado cruzado \"%1$s\" foi destru\u00eddo
+J9NLS_SHRC_OSCACHE_VIRT_DESTROY_SUCCESS=O cache compartilhado de convidado cruzado "%1$s" foi destru\u00eddo
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_VIRT_DESTROY_SUCCESS.sample_input_1=myCache
 J9NLS_SHRC_OSCACHE_VIRT_DESTROY_SUCCESS.explanation=The cross-guest shared cache named 1$ has been successfully destroyed.
@@ -4780,9 +4701,8 @@ J9NLS_SHRC_OSCACHE_VIRT_ATTACH_ATTACHED.system_action=The JVM continues.
 J9NLS_SHRC_OSCACHE_VIRT_ATTACH_ATTACHED.user_response=No action required.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_INCORRECT_TARGET=Localizada a especifica\u00e7\u00e3o de destino incorreta. O destino especificado no cabe\u00e7alho do cache \u00e9: %s, mas o esperado \u00e9: %s.
+J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_INCORRECT_TARGET=
 # START NON-TRANSLATABLE
-J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_INCORRECT_TARGET.sample_input_1=0
 J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_INCORRECT_TARGET.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_INCORRECT_TARGET.system_action=The cache is marked as corrupt and the JVM continues.
 J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_INCORRECT_TARGET.user_response=Contact your service representative.
@@ -4947,7 +4867,7 @@ J9NLS_SHRC_OSCACHE_STARTUP_ERROR_CACHERETRANSFORM_OPTION_WITH_BCI_ENABLED_CACHE.
 J9NLS_SHRC_OSCACHE_STARTUP_ERROR_CACHERETRANSFORM_OPTION_WITH_BCI_ENABLED_CACHE.user_response=Remove the sub-option incompatible with the Shared Class cache and rerun.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_INCOMPATIBLE_OPTION=As op\u00e7\u00f5es da linha de comandos \"%s\" e \"%s\" s\u00e3o incompat\u00edveis
+J9NLS_SHRC_SHRINIT_INCOMPATIBLE_OPTION=As op\u00e7\u00f5es da linha de comandos "%s" e "%s" s\u00e3o incompat\u00edveis
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_INCOMPATIBLE_OPTION.sample_input_1=cacheRetransformed
 J9NLS_SHRC_SHRINIT_INCOMPATIBLE_OPTION.sample_input_2=enableBCI
@@ -5039,7 +4959,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_RAW_DATA_AREA_SIZE.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_RAW_DATA_AREA_SIZE.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_OPTION_INVALID_MEMORY_SIZE=O tamanho da mem\u00f3ria para \"%s\" \u00e9 muito grande, ou especifica unidades diferentes de 'K','M' ou 'G'.
+J9NLS_SHRC_SHRINIT_OPTION_INVALID_MEMORY_SIZE=O tamanho da mem\u00f3ria para "%s" \u00e9 muito grande, ou especifica unidades diferentes de 'K','M' ou 'G'.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_OPTION_INVALID_MEMORY_SIZE.sample_input_1=foo
 J9NLS_SHRC_SHRINIT_OPTION_INVALID_MEMORY_SIZE.explanation=The memory size is too large, or specifies units other than 'K','M', or 'G'.
@@ -5240,7 +5160,7 @@ J9NLS_SHRC_OSCACHE_STARTUP_SHM_CONTROL_FILE_READ_ONLY.system_action=The JVM term
 J9NLS_SHRC_OSCACHE_STARTUP_SHM_CONTROL_FILE_READ_ONLY.user_response=Ensure shared memory control file has read-write permission and then retry. If the situation persists, contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_WARN_BLOCK_SPACE_FULL=O espa\u00e7o est\u00e1 completo para armazenar dados n\u00e3o AOT/n\u00e3o JIT, como classes, no cache compartilhado \"%s\".
+J9NLS_SHRC_CM_WARN_BLOCK_SPACE_FULL=O espa\u00e7o est\u00e1 completo para armazenar dados n\u00e3o AOT/n\u00e3o JIT, como classes, no cache compartilhado "%s".
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_WARN_BLOCK_SPACE_FULL.sample_input_1=myCache
 J9NLS_SHRC_CM_WARN_BLOCK_SPACE_FULL.explanation=Space for storing non-AOT/non-JIT data, such as classes, in named shared class cache is full and no further data may be added to it.
@@ -5248,7 +5168,7 @@ J9NLS_SHRC_CM_WARN_BLOCK_SPACE_FULL.system_action=The JVM continues.  The named 
 J9NLS_SHRC_CM_WARN_BLOCK_SPACE_FULL.user_response=To gain the full benefit of shared classes, delete the named cache and re-create it specifying a larger shared class cache size by the -Xscmx parameter.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_WARN_AOT_SPACE_FULL=O espa\u00e7o reservado para dados AOT no cache compartilhado \"%s\" est\u00e1 completo. Use -Xscminaot para aumentar o espa\u00e7o reservado para dados AOT.
+J9NLS_SHRC_CM_WARN_AOT_SPACE_FULL=O espa\u00e7o reservado para dados AOT no cache compartilhado "%s" est\u00e1 completo. Use -Xscminaot para aumentar o espa\u00e7o reservado para dados AOT.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_WARN_AOT_SPACE_FULL.sample_input_1=myCache
 J9NLS_SHRC_CM_WARN_AOT_SPACE_FULL.explanation=Space reserved for AOT data in named shared class cache is full and no further AOT data may be added to it.
@@ -5256,7 +5176,7 @@ J9NLS_SHRC_CM_WARN_AOT_SPACE_FULL.system_action=The JVM continues.  The named sh
 J9NLS_SHRC_CM_WARN_AOT_SPACE_FULL.user_response=To allow JVM to store more AOT compiled methods into shared class cache, increase the value specified by -Xscminaot parameter.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_WARN_JIT_SPACE_FULL=O espa\u00e7o reservado para dados JIT no cache compartilhado \"%s\" est\u00e1 completo. Use -Xscminjitdata para aumentar o espa\u00e7o reservado para dados JIT.
+J9NLS_SHRC_CM_WARN_JIT_SPACE_FULL=O espa\u00e7o reservado para dados JIT no cache compartilhado "%s" est\u00e1 completo. Use -Xscminjitdata para aumentar o espa\u00e7o reservado para dados JIT.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_WARN_JIT_SPACE_FULL.sample_input_1=myCache
 J9NLS_SHRC_CM_WARN_JIT_SPACE_FULL.explanation=Space reserved for JIT data in named shared class cache is full and no further JIT data may be added to it.
@@ -5470,8 +5390,7 @@ J9NLS_SHRC_OSCACHE_SHARED_MEMORY_OPFAILED_DISPLAY_SHMID.system_action=The JVM co
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_OPFAILED_DISPLAY_SHMID.user_response=Remove the shared memory indicated in the error message using "ipcrm" command if it still exists and is not in use.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYED_SEM=Recupera\u00e7\u00e3o de erro: configura\u00e7\u00e3o \
-de sem\u00e1foro destru\u00edda associada ao cache de classe compartilhada.
+J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYED_SEM=Recupera\u00e7\u00e3o de erro: configura\u00e7\u00e3o de sem\u00e1foro destru\u00edda associada ao cache de classe compartilhada.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYED_SEM.explanation=An error occurred in shared class processing and as part of error recovery JVM destroyed the semaphore set associated with shared class cache.
 J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYED_SEM.system_action=The JVM detected an error during shared class processing and has destroyed the semaphore set in an attempt to recover.
@@ -5486,10 +5405,7 @@ J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYED_SEM_WITH_SEMID.system_action=Th
 J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYED_SEM_WITH_SEMID.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYSEM_NOT_PERMITTED=Recupera\u00e7\u00e3o \
-de erro com falha: Falha ao destruir a configura\u00e7\u00e3o de sem\u00e1foro com semid=%d associado com o \
-cache de classe compartilhada. Apenas o criador ou propriet\u00e1rio ou usu\u00e1rio com privil\u00e9gios \
-administrativos pode destruir a configura\u00e7\u00e3o de sem\u00e1foro.
+J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYSEM_NOT_PERMITTED=Recupera\u00e7\u00e3o de erro com falha: Falha ao destruir a configura\u00e7\u00e3o de sem\u00e1foro com semid=%d associado com o cache de classe compartilhada. Apenas o criador ou propriet\u00e1rio ou usu\u00e1rio com privil\u00e9gios administrativos pode destruir a configura\u00e7\u00e3o de sem\u00e1foro.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYSEM_NOT_PERMITTED.sample_input_1=123456
 J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYSEM_NOT_PERMITTED.explanation=An error occurred in shared class processing. JVM's attempt to destroy the semaphore set as part of error recovery has failed as the Operating system allows only the creator or owner or a user with administrative privileges to destroy the semaphore set.
@@ -5497,9 +5413,7 @@ J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYSEM_NOT_PERMITTED.system_action=Th
 J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYSEM_NOT_PERMITTED.user_response=No action required.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYSEM_ERROR_V1=Recupera\u00e7\u00e3o \
-de erro com falha: Falha ao destruir a configura\u00e7\u00e3o de sem\u00e1foro com semid=%d associado com o \
-cache de classe compartilhada.
+J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYSEM_ERROR_V1=Recupera\u00e7\u00e3o de erro com falha: Falha ao destruir a configura\u00e7\u00e3o de sem\u00e1foro com semid=%d associado com o cache de classe compartilhada.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYSEM_ERROR_V1.sample_input_1=123456
 J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYSEM_ERROR_V1.explanation=An error occurred in shared class processing. JVM's attempt to destroy the semaphore set as part of error recovery has failed.
@@ -5514,8 +5428,7 @@ J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYED_SHM.system_action=The JVM detec
 J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYED_SHM.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYED_SHM_WITH_SHMID=Recupera\u00e7\u00e3o de erro: \
-mem\u00f3ria compartilhada destru\u00edda com id=%d associado ao cache de classe compartilhada.
+J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYED_SHM_WITH_SHMID=Recupera\u00e7\u00e3o de erro: mem\u00f3ria compartilhada destru\u00edda com id=%d associado ao cache de classe compartilhada.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYED_SHM_WITH_SHMID.sample_input_1=123456
 J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYED_SHM_WITH_SHMID.explanation=An error occurred in shared class processing and as part of error recovery JVM destroyed the shared memory associated with shared class cache.
@@ -5523,8 +5436,7 @@ J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYED_SHM_WITH_SHMID.system_action=Th
 J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYED_SHM_WITH_SHMID.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYSHM_NOT_PERMITTED=Recupera\u00e7\u00e3o de erro com falha: Falha ao destruir a mem\u00f3ria compartilhada com shmid=%d associada com o cache de classe compartilhada. Apenas o criador ou propriet\u00e1rio ou usu\u00e1rio com privil\u00e9gios administrativos podem \
-destruir a mem\u00f3ria compartilhada.
+J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYSHM_NOT_PERMITTED=Recupera\u00e7\u00e3o de erro com falha: Falha ao destruir a mem\u00f3ria compartilhada com shmid=%d associada com o cache de classe compartilhada. Apenas o criador ou propriet\u00e1rio ou usu\u00e1rio com privil\u00e9gios administrativos podem destruir a mem\u00f3ria compartilhada.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYSHM_NOT_PERMITTED.sample_input_1=123456
 J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYSHM_NOT_PERMITTED.explanation=An error occurred in shared class processing. JVM's attempt to destroy the shared memory as part of error recovery has failed as the Operating system allows only the creator or owner or a user with administrative privileges to destroy the shared memory.
@@ -5547,8 +5459,7 @@ J9NLS_SHRC_OSCACHE_STARTUP_NONFATAL_TRY_READONLY.system_action=The JVM attempts 
 J9NLS_SHRC_OSCACHE_STARTUP_NONFATAL_TRY_READONLY.user_response=No action required.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SEMAPHORE_DESTROY_NOT_PERMITTED=O usu\u00e1rio n\u00e3o tem permiss\u00e3o para destruir a configura\u00e7\u00e3o de sem\u00e1foro com semid=%d. Apenas o criador ou propriet\u00e1rio ou usu\u00e1rio com privil\u00e9gios \
-administrativos pode destruir a configura\u00e7\u00e3o de sem\u00e1foro.
+J9NLS_SHRC_OSCACHE_SEMAPHORE_DESTROY_NOT_PERMITTED=O usu\u00e1rio n\u00e3o tem permiss\u00e3o para destruir a configura\u00e7\u00e3o de sem\u00e1foro com semid=%d. Apenas o criador ou propriet\u00e1rio ou usu\u00e1rio com privil\u00e9gios administrativos pode destruir a configura\u00e7\u00e3o de sem\u00e1foro.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SEMAPHORE_DESTROY_NOT_PERMITTED.sample_input_1=123456
 J9NLS_SHRC_OSCACHE_SEMAPHORE_DESTROY_NOT_PERMITTED.explanation=Operating system allows only the creator or owner or a user with administrative privileges to destroy the semaphore set.
@@ -5571,8 +5482,7 @@ J9NLS_SHRC_OSCACHE_DESTROYSEM_ERROR_WITH_SEMID.system_action=The JVM continues.
 J9NLS_SHRC_OSCACHE_DESTROYSEM_ERROR_WITH_SEMID.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SHARED_MEMORY_DESTROY_NOT_PERMITTED=O usu\u00e1rio n\u00e3o tem permiss\u00e3o para destruir a mem\u00f3ria compartilhada com shmid=%d. Apenas o criador ou propriet\u00e1rio ou usu\u00e1rio com privil\u00e9gios administrativos podem \
-destruir a mem\u00f3ria compartilhada.
+J9NLS_SHRC_OSCACHE_SHARED_MEMORY_DESTROY_NOT_PERMITTED=O usu\u00e1rio n\u00e3o tem permiss\u00e3o para destruir a mem\u00f3ria compartilhada com shmid=%d. Apenas o criador ou propriet\u00e1rio ou usu\u00e1rio com privil\u00e9gios administrativos podem destruir a mem\u00f3ria compartilhada.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_DESTROY_NOT_PERMITTED.sample_input_1=123456
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_DESTROY_NOT_PERMITTED.explanation=Operating system allows only the creator or owner or a user with administrative privileges to destroy the shared memory.
@@ -5611,8 +5521,7 @@ J9NLS_SHRC_OSCACHE_PORT_ERROR_MESSAGE_SYSV_ERR.system_action=The JVM has failed 
 J9NLS_SHRC_OSCACHE_PORT_ERROR_MESSAGE_SYSV_ERR.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SEMAPHORE_CONTROL_FILE_UNLINK_FAILED=Recupera\u00e7\u00e3o de erro com falha: \
-Falha ao remover o arquivo de controle de configura\u00e7\u00e3o de sem\u00e1foro %s associado ao cache de classe compartilhada.
+J9NLS_SHRC_OSCACHE_SEMAPHORE_CONTROL_FILE_UNLINK_FAILED=Recupera\u00e7\u00e3o de erro com falha: Falha ao remover o arquivo de controle de configura\u00e7\u00e3o de sem\u00e1foro %s associado ao cache de classe compartilhada.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SEMAPHORE_CONTROL_FILE_UNLINK_FAILED.sample_input_1=C280M4F0A64_semaphore_mycache_G33
 J9NLS_SHRC_OSCACHE_SEMAPHORE_CONTROL_FILE_UNLINK_FAILED.explanation=An error occurred during shared class proccessing. JVM's attempt to remove the control file as part of error recovery has failed.
@@ -5620,8 +5529,7 @@ J9NLS_SHRC_OSCACHE_SEMAPHORE_CONTROL_FILE_UNLINK_FAILED.system_action=The JVM co
 J9NLS_SHRC_OSCACHE_SEMAPHORE_CONTROL_FILE_UNLINK_FAILED.user_response=If JVM fails to startup, please remove the control files manually.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SHARED_MEMORY_CONTROL_FILE_UNLINK_FAILED=Recupera\u00e7\u00e3o de erro com falha: \
-Falha ao remover o arquivo de controle de configura\u00e7\u00e3o de sem\u00e1foro %s associado ao cache de classe compartilhada.
+J9NLS_SHRC_OSCACHE_SHARED_MEMORY_CONTROL_FILE_UNLINK_FAILED=Recupera\u00e7\u00e3o de erro com falha: Falha ao remover o arquivo de controle de configura\u00e7\u00e3o de sem\u00e1foro %s associado ao cache de classe compartilhada.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_CONTROL_FILE_UNLINK_FAILED.sample_input_1=C280M4F0A64_semaphore_mycache_G33
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_CONTROL_FILE_UNLINK_FAILED.explanation=An error occurred during shared class proccessing. JVM's attempt to remove the control file as part of error recovery has failed.
@@ -5629,16 +5537,14 @@ J9NLS_SHRC_OSCACHE_SHARED_MEMORY_CONTROL_FILE_UNLINK_FAILED.system_action=The JV
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_CONTROL_FILE_UNLINK_FAILED.user_response=If JVM fails to startup, please remove the control files manually.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_ERROR_SEMAPHORE_LIMIT_REACHED=O limite do sistema para o \
-n\u00famero m\u00e1ximo de sem\u00e1foros ou do n\u00famero m\u00e1ximo em todo o sistema de sem\u00e1foros foi atingido.
+J9NLS_SHRC_OSCACHE_ERROR_SEMAPHORE_LIMIT_REACHED=O limite do sistema para o n\u00famero m\u00e1ximo de sem\u00e1foros ou do n\u00famero m\u00e1ximo em todo o sistema de sem\u00e1foros foi atingido.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_ERROR_SEMAPHORE_LIMIT_REACHED.explanation=The JVM failed to create new semaphore set for shared class cache as the system limit has been hit.
 J9NLS_SHRC_OSCACHE_ERROR_SEMAPHORE_LIMIT_REACHED.system_action=If -Xshareclasses:nonfatal is specified JVM will try to use an existing shared class cache in read-only mode. But if the cache does not exist, then JVM will continue without shared class cache. In absence of -Xshareclasses:nonfatal, JVM will terminate.
 J9NLS_SHRC_OSCACHE_ERROR_SEMAPHORE_LIMIT_REACHED.user_response=Contact your system admin to increase the system limit on semaphore resource or clean up any unused semaphore sets in the system and restart the JVM.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_ERROR_SHARED_MEMORY_LIMIT_REACHED=O limite do sistema para o n\u00famero m\u00e1ximo de regi\u00f5es da mem\u00f3ria compartilhada ou o limite do sistema inteiro na mem\u00f3ria alocada \
-para regi\u00f5es de mem\u00f3ria compartilhada foi atingido.
+J9NLS_SHRC_OSCACHE_ERROR_SHARED_MEMORY_LIMIT_REACHED=O limite do sistema para o n\u00famero m\u00e1ximo de regi\u00f5es da mem\u00f3ria compartilhada ou o limite do sistema inteiro na mem\u00f3ria alocada para regi\u00f5es de mem\u00f3ria compartilhada foi atingido.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_ERROR_SHARED_MEMORY_LIMIT_REACHED.explanation=The JVM failed to create new shared memory region for shared class cache as the system limit has been hit.
 J9NLS_SHRC_OSCACHE_ERROR_SHARED_MEMORY_LIMIT_REACHED.system_action=If -Xshareclasses:nonfatal is specified JVM will continue without shared class cache, otherwise it will terminate.
@@ -5652,18 +5558,18 @@ J9NLS_SHRC_OSCACHE_ERROR_MAX_OPEN_FILES_REACHED.system_action=If -Xshareclasses:
 J9NLS_SHRC_OSCACHE_ERROR_MAX_OPEN_FILES_REACHED.user_response=Contact your system admin to increase the system limit on maximum open files or close any unused files and restart the JVM.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SEMAPHORE_OPFAILED_CONTROL_FILE_LOCK_FAILED=Ocorreu um erro ao abrir o sem\u00e1foro. O arquivo de controle n\u00e3o p\u00f4de ser bloqueado.
+J9NLS_SHRC_OSCACHE_SEMAPHORE_OPFAILED_CONTROL_FILE_LOCK_FAILED=Ocorreu um erro ao abrir o sem\u00e1foro. Arquivo de controle n\u00e3o p\u00f4de ser aberto ou bloqueado. Assegure-se de que o usu\u00e1rio atual tenha permiss\u00f5es corretas no diret\u00f3rio de cache e arquivo de controle.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SEMAPHORE_OPFAILED_CONTROL_FILE_LOCK_FAILED.explanation=An error has occurred in shared class processing. Further messages may follow providing more detail.
 J9NLS_SHRC_OSCACHE_SEMAPHORE_OPFAILED_CONTROL_FILE_LOCK_FAILED.system_action=If -Xshareclasses:nonfatal is specified JVM will try to use an existing shared class cache in read-only mode. But if the cache does not exist, then JVM will continue without shared class cache. In absence of -Xshareclasses:nonfatal, JVM will terminate.
-J9NLS_SHRC_OSCACHE_SEMAPHORE_OPFAILED_CONTROL_FILE_LOCK_FAILED.user_response=Contact your service representative, unless subsequent messages indicate otherwise.
+J9NLS_SHRC_OSCACHE_SEMAPHORE_OPFAILED_CONTROL_FILE_LOCK_FAILED.user_response=Correct the permissions if they are set improperly and retry. If the situation persists, contact your service representative, unless subsequent messages indicate otherwise.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_CONTROL_FILE_LOCK_FAILED=Ocorreu um erro ao abrir a mem\u00f3ria compartilhada. O arquivo de controle n\u00e3o p\u00f4de ser bloqueado.
+J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_CONTROL_FILE_LOCK_FAILED=Ocorreu um erro ao abrir a mem\u00f3ria compartilhada. Arquivo de controle n\u00e3o p\u00f4de ser aberto ou bloqueado. Assegure-se de que o usu\u00e1rio atual tenha permiss\u00f5es corretas no diret\u00f3rio de cache e arquivo de controle.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_CONTROL_FILE_LOCK_FAILED.explanation=An error has occurred in shared class processing. Further messages may follow providing more detail.
 J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_CONTROL_FILE_LOCK_FAILED.system_action=If -Xshareclasses:nonfatal is specified JVM will continue without shared class cache, otherwise it will terminate.
-J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_CONTROL_FILE_LOCK_FAILED.user_response=Contact your service representative, unless subsequent messages indicate otherwise.
+J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_CONTROL_FILE_LOCK_FAILED.user_response=Correct the permissions if they are set improperly and retry. If the situation persists, contact your service representative, unless subsequent messages indicate otherwise.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_SHRINIT_FAILED_NONFATAL_PRESENT=Falha ao inicializar o cache de classe compartilhada. Continuar sem us\u00e1-lo como -Xshareclasses:nonfatal \u00e9 especificado
@@ -5737,7 +5643,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_RESTORECACHE.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_RESTORECACHE.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_OPTION_IGNORED_WARNING=As subop\u00e7\u00f5es \"%s\" e \"%s\" s\u00e3o incompat\u00edveis. A subop\u00e7\u00e3o \"%s\" \u00e9 ignorada
+J9NLS_SHRC_SHRINIT_OPTION_IGNORED_WARNING=As subop\u00e7\u00f5es "%s" e "%s" s\u00e3o incompat\u00edveis. A subop\u00e7\u00e3o "%s" \u00e9 ignorada
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_OPTION_IGNORED_WARNING.sample_input_1=option1
 J9NLS_SHRC_SHRINIT_OPTION_IGNORED_WARNING.sample_input_2=option2
@@ -5754,7 +5660,7 @@ J9NLS_SHRC_SHRINIT_GETCACHEDIR_FAILED.system_action=The JVM fails to complete th
 J9NLS_SHRC_SHRINIT_GETCACHEDIR_FAILED.user_response=Please try to use a shorter path or cache name.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_SUCCESS_RESTORE_CACHE=O cache compartilhado n\u00e3o persistente \"%s\" foi restaurado com sucesso a partir da captura instant\u00e2nea
+J9NLS_SHRC_SHRINIT_SUCCESS_RESTORE_CACHE=O cache compartilhado n\u00e3o persistente "%s" foi restaurado com sucesso a partir da captura instant\u00e2nea
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_SUCCESS_RESTORE_CACHE.sample_input_1=myCaches
 J9NLS_SHRC_SHRINIT_SUCCESS_RESTORE_CACHE.explanation=Non-persistent cache has been restored from the snapshot.
@@ -5762,7 +5668,7 @@ J9NLS_SHRC_SHRINIT_SUCCESS_RESTORE_CACHE.system_action=The JVM successfully comp
 J9NLS_SHRC_SHRINIT_SUCCESS_RESTORE_CACHE.user_response=No action required. This message is for information only.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_FAILURE_RESTORE_CACHE=Falha ao restaurar o cache compartilhado n\u00e3o persistente \"%s\" a partir da captura instant\u00e2nea
+J9NLS_SHRC_SHRINIT_FAILURE_RESTORE_CACHE=Falha ao restaurar o cache compartilhado n\u00e3o persistente "%s" a partir da captura instant\u00e2nea
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_FAILURE_RESTORE_CACHE.sample_input_1=myCaches
 J9NLS_SHRC_SHRINIT_FAILURE_RESTORE_CACHE.explanation=An error has occurred in restoring the non-persistent cache
@@ -5770,7 +5676,7 @@ J9NLS_SHRC_SHRINIT_FAILURE_RESTORE_CACHE.system_action=The JVM fails to complete
 J9NLS_SHRC_SHRINIT_FAILURE_RESTORE_CACHE.user_response=Other messages may have been issued indicating the reason why the cache cannot be restored from the snapshot.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_SUCCESS_CREATE_SNAPSHOT=A captura instant\u00e2nea do cache compartilhado n\u00e3o persistente \"%s\" foi criada
+J9NLS_SHRC_SHRINIT_SUCCESS_CREATE_SNAPSHOT=A captura instant\u00e2nea do cache compartilhado n\u00e3o persistente "%s" foi criada
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_SUCCESS_CREATE_SNAPSHOT.sample_input_1=myCaches
 J9NLS_SHRC_SHRINIT_SUCCESS_CREATE_SNAPSHOT.explanation=Successfully created the snapshot of an existing non-persistent shared cache.
@@ -5778,7 +5684,7 @@ J9NLS_SHRC_SHRINIT_SUCCESS_CREATE_SNAPSHOT.system_action=The JVM successfully co
 J9NLS_SHRC_SHRINIT_SUCCESS_CREATE_SNAPSHOT.user_response=No action required. This message is for information only.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_FAILURE_CREATE_SNAPSHOT=Falha ao criar uma captura instant\u00e2nea do cache compartilhado n\u00e3o persistente \"%s\"
+J9NLS_SHRC_SHRINIT_FAILURE_CREATE_SNAPSHOT=Falha ao criar uma captura instant\u00e2nea do cache compartilhado n\u00e3o persistente "%s"
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_FAILURE_CREATE_SNAPSHOT.sample_input_1=myCaches
 J9NLS_SHRC_SHRINIT_FAILURE_CREATE_SNAPSHOT.explanation=An error has occurred in creating snapshot of a non-persistent shared cache
@@ -5793,7 +5699,7 @@ J9NLS_SHRC_GETSNAPSHOTDIR_FAILED.system_action=The JVM fails to complete the req
 J9NLS_SHRC_GETSNAPSHOTDIR_FAILED.user_response=Please try to use a shorter path or cache name.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_ERROR_SNAPSHOT_FILE_OPEN=Falha ao abrir o arquivo da captura instant\u00e2nea do cache compartilhado \"%s\"
+J9NLS_SHRC_ERROR_SNAPSHOT_FILE_OPEN=Falha ao abrir o arquivo da captura instant\u00e2nea do cache compartilhado "%s"
 # START NON-TRANSLATABLE
 J9NLS_SHRC_ERROR_SNAPSHOT_FILE_OPEN.sample_input_1=/myJVM/myCaches
 J9NLS_SHRC_ERROR_SNAPSHOT_FILE_OPEN.explanation=An error occurred while opening the shared cache snapshot file.
@@ -5825,7 +5731,7 @@ J9NLS_SHRC_ERROR_SNAPSHOT_FILE_LOCK.system_action=The JVM fails to complete the 
 J9NLS_SHRC_ERROR_SNAPSHOT_FILE_LOCK.user_response=Previous error messages may indicate the reason. Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_ERROR_ENTER_MUTEX=Falha ao adquirir o mutex do cache \"%s\"
+J9NLS_SHRC_SHRINIT_ERROR_ENTER_MUTEX=Falha ao adquirir o mutex do cache "%s"
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_ERROR_ENTER_MUTEX.sample_input_1=myCaches
 J9NLS_SHRC_SHRINIT_ERROR_ENTER_MUTEX.explanation=An error occurred while acquiring a cache mutex.
@@ -5833,7 +5739,7 @@ J9NLS_SHRC_SHRINIT_ERROR_ENTER_MUTEX.system_action=The JVM fails to complete the
 J9NLS_SHRC_SHRINIT_ERROR_ENTER_MUTEX.user_response=Verify that the system has enough native resources for the JVM to work properly. If the situation persists, contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_ERROR_SNAPSHOT_FILE_TRUNCATE=Falha ao truncar o arquivo da captura instant\u00e2nea do cache compartilhado n\u00e3o persistente existente \"%s\"
+J9NLS_SHRC_SHRINIT_ERROR_SNAPSHOT_FILE_TRUNCATE=Falha ao truncar o arquivo da captura instant\u00e2nea do cache compartilhado n\u00e3o persistente existente "%s"
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_ERROR_SNAPSHOT_FILE_TRUNCATE.sample_input_1=/myJVM/myCaches
 J9NLS_SHRC_SHRINIT_ERROR_SNAPSHOT_FILE_TRUNCATE.explanation=An error has occurred in truncating the non-persistent shared cache snapshot file.
@@ -5841,7 +5747,7 @@ J9NLS_SHRC_SHRINIT_ERROR_SNAPSHOT_FILE_TRUNCATE.system_action=The JVM fails to c
 J9NLS_SHRC_SHRINIT_ERROR_SNAPSHOT_FILE_TRUNCATE.user_response=Previous error messages may indicate the reason. Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_OVERWRITE_EXISTING_SNAPSHOT_WARNING=A JVM est\u00e1 criando uma captura instant\u00e2nea do cache compartilhado n\u00e3o persistente \"%s\", mas um arquivo da captura instant\u00e2nea \"%s\" j\u00e1 existe e ser\u00e1 sobrescrito
+J9NLS_SHRC_SHRINIT_OVERWRITE_EXISTING_SNAPSHOT_WARNING=A JVM est\u00e1 criando uma captura instant\u00e2nea do cache compartilhado n\u00e3o persistente "%s", mas um arquivo da captura instant\u00e2nea "%s" j\u00e1 existe e ser\u00e1 sobrescrito
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_OVERWRITE_EXISTING_SNAPSHOT_WARNING.sample_input_1=myCaches
 J9NLS_SHRC_SHRINIT_OVERWRITE_EXISTING_SNAPSHOT_WARNING.sample_input_2=/myJVM/myCaches
@@ -5850,7 +5756,7 @@ J9NLS_SHRC_SHRINIT_OVERWRITE_EXISTING_SNAPSHOT_WARNING.system_action=The JVM con
 J9NLS_SHRC_SHRINIT_OVERWRITE_EXISTING_SNAPSHOT_WARNING.user_response=No action is required if the user wants to overwrite the non-persistent shared cache snapshot file intentionally. The user is responsible for snapshot file management. To retain the old snapshot file, create a backup or rename the file before creating a new one.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_ERROR_SNAPSHOT_FILE_WRITE=Falha ao gravar no arquivo da captura instant\u00e2nea do cache compartilhado n\u00e3o persistente \"%s\"
+J9NLS_SHRC_SHRINIT_ERROR_SNAPSHOT_FILE_WRITE=Falha ao gravar no arquivo da captura instant\u00e2nea do cache compartilhado n\u00e3o persistente "%s"
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_ERROR_SNAPSHOT_FILE_WRITE.sample_input_1=/myJVM/myCaches
 J9NLS_SHRC_SHRINIT_ERROR_SNAPSHOT_FILE_WRITE.explanation=An error occurred while writing into non-persistent shared cache snapshot file.
@@ -5858,7 +5764,7 @@ J9NLS_SHRC_SHRINIT_ERROR_SNAPSHOT_FILE_WRITE.system_action=The JVM fails to comp
 J9NLS_SHRC_SHRINIT_ERROR_SNAPSHOT_FILE_WRITE.user_response=Previous error messages may indicate the reason. The disk may be full. Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_ERROR_SNAPSHOT_FILE_SEEK=Falha ao reposicionar a compensa\u00e7\u00e3o do descritor do arquivo no arquivo da captura instant\u00e2nea do cache compartilhado n\u00e3o persistente \"%s\"
+J9NLS_SHRC_SHRINIT_ERROR_SNAPSHOT_FILE_SEEK=Falha ao reposicionar a compensa\u00e7\u00e3o do descritor do arquivo no arquivo da captura instant\u00e2nea do cache compartilhado n\u00e3o persistente "%s"
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_ERROR_SNAPSHOT_FILE_SEEK.sample_input_1=/myJVM/myCaches
 J9NLS_SHRC_SHRINIT_ERROR_SNAPSHOT_FILE_SEEK.explanation=An error has occurred in repositioning the offset of the file descriptor in the non-persistent shared cache snapshot file
@@ -5867,7 +5773,7 @@ J9NLS_SHRC_SHRINIT_ERROR_SNAPSHOT_FILE_SEEK.user_response=Previous error message
 # END NON-TRANSLATABLE
 
 # From: CacheLifeCycleManager.cpp
-J9NLS_SHRC_INFO_SNAPSHOT_DESTROYING_FOR_CACHEDIR=Tentando destruir todas as capturas instant\u00e2neas do cache compartilhado no cacheDir \"%s\"
+J9NLS_SHRC_INFO_SNAPSHOT_DESTROYING_FOR_CACHEDIR=Tentando destruir todas as capturas instant\u00e2neas do cache compartilhado no cacheDir "%s"
 # START NON-TRANSLATABLE
 J9NLS_SHRC_INFO_SNAPSHOT_DESTROYING_FOR_CACHEDIR.sample_input_1=/myJVM/myCaches
 J9NLS_SHRC_INFO_SNAPSHOT_DESTROYING_FOR_CACHEDIR.explanation=NOTAG
@@ -5875,7 +5781,7 @@ J9NLS_SHRC_INFO_SNAPSHOT_DESTROYING_FOR_CACHEDIR.system_action=None
 J9NLS_SHRC_INFO_SNAPSHOT_DESTROYING_FOR_CACHEDIR.user_response=None required.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CLCM_ERROR_SNAPSHOT_FILE_LENGTH=Falha ao obter o comprimento do arquivo da captura instant\u00e2nea do cache compartilhado \"%s\"
+J9NLS_SHRC_CLCM_ERROR_SNAPSHOT_FILE_LENGTH=Falha ao obter o comprimento do arquivo da captura instant\u00e2nea do cache compartilhado "%s"
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CLCM_ERROR_SNAPSHOT_FILE_LENGTH.sample_input_1=/myJVM/myCaches
 J9NLS_SHRC_CLCM_ERROR_SNAPSHOT_FILE_LENGTH.explanation=An error has occurred while getting the length of the snapshot file.
@@ -5890,7 +5796,7 @@ J9NLS_SHRC_CLCM_NO_SNAPSHOT.system_action=Processing continues.
 J9NLS_SHRC_CLCM_NO_SNAPSHOT.user_response=None required.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CLCM_SNAPSHOT_REMOVED_OLDER_GEN=Gera\u00e7\u00e3o mais antiga da captura instant\u00e2nea do cache compartilhado removida \"%s\"
+J9NLS_SHRC_CLCM_SNAPSHOT_REMOVED_OLDER_GEN=Gera\u00e7\u00e3o mais antiga da captura instant\u00e2nea do cache compartilhado removida "%s"
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CLCM_SNAPSHOT_REMOVED_OLDER_GEN.sample_input_1=myCache
 J9NLS_SHRC_CLCM_SNAPSHOT_REMOVED_OLDER_GEN.explanation=Successfully removed older generation of indicated shared cache snapshot.
@@ -5898,7 +5804,7 @@ J9NLS_SHRC_CLCM_SNAPSHOT_REMOVED_OLDER_GEN.system_action=Processing continues.
 J9NLS_SHRC_CLCM_SNAPSHOT_REMOVED_OLDER_GEN.user_response=None required.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CLCM_SNAPSHOT_FAILED_REMOVED_OLDER_GEN=Falha ao remover a gera\u00e7\u00e3o mais antiga da captura instant\u00e2nea do cache compartilhado \"%s\"
+J9NLS_SHRC_CLCM_SNAPSHOT_FAILED_REMOVED_OLDER_GEN=Falha ao remover a gera\u00e7\u00e3o mais antiga da captura instant\u00e2nea do cache compartilhado "%s"
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CLCM_SNAPSHOT_FAILED_REMOVED_OLDER_GEN.sample_input_1=myCache
 J9NLS_SHRC_CLCM_SNAPSHOT_FAILED_REMOVED_OLDER_GEN.explanation=It has not been possible to remove the older generation of indicated shared cache snapshot.
@@ -5906,7 +5812,7 @@ J9NLS_SHRC_CLCM_SNAPSHOT_FAILED_REMOVED_OLDER_GEN.system_action=Processing conti
 J9NLS_SHRC_CLCM_SNAPSHOT_FAILED_REMOVED_OLDER_GEN.user_response=Previous error messages may indicate the reason. Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CLCM_SNAPSHOT_FAILED_REMOVED_CURRENT_GEN=Falha ao remover a gera\u00e7\u00e3o atual da captura instant\u00e2nea do cache compartilhado \"%s\"
+J9NLS_SHRC_CLCM_SNAPSHOT_FAILED_REMOVED_CURRENT_GEN=Falha ao remover a gera\u00e7\u00e3o atual da captura instant\u00e2nea do cache compartilhado "%s"
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CLCM_SNAPSHOT_FAILED_REMOVED_CURRENT_GEN.sample_input_1=myCache
 J9NLS_SHRC_CLCM_SNAPSHOT_FAILED_REMOVED_CURRENT_GEN.explanation=It has not been possible to remove the current generation of indicated shared cache snapshot.
@@ -5921,7 +5827,7 @@ J9NLS_SHRC_CLCM_SNAPSHOT_NOT_EXIST.system_action=The JVM terminates.
 J9NLS_SHRC_CLCM_SNAPSHOT_NOT_EXIST.user_response=None required.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CLCM_SNAPSHOT_DESTROYED=A captura instant\u00e2nea do cache compartilhado \"%s\" foi destru\u00edda
+J9NLS_SHRC_CLCM_SNAPSHOT_DESTROYED=A captura instant\u00e2nea do cache compartilhado "%s" foi destru\u00edda
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CLCM_SNAPSHOT_DESTROYED.sample_input_1=myCache
 J9NLS_SHRC_CLCM_SNAPSHOT_DESTROYED.explanation=This is an information message notifying the user that the named shared cache snapshot has been destroyed as requested.
@@ -5937,7 +5843,7 @@ J9NLS_SHRC_OSCACHE_CONTROL_FILE_RECREATE_PROHIBITED_SNAPSHOT_CACHE.system_action
 J9NLS_SHRC_OSCACHE_CONTROL_FILE_RECREATE_PROHIBITED_SNAPSHOT_CACHE.user_response=None required.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SNAPSHOT_GROUPACCESS_REQUIRED=A JVM n\u00e3o est\u00e1 configurada para acessar o arquivo da captura instant\u00e2nea do cache compartilhado n\u00e3o persistente \"%s\". Para abrir o arquivo, use a subop\u00e7\u00e3o 'groupAccess'.
+J9NLS_SHRC_OSCACHE_SNAPSHOT_GROUPACCESS_REQUIRED=A JVM n\u00e3o est\u00e1 configurada para acessar o arquivo da captura instant\u00e2nea do cache compartilhado n\u00e3o persistente "%s". Para abrir o arquivo, use a subop\u00e7\u00e3o 'groupAccess'.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SNAPSHOT_GROUPACCESS_REQUIRED.sample_input_1=/myJVM/myCaches
 J9NLS_SHRC_OSCACHE_SNAPSHOT_GROUPACCESS_REQUIRED.explanation=An error has occurred within Shared Classes processing.
@@ -5945,7 +5851,7 @@ J9NLS_SHRC_OSCACHE_SNAPSHOT_GROUPACCESS_REQUIRED.system_action=The JVM fails to 
 J9NLS_SHRC_OSCACHE_SNAPSHOT_GROUPACCESS_REQUIRED.user_response=Modify existing "-Xshareclasses:" option to add "groupAccess" suboption and restart. The snapshot may have been created by another user in the same group as the current user.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SNAPSHOT_OTHERS_ACCESS_NOT_ALLOWED=A JVM n\u00e3o permite acesso ao arquivo da captura instant\u00e2nea do cache compartilhado \"%s\" porque o ID do usu\u00e1rio e o ID do grupo do processo da JVM s\u00e3o diferentes do ID do usu\u00e1rio e do ID do grupo do propriet\u00e1rio do arquivo da captura instant\u00e2nea do cache compartilhado e o ID do usu\u00e1rio do processo da JVM n\u00e3o pertence ao grupo do propriet\u00e1rio do arquivo da captura instant\u00e2nea do cache compartilhado.
+J9NLS_SHRC_OSCACHE_SNAPSHOT_OTHERS_ACCESS_NOT_ALLOWED=A JVM n\u00e3o permite acesso ao arquivo da captura instant\u00e2nea do cache compartilhado "%s" porque o ID do usu\u00e1rio e o ID do grupo do processo da JVM s\u00e3o diferentes do ID do usu\u00e1rio e do ID do grupo do propriet\u00e1rio do arquivo da captura instant\u00e2nea do cache compartilhado e o ID do usu\u00e1rio do processo da JVM n\u00e3o pertence ao grupo do propriet\u00e1rio do arquivo da captura instant\u00e2nea do cache compartilhado.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SNAPSHOT_OTHERS_ACCESS_NOT_ALLOWED.sample_input_1=/myJVM/myCaches
 J9NLS_SHRC_OSCACHE_SNAPSHOT_OTHERS_ACCESS_NOT_ALLOWED.explanation=An error has occurred within shared classes processing.
@@ -5953,7 +5859,7 @@ J9NLS_SHRC_OSCACHE_SNAPSHOT_OTHERS_ACCESS_NOT_ALLOWED.system_action=The JVM fail
 J9NLS_SHRC_OSCACHE_SNAPSHOT_OTHERS_ACCESS_NOT_ALLOWED.user_response=Specify a different cache name or directory to avoid conflict with existing shared cache snapshot created by another user not in its group.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SNAPSHOT_INTERNAL_ERROR_CHECKING_CACHEFILE_ACCESS=A JVM n\u00e3o p\u00f4de verificar as permiss\u00f5es do arquivo da captura instant\u00e2nea do cache compartilhado \"%s\"
+J9NLS_SHRC_OSCACHE_SNAPSHOT_INTERNAL_ERROR_CHECKING_CACHEFILE_ACCESS=A JVM n\u00e3o p\u00f4de verificar as permiss\u00f5es do arquivo da captura instant\u00e2nea do cache compartilhado "%s"
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SNAPSHOT_INTERNAL_ERROR_CHECKING_CACHEFILE_ACCESS.sample_input_1=/myJVM/myCaches
 J9NLS_SHRC_OSCACHE_SNAPSHOT_INTERNAL_ERROR_CHECKING_CACHEFILE_ACCESS.explanation=An error has occurred within shared classes processing.
@@ -5961,7 +5867,7 @@ J9NLS_SHRC_OSCACHE_SNAPSHOT_INTERNAL_ERROR_CHECKING_CACHEFILE_ACCESS.system_acti
 J9NLS_SHRC_OSCACHE_SNAPSHOT_INTERNAL_ERROR_CHECKING_CACHEFILE_ACCESS.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_ERROR_SNAPSHOT_FILE_NOT_FOUND=O arquivo da captura instant\u00e2nea do cache compartilhado \"%s\" n\u00e3o existe
+J9NLS_SHRC_OSCACHE_ERROR_SNAPSHOT_FILE_NOT_FOUND=O arquivo da captura instant\u00e2nea do cache compartilhado "%s" n\u00e3o existe
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_ERROR_SNAPSHOT_FILE_NOT_FOUND.sample_input_1=/myJVM/myCaches
 J9NLS_SHRC_OSCACHE_ERROR_SNAPSHOT_FILE_NOT_FOUND.explanation=The shared cache snapshot file is not found on the disk.
@@ -5969,8 +5875,7 @@ J9NLS_SHRC_OSCACHE_ERROR_SNAPSHOT_FILE_NOT_FOUND.system_action=The JVM fails to 
 J9NLS_SHRC_OSCACHE_ERROR_SNAPSHOT_FILE_NOT_FOUND.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_ERROR_SNAPSHOT_FILE_LENGTH=O comprimento do arquivo da captura instant\u00e2nea do cache compartilhado n\u00e3o persistente \"%s\" \u00e9 inv\u00e1lido. O comprimento do arquivo \u00e9 \
-de %lld bytes. Um arquivo da captura instant\u00e2nea v\u00e1lido \u00e9 de pelo menos %d bytes e no m\u00e1ximo %lld bytes.
+J9NLS_SHRC_OSCACHE_ERROR_SNAPSHOT_FILE_LENGTH=O comprimento do arquivo da captura instant\u00e2nea do cache compartilhado n\u00e3o persistente "%s" \u00e9 inv\u00e1lido. O comprimento do arquivo \u00e9 de %lld bytes. Um arquivo da captura instant\u00e2nea v\u00e1lido \u00e9 de pelo menos %d bytes e no m\u00e1ximo %lld bytes.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_ERROR_SNAPSHOT_FILE_LENGTH.sample_input_1=/myJVM/myCaches
 J9NLS_SHRC_OSCACHE_ERROR_SNAPSHOT_FILE_LENGTH.sample_input_2=1234
@@ -5981,7 +5886,7 @@ J9NLS_SHRC_OSCACHE_ERROR_SNAPSHOT_FILE_LENGTH.system_action=The JVM fails to com
 J9NLS_SHRC_OSCACHE_ERROR_SNAPSHOT_FILE_LENGTH.user_response=Ensure the file is a valid shared cache snapshot file.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_ERROR_RESTORE_EXISTING_CACHE=O cache compartilhado n\u00e3o persistente \"%s\" j\u00e1 existe. Ele n\u00e3o pode ser restaurado a partir da captura instant\u00e2nea.
+J9NLS_SHRC_OSCACHE_ERROR_RESTORE_EXISTING_CACHE=O cache compartilhado n\u00e3o persistente "%s" j\u00e1 existe. Ele n\u00e3o pode ser restaurado a partir da captura instant\u00e2nea.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_ERROR_RESTORE_EXISTING_CACHE.sample_input_1=myCache
 J9NLS_SHRC_OSCACHE_ERROR_RESTORE_EXISTING_CACHE.explanation=Only a new non-persistent shared cache can be restored from snapshot.
@@ -5996,7 +5901,7 @@ J9NLS_SHRC_OSCACHE_ERROR_STARTUP_CACHE.system_action=The JVM fails to complete t
 J9NLS_SHRC_OSCACHE_ERROR_STARTUP_CACHE.user_response=Verify that the system has enough native resources for the JVM to work properly. If the situation persists, contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_ERROR_SNAPSHOT_FILE_READ=Falha ao ler o arquivo da captura instant\u00e2nea do cache compartilhado n\u00e3o persistente \"%s\"
+J9NLS_SHRC_OSCACHE_ERROR_SNAPSHOT_FILE_READ=Falha ao ler o arquivo da captura instant\u00e2nea do cache compartilhado n\u00e3o persistente "%s"
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_ERROR_SNAPSHOT_FILE_READ.sample_input_1=/myJVM/myCaches
 J9NLS_SHRC_OSCACHE_ERROR_SNAPSHOT_FILE_READ.explanation=An error has occurred while reading the non-persistent shared cache snapshot file
@@ -6018,8 +5923,7 @@ J9NLS_SHRC_OSCACHE_STARTUP_RESTRICT_CLASSPATHS_ENABLED.system_action=The JVM con
 J9NLS_SHRC_OSCACHE_STARTUP_RESTRICT_CLASSPATHS_ENABLED.user_response=No action required, this message is for information only.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_STARTUP_RESTRICT_CLASSPATHS_IGNORED=A JVM ignorou a op\u00e7\u00e3o '-Xshareclasses:restrictClasspaths' j\u00e1 que o cache compartilhado existente foi criado sem a op\u00e7\u00e3o \
-'-Xshareclasses:restrictClasspaths'
+J9NLS_SHRC_OSCACHE_STARTUP_RESTRICT_CLASSPATHS_IGNORED=A JVM ignorou a op\u00e7\u00e3o '-Xshareclasses:restrictClasspaths' j\u00e1 que o cache compartilhado existente foi criado sem a op\u00e7\u00e3o '-Xshareclasses:restrictClasspaths'
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_STARTUP_RESTRICT_CLASSPATHS_IGNORED.explanation='-Xshareclasses:restrictClasspaths' is applicable only when the JVM is initializing a new shared cache.
 J9NLS_SHRC_OSCACHE_STARTUP_RESTRICT_CLASSPATHS_IGNORED.system_action=The JVM continues.
@@ -6047,7 +5951,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_PRINT_SNAPSHOT_FILENAME.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINT_SNAPSHOT_FILENAME.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SHARED_CACHE_SIZE_ZERO_AND_DIFF_ADDRESS_MODE=Use uma JVM %d-bit para executar a opera\u00e7\u00e3o solicitada no cache compartilhado %d-bit \"%s\" j\u00e1 que a JVM %d-bit n\u00e3o pode verificar se a mem\u00f3ria compartilhada foi criada pela JVM
+J9NLS_SHRC_OSCACHE_SHARED_CACHE_SIZE_ZERO_AND_DIFF_ADDRESS_MODE=Use uma JVM %d-bit para executar a opera\u00e7\u00e3o solicitada no cache compartilhado %d-bit "%s" j\u00e1 que a JVM %d-bit n\u00e3o pode verificar se a mem\u00f3ria compartilhada foi criada pela JVM
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_SIZE_ZERO_AND_DIFF_ADDRESS_MODE.sample_input_1=64
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_SIZE_ZERO_AND_DIFF_ADDRESS_MODE.sample_input_2=64
@@ -6059,27 +5963,21 @@ J9NLS_SHRC_OSCACHE_SHARED_CACHE_SIZE_ZERO_AND_DIFF_ADDRESS_MODE.user_response=Pl
 # END NON-TRANSLATABLE
 
 # From: shrinit.cpp
-J9NLS_SHRC_SHRINIT_HELPTEXT_INVALIDATE_AOT_METHODS=Invalide \
-o(s) m\u00e9todo(s) AOT correspondente(s) \u00e0(s) especifica\u00e7\u00e3o(\u00f5es) de \
-m\u00e9todo.
+J9NLS_SHRC_SHRINIT_HELPTEXT_INVALIDATE_AOT_METHODS=Invalide o(s) m\u00e9todo(s) AOT correspondente(s) \u00e0(s) especifica\u00e7\u00e3o(\u00f5es) de m\u00e9todo.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_INVALIDATE_AOT_METHODS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_INVALIDATE_AOT_METHODS.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_INVALIDATE_AOT_METHODS.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_REVALIDATE_AOT_METHODS=Revalide \
-o(s) m\u00e9todo(s) AOT correspondente(s) \u00e0(s) especifica\u00e7\u00e3o(\u00f5es) de m\u00e9todo.
+J9NLS_SHRC_SHRINIT_HELPTEXT_REVALIDATE_AOT_METHODS=Revalide o(s) m\u00e9todo(s) AOT correspondente(s) \u00e0(s) especifica\u00e7\u00e3o(\u00f5es) de m\u00e9todo.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_REVALIDATE_AOT_METHODS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_REVALIDATE_AOT_METHODS.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_REVALIDATE_AOT_METHODS.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_FIND_AOT_METHODS=Imprima \
-o(s) m\u00e9todo(s) AOT correspondente(s) \u00e0(s) especifica\u00e7\u00e3o(\u00f5es) de \
-m\u00e9todo.\n\
-\t<method_specification> \u00e9 definido como: [!]{*|[*]<packagename/classname>[*]}[.{*|[*]<methodname>[*]}[({*|[*]<parameters>[*]})]].
+J9NLS_SHRC_SHRINIT_HELPTEXT_FIND_AOT_METHODS=Imprima o(s) m\u00e9todo(s) AOT correspondente(s) \u00e0(s) especifica\u00e7\u00e3o(\u00f5es) de m\u00e9todo.\n\t<method_specification> \u00e9 definido como: [!]{*|[*]<packagename/classname>[*]}[.{*|[*]<methodname>[*]}[({*|[*]<parameters>[*]})]].
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_FIND_AOT_METHODS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_FIND_AOT_METHODS.system_action=
@@ -6101,9 +5999,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_AOT_METHODS_OPERATION.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_AOT_METHODS_OPERATION.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_METHOD_SPEC=O formato de <method_specification> \u00e9 [!]{*|[*]<packagename/classname>[*]}[.{*|[*]<methodname>[*]}[({*|[*]<parameters>[*]})]], por exemplo:\n\
-\n\
-\t-Xshareclasses:name=Cache1,%sjava/util/HashMap.hash(Ljava/lang/Object;)\n
+J9NLS_SHRC_SHRINIT_HELPTEXT_METHOD_SPEC=O formato de <method_specification> \u00e9 [!]{*|[*]<packagename/classname>[*]}[.{*|[*]<methodname>[*]}[({*|[*]<parameters>[*]})]], por exemplo:\n\n\t-Xshareclasses:name=Cache1,%sjava/util/HashMap.hash(Ljava/lang/Object;)\n
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_METHOD_SPEC.sample_input_1=findAotMethods=
 J9NLS_SHRC_SHRINIT_HELPTEXT_METHOD_SPEC.explanation=NOTAG
@@ -6111,26 +6007,16 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_METHOD_SPEC.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_METHOD_SPEC.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_INFOTEXT_METHOD_SPEC=IMPORTANTE: \
-\u00c9 poss\u00edvel analisar v\u00e1rias especifica\u00e7\u00f5es de m\u00e9todo separadas por \
-v\u00edrgula. Em que um valor da op\u00e7\u00e3o cont\u00e9m v\u00edrgula(s), ele deve \
-estar entre chaves. \n\
-\tVoc\u00ea pode precisar colocar as op\u00e7\u00f5es entre aspas para evitar que o \
-shell intercepte e fragmente as linhas de comando separadas por \
-v\u00edrgula, ou seja: \n\
-\n\
-\t\"-Xshareclasses:name=Cache1,%s{java/util/*.*(),java/lang/Object.*(*)}\" \
-ou\n\
-\t-Xshareclasses:name=Cache1,%s\'{java/util/*.*(),!java/util/*.*()}\'\n
+J9NLS_SHRC_SHRINIT_INFOTEXT_METHOD_SPEC=IMPORTANTE: \u00c9 poss\u00edvel analisar v\u00e1rias especifica\u00e7\u00f5es de m\u00e9todo separadas por v\u00edrgula. Em que um valor da op\u00e7\u00e3o cont\u00e9m v\u00edrgula(s), ele deve estar entre chaves. \n\tVoc\u00ea pode precisar colocar as op\u00e7\u00f5es entre aspas para evitar que o shell intercepte e fragmente as linhas de comando separadas por v\u00edrgula, ou seja: \n\n\t"-Xshareclasses:name=Cache1,%s{java/util/*.*(),java/lang/Object.*(*)}" ou\n\t-Xshareclasses:name=Cache1,%s'{java/util/*.*(),!java/util/*.*()}'\n
 # START NON-TRANSLATABLE
-J9NLS_SHRC_SHRINIT_INFOTEXT_METHOD_SPEC.sample_input_1=findAotMethods=
+J9NLS_SHRC_SHRINIT_INFOTEXT_METHOD_SPEC.sample_input_1=hashCode
+J9NLS_SHRC_SHRINIT_INFOTEXT_METHOD_SPEC.sample_input_2=hashCode
 J9NLS_SHRC_SHRINIT_INFOTEXT_METHOD_SPEC.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_INFOTEXT_METHOD_SPEC.system_action=
 J9NLS_SHRC_SHRINIT_INFOTEXT_METHOD_SPEC.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_INVALID_METHODSPEC=Especifica\u00e7\u00e3o(\u00f5es) \
-de m\u00e9todo inv\u00e1lida(s) para a op\u00e7\u00e3o \"%s\"
+J9NLS_SHRC_SHRINIT_INVALID_METHODSPEC=Especifica\u00e7\u00e3o(\u00f5es) de m\u00e9todo inv\u00e1lida(s) para a op\u00e7\u00e3o "%s"
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_INVALID_METHODSPEC.sample_input_1=findAotMethods=
 J9NLS_SHRC_SHRINIT_INVALID_METHODSPEC.explanation=The method specification provided was not recognised.
@@ -6138,9 +6024,7 @@ J9NLS_SHRC_SHRINIT_INVALID_METHODSPEC.system_action=The JVM ends.
 J9NLS_SHRC_SHRINIT_INVALID_METHODSPEC.user_response=Specify a valid method specification and try again.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_INVALIDATE_AOT_METHODS_OPERATION_SUCCESS=M\u00e9todo \
-(s) %d \
-AOT invalidado(s)
+J9NLS_SHRC_SHRINIT_INVALIDATE_AOT_METHODS_OPERATION_SUCCESS=M\u00e9todo (s) %d AOT invalidado(s)
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_INVALIDATE_AOT_METHODS_OPERATION_SUCCESS.sample_input_1=1
 J9NLS_SHRC_SHRINIT_INVALIDATE_AOT_METHODS_OPERATION_SUCCESS.explanation=Successfully found the AOT method(s) and performed the required operation.
@@ -6156,8 +6040,7 @@ J9NLS_SHRC_SHRINIT_REVALIDATE_AOT_METHODS_OPERATION_SUCCESS.system_action=The JV
 J9NLS_SHRC_SHRINIT_REVALIDATE_AOT_METHODS_OPERATION_SUCCESS.user_response=No action is required. This message is for information only.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_FIND_AOT_METHODS_OPERATION_SUCCESS=M\u00e9todo(s) \
-%d AOT localizado(s)
+J9NLS_SHRC_SHRINIT_FIND_AOT_METHODS_OPERATION_SUCCESS=M\u00e9todo(s) %d AOT localizado(s)
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_FIND_AOT_METHODS_OPERATION_SUCCESS.sample_input_1=1
 J9NLS_SHRC_SHRINIT_FIND_AOT_METHODS_OPERATION_SUCCESS.explanation=Successfully found the AOT method(s) and performed the required operation.
@@ -6165,8 +6048,7 @@ J9NLS_SHRC_SHRINIT_FIND_AOT_METHODS_OPERATION_SUCCESS.system_action=The JVM ends
 J9NLS_SHRC_SHRINIT_FIND_AOT_METHODS_OPERATION_SUCCESS.user_response=No action is required. This message is for information only.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_INVALIDATE_AOT_METHODS_OPERATION_FAILURE=Falha \
-ao invalidar o(s) m\u00e9todo(s) AOT
+J9NLS_SHRC_SHRINIT_INVALIDATE_AOT_METHODS_OPERATION_FAILURE=Falha ao invalidar o(s) m\u00e9todo(s) AOT
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_INVALIDATE_AOT_METHODS_OPERATION_FAILURE.explanation=An error occurred while attempting the requested operation on the AOT method.
 J9NLS_SHRC_SHRINIT_INVALIDATE_AOT_METHODS_OPERATION_FAILURE.system_action=The JVM ends.
@@ -6187,8 +6069,7 @@ J9NLS_SHRC_SHRINIT_FIND_AOT_METHODS_OPERATION_FAILURE.system_action=The JVM ends
 J9NLS_SHRC_SHRINIT_FIND_AOT_METHODS_OPERATION_FAILURE.user_response=Previous error messages may indicate the reason. Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_NO_AOT_METHOD_FOUND=Nenhum \
-m\u00e9todo AOT corresponde \u00e0(s) especifica\u00e7\u00e3o(\u00f5es)
+J9NLS_SHRC_SHRINIT_NO_AOT_METHOD_FOUND=Nenhum m\u00e9todo AOT corresponde \u00e0(s) especifica\u00e7\u00e3o(\u00f5es)
 # START NON-TRANSLATABLE.
 J9NLS_SHRC_SHRINIT_NO_AOT_METHOD_FOUND.explanation=There are no AOT methods in the cache that match the method specification.
 J9NLS_SHRC_SHRINIT_NO_AOT_METHOD_FOUND.system_action=The JVM ends.
@@ -6196,9 +6077,7 @@ J9NLS_SHRC_SHRINIT_NO_AOT_METHOD_FOUND.user_response=No action is required.
 # END NON-TRANSLATABLE
 
 # From: CacheMap.cpp
-J9NLS_SHRC_CM_PARSE_METHOD_SPECS_TOO_MANY_ERROR=Falha \
-ao analisar as especifica\u00e7\u00f5es de m\u00e9todo. N\u00e3o mais do que %d \
-especifica\u00e7\u00f5es de m\u00e9todo s\u00e3o permitidas.
+J9NLS_SHRC_CM_PARSE_METHOD_SPECS_TOO_MANY_ERROR=Falha ao analisar as especifica\u00e7\u00f5es de m\u00e9todo. N\u00e3o mais do que %d especifica\u00e7\u00f5es de m\u00e9todo s\u00e3o permitidas.
 # START NON-TRANSLATABLE.
 J9NLS_SHRC_CM_PARSE_METHOD_SPECS_TOO_MANY_ERROR.sample_input_1=64
 J9NLS_SHRC_CM_PARSE_METHOD_SPECS_TOO_MANY_ERROR.explanation=Too many method specifications are specified.
@@ -6206,16 +6085,14 @@ J9NLS_SHRC_CM_PARSE_METHOD_SPECS_TOO_MANY_ERROR.system_action=The JVM ends.
 J9NLS_SHRC_CM_PARSE_METHOD_SPECS_TOO_MANY_ERROR.user_response=Reduce the number of method specifications and try again. The maximum limit is 64.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PARSE_METHOD_SPECS_ERROR=Falha \
-ao analisar a(s) especifica\u00e7\u00e3o(\u00f5es) de m\u00e9todo
+J9NLS_SHRC_CM_PARSE_METHOD_SPECS_ERROR=Falha ao analisar a(s) especifica\u00e7\u00e3o(\u00f5es) de m\u00e9todo
 # START NON-TRANSLATABLE.
 J9NLS_SHRC_CM_PARSE_METHOD_SPECS_ERROR.explanation=An error has occurred while parsing the method specification.
 J9NLS_SHRC_CM_PARSE_METHOD_SPECS_ERROR.system_action=The JVM ends.
 J9NLS_SHRC_CM_PARSE_METHOD_SPECS_ERROR.user_response=Correct the format of the method specification and try again.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_FAILED_ENTER_WRITE_MUTEX=Falha para \
-obter o mutex de grava\u00e7\u00e3o de cache
+J9NLS_SHRC_CM_FAILED_ENTER_WRITE_MUTEX=Falha para obter o mutex de grava\u00e7\u00e3o de cache
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_FAILED_ENTER_WRITE_MUTEX.explanation=An error has occurred in acquiring the write mutex of the cache.
 J9NLS_SHRC_CM_FAILED_ENTER_WRITE_MUTEX.system_action=The JVM failed to perform the required operation on the AOT methods.
@@ -6223,8 +6100,7 @@ J9NLS_SHRC_CM_FAILED_ENTER_WRITE_MUTEX.user_response=Verify that the system has 
 # END NON-TRANSLATABLE
 
 #OSCachesysv.cpp
-J9NLS_SHRC_OSCACHE_CONTROL_FILE_RECREATE_PROHIBITED=A \
-recrea\u00e7\u00e3o de arquivo de controle de mem\u00f3ria compartilhada n\u00e3o \u00e9 permitida
+J9NLS_SHRC_OSCACHE_CONTROL_FILE_RECREATE_PROHIBITED=A recrea\u00e7\u00e3o de arquivo de controle de mem\u00f3ria compartilhada n\u00e3o \u00e9 permitida
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_CONTROL_FILE_RECREATE_PROHIBITED.explanation=Cannot perform the required operation since a valid shared cache does not exist.
 J9NLS_SHRC_OSCACHE_CONTROL_FILE_RECREATE_PROHIBITED.system_action=The JVM terminates.
@@ -6232,8 +6108,7 @@ J9NLS_SHRC_OSCACHE_CONTROL_FILE_RECREATE_PROHIBITED.user_response=None required.
 # END NON-TRANSLATABLE
 
 #shrinit.cpp
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_INVALIDATEDAOT=\t invalidatedaot Imprime apenas os tipos aot invalidados o \
-cache compartilhado.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_INVALIDATEDAOT=\t\ invalidatedaot\tImprime apenas os tipos aot invalidados o cache compartilhado.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_INVALIDATEDAOT.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_INVALIDATEDAOT.system_action=
@@ -6284,8 +6159,7 @@ J9NLS_SHRC_ERROR_SNAPSHOT_SET_GROUPACCESS_FAILED.system_action=The JVM continues
 J9NLS_SHRC_ERROR_SNAPSHOT_SET_GROUPACCESS_FAILED.user_response=Check the umask setting and ensure the user has sufficient permission for creating the snapshot file with group access.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_ERROR_FILE_STAT=Erro ao obter estat\u00edsticas do arquivo de cache de classe \
-compartilhada ao verificar a permiss\u00e3o de acesso de seu grupo.
+J9NLS_SHRC_OSCACHE_ERROR_FILE_STAT=Erro ao obter estat\u00edsticas do arquivo de cache de classe compartilhada ao verificar a permiss\u00e3o de acesso de seu grupo.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_ERROR_FILE_STAT.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_ERROR_FILE_STAT.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
@@ -6300,11 +6174,7 @@ J9NLS_SHRC_SHRCLSSUP_FAILURE_OPTION_BUFFER_OVERFLOW.system_action=The JVM termin
 J9NLS_SHRC_SHRCLSSUP_FAILURE_OPTION_BUFFER_OVERFLOW.user_response=Ensure the -Xshareclasses sub-options are not longer than the maximum length and retry.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_SHARED_MEMORY_SIZE_CHANGED=N\u00e3o \u00e9 poss\u00edvel criar mem\u00f3ria compartilhada com tamanho de %1$d bytes conforme solicitado \n\
-\ \tAjustado para o m\u00e1ximo permitido de mem\u00f3ria compartilhada (%2$d bytes) \n\
-\ \t(Para aumentar a mem\u00f3ria compartilhada dispon\u00edvel, modifique o valor SHMMAX do sistema) \n\
-\ \t Se -Xscdmx for usado, a \u00e1rea do atributo de depura\u00e7\u00e3o ser\u00e1 ajustada proporcionalmente \n\
-\ \t de acordo com sua propor\u00e7\u00e3o original para o valor -Xscmx.
+J9NLS_SHRC_SHRINIT_SHARED_MEMORY_SIZE_CHANGED=N\u00e3o \u00e9 poss\u00edvel criar mem\u00f3ria compartilhada com tamanho de %1$d bytes conforme solicitado \n \tAjustado para o m\u00e1ximo permitido de mem\u00f3ria compartilhada (%2$d bytes) \n \t(Para aumentar a mem\u00f3ria compartilhada dispon\u00edvel, modifique o valor SHMMAX do sistema) \n \t Se -Xscdmx for usado, a \u00e1rea do atributo de depura\u00e7\u00e3o ser\u00e1 ajustada proporcionalmente \n \t de acordo com sua propor\u00e7\u00e3o original para o valor -Xscmx.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_SHARED_MEMORY_SIZE_CHANGED.sample_input_1=99999999
 J9NLS_SHRC_SHRINIT_SHARED_MEMORY_SIZE_CHANGED.sample_input_2=99999998
@@ -6313,53 +6183,42 @@ J9NLS_SHRC_SHRINIT_SHARED_MEMORY_SIZE_CHANGED.system_action=The JVM continues.
 J9NLS_SHRC_SHRINIT_SHARED_MEMORY_SIZE_CHANGED.user_response=If you require a larger cache, destroy this cache, increase the value of SHMMAX and re-create the cache.
 # END NON-TRANSLATABLE
 
-J9NLS_CC_PAGE_PROTECTION_INFO1=A prote\u00e7\u00e3o da p\u00e1gina de mem\u00f3ria nos dados de tempo de execu\u00e7\u00e3o, os \
-dados de leitura/grava\u00e7\u00e3o da sequ\u00eancia e as p\u00e1ginas parcialmente \
-preenchidas s\u00e3o ativas com sucesso
+J9NLS_CC_PAGE_PROTECTION_INFO1=A prote\u00e7\u00e3o da p\u00e1gina de mem\u00f3ria nos dados de tempo de execu\u00e7\u00e3o, os dados de leitura/grava\u00e7\u00e3o da sequ\u00eancia e as p\u00e1ginas parcialmente preenchidas s\u00e3o ativas com sucesso
 # START NON-TRANSLATABLE
 J9NLS_CC_PAGE_PROTECTION_INFO1.explanation=Memory pages of the cache containing runtime data, string read-write data and partially filled pages are protected
 J9NLS_CC_PAGE_PROTECTION_INFO1.system_action=If any protected page of the cache is accessed illegally, the JVM will crash
 J9NLS_CC_PAGE_PROTECTION_INFO1.user_response=No action required
 # END NON-TRANSLATABLE
 
-J9NLS_CC_PAGE_PROTECTION_INFO2=A \
-prote\u00e7\u00e3o de p\u00e1gina de mem\u00f3ria em dados de tempo de execu\u00e7\u00e3o e p\u00e1ginas \
-parcialmente preenchidas \u00e9 ativada com \u00eaxito
+J9NLS_CC_PAGE_PROTECTION_INFO2=A prote\u00e7\u00e3o de p\u00e1gina de mem\u00f3ria em dados de tempo de execu\u00e7\u00e3o e p\u00e1ginas parcialmente preenchidas \u00e9 ativada com \u00eaxito
 # START NON-TRANSLATABLE
 J9NLS_CC_PAGE_PROTECTION_INFO2.explanation=Memory pages of the cache containing runtime data and partially filled pages are protected
 J9NLS_CC_PAGE_PROTECTION_INFO2.system_action=If any protected page of the cache is accessed illegally, the JVM will crash
 J9NLS_CC_PAGE_PROTECTION_INFO2.user_response=No action required
 # END NON-TRANSLATABLE
 
-J9NLS_CC_PAGE_PROTECTION_INFO3=A \
-prote\u00e7\u00e3o de p\u00e1gina de mem\u00f3ria em dados de tempo de execu\u00e7\u00e3o e dados \
-de leitura/grava\u00e7\u00e3o de sequ\u00eancia \u00e9 ativada com \u00eaxito
+J9NLS_CC_PAGE_PROTECTION_INFO3=A prote\u00e7\u00e3o de p\u00e1gina de mem\u00f3ria em dados de tempo de execu\u00e7\u00e3o e dados de leitura/grava\u00e7\u00e3o de sequ\u00eancia \u00e9 ativada com \u00eaxito
 # START NON-TRANSLATABLE
 J9NLS_CC_PAGE_PROTECTION_INFO3.explanation=Memory pages of the cache containing runtime data and string read-write data are protected
 J9NLS_CC_PAGE_PROTECTION_INFO3.system_action=If any protected page of the cache is accessed illegally, the JVM will crash
 J9NLS_CC_PAGE_PROTECTION_INFO3.user_response=No action required
 # END NON-TRANSLATABLE
 
-J9NLS_CC_PAGE_PROTECTION_INFO4=A \
-prote\u00e7\u00e3o de p\u00e1gina de mem\u00f3ria em dados de tempo de execu\u00e7\u00e3o foi \
-ativada com \u00eaxito
+J9NLS_CC_PAGE_PROTECTION_INFO4=A prote\u00e7\u00e3o de p\u00e1gina de mem\u00f3ria em dados de tempo de execu\u00e7\u00e3o foi ativada com \u00eaxito
 # START NON-TRANSLATABLE
 J9NLS_CC_PAGE_PROTECTION_INFO4.explanation=Memory pages of the cache containing runtime data are protected
 J9NLS_CC_PAGE_PROTECTION_INFO4.system_action=If any protected page of the cache is accessed illegally, the JVM will crash
 J9NLS_CC_PAGE_PROTECTION_INFO4.user_response=No action required
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_STARTUP_MPROTECT_PARTIAL_PAGES_ENABLED=A JVM ativou a prote\u00e7\u00e3o de p\u00e1gina parcial do cache \
-compartilhado, j\u00e1 que o cache compartilhado existente foi criado com a \
-prote\u00e7\u00e3o de p\u00e1gina parcial ativada.
+J9NLS_SHRC_OSCACHE_STARTUP_MPROTECT_PARTIAL_PAGES_ENABLED=A JVM ativou a prote\u00e7\u00e3o de p\u00e1gina parcial do cache compartilhado, j\u00e1 que o cache compartilhado existente foi criado com a prote\u00e7\u00e3o de p\u00e1gina parcial ativada.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_STARTUP_MPROTECT_PARTIAL_PAGES_ENABLED.explanation=The JVM is attaching to an existing shared cache which was created with partial protection enabled. Any JVM attaching to such cache enables partial page protection irrespective of command-line options.
 J9NLS_SHRC_OSCACHE_STARTUP_MPROTECT_PARTIAL_PAGES_ENABLED.system_action=The JVM protects partially filled pages as well as full pages in the shared class cache.
 J9NLS_SHRC_OSCACHE_STARTUP_MPROTECT_PARTIAL_PAGES_ENABLED.user_response=Please destroy existing shared cache and restart the JVM for -Xshareclasses:mprotect=nopartialpages or -Xshareclasses:mprotect=none option to be effective.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_STARTUP_MPROTECT_PARTIAL_PAGES_DISABLED=A \
-JVM foi desativada protegendo p\u00e1ginas parcialmente preenchidas. Se '-Xshareclasses:mprotect=onfind' for especificado, ele tamb\u00e9m ser\u00e1 ignorado.
+J9NLS_SHRC_OSCACHE_STARTUP_MPROTECT_PARTIAL_PAGES_DISABLED=A JVM foi desativada protegendo p\u00e1ginas parcialmente preenchidas. Se '-Xshareclasses:mprotect=onfind' for especificado, ele tamb\u00e9m ser\u00e1 ignorado.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_STARTUP_MPROTECT_PARTIAL_PAGES_DISABLED.explanation=The JVM is attaching to an existing shared cache which was created with '-Xshareclasses:mprotect=nopartialpages' option. Any JVM attaching to such cache disables partial page protection irrespective of command-line options.
 J9NLS_SHRC_OSCACHE_STARTUP_MPROTECT_PARTIAL_PAGES_DISABLED.system_action=The JVM protects only full pages in the shared class cache. Partially filled pages are not protected.
@@ -6373,7 +6232,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_MPROTECT_PARTIAL_PAGES.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_MPROTECT_PARTIAL_PAGES.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CC_WARN_AVAILABLE_SPACE_FULL=O limite de softmx para o uso de cache compartilhado \"%s\" foi atingido. Use a op\u00e7\u00e3o \"%s\" para aumentar o limite de softmx.
+J9NLS_SHRC_CC_WARN_AVAILABLE_SPACE_FULL=O limite de softmx para o uso de cache compartilhado "%s" foi atingido. Use a op\u00e7\u00e3o "%s" para aumentar o limite de softmx.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CC_WARN_AVAILABLE_SPACE_FULL.sample_input_1=Cache1
 J9NLS_SHRC_CC_WARN_AVAILABLE_SPACE_FULL.sample_input_2=adjustsoftmx=
@@ -6382,7 +6241,7 @@ J9NLS_SHRC_CC_WARN_AVAILABLE_SPACE_FULL.system_action=The JVM continues. The nam
 J9NLS_SHRC_CC_WARN_AVAILABLE_SPACE_FULL.user_response=Increase the softmx limit if user wants more data to be added to the shared cache.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CC_WARN_AOT_SPACE_FULL=O espa\u00e7o para dados AOT no cache compartilhado \"%s\" est\u00e1 completo.
+J9NLS_SHRC_CC_WARN_AOT_SPACE_FULL=O espa\u00e7o para dados AOT no cache compartilhado "%s" est\u00e1 completo.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CC_WARN_AOT_SPACE_FULL.sample_input_1=myCache
 J9NLS_SHRC_CC_WARN_AOT_SPACE_FULL.explanation=The space for AOT data in named shared class cache is full and no further AOT data can be added to it. If the shared cache is not full, then either the maximum space allowed for AOT data or softmx limit set for shared cache usage is reached.
@@ -6390,7 +6249,7 @@ J9NLS_SHRC_CC_WARN_AOT_SPACE_FULL.system_action=The JVM continues. The named sha
 J9NLS_SHRC_CC_WARN_AOT_SPACE_FULL.user_response=If the shared cache is not full, the maximum space allowed for AOT data can be increased using -Xshareclasses:adjustmaxaot= option. In the case softmx limit for shared cache usage is reached, it can be increased using -Xshareclasses:adjustsoftmx= option. User can also increase the minimum space reserved for AOT data using -Xshareclasses:adjustminaot= option.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CC_WARN_JIT_SPACE_FULL=O espa\u00e7o para dados JIT no cache compartilhado \"%s\" est\u00e1 completo.
+J9NLS_SHRC_CC_WARN_JIT_SPACE_FULL=O espa\u00e7o para dados JIT no cache compartilhado "%s" est\u00e1 completo.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CC_WARN_JIT_SPACE_FULL.sample_input_1=myCache
 J9NLS_SHRC_CC_WARN_JIT_SPACE_FULL.explanation=The space for JIT data in named shared class cache is full and no further JIT data can be added to it. If the shared cache is not full, then either the maximum space allowed for JIT data or softmx limit set for shared cache usage is reached.
@@ -6631,18 +6490,14 @@ J9NLS_SHRC_OSCACHE_STARTUP_MPROTECT_PARTIAL_PAGES_ON_STARTUP_ENABLED.system_acti
 J9NLS_SHRC_OSCACHE_STARTUP_MPROTECT_PARTIAL_PAGES_ON_STARTUP_ENABLED.user_response=None.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_STARTUP_MPROTECT_PARTIAL_PAGES_NOT_ENABLED_ON_STARTUP=A \
-JVM n\u00e3o foi ativada, protegendo as p\u00e1ginas parcialmente preenchidas \
-do cache compartilhado na inicializa\u00e7\u00e3o.
+J9NLS_SHRC_OSCACHE_STARTUP_MPROTECT_PARTIAL_PAGES_NOT_ENABLED_ON_STARTUP=A JVM n\u00e3o foi ativada, protegendo as p\u00e1ginas parcialmente preenchidas do cache compartilhado na inicializa\u00e7\u00e3o.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_STARTUP_MPROTECT_PARTIAL_PAGES_NOT_ENABLED_ON_STARTUP.explanation=The JVM is attaching to an existing shared cache which was not created with '-Xshareclasses:mprotectOnStartup' option. Any JVM attaching to such cache enables partial page protection after startup phase.
 J9NLS_SHRC_OSCACHE_STARTUP_MPROTECT_PARTIAL_PAGES_NOT_ENABLED_ON_STARTUP.system_action=The JVM protects partially filled pages after startup phase is over.
 J9NLS_SHRC_OSCACHE_STARTUP_MPROTECT_PARTIAL_PAGES_NOT_ENABLED_ON_STARTUP.user_response=Please destroy existing shared cache and restart the JVM for the JVM to protect partially filled pages in the shared cache on startup.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_MMAP_DESTROY_SUCCESS_CR=O \
-cache compartilhado persistente de refer\u00eancias compactadas \"%1$s\" foi \
-destru\u00eddo. Use a op\u00e7\u00e3o -Xnocompressedrefs se voc\u00ea desejar destruir um cache de refer\u00eancias n\u00e3o compactadas.
+J9NLS_SHRC_OSCACHE_MMAP_DESTROY_SUCCESS_CR=O cache compartilhado persistente de refer\u00eancias compactadas "%1$s" foi destru\u00eddo. Use a op\u00e7\u00e3o -Xnocompressedrefs se voc\u00ea desejar destruir um cache de refer\u00eancias n\u00e3o compactadas.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_MMAP_DESTROY_SUCCESS_CR.sample_input_1=myCache
 J9NLS_SHRC_OSCACHE_MMAP_DESTROY_SUCCESS_CR.explanation=This message informs you that you have successfully destroyed the compressed references cache named 1$.
@@ -6650,9 +6505,7 @@ J9NLS_SHRC_OSCACHE_MMAP_DESTROY_SUCCESS_CR.system_action=The JVM terminates at t
 J9NLS_SHRC_OSCACHE_MMAP_DESTROY_SUCCESS_CR.user_response=No action required, this is an information only message.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_MMAP_DESTROY_SUCCESS_NONCR=O \
-cache compartilhado persistente de refer\u00eancias n\u00e3o compactadas \"%1$s\" \
-foi destru\u00eddo. Use a op\u00e7\u00e3o -Xcompressedrefs se voc\u00ea desejar destruir um cache de refer\u00eancias compactadas.
+J9NLS_SHRC_OSCACHE_MMAP_DESTROY_SUCCESS_NONCR=O cache compartilhado persistente de refer\u00eancias n\u00e3o compactadas "%1$s" foi destru\u00eddo. Use a op\u00e7\u00e3o -Xcompressedrefs se voc\u00ea desejar destruir um cache de refer\u00eancias compactadas.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_MMAP_DESTROY_SUCCESS_NONCR.sample_input_1=myCache
 J9NLS_SHRC_OSCACHE_MMAP_DESTROY_SUCCESS_NONCR.explanation=This message informs you that you have successfully destroyed the non-compressed references cache named 1$.
@@ -6660,7 +6513,7 @@ J9NLS_SHRC_OSCACHE_MMAP_DESTROY_SUCCESS_NONCR.system_action=The JVM terminates a
 J9NLS_SHRC_OSCACHE_MMAP_DESTROY_SUCCESS_NONCR.user_response=No action required, this is an information only message.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SHARED_CACHE_DESTROYED_CR=O cache compartilhado de refer\u00eancias compactadas \"%s\" \u00e9 destru\u00eddo. Use a op\u00e7\u00e3o -Xnocompressedrefs se voc\u00ea desejar destruir um cache de refer\u00eancias n\u00e3o compactadas.
+J9NLS_SHRC_OSCACHE_SHARED_CACHE_DESTROYED_CR=O cache compartilhado de refer\u00eancias compactadas "%s" \u00e9 destru\u00eddo. Use a op\u00e7\u00e3o -Xnocompressedrefs se voc\u00ea desejar destruir um cache de refer\u00eancias n\u00e3o compactadas.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_DESTROYED_CR.sample_input_1=myCache
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_DESTROYED_CR.explanation=This is an information message notifying you that the named compressed references shared class cache has been destroyed as requested.
@@ -6668,8 +6521,7 @@ J9NLS_SHRC_OSCACHE_SHARED_CACHE_DESTROYED_CR.system_action=A JVM will not be cre
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_DESTROYED_CR.user_response=None required.  This is an information message issued when you request a shared class cache to be destroyed.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SHARED_CACHE_DESTROYED_NONCR=O \
-cache compartilhado de refer\u00eancias n\u00e3o compactadas \"%s\" \u00e9 destru\u00eddo. Use a op\u00e7\u00e3o -Xcompressedrefs se voc\u00ea desejar destruir um cache de refer\u00eancias compactadas.
+J9NLS_SHRC_OSCACHE_SHARED_CACHE_DESTROYED_NONCR=O cache compartilhado de refer\u00eancias n\u00e3o compactadas "%s" \u00e9 destru\u00eddo. Use a op\u00e7\u00e3o -Xcompressedrefs se voc\u00ea desejar destruir um cache de refer\u00eancias compactadas.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_DESTROYED_NONCR.sample_input_1=myCache
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_DESTROYED_NONCR.explanation=This is an information message notifying you that the named non-compressed references shared class cache has been destroyed as requested.
@@ -6677,8 +6529,7 @@ J9NLS_SHRC_OSCACHE_SHARED_CACHE_DESTROYED_NONCR.system_action=A JVM will not be 
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_DESTROYED_NONCR.user_response=None required.  This is an information message issued when you request a shared class cache to be destroyed.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CLCM_SNAPSHOT_DESTROYED_CR=A \
-captura instant\u00e2nea do cache compartilhado de refer\u00eancias compactadas \"%s\" \u00e9 destru\u00eddo. Use a op\u00e7\u00e3o -Xnocompressedrefs se voc\u00ea desejar destruir uma captura instant\u00e2nea de cache de refer\u00eancias n\u00e3o compactadas.
+J9NLS_SHRC_CLCM_SNAPSHOT_DESTROYED_CR=A captura instant\u00e2nea do cache compartilhado de refer\u00eancias compactadas "%s" \u00e9 destru\u00eddo. Use a op\u00e7\u00e3o -Xnocompressedrefs se voc\u00ea desejar destruir uma captura instant\u00e2nea de cache de refer\u00eancias n\u00e3o compactadas.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CLCM_SNAPSHOT_DESTROYED_CR.sample_input_1=myCache
 J9NLS_SHRC_CLCM_SNAPSHOT_DESTROYED_CR.explanation=This is an information message notifying the user that the named compressed references shared cache snapshot has been destroyed as requested.
@@ -6686,9 +6537,7 @@ J9NLS_SHRC_CLCM_SNAPSHOT_DESTROYED_CR.system_action=The JVM continues.
 J9NLS_SHRC_CLCM_SNAPSHOT_DESTROYED_CR.user_response=None required.  This is an information message issued when you request a shared cache snapshot to be destroyed.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CLCM_SNAPSHOT_DESTROYED_NONCR=A \
-captura instant\u00e2nea do cache compartilhado de refer\u00eancias n\u00e3o \
-compactadas \"%s\" foi destru\u00edda. Use a op\u00e7\u00e3o -Xcompressedrefs se voc\u00ea desejar destruir uma captura instant\u00e2nea de cache de refer\u00eancias compactadas.
+J9NLS_SHRC_CLCM_SNAPSHOT_DESTROYED_NONCR=A captura instant\u00e2nea do cache compartilhado de refer\u00eancias n\u00e3o compactadas "%s" foi destru\u00edda. Use a op\u00e7\u00e3o -Xcompressedrefs se voc\u00ea desejar destruir uma captura instant\u00e2nea de cache de refer\u00eancias compactadas.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CLCM_SNAPSHOT_DESTROYED_NONCR.sample_input_1=myCache
 J9NLS_SHRC_CLCM_SNAPSHOT_DESTROYED_NONCR.explanation=This is an information message notifying the user that the named non-compressed references shared cache snapshot has been destroyed as requested.
@@ -6714,7 +6563,7 @@ J9NLS_SHRC_CM_PRINTSHUTDOWNSTATS_UNSTORED.system_action=The JVM continues.
 J9NLS_SHRC_CM_PRINTSHUTDOWNSTATS_UNSTORED.user_response=No action required, this is an information only message.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_STALE=\t stale           Imprime todas as entradas antigas no cache compartilhado.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_STALE=\t\ stale\t\tImprime todas as entradas antigas no cache compartilhado.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_STALE.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_STALE.system_action=
@@ -6731,8 +6580,7 @@ J9NLS_SHRC_CM_PRINTSTATS_STALE_BYTES.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_STALE_BYTES.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_MIN_SPACE_SIZE_VALUE_TOO_BIG=O valor %s \u00e9 maior do que o tamanho do cache compartilhado, portanto ele foi configurado para se igualar ao \
-tamanho de cache compartilhado.
+J9NLS_SHRC_SHRINIT_MIN_SPACE_SIZE_VALUE_TOO_BIG=O valor %s \u00e9 maior do que o tamanho do cache compartilhado, portanto ele foi configurado para se igualar ao tamanho de cache compartilhado.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_MIN_SPACE_SIZE_VALUE_TOO_BIG.sample_input_1=-Xscminaot
 J9NLS_SHRC_SHRINIT_MIN_SPACE_SIZE_VALUE_TOO_BIG.explanation=It makes no sense for -Xscminaot/-Xscminjitdata to be greater than the shared cache size.
@@ -6758,8 +6606,7 @@ J9NLS_SHRC_CM_PRINTSHUTDOWNSTATS_UNSTORED_V1.system_action=The JVM continues.
 J9NLS_SHRC_CM_PRINTSHUTDOWNSTATS_UNSTORED_V1.user_response=No action required, this is an information only message.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CC_INCORRECT_BUILDID=Falha ao iniciar o cache compartilhado. O cache existente compartilhado foi criado por uma compila\u00e7\u00e3o JVM diferente e n\u00e3o \
-corresponde \u00e0 JVM em execu\u00e7\u00e3o.
+J9NLS_SHRC_CC_INCORRECT_BUILDID=Falha ao iniciar o cache compartilhado. O cache existente compartilhado foi criado por uma compila\u00e7\u00e3o JVM diferente e n\u00e3o corresponde \u00e0 JVM em execu\u00e7\u00e3o.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CC_INCORRECT_BUILDID.explanation=An error has occurred when starting up the cache. The build ID of the existing cache with the same name is different from that of the current JVM.
 J9NLS_SHRC_CC_INCORRECT_BUILDID.system_action=The JVM fails to complete the requested operation.
@@ -6810,7 +6657,7 @@ J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS_DISPLAY_DETAIL.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS_DISPLAY_DETAIL.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_STARTUPHINT=\t startuphint       Imprime somente tipos de sugest\u00f5es de inicializa\u00e7\u00e3o no cache compartilhado.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_STARTUPHINT=\t\ startuphint\tImprime somente tipos de sugest\u00f5es de inicializa\u00e7\u00e3o no cache compartilhado.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_STARTUPHINT.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_STARTUPHINT.system_action=
@@ -6944,7 +6791,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_CREATE_LAYER.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_CREATE_LAYER.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER=N\u00famero de camada %d inv\u00e1lido encontrado para \"%s\". O n\u00famero da camada deve ser menor que %d.
+J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER=N\u00famero de camada %d inv\u00e1lido encontrado para "%s". O n\u00famero da camada deve ser menor que %d.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER.sample_input_1=111
 J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER.sample_input_2=layer=
@@ -6971,8 +6818,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_NO_PERSISTENT_DISK_SPACE_CHECK.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_NO_PERSISTENT_DISK_SPACE_CHECK.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_TOP_LAYER_TITLE=\n\
-Estat\u00edsticas atuais para a camada superior do cache \"%s\": \n
+J9NLS_SHRC_CM_PRINTSTATS_TOP_LAYER_TITLE=\nEstat\u00edsticas atuais para a camada superior do cache "%s": \n
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_TOP_LAYER_TITLE.sample_input_1=myCache
 J9NLS_SHRC_CM_PRINTSTATS_TOP_LAYER_TITLE.explanation=NOTAG
@@ -6990,8 +6836,7 @@ J9NLS_SHRC_CM_PRINTSTATS_CACHE_LAYER.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_CACHE_LAYER.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_ALL_LAYERS_TITLE=\n\
-Estat\u00edsticas atuais para todas as camadas do cache \"%s\": \n
+J9NLS_SHRC_CM_PRINTSTATS_ALL_LAYERS_TITLE=\nEstat\u00edsticas atuais para todas as camadas do cache "%s": \n
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_ALL_LAYERS_TITLE.sample_input_1=myCache
 J9NLS_SHRC_CM_PRINTSTATS_ALL_LAYERS_TITLE.explanation=NOTAG
@@ -7006,8 +6851,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_PRINT_TOP_LAYER_STATS.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINT_TOP_LAYER_STATS.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP_V1=Op\u00e7\u00f5es dispon\u00edveis para -Xshareclasses:%1$s<options>. O di\u00e1logo \
-\u00e9 estendido para exibir mais op\u00e7\u00f5es. Ou seja, %2$saot+url \n
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP_V1=Op\u00e7\u00f5es dispon\u00edveis para -Xshareclasses:%1$s<options>. O di\u00e1logo \u00e9 estendido para exibir mais op\u00e7\u00f5es. Ou seja, %2$saot+url \n
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP_V1.sample_input_1=printStats=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP_V1.sample_input_2=printStats=
@@ -7061,4 +6905,11 @@ J9NLS_SHRC_OSCACHE_MMAP_MSYNC_ERROR=Erro ao sincronizar a mem\u00f3ria.
 J9NLS_SHRC_OSCACHE_MMAP_MSYNC_ERROR.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_MSYNC_ERROR.system_action=The JVM terminates, unless you have specified the non-fatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using shared classes.
 J9NLS_SHRC_OSCACHE_MMAP_MSYNC_ERROR.user_response=Contact your service representative.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_OSCACHE_MMAP_STARTUP_JITSERVER_LAYER_FILE_DELETE_ERROR=O arquivo de camada de cache tempor\u00e1rio n\u00e3o p\u00f4de ser removido
+# START NON-TRANSLATABLE
+J9NLS_SHRC_OSCACHE_MMAP_STARTUP_JITSERVER_LAYER_FILE_DELETE_ERROR.explanation=The JITServer AOT cache created a temporary shared class cache layer in order to function, but the underlying file could not be removed.
+J9NLS_SHRC_OSCACHE_MMAP_STARTUP_JITSERVER_LAYER_FILE_DELETE_ERROR.system_action=The JVM continues.
+J9NLS_SHRC_OSCACHE_MMAP_STARTUP_JITSERVER_LAYER_FILE_DELETE_ERROR.user_response=Contact your service representative.
 # END NON-TRANSLATABLE

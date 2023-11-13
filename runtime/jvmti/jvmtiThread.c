@@ -1326,7 +1326,7 @@ jvmtiSuspendResumeCallBack(J9VMThread *vmThread, J9MM_IterateObjectDescriptor *o
 {
 	j9object_t continuationObj = object->object;
 	j9object_t vthread = J9VMJDKINTERNALVMCONTINUATION_VTHREAD(vmThread, continuationObj);
-	ContinuationState continuationState = J9VMJDKINTERNALVMCONTINUATION_STATE(vmThread, continuationObj);;
+	ContinuationState continuationState = J9VMJDKINTERNALVMCONTINUATION_STATE(vmThread, continuationObj);
 
 	if ((NULL != vthread) && J9_ARE_NO_BITS_SET(continuationState, J9_GC_CONTINUATION_STATE_LAST_UNMOUNT)) {
 		jvmtiVThreadCallBackData *data = (jvmtiVThreadCallBackData*)userData;

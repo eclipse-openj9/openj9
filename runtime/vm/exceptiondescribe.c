@@ -53,12 +53,13 @@ printExceptionInThread(J9VMThread* vmThread)
 	
 	format = j9nls_lookup_message(
 		J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, 
-		J9NLS_VM_STACK_TRACE_EXCEPTION_IN, 
-		"Exception in thread \"%.*s\" ");
+		J9NLS_VM_STACK_TRACE_EXCEPTION_IN,
+		"Exception in thread \"%s\"");
 
 	name = getOMRVMThreadName(vmThread->omrVMThread);
 
-	j9tty_err_printf(PORTLIB, (char*)format, strlen(name), name);
+	j9tty_err_printf(PORTLIB, format, name);
+	j9tty_err_printf(PORTLIB, " ");
 	
 	releaseOMRVMThreadName(vmThread->omrVMThread);
 }

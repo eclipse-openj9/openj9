@@ -52,58 +52,56 @@ J9NLS_EXELIB_INTERNAL_HELP_1_1.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_1_1.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_1_2=\  -Xbootclasspath:<\u00fatvonal>    be\u00e1ll\u00edtja a rendszerind\u00edt\u00f3 oszt\u00e1ly\u00fatvonalat az <\u00fatvonal> \u00e9rt\u00e9kre
+J9NLS_EXELIB_INTERNAL_HELP_1_2=\ \ -Xbootclasspath:<\u00fatvonal>    be\u00e1ll\u00edtja a rendszerind\u00edt\u00f3 oszt\u00e1ly\u00fatvonalat az <\u00fatvonal> \u00e9rt\u00e9kre
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_1_2.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_1_2.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_1_2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_1_3=\  -Xbootclasspath/p:<\u00fatvonal>  az <\u00fatvonal> \u00e9rt\u00e9k\u00e9t a rendszerind\u00edt\u00f3 oszt\u00e1ly\u00fatvonal el\u00e9 f\u0171zi
+J9NLS_EXELIB_INTERNAL_HELP_1_3=\ \ -Xbootclasspath/p:<\u00fatvonal>  az <\u00fatvonal> \u00e9rt\u00e9k\u00e9t a rendszerind\u00edt\u00f3 oszt\u00e1ly\u00fatvonal el\u00e9 f\u0171zi
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_1_3.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_1_3.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_1_3.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_1_4=\  -Xbootclasspath/a:<\u00fatvonal>  az <\u00fatvonal> \u00e9rt\u00e9k\u00e9t a rendszerind\u00edt\u00f3 oszt\u00e1ly\u00fatvonal m\u00f6g\u00e9 f\u0171zi
+J9NLS_EXELIB_INTERNAL_HELP_1_4=\ \ -Xbootclasspath/a:<\u00fatvonal>  az <\u00fatvonal> \u00e9rt\u00e9k\u00e9t a rendszerind\u00edt\u00f3 oszt\u00e1ly\u00fatvonal m\u00f6g\u00e9 f\u0171zi
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_1_4.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_1_4.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_1_4.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_1_5=\n\
-\  -Xrun<f\u00fcggv\u00e9nyt\u00e1r>[:param\u00e9terek]  nat\u00edv \u00fcgyn\u00f6k-f\u00fcggv\u00e9nyt\u00e1r bet\u00f6lt\u00e9se\n\
-\                            (el\u00e9v\u00fclt, az -agentlib haszn\u00e1lata aj\u00e1nlott helyette)\n
+J9NLS_EXELIB_INTERNAL_HELP_1_5=\n  -Xrun<f\u00fcggv\u00e9nyt\u00e1r>[:param\u00e9terek]  nat\u00edv \u00fcgyn\u00f6k-f\u00fcggv\u00e9nyt\u00e1r bet\u00f6lt\u00e9se\n                            (el\u00e9v\u00fclt, az -agentlib haszn\u00e1lata aj\u00e1nlott helyette)\n
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_1_5.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_1_5.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_1_5.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_1_6=\  -Xint           csak \u00e9rtelmezett m\u00f3dban fut (ugyanaz, mint a -Xnojit -Xnoaot megad\u00e1sa)
+J9NLS_EXELIB_INTERNAL_HELP_1_6=\ \ -Xint           csak \u00e9rtelmezett m\u00f3dban fut (ugyanaz, mint a -Xnojit -Xnoaot megad\u00e1sa)
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_1_6.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_1_6.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_1_6.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_1_7=\  -Xnojit         a JIT letilt\u00e1sa
+J9NLS_EXELIB_INTERNAL_HELP_1_7=\ \ -Xnojit         a JIT letilt\u00e1sa
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_1_7.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_1_7.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_1_7.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_1_8=\  -Xnoaot         ne fusson az el\u0151re leford\u00edtott k\u00f3d
+J9NLS_EXELIB_INTERNAL_HELP_1_8=\ \ -Xnoaot         ne fusson az el\u0151re leford\u00edtott k\u00f3d
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_1_8.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_1_8.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_1_8.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_1_9=\  -Xfuture        szigor\u00fabb ellen\u0151rz\u00e9sek, v\u00e1rhat\u00f3an a j\u00f6v\u0151ben ez lesz az alap
+J9NLS_EXELIB_INTERNAL_HELP_1_9=\ \ -Xfuture        szigor\u00fabb ellen\u0151rz\u00e9sek, v\u00e1rhat\u00f3an a j\u00f6v\u0151ben ez lesz az alap
 # START NON-TRANSLATABLE
 
 J9NLS_EXELIB_INTERNAL_HELP_1_9.explanation=NOTAG
@@ -111,169 +109,168 @@ J9NLS_EXELIB_INTERNAL_HELP_1_9.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_1_9.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_1=\n\
-A k\u00f6vetkez\u0151 param\u00e9terek argumentumait byte-ban kell megadni.
+J9NLS_EXELIB_INTERNAL_HELP_2_1=\nA k\u00f6vetkez\u0151 param\u00e9terek argumentumait byte-ban kell megadni.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_1.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_1.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_1.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_2=A \"k\" (kilo) vagy \"m\" (mega) el\u0151tag\u00fa \u00e9rt\u00e9kek megfelel\u0151en felszorz\u00e1sra ker\u00fclnek.\n
+J9NLS_EXELIB_INTERNAL_HELP_2_2=A "k" (kilo) vagy "m" (mega) el\u0151tag\u00fa \u00e9rt\u00e9kek megfelel\u0151en felszorz\u00e1sra ker\u00fclnek.\n
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_2.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_2.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_3=\  -Xmca<x>        RAM oszt\u00e1lyszegmens n\u00f6vekm\u00e9ny\u00e9nek be\u00e1ll\u00edt\u00e1sa az <x> \u00e9rt\u00e9kre
+J9NLS_EXELIB_INTERNAL_HELP_2_3=\ \ -Xmca<x>        RAM oszt\u00e1lyszegmens n\u00f6vekm\u00e9ny\u00e9nek be\u00e1ll\u00edt\u00e1sa az <x> \u00e9rt\u00e9kre
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_3.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_3.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_3.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_4=\  -Xmco<x>        ROM oszt\u00e1lyszegmens n\u00f6vekm\u00e9ny\u00e9nek be\u00e1ll\u00edt\u00e1sa az <x> \u00e9rt\u00e9kre
+J9NLS_EXELIB_INTERNAL_HELP_2_4=\ \ -Xmco<x>        ROM oszt\u00e1lyszegmens n\u00f6vekm\u00e9ny\u00e9nek be\u00e1ll\u00edt\u00e1sa az <x> \u00e9rt\u00e9kre
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_4.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_4.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_4.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_5=\  -Xmn<x>         \u00faj ter\u00fcletm\u00e9ret <x> \u00e9rt\u00e9kre \u00e1ll\u00edt\u00e1sa
+J9NLS_EXELIB_INTERNAL_HELP_2_5=\ \ -Xmn<x>         \u00faj ter\u00fcletm\u00e9ret <x> \u00e9rt\u00e9kre \u00e1ll\u00edt\u00e1sa
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_5.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_5.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_5.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_1=\  -Xmn<x>  kezdeti/maxim\u00e1lis \u00faj ter\u00fcletm\u00e9ret <x> \u00e9rt\u00e9kre \u00e1ll\u00edt\u00e1sa
+J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_1=\ \ -Xmn<x>  kezdeti/maxim\u00e1lis \u00faj ter\u00fcletm\u00e9ret <x> \u00e9rt\u00e9kre \u00e1ll\u00edt\u00e1sa
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_1.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_1.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_1.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_2=\  -Xmns<x>        kezdeti \u00faj ter\u00fcletm\u00e9ret <x> \u00e9rt\u00e9kre \u00e1ll\u00edt\u00e1sa
+J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_2=\ \ -Xmns<x>        kezdeti \u00faj ter\u00fcletm\u00e9ret <x> \u00e9rt\u00e9kre \u00e1ll\u00edt\u00e1sa
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_2.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_2.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_3=\  -Xmnx<x>        maxim\u00e1lis ter\u00fcletm\u00e9ret <x> \u00e9rt\u00e9kre \u00e1ll\u00edt\u00e1sa
+J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_3=\ \ -Xmnx<x>        maxim\u00e1lis ter\u00fcletm\u00e9ret <x> \u00e9rt\u00e9kre \u00e1ll\u00edt\u00e1sa
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_3.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_3.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_3.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_6=\  -Xmo<x>         r\u00e9gi ter\u00fcletm\u00e9ret <x> \u00e9rt\u00e9kre \u00e1ll\u00edt\u00e1sa
+J9NLS_EXELIB_INTERNAL_HELP_2_6=\ \ -Xmo<x>         r\u00e9gi ter\u00fcletm\u00e9ret <x> \u00e9rt\u00e9kre \u00e1ll\u00edt\u00e1sa
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_6.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_6.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_6.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_1=\  -Xmo<x>  kezdeti/maxim\u00e1lis r\u00e9gi ter\u00fcletm\u00e9ret <x> \u00e9rt\u00e9kre \u00e1ll\u00edt\u00e1sa
+J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_1=\ \ -Xmo<x>  kezdeti/maxim\u00e1lis r\u00e9gi ter\u00fcletm\u00e9ret <x> \u00e9rt\u00e9kre \u00e1ll\u00edt\u00e1sa
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_1.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_1.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_1.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_2=\  -Xmos<x>        kezdeti r\u00e9gi ter\u00fcletm\u00e9ret <x> \u00e9rt\u00e9kre \u00e1ll\u00edt\u00e1sa
+J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_2=\ \ -Xmos<x>        kezdeti r\u00e9gi ter\u00fcletm\u00e9ret <x> \u00e9rt\u00e9kre \u00e1ll\u00edt\u00e1sa
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_2.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_2.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_3=\  -Xmox<x>        maxim\u00e1lis r\u00e9gi ter\u00fcletm\u00e9ret <x> \u00e9rt\u00e9kre \u00e1ll\u00edt\u00e1sa
+J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_3=\ \ -Xmox<x>        maxim\u00e1lis r\u00e9gi ter\u00fcletm\u00e9ret <x> \u00e9rt\u00e9kre \u00e1ll\u00edt\u00e1sa
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_3.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_3.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_3.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_7=\  -Xmoi<x>        r\u00e9gi ter\u00fcletn\u00f6vekm\u00e9ny <x> \u00e9rt\u00e9kre \u00e1ll\u00edt\u00e1sa
+J9NLS_EXELIB_INTERNAL_HELP_2_7=\ \ -Xmoi<x>        r\u00e9gi ter\u00fcletn\u00f6vekm\u00e9ny <x> \u00e9rt\u00e9kre \u00e1ll\u00edt\u00e1sa
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_7.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_7.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_7.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_8=\  -Xms<x>         r\u00e9gi ter\u00fcletm\u00e9ret <x> \u00e9rt\u00e9kre \u00e1ll\u00edt\u00e1sa
+J9NLS_EXELIB_INTERNAL_HELP_2_8=\ \ -Xms<x>         r\u00e9gi ter\u00fcletm\u00e9ret <x> \u00e9rt\u00e9kre \u00e1ll\u00edt\u00e1sa
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_8.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_8.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_8.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_8_MODRON=\  -Xms<x>        kezdeti mem\u00f3riam\u00e9ret <x> \u00e9rt\u00e9kre \u00e1ll\u00edt\u00e1sa
+J9NLS_EXELIB_INTERNAL_HELP_2_8_MODRON=\ \ -Xms<x>        kezdeti mem\u00f3riam\u00e9ret <x> \u00e9rt\u00e9kre \u00e1ll\u00edt\u00e1sa
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_8_MODRON.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_8_MODRON.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_8_MODRON.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_9=\  -Xmx<x>        maxim\u00e1lis mem\u00f3ria <x> \u00e9rt\u00e9kre \u00e1ll\u00edt\u00e1sa
+J9NLS_EXELIB_INTERNAL_HELP_2_9=\ \ -Xmx<x>        maxim\u00e1lis mem\u00f3ria <x> \u00e9rt\u00e9kre \u00e1ll\u00edt\u00e1sa
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_9.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_9.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_9.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_10_GENERATIONAL=\  -Xmr<x>  a megjegyzett halmaz m\u00e9ret\u00e9nek <x> \u00e9rt\u00e9kre \u00e1ll\u00edt\u00e1sa
+J9NLS_EXELIB_INTERNAL_HELP_2_10_GENERATIONAL=\ \ -Xmr<x>  a megjegyzett halmaz m\u00e9ret\u00e9nek <x> \u00e9rt\u00e9kre \u00e1ll\u00edt\u00e1sa
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_10_GENERATIONAL.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_10_GENERATIONAL.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_10_GENERATIONAL.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_10_GENERATIONAL_MODRON=\  -Xmrx<x>  a megjegyzett halmaz maxim\u00e1lis m\u00e9ret\u00e9nek <x> \u00e9rt\u00e9kre \u00e1ll\u00edt\u00e1sa
+J9NLS_EXELIB_INTERNAL_HELP_2_10_GENERATIONAL_MODRON=\ \ -Xmrx<x>  a megjegyzett halmaz maxim\u00e1lis m\u00e9ret\u00e9nek <x> \u00e9rt\u00e9kre \u00e1ll\u00edt\u00e1sa
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_10_GENERATIONAL_MODRON.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_10_GENERATIONAL_MODRON.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_10_GENERATIONAL_MODRON.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_11=\  -Xmso<x>        OS sz\u00e1lverem m\u00e9ret\u00e9nek <x> \u00e9rt\u00e9kre \u00e1ll\u00edt\u00e1sa
+J9NLS_EXELIB_INTERNAL_HELP_2_11=\ \ -Xmso<x>        OS sz\u00e1lverem m\u00e9ret\u00e9nek <x> \u00e9rt\u00e9kre \u00e1ll\u00edt\u00e1sa
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_11.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_11.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_11.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_12_GROWABLE=\  -Xiss<x>        kezdeti java sz\u00e1lverem m\u00e9ret\u00e9nek <x> \u00e9rt\u00e9kre \u00e1ll\u00edt\u00e1sa
+J9NLS_EXELIB_INTERNAL_HELP_2_12_GROWABLE=\ \ -Xiss<x>        kezdeti java sz\u00e1lverem m\u00e9ret\u00e9nek <x> \u00e9rt\u00e9kre \u00e1ll\u00edt\u00e1sa
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_12_GROWABLE.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_12_GROWABLE.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_12_GROWABLE.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_13_GROWABLE=\  -Xss<x>        maxim\u00e1lis java sz\u00e1lverem m\u00e9ret\u00e9nek <x> \u00e9rt\u00e9kre \u00e1ll\u00edt\u00e1sa
+J9NLS_EXELIB_INTERNAL_HELP_2_13_GROWABLE=\ \ -Xss<x>        maxim\u00e1lis java sz\u00e1lverem m\u00e9ret\u00e9nek <x> \u00e9rt\u00e9kre \u00e1ll\u00edt\u00e1sa
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_13_GROWABLE.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_13_GROWABLE.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_13_GROWABLE.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_13=\  -Xss<x>        sz\u00e1lverem m\u00e9ret\u00e9nek <x> \u00e9rt\u00e9kre \u00e1ll\u00edt\u00e1sa
+J9NLS_EXELIB_INTERNAL_HELP_2_13=\ \ -Xss<x>        sz\u00e1lverem m\u00e9ret\u00e9nek <x> \u00e9rt\u00e9kre \u00e1ll\u00edt\u00e1sa
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_13.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_13.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_13.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_14_MODRON=\  -Xmine<x>       kupacb\u0151v\u00edt\u00e9s minim\u00e1lis m\u00e9ret\u00e9nek <x> \u00e9rt\u00e9kre \u00e1ll\u00edt\u00e1sa
+J9NLS_EXELIB_INTERNAL_HELP_2_14_MODRON=\ \ -Xmine<x>       kupacb\u0151v\u00edt\u00e9s minim\u00e1lis m\u00e9ret\u00e9nek <x> \u00e9rt\u00e9kre \u00e1ll\u00edt\u00e1sa
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_14_MODRON.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_14_MODRON.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_14_MODRON.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_15_MODRON=\  -Xmaxe<x>       kupacb\u0151v\u00edt\u00e9s maxim\u00e1lis m\u00e9ret\u00e9nek <x> \u00e9rt\u00e9kre \u00e1ll\u00edt\u00e1sa
+J9NLS_EXELIB_INTERNAL_HELP_2_15_MODRON=\ \ -Xmaxe<x>       kupacb\u0151v\u00edt\u00e9s maxim\u00e1lis m\u00e9ret\u00e9nek <x> \u00e9rt\u00e9kre \u00e1ll\u00edt\u00e1sa
 # START NON-TRANSLATABLE
 
 J9NLS_EXELIB_INTERNAL_HELP_2_15_MODRON.explanation=NOTAG
@@ -281,8 +278,7 @@ J9NLS_EXELIB_INTERNAL_HELP_2_15_MODRON.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_15_MODRON.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_1=\n\
-A k\u00f6vetkez\u0151 param\u00e9terek argumentumait egy 0 \u00e9s 1 k\u00f6z\u00e9 es\u0151 decim\u00e1lis sz\u00e1mk\u00e9nt kell megadni.
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_1=\nA k\u00f6vetkez\u0151 param\u00e9terek argumentumait egy 0 \u00e9s 1 k\u00f6z\u00e9 es\u0151 decim\u00e1lis sz\u00e1mk\u00e9nt kell megadni.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_1.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_1.system_action=
@@ -296,14 +292,14 @@ J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_2.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_3=\  -Xminf<x>       GC ut\u00e1n a kupac minim\u00e1lis sz\u00e1zal\u00e9ka
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_3=\ \ -Xminf<x>       GC ut\u00e1n a kupac minim\u00e1lis sz\u00e1zal\u00e9ka
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_3.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_3.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_3.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_4=\  -Xmaxf<x>       GC ut\u00e1n a kupac maxim\u00e1lis sz\u00e1zal\u00e9ka
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_4=\ \ -Xmaxf<x>       GC ut\u00e1n a kupac maxim\u00e1lis sz\u00e1zal\u00e9ka
 # START NON-TRANSLATABLE
 
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_4.explanation=NOTAG
@@ -311,93 +307,91 @@ J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_4.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_4.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_1=\n\
-A k\u00f6vetkez\u0151 param\u00e9terek argumentumait decim\u00e1lis sz\u00e1mk\u00e9nt kell megadni.\n
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_1=\nA k\u00f6vetkez\u0151 param\u00e9terek argumentumait decim\u00e1lis sz\u00e1mk\u00e9nt kell megadni.\n
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_1.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_1.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_1.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_2=\  -Xgcthreads<x>                GC sz\u00e1lak sz\u00e1m\u00e1nak be\u00e1ll\u00edt\u00e1sa
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_2=\ \ -Xgcthreads<x>                GC sz\u00e1lak sz\u00e1m\u00e1nak be\u00e1ll\u00edt\u00e1sa
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_2.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_2.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_3=\  -Xnoclassgc                   dinamikus oszt\u00e1lyle\u00e1ll\u00edt\u00e1s letilt\u00e1sa
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_3=\ \ -Xnoclassgc                   dinamikus oszt\u00e1lyle\u00e1ll\u00edt\u00e1s letilt\u00e1sa
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_3.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_3.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_3.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_4=\  -Xclassgc                     dinamikus oszt\u00e1lyle\u00e1ll\u00edt\u00e1s enged\u00e9lyez\u00e9se
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_4=\ \ -Xclassgc                     dinamikus oszt\u00e1lyle\u00e1ll\u00edt\u00e1s enged\u00e9lyez\u00e9se
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_4.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_4.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_4.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_5=\  -Xalwaysclassgc               dinamikus oszt\u00e1lyle\u00e1ll\u00edt\u00e1s enged\u00e9lyez\u00e9se minden GC-n
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_5=\ \ -Xalwaysclassgc               dinamikus oszt\u00e1lyle\u00e1ll\u00edt\u00e1s enged\u00e9lyez\u00e9se minden GC-n
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_5.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_5.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_5.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_6=\  -Xnocompactexplicitgc         t\u00f6m\u00f6r\u00edt\u00e9s letilt\u00e1sa egy rendszer GC-n
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_6=\ \ -Xnocompactexplicitgc         t\u00f6m\u00f6r\u00edt\u00e9s letilt\u00e1sa egy rendszer GC-n
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_6.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_6.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_6.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_7=\  -Xcompactexplicitgc           t\u00f6m\u00f6r\u00edt\u00e9s enged\u00e9lyez\u00e9se minden rendszer GC-n
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_7=\ \ -Xcompactexplicitgc           t\u00f6m\u00f6r\u00edt\u00e9s enged\u00e9lyez\u00e9se minden rendszer GC-n
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_7.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_7.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_7.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_8=\  -Xcompactgc                   t\u00f6m\u00f6r\u00edt\u00e9s enged\u00e9lyez\u00e9se
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_8=\ \ -Xcompactgc                   t\u00f6m\u00f6r\u00edt\u00e9s enged\u00e9lyez\u00e9se
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_8.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_8.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_8.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_9=\  -Xnocompactgc                 t\u00f6m\u00f6r\u00edt\u00e9s letilt\u00e1sa
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_9=\ \ -Xnocompactgc                 t\u00f6m\u00f6r\u00edt\u00e9s letilt\u00e1sa
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_9.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_9.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_9.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_MODRON_LARGE_PAGE_SUPPORT=\  -Xlp     nagy lapok haszn\u00e1lat\u00e1nak enged\u00e9lyez\u00e9se
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_LARGE_PAGE_SUPPORT=\ \ -Xlp     nagy lapok haszn\u00e1lat\u00e1nak enged\u00e9lyez\u00e9se
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_LARGE_PAGE_SUPPORT.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_LARGE_PAGE_SUPPORT.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_LARGE_PAGE_SUPPORT.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_1=\n\
-\  -Xdbg:<be\u00e1ll\u00edt\u00e1sok>               hibakeres\u00e9s enged\u00e9lyez\u00e9se, JDWP szabv\u00e1nyos param\u00e9terek
+J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_1=\n  -Xdbg:<be\u00e1ll\u00edt\u00e1sok>               hibakeres\u00e9s enged\u00e9lyez\u00e9se, JDWP szabv\u00e1nyos param\u00e9terek
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_1.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_1.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_1.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_2=\  -Xrunjdwp:<be\u00e1ll\u00edt\u00e1sok>           hibakeres\u00e9s enged\u00e9lyez\u00e9se, JDWP szabv\u00e1nyos param\u00e9terek
+J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_2=\ \ -Xrunjdwp:<be\u00e1ll\u00edt\u00e1sok>           hibakeres\u00e9s enged\u00e9lyez\u00e9se, JDWP szabv\u00e1nyos param\u00e9terek
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_2.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_2.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_3=\  -Xdbginfo:<szimb\u00f3lumf\u00e1jl el\u00e9r\u00e9si \u00fat>  hibakeres\u00e9si inform\u00e1ci\u00f3s szerver enged\u00e9lyez\u00e9se
+J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_3=\ \ -Xdbginfo:<szimb\u00f3lumf\u00e1jl el\u00e9r\u00e9si \u00fat>  hibakeres\u00e9si inform\u00e1ci\u00f3s szerver enged\u00e9lyez\u00e9se
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_3.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_3.system_action=
@@ -405,7 +399,7 @@ J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_3.user_response=
 # END NON-TRANSLATABLE
 
 # -Xrdbginfo is a command line option to Java which takes 2 parameters; host name of a computer and the port the server is utilizing
-J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_4=\  -Xrdbginfo:<hoszt>:<port>      t\u00e1voli hibakeres\u00e9si inform\u00e1ci\u00f3s szerver enged\u00e9lyez\u00e9se
+J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_4=\ \ -Xrdbginfo:<hoszt>:<port>      t\u00e1voli hibakeres\u00e9si inform\u00e1ci\u00f3s szerver enged\u00e9lyez\u00e9se
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_4.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_4.system_action=
@@ -414,9 +408,7 @@ J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_4.user_response=
 
 # J9SourceExeLibArgumentsParsing - cmdline_classpath_WARN
 
-J9NLS_EXELIB_CMDLINE_CP_WARN=\n\
-FIGYELEM: A(z) \"%s\" parancssori argumentum elavult.\n\
-FIGYELEM: Haszn\u00e1lja a \"-classpath <\u00fatvonal>\" vagy \"-cp <\u00fatvonal>\" param\u00e9tert.
+J9NLS_EXELIB_CMDLINE_CP_WARN=\nFIGYELEM: A(z) "%s" parancssori argumentum elavult.\nFIGYELEM: Haszn\u00e1lja a "-classpath <\u00fatvonal>" vagy "-cp <\u00fatvonal>" param\u00e9tert.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_CMDLINE_CP_WARN.sample_input_1=-cp:
 J9NLS_EXELIB_CMDLINE_CP_WARN.explanation=NOTAG
@@ -425,9 +417,7 @@ J9NLS_EXELIB_CMDLINE_CP_WARN.user_response=
 # END NON-TRANSLATABLE
 
 #J9SourceExeLibArgumentsParsing - cmdline_prepend_internal_WARN/cmdline_perpend_numeric1024_WARN
-J9NLS_EXELIB_CMDLINE_PREPEND_WARN=\n\
-FIGYELEM: A(z) \"%s\" parancssori argumentum elavult.\n\
-FIGYELEM: Haszn\u00e1lja az egyen\u00e9rt\u00e9k\u0171 -X param\u00e9tert.
+J9NLS_EXELIB_CMDLINE_PREPEND_WARN=\nFIGYELEM: A(z) "%s" parancssori argumentum elavult.\nFIGYELEM: Haszn\u00e1lja az egyen\u00e9rt\u00e9k\u0171 -X param\u00e9tert.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_CMDLINE_PREPEND_WARN.sample_input_1=-mca:
 J9NLS_EXELIB_CMDLINE_PREPEND_WARN.explanation=NOTAG
@@ -602,7 +592,7 @@ J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_JAVA_VM.user_response=
 J9NLS_EXELIB_UNABLE_REDIRECT_IO=
 
 # J9SourceExeLibArgumentsParsing - describeInternalOptions
-J9NLS_EXELIB_INTERNAL_HELP_1_10=\  -Xquickstart    az indul\u00e1si id\u0151 ler\u00f6vid\u00edt\u00e9se az optimaliz\u00e1l\u00e1sok k\u00e9sleltet\u00e9s\u00e9vel
+J9NLS_EXELIB_INTERNAL_HELP_1_10=\ \ -Xquickstart    az indul\u00e1si id\u0151 ler\u00f6vid\u00edt\u00e9se az optimaliz\u00e1l\u00e1sok k\u00e9sleltet\u00e9s\u00e9vel
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_1_10.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_1_10.system_action=
@@ -618,21 +608,21 @@ J9NLS_EXELIB_JIT_LEVEL.system_action=
 J9NLS_EXELIB_JIT_LEVEL.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSSI_GROWABLE=\  -Xssi<x>        java sz\u00e1lverem n\u00f6vekm\u00e9ny <x> \u00e9rt\u00e9kre \u00e1ll\u00edt\u00e1sa
+J9NLS_EXELIB_INTERNAL_HELP_XSSI_GROWABLE=\ \ -Xssi<x>        java sz\u00e1lverem n\u00f6vekm\u00e9ny <x> \u00e9rt\u00e9kre \u00e1ll\u00edt\u00e1sa
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSSI_GROWABLE.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSSI_GROWABLE.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XSSI_GROWABLE.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSHARECLASSES=\  -Xshareclasses[:param\u00e9terek]  oszt\u00e1lyadatok megoszt\u00e1s\u00e1nak enged\u00e9lyez\u00e9se (a r\u00e9szletek a s\u00fag\u00f3ban)\n
+J9NLS_EXELIB_INTERNAL_HELP_XSHARECLASSES=\ \ -Xshareclasses[:param\u00e9terek]  oszt\u00e1lyadatok megoszt\u00e1s\u00e1nak enged\u00e9lyez\u00e9se (a r\u00e9szletek a s\u00fag\u00f3ban)\n
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSHARECLASSES.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSHARECLASSES.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XSHARECLASSES.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCMX=\  -Xscmx<x>       az \u00faj megosztott oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1r <x> m\u00e9retre \u00e1ll\u00edt\u00e1sa
+J9NLS_EXELIB_INTERNAL_HELP_XSCMX=\ \ -Xscmx<x>       az \u00faj megosztott oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1r <x> m\u00e9retre \u00e1ll\u00edt\u00e1sa
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCMX.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCMX.system_action=
@@ -658,7 +648,7 @@ J9NLS_EXELIB_VERSION_ME.system_action=
 J9NLS_EXELIB_VERSION_ME.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XLP_SIZE=\  -Xlp<x>         \u00e1ll\u00edtsa a nagy oldalm\u00e9retet <x> \u00e9rt\u00e9kre
+J9NLS_EXELIB_INTERNAL_HELP_XLP_SIZE=\ \ -Xlp<x>         \u00e1ll\u00edtsa a nagy oldalm\u00e9retet <x> \u00e9rt\u00e9kre
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XLP_SIZE.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XLP_SIZE.system_action=
@@ -681,9 +671,7 @@ J9NLS_EXELIB_LOGFILE_BACKUP_FAILED.system_action=JVM execution continues without
 J9NLS_EXELIB_LOGFILE_BACKUP_FAILED.user_response=Ensure target file has the right access permission.
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_CMDLINE_JXECOLON_WARN=\n\
-FIGYELEM: A(z) \"%s\" parancssori argumentum elavult.\n\
-FIGYELEM: Haszn\u00e1lja helyette a \"-jxe <\u00fatvonal>\" param\u00e9ter.\n
+J9NLS_EXELIB_CMDLINE_JXECOLON_WARN=\nFIGYELEM: A(z) "%s" parancssori argumentum elavult.\nFIGYELEM: Haszn\u00e1lja helyette a "-jxe <\u00fatvonal>" param\u00e9ter.\n
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_CMDLINE_JXECOLON_WARN.sample_input_1=-jxe:
 J9NLS_EXELIB_CMDLINE_JXECOLON_WARN.explanation=The specified command line argument is no longer valid
@@ -691,15 +679,14 @@ J9NLS_EXELIB_CMDLINE_JXECOLON_WARN.system_action=JVM will ignore the command lin
 J9NLS_EXELIB_CMDLINE_JXECOLON_WARN.user_response=Replace the command line argument as suggested.
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_1_11=\n\
-\  -Xtrace[:param\u00e9ter,...]  vez\u00e9rl\u00e9si nyomk\u00f6vet\u00e9s, tov\u00e1bbi r\u00e9szleteket az -Xtrace:help param\u00e9terrel jelen\u00edthet meg
+J9NLS_EXELIB_INTERNAL_HELP_1_11=\n  -Xtrace[:param\u00e9ter,...]  vez\u00e9rl\u00e9si nyomk\u00f6vet\u00e9s, tov\u00e1bbi r\u00e9szleteket az -Xtrace:help param\u00e9terrel jelen\u00edthet meg
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_1_11.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_1_11.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_1_11.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XJNI_1=\  -Xjni:<param\u00e9terek>               JNI param\u00e9terek be\u00e1ll\u00edt\u00e1sa
+J9NLS_EXELIB_INTERNAL_HELP_XJNI_1=\ \ -Xjni:<param\u00e9terek>               JNI param\u00e9terek be\u00e1ll\u00edt\u00e1sa
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XJNI_1.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XJNI_1.system_action=
@@ -713,30 +700,28 @@ J9NLS_EXELIB_INTERNAL_HELP_2_16.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_16.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCMINAOT=\  -Xscminaot<x>   AOT adatok sz\u00e1m\u00e1ra fenntartott minim\u00e1lis megosztott oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1r ter\u00fclet be\u00e1ll\u00edt\u00e1sa <x> \u00e9rt\u00e9kre
+J9NLS_EXELIB_INTERNAL_HELP_XSCMINAOT=\ \ -Xscminaot<x>   AOT adatok sz\u00e1m\u00e1ra fenntartott minim\u00e1lis megosztott oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1r ter\u00fclet be\u00e1ll\u00edt\u00e1sa <x> \u00e9rt\u00e9kre
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCMINAOT.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCMINAOT.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XSCMINAOT.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCMAXAOT=\  -Xscmaxaot<x>   AOT adatok sz\u00e1m\u00e1ra enged\u00e9lyezett maxim\u00e1lis megosztott oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1r ter\u00fclet be\u00e1ll\u00edt\u00e1sa <x> \u00e9rt\u00e9kre
+J9NLS_EXELIB_INTERNAL_HELP_XSCMAXAOT=\ \ -Xscmaxaot<x>   AOT adatok sz\u00e1m\u00e1ra enged\u00e9lyezett maxim\u00e1lis megosztott oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1r ter\u00fclet be\u00e1ll\u00edt\u00e1sa <x> \u00e9rt\u00e9kre
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCMAXAOT.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCMAXAOT.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XSCMAXAOT.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_1_12=\n\
-\  -Xcheck[:param\u00e9ter[:...]]  vez\u00e9rl\u00e9s ellen\u0151rz\u00e9s, tov\u00e1bbi r\u00e9szleteket az -Xcheck:help param\u00e9terrel jelen\u00edthet meg
+J9NLS_EXELIB_INTERNAL_HELP_1_12=\n  -Xcheck[:param\u00e9ter[:...]]  vez\u00e9rl\u00e9s ellen\u0151rz\u00e9s, tov\u00e1bbi r\u00e9szleteket az -Xcheck:help param\u00e9terrel jelen\u00edthet meg
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_1_12.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_1_12.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_1_12.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_1_13=\n\
-\  -Xdump[:param\u00e9ter,...]  vez\u00e9rl\u00e9si ki\u00edrat\u00e1sok, tov\u00e1bbi r\u00e9szleteket az -Xdump:help param\u00e9terrel jelen\u00edthet meg
+J9NLS_EXELIB_INTERNAL_HELP_1_13=\n  -Xdump[:param\u00e9ter,...]  vez\u00e9rl\u00e9si ki\u00edrat\u00e1sok, tov\u00e1bbi r\u00e9szleteket az -Xdump:help param\u00e9terrel jelen\u00edthet meg
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_1_13.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_1_13.system_action=
@@ -752,49 +737,49 @@ J9NLS_EXELIB_INTERNAL_HELP_VMSELECT.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_VMSELECT.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_VMCOMPRESSED=\  -Xcompressedrefs              t\u00f6m\u00f6r\u00edtett kupachivatkoz\u00e1sok haszn\u00e1lata
+J9NLS_EXELIB_INTERNAL_HELP_VMCOMPRESSED=\ \ -Xcompressedrefs              t\u00f6m\u00f6r\u00edtett kupachivatkoz\u00e1sok haszn\u00e1lata
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_VMCOMPRESSED.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_VMCOMPRESSED.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_VMCOMPRESSED.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_VMREALTIME=\  -Xrealtime                    val\u00f3s idej\u0171 b\u0151v\u00edtm\u00e9nyek enged\u00e9lyez\u00e9se
+J9NLS_EXELIB_INTERNAL_HELP_VMREALTIME=\ \ -Xrealtime                    val\u00f3s idej\u0171 b\u0151v\u00edtm\u00e9nyek enged\u00e9lyez\u00e9se
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_VMREALTIME.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_VMREALTIME.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_VMREALTIME.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_VMREALTIME2=\  -Xgcpolicy:metronome          val\u00f3s idej\u0171 b\u0151v\u00edtm\u00e9nyek enged\u00e9lyez\u00e9se
+J9NLS_EXELIB_INTERNAL_HELP_VMREALTIME2=\ \ -Xgcpolicy:metronome          val\u00f3s idej\u0171 b\u0151v\u00edtm\u00e9nyek enged\u00e9lyez\u00e9se
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_VMREALTIME2.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_VMREALTIME2.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_VMREALTIME2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_VMSOFTRT=\  -Xrealtime                    szoft val\u00f3s idej\u0171 rendszer enged\u00e9lyez\u00e9se
+J9NLS_EXELIB_INTERNAL_HELP_VMSOFTRT=\ \ -Xrealtime                    szoft val\u00f3s idej\u0171 rendszer enged\u00e9lyez\u00e9se
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_VMSOFTRT.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_VMSOFTRT.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_VMSOFTRT.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_VMSOFTRT2=\  -Xgcpolicy:metronome          szoft val\u00f3s idej\u0171 rendszer enged\u00e9lyez\u00e9se
+J9NLS_EXELIB_INTERNAL_HELP_VMSOFTRT2=\ \ -Xgcpolicy:metronome          szoft val\u00f3s idej\u0171 rendszer enged\u00e9lyez\u00e9se
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_VMSOFTRT2.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_VMSOFTRT2.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_VMSOFTRT2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_VMNORTSJ=\  -Xrealtime -Xnortsj           szoft val\u00f3s idej\u0171 rendszer enged\u00e9lyez\u00e9se
+J9NLS_EXELIB_INTERNAL_HELP_VMNORTSJ=\ \ -Xrealtime -Xnortsj           szoft val\u00f3s idej\u0171 rendszer enged\u00e9lyez\u00e9se
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_VMNORTSJ.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_VMNORTSJ.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_VMNORTSJ.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_VMNORTSJ2=\  -Xgcpolicy:metronome -Xnortsj szoft val\u00f3s idej\u0171 rendszer enged\u00e9lyez\u00e9se
+J9NLS_EXELIB_INTERNAL_HELP_VMNORTSJ2=\ \ -Xgcpolicy:metronome -Xnortsj szoft val\u00f3s idej\u0171 rendszer enged\u00e9lyez\u00e9se
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_VMNORTSJ2.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_VMNORTSJ2.system_action=
@@ -803,8 +788,7 @@ J9NLS_EXELIB_INTERNAL_HELP_VMNORTSJ2.user_response=
 
 # healthcenter help
 
-J9NLS_EXELIB_INTERNAL_HELP_HEALTHCENTER=\n\
-\  -Xhealthcenter  az Eg\u00e9szs\u00e9gk\u00f6zpont \u00fcgyn\u00f6k enged\u00e9lyez\u00e9se
+J9NLS_EXELIB_INTERNAL_HELP_HEALTHCENTER=\n  -Xhealthcenter  az Eg\u00e9szs\u00e9gk\u00f6zpont \u00fcgyn\u00f6k enged\u00e9lyez\u00e9se
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_HEALTHCENTER.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_HEALTHCENTER.system_action=
@@ -820,21 +804,21 @@ J9NLS_EXELIB_INTERNAL_HELP_DIAGNOSTICSCOLLECTOR.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_DIAGNOSTICSCOLLECTOR.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCDMX=\  -Xscdmx<x>      a megosztott oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1r hibakeres\u00e9si attrib\u00fatum ter\u00fclet m\u00e9ret\u00e9nek be\u00e1ll\u00edt\u00e1sa <x> \u00e9rt\u00e9kre
+J9NLS_EXELIB_INTERNAL_HELP_XSCDMX=\ \ -Xscdmx<x>      a megosztott oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1r hibakeres\u00e9si attrib\u00fatum ter\u00fclet m\u00e9ret\u00e9nek be\u00e1ll\u00edt\u00e1sa <x> \u00e9rt\u00e9kre
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCDMX.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCDMX.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XSCDMX.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCMINJIT=\  -Xscminjit<x>   JIT adatoknak fenntartott minim\u00e1lis megosztott oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1r ter\u00fclet be\u00e1ll\u00edt\u00e1sa <x> \u00e9rt\u00e9kre
+J9NLS_EXELIB_INTERNAL_HELP_XSCMINJIT=\ \ -Xscminjit<x>   JIT adatoknak fenntartott minim\u00e1lis megosztott oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1r ter\u00fclet be\u00e1ll\u00edt\u00e1sa <x> \u00e9rt\u00e9kre
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCMINJIT.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCMINJIT.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XSCMINJIT.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJIT=\  -Xscmaxjit<x>   JIT adatok sz\u00e1m\u00e1ra enged\u00e9lyezett maxim\u00e1lis megosztott oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1r ter\u00fclet be\u00e1ll\u00edt\u00e1sa <x> \u00e9rt\u00e9kre
+J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJIT=\ \ -Xscmaxjit<x>   JIT adatok sz\u00e1m\u00e1ra enged\u00e9lyezett maxim\u00e1lis megosztott oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1r ter\u00fclet be\u00e1ll\u00edt\u00e1sa <x> \u00e9rt\u00e9kre
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJIT.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJIT.system_action=
@@ -842,119 +826,119 @@ J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJIT.user_response=
 
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCMINJITDATA=\  -Xscminjitdata<x>   JIT adatoknak fenntartott minim\u00e1lis megosztott oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1r ter\u00fclet be\u00e1ll\u00edt\u00e1sa <x> \u00e9rt\u00e9kre
+J9NLS_EXELIB_INTERNAL_HELP_XSCMINJITDATA=\ \ -Xscminjitdata<x>   JIT adatoknak fenntartott minim\u00e1lis megosztott oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1r ter\u00fclet be\u00e1ll\u00edt\u00e1sa <x> \u00e9rt\u00e9kre
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCMINJITDATA.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCMINJITDATA.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XSCMINJITDATA.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJITDATA=\  -Xscmaxjitdata<x>   JIT adatok sz\u00e1m\u00e1ra enged\u00e9lyezett maxim\u00e1lis megosztott oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1r ter\u00fclet be\u00e1ll\u00edt\u00e1sa <x> \u00e9rt\u00e9kre
+J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJITDATA=\ \ -Xscmaxjitdata<x>   JIT adatok sz\u00e1m\u00e1ra enged\u00e9lyezett maxim\u00e1lis megosztott oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1r ter\u00fclet be\u00e1ll\u00edt\u00e1sa <x> \u00e9rt\u00e9kre
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJITDATA.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJITDATA.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJITDATA.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XZERONOSHAREZIP=\  -Xzero:nosharebootzip   ne ossza meg a rendszerbet\u00f6lt\u0151 jar bejegyz\u00e9s gyors\u00edt\u00f3t\u00e1rakat a megosztott oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1rban
+J9NLS_EXELIB_INTERNAL_HELP_XZERONOSHAREZIP=\ \ -Xzero:nosharebootzip   ne ossza meg a rendszerbet\u00f6lt\u0151 jar bejegyz\u00e9s gyors\u00edt\u00f3t\u00e1rakat a megosztott oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1rban
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XZERONOSHAREZIP.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XZERONOSHAREZIP.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XZERONOSHAREZIP.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XXSHARECLASSESENABLEBCI=\  -XX:ShareClassesEnableBCI   megosztott oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1r l\u00e9trehoz\u00e1sa byte-k\u00f3d felk\u00e9sz\u00edt\u00e9s t\u00e1mogat\u00e1s\u00e1val
+J9NLS_EXELIB_INTERNAL_HELP_XXSHARECLASSESENABLEBCI=\ \ -XX:ShareClassesEnableBCI   megosztott oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1r l\u00e9trehoz\u00e1sa byte-k\u00f3d felk\u00e9sz\u00edt\u00e9s t\u00e1mogat\u00e1s\u00e1val
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XXSHARECLASSESENABLEBCI.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XXSHARECLASSESENABLEBCI.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XXSHARECLASSESENABLEBCI.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XXSHARECLASSESDISABLEBCI=\  -XX:ShareClassesDisableBCI   megosztott oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1r l\u00e9trehoz\u00e1sa byte-k\u00f3d felk\u00e9sz\u00edt\u00e9s t\u00e1mogat\u00e1sa n\u00e9lk\u00fcl
+J9NLS_EXELIB_INTERNAL_HELP_XXSHARECLASSESDISABLEBCI=\ \ -XX:ShareClassesDisableBCI   megosztott oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1r l\u00e9trehoz\u00e1sa byte-k\u00f3d felk\u00e9sz\u00edt\u00e9s t\u00e1mogat\u00e1sa n\u00e9lk\u00fcl
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XXSHARECLASSESDISABLEBCI.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XXSHARECLASSESDISABLEBCI.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XXSHARECLASSESDISABLEBCI.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XXSTOREINTERMEDIATECLASSFILE=\  -XX:+StoreIntermediateClassfile   eredeti oszt\u00e1lyadatok t\u00e1rol\u00e1sa \u00fajra\u00e1talak\u00edt\u00e1s sor\u00e1n t\u00f6rt\u00e9n\u0151 felhaszn\u00e1l\u00e1shoz
+J9NLS_EXELIB_INTERNAL_HELP_XXSTOREINTERMEDIATECLASSFILE=\ \ -XX:+StoreIntermediateClassfile   eredeti oszt\u00e1lyadatok t\u00e1rol\u00e1sa \u00fajra\u00e1talak\u00edt\u00e1s sor\u00e1n t\u00f6rt\u00e9n\u0151 felhaszn\u00e1l\u00e1shoz
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XXSTOREINTERMEDIATECLASSFILE.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XXSTOREINTERMEDIATECLASSFILE.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XXSTOREINTERMEDIATECLASSFILE.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCSOFTMX=\  -Xscsoftmx<x>   az \u00faj megosztott oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1r gyenge maximum m\u00e9ret\u00e9nek be\u00e1ll\u00edt\u00e1sa <x> \u00e9rt\u00e9kre
+J9NLS_EXELIB_INTERNAL_HELP_XSCSOFTMX=\ \ -Xscsoftmx<x>   az \u00faj megosztott oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1r gyenge maximum m\u00e9ret\u00e9nek be\u00e1ll\u00edt\u00e1sa <x> \u00e9rt\u00e9kre
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCSOFTMX.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCSOFTMX.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XSCSOFTMX.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCMX_V1=\  -Xscmx<x>       az \u00faj megosztott oszt\u00e1ly gyors\u00edt\u00f3t\u00e1r m\u00e9ret\u00e9nek (vagy gyenge maximum m\u00e9ret\u00e9nek -XX:SharedCacheHardLimit= jelen van eset\u00e9n) be\u00e1ll\u00edt\u00e1sa <x> \u00e9rt\u00e9kre
+J9NLS_EXELIB_INTERNAL_HELP_XSCMX_V1=\ \ -Xscmx<x>       az \u00faj megosztott oszt\u00e1ly gyors\u00edt\u00f3t\u00e1r m\u00e9ret\u00e9nek (vagy gyenge maximum m\u00e9ret\u00e9nek -XX:SharedCacheHardLimit= jelen van eset\u00e9n) be\u00e1ll\u00edt\u00e1sa <x> \u00e9rt\u00e9kre
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCMX_V1.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCMX_V1.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XSCMX_V1.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XXSHARED_CACHE_HARD_LIMIT_EQUALS=\  -XX:SharedCacheHardLimit=<x>   az \u00faj megosztott oszt\u00e1ly gyors\u00edt\u00f3t\u00e1r m\u00e9ret\u00e9nek <x> \u00e9rt\u00e9kre \u00e1ll\u00edt\u00e1sa
+J9NLS_EXELIB_INTERNAL_HELP_XXSHARED_CACHE_HARD_LIMIT_EQUALS=\ \ -XX:SharedCacheHardLimit=<x>   az \u00faj megosztott oszt\u00e1ly gyors\u00edt\u00f3t\u00e1r m\u00e9ret\u00e9nek <x> \u00e9rt\u00e9kre \u00e1ll\u00edt\u00e1sa
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XXSHARED_CACHE_HARD_LIMIT_EQUALS.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XXSHARED_CACHE_HARD_LIMIT_EQUALS.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XXSHARED_CACHE_HARD_LIMIT_EQUALS.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XXENABLESHAREANONYMOUSCLASSES=\  -XX:+ShareAnonymousClasses   n\u00e9vtelen oszt\u00e1lyok t\u00e1rol\u00e1s\u00e1nak \u00e9s keres\u00e9s\u00e9nek enged\u00e9lyez\u00e9se az osztott oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1rban
+J9NLS_EXELIB_INTERNAL_HELP_XXENABLESHAREANONYMOUSCLASSES=\ \ -XX:+ShareAnonymousClasses   n\u00e9vtelen oszt\u00e1lyok t\u00e1rol\u00e1s\u00e1nak \u00e9s keres\u00e9s\u00e9nek enged\u00e9lyez\u00e9se az osztott oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1rban
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XXENABLESHAREANONYMOUSCLASSES.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XXENABLESHAREANONYMOUSCLASSES.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XXENABLESHAREANONYMOUSCLASSES.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XXDISABLESHAREANONYMOUSCLASSES=\  -XX:-ShareAnonymousClasses   n\u00e9vtelen oszt\u00e1lyok t\u00e1rol\u00e1s\u00e1nak \u00e9s keres\u00e9s\u00e9nek letilt\u00e1sa az osztott oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1rban
+J9NLS_EXELIB_INTERNAL_HELP_XXDISABLESHAREANONYMOUSCLASSES=\ \ -XX:-ShareAnonymousClasses   n\u00e9vtelen oszt\u00e1lyok t\u00e1rol\u00e1s\u00e1nak \u00e9s keres\u00e9s\u00e9nek letilt\u00e1sa az osztott oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1rban
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XXDISABLESHAREANONYMOUSCLASSES.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XXDISABLESHAREANONYMOUSCLASSES.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XXDISABLESHAREANONYMOUSCLASSES.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XXENABLESHAREUNSAFECLASSES=\  -XX:+ShareUnsafeClasses   nem n\u00e9vtelen nem biztons\u00e1gos oszt\u00e1lyok t\u00e1rol\u00e1s\u00e1nak \u00e9s keres\u00e9s\u00e9nek enged\u00e9lyez\u00e9se az osztott oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1rban
+J9NLS_EXELIB_INTERNAL_HELP_XXENABLESHAREUNSAFECLASSES=\ \ -XX:+ShareUnsafeClasses   nem n\u00e9vtelen nem biztons\u00e1gos oszt\u00e1lyok t\u00e1rol\u00e1s\u00e1nak \u00e9s keres\u00e9s\u00e9nek enged\u00e9lyez\u00e9se az osztott oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1rban
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XXENABLESHAREUNSAFECLASSES.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XXENABLESHAREUNSAFECLASSES.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XXENABLESHAREUNSAFECLASSES.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XXDISABLESHAREUNSAFECLASSES=\  -XX:-ShareUnsafeClasses   nem n\u00e9vtelen nem biztons\u00e1gos oszt\u00e1lyok t\u00e1rol\u00e1s\u00e1nak \u00e9s keres\u00e9s\u00e9nek letilt\u00e1sa az osztott oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1rban
+J9NLS_EXELIB_INTERNAL_HELP_XXDISABLESHAREUNSAFECLASSES=\ \ -XX:-ShareUnsafeClasses   nem n\u00e9vtelen nem biztons\u00e1gos oszt\u00e1lyok t\u00e1rol\u00e1s\u00e1nak \u00e9s keres\u00e9s\u00e9nek letilt\u00e1sa az osztott oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1rban
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XXDISABLESHAREUNSAFECLASSES.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XXDISABLESHAREUNSAFECLASSES.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XXDISABLESHAREUNSAFECLASSES.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XXENABLEUSEGCSTARTUPHINTS=\  -XX:+UseGCStartupHints   GC ind\u00edt\u00e1si tippek t\u00e1rol\u00e1s\u00e1nak \u00e9s keres\u00e9s\u00e9nek enged\u00e9lyez\u00e9se az osztott oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1rban
+J9NLS_EXELIB_INTERNAL_HELP_XXENABLEUSEGCSTARTUPHINTS=\ \ -XX:+UseGCStartupHints   GC ind\u00edt\u00e1si tippek t\u00e1rol\u00e1s\u00e1nak \u00e9s keres\u00e9s\u00e9nek enged\u00e9lyez\u00e9se az osztott oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1rban
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XXENABLEUSEGCSTARTUPHINTS.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XXENABLEUSEGCSTARTUPHINTS.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XXENABLEUSEGCSTARTUPHINTS.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XXDISABLEUSEGCSTARTUPHINTS=\  -XX:-UseGCStartupHints   GC ind\u00edt\u00e1si tippek t\u00e1rol\u00e1s\u00e1nak \u00e9s keres\u00e9s\u00e9nek letilt\u00e1sa az osztott oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1rban
+J9NLS_EXELIB_INTERNAL_HELP_XXDISABLEUSEGCSTARTUPHINTS=\ \ -XX:-UseGCStartupHints   GC ind\u00edt\u00e1si tippek t\u00e1rol\u00e1s\u00e1nak \u00e9s keres\u00e9s\u00e9nek letilt\u00e1sa az osztott oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1rban
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XXDISABLEUSEGCSTARTUPHINTS.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XXDISABLEUSEGCSTARTUPHINTS.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XXDISABLEUSEGCSTARTUPHINTS.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XXPORTABLESHAREDCACHE=\  -XX:+PortableSharedCache   enged\u00e9lyezi a szolg\u00e1ltat\u00e1st, amely a megosztott gyors\u00edt\u00f3t\u00e1r sz\u00e1m\u00edt\u00f3g\u00e9pek k\u00f6z\u00f6tti hordozhat\u00f3s\u00e1g\u00e1t pr\u00f3b\u00e1lja maximaliz\u00e1lni
+J9NLS_EXELIB_INTERNAL_HELP_XXPORTABLESHAREDCACHE=\ \ -XX:+PortableSharedCache   enged\u00e9lyezi a szolg\u00e1ltat\u00e1st, amely a megosztott gyors\u00edt\u00f3t\u00e1r sz\u00e1m\u00edt\u00f3g\u00e9pek k\u00f6z\u00f6tti hordozhat\u00f3s\u00e1g\u00e1t pr\u00f3b\u00e1lja maximaliz\u00e1lni
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XXPORTABLESHAREDCACHE.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XXPORTABLESHAREDCACHE.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XXPORTABLESHAREDCACHE.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XXNOPORTABLESHAREDCACHE=\  -XX:-PortableShareCache   letiltja a szolg\u00e1ltat\u00e1st, amely a megosztott gyors\u00edt\u00f3t\u00e1r sz\u00e1m\u00edt\u00f3g\u00e9pek k\u00f6z\u00f6tti hordozhat\u00f3s\u00e1g\u00e1t pr\u00f3b\u00e1lja maximaliz\u00e1lni
+J9NLS_EXELIB_INTERNAL_HELP_XXNOPORTABLESHAREDCACHE=\ \ -XX:-PortableShareCache   letiltja a szolg\u00e1ltat\u00e1st, amely a megosztott gyors\u00edt\u00f3t\u00e1r sz\u00e1m\u00edt\u00f3g\u00e9pek k\u00f6z\u00f6tti hordozhat\u00f3s\u00e1g\u00e1t pr\u00f3b\u00e1lja maximaliz\u00e1lni
 J9NLS_EXELIB_INTERNAL_HELP_XXNOPORTABLESHAREDCACHE.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XXNOPORTABLESHAREDCACHE.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XXNOPORTABLESHAREDCACHE.user_response=

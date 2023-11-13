@@ -46,7 +46,7 @@ J9NLS.HEADER=jnichknls.h
 
 # This occurs if you pass an unrecognized option to -Xcheck:jni. e.g. java -Xcheck:jni:bogus. Parameter #1 is the unrecognized command line option
 # -Xcheck:jni is not translatable
-J9NLS_JNICHK_UNRECOGNIZED_OPTION=-Xcheck:jni: \uc778\uc2dd\ud560 \uc218 \uc5c6\ub294 \uc635\uc158 --> \'%s\'
+J9NLS_JNICHK_UNRECOGNIZED_OPTION=-Xcheck:jni: \uc778\uc2dd\ud560 \uc218 \uc5c6\ub294 \uc635\uc158 --> '%s'
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_UNRECOGNIZED_OPTION.sample_input_1=bogus
 J9NLS_JNICHK_UNRECOGNIZED_OPTION.explanation=An unrecognized -Xcheck:jni option has been passed in to the JVM.
@@ -584,7 +584,7 @@ J9NLS_JNICHK_MISSING_EXCEPTION_CHECK.user_response=Correct the JNI application c
 # END NON-TRANSLATABLE
 
 # JNI is not translatable
-J9NLS_JNICHK_MALFORMED_IDENTIFIER=%1$s\uc758 JNI \uacbd\uace0: #%2$d \uc778\uc218\uac00 \uc798\ubabb\ub41c \ud615\uc2dd\uc758 ID\uc785\ub2c8\ub2e4(\"%3$s\").
+J9NLS_JNICHK_MALFORMED_IDENTIFIER=%1$s\uc758 JNI \uacbd\uace0: #%2$d \uc778\uc218\uac00 \uc798\ubabb\ub41c \ud615\uc2dd\uc758 ID\uc785\ub2c8\ub2e4("%3$s").
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_MALFORMED_IDENTIFIER.sample_input_1=methodName
 J9NLS_JNICHK_MALFORMED_IDENTIFIER.sample_input_2=3
@@ -595,7 +595,7 @@ J9NLS_JNICHK_MALFORMED_IDENTIFIER.user_response=Check and correct the JNI applic
 # END NON-TRANSLATABLE
 
 # JNI is not translatable
-J9NLS_JNICHK_MALFORMED_METHOD_SIGNATURE=%1$s\uc758 JNI \uacbd\uace0: #%2$d \uc778\uc218\uac00 \uc798\ubabb\ub41c \ud615\uc2dd\uc758 \uba54\uc18c\ub4dc \uc11c\uba85\uc785\ub2c8\ub2e4(\"%3$s\").
+J9NLS_JNICHK_MALFORMED_METHOD_SIGNATURE=%1$s\uc758 JNI \uacbd\uace0: #%2$d \uc778\uc218\uac00 \uc798\ubabb\ub41c \ud615\uc2dd\uc758 \uba54\uc18c\ub4dc \uc11c\uba85\uc785\ub2c8\ub2e4("%3$s").
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_MALFORMED_METHOD_SIGNATURE.sample_input_1=methodName
 J9NLS_JNICHK_MALFORMED_METHOD_SIGNATURE.sample_input_2=3
@@ -606,7 +606,7 @@ J9NLS_JNICHK_MALFORMED_METHOD_SIGNATURE.user_response=Check and correct the JNI 
 # END NON-TRANSLATABLE
 
 # JNI is not translatable
-J9NLS_JNICHK_MALFORMED_FIELD_SIGNATURE=%1$s\uc758 JNI \uacbd\uace0: #%2$d \uc778\uc218\uac00 \uc798\ubabb\ub41c \ud615\uc2dd\uc758 \ud544\ub4dc \uc11c\uba85\uc785\ub2c8\ub2e4(\"%3$s\").
+J9NLS_JNICHK_MALFORMED_FIELD_SIGNATURE=%1$s\uc758 JNI \uacbd\uace0: #%2$d \uc778\uc218\uac00 \uc798\ubabb\ub41c \ud615\uc2dd\uc758 \ud544\ub4dc \uc11c\uba85\uc785\ub2c8\ub2e4("%3$s").
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_MALFORMED_FIELD_SIGNATURE.sample_input_1=methodName
 J9NLS_JNICHK_MALFORMED_FIELD_SIGNATURE.sample_input_2=3
@@ -1008,6 +1008,7 @@ J9NLS_JNICHK_NON_PACKED_API_USED_FOR_PACKED_OBJECTS.user_response=Check and corr
 J9NLS_JNICHK_NON_STATIC_FIELDID_PASSED=%1$s\uc758 JNI \uc624\ub958: #%2$d \uc778\uc218\uac00 \uc815\uc801 \uc778\uc218\ub85c \uc608\uc0c1\ub418\uc9c0\ub9cc \ube44\uc815\uc801 \ud544\ub4dc ID\uac00 JNI\uc5d0 \uc804\ub2ec\ub429\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_NON_STATIC_FIELDID_PASSED.sample_input_1=methodName
+J9NLS_JNICHK_NON_STATIC_FIELDID_PASSED.sample_input_2=3
 J9NLS_JNICHK_NON_STATIC_FIELDID_PASSED.explanation=Validation of the field ID passed on the named JNI function has failed.
 J9NLS_JNICHK_NON_STATIC_FIELDID_PASSED.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
 J9NLS_JNICHK_NON_STATIC_FIELDID_PASSED.user_response=Check that the field ID passed in the function is correct.
@@ -1016,6 +1017,7 @@ J9NLS_JNICHK_NON_STATIC_FIELDID_PASSED.user_response=Check that the field ID pas
 J9NLS_JNICHK_STATIC_FIELDID_PASSED=%1$s\uc758 JNI \uc624\ub958: #%2$d \uc778\uc218\uac00 \ube44\uc815\uc801 \uc778\uc218\ub85c \uc608\uc0c1\ub418\uc9c0\ub9cc \uc815\uc801 \ud544\ub4dc ID\uac00 JNI\uc5d0 \uc804\ub2ec\ub429\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_STATIC_FIELDID_PASSED.sample_input_1=methodName
+J9NLS_JNICHK_STATIC_FIELDID_PASSED.sample_input_2=3
 J9NLS_JNICHK_STATIC_FIELDID_PASSED.explanation=Validation of the field ID passed on the named JNI function has failed.
 J9NLS_JNICHK_STATIC_FIELDID_PASSED.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
 J9NLS_JNICHK_STATIC_FIELDID_PASSED.user_response=Check that the field ID passed in the function is correct.
@@ -1036,9 +1038,9 @@ J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS2.user_response=Correct the JNI function ca
 # abortonerror is not translatable
 J9NLS_JNICHK_HELP_16=\tabortonerror   : \uc2ec\uac01\ud55c \uc624\ub958\uc5d0\uc11c \uc911\ub2e8\uc758 \uc6d0\uc778\uc774 \ub428
 # START NON-TRANSLATABLE
-J9NLS_JNICHK_HELP_15.explanation=NOTAG
-J9NLS_JNICHK_HELP_15.system_action=
-J9NLS_JNICHK_HELP_15.user_response=
+J9NLS_JNICHK_HELP_16.explanation=NOTAG
+J9NLS_JNICHK_HELP_16.system_action=
+J9NLS_JNICHK_HELP_16.user_response=
 # END NON-TRANSLATABLE
 
 # JNI, -Xcheck:jni:nonfatal and JVM are not translatable

@@ -275,17 +275,12 @@ J9NLS_VM_CHECK_JAVA_HOME.system_action=The JVM will terminate.
 J9NLS_VM_CHECK_JAVA_HOME.user_response=Check that JAVA_HOME environment variable is properly set.
 # END NON-TRANSLATABLE
 
-# Note: this message ends with a single space
-# This message will be followed by the exception's class name and
-# (if non-null) the exception's detail message
-# e.g. Exception in thread "main" java/lang/StackOverflowError: An overflow occurred
-J9NLS_VM_STACK_TRACE_EXCEPTION_IN=Ausnahmebedingung im Thread "%.*s"\u0020
+J9NLS_VM_STACK_TRACE_EXCEPTION_IN=Ausnahmebedingung in Thread "%s"
 # START NON-TRANSLATABLE
-J9NLS_VM_STACK_TRACE_EXCEPTION_IN.sample_input_1=57
-J9NLS_VM_STACK_TRACE_EXCEPTION_IN.sample_input_2=\"main\" java/lang/StackOverflowError: An overflow occurred
-J9NLS_VM_STACK_TRACE_EXCEPTION_IN.explanation=An exception has occurred.
-J9NLS_VM_STACK_TRACE_EXCEPTION_IN.system_action=The system will process the exception, which may result in JVM termination, or simply continuing the execution of the application.
-J9NLS_VM_STACK_TRACE_EXCEPTION_IN.user_response=Investigate cause of exception.
+J9NLS_VM_STACK_TRACE_EXCEPTION_IN.sample_input_1=main
+J9NLS_VM_STACK_TRACE_EXCEPTION_IN.explanation=NOTAG
+J9NLS_VM_STACK_TRACE_EXCEPTION_IN.system_action=
+J9NLS_VM_STACK_TRACE_EXCEPTION_IN.user_response=
 # END NON-TRANSLATABLE
 
 # first argument is the class name
@@ -2108,7 +2103,6 @@ J9NLS_VM_CRIU_SINGLETHREADMODE_JVMCRIUEXCEPTION.user_response=View CRIU document
 
 J9NLS_VM_CRIU_RESTORE_INITIALIZE_TRACE_FAILED=Die JVM konnte Xtrace beim Wiederherstellen der JVM nicht initialisieren
 # START NON-TRANSLATABLE
-J9NLS_VM_CRIU_RESTORE_INITIALIZE_TRACE_FAILED.sample_input_1=1
 J9NLS_VM_CRIU_RESTORE_INITIALIZE_TRACE_FAILED.explanation=CRIUSupport::checkpointJVM failed.
 J9NLS_VM_CRIU_RESTORE_INITIALIZE_TRACE_FAILED.system_action=The JVM will throw a JVMRestoreException.
 J9NLS_VM_CRIU_RESTORE_INITIALIZE_TRACE_FAILED.user_response=Check documentation for CRIUSupport restore options.
@@ -2116,7 +2110,6 @@ J9NLS_VM_CRIU_RESTORE_INITIALIZE_TRACE_FAILED.user_response=Check documentation 
 
 J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_SEEDOFFSET=Die JVM konnte aufgrund eines ung\u00fcltigen Startwert-Offsets keinen neuen Startwert f\u00fcr j.u.Random.seed.value angeben
 # START NON-TRANSLATABLE
-J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_SEEDOFFSET.sample_input_1=1
 J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_SEEDOFFSET.explanation=CRIUSupport::checkpointJVM failed.
 J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_SEEDOFFSET.system_action=The JVM will throw a JVMRestoreException.
 J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_SEEDOFFSET.user_response=View CRIU documentation to determine how to resolve the exception.
@@ -2124,7 +2117,6 @@ J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_SEEDOFFSET.user_response=View CRIU document
 
 J9NLS_VM_CRIU_RESTORE_RESEED_ATOMICLONG_CNF=Die JVM konnte keinen neuen Startwert f\u00fcr j.u.Random.seed.value angeben, da j.u.c.a.AtomicLong nicht gefunden wurde
 # START NON-TRANSLATABLE
-J9NLS_VM_CRIU_RESTORE_RESEED_ATOMICLONG_CNF.sample_input_1=1
 J9NLS_VM_CRIU_RESTORE_RESEED_ATOMICLONG_CNF.explanation=CRIUSupport::checkpointJVM failed.
 J9NLS_VM_CRIU_RESTORE_RESEED_ATOMICLONG_CNF.system_action=The JVM will throw a JVMRestoreException.
 J9NLS_VM_CRIU_RESTORE_RESEED_ATOMICLONG_CNF.user_response=View CRIU documentation to determine how to resolve the exception.
@@ -2132,7 +2124,6 @@ J9NLS_VM_CRIU_RESTORE_RESEED_ATOMICLONG_CNF.user_response=View CRIU documentatio
 
 J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_VALUEOFFSET=Die JVM konnte aufgrund eines ung\u00fcltigen Wert-Offsets keinen neuen Startwert f\u00fcr j.u.Random.seed.value angeben
 # START NON-TRANSLATABLE
-J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_VALUEOFFSET.sample_input_1=1
 J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_VALUEOFFSET.explanation=CRIUSupport::checkpointJVM failed.
 J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_VALUEOFFSET.system_action=The JVM will throw a JVMRestoreException.
 J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_VALUEOFFSET.user_response=View CRIU documentation to determine how to resolve the exception.
@@ -2140,8 +2131,68 @@ J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_VALUEOFFSET.user_response=View CRIU documen
 
 J9NLS_VM_CRIU_RESTORE_INITIALIZE_DUMP_FAILED=Die JVM konnte Xdump beim Wiederherstellen der JVM nicht initialisieren
 # START NON-TRANSLATABLE
-J9NLS_VM_CRIU_RESTORE_INITIALIZE_DUMP_FAILED.sample_input_1=1
 J9NLS_VM_CRIU_RESTORE_INITIALIZE_DUMP_FAILED.explanation=CRIUSupport::checkpointJVM failed.
 J9NLS_VM_CRIU_RESTORE_INITIALIZE_DUMP_FAILED.system_action=The JVM will throw a JVMRestoreException.
 J9NLS_VM_CRIU_RESTORE_INITIALIZE_DUMP_FAILED.user_response=Check documentation for CRIUSupport restore options.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_ILLEGAL_THREAD_STATE_UPCALL=Die JVM konnte aufgrund des falschen Threadstatus f\u00fcr upcall nicht fortgesetzt werden.
+# START NON-TRANSLATABLE
+J9NLS_VM_ILLEGAL_THREAD_STATE_UPCALL.explanation=An error occurred when the JVM attempted to perform upcall in the trivial downcall
+J9NLS_VM_ILLEGAL_THREAD_STATE_UPCALL.system_action=The JVM will throw a IllegalThreadStateException.
+J9NLS_VM_ILLEGAL_THREAD_STATE_UPCALL.user_response=Ensure the specified linker options for downcall are valid.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_FORKJOINPOOL_CNF=Die JVM konnte java.lang.VirtualThread.ForkJoinPool.parallelism aufgrund der Klasse java.util.concurrent.ForkJoinPool nicht zur\u00fccksetzen.
+# START NON-TRANSLATABLE
+J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_FORKJOINPOOL_CNF.explanation=CRIUSupport::checkpointJVM failed.
+J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_FORKJOINPOOL_CNF.system_action=The JVM will throw a JVMRestoreException.
+J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_FORKJOINPOOL_CNF.user_response=View CRIU documentation to determine how to resolve the exception.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_INVALID_DEFAULT_SCHEDULER_ADDRESS=Die JVM konnte java.lang.VirtualThread.ForkJoinPool.parallelism aufgrund einer ung\u00fcltigen DEFAULT_SCHEDULER-Adresse nicht zur\u00fccksetzen.
+# START NON-TRANSLATABLE
+J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_INVALID_DEFAULT_SCHEDULER_ADDRESS.explanation=CRIUSupport::checkpointJVM failed.
+J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_INVALID_DEFAULT_SCHEDULER_ADDRESS.system_action=The JVM will throw a JVMRestoreException.
+J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_INVALID_DEFAULT_SCHEDULER_ADDRESS.user_response=View CRIU documentation to determine how to resolve the exception.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_INVALID_PARALLELISM_OFFSET=Die JVM konnte java.lang.VirtualThread.ForkJoinPool.parallelism aufgrund eines ung\u00fcltigen Parallelit\u00e4tsoffsets nicht zur\u00fccksetzen.
+# START NON-TRANSLATABLE
+J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_INVALID_PARALLELISM_OFFSET.explanation=CRIUSupport::checkpointJVM failed.
+J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_INVALID_PARALLELISM_OFFSET.system_action=The JVM will throw a JVMRestoreException.
+J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_INVALID_PARALLELISM_OFFSET.user_response=View CRIU documentation to determine how to resolve the exception.
+# END NON-TRANSLATABLE
+
+# NullRestricted/value/implicit is not translatable
+J9NLS_VM_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS=Ein Instanzfeld mit einem Attribut NullRestricted muss sich in einer Wertklasse mit einem impliziten Konstruktor befinden.
+# START NON-TRANSLATABLE
+J9NLS_VM_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_VM_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS.system_action=The JVM will throw a verification or classloading related exception such as java.lang.ClassFormatError.
+J9NLS_VM_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# NullRestricted/value/implicit is not translatable
+J9NLS_VM_STATIC_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS=Ein statisches Feld mit einem Attribut NullRestricted muss sich in einer Wertklasse mit einem impliziten Konstruktor befinden.
+# START NON-TRANSLATABLE
+J9NLS_VM_STATIC_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_VM_STATIC_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS.system_action=The JVM will throw a verification or classloading related exception such as java.lang.ClassFormatError.
+J9NLS_VM_STATIC_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# Note: -XX:Compatibility= is a command-line option and should not be translated.
+J9NLS_VM_COMPATIBILITY_REPEATED=Die Befehlszeilenoption -XX:Compatibility = [mode] ist h\u00f6chstens einmal zul\u00e4ssig.
+# START NON-TRANSLATABLE
+J9NLS_VM_COMPATIBILITY_REPEATED.explanation=The specified command-line option may not be repeated.
+J9NLS_VM_COMPATIBILITY_REPEATED.system_action=The JVM will fail to start.
+J9NLS_VM_COMPATIBILITY_REPEATED.user_response=Remove the repetition of the option from the command line.
+# END NON-TRANSLATABLE
+
+# Note: -XX:Compatibility= is a command-line option and should not be translated.
+J9NLS_VM_COMPATIBILITY_UNSUPPORTED=Der in "-XX:Compatibility=%s" angegebene Kompatibilit\u00e4tsmodus wird nicht unterst\u00fctzt.
+# START NON-TRANSLATABLE
+J9NLS_VM_COMPATIBILITY_UNSUPPORTED.sample_input_1=unsupported
+J9NLS_VM_COMPATIBILITY_UNSUPPORTED.explanation=The specified compatibility mode is not supported.
+J9NLS_VM_COMPATIBILITY_UNSUPPORTED.system_action=The JVM will fail to start.
+J9NLS_VM_COMPATIBILITY_UNSUPPORTED.user_response=Remove the option from the command line.
 # END NON-TRANSLATABLE
