@@ -275,17 +275,12 @@ J9NLS_VM_CHECK_JAVA_HOME.system_action=The JVM will terminate.
 J9NLS_VM_CHECK_JAVA_HOME.user_response=Check that JAVA_HOME environment variable is properly set.
 # END NON-TRANSLATABLE
 
-# Note: this message ends with a single space
-# This message will be followed by the exception's class name and
-# (if non-null) the exception's detail message
-# e.g. Exception in thread "main" java/lang/StackOverflowError: An overflow occurred
-J9NLS_VM_STACK_TRACE_EXCEPTION_IN=Exception in thread \"%.*s\"\u0020
+J9NLS_VM_STACK_TRACE_EXCEPTION_IN=Exception in thread \"%s\"
 # START NON-TRANSLATABLE
-J9NLS_VM_STACK_TRACE_EXCEPTION_IN.sample_input_1=57
-J9NLS_VM_STACK_TRACE_EXCEPTION_IN.sample_input_2=\"main\" java/lang/StackOverflowError: An overflow occurred
-J9NLS_VM_STACK_TRACE_EXCEPTION_IN.explanation=An exception has occurred.
-J9NLS_VM_STACK_TRACE_EXCEPTION_IN.system_action=The system will process the exception, which may result in JVM termination, or simply continuing the execution of the application.
-J9NLS_VM_STACK_TRACE_EXCEPTION_IN.user_response=Investigate cause of exception.
+J9NLS_VM_STACK_TRACE_EXCEPTION_IN.sample_input_1=main
+J9NLS_VM_STACK_TRACE_EXCEPTION_IN.explanation=NOTAG
+J9NLS_VM_STACK_TRACE_EXCEPTION_IN.system_action=
+J9NLS_VM_STACK_TRACE_EXCEPTION_IN.user_response=
 # END NON-TRANSLATABLE
 
 # first argument is the class name
