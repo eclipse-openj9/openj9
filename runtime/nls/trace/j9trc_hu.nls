@@ -51,7 +51,7 @@ J9NLS_TRC_UNRECOGNISED_OPTION_STR=Ismeretlen nyomk\u00f6vet\u00e9si param\u00e9t
 J9NLS_TRC_UNRECOGNISED_OPTION_STR.explanation=An unknown option was used with the -Xtrace parameter.
 J9NLS_TRC_UNRECOGNISED_OPTION_STR.system_action=The JVM ends.
 J9NLS_TRC_UNRECOGNISED_OPTION_STR.user_response=Use -Xtrace:help to find the correct syntax for the -Xtrace options and try again.
-J9NLS_TRC_UNRECOGNISED_OPTION_STR.sample_input_1=-Xtrace:bogus
+J9NLS_TRC_UNRECOGNISED_OPTION_STR.sample_input_1=bogus
 # END NON-TRANSLATABLE
 
 J9NLS_TRC_ERROR_IN_OPTION_STR=Hiba a nyomk\u00f6vet\u00e9si param\u00e9ter feldolgoz\u00e1sakor: -Xtrace:%s
@@ -59,7 +59,7 @@ J9NLS_TRC_ERROR_IN_OPTION_STR=Hiba a nyomk\u00f6vet\u00e9si param\u00e9ter feldo
 J9NLS_TRC_ERROR_IN_OPTION_STR.explanation=An option used with the -Xtrace parameter could not be processed correctly due to a syntax error.
 J9NLS_TRC_ERROR_IN_OPTION_STR.system_action=The JVM ends.
 J9NLS_TRC_ERROR_IN_OPTION_STR.user_response=Use -Xtrace:help to find the correct syntax for the -Xtrace options and try again.
-J9NLS_TRC_ERROR_IN_OPTION_STR.sample_input_1=-Xtrace:buffers
+J9NLS_TRC_ERROR_IN_OPTION_STR.sample_input_1=buffers
 # END NON-TRANSLATABLE
 
 J9NLS_TRC_ERROR_IN_OPTION_WITH_ARG_STR=Hiba a nyomk\u00f6vet\u00e9si param\u00e9ter feldolgoz\u00e1sakor: -Xtrace:%s=%s
@@ -67,7 +67,8 @@ J9NLS_TRC_ERROR_IN_OPTION_WITH_ARG_STR=Hiba a nyomk\u00f6vet\u00e9si param\u00e9
 J9NLS_TRC_ERROR_IN_OPTION_WITH_ARG_STR.explanation=An option used with the -Xtrace parameter could not be processed correctly due to a problem with the option or the arguments used.
 J9NLS_TRC_ERROR_IN_OPTION_WITH_ARG_STR.system_action=The JVM ends.
 J9NLS_TRC_ERROR_IN_OPTION_WITH_ARG_STR.user_response=Use -Xtrace:help to find the correct syntax for the -Xtrace options and try again.
-J9NLS_TRC_ERROR_IN_OPTION_WITH_ARG_STR.sample_input_1=-Xtrace:buffers=bogus
+J9NLS_TRC_ERROR_IN_OPTION_WITH_ARG_STR.sample_input_1=buffers
+J9NLS_TRC_ERROR_IN_OPTION_WITH_ARG_STR.sample_input_2=bogus
 # END NON-TRANSLATABLE
 
 J9NLS_TRC_ERROR_DETAIL_STR=Hiba a nyomk\u00f6vet\u00e9si param\u00e9ter feldolgoz\u00e1sakor, r\u00e9szletek: %s
@@ -75,7 +76,7 @@ J9NLS_TRC_ERROR_DETAIL_STR=Hiba a nyomk\u00f6vet\u00e9si param\u00e9ter feldolgo
 J9NLS_TRC_ERROR_DETAIL_STR.explanation=An option used with the -Xtrace parameter could not be processed correctly due to the problem described in the detail string.
 J9NLS_TRC_ERROR_DETAIL_STR.system_action=The JVM ends.
 J9NLS_TRC_ERROR_DETAIL_STR.user_response=Use -Xtrace:help to find the correct syntax for the -Xtrace options and try again.
-J9NLS_TRC_ERROR_DETAIL_STR.sample_input_1=-Xtrace:buffers=bogus
+J9NLS_TRC_ERROR_DETAIL_STR.sample_input_1=Invalid option for -Xtrace:buffers - "bogus"
 # END NON-TRANSLATABLE
 
 J9NLS_TRC_FILE_OPEN_FAIL_STR=Hiba a nyomk\u00f6vet\u00e9si f\u00e1jl megnyit\u00e1sakor: %s
@@ -83,7 +84,7 @@ J9NLS_TRC_FILE_OPEN_FAIL_STR=Hiba a nyomk\u00f6vet\u00e9si f\u00e1jl megnyit\u00
 J9NLS_TRC_FILE_OPEN_FAIL_STR.explanation=The specified trace file could not be opened.
 J9NLS_TRC_FILE_OPEN_FAIL_STR.system_action=The JVM continues but trace data is not written to this file.
 J9NLS_TRC_FILE_OPEN_FAIL_STR.user_response=If you need to collect the trace data, restart the JVM specifying a trace file that can be opened.
-J9NLS_TRC_FILE_OPEN_FAIL_STR.sample_input_1=-Xtrace:output=C:\temp\trace.out
+J9NLS_TRC_FILE_OPEN_FAIL_STR.sample_input_1=C:\temp\trace.out
 # END NON-TRANSLATABLE
 
 J9NLS_TRC_HEADER_WRITE_FAIL_STR=Hiba a fejl\u00e9c nyomk\u00f6vet\u00e9si f\u00e1jlba \u00edr\u00e1sakor: %s
@@ -91,7 +92,7 @@ J9NLS_TRC_HEADER_WRITE_FAIL_STR=Hiba a fejl\u00e9c nyomk\u00f6vet\u00e9si f\u00e
 J9NLS_TRC_HEADER_WRITE_FAIL_STR.explanation=The specified trace file could not be written to.
 J9NLS_TRC_HEADER_WRITE_FAIL_STR.system_action=The JVM continues but trace data is not written to this file.
 J9NLS_TRC_HEADER_WRITE_FAIL_STR.user_response=If you need to collect the trace data, restart the JVM specifying a trace file that can be opened.
-J9NLS_TRC_HEADER_WRITE_FAIL_STR.sample_input_1=-Xtrace:output=C:\temp\trace.out
+J9NLS_TRC_HEADER_WRITE_FAIL_STR.sample_input_1=C:\temp\trace.out
 # END NON-TRANSLATABLE
 
 J9NLS_TRC_TRACE_WRITE_FAIL_STR=Hiba %d byte nyomk\u00f6vet\u00e9si f\u00e1jlba \u00edr\u00e1sakor: %s rc: %d
@@ -99,7 +100,9 @@ J9NLS_TRC_TRACE_WRITE_FAIL_STR=Hiba %d byte nyomk\u00f6vet\u00e9si f\u00e1jlba \
 J9NLS_TRC_TRACE_WRITE_FAIL_STR.explanation=The specified trace file could not be written to.
 J9NLS_TRC_TRACE_WRITE_FAIL_STR.system_action=The JVM continues but trace data is not written to this file.
 J9NLS_TRC_TRACE_WRITE_FAIL_STR.user_response=If you need to collect the trace data, restart the JVM specifying a trace file that can be opened.
-J9NLS_TRC_TRACE_WRITE_FAIL_STR.sample_input_1=-Xtrace:output=C:\temp\trace.out
+J9NLS_TRC_TRACE_WRITE_FAIL_STR.sample_input_1=5432
+J9NLS_TRC_TRACE_WRITE_FAIL_STR.sample_input_2=C:\temp\trace.out
+J9NLS_TRC_TRACE_WRITE_FAIL_STR.sample_input_3=-12
 # END NON-TRANSLATABLE
 
 J9NLS_TRC_NEXT_GEN_FILE_OPEN_FAIL_STR=Hiba a k\u00f6vetkez\u0151 nyomk\u00f6vet\u00e9si f\u00e1jl gener\u00e1ci\u00f3 megnyit\u00e1sakor: %s
@@ -115,7 +118,7 @@ J9NLS_TRC_FILE_SEEK_FAIL_STR=Hiba a nyomk\u00f6vet\u00e9si f\u00e1jlban v\u00e9g
 J9NLS_TRC_FILE_SEEK_FAIL_STR.explanation=The JVM could not find an expected location in the specified trace file.
 J9NLS_TRC_FILE_SEEK_FAIL_STR.system_action=The JVM continues but trace data is not written to this file.
 J9NLS_TRC_FILE_SEEK_FAIL_STR.user_response=If you need to collect the trace data, restart the JVM specifying a trace file that can be opened.
-J9NLS_TRC_FILE_SEEK_FAIL_STR.sample_input_1=-Xtrace:output={C:\temp\trace.out}
+J9NLS_TRC_FILE_SEEK_FAIL_STR.sample_input_1=C:\temp\trace.out
 # END NON-TRANSLATABLE
 
 J9NLS_TRC_SNAP_WRITE_FAIL=Hiba a snap f\u00e1jl \u00edr\u00e1sakor
@@ -123,7 +126,6 @@ J9NLS_TRC_SNAP_WRITE_FAIL=Hiba a snap f\u00e1jl \u00edr\u00e1sakor
 J9NLS_TRC_SNAP_WRITE_FAIL.explanation=The JVM could not write trace data to a snap file while the JVM was running.
 J9NLS_TRC_SNAP_WRITE_FAIL.system_action=The JVM continues but trace data is not written to this file.
 J9NLS_TRC_SNAP_WRITE_FAIL.user_response=If you need to collect the trace data, restart the JVM specifying a trace file that can be opened.
-J9NLS_TRC_SNAP_WRITE_FAIL.sample_input_1=
 # END NON-TRANSLATABLE
 
 J9NLS_TRC_NODYNAMIC_FALLBACK=Nat\u00edv mem\u00f3riafoglal\u00e1si hiba, vissza\u00e1ll\u00e1s a nem-dinamikus nyomk\u00f6vet\u00e9si be\u00e1ll\u00edt\u00e1sokra.
@@ -131,7 +133,6 @@ J9NLS_TRC_NODYNAMIC_FALLBACK=Nat\u00edv mem\u00f3riafoglal\u00e1si hiba, vissza\
 J9NLS_TRC_NODYNAMIC_FALLBACK.explanation=The JVM could not allocate space for another trace buffer.
 J9NLS_TRC_NODYNAMIC_FALLBACK.system_action=The JVM continues but trace reuses existing buffers. Trace points that are not written to disk before a new buffer is required might be lost.
 J9NLS_TRC_NODYNAMIC_FALLBACK.user_response=No action is required. However, to reduce the amount of trace points produced, change the trace options.
-J9NLS_TRC_NODYNAMIC_FALLBACK.sample_input_1=
 # END NON-TRANSLATABLE
 
 J9NLS_TRC_MODULE_NOT_LOADED=A modul nincs be\u00e1ll\u00edtva nyomk\u00f6vet\u00e9shez: %s
@@ -139,7 +140,7 @@ J9NLS_TRC_MODULE_NOT_LOADED=A modul nincs be\u00e1ll\u00edtva nyomk\u00f6vet\u00
 J9NLS_TRC_MODULE_NOT_LOADED.explanation=The JVM could not configure trace for the specified module, typically due to a native out of memory situation.
 J9NLS_TRC_MODULE_NOT_LOADED.system_action=The JVM continues but there is no trace data generated for this module.
 J9NLS_TRC_MODULE_NOT_LOADED.user_response=Contact your service representative. You might need to obtain additional information by running with -Xtrace:debug=<n>.
-J9NLS_TRC_MODULE_NOT_LOADED.sample_input_1=
+J9NLS_TRC_MODULE_NOT_LOADED.sample_input_1=j9vm
 # END NON-TRANSLATABLE
 
 J9NLS_TRC_COUNTER_FILE_NOT_OPENED=A nyomk\u00f6vet\u00e9si pont sz\u00e1ml\u00e1l\u00f3f\u00e1jl (%s) nem nyithat\u00f3 meg, sz\u00e1ml\u00e1l\u00f3k \u00e1tir\u00e1ny\u00edtva a szabv\u00e1ny hibakimenetre.
@@ -147,7 +148,7 @@ J9NLS_TRC_COUNTER_FILE_NOT_OPENED=A nyomk\u00f6vet\u00e9si pont sz\u00e1ml\u00e1
 J9NLS_TRC_COUNTER_FILE_NOT_OPENED.explanation=The JVM could not open the specified file for the trace point counts at shutdown.
 J9NLS_TRC_COUNTER_FILE_NOT_OPENED.system_action=The JVM writes the counter information to stderr at shutdown.
 J9NLS_TRC_COUNTER_FILE_NOT_OPENED.user_response=If you need to collect the trace data, restart the JVM specifying a trace file that can be written to.
-J9NLS_TRC_COUNTER_FILE_NOT_OPENED.sample_input_1=-Xtrace:count
+J9NLS_TRC_COUNTER_FILE_NOT_OPENED.sample_input_1=C:\temp\count.out
 # END NON-TRANSLATABLE
 
 J9NLS_TRC_COUNTER_BEING_WRITTEN=Nyomk\u00f6vet\u00e9si sz\u00e1ml\u00e1l\u00f3 inform\u00e1ci\u00f3k ki\u00edr\u00e1sa ide: %s
@@ -155,7 +156,7 @@ J9NLS_TRC_COUNTER_BEING_WRITTEN=Nyomk\u00f6vet\u00e9si sz\u00e1ml\u00e1l\u00f3 i
 J9NLS_TRC_COUNTER_BEING_WRITTEN.explanation=The JVM is writing trace counter information to the specified location at shutdown.
 J9NLS_TRC_COUNTER_BEING_WRITTEN.system_action=The JVM writes the counter information to that location at shutdown.
 J9NLS_TRC_COUNTER_BEING_WRITTEN.user_response=No action required. This message is for information only.
-J9NLS_TRC_COUNTER_BEING_WRITTEN.sample_input_1=
+J9NLS_TRC_COUNTER_BEING_WRITTEN.sample_input_1=utTrcCounters
 # END NON-TRANSLATABLE
 
 J9NLS_TRC_TRACE_INIT_FAILED=A nyomk\u00f6vet\u00e9si alrendszer inicializ\u00e1l\u00e1sa nem siker\u00fclt, a nyomk\u00f6vet\u00e9s nem enged\u00e9lyezett
@@ -163,7 +164,6 @@ J9NLS_TRC_TRACE_INIT_FAILED=A nyomk\u00f6vet\u00e9si alrendszer inicializ\u00e1l
 J9NLS_TRC_TRACE_INIT_FAILED.explanation=The JVM cannot start the trace engine.
 J9NLS_TRC_TRACE_INIT_FAILED.system_action=The JVM ends.
 J9NLS_TRC_TRACE_INIT_FAILED.user_response=Contact your service representative. You might need to obtain additional information by running with -Xtrace:debug=<n>.
-J9NLS_TRC_TRACE_INIT_FAILED.sample_input_1=
 # END NON-TRANSLATABLE
 
 J9NLS_TRC_REGISTER_SUBSCRIBER_FAILED=Hiba a nyomk\u00f6vet\u00e9s ki\u00edr\u00e1si el\u0151fizet\u0151 regisztr\u00e1l\u00e1sakor
@@ -171,7 +171,6 @@ J9NLS_TRC_REGISTER_SUBSCRIBER_FAILED=Hiba a nyomk\u00f6vet\u00e9s ki\u00edr\u00e
 J9NLS_TRC_REGISTER_SUBSCRIBER_FAILED.explanation=The JVM cannot start the trace subscriber thread that writes trace buffers to disk.
 J9NLS_TRC_REGISTER_SUBSCRIBER_FAILED.system_action=The JVM continues but trace data is not written to disk.
 J9NLS_TRC_REGISTER_SUBSCRIBER_FAILED.user_response=Contact your service representative. You might need to obtain additional information by running with -Xtrace:debug=<n>.
-J9NLS_TRC_REGISTER_SUBSCRIBER_FAILED.sample_input_1=
 # END NON-TRANSLATABLE
 
 J9NLS_TRC_RAS_GLOBAL_STORAGE=A RasGlobalStorage t\u00e1rter\u00fclete nem \u00e9rhet\u0151 el, a nyomk\u00f6vet\u00e9s nem enged\u00e9lyezett
@@ -179,7 +178,6 @@ J9NLS_TRC_RAS_GLOBAL_STORAGE=A RasGlobalStorage t\u00e1rter\u00fclete nem \u00e9
 J9NLS_TRC_RAS_GLOBAL_STORAGE.explanation=The JVM could not initialize.
 J9NLS_TRC_RAS_GLOBAL_STORAGE.system_action=The JVM ends.
 J9NLS_TRC_RAS_GLOBAL_STORAGE.user_response=Contact your service representative.
-J9NLS_TRC_RAS_GLOBAL_STORAGE.sample_input_1=
 # END NON-TRANSLATABLE
 
 J9NLS_TRC_RAS_TLS_ALLOC_FAILED=Nem lehet lefoglalni a RAS sz\u00e1l helyi t\u00e1rol\u00f3kulcs\u00e1t
@@ -187,7 +185,6 @@ J9NLS_TRC_RAS_TLS_ALLOC_FAILED=Nem lehet lefoglalni a RAS sz\u00e1l helyi t\u00e
 J9NLS_TRC_RAS_TLS_ALLOC_FAILED.explanation=The JVM could not initialize.
 J9NLS_TRC_RAS_TLS_ALLOC_FAILED.system_action=The JVM ends.
 J9NLS_TRC_RAS_TLS_ALLOC_FAILED.user_response=Contact your service representative.
-J9NLS_TRC_RAS_TLS_ALLOC_FAILED.sample_input_1=
 # END NON-TRANSLATABLE
 
 J9NLS_TRC_UTE_TLS_ALLC_FAILED=Nem lehet lefoglalni az UTE sz\u00e1l helyi t\u00e1rol\u00f3kulcs\u00e1t
@@ -195,7 +192,6 @@ J9NLS_TRC_UTE_TLS_ALLC_FAILED=Nem lehet lefoglalni az UTE sz\u00e1l helyi t\u00e
 J9NLS_TRC_UTE_TLS_ALLC_FAILED.explanation=The JVM could not initialize.
 J9NLS_TRC_UTE_TLS_ALLC_FAILED.system_action=The JVM ends.
 J9NLS_TRC_UTE_TLS_ALLC_FAILED.user_response=Contact your service representative.
-J9NLS_TRC_UTE_TLS_ALLC_FAILED.sample_input_1=
 # END NON-TRANSLATABLE
 
 J9NLS_TRC_TRACE_INIT_FAILED_RC=A nyomk\u00f6vet\u00e9si alrendszert nem siker\u00fclt megfelel\u0151en inicializ\u00e1lni, RC = %d
@@ -203,7 +199,7 @@ J9NLS_TRC_TRACE_INIT_FAILED_RC=A nyomk\u00f6vet\u00e9si alrendszert nem siker\u0
 J9NLS_TRC_TRACE_INIT_FAILED_RC.explanation=The JVM could not initialize.
 J9NLS_TRC_TRACE_INIT_FAILED_RC.system_action=The JVM ends.
 J9NLS_TRC_TRACE_INIT_FAILED_RC.user_response=Contact your service representative.
-J9NLS_TRC_TRACE_INIT_FAILED_RC.sample_input_1=
+J9NLS_TRC_TRACE_INIT_FAILED_RC.sample_input_1=-1
 # END NON-TRANSLATABLE
 
 J9NLS_TRC_SHUTDOWN_TIMEOUT=Id\u0151t\u00fall\u00e9p\u00e9s t\u00f6rt\u00e9nt a nyomk\u00f6vet\u00e9si alrendszer lez\u00e1r\u00e1sa k\u00f6zben

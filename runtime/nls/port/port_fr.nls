@@ -339,7 +339,7 @@ J9NLS_PORT_MMAP_INVALID_FILE_HANDLE.user_response=Contact your service represent
 
 # END NON-TRANSLATABLE
 
-J9NLS_PORT_LINUXDUMP_PIPE_CORE=Le r\u00e9glage %s \"%s\" indique que le vidage core doit \u00eatre dirig\u00e9 vers un programme\nexterne.  Tentative de renommage en core ou core.%d.  Consultez le manuel du programme externe pour savoir o\u00f9 le clich\u00e9 du processus core est \u00e9crit et assurez-vous que le programme ne le tronque pas.\n
+J9NLS_PORT_LINUXDUMP_PIPE_CORE=Le r\u00e9glage %s "%s" indique que le vidage core doit \u00eatre dirig\u00e9 vers un programme\nexterne.  Tentative de renommage en core ou core.%d.  Consultez le manuel du programme externe pour savoir o\u00f9 le clich\u00e9 du processus core est \u00e9crit et assurez-vous que le programme ne le tronque pas.\n
 # START NON-TRANSLATABLE
 J9NLS_PORT_LINUXDUMP_PIPE_CORE.sample_input_1=/proc/sys/kernel/core_pattern
 J9NLS_PORT_LINUXDUMP_PIPE_CORE.sample_input_2=|/usr/lib/systemd/systemd-coredump %P %u %g %s %t %c %h
@@ -488,7 +488,7 @@ J9NLS_PORT_SL_BUFFER_EXCEEDED_ERROR.system_action=Shared object is not loaded
 J9NLS_PORT_SL_BUFFER_EXCEEDED_ERROR.user_response=Reduce path length for the target shared object
 # END NON-TRANSLATABLE
 
-J9NLS_PORT_DUMP_PATH_EXISTS=Impossible de cr\u00e9er le vidage syst\u00e8me car un fichier non standard \"%s\" existe d\u00e9j\u00e0 avec le m\u00eame nom que le fichier pr\u00e9vu pour ce vidage syst\u00e8me
+J9NLS_PORT_DUMP_PATH_EXISTS=Impossible de cr\u00e9er le vidage syst\u00e8me car un fichier non standard "%s" existe d\u00e9j\u00e0 avec le m\u00eame nom que le fichier pr\u00e9vu pour ce vidage syst\u00e8me
 # START NON-TRANSLATABLE
 J9NLS_PORT_DUMP_PATH_EXISTS.sample_input_1=/home/user/core
 J9NLS_PORT_DUMP_PATH_EXISTS.explanation=The JVM was unable to produce a system dump because a non-regular file (for example a directory, symbolic link, pipe or socket) exists with the same name as the expected system dump file.
@@ -496,7 +496,7 @@ J9NLS_PORT_DUMP_PATH_EXISTS.system_action=The JVM continues, the requested syste
 J9NLS_PORT_DUMP_PATH_EXISTS.user_response=Check whether the name of a non-regular file (for example a directory, symbolic link, pipe or socket) in the current working directory of the Java application clashes with the default system dump file name (core or core.<process ID>) or with the setting of /proc/sys/kernel/core_pattern and /proc/sys/kernel/core_uses_pid. Either rename the subdirectory, or change the settings of /proc/sys/kernel/core_pattern and /proc/sys/kernel/core_uses_pid so that the names do not clash.
 # END NON-TRANSLATABLE
 
-J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND=Le fichier core cr\u00e9\u00e9 par le processus enfant dont l'ID de processus est %i est introuvable. Consultez la documentation du programme %s \"%s\" pour savoir o\u00f9 le fichier core est \u00e9crit et vous assurer que le programme ne le tronque pas.\n
+J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND=Le fichier core cr\u00e9\u00e9 par le processus enfant dont l'ID de processus est %i est introuvable. Consultez la documentation du programme %s "%s" pour savoir o\u00f9 le fichier core est \u00e9crit et vous assurer que le programme ne le tronque pas.\n
 # START NON-TRANSLATABLE
 J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND.sample_input_1=12345
 J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND.sample_input_2=/proc/sys/kernel/core_pattern
@@ -504,4 +504,12 @@ J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND.sample_input_3=|/usr/lib/systemd/system
 J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND.explanation=/proc/sys/kernel/core_pattern starting with | is used to redirect the core file to tools such as systemd-coredump which processes the core dump, for example to send it to a different directory and manage total core dump disk usage, or to suppress it.
 J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND.system_action=The VM could not find the core dump in the current directory most likely because the external program sent it elsewhere or suppressed it.
 J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND.user_response=Refer to the documentation for the external program specified in /proc/sys/kernel/core_pattern to find the core dump and review the program's configuration to ensure the dump is not truncated.
+# END NON-TRANSLATABLE
+
+J9NLS_PORT_RUNNING_IN_CONTAINER_FAILURE=Impossible d'identifier si la machine virtuelle Java s'ex\u00e9cute dans un conteneur ; message d'erreur: %s.
+# START NON-TRANSLATABLE
+J9NLS_PORT_RUNNING_IN_CONTAINER_FAILURE.sample_input_1=fopen failed to open /proc/1/cgroup file with errno=2
+J9NLS_PORT_RUNNING_IN_CONTAINER_FAILURE.explanation=An error was encountered while evaluating if the JVM is running inside a container.
+J9NLS_PORT_RUNNING_IN_CONTAINER_FAILURE.system_action=The JVM continues, but performance might be impacted if the JVM is running inside a container.
+J9NLS_PORT_RUNNING_IN_CONTAINER_FAILURE.user_response=Take action to resolve the error if performance is impacted inside a container. Otherwise, ignore the error.
 # END NON-TRANSLATABLE

@@ -46,7 +46,7 @@ J9NLS.HEADER=verbosenls.h
 
 # Note: %.*s is the thread name
 # Note: %zd/%zd is two numbers, indicating how much stack was used on each stack
-J9NLS_VERB_STACK_USAGE=Podrobn\u00fd z\u00e1sobn\u00edk: \"%2$.*1$s\" pou\u017eilo %3$zd/%4$zd bajtov v z\u00e1sobn\u00edkoch Java/C
+J9NLS_VERB_STACK_USAGE=Podrobn\u00fd z\u00e1sobn\u00edk: "%2$.*1$s" pou\u017eilo %3$zd/%4$zd bajtov v z\u00e1sobn\u00edkoch Java/C
 # START NON-TRANSLATABLE
 J9NLS_VERB_STACK_USAGE.sample_input_1=11
 J9NLS_VERB_STACK_USAGE.sample_input_2=Gc Worker Thread
@@ -257,7 +257,7 @@ J9NLS_VERB_CLASS_BAD_CPENTRY_JXE_OE_NOT_SUPPORTED.user_response=Replace the JXE 
 
 # Note: %.*s is the thread name
 # Note: %zd/%zd is two numbers, indicating how much stack was used on each stack
-J9NLS_VERB_STACK_USAGE_FOR_RUNNING_THREADS=Podrobn\u00fd z\u00e1sobn\u00edk: Spusten\u00e9 vl\u00e1kno \"%2$.*1$s\" pou\u017e\u00edva %3$zd/%4$zd bajtov v z\u00e1sobn\u00edkoch Java/C
+J9NLS_VERB_STACK_USAGE_FOR_RUNNING_THREADS=Podrobn\u00fd z\u00e1sobn\u00edk: Spusten\u00e9 vl\u00e1kno "%2$.*1$s" pou\u017e\u00edva %3$zd/%4$zd bajtov v z\u00e1sobn\u00edkoch Java/C
 # START NON-TRANSLATABLE
 J9NLS_VERB_STACK_USAGE_FOR_RUNNING_THREADS.explanation=Indicates how much stack was used on each stack for a thread when -verbose:stack is specified
 J9NLS_VERB_STACK_USAGE_FOR_RUNNING_THREADS.system_action=None

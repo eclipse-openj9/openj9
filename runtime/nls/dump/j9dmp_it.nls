@@ -100,7 +100,7 @@ J9NLS_DMP_MISSING_EXECUTABLE_STR.sample_input_1=bogus
 J9NLS_DMP_MISSING_EXECUTABLE_STR.link=dita:///diag/tools/dumpagents_exec.dita
 # END NON-TRANSLATABLE
 
-J9NLS_DMP_PROCESSING_EVENT_STR=Elaborazione dell'evento \"%1$s\", dettaglio \"%3$.*2$s\" - attendere.
+J9NLS_DMP_PROCESSING_EVENT_STR=Elaborazione dell'evento "%1$s", dettaglio "%3$.*2$s" - attendere.
 # START NON-TRANSLATABLE
 J9NLS_DMP_PROCESSING_EVENT_STR.explanation=A dump event has occurred and is being handled.
 J9NLS_DMP_PROCESSING_EVENT_STR.system_action=The JVM attempts to process the event.
@@ -179,7 +179,7 @@ J9NLS_DMP_ERROR_IN_DUMP_STR.link=
 
 # END NON-TRANSLATABLE
 
-J9NLS_DMP_PROCESSED_EVENT_STR=Evento dump elaborato \"%1$s\", dettaglio \"%3$.*2$s\".
+J9NLS_DMP_PROCESSED_EVENT_STR=Evento dump elaborato "%1$s", dettaglio "%3$.*2$s".
 # START NON-TRANSLATABLE
 J9NLS_DMP_PROCESSED_EVENT_STR.explanation=A dump event has occurred and has been handled.
 J9NLS_DMP_PROCESSED_EVENT_STR.system_action=The JVM continues.
@@ -398,8 +398,7 @@ J9NLS_DMP_USER_REQUESTED_DUMP_STR=L'utente ha richiesto il dump %1$s utilizzando
 J9NLS_DMP_USER_REQUESTED_DUMP_STR.explanation=The JVM will write a dump in response to a request through an API, such as JVMTI, or through the -Xtrace:trigger option.
 J9NLS_DMP_USER_REQUESTED_DUMP_STR.system_action=The JVM attempts to write the dump. A second message is produced when the dump is complete.
 J9NLS_DMP_USER_REQUESTED_DUMP_STR.user_response=Review the dump and take appropriate action.
-
-# javacore.txt is not translatable
+J9NLS_DMP_USER_REQUESTED_DUMP_STR.sample_input_1=java
 J9NLS_DMP_USER_REQUESTED_DUMP_STR.sample_input_2=javacore.txt
 J9NLS_DMP_USER_REQUESTED_DUMP_STR.sample_input_3=JVMTI
 J9NLS_DMP_USER_REQUESTED_DUMP_STR.link=dita:///diag/tools/dump_agents.dita
@@ -450,7 +449,7 @@ J9NLS_DMP_NO_SNAPDUMP_WHEN_TRACING_TO_FILE.link=dita:///diag/tools/dump_agents.d
 
 # END NON-TRANSLATABLE
 
-J9NLS_DMP_PROCESSING_EVENT_TIME=Elaborazione dell'evento dump \"%1$s\", dettagli \"%3$.*2$s\" in %4$s - attendere.
+J9NLS_DMP_PROCESSING_EVENT_TIME=Elaborazione dell'evento dump "%1$s", dettagli "%3$.*2$s" in %4$s - attendere.
 # START NON-TRANSLATABLE
 J9NLS_DMP_PROCESSING_EVENT_TIME.explanation=A dump event has occurred and is being handled.
 J9NLS_DMP_PROCESSING_EVENT_TIME.system_action=The JVM generates dumps as configured for the event by the -Xdump option.
@@ -512,6 +511,7 @@ J9NLS_DMP_TOO_MANY_DUMP_OPTIONS=Il numero di opzioni di dump deve essere minore 
 J9NLS_DMP_TOO_MANY_DUMP_OPTIONS.explanation=The number of -Xdump: options exceeds the VM limit
 J9NLS_DMP_TOO_MANY_DUMP_OPTIONS.system_action=The JVM exits.
 J9NLS_DMP_TOO_MANY_DUMP_OPTIONS.user_response=Combine dump types, event types, and filters using '+' into a single option
+J9NLS_DMP_TOO_MANY_DUMP_OPTIONS.sample_input_1=128
 J9NLS_DMP_TOO_MANY_DUMP_OPTIONS.link=
 # END NON-TRANSLATABLE
 
@@ -520,6 +520,8 @@ J9NLS_DMP_EXIT_SHUTDOWN=La VM \u00e8 in fase di arresto. Motivo: %2$.*1$s
 J9NLS_DMP_EXIT_SHUTDOWN.explanation=User requested to exit
 J9NLS_DMP_EXIT_SHUTDOWN.system_action=The JVM exits.
 J9NLS_DMP_EXIT_SHUTDOWN.user_response=This exit was requested by the user.
+J9NLS_DMP_EXIT_SHUTDOWN.sample_input_1=19
+J9NLS_DMP_EXIT_SHUTDOWN.sample_input_2=Cannot keep running
 J9NLS_DMP_EXIT_SHUTDOWN.link=
 # END NON-TRANSLATABLE
 
@@ -584,9 +586,12 @@ J9NLS_DMP_JIT_RECOMPILING_METHOD=Il dump JIT sta ricompilando %.*s.%.*s%.*s
 J9NLS_DMP_JIT_RECOMPILING_METHOD.explanation=The dump is recompiling the specified method signature.
 J9NLS_DMP_JIT_RECOMPILING_METHOD.system_action=The JVM continues.
 J9NLS_DMP_JIT_RECOMPILING_METHOD.user_response=Diagnostic information, provide this information to your service representative.
-J9NLS_DMP_JIT_RECOMPILING_METHOD.sample_input_1=java/lang/String
-J9NLS_DMP_JIT_RECOMPILING_METHOD.sample_input_2=equals
-J9NLS_DMP_JIT_RECOMPILING_METHOD.sample_input_3=(Ljava/lang/Object;)Z
+J9NLS_DMP_JIT_RECOMPILING_METHOD.sample_input_1=16
+J9NLS_DMP_JIT_RECOMPILING_METHOD.sample_input_2=java/lang/String
+J9NLS_DMP_JIT_RECOMPILING_METHOD.sample_input_3=6
+J9NLS_DMP_JIT_RECOMPILING_METHOD.sample_input_4=equals
+J9NLS_DMP_JIT_RECOMPILING_METHOD.sample_input_5=21
+J9NLS_DMP_JIT_RECOMPILING_METHOD.sample_input_6=(Ljava/lang/Object;)Z
 J9NLS_DMP_JIT_RECOMPILING_METHOD.link=
 
 # END NON-TRANSLATABLE

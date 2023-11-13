@@ -339,12 +339,13 @@ J9NLS_PORT_MMAP_INVALID_FILE_HANDLE.user_response=Contact your service represent
 
 # END NON-TRANSLATABLE
 
-J9NLS_PORT_LINUXDUMP_PIPE_CORE=\u041f\u0430\u0440\u0430\u043c\u0435\u0442\u0440 %s \"%s\" \u043e\u043f\u0440\u0435\u0434\u0435\u043b\u044f\u0435\u0442, \u0447\u0442\u043e\u0431\u044b \u0434\u0430\u043c\u043f \u043f\u0430\u043c\u044f\u0442\u0438 \u0431\u044b\u043b \u043d\u0430\u043f\u0440\u0430\u0432\u043b\u0435\u043d \u0432\u043d\u0435\u0448\u043d\u0435\u0439 \u043f\u0440\u043e\u0433\u0440\u0430\u043c\u043c\u0435.  \u041f\u043e\u043f\u044b\u0442\u043a\u0430 \u043f\u0435\u0440\u0435\u0438\u043c\u0435\u043d\u043e\u0432\u0430\u0442\u044c \u044f\u0434\u0440\u043e \u0438\u043b\u0438 \u044f\u0434\u0440\u043e.%d.\n
+J9NLS_PORT_LINUXDUMP_PIPE_CORE=\u041f\u0430\u0440\u0430\u043c\u0435\u0442\u0440%s "%s" \u0443\u043a\u0430\u0437\u044b\u0432\u0430\u0435\u0442, \u0447\u0442\u043e \u0434\u0430\u043c\u043f \u044f\u0434\u0440\u0430 \u0434\u043e\u043b\u0436\u0435\u043d \u0431\u044b\u0442\u044c \u043a\u043e\u043d\u0432\u0435\u0439\u0435\u0440\u043d\u044b\u043c \u0434\u043b\u044f \u0432\u043d\u0435\u0448\u043d\u0435\u0439 \u043f\u0440\u043e\u0433\u0440\u0430\u043c\u043c\u044b.  \u041f\u043e\u043f\u044b\u0442\u043a\u0430 \u043f\u0435\u0440\u0435\u0438\u043c\u0435\u043d\u043e\u0432\u0430\u043d\u0438\u044f \u044f\u0434\u0440\u0430 \u0438\u043b\u0438 \u044f\u0434\u0440\u0430.%d.  \u041f\u0440\u043e\u0441\u043c\u043e\u0442\u0440\u0438\u0442\u0435 \u0440\u0443\u043a\u043e\u0432\u043e\u0434\u0441\u0442\u0432\u043e \u043f\u043e \u0432\u043d\u0435\u0448\u043d\u0435\u0439 \u043f\u0440\u043e\u0433\u0440\u0430\u043c\u043c\u0435, \u0447\u0442\u043e\u0431\u044b \u043d\u0430\u0439\u0442\u0438, \u0433\u0434\u0435 \u0437\u0430\
+    \u043f\u0438\u0441\u0430\u043d \u0434\u0430\u043c\u043f \u044f\u0434\u0440\u0430, \u0438 \u0443\u0431\u0435\u0434\u0438\u0442\u0435\u0441\u044c, \u0447\u0442\u043e \u043f\u0440\u043e\u0433\u0440\u0430\u043c\u043c\u0430 \u043d\u0435 \u0443\u0441\u0435\u043a\u0430\u0435\u0442 \u0435\u0433\u043e.\n
 # START NON-TRANSLATABLE
 J9NLS_PORT_LINUXDUMP_PIPE_CORE.sample_input_1=/proc/sys/kernel/core_pattern
-J9NLS_PORT_LINUXDUMP_PIPE_CORE.sample_input_2=|/usr/libexec/abrt-hook-ccpp /var/spool/abrt %p %s %u %c
+J9NLS_PORT_LINUXDUMP_PIPE_CORE.sample_input_2=|/usr/lib/systemd/systemd-coredump %P %u %g %s %t %c %h
 J9NLS_PORT_LINUXDUMP_PIPE_CORE.sample_input_3=12345
-J9NLS_PORT_LINUXDUMP_PIPE_CORE.explanation=Tools such as ABRT use /proc/sys/kernel/core_pattern to redirect the core file to an external program, for example to create bug reports.
+J9NLS_PORT_LINUXDUMP_PIPE_CORE.explanation=/proc/sys/kernel/core_pattern starting with | is used to redirect the core file to tools such as systemd-coredump which processes the core dump, for example to send it to a different directory and manage total core dump disk usage, or to suppress it.
 J9NLS_PORT_LINUXDUMP_PIPE_CORE.system_action=The VM will look in the current directory for a file called either core or core.<process ID>, depending on the contents of /proc/sys/kernel/core_uses_pid.
 J9NLS_PORT_LINUXDUMP_PIPE_CORE.user_response=Refer to the documentation for the external program specified in /proc/sys/kernel/core_pattern.
 
@@ -488,10 +489,28 @@ J9NLS_PORT_SL_BUFFER_EXCEEDED_ERROR.system_action=Shared object is not loaded
 J9NLS_PORT_SL_BUFFER_EXCEEDED_ERROR.user_response=Reduce path length for the target shared object
 # END NON-TRANSLATABLE
 
-J9NLS_PORT_DUMP_PATH_EXISTS=\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u0441\u043e\u0437\u0434\u0430\u0442\u044c \u0434\u0430\u043c\u043f \u0441\u0438\u0441\u0442\u0435\u043c\u044b, \u0442\u0430\u043a \u043a\u0430\u043a \u0443\u0436\u0435 \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u0435\u0442 \u043d\u0435\u0441\u0442\u0430\u043d\u0434\u0430\u0440\u0442\u043d\u044b\u0439 \u0444\u0430\u0439\u043b \"%s\", \u0438\u043c\u044f \u043a\u043e\u0442\u043e\u0440\u043e\u0433\u043e \u0441\u043e\u0432\u043f\u0430\u0434\u0430\u0435\u0442 \u0441 \u043e\u0436\u0438\u0434\u0430\u0435\u043c\u044b\u043c \u0438\u043c\u0435\u043d\u0435\u043c \u0434\u0430\u043c\u043f\u0430 \u0441\u0438\u0441\u0442\u0435\u043c\u044b
+J9NLS_PORT_DUMP_PATH_EXISTS=\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u0441\u043e\u0437\u0434\u0430\u0442\u044c \u0434\u0430\u043c\u043f \u0441\u0438\u0441\u0442\u0435\u043c\u044b, \u0442\u0430\u043a \u043a\u0430\u043a \u0443\u0436\u0435 \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u0435\u0442 \u043d\u0435\u0441\u0442\u0430\u043d\u0434\u0430\u0440\u0442\u043d\u044b\u0439 \u0444\u0430\u0439\u043b "%s", \u0438\u043c\u044f \u043a\u043e\u0442\u043e\u0440\u043e\u0433\u043e \u0441\u043e\u0432\u043f\u0430\u0434\u0430\u0435\u0442 \u0441 \u043e\u0436\u0438\u0434\u0430\u0435\u043c\u044b\u043c \u0438\u043c\u0435\u043d\u0435\u043c \u0434\u0430\u043c\u043f\u0430 \u0441\u0438\u0441\u0442\u0435\u043c\u044b
 # START NON-TRANSLATABLE
 J9NLS_PORT_DUMP_PATH_EXISTS.sample_input_1=/home/user/core
 J9NLS_PORT_DUMP_PATH_EXISTS.explanation=The JVM was unable to produce a system dump because a non-regular file (for example a directory, symbolic link, pipe or socket) exists with the same name as the expected system dump file.
 J9NLS_PORT_DUMP_PATH_EXISTS.system_action=The JVM continues, the requested system dump is not produced.
 J9NLS_PORT_DUMP_PATH_EXISTS.user_response=Check whether the name of a non-regular file (for example a directory, symbolic link, pipe or socket) in the current working directory of the Java application clashes with the default system dump file name (core or core.<process ID>) or with the setting of /proc/sys/kernel/core_pattern and /proc/sys/kernel/core_uses_pid. Either rename the subdirectory, or change the settings of /proc/sys/kernel/core_pattern and /proc/sys/kernel/core_uses_pid so that the names do not clash.
+# END NON-TRANSLATABLE
+
+J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND=\u0411\u0430\u0437\u043e\u0432\u044b\u0439 \u0444\u0430\u0439\u043b, \u0441\u043e\u0437\u0434\u0430\u043d\u043d\u044b\u0439 \u0434\u043e\u0447\u0435\u0440\u043d\u0438\u043c \u043f\u0440\u043e\u0446\u0435\u0441\u0441\u043e\u043c \u0441 pid = %i , \u043d\u0435 \u043d\u0430\u0439\u0434\u0435\u043d. \u041f\u0440\u043e\u0441\u043c\u043e\u0442\u0440\u0438\u0442\u0435 \u0434\u043e\u043a\u0443\u043c\u0435\u043d\u0442\u0430\u0446\u0438\u044e \u043f\u043e \u043f\u0440\u043e\u0433\u0440\u0430\u043c\u043c\u0435 %s "%s", \u0447\u0442\u043e\u0431\u044b \u043d\u0430\u0439\u0442\u0438, \u0433\u0434\u0435 \u0437\u0430\u043f\u0438\u0441\u0430\u043d \u0444\u0430\u0439\u043b \u0434\u0430\u043c\u043f\u0430, \u0438 \u0443\u0431\u0435\u0434\u0438\u0442\u0435\u0441\u044c, \u0447\u0442\u043e \u043f\u0440\u043e\u0433\u0440\u0430\u043c\u043c\u0430 \u043d\u0435 \u0443\u0441\u0435\u043a\u0430\u0435\u0442 \u0435\u0433\u043e.\n
+# START NON-TRANSLATABLE
+J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND.sample_input_1=12345
+J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND.sample_input_2=/proc/sys/kernel/core_pattern
+J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND.sample_input_3=|/usr/lib/systemd/systemd-coredump %P %u %g %s %t %c %h
+J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND.explanation=/proc/sys/kernel/core_pattern starting with | is used to redirect the core file to tools such as systemd-coredump which processes the core dump, for example to send it to a different directory and manage total core dump disk usage, or to suppress it.
+J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND.system_action=The VM could not find the core dump in the current directory most likely because the external program sent it elsewhere or suppressed it.
+J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND.user_response=Refer to the documentation for the external program specified in /proc/sys/kernel/core_pattern to find the core dump and review the program's configuration to ensure the dump is not truncated.
+# END NON-TRANSLATABLE
+
+J9NLS_PORT_RUNNING_IN_CONTAINER_FAILURE=\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u043e\u043f\u0440\u0435\u0434\u0435\u043b\u0438\u0442\u044c, \u0440\u0430\u0431\u043e\u0442\u0430\u0435\u0442 \u043b\u0438 JVM \u0432 \u043a\u043e\u043d\u0442\u0435\u0439\u043d\u0435\u0440\u0435; \u0441\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u0435 \u043e\u0431 \u043e\u0448\u0438\u0431\u043a\u0435: %s.
+# START NON-TRANSLATABLE
+J9NLS_PORT_RUNNING_IN_CONTAINER_FAILURE.sample_input_1=fopen failed to open /proc/1/cgroup file with errno=2
+J9NLS_PORT_RUNNING_IN_CONTAINER_FAILURE.explanation=An error was encountered while evaluating if the JVM is running inside a container.
+J9NLS_PORT_RUNNING_IN_CONTAINER_FAILURE.system_action=The JVM continues, but performance might be impacted if the JVM is running inside a container.
+J9NLS_PORT_RUNNING_IN_CONTAINER_FAILURE.user_response=Take action to resolve the error if performance is impacted inside a container. Otherwise, ignore the error.
 # END NON-TRANSLATABLE
