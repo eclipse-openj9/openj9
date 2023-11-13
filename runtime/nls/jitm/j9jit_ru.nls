@@ -384,3 +384,50 @@ J9NLS_RELOCATABLE_CODE_FSD_MISMATCH.system_action=The compiler will not generate
 J9NLS_RELOCATABLE_CODE_FSD_MISMATCH.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
 J9NLS_RELOCATABLE_CODE_FSD_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
 # END NON-TRANSLATABLE
+
+J9NLS_JIT_CHECKPOINT_RESTORE_JIT_COMPILATION_DISABLED=\u0412\u043e\u0441\u0441\u0442\u0430\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u0435 \u043f\u043e\u0441\u043b\u0435 \u0432\u043e\u0441\u0441\u0442\u0430\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u044f \u043f\u043e\u0441\u043b\u0435 \u0432\u043e\u0441\u0441\u0442\u0430\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u044f JIT.
+# START NON-TRANSLATABLE
+J9NLS_JIT_CHECKPOINT_RESTORE_JIT_COMPILATION_DISABLED.explanation=The JVM is running in a mode post-restore that prevents further compilation.
+J9NLS_JIT_CHECKPOINT_RESTORE_JIT_COMPILATION_DISABLED.system_action=The compiler will not generate JIT code.
+J9NLS_JIT_CHECKPOINT_RESTORE_JIT_COMPILATION_DISABLED.user_response=Remove any (post-restore) option that would have resulted in this behaviour.
+# END NON-TRANSLATABLE
+
+J9NLS_JIT_CHECKPOINT_RESTORE_AOT_DISABLED=\u0412\u043e\u0441\u0441\u0442\u0430\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u0435 \u043f\u043e\u0441\u043b\u0435 \u0432\u043e\u0441\u0441\u0442\u0430\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u044f AOT \u0438 \u043a\u043e\u043c\u043f\u0438\u043b\u044f\u0446\u0438\u0438 \u043e\u0442\u043a\u043b\u044e\u0447\u0435\u043d\u043e.
+# START NON-TRANSLATABLE
+J9NLS_JIT_CHECKPOINT_RESTORE_AOT_DISABLED.explanation=The JVM is running in a mode post-restore that prevents further AOT load and compilation.
+J9NLS_JIT_CHECKPOINT_RESTORE_AOT_DISABLED.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_JIT_CHECKPOINT_RESTORE_AOT_DISABLED.user_response=Remove any (post-restore) option that would have resulted in this behaviour.
+# END NON-TRANSLATABLE
+
+J9NLS_JIT_CHECKPOINT_RESTORE_CODE_INVALIDATED=\u041d\u0435\u043a\u043e\u0442\u043e\u0440\u044b\u0439 \u0438\u043b\u0438 \u0432\u0435\u0441\u044c \u0441\u043a\u043e\u043c\u043f\u0438\u043b\u0438\u0440\u043e\u0432\u0430\u043d\u043d\u044b\u0439 \u043a\u043e\u0434 \u0432 \u043a\u044d\u0448\u0435 \u043a\u043e\u0434\u0430 \u0430\u043d\u043d\u0443\u043b\u0438\u0440\u043e\u0432\u0430\u043b \u0432\u043e\u0441\u0441\u0442\u0430\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u0435 \u043f\u043e\u0441\u043b\u0435 \u0432\u043e\u0441\u0441\u0442\u0430\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u044f.
+# START NON-TRANSLATABLE
+J9NLS_JIT_CHECKPOINT_RESTORE_CODE_INVALIDATED.explanation=The JVM is running in a mode that results in some or all existing compiled being invalid.
+J9NLS_JIT_CHECKPOINT_RESTORE_CODE_INVALIDATED.system_action=The compiler will invalidate code as applicable.
+J9NLS_JIT_CHECKPOINT_RESTORE_CODE_INVALIDATED.user_response=Remove any (post-restore) option that would have resulted in this behaviour.
+# END NON-TRANSLATABLE
+
+J9NLS_RELOCATABLE_CODE_ARRAY_HEADER_SHAPE_MISMATCH=\u041d\u0435\u0441\u043e\u043e\u0442\u0432\u0435\u0442\u0441\u0442\u0432\u0438\u0435 \u0444\u0443\u043d\u043a\u0446\u0438\u0438 \u0444\u043e\u0440\u043c\u044b \u0437\u0430\u0433\u043e\u043b\u043e\u0432\u043a\u0430 \u043c\u0430\u0441\u0441\u0438\u0432\u0430. \u041a\u043e\u0434 AOT \u0432 \u043a\u044d\u0448\u0435 \u043e\u0431\u0449\u0438\u0445 \u043a\u043b\u0430\u0441\u0441\u043e\u0432 \u0438\u0433\u043d\u043e\u0440\u0438\u0440\u0443\u0435\u0442\u0441\u044f.
+# START NON-TRANSLATABLE
+J9NLS_RELOCATABLE_CODE_ARRAY_HEADER_SHAPE_MISMATCH.explanation=The JVM is not running with the same header shape as the one that generated the code in the SCC.
+J9NLS_RELOCATABLE_CODE_ARRAY_HEADER_SHAPE_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_ARRAY_HEADER_SHAPE_MISMATCH.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_ARRAY_HEADER_SHAPE_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+# END NON-TRANSLATABLE
+
+J9NLS_RELOCATABLE_CODE_CH_TABLE_MISMATCH=\u041d\u0435\u0441\u043e\u043e\u0442\u0432\u0435\u0442\u0441\u0442\u0432\u0438\u0435 \u0442\u0430\u0431\u043b\u0438\u0446\u044b CH. \u041a\u043e\u0434 AOT \u0432 \u043a\u044d\u0448\u0435 \u043e\u0431\u0449\u0438\u0445 \u043a\u043b\u0430\u0441\u0441\u043e\u0432 \u0438\u0433\u043d\u043e\u0440\u0438\u0440\u0443\u0435\u0442\u0441\u044f.
+# START NON-TRANSLATABLE
+J9NLS_RELOCATABLE_CODE_CH_TABLE_MISMATCH.explanation=The JVM is not running in the same CH Table configuration as the one that generated the code in the SCC.
+J9NLS_RELOCATABLE_CODE_CH_TABLE_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_CH_TABLE_MISMATCH.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_CH_TABLE_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+# END NON-TRANSLATABLE
+
+J9NLS_JIT_OPTIONS_PERCENT_OUT_OF_RANGE=\u0417\u043d\u0430\u0447\u0435\u043d\u0438\u0435 '%1$s%2$f' \u0434\u043e\u043b\u0436\u043d\u043e \u0431\u044b\u0442\u044c \u043c\u0435\u0436\u0434\u0443 1.0 \u0438 100.0; \u0432\u043c\u0435\u0441\u0442\u043e \u044d\u0442\u043e\u0433\u043e \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u0443\u0435\u0442\u0441\u044f \u043f\u0440\u043e\u0446\u0435\u043d\u0442 \u043f\u043e \u0443\u043c\u043e\u043b\u0447\u0430\u043d\u0438\u044e '%3$d'.
+# START NON-TRANSLATABLE
+J9NLS_JIT_OPTIONS_PERCENT_OUT_OF_RANGE.explanation=The specified option is not within the permitted range.
+J9NLS_JIT_OPTIONS_PERCENT_OUT_OF_RANGE.system_action=The default percentage value will be used instead.
+J9NLS_JIT_OPTIONS_PERCENT_OUT_OF_RANGE.user_response=Correct the option.
+J9NLS_JIT_OPTIONS_PERCENT_OUT_OF_RANGE.sample_input_1=-XX:codecachetotalMaxRAMPercentage=
+J9NLS_JIT_OPTIONS_PERCENT_OUT_OF_RANGE.sample_input_2=0.8
+J9NLS_JIT_OPTIONS_PERCENT_OUT_OF_RANGE.sample_input_3=25
+# END NON-TRANSLATABLE

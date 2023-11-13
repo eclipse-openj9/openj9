@@ -339,7 +339,7 @@ J9NLS_PORT_MMAP_INVALID_FILE_HANDLE.user_response=Contact your service represent
 
 # END NON-TRANSLATABLE
 
-J9NLS_PORT_LINUXDUMP_PIPE_CORE=A(z) %s \"%s\" be\u00e1ll\u00edt\u00e1sa azt adja meg, hogy a k\u00f6zponti ki\u00edrat\u00e1st egy k\u00fcls\u0151 programba kell ir\u00e1ny\u00edtani.  K\u00eds\u00e9rlet a t\u00e1rki\u00edrat\u00e1s vagy a t\u00e1r \u00e1tnevez\u00e9s\u00e9re.%d.  Keresse meg a k\u00fcls\u0151 program k\u00e9zik\u00f6nyv\u00e9ben, hogy a t\u00e1rki\u00edrat\u00e1s hov\u00e1 t\u00f6rt\u00e9nik, \u00e9s gy\u0151z\u0151dj\u00f6n meg r\u00f3la, hogy a program nem csonkolja-e.\n
+J9NLS_PORT_LINUXDUMP_PIPE_CORE=A(z) %s "%s" be\u00e1ll\u00edt\u00e1sa azt adja meg, hogy a k\u00f6zponti ki\u00edrat\u00e1st egy k\u00fcls\u0151 programba kell ir\u00e1ny\u00edtani.  K\u00eds\u00e9rlet a t\u00e1rki\u00edrat\u00e1s vagy a t\u00e1r \u00e1tnevez\u00e9s\u00e9re.%d.  Keresse meg a k\u00fcls\u0151 program k\u00e9zik\u00f6nyv\u00e9ben, hogy a t\u00e1rki\u00edrat\u00e1s hov\u00e1 t\u00f6rt\u00e9nik, \u00e9s gy\u0151z\u0151dj\u00f6n meg r\u00f3la, hogy a program nem csonkolja-e.\n
 # START NON-TRANSLATABLE
 J9NLS_PORT_LINUXDUMP_PIPE_CORE.sample_input_1=/proc/sys/kernel/core_pattern
 J9NLS_PORT_LINUXDUMP_PIPE_CORE.sample_input_2=|/usr/lib/systemd/systemd-coredump %P %u %g %s %t %c %h
@@ -488,7 +488,7 @@ J9NLS_PORT_SL_BUFFER_EXCEEDED_ERROR.system_action=Shared object is not loaded
 J9NLS_PORT_SL_BUFFER_EXCEEDED_ERROR.user_response=Reduce path length for the target shared object
 # END NON-TRANSLATABLE
 
-J9NLS_PORT_DUMP_PATH_EXISTS=A rendszerki\u00edrat\u00e1s l\u00e9trehoz\u00e1sa nem siker\u00fclt, mert l\u00e9tezik egy nem-\u00e1lland\u00f3 f\u00e1jl (\"%s\"), amelynek neve ugyanaz, mint a v\u00e1rt rendszerki\u00edrat\u00e1s f\u00e1jl\u00e9
+J9NLS_PORT_DUMP_PATH_EXISTS=A rendszerki\u00edrat\u00e1s l\u00e9trehoz\u00e1sa nem siker\u00fclt, mert l\u00e9tezik egy nem-\u00e1lland\u00f3 f\u00e1jl ("%s"), amelynek neve ugyanaz, mint a v\u00e1rt rendszerki\u00edrat\u00e1s f\u00e1jl\u00e9
 # START NON-TRANSLATABLE
 J9NLS_PORT_DUMP_PATH_EXISTS.sample_input_1=/home/user/core
 J9NLS_PORT_DUMP_PATH_EXISTS.explanation=The JVM was unable to produce a system dump because a non-regular file (for example a directory, symbolic link, pipe or socket) exists with the same name as the expected system dump file.
@@ -496,7 +496,7 @@ J9NLS_PORT_DUMP_PATH_EXISTS.system_action=The JVM continues, the requested syste
 J9NLS_PORT_DUMP_PATH_EXISTS.user_response=Check whether the name of a non-regular file (for example a directory, symbolic link, pipe or socket) in the current working directory of the Java application clashes with the default system dump file name (core or core.<process ID>) or with the setting of /proc/sys/kernel/core_pattern and /proc/sys/kernel/core_uses_pid. Either rename the subdirectory, or change the settings of /proc/sys/kernel/core_pattern and /proc/sys/kernel/core_uses_pid so that the names do not clash.
 # END NON-TRANSLATABLE
 
-J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND=A pid = %i ut\u00f3dfolyamat \u00e1ltal l\u00e9trehozott ki\u00edrat\u00e1sf\u00e1jl nem tal\u00e1lhat\u00f3. Tekintse \u00e1t a(z) %s program \"%s\" dokument\u00e1ci\u00f3j\u00e1t, \u00e9s keresse meg, hogy a f\u00e1jlki\u00edrat\u00e1s hov\u00e1 t\u00f6rt\u00e9nik, majd gondoskodj\u00e9k r\u00f3la, hogy a program ne csonkolja a f\u00e1jlt.\n
+J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND=A pid = %i ut\u00f3dfolyamat \u00e1ltal l\u00e9trehozott ki\u00edrat\u00e1sf\u00e1jl nem tal\u00e1lhat\u00f3. Tekintse \u00e1t a(z) %s program "%s" dokument\u00e1ci\u00f3j\u00e1t, \u00e9s keresse meg, hogy a f\u00e1jlki\u00edrat\u00e1s hov\u00e1 t\u00f6rt\u00e9nik, majd gondoskodj\u00e9k r\u00f3la, hogy a program ne csonkolja a f\u00e1jlt.\n
 # START NON-TRANSLATABLE
 J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND.sample_input_1=12345
 J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND.sample_input_2=/proc/sys/kernel/core_pattern
@@ -504,4 +504,12 @@ J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND.sample_input_3=|/usr/lib/systemd/system
 J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND.explanation=/proc/sys/kernel/core_pattern starting with | is used to redirect the core file to tools such as systemd-coredump which processes the core dump, for example to send it to a different directory and manage total core dump disk usage, or to suppress it.
 J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND.system_action=The VM could not find the core dump in the current directory most likely because the external program sent it elsewhere or suppressed it.
 J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND.user_response=Refer to the documentation for the external program specified in /proc/sys/kernel/core_pattern to find the core dump and review the program's configuration to ensure the dump is not truncated.
+# END NON-TRANSLATABLE
+
+J9NLS_PORT_RUNNING_IN_CONTAINER_FAILURE=Nem siker\u00fclt azonos\u00edtani, hogy a JVM fut-e egy t\u00e1rol\u00f3ban; hiba\u00fczenet: %s.
+# START NON-TRANSLATABLE
+J9NLS_PORT_RUNNING_IN_CONTAINER_FAILURE.sample_input_1=fopen failed to open /proc/1/cgroup file with errno=2
+J9NLS_PORT_RUNNING_IN_CONTAINER_FAILURE.explanation=An error was encountered while evaluating if the JVM is running inside a container.
+J9NLS_PORT_RUNNING_IN_CONTAINER_FAILURE.system_action=The JVM continues, but performance might be impacted if the JVM is running inside a container.
+J9NLS_PORT_RUNNING_IN_CONTAINER_FAILURE.user_response=Take action to resolve the error if performance is impacted inside a container. Otherwise, ignore the error.
 # END NON-TRANSLATABLE

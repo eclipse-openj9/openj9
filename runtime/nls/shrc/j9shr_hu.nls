@@ -75,7 +75,7 @@ J9NLS_SHRC_CLCM_LAST_DETACH_TIME_TITLE.system_action=
 J9NLS_SHRC_CLCM_LAST_DETACH_TIME_TITLE.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CLCM_CANNOT_DESTROY_CACHE=A(z) \"%s\" gyors\u00edt\u00f3t\u00e1r nem semmis\u00edthet\u0151 meg
+J9NLS_SHRC_CLCM_CANNOT_DESTROY_CACHE=A(z) "%s" gyors\u00edt\u00f3t\u00e1r nem semmis\u00edthet\u0151 meg
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CLCM_CANNOT_DESTROY_CACHE.sample_input_1=myCache
 J9NLS_SHRC_CLCM_CANNOT_DESTROY_CACHE.explanation=It has not been possible to destroy the named shared class cache.
@@ -99,7 +99,7 @@ J9NLS_SHRC_CLCM_CACHE_EXPIRED.system_action=Processing continues.
 J9NLS_SHRC_CLCM_CACHE_EXPIRED.user_response=None required.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CLCM_FAILED_REMOVED=A megosztott \"%s\" oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1r elt\u00e1vol\u00edt\u00e1sa nem siker\u00fclt
+J9NLS_SHRC_CLCM_FAILED_REMOVED=A megosztott "%s" oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1r elt\u00e1vol\u00edt\u00e1sa nem siker\u00fclt
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CLCM_FAILED_REMOVED.sample_input_1=myCache
 J9NLS_SHRC_CLCM_FAILED_REMOVED.explanation=It has not been possible to remove the indicated shared class cache.
@@ -126,7 +126,7 @@ J9NLS_SHRC_OSCACHE_SHARED_CACHE_OPENED.system_action=The JVM continues.
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_OPENED.user_response=None required.  This is an information message issued when verbose shared class messages have been requested.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SHARED_CACHE_DESTROYED=A(z) \"%s\" megosztott gyors\u00edt\u00f3t\u00e1r megsemmis\u00fclt
+J9NLS_SHRC_OSCACHE_SHARED_CACHE_DESTROYED=A(z) "%s" megosztott gyors\u00edt\u00f3t\u00e1r megsemmis\u00fclt
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_DESTROYED.sample_input_1=myCache
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_DESTROYED.explanation=This is an information message notifying you that the named shared class cache has been destroyed as requested.
@@ -141,7 +141,7 @@ J9NLS_SHRC_OSCACHE_SHARED_CACHE_OPFAILED.system_action=
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_OPFAILED.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SHARED_CACHE_STILL_ATTACH=A(z) \"%s\" megosztott oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1r nem t\u00e1vol\u00edthat\u00f3 el, mert m\u00e9g mindig csatlakoznak JVM-ek a gyors\u00edt\u00f3t\u00e1rhoz
+J9NLS_SHRC_OSCACHE_SHARED_CACHE_STILL_ATTACH=A(z) "%s" megosztott oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1r nem t\u00e1vol\u00edthat\u00f3 el, mert m\u00e9g mindig csatlakoznak JVM-ek a gyors\u00edt\u00f3t\u00e1rhoz
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_STILL_ATTACH.sample_input_1=myCache
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_STILL_ATTACH.explanation=You have requested that the system destroy a shared class cache, but a process or processes are still attached to it.
@@ -149,7 +149,7 @@ J9NLS_SHRC_OSCACHE_SHARED_CACHE_STILL_ATTACH.system_action=The JVM terminates, u
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_STILL_ATTACH.user_response=Wait until any other processes using the shared class cache have terminated and then destroy it.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SHARED_CACHE_MEMORY_REMOVE_FAILED=A megosztott gyors\u00edt\u00f3t\u00e1r \"%s\" mem\u00f3ri\u00e1j\u00e1nak elt\u00e1vol\u00edt\u00e1sa meghi\u00fasult
+J9NLS_SHRC_OSCACHE_SHARED_CACHE_MEMORY_REMOVE_FAILED=A megosztott gyors\u00edt\u00f3t\u00e1r "%s" mem\u00f3ri\u00e1j\u00e1nak elt\u00e1vol\u00edt\u00e1sa meghi\u00fasult
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_MEMORY_REMOVE_FAILED.sample_input_1=myCache
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_MEMORY_REMOVE_FAILED.explanation=You have requested that the system destroy a shared class cache, but it has not been possible to remove the shared memory associated with the cache.
@@ -157,7 +157,7 @@ J9NLS_SHRC_OSCACHE_SHARED_CACHE_MEMORY_REMOVE_FAILED.system_action=The JVM termi
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_MEMORY_REMOVE_FAILED.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SHARED_CACHE_SEMAPHORE_REMOVE_FAILED=A megosztott gyors\u00edt\u00f3t\u00e1r \"%s\" szemaforj\u00e1nak elt\u00e1vol\u00edt\u00e1sa meghi\u00fasult
+J9NLS_SHRC_OSCACHE_SHARED_CACHE_SEMAPHORE_REMOVE_FAILED=A megosztott gyors\u00edt\u00f3t\u00e1r "%s" szemaforj\u00e1nak elt\u00e1vol\u00edt\u00e1sa meghi\u00fasult
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_SEMAPHORE_REMOVE_FAILED.sample_input_1=myCache
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_SEMAPHORE_REMOVE_FAILED.explanation=You have requested that the system destroy a shared class cache, but it has not been possible to remove the shared semaphore associated with the cache.
@@ -328,12 +328,7 @@ J9NLS_SHRC_SHRINIT_INCREMENTAL_UPDATE_DISABLED.system_action=
 J9NLS_SHRC_SHRINIT_INCREMENTAL_UPDATE_DISABLED.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELP_HEADER=Haszn\u00e1lat:\n\
-\n\
-java -Xshareclasses[:param\u00e9ter,...]\n\
-\n\
-\ Az \u00e9rv\u00e9nyes param\u00e9terek (r\u00f6vid \u00f6sszegz\u00e9ssel egy\u00fctt) a k\u00f6vetkez\u0151k:\n\
-\n
+J9NLS_SHRC_SHRINIT_HELP_HEADER=Haszn\u00e1lat:\n\njava -Xshareclasses[:param\u00e9ter,...]\n\n Az \u00e9rv\u00e9nyes param\u00e9terek (r\u00f6vid \u00f6sszegz\u00e9ssel egy\u00fctt) a k\u00f6vetkez\u0151k:\n\n
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELP_HEADER.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELP_HEADER.system_action=
@@ -368,9 +363,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALL.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALL.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_MODIFIEDEQUALS=M\u00f3dos\u00edtott byte-k\u00f3d megoszt\u00e1s\u00e1nak enged\u00e9lyez\u00e9se\n\
-\ \t<modContext> a m\u00f3dos\u00edt\u00e1s t\u00edpus\u00e1t le\u00edr\u00f3 user-descriptor\n\
-\ \taz ugyanazon <modContext>-et haszn\u00e1l\u00f3 JVM-ek ugyanazokat a m\u00f3dos\u00edt\u00e1sokat kell, hogy haszn\u00e1lj\u00e1k
+J9NLS_SHRC_SHRINIT_HELPTEXT_MODIFIEDEQUALS=M\u00f3dos\u00edtott byte-k\u00f3d megoszt\u00e1s\u00e1nak enged\u00e9lyez\u00e9se\n \t<modContext> a m\u00f3dos\u00edt\u00e1s t\u00edpus\u00e1t le\u00edr\u00f3 user-descriptor\n \taz ugyanazon <modContext>-et haszn\u00e1l\u00f3 JVM-ek ugyanazokat a m\u00f3dos\u00edt\u00e1sokat kell, hogy haszn\u00e1lj\u00e1k
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_MODIFIEDEQUALS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_MODIFIEDEQUALS.system_action=
@@ -461,7 +454,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_NO_INCREMENTAL_UPDATES.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_NO_INCREMENTAL_UPDATES.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_COMMAND_LINE_ERROR=A(z) \"%s\" parancssori param\u00e9ter nem ismerhet\u0151 fel
+J9NLS_SHRC_SHRINIT_HELPTEXT_COMMAND_LINE_ERROR=A(z) "%s" parancssori param\u00e9ter nem ismerhet\u0151 fel
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_COMMAND_LINE_ERROR.sample_input_1=foo
 J9NLS_SHRC_SHRINIT_HELPTEXT_COMMAND_LINE_ERROR.explanation=NOTISSUED
@@ -567,7 +560,7 @@ J9NLS_SHRC_SHRINIT_INCREMENTAL_DISABLED_INFO.system_action=The JVM continues.
 J9NLS_SHRC_SHRINIT_INCREMENTAL_DISABLED_INFO.user_response=None required.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_REQUIRES_SUBOPTION=A(z) \"%s\" parancssori param\u00e9ter tov\u00e1bbi param\u00e9tereket ig\u00e9nyel
+J9NLS_SHRC_SHRINIT_REQUIRES_SUBOPTION=A(z) "%s" parancssori param\u00e9ter tov\u00e1bbi param\u00e9tereket ig\u00e9nyel
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_REQUIRES_SUBOPTION.sample_input_1=name=
 J9NLS_SHRC_SHRINIT_REQUIRES_SUBOPTION.explanation=The specified command-line option requires further information.
@@ -575,7 +568,7 @@ J9NLS_SHRC_SHRINIT_REQUIRES_SUBOPTION.system_action=The JVM terminates, unless y
 J9NLS_SHRC_SHRINIT_REQUIRES_SUBOPTION.user_response=Specify the additional information required for the command-line option and rerun.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_OPTION_UNRECOGNISED=A(z) \"%s\" parancssori param\u00e9ter nem ismerhet\u0151 fel
+J9NLS_SHRC_SHRINIT_OPTION_UNRECOGNISED=A(z) "%s" parancssori param\u00e9ter nem ismerhet\u0151 fel
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_OPTION_UNRECOGNISED.sample_input_1=foo
 J9NLS_SHRC_SHRINIT_OPTION_UNRECOGNISED.explanation=The specified command-line option is not recognised.
@@ -755,7 +748,7 @@ J9NLS_SHRC_CM_FAILED_MARKSTALE_ATTEMPTS.system_action=The JVM terminates, unless
 J9NLS_SHRC_CM_FAILED_MARKSTALE_ATTEMPTS.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_WARN_FULL_CACHE=A(z) \"%s\" megosztott gyors\u00edt\u00f3t\u00e1r megtelt. Haszn\u00e1lja az -Xscmx kapcsol\u00f3t a gyors\u00edt\u00f3t\u00e1r m\u00e9ret\u00e9nek be\u00e1ll\u00edt\u00e1s\u00e1hoz.
+J9NLS_SHRC_CM_WARN_FULL_CACHE=A(z) "%s" megosztott gyors\u00edt\u00f3t\u00e1r megtelt. Haszn\u00e1lja az -Xscmx kapcsol\u00f3t a gyors\u00edt\u00f3t\u00e1r m\u00e9ret\u00e9nek be\u00e1ll\u00edt\u00e1s\u00e1hoz.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_WARN_FULL_CACHE.sample_input_1=myCache
 J9NLS_SHRC_CM_WARN_FULL_CACHE.explanation=The named shared class cache is full and no further classes may be added to it.
@@ -763,8 +756,7 @@ J9NLS_SHRC_CM_WARN_FULL_CACHE.system_action=The JVM continues.  The named shared
 J9NLS_SHRC_CM_WARN_FULL_CACHE.user_response=To gain the full benefit of shared classes, delete the named cache and re-create it specifying a larger shared class cache size by the -Xscmx parameter.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_WARN_CORRUPT_CACHE=A(z) \"%s\" megosztott gyors\u00edt\u00f3t\u00e1r s\u00e9r\u00fclt. Egy \u00faj JVM sem fog tudni csatlakozni a gyors\u00edt\u00f3t\u00e1rhoz.\n\
-\ \tA megl\u00e9v\u0151 JVM-ek tov\u00e1bb m\u0171k\u00f6dnek, de nem tudj\u00e1k friss\u00edteni a gyors\u00edt\u00f3t\u00e1rat.
+J9NLS_SHRC_CM_WARN_CORRUPT_CACHE=A(z) "%s" megosztott gyors\u00edt\u00f3t\u00e1r s\u00e9r\u00fclt. Egy \u00faj JVM sem fog tudni csatlakozni a gyors\u00edt\u00f3t\u00e1rhoz.\n \tA megl\u00e9v\u0151 JVM-ek tov\u00e1bb m\u0171k\u00f6dnek, de nem tudj\u00e1k friss\u00edteni a gyors\u00edt\u00f3t\u00e1rat.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_WARN_CORRUPT_CACHE.sample_input_1=myCache
 J9NLS_SHRC_CM_WARN_CORRUPT_CACHE.explanation=The shared class cache named in the message is corrupt.
@@ -772,8 +764,7 @@ J9NLS_SHRC_CM_WARN_CORRUPT_CACHE.system_action=The JVM will attempt to automatic
 J9NLS_SHRC_CM_WARN_CORRUPT_CACHE.user_response=Destroy the shared class cache named in the message and rerun.  If the situation persists, contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_TITLE=\n\
-A(z)\"%s\" gyors\u00edt\u00f3t\u00e1r jelenlegi statisztik\u00e1i: \n
+J9NLS_SHRC_CM_PRINTSTATS_TITLE=\nA(z)"%s" gyors\u00edt\u00f3t\u00e1r jelenlegi statisztik\u00e1i: \n
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_TITLE.sample_input_1=myCache
 J9NLS_SHRC_CM_PRINTSTATS_TITLE.explanation=NOTAG
@@ -882,8 +873,7 @@ J9NLS_SHRC_CM_PRINTSTATS_STALE.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_STALE.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_BASEADDRESS=\n\
-alapc\u00edm       = 0x%p
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_BASEADDRESS=\nalapc\u00edm       = 0x%p
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_BASEADDRESS.sample_input_1=4263E000
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_BASEADDRESS.explanation=NOTAG
@@ -1112,8 +1102,7 @@ J9NLS_SHRC_RMI_MULTIPLE_ORPHAN.user_response=
 
 #Post-DCUT Additions:
 
-J9NLS_SHRC_RMI_SAFEMODE_HEADER=\n\
-\tA ROMClass t\u00e1rol\u00e1s alatt\tA ROMClass a gyors\u00edt\u00f3t\u00e1rban
+J9NLS_SHRC_RMI_SAFEMODE_HEADER=\n\tA ROMClass t\u00e1rol\u00e1s alatt\tA ROMClass a gyors\u00edt\u00f3t\u00e1rban
 # START NON-TRANSLATABLE
 J9NLS_SHRC_RMI_SAFEMODE_HEADER.explanation=NOTAG
 J9NLS_SHRC_RMI_SAFEMODE_HEADER.system_action=
@@ -1238,8 +1227,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_NONFATAL.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_NONFATAL.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_NAMEEQUALS2=Adja meg a megosztott gyors\u00edt\u00f3t\u00e1r nev\u00e9t\n\
-\ \t(A csoportn\u00e9v helyett haszn\u00e1lja a %%g karaktereket, a felhaszn\u00e1l\u00f3n\u00e9v helyett pedig a %%u karaktereket)
+J9NLS_SHRC_SHRINIT_HELPTEXT_NAMEEQUALS2=Adja meg a megosztott gyors\u00edt\u00f3t\u00e1r nev\u00e9t\n \t(A csoportn\u00e9v helyett haszn\u00e1lja a %%g karaktereket, a felhaszn\u00e1l\u00f3n\u00e9v helyett pedig a %%u karaktereket)
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_NAMEEQUALS2.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_NAMEEQUALS2.system_action=
@@ -1269,9 +1257,7 @@ J9NLS_SHRC_SHRINIT_FAILURE_COPYING_GROUPNAME.system_action=The JVM terminates, u
 J9NLS_SHRC_SHRINIT_FAILURE_COPYING_GROUPNAME.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SIZE_CHANGED=A megosztott mem\u00f3ri\u00e1b\u00f3l a k\u00e9rt %1$d byte nem foglalhat\u00f3 le\n\
-\ \tA megengedett maxim\u00e1lis mem\u00f3riamennyis\u00e9g (%2$d byte) sikeresen lefoglal\u00e1sra ker\u00fclt \n\
-\ \t(Az el\u00e9rhet\u0151 megosztott mem\u00f3riamennyis\u00e9g n\u00f6vel\u00e9se \u00e9rdek\u00e9ben m\u00f3dos\u00edtsa a rendszer SHMMAX \u00e9rt\u00e9k\u00e9t)
+J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SIZE_CHANGED=A megosztott mem\u00f3ri\u00e1b\u00f3l a k\u00e9rt %1$d byte nem foglalhat\u00f3 le\n \tA megengedett maxim\u00e1lis mem\u00f3riamennyis\u00e9g (%2$d byte) sikeresen lefoglal\u00e1sra ker\u00fclt \n \t(Az el\u00e9rhet\u0151 megosztott mem\u00f3riamennyis\u00e9g n\u00f6vel\u00e9se \u00e9rdek\u00e9ben m\u00f3dos\u00edtsa a rendszer SHMMAX \u00e9rt\u00e9k\u00e9t)
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SIZE_CHANGED.sample_input_1=99999999
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SIZE_CHANGED.sample_input_2=99999998
@@ -1280,7 +1266,7 @@ J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SIZE_CHANGED.system_action=The JVM continues.
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SIZE_CHANGED.user_response=If you require a larger cache, destroy this cache, increase the value of SHMMAX and re-create the cache.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SHARED_CACHE_CREATEDA=A(z) \"%1$s\" megosztott oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1r l\u00e9trehoz\u00e1sra ker\u00fclt
+J9NLS_SHRC_OSCACHE_SHARED_CACHE_CREATEDA=A(z) "%1$s" megosztott oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1r l\u00e9trehoz\u00e1sra ker\u00fclt
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_CREATEDA.sample_input_1=myCache
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_CREATEDA.explanation=This message informs you that a shared class cache with the given name has been created.  It is only issued if verbose shared classes messages have been requested with -Xshareclasses:verbose.
@@ -1288,7 +1274,7 @@ J9NLS_SHRC_OSCACHE_SHARED_CACHE_CREATEDA.system_action=The JVM continues.
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_CREATEDA.user_response=No action required, this is an information only message.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SHARED_CACHE_OPENEDA=A(z) \"%1$s\" megosztott oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1r megnyit\u00e1sra ker\u00fclt
+J9NLS_SHRC_OSCACHE_SHARED_CACHE_OPENEDA=A(z) "%1$s" megosztott oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1r megnyit\u00e1sra ker\u00fclt
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_OPENEDA.sample_input_1=myCache
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_OPENEDA.explanation=This message informs you that an existing shared class cache with the given name has been opened.  It is only issued if verbose shared classes messages have been requested with -Xshareclasses:verbose.
@@ -1338,7 +1324,7 @@ J9NLS_SHRC_SHRINIT_VERBOSE_HELPER_ENABLED_INFO.system_action=
 J9NLS_SHRC_SHRINIT_VERBOSE_HELPER_ENABLED_INFO.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_ATTACH_SUCCESS=Csatlakoztatva a(z) \"%1$s\" gyors\u00edt\u00f3t\u00e1rhoz, m\u00e9ret=%2$d byte
+J9NLS_SHRC_OSCACHE_ATTACH_SUCCESS=Csatlakoztatva a(z) "%1$s" gyors\u00edt\u00f3t\u00e1rhoz, m\u00e9ret=%2$d byte
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_ATTACH_SUCCESS.sample_input_1=myCache
 J9NLS_SHRC_OSCACHE_ATTACH_SUCCESS.sample_input_2=16337376
@@ -1363,8 +1349,7 @@ J9NLS_SHRC_CM_PRINTSHUTDOWNSTATS_READ_STORED.system_action=The JVM continues.
 J9NLS_SHRC_CM_PRINTSHUTDOWNSTATS_READ_STORED.user_response=No action required, this is an information only message.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_MARK_STALE=A rendszer v\u00e1ltoz\u00e1st \u00e9szlelt a k\u00f6vetkez\u0151ben: %2$.*1$s...\n\
-\ \t...%3$d gyors\u00edt\u00f3t\u00e1rban l\u00e9v\u0151 oszt\u00e1ly el\u00e9v\u00fcltk\u00e9nt ker\u00fclt megjel\u00f6l\u00e9sre
+J9NLS_SHRC_CM_MARK_STALE=A rendszer v\u00e1ltoz\u00e1st \u00e9szlelt a k\u00f6vetkez\u0151ben: %2$.*1$s...\n \t...%3$d gyors\u00edt\u00f3t\u00e1rban l\u00e9v\u0151 oszt\u00e1ly el\u00e9v\u00fcltk\u00e9nt ker\u00fclt megjel\u00f6l\u00e9sre
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_MARK_STALE.sample_input_1=23
 J9NLS_SHRC_CM_MARK_STALE.sample_input_2=java/net/URLClassLoader
@@ -1374,8 +1359,7 @@ J9NLS_SHRC_CM_MARK_STALE.system_action=The JVM continues.
 J9NLS_SHRC_CM_MARK_STALE.user_response=No action required, this is an information only message.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_NAMEEQUALS_WIN=Adja meg a megosztott gyors\u00edt\u00f3t\u00e1r nev\u00e9t\n\
-\ \t(A felhaszn\u00e1l\u00f3n\u00e9v helyett haszn\u00e1lja a %%u karaktereket)
+J9NLS_SHRC_SHRINIT_HELPTEXT_NAMEEQUALS_WIN=Adja meg a megosztott gyors\u00edt\u00f3t\u00e1r nev\u00e9t\n \t(A felhaszn\u00e1l\u00f3n\u00e9v helyett haszn\u00e1lja a %%u karaktereket)
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_NAMEEQUALS_WIN.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_NAMEEQUALS_WIN.system_action=
@@ -2016,7 +2000,7 @@ J9NLS_SHRC_OSCACHE_MMAP_RUNEXITCODE_ERROR_UPDATING_LAST_ATTACHED_TIME.system_act
 J9NLS_SHRC_OSCACHE_MMAP_RUNEXITCODE_ERROR_UPDATING_LAST_ATTACHED_TIME.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_MMAP_DESTROY_SUCCESS=A(z) \"%1$s\" megosztott \u00e1lland\u00f3 gyors\u00edt\u00f3t\u00e1r megsemmis\u00edt\u00e9sre ker\u00fclt
+J9NLS_SHRC_OSCACHE_MMAP_DESTROY_SUCCESS=A(z) "%1$s" megosztott \u00e1lland\u00f3 gyors\u00edt\u00f3t\u00e1r megsemmis\u00edt\u00e9sre ker\u00fclt
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_MMAP_DESTROY_SUCCESS.sample_input_1=myCache
 J9NLS_SHRC_OSCACHE_MMAP_DESTROY_SUCCESS.explanation=This message informs you that you have successfully destroyed the cache named 1$.  This message is only issued if verbose Shared Classes messages have been requested with "-Xshareclasses:verbose".
@@ -2159,7 +2143,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_CACHEDIR.system_action=The JVM looks in the director
 J9NLS_SHRC_SHRINIT_HELPTEXT_CACHEDIR.user_response=None
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_OTHER_PERS_TYPE_CACHE_EXISTS=A(z) \"%s\" seg\u00e9dprogram \"%s\" \u00e1lland\u00f3 oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1ron val\u00f3 futtat\u00e1s\u00e1hoz ne haszn\u00e1lja a \"nonpersistent\" alopci\u00f3t
+J9NLS_SHRC_SHRINIT_OTHER_PERS_TYPE_CACHE_EXISTS=A(z) "%s" seg\u00e9dprogram "%s" \u00e1lland\u00f3 oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1ron val\u00f3 futtat\u00e1s\u00e1hoz ne haszn\u00e1lja a "nonpersistent" alopci\u00f3t
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_OTHER_PERS_TYPE_CACHE_EXISTS.sample_input_1=myUtility
 J9NLS_SHRC_SHRINIT_OTHER_PERS_TYPE_CACHE_EXISTS.sample_input_2=myCache
@@ -2168,7 +2152,7 @@ J9NLS_SHRC_SHRINIT_OTHER_PERS_TYPE_CACHE_EXISTS.system_action=The JVM exits
 J9NLS_SHRC_SHRINIT_OTHER_PERS_TYPE_CACHE_EXISTS.user_response=Remove nonpersistent suboption
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_OTHER_NONPERS_TYPE_CACHE_EXISTS=A(z) \"%s\" seg\u00e9dprogram \"%s\" nem \u00e1lland\u00f3 oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1ron val\u00f3 futtat\u00e1s\u00e1hoz a \"nonpersistent\" alparam\u00e9tert is haszn\u00e1lnia kell
+J9NLS_SHRC_SHRINIT_OTHER_NONPERS_TYPE_CACHE_EXISTS=A(z) "%s" seg\u00e9dprogram "%s" nem \u00e1lland\u00f3 oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1ron val\u00f3 futtat\u00e1s\u00e1hoz a "nonpersistent" alparam\u00e9tert is haszn\u00e1lnia kell
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_OTHER_NONPERS_TYPE_CACHE_EXISTS.sample_input_1=myUtility
 J9NLS_SHRC_SHRINIT_OTHER_NONPERS_TYPE_CACHE_EXISTS.sample_input_2=myCache
@@ -2177,7 +2161,7 @@ J9NLS_SHRC_SHRINIT_OTHER_NONPERS_TYPE_CACHE_EXISTS.system_action=The JVM exits
 J9NLS_SHRC_SHRINIT_OTHER_NONPERS_TYPE_CACHE_EXISTS.user_response=Add nonpersistent suboption
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CLCM_NOT_DONE_FOR_CACHE=Vegye figyelembe, hogy a(z) \"%s\" seg\u00e9dprogram nem tud a(z) \"%s\" nem kompatibilis oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1ron m\u0171k\u00f6dni. Haszn\u00e1ljon helyes szint\u0171 Java virtu\u00e1lis g\u00e9pet.
+J9NLS_SHRC_CLCM_NOT_DONE_FOR_CACHE=Vegye figyelembe, hogy a(z) "%s" seg\u00e9dprogram nem tud a(z) "%s" nem kompatibilis oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1ron m\u0171k\u00f6dni. Haszn\u00e1ljon helyes szint\u0171 Java virtu\u00e1lis g\u00e9pet.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CLCM_NOT_DONE_FOR_CACHE.sample_input_1=myUtility
 J9NLS_SHRC_CLCM_NOT_DONE_FOR_CACHE.sample_input_2=myCache
@@ -2327,7 +2311,7 @@ J9NLS_SHRC_COREMMAP_REQUIRED.system_action=The JVM terminates
 J9NLS_SHRC_COREMMAP_REQUIRED.user_response=Set CORE_MMAP or use nonpersistent caches
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_OTHER_PERS_TYPE_CACHE_EXISTS2=Ha a(z) \"%s\" seg\u00e9dprogramot a(z) \"%s\" \u00e1lland\u00f3 oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1ron k\u00edv\u00e1nja futtatni, akkor haszn\u00e1lja a \"persistent\" alparam\u00e9tert
+J9NLS_SHRC_SHRINIT_OTHER_PERS_TYPE_CACHE_EXISTS2=Ha a(z) "%s" seg\u00e9dprogramot a(z) "%s" \u00e1lland\u00f3 oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1ron k\u00edv\u00e1nja futtatni, akkor haszn\u00e1lja a "persistent" alparam\u00e9tert
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_OTHER_PERS_TYPE_CACHE_EXISTS2.sample_input_1=myUtility
 J9NLS_SHRC_SHRINIT_OTHER_PERS_TYPE_CACHE_EXISTS2.sample_input_2=myCache
@@ -2336,7 +2320,7 @@ J9NLS_SHRC_SHRINIT_OTHER_PERS_TYPE_CACHE_EXISTS2.system_action=The JVM exits
 J9NLS_SHRC_SHRINIT_OTHER_PERS_TYPE_CACHE_EXISTS2.user_response=Add persistent suboption
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_NESTED_WITHOUT_CACHELETS=A(z) \"%s\" megosztott oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1r a nested param\u00e9terrel nem ker\u00fclt l\u00e9trehoz\u00e1sra, a gyors\u00edt\u00f3t\u00e1r nem n\u00f6velhet\u0151
+J9NLS_SHRC_CM_NESTED_WITHOUT_CACHELETS=A(z) "%s" megosztott oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1r a nested param\u00e9terrel nem ker\u00fclt l\u00e9trehoz\u00e1sra, a gyors\u00edt\u00f3t\u00e1r nem n\u00f6velhet\u0151
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_NESTED_WITHOUT_CACHELETS.sample_input_1=sharedcc
 J9NLS_SHRC_CM_NESTED_WITHOUT_CACHELETS.explanation=An error has occurred within Shared Classes processing.
@@ -2351,7 +2335,7 @@ J9NLS_SHRC_OSCACHE_NESTED_IN_USE.system_action=The JVM terminates, unless you ha
 J9NLS_SHRC_OSCACHE_NESTED_IN_USE.user_response=Shutdown all the vms using the cache, or remove the nested option from your command-line, and restart.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_NO_CACHE_FOR_HINTS=A(z) \"%s\" be\u00e1gyazott gyors\u00edt\u00f3t\u00e1r nem n\u00f6velhet\u0151, nem siker\u00fclt \u00faj szupergyors\u00edt\u00f3t\u00e1rat lefoglalni a tippek sz\u00e1m\u00e1ra
+J9NLS_SHRC_CM_NO_CACHE_FOR_HINTS=A(z) "%s" be\u00e1gyazott gyors\u00edt\u00f3t\u00e1r nem n\u00f6velhet\u0151, nem siker\u00fclt \u00faj szupergyors\u00edt\u00f3t\u00e1rat lefoglalni a tippek sz\u00e1m\u00e1ra
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_NO_CACHE_FOR_HINTS.sample_input_1=sharedcc
 J9NLS_SHRC_CM_NO_CACHE_FOR_HINTS.explanation=An error has occurred within Shared Classes processing.
@@ -2359,7 +2343,7 @@ J9NLS_SHRC_CM_NO_CACHE_FOR_HINTS.system_action=The JVM terminates, unless you ha
 J9NLS_SHRC_CM_NO_CACHE_FOR_HINTS.user_response=Verify that the system has enough native resources for the JVM to work properly. If the situation persists, contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_NO_BLOCK_FOR_HINTS=A(z) \"%s\" be\u00e1gyazott gyors\u00edt\u00f3t\u00e1r nem n\u00f6velhet\u0151, nem siker\u00fclt blokkot lefoglalni a tippek sz\u00e1m\u00e1ra
+J9NLS_SHRC_CM_NO_BLOCK_FOR_HINTS=A(z) "%s" be\u00e1gyazott gyors\u00edt\u00f3t\u00e1r nem n\u00f6velhet\u0151, nem siker\u00fclt blokkot lefoglalni a tippek sz\u00e1m\u00e1ra
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_NO_BLOCK_FOR_HINTS.sample_input_1=sharedcc
 J9NLS_SHRC_CM_NO_BLOCK_FOR_HINTS.explanation=An error has occurred within Shared Classes processing.
@@ -2367,7 +2351,7 @@ J9NLS_SHRC_CM_NO_BLOCK_FOR_HINTS.system_action=The JVM terminates, unless you ha
 J9NLS_SHRC_CM_NO_BLOCK_FOR_HINTS.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_COPY_CACHE_FAILURE=A(z) \"%s\" be\u00e1gyazott gyors\u00edt\u00f3t\u00e1r l\u00e9trehoz\u00e1sa nem siker\u00fclt
+J9NLS_SHRC_CM_COPY_CACHE_FAILURE=A(z) "%s" be\u00e1gyazott gyors\u00edt\u00f3t\u00e1r l\u00e9trehoz\u00e1sa nem siker\u00fclt
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_COPY_CACHE_FAILURE.sample_input_1=sharedcc
 J9NLS_SHRC_CM_COPY_CACHE_FAILURE.explanation=An error has occurred within Shared Classes processing.
@@ -2375,7 +2359,7 @@ J9NLS_SHRC_CM_COPY_CACHE_FAILURE.system_action=The JVM terminates, unless you ha
 J9NLS_SHRC_CM_COPY_CACHE_FAILURE.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_CACHE_REMOVAL_FAILURE=A(z) \"%s\" gyors\u00edt\u00f3t\u00e1r lecser\u00e9l\u00e9se nem siker\u00fclt
+J9NLS_SHRC_CM_CACHE_REMOVAL_FAILURE=A(z) "%s" gyors\u00edt\u00f3t\u00e1r lecser\u00e9l\u00e9se nem siker\u00fclt
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_CACHE_REMOVAL_FAILURE.sample_input_1=sharedcc
 J9NLS_SHRC_CM_CACHE_REMOVAL_FAILURE.explanation=An error has occurred within Shared Classes processing.
@@ -2412,7 +2396,7 @@ J9NLS_SHRC_CM_PRINTSTATS_ROMMETHOD_DISPLAY.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_ROMMETHOD_DISPLAY.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_SERIALIZE_CACHE_FAILURE_AOT_OFFSETS=A(z) \"%s\" gyors\u00edt\u00f3t\u00e1r soros\u00edt\u00e1sa nem siker\u00fclt. Nem siker\u00fclt a ROMClass ofszetek friss\u00edt\u00e9se az AOT met\u00f3dusokban.
+J9NLS_SHRC_CM_SERIALIZE_CACHE_FAILURE_AOT_OFFSETS=A(z) "%s" gyors\u00edt\u00f3t\u00e1r soros\u00edt\u00e1sa nem siker\u00fclt. Nem siker\u00fclt a ROMClass ofszetek friss\u00edt\u00e9se az AOT met\u00f3dusokban.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_SERIALIZE_CACHE_FAILURE_AOT_OFFSETS.sample_input_1=sharedcc
 J9NLS_SHRC_CM_SERIALIZE_CACHE_FAILURE_AOT_OFFSETS.explanation=An error has occurred within Shared Classes processing while updating ROM Class offsets in AOT methods.
@@ -2420,7 +2404,7 @@ J9NLS_SHRC_CM_SERIALIZE_CACHE_FAILURE_AOT_OFFSETS.system_action=Your cache will 
 J9NLS_SHRC_CM_SERIALIZE_CACHE_FAILURE_AOT_OFFSETS.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_CANT_GROW_READONLY=A \"grow\" \u00e9s \"readonly\" param\u00e9terek nem haszn\u00e1lhat\u00f3k egy\u00fctt.
+J9NLS_SHRC_SHRINIT_CANT_GROW_READONLY=A "grow" \u00e9s "readonly" param\u00e9terek nem haszn\u00e1lhat\u00f3k egy\u00fctt.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_CANT_GROW_READONLY.explanation=An invalid combination of command-line options has been specified.
 J9NLS_SHRC_SHRINIT_CANT_GROW_READONLY.system_action=The JVM terminates.
@@ -2993,8 +2977,7 @@ J9NLS_SHRC_SHRINIT_SCDMX_GRTHAN_SCMX.sample_input_3=49152
 J9NLS_SHRC_SHRINIT_SCDMX_GRTHAN_SCMX.user_response=The value has been changed automatically
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELP_OTHEROPTS_HEADER= \n\
-Kapcsol\u00f3d\u00f3 parancssori be\u00e1ll\u00edt\u00e1sok:\n
+J9NLS_SHRC_SHRINIT_HELP_OTHEROPTS_HEADER= \nKapcsol\u00f3d\u00f3 parancssori be\u00e1ll\u00edt\u00e1sok:\n
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELP_OTHEROPTS_HEADER.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELP_OTHEROPTS_HEADER.system_action=
@@ -3043,8 +3026,7 @@ J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_LOCALVARIABLETABLE_BYTES.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_LOCALVARIABLETABLE_BYTES.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_BASEADDRESS_V2=\n\
-alapc\u00edm                             %*c= 0x%p
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_BASEADDRESS_V2=\nalapc\u00edm                             %*c= 0x%p
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_BASEADDRESS_V2.sample_input_1=0
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_BASEADDRESS_V2.sample_input_2=
@@ -3485,7 +3467,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTDETAILS.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTDETAILS.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CLCM_REMOVED_OLDER_GEN=Megosztott \"%s\" oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1r kor\u00e1bbi el\u0151\u00e1ll\u00edt\u00e1sa elt\u00e1vol\u00edt\u00e1sra ker\u00fclt.
+J9NLS_SHRC_CLCM_REMOVED_OLDER_GEN=Megosztott "%s" oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1r kor\u00e1bbi el\u0151\u00e1ll\u00edt\u00e1sa elt\u00e1vol\u00edt\u00e1sra ker\u00fclt.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CLCM_REMOVED_OLDER_GEN.sample_input_1=myCache
 J9NLS_SHRC_CLCM_REMOVED_OLDER_GEN.explanation=Successfully removed older generation of indicated shared class cache.
@@ -3493,7 +3475,7 @@ J9NLS_SHRC_CLCM_REMOVED_OLDER_GEN.system_action=Processing continues.
 J9NLS_SHRC_CLCM_REMOVED_OLDER_GEN.user_response=None required.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CLCM_FAILED_REMOVED_OLDER_GEN=A megosztott \"%s\" oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1r kor\u00e1bbi el\u0151\u00e1ll\u00edt\u00e1s\u00e1nak elt\u00e1vol\u00edt\u00e1sa nem siker\u00fclt.
+J9NLS_SHRC_CLCM_FAILED_REMOVED_OLDER_GEN=A megosztott "%s" oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1r kor\u00e1bbi el\u0151\u00e1ll\u00edt\u00e1s\u00e1nak elt\u00e1vol\u00edt\u00e1sa nem siker\u00fclt.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CLCM_FAILED_REMOVED_OLDER_GEN.sample_input_1=myCache
 J9NLS_SHRC_CLCM_FAILED_REMOVED_OLDER_GEN.explanation=It has not been possible to remove the older generation of indicated shared class cache.
@@ -3501,7 +3483,7 @@ J9NLS_SHRC_CLCM_FAILED_REMOVED_OLDER_GEN.system_action=Processing continues.
 J9NLS_SHRC_CLCM_FAILED_REMOVED_OLDER_GEN.user_response=Run with -Xshareclasses:verbose enabled to see other messages that may indicate the reason why the cache has not been destroyed.  Investigate these messages.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CLCM_FAILED_REMOVED_CURRENT_GEN=A megosztott \"%s\" oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1r aktu\u00e1lis el\u0151\u00e1ll\u00edt\u00e1s\u00e1nak elt\u00e1vol\u00edt\u00e1sa nem siker\u00fclt.
+J9NLS_SHRC_CLCM_FAILED_REMOVED_CURRENT_GEN=A megosztott "%s" oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1r aktu\u00e1lis el\u0151\u00e1ll\u00edt\u00e1s\u00e1nak elt\u00e1vol\u00edt\u00e1sa nem siker\u00fclt.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CLCM_FAILED_REMOVED_CURRENT_GEN.sample_input_1=myCache
 J9NLS_SHRC_CLCM_FAILED_REMOVED_CURRENT_GEN.explanation=It has not been possible to remove the current generation of indicated shared class cache.
@@ -3601,8 +3583,7 @@ J9NLS_SHRC_SHRINIT_MAXJIT_GRTHAN_SCMX.system_action=The JVM continues
 J9NLS_SHRC_SHRINIT_MAXJIT_GRTHAN_SCMX.user_response=The value has been changed automatically
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_WARN_CORRUPT_CACHE_V2=A(z) \"%s\" megosztott gyors\u00edt\u00f3t\u00e1r s\u00e9r\u00fclt. A s\u00e9r\u00fclt k\u00f3d a(z) %d. A s\u00e9r\u00fclt \u00e9rt\u00e9k a k\u00f6vetkez\u0151: 0x%p. Egy \u00faj JVM sem fog tudni csatlakozni a gyors\u00edt\u00f3t\u00e1rhoz.\n\
-\ \tA megl\u00e9v\u0151 JVM-ek tov\u00e1bb m\u0171k\u00f6dnek, de nem tudj\u00e1k friss\u00edteni a gyors\u00edt\u00f3t\u00e1rat.
+J9NLS_SHRC_CM_WARN_CORRUPT_CACHE_V2=A(z) "%s" megosztott gyors\u00edt\u00f3t\u00e1r s\u00e9r\u00fclt. A s\u00e9r\u00fclt k\u00f3d a(z) %d. A s\u00e9r\u00fclt \u00e9rt\u00e9k a k\u00f6vetkez\u0151: 0x%p. Egy \u00faj JVM sem fog tudni csatlakozni a gyors\u00edt\u00f3t\u00e1rhoz.\n \tA megl\u00e9v\u0151 JVM-ek tov\u00e1bb m\u0171k\u00f6dnek, de nem tudj\u00e1k friss\u00edteni a gyors\u00edt\u00f3t\u00e1rat.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_WARN_CORRUPT_CACHE_V2.sample_input_1=myCache
 J9NLS_SHRC_CM_WARN_CORRUPT_CACHE_V2.sample_input_2=-1
@@ -3719,7 +3700,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_TEST_BAD_BUILDID.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_TEST_BAD_BUILDID.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_FAILURE_NAME_ONLY_WHITESPACE=\u00c9rv\u00e9nytelen gyors\u00edt\u00f3t\u00e1rn\u00e9v. A(z) \"%.*s\" gyors\u00edt\u00f3t\u00e1rn\u00e9v csak sz\u00f3k\u00f6zszer\u0171 karaktereket tartalmaz, vagy \u00fcres.
+J9NLS_SHRC_SHRINIT_FAILURE_NAME_ONLY_WHITESPACE=\u00c9rv\u00e9nytelen gyors\u00edt\u00f3t\u00e1rn\u00e9v. A(z) "%.*s" gyors\u00edt\u00f3t\u00e1rn\u00e9v csak sz\u00f3k\u00f6zszer\u0171 karaktereket tartalmaz, vagy \u00fcres.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_FAILURE_NAME_ONLY_WHITESPACE.sample_input_1=8
 J9NLS_SHRC_SHRINIT_FAILURE_NAME_ONLY_WHITESPACE.sample_input_2=sharedcc
@@ -4271,49 +4252,49 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTALLSTATS_HELP.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTALLSTATS_HELP.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ALL=\t all               Ki\u00edrja a megosztott mem\u00f3ri\u00e1ban l\u00e9v\u0151 \u00f6sszes al\u00e1bbi t\u00edpust.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ALL=\t\ all               Ki\u00edrja a megosztott mem\u00f3ri\u00e1ban l\u00e9v\u0151 \u00f6sszes al\u00e1bbi t\u00edpust.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ALL.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ALL.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ALL.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_CLASSPATH=\t classpath   Csak a megosztott gyors\u00edt\u00f3t\u00e1rban l\u00e9v\u0151 oszt\u00e1ly\u00fatvonal t\u00edpusokat \u00edrja ki.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_CLASSPATH=\t\ classpath   Csak a megosztott gyors\u00edt\u00f3t\u00e1rban l\u00e9v\u0151 oszt\u00e1ly\u00fatvonal t\u00edpusokat \u00edrja ki.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_CLASSPATH.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_CLASSPATH.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_CLASSPATH.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_URL=\t url               Csak a megosztott gyors\u00edt\u00f3t\u00e1rban l\u00e9v\u0151 url t\u00edpusokat \u00edrja ki.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_URL=\t\ url               Csak a megosztott gyors\u00edt\u00f3t\u00e1rban l\u00e9v\u0151 url t\u00edpusokat \u00edrja ki.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_URL.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_URL.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_URL.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_TOKEN=\t token           Csak a megosztott gyors\u00edt\u00f3t\u00e1rban l\u00e9v\u0151 token t\u00edpusokat \u00edrja ki.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_TOKEN=\t\ token           Csak a megosztott gyors\u00edt\u00f3t\u00e1rban l\u00e9v\u0151 token t\u00edpusokat \u00edrja ki.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_TOKEN.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_TOKEN.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_TOKEN.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ROMCLASS=\t romclass     Csak a megosztott gyors\u00edt\u00f3t\u00e1rban l\u00e9v\u0151 romclass t\u00edpusokat \u00edrja ki.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ROMCLASS=\t\ romclass     Csak a megosztott gyors\u00edt\u00f3t\u00e1rban l\u00e9v\u0151 romclass t\u00edpusokat \u00edrja ki.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ROMCLASS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ROMCLASS.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ROMCLASS.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ROMMETHOD=\t rommethod   Csak a megosztott gyors\u00edt\u00f3t\u00e1rban l\u00e9v\u0151 rommethod t\u00edpusokat \u00edrja ki.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ROMMETHOD=\t\ rommethod   Csak a megosztott gyors\u00edt\u00f3t\u00e1rban l\u00e9v\u0151 rommethod t\u00edpusokat \u00edrja ki.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ROMMETHOD.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ROMMETHOD.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ROMMETHOD.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOT=\t aot               Csak a megosztott gyors\u00edt\u00f3t\u00e1rban l\u00e9v\u0151 aot t\u00edpusokat \u00edrja ki.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOT=\t\ aot               Csak a megosztott gyors\u00edt\u00f3t\u00e1rban l\u00e9v\u0151 aot t\u00edpusokat \u00edrja ki.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOT.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOT.system_action=
@@ -4321,70 +4302,70 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOT.user_response=
 # END NON-TRANSLATABLE
 
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JITPROFILE=\t jitprofile Csak a megosztott gyors\u00edt\u00f3t\u00e1rban l\u00e9v\u0151 jitprofile t\u00edpusokat \u00edrja ki.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JITPROFILE=\t\ jitprofile Csak a megosztott gyors\u00edt\u00f3t\u00e1rban l\u00e9v\u0151 jitprofile t\u00edpusokat \u00edrja ki.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JITPROFILE.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JITPROFILE.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JITPROFILE.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ZIPCACHE=\t zipcache     Csak a megosztott gyors\u00edt\u00f3t\u00e1rban l\u00e9v\u0151 zipcache t\u00edpusokat \u00edrja ki.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ZIPCACHE=\t\ zipcache     Csak a megosztott gyors\u00edt\u00f3t\u00e1rban l\u00e9v\u0151 zipcache t\u00edpusokat \u00edrja ki.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ZIPCACHE.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ZIPCACHE.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ZIPCACHE.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_EXTRA=\t extra           Ki\u00edrja a megosztott gyors\u00edt\u00f3t\u00e1rban l\u00e9v\u0151 \u00f6sszes al\u00e1bbi priv\u00e1t t\u00edpust.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_EXTRA=\t\ extra           Ki\u00edrja a megosztott gyors\u00edt\u00f3t\u00e1rban l\u00e9v\u0151 \u00f6sszes al\u00e1bbi priv\u00e1t t\u00edpust.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_EXTRA.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_EXTRA.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_EXTRA.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ORPHAN=\t orphan         Csak a megosztott gyors\u00edt\u00f3t\u00e1rban l\u00e9v\u0151 \u00e1rva t\u00edpusokat \u00edrja ki.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ORPHAN=\t\ orphan         Csak a megosztott gyors\u00edt\u00f3t\u00e1rban l\u00e9v\u0151 \u00e1rva t\u00edpusokat \u00edrja ki.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ORPHAN.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ORPHAN.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ORPHAN.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JITHINT=\t jithint       Csak a megosztott gyors\u00edt\u00f3t\u00e1rban l\u00e9v\u0151 jithint t\u00edpusokat \u00edrja ki.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JITHINT=\t\ jithint       Csak a megosztott gyors\u00edt\u00f3t\u00e1rban l\u00e9v\u0151 jithint t\u00edpusokat \u00edrja ki.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JITHINT.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JITHINT.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JITHINT.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTCH=\t aotch           Csak a megosztott gyors\u00edt\u00f3t\u00e1rban l\u00e9v\u0151 aotch t\u00edpusokat \u00edrja ki.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTCH=\t\ aotch           Csak a megosztott gyors\u00edt\u00f3t\u00e1rban l\u00e9v\u0151 aotch t\u00edpusokat \u00edrja ki.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTCH.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTCH.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTCH.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTTHUNK=\t aotthunk     Csak a megosztott gyors\u00edt\u00f3t\u00e1rban l\u00e9v\u0151 aotthunk t\u00edpusokat \u00edrja ki.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTTHUNK=\t\ aotthunk     Csak a megosztott gyors\u00edt\u00f3t\u00e1rban l\u00e9v\u0151 aotthunk t\u00edpusokat \u00edrja ki.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTTHUNK.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTTHUNK.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTTHUNK.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTDATA=\t aotdata       Csak a megosztott gyors\u00edt\u00f3t\u00e1rban l\u00e9v\u0151 aotdata t\u00edpusokat \u00edrja ki.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTDATA=\t\ aotdata       Csak a megosztott gyors\u00edt\u00f3t\u00e1rban l\u00e9v\u0151 aotdata t\u00edpusokat \u00edrja ki.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTDATA.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTDATA.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTDATA.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JCL=\t jcl               Csak a megosztott gyors\u00edt\u00f3t\u00e1rban l\u00e9v\u0151 jcl t\u00edpusokat \u00edrja ki.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JCL=\t\ jcl               Csak a megosztott gyors\u00edt\u00f3t\u00e1rban l\u00e9v\u0151 jcl t\u00edpusokat \u00edrja ki.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JCL.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JCL.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JCL.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_BYTEDATA=\t bytedata     Csak a megosztott gyors\u00edt\u00f3t\u00e1rban l\u00e9v\u0151 egy\u00e9b byte-adat t\u00edpusokat \u00edrja ki.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_BYTEDATA=\t\ bytedata     Csak a megosztott gyors\u00edt\u00f3t\u00e1rban l\u00e9v\u0151 egy\u00e9b byte-adat t\u00edpusokat \u00edrja ki.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_BYTEDATA.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_BYTEDATA.system_action=
@@ -4550,6 +4531,8 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_CHECK_STRINGTABLE_RESET.user_response=
 
 J9NLS_SHRC_SHRINIT_CHECK_STRING_TABLE_RESET_MAY_FAIL=Az -Xshareclasses:checkStringTableReset meghi\u00fasulhat. A karaktersorozat t\u00e1bla nem el\u00e9g nagy. Nagyobbnak kell lennie, mint az oper\u00e1ci\u00f3s rendszer lapm\u00e9rete. T\u00e1blam\u00e9ret = %d, Lapm\u00e9ret = %d
 # START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_CHECK_STRING_TABLE_RESET_MAY_FAIL.sample_input_1=256
+J9NLS_SHRC_SHRINIT_CHECK_STRING_TABLE_RESET_MAY_FAIL.sample_input_2=4096
 J9NLS_SHRC_SHRINIT_CHECK_STRING_TABLE_RESET_MAY_FAIL.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_SHRINIT_CHECK_STRING_TABLE_RESET_MAY_FAIL.system_action=The JVM terminates.
 J9NLS_SHRC_SHRINIT_CHECK_STRING_TABLE_RESET_MAY_FAIL.user_response=Contact your service representative.
@@ -4562,14 +4545,14 @@ J9NLS_SHRC_SHRINIT_CHECK_STRINGTABLE_RESET_MISSING_FLAG.system_action=The JVM te
 J9NLS_SHRC_SHRINIT_CHECK_STRINGTABLE_RESET_MISSING_FLAG.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_CACHE_FULL=A(z) \"%s\" gyors\u00edt\u00f3t\u00e1r megtelt. Nem foglalhat\u00f3 le a blokkm\u00e9ret = %d.
+J9NLS_SHRC_CM_CACHE_FULL=
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_CACHE_FULL.explanation=The JVM failed to store requested data in the cache as it is marked as full.
 J9NLS_SHRC_CM_CACHE_FULL.system_action=The JVM terminates.
 J9NLS_SHRC_CM_CACHE_FULL.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_INSUFFICIENT_FREE_BLOCK=A k\u00e9rt blokkm\u00e9ret nem foglalhat\u00f3 le a(z) \"%s\" gyors\u00edt\u00f3t\u00e1r sz\u00e1m\u00e1ra. El\u00e9rhet\u0151 byte-ok sz\u00e1ma = %d, Sz\u00fcks\u00e9ges byte-ok sz\u00e1ma= %d
+J9NLS_SHRC_CM_INSUFFICIENT_FREE_BLOCK=
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_INSUFFICIENT_FREE_BLOCK.explanation=There is not enough free memory in shared class cache to store requested amount of data.
 J9NLS_SHRC_CM_INSUFFICIENT_FREE_BLOCK.system_action=The JVM terminates.
@@ -4618,8 +4601,9 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_CREATECACHEDIR_FAILED_V2=Nem siker\u00fclt l\u00e9trehozni egy \"%s\" k\u00f6nyvt\u00e1rat a megosztott oszt\u00e1ly gyors\u00edt\u00f3t\u00e1rhoz
+J9NLS_SHRC_OSCACHE_CREATECACHEDIR_FAILED_V2=Nem siker\u00fclt l\u00e9trehozni egy "%s" k\u00f6nyvt\u00e1rat a megosztott oszt\u00e1ly gyors\u00edt\u00f3t\u00e1rhoz
 # START NON-TRANSLATABLE
+J9NLS_SHRC_OSCACHE_CREATECACHEDIR_FAILED_V2.sample_input_1=/home/user/cachedir
 J9NLS_SHRC_OSCACHE_CREATECACHEDIR_FAILED_V2.explanation=The directory specified for the shared class cache could not be created
 J9NLS_SHRC_OSCACHE_CREATECACHEDIR_FAILED_V2.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_CREATECACHEDIR_FAILED_V2.user_response=Make sure you have the right permissions for the controldir or cachedir chosen.
@@ -4632,8 +4616,10 @@ J9NLS_SHRC_OSCACHE_BAD_CACHENAME_ERROR.system_action=The JVM terminates, unless 
 J9NLS_SHRC_OSCACHE_BAD_CACHENAME_ERROR.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_MMAP_DISK_FULL=Nem siker\u00fclt inicializ\u00e1lni a megosztott oszt\u00e1lyok gyors\u00edt\u00f3t\u00e1r\u00e1t, a f\u00e1jlrendszeren nincs elegend\u0151 szabad ter\u00fclet. Az el\u00e9rhet\u0151 szabad lemezter\u00fclet %lld byte, a sz\u00fcks\u00e9ges ter\u00fclet %lld byte.
+J9NLS_SHRC_OSCACHE_MMAP_DISK_FULL=Nem siker\u00fclt inicializ\u00e1lni a megosztott oszt\u00e1lyok gyors\u00edt\u00f3t\u00e1r\u00e1t, a f\u00e1jlrendszeren nincs elegend\u0151 szabad ter\u00fclet. Szabad lemezter\u00fclet byte-ok = %llu, k\u00e9rt byte-ok = %llu.
 # START NON-TRANSLATABLE
+J9NLS_SHRC_OSCACHE_MMAP_DISK_FULL.sample_input_1=157286400
+J9NLS_SHRC_OSCACHE_MMAP_DISK_FULL.sample_input_2=314572800
 J9NLS_SHRC_OSCACHE_MMAP_DISK_FULL.explanation=An error has occurred within Shared Classes.
 J9NLS_SHRC_OSCACHE_MMAP_DISK_FULL.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_MMAP_DISK_FULL.user_response=Clean the file system. If the file system doesn't support free space reporting, see the "-Xshareclasses:noPersistentDiskSpaceCheck" option.
@@ -4699,7 +4685,7 @@ J9NLS_SHRC_OSCACHE_VIRT_STARTUP_CREATED.system_action=The JVM continues.
 J9NLS_SHRC_OSCACHE_VIRT_STARTUP_CREATED.user_response=No action required.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_VIRT_DESTROY_SUCCESS=A(z) \"%1$s\" vend\u00e9gek sz\u00e1m\u00e1ra megosztott gyors\u00edt\u00f3t\u00e1r megsemmis\u00edt\u00e9sre ker\u00fclt
+J9NLS_SHRC_OSCACHE_VIRT_DESTROY_SUCCESS=A(z) "%1$s" vend\u00e9gek sz\u00e1m\u00e1ra megosztott gyors\u00edt\u00f3t\u00e1r megsemmis\u00edt\u00e9sre ker\u00fclt
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_VIRT_DESTROY_SUCCESS.sample_input_1=myCache
 J9NLS_SHRC_OSCACHE_VIRT_DESTROY_SUCCESS.explanation=The cross-guest shared cache named 1$ has been successfully destroyed.
@@ -4715,9 +4701,8 @@ J9NLS_SHRC_OSCACHE_VIRT_ATTACH_ATTACHED.system_action=The JVM continues.
 J9NLS_SHRC_OSCACHE_VIRT_ATTACH_ATTACHED.user_response=No action required.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_INCORRECT_TARGET=Helytelen c\u00e9lmeghat\u00e1roz\u00e1s fordult el\u0151. A gyors\u00edt\u00f3t\u00e1r-fejl\u00e9cben megadott c\u00e9l a k\u00f6vetkez\u0151: %s, de az elv\u00e1rt a k\u00f6vetkez\u0151: %s.
+J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_INCORRECT_TARGET=
 # START NON-TRANSLATABLE
-J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_INCORRECT_TARGET.sample_input_1=0
 J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_INCORRECT_TARGET.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_INCORRECT_TARGET.system_action=The cache is marked as corrupt and the JVM continues.
 J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_INCORRECT_TARGET.user_response=Contact your service representative.
@@ -4882,7 +4867,7 @@ J9NLS_SHRC_OSCACHE_STARTUP_ERROR_CACHERETRANSFORM_OPTION_WITH_BCI_ENABLED_CACHE.
 J9NLS_SHRC_OSCACHE_STARTUP_ERROR_CACHERETRANSFORM_OPTION_WITH_BCI_ENABLED_CACHE.user_response=Remove the sub-option incompatible with the Shared Class cache and rerun.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_INCOMPATIBLE_OPTION=A(z) \"%s\" \u00e9s \"%s\" parancssori param\u00e9terek inkompatibilisek
+J9NLS_SHRC_SHRINIT_INCOMPATIBLE_OPTION=A(z) "%s" \u00e9s "%s" parancssori param\u00e9terek inkompatibilisek
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_INCOMPATIBLE_OPTION.sample_input_1=cacheRetransformed
 J9NLS_SHRC_SHRINIT_INCOMPATIBLE_OPTION.sample_input_2=enableBCI
@@ -4974,7 +4959,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_RAW_DATA_AREA_SIZE.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_RAW_DATA_AREA_SIZE.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_OPTION_INVALID_MEMORY_SIZE=A \"%s\" mem\u00f3riam\u00e9rete t\u00fal nagy, vagy a k\u00f6vetkez\u0151kt\u0151l elt\u00e9r\u0151 egys\u00e9get ad meg: 'K','M' \u00e9s 'G'.
+J9NLS_SHRC_SHRINIT_OPTION_INVALID_MEMORY_SIZE=A "%s" mem\u00f3riam\u00e9rete t\u00fal nagy, vagy a k\u00f6vetkez\u0151kt\u0151l elt\u00e9r\u0151 egys\u00e9get ad meg: 'K','M' \u00e9s 'G'.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_OPTION_INVALID_MEMORY_SIZE.sample_input_1=foo
 J9NLS_SHRC_SHRINIT_OPTION_INVALID_MEMORY_SIZE.explanation=The memory size is too large, or specifies units other than 'K','M', or 'G'.
@@ -5175,7 +5160,7 @@ J9NLS_SHRC_OSCACHE_STARTUP_SHM_CONTROL_FILE_READ_ONLY.system_action=The JVM term
 J9NLS_SHRC_OSCACHE_STARTUP_SHM_CONTROL_FILE_READ_ONLY.user_response=Ensure shared memory control file has read-write permission and then retry. If the situation persists, contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_WARN_BLOCK_SPACE_FULL=A nem-AOT/nem-JIT adatok (p\u00e9ld\u00e1ul oszt\u00e1lyok) t\u00e1rol\u00e1s\u00e1ra szolg\u00e1l\u00f3 ter\u00fclet megtelt a(z) \"%s\" megosztott gyors\u00edt\u00f3t\u00e1rban.
+J9NLS_SHRC_CM_WARN_BLOCK_SPACE_FULL=A nem-AOT/nem-JIT adatok (p\u00e9ld\u00e1ul oszt\u00e1lyok) t\u00e1rol\u00e1s\u00e1ra szolg\u00e1l\u00f3 ter\u00fclet megtelt a(z) "%s" megosztott gyors\u00edt\u00f3t\u00e1rban.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_WARN_BLOCK_SPACE_FULL.sample_input_1=myCache
 J9NLS_SHRC_CM_WARN_BLOCK_SPACE_FULL.explanation=Space for storing non-AOT/non-JIT data, such as classes, in named shared class cache is full and no further data may be added to it.
@@ -5183,7 +5168,7 @@ J9NLS_SHRC_CM_WARN_BLOCK_SPACE_FULL.system_action=The JVM continues.  The named 
 J9NLS_SHRC_CM_WARN_BLOCK_SPACE_FULL.user_response=To gain the full benefit of shared classes, delete the named cache and re-create it specifying a larger shared class cache size by the -Xscmx parameter.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_WARN_AOT_SPACE_FULL=Az AOT adatok sz\u00e1m\u00e1ra fenntartott ter\u00fclet a(z) \"%s\" megosztott gyors\u00edt\u00f3t\u00e1rban megtelt. Az -Xscminaot param\u00e9ter seg\u00edts\u00e9g\u00e9vel n\u00f6velje az AOT adatok sz\u00e1m\u00e1ra fenntartott ter\u00fcletet.
+J9NLS_SHRC_CM_WARN_AOT_SPACE_FULL=Az AOT adatok sz\u00e1m\u00e1ra fenntartott ter\u00fclet a(z) "%s" megosztott gyors\u00edt\u00f3t\u00e1rban megtelt. Az -Xscminaot param\u00e9ter seg\u00edts\u00e9g\u00e9vel n\u00f6velje az AOT adatok sz\u00e1m\u00e1ra fenntartott ter\u00fcletet.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_WARN_AOT_SPACE_FULL.sample_input_1=myCache
 J9NLS_SHRC_CM_WARN_AOT_SPACE_FULL.explanation=Space reserved for AOT data in named shared class cache is full and no further AOT data may be added to it.
@@ -5191,7 +5176,7 @@ J9NLS_SHRC_CM_WARN_AOT_SPACE_FULL.system_action=The JVM continues.  The named sh
 J9NLS_SHRC_CM_WARN_AOT_SPACE_FULL.user_response=To allow JVM to store more AOT compiled methods into shared class cache, increase the value specified by -Xscminaot parameter.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_WARN_JIT_SPACE_FULL=A JIT adatok sz\u00e1m\u00e1ra fenntartott ter\u00fclet a(z) \"%s\" megosztott gyors\u00edt\u00f3t\u00e1rban megtelt. Az -Xscminjitdata param\u00e9ter seg\u00edts\u00e9g\u00e9vel n\u00f6velje a JIT adatok sz\u00e1m\u00e1ra fenntartott ter\u00fcletet.
+J9NLS_SHRC_CM_WARN_JIT_SPACE_FULL=A JIT adatok sz\u00e1m\u00e1ra fenntartott ter\u00fclet a(z) "%s" megosztott gyors\u00edt\u00f3t\u00e1rban megtelt. Az -Xscminjitdata param\u00e9ter seg\u00edts\u00e9g\u00e9vel n\u00f6velje a JIT adatok sz\u00e1m\u00e1ra fenntartott ter\u00fcletet.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_WARN_JIT_SPACE_FULL.sample_input_1=myCache
 J9NLS_SHRC_CM_WARN_JIT_SPACE_FULL.explanation=Space reserved for JIT data in named shared class cache is full and no further JIT data may be added to it.
@@ -5573,18 +5558,18 @@ J9NLS_SHRC_OSCACHE_ERROR_MAX_OPEN_FILES_REACHED.system_action=If -Xshareclasses:
 J9NLS_SHRC_OSCACHE_ERROR_MAX_OPEN_FILES_REACHED.user_response=Contact your system admin to increase the system limit on maximum open files or close any unused files and restart the JVM.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SEMAPHORE_OPFAILED_CONTROL_FILE_LOCK_FAILED=Hiba t\u00f6rt\u00e9nt a szemafor megnyit\u00e1sa k\u00f6zben. A vez\u00e9rl\u0151f\u00e1jlt nem lehet z\u00e1rolni.
+J9NLS_SHRC_OSCACHE_SEMAPHORE_OPFAILED_CONTROL_FILE_LOCK_FAILED=Hiba t\u00f6rt\u00e9nt a szemafor megnyit\u00e1sa k\u00f6zben. A vez\u00e9rl\u0151f\u00e1jl nem nyithat\u00f3 meg vagy z\u00e1rolt. Gy\u0151z\u0151dj\u00f6n meg r\u00f3la, hogy az aktu\u00e1lis felhaszn\u00e1l\u00f3 megfelel\u0151 jogosults\u00e1gokkal rendelkezik a gyors\u00edt\u00f3t\u00e1r k\u00f6nyvt\u00e1r \u00e9s vez\u00e9rl\u0151f\u00e1jl sz\u00e1m\u00e1ra.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SEMAPHORE_OPFAILED_CONTROL_FILE_LOCK_FAILED.explanation=An error has occurred in shared class processing. Further messages may follow providing more detail.
 J9NLS_SHRC_OSCACHE_SEMAPHORE_OPFAILED_CONTROL_FILE_LOCK_FAILED.system_action=If -Xshareclasses:nonfatal is specified JVM will try to use an existing shared class cache in read-only mode. But if the cache does not exist, then JVM will continue without shared class cache. In absence of -Xshareclasses:nonfatal, JVM will terminate.
-J9NLS_SHRC_OSCACHE_SEMAPHORE_OPFAILED_CONTROL_FILE_LOCK_FAILED.user_response=Contact your service representative, unless subsequent messages indicate otherwise.
+J9NLS_SHRC_OSCACHE_SEMAPHORE_OPFAILED_CONTROL_FILE_LOCK_FAILED.user_response=Correct the permissions if they are set improperly and retry. If the situation persists, contact your service representative, unless subsequent messages indicate otherwise.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_CONTROL_FILE_LOCK_FAILED=Hiba t\u00f6rt\u00e9nt az osztott mem\u00f3ria megnyit\u00e1sa k\u00f6zben. A vez\u00e9rl\u0151f\u00e1jlt nem lehet z\u00e1rolni.
+J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_CONTROL_FILE_LOCK_FAILED=Hiba t\u00f6rt\u00e9nt az osztott mem\u00f3ria megnyit\u00e1sa k\u00f6zben. A vez\u00e9rl\u0151f\u00e1jl nem nyithat\u00f3 meg vagy z\u00e1rolt. Gy\u0151z\u0151dj\u00f6n meg r\u00f3la, hogy az aktu\u00e1lis felhaszn\u00e1l\u00f3 megfelel\u0151 jogosults\u00e1gokkal rendelkezik a gyors\u00edt\u00f3t\u00e1r k\u00f6nyvt\u00e1r \u00e9s vez\u00e9rl\u0151f\u00e1jl sz\u00e1m\u00e1ra.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_CONTROL_FILE_LOCK_FAILED.explanation=An error has occurred in shared class processing. Further messages may follow providing more detail.
 J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_CONTROL_FILE_LOCK_FAILED.system_action=If -Xshareclasses:nonfatal is specified JVM will continue without shared class cache, otherwise it will terminate.
-J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_CONTROL_FILE_LOCK_FAILED.user_response=Contact your service representative, unless subsequent messages indicate otherwise.
+J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_CONTROL_FILE_LOCK_FAILED.user_response=Correct the permissions if they are set improperly and retry. If the situation persists, contact your service representative, unless subsequent messages indicate otherwise.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_SHRINIT_FAILED_NONFATAL_PRESENT=A megosztott oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1r ind\u00edt\u00e1sa nem siker\u00fclt. A v\u00e9grehajt\u00e1s annak haszn\u00e1lata n\u00e9lk\u00fcl folytat\u00f3dik, mivel meg van adva az -Xshareclasses:nonfatal param\u00e9ter
@@ -5658,7 +5643,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_RESTORECACHE.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_RESTORECACHE.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_OPTION_IGNORED_WARNING=A(z) \"%s\" \u00e9s a(z) \"%s\" alparam\u00e9terek inkompatibilisek. A(z) \"%s\" alparam\u00e9ter figyelmen k\u00edv\u00fcl marad
+J9NLS_SHRC_SHRINIT_OPTION_IGNORED_WARNING=A(z) "%s" \u00e9s a(z) "%s" alparam\u00e9terek inkompatibilisek. A(z) "%s" alparam\u00e9ter figyelmen k\u00edv\u00fcl marad
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_OPTION_IGNORED_WARNING.sample_input_1=option1
 J9NLS_SHRC_SHRINIT_OPTION_IGNORED_WARNING.sample_input_2=option2
@@ -5675,7 +5660,7 @@ J9NLS_SHRC_SHRINIT_GETCACHEDIR_FAILED.system_action=The JVM fails to complete th
 J9NLS_SHRC_SHRINIT_GETCACHEDIR_FAILED.user_response=Please try to use a shorter path or cache name.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_SUCCESS_RESTORE_CACHE=A nem \u00e1lland\u00f3 \"%s\" megosztott gyors\u00edt\u00f3t\u00e1r sikeresen vissza\u00e1ll\u00edt\u00e1sra ker\u00fclt a pillanatk\u00e9pb\u0151l
+J9NLS_SHRC_SHRINIT_SUCCESS_RESTORE_CACHE=A nem \u00e1lland\u00f3 "%s" megosztott gyors\u00edt\u00f3t\u00e1r sikeresen vissza\u00e1ll\u00edt\u00e1sra ker\u00fclt a pillanatk\u00e9pb\u0151l
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_SUCCESS_RESTORE_CACHE.sample_input_1=myCaches
 J9NLS_SHRC_SHRINIT_SUCCESS_RESTORE_CACHE.explanation=Non-persistent cache has been restored from the snapshot.
@@ -5683,7 +5668,7 @@ J9NLS_SHRC_SHRINIT_SUCCESS_RESTORE_CACHE.system_action=The JVM successfully comp
 J9NLS_SHRC_SHRINIT_SUCCESS_RESTORE_CACHE.user_response=No action required. This message is for information only.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_FAILURE_RESTORE_CACHE=A nem \u00e1lland\u00f3 \"%s\" megosztott gyors\u00edt\u00f3t\u00e1rat nem siker\u00fclt vissza\u00e1ll\u00edtani a pillanatk\u00e9pb\u0151l
+J9NLS_SHRC_SHRINIT_FAILURE_RESTORE_CACHE=A nem \u00e1lland\u00f3 "%s" megosztott gyors\u00edt\u00f3t\u00e1rat nem siker\u00fclt vissza\u00e1ll\u00edtani a pillanatk\u00e9pb\u0151l
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_FAILURE_RESTORE_CACHE.sample_input_1=myCaches
 J9NLS_SHRC_SHRINIT_FAILURE_RESTORE_CACHE.explanation=An error has occurred in restoring the non-persistent cache
@@ -5691,7 +5676,7 @@ J9NLS_SHRC_SHRINIT_FAILURE_RESTORE_CACHE.system_action=The JVM fails to complete
 J9NLS_SHRC_SHRINIT_FAILURE_RESTORE_CACHE.user_response=Other messages may have been issued indicating the reason why the cache cannot be restored from the snapshot.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_SUCCESS_CREATE_SNAPSHOT=A nem \u00e1lland\u00f3 \"%s\" megosztott gyors\u00edt\u00f3t\u00e1r pillanatk\u00e9pe l\u00e9trehoz\u00e1sra ker\u00fclt
+J9NLS_SHRC_SHRINIT_SUCCESS_CREATE_SNAPSHOT=A nem \u00e1lland\u00f3 "%s" megosztott gyors\u00edt\u00f3t\u00e1r pillanatk\u00e9pe l\u00e9trehoz\u00e1sra ker\u00fclt
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_SUCCESS_CREATE_SNAPSHOT.sample_input_1=myCaches
 J9NLS_SHRC_SHRINIT_SUCCESS_CREATE_SNAPSHOT.explanation=Successfully created the snapshot of an existing non-persistent shared cache.
@@ -5699,7 +5684,7 @@ J9NLS_SHRC_SHRINIT_SUCCESS_CREATE_SNAPSHOT.system_action=The JVM successfully co
 J9NLS_SHRC_SHRINIT_SUCCESS_CREATE_SNAPSHOT.user_response=No action required. This message is for information only.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_FAILURE_CREATE_SNAPSHOT=A megosztott \"%s\" oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1r pillanatk\u00e9p\u00e9nek l\u00e9trehoz\u00e1sa nem siker\u00fclt
+J9NLS_SHRC_SHRINIT_FAILURE_CREATE_SNAPSHOT=A megosztott "%s" oszt\u00e1ly-gyors\u00edt\u00f3t\u00e1r pillanatk\u00e9p\u00e9nek l\u00e9trehoz\u00e1sa nem siker\u00fclt
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_FAILURE_CREATE_SNAPSHOT.sample_input_1=myCaches
 J9NLS_SHRC_SHRINIT_FAILURE_CREATE_SNAPSHOT.explanation=An error has occurred in creating snapshot of a non-persistent shared cache
@@ -5714,7 +5699,7 @@ J9NLS_SHRC_GETSNAPSHOTDIR_FAILED.system_action=The JVM fails to complete the req
 J9NLS_SHRC_GETSNAPSHOTDIR_FAILED.user_response=Please try to use a shorter path or cache name.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_ERROR_SNAPSHOT_FILE_OPEN=A(z) \"%s\" megosztott gyors\u00edt\u00f3t\u00e1r pillanatk\u00e9pf\u00e1jl megnyit\u00e1sa nem siker\u00fclt
+J9NLS_SHRC_ERROR_SNAPSHOT_FILE_OPEN=A(z) "%s" megosztott gyors\u00edt\u00f3t\u00e1r pillanatk\u00e9pf\u00e1jl megnyit\u00e1sa nem siker\u00fclt
 # START NON-TRANSLATABLE
 J9NLS_SHRC_ERROR_SNAPSHOT_FILE_OPEN.sample_input_1=/myJVM/myCaches
 J9NLS_SHRC_ERROR_SNAPSHOT_FILE_OPEN.explanation=An error occurred while opening the shared cache snapshot file.
@@ -5746,7 +5731,7 @@ J9NLS_SHRC_ERROR_SNAPSHOT_FILE_LOCK.system_action=The JVM fails to complete the 
 J9NLS_SHRC_ERROR_SNAPSHOT_FILE_LOCK.user_response=Previous error messages may indicate the reason. Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_ERROR_ENTER_MUTEX=A(z) \"%s\" gyors\u00edt\u00f3t\u00e1r k\u00f6lcs\u00f6n\u00f6s kiz\u00e1r\u00e1s\u00e1nak foganatos\u00edt\u00e1sa nem siker\u00fclt
+J9NLS_SHRC_SHRINIT_ERROR_ENTER_MUTEX=A(z) "%s" gyors\u00edt\u00f3t\u00e1r k\u00f6lcs\u00f6n\u00f6s kiz\u00e1r\u00e1s\u00e1nak foganatos\u00edt\u00e1sa nem siker\u00fclt
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_ERROR_ENTER_MUTEX.sample_input_1=myCaches
 J9NLS_SHRC_SHRINIT_ERROR_ENTER_MUTEX.explanation=An error occurred while acquiring a cache mutex.
@@ -5754,7 +5739,7 @@ J9NLS_SHRC_SHRINIT_ERROR_ENTER_MUTEX.system_action=The JVM fails to complete the
 J9NLS_SHRC_SHRINIT_ERROR_ENTER_MUTEX.user_response=Verify that the system has enough native resources for the JVM to work properly. If the situation persists, contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_ERROR_SNAPSHOT_FILE_TRUNCATE=A megl\u00e9v\u0151 nem \u00e1lland\u00f3 \"%s\" megosztott gyors\u00edt\u00f3t\u00e1r pillanatk\u00e9pf\u00e1jl csonkol\u00e1sa meghi\u00fasult
+J9NLS_SHRC_SHRINIT_ERROR_SNAPSHOT_FILE_TRUNCATE=A megl\u00e9v\u0151 nem \u00e1lland\u00f3 "%s" megosztott gyors\u00edt\u00f3t\u00e1r pillanatk\u00e9pf\u00e1jl csonkol\u00e1sa meghi\u00fasult
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_ERROR_SNAPSHOT_FILE_TRUNCATE.sample_input_1=/myJVM/myCaches
 J9NLS_SHRC_SHRINIT_ERROR_SNAPSHOT_FILE_TRUNCATE.explanation=An error has occurred in truncating the non-persistent shared cache snapshot file.
@@ -5762,7 +5747,7 @@ J9NLS_SHRC_SHRINIT_ERROR_SNAPSHOT_FILE_TRUNCATE.system_action=The JVM fails to c
 J9NLS_SHRC_SHRINIT_ERROR_SNAPSHOT_FILE_TRUNCATE.user_response=Previous error messages may indicate the reason. Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_OVERWRITE_EXISTING_SNAPSHOT_WARNING=A JVM a nem \u00e1lland\u00f3 \"%s\" megosztott gyors\u00edt\u00f3t\u00e1r pillanatk\u00e9p\u00e9t hozza l\u00e9tre, de m\u00e1r l\u00e9tezik \"%s\" nev\u0171 pillanatk\u00e9pf\u00e1jl \u00e9s az fel\u00fcl\u00edr\u00e1sra ker\u00fcl
+J9NLS_SHRC_SHRINIT_OVERWRITE_EXISTING_SNAPSHOT_WARNING=A JVM a nem \u00e1lland\u00f3 "%s" megosztott gyors\u00edt\u00f3t\u00e1r pillanatk\u00e9p\u00e9t hozza l\u00e9tre, de m\u00e1r l\u00e9tezik "%s" nev\u0171 pillanatk\u00e9pf\u00e1jl \u00e9s az fel\u00fcl\u00edr\u00e1sra ker\u00fcl
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_OVERWRITE_EXISTING_SNAPSHOT_WARNING.sample_input_1=myCaches
 J9NLS_SHRC_SHRINIT_OVERWRITE_EXISTING_SNAPSHOT_WARNING.sample_input_2=/myJVM/myCaches
@@ -5771,7 +5756,7 @@ J9NLS_SHRC_SHRINIT_OVERWRITE_EXISTING_SNAPSHOT_WARNING.system_action=The JVM con
 J9NLS_SHRC_SHRINIT_OVERWRITE_EXISTING_SNAPSHOT_WARNING.user_response=No action is required if the user wants to overwrite the non-persistent shared cache snapshot file intentionally. The user is responsible for snapshot file management. To retain the old snapshot file, create a backup or rename the file before creating a new one.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_ERROR_SNAPSHOT_FILE_WRITE=A nem \u00e1lland\u00f3 \"%s\" megosztott gyors\u00edt\u00f3t\u00e1r pillanatk\u00e9pf\u00e1jl \u00edr\u00e1sa meghi\u00fasult
+J9NLS_SHRC_SHRINIT_ERROR_SNAPSHOT_FILE_WRITE=A nem \u00e1lland\u00f3 "%s" megosztott gyors\u00edt\u00f3t\u00e1r pillanatk\u00e9pf\u00e1jl \u00edr\u00e1sa meghi\u00fasult
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_ERROR_SNAPSHOT_FILE_WRITE.sample_input_1=/myJVM/myCaches
 J9NLS_SHRC_SHRINIT_ERROR_SNAPSHOT_FILE_WRITE.explanation=An error occurred while writing into non-persistent shared cache snapshot file.
@@ -5779,7 +5764,7 @@ J9NLS_SHRC_SHRINIT_ERROR_SNAPSHOT_FILE_WRITE.system_action=The JVM fails to comp
 J9NLS_SHRC_SHRINIT_ERROR_SNAPSHOT_FILE_WRITE.user_response=Previous error messages may indicate the reason. The disk may be full. Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_ERROR_SNAPSHOT_FILE_SEEK=Nem siker\u00fclt \u00fajrapozicion\u00e1lni a f\u00e1jlle\u00edr\u00f3 eltol\u00e1s\u00e1t a nem \u00e1lland\u00f3 \"%s\" megosztott gyors\u00edt\u00f3t\u00e1r pillanatk\u00e9pf\u00e1jlban
+J9NLS_SHRC_SHRINIT_ERROR_SNAPSHOT_FILE_SEEK=Nem siker\u00fclt \u00fajrapozicion\u00e1lni a f\u00e1jlle\u00edr\u00f3 eltol\u00e1s\u00e1t a nem \u00e1lland\u00f3 "%s" megosztott gyors\u00edt\u00f3t\u00e1r pillanatk\u00e9pf\u00e1jlban
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_ERROR_SNAPSHOT_FILE_SEEK.sample_input_1=/myJVM/myCaches
 J9NLS_SHRC_SHRINIT_ERROR_SNAPSHOT_FILE_SEEK.explanation=An error has occurred in repositioning the offset of the file descriptor in the non-persistent shared cache snapshot file
@@ -5788,7 +5773,7 @@ J9NLS_SHRC_SHRINIT_ERROR_SNAPSHOT_FILE_SEEK.user_response=Previous error message
 # END NON-TRANSLATABLE
 
 # From: CacheLifeCycleManager.cpp
-J9NLS_SHRC_INFO_SNAPSHOT_DESTROYING_FOR_CACHEDIR=K\u00eds\u00e9rlet az \u00f6sszes megosztott pillanatk\u00e9p megsemmis\u00edt\u00e9s\u00e9re a(z) \"%s\" gyors\u00edt\u00f3t\u00e1r-k\u00f6nyvt\u00e1rban
+J9NLS_SHRC_INFO_SNAPSHOT_DESTROYING_FOR_CACHEDIR=K\u00eds\u00e9rlet az \u00f6sszes megosztott pillanatk\u00e9p megsemmis\u00edt\u00e9s\u00e9re a(z) "%s" gyors\u00edt\u00f3t\u00e1r-k\u00f6nyvt\u00e1rban
 # START NON-TRANSLATABLE
 J9NLS_SHRC_INFO_SNAPSHOT_DESTROYING_FOR_CACHEDIR.sample_input_1=/myJVM/myCaches
 J9NLS_SHRC_INFO_SNAPSHOT_DESTROYING_FOR_CACHEDIR.explanation=NOTAG
@@ -5796,7 +5781,7 @@ J9NLS_SHRC_INFO_SNAPSHOT_DESTROYING_FOR_CACHEDIR.system_action=None
 J9NLS_SHRC_INFO_SNAPSHOT_DESTROYING_FOR_CACHEDIR.user_response=None required.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CLCM_ERROR_SNAPSHOT_FILE_LENGTH=A(z) \"%s\" megosztott gyors\u00edt\u00f3t\u00e1r pillanatk\u00e9pf\u00e1jl hossz\u00e1nak lek\u00e9rdez\u00e9se nem siker\u00fclt
+J9NLS_SHRC_CLCM_ERROR_SNAPSHOT_FILE_LENGTH=A(z) "%s" megosztott gyors\u00edt\u00f3t\u00e1r pillanatk\u00e9pf\u00e1jl hossz\u00e1nak lek\u00e9rdez\u00e9se nem siker\u00fclt
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CLCM_ERROR_SNAPSHOT_FILE_LENGTH.sample_input_1=/myJVM/myCaches
 J9NLS_SHRC_CLCM_ERROR_SNAPSHOT_FILE_LENGTH.explanation=An error has occurred while getting the length of the snapshot file.
@@ -5811,7 +5796,7 @@ J9NLS_SHRC_CLCM_NO_SNAPSHOT.system_action=Processing continues.
 J9NLS_SHRC_CLCM_NO_SNAPSHOT.user_response=None required.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CLCM_SNAPSHOT_REMOVED_OLDER_GEN=A(z) \"%s\" megosztott gyors\u00edt\u00f3t\u00e1r pillanatk\u00e9p r\u00e9gebbi el\u0151\u00e1ll\u00edt\u00e1sa elt\u00e1vol\u00edtva
+J9NLS_SHRC_CLCM_SNAPSHOT_REMOVED_OLDER_GEN=A(z) "%s" megosztott gyors\u00edt\u00f3t\u00e1r pillanatk\u00e9p r\u00e9gebbi el\u0151\u00e1ll\u00edt\u00e1sa elt\u00e1vol\u00edtva
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CLCM_SNAPSHOT_REMOVED_OLDER_GEN.sample_input_1=myCache
 J9NLS_SHRC_CLCM_SNAPSHOT_REMOVED_OLDER_GEN.explanation=Successfully removed older generation of indicated shared cache snapshot.
@@ -5819,7 +5804,7 @@ J9NLS_SHRC_CLCM_SNAPSHOT_REMOVED_OLDER_GEN.system_action=Processing continues.
 J9NLS_SHRC_CLCM_SNAPSHOT_REMOVED_OLDER_GEN.user_response=None required.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CLCM_SNAPSHOT_FAILED_REMOVED_OLDER_GEN=A(z) \"%s\" megosztott gyors\u00edt\u00f3t\u00e1r pillanatk\u00e9p r\u00e9gebbi el\u0151\u00e1ll\u00edt\u00e1s\u00e1nak elt\u00e1vol\u00edt\u00e1sa nem siker\u00fclt
+J9NLS_SHRC_CLCM_SNAPSHOT_FAILED_REMOVED_OLDER_GEN=A(z) "%s" megosztott gyors\u00edt\u00f3t\u00e1r pillanatk\u00e9p r\u00e9gebbi el\u0151\u00e1ll\u00edt\u00e1s\u00e1nak elt\u00e1vol\u00edt\u00e1sa nem siker\u00fclt
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CLCM_SNAPSHOT_FAILED_REMOVED_OLDER_GEN.sample_input_1=myCache
 J9NLS_SHRC_CLCM_SNAPSHOT_FAILED_REMOVED_OLDER_GEN.explanation=It has not been possible to remove the older generation of indicated shared cache snapshot.
@@ -5827,7 +5812,7 @@ J9NLS_SHRC_CLCM_SNAPSHOT_FAILED_REMOVED_OLDER_GEN.system_action=Processing conti
 J9NLS_SHRC_CLCM_SNAPSHOT_FAILED_REMOVED_OLDER_GEN.user_response=Previous error messages may indicate the reason. Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CLCM_SNAPSHOT_FAILED_REMOVED_CURRENT_GEN=A(z) \"%s\" megosztott gyors\u00edt\u00f3t\u00e1r pillanatk\u00e9p aktu\u00e1lis el\u0151\u00e1ll\u00edt\u00e1s\u00e1nak elt\u00e1vol\u00edt\u00e1sa nem siker\u00fclt
+J9NLS_SHRC_CLCM_SNAPSHOT_FAILED_REMOVED_CURRENT_GEN=A(z) "%s" megosztott gyors\u00edt\u00f3t\u00e1r pillanatk\u00e9p aktu\u00e1lis el\u0151\u00e1ll\u00edt\u00e1s\u00e1nak elt\u00e1vol\u00edt\u00e1sa nem siker\u00fclt
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CLCM_SNAPSHOT_FAILED_REMOVED_CURRENT_GEN.sample_input_1=myCache
 J9NLS_SHRC_CLCM_SNAPSHOT_FAILED_REMOVED_CURRENT_GEN.explanation=It has not been possible to remove the current generation of indicated shared cache snapshot.
@@ -5842,7 +5827,7 @@ J9NLS_SHRC_CLCM_SNAPSHOT_NOT_EXIST.system_action=The JVM terminates.
 J9NLS_SHRC_CLCM_SNAPSHOT_NOT_EXIST.user_response=None required.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CLCM_SNAPSHOT_DESTROYED=A(z) \"%s\" megosztott gyors\u00edt\u00f3t\u00e1r pillanatk\u00e9p megsemmis\u00fclt
+J9NLS_SHRC_CLCM_SNAPSHOT_DESTROYED=A(z) "%s" megosztott gyors\u00edt\u00f3t\u00e1r pillanatk\u00e9p megsemmis\u00fclt
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CLCM_SNAPSHOT_DESTROYED.sample_input_1=myCache
 J9NLS_SHRC_CLCM_SNAPSHOT_DESTROYED.explanation=This is an information message notifying the user that the named shared cache snapshot has been destroyed as requested.
@@ -5858,7 +5843,7 @@ J9NLS_SHRC_OSCACHE_CONTROL_FILE_RECREATE_PROHIBITED_SNAPSHOT_CACHE.system_action
 J9NLS_SHRC_OSCACHE_CONTROL_FILE_RECREATE_PROHIBITED_SNAPSHOT_CACHE.user_response=None required.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SNAPSHOT_GROUPACCESS_REQUIRED=A JVM nincs be\u00e1ll\u00edtva a nem \u00e1lland\u00f3 \"%s\" megosztott gyors\u00edt\u00f3t\u00e1r pillanatk\u00e9pf\u00e1jl el\u00e9r\u00e9s\u00e9re. A f\u00e1jl el\u00e9r\u00e9shez haszn\u00e1lja a 'groupAccess' alparam\u00e9tert.
+J9NLS_SHRC_OSCACHE_SNAPSHOT_GROUPACCESS_REQUIRED=A JVM nincs be\u00e1ll\u00edtva a nem \u00e1lland\u00f3 "%s" megosztott gyors\u00edt\u00f3t\u00e1r pillanatk\u00e9pf\u00e1jl el\u00e9r\u00e9s\u00e9re. A f\u00e1jl el\u00e9r\u00e9shez haszn\u00e1lja a 'groupAccess' alparam\u00e9tert.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SNAPSHOT_GROUPACCESS_REQUIRED.sample_input_1=/myJVM/myCaches
 J9NLS_SHRC_OSCACHE_SNAPSHOT_GROUPACCESS_REQUIRED.explanation=An error has occurred within Shared Classes processing.
@@ -5866,7 +5851,7 @@ J9NLS_SHRC_OSCACHE_SNAPSHOT_GROUPACCESS_REQUIRED.system_action=The JVM fails to 
 J9NLS_SHRC_OSCACHE_SNAPSHOT_GROUPACCESS_REQUIRED.user_response=Modify existing "-Xshareclasses:" option to add "groupAccess" suboption and restart. The snapshot may have been created by another user in the same group as the current user.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SNAPSHOT_OTHERS_ACCESS_NOT_ALLOWED=A JVM nem enged\u00e9lyezi a hozz\u00e1f\u00e9r\u00e9st a(z) \"%s\" megosztott gyors\u00edt\u00f3t\u00e1r pillanatk\u00e9pf\u00e1jlhoz, mert a JVM folyamat felhaszn\u00e1l\u00f3i azonos\u00edt\u00f3ja \u00e9s csoportazonos\u00edt\u00f3ja k\u00fcl\u00f6nb\u00f6zik a megosztott gyors\u00edt\u00f3t\u00e1r pillanatk\u00e9pf\u00e1jl tulajdonos\u00e1nak felhaszn\u00e1l\u00f3i azonos\u00edt\u00f3j\u00e1t\u00f3l \u00e9s csoportazonos\u00edt\u00f3j\u00e1t\u00f3l, \u00e9s a JVM folyamat felhaszn\u00e1l\u00f3i azonos\u00edt\u00f3ja nem tartozik a megosztott gyors\u00edt\u00f3t\u00e1r pillanatk\u00e9pf\u00e1jl tulajdonos\u00e1nak csoportj\u00e1ba.
+J9NLS_SHRC_OSCACHE_SNAPSHOT_OTHERS_ACCESS_NOT_ALLOWED=A JVM nem enged\u00e9lyezi a hozz\u00e1f\u00e9r\u00e9st a(z) "%s" megosztott gyors\u00edt\u00f3t\u00e1r pillanatk\u00e9pf\u00e1jlhoz, mert a JVM folyamat felhaszn\u00e1l\u00f3i azonos\u00edt\u00f3ja \u00e9s csoportazonos\u00edt\u00f3ja k\u00fcl\u00f6nb\u00f6zik a megosztott gyors\u00edt\u00f3t\u00e1r pillanatk\u00e9pf\u00e1jl tulajdonos\u00e1nak felhaszn\u00e1l\u00f3i azonos\u00edt\u00f3j\u00e1t\u00f3l \u00e9s csoportazonos\u00edt\u00f3j\u00e1t\u00f3l, \u00e9s a JVM folyamat felhaszn\u00e1l\u00f3i azonos\u00edt\u00f3ja nem tartozik a megosztott gyors\u00edt\u00f3t\u00e1r pillanatk\u00e9pf\u00e1jl tulajdonos\u00e1nak csoportj\u00e1ba.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SNAPSHOT_OTHERS_ACCESS_NOT_ALLOWED.sample_input_1=/myJVM/myCaches
 J9NLS_SHRC_OSCACHE_SNAPSHOT_OTHERS_ACCESS_NOT_ALLOWED.explanation=An error has occurred within shared classes processing.
@@ -5874,7 +5859,7 @@ J9NLS_SHRC_OSCACHE_SNAPSHOT_OTHERS_ACCESS_NOT_ALLOWED.system_action=The JVM fail
 J9NLS_SHRC_OSCACHE_SNAPSHOT_OTHERS_ACCESS_NOT_ALLOWED.user_response=Specify a different cache name or directory to avoid conflict with existing shared cache snapshot created by another user not in its group.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SNAPSHOT_INTERNAL_ERROR_CHECKING_CACHEFILE_ACCESS=A JVM nem tudta ellen\u0151rizni a(z) \"%s\" megosztott gyors\u00edt\u00f3t\u00e1r pillanatk\u00e9pf\u00e1jl enged\u00e9lyeit
+J9NLS_SHRC_OSCACHE_SNAPSHOT_INTERNAL_ERROR_CHECKING_CACHEFILE_ACCESS=A JVM nem tudta ellen\u0151rizni a(z) "%s" megosztott gyors\u00edt\u00f3t\u00e1r pillanatk\u00e9pf\u00e1jl enged\u00e9lyeit
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SNAPSHOT_INTERNAL_ERROR_CHECKING_CACHEFILE_ACCESS.sample_input_1=/myJVM/myCaches
 J9NLS_SHRC_OSCACHE_SNAPSHOT_INTERNAL_ERROR_CHECKING_CACHEFILE_ACCESS.explanation=An error has occurred within shared classes processing.
@@ -5882,7 +5867,7 @@ J9NLS_SHRC_OSCACHE_SNAPSHOT_INTERNAL_ERROR_CHECKING_CACHEFILE_ACCESS.system_acti
 J9NLS_SHRC_OSCACHE_SNAPSHOT_INTERNAL_ERROR_CHECKING_CACHEFILE_ACCESS.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_ERROR_SNAPSHOT_FILE_NOT_FOUND=A(z) \"%s\" megosztott gyors\u00edt\u00f3t\u00e1r pillanatk\u00e9pf\u00e1jl nem l\u00e9tezik
+J9NLS_SHRC_OSCACHE_ERROR_SNAPSHOT_FILE_NOT_FOUND=A(z) "%s" megosztott gyors\u00edt\u00f3t\u00e1r pillanatk\u00e9pf\u00e1jl nem l\u00e9tezik
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_ERROR_SNAPSHOT_FILE_NOT_FOUND.sample_input_1=/myJVM/myCaches
 J9NLS_SHRC_OSCACHE_ERROR_SNAPSHOT_FILE_NOT_FOUND.explanation=The shared cache snapshot file is not found on the disk.
@@ -5890,7 +5875,7 @@ J9NLS_SHRC_OSCACHE_ERROR_SNAPSHOT_FILE_NOT_FOUND.system_action=The JVM fails to 
 J9NLS_SHRC_OSCACHE_ERROR_SNAPSHOT_FILE_NOT_FOUND.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_ERROR_SNAPSHOT_FILE_LENGTH=A nem \u00e1lland\u00f3 \"%s\" megosztott gyors\u00edt\u00f3t\u00e1r pillanatk\u00e9pf\u00e1jl hossza \u00e9rv\u00e9nytelen. A f\u00e1jl hossza %lld byte. Az \u00e9rv\u00e9nyes pillanatk\u00e9pf\u00e1jl legal\u00e1bb %d byte \u00e9s legfeljebb %lld byte m\u00e9ret\u0171.
+J9NLS_SHRC_OSCACHE_ERROR_SNAPSHOT_FILE_LENGTH=A nem \u00e1lland\u00f3 "%s" megosztott gyors\u00edt\u00f3t\u00e1r pillanatk\u00e9pf\u00e1jl hossza \u00e9rv\u00e9nytelen. A f\u00e1jl hossza %lld byte. Az \u00e9rv\u00e9nyes pillanatk\u00e9pf\u00e1jl legal\u00e1bb %d byte \u00e9s legfeljebb %lld byte m\u00e9ret\u0171.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_ERROR_SNAPSHOT_FILE_LENGTH.sample_input_1=/myJVM/myCaches
 J9NLS_SHRC_OSCACHE_ERROR_SNAPSHOT_FILE_LENGTH.sample_input_2=1234
@@ -5901,7 +5886,7 @@ J9NLS_SHRC_OSCACHE_ERROR_SNAPSHOT_FILE_LENGTH.system_action=The JVM fails to com
 J9NLS_SHRC_OSCACHE_ERROR_SNAPSHOT_FILE_LENGTH.user_response=Ensure the file is a valid shared cache snapshot file.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_ERROR_RESTORE_EXISTING_CACHE=A nem \u00e1lland\u00f3 \"%s\" megosztott gyors\u00edt\u00f3t\u00e1r m\u00e1r l\u00e9tezik. Nem lehet vissza\u00e1ll\u00edtani a pillanatk\u00e9pb\u0151l.
+J9NLS_SHRC_OSCACHE_ERROR_RESTORE_EXISTING_CACHE=A nem \u00e1lland\u00f3 "%s" megosztott gyors\u00edt\u00f3t\u00e1r m\u00e1r l\u00e9tezik. Nem lehet vissza\u00e1ll\u00edtani a pillanatk\u00e9pb\u0151l.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_ERROR_RESTORE_EXISTING_CACHE.sample_input_1=myCache
 J9NLS_SHRC_OSCACHE_ERROR_RESTORE_EXISTING_CACHE.explanation=Only a new non-persistent shared cache can be restored from snapshot.
@@ -5916,7 +5901,7 @@ J9NLS_SHRC_OSCACHE_ERROR_STARTUP_CACHE.system_action=The JVM fails to complete t
 J9NLS_SHRC_OSCACHE_ERROR_STARTUP_CACHE.user_response=Verify that the system has enough native resources for the JVM to work properly. If the situation persists, contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_ERROR_SNAPSHOT_FILE_READ=A nem \u00e1lland\u00f3 \"%s\" megosztott gyors\u00edt\u00f3t\u00e1r pillanatk\u00e9pf\u00e1jl beolvas\u00e1sa nem siker\u00fclt
+J9NLS_SHRC_OSCACHE_ERROR_SNAPSHOT_FILE_READ=A nem \u00e1lland\u00f3 "%s" megosztott gyors\u00edt\u00f3t\u00e1r pillanatk\u00e9pf\u00e1jl beolvas\u00e1sa nem siker\u00fclt
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_ERROR_SNAPSHOT_FILE_READ.sample_input_1=/myJVM/myCaches
 J9NLS_SHRC_OSCACHE_ERROR_SNAPSHOT_FILE_READ.explanation=An error has occurred while reading the non-persistent shared cache snapshot file
@@ -5966,7 +5951,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_PRINT_SNAPSHOT_FILENAME.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINT_SNAPSHOT_FILENAME.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SHARED_CACHE_SIZE_ZERO_AND_DIFF_ADDRESS_MODE=Haszn\u00e1ljon %d bites Java virtu\u00e1lis g\u00e9pet a k\u00e9rt m\u0171velet v\u00e9grehajt\u00e1s\u00e1hoz a(z) %d bites \"%s\" megosztott gyors\u00edt\u00f3t\u00e1ron, mivel a(z) %d bites JVM nem tudja ellen\u0151rizni, hogy az osztott mem\u00f3ri\u00e1t a JVM hozta-e l\u00e9tre
+J9NLS_SHRC_OSCACHE_SHARED_CACHE_SIZE_ZERO_AND_DIFF_ADDRESS_MODE=Haszn\u00e1ljon %d bites Java virtu\u00e1lis g\u00e9pet a k\u00e9rt m\u0171velet v\u00e9grehajt\u00e1s\u00e1hoz a(z) %d bites "%s" megosztott gyors\u00edt\u00f3t\u00e1ron, mivel a(z) %d bites JVM nem tudja ellen\u0151rizni, hogy az osztott mem\u00f3ri\u00e1t a JVM hozta-e l\u00e9tre
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_SIZE_ZERO_AND_DIFF_ADDRESS_MODE.sample_input_1=64
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_SIZE_ZERO_AND_DIFF_ADDRESS_MODE.sample_input_2=64
@@ -5992,8 +5977,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_REVALIDATE_AOT_METHODS.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_REVALIDATE_AOT_METHODS.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_FIND_AOT_METHODS=A met\u00f3dusspecifik\u00e1ci\u00f3(k)nak megfelel\u0151 AOT met\u00f3dus(ok) ki\u00edr\u00e1sa.\n\
-\tA <met\u00f3dusspecifik\u00e1ci\u00f3> a k\u00f6vetkez\u0151k\u00e9nt ker\u00fcl meghat\u00e1roz\u00e1sra: [!]{*|[*]<csomagn\u00e9v/oszt\u00e1lyn\u00e9v>[*]}[.{*|[*]<met\u00f3dusn\u00e9v>[*]}[({*|[*]<param\u00e9terek>[*]})]].
+J9NLS_SHRC_SHRINIT_HELPTEXT_FIND_AOT_METHODS=A met\u00f3dusspecifik\u00e1ci\u00f3(k)nak megfelel\u0151 AOT met\u00f3dus(ok) ki\u00edr\u00e1sa.\n\tA <met\u00f3dusspecifik\u00e1ci\u00f3> a k\u00f6vetkez\u0151k\u00e9nt ker\u00fcl meghat\u00e1roz\u00e1sra: [!]{*|[*]<csomagn\u00e9v/oszt\u00e1lyn\u00e9v>[*]}[.{*|[*]<met\u00f3dusn\u00e9v>[*]}[({*|[*]<param\u00e9terek>[*]})]].
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_FIND_AOT_METHODS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_FIND_AOT_METHODS.system_action=
@@ -6015,9 +5999,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_AOT_METHODS_OPERATION.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_AOT_METHODS_OPERATION.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_METHOD_SPEC=A <met\u00f3dusspecifik\u00e1ci\u00f3> form\u00e1tuma: [!]{*|[*]<csomagn\u00e9v/oszt\u00e1lyn\u00e9v>[*]}[.{*|[*]<met\u00f3dusn\u00e9v>[*]}[({*|[*]<param\u00e9terek>[*]})]], p\u00e9ld\u00e1ul:\n\
-\n\
-\t-Xshareclasses:name=Cache1,%sjava/util/HashMap.hash(Ljava/lang/Object;)\n
+J9NLS_SHRC_SHRINIT_HELPTEXT_METHOD_SPEC=A <met\u00f3dusspecifik\u00e1ci\u00f3> form\u00e1tuma: [!]{*|[*]<csomagn\u00e9v/oszt\u00e1lyn\u00e9v>[*]}[.{*|[*]<met\u00f3dusn\u00e9v>[*]}[({*|[*]<param\u00e9terek>[*]})]], p\u00e9ld\u00e1ul:\n\n\t-Xshareclasses:name=Cache1,%sjava/util/HashMap.hash(Ljava/lang/Object;)\n
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_METHOD_SPEC.sample_input_1=findAotMethods=
 J9NLS_SHRC_SHRINIT_HELPTEXT_METHOD_SPEC.explanation=NOTAG
@@ -6025,19 +6007,16 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_METHOD_SPEC.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_METHOD_SPEC.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_INFOTEXT_METHOD_SPEC=FONTOS: Vessz\u0151kkel elv\u00e1lasztva t\u00f6bb met\u00f3dusspecifik\u00e1ci\u00f3t is \u00e1tadhat. Ahol a param\u00e9ter\u00e9rt\u00e9k vessz\u0151(ke)t tartalmaz, ott az \u00e9rt\u00e9ket kapcsos z\u00e1r\u00f3jelek k\u00f6z\u00e9 kell z\u00e1rni. \n\
-\tA vessz\u0151vel elv\u00e1lasztott \u00e9rt\u00e9keket tartalmaz\u00f3 parancssorok parancs\u00e9rtelmez\u0151 \u00e1ltali elfog\u00e1s\u00e1nak \u00e9s t\u00f6rdel\u00e9s\u00e9nek megel\u0151z\u00e9se \u00e9rdek\u00e9ben lehet, hogy id\u00e9z\u0151jelek k\u00f6z\u00e9 kell z\u00e1rnia a param\u00e9tereket, pl.: \n\
-\n\
-\t\"-Xshareclasses:name=Cache1,%s{java/util/*.*(),java/lang/Object.*(*)}\" vagy\n\
-\t-Xshareclasses:name=Cache1,%s\'{java/util/*.*(),!java/util/*.*()}\'\n
+J9NLS_SHRC_SHRINIT_INFOTEXT_METHOD_SPEC=FONTOS: Vessz\u0151kkel elv\u00e1lasztva t\u00f6bb met\u00f3dusspecifik\u00e1ci\u00f3t is \u00e1tadhat. Ahol a param\u00e9ter\u00e9rt\u00e9k vessz\u0151(ke)t tartalmaz, ott az \u00e9rt\u00e9ket kapcsos z\u00e1r\u00f3jelek k\u00f6z\u00e9 kell z\u00e1rni. \n\tA vessz\u0151vel elv\u00e1lasztott \u00e9rt\u00e9keket tartalmaz\u00f3 parancssorok parancs\u00e9rtelmez\u0151 \u00e1ltali elfog\u00e1s\u00e1nak \u00e9s t\u00f6rdel\u00e9s\u00e9nek megel\u0151z\u00e9se \u00e9rdek\u00e9ben lehet, hogy id\u00e9z\u0151jelek k\u00f6z\u00e9 kell z\u00e1rnia a param\u00e9tereket, pl.: \n\n\t"-Xshareclasses:name=Cache1,%s{java/util/*.*(),java/lang/Object.*(*)}" vagy\n\t-Xshareclasses:name=Cache1,%s'{java/util/*.*(),!java/util/*.*()}'\n
 # START NON-TRANSLATABLE
-J9NLS_SHRC_SHRINIT_INFOTEXT_METHOD_SPEC.sample_input_1=findAotMethods=
+J9NLS_SHRC_SHRINIT_INFOTEXT_METHOD_SPEC.sample_input_1=hashCode
+J9NLS_SHRC_SHRINIT_INFOTEXT_METHOD_SPEC.sample_input_2=hashCode
 J9NLS_SHRC_SHRINIT_INFOTEXT_METHOD_SPEC.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_INFOTEXT_METHOD_SPEC.system_action=
 J9NLS_SHRC_SHRINIT_INFOTEXT_METHOD_SPEC.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_INVALID_METHODSPEC=Legal\u00e1bb egy \u00e9rv\u00e9nytelen met\u00f3dusspecifik\u00e1ci\u00f3 tartozik a(z) \"%s\" param\u00e9terhez
+J9NLS_SHRC_SHRINIT_INVALID_METHODSPEC=Legal\u00e1bb egy \u00e9rv\u00e9nytelen met\u00f3dusspecifik\u00e1ci\u00f3 tartozik a(z) "%s" param\u00e9terhez
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_INVALID_METHODSPEC.sample_input_1=findAotMethods=
 J9NLS_SHRC_SHRINIT_INVALID_METHODSPEC.explanation=The method specification provided was not recognised.
@@ -6129,7 +6108,7 @@ J9NLS_SHRC_OSCACHE_CONTROL_FILE_RECREATE_PROHIBITED.user_response=None required.
 # END NON-TRANSLATABLE
 
 #shrinit.cpp
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_INVALIDATEDAOT=\t invalidatedaot Csak \u00e9rv\u00e9nytelen\u00edtett AOT t\u00edpusokat \u00edr ki a megosztott gyors\u00edt\u00f3t\u00e1rba.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_INVALIDATEDAOT=\t\ invalidatedaot Csak \u00e9rv\u00e9nytelen\u00edtett AOT t\u00edpusokat \u00edr ki a megosztott gyors\u00edt\u00f3t\u00e1rba.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_INVALIDATEDAOT.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_INVALIDATEDAOT.system_action=
@@ -6195,11 +6174,7 @@ J9NLS_SHRC_SHRCLSSUP_FAILURE_OPTION_BUFFER_OVERFLOW.system_action=The JVM termin
 J9NLS_SHRC_SHRCLSSUP_FAILURE_OPTION_BUFFER_OVERFLOW.user_response=Ensure the -Xshareclasses sub-options are not longer than the maximum length and retry.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_SHARED_MEMORY_SIZE_CHANGED=A k\u00e9rt %1$d byte m\u00e9ret\u0171 megosztott mem\u00f3ria nem hozhat\u00f3 l\u00e9tre \n\
-\ \tBe\u00e1ll\u00edtva a megengedett maxim\u00e1lis megosztott mem\u00f3ria m\u00e9retre (%2$d byte) \n\
-\ \t(Az el\u00e9rhet\u0151 megosztott mem\u00f3ria n\u00f6vel\u00e9se \u00e9rdek\u00e9ben m\u00f3dos\u00edtsa a rendszer SHMMAX \u00e9rt\u00e9k) \n\
-\ \t -Xscdmx haszn\u00e1lata eset\u00e9n a hibakeres\u00e9si attrib\u00fatum ter\u00fclete annak -Xscmx \u00e9rt\u00e9khez \n\
-\ \t viszony\u00edtott eredeti ar\u00e1nya alapj\u00e1n ker\u00fcl be\u00e1ll\u00edt\u00e1sra.
+J9NLS_SHRC_SHRINIT_SHARED_MEMORY_SIZE_CHANGED=A k\u00e9rt %1$d byte m\u00e9ret\u0171 megosztott mem\u00f3ria nem hozhat\u00f3 l\u00e9tre \n \tBe\u00e1ll\u00edtva a megengedett maxim\u00e1lis megosztott mem\u00f3ria m\u00e9retre (%2$d byte) \n \t(Az el\u00e9rhet\u0151 megosztott mem\u00f3ria n\u00f6vel\u00e9se \u00e9rdek\u00e9ben m\u00f3dos\u00edtsa a rendszer SHMMAX \u00e9rt\u00e9k) \n \t -Xscdmx haszn\u00e1lata eset\u00e9n a hibakeres\u00e9si attrib\u00fatum ter\u00fclete annak -Xscmx \u00e9rt\u00e9khez \n \t viszony\u00edtott eredeti ar\u00e1nya alapj\u00e1n ker\u00fcl be\u00e1ll\u00edt\u00e1sra.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_SHARED_MEMORY_SIZE_CHANGED.sample_input_1=99999999
 J9NLS_SHRC_SHRINIT_SHARED_MEMORY_SIZE_CHANGED.sample_input_2=99999998
@@ -6257,7 +6232,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_MPROTECT_PARTIAL_PAGES.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_MPROTECT_PARTIAL_PAGES.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CC_WARN_AVAILABLE_SPACE_FULL=A megosztott \"%s\" gyors\u00edt\u00f3t\u00e1r haszn\u00e1lat\u00e1ra vonatkoz\u00f3 softmx korl\u00e1t el\u00e9r\u00e9sre ker\u00fclt. A(z) \"%s\" haszn\u00e1lat\u00e1val n\u00f6velje a softmx korl\u00e1tot.
+J9NLS_SHRC_CC_WARN_AVAILABLE_SPACE_FULL=A megosztott "%s" gyors\u00edt\u00f3t\u00e1r haszn\u00e1lat\u00e1ra vonatkoz\u00f3 softmx korl\u00e1t el\u00e9r\u00e9sre ker\u00fclt. A(z) "%s" haszn\u00e1lat\u00e1val n\u00f6velje a softmx korl\u00e1tot.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CC_WARN_AVAILABLE_SPACE_FULL.sample_input_1=Cache1
 J9NLS_SHRC_CC_WARN_AVAILABLE_SPACE_FULL.sample_input_2=adjustsoftmx=
@@ -6266,7 +6241,7 @@ J9NLS_SHRC_CC_WARN_AVAILABLE_SPACE_FULL.system_action=The JVM continues. The nam
 J9NLS_SHRC_CC_WARN_AVAILABLE_SPACE_FULL.user_response=Increase the softmx limit if user wants more data to be added to the shared cache.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CC_WARN_AOT_SPACE_FULL=Az AOT adatok ter\u00fclete a(z) \"%s\" megosztott gyors\u00edt\u00f3t\u00e1rban megtelt.
+J9NLS_SHRC_CC_WARN_AOT_SPACE_FULL=Az AOT adatok ter\u00fclete a(z) "%s" megosztott gyors\u00edt\u00f3t\u00e1rban megtelt.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CC_WARN_AOT_SPACE_FULL.sample_input_1=myCache
 J9NLS_SHRC_CC_WARN_AOT_SPACE_FULL.explanation=The space for AOT data in named shared class cache is full and no further AOT data can be added to it. If the shared cache is not full, then either the maximum space allowed for AOT data or softmx limit set for shared cache usage is reached.
@@ -6274,7 +6249,7 @@ J9NLS_SHRC_CC_WARN_AOT_SPACE_FULL.system_action=The JVM continues. The named sha
 J9NLS_SHRC_CC_WARN_AOT_SPACE_FULL.user_response=If the shared cache is not full, the maximum space allowed for AOT data can be increased using -Xshareclasses:adjustmaxaot= option. In the case softmx limit for shared cache usage is reached, it can be increased using -Xshareclasses:adjustsoftmx= option. User can also increase the minimum space reserved for AOT data using -Xshareclasses:adjustminaot= option.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CC_WARN_JIT_SPACE_FULL=A JIT adatok ter\u00fclete a(z) \"%s\" megosztott gyors\u00edt\u00f3t\u00e1rban megtelt.
+J9NLS_SHRC_CC_WARN_JIT_SPACE_FULL=A JIT adatok ter\u00fclete a(z) "%s" megosztott gyors\u00edt\u00f3t\u00e1rban megtelt.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CC_WARN_JIT_SPACE_FULL.sample_input_1=myCache
 J9NLS_SHRC_CC_WARN_JIT_SPACE_FULL.explanation=The space for JIT data in named shared class cache is full and no further JIT data can be added to it. If the shared cache is not full, then either the maximum space allowed for JIT data or softmx limit set for shared cache usage is reached.
@@ -6522,7 +6497,7 @@ J9NLS_SHRC_OSCACHE_STARTUP_MPROTECT_PARTIAL_PAGES_NOT_ENABLED_ON_STARTUP.system_
 J9NLS_SHRC_OSCACHE_STARTUP_MPROTECT_PARTIAL_PAGES_NOT_ENABLED_ON_STARTUP.user_response=Please destroy existing shared cache and restart the JVM for the JVM to protect partially filled pages in the shared cache on startup.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_MMAP_DESTROY_SUCCESS_CR=A t\u00f6m\u00f6r\u00edtett hivatkoz\u00e1sok \u00e1lland\u00f3 megosztott gyors\u00edt\u00f3t\u00e1ra (\"%1$s\") megsemmis\u00edt\u00e9sre ker\u00fclt. Haszn\u00e1lja az -Xnocompressedrefs param\u00e9tert, ha a nem t\u00f6m\u00f6r\u00edtett hivatkoz\u00e1sok gyors\u00edt\u00f3t\u00e1r\u00e1t k\u00edv\u00e1nja megsemmis\u00edteni.
+J9NLS_SHRC_OSCACHE_MMAP_DESTROY_SUCCESS_CR=A t\u00f6m\u00f6r\u00edtett hivatkoz\u00e1sok \u00e1lland\u00f3 megosztott gyors\u00edt\u00f3t\u00e1ra ("%1$s") megsemmis\u00edt\u00e9sre ker\u00fclt. Haszn\u00e1lja az -Xnocompressedrefs param\u00e9tert, ha a nem t\u00f6m\u00f6r\u00edtett hivatkoz\u00e1sok gyors\u00edt\u00f3t\u00e1r\u00e1t k\u00edv\u00e1nja megsemmis\u00edteni.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_MMAP_DESTROY_SUCCESS_CR.sample_input_1=myCache
 J9NLS_SHRC_OSCACHE_MMAP_DESTROY_SUCCESS_CR.explanation=This message informs you that you have successfully destroyed the compressed references cache named 1$.
@@ -6530,7 +6505,7 @@ J9NLS_SHRC_OSCACHE_MMAP_DESTROY_SUCCESS_CR.system_action=The JVM terminates at t
 J9NLS_SHRC_OSCACHE_MMAP_DESTROY_SUCCESS_CR.user_response=No action required, this is an information only message.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_MMAP_DESTROY_SUCCESS_NONCR=A nem t\u00f6m\u00f6r\u00edtett hivatkoz\u00e1sok \u00e1lland\u00f3 megosztott gyors\u00edt\u00f3t\u00e1ra (\"%1$s\") megsemmis\u00edt\u00e9sre ker\u00fclt. Haszn\u00e1lja az -Xcompressedrefs param\u00e9tert, ha a t\u00f6m\u00f6r\u00edtett hivatkoz\u00e1sok gyors\u00edt\u00f3t\u00e1r\u00e1t k\u00edv\u00e1nja megsemmis\u00edteni.
+J9NLS_SHRC_OSCACHE_MMAP_DESTROY_SUCCESS_NONCR=A nem t\u00f6m\u00f6r\u00edtett hivatkoz\u00e1sok \u00e1lland\u00f3 megosztott gyors\u00edt\u00f3t\u00e1ra ("%1$s") megsemmis\u00edt\u00e9sre ker\u00fclt. Haszn\u00e1lja az -Xcompressedrefs param\u00e9tert, ha a t\u00f6m\u00f6r\u00edtett hivatkoz\u00e1sok gyors\u00edt\u00f3t\u00e1r\u00e1t k\u00edv\u00e1nja megsemmis\u00edteni.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_MMAP_DESTROY_SUCCESS_NONCR.sample_input_1=myCache
 J9NLS_SHRC_OSCACHE_MMAP_DESTROY_SUCCESS_NONCR.explanation=This message informs you that you have successfully destroyed the non-compressed references cache named 1$.
@@ -6538,7 +6513,7 @@ J9NLS_SHRC_OSCACHE_MMAP_DESTROY_SUCCESS_NONCR.system_action=The JVM terminates a
 J9NLS_SHRC_OSCACHE_MMAP_DESTROY_SUCCESS_NONCR.user_response=No action required, this is an information only message.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SHARED_CACHE_DESTROYED_CR=A t\u00f6m\u00f6r\u00edtett hivatkoz\u00e1sok megosztott gyors\u00edt\u00f3t\u00e1ra (\"%s\") megsemmis\u00edt\u00e9sre ker\u00fclt. Haszn\u00e1lja az -Xnocompressedrefs param\u00e9tert, ha a nem t\u00f6m\u00f6r\u00edtett hivatkoz\u00e1sok gyors\u00edt\u00f3t\u00e1r\u00e1t k\u00edv\u00e1nja megsemmis\u00edteni.
+J9NLS_SHRC_OSCACHE_SHARED_CACHE_DESTROYED_CR=A t\u00f6m\u00f6r\u00edtett hivatkoz\u00e1sok megosztott gyors\u00edt\u00f3t\u00e1ra ("%s") megsemmis\u00edt\u00e9sre ker\u00fclt. Haszn\u00e1lja az -Xnocompressedrefs param\u00e9tert, ha a nem t\u00f6m\u00f6r\u00edtett hivatkoz\u00e1sok gyors\u00edt\u00f3t\u00e1r\u00e1t k\u00edv\u00e1nja megsemmis\u00edteni.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_DESTROYED_CR.sample_input_1=myCache
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_DESTROYED_CR.explanation=This is an information message notifying you that the named compressed references shared class cache has been destroyed as requested.
@@ -6546,7 +6521,7 @@ J9NLS_SHRC_OSCACHE_SHARED_CACHE_DESTROYED_CR.system_action=A JVM will not be cre
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_DESTROYED_CR.user_response=None required.  This is an information message issued when you request a shared class cache to be destroyed.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SHARED_CACHE_DESTROYED_NONCR=A nem t\u00f6m\u00f6r\u00edtett hivatkoz\u00e1sok megosztott gyors\u00edt\u00f3t\u00e1ra (\"%s\") megsemmis\u00edt\u00e9sre ker\u00fclt. Haszn\u00e1lja az -Xcompressedrefs param\u00e9tert, ha a t\u00f6m\u00f6r\u00edtett hivatkoz\u00e1sok gyors\u00edt\u00f3t\u00e1r\u00e1t k\u00edv\u00e1nja megsemmis\u00edteni.
+J9NLS_SHRC_OSCACHE_SHARED_CACHE_DESTROYED_NONCR=A nem t\u00f6m\u00f6r\u00edtett hivatkoz\u00e1sok megosztott gyors\u00edt\u00f3t\u00e1ra ("%s") megsemmis\u00edt\u00e9sre ker\u00fclt. Haszn\u00e1lja az -Xcompressedrefs param\u00e9tert, ha a t\u00f6m\u00f6r\u00edtett hivatkoz\u00e1sok gyors\u00edt\u00f3t\u00e1r\u00e1t k\u00edv\u00e1nja megsemmis\u00edteni.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_DESTROYED_NONCR.sample_input_1=myCache
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_DESTROYED_NONCR.explanation=This is an information message notifying you that the named non-compressed references shared class cache has been destroyed as requested.
@@ -6554,7 +6529,7 @@ J9NLS_SHRC_OSCACHE_SHARED_CACHE_DESTROYED_NONCR.system_action=A JVM will not be 
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_DESTROYED_NONCR.user_response=None required.  This is an information message issued when you request a shared class cache to be destroyed.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CLCM_SNAPSHOT_DESTROYED_CR=A t\u00f6m\u00f6r\u00edtett hivatkoz\u00e1sok megosztott gyors\u00edt\u00f3t\u00e1r pillanatk\u00e9pe (\"%s\") megsemmis\u00edt\u00e9sre ker\u00fclt. Haszn\u00e1lja az -Xnocompressedrefs param\u00e9tert, ha a nem t\u00f6m\u00f6r\u00edtett hivatkoz\u00e1sok gyors\u00edt\u00f3t\u00e1r pillanatk\u00e9p\u00e9t k\u00edv\u00e1nja megsemmis\u00edteni.
+J9NLS_SHRC_CLCM_SNAPSHOT_DESTROYED_CR=A t\u00f6m\u00f6r\u00edtett hivatkoz\u00e1sok megosztott gyors\u00edt\u00f3t\u00e1r pillanatk\u00e9pe ("%s") megsemmis\u00edt\u00e9sre ker\u00fclt. Haszn\u00e1lja az -Xnocompressedrefs param\u00e9tert, ha a nem t\u00f6m\u00f6r\u00edtett hivatkoz\u00e1sok gyors\u00edt\u00f3t\u00e1r pillanatk\u00e9p\u00e9t k\u00edv\u00e1nja megsemmis\u00edteni.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CLCM_SNAPSHOT_DESTROYED_CR.sample_input_1=myCache
 J9NLS_SHRC_CLCM_SNAPSHOT_DESTROYED_CR.explanation=This is an information message notifying the user that the named compressed references shared cache snapshot has been destroyed as requested.
@@ -6562,7 +6537,7 @@ J9NLS_SHRC_CLCM_SNAPSHOT_DESTROYED_CR.system_action=The JVM continues.
 J9NLS_SHRC_CLCM_SNAPSHOT_DESTROYED_CR.user_response=None required.  This is an information message issued when you request a shared cache snapshot to be destroyed.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CLCM_SNAPSHOT_DESTROYED_NONCR=A nem t\u00f6m\u00f6r\u00edtett hivatkoz\u00e1sok megosztott gyors\u00edt\u00f3t\u00e1r pillanatk\u00e9pe (\"%s\") megsemmis\u00edt\u00e9sre ker\u00fclt. Haszn\u00e1lja az -Xcompressedrefs param\u00e9tert, ha t\u00f6m\u00f6r\u00edtett hivatkoz\u00e1sok gyors\u00edt\u00f3t\u00e1r pillanatk\u00e9p\u00e9t k\u00edv\u00e1nja megsemmis\u00edteni.
+J9NLS_SHRC_CLCM_SNAPSHOT_DESTROYED_NONCR=A nem t\u00f6m\u00f6r\u00edtett hivatkoz\u00e1sok megosztott gyors\u00edt\u00f3t\u00e1r pillanatk\u00e9pe ("%s") megsemmis\u00edt\u00e9sre ker\u00fclt. Haszn\u00e1lja az -Xcompressedrefs param\u00e9tert, ha t\u00f6m\u00f6r\u00edtett hivatkoz\u00e1sok gyors\u00edt\u00f3t\u00e1r pillanatk\u00e9p\u00e9t k\u00edv\u00e1nja megsemmis\u00edteni.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CLCM_SNAPSHOT_DESTROYED_NONCR.sample_input_1=myCache
 J9NLS_SHRC_CLCM_SNAPSHOT_DESTROYED_NONCR.explanation=This is an information message notifying the user that the named non-compressed references shared cache snapshot has been destroyed as requested.
@@ -6588,7 +6563,7 @@ J9NLS_SHRC_CM_PRINTSHUTDOWNSTATS_UNSTORED.system_action=The JVM continues.
 J9NLS_SHRC_CM_PRINTSHUTDOWNSTATS_UNSTORED.user_response=No action required, this is an information only message.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_STALE=\t stale           Ki\u00edrja a megosztott gyors\u00edt\u00f3t\u00e1rban tal\u00e1lhat\u00f3 \u00f6sszes el\u00e9v\u00fclt bejegyz\u00e9st.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_STALE=\t\ stale           Ki\u00edrja a megosztott gyors\u00edt\u00f3t\u00e1rban tal\u00e1lhat\u00f3 \u00f6sszes el\u00e9v\u00fclt bejegyz\u00e9st.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_STALE.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_STALE.system_action=
@@ -6682,7 +6657,7 @@ J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS_DISPLAY_DETAIL.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS_DISPLAY_DETAIL.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_STARTUPHINT=\t startuphint       Csak a megosztott gyors\u00edt\u00f3t\u00e1rban tal\u00e1lhat\u00f3 ind\u00edt\u00e1si tipp t\u00edpusokat nyomtatja.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_STARTUPHINT=\t\ startuphint       Csak a megosztott gyors\u00edt\u00f3t\u00e1rban tal\u00e1lhat\u00f3 ind\u00edt\u00e1si tipp t\u00edpusokat nyomtatja.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_STARTUPHINT.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_STARTUPHINT.system_action=
@@ -6816,7 +6791,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_CREATE_LAYER.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_CREATE_LAYER.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER=A(z) %d \u00e9rv\u00e9nytelen r\u00e9tegsz\u00e1m \u00e9rhet\u0151 el a(z) \"%s\" eset\u00e9n. A r\u00e9tegsz\u00e1mnak %d \u00e9rt\u00e9kn\u00e9l kisebbnek kell lennie.
+J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER=A(z) %d \u00e9rv\u00e9nytelen r\u00e9tegsz\u00e1m \u00e9rhet\u0151 el a(z) "%s" eset\u00e9n. A r\u00e9tegsz\u00e1mnak %d \u00e9rt\u00e9kn\u00e9l kisebbnek kell lennie.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER.sample_input_1=111
 J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER.sample_input_2=layer=
@@ -6843,8 +6818,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_NO_PERSISTENT_DISK_SPACE_CHECK.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_NO_PERSISTENT_DISK_SPACE_CHECK.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_TOP_LAYER_TITLE=\n\
-A(z) \"%s\" gyors\u00edt\u00f3t\u00e1r legfels\u0151 r\u00e9teg\u00e9nek aktu\u00e1lis statisztik\u00e1ja: \n
+J9NLS_SHRC_CM_PRINTSTATS_TOP_LAYER_TITLE=\nA(z) "%s" gyors\u00edt\u00f3t\u00e1r legfels\u0151 r\u00e9teg\u00e9nek aktu\u00e1lis statisztik\u00e1ja: \n
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_TOP_LAYER_TITLE.sample_input_1=myCache
 J9NLS_SHRC_CM_PRINTSTATS_TOP_LAYER_TITLE.explanation=NOTAG
@@ -6862,8 +6836,7 @@ J9NLS_SHRC_CM_PRINTSTATS_CACHE_LAYER.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_CACHE_LAYER.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_ALL_LAYERS_TITLE=\n\
-A(z) \"%s\" gyors\u00edt\u00f3t\u00e1r \u00f6sszes r\u00e9teg\u00e9nek aktu\u00e1lis statisztik\u00e1ja: \n
+J9NLS_SHRC_CM_PRINTSTATS_ALL_LAYERS_TITLE=\nA(z) "%s" gyors\u00edt\u00f3t\u00e1r \u00f6sszes r\u00e9teg\u00e9nek aktu\u00e1lis statisztik\u00e1ja: \n
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_ALL_LAYERS_TITLE.sample_input_1=myCache
 J9NLS_SHRC_CM_PRINTSTATS_ALL_LAYERS_TITLE.explanation=NOTAG
@@ -6932,4 +6905,11 @@ J9NLS_SHRC_OSCACHE_MMAP_MSYNC_ERROR=Hiba a mem\u00f3ria szinkroniz\u00e1l\u00e1s
 J9NLS_SHRC_OSCACHE_MMAP_MSYNC_ERROR.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_MSYNC_ERROR.system_action=The JVM terminates, unless you have specified the non-fatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using shared classes.
 J9NLS_SHRC_OSCACHE_MMAP_MSYNC_ERROR.user_response=Contact your service representative.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_OSCACHE_MMAP_STARTUP_JITSERVER_LAYER_FILE_DELETE_ERROR=Az ideiglenes gyors\u00edt\u00f3t\u00e1r r\u00e9teg f\u00e1jl nem t\u00e1vol\u00edthat\u00f3 el.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_OSCACHE_MMAP_STARTUP_JITSERVER_LAYER_FILE_DELETE_ERROR.explanation=The JITServer AOT cache created a temporary shared class cache layer in order to function, but the underlying file could not be removed.
+J9NLS_SHRC_OSCACHE_MMAP_STARTUP_JITSERVER_LAYER_FILE_DELETE_ERROR.system_action=The JVM continues.
+J9NLS_SHRC_OSCACHE_MMAP_STARTUP_JITSERVER_LAYER_FILE_DELETE_ERROR.user_response=Contact your service representative.
 # END NON-TRANSLATABLE

@@ -339,7 +339,7 @@ J9NLS_PORT_MMAP_INVALID_FILE_HANDLE.user_response=Contact your service represent
 
 # END NON-TRANSLATABLE
 
-J9NLS_PORT_LINUXDUMP_PIPE_CORE=%s ayar\u0131 \"%s\", temel d\u00f6k\u00fcm\u00fcn bir d\u0131\u015f programa dahil edilece\u011fini belirtir.  Temel ya da temel %d yeniden adland\u0131rma i\u015flemi deneniyor.  Temel d\u00f6k\u00fcm\u00fcn\u00fcn nereye yaz\u0131ld\u0131\u011f\u0131n\u0131 bulmak i\u00e7in d\u0131\u015f program\u0131n elkitab\u0131n\u0131 g\u00f6zden ge\u00e7irin ve program\u0131n bunu kesmedi\u011finden emin olun.\n
+J9NLS_PORT_LINUXDUMP_PIPE_CORE=%s ayar\u0131 "%s", temel d\u00f6k\u00fcm\u00fcn bir d\u0131\u015f programa dahil edilece\u011fini belirtir.  Temel ya da temel %d yeniden adland\u0131rma i\u015flemi deneniyor.  Temel d\u00f6k\u00fcm\u00fcn\u00fcn nereye yaz\u0131ld\u0131\u011f\u0131n\u0131 bulmak i\u00e7in d\u0131\u015f program\u0131n elkitab\u0131n\u0131 g\u00f6zden ge\u00e7irin ve program\u0131n bunu kesmedi\u011finden emin olun.\n
 # START NON-TRANSLATABLE
 J9NLS_PORT_LINUXDUMP_PIPE_CORE.sample_input_1=/proc/sys/kernel/core_pattern
 J9NLS_PORT_LINUXDUMP_PIPE_CORE.sample_input_2=|/usr/lib/systemd/systemd-coredump %P %u %g %s %t %c %h
@@ -488,7 +488,7 @@ J9NLS_PORT_SL_BUFFER_EXCEEDED_ERROR.system_action=Shared object is not loaded
 J9NLS_PORT_SL_BUFFER_EXCEEDED_ERROR.user_response=Reduce path length for the target shared object
 # END NON-TRANSLATABLE
 
-J9NLS_PORT_DUMP_PATH_EXISTS=Sistem d\u00f6k\u00fcm\u00fc yarat\u0131lamad\u0131; beklenen sistem d\u00f6k\u00fcm\u00fc dosyas\u0131yla ayn\u0131 ad\u0131 ta\u015f\u0131yan, d\u00fczenli olmayan bir \"%s\" dosyas\u0131 var
+J9NLS_PORT_DUMP_PATH_EXISTS=Sistem d\u00f6k\u00fcm\u00fc yarat\u0131lamad\u0131; beklenen sistem d\u00f6k\u00fcm\u00fc dosyas\u0131yla ayn\u0131 ad\u0131 ta\u015f\u0131yan, d\u00fczenli olmayan bir "%s" dosyas\u0131 var
 # START NON-TRANSLATABLE
 J9NLS_PORT_DUMP_PATH_EXISTS.sample_input_1=/home/user/core
 J9NLS_PORT_DUMP_PATH_EXISTS.explanation=The JVM was unable to produce a system dump because a non-regular file (for example a directory, symbolic link, pipe or socket) exists with the same name as the expected system dump file.
@@ -496,7 +496,7 @@ J9NLS_PORT_DUMP_PATH_EXISTS.system_action=The JVM continues, the requested syste
 J9NLS_PORT_DUMP_PATH_EXISTS.user_response=Check whether the name of a non-regular file (for example a directory, symbolic link, pipe or socket) in the current working directory of the Java application clashes with the default system dump file name (core or core.<process ID>) or with the setting of /proc/sys/kernel/core_pattern and /proc/sys/kernel/core_uses_pid. Either rename the subdirectory, or change the settings of /proc/sys/kernel/core_pattern and /proc/sys/kernel/core_uses_pid so that the names do not clash.
 # END NON-TRANSLATABLE
 
-J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND=pid = %i ile alt s\u00fcre\u00e7 taraf\u0131ndan yarat\u0131lan temel dosya bulunamad\u0131. \u00c7ekirdek dosyan\u0131n nereye yaz\u0131ld\u0131\u011f\u0131n\u0131 bulmak ve program\u0131n bunu kesmedi\u011finden emin olmak i\u00e7in \"%s\" %s program\u0131na ili\u015fkin belgeleri g\u00f6zden ge\u00e7irin.\n
+J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND=pid = %i ile alt s\u00fcre\u00e7 taraf\u0131ndan yarat\u0131lan temel dosya bulunamad\u0131. \u00c7ekirdek dosyan\u0131n nereye yaz\u0131ld\u0131\u011f\u0131n\u0131 bulmak ve program\u0131n bunu kesmedi\u011finden emin olmak i\u00e7in "%s" %s program\u0131na ili\u015fkin belgeleri g\u00f6zden ge\u00e7irin.\n
 # START NON-TRANSLATABLE
 J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND.sample_input_1=12345
 J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND.sample_input_2=/proc/sys/kernel/core_pattern
@@ -504,4 +504,12 @@ J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND.sample_input_3=|/usr/lib/systemd/system
 J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND.explanation=/proc/sys/kernel/core_pattern starting with | is used to redirect the core file to tools such as systemd-coredump which processes the core dump, for example to send it to a different directory and manage total core dump disk usage, or to suppress it.
 J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND.system_action=The VM could not find the core dump in the current directory most likely because the external program sent it elsewhere or suppressed it.
 J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND.user_response=Refer to the documentation for the external program specified in /proc/sys/kernel/core_pattern to find the core dump and review the program's configuration to ensure the dump is not truncated.
+# END NON-TRANSLATABLE
+
+J9NLS_PORT_RUNNING_IN_CONTAINER_FAILURE=JVM ' nin bir ta\u015f\u0131y\u0131c\u0131 i\u00e7inde \u00e7al\u0131\u015f\u0131p \u00e7al\u0131\u015fmad\u0131\u011f\u0131 saptanamad\u0131; hata iletisi: %s.
+# START NON-TRANSLATABLE
+J9NLS_PORT_RUNNING_IN_CONTAINER_FAILURE.sample_input_1=fopen failed to open /proc/1/cgroup file with errno=2
+J9NLS_PORT_RUNNING_IN_CONTAINER_FAILURE.explanation=An error was encountered while evaluating if the JVM is running inside a container.
+J9NLS_PORT_RUNNING_IN_CONTAINER_FAILURE.system_action=The JVM continues, but performance might be impacted if the JVM is running inside a container.
+J9NLS_PORT_RUNNING_IN_CONTAINER_FAILURE.user_response=Take action to resolve the error if performance is impacted inside a container. Otherwise, ignore the error.
 # END NON-TRANSLATABLE

@@ -951,4 +951,41 @@ J9NLS_GC_OPTIONS_PREFERREDHEAPBASE_NOT_SUPPORTED_ON_ZOS_WARN=\u041e\u043f\u0446\
 J9NLS_GC_OPTIONS_PREFERREDHEAPBASE_NOT_SUPPORTED_ON_ZOS_WARN.explanation=The JVM was started with the -Xgc:preferredHeapBase option, which has no effect on z/OS.
 J9NLS_GC_OPTIONS_PREFERREDHEAPBASE_NOT_SUPPORTED_ON_ZOS_WARN.system_action=The JVM ignores the -Xgc:preferredHeapBase option.
 J9NLS_GC_OPTIONS_PREFERREDHEAPBASE_NOT_SUPPORTED_ON_ZOS_WARN.user_response=Refer to the IBM SDK documentation.
+
+# END NON-TRANSLATABLE
+
+# Note %s gc policy ("balanced" or "metronome")
+J9NLS_GC_POLICY_NOT_SUPPOURTED_CRIU=-Xgcpolicy:%s \u0432 \u043d\u0430\u0441\u0442\u043e\u044f\u0449\u0435\u0435 \u0432\u0440\u0435\u043c\u044f \u043d\u0435 \u043f\u043e\u0434\u0434\u0435\u0440\u0436\u0438\u0432\u0430\u0435\u0442\u0441\u044f \u0441 -XX: +EnableCRIUSupport
+# START NON-TRANSLATABLE
+J9NLS_GC_POLICY_NOT_SUPPOURTED_CRIU.sample_input_1=balanced
+J9NLS_GC_POLICY_NOT_SUPPOURTED_CRIU.explanation=The specified GC policy is currently unsuppourted with CRIU
+J9NLS_GC_POLICY_NOT_SUPPOURTED_CRIU.system_action=The JVM will terminate
+J9NLS_GC_POLICY_NOT_SUPPOURTED_CRIU.user_response=Adjust the garbage collector policy option (-Xgcpolicy) with one of the following supported policies: gencon, optavgpause or optthruput
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_FAILED_TO_REINITIALIZE_PARSING_RESTORE_OPTIONS=\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u0438\u043d\u0438\u0446\u0438\u0430\u043b\u0438\u0437\u0438\u0440\u043e\u0432\u0430\u0442\u044c; \u043d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u043f\u0440\u043e\u0430\u043d\u0430\u043b\u0438\u0437\u0438\u0440\u043e\u0432\u0430\u0442\u044c \u043e\u043f\u0446\u0438\u0438 \u0432\u043e\u0441\u0441\u0442\u0430\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u044f GC
+# START NON-TRANSLATABLE
+J9NLS_GC_FAILED_TO_REINITIALIZE_PARSING_RESTORE_OPTIONS.explanation=The garbage collector failed to initialize because of an error in the restore options
+J9NLS_GC_FAILED_TO_REINITIALIZE_PARSING_RESTORE_OPTIONS.system_action=The JVM will terminate
+J9NLS_GC_FAILED_TO_REINITIALIZE_PARSING_RESTORE_OPTIONS.user_response=Check that all of the GC options are correctly specified
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_THREAD_VALUE_MUST_BE_ABOVE_WARN=-Xgcthreads \u0431\u0443\u0434\u0435\u0442 \u043f\u0440\u043e\u0438\u0433\u043d\u043e\u0440\u0438\u0440\u043e\u0432\u0430\u043d. \u0423\u043a\u0430\u0437\u0430\u043d\u043d\u043e\u0435 \u0447\u0438\u0441\u043b\u043e \u043f\u043e\u0442\u043e\u043a\u043e\u0432 GC \u0434\u043e\u043b\u0436\u043d\u043e \u0431\u044b\u0442\u044c \u0431\u043e\u043b\u044c\u0448\u0435, \u0447\u0435\u043c \u0447\u0438\u0441\u043b\u043e \u043f\u043e\u0442\u043e\u043a\u043e\u0432 GC \u043a\u043e\u043d\u0442\u0440\u043e\u043b\u044c\u043d\u043e\u0439 \u0442\u043e\u0447\u043a\u0438 %1$zu
+# START NON-TRANSLATABLE
+J9NLS_GC_THREAD_VALUE_MUST_BE_ABOVE_WARN.explanation=-Xgcthreads must be greater than the specified value
+J9NLS_GC_THREAD_VALUE_MUST_BE_ABOVE_WARN.system_action=The JVM will terminate
+J9NLS_GC_THREAD_VALUE_MUST_BE_ABOVE_WARN.user_response=Refer to the OpenJ9 documentation and adjust -Xgcthreads to specify a GC thread count greater than the checkpoint GC thread count
+J9NLS_GC_THREAD_VALUE_MUST_BE_ABOVE_WARN.sample_input_1=4
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_OPTIONS_HIERARCHICAL_SCAN_ORDERING_NOT_SUPPORTED_WARN=\u041d\u0435\u043f\u043e\u0434\u0434\u0435\u0440\u0436\u0438\u0432\u0430\u0435\u043c\u0430\u044f \u043e\u043f\u0446\u0438\u044f -Xgc:hierarchicalScan\u041e\u043f\u0446\u0438\u044f \u0443\u043f\u043e\u0440\u044f\u0434\u043e\u0447\u0438\u0432\u0430 \u0441 \u043f\u0430\u0440\u0430\u043c\u0435\u0442\u0440\u043e\u043c -Xgcpolicy:%s \u0431\u0443\u0434\u0435\u0442 \u043f\u0440\u043e\u0438\u0433\u043d\u043e\u0440\u0438\u0440\u043e\u0432\u0430\u043d\u0430.
+# START NON-TRANSLATABLE
+J9NLS_GC_OPTIONS_HIERARCHICAL_SCAN_ORDERING_NOT_SUPPORTED_WARN.sample_input_1=balanced
+J9NLS_GC_OPTIONS_HIERARCHICAL_SCAN_ORDERING_NOT_SUPPORTED_WARN.explanation=-Xgc:hierarchicalScanOrdering is currently only supported with -Xgcpolicy:gencon.
+J9NLS_GC_OPTIONS_HIERARCHICAL_SCAN_ORDERING_NOT_SUPPORTED_WARN.system_action=The JVM ignores the -Xgc:hierarchicalScanOrdering option.
+J9NLS_GC_OPTIONS_HIERARCHICAL_SCAN_ORDERING_NOT_SUPPORTED_WARN.user_response=Refer to the OpenJ9 documentation for -Xgc:hierarchicalScanOrdering.
+
 # END NON-TRANSLATABLE

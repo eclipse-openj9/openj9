@@ -52,58 +52,56 @@ J9NLS_EXELIB_INTERNAL_HELP_1_1.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_1_1.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_1_2=\  -Xbootclasspath:<path>    nastavi za\u010detno nalaganje spremenljivke classpath na <path>
+J9NLS_EXELIB_INTERNAL_HELP_1_2=\ \ -Xbootclasspath:<path>    nastavi za\u010detno nalaganje spremenljivke classpath na <path>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_1_2.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_1_2.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_1_2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_1_3=\  -Xbootclasspath/p:<path>  dodaj <path> pred spremenljivko classpath za\u010detnega nalaganja
+J9NLS_EXELIB_INTERNAL_HELP_1_3=\ \ -Xbootclasspath/p:<path>  dodaj <path> pred spremenljivko classpath za\u010detnega nalaganja
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_1_3.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_1_3.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_1_3.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_1_4=\  -Xbootclasspath/a:<path>  dodaj <path> spremenljivki classpath za\u010detnega nalaganja
+J9NLS_EXELIB_INTERNAL_HELP_1_4=\ \ -Xbootclasspath/a:<path>  dodaj <path> spremenljivki classpath za\u010detnega nalaganja
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_1_4.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_1_4.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_1_4.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_1_5=\n\
-\  -Xrun<library>[:options]  nalo\u017ei izvirno knji\u017enico agentov\n\
-\                            (opu\u0161\u010deno zaradi -agentlib)\n
+J9NLS_EXELIB_INTERNAL_HELP_1_5=\n  -Xrun<library>[:options]  nalo\u017ei izvirno knji\u017enico agentov\n                            (opu\u0161\u010deno zaradi -agentlib)\n
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_1_5.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_1_5.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_1_5.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_1_6=\  -Xint           za\u017eeni le interpretirane (enakovredno -Xnojit -Xnoaot)
+J9NLS_EXELIB_INTERNAL_HELP_1_6=\ \ -Xint           za\u017eeni le interpretirane (enakovredno -Xnojit -Xnoaot)
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_1_6.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_1_6.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_1_6.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_1_7=\  -Xnojit         onemogo\u010di JIT
+J9NLS_EXELIB_INTERNAL_HELP_1_7=\ \ -Xnojit         onemogo\u010di JIT
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_1_7.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_1_7.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_1_7.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_1_8=\  -Xnoaot         ne za\u017eeni vnaprej zbrane kode
+J9NLS_EXELIB_INTERNAL_HELP_1_8=\ \ -Xnoaot         ne za\u017eeni vnaprej zbrane kode
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_1_8.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_1_8.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_1_8.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_1_9=\  -Xfuture        omogo\u010di najstro\u017eja preverjanja, s pri\u010dakovanjem prihodnjih okvar
+J9NLS_EXELIB_INTERNAL_HELP_1_9=\ \ -Xfuture        omogo\u010di najstro\u017eja preverjanja, s pri\u010dakovanjem prihodnjih okvar
 # START NON-TRANSLATABLE
 
 J9NLS_EXELIB_INTERNAL_HELP_1_9.explanation=NOTAG
@@ -111,169 +109,168 @@ J9NLS_EXELIB_INTERNAL_HELP_1_9.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_1_9.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_1=\n\
-Argumenti k naslednjim mo\u017enostim so izra\u017eeni v bajtih.
+J9NLS_EXELIB_INTERNAL_HELP_2_1=\nArgumenti k naslednjim mo\u017enostim so izra\u017eeni v bajtih.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_1.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_1.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_1.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_2=Vrednosti dodane h \"k\" (kilo) ali \"m\" (mega) bodo ustrezno mno\u017eene.\n
+J9NLS_EXELIB_INTERNAL_HELP_2_2=Vrednosti dodane h "k" (kilo) ali "m" (mega) bodo ustrezno mno\u017eene.\n
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_2.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_2.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_3=\  -Xmca<x>        nastavi prirastek odseka razreda RAM na <x>
+J9NLS_EXELIB_INTERNAL_HELP_2_3=\ \ -Xmca<x>        nastavi prirastek odseka razreda RAM na <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_3.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_3.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_3.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_4=\  -Xmco<x>        nastavi prirastek odseka razreda ROM na <x>
+J9NLS_EXELIB_INTERNAL_HELP_2_4=\ \ -Xmco<x>        nastavi prirastek odseka razreda ROM na <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_4.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_4.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_4.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_5=\  -Xmn<x>         nastavi velikost novega prostora na <x>
+J9NLS_EXELIB_INTERNAL_HELP_2_5=\ \ -Xmn<x>         nastavi velikost novega prostora na <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_5.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_5.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_5.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_1=\  -Xmn<x>         nastavi za\u010detno/maksimalno velikost novega prostora na <x>
+J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_1=\ \ -Xmn<x>         nastavi za\u010detno/maksimalno velikost novega prostora na <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_1.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_1.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_1.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_2=\  -Xmns<x>        nastavi za\u010detno velikost novega prostora na <x>
+J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_2=\ \ -Xmns<x>        nastavi za\u010detno velikost novega prostora na <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_2.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_2.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_3=\  -Xmnx<x>        nastavi maksimalno velikost novega prostora na <x>
+J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_3=\ \ -Xmnx<x>        nastavi maksimalno velikost novega prostora na <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_3.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_3.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_3.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_6=\  -Xmo<x>         nastavi velikost starega prostora na <x>
+J9NLS_EXELIB_INTERNAL_HELP_2_6=\ \ -Xmo<x>         nastavi velikost starega prostora na <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_6.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_6.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_6.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_1=\  -Xmo<x>         nastavi za\u010detno/maksimalno velikost starega prostora na <x>
+J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_1=\ \ -Xmo<x>         nastavi za\u010detno/maksimalno velikost starega prostora na <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_1.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_1.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_1.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_2=\  -Xmos<x>        nastavi za\u010detno velikost starega prostora na <x>
+J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_2=\ \ -Xmos<x>        nastavi za\u010detno velikost starega prostora na <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_2.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_2.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_3=\  -Xmox<x>        nastavi maksimalno velikost starega prostora na <x>
+J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_3=\ \ -Xmox<x>        nastavi maksimalno velikost starega prostora na <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_3.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_3.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_3.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_7=\  -Xmoi<x>        nastavi prirastek starega prostora na <x>
+J9NLS_EXELIB_INTERNAL_HELP_2_7=\ \ -Xmoi<x>        nastavi prirastek starega prostora na <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_7.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_7.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_7.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_8=\  -Xms<x>         nastavi velikost starega prostora na <x>
+J9NLS_EXELIB_INTERNAL_HELP_2_8=\ \ -Xms<x>         nastavi velikost starega prostora na <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_8.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_8.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_8.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_8_MODRON=\  -Xms<x>         nastavi velikost za\u010detnega pomnilnika na <x>
+J9NLS_EXELIB_INTERNAL_HELP_2_8_MODRON=\ \ -Xms<x>         nastavi velikost za\u010detnega pomnilnika na <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_8_MODRON.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_8_MODRON.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_8_MODRON.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_9=\  -Xmx<x>         nastavi maksimalni pomnilnik na <x>
+J9NLS_EXELIB_INTERNAL_HELP_2_9=\ \ -Xmx<x>         nastavi maksimalni pomnilnik na <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_9.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_9.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_9.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_10_GENERATIONAL=\  -Xmr<x>         nastavi zapomnjeno nastavitev na <x>
+J9NLS_EXELIB_INTERNAL_HELP_2_10_GENERATIONAL=\ \ -Xmr<x>         nastavi zapomnjeno nastavitev na <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_10_GENERATIONAL.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_10_GENERATIONAL.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_10_GENERATIONAL.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_10_GENERATIONAL_MODRON=\  -Xmrx<x>        nastavi maksimalno velikost zapomnjene nastavitve na <x>
+J9NLS_EXELIB_INTERNAL_HELP_2_10_GENERATIONAL_MODRON=\ \ -Xmrx<x>        nastavi maksimalno velikost zapomnjene nastavitve na <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_10_GENERATIONAL_MODRON.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_10_GENERATIONAL_MODRON.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_10_GENERATIONAL_MODRON.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_11=\  -Xmso<x>        nastavi velikost nitnega sklada OS na <x>
+J9NLS_EXELIB_INTERNAL_HELP_2_11=\ \ -Xmso<x>        nastavi velikost nitnega sklada OS na <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_11.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_11.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_11.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_12_GROWABLE=\  -Xiss<x>        nastavi za\u010detno velikost javanskega nitnega sklada na <x>
+J9NLS_EXELIB_INTERNAL_HELP_2_12_GROWABLE=\ \ -Xiss<x>        nastavi za\u010detno velikost javanskega nitnega sklada na <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_12_GROWABLE.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_12_GROWABLE.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_12_GROWABLE.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_13_GROWABLE=\  -Xss<x>         nastavi maksimalno velikost javanskega nitnega sklada na <x>
+J9NLS_EXELIB_INTERNAL_HELP_2_13_GROWABLE=\ \ -Xss<x>         nastavi maksimalno velikost javanskega nitnega sklada na <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_13_GROWABLE.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_13_GROWABLE.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_13_GROWABLE.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_13=\  -Xss<x>         nastavi velikost nitnega sklada na <x>
+J9NLS_EXELIB_INTERNAL_HELP_2_13=\ \ -Xss<x>         nastavi velikost nitnega sklada na <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_13.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_13.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_13.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_14_MODRON=\  -Xmine<x>       nastavi minimalno velikost za raz\u0161iritev kopice na <x>
+J9NLS_EXELIB_INTERNAL_HELP_2_14_MODRON=\ \ -Xmine<x>       nastavi minimalno velikost za raz\u0161iritev kopice na <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_14_MODRON.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_14_MODRON.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_14_MODRON.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_15_MODRON=\  -Xmaxe<x>       nastavi maksimalno velikost za raz\u0161iritev kopice na <x>
+J9NLS_EXELIB_INTERNAL_HELP_2_15_MODRON=\ \ -Xmaxe<x>       nastavi maksimalno velikost za raz\u0161iritev kopice na <x>
 # START NON-TRANSLATABLE
 
 J9NLS_EXELIB_INTERNAL_HELP_2_15_MODRON.explanation=NOTAG
@@ -281,8 +278,7 @@ J9NLS_EXELIB_INTERNAL_HELP_2_15_MODRON.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_15_MODRON.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_1=\n\
-Argumenti k naslednjim mo\u017enostim so izra\u017eeni kot decimalke od 0 do 1.
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_1=\nArgumenti k naslednjim mo\u017enostim so izra\u017eeni kot decimalke od 0 do 1.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_1.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_1.system_action=
@@ -296,14 +292,14 @@ J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_2.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_3=\  -Xminf<x>       minimalni odstotek proste kopice po GC
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_3=\ \ -Xminf<x>       minimalni odstotek proste kopice po GC
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_3.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_3.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_3.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_4=\  -Xmaxf<x>       maksimalni odstotek proste kopice po GC
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_4=\ \ -Xmaxf<x>       maksimalni odstotek proste kopice po GC
 # START NON-TRANSLATABLE
 
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_4.explanation=NOTAG
@@ -311,93 +307,91 @@ J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_4.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_4.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_1=\n\
-Argumenti za naslednje mo\u017enosti so izra\u017eeni kot decimalna \u0161tevila.\n
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_1=\nArgumenti za naslednje mo\u017enosti so izra\u017eeni kot decimalna \u0161tevila.\n
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_1.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_1.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_1.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_2=\  -Xgcthreads<x>                nastavi \u0161tevilo niti GC
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_2=\ \ -Xgcthreads<x>                nastavi \u0161tevilo niti GC
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_2.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_2.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_3=\  -Xnoclassgc                   onemogo\u010di dinami\u010dno odstranjevanje razredov
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_3=\ \ -Xnoclassgc                   onemogo\u010di dinami\u010dno odstranjevanje razredov
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_3.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_3.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_3.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_4=\  -Xclassgc                     omogo\u010di dinami\u010dno odstranjevanje razredov
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_4=\ \ -Xclassgc                     omogo\u010di dinami\u010dno odstranjevanje razredov
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_4.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_4.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_4.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_5=\  -Xalwaysclassgc               omogo\u010di dinami\u010dno odstranjevanje razredov na vsakem GC
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_5=\ \ -Xalwaysclassgc               omogo\u010di dinami\u010dno odstranjevanje razredov na vsakem GC
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_5.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_5.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_5.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_6=\  -Xnocompactexplicitgc         onemogo\u010di strnitev na sistemskem GC
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_6=\ \ -Xnocompactexplicitgc         onemogo\u010di strnitev na sistemskem GC
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_6.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_6.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_6.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_7=\  -Xcompactexplicitgc           omogo\u010di strnitev na vsakem sistemskem GC
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_7=\ \ -Xcompactexplicitgc           omogo\u010di strnitev na vsakem sistemskem GC
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_7.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_7.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_7.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_8=\  -Xcompactgc                   omogo\u010di strnitev
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_8=\ \ -Xcompactgc                   omogo\u010di strnitev
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_8.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_8.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_8.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_9=\  -Xnocompactgc                 onemogo\u010di strnitev
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_9=\ \ -Xnocompactgc                 onemogo\u010di strnitev
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_9.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_9.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_9.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_MODRON_LARGE_PAGE_SUPPORT=\  -Xlp                          omogo\u010di podporo velikih strani
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_LARGE_PAGE_SUPPORT=\ \ -Xlp                          omogo\u010di podporo velikih strani
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_LARGE_PAGE_SUPPORT.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_LARGE_PAGE_SUPPORT.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_LARGE_PAGE_SUPPORT.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_1=\n\
-\  -Xdbg:<options>               omogo\u010di odpravljanje napak, mo\u017enosti standarda JDWP
+J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_1=\n  -Xdbg:<options>               omogo\u010di odpravljanje napak, mo\u017enosti standarda JDWP
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_1.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_1.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_1.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_2=\  -Xrunjdwp:<options>          omogo\u010di odpravljanje napak, mo\u017enosti standarda JDWP
+J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_2=\ \ -Xrunjdwp:<options>          omogo\u010di odpravljanje napak, mo\u017enosti standarda JDWP
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_2.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_2.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_3=\  -Xdbginfo:<symbol file path>  omogo\u010di odpravljanje napak informacijskega stre\u017enika
+J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_3=\ \ -Xdbginfo:<symbol file path>  omogo\u010di odpravljanje napak informacijskega stre\u017enika
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_3.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_3.system_action=
@@ -405,7 +399,7 @@ J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_3.user_response=
 # END NON-TRANSLATABLE
 
 # -Xrdbginfo is a command line option to Java which takes 2 parameters; host name of a computer and the port the server is utilizing
-J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_4=\  -Xrdbginfo:<gostitelj>:<vrata>  omogo\u010dite oddaljeni informacijski stre\u017enik razhro\u0161\u010devanja
+J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_4=\ \ -Xrdbginfo:<gostitelj>:<vrata>  omogo\u010dite oddaljeni informacijski stre\u017enik razhro\u0161\u010devanja
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_4.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_4.system_action=
@@ -414,9 +408,7 @@ J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_4.user_response=
 
 # J9SourceExeLibArgumentsParsing - cmdline_classpath_WARN
 
-J9NLS_EXELIB_CMDLINE_CP_WARN=\n\
-OPOZORILO: Argument \"%s\" ukazne vrstice je odklonjen.\n\
-OPOZORILO: Uporabite \"-classpath <path>\" ali \"-cp <path>\".
+J9NLS_EXELIB_CMDLINE_CP_WARN=\nOPOZORILO: Argument "%s" ukazne vrstice je odklonjen.\nOPOZORILO: Uporabite "-classpath <path>" ali "-cp <path>".
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_CMDLINE_CP_WARN.sample_input_1=-cp:
 J9NLS_EXELIB_CMDLINE_CP_WARN.explanation=NOTAG
@@ -425,9 +417,7 @@ J9NLS_EXELIB_CMDLINE_CP_WARN.user_response=
 # END NON-TRANSLATABLE
 
 #J9SourceExeLibArgumentsParsing - cmdline_prepend_internal_WARN/cmdline_perpend_numeric1024_WARN
-J9NLS_EXELIB_CMDLINE_PREPEND_WARN=\n\
-OPOZORILO: Argument \"%s\" ukazne vrstice je odklonjen.\n\
-OPOZORILO: Uporabite enakovredni -X.
+J9NLS_EXELIB_CMDLINE_PREPEND_WARN=\nOPOZORILO: Argument "%s" ukazne vrstice je odklonjen.\nOPOZORILO: Uporabite enakovredni -X.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_CMDLINE_PREPEND_WARN.sample_input_1=-mca:
 J9NLS_EXELIB_CMDLINE_PREPEND_WARN.explanation=NOTAG
@@ -602,7 +592,7 @@ J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_JAVA_VM.user_response=
 J9NLS_EXELIB_UNABLE_REDIRECT_IO=
 
 # J9SourceExeLibArgumentsParsing - describeInternalOptions
-J9NLS_EXELIB_INTERNAL_HELP_1_10=\  -Xquickstart    izbolj\u0161anje zagonskega \u010dasa z zakasnitvijo optimizacij
+J9NLS_EXELIB_INTERNAL_HELP_1_10=\ \ -Xquickstart    izbolj\u0161anje zagonskega \u010dasa z zakasnitvijo optimizacij
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_1_10.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_1_10.system_action=
@@ -618,21 +608,21 @@ J9NLS_EXELIB_JIT_LEVEL.system_action=
 J9NLS_EXELIB_JIT_LEVEL.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSSI_GROWABLE=\  -Xssi<x>        nastavi prirastek javanskega nitnega sklada na <x>
+J9NLS_EXELIB_INTERNAL_HELP_XSSI_GROWABLE=\ \ -Xssi<x>        nastavi prirastek javanskega nitnega sklada na <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSSI_GROWABLE.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSSI_GROWABLE.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XSSI_GROWABLE.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSHARECLASSES=\  -Xshareclasses[:options]  Omogo\u010di podatke razreda v skupni rabi (za podrobnosti uporabite pomo\u010d)\n
+J9NLS_EXELIB_INTERNAL_HELP_XSHARECLASSES=\ \ -Xshareclasses[:options]  Omogo\u010di podatke razreda v skupni rabi (za podrobnosti uporabite pomo\u010d)\n
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSHARECLASSES.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSHARECLASSES.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XSHARECLASSES.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCMX=\  -Xscmx<x>       nastavi velikost novega predpomnilnika razredov v skupni rabi na <x>
+J9NLS_EXELIB_INTERNAL_HELP_XSCMX=\ \ -Xscmx<x>       nastavi velikost novega predpomnilnika razredov v skupni rabi na <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCMX.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCMX.system_action=
@@ -658,7 +648,7 @@ J9NLS_EXELIB_VERSION_ME.system_action=
 J9NLS_EXELIB_VERSION_ME.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XLP_SIZE=\  -Xlp<x>         nastavi veliko velikost strani na <x>
+J9NLS_EXELIB_INTERNAL_HELP_XLP_SIZE=\ \ -Xlp<x>         nastavi veliko velikost strani na <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XLP_SIZE.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XLP_SIZE.system_action=
@@ -681,9 +671,7 @@ J9NLS_EXELIB_LOGFILE_BACKUP_FAILED.system_action=JVM execution continues without
 J9NLS_EXELIB_LOGFILE_BACKUP_FAILED.user_response=Ensure target file has the right access permission.
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_CMDLINE_JXECOLON_WARN=\n\
-OPOZORILO: Argument \"%s\" ukazne vrstice je odklonjen.\n\
-OPOZORILO: Raje uporabite \"-jxe <path>.\"\n
+J9NLS_EXELIB_CMDLINE_JXECOLON_WARN=\nOPOZORILO: Argument "%s" ukazne vrstice je odklonjen.\nOPOZORILO: Raje uporabite "-jxe <path>."\n
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_CMDLINE_JXECOLON_WARN.sample_input_1=-jxe:
 J9NLS_EXELIB_CMDLINE_JXECOLON_WARN.explanation=The specified command line argument is no longer valid
@@ -691,15 +679,14 @@ J9NLS_EXELIB_CMDLINE_JXECOLON_WARN.system_action=JVM will ignore the command lin
 J9NLS_EXELIB_CMDLINE_JXECOLON_WARN.user_response=Replace the command line argument as suggested.
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_1_11=\n\
-\  -Xtrace[:option,...]  sledenje krmilnim elementom; ve\u010d podrobnosti poi\u0161\u010dite s -Xtrace:help
+J9NLS_EXELIB_INTERNAL_HELP_1_11=\n  -Xtrace[:option,...]  sledenje krmilnim elementom; ve\u010d podrobnosti poi\u0161\u010dite s -Xtrace:help
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_1_11.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_1_11.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_1_11.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XJNI_1=\  -Xjni:<options>               nastavi mo\u017enosti JNI
+J9NLS_EXELIB_INTERNAL_HELP_XJNI_1=\ \ -Xjni:<options>               nastavi mo\u017enosti JNI
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XJNI_1.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XJNI_1.system_action=
@@ -713,30 +700,28 @@ J9NLS_EXELIB_INTERNAL_HELP_2_16.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_16.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCMINAOT=\  -Xscminaot<x>   nastavi najmanj\u0161i prostor predpomnilnika razreda v skupni rabi, rezerviranega za podatke AOT, na <x>
+J9NLS_EXELIB_INTERNAL_HELP_XSCMINAOT=\ \ -Xscminaot<x>   nastavi najmanj\u0161i prostor predpomnilnika razreda v skupni rabi, rezerviranega za podatke AOT, na <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCMINAOT.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCMINAOT.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XSCMINAOT.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCMAXAOT=\  -Xscmaxaot<x>   nastavi najve\u010dji prostor predpomnilnika razreda v skupni rabi, dovoljenega za podatke AOT, na <x>
+J9NLS_EXELIB_INTERNAL_HELP_XSCMAXAOT=\ \ -Xscmaxaot<x>   nastavi najve\u010dji prostor predpomnilnika razreda v skupni rabi, dovoljenega za podatke AOT, na <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCMAXAOT.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCMAXAOT.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XSCMAXAOT.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_1_12=\n\
-\  -Xcheck[:option[:...]]  preverjanje krmilnih elementov; za podrobnosti vnesite -Xcheck:help
+J9NLS_EXELIB_INTERNAL_HELP_1_12=\n  -Xcheck[:option[:...]]  preverjanje krmilnih elementov; za podrobnosti vnesite -Xcheck:help
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_1_12.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_1_12.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_1_12.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_1_13=\n\
-\  -Xdump[:option,...]  izpisi krmilnih elementov; ve\u010d podrobnosti poi\u0161\u010dite s -Xdump:help
+J9NLS_EXELIB_INTERNAL_HELP_1_13=\n  -Xdump[:option,...]  izpisi krmilnih elementov; ve\u010d podrobnosti poi\u0161\u010dite s -Xdump:help
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_1_13.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_1_13.system_action=
@@ -752,49 +737,49 @@ J9NLS_EXELIB_INTERNAL_HELP_VMSELECT.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_VMSELECT.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_VMCOMPRESSED=\  -Xcompressedrefs              uporabi stisnjene sklice kopice
+J9NLS_EXELIB_INTERNAL_HELP_VMCOMPRESSED=\ \ -Xcompressedrefs              uporabi stisnjene sklice kopice
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_VMCOMPRESSED.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_VMCOMPRESSED.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_VMCOMPRESSED.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_VMREALTIME=\  -Xrealtime                    omogo\u010di pripone realtime
+J9NLS_EXELIB_INTERNAL_HELP_VMREALTIME=\ \ -Xrealtime                    omogo\u010di pripone realtime
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_VMREALTIME.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_VMREALTIME.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_VMREALTIME.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_VMREALTIME2=\  -Xgcpolicy:metronome          omogo\u010di pripone realtime
+J9NLS_EXELIB_INTERNAL_HELP_VMREALTIME2=\ \ -Xgcpolicy:metronome          omogo\u010di pripone realtime
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_VMREALTIME2.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_VMREALTIME2.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_VMREALTIME2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_VMSOFTRT=\  -Xrealtime                    omogo\u010di mehak realtime
+J9NLS_EXELIB_INTERNAL_HELP_VMSOFTRT=\ \ -Xrealtime                    omogo\u010di mehak realtime
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_VMSOFTRT.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_VMSOFTRT.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_VMSOFTRT.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_VMSOFTRT2=\  -Xgcpolicy:metronome          omogo\u010di mehak realtime
+J9NLS_EXELIB_INTERNAL_HELP_VMSOFTRT2=\ \ -Xgcpolicy:metronome          omogo\u010di mehak realtime
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_VMSOFTRT2.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_VMSOFTRT2.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_VMSOFTRT2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_VMNORTSJ=\  -Xrealtime -Xnortsj           omogo\u010di mehak realtime
+J9NLS_EXELIB_INTERNAL_HELP_VMNORTSJ=\ \ -Xrealtime -Xnortsj           omogo\u010di mehak realtime
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_VMNORTSJ.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_VMNORTSJ.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_VMNORTSJ.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_VMNORTSJ2=\  -Xgcpolicy:metronome -Xnortsj omogo\u010di mehak realtime
+J9NLS_EXELIB_INTERNAL_HELP_VMNORTSJ2=\ \ -Xgcpolicy:metronome -Xnortsj omogo\u010di mehak realtime
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_VMNORTSJ2.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_VMNORTSJ2.system_action=
@@ -803,8 +788,7 @@ J9NLS_EXELIB_INTERNAL_HELP_VMNORTSJ2.user_response=
 
 # healthcenter help
 
-J9NLS_EXELIB_INTERNAL_HELP_HEALTHCENTER=\n\
-\  -Xhealthcenter  omogo\u010di agenta za Zdravstveni center
+J9NLS_EXELIB_INTERNAL_HELP_HEALTHCENTER=\n  -Xhealthcenter  omogo\u010di agenta za Zdravstveni center
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_HEALTHCENTER.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_HEALTHCENTER.system_action=
@@ -820,21 +804,21 @@ J9NLS_EXELIB_INTERNAL_HELP_DIAGNOSTICSCOLLECTOR.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_DIAGNOSTICSCOLLECTOR.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCDMX=\  -Xscdmx<x>      podro\u010dje atributov razhro\u0161\u010devanja predpomnilnika razreda v skupni rabi nastavi na <x>
+J9NLS_EXELIB_INTERNAL_HELP_XSCDMX=\ \ -Xscdmx<x>      podro\u010dje atributov razhro\u0161\u010devanja predpomnilnika razreda v skupni rabi nastavi na <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCDMX.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCDMX.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XSCDMX.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCMINJIT=\  -Xscminjit<x>   nastavi najmanj\u0161i prostor predpomnilnika razreda v skupni rabi, rezerviranega za podatke JIT, na <x>
+J9NLS_EXELIB_INTERNAL_HELP_XSCMINJIT=\ \ -Xscminjit<x>   nastavi najmanj\u0161i prostor predpomnilnika razreda v skupni rabi, rezerviranega za podatke JIT, na <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCMINJIT.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCMINJIT.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XSCMINJIT.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJIT=\  -Xscmaxjit<x>   nastavi najve\u010dji prostor predpomnilnika razreda v skupni rabi, dovoljenega za podatke JIT, na <x>
+J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJIT=\ \ -Xscmaxjit<x>   nastavi najve\u010dji prostor predpomnilnika razreda v skupni rabi, dovoljenega za podatke JIT, na <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJIT.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJIT.system_action=
@@ -842,119 +826,119 @@ J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJIT.user_response=
 
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCMINJITDATA=\  -Xscminjitdata<x>   nastavi najmanj\u0161i prostor predpomnilnika razreda v skupni rabi, rezerviranega za podatke JIT, na <x>
+J9NLS_EXELIB_INTERNAL_HELP_XSCMINJITDATA=\ \ -Xscminjitdata<x>   nastavi najmanj\u0161i prostor predpomnilnika razreda v skupni rabi, rezerviranega za podatke JIT, na <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCMINJITDATA.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCMINJITDATA.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XSCMINJITDATA.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJITDATA=\  -Xscmaxjitdata<x>   nastavi najve\u010dji prostor predpomnilnika razreda v skupni rabi, dovoljenega za podatke JIT, na <x>
+J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJITDATA=\ \ -Xscmaxjitdata<x>   nastavi najve\u010dji prostor predpomnilnika razreda v skupni rabi, dovoljenega za podatke JIT, na <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJITDATA.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJITDATA.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJITDATA.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XZERONOSHAREZIP=\  -Xzero:nosharebootzip   predpomnilnikov vnosa bootstrap jar ne da v skupno rabo v predpomnilniku razredov v skupni rabi
+J9NLS_EXELIB_INTERNAL_HELP_XZERONOSHAREZIP=\ \ -Xzero:nosharebootzip   predpomnilnikov vnosa bootstrap jar ne da v skupno rabo v predpomnilniku razredov v skupni rabi
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XZERONOSHAREZIP.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XZERONOSHAREZIP.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XZERONOSHAREZIP.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XXSHARECLASSESENABLEBCI=\  -XX:ShareClassesEnableBCI   ustvari predpomnilnik razredov v skupni rabi s podporo za instrumentacijo bajtne kode
+J9NLS_EXELIB_INTERNAL_HELP_XXSHARECLASSESENABLEBCI=\ \ -XX:ShareClassesEnableBCI   ustvari predpomnilnik razredov v skupni rabi s podporo za instrumentacijo bajtne kode
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XXSHARECLASSESENABLEBCI.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XXSHARECLASSESENABLEBCI.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XXSHARECLASSESENABLEBCI.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XXSHARECLASSESDISABLEBCI=\  -XX:ShareClassesDisableBCI   ustvari predpomnilnik razredov v skupni rabi brez podpore za instrumentacijo bajtne kode
+J9NLS_EXELIB_INTERNAL_HELP_XXSHARECLASSESDISABLEBCI=\ \ -XX:ShareClassesDisableBCI   ustvari predpomnilnik razredov v skupni rabi brez podpore za instrumentacijo bajtne kode
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XXSHARECLASSESDISABLEBCI.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XXSHARECLASSESDISABLEBCI.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XXSHARECLASSESDISABLEBCI.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XXSTOREINTERMEDIATECLASSFILE=\  -XX:+StoreIntermediateClassfile   shrani neobdelane podatke razreda, ki se uporabljajo med ponovno pretvorbo
+J9NLS_EXELIB_INTERNAL_HELP_XXSTOREINTERMEDIATECLASSFILE=\ \ -XX:+StoreIntermediateClassfile   shrani neobdelane podatke razreda, ki se uporabljajo med ponovno pretvorbo
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XXSTOREINTERMEDIATECLASSFILE.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XXSTOREINTERMEDIATECLASSFILE.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XXSTOREINTERMEDIATECLASSFILE.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCSOFTMX=\  -Xscsoftmx<x>   nastavi mehko najve\u010djo velikost novega predpomnilnika razredov v skupni rabi na <x>
+J9NLS_EXELIB_INTERNAL_HELP_XSCSOFTMX=\ \ -Xscsoftmx<x>   nastavi mehko najve\u010djo velikost novega predpomnilnika razredov v skupni rabi na <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCSOFTMX.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCSOFTMX.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XSCSOFTMX.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCMX_V1=\  -Xscmx<x>       nastavi velikost (ali mehko najve\u010djo velikost, \u010de je prisotna mo\u017enost -XX:SharedCacheHardLimit=) novega predpomnilnika razredov v skupni rabi na <x>
+J9NLS_EXELIB_INTERNAL_HELP_XSCMX_V1=\ \ -Xscmx<x>       nastavi velikost (ali mehko najve\u010djo velikost, \u010de je prisotna mo\u017enost -XX:SharedCacheHardLimit=) novega predpomnilnika razredov v skupni rabi na <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCMX_V1.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCMX_V1.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XSCMX_V1.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XXSHARED_CACHE_HARD_LIMIT_EQUALS=\  -XX:SharedCacheHardLimit=<x>   nastavi velikost novega predpomnilnika razredov v skupni rabi na <x>
+J9NLS_EXELIB_INTERNAL_HELP_XXSHARED_CACHE_HARD_LIMIT_EQUALS=\ \ -XX:SharedCacheHardLimit=<x>   nastavi velikost novega predpomnilnika razredov v skupni rabi na <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XXSHARED_CACHE_HARD_LIMIT_EQUALS.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XXSHARED_CACHE_HARD_LIMIT_EQUALS.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XXSHARED_CACHE_HARD_LIMIT_EQUALS.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XXENABLESHAREANONYMOUSCLASSES=\  -XX:+ShareAnonymousClasses   omogo\u010di shranjevanje in iskanje anonimnih razredov v predpomnilniku razreda v skupni rabi.
+J9NLS_EXELIB_INTERNAL_HELP_XXENABLESHAREANONYMOUSCLASSES=\ \ -XX:+ShareAnonymousClasses   omogo\u010di shranjevanje in iskanje anonimnih razredov v predpomnilniku razreda v skupni rabi.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XXENABLESHAREANONYMOUSCLASSES.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XXENABLESHAREANONYMOUSCLASSES.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XXENABLESHAREANONYMOUSCLASSES.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XXDISABLESHAREANONYMOUSCLASSES=\  -XX:-ShareAnonymousClasses   onemogo\u010di shranjevanje in iskanje anonimnih razredov v predpomnilniku razreda v skupni rabi.
+J9NLS_EXELIB_INTERNAL_HELP_XXDISABLESHAREANONYMOUSCLASSES=\ \ -XX:-ShareAnonymousClasses   onemogo\u010di shranjevanje in iskanje anonimnih razredov v predpomnilniku razreda v skupni rabi.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XXDISABLESHAREANONYMOUSCLASSES.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XXDISABLESHAREANONYMOUSCLASSES.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XXDISABLESHAREANONYMOUSCLASSES.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XXENABLESHAREUNSAFECLASSES=\  -XX:+ShareUnsafeClasses   omogo\u010di shranjevanje in iskanje razredov, ki niso anonimni in niso varni, v predpomnilniku razreda v skupni rabi.
+J9NLS_EXELIB_INTERNAL_HELP_XXENABLESHAREUNSAFECLASSES=\ \ -XX:+ShareUnsafeClasses   omogo\u010di shranjevanje in iskanje razredov, ki niso anonimni in niso varni, v predpomnilniku razreda v skupni rabi.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XXENABLESHAREUNSAFECLASSES.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XXENABLESHAREUNSAFECLASSES.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XXENABLESHAREUNSAFECLASSES.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XXDISABLESHAREUNSAFECLASSES=\  -XX:-ShareUnsafeClasses   onemogo\u010di shranjevanje in iskanje razredov, ki niso anonimni in niso varni, v predpomnilniku razreda v skupni rabi.
+J9NLS_EXELIB_INTERNAL_HELP_XXDISABLESHAREUNSAFECLASSES=\ \ -XX:-ShareUnsafeClasses   onemogo\u010di shranjevanje in iskanje razredov, ki niso anonimni in niso varni, v predpomnilniku razreda v skupni rabi.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XXDISABLESHAREUNSAFECLASSES.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XXDISABLESHAREUNSAFECLASSES.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XXDISABLESHAREUNSAFECLASSES.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XXENABLEUSEGCSTARTUPHINTS=\  -XX:+UseGCStartupHints   omogo\u010di shranjevanje in iskanje zagonskih namigov GC v predpomnilniku razreda v skupni rabi.
+J9NLS_EXELIB_INTERNAL_HELP_XXENABLEUSEGCSTARTUPHINTS=\ \ -XX:+UseGCStartupHints   omogo\u010di shranjevanje in iskanje zagonskih namigov GC v predpomnilniku razreda v skupni rabi.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XXENABLEUSEGCSTARTUPHINTS.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XXENABLEUSEGCSTARTUPHINTS.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XXENABLEUSEGCSTARTUPHINTS.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XXDISABLEUSEGCSTARTUPHINTS=\  -XX:-UseGCStartupHints   onemogo\u010di shranjevanje in iskanje zagonskih namigov GC v predpomnilniku razreda v skupni rabi.
+J9NLS_EXELIB_INTERNAL_HELP_XXDISABLEUSEGCSTARTUPHINTS=\ \ -XX:-UseGCStartupHints   onemogo\u010di shranjevanje in iskanje zagonskih namigov GC v predpomnilniku razreda v skupni rabi.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XXDISABLEUSEGCSTARTUPHINTS.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XXDISABLEUSEGCSTARTUPHINTS.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XXDISABLEUSEGCSTARTUPHINTS.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XXPORTABLESHAREDCACHE=\  -XX:+PortableSharedCache   omogo\u010di funkcijo, ki posku\u0161a maksimirati prenosljivost predpomnilnika v skupni rabi v ve\u010d ra\u010dunalnikih
+J9NLS_EXELIB_INTERNAL_HELP_XXPORTABLESHAREDCACHE=\ \ -XX:+PortableSharedCache   omogo\u010di funkcijo, ki posku\u0161a maksimirati prenosljivost predpomnilnika v skupni rabi v ve\u010d ra\u010dunalnikih
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XXPORTABLESHAREDCACHE.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XXPORTABLESHAREDCACHE.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XXPORTABLESHAREDCACHE.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XXNOPORTABLESHAREDCACHE=\  -XX:-PortableShareCache   onemogo\u010di funkcijo, ki posku\u0161a maksimirati prenosljivost predpomnilnika v skupni rabi v ve\u010d ra\u010dunalnikih
+J9NLS_EXELIB_INTERNAL_HELP_XXNOPORTABLESHAREDCACHE=\ \ -XX:-PortableShareCache   onemogo\u010di funkcijo, ki posku\u0161a maksimirati prenosljivost predpomnilnika v skupni rabi v ve\u010d ra\u010dunalnikih
 J9NLS_EXELIB_INTERNAL_HELP_XXNOPORTABLESHAREDCACHE.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XXNOPORTABLESHAREDCACHE.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XXNOPORTABLESHAREDCACHE.user_response=
