@@ -212,6 +212,7 @@ typedef IDATA (*MonitorDestroy)(omrthread_monitor_t monitor);
 typedef IDATA (* ThreadLibControl)(const char * key, UDATA value);
 typedef IDATA (*SetCategory)(omrthread_t thread, UDATA category, UDATA type);
 typedef IDATA (*LibEnableCPUMonitor)(omrthread_t thread);
+typedef IDATA (*ThreadSleep)(I_64 millis);
 
 typedef I_32 (*PortInitLibrary)(J9PortLibrary *portLib, J9PortLibraryVersion *version, UDATA size);
 typedef UDATA (*PortGetSize)(struct J9PortLibraryVersion *version);
@@ -260,6 +261,7 @@ static pNewStringPlatform globalNewStringPlatform;
 static p_a2e_vsprintf global_a2e_vsprintf;
 #endif
 
+ThreadSleep f_threadSleep;
 static ThreadGlobal f_threadGlobal;
 static ThreadAttachEx f_threadAttachEx;
 static ThreadDetach f_threadDetach;
@@ -1015,8 +1017,9 @@ preloadLibraries(void)
 	f_threadLibControl = (ThreadLibControl) GetProcAddress (threadDLL, (LPCSTR) "omrthread_lib_control");
 	f_setCategory = (SetCategory) GetProcAddress (threadDLL, (LPCSTR) "omrthread_set_category");
 	f_libEnableCPUMonitor = (LibEnableCPUMonitor) GetProcAddress (threadDLL, (LPCSTR) "omrthread_lib_enable_cpu_monitor");
+	f_threadSleep = (ThreadSleep) GetProcAddress (threadDLL, (LPCSTR) "omrthread_sleep");
 	if (!f_threadGlobal || !f_threadAttachEx || !f_threadDetach || !f_monitorEnter || !f_monitorExit || !f_monitorInit
-		|| !f_monitorDestroy || !f_threadLibControl || !f_setCategory || !f_libEnableCPUMonitor
+		|| !f_monitorDestroy || !f_threadLibControl || !f_setCategory || !f_libEnableCPUMonitor || !f_threadSleep
 	) {
 		FreeLibrary(vmDLL);
 		FreeLibrary(threadDLL);
@@ -1442,8 +1445,9 @@ preloadLibraries(void)
 	f_threadLibControl = (ThreadLibControl) dlsym (threadDLL, "omrthread_lib_control");
 	f_setCategory = (SetCategory) dlsym (threadDLL, "omrthread_set_category");
 	f_libEnableCPUMonitor = (LibEnableCPUMonitor) dlsym (threadDLL, "omrthread_lib_enable_cpu_monitor");
+	f_threadSleep = (ThreadSleep) dlsym (threadDLL, "omrthread_sleep");
 	if (!f_threadGlobal || !f_threadAttachEx || !f_threadDetach || !f_monitorEnter || !f_monitorExit || !f_monitorInit
-		|| !f_monitorDestroy || !f_threadLibControl || !f_setCategory || !f_libEnableCPUMonitor
+		|| !f_monitorDestroy || !f_threadLibControl || !f_setCategory || !f_libEnableCPUMonitor || !f_threadSleep
 	) {
 		dlclose(vmDLL);
 #ifdef J9ZOS390
