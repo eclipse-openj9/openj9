@@ -957,6 +957,7 @@ J9NLS_GC_OPTIONS_PREFERREDHEAPBASE_NOT_SUPPORTED_ON_ZOS_WARN.user_response=Refer
 # Note %s gc policy ("balanced" or "metronome")
 J9NLS_GC_POLICY_NOT_SUPPOURTED_CRIU=-Xgcpolicy:%s \u306f\u73fe\u5728 -XX:+EnableCRIUSupport \u3067\u30b5\u30dd\u30fc\u30c8\u3055\u308c\u3066\u3044\u307e\u305b\u3093\u3002
 # START NON-TRANSLATABLE
+J9NLS_GC_POLICY_NOT_SUPPOURTED_CRIU.sample_input_1=balanced
 J9NLS_GC_POLICY_NOT_SUPPOURTED_CRIU.explanation=The specified GC policy is currently unsuppourted with CRIU
 J9NLS_GC_POLICY_NOT_SUPPOURTED_CRIU.system_action=The JVM will terminate
 J9NLS_GC_POLICY_NOT_SUPPOURTED_CRIU.user_response=Adjust the garbage collector policy option (-Xgcpolicy) with one of the following supported policies: gencon, optavgpause or optthruput
@@ -982,6 +983,7 @@ J9NLS_GC_THREAD_VALUE_MUST_BE_ABOVE_WARN.sample_input_1=4
 
 J9NLS_GC_OPTIONS_HIERARCHICAL_SCAN_ORDERING_NOT_SUPPORTED_WARN=-Xgcpolicy:%s \u3092\u6307\u5b9a\u3057\u305f\u30b5\u30dd\u30fc\u30c8\u3055\u308c\u306a\u3044 -Xgc:hierarchicalScan \u9806\u5e8f\u4ed8\u3051\u30aa\u30d7\u30b7\u30e7\u30f3\u306f\u7121\u8996\u3055\u308c\u307e\u3059\u3002
 # START NON-TRANSLATABLE
+J9NLS_GC_OPTIONS_HIERARCHICAL_SCAN_ORDERING_NOT_SUPPORTED_WARN.sample_input_1=balanced
 J9NLS_GC_OPTIONS_HIERARCHICAL_SCAN_ORDERING_NOT_SUPPORTED_WARN.explanation=-Xgc:hierarchicalScanOrdering is currently only supported with -Xgcpolicy:gencon.
 J9NLS_GC_OPTIONS_HIERARCHICAL_SCAN_ORDERING_NOT_SUPPORTED_WARN.system_action=The JVM ignores the -Xgc:hierarchicalScanOrdering option.
 J9NLS_GC_OPTIONS_HIERARCHICAL_SCAN_ORDERING_NOT_SUPPORTED_WARN.user_response=Refer to the OpenJ9 documentation for -Xgc:hierarchicalScanOrdering.

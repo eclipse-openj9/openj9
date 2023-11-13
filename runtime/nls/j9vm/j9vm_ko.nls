@@ -275,17 +275,12 @@ J9NLS_VM_CHECK_JAVA_HOME.system_action=The JVM will terminate.
 J9NLS_VM_CHECK_JAVA_HOME.user_response=Check that JAVA_HOME environment variable is properly set.
 # END NON-TRANSLATABLE
 
-# Note: this message ends with a single space
-# This message will be followed by the exception's class name and
-# (if non-null) the exception's detail message
-# e.g. Exception in thread "main" java/lang/StackOverflowError: An overflow occurred
-J9NLS_VM_STACK_TRACE_EXCEPTION_IN="%.*s" \uc2a4\ub808\ub4dc\uc5d0\uc11c \uc608\uc678\uac00 \ubc1c\uc0dd\ud588\uc2b5\ub2c8\ub2e4.\u0020
+J9NLS_VM_STACK_TRACE_EXCEPTION_IN="%s" \uc2a4\ub808\ub4dc\uc5d0\uc11c \uc608\uc678\uac00 \ubc1c\uc0dd\ud588\uc2b5\ub2c8\ub2e4
 # START NON-TRANSLATABLE
-J9NLS_VM_STACK_TRACE_EXCEPTION_IN.sample_input_1=57
-J9NLS_VM_STACK_TRACE_EXCEPTION_IN.sample_input_2=\"main\" java/lang/StackOverflowError: An overflow occurred
-J9NLS_VM_STACK_TRACE_EXCEPTION_IN.explanation=An exception has occurred.
-J9NLS_VM_STACK_TRACE_EXCEPTION_IN.system_action=The system will process the exception, which may result in JVM termination, or simply continuing the execution of the application.
-J9NLS_VM_STACK_TRACE_EXCEPTION_IN.user_response=Investigate cause of exception.
+J9NLS_VM_STACK_TRACE_EXCEPTION_IN.sample_input_1=main
+J9NLS_VM_STACK_TRACE_EXCEPTION_IN.explanation=NOTAG
+J9NLS_VM_STACK_TRACE_EXCEPTION_IN.system_action=
+J9NLS_VM_STACK_TRACE_EXCEPTION_IN.user_response=
 # END NON-TRANSLATABLE
 
 # first argument is the class name
@@ -2108,7 +2103,6 @@ J9NLS_VM_CRIU_SINGLETHREADMODE_JVMCRIUEXCEPTION.user_response=View CRIU document
 
 J9NLS_VM_CRIU_RESTORE_INITIALIZE_TRACE_FAILED=JVM\uc744 \ubcf5\uc6d0\ud55c \ud6c4 JVM\uc774 Xtrace\ub97c \ucd08\uae30\ud654\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
-J9NLS_VM_CRIU_RESTORE_INITIALIZE_TRACE_FAILED.sample_input_1=1
 J9NLS_VM_CRIU_RESTORE_INITIALIZE_TRACE_FAILED.explanation=CRIUSupport::checkpointJVM failed.
 J9NLS_VM_CRIU_RESTORE_INITIALIZE_TRACE_FAILED.system_action=The JVM will throw a JVMRestoreException.
 J9NLS_VM_CRIU_RESTORE_INITIALIZE_TRACE_FAILED.user_response=Check documentation for CRIUSupport restore options.
@@ -2116,7 +2110,6 @@ J9NLS_VM_CRIU_RESTORE_INITIALIZE_TRACE_FAILED.user_response=Check documentation 
 
 J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_SEEDOFFSET=\uc720\ud6a8\ud558\uc9c0 \uc54a\uc740 \uc2dc\ub4dc \uc624\ud504\uc14b\uc73c\ub85c \uc778\ud574 j.u.Random.seed.value\uc744(\ub97c) \ub2e4\uc2dc \uc2dc\ub4dc\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
-J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_SEEDOFFSET.sample_input_1=1
 J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_SEEDOFFSET.explanation=CRIUSupport::checkpointJVM failed.
 J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_SEEDOFFSET.system_action=The JVM will throw a JVMRestoreException.
 J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_SEEDOFFSET.user_response=View CRIU documentation to determine how to resolve the exception.
@@ -2124,7 +2117,6 @@ J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_SEEDOFFSET.user_response=View CRIU document
 
 J9NLS_VM_CRIU_RESTORE_RESEED_ATOMICLONG_CNF=j.u.c.a.AtomicLong\uc744(\ub97c) \ucc3e\uc744 \uc218 \uc5c6\uc5b4 JVM\uc5d0\uc11c j.u.Random.seed.value\uc744(\ub97c) \ub2e4\uc2dc \uc2dc\ub4dc\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
-J9NLS_VM_CRIU_RESTORE_RESEED_ATOMICLONG_CNF.sample_input_1=1
 J9NLS_VM_CRIU_RESTORE_RESEED_ATOMICLONG_CNF.explanation=CRIUSupport::checkpointJVM failed.
 J9NLS_VM_CRIU_RESTORE_RESEED_ATOMICLONG_CNF.system_action=The JVM will throw a JVMRestoreException.
 J9NLS_VM_CRIU_RESTORE_RESEED_ATOMICLONG_CNF.user_response=View CRIU documentation to determine how to resolve the exception.
@@ -2132,7 +2124,6 @@ J9NLS_VM_CRIU_RESTORE_RESEED_ATOMICLONG_CNF.user_response=View CRIU documentatio
 
 J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_VALUEOFFSET=\uc720\ud6a8\ud558\uc9c0 \uc54a\uc740 \uac12 \uc624\ud504\uc14b\uc73c\ub85c \uc778\ud574 JVM\uc774 j.u.Random.seed.value\uc744(\ub97c) \ub2e4\uc2dc \uc2dc\ub4dc\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
-J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_VALUEOFFSET.sample_input_1=1
 J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_VALUEOFFSET.explanation=CRIUSupport::checkpointJVM failed.
 J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_VALUEOFFSET.system_action=The JVM will throw a JVMRestoreException.
 J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_VALUEOFFSET.user_response=View CRIU documentation to determine how to resolve the exception.
@@ -2140,8 +2131,68 @@ J9NLS_VM_CRIU_RESTORE_RESEED_INVALID_VALUEOFFSET.user_response=View CRIU documen
 
 J9NLS_VM_CRIU_RESTORE_INITIALIZE_DUMP_FAILED=JVM\uc744 \ubcf5\uc6d0\ud55c \ud6c4 JVM\uc774 Xdump\ub97c \ucd08\uae30\ud654\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
-J9NLS_VM_CRIU_RESTORE_INITIALIZE_DUMP_FAILED.sample_input_1=1
 J9NLS_VM_CRIU_RESTORE_INITIALIZE_DUMP_FAILED.explanation=CRIUSupport::checkpointJVM failed.
 J9NLS_VM_CRIU_RESTORE_INITIALIZE_DUMP_FAILED.system_action=The JVM will throw a JVMRestoreException.
 J9NLS_VM_CRIU_RESTORE_INITIALIZE_DUMP_FAILED.user_response=Check documentation for CRIUSupport restore options.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_ILLEGAL_THREAD_STATE_UPCALL=\uc0c1\ud5a5 \ud638\ucd9c\uc5d0 \ub300\ud55c \uc798\ubabb\ub41c \uc2a4\ub808\ub4dc \uc0c1\ud0dc\ub85c \uc778\ud574 JVM\uc744 \uc9c4\ud589\ud558\ub294 \ub370 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.
+# START NON-TRANSLATABLE
+J9NLS_VM_ILLEGAL_THREAD_STATE_UPCALL.explanation=An error occurred when the JVM attempted to perform upcall in the trivial downcall
+J9NLS_VM_ILLEGAL_THREAD_STATE_UPCALL.system_action=The JVM will throw a IllegalThreadStateException.
+J9NLS_VM_ILLEGAL_THREAD_STATE_UPCALL.user_response=Ensure the specified linker options for downcall are valid.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_FORKJOINPOOL_CNF=java.util.concurrent.ForkJoinPool \ud074\ub798\uc2a4\ub97c \ucc3e\uc744 \uc218 \uc5c6\uc73c\ubbc0\ub85c JVM\uc774 java.lang.VirtualThread.ForkJoinPool.parallelism \uc744 \uc7ac\uc124\uc815\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.
+# START NON-TRANSLATABLE
+J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_FORKJOINPOOL_CNF.explanation=CRIUSupport::checkpointJVM failed.
+J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_FORKJOINPOOL_CNF.system_action=The JVM will throw a JVMRestoreException.
+J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_FORKJOINPOOL_CNF.user_response=View CRIU documentation to determine how to resolve the exception.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_INVALID_DEFAULT_SCHEDULER_ADDRESS=\uc62c\ubc14\ub974\uc9c0 \uc54a\uc740 DEFAULT_SCHEDULER \uc8fc\uc18c\ub85c \uc778\ud574 JVM\uc774 java.lang.VirtualThread.ForkJoinPool.parallelism \uc744 \uc7ac\uc124\uc815\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.
+# START NON-TRANSLATABLE
+J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_INVALID_DEFAULT_SCHEDULER_ADDRESS.explanation=CRIUSupport::checkpointJVM failed.
+J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_INVALID_DEFAULT_SCHEDULER_ADDRESS.system_action=The JVM will throw a JVMRestoreException.
+J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_INVALID_DEFAULT_SCHEDULER_ADDRESS.user_response=View CRIU documentation to determine how to resolve the exception.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_INVALID_PARALLELISM_OFFSET=\uc62c\ubc14\ub974\uc9c0 \uc54a\uc740 \ubcd1\ub82c \ucc98\ub9ac \uc624\ud504\uc14b\uc73c\ub85c \uc778\ud574 JVM\uc774 java.lang.VirtualThread.ForkJoinPool.parallelism \uc744 \uc7ac\uc124\uc815\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.
+# START NON-TRANSLATABLE
+J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_INVALID_PARALLELISM_OFFSET.explanation=CRIUSupport::checkpointJVM failed.
+J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_INVALID_PARALLELISM_OFFSET.system_action=The JVM will throw a JVMRestoreException.
+J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_INVALID_PARALLELISM_OFFSET.user_response=View CRIU documentation to determine how to resolve the exception.
+# END NON-TRANSLATABLE
+
+# NullRestricted/value/implicit is not translatable
+J9NLS_VM_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS=NullRestricted \uc18d\uc131\uc774 \uc788\ub294 \uc778\uc2a4\ud134\uc2a4 \ud544\ub4dc\ub294 \ub0b4\uc7ac\ub41c \uc0dd\uc131\uc790\uac00 \uc788\ub294 \uac12 \ud074\ub798\uc2a4\uc5d0 \uc788\uc5b4\uc57c \ud569\ub2c8\ub2e4.
+# START NON-TRANSLATABLE
+J9NLS_VM_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_VM_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS.system_action=The JVM will throw a verification or classloading related exception such as java.lang.ClassFormatError.
+J9NLS_VM_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# NullRestricted/value/implicit is not translatable
+J9NLS_VM_STATIC_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS=NullRestricted \uc18d\uc131\uc774 \uc788\ub294 \uc815\uc801 \ud544\ub4dc\ub294 \ub0b4\uc7ac\ub41c \uc0dd\uc131\uc790\uac00 \uc788\ub294 \uac12 \ud074\ub798\uc2a4\uc5d0 \uc788\uc5b4\uc57c \ud569\ub2c8\ub2e4.
+# START NON-TRANSLATABLE
+J9NLS_VM_STATIC_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_VM_STATIC_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS.system_action=The JVM will throw a verification or classloading related exception such as java.lang.ClassFormatError.
+J9NLS_VM_STATIC_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# Note: -XX:Compatibility= is a command-line option and should not be translated.
+J9NLS_VM_COMPATIBILITY_REPEATED=\uba85\ub839\ud589 \uc635\uc158 -XX:Compatibility = [mode] \uc740 (\ub294) \ucd5c\ub300 \ud55c \ubc88\ub9cc \ud5c8\uc6a9\ub429\ub2c8\ub2e4.
+# START NON-TRANSLATABLE
+J9NLS_VM_COMPATIBILITY_REPEATED.explanation=The specified command-line option may not be repeated.
+J9NLS_VM_COMPATIBILITY_REPEATED.system_action=The JVM will fail to start.
+J9NLS_VM_COMPATIBILITY_REPEATED.user_response=Remove the repetition of the option from the command line.
+# END NON-TRANSLATABLE
+
+# Note: -XX:Compatibility= is a command-line option and should not be translated.
+J9NLS_VM_COMPATIBILITY_UNSUPPORTED="-XX:Compatibility=%s" \uc5d0 \uc9c0\uc815\ub41c \ud638\ud658\uc131 \ubaa8\ub4dc\uac00 \uc9c0\uc6d0\ub418\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.
+# START NON-TRANSLATABLE
+J9NLS_VM_COMPATIBILITY_UNSUPPORTED.sample_input_1=unsupported
+J9NLS_VM_COMPATIBILITY_UNSUPPORTED.explanation=The specified compatibility mode is not supported.
+J9NLS_VM_COMPATIBILITY_UNSUPPORTED.system_action=The JVM will fail to start.
+J9NLS_VM_COMPATIBILITY_UNSUPPORTED.user_response=Remove the option from the command line.
 # END NON-TRANSLATABLE

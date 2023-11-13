@@ -173,6 +173,7 @@ J9NLS_VMUTIL_OPTIONS_FILE_INVALID_STR=Soubor voleb %s je neplatn\u00fd.
 J9NLS_VMUTIL_OPTIONS_FILE_INVALID_STR.explanation=An options file specified with the -Xoptionsfile option could not be opened or is too large
 J9NLS_VMUTIL_OPTIONS_FILE_INVALID_STR.system_action=The JVM will exit
 J9NLS_VMUTIL_OPTIONS_FILE_INVALID_STR.user_response=Check the size and contents of the option file
+J9NLS_VMUTIL_OPTIONS_FILE_INVALID_STR.sample_input_1=lib/options.default
 # END NON-TRANSLATABLE
 
 # Message for IllegalAccessError if receiver class is not the current class or a subtype of the current [=interface] class

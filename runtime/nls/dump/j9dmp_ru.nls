@@ -100,7 +100,7 @@ J9NLS_DMP_MISSING_EXECUTABLE_STR.sample_input_1=bogus
 J9NLS_DMP_MISSING_EXECUTABLE_STR.link=dita:///diag/tools/dumpagents_exec.dita
 # END NON-TRANSLATABLE
 
-J9NLS_DMP_PROCESSING_EVENT_STR=\u041e\u0431\u0440\u0430\u0431\u043e\u0442\u043a\u0430 \u0441\u043e\u0431\u044b\u0442\u0438\u044f \u0434\u0430\u043c\u043f\u0430 \"%1$s\", \u044d\u043b\u0435\u043c\u0435\u043d\u0442 \"%3$.*2$s\" - \u041f\u043e\u0436\u0430\u043b\u0443\u0439\u0441\u0442\u0430, \u043f\u043e\u0434\u043e\u0436\u0434\u0438\u0442\u0435.
+J9NLS_DMP_PROCESSING_EVENT_STR=\u041e\u0431\u0440\u0430\u0431\u043e\u0442\u043a\u0430 \u0441\u043e\u0431\u044b\u0442\u0438\u044f \u0434\u0430\u043c\u043f\u0430 "%1$s", \u044d\u043b\u0435\u043c\u0435\u043d\u0442 "%3$.*2$s" - \u041f\u043e\u0436\u0430\u043b\u0443\u0439\u0441\u0442\u0430, \u043f\u043e\u0434\u043e\u0436\u0434\u0438\u0442\u0435.
 # START NON-TRANSLATABLE
 J9NLS_DMP_PROCESSING_EVENT_STR.explanation=A dump event has occurred and is being handled.
 J9NLS_DMP_PROCESSING_EVENT_STR.system_action=The JVM attempts to process the event.
@@ -179,7 +179,7 @@ J9NLS_DMP_ERROR_IN_DUMP_STR.link=
 
 # END NON-TRANSLATABLE
 
-J9NLS_DMP_PROCESSED_EVENT_STR=\u041e\u0431\u0440\u0430\u0431\u043e\u0442\u0430\u043d\u043e \u0441\u043e\u0431\u044b\u0442\u0438\u0435 \u0434\u0430\u043c\u043f\u0430 \"%1$s\", \u044d\u043b\u0435\u043c\u0435\u043d\u0442 \"%3$.*2$s\".
+J9NLS_DMP_PROCESSED_EVENT_STR=\u041e\u0431\u0440\u0430\u0431\u043e\u0442\u0430\u043d\u043e \u0441\u043e\u0431\u044b\u0442\u0438\u0435 \u0434\u0430\u043c\u043f\u0430 "%1$s", \u044d\u043b\u0435\u043c\u0435\u043d\u0442 "%3$.*2$s".
 # START NON-TRANSLATABLE
 J9NLS_DMP_PROCESSED_EVENT_STR.explanation=A dump event has occurred and has been handled.
 J9NLS_DMP_PROCESSED_EVENT_STR.system_action=The JVM continues.
@@ -398,8 +398,7 @@ J9NLS_DMP_USER_REQUESTED_DUMP_STR=\u041f\u043e\u043b\u044c\u0437\u043e\u0432\u04
 J9NLS_DMP_USER_REQUESTED_DUMP_STR.explanation=The JVM will write a dump in response to a request through an API, such as JVMTI, or through the -Xtrace:trigger option.
 J9NLS_DMP_USER_REQUESTED_DUMP_STR.system_action=The JVM attempts to write the dump. A second message is produced when the dump is complete.
 J9NLS_DMP_USER_REQUESTED_DUMP_STR.user_response=Review the dump and take appropriate action.
-
-# javacore.txt is not translatable
+J9NLS_DMP_USER_REQUESTED_DUMP_STR.sample_input_1=java
 J9NLS_DMP_USER_REQUESTED_DUMP_STR.sample_input_2=javacore.txt
 J9NLS_DMP_USER_REQUESTED_DUMP_STR.sample_input_3=JVMTI
 J9NLS_DMP_USER_REQUESTED_DUMP_STR.link=dita:///diag/tools/dump_agents.dita
@@ -450,7 +449,7 @@ J9NLS_DMP_NO_SNAPDUMP_WHEN_TRACING_TO_FILE.link=dita:///diag/tools/dump_agents.d
 
 # END NON-TRANSLATABLE
 
-J9NLS_DMP_PROCESSING_EVENT_TIME=\u041e\u0431\u0440\u0430\u0431\u043e\u0442\u043a\u0430 \u0441\u043e\u0431\u044b\u0442\u0438\u044f \u0434\u0430\u043c\u043f\u0430 \"%1$s\", \u044d\u043b\u0435\u043c\u0435\u043d\u0442 \"%3$.*2$s\" \u0432 %4$s. \u041f\u043e\u0434\u043e\u0436\u0434\u0438\u0442\u0435.
+J9NLS_DMP_PROCESSING_EVENT_TIME=\u041e\u0431\u0440\u0430\u0431\u043e\u0442\u043a\u0430 \u0441\u043e\u0431\u044b\u0442\u0438\u044f \u0434\u0430\u043c\u043f\u0430 "%1$s", \u044d\u043b\u0435\u043c\u0435\u043d\u0442 "%3$.*2$s" \u0432 %4$s. \u041f\u043e\u0434\u043e\u0436\u0434\u0438\u0442\u0435.
 # START NON-TRANSLATABLE
 J9NLS_DMP_PROCESSING_EVENT_TIME.explanation=A dump event has occurred and is being handled.
 J9NLS_DMP_PROCESSING_EVENT_TIME.system_action=The JVM generates dumps as configured for the event by the -Xdump option.
@@ -512,6 +511,7 @@ J9NLS_DMP_TOO_MANY_DUMP_OPTIONS=\u0427\u0438\u0441\u043b\u043e \u043f\u0430\u044
 J9NLS_DMP_TOO_MANY_DUMP_OPTIONS.explanation=The number of -Xdump: options exceeds the VM limit
 J9NLS_DMP_TOO_MANY_DUMP_OPTIONS.system_action=The JVM exits.
 J9NLS_DMP_TOO_MANY_DUMP_OPTIONS.user_response=Combine dump types, event types, and filters using '+' into a single option
+J9NLS_DMP_TOO_MANY_DUMP_OPTIONS.sample_input_1=128
 J9NLS_DMP_TOO_MANY_DUMP_OPTIONS.link=
 # END NON-TRANSLATABLE
 
@@ -520,6 +520,8 @@ J9NLS_DMP_EXIT_SHUTDOWN=\u0412\u0438\u0440\u0442\u0443\u0430\u043b\u044c\u043d\u
 J9NLS_DMP_EXIT_SHUTDOWN.explanation=User requested to exit
 J9NLS_DMP_EXIT_SHUTDOWN.system_action=The JVM exits.
 J9NLS_DMP_EXIT_SHUTDOWN.user_response=This exit was requested by the user.
+J9NLS_DMP_EXIT_SHUTDOWN.sample_input_1=19
+J9NLS_DMP_EXIT_SHUTDOWN.sample_input_2=Cannot keep running
 J9NLS_DMP_EXIT_SHUTDOWN.link=
 # END NON-TRANSLATABLE
 
@@ -584,9 +586,12 @@ J9NLS_DMP_JIT_RECOMPILING_METHOD=\u0414\u0430\u043c\u043f JIT \u043f\u043e\u0432
 J9NLS_DMP_JIT_RECOMPILING_METHOD.explanation=The dump is recompiling the specified method signature.
 J9NLS_DMP_JIT_RECOMPILING_METHOD.system_action=The JVM continues.
 J9NLS_DMP_JIT_RECOMPILING_METHOD.user_response=Diagnostic information, provide this information to your service representative.
-J9NLS_DMP_JIT_RECOMPILING_METHOD.sample_input_1=java/lang/String
-J9NLS_DMP_JIT_RECOMPILING_METHOD.sample_input_2=equals
-J9NLS_DMP_JIT_RECOMPILING_METHOD.sample_input_3=(Ljava/lang/Object;)Z
+J9NLS_DMP_JIT_RECOMPILING_METHOD.sample_input_1=16
+J9NLS_DMP_JIT_RECOMPILING_METHOD.sample_input_2=java/lang/String
+J9NLS_DMP_JIT_RECOMPILING_METHOD.sample_input_3=6
+J9NLS_DMP_JIT_RECOMPILING_METHOD.sample_input_4=equals
+J9NLS_DMP_JIT_RECOMPILING_METHOD.sample_input_5=21
+J9NLS_DMP_JIT_RECOMPILING_METHOD.sample_input_6=(Ljava/lang/Object;)Z
 J9NLS_DMP_JIT_RECOMPILING_METHOD.link=
 
 # END NON-TRANSLATABLE
@@ -598,4 +603,18 @@ J9NLS_DMP_JIT_TRACE_IL_CRASHED_THREAD.system_action=The JVM continues.
 J9NLS_DMP_JIT_TRACE_IL_CRASHED_THREAD.user_response=Diagnostic information, provide this information to your service representative.
 J9NLS_DMP_JIT_TRACE_IL_CRASHED_THREAD.link=
 
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_PROCESSING_DETAILED_EVENT_TIME=\u041e\u0431\u0440\u0430\u0431\u043e\u0442\u043a\u0430 \u0441\u043e\u0431\u044b\u0442\u0438\u044f \u0434\u0430\u043c\u043f\u0430 "%1$s", \u0441\u0432\u0435\u0434\u0435\u043d\u0438\u044f "%3$.*2$s", \u0438\u0441\u043a\u043b\u044e\u0447\u0438\u0442\u0435\u043b\u044c\u043d\u0430\u044f \u0441\u0438\u0442\u0443\u0430\u0446\u0438\u044f "%5$.*4$s" \u0432 %6$s -\u043f\u043e\u0434\u043e\u0436\u0434\u0438\u0442\u0435.
+# START NON-TRANSLATABLE
+J9NLS_DMP_PROCESSING_DETAILED_EVENT_TIME.explanation=A dump event has occurred and is being handled.
+J9NLS_DMP_PROCESSING_DETAILED_EVENT_TIME.system_action=The JVM generates dumps as configured for the event by the -Xdump option.
+J9NLS_DMP_PROCESSING_DETAILED_EVENT_TIME.user_response=No response is required.
+J9NLS_DMP_PROCESSING_DETAILED_EVENT_TIME.sample_input_1=throw
+J9NLS_DMP_PROCESSING_DETAILED_EVENT_TIME.sample_input_2=9
+J9NLS_DMP_PROCESSING_DETAILED_EVENT_TIME.sample_input_3=#00000000
+J9NLS_DMP_PROCESSING_DETAILED_EVENT_TIME.sample_input_4=12
+J9NLS_DMP_PROCESSING_DETAILED_EVENT_TIME.sample_input_5=No such file
+J9NLS_DMP_PROCESSING_DETAILED_EVENT_TIME.sample_input_6=20220919.114434
+J9NLS_DMP_PROCESSING_DETAILED_EVENT_TIME.link=dita:///diag/tools/dump_agents.dita
 # END NON-TRANSLATABLE

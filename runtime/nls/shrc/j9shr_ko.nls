@@ -75,7 +75,7 @@ J9NLS_SHRC_CLCM_LAST_DETACH_TIME_TITLE.system_action=
 J9NLS_SHRC_CLCM_LAST_DETACH_TIME_TITLE.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CLCM_CANNOT_DESTROY_CACHE=\"%s\" \uce90\uc2dc\ub97c \uc0ad\uc81c\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.
+J9NLS_SHRC_CLCM_CANNOT_DESTROY_CACHE="%s" \uce90\uc2dc\ub97c \uc0ad\uc81c\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CLCM_CANNOT_DESTROY_CACHE.sample_input_1=myCache
 J9NLS_SHRC_CLCM_CANNOT_DESTROY_CACHE.explanation=It has not been possible to destroy the named shared class cache.
@@ -99,7 +99,7 @@ J9NLS_SHRC_CLCM_CACHE_EXPIRED.system_action=Processing continues.
 J9NLS_SHRC_CLCM_CACHE_EXPIRED.user_response=None required.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CLCM_FAILED_REMOVED=\uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc \"%s\"\uc744(\ub97c) \uc81c\uac70\ud558\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4.
+J9NLS_SHRC_CLCM_FAILED_REMOVED=\uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc "%s"\uc744(\ub97c) \uc81c\uac70\ud558\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CLCM_FAILED_REMOVED.sample_input_1=myCache
 J9NLS_SHRC_CLCM_FAILED_REMOVED.explanation=It has not been possible to remove the indicated shared class cache.
@@ -126,7 +126,7 @@ J9NLS_SHRC_OSCACHE_SHARED_CACHE_OPENED.system_action=The JVM continues.
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_OPENED.user_response=None required.  This is an information message issued when verbose shared class messages have been requested.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SHARED_CACHE_DESTROYED=\uacf5\uc720 \uce90\uc2dc \"%s\"\uc774(\uac00) \uc0ad\uc81c\ub429\ub2c8\ub2e4.
+J9NLS_SHRC_OSCACHE_SHARED_CACHE_DESTROYED=\uacf5\uc720 \uce90\uc2dc "%s"\uc774(\uac00) \uc0ad\uc81c\ub429\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_DESTROYED.sample_input_1=myCache
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_DESTROYED.explanation=This is an information message notifying you that the named shared class cache has been destroyed as requested.
@@ -141,7 +141,7 @@ J9NLS_SHRC_OSCACHE_SHARED_CACHE_OPFAILED.system_action=
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_OPFAILED.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SHARED_CACHE_STILL_ATTACH=\uce90\uc2dc\uc5d0 \uc5f0\uacb0\ub41c JVM\uc774 \uc5ec\uc804\ud788 \uc788\uae30 \ub54c\ubb38\uc5d0 \uacf5\uc720 \uce90\uc2dc \"%s\"\uc744(\ub97c) \uc81c\uac70\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.
+J9NLS_SHRC_OSCACHE_SHARED_CACHE_STILL_ATTACH=\uce90\uc2dc\uc5d0 \uc5f0\uacb0\ub41c JVM\uc774 \uc5ec\uc804\ud788 \uc788\uae30 \ub54c\ubb38\uc5d0 \uacf5\uc720 \uce90\uc2dc "%s"\uc744(\ub97c) \uc81c\uac70\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_STILL_ATTACH.sample_input_1=myCache
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_STILL_ATTACH.explanation=You have requested that the system destroy a shared class cache, but a process or processes are still attached to it.
@@ -149,7 +149,7 @@ J9NLS_SHRC_OSCACHE_SHARED_CACHE_STILL_ATTACH.system_action=The JVM terminates, u
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_STILL_ATTACH.user_response=Wait until any other processes using the shared class cache have terminated and then destroy it.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SHARED_CACHE_MEMORY_REMOVE_FAILED=\uacf5\uc720 \uce90\uc2dc \"%s\" \uba54\ubaa8\ub9ac \uc81c\uac70\uac00 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.
+J9NLS_SHRC_OSCACHE_SHARED_CACHE_MEMORY_REMOVE_FAILED=\uacf5\uc720 \uce90\uc2dc "%s" \uba54\ubaa8\ub9ac \uc81c\uac70\uac00 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_MEMORY_REMOVE_FAILED.sample_input_1=myCache
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_MEMORY_REMOVE_FAILED.explanation=You have requested that the system destroy a shared class cache, but it has not been possible to remove the shared memory associated with the cache.
@@ -157,7 +157,7 @@ J9NLS_SHRC_OSCACHE_SHARED_CACHE_MEMORY_REMOVE_FAILED.system_action=The JVM termi
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_MEMORY_REMOVE_FAILED.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SHARED_CACHE_SEMAPHORE_REMOVE_FAILED=\uacf5\uc720 \uce90\uc2dc \"%s\" \uc138\ub9c8\ud3ec\uc5b4 \uc81c\uac70\uac00 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.
+J9NLS_SHRC_OSCACHE_SHARED_CACHE_SEMAPHORE_REMOVE_FAILED=\uacf5\uc720 \uce90\uc2dc "%s" \uc138\ub9c8\ud3ec\uc5b4 \uc81c\uac70\uac00 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_SEMAPHORE_REMOVE_FAILED.sample_input_1=myCache
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_SEMAPHORE_REMOVE_FAILED.explanation=You have requested that the system destroy a shared class cache, but it has not been possible to remove the shared semaphore associated with the cache.
@@ -328,12 +328,7 @@ J9NLS_SHRC_SHRINIT_INCREMENTAL_UPDATE_DISABLED.system_action=
 J9NLS_SHRC_SHRINIT_INCREMENTAL_UPDATE_DISABLED.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELP_HEADER=\uc0ac\uc6a9\ubc95:\n\
-\n\
-java -Xshareclasses[:option,...]\n\
-\n\
-\ \ud3ec\ud568\ub41c \uc62c\ubc14\ub978 \uc635\uc158(\uac04\ub7b5\ud55c \uc694\uc57d\ub3c4 \ud3ec\ud568)\uc740 \ub2e4\uc74c\uacfc \uac19\uc2b5\ub2c8\ub2e4. \n\
-\n
+J9NLS_SHRC_SHRINIT_HELP_HEADER=\uc0ac\uc6a9\ubc95:\n\njava -Xshareclasses[:option,...]\n\n \ud3ec\ud568\ub41c \uc62c\ubc14\ub978 \uc635\uc158(\uac04\ub7b5\ud55c \uc694\uc57d\ub3c4 \ud3ec\ud568)\uc740 \ub2e4\uc74c\uacfc \uac19\uc2b5\ub2c8\ub2e4. \n\n
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELP_HEADER.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELP_HEADER.system_action=
@@ -368,9 +363,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALL.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALL.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_MODIFIEDEQUALS=\uc218\uc815\ub41c \ubc14\uc774\ud2b8 \ucf54\ub4dc\uc758 \uacf5\uc720\ub97c \uc0ac\uc6a9 \uac00\ub2a5\ud558\uac8c \ud569\ub2c8\ub2e4.\n\
-\ \t<modContext>\ub294 \uc218\uc815 \uc720\ud615\uc744 \uc124\uba85\ud558\ub294 \uc0ac\uc6a9\uc790 \uc124\uba85\uc790\uc785\ub2c8\ub2e4.\n\
-\ \t\ub3d9\uc77c\ud55c <modContext>\ub97c \uc0ac\uc6a9\ud558\ub294 JVM\uc740 \ub3d9\uc77c\ud55c \uc218\uc815\uc744 \uc0ac\uc6a9\ud574\uc57c \ud569\ub2c8\ub2e4.
+J9NLS_SHRC_SHRINIT_HELPTEXT_MODIFIEDEQUALS=\uc218\uc815\ub41c \ubc14\uc774\ud2b8 \ucf54\ub4dc\uc758 \uacf5\uc720\ub97c \uc0ac\uc6a9 \uac00\ub2a5\ud558\uac8c \ud569\ub2c8\ub2e4.\n \t<modContext>\ub294 \uc218\uc815 \uc720\ud615\uc744 \uc124\uba85\ud558\ub294 \uc0ac\uc6a9\uc790 \uc124\uba85\uc790\uc785\ub2c8\ub2e4.\n \t\ub3d9\uc77c\ud55c <modContext>\ub97c \uc0ac\uc6a9\ud558\ub294 JVM\uc740 \ub3d9\uc77c\ud55c \uc218\uc815\uc744 \uc0ac\uc6a9\ud574\uc57c \ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_MODIFIEDEQUALS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_MODIFIEDEQUALS.system_action=
@@ -461,7 +454,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_NO_INCREMENTAL_UPDATES.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_NO_INCREMENTAL_UPDATES.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_COMMAND_LINE_ERROR=\uba85\ub839\ud589 \uc635\uc158 \"%s\"\uc744(\ub97c) \uc778\uc2dd\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.
+J9NLS_SHRC_SHRINIT_HELPTEXT_COMMAND_LINE_ERROR=\uba85\ub839\ud589 \uc635\uc158 "%s"\uc744(\ub97c) \uc778\uc2dd\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_COMMAND_LINE_ERROR.sample_input_1=foo
 J9NLS_SHRC_SHRINIT_HELPTEXT_COMMAND_LINE_ERROR.explanation=NOTISSUED
@@ -567,7 +560,7 @@ J9NLS_SHRC_SHRINIT_INCREMENTAL_DISABLED_INFO.system_action=The JVM continues.
 J9NLS_SHRC_SHRINIT_INCREMENTAL_DISABLED_INFO.user_response=None required.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_REQUIRES_SUBOPTION=\uba85\ub839\ud589 \uc635\uc158 \"%s\"\uc5d0 \ud558\uc704 \uc635\uc158\uc774 \ud544\uc694\ud569\ub2c8\ub2e4.
+J9NLS_SHRC_SHRINIT_REQUIRES_SUBOPTION=\uba85\ub839\ud589 \uc635\uc158 "%s"\uc5d0 \ud558\uc704 \uc635\uc158\uc774 \ud544\uc694\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_REQUIRES_SUBOPTION.sample_input_1=name=
 J9NLS_SHRC_SHRINIT_REQUIRES_SUBOPTION.explanation=The specified command-line option requires further information.
@@ -575,7 +568,7 @@ J9NLS_SHRC_SHRINIT_REQUIRES_SUBOPTION.system_action=The JVM terminates, unless y
 J9NLS_SHRC_SHRINIT_REQUIRES_SUBOPTION.user_response=Specify the additional information required for the command-line option and rerun.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_OPTION_UNRECOGNISED=\uba85\ub839\ud589 \uc635\uc158 \"%s\"\uc744(\ub97c) \uc778\uc2dd\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.
+J9NLS_SHRC_SHRINIT_OPTION_UNRECOGNISED=\uba85\ub839\ud589 \uc635\uc158 "%s"\uc744(\ub97c) \uc778\uc2dd\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_OPTION_UNRECOGNISED.sample_input_1=foo
 J9NLS_SHRC_SHRINIT_OPTION_UNRECOGNISED.explanation=The specified command-line option is not recognised.
@@ -755,7 +748,7 @@ J9NLS_SHRC_CM_FAILED_MARKSTALE_ATTEMPTS.system_action=The JVM terminates, unless
 J9NLS_SHRC_CM_FAILED_MARKSTALE_ATTEMPTS.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_WARN_FULL_CACHE=\uacf5\uc720 \uce90\uc2dc \"%s\"\uc774(\uac00) \uac00\ub4dd \ucc3c\uc2b5\ub2c8\ub2e4. -Xscmx\ub97c \uc0ac\uc6a9\ud558\uc5ec \uce90\uc2dc \ud06c\uae30\ub97c \uc124\uc815\ud558\uc2ed\uc2dc\uc624.
+J9NLS_SHRC_CM_WARN_FULL_CACHE=\uacf5\uc720 \uce90\uc2dc "%s"\uc774(\uac00) \uac00\ub4dd \ucc3c\uc2b5\ub2c8\ub2e4. -Xscmx\ub97c \uc0ac\uc6a9\ud558\uc5ec \uce90\uc2dc \ud06c\uae30\ub97c \uc124\uc815\ud558\uc2ed\uc2dc\uc624.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_WARN_FULL_CACHE.sample_input_1=myCache
 J9NLS_SHRC_CM_WARN_FULL_CACHE.explanation=The named shared class cache is full and no further classes may be added to it.
@@ -763,8 +756,7 @@ J9NLS_SHRC_CM_WARN_FULL_CACHE.system_action=The JVM continues.  The named shared
 J9NLS_SHRC_CM_WARN_FULL_CACHE.user_response=To gain the full benefit of shared classes, delete the named cache and re-create it specifying a larger shared class cache size by the -Xscmx parameter.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_WARN_CORRUPT_CACHE=\uacf5\uc720 \uce90\uc2dc \"%s\"\uc774(\uac00) \uc190\uc0c1\ub418\uc5c8\uc2b5\ub2c8\ub2e4. \uc0c8 JVM\uc740 \uce90\uc2dc\uc5d0 \uc5f0\uacb0\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.\n\
-\ \t\uae30\uc874 JVM\uc740 \uacc4\uc18d \uc0ac\uc6a9\ud560 \uc218 \uc788\uc9c0\ub9cc \uce90\uc2dc\ub97c \uc5c5\ub370\uc774\ud2b8\ud560 \uc218\ub294 \uc5c6\uc2b5\ub2c8\ub2e4.
+J9NLS_SHRC_CM_WARN_CORRUPT_CACHE=\uacf5\uc720 \uce90\uc2dc "%s"\uc774(\uac00) \uc190\uc0c1\ub418\uc5c8\uc2b5\ub2c8\ub2e4. \uc0c8 JVM\uc740 \uce90\uc2dc\uc5d0 \uc5f0\uacb0\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.\n \t\uae30\uc874 JVM\uc740 \uacc4\uc18d \uc0ac\uc6a9\ud560 \uc218 \uc788\uc9c0\ub9cc \uce90\uc2dc\ub97c \uc5c5\ub370\uc774\ud2b8\ud560 \uc218\ub294 \uc5c6\uc2b5\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_WARN_CORRUPT_CACHE.sample_input_1=myCache
 J9NLS_SHRC_CM_WARN_CORRUPT_CACHE.explanation=The shared class cache named in the message is corrupt.
@@ -772,8 +764,7 @@ J9NLS_SHRC_CM_WARN_CORRUPT_CACHE.system_action=The JVM will attempt to automatic
 J9NLS_SHRC_CM_WARN_CORRUPT_CACHE.user_response=Destroy the shared class cache named in the message and rerun.  If the situation persists, contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_TITLE=\n\
-\"%s\" \uce90\uc2dc\uc758 \ud604\uc7ac \ud1b5\uacc4: \n
+J9NLS_SHRC_CM_PRINTSTATS_TITLE=\n"%s" \uce90\uc2dc\uc758 \ud604\uc7ac \ud1b5\uacc4: \n
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_TITLE.sample_input_1=myCache
 J9NLS_SHRC_CM_PRINTSTATS_TITLE.explanation=NOTAG
@@ -882,8 +873,7 @@ J9NLS_SHRC_CM_PRINTSTATS_STALE.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_STALE.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_BASEADDRESS=\n\
-\uae30\ubcf8 \uc8fc\uc18c       = 0x%p
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_BASEADDRESS=\n\uae30\ubcf8 \uc8fc\uc18c       = 0x%p
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_BASEADDRESS.sample_input_1=4263E000
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_BASEADDRESS.explanation=NOTAG
@@ -1237,8 +1227,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_NONFATAL.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_NONFATAL.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_NAMEEQUALS2=\uacf5\uc720 \uce90\uc2dc \uc774\ub984 \uc9c0\uc815\n\
-\ \t(\uadf8\ub8f9 \uc774\ub984\uc5d0 %%g\uc744(\ub97c) \ub300\uccb4 \uc0ac\uc6a9\ud558\uace0 \uc0ac\uc6a9\uc790 \uc774\ub984\uc5d0\ub294 %%u \uc0ac\uc6a9)
+J9NLS_SHRC_SHRINIT_HELPTEXT_NAMEEQUALS2=\uacf5\uc720 \uce90\uc2dc \uc774\ub984 \uc9c0\uc815\n \t(\uadf8\ub8f9 \uc774\ub984\uc5d0 %%g\uc744(\ub97c) \ub300\uccb4 \uc0ac\uc6a9\ud558\uace0 \uc0ac\uc6a9\uc790 \uc774\ub984\uc5d0\ub294 %%u \uc0ac\uc6a9)
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_NAMEEQUALS2.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_NAMEEQUALS2.system_action=
@@ -1268,9 +1257,7 @@ J9NLS_SHRC_SHRINIT_FAILURE_COPYING_GROUPNAME.system_action=The JVM terminates, u
 J9NLS_SHRC_SHRINIT_FAILURE_COPYING_GROUPNAME.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SIZE_CHANGED=\uc694\uccad\ud55c \uacf5\uc720 \uba54\ubaa8\ub9ac\uc758 %1$d\ubc14\uc774\ud2b8\ub97c \ud560\ub2f9\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4. \n\
-\ \t\ud5c8\uc6a9\ub41c \ucd5c\ub300 \uacf5\uc720 \uba54\ubaa8\ub9ac\uac00 \ud560\ub2f9\ub418\uc5c8\uc2b5\ub2c8\ub2e4(%2$d\ubc14\uc774\ud2b8) \n\
-\ \t(\uc0ac\uc6a9 \uac00\ub2a5 \uacf5\uc720 \uba54\ubaa8\ub9ac\ub97c \ub298\ub9ac\ub824\uba74 \uc2dc\uc2a4\ud15c SHMMAX \uac12\uc744 \uc218\uc815\ud558\uc2ed\uc2dc\uc624.)
+J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SIZE_CHANGED=\uc694\uccad\ud55c \uacf5\uc720 \uba54\ubaa8\ub9ac\uc758 %1$d\ubc14\uc774\ud2b8\ub97c \ud560\ub2f9\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4. \n \t\ud5c8\uc6a9\ub41c \ucd5c\ub300 \uacf5\uc720 \uba54\ubaa8\ub9ac\uac00 \ud560\ub2f9\ub418\uc5c8\uc2b5\ub2c8\ub2e4(%2$d\ubc14\uc774\ud2b8) \n \t(\uc0ac\uc6a9 \uac00\ub2a5 \uacf5\uc720 \uba54\ubaa8\ub9ac\ub97c \ub298\ub9ac\ub824\uba74 \uc2dc\uc2a4\ud15c SHMMAX \uac12\uc744 \uc218\uc815\ud558\uc2ed\uc2dc\uc624.)
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SIZE_CHANGED.sample_input_1=99999999
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SIZE_CHANGED.sample_input_2=99999998
@@ -1279,7 +1266,7 @@ J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SIZE_CHANGED.system_action=The JVM continues.
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SIZE_CHANGED.user_response=If you require a larger cache, destroy this cache, increase the value of SHMMAX and re-create the cache.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SHARED_CACHE_CREATEDA=\uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc \"%1$s\"\uc774(\uac00) \uc791\uc131\ub418\uc5c8\uc2b5\ub2c8\ub2e4.
+J9NLS_SHRC_OSCACHE_SHARED_CACHE_CREATEDA=\uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc "%1$s"\uc774(\uac00) \uc791\uc131\ub418\uc5c8\uc2b5\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_CREATEDA.sample_input_1=myCache
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_CREATEDA.explanation=This message informs you that a shared class cache with the given name has been created.  It is only issued if verbose shared classes messages have been requested with -Xshareclasses:verbose.
@@ -1287,7 +1274,7 @@ J9NLS_SHRC_OSCACHE_SHARED_CACHE_CREATEDA.system_action=The JVM continues.
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_CREATEDA.user_response=No action required, this is an information only message.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SHARED_CACHE_OPENEDA=\uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc \"%1$s\"\uc774(\uac00) \uc5f4\ub838\uc2b5\ub2c8\ub2e4.
+J9NLS_SHRC_OSCACHE_SHARED_CACHE_OPENEDA=\uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc "%1$s"\uc774(\uac00) \uc5f4\ub838\uc2b5\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_OPENEDA.sample_input_1=myCache
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_OPENEDA.explanation=This message informs you that an existing shared class cache with the given name has been opened.  It is only issued if verbose shared classes messages have been requested with -Xshareclasses:verbose.
@@ -1337,7 +1324,7 @@ J9NLS_SHRC_SHRINIT_VERBOSE_HELPER_ENABLED_INFO.system_action=
 J9NLS_SHRC_SHRINIT_VERBOSE_HELPER_ENABLED_INFO.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_ATTACH_SUCCESS=\"%1$s\" \uce90\uc2dc\uc5d0 \uc5f0\uacb0, \ud06c\uae30=%2$d\ubc14\uc774\ud2b8
+J9NLS_SHRC_OSCACHE_ATTACH_SUCCESS="%1$s" \uce90\uc2dc\uc5d0 \uc5f0\uacb0, \ud06c\uae30=%2$d\ubc14\uc774\ud2b8
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_ATTACH_SUCCESS.sample_input_1=myCache
 J9NLS_SHRC_OSCACHE_ATTACH_SUCCESS.sample_input_2=16337376
@@ -1362,8 +1349,7 @@ J9NLS_SHRC_CM_PRINTSHUTDOWNSTATS_READ_STORED.system_action=The JVM continues.
 J9NLS_SHRC_CM_PRINTSHUTDOWNSTATS_READ_STORED.user_response=No action required, this is an information only message.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_MARK_STALE=%2$.*1$s\uc5d0\uc11c \ubcc0\uacbd \ubc1c\uacac...\n\
-\ \t...%3$d\uc5d0 \uce90\uc2dc\ub41c \ud074\ub798\uc2a4 \uc190\uc0c1 \ud45c\uc2dc
+J9NLS_SHRC_CM_MARK_STALE=%2$.*1$s\uc5d0\uc11c \ubcc0\uacbd \ubc1c\uacac...\n \t...%3$d\uc5d0 \uce90\uc2dc\ub41c \ud074\ub798\uc2a4 \uc190\uc0c1 \ud45c\uc2dc
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_MARK_STALE.sample_input_1=23
 J9NLS_SHRC_CM_MARK_STALE.sample_input_2=java/net/URLClassLoader
@@ -1373,8 +1359,7 @@ J9NLS_SHRC_CM_MARK_STALE.system_action=The JVM continues.
 J9NLS_SHRC_CM_MARK_STALE.user_response=No action required, this is an information only message.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_NAMEEQUALS_WIN=\uacf5\uc720 \uce90\uc2dc \uc774\ub984 \uc9c0\uc815\n\
-\ \t(\uc0ac\uc6a9\uc790 \uc774\ub984 \ub300\uccb4\uc5d0 %%u \uc0ac\uc6a9)
+J9NLS_SHRC_SHRINIT_HELPTEXT_NAMEEQUALS_WIN=\uacf5\uc720 \uce90\uc2dc \uc774\ub984 \uc9c0\uc815\n \t(\uc0ac\uc6a9\uc790 \uc774\ub984 \ub300\uccb4\uc5d0 %%u \uc0ac\uc6a9)
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_NAMEEQUALS_WIN.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_NAMEEQUALS_WIN.system_action=
@@ -2015,7 +2000,7 @@ J9NLS_SHRC_OSCACHE_MMAP_RUNEXITCODE_ERROR_UPDATING_LAST_ATTACHED_TIME.system_act
 J9NLS_SHRC_OSCACHE_MMAP_RUNEXITCODE_ERROR_UPDATING_LAST_ATTACHED_TIME.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_MMAP_DESTROY_SUCCESS=\uc9c0\uc18d\uc801 \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc \"%1$s\"\uc774(\uac00) \uc0ad\uc81c\ub418\uc5c8\uc2b5\ub2c8\ub2e4.
+J9NLS_SHRC_OSCACHE_MMAP_DESTROY_SUCCESS=\uc9c0\uc18d\uc801 \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc "%1$s"\uc774(\uac00) \uc0ad\uc81c\ub418\uc5c8\uc2b5\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_MMAP_DESTROY_SUCCESS.sample_input_1=myCache
 J9NLS_SHRC_OSCACHE_MMAP_DESTROY_SUCCESS.explanation=This message informs you that you have successfully destroyed the cache named 1$.  This message is only issued if verbose Shared Classes messages have been requested with "-Xshareclasses:verbose".
@@ -2158,7 +2143,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_CACHEDIR.system_action=The JVM looks in the director
 J9NLS_SHRC_SHRINIT_HELPTEXT_CACHEDIR.user_response=None
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_OTHER_PERS_TYPE_CACHE_EXISTS=\"%s\" \uc720\ud2f8\ub9ac\ud2f0\ub97c \uc9c0\uc18d\uc801 \ud074\ub798\uc2a4 \uce90\uc2dc \"%s\"\uc5d0\uc11c \uc2e4\ud589\ud558\ub824\uba74 \"nonpersistent\" \ud558\uc704 \uc635\uc158\uc744 \uc0ac\uc6a9\ud558\uc9c0 \ub9c8\uc2ed\uc2dc\uc624.
+J9NLS_SHRC_SHRINIT_OTHER_PERS_TYPE_CACHE_EXISTS="%s" \uc720\ud2f8\ub9ac\ud2f0\ub97c \uc9c0\uc18d\uc801 \ud074\ub798\uc2a4 \uce90\uc2dc "%s"\uc5d0\uc11c \uc2e4\ud589\ud558\ub824\uba74 "nonpersistent" \ud558\uc704 \uc635\uc158\uc744 \uc0ac\uc6a9\ud558\uc9c0 \ub9c8\uc2ed\uc2dc\uc624.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_OTHER_PERS_TYPE_CACHE_EXISTS.sample_input_1=myUtility
 J9NLS_SHRC_SHRINIT_OTHER_PERS_TYPE_CACHE_EXISTS.sample_input_2=myCache
@@ -2167,7 +2152,7 @@ J9NLS_SHRC_SHRINIT_OTHER_PERS_TYPE_CACHE_EXISTS.system_action=The JVM exits
 J9NLS_SHRC_SHRINIT_OTHER_PERS_TYPE_CACHE_EXISTS.user_response=Remove nonpersistent suboption
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_OTHER_NONPERS_TYPE_CACHE_EXISTS=\"%s\" \uc720\ud2f8\ub9ac\ud2f0\ub97c \ube44\uc9c0\uc18d\uc801 \uacf5\uc720 \uce90\uc2dc \"%s\"\uc5d0\uc11c \uc2e4\ud589\ud558\ub824\uba74 \"nonpersistent\" \ud558\uc704 \uc635\uc158\ub3c4 \uc0ac\uc6a9\ud574\uc57c \ud569\ub2c8\ub2e4.
+J9NLS_SHRC_SHRINIT_OTHER_NONPERS_TYPE_CACHE_EXISTS="%s" \uc720\ud2f8\ub9ac\ud2f0\ub97c \ube44\uc9c0\uc18d\uc801 \uacf5\uc720 \uce90\uc2dc "%s"\uc5d0\uc11c \uc2e4\ud589\ud558\ub824\uba74 "nonpersistent" \ud558\uc704 \uc635\uc158\ub3c4 \uc0ac\uc6a9\ud574\uc57c \ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_OTHER_NONPERS_TYPE_CACHE_EXISTS.sample_input_1=myUtility
 J9NLS_SHRC_SHRINIT_OTHER_NONPERS_TYPE_CACHE_EXISTS.sample_input_2=myCache
@@ -2176,7 +2161,7 @@ J9NLS_SHRC_SHRINIT_OTHER_NONPERS_TYPE_CACHE_EXISTS.system_action=The JVM exits
 J9NLS_SHRC_SHRINIT_OTHER_NONPERS_TYPE_CACHE_EXISTS.user_response=Add nonpersistent suboption
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CLCM_NOT_DONE_FOR_CACHE=\"%s\" \uc720\ud2f8\ub9ac\ud2f0\ub294 \ube44\ud638\ud658 \ud074\ub798\uc2a4 \uce90\uc2dc \"%s\"\uc5d0 \ub300\ud574 \uc791\ub3d9\ud558\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4. \uc62c\ubc14\ub978 \ub808\ubca8\uc758 JVM\uc744 \uc0ac\uc6a9\ud558\uc2ed\uc2dc\uc624.
+J9NLS_SHRC_CLCM_NOT_DONE_FOR_CACHE="%s" \uc720\ud2f8\ub9ac\ud2f0\ub294 \ube44\ud638\ud658 \ud074\ub798\uc2a4 \uce90\uc2dc "%s"\uc5d0 \ub300\ud574 \uc791\ub3d9\ud558\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4. \uc62c\ubc14\ub978 \ub808\ubca8\uc758 JVM\uc744 \uc0ac\uc6a9\ud558\uc2ed\uc2dc\uc624.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CLCM_NOT_DONE_FOR_CACHE.sample_input_1=myUtility
 J9NLS_SHRC_CLCM_NOT_DONE_FOR_CACHE.sample_input_2=myCache
@@ -2326,7 +2311,7 @@ J9NLS_SHRC_COREMMAP_REQUIRED.system_action=The JVM terminates
 J9NLS_SHRC_COREMMAP_REQUIRED.user_response=Set CORE_MMAP or use nonpersistent caches
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_OTHER_PERS_TYPE_CACHE_EXISTS2=\"%s\" \uc720\ud2f8\ub9ac\ud2f0\ub97c \uc9c0\uc18d\uc801 \ud074\ub798\uc2a4 \uce90\uc2dc \"%s\"\uc5d0\uc11c \uc2e4\ud589\ud558\ub824\uba74 \"persistent\" \ud558\uc704 \uc635\uc158\uc744 \uc0ac\uc6a9\ud558\uc2ed\uc2dc\uc624.
+J9NLS_SHRC_SHRINIT_OTHER_PERS_TYPE_CACHE_EXISTS2="%s" \uc720\ud2f8\ub9ac\ud2f0\ub97c \uc9c0\uc18d\uc801 \ud074\ub798\uc2a4 \uce90\uc2dc "%s"\uc5d0\uc11c \uc2e4\ud589\ud558\ub824\uba74 "persistent" \ud558\uc704 \uc635\uc158\uc744 \uc0ac\uc6a9\ud558\uc2ed\uc2dc\uc624.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_OTHER_PERS_TYPE_CACHE_EXISTS2.sample_input_1=myUtility
 J9NLS_SHRC_SHRINIT_OTHER_PERS_TYPE_CACHE_EXISTS2.sample_input_2=myCache
@@ -2335,7 +2320,7 @@ J9NLS_SHRC_SHRINIT_OTHER_PERS_TYPE_CACHE_EXISTS2.system_action=The JVM exits
 J9NLS_SHRC_SHRINIT_OTHER_PERS_TYPE_CACHE_EXISTS2.user_response=Add persistent suboption
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_NESTED_WITHOUT_CACHELETS=\uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc \"%s\"\uc740(\ub294) nested \uc635\uc158\uc774 \ud3ec\ud568\ub41c \ucc44\ub85c \uc791\uc131\ub418\uc9c0 \uc54a\uc544\uc11c \uce90\uc2dc\ub97c \ud655\uc7a5\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.
+J9NLS_SHRC_CM_NESTED_WITHOUT_CACHELETS=\uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc "%s"\uc740(\ub294) nested \uc635\uc158\uc774 \ud3ec\ud568\ub41c \ucc44\ub85c \uc791\uc131\ub418\uc9c0 \uc54a\uc544\uc11c \uce90\uc2dc\ub97c \ud655\uc7a5\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_NESTED_WITHOUT_CACHELETS.sample_input_1=sharedcc
 J9NLS_SHRC_CM_NESTED_WITHOUT_CACHELETS.explanation=An error has occurred within Shared Classes processing.
@@ -2350,7 +2335,7 @@ J9NLS_SHRC_OSCACHE_NESTED_IN_USE.system_action=The JVM terminates, unless you ha
 J9NLS_SHRC_OSCACHE_NESTED_IN_USE.user_response=Shutdown all the vms using the cache, or remove the nested option from your command-line, and restart.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_NO_CACHE_FOR_HINTS=\uc911\ucca9\ub41c \uce90\uc2dc \"%s\"\uc744(\ub97c) \ud655\uc7a5\ud560 \uc218 \uc5c6\uc73c\uba70 \ud78c\ud2b8\uc6a9 \uc0c8 \uc218\ud37c\uce90\uc2dc \ud560\ub2f9\ub3c4 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.
+J9NLS_SHRC_CM_NO_CACHE_FOR_HINTS=\uc911\ucca9\ub41c \uce90\uc2dc "%s"\uc744(\ub97c) \ud655\uc7a5\ud560 \uc218 \uc5c6\uc73c\uba70 \ud78c\ud2b8\uc6a9 \uc0c8 \uc218\ud37c\uce90\uc2dc \ud560\ub2f9\ub3c4 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_NO_CACHE_FOR_HINTS.sample_input_1=sharedcc
 J9NLS_SHRC_CM_NO_CACHE_FOR_HINTS.explanation=An error has occurred within Shared Classes processing.
@@ -2358,7 +2343,7 @@ J9NLS_SHRC_CM_NO_CACHE_FOR_HINTS.system_action=The JVM terminates, unless you ha
 J9NLS_SHRC_CM_NO_CACHE_FOR_HINTS.user_response=Verify that the system has enough native resources for the JVM to work properly. If the situation persists, contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_NO_BLOCK_FOR_HINTS=\uc911\ucca9\ub41c \uce90\uc2dc \"%s\"\uc744(\ub97c) \ud655\uc7a5\ud560 \uc218 \uc5c6\uc73c\uba70 \ud78c\ud2b8\uc6a9 \ube14\ub85d \ud560\ub2f9\ub3c4 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.
+J9NLS_SHRC_CM_NO_BLOCK_FOR_HINTS=\uc911\ucca9\ub41c \uce90\uc2dc "%s"\uc744(\ub97c) \ud655\uc7a5\ud560 \uc218 \uc5c6\uc73c\uba70 \ud78c\ud2b8\uc6a9 \ube14\ub85d \ud560\ub2f9\ub3c4 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_NO_BLOCK_FOR_HINTS.sample_input_1=sharedcc
 J9NLS_SHRC_CM_NO_BLOCK_FOR_HINTS.explanation=An error has occurred within Shared Classes processing.
@@ -2366,7 +2351,7 @@ J9NLS_SHRC_CM_NO_BLOCK_FOR_HINTS.system_action=The JVM terminates, unless you ha
 J9NLS_SHRC_CM_NO_BLOCK_FOR_HINTS.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_COPY_CACHE_FAILURE=\uc911\ucca9\ub41c \uce90\uc2dc\"%s\" \uc791\uc131\uc774 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.
+J9NLS_SHRC_CM_COPY_CACHE_FAILURE=\uc911\ucca9\ub41c \uce90\uc2dc"%s" \uc791\uc131\uc774 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_COPY_CACHE_FAILURE.sample_input_1=sharedcc
 J9NLS_SHRC_CM_COPY_CACHE_FAILURE.explanation=An error has occurred within Shared Classes processing.
@@ -2374,7 +2359,7 @@ J9NLS_SHRC_CM_COPY_CACHE_FAILURE.system_action=The JVM terminates, unless you ha
 J9NLS_SHRC_CM_COPY_CACHE_FAILURE.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_CACHE_REMOVAL_FAILURE=\"%s\" \uce90\uc2dc \ubc14\uafb8\uae30\uac00 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.
+J9NLS_SHRC_CM_CACHE_REMOVAL_FAILURE="%s" \uce90\uc2dc \ubc14\uafb8\uae30\uac00 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_CACHE_REMOVAL_FAILURE.sample_input_1=sharedcc
 J9NLS_SHRC_CM_CACHE_REMOVAL_FAILURE.explanation=An error has occurred within Shared Classes processing.
@@ -2411,7 +2396,7 @@ J9NLS_SHRC_CM_PRINTSTATS_ROMMETHOD_DISPLAY.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_ROMMETHOD_DISPLAY.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_SERIALIZE_CACHE_FAILURE_AOT_OFFSETS=\"%s\" \uce90\uc2dc \uc9c1\ub82c\ud654\uac00 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4. AOT \uba54\uc18c\ub4dc\uc5d0\uc11c ROM \ud074\ub798\uc2a4 \uc624\ud504\uc14b \uc5c5\ub370\uc774\ud2b8\uac00 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.
+J9NLS_SHRC_CM_SERIALIZE_CACHE_FAILURE_AOT_OFFSETS="%s" \uce90\uc2dc \uc9c1\ub82c\ud654\uac00 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4. AOT \uba54\uc18c\ub4dc\uc5d0\uc11c ROM \ud074\ub798\uc2a4 \uc624\ud504\uc14b \uc5c5\ub370\uc774\ud2b8\uac00 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_SERIALIZE_CACHE_FAILURE_AOT_OFFSETS.sample_input_1=sharedcc
 J9NLS_SHRC_CM_SERIALIZE_CACHE_FAILURE_AOT_OFFSETS.explanation=An error has occurred within Shared Classes processing while updating ROM Class offsets in AOT methods.
@@ -2419,7 +2404,7 @@ J9NLS_SHRC_CM_SERIALIZE_CACHE_FAILURE_AOT_OFFSETS.system_action=Your cache will 
 J9NLS_SHRC_CM_SERIALIZE_CACHE_FAILURE_AOT_OFFSETS.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_CANT_GROW_READONLY=\"grow\" \ubc0f \"readonly\" \uc635\uc158\uc740 \uac19\uc774 \uc0ac\uc6a9\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.
+J9NLS_SHRC_SHRINIT_CANT_GROW_READONLY="grow" \ubc0f "readonly" \uc635\uc158\uc740 \uac19\uc774 \uc0ac\uc6a9\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_CANT_GROW_READONLY.explanation=An invalid combination of command-line options has been specified.
 J9NLS_SHRC_SHRINIT_CANT_GROW_READONLY.system_action=The JVM terminates.
@@ -2992,8 +2977,7 @@ J9NLS_SHRC_SHRINIT_SCDMX_GRTHAN_SCMX.sample_input_3=49152
 J9NLS_SHRC_SHRINIT_SCDMX_GRTHAN_SCMX.user_response=The value has been changed automatically
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELP_OTHEROPTS_HEADER= \n\
-\uad00\ub828\ub41c \uba85\ub839\ud589 \uc635\uc158:\n
+J9NLS_SHRC_SHRINIT_HELP_OTHEROPTS_HEADER= \n\uad00\ub828\ub41c \uba85\ub839\ud589 \uc635\uc158:\n
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELP_OTHEROPTS_HEADER.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELP_OTHEROPTS_HEADER.system_action=
@@ -3042,8 +3026,7 @@ J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_LOCALVARIABLETABLE_BYTES.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_LOCALVARIABLETABLE_BYTES.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_BASEADDRESS_V2=\n\
-\uae30\ubcf8 \uc8fc\uc18c                        %*c= 0x%p
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_BASEADDRESS_V2=\n\uae30\ubcf8 \uc8fc\uc18c                        %*c= 0x%p
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_BASEADDRESS_V2.sample_input_1=0
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_BASEADDRESS_V2.sample_input_2=
@@ -3484,7 +3467,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTDETAILS.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTDETAILS.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CLCM_REMOVED_OLDER_GEN=\uc774\uc804\uc5d0 \uc0dd\uc131\ub41c \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc \"%s\" \uc81c\uac70\ub428
+J9NLS_SHRC_CLCM_REMOVED_OLDER_GEN=\uc774\uc804\uc5d0 \uc0dd\uc131\ub41c \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc "%s" \uc81c\uac70\ub428
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CLCM_REMOVED_OLDER_GEN.sample_input_1=myCache
 J9NLS_SHRC_CLCM_REMOVED_OLDER_GEN.explanation=Successfully removed older generation of indicated shared class cache.
@@ -3492,7 +3475,7 @@ J9NLS_SHRC_CLCM_REMOVED_OLDER_GEN.system_action=Processing continues.
 J9NLS_SHRC_CLCM_REMOVED_OLDER_GEN.user_response=None required.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CLCM_FAILED_REMOVED_OLDER_GEN=\uc774\uc804\uc5d0 \uc0dd\uc131\ub41c \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc \"%s\" \uc81c\uac70\uc5d0 \uc2e4\ud328
+J9NLS_SHRC_CLCM_FAILED_REMOVED_OLDER_GEN=\uc774\uc804\uc5d0 \uc0dd\uc131\ub41c \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc "%s" \uc81c\uac70\uc5d0 \uc2e4\ud328
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CLCM_FAILED_REMOVED_OLDER_GEN.sample_input_1=myCache
 J9NLS_SHRC_CLCM_FAILED_REMOVED_OLDER_GEN.explanation=It has not been possible to remove the older generation of indicated shared class cache.
@@ -3500,7 +3483,7 @@ J9NLS_SHRC_CLCM_FAILED_REMOVED_OLDER_GEN.system_action=Processing continues.
 J9NLS_SHRC_CLCM_FAILED_REMOVED_OLDER_GEN.user_response=Run with -Xshareclasses:verbose enabled to see other messages that may indicate the reason why the cache has not been destroyed.  Investigate these messages.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CLCM_FAILED_REMOVED_CURRENT_GEN=\ud604\uc7ac \uc0dd\uc131\ub41c \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc \"%s\" \uc81c\uac70\uc5d0 \uc2e4\ud328
+J9NLS_SHRC_CLCM_FAILED_REMOVED_CURRENT_GEN=\ud604\uc7ac \uc0dd\uc131\ub41c \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc "%s" \uc81c\uac70\uc5d0 \uc2e4\ud328
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CLCM_FAILED_REMOVED_CURRENT_GEN.sample_input_1=myCache
 J9NLS_SHRC_CLCM_FAILED_REMOVED_CURRENT_GEN.explanation=It has not been possible to remove the current generation of indicated shared class cache.
@@ -3600,8 +3583,7 @@ J9NLS_SHRC_SHRINIT_MAXJIT_GRTHAN_SCMX.system_action=The JVM continues
 J9NLS_SHRC_SHRINIT_MAXJIT_GRTHAN_SCMX.user_response=The value has been changed automatically
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_WARN_CORRUPT_CACHE_V2=\uacf5\uc720 \uce90\uc2dc \"%s\"\uc774(\uac00) \uc190\uc0c1\ub418\uc5c8\uc2b5\ub2c8\ub2e4. \uc190\uc0c1 \ucf54\ub4dc\ub294 %d\uc785\ub2c8\ub2e4. \uc190\uc0c1 \uac12\uc740 0x%p\uc785\ub2c8\ub2e4. \uc0c8 JVM\uc740 \uce90\uc2dc\uc5d0 \uc5f0\uacb0\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.\n\
-\ \t\uae30\uc874 JVM\uc740 \uacc4\uc18d \uc0ac\uc6a9\ud560 \uc218 \uc788\uc9c0\ub9cc \uce90\uc2dc\ub97c \uc5c5\ub370\uc774\ud2b8\ud560 \uc218\ub294 \uc5c6\uc2b5\ub2c8\ub2e4.
+J9NLS_SHRC_CM_WARN_CORRUPT_CACHE_V2=\uacf5\uc720 \uce90\uc2dc "%s"\uc774(\uac00) \uc190\uc0c1\ub418\uc5c8\uc2b5\ub2c8\ub2e4. \uc190\uc0c1 \ucf54\ub4dc\ub294 %d\uc785\ub2c8\ub2e4. \uc190\uc0c1 \uac12\uc740 0x%p\uc785\ub2c8\ub2e4. \uc0c8 JVM\uc740 \uce90\uc2dc\uc5d0 \uc5f0\uacb0\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.\n \t\uae30\uc874 JVM\uc740 \uacc4\uc18d \uc0ac\uc6a9\ud560 \uc218 \uc788\uc9c0\ub9cc \uce90\uc2dc\ub97c \uc5c5\ub370\uc774\ud2b8\ud560 \uc218\ub294 \uc5c6\uc2b5\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_WARN_CORRUPT_CACHE_V2.sample_input_1=myCache
 J9NLS_SHRC_CM_WARN_CORRUPT_CACHE_V2.sample_input_2=-1
@@ -3718,7 +3700,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_TEST_BAD_BUILDID.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_TEST_BAD_BUILDID.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_FAILURE_NAME_ONLY_WHITESPACE=\uc62c\ubc14\ub974\uc9c0 \uc54a\uc740 \uce90\uc2dc \uc774\ub984. \uce90\uc2dc \uc774\ub984 \"%.*s\"\uc5d0 \uacf5\ubc31\ub9cc \uc788\uac70\ub098 \ube44\uc5b4 \uc788\uc74c
+J9NLS_SHRC_SHRINIT_FAILURE_NAME_ONLY_WHITESPACE=\uc62c\ubc14\ub974\uc9c0 \uc54a\uc740 \uce90\uc2dc \uc774\ub984. \uce90\uc2dc \uc774\ub984 "%.*s"\uc5d0 \uacf5\ubc31\ub9cc \uc788\uac70\ub098 \ube44\uc5b4 \uc788\uc74c
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_FAILURE_NAME_ONLY_WHITESPACE.sample_input_1=8
 J9NLS_SHRC_SHRINIT_FAILURE_NAME_ONLY_WHITESPACE.sample_input_2=sharedcc
@@ -4270,49 +4252,49 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTALLSTATS_HELP.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTALLSTATS_HELP.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ALL=\t all \uacf5\uc720 \uce90\uc2dc\uc5d0 \uc788\ub294 \ub2e4\uc74c \uc720\ud615 \ubaa8\ub450\ub97c \uc778\uc1c4\ud569\ub2c8\ub2e4.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ALL=\t\ all \uacf5\uc720 \uce90\uc2dc\uc5d0 \uc788\ub294 \ub2e4\uc74c \uc720\ud615 \ubaa8\ub450\ub97c \uc778\uc1c4\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ALL.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ALL.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ALL.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_CLASSPATH=\t classpath \uacf5\uc720 \uce90\uc2dc\uc5d0 \uc788\ub294 classpath \uc720\ud615\ub9cc \uc778\uc1c4\ud569\ub2c8\ub2e4.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_CLASSPATH=\t\ classpath \uacf5\uc720 \uce90\uc2dc\uc5d0 \uc788\ub294 classpath \uc720\ud615\ub9cc \uc778\uc1c4\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_CLASSPATH.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_CLASSPATH.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_CLASSPATH.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_URL=\t url \uacf5\uc720 \uce90\uc2dc\uc5d0 \uc788\ub294 url \uc720\ud615\ub9cc \uc778\uc1c4\ud569\ub2c8\ub2e4.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_URL=\t\ url \uacf5\uc720 \uce90\uc2dc\uc5d0 \uc788\ub294 url \uc720\ud615\ub9cc \uc778\uc1c4\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_URL.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_URL.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_URL.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_TOKEN=\t token \uacf5\uc720 \uce90\uc2dc\uc5d0 \uc788\ub294 \ud1a0\ud070 \uc720\ud615\ub9cc \uc778\uc1c4\ud569\ub2c8\ub2e4.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_TOKEN=\t\ token \uacf5\uc720 \uce90\uc2dc\uc5d0 \uc788\ub294 \ud1a0\ud070 \uc720\ud615\ub9cc \uc778\uc1c4\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_TOKEN.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_TOKEN.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_TOKEN.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ROMCLASS=\t romclass \uacf5\uc720 \uce90\uc2dc\uc5d0 \uc788\ub294 romclass \uc720\ud615\ub9cc \uc778\uc1c4\ud569\ub2c8\ub2e4.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ROMCLASS=\t\ romclass \uacf5\uc720 \uce90\uc2dc\uc5d0 \uc788\ub294 romclass \uc720\ud615\ub9cc \uc778\uc1c4\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ROMCLASS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ROMCLASS.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ROMCLASS.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ROMMETHOD=\t rommethod \uacf5\uc720 \uce90\uc2dc\uc5d0 \uc788\ub294 rommethod \uc720\ud615\ub9cc \uc778\uc1c4\ud569\ub2c8\ub2e4.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ROMMETHOD=\t\ rommethod \uacf5\uc720 \uce90\uc2dc\uc5d0 \uc788\ub294 rommethod \uc720\ud615\ub9cc \uc778\uc1c4\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ROMMETHOD.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ROMMETHOD.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ROMMETHOD.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOT=\t aot \uacf5\uc720 \uce90\uc2dc\uc5d0 \uc788\ub294 aot \uc720\ud615\ub9cc \uc778\uc1c4\ud569\ub2c8\ub2e4.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOT=\t\ aot \uacf5\uc720 \uce90\uc2dc\uc5d0 \uc788\ub294 aot \uc720\ud615\ub9cc \uc778\uc1c4\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOT.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOT.system_action=
@@ -4320,70 +4302,70 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOT.user_response=
 # END NON-TRANSLATABLE
 
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JITPROFILE=\t jitprofile \uacf5\uc720 \uce90\uc2dc\uc5d0 \uc788\ub294 jitprofile \uc720\ud615\ub9cc \uc778\uc1c4\ud569\ub2c8\ub2e4.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JITPROFILE=\t\ jitprofile \uacf5\uc720 \uce90\uc2dc\uc5d0 \uc788\ub294 jitprofile \uc720\ud615\ub9cc \uc778\uc1c4\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JITPROFILE.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JITPROFILE.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JITPROFILE.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ZIPCACHE=\t zipcache     \uacf5\uc720 \uce90\uc2dc\uc5d0 \uc788\ub294 zipcache \uc720\ud615\ub9cc \uc778\uc1c4\ud569\ub2c8\ub2e4.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ZIPCACHE=\t\ zipcache     \uacf5\uc720 \uce90\uc2dc\uc5d0 \uc788\ub294 zipcache \uc720\ud615\ub9cc \uc778\uc1c4\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ZIPCACHE.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ZIPCACHE.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ZIPCACHE.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_EXTRA=\t extra \uacf5\uc720 \uce90\uc2dc\uc5d0 \uc788\ub294 \ub2e4\uc74c private \uc720\ud615\uc744 \ubaa8\ub450 \uc778\uc1c4\ud569\ub2c8\ub2e4.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_EXTRA=\t\ extra \uacf5\uc720 \uce90\uc2dc\uc5d0 \uc788\ub294 \ub2e4\uc74c private \uc720\ud615\uc744 \ubaa8\ub450 \uc778\uc1c4\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_EXTRA.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_EXTRA.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_EXTRA.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ORPHAN=\t orphan \uacf5\uc720 \uce90\uc2dc\uc5d0 \uc788\ub294 \uace0\uc544 \uc720\ud615\ub9cc \uc778\uc1c4\ud569\ub2c8\ub2e4.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ORPHAN=\t\ orphan \uacf5\uc720 \uce90\uc2dc\uc5d0 \uc788\ub294 \uace0\uc544 \uc720\ud615\ub9cc \uc778\uc1c4\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ORPHAN.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ORPHAN.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ORPHAN.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JITHINT=\t jithint \uacf5\uc720 \uce90\uc2dc\uc5d0 \uc788\ub294 jithint \uc720\ud615\ub9cc \uc778\uc1c4\ud569\ub2c8\ub2e4.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JITHINT=\t\ jithint \uacf5\uc720 \uce90\uc2dc\uc5d0 \uc788\ub294 jithint \uc720\ud615\ub9cc \uc778\uc1c4\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JITHINT.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JITHINT.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JITHINT.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTCH=\t aotch \uacf5\uc720 \uce90\uc2dc\uc5d0 \uc788\ub294 aotch \uc720\ud615\ub9cc \uc778\uc1c4\ud569\ub2c8\ub2e4.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTCH=\t\ aotch \uacf5\uc720 \uce90\uc2dc\uc5d0 \uc788\ub294 aotch \uc720\ud615\ub9cc \uc778\uc1c4\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTCH.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTCH.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTCH.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTTHUNK=\t aotthunk \uacf5\uc720 \uce90\uc2dc\uc5d0 \uc788\ub294 aotthunk \uc720\ud615\ub9cc \uc778\uc1c4\ud569\ub2c8\ub2e4.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTTHUNK=\t\ aotthunk \uacf5\uc720 \uce90\uc2dc\uc5d0 \uc788\ub294 aotthunk \uc720\ud615\ub9cc \uc778\uc1c4\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTTHUNK.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTTHUNK.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTTHUNK.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTDATA=\t aotdata \uacf5\uc720 \uce90\uc2dc\uc5d0 \uc788\ub294 aotdata \uc720\ud615\ub9cc \uc778\uc1c4\ud569\ub2c8\ub2e4.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTDATA=\t\ aotdata \uacf5\uc720 \uce90\uc2dc\uc5d0 \uc788\ub294 aotdata \uc720\ud615\ub9cc \uc778\uc1c4\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTDATA.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTDATA.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTDATA.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JCL=\t jcl \uacf5\uc720 \uce90\uc2dc\uc5d0 \uc788\ub294 jcl \uc720\ud615\ub9cc \uc778\uc1c4\ud569\ub2c8\ub2e4.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JCL=\t\ jcl \uacf5\uc720 \uce90\uc2dc\uc5d0 \uc788\ub294 jcl \uc720\ud615\ub9cc \uc778\uc1c4\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JCL.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JCL.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JCL.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_BYTEDATA=\t bytedata \uacf5\uc720 \uce90\uc2dc\uc5d0 \uc788\ub294 \uae30\ud0c0 \ubaa8\ub4e0 \ubc14\uc774\ud2b8 \ub370\uc774\ud130 \uc720\ud615\uc744 \uc778\uc1c4\ud569\ub2c8\ub2e4.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_BYTEDATA=\t\ bytedata \uacf5\uc720 \uce90\uc2dc\uc5d0 \uc788\ub294 \uae30\ud0c0 \ubaa8\ub4e0 \ubc14\uc774\ud2b8 \ub370\uc774\ud130 \uc720\ud615\uc744 \uc778\uc1c4\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_BYTEDATA.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_BYTEDATA.system_action=
@@ -4549,6 +4531,8 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_CHECK_STRINGTABLE_RESET.user_response=
 
 J9NLS_SHRC_SHRINIT_CHECK_STRING_TABLE_RESET_MAY_FAIL=-Xshareclasses:checkStringTableReset\uc774 \uc2e4\ud328\ud588\uc744 \uc218 \uc788\uc2b5\ub2c8\ub2e4. \ubb38\uc790\uc5f4 \ud14c\uc774\ube14\uc774 \ucda9\ubd84\ud788 \ud06c\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4. OS \ud398\uc774\uc9c0 \ud06c\uae30\ubcf4\ub2e4 \ucee4\uc57c \ud569\ub2c8\ub2e4. \ud14c\uc774\ube14 \ud06c\uae30 = %d, \ud398\uc774\uc9c0 \ud06c\uae30 = %d
 # START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_CHECK_STRING_TABLE_RESET_MAY_FAIL.sample_input_1=256
+J9NLS_SHRC_SHRINIT_CHECK_STRING_TABLE_RESET_MAY_FAIL.sample_input_2=4096
 J9NLS_SHRC_SHRINIT_CHECK_STRING_TABLE_RESET_MAY_FAIL.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_SHRINIT_CHECK_STRING_TABLE_RESET_MAY_FAIL.system_action=The JVM terminates.
 J9NLS_SHRC_SHRINIT_CHECK_STRING_TABLE_RESET_MAY_FAIL.user_response=Contact your service representative.
@@ -4561,14 +4545,14 @@ J9NLS_SHRC_SHRINIT_CHECK_STRINGTABLE_RESET_MISSING_FLAG.system_action=The JVM te
 J9NLS_SHRC_SHRINIT_CHECK_STRINGTABLE_RESET_MISSING_FLAG.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_CACHE_FULL=\"%s\" \uce90\uc2dc\uac00 \uac00\ub4dd \ucc2c \uac83\uc73c\ub85c \ud45c\uc2dc\ub429\ub2c8\ub2e4. \ube14\ub85d \ud06c\uae30 = %d\uc744(\ub97c) \ud560\ub2f9\ud558\ub294 \ub370 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.
+J9NLS_SHRC_CM_CACHE_FULL=
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_CACHE_FULL.explanation=The JVM failed to store requested data in the cache as it is marked as full.
 J9NLS_SHRC_CM_CACHE_FULL.system_action=The JVM terminates.
 J9NLS_SHRC_CM_CACHE_FULL.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_INSUFFICIENT_FREE_BLOCK=\"%s\"\uc5d0 \ub300\ud574 \uc694\uccad\ub41c \ube14\ub85d \ud06c\uae30\ub97c \ud560\ub2f9\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4. \uc0ac\uc6a9 \uac00\ub2a5 \ubc14\uc774\ud2b8 = %d, \uc694\uccad\ub41c \ubc14\uc774\ud2b8 = %d
+J9NLS_SHRC_CM_INSUFFICIENT_FREE_BLOCK=
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_INSUFFICIENT_FREE_BLOCK.explanation=There is not enough free memory in shared class cache to store requested amount of data.
 J9NLS_SHRC_CM_INSUFFICIENT_FREE_BLOCK.system_action=The JVM terminates.
@@ -4617,8 +4601,9 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_CREATECACHEDIR_FAILED_V2=\uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc\uc6a9 \"%s\" \ub514\ub809\ud1a0\ub9ac\ub97c \uc791\uc131\ud558\ub294 \ub370 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.
+J9NLS_SHRC_OSCACHE_CREATECACHEDIR_FAILED_V2=\uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc\uc6a9 "%s" \ub514\ub809\ud1a0\ub9ac\ub97c \uc791\uc131\ud558\ub294 \ub370 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
+J9NLS_SHRC_OSCACHE_CREATECACHEDIR_FAILED_V2.sample_input_1=/home/user/cachedir
 J9NLS_SHRC_OSCACHE_CREATECACHEDIR_FAILED_V2.explanation=The directory specified for the shared class cache could not be created
 J9NLS_SHRC_OSCACHE_CREATECACHEDIR_FAILED_V2.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_CREATECACHEDIR_FAILED_V2.user_response=Make sure you have the right permissions for the controldir or cachedir chosen.
@@ -4631,8 +4616,10 @@ J9NLS_SHRC_OSCACHE_BAD_CACHENAME_ERROR.system_action=The JVM terminates, unless 
 J9NLS_SHRC_OSCACHE_BAD_CACHENAME_ERROR.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_MMAP_DISK_FULL=\ud30c\uc77c \uc2dc\uc2a4\ud15c\uc5d0 \uacf5\uac04\uc774 \ubd80\uc871\ud558\ubbc0\ub85c \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc\ub97c \ucd08\uae30\ud654\ud558\ub294 \ub370 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4. \uc0ac\uc6a9 \uac00\ub2a5 \ub514\uc2a4\ud06c \uc5ec\uc720 \uacf5\uac04 \ubc14\uc774\ud2b8 = %lld, \uc694\uccad\ub41c \ubc14\uc774\ud2b8 = %lld.
+J9NLS_SHRC_OSCACHE_MMAP_DISK_FULL=\ud30c\uc77c \uc2dc\uc2a4\ud15c\uc5d0 \uacf5\uac04\uc774 \ubd80\uc871\ud558\ubbc0\ub85c \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc\ub97c \ucd08\uae30\ud654\ud558\ub294 \ub370 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4. \uc0ac\uc6a9 \uac00\ub2a5\ud55c \ub514\uc2a4\ud06c \uc5ec\uc720 \uacf5\uac04 \ubc14\uc774\ud2b8 = %llu, \uc694\uccad\ub41c \ubc14\uc774\ud2b8 = %llu.
 # START NON-TRANSLATABLE
+J9NLS_SHRC_OSCACHE_MMAP_DISK_FULL.sample_input_1=157286400
+J9NLS_SHRC_OSCACHE_MMAP_DISK_FULL.sample_input_2=314572800
 J9NLS_SHRC_OSCACHE_MMAP_DISK_FULL.explanation=An error has occurred within Shared Classes.
 J9NLS_SHRC_OSCACHE_MMAP_DISK_FULL.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_MMAP_DISK_FULL.user_response=Clean the file system. If the file system doesn't support free space reporting, see the "-Xshareclasses:noPersistentDiskSpaceCheck" option.
@@ -4698,7 +4685,7 @@ J9NLS_SHRC_OSCACHE_VIRT_STARTUP_CREATED.system_action=The JVM continues.
 J9NLS_SHRC_OSCACHE_VIRT_STARTUP_CREATED.user_response=No action required.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_VIRT_DESTROY_SUCCESS=\uad50\ucc28 \uac8c\uc2a4\ud2b8 \uacf5\uc720 \uce90\uc2dc \"%1$s\"\uc774(\uac00) \uc601\uad6c \uc0ad\uc81c\ub428
+J9NLS_SHRC_OSCACHE_VIRT_DESTROY_SUCCESS=\uad50\ucc28 \uac8c\uc2a4\ud2b8 \uacf5\uc720 \uce90\uc2dc "%1$s"\uc774(\uac00) \uc601\uad6c \uc0ad\uc81c\ub428
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_VIRT_DESTROY_SUCCESS.sample_input_1=myCache
 J9NLS_SHRC_OSCACHE_VIRT_DESTROY_SUCCESS.explanation=The cross-guest shared cache named 1$ has been successfully destroyed.
@@ -4714,9 +4701,8 @@ J9NLS_SHRC_OSCACHE_VIRT_ATTACH_ATTACHED.system_action=The JVM continues.
 J9NLS_SHRC_OSCACHE_VIRT_ATTACH_ATTACHED.user_response=No action required.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_INCORRECT_TARGET=\uc62c\ubc14\ub974\uc9c0 \uc54a\uc740 \ub300\uc0c1 \uc2a4\ud399\uc744 \ucc3e\uc558\uc2b5\ub2c8\ub2e4. \uce90\uc2dc \ud5e4\ub354\uc5d0\uc11c \uc9c0\uc815\ub41c \ub300\uc0c1\uc740 %s\uc774\uc9c0\ub9cc \uc608\uc0c1\uc740 %s\uc785\ub2c8\ub2e4.
+J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_INCORRECT_TARGET=
 # START NON-TRANSLATABLE
-J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_INCORRECT_TARGET.sample_input_1=0
 J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_INCORRECT_TARGET.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_INCORRECT_TARGET.system_action=The cache is marked as corrupt and the JVM continues.
 J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_INCORRECT_TARGET.user_response=Contact your service representative.
@@ -4881,7 +4867,7 @@ J9NLS_SHRC_OSCACHE_STARTUP_ERROR_CACHERETRANSFORM_OPTION_WITH_BCI_ENABLED_CACHE.
 J9NLS_SHRC_OSCACHE_STARTUP_ERROR_CACHERETRANSFORM_OPTION_WITH_BCI_ENABLED_CACHE.user_response=Remove the sub-option incompatible with the Shared Class cache and rerun.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_INCOMPATIBLE_OPTION=\uba85\ub839\ud589 \uc635\uc158 \"%s\" \ubc0f \"%s\"\uc740(\ub294) \ud638\ud658\ub418\uc9c0 \uc54a\uc74c
+J9NLS_SHRC_SHRINIT_INCOMPATIBLE_OPTION=\uba85\ub839\ud589 \uc635\uc158 "%s" \ubc0f "%s"\uc740(\ub294) \ud638\ud658\ub418\uc9c0 \uc54a\uc74c
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_INCOMPATIBLE_OPTION.sample_input_1=cacheRetransformed
 J9NLS_SHRC_SHRINIT_INCOMPATIBLE_OPTION.sample_input_2=enableBCI
@@ -4973,7 +4959,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_RAW_DATA_AREA_SIZE.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_RAW_DATA_AREA_SIZE.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_OPTION_INVALID_MEMORY_SIZE=\"%s\"\uc758 \uba54\ubaa8\ub9ac \ud06c\uae30\uac00 \ub108\ubb34 \ud06c\uac70\ub098 'K','M' \ub610\ub294 'G'\uac00 \uc544\ub2cc \ub2e8\uc704\ub97c \uc9c0\uc815\ud569\ub2c8\ub2e4.
+J9NLS_SHRC_SHRINIT_OPTION_INVALID_MEMORY_SIZE="%s"\uc758 \uba54\ubaa8\ub9ac \ud06c\uae30\uac00 \ub108\ubb34 \ud06c\uac70\ub098 'K','M' \ub610\ub294 'G'\uac00 \uc544\ub2cc \ub2e8\uc704\ub97c \uc9c0\uc815\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_OPTION_INVALID_MEMORY_SIZE.sample_input_1=foo
 J9NLS_SHRC_SHRINIT_OPTION_INVALID_MEMORY_SIZE.explanation=The memory size is too large, or specifies units other than 'K','M', or 'G'.
@@ -5174,7 +5160,7 @@ J9NLS_SHRC_OSCACHE_STARTUP_SHM_CONTROL_FILE_READ_ONLY.system_action=The JVM term
 J9NLS_SHRC_OSCACHE_STARTUP_SHM_CONTROL_FILE_READ_ONLY.user_response=Ensure shared memory control file has read-write permission and then retry. If the situation persists, contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_WARN_BLOCK_SPACE_FULL=\uacf5\uc720 \uce90\uc2dc \"%s\"\uc5d0\uc11c \ud074\ub798\uc2a4\uc640 \uac19\uc740 \ube44AOT/\ube44JIT \ub370\uc774\ud130 \uc800\uc7a5\uc744 \uc704\ud55c \uacf5\uac04\uc774 \uac00\ub4dd \ucc3c\uc2b5\ub2c8\ub2e4.
+J9NLS_SHRC_CM_WARN_BLOCK_SPACE_FULL=\uacf5\uc720 \uce90\uc2dc "%s"\uc5d0\uc11c \ud074\ub798\uc2a4\uc640 \uac19\uc740 \ube44AOT/\ube44JIT \ub370\uc774\ud130 \uc800\uc7a5\uc744 \uc704\ud55c \uacf5\uac04\uc774 \uac00\ub4dd \ucc3c\uc2b5\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_WARN_BLOCK_SPACE_FULL.sample_input_1=myCache
 J9NLS_SHRC_CM_WARN_BLOCK_SPACE_FULL.explanation=Space for storing non-AOT/non-JIT data, such as classes, in named shared class cache is full and no further data may be added to it.
@@ -5182,7 +5168,7 @@ J9NLS_SHRC_CM_WARN_BLOCK_SPACE_FULL.system_action=The JVM continues.  The named 
 J9NLS_SHRC_CM_WARN_BLOCK_SPACE_FULL.user_response=To gain the full benefit of shared classes, delete the named cache and re-create it specifying a larger shared class cache size by the -Xscmx parameter.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_WARN_AOT_SPACE_FULL=\uacf5\uc720 \uce90\uc2dc \"%s\"\uc5d0\uc11c AOT \ub370\uc774\ud130\uc5d0 \uc608\uc57d\ub41c \uacf5\uac04\uc774 \uac00\ub4dd \ucc3c\uc2b5\ub2c8\ub2e4. -Xscminaot\ub97c \uc0ac\uc6a9\ud558\uc5ec AOT \ub370\uc774\ud130\uc5d0 \uc608\uc57d\ub41c \uacf5\uac04\uc744 \ub298\ub9ac\uc2ed\uc2dc\uc624.
+J9NLS_SHRC_CM_WARN_AOT_SPACE_FULL=\uacf5\uc720 \uce90\uc2dc "%s"\uc5d0\uc11c AOT \ub370\uc774\ud130\uc5d0 \uc608\uc57d\ub41c \uacf5\uac04\uc774 \uac00\ub4dd \ucc3c\uc2b5\ub2c8\ub2e4. -Xscminaot\ub97c \uc0ac\uc6a9\ud558\uc5ec AOT \ub370\uc774\ud130\uc5d0 \uc608\uc57d\ub41c \uacf5\uac04\uc744 \ub298\ub9ac\uc2ed\uc2dc\uc624.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_WARN_AOT_SPACE_FULL.sample_input_1=myCache
 J9NLS_SHRC_CM_WARN_AOT_SPACE_FULL.explanation=Space reserved for AOT data in named shared class cache is full and no further AOT data may be added to it.
@@ -5190,7 +5176,7 @@ J9NLS_SHRC_CM_WARN_AOT_SPACE_FULL.system_action=The JVM continues.  The named sh
 J9NLS_SHRC_CM_WARN_AOT_SPACE_FULL.user_response=To allow JVM to store more AOT compiled methods into shared class cache, increase the value specified by -Xscminaot parameter.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_WARN_JIT_SPACE_FULL=\uacf5\uc720 \uce90\uc2dc \"%s\"\uc5d0\uc11c JIT \ub370\uc774\ud130\uc5d0 \uc608\uc57d\ub41c \uacf5\uac04\uc774 \uac00\ub4dd \ucc3c\uc2b5\ub2c8\ub2e4. -Xscminjitdata\ub97c \uc0ac\uc6a9\ud558\uc5ec JIT \ub370\uc774\ud130\uc5d0 \uc608\uc57d\ub41c \uacf5\uac04\uc744 \ub298\ub9ac\uc2ed\uc2dc\uc624.
+J9NLS_SHRC_CM_WARN_JIT_SPACE_FULL=\uacf5\uc720 \uce90\uc2dc "%s"\uc5d0\uc11c JIT \ub370\uc774\ud130\uc5d0 \uc608\uc57d\ub41c \uacf5\uac04\uc774 \uac00\ub4dd \ucc3c\uc2b5\ub2c8\ub2e4. -Xscminjitdata\ub97c \uc0ac\uc6a9\ud558\uc5ec JIT \ub370\uc774\ud130\uc5d0 \uc608\uc57d\ub41c \uacf5\uac04\uc744 \ub298\ub9ac\uc2ed\uc2dc\uc624.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_WARN_JIT_SPACE_FULL.sample_input_1=myCache
 J9NLS_SHRC_CM_WARN_JIT_SPACE_FULL.explanation=Space reserved for JIT data in named shared class cache is full and no further JIT data may be added to it.
@@ -5572,18 +5558,18 @@ J9NLS_SHRC_OSCACHE_ERROR_MAX_OPEN_FILES_REACHED.system_action=If -Xshareclasses:
 J9NLS_SHRC_OSCACHE_ERROR_MAX_OPEN_FILES_REACHED.user_response=Contact your system admin to increase the system limit on maximum open files or close any unused files and restart the JVM.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SEMAPHORE_OPFAILED_CONTROL_FILE_LOCK_FAILED=\uc138\ub9c8\ud3ec\uc5b4\ub97c \uc5ec\ub294 \uc911\uc5d0 \uc624\ub958\uac00 \ubc1c\uc0dd\ud588\uc2b5\ub2c8\ub2e4. \uc81c\uc5b4 \ud30c\uc77c\uc744 \uc7a0\uae00 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.
+J9NLS_SHRC_OSCACHE_SEMAPHORE_OPFAILED_CONTROL_FILE_LOCK_FAILED=\uc138\ub9c8\ud3ec\uc5b4\ub97c \uc5ec\ub294 \uc911\uc5d0 \uc624\ub958\uac00 \ubc1c\uc0dd\ud588\uc2b5\ub2c8\ub2e4. \uc81c\uc5b4 \ud30c\uc77c\uc744 \uc5f4 \uc218 \uc5c6\uac70\ub098 \uc7a0\uae00 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4. \ud604\uc7ac \uc0ac\uc6a9\uc790\uc5d0\uac8c \uce90\uc2dc \ub514\ub809\ud1a0\ub9ac \ubc0f \uc81c\uc5b4 \ud30c\uc77c\uc5d0 \ub300\ud55c \uc62c\ubc14\ub978 \uad8c\ud55c\uc774 \uc788\ub294\uc9c0 \ud655\uc778\ud558\uc2ed\uc2dc\uc624.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SEMAPHORE_OPFAILED_CONTROL_FILE_LOCK_FAILED.explanation=An error has occurred in shared class processing. Further messages may follow providing more detail.
 J9NLS_SHRC_OSCACHE_SEMAPHORE_OPFAILED_CONTROL_FILE_LOCK_FAILED.system_action=If -Xshareclasses:nonfatal is specified JVM will try to use an existing shared class cache in read-only mode. But if the cache does not exist, then JVM will continue without shared class cache. In absence of -Xshareclasses:nonfatal, JVM will terminate.
-J9NLS_SHRC_OSCACHE_SEMAPHORE_OPFAILED_CONTROL_FILE_LOCK_FAILED.user_response=Contact your service representative, unless subsequent messages indicate otherwise.
+J9NLS_SHRC_OSCACHE_SEMAPHORE_OPFAILED_CONTROL_FILE_LOCK_FAILED.user_response=Correct the permissions if they are set improperly and retry. If the situation persists, contact your service representative, unless subsequent messages indicate otherwise.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_CONTROL_FILE_LOCK_FAILED=\uacf5\uc720 \uba54\ubaa8\ub9ac\ub97c \uc5ec\ub294 \uc911\uc5d0 \uc624\ub958\uac00 \ubc1c\uc0dd\ud588\uc2b5\ub2c8\ub2e4. \uc81c\uc5b4 \ud30c\uc77c\uc744 \uc7a0\uae00 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.
+J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_CONTROL_FILE_LOCK_FAILED=\uacf5\uc720 \uba54\ubaa8\ub9ac\ub97c \uc5ec\ub294 \uc911\uc5d0 \uc624\ub958\uac00 \ubc1c\uc0dd\ud588\uc2b5\ub2c8\ub2e4. \uc81c\uc5b4 \ud30c\uc77c\uc744 \uc5f4 \uc218 \uc5c6\uac70\ub098 \uc7a0\uae00 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4. \ud604\uc7ac \uc0ac\uc6a9\uc790\uc5d0\uac8c \uce90\uc2dc \ub514\ub809\ud1a0\ub9ac \ubc0f \uc81c\uc5b4 \ud30c\uc77c\uc5d0 \ub300\ud55c \uc62c\ubc14\ub978 \uad8c\ud55c\uc774 \uc788\ub294\uc9c0 \ud655\uc778\ud558\uc2ed\uc2dc\uc624.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_CONTROL_FILE_LOCK_FAILED.explanation=An error has occurred in shared class processing. Further messages may follow providing more detail.
 J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_CONTROL_FILE_LOCK_FAILED.system_action=If -Xshareclasses:nonfatal is specified JVM will continue without shared class cache, otherwise it will terminate.
-J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_CONTROL_FILE_LOCK_FAILED.user_response=Contact your service representative, unless subsequent messages indicate otherwise.
+J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_CONTROL_FILE_LOCK_FAILED.user_response=Correct the permissions if they are set improperly and retry. If the situation persists, contact your service representative, unless subsequent messages indicate otherwise.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_SHRINIT_FAILED_NONFATAL_PRESENT=\uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc\ub97c \uc2dc\uc791\ud558\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4. -Xshareclasses:nonfatal\uc774 \uc9c0\uc815\ub418\uc5c8\uc73c\ubbc0\ub85c \uc774\ub97c \uc0ac\uc6a9\ud558\uc9c0 \ub9d0\uace0 \uacc4\uc18d\ud558\uc2ed\uc2dc\uc624.
@@ -5657,7 +5643,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_RESTORECACHE.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_RESTORECACHE.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_OPTION_IGNORED_WARNING=\ud558\uc704 \uc635\uc158 \"%s\" \ubc0f \"%s\"\uc740(\ub294) \ud638\ud658\ub418\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4. \ud558\uc704 \uc635\uc158 \"%s\"\uc774(\uac00) \ubb34\uc2dc\ub429\ub2c8\ub2e4.
+J9NLS_SHRC_SHRINIT_OPTION_IGNORED_WARNING=\ud558\uc704 \uc635\uc158 "%s" \ubc0f "%s"\uc740(\ub294) \ud638\ud658\ub418\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4. \ud558\uc704 \uc635\uc158 "%s"\uc774(\uac00) \ubb34\uc2dc\ub429\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_OPTION_IGNORED_WARNING.sample_input_1=option1
 J9NLS_SHRC_SHRINIT_OPTION_IGNORED_WARNING.sample_input_2=option2
@@ -5674,7 +5660,7 @@ J9NLS_SHRC_SHRINIT_GETCACHEDIR_FAILED.system_action=The JVM fails to complete th
 J9NLS_SHRC_SHRINIT_GETCACHEDIR_FAILED.user_response=Please try to use a shorter path or cache name.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_SUCCESS_RESTORE_CACHE=\ube44\uc9c0\uc18d\uc801 \uacf5\uc720 \uce90\uc2dc \"%s\"\uc774(\uac00) \uc2a4\ub0c5\uc0f7\uc5d0\uc11c \ubcf5\uc6d0\ub418\uc5c8\uc74c
+J9NLS_SHRC_SHRINIT_SUCCESS_RESTORE_CACHE=\ube44\uc9c0\uc18d\uc801 \uacf5\uc720 \uce90\uc2dc "%s"\uc774(\uac00) \uc2a4\ub0c5\uc0f7\uc5d0\uc11c \ubcf5\uc6d0\ub418\uc5c8\uc74c
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_SUCCESS_RESTORE_CACHE.sample_input_1=myCaches
 J9NLS_SHRC_SHRINIT_SUCCESS_RESTORE_CACHE.explanation=Non-persistent cache has been restored from the snapshot.
@@ -5682,7 +5668,7 @@ J9NLS_SHRC_SHRINIT_SUCCESS_RESTORE_CACHE.system_action=The JVM successfully comp
 J9NLS_SHRC_SHRINIT_SUCCESS_RESTORE_CACHE.user_response=No action required. This message is for information only.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_FAILURE_RESTORE_CACHE=\uc2a4\ub0c5\uc0f7\uc5d0\uc11c \ube44\uc9c0\uc18d\uc801 \uacf5\uc720 \uce90\uc2dc \"%s\"\uc744(\ub97c) \ubcf5\uc6d0\ud558\ub294 \ub370 \uc2e4\ud328\ud568
+J9NLS_SHRC_SHRINIT_FAILURE_RESTORE_CACHE=\uc2a4\ub0c5\uc0f7\uc5d0\uc11c \ube44\uc9c0\uc18d\uc801 \uacf5\uc720 \uce90\uc2dc "%s"\uc744(\ub97c) \ubcf5\uc6d0\ud558\ub294 \ub370 \uc2e4\ud328\ud568
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_FAILURE_RESTORE_CACHE.sample_input_1=myCaches
 J9NLS_SHRC_SHRINIT_FAILURE_RESTORE_CACHE.explanation=An error has occurred in restoring the non-persistent cache
@@ -5690,7 +5676,7 @@ J9NLS_SHRC_SHRINIT_FAILURE_RESTORE_CACHE.system_action=The JVM fails to complete
 J9NLS_SHRC_SHRINIT_FAILURE_RESTORE_CACHE.user_response=Other messages may have been issued indicating the reason why the cache cannot be restored from the snapshot.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_SUCCESS_CREATE_SNAPSHOT=\ube44\uc9c0\uc18d\uc801 \uacf5\uc720 \uce90\uc2dc \"%s\"\uc758 \uc2a4\ub0c5\uc0f7\uc774 \uc791\uc131\ub428
+J9NLS_SHRC_SHRINIT_SUCCESS_CREATE_SNAPSHOT=\ube44\uc9c0\uc18d\uc801 \uacf5\uc720 \uce90\uc2dc "%s"\uc758 \uc2a4\ub0c5\uc0f7\uc774 \uc791\uc131\ub428
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_SUCCESS_CREATE_SNAPSHOT.sample_input_1=myCaches
 J9NLS_SHRC_SHRINIT_SUCCESS_CREATE_SNAPSHOT.explanation=Successfully created the snapshot of an existing non-persistent shared cache.
@@ -5698,7 +5684,7 @@ J9NLS_SHRC_SHRINIT_SUCCESS_CREATE_SNAPSHOT.system_action=The JVM successfully co
 J9NLS_SHRC_SHRINIT_SUCCESS_CREATE_SNAPSHOT.user_response=No action required. This message is for information only.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_FAILURE_CREATE_SNAPSHOT=\ube44\uc9c0\uc18d\uc801 \uacf5\uc720 \uce90\uc2dc \"%s\"\uc758 \uc2a4\ub0c5\uc0f7\uc744 \uc791\uc131\ud558\ub294 \ub370 \uc2e4\ud328\ud568
+J9NLS_SHRC_SHRINIT_FAILURE_CREATE_SNAPSHOT=\ube44\uc9c0\uc18d\uc801 \uacf5\uc720 \uce90\uc2dc "%s"\uc758 \uc2a4\ub0c5\uc0f7\uc744 \uc791\uc131\ud558\ub294 \ub370 \uc2e4\ud328\ud568
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_FAILURE_CREATE_SNAPSHOT.sample_input_1=myCaches
 J9NLS_SHRC_SHRINIT_FAILURE_CREATE_SNAPSHOT.explanation=An error has occurred in creating snapshot of a non-persistent shared cache
@@ -5713,7 +5699,7 @@ J9NLS_SHRC_GETSNAPSHOTDIR_FAILED.system_action=The JVM fails to complete the req
 J9NLS_SHRC_GETSNAPSHOTDIR_FAILED.user_response=Please try to use a shorter path or cache name.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_ERROR_SNAPSHOT_FILE_OPEN=\uacf5\uc720 \uce90\uc2dc \uc2a4\ub0c5\uc0f7 \ud30c\uc77c \"%s\"\uc744(\ub97c) \uc5ec\ub294 \ub370 \uc2e4\ud328\ud568
+J9NLS_SHRC_ERROR_SNAPSHOT_FILE_OPEN=\uacf5\uc720 \uce90\uc2dc \uc2a4\ub0c5\uc0f7 \ud30c\uc77c "%s"\uc744(\ub97c) \uc5ec\ub294 \ub370 \uc2e4\ud328\ud568
 # START NON-TRANSLATABLE
 J9NLS_SHRC_ERROR_SNAPSHOT_FILE_OPEN.sample_input_1=/myJVM/myCaches
 J9NLS_SHRC_ERROR_SNAPSHOT_FILE_OPEN.explanation=An error occurred while opening the shared cache snapshot file.
@@ -5745,7 +5731,7 @@ J9NLS_SHRC_ERROR_SNAPSHOT_FILE_LOCK.system_action=The JVM fails to complete the 
 J9NLS_SHRC_ERROR_SNAPSHOT_FILE_LOCK.user_response=Previous error messages may indicate the reason. Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_ERROR_ENTER_MUTEX=\uce90\uc2dc \"%s\"\uc758 mutex\ub97c \ud655\ubcf4\ud558\ub294 \ub370 \uc2e4\ud328\ud568
+J9NLS_SHRC_SHRINIT_ERROR_ENTER_MUTEX=\uce90\uc2dc "%s"\uc758 mutex\ub97c \ud655\ubcf4\ud558\ub294 \ub370 \uc2e4\ud328\ud568
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_ERROR_ENTER_MUTEX.sample_input_1=myCaches
 J9NLS_SHRC_SHRINIT_ERROR_ENTER_MUTEX.explanation=An error occurred while acquiring a cache mutex.
@@ -5753,7 +5739,7 @@ J9NLS_SHRC_SHRINIT_ERROR_ENTER_MUTEX.system_action=The JVM fails to complete the
 J9NLS_SHRC_SHRINIT_ERROR_ENTER_MUTEX.user_response=Verify that the system has enough native resources for the JVM to work properly. If the situation persists, contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_ERROR_SNAPSHOT_FILE_TRUNCATE=\uae30\uc874 \ube44\uc9c0\uc18d\uc801 \uacf5\uc720 \uce90\uc2dc \uc2a4\ub0c5\uc0f7 \ud30c\uc77c \"%s\"\uc744(\ub97c) \uc790\ub974\ub294 \ub370 \uc2e4\ud328\ud568
+J9NLS_SHRC_SHRINIT_ERROR_SNAPSHOT_FILE_TRUNCATE=\uae30\uc874 \ube44\uc9c0\uc18d\uc801 \uacf5\uc720 \uce90\uc2dc \uc2a4\ub0c5\uc0f7 \ud30c\uc77c "%s"\uc744(\ub97c) \uc790\ub974\ub294 \ub370 \uc2e4\ud328\ud568
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_ERROR_SNAPSHOT_FILE_TRUNCATE.sample_input_1=/myJVM/myCaches
 J9NLS_SHRC_SHRINIT_ERROR_SNAPSHOT_FILE_TRUNCATE.explanation=An error has occurred in truncating the non-persistent shared cache snapshot file.
@@ -5761,7 +5747,7 @@ J9NLS_SHRC_SHRINIT_ERROR_SNAPSHOT_FILE_TRUNCATE.system_action=The JVM fails to c
 J9NLS_SHRC_SHRINIT_ERROR_SNAPSHOT_FILE_TRUNCATE.user_response=Previous error messages may indicate the reason. Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_OVERWRITE_EXISTING_SNAPSHOT_WARNING=JVM\uc774 \ube44\uc9c0\uc18d\uc801 \uacf5\uc720 \uce90\uc2dc \"%s\"\uc758 \uc2a4\ub0c5\uc0f7\uc744 \uc791\uc131 \uc911\uc774\uc9c0\ub9cc, \uc2a4\ub0c5\uc0f7 \ud30c\uc77c \"%s\"\uc774(\uac00) \uc774\ubbf8 \uc874\uc7ac\ud558\uba70 \uacb9\uccd0\uc4f0\uac8c \ub429\ub2c8\ub2e4.
+J9NLS_SHRC_SHRINIT_OVERWRITE_EXISTING_SNAPSHOT_WARNING=JVM\uc774 \ube44\uc9c0\uc18d\uc801 \uacf5\uc720 \uce90\uc2dc "%s"\uc758 \uc2a4\ub0c5\uc0f7\uc744 \uc791\uc131 \uc911\uc774\uc9c0\ub9cc, \uc2a4\ub0c5\uc0f7 \ud30c\uc77c "%s"\uc774(\uac00) \uc774\ubbf8 \uc874\uc7ac\ud558\uba70 \uacb9\uccd0\uc4f0\uac8c \ub429\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_OVERWRITE_EXISTING_SNAPSHOT_WARNING.sample_input_1=myCaches
 J9NLS_SHRC_SHRINIT_OVERWRITE_EXISTING_SNAPSHOT_WARNING.sample_input_2=/myJVM/myCaches
@@ -5770,7 +5756,7 @@ J9NLS_SHRC_SHRINIT_OVERWRITE_EXISTING_SNAPSHOT_WARNING.system_action=The JVM con
 J9NLS_SHRC_SHRINIT_OVERWRITE_EXISTING_SNAPSHOT_WARNING.user_response=No action is required if the user wants to overwrite the non-persistent shared cache snapshot file intentionally. The user is responsible for snapshot file management. To retain the old snapshot file, create a backup or rename the file before creating a new one.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_ERROR_SNAPSHOT_FILE_WRITE=\ube44\uc9c0\uc18d\uc801 \uacf5\uc720 \uce90\uc2dc \uc2a4\ub0c5\uc0f7 \ud30c\uc77c \"%s\"\uc5d0 \uc4f0\ub294 \ub370 \uc2e4\ud328\ud568
+J9NLS_SHRC_SHRINIT_ERROR_SNAPSHOT_FILE_WRITE=\ube44\uc9c0\uc18d\uc801 \uacf5\uc720 \uce90\uc2dc \uc2a4\ub0c5\uc0f7 \ud30c\uc77c "%s"\uc5d0 \uc4f0\ub294 \ub370 \uc2e4\ud328\ud568
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_ERROR_SNAPSHOT_FILE_WRITE.sample_input_1=/myJVM/myCaches
 J9NLS_SHRC_SHRINIT_ERROR_SNAPSHOT_FILE_WRITE.explanation=An error occurred while writing into non-persistent shared cache snapshot file.
@@ -5778,7 +5764,7 @@ J9NLS_SHRC_SHRINIT_ERROR_SNAPSHOT_FILE_WRITE.system_action=The JVM fails to comp
 J9NLS_SHRC_SHRINIT_ERROR_SNAPSHOT_FILE_WRITE.user_response=Previous error messages may indicate the reason. The disk may be full. Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_ERROR_SNAPSHOT_FILE_SEEK=\ube44\uc9c0\uc18d\uc801 \uacf5\uc720 \uce90\uc2dc \uc2a4\ub0c5\uc0f7 \ud30c\uc77c \"%s\"\uc5d0\uc11c \ud30c\uc77c \ub514\uc2a4\ud06c\ub9bd\ud130\uc758 \uc624\ud504\uc14b \uc704\uce58\ub97c \uc7ac\uc124\uc815\ud558\ub294 \ub370 \uc2e4\ud328\ud568
+J9NLS_SHRC_SHRINIT_ERROR_SNAPSHOT_FILE_SEEK=\ube44\uc9c0\uc18d\uc801 \uacf5\uc720 \uce90\uc2dc \uc2a4\ub0c5\uc0f7 \ud30c\uc77c "%s"\uc5d0\uc11c \ud30c\uc77c \ub514\uc2a4\ud06c\ub9bd\ud130\uc758 \uc624\ud504\uc14b \uc704\uce58\ub97c \uc7ac\uc124\uc815\ud558\ub294 \ub370 \uc2e4\ud328\ud568
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_ERROR_SNAPSHOT_FILE_SEEK.sample_input_1=/myJVM/myCaches
 J9NLS_SHRC_SHRINIT_ERROR_SNAPSHOT_FILE_SEEK.explanation=An error has occurred in repositioning the offset of the file descriptor in the non-persistent shared cache snapshot file
@@ -5787,7 +5773,7 @@ J9NLS_SHRC_SHRINIT_ERROR_SNAPSHOT_FILE_SEEK.user_response=Previous error message
 # END NON-TRANSLATABLE
 
 # From: CacheLifeCycleManager.cpp
-J9NLS_SHRC_INFO_SNAPSHOT_DESTROYING_FOR_CACHEDIR=cacheDir \"%s\"\uc758 \ubaa8\ub4e0 \uacf5\uc720 \uce90\uc2dc \uc2a4\ub0c5\uc0f7\uc744 \uc601\uad6c \uc0ad\uc81c\ud558\ub294 \uc911
+J9NLS_SHRC_INFO_SNAPSHOT_DESTROYING_FOR_CACHEDIR=cacheDir "%s"\uc758 \ubaa8\ub4e0 \uacf5\uc720 \uce90\uc2dc \uc2a4\ub0c5\uc0f7\uc744 \uc601\uad6c \uc0ad\uc81c\ud558\ub294 \uc911
 # START NON-TRANSLATABLE
 J9NLS_SHRC_INFO_SNAPSHOT_DESTROYING_FOR_CACHEDIR.sample_input_1=/myJVM/myCaches
 J9NLS_SHRC_INFO_SNAPSHOT_DESTROYING_FOR_CACHEDIR.explanation=NOTAG
@@ -5795,7 +5781,7 @@ J9NLS_SHRC_INFO_SNAPSHOT_DESTROYING_FOR_CACHEDIR.system_action=None
 J9NLS_SHRC_INFO_SNAPSHOT_DESTROYING_FOR_CACHEDIR.user_response=None required.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CLCM_ERROR_SNAPSHOT_FILE_LENGTH=\uacf5\uc720 \uce90\uc2dc \uc2a4\ub0c5\uc0f7 \ud30c\uc77c \"%s\"\uc758 \uae38\uc774\ub97c \uac00\uc838\uc624\ub294 \ub370 \uc2e4\ud328\ud568
+J9NLS_SHRC_CLCM_ERROR_SNAPSHOT_FILE_LENGTH=\uacf5\uc720 \uce90\uc2dc \uc2a4\ub0c5\uc0f7 \ud30c\uc77c "%s"\uc758 \uae38\uc774\ub97c \uac00\uc838\uc624\ub294 \ub370 \uc2e4\ud328\ud568
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CLCM_ERROR_SNAPSHOT_FILE_LENGTH.sample_input_1=/myJVM/myCaches
 J9NLS_SHRC_CLCM_ERROR_SNAPSHOT_FILE_LENGTH.explanation=An error has occurred while getting the length of the snapshot file.
@@ -5810,7 +5796,7 @@ J9NLS_SHRC_CLCM_NO_SNAPSHOT.system_action=Processing continues.
 J9NLS_SHRC_CLCM_NO_SNAPSHOT.user_response=None required.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CLCM_SNAPSHOT_REMOVED_OLDER_GEN=\uc774\uc804\uc5d0 \uc0dd\uc131\ub41c \uacf5\uc720 \uce90\uc2dc \uc2a4\ub0c5\uc0f7 \"%s\"\uc744(\ub97c) \uc81c\uac70\ud568
+J9NLS_SHRC_CLCM_SNAPSHOT_REMOVED_OLDER_GEN=\uc774\uc804\uc5d0 \uc0dd\uc131\ub41c \uacf5\uc720 \uce90\uc2dc \uc2a4\ub0c5\uc0f7 "%s"\uc744(\ub97c) \uc81c\uac70\ud568
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CLCM_SNAPSHOT_REMOVED_OLDER_GEN.sample_input_1=myCache
 J9NLS_SHRC_CLCM_SNAPSHOT_REMOVED_OLDER_GEN.explanation=Successfully removed older generation of indicated shared cache snapshot.
@@ -5818,7 +5804,7 @@ J9NLS_SHRC_CLCM_SNAPSHOT_REMOVED_OLDER_GEN.system_action=Processing continues.
 J9NLS_SHRC_CLCM_SNAPSHOT_REMOVED_OLDER_GEN.user_response=None required.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CLCM_SNAPSHOT_FAILED_REMOVED_OLDER_GEN=\uc774\uc804\uc5d0 \uc0dd\uc131\ub41c \uacf5\uc720 \uce90\uc2dc \uc2a4\ub0c5\uc0f7 \"%s\"\uc744(\ub97c) \uc81c\uac70\ud558\ub294 \ub370 \uc2e4\ud328\ud568
+J9NLS_SHRC_CLCM_SNAPSHOT_FAILED_REMOVED_OLDER_GEN=\uc774\uc804\uc5d0 \uc0dd\uc131\ub41c \uacf5\uc720 \uce90\uc2dc \uc2a4\ub0c5\uc0f7 "%s"\uc744(\ub97c) \uc81c\uac70\ud558\ub294 \ub370 \uc2e4\ud328\ud568
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CLCM_SNAPSHOT_FAILED_REMOVED_OLDER_GEN.sample_input_1=myCache
 J9NLS_SHRC_CLCM_SNAPSHOT_FAILED_REMOVED_OLDER_GEN.explanation=It has not been possible to remove the older generation of indicated shared cache snapshot.
@@ -5826,7 +5812,7 @@ J9NLS_SHRC_CLCM_SNAPSHOT_FAILED_REMOVED_OLDER_GEN.system_action=Processing conti
 J9NLS_SHRC_CLCM_SNAPSHOT_FAILED_REMOVED_OLDER_GEN.user_response=Previous error messages may indicate the reason. Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CLCM_SNAPSHOT_FAILED_REMOVED_CURRENT_GEN=\ud604\uc7ac \uc0dd\uc131\ud55c \uacf5\uc720 \uce90\uc2dc \uc2a4\ub0c5\uc0f7 \"%s\"\uc744(\ub97c) \uc81c\uac70\ud558\ub294 \ub370 \uc2e4\ud328\ud568
+J9NLS_SHRC_CLCM_SNAPSHOT_FAILED_REMOVED_CURRENT_GEN=\ud604\uc7ac \uc0dd\uc131\ud55c \uacf5\uc720 \uce90\uc2dc \uc2a4\ub0c5\uc0f7 "%s"\uc744(\ub97c) \uc81c\uac70\ud558\ub294 \ub370 \uc2e4\ud328\ud568
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CLCM_SNAPSHOT_FAILED_REMOVED_CURRENT_GEN.sample_input_1=myCache
 J9NLS_SHRC_CLCM_SNAPSHOT_FAILED_REMOVED_CURRENT_GEN.explanation=It has not been possible to remove the current generation of indicated shared cache snapshot.
@@ -5841,7 +5827,7 @@ J9NLS_SHRC_CLCM_SNAPSHOT_NOT_EXIST.system_action=The JVM terminates.
 J9NLS_SHRC_CLCM_SNAPSHOT_NOT_EXIST.user_response=None required.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CLCM_SNAPSHOT_DESTROYED=\uacf5\uc720 \uce90\uc2dc \uc2a4\ub0c5\uc0f7 \"%s\"\uc774(\uac00) \uc601\uad6c \uc0ad\uc81c\ub428
+J9NLS_SHRC_CLCM_SNAPSHOT_DESTROYED=\uacf5\uc720 \uce90\uc2dc \uc2a4\ub0c5\uc0f7 "%s"\uc774(\uac00) \uc601\uad6c \uc0ad\uc81c\ub428
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CLCM_SNAPSHOT_DESTROYED.sample_input_1=myCache
 J9NLS_SHRC_CLCM_SNAPSHOT_DESTROYED.explanation=This is an information message notifying the user that the named shared cache snapshot has been destroyed as requested.
@@ -5857,7 +5843,7 @@ J9NLS_SHRC_OSCACHE_CONTROL_FILE_RECREATE_PROHIBITED_SNAPSHOT_CACHE.system_action
 J9NLS_SHRC_OSCACHE_CONTROL_FILE_RECREATE_PROHIBITED_SNAPSHOT_CACHE.user_response=None required.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SNAPSHOT_GROUPACCESS_REQUIRED=JVM\uc740 \ube44\uc9c0\uc18d\uc801 \uacf5\uc720 \uce90\uc2dc \uc2a4\ub0c5\uc0f7 \ud30c\uc77c \"%s\"\uc5d0 \uc561\uc138\uc2a4\ud558\ub3c4\ub85d \uad6c\uc131\ub418\uc9c0 \uc54a\uc558\uc2b5\ub2c8\ub2e4. \ud30c\uc77c\uc744 \uc5f4\ub824\uba74 'groupAccess' \ud558\uc704 \uc635\uc158\uc744 \uc0ac\uc6a9\ud558\uc2ed\uc2dc\uc624.
+J9NLS_SHRC_OSCACHE_SNAPSHOT_GROUPACCESS_REQUIRED=JVM\uc740 \ube44\uc9c0\uc18d\uc801 \uacf5\uc720 \uce90\uc2dc \uc2a4\ub0c5\uc0f7 \ud30c\uc77c "%s"\uc5d0 \uc561\uc138\uc2a4\ud558\ub3c4\ub85d \uad6c\uc131\ub418\uc9c0 \uc54a\uc558\uc2b5\ub2c8\ub2e4. \ud30c\uc77c\uc744 \uc5f4\ub824\uba74 'groupAccess' \ud558\uc704 \uc635\uc158\uc744 \uc0ac\uc6a9\ud558\uc2ed\uc2dc\uc624.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SNAPSHOT_GROUPACCESS_REQUIRED.sample_input_1=/myJVM/myCaches
 J9NLS_SHRC_OSCACHE_SNAPSHOT_GROUPACCESS_REQUIRED.explanation=An error has occurred within Shared Classes processing.
@@ -5865,7 +5851,7 @@ J9NLS_SHRC_OSCACHE_SNAPSHOT_GROUPACCESS_REQUIRED.system_action=The JVM fails to 
 J9NLS_SHRC_OSCACHE_SNAPSHOT_GROUPACCESS_REQUIRED.user_response=Modify existing "-Xshareclasses:" option to add "groupAccess" suboption and restart. The snapshot may have been created by another user in the same group as the current user.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SNAPSHOT_OTHERS_ACCESS_NOT_ALLOWED=JVM \ud504\ub85c\uc138\uc2a4\uc758 \uc0ac\uc6a9\uc790 ID \ubc0f \uadf8\ub8f9 ID\uac00 \uacf5\uc720 \uce90\uc2dc \uc2a4\ub0c5\uc0f7 \ud30c\uc77c \uc18c\uc720\uc790\uc758 \uc0ac\uc6a9\uc790 ID \ubc0f \uadf8\ub8f9 ID\uc640 \ub2e4\ub974\uba70, JVM \ud504\ub85c\uc138\uc2a4\uc758 \uc0ac\uc6a9\uc790 ID\uac00 \uacf5\uc720 \uce90\uc2dc \uc2a4\ub0c5\uc0f7 \ud30c\uc77c \uc18c\uc720\uc790 \uadf8\ub8f9\uc5d0 \uc18d\ud574 \uc788\uc9c0 \uc54a\uae30 \ub54c\ubb38\uc5d0 JVM\uc740 \uacf5\uc720 \uce90\uc2dc \uc2a4\ub0c5\uc0f7 \ud30c\uc77c \"%s\"\uc5d0 \ub300\ud55c \uc561\uc138\uc2a4\ub97c \ud5c8\uc6a9\ud558\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.
+J9NLS_SHRC_OSCACHE_SNAPSHOT_OTHERS_ACCESS_NOT_ALLOWED=JVM \ud504\ub85c\uc138\uc2a4\uc758 \uc0ac\uc6a9\uc790 ID \ubc0f \uadf8\ub8f9 ID\uac00 \uacf5\uc720 \uce90\uc2dc \uc2a4\ub0c5\uc0f7 \ud30c\uc77c \uc18c\uc720\uc790\uc758 \uc0ac\uc6a9\uc790 ID \ubc0f \uadf8\ub8f9 ID\uc640 \ub2e4\ub974\uba70, JVM \ud504\ub85c\uc138\uc2a4\uc758 \uc0ac\uc6a9\uc790 ID\uac00 \uacf5\uc720 \uce90\uc2dc \uc2a4\ub0c5\uc0f7 \ud30c\uc77c \uc18c\uc720\uc790 \uadf8\ub8f9\uc5d0 \uc18d\ud574 \uc788\uc9c0 \uc54a\uae30 \ub54c\ubb38\uc5d0 JVM\uc740 \uacf5\uc720 \uce90\uc2dc \uc2a4\ub0c5\uc0f7 \ud30c\uc77c "%s"\uc5d0 \ub300\ud55c \uc561\uc138\uc2a4\ub97c \ud5c8\uc6a9\ud558\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SNAPSHOT_OTHERS_ACCESS_NOT_ALLOWED.sample_input_1=/myJVM/myCaches
 J9NLS_SHRC_OSCACHE_SNAPSHOT_OTHERS_ACCESS_NOT_ALLOWED.explanation=An error has occurred within shared classes processing.
@@ -5873,7 +5859,7 @@ J9NLS_SHRC_OSCACHE_SNAPSHOT_OTHERS_ACCESS_NOT_ALLOWED.system_action=The JVM fail
 J9NLS_SHRC_OSCACHE_SNAPSHOT_OTHERS_ACCESS_NOT_ALLOWED.user_response=Specify a different cache name or directory to avoid conflict with existing shared cache snapshot created by another user not in its group.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SNAPSHOT_INTERNAL_ERROR_CHECKING_CACHEFILE_ACCESS=JVM\uc774 \uacf5\uc720 \uce90\uc2dc \uc2a4\ub0c5\uc0f7 \ud30c\uc77c \"%s\"\uc758 \uad8c\ud55c\uc744 \ud655\uc778\ud558\uc9c0 \ubabb\ud568
+J9NLS_SHRC_OSCACHE_SNAPSHOT_INTERNAL_ERROR_CHECKING_CACHEFILE_ACCESS=JVM\uc774 \uacf5\uc720 \uce90\uc2dc \uc2a4\ub0c5\uc0f7 \ud30c\uc77c "%s"\uc758 \uad8c\ud55c\uc744 \ud655\uc778\ud558\uc9c0 \ubabb\ud568
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SNAPSHOT_INTERNAL_ERROR_CHECKING_CACHEFILE_ACCESS.sample_input_1=/myJVM/myCaches
 J9NLS_SHRC_OSCACHE_SNAPSHOT_INTERNAL_ERROR_CHECKING_CACHEFILE_ACCESS.explanation=An error has occurred within shared classes processing.
@@ -5881,7 +5867,7 @@ J9NLS_SHRC_OSCACHE_SNAPSHOT_INTERNAL_ERROR_CHECKING_CACHEFILE_ACCESS.system_acti
 J9NLS_SHRC_OSCACHE_SNAPSHOT_INTERNAL_ERROR_CHECKING_CACHEFILE_ACCESS.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_ERROR_SNAPSHOT_FILE_NOT_FOUND=\uacf5\uc720 \uce90\uc2dc \uc2a4\ub0c5\uc0f7 \ud30c\uc77c \"%s\"\uc774(\uac00) \uc874\uc7ac\ud558\uc9c0 \uc54a\uc74c
+J9NLS_SHRC_OSCACHE_ERROR_SNAPSHOT_FILE_NOT_FOUND=\uacf5\uc720 \uce90\uc2dc \uc2a4\ub0c5\uc0f7 \ud30c\uc77c "%s"\uc774(\uac00) \uc874\uc7ac\ud558\uc9c0 \uc54a\uc74c
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_ERROR_SNAPSHOT_FILE_NOT_FOUND.sample_input_1=/myJVM/myCaches
 J9NLS_SHRC_OSCACHE_ERROR_SNAPSHOT_FILE_NOT_FOUND.explanation=The shared cache snapshot file is not found on the disk.
@@ -5889,7 +5875,7 @@ J9NLS_SHRC_OSCACHE_ERROR_SNAPSHOT_FILE_NOT_FOUND.system_action=The JVM fails to 
 J9NLS_SHRC_OSCACHE_ERROR_SNAPSHOT_FILE_NOT_FOUND.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_ERROR_SNAPSHOT_FILE_LENGTH=\ube44\uc9c0\uc18d\uc801 \uacf5\uc720 \uce90\uc2dc \uc2a4\ub0c5\uc0f7 \ud30c\uc77c \"%s\"\uc758 \uae38\uc774\uac00 \uc62c\ubc14\ub974\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4. \ud30c\uc77c\uc758 \uae38\uc774\uac00 %lld\ubc14\uc774\ud2b8\uc785\ub2c8\ub2e4. \uc720\ud6a8\ud55c \uc2a4\ub0c5\uc0f7 \ud30c\uc77c\uc740 \ucd5c\uc18c %d\ubc14\uc774\ud2b8\uc774\uba70 \ucd5c\ub300 %lld\ubc14\uc774\ud2b8\uc785\ub2c8\ub2e4.
+J9NLS_SHRC_OSCACHE_ERROR_SNAPSHOT_FILE_LENGTH=\ube44\uc9c0\uc18d\uc801 \uacf5\uc720 \uce90\uc2dc \uc2a4\ub0c5\uc0f7 \ud30c\uc77c "%s"\uc758 \uae38\uc774\uac00 \uc62c\ubc14\ub974\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4. \ud30c\uc77c\uc758 \uae38\uc774\uac00 %lld\ubc14\uc774\ud2b8\uc785\ub2c8\ub2e4. \uc720\ud6a8\ud55c \uc2a4\ub0c5\uc0f7 \ud30c\uc77c\uc740 \ucd5c\uc18c %d\ubc14\uc774\ud2b8\uc774\uba70 \ucd5c\ub300 %lld\ubc14\uc774\ud2b8\uc785\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_ERROR_SNAPSHOT_FILE_LENGTH.sample_input_1=/myJVM/myCaches
 J9NLS_SHRC_OSCACHE_ERROR_SNAPSHOT_FILE_LENGTH.sample_input_2=1234
@@ -5900,7 +5886,7 @@ J9NLS_SHRC_OSCACHE_ERROR_SNAPSHOT_FILE_LENGTH.system_action=The JVM fails to com
 J9NLS_SHRC_OSCACHE_ERROR_SNAPSHOT_FILE_LENGTH.user_response=Ensure the file is a valid shared cache snapshot file.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_ERROR_RESTORE_EXISTING_CACHE=\ube44\uc9c0\uc18d\uc801 \uacf5\uc720 \uce90\uc2dc \"%s\"\uc774(\uac00) \uc774\ubbf8 \uc874\uc7ac\ud569\ub2c8\ub2e4. \uc2a4\ub0c5\uc0f7\uc5d0\uc11c \ubcf5\uc6d0\ub420 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.
+J9NLS_SHRC_OSCACHE_ERROR_RESTORE_EXISTING_CACHE=\ube44\uc9c0\uc18d\uc801 \uacf5\uc720 \uce90\uc2dc "%s"\uc774(\uac00) \uc774\ubbf8 \uc874\uc7ac\ud569\ub2c8\ub2e4. \uc2a4\ub0c5\uc0f7\uc5d0\uc11c \ubcf5\uc6d0\ub420 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_ERROR_RESTORE_EXISTING_CACHE.sample_input_1=myCache
 J9NLS_SHRC_OSCACHE_ERROR_RESTORE_EXISTING_CACHE.explanation=Only a new non-persistent shared cache can be restored from snapshot.
@@ -5915,7 +5901,7 @@ J9NLS_SHRC_OSCACHE_ERROR_STARTUP_CACHE.system_action=The JVM fails to complete t
 J9NLS_SHRC_OSCACHE_ERROR_STARTUP_CACHE.user_response=Verify that the system has enough native resources for the JVM to work properly. If the situation persists, contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_ERROR_SNAPSHOT_FILE_READ=\ube44\uc9c0\uc18d\uc801 \uacf5\uc720 \uce90\uc2dc \uc2a4\ub0c5\uc0f7 \ud30c\uc77c \"%s\"\uc744(\ub97c) \uc77d\ub294 \ub370 \uc2e4\ud328\ud568
+J9NLS_SHRC_OSCACHE_ERROR_SNAPSHOT_FILE_READ=\ube44\uc9c0\uc18d\uc801 \uacf5\uc720 \uce90\uc2dc \uc2a4\ub0c5\uc0f7 \ud30c\uc77c "%s"\uc744(\ub97c) \uc77d\ub294 \ub370 \uc2e4\ud328\ud568
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_ERROR_SNAPSHOT_FILE_READ.sample_input_1=/myJVM/myCaches
 J9NLS_SHRC_OSCACHE_ERROR_SNAPSHOT_FILE_READ.explanation=An error has occurred while reading the non-persistent shared cache snapshot file
@@ -5965,7 +5951,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_PRINT_SNAPSHOT_FILENAME.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINT_SNAPSHOT_FILENAME.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SHARED_CACHE_SIZE_ZERO_AND_DIFF_ADDRESS_MODE=%d\ube44\ud2b8 JVM\uc744 \uc0ac\uc6a9\ud558\uc5ec %d\ube44\ud2b8 \uacf5\uc720 \uce90\uc2dc \"%s\"\uc5d0 \ub300\ud574 \uc694\uccad\ub41c \uc870\uc791\uc744 \uc218\ud589\ud558\uc2ed\uc2dc\uc624. \uc774\ub294 %d\ube44\ud2b8 JVM\uc774 \uacf5\uc720 \uba54\ubaa8\ub9ac\uac00 JVM\uc5d0\uc11c \uc791\uc131\ub418\uc5c8\uc74c\uc744 \ud655\uc778\ud560 \uc218 \uc5c6\uae30 \ub54c\ubb38\uc785\ub2c8\ub2e4.
+J9NLS_SHRC_OSCACHE_SHARED_CACHE_SIZE_ZERO_AND_DIFF_ADDRESS_MODE=%d\ube44\ud2b8 JVM\uc744 \uc0ac\uc6a9\ud558\uc5ec %d\ube44\ud2b8 \uacf5\uc720 \uce90\uc2dc "%s"\uc5d0 \ub300\ud574 \uc694\uccad\ub41c \uc870\uc791\uc744 \uc218\ud589\ud558\uc2ed\uc2dc\uc624. \uc774\ub294 %d\ube44\ud2b8 JVM\uc774 \uacf5\uc720 \uba54\ubaa8\ub9ac\uac00 JVM\uc5d0\uc11c \uc791\uc131\ub418\uc5c8\uc74c\uc744 \ud655\uc778\ud560 \uc218 \uc5c6\uae30 \ub54c\ubb38\uc785\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_SIZE_ZERO_AND_DIFF_ADDRESS_MODE.sample_input_1=64
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_SIZE_ZERO_AND_DIFF_ADDRESS_MODE.sample_input_2=64
@@ -5991,8 +5977,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_REVALIDATE_AOT_METHODS.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_REVALIDATE_AOT_METHODS.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_FIND_AOT_METHODS=\uba54\uc18c\ub4dc \uc2a4\ud399\uacfc \uc77c\uce58\ud558\ub294 AOT \uba54\uc18c\ub4dc\ub97c \uc778\uc1c4\ud569\ub2c8\ub2e4.\n\
-\t<method_specification>\uc740 [!]{*|[*]<packagename/classname>[*]}[.{*|[*]<methodname>[*]}[({*|[*]<parameters>[*]})]]\uc73c\ub85c \uc815\uc758\ub429\ub2c8\ub2e4.
+J9NLS_SHRC_SHRINIT_HELPTEXT_FIND_AOT_METHODS=\uba54\uc18c\ub4dc \uc2a4\ud399\uacfc \uc77c\uce58\ud558\ub294 AOT \uba54\uc18c\ub4dc\ub97c \uc778\uc1c4\ud569\ub2c8\ub2e4.\n\t<method_specification>\uc740 [!]{*|[*]<packagename/classname>[*]}[.{*|[*]<methodname>[*]}[({*|[*]<parameters>[*]})]]\uc73c\ub85c \uc815\uc758\ub429\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_FIND_AOT_METHODS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_FIND_AOT_METHODS.system_action=
@@ -6014,9 +5999,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_AOT_METHODS_OPERATION.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_AOT_METHODS_OPERATION.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_METHOD_SPEC=<method_specification>\uc758 \ud615\uc2dd\uc740 [!]{*|[*]<packagename/classname>[*]}[.{*|[*]<methodname>[*]}[({*|[*]<parameters>[*]})]]\uc785\ub2c8\ub2e4. \uc608\ub97c \ub4e4\uc5b4 \ub2e4\uc74c\uacfc \uac19\uc2b5\ub2c8\ub2e4. \n\
-\n\
-\t-Xshareclasses:name=Cache1,%sjava/util/HashMap.hash(Ljava/lang/Object;)\n
+J9NLS_SHRC_SHRINIT_HELPTEXT_METHOD_SPEC=<method_specification>\uc758 \ud615\uc2dd\uc740 [!]{*|[*]<packagename/classname>[*]}[.{*|[*]<methodname>[*]}[({*|[*]<parameters>[*]})]]\uc785\ub2c8\ub2e4. \uc608\ub97c \ub4e4\uc5b4 \ub2e4\uc74c\uacfc \uac19\uc2b5\ub2c8\ub2e4. \n\n\t-Xshareclasses:name=Cache1,%sjava/util/HashMap.hash(Ljava/lang/Object;)\n
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_METHOD_SPEC.sample_input_1=findAotMethods=
 J9NLS_SHRC_SHRINIT_HELPTEXT_METHOD_SPEC.explanation=NOTAG
@@ -6024,19 +6007,16 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_METHOD_SPEC.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_METHOD_SPEC.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_INFOTEXT_METHOD_SPEC=\uc911\uc694: \uc5ec\ub7ec \uba54\uc18c\ub4dc \uc2a4\ud399\uc744 \uc27c\ud45c\ub85c \uad6c\ubd84\ud558\uc5ec \uc804\ub2ec\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4. \uc635\uc158 \uac12\uc5d0 \uc27c\ud45c\uac00 \ud3ec\ud568\ub41c \uacbd\uc6b0 \uc911\uad04\ud638\ub85c \ubb36\uc5b4\uc57c \ud569\ub2c8\ub2e4.\n\
-\t\uc258\uc774 \uc27c\ud45c\ub85c \uad6c\ubd84\ub41c \uba85\ub839\ud589\uc744 \uac00\ub85c\ucc44\uac70\ub098 \ub2e8\ud3b8\ud654\ud558\uc9c0 \uc54a\uac8c \ud558\ub824\uba74 \uc635\uc158\uc744 \ub530\uc634\ud45c\ub85c \ubb36\uc5b4\uc57c \ud569\ub2c8\ub2e4. \uc608\ub97c \ub4e4\uc5b4 \ub2e4\uc74c\uacfc \uac19\uc2b5\ub2c8\ub2e4.\n\
-\n\
-\t\"-Xshareclasses:name=Cache1,%s{java/util/*.*(),java/lang/Object.*(*)}\" or\n\
-\t-Xshareclasses:name=Cache1,%s\'{java/util/*.*(),!java/util/*.*()}\'\n
+J9NLS_SHRC_SHRINIT_INFOTEXT_METHOD_SPEC=\uc911\uc694: \uc5ec\ub7ec \uba54\uc18c\ub4dc \uc2a4\ud399\uc744 \uc27c\ud45c\ub85c \uad6c\ubd84\ud558\uc5ec \uc804\ub2ec\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4. \uc635\uc158 \uac12\uc5d0 \uc27c\ud45c\uac00 \ud3ec\ud568\ub41c \uacbd\uc6b0 \uc911\uad04\ud638\ub85c \ubb36\uc5b4\uc57c \ud569\ub2c8\ub2e4.\n\t\uc258\uc774 \uc27c\ud45c\ub85c \uad6c\ubd84\ub41c \uba85\ub839\ud589\uc744 \uac00\ub85c\ucc44\uac70\ub098 \ub2e8\ud3b8\ud654\ud558\uc9c0 \uc54a\uac8c \ud558\ub824\uba74 \uc635\uc158\uc744 \ub530\uc634\ud45c\ub85c \ubb36\uc5b4\uc57c \ud569\ub2c8\ub2e4. \uc608\ub97c \ub4e4\uc5b4 \ub2e4\uc74c\uacfc \uac19\uc2b5\ub2c8\ub2e4.\n\n\t"-Xshareclasses:name=Cache1,%s{java/util/*.*(),java/lang/Object.*(*)}" or\n\t-Xshareclasses:name=Cache1,%s'{java/util/*.*(),!java/util/*.*()}'\n
 # START NON-TRANSLATABLE
-J9NLS_SHRC_SHRINIT_INFOTEXT_METHOD_SPEC.sample_input_1=findAotMethods=
+J9NLS_SHRC_SHRINIT_INFOTEXT_METHOD_SPEC.sample_input_1=hashCode
+J9NLS_SHRC_SHRINIT_INFOTEXT_METHOD_SPEC.sample_input_2=hashCode
 J9NLS_SHRC_SHRINIT_INFOTEXT_METHOD_SPEC.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_INFOTEXT_METHOD_SPEC.system_action=
 J9NLS_SHRC_SHRINIT_INFOTEXT_METHOD_SPEC.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_INVALID_METHODSPEC=\uc635\uc158 \"%s\"\uc5d0 \uc62c\ubc14\ub974\uc9c0 \uc54a\uc740 \uba54\uc18c\ub4dc \uc2a4\ud399
+J9NLS_SHRC_SHRINIT_INVALID_METHODSPEC=\uc635\uc158 "%s"\uc5d0 \uc62c\ubc14\ub974\uc9c0 \uc54a\uc740 \uba54\uc18c\ub4dc \uc2a4\ud399
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_INVALID_METHODSPEC.sample_input_1=findAotMethods=
 J9NLS_SHRC_SHRINIT_INVALID_METHODSPEC.explanation=The method specification provided was not recognised.
@@ -6128,7 +6108,7 @@ J9NLS_SHRC_OSCACHE_CONTROL_FILE_RECREATE_PROHIBITED.user_response=None required.
 # END NON-TRANSLATABLE
 
 #shrinit.cpp
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_INVALIDATEDAOT=\t invalidatedaot \uacf5\uc720 \uce90\uc2dc\uc5d0 \uc788\ub294 \ubb34\ud6a8\ud654\ub41c AOT \uc720\ud615\ub9cc \uc778\uc1c4\ud569\ub2c8\ub2e4.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_INVALIDATEDAOT=\t\ invalidatedaot \uacf5\uc720 \uce90\uc2dc\uc5d0 \uc788\ub294 \ubb34\ud6a8\ud654\ub41c AOT \uc720\ud615\ub9cc \uc778\uc1c4\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_INVALIDATEDAOT.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_INVALIDATEDAOT.system_action=
@@ -6194,11 +6174,7 @@ J9NLS_SHRC_SHRCLSSUP_FAILURE_OPTION_BUFFER_OVERFLOW.system_action=The JVM termin
 J9NLS_SHRC_SHRCLSSUP_FAILURE_OPTION_BUFFER_OVERFLOW.user_response=Ensure the -Xshareclasses sub-options are not longer than the maximum length and retry.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_SHARED_MEMORY_SIZE_CHANGED=\uc694\uccad\ub41c %1$d \ubc14\uc774\ud2b8 \ud06c\uae30\uc758 \uacf5\uc720 \uba54\ubaa8\ub9ac\ub97c \uc0dd\uc131\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.\n\
-\ \t\ud5c8\uc6a9\ub41c \ucd5c\ub300 \ud06c\uae30\uc758 \uba54\ubaa8\ub9ac\ub85c \uc870\uc815\ub418\uc5c8\uc2b5\ub2c8\ub2e4(%2$d \ubc14\uc774\ud2b8) \n\
-\ \t(\uc0ac\uc6a9 \uac00\ub2a5 \uacf5\uc720 \uba54\ubaa8\ub9ac\ub97c \ub298\ub9ac\ub824\uba74 \uc2dc\uc2a4\ud15c SHMMAX \uac12\uc744 \uc218\uc815\ud558\uc2ed\uc2dc\uc624.) \n\
-\ \t-Xscdmx\uac00 \uc0ac\uc6a9\ub41c \uacbd\uc6b0 \ub514\ubc84\uadf8 \uc18d\uc131 \uc601\uc5ed\uc740 \ubcf4\ud638 \uc0c1\ud0dc\ub85c \uc870\uc815\ub429\ub2c8\ub2e4.\n\
-\ \tXscmx \uac12\uc5d0 \ub300\ud55c \uc6d0\ub798\uc758 \ube44\uc728\uc5d0 \ub530\ub985\ub2c8\ub2e4.
+J9NLS_SHRC_SHRINIT_SHARED_MEMORY_SIZE_CHANGED=\uc694\uccad\ub41c %1$d \ubc14\uc774\ud2b8 \ud06c\uae30\uc758 \uacf5\uc720 \uba54\ubaa8\ub9ac\ub97c \uc0dd\uc131\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.\n \t\ud5c8\uc6a9\ub41c \ucd5c\ub300 \ud06c\uae30\uc758 \uba54\ubaa8\ub9ac\ub85c \uc870\uc815\ub418\uc5c8\uc2b5\ub2c8\ub2e4(%2$d \ubc14\uc774\ud2b8) \n \t(\uc0ac\uc6a9 \uac00\ub2a5 \uacf5\uc720 \uba54\ubaa8\ub9ac\ub97c \ub298\ub9ac\ub824\uba74 \uc2dc\uc2a4\ud15c SHMMAX \uac12\uc744 \uc218\uc815\ud558\uc2ed\uc2dc\uc624.) \n \t-Xscdmx\uac00 \uc0ac\uc6a9\ub41c \uacbd\uc6b0 \ub514\ubc84\uadf8 \uc18d\uc131 \uc601\uc5ed\uc740 \ubcf4\ud638 \uc0c1\ud0dc\ub85c \uc870\uc815\ub429\ub2c8\ub2e4.\n \tXscmx \uac12\uc5d0 \ub300\ud55c \uc6d0\ub798\uc758 \ube44\uc728\uc5d0 \ub530\ub985\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_SHARED_MEMORY_SIZE_CHANGED.sample_input_1=99999999
 J9NLS_SHRC_SHRINIT_SHARED_MEMORY_SIZE_CHANGED.sample_input_2=99999998
@@ -6256,7 +6232,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_MPROTECT_PARTIAL_PAGES.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_MPROTECT_PARTIAL_PAGES.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CC_WARN_AVAILABLE_SPACE_FULL=\uacf5\uc720 \uce90\uc2dc \"%s\" \uc0ac\uc6a9\uc5d0 \ub300\ud55c softmx \uc81c\ud55c\uc5d0 \ub3c4\ub2ec\ud588\uc2b5\ub2c8\ub2e4. softmx \uc81c\ud55c\uc744 \ub298\ub9ac\ub824\uba74 \"%s\" \uc635\uc158\uc744 \uc0ac\uc6a9\ud558\uc2ed\uc2dc\uc624.
+J9NLS_SHRC_CC_WARN_AVAILABLE_SPACE_FULL=\uacf5\uc720 \uce90\uc2dc "%s" \uc0ac\uc6a9\uc5d0 \ub300\ud55c softmx \uc81c\ud55c\uc5d0 \ub3c4\ub2ec\ud588\uc2b5\ub2c8\ub2e4. softmx \uc81c\ud55c\uc744 \ub298\ub9ac\ub824\uba74 "%s" \uc635\uc158\uc744 \uc0ac\uc6a9\ud558\uc2ed\uc2dc\uc624.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CC_WARN_AVAILABLE_SPACE_FULL.sample_input_1=Cache1
 J9NLS_SHRC_CC_WARN_AVAILABLE_SPACE_FULL.sample_input_2=adjustsoftmx=
@@ -6265,7 +6241,7 @@ J9NLS_SHRC_CC_WARN_AVAILABLE_SPACE_FULL.system_action=The JVM continues. The nam
 J9NLS_SHRC_CC_WARN_AVAILABLE_SPACE_FULL.user_response=Increase the softmx limit if user wants more data to be added to the shared cache.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CC_WARN_AOT_SPACE_FULL=\uacf5\uc720 \uce90\uc2dc \"%s\"\uc5d0\uc11c AOT \ub370\uc774\ud130 \uacf5\uac04\uc774 \uac00\ub4dd \ucc3c\uc2b5\ub2c8\ub2e4.
+J9NLS_SHRC_CC_WARN_AOT_SPACE_FULL=\uacf5\uc720 \uce90\uc2dc "%s"\uc5d0\uc11c AOT \ub370\uc774\ud130 \uacf5\uac04\uc774 \uac00\ub4dd \ucc3c\uc2b5\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CC_WARN_AOT_SPACE_FULL.sample_input_1=myCache
 J9NLS_SHRC_CC_WARN_AOT_SPACE_FULL.explanation=The space for AOT data in named shared class cache is full and no further AOT data can be added to it. If the shared cache is not full, then either the maximum space allowed for AOT data or softmx limit set for shared cache usage is reached.
@@ -6273,7 +6249,7 @@ J9NLS_SHRC_CC_WARN_AOT_SPACE_FULL.system_action=The JVM continues. The named sha
 J9NLS_SHRC_CC_WARN_AOT_SPACE_FULL.user_response=If the shared cache is not full, the maximum space allowed for AOT data can be increased using -Xshareclasses:adjustmaxaot= option. In the case softmx limit for shared cache usage is reached, it can be increased using -Xshareclasses:adjustsoftmx= option. User can also increase the minimum space reserved for AOT data using -Xshareclasses:adjustminaot= option.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CC_WARN_JIT_SPACE_FULL=\uacf5\uc720 \uce90\uc2dc \"%s\"\uc5d0\uc11c JIT \ub370\uc774\ud130 \uacf5\uac04\uc774 \uac00\ub4dd \ucc3c\uc2b5\ub2c8\ub2e4.
+J9NLS_SHRC_CC_WARN_JIT_SPACE_FULL=\uacf5\uc720 \uce90\uc2dc "%s"\uc5d0\uc11c JIT \ub370\uc774\ud130 \uacf5\uac04\uc774 \uac00\ub4dd \ucc3c\uc2b5\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CC_WARN_JIT_SPACE_FULL.sample_input_1=myCache
 J9NLS_SHRC_CC_WARN_JIT_SPACE_FULL.explanation=The space for JIT data in named shared class cache is full and no further JIT data can be added to it. If the shared cache is not full, then either the maximum space allowed for JIT data or softmx limit set for shared cache usage is reached.
@@ -6521,7 +6497,7 @@ J9NLS_SHRC_OSCACHE_STARTUP_MPROTECT_PARTIAL_PAGES_NOT_ENABLED_ON_STARTUP.system_
 J9NLS_SHRC_OSCACHE_STARTUP_MPROTECT_PARTIAL_PAGES_NOT_ENABLED_ON_STARTUP.user_response=Please destroy existing shared cache and restart the JVM for the JVM to protect partially filled pages in the shared cache on startup.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_MMAP_DESTROY_SUCCESS_CR=\uc555\ucd95\ub41c \ucc38\uc870\uc758 \uc9c0\uc18d\uc801 \uacf5\uc720 \uce90\uc2dc \"%1$s\"\uc774(\uac00) \uc601\uad6c \uc0ad\uc81c\ub418\uc5c8\uc2b5\ub2c8\ub2e4. \uc555\ucd95\ub418\uc9c0 \uc54a\uc740 \ucc38\uc870 \uce90\uc2dc\ub97c \uc601\uad6c \uc0ad\uc81c\ud558\ub824\ub294 \uacbd\uc6b0\uc5d0\ub294 -Xnocompressedrefs \uc635\uc158\uc744 \uc0ac\uc6a9\ud558\uc2ed\uc2dc\uc624.
+J9NLS_SHRC_OSCACHE_MMAP_DESTROY_SUCCESS_CR=\uc555\ucd95\ub41c \ucc38\uc870\uc758 \uc9c0\uc18d\uc801 \uacf5\uc720 \uce90\uc2dc "%1$s"\uc774(\uac00) \uc601\uad6c \uc0ad\uc81c\ub418\uc5c8\uc2b5\ub2c8\ub2e4. \uc555\ucd95\ub418\uc9c0 \uc54a\uc740 \ucc38\uc870 \uce90\uc2dc\ub97c \uc601\uad6c \uc0ad\uc81c\ud558\ub824\ub294 \uacbd\uc6b0\uc5d0\ub294 -Xnocompressedrefs \uc635\uc158\uc744 \uc0ac\uc6a9\ud558\uc2ed\uc2dc\uc624.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_MMAP_DESTROY_SUCCESS_CR.sample_input_1=myCache
 J9NLS_SHRC_OSCACHE_MMAP_DESTROY_SUCCESS_CR.explanation=This message informs you that you have successfully destroyed the compressed references cache named 1$.
@@ -6529,7 +6505,7 @@ J9NLS_SHRC_OSCACHE_MMAP_DESTROY_SUCCESS_CR.system_action=The JVM terminates at t
 J9NLS_SHRC_OSCACHE_MMAP_DESTROY_SUCCESS_CR.user_response=No action required, this is an information only message.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_MMAP_DESTROY_SUCCESS_NONCR=\uc555\ucd95\ub418\uc9c0 \uc54a\uc740 \ucc38\uc870\uc758 \uc9c0\uc18d\uc801 \uacf5\uc720 \uce90\uc2dc \"%1$s\"\uc774(\uac00) \uc601\uad6c \uc0ad\uc81c\ub418\uc5c8\uc2b5\ub2c8\ub2e4. \uc555\ucd95\ub41c \ucc38\uc870 \uce90\uc2dc\ub97c \uc601\uad6c \uc0ad\uc81c\ud558\ub824\ub294 \uacbd\uc6b0\uc5d0\ub294 -Xcompressedrefs \uc635\uc158\uc744 \uc0ac\uc6a9\ud558\uc2ed\uc2dc\uc624.
+J9NLS_SHRC_OSCACHE_MMAP_DESTROY_SUCCESS_NONCR=\uc555\ucd95\ub418\uc9c0 \uc54a\uc740 \ucc38\uc870\uc758 \uc9c0\uc18d\uc801 \uacf5\uc720 \uce90\uc2dc "%1$s"\uc774(\uac00) \uc601\uad6c \uc0ad\uc81c\ub418\uc5c8\uc2b5\ub2c8\ub2e4. \uc555\ucd95\ub41c \ucc38\uc870 \uce90\uc2dc\ub97c \uc601\uad6c \uc0ad\uc81c\ud558\ub824\ub294 \uacbd\uc6b0\uc5d0\ub294 -Xcompressedrefs \uc635\uc158\uc744 \uc0ac\uc6a9\ud558\uc2ed\uc2dc\uc624.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_MMAP_DESTROY_SUCCESS_NONCR.sample_input_1=myCache
 J9NLS_SHRC_OSCACHE_MMAP_DESTROY_SUCCESS_NONCR.explanation=This message informs you that you have successfully destroyed the non-compressed references cache named 1$.
@@ -6537,7 +6513,7 @@ J9NLS_SHRC_OSCACHE_MMAP_DESTROY_SUCCESS_NONCR.system_action=The JVM terminates a
 J9NLS_SHRC_OSCACHE_MMAP_DESTROY_SUCCESS_NONCR.user_response=No action required, this is an information only message.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SHARED_CACHE_DESTROYED_CR=\uc555\ucd95\ub41c \ucc38\uc870\uc758 \uacf5\uc720 \uce90\uc2dc \"%s\"\uc774(\uac00) \uc601\uad6c \uc0ad\uc81c\ub418\uc5c8\uc2b5\ub2c8\ub2e4. \uc555\ucd95\ub418\uc9c0 \uc54a\uc740 \ucc38\uc870 \uce90\uc2dc\ub97c \uc601\uad6c \uc0ad\uc81c\ud558\ub824\ub294 \uacbd\uc6b0\uc5d0\ub294 -Xnocompressedrefs \uc635\uc158\uc744 \uc0ac\uc6a9\ud558\uc2ed\uc2dc\uc624.
+J9NLS_SHRC_OSCACHE_SHARED_CACHE_DESTROYED_CR=\uc555\ucd95\ub41c \ucc38\uc870\uc758 \uacf5\uc720 \uce90\uc2dc "%s"\uc774(\uac00) \uc601\uad6c \uc0ad\uc81c\ub418\uc5c8\uc2b5\ub2c8\ub2e4. \uc555\ucd95\ub418\uc9c0 \uc54a\uc740 \ucc38\uc870 \uce90\uc2dc\ub97c \uc601\uad6c \uc0ad\uc81c\ud558\ub824\ub294 \uacbd\uc6b0\uc5d0\ub294 -Xnocompressedrefs \uc635\uc158\uc744 \uc0ac\uc6a9\ud558\uc2ed\uc2dc\uc624.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_DESTROYED_CR.sample_input_1=myCache
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_DESTROYED_CR.explanation=This is an information message notifying you that the named compressed references shared class cache has been destroyed as requested.
@@ -6545,7 +6521,7 @@ J9NLS_SHRC_OSCACHE_SHARED_CACHE_DESTROYED_CR.system_action=A JVM will not be cre
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_DESTROYED_CR.user_response=None required.  This is an information message issued when you request a shared class cache to be destroyed.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SHARED_CACHE_DESTROYED_NONCR=\uc555\ucd95\ub418\uc9c0 \uc54a\uc740 \ucc38\uc870\uc758 \uacf5\uc720 \uce90\uc2dc \"%s\"\uc774(\uac00) \uc601\uad6c \uc0ad\uc81c\ub418\uc5c8\uc2b5\ub2c8\ub2e4. \uc555\ucd95\ub41c \ucc38\uc870 \uce90\uc2dc\ub97c \uc601\uad6c \uc0ad\uc81c\ud558\ub824\ub294 \uacbd\uc6b0\uc5d0\ub294 -Xcompressedrefs \uc635\uc158\uc744 \uc0ac\uc6a9\ud558\uc2ed\uc2dc\uc624.
+J9NLS_SHRC_OSCACHE_SHARED_CACHE_DESTROYED_NONCR=\uc555\ucd95\ub418\uc9c0 \uc54a\uc740 \ucc38\uc870\uc758 \uacf5\uc720 \uce90\uc2dc "%s"\uc774(\uac00) \uc601\uad6c \uc0ad\uc81c\ub418\uc5c8\uc2b5\ub2c8\ub2e4. \uc555\ucd95\ub41c \ucc38\uc870 \uce90\uc2dc\ub97c \uc601\uad6c \uc0ad\uc81c\ud558\ub824\ub294 \uacbd\uc6b0\uc5d0\ub294 -Xcompressedrefs \uc635\uc158\uc744 \uc0ac\uc6a9\ud558\uc2ed\uc2dc\uc624.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_DESTROYED_NONCR.sample_input_1=myCache
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_DESTROYED_NONCR.explanation=This is an information message notifying you that the named non-compressed references shared class cache has been destroyed as requested.
@@ -6553,7 +6529,7 @@ J9NLS_SHRC_OSCACHE_SHARED_CACHE_DESTROYED_NONCR.system_action=A JVM will not be 
 J9NLS_SHRC_OSCACHE_SHARED_CACHE_DESTROYED_NONCR.user_response=None required.  This is an information message issued when you request a shared class cache to be destroyed.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CLCM_SNAPSHOT_DESTROYED_CR=\uc555\ucd95\ub41c \ucc38\uc870\uc758 \uacf5\uc720 \uce90\uc2dc \uc2a4\ub0c5\uc0f7 \"%s\"\uc774(\uac00) \uc601\uad6c \uc0ad\uc81c\ub418\uc5c8\uc2b5\ub2c8\ub2e4. \uc555\ucd95\ub418\uc9c0 \uc54a\uc740 \ucc38\uc870 \uce90\uc2dc \uc2a4\ub0c5\uc0f7\uc744 \uc601\uad6c \uc0ad\uc81c\ud558\ub824\ub294 \uacbd\uc6b0\uc5d0\ub294 -Xnocompressedrefs \uc635\uc158\uc744 \uc0ac\uc6a9\ud558\uc2ed\uc2dc\uc624.
+J9NLS_SHRC_CLCM_SNAPSHOT_DESTROYED_CR=\uc555\ucd95\ub41c \ucc38\uc870\uc758 \uacf5\uc720 \uce90\uc2dc \uc2a4\ub0c5\uc0f7 "%s"\uc774(\uac00) \uc601\uad6c \uc0ad\uc81c\ub418\uc5c8\uc2b5\ub2c8\ub2e4. \uc555\ucd95\ub418\uc9c0 \uc54a\uc740 \ucc38\uc870 \uce90\uc2dc \uc2a4\ub0c5\uc0f7\uc744 \uc601\uad6c \uc0ad\uc81c\ud558\ub824\ub294 \uacbd\uc6b0\uc5d0\ub294 -Xnocompressedrefs \uc635\uc158\uc744 \uc0ac\uc6a9\ud558\uc2ed\uc2dc\uc624.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CLCM_SNAPSHOT_DESTROYED_CR.sample_input_1=myCache
 J9NLS_SHRC_CLCM_SNAPSHOT_DESTROYED_CR.explanation=This is an information message notifying the user that the named compressed references shared cache snapshot has been destroyed as requested.
@@ -6561,7 +6537,7 @@ J9NLS_SHRC_CLCM_SNAPSHOT_DESTROYED_CR.system_action=The JVM continues.
 J9NLS_SHRC_CLCM_SNAPSHOT_DESTROYED_CR.user_response=None required.  This is an information message issued when you request a shared cache snapshot to be destroyed.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CLCM_SNAPSHOT_DESTROYED_NONCR=\uc555\ucd95\ub418\uc9c0 \uc54a\uc740 \ucc38\uc870\uc758 \uacf5\uc720 \uce90\uc2dc \uc2a4\ub0c5\uc0f7 \"%s\"\uc774(\uac00) \uc601\uad6c \uc0ad\uc81c\ub418\uc5c8\uc2b5\ub2c8\ub2e4. \uc555\ucd95\ub41c \ucc38\uc870 \uce90\uc2dc \uc2a4\ub0c5\uc0f7\uc744 \uc601\uad6c \uc0ad\uc81c\ud558\ub824\ub294 \uacbd\uc6b0\uc5d0\ub294 -Xcompressedrefs \uc635\uc158\uc744 \uc0ac\uc6a9\ud558\uc2ed\uc2dc\uc624.
+J9NLS_SHRC_CLCM_SNAPSHOT_DESTROYED_NONCR=\uc555\ucd95\ub418\uc9c0 \uc54a\uc740 \ucc38\uc870\uc758 \uacf5\uc720 \uce90\uc2dc \uc2a4\ub0c5\uc0f7 "%s"\uc774(\uac00) \uc601\uad6c \uc0ad\uc81c\ub418\uc5c8\uc2b5\ub2c8\ub2e4. \uc555\ucd95\ub41c \ucc38\uc870 \uce90\uc2dc \uc2a4\ub0c5\uc0f7\uc744 \uc601\uad6c \uc0ad\uc81c\ud558\ub824\ub294 \uacbd\uc6b0\uc5d0\ub294 -Xcompressedrefs \uc635\uc158\uc744 \uc0ac\uc6a9\ud558\uc2ed\uc2dc\uc624.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CLCM_SNAPSHOT_DESTROYED_NONCR.sample_input_1=myCache
 J9NLS_SHRC_CLCM_SNAPSHOT_DESTROYED_NONCR.explanation=This is an information message notifying the user that the named non-compressed references shared cache snapshot has been destroyed as requested.
@@ -6587,7 +6563,7 @@ J9NLS_SHRC_CM_PRINTSHUTDOWNSTATS_UNSTORED.system_action=The JVM continues.
 J9NLS_SHRC_CM_PRINTSHUTDOWNSTATS_UNSTORED.user_response=No action required, this is an information only message.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_STALE=\t stale           \uacf5\uc720 \uce90\uc2dc\uc5d0 \uc788\ub294 \ubaa8\ub4e0 \uc190\uc0c1 \ud56d\ubaa9\uc744 \uc778\uc1c4\ud569\ub2c8\ub2e4.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_STALE=\t\ stale           \uacf5\uc720 \uce90\uc2dc\uc5d0 \uc788\ub294 \ubaa8\ub4e0 \uc190\uc0c1 \ud56d\ubaa9\uc744 \uc778\uc1c4\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_STALE.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_STALE.system_action=
@@ -6681,7 +6657,7 @@ J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS_DISPLAY_DETAIL.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS_DISPLAY_DETAIL.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_STARTUPHINT=\t \uc2dc\uc791 \ud78c\ud2b8 \uacf5\uc720 \uce90\uc2dc\uc5d0 \uc788\ub294 \uc2dc\uc791 \ud78c\ud2b8 \uc720\ud615\ub9cc \uc778\uc1c4\ud569\ub2c8\ub2e4.
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_STARTUPHINT=\t\ \uc2dc\uc791 \ud78c\ud2b8 \uacf5\uc720 \uce90\uc2dc\uc5d0 \uc788\ub294 \uc2dc\uc791 \ud78c\ud2b8 \uc720\ud615\ub9cc \uc778\uc1c4\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_STARTUPHINT.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_STARTUPHINT.system_action=
@@ -6815,7 +6791,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_CREATE_LAYER.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_CREATE_LAYER.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER=\uc62c\ubc14\ub974\uc9c0 \uc54a\uc740 \uacc4\uce35 \ubc88\ud638 %d\uc774(\uac00) \"%s\"\uc5d0 \ub300\ud574 \ubc1c\uacac\ub418\uc5c8\uc2b5\ub2c8\ub2e4. \uacc4\uce35 \ubc88\ud638\ub294 %d \ubbf8\ub9cc\uc774\uc5b4\uc57c \ud569\ub2c8\ub2e4.
+J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER=\uc62c\ubc14\ub974\uc9c0 \uc54a\uc740 \uacc4\uce35 \ubc88\ud638 %d\uc774(\uac00) "%s"\uc5d0 \ub300\ud574 \ubc1c\uacac\ub418\uc5c8\uc2b5\ub2c8\ub2e4. \uacc4\uce35 \ubc88\ud638\ub294 %d \ubbf8\ub9cc\uc774\uc5b4\uc57c \ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER.sample_input_1=111
 J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER.sample_input_2=layer=
@@ -6842,8 +6818,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_NO_PERSISTENT_DISK_SPACE_CHECK.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_NO_PERSISTENT_DISK_SPACE_CHECK.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_TOP_LAYER_TITLE=\n\
-\uce90\uc2dc \"%s\"\uc758 \uc0c1\uc704 \uacc4\uce35\uc5d0 \ub300\ud55c \ud604\uc7ac \ud1b5\uacc4: \n
+J9NLS_SHRC_CM_PRINTSTATS_TOP_LAYER_TITLE=\n\uce90\uc2dc "%s"\uc758 \uc0c1\uc704 \uacc4\uce35\uc5d0 \ub300\ud55c \ud604\uc7ac \ud1b5\uacc4: \n
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_TOP_LAYER_TITLE.sample_input_1=myCache
 J9NLS_SHRC_CM_PRINTSTATS_TOP_LAYER_TITLE.explanation=NOTAG
@@ -6861,8 +6836,7 @@ J9NLS_SHRC_CM_PRINTSTATS_CACHE_LAYER.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_CACHE_LAYER.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_ALL_LAYERS_TITLE=\n\
-\uce90\uc2dc \"%s\"\uc758 \ubaa8\ub4e0 \uacc4\uce35\uc5d0 \ub300\ud55c \ud604\uc7ac \ud1b5\uacc4: \n
+J9NLS_SHRC_CM_PRINTSTATS_ALL_LAYERS_TITLE=\n\uce90\uc2dc "%s"\uc758 \ubaa8\ub4e0 \uacc4\uce35\uc5d0 \ub300\ud55c \ud604\uc7ac \ud1b5\uacc4: \n
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_ALL_LAYERS_TITLE.sample_input_1=myCache
 J9NLS_SHRC_CM_PRINTSTATS_ALL_LAYERS_TITLE.explanation=NOTAG
@@ -6931,4 +6905,11 @@ J9NLS_SHRC_OSCACHE_MMAP_MSYNC_ERROR=\uba54\ubaa8\ub9ac \ub3d9\uae30\ud654 \uc911
 J9NLS_SHRC_OSCACHE_MMAP_MSYNC_ERROR.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_MSYNC_ERROR.system_action=The JVM terminates, unless you have specified the non-fatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using shared classes.
 J9NLS_SHRC_OSCACHE_MMAP_MSYNC_ERROR.user_response=Contact your service representative.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_OSCACHE_MMAP_STARTUP_JITSERVER_LAYER_FILE_DELETE_ERROR=\uc784\uc2dc \uce90\uc2dc \uacc4\uce35 \ud30c\uc77c\uc744 \uc81c\uac70\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_OSCACHE_MMAP_STARTUP_JITSERVER_LAYER_FILE_DELETE_ERROR.explanation=The JITServer AOT cache created a temporary shared class cache layer in order to function, but the underlying file could not be removed.
+J9NLS_SHRC_OSCACHE_MMAP_STARTUP_JITSERVER_LAYER_FILE_DELETE_ERROR.system_action=The JVM continues.
+J9NLS_SHRC_OSCACHE_MMAP_STARTUP_JITSERVER_LAYER_FILE_DELETE_ERROR.user_response=Contact your service representative.
 # END NON-TRANSLATABLE

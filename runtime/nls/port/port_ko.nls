@@ -339,7 +339,7 @@ J9NLS_PORT_MMAP_INVALID_FILE_HANDLE.user_response=Contact your service represent
 
 # END NON-TRANSLATABLE
 
-J9NLS_PORT_LINUXDUMP_PIPE_CORE=%s \uc124\uc815 \"%s\"\uc740(\ub294) \ucf54\uc5b4 \ub364\ud504\uac00\n\uc678\ubd80 \ud504\ub85c\uadf8\ub7a8\uc73c\ub85c \ud30c\uc774\ud504\ub428\uc744 \uc9c0\uc815\ud569\ub2c8\ub2e4.  \ucf54\uc5b4 \ub610\ub294 core.%d(\uc73c)\ub85c \uc774\ub984 \ubc14\uafb8\uae30\ub97c\n\uc2dc\ub3c4\ud569\ub2c8\ub2e4.  \uc678\ubd80 \ud504\ub85c\uadf8\ub7a8\uc5d0 \ub300\ud55c \ub9e4\ub274\uc5bc\uc744 \uac80\ud1a0\ud558\uc5ec \ucf54\uc5b4 \ub364\ud504\uac00 \uae30\ub85d\ub41c \uc704\uce58\ub97c \ucc3e\uace0 \ud504\ub85c\uadf8\ub7a8\uc774 \uc774\ub97c \uc790\ub974\uc9c0 \uc54a\ub294\uc9c0 \ud655\uc778\ud558\uc2ed\uc2dc\uc624.\n
+J9NLS_PORT_LINUXDUMP_PIPE_CORE=%s \uc124\uc815 "%s"\uc740(\ub294) \ucf54\uc5b4 \ub364\ud504\uac00\n\uc678\ubd80 \ud504\ub85c\uadf8\ub7a8\uc73c\ub85c \ud30c\uc774\ud504\ub428\uc744 \uc9c0\uc815\ud569\ub2c8\ub2e4.  \ucf54\uc5b4 \ub610\ub294 core.%d(\uc73c)\ub85c \uc774\ub984 \ubc14\uafb8\uae30\ub97c\n\uc2dc\ub3c4\ud569\ub2c8\ub2e4.  \uc678\ubd80 \ud504\ub85c\uadf8\ub7a8\uc5d0 \ub300\ud55c \ub9e4\ub274\uc5bc\uc744 \uac80\ud1a0\ud558\uc5ec \ucf54\uc5b4 \ub364\ud504\uac00 \uae30\ub85d\ub41c \uc704\uce58\ub97c \ucc3e\uace0 \ud504\ub85c\uadf8\ub7a8\uc774 \uc774\ub97c \uc790\ub974\uc9c0 \uc54a\ub294\uc9c0 \ud655\uc778\ud558\uc2ed\uc2dc\uc624.\n
 # START NON-TRANSLATABLE
 J9NLS_PORT_LINUXDUMP_PIPE_CORE.sample_input_1=/proc/sys/kernel/core_pattern
 J9NLS_PORT_LINUXDUMP_PIPE_CORE.sample_input_2=|/usr/lib/systemd/systemd-coredump %P %u %g %s %t %c %h
@@ -488,7 +488,7 @@ J9NLS_PORT_SL_BUFFER_EXCEEDED_ERROR.system_action=Shared object is not loaded
 J9NLS_PORT_SL_BUFFER_EXCEEDED_ERROR.user_response=Reduce path length for the target shared object
 # END NON-TRANSLATABLE
 
-J9NLS_PORT_DUMP_PATH_EXISTS=\ube44\uc815\uaddc \ud30c\uc77c \"%s\"\uc774(\uac00) \uc608\uc0c1\ub41c \uc2dc\uc2a4\ud15c \ub364\ud504 \ud30c\uc77c\uacfc \ub3d9\uc77c\ud55c \uc774\ub984\uc73c\ub85c \uc874\uc7ac\ud558\ubbc0\ub85c \uc2dc\uc2a4\ud15c \ub364\ud504 \uc0dd\uc131\uc5d0 \uc2e4\ud328\ud568
+J9NLS_PORT_DUMP_PATH_EXISTS=\ube44\uc815\uaddc \ud30c\uc77c "%s"\uc774(\uac00) \uc608\uc0c1\ub41c \uc2dc\uc2a4\ud15c \ub364\ud504 \ud30c\uc77c\uacfc \ub3d9\uc77c\ud55c \uc774\ub984\uc73c\ub85c \uc874\uc7ac\ud558\ubbc0\ub85c \uc2dc\uc2a4\ud15c \ub364\ud504 \uc0dd\uc131\uc5d0 \uc2e4\ud328\ud568
 # START NON-TRANSLATABLE
 J9NLS_PORT_DUMP_PATH_EXISTS.sample_input_1=/home/user/core
 J9NLS_PORT_DUMP_PATH_EXISTS.explanation=The JVM was unable to produce a system dump because a non-regular file (for example a directory, symbolic link, pipe or socket) exists with the same name as the expected system dump file.
@@ -496,7 +496,7 @@ J9NLS_PORT_DUMP_PATH_EXISTS.system_action=The JVM continues, the requested syste
 J9NLS_PORT_DUMP_PATH_EXISTS.user_response=Check whether the name of a non-regular file (for example a directory, symbolic link, pipe or socket) in the current working directory of the Java application clashes with the default system dump file name (core or core.<process ID>) or with the setting of /proc/sys/kernel/core_pattern and /proc/sys/kernel/core_uses_pid. Either rename the subdirectory, or change the settings of /proc/sys/kernel/core_pattern and /proc/sys/kernel/core_uses_pid so that the names do not clash.
 # END NON-TRANSLATABLE
 
-J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND=pid = %i\uc778 \ud558\uc704 \ud504\ub85c\uc138\uc2a4\uc5d0\uc11c \uc791\uc131\ub41c \ucf54\uc5b4 \ud30c\uc77c\uc744 \ucc3e\uc744 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4. %s \ud504\ub85c\uadf8\ub7a8 \"%s\"\uc5d0 \ub300\ud55c \ubb38\uc11c\ub97c \uac80\ud1a0\ud558\uc5ec \ucf54\uc5b4 \ud30c\uc77c\uc774 \uc791\uc131\ub41c \uc704\uce58\ub97c \ud655\uc778\ud558\uace0 \ud504\ub85c\uadf8\ub7a8\uc774 \uc774\ub97c \uc790\ub974\uc9c0 \uc54a\ub294\uc9c0 \ud655\uc778\ud558\uc2ed\uc2dc\uc624.\n
+J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND=pid = %i\uc778 \ud558\uc704 \ud504\ub85c\uc138\uc2a4\uc5d0\uc11c \uc791\uc131\ub41c \ucf54\uc5b4 \ud30c\uc77c\uc744 \ucc3e\uc744 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4. %s \ud504\ub85c\uadf8\ub7a8 "%s"\uc5d0 \ub300\ud55c \ubb38\uc11c\ub97c \uac80\ud1a0\ud558\uc5ec \ucf54\uc5b4 \ud30c\uc77c\uc774 \uc791\uc131\ub41c \uc704\uce58\ub97c \ud655\uc778\ud558\uace0 \ud504\ub85c\uadf8\ub7a8\uc774 \uc774\ub97c \uc790\ub974\uc9c0 \uc54a\ub294\uc9c0 \ud655\uc778\ud558\uc2ed\uc2dc\uc624.\n
 # START NON-TRANSLATABLE
 J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND.sample_input_1=12345
 J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND.sample_input_2=/proc/sys/kernel/core_pattern
@@ -504,4 +504,12 @@ J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND.sample_input_3=|/usr/lib/systemd/system
 J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND.explanation=/proc/sys/kernel/core_pattern starting with | is used to redirect the core file to tools such as systemd-coredump which processes the core dump, for example to send it to a different directory and manage total core dump disk usage, or to suppress it.
 J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND.system_action=The VM could not find the core dump in the current directory most likely because the external program sent it elsewhere or suppressed it.
 J9NLS_PORT_LINUXDUMP_PIPE_CORE_NOT_FOUND.user_response=Refer to the documentation for the external program specified in /proc/sys/kernel/core_pattern to find the core dump and review the program's configuration to ensure the dump is not truncated.
+# END NON-TRANSLATABLE
+
+J9NLS_PORT_RUNNING_IN_CONTAINER_FAILURE=JVM\uc774 \ucee8\ud14c\uc774\ub108 \ub0b4\ubd80\uc5d0\uc11c \uc2e4\ud589 \uc911\uc778\uc9c0 \uc5ec\ubd80\ub97c \uc2dd\ubcc4\ud558\ub294 \ub370 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4. \uc624\ub958 \uba54\uc2dc\uc9c0: %s.
+# START NON-TRANSLATABLE
+J9NLS_PORT_RUNNING_IN_CONTAINER_FAILURE.sample_input_1=fopen failed to open /proc/1/cgroup file with errno=2
+J9NLS_PORT_RUNNING_IN_CONTAINER_FAILURE.explanation=An error was encountered while evaluating if the JVM is running inside a container.
+J9NLS_PORT_RUNNING_IN_CONTAINER_FAILURE.system_action=The JVM continues, but performance might be impacted if the JVM is running inside a container.
+J9NLS_PORT_RUNNING_IN_CONTAINER_FAILURE.user_response=Take action to resolve the error if performance is impacted inside a container. Otherwise, ignore the error.
 # END NON-TRANSLATABLE

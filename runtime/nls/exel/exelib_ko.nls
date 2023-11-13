@@ -52,58 +52,56 @@ J9NLS_EXELIB_INTERNAL_HELP_1_1.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_1_1.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_1_2=\  -Xbootclasspath:<path>    \ubd80\ud2b8\uc2a4\ud2b8\ub7a9 \ud074\ub798\uc2a4 \uacbd\ub85c\ub97c <path>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
+J9NLS_EXELIB_INTERNAL_HELP_1_2=\ \ -Xbootclasspath:<path>    \ubd80\ud2b8\uc2a4\ud2b8\ub7a9 \ud074\ub798\uc2a4 \uacbd\ub85c\ub97c <path>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_1_2.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_1_2.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_1_2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_1_3=\  -Xbootclasspath/p:<path>  \ubd80\ud2b8\uc2a4\ud2b8\ub7a9 \ud074\ub798\uc2a4 \uacbd\ub85c \uc55e\uc5d0 <path>\ub97c \ucd94\uac00\ud569\ub2c8\ub2e4.
+J9NLS_EXELIB_INTERNAL_HELP_1_3=\ \ -Xbootclasspath/p:<path>  \ubd80\ud2b8\uc2a4\ud2b8\ub7a9 \ud074\ub798\uc2a4 \uacbd\ub85c \uc55e\uc5d0 <path>\ub97c \ucd94\uac00\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_1_3.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_1_3.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_1_3.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_1_4=\  -Xbootclasspath/a:<path>  \ubd80\ud2b8\uc2a4\ud2b8\ub7a9 \ud074\ub798\uc2a4 \uacbd\ub85c\uc5d0 <path>\ub97c \ucd94\uac00\ud569\ub2c8\ub2e4.
+J9NLS_EXELIB_INTERNAL_HELP_1_4=\ \ -Xbootclasspath/a:<path>  \ubd80\ud2b8\uc2a4\ud2b8\ub7a9 \ud074\ub798\uc2a4 \uacbd\ub85c\uc5d0 <path>\ub97c \ucd94\uac00\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_1_4.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_1_4.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_1_4.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_1_5=\n\
-\  -Xrun<library>[:options]  \uc6d0\uc2dc \uc5d0\uc774\uc804\ud2b8 \ub77c\uc774\ube0c\ub7ec\ub9ac \ub85c\ub4dc\n\
-\                            (-agentlib\ub294 \ub354 \uc774\uc0c1 \uc0ac\uc6a9\ub418\uc9c0 \uc54a\uc74c)\n
+J9NLS_EXELIB_INTERNAL_HELP_1_5=\n  -Xrun<library>[:options]  \uc6d0\uc2dc \uc5d0\uc774\uc804\ud2b8 \ub77c\uc774\ube0c\ub7ec\ub9ac \ub85c\ub4dc\n                            (-agentlib\ub294 \ub354 \uc774\uc0c1 \uc0ac\uc6a9\ub418\uc9c0 \uc54a\uc74c)\n
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_1_5.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_1_5.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_1_5.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_1_6=\  -Xint           \ud574\uc11d\ub41c \uacbd\uc6b0\uc5d0\ub9cc \uc2e4\ud589\ud569\ub2c8\ub2e4(-Xnojit -Xnoaot\uc640 \ub3d9\uc77c).
+J9NLS_EXELIB_INTERNAL_HELP_1_6=\ \ -Xint           \ud574\uc11d\ub41c \uacbd\uc6b0\uc5d0\ub9cc \uc2e4\ud589\ud569\ub2c8\ub2e4(-Xnojit -Xnoaot\uc640 \ub3d9\uc77c).
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_1_6.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_1_6.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_1_6.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_1_7=\  -Xnojit         JIT\ub97c \uc0ac\uc6a9 \ubd88\uac00\ub2a5\ud558\uac8c \ud569\ub2c8\ub2e4.
+J9NLS_EXELIB_INTERNAL_HELP_1_7=\ \ -Xnojit         JIT\ub97c \uc0ac\uc6a9 \ubd88\uac00\ub2a5\ud558\uac8c \ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_1_7.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_1_7.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_1_7.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_1_8=\  -Xnoaot         \uc0ac\uc804 \ucef4\ud30c\uc77c\ub41c \ucf54\ub4dc\ub97c \uc2e4\ud589\ud558\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.
+J9NLS_EXELIB_INTERNAL_HELP_1_8=\ \ -Xnoaot         \uc0ac\uc804 \ucef4\ud30c\uc77c\ub41c \ucf54\ub4dc\ub97c \uc2e4\ud589\ud558\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_1_8.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_1_8.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_1_8.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_1_9=\  -Xfuture        \uac00\uc7a5 \uc5c4\uaca9\ud55c \uac80\uc0ac\ub97c \uc0ac\uc6a9\ud558\uc5ec \ub098\uc911 \uae30\ubcf8\uac12\uc744 \uc608\uc0c1\ud569\ub2c8\ub2e4.
+J9NLS_EXELIB_INTERNAL_HELP_1_9=\ \ -Xfuture        \uac00\uc7a5 \uc5c4\uaca9\ud55c \uac80\uc0ac\ub97c \uc0ac\uc6a9\ud558\uc5ec \ub098\uc911 \uae30\ubcf8\uac12\uc744 \uc608\uc0c1\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 
 J9NLS_EXELIB_INTERNAL_HELP_1_9.explanation=NOTAG
@@ -111,169 +109,168 @@ J9NLS_EXELIB_INTERNAL_HELP_1_9.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_1_9.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_1=\n\
-\ub2e4\uc74c \uc635\uc158\uc758 \uc778\uc218\ub294 \ubc14\uc774\ud2b8 \ub2e8\uc704\ub85c \ud45c\uc2dc\ub429\ub2c8\ub2e4.
+J9NLS_EXELIB_INTERNAL_HELP_2_1=\n\ub2e4\uc74c \uc635\uc158\uc758 \uc778\uc218\ub294 \ubc14\uc774\ud2b8 \ub2e8\uc704\ub85c \ud45c\uc2dc\ub429\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_1.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_1.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_1.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_2=\uc811\ubbf8\ubd80\uac00 \"k\"(\ud0ac\ub85c) \ub610\ub294 \"m\"(\uba54\uac00)\uc778 \uac12\uc740 \ub2e4\uc74c\uc5d0 \ub530\ub77c \uacc4\uc0b0\ub429\ub2c8\ub2e4.\n
+J9NLS_EXELIB_INTERNAL_HELP_2_2=\uc811\ubbf8\ubd80\uac00 "k"(\ud0ac\ub85c) \ub610\ub294 "m"(\uba54\uac00)\uc778 \uac12\uc740 \ub2e4\uc74c\uc5d0 \ub530\ub77c \uacc4\uc0b0\ub429\ub2c8\ub2e4.\n
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_2.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_2.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_3=\  -Xmca<x>        RAM \ud074\ub798\uc2a4 \uc138\uadf8\uba3c\ud2b8 \uc99d\ubd84\uc744 <x>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
+J9NLS_EXELIB_INTERNAL_HELP_2_3=\ \ -Xmca<x>        RAM \ud074\ub798\uc2a4 \uc138\uadf8\uba3c\ud2b8 \uc99d\ubd84\uc744 <x>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_3.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_3.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_3.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_4=\  -Xmco<x>        ROM \ud074\ub798\uc2a4 \uc138\uadf8\uba3c\ud2b8 \uc99d\ubd84\uc744 <x>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
+J9NLS_EXELIB_INTERNAL_HELP_2_4=\ \ -Xmco<x>        ROM \ud074\ub798\uc2a4 \uc138\uadf8\uba3c\ud2b8 \uc99d\ubd84\uc744 <x>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_4.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_4.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_4.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_5=\  -Xmn<x>         \uc0c8 \uacf5\uac04 \ud06c\uae30\ub97c <x>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
+J9NLS_EXELIB_INTERNAL_HELP_2_5=\ \ -Xmn<x>         \uc0c8 \uacf5\uac04 \ud06c\uae30\ub97c <x>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_5.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_5.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_5.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_1=\  -Xmn<x>         \ucd08\uae30/\ucd5c\ub300 \uc0c8 \uacf5\uac04 \ud06c\uae30\ub97c <x>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
+J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_1=\ \ -Xmn<x>         \ucd08\uae30/\ucd5c\ub300 \uc0c8 \uacf5\uac04 \ud06c\uae30\ub97c <x>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_1.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_1.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_1.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_2=\  -Xmns<x>        \ucd08\uae30 \uc0c8 \uacf5\uac04 \ud06c\uae30\ub97c <x>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
+J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_2=\ \ -Xmns<x>        \ucd08\uae30 \uc0c8 \uacf5\uac04 \ud06c\uae30\ub97c <x>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_2.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_2.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_3=\  -Xmnx<x>        \ucd5c\ub300 \uc0c8 \uacf5\uac04 \ud06c\uae30\ub97c <x>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
+J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_3=\ \ -Xmnx<x>        \ucd5c\ub300 \uc0c8 \uacf5\uac04 \ud06c\uae30\ub97c <x>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_3.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_3.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_3.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_6=\  -Xmo<x>         \uae30\uc874 \uacf5\uac04 \ud06c\uae30\ub97c <x>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
+J9NLS_EXELIB_INTERNAL_HELP_2_6=\ \ -Xmo<x>         \uae30\uc874 \uacf5\uac04 \ud06c\uae30\ub97c <x>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_6.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_6.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_6.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_1=\  -Xmo<x>         \ucd08\uae30/\ucd5c\ub300 \uae30\uc874 \uacf5\uac04 \ud06c\uae30\ub97c <x>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
+J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_1=\ \ -Xmo<x>         \ucd08\uae30/\ucd5c\ub300 \uae30\uc874 \uacf5\uac04 \ud06c\uae30\ub97c <x>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_1.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_1.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_1.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_2=\  -Xmos<x>        \ucd08\uae30 \uae30\uc874 \uacf5\uac04 \ud06c\uae30\ub97c <x>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
+J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_2=\ \ -Xmos<x>        \ucd08\uae30 \uae30\uc874 \uacf5\uac04 \ud06c\uae30\ub97c <x>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_2.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_2.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_3=\  -Xmox<x>        \ucd5c\ub300 \uae30\uc874 \uacf5\uac04 \ud06c\uae30\ub97c <x>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
+J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_3=\ \ -Xmox<x>        \ucd5c\ub300 \uae30\uc874 \uacf5\uac04 \ud06c\uae30\ub97c <x>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_3.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_3.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_3.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_7=\  -Xmoi<x>        \uae30\uc874 \uacf5\uac04 \uc99d\ubd84\uc744 <x>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
+J9NLS_EXELIB_INTERNAL_HELP_2_7=\ \ -Xmoi<x>        \uae30\uc874 \uacf5\uac04 \uc99d\ubd84\uc744 <x>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_7.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_7.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_7.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_8=\  -Xms<x>         \uae30\uc874 \uacf5\uac04 \ud06c\uae30\ub97c <x>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
+J9NLS_EXELIB_INTERNAL_HELP_2_8=\ \ -Xms<x>         \uae30\uc874 \uacf5\uac04 \ud06c\uae30\ub97c <x>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_8.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_8.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_8.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_8_MODRON=\  -Xms<x>         \ucd08\uae30 \uba54\ubaa8\ub9ac \ud06c\uae30\ub97c <x>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
+J9NLS_EXELIB_INTERNAL_HELP_2_8_MODRON=\ \ -Xms<x>         \ucd08\uae30 \uba54\ubaa8\ub9ac \ud06c\uae30\ub97c <x>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_8_MODRON.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_8_MODRON.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_8_MODRON.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_9=\  -Xmx<x>         \ucd5c\ub300 \uba54\ubaa8\ub9ac\ub97c <x>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
+J9NLS_EXELIB_INTERNAL_HELP_2_9=\ \ -Xmx<x>         \ucd5c\ub300 \uba54\ubaa8\ub9ac\ub97c <x>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_9.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_9.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_9.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_10_GENERATIONAL=\  -Xmr<x>         \uae30\uc5b5\ub41c \uc124\uc815 \ud06c\uae30\ub97c <x>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
+J9NLS_EXELIB_INTERNAL_HELP_2_10_GENERATIONAL=\ \ -Xmr<x>         \uae30\uc5b5\ub41c \uc124\uc815 \ud06c\uae30\ub97c <x>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_10_GENERATIONAL.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_10_GENERATIONAL.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_10_GENERATIONAL.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_10_GENERATIONAL_MODRON=\  -Xmrx<x>        \uae30\uc5b5\ub41c \uc124\uc815\uc758 \ucd5c\ub300 \ud06c\uae30\ub97c <x>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
+J9NLS_EXELIB_INTERNAL_HELP_2_10_GENERATIONAL_MODRON=\ \ -Xmrx<x>        \uae30\uc5b5\ub41c \uc124\uc815\uc758 \ucd5c\ub300 \ud06c\uae30\ub97c <x>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_10_GENERATIONAL_MODRON.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_10_GENERATIONAL_MODRON.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_10_GENERATIONAL_MODRON.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_11=\  -Xmso<x>        OS \uc2a4\ub808\ub4dc \uc2a4\ud0dd \ud06c\uae30\ub97c <x>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
+J9NLS_EXELIB_INTERNAL_HELP_2_11=\ \ -Xmso<x>        OS \uc2a4\ub808\ub4dc \uc2a4\ud0dd \ud06c\uae30\ub97c <x>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_11.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_11.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_11.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_12_GROWABLE=\  -Xiss<x>        \ucd08\uae30 Java \uc2a4\ub808\ub4dc \uc2a4\ud0dd \ud06c\uae30\ub97c <x>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
+J9NLS_EXELIB_INTERNAL_HELP_2_12_GROWABLE=\ \ -Xiss<x>        \ucd08\uae30 Java \uc2a4\ub808\ub4dc \uc2a4\ud0dd \ud06c\uae30\ub97c <x>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_12_GROWABLE.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_12_GROWABLE.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_12_GROWABLE.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_13_GROWABLE=\  -Xss<x>         \ucd5c\ub300 Java \uc2a4\ub808\ub4dc \uc2a4\ud0dd \ud06c\uae30\ub97c <x>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
+J9NLS_EXELIB_INTERNAL_HELP_2_13_GROWABLE=\ \ -Xss<x>         \ucd5c\ub300 Java \uc2a4\ub808\ub4dc \uc2a4\ud0dd \ud06c\uae30\ub97c <x>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_13_GROWABLE.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_13_GROWABLE.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_13_GROWABLE.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_13=\  -Xss<x>        \uc2a4\ub808\ub4dc \uc2a4\ud0dd \ud06c\uae30\ub97c <x>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
+J9NLS_EXELIB_INTERNAL_HELP_2_13=\ \ -Xss<x>        \uc2a4\ub808\ub4dc \uc2a4\ud0dd \ud06c\uae30\ub97c <x>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_13.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_13.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_13.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_14_MODRON=\  -Xmine<x>       \ud799 \ud655\uc7a5\uc758 \ucd5c\uc18c \ud06c\uae30\ub97c <x>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
+J9NLS_EXELIB_INTERNAL_HELP_2_14_MODRON=\ \ -Xmine<x>       \ud799 \ud655\uc7a5\uc758 \ucd5c\uc18c \ud06c\uae30\ub97c <x>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_2_14_MODRON.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_2_14_MODRON.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_14_MODRON.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_2_15_MODRON=\  -Xmaxe<x>       \ud799 \ud655\uc7a5\uc758 \ucd5c\ub300 \ud06c\uae30\ub97c <x>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
+J9NLS_EXELIB_INTERNAL_HELP_2_15_MODRON=\ \ -Xmaxe<x>       \ud799 \ud655\uc7a5\uc758 \ucd5c\ub300 \ud06c\uae30\ub97c <x>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 
 J9NLS_EXELIB_INTERNAL_HELP_2_15_MODRON.explanation=NOTAG
@@ -281,8 +278,7 @@ J9NLS_EXELIB_INTERNAL_HELP_2_15_MODRON.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_15_MODRON.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_1=\n\
-\ub2e4\uc74c \uc635\uc158\uc758 \uc778\uc218\ub294 0\uacfc 1 \uc0ac\uc774\uc758 10\uc9c4\uc218\ub85c \ud45c\uc2dc\ub429\ub2c8\ub2e4.
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_1=\n\ub2e4\uc74c \uc635\uc158\uc758 \uc778\uc218\ub294 0\uacfc 1 \uc0ac\uc774\uc758 10\uc9c4\uc218\ub85c \ud45c\uc2dc\ub429\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_1.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_1.system_action=
@@ -296,14 +292,14 @@ J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_2.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_3=\  -Xminf<x>       GC \uc774\ud6c4 \uc5ec\uc720 \ud799\uc758 \ucd5c\uc18c \ubc31\ubd84\uc728
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_3=\ \ -Xminf<x>       GC \uc774\ud6c4 \uc5ec\uc720 \ud799\uc758 \ucd5c\uc18c \ubc31\ubd84\uc728
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_3.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_3.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_3.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_4=\  -Xmaxf<x>       GC \uc774\ud6c4 \uc5ec\uc720 \ud799\uc758 \ucd5c\ub300 \ubc31\ubd84\uc728
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_4=\ \ -Xmaxf<x>       GC \uc774\ud6c4 \uc5ec\uc720 \ud799\uc758 \ucd5c\ub300 \ubc31\ubd84\uc728
 # START NON-TRANSLATABLE
 
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_4.explanation=NOTAG
@@ -311,93 +307,91 @@ J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_4.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_4.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_1=\n\
-\ub2e4\uc74c \uc635\uc158\uc758 \uc778\uc218\ub294 10\uc9c4\uc218\ub85c \ud45c\uc2dc\ub429\ub2c8\ub2e4.\n
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_1=\n\ub2e4\uc74c \uc635\uc158\uc758 \uc778\uc218\ub294 10\uc9c4\uc218\ub85c \ud45c\uc2dc\ub429\ub2c8\ub2e4.\n
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_1.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_1.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_1.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_2=\  -Xgcthreads<x>                GC \uc2a4\ub808\ub4dc \uc218\ub97c \uc124\uc815\ud569\ub2c8\ub2e4.
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_2=\ \ -Xgcthreads<x>                GC \uc2a4\ub808\ub4dc \uc218\ub97c \uc124\uc815\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_2.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_2.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_3=\  -Xnoclassgc                   dynamic \ud074\ub798\uc2a4 \ub85c\ub4dc \ud574\uc81c\ub97c \uc0ac\uc6a9 \ubd88\uac00\ub2a5\ud558\uac8c \ud569\ub2c8\ub2e4.
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_3=\ \ -Xnoclassgc                   dynamic \ud074\ub798\uc2a4 \ub85c\ub4dc \ud574\uc81c\ub97c \uc0ac\uc6a9 \ubd88\uac00\ub2a5\ud558\uac8c \ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_3.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_3.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_3.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_4=\  -Xclassgc                     dynamic \ud074\ub798\uc2a4 \ub85c\ub4dc \ud574\uc81c\ub97c \uc0ac\uc6a9 \uac00\ub2a5\ud558\uac8c \ud569\ub2c8\ub2e4.
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_4=\ \ -Xclassgc                     dynamic \ud074\ub798\uc2a4 \ub85c\ub4dc \ud574\uc81c\ub97c \uc0ac\uc6a9 \uac00\ub2a5\ud558\uac8c \ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_4.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_4.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_4.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_5=\  -Xalwaysclassgc               \ubaa8\ub4e0 GC\uc5d0\uc11c dynamic \ud074\ub798\uc2a4 \ub85c\ub4dc \ud574\uc81c\ub97c \uc0ac\uc6a9 \uac00\ub2a5\ud558\uac8c \ud569\ub2c8\ub2e4.
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_5=\ \ -Xalwaysclassgc               \ubaa8\ub4e0 GC\uc5d0\uc11c dynamic \ud074\ub798\uc2a4 \ub85c\ub4dc \ud574\uc81c\ub97c \uc0ac\uc6a9 \uac00\ub2a5\ud558\uac8c \ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_5.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_5.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_5.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_6=\  -Xnocompactexplicitgc         GC \uc2dc\uc2a4\ud15c\uc5d0\uc11c \uc555\ucd95\uc744 \uc0ac\uc6a9 \ubd88\uac00\ub2a5\ud558\uac8c \ud569\ub2c8\ub2e4.
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_6=\ \ -Xnocompactexplicitgc         GC \uc2dc\uc2a4\ud15c\uc5d0\uc11c \uc555\ucd95\uc744 \uc0ac\uc6a9 \ubd88\uac00\ub2a5\ud558\uac8c \ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_6.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_6.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_6.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_7=\  -Xcompactexplicitgc           \ubaa8\ub4e0 GC \uc2dc\uc2a4\ud15c\uc5d0\uc11c \uc555\ucd95\uc744 \uc0ac\uc6a9 \uac00\ub2a5\ud558\uac8c \ud569\ub2c8\ub2e4.
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_7=\ \ -Xcompactexplicitgc           \ubaa8\ub4e0 GC \uc2dc\uc2a4\ud15c\uc5d0\uc11c \uc555\ucd95\uc744 \uc0ac\uc6a9 \uac00\ub2a5\ud558\uac8c \ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_7.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_7.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_7.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_8=\  -Xcompactgc                   \uc555\ucd95\uc744 \uc0ac\uc6a9 \uac00\ub2a5\ud558\uac8c \ud569\ub2c8\ub2e4.
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_8=\ \ -Xcompactgc                   \uc555\ucd95\uc744 \uc0ac\uc6a9 \uac00\ub2a5\ud558\uac8c \ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_8.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_8.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_8.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_9=\  -Xnocompactgc                 \uc555\ucd95\uc744 \uc0ac\uc6a9 \ubd88\uac00\ub2a5\ud558\uac8c \ud569\ub2c8\ub2e4.
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_9=\ \ -Xnocompactgc                 \uc555\ucd95\uc744 \uc0ac\uc6a9 \ubd88\uac00\ub2a5\ud558\uac8c \ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_9.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_9.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_9.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_MODRON_LARGE_PAGE_SUPPORT=\  -Xlp                          \ub300\uc6a9\ub7c9 \ud398\uc774\uc9c0 \uc9c0\uc6d0\uc744 \uc0ac\uc6a9 \uac00\ub2a5\ud558\uac8c \ud569\ub2c8\ub2e4.
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_LARGE_PAGE_SUPPORT=\ \ -Xlp                          \ub300\uc6a9\ub7c9 \ud398\uc774\uc9c0 \uc9c0\uc6d0\uc744 \uc0ac\uc6a9 \uac00\ub2a5\ud558\uac8c \ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_LARGE_PAGE_SUPPORT.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_LARGE_PAGE_SUPPORT.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_MODRON_LARGE_PAGE_SUPPORT.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_1=\n\
-\  -Xdbg:<options>               JDWP \ud45c\uc900 \uc635\uc158\uc778 \ub514\ubc84\uadf8\ub97c \uc0ac\uc6a9 \uac00\ub2a5\ud558\uac8c \ud569\ub2c8\ub2e4.
+J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_1=\n  -Xdbg:<options>               JDWP \ud45c\uc900 \uc635\uc158\uc778 \ub514\ubc84\uadf8\ub97c \uc0ac\uc6a9 \uac00\ub2a5\ud558\uac8c \ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_1.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_1.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_1.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_2=\  -Xrunjdwp:<options>           JDWP \ud45c\uc900 \uc635\uc158\uc778 \ub514\ubc84\uadf8\ub97c \uc0ac\uc6a9 \uac00\ub2a5\ud558\uac8c \ud569\ub2c8\ub2e4.
+J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_2=\ \ -Xrunjdwp:<options>           JDWP \ud45c\uc900 \uc635\uc158\uc778 \ub514\ubc84\uadf8\ub97c \uc0ac\uc6a9 \uac00\ub2a5\ud558\uac8c \ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_2.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_2.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_3=\  -Xdbginfo:<symbol file path>  \ub514\ubc84\uadf8 \uc815\ubcf4 \uc11c\ubc84\ub97c \uc0ac\uc6a9 \uac00\ub2a5\ud558\uac8c \ud569\ub2c8\ub2e4.
+J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_3=\ \ -Xdbginfo:<symbol file path>  \ub514\ubc84\uadf8 \uc815\ubcf4 \uc11c\ubc84\ub97c \uc0ac\uc6a9 \uac00\ub2a5\ud558\uac8c \ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_3.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_3.system_action=
@@ -405,7 +399,7 @@ J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_3.user_response=
 # END NON-TRANSLATABLE
 
 # -Xrdbginfo is a command line option to Java which takes 2 parameters; host name of a computer and the port the server is utilizing
-J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_4=\  -Xrdbginfo:<host>:<port>      \uc6d0\uaca9 \ub514\ubc84\uadf8 \uc815\ubcf4 \uc11c\ubc84 \uc0ac\uc6a9
+J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_4=\ \ -Xrdbginfo:<host>:<port>      \uc6d0\uaca9 \ub514\ubc84\uadf8 \uc815\ubcf4 \uc11c\ubc84 \uc0ac\uc6a9
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_4.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_4.system_action=
@@ -414,9 +408,7 @@ J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_4.user_response=
 
 # J9SourceExeLibArgumentsParsing - cmdline_classpath_WARN
 
-J9NLS_EXELIB_CMDLINE_CP_WARN=\n\
-\uacbd\uace0: \uba85\ub839\ud589 \uc778\uc218 \"%s\"\ub294 \uc0ac\uc6a9\ub418\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.\n\
-\uacbd\uace0: \"-classpath <path>\" \ub610\ub294 \"-cp <path>\"\ub97c \uc0ac\uc6a9\ud558\uc2ed\uc2dc\uc624.
+J9NLS_EXELIB_CMDLINE_CP_WARN=\n\uacbd\uace0: \uba85\ub839\ud589 \uc778\uc218 "%s"\ub294 \uc0ac\uc6a9\ub418\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.\n\uacbd\uace0: "-classpath <path>" \ub610\ub294 "-cp <path>"\ub97c \uc0ac\uc6a9\ud558\uc2ed\uc2dc\uc624.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_CMDLINE_CP_WARN.sample_input_1=-cp:
 J9NLS_EXELIB_CMDLINE_CP_WARN.explanation=NOTAG
@@ -425,9 +417,7 @@ J9NLS_EXELIB_CMDLINE_CP_WARN.user_response=
 # END NON-TRANSLATABLE
 
 #J9SourceExeLibArgumentsParsing - cmdline_prepend_internal_WARN/cmdline_perpend_numeric1024_WARN
-J9NLS_EXELIB_CMDLINE_PREPEND_WARN=\n\
-\uacbd\uace0: \uba85\ub839\ud589 \uc778\uc218 \"%s\"\ub294 \uc0ac\uc6a9\ub418\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.\n\
-\uacbd\uace0: -X \ub3d9\ub4f1 \uae30\ub2a5\uc744 \uc0ac\uc6a9\ud558\uc2ed\uc2dc\uc624.
+J9NLS_EXELIB_CMDLINE_PREPEND_WARN=\n\uacbd\uace0: \uba85\ub839\ud589 \uc778\uc218 "%s"\ub294 \uc0ac\uc6a9\ub418\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.\n\uacbd\uace0: -X \ub3d9\ub4f1 \uae30\ub2a5\uc744 \uc0ac\uc6a9\ud558\uc2ed\uc2dc\uc624.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_CMDLINE_PREPEND_WARN.sample_input_1=-mca:
 J9NLS_EXELIB_CMDLINE_PREPEND_WARN.explanation=NOTAG
@@ -602,7 +592,7 @@ J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_JAVA_VM.user_response=
 J9NLS_EXELIB_UNABLE_REDIRECT_IO=
 
 # J9SourceExeLibArgumentsParsing - describeInternalOptions
-J9NLS_EXELIB_INTERNAL_HELP_1_10=\  -Xquickstart    \ucd5c\uc801\ud654\ub97c \uc9c0\uc5f0\ud558\uc5ec \uc2dc\uc791 \uc2dc\uac04\uc744 \ud5a5\uc0c1\uc2dc\ud0b5\ub2c8\ub2e4.
+J9NLS_EXELIB_INTERNAL_HELP_1_10=\ \ -Xquickstart    \ucd5c\uc801\ud654\ub97c \uc9c0\uc5f0\ud558\uc5ec \uc2dc\uc791 \uc2dc\uac04\uc744 \ud5a5\uc0c1\uc2dc\ud0b5\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_1_10.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_1_10.system_action=
@@ -618,21 +608,21 @@ J9NLS_EXELIB_JIT_LEVEL.system_action=
 J9NLS_EXELIB_JIT_LEVEL.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSSI_GROWABLE=\  -Xssi<x>        java \uc2a4\ub808\ub4dc \uc2a4\ud0dd \uc99d\ubd84\uc744 <x>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
+J9NLS_EXELIB_INTERNAL_HELP_XSSI_GROWABLE=\ \ -Xssi<x>        java \uc2a4\ub808\ub4dc \uc2a4\ud0dd \uc99d\ubd84\uc744 <x>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSSI_GROWABLE.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSSI_GROWABLE.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XSSI_GROWABLE.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSHARECLASSES=\  -Xshareclasses[:options]  \ud074\ub798\uc2a4 \ub370\uc774\ud130 \uacf5\uc720\ub97c \uc0ac\uc6a9 \uac00\ub2a5\ud558\uac8c \ud569\ub2c8\ub2e4(\uc138\ubd80\uc0ac\ud56d\uc740 \ub3c4\uc6c0\ub9d0 \ucc38\uc870).\n
+J9NLS_EXELIB_INTERNAL_HELP_XSHARECLASSES=\ \ -Xshareclasses[:options]  \ud074\ub798\uc2a4 \ub370\uc774\ud130 \uacf5\uc720\ub97c \uc0ac\uc6a9 \uac00\ub2a5\ud558\uac8c \ud569\ub2c8\ub2e4(\uc138\ubd80\uc0ac\ud56d\uc740 \ub3c4\uc6c0\ub9d0 \ucc38\uc870).\n
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSHARECLASSES.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSHARECLASSES.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XSHARECLASSES.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCMX=\  -Xscmx<x>       \uc0c8 \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc\uc758 \ud06c\uae30\ub97c <x>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
+J9NLS_EXELIB_INTERNAL_HELP_XSCMX=\ \ -Xscmx<x>       \uc0c8 \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc\uc758 \ud06c\uae30\ub97c <x>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCMX.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCMX.system_action=
@@ -658,7 +648,7 @@ J9NLS_EXELIB_VERSION_ME.system_action=
 J9NLS_EXELIB_VERSION_ME.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XLP_SIZE=\  -Xlp<x>         \ud070 \ud398\uc774\uc9c0 \ud06c\uae30\ub97c <x>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
+J9NLS_EXELIB_INTERNAL_HELP_XLP_SIZE=\ \ -Xlp<x>         \ud070 \ud398\uc774\uc9c0 \ud06c\uae30\ub97c <x>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XLP_SIZE.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XLP_SIZE.system_action=
@@ -681,9 +671,7 @@ J9NLS_EXELIB_LOGFILE_BACKUP_FAILED.system_action=JVM execution continues without
 J9NLS_EXELIB_LOGFILE_BACKUP_FAILED.user_response=Ensure target file has the right access permission.
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_CMDLINE_JXECOLON_WARN=\n\
-\uacbd\uace0: \uba85\ub839\ud589 \uc778\uc218 \"%s\"\ub294 \uc0ac\uc6a9\ub418\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.\n\
-\uacbd\uace0: \"-jxe <path>\"\ub97c \ub300\uc2e0 \uc0ac\uc6a9\ud558\uc2ed\uc2dc\uc624.\n
+J9NLS_EXELIB_CMDLINE_JXECOLON_WARN=\n\uacbd\uace0: \uba85\ub839\ud589 \uc778\uc218 "%s"\ub294 \uc0ac\uc6a9\ub418\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.\n\uacbd\uace0: "-jxe <path>"\ub97c \ub300\uc2e0 \uc0ac\uc6a9\ud558\uc2ed\uc2dc\uc624.\n
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_CMDLINE_JXECOLON_WARN.sample_input_1=-jxe:
 J9NLS_EXELIB_CMDLINE_JXECOLON_WARN.explanation=The specified command line argument is no longer valid
@@ -691,15 +679,14 @@ J9NLS_EXELIB_CMDLINE_JXECOLON_WARN.system_action=JVM will ignore the command lin
 J9NLS_EXELIB_CMDLINE_JXECOLON_WARN.user_response=Replace the command line argument as suggested.
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_1_11=\n\
-\  -Xtrace[:option,...]  \uc81c\uc5b4 \ucd94\uc801, \uc790\uc138\ud55c \ub0b4\uc6a9\uc740 -Xtrace:help\ub97c \uc0ac\uc6a9\ud558\uc2ed\uc2dc\uc624.
+J9NLS_EXELIB_INTERNAL_HELP_1_11=\n  -Xtrace[:option,...]  \uc81c\uc5b4 \ucd94\uc801, \uc790\uc138\ud55c \ub0b4\uc6a9\uc740 -Xtrace:help\ub97c \uc0ac\uc6a9\ud558\uc2ed\uc2dc\uc624.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_1_11.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_1_11.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_1_11.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XJNI_1=\  -Xjni:<options>               JNI \uc635\uc158\uc744 \uc124\uc815\ud569\ub2c8\ub2e4.
+J9NLS_EXELIB_INTERNAL_HELP_XJNI_1=\ \ -Xjni:<options>               JNI \uc635\uc158\uc744 \uc124\uc815\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XJNI_1.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XJNI_1.system_action=
@@ -713,30 +700,28 @@ J9NLS_EXELIB_INTERNAL_HELP_2_16.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_2_16.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCMINAOT=\  -Xscminaot<x>   AOT \ub370\uc774\ud130\uc6a9\uc73c\ub85c \uc608\uc57d\ub41c \ucd5c\uc18c \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc \uacf5\uac04\uc744 <x>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
+J9NLS_EXELIB_INTERNAL_HELP_XSCMINAOT=\ \ -Xscminaot<x>   AOT \ub370\uc774\ud130\uc6a9\uc73c\ub85c \uc608\uc57d\ub41c \ucd5c\uc18c \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc \uacf5\uac04\uc744 <x>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCMINAOT.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCMINAOT.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XSCMINAOT.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCMAXAOT=\  -Xscmaxaot<x>   AOT \ub370\uc774\ud130\uc5d0 \ud5c8\uc6a9\ub418\ub294 \ucd5c\ub300 \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc \uacf5\uac04\uc744 <x>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
+J9NLS_EXELIB_INTERNAL_HELP_XSCMAXAOT=\ \ -Xscmaxaot<x>   AOT \ub370\uc774\ud130\uc5d0 \ud5c8\uc6a9\ub418\ub294 \ucd5c\ub300 \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc \uacf5\uac04\uc744 <x>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCMAXAOT.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCMAXAOT.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XSCMAXAOT.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_1_12=\n\
-\  -Xcheck[:option[:...]]  \uc81c\uc5b4 \ud655\uc778, \uc790\uc138\ud55c \ub0b4\uc6a9\uc740 -Xcheck:help\ub97c \uc0ac\uc6a9\ud558\uc2ed\uc2dc\uc624.
+J9NLS_EXELIB_INTERNAL_HELP_1_12=\n  -Xcheck[:option[:...]]  \uc81c\uc5b4 \ud655\uc778, \uc790\uc138\ud55c \ub0b4\uc6a9\uc740 -Xcheck:help\ub97c \uc0ac\uc6a9\ud558\uc2ed\uc2dc\uc624.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_1_12.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_1_12.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_1_12.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_1_13=\n\
-\  -Xdump[:option,...]  \uc81c\uc5b4 \ub364\ud504, \uc790\uc138\ud55c \ub0b4\uc6a9\uc740 -Xdump:help\ub97c \uc0ac\uc6a9\ud558\uc2ed\uc2dc\uc624.
+J9NLS_EXELIB_INTERNAL_HELP_1_13=\n  -Xdump[:option,...]  \uc81c\uc5b4 \ub364\ud504, \uc790\uc138\ud55c \ub0b4\uc6a9\uc740 -Xdump:help\ub97c \uc0ac\uc6a9\ud558\uc2ed\uc2dc\uc624.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_1_13.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_1_13.system_action=
@@ -752,49 +737,49 @@ J9NLS_EXELIB_INTERNAL_HELP_VMSELECT.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_VMSELECT.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_VMCOMPRESSED=\  -Xcompressedrefs              \uc555\ucd95\ub41c \ud799 \ucc38\uc870 \uc0ac\uc6a9
+J9NLS_EXELIB_INTERNAL_HELP_VMCOMPRESSED=\ \ -Xcompressedrefs              \uc555\ucd95\ub41c \ud799 \ucc38\uc870 \uc0ac\uc6a9
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_VMCOMPRESSED.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_VMCOMPRESSED.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_VMCOMPRESSED.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_VMREALTIME=\  -Xrealtime                    \uc2e4\uc2dc\uac04 \ud655\uc7a5\uae30\ub2a5 \uc0ac\uc6a9
+J9NLS_EXELIB_INTERNAL_HELP_VMREALTIME=\ \ -Xrealtime                    \uc2e4\uc2dc\uac04 \ud655\uc7a5\uae30\ub2a5 \uc0ac\uc6a9
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_VMREALTIME.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_VMREALTIME.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_VMREALTIME.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_VMREALTIME2=\  -Xgcpolicy:metronome          \uc2e4\uc2dc\uac04 \ud655\uc7a5\uae30\ub2a5 \uc0ac\uc6a9
+J9NLS_EXELIB_INTERNAL_HELP_VMREALTIME2=\ \ -Xgcpolicy:metronome          \uc2e4\uc2dc\uac04 \ud655\uc7a5\uae30\ub2a5 \uc0ac\uc6a9
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_VMREALTIME2.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_VMREALTIME2.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_VMREALTIME2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_VMSOFTRT=\  -Xrealtime                    \uc18c\ud504\ud2b8 \uc2e4\uc2dc\uac04 \uc0ac\uc6a9
+J9NLS_EXELIB_INTERNAL_HELP_VMSOFTRT=\ \ -Xrealtime                    \uc18c\ud504\ud2b8 \uc2e4\uc2dc\uac04 \uc0ac\uc6a9
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_VMSOFTRT.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_VMSOFTRT.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_VMSOFTRT.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_VMSOFTRT2=\  -Xgcpolicy:metronome          \uc18c\ud504\ud2b8 \uc2e4\uc2dc\uac04 \uc0ac\uc6a9
+J9NLS_EXELIB_INTERNAL_HELP_VMSOFTRT2=\ \ -Xgcpolicy:metronome          \uc18c\ud504\ud2b8 \uc2e4\uc2dc\uac04 \uc0ac\uc6a9
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_VMSOFTRT2.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_VMSOFTRT2.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_VMSOFTRT2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_VMNORTSJ=\  -Xrealtime -Xnortsj           \uc18c\ud504\ud2b8 \uc2e4\uc2dc\uac04 \uc0ac\uc6a9
+J9NLS_EXELIB_INTERNAL_HELP_VMNORTSJ=\ \ -Xrealtime -Xnortsj           \uc18c\ud504\ud2b8 \uc2e4\uc2dc\uac04 \uc0ac\uc6a9
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_VMNORTSJ.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_VMNORTSJ.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_VMNORTSJ.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_VMNORTSJ2=\  -Xgcpolicy:metronome -Xnortsj \uc18c\ud504\ud2b8 \uc2e4\uc2dc\uac04 \uc0ac\uc6a9
+J9NLS_EXELIB_INTERNAL_HELP_VMNORTSJ2=\ \ -Xgcpolicy:metronome -Xnortsj \uc18c\ud504\ud2b8 \uc2e4\uc2dc\uac04 \uc0ac\uc6a9
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_VMNORTSJ2.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_VMNORTSJ2.system_action=
@@ -803,8 +788,7 @@ J9NLS_EXELIB_INTERNAL_HELP_VMNORTSJ2.user_response=
 
 # healthcenter help
 
-J9NLS_EXELIB_INTERNAL_HELP_HEALTHCENTER=\n\
-\  -Xhealthcenter  Health Center \uc5d0\uc774\uc804\ud2b8 \uc0ac\uc6a9
+J9NLS_EXELIB_INTERNAL_HELP_HEALTHCENTER=\n  -Xhealthcenter  Health Center \uc5d0\uc774\uc804\ud2b8 \uc0ac\uc6a9
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_HEALTHCENTER.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_HEALTHCENTER.system_action=
@@ -820,21 +804,21 @@ J9NLS_EXELIB_INTERNAL_HELP_DIAGNOSTICSCOLLECTOR.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_DIAGNOSTICSCOLLECTOR.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCDMX=\  -Xscdmx<x>      \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc \ub514\ubc84\uadf8 \uc18d\uc131 \uc601\uc5ed\uc758 \ud06c\uae30\ub97c <x>\ub85c \uc124\uc815
+J9NLS_EXELIB_INTERNAL_HELP_XSCDMX=\ \ -Xscdmx<x>      \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc \ub514\ubc84\uadf8 \uc18d\uc131 \uc601\uc5ed\uc758 \ud06c\uae30\ub97c <x>\ub85c \uc124\uc815
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCDMX.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCDMX.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XSCDMX.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCMINJIT=\  -Xscminjit<x>   JIT \ub370\uc774\ud130\uc5d0 \uc608\uc57d\ub41c \ucd5c\uc18c \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc \uacf5\uac04\uc744 <x>\ub85c \uc124\uc815
+J9NLS_EXELIB_INTERNAL_HELP_XSCMINJIT=\ \ -Xscminjit<x>   JIT \ub370\uc774\ud130\uc5d0 \uc608\uc57d\ub41c \ucd5c\uc18c \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc \uacf5\uac04\uc744 <x>\ub85c \uc124\uc815
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCMINJIT.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCMINJIT.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XSCMINJIT.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJIT=\  -Xscmaxjit<x>   JIT \ub370\uc774\ud130\uc5d0 \ud5c8\uc6a9\ub41c \ucd5c\ub300 \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc \uacf5\uac04\uc744 <x>\ub85c \uc124\uc815
+J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJIT=\ \ -Xscmaxjit<x>   JIT \ub370\uc774\ud130\uc5d0 \ud5c8\uc6a9\ub41c \ucd5c\ub300 \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc \uacf5\uac04\uc744 <x>\ub85c \uc124\uc815
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJIT.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJIT.system_action=
@@ -842,119 +826,119 @@ J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJIT.user_response=
 
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCMINJITDATA=\  -Xscminjitdata<x>   JIT \ub370\uc774\ud130\uc5d0 \uc608\uc57d\ub41c \ucd5c\uc18c \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc \uacf5\uac04\uc744 <x>\ub85c \uc124\uc815
+J9NLS_EXELIB_INTERNAL_HELP_XSCMINJITDATA=\ \ -Xscminjitdata<x>   JIT \ub370\uc774\ud130\uc5d0 \uc608\uc57d\ub41c \ucd5c\uc18c \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc \uacf5\uac04\uc744 <x>\ub85c \uc124\uc815
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCMINJITDATA.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCMINJITDATA.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XSCMINJITDATA.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJITDATA=\  -Xscmaxjitdata<x>   JIT \ub370\uc774\ud130\uc5d0 \ud5c8\uc6a9\ub41c \ucd5c\ub300 \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc \uacf5\uac04\uc744 <x>\ub85c \uc124\uc815
+J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJITDATA=\ \ -Xscmaxjitdata<x>   JIT \ub370\uc774\ud130\uc5d0 \ud5c8\uc6a9\ub41c \ucd5c\ub300 \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc \uacf5\uac04\uc744 <x>\ub85c \uc124\uc815
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJITDATA.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJITDATA.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJITDATA.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XZERONOSHAREZIP=\  -Xzero:nosharebootzip   \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc\uc5d0\uc11c \ubd80\ud2b8\uc2a4\ud2b8\ub7a9 JAR \uc785\ub825 \uce90\uc2dc\ub97c \uacf5\uc720\ud558\uc9c0 \ub9c8\uc2ed\uc2dc\uc624.
+J9NLS_EXELIB_INTERNAL_HELP_XZERONOSHAREZIP=\ \ -Xzero:nosharebootzip   \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc\uc5d0\uc11c \ubd80\ud2b8\uc2a4\ud2b8\ub7a9 JAR \uc785\ub825 \uce90\uc2dc\ub97c \uacf5\uc720\ud558\uc9c0 \ub9c8\uc2ed\uc2dc\uc624.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XZERONOSHAREZIP.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XZERONOSHAREZIP.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XZERONOSHAREZIP.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XXSHARECLASSESENABLEBCI=\  -XX:ShareClassesEnableBCI   \ubc14\uc774\ud2b8 \ucf54\ub4dc \uc778\uc2a4\ud2b8\ub8e8\uba3c\ud14c\uc774\uc158\uc5d0 \ub300\ud55c \uc9c0\uc6d0\uc774 \uc788\ub294 \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc \uc791\uc131
+J9NLS_EXELIB_INTERNAL_HELP_XXSHARECLASSESENABLEBCI=\ \ -XX:ShareClassesEnableBCI   \ubc14\uc774\ud2b8 \ucf54\ub4dc \uc778\uc2a4\ud2b8\ub8e8\uba3c\ud14c\uc774\uc158\uc5d0 \ub300\ud55c \uc9c0\uc6d0\uc774 \uc788\ub294 \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc \uc791\uc131
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XXSHARECLASSESENABLEBCI.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XXSHARECLASSESENABLEBCI.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XXSHARECLASSESENABLEBCI.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XXSHARECLASSESDISABLEBCI=\  -XX:ShareClassesDisableBCI   \ubc14\uc774\ud2b8 \ucf54\ub4dc \uc778\uc2a4\ud2b8\ub8e8\uba3c\ud14c\uc774\uc158\uc5d0 \ub300\ud55c \uc9c0\uc6d0 \uc5c6\uc774 \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc \uc791\uc131
+J9NLS_EXELIB_INTERNAL_HELP_XXSHARECLASSESDISABLEBCI=\ \ -XX:ShareClassesDisableBCI   \ubc14\uc774\ud2b8 \ucf54\ub4dc \uc778\uc2a4\ud2b8\ub8e8\uba3c\ud14c\uc774\uc158\uc5d0 \ub300\ud55c \uc9c0\uc6d0 \uc5c6\uc774 \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc \uc791\uc131
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XXSHARECLASSESDISABLEBCI.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XXSHARECLASSESDISABLEBCI.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XXSHARECLASSESDISABLEBCI.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XXSTOREINTERMEDIATECLASSFILE=\  -XX:+StoreIntermediateClassfile   \uc7ac\ubcc0\ud658 \uc911\uc5d0 \uc0ac\uc6a9\ud558\ub294 \uc6d0\uc2dc \ud074\ub798\uc2a4 \ub370\uc774\ud130 \uc800\uc7a5
+J9NLS_EXELIB_INTERNAL_HELP_XXSTOREINTERMEDIATECLASSFILE=\ \ -XX:+StoreIntermediateClassfile   \uc7ac\ubcc0\ud658 \uc911\uc5d0 \uc0ac\uc6a9\ud558\ub294 \uc6d0\uc2dc \ud074\ub798\uc2a4 \ub370\uc774\ud130 \uc800\uc7a5
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XXSTOREINTERMEDIATECLASSFILE.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XXSTOREINTERMEDIATECLASSFILE.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XXSTOREINTERMEDIATECLASSFILE.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCSOFTMX=\  -Xscsoftmx<x>   \uc0c8 \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc\uc758 \ucd5c\ub300 \uc18c\ud504\ud2b8 \ud06c\uae30\ub97c <x>\ub85c \uc124\uc815
+J9NLS_EXELIB_INTERNAL_HELP_XSCSOFTMX=\ \ -Xscsoftmx<x>   \uc0c8 \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc\uc758 \ucd5c\ub300 \uc18c\ud504\ud2b8 \ud06c\uae30\ub97c <x>\ub85c \uc124\uc815
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCSOFTMX.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCSOFTMX.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XSCSOFTMX.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCMX_V1=\  -Xscmx<x>       \uc0c8 \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc\uc758 \ud06c\uae30(\ub610\ub294 -XX:SharedCacheHardLimit= \uc635\uc158\uc774 \uc788\uc744 \uacbd\uc6b0 \uc18c\ud504\ud2b8 \ucd5c\ub300 \ud06c\uae30)\ub97c <x>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
+J9NLS_EXELIB_INTERNAL_HELP_XSCMX_V1=\ \ -Xscmx<x>       \uc0c8 \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc\uc758 \ud06c\uae30(\ub610\ub294 -XX:SharedCacheHardLimit= \uc635\uc158\uc774 \uc788\uc744 \uacbd\uc6b0 \uc18c\ud504\ud2b8 \ucd5c\ub300 \ud06c\uae30)\ub97c <x>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCMX_V1.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCMX_V1.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XSCMX_V1.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XXSHARED_CACHE_HARD_LIMIT_EQUALS=\  -XX:SharedCacheHardLimit<x>       \uc0c8 \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc\uc758 \ud06c\uae30\ub97c <x>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
+J9NLS_EXELIB_INTERNAL_HELP_XXSHARED_CACHE_HARD_LIMIT_EQUALS=\ \ -XX:SharedCacheHardLimit<x>       \uc0c8 \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc\uc758 \ud06c\uae30\ub97c <x>\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XXSHARED_CACHE_HARD_LIMIT_EQUALS.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XXSHARED_CACHE_HARD_LIMIT_EQUALS.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XXSHARED_CACHE_HARD_LIMIT_EQUALS.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XXENABLESHAREANONYMOUSCLASSES=\  -XX:+ShareAnonymousClasses\ub294 \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc\uc5d0\uc11c \uc775\uba85 \ud074\ub798\uc2a4 \uc800\uc7a5 \ubc0f \ucc3e\uae30\ub97c \uc0ac\uc6a9\uc73c\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
+J9NLS_EXELIB_INTERNAL_HELP_XXENABLESHAREANONYMOUSCLASSES=\ \ -XX:+ShareAnonymousClasses\ub294 \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc\uc5d0\uc11c \uc775\uba85 \ud074\ub798\uc2a4 \uc800\uc7a5 \ubc0f \ucc3e\uae30\ub97c \uc0ac\uc6a9\uc73c\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XXENABLESHAREANONYMOUSCLASSES.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XXENABLESHAREANONYMOUSCLASSES.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XXENABLESHAREANONYMOUSCLASSES.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XXDISABLESHAREANONYMOUSCLASSES=\  -XX:-ShareAnonymousClasses\ub294 \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc\uc5d0\uc11c \uc775\uba85 \ud074\ub798\uc2a4 \uc800\uc7a5 \ubc0f \ucc3e\uae30\ub97c \uc0ac\uc6a9 \uc548\ud568\uc73c\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
+J9NLS_EXELIB_INTERNAL_HELP_XXDISABLESHAREANONYMOUSCLASSES=\ \ -XX:-ShareAnonymousClasses\ub294 \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc\uc5d0\uc11c \uc775\uba85 \ud074\ub798\uc2a4 \uc800\uc7a5 \ubc0f \ucc3e\uae30\ub97c \uc0ac\uc6a9 \uc548\ud568\uc73c\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XXDISABLESHAREANONYMOUSCLASSES.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XXDISABLESHAREANONYMOUSCLASSES.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XXDISABLESHAREANONYMOUSCLASSES.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XXENABLESHAREUNSAFECLASSES=\  -XX:+ShareUnsafeClasses\ub294 \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc\uc5d0\uc11c \ube44\uc775\uba85\uc758 \uc548\uc804\ud558\uc9c0 \uc54a\uc740 \ud074\ub798\uc2a4 \uc800\uc7a5 \ubc0f \ucc3e\uae30\ub97c \uc0ac\uc6a9\uc73c\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
+J9NLS_EXELIB_INTERNAL_HELP_XXENABLESHAREUNSAFECLASSES=\ \ -XX:+ShareUnsafeClasses\ub294 \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc\uc5d0\uc11c \ube44\uc775\uba85\uc758 \uc548\uc804\ud558\uc9c0 \uc54a\uc740 \ud074\ub798\uc2a4 \uc800\uc7a5 \ubc0f \ucc3e\uae30\ub97c \uc0ac\uc6a9\uc73c\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XXENABLESHAREUNSAFECLASSES.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XXENABLESHAREUNSAFECLASSES.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XXENABLESHAREUNSAFECLASSES.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XXDISABLESHAREUNSAFECLASSES=\  -XX:-ShareUnsafeClasses\ub294 \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc\uc5d0\uc11c \ube44\uc775\uba85\uc758 \uc548\uc804\ud558\uc9c0 \uc54a\uc740 \ud074\ub798\uc2a4 \uc800\uc7a5 \ubc0f \ucc3e\uae30\ub97c \uc0ac\uc6a9 \uc548\ud568\uc73c\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
+J9NLS_EXELIB_INTERNAL_HELP_XXDISABLESHAREUNSAFECLASSES=\ \ -XX:-ShareUnsafeClasses\ub294 \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc\uc5d0\uc11c \ube44\uc775\uba85\uc758 \uc548\uc804\ud558\uc9c0 \uc54a\uc740 \ud074\ub798\uc2a4 \uc800\uc7a5 \ubc0f \ucc3e\uae30\ub97c \uc0ac\uc6a9 \uc548\ud568\uc73c\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XXDISABLESHAREUNSAFECLASSES.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XXDISABLESHAREUNSAFECLASSES.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XXDISABLESHAREUNSAFECLASSES.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XXENABLEUSEGCSTARTUPHINTS=\  -XX:+UseGCStartupHints\ub294 \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc\uc5d0\uc11c GC \uc2dc\uc791 \ud78c\ud2b8 \uc800\uc7a5 \ubc0f \ucc3e\uae30\ub97c \uc0ac\uc6a9\uc73c\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
+J9NLS_EXELIB_INTERNAL_HELP_XXENABLEUSEGCSTARTUPHINTS=\ \ -XX:+UseGCStartupHints\ub294 \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc\uc5d0\uc11c GC \uc2dc\uc791 \ud78c\ud2b8 \uc800\uc7a5 \ubc0f \ucc3e\uae30\ub97c \uc0ac\uc6a9\uc73c\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XXENABLEUSEGCSTARTUPHINTS.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XXENABLEUSEGCSTARTUPHINTS.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XXENABLEUSEGCSTARTUPHINTS.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XXDISABLEUSEGCSTARTUPHINTS=\  -XX:-UseGCStartupHints\ub294 \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc\uc5d0\uc11c GC \uc2dc\uc791 \ud78c\ud2b8 \uc800\uc7a5 \ubc0f \ucc3e\uae30\ub97c \uc0ac\uc6a9 \uc548\ud568\uc73c\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
+J9NLS_EXELIB_INTERNAL_HELP_XXDISABLEUSEGCSTARTUPHINTS=\ \ -XX:-UseGCStartupHints\ub294 \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc\uc5d0\uc11c GC \uc2dc\uc791 \ud78c\ud2b8 \uc800\uc7a5 \ubc0f \ucc3e\uae30\ub97c \uc0ac\uc6a9 \uc548\ud568\uc73c\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XXDISABLEUSEGCSTARTUPHINTS.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XXDISABLEUSEGCSTARTUPHINTS.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XXDISABLEUSEGCSTARTUPHINTS.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XXPORTABLESHAREDCACHE=\  -XX:+PortableSharedCache   \uc2dc\uc2a4\ud15c \uac04\uc5d0 \uacf5\uc720 \uce90\uc2dc\uc758 \uc774\uc2dd\uc131\uc744 \ucd5c\ub300\ud654\ud558\ub824\uace0 \uc2dc\ub3c4\ud558\ub294 \uae30\ub2a5 \uc0ac\uc6a9
+J9NLS_EXELIB_INTERNAL_HELP_XXPORTABLESHAREDCACHE=\ \ -XX:+PortableSharedCache   \uc2dc\uc2a4\ud15c \uac04\uc5d0 \uacf5\uc720 \uce90\uc2dc\uc758 \uc774\uc2dd\uc131\uc744 \ucd5c\ub300\ud654\ud558\ub824\uace0 \uc2dc\ub3c4\ud558\ub294 \uae30\ub2a5 \uc0ac\uc6a9
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XXPORTABLESHAREDCACHE.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XXPORTABLESHAREDCACHE.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XXPORTABLESHAREDCACHE.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XXNOPORTABLESHAREDCACHE=\  -XX:-PortableShareCache   \uc2dc\uc2a4\ud15c \uac04\uc5d0 \uacf5\uc720 \uce90\uc2dc\uc758 \uc774\uc2dd\uc131\uc744 \ucd5c\ub300\ud654\ud558\ub824\uace0 \uc2dc\ub3c4\ud558\ub294 \uae30\ub2a5 \uc0ac\uc6a9 \uc548\ud568
+J9NLS_EXELIB_INTERNAL_HELP_XXNOPORTABLESHAREDCACHE=\ \ -XX:-PortableShareCache   \uc2dc\uc2a4\ud15c \uac04\uc5d0 \uacf5\uc720 \uce90\uc2dc\uc758 \uc774\uc2dd\uc131\uc744 \ucd5c\ub300\ud654\ud558\ub824\uace0 \uc2dc\ub3c4\ud558\ub294 \uae30\ub2a5 \uc0ac\uc6a9 \uc548\ud568
 J9NLS_EXELIB_INTERNAL_HELP_XXNOPORTABLESHAREDCACHE.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XXNOPORTABLESHAREDCACHE.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XXNOPORTABLESHAREDCACHE.user_response=
