@@ -53,13 +53,15 @@ public class ValueTypeArrayTests {
 	}
 
 	/**
-	 * A simple primitive value type class
+	 * A simple nullrestricted(flattenable) value type class
 	 */
-	static primitive class PointPV implements SomeIface {
+	static value class PointFV implements SomeIface {
 		double x;
 		double y;
 
-		PointPV(double x, double y) {
+		public implicit PointFV();
+
+		PointFV(double x, double y) {
 			this.x = x;
 			this.y = y;
 		}
@@ -73,7 +75,7 @@ public class ValueTypeArrayTests {
 	static Object nullObj = null;
 	static SomeIface bogusIfaceObj = new Bogus();
 	static PointV pointVal = new PointV(1.0, 2.0);
-	static PointPV pointPrimVal = new PointPV(1.0, 2.0);
+	static PointFV! pointFlattenableVal = new PointFV(1.0, 2.0);
 
 	static void assign(Object[] arr, int idx, Object value) {
 		arr[idx] = value;
@@ -87,7 +89,7 @@ public class ValueTypeArrayTests {
 		arr[idx] = value;
 	}
 
-	static void assign(Object[] arr, int idx, PointPV value) {
+	static void assign(Object[] arr, int idx, PointFV! value) {
 		arr[idx] = value;
 	}
 
@@ -99,7 +101,7 @@ public class ValueTypeArrayTests {
 		arr[idx] = value;
 	}
 
-	static void assign(SomeIface[] arr, int idx, PointPV value) {
+	static void assign(SomeIface[] arr, int idx, PointFV! value) {
 		arr[idx] = value;
 	}
 
@@ -107,7 +109,7 @@ public class ValueTypeArrayTests {
 		arr[idx] = value;
 	}
 
-	static void assign(PointPV[] arr, int idx, PointPV value) {
+	static void assign(PointFV![] arr, int idx, PointFV! value) {
 		arr[idx] = value;
 	}
 
@@ -119,8 +121,8 @@ public class ValueTypeArrayTests {
 				assign(arr, idx, (SomeIface) src);
 			} else if (srcKind == VAL_TYPE) {
 				assign(arr, idx, (PointV) src);
-			} else if (srcKind == PRIM_TYPE) {
-				assign(arr, idx, (PointPV) src);
+			} else if (srcKind == FLATTENABLE_TYPE) {
+				assign(arr, idx, (PointFV!) src);
 			} else {
 				fail("Unexpected source type requested "+srcKind);
 			}
@@ -131,8 +133,8 @@ public class ValueTypeArrayTests {
 				assign((SomeIface[]) arr, idx, (SomeIface) src);
 			} else if (srcKind == VAL_TYPE) {
 				assign((SomeIface[]) arr, idx, (PointV) src);
-			} else if (srcKind == PRIM_TYPE) {
-				assign((SomeIface[]) arr, idx, (PointPV) src);
+			} else if (srcKind == FLATTENABLE_TYPE) {
+				assign((SomeIface[]) arr, idx, (PointFV!) src);
 			} else {
 				fail("Unexpected source type requested "+srcKind);
 			}
@@ -143,20 +145,20 @@ public class ValueTypeArrayTests {
 				// Meaningless combination
 			} else if (srcKind == VAL_TYPE) {
 				assign((PointV[]) arr, idx, (PointV) src);
-			} else if (srcKind == PRIM_TYPE) {
+			} else if (srcKind == FLATTENABLE_TYPE) {
 				// Meaningless combination
 			} else {
 				fail("Unexpected source type requested "+srcKind);
 			}
-		} else if (arrKind == PRIM_TYPE) {
+		} else if (arrKind == FLATTENABLE_TYPE) {
 			if (srcKind == OBJ_TYPE) {
 				// Meaningless combination
 			} else if (srcKind == IFACE_TYPE) {
 				// Meaningless combination
 			} else if (srcKind == VAL_TYPE) {
 				// Meaningless combination
-			} else if (srcKind == PRIM_TYPE) {
-				assign((PointPV[])arr, idx, (PointPV) src);
+			} else if (srcKind == FLATTENABLE_TYPE) {
+				assign((PointFV![])arr, idx, (PointFV!) src);
 			} else {
 				fail("Unexpected source type requested "+srcKind);
 			}
@@ -183,15 +185,15 @@ public class ValueTypeArrayTests {
 
 	/**
 	 * Represents the type <code>PointV</code> or <code>PointV[]</code>.
-	 * {@link PointV} is a non-primitive value type class defined by this test.
+	 * {@link PointV} is a non-flattenable value type class defined by this test.
 	 */
 	static final int VAL_TYPE = 3;
 
 	/**
-	 * Represents the type <code>PointPV</code> or <code>PointPV[]</code>.
-	 * {@link PointPV} is a primitive value type class defined by this test.
+	 * Represents the type <code>PointFV</code> or <code>PointFV[]</code>.
+	 * {@link PointFV} is a flattenable value type class defined by this test.
 	 */
-	static final int PRIM_TYPE = 4;
+	static final int FLATTENABLE_TYPE = 4;
 
 	/**
 	 * Convenient constant reference to the <code>ArrayIndexOutOfBoundsException</code> class
@@ -211,7 +213,7 @@ public class ValueTypeArrayTests {
 	/**
 	 * The expected kind of exception that will be thrown, if any, for an
 	 * assignment to an array whose component type is one of {@link #OBJ_TYPE},
-	 * {@link #IFACE_TYPE}, {@link #VAL_TYPE} or {@link #PRIM_TYPE} with a source
+	 * {@link #IFACE_TYPE}, {@link #VAL_TYPE} or {@link #FLATTENABLE_TYPE} with a source
 	 * of one of those same types or {@link #NULL_REF}.
 	 *
 	 * <p><code>expectedAssignmentExceptions[actualArrayKind][actualSourceKind]</code>
@@ -221,14 +223,15 @@ public class ValueTypeArrayTests {
 						null,									// NULL_REF for array is not a possibility
 						new Class[] {null, null, null, null, null}, // All values can be assigned to Object[]
 						new Class[] {null, ASE,  null, null, null}, // ASE for SomeIface[] = Object
-						new Class[] {null, ASE,  ASE,  null, ASE},  // ASE for PointV[] = PointPV, SomeIface
-						new Class[] {NPE,  ASE,  ASE,  ASE,  null}, // NPE for PointPV[] = null; ASE for PointPV[] = PointV
+						new Class[] {null, ASE,  ASE,  null, ASE},  // ASE for PointV[] = PointFV, SomeIface
+						// TODO first ASE for nullrestricted null assignment disabled until OpenJ9 has full support for nullrestricted arrays
+						new Class[] {/*ASE*/ null,  ASE,  ASE,  ASE,  null}, // ASE for PointFV[] = null; ASE for PointFV[] = PointV
 					};
 
 	/**
 	 * Indicates whether a value or an array with component class
 	 * that is one of {@link #NULL_REF}, {@link #OBJ_TYPE},
-	 * {@link #IFACE_TYPE}, {@link #VAL_TYPE} or {@link #PRIM_TYPE} can be
+	 * {@link #IFACE_TYPE}, {@link #VAL_TYPE} or {@link #FLATTENABLE_TYPE} can be
 	 * cast to another member of that same set of types without triggering a
 	 * <code>ClassCastException</code> or <code>NullPointerException</code>
 	 *
@@ -236,18 +239,18 @@ public class ValueTypeArrayTests {
 	 */
 	static boolean permittedCast[][] =
 		new boolean[][] {
-						new boolean[] { false, true, true,  true,  false },	// NULL_REF cannot be cast to primitive value
+						new boolean[] { false, true, true,  true,  false },	// NULL_REF cannot be cast to null-restricted value
 						new boolean[] { false, true, false, false, false },	// OBJ_TYPE to Object
 						new boolean[] { false, true, true, false,  false },	// IFACE_TYPE to Object, SomeIface
 						new boolean[] { false, true, true, true ,  false },	// VAL_TYPE to Object, SomeIface, PointV
-						new boolean[] { false, true, true, false,  true }	// PRIM_TYPE to Object, SomeIface, PointPV
+						new boolean[] { false, true, true, false,  true }	// FLATTENABLE_TYPE to Object, SomeIface, PointFV
 					};
 
 	/**
 	 * Dispatch to a particular test method that will test with parameters cast to a specific pair
 	 * of static types.  Those types are specified by the <code>staticArrayKind</code> and
 	 * <code>staticSourceKind</code> parameters, each of which has one of the values
-	 * {@link #OBJ_TYPE}, {@link #IFACE_TYPE}, {@link #VAL_TYPE} or {@link #PRIM_TYPE}.
+	 * {@link #OBJ_TYPE}, {@link #IFACE_TYPE}, {@link #VAL_TYPE} or {@link #FLATTENABLE_TYPE}.
 	 *
 	 * @param arr Array to which <code>sourceVal</code> will be assigned
 	 * @param sourceVal Value that will be assigned to an element of <code>arr</code>
@@ -256,8 +259,8 @@ public class ValueTypeArrayTests {
 	 */
 	static void runTest(Object[] arr, Object sourceVal, int staticArrayKind, int staticSourceKind) throws Throwable {
 		boolean caughtThrowable = false;
-		int actualArrayKind = arr instanceof PointPV[]
-								? PRIM_TYPE
+		int actualArrayKind = arr instanceof PointFV![]
+								? FLATTENABLE_TYPE
 								: arr instanceof PointV[]
 									? VAL_TYPE
 									: arr instanceof SomeIface[]
@@ -265,8 +268,8 @@ public class ValueTypeArrayTests {
 										: OBJ_TYPE;
 		int actualSourceKind = sourceVal == null
 								? NULL_REF
-								: sourceVal instanceof PointPV
-									? PRIM_TYPE
+								: sourceVal instanceof PointFV!
+									? FLATTENABLE_TYPE
 									: sourceVal instanceof PointV
 										? VAL_TYPE
 										: sourceVal instanceof SomeIface
@@ -297,7 +300,7 @@ public class ValueTypeArrayTests {
 		}
 
 		// ArrayIndexOutOfBoundsException must be checked before both
-		// NullPointerException for primitive value type and ArrayStoreException.
+		// NullPointerException for null-restricted value type and ArrayStoreException.
 		// This call to assignDispatch will attempt an out-of-bounds element assignment,
 		// and is always expected to throw an ArrayIndexOutOfBoundsException.
 		boolean caughtAIOOBE = false;
@@ -322,9 +325,9 @@ public class ValueTypeArrayTests {
 	 */
 	@Test(priority=1,invocationCount=2)
 	static public void testValueTypeArrayAssignments() throws Throwable {
-		Object[][] testArrays = new Object[][] {new Object[2], new SomeIface[2], new PointV[2], new PointPV[2]};
-		int[] kinds = {OBJ_TYPE, IFACE_TYPE, VAL_TYPE, PRIM_TYPE};
-		Object[] vals = new Object[] {null, bogusIfaceObj, new PointV(1.0, 2.0), new PointPV(3.0, 4.0)};
+		Object[][] testArrays = new Object[][] {new Object[2], new SomeIface[2], new PointV[2], new PointFV![2]};
+		int[] kinds = {OBJ_TYPE, IFACE_TYPE, VAL_TYPE, FLATTENABLE_TYPE};
+		Object[] vals = new Object[] {null, bogusIfaceObj, new PointV(1.0, 2.0), new PointFV(3.0, 4.0)};
 
 		for (int i = 0; i < testArrays.length; i++) {
 			Object[] testArray = testArrays[i];
@@ -350,33 +353,39 @@ public class ValueTypeArrayTests {
 						runTest(testArrays[i], nullObj, staticArrayKind, staticValueKind);
 						runTest(testArrays[i], bogusIfaceObj, staticArrayKind, staticValueKind);
 						runTest(testArrays[i], pointVal, staticArrayKind, staticValueKind);
-						runTest(testArrays[i], pointPrimVal, staticArrayKind, staticValueKind);
+						runTest(testArrays[i], pointFlattenableVal, staticArrayKind, staticValueKind);
 					}
 				}
 			}
 		}
 	}
 
-	static primitive class SomePrimitiveClassWithDoubleField{
+	static value class SomeFlattenableClassWithDoubleField {
 		public double d;
 
-		SomePrimitiveClassWithDoubleField(double x) {
+		public implicit SomeFlattenableClassWithDoubleField();
+
+		SomeFlattenableClassWithDoubleField(double x) {
 			this.d = x;
 		}
 	}
 
-	static primitive class SomePrimitiveClassWithFloatField{
+	static value class SomeFlattenableClassWithFloatField {
 		public float f;
 
-		SomePrimitiveClassWithFloatField(float x) {
+		public implicit SomeFlattenableClassWithFloatField();
+
+		SomeFlattenableClassWithFloatField(float x) {
 			this.f = x;
 		}
 	}
 
-	static primitive class SomePrimitiveClassWithLongField{
+	static value class SomeFlattenableClassWithLongField {
 		public long l;
 
-		SomePrimitiveClassWithLongField(long x) {
+		public implicit SomeFlattenableClassWithLongField();
+
+		SomeFlattenableClassWithLongField(long x) {
 			this.l = x;
 		}
 	}
@@ -409,11 +418,13 @@ public class ValueTypeArrayTests {
 
 	interface SomeInterface2WithSingleImplementer {}
 
-	static primitive class SomePrimitiveClassImplIf implements SomeInterface1WithSingleImplementer {
+	static value class SomeFlattenableClassImplIf implements SomeInterface1WithSingleImplementer {
 		public double d;
 		public long l;
 
-		SomePrimitiveClassImplIf(double val1, long val2) {
+		public implicit SomeFlattenableClassImplIf();
+
+		SomeFlattenableClassImplIf(double val1, long val2) {
 			this.d = val1;
 			this.l = val2;
 		}
@@ -439,8 +450,8 @@ public class ValueTypeArrayTests {
 		SomeInterface2WithSingleImplementer   data_5;
 
 		SomeClassHolder() {
-			data_1 = new SomePrimitiveClassImplIf[ARRAY_LENGTH];
-			data_2 = new SomePrimitiveClassImplIf[ARRAY_LENGTH];
+			data_1 = new SomeFlattenableClassImplIf![ARRAY_LENGTH];
+			data_2 = new SomeFlattenableClassImplIf![ARRAY_LENGTH];
 
 			data_3 = new SomeIdentityClassImplIf[ARRAY_LENGTH];
 			data_4 = new SomeIdentityClassImplIf[ARRAY_LENGTH];
@@ -448,8 +459,8 @@ public class ValueTypeArrayTests {
 			data_5 = new SomeIdentityClassImplIf((double)(12345), (long)(12345));
 
 			for (int i = 0; i < ARRAY_LENGTH; i++) {
-				data_1[i] = new SomePrimitiveClassImplIf((double)i, (long)i);
-				data_2[i] = new SomePrimitiveClassImplIf((double)(i+1), (long)(i+1));
+				data_1[i] = new SomeFlattenableClassImplIf((double)i, (long)i);
+				data_2[i] = new SomeFlattenableClassImplIf((double)(i+1), (long)(i+1));
 
 				data_3[i] = data_5;
 				data_4[i] = new SomeIdentityClassImplIf((double)(i+1), (long)(i+1));
@@ -457,19 +468,19 @@ public class ValueTypeArrayTests {
 		}
 	}
 
-	static void readArrayElementWithDoubleField(SomePrimitiveClassWithDoubleField[] data) throws Throwable {
+	static void readArrayElementWithDoubleField(SomeFlattenableClassWithDoubleField![] data) throws Throwable {
 		for (int i=0; i<data.length; ++i) {
 			assertEquals(data[i].d, (double)i);
 		}
 	}
 
-	static void readArrayElementWithFloatField(SomePrimitiveClassWithFloatField[] data) throws Throwable {
+	static void readArrayElementWithFloatField(SomeFlattenableClassWithFloatField![] data) throws Throwable {
 		for (int i=0; i<data.length; ++i) {
 			assertEquals(data[i].f, (float)i);
 		}
 	}
 
-	static void readArrayElementWithLongField(SomePrimitiveClassWithLongField[] data) throws Throwable {
+	static void readArrayElementWithLongField(SomeFlattenableClassWithLongField![] data) throws Throwable {
 		for (int i=0; i<data.length; ++i) {
 			assertEquals(data[i].l, (long)i);
 		}
@@ -493,9 +504,9 @@ public class ValueTypeArrayTests {
 		}
 	}
 
-	static void readArrayElementWithSomePrimitiveClassImplIf(SomeClassHolder holder) throws Throwable {
+	static void readArrayElementWithSomeFlattenableClassImplIf(SomeClassHolder holder) throws Throwable {
 		for (int i=0; i<holder.data_1.length; ++i) {
-			assertEquals(holder.data_1[i], new SomePrimitiveClassImplIf((double)i, (long)i));
+			assertEquals(holder.data_1[i], new SomeFlattenableClassImplIf((double)i, (long)i));
 		}
 	}
 
@@ -505,7 +516,7 @@ public class ValueTypeArrayTests {
 		}
 	}
 
-	static void writeArrayElementWithDoubleField(SomePrimitiveClassWithDoubleField[] srcData, SomePrimitiveClassWithDoubleField[] dstData) throws Throwable {
+	static void writeArrayElementWithDoubleField(SomeFlattenableClassWithDoubleField![] srcData, SomeFlattenableClassWithDoubleField![] dstData) throws Throwable {
 		for (int i=0; i<dstData.length; ++i) {
 			dstData[i] = srcData[i];
 		}
@@ -515,7 +526,7 @@ public class ValueTypeArrayTests {
 		}
 	}
 
-	static void writeArrayElementWithFloatField(SomePrimitiveClassWithFloatField[] srcData, SomePrimitiveClassWithFloatField[] dstData) throws Throwable {
+	static void writeArrayElementWithFloatField(SomeFlattenableClassWithFloatField![] srcData, SomeFlattenableClassWithFloatField![] dstData) throws Throwable {
 		for (int i=0; i<dstData.length; ++i) {
 			dstData[i] = srcData[i];
 		}
@@ -525,7 +536,7 @@ public class ValueTypeArrayTests {
 		}
 	}
 
-	static void writeArrayElementWithLongField(SomePrimitiveClassWithLongField[] srcData, SomePrimitiveClassWithLongField[] dstData) throws Throwable {
+	static void writeArrayElementWithLongField(SomeFlattenableClassWithLongField![] srcData, SomeFlattenableClassWithLongField![] dstData) throws Throwable {
 		for (int i=0; i<dstData.length; ++i) {
 			dstData[i] = srcData[i];
 		}
@@ -565,13 +576,13 @@ public class ValueTypeArrayTests {
 		}
 	}
 
-	static void writeArrayElementWithSomePrimitiveClassImplIf(SomeClassHolder holder) throws Throwable {
+	static void writeArrayElementWithSomeFlattenableClassImplIf(SomeClassHolder holder) throws Throwable {
 		for (int i=0; i<holder.data_1.length; ++i) {
 			holder.data_1[i] = holder.data_2[i];
 		}
 
 		for (int i=0; i<holder.data_1.length; ++i) {
-			assertEquals(holder.data_1[i], new SomePrimitiveClassImplIf((double)(i+1), (long)(i+1)));
+			assertEquals(holder.data_1[i], new SomeFlattenableClassImplIf((double)(i+1), (long)(i+1)));
 		}
 	}
 
@@ -588,9 +599,9 @@ public class ValueTypeArrayTests {
 	@Test(priority=1,invocationCount=2)
 	static public void testValueTypeAaload() throws Throwable {
 		int ARRAY_LENGTH = 10;
-		SomePrimitiveClassWithDoubleField[] data1  = new SomePrimitiveClassWithDoubleField[ARRAY_LENGTH];
-		SomePrimitiveClassWithFloatField[]  data2  = new SomePrimitiveClassWithFloatField[ARRAY_LENGTH];
-		SomePrimitiveClassWithLongField[]   data3  = new SomePrimitiveClassWithLongField[ARRAY_LENGTH];
+		SomeFlattenableClassWithDoubleField![] data1  = new SomeFlattenableClassWithDoubleField![ARRAY_LENGTH];
+		SomeFlattenableClassWithFloatField![]  data2  = new SomeFlattenableClassWithFloatField![ARRAY_LENGTH];
+		SomeFlattenableClassWithLongField![]   data3  = new SomeFlattenableClassWithLongField![ARRAY_LENGTH];
 
 		SomeIdentityClassWithDoubleField[] data4  = new SomeIdentityClassWithDoubleField[ARRAY_LENGTH];
 		SomeIdentityClassWithFloatField[]  data5  = new SomeIdentityClassWithFloatField[ARRAY_LENGTH];
@@ -599,9 +610,9 @@ public class ValueTypeArrayTests {
 		SomeClassHolder holder = new SomeClassHolder();
 
 		for (int i=0; i<ARRAY_LENGTH; ++i) {
-			data1[i] = new SomePrimitiveClassWithDoubleField((double)i);
-			data2[i] = new SomePrimitiveClassWithFloatField((float)i);
-			data3[i] = new SomePrimitiveClassWithLongField((long)i);
+			data1[i] = new SomeFlattenableClassWithDoubleField((double)i);
+			data2[i] = new SomeFlattenableClassWithFloatField((float)i);
+			data3[i] = new SomeFlattenableClassWithLongField((long)i);
 
 			data4[i] = new SomeIdentityClassWithDoubleField((double)i);
 			data5[i] = new SomeIdentityClassWithFloatField((float)i);
@@ -616,19 +627,19 @@ public class ValueTypeArrayTests {
 		readArrayElementWithFloatField(data5);
 		readArrayElementWithLongField(data6);
 
-		readArrayElementWithSomePrimitiveClassImplIf(holder);
+		readArrayElementWithSomeFlattenableClassImplIf(holder);
 		readArrayElementWithSomeIdentityClassImplIf(holder);
 	}
 
 	@Test(priority=1,invocationCount=2)
 	static public void testValueTypeAastore() throws Throwable {
 		int ARRAY_LENGTH = 10;
-		SomePrimitiveClassWithDoubleField[] srcData1 = new SomePrimitiveClassWithDoubleField[ARRAY_LENGTH];
-		SomePrimitiveClassWithDoubleField[] dstData1 = new SomePrimitiveClassWithDoubleField[ARRAY_LENGTH];
-		SomePrimitiveClassWithFloatField[]  srcData2 = new SomePrimitiveClassWithFloatField[ARRAY_LENGTH];
-		SomePrimitiveClassWithFloatField[]  dstData2 = new SomePrimitiveClassWithFloatField[ARRAY_LENGTH];
-		SomePrimitiveClassWithLongField[]   srcData3 = new SomePrimitiveClassWithLongField[ARRAY_LENGTH];
-		SomePrimitiveClassWithLongField[]   dstData3 = new SomePrimitiveClassWithLongField[ARRAY_LENGTH];
+		SomeFlattenableClassWithDoubleField![] srcData1 = new SomeFlattenableClassWithDoubleField![ARRAY_LENGTH];
+		SomeFlattenableClassWithDoubleField![] dstData1 = new SomeFlattenableClassWithDoubleField![ARRAY_LENGTH];
+		SomeFlattenableClassWithFloatField![]  srcData2 = new SomeFlattenableClassWithFloatField![ARRAY_LENGTH];
+		SomeFlattenableClassWithFloatField![]  dstData2 = new SomeFlattenableClassWithFloatField![ARRAY_LENGTH];
+		SomeFlattenableClassWithLongField![]   srcData3 = new SomeFlattenableClassWithLongField![ARRAY_LENGTH];
+		SomeFlattenableClassWithLongField![]   dstData3 = new SomeFlattenableClassWithLongField![ARRAY_LENGTH];
 
 		SomeIdentityClassWithDoubleField[] srcData4  = new SomeIdentityClassWithDoubleField[ARRAY_LENGTH];
 		SomeIdentityClassWithDoubleField[] dstData4  = new SomeIdentityClassWithDoubleField[ARRAY_LENGTH];
@@ -640,13 +651,13 @@ public class ValueTypeArrayTests {
 		SomeClassHolder holder   = new SomeClassHolder();
 
 		for (int i=0; i<ARRAY_LENGTH; ++i) {
-			srcData1[i] = new SomePrimitiveClassWithDoubleField((double)(i+1));
-			srcData2[i] = new SomePrimitiveClassWithFloatField((float)(i+1));
-			srcData3[i] = new SomePrimitiveClassWithLongField((long)(i+1));
+			srcData1[i] = new SomeFlattenableClassWithDoubleField((double)(i+1));
+			srcData2[i] = new SomeFlattenableClassWithFloatField((float)(i+1));
+			srcData3[i] = new SomeFlattenableClassWithLongField((long)(i+1));
 
-			dstData1[i] = new SomePrimitiveClassWithDoubleField((double)i);
-			dstData2[i] = new SomePrimitiveClassWithFloatField((float)i);
-			dstData3[i] = new SomePrimitiveClassWithLongField((long)i);
+			dstData1[i] = new SomeFlattenableClassWithDoubleField((double)i);
+			dstData2[i] = new SomeFlattenableClassWithFloatField((float)i);
+			dstData3[i] = new SomeFlattenableClassWithLongField((long)i);
 
 			srcData4[i] = new SomeIdentityClassWithDoubleField((double)(i+1));
 			srcData5[i] = new SomeIdentityClassWithFloatField((float)(i+1));
@@ -665,23 +676,24 @@ public class ValueTypeArrayTests {
 		writeArrayElementWithFloatField(srcData5, dstData5);
 		writeArrayElementWithLongField(srcData6, dstData6);
 
-		writeArrayElementWithSomePrimitiveClassImplIf(holder);
+		writeArrayElementWithSomeFlattenableClassImplIf(holder);
 		writeArrayElementWithSomeIdentityClassImplIf(holder);
 	}
 
-	public static primitive class EmptyPrim {
+	public static value class EmptyFlat {
+		public implicit EmptyFlat();
 	}
 
 	public static value class EmptyVal {
 	}
 
-	static void copyBetweenEmptyPrimArrays(EmptyPrim[] arr1, EmptyPrim[] arr2) {
+	static void copyBetweenEmptyFlatArrays(EmptyFlat![] arr1, EmptyFlat![] arr2) {
 		for (int i = 0; i < arr1.length; i++) {
 			arr1[i] = arr2[i];
 		}
 	}
 
-	static void compareEmptyPrimArrays(EmptyPrim[] arr1, EmptyPrim[] arr2) {
+	static void compareEmptyFlatArrays(EmptyFlat![] arr1, EmptyFlat![] arr2) {
 		for (int i = 0; i < arr1.length; i++) {
 			assertEquals(arr1[i], arr2[i]);
 		}
@@ -701,11 +713,11 @@ public class ValueTypeArrayTests {
 
 	@Test(priority=1,invocationCount=2)
 	static public void testEmptyValueArrayElement() {
-		EmptyPrim[] primArr1 = new EmptyPrim[4];
-		EmptyPrim[] primArr2 = new EmptyPrim[4];
+		EmptyFlat![] flatArr1 = new EmptyFlat![4];
+		EmptyFlat![] flatArr2 = new EmptyFlat![4];
 
-		copyBetweenEmptyPrimArrays(primArr1, primArr2);
-		compareEmptyPrimArrays(primArr1, primArr2);
+		copyBetweenEmptyFlatArrays(flatArr1, flatArr2);
+		compareEmptyFlatArrays(flatArr1, flatArr2);
 
 		EmptyVal[] valArr1 = new EmptyVal[4];
 		EmptyVal[] valArr2 = new EmptyVal[4];
@@ -722,32 +734,34 @@ public class ValueTypeArrayTests {
 		arr[index] = obj;
 	}
 
-	@Test(priority=1,invocationCount=2)
+	/* Disabled because OpenJ9 does not fully support flattened arrays for lw5 changes yet. */
+	@Test(priority=1,invocationCount=2, enabled=false)
 	static public void testStoreNullToNullRestrictedArrayElement1() throws Throwable {
 		int ARRAY_LENGTH = 10;
-		SomePrimitiveClassWithDoubleField[] dstData = new SomePrimitiveClassWithDoubleField[ARRAY_LENGTH];
+		SomeFlattenableClassWithDoubleField![] dstData = new SomeFlattenableClassWithDoubleField![ARRAY_LENGTH];
 
 		try {
 			arrayElementStoreNull(dstData, ARRAY_LENGTH/2);
-		} catch (NullPointerException npe) {
+		} catch (ArrayStoreException npe) {
 			return; /* pass */
 		}
 
-		Assert.fail("Expect a NullPointerException. No exception or wrong kind of exception thrown");
+		Assert.fail("Expect a ArrayStoreException. No exception or wrong kind of exception thrown");
 	}
 
-	@Test(priority=1,invocationCount=2)
+	/* Disabled because OpenJ9 does not fully support flattened arrays for lw5 changes yet. */
+	@Test(priority=1,invocationCount=2, enabled=false)
 	static public void testStoreNullToNullRestrictedArrayElement2() throws Throwable {
 		int ARRAY_LENGTH = 10;
-		SomePrimitiveClassWithDoubleField[] dstData = new SomePrimitiveClassWithDoubleField[ARRAY_LENGTH];
+		SomeFlattenableClassWithDoubleField![] dstData = new SomeFlattenableClassWithDoubleField![ARRAY_LENGTH];
 		Object obj = null;
 
 		try {
 			arrayElementStore(dstData, ARRAY_LENGTH/2, obj);
-		} catch (NullPointerException npe) {
+		} catch (ArrayStoreException npe) {
 			return; /* pass */
 		}
 
-		Assert.fail("Expect a NullPointerException. No exception or wrong kind of exception thrown");
+		Assert.fail("Expect a ArrayStoreException. No exception or wrong kind of exception thrown");
 	}
 }
