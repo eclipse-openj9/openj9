@@ -38,6 +38,11 @@
 #include "VMHelpers.hpp"
 #include "OMR/Bytes.hpp"
 
+#if JAVA_SPEC_VERSION >= 19
+#include "HeapIteratorAPI.h"
+#include "ContinuationHelpers.hpp"
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
 extern "C" {
 
 /* Generic rounding macro - result is a UDATA */
@@ -113,7 +118,8 @@ static J9OSRFrame* findOSRFrameAtInlineDepth(J9OSRBuffer *osrBuffer, UDATA inlin
 static void   jitFramePopNotificationAdded(J9VMThread * currentThread, J9StackWalkState * walkState, UDATA inlineDepth);
 static void decompPrintMethod(J9VMThread * currentThread, J9Method * method);
 static UDATA decompileAllFrameIterator(J9VMThread * currentThread, J9StackWalkState * walkState);
-static J9JITDecompilationInfo * deleteDecompilationForExistingFrame(J9VMThread * decompileThread, J9JITDecompilationInfo * info);
+static J9JITDecompilationInfo *deleteDecompilationForExistingFrame(J9VMThread *currentThread, J9VMThread *decompileThread, J9JITDecompilationInfo *info);
+static J9JITDecompilationInfo *addDecompilationHelper(J9VMThread *currentThread, J9StackWalkState *walkState, UDATA reason, J9JITDecompilationInfo **previous);
 static J9JITDecompilationInfo * addDecompilation(J9VMThread * currentThread, J9StackWalkState * walkState, UDATA reason);
 static void removeAllBreakpoints(J9VMThread * currentThread);
 static void buildBytecodeFrame(J9VMThread *currentThread, J9OSRFrame *osrFrame);
@@ -127,7 +133,8 @@ static void markMethodUnbreakpointed(J9VMThread * currentThread, J9JITBreakpoint
 static void reinstallAllBreakpoints(J9VMThread * currentThread);
 static UDATA decompileMethodFrameIterator(J9VMThread * currentThread, J9StackWalkState * walkState);
 static void deleteAllDecompilations(J9VMThread * currentThread, UDATA reason, J9Method * method);
-static void freeDecompilationRecord(J9VMThread * decompileThread, J9JITDecompilationInfo * info, UDATA retain);
+static void freeDecompilations(J9VMThread *currentThread, J9VMThread *decompileThread, J9JITDecompilationInfo **previous, UDATA reason, J9Method *method);
+static void freeDecompilationRecord(J9VMThread *currentThread, J9VMThread *decompileThread, J9JITDecompilationInfo *info, UDATA retain);
 static UDATA osrAllFramesSize(J9VMThread *currentThread, J9JITExceptionTable *metaData, void *jitPC, UDATA resolveFrameFlags);
 static UDATA performOSR(J9VMThread *currentThread, J9StackWalkState *walkState, J9OSRBuffer *osrBuffer, U_8 *osrScratchBuffer, UDATA scratchBufferSize, UDATA jitStackFrameSize, UDATA *mustDecompile);
 static UDATA* jitLocalSlotAddress(J9VMThread * currentThread, J9StackWalkState *walkState, UDATA slot, UDATA inlineDepth);
@@ -144,6 +151,12 @@ static J9JITDecompilationInfo* fetchAndUnstackDecompilationInfo(J9VMThread *curr
 static void fixSavedPC(J9VMThread *currentThread, J9JITDecompilationInfo *decompRecord);
 static void dumpStack(J9VMThread *currentThread, char const *msg);
 static J9ROMNameAndSignature* getNASFromInvoke(U_8 *bytecodePC, J9ROMClass *romClass);
+#if JAVA_SPEC_VERSION >= 19
+static jvmtiIterationControl codeBreakpointAddedCallBack(J9VMThread *currentThread, J9MM_IterateObjectDescriptor *object, void *userData);
+static jvmtiIterationControl deleteDecompCallBack(J9VMThread *currentThread, J9MM_IterateObjectDescriptor *object, void *userData);
+static jvmtiIterationControl decompileAllCallBack(J9VMThread *currentThread, J9MM_IterateObjectDescriptor *object, void *userData);
+static J9JITDecompilationInfo * addDecompilationForContinuation(J9VMThread * currentThread, J9StackWalkState * walkState, UDATA reason, J9VMContinuation *continuation);
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
 
 /**
@@ -342,7 +355,7 @@ jitCleanUpDecompilationStack(J9VMThread * currentThread, J9StackWalkState * walk
 			}
 		}
 		current = current->next;
-		freeDecompilationRecord(currentThread, temp, FALSE);
+		freeDecompilationRecord(currentThread, currentThread, temp, FALSE);
 	}
 	currentThread->decompilationStack = current;
 
@@ -352,15 +365,38 @@ jitCleanUpDecompilationStack(J9VMThread * currentThread, J9StackWalkState * walk
 #endif /* J9VM_INTERP_HOT_CODE_REPLACEMENT (autogen) */
 
 
+#if JAVA_SPEC_VERSION >= 19
+static jvmtiIterationControl
+codeBreakpointAddedCallBack(J9VMThread *currentThread, J9MM_IterateObjectDescriptor *object, void *userData)
+{
+	J9JavaVM *vm = currentThread->javaVM;
+	j9object_t continuationObj = object->object;
+	j9object_t vthread = J9VMJDKINTERNALVMCONTINUATION_VTHREAD(currentThread, continuationObj);
+	ContinuationState continuationState = J9VMJDKINTERNALVMCONTINUATION_STATE(currentThread, continuationObj);
+
+	if ((NULL != vthread) && J9_ARE_NO_BITS_SET(continuationState, J9_GC_CONTINUATION_STATE_LAST_UNMOUNT)) {
+		J9StackWalkState *walkState = (J9StackWalkState*)userData;
+		J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(currentThread, continuationObj);
+		j9object_t threadObject = VM_ContinuationHelpers::getThreadObjectForContinuation(currentThread, continuation, continuationObj);
+
+		vm->internalVMFunctions->walkContinuationStackFrames(currentThread, continuation, threadObject, walkState);
+	}
+	return JVMTI_ITERATION_CONTINUE;
+}
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
+
 void  
 jitCodeBreakpointAdded(J9VMThread * currentThread, J9Method * method)
 {
 	PORT_ACCESS_FROM_VMC(currentThread);
-	J9JITConfig * jitConfig = currentThread->javaVM->jitConfig;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9JITConfig * jitConfig = vm->jitConfig;
 	J9JITBreakpointedMethod * breakpointedMethod;
 	J9JITBreakpointedMethod * breakpointedMethods = jitConfig->breakpointedMethods;
 	J9VMThread * loopThread;
-	
+	J9StackWalkState walkState;
+
 	/* Called under exclusive access, so no mutex required */
 
 	Trc_Decomp_jitCodeBreakpointAdded_Entry(currentThread, method);
@@ -393,17 +429,20 @@ jitCodeBreakpointAdded(J9VMThread * currentThread, J9Method * method)
 
 	Trc_Decomp_jitCodeBreakpointAdded_hasBeenTranslated(currentThread, breakpointedMethod->hasBeenTranslated);
 
+	walkState.userData1 = method;
+	walkState.flags = J9_STACKWALK_ITERATE_FRAMES | J9_STACKWALK_SKIP_INLINES | J9_STACKWALK_VISIBLE_ONLY | J9_STACKWALK_ITERATE_HIDDEN_JIT_FRAMES | J9_STACKWALK_MAINTAIN_REGISTER_MAP;
+	walkState.skipCount = 0;
+	walkState.frameWalkFunction = codeBreakpointAddedFrameIterator;
 	loopThread = currentThread;
 	do {
-		J9StackWalkState walkState;
-
-		walkState.userData1 = method;
-		walkState.flags = J9_STACKWALK_ITERATE_FRAMES | J9_STACKWALK_SKIP_INLINES | J9_STACKWALK_VISIBLE_ONLY | J9_STACKWALK_ITERATE_HIDDEN_JIT_FRAMES | J9_STACKWALK_MAINTAIN_REGISTER_MAP;
-		walkState.skipCount = 0;
-		walkState.frameWalkFunction = codeBreakpointAddedFrameIterator;
 		walkState.walkThread = loopThread;
 		currentThread->javaVM->walkStackFrames(currentThread, &walkState);
 	} while ((loopThread = loopThread->linkNext) != currentThread);	
+
+#if JAVA_SPEC_VERSION >= 19
+	vm->memoryManagerFunctions->j9gc_flush_nonAllocationCaches_for_walk(vm);
+	vm->memoryManagerFunctions->j9mm_iterate_all_continuation_objects(currentThread, PORTLIB, 0, codeBreakpointAddedCallBack, (void*)&walkState);
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
 	Trc_Decomp_jitCodeBreakpointAdded_Exit(currentThread);
 }
@@ -509,7 +548,7 @@ jitDecompileMethod(J9VMThread * currentThread, J9JITDecompilationInfo * decompRe
 
 	performDecompile(currentThread, &decompileState, decompRecord, osrFrame, numberOfFrames);
 
-	freeDecompilationRecord(currentThread, decompRecord, TRUE);
+	freeDecompilationRecord(currentThread, currentThread, decompRecord, TRUE);
 }
 
 /**
@@ -1096,13 +1135,11 @@ fixStackForNewDecompilation(J9VMThread * currentThread, J9StackWalkState * walkS
 
 
 static J9JITDecompilationInfo *
-addDecompilation(J9VMThread * currentThread, J9StackWalkState * walkState, UDATA reason)
+addDecompilationHelper(J9VMThread * currentThread, J9StackWalkState * walkState, UDATA reason, J9JITDecompilationInfo **previous)
 {
 	PORT_ACCESS_FROM_VMC(currentThread);
 	J9JavaVM* vm = currentThread->javaVM;
-	J9VMThread * decompileThread = walkState->walkThread;
 	J9JITDecompilationInfo * info;
-	J9JITDecompilationInfo ** previous;
 	J9JITDecompilationInfo * current;
 	J9JITExceptionTable *metaData = walkState->jitInfo;
 	UDATA allocSize = sizeof(J9JITDecompilationInfo);
@@ -1126,7 +1163,6 @@ addDecompilation(J9VMThread * currentThread, J9StackWalkState * walkState, UDATA
 
 	/* The decompilation is ordered by frame, with lesser frame values appearing at the beginning */
 
-	previous = &(decompileThread->decompilationStack);
 	while ((current = *previous) != NULL) {
 		/* If a decompilation for this frame already exists, tag it with the new reason and return */
 
@@ -1209,6 +1245,14 @@ addDecompilation(J9VMThread * currentThread, J9StackWalkState * walkState, UDATA
 	return info;
 }
 
+static J9JITDecompilationInfo *
+addDecompilation(J9VMThread * currentThread, J9StackWalkState * walkState, UDATA reason)
+{
+	J9VMThread *decompileThread = walkState->walkThread;
+
+	return addDecompilationHelper(currentThread, walkState, reason, &decompileThread->decompilationStack);
+}
+
 void  
 c_jitDecompileAtExceptionCatch(J9VMThread * currentThread)
 {
@@ -1283,7 +1327,7 @@ c_jitDecompileAtExceptionCatch(J9VMThread * currentThread)
 
 	performDecompile(currentThread, &decompileState, decompRecord, osrFrame, numberOfFrames);
 
-	freeDecompilationRecord(currentThread, decompRecord, TRUE);
+	freeDecompilationRecord(currentThread, currentThread, decompRecord, TRUE);
 
 	/* Push the exception */
 	UDATA *sp = currentThread->sp - 1;
@@ -1328,7 +1372,7 @@ jitDecompileMethodForFramePop(J9VMThread * currentThread, UDATA skipCount)
  	/* Now decompile the frame */
 
 	performDecompile(currentThread, &decompileState, decompRecord, osrFrame, numberOfFrames);
-	freeDecompilationRecord(currentThread, decompRecord, TRUE);
+	freeDecompilationRecord(currentThread, currentThread, decompRecord, TRUE);
 
 	dumpStack(currentThread, "after jitDecompileMethodForFramePop");
 
@@ -1339,9 +1383,8 @@ jitDecompileMethodForFramePop(J9VMThread * currentThread, UDATA skipCount)
 
 
 static J9JITDecompilationInfo *
-deleteDecompilationForExistingFrame(J9VMThread * decompileThread, J9JITDecompilationInfo * info)
+deleteDecompilationForExistingFrame(J9VMThread *currentThread, J9VMThread *decompileThread, J9JITDecompilationInfo *info)
 {
-	PORT_ACCESS_FROM_VMC(decompileThread);
 	J9JITDecompilationInfo * next = info->next;
 
 	Trc_Decomp_deleteDecompilationForExistingFrame_Entry();
@@ -1350,7 +1393,7 @@ deleteDecompilationForExistingFrame(J9VMThread * decompileThread, J9JITDecompila
 
 	Trc_Decomp_deleteDecompilationForExistingFrame_freeDecomp(info, info->bp);
 
-	freeDecompilationRecord(decompileThread, info, FALSE);
+	freeDecompilationRecord(currentThread, decompileThread, info, FALSE);
 
 	Trc_Decomp_deleteDecompilationForExistingFrame_Exit();
 
@@ -1359,19 +1402,24 @@ deleteDecompilationForExistingFrame(J9VMThread * decompileThread, J9JITDecompila
 
 
 static void
-freeDecompilationRecord(J9VMThread * decompileThread, J9JITDecompilationInfo * info, UDATA retain)
+freeDecompilationRecord(J9VMThread *currentThread, J9VMThread *decompileThread, J9JITDecompilationInfo *info, UDATA retain)
 {
-	PORT_ACCESS_FROM_VMC(decompileThread);
+	PORT_ACCESS_FROM_VMC(currentThread);
 
-	j9mem_free_memory(decompileThread->lastDecompilation);
-	decompileThread->lastDecompilation = NULL;
-	if (info->reason & JITDECOMP_OSR_GLOBAL_BUFFER_USED) {
-		omrthread_monitor_exit(decompileThread->javaVM->osrGlobalBufferLock);
+	if (NULL == decompileThread) {
+		Assert_CodertVM_false(retain);
+		j9mem_free_memory(info);
 	} else {
-		if (retain) {
-			decompileThread->lastDecompilation = info;
+		j9mem_free_memory(decompileThread->lastDecompilation);
+		decompileThread->lastDecompilation = NULL;
+		if (J9_ARE_ANY_BITS_SET(info->reason, JITDECOMP_OSR_GLOBAL_BUFFER_USED)) {
+			omrthread_monitor_exit(decompileThread->javaVM->osrGlobalBufferLock);
 		} else {
-			j9mem_free_memory(info);
+			if (0 != retain) {
+				decompileThread->lastDecompilation = info;
+			} else {
+				j9mem_free_memory(info);
+			}
 		}
 	}
 }
@@ -1474,23 +1522,101 @@ jitDataBreakpointRemoved(J9VMThread * currentThread)
 
 
 static void
+freeDecompilations(J9VMThread *currentThread, J9VMThread *decompileThread, J9JITDecompilationInfo **previous, UDATA reason, J9Method *method)
+{
+	J9JITDecompilationInfo * current = NULL;
+
+	while (NULL != (current = *previous)) {
+		if (J9_ARE_ANY_BITS_SET(current->reason, reason) && ((NULL == method) || (current->method == method))) {
+			current->reason &= ~reason;
+			if (0 != current->reason) {
+				Trc_Decomp_deleteAllDecompilations_notFreeingRecord(currentThread, current, current->reason);
+				previous = &(current->next);
+			} else {
+				*previous = deleteDecompilationForExistingFrame(currentThread, decompileThread, current);
+			}
+		} else {
+			previous = &(current->next);
+		}
+	}
+}
+
+
+#if JAVA_SPEC_VERSION >= 19
+
+typedef struct {
+	UDATA reason;
+	J9Method *method;
+} J9DeleteDecompData;
+
+static jvmtiIterationControl
+deleteDecompCallBack(J9VMThread *currentThread, J9MM_IterateObjectDescriptor *object, void *userData)
+{
+	j9object_t continuationObj = object->object;
+	j9object_t vthread = J9VMJDKINTERNALVMCONTINUATION_VTHREAD(currentThread, continuationObj);
+	ContinuationState continuationState = J9VMJDKINTERNALVMCONTINUATION_STATE(currentThread, continuationObj);
+
+	if ((NULL != vthread) && J9_ARE_NO_BITS_SET(continuationState, J9_GC_CONTINUATION_STATE_LAST_UNMOUNT)) {
+		J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(currentThread, continuationObj);
+		J9DeleteDecompData *data = (J9DeleteDecompData*)userData;
+
+		freeDecompilations(currentThread, NULL, &(continuation->decompilationStack), data->reason, data->method);
+	}
+	return JVMTI_ITERATION_CONTINUE;
+}
+
+static jvmtiIterationControl
+decompileAllCallBack(J9VMThread *currentThread, J9MM_IterateObjectDescriptor *object, void *userData)
+{
+	J9JavaVM *vm = currentThread->javaVM;
+	j9object_t continuationObj = object->object;
+	j9object_t vthread = J9VMJDKINTERNALVMCONTINUATION_VTHREAD(currentThread, continuationObj);
+	ContinuationState continuationState = J9VMJDKINTERNALVMCONTINUATION_STATE(currentThread, continuationObj);
+
+	if ((NULL != vthread) && J9_ARE_NO_BITS_SET(continuationState, J9_GC_CONTINUATION_STATE_LAST_UNMOUNT)) {
+		J9StackWalkState *walkState = (J9StackWalkState*)userData;
+		J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(currentThread, continuationObj);
+		j9object_t threadObject = VM_ContinuationHelpers::getThreadObjectForContinuation(currentThread, continuation, continuationObj);
+
+		walkState->userData2 = (void*)continuation;
+		vm->internalVMFunctions->walkContinuationStackFrames(currentThread, continuation, threadObject, walkState);
+	}
+	return JVMTI_ITERATION_CONTINUE;
+}
+
+static J9JITDecompilationInfo *
+addDecompilationForContinuation(J9VMThread * currentThread, J9StackWalkState * walkState, UDATA reason, J9VMContinuation *continuation)
+{
+	return addDecompilationHelper(currentThread, walkState, reason, &continuation->decompilationStack);
+}
+
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
+
+static void
 decompileAllMethodsInAllStacks(J9VMThread * currentThread, UDATA reason)
 {
+	J9JavaVM *vm = currentThread->javaVM;
 	J9VMThread * loopThread;
+	J9StackWalkState walkState;
 
 	/* Mark every JIT method in every stack for decompilation */
 
+	walkState.flags = J9_STACKWALK_ITERATE_FRAMES | J9_STACKWALK_SKIP_INLINES | J9_STACKWALK_VISIBLE_ONLY | J9_STACKWALK_ITERATE_HIDDEN_JIT_FRAMES | J9_STACKWALK_MAINTAIN_REGISTER_MAP;
+	walkState.skipCount = 0;
+	walkState.frameWalkFunction = decompileAllFrameIterator;
+	walkState.userData1 = (void *) reason;
+	walkState.userData2 = NULL;
 	loopThread = currentThread;
 	do {
-		J9StackWalkState walkState;
-
-		walkState.flags = J9_STACKWALK_ITERATE_FRAMES | J9_STACKWALK_SKIP_INLINES | J9_STACKWALK_VISIBLE_ONLY | J9_STACKWALK_ITERATE_HIDDEN_JIT_FRAMES | J9_STACKWALK_MAINTAIN_REGISTER_MAP;
-		walkState.skipCount = 0;
-		walkState.frameWalkFunction = decompileAllFrameIterator;
 		walkState.walkThread = loopThread;
-		walkState.userData1 = (void *) reason;
-		currentThread->javaVM->walkStackFrames(currentThread, &walkState);
+		vm->walkStackFrames(currentThread, &walkState);
 	} while ((loopThread = loopThread->linkNext) != currentThread);
+
+#if JAVA_SPEC_VERSION >= 19
+	vm->memoryManagerFunctions->j9gc_flush_nonAllocationCaches_for_walk(vm);
+	vm->memoryManagerFunctions->j9mm_iterate_all_continuation_objects(currentThread, vm->portLibrary, 0, decompileAllCallBack, (void*)&walkState);
+#endif /* JAVA_SPEC_VERSION >= 19 */
 }
 
 
@@ -1499,8 +1625,16 @@ decompileAllFrameIterator(J9VMThread * currentThread, J9StackWalkState * walkSta
 {
 	/* Decompile all JIT frames */
 
-	if (walkState->jitInfo) {
-		addDecompilation(currentThread, walkState, (UDATA) walkState->userData1);
+	if (NULL != walkState->jitInfo) {
+#if JAVA_SPEC_VERSION >= 19
+		J9VMContinuation *continuation = (J9VMContinuation*)walkState->userData2;
+		if (NULL != continuation) {
+			addDecompilationForContinuation(currentThread, walkState, (UDATA)walkState->userData1, continuation);
+		} else
+#endif /* JAVA_SPEC_VERSION >= 19 */
+		{
+			addDecompilation(currentThread, walkState, (UDATA) walkState->userData1);
+		}
 	}
 
 	return J9_STACKWALK_KEEP_ITERATING;
@@ -1508,32 +1642,22 @@ decompileAllFrameIterator(J9VMThread * currentThread, J9StackWalkState * walkSta
 
 
 static void
-deleteAllDecompilations(J9VMThread * currentThread, UDATA reason, J9Method * method)
+deleteAllDecompilations(J9VMThread *currentThread, UDATA reason, J9Method * method)
 {
-	J9VMThread * loopThread;
+	J9VMThread * loopThread = currentThread;
 
 	Trc_Decomp_deleteAllDecompilations_Entry(currentThread);
 
-	loopThread = currentThread;
 	do {
-		J9JITDecompilationInfo ** previous;
-		J9JITDecompilationInfo * current;
-
-		previous = &(loopThread->decompilationStack);
-		while ((current = *previous) != NULL) {
-			if ((current->reason & reason) && (!method || (current->method == method))) {
-				current->reason &= ~reason;
-				if (current->reason) {
-					Trc_Decomp_deleteAllDecompilations_notFreeingRecord(currentThread, current, current->reason);
-					previous = &(current->next);
-				} else {
-					*previous = deleteDecompilationForExistingFrame(loopThread, current);
-				}
-			} else {
-				previous = &(current->next);
-			}
-		}
+		freeDecompilations(currentThread, loopThread, &loopThread->decompilationStack, reason, method);
 	} while ((loopThread = loopThread->linkNext) != currentThread);	
+
+#if JAVA_SPEC_VERSION >= 19
+	J9JavaVM *vm = currentThread->javaVM;
+	J9DeleteDecompData data = { reason, method };
+	vm->memoryManagerFunctions->j9gc_flush_nonAllocationCaches_for_walk(vm);
+	vm->memoryManagerFunctions->j9mm_iterate_all_continuation_objects(currentThread, vm->portLibrary, 0, deleteDecompCallBack, (void*)&data);
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
 	Trc_Decomp_deleteAllDecompilations_Exit(currentThread);
 }
@@ -2335,7 +2459,7 @@ induceOSROnCurrentThread(J9VMThread * currentThread)
 	if (OSR_OK != osrReturnCode) {
 outOfMemory:
 		decompilationRecord->reason = reason;
-		freeDecompilationRecord(currentThread, decompilationRecord, FALSE);
+		freeDecompilationRecord(currentThread, currentThread, decompilationRecord, FALSE);
 	} else {
 		fixStackForNewDecompilation(currentThread, &walkState, decompilationRecord, reason, &currentThread->decompilationStack);
 	}
