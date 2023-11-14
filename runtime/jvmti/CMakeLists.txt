@@ -37,7 +37,7 @@ j9vm_add_library(j9jvmti SHARED
 	jvmtiGeneral.c
 	jvmtiHeap.c
 	jvmtiHeap10.c
-	jvmtiHelpers.c
+	jvmtiHelpers.cpp
 	jvmtiHook.c
 	jvmtiJNIFunctionInterception.c
 	jvmtiLocalVariable.c
