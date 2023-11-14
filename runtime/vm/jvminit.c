@@ -3916,6 +3916,9 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 	vm->checkpointState.lastRestoreTimeMillis = -1;
 	/* Its unclear if we need an option for this, so we can keep the init here for the time being */
 	vm->checkpointState.maxRetryForNotCheckpointSafe = 100;
+	vm->checkpointState.sleepNanosecondsForNotCheckpointSafe = 10000;
+	vm->checkpointState.sleepNanosecondsUpperBoundForNotCheckpointSafe = 300000000;
+	vm->checkpointState.percentageOfMaxRetryBeforeIncreasingSleepNanosecondsForNotCheckpointSafe = 10;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 	{

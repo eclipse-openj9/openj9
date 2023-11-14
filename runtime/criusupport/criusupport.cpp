@@ -24,6 +24,7 @@
 #include <errno.h>
 #include <dlfcn.h>
 #include <malloc.h>
+#include <math.h>
 #endif /* defined(LINUX) */
 
 extern "C" {
@@ -690,6 +691,12 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 		UDATA success = 0;
 		bool safePoint = J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_OSR_SAFE_POINT);
 		UDATA maxRetries = vm->checkpointState.maxRetryForNotCheckpointSafe;
+		U_64 sleepNanoseconds = vm->checkpointState.sleepNanosecondsForNotCheckpointSafe;
+		U_64 sleepNanosecondsUpperBound = vm->checkpointState.sleepNanosecondsUpperBoundForNotCheckpointSafe;
+		UDATA percentageOfMaxRetryBeforeIncreasingSleepNanoseconds = vm->checkpointState.percentageOfMaxRetryBeforeIncreasingSleepNanosecondsForNotCheckpointSafe;
+		UDATA numIncreasesToSleepNanoseconds = maxRetries / percentageOfMaxRetryBeforeIncreasingSleepNanoseconds;
+		UDATA numRetriesBeforeIncreasingSleepNanoseconds = maxRetries / numIncreasesToSleepNanoseconds;
+		double sleepNanosecondsMultiplier = pow(sleepNanosecondsUpperBound / sleepNanoseconds, 1.0 / numIncreasesToSleepNanoseconds);
 		BOOLEAN syslogFlagNone = TRUE;
 		char *syslogOptions = NULL;
 		I_32 syslogBufferSize = 0;
@@ -844,7 +851,12 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 		for (UDATA i = 0; (0 != notSafeToCheckpoint) && (i <= maxRetries); i++) {
 			releaseSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
 			vmFuncs->internalExitVMToJNI(currentThread);
-			omrthread_nanosleep(10000);
+			omrthread_nanosleep(sleepNanoseconds);
+			if (((i % numRetriesBeforeIncreasingSleepNanoseconds) == (numRetriesBeforeIncreasingSleepNanoseconds - 1))
+				&& ((sleepNanoseconds * sleepNanosecondsMultiplier) <= sleepNanosecondsUpperBound)
+			) {
+				sleepNanoseconds *= sleepNanosecondsMultiplier;
+			}
 			vmFuncs->internalEnterVMFromJNI(currentThread);
 			acquireSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
 			notSafeToCheckpoint = checkIfSafeToCheckpoint(currentThread);
