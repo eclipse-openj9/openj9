@@ -33,6 +33,7 @@
 	<!-- set properties for this build -->
 	<property name="DEST" value="${BUILD_ROOT}/functional/cmdLineTests/criu" />
 	<property name="src" location="./src"/>
+	<property name="TestUtilities" location="../../TestUtilities/src"/>
 	<property name="build" location="./bin"/>
 
 	<target name="init">
@@ -66,6 +67,11 @@
 				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
 					<exclude name="${excludeJDK11UpTimeoutAdjustmentTest}" />
 					<exclude name="${excludeTestMachineResourceChange}" />
+					<src path="${src}" />
+					<src path="${TestUtilities}" />
+					<classpath>
+						<pathelement location="${LIB_DIR}/testng.jar"/>
+					</classpath>
 				</javac>
 			</then>
 			<else>
@@ -76,6 +82,11 @@
 					<compilerarg line="${addExports}" />
 					<compilerarg line="${enablePreview}" />
 					<exclude name="${excludeTestMachineResourceChange}" />
+					<src path="${src}" />
+					<src path="${TestUtilities}" />
+					<classpath>
+						<pathelement location="${LIB_DIR}/testng.jar"/>
+					</classpath>
 				</javac>
 			</else>
 		</if>

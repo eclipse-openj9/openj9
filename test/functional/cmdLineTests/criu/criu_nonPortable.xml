@@ -1030,4 +1030,20 @@
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
+
+  <test id="Create CRIU checkpoint image and restore once - testTimeCompensation">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -Xtrace:print={j9criu,j9jcl.533} --add-exports java.base/openj9.internal.criu=ALL-UNNAMED" $MAINCLASS_TIMECHANGE$ testTimeCompensation 1 false false</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="success" caseSensitive="yes" regex="no">PASSED: testTimeCompensation</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <output type="failure" caseSensitive="yes" regex="no">FAILED: testTimeCompensation</output>
+    <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+  </test>
 </suite>

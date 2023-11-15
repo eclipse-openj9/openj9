@@ -34,6 +34,7 @@
 	<property name="DEST" value="${BUILD_ROOT}/functional/cmdLineTests/cmdLineTest_J9tests" />
 	<property name="PROJECT_ROOT" location="." />
 	<property name="src" location="${PROJECT_ROOT}/src" />
+	<property name="TestUtilities" location="../../TestUtilities/src"/>
 	<property name="build" location="${PROJECT_ROOT}/bin" />
 
 	<target name="init">
@@ -49,6 +50,11 @@
 		<echo>===debug:                        on</echo>
 		<echo>===destdir:                      ${DEST}</echo>
 		<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
+			<src path="${src}" />
+			<src path="${TestUtilities}" />
+			<classpath>
+				<pathelement location="${LIB_DIR}/testng.jar"/>
+			</classpath>
 		</javac>
 	</target>
 
@@ -56,6 +62,7 @@
 		<jar jarfile="${DEST}/cmdLineTest_J9tests.jar" filesonly="true">
 			<fileset dir="${build}" />
 			<fileset dir="${src}" />
+			<fileset dir="${TestUtilities}" />
 		</jar>
 		<copy todir="${DEST}">
 			<fileset dir="${PROJECT_ROOT}" includes="*.xml" />

@@ -52,3 +52,4 @@ TraceException=Trc_CRIU_setupJNIFieldIDsAndCRIUAPI_load_criu_failure Overhead=1 
 TraceException=Trc_CRIU_setupJNIFieldIDsAndCRIUAPI_not_find_criu_methods Overhead=1 Level=1 Template="setupJNIFieldIDsAndCRIUAPI() The JVM could not find critical criu functions in libcriu.so: %zi"
 
 TraceException=Trc_CRIU_checkpointJVMImpl_triggerOneOffJavaDump Overhead=1 Level=1 Template="checkpointJVMImpl triggerOneOffDump() returns %d"
+TraceEvent=Trc_CRIU_after_criu_dump Overhead=1 Level=2 Template="After checkpoint criu_dump(), criuRestoreNanoTimeMonotonic (%lld), criuRestoreNanoUTCTime (%llu), lastRestoreTimeMillis (%lld)"
