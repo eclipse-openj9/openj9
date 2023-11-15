@@ -296,7 +296,7 @@ public class InvalidUpCallTests {
 
 		try (Arena arena = Arena.ofConfined()) {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_add2IntStructs_returnStruct,
-					FunctionDescriptor.of(structLayout, structLayout, structLayout), arena, Linker.Option.critical());
+					FunctionDescriptor.of(structLayout, structLayout, structLayout), arena, Linker.Option.critical(false));
 			fail("Failed to throw out IllegalArgumentException in the case of the invalid linker option for upcall.");
 		}
 	}
@@ -305,7 +305,7 @@ public class InvalidUpCallTests {
 	public void test_InvalidLinkerOptions_isTrivial_2() throws Throwable {
 		FunctionDescriptor fd = FunctionDescriptor.of(JAVA_INT, JAVA_INT, ADDRESS);
 		MemorySegment functionSymbol = nativeLibLookup.find("captureTrivialOptionByUpcallMH").get();
-		MethodHandle mh = linker.downcallHandle(functionSymbol, fd, Linker.Option.critical());
+		MethodHandle mh = linker.downcallHandle(functionSymbol, fd, Linker.Option.critical(false));
 
 		try (Arena arena = Arena.ofConfined()) {
 			MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_captureTrivialOption,
