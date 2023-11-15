@@ -552,7 +552,7 @@ TR::Block * TR_J9ByteCodeIlGenerator::walker(TR::Block * prevBlock)
 
          case J9BCaconst_init:
             {
-            if (TR::Compiler->om.areValueTypesEnabled())
+            if (TR::Compiler->om.areValueTypesEnabled() && !TR::Compiler->om.areValueTypeInstancesCreatedWithBCNew())
                {
                genAconst_init(next2Bytes());
                _bcIndex += 3;
@@ -564,7 +564,7 @@ TR::Block * TR_J9ByteCodeIlGenerator::walker(TR::Block * prevBlock)
             break;
             }
          case J9BCwithfield:
-            if (TR::Compiler->om.areValueTypesEnabled())
+            if (TR::Compiler->om.areValueTypesEnabled() && !TR::Compiler->om.areValueTypeInstancesCreatedWithBCNew())
                {
                genWithField(next2Bytes());
                _bcIndex += 3;
@@ -6129,6 +6129,12 @@ TR_J9ByteCodeIlGenerator::genNew(TR::ILOpCodes opCode)
    if (!node->getFirstChild()->getSymbolReference()->isUnresolved() && node->getFirstChild()->getSymbol()->isStatic())
       {
       TR_OpaqueClassBlock *clazz = (TR_OpaqueClassBlock*)node->getFirstChild()->getSymbol()->castToStaticSymbol()->getStaticAddress();
+
+      if (TR::Compiler->cls.isValueTypeClass(clazz) && TR::Compiler->om.areValueTypeInstancesCreatedWithBCNew())
+         {
+         node->setIdentityless(true);
+         }
+
       int32_t len;
       char *sig;
       sig = TR::Compiler->cls.classSignature_DEPRECATED(comp(), clazz, len, comp()->trMemory());
