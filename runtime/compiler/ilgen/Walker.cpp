@@ -6272,6 +6272,12 @@ TR_J9ByteCodeIlGenerator::genNew(TR::ILOpCodes opCode)
    if (!node->getFirstChild()->getSymbolReference()->isUnresolved() && node->getFirstChild()->getSymbol()->isStatic())
       {
       TR_OpaqueClassBlock *clazz = (TR_OpaqueClassBlock*)node->getFirstChild()->getSymbol()->castToStaticSymbol()->getStaticAddress();
+
+      if (TR::Compiler->cls.isValueTypeClass(clazz))
+         {
+         node->setIdentityless(true);
+         }
+
       int32_t len;
       char *sig;
       sig = TR::Compiler->cls.classSignature_DEPRECATED(comp(), clazz, len, comp()->trMemory());
