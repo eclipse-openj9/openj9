@@ -310,8 +310,6 @@ virtualThreadMountBegin(JNIEnv *env, jobject thread)
 {
 	J9VMThread *currentThread = (J9VMThread *)env;
 
-	VM_VMHelpers::virtualThreadHideFrames(currentThread, JNI_TRUE);
-
 	j9object_t threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
 	Assert_SC_true(IS_JAVA_LANG_VIRTUALTHREAD(currentThread, threadObj));
 
@@ -351,6 +349,8 @@ virtualThreadMountBegin(JNIEnv *env, jobject thread)
 		enterVThreadTransitionCritical(currentThread, thread);
 		threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
 	}
+
+	VM_VMHelpers::virtualThreadHideFrames(currentThread, JNI_TRUE);
 }
 
 /* Caller must have VMAccess. */
@@ -360,8 +360,6 @@ virtualThreadMountEnd(JNIEnv *env, jobject thread)
 	J9VMThread *currentThread = (J9VMThread *)env;
 	J9JavaVM *vm = currentThread->javaVM;
 	j9object_t threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
-
-	VM_VMHelpers::virtualThreadHideFrames(currentThread, JNI_FALSE);
 
 	Assert_SC_true(IS_JAVA_LANG_VIRTUALTHREAD(currentThread, threadObj));
 
@@ -376,6 +374,8 @@ virtualThreadMountEnd(JNIEnv *env, jobject thread)
 				continuationObj,
 				J9VMJDKINTERNALVMCONTINUATION_VMREF(currentThread, continuationObj));
 	}
+
+	VM_VMHelpers::virtualThreadHideFrames(currentThread, JNI_FALSE);
 
 	/* Allow thread to be inspected again. */
 	exitVThreadTransitionCritical(currentThread, threadObj);
@@ -409,7 +409,6 @@ virtualThreadUnmountBegin(JNIEnv *env, jobject thread)
 	TRIGGER_J9HOOK_VM_VIRTUAL_THREAD_UNMOUNT(vm->hookInterface, currentThread);
 
 	enterVThreadTransitionCritical(currentThread, thread);
-	VM_VMHelpers::virtualThreadHideFrames(currentThread, JNI_TRUE);
 
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	j9object_t carrierThreadObject = currentThread->carrierThreadObject;
@@ -432,6 +431,8 @@ virtualThreadUnmountBegin(JNIEnv *env, jobject thread)
 		carrierThreadObject = currentThread->carrierThreadObject;
 		threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
 	}
+
+	VM_VMHelpers::virtualThreadHideFrames(currentThread, JNI_TRUE);
 }
 
 /* Caller must have VMAccess. */
@@ -441,8 +442,6 @@ virtualThreadUnmountEnd(JNIEnv *env, jobject thread)
 	J9VMThread *currentThread = (J9VMThread *)env;
 	J9JavaVM *vm = currentThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
-
-	VM_VMHelpers::virtualThreadHideFrames(currentThread, JNI_FALSE);
 
 	j9object_t threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
 	j9object_t continuationObj = J9VMJAVALANGVIRTUALTHREAD_CONT(currentThread, threadObj);
@@ -464,6 +463,8 @@ virtualThreadUnmountEnd(JNIEnv *env, jobject thread)
 	if (VM_ContinuationHelpers::isFinished(continuationState)) {
 		vmFuncs->freeTLS(currentThread, threadObj);
 	}
+
+	VM_VMHelpers::virtualThreadHideFrames(currentThread, JNI_FALSE);
 
 	/* Allow thread to be inspected again. */
 	exitVThreadTransitionCritical(currentThread, threadObj);
@@ -577,13 +578,31 @@ JNIEXPORT void JNICALL
 JVM_VirtualThreadHideFrames(JNIEnv *env, jobject vthread, jboolean hide)
 {
 	J9VMThread *currentThread = (J9VMThread *)env;
+	J9InternalVMFunctions const * const vmFuncs = currentThread->javaVM->internalVMFunctions;
 
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+
+	j9object_t vThreadObj = currentThread->threadObject;
+	Assert_SC_true(IS_JAVA_LANG_VIRTUALTHREAD(currentThread, vThreadObj));
+	/* Do not allow JVMTI operations because J9VMThread->threadObject is modified
+	 * between the first invocation with hide=true and the second invocation with
+	 * hide=false. Otherwise, JVMTI functions will see an unstable
+	 * J9VMThread->threadObject.
+	 */
+	bool hiddenFrames = J9_ARE_ALL_BITS_SET(currentThread->privateFlags, J9_PRIVATE_FLAGS_VIRTUAL_THREAD_HIDDEN_FRAMES);
 	if (hide) {
-		Assert_SC_true(J9_ARE_NO_BITS_SET(currentThread->privateFlags, J9_PRIVATE_FLAGS_VIRTUAL_THREAD_HIDDEN_FRAMES));
-	} else {
-		Assert_SC_true(J9_ARE_ALL_BITS_SET(currentThread->privateFlags, J9_PRIVATE_FLAGS_VIRTUAL_THREAD_HIDDEN_FRAMES));
+		Assert_SC_true(!hiddenFrames && (vThreadObj == J9_JNI_UNWRAP_REFERENCE(vthread)));
+		enterVThreadTransitionCritical(currentThread, vthread);
 	}
+
 	VM_VMHelpers::virtualThreadHideFrames(currentThread, hide);
+
+	if (!hide) {
+		Assert_SC_true(hiddenFrames);
+		exitVThreadTransitionCritical(currentThread, vThreadObj);
+	}
+
+	vmFuncs->internalExitVMToJNI(currentThread);
 }
 #endif /* JAVA_SPEC_VERSION >= 20 */
 
