@@ -289,4 +289,22 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<impl>openj9</impl>
 		</impls>
 	</test>
+	<test>
+		<testCaseName>cmdLineTest_J9test_elapsedTime</testCaseName>
+		<command>$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) \
+	-DJARPATH=$(Q)$(TESTNG)$(P)$(TEST_RESROOT)$(D)cmdLineTest_J9tests.jar$(Q) \
+	-DJVMLIBPATH=$(Q)$(J9VM_PATH)$(Q) \
+	-DTESTDIR=$(Q)$(TEST_RESROOT)$(Q) -DRESJAR=$(CMDLINETESTER_RESJAR) -DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) \
+	-jar $(CMDLINETESTER_JAR) \
+	-config $(Q)$(TEST_RESROOT)$(D)j9tests_elapsedTime.xml$(Q) \
+	-xids all,$(PLATFORM) -plats all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)j9tests_exclude.xml$(Q) \
+	-explainExcludes -nonZeroExitWhenError; \
+	$(TEST_STATUS)</command>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+	</test>
 </playlist>

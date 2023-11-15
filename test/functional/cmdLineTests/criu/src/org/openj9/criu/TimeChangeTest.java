@@ -25,11 +25,16 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import openj9.internal.criu.InternalCRIUSupport;
+import org.eclipse.openj9.criu.CRIUSupport;
+
+import org.openj9.test.util.TimeUtilities;
+import org.testng.AssertJUnit;
 
 public class TimeChangeTest {
 
@@ -66,6 +71,9 @@ public class TimeChangeTest {
 			case "testSystemNanoTimeJitPostCheckpointCompile":
 				tct.testSystemNanoTimeJitPostCheckpointCompile();
 				break;
+			case "testTimeCompensation":
+				tct.testTimeCompensation();
+				break;
 			default:
 				// timer related tests
 				tct.test(testName);
@@ -98,6 +106,106 @@ public class TimeChangeTest {
 		Thread.sleep(12000);
 		showThreadCurrentTime("End " + testName);
 		timer.cancel();
+	}
+
+	private void testTimeCompensation() throws InterruptedException {
+		CRIUSupport criu = CRIUTestUtils.prepareCheckPointJVM(CRIUTestUtils.imagePath);
+		if (criu == null) {
+			// "CRIU is not enabled" is to appear and cause the test failure.
+			return;
+		}
+		CRIUTestUtils.showThreadCurrentTime("testTimeCompensation() starts");
+		final TimeUtilities tu = new TimeUtilities();
+		final Object dummy = new Object();
+		long millisTimeStart = System.currentTimeMillis();
+		long nanoTimeStart = System.nanoTime();
+
+		synchronized (dummy) {
+			dummy.wait(100);
+		}
+		TimeUtilities.checkElapseTime("testTimeCompensation() wait 100ms", millisTimeStart, nanoTimeStart, 100, 800,
+				100, 800);
+
+		millisTimeStart = System.currentTimeMillis();
+		nanoTimeStart = System.nanoTime();
+		Thread.currentThread().sleep(100);
+		TimeUtilities.checkElapseTime("testTimeCompensation() sleep 100ms", millisTimeStart, nanoTimeStart, 100, 800,
+				100, 800);
+
+		// this TimerTask is to run before CRIUR checkpoint
+		tu.timerSchedule("testTimeCompensation() preCheckpoint timer delayed 100ms", System.currentTimeMillis(),
+				System.nanoTime(), 100, 500, 100, 500, 100);
+
+		// this TimerTask is to run before CRIUR checkpoint
+		tu.timerSchedule("testTimeCompensation() preCheckpoint timer delayed 2s", System.currentTimeMillis(),
+				System.nanoTime(), 2000, 3000, 2000, 3000, 2000);
+
+		// this TimerTask is to run after CRIUR restore
+		tu.timerSchedule("testTimeCompensation() preCheckpoint timer delayed 4s", System.currentTimeMillis(),
+				System.nanoTime(), 6000, 10000, 4000, 8000, 4000);
+
+		final long preCheckpointMillisTime = System.currentTimeMillis();
+		final long preCheckpointNanoTime = System.nanoTime();
+
+		Thread.currentThread().sleep(2000);
+
+		criu.registerPreCheckpointHook(new Runnable() {
+			public void run() {
+				// check time elapsed within preCheckpoint hook
+				TimeUtilities.checkElapseTime("testTimeCompensation() preCheckpointHook", preCheckpointMillisTime,
+						preCheckpointNanoTime, 2000, 4000, 2000, 4000);
+
+				// scheduled task can't run before the checkpoint because all threads are halted
+				// in single threaded mode except the current thread performing CRIU checkpoit
+				tu.timerSchedule("testTimeCompensation()() preCheckpointHook timer delayed 10ms",
+						System.currentTimeMillis(), System.nanoTime(), 2000, 8000, 10, 500, 10);
+				tu.timerSchedule("testTimeCompensation() preCheckpointHook timer delayed 4s",
+						System.currentTimeMillis(), System.nanoTime(), 6000, 10000, 4000, 4500, 4000);
+			}
+		});
+		// assuming 2s between CRIU checkpoint and restore at criuScript.sh
+		criu.registerPostRestoreHook(new Runnable() {
+			public void run() {
+				// check time elapsed within postRestore hook
+				TimeUtilities.checkElapseTime("testTimeCompensation() postRestoreHook", preCheckpointMillisTime,
+						preCheckpointNanoTime, 4000, 8000, 2000, 4000);
+
+				tu.timerSchedule("testTimeCompensation() postRestoreHook timer delayed 10ms",
+						System.currentTimeMillis(), System.nanoTime(), 10, 800, 9, 800, 10);
+				tu.timerSchedule("testTimeCompensation() postRestoreHook timer delayed 2s", System.currentTimeMillis(),
+						System.nanoTime(), 2000, 3000, 2000, 3000, 2000);
+			}
+		});
+
+		TimeUtilities.checkElapseTime("testTimeCompensation() preCheckpoint", preCheckpointMillisTime,
+				preCheckpointNanoTime, 2000, 3000, 2000, 3000);
+
+		CRIUTestUtils.checkPointJVMNoSetup(criu, CRIUTestUtils.imagePath, false);
+
+		TimeUtilities.checkElapseTime("testTimeCompensation() after CRIU restore", preCheckpointMillisTime,
+				preCheckpointNanoTime, 2000, 6000, 2000, 6000);
+
+		CRIUTestUtils.showThreadCurrentTime("testTimeCompensation() postRestore");
+		final long postRestoreMillisTime = System.currentTimeMillis();
+		final long postRestoreNanoTime = System.nanoTime();
+
+		// following two timer tasks are expected to run after taking a checkpoint
+		tu.timerSchedule("testTimeCompensation() postRestore timer delayed 100ms", System.currentTimeMillis(),
+				System.nanoTime(), 100, 800, 100, 800, 100);
+
+		tu.timerSchedule("testTimeCompensation() postRestore timer delayed 2s", System.currentTimeMillis(),
+				System.nanoTime(), 2000, 3000, 2000, 3000, 2000);
+
+		Thread.currentThread().sleep(2000);
+
+		TimeUtilities.checkElapseTime("testTimeCompensation() postRestore", postRestoreMillisTime, postRestoreNanoTime,
+				2000, 3000, 2000, 3000);
+
+		if (tu.getResultAndCancelTimers()) {
+			System.out.println("PASSED: " + "testTimeCompensation");
+		} else {
+			System.out.println("FAILED: " + "testTimeCompensation");
+		}
 	}
 
 	public void testSystemNanoTime() {

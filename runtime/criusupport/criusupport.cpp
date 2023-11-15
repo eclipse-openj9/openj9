@@ -941,8 +941,8 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 		VM_VMHelpers::setVMState(currentThread, J9VMSTATE_CRIU_SUPPORT_RESTORE_PHASE_START);
 		restoreNanoTimeMonotonic = j9time_nano_time();
 		restoreNanoUTCTime = j9time_current_time_nanos(&success);
-		vm->checkpointState.lastRestoreTimeMillis = (I_64)(restoreNanoUTCTime/J9TIME_NANOSECONDS_PER_MILLIS);
-		Trc_CRIU_after_checkpoint(currentThread, restoreNanoTimeMonotonic, restoreNanoUTCTime);
+		vm->checkpointState.lastRestoreTimeMillis = (I_64)(restoreNanoUTCTime / J9TIME_NANOSECONDS_PER_MILLIS);
+		Trc_CRIU_after_criu_dump(currentThread, restoreNanoTimeMonotonic, restoreNanoUTCTime, vm->checkpointState.lastRestoreTimeMillis);
 		if (!syslogFlagNone) {
 			/* Re-open the system logger, and set options with saved string value. */
 			j9port_control(J9PORT_CTLDATA_SYSLOG_OPEN, 0);
@@ -954,36 +954,6 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 			nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_JCL_CRIU_DUMP_FAILED, NULL);
 			goto wakeJavaThreadsWithExclusiveVMAccess;
 		}
-		if (0 == success) {
-			systemReturnCode = errno;
-			currentExceptionClass = vm->checkpointState.criuJVMRestoreExceptionClass;
-			nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_JCL_CRIU_J9_CURRENT_TIME_NANOS_FAILURE, NULL);
-			goto wakeJavaThreadsWithExclusiveVMAccess;
-		}
-		/* JVM downtime between checkpoint and restore is calculated with j9time_current_time_nanos()
-		 * which is expected to be accurate in scenarios such as host rebooting, CRIU image moving across timezones.
-		 */
-		vm->checkpointState.checkpointRestoreTimeDelta = (I_64)(restoreNanoUTCTime - checkpointNanoUTCTime);
-		if (vm->checkpointState.checkpointRestoreTimeDelta < 0) {
-			/* A negative value was calculated for checkpointRestoreTimeDelta,
-			 * Trc_CRIU_checkpoint_nano_times & Trc_CRIU_restore_nano_times can be used for further investigation.
-			 * Currently OpenJ9 CRIU only supports 64-bit systems, and IDATA is equivalent to int64_t here.
-			 */
-			systemReturnCode = (IDATA)vm->checkpointState.checkpointRestoreTimeDelta;
-			currentExceptionClass = vm->checkpointState.criuJVMRestoreExceptionClass;
-			nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
-					J9NLS_JCL_CRIU_NEGATIVE_CHECKPOINT_RESTORE_TIME_DELTA, NULL);
-			goto wakeJavaThreadsWithExclusiveVMAccess;
-		}
-		/* j9time_nano_time() might be based on a different starting point in scenarios
-		 * such as host rebooting, CRIU image moving across timezones.
-		 * The adjustment calculated below is expected to be same as checkpointRestoreTimeDelta
-		 * if there is no change for j9time_nano_time() start point.
-		 * This value might be negative.
-		 */
-		portLibrary->nanoTimeMonotonicClockDelta = restoreNanoTimeMonotonic - checkpointNanoTimeMonotonic;
-		Trc_CRIU_restore_nano_times(currentThread, restoreNanoUTCTime, checkpointNanoUTCTime, vm->checkpointState.checkpointRestoreTimeDelta,
-			restoreNanoTimeMonotonic, checkpointNanoTimeMonotonic, portLibrary->nanoTimeMonotonicClockDelta);
 
 		/* We can only end up here if the CRIU restore was successful */
 		isAfterCheckpoint = TRUE;
@@ -1021,6 +991,40 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 			goto wakeJavaThreads;
 		}
 
+		restoreNanoTimeMonotonic = j9time_nano_time();
+		restoreNanoUTCTime = j9time_current_time_nanos(&success);
+		if (0 == success) {
+			systemReturnCode = errno;
+			currentExceptionClass = vm->checkpointState.criuJVMRestoreExceptionClass;
+			nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_JCL_CRIU_J9_CURRENT_TIME_NANOS_FAILURE, NULL);
+			goto wakeJavaThreadsWithExclusiveVMAccess;
+		}
+		Trc_CRIU_after_checkpoint(currentThread, restoreNanoTimeMonotonic, restoreNanoUTCTime);
+		/* JVM downtime between checkpoint and restore is calculated with j9time_current_time_nanos()
+		 * which is expected to be accurate in scenarios such as host rebooting, CRIU image moving across timezones.
+		 */
+		vm->checkpointState.checkpointRestoreTimeDelta = (I_64)(restoreNanoUTCTime - checkpointNanoUTCTime);
+		if (vm->checkpointState.checkpointRestoreTimeDelta < 0) {
+			/* A negative value was calculated for checkpointRestoreTimeDelta,
+			 * Trc_CRIU_checkpoint_nano_times & Trc_CRIU_restore_nano_times can be used for further investigation.
+			 * Currently OpenJ9 CRIU only supports 64-bit systems, and IDATA is equivalent to int64_t here.
+			 */
+			systemReturnCode = (IDATA)vm->checkpointState.checkpointRestoreTimeDelta;
+			currentExceptionClass = vm->checkpointState.criuJVMRestoreExceptionClass;
+			nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+					J9NLS_JCL_CRIU_NEGATIVE_CHECKPOINT_RESTORE_TIME_DELTA, NULL);
+			goto wakeJavaThreadsWithExclusiveVMAccess;
+		}
+		/* j9time_nano_time() might be based on a different starting point in scenarios
+		 * such as host rebooting, CRIU image moving across timezones.
+		 * The adjustment calculated below is expected to be same as checkpointRestoreTimeDelta
+		 * if there is no change for j9time_nano_time() start point.
+		 * This value might be negative.
+		 */
+		portLibrary->nanoTimeMonotonicClockDelta = restoreNanoTimeMonotonic - checkpointNanoTimeMonotonic;
+		Trc_CRIU_restore_nano_times(currentThread, restoreNanoUTCTime, checkpointNanoUTCTime, vm->checkpointState.checkpointRestoreTimeDelta,
+				restoreNanoTimeMonotonic, checkpointNanoTimeMonotonic, portLibrary->nanoTimeMonotonicClockDelta);
+
 		VM_VMHelpers::setVMState(currentThread, J9VMSTATE_CRIU_SUPPORT_RESTORE_PHASE_INTERNAL_HOOKS);
 
 		if (FALSE == vmFuncs->jvmRestoreHooks(currentThread)) {
@@ -1051,7 +1055,6 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 					J9NLS_JCL_CRIU_FAILED_TO_ENABLE_ALL_RESTORE_OPTIONS, NULL);
 			}
 		}
-
 
 wakeJavaThreads:
 		acquireSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
