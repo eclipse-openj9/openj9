@@ -306,7 +306,7 @@ public class PrimitiveTypeTests1 {
 	public void test_validateTrivialOption_1() throws Throwable {
 		FunctionDescriptor fd = FunctionDescriptor.of(JAVA_INT, JAVA_INT);
 		MemorySegment functionSymbol = nativeLibLookup.find("validateTrivialOption").get();
-		MethodHandle mh = linker.downcallHandle(functionSymbol, fd, Linker.Option.critical());
+		MethodHandle mh = linker.downcallHandle(functionSymbol, fd, Linker.Option.critical(false));
 		int result = (int)mh.invokeExact(111);
 		Assert.assertEquals(result, 111);
 	}
