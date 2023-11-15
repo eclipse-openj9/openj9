@@ -48,9 +48,6 @@ public class JDK11UpTimeoutAdjustmentTest {
 
 	private void test(String testName) throws InterruptedException {
 		CRIUSupport criu = CRIUTestUtils.prepareCheckPointJVM(CRIUTestUtils.imagePath);
-		if (criu == null) {
-			return;
-		}
 		System.out.println("Start test name: " + testName);
 		CRIUTestUtils.showThreadCurrentTime("Before starting " + testName);
 		switch (testName) {

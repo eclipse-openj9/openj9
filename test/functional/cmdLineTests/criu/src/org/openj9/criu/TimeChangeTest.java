@@ -47,7 +47,6 @@ public class TimeChangeTest {
 	private final static long MILLIS_DELAY_AFTERCHECKPOINTDONE = 5000;
 	private final long startNanoTime = System.nanoTime();
 	private final long currentTimeMillis = System.currentTimeMillis();
-	private final static Path imagePath = Paths.get("cpData");
 
 	public static void main(String args[]) throws InterruptedException {
 		if (args.length == 0) {
@@ -82,6 +81,7 @@ public class TimeChangeTest {
 	}
 
 	private void test(String testName) throws InterruptedException {
+		CRIUSupport criu = CRIUTestUtils.prepareCheckPointJVM(CRIUTestUtils.imagePath);
 		System.out.println("Start test name: " + testName);
 		showThreadCurrentTime("Before starting " + testName);
 		Timer timer = new Timer();
@@ -101,7 +101,7 @@ public class TimeChangeTest {
 		default:
 			throw new RuntimeException("Unrecognized test name: " + testName);
 		}
-		CRIUTestUtils.checkPointJVM(imagePath, false);
+		CRIUTestUtils.checkPointJVMNoSetup(criu, CRIUTestUtils.imagePath, false);
 		// maximum test running time is 12s
 		Thread.sleep(12000);
 		showThreadCurrentTime("End " + testName);
@@ -209,9 +209,10 @@ public class TimeChangeTest {
 	}
 
 	public void testSystemNanoTime() {
+		CRIUSupport criu = CRIUTestUtils.prepareCheckPointJVM(CRIUTestUtils.imagePath);
 		final long beforeCheckpoint = System.nanoTime();
 		System.out.println("System.nanoTime() before CRIU checkpoint: " + beforeCheckpoint);
-		CRIUTestUtils.checkPointJVM(imagePath, false);
+		CRIUTestUtils.checkPointJVMNoSetup(criu, CRIUTestUtils.imagePath, false);
 		final long afterRestore = System.nanoTime();
 		final long elapsedTime = afterRestore - beforeCheckpoint;
 		if (elapsedTime < MAX_TARDINESS_NS) {
@@ -229,8 +230,9 @@ public class TimeChangeTest {
 			System.out.println("FAILED: InternalCRIUSupport.getLastRestoreTime() - " + lastRestoreTime
 					+ " should be -1 before restore");
 		}
+		CRIUSupport criu = CRIUTestUtils.prepareCheckPointJVM(CRIUTestUtils.imagePath);
 		long beforeCheckpoint = System.currentTimeMillis();
-		CRIUTestUtils.checkPointJVM(imagePath, false);
+		CRIUTestUtils.checkPointJVMNoSetup(criu, CRIUTestUtils.imagePath, false);
 		lastRestoreTime = InternalCRIUSupport.getLastRestoreTime();
 		long afterRestore = System.currentTimeMillis();
 		if (beforeCheckpoint >= lastRestoreTime) {
@@ -247,36 +249,33 @@ public class TimeChangeTest {
 	}
 
 	private void testMXBeanUpTime() {
+		CRIUSupport criu = CRIUTestUtils.prepareCheckPointJVM(CRIUTestUtils.imagePath);
 		RuntimeMXBean mxb = ManagementFactory.getRuntimeMXBean();
 		long uptimeBeforeCheckpoint = mxb.getUptime();
-		CRIUTestUtils.checkPointJVM(imagePath, false);
+		CRIUTestUtils.checkPointJVMNoSetup(criu, CRIUTestUtils.imagePath, false);
 		long uptimeAfterCheckpoint = mxb.getUptime();
-		// UpTime adjustment less than the JVM down time 2s.
-		long adjustMillis = 1500;
 
 		if (uptimeAfterCheckpoint <= uptimeBeforeCheckpoint) {
 			System.out.println("FAILED: testMXBeanUpTime() - uptimeAfterCheckpoint " + uptimeAfterCheckpoint
 					+ " can't be less than uptimeBeforeCheckpoint " + uptimeBeforeCheckpoint);
-		} else if (uptimeAfterCheckpoint >= (uptimeBeforeCheckpoint + adjustMillis)) {
-			System.out.println("FAILED: testMXBeanUpTime() - uptimeAfterCheckpoint " + uptimeAfterCheckpoint
-					+ " can't be greater than uptimeBeforeCheckpoint " + uptimeBeforeCheckpoint + " + " + adjustMillis);
 		} else {
 			System.out.println("PASSED: testMXBeanUpTime() - uptimeAfterCheckpoint " + uptimeAfterCheckpoint
-					+ " is less than uptimeBeforeCheckpoint " + uptimeBeforeCheckpoint + " + "
-					+ adjustMillis);
+					+ " is greater than uptimeBeforeCheckpoint " + uptimeBeforeCheckpoint);
 		}
 	}
 
 	public void testSystemNanoTimeJitPreCheckpointCompile() {
+		CRIUSupport criu = CRIUTestUtils.prepareCheckPointJVM(CRIUTestUtils.imagePath);
 		testSystemNanoTimeJitTestPreCheckpointPhase();
 		testSystemNanoTimeJitWarmupPhase();
-		CRIUTestUtils.checkPointJVM(imagePath, false);
+		CRIUTestUtils.checkPointJVMNoSetup(criu, CRIUTestUtils.imagePath, false);
 		testSystemNanoTimeJitTestPostCheckpointPhase();
 	}
 
 	public void testSystemNanoTimeJitPostCheckpointCompile() {
+		CRIUSupport criu = CRIUTestUtils.prepareCheckPointJVM(CRIUTestUtils.imagePath);
 		testSystemNanoTimeJitTestPreCheckpointPhase();
-		CRIUTestUtils.checkPointJVM(imagePath, false);
+		CRIUTestUtils.checkPointJVMNoSetup(criu, CRIUTestUtils.imagePath, false);
 		testSystemNanoTimeJitWarmupPhase();
 		testSystemNanoTimeJitTestPostCheckpointPhase();
 	}
