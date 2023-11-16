@@ -1558,9 +1558,12 @@ deleteDecompCallBack(J9VMThread *currentThread, J9MM_IterateObjectDescriptor *ob
 
 	if ((NULL != vthread) && J9_ARE_NO_BITS_SET(continuationState, J9_GC_CONTINUATION_STATE_LAST_UNMOUNT)) {
 		J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(currentThread, continuationObj);
-		J9DeleteDecompData *data = (J9DeleteDecompData*)userData;
 
-		freeDecompilations(currentThread, NULL, &(continuation->decompilationStack), data->reason, data->method);
+		if (NULL != continuation) {
+			J9DeleteDecompData *data = (J9DeleteDecompData*)userData;
+
+			freeDecompilations(currentThread, NULL, &(continuation->decompilationStack), data->reason, data->method);
+		}
 	}
 	return JVMTI_ITERATION_CONTINUE;
 }
