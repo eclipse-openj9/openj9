@@ -22,6 +22,11 @@
 package org.openj9.test.lworld;
 
 import static org.testng.Assert.*;
+
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles.Lookup;
+import java.lang.invoke.MethodType;
 import org.testng.annotations.Test;
 
 /*
@@ -42,6 +47,7 @@ import org.testng.annotations.Test;
 
 @Test(groups = { "level.sanity" })
 public class ValueTypeTests {
+	static Lookup lookup = MethodHandles.lookup();
 	/* default values */
 	static int[] defaultPointPositions1 = {0xFFEEFFEE, 0xAABBAABB};
 	static int[] defaultPointPositions2 = {0xCCDDCCDD, 0x33443344};
@@ -68,6 +74,7 @@ public class ValueTypeTests {
 	static Object defaultObjectNew = (Object)0xFFEEFFEE;
 	/* miscellaneous constants */
 	static final int genericArraySize = 10;
+	static final int objectGCScanningIterationCount = 1000;
 
 	static value class Point2D {
 		int x;
@@ -82,6 +89,11 @@ public class ValueTypeTests {
 
 		Point2D(int[] position) {
 			this(position[0], position[1]);
+		}
+
+		void checkEqualPoint2D(int[] position) throws Throwable {
+			assertEquals(this.x, position[0]);
+			assertEquals(this.y, position[1]);
 		}
 	}
 
@@ -119,6 +131,11 @@ public class ValueTypeTests {
 		FlattenedLine2D(int[][] positions) {
 			this(new Point2D(positions[0]), new Point2D(positions[1]));
 		}
+
+		void checkEqualFlattenedLine2D(int[][] positions) throws Throwable {
+			st.checkEqualPoint2D(positions[0]);
+			en.checkEqualPoint2D(positions[1]);
+		}
 	}
 
 	static value class Triangle2D {
@@ -141,6 +158,12 @@ public class ValueTypeTests {
 						new Point2D(positions[1][1][0], positions[1][1][1])),
 				new FlattenedLine2D(new Point2D(positions[2][0][0], positions[2][0][1]),
 						new Point2D(positions[2][1][0], positions[2][1][1])));
+		}
+
+		void checkEqualTriangle2D(int[][][] positions) throws Throwable {
+			v1.checkEqualFlattenedLine2D(positions[0]);
+			v2.checkEqualFlattenedLine2D(positions[1]);
+			v3.checkEqualFlattenedLine2D(positions[2]);
 		}
 	}
 
@@ -222,15 +245,16 @@ public class ValueTypeTests {
 				new Triangle2D(defaultTrianglePositions));
 		}
 
-		void checkFieldsWithDefaults() throws Throwable {
-			checkEqualPoint2D(point, defaultPointPositions1);
-			checkEqualFlattenedLine2D(line, defaultLinePositions1);
+		AssortedValueWithLongAlignment checkFieldsWithDefaults() throws Throwable {
+			point.checkEqualPoint2D(defaultPointPositions1);
+			line.checkEqualFlattenedLine2D(defaultLinePositions1);
 			assertEquals(o.val, defaultObject);
 			assertEquals(l.l, defaultLong);
 			assertEquals(d.d, defaultDouble);
 			assertEquals(i.i, defaultInt);
-			checkEqualTriangle2D(tri, defaultTrianglePositions);
+			tri.checkEqualTriangle2D(defaultTrianglePositions);
 			// TODO add putfield tests once withfield is replaced
+			return this; // should be updated to new defaults once putfield tests are here
 		}
 	}
 
@@ -261,13 +285,13 @@ public class ValueTypeTests {
 		}
 
 		void checkFieldsWithDefaults() throws Throwable {
-			checkEqualPoint2D(point, defaultPointPositions1);
+			point.checkEqualPoint2D(defaultPointPositions1);
 			point = new Point2D(defaultPointPositionsNew);
-			checkEqualPoint2D(point, defaultPointPositionsNew);
+			point.checkEqualPoint2D(defaultPointPositionsNew);
 
-			checkEqualFlattenedLine2D(line, defaultLinePositions1);
+			line.checkEqualFlattenedLine2D(defaultLinePositions1);
 			line = new FlattenedLine2D(defaultLinePositionsNew);
-			checkEqualFlattenedLine2D(line, defaultLinePositionsNew);
+			line.checkEqualFlattenedLine2D(defaultLinePositionsNew);
 
 			assertEquals(o.val, defaultObject);
 			o = new ValueObject(defaultObjectNew);
@@ -285,9 +309,9 @@ public class ValueTypeTests {
 			i = new ValueInt(defaultIntNew);
 			assertEquals(i.i, defaultIntNew);
 
-			checkEqualTriangle2D(tri, defaultTrianglePositions);
+			tri.checkEqualTriangle2D(defaultTrianglePositions);
 			tri = new Triangle2D(defaultTrianglePositionsNew);
-			checkEqualTriangle2D(tri, defaultTrianglePositionsNew);
+			tri.checkEqualTriangle2D(defaultTrianglePositionsNew);
 		}
 	}
 
@@ -319,15 +343,16 @@ public class ValueTypeTests {
 				new Triangle2D(defaultTrianglePositions));
 		}
 
-		void checkFieldsWithDefaults() throws Throwable {
-			checkEqualTriangle2D(tri, defaultTrianglePositions);
-			checkEqualPoint2D(point, defaultPointPositions1);
-			checkEqualFlattenedLine2D(line, defaultLinePositions1);
+		AssortedValueWithObjectAlignment checkFieldsWithDefaults() throws Throwable {
+			tri.checkEqualTriangle2D(defaultTrianglePositions);
+			point.checkEqualPoint2D(defaultPointPositions1);
+			line.checkEqualFlattenedLine2D( defaultLinePositions1);
 			assertEquals(o.val, defaultObject);
 			assertEquals(i.i, defaultInt);
 			assertEquals(f.f, defaultFloat);
-			checkEqualTriangle2D(tri2, defaultTrianglePositions);
+			tri2.checkEqualTriangle2D(defaultTrianglePositions);
 			// TODO add putfield tests once withfield is replaced
+			return this; // should be updated to new defaults once putfield tests are here
 		}
 	}
 
@@ -358,17 +383,17 @@ public class ValueTypeTests {
 		}
 
 		void checkFieldsWithDefaults() throws Throwable {
-			checkEqualTriangle2D(tri, defaultTrianglePositions);
+			tri.checkEqualTriangle2D(defaultTrianglePositions);
 			tri = new Triangle2D(defaultTrianglePositionsNew);
-			checkEqualTriangle2D(tri, defaultTrianglePositionsNew);
+			tri.checkEqualTriangle2D(defaultTrianglePositionsNew);
 
-			checkEqualPoint2D(point, defaultPointPositions1);
+			point.checkEqualPoint2D(defaultPointPositions1);
 			point = new Point2D(defaultPointPositionsNew);
-			checkEqualPoint2D(point, defaultPointPositionsNew);
+			point.checkEqualPoint2D(defaultPointPositionsNew);
 
-			checkEqualFlattenedLine2D(line, defaultLinePositions1);
+			line.checkEqualFlattenedLine2D(defaultLinePositions1);
 			line = new FlattenedLine2D(defaultLinePositionsNew);
-			checkEqualFlattenedLine2D(line, defaultLinePositionsNew);
+			line.checkEqualFlattenedLine2D(defaultLinePositionsNew);
 
 			assertEquals(o.val, defaultObject);
 			o = new ValueObject(defaultObjectNew);
@@ -382,9 +407,9 @@ public class ValueTypeTests {
 			f = new ValueFloat(defaultFloatNew);
 			assertEquals(f.f, defaultFloatNew);
 
-			checkEqualTriangle2D(tri2, defaultTrianglePositions);
+			tri2.checkEqualTriangle2D(defaultTrianglePositions);
 			tri2 = new Triangle2D(defaultTrianglePositionsNew);
-			checkEqualTriangle2D(tri2, defaultTrianglePositionsNew);
+			tri2.checkEqualTriangle2D(defaultTrianglePositionsNew);
 		}
 	}
 
@@ -416,12 +441,12 @@ public class ValueTypeTests {
 		}
 
 		void checkFieldsWithDefaults() throws Throwable {
-			checkEqualTriangle2D(tri, defaultTrianglePositions);
-			checkEqualPoint2D(point, defaultPointPositions1);
-			checkEqualFlattenedLine2D(line, defaultLinePositions1);
+			tri.checkEqualTriangle2D(defaultTrianglePositions);
+			point.checkEqualPoint2D(defaultPointPositions1);
+			line.checkEqualFlattenedLine2D(defaultLinePositions1);
 			assertEquals(i.i, defaultInt);
 			assertEquals(f.f, defaultFloat);
-			checkEqualTriangle2D(tri2, defaultTrianglePositions);
+			tri2.checkEqualTriangle2D(defaultTrianglePositions);
 			// TODO add putfield tests once withfield is replaced
 		}
 	}
@@ -450,17 +475,17 @@ public class ValueTypeTests {
 		}
 
 		void checkFieldsWithDefaults() throws Throwable {
-			checkEqualTriangle2D(tri, defaultTrianglePositions);
+			tri.checkEqualTriangle2D(defaultTrianglePositions);
 			tri = new Triangle2D(defaultTrianglePositionsNew);
-			checkEqualTriangle2D(tri, defaultTrianglePositionsNew);
+			tri.checkEqualTriangle2D(defaultTrianglePositionsNew);
 
-			checkEqualPoint2D(point, defaultPointPositions1);
+			point.checkEqualPoint2D(defaultPointPositions1);
 			point = new Point2D(defaultPointPositionsNew);
-			checkEqualPoint2D(point, defaultPointPositionsNew);
+			point.checkEqualPoint2D(defaultPointPositionsNew);
 
-			checkEqualFlattenedLine2D(line, defaultLinePositions1);
+			line.checkEqualFlattenedLine2D(defaultLinePositions1);
 			line = new FlattenedLine2D(defaultLinePositionsNew);
-			checkEqualFlattenedLine2D(line, defaultLinePositionsNew);
+			line.checkEqualFlattenedLine2D(defaultLinePositionsNew);
 
 			assertEquals(i.i, defaultInt);
 			i = new ValueInt(defaultIntNew);
@@ -470,9 +495,9 @@ public class ValueTypeTests {
 			f = new ValueFloat(defaultFloatNew);
 			assertEquals(f.f, defaultFloatNew);
 
-			checkEqualTriangle2D(tri2, defaultTrianglePositions);
+			tri2.checkEqualTriangle2D(defaultTrianglePositions);
 			tri2 = new Triangle2D(defaultTrianglePositionsNew);
-			checkEqualTriangle2D(tri2, defaultTrianglePositionsNew);
+			tri2.checkEqualTriangle2D(defaultTrianglePositionsNew);
 		}
 	}
 
@@ -998,7 +1023,7 @@ public class ValueTypeTests {
 	@Test(priority=3)
 	static public void testCreateTriangle2D() throws Throwable {
 		Triangle2D triangle2D = new Triangle2D(defaultTrianglePositions);
-		checkEqualTriangle2D(triangle2D, defaultTrianglePositions);
+		triangle2D.checkEqualTriangle2D(defaultTrianglePositions);
 	}
 
 	@Test(priority=2)
@@ -1068,16 +1093,16 @@ public class ValueTypeTests {
 		array[8] = triangle1;
 		array[9] = triangleEmpty;
 
-		checkEqualTriangle2D(array[0], defaultTrianglePositions);
-		checkEqualTriangle2D(array[1], defaultTrianglePositionsEmpty);
-		checkEqualTriangle2D(array[2], defaultTrianglePositionsNew);
-		checkEqualTriangle2D(array[3], defaultTrianglePositionsEmpty);
-		checkEqualTriangle2D(array[4], defaultTrianglePositions);
-		checkEqualTriangle2D(array[5], defaultTrianglePositionsEmpty);
-		checkEqualTriangle2D(array[6], defaultTrianglePositionsNew);
-		checkEqualTriangle2D(array[7], defaultTrianglePositionsEmpty);
-		checkEqualTriangle2D(array[8], defaultTrianglePositions);
-		checkEqualTriangle2D(array[9], defaultTrianglePositionsEmpty);
+		array[0].checkEqualTriangle2D(defaultTrianglePositions);
+		array[1].checkEqualTriangle2D(defaultTrianglePositionsEmpty);
+		array[2].checkEqualTriangle2D(defaultTrianglePositionsNew);
+		array[3].checkEqualTriangle2D(defaultTrianglePositionsEmpty);
+		array[4].checkEqualTriangle2D(defaultTrianglePositions);
+		array[5].checkEqualTriangle2D(defaultTrianglePositionsEmpty);
+		array[6].checkEqualTriangle2D(defaultTrianglePositionsNew);
+		array[7].checkEqualTriangle2D(defaultTrianglePositionsEmpty);
+		array[8].checkEqualTriangle2D(defaultTrianglePositions);
+		array[9].checkEqualTriangle2D(defaultTrianglePositionsEmpty);
 	}
 
 	@Test(priority=1)
@@ -1195,12 +1220,12 @@ public class ValueTypeTests {
 		c.f = new ValueFloat(defaultFloat);
 		c.tri2 = new Triangle2D(defaultTrianglePositions);
 
-		checkEqualTriangle2D(c.tri, defaultTrianglePositions);
-		checkEqualPoint2D(c.point, defaultPointPositions1);
-		checkEqualFlattenedLine2D(c.line, defaultLinePositions1);
+		c.tri.checkEqualTriangle2D(defaultTrianglePositions);
+		c.point.checkEqualPoint2D(defaultPointPositions1);
+		c.line.checkEqualFlattenedLine2D(defaultLinePositions1);
 		assertEquals(c.i.i, defaultInt);
 		assertEquals(c.f.f, defaultFloat);
-		checkEqualTriangle2D(c.tri2, defaultTrianglePositions);
+		c.tri2.checkEqualTriangle2D(defaultTrianglePositions);
 	}
 
 	static value class ClassWithOnlyStaticFieldsWithLongAlignment {
@@ -1224,13 +1249,13 @@ public class ValueTypeTests {
 		c.i = new ValueInt(defaultInt);
 		c.tri = new Triangle2D(defaultTrianglePositions);
 
-		checkEqualPoint2D(c.point, defaultPointPositions1);
-		checkEqualFlattenedLine2D(c.line, defaultLinePositions1);
+		c.point.checkEqualPoint2D(defaultPointPositions1);
+		c.line.checkEqualFlattenedLine2D(defaultLinePositions1);
 		assertEquals(c.o.val, defaultObject);
 		assertEquals(c.l.l, defaultLong);
 		assertEquals(c.d.d, defaultDouble);
 		assertEquals(c.i.i, defaultInt);
-		checkEqualTriangle2D(c.tri, defaultTrianglePositions);
+		c.tri.checkEqualTriangle2D(defaultTrianglePositions);
 	}
 
 	static value class ClassWithOnlyStaticFieldsWithObjectAlignment {
@@ -1254,13 +1279,13 @@ public class ValueTypeTests {
 		c.f = new ValueFloat(defaultFloat);
 		c.tri2 = new Triangle2D(defaultTrianglePositions);
 
-		checkEqualTriangle2D(c.tri, defaultTrianglePositions);
-		checkEqualPoint2D(c.point, defaultPointPositions1);
-		checkEqualFlattenedLine2D(c.line, defaultLinePositions1);
+		c.tri.checkEqualTriangle2D(defaultTrianglePositions);
+		c.point.checkEqualPoint2D(defaultPointPositions1);
+		c.line.checkEqualFlattenedLine2D(defaultLinePositions1);
 		assertEquals(c.o.val, defaultObject);
 		assertEquals(c.i.i, defaultInt);
 		assertEquals(c.f.f, defaultFloat);
-		checkEqualTriangle2D(c.tri2, defaultTrianglePositions);
+		c.tri2.checkEqualTriangle2D(defaultTrianglePositions);
 	}
 
 	//*******************************************************************************
@@ -1362,23 +1387,414 @@ public class ValueTypeTests {
 	}
 
 	//*******************************************************************************
-	// Helper methods
+	// ACMP tests
 	//*******************************************************************************
+	@Test(priority=2, invocationCount=2)
+	static public void testBasicACMPTestOnIdentityTypes() throws Throwable {
+		Object identityType1 = new String();
+		Object identityType2 = new String();
+		Object nullPointer = null;
 
-
-	static void checkEqualPoint2D(Point2D point, int[] position) throws Throwable {
-		assertEquals(point.x, position[0]);
-		assertEquals(point.y, position[1]);
+		/* sanity test on identity classes */
+		assertTrue((identityType1 == identityType1), "An identity (==) comparison on the same identityType should always return true");
+		assertFalse((identityType2 == identityType1), "An identity (==) comparison on different identityTypes should always return false");
+		assertFalse((identityType2 == nullPointer), "An identity (==) comparison on different identityTypes should always return false");
+		assertTrue((nullPointer == nullPointer), "An identity (==) comparison on the same identityType should always return true");
+		assertFalse((identityType1 != identityType1), "An identity (!=) comparison on the same identityType should always return false");
+		assertTrue((identityType2 != identityType1), "An identity (!=) comparison on different identityTypes should always return true");
+		assertTrue((identityType2 != nullPointer), "An identity (!=) comparison on different identityTypes should always return true");
+		assertFalse((nullPointer != nullPointer), "An identity (!=) comparison on the same identityType should always return false");
 	}
 
-	static void checkEqualFlattenedLine2D(FlattenedLine2D line, int[][] positions) throws Throwable {
-		checkEqualPoint2D(line.st, positions[0]);
-		checkEqualPoint2D(line.en, positions[1]);
+	@Test(priority=2, invocationCount=2)
+	static public void testBasicACMPTestOnValueTypes() throws Throwable {
+		Point2D valueType1 = new Point2D(1, 2);
+		Point2D valueType2 = new Point2D(1, 2);
+		Point2D newValueType = new Point2D(2, 1);
+		Object identityType = new String();
+		Object nullPointer = null;
+
+		assertTrue((valueType1 == valueType1), "A substitutability (==) test on the same value should always return true");
+		assertTrue((valueType1 == valueType2), "A substitutability (==) test on different value the same contents should always return true");
+		assertFalse((valueType1 == newValueType), "A substitutability (==) test on different value should always return false");
+		assertFalse((valueType1 == identityType), "A substitutability (==) test on different value with identity type should always return false");
+		assertFalse((valueType1 == nullPointer), "A substitutability (==) test on different value with null pointer should always return false");
+		assertFalse((valueType1 != valueType1), "A substitutability (!=) test on the same value should always return false");
+		assertFalse((valueType1 != valueType2), "A substitutability (!=) test on different value the same contents should always return false");
+		assertTrue((valueType1 != newValueType), "A substitutability (!=) test on different value should always return true");
+		assertTrue((valueType1 != identityType), "A substitutability (!=) test on different value with identity type should always return true");
+		assertTrue((valueType1 != nullPointer), "A substitutability (!=) test on different value with null pointer should always return true");
 	}
 
-	static void checkEqualTriangle2D(Triangle2D triangle, int[][][] positions) throws Throwable {
-		checkEqualFlattenedLine2D(triangle.v1, positions[0]);
-		checkEqualFlattenedLine2D(triangle.v2, positions[1]);
-		checkEqualFlattenedLine2D(triangle.v3, positions[2]);
+	@Test(priority=4)
+	static public void testACMPTestOnFastSubstitutableValueTypes() throws Throwable {
+		Triangle2D valueType1 = new Triangle2D(defaultTrianglePositions);
+		Triangle2D valueType2 = new Triangle2D(defaultTrianglePositions);
+		Triangle2D newValueType = new Triangle2D(defaultTrianglePositionsNew);
+		Object identityType = new String();
+		Object nullPointer = null;
+
+		assertTrue((valueType1 == valueType1), "A substitutability (==) test on the same value should always return true");
+		assertTrue((valueType1 == valueType2), "A substitutability (==) test on different value the same contents should always return true");
+		assertFalse((valueType1 == newValueType), "A substitutability (==) test on different value should always return false");
+		assertFalse((valueType1 == identityType), "A substitutability (==) test on different value with identity type should always return false");
+		assertFalse((valueType1 == nullPointer), "A substitutability (==) test on different value with null pointer should always return false");
+		assertFalse((valueType1 != valueType1), "A substitutability (!=) test on the same value should always return false");
+		assertFalse((valueType1 != valueType2), "A substitutability (!=) test on different value the same contents should always return false");
+		assertTrue((valueType1 != newValueType), "A substitutability (!=) test on different value should always return true");
+		assertTrue((valueType1 != identityType), "A substitutability (!=) test on different value with identity type should always return true");
+		assertTrue((valueType1 != nullPointer), "A substitutability (!=) test on different value with null pointer should always return true");
+	}
+
+	static value class ValueTypeFastSubVT {
+		int x,y,z;
+		Object[] arr;
+
+		public implicit ValueTypeFastSubVT();
+
+		ValueTypeFastSubVT(int x, int y, int z, Object[] arr) {
+			this.x = x;
+			this.y = y;
+			this.z = z;
+			this.arr = arr;
+		}
+	}
+
+	@Test(priority=3)
+	static public void testACMPTestOnFastSubstitutableValueTypesVer2() throws Throwable {
+		/* these VTs will have array refs */
+		Object[] arr = {"foo", "bar", "baz"};
+		Object[] arr2 = {"foozo", "barzo", "bazzo"};
+		ValueTypeFastSubVT valueType1 = new ValueTypeFastSubVT(1, 2, 3, arr);
+		ValueTypeFastSubVT valueType2 = new ValueTypeFastSubVT(1, 2, 3, arr);
+		ValueTypeFastSubVT newValueType = new ValueTypeFastSubVT(3, 2, 1, arr2);
+		Object identityType = new String();
+		Object nullPointer = null;
+
+		assertTrue((valueType1 == valueType1), "A substitutability (==) test on the same value should always return true");
+		assertTrue((valueType1 == valueType2), "A substitutability (==) test on different value the same contents should always return true");
+		assertFalse((valueType1 == newValueType), "A substitutability (==) test on different value should always return false");
+		assertFalse((valueType1 == identityType), "A substitutability (==) test on different value with identity type should always return false");
+		assertFalse((valueType1 == nullPointer), "A substitutability (==) test on different value with null pointer should always return false");
+		assertFalse((valueType1 != valueType1), "A substitutability (!=) test on the same value should always return false");
+		assertFalse((valueType1 != valueType2), "A substitutability (!=) test on different value the same contents should always return false");
+		assertTrue((valueType1 != newValueType), "A substitutability (!=) test on different value should always return true");
+		assertTrue((valueType1 != identityType), "A substitutability (!=) test on different value with identity type should always return true");
+		assertTrue((valueType1 != nullPointer), "A substitutability (!=) test on different value with null pointer should always return true");
+	}
+
+	static value class Node {
+		long l;
+		Object next;
+		int i;
+
+		Node(long l, Object next, int i) {
+			this.l = l;
+			this.next = next;
+			this.i = i;
+		}
+	}
+
+	@Test(priority=3)
+	static public void testACMPTestOnRecursiveValueTypes() throws Throwable {
+		Node list1 = new Node(3L, null, 3);
+		Node list2 = new Node(3L, null, 3);
+		Node list3sameAs1 = new Node(3L, null, 3);
+		Node list4 = new Node(3L, null, 3);
+		Node list5null = new Node(3L, null, 3);
+		Node list6null = new Node(3L, null, 3);
+		Node list7obj = new Node(3L, new Object(), 3);
+		Node list8str = new Node(3L, "foo", 3);
+		Object identityType = new String();
+		Object nullPointer = null;
+
+		for (int i = 0; i < 100; i++) {
+			list1 = new Node(3L, list1, i);
+			list2 = new Node(3L, list2, i + 1);
+			list3sameAs1 = new Node(3L, list3sameAs1, i);
+		}
+		for (int i = 0; i < 50; i++) {
+			list4 = new Node(3L, list4, i);
+		}
+
+		assertTrue((list1 == list1), "A substitutability (==) test on the same value should always return true");
+		assertTrue((list5null == list5null), "A substitutability (==) test on the same value should always return true");
+		assertTrue((list1 == list3sameAs1), "A substitutability (==) test on different value the same contents should always return true");
+		assertTrue((list5null == list6null), "A substitutability (==) test on different value the same contents should always return true");
+		assertFalse((list1 == list2), "A substitutability (==) test on different value should always return false");
+		assertFalse((list1 == list4), "A substitutability (==) test on different value should always return false");
+		assertFalse((list1 == list5null), "A substitutability (==) test on different value should always return false");
+		assertFalse((list1 == list7obj), "A substitutability (==) test on different value should always return false");
+		assertFalse((list1 == list8str), "A substitutability (==) test on different value should always return false");
+		assertFalse((list7obj == list8str), "A substitutability (==) test on different value should always return false");
+		assertFalse((list1 == identityType), "A substitutability (==) test on different value with identity type should always return false");
+		assertFalse((list1 == nullPointer), "A substitutability (==) test on different value with null pointer should always return false");
+		assertFalse((list1 != list1), "A substitutability (!=) test on the same value should always return false");
+		assertFalse((list5null != list5null), "A substitutability (!=) test on the same value should always return false");
+		assertFalse((list1 != list3sameAs1), "A substitutability (!=) test on different value the same contents should always return false");
+		assertFalse((list5null != list6null), "A substitutability (!=) test on different value the same contents should always return false");
+		assertTrue((list1 != list2), "A substitutability (!=) test on different value should always return true");
+		assertTrue((list1 != list4), "A substitutability (!=) test on different value should always return true");
+		assertTrue((list1 != list5null), "A substitutability (!=) test on different value should always return true");
+		assertTrue((list1 != list7obj), "A substitutability (!=) test on different value should always return true");
+		assertTrue((list1 != list8str), "A substitutability (!=) test on different value should always return true");
+		assertTrue((list7obj != list8str), "A substitutability (!=) test on different value should always return true");
+		assertTrue((list1 != identityType), "A substitutability (!=) test on different value with identity type should always return true");
+		assertTrue((list1 != nullPointer), "A substitutability (!=) test on different value with null pointer should always return true");
+	}
+
+	@Test(priority=3, invocationCount=2)
+	static public void testACMPTestOnValueFloat() throws Throwable {
+		ValueFloat! float1 = new ValueFloat(1.1f);
+		ValueFloat! float2 = new ValueFloat(-1.1f);
+		ValueFloat! float3 = new ValueFloat(12341.112341234f);
+		ValueFloat! float4sameAs1 = new ValueFloat(1.1f);
+		ValueFloat! nan = new ValueFloat(Float.NaN);
+		ValueFloat! nan2 = new ValueFloat(Float.NaN);
+		ValueFloat! positiveZero = new ValueFloat(0.0f);
+		ValueFloat! negativeZero = new ValueFloat(-0.0f);
+		ValueFloat! positiveInfinity = new ValueFloat(Float.POSITIVE_INFINITY);
+		ValueFloat! negativeInfinity = new ValueFloat(Float.NEGATIVE_INFINITY);
+
+		assertTrue((float1 == float1), "A substitutability (==) test on the same value should always return true");
+		assertTrue((float1 == float4sameAs1), "A substitutability (==) test on different value the same contents should always return true");
+		assertTrue((nan == nan2), "A substitutability (==) test on different value the same contents should always return true");
+		assertFalse((float1 == float2), "A substitutability (==) test on different value should always return false");
+		assertFalse((float1 == float3), "A substitutability (==) test on different value should always return false");
+		assertFalse((float1 == nan), "A substitutability (==) test on different value should always return false");
+		assertFalse((float1 == positiveZero), "A substitutability (==) test on different value should always return false");
+		assertFalse((float1 == negativeZero), "A substitutability (==) test on different value should always return false");
+		assertFalse((float1 == positiveInfinity), "A substitutability (==) test on different value should always return false");
+		assertFalse((float1 == negativeInfinity), "A substitutability (==) test on different value should always return false");
+		assertFalse((positiveInfinity == negativeInfinity), "A substitutability (==) test on different value should always return false");
+		assertFalse((positiveZero == negativeZero), "A substitutability (==) test on different value should always return false");
+		assertFalse((float1 != float1), "A substitutability (!=) test on the same value should always return false");
+		assertFalse((float1 != float4sameAs1), "A substitutability (!=) test on different value the same contents should always return false");
+		assertFalse((nan != nan2), "A substitutability (!=) test on different value the same contents should always return false");
+		assertTrue((float1 != float2), "A substitutability (!=) test on different value should always return true");
+		assertTrue((float1 != float3), "A substitutability (!=) test on different value should always return true");
+		assertTrue((float1 != nan), "A substitutability (!=) test on different value should always return true");
+		assertTrue((float1 != positiveZero), "A substitutability (!=) test on different value should always return true");
+		assertTrue((float1 != negativeZero), "A substitutability (!=) test on different value should always return true");
+		assertTrue((float1 != positiveInfinity), "A substitutability (!=) test on different value should always return true");
+		assertTrue((float1 != negativeInfinity), "A substitutability (!=) test on different value should always return true");
+		assertTrue((positiveInfinity != negativeInfinity), "A substitutability (!=) test on different value should always return true");
+		assertTrue((positiveZero != negativeZero), "A substitutability (!=) test on different value should always return true");
+	}
+
+	@Test(priority=3, invocationCount=2)
+	static public void testACMPTestOnValueDouble() throws Throwable {
+		ValueDouble! double1 = new ValueDouble(1.1d);
+		ValueDouble! double2 = new ValueDouble(-1.1d);
+		ValueDouble! double3 = new ValueDouble(12341.112341234d);
+		ValueDouble! double4sameAs1 = new ValueDouble(1.1d);
+		ValueDouble! nan = new ValueDouble(Double.NaN);
+		ValueDouble! nan2 = new ValueDouble(Double.NaN);
+		ValueDouble! positiveZero = new ValueDouble(0.0d);
+		ValueDouble! negativeZero = new ValueDouble(-0.0d);
+		ValueDouble! positiveInfinity = new ValueDouble(Double.POSITIVE_INFINITY);
+		ValueDouble! negativeInfinity = new ValueDouble(Double.NEGATIVE_INFINITY);
+
+		assertTrue((double1 == double1), "A substitutability (==) test on the same value should always return true");
+		assertTrue((double1 == double4sameAs1), "A substitutability (==) test on different value the same contents should always return true");
+		assertTrue((nan == nan2), "A substitutability (==) test on different value the same contents should always return true");
+		assertFalse((double1 == double2), "A substitutability (==) test on different value should always return false");
+		assertFalse((double1 == double3), "A substitutability (==) test on different value should always return false");
+		assertFalse((double1 == nan), "A substitutability (==) test on different value should always return false");
+		assertFalse((double1 == positiveZero), "A substitutability (==) test on different value should always return false");
+		assertFalse((double1 == negativeZero), "A substitutability (==) test on different value should always return false");
+		assertFalse((double1 == positiveInfinity), "A substitutability (==) test on different value should always return false");
+		assertFalse((double1 == negativeInfinity), "A substitutability (==) test on different value should always return false");
+		assertFalse((positiveInfinity == negativeInfinity), "A substitutability (==) test on different value should always return false");
+		assertFalse((positiveZero == negativeZero), "A substitutability (==) test on different value should always return false");
+		assertFalse((double1 != double1), "A substitutability (!=) test on the same value should always return false");
+		assertFalse((double1 != double4sameAs1), "A substitutability (!=) test on different value the same contents should always return false");
+		assertFalse((nan != nan2), "A substitutability (!=) test on different value the same contents should always return false");
+		assertTrue((double1 != double2), "A substitutability (!=) test on different value should always return true");
+		assertTrue((double1 != double3), "A substitutability (!=) test on different value should always return true");
+		assertTrue((double1 != nan), "A substitutability (!=) test on different value should always return true");
+		assertTrue((double1 != positiveZero), "A substitutability (!=) test on different value should always return true");
+		assertTrue((double1 != negativeZero), "A substitutability (!=) test on different value should always return true");
+		assertTrue((double1 != positiveInfinity), "A substitutability (!=) test on different value should always return true");
+		assertTrue((double1 != negativeInfinity), "A substitutability (!=) test on different value should always return true");
+		assertTrue((positiveInfinity != negativeInfinity), "A substitutability (!=) test on different value should always return true");
+		assertTrue((positiveZero != negativeZero), "A substitutability (!=) test on different value should always return true");
+	}
+
+	@Test(priority=6)
+	static public void testACMPTestOnAssortedValues() throws Throwable {
+		Object assortedValueWithLongAlignment = AssortedValueWithLongAlignment.createObjectWithDefaults();
+		Object assortedValueWithLongAlignment2 = AssortedValueWithLongAlignment.createObjectWithDefaults();
+		Object assortedValueWithLongAlignment3 = AssortedValueWithLongAlignment.createObjectWithDefaults();
+		assortedValueWithLongAlignment3 = ((AssortedValueWithLongAlignment)assortedValueWithLongAlignment3).checkFieldsWithDefaults();
+
+		Object assortedValueWithObjectAlignment = AssortedValueWithObjectAlignment.createObjectWithDefaults();
+		Object assortedValueWithObjectAlignment2 = AssortedValueWithObjectAlignment.createObjectWithDefaults();
+		Object assortedValueWithObjectAlignment3 = AssortedValueWithObjectAlignment.createObjectWithDefaults();
+		assortedValueWithObjectAlignment3 = ((AssortedValueWithObjectAlignment)assortedValueWithObjectAlignment3).checkFieldsWithDefaults();
+
+		// TODO add commented out tests once withfield is replaced
+		assertTrue((assortedValueWithLongAlignment == assortedValueWithLongAlignment), "A substitutability (==) test on the same value should always return true");
+		assertTrue((assortedValueWithObjectAlignment == assortedValueWithObjectAlignment), "A substitutability (==) test on the same value should always return true");
+		assertTrue((assortedValueWithLongAlignment == assortedValueWithLongAlignment2), "A substitutability (==) test on different value the same contents should always return true");
+		assertTrue((assortedValueWithObjectAlignment == assortedValueWithObjectAlignment2), "A substitutability (==) test on different value the same contents should always return true");
+		//assertFalse((assortedValueWithLongAlignment == assortedValueWithLongAlignment3), "A substitutability (==) test on different value should always return false");
+		assertFalse((assortedValueWithLongAlignment == assortedValueWithObjectAlignment), "A substitutability (==) test on different value should always return false");
+		//assertFalse((assortedValueWithObjectAlignment == assortedValueWithObjectAlignment3), "A substitutability (==) test on different value should always return false");
+		assertFalse((assortedValueWithLongAlignment != assortedValueWithLongAlignment), "A substitutability (!=) test on the same value should always return false");
+		assertFalse((assortedValueWithObjectAlignment != assortedValueWithObjectAlignment), "A substitutability (!=) test on the same value should always return false");
+		assertFalse((assortedValueWithLongAlignment != assortedValueWithLongAlignment2), "A substitutability (!=) test on different value the same contents should always return false");
+		assertFalse((assortedValueWithObjectAlignment != assortedValueWithObjectAlignment2), "A substitutability (!=) test on different value the same contents should always return false");
+		//assertTrue((assortedValueWithLongAlignment != assortedValueWithLongAlignment3), "A substitutability (!=) test on different value the same contents should always return false");
+		assertTrue((assortedValueWithLongAlignment != assortedValueWithObjectAlignment), "A substitutability (!=) test on different value the same contents should always return false");
+		//assertTrue((assortedValueWithObjectAlignment != assortedValueWithObjectAlignment3), "A substitutability (!=) test on different value the same contents should always return false");
+	}
+
+	// *******************************************************************************
+	// Value type synchronization tests
+	// *******************************************************************************
+
+	@Test(priority=2)
+	static public void testMonitorEnterAndExitOnValueType() throws Throwable {
+		int x = 1;
+		int y = 1;
+		Object valueType = new Point2D(x, y);
+		Object[] valueTypeArray = new FlattenedLine2D[genericArraySize];
+
+		Class<?> testMonitorExitOnValueType = ValueTypeGenerator.generateRefClass("TestMonitorEnterAndExitOnValueType");
+		MethodHandle monitorEnterAndExitOnValueType = lookup.findStatic(testMonitorExitOnValueType, "testMonitorEnterAndExitWithRefType", MethodType.methodType(void.class, Object.class));
+		try {
+			monitorEnterAndExitOnValueType.invoke(valueType);
+			fail("should throw exception. MonitorExit cannot be used with ValueType");
+		} catch (IllegalMonitorStateException e) {}
+
+		try {
+			monitorEnterAndExitOnValueType.invoke(valueTypeArray);
+		} catch (IllegalMonitorStateException e) {
+			fail("Should not throw exception. MonitorExit can be used with ValueType arrays");
+		}
+	}
+
+	@Test(priority=2)
+	static public void testSynchMethodsOnValueTypes() throws Throwable {
+		try {
+			ValueTypeGenerator.generateIllegalValueClassWithSychMethods("TestSynchMethodsOnValueTypesIllegal");
+			fail("should throw exception. Synchronized methods cannot be used with ValueType");
+		} catch (ClassFormatError e) {}
+
+		Class<?> clazz = ValueTypeGenerator.generateValueClass("TestSynchMethodsOnValueTypes");
+		MethodHandle staticSyncMethod = lookup.findStatic(clazz, "staticSynchronizedMethodReturnInt", MethodType.methodType(int.class));
+
+		try {
+			staticSyncMethod.invoke();
+		} catch (ClassFormatError e) {
+			fail("should not throw exception. Synchronized static methods can be used with ValueType");
+		}
+	}
+
+	@Test(priority=2)
+	static public void testSynchMethodsOnRefTypes() throws Throwable {
+		Class<?> refTypeClass = ValueTypeGenerator.generateRefClass("TestSynchMethodsOnRefTypes");
+		MethodHandle makeRef = lookup.findStatic(refTypeClass, "makeRef", MethodType.methodType(refTypeClass));
+		Object refType = makeRef.invoke();
+
+		MethodHandle syncMethod = lookup.findVirtual(refTypeClass, "synchronizedMethodReturnInt", MethodType.methodType(int.class));
+		MethodHandle staticSyncMethod = lookup.findStatic(refTypeClass, "staticSynchronizedMethodReturnInt", MethodType.methodType(int.class));
+
+		try {
+			syncMethod.invoke(refType);
+		} catch (IllegalMonitorStateException e) {
+			fail("should not throw exception. Synchronized static methods can be used with RefType");
+		}
+
+		try {
+			staticSyncMethod.invoke();
+		} catch (IllegalMonitorStateException e) {
+			fail("should not throw exception. Synchronized static methods can be used with RefType");
+		}
+	}
+
+	@Test(priority=1)
+	static public void testMonitorExitWithRefType() throws Throwable {
+		int x = 1;
+		Object refType = (Object) x;
+
+		Class<?> testMonitorExitWithRefType = ValueTypeGenerator.generateRefClass("TestMonitorExitWithRefType");
+		MethodHandle monitorExitWithRefType = lookup.findStatic(testMonitorExitWithRefType, "testMonitorExitOnObject", MethodType.methodType(void.class, Object.class));
+		try {
+			monitorExitWithRefType.invoke(refType);
+			fail("should throw exception. MonitorExit doesn't have a matching MonitorEnter");
+		} catch (IllegalMonitorStateException e) {}
+	}
+
+	@Test(priority=1)
+	static public void testMonitorEnterAndExitWithRefType() throws Throwable {
+		int x = 2;
+		Object refType = (Object) x;
+
+		Class<?> testMonitorEnterAndExitWithRefType = ValueTypeGenerator.generateRefClass("TestMonitorEnterAndExitWithRefType");
+		MethodHandle monitorEnterAndExitWithRefType = lookup.findStatic(testMonitorEnterAndExitWithRefType, "testMonitorEnterAndExitWithRefType", MethodType.methodType(void.class, Object.class));
+		try {
+			monitorEnterAndExitWithRefType.invoke(refType);
+		} catch (IllegalMonitorStateException e) {
+			fail("shouldn't throw exception. MonitorEnter and MonitorExit should be used with refType");
+		}
+	}
+
+	static class ClassWithValueTypeVolatile {
+		ValueInt! i;
+		ValueInt! i2;
+		Point2D! point; // 8 bytes, will be flattened.
+		volatile Point2D! vpoint; // volatile 8 bytes, will be flattened.
+		FlattenedLine2D! line; // 16 bytes, will be flattened.
+		volatile FlattenedLine2D! vline; // volatile 16 bytes, will not be flattened.
+		ClassWithValueTypeVolatile(ValueInt! i, ValueInt! i2, Point2D! point, Point2D! vpoint,
+			FlattenedLine2D! line, FlattenedLine2D! vline) {
+				this.i = i;
+				this.i2 = i2;
+				this.point = point;
+				this.vpoint = vpoint;
+				this.line = line;
+				this.vline = vline;
+		}
+
+		static ClassWithValueTypeVolatile createObjectWithDefaults() {
+			return new ClassWithValueTypeVolatile(new ValueInt(defaultInt), new ValueInt(defaultInt),
+				new Point2D(defaultPointPositions1), new Point2D(defaultPointPositions1),
+				new FlattenedLine2D(defaultLinePositions1), new FlattenedLine2D(defaultLinePositions1)
+			);
+		}
+
+		void checkFieldsWithDefaults() throws Throwable {
+			assertEquals(i.i, defaultInt);
+			i = new ValueInt(defaultIntNew);
+			assertEquals(i.i, defaultIntNew);
+
+			assertEquals(i2.i, defaultInt);
+			i2 = new ValueInt(defaultIntNew);
+			assertEquals(i2.i, defaultIntNew);
+
+			point.checkEqualPoint2D(defaultPointPositions1);
+			point = new Point2D(defaultPointPositionsNew);
+			point.checkEqualPoint2D(defaultPointPositionsNew);
+
+			vpoint.checkEqualPoint2D(defaultPointPositions1);
+			vpoint = new Point2D(defaultPointPositionsNew);
+			vpoint.checkEqualPoint2D(defaultPointPositionsNew);
+
+			line.checkEqualFlattenedLine2D(defaultLinePositions1);
+			line = new FlattenedLine2D(defaultLinePositionsNew);
+			line.checkEqualFlattenedLine2D(defaultLinePositionsNew);
+
+			vline.checkEqualFlattenedLine2D(defaultLinePositions1);
+			vline = new FlattenedLine2D(defaultLinePositionsNew);
+			vline.checkEqualFlattenedLine2D(defaultLinePositionsNew);
+		}
+	}
+
+	@Test(priority=3)
+	static public void createClassWithVolatileValueTypeFields() throws Throwable {
+		ClassWithValueTypeVolatile c = ClassWithValueTypeVolatile.createObjectWithDefaults();
+		c.checkFieldsWithDefaults();
 	}
 }

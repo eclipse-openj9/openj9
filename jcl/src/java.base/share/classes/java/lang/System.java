@@ -1802,13 +1802,13 @@ public abstract static class LoggerFinder {
 								(PrivilegedAction<LoggerFinder>) () -> jdk.internal.logger.LoggerFinderLoader.getLoggerFinder(),
 								AccessController.getContext(),
 								com.ibm.oti.util.RuntimePermissions.permissionLoggerFinder);
-			/*[IF JAVA_SPEC_VERSION >= 17]*/
+			/*[IF JAVA_SPEC_VERSION >= 11]*/
 			/*[IF JAVA_SPEC_VERSION != 21] Temporary until jdk21 picks up the OpenJDK change */
 			if (localFinder instanceof jdk.internal.logger.LoggerFinderLoader.TemporaryLoggerFinder) {
 				return localFinder;
 			}
 			/*[ENDIF] JAVA_SPEC_VERSION != 21 */
-			/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
+			/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 			loggerFinder = localFinder;
 		}
 		return localFinder;
