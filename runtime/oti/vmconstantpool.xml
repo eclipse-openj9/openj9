@@ -247,6 +247,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	<!-- Field references for Java 19 Virtual Thread. -->
 	<fieldref class="java/lang/Thread" name="cont" signature="Ljdk/internal/vm/Continuation;" versions="19-"/>
 	<fieldref class="java/lang/Thread" name="holder" signature="Ljava/lang/Thread$FieldHolder;" versions="19-"/>
+	<fieldref class="java/lang/Thread" name="container" signature="Ljdk/internal/vm/ThreadContainer;" versions="19-"/>
 	<fieldref class="java/lang/Thread$FieldHolder" name="daemon" signature="Z" versions="19-"/>
 	<fieldref class="java/lang/Thread$FieldHolder" name="group" signature="Ljava/lang/ThreadGroup;" versions="19-"/>
 	<fieldref class="java/lang/Thread$FieldHolder" name="priority" signature="I" versions="19-"/>
