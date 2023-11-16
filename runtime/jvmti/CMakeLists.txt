@@ -49,7 +49,7 @@ j9vm_add_library(j9jvmti SHARED
 	jvmtiStackFrame.c
 	jvmtiStartup.c
 	jvmtiSystemProperties.c
-	jvmtiThread.c
+	jvmtiThread.cpp
 	jvmtiThreadGroup.c
 	jvmtiTimers.c
 	jvmtiWatchedField.c
