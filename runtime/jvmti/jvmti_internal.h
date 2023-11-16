@@ -2238,7 +2238,7 @@ jvmtiSetSystemProperty(jvmtiEnv* env,
 	const char* value);
 
 
-/* ---------------- jvmtiThread.c ---------------- */
+/* ---------------- jvmtiThread.cpp ---------------- */
 
 /**
 * @brief
