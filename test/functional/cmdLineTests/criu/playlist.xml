@@ -65,6 +65,12 @@
 			<variation>-Xint -XX:+CRIURestoreNonPortableMode</variation>
 			<variation>-Xjit:count=0 -XX:+CRIURestoreNonPortableMode</variation>
 		</variations>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/18468</comment>
+				<platform>ppc64le.*</platform>
+			</disable>
+		</disables>
 		<command>
 			$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -Xdump \
 			-DSCRIPPATH=$(TEST_RESROOT)$(D)criuScript.sh -DTEST_RESROOT=$(TEST_RESROOT) \
@@ -99,6 +105,12 @@
 			<variation>-Xgcpolicy:gencon -Xgcthreads64 -XX:CheckpointGCThreads=1</variation>
 			<variation>-Xgcpolicy:gencon -Xgcthreads1</variation>
 		</variations>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/18468</comment>
+				<platform>ppc64le.*</platform>
+			</disable>
+		</disables>
 		<command>
 			TR_Options=$(Q)exclude={org/openj9/criu/TimeChangeTest.nanoTimeInt()J},dontInline={org/openj9/criu/TimeChangeTest.nanoTimeInt()J|org/openj9/criu/TimeChangeTest.nanoTimeJit()J},{org/openj9/criu/TimeChangeTest.nanoTimeJit()J}(count=1)$(Q) \
 			$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -Xdump \
@@ -128,6 +140,12 @@
 			<variation>-Xjit:count=0</variation>
 			<variation>-Xjit:vlog=vlog</variation>
 		</variations>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/18468</comment>
+				<platform>ppc64le.*</platform>
+			</disable>
+		</disables>
 		<command>
 			TR_Options=$(Q)disableSuffixLogs$(Q) \
 			$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -Xdump \
@@ -156,6 +174,12 @@
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/18468</comment>
+				<platform>ppc64le.*</platform>
+			</disable>
+		</disables>
 		<command>
 			if [ -x $(Q)$(TEST_JDK_BIN)$(D)jitserver$(Q) ]; \
 			then \
@@ -195,6 +219,12 @@
 			<variation>-Xjit:vlog=vlog</variation>
 			<variation>-XX:+JVMPortableRestoreMode</variation>
 		</variations>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/18468</comment>
+				<platform>ppc64le.*</platform>
+			</disable>
+		</disables>
 		<command>
 			if [ -x $(Q)$(TEST_JDK_BIN)$(D)jitserver$(Q) ]; \
 			then \
@@ -234,6 +264,12 @@
 			<variation>-Xgcpolicy:optthruput</variation>
 			<variation>-Xgcpolicy:optavgpause</variation>
 		</variations>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/18468</comment>
+				<platform>ppc64le.*</platform>
+			</disable>
+		</disables>
 		<command>
 			TR_Options=$(Q)exclude={org/openj9/criu/TimeChangeTest.nanoTimeInt()J},dontInline={org/openj9/criu/TimeChangeTest.nanoTimeInt()J|org/openj9/criu/TimeChangeTest.nanoTimeJit()J},{org/openj9/criu/TimeChangeTest.nanoTimeJit()J}(count=1)$(Q) \
 			$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -Xdump \
@@ -265,6 +301,12 @@
 			<variation>-Xgcpolicy:optthruput</variation>
 			<variation>-Xgcpolicy:optavgpause</variation>
 		</variations>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/18468</comment>
+				<platform>ppc64le.*</platform>
+			</disable>
+		</disables>
 		<command>
 			TR_Options=$(Q)exclude={org/openj9/criu/TimeChangeTest.nanoTimeInt()J},dontInline={org/openj9/criu/TimeChangeTest.nanoTimeInt()J|org/openj9/criu/TimeChangeTest.nanoTimeJit()J},{org/openj9/criu/TimeChangeTest.nanoTimeJit()J}(count=1)$(Q) \
 			$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -Xdump \
@@ -296,6 +338,12 @@
 			<variation>-Xgcpolicy:optthruput</variation>
 			<variation>-Xgcpolicy:optavgpause</variation>
 		</variations>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/18468</comment>
+				<platform>ppc64le.*</platform>
+			</disable>
+		</disables>
 		<command>
 			TR_Options=$(Q)exclude={org/openj9/criu/TimeChangeTest.nanoTimeInt()J},dontInline={org/openj9/criu/TimeChangeTest.nanoTimeInt()J|org/openj9/criu/TimeChangeTest.nanoTimeJit()J},{org/openj9/criu/TimeChangeTest.nanoTimeJit()J}(count=1)$(Q) \
 			$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -Xdump \
@@ -327,6 +375,12 @@
 			<variation>-Xgcpolicy:optthruput</variation>
 			<variation>-Xgcpolicy:optavgpause</variation>
 		</variations>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/18468</comment>
+				<platform>ppc64le.*</platform>
+			</disable>
+		</disables>
 		<command>
 			TR_Options=$(Q)exclude={org/openj9/criu/TimeChangeTest.nanoTimeInt()J},dontInline={org/openj9/criu/TimeChangeTest.nanoTimeInt()J|org/openj9/criu/TimeChangeTest.nanoTimeJit()J},{org/openj9/criu/TimeChangeTest.nanoTimeJit()J}(count=1)$(Q) \
 			$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -Xdump \
@@ -357,6 +411,12 @@
 			<variation>-Xjit:count=0 -XX:+CRIURestoreNonPortableMode</variation>
 			<variation>-XX:+JVMPortableRestoreMode</variation>
 		</variations>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/18468</comment>
+				<platform>ppc64le.*</platform>
+			</disable>
+		</disables>
 		<command>
 			$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -Xdump \
 			-DSCRIPPATH=$(TEST_RESROOT)$(D)criuScript.sh -DTEST_RESROOT=$(TEST_RESROOT) \
@@ -388,6 +448,12 @@
 			<variation>-Xint -XX:+CRIURestoreNonPortableMode</variation>
 			<variation>-Xjit:count=0 -XX:+CRIURestoreNonPortableMode</variation>
 		</variations>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/18468</comment>
+				<platform>ppc64le.*</platform>
+			</disable>
+		</disables>
 		<command>
 			$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -Xdump \
 			-DSCRIPPATH=$(TEST_RESROOT)$(D)criuScript.sh -DTEST_RESROOT=$(TEST_RESROOT) \
@@ -417,6 +483,12 @@
 		<variations>
 			<variation>-XX:+CRIURestoreNonPortableMode -Denable.j9internal.checkpoint.security.api.debug=true</variation>
 		</variations>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/18468</comment>
+				<platform>ppc64le.*</platform>
+			</disable>
+		</disables>
 		<command>
 			$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -Xdump \
 			-DSCRIPPATH=$(TEST_RESROOT)$(D)criuSecurityScript.sh -DTEST_RESROOT=$(TEST_RESROOT) \
@@ -443,6 +515,12 @@
 		<variations>
 			<variation>-Denable.j9internal.checkpoint.security.api.debug=true</variation>
 		</variations>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/18468</comment>
+				<platform>ppc64le.*</platform>
+			</disable>
+		</disables>
 		<command>
 			$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -Xdump \
 			-DSCRIPPATH=$(TEST_RESROOT)$(D)criuRandomScript.sh -DTEST_RESROOT=$(TEST_RESROOT) \
