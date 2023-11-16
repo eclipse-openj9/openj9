@@ -24,6 +24,11 @@
 #include "jvmtiHelpers.h"
 #include "jvmti_internal.h"
 
+#if JAVA_SPEC_VERSION >= 19
+#include "HeapIteratorAPI.h"
+#include "VMHelpers.hpp"
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
 extern "C" {
 
 typedef struct J9JVMTIRunAgentThreadArgs {
@@ -39,8 +44,6 @@ static UDATA wrappedAgentThreadStart(J9PortLibrary *portLib, void *entryArg);
 static void ownedMonitorIterator(J9VMThread *currentThread, J9StackWalkState *walkState, j9object_t *slot, const void *stackLocation);
 
 #if JAVA_SPEC_VERSION >= 19
-#include "HeapIteratorAPI.h"
-
 typedef struct jvmtiVThreadCallBackData {
 	const jthread *except_list;
 	jint except_count;
@@ -49,6 +52,9 @@ typedef struct jvmtiVThreadCallBackData {
 } jvmtiVThreadCallBackData;
 
 static jvmtiIterationControl jvmtiSuspendResumeCallBack(J9VMThread *vmThread, J9MM_IterateObjectDescriptor *object, void *userData);
+static bool checkIfSafeToContinue(J9VMThread *currentThread, J9InternalVMFunctions *vmFuncs);
+static void unsetJVMTIHaltFlag(J9VMThread *currentThread, J9InternalVMFunctions *vmFuncs);
+static void acquireVMAccessHelper(J9VMThread *currentThread, J9InternalVMFunctions *vmFuncs, bool safePoint);
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
 jvmtiError JNICALL
@@ -1323,6 +1329,111 @@ done:
 }
 
 #if JAVA_SPEC_VERSION >= 19
+/**
+ * Walk all the J9VMThreads, except the current thread. Return false if any
+ * J9VMThread has the J9_PRIVATE_FLAGS_VIRTUAL_THREAD_HIDDEN_FRAMES flag set,
+ * which indicates that the virtual thread and the corresponding carrier thread
+ * are in an unsteady state (e.g. mount or unmount phases). If the above flag
+ * is not set, a JVMTI specific halt flag is set for the J9VMThread. Return true
+ * if no J9VMThreads have the above flag set and all J9VMThreads have been halted.
+ *
+ * @param[in] currentThread the current J9VMThread
+ * @param[in] vmFuncs pointer to VM internal functions struct
+ *
+ * @return true if all threads are halted; otherwise, false
+ */
+static bool
+checkIfSafeToContinue(J9VMThread *currentThread, J9InternalVMFunctions *vmFuncs)
+{
+	bool isSafeToContinue = true;
+	J9JavaVM *vm = currentThread->javaVM;
+
+	Assert_JVMTI_true((J9_XACCESS_EXCLUSIVE == vm->exclusiveAccessState) || (J9_XACCESS_EXCLUSIVE == vm->safePointState));
+
+	J9VMThread *walkThread = J9_LINKED_LIST_START_DO(vm->mainThread);
+	while (NULL != walkThread) {
+		if (VM_VMHelpers::threadCanRunJavaCode(walkThread)
+		&& (currentThread != walkThread)
+		) {
+			if (J9_ARE_ANY_BITS_SET(walkThread->privateFlags, J9_PRIVATE_FLAGS_VIRTUAL_THREAD_HIDDEN_FRAMES)) {
+				isSafeToContinue = false;
+			} else {
+				vmFuncs->setHaltFlag(walkThread, J9_PUBLIC_FLAGS_HALT_THREAD_FOR_JVMTI);
+			}
+		}
+		walkThread = J9_LINKED_LIST_NEXT_DO(vm->mainThread, walkThread);
+	}
+
+	return isSafeToContinue;
+}
+
+/**
+ * Walk all the J9VMThreads, except the current thread. Remove the JVMTI
+ * specific halt flag for each J9VMThread.
+ *
+ * @param[in] currentThread the current J9VMThread
+ * @param[in] vmFuncs pointer to VM internal functions struct
+ */
+static void
+unsetJVMTIHaltFlag(J9VMThread *currentThread, J9InternalVMFunctions *vmFuncs)
+{
+	J9JavaVM *vm = currentThread->javaVM;
+
+	Assert_JVMTI_true((J9_XACCESS_EXCLUSIVE == vm->exclusiveAccessState) || (J9_XACCESS_EXCLUSIVE == vm->safePointState));
+
+	J9VMThread *walkThread = J9_LINKED_LIST_START_DO(vm->mainThread);
+	while (NULL != walkThread) {
+		if (VM_VMHelpers::threadCanRunJavaCode(walkThread)
+		&& (currentThread != walkThread)
+		) {
+			vmFuncs->clearHaltFlag(walkThread, J9_PUBLIC_FLAGS_HALT_THREAD_FOR_JVMTI);
+		}
+		walkThread = J9_LINKED_LIST_NEXT_DO(vm->mainThread, walkThread);
+	}
+}
+
+/**
+ * Acquire either safe point or exclusive VM access while assuring that no
+ * J9VMThread has the J9_PRIVATE_FLAGS_VIRTUAL_THREAD_HIDDEN_FRAMES flag set,
+ * which indicates that the virtual thread and the corresponding carrier
+ * thread are in an unsteady state (e.g. mount or unmount phases).
+ *
+ * Each iteration of the loop sleeps for 0.1 ms. Total sleep in the loop adds
+ * to 100 ms. An assertion is thrown if it is unsafe to continue, i.e. VM
+ * access couldn't be acquired because some J9VMThreads were in an unsteady
+ * state, after the loop.
+ *
+ * @param[in] currentThread the current J9VMThread
+ * @param[in] vmFuncs pointer to VM internal functions struct
+ * @param[in] safePoint true for safe point and false for exclusive VM access
+ */
+static void
+acquireVMAccessHelper(J9VMThread *currentThread, J9InternalVMFunctions *vmFuncs, bool safePoint)
+{
+	VM_VMHelpers::acquireSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
+	bool safeToContinue = checkIfSafeToContinue(currentThread, vmFuncs);
+
+	for (UDATA i = 0; !safeToContinue && (i <= 1000); i++) {
+		VM_VMHelpers::releaseSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
+		vmFuncs->internalExitVMToJNI(currentThread);
+		omrthread_nanosleep(100000);
+		vmFuncs->internalEnterVMFromJNI(currentThread);
+		VM_VMHelpers::acquireSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
+		safeToContinue = checkIfSafeToContinue(currentThread, vmFuncs);
+	}
+
+	Assert_JVMTI_true(safeToContinue);
+}
+
+/**
+ * The callback used to either suspend or resume a virtual thread.
+ *
+ * @param[in] vmThread the J9VMThread
+ * @param[in] object the continuation object for the virtual thread
+ * @param[in] userData indicates whether to suspend or resume the virtual thread
+ *
+ * @return JVMTI_ITERATION_CONTINUE to iterate all the continuation objects
+ */
 static jvmtiIterationControl
 jvmtiSuspendResumeCallBack(J9VMThread *vmThread, J9MM_IterateObjectDescriptor *object, void *userData)
 {
@@ -1387,6 +1498,7 @@ jvmtiSuspendAllVirtualThreads(jvmtiEnv *env,
 		J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 		PORT_ACCESS_FROM_JAVAVM(vm);
 		jvmtiVThreadCallBackData data = {except_list, except_count, TRUE, FALSE};
+		bool safePoint = J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_OSR_SAFE_POINT);
 
 		vmFuncs->internalEnterVMFromJNI(currentThread);
 
@@ -1408,11 +1520,14 @@ jvmtiSuspendAllVirtualThreads(jvmtiEnv *env,
 			}
 		}
 
+		acquireVMAccessHelper(currentThread, vmFuncs, safePoint);
+
 		/* Walk all virtual threads. */
-		vmFuncs->acquireExclusiveVMAccess(currentThread);
 		vm->memoryManagerFunctions->j9gc_flush_nonAllocationCaches_for_walk(vm);
 		vm->memoryManagerFunctions->j9mm_iterate_all_continuation_objects(currentThread, PORTLIB, 0, jvmtiSuspendResumeCallBack, (void*)&data);
-		vmFuncs->releaseExclusiveVMAccess(currentThread);
+
+		unsetJVMTIHaltFlag(currentThread, vmFuncs);
+		VM_VMHelpers::releaseSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
 
 		/* If the current thread appeared in the list (and was marked as suspended), block now until the thread is resumed. */
 		if (data.suspend_current_thread) {
@@ -1444,6 +1559,7 @@ jvmtiResumeAllVirtualThreads(jvmtiEnv *env,
 		J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 		PORT_ACCESS_FROM_JAVAVM(vm);
 		jvmtiVThreadCallBackData data = {except_list, except_count, FALSE, FALSE};
+		bool safePoint = J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_OSR_SAFE_POINT);
 
 		vmFuncs->internalEnterVMFromJNI(currentThread);
 
@@ -1465,11 +1581,14 @@ jvmtiResumeAllVirtualThreads(jvmtiEnv *env,
 			}
 		}
 
+		acquireVMAccessHelper(currentThread, vmFuncs, safePoint);
+
 		/* Walk all virtual threads. */
-		vmFuncs->acquireExclusiveVMAccess(currentThread);
 		vm->memoryManagerFunctions->j9gc_flush_nonAllocationCaches_for_walk(vm);
 		vm->memoryManagerFunctions->j9mm_iterate_all_continuation_objects(currentThread, PORTLIB, 0, jvmtiSuspendResumeCallBack, (void*)&data);
-		vmFuncs->releaseExclusiveVMAccess(currentThread);
+
+		unsetJVMTIHaltFlag(currentThread, vmFuncs);
+		VM_VMHelpers::releaseSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
 done:
 		vmFuncs->internalExitVMToJNI(currentThread);
 	}
