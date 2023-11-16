@@ -846,25 +846,12 @@ getVirtualThreadState(J9VMThread *currentThread, jthread thread)
 				break;
 			case JVMTI_VTHREAD_STATE_STARTED:
 			{
-				JNIEnv *env = (JNIEnv *)currentThread;
-				jfieldID fid = NULL;
-				jclass jlThread = NULL;
-
-				vm->internalVMFunctions->internalExitVMToJNI(currentThread);
-				jlThread = env->FindClass("java/lang/Thread");
-				if (NULL != jlThread) {
-					fid = env->GetFieldID(jlThread, "container", "Ljdk/internal/vm/ThreadContainer;");
-				}
-				if ((NULL != fid)
-					&& (NULL == env->GetObjectField(thread, fid))
-				) {
+				j9object_t threadContainer = J9VMJAVALANGTHREAD_CONTAINER(currentThread, vThreadObject);
+				if (NULL == threadContainer) {
 					rc = JVMTI_JAVA_LANG_THREAD_STATE_NEW;
 				} else {
 					rc = JVMTI_JAVA_LANG_THREAD_STATE_RUNNABLE;
 				}
-				vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
-				/* Re-fetch object to correctly set the isSuspendedInternal field. */
-				vThreadObject = J9_JNI_UNWRAP_REFERENCE(thread);
 				break;
 			}
 			case JVMTI_VTHREAD_STATE_RUNNABLE:
