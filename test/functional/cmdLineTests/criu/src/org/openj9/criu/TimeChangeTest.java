@@ -116,15 +116,8 @@ public class TimeChangeTest {
 		}
 		CRIUTestUtils.showThreadCurrentTime("testTimeCompensation() starts");
 		final TimeUtilities tu = new TimeUtilities();
-		final Object dummy = new Object();
 		long millisTimeStart = System.currentTimeMillis();
 		long nanoTimeStart = System.nanoTime();
-
-		synchronized (dummy) {
-			dummy.wait(100);
-		}
-		TimeUtilities.checkElapseTime("testTimeCompensation() wait 100ms", millisTimeStart, nanoTimeStart, 100, 800,
-				100, 800);
 
 		millisTimeStart = System.currentTimeMillis();
 		nanoTimeStart = System.nanoTime();

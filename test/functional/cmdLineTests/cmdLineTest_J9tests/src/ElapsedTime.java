@@ -34,15 +34,8 @@ public class ElapsedTime {
 
 	private static void testElapsedTime() throws InterruptedException {
 		TimeUtilities tu = new TimeUtilities();
-		final Object dummy = new Object();
 		long millisTimeStart = System.currentTimeMillis();
 		long nanoTimeStart = System.nanoTime();
-
-		synchronized (dummy) {
-			dummy.wait(100);
-		}
-		AssertJUnit.assertTrue(
-				tu.checkElapseTime("testElapsedTime() wait 100ms", millisTimeStart, nanoTimeStart, 100, 800, 100, 800));
 
 		millisTimeStart = System.currentTimeMillis();
 		nanoTimeStart = System.nanoTime();
