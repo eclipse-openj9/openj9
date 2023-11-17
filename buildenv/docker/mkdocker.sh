@@ -422,6 +422,12 @@ fi
   echo " && ln -sf g++ /usr/bin/c++ \\"
   echo " && rm -f gcc-7.tar.xz"
   echo ""
+  echo "# Install gcc-11.2."
+  echo "RUN cd /usr/local \\"
+  echo " && $wget_O gcc-11.tar.xz 'https://ci.adoptopenjdk.net/userContent/gcc/gcc112.$arch.tar.xz' \\"
+  echo " && tar -xJf gcc-11.tar.xz \\"
+  echo " && rm -f gcc-11.tar.xz"
+  echo ""
   local ant_version=1.10.5
   echo "# Install ant."
   echo "RUN cd /tmp \\"
