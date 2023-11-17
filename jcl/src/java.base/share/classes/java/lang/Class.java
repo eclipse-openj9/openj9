@@ -3591,20 +3591,11 @@ private AnnotationCache getAnnotationCache() {
 		if (annotationsData == null) {
 			annotationCacheResult = new AnnotationCache(null, buildAnnotations(null));
 		} else {
-			long offset = Unsafe.ARRAY_BYTE_BASE_OFFSET + ((annotationsData.length * Unsafe.ARRAY_BYTE_INDEX_SCALE) - VM.FJ9OBJECT_SIZE);
-			long ramCPAddr = 0;
-			if (VM.FJ9OBJECT_SIZE == 4) {
-				/* Compressed object refs */
-				ramCPAddr = Integer.toUnsignedLong(unsafe.getInt(annotationsData, offset));
-			} else {
-				ramCPAddr = unsafe.getLong(annotationsData, offset);
-			}
-			Object internalCP = VM.getVMLangAccess().createInternalConstantPool(ramCPAddr);
-
+			ConstantPool cp = VM.getConstantPoolFromAnnotationBytes(this, annotationsData);
 			Annotation[] directAnnotations = sun.reflect.annotation.AnnotationParser.toArray(
 						sun.reflect.annotation.AnnotationParser.parseAnnotations(
 								annotationsData,
-								getConstantPool(internalCP),
+								cp,
 								this));
 			
 			LinkedHashMap<Class<? extends Annotation>, Annotation> directAnnotationsMap = new LinkedHashMap<>(directAnnotations.length * 4 / 3);
