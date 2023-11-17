@@ -59,6 +59,20 @@ static J9WalkFieldAction countFieldIterator(J9ROMFieldShape *romField, J9Class *
 static J9WalkFieldAction allFieldIterator(J9ROMFieldShape *romField, J9Class *declaringClass, void *userData);
 static jmethodID reflectMethodToID(J9VMThread *vmThread, jobject reflectMethod);
 
+/* Append J9ConstantPool* at end of array so Class.getAnnotationCache, java.lang.reflect.Method and
+ * java.lang.reflect.Field can use it to get a ConstantPool consistent with the annotation data in case of redefine
+ */
+static void
+appendConstantPoolToByteArray(struct J9VMThread *vmThread, j9object_t byteArray, U_32 byteCount, J9ConstantPool *ramCP)
+{
+	J9ConstantPool *ramCPPtr = (J9ConstantPool *)(I_8 *)J9JAVAARRAY_EA(vmThread, byteArray, byteCount, I_8);
+	if (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread)) {
+		*(U_32 *)ramCPPtr = (U_32)(UDATA)ramCP;
+	} else {
+		*(UDATA *)ramCPPtr = (UDATA)ramCP;
+	}
+}
+
 static UDATA
 isConstructor(J9Method *ramMethod)
 {
@@ -77,7 +91,7 @@ isConstructor(J9Method *ramMethod)
  * If/when the annotation data is moved, these functions must be updated.
  */
 static j9object_t
-getAnnotationDataAsByteArray(struct J9VMThread *vmThread, U_32 *annotationData)
+getAnnotationDataAsByteArray(struct J9VMThread *vmThread, U_32 *annotationData, struct J9ConstantPool *constantPool)
 {
 	U_32 i = 0;
 	U_32 byteCount = *annotationData;
@@ -94,6 +108,10 @@ getAnnotationDataAsByteArray(struct J9VMThread *vmThread, U_32 *annotationData)
 		J9JAVAARRAYOFBYTE_STORE(vmThread, byteArray, i, byteData[i]);
 	}
 
+	if (NULL != constantPool) {
+		appendConstantPoolToByteArray(vmThread, byteArray, *annotationData, constantPool);
+	}
+
 	return byteArray;
 }
 
@@ -104,7 +122,7 @@ getAnnotationDataFromROMMethodHelper(struct J9VMThread *vmThread, J9Method *ramM
 	J9ROMMethod *romMethod = (J9ROMMethod *) (ramMethod->bytecodes - sizeof(J9ROMMethod));
 	U_32 *annotationData = getAnnotationDataFromROMMethod(romMethod);
 	if (NULL != annotationData) {
-		result = getAnnotationDataAsByteArray(vmThread, annotationData);
+		result = getAnnotationDataAsByteArray(vmThread, annotationData, J9_CP_FROM_METHOD(ramMethod));
 	}
 	return result;
 }
@@ -115,20 +133,7 @@ getClassAnnotationData(struct J9VMThread *vmThread, struct J9Class *declaringCla
 	j9object_t result = NULL;
 	U_32 *annotationData = getClassAnnotationsDataForROMClass(declaringClass->romClass);
 	if (NULL != annotationData) {
-		J9ConstantPool *ramCP = J9_CP_FROM_CLASS(declaringClass);
-		result = getAnnotationDataAsByteArray(vmThread, annotationData);
-		if (NULL != result) {
-			U_32 byteCount = *annotationData;
-			/* Append J9ConstantPool* at end of array so Class.getAnnotationCache can use it to
-			* get a ConstantPool consistent with the annotation data in case of redefine
-			*/
-			J9ConstantPool *ramCPPtr = (J9ConstantPool *)(I_8 *)J9JAVAARRAY_EA(vmThread, result, byteCount, I_8);
-			if (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread)) {
-				*(U_32 *)ramCPPtr = (U_32)(UDATA)ramCP;
-			} else {
-				*(UDATA *)ramCPPtr = (UDATA)ramCP;
-			}
-		}
+		result = getAnnotationDataAsByteArray(vmThread, annotationData, J9_CP_FROM_CLASS(declaringClass));
 	}
 	return result;
 }
@@ -146,19 +151,8 @@ getClassTypeAnnotationsAsByteArray(JNIEnv *env, jclass jlClass)
 		struct J9Class *declaringClass = J9VM_J9CLASS_FROM_HEAPCLASS(vmThread, clazz);
 		U_32 *annotationData = getClassTypeAnnotationsDataForROMClass(declaringClass->romClass);
 		if (NULL != annotationData) {
-			J9ConstantPool *ramCP = J9_CP_FROM_CLASS(declaringClass);
-			j9object_t annotationsByteArray = getAnnotationDataAsByteArray(vmThread, annotationData);
+			j9object_t annotationsByteArray = getAnnotationDataAsByteArray(vmThread, annotationData, J9_CP_FROM_CLASS(declaringClass));
 			if (NULL != annotationsByteArray) {
-				U_32 byteCount = *annotationData;
-				/* Append J9ConstantPool* at end of array so Class.getAnnotationCache can use it to
-				* get a ConstantPool consistent with the annotation data in case of redefine
-				*/
-				J9ConstantPool *ramCPPtr = (J9ConstantPool *)(I_8 *)J9JAVAARRAY_EA(vmThread, annotationsByteArray, byteCount, I_8);
-				if (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread)) {
-					*(U_32 *)ramCPPtr = (U_32)(UDATA)ramCP;
-				} else {
-					*(UDATA *)ramCPPtr = (UDATA)ramCP;
-				}
 				result = vmThread->javaVM->internalVMFunctions->j9jni_createLocalRef(env, annotationsByteArray);
 			}
 		}
@@ -173,7 +167,7 @@ getFieldAnnotationData(struct J9VMThread *vmThread, struct J9Class *declaringCla
 	j9object_t result = NULL;
 	U_32 *annotationData = getFieldAnnotationsDataFromROMField(j9FieldID->field);
 	if ( NULL != annotationData ) {
-		result = getAnnotationDataAsByteArray(vmThread, annotationData);
+		result = getAnnotationDataAsByteArray(vmThread, annotationData, J9_CP_FROM_CLASS(declaringClass));
 	}
 	return result;
 }
@@ -181,24 +175,24 @@ getFieldAnnotationData(struct J9VMThread *vmThread, struct J9Class *declaringCla
 jbyteArray
 getFieldTypeAnnotationsAsByteArray(JNIEnv *env, jobject jlrField)
 {
-    jobject result = NULL;
-    j9object_t fieldObject = NULL;
-    J9VMThread *vmThread = (J9VMThread *) env;
+	jobject result = NULL;
+	j9object_t fieldObject = NULL;
+	J9VMThread *vmThread = (J9VMThread *) env;
 
-    enterVMFromJNI(vmThread);
-    fieldObject = J9_JNI_UNWRAP_REFERENCE(jlrField);
-    if (NULL != fieldObject) {
-        J9JNIFieldID *fieldID = vmThread->javaVM->reflectFunctions.idFromFieldObject(vmThread, NULL, fieldObject);
-    	U_32 *annotationData = getFieldTypeAnnotationsDataFromROMField(fieldID->field);
-    	if ( NULL != annotationData ) {
-    		j9object_t annotationsByteArray = getAnnotationDataAsByteArray(vmThread, annotationData);
-    		if (NULL != annotationsByteArray) {
-    			result = vmThread->javaVM->internalVMFunctions->j9jni_createLocalRef(env, annotationsByteArray);
-    		}
-    	}
-    }
-    exitVMToJNI(vmThread);
-    return result;
+	enterVMFromJNI(vmThread);
+	fieldObject = J9_JNI_UNWRAP_REFERENCE(jlrField);
+	if (NULL != fieldObject) {
+		J9JNIFieldID *fieldID = vmThread->javaVM->reflectFunctions.idFromFieldObject(vmThread, NULL, fieldObject);
+		U_32 *annotationData = getFieldTypeAnnotationsDataFromROMField(fieldID->field);
+		if ( NULL != annotationData ) {
+			j9object_t annotationsByteArray = getAnnotationDataAsByteArray(vmThread, annotationData, NULL);
+			if (NULL != annotationsByteArray) {
+				result = vmThread->javaVM->internalVMFunctions->j9jni_createLocalRef(env, annotationsByteArray);
+			}
+		}
+	}
+	exitVMToJNI(vmThread);
+	return result;
 }
 
 /**
@@ -1936,7 +1930,7 @@ getRecordComponentsHelper(JNIEnv *env, jobject cls)
 			/* byte[] annotations */
 			if (recordComponentHasAnnotations(recordComponent)) {
 				U_32* annotationData = getRecordComponentAnnotationData(recordComponent);
-				j9object_t byteArray = getAnnotationDataAsByteArray(vmThread, annotationData);
+				j9object_t byteArray = getAnnotationDataAsByteArray(vmThread, annotationData, NULL);
 				if (NULL != vmThread->currentException) {
 					DROP_OBJECT_IN_SPECIAL_FRAME(vmThread); /* recordComponentObject */
 					goto done;
@@ -1948,7 +1942,7 @@ getRecordComponentsHelper(JNIEnv *env, jobject cls)
 			/* byte[] typeAnnotations */
 			if (recordComponentHasTypeAnnotations(recordComponent)) {
 				U_32* typeAnnotationData = getRecordComponentTypeAnnotationData(recordComponent);
-				j9object_t byteArray = getAnnotationDataAsByteArray(vmThread, typeAnnotationData);
+				j9object_t byteArray = getAnnotationDataAsByteArray(vmThread, typeAnnotationData, NULL);
 				if (NULL != vmThread->currentException) {
 					DROP_OBJECT_IN_SPECIAL_FRAME(vmThread); /* recordComponentObject */
 					goto done;
