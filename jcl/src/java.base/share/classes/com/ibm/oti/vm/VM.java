@@ -27,9 +27,13 @@ import com.ibm.oti.util.Msg;
 import com.ibm.oti.util.Util;
 
 /*[IF Sidecar19-SE]
+import jdk.internal.misc.Unsafe;
 import jdk.internal.reflect.CallerSensitive;
+import jdk.internal.reflect.ConstantPool;
 /*[ELSE]*/
+import sun.misc.Unsafe;
 import sun.reflect.CallerSensitive;
+import sun.reflect.ConstantPool;
 /*[ENDIF]*/
  
 /**
@@ -583,4 +587,34 @@ public static native long getJ9ConstantPoolFromJ9Class(long j9clazz);
  * @return true if JVM is in single threaded mode, false otherwise
  */
 public static native boolean isJVMInSingleThreadedMode();
+
+/**
+ * A J9ConstantPool* is appended to anntation parameter byte arrays
+ * so it will be consistent with annotation data if the class is redefined.
+ * Only use this method with:
+ * - java.lang.Class.getAnnotationCache()
+ * - java.lang.reflect.Executable.annotations
+ * - java.lang.reflect.Method.parameterAnnotations
+ * - java.lang.reflect.Method.annotationDefault
+ * - java.lang.reflect.Field.annotations
+ * @param clazz
+ * @param array
+ * @return ConstantPool associated with byte array, if array is null return
+ * constantpool associated with clazz
+ */
+public static ConstantPool getConstantPoolFromAnnotationBytes(Class<?> clazz, byte[] array) {
+	if (null == array) {
+		return getVMLangAccess().getConstantPool(clazz);
+	}
+	long offset = Unsafe.ARRAY_BYTE_BASE_OFFSET + ((array.length * Unsafe.ARRAY_BYTE_INDEX_SCALE) - FJ9OBJECT_SIZE);
+	long ramCPAddr = 0;
+	if (FJ9OBJECT_SIZE == 4) {
+		/* Compressed object refs */
+		ramCPAddr = Integer.toUnsignedLong(Unsafe.getUnsafe().getInt(array, offset));
+	} else {
+		ramCPAddr = Unsafe.getUnsafe().getLong(array, offset);
+	}
+	Object internalCP = getVMLangAccess().createInternalConstantPool(ramCPAddr);
+	return getVMLangAccess().getConstantPool(internalCP);
+}
 }
