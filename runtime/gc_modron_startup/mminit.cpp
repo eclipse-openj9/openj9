@@ -3179,24 +3179,114 @@ gcReinitializeDefaultsForRestore(J9VMThread* vmThread)
 {
 	MM_GCExtensions* extensions = MM_GCExtensions::getExtensions(vmThread);
 	J9JavaVM *vm = vmThread->javaVM;
-	bool result = true;
 
 	PORT_ACCESS_FROM_JAVAVM(vm);
+	OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
 
 	extensions->gcThreadCountForced = false;
 	extensions->parSweepChunkSize = 0;
 
 	if (!gcParseReconfigurableCommandLine(vm, vm->checkpointState.restoreArgsList)) {
-		result = false;
+		goto _error;
 	}
-
+	/**
+	 * Note here this parameter which represents the machine physical memory is updated,
+	 * and the original heap geometry from snapshot run remains unchanged.
+	 */
+	extensions->usablePhysicalMemory = omrsysinfo_get_addressable_physical_memory();
 	/* If the thread count is being forced, check its validity and display a warning message if it is invalid, then mark it as invalid. */
 	if (extensions->gcThreadCountForced && (extensions->gcThreadCount < extensions->dispatcher->threadCountMaximum())) {
 		j9nls_printf(PORTLIB, J9NLS_WARNING, J9NLS_GC_THREAD_VALUE_MUST_BE_ABOVE_WARN, (UDATA)extensions->dispatcher->threadCountMaximum());
 		extensions->gcThreadCountForced = false;
 	}
 
-	return result;
+	/**
+	 * While ideally it is desired to change the heap geometry (parameters such as
+	 * extensions->maxMemory, virtual memory reserved, etc), it would be too complex
+	 * and slow. As an alternative, the geometry remains unchanged, but the
+	 * existing softmx functionality is utilized to limit the maximum size of heap.
+	 */
+	{
+		/**
+		 * Softmx is initially set by heuristic(a function of usable physical memory),
+		 * and then further adjusted or refused based on -Xmx/-Xms
+		 */
+		uintptr_t candidateSoftMx = 0;
+		/**
+		 * The original JVM only considers the maxRAMPercent if the Xmx is not set, and
+		 * restore path should do the same.
+		 */
+		if ((0.0 <= extensions->maxRAMPercent) && !extensions->userSpecifiedParameters._Xmx._wasSpecified) {
+			candidateSoftMx = extensions->maxRAMPercent * extensions->usablePhysicalMemory / 100.0;
+		} else {
+			/**
+			 * Since CRIU snapshot/restore is not supported in Java 8, we will
+			 * always pass false to computeDefaultMaxHeapForJava().
+			 */
+			candidateSoftMx = extensions->computeDefaultMaxHeapForJava(false);
+		}
+		/**
+		 * When dynamicHeapAdjustmentForRestore is set, the candidateSoftmx is
+		 * preferred over being refused based on other values.
+		 */
+		if (extensions->dynamicHeapAdjustmentForRestore) {
+			if (extensions->memoryMax > candidateSoftMx) {
+				/* If the softmx value is smaller than Xms, it is set to Xms value. */
+				if (extensions->initialMemorySize > candidateSoftMx) {
+					candidateSoftMx = extensions->initialMemorySize;
+				} else {
+					/**
+					 * If the candidate softmx value is within [Xms, Xmx],
+					 * the softmx is assigned to candidate softmx.
+					 */
+				}
+			} else {
+				/**
+				 * When the proposed softmx is larger than the -Xmx, the whole
+				 * heap is used. Softmx is simply disabled instead of being set
+				 * to the -Xmx value in this case.
+				 */
+				candidateSoftMx = 0;
+			}
+		} else {
+			/**
+			 * If specified (by snapshot command line option, api or restore command line option),
+			 * the user-specified softmx is used to replace the heuristic value.
+			 */
+			if (0 != extensions->softMx) {
+				Assert_MM_true(extensions->softMx >= extensions->initialMemorySize);
+				Assert_MM_true(extensions->softMx <= extensions->memoryMax);
+				candidateSoftMx = extensions->softMx;
+			} else {
+				/**
+				 * If the Xmx is specified or its value is smaller than the softmx, the softmx
+				 * is not set.
+				 */
+				if (!extensions->userSpecifiedParameters._Xmx._wasSpecified && (extensions->memoryMax > candidateSoftMx)) {
+					if (extensions->initialMemorySize > candidateSoftMx) {
+						/**
+						 * If the softmx is calculated by heuristic, and it's smaller than
+						 * the Xms value, then the softmx is increased to the Xms value.
+						 * Note if the softmx is provided through the command line, its validity
+						 * is checked inside gcParseReconfigurableCommandLine().
+						 */
+						candidateSoftMx = extensions->initialMemorySize;
+					} else {
+						/**
+						 * If the candidate softmx value is within [Xms, Xmx], the candidate softmx
+						 * is not further adjusted
+						 */
+					}
+				} else {
+					candidateSoftMx = 0;
+				}
+			}
+		}
+		extensions->softMx = candidateSoftMx;
+	}
+	return true;
+_error:
+	return false;
 }
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
