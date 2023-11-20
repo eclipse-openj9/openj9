@@ -82,7 +82,10 @@ J9::ARM64::CodeGenerator::initialize()
       {
       cg->setSupportsInlineVectorizedMismatch();
       }
-
+   if ((!TR::Compiler->om.canGenerateArraylets()) && (!comp->getOption(TR_DisableSIMDStringHashCode)))
+      {
+      cg->setSupportsInlineStringHashCode();
+      }
    if (comp->fej9()->hasFixedFrameC_CallingConvention())
       cg->setHasFixedFrameC_CallingConvention();
    }
