@@ -49,7 +49,7 @@ class RWMonitor
    private:
 
    friend class J9::MonitorTable;
-   bool init(char *name);
+   bool init(const char *name);
    bool initFromVMMutex(void *mutex);
 
 #ifdef J9VM_JIT_CLASS_UNLOAD_RWMONITOR

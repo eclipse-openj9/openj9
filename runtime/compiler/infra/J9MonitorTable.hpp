@@ -73,7 +73,7 @@ class OMR_EXTENSIBLE MonitorTable : public OMR::MonitorTableConnector
    friend class J9::RWMonitor;
    friend class TR::MonitorTable;
 
-   TR::Monitor *create(char *name);
+   TR::Monitor *create(const char *name);
    void insert(TR::Monitor *monitor);
 
    J9PortLibrary *_portLib;

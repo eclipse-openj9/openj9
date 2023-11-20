@@ -91,7 +91,7 @@ J9::MonitorTable::allocInitClassUnloadMonitorHolders(uint32_t allowedTotalCompTh
    }
 
 TR::Monitor *
-J9::MonitorTable::create(char *name)
+J9::MonitorTable::create(const char *name)
    {
    PORT_ACCESS_FROM_PORT(_portLib);
 

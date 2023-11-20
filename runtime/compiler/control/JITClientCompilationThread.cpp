@@ -766,8 +766,8 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          auto &field = std::get<1>(recv);
          auto &sig = std::get<2>(recv);
          uintptr_t options = std::get<3>(recv);
-         client->write(response, fe->getInstanceFieldOffset(clazz, const_cast<char *>(field.data()), field.length(),
-                                                            const_cast<char *>(sig.data()), sig.length(), options));
+         client->write(response, fe->getInstanceFieldOffset(clazz, field.data(), field.length(),
+                                                            sig.data(), sig.length(), options));
          }
          break;
       case MessageType::VM_getJavaLangClassHashCode:

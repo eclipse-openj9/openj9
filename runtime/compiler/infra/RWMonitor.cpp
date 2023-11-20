@@ -62,7 +62,7 @@ J9::RWMonitor::destroy()
 
 
 bool
-J9::RWMonitor::init(char *name)
+J9::RWMonitor::init(const char *name)
    {
    return j9thread_rwmutex_init(&_monitor, 0, name) == 0 ? true : false;
    }
@@ -113,7 +113,7 @@ J9::RWMonitor::destroy()
 
 
 bool
-J9::RWMonitor::init(char *name)
+J9::RWMonitor::init(const char *name)
    {
    return j9thread_monitor_init_with_name((J9ThreadMonitor**)&_monitor, 0, name) == 0 ? true : false;
    }

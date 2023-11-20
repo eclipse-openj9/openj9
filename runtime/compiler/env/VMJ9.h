@@ -315,19 +315,19 @@ public:
    bool fsdIsEnabled() { return _flags.testAny(FSDIsEnabled); }
    void setFSDIsEnabled(bool b) { _flags.set(FSDIsEnabled, b); }
 
-   uint32_t getInstanceFieldOffset(TR_OpaqueClassBlock * classPointer, char * fieldName, char * sig)
+   uint32_t getInstanceFieldOffset(TR_OpaqueClassBlock * classPointer, const char * fieldName, const char * sig)
       {
       return getInstanceFieldOffset(classPointer, fieldName, (uint32_t)strlen(fieldName), sig, (uint32_t)strlen(sig));
       }
-   uint32_t getInstanceFieldOffset(TR_OpaqueClassBlock * classPointer, char * fieldName, char * sig, uintptr_t options)
+   uint32_t getInstanceFieldOffset(TR_OpaqueClassBlock * classPointer, const char * fieldName, const char * sig, uintptr_t options)
       {
       return getInstanceFieldOffset(classPointer, fieldName, (uint32_t)strlen(fieldName), sig, (uint32_t)strlen(sig), options);
       }
 
-   virtual uint32_t getInstanceFieldOffset(TR_OpaqueClassBlock * classPointer, char * fieldName,
-                                                     uint32_t fieldLen, char * sig, uint32_t sigLen, UDATA options);
-   virtual uint32_t getInstanceFieldOffset(TR_OpaqueClassBlock * classPointer, char * fieldName,
-                                                     uint32_t fieldLen, char * sig, uint32_t sigLen);
+   virtual uint32_t getInstanceFieldOffset(TR_OpaqueClassBlock * classPointer, const char * fieldName,
+                                                     uint32_t fieldLen, const char * sig, uint32_t sigLen, UDATA options);
+   virtual uint32_t getInstanceFieldOffset(TR_OpaqueClassBlock * classPointer, const char * fieldName,
+                                                     uint32_t fieldLen, const char * sig, uint32_t sigLen);
 
    // Not implemented
    virtual TR_ResolvedMethod * getObjectNewInstanceImplMethod(TR_Memory *) { return 0; }
@@ -610,24 +610,24 @@ public:
    virtual uintptr_t           getStaticReferenceFieldAtAddress(uintptr_t fieldAddress);
    virtual int32_t              getInt32FieldAt(uintptr_t objectPointer, uintptr_t fieldOffset);
 
-   int32_t getInt32Field(uintptr_t objectPointer, char *fieldName)
+   int32_t getInt32Field(uintptr_t objectPointer, const char *fieldName)
       {
       return getInt32FieldAt(objectPointer, getInstanceFieldOffset(getObjectClass(objectPointer), fieldName, "I"));
       }
 
-   int64_t getInt64Field(uintptr_t objectPointer, char *fieldName)
+   int64_t getInt64Field(uintptr_t objectPointer, const char *fieldName)
       {
       return getInt64FieldAt(objectPointer, getInstanceFieldOffset(getObjectClass(objectPointer), fieldName, "J"));
       }
    virtual int64_t              getInt64FieldAt(uintptr_t objectPointer, uintptr_t fieldOffset);
    virtual void                 setInt64FieldAt(uintptr_t objectPointer, uintptr_t fieldOffset, int64_t newValue);
-   void setInt64Field(uintptr_t objectPointer, char *fieldName, int64_t newValue)
+   void setInt64Field(uintptr_t objectPointer, const char *fieldName, int64_t newValue)
       {
       setInt64FieldAt(objectPointer, getInstanceFieldOffset(getObjectClass(objectPointer), fieldName, "J"), newValue);
       }
 
    virtual bool                 compareAndSwapInt64FieldAt(uintptr_t objectPointer, uintptr_t fieldOffset, int64_t oldValue, int64_t newValue);
-   bool compareAndSwapInt64Field(uintptr_t objectPointer, char *fieldName, int64_t oldValue, int64_t newValue)
+   bool compareAndSwapInt64Field(uintptr_t objectPointer, const char *fieldName, int64_t oldValue, int64_t newValue)
       {
       return compareAndSwapInt64FieldAt(objectPointer, getInstanceFieldOffset(getObjectClass(objectPointer), fieldName, "J"), oldValue, newValue);
       }
@@ -1390,7 +1390,7 @@ public:
    virtual uintptr_t getLocalFragmentOffset();
    virtual int32_t getLocalObjectAlignmentInBytes();
 
-   uint32_t getInstanceFieldOffsetIncludingHeader(char* classSignature, char * fieldName, char * fieldSig, TR_ResolvedMethod* method);
+   uint32_t getInstanceFieldOffsetIncludingHeader(const char* classSignature, const char * fieldName, const char * fieldSig, TR_ResolvedMethod* method);
 
    virtual void markHotField( TR::Compilation *, TR::SymbolReference *, TR_OpaqueClassBlock *, bool);
    virtual void reportHotField(int32_t reducedCpuUtil, J9Class* clazz, uint8_t fieldOffset,  uint32_t reducedFrequency);
@@ -1583,8 +1583,8 @@ public:
    virtual TR_OpaqueClassBlock *getClassOfMethod(TR_OpaqueMethodBlock *method);
    virtual void               getResolvedMethods(TR_Memory *, TR_OpaqueClassBlock *, List<TR_ResolvedMethod> *);
    virtual TR_ResolvedMethod *getResolvedMethodForNameAndSignature(TR_Memory * trMemory, TR_OpaqueClassBlock * classPointer, const char* methodName, const char *signature);
-   virtual uint32_t           getInstanceFieldOffset(TR_OpaqueClassBlock * classPointer, char * fieldName,
-                                                     uint32_t fieldLen, char * sig, uint32_t sigLen, UDATA options);
+   virtual uint32_t           getInstanceFieldOffset(TR_OpaqueClassBlock * classPointer, const char * fieldName,
+                                                     uint32_t fieldLen, const char * sig, uint32_t sigLen, UDATA options);
 
    virtual TR_OpaqueMethodBlock *getResolvedVirtualMethod(TR_OpaqueClassBlock * classObject, int32_t cpIndex, bool ignoreReResolve = true);
    virtual TR_OpaqueMethodBlock *getResolvedInterfaceMethod(TR_OpaqueMethodBlock *ownerMethod, TR_OpaqueClassBlock * classObject, int32_t cpIndex);
