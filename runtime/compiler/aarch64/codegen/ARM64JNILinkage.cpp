@@ -395,7 +395,6 @@ size_t J9::ARM64::JNILinkage::buildJNIArgs(TR::Node *callNode, TR::RegisterDepen
    {
    const TR::ARM64LinkageProperties &properties = _systemLinkage->getProperties();
    TR::ARM64MemoryArgument *pushToMemory = NULL;
-   TR::Register *argMemReg;
    TR::Register *tempReg;
    int32_t argIndex = 0;
    int32_t numMemArgs = 0;
@@ -503,12 +502,18 @@ size_t J9::ARM64::JNILinkage::buildJNIArgs(TR::Node *callNode, TR::RegisterDepen
    if (numMemArgs > 0)
       {
       pushToMemory = new (trStackMemory()) TR::ARM64MemoryArgument[numMemArgs];
-
-      argMemReg = cg()->allocateRegister();
       }
 
    // align to 16-byte boundary
    totalSize = (totalSize + 15) & (~15);
+   /*
+    * We have J9_INLINE_JNI_MAX_ARG_COUNT (32) slots in interpreter frame.
+    * If the size of the native stack used for passing parameters exceeds this size,
+    * it will overwrite preserved registers.
+    * The number of parameters is guaranteed to be <= J9_INLINE_JNI_MAX_ARG_COUNT
+    * when HasFixedFrameC_CallingConvention codegen flag is set.
+    */
+   TR_ASSERT_FATAL(totalSize <= sizeof(UDATA) * J9_INLINE_JNI_MAX_ARG_COUNT, "totalSize must not be larger than J9_INLINE_JNI_MAX_ARG_COUNT slots");
 
    numIntegerArgs = 0;
    numFloatArgs = 0;
@@ -522,6 +527,7 @@ size_t J9::ARM64::JNILinkage::buildJNIArgs(TR::Node *callNode, TR::RegisterDepen
 #if defined(OSX)
    sigCursor = (char *)sig;
 #endif
+   TR::RealRegister *sp = cg()->machine()->getRealRegister(properties.getStackPointerRegister());
 
    for (i = firstArgumentChild; i < callNode->getNumChildren(); i++)
       {
@@ -611,7 +617,7 @@ size_t J9::ARM64::JNILinkage::buildJNIArgs(TR::Node *callNode, TR::RegisterDepen
 #else
 #error Unsupported platform
 #endif
-               getOutgoingArgumentMemRef(argMemReg, argOffset, argRegister, op, pushToMemory[argIndex++]);
+               getOutgoingArgumentMemRef(sp, argOffset, argRegister, op, pushToMemory[argIndex++]);
                argOffset += offsetInc;
                }
             numIntegerArgs++;
@@ -672,7 +678,7 @@ size_t J9::ARM64::JNILinkage::buildJNIArgs(TR::Node *callNode, TR::RegisterDepen
 #error Unsupported platform
 #endif
                   }
-               getOutgoingArgumentMemRef(argMemReg, argOffset, argRegister, op, pushToMemory[argIndex++]);
+               getOutgoingArgumentMemRef(sp, argOffset, argRegister, op, pushToMemory[argIndex++]);
                argOffset += offsetInc;
                }
             numFloatArgs++;
@@ -746,17 +752,12 @@ size_t J9::ARM64::JNILinkage::buildJNIArgs(TR::Node *callNode, TR::RegisterDepen
 
    if (numMemArgs > 0)
       {
-      TR::RealRegister *sp = cg()->machine()->getRealRegister(properties.getStackPointerRegister());
-      generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::subimmx, callNode, argMemReg, sp, totalSize);
-
       for (argIndex = 0; argIndex < numMemArgs; argIndex++)
          {
          TR::Register *aReg = pushToMemory[argIndex].argRegister;
          generateMemSrc1Instruction(cg(), pushToMemory[argIndex].opCode, callNode, pushToMemory[argIndex].argMemory, aReg);
          cg()->stopUsingRegister(aReg);
          }
-
-      cg()->stopUsingRegister(argMemReg);
       }
 
    return totalSize;
@@ -1058,20 +1059,7 @@ TR::Register *J9::ARM64::JNILinkage::buildDirectDispatch(TR::Node *callNode)
 #endif
    TR::RegisterDependencyConditions *deps = new (trHeapMemory()) TR::RegisterDependencyConditions(maxRegisters, maxPostRegisters, trMemory());
 
-   size_t spSize = buildJNIArgs(callNode, deps, passThread, passReceiver, killNonVolatileGPRs);
-   TR::RealRegister *sp = machine()->getRealRegister(_systemLinkage->getProperties().getStackPointerRegister());
-
-   if (spSize > 0)
-      {
-      if (constantIsUnsignedImm12(spSize))
-         {
-         generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::subimmx, callNode, sp, sp, spSize);
-         }
-      else
-         {
-         TR_ASSERT_FATAL(false, "Too many arguments.");
-         }
-      }
+   buildJNIArgs(callNode, deps, passThread, passReceiver, killNonVolatileGPRs);
 
    TR::Register *returnRegister = getReturnRegisterFromDeps(callNode, deps);
 
@@ -1110,18 +1098,6 @@ TR::Register *J9::ARM64::JNILinkage::buildDirectDispatch(TR::Node *callNode)
 
    TR::Instruction *callInstr = generateMethodDispatch(callNode, isJNIGCPoint, deps, targetAddress, x9Reg);
    generateLabelInstruction(cg(), TR::InstOpCode::label, callNode, returnLabel, callInstr);
-
-   if (spSize > 0)
-      {
-      if (constantIsUnsignedImm12(spSize))
-         {
-         generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::addimmx, callNode, sp, sp, spSize);
-         }
-      else
-         {
-         TR_ASSERT_FATAL(false, "Too many arguments.");
-         }
-      }
 
    if (dropVMAccess)
       {
