@@ -36,7 +36,7 @@
 			<variation>-Xnocompressedrefs -Xgcpolicy:gencon</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
-		-Xint \
+		-Xint --enable-preview \
 		--add-opens java.base/jdk.internal.misc=ALL-UNNAMED \
 		--add-exports java.base/jdk.internal.value=ALL-UNNAMED \
 		-cp $(Q)$(LIB_DIR)$(D)asm.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)ValhallaTests.jar$(Q) \
