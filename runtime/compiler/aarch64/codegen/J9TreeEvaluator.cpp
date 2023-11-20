@@ -29,6 +29,7 @@
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/CodeGenerator_inlines.hpp"
 #include "codegen/CodeGeneratorUtils.hpp"
+#include "codegen/ConstantDataSnippet.hpp"
 #include "codegen/ForceRecompilationSnippet.hpp"
 #include "codegen/GenerateInstructions.hpp"
 #include "codegen/J9ARM64Snippet.hpp"
@@ -5950,6 +5951,263 @@ static TR::Register *inlineCRC32CUpdateBytes(TR::Node *node, TR::CodeGenerator *
    return inputReg;
    }
 
+/**
+ * @brief Generates vectorized instruction sequence for computing hashcode of a String
+ *
+ * @param[in] node: node
+ * @param[in] isCompressed: true if compressed string
+ * @param[in] cg: CodeGenerator
+ *
+ * @returns register
+ */
+static TR::Register *inlineStringHashCode(TR::Node *node, bool isCompressed, TR::CodeGenerator *cg)
+   {
+   /*
+    *    str[16] = example string representing 16 compressed characters
+    *
+    *    The serial method for creating the hash:
+    *          hash = 0, offset = 0, count = 16
+    *          for (int i = offset; i < offset+count; ++i) {
+    *                hash = (hash << 5) - hash + str[i];
+    *          }
+    *
+    *    Note that ((hash << 5) - hash) is equivalent to hash * 31
+    *
+    *    Expanding out the for loop:
+    *          hash = ((((((((0*31+str[0])*31+str[1])*31+....)*31+str[14])*31+str[15])
+    *
+    *    Simplified:
+    *          hash =        (31^15)*str[0] + (31^14)*str[1] + (31^13)*str[2] + (31^12)*str[3]
+    *                      + (31^11)*str[4] + (31^10)*str[5] + (31^9)*str[6]  + (31^8)*str[7]
+    *                      + (31^7)*str[8]  + (31^6)*str[9]  + (31^5)*str[10] + (31^4)*str[11]
+    *                      + (31^3)*str[12] + (31^2)*str[13] + (31^1)*str[14] + (31^0)*str[15]
+    *
+    *    Rearranged:
+    *          hash =        (31^15)*str[0] + (31^11)*str[4] + (31^7)*str[8]  + (31^3)*str[12]
+    *                      + (31^14)*str[1] + (31^10)*str[5] + (31^6)*str[9]  + (31^2)*str[13]
+    *                      + (31^13)*str[2] + (31^9)*str[6]  + (31^5)*str[10] + (31^1)*str[14]
+    *                      + (31^12)*str[3] + (31^8)*str[7]  + (31^4)*str[11] + (31^0)*str[15]
+    *
+    *    Factor out [31^3, 31^2, 31^1, 31^0]:
+    *          hash =        31^3*((31^12)*str[0] + (31^8)*str[4] + (31^4)*str[8]  + str[12])           Vector[0]
+    *                      + 31^2*((31^12)*str[1] + (31^8)*str[5] + (31^4)*str[9]  + str[13])           Vector[1]
+    *                      + 31^1*((31^12)*str[2] + (31^8)*str[6] + (31^4)*str[10] + str[14])           Vector[2]
+    *                      + 31^0*((31^12)*str[3] + (31^8)*str[7] + (31^4)*str[11] + str[15])           Vector[3]
+    *
+    *    Keep factoring out any 31^4 if possible.
+    *
+    *    Vectorization is done by simultaneously calculating the four sums that hash is made of (each -> is a successive step):
+    *          Vector[0] = str[0] -> multiply 31^4 -> add str[4] -> multiply 31^4 -> add str[8]  -> multiply 31^4 -> add str[12] -> multiply 31^3
+    *          Vector[1] = str[1] -> multiply 31^4 -> add str[5] -> multiply 31^4 -> add str[9]  -> multiply 31^4 -> add str[13] -> multiply 31^2
+    *          Vector[2] = str[2] -> multiply 31^4 -> add str[6] -> multiply 31^4 -> add str[10] -> multiply 31^4 -> add str[14] -> multiply 31^1
+    *          Vector[3] = str[3] -> multiply 31^4 -> add str[7] -> multiply 31^4 -> add str[11] -> multiply 31^4 -> add str[15] -> multiply 1
+    *
+    *    Because the vector multiply and accumulate instruction has high latency, the subsequent multiply and accumulate has to wait for a few cycles
+    *    until the result of the previous step becomes available. To avoid this, we break the dependency chain by multiplying with 31^8.
+    *      (1) Vector0[0] = str[0] -> multiply 31^8 -> add str[8]   (2) Vector1[0] = str[4] -> multiply 31^8 -> add str[12]
+    *          Vector0[1] = str[1] -> multiply 31^8 -> add str[9]       Vector1[1] = str[5] -> multiply 31^8 -> add str[13]
+    *          Vector0[2] = str[2] -> multiply 31^8 -> add str[10]      Vector1[2] = str[6] -> multiply 31^8 -> add str[14]
+    *          Vector0[3] = str[3] -> multiply 31^8 -> add str[11]      Vector1[3] = str[7] -> multiply 31^8 -> add str[15]
+    *
+    *      (3) Vector[0] = Vector0[0] -> multiply 31^4 -> add Vector1[0] -> multiply 31^3
+    *          Vector[1] = Vector0[1] -> multiply 31^4 -> add Vector1[1] -> multiply 31^2
+    *          Vector[2] = Vector0[2] -> multiply 31^4 -> add Vector1[2] -> multiply 31^1
+    *          Vector[3] = Vector0[3] -> multiply 31^4 -> add Vector1[3] -> multiply 1
+    *
+    *    If the number of characters in the string is not a multiple of 16 (or 8 in the case of decompressed String),
+    *    then the remainder of the hash is calculated serially.
+    *
+    *    addx dataAddrReg, addressReg, #headersize
+    *    movz resultReg, #0
+    *    cmpw lengthReg, #(8 or 16)
+    *    b.lt residual
+    *    sub lengthReg, lengthReg, #(8 or 16)
+    *    ldr vMultiplierReg, multiplier
+    *    ldr vMultiplier4Reg, multiplier4
+    *    mul vMultiplier8Reg.4s, vMultiplier4Reg.4s, vMultiplier4Reg.4s ; 31^8
+    *    movi vtmp1Reg.16b, #0
+    *    movi vtmp2Reg.16b, #0
+    * LOOP:
+    *    subs lengthReg, lengthReg, #(8 or 16)
+    *    ldr vtmp3Reg, [dataAddrReg], #16
+    *
+    * if decompressed
+    *    uxtl vtmp4Reg.4s, vtmp3Reg.4h
+    *    uxtl2 vtmp5Reg.4s, vtmp3Reg.8h
+    *    ; (1) Vector0[k] = str[k] -> multiply 31^8 -> add str[k+8]
+    *    mla vtmp4Reg.4s, vtmp1Reg.4s, vMultiplier8Reg.4s
+    *    mov vtmp1Reg.16b, vtmp4Reg.16b
+    *    ; (2) Vector1[k] = str[k+4] -> multiply 31^8 -> add str[k+12]
+    *    mla vtmp5Reg.4s, vtmp2Reg.4s, vMultiplier8Reg.4s
+    *    mov vtmp2Reg.16b, vtmp5Reg.16b
+    * else ; compressed
+    *    uxtl vtmp4Reg.8h, vtmp3Reg.8b
+    *    uxtl2 vtmp5Reg.8h, vtmp3Reg.16b
+    *    uxtl vtmp6Reg.4s, vtmp4Reg.4h
+    *    uxtl2 vtmp3Reg.4s, vtmp4Reg.8h
+    *    ; (1) Vector0[k] = str[k] -> multiply 31^8 -> add str[k+8]
+    *    mla vtmp6Reg.4s, vtmp1Reg.4s, vMultiplier8Reg.4s
+    *    uxtl vtmp1Reg.4s, vtmp5Reg.4h
+    *    ; (2) Vector1[k] = str[k+4] -> multiply 31^8 -> add str[k+12]
+    *    mla vtmp3Reg.4s, vtmp2Reg.4s, vMultiplier8Reg.4s
+    *    uxtl2 vtmp2Reg.4s, vtmp5Reg.8h
+    *    ; (1) Vector0[k] = str[k] -> multiply 31^8 -> add str[k+8]
+    *    mla vtmp1Reg.4s, vtmp6Reg.4s, vMultiplier8Reg.4s
+    *    ; (2) Vector1[k] = str[k+4] -> multiply 31^8 -> add str[k+12]
+    *    mla vtmp2Reg.4s, vtmp3Reg.4s, vMultiplier8Reg.4s
+    * fi
+    *    b.ge LOOP
+    *    ; (3) Vector[k] = Vector0[k] -> multiply 31^4 -> add Vector1[k]
+    *    mla vtmp2Reg.4s, vtmp1Reg.4s, vMultiplier4Reg.4s
+    *    ; (3) -> multiply 31^(3-k)
+    *    mul vtmp1Reg.4s, vtmp2Reg.4s, vMultiplierReg.4s
+    *    addv vtmp1Reg, vtmp1Reg.4s
+    *    mov resultReg, vtmp1Reg.s[0]
+    *    addws lengthReg, lengthReg, #(8 or 16)
+    *    b.eq done
+    * residual:
+    *    subws lengthReg, lengthReg, #1
+    * if decompressed
+    *    ldrh dataReg, [dataAddrReg], #2
+    * else ; compressed
+    *    ldrb dataReg, [dataAddrReg], #1
+    * fi
+    *    addw dataReg, dataReg, resultReg, lsl #5
+    *    subw resultReg, dataReg, resultReg
+    *    b.gt residual
+    * done:
+    *    ret
+    *    .align 3
+    * multiplier:
+    *    .dword 0x000003c10000745f ; 31^2, 31^3
+    *    .dword 0x000000010000001f ;    1, 31
+    * multiplier4:
+    *    .dword 0x000e1781000e1781 ; 31^4
+    *    .dword 0x000e1781000e1781
+    *
+    */
+
+   /*
+    * We omit to evaluate the second child because it is always 0.
+    */
+   TR::Node *arrayNode = node->getFirstChild();
+   TR::Node *lengthNode = node->getThirdChild();
+   TR::Register *arrayReg = cg->evaluate(arrayNode);
+   TR::Register *savedLengthReg = cg->evaluate(lengthNode);
+   TR_ARM64ScratchRegisterManager *srm = cg->generateScratchRegisterManager(12);
+   TR::Register *dataAddrReg = (arrayNode->getReferenceCount() > 1) ? srm->findOrCreateScratchRegister() : arrayReg;
+   TR::Register *lengthReg = (lengthNode->getReferenceCount() > 1) ? srm->findOrCreateScratchRegister() : savedLengthReg;
+   TR::Compilation *comp = cg->comp();
+   if (comp->getOptions()->enableDebugCounters())
+      {
+      cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "cg.StringHashCode/(%s)/%s",
+                                                                        comp->signature(),
+                                                                        comp->getHotnessName()), *srm);
+      }
+   TR::Register *resultReg = cg->allocateRegister();
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmx, node, dataAddrReg, arrayReg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
+   loadConstant32(cg, node, 0, resultReg);
+   generateCompareImmInstruction(cg, node, lengthReg, (isCompressed ? 16 : 8), false);
+   TR::LabelSymbol *residualLabel = generateLabelSymbol(cg);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, residualLabel, TR::CC_LT);
+   if (comp->getOptions()->enableDebugCounters())
+      {
+      cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "cg.StringHashCode/(%s)/%s:long",
+                                                                        comp->signature(),
+                                                                        comp->getHotnessName()), *srm);
+      }
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::subimmw, node, lengthReg, lengthReg, (isCompressed ? 16 : 8));
+   TR::Register *multiplierReg = srm->findOrCreateScratchRegister(TR_VRF);
+   {
+      static uint32_t multiplier[] = { 31*31*31, 31*31, 31, 1 };
+      auto snippet = cg->findOrCreateConstantDataSnippet(node, multiplier, sizeof(multiplier));
+      TR::LabelSymbol *multiplierLabel = snippet->getSnippetLabel();
+      generateTrg1ImmSymInstruction(cg, TR::InstOpCode::vldrq, node, multiplierReg, 0, multiplierLabel);
+   }
+   TR::Register *multiplier4Reg = srm->findOrCreateScratchRegister(TR_VRF);
+   {
+      static uint32_t multiplier[] = { 31*31*31*31, 31*31*31*31, 31*31*31*31, 31*31*31*31 };
+      auto snippet = cg->findOrCreateConstantDataSnippet(node, multiplier, sizeof(multiplier));
+      TR::LabelSymbol *multiplierLabel = snippet->getSnippetLabel();
+      generateTrg1ImmSymInstruction(cg, TR::InstOpCode::vldrq, node, multiplier4Reg, 0, multiplierLabel);
+   }
+   TR::Register *multiplier8Reg = srm->findOrCreateScratchRegister(TR_VRF);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::vmul4s, node, multiplier8Reg, multiplier4Reg, multiplier4Reg);
+   TR::Register *vtmp1Reg = srm->findOrCreateScratchRegister(TR_VRF);
+   TR::Register *vtmp2Reg = srm->findOrCreateScratchRegister(TR_VRF);
+   generateTrg1ImmInstruction(cg, TR::InstOpCode::vmovi4s, node, vtmp1Reg, 0);
+   generateTrg1ImmInstruction(cg, TR::InstOpCode::vmovi4s, node, vtmp2Reg, 0);
+
+   /*
+    * Main loop: 16 bytes are processed in 1 iteration of the loop.
+    */
+   TR::LabelSymbol *loopLabel = generateLabelSymbol(cg);
+   TR::Register *vtmp3Reg = srm->findOrCreateScratchRegister(TR_VRF);
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, loopLabel);
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::subsimmw, node, lengthReg, lengthReg, (isCompressed ? 16 : 8));
+   generateTrg1MemInstruction(cg, TR::InstOpCode::vldrpostq, node, vtmp3Reg, TR::MemoryReference::createWithDisplacement(cg, dataAddrReg, 16));
+
+   TR::Register *vtmp4Reg = srm->findOrCreateScratchRegister(TR_VRF);
+   TR::Register *vtmp5Reg = srm->findOrCreateScratchRegister(TR_VRF);
+   if (isCompressed)
+      {
+      TR::Register *vtmp6Reg = srm->findOrCreateScratchRegister(TR_VRF);
+      generateVectorUXTLInstruction(cg, TR::Int8, node, vtmp4Reg, vtmp3Reg, false);
+      generateVectorUXTLInstruction(cg, TR::Int8, node, vtmp5Reg, vtmp3Reg, true);
+      generateVectorUXTLInstruction(cg, TR::Int16, node, vtmp6Reg, vtmp4Reg, false);
+      generateVectorUXTLInstruction(cg, TR::Int16, node, vtmp3Reg, vtmp4Reg, true);
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::vmla4s, node, vtmp6Reg, vtmp1Reg, multiplier8Reg);
+      generateVectorUXTLInstruction(cg, TR::Int16, node, vtmp1Reg, vtmp5Reg, false);
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::vmla4s, node, vtmp3Reg, vtmp2Reg, multiplier8Reg);
+      generateVectorUXTLInstruction(cg, TR::Int16, node, vtmp2Reg, vtmp5Reg, true);
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::vmla4s, node, vtmp1Reg, vtmp6Reg, multiplier8Reg);
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::vmla4s, node, vtmp2Reg, vtmp3Reg, multiplier8Reg);
+      }
+   else
+      {
+      generateVectorUXTLInstruction(cg, TR::Int16, node, vtmp4Reg, vtmp3Reg, false);
+      generateVectorUXTLInstruction(cg, TR::Int16, node, vtmp5Reg, vtmp3Reg, true);
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::vmla4s, node, vtmp4Reg, vtmp1Reg, multiplier8Reg);
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::vorr16b, node, vtmp1Reg, vtmp4Reg, vtmp4Reg); /* mov vtmp1Reg.16b, vtmp4Reg.16b */
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::vmla4s, node, vtmp5Reg, vtmp2Reg, multiplier8Reg);
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::vorr16b, node, vtmp2Reg, vtmp5Reg, vtmp5Reg); /* mov vtmp2Reg.16b, vtmp5Reg.16b */
+      }
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, loopLabel, TR::CC_GE);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::vmla4s, node, vtmp2Reg, vtmp1Reg, multiplier4Reg);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::vmul4s, node, vtmp1Reg, vtmp2Reg, multiplierReg);
+   generateTrg1Src1Instruction(cg, TR::InstOpCode::vaddv4s, node, vtmp1Reg, vtmp1Reg);
+   generateMovVectorElementToGPRInstruction(cg, TR::InstOpCode::umovws, node, resultReg, vtmp1Reg, 0);
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addsimmw, node, lengthReg, lengthReg, (isCompressed ? 16 : 8));
+
+   TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, doneLabel, TR::CC_EQ);
+
+   /* the remainder of the hash is calculated serially. */
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, residualLabel);
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::subsimmw, node, lengthReg, lengthReg, 1);
+   TR::Register *dataReg = srm->findOrCreateScratchRegister();
+   generateTrg1MemInstruction(cg, (isCompressed ? TR::InstOpCode::ldrbpost : TR::InstOpCode::ldrhpost), node, dataReg,
+                              TR::MemoryReference::createWithDisplacement(cg, dataAddrReg, (isCompressed ? 1 : 2)));
+   generateTrg1Src2ShiftedInstruction(cg, TR::InstOpCode::addw, node, dataReg, dataReg, resultReg, TR::SH_LSL, 5);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::subw, node, resultReg, dataReg, resultReg);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, residualLabel, TR::CC_GT);
+
+   TR::RegisterDependencyConditions *conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 3 + srm->numAvailableRegisters(), cg->trMemory());
+   conditions->addPostCondition(arrayReg, TR::RealRegister::NoReg);
+   conditions->addPostCondition(savedLengthReg, TR::RealRegister::NoReg);
+   conditions->addPostCondition(resultReg, TR::RealRegister::NoReg);
+   srm->addScratchRegistersToDependencyList(conditions);
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, conditions);
+
+   node->setRegister(resultReg);
+   srm->stopUsingRegisters();
+   cg->decReferenceCount(arrayNode);
+   cg->recursivelyDecReferenceCount(node->getSecondChild());
+   cg->decReferenceCount(lengthNode);
+
+   return resultReg;
+   }
+
 bool
 J9::ARM64::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&resultReg)
    {
@@ -5963,6 +6221,28 @@ J9::ARM64::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
       }
    if (methodSymbol)
       {
+      switch (methodSymbol->getMandatoryRecognizedMethod())
+         {
+         case TR::java_lang_String_hashCodeImplDecompressed:
+            if (cg->getSupportsInlineStringHashCode())
+               {
+               resultReg = inlineStringHashCode(node, false, cg);
+               return true;
+               }
+            break;
+
+         case TR::java_lang_String_hashCodeImplCompressed:
+            if (cg->getSupportsInlineStringHashCode())
+               {
+               resultReg = inlineStringHashCode(node, true, cg);
+               return true;
+               }
+            break;
+
+         default:
+            break;
+         }
+
       switch (methodSymbol->getRecognizedMethod())
          {
          case TR::java_nio_Bits_keepAlive:
