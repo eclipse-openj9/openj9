@@ -24,6 +24,8 @@
 #include "jvmtiHelpers.h"
 #include "jvmti_internal.h"
 
+extern "C" {
+
 typedef struct J9JVMTIRunAgentThreadArgs {
 	jvmtiEnv *jvmti_env;
 	jvmtiStartFunction proc;
@@ -180,7 +182,7 @@ jvmtiGetAllThreads(jvmtiEnv *env,
 
 		vm->internalVMFunctions->acquireExclusiveVMAccess(currentThread);
 
-		threads = j9mem_allocate_memory(sizeof(jthread) * vm->totalThreadCount, J9MEM_CATEGORY_JVMTI_ALLOCATE);
+		threads = (jthread *)j9mem_allocate_memory(sizeof(jthread) * vm->totalThreadCount, J9MEM_CATEGORY_JVMTI_ALLOCATE);
 		if (NULL == threads) {
 			rc = JVMTI_ERROR_OUT_OF_MEMORY;
 		} else {
@@ -525,7 +527,7 @@ jvmtiGetThreadInfo(jvmtiEnv *env,
 				j9object_t threadName = J9VMJAVALANGTHREAD_NAME(currentThread, threadObject);
 
 				if (NULL == threadName) {
-					name = j9mem_allocate_memory(1, J9MEM_CATEGORY_JVMTI_ALLOCATE);
+					name = (char *)j9mem_allocate_memory(1, J9MEM_CATEGORY_JVMTI_ALLOCATE);
 					if (NULL == name) {
 						rc = JVMTI_ERROR_OUT_OF_MEMORY;
 						goto release;
@@ -543,7 +545,7 @@ jvmtiGetThreadInfo(jvmtiEnv *env,
 				size_t threadNameLen = (NULL == threadName) ? 1 : (strlen(threadName) + 1);
 
 				/* Be sure to allocate at least one byte for the nul termination. */
-				name = j9mem_allocate_memory(threadNameLen, J9MEM_CATEGORY_JVMTI_ALLOCATE);
+				name = (char *)j9mem_allocate_memory(threadNameLen, J9MEM_CATEGORY_JVMTI_ALLOCATE);
 				if (NULL == name) {
 					/* Failed to allocate memory, so release VMTthread and exit. */
 					releaseOMRVMThreadName(targetThread->omrVMThread);
@@ -698,7 +700,7 @@ jvmtiGetOwnedMonitorInfo(jvmtiEnv *env,
 
 			count = walkLocalMonitorRefs(currentThread, NULL, targetThread, threadToWalk, UDATA_MAX);
 
-			locks = j9mem_allocate_memory(sizeof(jobject) * count, J9MEM_CATEGORY_JVMTI_ALLOCATE);
+			locks = (jobject *)j9mem_allocate_memory(sizeof(jobject) * count, J9MEM_CATEGORY_JVMTI_ALLOCATE);
 			if (NULL == locks) {
 				rc = JVMTI_ERROR_OUT_OF_MEMORY;
 			} else if (0 != count) {
@@ -817,7 +819,7 @@ jvmtiGetOwnedMonitorStackDepthInfo(jvmtiEnv *env,
 
 			/* Do we have any records at all? */
 			if (maxRecords > 0) {
-				resultArray = j9mem_allocate_memory((jlong)maxRecords * sizeof(jvmtiMonitorStackDepthInfo), J9MEM_CATEGORY_JVMTI_ALLOCATE);
+				resultArray = (jvmtiMonitorStackDepthInfo *)j9mem_allocate_memory((jlong)maxRecords * sizeof(jvmtiMonitorStackDepthInfo), J9MEM_CATEGORY_JVMTI_ALLOCATE);
 				if (NULL == resultArray) {
 					maxRecords = 0;
 					resultArray = NULL;
@@ -970,7 +972,7 @@ jvmtiRunAgentThread(jvmtiEnv *env,
 		}
 
 		/* Create entry args for the thread proc. */
-		args = j9mem_allocate_memory(sizeof(J9JVMTIRunAgentThreadArgs), J9MEM_CATEGORY_JVMTI);
+		args = (J9JVMTIRunAgentThreadArgs *)j9mem_allocate_memory(sizeof(J9JVMTIRunAgentThreadArgs), J9MEM_CATEGORY_JVMTI);
 		if (NULL == args) {
 			rc = JVMTI_ERROR_OUT_OF_MEMORY;
 		} else {
@@ -1169,7 +1171,7 @@ static int J9THREAD_PROC
 agentThreadStart(void *entryArg)
 {
 	UDATA result = 0;
-	J9JVMTIRunAgentThreadArgs *args = entryArg;
+	J9JVMTIRunAgentThreadArgs *args = (J9JVMTIRunAgentThreadArgs *)entryArg;
 	J9JavaVM *vm = JAVAVM_FROM_ENV((J9JVMTIEnv *)args->jvmti_env);
 	J9VMThread *vmThread = vm->internalVMFunctions->currentVMThread(vm);
 	PORT_ACCESS_FROM_JAVAVM(vm);
@@ -1189,7 +1191,7 @@ agentThreadStart(void *entryArg)
 static UDATA
 wrappedAgentThreadStart(J9PortLibrary *portLib, void *entryArg)
 {
-	J9JVMTIRunAgentThreadArgs *args = entryArg;
+	J9JVMTIRunAgentThreadArgs *args = (J9JVMTIRunAgentThreadArgs *)entryArg;
 	J9JavaVM *vm = JAVAVM_FROM_ENV((J9JVMTIEnv *)args->jvmti_env);
 	J9VMThread *vmThread = vm->internalVMFunctions->currentVMThread(vm);
 	jvmtiEnv *jvmti_env = args->jvmti_env;
@@ -1279,10 +1281,10 @@ walkLocalMonitorRefs(J9VMThread *currentThread, jobject *locks, J9VMThread *targ
 
 	/* Check the local JNI refs. */
 	while (NULL != frame) {
-		ref = pool_startDo(frame->references, &poolState);
+		ref = (j9object_t *)pool_startDo((J9Pool *)frame->references, &poolState);
 		while (NULL != ref) {
 			ownedMonitorIterator(currentThread, &walkState, ref, ref);
-			ref = pool_nextDo(&poolState);
+			ref = (j9object_t *)pool_nextDo(&poolState);
 		}
 		frame = frame->previous;
 	}
@@ -1475,3 +1477,5 @@ done:
 	TRACE_JVMTI_RETURN(jvmtiResumeAllVirtualThreads);
 }
 #endif /* JAVA_SPEC_VERSION >= 19 */
+
+} /* extern "C" */
