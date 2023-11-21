@@ -445,13 +445,13 @@
 			<variation>-Xjit:count=50,limit={*testSIMDCommonedAddress*},optLevel=scorching,disableAsyncCompilation</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
-        -cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jitt.jar$(Q) \
-        org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
-        -testnames \
-        SIMDCommonedAddressTest \
-        -groups $(TEST_GROUP) \
-        -excludegroups $(DEFAULT_EXCLUDE); \
-        $(TEST_STATUS)</command>
+	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jitt.jar$(Q) \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
+	-testnames \
+	SIMDCommonedAddressTest \
+	-groups $(TEST_GROUP) \
+	-excludegroups $(DEFAULT_EXCLUDE); \
+	$(TEST_STATUS)</command>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -557,6 +557,43 @@
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames \
 	BNDCHKSimplifyTest \
+	-groups $(TEST_GROUP) \
+	-excludegroups $(DEFAULT_EXCLUDE); \
+	$(TEST_STATUS)</command>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<features>
+			<feature>AOT:nonapplicable</feature>
+		</features>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
+	</test>
+	<test>
+		<testCaseName>treeSimplifierTest</testCaseName>
+		<variations>
+			<variation>-Xjit:optLevel=warm,disableAsyncCompilation</variation>
+			<variation>-Xjit:optLevel=hot,disableAsyncCompilation</variation>
+			<variation>-Xjit:optLevel=scorching,disableAsyncCompilation</variation>
+			<variation>-Xjit:optLevel=warm,disableAsyncCompilation -XX:-EnableHCR</variation>
+			<variation>-Xjit:optLevel=hot,disableAsyncCompilation -XX:-EnableHCR</variation>
+			<variation>-Xjit:optLevel=scorching,disableAsyncCompilation -XX:-EnableHCR</variation>
+
+			<!-- Suppress removal of DIVCHK in Value Propagation to ensure opportunities are seen by Tree Simplifier -->
+			<variation>-Xjit:optLevel=warm,disableAsyncCompilation,disableOptTransformations={O^O\ VALUE\ PROPAGATION:\ Removing\ redundant\ div\ check\ node} -XX:-EnableHCR</variation>
+			<variation>-Xjit:optLevel=hot,disableAsyncCompilation,disableOptTransformations={O^O\ VALUE\ PROPAGATION:\ Removing\ redundant\ div\ check\ node} -XX:-EnableHCR</variation>
+			<variation>-Xjit:optLevel=scorching,disableAsyncCompilation,disableOptTransformations={O^O\ VALUE\ PROPAGATION:\ Removing\ redundant\ div\ check\ node} -XX:-EnableHCR</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jitt.jar$(Q) \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
+	-testnames \
+	treeSimplifierTest \
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>

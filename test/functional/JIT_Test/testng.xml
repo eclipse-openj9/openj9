@@ -364,6 +364,11 @@
       <class name="jit.test.tr.decomposition.IntegerMultiplyDecomposer" />
     </classes>
   </test>
+  <test name="treeSimplifierTest">
+    <classes>
+      <class name="jit.test.tr.treeSimplifier.DivideOrRemainderByZero" />
+    </classes>
+  </test>
   <test name="explicitNewInitTest">
     <classes>
       <class name="jit.test.tr.explicitNewInit.ExplicitNewInitTest" />
