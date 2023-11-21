@@ -73,7 +73,6 @@
 #define OPT_NUMA_NONE "-Xnuma:none"
 #define OPT_XXMAXRAMPERCENT "-XX:MaxRAMPercentage="
 #define OPT_XXINITIALRAMPERCENT "-XX:InitialRAMPercentage="
-
 /**
  * @}
  */
@@ -1317,27 +1316,29 @@ gcParseReconfigurableCommandLine(J9JavaVM* vm, J9VMInitArgs* args)
 	IDATA result = 0;
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	if (-1 != FIND_ARG_IN_ARGS(args, EXACT_MEMORY_MATCH, OPT_SOFTMX, NULL)) {
-		result = option_set_to_opt_args(vm, OPT_SOFTMX, &index, EXACT_MEMORY_MATCH, &extensions->softMx, args);
+		uintptr_t softmx = 0;
+		result = option_set_to_opt_args(vm, OPT_SOFTMX, &index, EXACT_MEMORY_MATCH, &softmx, args);
 		if (OPTION_OK != result) {
 			if (OPTION_MALFORMED == result) {
 				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_MUST_BE_NUMBER, OPT_SOFTMX);
 			}
 			goto _error;
 		}
-		extensions->softMx = MM_Math::roundToFloor(extensions->heapAlignment, extensions->softMx);
-		extensions->softMx = MM_Math::roundToFloor(extensions->regionSize, extensions->softMx);
-		if (extensions->softMx > extensions->memoryMax) {
+		softmx = MM_Math::roundToFloor(extensions->heapAlignment, softmx);
+		softmx = MM_Math::roundToFloor(extensions->regionSize, softmx);
+		if (softmx > extensions->memoryMax) {
 			j9nls_printf(PORTLIB,J9NLS_ERROR,J9NLS_GC_SUBSPACE_TOO_LARGE_FOR_HEAP, OPT_SOFTMX);
 			goto _error;
 		}
 
-		if (extensions->softMx < extensions->initialMemorySize) {
+		if (softmx < extensions->initialMemorySize) {
 			UDATA minimumSizeValue = extensions->initialMemorySize;
 			const char *qualifier = NULL;
 			qualifiedSize(&minimumSizeValue, &qualifier);
 			j9nls_printf(PORTLIB,J9NLS_ERROR,J9NLS_GC_SUBSPACE_TOO_SMALL_FOR_VALUE, OPT_SOFTMX, minimumSizeValue, qualifier);
 			goto _error;
 		}
+		extensions->softMx = softmx;
 	}
 	if (!gcParseReconfigurableSoverignArguments(vm, args)) {
 		goto _error;
@@ -1404,7 +1405,18 @@ gcParseXXArguments(J9JavaVM *vm)
 			}
 		}
 	}
-
+	{
+		IDATA dynamicHeapAdjustmentForRestoreIndex = FIND_AND_CONSUME_VMARG(EXACT_MATCH, "-XX:+dynamicHeapAdjustmentForRestore", NULL);
+		IDATA noDynamicHeapAdjustmentForRestoreIndex = FIND_AND_CONSUME_VMARG(EXACT_MATCH, "-XX:-dynamicHeapAdjustmentForRestore", NULL);
+		if (dynamicHeapAdjustmentForRestoreIndex != noDynamicHeapAdjustmentForRestoreIndex) {
+			/* At least one option is set. Find the right most one. */
+			if (dynamicHeapAdjustmentForRestoreIndex > noDynamicHeapAdjustmentForRestoreIndex) {
+				extensions->dynamicHeapAdjustmentForRestore = true;
+			} else {
+				extensions->dynamicHeapAdjustmentForRestore = false;
+			}
+		}
+	}
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 	{
 		IDATA index = -1;
@@ -1627,7 +1639,8 @@ gcParseCommandLineAndInitializeWithValues(J9JavaVM *vm, IDATA *memoryParameters)
 			}
 		}
 		/* set default max heap for Java */
-		extensions->computeDefaultMaxHeapForJava(enableOriginalJDK8HeapSizeCompatibilityOption);
+		extensions->memoryMax = extensions->computeDefaultMaxHeapForJava(enableOriginalJDK8HeapSizeCompatibilityOption);
+		extensions->maxSizeDefaultMemorySpace = extensions->memoryMax;
 	}
 	result = option_set_to_opt(vm, OPT_XMCA, &index, EXACT_MEMORY_MATCH, &vm->ramClassAllocationIncrement);
 	if (OPTION_OK != result) {
@@ -1665,12 +1678,15 @@ gcParseCommandLineAndInitializeWithValues(J9JavaVM *vm, IDATA *memoryParameters)
 
 	memoryParameters[opt_Xmcrs] = index;
 
-	result = option_set_to_opt(vm, OPT_XMX, &index, EXACT_MEMORY_MATCH, &extensions->memoryMax);
+	result = option_set_to_opt(vm, OPT_XMX, &index, EXACT_MEMORY_MATCH, &extensions->userSpecifiedParameters._Xmx._valueSpecified);
 	if (OPTION_OK != result) {
 		goto _error;
 	}
 	memoryParameters[opt_Xmx] = index;
-
+	if (-1 != memoryParameters[opt_Xmx]) {
+		extensions->userSpecifiedParameters._Xmx._wasSpecified = true;
+		extensions->memoryMax = extensions->userSpecifiedParameters._Xmx._valueSpecified;
+	}
 	result = option_set_to_opt(vm, OPT_SOFTMX, &index, EXACT_MEMORY_MATCH, &extensions->softMx);
 	if (OPTION_OK != result) {
 		goto _error;

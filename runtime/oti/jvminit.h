@@ -689,6 +689,7 @@ enum INIT_STAGE {
 
 #define VMOPT_XTRACE "-Xtrace"
 
+
 #ifdef J9VM_INTERP_VERBOSE
 
 #define JVMINIT_VERBOSE_INIT_TRACE(flags, txt) do { \
