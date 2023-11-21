@@ -71,5 +71,18 @@ Java_openj9_internal_criu_InternalCRIUSupport_isCRIUSupportEnabledImpl(JNIEnv *e
 
 	return res;
 }
+
+jboolean JNICALL
+Java_openj9_internal_criu_InternalCRIUSupport_enableCRIUSecProviderImpl(JNIEnv *env, jclass unused)
+{
+	J9VMThread *currentThread = (J9VMThread *)env;
+	jboolean res = JNI_FALSE;
+
+	if (currentThread->javaVM->internalVMFunctions->enableCRIUSecProvider(currentThread)) {
+		res = JNI_TRUE;
+	}
+
+	return res;
+}
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 }

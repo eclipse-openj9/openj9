@@ -1292,6 +1292,9 @@ Java_jdk_internal_misc_ScopedMemoryAccess_closeScope0(JNIEnv *env, jobject insta
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 /* criu.cpp */
+jboolean JNICALL
+Java_openj9_internal_criu_InternalCRIUSupport_enableCRIUSecProviderImpl(JNIEnv *env, jclass unused);
+
 jlong JNICALL
 Java_openj9_internal_criu_InternalCRIUSupport_getCheckpointRestoreNanoTimeDeltaImpl(JNIEnv *env, jclass unused);
 
