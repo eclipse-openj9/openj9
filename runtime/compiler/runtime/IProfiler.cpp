@@ -3177,7 +3177,7 @@ TR_IPBCDataCallGraph::loadFromPersistentCopy(TR_IPBCDataStorageHeader * storage,
          if (classChainIdentifyingLoader)
             {
             TR::VMAccessCriticalSection criticalSection(comp->fej9());
-            J9ClassLoader *classLoader = (J9ClassLoader *)sharedCache->persistentClassLoaderTable()->lookupClassLoaderAssociatedWithClassChain(classChainIdentifyingLoader);
+            J9ClassLoader *classLoader = (J9ClassLoader *)sharedCache->lookupClassLoaderAssociatedWithClassChain(classChainIdentifyingLoader);
             if (classLoader)
                {
                TR_OpaqueClassBlock *j9class = sharedCache->lookupClassFromChainAndLoader(classChain, classLoader);

@@ -67,6 +67,7 @@ public:
    virtual bool isPtrToROMClassesSectionInSharedCache(void *ptr, uintptr_t *cacheOffset = NULL) { return false; }
    virtual bool isOffsetOfPtrToROMClassesSectionInSharedCache(uintptr_t offset, void **ptr = NULL) { return false; }
 
+   virtual void *lookupClassLoaderAssociatedWithClassChain(void *chainData) {return NULL; }
    virtual TR_OpaqueClassBlock *lookupClassFromChainAndLoader(uintptr_t *chainData, void *loader) { return NULL; }
 
    virtual uintptr_t getClassChainOffsetIdentifyingLoader(TR_OpaqueClassBlock *clazz, uintptr_t **classChain = NULL) { return 0; }
