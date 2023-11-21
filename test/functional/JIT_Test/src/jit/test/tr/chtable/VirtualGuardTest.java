@@ -70,8 +70,11 @@ public class VirtualGuardTest implements Notifiable {
 	}
 	
 	private char bar() {
+		System.out.println("TASK A loaded at:"+java.lang.System.currentTimeMillis());
 		char state = 'A';
-		while (keepOnGoing) {								
+		int  count = 0;
+		while (keepOnGoing ||
+			(state == '?' && count <= 1)) {
 			int result = goo();
 			switch (result) {
 				case 4*'A':
@@ -83,6 +86,7 @@ public class VirtualGuardTest implements Notifiable {
 				default:
 					AssertJUnit.assertTrue("switching to ?", state == 'A' && result > 4*'A' && result < 4*'B');
 					state = '?';
+					++count;
 					break;
 			}			
 		}
@@ -114,9 +118,13 @@ public class VirtualGuardTest implements Notifiable {
 	public void wakeUp(int event) {
 		switch (event) {
 			case TASK_LOAD_B:
-				f = new B(); break;
+				f = new B();
+				System.out.println("TASK B loaded at:"+java.lang.System.currentTimeMillis());
+				break;
 			case TASK_FIN:
-				keepOnGoing = false; break;			
+				keepOnGoing = false;
+				System.out.println("TASK FIN loaded at:"+java.lang.System.currentTimeMillis());
+				break;
 		}
 		
 	}
