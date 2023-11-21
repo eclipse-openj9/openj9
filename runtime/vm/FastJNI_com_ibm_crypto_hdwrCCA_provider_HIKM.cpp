@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2022, 2022 IBM Corp. and others
+ * Copyright (c) 2022, 2024 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -54,8 +54,61 @@ VMAccess is released by the crypto AES, DES, and TripleDES algorithms */
 
 #define AES 0
 #define DES 1
+#define GCM 2
+
+#if defined(CRYPTO_DEBUG)
+#define TRACE_ENTER() fprintf(stderr, "%s entered\n", __FUNCTION__)
+#define TRACE_EXIT()  fprintf(stderr, "%s exiting\n", __FUNCTION__)
+#define TRACE_EXIT_RC(_rc) fprintf(stderr, "%s exiting rc=%d\n", __FUNCTION__, _rc)
+#define TRACE0(_fmtStr)  fprintf(stderr, _fmtStr)
+#define TRACE1(_fmtStr, _p1) fprintf(stderr, _fmtStr, _p1)
+#define TRACE2(_fmtStr, _p1, _p2) fprintf(stderr, _fmtStr, _p1, _p2)
+#define TRACE3(_fmtStr, _p1, _p2, _p3) fprintf(stderr, _fmtStr, _p1, _p2, _p3)
+#define TRACE4(_fmtStr, _p1, _p2, _p3, _p4) fprintf(stderr, _fmtStr, _p1, _p2, _p3, _p4)
+#define TRACE5(_fmtStr, _p1, _p2, _p3, _p4, _p5) fprintf(stderr, _fmtStr, _p1, _p2, _p3, _p4, _p5)
+#define TRACE6(_fmtStr, _p1, _p2, _p3, _p4, _p5, _p6) fprintf(stderr, _fmtStr, _p1, _p2, _p3, _p4, _p5, _p6)
+#else /* defined(CRYPTO_DEBUG) */
+#define TRACE_ENTER()
+#define TRACE_EXIT()
+#define TRACE_EXIT_RC(_rc)
+#define TRACE0(_fmtStr)
+#define TRACE1(_fmtStr, _p1)
+#define TRACE2(_fmtStr, _p1, _p2)
+#define TRACE3(_fmtStr, _p1, _p2, _p3)
+#define TRACE4(_fmtStr, _p1, _p2, _p3, _p4)
+#define TRACE5(_fmtStr, _p1, _p2, _p3, _p4, _p5)
+#define TRACE6(_fmtStr, _p1, _p2, _p3, _p4, _p5, _p6)
+#endif /* defined(CRYPTO_DEBUG) */
 
 extern "C" {
+
+/* The operations and request structure must be kept in sync with the definitions
+ * in hikm.h and hikmimp.c operations.
+ */
+#define ONLY   1
+#define FIRST  2
+#define MIDDLE 3
+#define LAST   4
+
+/* request structure */
+typedef struct {
+    jbyte *key_identifier;
+    jbyte *initialization_vector;
+    jbyte *input;
+    jbyte *AAD_data;
+    jbyte *output;
+    jbyte *chain_data;
+    jbyte *AuthTag;
+    int key_length;
+    int initialization_vector_length;
+    long total_length;
+    long input_length;
+    long AAD_data_length;
+    int output_length;
+    int chain_data_length;
+    int authTagLen;
+    int icvMode;
+} cipher_request_t;
 
 typedef int CIPHER_t(void * rule_array,
                      void * key_identifier,
@@ -73,6 +126,8 @@ typedef int CIPHER_t(void * rule_array,
                      int rule_array_count,
                      int XOROperation);
 
+typedef int GCM_CIPHER_t(cipher_request_t *pRequest);
+
 typedef int SHA_t(void * ra,
                   void * text,
                   void * chaining_vector,
@@ -84,7 +139,8 @@ typedef int SHA_t(void * ra,
                   int ra_length);
 
 typedef union {
-    CIPHER_t* CIPHER_op;
+    CIPHER_t *CIPHER_op;
+    GCM_CIPHER_t *GCM_CIPHER_op;
 } cryptoFunc_t;
 
 typedef union {
@@ -96,6 +152,8 @@ typedef struct cryptoPointers {
     cryptoFunc_t KMAESDPtr;
     cryptoFunc_t KMDESEPtr;
     cryptoFunc_t KMDESDPtr;
+    cryptoFunc_t KMGCMEPtr;
+    cryptoFunc_t KMGCMDPtr;
     SHAFunc_t KXMDSHAPtr;
     SHAFunc_t KXMDSHA224Ptr;
     SHAFunc_t KXMDSHA256Ptr;
@@ -105,6 +163,8 @@ typedef struct cryptoPointers {
     CIPHER_t* KMAESD;
     CIPHER_t* KMDESE;
     CIPHER_t* KMDESD;
+    GCM_CIPHER_t* KMGCME;
+    GCM_CIPHER_t* KMGCMD;
     SHA_t* KXMDSHA;
     SHA_t* KXMDSHA224;
     SHA_t* KXMDSHA256;
@@ -122,12 +182,13 @@ typedef struct cryptoPointers {
 static void
 loadCryptoLib(J9VMThread *currentThread)
 {
-    omrthread_monitor_t mutex = currentThread->javaVM->jniHikmCryptoLibLock;
+    TRACE_ENTER();
 
+    omrthread_monitor_t mutex = currentThread->javaVM->jniHikmCryptoLibLock;
     omrthread_monitor_enter(mutex);
     if (NULL == currentThread->javaVM->jniHikmCryptoFunctions) {
         PORT_ACCESS_FROM_VMC(currentThread);
-        cryptoPointers_t* cryptFuncs = (cryptoPointers_t*)j9mem_allocate_memory(sizeof(cryptoPointers_t), J9MEM_CATEGORY_VM_JCL);
+        cryptoPointers_t *cryptFuncs = (cryptoPointers_t*)j9mem_allocate_memory(sizeof(cryptoPointers_t), J9MEM_CATEGORY_VM_JCL);
         UDATA* cryptoLibrary = &(currentThread->javaVM->jniHikmCryptoLibrary);
         J9PortLibrary * portLib = currentThread->javaVM->portLibrary;
         char* dir = currentThread->javaVM->j2seRootDirectory;
@@ -182,6 +243,12 @@ loadCryptoLib(J9VMThread *currentThread)
             if (0 != j9sl_lookup_name(*cryptoLibrary, (char*)"KMDESD_internal", (UDATA*)&(cryptFuncs->KMDESD), "iLLLLLLiiiiiiiii")) {
                 Assert_VM_internalError();
             }
+            if (0 != j9sl_lookup_name(*cryptoLibrary, (char*)"KMGCME_internal", (UDATA*)&(cryptFuncs->KMGCME), "iJ")) {
+                Assert_VM_internalError();
+            }
+            if (0 != j9sl_lookup_name(*cryptoLibrary, (char*)"KMGCMD_internal", (UDATA*)&(cryptFuncs->KMGCMD), "iJ")) {
+                Assert_VM_internalError();
+            }
             if (0 != j9sl_lookup_name(*cryptoLibrary, (char*)"KXMDSHA_internal", (UDATA*)&(cryptFuncs->KXMDSHA), "iLLLLiiiii")) {
                 Assert_VM_internalError();
             }
@@ -203,6 +270,8 @@ loadCryptoLib(J9VMThread *currentThread)
             printf("** KMAESD: %p\n", cryptFuncs->KMAESD);
             printf("** KMDESE: %p\n", cryptFuncs->KMDESE);
             printf("** KMDESD: %p\n", cryptFuncs->KMDESD);
+            printf("** KMGCME: %p\n", cryptFuncs->KMGCME);
+            printf("** KMGCMD: %p\n", cryptFuncs->KMGCMD);
             printf("** KXMDSHA: %p\n", cryptFuncs->KXMDSHA);
             printf("** KXMDSHA224: %p\n", cryptFuncs->KXMDSHA224);
             printf("** KXMDSHA256: %p\n", cryptFuncs->KXMDSHA256);
@@ -210,15 +279,17 @@ loadCryptoLib(J9VMThread *currentThread)
             printf("** KXMDSHA512: %p\n", cryptFuncs->KXMDSHA512);
 #endif /* CRYPTO_DEBUG */
 
-            cryptFuncs->KMAESEPtr.CIPHER_op  = cryptFuncs->KMAESE;
-            cryptFuncs->KMAESDPtr.CIPHER_op  = cryptFuncs->KMAESD;
-            cryptFuncs->KMDESEPtr.CIPHER_op  = cryptFuncs->KMDESE;
-            cryptFuncs->KMDESDPtr.CIPHER_op  = cryptFuncs->KMDESD;
-            cryptFuncs->KXMDSHAPtr.SHA_op    = cryptFuncs->KXMDSHA;
-            cryptFuncs->KXMDSHA224Ptr.SHA_op = cryptFuncs->KXMDSHA224;
-            cryptFuncs->KXMDSHA256Ptr.SHA_op = cryptFuncs->KXMDSHA256;
-            cryptFuncs->KXMDSHA384Ptr.SHA_op = cryptFuncs->KXMDSHA384;
-            cryptFuncs->KXMDSHA512Ptr.SHA_op = cryptFuncs->KXMDSHA512;
+            cryptFuncs->KMAESEPtr.CIPHER_op      = cryptFuncs->KMAESE;
+            cryptFuncs->KMAESDPtr.CIPHER_op      = cryptFuncs->KMAESD;
+            cryptFuncs->KMDESEPtr.CIPHER_op      = cryptFuncs->KMDESE;
+            cryptFuncs->KMDESDPtr.CIPHER_op      = cryptFuncs->KMDESD;
+            cryptFuncs->KMGCMEPtr.GCM_CIPHER_op  = cryptFuncs->KMGCME;
+            cryptFuncs->KMGCMDPtr.GCM_CIPHER_op  = cryptFuncs->KMGCMD;
+            cryptFuncs->KXMDSHAPtr.SHA_op        = cryptFuncs->KXMDSHA;
+            cryptFuncs->KXMDSHA224Ptr.SHA_op     = cryptFuncs->KXMDSHA224;
+            cryptFuncs->KXMDSHA256Ptr.SHA_op     = cryptFuncs->KXMDSHA256;
+            cryptFuncs->KXMDSHA384Ptr.SHA_op     = cryptFuncs->KXMDSHA384;
+            cryptFuncs->KXMDSHA512Ptr.SHA_op     = cryptFuncs->KXMDSHA512;
             currentThread->javaVM->jniHikmCryptoFunctions = (void*)cryptFuncs;
             if ((correctPath != correctPathPtr) && (NULL != correctPathPtr)) {
                 j9mem_free_memory(correctPathPtr);
@@ -226,6 +297,7 @@ loadCryptoLib(J9VMThread *currentThread)
         }
     }
     omrthread_monitor_exit(mutex);
+    TRACE_EXIT();
 }
 
 /*
@@ -408,7 +480,7 @@ cipherLaunch(J9VMThread *currentThread, jint return_code, jint reason_code, jint
                 result = returnCode;
                 break;
             }
-            /* no error, crypto returns length */
+            /* No error, crypto returns length. */
             result += returnCode;
 
             /* Release VMAccess to allow GC to work if needed. Recover
@@ -458,8 +530,8 @@ discontiguousCipherLaunch(J9VMThread *currentThread, jint return_code, jint reas
     void* chainDataAddress      = J9JAVAARRAY_EA(currentThread, chainDataObj, 0, U_8);
 
     /* Allocate native buffers to be used to directly interact with crypto API */
-    void* inputNativePtr         = j9mem_allocate_memory(input_length, J9MEM_CATEGORY_VM_JCL);
-    void* outputNativePtr        = j9mem_allocate_memory(output_length, J9MEM_CATEGORY_VM_JCL);
+    void* inputNativePtr        = j9mem_allocate_memory(input_length, J9MEM_CATEGORY_VM_JCL);
+    void* outputNativePtr       = j9mem_allocate_memory(output_length, J9MEM_CATEGORY_VM_JCL);
 
     if ((NULL != outputNativePtr) && (NULL != inputNativePtr)) {
 
@@ -497,20 +569,166 @@ discontiguousCipherLaunch(J9VMThread *currentThread, jint return_code, jint reas
             }
         }
 
-        /* Release input and output native buffers */
-        j9mem_free_memory(inputNativePtr);
-        j9mem_free_memory(outputNativePtr);
     } else {
         /* Throw OutOfMemory exception, unable to allocate buffer */
         ret = -1;
         setNativeOutOfMemoryError(currentThread, J9NLS_VM_NATIVE_OOM);
     }
 
+    /* Release input and output native buffers. */
+    j9mem_free_memory(inputNativePtr);
+    j9mem_free_memory(outputNativePtr);
 #if defined(CRYPTO_DEBUG)
     fprintf(stderr,"Exit discontiguousCipherLaunch\n");
 #endif /* CRYPTO_DEBUG */
 
     /* Return output size or error code */
+    return ret;
+}
+
+static VMINLINE jint
+aesCipherLaunch(J9VMThread       *currentThread,
+                j9object_t        input,
+                j9object_t        output,
+                cipher_request_t *pRequest,
+                cryptoFunc_t      cbcOp)
+{
+    TRACE_ENTER();
+
+    jint result = 0;
+    int inputIndex = 0;
+    int outputIndex = 0;
+
+    j9object_t inputObj  = J9_JNI_UNWRAP_REFERENCE(input);
+    j9object_t outputObj = J9_JNI_UNWRAP_REFERENCE(output);
+
+    pRequest->input  = (jbyte*)J9JAVAARRAY_EA(currentThread, inputObj, inputIndex, U_8);
+    pRequest->output = (jbyte*)J9JAVAARRAY_EA(currentThread, outputObj, outputIndex, U_8);
+
+    if (pRequest->input_length <= CIPHER_OP_SIZE_LIMIT) {
+        /* The size of pRequest->input_length is not too large and can be done with a
+         * single call.
+         */
+         result = (*(cbcOp.GCM_CIPHER_op))(pRequest);
+
+    } else {
+        /* The requested operation is too large to be done in a single op since
+         * that would acquire VMAccess for too long, so the operation is broken
+         * up.
+         */
+        int returnCode = 0;
+        jint currentBytes = 0;
+        jint bytesToOp = pRequest->input_length;
+
+        while (0 != bytesToOp) {
+            if ((bytesToOp - CIPHER_OP_SIZE_LIMIT) >= 0) {
+                currentBytes = CIPHER_OP_SIZE_LIMIT;
+            } else {
+                currentBytes = bytesToOp;
+            }
+
+            pRequest->input_length = currentBytes;
+            pRequest->output_length = currentBytes;
+            if (inputIndex == 0) {
+                /* If the first call, we need to tell IBMJCECCA to use the
+                 * initialization vector when encrypting and decrypting the byte
+                 * arrays.
+                 */
+                TRACE0("aesCipherLaunch, first call\n");
+                pRequest->icvMode = FIRST;
+                returnCode = (*(cbcOp.GCM_CIPHER_op))(pRequest);
+
+            } else if ((bytesToOp - currentBytes) > 0) {
+                /* Subsequent but not final call. For subsequent calls, we will
+                 * tell IBMJCECCA to use the chain data for the rest of the
+                 * operation.
+                 */
+                TRACE0("aesCipherLaunch, subsequent but not final call\n");
+                pRequest->icvMode = MIDDLE;
+                returnCode = (*(cbcOp.GCM_CIPHER_op))(pRequest);
+
+            } else {
+                /* Final call */
+                TRACE0("aesCipherLaunch, final call\n");
+                pRequest->icvMode = LAST;
+                returnCode = (*(cbcOp.GCM_CIPHER_op))(pRequest);
+                break;
+            }
+
+            if (returnCode < 0) {
+                /* Crypto returned error, returning immediately. */
+                result = returnCode;
+                break;
+            }
+            /* No error, crypto returns length. */
+            result += returnCode;
+
+            /* Release VMAccess to allow GC to work if needed. Recover
+             * input/output pointers afterwards.
+             */
+            if (J9_ARE_ANY_BITS_SET(currentThread->publicFlags, J9_PUBLIC_FLAGS_HALT_THREAD_ANY)) {
+                J9InternalVMFunctions const * const vmFuncs = currentThread->javaVM->internalVMFunctions;
+                vmFuncs->internalReleaseVMAccess(currentThread);
+                vmFuncs->internalAcquireVMAccess(currentThread);
+                inputObj = J9_JNI_UNWRAP_REFERENCE(input);
+                outputObj = J9_JNI_UNWRAP_REFERENCE(output);
+            }
+            inputIndex += currentBytes;
+            outputIndex += returnCode;
+            pRequest->input = (jbyte*)J9JAVAARRAY_EA(currentThread, inputObj, inputIndex, U_8);
+            pRequest->output = (jbyte*)J9JAVAARRAY_EA(currentThread, outputObj, outputIndex, U_8);
+            bytesToOp -= currentBytes;
+        }
+    }
+
+    TRACE_EXIT_RC(result);
+    return result;
+}
+
+
+static VMINLINE jint
+aesDiscontiguousCipherLaunch(J9VMThread       *currentThread,
+                             j9object_t        input,
+                             j9object_t        output,
+                             cipher_request_t *pRequest,
+                             cryptoFunc_t      cbcOp)
+{
+    TRACE_ENTER();
+
+    jint ret = 0;
+    int offset = 0;
+    PORT_ACCESS_FROM_VMC(currentThread);
+
+    /* Allocate native buffers to be used to directly interact with crypto API. */
+    void* inputNativePtr  = j9mem_allocate_memory(pRequest->input_length, J9MEM_CATEGORY_VM_JCL);
+    void* outputNativePtr = j9mem_allocate_memory(pRequest->output_length, J9MEM_CATEGORY_VM_JCL);
+
+    if ((NULL != outputNativePtr) && (NULL != inputNativePtr)) {
+
+        VM_ArrayCopyHelpers::memcpyFromArray(currentThread, J9_JNI_UNWRAP_REFERENCE(input), offset, pRequest->input_length, inputNativePtr);
+
+        /* Do crypto operation. */
+        pRequest->input = (signed char*)inputNativePtr;
+        pRequest->output = (signed char*)outputNativePtr;
+        ret = (*(cbcOp.GCM_CIPHER_op))(pRequest);
+
+        /* Negative ret means an error code, don't copy in that case. */
+        if (ret >= 0) {
+            VM_ArrayCopyHelpers::memcpyToArray(currentThread, J9_JNI_UNWRAP_REFERENCE(output), offset, ret, outputNativePtr);
+        }
+
+    } else {
+        /* Throw OutOfMemory exception, unable to allocate buffer. */
+        ret = -1;
+        setNativeOutOfMemoryError(currentThread, J9NLS_VM_NATIVE_OOM);
+    }
+
+    /* Release input and output native buffers. */
+    j9mem_free_memory(inputNativePtr);
+    j9mem_free_memory(outputNativePtr);
+
+    /* Return output size or error code. */
+    TRACE_EXIT_RC(ret);
     return ret;
 }
 
@@ -531,8 +749,8 @@ cipher(J9VMThread *currentThread, jint return_code, jint reason_code, jint rule_
      *            3. is input length greater than zero
      *            4. is output length greater than zero
      * Note that the input length is passed from the JCL code so incorrect value
-     * could cause a crash in the crypto. lib - in which case the JCL code needs
-     * to be fixed
+     * could cause a crash in the crypto lib - in which case the JCL code needs
+     * to be fixed.
      */
     bool isContInput  = isCryptoArrayContiguous(currentThread, offset, input_length);
     bool isContOutput = isCryptoArrayContiguous(currentThread, offset, output_length);
@@ -599,6 +817,58 @@ cipher(J9VMThread *currentThread, jint return_code, jint reason_code, jint rule_
     fprintf(stderr,"Exit cipher\n");
 #endif /* CRYPTO_DEBUG */
 
+    return result;
+}
+
+static VMINLINE jint
+aesCipher(J9VMThread       *currentThread,
+          j9object_t        input,
+          j9object_t        output,
+          cipher_request_t *pRequest,
+          cryptoFunc_t      cbcOp)
+{
+    TRACE_ENTER();
+
+    jint offset = 0;
+    jint result = 0;
+
+    /* The if statement below determines if contiguous array or discontiguous array
+     * processing is required.
+     * There are four inputs:
+     *            1. is input array contiguous
+     *            2. is output array contiguous
+     *            3. is input length greater than zero
+     *            4. is output length greater than zero
+     * Note that the input length is passed from the JCL code so incorrect value
+     * could cause a crash in the crypto lib - in which case the JCL code needs
+     * to be fixed.
+     */
+    bool isContInput  = isCryptoArrayContiguous(currentThread, offset, pRequest->input_length);
+    bool isContOutput = isCryptoArrayContiguous(currentThread, offset, pRequest->output_length);
+    bool isContiguous = ((((  pRequest->input_length >  0) && (pRequest->output_length >  0)) && (isContInput && isContOutput))
+                        || (((pRequest->input_length <= 0) && (pRequest->output_length >  0)) && isContOutput)
+                        || (((pRequest->input_length >  0) && (pRequest->output_length <= 0)) && isContInput)
+                        || (((pRequest->input_length <= 0) && (pRequest->output_length <= 0))));
+
+    if (isContiguous) {
+        TRACE0("cipher, The array is contiguous\n");
+
+        result = aesCipherLaunch(currentThread,
+                                 input,
+                                 output,
+                                 pRequest,
+                                 cbcOp);
+    } else {
+        TRACE0("cipher, The array is discontiguous\n");
+
+        result = aesDiscontiguousCipherLaunch(currentThread,
+                                              input,
+                                              output,
+                                              pRequest,
+                                              cbcOp);
+    }
+
+    TRACE_EXIT_RC(result);
     return result;
 }
 
@@ -698,16 +968,16 @@ digest(J9VMThread *currentThread, jint return_code, jint reason_code, jint rule_
                 VM_ArrayCopyHelpers::memcpyToArray(currentThread, J9_JNI_UNWRAP_REFERENCE(hash), 0, hash_length, hashNativePtr);
             }
 
-            /* Release native buffers from memory */
-            j9mem_free_memory(ruleArrayNativePtr);
-            j9mem_free_memory(textNativePtr);
-            j9mem_free_memory(chainingVectorNativePtr);
-            j9mem_free_memory(hashNativePtr);
         } else {
             /* Throw OutOfMemory exception, unable to allocate buffer */
             result = -1;
             setNativeOutOfMemoryError(currentThread, J9NLS_VM_NATIVE_OOM);
         }
+
+        j9mem_free_memory(ruleArrayNativePtr);
+        j9mem_free_memory(textNativePtr);
+        j9mem_free_memory(chainingVectorNativePtr);
+        j9mem_free_memory(hashNativePtr);
     }
 
 #if defined(CRYPTO_DEBUG)
@@ -718,75 +988,81 @@ digest(J9VMThread *currentThread, jint return_code, jint reason_code, jint rule_
 }
 
 jint JNICALL
-Fast_com_ibm_crypto_hdwrCCA_provider_HIKM_KMAESE(J9VMThread *currentThread, jint return_code, jint reason_code, jint rule_array_count, j9object_t rule_array, jint key_length, j9object_t key_identifier, jint initialization_vector_length, j9object_t initialization_vector, jint chain_data_length, j9object_t chain_data, jint clear_text_length, j9object_t clear_text, jint cipher_text_length, j9object_t cipher_text)
+Fast_com_ibm_crypto_hdwrCCA_provider_HIKM_KMAESE(J9VMThread *currentThread, jint icvMode, jint key_length, j9object_t key_identifier, jint initialization_vector_length, j9object_t initialization_vector, jint chain_data_length, j9object_t chain_data, jint clear_text_length, j9object_t clear_text, jint cipher_text_length, j9object_t cipher_text)
 {
-#if defined(CRYPTO_DEBUG)
-    fprintf(stderr,"Enter Fast_com_ibm_crypto_hdwrCCA_provider_HIKM_KMAESE\n");
-#endif /* CRYPTO_DEBUG */
+    TRACE_ENTER();
+    TRACE2("clear_text_length=%d cipher_text_length=%d\n", clear_text_length, cipher_text_length);
+    TRACE5("%p %p %p %p %p ---- \n", key_identifier, initialization_vector, chain_data, clear_text, cipher_text);
+
+    cipher_request_t request;
 
     bool cryptoLibLoaded = (NULL != currentThread->javaVM->jniHikmCryptoFunctions);
     if (!cryptoLibLoaded) {
         loadCryptoLib(currentThread);
     }
-    cryptoPointers_t* cryptFuncs = (cryptoPointers_t*)currentThread->javaVM->jniHikmCryptoFunctions;
+    cryptoPointers_t *cryptFuncs = (cryptoPointers_t*)currentThread->javaVM->jniHikmCryptoFunctions;
 
-    return cipher(currentThread,
-                  return_code,
-                  reason_code,
-                  rule_array_count,
-                  rule_array,
-                  key_length,
-                  key_identifier,
-                  initialization_vector_length,
-                  initialization_vector,
-                  chain_data_length,
-                  chain_data,
-                  clear_text_length,      // input_length
-                  clear_text,             // input
-                  cipher_text_length,     // output_length
-                  cipher_text,            // output
-                  cryptFuncs->KMAESE,
-                  cryptFuncs->KMAESEPtr,
-                  0,
-                  ENCRYPT,
-                  AES);
+    j9object_t keyIdentifierObj = J9_JNI_UNWRAP_REFERENCE(key_identifier);
+    j9object_t initVectorObj    = J9_JNI_UNWRAP_REFERENCE(initialization_vector);
+    j9object_t chainDataObj     = J9_JNI_UNWRAP_REFERENCE(chain_data);
 
+    request.key_length                   = key_length;
+    request.key_identifier               = (jbyte*)J9JAVAARRAY_EA(currentThread, keyIdentifierObj, 0, U_8);
+    request.initialization_vector_length = initialization_vector_length;
+    request.initialization_vector        = (jbyte*)J9JAVAARRAY_EA(currentThread, initVectorObj, 0, U_8);
+    request.chain_data_length            = chain_data_length;
+    request.chain_data                   = (jbyte*)J9JAVAARRAY_EA(currentThread, chainDataObj, 0, U_8);
+    request.total_length                 = clear_text_length;      // total length before it is broken up into multiple calls
+    request.input_length                 = clear_text_length;      // input_length
+    request.output_length                = cipher_text_length;     // output_length
+    request.icvMode                      = icvMode;
+
+    jint result = aesCipher(currentThread,
+                            clear_text,
+                            cipher_text,
+                            &request,
+                            cryptFuncs->KMAESEPtr);
+    TRACE_EXIT_RC(result);
+    return result;
 }
 
 jint JNICALL
-Fast_com_ibm_crypto_hdwrCCA_provider_HIKM_KMAESD(J9VMThread *currentThread, jint return_code, jint reason_code, jint rule_array_count, j9object_t rule_array, jint key_length, j9object_t key_identifier, jint initialization_vector_length, j9object_t initialization_vector, jint chain_data_length, j9object_t chain_data, jint clear_text_length, j9object_t clear_text, jint cipher_text_length, j9object_t cipher_text)
+Fast_com_ibm_crypto_hdwrCCA_provider_HIKM_KMAESD(J9VMThread *currentThread, jint icvMode, jint key_length, j9object_t key_identifier, jint initialization_vector_length, j9object_t initialization_vector, jint chain_data_length, j9object_t chain_data, jint cipher_text_length, j9object_t cipher_text, jint clear_text_length, j9object_t clear_text)
 {
-#if defined(CRYPTO_DEBUG)
-    fprintf(stderr,"Enter Fast_com_ibm_crypto_hdwrCCA_provider_HIKM_KMAESD\n");
-#endif /* CRYPTO_DEBUG */
+    TRACE_ENTER();
+    TRACE2("cipher_text_length=%d clear_text_length=%d\n", cipher_text_length, clear_text_length);
+    TRACE5("%p %p %p %p %p ---- \n", key_identifier, initialization_vector, chain_data, clear_text, cipher_text);
+
+    cipher_request_t request;
 
     bool cryptoLibLoaded = (NULL != currentThread->javaVM->jniHikmCryptoFunctions);
     if (!cryptoLibLoaded) {
         loadCryptoLib(currentThread);
     }
-    cryptoPointers_t* cryptFuncs = (cryptoPointers_t*)currentThread->javaVM->jniHikmCryptoFunctions;
+    cryptoPointers_t *cryptFuncs = (cryptoPointers_t*)currentThread->javaVM->jniHikmCryptoFunctions;
 
-    return cipher(currentThread,
-                  return_code,
-                  reason_code,
-                  rule_array_count,
-                  rule_array,
-                  key_length,
-                  key_identifier,
-                  initialization_vector_length,
-                  initialization_vector,
-                  chain_data_length,
-                  chain_data,
-                  cipher_text_length,     // input_length
-                  cipher_text,            // input
-                  clear_text_length,      // output_length
-                  clear_text,             // output
-                  cryptFuncs->KMAESD,
-                  cryptFuncs->KMAESDPtr,
-                  0,
-                  DECRYPT,
-                  AES);
+    j9object_t keyIdentifierObj = J9_JNI_UNWRAP_REFERENCE(key_identifier);
+    j9object_t initVectorObj    = J9_JNI_UNWRAP_REFERENCE(initialization_vector);
+    j9object_t chainDataObj     = J9_JNI_UNWRAP_REFERENCE(chain_data);
 
+    request.key_length                   = key_length;
+    request.key_identifier               = (jbyte*)J9JAVAARRAY_EA(currentThread, keyIdentifierObj, 0, U_8);
+    request.initialization_vector_length = initialization_vector_length;
+    request.initialization_vector        = (jbyte*)J9JAVAARRAY_EA(currentThread, initVectorObj, 0, U_8);
+    request.chain_data_length            = chain_data_length;
+    request.chain_data                   = (jbyte*)J9JAVAARRAY_EA(currentThread, chainDataObj, 0, U_8);
+    request.total_length                 = cipher_text_length;      // total length before it is broken up into multiple calls
+    request.input_length                 = cipher_text_length;      // input_length
+    request.output_length                = clear_text_length;       // output_length
+    request.icvMode                      = icvMode;
+
+    jint result = aesCipher(currentThread,
+                            cipher_text,
+                            clear_text,
+                            &request,
+                            cryptFuncs->KMAESDPtr);
+    TRACE_EXIT_RC(result);
+    return result;
 }
 
 jint JNICALL
@@ -800,7 +1076,7 @@ Fast_com_ibm_crypto_hdwrCCA_provider_HIKM_KMDESE(J9VMThread *currentThread, jint
     if (!cryptoLibLoaded) {
         loadCryptoLib(currentThread);
     }
-    cryptoPointers_t* cryptFuncs = (cryptoPointers_t*)currentThread->javaVM->jniHikmCryptoFunctions;
+    cryptoPointers_t *cryptFuncs = (cryptoPointers_t*)currentThread->javaVM->jniHikmCryptoFunctions;
 
     return cipher(currentThread,
                   return_code,
@@ -836,7 +1112,7 @@ Fast_com_ibm_crypto_hdwrCCA_provider_HIKM_KMDESD(J9VMThread *currentThread, jint
     if (!cryptoLibLoaded) {
         loadCryptoLib(currentThread);
     }
-    cryptoPointers_t* cryptFuncs = (cryptoPointers_t*)currentThread->javaVM->jniHikmCryptoFunctions;
+    cryptoPointers_t *cryptFuncs = (cryptoPointers_t*)currentThread->javaVM->jniHikmCryptoFunctions;
 
     return cipher(currentThread,
                   return_code,
@@ -858,7 +1134,112 @@ Fast_com_ibm_crypto_hdwrCCA_provider_HIKM_KMDESD(J9VMThread *currentThread, jint
                   0,
                   DECRYPT,
                   DES);
+}
 
+jint JNICALL
+Fast_com_ibm_crypto_hdwrCCA_provider_HIKM_KMGCME(J9VMThread *currentThread,
+                                                 jint       key_length,
+                                                 j9object_t key_identifier,
+                                                 jint       initialization_vector_length,
+                                                 j9object_t initialization_vector,
+                                                 jint       clear_text_length,
+                                                 j9object_t clear_text,
+                                                 jint       AAD_data_length,                      /* AAD */
+                                                 j9object_t AAD_data,
+                                                 jint       cipher_text_length,
+                                                 j9object_t cipher_text,
+                                                 jint       authTagLen,
+                                                 j9object_t authTag)
+{
+    TRACE_ENTER();
+    TRACE4("initialization_vector_length=%d clear_text_length=%d AAD_data_length=%d cipher_text_length=%d\n",
+           initialization_vector_length, clear_text_length, AAD_data_length, cipher_text_length);
+
+    cipher_request_t request;
+
+    if (NULL == currentThread->javaVM->jniHikmCryptoFunctions) {    // Has cryptoLib been loaded?
+        loadCryptoLib(currentThread);
+    }
+    cryptoPointers_t *cryptFuncs = (cryptoPointers_t*)currentThread->javaVM->jniHikmCryptoFunctions;
+
+    j9object_t keyIdentifierObj = J9_JNI_UNWRAP_REFERENCE(key_identifier);
+    j9object_t initVectorObj    = J9_JNI_UNWRAP_REFERENCE(initialization_vector);
+    j9object_t aadObj           = J9_JNI_UNWRAP_REFERENCE(AAD_data);
+    j9object_t authTagObj       = J9_JNI_UNWRAP_REFERENCE(authTag);
+
+    request.key_length                   = key_length;
+    request.key_identifier               = (jbyte*)J9JAVAARRAY_EA(currentThread, keyIdentifierObj, 0, U_8);
+    request.initialization_vector_length = initialization_vector_length;
+    request.initialization_vector        = (jbyte*)J9JAVAARRAY_EA(currentThread, initVectorObj, 0, U_8);
+    request.total_length                 = clear_text_length;      // total length before it is broken up into multiple calls
+    request.input_length                 = clear_text_length;      // input_length
+    request.output_length                = cipher_text_length;     // output_length
+    request.AAD_data_length              = AAD_data_length;
+    request.AAD_data                     = (jbyte*)J9JAVAARRAY_EA(currentThread, aadObj, 0, U_8);
+    request.authTagLen                   = authTagLen;
+    request.AuthTag                      = (jbyte*)J9JAVAARRAY_EA(currentThread, authTagObj, 0, U_8);
+    request.icvMode                      = ONLY;
+
+    jint result = aesCipher(currentThread,
+                            clear_text,
+                            cipher_text,
+                            &request,
+                            cryptFuncs->KMGCMEPtr);
+    TRACE_EXIT_RC(result);
+    return result;
+}
+
+jint JNICALL
+Fast_com_ibm_crypto_hdwrCCA_provider_HIKM_KMGCMD(J9VMThread *currentThread,
+                                                 jint       key_length,
+                                                 j9object_t key_identifier,
+                                                 jint       initialization_vector_length,
+                                                 j9object_t initialization_vector,
+                                                 jint       cipher_text_length,
+                                                 j9object_t cipher_text,
+                                                 jint       AAD_data_length,                      /* AAD */
+                                                 j9object_t AAD_data,
+                                                 jint       clear_text_length,
+                                                 j9object_t clear_text,
+                                                 jint       authTagLen,
+                                                 j9object_t authTag)
+{
+    TRACE_ENTER();
+    TRACE4("initialization_vector_length=%d cipher_text_length=%d AAD_data_length=%d clear_text_length=%d\n",
+           initialization_vector_length, cipher_text_length, AAD_data_length, clear_text_length);
+
+    cipher_request_t request;
+
+    if (NULL == currentThread->javaVM->jniHikmCryptoFunctions) {    // Has cryptoLib been loaded?
+        loadCryptoLib(currentThread);
+    }
+    cryptoPointers_t *cryptFuncs = (cryptoPointers_t*)currentThread->javaVM->jniHikmCryptoFunctions;
+
+    j9object_t keyIdentifierObj = J9_JNI_UNWRAP_REFERENCE(key_identifier);
+    j9object_t initVectorObj    = J9_JNI_UNWRAP_REFERENCE(initialization_vector);
+    j9object_t aadObj           = J9_JNI_UNWRAP_REFERENCE(AAD_data);
+    j9object_t authTagObj       = J9_JNI_UNWRAP_REFERENCE(authTag);
+
+    request.key_length                   = key_length;
+    request.key_identifier               = (jbyte*)J9JAVAARRAY_EA(currentThread, keyIdentifierObj, 0, U_8);
+    request.initialization_vector_length = initialization_vector_length;
+    request.initialization_vector        = (jbyte*)J9JAVAARRAY_EA(currentThread, initVectorObj, 0, U_8);
+    request.total_length                 = cipher_text_length;      // total length before it is broken up into multiple calls
+    request.input_length                 = cipher_text_length;      // input_length
+    request.output_length                = clear_text_length;       // output_length
+    request.AAD_data_length              = AAD_data_length;
+    request.AAD_data                     = (jbyte*)J9JAVAARRAY_EA(currentThread, aadObj, 0, U_8);
+    request.authTagLen                   = authTagLen;
+    request.AuthTag                      = (jbyte*)J9JAVAARRAY_EA(currentThread, authTagObj, 0, U_8);
+    request.icvMode                      = ONLY;
+
+    jint result = aesCipher(currentThread,
+                            cipher_text,
+                            clear_text,
+                            &request,
+                            cryptFuncs->KMGCMDPtr);
+    TRACE_EXIT_RC(result);
+    return result;
 }
 
 jint JNICALL
@@ -872,7 +1253,7 @@ Fast_com_ibm_crypto_hdwrCCA_provider_HIKM_KXMDSHA(J9VMThread *currentThread, jin
     if (!cryptoLibLoaded) {
         loadCryptoLib(currentThread);
     }
-    cryptoPointers_t* cryptFuncs = (cryptoPointers_t*)currentThread->javaVM->jniHikmCryptoFunctions;
+    cryptoPointers_t *cryptFuncs = (cryptoPointers_t*)currentThread->javaVM->jniHikmCryptoFunctions;
 
     return digest(currentThread,
                   return_code,
@@ -903,7 +1284,7 @@ Fast_com_ibm_crypto_hdwrCCA_provider_HIKM_KXMDSHA224(J9VMThread *currentThread, 
     if (!cryptoLibLoaded) {
         loadCryptoLib(currentThread);
     }
-    cryptoPointers_t* cryptFuncs = (cryptoPointers_t*)currentThread->javaVM->jniHikmCryptoFunctions;
+    cryptoPointers_t *cryptFuncs = (cryptoPointers_t*)currentThread->javaVM->jniHikmCryptoFunctions;
 
     return digest(currentThread,
                   return_code,
@@ -934,7 +1315,7 @@ Fast_com_ibm_crypto_hdwrCCA_provider_HIKM_KXMDSHA256(J9VMThread *currentThread, 
     if (!cryptoLibLoaded) {
         loadCryptoLib(currentThread);
     }
-    cryptoPointers_t* cryptFuncs = (cryptoPointers_t*)currentThread->javaVM->jniHikmCryptoFunctions;
+    cryptoPointers_t *cryptFuncs = (cryptoPointers_t*)currentThread->javaVM->jniHikmCryptoFunctions;
 
     return digest(currentThread,
                   return_code,
@@ -965,7 +1346,7 @@ Fast_com_ibm_crypto_hdwrCCA_provider_HIKM_KXMDSHA384(J9VMThread *currentThread, 
     if (!cryptoLibLoaded) {
         loadCryptoLib(currentThread);
     }
-    cryptoPointers_t* cryptFuncs = (cryptoPointers_t*)currentThread->javaVM->jniHikmCryptoFunctions;
+    cryptoPointers_t *cryptFuncs = (cryptoPointers_t*)currentThread->javaVM->jniHikmCryptoFunctions;
 
     return digest(currentThread,
                   return_code,
@@ -996,7 +1377,7 @@ Fast_com_ibm_crypto_hdwrCCA_provider_HIKM_KXMDSHA512(J9VMThread *currentThread, 
     if (!cryptoLibLoaded) {
         loadCryptoLib(currentThread);
     }
-    cryptoPointers_t* cryptFuncs = (cryptoPointers_t*)currentThread->javaVM->jniHikmCryptoFunctions;
+    cryptoPointers_t *cryptFuncs = (cryptoPointers_t*)currentThread->javaVM->jniHikmCryptoFunctions;
 
     return digest(currentThread,
                   return_code,
@@ -1017,13 +1398,17 @@ Fast_com_ibm_crypto_hdwrCCA_provider_HIKM_KXMDSHA512(J9VMThread *currentThread, 
 }
 
 J9_FAST_JNI_METHOD_TABLE(com_ibm_crypto_hdwrCCA_provider_HIKM)
-    J9_FAST_JNI_METHOD("KMAESE", "(III[BI[BI[BI[BI[BI[B)I", Fast_com_ibm_crypto_hdwrCCA_provider_HIKM_KMAESE,
+    J9_FAST_JNI_METHOD("KMAESE", "(II[BI[BI[BI[BI[B)I", Fast_com_ibm_crypto_hdwrCCA_provider_HIKM_KMAESE,
         J9_FAST_JNI_RETAIN_VM_ACCESS | J9_FAST_JNI_DO_NOT_PASS_RECEIVER)
-    J9_FAST_JNI_METHOD("KMAESD", "(III[BI[BI[BI[BI[BI[B)I", Fast_com_ibm_crypto_hdwrCCA_provider_HIKM_KMAESD,
+    J9_FAST_JNI_METHOD("KMAESD", "(II[BI[BI[BI[BI[B)I", Fast_com_ibm_crypto_hdwrCCA_provider_HIKM_KMAESD,
         J9_FAST_JNI_RETAIN_VM_ACCESS | J9_FAST_JNI_DO_NOT_PASS_RECEIVER)
     J9_FAST_JNI_METHOD("KMDESE", "(III[BI[BI[BI[BI[BI[B)I", Fast_com_ibm_crypto_hdwrCCA_provider_HIKM_KMDESE,
         J9_FAST_JNI_RETAIN_VM_ACCESS | J9_FAST_JNI_DO_NOT_PASS_RECEIVER)
     J9_FAST_JNI_METHOD("KMDESD", "(III[BI[BI[BI[BI[BI[B)I", Fast_com_ibm_crypto_hdwrCCA_provider_HIKM_KMDESD,
+        J9_FAST_JNI_RETAIN_VM_ACCESS | J9_FAST_JNI_DO_NOT_PASS_RECEIVER)
+    J9_FAST_JNI_METHOD("KMGCME", "(I[BI[BI[BI[BI[BI[B)I", Fast_com_ibm_crypto_hdwrCCA_provider_HIKM_KMGCME,
+        J9_FAST_JNI_RETAIN_VM_ACCESS | J9_FAST_JNI_DO_NOT_PASS_RECEIVER)
+    J9_FAST_JNI_METHOD("KMGCMD", "(I[BI[BI[BI[BI[BI[B)I", Fast_com_ibm_crypto_hdwrCCA_provider_HIKM_KMGCMD,
         J9_FAST_JNI_RETAIN_VM_ACCESS | J9_FAST_JNI_DO_NOT_PASS_RECEIVER)
     J9_FAST_JNI_METHOD("KXMDSHA", "(III[BII[BI[BI[B)I", Fast_com_ibm_crypto_hdwrCCA_provider_HIKM_KXMDSHA,
         J9_FAST_JNI_RETAIN_VM_ACCESS | J9_FAST_JNI_DO_NOT_PASS_RECEIVER)
