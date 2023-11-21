@@ -56,7 +56,7 @@ template <class T> class List;
 template <class T> class ListElement;
 
 /**
- * Clang and old versions of XLC cannot determine uintptr_t is 
+ * Clang and old versions of XLC cannot determine uintptr_t is
  * equivalent to uint32_t or uint64_t.
  */
 #if defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(OSX)
@@ -164,7 +164,7 @@ struct TR_ByteInfo
 union TR_BigDecimalInfo
    {
    uint64_t value;
-   struct 
+   struct
       {
       int32_t flag;
       int32_t scale;
@@ -233,7 +233,7 @@ class TR_AbstractProfilerInfo : public TR_Link0<TR_AbstractProfilerInfo>
 
 /**
  * Hash table abstract profiler
- * 
+ *
  * Provides common methods for generating the instrumentation
  */
 class TR_AbstractHashTableProfilerInfo : public TR_AbstractProfilerInfo
@@ -268,7 +268,7 @@ class TR_AbstractHashTableProfilerInfo : public TR_AbstractProfilerInfo
     * Table layout
     */
    uintptr_t getBaseAddress() { return (uintptr_t) this; }
-   virtual size_t getLockOffset() = 0; 
+   virtual size_t getLockOffset() = 0;
    virtual size_t getHashOffset() = 0;
    virtual size_t getKeysOffset()  = 0;
    virtual size_t getFreqOffset() = 0;
@@ -327,7 +327,7 @@ class TR_AbstractHashTableProfilerInfo : public TR_AbstractProfilerInfo
 
 /**
  * Hash table implementation of value profiling
- * 
+ *
  * Instrumentation will generate a hash and check for a match in jitted code.
  * Collisions are managed by the runtime helper.
  */
@@ -462,10 +462,10 @@ TR_HashTableProfilerInfo<T>::getTotalFrequency()
       if (freqs[i] > 0 && i != getOtherIndex())
          totalFrequency += freqs[i];
       }
-   
+
    unlock();
 
-   return totalFrequency; 
+   return totalFrequency;
    }
 
 /**
@@ -553,7 +553,7 @@ TR_HashTableProfilerInfo<T>::getMaxValue(T &value)
 
 /**
  * Stash the values and frequencies into a vector.
- * 
+ *
  * \param vec Vector to fill. Will be cleared.
  * \return Reference to vector.
  */
@@ -727,7 +727,7 @@ TR_EmbeddedHashTable<T, bits>::addKey(T value)
          {
          available = available > 0  ? available : i;
          continue;
-         } 
+         }
 
       if (value == _keys[i])
          break;
@@ -756,7 +756,7 @@ TR_EmbeddedHashTable<T, bits>::addKey(T value)
 
          // Store the first value
          _keys[newIndex] = value;
-         _freqs[newIndex] = 1; 
+         _freqs[newIndex] = 1;
          this->_hashConfig = hashConfig;
          }
       else
@@ -787,7 +787,7 @@ TR_EmbeddedHashTable<T, bits>::addKey(T value)
 
    // Unlock the table, leaving JIT access disabled if at capacity
    this->_metaData.full = populated >= this->getCapacity();
-   this->unlock(populated < this->getCapacity()); 
+   this->unlock(populated < this->getCapacity());
 
    if (dumpInfo)
       {
@@ -845,7 +845,7 @@ TR_HashTableProfilerInfo<T>::initialHashConfig(HashFunction &hash, T value)
       }
 
    // Otherwise, place in final slot
-   size_t firstOne = getHashType() == BitIndexHash ? 0 : 8;  
+   size_t firstOne = getHashType() == BitIndexHash ? 0 : 8;
    for (size_t i = 0; i < getBits(); ++i)
       {
       if (getHashType() == BitIndexHash)
@@ -853,7 +853,7 @@ TR_HashTableProfilerInfo<T>::initialHashConfig(HashFunction &hash, T value)
       else
          hash.shifts[i] = firstOne - i;
       }
-   
+
    return (1 << getBits()) - 1;
    }
 
@@ -879,7 +879,7 @@ TR_HashTableProfilerInfo<T>::updateHashConfig(HashFunction &hash, T mask)
    for (; mask && bit < getBits(); ++bit)
       {
       // Shift mask until a set bit is found
-      while (!(mask & 1))      
+      while (!(mask & 1))
          {
          ++index;
          mask >>= 1;
@@ -937,7 +937,7 @@ TR_EmbeddedHashTable<T, bits>::recursivelySplit(T mask, T choices)
       return mask;
 
    // Try to preserve the existing order by selecting a bit that is zero in key0, one in key1
-   T diff = ~key0 & key1; 
+   T diff = ~key0 & key1;
 
    // Couldn't find a suitable choice, grab any difference
    if (!diff)
@@ -965,7 +965,7 @@ TR_HashTableProfilerInfo<T>::applyHash(HashFunction &hash, T value)
    {
    size_t result = 0;
    if (getHashType() == BitMaskHash)
-      { 
+      {
       size_t i = 1;
       T work = hash.mask;
       while (work)
@@ -1286,7 +1286,7 @@ TR_LinkedListProfilerInfo<T>::getMaxValue(T &value)
 
 /**
  * Stash the values and frequencies into a vector.
- * 
+ *
  * \param vec Vector to fill. Will be cleared.
  * \return Reference to vector.
  */
@@ -1299,7 +1299,7 @@ TR_LinkedListProfilerInfo<T>::getList(TR::vector<TR_ProfiledValue<T>, TR::Region
    vec.resize(getNumProfiledValues());
    size_t i = 0;
    for (auto iter = getFirst(); iter; iter = iter->getNext())
-      { 
+      {
       if (iter->_frequency > 0)
          {
          vec[i]._value = iter->_value;
@@ -1328,7 +1328,7 @@ TR_LinkedListProfilerInfo<T>::dumpInfo(TR::FILE *logFile)
    size_t count = 0;
    size_t padding = 2 * sizeof(T) + 2;
    for (auto iter = getFirst(); iter; iter = iter->getNext())
-      trfprintf(logFile, "    %d: %d %0*x", count++, iter->_frequency, padding, iter->_value); 
+      trfprintf(logFile, "    %d: %d %0*x", count++, iter->_frequency, padding, iter->_value);
 
    trfprintf(logFile, "   Num: %d Total Frequency: %d\n", count, getTotalFrequency());
    }
@@ -1343,15 +1343,15 @@ template <typename T> uint32_t
 TR_LinkedListProfilerInfo<T>::getTotalFrequency(uintptr_t **addrOfTotalFrequency)
    {
    OMR::CriticalSection lock(vpMonitor);
-   
+
    uintptr_t *addr = NULL;
    for (auto cursor = getFirst(); cursor; cursor = cursor->getNext())
       addr = &cursor->_totalFrequency;
 
    if (addrOfTotalFrequency)
       *addrOfTotalFrequency = addr;
-   return (uint32_t) *addr; 
-   } 
+   return (uint32_t) *addr;
+   }
 
 /**
  * Add a value to the list if there is room and its not already present.
@@ -1374,6 +1374,7 @@ TR_LinkedListProfilerInfo<T>::incrementOrCreate(T &value, uintptr_t **addrOfTota
       totalFrequency = getTotalFrequency(addrOfTotalFrequency);
 
    int32_t numDistinctValuesProfiled = 0;
+   Element *lastCursorExtraInfo = getFirst();
    Element *cursorExtraInfo = getFirst()->getNext();
    while (cursorExtraInfo)
       {
@@ -1389,11 +1390,14 @@ TR_LinkedListProfilerInfo<T>::incrementOrCreate(T &value, uintptr_t **addrOfTota
          }
 
       numDistinctValuesProfiled++;
+      lastCursorExtraInfo = cursorExtraInfo;
       cursorExtraInfo = cursorExtraInfo->getNext();
       }
 
-   if (!cursorExtraInfo)
-      cursorExtraInfo = getFirst();
+   TR_ASSERT_FATAL(cursorExtraInfo == NULL, "cursorExtraInfo = 0x%p should be NULL at this point!\n", cursorExtraInfo);
+   TR_ASSERT_FATAL(lastCursorExtraInfo, "lastCursorExtraInfo should not be NULL at this point!\n");
+
+   cursorExtraInfo = lastCursorExtraInfo;
 
    maxNumValuesProfiled = std::min<uint32_t>(maxNumValuesProfiled, LINKEDLIST_MAX_NUM_VALUES);
    if (numDistinctValuesProfiled <= maxNumValuesProfiled)
@@ -1531,7 +1535,7 @@ TR_ArrayProfilerInfo<T>::getMaxValue(T &value)
 
 /**
  * Stash the values and frequencies into a vector.
- * 
+ *
  * \param vec Vector to fill. Will be cleared.
  * \return Reference to vector.
  */
@@ -1544,7 +1548,7 @@ TR_ArrayProfilerInfo<T>::getList(TR::vector<TR_ProfiledValue<T>, TR::Region&> &v
    vec.resize(getNumProfiledValues());
    size_t j = 0;
    for (size_t i = 0; i < getSize(); ++i)
-      { 
+      {
       if (_frequencies[i] > 0)
          {
          vec[j]._value = _values[i];
@@ -1608,7 +1612,7 @@ TR_ArrayProfilerInfo<T>::incrementOrCreate(const T &value)
          break;
          }
       }
-   
+
    _totalFrequency++;
    }
 
@@ -1760,7 +1764,7 @@ TR_GenericValueInfo<T>::getMaxValue()
 /**
  * Stash the values and frequencies into a vector and sort it.
  * Sort is ordered by frequency descending.
- * 
+ *
  * \param region Region to allocate vector in.
  * \return Reference to sorted vector.
  */
@@ -1768,7 +1772,7 @@ template <typename T> void
 TR_GenericValueInfo<T>::getSortedList(Vector &vec)
    {
    _profiler->getList(vec);
-   std::sort(vec.begin(), vec.end(), DescendingSort()); 
+   std::sort(vec.begin(), vec.end(), DescendingSort());
    }
 
 /**
