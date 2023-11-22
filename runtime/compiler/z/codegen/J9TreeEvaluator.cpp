@@ -9204,8 +9204,9 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
             debugObj->addInstructionComment(cursor, "Denotes start of OOL monent monitorLookupCache");
             }
 
-         lookupOffsetReg = cg->allocateRegister();
-         OOLConditions->addPostCondition(lookupOffsetReg, TR::RealRegister::AssignAny);
+         lookupOffsetReg = srm->findOrCreateScratchRegister();
+         //OOLConditions->addPostCondition(lookupOffsetReg, TR::RealRegister::AssignAny);
+         //TODO: ADD post condition to OOLConditions!
 
          int32_t offsetOfMonitorLookupCache = offsetof(J9VMThread, objectMonitorLookupCache);
          int32_t t = trailingZeroes(TR::Compiler->om.getObjectAlignmentInBytes());
@@ -9252,6 +9253,8 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
             startICF = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, helperCallLabel);
             }
 
+         srm->reclaimScratchRegister(lookupOffsetReg);
+
          int32_t offsetOfMonitor = offsetof(J9ObjectMonitor, monitor);
          temp2MR = generateS390MemoryReference(tempRegister, offsetOfMonitor, cg);
          generateRXInstruction(cg, TR::InstOpCode::getCmpOpCode(), node, objReg, temp2MR);
@@ -9295,6 +9298,9 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
          generateS390LabelInstruction(cg, TR::InstOpCode::label, node, helperCallLabel );
          TR::RegisterDependencyConditions *deps = NULL;
          dummyResultReg = helperLink->buildDirectDispatch(node, &deps);
+
+         srm->addScratchRegistersToDependencyList(OOLConditions);
+
          TR::RegisterDependencyConditions *mergeConditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(OOLConditions, deps, cg);
          generateS390LabelInstruction(cg, TR::InstOpCode::label, node, helperReturnOOLLabel , mergeConditions);
 
@@ -9499,8 +9505,6 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    cg->stopUsingRegister(monitorReg);
    if (objectClassReg)
       cg->stopUsingRegister(objectClassReg);
-   if (lookupOffsetReg)
-      cg->stopUsingRegister(lookupOffsetReg);
    if (tempRegister && (tempRegister != objectClassReg))
       cg->stopUsingRegister(tempRegister);
    cg->decReferenceCount(objNode);
