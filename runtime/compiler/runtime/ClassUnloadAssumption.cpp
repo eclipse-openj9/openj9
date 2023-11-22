@@ -1381,7 +1381,7 @@ void TR_AddressSet::trace(char *format, ...)
       }
    }
 
-void TR_AddressSet::traceDetails(char *format, ...)
+void TR_AddressSet::traceDetails(const char *format, ...)
    {
    if (enableTraceDetails())
       {

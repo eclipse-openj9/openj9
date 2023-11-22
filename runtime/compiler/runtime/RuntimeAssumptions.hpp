@@ -224,7 +224,7 @@ class TR_AddressSet
 
    static void trace(char *format, ...);
    static bool enableTraceDetails();
-   static void traceDetails(char *format, ...);
+   static void traceDetails(const char *format, ...);
 
    void moveAddressRanges(int32_t desiredHole, int32_t currentHole);
    void moveAddressRangesBy(int32_t low, int32_t high, int32_t distance);

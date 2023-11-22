@@ -1385,7 +1385,7 @@ TR_J9ServerVM::isUnloadAssumptionRequired(TR_OpaqueClassBlock *clazz, TR_Resolve
    }
 
 uint32_t
-TR_J9ServerVM::getInstanceFieldOffset(TR_OpaqueClassBlock *clazz, char *fieldName, uint32_t fieldLen, char *sig, uint32_t sigLen, UDATA options)
+TR_J9ServerVM::getInstanceFieldOffset(TR_OpaqueClassBlock *clazz, const char *fieldName, uint32_t fieldLen, const char *sig, uint32_t sigLen, UDATA options)
    {
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JITServer::MessageType::VM_getInstanceFieldOffset, clazz, std::string(fieldName, fieldLen), std::string(sig, sigLen), options);
@@ -2865,8 +2865,8 @@ TR_J9SharedCacheServerVM::javaLangClassGetModifiersImpl(TR_OpaqueClassBlock * cl
    }
 
 uint32_t
-TR_J9SharedCacheServerVM::getInstanceFieldOffset(TR_OpaqueClassBlock * classPointer, char * fieldName, uint32_t fieldLen,
-                                    char * sig, uint32_t sigLen, UDATA options)
+TR_J9SharedCacheServerVM::getInstanceFieldOffset(TR_OpaqueClassBlock * classPointer, const char * fieldName, uint32_t fieldLen,
+                                    const char * sig, uint32_t sigLen, UDATA options)
    {
    TR::Compilation* comp = _compInfoPT->getCompilation();
    TR_ASSERT(comp, "Should be called only within a compilation");
