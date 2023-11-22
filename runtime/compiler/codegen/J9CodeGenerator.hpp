@@ -188,6 +188,7 @@ public:
    bool needRelocationsForBodyInfoData();
    bool needRelocationsForPersistentInfoData();
 #endif /* defined(J9VM_OPT_JITSERVER) */
+   bool needRelocationsForPersistentProfileInfoData();
 
    // ----------------------------------------
    TR::Node *createOrFindClonedNode(TR::Node *node, int32_t numChildren);

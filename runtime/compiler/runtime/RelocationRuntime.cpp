@@ -839,6 +839,66 @@ TR_RelocationRuntime::relocateMethodMetaData(UDATA codeRelocationAmount, UDATA d
          persistentBodyInfo->setMethodInfo(persistentMethodInfo);
          }
       _exceptionTable->bodyInfo = (void *)(persistentBodyInfo);
+
+#if defined(J9VM_OPT_JITSERVER)
+      TR_PersistentMethodInfo *methodInfo = persistentBodyInfo->getMethodInfo();
+
+      uint8_t *profileInfoBuffer = (uint8_t *)(persistentMethodInfo + 1);
+      TR_PersistentProfileInfo *recentProfileInfo = NULL;
+      TR_PersistentProfileInfo *bestProfileInfo = NULL;
+      TR_PersistentProfileInfo *remoteRecentProfileInfo = methodInfo->_recentProfileInfo;
+      TR_PersistentProfileInfo *remoteBestProfileInfo = methodInfo->_bestProfileInfo;
+
+      /*
+       * Cannot use TR_PersistentMethodInfo::getRecentProfileInfo() as it tries to access
+       * TR_PersistentMethodInfo::_recentProfileInfo which is an invalid pointer when loading AOT body
+       * obtained from SCC or from JIT server
+       */
+      if (NULL != remoteRecentProfileInfo)
+         {
+         recentProfileInfo = TR_PersistentProfileInfo::deserialize(profileInfoBuffer);
+         persistentBodyInfo->setProfileInfo(recentProfileInfo);
+         methodInfo->_recentProfileInfo = recentProfileInfo;
+         TR_PersistentProfileInfo::incRefCount(recentProfileInfo);
+
+         // If running with the profiling thread, add profileInfo to its list
+         if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableJProfilerThread))
+            {
+            TR::CompilationInfo::get()->getJProfilerThread()->addProfileInfo(recentProfileInfo);
+            }
+         }
+      /*
+       * Cannot use TR_PersistentMethodInfo::getBestProfileInfo() as it tries to access
+       * TR_PersistentMethodInfo::_bestProfileInfo which is an invalid pointer when loading AOT body
+       * obtained from SCC or from JIT server
+       */
+      if (NULL != remoteBestProfileInfo)
+         {
+         if (remoteBestProfileInfo != remoteRecentProfileInfo)
+            {
+            bestProfileInfo = TR_PersistentProfileInfo::deserialize(profileInfoBuffer);
+            }
+         else
+            {
+            bestProfileInfo = recentProfileInfo;
+            }
+         methodInfo->_bestProfileInfo = bestProfileInfo;
+         TR_PersistentProfileInfo::incRefCount(bestProfileInfo);
+
+         // If running with the profiling thread, add profileInfo to its list
+         if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableJProfilerThread))
+            {
+            TR::CompilationInfo::get()->getJProfilerThread()->addProfileInfo(bestProfileInfo);
+            }
+         }
+
+      TR::Recompilation *recompInfo = comp()->getRecompilationInfo();
+      if (recompInfo)
+         {
+         recompInfo->setJittedBodyInfo(persistentBodyInfo);
+         recompInfo->setMethodInfo(persistentBodyInfo->getMethodInfo());
+         }
+#endif /* defined(J9VM_OPT_JITSERVER) */
       }
 
    if (getPersistentInfo()->isRuntimeInstrumentationEnabled() &&

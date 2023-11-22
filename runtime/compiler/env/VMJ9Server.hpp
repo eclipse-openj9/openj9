@@ -53,6 +53,7 @@ public:
    virtual bool canDevirtualizeDispatch() override                       { return true; }
    virtual bool needRelocationsForBodyInfoData() override                { return true; }
    virtual bool needRelocationsForPersistentInfoData() override          { return true; }
+   virtual bool needRelocationsForPersistentProfileInfoData() override   { return true; }
    virtual bool needRelocationsForLookupEvaluationData() override        { return true; }
    virtual bool needRelocationsForCurrentMethodPC() override             { return true; }
    virtual bool needRelocationsForCurrentMethodStartPC() override        { return true; }
@@ -296,6 +297,7 @@ public:
    virtual bool       needRelocationsForLookupEvaluationData() override        { return true; }
    virtual bool       needRelocationsForBodyInfoData() override                { return true; }
    virtual bool       needRelocationsForPersistentInfoData() override          { return true; }
+   virtual bool       needRelocationsForPersistentProfileInfoData() override   { return true; }
    virtual bool       nopsAlsoProcessedByRelocations() override                { return true; }
    virtual bool       supportsGuardMerging() override                          { return false; }
    virtual bool       canDevirtualizeDispatch() override                       { return false; }

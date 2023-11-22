@@ -2704,13 +2704,11 @@ J9::Options::setupJITServerOptions()
        compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
       {
       self()->setOption(TR_DisableSamplingJProfiling);
-      self()->setOption(TR_DisableProfiling); // JITServer limitation, JIT profiling data is not available to remote compiles yet
 #if defined(TR_HOST_ARM64)
       self()->setOption(TR_DisableEDO); // Temporary JITServer limitation on aarch64
 #endif /* defined (TR_HOST_ARM64) */
       self()->setOption(TR_DisableMethodIsCold); // Shady heuristic; better to disable to reduce client/server traffic
-      self()->setOption(TR_DisableJProfilerThread);
-      self()->setOption(TR_EnableJProfiling, false);
+      self()->setOption(TR_DisableValueProfiling);
 
       if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
          {
@@ -2718,9 +2716,10 @@ J9::Options::setupJITServerOptions()
          // For the same reason we don't have to use TR_EnableYieldVMAccess
          self()->setOption(TR_DisableNoVMAccess);
 
-         // IProfiler thread is not needed at JITServer because
-         // no IProfiler info is collected at the server itself
+         // IProfiler and JProfiler thread is not needed at JITServer because
+         // no IProfiler and JProfiler info is collected at the server itself
          self()->setOption(TR_DisableIProfilerThread);
+         self()->setOption(TR_DisableJProfilerThread);
          J9::Compilation::setOutOfProcessCompilation();
          }
 

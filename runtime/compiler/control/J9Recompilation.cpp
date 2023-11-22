@@ -114,12 +114,6 @@ J9::Recompilation::setupMethodInfo()
       // has a compilation level set in it (by virtue of a previous compilation)
       //
       _methodInfo = getExistingMethodInfo(_compilation->getCurrentMethod());
-#if defined(J9VM_OPT_JITSERVER)
-      if (comp()->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
-         {
-         TR_ASSERT_FATAL(_methodInfo->profilingDisabled(), "Profiling is not supported in JITServer");
-         }
-#endif /* defined(J9VM_OPT_JITSERVER) */
 
       if (!comp()->fej9()->canRecompileMethodWithMatchingPersistentMethodInfo(comp()) &&
           !comp()->isGPUCompilation())
@@ -764,17 +758,94 @@ J9::Recompilation::persistentJittedBodyInfoFromString(const std::string &bodyInf
    bodyInfo->setMethodInfo(methodInfo);
    bodyInfo->setProfileInfo(NULL);
    bodyInfo->setMapTable(NULL);
-   resetPersistentProfileInfo(methodInfo);
+   methodInfo->setOptimizationPlan(NULL);
    return bodyInfo;
    }
 
+/**
+ * Serialize a TR_PersistentProfileInfo struct
+ *
+ * @param [in] profileInfo ref to TR_PersistentProfileInfo to be serialized
+ * @param [out] profileInfoStr ref to string which points to the serialized TR_PersistentProfileInfo
+ */
 void
-J9::Recompilation::resetPersistentProfileInfo(TR_PersistentMethodInfo *methodInfo)
+J9::Recompilation::serializePersistentProfileInfo(const TR_PersistentProfileInfo &profileInfo, std::string &profileInfoStr, TR_Memory *trMemory)
    {
-   methodInfo->setOptimizationPlan(NULL);
-   // Cannot use setter because it calls the destructor on the old profile data,
-   // which is a client pointer
-   methodInfo->_recentProfileInfo = NULL;
-   methodInfo->_bestProfileInfo = NULL;
+   uint32_t size = profileInfo.getSizeForSerialization();
+   uint8_t * buffer = (uint8_t *)trMemory->allocateHeapMemory(size);
+   uint8_t * origBuffer = buffer; // buffer gets updated after the serialization
+   profileInfo.serialize(buffer);
+   profileInfoStr.append((char *)origBuffer, size);
+   }
+
+/**
+ * Serialize the "recent" and "best" profile information stored in TR_PersistentMethodInfo
+ *
+ * @param [in] methodInfo pointer to TR_PersistentMethodInfo which stores "recent" and "best" profile info
+ * @param [out] recentProfileInfoStr ref to string which points to the serialized recent TR_PersistentProfileInfo
+ * @param [out] bestProfileInfoStr ref to string which points to the serialized best TR_PersistentProfileInfo
+ */
+void
+J9::Recompilation::serializePersistentProfileInfo(TR_PersistentMethodInfo *methodInfo, std::string &recentProfileInfoStr, std::string &bestProfileInfoStr, TR_Memory *trMemory)
+   {
+   TR_PersistentProfileInfo *recentProfileInfo = methodInfo->getRecentProfileInfo();
+   TR_PersistentProfileInfo *bestProfileInfo = methodInfo->getBestProfileInfo();
+   if (NULL != recentProfileInfo)
+      {
+      J9::Recompilation::serializePersistentProfileInfo(*recentProfileInfo, recentProfileInfoStr, trMemory);
+      TR_PersistentProfileInfo::decRefCount(recentProfileInfo);
+      }
+   if ((NULL != bestProfileInfo) && (bestProfileInfo != recentProfileInfo))
+      {
+      J9::Recompilation::serializePersistentProfileInfo(*bestProfileInfo, bestProfileInfoStr, trMemory);
+      TR_PersistentProfileInfo::decRefCount(bestProfileInfo);
+      }
+   }
+
+
+/**
+ * Deserialize the "recent" and "best" profile information and store the pointer to the newly constructed
+ * TR_PersistentProfileInfo in the TR_PersistentMethodInfo.
+ *
+ * @param [in] methodInfo pointer to TR_PersistentMethodInfo which stores "recent" and "best" profile info
+ * @param [in] recentProfileInfoStr ref to string which points to the serialized recent TR_PersistentProfileInfo
+ * @param [in] bestProfileInfoStr ref to string which points to the serialized best TR_PersistentProfileInfo
+ */
+void
+J9::Recompilation::deserializePersistentProfileInfo(TR_PersistentMethodInfo *methodInfo, const std::string &recentProfileInfoStr, const std::string &bestProfileInfoStr)
+   {
+   TR_ASSERT_FATAL(TR::Options::getCmdLineOptions()->getOption(TR_DisableJProfilerThread), "As deserialization is done by server, JProfiler thread should not be enabled");
+   TR_PersistentProfileInfo *recentProfileInfo = NULL;
+   TR_PersistentProfileInfo *bestProfileInfo = NULL;
+   TR_PersistentProfileInfo *remoteRecentProfileInfo = methodInfo->_recentProfileInfo;
+   TR_PersistentProfileInfo *remoteBestProfileInfo = methodInfo->_bestProfileInfo;
+   /*
+    * Cannot use TR_PersistentMethodInfo::getRecentProfileInfo() as it tries to access
+    * TR_PersistentMethodInfo::_recentProfileInfo which is an invalid pointer when
+    * TR_PersistentMethodInfo is a remote copy.
+    * Same reason applies for not using TR_PersistentMethodInfo::getBestProfileInfo().
+    */
+   if (recentProfileInfoStr.size() > 0)
+      {
+      uint8_t *profileInfoStr = (uint8_t *)recentProfileInfoStr.c_str();
+      recentProfileInfo = TR_PersistentProfileInfo::deserialize(profileInfoStr);
+      methodInfo->_recentProfileInfo = recentProfileInfo;
+      TR_PersistentProfileInfo::incRefCount(recentProfileInfo);
+      }
+
+   if (remoteBestProfileInfo == remoteRecentProfileInfo)
+      {
+      bestProfileInfo = recentProfileInfo;
+      }
+   else if (bestProfileInfoStr.size() > 0)
+      {
+      uint8_t *profileInfoStr = (uint8_t *)bestProfileInfoStr.c_str();
+      bestProfileInfo = TR_PersistentProfileInfo::deserialize(profileInfoStr);
+      }
+   methodInfo->_bestProfileInfo = bestProfileInfo;
+   if (bestProfileInfo)
+      {
+      TR_PersistentProfileInfo::incRefCount(bestProfileInfo);
+      }
    }
 #endif /* defined(J9VM_OPT_JITSERVER) */

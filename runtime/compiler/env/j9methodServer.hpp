@@ -59,8 +59,13 @@ TR_ResolvedJ9JITServerMethodInfoStruct
    };
 
 
-// The last 3 strings are serialized versions of jittedBodyInfo, persistentMethodInfo and TR_ContiguousIPMethodHashTableInfo
-using TR_ResolvedJ9JITServerMethodInfo = std::tuple<TR_ResolvedJ9JITServerMethodInfoStruct, std::string, std::string, std::string>;
+// The last 5 strings are serialized versions of
+//    1. jittedBodyInfo
+//    2. persistentMethodInfo
+//    3. TR_ContiguousIPMethodHashTableInfo
+//    4. recent TR_PersistentProfileInfo in persistentMethodInfo
+//    5. best TR_PersistentProfileInfo in persistentMethodInfo
+using TR_ResolvedJ9JITServerMethodInfo = std::tuple<TR_ResolvedJ9JITServerMethodInfoStruct, std::string, std::string, std::string, std::string, std::string>;
 
 // key used to identify a resolved method in resolved methods cache.
 // Since one cache contains different types of resolved methods, need to uniquely identify
@@ -127,6 +132,8 @@ TR_ResolvedMethodCacheEntry
    TR_PersistentJittedBodyInfo *persistentBodyInfo;
    TR_PersistentMethodInfo *persistentMethodInfo;
    TR_ContiguousIPMethodHashTableEntry *IPMethodInfo;
+   TR_PersistentProfileInfo *recentProfileInfo;
+   TR_PersistentProfileInfo *bestProfileInfo;
    int32_t ttlForUnresolved;
    };
 
@@ -232,7 +239,7 @@ public:
    void cacheFields();
    int32_t collectImplementorsCapped(TR_OpaqueClassBlock *topClass, int32_t maxCount, int32_t cpIndexOrOffset, TR_YesNoMaybe useGetResolvedInterfaceMethod, TR_ResolvedMethod **implArray);
    bool isLambdaFormGeneratedMethod() { return _isLambdaFormGeneratedMethod; }
-   static void packMethodInfo(TR_ResolvedJ9JITServerMethodInfo &methodInfo, TR_ResolvedJ9Method *resolvedMethod, TR_FrontEnd *fe);
+   static void packMethodInfo(TR_ResolvedJ9JITServerMethodInfo &methodInfo, TR_ResolvedJ9Method *resolvedMethod, TR_FrontEnd *fe, TR_Memory *trMemory);
 
 protected:
    JITServer::ServerStream *_stream;

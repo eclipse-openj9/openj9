@@ -80,6 +80,7 @@ class TR_PersistentMethodInfo
    friend class TR_S390Recompilation;  // FIXME: ugly
    friend class ::OMR::Options;
    friend class J9::CompilationStrategy;
+   friend class TR_RelocationRuntime;
 
    public:
    TR_PERSISTENT_ALLOC(TR_Memory::PersistentMethodInfo);

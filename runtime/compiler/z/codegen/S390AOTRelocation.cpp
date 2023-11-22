@@ -247,6 +247,19 @@ void TR::S390EncodingRelocation::addRelocation(TR::CodeGenerator *cg, uint8_t *c
          line,
          node);
       }
+   else if (_reloType == TR_BlockFrequency)
+      {
+      TR_RelocationRecordInformation *recordInfo = ( TR_RelocationRecordInformation *)comp->trMemory()->allocateMemory(sizeof( TR_RelocationRecordInformation), heapAlloc);
+      recordInfo->data1 = (uintptr_t)getSymbolReference();
+      recordInfo->data2 = 0; // seqKind
+      cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *)recordInfo, TR_BlockFrequency, cg),
+                              file, line, node);
+      }
+   else if (_reloType == TR_RecompQueuedFlag)
+      {
+      cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation(cursor, NULL, TR_RecompQueuedFlag, cg),
+                              file, line, node);
+      }
    else
       {
       TR_ASSERT(0,"relocation type [%d] not handled yet", _reloType);

@@ -834,7 +834,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
             resolvedMethod->setMethodHandleLocation(methodHandleLocation);
 
             TR_ResolvedJ9JITServerMethodInfo methodInfo;
-            TR_ResolvedJ9JITServerMethod::packMethodInfo(methodInfo, static_cast<TR_ResolvedJ9Method *>(resolvedMethod), fe);
+            TR_ResolvedJ9JITServerMethod::packMethodInfo(methodInfo, static_cast<TR_ResolvedJ9Method *>(resolvedMethod), fe, trMemory);
 
             client->write(response, archetype, std::string(thunkableSignature, length), methodInfo);
             }
@@ -1118,7 +1118,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          auto recv = client->getRecvData<TR_ResolvedJ9Method *, uintptr_t *>();
          auto *targetMethod = static_cast<TR_ResolvedJ9Method *>(fe->targetMethodFromInvokeCacheArrayMemberNameObj(comp, std::get<0>(recv), std::get<1>(recv)));
          TR_ResolvedJ9JITServerMethodInfo methodInfo;
-         TR_ResolvedJ9JITServerMethod::packMethodInfo(methodInfo, targetMethod, fe);
+         TR_ResolvedJ9JITServerMethod::packMethodInfo(methodInfo, targetMethod, fe, trMemory);
          client->write(response, targetMethod->getPersistentIdentifier(), methodInfo);
          }
          break;
@@ -1560,7 +1560,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          bool isInvokeCacheAppendixNull = false;
          auto *handleMethod = static_cast<TR_ResolvedJ9Method *>(owningMethod->getResolvedHandleMethod(comp, cpIndex, &isUnresolvedInCP, &isInvokeCacheAppendixNull));
          TR_ResolvedJ9JITServerMethodInfo methodInfo;
-         TR_ResolvedJ9JITServerMethod::packMethodInfo(methodInfo, handleMethod, fe);
+         TR_ResolvedJ9JITServerMethod::packMethodInfo(methodInfo, handleMethod, fe, trMemory);
          std::string signature(utf8Data(handleMethod->_signature), J9UTF8_LENGTH(handleMethod->_signature));
 
          client->write(
@@ -1633,7 +1633,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          bool isInvokeCacheAppendixNull = false;
          auto *dynamicMethod = static_cast<TR_ResolvedJ9Method *>(owningMethod->getResolvedDynamicMethod(comp, callSiteIndex, &isUnresolvedInCP, &isInvokeCacheAppendixNull));
          TR_ResolvedJ9JITServerMethodInfo methodInfo;
-         TR_ResolvedJ9JITServerMethod::packMethodInfo(methodInfo, (TR_ResolvedJ9Method *) dynamicMethod, fe);
+         TR_ResolvedJ9JITServerMethod::packMethodInfo(methodInfo, (TR_ResolvedJ9Method *) dynamicMethod, fe, trMemory);
 
          client->write(
             response,
@@ -1763,7 +1763,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
                }
             if (resolvedMethod)
                {
-               TR_ResolvedJ9JITServerMethod::packMethodInfo(methodInfo, resolvedMethod, fe);
+               TR_ResolvedJ9JITServerMethod::packMethodInfo(methodInfo, resolvedMethod, fe, trMemory);
                ramMethod = resolvedMethod->getPersistentIdentifier();
                }
             ramMethods[i] = ramMethod;
@@ -1838,7 +1838,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
             for (int32_t i = 0; i < implCount; ++i)
                {
                TR_ResolvedJ9JITServerMethodInfo methodInfo;
-               TR_ResolvedJ9JITServerMethod::packMethodInfo(methodInfo, (TR_ResolvedJ9Method *) implArray[i], fe);
+               TR_ResolvedJ9JITServerMethod::packMethodInfo(methodInfo, (TR_ResolvedJ9Method *) implArray[i], fe, trMemory);
                methodInfos.push_back(methodInfo);
                ramMethods.push_back(static_cast<TR_ResolvedJ9Method *>(implArray[i])->ramMethod());
                }
@@ -3143,9 +3143,18 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
    auto classInfoTuple = JITServerHelpers::packRemoteROMClassInfo(clazz, compiler->fej9vm()->vmThread(),
                                                                   compiler->trMemory(), serializeClass);
    std::string optionsStr = TR::Options::packOptions(compiler->getOptions());
-   std::string recompMethodInfoStr = compiler->isRecompilationEnabled()
-      ? std::string((const char *)compiler->getRecompilationInfo()->getMethodInfo(), sizeof(TR_PersistentMethodInfo))
-      : std::string();
+   TR_PersistentMethodInfo *methodInfo = NULL;
+   if (compiler->isRecompilationEnabled())
+      {
+      methodInfo = compiler->getRecompilationInfo()->getMethodInfo();
+      }
+   std::string recompMethodInfoStr = (methodInfo) ? std::string((char *) methodInfo, sizeof(TR_PersistentMethodInfo)) : std::string();
+   std::string recentProfileInfoStr;
+   std::string bestProfileInfoStr;
+   if (methodInfo)
+      {
+      J9::Recompilation::serializePersistentProfileInfo(methodInfo, recentProfileInfoStr, bestProfileInfoStr, compiler->trMemory());
+      }
 
    uintptr_t *classChain = NULL;
    std::vector<J9Class *> ramClassChain;
@@ -3226,8 +3235,8 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
       client->buildCompileRequest(
          persistentInfo->getClientUID(), seqNo, lastCriticalSeqNo, method, clazz, *entry->_optimizationPlan,
          detailsStr, details.getType(), unloadedClasses, illegalModificationList, classInfoTuple, optionsStr,
-         recompMethodInfoStr, chtableUpdates.first, chtableUpdates.second, useAotCompilation,
-         TR::Compiler->vm.isVMInStartupPhase(compInfoPT->getJitConfig()), aotCacheLoad, methodIndex,
+         recompMethodInfoStr, recentProfileInfoStr, bestProfileInfoStr, chtableUpdates.first, chtableUpdates.second,
+         useAotCompilation, TR::Compiler->vm.isVMInStartupPhase(compInfoPT->getJitConfig()), aotCacheLoad, methodIndex,
          classChain, ramClassChain, uncachedRAMClasses, uncachedClassInfos, newKnownIds
       );
 

@@ -2836,6 +2836,7 @@ TR_PersistentProfileInfo::TR_PersistentProfileInfo(uint8_t * &buffer) :
    _blockFrequencyInfo = serializedData->hasBlockFrequencyInfo ? TR_BlockFrequencyInfo::deserialize(buffer, this) : NULL;
    TR_ASSERT_FATAL(!serializedData->hasValueProfileInfo, "hasValueProfileInfo should be false\n");
    _valueProfileInfo = NULL;
+   _catchBlockProfileInfo = NULL;
 
    // these two are not required
    memset(_profilingFrequency, 0, sizeof(_profilingFrequency));
