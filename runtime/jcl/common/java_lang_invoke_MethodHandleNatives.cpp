@@ -926,6 +926,17 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(
 						new_flags |= MN_IS_METHOD;
 						if (MH_REF_INVOKEINTERFACE == ref_kind) {
 							Assert_JCL_true(J9_ARE_NO_BITS_SET(methodModifiers, J9AccStatic));
+#if JAVA_SPEC_VERSION < 11
+							/* Ensure findVirtual throws an IllegalAccessException (by wrapping this IncompatibleClassChangeError)
+							 * when trying to access a private interface method for Java 10- with OpenJDK MHs.
+							 */
+							if (J9_ARE_NO_BITS_SET(lookupOptions, J9_LOOK_STATIC)
+							&& J9_ARE_ALL_BITS_SET(methodModifiers, J9AccPrivate)
+							) {
+								vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, NULL);
+								goto done;
+							}
+#endif /* JAVA_SPEC_VERSION < 11 */
 							if (J9_ARE_ALL_BITS_SET(methodID->vTableIndex, J9_JNI_MID_INTERFACE)) {
 								new_flags |= MH_REF_INVOKEINTERFACE << MN_REFERENCE_KIND_SHIFT;
 							} else if (!J9ROMMETHOD_HAS_VTABLE(romMethod)) {
