@@ -291,6 +291,12 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	</test>
 	<test>
 		<testCaseName>cmdLineTest_J9test_elapsedTime</testCaseName>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/18487</comment>
+				<platform>.*windows.*</platform>
+			</disable>
+		</disables>
 		<command>$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) \
 	-DJARPATH=$(Q)$(TESTNG)$(P)$(TEST_RESROOT)$(D)cmdLineTest_J9tests.jar$(Q) \
 	-DJVMLIBPATH=$(Q)$(J9VM_PATH)$(Q) \
