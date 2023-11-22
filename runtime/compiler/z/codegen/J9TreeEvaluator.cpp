@@ -9331,11 +9331,6 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       return reservationLockEnter(node, lwOffset, objectClassReg, cg, helperLink);
       }
 
-   if (normalLockWithReservationPreserving)
-      {
-      lockPreservingReg = cg->allocateRegister();
-      conditions->addPostCondition(lockPreservingReg, TR::RealRegister::AssignAny);
-      }
    const char* debugCounterNamePrefix = normalLockWithReservationPreserving? "LockEnt/Preserving": "LockEnt/Normal";
    // Opcodes:
    bool use64b = true;
@@ -9438,6 +9433,7 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       generateRRInstruction(cg, andOp, node, wasteReg, monitorReg);
       if (normalLockWithReservationPreserving)
          {
+         lockPreservingReg = srm->findOrCreateScratchRegister();
          generateRRInstruction(cg,loadRegOp, node, lockPreservingReg, metaReg);
          generateRILInstruction(cg, orImmOp, node, lockPreservingReg, LOCK_RESERVATION_BIT);
          }
@@ -9448,6 +9444,10 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       // In this case we call helper function and let the VM handle the situation.
       startICF = generateS390CompareAndBranchInstruction(cg, compareOp, node, wasteReg, normalLockWithReservationPreserving ? lockPreservingReg : metaReg, TR::InstOpCode::COND_BNE, callHelper, false, false);
       srm->reclaimScratchRegister(wasteReg);
+      if (normalLockWithReservationPreserving)
+         {
+         srm->reclaimScratchRegister(lockPreservingReg);
+         }
 
       cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "%s/Recursive", debugCounterNamePrefix), 1, TR::DebugCounter::Undetermined);
       // In case of recursive lock, the counter should be incremented.
@@ -9503,8 +9503,6 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       cg->stopUsingRegister(lookupOffsetReg);
    if (tempRegister && (tempRegister != objectClassReg))
       cg->stopUsingRegister(tempRegister);
-   if (lockPreservingReg)
-      cg->stopUsingRegister(lockPreservingReg);
    cg->decReferenceCount(objNode);
    return NULL;
    }
