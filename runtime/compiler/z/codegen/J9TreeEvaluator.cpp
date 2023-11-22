@@ -9087,7 +9087,7 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       }
 
 
-   TR_S390ScratchRegisterManager *srm = cg->generateScratchRegisterManager();
+   TR_S390ScratchRegisterManager *srm = cg->generateScratchRegisterManager(TODO: add capacity);
 
    TR::Node                *objNode                   = node->getFirstChild();
    TR::Register            *objReg                    = cg->evaluate(objNode);
@@ -9326,10 +9326,6 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
    if (reserveLocking)
       {
-
-      // TODO - ScratchRegisterManager Should Manage these temporary Registers.
-      if (wasteReg)
-         cg->stopUsingRegister(wasteReg);
       cg->stopUsingRegister(monitorReg);
       // TODO : objectClassReg contains the J9Class for object which is set in lwOffset <= 0 case. Usually that is NULL in the following function call
       return reservationLockEnter(node, lwOffset, objectClassReg, cg, helperLink);
@@ -9426,8 +9422,7 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
       TR::MemoryReference * tempMR = generateS390MemoryReference(baseReg, lwOffset, cg);
       TR::MemoryReference * tempMR1 = generateS390MemoryReference(baseReg, lwOffset, cg);
-      wasteReg = cg->allocateRegister();
-      conditions->addPostCondition(wasteReg, TR::RealRegister::AssignAny);
+      wasteReg = srm->findOrCreateScratchRegister();
       // Loading Lock value into monitorReg
       generateRXInstruction(cg, loadOp, node, monitorReg, tempMR);
       generateRIInstruction(cg, loadHalfWordImmOp, node, wasteReg,
@@ -9452,6 +9447,7 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       // if comparison fails (masked lock value != R13) that means another thread owns the lock.
       // In this case we call helper function and let the VM handle the situation.
       startICF = generateS390CompareAndBranchInstruction(cg, compareOp, node, wasteReg, normalLockWithReservationPreserving ? lockPreservingReg : metaReg, TR::InstOpCode::COND_BNE, callHelper, false, false);
+      srm->reclaimScratchRegister(wasteReg);
 
       cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "%s/Recursive", debugCounterNamePrefix), 1, TR::DebugCounter::Undetermined);
       // In case of recursive lock, the counter should be incremented.
@@ -9476,6 +9472,8 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       cursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, node, callHelper);
       }
 
+   srm->addScratchRegistersToDependencyList(conditions);
+
    cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "%s/VMHelper", debugCounterNamePrefix), 1, TR::DebugCounter::Undetermined);
    TR::RegisterDependencyConditions *deps = NULL;
    dummyResultReg = inlineRecursive ? helperLink->buildDirectDispatch(node, &deps) : helperLink->buildDirectDispatch(node);
@@ -9499,8 +9497,6 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, cFlowRegionEnd, conditions);
 
    cg->stopUsingRegister(monitorReg);
-   if (wasteReg)
-      cg->stopUsingRegister(wasteReg);
    if (objectClassReg)
       cg->stopUsingRegister(objectClassReg);
    if (lookupOffsetReg)
