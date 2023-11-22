@@ -47,7 +47,7 @@ class Monitor : public TR_Link0<TR::Monitor>
    {
    public:
 
-   static TR::Monitor *create(char *name);
+   static TR::Monitor *create(const char *name);
    static void destroy(TR::Monitor *monitor);
 
    void enter();
@@ -81,7 +81,7 @@ class Monitor : public TR_Link0<TR::Monitor>
    void operator delete(void *p);
    void operator delete(void *p, void *) {}
 
-   bool init(char *name);
+   bool init(const char *name);
 
    bool initFromVMMutex(void *mutex);
 

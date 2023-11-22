@@ -32,7 +32,7 @@
 TR::MonitorTable *OMR::MonitorTable::_instance = 0;
 
 TR::Monitor *
-J9::Monitor::create(char *name)
+J9::Monitor::create(const char *name)
    {
    return TR::MonitorTable::get()->create(name);
    }
@@ -44,7 +44,7 @@ J9::Monitor::destroy(TR::Monitor *monitor)
    }
 
 bool
-J9::Monitor::init(char *name)
+J9::Monitor::init(const char *name)
    {
    setNext(0);
    if (j9thread_monitor_init_with_name((J9ThreadMonitor**)&_monitor, 0, name))
