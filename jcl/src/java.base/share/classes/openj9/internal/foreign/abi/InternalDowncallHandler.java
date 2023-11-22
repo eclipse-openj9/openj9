@@ -49,10 +49,11 @@ import java.lang.foreign.SegmentAllocator;
 import java.lang.foreign.ValueLayout;
 /*[IF JAVA_SPEC_VERSION >= 22]*/
 import jdk.internal.access.SharedSecrets;
+import jdk.internal.foreign.AbstractMemorySegmentImpl;
 /*[ENDIF] JAVA_SPEC_VERSION >= 22 */
+import jdk.internal.foreign.MemorySessionImpl;
 import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.LinkerOptions;
-import jdk.internal.foreign.MemorySessionImpl;
 /*[ELSE] JAVA_SPEC_VERSION >= 21 */
 import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.FunctionDescriptor;
@@ -88,6 +89,39 @@ public class InternalDowncallHandler {
 	private MemoryLayout[] argLayoutArray;
 	private MemoryLayout realReturnLayout;
 	private MethodHandle boundMH;
+
+	/*[IF JAVA_SPEC_VERSION >= 22]*/
+	/* The identifier denotes the passed-in argument is a heap segment which helps
+	 * extract the address from the heap argument's base object in native.
+	 */
+	private static final long DOWNCALL_HEAP_ARGUMENT_ID = 0x1;
+
+	/* The ThreadLocal holds the information of the heap argument which includes
+	 * the base object array, the offset array plus the current heap argument index
+	 * for the current thread in multithreading. The heap base array stores the base
+	 * object (which contains the heap address as defined in OpenJDK) of the heap
+	 * arguments to extract the heap address from the base object in native.
+	 */
+	private static final class HeapArgInfo {
+		final Object[] bases;
+		final long[] offsets;
+		int index;
+
+		HeapArgInfo(int size) {
+			bases = new Object[size];
+			offsets = new long[size];
+			index = 0;
+		}
+
+		void append(Object base, long offset) {
+			bases[index] = base;
+			offsets[index] = offset;
+			index += 1;
+		}
+	}
+
+	private final ThreadLocal<HeapArgInfo> heapArgInfo;
+	/*[ENDIF] JAVA_SPEC_VERSION >= 22 */
 
 	/* The hashtables of sessions/scopes is intended for multithreading in which case
 	 * the same downcall handler might hold various sessions/scopes being used by
@@ -151,11 +185,16 @@ public class InternalDowncallHandler {
 	/*[ENDIF] JAVA_SPEC_VERSION >= 22 */
 	private static synchronized native void resolveRequiredFields();
 	private native void initCifNativeThunkData(String[] argLayouts, String retLayout, boolean newArgTypes, int varArgIndex);
-	/*[IF JAVA_SPEC_VERSION >= 21]*/
-	private native long invokeNative(boolean isInTrivialDownCall, long returnStateMemAddr, long returnStructMemAddr, long functionAddress, long calloutThunk, long[] argValues);
-	/*[ELSE] JAVA_SPEC_VERSION >= 21 */
-	private native long invokeNative(long returnStructMemAddr, long functionAddress, long calloutThunk, long[] argValues);
-	/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
+	private native long invokeNative(
+			/*[IF JAVA_SPEC_VERSION >= 22]*/
+			Object[] bases,
+			long[] offsets,
+			/*[ENDIF] JAVA_SPEC_VERSION >= 22 */
+			/*[IF JAVA_SPEC_VERSION >= 21]*/
+			boolean isInCriticalDownCall, long returnStateMemAddr,
+			/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
+			long returnStructMemAddr, long functionAddress, long calloutThunk, long[] argValues
+			);
 
 	private static final class PrivateClassLock {
 		PrivateClassLock() {}
@@ -266,10 +305,25 @@ public class InternalDowncallHandler {
 	/* Intended for memSegmtOfPtrToLongArgFilter that converts the memory segment
 	 * of the passed-in pointer argument to long.
 	 */
-	private final long memSegmtOfPtrToLongArg(MemorySegment argValue) throws IllegalStateException {
-		UpcallMHMetaData.validateNativeArgRetSegmentOfPtr(argValue);
+	private final long memSegmtOfPtrToLongArg(MemorySegment argValue, LinkerOptions options) throws IllegalStateException {
+		UpcallMHMetaData.validateNativeArgRetSegmentOfPtr(argValue, options);
 		addMemArgScope(argValue.scope());
-		return argValue.address();
+
+		long address = argValue.address();
+		/*[IF JAVA_SPEC_VERSION >= 22]*/
+		if (!argValue.isNative() && options.allowsHeapAccess()) {
+			HeapArgInfo info = heapArgInfo.get();
+			if (info == null) {
+				info = new HeapArgInfo(argLayoutArray.length);
+				heapArgInfo.set(info);
+			}
+			/* Store the heap argument's base object and offset. */
+			AbstractMemorySegmentImpl segment = (AbstractMemorySegmentImpl)argValue;
+			info.append(segment.unsafeGetBase(), segment.unsafeGetOffset());
+			address = DOWNCALL_HEAP_ARGUMENT_ID;
+		}
+		/*[ENDIF] JAVA_SPEC_VERSION >= 22 */
+		return address;
 	}
 	/*[ELSE] JAVA_SPEC_VERSION >= 21 */
 	/* Intended for memAddrToLongArgFilter that converts the memory address to long. */
@@ -414,10 +468,14 @@ public class InternalDowncallHandler {
 		scopeHandleMap = new ConcurrentHashMap<>();
 		/*[ENDIF] JAVA_SPEC_VERSION == 17 */
 
+		/*[IF JAVA_SPEC_VERSION >= 22]*/
+		heapArgInfo = new ThreadLocal<>();
+		/*[ENDIF] JAVA_SPEC_VERSION >= 22 */
+
 		try {
 			/*[IF JAVA_SPEC_VERSION >= 21]*/
 			longObjToMemSegmtRetFilter = lookup.bind(this, "longObjToMemSegmtRet", methodType(MemorySegment.class, Object.class));
-			memSegmtOfPtrToLongArgFilter = lookup.bind(this, "memSegmtOfPtrToLongArg", methodType(long.class, MemorySegment.class));
+			memSegmtOfPtrToLongArgFilter = lookup.bind(this, "memSegmtOfPtrToLongArg", methodType(long.class, MemorySegment.class, LinkerOptions.class));
 			/*[ELSE] JAVA_SPEC_VERSION >= 21 */
 			memAddrToLongArgFilter = lookup.bind(this, "memAddrToLongArg", methodType(long.class, MemoryAddress.class));
 			/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
@@ -603,7 +661,7 @@ public class InternalDowncallHandler {
 			 * Note: AddressLayout is introduced in JDK21 to replace OfAddress.
 			 */
 			if (argLayout instanceof AddressLayout) {
-				filterMH = memSegmtOfPtrToLongArgFilter;
+				filterMH = MethodHandles.insertArguments(memSegmtOfPtrToLongArgFilter, 1, linkerOpts);
 			} else
 			/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 			{
@@ -785,6 +843,9 @@ public class InternalDowncallHandler {
 		/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 
 		long returnVal;
+		/*[IF JAVA_SPEC_VERSION >= 22]*/
+		HeapArgInfo info = heapArgInfo.get();
+		/*[ENDIF] JAVA_SPEC_VERSION >= 22 */
 		/* The scope associated with memory specific arguments must be kept alive
 		 * during the downcall since JDK17, including the downcall adddress.
 		 *
@@ -795,6 +856,8 @@ public class InternalDowncallHandler {
 			SetDependency(arena.scope());
 			returnVal = invokeNative(
 					/*[IF JAVA_SPEC_VERSION >= 22]*/
+					(info != null) ? info.bases : null,
+					(info != null) ? info.offsets : null,
 					linkerOpts.isCritical(),
 					/*[ELSE] JAVA_SPEC_VERSION >= 22 */
 					linkerOpts.isTrivial(),
@@ -810,6 +873,16 @@ public class InternalDowncallHandler {
 		returnVal = invokeNative(retMemAddr, getValidDowncallMemAddr(downcallAddr), cifNativeThunkAddr, args);
 		releaseScope();
 		/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
+
+		/*[IF JAVA_SPEC_VERSION >= 22]*/
+		/* Reset the heap argument information for the current thread so as to
+		 * update the base object of different heap arguments passed by the same
+		 * downcall handler within the current thread.
+		 */
+		if (info != null) {
+			heapArgInfo.remove();
+		}
+		/*[ENDIF] JAVA_SPEC_VERSION >= 22 */
 
 		/* This struct specific MemorySegment object returns to the current thread in the multithreading environment,
 		 * in which case the native invocations from threads end up with distinct returned structs.

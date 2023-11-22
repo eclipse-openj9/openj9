@@ -274,7 +274,7 @@ public class UpcallMethodHandles {
 
 	public static final MethodHandle MH_addNegBytesFromStruct;
 	public static final MethodHandle MH_addNegShortsFromStruct;
-	public static final MethodHandle MH_captureTrivialOption;
+	public static final MethodHandle MH_captureCriticalOption;
 
 	public static final MethodHandle MH_addBoolAndBoolsFromUnionWithXor;
 	public static final MethodHandle MH_addBoolAndBoolsFromUnionPtrWithXor;
@@ -674,7 +674,7 @@ public class UpcallMethodHandles {
 
 			MH_addNegBytesFromStruct = lookup.findStatic(UpcallMethodHandles.class, "addNegBytesFromStruct", MT_Byte_Byte_MemSegmt.appendParameterTypes(byte.class, byte.class)); //$NON-NLS-1$
 			MH_addNegShortsFromStruct = lookup.findStatic(UpcallMethodHandles.class, "addNegShortsFromStruct", MT_Short_Short_MemSegmt.appendParameterTypes(short.class, short.class)); //$NON-NLS-1$
-			MH_captureTrivialOption = lookup.findStatic(UpcallMethodHandles.class, "captureTrivialOption", methodType(int.class, int.class)); //$NON-NLS-1$
+			MH_captureCriticalOption = lookup.findStatic(UpcallMethodHandles.class, "captureCriticalOption", methodType(int.class, int.class)); //$NON-NLS-1$
 
 			MH_addBoolAndBoolsFromUnionWithXor = lookup.findStatic(UpcallMethodHandles.class, "addBoolAndBoolsFromUnionWithXor", MT_Bool_Bool_MemSegmt); //$NON-NLS-1$
 			MH_addBoolAndBoolsFromUnionPtrWithXor = lookup.findStatic(UpcallMethodHandles.class, "addBoolAndBoolsFromUnionPtrWithXor", MT_Bool_Bool_MemSegmt); //$NON-NLS-1$
@@ -2432,8 +2432,8 @@ public class UpcallMethodHandles {
 		return shortSum;
 	}
 
-	public static int captureTrivialOption(int intArg1) {
-		Assert.fail("The method shouldn't be invoked during the trivial downcall.");
+	public static int captureCriticalOption(int intArg1) {
+		Assert.fail("The method shouldn't be invoked during the critical downcall.");
 		return intArg1;
 	}
 
