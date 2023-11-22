@@ -6097,6 +6097,12 @@ static TR::Register *inlineStringHashCode(TR::Node *node, bool isCompressed, TR:
    TR_ARM64ScratchRegisterManager *srm = cg->generateScratchRegisterManager(12);
    TR::Register *dataAddrReg = (arrayNode->getReferenceCount() > 1) ? srm->findOrCreateScratchRegister() : arrayReg;
    TR::Register *lengthReg = (lengthNode->getReferenceCount() > 1) ? srm->findOrCreateScratchRegister() : savedLengthReg;
+
+   if (lengthNode->getReferenceCount() > 1)
+      {
+      generateMovInstruction(cg, node, lengthReg, savedLengthReg, false);
+      }
+
    TR::Compilation *comp = cg->comp();
    if (comp->getOptions()->enableDebugCounters())
       {
