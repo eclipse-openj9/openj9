@@ -23,7 +23,9 @@ package org.openj9.test.util;
 
 public class PlatformInfo {
 	private static final String OS_NAME = "os.name"; //$NON-NLS-1$
+	private static final String OS_ARCH = "os.arch"; //$NON-NLS-1$
 	private static final String osName = System.getProperty(OS_NAME);
+	private static final String osArch = System.getProperty(OS_ARCH);
 	private static final boolean isPlatformZOS = (osName != null) && osName.toLowerCase().startsWith("z/os"); //$NON-NLS-1$
 	private	static final boolean isOpenJ9Status = 
 			System.getProperty("java.vm.vendor").contains("OpenJ9"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -38,6 +40,10 @@ public class PlatformInfo {
 
 	public static boolean isZOS() {
 		return isPlatformZOS;
+	}
+
+	public static boolean isS390() {
+		return ((null != osArch) && osArch.startsWith("s390"));
 	}
 
 	/**
