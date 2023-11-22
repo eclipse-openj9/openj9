@@ -62,6 +62,9 @@ public final class InternalUpcallHandler {
 	private final MemoryLayout realReturnLayout;
 	private final long thunkAddr;
 	private UpcallMHMetaData metaData;
+	/*[IF JAVA_SPEC_VERSION >= 21]*/
+	private final LinkerOptions linkerOpts;
+	/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 
 	static final Lookup lookup = MethodHandles.lookup();
 
@@ -76,7 +79,7 @@ public final class InternalUpcallHandler {
 	static {
 		try {
 			/*[IF JAVA_SPEC_VERSION >= 21]*/
-			argRetSegmtOfPtrFilter = lookup.findStatic(InternalUpcallHandler.class, "argRetSegmtOfPtr", methodType(MemorySegment.class, MemorySegment.class, MemoryLayout.class));
+			argRetSegmtOfPtrFilter = lookup.findStatic(InternalUpcallHandler.class, "argRetSegmtOfPtr", methodType(MemorySegment.class, MemorySegment.class, MemoryLayout.class, LinkerOptions.class));
 			/*[ELSE] JAVA_SPEC_VERSION >= 21 */
 			argRetAddrOfPtrFilter = lookup.findStatic(InternalUpcallHandler.class, "argRetAddrOfPtr", methodType(MemoryAddress.class, MemoryAddress.class));
 			/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
@@ -90,8 +93,8 @@ public final class InternalUpcallHandler {
 	 * of the passed-in pointer argument.
 	 */
 	/*[IF JAVA_SPEC_VERSION >= 21]*/
-	private static MemorySegment argRetSegmtOfPtr(MemorySegment argValue, MemoryLayout layout) throws IllegalStateException {
-		UpcallMHMetaData.validateNativeArgRetSegmentOfPtr(argValue);
+	private static MemorySegment argRetSegmtOfPtr(MemorySegment argValue, MemoryLayout layout, LinkerOptions options) throws IllegalStateException {
+		UpcallMHMetaData.validateNativeArgRetSegmentOfPtr(argValue, options);
 		return UpcallMHMetaData.getArgRetAlignedSegmentOfPtr(argValue.address(), layout);
 	}
 	/*[ELSE] JAVA_SPEC_VERSION >= 21 */
@@ -136,6 +139,9 @@ public final class InternalUpcallHandler {
 		List<MemoryLayout> argLayouts = cDesc.argumentLayouts();
 		argLayoutArray = argLayouts.toArray(new MemoryLayout[argLayouts.size()]);
 		realReturnLayout = cDesc.returnLayout().orElse(null); // Set to null for void
+		/*[IF JAVA_SPEC_VERSION >= 21]*/
+		linkerOpts = options;
+		/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 
 		/*[IF JAVA_SPEC_VERSION == 17]*/
 		/* The layout check against the method type is still required for Java 17 in that both
@@ -244,7 +250,7 @@ public final class InternalUpcallHandler {
 		else if (argLayout instanceof ValueLayout) {
 			/*[IF JAVA_SPEC_VERSION >= 21]*/
 			if (argLayout instanceof AddressLayout) {
-				filterMH = MethodHandles.insertArguments(argRetSegmtOfPtrFilter, 1, argLayout);
+				filterMH = MethodHandles.insertArguments(argRetSegmtOfPtrFilter, 1, argLayout, linkerOpts);
 			} else
 			/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 			{

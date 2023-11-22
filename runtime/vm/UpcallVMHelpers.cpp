@@ -298,7 +298,7 @@ native2InterpJavaUpcallImpl(J9UpcallMetaData *data, void *argsListPointer)
 		 * by throwing out an exception so as to remind users of the incorrect behavior in applications rather
 		 * than ending up with an assertion failure by crashing the JVM in the RI implementation.
 		 */
-		if (downCallThread->isInTrivialDownCall) {
+		if (downCallThread->isInCriticalDownCall) {
 			setCurrentExceptionNLS(downCallThread, J9VMCONSTANTPOOL_JAVALANGILLEGALTHREADSTATEEXCEPTION, J9NLS_VM_ILLEGAL_THREAD_STATE_UPCALL);
 			goto illegalState;
 		}

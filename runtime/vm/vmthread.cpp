@@ -268,7 +268,7 @@ allocateVMThread(J9JavaVM * vm, omrthread_t osThread, UDATA privateFlags, void *
 	newThread->jmpBufEnvPtr = NULL;
 #endif /* JAVA_SPEC_VERSION >= 16 */
 #if JAVA_SPEC_VERSION >= 21
-	newThread->isInTrivialDownCall = FALSE;
+	newThread->isInCriticalDownCall = FALSE;
 #endif /* JAVA_SPEC_VERSION >= 21 */
 
 #if JAVA_SPEC_VERSION >= 19

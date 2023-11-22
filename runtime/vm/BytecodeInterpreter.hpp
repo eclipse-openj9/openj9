@@ -5158,9 +5158,13 @@ done:
 	}
 
 #if JAVA_SPEC_VERSION >= 16
-#if JAVA_SPEC_VERSION >= 21
+#if JAVA_SPEC_VERSION >= 22
 	/* openj9.internal.foreign.abi.InternalDowncallHandler:
-	 * private native long invokeNative(boolean isInTrivialDownCall, long returnStateMemAddr, long returnStructMemAddr, long functionAddr, long calloutThunk, long[] argValues);
+	 * private native long invokeNative(Object[] bases, long[] offsets, boolean isInCriticalDownCall, long returnStateMemAddr, long returnStructMemAddr, long functionAddr, long calloutThunk, long[] argValues);
+	 */
+#elif JAVA_SPEC_VERSION == 21
+	/* openj9.internal.foreign.abi.InternalDowncallHandler:
+	 * private native long invokeNative(boolean isInCriticalDownCall, long returnStateMemAddr, long returnStructMemAddr, long functionAddr, long calloutThunk, long[] argValues);
 	 */
 #else /* JAVA_SPEC_VERSION >= 21 */
 	/* openj9.internal.foreign.abi.InternalDowncallHandler:
@@ -5195,7 +5199,12 @@ done:
 		UDATA *returnStorage = &(_currentThread->returnValue);
 		U_64 *ffiArgs = _currentThread->ffiArgs;
 		U_64 sFfiArgs[16];
-#if JAVA_SPEC_VERSION >= 21
+#if JAVA_SPEC_VERSION >= 22
+		UDATA argSlots = 13;
+		I_32 *returnState = NULL;
+		UDATA curHeapArgIdx = 0;
+		BOOLEAN isHeapPassed = FALSE;
+#elif JAVA_SPEC_VERSION == 21
 		UDATA argSlots = 11;
 		I_32 *returnState = NULL;
 #else /* JAVA_SPEC_VERSION >= 21 */
@@ -5224,7 +5233,7 @@ done:
 		returnState = (I_32 *)(UDATA)*(I_64 *)(_sp + 7); /* returnStateMemAddr */
 
 		/* Set the linker option to the current thread for the trivial downcall. */
-		_currentThread->isInTrivialDownCall = (0 == *(U_32*)(_sp + 9)) ? FALSE : TRUE;
+		_currentThread->isInCriticalDownCall = (0 == *(U_32*)(_sp + 9)) ? FALSE : TRUE;
 #endif /* JAVA_SPEC_VERSION >= 21 */
 
 		if (isMinimal) {
@@ -5278,6 +5287,48 @@ done:
 			} else if (J9NtcPointer == argType) {
 				/* ffi_call expects the address of the pointer is the address of the stackslot. */
 				pointerValues[i] = (U_64)ffiArgs[i];
+#if JAVA_SPEC_VERSION >= 22
+				if ((U_64)J9_FFI_DOWNCALL_HEAP_ARGUMENT_ID == pointerValues[i]) {
+					j9object_t heapBase = (j9object_t)J9JAVAARRAYOFOBJECT_LOAD(
+							_currentThread,
+							J9_JNI_UNWRAP_REFERENCE(_sp + 11), /* The heap base array. */
+							curHeapArgIdx);
+					if (NULL == heapBase) {
+						rc = THROW_NPE;
+						goto done;
+					}
+					U_64 heapOffset = (U_64)J9JAVAARRAYOFLONG_LOAD(
+							_currentThread,
+							J9_JNI_UNWRAP_REFERENCE(_sp + 10), /* The heap offset array. */
+							curHeapArgIdx);
+					/* Extract the heap address from the base object of the heap segment which is
+					 * created by MemorySegment.ofArray(), MemorySegment.ofBuffer() or other methods
+					 * (which only returns part of the heap array) in OpenJDK.
+					 *
+					 * Note:
+					 * 1) Only MemorySegment objects representing the on-heap arrays reach here.
+					 * 2) The heap base object must be a contiguous array to be accessed in native.
+					 */
+					if (J9ISCONTIGUOUSARRAY(_currentThread, heapBase)) {
+						/* The address is simply the base object plus the offset. */
+						pointerValues[i] = (UDATA)heapBase + heapOffset;
+						curHeapArgIdx += 1;
+					} else {
+						/* TODO: We will need to handle the case of a discontiguous array later. */
+						buildInternalNativeStackFrame(REGISTER_ARGS);
+						updateVMStruct(REGISTER_ARGS);
+						prepareForExceptionThrow(_currentThread);
+						setCurrentExceptionUTF(_currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, NULL);
+						VMStructHasBeenUpdated(REGISTER_ARGS);
+						rc = GOTO_THROW_CURRENT_EXCEPTION;
+						goto done;
+					}
+					/* Set the flag to obtain the VMAccess so as to prevent the GC from
+					 * updating the heap address during the critical downcall.
+					 */
+					isHeapPassed = TRUE;
+				}
+#endif /* JAVA_SPEC_VERSION >= 22 */
 				values[i] = &pointerValues[i];
 			} else if (J9NtcStruct == argType) {
 				/* ffi_call expects the address of the struct is the address of the native memory that stores the struct. */
@@ -5306,8 +5357,12 @@ done:
 #endif /* JAVA_SPEC_VERSION >= 19 */
 		updateVMStruct(REGISTER_ARGS);
 #if JAVA_SPEC_VERSION >= 21
-		/* Only exit to JNI for non-trivial downcalls for better performance. */
-		if (!_currentThread->isInTrivialDownCall)
+		/* Only exit to JNI for non-critical downcalls for better performance. */
+		if (!_currentThread->isInCriticalDownCall
+#if JAVA_SPEC_VERSION >= 22
+		|| isHeapPassed
+#endif /* JAVA_SPEC_VERSION >= 22 */
+		)
 #endif /* JAVA_SPEC_VERSION >= 21 */
 		{
 			VM_VMAccess::inlineExitVMToJNI(_currentThread);
@@ -5320,8 +5375,12 @@ done:
 #endif /* FFI_NATIVE_RAW_API */
 		VM_VMHelpers::afterJNICall(_currentThread);
 #if JAVA_SPEC_VERSION >= 21
-		/* Re-enter VM after non-trivial downcalls. */
-		if (!_currentThread->isInTrivialDownCall)
+		/* Re-enter VM after non-critical downcalls. */
+		if (!_currentThread->isInCriticalDownCall
+#if JAVA_SPEC_VERSION >= 22
+		|| isHeapPassed
+#endif /* JAVA_SPEC_VERSION >= 22 */
+		)
 #endif /* JAVA_SPEC_VERSION >= 21 */
 		{
 			VM_VMAccess::inlineEnterVMFromJNI(_currentThread);
@@ -5358,7 +5417,7 @@ done:
 done:
 #if JAVA_SPEC_VERSION >= 21
 		/* Clear the trivial downcall flag. */
-		_currentThread->isInTrivialDownCall = FALSE;
+		_currentThread->isInCriticalDownCall = FALSE;
 #endif /* JAVA_SPEC_VERSION >= 21 */
 
 		if (!isMinimal) {
