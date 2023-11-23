@@ -9008,14 +9008,14 @@ J9::Z::TreeEvaluator::VMifInstanceOfEvaluator(TR::Node * node, TR::CodeGenerator
  * @return Returns a register containing objectClassPointer
  */
 static TR::Register*
-generateCheckForValueMonitorEnterOrExit(TR::Node *node, TR::LabelSymbol* mergeLabel, TR::LabelSymbol *helperCallLabel, TR::CodeGenerator *cg)
+generateCheckForValueMonitorEnterOrExit(TR::Node *node, TR::LabelSymbol* mergeLabel, TR::LabelSymbol *helperCallLabel, TR::CodeGenerator *cg, TR_S390ScratchRegisterManager *srm)
    {
    TR::Register *objReg = cg->evaluate(node->getFirstChild());
-   TR::Register *objectClassReg = cg->allocateRegister();
+   TR::Register *objectClassReg = srm->findOrCreateScratchRegister();
 
    TR::TreeEvaluator::genLoadForObjectHeadersMasked(cg, node, objectClassReg, generateS390MemoryReference(objReg, TR::Compiler->om.offsetOfObjectVftField(), cg), NULL);
 
-   TR::Register *tempReg = cg->allocateRegister();
+   TR::Register *tempReg = srm->findOrCreateScratchRegister();
    generateLoad32BitConstant(cg, node, J9_CLASS_DISALLOWS_LOCKING_FLAGS, tempReg, false);
 
    TR::MemoryReference *classFlagsMemRef = generateS390MemoryReference(objectClassReg, static_cast<uint32_t>(static_cast<TR_J9VMBase *>(cg->comp()->fe())->getOffsetOfClassFlags()), cg);
@@ -9061,7 +9061,7 @@ generateCheckForValueMonitorEnterOrExit(TR::Node *node, TR::LabelSymbol* mergeLa
       helperCallOOLSection->swapInstructionListsWithCompilation();
       }
 
-   cg->stopUsingRegister(tempReg);
+   srm->reclaimScratchRegister(tempReg);
    return objectClassReg;
    }
 
@@ -9087,7 +9087,7 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       }
 
 
-   TR_S390ScratchRegisterManager *srm = cg->generateScratchRegisterManager(TODO: add capacity);
+   TR_S390ScratchRegisterManager *srm = cg->generateScratchRegisterManager(2);
 
    TR::Node                *objNode                   = node->getFirstChild();
    TR::Register            *objReg                    = cg->evaluate(objNode);
@@ -9135,7 +9135,7 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       // If we are generating code for MonitorCacheLookup then we will not have a separate OOL for inlineRecursive, and callLabel points
       // to the OOL Containing only helper call. Otherwise, OOL will have other code apart from helper call which we do not want to execute
       // for ValueType or ValueBased object and in that scenario we will need to generate another OOL that just contains helper call.
-      objectClassReg = generateCheckForValueMonitorEnterOrExit(node, cFlowRegionEnd, lwOffset <= 0 ? callLabel : NULL, cg);
+      objectClassReg = generateCheckForValueMonitorEnterOrExit(node, cFlowRegionEnd, lwOffset <= 0 ? callLabel : NULL, cg, srm);
       }
    TR::RegisterDependencyConditions * conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, numDeps, cg);
 
@@ -9162,9 +9162,7 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       if (objectClassReg == NULL)
          {
          tempMR = generateS390MemoryReference(objReg, TR::Compiler->om.offsetOfObjectVftField(), cg);
-         // TODO We don't need objectClassReg except in this ifCase. We can use scratchRegisterManager to allocate one here.
-         objectClassReg = cg->allocateRegister();
-         conditions->addPostCondition(objectClassReg, TR::RealRegister::AssignAny);
+         objectClassReg = srm->findOrCreateScratchRegister();
          TR::TreeEvaluator::genLoadForObjectHeadersMasked(cg, node, objectClassReg, tempMR, NULL);
          }
       int32_t offsetOfLockOffset = offsetof(J9Class, lockOffset);
@@ -9205,8 +9203,6 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
             }
 
          lookupOffsetReg = srm->findOrCreateScratchRegister();
-         //OOLConditions->addPostCondition(lookupOffsetReg, TR::RealRegister::AssignAny);
-         //TODO: ADD post condition to OOLConditions!
 
          int32_t offsetOfMonitorLookupCache = offsetof(J9VMThread, objectMonitorLookupCache);
          int32_t t = trailingZeroes(TR::Compiler->om.getObjectAlignmentInBytes());
@@ -9336,6 +9332,9 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       // TODO : objectClassReg contains the J9Class for object which is set in lwOffset <= 0 case. Usually that is NULL in the following function call
       return reservationLockEnter(node, lwOffset, objectClassReg, cg, helperLink);
       }
+
+   if (objectClassReg)
+      srm->reclaimScratchRegister(objectClassReg);
 
    const char* debugCounterNamePrefix = normalLockWithReservationPreserving? "LockEnt/Preserving": "LockEnt/Normal";
    // Opcodes:
@@ -9503,9 +9502,7 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, cFlowRegionEnd, conditions);
 
    cg->stopUsingRegister(monitorReg);
-   if (objectClassReg)
-      cg->stopUsingRegister(objectClassReg);
-   if (tempRegister && (tempRegister != objectClassReg))
+   if (tempRegister)
       cg->stopUsingRegister(tempRegister);
    cg->decReferenceCount(objNode);
    return NULL;
