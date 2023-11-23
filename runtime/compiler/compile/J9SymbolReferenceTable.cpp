@@ -719,7 +719,14 @@ J9::SymbolReferenceTable::findOrCreateJavaLangReferenceReferentShadowSymbol(
 // Right now it only works for private fields or fields that are guaranteed to be accessed only from one class
 // because searchRecognizedField only does a name comparison, t does not work if the field is accessed from a subclass of the expected one
 TR::SymbolReference *
-J9::SymbolReferenceTable::findOrFabricateShadowSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, TR::Symbol::RecognizedField recognizedField, TR::DataType type, uint32_t offset, bool isVolatile, bool isPrivate, bool isFinal, char* name)
+J9::SymbolReferenceTable::findOrFabricateShadowSymbol(TR::ResolvedMethodSymbol *owningMethodSymbol,
+                                                      TR::Symbol::RecognizedField recognizedField,
+                                                      TR::DataType type,
+                                                      uint32_t offset,
+                                                      bool isVolatile,
+                                                      bool isPrivate,
+                                                      bool isFinal,
+                                                      const char *name)
    {
    TR_ResolvedMethod * owningMethod = owningMethodSymbol->getResolvedMethod();
 

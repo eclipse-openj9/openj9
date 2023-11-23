@@ -4055,7 +4055,7 @@ typedef struct J9JITConfig {
 	void  ( *jitFlushCompilationQueue)(struct J9VMThread * currentThread, J9JITFlushCompilationQueueReason reason) ;
 	void  ( *jitDecompileMethodForFramePop)(struct J9VMThread * currentThread, UDATA skipCount) ;
 	void  ( *jitExceptionCaught)(struct J9VMThread * currentThread) ;
-	void  ( *j9jit_printf)(void *voidConfig, char *format, ...) ;
+	void  ( *j9jit_printf)(void *voidConfig, const char *format, ...) ;
 	void* tracingHook;
 	void  ( *jitCheckScavengeOnResolve)(struct J9VMThread *currentThread) ;
 	void* jitInstanceOf;
