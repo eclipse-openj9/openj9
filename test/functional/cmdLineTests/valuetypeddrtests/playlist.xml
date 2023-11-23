@@ -30,6 +30,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<command>
 			perl $(JVM_TEST_ROOT)$(D)TestConfig$(D)scripts$(D)tools$(D)sysvcleanup.pl all ; \
 			$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -Xverify:none \
+			--enable-preview \
 			--add-opens java.base/jdk.internal.misc=ALL-UNNAMED \
 			-DRESJAR=$(CMDLINETESTER_RESJAR) \
 			-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) \
@@ -68,6 +69,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<command>
 			perl $(JVM_TEST_ROOT)$(D)TestConfig$(D)scripts$(D)tools$(D)sysvcleanup.pl all ; \
 			$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -Xverify:none \
+			--enable-preview \
 			--add-opens java.base/jdk.internal.misc=ALL-UNNAMED \
 			-DRESJAR=$(CMDLINETESTER_RESJAR) \
 			-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) \
@@ -106,6 +108,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<command>
 			perl $(JVM_TEST_ROOT)$(D)TestConfig$(D)scripts$(D)tools$(D)sysvcleanup.pl all ; \
 			$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -Xverify:none \
+			--enable-preview \
 			--add-opens java.base/jdk.internal.misc=ALL-UNNAMED \
 			-DRESJAR=$(CMDLINETESTER_RESJAR) \
 			-DOPT=-Xint \
@@ -145,6 +148,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<command>
 			perl $(JVM_TEST_ROOT)$(D)TestConfig$(D)scripts$(D)tools$(D)sysvcleanup.pl all ; \
 			$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -Xverify:none \
+			--enable-preview \
 			--add-opens java.base/jdk.internal.misc=ALL-UNNAMED \
 			-DRESJAR=$(CMDLINETESTER_RESJAR) \
 			-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) \
