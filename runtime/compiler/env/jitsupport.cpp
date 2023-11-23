@@ -79,7 +79,7 @@ I_32 j9jit_fread(I_32 fd, void * buf, IDATA nbytes)
    }
 
 
-I_32 j9jit_fmove(char * pathExist, char * pathNew)
+I_32 j9jit_fmove(const char *pathExist, const char *pathNew)
    {
    PORT_ACCESS_FROM_PORT(TR::Compiler->portLib);
    I_32 fileId;
@@ -93,7 +93,7 @@ I_32 j9jit_fmove(char * pathExist, char * pathNew)
    }
 
 
-I_32 j9jit_fopen_existing(char *fileName)
+I_32 j9jit_fopen_existing(const char *fileName)
    {
    PORT_ACCESS_FROM_PORT(TR::Compiler->portLib);
    I_32 fileId;
@@ -113,7 +113,7 @@ void j9jit_fcloseId(I_32 fileId)
    }
 
 
-I_32 j9jit_fopenName(char *fileName)
+I_32 j9jit_fopenName(const char *fileName)
    {
    PORT_ACCESS_FROM_PORT(TR::Compiler->portLib);
    I_32 fileId;
@@ -127,7 +127,7 @@ I_32 j9jit_fopenName(char *fileName)
 
 
 TR::FILE *
-j9jit_fopen(char *fileName, const char *mode, bool useJ9IO)
+j9jit_fopen(const char *fileName, const char *mode, bool useJ9IO)
    {
    PORT_ACCESS_FROM_PORT(TR::Compiler->portLib);
    TR::FILE *pFile;
@@ -232,7 +232,7 @@ void j9jitrt_unlock_log(void *voidConfig)
    }
 
 
-I_32 j9jit_vfprintfId(I_32 fileId, char *format, ...)
+I_32 j9jit_vfprintfId(I_32 fileId, const char *format, ...)
    {
    PORT_ACCESS_FROM_PORT(TR::Compiler->portLib);
    char buf[512];
@@ -264,7 +264,7 @@ I_32 j9jit_vfprintfId(I_32 fileId, char *format, ...)
    }
 
 
-I_32 j9jit_fprintfId(I_32 fileId, char *format, ...)
+I_32 j9jit_fprintfId(I_32 fileId, const char *format, ...)
    {
    va_list args;
    va_start(args, format);
@@ -274,7 +274,7 @@ I_32 j9jit_fprintfId(I_32 fileId, char *format, ...)
    }
 
 
-I_32 j9jit_vfprintf(TR::FILE *pFile, char *format, va_list args)
+I_32 j9jit_vfprintf(TR::FILE *pFile, const char *format, va_list args)
    {
    PORT_ACCESS_FROM_PORT(TR::Compiler->portLib);
    const int32_t BUFSIZE = 640;
@@ -324,7 +324,7 @@ I_32 j9jit_vfprintf(TR::FILE *pFile, char *format, va_list args)
    }
 
 
-I_32 j9jit_fprintf(TR::FILE *pFile, char *format, ...)
+I_32 j9jit_fprintf(TR::FILE *pFile, const char *format, ...)
    {
    va_list args;
    va_start(args, format);
@@ -334,13 +334,13 @@ I_32 j9jit_fprintf(TR::FILE *pFile, char *format, ...)
    }
 
 
-static I_32 vlog_vprintf(J9JITConfig *config, char *format, va_list args)
+static I_32 vlog_vprintf(J9JITConfig *config, const char *format, va_list args)
    {
    return j9jit_vfprintf(((TR_JitPrivateConfig*)config->privateConfig)->vLogFile, format, args);
    }
 
 
-static I_32 vlog_printf(J9JITConfig *config, char *format, ...)
+static I_32 vlog_printf(J9JITConfig *config, const char *format, ...)
    {
    va_list args;
    va_start(args, format);
@@ -350,14 +350,14 @@ static I_32 vlog_printf(J9JITConfig *config, char *format, ...)
    }
 
 
-I_32 j9jit_vprintf(void *voidConfig, char *format, va_list args)
+I_32 j9jit_vprintf(void *voidConfig, const char *format, va_list args)
    {
    J9JITConfig *config = (J9JITConfig *) voidConfig;
    return vlog_vprintf(config, format, args);
    }
 
 
-void j9jit_printf(void *voidConfig, char *format, ...)
+void j9jit_printf(void *voidConfig, const char *format, ...)
    {
    va_list args;
    va_start(args, format);
@@ -366,13 +366,13 @@ void j9jit_printf(void *voidConfig, char *format, ...)
    }
 
 
-static I_32 rtlog_vprintf(J9JITConfig *config, char *format, va_list args)
+static I_32 rtlog_vprintf(J9JITConfig *config, const char *format, va_list args)
    {
    return j9jit_vfprintf(((TR_JitPrivateConfig*)config->privateConfig)->rtLogFile, format, args);
    }
 
 
-I_32 j9jitrt_printf(void *voidConfig, char *format, ...)
+I_32 j9jitrt_printf(void *voidConfig, const char *format, ...)
    {
    va_list args;
    va_start(args, format);
