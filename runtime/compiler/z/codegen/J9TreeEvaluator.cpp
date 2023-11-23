@@ -9144,8 +9144,6 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
    conditions->addPostCondition(objReg, TR::RealRegister::AssignAny);
    conditions->addPostCondition(monitorReg, TR::RealRegister::AssignAny);
-   if (objectClassReg != NULL)
-      conditions->addPostCondition(objectClassReg, TR::RealRegister::AssignAny);
 
    static const char * peekFirst = feGetEnv("TR_PeekingMonEnter");
    // This debug option is for printing the locking mechanism.
@@ -9555,6 +9553,8 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
    TR::LabelSymbol *callHelper                     = generateLabelSymbol(cg);
    TR::LabelSymbol *returnLabel                    = generateLabelSymbol(cg);
 
+   TR_S390ScratchRegisterManager *srm = cg->generateScratchRegisterManager(2);
+
    int32_t numDeps = 4;
    if (lwOffset <=0)
       {
@@ -9571,7 +9571,7 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
    if (isMonitorValueBasedOrValueType == TR_maybe)
       {
       numDeps += 1;
-      objectClassReg = generateCheckForValueMonitorEnterOrExit(node, cFlowRegionEnd, lwOffset <= 0 ? callLabel : NULL, cg);
+      objectClassReg = generateCheckForValueMonitorEnterOrExit(node, cFlowRegionEnd, lwOffset <= 0 ? callLabel : NULL, cg, srm);
       }
    TR::RegisterDependencyConditions * conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, numDeps, cg);
 
@@ -9586,8 +9586,6 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
 
    conditions->addPostCondition(objReg, TR::RealRegister::AssignAny);
    conditions->addPostCondition(monitorReg, TR::RealRegister::AssignAny);
-   if (objectClassReg != NULL)
-      conditions->addPostCondition(objectClassReg, TR::RealRegister::AssignAny);
 
 
    if (lwOffset <= 0)
@@ -9601,8 +9599,7 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
       if (objectClassReg == NULL)
          {
          tempMR = generateS390MemoryReference(objReg, TR::Compiler->om.offsetOfObjectVftField(), cg);
-         objectClassReg = cg->allocateRegister();
-         conditions->addPostCondition(objectClassReg, TR::RealRegister::AssignAny);
+         objectClassReg = srm->findOrCreateScratchRegister();
          TR::TreeEvaluator::genLoadForObjectHeadersMasked(cg, node, objectClassReg, tempMR, NULL);
          }
       int32_t offsetOfLockOffset = offsetof(J9Class, lockOffset);
@@ -9758,6 +9755,7 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
       cg->stopUsingRegister(monitorReg);
       return reservationLockExit(node, lwOffset, objectClassReg, cg, helperLink);
       }
+   srm->reclaimScratchRegister(objectClassReg);
    ////////////
    // Opcodes:
    bool use64b = true;
@@ -9893,6 +9891,7 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
       else
          cg->generateDebugCounter("LockExit/Normal/VMHelper", 1, TR::DebugCounter::Undetermined);
       }
+   srm->addScratchRegistersToDependencyList(conditions);
    TR::RegisterDependencyConditions *deps = NULL;
    TR::Register *dummyResultReg = inlineRecursive ? helperLink->buildDirectDispatch(node, &deps) : helperLink->buildDirectDispatch(node);
    TR::RegisterDependencyConditions *mergeConditions = NULL;
@@ -9914,11 +9913,9 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, cFlowRegionEnd, conditions);
 
    cg->stopUsingRegister(monitorReg);
-   if (objectClassReg)
-      cg->stopUsingRegister(objectClassReg);
    if (lookupOffsetReg)
       cg->stopUsingRegister(lookupOffsetReg);
-   if (tempRegister && (tempRegister != objectClassReg))
+   if (tempRegister)
       cg->stopUsingRegister(tempRegister);
    if (scratchRegister)
       cg->stopUsingRegister(scratchRegister);
