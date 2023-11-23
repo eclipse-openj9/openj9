@@ -228,7 +228,7 @@ public class ValueTypeArrayTests {
 	/**
 	 * Indicates whether a value or an array with component class
 	 * that is one of {@link #NULL_REF}, {@link #OBJ_TYPE},
-         * {@link #IFACE_TYPE}, {@link #VAL_TYPE} or {@link #PRIM_TYPE} can be
+	 * {@link #IFACE_TYPE}, {@link #VAL_TYPE} or {@link #PRIM_TYPE} can be
 	 * cast to another member of that same set of types without triggering a
 	 * <code>ClassCastException</code> or <code>NullPointerException</code>
 	 *
@@ -346,7 +346,7 @@ public class ValueTypeArrayTests {
 					//    - the type of the array is less specific than that of the source (staticArrayKind < staticValueKind)
 					//
 					if (staticArrayKind == staticValueKind
-						 || (staticArrayKind < staticValueKind && staticArrayKind < VAL_TYPE)) {
+						|| (staticArrayKind < staticValueKind && staticArrayKind < VAL_TYPE)) {
 						runTest(testArrays[i], nullObj, staticArrayKind, staticValueKind);
 						runTest(testArrays[i], bogusIfaceObj, staticArrayKind, staticValueKind);
 						runTest(testArrays[i], pointVal, staticArrayKind, staticValueKind);
@@ -357,317 +357,317 @@ public class ValueTypeArrayTests {
 		}
 	}
 
-   static primitive class SomePrimitiveClassWithDoubleField{
-      public double d;
+	static primitive class SomePrimitiveClassWithDoubleField{
+		public double d;
 
 		SomePrimitiveClassWithDoubleField(double x) {
 			this.d = x;
 		}
-   }
+	}
 
-   static primitive class SomePrimitiveClassWithFloatField{
-      public float f;
+	static primitive class SomePrimitiveClassWithFloatField{
+		public float f;
 
 		SomePrimitiveClassWithFloatField(float x) {
 			this.f = x;
 		}
-   }
+	}
 
-   static primitive class SomePrimitiveClassWithLongField{
-      public long l;
+	static primitive class SomePrimitiveClassWithLongField{
+		public long l;
 
 		SomePrimitiveClassWithLongField(long x) {
 			this.l = x;
 		}
-   }
+	}
 
-   static class SomeIdentityClassWithDoubleField{
-      public double d;
+	static class SomeIdentityClassWithDoubleField{
+		public double d;
 
 		SomeIdentityClassWithDoubleField(double x) {
 			this.d = x;
 		}
-   }
+	}
 
-   static class SomeIdentityClassWithFloatField{
-      public float f;
+	static class SomeIdentityClassWithFloatField{
+		public float f;
 
 		SomeIdentityClassWithFloatField(float x) {
 			this.f = x;
 		}
-   }
+	}
 
-   static class SomeIdentityClassWithLongField{
-      public long l;
+	static class SomeIdentityClassWithLongField{
+		public long l;
 
 		SomeIdentityClassWithLongField(long x) {
 			this.l = x;
 		}
-   }
+	}
 
-   interface SomeInterface1WithSingleImplementer {}
+	interface SomeInterface1WithSingleImplementer {}
 
-   interface SomeInterface2WithSingleImplementer {}
+	interface SomeInterface2WithSingleImplementer {}
 
-   static primitive class SomePrimitiveClassImplIf implements SomeInterface1WithSingleImplementer {
-      public double d;
-      public long l;
+	static primitive class SomePrimitiveClassImplIf implements SomeInterface1WithSingleImplementer {
+		public double d;
+		public long l;
 
 		SomePrimitiveClassImplIf(double val1, long val2) {
 			this.d = val1;
 			this.l = val2;
 		}
-   }
+	}
 
-   static class SomeIdentityClassImplIf implements SomeInterface2WithSingleImplementer {
-      public double d;
-      public long l;
+	static class SomeIdentityClassImplIf implements SomeInterface2WithSingleImplementer {
+		public double d;
+		public long l;
 
 		SomeIdentityClassImplIf(double val1, long val2) {
 			this.d = val1;
 			this.l = val2;
 		}
-   }
+	}
 
-   static class SomeClassHolder {
-      public static int ARRAY_LENGTH = 10;
-      SomeInterface1WithSingleImplementer[] data_1;
-      SomeInterface1WithSingleImplementer[] data_2;
+	static class SomeClassHolder {
+		public static int ARRAY_LENGTH = 10;
+		SomeInterface1WithSingleImplementer[] data_1;
+		SomeInterface1WithSingleImplementer[] data_2;
 
-      SomeInterface2WithSingleImplementer[] data_3;
-      SomeInterface2WithSingleImplementer[] data_4;
-      SomeInterface2WithSingleImplementer   data_5;
+		SomeInterface2WithSingleImplementer[] data_3;
+		SomeInterface2WithSingleImplementer[] data_4;
+		SomeInterface2WithSingleImplementer   data_5;
 
 		SomeClassHolder() {
-         data_1 = new SomePrimitiveClassImplIf[ARRAY_LENGTH];
-         data_2 = new SomePrimitiveClassImplIf[ARRAY_LENGTH];
+			data_1 = new SomePrimitiveClassImplIf[ARRAY_LENGTH];
+			data_2 = new SomePrimitiveClassImplIf[ARRAY_LENGTH];
 
-         data_3 = new SomeIdentityClassImplIf[ARRAY_LENGTH];
-         data_4 = new SomeIdentityClassImplIf[ARRAY_LENGTH];
+			data_3 = new SomeIdentityClassImplIf[ARRAY_LENGTH];
+			data_4 = new SomeIdentityClassImplIf[ARRAY_LENGTH];
 
-         data_5 = new SomeIdentityClassImplIf((double)(12345), (long)(12345));
+			data_5 = new SomeIdentityClassImplIf((double)(12345), (long)(12345));
 
-         for (int i = 0; i < ARRAY_LENGTH; i++) {
-            data_1[i] = new SomePrimitiveClassImplIf((double)i, (long)i);
-            data_2[i] = new SomePrimitiveClassImplIf((double)(i+1), (long)(i+1));
+			for (int i = 0; i < ARRAY_LENGTH; i++) {
+				data_1[i] = new SomePrimitiveClassImplIf((double)i, (long)i);
+				data_2[i] = new SomePrimitiveClassImplIf((double)(i+1), (long)(i+1));
 
-            data_3[i] = data_5;
-            data_4[i] = new SomeIdentityClassImplIf((double)(i+1), (long)(i+1));
-         }
-      }
-   }
+				data_3[i] = data_5;
+				data_4[i] = new SomeIdentityClassImplIf((double)(i+1), (long)(i+1));
+			}
+		}
+	}
 
-   static void readArrayElementWithDoubleField(SomePrimitiveClassWithDoubleField[] data) throws Throwable {
-      for (int i=0; i<data.length; ++i) {
-         assertEquals(data[i].d, (double)i);
-      }
-   }
+	static void readArrayElementWithDoubleField(SomePrimitiveClassWithDoubleField[] data) throws Throwable {
+		for (int i=0; i<data.length; ++i) {
+			assertEquals(data[i].d, (double)i);
+		}
+	}
 
-   static void readArrayElementWithFloatField(SomePrimitiveClassWithFloatField[] data) throws Throwable {
-      for (int i=0; i<data.length; ++i) {
-         assertEquals(data[i].f, (float)i);
-      }
-   }
+	static void readArrayElementWithFloatField(SomePrimitiveClassWithFloatField[] data) throws Throwable {
+		for (int i=0; i<data.length; ++i) {
+			assertEquals(data[i].f, (float)i);
+		}
+	}
 
-   static void readArrayElementWithLongField(SomePrimitiveClassWithLongField[] data) throws Throwable {
-      for (int i=0; i<data.length; ++i) {
-         assertEquals(data[i].l, (long)i);
-      }
-   }
+	static void readArrayElementWithLongField(SomePrimitiveClassWithLongField[] data) throws Throwable {
+		for (int i=0; i<data.length; ++i) {
+			assertEquals(data[i].l, (long)i);
+		}
+	}
 
-   static void readArrayElementWithDoubleField(SomeIdentityClassWithDoubleField[] data) throws Throwable {
-      for (int i=0; i<data.length; ++i) {
-         assertEquals(data[i].d, (double)i);
-      }
-   }
+	static void readArrayElementWithDoubleField(SomeIdentityClassWithDoubleField[] data) throws Throwable {
+		for (int i=0; i<data.length; ++i) {
+			assertEquals(data[i].d, (double)i);
+		}
+	}
 
-   static void readArrayElementWithFloatField(SomeIdentityClassWithFloatField[] data) throws Throwable {
-      for (int i=0; i<data.length; ++i) {
-         assertEquals(data[i].f, (float)i);
-      }
-   }
+	static void readArrayElementWithFloatField(SomeIdentityClassWithFloatField[] data) throws Throwable {
+		for (int i=0; i<data.length; ++i) {
+			assertEquals(data[i].f, (float)i);
+		}
+	}
 
-   static void readArrayElementWithLongField(SomeIdentityClassWithLongField[] data) throws Throwable {
-      for (int i=0; i<data.length; ++i) {
-         assertEquals(data[i].l, (long)i);
-      }
-   }
+	static void readArrayElementWithLongField(SomeIdentityClassWithLongField[] data) throws Throwable {
+		for (int i=0; i<data.length; ++i) {
+			assertEquals(data[i].l, (long)i);
+		}
+	}
 
-   static void readArrayElementWithSomePrimitiveClassImplIf(SomeClassHolder holder) throws Throwable {
-      for (int i=0; i<holder.data_1.length; ++i) {
-         assertEquals(holder.data_1[i], new SomePrimitiveClassImplIf((double)i, (long)i));
-      }
-   }
+	static void readArrayElementWithSomePrimitiveClassImplIf(SomeClassHolder holder) throws Throwable {
+		for (int i=0; i<holder.data_1.length; ++i) {
+			assertEquals(holder.data_1[i], new SomePrimitiveClassImplIf((double)i, (long)i));
+		}
+	}
 
-   static void readArrayElementWithSomeIdentityClassImplIf(SomeClassHolder holder) throws Throwable {
-      for (int i=0; i<holder.data_3.length; ++i) {
-         assertEquals(holder.data_3[i], holder.data_5);
-      }
-   }
+	static void readArrayElementWithSomeIdentityClassImplIf(SomeClassHolder holder) throws Throwable {
+		for (int i=0; i<holder.data_3.length; ++i) {
+			assertEquals(holder.data_3[i], holder.data_5);
+		}
+	}
 
-   static void writeArrayElementWithDoubleField(SomePrimitiveClassWithDoubleField[] srcData, SomePrimitiveClassWithDoubleField[] dstData) throws Throwable {
-      for (int i=0; i<dstData.length; ++i) {
-         dstData[i] = srcData[i];
-      }
+	static void writeArrayElementWithDoubleField(SomePrimitiveClassWithDoubleField[] srcData, SomePrimitiveClassWithDoubleField[] dstData) throws Throwable {
+		for (int i=0; i<dstData.length; ++i) {
+			dstData[i] = srcData[i];
+		}
 
-      for (int i=0; i<dstData.length; ++i) {
-         assertEquals(dstData[i].d, (double)(i+1));
-      }
-   }
+		for (int i=0; i<dstData.length; ++i) {
+			assertEquals(dstData[i].d, (double)(i+1));
+		}
+	}
 
-   static void writeArrayElementWithFloatField(SomePrimitiveClassWithFloatField[] srcData, SomePrimitiveClassWithFloatField[] dstData) throws Throwable {
-      for (int i=0; i<dstData.length; ++i) {
-         dstData[i] = srcData[i];
-      }
+	static void writeArrayElementWithFloatField(SomePrimitiveClassWithFloatField[] srcData, SomePrimitiveClassWithFloatField[] dstData) throws Throwable {
+		for (int i=0; i<dstData.length; ++i) {
+			dstData[i] = srcData[i];
+		}
 
-      for (int i=0; i<dstData.length; ++i) {
-         assertEquals(dstData[i].f, (float)(i+1));
-      }
-   }
+		for (int i=0; i<dstData.length; ++i) {
+			assertEquals(dstData[i].f, (float)(i+1));
+		}
+	}
 
-   static void writeArrayElementWithLongField(SomePrimitiveClassWithLongField[] srcData, SomePrimitiveClassWithLongField[] dstData) throws Throwable {
-      for (int i=0; i<dstData.length; ++i) {
-         dstData[i] = srcData[i];
-      }
+	static void writeArrayElementWithLongField(SomePrimitiveClassWithLongField[] srcData, SomePrimitiveClassWithLongField[] dstData) throws Throwable {
+		for (int i=0; i<dstData.length; ++i) {
+			dstData[i] = srcData[i];
+		}
 
-      for (int i=0; i<dstData.length; ++i) {
-         assertEquals(dstData[i].l, (long)(i+1));
-      }
-   }
+		for (int i=0; i<dstData.length; ++i) {
+			assertEquals(dstData[i].l, (long)(i+1));
+		}
+	}
 
-   static void writeArrayElementWithDoubleField(SomeIdentityClassWithDoubleField[] srcData, SomeIdentityClassWithDoubleField[] dstData) throws Throwable {
-      for (int i=0; i<dstData.length; ++i) {
-         dstData[i] = srcData[i];
-      }
+	static void writeArrayElementWithDoubleField(SomeIdentityClassWithDoubleField[] srcData, SomeIdentityClassWithDoubleField[] dstData) throws Throwable {
+		for (int i=0; i<dstData.length; ++i) {
+			dstData[i] = srcData[i];
+		}
 
-      for (int i=0; i<dstData.length; ++i) {
-         assertEquals(dstData[i].d, (double)(i+1));
-      }
-   }
+		for (int i=0; i<dstData.length; ++i) {
+			assertEquals(dstData[i].d, (double)(i+1));
+		}
+	}
 
-   static void writeArrayElementWithFloatField(SomeIdentityClassWithFloatField[] srcData, SomeIdentityClassWithFloatField[] dstData) throws Throwable {
-      for (int i=0; i<dstData.length; ++i) {
-         dstData[i] = srcData[i];
-      }
+	static void writeArrayElementWithFloatField(SomeIdentityClassWithFloatField[] srcData, SomeIdentityClassWithFloatField[] dstData) throws Throwable {
+		for (int i=0; i<dstData.length; ++i) {
+			dstData[i] = srcData[i];
+		}
 
-      for (int i=0; i<dstData.length; ++i) {
-         assertEquals(dstData[i].f, (float)(i+1));
-      }
-   }
+		for (int i=0; i<dstData.length; ++i) {
+			assertEquals(dstData[i].f, (float)(i+1));
+		}
+	}
 
-   static void writeArrayElementWithLongField(SomeIdentityClassWithLongField[] srcData, SomeIdentityClassWithLongField[] dstData) throws Throwable {
-      for (int i=0; i<dstData.length; ++i) {
-         dstData[i] = srcData[i];
-      }
+	static void writeArrayElementWithLongField(SomeIdentityClassWithLongField[] srcData, SomeIdentityClassWithLongField[] dstData) throws Throwable {
+		for (int i=0; i<dstData.length; ++i) {
+			dstData[i] = srcData[i];
+		}
 
-      for (int i=0; i<dstData.length; ++i) {
-         assertEquals(dstData[i].l, (long)(i+1));
-      }
-   }
+		for (int i=0; i<dstData.length; ++i) {
+			assertEquals(dstData[i].l, (long)(i+1));
+		}
+	}
 
-   static void writeArrayElementWithSomePrimitiveClassImplIf(SomeClassHolder holder) throws Throwable {
-      for (int i=0; i<holder.data_1.length; ++i) {
-         holder.data_1[i] = holder.data_2[i];
-      }
+	static void writeArrayElementWithSomePrimitiveClassImplIf(SomeClassHolder holder) throws Throwable {
+		for (int i=0; i<holder.data_1.length; ++i) {
+			holder.data_1[i] = holder.data_2[i];
+		}
 
-      for (int i=0; i<holder.data_1.length; ++i) {
-         assertEquals(holder.data_1[i], new SomePrimitiveClassImplIf((double)(i+1), (long)(i+1)));
-      }
-   }
+		for (int i=0; i<holder.data_1.length; ++i) {
+			assertEquals(holder.data_1[i], new SomePrimitiveClassImplIf((double)(i+1), (long)(i+1)));
+		}
+	}
 
-   static void writeArrayElementWithSomeIdentityClassImplIf(SomeClassHolder holder) throws Throwable {
-      for (int i=0; i<holder.data_3.length; ++i) {
-         holder.data_3[i] = holder.data_4[i];
-      }
+	static void writeArrayElementWithSomeIdentityClassImplIf(SomeClassHolder holder) throws Throwable {
+		for (int i=0; i<holder.data_3.length; ++i) {
+			holder.data_3[i] = holder.data_4[i];
+		}
 
-      for (int i=0; i<holder.data_3.length; ++i) {
-         assertEquals(holder.data_3[i], holder.data_4[i]);
-      }
-   }
+		for (int i=0; i<holder.data_3.length; ++i) {
+			assertEquals(holder.data_3[i], holder.data_4[i]);
+		}
+	}
 
-   @Test(priority=1,invocationCount=2)
+	@Test(priority=1,invocationCount=2)
 	static public void testValueTypeAaload() throws Throwable {
-      int ARRAY_LENGTH = 10;
-      SomePrimitiveClassWithDoubleField[] data1  = new SomePrimitiveClassWithDoubleField[ARRAY_LENGTH];
-      SomePrimitiveClassWithFloatField[]  data2  = new SomePrimitiveClassWithFloatField[ARRAY_LENGTH];
-      SomePrimitiveClassWithLongField[]   data3  = new SomePrimitiveClassWithLongField[ARRAY_LENGTH];
+		int ARRAY_LENGTH = 10;
+		SomePrimitiveClassWithDoubleField[] data1  = new SomePrimitiveClassWithDoubleField[ARRAY_LENGTH];
+		SomePrimitiveClassWithFloatField[]  data2  = new SomePrimitiveClassWithFloatField[ARRAY_LENGTH];
+		SomePrimitiveClassWithLongField[]   data3  = new SomePrimitiveClassWithLongField[ARRAY_LENGTH];
 
-      SomeIdentityClassWithDoubleField[] data4  = new SomeIdentityClassWithDoubleField[ARRAY_LENGTH];
-      SomeIdentityClassWithFloatField[]  data5  = new SomeIdentityClassWithFloatField[ARRAY_LENGTH];
-      SomeIdentityClassWithLongField[]   data6  = new SomeIdentityClassWithLongField[ARRAY_LENGTH];
+		SomeIdentityClassWithDoubleField[] data4  = new SomeIdentityClassWithDoubleField[ARRAY_LENGTH];
+		SomeIdentityClassWithFloatField[]  data5  = new SomeIdentityClassWithFloatField[ARRAY_LENGTH];
+		SomeIdentityClassWithLongField[]   data6  = new SomeIdentityClassWithLongField[ARRAY_LENGTH];
 
-      SomeClassHolder holder = new SomeClassHolder();
+		SomeClassHolder holder = new SomeClassHolder();
 
-      for (int i=0; i<ARRAY_LENGTH; ++i) {
-         data1[i] = new SomePrimitiveClassWithDoubleField((double)i);
-         data2[i] = new SomePrimitiveClassWithFloatField((float)i);
-         data3[i] = new SomePrimitiveClassWithLongField((long)i);
+		for (int i=0; i<ARRAY_LENGTH; ++i) {
+			data1[i] = new SomePrimitiveClassWithDoubleField((double)i);
+			data2[i] = new SomePrimitiveClassWithFloatField((float)i);
+			data3[i] = new SomePrimitiveClassWithLongField((long)i);
 
-         data4[i] = new SomeIdentityClassWithDoubleField((double)i);
-         data5[i] = new SomeIdentityClassWithFloatField((float)i);
-         data6[i] = new SomeIdentityClassWithLongField((long)i);
-      }
+			data4[i] = new SomeIdentityClassWithDoubleField((double)i);
+			data5[i] = new SomeIdentityClassWithFloatField((float)i);
+			data6[i] = new SomeIdentityClassWithLongField((long)i);
+		}
 
-      readArrayElementWithDoubleField(data1);
-      readArrayElementWithFloatField(data2);
-      readArrayElementWithLongField(data3);
+		readArrayElementWithDoubleField(data1);
+		readArrayElementWithFloatField(data2);
+		readArrayElementWithLongField(data3);
 
-      readArrayElementWithDoubleField(data4);
-      readArrayElementWithFloatField(data5);
-      readArrayElementWithLongField(data6);
+		readArrayElementWithDoubleField(data4);
+		readArrayElementWithFloatField(data5);
+		readArrayElementWithLongField(data6);
 
-      readArrayElementWithSomePrimitiveClassImplIf(holder);
-      readArrayElementWithSomeIdentityClassImplIf(holder);
-   }
+		readArrayElementWithSomePrimitiveClassImplIf(holder);
+		readArrayElementWithSomeIdentityClassImplIf(holder);
+	}
 
-   @Test(priority=1,invocationCount=2)
+	@Test(priority=1,invocationCount=2)
 	static public void testValueTypeAastore() throws Throwable {
-      int ARRAY_LENGTH = 10;
-      SomePrimitiveClassWithDoubleField[] srcData1 = new SomePrimitiveClassWithDoubleField[ARRAY_LENGTH];
-      SomePrimitiveClassWithDoubleField[] dstData1 = new SomePrimitiveClassWithDoubleField[ARRAY_LENGTH];
-      SomePrimitiveClassWithFloatField[]  srcData2 = new SomePrimitiveClassWithFloatField[ARRAY_LENGTH];
-      SomePrimitiveClassWithFloatField[]  dstData2 = new SomePrimitiveClassWithFloatField[ARRAY_LENGTH];
-      SomePrimitiveClassWithLongField[]   srcData3 = new SomePrimitiveClassWithLongField[ARRAY_LENGTH];
-      SomePrimitiveClassWithLongField[]   dstData3 = new SomePrimitiveClassWithLongField[ARRAY_LENGTH];
+		int ARRAY_LENGTH = 10;
+		SomePrimitiveClassWithDoubleField[] srcData1 = new SomePrimitiveClassWithDoubleField[ARRAY_LENGTH];
+		SomePrimitiveClassWithDoubleField[] dstData1 = new SomePrimitiveClassWithDoubleField[ARRAY_LENGTH];
+		SomePrimitiveClassWithFloatField[]  srcData2 = new SomePrimitiveClassWithFloatField[ARRAY_LENGTH];
+		SomePrimitiveClassWithFloatField[]  dstData2 = new SomePrimitiveClassWithFloatField[ARRAY_LENGTH];
+		SomePrimitiveClassWithLongField[]   srcData3 = new SomePrimitiveClassWithLongField[ARRAY_LENGTH];
+		SomePrimitiveClassWithLongField[]   dstData3 = new SomePrimitiveClassWithLongField[ARRAY_LENGTH];
 
-      SomeIdentityClassWithDoubleField[] srcData4  = new SomeIdentityClassWithDoubleField[ARRAY_LENGTH];
-      SomeIdentityClassWithDoubleField[] dstData4  = new SomeIdentityClassWithDoubleField[ARRAY_LENGTH];
-      SomeIdentityClassWithFloatField[]  srcData5  = new SomeIdentityClassWithFloatField[ARRAY_LENGTH];
-      SomeIdentityClassWithFloatField[]  dstData5  = new SomeIdentityClassWithFloatField[ARRAY_LENGTH];
-      SomeIdentityClassWithLongField[]   srcData6  = new SomeIdentityClassWithLongField[ARRAY_LENGTH];
-      SomeIdentityClassWithLongField[]   dstData6  = new SomeIdentityClassWithLongField[ARRAY_LENGTH];
+		SomeIdentityClassWithDoubleField[] srcData4  = new SomeIdentityClassWithDoubleField[ARRAY_LENGTH];
+		SomeIdentityClassWithDoubleField[] dstData4  = new SomeIdentityClassWithDoubleField[ARRAY_LENGTH];
+		SomeIdentityClassWithFloatField[]  srcData5  = new SomeIdentityClassWithFloatField[ARRAY_LENGTH];
+		SomeIdentityClassWithFloatField[]  dstData5  = new SomeIdentityClassWithFloatField[ARRAY_LENGTH];
+		SomeIdentityClassWithLongField[]   srcData6  = new SomeIdentityClassWithLongField[ARRAY_LENGTH];
+		SomeIdentityClassWithLongField[]   dstData6  = new SomeIdentityClassWithLongField[ARRAY_LENGTH];
 
-      SomeClassHolder holder   = new SomeClassHolder();
+		SomeClassHolder holder   = new SomeClassHolder();
 
-      for (int i=0; i<ARRAY_LENGTH; ++i) {
-         srcData1[i] = new SomePrimitiveClassWithDoubleField((double)(i+1));
-         srcData2[i] = new SomePrimitiveClassWithFloatField((float)(i+1));
-         srcData3[i] = new SomePrimitiveClassWithLongField((long)(i+1));
+		for (int i=0; i<ARRAY_LENGTH; ++i) {
+			srcData1[i] = new SomePrimitiveClassWithDoubleField((double)(i+1));
+			srcData2[i] = new SomePrimitiveClassWithFloatField((float)(i+1));
+			srcData3[i] = new SomePrimitiveClassWithLongField((long)(i+1));
 
-         dstData1[i] = new SomePrimitiveClassWithDoubleField((double)i);
-         dstData2[i] = new SomePrimitiveClassWithFloatField((float)i);
-         dstData3[i] = new SomePrimitiveClassWithLongField((long)i);
+			dstData1[i] = new SomePrimitiveClassWithDoubleField((double)i);
+			dstData2[i] = new SomePrimitiveClassWithFloatField((float)i);
+			dstData3[i] = new SomePrimitiveClassWithLongField((long)i);
 
-         srcData4[i] = new SomeIdentityClassWithDoubleField((double)(i+1));
-         srcData5[i] = new SomeIdentityClassWithFloatField((float)(i+1));
-         srcData6[i] = new SomeIdentityClassWithLongField((long)(i+1));
+			srcData4[i] = new SomeIdentityClassWithDoubleField((double)(i+1));
+			srcData5[i] = new SomeIdentityClassWithFloatField((float)(i+1));
+			srcData6[i] = new SomeIdentityClassWithLongField((long)(i+1));
 
-         dstData4[i] = new SomeIdentityClassWithDoubleField((double)i);
-         dstData5[i] = new SomeIdentityClassWithFloatField((float)i);
-         dstData6[i] = new SomeIdentityClassWithLongField((long)i);
-      }
+			dstData4[i] = new SomeIdentityClassWithDoubleField((double)i);
+			dstData5[i] = new SomeIdentityClassWithFloatField((float)i);
+			dstData6[i] = new SomeIdentityClassWithLongField((long)i);
+		}
 
-      writeArrayElementWithDoubleField(srcData1, dstData1);
-      writeArrayElementWithFloatField(srcData2, dstData2);
-      writeArrayElementWithLongField(srcData3, dstData3);
+		writeArrayElementWithDoubleField(srcData1, dstData1);
+		writeArrayElementWithFloatField(srcData2, dstData2);
+		writeArrayElementWithLongField(srcData3, dstData3);
 
-      writeArrayElementWithDoubleField(srcData4, dstData4);
-      writeArrayElementWithFloatField(srcData5, dstData5);
-      writeArrayElementWithLongField(srcData6, dstData6);
+		writeArrayElementWithDoubleField(srcData4, dstData4);
+		writeArrayElementWithFloatField(srcData5, dstData5);
+		writeArrayElementWithLongField(srcData6, dstData6);
 
-      writeArrayElementWithSomePrimitiveClassImplIf(holder);
-      writeArrayElementWithSomeIdentityClassImplIf(holder);
-   }
+		writeArrayElementWithSomePrimitiveClassImplIf(holder);
+		writeArrayElementWithSomeIdentityClassImplIf(holder);
+	}
 
 	public static primitive class EmptyPrim {
 	}
