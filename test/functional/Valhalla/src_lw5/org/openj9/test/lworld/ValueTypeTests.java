@@ -1253,7 +1253,7 @@ public class ValueTypeTests {
 	}
 
 	@Test(priority=3, invocationCount=2)
-	static public void testLayoutsWithPrimitives() throws Throwable {
+	static public void testLayoutsWithNullRestrictedFields() throws Throwable {
 		SingleBackfill! singleBackfillInstance = new SingleBackfill(defaultLong, defaultObject, defaultInt);
 		assertEquals(singleBackfillInstance.i, defaultInt);
 		assertEquals(singleBackfillInstance.o, defaultObject);
@@ -1784,6 +1784,42 @@ public class ValueTypeTests {
 		assertTrue(IdentityObject.class.isIdentity());
 	}
 
+	@Test(priority=1)
+	static public void testIsValueClassOnValueType() throws Throwable {
+		assertTrue(ValueLong.class.isValue());
+		assertFalse(ValueLong.class.isIdentity());
+	}
+
+	private interface TestInterface {}
+
+	@Test(priority=1)
+	static public void testIsValueClassOnInterface() throws Throwable {
+		assertFalse(TestInterface.class.isValue());
+		assertFalse(TestInterface.class.isIdentity());
+	}
+
+	@Test(priority=1)
+	static public void testIsValueClassOnAbstractClass() throws Throwable {
+		assertFalse(HeavyAbstractClass.class.isValue());
+		assertTrue(HeavyAbstractClass.class.isIdentity());
+	}
+
+	@Test(priority=1)
+	static public void testIsValueOnValueArrayClass() throws Throwable {
+		assertFalse(ValueLong.class.arrayType().isValue());
+		assertTrue(ValueLong.class.arrayType().isIdentity());
+	}
+
+	static class TestIsValueOnRefArrayClass {
+		long longField;
+	}
+
+	@Test(priority=1)
+	static public void testIsValueOnRefArrayClass() throws Throwable {
+		assertFalse(TestIsValueOnRefArrayClass.class.arrayType().isValue());
+		assertTrue(TestIsValueOnRefArrayClass.class.arrayType().isIdentity());
+	}
+
 	static value class ValueIntPoint2D {
 		final ValueInt x, y;
 
@@ -1826,6 +1862,17 @@ public class ValueTypeTests {
 		static Triangle2D! tri2;
 	}
 
+	/* Prioritize before static fields are set by testStaticFieldsWithSingleAlignment */
+	@Test(priority=3, invocationCount=2)
+	static public void testStaticFieldsWithSingleAlignmenDefaultValues() throws Throwable {
+		assertNotNull(ClassWithOnlyStaticFieldsWithSingleAlignment.tri);
+		assertNotNull(ClassWithOnlyStaticFieldsWithSingleAlignment.point);
+		assertNotNull(ClassWithOnlyStaticFieldsWithSingleAlignment.line);
+		assertNotNull(ClassWithOnlyStaticFieldsWithSingleAlignment.i);
+		assertNotNull(ClassWithOnlyStaticFieldsWithSingleAlignment.f);
+		assertNotNull(ClassWithOnlyStaticFieldsWithSingleAlignment.tri2);
+	}
+
 	@Test(priority=4)
 	static public void testStaticFieldsWithSingleAlignment() throws Throwable {
 		ClassWithOnlyStaticFieldsWithSingleAlignment.tri = new Triangle2D(defaultTrianglePositions);
@@ -1843,16 +1890,6 @@ public class ValueTypeTests {
 		ClassWithOnlyStaticFieldsWithSingleAlignment.tri2.checkEqualTriangle2D(defaultTrianglePositions);
 	}
 
-	@Test(priority=5, invocationCount=2)
-	static public void testStaticFieldsWithSingleAlignmenDefaultValues() throws Throwable {
-		assertNotNull(ClassWithOnlyStaticFieldsWithSingleAlignment.tri);
-		assertNotNull(ClassWithOnlyStaticFieldsWithSingleAlignment.point);
-		assertNotNull(ClassWithOnlyStaticFieldsWithSingleAlignment.line);
-		assertNotNull(ClassWithOnlyStaticFieldsWithSingleAlignment.i);
-		assertNotNull(ClassWithOnlyStaticFieldsWithSingleAlignment.f);
-		assertNotNull(ClassWithOnlyStaticFieldsWithSingleAlignment.tri2);
-	}
-
 	static value class ClassWithOnlyStaticFieldsWithLongAlignment {
 		static Point2D! point;
 		static FlattenedLine2D! line;
@@ -1861,6 +1898,18 @@ public class ValueTypeTests {
 		static ValueDouble! d;
 		static ValueInt! i;
 		static Triangle2D! tri;
+	}
+
+	/* Prioritize before static fields are set by testStaticFieldsWithLongAlignment */
+	@Test(priority=3, invocationCount=2)
+	static public void testStaticFieldsWithLongAlignmenDefaultValues() throws Throwable {
+		assertNotNull(ClassWithOnlyStaticFieldsWithLongAlignment.point);
+		assertNotNull(ClassWithOnlyStaticFieldsWithLongAlignment.line);
+		assertNotNull(ClassWithOnlyStaticFieldsWithLongAlignment.o);
+		assertNotNull(ClassWithOnlyStaticFieldsWithLongAlignment.l);
+		assertNotNull(ClassWithOnlyStaticFieldsWithLongAlignment.d);
+		assertNotNull(ClassWithOnlyStaticFieldsWithLongAlignment.i);
+		assertNotNull(ClassWithOnlyStaticFieldsWithLongAlignment.tri);
 	}
 
 	@Test(priority=4)
@@ -1882,17 +1931,6 @@ public class ValueTypeTests {
 		ClassWithOnlyStaticFieldsWithLongAlignment.tri.checkEqualTriangle2D(defaultTrianglePositions);
 	}
 
-	@Test(priority=5, invocationCount=2)
-	static public void testStaticFieldsWithLongAlignmenDefaultValues() throws Throwable {
-		assertNotNull(ClassWithOnlyStaticFieldsWithLongAlignment.point);
-		assertNotNull(ClassWithOnlyStaticFieldsWithLongAlignment.line);
-		assertNotNull(ClassWithOnlyStaticFieldsWithLongAlignment.o);
-		assertNotNull(ClassWithOnlyStaticFieldsWithLongAlignment.l);
-		assertNotNull(ClassWithOnlyStaticFieldsWithLongAlignment.d);
-		assertNotNull(ClassWithOnlyStaticFieldsWithLongAlignment.i);
-		assertNotNull(ClassWithOnlyStaticFieldsWithLongAlignment.tri);
-	}
-
 	static value class ClassWithOnlyStaticFieldsWithObjectAlignment {
 		static Triangle2D! tri;
 		static Point2D! point;
@@ -1901,6 +1939,18 @@ public class ValueTypeTests {
 		static ValueInt! i;
 		static ValueFloat! f;
 		static Triangle2D! tri2;
+	}
+
+	/* Prioritize before static fields are set by testStaticFieldsWithObjectAlignment */
+	@Test(priority=3, invocationCount=2)
+	static public void testStaticFieldsWithObjectAlignmentDefaultValues() throws Throwable {
+		assertNotNull(ClassWithOnlyStaticFieldsWithObjectAlignment.tri);
+		assertNotNull(ClassWithOnlyStaticFieldsWithObjectAlignment.point);
+		assertNotNull(ClassWithOnlyStaticFieldsWithObjectAlignment.line);
+		assertNotNull(ClassWithOnlyStaticFieldsWithObjectAlignment.o);
+		assertNotNull(ClassWithOnlyStaticFieldsWithObjectAlignment.i);
+		assertNotNull(ClassWithOnlyStaticFieldsWithObjectAlignment.f);
+		assertNotNull(ClassWithOnlyStaticFieldsWithObjectAlignment.tri2);
 	}
 
 	@Test(priority=4)
@@ -1920,17 +1970,6 @@ public class ValueTypeTests {
 		assertEquals(ClassWithOnlyStaticFieldsWithObjectAlignment.i.i, defaultInt);
 		assertEquals(ClassWithOnlyStaticFieldsWithObjectAlignment.f.f, defaultFloat);
 		ClassWithOnlyStaticFieldsWithObjectAlignment.tri2.checkEqualTriangle2D(defaultTrianglePositions);
-	}
-
-	@Test(priority=5, invocationCount=2)
-	static public void testStaticFieldsWithObjectAlignmentDefaultValues() throws Throwable {
-		assertNotNull(ClassWithOnlyStaticFieldsWithObjectAlignment.tri);
-		assertNotNull(ClassWithOnlyStaticFieldsWithObjectAlignment.point);
-		assertNotNull(ClassWithOnlyStaticFieldsWithObjectAlignment.line);
-		assertNotNull(ClassWithOnlyStaticFieldsWithObjectAlignment.o);
-		assertNotNull(ClassWithOnlyStaticFieldsWithObjectAlignment.i);
-		assertNotNull(ClassWithOnlyStaticFieldsWithObjectAlignment.f);
-		assertNotNull(ClassWithOnlyStaticFieldsWithObjectAlignment.tri2);
 	}
 
 	//*******************************************************************************
@@ -2034,7 +2073,7 @@ public class ValueTypeTests {
 	/*
 	 * Create large number of value types and instantiate them
 	 *
-	 * value Point2D# {
+	 * value Point2D {
 	 * 	int x;
 	 * 	int y;
 	 * }
@@ -2551,7 +2590,7 @@ public class ValueTypeTests {
 	 * Create a value type and read the fields before
 	 * they are set. The test should Verify that the
 	 * flattenable fields are set to the default values.
-	 * NULL should never be observed for Qtypes.
+	 * NULL should never be observed for nullrestricted fields.
 	 */
 	@Test(priority=4)
 	static public void testDefaultValues() throws Throwable {
@@ -2589,6 +2628,9 @@ public class ValueTypeTests {
 	/*
 	 * Create Array Objects with Point Class without initialization
 	 * The array should be set to a Default Value.
+	 *
+	 * TODO not sure if this array needs to be nullrestricted, currently the ri
+	 * is not up to date on this. Revisit this later.
 	 */
 	@Test(priority=4, invocationCount=2)
 	static public void testDefaultValueInPointArray() throws Throwable {
@@ -2812,8 +2854,8 @@ public class ValueTypeTests {
 	static public void testCheckCastValueTypeOnInvalidClass() throws Throwable {
 		String fields[] = {"longField:J"};
 		Class valueClass = ValueTypeGenerator.generateValueClass("TestCheckCastOnInvalidClass", fields);
-		MethodHandle checkCastOnInvalidLtype = lookup.findStatic(valueClass, "testCheckCastOnInvalidClass", MethodType.methodType(Object.class));
-		checkCastOnInvalidLtype.invoke();
+		MethodHandle checkCastOnInvalidClass = lookup.findStatic(valueClass, "testCheckCastOnInvalidClass", MethodType.methodType(Object.class));
+		checkCastOnInvalidClass.invoke();
 	}
 
 	/*
