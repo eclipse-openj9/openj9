@@ -4084,6 +4084,16 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 	}
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
+	{
+		IDATA keepJNIIDs = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXKEEPJNIIDS, NULL);
+		IDATA noKeepJNIIDs = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXNOKEEPJNIIDS, NULL);
+		if (keepJNIIDs > noKeepJNIIDs) {
+			vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_KEEP_JNI_IDS;
+		} else if (keepJNIIDs < noKeepJNIIDs) {
+			vm->extendedRuntimeFlags2 &= ~(UDATA)J9_EXTENDED_RUNTIME2_KEEP_JNI_IDS;
+		}
+	}
+
 	return JNI_OK;
 }
 
