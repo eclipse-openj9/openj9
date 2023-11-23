@@ -52,11 +52,6 @@
 
 extern "C" {
 
-typedef union J9GenericJNIID {
-	J9JNIFieldID fieldID;
-	J9JNIMethodID methodID;
-} J9GenericJNIID;
-
 #define METHODID_CLASS_REF(methodID) ((jclass) &(J9_CP_FROM_METHOD(((J9JNIMethodID *) (methodID))->method)->ramClass->classObject))
 
 #define MAX_LOCAL_CAPACITY (64 * 1024)

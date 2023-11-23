@@ -52,7 +52,7 @@ jvmtiGetMethodName(jvmtiEnv* env,
 
 	ENSURE_PHASE_START_OR_LIVE(env);
 
-	ENSURE_JMETHODID_NON_NULL(method);
+	ENSURE_JMETHODID_VALID(method);
 
 	romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(((J9JNIMethodID *) method)->method);
 
@@ -141,7 +141,7 @@ jvmtiGetMethodDeclaringClass(jvmtiEnv* env,
 
 		ENSURE_PHASE_START_OR_LIVE(env);
 
-		ENSURE_JMETHODID_NON_NULL(method);
+		ENSURE_JMETHODID_VALID(method);
 		ENSURE_NON_NULL(declaring_class_ptr);
 
 		methodClass = getCurrentClass(J9_CLASS_FROM_METHOD(((J9JNIMethodID *) method)->method));
@@ -171,7 +171,7 @@ jvmtiGetMethodModifiers(jvmtiEnv* env,
 
 	ENSURE_PHASE_START_OR_LIVE(env);
 
-	ENSURE_JMETHODID_NON_NULL(method);
+	ENSURE_JMETHODID_VALID(method);
 	ENSURE_NON_NULL(modifiers_ptr);
 
 	romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(((J9JNIMethodID *) method)->method);
@@ -200,7 +200,7 @@ jvmtiGetMaxLocals(jvmtiEnv* env,
 
 	ENSURE_PHASE_START_OR_LIVE(env);
 
-	ENSURE_JMETHODID_NON_NULL(method);
+	ENSURE_JMETHODID_VALID(method);
 	ENSURE_NON_NULL(max_ptr);
 
 	romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(((J9JNIMethodID *) method)->method);
@@ -238,7 +238,7 @@ jvmtiGetArgumentsSize(jvmtiEnv* env,
 
 	ENSURE_PHASE_START_OR_LIVE(env);
 
-	ENSURE_JMETHODID_NON_NULL(method);
+	ENSURE_JMETHODID_VALID(method);
 	ENSURE_NON_NULL(size_ptr);
 
 	romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(((J9JNIMethodID *) method)->method);
@@ -277,7 +277,7 @@ jvmtiGetLineNumberTable(jvmtiEnv* env,
 	ENSURE_PHASE_START_OR_LIVE(env);
 	ENSURE_CAPABILITY(env, can_get_line_numbers);
 
-	ENSURE_JMETHODID_NON_NULL(method);
+	ENSURE_JMETHODID_VALID(method);
 	ENSURE_NON_NULL(entry_count_ptr);
 	ENSURE_NON_NULL(table_ptr);
 
@@ -356,7 +356,7 @@ jvmtiGetMethodLocation(jvmtiEnv* env,
 
 	ENSURE_PHASE_START_OR_LIVE(env);
 
-	ENSURE_JMETHODID_NON_NULL(method);
+	ENSURE_JMETHODID_VALID(method);
 	ENSURE_NON_NULL(start_location_ptr);
 	ENSURE_NON_NULL(end_location_ptr);
 
@@ -404,7 +404,7 @@ jvmtiGetLocalVariableTable(jvmtiEnv* env,
 	ENSURE_PHASE_LIVE(env);
 	ENSURE_CAPABILITY(env, can_access_local_variables);
 
-	ENSURE_JMETHODID_NON_NULL(method);
+	ENSURE_JMETHODID_VALID(method);
 	ENSURE_NON_NULL(entry_count_ptr);
 	ENSURE_NON_NULL(table_ptr);
 
@@ -520,7 +520,7 @@ jvmtiGetBytecodes(jvmtiEnv* env,
 	ENSURE_PHASE_START_OR_LIVE(env);
 	ENSURE_CAPABILITY(env, can_get_bytecodes);
 
-	ENSURE_JMETHODID_NON_NULL(method);
+	ENSURE_JMETHODID_VALID(method);
 	ENSURE_NON_NULL(bytecode_count_ptr);
 	ENSURE_NON_NULL(bytecodes_ptr);
 
@@ -843,7 +843,7 @@ jvmtiIsMethodNative(jvmtiEnv* env,
 
 	ENSURE_PHASE_START_OR_LIVE(env);
 
-	ENSURE_JMETHODID_NON_NULL(method);
+	ENSURE_JMETHODID_VALID(method);
 	ENSURE_NON_NULL(is_native_ptr);
 
 	romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(((J9JNIMethodID *) method)->method);
@@ -872,7 +872,7 @@ jvmtiIsMethodSynthetic(jvmtiEnv* env,
 	ENSURE_PHASE_START_OR_LIVE(env);
 	ENSURE_CAPABILITY(env, can_get_synthetic_attribute);
 
-	ENSURE_JMETHODID_NON_NULL(method);
+	ENSURE_JMETHODID_VALID(method);
 	ENSURE_NON_NULL(is_synthetic_ptr);
 
 	romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(((J9JNIMethodID *) method)->method);
@@ -899,7 +899,7 @@ jvmtiIsMethodObsolete(jvmtiEnv* env,
 
 	ENSURE_PHASE_START_OR_LIVE(env);
 
-	ENSURE_JMETHODID_NON_NULL(method);
+	ENSURE_JMETHODID_VALID(method);
 	ENSURE_NON_NULL(is_obsolete_ptr);
 
 	rv_is_obsolete = (J9CLASS_FLAGS(J9_CLASS_FROM_METHOD(((J9JNIMethodID *) method)->method)) & J9AccClassHotSwappedOut) ? JNI_TRUE : JNI_FALSE;

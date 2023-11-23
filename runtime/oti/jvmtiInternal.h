@@ -436,16 +436,16 @@ typedef struct jvmtiGcp_translation {
 		} \
 	} while(0) 
 
-#define ENSURE_JMETHODID_NON_NULL(var) \
+#define ENSURE_JMETHODID_VALID(var) \
 	do { \
-		if ((var) == NULL) { \
+		if ((NULL == (var)) || (UDATA_MAX == (UDATA)((J9JNIMethodID*)(var))->method)) { \
 			JVMTI_ERROR(JVMTI_ERROR_INVALID_METHODID); \
 		} \
 	} while(0)
 
-#define ENSURE_JFIELDID_NON_NULL(var) \
+#define ENSURE_JFIELDID_VALID(var) \
 	do { \
-		if ((var) == NULL) { \
+		if ((NULL == (var)) || (UDATA_MAX == (UDATA)((J9JNIFieldID*)(var))->declaringClass)) { \
 			JVMTI_ERROR(JVMTI_ERROR_INVALID_FIELDID); \
 		} \
 	} while(0)
@@ -515,8 +515,8 @@ typedef struct jvmtiGcp_translation {
 #define ENSURE_CAPABILITY(env, capability)
 #define ENSURE_NON_NULL(var)
 #define ENSURE_NON_NEGATIVE(var)
-#define ENSURE_JMETHODID_NON_NULL(var)
-#define ENSURE_JFIELDID_NON_NULL(var)
+#define ENSURE_JMETHODID_VALID(var)
+#define ENSURE_JFIELDID_VALID(var)
 #define ENSURE_JOBJECT_NON_NULL(var)
 #define ENSURE_JCLASS_NON_NULL(var)
 #define ENSURE_JTHREADGROUP_NON_NULL(var)
