@@ -21,12 +21,15 @@
  *******************************************************************************/
 package org.openj9.test.lworld;
 
+import static org.objectweb.asm.Opcodes.*;
 import static org.testng.Assert.*;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.invoke.MethodType;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
 import org.testng.annotations.Test;
 
 /*
@@ -69,6 +72,10 @@ public class ValueTypeTests {
 	static Object defaultObject = (Object)0xEEFFEEFF;
 	static int defaultIntNew = 0x45456767;
 	static long defaultLongNew = 0x11551155AAEEAAEEL;
+	static long defaultLongNew2 = 0x22662266BBFFBBFFL;
+	static long defaultLongNew3 = 0x33773377CC00CC00L;
+	static long defaultLongNew4 = 0x44884488DD11DD11L;
+	static long defaultLongNew5 = 0x55995599EE22EE22L;
 	static double defaultDoubleNew = -123412341.21341234d;
 	static float defaultFloatNew = -123423.12341234f;
 	static Object defaultObjectNew = (Object)0xFFEEFFEE;
@@ -94,6 +101,11 @@ public class ValueTypeTests {
 		void checkEqualPoint2D(int[] position) throws Throwable {
 			assertEquals(this.x, position[0]);
 			assertEquals(this.y, position[1]);
+		}
+
+		void checkFieldAccessWithDefaultValues() throws Throwable {
+			checkEqualPoint2D(defaultPointPositions1);
+			// TODO add putfield tests once withfield is replaced
 		}
 	}
 
@@ -132,6 +144,11 @@ public class ValueTypeTests {
 			this(new Point2D(positions[0]), new Point2D(positions[1]));
 		}
 
+		void checkFieldAccessWithDefaultValues() throws Throwable {
+			checkEqualFlattenedLine2D(defaultLinePositions1);
+			// TODO add putfield tests once withfield is replaced
+		}
+
 		void checkEqualFlattenedLine2D(int[][] positions) throws Throwable {
 			st.checkEqualPoint2D(positions[0]);
 			en.checkEqualPoint2D(positions[1]);
@@ -160,6 +177,12 @@ public class ValueTypeTests {
 						new Point2D(positions[2][1][0], positions[2][1][1])));
 		}
 
+
+		void checkFieldAccessWithDefaultValues() throws Throwable {
+			checkEqualTriangle2D(defaultTrianglePositions);
+			// TODO add putfield tests once withfield is replaced
+		}
+
 		void checkEqualTriangle2D(int[][][] positions) throws Throwable {
 			v1.checkEqualFlattenedLine2D(positions[0]);
 			v2.checkEqualFlattenedLine2D(positions[1]);
@@ -184,6 +207,10 @@ public class ValueTypeTests {
 
 		ValueLong(long l) {
 			this.l = l;
+		}
+
+		public long getL() {
+			return l;
 		}
 	}
 
@@ -266,6 +293,8 @@ public class ValueTypeTests {
 		ValueDouble! d;
 		ValueInt! i;
 		Triangle2D! tri;
+
+		AssortedRefWithLongAlignment() {}
 
 		AssortedRefWithLongAlignment(Point2D! point, FlattenedLine2D! line, ValueObject! o, ValueLong! l, ValueDouble! d, ValueInt! i, Triangle2D! tri) {
 			this.point = point;
@@ -498,113 +527,6 @@ public class ValueTypeTests {
 			tri2.checkEqualTriangle2D(defaultTrianglePositions);
 			tri2 = new Triangle2D(defaultTrianglePositionsNew);
 			tri2.checkEqualTriangle2D(defaultTrianglePositionsNew);
-		}
-	}
-
-	static value class SingleBackfill {
-		long l;
-		Object o;
-		int i;
-
-		public implicit SingleBackfill();
-
-		SingleBackfill(long l, Object o, int i) {
-			this.l = l;
-			this.o = o;
-			this.i = i;
-		}
-	}
-
-	static value class ObjectBackfill {
-		long l;
-		Object o;
-
-		public implicit ObjectBackfill();
-
-		ObjectBackfill(long l, Object o) {
-			this.l = l;
-			this.o = o;
-		}
-	}
-
-	static value class FlatUnAlignedSingle {
-		ValueInt! i;
-		ValueInt! i2;
-
-		public implicit FlatUnAlignedSingle();
-
-		FlatUnAlignedSingle(ValueInt! i, ValueInt! i2) {
-			this.i = i;
-			this.i2 = i2;
-		}
-	}
-
-	static value class FlatUnAlignedSingleBackfill {
-		ValueLong! l;
-		FlatUnAlignedSingle! singles;
-		ValueObject! o;
-
-		public implicit FlatUnAlignedSingleBackfill();
-
-		FlatUnAlignedSingleBackfill(ValueLong! l, FlatUnAlignedSingle! singles, ValueObject! o) {
-			this.l = l;
-			this.singles = singles;
-			this.o = o;
-		}
-	}
-
-	static value class FlatUnAlignedSingleBackfill2 {
-		ValueLong! l;
-		FlatUnAlignedSingle! singles;
-		FlatUnAlignedSingle! singles2;
-
-		public implicit FlatUnAlignedSingleBackfill2();
-
-		FlatUnAlignedSingleBackfill2(ValueLong! l, FlatUnAlignedSingle! singles, FlatUnAlignedSingle! singles2) {
-			this.l = l;
-			this.singles = singles;
-			this.singles2 = singles2;
-
-		}
-	}
-
-	static value class FlatUnAlignedObject {
-		ValueObject! o;
-		ValueObject! o2;
-
-		public implicit FlatUnAlignedObject();
-
-		FlatUnAlignedObject(ValueObject! o, ValueObject! o2) {
-			this.o = o;
-			this.o2 = o2;
-		}
-	}
-
-	static value class FlatUnAlignedObjectBackfill {
-		FlatUnAlignedObject! objects;
-		FlatUnAlignedObject! objects2;
-		ValueLong! l;
-
-		public implicit FlatUnAlignedObjectBackfill();
-
-		FlatUnAlignedObjectBackfill(FlatUnAlignedObject! objects, FlatUnAlignedObject! objects2, ValueLong! l) {
-			this.objects = objects;
-			this.objects2 = objects2;
-			this.l = l;
-		}
-	}
-
-	static value class FlatUnAlignedObjectBackfill2 {
-		ValueObject! o;
-		FlatUnAlignedObject! objects;
-		ValueLong! l;
-
-		public implicit FlatUnAlignedObjectBackfill2();
-
-		FlatUnAlignedObjectBackfill2(ValueObject! o, FlatUnAlignedObject! objects, ValueLong! l) {
-			this.o = o;
-			this.objects = objects;
-			this.l = l;
 		}
 	}
 
@@ -1197,6 +1119,736 @@ public class ValueTypeTests {
 		a.checkFieldsWithDefaults();
 	}
 
+	static value class SingleBackfill {
+		long l;
+		Object o;
+		int i;
+
+		public implicit SingleBackfill();
+
+		SingleBackfill(long l, Object o, int i) {
+			this.l = l;
+			this.o = o;
+			this.i = i;
+		}
+	}
+
+	static value class ObjectBackfill {
+		long l;
+		Object o;
+
+		public implicit ObjectBackfill();
+
+		ObjectBackfill(long l, Object o) {
+			this.l = l;
+			this.o = o;
+		}
+	}
+
+	static value class FlatSingleBackfill {
+		ValueLong! l;
+		ValueObject! o;
+		ValueInt! i;
+
+		public implicit FlatSingleBackfill();
+
+		FlatSingleBackfill(ValueLong! l, ValueObject! o, ValueInt! i) {
+			this.l = l;
+			this.o = o;
+			this.i = i;
+		}
+	}
+
+	static value class FlatObjectBackfill {
+		ValueLong! l;
+		ValueObject! o;
+
+		public implicit FlatObjectBackfill();
+
+		FlatObjectBackfill(ValueLong! l, ValueObject! o) {
+			this.l = l;
+			this.o = o;
+		}
+	}
+
+	static value class FlatUnAlignedSingle {
+		ValueInt! i;
+		ValueInt! i2;
+
+		public implicit FlatUnAlignedSingle();
+
+		FlatUnAlignedSingle(ValueInt! i, ValueInt! i2) {
+			this.i = i;
+			this.i2 = i2;
+		}
+	}
+
+	static value class FlatUnAlignedSingleBackfill {
+		ValueLong! l;
+		FlatUnAlignedSingle! singles;
+		ValueObject! o;
+
+		public implicit FlatUnAlignedSingleBackfill();
+
+		FlatUnAlignedSingleBackfill(ValueLong! l, FlatUnAlignedSingle! singles, ValueObject! o) {
+			this.l = l;
+			this.singles = singles;
+			this.o = o;
+		}
+	}
+
+	static value class FlatUnAlignedSingleBackfill2 {
+		ValueLong! l;
+		FlatUnAlignedSingle! singles;
+		FlatUnAlignedSingle! singles2;
+
+		public implicit FlatUnAlignedSingleBackfill2();
+
+		FlatUnAlignedSingleBackfill2(ValueLong! l, FlatUnAlignedSingle! singles, FlatUnAlignedSingle! singles2) {
+			this.l = l;
+			this.singles = singles;
+			this.singles2 = singles2;
+
+		}
+	}
+
+	static value class FlatUnAlignedObject {
+		ValueObject! o;
+		ValueObject! o2;
+
+		public implicit FlatUnAlignedObject();
+
+		FlatUnAlignedObject(ValueObject! o, ValueObject! o2) {
+			this.o = o;
+			this.o2 = o2;
+		}
+	}
+
+	static value class FlatUnAlignedObjectBackfill {
+		FlatUnAlignedObject! objects;
+		FlatUnAlignedObject! objects2;
+		ValueLong! l;
+
+		public implicit FlatUnAlignedObjectBackfill();
+
+		FlatUnAlignedObjectBackfill(FlatUnAlignedObject! objects, FlatUnAlignedObject! objects2, ValueLong! l) {
+			this.objects = objects;
+			this.objects2 = objects2;
+			this.l = l;
+		}
+	}
+
+	static value class FlatUnAlignedObjectBackfill2 {
+		ValueObject! o;
+		FlatUnAlignedObject! objects;
+		ValueLong! l;
+
+		public implicit FlatUnAlignedObjectBackfill2();
+
+		FlatUnAlignedObjectBackfill2(ValueObject! o, FlatUnAlignedObject! objects, ValueLong! l) {
+			this.o = o;
+			this.objects = objects;
+			this.l = l;
+		}
+	}
+
+	@Test(priority=3, invocationCount=2)
+	static public void testLayoutsWithNullRestrictedFields() throws Throwable {
+		SingleBackfill! singleBackfillInstance = new SingleBackfill(defaultLong, defaultObject, defaultInt);
+		assertEquals(singleBackfillInstance.i, defaultInt);
+		assertEquals(singleBackfillInstance.o, defaultObject);
+		assertEquals(singleBackfillInstance.l, defaultLong);
+
+		ObjectBackfill! objectBackfillInstance = new ObjectBackfill(defaultLong, defaultObject);
+		assertEquals(objectBackfillInstance.o, defaultObject);
+		assertEquals(objectBackfillInstance.l, defaultLong);
+	}
+
+	@Test(priority=5, invocationCount=2)
+	static public void testFlatLayoutsWithValueTypes() throws Throwable {
+		FlatSingleBackfill! flatSingleBackfillInstance = new FlatSingleBackfill(new ValueLong(defaultLong), new ValueObject(defaultObject), new ValueInt(defaultInt));
+		assertEquals(flatSingleBackfillInstance.i.i, defaultInt);
+		assertEquals(flatSingleBackfillInstance.o.val, defaultObject);
+		assertEquals(flatSingleBackfillInstance.l.l, defaultLong);
+
+		FlatObjectBackfill! objectBackfillInstance = new FlatObjectBackfill(new ValueLong(defaultLong), new ValueObject(defaultObject));
+		assertEquals(objectBackfillInstance.o.val, defaultObject);
+		assertEquals(objectBackfillInstance.l.l, defaultLong);
+
+		FlatUnAlignedSingleBackfill! flatUnAlignedSingleBackfillInstance =
+			new FlatUnAlignedSingleBackfill(new ValueLong(defaultLong), new FlatUnAlignedSingle(new ValueInt(defaultInt), new ValueInt(defaultIntNew)), new ValueObject(defaultObject));
+		assertEquals(flatUnAlignedSingleBackfillInstance.l.l, defaultLong);
+		assertEquals(flatUnAlignedSingleBackfillInstance.o.val, defaultObject);
+		assertEquals(flatUnAlignedSingleBackfillInstance.singles.i.i, defaultInt);
+		assertEquals(flatUnAlignedSingleBackfillInstance.singles.i2.i, defaultIntNew);
+
+		FlatUnAlignedSingleBackfill2! flatUnAlignedSingleBackfill2Instance =
+			new FlatUnAlignedSingleBackfill2(new ValueLong(defaultLong), new FlatUnAlignedSingle(new ValueInt(defaultInt), new ValueInt(defaultIntNew)), new FlatUnAlignedSingle(new ValueInt(defaultInt), new ValueInt(defaultIntNew)));
+		assertEquals(flatUnAlignedSingleBackfill2Instance.l.l, defaultLong);
+		assertEquals(flatUnAlignedSingleBackfill2Instance.singles.i.i, defaultInt);
+		assertEquals(flatUnAlignedSingleBackfill2Instance.singles.i2.i, defaultIntNew);
+		assertEquals(flatUnAlignedSingleBackfill2Instance.singles2.i.i, defaultInt);
+		assertEquals(flatUnAlignedSingleBackfill2Instance.singles2.i2.i, defaultIntNew);
+
+		FlatUnAlignedObjectBackfill! flatUnAlignedObjectBackfillInstance =
+			new FlatUnAlignedObjectBackfill(new FlatUnAlignedObject(new ValueObject(defaultObject), new ValueObject(defaultObjectNew)),
+				new FlatUnAlignedObject(new ValueObject(defaultObject), new ValueObject(defaultObjectNew)), new ValueLong(defaultLong));
+		assertEquals(flatUnAlignedObjectBackfillInstance.l.l, defaultLong);
+		assertEquals(flatUnAlignedObjectBackfillInstance.objects.o.val, defaultObject);
+		assertEquals(flatUnAlignedObjectBackfillInstance.objects.o2.val, defaultObjectNew);
+		assertEquals(flatUnAlignedObjectBackfillInstance.objects2.o.val, defaultObject);
+		assertEquals(flatUnAlignedObjectBackfillInstance.objects2.o2.val, defaultObjectNew);
+
+		FlatUnAlignedObjectBackfill2! flatUnAlignedObjectBackfill2Instance =
+			new FlatUnAlignedObjectBackfill2(new ValueObject(defaultObject), new FlatUnAlignedObject(new ValueObject(defaultObject), new ValueObject(defaultObjectNew)), new ValueLong(defaultLong));
+		assertEquals(flatUnAlignedObjectBackfill2Instance.l.l, defaultLong);
+		assertEquals(flatUnAlignedObjectBackfill2Instance.objects.o.val, defaultObject);
+		assertEquals(flatUnAlignedObjectBackfill2Instance.objects.o2.val, defaultObjectNew);
+		assertEquals(flatUnAlignedObjectBackfill2Instance.o.val, defaultObject);
+	}
+
+	static value class ValueTypeDoubleLong {
+		final ValueLong! l;
+		final long l2;
+		public implicit ValueTypeDoubleLong();
+		ValueTypeDoubleLong(ValueLong l, long l2) {
+			this.l = l;
+			this.l2 = l2;
+		}
+		public ValueLong getL() {
+			return l;
+		}
+		public long getL2() {
+			return l2;
+		}
+	}
+
+	static value class ValueTypeQuadLong {
+		final ValueTypeDoubleLong! l;
+		final ValueLong! l2;
+		final long l3;
+		public implicit ValueTypeQuadLong();
+		ValueTypeQuadLong(ValueTypeDoubleLong l, ValueLong l2, long l3) {
+			this.l = l;
+			this.l2 = l2;
+			this.l3 = l3;
+		}
+		public ValueTypeDoubleLong getL() {
+			return l;
+		}
+		public ValueLong getL2() {
+			return l2;
+		}
+		public long getL3() {
+			return l3;
+		}
+	}
+
+	static value class ValueTypeDoubleQuadLong {
+		final ValueTypeQuadLong! l;
+		final ValueTypeDoubleLong! l2;
+		final ValueLong! l3;
+		final long l4;
+		public implicit ValueTypeDoubleQuadLong();
+		ValueTypeDoubleQuadLong(ValueTypeQuadLong l, ValueTypeDoubleLong l2, ValueLong l3, long l4) {
+			this.l = l;
+			this.l2 = l2;
+			this.l3 = l3;
+			this.l4 = l4;
+		}
+		public ValueTypeQuadLong getL() {
+			return l;
+		}
+		public ValueTypeDoubleLong getL2() {
+			return l2;
+		}
+		public ValueLong getL3() {
+			return l3;
+		}
+		public long getL4() {
+			return l4;
+		}
+	}
+
+	@Test(priority=4, invocationCount=2)
+	static public void testFlatLayoutsWithRecursiveLongs() throws Throwable {
+		ValueTypeDoubleLong! doubleLongInstance = new ValueTypeDoubleLong(new ValueLong(defaultLong), defaultLongNew);
+		assertEquals(doubleLongInstance.getL().getL(), defaultLong);
+		assertEquals(doubleLongInstance.getL2(), defaultLongNew);
+
+		ValueTypeQuadLong! quadLongInstance = new ValueTypeQuadLong(doubleLongInstance, new ValueLong(defaultLongNew2), defaultLongNew3);
+		assertEquals(quadLongInstance.getL().getL().getL(), defaultLong);
+		assertEquals(quadLongInstance.getL().getL2(), defaultLongNew);
+		assertEquals(quadLongInstance.getL2().getL(), defaultLongNew2);
+		assertEquals(quadLongInstance.getL3(), defaultLongNew3);
+
+		ValueTypeDoubleQuadLong! doubleQuadLongInstance = new ValueTypeDoubleQuadLong(quadLongInstance, doubleLongInstance, new ValueLong(defaultLongNew4), defaultLongNew5);
+
+		assertEquals(doubleQuadLongInstance.getL().getL().getL().getL(), defaultLong);
+		assertEquals(doubleQuadLongInstance.getL().getL().getL2(), defaultLongNew);
+		assertEquals(doubleQuadLongInstance.getL().getL2().getL(), defaultLongNew2);
+		assertEquals(doubleQuadLongInstance.getL().getL3(), defaultLongNew3);
+		assertEquals(doubleQuadLongInstance.getL2().getL().getL(), defaultLong);
+		assertEquals(doubleQuadLongInstance.getL2().getL2(), defaultLongNew);
+		assertEquals(doubleQuadLongInstance.getL3().getL(), defaultLongNew4);
+		assertEquals(doubleQuadLongInstance.getL4(), defaultLongNew5);
+	}
+
+	static value class NestedA {
+		int x;
+		int y;
+
+		public implicit NestedA();
+	}
+
+	static value class NestedB {
+		NestedA! a;
+		NestedA! b;
+
+		public implicit NestedB();
+	}
+
+	static value class ContainerC {
+		NestedB! c;
+		NestedB! d;
+
+		public implicit ContainerC();
+	}
+
+	@Test(priority=1)
+	static public void testFlattenedFieldInitSequence() throws Throwable {
+		ContainerC! c = new ContainerC();
+		assertNotNull(c.c);
+		assertNotNull(c.c.a);
+		assertNotNull(c.c.b);
+
+		assertNotNull(c.d);
+		assertNotNull(c.d.a);
+		assertNotNull(c.d.b);
+	}
+
+	private static class UnresolvedClassDesc {
+		public String name;
+		public String[] fields;
+		public UnresolvedClassDesc(String name, String[] fields) {
+			this.name = name;
+			this.fields = fields;
+		}
+	}
+
+	/*
+	 * Test use of GETFIELD operations on the fields of a container class, where
+	 * the fields are of value type classes that have not been resolved.
+	 *
+	 * The method is first called so that the GETFIELD will not be executed, and
+	 * the class not resolved, and then called so that the GETFIELD and class
+	 * resolution is triggered.
+	 */
+	@Test(priority=1)
+	static public void testUnresolvedGetFieldUse() throws Throwable {
+		/*
+		 * Set up classes that look roughly like this:
+		 *
+		 * public inline class UnresolvedB1 {
+		 *     public final int a;
+		 *     public final int b;
+		 * }
+		 *
+		 * public inline class UnresolvedB2 {
+		 *     public final int c;
+		 *     public final int d;
+		 * }
+		 *
+		 * public inline class UnresolvedB3 {
+		 *     public final int e;
+		 *     public final int f;
+		 * }
+		 *
+		 * public class ContainerForUnresolvedB {
+		 *     public UnresolvedB1! v1;
+		 *     public UnresolvedB2! v2;
+		 *     public UnresolvedB3! v3;
+		 * }
+		 *
+		 * public class UsingUnresolvedB {
+		 *     public Object testUnresolvedValueTypeGetField(int fieldNum, ContainerForUnresolvedB container) {
+		 *         // Passing in a value in the range [0..2] triggers execution of a GETFIELD
+		 *         // operation on the corresponding field of "container", triggering
+		 *         // resolution of the field.  Passing in a value outside that range, delays
+		 *         // triggering resolution of the field
+		 *         //
+		 *         switch (fieldNum) {
+		 *         case 0: return container.v1;
+		 *         case 1: return container.v2;
+		 *         case 2: return container.v3;
+		 *         default: return null;
+		 *         }
+		 *     }
+		 * }
+		 */
+		UnresolvedClassDesc[] uclassDescArr = new UnresolvedClassDesc[] {
+								new UnresolvedClassDesc("UnresolvedB1", new String[] {"a:I", "b:I"}),
+								new UnresolvedClassDesc("UnresolvedB2", new String[] {"c:I", "d:I"}),
+								new UnresolvedClassDesc("UnresolvedB3", new String[] {"e:I", "f:I"})};
+
+		Class[] valueClassArr = new Class[uclassDescArr.length];
+		String containerFields[] = new String[uclassDescArr.length];
+		MethodHandle[][] valueFieldGetters = new MethodHandle[uclassDescArr.length][];
+
+		for (int i = 0; i < uclassDescArr.length; i++) {
+			UnresolvedClassDesc desc = uclassDescArr[i];
+			valueClassArr[i] = ValueTypeGenerator.generateValueClass(desc.name, desc.fields);
+			valueFieldGetters[i] = new MethodHandle[desc.fields.length];
+			containerFields[i] = "v"+(i+1)+":L"+desc.name+";::NR";
+
+			for (int j = 0; j < desc.fields.length; j++) {
+				String[] nameAndSig = desc.fields[j].split(":");
+				valueFieldGetters[i][j] = generateGenericGetter(valueClassArr[i], nameAndSig[0]);
+			}
+		}
+
+		Class containerClass = ValueTypeGenerator.generateRefClass("ContainerForUnresolvedB", containerFields);
+
+		String fieldsUsing[] = {};
+		Class usingClass = ValueTypeGenerator.generateRefClass("UsingUnresolvedB", fieldsUsing, "ContainerForUnresolvedB", containerFields);
+
+		MethodHandle getFieldUnresolved = lookup.findStatic(usingClass, "testUnresolvedValueTypeGetField",
+															MethodType.methodType(Object.class, new Class[] {int.class, containerClass}));
+
+		for (int i = 0; i < 10; i++) {
+			/*
+			 * Pass -1 to avoid execution of GETFIELD against field that has a value type class
+			 * In turn that delays the resolution of the value type class
+			 */
+			assertNull(getFieldUnresolved.invoke(-1, null));
+		}
+
+		Object containerObject = containerClass.newInstance();
+		for (int i = 0; i < uclassDescArr.length; i++) {
+			/*
+			 * Pass 0 or more to trigger execution of GETFIELD against field that has a value type class
+			 * In turn that triggers the resolution of the associated value type classes
+			 */
+			Object fieldVal = getFieldUnresolved.invoke(i, containerObject);
+			assertNotNull(fieldVal);
+
+			for (int j = 0; j < valueFieldGetters[i].length; j++) {
+				assertEquals(valueFieldGetters[i][j].invoke(fieldVal), Integer.valueOf(0));
+			}
+		}
+	}
+
+	/*
+	 * Test use of PUTFIELD operations on the fields of a container class, where
+	 * the fields are of value type classes that have not been resolved.
+	 *
+	 * The method is first called so that the PUTFIELD will not be executed, and
+	 * the class not resolved, and then called so that the PUTFIELD and class
+	 * resolution is triggered.
+	 */
+	@Test(priority=1)
+	static public void testUnresolvedPutFieldUse() throws Throwable {
+		/*
+		 * Set up classes that look roughly like this:
+		 *
+		 * public inline class UnresolvedC1 {
+		 *     public final int a;
+		 *     public final int b;
+		 * }
+		 *
+		 * public inline class UnresolvedC2 {
+		 *     public final int c;
+		 *     public final int d;
+		 * }
+		 *
+		 * public inline class UnresolvedC3 {
+		 *     public final int e;
+		 *     public final int f;
+		 * }
+		 *
+		 * public class ContainerForUnresolvedC {
+		 *     public UnresolvedC1 v1;
+		 *     public UnresolvedC2 v2;
+		 *     public UnresolvedC3 v3;
+		 * }
+		 *
+		 * public class UsingUnresolvedC {
+		 *     public Object testUnresolvedValueTypePutField(int fieldNum, ContainerForUnresolvedC container, Object val) {
+		 *         // Passing in a value in the range [0..2] triggers execution of a PUTFIELD
+		 *         // operation on the corresponding field of "container", triggering
+		 *         // resolution of the class and field.  Passing in a value outside that range,
+		 *         // delays triggering that resolution
+		 *         //
+		 *         switch (fieldNum) {
+		 *         case 0: container.v1 = (UnresolvedC3) val; break;
+		 *         case 1: container.v2 = (UnresolvedC2) val; break;
+		 *         case 2: container.v3 = (UnresolvedC3) val; break;
+		 *         default: break;
+		 *         }
+		 *     }
+		 * }
+		 */
+		UnresolvedClassDesc[] uclassDescArr = new UnresolvedClassDesc[] {
+								new UnresolvedClassDesc("UnresolvedC1", new String[] {"a:I", "b:I"}),
+								new UnresolvedClassDesc("UnresolvedC2", new String[] {"c:I", "d:I"}),
+								new UnresolvedClassDesc("UnresolvedC3", new String[] {"e:I", "f:I"})};
+
+		Class[] valueClassArr = new Class[uclassDescArr.length];
+		String containerFields[] = new String[uclassDescArr.length];
+		MethodHandle[][] valueFieldGetters = new MethodHandle[uclassDescArr.length][];
+		MethodHandle[] containerFieldGetters = new MethodHandle[uclassDescArr.length];
+
+		for (int i = 0; i < uclassDescArr.length; i++) {
+			UnresolvedClassDesc desc = uclassDescArr[i];
+			valueClassArr[i] = ValueTypeGenerator.generateValueClass(desc.name, desc.fields);
+			valueFieldGetters[i] = new MethodHandle[desc.fields.length];
+			containerFields[i] = "v"+(i+1)+":L"+desc.name+";::NR";
+
+			for (int j = 0; j < desc.fields.length; j++) {
+				String[] nameAndSig = desc.fields[j].split(":");
+				valueFieldGetters[i][j] = generateGenericGetter(valueClassArr[i], nameAndSig[0]);
+			}
+		}
+
+		Class containerClass = ValueTypeGenerator.generateRefClass("ContainerForUnresolvedC", containerFields);
+
+		for (int i = 0; i < uclassDescArr.length; i++) {
+			String[] nameAndSig = containerFields[i].split(":");
+			containerFieldGetters[i] = generateGenericGetter(containerClass, nameAndSig[0]);
+		}
+
+		String fieldsUsing[] = {};
+		Class usingClass = ValueTypeGenerator.generateRefClass("UsingUnresolvedC", fieldsUsing, "ContainerForUnresolvedC", containerFields);
+
+		MethodHandle putFieldUnresolved = lookup.findStatic(usingClass, "testUnresolvedValueTypePutField",
+												MethodType.methodType(void.class, new Class[] {int.class, containerClass, Object.class}));
+
+		for (int i = 0; i < 10; i++) {
+			/*
+			 * Pass -1 to avoid execution of PUTFIELD into field that has a value type class
+			 * In turn that delays the resolution of the value type class
+			 */
+			putFieldUnresolved.invoke(-1, null, null);
+		}
+
+		Object containerObject = containerClass.newInstance();
+		for (int i = 0; i < uclassDescArr.length; i++) {
+			MethodHandle makeDefaultValue = lookup.findStatic(valueClassArr[i], "makeValueTypeDefaultValue", MethodType.methodType(Object.class));
+			Object valueObject = makeDefaultValue.invoke();
+			/*
+			 * Pass 0 or more to trigger execution of PUTFIELD against field that has a value type class
+			 * In turn that triggers the resolution of the associated value type classes
+			 */
+			putFieldUnresolved.invoke(i, containerObject, valueObject);
+		}
+
+		for (int i = 0; i < containerFieldGetters.length; i++) {
+			Object containerFieldValue = containerFieldGetters[i].invoke(containerObject);
+
+			for (int j = 0; j < valueFieldGetters[i].length; j++) {
+				assertEquals(valueFieldGetters[i][j].invoke(containerFieldValue), Integer.valueOf(0));
+			}
+		}
+	}
+
+	static MethodHandle generateGenericGetter(Class<?> clazz, String fieldName) {
+		try {
+			return lookup.findVirtual(clazz, "getGeneric"+fieldName, MethodType.methodType(Object.class));
+		} catch (IllegalAccessException | SecurityException | NullPointerException | NoSuchMethodException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	@Test(priority = 1)
+	static public void testIdentityObjectOnValueType() throws Throwable {
+		assertTrue(ValueLong.class.isValue());
+		assertFalse(ValueLong.class.isIdentity());
+	}
+
+	@Test(priority=1)
+	static public void testIdentityObjectOnHeavyAbstract() throws Throwable {
+		assertFalse(HeavyAbstractClass.class.isValue());
+		assertTrue(HeavyAbstractClass.class.isIdentity());
+	}
+
+	public static abstract class HeavyAbstractClass {
+		/* Abstract class that has fields */
+		private int x;
+		private int y;
+		public int getX(){
+			return x;
+		}
+		public int getY(){
+			return y;
+		}
+	}
+
+	public static abstract class HeavyAbstractClass1 {
+		/* Abstract class that has non-empty constructors */
+		public HeavyAbstractClass1() {
+			System.out.println("This class is HeavyAbstractClass1");
+		}
+	}
+
+	public static abstract class HeavyAbstractClass2 {
+		/* Abstract class that has synchronized methods */
+		public synchronized void printClassName() {
+			System.out.println("This class is HeavyAbstractClass2");
+		}
+	}
+
+	public static abstract class HeavyAbstractClass3 {
+		/* Abstract class that has initializer */
+		{ System.out.println("This class is HeavyAbstractClass3"); }
+	}
+
+	public static abstract class LightAbstractClass {
+
+	}
+
+	private static abstract class InvisibleLightAbstractClass {
+
+	}
+
+	static private void valueTypeIdentityObjectTestHelper(String testName, String superClassName, int extraClassFlags) throws Throwable {
+		String fields[] = {"longField:J"};
+		if (null == superClassName) {
+			superClassName = "java/lang/Object";
+		}
+		Class valueClass = ValueTypeGenerator.generateValueClass(testName, superClassName, fields, extraClassFlags);
+		assertTrue(valueClass.isValue());
+	}
+
+	@Test(priority=1, expectedExceptions=IncompatibleClassChangeError.class)
+	static public void testValueTypeSubClassHeavyAbstract() throws Throwable {
+		String superClassName = HeavyAbstractClass.class.getName().replace('.', '/');
+		valueTypeIdentityObjectTestHelper("testValueTypeSubClassHeavyAbstract", superClassName, 0);
+	}
+
+	@Test(priority=1, expectedExceptions=IncompatibleClassChangeError.class)
+	static public void testValueTypeSubClassHeavyAbstract1() throws Throwable {
+		String superClassName = HeavyAbstractClass1.class.getName().replace('.', '/');
+		valueTypeIdentityObjectTestHelper("testValueTypeSubClassHeavyAbstract1", superClassName, 0);
+	}
+
+	@Test(priority=1, expectedExceptions=IncompatibleClassChangeError.class)
+	static public void testValueTypeSubClassHeavyAbstract2() throws Throwable {
+		String superClassName = HeavyAbstractClass2.class.getName().replace('.', '/');
+		valueTypeIdentityObjectTestHelper("testValueTypeSubClassHeavyAbstract2", superClassName, 0);
+	}
+
+	@Test(priority=1, expectedExceptions=IncompatibleClassChangeError.class)
+	static public void testValueTypeSubClassHeavyAbstract3() throws Throwable {
+		String superClassName = HeavyAbstractClass3.class.getName().replace('.', '/');
+		valueTypeIdentityObjectTestHelper("testValueTypeSubClassHeavyAbstract3", superClassName, 0);
+	}
+
+	@Test(priority=1)
+	static public void testValueTypeSubClassLightAbstract() throws Throwable {
+		String superClassName = LightAbstractClass.class.getName().replace('.', '/');
+		valueTypeIdentityObjectTestHelper("testValueTypeSubClassLightAbstract", superClassName, 0);
+	}
+
+	@Test(priority=1, expectedExceptions=ClassFormatError.class)
+	/* RI throws ClassFormatError for this case. */
+	static public void testInterfaceValueType() throws Throwable {
+		valueTypeIdentityObjectTestHelper("testInterfaceValueType", "java/lang/Object", ACC_INTERFACE | ACC_ABSTRACT);
+	}
+
+	@Test(priority=1, expectedExceptions=ClassFormatError.class)
+	/* RI throws ClassFormatError for this case. */
+	static public void testAbstractValueType() throws Throwable {
+		valueTypeIdentityObjectTestHelper("testAbstractValueType", "java/lang/Object", ACC_ABSTRACT);
+	}
+
+	@Test(priority=1, expectedExceptions=IllegalAccessError.class)
+	static public void testValueTypeSubClassInvisibleLightAbstractClass() throws Throwable {
+		String superClassName = InvisibleLightAbstractClass.class.getName().replace('.', '/');
+		valueTypeIdentityObjectTestHelper("testValueTypeSubClassInvisibleLightAbstractClass", superClassName, 0);
+	}
+
+	@Test(priority = 1)
+	static public void testIdentityObjectOnJLObject() throws Throwable {
+		assertFalse(Object.class.isValue());
+		assertFalse(Object.class.isIdentity());
+	}
+
+	static class IdentityObject {
+		long longField;
+	}
+
+	@Test(priority = 1)
+	static public void testIdentityObjectOnRef() throws Throwable {
+		assertFalse(IdentityObject.class.isValue());
+		assertTrue(IdentityObject.class.isIdentity());
+	}
+
+	@Test(priority=1)
+	static public void testIsValueClassOnValueType() throws Throwable {
+		assertTrue(ValueLong.class.isValue());
+		assertFalse(ValueLong.class.isIdentity());
+	}
+
+	private interface TestInterface {}
+
+	@Test(priority=1)
+	static public void testIsValueClassOnInterface() throws Throwable {
+		assertFalse(TestInterface.class.isValue());
+		assertFalse(TestInterface.class.isIdentity());
+	}
+
+	@Test(priority=1)
+	static public void testIsValueClassOnAbstractClass() throws Throwable {
+		assertFalse(HeavyAbstractClass.class.isValue());
+		assertTrue(HeavyAbstractClass.class.isIdentity());
+	}
+
+	@Test(priority=1)
+	static public void testIsValueOnValueArrayClass() throws Throwable {
+		assertFalse(ValueLong.class.arrayType().isValue());
+		assertTrue(ValueLong.class.arrayType().isIdentity());
+	}
+
+	static class TestIsValueOnRefArrayClass {
+		long longField;
+	}
+
+	@Test(priority=1)
+	static public void testIsValueOnRefArrayClass() throws Throwable {
+		assertFalse(TestIsValueOnRefArrayClass.class.arrayType().isValue());
+		assertTrue(TestIsValueOnRefArrayClass.class.arrayType().isIdentity());
+	}
+
+	static value class ValueIntPoint2D {
+		final ValueInt x, y;
+
+		ValueIntPoint2D(ValueInt x, ValueInt y) {
+			this.x = x;
+			this.y = y;
+		}
+	}
+
+	@Test(priority=1)
+	static public void testValueClassHashCode() throws Throwable {
+		Object p1 = new ValueIntPoint2D(new ValueInt(1), new ValueInt(2));
+		Object p2 = new ValueIntPoint2D(new ValueInt(1), new ValueInt(2));
+		Object p3 = new ValueIntPoint2D(new ValueInt(2), new ValueInt(2));
+		Object p4 = new ValueIntPoint2D(new ValueInt(2), new ValueInt(1));
+		Object p5 = new ValueIntPoint2D(new ValueInt(3), new ValueInt(4));
+
+		int h1 = p1.hashCode();
+		int h2 = p2.hashCode();
+		int h3 = p3.hashCode();
+		int h4 = p4.hashCode();
+		int h5 = p5.hashCode();
+
+		assertEquals(h1, h2);
+		assertNotEquals(h1, h3);
+		assertNotEquals(h1, h4);
+		assertNotEquals(h1, h5);
+	}
+
 	//*******************************************************************************
 	// Value type tests for static fields
 	//*******************************************************************************
@@ -1210,22 +1862,32 @@ public class ValueTypeTests {
 		static Triangle2D! tri2;
 	}
 
+	/* Prioritize before static fields are set by testStaticFieldsWithSingleAlignment */
+	@Test(priority=3, invocationCount=2)
+	static public void testStaticFieldsWithSingleAlignmenDefaultValues() throws Throwable {
+		assertNotNull(ClassWithOnlyStaticFieldsWithSingleAlignment.tri);
+		assertNotNull(ClassWithOnlyStaticFieldsWithSingleAlignment.point);
+		assertNotNull(ClassWithOnlyStaticFieldsWithSingleAlignment.line);
+		assertNotNull(ClassWithOnlyStaticFieldsWithSingleAlignment.i);
+		assertNotNull(ClassWithOnlyStaticFieldsWithSingleAlignment.f);
+		assertNotNull(ClassWithOnlyStaticFieldsWithSingleAlignment.tri2);
+	}
+
 	@Test(priority=4)
 	static public void testStaticFieldsWithSingleAlignment() throws Throwable {
-		ClassWithOnlyStaticFieldsWithSingleAlignment c = new ClassWithOnlyStaticFieldsWithSingleAlignment();
-		c.tri = new Triangle2D(defaultTrianglePositions);
-		c.point = new Point2D(defaultPointPositions1);
-		c.line = new FlattenedLine2D(defaultLinePositions1);
-		c.i = new ValueInt(defaultInt);
-		c.f = new ValueFloat(defaultFloat);
-		c.tri2 = new Triangle2D(defaultTrianglePositions);
+		ClassWithOnlyStaticFieldsWithSingleAlignment.tri = new Triangle2D(defaultTrianglePositions);
+		ClassWithOnlyStaticFieldsWithSingleAlignment.point = new Point2D(defaultPointPositions1);
+		ClassWithOnlyStaticFieldsWithSingleAlignment.line = new FlattenedLine2D(defaultLinePositions1);
+		ClassWithOnlyStaticFieldsWithSingleAlignment.i = new ValueInt(defaultInt);
+		ClassWithOnlyStaticFieldsWithSingleAlignment.f = new ValueFloat(defaultFloat);
+		ClassWithOnlyStaticFieldsWithSingleAlignment.tri2 = new Triangle2D(defaultTrianglePositions);
 
-		c.tri.checkEqualTriangle2D(defaultTrianglePositions);
-		c.point.checkEqualPoint2D(defaultPointPositions1);
-		c.line.checkEqualFlattenedLine2D(defaultLinePositions1);
-		assertEquals(c.i.i, defaultInt);
-		assertEquals(c.f.f, defaultFloat);
-		c.tri2.checkEqualTriangle2D(defaultTrianglePositions);
+		ClassWithOnlyStaticFieldsWithSingleAlignment.tri.checkEqualTriangle2D(defaultTrianglePositions);
+		ClassWithOnlyStaticFieldsWithSingleAlignment.point.checkEqualPoint2D(defaultPointPositions1);
+		ClassWithOnlyStaticFieldsWithSingleAlignment.line.checkEqualFlattenedLine2D(defaultLinePositions1);
+		assertEquals(ClassWithOnlyStaticFieldsWithSingleAlignment.i.i, defaultInt);
+		assertEquals(ClassWithOnlyStaticFieldsWithSingleAlignment.f.f, defaultFloat);
+		ClassWithOnlyStaticFieldsWithSingleAlignment.tri2.checkEqualTriangle2D(defaultTrianglePositions);
 	}
 
 	static value class ClassWithOnlyStaticFieldsWithLongAlignment {
@@ -1238,24 +1900,35 @@ public class ValueTypeTests {
 		static Triangle2D! tri;
 	}
 
+	/* Prioritize before static fields are set by testStaticFieldsWithLongAlignment */
+	@Test(priority=3, invocationCount=2)
+	static public void testStaticFieldsWithLongAlignmenDefaultValues() throws Throwable {
+		assertNotNull(ClassWithOnlyStaticFieldsWithLongAlignment.point);
+		assertNotNull(ClassWithOnlyStaticFieldsWithLongAlignment.line);
+		assertNotNull(ClassWithOnlyStaticFieldsWithLongAlignment.o);
+		assertNotNull(ClassWithOnlyStaticFieldsWithLongAlignment.l);
+		assertNotNull(ClassWithOnlyStaticFieldsWithLongAlignment.d);
+		assertNotNull(ClassWithOnlyStaticFieldsWithLongAlignment.i);
+		assertNotNull(ClassWithOnlyStaticFieldsWithLongAlignment.tri);
+	}
+
 	@Test(priority=4)
 	static public void testStaticFieldsWithLongAlignment() throws Throwable {
-		ClassWithOnlyStaticFieldsWithLongAlignment c = new ClassWithOnlyStaticFieldsWithLongAlignment();
-		c.point = new Point2D(defaultPointPositions1);
-		c.line = new FlattenedLine2D(defaultLinePositions1);
-		c.o = new ValueObject(defaultObject);
-		c.l = new ValueLong(defaultLong);
-		c.d = new ValueDouble(defaultDouble);
-		c.i = new ValueInt(defaultInt);
-		c.tri = new Triangle2D(defaultTrianglePositions);
+		ClassWithOnlyStaticFieldsWithLongAlignment.point = new Point2D(defaultPointPositions1);
+		ClassWithOnlyStaticFieldsWithLongAlignment.line = new FlattenedLine2D(defaultLinePositions1);
+		ClassWithOnlyStaticFieldsWithLongAlignment.o = new ValueObject(defaultObject);
+		ClassWithOnlyStaticFieldsWithLongAlignment.l = new ValueLong(defaultLong);
+		ClassWithOnlyStaticFieldsWithLongAlignment.d = new ValueDouble(defaultDouble);
+		ClassWithOnlyStaticFieldsWithLongAlignment.i = new ValueInt(defaultInt);
+		ClassWithOnlyStaticFieldsWithLongAlignment.tri = new Triangle2D(defaultTrianglePositions);
 
-		c.point.checkEqualPoint2D(defaultPointPositions1);
-		c.line.checkEqualFlattenedLine2D(defaultLinePositions1);
-		assertEquals(c.o.val, defaultObject);
-		assertEquals(c.l.l, defaultLong);
-		assertEquals(c.d.d, defaultDouble);
-		assertEquals(c.i.i, defaultInt);
-		c.tri.checkEqualTriangle2D(defaultTrianglePositions);
+		ClassWithOnlyStaticFieldsWithLongAlignment.point.checkEqualPoint2D(defaultPointPositions1);
+		ClassWithOnlyStaticFieldsWithLongAlignment.line.checkEqualFlattenedLine2D(defaultLinePositions1);
+		assertEquals(ClassWithOnlyStaticFieldsWithLongAlignment.o.val, defaultObject);
+		assertEquals(ClassWithOnlyStaticFieldsWithLongAlignment.l.l, defaultLong);
+		assertEquals(ClassWithOnlyStaticFieldsWithLongAlignment.d.d, defaultDouble);
+		assertEquals(ClassWithOnlyStaticFieldsWithLongAlignment.i.i, defaultInt);
+		ClassWithOnlyStaticFieldsWithLongAlignment.tri.checkEqualTriangle2D(defaultTrianglePositions);
 	}
 
 	static value class ClassWithOnlyStaticFieldsWithObjectAlignment {
@@ -1268,24 +1941,35 @@ public class ValueTypeTests {
 		static Triangle2D! tri2;
 	}
 
+	/* Prioritize before static fields are set by testStaticFieldsWithObjectAlignment */
+	@Test(priority=3, invocationCount=2)
+	static public void testStaticFieldsWithObjectAlignmentDefaultValues() throws Throwable {
+		assertNotNull(ClassWithOnlyStaticFieldsWithObjectAlignment.tri);
+		assertNotNull(ClassWithOnlyStaticFieldsWithObjectAlignment.point);
+		assertNotNull(ClassWithOnlyStaticFieldsWithObjectAlignment.line);
+		assertNotNull(ClassWithOnlyStaticFieldsWithObjectAlignment.o);
+		assertNotNull(ClassWithOnlyStaticFieldsWithObjectAlignment.i);
+		assertNotNull(ClassWithOnlyStaticFieldsWithObjectAlignment.f);
+		assertNotNull(ClassWithOnlyStaticFieldsWithObjectAlignment.tri2);
+	}
+
 	@Test(priority=4)
 	static public void testStaticFieldsWithObjectAlignment() throws Throwable {
-		ClassWithOnlyStaticFieldsWithObjectAlignment c = new ClassWithOnlyStaticFieldsWithObjectAlignment();
-		c.tri = new Triangle2D(defaultTrianglePositions);
-		c.point = new Point2D(defaultPointPositions1);
-		c.line = new FlattenedLine2D(defaultLinePositions1);
-		c.o = new ValueObject(defaultObject);
-		c.i = new ValueInt(defaultInt);
-		c.f = new ValueFloat(defaultFloat);
-		c.tri2 = new Triangle2D(defaultTrianglePositions);
+		ClassWithOnlyStaticFieldsWithObjectAlignment.tri = new Triangle2D(defaultTrianglePositions);
+		ClassWithOnlyStaticFieldsWithObjectAlignment.point = new Point2D(defaultPointPositions1);
+		ClassWithOnlyStaticFieldsWithObjectAlignment.line = new FlattenedLine2D(defaultLinePositions1);
+		ClassWithOnlyStaticFieldsWithObjectAlignment.o = new ValueObject(defaultObject);
+		ClassWithOnlyStaticFieldsWithObjectAlignment.i = new ValueInt(defaultInt);
+		ClassWithOnlyStaticFieldsWithObjectAlignment.f = new ValueFloat(defaultFloat);
+		ClassWithOnlyStaticFieldsWithObjectAlignment.tri2 = new Triangle2D(defaultTrianglePositions);
 
-		c.tri.checkEqualTriangle2D(defaultTrianglePositions);
-		c.point.checkEqualPoint2D(defaultPointPositions1);
-		c.line.checkEqualFlattenedLine2D(defaultLinePositions1);
-		assertEquals(c.o.val, defaultObject);
-		assertEquals(c.i.i, defaultInt);
-		assertEquals(c.f.f, defaultFloat);
-		c.tri2.checkEqualTriangle2D(defaultTrianglePositions);
+		ClassWithOnlyStaticFieldsWithObjectAlignment.tri.checkEqualTriangle2D(defaultTrianglePositions);
+		ClassWithOnlyStaticFieldsWithObjectAlignment.point.checkEqualPoint2D(defaultPointPositions1);
+		ClassWithOnlyStaticFieldsWithObjectAlignment.line.checkEqualFlattenedLine2D(defaultLinePositions1);
+		assertEquals(ClassWithOnlyStaticFieldsWithObjectAlignment.o.val, defaultObject);
+		assertEquals(ClassWithOnlyStaticFieldsWithObjectAlignment.i.i, defaultInt);
+		assertEquals(ClassWithOnlyStaticFieldsWithObjectAlignment.f.f, defaultFloat);
+		ClassWithOnlyStaticFieldsWithObjectAlignment.tri2.checkEqualTriangle2D(defaultTrianglePositions);
 	}
 
 	//*******************************************************************************
@@ -1384,6 +2068,100 @@ public class ValueTypeTests {
 		System.gc();
 
 		MegaValueObject! value = array[0];
+	}
+
+	/*
+	 * Create large number of value types and instantiate them
+	 *
+	 * value Point2D {
+	 * 	int x;
+	 * 	int y;
+	 * }
+	 */
+	@Test(priority=1)
+	static public void testCreateLargeNumberOfPoint2D() throws Throwable {
+		String fields[] = {"x:I", "y:I"};
+		for (int valueIndex = 0; valueIndex < objectGCScanningIterationCount; valueIndex++) {
+			String className = "Point2D" + valueIndex;
+			Class point2DXClass = ValueTypeGenerator.generateValueClass(className, fields);
+			/* findStatic will trigger class resolution */
+			MethodHandle makePoint2DX = lookup.findStatic(point2DXClass, "staticMethod", MethodType.methodType(void.class));
+			if (0 == (valueIndex % 100)) {
+				System.gc();
+			}
+		}
+	}
+
+	/*
+	 * Maintain a buffer of flattened arrays with long-aligned valuetypes while keeping a certain amount of classes alive at any
+	 * single time. This forces the GC to unload the classes.
+	 */
+	@Test(priority=5, invocationCount=2)
+	static public void testValueWithLongAlignmentGCScanning() throws Throwable {
+		ArrayList<AssortedValueWithLongAlignment![]> longAlignmentArrayList = new ArrayList<AssortedValueWithLongAlignment![]>(objectGCScanningIterationCount);
+		for (int i = 0; i < objectGCScanningIterationCount; i++) {
+			AssortedValueWithLongAlignment![] array = new AssortedValueWithLongAlignment![genericArraySize];
+			for (int j = 0; j < genericArraySize; j++) {
+				array[j] = AssortedValueWithLongAlignment.createObjectWithDefaults();
+			}
+			longAlignmentArrayList.add(array);
+		}
+
+		System.gc();
+
+		for (int i = 0; i < objectGCScanningIterationCount; i++) {
+			for (int j = 0; j < genericArraySize; j++) {
+				longAlignmentArrayList.get(i)[j].checkFieldsWithDefaults();
+			}
+		}
+	}
+
+	/*
+	 * Maintain a buffer of flattened arrays with object-aligned valuetypes while keeping a certain amount of classes alive at any
+	 * single time. This forces the GC to unload the classes.
+	 */
+	@Test(priority=5, invocationCount=2)
+	static public void testValueWithObjectAlignmentGCScanning() throws Throwable {
+		ArrayList<AssortedValueWithObjectAlignment![]> objectAlignmentArrayList = new ArrayList<AssortedValueWithObjectAlignment![]>(objectGCScanningIterationCount);
+		for (int i = 0; i < objectGCScanningIterationCount; i++) {
+			AssortedValueWithObjectAlignment![] array = new AssortedValueWithObjectAlignment![genericArraySize];
+			for (int j = 0; j < genericArraySize; j++) {
+				array[j] = AssortedValueWithObjectAlignment.createObjectWithDefaults();
+			}
+			objectAlignmentArrayList.add(array);
+		}
+
+		System.gc();
+
+		for (int i = 0; i < objectGCScanningIterationCount; i++) {
+			for (int j = 0; j < genericArraySize; j++) {
+				objectAlignmentArrayList.get(i)[j].checkFieldsWithDefaults();
+			}
+		}
+	}
+
+	/*
+	 * Maintain a buffer of flattened arrays with single-aligned valuetypes while keeping a certain amount of classes alive at any
+	 * single time. This forces the GC to unload the classes.
+	 */
+	@Test(priority=5, invocationCount=2)
+	static public void testValueWithSingleAlignmentGCScanning() throws Throwable {
+		ArrayList<AssortedValueWithSingleAlignment![]> singleAlignmentArrayList = new ArrayList<AssortedValueWithSingleAlignment![]>(objectGCScanningIterationCount);
+		for (int i = 0; i < objectGCScanningIterationCount; i++) {
+			AssortedValueWithSingleAlignment![] array = new AssortedValueWithSingleAlignment![genericArraySize];
+			for (int j = 0; j < genericArraySize; j++) {
+				array[j] = AssortedValueWithSingleAlignment.createObjectWithDefaults();
+			}
+			singleAlignmentArrayList.add(array);
+		}
+
+		System.gc();
+
+		for (int i = 0; i < objectGCScanningIterationCount; i++) {
+			for (int j = 0; j < genericArraySize; j++) {
+				singleAlignmentArrayList.get(i)[j].checkFieldsWithDefaults();
+			}
+		}
 	}
 
 	//*******************************************************************************
@@ -1678,7 +2456,7 @@ public class ValueTypeTests {
 	@Test(priority=2)
 	static public void testSynchMethodsOnValueTypes() throws Throwable {
 		try {
-			ValueTypeGenerator.generateIllegalValueClassWithSychMethods("TestSynchMethodsOnValueTypesIllegal");
+			ValueTypeGenerator.generateIllegalValueClassWithSynchMethods("TestSynchMethodsOnValueTypesIllegal", null);
 			fail("should throw exception. Synchronized methods cannot be used with ValueType");
 		} catch (ClassFormatError e) {}
 
@@ -1796,5 +2574,309 @@ public class ValueTypeTests {
 	static public void createClassWithVolatileValueTypeFields() throws Throwable {
 		ClassWithValueTypeVolatile c = ClassWithValueTypeVolatile.createObjectWithDefaults();
 		c.checkFieldsWithDefaults();
+	}
+
+	@Test(priority=1, expectedExceptions=ClassFormatError.class)
+	static public void testValueTypeHasSynchMethods() throws Throwable {
+		String fields[] = {"longField:J"};
+		Class valueClass = ValueTypeGenerator.generateIllegalValueClassWithSynchMethods("TestValueTypeHasSynchMethods", fields);
+	}
+
+	//*******************************************************************************
+	// default value tests
+	//*******************************************************************************
+
+	/*
+	 * Create a value type and read the fields before
+	 * they are set. The test should Verify that the
+	 * flattenable fields are set to the default values.
+	 * NULL should never be observed for nullrestricted fields.
+	 */
+	@Test(priority=4)
+	static public void testDefaultValues() throws Throwable {
+		AssortedValueWithLongAlignment assortedValueWithLongAlignment = new AssortedValueWithLongAlignment();
+		assertNotNull(assortedValueWithLongAlignment.point);
+		assertNotNull(assortedValueWithLongAlignment.line);
+		assertNotNull(assortedValueWithLongAlignment.o);
+		assertNotNull(assortedValueWithLongAlignment.l);
+		assertNotNull(assortedValueWithLongAlignment.d);
+		assertNotNull(assortedValueWithLongAlignment.i);
+		assertNotNull(assortedValueWithLongAlignment.tri);
+
+		/* Test with assorted ref object with long alignment */
+		AssortedRefWithLongAlignment assortedRefWithLongAlignment = new AssortedRefWithLongAlignment();
+		assertNotNull(assortedRefWithLongAlignment.point);
+		assertNotNull(assortedRefWithLongAlignment.line);
+		assertNotNull(assortedRefWithLongAlignment.o);
+		assertNotNull(assortedRefWithLongAlignment.l);
+		assertNotNull(assortedRefWithLongAlignment.d);
+		assertNotNull(assortedRefWithLongAlignment.i);
+		assertNotNull(assortedRefWithLongAlignment.tri);
+
+		/* Test with flattened line 2D */
+		FlattenedLine2D flattenedLine2D = new FlattenedLine2D();
+		assertNotNull(flattenedLine2D.st);
+		assertNotNull(flattenedLine2D.en);
+
+		/* Test with triangle 2D */
+		Triangle2D triangle2D = new Triangle2D();
+		assertNotNull(triangle2D.v1);
+		assertNotNull(triangle2D.v2);
+		assertNotNull(triangle2D.v3);
+	}
+
+	/*
+	 * Create Array Objects with Point Class without initialization
+	 * The array should be set to a Default Value.
+	 *
+	 * TODO not sure if this array needs to be nullrestricted, currently the ri
+	 * is not up to date on this. Revisit this later.
+	 */
+	@Test(priority=4, invocationCount=2)
+	static public void testDefaultValueInPointArray() throws Throwable {
+		Point2D[] pointArray = new Point2D[genericArraySize];
+		for (int i = 0; i < genericArraySize; i++) {
+			assertNotNull(pointArray[i]);
+		}
+	}
+
+	/**
+	 * Create multi dimensional array with Point Class without initialization.
+	 * Set each array value to a default value and check field access method handler.
+	 */
+	@Test(priority=4)
+	static public void testDefaultValueInPointInstanceMultiArray() throws Throwable {
+		Point2D[][] pointArray = new Point2D[genericArraySize][genericArraySize];
+		for (int i = 0; i < genericArraySize; i++) {
+			for (int j = 0; j < genericArraySize; j++) {
+				 pointArray[i][j] = new Point2D(defaultPointPositions1);
+			}
+		}
+		for (int i = 0; i < genericArraySize; i++) {
+			for (int j = 0; j < genericArraySize; j++) {
+				pointArray[i][j].checkFieldAccessWithDefaultValues();
+			}
+		}
+	}
+
+	/*
+	 * Create Array Objects with Flattened Line without initialization
+	 * Check the fields of each element in arrays. No field should be NULL.
+	 */
+	@Test(priority=4, invocationCount=2)
+	static public void testDefaultValueInLineArray() throws Throwable {
+		FlattenedLine2D[] flattenedLineArray = new FlattenedLine2D[genericArraySize];
+		for (int i = 0; i < genericArraySize; i++) {
+			FlattenedLine2D lineObject = flattenedLineArray[i];
+			assertNotNull(lineObject);
+			assertNotNull(lineObject.st);
+			assertNotNull(lineObject.en);
+		}
+	}
+
+	/**
+	 * Create multi dimensional array with Line Class without initialization.
+	 * Set each array value to a default value and check field access method handler.
+	 */
+	@Test(priority=4)
+	static public void testDefaultValueInLineInstanceMultiArray() throws Throwable {
+		FlattenedLine2D[][] flattenedLineArray = new FlattenedLine2D[genericArraySize][genericArraySize];
+		for (int i = 0; i < genericArraySize; i++) {
+			for (int j = 0; j < genericArraySize; j++) {
+				FlattenedLine2D lineNew = new FlattenedLine2D(defaultLinePositions1);
+				flattenedLineArray[i][j] = lineNew;
+			}
+		}
+		for (int i = 0; i < genericArraySize; i++) {
+			for (int j = 0; j < genericArraySize; j++) {
+				flattenedLineArray[i][j].checkFieldAccessWithDefaultValues();
+			}
+		}
+	}
+
+	/*
+	 * Create Array Objects with triangle class without initialization
+	 * Check the fields of each element in arrays. No field should be NULL.
+	 */
+	@Test(priority=4, invocationCount=2)
+	static public void testDefaultValueInTriangleArray() throws Throwable {
+		Triangle2D[] triangleArray = new Triangle2D[genericArraySize];
+		for (int i = 0; i < genericArraySize; i++) {
+			Triangle2D triangleObject = triangleArray[i];
+			assertNotNull(triangleObject);
+			assertNotNull(triangleObject.v1);
+			assertNotNull(triangleObject.v2);
+			assertNotNull(triangleObject.v3);
+		}
+	}
+
+	/**
+	 * Create multi dimensional array with Triangle Class without initialization.
+	 * Set each array value to a default value and check field access method handler.
+	 */
+	@Test(priority=4)
+	static public void testDefaultValueInTriangleInstanceMultiArray() throws Throwable {
+		Triangle2D[][] triangleArray = new Triangle2D[genericArraySize][genericArraySize];
+		for (int i = 0; i < genericArraySize; i++) {
+			for (int j = 0; j < genericArraySize; j++) {
+				triangleArray[i][j] = new Triangle2D(defaultTrianglePositions);
+			}
+		}
+		for (int i = 0; i < genericArraySize; i++) {
+			for (int j = 0; j < genericArraySize; j++) {
+				triangleArray[i][j].checkFieldAccessWithDefaultValues();
+			}
+		}
+	}
+
+	/*
+	 * Create an assortedRefWithLongAlignment Array
+	 * Since it's ref type, the array should be filled with nullptrs
+	 */
+	@Test(priority=4, invocationCount=2)
+	static public void testDefaultValueInAssortedRefWithLongAlignmentArray() throws Throwable {
+		AssortedRefWithLongAlignment[] array = new AssortedRefWithLongAlignment[genericArraySize];
+		for (int i = 0; i < genericArraySize; i++) {
+			assertNull(array[i]);
+		}
+	}
+
+	/*
+	 * Create an Array  Object with assortedValueWithLongAlignment class without initialization
+	 * Check the fields of each element in arrays. No field should be NULL.
+	 */
+	@Test(priority=4, invocationCount=2)
+	static public void testDefaultValueInAssortedValueWithLongAlignmentArray() throws Throwable {
+		AssortedValueWithLongAlignment[] array = new AssortedValueWithLongAlignment[genericArraySize];
+		for (int i = 0; i < genericArraySize; i++) {
+			AssortedValueWithLongAlignment v = array[i];
+			assertNotNull(v);
+			assertNotNull(v.point);
+			assertNotNull(v.line);
+			assertNotNull(v.o);
+			assertNotNull(v.l);
+			assertNotNull(v.d);
+			assertNotNull(v.i);
+			assertNotNull(v.tri);
+		}
+	}
+
+	/**
+	 * Create multi dimensional array with assortedValueWithLongAlignment without initialization.
+	 * Set each array value to a default value and check field access method handler.
+	 *
+	 * Fails tests with array flattening enabled
+	 */
+	@Test(priority=5)
+	static public void testDefaultValueInAssortedValueWithLongAlignmenInstanceMultiArray() throws Throwable {
+		AssortedValueWithLongAlignment[][] array = new AssortedValueWithLongAlignment[genericArraySize][genericArraySize];
+		for (int i = 0; i < genericArraySize; i++) {
+			for (int j = 0; j < genericArraySize; j++) {
+				array[i][j] = AssortedValueWithLongAlignment.createObjectWithDefaults();
+			}
+		}
+		for (int i = 0; i < genericArraySize; i++) {
+			for (int j = 0; j < genericArraySize; j++) {
+				array[i][j].checkFieldsWithDefaults();
+			}
+		}
+	}
+
+	/*
+	 * Create a 2D array of valueTypes, verify that the default elements are null.
+	 */
+	@Test(priority=5, invocationCount=2)
+	static public void testMultiDimentionalArrays() throws Throwable {
+		Class assortedValueWithLongAlignment2DClass = Array.newInstance(AssortedValueWithLongAlignment.class, 1).getClass();
+		Class assortedValueWithSingleAlignment2DClass = Array.newInstance(AssortedValueWithSingleAlignment.class, 1).getClass();
+
+		Object assortedRefWithLongAlignment2DArray = Array.newInstance(assortedValueWithLongAlignment2DClass, genericArraySize);
+		Object assortedRefWithSingleAlignment2DArray = Array.newInstance(assortedValueWithSingleAlignment2DClass, genericArraySize);
+
+		for (int i = 0; i < genericArraySize; i++) {
+			Object ref = Array.get(assortedRefWithLongAlignment2DArray, i);
+			assertNull(ref);
+
+			ref = Array.get(assortedRefWithSingleAlignment2DArray, i);
+			assertNull(ref);
+		}
+	}
+
+	@Test(priority=1)
+	static public void testCyclicalStaticFieldDefaultValues1() throws Throwable {
+		String cycleA1[] = { "val1:LCycleB1;:static" };
+		String cycleB1[] = { "val1:LCycleA1;:static" };
+
+		Class cycleA1Class = ValueTypeGenerator.generateValueClass("CycleA1", cycleA1);
+		Class cycleB1Class = ValueTypeGenerator.generateValueClass("CycleB1", cycleB1);
+
+		MethodHandle makeCycleA1 = lookup.findStatic(cycleA1Class, "makeValueGeneric", MethodType.methodType(Object.class));
+		MethodHandle makeCycleB1 = lookup.findStatic(cycleB1Class, "makeValueGeneric", MethodType.methodType(Object.class));
+
+		makeCycleA1.invoke();
+		makeCycleB1.invoke();
+	}
+
+	@Test(priority=1)
+	static public void testCyclicalStaticFieldDefaultValues2() throws Throwable {
+		String cycleA2[] = { "val1:LCycleB2;:static" };
+		String cycleB2[] = { "val1:LCycleC2;:static" };
+		String cycleC2[] = { "val1:LCycleA2;:static" };
+
+		Class cycleA2Class = ValueTypeGenerator.generateValueClass("CycleA2", cycleA2);
+		Class cycleB2Class = ValueTypeGenerator.generateValueClass("CycleB2", cycleB2);
+		Class cycleC2Class = ValueTypeGenerator.generateValueClass("CycleC2", cycleC2);
+
+		MethodHandle makeCycleA2 = lookup.findStatic(cycleA2Class, "makeValueGeneric", MethodType.methodType(Object.class));
+		MethodHandle makeCycleB2 = lookup.findStatic(cycleB2Class, "makeValueGeneric", MethodType.methodType(Object.class));
+		MethodHandle makeCycleC2 = lookup.findStatic(cycleB2Class, "makeValueGeneric", MethodType.methodType(Object.class));
+
+		makeCycleA2.invoke();
+		makeCycleB2.invoke();
+		makeCycleC2.invoke();
+	}
+
+	@Test(priority=1)
+	static public void testCyclicalStaticFieldDefaultValues3() throws Throwable {
+		String cycleA3[] = { "val1:LCycleA3;:static" };
+
+		Class cycleA3Class = ValueTypeGenerator.generateValueClass("CycleA3", cycleA3);
+
+		MethodHandle makeCycleA3 = lookup.findStatic(cycleA3Class, "makeValueGeneric", MethodType.methodType(Object.class));
+
+		makeCycleA3.invoke();
+	}
+
+	//*******************************************************************************
+	// checkcast tests
+	//*******************************************************************************
+	@Test(priority=1)
+	static public void testCheckCastValueTypeOnInvalidClass() throws Throwable {
+		String fields[] = {"longField:J"};
+		Class valueClass = ValueTypeGenerator.generateValueClass("TestCheckCastOnInvalidClass", fields);
+		MethodHandle checkCastOnInvalidClass = lookup.findStatic(valueClass, "testCheckCastOnInvalidClass", MethodType.methodType(Object.class));
+		checkCastOnInvalidClass.invoke();
+	}
+
+	/*
+	 * Ensure that casting a non null value type to a valid value type will pass
+	 */
+	@Test(priority=1)
+	static public void testCheckCastValueTypeOnNonNullType() throws Throwable {
+		String fields[] = {"longField:J"};
+		Class valueClass = ValueTypeGenerator.generateValueClass("TestCheckCastValueTypeOnNonNullType", fields);
+		MethodHandle checkCastValueTypeOnNonNullType = lookup.findStatic(valueClass, "testCheckCastValueTypeOnNonNullType", MethodType.methodType(Object.class));
+		checkCastValueTypeOnNonNullType.invoke();
+	}
+
+	/*
+	 * Ensure that casting null to a reference type class will pass
+	 */
+	@Test(priority=1)
+	static public void testCheckCastRefClassOnNull() throws Throwable {
+		String fields[] = {"longField:J"};
+		Class refClass = ValueTypeGenerator.generateRefClass("TestCheckCastRefClassOnNull", fields);
+		MethodHandle checkCastRefClassOnNull = lookup.findStatic(refClass, "testCheckCastRefClassOnNull", MethodType.methodType(Object.class));
+		checkCastRefClassOnNull.invoke();
 	}
 }

@@ -62,6 +62,7 @@
 			<!-- <src path="${src_lw5}"/> -->
 			<src path="${transformerListener}" />
 			<compilerarg line='--add-exports java.base/jdk.internal.misc=ALL-UNNAMED --add-exports java.base/jdk.internal.value=ALL-UNNAMED' />
+			<compilerarg line='--enable-preview -source 22'/>
 			<!-- Also remove this line when running lw5 -->
 			<compilerarg line='-source 22 -XDenablePrimitiveClasses' />
 			<classpath>

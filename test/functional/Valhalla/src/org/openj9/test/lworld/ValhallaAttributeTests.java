@@ -77,14 +77,6 @@ public class ValhallaAttributeTests {
 		ValhallaAttributeGenerator.generateNonValueTypeClassWithImplicitCreationAttribute("NonValueTypeImplicitCreationAttribute");
 	}
 
-	/* ImplicitCreation smoke test. The attribute doesn't do anything in the vm right now, make sure
-	 * it passes class validation.
-	 */
-	@Test
-	static public void testValueTypeClassWithImplicitCreationAttribute() throws Throwable {
-		ValhallaAttributeGenerator.generateValidClassWithImplicitCreationAttribute("ValueTypeClassWithImplicitCreationAttribute");
-	}
-
 	/* There must be no more than one NullRestricted attribute in the attributes table of a field_info structure */
 	@Test(expectedExceptions = java.lang.ClassFormatError.class, expectedExceptionsMessageRegExp = ".*Multiple NullRestricted attributes present.*")
 	static public void testMultipleNullRestrictedAttributes() throws Throwable {
