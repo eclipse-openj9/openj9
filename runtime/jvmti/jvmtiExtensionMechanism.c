@@ -3586,7 +3586,7 @@ jvmtiGetJ9method(jvmtiEnv *env, ...)
 
 	ENSURE_PHASE_START_OR_LIVE(env);
 
-	ENSURE_JMETHODID_NON_NULL(mid);
+	ENSURE_JMETHODID_VALID(mid);
 	ENSURE_NON_NULL(j9MethodPtr);
 
 	rv_j9Method = ((J9JNIMethodID *) mid)->method;
