@@ -47,7 +47,7 @@ jvmtiSetBreakpoint(jvmtiEnv* env,
 		ENSURE_PHASE_LIVE(env);
 		ENSURE_CAPABILITY(env, can_generate_breakpoint_events);
 
-		ENSURE_JMETHODID_NON_NULL(method);
+		ENSURE_JMETHODID_VALID(method);
 
 		/* Ensure the location is valid for the method */
 
@@ -119,7 +119,7 @@ jvmtiClearBreakpoint(jvmtiEnv* env,
 		ENSURE_PHASE_LIVE(env);
 		ENSURE_CAPABILITY(env, can_generate_breakpoint_events);
 
-		ENSURE_JMETHODID_NON_NULL(method);
+		ENSURE_JMETHODID_VALID(method);
 
 		/* Ensure the location is valid for the method */
 

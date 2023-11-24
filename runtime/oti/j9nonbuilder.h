@@ -3812,6 +3812,11 @@ typedef struct J9JNIFieldID {
 	struct J9Class* declaringClass;
 } J9JNIFieldID;
 
+typedef union J9GenericJNIID {
+	J9JNIFieldID fieldID;
+	J9JNIMethodID methodID;
+} J9GenericJNIID;
+
 typedef struct J9ITable {
 	struct J9Class* interfaceClass;
 	UDATA depth;
