@@ -22,7 +22,6 @@
 package org.openj9.test.lworld;
 
 import java.lang.reflect.Array;
-import static org.openj9.test.lworld.ValueTypeTests.*;
 import static org.openj9.test.lworld.ValueTypeTestClasses.*;
 
 public class DDRBackfillLayoutTest {
@@ -66,12 +65,12 @@ public class DDRBackfillLayoutTest {
 			new ObjectBackfill(defaultLong, defaultObject);
 
 		ValueTypeDoubleLong doubleLongInstance = new ValueTypeDoubleLong(
-			new ValueLong(ValueTypeTests.defaultLong), ValueTypeTests.defaultLongNew);
+			new ValueLong(defaultLong), defaultLongNew);
 		ValueTypeQuadLong quadLongInstance = new ValueTypeQuadLong(doubleLongInstance,
-			new ValueLong(ValueTypeTests.defaultLongNew2), ValueTypeTests.defaultLongNew3);
+			new ValueLong(defaultLongNew2), defaultLongNew3);
 		ValueTypeDoubleQuadLong doubleQuadLongInstance =
 			new ValueTypeDoubleQuadLong(quadLongInstance, doubleLongInstance,
-			new ValueLong(ValueTypeTests.defaultLongNew4), ValueTypeTests.defaultLongNew5);
+			new ValueLong(defaultLongNew4), defaultLongNew5);
 
 		FlatUnAlignedSingleBackfill2![] flatUnAlignedSingleBackfill2Array =
 			new FlatUnAlignedSingleBackfill2![3];
@@ -80,7 +79,7 @@ public class DDRBackfillLayoutTest {
 		ValueTypeQuadLong[] quadLongArray = new ValueTypeQuadLong[3];
 		quadLongArray[1] = quadLongInstance;
 
-		checkObject(flatSingleBackfillInstance,
+		ValueTypeTests.checkObject(flatSingleBackfillInstance,
 				objectBackfillInstance,
 				flatUnAlignedSingleBackfillInstance,
 				flatUnAlignedSingleBackfill2Instance,
