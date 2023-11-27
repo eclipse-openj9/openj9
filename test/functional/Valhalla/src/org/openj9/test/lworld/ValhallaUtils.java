@@ -32,10 +32,12 @@ public class ValhallaUtils {
 	static final int CLASS_FILE_MAJOR_VERSION = 66;
 
 	/* workaround till the new ASM is released */
-	static final int ACONST_INIT = 203;
-	static final int WITHFIELD = 204;
 	static final int ACC_IDENTITY = 0x20;
 	static final int ACC_VALUE_TYPE = 0x040;
+
+	/* these can be removed with qtypes tests */
+	static final int ACONST_INIT = 203;
+	static final int WITHFIELD = 204;
 	static final int ACC_PRIMITIVE = 0x800;
 
 	/* ImplicitCreation flags */
