@@ -23,7 +23,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 <!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
 
 <suite id="J9 Value Type ddr test with flattening enabled" timeout="600">
-	<variable name="ARGS" value="-XX:ValueTypeFlatteningThreshold=999999 -XX:+EnableArrayFlattening -Xverify:none --add-opens java.base/jdk.internal.misc=ALL-UNNAMED" />
+	<variable name="ARGS" value="--enable-preview -XX:ValueTypeFlatteningThreshold=999999 -XX:+EnableArrayFlattening -Xverify:none --add-opens java.base/jdk.internal.misc=ALL-UNNAMED" />
 	<variable name="JARS" value="-cp $ASMJAR$$CPDL$$JCOMMANDERJAR$$CPDL$$TESTNGJAR$$CPDL$$VALUETYPEJAR$" />
 	<variable name="PROGRAM" value="org.openj9.test.lworld.DDRBackfillLayoutTest" />
 	<variable name="DUMPFILE" value="j9core.dmp" />
