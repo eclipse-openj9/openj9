@@ -2879,4 +2879,8 @@ public class ValueTypeTests {
 		MethodHandle checkCastRefClassOnNull = lookup.findStatic(refClass, "testCheckCastRefClassOnNull", MethodType.methodType(Object.class));
 		checkCastRefClassOnNull.invoke();
 	}
+
+	static void checkObject(Object ...objects) throws Throwable {
+		com.ibm.jvm.Dump.SystemDump();
+	}
 }
