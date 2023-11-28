@@ -75,10 +75,6 @@ public class TestConcurrentMode {
 	static void TestConcurrentModePreCheckpointHookThrowException() {
 		CRIUTestUtils.showThreadCurrentTime("TestConcurrentModePreCheckpointHookThrowException() starts ..");
 		CRIUSupport criu = CRIUTestUtils.prepareCheckPointJVM(CRIUTestUtils.imagePath);
-		if (criu == null) {
-			// "CRIU is not enabled" is to appear and cause the test failure.
-			return;
-		}
 		criu.registerPreCheckpointHook(() -> {
 			throw new RuntimeException("TestConcurrentModePreCheckpointHookThrowException() within preCheckpointHook");
 		}, CRIUSupport.HookMode.CONCURRENT_MODE, USER_HOOK_MODE_PRIORITY_LOW);
@@ -92,10 +88,6 @@ public class TestConcurrentMode {
 	static void TestConcurrentModePreCheckpointHookThrowExceptionPriority() {
 		CRIUTestUtils.showThreadCurrentTime("TestConcurrentModePreCheckpointHookThrowExceptionPriority() starts ..");
 		CRIUSupport criu = CRIUTestUtils.prepareCheckPointJVM(CRIUTestUtils.imagePath);
-		if (criu == null) {
-			// "CRIU is not enabled" is to appear and cause the test failure.
-			return;
-		}
 		criu.registerPreCheckpointHook(
 				() -> CRIUTestUtils.showThreadCurrentTime("TestConcurrentModePreCheckpointHookThrowExceptionPriority() within preCheckpointHook"),
 				CRIUSupport.HookMode.CONCURRENT_MODE, 100);
@@ -109,10 +101,6 @@ public class TestConcurrentMode {
 	static void TestConcurrentModePreCheckpointHookRunOnce() {
 		CRIUTestUtils.showThreadCurrentTime("TestConcurrentModePreCheckpointHookRunOnce() starts ..");
 		CRIUSupport criu = CRIUTestUtils.prepareCheckPointJVM(CRIUTestUtils.imagePath);
-		if (criu == null) {
-			// "CRIU is not enabled" is to appear and cause the test failure.
-			return;
-		}
 		criu.registerPreCheckpointHook(
 				() -> CRIUTestUtils.showThreadCurrentTime("TestConcurrentModePreCheckpointHookRunOnce() within preCheckpointHook"),
 				CRIUSupport.HookMode.CONCURRENT_MODE, USER_HOOK_MODE_PRIORITY_LOW);
@@ -126,10 +114,6 @@ public class TestConcurrentMode {
 	static void TestConcurrentModePreCheckpointHookPriorities() {
 		CRIUTestUtils.showThreadCurrentTime("TestConcurrentModePreCheckpointHookPriorities() starts ..");
 		CRIUSupport criu = CRIUTestUtils.prepareCheckPointJVM(CRIUTestUtils.imagePath);
-		if (criu == null) {
-			// "CRIU is not enabled" is to appear and cause the test failure.
-			return;
-		}
 		final TestResult testResult = new TestResult(true, 0);
 		criu.registerPreCheckpointHook(() -> {
 			CRIUTestUtils.showThreadCurrentTime("The preCheckpointHook with lower priority in CONCURRENT_MODE");
@@ -190,10 +174,6 @@ public class TestConcurrentMode {
 	static void TestConcurrentModePostRestoreHookThrowException() {
 		CRIUTestUtils.showThreadCurrentTime("TestConcurrentModePostRestoreHookThrowException() starts ..");
 		CRIUSupport criu = CRIUTestUtils.prepareCheckPointJVM(CRIUTestUtils.imagePath);
-		if (criu == null) {
-			// "CRIU is not enabled" is to appear and cause the test failure.
-			return;
-		}
 		criu.registerPostRestoreHook(() -> {
 			throw new RuntimeException("TestConcurrentModePostRestoreHookThrowException() within postRestoreHook");
 		}, CRIUSupport.HookMode.CONCURRENT_MODE, 1);
@@ -207,10 +187,6 @@ public class TestConcurrentMode {
 	static void TestConcurrentModePostRestoreHookThrowExceptionPriority() {
 		CRIUTestUtils.showThreadCurrentTime("TestConcurrentModePostRestoreHookThrowExceptionPriority() starts ..");
 		CRIUSupport criu = CRIUTestUtils.prepareCheckPointJVM(CRIUTestUtils.imagePath);
-		if (criu == null) {
-			// "CRIU is not enabled" is to appear and cause the test failure.
-			return;
-		}
 		criu.registerPostRestoreHook(
 				() -> CRIUTestUtils.showThreadCurrentTime("TestConcurrentModePostRestoreHookRunOnce() within postRestoreHook"),
 				CRIUSupport.HookMode.CONCURRENT_MODE, -1);
@@ -224,10 +200,6 @@ public class TestConcurrentMode {
 	static void TestConcurrentModePostRestoreHookRunOnce() {
 		CRIUTestUtils.showThreadCurrentTime("TestConcurrentModePostRestoreHookRunOnce() starts ..");
 		CRIUSupport criu = CRIUTestUtils.prepareCheckPointJVM(CRIUTestUtils.imagePath);
-		if (criu == null) {
-			// "CRIU is not enabled" is to appear and cause the test failure.
-			return;
-		}
 		criu.registerPostRestoreHook(
 				() -> CRIUTestUtils.showThreadCurrentTime("TestConcurrentModePostRestoreHookRunOnce() within postRestoreHook"),
 				CRIUSupport.HookMode.CONCURRENT_MODE, 1);
@@ -241,10 +213,6 @@ public class TestConcurrentMode {
 	static void TestConcurrentModePostRestoreHookPriorities() {
 		CRIUTestUtils.showThreadCurrentTime("TestConcurrentModePostRestoreHookPriorities() starts ..");
 		CRIUSupport criu = CRIUTestUtils.prepareCheckPointJVM(CRIUTestUtils.imagePath);
-		if (criu == null) {
-			// "CRIU is not enabled" is to appear and cause the test failure.
-			return;
-		}
 		final TestResult testResult = new TestResult(true, 0);
 		criu.registerPostRestoreHook(() -> {
 			CRIUTestUtils.showThreadCurrentTime("The postRestoreHook with lower priority in CONCURRENT_MODE");
