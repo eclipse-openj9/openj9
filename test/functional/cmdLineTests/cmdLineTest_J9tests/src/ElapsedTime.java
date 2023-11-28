@@ -40,8 +40,7 @@ public class ElapsedTime {
 		millisTimeStart = System.currentTimeMillis();
 		nanoTimeStart = System.nanoTime();
 		Thread.currentThread().sleep(100);
-		AssertJUnit.assertTrue(tu.checkElapseTime("testElapsedTime() sleep 100ms", millisTimeStart, nanoTimeStart, 100,
-				800, 100, 800));
+		AssertJUnit.assertTrue(tu.checkElapseTime("testElapsedTime() sleep 100ms", millisTimeStart, nanoTimeStart, 100, 100));
 
 		millisTimeStart = System.currentTimeMillis();
 		nanoTimeStart = System.nanoTime();
