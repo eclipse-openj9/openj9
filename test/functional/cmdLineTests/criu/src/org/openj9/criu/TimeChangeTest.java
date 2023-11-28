@@ -127,8 +127,7 @@ public class TimeChangeTest {
 		millisTimeStart = System.currentTimeMillis();
 		nanoTimeStart = System.nanoTime();
 		Thread.currentThread().sleep(100);
-		TimeUtilities.checkElapseTime("testTimeCompensation() sleep 100ms", millisTimeStart, nanoTimeStart, 100, 800,
-				100, 800);
+		TimeUtilities.checkElapseTime("testTimeCompensation() sleep 100ms", millisTimeStart, nanoTimeStart, 100, 100);
 
 		// this TimerTask is to run before CRIUR checkpoint
 		tu.timerSchedule("testTimeCompensation() preCheckpoint timer delayed 100ms", System.currentTimeMillis(),
@@ -151,7 +150,7 @@ public class TimeChangeTest {
 			public void run() {
 				// check time elapsed within preCheckpoint hook
 				TimeUtilities.checkElapseTime("testTimeCompensation() preCheckpointHook", preCheckpointMillisTime,
-						preCheckpointNanoTime, 2000, 4000, 2000, 4000);
+						preCheckpointNanoTime, 2000, 2000);
 
 				// scheduled task can't run before the checkpoint because all threads are halted
 				// in single threaded mode except the current thread performing CRIU checkpoit
@@ -166,7 +165,7 @@ public class TimeChangeTest {
 			public void run() {
 				// check time elapsed within postRestore hook
 				TimeUtilities.checkElapseTime("testTimeCompensation() postRestoreHook", preCheckpointMillisTime,
-						preCheckpointNanoTime, 4000, 8000, 2000, 4000);
+						preCheckpointNanoTime, 4000, 2000);
 
 				tu.timerSchedule("testTimeCompensation() postRestoreHook timer delayed 10ms",
 						System.currentTimeMillis(), System.nanoTime(), 10, 800, 9, 800, 10);
@@ -176,12 +175,12 @@ public class TimeChangeTest {
 		});
 
 		TimeUtilities.checkElapseTime("testTimeCompensation() preCheckpoint", preCheckpointMillisTime,
-				preCheckpointNanoTime, 2000, 3000, 2000, 3000);
+				preCheckpointNanoTime, 2000, 2000);
 
 		CRIUTestUtils.checkPointJVMNoSetup(criu, CRIUTestUtils.imagePath, false);
 
 		TimeUtilities.checkElapseTime("testTimeCompensation() after CRIU restore", preCheckpointMillisTime,
-				preCheckpointNanoTime, 2000, 6000, 2000, 6000);
+				preCheckpointNanoTime, 2000, 2000);
 
 		CRIUTestUtils.showThreadCurrentTime("testTimeCompensation() postRestore");
 		final long postRestoreMillisTime = System.currentTimeMillis();
@@ -197,7 +196,7 @@ public class TimeChangeTest {
 		Thread.currentThread().sleep(2000);
 
 		TimeUtilities.checkElapseTime("testTimeCompensation() postRestore", postRestoreMillisTime, postRestoreNanoTime,
-				2000, 3000, 2000, 3000);
+				2000, 2000);
 
 		if (tu.getResultAndCancelTimers()) {
 			System.out.println("PASSED: " + "testTimeCompensation");
