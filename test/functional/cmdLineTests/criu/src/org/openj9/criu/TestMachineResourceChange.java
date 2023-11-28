@@ -97,10 +97,6 @@ public class TestMachineResourceChange {
 
 	private void test(String testName) throws InterruptedException {
 		CRIUSupport criu = CRIUTestUtils.prepareCheckPointJVM(CRIUTestUtils.imagePath);
-		if (criu == null) {
-			// prepareCheckPointJVM() has an error message "CRIU is not enabled".
-			return;
-		}
 		CRIUTestUtils.showThreadCurrentTime("Before starting " + testName);
 		switch (testName) {
 		case "testVirtualThreadForkJoinPoolParallelism":

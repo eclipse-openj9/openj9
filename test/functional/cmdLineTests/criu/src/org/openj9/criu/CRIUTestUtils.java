@@ -82,27 +82,25 @@ public class CRIUTestUtils {
 				deleteCheckpointDirectory(path);
 			}
 		} else {
-			System.err.println("CRIU is not enabled");
+			throw new RuntimeException("CRIU is not enabled");
 		}
 	}
 
 	public static CRIUSupport prepareCheckPointJVM(Path path) {
-		CRIUSupport criu = null;
 		if (CRIUSupport.isCRIUSupportEnabled()) {
 			deleteCheckpointDirectory(path);
 			createCheckpointDirectory(path);
-			criu = new CRIUSupport(path);
+			return (new CRIUSupport(path)).setLeaveRunning(false).setShellJob(true).setFileLocks(true);
 		} else {
-			System.err.println("CRIU is not enabled");
+			throw new RuntimeException("CRIU is not enabled");
 		}
-		return criu;
 	}
 
 	public static void checkPointJVMNoSetup(CRIUSupport criu, Path path, boolean deleteDir) {
 		if (criu != null) {
 			try {
 				showThreadCurrentTime("Performing CRIUSupport.checkpointJVM()");
-				criu.setLeaveRunning(false).setShellJob(true).setFileLocks(true).checkpointJVM();
+				criu.checkpointJVM();
 			} catch (SystemRestoreException e) {
 				e.printStackTrace();
 			}
@@ -110,7 +108,7 @@ public class CRIUTestUtils {
 				deleteCheckpointDirectory(path);
 			}
 		} else {
-			System.err.println("CRIU is not enabled");
+			throw new RuntimeException("CRIU is not enabled");
 		}
 	}
 
