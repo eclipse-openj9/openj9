@@ -9499,6 +9499,7 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, cFlowRegionEnd, conditions);
 
+   srm->stopUsingRegisters();
    cg->stopUsingRegister(monitorReg);
    if (tempRegister)
       cg->stopUsingRegister(tempRegister);
@@ -9912,6 +9913,7 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
 
    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, cFlowRegionEnd, conditions);
 
+   srm->stopUsingRegisters();
    cg->stopUsingRegister(monitorReg);
    if (lookupOffsetReg)
       cg->stopUsingRegister(lookupOffsetReg);
