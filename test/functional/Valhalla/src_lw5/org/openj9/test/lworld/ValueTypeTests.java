@@ -105,7 +105,6 @@ public class ValueTypeTests {
 
 		void checkFieldAccessWithDefaultValues() throws Throwable {
 			checkEqualPoint2D(defaultPointPositions1);
-			// TODO add putfield tests once withfield is replaced
 		}
 	}
 
@@ -146,7 +145,6 @@ public class ValueTypeTests {
 
 		void checkFieldAccessWithDefaultValues() throws Throwable {
 			checkEqualFlattenedLine2D(defaultLinePositions1);
-			// TODO add putfield tests once withfield is replaced
 		}
 
 		void checkEqualFlattenedLine2D(int[][] positions) throws Throwable {
@@ -180,7 +178,6 @@ public class ValueTypeTests {
 
 		void checkFieldAccessWithDefaultValues() throws Throwable {
 			checkEqualTriangle2D(defaultTrianglePositions);
-			// TODO add putfield tests once withfield is replaced
 		}
 
 		void checkEqualTriangle2D(int[][][] positions) throws Throwable {
@@ -272,7 +269,7 @@ public class ValueTypeTests {
 				new Triangle2D(defaultTrianglePositions));
 		}
 
-		AssortedValueWithLongAlignment checkFieldsWithDefaults() throws Throwable {
+		void checkFieldsWithDefaults() throws Throwable {
 			point.checkEqualPoint2D(defaultPointPositions1);
 			line.checkEqualFlattenedLine2D(defaultLinePositions1);
 			assertEquals(o.val, defaultObject);
@@ -280,8 +277,6 @@ public class ValueTypeTests {
 			assertEquals(d.d, defaultDouble);
 			assertEquals(i.i, defaultInt);
 			tri.checkEqualTriangle2D(defaultTrianglePositions);
-			// TODO add putfield tests once withfield is replaced
-			return this; // should be updated to new defaults once putfield tests are here
 		}
 	}
 
@@ -372,7 +367,7 @@ public class ValueTypeTests {
 				new Triangle2D(defaultTrianglePositions));
 		}
 
-		AssortedValueWithObjectAlignment checkFieldsWithDefaults() throws Throwable {
+		void checkFieldsWithDefaults() throws Throwable {
 			tri.checkEqualTriangle2D(defaultTrianglePositions);
 			point.checkEqualPoint2D(defaultPointPositions1);
 			line.checkEqualFlattenedLine2D( defaultLinePositions1);
@@ -380,8 +375,6 @@ public class ValueTypeTests {
 			assertEquals(i.i, defaultInt);
 			assertEquals(f.f, defaultFloat);
 			tri2.checkEqualTriangle2D(defaultTrianglePositions);
-			// TODO add putfield tests once withfield is replaced
-			return this; // should be updated to new defaults once putfield tests are here
 		}
 	}
 
@@ -476,7 +469,6 @@ public class ValueTypeTests {
 			assertEquals(i.i, defaultInt);
 			assertEquals(f.f, defaultFloat);
 			tri2.checkEqualTriangle2D(defaultTrianglePositions);
-			// TODO add putfield tests once withfield is replaced
 		}
 	}
 
@@ -609,7 +601,6 @@ public class ValueTypeTests {
 			assertEquals(v14.val, defaultObject);
 			assertEquals(v15.val, defaultObject);
 			assertEquals(v16.val, defaultObject);
-			// TODO add putfield tests once withfield is replaced
 		}
 	 }
 
@@ -683,7 +674,6 @@ public class ValueTypeTests {
 				l14.checkFieldsWithDefaults();
 				l15.checkFieldsWithDefaults();
 				l16.checkFieldsWithDefaults();
-				// TODO add putfield tests once withfield is replaced
 			}
 	 }
 
@@ -887,8 +877,6 @@ public class ValueTypeTests {
 
 		assertEquals(point2D.x, x);
 		assertEquals(point2D.y, y);
-
-		// TODO add putfield tests once withfield is replaced
 	}
 
 	@Test(priority=1)
@@ -900,8 +888,6 @@ public class ValueTypeTests {
 
 		assertEquals(p.d, d);
 		assertEquals(p.l, l);
-
-		// TODO add putfield tests once withfield is replaced
 	}
 
 	@Test(priority=2)
@@ -919,8 +905,6 @@ public class ValueTypeTests {
 		assertEquals(line2D.st.y, y);
 		assertEquals(line2D.en.x, x2);
 		assertEquals(line2D.en.y, y2);
-
-		// TODO add putfield tests once withfield is replaced
 	}
 
 	@Test(priority=2)
@@ -938,8 +922,6 @@ public class ValueTypeTests {
 		assertEquals(line2D.st.y, y);
 		assertEquals(line2D.en.x, x2);
 		assertEquals(line2D.en.y, y2);
-
-		// TODO add putfield tests once withfield is replaced
 	}
 
 	@Test(priority=3)
@@ -1032,7 +1014,6 @@ public class ValueTypeTests {
 		int i = Integer.MAX_VALUE;
 		ValueInt! valueInt = new ValueInt(i);
 		assertEquals(valueInt.i, i);
-		// TODO add putfield tests once withfield is replaced
 	}
 
 	@Test(priority=1)
@@ -1040,7 +1021,6 @@ public class ValueTypeTests {
 		long l = Long.MAX_VALUE;
 		ValueLong! valueLong = new ValueLong(l);
 		assertEquals(valueLong.l, l);
-		// TODO add putfield tests once withfield is replaced
 	}
 
 	@Test(priority=1)
@@ -1048,7 +1028,6 @@ public class ValueTypeTests {
 		double d = Double.MAX_VALUE;
 		ValueDouble! valueDouble = new ValueDouble(d);
 		assertEquals(valueDouble.d, d);
-		// TODO add putfield tests once withfield is replaced
 	}
 
 	@Test(priority=1)
@@ -1056,7 +1035,6 @@ public class ValueTypeTests {
 		float f = Float.MAX_VALUE;
 		ValueFloat! valueFloat = new ValueFloat(f);
 		assertEquals(valueFloat.f, f);
-		// TODO add putfield tests once withfield is replaced
 	}
 
 	@Test(priority=1)
@@ -1064,7 +1042,6 @@ public class ValueTypeTests {
 		Object val = (Object)0xEEFFEEFF;
 		ValueObject! valueObject = new ValueObject(val);
 		assertEquals(valueObject.val, val);
-		// TODO add putfield tests once withfield is replaced
 	}
 
 	@Test(priority=2)
@@ -2403,29 +2380,33 @@ public class ValueTypeTests {
 	static public void testACMPTestOnAssortedValues() throws Throwable {
 		Object assortedValueWithLongAlignment = AssortedValueWithLongAlignment.createObjectWithDefaults();
 		Object assortedValueWithLongAlignment2 = AssortedValueWithLongAlignment.createObjectWithDefaults();
-		Object assortedValueWithLongAlignment3 = AssortedValueWithLongAlignment.createObjectWithDefaults();
-		assortedValueWithLongAlignment3 = ((AssortedValueWithLongAlignment)assortedValueWithLongAlignment3).checkFieldsWithDefaults();
+		Object assortedValueWithLongAlignment3 = new AssortedValueWithLongAlignment(new Point2D(defaultPointPositionsNew),
+				new FlattenedLine2D(defaultLinePositionsNew), new ValueObject(defaultObjectNew),
+				new ValueLong(defaultLongNew), new ValueDouble(defaultDoubleNew), new ValueInt(defaultIntNew),
+				new Triangle2D(defaultTrianglePositionsNew));
 
 		Object assortedValueWithObjectAlignment = AssortedValueWithObjectAlignment.createObjectWithDefaults();
 		Object assortedValueWithObjectAlignment2 = AssortedValueWithObjectAlignment.createObjectWithDefaults();
-		Object assortedValueWithObjectAlignment3 = AssortedValueWithObjectAlignment.createObjectWithDefaults();
-		assortedValueWithObjectAlignment3 = ((AssortedValueWithObjectAlignment)assortedValueWithObjectAlignment3).checkFieldsWithDefaults();
+		Object assortedValueWithObjectAlignment3 = new AssortedValueWithObjectAlignment(
+				new Triangle2D(defaultTrianglePositionsNew), new Point2D(defaultPointPositionsNew),
+				new FlattenedLine2D(defaultLinePositionsNew), new ValueObject(defaultObjectNew),
+				new ValueInt(defaultIntNew), new ValueFloat(defaultFloatNew),
+				new Triangle2D(defaultTrianglePositionsNew));
 
-		// TODO add commented out tests once withfield is replaced
 		assertTrue((assortedValueWithLongAlignment == assortedValueWithLongAlignment), "A substitutability (==) test on the same value should always return true");
 		assertTrue((assortedValueWithObjectAlignment == assortedValueWithObjectAlignment), "A substitutability (==) test on the same value should always return true");
 		assertTrue((assortedValueWithLongAlignment == assortedValueWithLongAlignment2), "A substitutability (==) test on different value the same contents should always return true");
 		assertTrue((assortedValueWithObjectAlignment == assortedValueWithObjectAlignment2), "A substitutability (==) test on different value the same contents should always return true");
-		//assertFalse((assortedValueWithLongAlignment == assortedValueWithLongAlignment3), "A substitutability (==) test on different value should always return false");
+		assertFalse((assortedValueWithLongAlignment == assortedValueWithLongAlignment3), "A substitutability (==) test on different value should always return false");
 		assertFalse((assortedValueWithLongAlignment == assortedValueWithObjectAlignment), "A substitutability (==) test on different value should always return false");
-		//assertFalse((assortedValueWithObjectAlignment == assortedValueWithObjectAlignment3), "A substitutability (==) test on different value should always return false");
+		assertFalse((assortedValueWithObjectAlignment == assortedValueWithObjectAlignment3), "A substitutability (==) test on different value should always return false");
 		assertFalse((assortedValueWithLongAlignment != assortedValueWithLongAlignment), "A substitutability (!=) test on the same value should always return false");
 		assertFalse((assortedValueWithObjectAlignment != assortedValueWithObjectAlignment), "A substitutability (!=) test on the same value should always return false");
 		assertFalse((assortedValueWithLongAlignment != assortedValueWithLongAlignment2), "A substitutability (!=) test on different value the same contents should always return false");
 		assertFalse((assortedValueWithObjectAlignment != assortedValueWithObjectAlignment2), "A substitutability (!=) test on different value the same contents should always return false");
-		//assertTrue((assortedValueWithLongAlignment != assortedValueWithLongAlignment3), "A substitutability (!=) test on different value the same contents should always return false");
+		assertTrue((assortedValueWithLongAlignment != assortedValueWithLongAlignment3), "A substitutability (!=) test on different value the same contents should always return false");
 		assertTrue((assortedValueWithLongAlignment != assortedValueWithObjectAlignment), "A substitutability (!=) test on different value the same contents should always return false");
-		//assertTrue((assortedValueWithObjectAlignment != assortedValueWithObjectAlignment3), "A substitutability (!=) test on different value the same contents should always return false");
+		assertTrue((assortedValueWithObjectAlignment != assortedValueWithObjectAlignment3), "A substitutability (!=) test on different value the same contents should always return false");
 	}
 
 	// *******************************************************************************
@@ -2856,17 +2837,6 @@ public class ValueTypeTests {
 		Class valueClass = ValueTypeGenerator.generateValueClass("TestCheckCastOnInvalidClass", fields);
 		MethodHandle checkCastOnInvalidClass = lookup.findStatic(valueClass, "testCheckCastOnInvalidClass", MethodType.methodType(Object.class));
 		checkCastOnInvalidClass.invoke();
-	}
-
-	/*
-	 * Ensure that casting a non null value type to a valid value type will pass
-	 */
-	@Test(priority=1)
-	static public void testCheckCastValueTypeOnNonNullType() throws Throwable {
-		String fields[] = {"longField:J"};
-		Class valueClass = ValueTypeGenerator.generateValueClass("TestCheckCastValueTypeOnNonNullType", fields);
-		MethodHandle checkCastValueTypeOnNonNullType = lookup.findStatic(valueClass, "testCheckCastValueTypeOnNonNullType", MethodType.methodType(Object.class));
-		checkCastValueTypeOnNonNullType.invoke();
 	}
 
 	/*
