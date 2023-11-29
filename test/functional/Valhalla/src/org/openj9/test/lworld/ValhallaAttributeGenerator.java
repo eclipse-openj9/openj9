@@ -120,7 +120,7 @@ public class ValhallaAttributeGenerator extends ClassLoader {
 		return generator.defineClass(className, classBytes, 0, classBytes.length);
 	}
 
-	public static Class<?> generatePutFieldNullToNullRestrictedField(String className, String fieldClassName) {
+	public static Class<?> generatePutFieldNullToField(String className, String fieldClassName, boolean nullRestrictedField) {
 		String fieldName = "field";
 
 		/* Generate field class - value class with ImplicitCreation attribute and ACC_DEFAULT flag set.  */
@@ -133,7 +133,9 @@ public class ValhallaAttributeGenerator extends ClassLoader {
 
 		/* instance field of previously generated field class with NullRestrictd attribute */
 		FieldVisitor fieldVisitor = classWriter.visitField(ACC_PUBLIC, fieldName, fieldClass.descriptorString(), null, null);
-		fieldVisitor.visitAttribute(new ValhallaUtils.NullRestrictedAttribute());
+		if (nullRestrictedField) {
+			fieldVisitor.visitAttribute(new ValhallaUtils.NullRestrictedAttribute());
+		}
 
 		/* assign field to null in <init> */
 		MethodVisitor mvInit = classWriter.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
@@ -183,41 +185,6 @@ public class ValhallaAttributeGenerator extends ClassLoader {
 		/* Generate class with field with NullRestricted attribute */
 		byte[] classBytes = generateIdentityClassWithField(className, isStatic ? ACC_STATIC : 0,
 			"field", fieldClass.descriptorString(), new Attribute[]{new ValhallaUtils.NullRestrictedAttribute()});
-		return generator.defineClass(className, classBytes, 0, classBytes.length);
-	}
-
-	public static Class<?> generateWithFieldStoreNullToNullRestrictedField(String className, String fieldClassName) {
-		String fieldName = "field";
-
-		/* Generate field class - value class with ImplicitCreation attribute and ACC_DEFAULT flag set.  */
-		byte[] fieldClassBytes = generateClass(fieldClassName, ACC_PUBLIC + ACC_FINAL + ValhallaUtils.ACC_VALUE_TYPE,
-			new Attribute[] {new ValhallaUtils.ImplicitCreationAttribute(ValhallaUtils.ACC_DEFAULT)});
-		Class<?> fieldClass = generator.defineClass(fieldClassName, fieldClassBytes, 0, fieldClassBytes.length);
-
-		ClassWriter classWriter = new ClassWriter(0);
-		classWriter.visit(ValhallaUtils.CLASS_FILE_MAJOR_VERSION, ACC_PUBLIC + ValhallaUtils.ACC_IDENTITY, className, null, "java/lang/Object", null);
-
-		/* instance field of previously generated field class with NullRestrictd attribute */
-		FieldVisitor fieldVisitor = classWriter.visitField(ACC_PUBLIC, fieldName, fieldClass.descriptorString(), null, null);
-		fieldVisitor.visitAttribute(new ValhallaUtils.NullRestrictedAttribute());
-
-		MethodVisitor mvInit = classWriter.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
-		mvInit.visitCode();
-		mvInit.visitVarInsn(ALOAD, 0);
-		mvInit.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V");
-		mvInit.visitVarInsn(ALOAD, 0);
-		mvInit.visitTypeInsn(ValhallaUtils.ACONST_INIT, fieldClass.descriptorString());
-		mvInit.visitFieldInsn(PUTFIELD, className, fieldName, fieldClass.descriptorString());
-		mvInit.visitVarInsn(ALOAD, 0);
-		mvInit.visitFieldInsn(GETFIELD, className, fieldName, fieldClass.descriptorString());
-		mvInit.visitInsn(ACONST_NULL);
-		mvInit.visitFieldInsn(ValhallaUtils.WITHFIELD, className, fieldName, fieldClass.descriptorString());
-		mvInit.visitInsn(RETURN);
-		mvInit.visitMaxs(2, 1);
-		mvInit.visitEnd();
-
-		classWriter.visitEnd();
-		byte[] classBytes = classWriter.toByteArray();
 		return generator.defineClass(className, classBytes, 0, classBytes.length);
 	}
 

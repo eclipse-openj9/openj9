@@ -146,13 +146,18 @@ public class ValhallaAttributeTests {
 		c.newInstance();
 	}
 
+	@Test
+	static public void testPutFieldNullToValueTypeField() throws Throwable {
+		Class<?> c = ValhallaAttributeGenerator.generatePutFieldNullToField("TestPutFieldNullToValueTypeField", "TestPutFieldNullToValueTypeFieldField", false);
+		c.newInstance();
+	}
+
 	static public Class<?> testPutFieldNullToNullRestrictedFieldClass = null;
 	static public Class<?> testPutStaticNullToNullRestrictedFieldClass = null;
-	static public Class<?> testWithFieldStoreNullToNullRestrictedFieldClass = null;
 
 	@Test(priority=1)
 	static public void testCreateTestPutFieldNullToNullRestrictedField() throws Throwable {
-		testPutFieldNullToNullRestrictedFieldClass = ValhallaAttributeGenerator.generatePutFieldNullToNullRestrictedField("TestPutFieldNullToNullRestrictedField", "TestPutFieldNullToNullRestrictedFieldField");
+		testPutFieldNullToNullRestrictedFieldClass = ValhallaAttributeGenerator.generatePutFieldNullToField("TestPutFieldNullToNullRestrictedField", "TestPutFieldNullToNullRestrictedFieldField", true);
 	}
 
 	/* Instance field with NullRestricted attribute cannot be set to null. */
@@ -190,15 +195,5 @@ public class ValhallaAttributeTests {
 			throw e;
 		}
 		Assert.fail("Test expected a NullPointerException wrapped in ExceptionInInitializerError.");
-	}
-
-	@Test(priority=1)
-	static public void testCreateTestWithFieldStoreNullToNullRestrictedField() throws Throwable {
-		testWithFieldStoreNullToNullRestrictedFieldClass = ValhallaAttributeGenerator.generateWithFieldStoreNullToNullRestrictedField("TestWithFieldStoreNullToNullRestrictedField", "TestWithFieldStoreNullToNullRestrictedFieldField");
-	}
-
-	@Test(priority=2, invocationCount=2, expectedExceptions = java.lang.NullPointerException.class)
-	static public void testWithFieldStoreNullToNullRestrictedField() throws Throwable {
-		testWithFieldStoreNullToNullRestrictedFieldClass.newInstance();
 	}
 }
