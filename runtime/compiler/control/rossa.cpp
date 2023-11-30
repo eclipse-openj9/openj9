@@ -1972,12 +1972,6 @@ aboutToBootstrap(J9JavaVM * javaVM, J9JITConfig * jitConfig)
       return -1;
       }
 
-   if (!TR::Options::getCmdLineOptions()->allowRecompilation() || !TR::Options::getAOTCmdLineOptions()->allowRecompilation())
-      {
-      TR::Options::getCmdLineOptions()->setOption(TR_DisableCHOpts);
-      TR::Options::getAOTCmdLineOptions()->setOption(TR_DisableCHOpts);
-      }
-
    // Get local var names if available (ie. classfile was compiled with -g).
    // We just check getDebug() for lack of a reliable way to check whether there are any methods being logged.
    //
