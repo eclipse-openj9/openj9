@@ -755,8 +755,8 @@ acquireExclusiveVMAccessFromExternalThread(J9JavaVM * vm)
 	UDATA vmResponsesExpected = 0;
 	UDATA jniResponsesExpected = 0;
 
-	/* If safepoiont exclusive has already been acquired, nothing need be done here */
-	if (J9_XACCESS_EXCLUSIVE == vm->safePointState) {
+	/* If exclusive has already been acquired, nothing need be done here */
+	if (vm->alreadyHaveExclusive) {
 		return;
 	}
 
@@ -842,8 +842,8 @@ releaseExclusiveVMAccessFromExternalThread(J9JavaVM * vm)
 {
 	J9VMThread * currentThread;
 
-	/* If safepoiont exclusive has already been acquired, nothing need be done here */
-	if (J9_XACCESS_EXCLUSIVE == vm->safePointState) {
+	/* If exclusive has already been acquired, nothing need be done here */
+	if (vm->alreadyHaveExclusive) {
 		return;
 	}
 
@@ -924,8 +924,8 @@ requestExclusiveVMAccessMetronomeTemp(J9JavaVM *vm, UDATA block, UDATA *vmRespon
 	UDATA jniResponsesExpected = 0;
 	*gcPriority = J9THREAD_PRIORITY_MAX;
 
-	/* If safepoiont exclusive has already been acquired, nothing need be done here */
-	if (J9_XACCESS_EXCLUSIVE == vm->safePointState) {
+	/* If exclusive has already been acquired, nothing need be done here */
+	if (vm->alreadyHaveExclusive) {
 		return TRUE;
 	}
 
@@ -1028,22 +1028,24 @@ waitForExclusiveVMAccessMetronomeTemp(J9VMThread * vmThread, UDATA vmResponsesRe
 {
 	J9JavaVM *vm = vmThread->javaVM;
 
-	/* No need to wait if we already have safepoint exclusive */
-	if (J9_XACCESS_EXCLUSIVE != vm->safePointState) {
-		waitForResponseFromExternalThread(vmThread->javaVM, vmResponsesRequired, jniResponsesRequired);
-
-		VM_VMAccess::backOffFromSafePoint(vmThread);
-	
-		/* Do not wait on JAVA_SUSPEND, since we are not real JAVA thread.
-		 * This patch was needed for some debug scenarios with JVMTI, that would result in a deadlock otherwise.
-		 * TODO: re-examine with latest JDWP
-		 */
-		internalAcquireVMAccessNoMutexWithMask(vmThread, J9_PUBLIC_FLAGS_HALT_THREAD_ANY_NO_JAVA_SUSPEND);
-
-		Assert_VM_true(vmThread->omrVMThread->exclusiveCount==0);
-
-		++(vmThread->omrVMThread->exclusiveCount);
+	/* If exclusive has already been acquired, nothing need be done here */
+	if (vm->alreadyHaveExclusive) {
+		return;
 	}
+
+	waitForResponseFromExternalThread(vmThread->javaVM, vmResponsesRequired, jniResponsesRequired);
+
+	VM_VMAccess::backOffFromSafePoint(vmThread);
+
+	/* Do not wait on JAVA_SUSPEND, since we are not real JAVA thread.
+	 * This patch was needed for some debug scenarios with JVMTI, that would result in a deadlock otherwise.
+	 * TODO: re-examine with latest JDWP
+	 */
+	internalAcquireVMAccessNoMutexWithMask(vmThread, J9_PUBLIC_FLAGS_HALT_THREAD_ANY_NO_JAVA_SUSPEND);
+
+	Assert_VM_true(vmThread->omrVMThread->exclusiveCount==0);
+
+	++(vmThread->omrVMThread->exclusiveCount);
 }
 
 void

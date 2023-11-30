@@ -1233,7 +1233,9 @@ redefineClassesCommon(jvmtiEnv* env,
 		/* Eliminate dark matter so that none will be encountered in prepareToFixMemberNames(). */
 		UDATA savedAllowUserHeapWalkFlag = vm->requiredDebugAttributes & J9VM_DEBUG_ATTRIBUTE_ALLOW_USER_HEAP_WALK;
 		vm->requiredDebugAttributes |= J9VM_DEBUG_ATTRIBUTE_ALLOW_USER_HEAP_WALK;
+		vm->alreadyHaveExclusive = TRUE;
 		vm->memoryManagerFunctions->j9gc_modron_global_collect_with_overrides(currentThread, J9MMCONSTANT_EXPLICIT_GC_EXCLUSIVE_VMACCESS_ALREADY_ACQUIRED);
+		vm->alreadyHaveExclusive = FALSE;
 		if (0 == savedAllowUserHeapWalkFlag) {
 			/* Clear the flag to restore its original value. */
 			vm->requiredDebugAttributes &= ~J9VM_DEBUG_ATTRIBUTE_ALLOW_USER_HEAP_WALK;
