@@ -1126,12 +1126,7 @@ MM_MetronomeDelegate::postRequestExclusiveVMAccess(OMR_VMThread *threadRequestin
 uintptr_t
 MM_MetronomeDelegate::requestExclusiveVMAccess(MM_EnvironmentBase *env, uintptr_t block, uintptr_t *gcPriority)
 {
-	BOOLEAN rc = TRUE;
-
-	if (J9_XACCESS_EXCLUSIVE != _javaVM->safePointState) {
-		rc = _javaVM->internalVMFunctions->requestExclusiveVMAccessMetronomeTemp(_javaVM, block, &_vmResponsesRequiredForExclusiveVMAccess, &_jniResponsesRequiredForExclusiveVMAccess, gcPriority);
-	}
-	return rc;
+	return _javaVM->internalVMFunctions->requestExclusiveVMAccessMetronomeTemp(_javaVM, block, &_vmResponsesRequiredForExclusiveVMAccess, &_jniResponsesRequiredForExclusiveVMAccess, gcPriority);
 }
 
 /**
@@ -1144,10 +1139,8 @@ MM_MetronomeDelegate::waitForExclusiveVMAccess(MM_EnvironmentBase *env, bool wai
 {
 	J9VMThread *mainGCThread = (J9VMThread *)env->getLanguageVMThread();
 	
-	if (J9_XACCESS_EXCLUSIVE != _javaVM->safePointState) {
-		if (waitRequired) {
-			_javaVM->internalVMFunctions->waitForExclusiveVMAccessMetronomeTemp((J9VMThread *)env->getLanguageVMThread(), _vmResponsesRequiredForExclusiveVMAccess, _jniResponsesRequiredForExclusiveVMAccess);
-		}
+	if (waitRequired) {
+		_javaVM->internalVMFunctions->waitForExclusiveVMAccessMetronomeTemp((J9VMThread *)env->getLanguageVMThread(), _vmResponsesRequiredForExclusiveVMAccess, _jniResponsesRequiredForExclusiveVMAccess);
 	}
 	++(mainGCThread->omrVMThread->exclusiveCount);
 }
@@ -1162,12 +1155,11 @@ MM_MetronomeDelegate::acquireExclusiveVMAccess(MM_EnvironmentBase *env, bool wai
 {
 	J9VMThread *mainGCThread = (J9VMThread *)env->getLanguageVMThread();
 
-	if (J9_XACCESS_EXCLUSIVE != _javaVM->safePointState) {
-		if (waitRequired) {
-			_javaVM->internalVMFunctions->acquireExclusiveVMAccessFromExternalThread(_javaVM);
-		}
+	if (waitRequired) {
+		_javaVM->internalVMFunctions->acquireExclusiveVMAccessFromExternalThread(_javaVM);
 	}
 	++(mainGCThread->omrVMThread->exclusiveCount);
+
 }
 
 /**
@@ -1182,22 +1174,14 @@ MM_MetronomeDelegate::releaseExclusiveVMAccess(MM_EnvironmentBase *env, bool rel
 
 	--(mainGCThread->omrVMThread->exclusiveCount);
 	if (releaseRequired) {
-		--(mainGCThread->omrVMThread->exclusiveCount);
-
-		Assert_MM_true(mainGCThread->omrVMThread->exclusiveCount==0);
-
-		_javaVM->internalVMFunctions->internalReleaseVMAccessNoMutex(mainGCThread);
-
-		if (J9_XACCESS_EXCLUSIVE != _javaVM->safePointState) {
-			_javaVM->internalVMFunctions->releaseExclusiveVMAccessFromExternalThread(_javaVM);
-		}
+		_javaVM->internalVMFunctions->releaseExclusiveVMAccessMetronome(mainGCThread);
+		/* Set the exclusive access response counts to an unusual value,
+		 * just for debug purposes, so we can detect scenarios, when main
+		 * thread is waiting for Xaccess with noone requesting it before.
+		 */
+		_vmResponsesRequiredForExclusiveVMAccess = 0x7fffffff;
+		_jniResponsesRequiredForExclusiveVMAccess = 0x7fffffff;
 	}
-	/* Set the exclusive access response counts to an unusual value,
-	 * just for debug purposes, so we can detect scenarios, when main
-	 * thread is waiting for Xaccess with noone requesting it before.
-	 */
-	_vmResponsesRequiredForExclusiveVMAccess = 0x7fffffff;
-	_jniResponsesRequiredForExclusiveVMAccess = 0x7fffffff;
 }
 
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
