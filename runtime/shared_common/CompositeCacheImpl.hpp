@@ -140,7 +140,7 @@ public:
 
 	bool crashDetected(UDATA* localCrashCntr);
 
-	void reset(J9VMThread* currentThread);
+	void reset(J9VMThread* currentThread, bool canUnlockCache = true);
 
 	BlockPtr nextEntry(J9VMThread* currentThread, UDATA* staleItems);
 	
