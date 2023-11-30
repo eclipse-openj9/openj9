@@ -1610,7 +1610,7 @@ public class ValueTypeTests {
 
 		Object containerObject = containerClass.newInstance();
 		for (int i = 0; i < uclassDescArr.length; i++) {
-			MethodHandle makeDefaultValue = lookup.findStatic(valueClassArr[i], "makeValueTypeDefaultValue", MethodType.methodType(Object.class));
+			MethodHandle makeDefaultValue = lookup.findStatic(valueClassArr[i], "makeObject", MethodType.methodType(valueClassArr[i]));
 			Object valueObject = makeDefaultValue.invoke();
 			/*
 			 * Pass 0 or more to trigger execution of PUTFIELD against field that has a value type class
@@ -2454,7 +2454,7 @@ public class ValueTypeTests {
 	@Test(priority=2)
 	static public void testSynchMethodsOnRefTypes() throws Throwable {
 		Class<?> refTypeClass = ValueTypeGenerator.generateRefClass("TestSynchMethodsOnRefTypes");
-		MethodHandle makeRef = lookup.findStatic(refTypeClass, "makeRef", MethodType.methodType(refTypeClass));
+		MethodHandle makeRef = lookup.findStatic(refTypeClass, "makeObject", MethodType.methodType(refTypeClass));
 		Object refType = makeRef.invoke();
 
 		MethodHandle syncMethod = lookup.findVirtual(refTypeClass, "synchronizedMethodReturnInt", MethodType.methodType(int.class));
@@ -2791,8 +2791,8 @@ public class ValueTypeTests {
 		Class cycleA1Class = ValueTypeGenerator.generateValueClass("CycleA1", cycleA1);
 		Class cycleB1Class = ValueTypeGenerator.generateValueClass("CycleB1", cycleB1);
 
-		MethodHandle makeCycleA1 = lookup.findStatic(cycleA1Class, "makeValueGeneric", MethodType.methodType(Object.class));
-		MethodHandle makeCycleB1 = lookup.findStatic(cycleB1Class, "makeValueGeneric", MethodType.methodType(Object.class));
+		MethodHandle makeCycleA1 = lookup.findStatic(cycleA1Class, "makeObject", MethodType.methodType(cycleA1Class));
+		MethodHandle makeCycleB1 = lookup.findStatic(cycleB1Class, "makeObject", MethodType.methodType(cycleB1Class));
 
 		makeCycleA1.invoke();
 		makeCycleB1.invoke();
@@ -2808,9 +2808,9 @@ public class ValueTypeTests {
 		Class cycleB2Class = ValueTypeGenerator.generateValueClass("CycleB2", cycleB2);
 		Class cycleC2Class = ValueTypeGenerator.generateValueClass("CycleC2", cycleC2);
 
-		MethodHandle makeCycleA2 = lookup.findStatic(cycleA2Class, "makeValueGeneric", MethodType.methodType(Object.class));
-		MethodHandle makeCycleB2 = lookup.findStatic(cycleB2Class, "makeValueGeneric", MethodType.methodType(Object.class));
-		MethodHandle makeCycleC2 = lookup.findStatic(cycleB2Class, "makeValueGeneric", MethodType.methodType(Object.class));
+		MethodHandle makeCycleA2 = lookup.findStatic(cycleA2Class, "makeObject", MethodType.methodType(cycleA2Class));
+		MethodHandle makeCycleB2 = lookup.findStatic(cycleB2Class, "makeObject", MethodType.methodType(cycleB2Class));
+		MethodHandle makeCycleC2 = lookup.findStatic(cycleB2Class, "makeObject", MethodType.methodType(cycleB2Class));
 
 		makeCycleA2.invoke();
 		makeCycleB2.invoke();
@@ -2823,7 +2823,7 @@ public class ValueTypeTests {
 
 		Class cycleA3Class = ValueTypeGenerator.generateValueClass("CycleA3", cycleA3);
 
-		MethodHandle makeCycleA3 = lookup.findStatic(cycleA3Class, "makeValueGeneric", MethodType.methodType(Object.class));
+		MethodHandle makeCycleA3 = lookup.findStatic(cycleA3Class, "makeObject", MethodType.methodType(cycleA3Class));
 
 		makeCycleA3.invoke();
 	}
