@@ -22,7 +22,6 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <malloc.h>
-#include <math.h>
 #include <string.h>
 
 #include "objhelp.h"
@@ -1499,12 +1498,7 @@ criuCheckpointJVMImpl(JNIEnv *env,
 		UDATA success = 0;
 		bool safePoint = J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_OSR_SAFE_POINT);
 		UDATA maxRetries = vm->checkpointState.maxRetryForNotCheckpointSafe;
-		U_64 sleepNanoseconds = vm->checkpointState.sleepNanosecondsForNotCheckpointSafe;
-		U_64 sleepNanosecondsUpperBound = vm->checkpointState.sleepNanosecondsUpperBoundForNotCheckpointSafe;
-		UDATA percentageOfMaxRetryBeforeIncreasingSleepNanoseconds = vm->checkpointState.percentageOfMaxRetryBeforeIncreasingSleepNanosecondsForNotCheckpointSafe;
-		UDATA numIncreasesToSleepNanoseconds = maxRetries / percentageOfMaxRetryBeforeIncreasingSleepNanoseconds;
-		UDATA numRetriesBeforeIncreasingSleepNanoseconds = maxRetries / numIncreasesToSleepNanoseconds;
-		double sleepNanosecondsMultiplier = pow(sleepNanosecondsUpperBound / sleepNanoseconds, 1.0 / numIncreasesToSleepNanoseconds);
+		U_64 sleepMilliseconds = vm->checkpointState.sleepMillisecondsForNotCheckpointSafe;
 		BOOLEAN syslogFlagNone = TRUE;
 		char *syslogOptions = NULL;
 		I_32 syslogBufferSize = 0;
@@ -1659,12 +1653,7 @@ criuCheckpointJVMImpl(JNIEnv *env,
 		for (UDATA i = 0; (0 != notSafeToCheckpoint) && (i <= maxRetries); i++) {
 			releaseSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
 			vmFuncs->internalExitVMToJNI(currentThread);
-			omrthread_nanosleep(sleepNanoseconds);
-			if (((i % numRetriesBeforeIncreasingSleepNanoseconds) == (numRetriesBeforeIncreasingSleepNanoseconds - 1))
-				&& ((sleepNanoseconds * sleepNanosecondsMultiplier) <= sleepNanosecondsUpperBound)
-			) {
-				sleepNanoseconds *= sleepNanosecondsMultiplier;
-			}
+			omrthread_sleep(sleepMilliseconds);
 			vmFuncs->internalEnterVMFromJNI(currentThread);
 			acquireSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
 			notSafeToCheckpoint = checkIfSafeToCheckpoint(currentThread);
