@@ -27,7 +27,7 @@
 <suite id="J9 Criu Command-Line Option Tests" timeout="300">
   <variable name="MAINCLASS_TIMEOUTADJUSTMENT" value="org.openj9.criu.JDK11UpTimeoutAdjustmentTest" />
   <variable name="EXPORTS" value="--add-exports=java.base/jdk.internal.misc=ALL-UNNAMED --add-exports=java.base/openj9.internal.criu=ALL-UNNAMED"/>
-  <variable name="TRACECRIU" value="-Xtrace:print={j9criu}" />
+  <variable name="TRACECRIU" value="-Xtrace:print={j9vm.684-696,j9vm.699,j9vm.717-743}" />
 
   <test id="Create CRIU checkpoint image and restore once - testThreadPark">
     <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ $TRACECRIU$ $EXPORTS$" "$MAINCLASS_TIMEOUTADJUSTMENT$ testThreadPark" 1 1 false false</command>

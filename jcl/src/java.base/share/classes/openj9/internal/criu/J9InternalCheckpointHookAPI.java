@@ -1,6 +1,6 @@
 /*[INCLUDE-IF CRIU_SUPPORT]*/
 /*******************************************************************************
- * Copyright IBM Corp. and others 2021
+ * Copyright IBM Corp. and others 2023
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,13 +20,13 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
-package org.eclipse.openj9.criu;
+package openj9.internal.criu;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.eclipse.openj9.criu.CRIUSupport.HookMode;
+import openj9.internal.criu.InternalCRIUSupport.HookMode;
 
 final class J9InternalCheckpointHookAPI {
 
@@ -52,9 +52,9 @@ final class J9InternalCheckpointHookAPI {
 			throws UnsupportedOperationException {
 		// The hook mode and priority have been verified  by the caller.
 		J9InternalCheckpointHook internalHook = new J9InternalCheckpointHook(mode, priority, name, hook);
-		if (mode == CRIUSupport.HookMode.SINGLE_THREAD_MODE) {
+		if (mode == InternalCRIUSupport.HookMode.SINGLE_THREAD_MODE) {
 			postRestoreHooksSingleThread.add(internalHook);
-		} else if (mode == CRIUSupport.HookMode.CONCURRENT_MODE) {
+		} else if (mode == InternalCRIUSupport.HookMode.CONCURRENT_MODE) {
 			postRestoreHooksConcurrentThread.add(internalHook);
 		}
 	}
@@ -75,9 +75,9 @@ final class J9InternalCheckpointHookAPI {
 			throws UnsupportedOperationException {
 		// The hook mode and priority have been verified  by the caller.
 		J9InternalCheckpointHook internalHook = new J9InternalCheckpointHook(mode, priority, name, hook);
-		if (CRIUSupport.HookMode.SINGLE_THREAD_MODE == mode) {
+		if (InternalCRIUSupport.HookMode.SINGLE_THREAD_MODE == mode) {
 			preCheckpointHooksSingleThread.add(internalHook);
-		} else if (CRIUSupport.HookMode.CONCURRENT_MODE == mode) {
+		} else if (InternalCRIUSupport.HookMode.CONCURRENT_MODE == mode) {
 			preCheckpointHooksConcurrentThread.add(internalHook);
 		}
 	}
@@ -126,7 +126,7 @@ final class J9InternalCheckpointHookAPI {
 
 	final private static class J9InternalCheckpointHook implements Comparable<J9InternalCheckpointHook> {
 
-		private final CRIUSupport.HookMode hookMode;
+		private final InternalCRIUSupport.HookMode hookMode;
 		private final int priority;
 		private final Runnable hook;
 		private final String name;
@@ -144,7 +144,7 @@ final class J9InternalCheckpointHookAPI {
 			hook.run();
 		}
 
-		J9InternalCheckpointHook(CRIUSupport.HookMode hookMode, int priority, String name, Runnable hook) {
+		J9InternalCheckpointHook(InternalCRIUSupport.HookMode hookMode, int priority, String name, Runnable hook) {
 			this.hookMode = hookMode;
 			this.priority = priority;
 			this.hook = hook;
@@ -153,7 +153,7 @@ final class J9InternalCheckpointHookAPI {
 
 		@Override
 		public String toString() {
-			String hookModeStr = CRIUSupport.HookMode.SINGLE_THREAD_MODE == hookMode ? "single-threaded" : "concurrent"; //$NON-NLS-1$ //$NON-NLS-2$
+			String hookModeStr = InternalCRIUSupport.HookMode.SINGLE_THREAD_MODE == hookMode ? "single-threaded" : "concurrent"; //$NON-NLS-1$ //$NON-NLS-2$
 			return "[J9InternalCheckpointHook(" + hookModeStr + " mode): [" + name + "], priority:[" + priority //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 					+ "], runnable:[" + hook + "]]"; //$NON-NLS-1$ //$NON-NLS-2$
 		}

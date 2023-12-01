@@ -936,3 +936,28 @@ TraceEvent=Trc_VM_criu_jlVirtualThreadForkJoinPoolResetParallelism_same_cpucount
 TraceEvent=Trc_VM_criu_jlVirtualThreadForkJoinPoolResetParallelism_reset_parallelism Overhead=1 Level=5 Template="Reset j.l.VirtualThread.ForkJoinPool.parallelism: fjpObject(0x%p) parallelism(%zu) after restore"
 TraceException=Trc_VM_criu_initializeCriuHooks_Random_CNF Overhead=1 Level=3 Template="initializeCriuHooks() j.u.Random class not found"
 TraceException=Trc_VM_criu_jlVirtualThreadForkJoinPoolResetParallelism_DEFAULT_SCHEDULER_NULL Overhead=1 Level=3 Template="Reset j.l.VirtualThread.ForkJoinPool.parallelism: DEFAULT_SCHEDULER is NULL"
+
+TraceAssert=Assert_VM_criu_notNull noEnv Overhead=1 Level=1 Assert="(P1) != NULL"
+TraceAssert=Assert_VM_criu_true noEnv Overhead=1 Level=1 Assert="(P1)"
+
+TraceEvent=Trc_VM_criu_checkpointJVMImpl_checkpointWithActiveCLinit Overhead=1 Level=2 Template="Taking a checkpoint with active clinit"
+TraceEntry=Trc_VM_criu_checkpointJVMImpl_Entry Overhead=1 Level=2 Template="Java_openj9_internal_criu_CRIUSupport_checkpointJVMImpl"
+
+TraceEvent=Trc_VM_criu_before_checkpoint Overhead=1 Level=2 Template="Before checkpoint criu_dump(), j9time_nano_time() returns %lld, j9time_current_time_nanos() returns %llu"
+TraceEvent=Trc_VM_criu_checkpoint_nano_times Overhead=1 Level=2 Template="Before checkpoint, checkpointNanoTimeMonotonic = %lld, checkpointNanoUTCTime = %llu"
+TraceEvent=Trc_VM_criu_checkpointJVMImpl_checkIfSafeToCheckpointBlockedVer Overhead=1 Level=2 Template="Checkpoint blocked because thread=%p is in method=%p due to delay code %zu"
+TraceEvent=Trc_VM_criu_checkpointJVMImpl_syslogOptions Overhead=1 Level=3 Template="Current syslogOptions: %s"
+TraceEvent=Trc_VM_criu_after_checkpoint Overhead=1 Level=2 Template="After checkpoint criu_dump(), j9time_nano_time() returns %lld, j9time_current_time_nanos() returns %llu"
+TraceEvent=Trc_VM_criu_restore_nano_times Overhead=1 Level=2 Template="After restore, restoreNanoUTCTime = %llu, checkpointNanoUTCTime = %llu, checkpointRestoreTimeDelta = %lld, restoreNanoTimeMonotonic = %lld, checkpointNanoTimeMonotonic = %lld, nanoTimeMonotonicClockDelta = %lld"
+TraceEvent=Trc_VM_criu_restoreArg Overhead=1 Level=5 Test Template="Restore arg: %s"
+
+TraceException=Trc_VM_criu_checkpointJVMImpl_triggerOneOffJavaDump Overhead=1 Level=1 Template="checkpointJVMImpl triggerOneOffDump() returns %d"
+TraceException=Trc_VM_criu_getNativeString_getStringSizeFail Overhead=1 Level=1 Template="Failed to get Java string size: mutf8String=%s mutf8StringSize=%zu"
+TraceException=Trc_VM_criu_getNativeString_convertFail Overhead=1 Level=1 Template="Failed to convert Java string: mutf8String=%s mutf8StringSize=%zu requiredConvertedStringSize=%zd"
+TraceException=Trc_VM_criu_setupJNIFieldIDsAndCRIUAPI_load_criu_failure Overhead=1 Level=1 Template="setupJNIFieldIDsAndCRIUAPI() The JVM attempted to load libcriu.so but was unable to: %zi"
+TraceException=Trc_VM_criu_setupJNIFieldIDsAndCRIUAPI_not_find_criu_methods Overhead=1 Level=1 Template="setupJNIFieldIDsAndCRIUAPI() The JVM could not find critical criu functions in libcriu.so: %zi"
+TraceException=Trc_VM_criu_setupJNIFieldIDsAndCRIUAPI_null_exception_class Overhead=1 Level=1 Template="setupJNIFieldIDsAndCRIUAPI() criuJVMCheckpointExceptionClass(%p) criuSystemCheckpointExceptionClass(%p) criuJVMRestoreExceptionClass(%p) criuSystemRestoreExceptionClass(%p)"
+TraceException=Trc_VM_criu_setupJNIFieldIDsAndCRIUAPI_null_init Overhead=1 Level=1 Template="setupJNIFieldIDsAndCRIUAPI() criuSystemRestoreExceptionInit(%p) criuJVMRestoreExceptionInit(%p) criuSystemCheckpointExceptionInit(%p) criuJVMCheckpointExceptionInit(%p)"
+
+TraceExit=Trc_VM_criu_checkpointJVMImpl_Exit Overhead=1 Level=2 Template="Java_openj9_internal_criu_CRIUSupport_checkpointJVMImpl"
+TraceEvent=Trc_VM_criu_after_dump Overhead=1 Level=2 Template="After checkpoint criu_dump(), criuRestoreNanoTimeMonotonic (%lld), criuRestoreNanoUTCTime (%llu), lastRestoreTimeMillis (%lld)"

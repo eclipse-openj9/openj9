@@ -150,8 +150,8 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 
 	<classref name="jdk/internal/vm/Continuation" versions="19-"/>
 
-	<classref name="org/eclipse/openj9/criu/JVMCheckpointException" flags="opt_criuSupport"/>
-	<classref name="org/eclipse/openj9/criu/JVMRestoreException" flags="opt_criuSupport"/>
+	<classref name="openj9/internal/criu/JVMCheckpointException" flags="opt_criuSupport"/>
+	<classref name="openj9/internal/criu/JVMRestoreException" flags="opt_criuSupport"/>
 
 	<!-- Class references needed to support Foreign Linker API. -->
 	<classref name="openj9/internal/foreign/abi/InternalDowncallHandler" flags="opt_openjdkFfi" versions="17-"/>

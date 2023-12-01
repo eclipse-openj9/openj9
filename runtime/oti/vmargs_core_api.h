@@ -59,6 +59,10 @@ typedef struct J9JavaVMArgInfoList {
 #define RC_FAILED -70
 #define RC_MALFORMED -71
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 J9JavaVMArgInfo *
 newJavaVMArgInfo(J9JavaVMArgInfoList *vmArgumentsList, char *optString, uintptr_t flags);
 
@@ -112,5 +116,9 @@ parseOptionsFileText(J9PortLibrary* portLibrary, const char* fileText, J9JavaVMA
  */
 intptr_t
 parseHypervisorEnvVar(J9PortLibrary *portLib, char *argBuffer, J9JavaVMArgInfoList *hypervisorArgumentsList);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* vmargs_core_api_h */
