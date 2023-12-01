@@ -26,7 +26,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Array;
 
-import static org.openj9.test.lworld.ValueTypeTests.*;
+import static org.openj9.test.lworld.ValueTypeTestClasses.*;
 
 public class DDRValueTypeTest {
 	public static void main(String[] args) {
@@ -51,7 +51,7 @@ public class DDRValueTypeTest {
 		array[0] = assortedValueWithSingleAlignment;
 		array[1] = assortedValueWithSingleAlignmentAlt;
 
-		checkObject(assortedValueWithSingleAlignment,
+		ValueTypeTests.checkObject(assortedValueWithSingleAlignment,
 				assortedValueWithSingleAlignmentAlt,
 				array
 				);

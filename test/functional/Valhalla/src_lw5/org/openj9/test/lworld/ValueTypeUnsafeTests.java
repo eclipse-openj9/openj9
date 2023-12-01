@@ -35,8 +35,6 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import static org.openj9.test.lworld.ValueTypeTestClasses.*;
-import static org.openj9.test.lworld.ValueTypeTests.*;
-
 
 @Test(groups = { "level.sanity" })
 public class ValueTypeUnsafeTests {
