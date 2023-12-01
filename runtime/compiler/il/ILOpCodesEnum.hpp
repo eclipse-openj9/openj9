@@ -26,7 +26,7 @@
 #include "compiler/il/OMRILOpCodesEnum.hpp" 
 
    FirstJ9Op = LastScalarOMROp + 1,
-   LastJ9Op = BCDCHK,
+   LastJ9Op = zdchk,
    FirstTROp = FirstOMROp,
    LastTROp = LastJ9Op,
 

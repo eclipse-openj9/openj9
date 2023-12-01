@@ -211,6 +211,7 @@ class TR_DataAccessAccelerator : public TR::Optimization
    TR::Node* insertDecimalSetIntrinsic(TR::TreeTop* callTreeTop, TR::Node* callNode, int32_t sourceNumBytes, int32_t targetNumBytes);
 
    bool inlineCheckPackedDecimal(TR::TreeTop* callTreeTop, TR::Node* callNode);
+   bool inlineCheckExternalDecimal(TR::TreeTop* callTreeTop, TR::Node* callNode);
 
    private:
 

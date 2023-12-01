@@ -2615,6 +2615,14 @@ void TR_ResolvedJ9Method::construct()
       {TR::unknownMethod}
    };
 
+   static X DataAccessExternalDecimalMethods[] =
+   {
+      {x(TR::com_ibm_dataaccess_ExternalDecimal_checkExternalDecimal , "checkExternalDecimal" , "([BIIII)I")},
+      {x(TR::com_ibm_dataaccess_ExternalDecimal_checkExternalDecimal_, "checkExternalDecimal_", "([BIIII)I")},
+
+      {TR::unknownMethod}
+   };
+
 
    static X BigDecimalMethods[] =
       {
@@ -4289,6 +4297,7 @@ void TR_ResolvedJ9Method::construct()
       { "java/util/Hashtable$HashEnumerator", HashtableHashEnumeratorMethods },
       { "com/ibm/Compiler/Internal/Prefetch", PrefetchMethods },
       { "java/lang/invoke/VarHandleInternal", VarHandleMethods },
+      { "com/ibm/dataaccess/ExternalDecimal", DataAccessExternalDecimalMethods },
       { 0 }
       };
 

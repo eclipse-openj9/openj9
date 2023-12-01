@@ -343,6 +343,14 @@ int32_t TR_DataAccessAccelerator::performOnBlock(TR::Block* block, TreeTopContai
                      ++result;
                      }
                   break;
+               // DAA External Decimal Check
+               case TR::com_ibm_dataaccess_ExternalDecimal_checkExternalDecimal_:
+                  if (comp()->target().cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL_ENHANCEMENT_FACILITY_3)
+                        && inlineCheckExternalDecimal(treeTop, callNode))
+                     {
+                     ++result;
+                     }
+                  break;
 
                default:
                   matched = false;
@@ -845,6 +853,99 @@ bool TR_DataAccessAccelerator::inlineCheckPackedDecimal(TR::TreeTop *callTreeTop
 
    return false;
    }
+
+bool TR_DataAccessAccelerator::inlineCheckExternalDecimal(TR::TreeTop *callTreeTop, TR::Node *callNode)
+   {
+   TR::Node *byteArrayNode = callNode->getChild(0);
+   TR::Node *offsetNode = callNode->getChild(1);
+   TR::Node *precisionNode = callNode->getChild(2);
+   TR::Node *typeNode = callNode->getChild(3);
+   TR::Node *bytesWithSpacesNode = callNode->getChild(4);
+
+   int32_t precision = precisionNode->getInt();
+   int32_t bytesWithSpaces = bytesWithSpacesNode->getInt();
+   int32_t type = typeNode->getInt();
+   const char *failMsg = NULL;
+
+   /* Hardware expects both, precision and bytesWithSpaces to be
+    * 5 bit unsigned binary integer. However, 0 is valid only for
+    * bytesWithSpaces. This is why precision must be within [1-31]
+    * range and bytesWithSpaces must be within [0-31] range.
+    */
+   // TODO: Add support for non-constant arguments
+   if (!isChildConst(callNode, 2))
+      failMsg = "Precision is not constant";
+   else if (precision < 1 || precision > 31)
+      failMsg = "Precision value is not in valid range [1-31]";
+   else if (!isChildConst(callNode, 3))
+      failMsg = "Decimal type node is not constant";
+   else if (type < 1 || type > 4)
+      failMsg = "Invalid decimal type. Supported types are (1|2|3|4)";
+   else if (!isChildConst(callNode, 4))
+      failMsg = "bytesWithSpaces node is not constant";
+   else if (bytesWithSpaces < 0 || bytesWithSpaces > 31)
+      failMsg = "bytesWithSpaces value not in valid range [0-31]";
+
+   if (failMsg)
+      {
+      TR::DebugCounter::incStaticDebugCounter(comp(),
+                                               TR::DebugCounter::debugCounterName(comp(),
+                                                                                  "DAA/rejected/chkZonedDecimal"));
+
+      return printInliningStatus (false, callNode, failMsg);
+      }
+
+   if (performTransformation(comp(), "O^O TR_DataAccessAccelerator: inlineCheckZonedDecimal on callNode %p\n", callNode))
+      {
+      TR::DebugCounter::incStaticDebugCounter(comp(),
+                                              TR::DebugCounter::debugCounterName(comp(),
+                                                                                 "DAA/inlined/chkZonedDecimal"));
+
+      insertByteArrayNULLCHK(callTreeTop, callNode, byteArrayNode);
+
+      TR::DataType decimalType = TR::DataTypes::NoType;
+      TR::ILOpCodes loadOpCode = TR::BadILOp;
+      if (type == 1)
+         {
+         decimalType = TR::ZonedDecimal;
+         loadOpCode = TR::zdloadi;
+         }
+      else if (type == 2)
+         {
+         decimalType = TR::ZonedDecimalSignLeadingEmbedded;
+         loadOpCode = TR::zdsleLoadi;
+         }
+      else if (type == 3)
+         {
+         decimalType = TR::ZonedDecimalSignTrailingSeparate;
+         loadOpCode = TR::zdstsLoadi;
+         }
+      else if (type == 4)
+         {
+         decimalType = TR::ZonedDecimalSignLeadingSeparate;
+         loadOpCode = TR::zdslsLoadi;
+         }
+      int32_t precisionSizeInNumberOfBytes = TR::DataType::getSizeFromBCDPrecision(decimalType, precision);
+
+      insertByteArrayBNDCHK(callTreeTop, callNode, byteArrayNode, offsetNode, 0);
+      insertByteArrayBNDCHK(callTreeTop, callNode, byteArrayNode, offsetNode, precisionSizeInNumberOfBytes - 1);
+
+      TR::SymbolReference* zonedDecimalSymbolReference = comp()->getSymRefTab()->findOrCreateArrayShadowSymbolRef(decimalType, NULL, precisionSizeInNumberOfBytes, fe());
+      TR::Node* zdchkChild0Node = TR::Node::createWithSymRef(loadOpCode, 1, 1, constructAddressNode(callNode, byteArrayNode, offsetNode), zonedDecimalSymbolReference);
+      zdchkChild0Node->setDecimalPrecision(precision);
+
+      byteArrayNode->decReferenceCount();
+      offsetNode->decReferenceCount();
+      precisionNode->decReferenceCount();
+      typeNode->decReferenceCount();
+
+      TR::Node* bytesWithSpacesConstNode = TR::Node::bconst(static_cast<uint8_t>(bytesWithSpaces));
+      TR::Node::recreateWithoutProperties(callNode, TR::zdchk, 2, zdchkChild0Node, bytesWithSpacesConstNode);
+      return true;
+      }
+
+   return false;
+}
 
 TR::Node* TR_DataAccessAccelerator::insertIntegerGetIntrinsic(TR::TreeTop* callTreeTop, TR::Node* callNode, int32_t sourceNumBytes, int32_t targetNumBytes)
    {
