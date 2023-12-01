@@ -456,7 +456,7 @@ SH_CompositeCacheImpl::crashDetected(UDATA* localCrashCntr)
  * @param [in] currentThread  Pointer to J9VMThread structure for the current thread
  */
 void
-SH_CompositeCacheImpl::reset(J9VMThread* currentThread)
+SH_CompositeCacheImpl::reset(J9VMThread* currentThread, bool canUnlockCache)
 {
 	if (!_started) {
 		Trc_SHR_Assert_ShouldNeverHappen();
@@ -475,8 +475,10 @@ SH_CompositeCacheImpl::reset(J9VMThread* currentThread)
 	_maxAOTUnstoredBytes = 0;
 	_maxJITUnstoredBytes = 0;
 
-	/* If cache is locked, unlock it */
-	doUnlockCache(currentThread);
+	if (canUnlockCache) {
+		/* If cache is locked, unlock it */
+		doUnlockCache(currentThread);
+	}
 
 	Trc_SHR_CC_reset_Exit(currentThread);
 }
