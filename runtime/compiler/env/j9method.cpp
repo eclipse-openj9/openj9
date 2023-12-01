@@ -2617,6 +2617,14 @@ void TR_ResolvedJ9Method::construct()
       {TR::unknownMethod}
    };
 
+   static X DataAccessExternalDecimalMethods[] =
+   {
+      {x(TR::com_ibm_dataaccess_ExternalDecimal_checkExternalDecimal , "checkExternalDecimal" , "([BIIII)I")},
+      {x(TR::com_ibm_dataaccess_ExternalDecimal_checkExternalDecimal_, "checkExternalDecimal_", "([BIIII)I")},
+
+      {TR::unknownMethod}
+   };
+
 
    static X BigDecimalMethods[] =
       {
@@ -4291,6 +4299,7 @@ void TR_ResolvedJ9Method::construct()
       { "java/util/Hashtable$HashEnumerator", HashtableHashEnumeratorMethods },
       { "com/ibm/Compiler/Internal/Prefetch", PrefetchMethods },
       { "java/lang/invoke/VarHandleInternal", VarHandleMethods },
+      { "com/ibm/dataaccess/ExternalDecimal", DataAccessExternalDecimalMethods },
       { 0 }
       };
 
@@ -9827,9 +9836,16 @@ TR_ResolvedJ9Method::isFieldFlattened(TR::Compilation *comp, int32_t cpIndex, bo
    }
 
 bool
+TR_ResolvedJ9Method::isDAAExternalDecimalWrapperMethod()
+   {
+   // DAA External Decimal check method
+   return (this->TR_ResolvedMethod::getRecognizedMethod() == TR::com_ibm_dataaccess_ExternalDecimal_checkExternalDecimal);
+   }
+
+bool
 TR_ResolvedJ9Method::isDAAWrapperMethod()
    {
-   return isDAAMarshallingWrapperMethod() || isDAAPackedDecimalWrapperMethod();
+   return isDAAMarshallingWrapperMethod() || isDAAPackedDecimalWrapperMethod() || isDAAExternalDecimalWrapperMethod();
    }
 
 bool
@@ -9971,9 +9987,16 @@ TR_ResolvedJ9Method::isDAAPackedDecimalWrapperMethod()
    }
 
 bool
+TR_ResolvedJ9Method::isDAAExternalDecimalIntrinsicMethod()
+   {
+   // DAA External Decimal check method
+   return (this->TR_ResolvedMethod::getRecognizedMethod() == TR::com_ibm_dataaccess_ExternalDecimal_checkExternalDecimal_);
+   }
+
+bool
 TR_ResolvedJ9Method::isDAAIntrinsicMethod()
    {
-   return isDAAMarshallingIntrinsicMethod() || isDAAPackedDecimalIntrinsicMethod();
+   return isDAAMarshallingIntrinsicMethod() || isDAAPackedDecimalIntrinsicMethod() || isDAAExternalDecimalIntrinsicMethod();
    }
 
 bool

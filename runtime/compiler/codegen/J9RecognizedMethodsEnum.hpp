@@ -724,6 +724,12 @@
    com_ibm_dataaccess_PackedDecimal_movePackedDecimal_,
    com_ibm_dataaccess_PackedDecimal_checkPackedDecimal_,
 
+   // wrapper methods
+   com_ibm_dataaccess_ExternalDecimal_checkExternalDecimal,
+
+   //inline methods
+   com_ibm_dataaccess_ExternalDecimal_checkExternalDecimal_,
+
    com_ibm_Compiler_Internal__TR_Prefetch,
 
    com_ibm_Compiler_Internal_Quad_enableQuadOptimization,

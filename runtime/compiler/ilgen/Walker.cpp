@@ -4190,6 +4190,8 @@ break
       DAA_PRINT(TR::com_ibm_dataaccess_PackedDecimal_shiftRightPackedDecimal);
       DAA_PRINT(TR::com_ibm_dataaccess_PackedDecimal_movePackedDecimal);
 
+      DAA_PRINT(TR::com_ibm_dataaccess_ExternalDecimal_checkExternalDecimal);
+
       default:
          break;
       }
