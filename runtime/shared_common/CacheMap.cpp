@@ -1221,7 +1221,7 @@ SH_CacheMap::readCache(J9VMThread* currentThread, SH_CompositeCacheImpl* cache, 
 
 /* THREADING: MUST be protected by cache write mutex - therefore single-threaded within this JVM */
 IDATA
-SH_CacheMap::checkForCrash(J9VMThread* currentThread, bool hasClassSegmentMutex)
+SH_CacheMap::checkForCrash(J9VMThread* currentThread, bool hasClassSegmentMutex, bool canUnlockCache)
 {
 	IDATA rc = 0;
 	PORT_ACCESS_FROM_PORT(_portlib);
@@ -1235,7 +1235,7 @@ SH_CacheMap::checkForCrash(J9VMThread* currentThread, bool hasClassSegmentMutex)
 		if (resetAllManagers(currentThread) != 0) {
 			return -1;
 		}
-		_cc->reset(currentThread);
+		_cc->reset(currentThread, canUnlockCache);
 		rc = refreshHashtables(currentThread, hasClassSegmentMutex);
 	}
 	return rc;
@@ -1567,7 +1567,7 @@ SH_CacheMap::addClasspathToCache(J9VMThread* currentThread, ClasspathItem* obj)
  * @return the number of items read, or -1 on error
  */
 IDATA
-SH_CacheMap::runEntryPointChecks(J9VMThread* currentThread, void* address, const char** p_subcstr)
+SH_CacheMap::runEntryPointChecks(J9VMThread* currentThread, void* address, const char** p_subcstr, bool canUnlockCache)
 {
 	bool hasClassSegmentMutex = false;
 	IDATA itemsAdded;
@@ -1600,7 +1600,7 @@ SH_CacheMap::runEntryPointChecks(J9VMThread* currentThread, void* address, const
 	if (!_ccHead->isRunningReadOnly()) {
 		if (_ccHead->hasWriteMutex(currentThread)) {
 			/* Can only call this function if we have the write mutex */
-			rc = checkForCrash(currentThread, hasClassSegmentMutex);
+			rc = checkForCrash(currentThread, hasClassSegmentMutex, canUnlockCache);
 			if(rc < 0) {
 				Trc_SHR_CM_runEntryPointChecks_Exit_Failed4(currentThread);
 				return rc;
@@ -2975,7 +2975,7 @@ SH_CacheMap::updateROMClassResource(J9VMThread* currentThread, const void* addre
 		}
 		hasWriteMutex = true;
 
-		if (runEntryPointChecks(currentThread, (void*)addressInCache, p_subcstr) == -1) {
+		if (runEntryPointChecks(currentThread, (void*)addressInCache, p_subcstr, false) == -1) {
 			Trc_SHR_CM_updateROMClassResource_Exit3(currentThread);
 			result = J9SHR_RESOURCE_STORE_ERROR;
 			break;
@@ -4410,7 +4410,7 @@ SH_CacheMap::markStale(J9VMThread* currentThread, ClasspathEntryItem* cpei, bool
 	currentThread->omrVMThread->vmState = J9VMSTATE_SHAREDCLASS_MARKSTALE;
 	while (retryCount < MARK_STALE_RETRY_TIMES) {
 		if (hasWriteMutex || (_ccHead->enterWriteMutex(currentThread, true,fnName)==0)) {	/* true = lockCache */
-			if (runEntryPointChecks(currentThread, NULL, NULL) == -1) {
+			if (runEntryPointChecks(currentThread, NULL, NULL, false) == -1) {
 				if (!hasWriteMutex) {
 					_ccHead->exitWriteMutex(currentThread, fnName);		/* Will unlock cache */
 				}
