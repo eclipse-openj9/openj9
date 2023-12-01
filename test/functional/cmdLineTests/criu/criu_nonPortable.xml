@@ -190,7 +190,7 @@
   </test>
 
   <test id="Create CRIU checkpoint image and restore once - testGetLastRestoreTime">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -Xtrace:print=j9criu --add-exports java.base/openj9.internal.criu=ALL-UNNAMED" $MAINCLASS_TIMECHANGE$ testGetLastRestoreTime 1 false false</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -Xtrace:print={j9vm.684-696,j9vm.699,j9vm.717-743} --add-exports java.base/openj9.internal.criu=ALL-UNNAMED" $MAINCLASS_TIMECHANGE$ testGetLastRestoreTime 1 false false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="success" caseSensitive="yes" regex="no">PASSED: InternalCRIUSupport.getLastRestoreTime()</output>
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
@@ -206,7 +206,7 @@
   </test>
 
   <test id="Create CRIU checkpoint image and restore once - testMXBeanUpTime">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -Xtrace:print={j9criu,j9jcl.533} --add-exports java.base/openj9.internal.criu=ALL-UNNAMED" $MAINCLASS_TIMECHANGE$ testMXBeanUpTime 1 false false</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -Xtrace:print={j9jcl.533,j9vm.684-696,j9vm.699,j9vm.717-743} --add-exports java.base/openj9.internal.criu=ALL-UNNAMED" $MAINCLASS_TIMECHANGE$ testMXBeanUpTime 1 false false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="success" caseSensitive="yes" regex="no">PASSED: testMXBeanUpTime()</output>
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
@@ -275,7 +275,7 @@
   </test>
 
   <test id="Create and Restore Criu Checkpoint Image once - NotCheckpointSafeDeadlock">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -XX:+ThrowOnDelayedCheckpointOperation -Xtrace:print=j9criu.17 --add-opens java.base/jdk.internal.misc=ALL-UNNAMED  --add-exports java.base/openj9.internal.criu=ALL-UNNAMED" $MAINCLASS_DEADLOCK_TEST$ NotCheckpointSafeDeadlock 1</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -XX:+ThrowOnDelayedCheckpointOperation -Xtrace:print=j9vm.731 --add-opens java.base/jdk.internal.misc=ALL-UNNAMED  --add-exports java.base/openj9.internal.criu=ALL-UNNAMED" $MAINCLASS_DEADLOCK_TEST$ NotCheckpointSafeDeadlock 1</command>
     <output type="success" caseSensitive="yes" regex="no">User requested Java dump using</output>
     <output type="success" caseSensitive="yes" regex="no">TEST PASSED</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
@@ -294,7 +294,7 @@
 
 <!--
   <test id="Create and Restore Criu Checkpoint Image once - MethodTypeDeadlockTest">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -XX:+ThrowOnDelayedCheckpointOperation -Xtrace:print=j9criu.17 -fix-add-opens java.base/jdk.internal.misc=ALL-UNNAMED  -fix-add-exports java.base/openj9.internal.criu=ALL-UNNAMED" $MAINCLASS_DEADLOCK_TEST$ MethodTypeDeadlockTest 1</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -XX:+ThrowOnDelayedCheckpointOperation -Xtrace:print=j9vm.731 -fix-add-opens java.base/jdk.internal.misc=ALL-UNNAMED  -fix-add-exports java.base/openj9.internal.criu=ALL-UNNAMED" $MAINCLASS_DEADLOCK_TEST$ MethodTypeDeadlockTest 1</command>
     <output type="success" caseSensitive="yes" regex="no">User requested Java dump using</output>
     <output type="success" caseSensitive="yes" regex="no">TEST PASSED</output>
     <output type="failure" caseSensitive="yes" regex="no">TEST FAILED</output>
@@ -313,7 +313,7 @@
   </test>
 -->
   <test id="Create and Restore Criu Checkpoint Image once - clinitTest">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -XX:+ThrowOnDelayedCheckpointOperation -Xdump:system:events=user -Xtrace:print=j9criu.17 --add-opens java.base/jdk.internal.misc=ALL-UNNAMED  --add-exports java.base/openj9.internal.criu=ALL-UNNAMED" $MAINCLASS_DEADLOCK_TEST$ ClinitTest 1</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -XX:+ThrowOnDelayedCheckpointOperation -Xdump:system:events=user -Xtrace:print=j9vm.731 --add-opens java.base/jdk.internal.misc=ALL-UNNAMED  --add-exports java.base/openj9.internal.criu=ALL-UNNAMED" $MAINCLASS_DEADLOCK_TEST$ ClinitTest 1</command>
     <output type="success" caseSensitive="yes" regex="no">User requested Java dump using</output>
     <output type="success" caseSensitive="yes" regex="no">TEST PASSED</output>
     <output type="failure" caseSensitive="yes" regex="no">TEST FAILED</output>
@@ -332,7 +332,7 @@
   </test>
 
   <test id="Create and Restore Criu Checkpoint Image once - clinitTest2">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -XX:-ThrowOnDelayedCheckpointOperation -Xdump:system:events=user -Xtrace:print=j9criu.17 --add-opens java.base/jdk.internal.misc=ALL-UNNAMED  --add-exports java.base/openj9.internal.criu=ALL-UNNAMED" $MAINCLASS_DEADLOCK_TEST$ ClinitTest 1</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -XX:-ThrowOnDelayedCheckpointOperation -Xdump:system:events=user -Xtrace:print=j9vm.731 --add-opens java.base/jdk.internal.misc=ALL-UNNAMED  --add-exports java.base/openj9.internal.criu=ALL-UNNAMED" $MAINCLASS_DEADLOCK_TEST$ ClinitTest 1</command>
     <output type="success" caseSensitive="yes" regex="no">User requested Java dump using</output>
     <output type="success" caseSensitive="yes" regex="no">TEST PASSED</output>
     <output type="failure" caseSensitive="yes" regex="no">TEST FAILED</output>
@@ -531,7 +531,7 @@
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="Envvar test5">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -Xtrace:print=j9criu.16" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest5 1</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -Xtrace:print=j9vm.735" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest5 1</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
@@ -550,7 +550,7 @@
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="Envvar test6">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -Xtrace:print=j9criu.16" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest6 1</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -Xtrace:print=j9vm.735" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest6 1</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
@@ -569,7 +569,7 @@
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="Envvar test7">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -Xtrace:print=j9criu.16" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest7 1</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -Xtrace:print=j9vm.735" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest7 1</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
@@ -588,7 +588,7 @@
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="Envvar test8">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -Xtrace:print=j9criu.16" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest8 1</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -Xtrace:print=j9vm.735" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest8 1</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
@@ -655,7 +655,7 @@
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="Envvar test12">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -Xtrace:print=j9criu.16" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest12 1</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -Xtrace:print=j9vm.735" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest12 1</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
@@ -1032,7 +1032,7 @@
   </test>
 
   <test id="Create CRIU checkpoint image and restore once - testTimeCompensation">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -Xtrace:print={j9criu,j9jcl.533} --add-exports java.base/openj9.internal.criu=ALL-UNNAMED" $MAINCLASS_TIMECHANGE$ testTimeCompensation 1 false false</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -Xtrace:print={j9jcl.533,j9vm.684-696,j9vm.699,j9vm.717-743} --add-exports java.base/openj9.internal.criu=ALL-UNNAMED" $MAINCLASS_TIMECHANGE$ testTimeCompensation 1 false false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="success" caseSensitive="yes" regex="no">PASSED: testTimeCompensation</output>
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>

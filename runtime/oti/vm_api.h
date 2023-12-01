@@ -648,6 +648,44 @@ addInternalJVMClassIterationRestoreHook(J9VMThread *currentThread, classIteratio
 
 jobject
 getRestoreSystemProperites(J9VMThread *currentThread);
+
+/**
+ * @brief This function setup JNI fields and CRIU APIs before performing a checkpoint, only once.
+ *
+ * @param[in] env JNI environment
+ * @param[in/out] currentExceptionClass current exception class
+ * @param[in/out] systemReturnCode the system return code
+ * @param[in/out] nlsMsgFormat an NLS message
+ *
+ * @return BOOLEAN TRUE if no error, otherwise FALSE
+ */
+BOOLEAN
+setupJNIFieldIDsAndCRIUAPI(JNIEnv *env, jclass *currentExceptionClass, IDATA *systemReturnCode, const char **nlsMsgFormat);
+
+/**
+ * @brief This function performs a CRIU checkpoint using the options supplied.
+ *
+ * @param[in] env JNI environment
+ * @param[in] imagesDir the directory that will hold the images upon checkpoint
+ * @param[in] leaveRunning controls whether process trees are left running after checkpoint
+ * @param[in] shellJob controls ability to dump shell jobs
+ * @param[in] extUnixSupport controls whether to dump only one end of a unix socket pair
+ * @param[in] logLevel the verbosity of log output
+ * @param[in] logFile write log output to logFile
+ * @param[in] fileLocks controls whether to dump file locks
+ * @param[in] workDir the directory where non-image files are stored (e.g. logs)
+ * @param[in] tcpEstablished controls whether to re-establish TCP connects
+ * @param[in] autoDedup controls whether auto dedup of memory pages is enabled
+ * @param[in] trackMemory controls whether memory tracking is enabled
+ * @param[in] unprivileged controls whether CRIU will be invoked in privileged or unprivileged mode
+ * @param[in] optionsFile the file that contains the new JVM options to be added on restore
+ * @param[in] environmentFile the file that contains the new environment variables to be added
+ *
+ * @return void
+ */
+void JNICALL
+criuCheckpointJVMImpl(JNIEnv *env, jstring imagesDir, jboolean leaveRunning, jboolean shellJob, jboolean extUnixSupport, jint logLevel, jstring logFile, jboolean fileLocks,
+		jstring workDir, jboolean tcpEstablished, jboolean autoDedup, jboolean trackMemory, jboolean unprivileged, jstring optionsFile, jstring environmentFile);
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 /* ---------------- classloadersearch.c ---------------- */

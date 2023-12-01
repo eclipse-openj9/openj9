@@ -24,7 +24,6 @@ add_tracegen(j9criu.tdf)
 
 j9vm_add_library(j9criu SHARED
 	OUTPUT_NAME j9criu${J9VM_VERSION_SUFFIX}
-	criusupport.cpp
 
 	${CMAKE_CURRENT_BINARY_DIR}/ut_j9criu.c
 )
@@ -39,12 +38,7 @@ add_dependencies(j9vm_interface j9vm_m4gen)
 target_link_libraries(j9criu
 	PRIVATE
 		j9vm_interface
-		j9vm_gc_includes
 		j9util
-		j9thr
-		dl
-		j9utilcore
-		j9pool
 )
 
 include(exports.cmake)

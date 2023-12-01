@@ -420,6 +420,8 @@ J9InternalVMFunctions J9InternalFunctions = {
 	addInternalJVMClassIterationRestoreHook,
 	setCRIUSingleThreadModeJVMCRIUException,
 	getRestoreSystemProperites,
+	setupJNIFieldIDsAndCRIUAPI,
+	criuCheckpointJVMImpl,
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 	getClassNameString,
 	getDefaultValueSlotAddress,

@@ -84,5 +84,50 @@ Java_openj9_internal_criu_InternalCRIUSupport_enableCRIUSecProviderImpl(JNIEnv *
 
 	return res;
 }
+
+jboolean JNICALL
+Java_openj9_internal_criu_InternalCRIUSupport_setupJNIFieldIDsAndCRIUAPI(JNIEnv *env, jclass unused)
+{
+	jclass currentExceptionClass = NULL;
+	IDATA systemReturnCode = 0;
+	const char *nlsMsgFormat = NULL;
+
+	return ((J9VMThread *)env)->javaVM->internalVMFunctions->setupJNIFieldIDsAndCRIUAPI(env, &currentExceptionClass, &systemReturnCode, &nlsMsgFormat) ? JNI_TRUE : JNI_FALSE;
+}
+
+void JNICALL
+Java_openj9_internal_criu_InternalCRIUSupport_checkpointJVMImpl(JNIEnv *env,
+		jclass unused,
+		jstring imagesDir,
+		jboolean leaveRunning,
+		jboolean shellJob,
+		jboolean extUnixSupport,
+		jint logLevel,
+		jstring logFile,
+		jboolean fileLocks,
+		jstring workDir,
+		jboolean tcpEstablished,
+		jboolean autoDedup,
+		jboolean trackMemory,
+		jboolean unprivileged,
+		jstring optionsFile,
+		jstring environmentFile)
+{
+	((J9VMThread*)env)->javaVM->internalVMFunctions->criuCheckpointJVMImpl(env, imagesDir, leaveRunning, shellJob, extUnixSupport, logLevel, logFile, fileLocks, workDir, tcpEstablished, autoDedup, trackMemory, unprivileged, optionsFile, environmentFile);
+}
+
+jobject JNICALL
+Java_openj9_internal_criu_InternalCRIUSupport_getRestoreSystemProperites(JNIEnv *env, jclass unused)
+{
+	J9VMThread *currentThread = (J9VMThread*)env;
+	J9JavaVM *vm = currentThread->javaVM;
+	jobject systemProperties = NULL;
+
+	if (NULL != vm->checkpointState.restoreArgsList) {
+		systemProperties = vm->internalVMFunctions->getRestoreSystemProperites(currentThread);
+	}
+
+	return systemProperties;
+}
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 }

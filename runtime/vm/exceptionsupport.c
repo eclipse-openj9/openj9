@@ -1303,13 +1303,13 @@ setCRIUSingleThreadModeJVMCRIUException(J9VMThread *vmThread, U_32 moduleName, U
 	}
 	msg = OMRPORT_FROM_J9PORT(PORTLIB)->nls_lookup_message(OMRPORT_FROM_J9PORT(PORTLIB), J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, moduleName, messageNumber, NULL);
 
-	/* set org.eclipse.openj9.criu.JVMCheckpointException or JVMRestoreException */
+	/* set openj9.internal.criu.JVMCheckpointException or JVMRestoreException */
 	if (0 == vm->checkpointState.checkpointRestoreTimeDelta) {
 		/* throw JVMCheckpointException at checkpoint */
-		setCurrentExceptionUTF(vmThread, J9VMCONSTANTPOOL_ORGECLIPSEOPENJ9CRIUJVMCHECKPOINTEXCEPTION, msg);
+		setCurrentExceptionUTF(vmThread, J9VMCONSTANTPOOL_OPENJ9INTERNALCRIUJVMCHECKPOINTEXCEPTION, msg);
 	} else {
 		/* throw JVMRestoreException at restore */
-		setCurrentExceptionUTF(vmThread, J9VMCONSTANTPOOL_ORGECLIPSEOPENJ9CRIUJVMRESTOREEXCEPTION, msg);
+		setCurrentExceptionUTF(vmThread, J9VMCONSTANTPOOL_OPENJ9INTERNALCRIUJVMRESTOREEXCEPTION, msg);
 	}
 	rc = vm->j9rasDumpFunctions->triggerOneOffDump(vm, "java", "CRIUSingleThreadModeJVMCRIUException", NULL, 0);
 	Trc_VM_criu_setSingleThreadModeJVMCRIUException_triggerOneOffJavaDump(vmThread, rc);

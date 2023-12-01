@@ -55,6 +55,10 @@
 #define ENV_LD_LIB_PATH "LD_LIBRARY_PATH"
 #endif /* defined(OSX) */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Walks the j9vm_args to find the entry for a given argument. optionValue can be
  * specified to find a specific value for the option, such as -Xverify:none or can be NULL.
@@ -287,5 +291,9 @@ createJvmInitArgs(J9PortLibrary * portLib, JavaVMInitArgs *launcherArgs, J9JavaV
  */
 void
 destroyJvmInitArgs(J9PortLibrary * portLib, J9VMInitArgs *vmArgumentsList);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* vmargs_api_h */
