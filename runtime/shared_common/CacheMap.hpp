@@ -265,7 +265,7 @@ public:
 
 	bool isCacheCorruptReported(void);
 
-	IDATA runEntryPointChecks(J9VMThread* currentThread, void* isAddressInCache, const char** subcstr);
+	IDATA runEntryPointChecks(J9VMThread* currentThread, void* isAddressInCache, const char** subcstr, bool canUnlockCache = true);
 
 	void protectPartiallyFilledPages(J9VMThread *currentThread);
 
@@ -364,7 +364,7 @@ private:
 
 	UDATA initializeROMSegmentList(J9VMThread* currentThread);
 
-	IDATA checkForCrash(J9VMThread* currentThread, bool hasClassSegmentMutex);
+	IDATA checkForCrash(J9VMThread* currentThread, bool hasClassSegmentMutex, bool canUnlockCache = true);
 	
 	void reportCorruptCache(J9VMThread* currentThread, SH_CompositeCacheImpl* _ccToUse);
 
