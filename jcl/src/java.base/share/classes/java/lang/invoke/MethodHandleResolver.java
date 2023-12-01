@@ -46,6 +46,11 @@ import com.ibm.jit.JITHelpers;
 import java.lang.invoke.MethodHandleInfo;
 /*[ENDIF] JAVA_SPEC_VERSION >= 16 */
 
+/*[IF OPENJDK_METHODHANDLES & (JAVA_SPEC_VERSION < 9)]*/
+import java.lang.reflect.Modifier;
+import java.lang.reflect.Method;
+/*[ENDIF] OPENJDK_METHODHANDLES & (JAVA_SPEC_VERSION < 9) */
+
 /**
  * Static methods for the MethodHandle class.
  */
@@ -61,6 +66,10 @@ final class MethodHandleResolver {
 	private static final int BSM_NAME_ARGUMENT_INDEX = 1;
 	private static final int BSM_TYPE_ARGUMENT_INDEX = 2;
 	private static final int BSM_OPTIONAL_ARGUMENTS_START_INDEX = 3;
+
+/*[IF OPENJDK_METHODHANDLES & (JAVA_SPEC_VERSION < 9)]*/
+	private static final int VARARGS = 0x80;
+/*[ENDIF] OPENJDK_METHODHANDLES & (JAVA_SPEC_VERSION < 9) */
 
 	/*
 	 * Return the result of J9_CP_TYPE(J9Class->romClass->cpShapeDescription, index)
@@ -785,4 +794,51 @@ final class MethodHandleResolver {
 /*[ENDIF] OPENJDK_METHODHANDLES*/
 	}
 /*[ENDIF] JAVA_SPEC_VERSION >= 16 */
+
+/*[IF OPENJDK_METHODHANDLES & (JAVA_SPEC_VERSION < 9)]*/
+	/**
+	 * Create a MethodHandle to throw an AbstractMethodError if the error conditions
+	 * are met. Used in MethodHandles.unreflect for OpenJDK MethodHandles to match
+	 * the RI behaviour for JDK8 for private interface methods.
+	 *
+	 * @param m the Method whose modifiers determine if an AbstractMethodError
+	 *        thrower should be installed
+	 *
+	 * @return an AbstractMethodError-thrower MethodHandle or null
+	 *
+	 * @throws InternalError if the AbstractMethodError constructor cannot be found
+	 */
+	@SuppressWarnings("unused")
+	public static final MethodHandle maybeCreateAbstractMethodErrorThrower(Method m) {
+		MethodHandle result = null;
+		Class<?> declaringClass = m.getDeclaringClass();
+		int methodModifiers = m.getModifiers();
+
+		if (declaringClass.isInterface()
+			&& !Modifier.isStatic(methodModifiers)
+			&& Modifier.isPrivate(methodModifiers)
+		) {
+			MethodType type = MethodType.methodType(m.getReturnType(), m.getParameterTypes());
+			type = type.insertParameterTypes(0, declaringClass);
+
+			MethodHandle thrower = MethodHandles.throwException(type.returnType(), AbstractMethodError.class);
+			MethodHandle constructor;
+			try {
+				constructor = IMPL_LOOKUP.findConstructor(
+						AbstractMethodError.class,
+						MethodType.methodType(void.class));
+			} catch (IllegalAccessException | NoSuchMethodException e) {
+				throw new InternalError("Unable to find AbstractMethodError.<init>()"); //$NON-NLS-1$
+			}
+			result = MethodHandles.foldArguments(thrower, constructor);
+			result = MethodHandles.dropArguments(result, 0, type.parameterList());
+
+			if ((methodModifiers & VARARGS) != 0) {
+				Class<?> lastClass = result.type().lastParameterType();
+				result = result.asVarargsCollector(lastClass);
+			}
+		}
+		return result;
+	}
+/*[ENDIF] OPENJDK_METHODHANDLES & (JAVA_SPEC_VERSION < 9) */
 }
