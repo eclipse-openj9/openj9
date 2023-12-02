@@ -78,7 +78,7 @@ public class JDK11UpTimeoutAdjustmentTest {
 			throw new RuntimeException("Unrecognized test name: " + testName);
 		}
 
-		while (testResult.lockStatus == 0) {
+		while (testResult.lockStatus.get() == 0) {
 			Thread.currentThread().yield();
 		}
 		CRIUTestUtils.checkPointJVMNoSetup(criu, CRIUTestUtils.imagePath, false);
@@ -138,7 +138,7 @@ public class JDK11UpTimeoutAdjustmentTest {
 	private void testThreadParkHelper(String testName) {
 		CRIUTestUtils.showThreadCurrentTime(testName + " before park()");
 		final long startNanoTime = System.nanoTime();
-		testResult.lockStatus = 1;
+		testResult.lockStatus.set(1);
 		unsafe.park(false, nsTime5s);
 		final long endNanoTime = System.nanoTime();
 		CRIUTestUtils.showThreadCurrentTime(testName + " after park()");
@@ -160,7 +160,7 @@ public class JDK11UpTimeoutAdjustmentTest {
 		CRIUTestUtils.showThreadCurrentTime(testName + " before sleep()");
 		final long startNanoTime = System.nanoTime();
 		try {
-			testResult.lockStatus = 1;
+			testResult.lockStatus.set(1);
 			Thread.sleep(msTime5s);
 			final long endNanoTime = System.nanoTime();
 			CRIUTestUtils.showThreadCurrentTime(testName + " after sleep()");
@@ -191,7 +191,7 @@ public class JDK11UpTimeoutAdjustmentTest {
 					final long startNanoTime;
 					synchronized (objWait) {
 						startNanoTime = System.nanoTime();
-						testResult.lockStatus = 1;
+						testResult.lockStatus.set(1);
 						objWait.wait();
 					}
 					final long endNanoTime = System.nanoTime();
@@ -220,7 +220,7 @@ public class JDK11UpTimeoutAdjustmentTest {
 			final long startNanoTime;
 			synchronized (objWait) {
 				startNanoTime = System.nanoTime();
-				testResult.lockStatus = 1;
+				testResult.lockStatus.set(1);
 				objWait.wait(ms, ns);
 			}
 			final long endNanoTime = System.nanoTime();

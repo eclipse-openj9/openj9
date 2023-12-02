@@ -76,7 +76,7 @@ public class DeadlockTest {
 
 		Thread t1 = new Thread(() -> {
 			synchronized (lock) {
-				testResult.lockStatus = 1;
+				testResult.lockStatus.set(1);
 				try {
 					Thread.sleep(20000);
 				} catch (InterruptedException e) {
@@ -95,7 +95,7 @@ public class DeadlockTest {
 			}
 		});
 
-		while (testResult.lockStatus == 0) {
+		while (testResult.lockStatus.get() == 0) {
 			Thread.yield();
 		}
 
@@ -126,7 +126,7 @@ public class DeadlockTest {
 		Thread t1 = new Thread(() -> {
 			Runnable run = () -> {
 				synchronized (lock) {
-					testResult.lockStatus = 1;
+					testResult.lockStatus.set(1);
 					try {
 						Thread.sleep(20000);
 					} catch (InterruptedException e) {
@@ -143,7 +143,7 @@ public class DeadlockTest {
 
 		CRIUSupport criuSupport = new CRIUSupport(path);
 
-		while (testResult.lockStatus == 0) {
+		while (testResult.lockStatus.get() == 0) {
 			Thread.yield();
 		}
 
@@ -170,7 +170,7 @@ public class DeadlockTest {
 		Path path = Paths.get("cpData");
 		final TestResult testResult = new TestResult(true, 0);
 		Runnable run = () -> {
-			testResult.lockStatus++;
+			testResult.lockStatus.incrementAndGet();
 			for (int i = 0; i < 30; i++) {
 				URL[] urlArray = { A.class.getProtectionDomain().getCodeSource().getLocation() };
 				URLClassLoader loader = new URLClassLoader(urlArray);
@@ -186,7 +186,7 @@ public class DeadlockTest {
 			thread.start();
 		}
 
-		while (testResult.lockStatus < 5) {
+		while (testResult.lockStatus.get() < 5) {
 			Thread.yield();
 		}
 
@@ -241,7 +241,7 @@ public class DeadlockTest {
 		Path path = Paths.get("cpData");
 
 		mainTestResult.testPassed = false;
-		mainTestResult.lockStatus = 0;
+		mainTestResult.lockStatus.set(0);
 
 		Thread t1 = new Thread(()->{
 			new ClinitDeadlock();
@@ -249,7 +249,7 @@ public class DeadlockTest {
 
 		t1.start();
 
-		while (mainTestResult.lockStatus == 0) {
+		while (mainTestResult.lockStatus.get() == 0) {
 			Thread.yield();
 		}
 
@@ -278,7 +278,7 @@ public class DeadlockTest {
 		Path path = Paths.get("cpData");
 
 		mainTestResult.testPassed = false;
-		mainTestResult.lockStatus = 0;
+		mainTestResult.lockStatus.set(0);
 
 		Thread t1 = new Thread(()->{
 			new ClinitDeadlock();
@@ -286,7 +286,7 @@ public class DeadlockTest {
 
 		t1.start();
 
-		while (mainTestResult.lockStatus == 0) {
+		while (mainTestResult.lockStatus.get() == 0) {
 			Thread.yield();
 		}
 
@@ -314,7 +314,7 @@ public class DeadlockTest {
 	static class ClinitDeadlock {
 
 		static {
-			mainTestResult.lockStatus = 1;
+			mainTestResult.lockStatus.set(1);
 			synchronized(lock) {
 				try {
 					System.out.println("Thread waiting");

@@ -21,12 +21,14 @@
  *******************************************************************************/
 package org.openj9.criu;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 public class TestResult {
 	boolean testPassed;
-	volatile int lockStatus;
+	AtomicInteger lockStatus;
 
 	TestResult(boolean testPassed, int lockStatus) {
 		this.testPassed = testPassed;
-		this.lockStatus = lockStatus;
+		this.lockStatus = new AtomicInteger(lockStatus);
 	}
 }
