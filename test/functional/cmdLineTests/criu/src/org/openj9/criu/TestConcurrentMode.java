@@ -118,45 +118,45 @@ public class TestConcurrentMode {
 		criu.registerPreCheckpointHook(() -> {
 			CRIUTestUtils.showThreadCurrentTime("The preCheckpointHook with lower priority in CONCURRENT_MODE");
 			// check if it is the initial value
-			if (testResult.lockStatus != 0) {
+			if (testResult.lockStatus.get() != 0) {
 				testResult.testPassed = false;
 				CRIUTestUtils.showThreadCurrentTime("The preCheckpointHook with lower priority in CONCURRENT_MODE failed with testResult.lockStatus = "
-						+ testResult.lockStatus);
+						+ testResult.lockStatus.get());
 			} else {
-				testResult.lockStatus = 1;
+				testResult.lockStatus.set(1);
 			}
 		}, CRIUSupport.HookMode.CONCURRENT_MODE, USER_HOOK_MODE_PRIORITY_LOW);
 		criu.registerPreCheckpointHook(() -> {
 			CRIUTestUtils.showThreadCurrentTime("The preCheckpointHook with higher priority in CONCURRENT_MODE");
 			// check if it is the value set by the hook with USER_HOOK_MODE_PRIORITY_LOW in CONCURRENT_MODE
-			if (testResult.lockStatus != 1) {
+			if (testResult.lockStatus.get() != 1) {
 				testResult.testPassed = false;
 				CRIUTestUtils.showThreadCurrentTime("The preCheckpointHook with higher priority in CONCURRENT_MODE failed with testResult.lockStatus = "
-						+ testResult.lockStatus);
+						+ testResult.lockStatus.get());
 			} else {
-				testResult.lockStatus = 2;
+				testResult.lockStatus.set(2);
 			}
 		}, CRIUSupport.HookMode.CONCURRENT_MODE, USER_HOOK_MODE_PRIORITY_HIGH);
 		criu.registerPreCheckpointHook(() -> {
 			CRIUTestUtils.showThreadCurrentTime("The preCheckpointHook with lower priority in SINGLE_THREAD_MODE");
 			// check if it is the value set by the hook with USER_HOOK_MODE_PRIORITY_HIGH in CONCURRENT_MODE
-			if (testResult.lockStatus != 2) {
+			if (testResult.lockStatus.get() != 2) {
 				testResult.testPassed = false;
 				CRIUTestUtils.showThreadCurrentTime("The preCheckpointHook with lower priority in SINGLE_THREAD_MODE failed with testResult.lockStatus = "
-						+ testResult.lockStatus);
+						+ testResult.lockStatus.get());
 			} else {
-				testResult.lockStatus = 3;
+				testResult.lockStatus.set(3);
 			}
 		}, CRIUSupport.HookMode.SINGLE_THREAD_MODE, USER_HOOK_MODE_PRIORITY_LOW);
 		criu.registerPreCheckpointHook(() -> {
 			CRIUTestUtils.showThreadCurrentTime("The preCheckpointHook with higher priority in SINGLE_THREAD_MODE");
 			// check if it is the value set by the hook with USER_HOOK_MODE_PRIORITY_LOW in SINGLE_THREAD_MODE
-			if (testResult.lockStatus != 3) {
+			if (testResult.lockStatus.get() != 3) {
 				testResult.testPassed = false;
 				CRIUTestUtils.showThreadCurrentTime("The preCheckpointHook with higher priority in SINGLE_THREAD_MODE failed with testResult.lockStatus = "
-						+ testResult.lockStatus);
+						+ testResult.lockStatus.get());
 			} else {
-				testResult.lockStatus = 4;
+				testResult.lockStatus.set(4);
 			}
 		}, CRIUSupport.HookMode.SINGLE_THREAD_MODE, USER_HOOK_MODE_PRIORITY_HIGH);
 
@@ -217,45 +217,45 @@ public class TestConcurrentMode {
 		criu.registerPostRestoreHook(() -> {
 			CRIUTestUtils.showThreadCurrentTime("The postRestoreHook with lower priority in CONCURRENT_MODE");
 			// check if it is the value set by the hook with USER_HOOK_MODE_PRIORITY_LOW in CONCURRENT_MODE
-			if (testResult.lockStatus != 3) {
+			if (testResult.lockStatus.get() != 3) {
 				testResult.testPassed = false;
 				CRIUTestUtils.showThreadCurrentTime("The postRestoreHook with lower priority in CONCURRENT_MODE failed with testResult.lockStatus = "
-						+ testResult.lockStatus);
+						+ testResult.lockStatus.get());
 			} else {
-				testResult.lockStatus = 4;
+				testResult.lockStatus.set(4);
 			}
 		}, CRIUSupport.HookMode.CONCURRENT_MODE, USER_HOOK_MODE_PRIORITY_LOW);
 		criu.registerPostRestoreHook(() -> {
 			CRIUTestUtils.showThreadCurrentTime("The postRestoreHook with higher priority in CONCURRENT_MODE");
 			// check if it is the value set by the hook with USER_HOOK_MODE_PRIORITY_LOW in SINGLE_THREAD_MODE
-			if (testResult.lockStatus != 2) {
+			if (testResult.lockStatus.get() != 2) {
 				testResult.testPassed = false;
 				CRIUTestUtils.showThreadCurrentTime("The postRestoreHook with higher priority in CONCURRENT_MODE failed with testResult.lockStatus = "
-						+ testResult.lockStatus);
+						+ testResult.lockStatus.get());
 			} else {
-				testResult.lockStatus = 3;
+				testResult.lockStatus.set(3);
 			}
 		}, CRIUSupport.HookMode.CONCURRENT_MODE, USER_HOOK_MODE_PRIORITY_HIGH);
 		criu.registerPostRestoreHook(() -> {
 			CRIUTestUtils.showThreadCurrentTime("The postRestoreHook with lower priority in SINGLE_THREAD_MODE");
 			// check if it is the value set by the hook with USER_HOOK_MODE_PRIORITY_HIGH in SINGLE_THREAD_MODE
-			if (testResult.lockStatus != 1) {
+			if (testResult.lockStatus.get() != 1) {
 				testResult.testPassed = false;
 				CRIUTestUtils.showThreadCurrentTime("The postRestoreHook with lower priority in SINGLE_THREAD_MODE failed with testResult.lockStatus = "
-						+ testResult.lockStatus);
+						+ testResult.lockStatus.get());
 			} else {
-				testResult.lockStatus = 2;
+				testResult.lockStatus.set(2);
 			}
 		}, CRIUSupport.HookMode.SINGLE_THREAD_MODE, USER_HOOK_MODE_PRIORITY_LOW);
 		criu.registerPostRestoreHook(() -> {
 			CRIUTestUtils.showThreadCurrentTime("The postRestoreHook with higher priority in SINGLE_THREAD_MODE");
 			// check if it is the initial value
-			if (testResult.lockStatus != 0) {
+			if (testResult.lockStatus.get() != 0) {
 				testResult.testPassed = false;
 				CRIUTestUtils.showThreadCurrentTime("The postRestoreHook with higher priority in SINGLE_THREAD_MODE failed with testResult.lockStatus = "
-						+ testResult.lockStatus);
+						+ testResult.lockStatus.get());
 			} else {
-				testResult.lockStatus = 1;
+				testResult.lockStatus.set(1);
 			}
 		}, CRIUSupport.HookMode.SINGLE_THREAD_MODE, USER_HOOK_MODE_PRIORITY_HIGH);
 
