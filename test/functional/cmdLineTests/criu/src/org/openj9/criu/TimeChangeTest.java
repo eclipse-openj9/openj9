@@ -30,6 +30,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import openj9.internal.criu.InternalCRIUSupport;
+import org.eclipse.openj9.criu.CRIUSupport;
 
 public class TimeChangeTest {
 
