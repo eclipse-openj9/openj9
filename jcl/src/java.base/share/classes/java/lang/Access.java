@@ -750,6 +750,12 @@ final class Access implements JavaLangAccess {
 	public void copyToSegmentRaw(String string, MemorySegment segment, long offset) {
 		string.copyToSegmentRaw(segment, offset);
 	}
+
+	// No @Override to avoid breaking valhalla builds which is behind latest OpenJDK head stream update.
+	public Method findMethod(Class<?> clazz, boolean isPublic, String methodName, Class<?>... parameterTypes) {
+		return clazz.findMethod(isPublic, methodName, parameterTypes);
+	}
+
 /*[ENDIF] JAVA_SPEC_VERSION >= 22 */
 
 /*[IF INLINE-TYPES]*/
