@@ -110,6 +110,10 @@
 				<comment>https://github.com/eclipse-openj9/openj9/issues/18468</comment>
 				<platform>ppc64le.*</platform>
 			</disable>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/18570</comment>
+				<platform>s390x.*</platform>
+			</disable>
 		</disables>
 		<command>
 			TR_Options=$(Q)exclude={org/openj9/criu/TimeChangeTest.nanoTimeInt()J},dontInline={org/openj9/criu/TimeChangeTest.nanoTimeInt()J|org/openj9/criu/TimeChangeTest.nanoTimeJit()J},{org/openj9/criu/TimeChangeTest.nanoTimeJit()J}(count=1)$(Q) \
