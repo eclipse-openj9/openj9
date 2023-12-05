@@ -30,7 +30,7 @@ jobs:
     if: startsWith(github.event.comment.body, 'auto exclude test')
     steps:
       - name: Set up Python 3.8
-        uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
+        uses: actions/setup-python@b64ffcaf5b410884ad320a9cfac8866006a109aa # v4.8.0
         with:
           python-version: 3.8
       - name: check python version
