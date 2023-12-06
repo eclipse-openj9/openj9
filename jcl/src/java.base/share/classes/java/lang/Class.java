@@ -256,18 +256,6 @@ public final class Class<T> implements java.io.Serializable, GenericDeclaration,
 	private static boolean reflectCacheAppOnly = true;
 
 	/*
-	 * The target method types to be searched by getMethodHelper().
-	 */
-	enum SearchMethodType {
-		// all method types, public or not
-		ALL,
-		// public method only
-		PUBLIC,
-		// not public method
-		NOTPUBLIC,
-	}
-
-	/*
 	 * This {@code ClassReflectNullPlaceHolder} class is created to indicate the cached class value is
 	 * initialized to null rather than the default value null ;e.g. {@code cachedDeclaringClass}
 	 * and {@code cachedEnclosingClass}. The reason default value has to be null is that
@@ -1274,7 +1262,7 @@ List<Method> getDeclaredPublicMethods(String name, Class<?>... parameterTypes) {
 	}
 	try {
 		methodList = new ArrayList<>();
-		getMethodHelper(false, true, methodList, name, parameterTypes);
+		getMethodHelper(false, true, true, methodList, name, parameterTypes);
 	} catch (NoSuchMethodException e) {
 		// no NoSuchMethodException expected
 	}
@@ -1374,7 +1362,7 @@ public Method getDeclaredMethod(String name, Class<?>... parameterTypes) throws 
 		ClassLoader callerClassLoader = ClassLoader.getStackClassLoader(1);
 		checkMemberAccess(security, callerClassLoader, Member.DECLARED);
 	}
-	return getMethodHelper(true, true, null, name, parameterTypes);
+	return getMethodHelper(true, true, false, null, name, parameterTypes);
 }
 
 /**
@@ -1699,7 +1687,7 @@ public Method getMethod(String name, Class<?>... parameterTypes) throws NoSuchMe
 		ClassLoader callerClassLoader = ClassLoader.getStackClassLoader(1);
 		checkMemberAccess(security, callerClassLoader, Member.PUBLIC);
 	}
-	return getMethodHelper(true, false, null, name, parameterTypes);
+	return getMethodHelper(true, false, true, null, name, parameterTypes);
 }
 
 /**
@@ -1714,20 +1702,11 @@ private Method throwExceptionOrReturnNull(boolean throwException, String name, C
 }
 
 /**
- * A convenient method for getMethodHelper() with SearchMethodType.ALL.
- */
-Method getMethodHelper(
-	boolean throwException, boolean forDeclaredMethod, List<Method> methodList, String name, Class<?>... parameterTypes)
-	throws NoSuchMethodException {
-	return getMethodHelper(throwException, forDeclaredMethod, methodList, SearchMethodType.ALL, name, parameterTypes);
-}
-
-/**
  * Helper method for
  *	public Method getDeclaredMethod(String name, Class<?>... parameterTypes)
  *	public Method getMethod(String name, Class<?>... parameterTypes)
  *	List<Method> getDeclaredPublicMethods(String name, Class<?>... parameterTypes)
- *	Method findMethod(boolean isPublic, String methodName, Class<?>... parameterTypes)
+ *	Method findMethod(boolean publicOnly, String methodName, Class<?>... parameterTypes)
  * without going thorough security checking
  *
  * @param	throwException boolean
@@ -1737,28 +1716,25 @@ Method getMethodHelper(
  *				true - for getDeclaredMethod(String name, Class<?>... parameterTypes)
  *						& getDeclaredPublicMethods(String name, Class<?>... parameterTypes);
  *				false - for getMethod(String name, Class<?>... parameterTypes)
- *						& findMethod(boolean isPublic, String methodName, Class<?>... parameterTypes);
+ *						& findMethod(boolean publicOnly, String methodName, Class<?>... parameterTypes);
  * @param	name String					the name of the method
  * @param	parameterTypes Class<?>[]	the types of the arguments
  * @param	methodList List<Method>		a list to store the methods described by the arguments
  * 										for getDeclaredPublicMethods()
  * 										or null for getDeclaredMethod(), getMethod() & findMethod()
- * @param	methodScope SearchMethodType	the method type to be searched
- * 										SearchMethodType.PUBLIC/NOTPUBLIC for findMethod()
- * 										or SearchMethodType.ALL for others
+ * @param	publicOnly boolean			true - only search public methods
+ * 										false - search all methods
  * @return	Method						the method described by the arguments.
  * @throws	NoSuchMethodException		if the method could not be found.
  */
 @CallerSensitive
 Method getMethodHelper(
-	boolean throwException, boolean forDeclaredMethod, List<Method> methodList, SearchMethodType searchMethodType, String name, Class<?>... parameterTypes)
+	boolean throwException, boolean forDeclaredMethod, boolean publicOnly, List<Method> methodList, String name, Class<?>... parameterTypes)
 	throws NoSuchMethodException {
 	Method result;
 	Method bestCandidate;
 	String strSig;
 	boolean candidateFromInterface = false;
-	boolean searchAllMethods = searchMethodType == SearchMethodType.ALL;
-	boolean searchPublicMethodOnly = searchMethodType == SearchMethodType.PUBLIC;
 
 	/*[PR CMVC 114820, CMVC 115873, CMVC 116166] add reflection cache */
 	if (parameterTypes == null) {
@@ -1768,15 +1744,12 @@ Method getMethodHelper(
 		// getDeclaredPublicMethods() has to go through all methods anyway
 		Method cachedMethod = lookupCachedMethod(name, parameterTypes);
 		if (cachedMethod != null) {
-			if (searchAllMethods && forDeclaredMethod && (cachedMethod.getDeclaringClass() == this)) {
-				return cachedMethod;
+			if (forDeclaredMethod) {
+				if (cachedMethod.getDeclaringClass() == this) {
+					return cachedMethod;
+				}
 			} else {
-				boolean isPublic = Modifier.isPublic(cachedMethod.getModifiers());
-				if (searchAllMethods) {
-					if (!forDeclaredMethod && isPublic) {
-						return cachedMethod;
-					}
-				} else if (searchPublicMethodOnly == isPublic) {
+				if (!publicOnly || Modifier.isPublic(cachedMethod.getModifiers())) {
 					return cachedMethod;
 				}
 			}
@@ -1863,7 +1836,7 @@ Method getMethodHelper(
 	 * Otherwise, the result method is chosen arbitrarily from specific methods.
 	 */
 	bestCandidate = result;
-	boolean initialResultShouldBeReplaced = !searchAllMethods && (publicMethodInitialResult != searchPublicMethodOnly);
+	boolean initialResultShouldBeReplaced = !forDeclaredMethod && publicOnly && !publicMethodInitialResult;
 	if (!candidateFromInterface) {
 		Class<?> declaringClass = forDeclaredMethod ? this : result.getDeclaringClass();
 		while (true) {
@@ -1875,12 +1848,11 @@ Method getMethodHelper(
 			if ((methodList != null) && publicMethod) {
 				methodList.add(result);
 			}
-			boolean searchIsPublic = !searchAllMethods && (searchPublicMethodOnly == publicMethod);
-			if (searchIsPublic && initialResultShouldBeReplaced) {
-				// Current result is the method type to be found but the initial result wasn't.
+			if (publicMethod && initialResultShouldBeReplaced) {
+				// Current result is a public method to be searched but the initial result wasn't.
 				bestCandidate = result;
 				initialResultShouldBeReplaced = false;
-			} else if (forDeclaredMethod || publicMethod || searchIsPublic) {
+			} else if (forDeclaredMethod || publicMethod || !publicOnly) {
 				// bestCandidate and result have same declaringClass.
 				Class<?> candidateRetType = bestCandidate.getReturnType();
 				Class<?> resultRetType = result.getReturnType();
@@ -1890,8 +1862,8 @@ Method getMethodHelper(
 			}
 		}
 	}
-	if (!searchAllMethods && initialResultShouldBeReplaced) {
-		// The initial result doesn't match the searching method type.
+	if (initialResultShouldBeReplaced) {
+		// The initial result is not a public method to be searched, and no other public methods found.
 		return null;
 	} else {
 		return cacheMethod(bestCandidate);
@@ -5870,10 +5842,9 @@ SecurityException {
 		};
 	}
 
-	Method findMethod(boolean isPublic, String methodName, Class<?>... parameterTypes) {
+	Method findMethod(boolean publicOnly, String methodName, Class<?>... parameterTypes) {
 		try {
-			return getMethodHelper(true, false, null, isPublic ? SearchMethodType.PUBLIC : SearchMethodType.NOTPUBLIC,
-					methodName, parameterTypes);
+			return getMethodHelper(false, false, publicOnly, null, methodName, parameterTypes);
 		} catch (NoSuchMethodException nsme) {
 			return null;
 		}
