@@ -285,14 +285,6 @@ final class Access implements JavaLangAccess {
 		return classLoader.createOrGetClassLoaderValueMap();
 	}
 
-	public Method getMethodOrNull(Class<?> clz, String name, Class<?>... parameterTypes) {
-		try {
-			return clz.getMethodHelper(false, false, null, name, parameterTypes);
-		} catch (NoSuchMethodException ex) {
-			return null;
-		}
-	}
-
 	@SuppressWarnings("removal")
 	public void invalidatePackageAccessCache() {
 /*[IF JAVA_SPEC_VERSION >= 10]*/
@@ -752,8 +744,8 @@ final class Access implements JavaLangAccess {
 	}
 
 	// No @Override to avoid breaking valhalla builds which is behind latest OpenJDK head stream update.
-	public Method findMethod(Class<?> clazz, boolean isPublic, String methodName, Class<?>... parameterTypes) {
-		return clazz.findMethod(isPublic, methodName, parameterTypes);
+	public Method findMethod(Class<?> clazz, boolean publicOnly, String methodName, Class<?>... parameterTypes) {
+		return clazz.findMethod(publicOnly, methodName, parameterTypes);
 	}
 
 /*[ENDIF] JAVA_SPEC_VERSION >= 22 */
