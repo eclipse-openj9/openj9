@@ -21,22 +21,35 @@
  *******************************************************************************/
 package org.openj9.test.java.lang;
 
+import org.openj9.test.util.CompilerAccess;
+import org.openj9.test.util.VersionCheck;
 import org.testng.annotations.Test;
 import org.testng.Assert;
-import org.testng.AssertJUnit;
 
 @Test(groups = { "level.sanity" })
 public class Test_Compiler {
 
 	/**
-	* @tests java.lang.Compiler#Compiler()
-	*/
+	 * @tests java.lang.Compiler#Compiler()
+	 */
 	@Test
 	public void test_Constructor() {
+		if (VersionCheck.major() >= 21) {
+			// java.lang.Compiler is not available
+			return;
+		}
+		Class<?> compilerClass;
 		try {
-			Compiler c = (Compiler)Compiler.class.newInstance();
-			AssertJUnit.assertTrue("Constructor should have failed.", false);
-		} catch (Exception e) {//Correct.
+			compilerClass = Class.forName("java.lang.Compiler");
+		} catch (ClassNotFoundException e) {
+			Assert.fail("Cannot find class java.lang.Compiler", e);
+			return;
+		}
+		try {
+			compilerClass.newInstance();
+			Assert.fail("Constructor should have failed.");
+		} catch (Exception e) {
+			// correct
 		}
 	}
 
@@ -46,9 +59,9 @@ public class Test_Compiler {
 	@Test
 	public void test_command() {
 		try {
-			AssertJUnit.assertTrue("Incorrect behavior.", Compiler.command(new Object()) == null);
+			Assert.assertNull(CompilerAccess.command(new Object()), "Incorrect behavior.");
 		} catch (Exception e) {
-			AssertJUnit.assertTrue("Exception during test.", false);
+			Assert.fail("Exception during test.", e);
 		}
 	}
 
@@ -60,9 +73,9 @@ public class Test_Compiler {
 		try {
 			// Do not test return value, may return true or false depending on
 			// if the jit is enabled. Make the call to ensure it doesn't crash.
-			Compiler.compileClass(Compiler.class);
+			CompilerAccess.compileClass(CompilerAccess.class);
 		} catch (Exception e) {
-			Assert.fail("Exception during test.");
+			Assert.fail("Exception during test.", e);
 		}
 	}
 
@@ -74,9 +87,9 @@ public class Test_Compiler {
 		try {
 			// Do not test return value, may return true or false depending on
 			// if the jit is enabled. Make the call to ensure it doesn't crash.
-			Compiler.compileClasses("Compiler");
+			CompilerAccess.compileClasses("Integer");
 		} catch (Exception e) {
-			Assert.fail("Exception during test.");
+			Assert.fail("Exception during test.", e);
 		}
 	}
 
@@ -86,11 +99,11 @@ public class Test_Compiler {
 	@Test
 	public void test_disable() {
 		try {
-			Compiler.disable();
-			Compiler.compileClass(Compiler.class);
-			AssertJUnit.assertTrue("Correct behavior.", true);
+			CompilerAccess.disable();
+			CompilerAccess.compileClass(CompilerAccess.class);
+			// correct behavior
 		} catch (Exception e) {
-			AssertJUnit.assertTrue("Exception during test.", false);
+			Assert.fail("Exception during test.", e);
 		}
 	}
 
@@ -100,12 +113,12 @@ public class Test_Compiler {
 	@Test
 	public void test_enable() {
 		try {
-			Compiler.disable();
-			Compiler.enable();
-			Compiler.compileClass(Compiler.class);
-			AssertJUnit.assertTrue("Correct behavior.", true);
+			CompilerAccess.disable();
+			CompilerAccess.enable();
+			CompilerAccess.compileClass(CompilerAccess.class);
+			// correct behavior
 		} catch (Exception e) {
-			AssertJUnit.assertTrue("Exception during test.", false);
+			Assert.fail("Exception during test.", e);
 		}
 	}
 }
