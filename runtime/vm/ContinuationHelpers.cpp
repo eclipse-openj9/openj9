@@ -306,6 +306,7 @@ yieldContinuation(J9VMThread *currentThread, BOOLEAN isFinished)
 	 */
 	Assert_VM_true(VM_ContinuationHelpers::isMountedWithCarrierThread(*continuationStatePtr, currentThread));
 	VM_ContinuationHelpers::resetCarrierID(continuationStatePtr);
+	VM_AtomicSupport::writeBarrier();
 	/* Logically postUnmountContinuation(), which add the related continuation Object to the rememberedSet or dirty the Card for concurrent marking for future scanning, should be called
 	 * before resetCarrierID(), but the scan might happened before resetCarrierID() if concurrent card clean happens, then the related compensating scan might be
 	 * missed due to the continuation still is stated as mounted(we don't scan any mounted continuation, it should be scanned during root scanning via J9VMThread->currentContinuation).
