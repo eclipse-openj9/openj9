@@ -23,7 +23,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 <module>
 	<artifact type="target" name="j9jitlauncher">
 		<include-if condition="spec.flags.interp_nativeSupport"/>
-		<exclude-if condition="spec.linux_riscv.*" />
+		<exclude-if condition="spec.linux_riscv.*"/>
 		<phase>jit j2se</phase>
 
 		<dependencies>
