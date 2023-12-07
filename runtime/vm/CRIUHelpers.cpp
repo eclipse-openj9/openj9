@@ -1498,6 +1498,7 @@ criuCheckpointJVMImpl(JNIEnv *env,
 		UDATA success = 0;
 		bool safePoint = J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_OSR_SAFE_POINT);
 		UDATA maxRetries = vm->checkpointState.maxRetryForNotCheckpointSafe;
+		UDATA sleepMilliseconds = vm->checkpointState.sleepMillisecondsForNotCheckpointSafe;
 		BOOLEAN syslogFlagNone = TRUE;
 		char *syslogOptions = NULL;
 		I_32 syslogBufferSize = 0;
@@ -1652,7 +1653,7 @@ criuCheckpointJVMImpl(JNIEnv *env,
 		for (UDATA i = 0; (0 != notSafeToCheckpoint) && (i <= maxRetries); i++) {
 			releaseSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
 			vmFuncs->internalExitVMToJNI(currentThread);
-			omrthread_nanosleep(10000);
+			omrthread_sleep(sleepMilliseconds);
 			vmFuncs->internalEnterVMFromJNI(currentThread);
 			acquireSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
 			notSafeToCheckpoint = checkIfSafeToCheckpoint(currentThread);
