@@ -2760,6 +2760,37 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 				argIndex2 = FIND_NEXT_ARG_IN_VMARGS_FORWARD(STARTSWITH_MATCH, VMOPT_XXGLOBALLOCKRESERVATIONCOLON, NULL, argIndex2);
 			}
 
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+			vm->checkpointState.maxRetryForNotCheckpointSafe = 100;
+			if ((argIndex = FIND_AND_CONSUME_VMARG(STARTSWITH_MATCH, VMOPT_XXMAXRETRYFORNOTCHECKPOINTSAFE_EQUALS, NULL)) >= 0) {
+				UDATA maxRetryForNotCheckpointSafe = 0;
+				char *optname = VMOPT_XXMAXRETRYFORNOTCHECKPOINTSAFE_EQUALS;
+				parseError = GET_INTEGER_VALUE(argIndex, optname, maxRetryForNotCheckpointSafe);
+				if (OPTION_OK != parseError) {
+					parseErrorOption = VMOPT_XXMAXRETRYFORNOTCHECKPOINTSAFE_EQUALS;
+					goto _memParseError;
+				}
+				vm->checkpointState.maxRetryForNotCheckpointSafe = maxRetryForNotCheckpointSafe;
+			}
+
+			vm->checkpointState.sleepMillisecondsForNotCheckpointSafe = 10;
+			if ((argIndex = FIND_AND_CONSUME_VMARG(STARTSWITH_MATCH, VMOPT_XXSLEEPMILLISECONDSFORNOTCHECKPOINTSAFE_EQUALS, NULL)) >= 0) {
+				UDATA sleepMillisecondsForNotCheckpointSafe = 0;
+				char *optname = VMOPT_XXSLEEPMILLISECONDSFORNOTCHECKPOINTSAFE_EQUALS;
+				parseError = GET_INTEGER_VALUE(argIndex, optname, sleepMillisecondsForNotCheckpointSafe);
+				if (OPTION_OK != parseError) {
+					parseErrorOption = VMOPT_XXSLEEPMILLISECONDSFORNOTCHECKPOINTSAFE_EQUALS;
+					goto _memParseError;
+				}
+				if (sleepMillisecondsForNotCheckpointSafe < 1) {
+					parseErrorOption = VMOPT_XXSLEEPMILLISECONDSFORNOTCHECKPOINTSAFE_EQUALS;
+					parseError = OPTION_OUTOFRANGE;
+					goto _memParseError;
+				}
+				vm->checkpointState.sleepMillisecondsForNotCheckpointSafe = sleepMillisecondsForNotCheckpointSafe;
+			}
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+
 			break;
 
 		case BYTECODE_TABLE_SET:
@@ -3924,8 +3955,6 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 	}
 
 	vm->checkpointState.lastRestoreTimeMillis = -1;
-	/* Its unclear if we need an option for this, so we can keep the init here for the time being */
-	vm->checkpointState.maxRetryForNotCheckpointSafe = 100;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 	{
