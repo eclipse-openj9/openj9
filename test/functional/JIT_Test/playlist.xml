@@ -755,6 +755,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			 If the launcher doesn't exist we assume that the build doesn't support JITServer and trivially pass the test. -->
 		<command>if [ -x $(Q)$(TEST_JDK_BIN)$(D)jitserver$(Q) ]; \
 	then \
+		$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 		$(JAVA_COMMAND) \
 		-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jitt.jar$(Q) \
 		-DSERVER_EXE=$(Q)$(TEST_JDK_BIN)$(D)jitserver$(Q) \
