@@ -677,7 +677,7 @@ char *
 TR_ResolvedJ9MethodBase::fieldOrStaticName(I_32 cpIndex, int32_t & len, TR_Memory * trMemory, TR_AllocationKind kind)
    {
    if (cpIndex == -1)
-      return "<internal name>";
+      return (char *)"<internal name>";
 
    J9ROMFieldRef * ref = (J9ROMFieldRef *) (&romCPBase()[cpIndex]);
    J9ROMNameAndSignature * nameAndSignature = J9ROMFIELDREF_NAMEANDSIGNATURE(ref);
@@ -709,7 +709,7 @@ TR_ResolvedJ9MethodBase::staticName(I_32 cpIndex, TR_Memory * m, TR_AllocationKi
 char *
 TR_ResolvedJ9MethodBase::fieldName(I_32 cpIndex, int32_t & len, TR_Memory * m, TR_AllocationKind kind)
    {
-   if (cpIndex < 0) return "<internal field>";
+   if (cpIndex < 0) return (char *)"<internal field>";
    return fieldOrStaticName(cpIndex, len, m, kind);
    }
 
@@ -7697,8 +7697,8 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             // Inspect source and target types and decide what to do
             //
             char sourceBuf[2], targetBuf[2];
-            char *sourceName = sourceBuf; char *sourceType = sourceBuf;
-            char *targetName = targetBuf; char *targetType = targetBuf;
+            const char *sourceName = sourceBuf; const char *sourceType = sourceBuf;
+            const char *targetName = targetBuf; const char *targetType = targetBuf;
             switch (sourceSig[0])
                {
                case 'Q':
@@ -8004,8 +8004,8 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          int32_t i;
          int32_t permuteLength;
          TR::Node *originalArgs;
-         char * oldSignature;
-         char * newSignature;
+         char *oldSignature;
+         char *newSignature;
          TR::Node* extraArrayNode = NULL;
          TR::Node* extraL[5];
          if (rm == TR::java_lang_invoke_BruteArgumentMoverHandle_permuteArgs)
@@ -8028,7 +8028,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             // Do the server-side operations
             originalArgs = genNodeAndPopChildren(TR::icall, 1, placeholderWithDummySignature());
             oldSignature = originalArgs->getSymbolReference()->getSymbol()->getResolvedMethodSymbol()->getResolvedMethod()->signatureChars();
-            newSignature = "()I";
+            newSignature = (char *)"()I";
             if (comp()->getOption(TR_TraceILGen))
                traceMsg(comp(), "  permuteArgs: oldSignature is %s\n", oldSignature);
             for (i=0; i < permuteLength; i++)
@@ -8110,7 +8110,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             // Push args while computing the result placeholder's signature
             //
             oldSignature = originalArgs->getSymbolReference()->getSymbol()->getResolvedMethodSymbol()->getResolvedMethod()->signatureChars();
-            newSignature = "()I";
+            newSignature = (char *)"()I";
             permuteLength = fej9->getArrayLengthInElements(permuteArray);
             if (comp()->getOption(TR_TraceILGen))
                traceMsg(comp(), "  permuteArgs: oldSignature is %s\n", oldSignature);
@@ -8758,7 +8758,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
              placeholder->getAndDecChild(i);
              }
 
-         char * newSignature = "()I";
+         char *newSignature = (char *)"()I";
          // The rest of the stack should be the arg positions if there are any
          for (int i=0; i<numCombinerArgs; i++)
              {
@@ -8924,7 +8924,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 
          // This is required beyond the scope of the stack memory region
          TR::Node *placeholder = NULL;
-         char * newSignature = "()I";
+         char *newSignature = (char *)"()I";
 
          {
          TR::StackMemoryRegion stackMemoryRegion(*comp()->trMemory());

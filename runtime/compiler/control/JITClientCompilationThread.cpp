@@ -790,8 +790,8 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          auto &className = std::get<0>(recv);
          auto &methodName = std::get<1>(recv);
          auto &signature = std::get<2>(recv);
-         client->write(response, fe->getMethodFromName(const_cast<char *>(className.data()), const_cast<char *>(methodName.data()),
-                                                       const_cast<char *>(signature.data())));
+         client->write(response, fe->getMethodFromName(className.data(), methodName.data(),
+                                                       signature.data()));
          }
          break;
       case MessageType::VM_getMethodFromClass:
@@ -801,8 +801,8 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          auto &methodName = std::get<1>(recv);
          auto &signature = std::get<2>(recv);
          TR_OpaqueClassBlock *callingClass = std::get<3>(recv);
-         client->write(response, fe->getMethodFromClass(methodClass, const_cast<char *>(methodName.data()),
-                                                        const_cast<char *>(signature.data()), callingClass));
+         client->write(response, fe->getMethodFromClass(methodClass, methodName.data(),
+                                                        signature.data(), callingClass));
          }
          break;
       case MessageType::VM_createMethodHandleArchetypeSpecimen:
