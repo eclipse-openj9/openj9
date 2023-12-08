@@ -260,7 +260,7 @@ final class MethodHandleResolver {
 			int bsmArgCount = UNSAFE.getShort(bsmData + BSM_ARGUMENT_COUNT_OFFSET);
 			long bsmArgs = bsmData + BSM_ARGUMENTS_OFFSET;
 			MethodHandle bsm = getCPMethodHandleAt(internalConstantPool, bsmIndex);
-			if (null == bsm) {
+			if (bsm == null) {
 				/*[MSG "K05cd", "unable to resolve 'bootstrap_method_ref' in '{0}' at index {1}"]*/
 				throw new NullPointerException(Msg.getString("K05cd", classObject.toString(), bsmIndex)); //$NON-NLS-1$
 			}
@@ -297,9 +297,13 @@ final class MethodHandleResolver {
 				throw e;
 			}
 /*[ENDIF] JAVA_SPEC_VERSION < 11*/
+
+			if (type == null) {
+				throw new BootstrapMethodError(e);
+			}
+
 			/* Any throwables are wrapped in an invoke-time BootstrapMethodError exception throw. */
 			try {
-				MethodHandle resultHandle;
 				MethodHandle thrower = MethodHandles.throwException(type.returnType(), BootstrapMethodError.class);
 				MethodHandle constructor = IMPL_LOOKUP.findConstructor(BootstrapMethodError.class, MethodType.methodType(void.class, Throwable.class));
 
@@ -314,13 +318,13 @@ final class MethodHandleResolver {
 				} else {
 					combiner = constructor.bindTo(e);
 				}
-				resultHandle = MethodHandles.foldArguments(thrower, combiner);
+
+				MethodHandle resultHandle = MethodHandles.foldArguments(thrower, combiner);
 /*[IF JAVA_SPEC_VERSION >= 11]*/
-				MemberName memberName = resultHandle.internalForm().vmentry;
+				result[0] = resultHandle.internalForm().vmentry;
 /*[ELSE] JAVA_SPEC_VERSION >= 11*/
-				MemberName memberName = resultHandle.internalForm().compileToBytecode();
+				result[0] = resultHandle.internalForm().compileToBytecode();
 /*[ENDIF] JAVA_SPEC_VERSION >= 11*/
-				result[0] = memberName;
 				result[1] = resultHandle;
 			} catch (IllegalAccessException iae) {
 				throw new Error(iae);
