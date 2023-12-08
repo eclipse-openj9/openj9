@@ -2196,3 +2196,113 @@ J9NLS_VM_COMPATIBILITY_UNSUPPORTED.explanation=The specified compatibility mode 
 J9NLS_VM_COMPATIBILITY_UNSUPPORTED.system_action=The JVM will fail to start.
 J9NLS_VM_COMPATIBILITY_UNSUPPORTED.user_response=Remove the option from the command line.
 # END NON-TRANSLATABLE
+
+J9NLS_VM_CRIU_CANNOT_SET_UNPRIVILEGED=A CRIU korl\u00e1tozott m\u00f3d nem \u00e1ll\u00edthat\u00f3 be, errno= %li
+# START NON-TRANSLATABLE
+J9NLS_VM_CRIU_CANNOT_SET_UNPRIVILEGED.explanation=An error occurred when the JVM attempted set CRIU unprivileged mode.
+J9NLS_VM_CRIU_CANNOT_SET_UNPRIVILEGED.system_action=The JVM will throw a SystemCheckpointException.
+J9NLS_VM_CRIU_CANNOT_SET_UNPRIVILEGED.user_response=Ensure that CRIU supports unprivileged mode.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_CRIU_DUMP_FAILED=JVM folyamatokr\u00f3l nem k\u00e9sz\u00edthet\u0151 ki\u00edrat\u00e1s, err= %li
+# START NON-TRANSLATABLE
+J9NLS_VM_CRIU_DUMP_FAILED.explanation=An error occurred when the JVM attempted to dump the process via criu_dump.
+J9NLS_VM_CRIU_DUMP_FAILED.system_action=The JVM will throw a SystemCheckpointException.
+J9NLS_VM_CRIU_DUMP_FAILED.user_response=View CRIU documentation to determine how to resolve the error.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_CRIU_FAILED_DELAY_LOCK_RELATED_OPS=A k\u00e9sleltetett z\u00e1rol\u00e1ssal kapcsolatos m\u0171veletek nem futottak le sikeresen, errno= %li
+# START NON-TRANSLATABLE
+J9NLS_VM_CRIU_FAILED_DELAY_LOCK_RELATED_OPS.explanation=An error occurred when the JVM attempted to run delayed identity operations.
+J9NLS_VM_CRIU_FAILED_DELAY_LOCK_RELATED_OPS.system_action=The JVM will throw a JVMRestoreException.
+J9NLS_VM_CRIU_FAILED_DELAY_LOCK_RELATED_OPS.user_response=View CRIU documentation to determine how to resolve the error.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_CRIU_FAILED_TO_CONVERT_JAVA_STRING=A java karaktersorozat nem alak\u00edthat\u00f3 \u00e1t nat\u00edv k\u00f3dol\u00e1sra, err= %li
+# START NON-TRANSLATABLE
+J9NLS_VM_CRIU_FAILED_TO_CONVERT_JAVA_STRING.explanation=An error occurred when the JVM attempted to convert a java string to native encoding.
+J9NLS_VM_CRIU_FAILED_TO_CONVERT_JAVA_STRING.system_action=The JVM will throw a JVMCheckpointException.
+J9NLS_VM_CRIU_FAILED_TO_CONVERT_JAVA_STRING.user_response=Ensure the specified input strings are valid.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_CRIU_FAILED_TO_ENABLE_ALL_RESTORE_OPTIONS=A JVM nem tudta enged\u00e9lyezni az \u00f6sszes megadott vissza\u00e1ll\u00edt\u00e1si be\u00e1ll\u00edt\u00e1st
+# START NON-TRANSLATABLE
+J9NLS_VM_CRIU_FAILED_TO_ENABLE_ALL_RESTORE_OPTIONS.explanation=CRIUSupport::checkpointJVM failed.
+J9NLS_VM_CRIU_FAILED_TO_ENABLE_ALL_RESTORE_OPTIONS.system_action=The JVM will throw a JVMRestoreException.
+J9NLS_VM_CRIU_FAILED_TO_ENABLE_ALL_RESTORE_OPTIONS.user_response=Check documentation to see which options are allowed on restore.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_CRIU_FAILED_TO_CLOSE_DIR=Az ellen\u0151rz\u00e9si pont adatk\u00f6nyvt\u00e1r nem z\u00e1rhat\u00f3 be, errno= %li
+# START NON-TRANSLATABLE
+J9NLS_VM_CRIU_FAILED_TO_CLOSE_DIR.explanation=An error occurred when the JVM attempted to close the specified directory.
+J9NLS_VM_CRIU_FAILED_TO_CLOSE_DIR.system_action=The JVM will throw a SystemRestoreException or SystemCheckpointException.
+
+J9NLS_VM_CRIU_FAILED_TO_CLOSE_WORK_DIR=Could not close the work directory, errno=%li
+# START NON-TRANSLATABLE
+J9NLS_VM_CRIU_FAILED_TO_CLOSE_WORK_DIR.explanation=An error occurred when the JVM attempted to close the specified directory.
+J9NLS_VM_CRIU_FAILED_TO_CLOSE_WORK_DIR.system_action=The JVM will throw a SystemRestoreException or SystemCheckpointException.
+J9NLS_VM_CRIU_FAILED_TO_CLOSE_WORK_DIR.user_response=Ensure the specified directory is accessible.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_CRIU_FAILED_TO_OPEN_DIR=Az ellen\u0151rz\u00e9si pont adatk\u00f6nyvt\u00e1r nem nyithat\u00f3 meg, errno= %li
+# START NON-TRANSLATABLE
+J9NLS_VM_CRIU_FAILED_TO_OPEN_DIR.explanation=An error occurred when the JVM attempted to open the specified directory.
+J9NLS_VM_CRIU_FAILED_TO_OPEN_DIR.system_action=The JVM will throw a JVMCheckpointException.
+J9NLS_VM_CRIU_FAILED_TO_OPEN_DIR.user_response=Ensure the specified directory is accessible.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_CRIU_FAILED_TO_OPEN_WORK_DIR=A munkak\u00f6nyvt\u00e1r nem nyithat\u00f3 meg, errno= %li
+# START NON-TRANSLATABLE
+J9NLS_VM_CRIU_FAILED_TO_OPEN_WORK_DIR.explanation=An error occurred when the JVM attempted to open the specified directory.
+J9NLS_VM_CRIU_FAILED_TO_OPEN_WORK_DIR.system_action=The JVM will throw a JVMCheckpointException.
+J9NLS_VM_CRIU_FAILED_TO_OPEN_WORK_DIR.user_response=Ensure the specified directory is accessible.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_CRIU_INIT_FAILED=A CRIU be\u00e1ll\u00edt\u00e1sok nem inicializ\u00e1lhat\u00f3k, err= %li
+# START NON-TRANSLATABLE
+J9NLS_VM_CRIU_INIT_FAILED.explanation=An error occurred when the JVM attempted to initialize CRIU options.
+J9NLS_VM_CRIU_INIT_FAILED.system_action=The JVM will throw a SystemCheckpointException.
+J9NLS_VM_CRIU_INIT_FAILED.user_response=View CRIU documentation to determine how to resolve the error.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_CRIU_J9_CURRENT_TIME_NANOS_FAILURE=j9time_current_time_nanos errno = %li hibasz\u00e1mmal meghi\u00fasult
+# START NON-TRANSLATABLE
+J9NLS_VM_CRIU_J9_CURRENT_TIME_NANOS_FAILURE.explanation=j9time_current_time_nanos failed.
+J9NLS_VM_CRIU_J9_CURRENT_TIME_NANOS_FAILURE.system_action=The JVM will throw a JVMCheckpointException.
+J9NLS_VM_CRIU_J9_CURRENT_TIME_NANOS_FAILURE.user_response=View CRIU documentation to determine how to resolve the error.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_CRIU_LOADING_LIBCRIU_FAILED=A JVM megpr\u00f3b\u00e1lta bet\u00f6lteni a libcriu.so szolg\u00e1ltat\u00e1st, de ez sikertelen volt: %li
+# START NON-TRANSLATABLE
+J9NLS_VM_CRIU_LOADING_LIBCRIU_FAILED.explanation=CRIUSupport::checkpointJVM failed.
+J9NLS_VM_CRIU_LOADING_LIBCRIU_FAILED.system_action=The JVM will throw a SystemCheckpointException.
+J9NLS_VM_CRIU_LOADING_LIBCRIU_FAILED.user_response=Make sure libcriu is installed on your system and is on the library load path.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_CRIU_LOADING_LIBCRIU_FUNCTIONS_FAILED=A JVM nem tal\u00e1lt meg kritikus fontoss\u00e1g\u00fa criu funkci\u00f3kat a k\u00f6vetkez\u0151ben: libcriu.so: %li
+# START NON-TRANSLATABLE
+J9NLS_VM_CRIU_LOADING_LIBCRIU_FUNCTIONS_FAILED.explanation=CRIUSupport::checkpointJVM failed.
+J9NLS_VM_CRIU_LOADING_LIBCRIU_FUNCTIONS_FAILED.system_action=The JVM will throw a SystemCheckpointException.
+J9NLS_VM_CRIU_LOADING_LIBCRIU_FUNCTIONS_FAILED.user_response=Check your installation of criu with `criu check`.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_CRIU_LOADING_OPTIONS_FILE_FAILED=A JVM nem tudta bet\u00f6lteni a be\u00e1ll\u00edt\u00e1si f\u00e1jlt
+# START NON-TRANSLATABLE
+J9NLS_VM_CRIU_LOADING_OPTIONS_FILE_FAILED.explanation=CRIUSupport::checkpointJVM failed.
+J9NLS_VM_CRIU_LOADING_OPTIONS_FILE_FAILED.system_action=The JVM will throw a JVMRestoreException.
+J9NLS_VM_CRIU_LOADING_OPTIONS_FILE_FAILED.user_response=Check the arguments to CRIUSupport::registerRestoreOptionsFile.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_CRIU_MAX_RETRY_FOR_NOTCHECKPOINTSAFE_REACHED=A JVM ellen\u0151rz\u00e9si pontok haszn\u00e1lat\u00e1t k\u00eds\u00e9relte meg, de a @NotCheckpointSafe keretekben v\u00e9grehajtott k\u00f3d miatt nem siker\u00fclt. Pr\u00f3b\u00e1lkoz\u00e1si k\u00eds\u00e9rletek: %li
+# START NON-TRANSLATABLE
+J9NLS_VM_CRIU_MAX_RETRY_FOR_NOTCHECKPOINTSAFE_REACHED.explanation=CRIUSupport::checkpointJVM failed.
+J9NLS_VM_CRIU_MAX_RETRY_FOR_NOTCHECKPOINTSAFE_REACHED.system_action=The JVM will throw a JVMCheckpointException.
+J9NLS_VM_CRIU_MAX_RETRY_FOR_NOTCHECKPOINTSAFE_REACHED.user_response=View CRIU documentation to determine how to resolve the error.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_CRIU_NEGATIVE_CHECKPOINT_RESTORE_TIME_DELTA=A checkpointRestoreTimeDelta = %zd \u00e9rt\u00e9k\u00e9nek kisz\u00e1m\u00edt\u00e1sa negat\u00edv \u00e9rt\u00e9ket eredm\u00e9nyez
+# START NON-TRANSLATABLE
+J9NLS_VM_CRIU_NEGATIVE_CHECKPOINT_RESTORE_TIME_DELTA.explanation=checkpointRestoreTimeDelta is expected not to be negative.
+J9NLS_VM_CRIU_NEGATIVE_CHECKPOINT_RESTORE_TIME_DELTA.system_action=The JVM will throw a JVMRestoreException.
+J9NLS_VM_CRIU_NEGATIVE_CHECKPOINT_RESTORE_TIME_DELTA.user_response=View CRIU documentation to determine how to resolve the error.
+# END NON-TRANSLATABLE
