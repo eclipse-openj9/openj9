@@ -103,8 +103,6 @@
 
 #define LOCAL_OBJECTS_COLLECTABLE 1
 
-extern void createGuardSiteForRemovedGuard(TR::Compilation *comp, TR::Node* ifNode);
-
 static bool blockIsInLoop(TR::Block *block)
    {
    for (TR_Structure *s = block->getStructureOf()->getParent(); s; s = s->getParent())
@@ -5901,8 +5899,6 @@ bool TR_EscapeAnalysis::fixupNode(TR::Node *node, TR::Node *parent, TR::NodeChec
       if (firstValue == secondValue)
          {
          compareValue = 0;
-
-         createGuardSiteForRemovedGuard(comp(), node);
          }
       else
          {
