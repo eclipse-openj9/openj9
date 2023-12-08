@@ -115,7 +115,7 @@ public class VmArgumentTests {
 	private static final String  MAPOPT_XJIT_COUNT_EQUALS = "-Xjit:count="+MIXED_MODE_THRESHOLD_VALUE;
 
 	private static final String JAVA_COMPILER = "JAVA_COMPILER";
-	private static final String JAVA_COMPILER_VALUE=System.getProperty("java.compiler");
+	private static final String JAVA_COMPILER_VALUE = System.getProperty(VersionCheck.major() < 21 ? "java.compiler" : "openj9.compiler");
 	private static final String SYSPROP_DJAVA_COMPILER_EQUALS = "-Djava.compiler="+JAVA_COMPILER_VALUE;
 
 	private static final boolean isIBM;
@@ -499,7 +499,12 @@ public class VmArgumentTests {
 			env.put(IBM_JAVA_OPTIONS, ibmJavaOptionsArg);
 
 			actualArguments = runAndGetArgumentList(pb);
-			final String[] expectedArguments = new String[] {MAPOPT_XJIT_COUNT_EQUALS, SYSPROP_DJAVA_COMPILER_EQUALS, VMOPT_XRS, ibmJavaOptionsArg};
+			final String[] expectedArguments;
+			if (VersionCheck.major() < 21) {
+				expectedArguments = new String[] {MAPOPT_XJIT_COUNT_EQUALS, SYSPROP_DJAVA_COMPILER_EQUALS, VMOPT_XRS, ibmJavaOptionsArg};
+			} else {
+				expectedArguments = new String[] {MAPOPT_XJIT_COUNT_EQUALS, VMOPT_XRS, ibmJavaOptionsArg};
+			}
 			HashMap<String, Integer> argumentPositions = checkArguments(actualArguments, expectedArguments);
 			checkArgumentSequence(expectedArguments, argumentPositions, true);
 			/* mapped options in environment variables should come before other non-implicit arguments */
