@@ -157,8 +157,8 @@ public:
    virtual bool hasFinalizer(TR_OpaqueClassBlock *clazz) override;
    virtual uintptr_t getClassDepthAndFlagsValue(TR_OpaqueClassBlock *clazz) override;
    virtual uintptr_t getClassFlagsValue(TR_OpaqueClassBlock * clazz) override;
-   virtual TR_OpaqueMethodBlock *getMethodFromName(char *className, char *methodName, char *signature) override;
-   virtual TR_OpaqueMethodBlock *getMethodFromClass(TR_OpaqueClassBlock *methodClass, char *methodName, char *signature, TR_OpaqueClassBlock *callingClass) override;
+   virtual TR_OpaqueMethodBlock *getMethodFromName(const char *className, const char *methodName, const char *signature) override;
+   virtual TR_OpaqueMethodBlock *getMethodFromClass(TR_OpaqueClassBlock *methodClass, const char *methodName, const char *signature, TR_OpaqueClassBlock *callingClass) override;
    virtual bool isStable(J9Class *fieldClass, int cpIndex) override;
    virtual bool isForceInline(TR_ResolvedMethod *method) override;
    virtual bool isIntrinsicCandidate(TR_ResolvedMethod *method) override;
@@ -245,7 +245,7 @@ public:
    virtual UDATA getVMTargetOffset() override;
    virtual UDATA getVMIndexOffset() override;
 #endif
-   virtual TR::KnownObjectTable::Index getMemberNameFieldKnotIndexFromMethodHandleKnotIndex(TR::Compilation *comp, TR::KnownObjectTable::Index mhIndex, char *fieldName) override;
+   virtual TR::KnownObjectTable::Index getMemberNameFieldKnotIndexFromMethodHandleKnotIndex(TR::Compilation *comp, TR::KnownObjectTable::Index mhIndex, const char *fieldName) override;
    virtual bool isMethodHandleExpectedType(TR::Compilation *comp, TR::KnownObjectTable::Index mhIndex, TR::KnownObjectTable::Index expectedTypeIndex) override;
    virtual bool inSnapshotMode() override;
    virtual bool isSnapshotModeEnabled() override;
@@ -312,55 +312,55 @@ public:
 
    virtual bool shouldDelayAotLoad() override                                  { return true; }
    virtual bool isStable(int cpIndex, TR_ResolvedMethod *owningMethod, TR::Compilation *comp) override { return false; }
-   virtual bool isClassVisible(TR_OpaqueClassBlock * sourceClass, TR_OpaqueClassBlock * destClass) override;
+   virtual bool isClassVisible(TR_OpaqueClassBlock *sourceClass, TR_OpaqueClassBlock *destClass) override;
    virtual bool stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *methodClass) override;
    virtual bool isMethodTracingEnabled(TR_OpaqueMethodBlock *method) override;
    virtual bool traceableMethodsCanBeInlined() override;
    virtual bool canMethodEnterEventBeHooked() override;
    virtual bool canMethodExitEventBeHooked() override;
    virtual bool methodsCanBeInlinedEvenIfEventHooksEnabled(TR::Compilation *comp) override;
-   virtual int32_t getJavaLangClassHashCode(TR::Compilation * comp, TR_OpaqueClassBlock * clazzPointer, bool &hashCodeComputed) override;
-   virtual bool javaLangClassGetModifiersImpl(TR_OpaqueClassBlock * clazzPointer, int32_t &result) override;
-   virtual uint32_t getInstanceFieldOffset(TR_OpaqueClassBlock * classPointer, const char * fieldName, uint32_t fieldLen, const char * sig, uint32_t sigLen, UDATA options) override;
-   virtual TR_OpaqueClassBlock * getClassOfMethod(TR_OpaqueMethodBlock *method) override;
-   virtual TR_OpaqueClassBlock * getSuperClass(TR_OpaqueClassBlock *classPointer) override;
+   virtual int32_t getJavaLangClassHashCode(TR::Compilation *comp, TR_OpaqueClassBlock *clazzPointer, bool &hashCodeComputed) override;
+   virtual bool javaLangClassGetModifiersImpl(TR_OpaqueClassBlock *clazzPointer, int32_t &result) override;
+   virtual uint32_t getInstanceFieldOffset(TR_OpaqueClassBlock *classPointer, const char *fieldName, uint32_t fieldLen, const char *sig, uint32_t sigLen, UDATA options) override;
+   virtual TR_OpaqueClassBlock *getClassOfMethod(TR_OpaqueMethodBlock *method) override;
+   virtual TR_OpaqueClassBlock *getSuperClass(TR_OpaqueClassBlock *classPointer) override;
    virtual void getResolvedMethods(TR_Memory *, TR_OpaqueClassBlock *, List<TR_ResolvedMethod> *) override;
-   virtual TR_ResolvedMethod * getResolvedMethodForNameAndSignature(TR_Memory * trMemory, TR_OpaqueClassBlock * classPointer, const char* methodName, const char *signature) override;
+   virtual TR_ResolvedMethod *getResolvedMethodForNameAndSignature(TR_Memory * trMemory, TR_OpaqueClassBlock *classPointer, const char *methodName, const char *signature) override;
    virtual bool isClassLibraryMethod(TR_OpaqueMethodBlock *method, bool vettedForAOT = false) override;
-   virtual TR_OpaqueMethodBlock * getMethodFromClass(TR_OpaqueClassBlock *, char *, char *, TR_OpaqueClassBlock * = NULL) override;
+   virtual TR_OpaqueMethodBlock *getMethodFromClass(TR_OpaqueClassBlock *, const char *, const char *, TR_OpaqueClassBlock * = NULL) override;
    virtual bool supportAllocationInlining(TR::Compilation *comp, TR::Node *node) override;
    virtual TR_YesNoMaybe isInstanceOf(TR_OpaqueClassBlock *instanceClass, TR_OpaqueClassBlock *castClass, bool instanceIsFixed, bool castIsFixed = true, bool optimizeForAOT = false) override;
-   virtual TR_OpaqueClassBlock * getClassFromSignature(const char * sig, int32_t length, TR_ResolvedMethod *method, bool isVettedForAOT = false) override;
-   virtual TR_OpaqueClassBlock * getClassFromSignature(const char * sig, int32_t length, TR_OpaqueMethodBlock *method, bool isVettedForAOT = false) override;
-   virtual TR_OpaqueClassBlock * getSystemClassFromClassName(const char * name, int32_t length, bool isVettedForAOT = false) override;
-   virtual TR_OpaqueClassBlock * getProfiledClassFromProfiledInfo(TR_ExtraAddressInfo *profiledInfo) override;
+   virtual TR_OpaqueClassBlock *getClassFromSignature(const char *sig, int32_t length, TR_ResolvedMethod *method, bool isVettedForAOT = false) override;
+   virtual TR_OpaqueClassBlock *getClassFromSignature(const char *sig, int32_t length, TR_OpaqueMethodBlock *method, bool isVettedForAOT = false) override;
+   virtual TR_OpaqueClassBlock *getSystemClassFromClassName(const char *name, int32_t length, bool isVettedForAOT = false) override;
+   virtual TR_OpaqueClassBlock *getProfiledClassFromProfiledInfo(TR_ExtraAddressInfo *profiledInfo) override;
    virtual bool isPublicClass(TR_OpaqueClassBlock *clazz) override;
-   virtual bool hasFinalizer(TR_OpaqueClassBlock * classPointer) override;
-   virtual uintptr_t getClassDepthAndFlagsValue(TR_OpaqueClassBlock * classPointer) override;
-   virtual uintptr_t getClassFlagsValue(TR_OpaqueClassBlock * classPointer) override;
+   virtual bool hasFinalizer(TR_OpaqueClassBlock *classPointer) override;
+   virtual uintptr_t getClassDepthAndFlagsValue(TR_OpaqueClassBlock *classPointer) override;
+   virtual uintptr_t getClassFlagsValue(TR_OpaqueClassBlock *classPointer) override;
    virtual bool isPrimitiveClass(TR_OpaqueClassBlock *clazzPointer) override;
-   virtual TR_OpaqueClassBlock * getComponentClassFromArrayClass(TR_OpaqueClassBlock * arrayClass) override;
-   virtual TR_OpaqueClassBlock * getArrayClassFromComponentClass(TR_OpaqueClassBlock *componentClass) override;
-   virtual TR_OpaqueClassBlock * getLeafComponentClassFromArrayClass(TR_OpaqueClassBlock * arrayClass) override;
-   virtual TR_OpaqueClassBlock * getBaseComponentClass(TR_OpaqueClassBlock * clazz, int32_t & numDims) override;
-   virtual TR_OpaqueClassBlock * getClassFromNewArrayType(int32_t arrayType) override;
+   virtual TR_OpaqueClassBlock *getComponentClassFromArrayClass(TR_OpaqueClassBlock *arrayClass) override;
+   virtual TR_OpaqueClassBlock *getArrayClassFromComponentClass(TR_OpaqueClassBlock *componentClass) override;
+   virtual TR_OpaqueClassBlock *getLeafComponentClassFromArrayClass(TR_OpaqueClassBlock *arrayClass) override;
+   virtual TR_OpaqueClassBlock *getBaseComponentClass(TR_OpaqueClassBlock *clazz, int32_t & numDims) override;
+   virtual TR_OpaqueClassBlock *getClassFromNewArrayType(int32_t arrayType) override;
    virtual bool isPrimitiveArray(TR_OpaqueClassBlock *) override;
    virtual bool isReferenceArray(TR_OpaqueClassBlock *) override;
-   virtual TR_OpaqueMethodBlock * getInlinedCallSiteMethod(TR_InlinedCallSite *ics) override;
+   virtual TR_OpaqueMethodBlock *getInlinedCallSiteMethod(TR_InlinedCallSite *ics) override;
    virtual bool sameClassLoaders(TR_OpaqueClassBlock *, TR_OpaqueClassBlock *) override { return false; }
    virtual bool isUnloadAssumptionRequired(TR_OpaqueClassBlock *, TR_ResolvedMethod *) override { return true; }
    virtual bool classHasBeenExtended(TR_OpaqueClassBlock *) override { return true; }
-   virtual TR_ResolvedMethod * getObjectNewInstanceImplMethod(TR_Memory *) override { return NULL; }
-   virtual TR::CodeCache * getResolvedTrampoline(TR::Compilation *, TR::CodeCache* curCache, J9Method * method, bool inBinaryEncoding) override { return 0; }
+   virtual TR_ResolvedMethod *getObjectNewInstanceImplMethod(TR_Memory *) override { return NULL; }
+   virtual TR::CodeCache *getResolvedTrampoline(TR::Compilation *, TR::CodeCache* curCache, J9Method * method, bool inBinaryEncoding) override { return 0; }
    virtual intptr_t methodTrampolineLookup(TR::Compilation *, TR::SymbolReference *symRef, void *callSite) override { TR_ASSERT_FATAL(0, "methodTrampolineLookup not implemented for AOT");  return 0; }
-   virtual TR::CodeCache * getDesignatedCodeCache(TR::Compilation *comp) override;
-   virtual void * persistMHJ2IThunk(void *thunk) override { TR_ASSERT_FATAL(0, "persistMHJ2IThunk should not be called on the server"); return NULL; }
-   virtual void * findPersistentMHJ2IThunk(char *signatureChars) override { TR_ASSERT_FATAL(0, "findPersistentMHJ2IThunk should not be called on the server"); return NULL; }
-   virtual J9Class * getClassForAllocationInlining(TR::Compilation *comp, TR::SymbolReference *classSymRef) override;
+   virtual TR::CodeCache *getDesignatedCodeCache(TR::Compilation *comp) override;
+   virtual void *persistMHJ2IThunk(void *thunk) override { TR_ASSERT_FATAL(0, "persistMHJ2IThunk should not be called on the server"); return NULL; }
+   virtual void *findPersistentMHJ2IThunk(char *signatureChars) override { TR_ASSERT_FATAL(0, "findPersistentMHJ2IThunk should not be called on the server"); return NULL; }
+   virtual J9Class *getClassForAllocationInlining(TR::Compilation *comp, TR::SymbolReference *classSymRef) override;
    virtual bool ensureOSRBufferSize(TR::Compilation *comp, uintptr_t osrFrameSizeInBytes, uintptr_t osrScratchBufferSizeInBytes, uintptr_t osrStackFrameSizeInBytes) override;
-   virtual TR_OpaqueMethodBlock *getMethodFromName(char *className, char *methodName, char *signature) override;
-   virtual TR_OpaqueMethodBlock *getResolvedVirtualMethod(TR_OpaqueClassBlock * classObject, int32_t cpIndex, bool ignoreReResolve = true) override;
-   virtual TR_OpaqueMethodBlock *getResolvedInterfaceMethod(TR_OpaqueMethodBlock *ownerMethod, TR_OpaqueClassBlock * classObject, int32_t cpIndex) override;
+   virtual TR_OpaqueMethodBlock *getMethodFromName(const char *className, const char *methodName, const char *signature) override;
+   virtual TR_OpaqueMethodBlock *getResolvedVirtualMethod(TR_OpaqueClassBlock *classObject, int32_t cpIndex, bool ignoreReResolve = true) override;
+   virtual TR_OpaqueMethodBlock *getResolvedInterfaceMethod(TR_OpaqueMethodBlock *ownerMethod, TR_OpaqueClassBlock *classObject, int32_t cpIndex) override;
 
 protected :
    bool validateClass(TR_OpaqueMethodBlock * method, TR_OpaqueClassBlock* j9class, bool isVettedForAOT);

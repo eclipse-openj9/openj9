@@ -94,7 +94,7 @@ class TR_MHJ2IThunkTable
 
    private: // Fields
 
-   char *_name;
+   const char *_name;
    TR::Monitor *_monitor;
    TR_PersistentArray<Node> _nodes;
 
@@ -116,7 +116,7 @@ class TR_MHJ2IThunkTable
    int16_t terseSignatureLength(char *signature);
    void getTerseSignature(char *buf, int16_t bufLength, char *signature);
 
-   TR_MHJ2IThunkTable(TR_PersistentMemory *m, char *name);
+   TR_MHJ2IThunkTable(TR_PersistentMemory *m, const char *name);
    TR_PERSISTENT_ALLOC(TR_Memory::JSR292)
 
    void dumpTo(TR_FrontEnd *fe, TR::FILE *file);

@@ -381,7 +381,7 @@ private:
 
    TR_AOTStats *aotStats() { return _aotStats; }
 
-   void log(char *format, ...);
+   void log(const char *format, ...);
 
    SCCHint getHint(J9VMThread * vmThread, J9Method *method);
 

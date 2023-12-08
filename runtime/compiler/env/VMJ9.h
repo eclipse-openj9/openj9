@@ -162,7 +162,7 @@ TR_StaticFinalData
 extern "C" {
 #endif
 
-   J9VMThread * getJ9VMThreadFromTR_VM(void * vm);
+   J9VMThread * getJ9VMThreadFromTR_VM(void *vm);
    J9JITConfig * getJ9JitConfigFromFE(void *vm);
    TR::FILE *j9jit_fopen(const char *fileName, const char *mode, bool useJ9IO);
    void j9jit_fclose(TR::FILE *pFile);
@@ -184,15 +184,15 @@ extern "C" {
    I_32 j9jit_fopen_existing(const char *fileName);
    I_32 j9jit_fmove(const char * pathExist, const char * pathNew);
    void j9jit_fcloseId(I_32 fileId);
-   I_32 j9jit_fread(I_32 fd, void * buf, IDATA nbytes);
+   I_32 j9jit_fread(I_32 fd, void *buf, IDATA nbytes);
    I_32 j9jit_fseek(I_32 fd, I_32 whence);
    I_64 j9jit_time_current_time_millis();
    I_32 j9jit_vfprintfId(I_32 fileId, const char *format, ...);
    I_32 j9jit_fprintfId(I_32 fileId, const char *format, ...);
 
    void jitHookClassLoadHelper(J9VMThread *vmThread,
-                               J9JITConfig * jitConfig,
-                               J9Class * cl,
+                               J9JITConfig *jitConfig,
+                               J9Class *cl,
                                TR::CompilationInfo *compInfo,
                                UDATA *classLoadEventFailed);
 
@@ -297,15 +297,15 @@ public:
 
    virtual TR::DataType dataTypeForLoadOrStore(TR::DataType dt) { return (dt == TR::Int8 || dt == TR::Int16) ? TR::Int32 : dt; }
 
-   static bool createGlobalFrontEnd(J9JITConfig * jitConfig, TR::CompilationInfo * compInfo);
+   static bool createGlobalFrontEnd(J9JITConfig *jitConfig, TR::CompilationInfo *compInfo);
    static TR_J9VMBase * get(J9JITConfig *, J9VMThread *, VM_TYPE vmType=DEFAULT_VM);
    static char *getJ9FormattedName(J9JITConfig *, J9PortLibrary *, char *, size_t, char *, char *, bool suffix=false);
 
    int32_t *getStringClassEnableCompressionFieldAddr(TR::Compilation *comp, bool isVettedForAOT);
-   virtual bool stringEquals(TR::Compilation * comp, uintptr_t* stringLocation1, uintptr_t* stringLocation2, int32_t& result);
-   virtual bool getStringHashCode(TR::Compilation * comp, uintptr_t* stringLocation, int32_t& result);
+   virtual bool stringEquals(TR::Compilation *comp, uintptr_t *stringLocation1, uintptr_t *stringLocation2, int32_t &result);
+   virtual bool getStringHashCode(TR::Compilation *comp, uintptr_t *stringLocation, int32_t &result);
 
-   virtual bool isThunkArchetype(J9Method * method);
+   virtual bool isThunkArchetype(J9Method *method);
 
    J9VMThread * vmThread();
 
@@ -315,22 +315,22 @@ public:
    bool fsdIsEnabled() { return _flags.testAny(FSDIsEnabled); }
    void setFSDIsEnabled(bool b) { _flags.set(FSDIsEnabled, b); }
 
-   uint32_t getInstanceFieldOffset(TR_OpaqueClassBlock * classPointer, const char * fieldName, const char * sig)
+   uint32_t getInstanceFieldOffset(TR_OpaqueClassBlock *classPointer, const char *fieldName, const char *sig)
       {
       return getInstanceFieldOffset(classPointer, fieldName, (uint32_t)strlen(fieldName), sig, (uint32_t)strlen(sig));
       }
-   uint32_t getInstanceFieldOffset(TR_OpaqueClassBlock * classPointer, const char * fieldName, const char * sig, uintptr_t options)
+   uint32_t getInstanceFieldOffset(TR_OpaqueClassBlock *classPointer, const char *fieldName, const char *sig, uintptr_t options)
       {
       return getInstanceFieldOffset(classPointer, fieldName, (uint32_t)strlen(fieldName), sig, (uint32_t)strlen(sig), options);
       }
 
-   virtual uint32_t getInstanceFieldOffset(TR_OpaqueClassBlock * classPointer, const char * fieldName,
-                                                     uint32_t fieldLen, const char * sig, uint32_t sigLen, UDATA options);
-   virtual uint32_t getInstanceFieldOffset(TR_OpaqueClassBlock * classPointer, const char * fieldName,
-                                                     uint32_t fieldLen, const char * sig, uint32_t sigLen);
+   virtual uint32_t getInstanceFieldOffset(TR_OpaqueClassBlock *classPointer, const char *fieldName,
+                                                     uint32_t fieldLen, const char *sig, uint32_t sigLen, UDATA options);
+   virtual uint32_t getInstanceFieldOffset(TR_OpaqueClassBlock *classPointer, const char *fieldName,
+                                                     uint32_t fieldLen, const char *sig, uint32_t sigLen);
 
    // Not implemented
-   virtual TR_ResolvedMethod * getObjectNewInstanceImplMethod(TR_Memory *) { return 0; }
+   virtual TR_ResolvedMethod *getObjectNewInstanceImplMethod(TR_Memory *) { return 0; }
 
    virtual bool stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *methodClass) = 0;
 
@@ -405,9 +405,9 @@ protected:
    bool isAotResolvedVirtualDispatchGuaranteed(TR::Compilation *comp);
 
 public:
-   virtual TR_OpaqueMethodBlock * getMethodFromClass(TR_OpaqueClassBlock *, char *, char *, TR_OpaqueClassBlock * = NULL);
+   virtual TR_OpaqueMethodBlock *getMethodFromClass(TR_OpaqueClassBlock *, const char *, const char *, TR_OpaqueClassBlock * = NULL);
 
-   TR_OpaqueMethodBlock * getMatchingMethodFromNameAndSignature(TR_OpaqueClassBlock * classPointer, const char* methodName, const char *signature, bool validate = true);
+   TR_OpaqueMethodBlock *getMatchingMethodFromNameAndSignature(TR_OpaqueClassBlock *classPointer, const char* methodName, const char *signature, bool validate = true);
 
    virtual void getResolvedMethods(TR_Memory *, TR_OpaqueClassBlock *, List<TR_ResolvedMethod> *);
    /**
@@ -428,11 +428,11 @@ public:
 
    TR_OpaqueMethodBlock *getResolvedInterfaceMethod(J9ConstantPool *ownerCP, TR_OpaqueClassBlock * classObject, int32_t cpIndex);
 
-   uintptr_t getReferenceField(uintptr_t objectPointer, char *fieldName, char *fieldSignature)
+   uintptr_t getReferenceField(uintptr_t objectPointer, const char *fieldName, const char *fieldSignature)
       {
       return getReferenceFieldAt(objectPointer, getInstanceFieldOffset(getObjectClass(objectPointer), fieldName, fieldSignature));
       }
-   uintptr_t getVolatileReferenceField(uintptr_t objectPointer, char *fieldName, char *fieldSignature)
+   uintptr_t getVolatileReferenceField(uintptr_t objectPointer, const char *fieldName, const char *fieldSignature)
       {
       return getVolatileReferenceFieldAt(objectPointer, getInstanceFieldOffset(getObjectClass(objectPointer), fieldName, fieldSignature));
       }
@@ -835,7 +835,7 @@ public:
    virtual uintptr_t *mutableCallSite_bypassLocation(uintptr_t mutableCallSite);
    virtual uintptr_t *mutableCallSite_findOrCreateBypassLocation(uintptr_t mutableCallSite);
 
-   virtual TR_OpaqueMethodBlock *lookupArchetype(TR_OpaqueClassBlock *clazz, char *name, char *signature);
+   virtual TR_OpaqueMethodBlock *lookupArchetype(TR_OpaqueClassBlock *clazz, const char *name, const char *signature);
    virtual TR_OpaqueMethodBlock *lookupMethodHandleThunkArchetype(uintptr_t methodHandle);
    virtual TR_ResolvedMethod    *createMethodHandleArchetypeSpecimen(TR_Memory *, uintptr_t *methodHandleLocation, TR_ResolvedMethod *owningMethod = 0);
    virtual TR_ResolvedMethod    *createMethodHandleArchetypeSpecimen(TR_Memory *, TR_OpaqueMethodBlock *archetype, uintptr_t *methodHandleLocation, TR_ResolvedMethod *owningMethod = 0); // more efficient if you already know the archetype
@@ -1000,7 +1000,7 @@ public:
     * \param mhIndex known object index of the java/lang/invoke/MemberName object
     * \param fieldName the name of the field for which we return the known object index
     */
-   virtual TR::KnownObjectTable::Index getMemberNameFieldKnotIndexFromMethodHandleKnotIndex(TR::Compilation *comp, TR::KnownObjectTable::Index mhIndex, char *fieldName);
+   virtual TR::KnownObjectTable::Index getMemberNameFieldKnotIndexFromMethodHandleKnotIndex(TR::Compilation *comp, TR::KnownObjectTable::Index mhIndex, const char *fieldName);
 
    /**
     * \brief
@@ -1342,10 +1342,10 @@ public:
    uint8_t *allocateDataCacheRecord(uint32_t numBytes,  TR::Compilation *comp, bool contiguous,
                                 bool *shouldRetryAllocation, uint32_t allocationType, uint32_t *size);
 
-   virtual int findOrCreateMethodSymRef(TR::Compilation* comp, TR::ResolvedMethodSymbol* owningMethodSym, char* classSig, char** methodSig, TR::SymbolReference** symRefs, int methodCount);
-   virtual int findOrCreateMethodSymRef(TR::Compilation* comp, TR::ResolvedMethodSymbol* owningMethodSym, char** methodSig, TR::SymbolReference** symRefs, int methodCount);
-   virtual TR::SymbolReference* findOrCreateMethodSymRef(TR::Compilation* comp, TR::ResolvedMethodSymbol* owningMethodSym, char* classSig, char* methodSig);
-   virtual TR::SymbolReference* findOrCreateMethodSymRef(TR::Compilation* comp, TR::ResolvedMethodSymbol* owningMethodSym, char* methodSig);
+   virtual int findOrCreateMethodSymRef(TR::Compilation *comp, TR::ResolvedMethodSymbol *owningMethodSym, const char *classSig, const char **methodSig, TR::SymbolReference **symRefs, int methodCount);
+   virtual int findOrCreateMethodSymRef(TR::Compilation *comp, TR::ResolvedMethodSymbol *owningMethodSym, const char **methodSig, TR::SymbolReference **symRefs, int methodCount);
+   virtual TR::SymbolReference* findOrCreateMethodSymRef(TR::Compilation *comp, TR::ResolvedMethodSymbol *owningMethodSym, const char *classSig, const char *methodSig);
+   virtual TR::SymbolReference* findOrCreateMethodSymRef(TR::Compilation *comp, TR::ResolvedMethodSymbol *owningMethodSym, const char *methodSig);
 
    virtual bool isOwnableSyncClass(TR_OpaqueClassBlock *clazz);
    const char *getJ9MonitorName(J9ThreadMonitor* monitor);
@@ -1479,7 +1479,7 @@ public:
    virtual void               initializeHasFixedFrameC_CallingConvention();
 
    virtual bool               isPublicClass(TR_OpaqueClassBlock *clazz);
-   virtual TR_OpaqueMethodBlock *getMethodFromName(char * className, char *methodName, char *signature);
+   virtual TR_OpaqueMethodBlock *getMethodFromName(const char *className, const char *methodName, const char *signature);
 
    virtual TR_OpaqueClassBlock * getComponentClassFromArrayClass(TR_OpaqueClassBlock * arrayClass);
    virtual TR_OpaqueClassBlock * getArrayClassFromComponentClass(TR_OpaqueClassBlock *componentClass);

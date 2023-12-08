@@ -73,7 +73,7 @@ TR_MHJ2IThunk::allocate(
    }
 
 
-TR_MHJ2IThunkTable::TR_MHJ2IThunkTable(TR_PersistentMemory *m, char *name):
+TR_MHJ2IThunkTable::TR_MHJ2IThunkTable(TR_PersistentMemory *m, const char *name):
    _name(name),
    _monitor(TR::Monitor::create(name)),
    _nodes(m)
