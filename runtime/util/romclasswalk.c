@@ -210,8 +210,12 @@ void allSlotsInROMClassDo(J9ROMClass* romClass,
 #endif /* JAVA_SPEC_VERSION >= 11 */
 
 	/* add CP NAS section */
-	firstMethod = J9ROMCLASS_ROMMETHODS(romClass);
-	count = (U_32)(((UDATA)firstMethod - (UDATA)srpCursor) / (sizeof(J9SRP) * 2));
+	if (0 != romClass->romMethodCount) {
+		firstMethod = J9ROMCLASS_ROMMETHODS(romClass);
+		count = (U_32)(((UDATA)firstMethod - (UDATA)srpCursor) / (sizeof(J9SRP) * 2));
+	} else {
+		count = 0;
+	}
 	rangeValid = callbacks->validateRangeCallback(romClass, srpCursor, count * sizeof(J9SRP) * 2, userData);
 	if (rangeValid) {
 		callbacks->sectionCallback(romClass, srpCursor, count * sizeof(J9SRP) * 2, "cpNamesAndSignaturesSRPs", userData);
