@@ -266,9 +266,9 @@ static void loadDLL (void* dllLoadInfo, void* userDataTemp);
 static void registerIgnoredOptions (J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args);
 static UDATA protectedInitializeJavaVM (J9PortLibrary* portLibrary, void * userData);
 static J9Pool *initializeDllLoadTable (J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args, UDATA verboseFlags, J9JavaVM *vm);
-#if (defined(J9VM_OPT_SIDECAR))
+#if defined(J9VM_OPT_SIDECAR) && (JAVA_SPEC_VERSION < 21)
 static IDATA checkDjavacompiler (J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args);
-#endif /* J9VM_OPT_SIDECAR */
+#endif /* defined(J9VM_OPT_SIDECAR) && (JAVA_SPEC_VERSION < 21) */
 static void* getOptionExtraInfo (J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args, IDATA match, char* optionName);
 static void closeAllDLLs (J9JavaVM* vm);
 
@@ -4914,6 +4914,7 @@ registerCmdLineMapping(J9JavaVM* vm, char* sov_option, char* j9_option, UDATA ma
 static IDATA
 registerVMCmdLineMappings(J9JavaVM* vm)
 {
+#if JAVA_SPEC_VERSION < 21
 	char jitOpt[SMALL_STRING_BUF_SIZE];				/* Plenty big enough */
 	char* changeCursor;
 	IDATA bufLeft = 0;
@@ -4922,6 +4923,7 @@ registerVMCmdLineMappings(J9JavaVM* vm)
 	strcpy(jitOpt, SYSPROP_DJAVA_COMPILER_EQUALS);
 	bufLeft = SMALL_STRING_BUF_SIZE - strlen(jitOpt) - 1;
 	changeCursor = &jitOpt[strlen(jitOpt)];
+#endif /* JAVA_SPEC_VERSION < 21 */
 
 #ifdef J9VM_OPT_JVMTI
 	if (registerCmdLineMapping(vm, MAPOPT_JAVAAGENT_COLON, MAPOPT_AGENTLIB_INSTRUMENT_EQUALS, MAP_WITH_INCLUSIVE_OPTIONS) == RC_FAILED) {
@@ -4932,6 +4934,7 @@ registerVMCmdLineMappings(J9JavaVM* vm)
 	if (registerCmdLineMapping(vm, MAPOPT_XCOMP, MAPOPT_XJIT_COUNT0, EXACT_MAP_NO_OPTIONS) == RC_FAILED) {
 		return RC_FAILED;
 	}
+#if JAVA_SPEC_VERSION < 21
 	strncpy(changeCursor, DJCOPT_JITC, bufLeft);
 	if (registerCmdLineMapping(vm, jitOpt, VMOPT_XJIT, EXACT_MAP_NO_OPTIONS) == RC_FAILED) {
 		return RC_FAILED;
@@ -4943,6 +4946,7 @@ registerVMCmdLineMappings(J9JavaVM* vm)
 	if (registerCmdLineMapping(vm, SYSPROP_DJAVA_COMPILER_EQUALS, VMOPT_XINT, STARTSWITH_MAP_NO_OPTIONS) == RC_FAILED) {				/* any other -Djava.compiler= found is mapped to -Xint */
 		return RC_FAILED;
 	}
+#endif /* JAVA_SPEC_VERSION < 21 */
 	if (registerCmdLineMapping(vm, MAPOPT_XDISABLEJAVADUMP, MAPOPT_XDUMP_JAVA_NONE, EXACT_MAP_NO_OPTIONS) == RC_FAILED) {
 		return RC_FAILED;
 	}
@@ -6287,7 +6291,7 @@ testOptionValueOps(J9JavaVM* vm)
 #endif
 
 
-#if (defined(J9VM_OPT_SIDECAR))
+#if defined(J9VM_OPT_SIDECAR) && (JAVA_SPEC_VERSION < 21)
 /* Whine about -Djava.compiler if the option is not used correctly */
 
 static IDATA
@@ -6312,7 +6316,7 @@ checkDjavacompiler(J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args)
 	}
 	return 0;
 }
-#endif /* J9VM_OPT_SIDECAR */
+#endif /* defined(J9VM_OPT_SIDECAR) && (JAVA_SPEC_VERSION < 21) */
 
 
 static IDATA
@@ -7257,10 +7261,12 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 #endif
 
 #ifdef J9VM_OPT_SIDECAR
+#if JAVA_SPEC_VERSION < 21
 	/* Whine about -Djava.compiler after extra VM options are added, but before mappings are set */
 	if (RC_FAILED == checkDjavacompiler(portLibrary, vm->vmArgsArray)) {
 		goto error;
 	}
+#endif /* JAVA_SPEC_VERSION < 21 */
 
 	if (doParseXlogForCompatibility) {
 		if (JNI_OK != parseXlogForCompatibility(vm)) {
@@ -7416,17 +7422,23 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 		goto error;
 	}
 
-	/* If the JIT started, set the java.compiler system property and allocate the global OSR buffer */
+	/* If the JIT started, set the java.compiler/openj9.compiler system property and allocate the global OSR buffer */
 	if (NULL != vm->jitConfig) {
-		J9VMSystemProperty * property = NULL;
 #ifndef DELETEME
 		UDATA osrGlobalBufferSize = sizeof(J9JITDecompilationInfo);
 #endif
+#if JAVA_SPEC_VERSION < 21
+		J9VMSystemProperty * property = NULL;
 
 		if (J9SYSPROP_ERROR_NONE == getSystemProperty(vm, "java.compiler", &property)) {
 			setSystemProperty(vm, property, J9_JIT_DLL_NAME);
 			property->flags &= ~J9SYSPROP_FLAG_WRITEABLE;
 		}
+#else /* JAVA_SPEC_VERSION < 21 */
+		if (J9SYSPROP_ERROR_NONE != addSystemProperty(vm, "openj9.compiler", J9_JIT_DLL_NAME, 0)) {
+			goto error;
+		}
+#endif /* JAVA_SPEC_VERSION < 21 */
 #ifndef DELETEME
 		osrGlobalBufferSize += ROUND_TO(sizeof(UDATA), vm->jitConfig->osrFramesMaximumSize);
 		osrGlobalBufferSize += ROUND_TO(sizeof(UDATA), vm->jitConfig->osrScratchBufferMaximumSize);
@@ -7471,6 +7483,12 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 		}
 
 	} else {
+#if JAVA_SPEC_VERSION >= 21
+		if (J9SYSPROP_ERROR_NONE != addSystemProperty(vm, "openj9.compiler", "", 0)) {
+			goto error;
+		}
+#endif /* JAVA_SPEC_VERSION >= 21 */
+
 		/* If there is no JIT, change the vm phase so RAS will enable level 2 tracepoints */
 		jvmPhaseChange(vm, J9VM_PHASE_NOT_STARTUP);
 	}
