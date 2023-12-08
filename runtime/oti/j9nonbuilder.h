@@ -4223,6 +4223,7 @@ typedef struct J9CRIUCheckpointState {
 	I_64 checkpointRestoreTimeDelta;
 	I_64 lastRestoreTimeMillis;
 	UDATA maxRetryForNotCheckpointSafe;
+	UDATA sleepMillisecondsForNotCheckpointSafe;
 	jclass criuJVMCheckpointExceptionClass;
 	jclass criuSystemCheckpointExceptionClass;
 	jclass criuJVMRestoreExceptionClass;

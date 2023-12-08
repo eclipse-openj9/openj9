@@ -292,9 +292,8 @@
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
   </test>
 
-<!--
   <test id="Create and Restore Criu Checkpoint Image once - MethodTypeDeadlockTest">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -XX:+ThrowOnDelayedCheckpointOperation -Xtrace:print=j9criu.17 -fix-add-opens java.base/jdk.internal.misc=ALL-UNNAMED  -fix-add-exports java.base/openj9.internal.criu=ALL-UNNAMED" $MAINCLASS_DEADLOCK_TEST$ MethodTypeDeadlockTest 1</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -XX:+ThrowOnDelayedCheckpointOperation -XX:sleepMillisecondsForNotCheckpointSafe=20 -Xtrace:print=j9criu.17 --add-opens java.base/jdk.internal.misc=ALL-UNNAMED  --add-exports java.base/openj9.internal.criu=ALL-UNNAMED" $MAINCLASS_DEADLOCK_TEST$ MethodTypeDeadlockTest 1</command>
     <output type="success" caseSensitive="yes" regex="no">User requested Java dump using</output>
     <output type="success" caseSensitive="yes" regex="no">TEST PASSED</output>
     <output type="failure" caseSensitive="yes" regex="no">TEST FAILED</output>
@@ -303,15 +302,15 @@
     <output type="required" caseSensitive="no" regex="no">Killed</output>
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
     <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
-      If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure.
+    <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
     <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
     <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <output type="failure" caseSensitive="yes" regex="no">TEST FAILED</output>
-     In the past, the failure below was caused by an issue where CRIU can't be found on the PATH.
+    <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
   </test>
--->
+
   <test id="Create and Restore Criu Checkpoint Image once - clinitTest">
     <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -XX:+ThrowOnDelayedCheckpointOperation -Xdump:system:events=user -Xtrace:print=j9criu.17 --add-opens java.base/jdk.internal.misc=ALL-UNNAMED  --add-exports java.base/openj9.internal.criu=ALL-UNNAMED" $MAINCLASS_DEADLOCK_TEST$ ClinitTest 1</command>
     <output type="success" caseSensitive="yes" regex="no">User requested Java dump using</output>

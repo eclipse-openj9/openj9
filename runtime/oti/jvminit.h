@@ -431,6 +431,8 @@ enum INIT_STAGE {
 #define VMOPT_XSHARECLASSES_DISABLEONRESTORE "-Xshareclasses:disableOnRestore"
 #define VMOPT_XXENABLETHROWONDELAYECHECKPOINTOPERATION "-XX:+ThrowOnDelayedCheckpointOperation"
 #define VMOPT_XXDISABLETHROWONDELAYECHECKPOINTOPERATION "-XX:-ThrowOnDelayedCheckpointOperation"
+#define VMOPT_XXMAXRETRYFORNOTCHECKPOINTSAFE_EQUALS "-XX:maxRetryForNotCheckpointSafe="
+#define VMOPT_XXSLEEPMILLISECONDSFORNOTCHECKPOINTSAFE_EQUALS "-XX:sleepMillisecondsForNotCheckpointSafe="
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 /* Compatibility options. */
