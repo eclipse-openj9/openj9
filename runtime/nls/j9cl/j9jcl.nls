@@ -588,3 +588,21 @@ J9NLS_JCL_CRIU_FAILED_TO_ENABLE_ALL_RESTORE_OPTIONS.explanation=NOTAG
 J9NLS_JCL_CRIU_FAILED_TO_ENABLE_ALL_RESTORE_OPTIONS.system_action=
 J9NLS_JCL_CRIU_FAILED_TO_ENABLE_ALL_RESTORE_OPTIONS.user_response=
 # END NON-TRANSLATABLE
+
+# Note: "java.compiler" is a system property name and should not be translated.
+# Note: "-Xjit" is a command line parameter and should not be translated.
+J9NLS_JCL_JAVA_COMPILER_WARNING_XJIT=Setting the java.compiler system property is obsolete in version 21 and later, use -Xjit instead.
+# START NON-TRANSLATABLE
+J9NLS_JCL_JAVA_COMPILER_WARNING_XJIT.explanation=The java.compiler system property can no longer be used to enable or disable the JIT.
+J9NLS_JCL_JAVA_COMPILER_WARNING_XJIT.system_action=Setting the java.compiler system property is ignored.
+J9NLS_JCL_JAVA_COMPILER_WARNING_XJIT.user_response=Use the -Xjit option to enable the JIT.
+# END NON-TRANSLATABLE
+
+# Note: "java.compiler" is a system property name and should not be translated.
+# Note: "-Xint" is a command line parameter and should not be translated.
+J9NLS_JCL_JAVA_COMPILER_WARNING_XINT=Setting the java.compiler system property is obsolete in version 21 and later, use -Xint instead.
+# START NON-TRANSLATABLE
+J9NLS_JCL_JAVA_COMPILER_WARNING_XINT.explanation=The java.compiler system property can no longer be used to enable or disable the JIT.
+J9NLS_JCL_JAVA_COMPILER_WARNING_XINT.system_action=Setting the java.compiler system property is ignored.
+J9NLS_JCL_JAVA_COMPILER_WARNING_XINT.user_response=Use the -Xint option to disable the JIT.
+# END NON-TRANSLATABLE

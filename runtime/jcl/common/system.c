@@ -36,6 +36,7 @@
 #include "jclprots.h"
 
 #include "ut_j9jcl.h"
+#include "j9jclnls.h"
 
 #if defined(J9ZOS390)
 #include "atoe.h"
@@ -551,6 +552,17 @@ systemPropertyIterator(char* key, char* value, void* userData)
 		return;
 	}
 
+#if JAVA_SPEC_VERSION >= 21
+	if (0 == strcmp("java.compiler", key)) {
+		PORT_ACCESS_FROM_ENV(env);
+		if ((0 == strcmp("jitc", value)) || (0 == strcmp(J9_JIT_DLL_NAME, value))) {
+			j9nls_printf(PORTLIB, J9NLS_WARNING, J9NLS_JCL_JAVA_COMPILER_WARNING_XJIT);
+		} else {
+			j9nls_printf(PORTLIB, J9NLS_WARNING, J9NLS_JCL_JAVA_COMPILER_WARNING_XINT);
+		}
+		return;
+	}
+#endif /* JAVA_SPEC_VERSION >= 21 */
 
 	/* check for overridden system properties, use linear scan for now */
 	for (i=0; i < defaultCount; i+=2) {
