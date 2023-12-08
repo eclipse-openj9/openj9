@@ -72,7 +72,12 @@ public final class CompilationMXBeanImpl implements CompilationMXBean {
 	 */
 	@Override
 	public String getName() {
-		return com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties().getProperty("java.compiler"); //$NON-NLS-1$
+		return com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties().
+/*[IF JAVA_SPEC_VERSION < 21]*/
+				getProperty("java.compiler"); //$NON-NLS-1$
+/*[ELSE] JAVA_SPEC_VERSION < 21 */
+				getProperty("openj9.compiler"); //$NON-NLS-1$
+/*[ENDIF] JAVA_SPEC_VERSION < 21*/
 	}
 
 	/**

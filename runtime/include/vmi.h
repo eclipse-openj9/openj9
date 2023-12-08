@@ -276,7 +276,7 @@ GetInitArgs(VMInterface* vmi);
 <BR>OpenJ9   - 1ca0ab98
 <BR>OMR      - 05d2b8a2
 <BR>JCL      - c2aa0348 based on jdk8u172-b11"</TD></TR>
- * <TR><TD>java.compiler</TD>			<TD>"j9jit29"</TD></TR>
+ * <TR><TD>java.compiler</TD>			<TD>"j9jit29" - not supported from jdk21</TD></TR>
  * <TR><TD>java.class.version</TD>		<TD>"52.0"</TD></TR>
  * <TR><TD>java.home</TD>			<TD>the absolute path of the parent directory of the directory containing the vm
 <BR>i.e. for a vm /clear/bin/vm.exe, java.home is /clear</TD></TR>
