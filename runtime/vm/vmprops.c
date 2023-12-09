@@ -759,11 +759,13 @@ initializeSystemProperties(J9JavaVM * vm)
 	}
 #endif
 
+#if JAVA_SPEC_VERSION < 21
 	/* Don't know the JIT yet, put in a placeholder and make it writeable for now */
 	rc = addSystemProperty(vm, "java.compiler", "", J9SYSPROP_FLAG_WRITEABLE);
 	if (J9SYSPROP_ERROR_NONE != rc) {
 		goto fail;
 	}
+#endif /* JAVA_SPEC_VERSION < 21 */
 
 	/* We don't have enough information yet. Put in placeholders. */
 #if defined(J9VM_OPT_SIDECAR) && !defined(WIN32)

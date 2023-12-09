@@ -1412,7 +1412,9 @@ addEnvironmentVariables(J9PortLibrary *portLib, JavaVMInitArgs *launcherArgs, J9
 	IDATA status = 0;
 	if (
 			(0 != mapEnvVarToArgument(portLib, ENVVAR_IBM_MIXED_MODE_THRESHOLD, MAPOPT_XJIT_COUNT_EQUALS, vmArgumentsList, EXACT_MAP_WITH_OPTIONS, verboseFlags))
+#if JAVA_SPEC_VERSION < 21
 			|| (0 != mapEnvVarToArgument(portLib, ENVVAR_JAVA_COMPILER, SYSPROP_DJAVA_COMPILER_EQUALS, vmArgumentsList, EXACT_MAP_WITH_OPTIONS, verboseFlags))
+#endif /* JAVA_SPEC_VERSION < 21 */
 			|| (0 != mapEnvVarToArgument(portLib, ENVVAR_IBM_NOSIGHANDLER, VMOPT_XRS, vmArgumentsList, EXACT_MAP_NO_OPTIONS, verboseFlags))
 #if defined(J9ZOS390)
 			|| (0 != mapEnvVarToArgument(portLib, ENVVAR_JAVA_THREAD_MODEL, MAPOPT_XTHR_TW_EQUALS, vmArgumentsList, EXACT_MAP_WITH_OPTIONS, verboseFlags))

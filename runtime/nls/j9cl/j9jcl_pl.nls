@@ -444,147 +444,165 @@ J9NLS_JCL_DUPLICATE_CLASS_DEFINITION.system_action=The JVM will throw a LinkageE
 J9NLS_JCL_DUPLICATE_CLASS_DEFINITION.user_response=Ensure there is no duplicate definition for the class in the message and try again.
 # END NON-TRANSLATABLE
 
-J9NLS_JCL_CRIU_FAILED_TO_OPEN_DIR=Nie mo\u017cna otworzy\u0107 katalogu danych punktu kontrolnego, errno=%li
+J9NLS_JCL_CRIU_FAILED_TO_OPEN_DIR=
 # START NON-TRANSLATABLE
-J9NLS_JCL_CRIU_FAILED_TO_OPEN_DIR.sample_input_1=1
-J9NLS_JCL_CRIU_FAILED_TO_OPEN_DIR.explanation=An error occurred when the JVM attempted to open the specified directory.
-J9NLS_JCL_CRIU_FAILED_TO_OPEN_DIR.system_action=The JVM will throw a JVMCheckpointException.
-J9NLS_JCL_CRIU_FAILED_TO_OPEN_DIR.user_response=Ensure the specified directory is accessible.
+J9NLS_JCL_CRIU_FAILED_TO_OPEN_DIR.sample_input_1=
+J9NLS_JCL_CRIU_FAILED_TO_OPEN_DIR.explanation=NOTAG
+J9NLS_JCL_CRIU_FAILED_TO_OPEN_DIR.system_action=
+J9NLS_JCL_CRIU_FAILED_TO_OPEN_DIR.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_JCL_CRIU_INIT_FAILED=Nie mo\u017cna zainicjowa\u0107 opcji CRIU, err=%li
+J9NLS_JCL_CRIU_INIT_FAILED=
 # START NON-TRANSLATABLE
-J9NLS_JCL_CRIU_INIT_FAILED.sample_input_1=1
-J9NLS_JCL_CRIU_INIT_FAILED.explanation=An error occurred when the JVM attempted to initialize CRIU options.
-J9NLS_JCL_CRIU_INIT_FAILED.system_action=The JVM will throw a SystemCheckpointException.
-J9NLS_JCL_CRIU_INIT_FAILED.user_response=View CRIU documentation to determine how to resolve the error.
+J9NLS_JCL_CRIU_INIT_FAILED.sample_input_1=
+J9NLS_JCL_CRIU_INIT_FAILED.explanation=NOTAG
+J9NLS_JCL_CRIU_INIT_FAILED.system_action=
+J9NLS_JCL_CRIU_INIT_FAILED.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_JCL_CRIU_DUMP_FAILED=Nie mo\u017cna utworzy\u0107 zrzutu proces\u00f3w JVM, err=%li
+J9NLS_JCL_CRIU_DUMP_FAILED=
 # START NON-TRANSLATABLE
-J9NLS_JCL_CRIU_DUMP_FAILED.sample_input_1=1
-J9NLS_JCL_CRIU_DUMP_FAILED.explanation=An error occurred when the JVM attempted to dump the process via criu_dump.
-J9NLS_JCL_CRIU_DUMP_FAILED.system_action=The JVM will throw a SystemCheckpointException.
-J9NLS_JCL_CRIU_DUMP_FAILED.user_response=View CRIU documentation to determine how to resolve the error.
+J9NLS_JCL_CRIU_DUMP_FAILED.sample_input_1=
+J9NLS_JCL_CRIU_DUMP_FAILED.explanation=NOTAG
+J9NLS_JCL_CRIU_DUMP_FAILED.system_action=
+J9NLS_JCL_CRIU_DUMP_FAILED.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_JCL_CRIU_FAILED_TO_CLOSE_DIR=Nie mo\u017cna zamkn\u0105\u0107 katalogu danych punktu kontrolnego, errno=%li
+J9NLS_JCL_CRIU_FAILED_TO_CLOSE_DIR=
 # START NON-TRANSLATABLE
-J9NLS_JCL_CRIU_FAILED_TO_CLOSE_DIR.sample_input_1=1
-J9NLS_JCL_CRIU_FAILED_TO_CLOSE_DIR.explanation=An error occurred when the JVM attempted to close the specified directory.
-J9NLS_JCL_CRIU_FAILED_TO_CLOSE_DIR.system_action=The JVM will throw a SystemRestoreException or SystemCheckpointException.
+J9NLS_JCL_CRIU_FAILED_TO_CLOSE_DIR.sample_input_1=
+J9NLS_JCL_CRIU_FAILED_TO_CLOSE_DIR.explanation=NOTAG
+J9NLS_JCL_CRIU_FAILED_TO_CLOSE_DIR.system_action=
 
-J9NLS_JCL_CRIU_FAILED_TO_CLOSE_DIR.user_response=Ensure the specified directory is accessible.
+J9NLS_JCL_CRIU_FAILED_TO_CLOSE_DIR.user_response=
 # END NON-TRANSLATABLE
 
 J9NLS_JCL_CRIU_FAILED_TO_CONVERT_JAVA_STRING=Nie mo\u017cna przekszta\u0142ci\u0107 \u0142a\u0144cucha Java z u\u017cyciem kodowania rodzimego, err=%li
 # START NON-TRANSLATABLE
-J9NLS_JCL_CRIU_FAILED_TO_CONVERT_JAVA_STRING.sample_input_1=1
-J9NLS_JCL_CRIU_FAILED_TO_CONVERT_JAVA_STRING.explanation=An error occurred when the JVM attempted to convert a java string to native encoding.
-J9NLS_JCL_CRIU_FAILED_TO_CONVERT_JAVA_STRING.system_action=The JVM will throw a JVMCheckpointException.
-J9NLS_JCL_CRIU_FAILED_TO_CONVERT_JAVA_STRING.user_response=Ensure the specified input strings are valid.
+J9NLS_JCL_CRIU_FAILED_TO_CONVERT_JAVA_STRING.sample_input_1=
+J9NLS_JCL_CRIU_FAILED_TO_CONVERT_JAVA_STRING.explanation=NOTAG
+J9NLS_JCL_CRIU_FAILED_TO_CONVERT_JAVA_STRING.system_action=
+J9NLS_JCL_CRIU_FAILED_TO_CONVERT_JAVA_STRING.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_JCL_CRIU_FAILED_TO_OPEN_WORK_DIR=Nie mo\u017cna otworzy\u0107 katalogu roboczego, errno=%li
+J9NLS_JCL_CRIU_FAILED_TO_OPEN_WORK_DIR=
 # START NON-TRANSLATABLE
-J9NLS_JCL_CRIU_FAILED_TO_OPEN_WORK_DIR.sample_input_1=1
-J9NLS_JCL_CRIU_FAILED_TO_OPEN_WORK_DIR.explanation=An error occurred when the JVM attempted to open the specified directory.
-J9NLS_JCL_CRIU_FAILED_TO_OPEN_WORK_DIR.system_action=The JVM will throw a JVMCheckpointException.
-J9NLS_JCL_CRIU_FAILED_TO_OPEN_WORK_DIR.user_response=Ensure the specified directory is accessible.
+J9NLS_JCL_CRIU_FAILED_TO_OPEN_WORK_DIR.sample_input_1=
+J9NLS_JCL_CRIU_FAILED_TO_OPEN_WORK_DIR.explanation=NOTAG
+J9NLS_JCL_CRIU_FAILED_TO_OPEN_WORK_DIR.system_action=
+J9NLS_JCL_CRIU_FAILED_TO_OPEN_WORK_DIR.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_JCL_CRIU_FAILED_TO_CLOSE_WORK_DIR=Nie mo\u017cna zamkn\u0105\u0107 katalogu roboczego, errno=%li
+J9NLS_JCL_CRIU_FAILED_TO_CLOSE_WORK_DIR=
 # START NON-TRANSLATABLE
-J9NLS_JCL_CRIU_FAILED_TO_CLOSE_WORK_DIR.sample_input_1=1
-J9NLS_JCL_CRIU_FAILED_TO_CLOSE_WORK_DIR.explanation=An error occurred when the JVM attempted to close the specified directory.
-J9NLS_JCL_CRIU_FAILED_TO_CLOSE_WORK_DIR.system_action=The JVM will throw a SystemRestoreException or SystemCheckpointException.
-J9NLS_JCL_CRIU_FAILED_TO_CLOSE_WORK_DIR.user_response=Ensure the specified directory is accessible.
+J9NLS_JCL_CRIU_FAILED_TO_CLOSE_WORK_DIR.sample_input_1=
+J9NLS_JCL_CRIU_FAILED_TO_CLOSE_WORK_DIR.explanation=NOTAG
+J9NLS_JCL_CRIU_FAILED_TO_CLOSE_WORK_DIR.system_action=
+J9NLS_JCL_CRIU_FAILED_TO_CLOSE_WORK_DIR.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_JCL_CRIU_FAILED_TO_RUN_INTERNAL_CHECKPOINT_HOOKS=Nie mo\u017cna uruchomi\u0107 wewn\u0119trznych hak\u00f3w punkt\u00f3w kontrolnych, errno=%li
+J9NLS_JCL_CRIU_FAILED_TO_RUN_INTERNAL_CHECKPOINT_HOOKS=
 # START NON-TRANSLATABLE
-J9NLS_JCL_CRIU_FAILED_TO_RUN_INTERNAL_CHECKPOINT_HOOKS.sample_input_1=1
-J9NLS_JCL_CRIU_FAILED_TO_RUN_INTERNAL_CHECKPOINT_HOOKS.explanation=An error occurred when the JVM attempted to run internal checkpoint hooks.
-J9NLS_JCL_CRIU_FAILED_TO_RUN_INTERNAL_CHECKPOINT_HOOKS.system_action=The JVM will throw a SystemCheckpointException.
-J9NLS_JCL_CRIU_FAILED_TO_RUN_INTERNAL_CHECKPOINT_HOOKS.user_response=View CRIU documentation to determine how to resolve the error.
+J9NLS_JCL_CRIU_FAILED_TO_RUN_INTERNAL_CHECKPOINT_HOOKS.sample_input_1=
+J9NLS_JCL_CRIU_FAILED_TO_RUN_INTERNAL_CHECKPOINT_HOOKS.explanation=NOTAG
+J9NLS_JCL_CRIU_FAILED_TO_RUN_INTERNAL_CHECKPOINT_HOOKS.system_action=
+J9NLS_JCL_CRIU_FAILED_TO_RUN_INTERNAL_CHECKPOINT_HOOKS.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_JCL_CRIU_FAILED_TO_RUN_INTERNAL_RESTORE_HOOKS=Nie mo\u017cna uruchomi\u0107 wewn\u0119trznych hak\u00f3w odtwarzania, errno=%li
+J9NLS_JCL_CRIU_FAILED_TO_RUN_INTERNAL_RESTORE_HOOKS=
 # START NON-TRANSLATABLE
-J9NLS_JCL_CRIU_FAILED_TO_RUN_INTERNAL_RESTORE_HOOKS.sample_input_1=1
-J9NLS_JCL_CRIU_FAILED_TO_RUN_INTERNAL_RESTORE_HOOKS.explanation=An error occurred when the JVM attempted to run internal restore hooks.
-J9NLS_JCL_CRIU_FAILED_TO_RUN_INTERNAL_RESTORE_HOOKS.system_action=The JVM will throw a JVMRestoreException.
-J9NLS_JCL_CRIU_FAILED_TO_RUN_INTERNAL_RESTORE_HOOKS.user_response=View CRIU documentation to determine how to resolve the error.
+J9NLS_JCL_CRIU_FAILED_TO_RUN_INTERNAL_RESTORE_HOOKS.sample_input_1=
+J9NLS_JCL_CRIU_FAILED_TO_RUN_INTERNAL_RESTORE_HOOKS.explanation=NOTAG
+J9NLS_JCL_CRIU_FAILED_TO_RUN_INTERNAL_RESTORE_HOOKS.system_action=
+J9NLS_JCL_CRIU_FAILED_TO_RUN_INTERNAL_RESTORE_HOOKS.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_JCL_CRIU_FAILED_DELAY_LOCK_RELATED_OPS=Nie mo\u017cna pomy\u015blnie uruchomi\u0107 op\u00f3\u017anionych operacji zwi\u0105zanych z blokadami, errno=%li
+J9NLS_JCL_CRIU_FAILED_DELAY_LOCK_RELATED_OPS=
 # START NON-TRANSLATABLE
-J9NLS_JCL_CRIU_FAILED_DELAY_LOCK_RELATED_OPS.sample_input_1=1
-J9NLS_JCL_CRIU_FAILED_DELAY_LOCK_RELATED_OPS.explanation=An error occurred when the JVM attempted to run delayed identity operations.
-J9NLS_JCL_CRIU_FAILED_DELAY_LOCK_RELATED_OPS.system_action=The JVM will throw a JVMRestoreException.
-J9NLS_JCL_CRIU_FAILED_DELAY_LOCK_RELATED_OPS.user_response=View CRIU documentation to determine how to resolve the error.
+J9NLS_JCL_CRIU_FAILED_DELAY_LOCK_RELATED_OPS.sample_input_1=
+J9NLS_JCL_CRIU_FAILED_DELAY_LOCK_RELATED_OPS.explanation=NOTAG
+J9NLS_JCL_CRIU_FAILED_DELAY_LOCK_RELATED_OPS.system_action=
+J9NLS_JCL_CRIU_FAILED_DELAY_LOCK_RELATED_OPS.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_JCL_CRIU_CANNOT_SET_UNPRIVILEGED=Nie mo\u017cna ustawi\u0107 trybu nieuprzywilejowanego CRIU, errno=%li
+J9NLS_JCL_CRIU_CANNOT_SET_UNPRIVILEGED=
 # START NON-TRANSLATABLE
-J9NLS_JCL_CRIU_CANNOT_SET_UNPRIVILEGED.sample_input_1=1
-J9NLS_JCL_CRIU_CANNOT_SET_UNPRIVILEGED.explanation=An error occurred when the JVM attempted set CRIU unprivileged mode.
-J9NLS_JCL_CRIU_CANNOT_SET_UNPRIVILEGED.system_action=The JVM will throw a SystemCheckpointException.
-J9NLS_JCL_CRIU_CANNOT_SET_UNPRIVILEGED.user_response=Ensure that CRIU supports unprivileged mode.
+J9NLS_JCL_CRIU_CANNOT_SET_UNPRIVILEGED.sample_input_1=
+J9NLS_JCL_CRIU_CANNOT_SET_UNPRIVILEGED.explanation=NOTAG
+J9NLS_JCL_CRIU_CANNOT_SET_UNPRIVILEGED.system_action=
+J9NLS_JCL_CRIU_CANNOT_SET_UNPRIVILEGED.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_JCL_CRIU_NEGATIVE_CHECKPOINT_RESTORE_TIME_DELTA=Warto\u015b\u0107 ujemna obliczona dla parametru checkpointRestoreTimeDelta=%zd
+J9NLS_JCL_CRIU_NEGATIVE_CHECKPOINT_RESTORE_TIME_DELTA=
 # START NON-TRANSLATABLE
-J9NLS_JCL_CRIU_NEGATIVE_CHECKPOINT_RESTORE_TIME_DELTA.sample_input_1=1
-J9NLS_JCL_CRIU_NEGATIVE_CHECKPOINT_RESTORE_TIME_DELTA.explanation=checkpointRestoreTimeDelta is expected not to be negative.
-J9NLS_JCL_CRIU_NEGATIVE_CHECKPOINT_RESTORE_TIME_DELTA.system_action=The JVM will throw a JVMRestoreException.
-J9NLS_JCL_CRIU_NEGATIVE_CHECKPOINT_RESTORE_TIME_DELTA.user_response=View CRIU documentation to determine how to resolve the error.
+J9NLS_JCL_CRIU_NEGATIVE_CHECKPOINT_RESTORE_TIME_DELTA.sample_input_1=
+J9NLS_JCL_CRIU_NEGATIVE_CHECKPOINT_RESTORE_TIME_DELTA.explanation=NOTAG
+J9NLS_JCL_CRIU_NEGATIVE_CHECKPOINT_RESTORE_TIME_DELTA.system_action=
+J9NLS_JCL_CRIU_NEGATIVE_CHECKPOINT_RESTORE_TIME_DELTA.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_JCL_CRIU_J9_CURRENT_TIME_NANOS_FAILURE=Niepowodzenie j9time_current_time_nanos, errno=%li
+J9NLS_JCL_CRIU_J9_CURRENT_TIME_NANOS_FAILURE=
 # START NON-TRANSLATABLE
-J9NLS_JCL_CRIU_J9_CURRENT_TIME_NANOS_FAILURE.sample_input_1=1
-J9NLS_JCL_CRIU_J9_CURRENT_TIME_NANOS_FAILURE.explanation=j9time_current_time_nanos failed.
-J9NLS_JCL_CRIU_J9_CURRENT_TIME_NANOS_FAILURE.system_action=The JVM will throw a JVMCheckpointException.
-J9NLS_JCL_CRIU_J9_CURRENT_TIME_NANOS_FAILURE.user_response=View CRIU documentation to determine how to resolve the error.
+J9NLS_JCL_CRIU_J9_CURRENT_TIME_NANOS_FAILURE.sample_input_1=
+J9NLS_JCL_CRIU_J9_CURRENT_TIME_NANOS_FAILURE.explanation=NOTAG
+J9NLS_JCL_CRIU_J9_CURRENT_TIME_NANOS_FAILURE.system_action=
+J9NLS_JCL_CRIU_J9_CURRENT_TIME_NANOS_FAILURE.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_JCL_CRIU_MAX_RETRY_FOR_NOTCHECKPOINTSAFE_REACHED=Maszyna JVM podj\u0119\u0142a pr\u00f3b\u0119 utworzenia punktu kontrolnego, ale nie mog\u0142a tego zrobi\u0107 z powodu kodu wykonywanego w ramkach @NotCheckpointSafe. Pr\u00f3by ponowienia: %li
+J9NLS_JCL_CRIU_MAX_RETRY_FOR_NOTCHECKPOINTSAFE_REACHED=
 # START NON-TRANSLATABLE
-J9NLS_JCL_CRIU_MAX_RETRY_FOR_NOTCHECKPOINTSAFE_REACHED.sample_input_1=1
-J9NLS_JCL_CRIU_MAX_RETRY_FOR_NOTCHECKPOINTSAFE_REACHED.explanation=CRIUSupport::checkpointJVM failed.
-J9NLS_JCL_CRIU_MAX_RETRY_FOR_NOTCHECKPOINTSAFE_REACHED.system_action=The JVM will throw a JVMCheckpointException.
-J9NLS_JCL_CRIU_MAX_RETRY_FOR_NOTCHECKPOINTSAFE_REACHED.user_response=View CRIU documentation to determine how to resolve the error.
+J9NLS_JCL_CRIU_MAX_RETRY_FOR_NOTCHECKPOINTSAFE_REACHED.sample_input_1=
+J9NLS_JCL_CRIU_MAX_RETRY_FOR_NOTCHECKPOINTSAFE_REACHED.explanation=NOTAG
+J9NLS_JCL_CRIU_MAX_RETRY_FOR_NOTCHECKPOINTSAFE_REACHED.system_action=
+J9NLS_JCL_CRIU_MAX_RETRY_FOR_NOTCHECKPOINTSAFE_REACHED.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_JCL_CRIU_LOADING_LIBCRIU_FAILED=Maszyna JVM podj\u0119\u0142a pr\u00f3b\u0119 za\u0142adowania pliku libcriu.so, ale nie by\u0142a w stanie tego zrobi\u0107: %li
+J9NLS_JCL_CRIU_LOADING_LIBCRIU_FAILED=
 # START NON-TRANSLATABLE
-J9NLS_JCL_CRIU_LOADING_LIBCRIU_FAILED.sample_input_1=1
-J9NLS_JCL_CRIU_LOADING_LIBCRIU_FAILED.explanation=CRIUSupport::checkpointJVM failed.
-J9NLS_JCL_CRIU_LOADING_LIBCRIU_FAILED.system_action=The JVM will throw a SystemCheckpointException.
-J9NLS_JCL_CRIU_LOADING_LIBCRIU_FAILED.user_response=Make sure libcriu is installed on your system and is on the library load path.
+J9NLS_JCL_CRIU_LOADING_LIBCRIU_FAILED.sample_input_1=
+J9NLS_JCL_CRIU_LOADING_LIBCRIU_FAILED.explanation=NOTAG
+J9NLS_JCL_CRIU_LOADING_LIBCRIU_FAILED.system_action=
+J9NLS_JCL_CRIU_LOADING_LIBCRIU_FAILED.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_JCL_CRIU_LOADING_LIBCRIU_FUNCTIONS_FAILED=Maszyna JVM nie mog\u0142a znale\u017a\u0107 newralgicznych funkcji criu w pliku libcriu.so: %li
+J9NLS_JCL_CRIU_LOADING_LIBCRIU_FUNCTIONS_FAILED=
 # START NON-TRANSLATABLE
-J9NLS_JCL_CRIU_LOADING_LIBCRIU_FUNCTIONS_FAILED.sample_input_1=1
-J9NLS_JCL_CRIU_LOADING_LIBCRIU_FUNCTIONS_FAILED.explanation=CRIUSupport::checkpointJVM failed.
-J9NLS_JCL_CRIU_LOADING_LIBCRIU_FUNCTIONS_FAILED.system_action=The JVM will throw a SystemCheckpointException.
-J9NLS_JCL_CRIU_LOADING_LIBCRIU_FUNCTIONS_FAILED.user_response=Check your installation of criu with `criu check`.
+J9NLS_JCL_CRIU_LOADING_LIBCRIU_FUNCTIONS_FAILED.sample_input_1=
+J9NLS_JCL_CRIU_LOADING_LIBCRIU_FUNCTIONS_FAILED.explanation=NOTAG
+J9NLS_JCL_CRIU_LOADING_LIBCRIU_FUNCTIONS_FAILED.system_action=
+J9NLS_JCL_CRIU_LOADING_LIBCRIU_FUNCTIONS_FAILED.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_JCL_CRIU_LOADING_OPTIONS_FILE_FAILED=\u015arodowisko JVM nie mog\u0142o za\u0142adowa\u0107 pliku opcji
+J9NLS_JCL_CRIU_LOADING_OPTIONS_FILE_FAILED=
 # START NON-TRANSLATABLE
-J9NLS_JCL_CRIU_LOADING_OPTIONS_FILE_FAILED.sample_input_1=1
-J9NLS_JCL_CRIU_LOADING_OPTIONS_FILE_FAILED.explanation=CRIUSupport::checkpointJVM failed.
-J9NLS_JCL_CRIU_LOADING_OPTIONS_FILE_FAILED.system_action=The JVM will throw a JVMRestoreException.
-J9NLS_JCL_CRIU_LOADING_OPTIONS_FILE_FAILED.user_response=Check the arguments to CRIUSupport::registerRestoreOptionsFile.
+J9NLS_JCL_CRIU_LOADING_OPTIONS_FILE_FAILED.sample_input_1=
+J9NLS_JCL_CRIU_LOADING_OPTIONS_FILE_FAILED.explanation=NOTAG
+J9NLS_JCL_CRIU_LOADING_OPTIONS_FILE_FAILED.system_action=
+J9NLS_JCL_CRIU_LOADING_OPTIONS_FILE_FAILED.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_JCL_CRIU_FAILED_TO_ENABLE_ALL_RESTORE_OPTIONS=\u015arodowisko JVM nie mog\u0142o w\u0142\u0105czy\u0107 wszystkich podanych opcji odtwarzania.
+J9NLS_JCL_CRIU_FAILED_TO_ENABLE_ALL_RESTORE_OPTIONS=
 # START NON-TRANSLATABLE
-J9NLS_JCL_CRIU_FAILED_TO_ENABLE_ALL_RESTORE_OPTIONS.sample_input_1=1
-J9NLS_JCL_CRIU_FAILED_TO_ENABLE_ALL_RESTORE_OPTIONS.explanation=CRIUSupport::checkpointJVM failed.
-J9NLS_JCL_CRIU_FAILED_TO_ENABLE_ALL_RESTORE_OPTIONS.system_action=The JVM will throw a JVMRestoreException.
-J9NLS_JCL_CRIU_FAILED_TO_ENABLE_ALL_RESTORE_OPTIONS.user_response=Check documentation to see which options are allowed on restore.
+J9NLS_JCL_CRIU_FAILED_TO_ENABLE_ALL_RESTORE_OPTIONS.sample_input_1=
+J9NLS_JCL_CRIU_FAILED_TO_ENABLE_ALL_RESTORE_OPTIONS.explanation=NOTAG
+J9NLS_JCL_CRIU_FAILED_TO_ENABLE_ALL_RESTORE_OPTIONS.system_action=
+J9NLS_JCL_CRIU_FAILED_TO_ENABLE_ALL_RESTORE_OPTIONS.user_response=
+# END NON-TRANSLATABLE
+
+# Note: "java.compiler" is a system property name and should not be translated.
+# Note: "-Xjit" is a command line parameter and should not be translated.
+J9NLS_JCL_JAVA_COMPILER_WARNING_XJIT=Ustawienie w\u0142a\u015bciwo\u015bci systemowej java.compiler jest przestarza\u0142e w wersji 21 i nowszych. Zamiast tego nale\u017cy u\u017cy\u0107 opcji -Xjit.
+# START NON-TRANSLATABLE
+J9NLS_JCL_JAVA_COMPILER_WARNING_XJIT.explanation=The java.compiler system property can no longer be used to enable or disable the JIT.
+J9NLS_JCL_JAVA_COMPILER_WARNING_XJIT.system_action=Setting the java.compiler system property is ignored.
+J9NLS_JCL_JAVA_COMPILER_WARNING_XJIT.user_response=Use the -Xjit option to enable the JIT.
+# END NON-TRANSLATABLE
+
+# Note: "java.compiler" is a system property name and should not be translated.
+# Note: "-Xint" is a command line parameter and should not be translated.
+J9NLS_JCL_JAVA_COMPILER_WARNING_XINT=Ustawienie w\u0142a\u015bciwo\u015bci systemowej java.compiler jest przestarza\u0142e w wersji 21 i nowszych. Zamiast tego nale\u017cy u\u017cy\u0107 opcji -Xint.
+# START NON-TRANSLATABLE
+J9NLS_JCL_JAVA_COMPILER_WARNING_XINT.explanation=The java.compiler system property can no longer be used to enable or disable the JIT.
+J9NLS_JCL_JAVA_COMPILER_WARNING_XINT.system_action=Setting the java.compiler system property is ignored.
+J9NLS_JCL_JAVA_COMPILER_WARNING_XINT.user_response=Use the -Xint option to disable the JIT.
 # END NON-TRANSLATABLE
