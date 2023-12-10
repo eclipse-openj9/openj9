@@ -11740,6 +11740,8 @@ J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::CodeGenerator *c
             return TR::TreeEvaluator::inlineStringLatin1Inflate(node, cg);
             }
          break;
+      case TR::java_util_zip_CRC32C_updateBytes:
+         return TR::TreeEvaluator::inlineCRC32CUpdate(node, cg);
       case TR::java_lang_Math_sqrt:
       case TR::java_lang_StrictMath_sqrt:
       case TR::java_lang_System_nanoTime:
@@ -11953,6 +11955,124 @@ J9::X86::TreeEvaluator::inlineStringLatin1Inflate(TR::Node *node, TR::CodeGenera
       }
 
    return NULL;
+   }
+
+TR::Register *
+J9::X86::TreeEvaluator::inlineCRC32CUpdate(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR::Node *crcNode = node->getChild(0);
+   TR::Node *bufNode = node->getChild(1);
+   TR::Node *offNode = node->getChild(2);
+   TR::Node *endNode = node->getChild(3);
+
+   TR::Register *result = cg->intClobberEvaluate(crcNode);
+   TR::Register *offsetReg = cg->intClobberEvaluate(offNode);
+   TR::Register *bufReg = cg->evaluate(bufNode);
+   TR::Register *endReg = cg->evaluate(endNode);
+   TR::Register *tmpReg = cg->allocateRegister(TR_GPR);
+   TR::Register *tmp2Reg = cg->allocateRegister(TR_GPR);
+
+   TR::LabelSymbol *startMain2Loop = generateLabelSymbol(cg);
+   TR::LabelSymbol *endMain2Loop = generateLabelSymbol(cg);
+   TR::LabelSymbol *startMainLoop = generateLabelSymbol(cg);
+   TR::LabelSymbol *endMainLoop = generateLabelSymbol(cg);
+   TR::LabelSymbol *startResidualLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *endResidualLabel = generateLabelSymbol(cg);
+
+   int maxDepCount = 10;
+   bool is64bit = cg->comp()->target().is64Bit();
+   TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions(0, maxDepCount, cg);
+
+   deps->addPostCondition(bufReg, TR::RealRegister::eax, cg);
+   deps->addPostCondition(offsetReg, TR::RealRegister::ebx, cg);
+   deps->addPostCondition(tmpReg, TR::RealRegister::edi, cg);
+   deps->addPostCondition(result, TR::RealRegister::ecx, cg);
+   deps->addPostCondition(endReg, TR::RealRegister::NoReg, cg);
+   deps->addPostCondition(tmp2Reg, TR::RealRegister::NoReg, cg);
+
+   ///
+   generateLabelInstruction(TR::InstOpCode::label, node, startMain2Loop, cg);
+   generateRegRegInstruction(TR::InstOpCode::MOVRegReg(is64bit), node, tmpReg, offsetReg, cg);
+   generateRegImmInstruction(TR::InstOpCode::ADD4RegImm4, node, tmpReg, 64, cg);
+
+   generateRegRegInstruction(TR::InstOpCode::CMP4RegReg, node, tmpReg, endReg, cg);
+   generateLabelInstruction(TR::InstOpCode::JG4, node, endMain2Loop, cg);
+
+   // Main Loop Body
+
+   for (int i = 0; i < 8; i++)
+      {
+      TR::MemoryReference *mr = generateX86MemoryReference(bufReg, offsetReg, 0, TR::Compiler->om.contiguousArrayHeaderSizeInBytes() + i * 8, cg);
+      generateRegMemInstruction(TR::InstOpCode::CRC32QRegReg, node, result, mr, cg);
+      }
+
+   generateRegImmInstruction(TR::InstOpCode::ADD4RegImm4, node, offsetReg, 64, cg);
+
+   // Loop back
+   generateLabelInstruction(TR::InstOpCode::JMP4, node, startMain2Loop, cg);
+   generateLabelInstruction(TR::InstOpCode::label, node, endMain2Loop, cg);
+   ///
+
+   generateLabelInstruction(TR::InstOpCode::label, node, startMainLoop, cg);
+   generateRegRegInstruction(TR::InstOpCode::MOVRegReg(is64bit), node, tmpReg, offsetReg, cg);
+   generateRegImmInstruction(TR::InstOpCode::ADD4RegImm4, node, tmpReg, 8, cg);
+
+   generateRegRegInstruction(TR::InstOpCode::CMP4RegReg, node, tmpReg, endReg, cg);
+   generateLabelInstruction(TR::InstOpCode::JG4, node, endMainLoop, cg);
+
+   // Main Loop Body
+
+   TR::MemoryReference *mr = generateX86MemoryReference(bufReg, offsetReg, 0, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg);
+   generateRegMemInstruction(TR::InstOpCode::CRC32QRegReg, node, result, mr, cg);
+
+   generateRegImmInstruction(TR::InstOpCode::ADD4RegImm4, node, offsetReg, 8, cg);
+
+   // Loop back
+   generateLabelInstruction(TR::InstOpCode::JMP4, node, startMainLoop, cg);
+   generateLabelInstruction(TR::InstOpCode::label, node, endMainLoop, cg);
+
+   generateRegRegInstruction(TR::InstOpCode::MOVRegReg(is64bit), node, tmpReg, endReg, cg);
+   generateRegRegInstruction(TR::InstOpCode::SUBRegReg(is64bit), node, tmpReg, offsetReg, cg);
+
+   int copy_instruction_size = 8 + 3;
+
+   generateRegRegImmInstruction(TR::InstOpCode::IMUL4RegRegImm4, node, tmpReg, tmpReg, -copy_instruction_size, cg);
+   generateRegImmInstruction(TR::InstOpCode::ADD4RegImm4, node, tmpReg, copy_instruction_size * 7, cg);
+
+   // calculate address to jump too
+
+   TR::MemoryReference *residueLabelMR = generateX86MemoryReference(startResidualLabel, cg);
+
+   if (cg->comp()->target().is64Bit() && residueLabelMR->getAddressRegister())
+      {
+      deps->addPostCondition(residueLabelMR->getAddressRegister(), TR::RealRegister::NoReg, cg);
+      }
+
+   generateRegMemInstruction(TR::InstOpCode::LEARegMem(is64bit), node, tmp2Reg, residueLabelMR, cg);
+   generateRegRegInstruction(TR::InstOpCode::ADDRegReg(is64bit), node, tmpReg, tmp2Reg, cg);
+
+   generateRegInstruction(TR::InstOpCode::JMPReg, node, tmpReg, cg);
+   generateLabelInstruction(TR::InstOpCode::label, node, startResidualLabel, cg);
+
+   for (int i = 0; i < 7; i++)
+      {
+      generateRegMemInstruction(TR::InstOpCode::CRC32BRegReg, node, result,
+                                generateX86MemoryReference(bufReg, offsetReg, 0, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg), cg);
+      generateRegInstruction(TR::InstOpCode::INCReg(is64bit), node, offsetReg, cg);
+      }
+
+   deps->stopAddingConditions();
+   generateLabelInstruction(TR::InstOpCode::label, node, endResidualLabel, deps, cg);
+
+   cg->stopUsingRegister(tmpReg);
+   cg->stopUsingRegister(tmp2Reg);
+   cg->stopUsingRegister(offsetReg);
+
+   for (int i = 0; i < node->getNumChildren(); i++) {
+      cg->decReferenceCount(node->getChild(i));
+   }
+
+   return result;
    }
 
 TR::Register *
