@@ -923,7 +923,7 @@ def get_node_platform(nodeLabels) {
         return ''
     }
     switch (baseOS) {
-        case ['aix', 'windows', 'osx', 'zos']:
+        case ['aix', 'windows', 'mac', 'zos']:
             return baseOS
             break
         case ['linux', 'ubuntu', 'rhel', 'cent', 'sles'] :
