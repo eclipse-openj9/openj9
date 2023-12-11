@@ -129,6 +129,18 @@ isCheckpointAllowed(J9VMThread *currentThread)
 }
 
 BOOLEAN
+enableCRIUSecProvider(J9VMThread *currentThread)
+{
+	BOOLEAN result = FALSE;
+
+	if (isCRIUSupportEnabled(currentThread)) {
+		result = J9_ARE_ANY_BITS_SET(currentThread->javaVM->checkpointState.flags, J9VM_CRIU_ENABLE_CRIU_SEC_PROVIDER);
+	}
+
+	return result;
+}
+
+BOOLEAN
 isNonPortableRestoreMode(J9VMThread *currentThread)
 {
 	return J9_ARE_ALL_BITS_SET(currentThread->javaVM->checkpointState.flags, J9VM_CRIU_IS_NON_PORTABLE_RESTORE_MODE);
