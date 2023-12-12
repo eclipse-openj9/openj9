@@ -21,6 +21,7 @@
  *******************************************************************************/
 package com.ibm.j9ddr.vm29.j9;
 
+import static com.ibm.j9ddr.vm29.structure.J9FieldFlags.J9FieldFlagIsNullRestricted;
 import static com.ibm.j9ddr.vm29.structure.J9FieldFlags.J9FieldFlagObject;
 import static com.ibm.j9ddr.vm29.structure.J9FieldFlags.J9FieldSizeDouble;
 import static com.ibm.j9ddr.vm29.structure.J9JavaAccessFlags.J9AccStatic;
@@ -393,7 +394,9 @@ public class ObjectFieldInfo {
 			UDATA modifiers = f.modifiers();
 			if (!modifiers.anyBitsIn(J9AccStatic) ) {
 				if (modifiers.anyBitsIn(J9FieldFlagObject)) {
-					if (valueTypeHelper.isFlattenableFieldSignature(J9ROMFieldShapeHelper.getSignature(f))) {
+					if (valueTypeHelper.isFlattenableFieldSignature(J9ROMFieldShapeHelper.getSignature(f))
+						|| ((modifiers.intValue() & J9FieldFlagIsNullRestricted) != 0)
+					) {
 						int size = 0;
 						J9ClassPointer fieldClass = valueTypeHelper.findJ9ClassInFlattenedClassCacheWithFieldName(containerClazz, J9ROMFieldShapeHelper.getName(f));
 						if (!valueTypeHelper.isJ9FieldIsFlattened(fieldClass, f)) {
