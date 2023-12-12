@@ -395,7 +395,7 @@ public class ObjectFieldInfo {
 			if (!modifiers.anyBitsIn(J9AccStatic) ) {
 				if (modifiers.anyBitsIn(J9FieldFlagObject)) {
 					if (valueTypeHelper.isFlattenableFieldSignature(J9ROMFieldShapeHelper.getSignature(f))
-						|| ((modifiers.intValue() & J9FieldFlagIsNullRestricted) != 0)
+						|| modifiers.anyBitsIn(J9FieldFlagIsNullRestricted)
 					) {
 						int size = 0;
 						J9ClassPointer fieldClass = valueTypeHelper.findJ9ClassInFlattenedClassCacheWithFieldName(containerClazz, J9ROMFieldShapeHelper.getName(f));
