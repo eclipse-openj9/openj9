@@ -5894,7 +5894,8 @@ TR_J9ByteCodeIlGenerator::loadArrayElement(TR::DataType dataType, TR::ILOpCodes 
    if (mayBeValueType &&
        TR::Compiler->om.isValueTypeArrayFlatteningEnabled() && // isValueTypeArrayFlatteningEnabled() checks areFlattenableValueTypesEnabled()
        !TR::Compiler->om.canGenerateArraylets() &&
-       dataType == TR::Address)
+       dataType == TR::Address &&
+       !_methodSymbol->skipFlattenableArrayElementNonHelperCall())
       {
       TR::Node* elementIndex = pop();
       TR::Node* arrayBaseAddress = pop();
@@ -7478,15 +7479,9 @@ TR_J9ByteCodeIlGenerator::storeArrayElement(TR::DataType dataType, TR::ILOpCodes
        !TR::Compiler->om.canGenerateArraylets() &&
        dataType == TR::Address)
       {
-      if (!TR::Compiler->om.isValueTypeArrayFlatteningEnabled() &&
-          _methodSymbol->skipNonNullableArrayNullStoreCheck())
-         {
-         generateNonHelper = false;
-         }
-      else
-         {
-         generateNonHelper = true;
-         }
+      generateNonHelper = (TR::Compiler->om.isValueTypeArrayFlatteningEnabled()
+                             && !_methodSymbol->skipFlattenableArrayElementNonHelperCall())
+                          || !_methodSymbol->skipNonNullableArrayNullStoreCheck();
       }
 
    if (generateNonHelper)
