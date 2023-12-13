@@ -4376,6 +4376,10 @@ void TR_ResolvedJ9Method::construct()
          {
          // Cases where multiple method names all map to the same RecognizedMethod
          //
+         if ((classNameLen == 13) && !strncmp(className, "java/util/Map", 13))
+            setRecognizedMethodInfo(TR::java_util_Map_all);
+         if ((classNameLen == 15) && !strncmp(className, "java/lang/Class", 15))
+            setRecognizedMethodInfo(TR::java_lang_Class_all);
          if ((classNameLen == 17) && !strncmp(className, "java/util/TreeMap", 17))
             setRecognizedMethodInfo(TR::java_util_TreeMap_all);
          else if ((classNameLen == 17) && !strncmp(className, "java/util/EnumMap", 17))
@@ -4391,14 +4395,32 @@ void TR_ResolvedJ9Method::construct()
             }
          else if ((classNameLen == 17) && !strncmp(className, "java/util/HashMap", 17))
              setRecognizedMethodInfo(TR::java_util_HashMap_all);
+         else if ((classNameLen == 17) && !strncmp(className, "java/util/TimSort", 17))
+             setRecognizedMethodInfo(TR::java_util_TimSort_all);
          else if ((classNameLen == 19) && !strncmp(className, "java/util/ArrayList", 19))
             setRecognizedMethodInfo(TR::java_util_ArrayList_all);
          else if ((classNameLen == 19) && !strncmp(className, "java/util/Hashtable", 19))
             setRecognizedMethodInfo(TR::java_util_Hashtable_all);
+         else if ((classNameLen == 20) && !strncmp(className, "java/util/LinkedList", 20))
+            setRecognizedMethodInfo(TR::java_util_LinkedList_all);
+         else if ((classNameLen == 20) && !strncmp(className, "java/util/ArrayDeque", 20))
+            setRecognizedMethodInfo(TR::java_util_ArrayDeque_all);
+         else if ((classNameLen == 21) && !strncmp(className, "java/util/WeakHashMap", 21))
+            setRecognizedMethodInfo(TR::java_util_WeakHashMap_all);
          else if ((classNameLen == 38) && !strncmp(className, "java/util/concurrent/ConcurrentHashMap", 38))
             setRecognizedMethodInfo(TR::java_util_concurrent_ConcurrentHashMap_all);
          else if ((classNameLen == 16) && !strncmp(className, "java/util/Vector", 16))
             setRecognizedMethodInfo(TR::java_util_Vector_all);
+         else if ((classNameLen == 22) && !strncmp(className, "java/util/stream/Nodes", 22))
+            setRecognizedMethodInfo(TR::java_util_stream_Nodes_all);
+         else if ((classNameLen == 23) && !strncmp(className, "java/util/LinkedHashMap", 23))
+            setRecognizedMethodInfo(TR::java_util_LinkedHashMap_all);
+         else if ((classNameLen == 23) && !strncmp(className, "java/util/regex/Pattern", 23))
+            setRecognizedMethodInfo(TR::java_util_regex_Pattern_all);
+         else if ((classNameLen == 25) && !strncmp(className, "java/util/IdentityHashMap", 25))
+            setRecognizedMethodInfo(TR::java_util_IdentityHashMap_all);
+         else if ((classNameLen == 27) && !strncmp(className, "java/util/ComparableTimSort", 27))
+            setRecognizedMethodInfo(TR::java_util_ComparableTimSort_all);
          else if ((classNameLen == 28) && !strncmp(className, "java/lang/invoke/ILGenMacros", 28))
             {
             if (!strncmp(name, "invokeExact_", 12))
@@ -4408,6 +4430,8 @@ void TR_ResolvedJ9Method::construct()
             else if (!strncmp(name, "last_", 5))
                setRecognizedMethodInfo(TR::java_lang_invoke_ILGenMacros_last);
             }
+         else if ((classNameLen == 28) && !strncmp(className, "java/util/AbstractCollection", 28))
+            setRecognizedMethodInfo(TR::java_util_AbstractCollection_all);
          else if ((classNameLen == 29) && !strncmp(className, "java/lang/invoke/MethodHandle", 29))
             {
             if (!strncmp(name, "asType", 6))
@@ -4434,11 +4458,6 @@ void TR_ResolvedJ9Method::construct()
             if (!strncmp(name, "invokeExact_thunkArchetype_", 27))
                setRecognizedMethodInfo(TR::java_lang_invoke_DirectHandle_invokeExact);
             }
-         else if ((classNameLen == 32) && !strncmp(className, "java/lang/invoke/InterfaceHandle", 32))
-            {
-            if (!strncmp(name, "invokeExact_thunkArchetype_", 27))
-               setRecognizedMethodInfo(TR::java_lang_invoke_InterfaceHandle_invokeExact);
-            }
          else if ((classNameLen == 30) && !strncmp(className, "java/lang/invoke/VirtualHandle", 30))
             {
             if (!strncmp(name, "virtualCall_", 12))
@@ -4454,6 +4473,15 @@ void TR_ResolvedJ9Method::construct()
                setRecognizedMethodInfo(TR::java_lang_invoke_ComputedCalls_dispatchVirtual);
             else if (!strncmp(name, "dispatchJ9Method_", 17))
                setRecognizedMethodInfo(TR::java_lang_invoke_ComputedCalls_dispatchJ9Method);
+            }
+         else if ((classNameLen == 30) && !strncmp(className, "java/util/ImmutableCollections", 30))
+            {
+            setRecognizedMethodInfo(TR::java_util_ImmutableCollections_all);
+            }
+         else if ((classNameLen == 32) && !strncmp(className, "java/lang/invoke/InterfaceHandle", 32))
+            {
+            if (!strncmp(name, "invokeExact_thunkArchetype_", 27))
+               setRecognizedMethodInfo(TR::java_lang_invoke_InterfaceHandle_invokeExact);
             }
          else if ((classNameLen >= 59 + 3 && classNameLen <= 59 + 7) && !strncmp(className, "java/lang/invoke/ArrayVarHandle$ArrayVarHandleOperations$Op", 59))
             {
