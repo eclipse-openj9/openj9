@@ -374,6 +374,8 @@ public:
       SAMPLE_THR_FAILED_TO_ATTACH,
       SAMPLE_THR_ATTACHED,
       SAMPLE_THR_INITIALIZED,
+      SAMPLE_THR_SUSPENDED,
+      SAMPLE_THR_RESUMING,
       SAMPLE_THR_STOPPING,
       SAMPLE_THR_DESTROYED,
       SAMPLE_THR_LAST_STATE // must be the last one
@@ -730,9 +732,6 @@ public:
 
    void setVMExceptionEventsHooked(bool trace) { _vmExceptionEventsHooked = trace; }
    bool isVMExceptionEventsHooked()            { return _vmExceptionEventsHooked;  }
-
-   bool resetStartAndElapsedTime()              { return _resetStartAndElapsedTime;  }
-   void setResetStartAndElapsedTime(bool reset) { _resetStartAndElapsedTime = reset; }
 
 #if defined(J9VM_OPT_JITSERVER)
    bool canPerformRemoteCompilationInCRIUMode()                   { return _canPerformRemoteCompilationInCRIUMode;       }
@@ -1395,7 +1394,6 @@ private:
    TR_CheckpointStatus _checkpointStatus;
    bool _vmMethodTraceEnabled;
    bool _vmExceptionEventsHooked;
-   bool _resetStartAndElapsedTime;
 #if defined(J9VM_OPT_JITSERVER)
    bool _canPerformRemoteCompilationInCRIUMode;
    bool _remoteCompilationRequestedAtBootstrap;
@@ -1595,6 +1593,29 @@ private:
     * @return false false if the checkpoint is interrupted, true otherwise.
     */
    bool suspendCompThreadsForCheckpoint(J9VMThread *vmThread);
+
+   /**
+    * @brief Suspend all JIT threads such as
+    *        * Compilation Threads
+    *        * Sampler Thread
+    *
+    * @param vmThread The J9VMThread
+    *
+    * @return false if the checkpoint is interrupted, true otherwise.
+    */
+   bool suspendJITThreadsForCheckpoint(J9VMThread *vmThread);
+
+   /**
+    * @brief Resume all JIT threads suspended by suspendCompilerThreadsForCheckpoint
+    *
+    * @param vmThread The J9VMThread
+    */
+   void resumeJITThreadsForRestore(J9VMThread *vmThread);
+
+   /**
+    * @brief Reset Start Time post retore
+    */
+   void resetStartTime();
 #endif
    }; // CompilationInfo
 }

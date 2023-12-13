@@ -1207,8 +1207,6 @@ TR::CompilationInfo::CompilationInfo(J9JITConfig *jitConfig) :
         || J9_EVENT_IS_RESERVED(jitConfig->javaVM->hookInterface, J9HOOK_VM_EXCEPTION_THROW);
    _vmExceptionEventsHooked = exceptionCatchEventHooked || exceptionThrowEventHooked;
 
-   _resetStartAndElapsedTime = false;
-
 #if defined(J9VM_OPT_JITSERVER)
    _canPerformRemoteCompilationInCRIUMode = false;
    _remoteCompilationRequestedAtBootstrap = false;
@@ -2901,6 +2899,79 @@ bool TR::CompilationInfo::suspendCompThreadsForCheckpoint(J9VMThread *vmThread)
    return true;
    }
 
+bool
+TR::CompilationInfo::suspendJITThreadsForCheckpoint(J9VMThread *vmThread)
+   {
+   // Suspend compilation threads for checkpoint
+   if (!suspendCompThreadsForCheckpoint(vmThread))
+      return false;
+
+   // Suspend Sampler Thread
+   if (_jitConfig->samplerMonitor)
+      {
+      j9thread_monitor_enter(_jitConfig->samplerMonitor);
+      j9thread_interrupt(_jitConfig->samplerThread);
+
+      // Determine whether to wait on the CR Monitor.
+      //
+      // Note, this thread releases the sampler monitor and then
+      // acquires the CR monitor inside releaseCompMonitorUntilNotifiedOnCRMonitor.
+      while (!shouldCheckpointBeInterrupted()
+             && getSamplingThreadLifetimeState() != TR::CompilationInfo::SAMPLE_THR_SUSPENDED)
+         {
+         j9thread_monitor_exit(_jitConfig->samplerMonitor);
+         releaseCompMonitorUntilNotifiedOnCRMonitor(vmThread);
+         j9thread_monitor_enter(_jitConfig->samplerMonitor);
+         }
+
+      j9thread_monitor_exit(_jitConfig->samplerMonitor);
+      }
+
+   return !shouldCheckpointBeInterrupted();
+   }
+
+void
+TR::CompilationInfo::resumeJITThreadsForRestore(J9VMThread *vmThread)
+   {
+   // Resume suspended Sampler Thread
+   if (_jitConfig->samplerMonitor)
+      {
+      j9thread_monitor_enter(_jitConfig->samplerMonitor);
+      setSamplingThreadLifetimeState(TR::CompilationInfo::SAMPLE_THR_RESUMING);
+      j9thread_monitor_notify_all(_jitConfig->samplerMonitor);
+      j9thread_monitor_exit(_jitConfig->samplerMonitor);
+      }
+
+   // Resume suspended compilation threads.
+   resumeCompilationThread();
+   }
+
+/* Post-restore, reset the start time. While the Checkpoint phase is
+ * conceptually part of building the application, in order to ensure
+ * consistency with parts of the compiler that memoize elapsd time,
+ * the start time is reset to pretend like the JVM started
+ * persistentInfo->getElapsedTime() milliseconds ago. This will impact
+ * options such as -XsamplingExpirationTime. However, such an option
+ * may not make sense in the context of checkpoint/restore.
+ */
+void
+TR::CompilationInfo::resetStartTime()
+   {
+   PORT_ACCESS_FROM_JAVAVM(jitConfig->javaVM);
+   TR::PersistentInfo *persistentInfo = getPersistentInfo();
+
+   if (TR::Options::isAnyVerboseOptionSet())
+      TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Start and elapsed time: startTime=%6u, elapsedTime=%6u",
+                                       (uint32_t)persistentInfo->getStartTime(), (uint32_t)persistentInfo->getElapsedTime());
+
+   uint64_t crtTime = j9time_current_time_millis() - persistentInfo->getElapsedTime();
+   persistentInfo->setStartTime(crtTime);
+
+   if (TR::Options::isAnyVerboseOptionSet())
+      TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Reset start and elapsed time: startTime=%6u, elapsedTime=%6u",
+                                       (uint32_t)persistentInfo->getStartTime(), (uint32_t)persistentInfo->getElapsedTime());
+   }
+
 void TR::CompilationInfo::prepareForCheckpoint()
    {
    J9JavaVM   *vm       = _jitConfig->javaVM;
@@ -2933,8 +3004,8 @@ void TR::CompilationInfo::prepareForCheckpoint()
       if (!compileMethodsForCheckpoint(vmThread))
          return;
 
-   // Suspend compilation threads for checkpoint
-   if (!suspendCompThreadsForCheckpoint(vmThread))
+   // Suspend JIT threads for checkpoint
+   if (!suspendJITThreadsForCheckpoint(vmThread))
       return;
 
 #if defined(J9VM_OPT_JITSERVER)
@@ -2967,9 +3038,6 @@ void TR::CompilationInfo::prepareForRestore()
    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestore))
       TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Preparing for restore");
 
-   // Inform the Sampler Thread to reset the start and elapsed time it maintains
-   setResetStartAndElapsedTime(true);
-
    // Process the post-restore options
    J9::OptionsPostRestore::processOptionsPostRestore(vmThread, _jitConfig, this);
 
@@ -2981,8 +3049,11 @@ void TR::CompilationInfo::prepareForRestore()
    // Reset the checkpoint in progress flag.
    resetCheckpointInProgress();
 
-   // Resume suspended compilation threads.
-   resumeCompilationThread();
+   // Reset the start time.
+   resetStartTime();
+
+   // Resume JIT threads.
+   resumeJITThreadsForRestore(vmThread);
    }
 
    // Check if there is no swap memory post restore
