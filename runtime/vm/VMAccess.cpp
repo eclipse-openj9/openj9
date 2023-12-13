@@ -755,6 +755,11 @@ acquireExclusiveVMAccessFromExternalThread(J9JavaVM * vm)
 	UDATA vmResponsesExpected = 0;
 	UDATA jniResponsesExpected = 0;
 
+	/* If exclusive has already been acquired, nothing need be done here */
+	if (vm->alreadyHaveExclusive) {
+		return;
+	}
+
 	synchronizeRequestsFromExternalThread(vm, TRUE);
 
 	/* Post the halt request to all threads */
@@ -836,6 +841,12 @@ void
 releaseExclusiveVMAccessFromExternalThread(J9JavaVM * vm)
 {
 	J9VMThread * currentThread;
+
+	/* If exclusive has already been acquired, nothing need be done here */
+	if (vm->alreadyHaveExclusive) {
+		return;
+	}
+
 	Assert_VM_true(J9_XACCESS_EXCLUSIVE == vm->exclusiveAccessState);
 
 	/* Acquire these monitors in the same order as in allocateVMThread to prevent deadlock */
@@ -912,6 +923,11 @@ requestExclusiveVMAccessMetronomeTemp(J9JavaVM *vm, UDATA block, UDATA *vmRespon
 	UDATA vmResponsesExpected = 0;
 	UDATA jniResponsesExpected = 0;
 	*gcPriority = J9THREAD_PRIORITY_MAX;
+
+	/* If exclusive has already been acquired, nothing need be done here */
+	if (vm->alreadyHaveExclusive) {
+		return FALSE;
+	}
 
 	/* Check if another party is requesting X access already. */
 	if (FALSE == synchronizeRequestsFromExternalThread(vm, block)) {
@@ -1010,7 +1026,14 @@ waitForExclusiveVMAccessMetronome(J9VMThread * vmThread, UDATA responsesRequired
 void
 waitForExclusiveVMAccessMetronomeTemp(J9VMThread * vmThread, UDATA vmResponsesRequired, UDATA jniResponsesRequired)
 {
-	waitForResponseFromExternalThread(vmThread->javaVM, vmResponsesRequired, jniResponsesRequired);
+	J9JavaVM *vm = vmThread->javaVM;
+
+	/* If exclusive has already been acquired, nothing need be done here */
+	if (vm->alreadyHaveExclusive) {
+		return;
+	}
+
+	waitForResponseFromExternalThread(vm, vmResponsesRequired, jniResponsesRequired);
 
 	VM_VMAccess::backOffFromSafePoint(vmThread);
 
