@@ -134,7 +134,7 @@ void printHashedCallSite ( TR_IPHashedCallSite * hcs, ::FILE* fout = stderr, voi
 
 static bool matchesRegularExpression (TR::Compilation* comp) {
 
-   static char* cRegex = feGetEnv ("TR_printIfRegex");
+   static const char *cRegex = feGetEnv ("TR_printIfRegex");
    if (cRegex && comp->getOptions())
       {
       static TR::SimpleRegex * regex = TR::SimpleRegex::create(cRegex);

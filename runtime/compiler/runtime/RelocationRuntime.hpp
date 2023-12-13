@@ -311,7 +311,7 @@ class TR_RelocationRuntime {
          TR_ASSERT(g >= 0 && g < TR_NumGlobalValueItems, "invalid index for global item");
          _globalValueList[g] = v;
          }
-      static char *       nameOfGlobal(uint32_t g)
+      static const char *       nameOfGlobal(uint32_t g)
          {
          TR_ASSERT(g >= 0 && g < TR_NumGlobalValueItems, "invalid index for global item");
          return _globalValueNames[g];
@@ -352,7 +352,7 @@ class TR_RelocationRuntime {
       const bool isValidationError(TR_RelocationErrorCode errorCode) { return (errorCode & TR_RelocationErrorCodeType::VALIDATION); }
       const bool isRelocationError(TR_RelocationErrorCode errorCode) { return (errorCode & TR_RelocationErrorCodeType::RELOCATION); }
 
-      static char *getReloErrorCodeName(TR_RelocationErrorCode errorCode) { return _reloErrorCodeNames[TR_RelocationError::decode(errorCode)]; }
+      static const char *getReloErrorCodeName(TR_RelocationErrorCode errorCode) { return _reloErrorCodeNames[TR_RelocationError::decode(errorCode)]; }
 
    private:
       virtual uint8_t * allocateSpaceInCodeCache(UDATA codeSize)                           { return NULL; }
@@ -388,10 +388,10 @@ class TR_RelocationRuntime {
       static bool       _globalValuesInitialized;
       static uintptr_t  _globalValueList[TR_NumGlobalValueItems];
       static uint8_t    _globalValueSizeList[TR_NumGlobalValueItems];
-      static char      *_globalValueNames[TR_NumGlobalValueItems];
+      static const char      *_globalValueNames[TR_NumGlobalValueItems];
 
       TR_RelocationErrorCode _reloErrorCode;
-      static char *_reloErrorCodeNames[];
+      static const char *_reloErrorCodeNames[];
 
    protected:
 
@@ -476,10 +476,10 @@ private:
       virtual void initializeAotRuntimeInfo();
       virtual void initializeCacheDeltas();
 
-      virtual void incompatibleCache(U_32 module, U_32 reason, char *assumeMessage);
+      virtual void incompatibleCache(U_32 module, U_32 reason, const char *assumeMessage);
 
       void checkAOTHeaderFlags(const TR_AOTHeader *hdrInCache, intptr_t featureFlags);
-      bool generateError(U_32 module_name, U_32 reason, char *assumeMessage);
+      bool generateError(U_32 module_name, U_32 reason, const char *assumeMessage);
 
       bool _sharedCacheIsFull;
 

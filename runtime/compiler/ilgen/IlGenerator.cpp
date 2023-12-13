@@ -2152,14 +2152,14 @@ bool TR_J9ByteCodeIlGenerator::replaceMethods(TR::TreeTop *tt, TR::Node *node)
    return true;
    }
 
-static bool matchFieldOrStaticName(TR::Compilation* comp, TR::Node* node, char* staticOrFieldName) {
+static bool matchFieldOrStaticName(TR::Compilation *comp, TR::Node *node, const char *staticOrFieldName) {
    if ((!node->getOpCode().isLoad() && !node->getOpCode().isStore()) ||
        !node->getOpCode().hasSymbolReference())
       return false;
-   TR::SymbolReference* symRef = node->getSymbolReference();
-   TR::Symbol* sym = symRef->getSymbol();
+   TR::SymbolReference *symRef = node->getSymbolReference();
+   TR::Symbol *sym = symRef->getSymbol();
    if (sym == NULL || symRef->getCPIndex() < 0) return false;
-   TR_ResolvedMethod* method = comp->getOwningMethodSymbol(symRef->getOwningMethodIndex())->getResolvedMethod();
+   TR_ResolvedMethod *method = comp->getOwningMethodSymbol(symRef->getOwningMethodIndex())->getResolvedMethod();
    if (!method) return false;
    switch(sym->getKind()) {
    case TR::Symbol::IsStatic:
@@ -2170,12 +2170,12 @@ static bool matchFieldOrStaticName(TR::Compilation* comp, TR::Node* node, char* 
       int32_t numHelperSymbols = comp->getSymRefTab()->getNumHelperSymbols();
       if ((index < numHelperSymbols) || (index < nonhelperIndex) || !sym->isStaticField()) return false;
 
-      const char * nodeName = method->staticName(symRef->getCPIndex(), comp->trMemory(), stackAlloc);
+      const char *nodeName = method->staticName(symRef->getCPIndex(), comp->trMemory(), stackAlloc);
       return !strcmp(nodeName, staticOrFieldName);
       }
    case TR::Symbol::IsShadow:
       {
-      const char * nodeName = method->fieldName(symRef->getCPIndex(), comp->trMemory(), stackAlloc);
+      const char *nodeName = method->fieldName(symRef->getCPIndex(), comp->trMemory(), stackAlloc);
       return !strcmp(nodeName, staticOrFieldName);
       }
    default:
@@ -2183,8 +2183,8 @@ static bool matchFieldOrStaticName(TR::Compilation* comp, TR::Node* node, char* 
    }
 }
 
-bool TR_J9ByteCodeIlGenerator::replaceField(TR::Node* node, char* destClass,
-                 char* destFieldName, char* destFieldSignature,
+bool TR_J9ByteCodeIlGenerator::replaceField(TR::Node *node, const char *destClass,
+                 const char *destFieldName, const char *destFieldSignature,
                  int parmIndex)
    {
    TR_OpaqueClassBlock *c = fej9()->getClassFromSignature(destClass, strlen(destClass), comp()->getCurrentMethod());
@@ -2242,8 +2242,8 @@ bool TR_J9ByteCodeIlGenerator::replaceField(TR::Node* node, char* destClass,
    return false;
    }
 
-bool TR_J9ByteCodeIlGenerator::replaceStatic(TR::Node* node,
-                                           char* dstClassName, char* staticName, char* type)
+bool TR_J9ByteCodeIlGenerator::replaceStatic(TR::Node *node,
+                                           const char *dstClassName, const char *staticName, const char *type)
    {
    TR_OpaqueClassBlock *c = fej9()->getClassFromSignature(dstClassName, strlen(dstClassName), comp()->getCurrentMethod());
 

@@ -67,7 +67,7 @@ static IDATA initializeCompilerArgs(J9JavaVM* vm,
 
    char* xCommandLineOptions = NULL;
 
-   char *VMOPT_WITH_COLON;
+   const char *VMOPT_WITH_COLON;
    const char *fatalErrorStr = NULL;
    if (isXjit)
       {
@@ -221,8 +221,8 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
    J9JITConfig * jitConfig = 0;
    UDATA initialFlags = 0;
    J9VMDllLoadInfo* loadInfo = FIND_DLL_TABLE_ENTRY( THIS_DLL_NAME );
-   char* xjitCommandLineOptions = "";
-   char* xaotCommandLineOptions = "";
+   char *xjitCommandLineOptions = const_cast<char *>("");
+   char *xaotCommandLineOptions = const_cast<char *>("");
    IDATA fullSpeedDebugSet = FALSE;
    IDATA argIndex = 0;
 

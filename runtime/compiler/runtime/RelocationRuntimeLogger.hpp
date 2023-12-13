@@ -50,8 +50,8 @@ class TR_RelocationRuntimeLogger {
       bool logEnabled()                                    { return _logEnabled; }
       bool logDetailEnabled(int32_t n)                     { return (n <=_logLevel); }
 
-      void debug_printf(char *format, ...);
-      void printf(char *format, ...);
+      void debug_printf(const char *format, ...);
+      void printf(const char *format, ...);
 
       void relocatableDataHeader();
       void method(bool newLine);

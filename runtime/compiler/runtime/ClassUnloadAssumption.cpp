@@ -208,7 +208,7 @@ OMR::RuntimeAssumption::addToRAT(TR_PersistentMemory * persistentMemory, TR_Runt
    }
 
 void
-OMR::RuntimeAssumption::dumpInfo(char *subclassName)
+OMR::RuntimeAssumption::dumpInfo(const char *subclassName)
    {
    TR_VerboseLog::write("%s@%p: key=%p", subclassName, this, _key);
    }
@@ -1368,9 +1368,9 @@ void TR_AddressSet::setRanges(const std::vector<TR_AddressRange> &ranges)
    }
 #endif
 
-void TR_AddressSet::trace(char *format, ...)
+void TR_AddressSet::trace(const char *format, ...)
    {
-   static char *env = feGetEnv("TR_traceUnloadedClassRanges");
+   static const char *env = feGetEnv("TR_traceUnloadedClassRanges");
    if (env)
       {
       va_list args;

@@ -156,7 +156,7 @@ bool isQuickstart = false;
 TR::Monitor *vpMonitor = 0;
 
 
-char *compilationErrorNames[]={
+const char *compilationErrorNames[]={
    "compilationOK",                                        // 0
    "compilationFailure",                                   // 1
    "compilationRestrictionILNodes",                        // 2
@@ -1317,7 +1317,7 @@ onLoadInternal(
    //
    if (xaotCommandLine)
       {
-      char *endAOTOptions = TR::Options::processOptionsAOT(xaotCommandLine, jitConfig, feWithoutThread);
+      const char *endAOTOptions = TR::Options::processOptionsAOT(xaotCommandLine, jitConfig, feWithoutThread);
       if (*endAOTOptions)
          {
          // Generate AOT error message only if error occurs in -Xaot processing
@@ -1333,7 +1333,7 @@ onLoadInternal(
          }
       }
 
-   char *endJITOptions = TR::Options::processOptionsJIT(xjitCommandLine, jitConfig, feWithoutThread);
+   const char *endJITOptions = TR::Options::processOptionsJIT(xjitCommandLine, jitConfig, feWithoutThread);
 
    if (*endJITOptions)
       {
@@ -1944,7 +1944,7 @@ aboutToBootstrap(J9JavaVM * javaVM, J9JITConfig * jitConfig)
       }
 #endif
 
-   char * endOptionsAOT = TR::Options::latePostProcessAOT(jitConfig);
+   const char *endOptionsAOT = TR::Options::latePostProcessAOT(jitConfig);
    if ((intptr_t)endOptionsAOT == 1)
       return 1;
 
@@ -1958,7 +1958,7 @@ aboutToBootstrap(J9JavaVM * javaVM, J9JITConfig * jitConfig)
       return -1;
       }
 
-   char * endOptions = TR::Options::latePostProcessJIT(jitConfig);
+   const char *endOptions = TR::Options::latePostProcessJIT(jitConfig);
    if ((intptr_t)endOptions == 1)
       return 1;
 
