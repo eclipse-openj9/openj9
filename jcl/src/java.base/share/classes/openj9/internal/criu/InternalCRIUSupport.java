@@ -71,6 +71,12 @@ public final class InternalCRIUSupport {
 	private static native long getLastRestoreTimeImpl();
 	private static native boolean isCRIUSupportEnabledImpl();
 	private static native boolean isCheckpointAllowedImpl();
+/*[IF CRAC_SUPPORT]*/
+	private static final boolean cracSupportEnabled = isCRaCSupportEnabledImpl();
+	private static native boolean isCRaCSupportEnabledImpl();
+	private static String cracCheckpointToDir = "";
+	private static native String getCRaCCheckpointToDirImpl();
+/*[ENDIF] CRAC_SUPPORT*/
 
 	/**
 	 * Retrieve the elapsed time between Checkpoint and Restore.
@@ -97,6 +103,30 @@ public final class InternalCRIUSupport {
 	}
 
 	/**
+	 * Queries if CRaC or CRIU support is enabled.
+	 *
+	 * @return true if CRaC or CRIU support is enabled, false otherwise
+	 */
+	public synchronized static boolean isCRaCorCRIUSupportEnabled() {
+		boolean result = criuSupportEnabled;
+/*[IF CRAC_SUPPORT]*/
+		result |= cracSupportEnabled;
+/*[ENDIF] CRAC_SUPPORT*/
+		return result;
+	}
+
+/*[IF CRAC_SUPPORT]*/
+	/**
+	 * Queries if CRaC support is enabled.
+	 *
+	 * @return true if CRaC support is enabled, false otherwise
+	 */
+	public synchronized static boolean isCRaCSupportEnabled() {
+		return cracSupportEnabled;
+	}
+/*[ENDIF] CRAC_SUPPORT*/
+
+	/**
 	 * Queries if CRIU support is enabled.
 	 *
 	 * @return true if CRIU support is enabled, false otherwise
@@ -121,18 +151,36 @@ public final class InternalCRIUSupport {
 
 	/**
 	 * Queries if CRIU Checkpoint is allowed.
-	 * isCRIUSupportEnabled() is invoked first to check if CRIU support is enabled,
+	 * isCRaCorCRIUSupportEnabled() is invoked first to check if CRac or CRIU support is enabled,
 	 * and criu library has been loaded.
 	 *
 	 * @return true if Checkpoint is allowed, otherwise false
 	 */
 	public static boolean isCheckpointAllowed() {
 		boolean checkpointAllowed = false;
-		if (criuSupportEnabled) {
+		if (criuSupportEnabled
+/*[IF CRAC_SUPPORT]*/
+			|| cracSupportEnabled
+/*[ENDIF] CRAC_SUPPORT*/
+		) {
 			checkpointAllowed = isCheckpointAllowedImpl();
 		}
 		return checkpointAllowed;
 	}
+
+/*[IF CRAC_SUPPORT]*/
+	/**
+	 * Retrieve the CRaC checkpoint DIR specified via a command line option -XX:CRaCCheckpointTo=[dir].
+	 *
+	 * @return the CRaC checkpoint DIR, null if no such DIR was specified.
+	 */
+	public static String getCRaCCheckpointToDir() {
+		if ((cracCheckpointToDir != null) && cracCheckpointToDir.isEmpty()) {
+			cracCheckpointToDir = getCRaCCheckpointToDirImpl();
+		}
+		return cracCheckpointToDir;
+	}
+/*[ENDIF] CRAC_SUPPORT*/
 
 	/**
 	 *
@@ -258,9 +306,29 @@ public final class InternalCRIUSupport {
 	}
 
 	/**
+	 * Queries if the criu library has been loaded.
+	 *
+	 * @return TRUE if the library is loaded, FALSE otherwise.
+	 */
+	public static boolean isNativeLoaded() {
+		init();
+		return nativeLoaded;
+	}
+
+	/**
+	 * Queries if CRaC or CRIU support is enabled and criu library has been loaded.
+	 *
+	 * @return TRUE if CRaC or CRIU support is enabled and the library is loaded, FALSE otherwise.
+	 */
+	public static boolean isCRaCorCRIUSupportEnabledAndNativeLoaded() {
+		init();
+		return (nativeLoaded && isCRaCorCRIUSupportEnabled());
+	}
+
+	/**
 	 * Queries if CRIU support is enabled and criu library has been loaded.
 	 *
-	 * @return TRUE if support is enabled and the library is loaded, FALSE otherwise
+	 * @return TRUE if CRIU support is enabled and the library is loaded, FALSE otherwise.
 	 */
 	public static boolean isCRIUSupportEnabledAndNativeLoaded() {
 		init();
@@ -268,14 +336,14 @@ public final class InternalCRIUSupport {
 	}
 
 	/**
-	 * Returns an error message describing why isCRIUSupportEnabled()
+	 * Returns an error message describing why isCRaCorCRIUSupportEnabled()
 	 * returns false, and what can be done to remediate the issue.
 	 *
-	 * @return NULL if isCRIUSupportEnabled() returns true and nativeLoaded is true as well, otherwise the error message.
+	 * @return NULL if isCRaCorCRIUSupportEnabled() returns true and nativeLoaded is true as well, otherwise the error message.
 	 */
 	public static String getErrorMessage() {
 		if (errorMsg == null) {
-			if (isCRIUSupportEnabled()) {
+			if (isCRaCorCRIUSupportEnabled()) {
 				if (!nativeLoaded) {
 					errorMsg = "There was a problem loaded the criu native library.\n" //$NON-NLS-1$
 							+ "Please check that criu is installed on the machine by running `criu check`.\n" //$NON-NLS-1$
@@ -856,7 +924,7 @@ public final class InternalCRIUSupport {
 	 *                                       restore
 	 */
 	public synchronized void checkpointJVM() {
-		if (isCRIUSupportEnabledAndNativeLoaded()) {
+		if (isCRaCorCRIUSupportEnabledAndNativeLoaded()) {
 			if (isCheckpointAllowed()) {
 				/* Add env variables restore hook. */
 				String envFilePath = null;
@@ -882,7 +950,7 @@ public final class InternalCRIUSupport {
 						"Running in non-portable mode (only one checkpoint is allowed), and we have already checkpointed once"); //$NON-NLS-1$
 			}
 		} else {
-			throw new UnsupportedOperationException("CRIU support is not enabled"); //$NON-NLS-1$
+			throw new UnsupportedOperationException("CRAC or CRIU support is not enabled"); //$NON-NLS-1$
 		}
 	}
 }

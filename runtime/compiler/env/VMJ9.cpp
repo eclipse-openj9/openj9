@@ -9414,7 +9414,7 @@ bool
 TR_J9VMBase::isSnapshotModeEnabled()
    {
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-   return getJ9JITConfig()->javaVM->internalVMFunctions->isCRIUSupportEnabled(vmThread());
+   return getJ9JITConfig()->javaVM->internalVMFunctions->isCRaCorCRIUSupportEnabled(vmThread());
 #else /* defined(J9VM_OPT_CRIU_SUPPORT) */
    return false;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */

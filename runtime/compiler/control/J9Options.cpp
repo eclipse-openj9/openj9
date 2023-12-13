@@ -2364,7 +2364,7 @@ bool J9::Options::preProcessJitServer(J9JavaVM *vm, J9JITConfig *jitConfig)
          // Enable JITServer client mode if
          // 1) CRIU support is enabled
          // 2) client mode is not explicitly disabled
-         bool implicitClientMode = ifuncs->isCRIUSupportEnabled(currentThread) && !useJitServerExplicitlyDisabled;
+         bool implicitClientMode = ifuncs->isCRaCorCRIUSupportEnabled(currentThread) && !useJitServerExplicitlyDisabled;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
          if (useJitServerExplicitlySpecified

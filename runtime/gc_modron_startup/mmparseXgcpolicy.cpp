@@ -85,7 +85,7 @@ isMetronomeGCPolicySupported(MM_GCExtensions *extensions)
 {
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 	J9JavaVM *vm = extensions->getJavaVM();
-	if (vm->internalVMFunctions->isCRIUSupportEnabled_VM(vm)) {
+	if (vm->internalVMFunctions->isCRaCorCRIUSupportEnabled_VM(vm)) {
 		PORT_ACCESS_FROM_JAVAVM(vm);
 		j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_POLICY_NOT_SUPPOURTED_CRIU, "metronome");
 		return false;
@@ -107,7 +107,7 @@ isBalancedGCPolicySupported(MM_GCExtensions *extensions)
 {
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 	J9JavaVM *vm = extensions->getJavaVM();
-	if (vm->internalVMFunctions->isCRIUSupportEnabled_VM(vm)) {
+	if (vm->internalVMFunctions->isCRaCorCRIUSupportEnabled_VM(vm)) {
 		PORT_ACCESS_FROM_JAVAVM(vm);
 		j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_POLICY_NOT_SUPPOURTED_CRIU, "balanced");
 		return false;

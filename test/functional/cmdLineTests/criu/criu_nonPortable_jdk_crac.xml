@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+
+<!--
+  Copyright IBM Corp. and others 2024
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] https://openjdk.org/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
+-->
+
+<!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
+
+<suite id="J9 Criu Command-Line Option Tests - jdk.crac" timeout="300">
+  <variable name="MAINCLASS_TESTJDKCRAC" value="org.openj9.criu.TestJDKCRAC" />
+  <variable name="EXPORTS" value="--add-exports=java.base/openj9.internal.criu=ALL-UNNAMED"/>
+  <variable name="CRACCHECKPOINTTO" value="-XX:CRaCCheckpointTo=./cpData"/>
+
+  <test id="jdk.crac - create and restore once">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ $EXPORTS$ $CRACCHECKPOINTTO$" $MAINCLASS_TESTJDKCRAC$ unusedArgument 1 false false</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+  </test>
+</suite>

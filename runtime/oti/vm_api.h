@@ -498,24 +498,34 @@ internalCreateRAMClassFromROMClass(J9VMThread *vmThread, J9ClassLoader *classLoa
 
 /* ---------------- CRIUHelpers.cpp ---------------- */
 /**
+ * @brief Queries if CRaC or CRIU support is enabled. By default support
+ * is not enabled, it can be enabled with -XX:CRaCCheckpointTo or -XX:+EnableCRIUSupport.
+ *
+ * @param currentThread vmthread token
+ * @return TRUE if enabled, FALSE otherwise
+ */
+BOOLEAN
+isCRaCorCRIUSupportEnabled(J9VMThread *currentThread);
+
+/**
+ * @brief Queries if CRaC or CRIU support is enabled. By default support
+ * is not enabled, it can be enabled with -XX:CRaCCheckpointTo or -XX:+EnableCRIUSupport.
+ *
+ * @param vm javaVM token
+ * @return TRUE if enabled, FALSE otherwise
+ */
+BOOLEAN
+isCRaCorCRIUSupportEnabled_VM(J9JavaVM *vm);
+
+/**
  * @brief Queries if CRIU support is enabled. By default support
- * is not enabled, it can be enabled with `-XX:+EnableCRIUSupport`
+ * is not enabled, it can be enabled with -XX:+EnableCRIUSupport.
  *
  * @param currentThread vmthread token
  * @return TRUE if enabled, FALSE otherwise
  */
 BOOLEAN
 isCRIUSupportEnabled(J9VMThread *currentThread);
-
-/**
- * @brief Queries if CRIU support is enabled. By default support
- * is not enabled, it can be enabled with `-XX:+EnableCRIUSupport`
- *
- * @param vm javaVM token
- * @return TRUE if enabled, FALSE otherwise
- */
-BOOLEAN
-isCRIUSupportEnabled_VM(J9JavaVM *vm);
 
 /**
  * @brief Checks if the CRIU security provider is enabled when CRIU

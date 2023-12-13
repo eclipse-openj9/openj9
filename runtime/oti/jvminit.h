@@ -441,6 +441,10 @@ enum INIT_STAGE {
 #define VMOPT_XXSLEEPMILLISECONDSFORNOTCHECKPOINTSAFE_EQUALS "-XX:sleepMillisecondsForNotCheckpointSafe="
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
+#if defined(J9VM_OPT_CRAC_SUPPORT)
+#define VMOPT_XXCRACCHECKPOINTTO "-XX:CRaCCheckpointTo="
+#endif /* defined(J9VM_OPT_CRAC_SUPPORT) */
+
 /* Compatibility options. */
 #define VMOPT_XXCOMPATIBILITY_EQUALS "-XX:Compatibility="
 
