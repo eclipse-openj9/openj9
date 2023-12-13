@@ -528,7 +528,7 @@ uint8_t *TR::PPCUnresolvedCallSnippet::emitSnippetBody()
       TR::ExternalRelocation::create(
          cursor,
          *(uint8_t **)cursor,
-         getNode() ? (uint8_t *)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
+         getNode() ? (uint8_t *)(uintptr_t)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
          TR_Trampolines,
          cg()),
       __FILE__,

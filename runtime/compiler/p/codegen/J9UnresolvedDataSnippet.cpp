@@ -182,7 +182,7 @@ uint8_t *J9::Power::UnresolvedDataSnippet::emitSnippetBody()
       TR::ExternalRelocation::create(
          cursor,
          *(uint8_t **)cursor,
-         getNode() ? (uint8_t *)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
+         getNode() ? (uint8_t *)(uintptr_t)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
          TR_ConstantPool,
          cg()),
       __FILE__,
@@ -200,7 +200,7 @@ uint8_t *J9::Power::UnresolvedDataSnippet::emitSnippetBody()
       if (getDataSymbol()->isConstObjectRef() || getDataSymbol()->isConstantDynamic())
          {
          cg()->addProjectSpecializedRelocation(cursor, *(uint8_t **)(cursor-4),
-               getNode() ? (uint8_t *)getNode()->getInlinedSiteIndex() : (uint8_t *)-1, TR_ConstantPool,
+               getNode() ? (uint8_t *)(uintptr_t)getNode()->getInlinedSiteIndex() : (uint8_t *)-1, TR_ConstantPool,
                                 __FILE__,
                                 __LINE__,
                                 getNode());
