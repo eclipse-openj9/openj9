@@ -786,7 +786,7 @@ static uint64_t QueryCounter()
    {
    timebasestruct_t tb;
    read_real_time(&tb, sizeof(tb));
-   uint64_t result = tb.tb_high << 32 | tb.tb_low;
+   uint64_t result = (((uint64_t)tb.tb_high) << 32) | tb.tb_low;
    return result;
    }
 #else
