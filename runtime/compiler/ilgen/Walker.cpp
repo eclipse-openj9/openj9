@@ -7471,9 +7471,25 @@ TR_J9ByteCodeIlGenerator::storeArrayElement(TR::DataType dataType, TR::ILOpCodes
    // we won't have flattening, so no call to flattenable array element access
    // helper is needed.
    //
+
+   bool generateNonHelper = false;
+
    if (TR::Compiler->om.areFlattenableValueTypesEnabled() &&
        !TR::Compiler->om.canGenerateArraylets() &&
        dataType == TR::Address)
+      {
+      if (!TR::Compiler->om.isValueTypeArrayFlatteningEnabled() &&
+          _methodSymbol->skipNonNullableArrayNullStoreCheck())
+         {
+         generateNonHelper = false;
+         }
+      else
+         {
+         generateNonHelper = true;
+         }
+      }
+
+   if (generateNonHelper)
       {
       TR::Node* elementIndex = pop();
       TR::Node* arrayBaseAddress = pop();
