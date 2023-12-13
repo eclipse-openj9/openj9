@@ -47,8 +47,8 @@
 #include <stdio.h>
 
 
-char *
-J9::Options::kcaOffsets(char *option, void *, TR::OptionTable *entry)
+const char *
+J9::Options::kcaOffsets(const char *option, void *, TR::OptionTable *entry)
    {
    char szFileName[40];
    char szCMPRSS[8];

@@ -208,7 +208,7 @@ TR::OptionSet *findOptionSet(J9Method *method, bool isAOT)
    return optionSet;
    }
 
-static void reportHook(J9VMThread *curThread, char *name, char *format=NULL, ...)
+static void reportHook(J9VMThread *curThread, const char *name, const char *format=NULL, ...)
    {
    J9JITConfig * jitConfig = curThread->javaVM->jitConfig;
    TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
@@ -228,7 +228,7 @@ static void reportHook(J9VMThread *curThread, char *name, char *format=NULL, ...
       }
    }
 
-static void reportHookFinished(J9VMThread *curThread, char *name, char *format=NULL, ...)
+static void reportHookFinished(J9VMThread *curThread, const char *name, const char *format=NULL, ...)
    {
    J9JITConfig * jitConfig = curThread->javaVM->jitConfig;
    TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
@@ -246,7 +246,7 @@ static void reportHookFinished(J9VMThread *curThread, char *name, char *format=N
       }
    }
 
-static void reportHookDetail(J9VMThread *curThread, char *name, char *format, ...)
+static void reportHookDetail(J9VMThread *curThread, const char *name, const char *format, ...)
    {
    J9JITConfig * jitConfig = curThread->javaVM->jitConfig;
    TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
@@ -2513,7 +2513,7 @@ void jitClassesRedefined(J9VMThread * currentThread, UDATA classCount, J9JITRede
 
 void jitFlushCompilationQueue(J9VMThread * currentThread, J9JITFlushCompilationQueueReason reason)
    {
-   char *buffer = "unknown reason";
+   const char *buffer = "unknown reason";
    if (reason == J9FlushCompQueueDataBreakpoint)
       buffer = "DataBreakpoint";
    else
@@ -4458,7 +4458,7 @@ static void samplingObservationsLogic(J9JITConfig * jitConfig, TR::CompilationIn
    compInfo->_stats._methodsSampleWindowReset = 0;
    }
 
-char* jitStateNames[]=
+const char* jitStateNames[]=
    {
    "UNDEFINED",
    "IDLE     ",
@@ -5541,7 +5541,7 @@ static void initJitGCMapCheckAsyncHook(J9JavaVM * vm, IDATA handlerKey, J9JITCon
 
 
 //int32_t samplerThreadStateFrequencies[TR::CompilationInfo::SAMPLER_LAST_STATE+1] = {0, 2, 1000, 100000, INT_MAX, INT_MAX, -1};
-char* samplerThreadStateNames[TR::CompilationInfo::SAMPLER_LAST_STATE+1] =
+const char* samplerThreadStateNames[TR::CompilationInfo::SAMPLER_LAST_STATE+1] =
                                  {
                                    "NOT_INITIALIZED",
                                    "DEFAULT",

@@ -222,7 +222,7 @@ class TR_AddressSet
    int32_t          _numAddressRanges;
    int32_t          _maxAddressRanges;
 
-   static void trace(char *format, ...);
+   static void trace(const char *format, ...);
    static bool enableTraceDetails();
    static void traceDetails(const char *format, ...);
 

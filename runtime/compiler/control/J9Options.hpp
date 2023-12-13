@@ -433,7 +433,7 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
 
    static bool _xrsSync;
 
-   static char * _externalOptionStrings[ExternalOptions::TR_NumExternalOptions];
+   static const char * _externalOptionStrings[ExternalOptions::TR_NumExternalOptions];
 
    static void  printPID();
 
@@ -442,35 +442,35 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
 
 
 
-   static char *kcaOffsets(char *option, void *, TR::OptionTable *entry);
+   static const char *kcaOffsets(const char *option, void *, TR::OptionTable *entry);
 
-   static char *gcOnResolveOption(char *option, void *, TR::OptionTable *entry);
+   static const char *gcOnResolveOption(const char *option, void *, TR::OptionTable *entry);
 
-   static char *tprofOption(char *option, void *, TR::OptionTable *entry);
+   static const char *tprofOption(const char *option, void *, TR::OptionTable *entry);
 
-   static char *loadLimitOption(char *option, void *, TR::OptionTable *entry);
+   static const char *loadLimitOption(const char *option, void *, TR::OptionTable *entry);
 
-   static char *loadLimitfileOption(char *option, void *, TR::OptionTable *entry);
+   static const char *loadLimitfileOption(const char *option, void *, TR::OptionTable *entry);
 
 #if defined(J9VM_OPT_JITSERVER)
-   static char *JITServerAOTCacheStoreLimitOption(char *option, void *, TR::OptionTable *entry);
-   static char *JITServerAOTCacheLoadLimitOption(char *option, void *, TR::OptionTable *entry);
-   static char *JITServerRemoteExclude(char *option, void *base, TR::OptionTable *entry);
+   static const char *JITServerAOTCacheStoreLimitOption(const char *option, void *, TR::OptionTable *entry);
+   static const char *JITServerAOTCacheLoadLimitOption(const char *option, void *, TR::OptionTable *entry);
+   static const char *JITServerRemoteExclude(const char *option, void *base, TR::OptionTable *entry);
    static bool JITServerParseCommonOptions(J9VMInitArgs *vmArgsArray, J9JavaVM *vm, TR::CompilationInfo *compInfo);
    static void JITServerParseLocalSyncCompiles(J9VMInitArgs *vmArgsArray, J9JavaVM *vm, TR::CompilationInfo *compInfo, bool isFSDEnabled);
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
-   static char *vmStateOption(char *option, void *, TR::OptionTable *entry);
+   static const char *vmStateOption(const char *option, void *, TR::OptionTable *entry);
 
-   static char *setJitConfigRuntimeFlag(char *option, void *base, TR::OptionTable *entry);
-   static char *resetJitConfigRuntimeFlag(char *option, void *base, TR::OptionTable *entry);
-   static char *setJitConfigNumericValue(char *option, void *base, TR::OptionTable *entry);
+   static const char *setJitConfigRuntimeFlag(const char *option, void *base, TR::OptionTable *entry);
+   static const char *resetJitConfigRuntimeFlag(const char *option, void *base, TR::OptionTable *entry);
+   static const char *setJitConfigNumericValue(const char *option, void *base, TR::OptionTable *entry);
 
    static bool useCompressedPointers();
-   static char *limitOption(char *option, void *, TR::OptionTable *entry);
-   static char *inlinefileOption(char *option, void *, TR::OptionTable *entry);
-   static char *limitfileOption(char *option, void *, TR::OptionTable *entry);
-   static char *versionOption(char *option, void *, TR::OptionTable *entry);
+   static const char *limitOption(const char *option, void *, TR::OptionTable *entry);
+   static const char *inlinefileOption(const char *option, void *, TR::OptionTable *entry);
+   static const char *limitfileOption(const char *option, void *, TR::OptionTable *entry);
+   static const char *versionOption(const char *option, void *, TR::OptionTable *entry);
 
    /** \brief
     *    Set memory manager functions related configuration.
@@ -626,7 +626,7 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    private:
 
 #if defined(J9VM_OPT_JITSERVER)
-   static char *JITServerAOTCacheLimitOption(char *option, void *base, TR::OptionTable *entry, TR::CompilationFilters *&filters, const char *optName);
+   static const char *JITServerAOTCacheLimitOption(const char *option, void *base, TR::OptionTable *entry, TR::CompilationFilters *&filters, const char *optName);
 #endif /* defined(J9VM_OPT_JITSERVER) */
    };
 

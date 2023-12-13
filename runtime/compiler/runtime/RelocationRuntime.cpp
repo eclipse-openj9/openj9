@@ -81,7 +81,7 @@
 
 #include "exceptions/AOTFailure.hpp"
 
-char *TR_RelocationRuntime::_reloErrorCodeNames[] =
+const char *TR_RelocationRuntime::_reloErrorCodeNames[] =
    {
    "relocationOK",                                     // 0
 
@@ -938,7 +938,7 @@ uintptr_t TR_RelocationRuntime::_globalValueList[TR_NumGlobalValueItems] =
    0          // TR_HeapSizeForBarrierRange0
    };
 
-char *TR_RelocationRuntime::_globalValueNames[TR_NumGlobalValueItems] =
+const char *TR_RelocationRuntime::_globalValueNames[TR_NumGlobalValueItems] =
    {
    "not used (0)",
    "TR_CountForRecompile (1)",
@@ -1036,7 +1036,7 @@ TR_SharedCacheRelocationRuntime::initializeCacheDeltas()
    }
 
 void
-TR_SharedCacheRelocationRuntime::incompatibleCache(U_32 module_name, U_32 reason, char *assumeMessage)
+TR_SharedCacheRelocationRuntime::incompatibleCache(U_32 module_name, U_32 reason, const char *assumeMessage)
    {
    if (TR::Options::isAnyVerboseOptionSet())
       {
@@ -1051,7 +1051,7 @@ TR_SharedCacheRelocationRuntime::incompatibleCache(U_32 module_name, U_32 reason
    }
 
 bool
-TR_SharedCacheRelocationRuntime::generateError(U_32 module_name, U_32 reason, char *assumeMessage)
+TR_SharedCacheRelocationRuntime::generateError(U_32 module_name, U_32 reason, const char *assumeMessage)
    {
    incompatibleCache(module_name, reason, assumeMessage);
    return false;
