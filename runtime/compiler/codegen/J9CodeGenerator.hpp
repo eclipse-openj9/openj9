@@ -158,7 +158,7 @@ public:
                                           uint8_t *target,
                                           uint8_t *target2,  //pass in NULL when no target2
                                           TR_ExternalRelocationTargetKind kind,
-                                          char *generatingFileName,
+                                          const char *generatingFileName,
                                           uintptr_t generatingLineNumber,
                                           TR::Node *node);
    //TR::ExternalOrderedPair32BitRelocation
@@ -166,7 +166,7 @@ public:
                                           uint8_t *location2,
                                           uint8_t *target,
                                           TR_ExternalRelocationTargetKind kind,
-                                          char *generatingFileName,
+                                          const char *generatingFileName,
                                           uintptr_t generatingLineNumber,
                                           TR::Node *node);
    //TR::BeforeBinaryEncodingExternalRelocation
@@ -174,7 +174,7 @@ public:
                                           uint8_t *target,
                                           uint8_t *target2,   //pass in NULL when no target2
                                           TR_ExternalRelocationTargetKind kind,
-                                          char *generatingFileName,
+                                          const char *generatingFileName,
                                           uintptr_t generatingLineNumber,
                                           TR::Node *node);
 

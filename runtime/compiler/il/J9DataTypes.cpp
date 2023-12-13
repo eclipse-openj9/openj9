@@ -147,7 +147,7 @@ const int32_t packedDecimalPrecisionToByteLengthMap[TR_MAX_DECIMAL_PRECISION+1]
 
 
 
-char *J9::DataType::_TR_RawBCDSignCodeNames[num_raw_bcd_sign_codes] =
+const char *J9::DataType::_TR_RawBCDSignCodeNames[num_raw_bcd_sign_codes] =
    {
    "raw_bcd_sign_unknown",
    "0xc",
@@ -163,7 +163,7 @@ int32_t J9::DataType::_TR_RawBCDSignCodeValues[num_raw_bcd_sign_codes] =
    0xf,                                  // raw_bcd_sign_0xf
    };
 
-char *J9::DataType::_TR_BCDSignCodeNames[num_bcd_sign_codes] =
+const char *J9::DataType::_TR_BCDSignCodeNames[num_bcd_sign_codes] =
    {
    "bcd_sign_unknown",
    "plus",

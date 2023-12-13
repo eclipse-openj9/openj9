@@ -202,7 +202,7 @@ J9::Symbol::searchRecognizedField(TR::Compilation * comp, TR_ResolvedMethod * ow
       int32_t  totalLen;
       char    *fieldName;
       fieldName = owningMethod->staticName(cpIndex, totalLen, comp->trMemory());  // totalLen = strlen("<class>" + "<field>" + "<sig>") + 3
-      static char *assertionsDisabledStr = "$assertionsDisabled Z";
+      static const char *assertionsDisabledStr = "$assertionsDisabled Z";
       //string will be of the form "<class>.$assertionsDisabled Z"
       if (declaringClass
           && totalLen >= 22
