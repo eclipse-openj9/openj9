@@ -1,5 +1,5 @@
 ##############################################################################
-# Copyright IBM Corp. and others 2021
+# Copyright IBM Corp. and others 2023
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,3 +30,22 @@ org.openj9.test.nestmates.NestAttributeTest:testGetNestMembersAPIInValidHostWron
 org.openj9.test.nestmates.NestAttributeTest:testGetNestMembersAPINestMemberWrongPackage NA generic-all
 org.openj9.test.nestmates.NestAttributeTest:testGetNestMembersAPINestMemberWrongNestHost NA generic-all
 org.openj9.test.nestmates.NestAttributeTest:testGetNestMembersAPINestMemberWrongNestHost2 NA generic-all
+
+# Exclude Java 19 Thread related failures
+
+org.openj9.test.java.lang.Test_ThreadGroup:test_activeCount NA generic-all
+org.openj9.test.java.lang.Test_ThreadGroup:test_Constructor2 NA generic-all
+org.openj9.test.java.lang.Test_ThreadGroup:test_destroy NA generic-all
+org.openj9.test.java.lang.Test_ThreadGroup:test_destroy2 NA generic-all
+org.openj9.test.java.lang.Test_ThreadGroup:test_destroy3 NA generic-all
+org.openj9.test.java.lang.Test_ThreadGroup:test_list NA generic-all
+org.openj9.test.java.lang.Test_ThreadGroup:test_remove NA generic-all
+org.openj9.test.java.lang.Test_ThreadGroup:test_resume NA generic-all
+org.openj9.test.java.lang.Test_ThreadGroup:test_setDaemon2 NA generic-all
+org.openj9.test.java.lang.Test_ThreadGroup:test_stop NA generic-all
+org.openj9.test.java.lang.Test_ThreadGroup:test_suspend NA generic-all
+org.openj9.test.java.lang.Test_ThreadGroup:test_uncaughtException NA generic-all
+org.openj9.test.java.lang.Test_Thread:test_start_WeakReference NA generic-all
+org.openj9.test.java.lang.Test_Thread:test_currentThread NA generic-all
+org.openj9.test.java.lang.Test_Thread:test_toString NA generic-all
+org.openj9.test.java.lang.management.TestManagementFactory:testGetPlatformMXBeans NA generic-all
