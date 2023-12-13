@@ -248,20 +248,20 @@ public:
       return bcd_invalid_sign;
       }
 
-   static char *getName(TR_RawBCDSignCode s)
+   static const char *getName(TR_RawBCDSignCode s)
       {
       if (s < num_raw_bcd_sign_codes)
          return _TR_RawBCDSignCodeNames[s];
       else
-         return (char*)"unknown raw sign";
+         return "unknown raw sign";
       }
 
-   static char *getName(TR_BCDSignCode s)
+   static const char *getName(TR_BCDSignCode s)
       {
       if (s < num_bcd_sign_codes)
          return _TR_BCDSignCodeNames[s];
       else
-         return (char*)"unknown bcd sign";
+         return "unknown bcd sign";
       }
 
    static int32_t getValue(TR_RawBCDSignCode s)
@@ -345,9 +345,9 @@ public:
    static bool normalizedSignIsNegative(TR::DataType dt, TR_BCDSignCode normalizedSign);
 
 private:
-   static char*         _TR_RawBCDSignCodeNames[num_raw_bcd_sign_codes];
-   static int32_t       _TR_RawBCDSignCodeValues[num_raw_bcd_sign_codes];
-   static char*         _TR_BCDSignCodeNames[num_bcd_sign_codes];
+   static const char* _TR_RawBCDSignCodeNames[num_raw_bcd_sign_codes];
+   static int32_t     _TR_RawBCDSignCodeValues[num_raw_bcd_sign_codes];
+   static const char* _TR_BCDSignCodeNames[num_bcd_sign_codes];
    };
 
 }
