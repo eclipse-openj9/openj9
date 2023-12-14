@@ -5928,6 +5928,7 @@ typedef struct J9JavaVM {
 	UDATA addModulesCount;
 	UDATA safePointState;
 	UDATA safePointResponseCount;
+	BOOLEAN alreadyHaveExclusive;
 	struct J9VMRuntimeStateListener vmRuntimeStateListener;
 #if defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH)
 #if defined(J9UNIX) || defined(AIXPPC)
