@@ -622,6 +622,8 @@ Mixed references is the default to build when no options are specified. _Note th
 - `--with-mixedrefs=static` (this is the default) create a mixed references build which avoids runtime checks by compiling source twice
 - `--with-noncompressedrefs` create a build supporting non-compressed references only
 
+:pencil: **AArch64 macOS only:** Please specify `--with-noncompressedrefs` because compressed references is not supported on AArch64 macOS yet.
+
 :pencil: **OpenSSL support:** If you want to build an OpenJDK that includes OpenSSL, you must specify `--with-openssl={fetched|path_to_library}`
 
   where:
