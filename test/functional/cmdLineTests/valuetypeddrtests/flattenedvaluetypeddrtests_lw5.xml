@@ -59,8 +59,12 @@
 			<input>!stackslots $mainThreadId$</input>
 			<input>quit</input>
 		</command>
-		<output regex="no" type="success" showMatch="yes">I-Slot: a0[0x</output>
-		<saveoutput regex="no" type="required" saveName="objectAddr" splitIndex="1" splitBy="= " showMatch="yes">I-Slot: a0[0x</saveoutput>
+		<!-- this regex is a hack until reflection for ValueTypeTests.checkObject is no longer needed -->
+		<output regex="yes" javaUtilPattern="yes" type="success" showMatch="yes">checkObject.*\n.*\n.*\n.*\n.*</output>
+		<!-- navigate to I-Slot: a0[0x] = <address> after call to ValueTypeTests.checkObject -->
+		<saveoutput regex="yes" javaUtilPattern="yes" type="required" saveName="objectAddr" splitIndex="93" splitBy="= " showMatch="yes">checkObject.*\n.*\n.*\n.*\n.*</saveoutput>
+		<!--<output regex="no" type="success" showMatch="yes">I-Slot: a0[0x</output>
+		<saveoutput regex="no" type="required" saveName="objectAddr" splitIndex="1" splitBy="= " showMatch="yes">I-Slot: a0[0x</saveoutput>-->
 		<output regex="no" type="failure">Problem running command</output>
 	</test>
 
@@ -190,8 +194,13 @@
 			<input>!stackslots $mainThreadId$</input>
 			<input>quit</input>
 		</command>
-		<output regex="no" type="success" showMatch="yes">I-Slot: a0[0x</output>
-		<saveoutput regex="no" type="required" saveName="objectAddr" splitIndex="1" splitBy="= " showMatch="yes">I-Slot: a0[0x</saveoutput>
+
+		<!-- this regex is a hack until reflection for ValueTypeTests.checkObject is no longer needed -->
+		<output regex="yes" javaUtilPattern="yes" type="success" showMatch="yes">checkObject.*\n.*\n.*\n.*\n.*</output>
+		<!-- navigate to I-Slot: a0[0x] = <address> after call to ValueTypeTests.checkObject -->
+		<saveoutput regex="yes" javaUtilPattern="yes" type="required" saveName="objectAddr" splitIndex="93" splitBy="= " showMatch="yes">checkObject.*\n.*\n.*\n.*\n.*</saveoutput>
+		<!--<output regex="no" type="success" showMatch="yes">I-Slot: a0[0x</output>
+		<saveoutput regex="no" type="required" saveName="objectAddr" splitIndex="1" splitBy="= " showMatch="yes">I-Slot: a0[0x</saveoutput>-->
 		<output regex="no" type="failure">Problem running command</output>
 	</test>
 
