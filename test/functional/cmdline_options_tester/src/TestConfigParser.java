@@ -202,6 +202,9 @@ class TestConfigParser {
 				if (hasAllowedPlatform((String)attributes.get("platforms"))) {
 					String regex = (String)attributes.get("regex");
 					String javaUtilPattern = "no";
+					if (null != attributes.get("javaUtilPattern")) {
+						javaUtilPattern = (String)attributes.get("javaUtilPattern");
+					}
 					String showRegexMatch = "no";
 					if (null != attributes.get("showMatch")) {
 						showRegexMatch = (String)attributes.get("showMatch");

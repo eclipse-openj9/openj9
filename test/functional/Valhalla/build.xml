@@ -57,16 +57,16 @@
 		<echo>===destdir:                      ${DEST}</echo>
 		<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" encoding="ISO-8859-1">
 			<src path="${src}"/>
-			<!-- uncomment when running with the latest Valhalla compiler (currently in lw5 branch but will eventually be merged) -->
-			<src path="${src_qtypes}"/>
-			<!-- <src path="${src_lw5}"/> -->
+			<!-- uncomment when running with the latest Valhalla compiler (currently in lw5 branch but will eventually be merged)-->
+			<!-- <src path="${src_qtypes}"/> -->
+			<src path="${src_lw5}"/>
 			<src path="${transformerListener}" />
 			<compilerarg line='--add-exports java.base/jdk.internal.misc=ALL-UNNAMED --add-exports java.base/jdk.internal.value=ALL-UNNAMED' />
 			<compilerarg line='--enable-preview -source 22'/>
 			<!-- uncomment when running with lw5 -->
-			<!--<compilerarg line='-XDenableNullRestrictedTypes' />-->
+			<compilerarg line='-XDenableNullRestrictedTypes' />
 			<!-- Also remove this line when running lw5 -->
-			<compilerarg line='-source 22 -XDenablePrimitiveClasses' />
+			<!--<compilerarg line='-source 22 -XDenablePrimitiveClasses' />-->
 			<classpath>
 				<pathelement location="${LIB_DIR}/testng.jar"/>
 				<pathelement location="${LIB_DIR}/jcommander.jar"/>

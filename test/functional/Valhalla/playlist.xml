@@ -53,10 +53,6 @@
 		<versions>
 			<version>Valhalla</version>
 		</versions>
-		<impls>
-			<impl>openj9</impl>
-			<impl>ibm</impl>
-		</impls>
 	</test>
 	<test>
 		<testCaseName>ValueTypeTestsJIT</testCaseName>
@@ -90,10 +86,6 @@
 		<versions>
 			<version>Valhalla</version>
 		</versions>
-		<impls>
-			<impl>openj9</impl>
-			<impl>ibm</impl>
-		</impls>
 	</test>
 	<test>
 		<testCaseName>ValueTypeArrayTests</testCaseName>
@@ -127,10 +119,6 @@
 		<versions>
 			<version>Valhalla</version>
 		</versions>
-		<impls>
-			<impl>openj9</impl>
-			<impl>ibm</impl>
-		</impls>
 	</test>
 	<test>
 		<testCaseName>ValueTypeArrayTestsJIT</testCaseName>
@@ -174,10 +162,6 @@
 		<versions>
 			<version>Valhalla</version>
 		</versions>
-		<impls>
-			<impl>openj9</impl>
-			<impl>ibm</impl>
-		</impls>
 	</test>
 	<test>
 		<testCaseName>ValueTypeUnsafeTests</testCaseName>
@@ -205,10 +189,6 @@
 		<versions>
 			<version>Valhalla</version>
 		</versions>
-		<impls>
-			<impl>openj9</impl>
-			<impl>ibm</impl>
-		</impls>
 	</test>
 	<test>
 		<testCaseName>ValueTypeOptTests</testCaseName>
@@ -246,10 +226,6 @@
 		<versions>
 			<version>Valhalla</version>
 		</versions>
-		<impls>
-			<impl>openj9</impl>
-			<impl>ibm</impl>
-		</impls>
 	</test>
 	<test>
 		<testCaseName>NullRestrictedTypeOptTests</testCaseName>
@@ -289,10 +265,6 @@
 		<versions>
 			<version>Valhalla</version>
 		</versions>
-		<impls>
-			<impl>openj9</impl>
-			<impl>ibm</impl>
-		</impls>
 	</test>
 	<test>
 		<testCaseName>ValhallaAttributeTests</testCaseName>
@@ -321,10 +293,6 @@
 		<versions>
 			<version>Valhalla</version>
 		</versions>
-		<impls>
-			<impl>openj9</impl>
-			<impl>ibm</impl>
-		</impls>
 	</test>
 	<test>
 		<testCaseName>ValueTypeSystemArraycopyTests</testCaseName>
@@ -371,9 +339,5 @@
 		<versions>
 			<version>Valhalla</version>
 		</versions>
-		<impls>
-			<impl>openj9</impl>
-			<impl>ibm</impl>
-		</impls>
 	</test>
 </playlist>
