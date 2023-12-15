@@ -296,6 +296,8 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    static int32_t _IprofilerOffSubtractionFactor;
    static int32_t _IprofilerOffDivisionFactor;
 
+   static int32_t _IprofilerPreCheckpointDropRate;
+
    static int32_t _LoopyMethodSubtractionFactor;
    static int32_t _LoopyMethodDivisionFactor;
 

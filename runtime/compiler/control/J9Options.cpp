@@ -183,6 +183,7 @@ int32_t J9::Options::_iProfilerMethodHashTableSize = 32707; // 32707 could be an
 int32_t J9::Options::_IprofilerOffSubtractionFactor = 500;
 int32_t J9::Options::_IprofilerOffDivisionFactor = 16;
 
+int32_t J9::Options::_IprofilerPreCheckpointDropRate = 0;
 
 
 int32_t J9::Options::_maxIprofilingCount = TR_DEFAULT_INITIAL_COUNT; // 3000
@@ -1055,6 +1056,8 @@ TR::OptionTable OMR::Options::_feOptions[] = {
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_IprofilerOffDivisionFactor, 0, "F%d", NOT_IN_SUBSET},
    {"iprofilerOffSubtractionFactor=", "O<nnn>\tCounts Subtraction factor when IProfiler is Off",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_IprofilerOffSubtractionFactor, 0, "F%d", NOT_IN_SUBSET},
+   {"iprofilerPreCheckpointDropRate=", "O<nnn>\tPercent*10 of buffers to drop precheckpoint",
+        TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_IprofilerPreCheckpointDropRate, 0, "F%d", NOT_IN_SUBSET},
    {"iprofilerSamplesBeforeTurningOff=", "O<nnn>\tnumber of interpreter profiling samples "
                                 "needs to be taken after the profiling starts going off to completely turn it off. "
                                 "Specify a very large value to disable this optimization",

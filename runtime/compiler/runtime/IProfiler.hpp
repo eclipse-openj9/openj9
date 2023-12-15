@@ -734,6 +734,7 @@ private:
    TR::Monitor                    *_iprofilerMonitor;
    volatile int32_t                _numOutstandingBuffers;
    uint64_t                        _numRequests;
+   uint64_t                        _numRequestsDropped;
    uint64_t                        _numRequestsSkipped;
    uint64_t                        _numRequestsHandedToIProfilerThread;
    uint64_t                        _iprofilerNumRecords; // info stats only
