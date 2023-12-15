@@ -246,12 +246,6 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 	private native int getOnlineProcessorsImpl();
 
 	/**
-	 * Check if the CpuLoadCompatibility flag is set.
-	 * @return if the CpuLoadCompatibility flag is set
-	 */
-	private static native boolean hasCpuLoadCompatibilityFlag();
-
-	/**
 	 * {@inheritDoc}
 	 */
 	@Override
@@ -269,9 +263,8 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 		}
 		latestCpuTime = cpuTime;
 
-		/* First call to this method returns 0 to match the behaviour of the RI.
-		 * If the CpuLoadCompatibility flag is set, the bahaviour is reverted to
-		 * return -1 for compatibility.
+		/* First call to this method should -1, since we don't have any previous
+		 * CPU times (or timestamp) to compute CPU load against.
 		 */
 		if (-1 == oldTime) {
 			/* Save current counters; next invocation onwards, we use these to
@@ -279,11 +272,7 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 			 */
 			oldTime = interimTime = latestTime;
 			oldCpuTime = interimCpuTime = latestCpuTime;
-			if (hasCpuLoadCompatibilityFlag()) {
-				return 0;
-			} else {
-				return CpuLoadCalculationConstants.ERROR_VALUE;
-			}
+			return CpuLoadCalculationConstants.ERROR_VALUE;
 		}
 
 		/* If a sufficiently long interval has elapsed since last sampling, calculate using
