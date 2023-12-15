@@ -86,6 +86,10 @@ J9::ARM64::CodeGenerator::initialize()
       {
       cg->setSupportsInlineStringHashCode();
       }
+   if ((!TR::Compiler->om.canGenerateArraylets()) && (!comp->getOption(TR_DisableFastStringIndexOf)))
+      {
+      cg->setSupportsInlineStringIndexOf();
+      }
    if (comp->fej9()->hasFixedFrameC_CallingConvention())
       cg->setHasFixedFrameC_CallingConvention();
    }
