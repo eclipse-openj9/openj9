@@ -316,8 +316,8 @@ TR_Debug::print(TR::FILE *pOutFile, TR::UnresolvedDataSnippet * snippet)
          glueRef = _cg->getSymRef(TR_PPCinterpreterUnresolvedStaticDataGlue);
       }
 
-   char    *info = "";
-   int32_t  distance;
+   const char *info = "";
+   int32_t     distance;
    if (isBranchToTrampoline(glueRef, cursor, distance))
       info = " Through Trampoline";
 

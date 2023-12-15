@@ -3557,7 +3557,7 @@ bool J9::ValuePropagation::isUnreliableSignatureType(
    return true;
    }
 
-static void getHelperSymRefs(OMR::ValuePropagation *vp, TR::Node *curCallNode, TR::SymbolReference *&getHelpersSymRef, TR::SymbolReference *&helperSymRef, char *helperSig, int32_t helperSigLen, TR::MethodSymbol::Kinds helperCallKind)
+static void getHelperSymRefs(OMR::ValuePropagation *vp, TR::Node *curCallNode, TR::SymbolReference *&getHelpersSymRef, TR::SymbolReference *&helperSymRef, const char *helperSig, int32_t helperSigLen, TR::MethodSymbol::Kinds helperCallKind)
    {
    //Function to retrieve the JITHelpers.getHelpers and JITHelpers.<helperSig> method symbol references.
    //

@@ -8816,7 +8816,7 @@ static TR::Register *inlineAtomicOps(TR::Node *node, TR::CodeGenerator *cg, int8
    if (!isArray)
       {
       TR_OpaqueClassBlock * bdClass;
-      char *className, *fieldSig;
+      const char *className, *fieldSig;
       int32_t classNameLen, fieldSigLen;
 
       fieldSigLen = 1;
@@ -8878,7 +8878,7 @@ static TR::Register *inlineAtomicOps(TR::Node *node, TR::CodeGenerator *cg, int8
             shiftAmount = 3;
 
          TR_OpaqueClassBlock * bdClass;
-         char *className, *fieldSig;
+         const char *className, *fieldSig;
          int32_t classNameLen, fieldSigLen;
 
          fieldSigLen = 1;
@@ -9379,7 +9379,7 @@ static TR::Register *inlineAtomicOperation(TR::Node *node, TR::CodeGenerator *cg
    else if (!isArray)
       {
       TR_OpaqueClassBlock *classBlock;
-      char *className, *fieldSig;
+      const char *className, *fieldSig;
       int32_t classNameLen, fieldSigLen;
       fieldSigLen = 1;
 
@@ -9432,7 +9432,7 @@ static TR::Register *inlineAtomicOperation(TR::Node *node, TR::CodeGenerator *cg
       fieldOffset = TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
 
       TR_OpaqueClassBlock *classBlock;
-      char *className, *fieldSig;
+      const char *className, *fieldSig;
       int32_t classNameLen, fieldSigLen;
       fieldSigLen = 1;
 

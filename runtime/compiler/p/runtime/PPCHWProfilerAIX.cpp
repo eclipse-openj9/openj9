@@ -67,7 +67,7 @@ struct pmapiInterface
    int (*pm_delete_program_mythread)();
    int (*pm_start_mythread)();
    int (*pm_stop_mythread)();
-   char* (*pm_strerror)(char *where, int error);
+   char* (*pm_strerror)(const char *where, int error);
    int (*pm_get_data_mythread)(pm_data_t *data);
    // Private, not declared in pmapi.h
    int (*pm_set_ebb_handler)(void *handler_address, void *data_area);
@@ -107,7 +107,7 @@ static bool pmapiInit()
       goto fail;
       }
 
-   char *curSym;
+   const char *curSym;
    curSym = "pm_initialize";
    pmapi.pm_initialize = (int (*)(int, pm_info2_t *, pm_groups_info_t *, int))dlsym(pmapi.dlHandle, curSym);
    if (!pmapi.pm_initialize)
@@ -149,7 +149,7 @@ static bool pmapiInit()
    if (!pmapi.pm_disable_bhrb)
       goto pmapiClose;
    curSym = "pm_strerror";
-   pmapi.pm_strerror = (char* (*)(char *, int))dlsym(pmapi.dlHandle, curSym);
+   pmapi.pm_strerror = (char* (*)(const char *, int))dlsym(pmapi.dlHandle, curSym);
    if (!pmapi.pm_strerror)
       goto pmapiClose;
    curSym = "pm_get_data_mythread";

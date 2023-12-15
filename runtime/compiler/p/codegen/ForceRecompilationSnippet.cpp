@@ -236,7 +236,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCForceRecompilationSnippet * snippet)
       cursor += 4;
       }
 
-   char    *info = "";
+   const char *info = "";
    if (isBranchToTrampoline(_cg->getSymRef(TR_PPCinduceRecompilation), cursor, value))
       info = " Through trampoline";
 

@@ -49,12 +49,12 @@
 // -------------------------------------------------------------------------------------------
 bool shouldEnableSEL(TR::Compilation *comp)
    {
-   static char * enableSEL = feGetEnv("TR_SIGNEXTENDLOADS");
+   static const char *enableSEL = feGetEnv("TR_SIGNEXTENDLOADS");
    if (comp->target().cpu.isZ())
       {
       // enable only for 390
-      static char * nenableSEL = feGetEnv("TR_NSIGNEXTENDLOADS");
-      if(nenableSEL ==NULL) enableSEL = "enable";
+      static const char *nenableSEL = feGetEnv("TR_NSIGNEXTENDLOADS");
+      if (nenableSEL == NULL) enableSEL = "enable";
       }
    return ((enableSEL != NULL) &&
            comp->target().is64Bit());

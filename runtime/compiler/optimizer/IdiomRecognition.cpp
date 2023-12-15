@@ -3363,13 +3363,13 @@ TR_CISCTransformer::isBlockInLoopBody(TR::Block *block)
 
 
 void
-TR_CISCTransformer::showEmbeddedData(char *title, uint8_t *data)
+TR_CISCTransformer::showEmbeddedData(const char *title, uint8_t *data)
    {
    int32_t i, j;
-   traceMsg(comp(), "%s\n    ",title);
+   traceMsg(comp(), "%s\n    ", title);
    for (j = 0; j < _numPNodes; j++)
       {
-      traceMsg(comp(), "%3d",j);
+      traceMsg(comp(), "%3d", j);
       }
    traceMsg(comp(), "\n  --");
    for (j = 0; j < _numPNodes; j++)
@@ -3386,7 +3386,7 @@ TR_CISCTransformer::showEmbeddedData(char *title, uint8_t *data)
          if (this_result == _Unknown || this_result == _NotEmbed)
             traceMsg(comp(), "|  ");
          else
-            traceMsg(comp(), "| %X",data[idx(j, i)]);
+            traceMsg(comp(), "| %X", data[idx(j, i)]);
          }
       traceMsg(comp(), "\n");
       }
@@ -5144,7 +5144,7 @@ TR_CISCTransformer::moveCISCNodesInList(List<TR_CISCNode> *l, TR_CISCNode *from,
 // * _T->_orderByData
 //*****************************************************************************
 void
-TR_CISCTransformer::moveCISCNodes(TR_CISCNode *from, TR_CISCNode *to, TR_CISCNode *moveTo, char *debugStr)
+TR_CISCTransformer::moveCISCNodes(TR_CISCNode *from, TR_CISCNode *to, TR_CISCNode *moveTo, const char *debugStr)
    {
    if (showMesssagesStdout())
       {
@@ -7665,7 +7665,7 @@ TR_CISCTransformer::computeTopologicalEmbedding(TR_CISCGraph *P, TR_CISCGraph *T
 
    if (trace() || showMesssagesStdout())
       {
-      char *bcinfo = "";
+      char *bcinfo = (char *)"";
 #if SHOW_BCINDICES
       char tmpbuf[256];
       int32_t minIndex, maxIndex;
