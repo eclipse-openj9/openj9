@@ -1166,6 +1166,8 @@ Java_com_ibm_lang_management_internal_ExtendedOperatingSystemMXBeanImpl_getOnlin
 jstring JNICALL
 Java_com_ibm_lang_management_internal_ExtendedOperatingSystemMXBeanImpl_getHardwareModelImpl(JNIEnv *env, jobject obj);
 
+jboolean JNICALL
+Java_com_ibm_lang_management_internal_ExtendedOperatingSystemMXBeanImpl_hasCpuLoadCompatibilityFlag(JNIEnv *env, jclass unusedClass);
 /**
  * Returns the maximum number of file descriptors that can be opened in a process.
  *
