@@ -67,6 +67,7 @@
 	<export name="Java_com_ibm_lang_management_internal_ExtendedOperatingSystemMXBeanImpl_getMemoryUsageImpl" />
 	<export name="Java_com_ibm_lang_management_internal_ExtendedOperatingSystemMXBeanImpl_getOnlineProcessorsImpl" />
 	<export name="Java_com_ibm_lang_management_internal_ExtendedOperatingSystemMXBeanImpl_getHardwareModelImpl" />
+	<export name="Java_com_ibm_lang_management_internal_ExtendedOperatingSystemMXBeanImpl_hasCpuLoadCompatibilityFlag" />
 	<export name="Java_com_ibm_lang_management_internal_JvmCpuMonitor_getThreadsCpuUsageImpl" />
 	<export name="Java_com_ibm_lang_management_internal_JvmCpuMonitor_setThreadCategoryImpl" />
 	<export name="Java_com_ibm_lang_management_internal_JvmCpuMonitor_getThreadCategoryImpl" />
