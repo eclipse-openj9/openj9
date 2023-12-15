@@ -519,20 +519,6 @@ Java_com_ibm_lang_management_internal_ExtendedOperatingSystemMXBeanImpl_getHardw
 }
 
 /**
- * Check if the CpuLoadCompatibility flag is set.
- *
- * @param env instance of JNIEnv
- * @param unusedClass
- *
- * @return if the CpuLoadCompatibility flag is set
- */
-jboolean JNICALL
-Java_com_ibm_lang_management_internal_ExtendedOperatingSystemMXBeanImpl_hasCpuLoadCompatibilityFlag(JNIEnv *env, jclass unusedClass) {
-	J9JavaVM *vm = ((J9VMThread *)env)->javaVM;
-	return J9_ARE_ALL_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_CPU_LOAD_COMPATIBILITY);
-}
-
-/**
  * Returns the maximum number of file descriptors that can be opened in a process.
  *
  * Class: com_ibm_lang_management_internal_UnixExtendedOperatingSystem
