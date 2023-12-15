@@ -58,7 +58,7 @@ TR::VP_BCDValue         *TR::VP_BCDValue::asBCDValue()                  { return
 TR::VP_BCDSign          *TR::VP_BCDSign::asBCDSign()                    { return this; }
 
 
-char *TR::VP_BCDSign::TR_BCDSignConstraintNames[TR_Sign_Num_Types] =
+const char *TR::VP_BCDSign::TR_BCDSignConstraintNames[TR_Sign_Num_Types] =
    {
    "<unknown_sign_state>",
    "<clean>",

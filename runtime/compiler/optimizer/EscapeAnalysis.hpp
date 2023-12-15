@@ -673,7 +673,7 @@ class TR_EscapeAnalysis : public TR::Optimization
    void     setHasFlushOnEntry(int32_t blockNum) {_blocksWithFlushOnEntry->set(blockNum);}
    void     rememoize(Candidate *c, bool mayDememoizeNextTime=false);
 
-   void     printCandidates(char *);
+   void     printCandidates(const char *);
 
    char *getClassName(TR::Node *classNode);
 

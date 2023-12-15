@@ -1304,7 +1304,7 @@ class TR_CISCTransformer : public TR_LoopTransformer
 
    bool computeTopologicalEmbedding(TR_CISCGraph *P, TR_CISCGraph *T);
    bool embeddingHasConflictingBranches();
-   void showEmbeddedData(char *title, uint8_t *data);
+   void showEmbeddedData(const char *title, uint8_t *data);
    bool computeEmbeddedForData();
    bool computeEmbeddedForCFG();
    bool dagEmbed(TR_CISCNode *, TR_CISCNode*);
@@ -1452,7 +1452,7 @@ class TR_CISCTransformer : public TR_LoopTransformer
    void showCandidates();
    void registerCandidates();
    void moveCISCNodesInList(List<TR_CISCNode> *l, TR_CISCNode *from, TR_CISCNode *to, TR_CISCNode *moveTo);
-   void moveCISCNodes(TR_CISCNode *from, TR_CISCNode *to, TR_CISCNode *moveTo, char *debugStr = NULL);
+   void moveCISCNodes(TR_CISCNode *from, TR_CISCNode *to, TR_CISCNode *moveTo, const char *debugStr = NULL);
    TR::Block *searchPredecessorOfBlock(TR::Block *block);
    TR::Block *modifyBlockByVersioningCheck(TR::Block *block, TR::TreeTop *startTop, TR::Node *lengthNode, List<TR::Node> *guardList = NULL);
    TR::Block *modifyBlockByVersioningCheck(TR::Block *block, TR::TreeTop *startTop, List<TR::Node> *guardList);

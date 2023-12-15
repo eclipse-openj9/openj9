@@ -1181,7 +1181,7 @@ TR_MHJ2IThunk *TR::PPCCallSnippet::generateInvokeExactJ2IThunk(TR::Node *callNod
 uint8_t *
 TR_Debug::printPPCArgumentsFlush(TR::FILE *pOutFile, TR::Node *node, uint8_t *cursor, int32_t argSize)
    {
-   char *storeGPROpName;
+   const char *storeGPROpName;
    int32_t offset = 0,
            intArgNum = 0,
            floatArgNum = 0;
@@ -1427,8 +1427,8 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCCallSnippet * snippet)
 
    cursor = printPPCArgumentsFlush(pOutFile, callNode, cursor, snippet->getSizeOfArguments());
 
-   char    *info = "";
-   int32_t  distance;
+   const char *info = "";
+   int32_t     distance;
    if (isBranchToTrampoline(glueRef, cursor, distance))
       info = " Through trampoline";
 
@@ -1526,8 +1526,8 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCVirtualUnresolvedSnippet * snippet)
 
    printSnippetLabel(pOutFile, snippet->getSnippetLabel(), cursor, "Virtual Unresolved Call Snippet");
 
-   char    *info = "";
-   int32_t  distance;
+   const char *info = "";
+   int32_t     distance;
    if (isBranchToTrampoline(_cg->getSymRef(TR_PPCvirtualUnresolvedHelper), cursor, distance))
       info = " Through trampoline";
 
@@ -1575,8 +1575,8 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCInterfaceCallSnippet * snippet)
 
    printSnippetLabel(pOutFile, snippet->getSnippetLabel(), cursor, "Interface Call Snippet");
 
-   char    *info = "";
-   int32_t  distance;
+   const char *info = "";
+   int32_t     distance;
    if (isBranchToTrampoline(_cg->getSymRef(TR_PPCinterfaceCallHelper), cursor, distance))
       info = " Through trampoline";
 

@@ -89,10 +89,10 @@ class VP_BCDSign : public TR::VPConstraint
 
    static bool signsAreConsistent(TR_BCDSignConstraint signOne, TR_BCDSignConstraint signTwo);
 
-   char *getName()
+   const char *getName()
       { return getName(_sign); }
 
-   static char *getName(TR_BCDSignConstraint sign)
+   static const char *getName(TR_BCDSignConstraint sign)
       { return ((sign < TR_Sign_Num_Types) ? TR_BCDSignConstraintNames[sign] : (char*)"invalid_sign_constraint"); }
 
    static TR_BCDSignConstraint getSignConstraintFromBCDSign(TR_BCDSignCode bcdSign)
@@ -147,7 +147,7 @@ class VP_BCDSign : public TR::VPConstraint
    TR::DataType _dataType;
 
    private:
-   static char  *TR_BCDSignConstraintNames[TR_Sign_Num_Types];
+   static const char *TR_BCDSignConstraintNames[TR_Sign_Num_Types];
    };
 
 class VP_BCDValue : public TR::VP_BCDSign

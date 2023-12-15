@@ -353,8 +353,8 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCStackCheckFailureSnippet * snippet)
       cursor += 4;
       }
 
-   char    *info = "";
-   int32_t  distance;
+   const char *info = "";
+   int32_t     distance;
    if (isBranchToTrampoline(_comp->getSymRefTab()->element(TR_stackOverflow), cursor, distance))
       info = " Through trampoline";
 
