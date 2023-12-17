@@ -269,9 +269,8 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 		}
 		latestCpuTime = cpuTime;
 
-		/* First call to this method returns 0 to match the behaviour of the RI.
-		 * If the CpuLoadCompatibility flag is set, the bahaviour is reverted to
-		 * return -1 for compatibility.
+		/* If no previous timestamps is set, the default behaviour is to return -1.
+		 * If the compatibility flag is set, return 0 to match the behaviour of RI.
 		 */
 		if (-1 == oldTime) {
 			/* Save current counters; next invocation onwards, we use these to
