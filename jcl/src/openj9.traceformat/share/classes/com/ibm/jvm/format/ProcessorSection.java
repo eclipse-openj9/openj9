@@ -80,9 +80,9 @@ public class ProcessorSection {
          * These String arrays refer to enum values in entries of the
          * ProcessorInfo structure defined in xhpi.h .
          */
-        String[] Archs      = { "Unknown", "x86", "S390", "Power", "IA64", "S390X", "AMD64", "RISCV"};
-        String[] SubTypes   = { "i486", "i586", "Pentium II", "Pentium III",
-            "Merced","McKinley", "PowerRS", "PowerPC", "GigaProcessor", "ESA", "Pentium IV", "T-Rex", "Opteron", "RV64G"};
+        String[] Archs      = { "Unknown", "x86", "S390", "Power", "IA64", "S390X", "AMD64", "RISCV", "AArch64" };
+        String[] SubTypes   = { "i486", "i586", "Pentium II", "Pentium III", "Merced", "McKinley",
+                "PowerRS", "PowerPC", "GigaProcessor", "ESA", "Pentium IV", "T-Rex", "Opteron", "RV64G", "Armv8-A" };
         String[] trCounter  = { "Sequence Counter", "Special", "RDTSC Timer", "AIX Timer",
                 "MFSPR Timer", "MFTB Timer", "STCK Timer", "J9 timer"};
         out.write("Sys Processor Info :");
