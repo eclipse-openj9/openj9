@@ -3183,7 +3183,12 @@ gcReinitializeDefaultsForRestore(J9VMThread* vmThread)
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
 
-	extensions->gcThreadCountForced = false;
+	/* If Snapshot VM did not specify -Xgcthreads or -Xgcmaxthreads, the count will be determined from scratch, either as new restore default or through restore specified options.
+	 * If Snapshot VM did specify, we want to continue using the count value unless (only) restore specific options override it */
+	if (!extensions->gcThreadCountSpecified) {
+		extensions->gcThreadCount = 0;
+		extensions->gcThreadCountForced = false;
+	}
 	extensions->parSweepChunkSize = 0;
 
 	if (!gcParseReconfigurableCommandLine(vm, vm->checkpointState.restoreArgsList)) {
