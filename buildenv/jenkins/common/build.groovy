@@ -58,6 +58,21 @@ def get_sources_with_authentication() {
     }
 }
 
+def get_source_call(gskit_cred="") {
+    sh "bash get_source.sh ${EXTRA_GETSOURCE_OPTIONS} ${gskit_cred} ${OPENJ9_REPO_OPTION} ${OPENJ9_BRANCH_OPTION} ${OPENJ9_SHA_OPTION} ${OPENJ9_REFERENCE} ${OMR_REPO_OPTION} ${OMR_BRANCH_OPTION} ${OMR_SHA_OPTION} ${OMR_REFERENCE}"
+}
+
+def get_source_call_optional_gskit() {
+    if (EXTRA_GETSOURCE_OPTIONS.contains("-gskit-bin") || (EXTRA_CONFIGURE_OPTIONS.contains("-gskit-sdk-bin"))) {
+        gskitCredentialID = variableFile.get_user_credentials_id('gskit')
+        withCredentials([usernamePassword(credentialsId: "${gskitCredentialID}", passwordVariable: 'GSKIT_PASSWORD', usernameVariable: 'GSKIT_USERNAME')]) {
+            get_source_call("-gskit-credential=\$GSKIT_USERNAME:\$GSKIT_PASSWORD")
+        }
+    } else {
+        get_source_call()
+    }
+}
+
 def get_sources() {
     // Temp workaround for Windows clones
     // See #3633 and JENKINS-54612
@@ -107,7 +122,7 @@ def get_sources() {
         // Look for dependent changes and checkout PR(s)
         checkout_pullrequest()
     } else {
-        sh "bash get_source.sh ${EXTRA_GETSOURCE_OPTIONS} ${OPENJ9_REPO_OPTION} ${OPENJ9_BRANCH_OPTION} ${OPENJ9_SHA_OPTION} ${OPENJ9_REFERENCE} ${OMR_REPO_OPTION} ${OMR_BRANCH_OPTION} ${OMR_SHA_OPTION} ${OMR_REFERENCE}"
+        get_source_call_optional_gskit()
     }
 }
 
@@ -227,7 +242,7 @@ def checkout_pullrequest() {
         checkout_pullrequest(OPENJDK_PR, "ibmruntimes/openj9-openjdk-jdk${JDK_REPO_SUFFIX}")
     }
 
-    sh "bash get_source.sh ${EXTRA_GETSOURCE_OPTIONS} ${OPENJ9_REPO_OPTION} ${OPENJ9_BRANCH_OPTION} ${OPENJ9_SHA_OPTION} ${OPENJ9_REFERENCE} ${OMR_REPO_OPTION} ${OMR_BRANCH_OPTION} ${OMR_SHA_OPTION} ${OMR_REFERENCE}"
+    get_source_call_optional_gskit()
 
     // Checkout dependent PRs, if any were specified
     if (openj9_bool) {
