@@ -81,21 +81,19 @@ createContinuation(J9VMThread *currentThread, j9object_t continuationObject)
 		vm->avgCacheLookupTime += (I_64)j9time_hires_delta(start, j9time_hires_clock(), OMRPORT_TIME_DELTA_IN_NANOSECONDS);
 #endif /* defined(J9VM_PROF_CONTINUATION_ALLOCATION) */
 
+	J9JavaStack *stack = NULL;
+	J9SFJNINativeMethodFrame *frame = NULL;
 	/* No cache found, allocate new continuation structure. */
 	if (NULL == continuation) {
 #if defined(J9VM_PROF_CONTINUATION_ALLOCATION)
 		start = j9time_hires_clock();
 #endif /* defined(J9VM_PROF_CONTINUATION_ALLOCATION) */
-		J9JavaStack *stack = NULL;
-		J9SFJNINativeMethodFrame *frame = NULL;
 		continuation = (J9VMContinuation*)j9mem_allocate_memory(sizeof(J9VMContinuation), OMRMEM_CATEGORY_THREADS);
 		if (NULL == continuation) {
 			vm->internalVMFunctions->setNativeOutOfMemoryError(currentThread, 0, 0);
 			result = FALSE;
 			goto end;
 		}
-
-		memset(continuation, 0, sizeof(J9VMContinuation));
 
 #ifdef J9VM_INTERP_GROWABLE_STACKS
 #define VMTHR_INITIAL_STACK_SIZE ((vm->initialStackSize > (UDATA) vm->stackSize) ? vm->stackSize : vm->initialStackSize)
@@ -112,22 +110,6 @@ createContinuation(J9VMThread *currentThread, j9object_t continuationObject)
 
 #undef VMTHR_INITIAL_STACK_SIZE
 
-		continuation->stackObject = stack;
-		continuation->stackOverflowMark2 = J9JAVASTACK_STACKOVERFLOWMARK(stack);
-		continuation->stackOverflowMark = continuation->stackOverflowMark2;
-
-		frame = ((J9SFJNINativeMethodFrame*)stack->end) - 1;
-		frame->method = NULL;
-		frame->specialFrameFlags = 0;
-		frame->savedCP = NULL;
-		frame->savedPC = (U_8*)(UDATA)J9SF_FRAME_TYPE_END_OF_STACK;
-		frame->savedA0 = (UDATA*)(UDATA)J9SF_A0_INVISIBLE_TAG;
-		continuation->sp = (UDATA*)frame;
-		continuation->literals = NULL;
-		continuation->pc = (U_8*)J9SF_FRAME_TYPE_JNI_NATIVE_METHOD;
-		continuation->arg0EA = (UDATA*)&frame->savedA0;
-		continuation->stackObject->isVirtual = TRUE;
-
 #if defined(J9VM_PROF_CONTINUATION_ALLOCATION)
 		I_64 totalTime = (I_64)j9time_hires_delta(start, j9time_hires_clock(), OMRPORT_TIME_DELTA_IN_NANOSECONDS);
 		if (totalTime > 10000) {
@@ -138,7 +120,31 @@ createContinuation(J9VMThread *currentThread, j9object_t continuationObject)
 			vm->fastAllocAvgTime += totalTime;
 		}
 #endif /* defined(J9VM_PROF_CONTINUATION_ALLOCATION) */
+	} else {
+		/* Reset and reuse the stack in the recycled continuation. */
+		stack = continuation->stackObject;
+		stack->previous = NULL;
+		stack->firstReferenceFrame = 0;
 	}
+
+	/* Reset all fields in the new or recycled continuation. */
+	memset(continuation, 0, sizeof(J9VMContinuation));
+
+	continuation->stackObject = stack;
+	continuation->stackOverflowMark2 = J9JAVASTACK_STACKOVERFLOWMARK(stack);
+	continuation->stackOverflowMark = continuation->stackOverflowMark2;
+
+	frame = ((J9SFJNINativeMethodFrame*)stack->end) - 1;
+	frame->method = NULL;
+	frame->specialFrameFlags = 0;
+	frame->savedCP = NULL;
+	frame->savedPC = (U_8*)(UDATA)J9SF_FRAME_TYPE_END_OF_STACK;
+	frame->savedA0 = (UDATA*)(UDATA)J9SF_A0_INVISIBLE_TAG;
+	continuation->sp = (UDATA*)frame;
+	continuation->literals = NULL;
+	continuation->pc = (U_8*)J9SF_FRAME_TYPE_JNI_NATIVE_METHOD;
+	continuation->arg0EA = (UDATA*)&frame->savedA0;
+	continuation->stackObject->isVirtual = TRUE;
 
 	J9VMJDKINTERNALVMCONTINUATION_SET_VMREF(currentThread, continuationObject, continuation);
 
@@ -355,17 +361,6 @@ recycleContinuation(J9JavaVM *vm, J9VMThread *vmThread, J9VMContinuation* contin
 {
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	bool cached = false;
-	/* Prepare continuationState for recycle, and reset stack initial state. */
-	J9SFJNINativeMethodFrame *frame = ((J9SFJNINativeMethodFrame*)continuation->stackObject->end) - 1;
-	frame->method = NULL;
-	frame->specialFrameFlags = 0;
-	frame->savedCP = NULL;
-	frame->savedPC = (U_8*)(UDATA)J9SF_FRAME_TYPE_END_OF_STACK;
-	frame->savedA0 = (UDATA*)(UDATA)J9SF_A0_INVISIBLE_TAG;
-	continuation->sp = (UDATA*)frame;
-	continuation->literals = NULL;
-	continuation->pc = (U_8*)J9SF_FRAME_TYPE_JNI_NATIVE_METHOD;
-	continuation->arg0EA = (UDATA*)&frame->savedA0;
 
 	if (!skipLocalCache && (0 < vm->continuationT1Size)) {
 		/* If called by carrier thread (not global), try to store in local cache first.
