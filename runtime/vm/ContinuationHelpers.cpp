@@ -152,6 +152,7 @@ synchronizeWithConcurrentGCScan(J9VMThread *currentThread, j9object_t continuati
 {
 	ContinuationState oldContinuationState = 0;
 	ContinuationState returnContinuationState = 0;
+
 	/* Set pending state and carrier id, GC need to distinguish between fully mounted (don't scan) vs pending to be mounted (do scan) cases. */
 	do {
 		oldContinuationState = *continuationStatePtr;
@@ -167,10 +168,11 @@ synchronizeWithConcurrentGCScan(J9VMThread *currentThread, j9object_t continuati
 	 * but only up to small finite number of times.
 	 */
 	do {
-		if (VM_ContinuationHelpers::isConcurrentlyScanned(returnContinuationState)) {
+		oldContinuationState = *continuationStatePtr;
+		if (VM_ContinuationHelpers::isConcurrentlyScanned(oldContinuationState)) {
 			omrthread_monitor_enter(currentThread->publicFlagsMutex);
 			/* Wait till potentially concurrent GC scans are complete */
-			do {
+			for(;;) {
 				oldContinuationState = *continuationStatePtr;
 				if (VM_ContinuationHelpers::isConcurrentlyScanned(oldContinuationState)) {
 					PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, continuationObject);
@@ -183,13 +185,13 @@ synchronizeWithConcurrentGCScan(J9VMThread *currentThread, j9object_t continuati
 					continuationObject = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
 					/* Object might have moved - update its address and the address of the state slot. */
 					continuationStatePtr = VM_ContinuationHelpers::getContinuationStateAddress(currentThread, continuationObject);
-					continue;
+				} else {
+					break;
 				}
-			} while (false);
+			}
 			omrthread_monitor_exit(currentThread->publicFlagsMutex);
 		}
 		/* Remove pending state */
-		oldContinuationState = *continuationStatePtr;
 		Assert_VM_true(VM_ContinuationHelpers::isMountedWithCarrierThread(oldContinuationState, currentThread));
 		Assert_VM_true(VM_ContinuationHelpers::isPendingToBeMounted(oldContinuationState));
 		ContinuationState newContinuationState = oldContinuationState;
@@ -197,6 +199,7 @@ synchronizeWithConcurrentGCScan(J9VMThread *currentThread, j9object_t continuati
 		returnContinuationState = VM_AtomicSupport::lockCompareExchange(continuationStatePtr, oldContinuationState, newContinuationState);
 	} while (oldContinuationState != returnContinuationState);
 	Assert_VM_false(VM_ContinuationHelpers::isPendingToBeMounted(*continuationStatePtr));
+	Assert_VM_false(VM_ContinuationHelpers::isConcurrentlyScanned(*continuationStatePtr));
 
 	return continuationObject;
 }
@@ -306,7 +309,6 @@ yieldContinuation(J9VMThread *currentThread, BOOLEAN isFinished)
 	 */
 	Assert_VM_true(VM_ContinuationHelpers::isMountedWithCarrierThread(*continuationStatePtr, currentThread));
 	VM_ContinuationHelpers::resetCarrierID(continuationStatePtr);
-	VM_AtomicSupport::writeBarrier();
 	/* Logically postUnmountContinuation(), which add the related continuation Object to the rememberedSet or dirty the Card for concurrent marking for future scanning, should be called
 	 * before resetCarrierID(), but the scan might happened before resetCarrierID() if concurrent card clean happens, then the related compensating scan might be
 	 * missed due to the continuation still is stated as mounted(we don't scan any mounted continuation, it should be scanned during root scanning via J9VMThread->currentContinuation).
