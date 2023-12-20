@@ -39,6 +39,41 @@ can be followed with the following modifications:
 
 :pencil: For more CMake info see [OMR CMake documentation](https://github.com/eclipse/omr/blob/master/doc/BuildingWithCMake.md)
 
+## Advanced: Building the vm without building openjdk
+
+- Create build directory (its relation to the openj9/omr source trees is not important, however the openj9 directory should not be the same as the build directory)
+- cd to the build directory
+- Create an `openj9_version_info.h`, you can simply copy the template from the openjdk extensions repo, or run
+```
+cat > openj9_version_info.h << EOF
+#ifndef OPENJ9_VERSION_INFO_H
+#define OPENJ9_VERSION_INFO_H
+
+#define J9COMPILER_VERSION_STRING "X"
+#define J9PRODUCT_NAME            "X"
+#define J9TARGET_CPU_BITS         "X"
+#define J9TARGET_CPU_OSARCH       "X"
+#define J9TARGET_OS               "X"
+#define J9USERNAME                "X"
+#define J9VERSION_STRING          "X"
+#define OPENJDK_SHA               "X"
+#define OPENJDK_TAG               "X"
+#define J9JVM_VERSION_STRING      "X"
+#define OPENJ9_TAG                "X"
+#define J9JDK_EXT_VERSION         "X"
+#define J9JDK_EXT_NAME            "X"
+
+#endif /* OPENJ9_VERSION_INFO_H */
+EOF
+```
+- Run the `cmake` command with the general form, `cmake -C <path_to_openj9>/runtime/cmake/caches/<spec>.cmake -DBOOT_JDK=<path_to_jdk>  -DJAVA_SPEC_VERSION=<java_version> -DOPENJ9_BUILD=ON -DJ9VM_OMR_DIR=<path_to_omr> <path_to_openj9>`
+  - Both `path_to_omr` and `path_to_openj9` can be relative paths.
+  - The `BOOT_JDK` argument can alternately be passed in via the `BOOT_JDK` environment variable.
+  - Due to limitations of cmake on OSX, you must pass the location of the nasm via `-DCMAKE_ASM_NASM_COMPILER=/path/to/nasm`.
+  - `-DOMR_DDR=ON` can be passed to enable ddr (the default is off).
+  - `-G Ninja` can be passed to generate a ninja build system. Has the benefit of significantly faster partial rebuilds. (Note: J9 support here is still experimental)
+- run `make [<target_name>]`, a list of targets can be obtained by running `make help`.
+
 ## FAQ
 
 ### Why are only some targets installed via `install()`?
