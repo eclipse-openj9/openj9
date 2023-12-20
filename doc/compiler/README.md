@@ -110,6 +110,7 @@ In the end code generators perform binary encoding to write the appropriate bits
     * [Exception Directed Optimization (EDO)](optimizer/EdoOptimization.md)
   * Inlining
     * [Overview of Inlining (OMR)](https://github.com/eclipse/omr/blob/master/doc/compiler/optimizer/Inliner.md)
+    * [Inlining and Inlining Guards (OpenJ9)](optimizer/InliningAndInliningGuards.md)
     * [BenefitInliner (OMR)](https://github.com/eclipse/omr/blob/master/doc/compiler/optimizer/BenefitInliner.md)
     * [Inline Fast Path Locations (OpenJ9)](optimizer/inlineFastPathLocations.md)
   * [Loop Optimizations](optimizer/LoopOptimizationSummary.md)
