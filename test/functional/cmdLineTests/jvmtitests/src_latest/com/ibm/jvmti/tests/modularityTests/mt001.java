@@ -42,6 +42,9 @@ public class mt001 {
 	
 	Module m1 = null;
 	Module m2 = null;
+	Module m3 = null;
+	Module m4 = null;
+	Module m5 = null;
 	
 	static boolean success = true; 
 	
@@ -56,7 +59,10 @@ public class mt001 {
 				
 		m1 = Modules.defineModule(mt001.class.getClassLoader(), "m1", pkgs1);
 		m2 = Modules.defineModule(mt001.class.getClassLoader(), "m2", pkgs2);
-		
+		m3 = Modules.defineModule(mt001.class.getClassLoader(), "m3.module.name.test", pkgs2);
+		m4 = Modules.defineModule(mt001.class.getClassLoader(), "m4..double.dot.test", pkgs2);
+		m5 = Modules.defineModule(mt001.class.getClassLoader(), ".m5.begin.with.dot.test", pkgs2);
+
 		return true;
 	}
 	

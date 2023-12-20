@@ -156,6 +156,66 @@ compareStrings(J9VMThread *vmThread, j9object_t string1, j9object_t string2)
 }
 
 /**
+ * Compare a UTF8 string to a java string from an offset for equality.
+ * @param *vm
+ * @param *string
+ * @param translateDots
+ * @param *utfData
+ * @param utfLength
+ * @param offset
+ * @returns 1 if the strings are equal, 0 otherwise
+ */
+UDATA
+comparePartialStringToUTF8FromOffset(J9VMThread *vmThread, j9object_t string, UDATA stringLength, UDATA translateDots, const U_8 * utfData, UDATA utfLength, UDATA offset)
+{
+	const U_8 *tmpUtfData = utfData;
+	UDATA tmpUtfLength = utfLength;
+	UDATA i = offset;
+	UDATA tmpStringLength = stringLength - offset;
+	j9object_t unicodeBytes = J9VMJAVALANGSTRING_VALUE(vmThread, string);
+
+	if (IS_STRING_COMPRESSED(vmThread, string)) {
+		while ((tmpUtfLength != 0) && (tmpStringLength != 0)) {
+			U_16 unicodeChar = (U_16)J9JAVAARRAYOFBYTE_LOAD(vmThread, unicodeBytes, i);
+			U_16 utfChar;
+			UDATA consumed = decodeUTF8Char(tmpUtfData, &utfChar);
+
+			if (translateDots) {
+				if ('.' == unicodeChar) {
+					unicodeChar = '/';
+				}
+			}
+			if (unicodeChar != utfChar) {
+				return 0;
+			}
+			tmpStringLength--;
+			tmpUtfData += consumed;
+			tmpUtfLength -= consumed;
+			i++;
+		}
+	} else {
+		while ((tmpUtfLength != 0) && (tmpStringLength != 0)) {
+			U_16 unicodeChar = J9JAVAARRAYOFCHAR_LOAD(vmThread, unicodeBytes, i);
+			U_16 utfChar;
+			UDATA ate = decodeUTF8Char(tmpUtfData, &utfChar);
+			if (translateDots) {
+				if ('.' == unicodeChar) {
+					unicodeChar = '/';
+				}
+			}
+			if (unicodeChar != utfChar) {
+				return 0;
+			}
+			tmpStringLength--;
+			tmpUtfData += ate;
+			tmpUtfLength -= ate;
+			i++;
+		}
+	}
+	return (tmpUtfLength == 0);
+}
+
+/**
  * Compare a java string to a UTF8 string for equality.
  * @param *vm
  * @param *string
