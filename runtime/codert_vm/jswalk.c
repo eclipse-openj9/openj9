@@ -787,9 +787,7 @@ static void jitWalkRegisterMap(J9StackWalkState *walkState, void *stackMap, J9JI
  */
 #define JIT_FPR_PARM_ADDRESS(walkState, fpParmNumber) \
 	(((U_64*)((walkState)->walkedEntryLocalStorage->jitFPRegisterStorageBase)) + \
-		(J9_ARE_ANY_BITS_SET((walkState)->walkThread->javaVM->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS) \
-				? 16 + (2 * jitFloatArgumentRegisterNumbers[fpParmNumber]) \
-				: jitFloatArgumentRegisterNumbers[fpParmNumber]) \
+		jitFloatArgumentRegisterNumbers[fpParmNumber] \
 	)
 #else
 #define JIT_FPR_PARM_ADDRESS(walkState, fpParmNumber) (((U_64*)((walkState)->walkedEntryLocalStorage->jitFPRegisterStorageBase)) + jitFloatArgumentRegisterNumbers[fpParmNumber])

@@ -2635,6 +2635,8 @@ typedef struct J9SFStackFrame {
 #define J9SF_A0_INVISIBLE_TAG  2
 #define J9SF_A0_REPORT_FRAME_POP_TAG  1
 
+#define J9SF_CompactVectorState 1
+
 typedef struct J9SFSpecialFrame {
 	UDATA specialFrameFlags;
 	struct J9Method* savedCP;
@@ -6224,8 +6226,7 @@ typedef struct J9CInterpreterStackFrame {
 	U_8 preservedFPRs[8 * 8]; /* fp8-fp15 - callee saves in own frame */
 #endif /* J9ZOS390 */
 	J9JITGPRSpillArea jitGPRs;
-	U_8 jitFPRs[16 * 8]; /* f0-f15 */
-	U_8 jitVRs[32 * 16]; /* v0-v31 */
+	U_8 jitFPRs[32 * 16]; /* v0-v31 or f0-f15 */
 #elif defined(J9VM_ARCH_POWER) /* J9VM_ARCH_S390 */
 #if defined(AIXPPC)
 	/* AIX
