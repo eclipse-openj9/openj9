@@ -530,8 +530,7 @@ createStackMap(
    memcpy(location, &byteCodeInfo, sizeof(TR_ByteCodeInfo));
    location += sizeof(int32_t);
 
-   ///traceMsg(comp, "map %p rsd %x location %p\n", map, location, map->getRegisterSaveDescription());
-   *(int32_t *)location = map->getRegisterSaveDescription();
+   *(int32_t *)location = 0;
    location += sizeof(int32_t);
 
    *(int32_t *)location = map->getRegisterMap();
