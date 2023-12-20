@@ -677,6 +677,7 @@ Java_java_lang_invoke_PrimitiveHandle_setVMSlotAndRawModifiersFromMethod(JNIEnv 
 			break;
 		case J9_METHOD_HANDLE_KIND_VIRTUAL:
 			vmSlotValue = methodID->vTableIndex;
+			Assert_JCL_true(vmSlotValue != 0);
 			break;
 		case J9_METHOD_HANDLE_KIND_INTERFACE:
 			Assert_JCL_true(J9_ARE_ANY_BITS_SET(methodID->vTableIndex, J9_JNI_MID_INTERFACE));
