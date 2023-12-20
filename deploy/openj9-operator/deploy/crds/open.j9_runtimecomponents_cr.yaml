@@ -1,0 +1,12 @@
+# This CustomResource deploys a sample OpenJ9 image from AdoptOpenJDK dockerhub 
+# and runs java as container entrypoint. 
+apiVersion: open.j9/v1beta1
+kind: RuntimeComponent
+metadata:
+  name: sample-openj9
+spec:
+  # Change applicationImage field to your application image name
+  applicationImage: adoptopenjdk:openj9
+  # Change command field to override image entrypoint
+  # Use container pre-build entrypoint if empty
+  command: ["java"]
