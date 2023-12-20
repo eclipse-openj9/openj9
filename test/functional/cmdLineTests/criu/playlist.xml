@@ -542,4 +542,40 @@
 			<impl>openj9</impl>
 		</impls>
 	</test>
+	<test>
+		<testCaseName>cmdLineTester_criu_gc_threads</testCaseName>
+		<variations>
+			<variation>-Xgcpolicy:gencon</variation>
+			<variation>-Xgcpolicy:balanced</variation>
+			<variation>-Xgcpolicy:optavgpause</variation>
+			<variation>-Xgcpolicy:optthruput</variation>
+			<variation>-Xgcpolicy:metronome</variation>
+			<variation>-Xgcthreads1</variation>
+			<variation>-Xgcthreads2 -XX:CheckpointGCThreads=4</variation>
+			<variation>-Xgcthreads64 -XX:CheckpointGCThreads=1</variation>
+			<variation>-Xgcthreads1 -XX:CheckpointGCThreads=64</variation>
+			<variation>-Xgcthreads99 -XX:CheckpointGCThreads=99</variation>
+			<variation>-Xgcthreads99 -XX:CheckpointGCThreads=1</variation>
+		</variations>
+		<command>
+			$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump \
+			-DSCRIPPATH=$(TEST_RESROOT)$(D)criuVerifyGCThreading.sh -DRUNCRIUSCRIPPATH=$(TEST_RESROOT)$(D)criuScript.sh -DTEST_RESROOT=$(TEST_RESROOT) \
+			-DJAVA_COMMAND=$(JAVA_COMMAND) -DJVM_OPTIONS=$(Q)$(JVM_OPTIONS)$(Q) \
+			-jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)criu_gc_threading.xml$(Q) \
+			-explainExcludes -xids all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
+			$(TEST_STATUS)
+		</command>
+		<features>
+			<feature>CRIU:required</feature>
+		</features>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<impls>
+			<impl>openj9</impl>
+		</impls>
+	</test>
 </playlist>
