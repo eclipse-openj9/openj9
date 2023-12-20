@@ -40,6 +40,9 @@ can be followed with the following modifications:
 :pencil: For more CMake info see [OMR CMake documentation](https://github.com/eclipse/omr/blob/master/doc/BuildingWithCMake.md)
 
 ## FAQ
+[Why are only some targets installed via `install()`?](#why-are-only-some-targets-installed-via-install)
+
+[How do I add build flags?](#how-do-i-add-build-flags)
 
 ### Why are only some targets installed via `install()`?
 Generally only shared libraries / executables are installed. Static libraries are
@@ -50,3 +53,17 @@ just to update the `rpath` (on applicable platforms) and to move the binary
 to the corresponding source directory. We do this purely for compatability with
 existing build infrastructure that expects the binaries to be laid out as they
 would be under a `makefile` driven build.
+
+### How do I add build flags?
+- Add flag to [options.cmake](../../runtime/cmake/options.cmake). For a basic boolean option the
+syntax is `option(<FLAG_NAME> "<documentation string>")`
+- Set the value in the [cache files](../../runtime/cmake/caches) (this is the CMake equivilent of UMA build specs).
+The synatx is `set(<FLAG_NAME> <VALUE> CACHE <TYPE> "<documentation string>")`, where `<TYPE>` will probably be `BOOL`.
+
+Note that unlike the build specs, cache files can `include()` other cache files.
+It is also important to note that `set(... CACHE)` will not overwrite an existing value in the cache. ie.
+```
+set(FOO ON CACHE BOOL "")
+set(FOO OFF CACHE BOOL ""
+```
+results in `FOO` having a value of `ON`
