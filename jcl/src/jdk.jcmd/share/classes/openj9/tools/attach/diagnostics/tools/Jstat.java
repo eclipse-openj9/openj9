@@ -42,6 +42,7 @@ public class Jstat {
 
 	private static final String OPTION_CLASS = "-class";
 	private static final String[] OPTIONS = { OPTION_CLASS };
+	private static final String GC = "-gc";
 
 	private static final String ERROR_AN_ARG_REQUIRED = "An argument is required";
 	private static final String ERROR_INVALID_ARG = "An invalid argument";
@@ -144,9 +145,27 @@ public class Jstat {
 					if (statOption != null) {
 						// one option has already been set, print error message and help text, and exit
 						Util.exitJVMWithReasonAndHelp(ERROR_INVALID_ARG, HELPTEXT);
+						
 					} else {
 						foundStatOption = true;
 						switch (arg) {
+						case GC:
+							String stringWithPrefix = "stringWithPrefix";
+							// Load Java Heap with 3 M java.lang.String instances
+							for (int i = 0; i < 3000000; i++) {
+							    String newString = stringWithPrefix + i;
+							    stringContainer.put(newString, newString);
+							}
+							System.out.println("MAP size: " + stringContainer.size());
+							// Explicit GC!
+							System.gc();
+							// Remove 2 M out of 3 M
+							for (int i = 0; i < 2000000; i++) {
+							    String newString = stringWithPrefix + i;
+							    stringContainer.remove(newString);
+							}
+							System.out.println("MAP size: " + stringContainer.size());
+							break;
 						case OPTION_CLASS:
 							statOption = "jstat.class";
 							break;
