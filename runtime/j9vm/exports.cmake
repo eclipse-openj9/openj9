@@ -441,6 +441,7 @@ endif()
 if(NOT JAVA_SPEC_VERSION LESS 22)
 	jvm_add_exports(jvm
 		JVM_ExpandStackFrameInfo
+		JVM_VirtualThreadDisableSuspend
 	)
 endif()
 
