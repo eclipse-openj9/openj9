@@ -238,19 +238,39 @@ public class ThreadInfoBase {
 		return result;
 	}
 
+	private int hashCodeValue = 0;
 	/**
 	 * {@inheritDoc}
 	 */
 	@Override
 	public int hashCode() {
-		return (Long.toString(blockedCount) + blockedTime + lockName + lockOwnerId
-				+ lockOwnerName + stackTrace.length + threadId + threadName
-				+ threadState + waitedCount + waitedTime + inNative
-				+ suspended
-/*[IF Sidecar19-SE]*/
-				+ daemon + priority
-/*[ENDIF]*/
-		).hashCode();
+		/* Ignore the rare case when the hashcode evaluates to 0,
+		 * since the cost of re-evaluating
+		 * the code is less than the cost of an extra boolean field in the object.
+		 */
+		if (0 == hashCodeValue) {
+			long hashTemp = blockedCount
+					+ (0x2 * blockedTime)
+					+ (0x4 * lockOwnerId)
+					+ (0x8 * stackTrace.length)
+					+ (0x10 * threadId)
+					+ (0x20 * threadState.ordinal())
+					+ (0x40 * waitedCount)
+					+ (0x80 * waitedTime)
+					+ (inNative ? 0x100 : 0)
+					+ (suspended ? 0x200 : 0)
+					/*[IF Java11]*/
+					+ (daemon ? 0x400 : 0)
+					+ (0x800 * priority)
+					/*[ENDIF]*/
+					+ (0x100 * lockName.hashCode())
+					+ (0x10000 * lockOwnerName.hashCode())
+					+ (0x1000000 * threadName.hashCode())
+					;
+					
+			hashCodeValue = (int) (hashTemp + (hashTemp >> 32));
+		}
+		return hashCodeValue;
 	}
 
 	/**
