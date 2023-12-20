@@ -137,6 +137,14 @@ public class ImageBuilder extends AbstractBuilderComponent implements IImageBuil
 	}
 
 	/**
+	 * Set dump creation time with an accurate time zone.
+	 * @param time
+	 */
+	public void setCreationTimeUTC(long creationTime) {
+		fImage.setCreationTimeUTC(creationTime);
+	}
+
+	/**
 	 * Set dump creation nanotime
 	 * @param nanoTime
 	 */

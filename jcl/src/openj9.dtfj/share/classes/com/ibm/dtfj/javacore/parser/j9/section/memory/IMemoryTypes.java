@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar18-SE]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2007
  *
@@ -25,6 +25,9 @@ package com.ibm.dtfj.javacore.parser.j9.section.memory;
 public interface IMemoryTypes {
 
 	public static final String MEMORY_SECTION = "MEMINFO";
+	public static final String T_1STHEAPTYPE = "1STHEAPTYPE";
+	public static final String T_1STHEAPSPACE = "1STHEAPSPACE";
+	public static final String T_1STHEAPREGION = "1STHEAPREGION";
 	public static final String T_1STSEGTYPE = "1STSEGTYPE";
 	public static final String T_1STSEGMENT = "1STSEGMENT";
 	public static final String T_1STHEAPFREE = "1STHEAPFREE";

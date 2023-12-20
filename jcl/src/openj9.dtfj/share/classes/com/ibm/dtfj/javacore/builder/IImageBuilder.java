@@ -109,7 +109,13 @@ public interface IImageBuilder {
 	 * @param creationTime the time
 	 */
 	public void setCreationTime(long creationTime);
-	
+
+	/**
+	 * Set the time the dump was created.
+	 * @param creationTime the time relative to UTC.
+	 */
+	public void setCreationTimeUTC(long creationTime);
+
 	/**
 	 * Set the nanotime the dump was created
 	 * @param nanoTime the time

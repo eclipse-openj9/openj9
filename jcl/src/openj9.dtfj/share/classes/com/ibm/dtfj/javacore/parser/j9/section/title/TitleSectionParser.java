@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar18-SE]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2007
  *
@@ -22,7 +22,6 @@
  *******************************************************************************/
 package com.ibm.dtfj.javacore.parser.j9.section.title;
 
-import java.text.ParseException;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -32,7 +31,7 @@ import com.ibm.dtfj.javacore.parser.j9.IAttributeValueMap;
 import com.ibm.dtfj.javacore.parser.j9.SectionParser;
 
 public class TitleSectionParser extends SectionParser implements ITitleTypes {
-	
+
 	public TitleSectionParser() {
 		super(TITLE_SECTION);
 	}
@@ -42,14 +41,29 @@ public class TitleSectionParser extends SectionParser implements ITitleTypes {
 	 * @throws ParserException
 	 */
 	protected void topLevelRule() throws ParserException {
-		
-		IAttributeValueMap results = null;
+
+		IAttributeValueMap results;
 		Date dumpDate = null;
-		
+
 		processTagLineRequired(T_1TISIGINFO);
-		
-		results = processTagLineRequired(T_1TIDATETIME);
+
+		results = processTagLineOptional(T_1TIDATETIMEUTC);
 		if (results != null) {
+			String tm = results.getTokenValue(TI_DATE);
+			if (tm != null) {
+				// Added by openj9 issue #12397
+				// 1TIDATETIMEUTC Date: 2022/11/25 at 13:02:44:846 (UTC)
+				SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd 'at' HH:mm:ss:S (zzz)");
+				dumpDate = sdf.parse(tm, new ParsePosition(0));
+				if (dumpDate != null) {
+					long time = dumpDate.getTime();
+					fImageBuilder.setCreationTimeUTC(time);
+				}
+			}
+		}
+
+		results = processTagLineRequired(T_1TIDATETIME);
+		if (dumpDate == null && results != null) {
 			String tm = results.getTokenValue(TI_DATE);
 			if (tm != null) {
 				// Java 8 SR2 or later, with millisecs added:
@@ -68,7 +82,7 @@ public class TitleSectionParser extends SectionParser implements ITitleTypes {
 				}
 			}
 		}
-		
+
 		results = processTagLineOptional(T_1TINANOTIME);
 		if (results != null) {
 			String nanoTimeString = results.getTokenValue(TI_NANO);
@@ -76,7 +90,7 @@ public class TitleSectionParser extends SectionParser implements ITitleTypes {
 				fImageBuilder.setCreationTimeNanos(Long.parseLong(nanoTimeString));
 			}
 		}
-		
+
 		results = processTagLineRequired(T_1TIFILENAME);
 		if (results != null) {
 			String fn = results.getTokenValue(TI_FILENAME);
@@ -150,10 +164,10 @@ public class TitleSectionParser extends SectionParser implements ITitleTypes {
 				}
 			} catch (NumberFormatException e) {
 			}
-		}	
+		}
 		return null;
 	}
-	
+
 	/**
 	 * Empty hook for now.
 	 */

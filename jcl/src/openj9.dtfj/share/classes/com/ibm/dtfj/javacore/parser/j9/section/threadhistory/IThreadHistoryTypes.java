@@ -1,6 +1,6 @@
 /*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
- * Copyright IBM Corp. and others 2009
+ * Copyright IBM Corp. and others 2022
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -18,23 +18,23 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-package com.ibm.dtfj.javacore.parser.j9.section.title;
+package com.ibm.dtfj.javacore.parser.j9.section.threadhistory;
 
-public interface ITitleTypes {
+/**
+ * Tags for the thread history.
+ */
+public interface IThreadHistoryTypes {
 
-	public static final String TITLE_SECTION = "TITLE";
-	public static final String T_1TISIGINFO = "1TISIGINFO";
-	public static final String T_1TIDATETIMEUTC = "1TIDATETIMEUTC";
-	public static final String T_1TIDATETIME = "1TIDATETIME";
-	public static final String T_1TIFILENAME = "1TIFILENAME";
-	public static final String T_1TINANOTIME = "1TINANOTIME";
+	String THREADHISTORY_SECTION = "ThreadHistory";
 
+	String T_1XECTHTYPE = "1XECTHTYPE";
+	String T_3XEHSTTYPE = "3XEHSTTYPE";
 	/*
 	 * Attributes
 	 */
-	public static final String TI_DATE = "title_date";
-	public static final String TI_FILENAME = "title_filename";
-	public static final String TI_NANO = "title_nanotime";
+	String THREADHISTORY_NAME = "thread_history_name";
+	String THREADHISTORY_ID = "thread_history_id";
+	String THREADHISTORY_LINE = "thread_history_line";
 }

@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar18-SE]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2007
  *
@@ -25,14 +25,17 @@ package com.ibm.dtfj.javacore.builder.javacore;
 import java.util.HashMap;
 
 import com.ibm.dtfj.image.CorruptDataException;
+import com.ibm.dtfj.image.DataUnavailable;
 import com.ibm.dtfj.image.ImagePointer;
 import com.ibm.dtfj.image.ImageProcess;
+import com.ibm.dtfj.image.ImageSection;
 import com.ibm.dtfj.image.ImageThread;
 import com.ibm.dtfj.image.javacore.JCImageAddressSpace;
 import com.ibm.dtfj.image.javacore.JCImageProcess;
 import com.ibm.dtfj.image.javacore.JCImageThread;
 import com.ibm.dtfj.java.JavaClass;
 import com.ibm.dtfj.java.JavaClassLoader;
+import com.ibm.dtfj.java.JavaHeap;
 import com.ibm.dtfj.java.JavaMonitor;
 import com.ibm.dtfj.java.JavaObject;
 import com.ibm.dtfj.java.JavaRuntimeMemoryCategory;
@@ -41,6 +44,7 @@ import com.ibm.dtfj.java.JavaThread;
 import com.ibm.dtfj.java.javacore.JCInvalidArgumentsException;
 import com.ibm.dtfj.java.javacore.JCJavaClass;
 import com.ibm.dtfj.java.javacore.JCJavaClassLoader;
+import com.ibm.dtfj.java.javacore.JCJavaHeap;
 import com.ibm.dtfj.java.javacore.JCJavaLocation;
 import com.ibm.dtfj.java.javacore.JCJavaMethod;
 import com.ibm.dtfj.java.javacore.JCJavaMonitor;
@@ -56,7 +60,6 @@ import com.ibm.dtfj.javacore.builder.IBuilderData;
 import com.ibm.dtfj.javacore.builder.IJavaRuntimeBuilder;
 
 public class JavaRuntimeBuilder extends AbstractBuilderComponent implements IJavaRuntimeBuilder {
-
 
 	private JCImageProcess fImageProcess = null;
 	private JCJavaRuntime fJavaRuntime = null;
@@ -76,11 +79,11 @@ public class JavaRuntimeBuilder extends AbstractBuilderComponent implements IJav
 		if (fId == null) fJavaRuntime = new JCJavaRuntime(fImageProcess, fId);
 		fAddressSpace = fImageProcess.getImageAddressSpace();
 	}
-	
+
 	/**
 	 * Must pass a valid class loader ID in order to generate a class loader object. Else exception
-	 * is thrown. 
-	 * 
+	 * is thrown.
+	 *
 	 * @param classLoaderName optional
 	 * @param clID required, or else exception is throw and class loader is not created.
 	 * @param objectID optional (although generally this is the same as the clID for most javacores)
@@ -93,14 +96,14 @@ public class JavaRuntimeBuilder extends AbstractBuilderComponent implements IJav
 			if (classLoader == null) {
 				classLoader = new JCJavaClassLoader(getJavaRuntime(), clID);
 			}
-			
+
 			JCJavaObject javaObject = classLoader.getInternalObject();
 			if (javaObject == null) {
 				JCJavaClass javaClass = getJavaRuntime().findJavaClass(classLoaderName);
 				if (javaClass == null) {
 					javaClass = new JCJavaClass(getJavaRuntime(), classLoaderName);
 				}
-					
+
 				ImagePointer objectPointer = fAddressSpace.getPointer(objectID);
 				javaObject = new JCJavaObject(objectPointer, javaClass);
 				classLoader.setObject(javaObject);
@@ -110,10 +113,10 @@ public class JavaRuntimeBuilder extends AbstractBuilderComponent implements IJav
 			throw new BuilderFailureException(e);
 		}
 	}
-	
+
 	/**
 	 * Note that even if a class was already registered with a class loader previously, it may contain incomplete data,
-	 * so this case has to be considered. 
+	 * so this case has to be considered.
 	 */
 	public JavaClass addClass(JavaClassLoader jClassLoader, String name, long classID, long superClassID, String fileName) throws BuilderFailureException {
 		try {
@@ -134,9 +137,9 @@ public class JavaRuntimeBuilder extends AbstractBuilderComponent implements IJav
 			throw new BuilderFailureException(e);
 		}
 	}
-	
+
 	/**
-	 * Either retrieves an existing java class registered with the java runtime or it creates one and it fills in missing information, 
+	 * Either retrieves an existing java class registered with the java runtime or it creates one and it fills in missing information,
 	 * if the latter is available.
 	 * <br><br>
 	 * A valid runtime and class name must be passed in order to successfully generate a java class. An invalid argument exception is
@@ -144,7 +147,7 @@ public class JavaRuntimeBuilder extends AbstractBuilderComponent implements IJav
 	 * <br><br>
 	 * A null value should not be returned, as this indicates an error was encountered. Instead, throw the
 	 * appropriate exception.
-	 * 
+	 *
 	 * @param runtime required
 	 * @param name required
 	 * @param classID optional
@@ -171,8 +174,8 @@ public class JavaRuntimeBuilder extends AbstractBuilderComponent implements IJav
 					}
 				}
 				return jClass;
-			}			
-			
+			}
+
 			JCJavaClass jClass = runtime.findJavaClass(name);
 			if (jClass == null) {
 				jClass = new JCJavaClass(runtime, name);
@@ -188,7 +191,7 @@ public class JavaRuntimeBuilder extends AbstractBuilderComponent implements IJav
 	}
 
 	/**
-	 * 
+	 *
 	 * @return imageprocess containing the runtime.
 	 */
 	public ImageProcess getImageProcess() {
@@ -200,7 +203,7 @@ public class JavaRuntimeBuilder extends AbstractBuilderComponent implements IJav
 	 * throw an exception. Note that a javathread cannot be successfully added if no valid threadID is passed.
 	 * <br><br>
 	 * REQUIREMENT: Thread Id must be valid to properly create a Java Thread, or exception is thrown.
-	 * 
+	 *
 	 * @throws BuilderFailureException if arguments lead to an invalid DTFJ object, particularly an invalid threadID
 	 * @return a non null JavaThread that was successfully added or updated.
 	 */
@@ -257,7 +260,7 @@ public class JavaRuntimeBuilder extends AbstractBuilderComponent implements IJav
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	public JavaStackFrame addJavaStackFrame(JavaThread javaThread, String className, String classFileName, String methodName, String methodType, String compilationLevel, int lineNumber) throws BuilderFailureException {
 		try {
@@ -275,7 +278,7 @@ public class JavaRuntimeBuilder extends AbstractBuilderComponent implements IJav
 			if ("run".equals(methodName)) {
 				/*
 				 * Perhaps the type of the thread is the type of the last run() method.
-				 * Not strictly accurate if the class was extended without overriding run(). 
+				 * Not strictly accurate if the class was extended without overriding run().
 				 * Add the object only if the object ID is valid.
 				 */
 				try {
@@ -317,7 +320,7 @@ public class JavaRuntimeBuilder extends AbstractBuilderComponent implements IJav
 			 * Adding a class and monitor object are optional, therefore
 			 * if the data is not present don't assume it is an error.
 			 */
-			
+
 			if (className != null) {
 				JCJavaClass jClass = generateJavaClass(getJavaRuntime(), className, IBuilderData.NOT_AVAILABLE);
 				/*
@@ -336,7 +339,7 @@ public class JavaRuntimeBuilder extends AbstractBuilderComponent implements IJav
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	public void addBlockedThread(JavaMonitor monitor, long threadID) throws BuilderFailureException {
 		JCJavaMonitor jmonitor = (JCJavaMonitor) monitor;
@@ -345,23 +348,23 @@ public class JavaRuntimeBuilder extends AbstractBuilderComponent implements IJav
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	public void addWaitOnNotifyThread(JavaMonitor monitor, long threadID) throws BuilderFailureException {
 		JCJavaMonitor jmonitor = (JCJavaMonitor) monitor;
 		ImagePointer pointer = fAddressSpace.getPointer(threadID);
 		jmonitor.addNotifyWaiter(pointer);
 	}
-	
+
 	/**
 	 * Adds an (empty) JavaVMInitArgs
-	 */	
+	 */
 	public void addVMInitArgs() throws BuilderFailureException {
 		if (fJavaVMInitArgs != null) {
 			throw new BuilderFailureException("JCJavaVMInitArgs already created for this JavaRuntime");
 		}
 		try {
-			// Create JavaVMInitArgs object. Note that JNI version and ignoreUnrecognized 
+			// Create JavaVMInitArgs object. Note that JNI version and ignoreUnrecognized
 			// flags are not available in javacore - JCJavaVMInitArgs returns DataUnavailable
 			// if those fields are requested.
 			fJavaVMInitArgs = new JCJavaVMInitArgs(getJavaRuntime(), 0, true);
@@ -369,10 +372,10 @@ public class JavaRuntimeBuilder extends AbstractBuilderComponent implements IJav
 			throw new BuilderFailureException(e);
 		}
 	}
-	
+
 	/**
 	 * Adds an individual VM option to JavaVMInitArgs
-	 */	
+	 */
 	public void addVMOption(String option) throws BuilderFailureException {
 		if (fJavaVMInitArgs == null) {
 			throw new BuilderFailureException("JCJavaVMInitArgs must be created before options added");
@@ -385,8 +388,8 @@ public class JavaRuntimeBuilder extends AbstractBuilderComponent implements IJav
 	}
 
 	/**
-	 * Adds an individual VM option to JavaVMInitArgs, with 'extra information' field 
-	 */	
+	 * Adds an individual VM option to JavaVMInitArgs, with 'extra information' field
+	 */
 	public void addVMOption(String option, long extraInfo) throws BuilderFailureException {
 		if (fJavaVMInitArgs == null) {
 			throw new BuilderFailureException("JCJavaVMInitArgs must be created before options added");
@@ -398,7 +401,7 @@ public class JavaRuntimeBuilder extends AbstractBuilderComponent implements IJav
 			throw new BuilderFailureException(e);
 		}
 	}
-	
+
 	/**
 	 * Sets the Java version string.
 	 */
@@ -427,13 +430,13 @@ public class JavaRuntimeBuilder extends AbstractBuilderComponent implements IJav
 			JavaRuntimeMemoryCategory parent)
 	{
 		JCJavaRuntimeMemoryCategory category = new JCJavaRuntimeMemoryCategory(name,deepBytes,deepAllocations);
-		
+
 		if (parent != null) {
 			( (JCJavaRuntimeMemoryCategory) parent).addChild(category);
 		} else {
 			getJavaRuntime().addTopLevelMemoryCategory(category);
 		}
-		
+
 		return category;
 	}
 
@@ -451,12 +454,50 @@ public class JavaRuntimeBuilder extends AbstractBuilderComponent implements IJav
 	public void addJITProperty(String name, String value) {
 		getJavaRuntime().addJITProperty(name, value);
 	}
-	
+
 	public void setStartTime(long startTime) {
 		getJavaRuntime().setStartTime(startTime);
 	}
-	
+
 	public void setStartTimeNanos(long startTimeNanos) {
 		getJavaRuntime().setStartTimeNanos(startTimeNanos);
+	}
+
+	@Override
+	public JavaHeap addJavaHeap(String name) {
+		JCJavaHeap javaHeap = new JCJavaHeap(name);
+		getJavaRuntime().addJavaHeap(javaHeap);
+		return javaHeap;
+	}
+
+	@Override
+	public void addJavaHeapSection(JavaHeap heap, ImageSection section) {
+		JCJavaHeap javaHeap = (JCJavaHeap)heap;
+		javaHeap.addSection(section);
+	}
+
+	@Override
+	public void addTraceBuffer(String id, Object buffer) {
+		getJavaRuntime().addTraceBuffer(id, buffer);
+	}
+
+	/**
+	 * Get the time the JVM started.
+	 * @return the time in milliseconds since the epoch
+	 * @throws CorruptDataException if there is an error retrieving the time
+	 * @throws DataUnavailable if the time is not in the javacore
+	 */
+	public long getStartTime() throws DataUnavailable, CorruptDataException {
+		return getJavaRuntime().getStartTime();
+	}
+
+	/**
+	 * Get the nanotime the JVM was started.
+	 * @return the time in nanoseconds
+	 * @throws CorruptDataException if there is an error retrieving the time
+	 * @throws DataUnavailable if the time is not in the javacore
+	 */
+	public long getStartTimeNanos() throws DataUnavailable, CorruptDataException {
+		return getJavaRuntime().getStartTimeNanos();
 	}
 }

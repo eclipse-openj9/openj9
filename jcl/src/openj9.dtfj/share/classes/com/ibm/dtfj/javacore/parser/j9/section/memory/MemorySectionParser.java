@@ -22,18 +22,22 @@
  *******************************************************************************/
 package com.ibm.dtfj.javacore.parser.j9.section.memory;
 
+import com.ibm.dtfj.image.ImageSection;
+import com.ibm.dtfj.java.JavaHeap;
 import com.ibm.dtfj.javacore.builder.IBuilderData;
 import com.ibm.dtfj.javacore.builder.IImageAddressSpaceBuilder;
 import com.ibm.dtfj.javacore.builder.IImageProcessBuilder;
+import com.ibm.dtfj.javacore.builder.IJavaRuntimeBuilder;
 import com.ibm.dtfj.javacore.parser.framework.parser.ParserException;
 import com.ibm.dtfj.javacore.parser.j9.IAttributeValueMap;
 import com.ibm.dtfj.javacore.parser.j9.SectionParser;
 
 public class MemorySectionParser extends SectionParser implements IMemoryTypes {
-	
+
 	private IImageAddressSpaceBuilder fImageAddressSpaceBuilder;
 	private IImageProcessBuilder fImageProcessBuilder;
-	
+	private IJavaRuntimeBuilder fJavaRuntimeBuilder;
+
 	public MemorySectionParser() {
 		super(MEMORY_SECTION);
 	}
@@ -43,13 +47,16 @@ public class MemorySectionParser extends SectionParser implements IMemoryTypes {
 	 * @throws ParserException
 	 */
 	protected void topLevelRule() throws ParserException {
-		
-		// get access to DTFJ AddressSpace and ImageProcess objects 
+
+		// get access to DTFJ AddressSpace and ImageProcess objects
 		fImageAddressSpaceBuilder = fImageBuilder.getCurrentAddressSpaceBuilder();
 		if (fImageAddressSpaceBuilder != null) {
 			fImageProcessBuilder = fImageAddressSpaceBuilder.getCurrentImageProcessBuilder();
+			if (fImageProcessBuilder != null) {
+				fJavaRuntimeBuilder = fImageProcessBuilder.getCurrentJavaRuntimeBuilder();
+			}
 		}
-		
+
 		memInfo();
 	}
 
@@ -59,16 +66,54 @@ public class MemorySectionParser extends SectionParser implements IMemoryTypes {
 	 */
 	private void memInfo() throws ParserException {
 
-		IAttributeValueMap results = null;
+		IAttributeValueMap results;
+
+		while ((results = processTagLineOptional(T_1STHEAPTYPE)) != null) {
+			// The heap type
+			String segName = results.getTokenValue(MEMORY_SEGMENT_NAME);
+			IAttributeValueMap resultsSpace;
+			while ((resultsSpace = processTagLineOptional(T_1STHEAPSPACE)) != null) {
+				long spaceid = resultsSpace.getLongValue(MEMORY_SEGMENT_ID);
+				String spacetype = resultsSpace.getTokenValue(MEMORY_SEGMENT_TYPE).trim();
+				String spaceName;
+				if (spaceid != IBuilderData.NOT_AVAILABLE) {
+					spaceName = segName + " " + spacetype + " 0x" + Long.toHexString(spaceid);
+				} else {
+					spaceName = segName + " " + spacetype;
+				}
+				JavaHeap heap = fJavaRuntimeBuilder != null ? fJavaRuntimeBuilder.addJavaHeap(spaceName) : null;
+				// Each segment
+				IAttributeValueMap resultsRegion;
+				while ((resultsRegion = processTagLineOptional(T_1STHEAPREGION)) != null) {
+					long id = resultsRegion.getLongValue(MEMORY_SEGMENT_ID);
+					long head = resultsRegion.getLongValue(MEMORY_SEGMENT_HEAD);
+					long size = resultsRegion.getLongValue(MEMORY_SEGMENT_SIZE);
+					long tail = resultsRegion.getLongValue(MEMORY_SEGMENT_TAIL);
+					String type = resultsRegion.getTokenValue(MEMORY_SEGMENT_TYPE).trim();
+					String name;
+					if (id != IBuilderData.NOT_AVAILABLE) {
+						name = type + " 0x" + Long.toHexString(id);
+					} else {
+						name = type;
+					}
+					if (fImageAddressSpaceBuilder != null) {
+						ImageSection section = fImageAddressSpaceBuilder.addImageSection(name, head, size);
+						if (heap != null) {
+							fJavaRuntimeBuilder.addJavaHeapSection(heap, section);
+						}
+					}
+				}
+			}
+		}
 
 		// Heap information
 		results = processTagLineOptional(T_1STHEAPALLOC);
 		results = processTagLineOptional(T_1STHEAPFREE);
-		
+
 		while ((results = processTagLineOptional(T_1STSEGTYPE)) != null) {
 			// The segment type
 			String segName = results.getTokenValue(MEMORY_SEGMENT_NAME);
-			
+
 			// Each segment
 			while ((results = processTagLineOptional(T_1STSEGMENT)) != null) {
 
@@ -87,7 +132,7 @@ public class MemorySectionParser extends SectionParser implements IMemoryTypes {
 				if (head != IBuilderData.NOT_AVAILABLE) {
 					if (free != IBuilderData.NOT_AVAILABLE) {
 						long headSize = free - head;
-						if (headSize != 0) {
+						if ((headSize != 0) && (fImageAddressSpaceBuilder != null)) {
 							fImageAddressSpaceBuilder.addImageSection(name
 									+ " head", head, headSize);
 						}
@@ -97,7 +142,7 @@ public class MemorySectionParser extends SectionParser implements IMemoryTypes {
 				if (free != IBuilderData.NOT_AVAILABLE) {
 					if (tail != IBuilderData.NOT_AVAILABLE) {
 						long freeSize = tail - free;
-						if (freeSize != 0) {
+						if ((freeSize != 0) && (fImageAddressSpaceBuilder != null)) {
 							fImageAddressSpaceBuilder.addImageSection(name
 									+ " free", free, freeSize);
 						}
@@ -108,7 +153,7 @@ public class MemorySectionParser extends SectionParser implements IMemoryTypes {
 					if (tail != IBuilderData.NOT_AVAILABLE) {
 						if (size != IBuilderData.NOT_AVAILABLE) {
 							long tailSize = head + size - tail;
-							if (tailSize != 0) {
+							if ((tailSize != 0) && (fImageAddressSpaceBuilder != null)) {
 								fImageAddressSpaceBuilder.addImageSection(name
 										+ " tail", tail, tailSize);
 							}

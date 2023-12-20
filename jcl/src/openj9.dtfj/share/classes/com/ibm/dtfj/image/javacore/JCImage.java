@@ -53,6 +53,7 @@ public class JCImage implements JCReleasingImage, ManagedImage {
 	private boolean fBytesMemSet = false;
 	private long fCreationTime;
 	private boolean fCreationTimeSet = false;
+	private boolean fCreationTimeUTCSet = false;
 	private long fCreationTimeNanos;
 	private boolean fCreationTimeNanosSet = false;
 	private String fHostName = null;
@@ -235,14 +236,29 @@ public class JCImage implements JCReleasingImage, ManagedImage {
 	}
 
 	/**
-	 * 
+	 * Set the creation time of the image.
+	 * If the time has previously been set using UTC
+	 * then do not modify the time.
 	 * @param creationTime
 	 */
 	public void setCreationTime(long creationTime) {
+		if (!fCreationTimeUTCSet)
+		{
+			fCreationTime = creationTime;
+			fCreationTimeSet = true;
+		}
+	}
+
+	/**
+	 * Set the creation time of the image in UTC.
+	 * @param creationTime
+	 */
+	public void setCreationTimeUTC(long creationTime) {
 		fCreationTime = creationTime;
 		fCreationTimeSet = true;
+		fCreationTimeUTCSet = true;
 	}
-	
+
 	/**
 	 * 
 	 * @param creationTimeNanos

@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar18-SE]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2007
  *
@@ -28,7 +28,7 @@ import com.ibm.dtfj.javacore.parser.framework.tag.TagParser;
 import com.ibm.dtfj.javacore.parser.j9.section.common.CommonPatternMatchers;
 
 public class TitleTagParser extends TagParser implements ITitleTypes {
-	
+
 	public TitleTagParser() {
 		super(TITLE_SECTION);
 	}
@@ -36,6 +36,7 @@ public class TitleTagParser extends TagParser implements ITitleTypes {
 	/**
 	 * Initialize parser with rules for the TITLE section in the javacore
 	 */
+	@Override
 	protected void initTagAttributeRules() {
 
 		addTag(T_1TISIGINFO, null);
@@ -45,27 +46,37 @@ public class TitleTagParser extends TagParser implements ITitleTypes {
 	}
 
 	/**
-	 * Add rule for the dump date (1TIDATETIME line)
+	 * Add rule for the dump date (1TIDATETIME line).
+	 * Also add rule for the dump date (1TIDATETIMEUTC line).
 	 */
 	private void addDateTime() {
 		ILineRule lineRule = new LineRule() {
+			@Override
 			public void processLine(String source, int startingOffset) {
+				// This is used to parse any of these lines:
 				// 1TIDATETIME    Date:    2009/02/09 at 15:48:30
 				//  or (Java 8 SR2 or later, with millisecs added):
 				// 1TIDATETIME    Date:    2015/07/17 at 09:46:27:261
+				//  or
+				// 1TIDATETIMEUTC Date:    2015/07/17 at 09:46:27:261 (UTC)
+				//
+				// 1TIDATETIMEUTC, if present, is in addition to 1TIDATETIME
+				// but this line rule can process any of them.
 				consumeUntilFirstMatch(CommonPatternMatchers.colon);
 				consumeUntilFirstMatch(CommonPatternMatchers.whitespace);
 				addToken(TI_DATE, CommonPatternMatchers.allButLineFeed);
 			}
 		};
+		addTag(T_1TIDATETIMEUTC, lineRule);
 		addTag(T_1TIDATETIME, lineRule);
 	}
-	
+
 	/**
 	 * Add rule for the dump nanotime (1TINANOTIME line)
 	 */
 	private void addNanoTime() {
 		ILineRule lineRule = new LineRule() {
+			@Override
 			public void processLine(String source, int startingOffset) {
 				// 1TINANOTIME    System nanotime: 3534320355422
 				consumeUntilFirstMatch(CommonPatternMatchers.colon);
@@ -75,13 +86,13 @@ public class TitleTagParser extends TagParser implements ITitleTypes {
 		};
 		addTag(T_1TINANOTIME, lineRule);
 	}
-	
 
 	/**
 	 * Add rule for the dump filename (1TIFILENAME line)
 	 */
 	private void addFileName() {
 		ILineRule lineRule = new LineRule() {
+			@Override
 			public void processLine(String source, int startingOffset) {
 				//1TIFILENAME    Javacore filename:    C:\Documents and Settings\Administrator\My Documents\javacore.20080219.155641.3836.0003.txt
 				consumeUntilFirstMatch(CommonPatternMatchers.colon);
