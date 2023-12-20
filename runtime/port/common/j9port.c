@@ -129,6 +129,7 @@ static J9PortLibrary MainPortLibraryTable = {
 	j9hypervisor_startup, /* hypervisor_startup */
 	j9hypervisor_shutdown, /* hypervisor_shutdown */
 	j9hypervisor_hypervisor_present, /* hyperevisor_present */
+	j9hypervisor_microvm_present, /* microvm_present */
 	j9hypervisor_get_hypervisor_info,/* hypervisor_get_hypervisor_info */
 	j9hypervisor_get_guest_processor_usage, /* hypervisor_get_guest_processor_usage */
 	j9hypervisor_get_guest_memory_usage, /* hypervisor_get_guest_memory_usage */
