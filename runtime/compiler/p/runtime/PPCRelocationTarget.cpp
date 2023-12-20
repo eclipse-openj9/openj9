@@ -202,6 +202,10 @@ TR_PPC32RelocationTarget::storeRelativeAddressSequence(uint8_t *address, uint8_t
 void
 TR_PPC64RelocationTarget::storeAddressSequence(uint8_t *address, uint8_t *reloLocation, uint32_t seqNumber)
    {
+   //Contingious Word
+   if(seqNumber == 7)
+      return storePointer(address, reloLocation);
+
    uint16_t value1, value2, value3, value4;
    uint16_t *patchAddr1, *patchAddr2, *patchAddr3, *patchAddr4;
    uintptr_t highValue;
