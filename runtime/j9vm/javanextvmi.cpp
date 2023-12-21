@@ -724,12 +724,14 @@ JVM_ExpandStackFrameInfo(JNIEnv *env, jobject object)
 {
 	assert(!"JVM_ExpandStackFrameInfo unimplemented");
 }
+#endif /* JAVA_SPEC_VERSION >= 22 */
 
+#if JAVA_SPEC_VERSION >= 23
 JNIEXPORT void JNICALL
 JVM_VirtualThreadDisableSuspend(JNIEnv *env, jobject vthread, jboolean enter)
 {
 	assert(!"JVM_VirtualThreadDisableSuspend unimplemented");
 }
-#endif /* JAVA_SPEC_VERSION >= 22 */
+#endif /* JAVA_SPEC_VERSION >= 23 */
 
 } /* extern "C" */
