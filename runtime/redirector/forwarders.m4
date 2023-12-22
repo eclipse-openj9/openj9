@@ -429,5 +429,5 @@ _IF([defined(J9VM_OPT_VALHALLA_VALUE_TYPES)],
 	[_X(JVM_IsValhallaEnabled, JNICALL, false, jboolean, void)])
 _IF([JAVA_SPEC_VERSION >= 22],
 	[_X(JVM_ExpandStackFrameInfo, JNICALL, false, void, JNIEnv *env, jobject object)])
-_IF([JAVA_SPEC_VERSION >= 23],
+_IF([JAVA_SPEC_VERSION >= 22],
 	[_X(JVM_VirtualThreadDisableSuspend, JNICALL, false, void, JNIEnv *env, jobject vthread, jboolean enter)])
