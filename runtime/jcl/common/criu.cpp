@@ -43,7 +43,15 @@ Java_openj9_internal_criu_InternalCRIUSupport_getLastRestoreTimeImpl(JNIEnv *env
 {
 	J9VMThread *currentThread = (J9VMThread *)env;
 
-	return currentThread->javaVM->checkpointState.lastRestoreTimeMillis;
+	return currentThread->javaVM->checkpointState.lastRestoreTimeInNanoseconds;
+}
+
+jlong JNICALL
+Java_openj9_internal_criu_InternalCRIUSupport_getProcessRestoreStartTimeImpl(JNIEnv *env, jclass unused)
+{
+	J9VMThread *currentThread = (J9VMThread *)env;
+
+	return currentThread->javaVM->checkpointState.processRestoreStartTimeInNanoseconds;
 }
 
 jboolean JNICALL

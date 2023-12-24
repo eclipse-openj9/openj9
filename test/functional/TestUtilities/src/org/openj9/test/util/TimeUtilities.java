@@ -21,10 +21,12 @@
  *******************************************************************************/
 package org.openj9.test.util;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Utility class to check time.
@@ -89,6 +91,11 @@ public class TimeUtilities {
 	public static boolean checkElapseTime(String testName, long startMillisTime, long startNanoTime,
 			long minElapsedMillisTime, long minElapsedNanoTimeInMillis) {
 		return checkElapseTime(testName, startMillisTime, startNanoTime, minElapsedMillisTime, 0, minElapsedNanoTimeInMillis, 0);
+	}
+
+	public static long getCurrentTimeInNanoseconds() {
+		Instant instant = Instant.now();
+		return TimeUnit.SECONDS.toNanos(instant.getEpochSecond()) + instant.getNano();
 	}
 
 	private volatile boolean tasksPassed = true;

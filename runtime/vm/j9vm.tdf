@@ -960,5 +960,7 @@ TraceException=Trc_VM_criu_setupJNIFieldIDsAndCRIUAPI_null_exception_class Overh
 TraceException=Trc_VM_criu_setupJNIFieldIDsAndCRIUAPI_null_init Overhead=1 Level=1 Template="setupJNIFieldIDsAndCRIUAPI() criuSystemRestoreExceptionInit(%p) criuJVMRestoreExceptionInit(%p) criuSystemCheckpointExceptionInit(%p) criuJVMCheckpointExceptionInit(%p)"
 
 TraceExit=Trc_VM_criu_checkpointJVMImpl_Exit Overhead=1 Level=2 Template="Java_openj9_internal_criu_CRIUSupport_checkpointJVMImpl"
-TraceEvent=Trc_VM_criu_after_dump Overhead=1 Level=2 Template="After checkpoint criu_dump(), criuRestoreNanoTimeMonotonic (%lld), criuRestoreNanoUTCTime (%llu), lastRestoreTimeMillis (%lld)"
+TraceEvent=Trc_VM_criu_after_dump Obsolete Overhead=1 Level=2 Template="After checkpoint criu_dump(), criuRestoreNanoTimeMonotonic (%lld), criuRestoreNanoUTCTime (%llu), lastRestoreTimeMillis (%lld)"
 TraceEvent=Trc_VM_crac_checkpointTo NoEnv Overhead=1 Level=3 Template="-XX:CRaCCheckpointTo=%s"
+TraceEvent=Trc_VM_criu_after_dump Overhead=1 Level=2 Template="After checkpoint criu_dump(), restoreNanoTimeMonotonic (%lld), lastRestoreTimeInNanoseconds (%lld)"
+TraceEvent=Trc_VM_criu_process_restore_start_after_dump Overhead=1 Level=2 Template="After checkpoint criu_dump(), restorePid (%zu), processRestoreStartTimeInNanoseconds (%lld)"

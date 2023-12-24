@@ -60,7 +60,6 @@ static BOOLEAN criuRestoreDisableSharedClassCache(J9VMThread *currentThread, voi
 static BOOLEAN criuRestoreInitializeDump(J9VMThread *currentThread, void *userData, const char **nlsMsgFormat);
 static jvmtiIterationControl objectIteratorCallback(J9JavaVM *vm, J9MM_IterateObjectDescriptor *objectDesc, void *userData);
 
-#define J9TIME_NANOSECONDS_PER_MILLIS 1000000
 #define STRING_BUFFER_SIZE 256
 #define ENV_FILE_BUFFER 1024
 
@@ -1510,6 +1509,7 @@ criuCheckpointJVMImpl(JNIEnv *env,
 		I_32 syslogBufferSize = 0;
 		UDATA oldVMState = VM_VMHelpers::setVMState(currentThread, J9VMSTATE_CRIU_SUPPORT_CHECKPOINT_PHASE_START);
 		UDATA notSafeToCheckpoint = 0;
+		UDATA criuRestorePid = 0;
 
 		vmFuncs->internalEnterVMFromJNI(currentThread);
 
@@ -1756,8 +1756,31 @@ criuCheckpointJVMImpl(JNIEnv *env,
 		VM_VMHelpers::setVMState(currentThread, J9VMSTATE_CRIU_SUPPORT_RESTORE_PHASE_START);
 		restoreNanoTimeMonotonic = j9time_nano_time();
 		restoreNanoUTCTime = j9time_current_time_nanos(&success);
-		vm->checkpointState.lastRestoreTimeMillis = (I_64)(restoreNanoUTCTime / J9TIME_NANOSECONDS_PER_MILLIS);
-		Trc_VM_criu_after_dump(currentThread, restoreNanoTimeMonotonic, restoreNanoUTCTime, vm->checkpointState.lastRestoreTimeMillis);
+		if (0 == success) {
+			systemReturnCode = errno;
+			currentExceptionClass = vm->checkpointState.criuSystemRestoreExceptionClass;
+			nlsMsgFormat = j9nls_lookup_message(
+				J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+				J9NLS_VM_CRIU_J9_CURRENT_TIME_NANOS_FAILURE,
+				NULL);
+			j9mem_free_memory(syslogOptions);
+			goto wakeJavaThreadsWithExclusiveVMAccess;
+		}
+		vm->checkpointState.lastRestoreTimeInNanoseconds = (I_64)restoreNanoUTCTime;
+		Trc_VM_criu_after_dump(currentThread, restoreNanoTimeMonotonic, vm->checkpointState.lastRestoreTimeInNanoseconds);
+		criuRestorePid = j9sysinfo_get_ppid();
+		systemReturnCode = j9sysinfo_get_process_start_time(criuRestorePid, &restoreNanoUTCTime);
+		if (0 != systemReturnCode) {
+			currentExceptionClass = vm->checkpointState.criuSystemRestoreExceptionClass;
+			nlsMsgFormat = j9nls_lookup_message(
+				J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+				J9NLS_VM_CRIU_J9_GET_PROCESS_START_TIME_FAILURE,
+				NULL);
+			j9mem_free_memory(syslogOptions);
+			goto wakeJavaThreadsWithExclusiveVMAccess;
+		}
+		vm->checkpointState.processRestoreStartTimeInNanoseconds = (I_64)restoreNanoUTCTime;
+		Trc_VM_criu_process_restore_start_after_dump(currentThread, criuRestorePid, vm->checkpointState.processRestoreStartTimeInNanoseconds);
 		if (!syslogFlagNone) {
 			/* Re-open the system logger, and set options with saved string value. */
 			j9port_control(J9PORT_CTLDATA_SYSLOG_OPEN, 0);

@@ -1303,6 +1303,9 @@ Java_openj9_internal_criu_InternalCRIUSupport_getCheckpointRestoreNanoTimeDeltaI
 jlong JNICALL
 Java_openj9_internal_criu_InternalCRIUSupport_getLastRestoreTimeImpl(JNIEnv *env, jclass unused);
 
+jlong JNICALL
+Java_openj9_internal_criu_InternalCRIUSupport_getProcessRestoreStartTimeImpl(JNIEnv *env, jclass unused);
+
 jboolean JNICALL
 Java_openj9_internal_criu_InternalCRIUSupport_isCheckpointAllowedImpl(JNIEnv *env, jclass unused);
 
