@@ -77,6 +77,8 @@ public class JCJavaRuntime implements JavaRuntime {
 	private HashMap fJavaThreads;
 	private HashMap fJavaClassIDs;
 	private JCJavaVMInitArgs fJavaVMInitArgs;
+	private JCJavaVMInitArgs fJavaVMRestoreArgs;
+
 	private List fMemoryCategories;
 	
 	private String fFullVersion;
@@ -165,6 +167,18 @@ public class JCJavaRuntime implements JavaRuntime {
 			throw new DataUnavailable("JavaVMInitArgs not available");
 		} else {
 			return fJavaVMInitArgs;
+		}
+	}
+
+	/**
+	 *  @see com.ibm.dtfj.java.JavaRuntime#getJavaVMRestoreArgs()
+	 */
+	@Override
+	public JavaVMInitArgs getJavaVMRestoreArgs() throws DataUnavailable, CorruptDataException {
+		if (fJavaVMRestoreArgs == null) {
+			throw new DataUnavailable("VM Restore Args not available in this javacore.");
+		} else {
+			return fJavaVMRestoreArgs;
 		}
 	}
 	
@@ -412,6 +426,19 @@ public class JCJavaRuntime implements JavaRuntime {
 			throw new JCInvalidArgumentsException("Must pass a valid JavaVMInitArgs object");
 		}
 		fJavaVMInitArgs = args;
+	}
+
+	/**
+	 * NON-DTFJ
+	 * See addJavaVMInitArgs
+	 * @param args must not be null
+	 * @throws JCRegistrationFailureException if invalid args passed.
+	 */
+	public void addJavaVMRestoreArgs(JCJavaVMInitArgs args) throws JCInvalidArgumentsException {
+		if (args == null) {
+			throw new JCInvalidArgumentsException("Must pass a valid JavaVMInitArgs object for restore args.");
+		}
+		fJavaVMRestoreArgs = args;
 	}
 
 	public Iterator getHeapRoots() {

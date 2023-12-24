@@ -239,37 +239,60 @@ public class EnvironmentSectionParser extends SectionParser implements IEnvironm
 	}
 	
 	/**
-	 * Parse the user args information (1CIUSERARGS and 2CIUSERARG lines) 
+	 * Parse the user args information (1CIUSERARGS and 2CIUSERARG lines)
+	 * and the restore args info (1CIRESTARGS and 2CIRESTARG lines) if they exist
 	 * @throws ParserException
 	 */
 	private void parseUserArgs() throws ParserException {
 		IAttributeValueMap results = null;
 		
-		if ((results = processTagLineRequired(T_1CIUSERARGS)) != null) {
+		results = processTagLineOptional(T_1CIUSERARGS);
+		if (null != results) {
 			boolean added = false;
-			while((results = processTagLineOptional(T_2CIUSERARG)) != null) {
+			results = processTagLineOptional(T_2CIUSERARG);
+			while(null != results) {
 				if (!added) {
 					// Delay creating init args until we find some args
 					added = true;
 					try {
 						fRuntimeBuilder.addVMInitArgs();
 					} catch (BuilderFailureException e) {
-						handleError("Failed to add JavaVMInitArgs to builder: ", e);
+						handleError("Failed to add VM init args to builder: ", e);
 					}
 				}
 				String argString = results.getTokenValue(ARG_STRING);
 				long extraInfo = results.getLongValue(ARG_EXTRA);
 				try {
-					if (extraInfo == IBuilderData.NOT_AVAILABLE) {
-						if (argString != null) {
-							fRuntimeBuilder.addVMOption(argString);
-						}
-					} else {
-						fRuntimeBuilder.addVMOption(argString, extraInfo);
+					if (argString != null) {
+						fRuntimeBuilder.addVMInitOption(argString, extraInfo);
 					}
 				} catch (BuilderFailureException e) {
-					handleError("Failed to add VM option to builder: " + argString + " ", e);
+					handleError("Failed to add VM init option to builder: " + argString + " ", e);
 				}
+				results = processTagLineOptional(T_2CIUSERARG);
+			}
+		}
+
+		results = processTagLineOptional(T_1CIRESTARGS);
+		if (null != results) {
+			// if they exist, then we should add them, restore args can be empty
+			try {
+				fRuntimeBuilder.addVMRestoreArgs();
+			} catch (BuilderFailureException e) {
+				handleError("Failed to add VM restore args to builder: ", e);
+			}
+			results = processTagLineOptional(T_2CIRESTARG);
+			while(null != results) {
+				String argString = results.getTokenValue(ARG_STRING);
+				long extraInfo = results.getLongValue(ARG_EXTRA);
+				try {
+					if (argString != null) {
+						fRuntimeBuilder.addVMRestoreOption(argString, extraInfo);
+					}
+				} catch (BuilderFailureException e) {
+					handleError("Failed to add restore option to builder: " + argString + " ", e);
+				}
+				results = processTagLineOptional(T_2CIRESTARG);
 			}
 		}
 	}

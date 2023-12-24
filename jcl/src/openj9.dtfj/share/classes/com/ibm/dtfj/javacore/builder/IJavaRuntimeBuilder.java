@@ -125,26 +125,32 @@ public interface IJavaRuntimeBuilder {
 	public void addBlockedThread(JavaMonitor monitor, long threadID) throws BuilderFailureException;
 
 	/**
-	 * Adds a (empty) JavaVMInitArgs
-	 * @param option
+	 * Adds a (empty) JavaVMInitArgs object representing the VM init args.
 	 * @return void
 	 */
 	public void addVMInitArgs() throws BuilderFailureException;
 
 	/**
-	 * Adds an individual Java VM option to JavaVMInitArgs
-	 * @param option
+	 * Adds a (empty) JavaVMInitArgs object representing VM restore args.
 	 * @return void
 	 */
-	public void addVMOption(String option) throws BuilderFailureException;
+	public void addVMRestoreArgs() throws BuilderFailureException;
 
 	/**
-	 * Adds an individual Java VM option to JavaVMInitArgs, with 'extra information' field
-	 * @param option 
-	 * @param extraInfo
+	 * Adds an individual Java VM option to VM init args, with optional 'extra info' field
+	 * @param option text of the VM option
+	 * @param extraInfo IBuilderData.NOT_AVAILABLE if not present
 	 * @return void
 	 */
-	public void addVMOption(String option, long extraInfo) throws BuilderFailureException;
+	public void addVMInitOption(String option, long extraInfo) throws BuilderFailureException;
+
+	/**
+	 * Adds an individual Java VM option to VM restore args, with optional 'extra info' field.
+	 * @param option text of the VM option
+	 * @param extraInfo IBuilderData.NOT_AVAILABLE if not present
+	 * @return void
+	 */
+	public void addVMRestoreOption(String option, long extraInfo) throws BuilderFailureException;
 
 	/**
 	 * Sets the Java version

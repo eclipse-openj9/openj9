@@ -39,6 +39,8 @@ public interface IEnvironmentTypes {
 	public static final String T_1CISYSCP = "1CISYSCP";      
 	public static final String T_1CIUSERARGS = "1CIUSERARGS";  
 	public static final String T_2CIUSERARG = "2CIUSERARG";    
+	public static final String T_1CIRESTARGS = "1CIRESTARGS";
+	public static final String T_2CIRESTARG = "2CIRESTARG";
 	public static final String T_1CIJVMMI = "1CIJVMMI";  
 	public static final String T_2CIJVMMIOFF = "2CIJVMMIOFF";
 	public static final String T_1CIENVVARS = "1CIENVVARS";
