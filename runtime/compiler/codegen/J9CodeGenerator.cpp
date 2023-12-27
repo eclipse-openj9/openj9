@@ -2666,16 +2666,9 @@ static TR_ExternalRelocationTargetKind getReloKindFromGuardSite(TR::CodeGenerato
       case TR_NonoverriddenGuard:
          type = TR_InlinedVirtualMethodWithNopGuard;
          break;
-      case TR_RemovedNonoverriddenGuard:
-         type = TR_InlinedVirtualMethod;
-         break;
 
       case TR_InterfaceGuard:
          type = TR_InlinedInterfaceMethodWithNopGuard;
-         break;
-      case TR_RemovedInterfaceGuard:
-         traceMsg(cg->comp(), "TR_RemovedInterfaceMethod\n");
-         type = TR_InlinedInterfaceMethod;
          break;
 
       case TR_AbstractGuard:
@@ -2706,11 +2699,6 @@ static TR_ExternalRelocationTargetKind getReloKindFromGuardSite(TR::CodeGenerato
          else
             TR_ASSERT(0,"Unexpected TR_MethodEnterExitGuard at site %p guard %p node %p\n",
                               site, site->getGuard(), site->getGuard()->getCallNode());
-         break;
-
-      case TR_RemovedProfiledGuard:
-         traceMsg(cg->comp(), "TR_ProfiledInlinedMethodRelocation\n");
-         type = TR_ProfiledInlinedMethodRelocation;
          break;
 
       case TR_ProfiledGuard:
