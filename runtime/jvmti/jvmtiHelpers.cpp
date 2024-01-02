@@ -153,7 +153,7 @@ getVMThread(J9VMThread *currentThread, jthread thread, J9VMThread **vmThreadPtr,
 	if (isVirtualThread) {
 		vm->internalVMFunctions->acquireVThreadInspector(currentThread, thread, TRUE);
 		/* Re-fetch threadObject since acquireVThreadInspector can release and reacquire VM access. */
-                threadObject = J9_JNI_UNWRAP_REFERENCE(thread);
+		threadObject = J9_JNI_UNWRAP_REFERENCE(thread);
 	}
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
@@ -301,7 +301,7 @@ disposeEnvironment(J9JVMTIEnv * j9env, UDATA freeData)
 			j9env->mutex = NULL;
 		}
 
-		if (NULL !=  j9env->threadDataPoolMutex) {
+		if (NULL != j9env->threadDataPoolMutex) {
 			omrthread_monitor_destroy(j9env->threadDataPoolMutex);
 			j9env->threadDataPoolMutex = NULL;
 		}
@@ -411,11 +411,11 @@ allocateEnvironment(J9InvocationJavaVM * invocationJavaVM, jint version, void **
 			if (j9env->threadDataPool == NULL) {
 				goto fail;
 			}
-			j9env->objectTagTable = hashTableNew(OMRPORT_FROM_J9PORT(vm->portLibrary), J9_GET_CALLSITE(), 0, sizeof(J9JVMTIObjectTag), sizeof(jlong), 0,  J9MEM_CATEGORY_JVMTI, hashObjectTag, hashEqualObjectTag, NULL, NULL);
+			j9env->objectTagTable = hashTableNew(OMRPORT_FROM_J9PORT(vm->portLibrary), J9_GET_CALLSITE(), 0, sizeof(J9JVMTIObjectTag), sizeof(jlong), 0, J9MEM_CATEGORY_JVMTI, hashObjectTag, hashEqualObjectTag, NULL, NULL);
 			if (j9env->objectTagTable == NULL) {
 				goto fail;
 			}
-			j9env->watchedClasses = hashTableNew(OMRPORT_FROM_J9PORT(vm->portLibrary), J9_GET_CALLSITE(), 0, sizeof(J9JVMTIWatchedClass), sizeof(UDATA), 0,  J9MEM_CATEGORY_JVMTI, watchedClassHash, watchedClassEqual, NULL, NULL);
+			j9env->watchedClasses = hashTableNew(OMRPORT_FROM_J9PORT(vm->portLibrary), J9_GET_CALLSITE(), 0, sizeof(J9JVMTIWatchedClass), sizeof(UDATA), 0, J9MEM_CATEGORY_JVMTI, watchedClassHash, watchedClassEqual, NULL, NULL);
 			if (j9env->watchedClasses == NULL) {
 				goto fail;
 			}
@@ -498,10 +498,10 @@ prepareForEvent(J9JVMTIEnv * j9env, J9VMThread * currentThread, J9VMThread * eve
 	 * when in Primordial phase since the threadObject is not initialized until sometime after
 	 * j.l.Thread is loaded. This is done to correctly fire the Class File Load events on classes
 	 * loaded prior to j.l.Thread. See CMVC 127730 */
-	
+
 	if ((NULL == eventThread->threadObject) && (J9JVMTI_PHASE(j9env) != JVMTI_PHASE_PRIMORDIAL)) {
-        return FALSE;
-    }
+		return FALSE;
+	}
 
 	/* See if the event is enabled either globally or for the current thread */
 
@@ -553,13 +553,13 @@ javaOffloadSwitchOff(J9JVMTIEnv * j9env, J9VMThread * currentThread, UDATA event
 	J9JavaVM * vm = NULL;
 	BOOLEAN zAAPSwitchingFlag = FALSE;
 	J9NativeLibrary * nativeLibrary = j9env->library;
-	
+
 	Assert_JVMTI_true(NULL != currentThread);
 	vm = currentThread->javaVM;
 
 	/* There are two cases for zAAP switching:
-	 * 1) The agent library (most likely created by customer) calls GetEnv() at any time when required 
-	 *    but doesn't need to call GetEnv() in Agent_OnLoad. Thus, it may be possible for j9env->library 
+	 * 1) The agent library (most likely created by customer) calls GetEnv() at any time when required
+	 *    but doesn't need to call GetEnv() in Agent_OnLoad. Thus, it may be possible for j9env->library
 	 *    to be NULL if JVMTI is used directly by the VM.
 	 * 2) The flag in J9NativeLibrary->doSwitching requires it to do zAAP switching.
 	 */
@@ -722,7 +722,7 @@ getThreadStateHelper(J9VMThread *currentThread, j9object_t threadObject, J9VMThr
 {
 	jint state = 0;
 	UDATA vmstate = getVMThreadObjectStatesAll(vmThread, NULL, NULL, NULL);
-	
+
 	/* Assumes that the current thread has VM access, and the thread is locked (will not die) */
 
 	if (vmThread == NULL || (vmstate & J9VMTHREAD_STATE_UNKNOWN)) {
@@ -731,9 +731,9 @@ getThreadStateHelper(J9VMThread *currentThread, j9object_t threadObject, J9VMThr
 		} else {
 			/* new thread */
 		}
-	} else if (vmstate & J9VMTHREAD_STATE_DEAD)  {
+	} else if (vmstate & J9VMTHREAD_STATE_DEAD) {
 		state |= JVMTI_THREAD_STATE_TERMINATED;
-	} else {		
+	} else {
 		state |= JVMTI_THREAD_STATE_ALIVE;
 
 		if (vmstate & J9VMTHREAD_STATE_SUSPENDED) {
@@ -784,7 +784,7 @@ getThreadStateHelper(J9VMThread *currentThread, j9object_t threadObject, J9VMThr
 		} else if (vmstate & J9VMTHREAD_STATE_PARKED_TIMED) {
 			state |= JVMTI_THREAD_STATE_PARKED;
 			state |= JVMTI_THREAD_STATE_WAITING_WITH_TIMEOUT;
-			state |= JVMTI_THREAD_STATE_WAITING;	
+			state |= JVMTI_THREAD_STATE_WAITING;
 		/* Thread.sleep(...) */
 		} else if (vmstate & J9VMTHREAD_STATE_SLEEPING) {
 			state |= JVMTI_THREAD_STATE_SLEEPING;
@@ -973,28 +973,28 @@ getCurrentClass(J9Class * clazz)
 
 
 static UDATA
-hashObjectTag(void *entry, void *userData) 
+hashObjectTag(void *entry, void *userData)
 {
 	return ((UDATA) ((J9JVMTIObjectTag *) entry)->ref) / sizeof(UDATA);
 }
 
 
 static UDATA
-hashEqualObjectTag(void *lhsEntry, void *rhsEntry, void *userData) 
+hashEqualObjectTag(void *lhsEntry, void *rhsEntry, void *userData)
 {
 	return (((J9JVMTIObjectTag *) lhsEntry)->ref == ((J9JVMTIObjectTag *) rhsEntry)->ref);
 }
 
 
 static UDATA
-watchedClassHash(void *entry, void *userData) 
+watchedClassHash(void *entry, void *userData)
 {
 	return ((UDATA) ((J9JVMTIWatchedClass *) entry)->clazz) / J9_REQUIRED_CLASS_ALIGNMENT;
 }
 
 
 static UDATA
-watchedClassEqual(void *lhsEntry, void *rhsEntry, void *userData) 
+watchedClassEqual(void *lhsEntry, void *rhsEntry, void *userData)
 {
 	return (((J9JVMTIWatchedClass *) lhsEntry)->clazz == ((J9JVMTIWatchedClass *) rhsEntry)->clazz);
 }
@@ -1111,7 +1111,7 @@ setGlobalBreakpoint(J9VMThread * currentThread, J9Method * ramMethod, IDATA loca
 				if (methodIDs[methodIndex] == methodID) {
 					equivalentMethod = currentClass->ramMethods + methodIndex;
 					found = TRUE;
-					
+
 					*bpChain = globalBreakpoint;
 					bpChain = &globalBreakpoint->equivalentBreakpoint;
 
@@ -1129,7 +1129,7 @@ setGlobalBreakpoint(J9VMThread * currentThread, J9Method * ramMethod, IDATA loca
 				break;
 			}
 		}
-		
+
 		*bpChain = globalBreakpoint;
 	}
 
@@ -1307,9 +1307,10 @@ createBreakpointedMethod(J9VMThread * currentThread, J9Method * ramMethod)
 	/* Fix the method and stacks to point to the new bytecodes */
 
 	fixBytecodesInAllStacks(currentThread, ramMethod, delta);
-	
+
 	/* Add the delta to point at the copied bytecodes. This effectively changes this RAM Method's
-	   ROM Method to the copy when accessed using J9_ROM_METHOD_FROM_RAM_METHOD */
+	 * ROM Method to the copy when accessed using J9_ROM_METHOD_FROM_RAM_METHOD.
+	 */
 
 	ramMethod->bytecodes += delta;
 
@@ -1342,7 +1343,7 @@ createSingleBreakpoint(J9VMThread * currentThread, J9Method * ramMethod, IDATA l
 		}
 	}
 	++(breakpointedMethod->referenceCount);
-	
+
 	/* Create a new breakpoint */
 
 	globalBreakpoint = (J9JVMTIGlobalBreakpoint*)pool_newElement(jvmtiData->breakpoints);
@@ -1763,16 +1764,16 @@ done:
 	return rc;
 }
 
-/** 
- * \brief Get a primitive type for the supplied signature. 
+/**
+ * \brief Get a primitive type for the supplied signature.
  * \ingroup jvmti.helpers
- * 
+ *
  * @param[in]	signature 	signature of the data
- * @param[out]	primitiveType	primitive type 
+ * @param[out]	primitiveType	primitive type
  * @return JVMTI_ERROR_NONE on success or JVMTI_ERROR_ILLEGAL_ARGUMENT if signature does not describe a primitive type
- *	
+ *
  */
-jvmtiError 
+jvmtiError
 getPrimitiveType(J9UTF8 *signature, jvmtiPrimitiveType *primitiveType)
 {
 	switch (J9UTF8_DATA(signature)[0]) {
@@ -1783,7 +1784,7 @@ getPrimitiveType(J9UTF8 *signature, jvmtiPrimitiveType *primitiveType)
 		case 'B':
 			*primitiveType = JVMTI_PRIMITIVE_TYPE_BYTE;
 			break;
-	        case 'C':
+		case 'C':
 			*primitiveType = JVMTI_PRIMITIVE_TYPE_CHAR;
 			break;
 		case 'S':
