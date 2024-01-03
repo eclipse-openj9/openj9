@@ -66,7 +66,6 @@ jvm_add_exports(jvm
 	_JVM_CurrentClassLoader@4
 	_JVM_CurrentLoadedClass@4
 	_JVM_CurrentTimeMillis@8
-	_JVM_CX8Field@28
 	_JVM_DefineClassWithSource@28
 	_JVM_DumpThreads@12
 	_JVM_ExpandFdTable@4
@@ -125,7 +124,6 @@ jvm_add_exports(jvm
 	_JVM_SocketAvailable@8
 	_JVM_SocketClose@4
 	_JVM_Startup@8
-	_JVM_SupportsCX8@0
 	_JVM_Sync@4
 	_JVM_Timeout@8
 	_JVM_TotalMemory@0
@@ -438,7 +436,11 @@ if(NOT JAVA_SPEC_VERSION LESS 21)
 	)
 endif()
 
-if(NOT JAVA_SPEC_VERSION LESS 22)
+if(JAVA_SPEC_VERSION LESS 22)
+	jvm_add_exports(jvm
+		_JVM_SupportsCX8@0
+	)
+else()
 	jvm_add_exports(jvm
 		JVM_ExpandStackFrameInfo
 	)
