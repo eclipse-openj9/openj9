@@ -1241,6 +1241,13 @@ ClientSessionHT::purgeOldDataIfNeeded()
             _clientSessionMap.erase(iter); // delete the mapping from the hashtable
             }
          }
+      // If all the clients were deleted, shut down the shared ROMClass cache
+      if (_clientSessionMap.empty())
+         {
+         if (auto cache = TR::CompilationInfo::get()->getJITServerSharedROMClassCache())
+            cache->shutdown();
+         }
+
       _timeOfLastPurge = crtTime;
 
       // JITServer TODO: keep stats on how many elements were purged
