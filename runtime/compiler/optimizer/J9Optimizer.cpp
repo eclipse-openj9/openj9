@@ -332,7 +332,7 @@ static const OptimizationStrategy warmStrategyOpts[] =
 #ifdef TR_HOST_S390
    { OMR::globalCopyPropagation,                     OMR::IfVoluntaryOSR        },
 #endif
-   { OMR::lastLoopVersionerGroup,                    OMR::IfLoops               },
+   { OMR::lastLoopVersionerGroup,                    OMR::IfLoopsAndNotCompileTimeSensitive},
 #ifdef TR_HOST_S390
    { OMR::globalDeadStoreElimination,                OMR::IfEnabledAndLoops          },
    { OMR::deadTreesElimination                                                       },
