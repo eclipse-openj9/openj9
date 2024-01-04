@@ -377,7 +377,9 @@ freeClassLoader(J9ClassLoader *classLoader, J9JavaVM *javaVM, J9VMThread *vmThre
 	}
 
 	if (NULL != classLoader->jniIDs) {
-		if (J9_ARE_ANY_BITS_SET(javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_KEEP_JNI_IDS)) {
+		if (J9_ARE_NO_BITS_SET(javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_NEVER_KEEP_JNI_IDS)
+		&& (javaVM->asyncGetCallTraceUsed || J9_ARE_ANY_BITS_SET(javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ALWAYS_KEEP_JNI_IDS))
+		) {
 			pool_state idWalkState;
 			J9GenericJNIID *jniID = pool_startDo(classLoader->jniIDs, &idWalkState);
 
