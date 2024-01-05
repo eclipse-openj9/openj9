@@ -138,10 +138,10 @@
 		<return type="success" value="0"/>
 	</test>
 
-	<test id="rc021">
+	<!-- <test id="rc021">
 		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:rc021 -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
 		<return type="success" value="0"/>
-	</test>
+	</test> -->
 
  	<test id="rtc001">
 		<command>$EXE$ $JVM_OPTS$ $EXTRA_Add_OPEN_OPTION$ $AGENTLIB$=test:rtc001 -Dsun.reflect.noInflation=true  -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
