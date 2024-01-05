@@ -9220,20 +9220,32 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                   {
                   options->setOption(TR_DisableStoreSinking);
                   }
-               // On x86, disable idiomRecognition for compilation at warm or below to save compilation time
-               // However, don't disable it for AOT compilations or precheckpoint or under -Xtune:throughput
-               if (TR::Compiler->target.cpu.isX86() &&
-                   options->getOptLevel() <= warm &&
-                   !vm->isAOT_DEPRECATED_DO_NOT_USE() &&
-#if defined(J9VM_OPT_CRIU_SUPPORT)
-                  !(jitConfig->javaVM->internalVMFunctions->isNonPortableRestoreMode(vmThread) &&
-                    jitConfig->javaVM->internalVMFunctions->isCheckpointAllowed(vmThread)) &&
-#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
-                   TR::Options::getAggressivityLevel() != TR::Options::TR_AggresivenessLevel::AGGRESSIVE_THROUGHPUT)
+               // Some optimizations (like idiomRecognition) can be avoided for compilations
+               // at warm or below to save compilation time
+               // However, we should perform such expensive opts for AOT compilations or precheckpoint or under -Xtune:throughput
+               if (options->getOptLevel() <= warm)
                   {
-                  static char *enableIdiomRecognitionAtWarm = feGetEnv("TR_EnableIdiomRecognitionAtWarm");
-                  if (!enableIdiomRecognitionAtWarm)
-                     options->setDisabled(OMR::idiomRecognition, true);
+                  static char *forceExpensiveOptsAtWarm = feGetEnv("TR_EnableExpensiveOptsAtWarm");
+                  bool enableExpensiveOptsAtWarm = forceExpensiveOptsAtWarm || // override
+                          vm->isAOT_DEPRECATED_DO_NOT_USE() || // AOT compilations
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+                          (jitConfig->javaVM->internalVMFunctions->isNonPortableRestoreMode(vmThread) &&
+                          jitConfig->javaVM->internalVMFunctions->isCheckpointAllowed(vmThread)) ||
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+                          TR::Options::getAggressivityLevel() == TR::Options::TR_AggresivenessLevel::AGGRESSIVE_THROUGHPUT;
+                  if (enableExpensiveOptsAtWarm)
+                     {
+                     options->setOption(TR_NotCompileTimeSensitive);
+                     }
+                  else
+                     {
+                     if (TR::Compiler->target.cpu.isX86())
+                        {
+                        static char *enableIdiomRecognitionAtWarm = feGetEnv("TR_EnableIdiomRecognitionAtWarm");
+                        if (!enableIdiomRecognitionAtWarm)
+                           options->setDisabled(OMR::idiomRecognition, true);
+                        }
+                     }
                   }
                } // end of compilation strategy tweaks for Java
 
