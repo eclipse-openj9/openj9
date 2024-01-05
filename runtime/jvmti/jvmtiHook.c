@@ -221,19 +221,21 @@ static void
 destroyThreadData(J9JVMTIEnv *j9env, J9VMThread *vmThread)
 {
 	j9object_t threadObject = vmThread->threadObject;
+	if (NULL != threadObject) {
 #if JAVA_SPEC_VERSION >= 19
-	void *tlsArray = J9OBJECT_ADDRESS_LOAD(vmThread, threadObject, vmThread->javaVM->tlsOffset);
+		void *tlsArray = J9OBJECT_ADDRESS_LOAD(vmThread, threadObject, vmThread->javaVM->tlsOffset);
 
-	if (NULL != tlsArray)
+		if (NULL != tlsArray)
 #endif /* JAVA_SPEC_VERSION >= 19 */
-	{
-		/* Deallocate the thread data block for this environment/thread pair, if it exists. */
-		J9JVMTIThreadData *threadData = jvmtiTLSGet(vmThread, threadObject, j9env->tlsKey);
-		if (NULL != threadData) {
-			jvmtiTLSSet(vmThread, threadObject, j9env->tlsKey, NULL);
-			omrthread_monitor_enter(j9env->threadDataPoolMutex);
-			pool_removeElement(j9env->threadDataPool, threadData);
-			omrthread_monitor_exit(j9env->threadDataPoolMutex);
+		{
+			/* Deallocate the thread data block for this environment/thread pair, if it exists. */
+			J9JVMTIThreadData *threadData = jvmtiTLSGet(vmThread, threadObject, j9env->tlsKey);
+			if (NULL != threadData) {
+				jvmtiTLSSet(vmThread, threadObject, j9env->tlsKey, NULL);
+				omrthread_monitor_enter(j9env->threadDataPoolMutex);
+				pool_removeElement(j9env->threadDataPool, threadData);
+				omrthread_monitor_exit(j9env->threadDataPoolMutex);
+			}
 		}
 	}
 }
