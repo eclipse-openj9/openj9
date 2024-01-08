@@ -356,13 +356,14 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
             /* The order is important: we have to request it before the first TLH is created. */
             /* Platform detection seems difficult at this point.                              */
             {
+            static bool disableBatchClear = feGetEnv2("TR_DisableBatchClear", (void *)vm) != NULL;
 #ifdef TR_HOST_X86
-            static char *enableBatchClear = feGetEnv2("TR_EnableBatchClear", (void *)vm);
-
+            /* TODO: Determine appropriate microarchitecture(s) such as skylake+        */
+            /* if (!TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_X86_INTELSKYLAKE)) */
+            /*   disableBatchClear = true;                                              */
 #else //ppc and s390
-            static char *disableBatchClear = feGetEnv2("TR_DisableBatchClear", (void *)vm);
 #ifdef TR_HOST_POWER
-            static char *disableDualTLH   = feGetEnv2("TR_DisableDualTLH", (void *)vm);
+            static char *disableDualTLH = feGetEnv2("TR_DisableDualTLH", (void *)vm);
 
             //if disableDualTLH is specified, revert back to old semantics.
             // Do not batch clear, JIT has to zeroinit all code on TLH.
@@ -374,16 +375,11 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
             * the TLH mode, and it won't matter anyway, since JIT'ed code won't be run.
             * See CMVC 70078
             */
-            if (
-#ifdef TR_HOST_X86
-                 enableBatchClear
-#else//ppc and s390
-                 disableBatchClear==0
+            if (!disableBatchClear
 #ifdef TR_HOST_POWER
-                  &&!disableZeroedTLHPages
+                && !disableZeroedTLHPages
 #endif//TR_HOST_POWER
-#endif//TR_HOST_X86
-            )
+               )
                {
                J9VMDllLoadInfo *gcLoadInfo = getGCDllLoadInfo(vm);
 
