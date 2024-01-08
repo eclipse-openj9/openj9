@@ -277,11 +277,7 @@ resumeNonInline:
 		 * the transition point, and can be assumed to be valid.
 		 */
 		if (J9_ARE_NO_BITS_SET(walkState->flags, J9_STACKWALK_NO_ERROR_REPORT)) {
-			/* Avoid recursive error situations */
-			if (0 == (walkState->walkThread->privateFlags & J9_PRIVATE_FLAGS_STACK_CORRUPT)) {
-				walkState->walkThread->privateFlags |= J9_PRIVATE_FLAGS_STACK_CORRUPT;
-				walkState->walkThread->javaVM->internalVMFunctions->invalidJITReturnAddress(walkState);
-			}
+			walkState->walkThread->javaVM->internalVMFunctions->invalidJITReturnAddress(walkState);
 		}
 i2jTransition: ;
 	}
@@ -1053,11 +1049,7 @@ static void jitWalkResolveMethodFrame(J9StackWalkState *walkState)
 			 * which will likely lead to further errors or crashes.
 			 */
 			if (J9_ARE_NO_BITS_SET(walkState->flags, J9_STACKWALK_NO_ERROR_REPORT)) {
-				/* Avoid recursive error situations */
-				if (0 == (walkState->walkThread->privateFlags & J9_PRIVATE_FLAGS_STACK_CORRUPT)) {
-					walkState->walkThread->privateFlags |= J9_PRIVATE_FLAGS_STACK_CORRUPT;
-					walkState->walkThread->javaVM->internalVMFunctions->invalidJITReturnAddress(walkState);
-				}
+				walkState->walkThread->javaVM->internalVMFunctions->invalidJITReturnAddress(walkState);
 			}
 			return;
 		}

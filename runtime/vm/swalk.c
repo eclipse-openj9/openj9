@@ -441,10 +441,6 @@ terminationPoint:
 		currentThread->activeWalkState = oldState;
 	}
 
-	if (J9_ARE_ANY_BITS_SET(walkState->walkThread->privateFlags, J9_PRIVATE_FLAGS_STACK_CORRUPT)) {
-		rc = J9_STACKWALK_RC_STACK_CORRUPT;
-	}
-
 	return rc;
 }
 

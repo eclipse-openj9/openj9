@@ -48,6 +48,7 @@ objectIsBeingWaitedOn(J9VMThread *currentThread, J9VMThread *targetThread, j9obj
  * @param[in] targetThread
  * @param[in] info Array where monitor info should be returned
  * @param[in] infoLen Length of the info array in elements, not bytes
+ * @param[in] reportErrors TRUE to allow the stack walker to assert on errors, FALSE to ignore errors
  * @return -1 on error<br>
  * >= 0, number of info elements
  *
@@ -59,7 +60,7 @@ objectIsBeingWaitedOn(J9VMThread *currentThread, J9VMThread *targetThread, j9obj
  */
 IDATA
 getOwnedObjectMonitors(J9VMThread *currentThread, J9VMThread *targetThread,
-		J9ObjectMonitorInfo *info, IDATA infoLen)
+		J9ObjectMonitorInfo *info, IDATA infoLen, BOOLEAN reportErrors)
 {
 	J9StackWalkState walkState;
 	BOOLEAN countOnly = FALSE;
@@ -88,6 +89,9 @@ getOwnedObjectMonitors(J9VMThread *currentThread, J9VMThread *targetThread,
 		| J9_STACKWALK_INCLUDE_NATIVES
 		| J9_STACKWALK_SKIP_INLINES
 		| J9_STACKWALK_ITERATE_FRAMES;
+	if (!reportErrors) {
+		walkState.flags |= J9_STACKWALK_NO_ERROR_REPORT;
+	}
 	walkState.frameWalkFunction = getOwnedObjectMonitorsIterator;
 
 	if (javaVM->walkStackFrames(currentThread, &walkState) != J9_STACKWALK_RC_NONE) {

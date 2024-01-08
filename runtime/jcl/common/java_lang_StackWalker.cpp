@@ -121,11 +121,11 @@ Java_java_lang_StackWalker_walkWrapperImpl(JNIEnv *env, jclass clazz, jint flags
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	if (J9_ARE_ANY_BITS_SET((UDATA)flags, J9_GET_MONITORS)) {
 		J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
-		IDATA infoLen = vmFuncs->getOwnedObjectMonitors(vmThread, vmThread, NULL, 0);
+		IDATA infoLen = vmFuncs->getOwnedObjectMonitors(vmThread, vmThread, NULL, 0, TRUE);
 		if (infoLen > 0) {
 			info = (J9ObjectMonitorInfo *)j9mem_allocate_memory(infoLen * sizeof(J9ObjectMonitorInfo), J9MEM_CATEGORY_VM_JCL);
 			if (NULL != info) {
-				IDATA rc = vmFuncs->getOwnedObjectMonitors(vmThread, vmThread, info, infoLen);
+				IDATA rc = vmFuncs->getOwnedObjectMonitors(vmThread, vmThread, info, infoLen, TRUE);
 				if (rc >= 0) {
 					walkState->userData3 = info;
 					walkState->userData4 = (void *)infoLen;
