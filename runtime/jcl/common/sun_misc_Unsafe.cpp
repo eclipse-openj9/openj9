@@ -810,8 +810,8 @@ Java_sun_misc_Unsafe_shouldBeInitialized(JNIEnv *env, jobject receiver, jclass c
 		vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
 	} else {
 		j9object_t classObject = J9_JNI_UNWRAP_REFERENCE(clazz);
-		J9Class *j9clazz =  J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, classObject);
-		if (VM_VMHelpers::classRequiresInitialization(currentThread, j9clazz)) {
+		J9Class *j9clazz = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, classObject);
+		if (J9ClassInitSucceeded != j9clazz->initializeStatus) {
 			result = JNI_TRUE;
 		}
 	}
