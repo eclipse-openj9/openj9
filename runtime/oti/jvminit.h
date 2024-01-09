@@ -454,6 +454,12 @@ enum INIT_STAGE {
 #define VMOPT_XXSHOWNATIVESTACKSYMBOLS_BASIC "-XX:+ShowNativeStackSymbols=basic" /* show only easily acquired native stack symbols */
 #define VMOPT_XXSHOWNATIVESTACKSYMBOLS_ALL "-XX:+ShowNativeStackSymbols=all" /* show all available native stack symbols */
 
+#if JAVA_SPEC_VERSION >= 21
+/* Option to control if unmounted thread stacktraces are shown in java core dumps. */
+#define VMOPT_XXSHOWUNMOUNTEDTHREADSTACKS "-XX:+ShowUnmountedThreadStacks"
+#define VMOPT_XXNOSHOWUNMOUNTEDTHREADSTACKS "-XX:-ShowUnmountedThreadStacks"
+#endif /* JAVA_SPEC_VERSION >= 21 */
+
 /* Option to turn on exception on synchronization on instances of value-based classes */
 #define VMOPT_XXDIAGNOSE_SYNC_ON_VALUEBASED_CLASSES_EQUALS1 "-XX:DiagnoseSyncOnValueBasedClasses=1"
 /* Option to turn on warning on synchronization on instances of value-based classes */
