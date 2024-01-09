@@ -27,6 +27,9 @@ import java.lang.StackWalker.StackFrame;
 import java.lang.StackWalker.StackFrameImpl;
 import java.util.List;
 import java.util.stream.Collectors;
+/*[IF JAVA_SPEC_VERSION >= 23]*/
+import jdk.internal.vm.Continuation;
+/*[ENDIF] JAVA_SPEC_VERSION >= 23 */
 
 /**
  * Prints the stack trace of a pinned thread that is attempting to yield.
@@ -37,16 +40,27 @@ final class PinnedThreadPrinter {
 
 	static void printStackTrace(PrintStream out, boolean printAll) {
 		out.println(Thread.currentThread());
+		printStackTraceHelper(out, printAll);
+	}
+
+	private static void printStackTraceHelper(PrintStream out, boolean printAll) {
 		List<StackFrame> stackFrames = STACKWALKER.walk(s -> s.collect(Collectors.toList()));
 		for (int i = 0; i < stackFrames.size(); i++) {
 			StackFrameImpl sti = (StackFrameImpl) stackFrames.get(i);
 			Object[] monitors = sti.getMonitors();
 
 			if (monitors != null) {
-				out.println("    " + sti.toString() + " <== monitors:" + monitors.length);
+				out.println("    " + sti.toString() + " <== monitors:" + monitors.length); //$NON-NLS-1$ //$NON-NLS-2$
 			} else if (sti.isNativeMethod() || (printAll && (sti.getDeclaringClass() != PinnedThreadPrinter.class))) {
-				out.println("    " + sti.toString());
+				out.println("    " + sti.toString()); //$NON-NLS-1$
 			}
 		}
 	}
+
+/*[IF JAVA_SPEC_VERSION >= 23]*/
+	static void printStackTrace(PrintStream out, Continuation.Pinned reason, boolean printAll) {
+		out.println(Thread.currentThread() + " reason:" + reason); //$NON-NLS-1$
+		printStackTraceHelper(out, printAll);
+	}
+/*[ENDIF] JAVA_SPEC_VERSION >= 23 */
 }
