@@ -793,7 +793,7 @@ jvmtiGetOwnedMonitorStackDepthInfo(jvmtiEnv *env,
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
 			/* Get the count of owned monitors. */
-			maxRecords = vm->internalVMFunctions->getOwnedObjectMonitors(currentThread, threadToWalk, NULL, 0);
+			maxRecords = vm->internalVMFunctions->getOwnedObjectMonitors(currentThread, threadToWalk, NULL, 0, TRUE);
 			if (maxRecords < 0) {
 				rc = JVMTI_ERROR_INTERNAL;
 				goto freeMemory;
@@ -811,7 +811,7 @@ jvmtiGetOwnedMonitorStackDepthInfo(jvmtiEnv *env,
 				goto freeMemory;
 			}
 
-			maxRecords = vm->internalVMFunctions->getOwnedObjectMonitors(currentThread, threadToWalk, monitorEnterRecords, maxRecords);
+			maxRecords = vm->internalVMFunctions->getOwnedObjectMonitors(currentThread, threadToWalk, monitorEnterRecords, maxRecords, TRUE);
 			if (maxRecords < 0) {
 				rc = JVMTI_ERROR_INTERNAL;
 				goto freeMemory;
