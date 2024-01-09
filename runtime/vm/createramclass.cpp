@@ -1975,8 +1975,12 @@ loadFlattenableFieldValueClasses(J9VMThread *currentThread, J9ClassLoader *class
 					goto done;
 				} else {
 					J9ROMClass *valueROMClass = valueClass->romClass;
-
-					if (!J9ROMCLASS_IS_PRIMITIVE_VALUE_TYPE(valueROMClass)) {
+					/* This restriction has been relaxed from J9ROMCLASS_IS_PRIMITIVE_VALUE_TYPE
+					 * to prevent errors while using the J9ClassIsPrimitiveValueType flag to indicate
+					 * flattening eligibility for nullrestricted fields. Eventually this case will be
+					 * removed with Q types.
+					 */
+					if (!J9ROMCLASS_IS_VALUE(valueROMClass)) {
 						J9UTF8 *badClass = NNSRP_GET(valueROMClass->className, J9UTF8*);
 						setCurrentExceptionNLSWithArgs(currentThread, J9NLS_VM_ERROR_QTYPE_NOT_VALUE_TYPE, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, J9UTF8_LENGTH(badClass), J9UTF8_DATA(badClass));
 						result = FALSE;
@@ -2361,6 +2365,10 @@ nativeOOM:
 				&& J9_ARE_ALL_BITS_SET(getImplicitCreationFlags(romClass), J9AccImplicitCreateHasDefaultValue))
 			) {
 				UDATA instanceSize = state->ramClass->totalInstanceSize;
+				/* This ram class flag is not correct for the nullrestricted value class case
+				 * since the meaning of primitive and nullrestricted don't fully overlap.
+				 * Using it for now to enable flattening of nullrestricted fields.
+				 */
 				classFlags |= J9ClassIsPrimitiveValueType;
 				if ((instanceSize <= javaVM->valueFlatteningThreshold)
 					&& !J9ROMCLASS_IS_CONTENDED(romClass)
