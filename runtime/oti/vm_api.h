@@ -4701,11 +4701,12 @@ objectIsBeingWaitedOn(J9VMThread *currentThread, J9VMThread *targetThread, j9obj
  * @param targetThread
  * @param info
  * @param infoLen
+ * @param reportErrors
  * @return IDATA
  */
 IDATA
 getOwnedObjectMonitors(J9VMThread *currentThread, J9VMThread *targetThread,
-		J9ObjectMonitorInfo *info, IDATA infoLen);
+		J9ObjectMonitorInfo *info, IDATA infoLen, BOOLEAN reportErrors);
 
 /**
  * @brief Construct a UTF8 illegalAccess message.

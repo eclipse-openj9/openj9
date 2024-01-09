@@ -1627,12 +1627,12 @@ getMonitors(J9VMThread *currentThread, J9VMThread *targetThread, ThreadInfo *tin
 	Trc_JCL_threadmxbean_getMonitors_Entry(currentThread, targetThread, tinfo, stackLen);
 
 	infoLen = vm->internalVMFunctions->getOwnedObjectMonitors(currentThread,
-			targetThread, NULL, 0);
+			targetThread, NULL, 0, TRUE);
 	if (infoLen > 0) {
 		info = j9mem_allocate_memory(infoLen * sizeof(J9ObjectMonitorInfo), J9MEM_CATEGORY_VM_JCL);
 		if (info) {
 			rc = vm->internalVMFunctions->getOwnedObjectMonitors(currentThread,
-					targetThread, info, infoLen);
+					targetThread, info, infoLen, TRUE);
 			if (rc >= 0) {
 				tinfo->lockedMonitors.arr_unsafe = info;
 				tinfo->lockedMonitors.len = rc;

@@ -237,9 +237,7 @@ public class StackWalker
 			U8Pointer nextPC = null;
 			J9MethodPointer nextLiterals;
 
-			StackWalkResult rc = walkState.privateFlags.anyBitsIn(J9_PRIVATE_FLAGS_STACK_CORRUPT)
-							? StackWalkResult.STACK_CORRUPT
-							: StackWalkResult.NONE;
+			StackWalkResult rc = StackWalkResult.NONE;
 
 			/* Java-implementation specific variables start */
 			boolean endOfStackReached = false;

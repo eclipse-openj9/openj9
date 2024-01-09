@@ -5380,7 +5380,7 @@ IDATA
 JavaCoreDumpWriter::getOwnedObjectMonitors(J9VMThread* vmThread, J9ObjectMonitorInfo* monitorInfos)
 {
 	IDATA monitorCount = 0;
-	monitorCount = _VirtualMachine->internalVMFunctions->getOwnedObjectMonitors(_Context->onThread, vmThread, monitorInfos, _MaximumMonitorInfosPerThread);
+	monitorCount = _VirtualMachine->internalVMFunctions->getOwnedObjectMonitors(_Context->onThread, vmThread, monitorInfos, _MaximumMonitorInfosPerThread, FALSE);
 
 	/* Walk the returned monitor info and sum up the entry counts to make them more useful in the stack
 	 * trace. (The array is walked backwards so the totals start at 1 at the bottom of the stack!)

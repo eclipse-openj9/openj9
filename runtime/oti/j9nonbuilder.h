@@ -4892,7 +4892,7 @@ typedef struct J9InternalVMFunctions {
 	void  ( *rasStartDeferredThreads)(struct J9JavaVM* vm) ;
 	int  ( *initJVMRI)(struct J9JavaVM* vm) ;
 	int  ( *shutdownJVMRI)(struct J9JavaVM* vm) ;
-	IDATA  ( *getOwnedObjectMonitors)(struct J9VMThread *currentThread, struct J9VMThread *targetThread, struct J9ObjectMonitorInfo *info, IDATA infoLen) ;
+	IDATA  ( *getOwnedObjectMonitors)(struct J9VMThread *currentThread, struct J9VMThread *targetThread, struct J9ObjectMonitorInfo *info, IDATA infoLen, BOOLEAN reportErrors) ;
 #if !defined(J9VM_SIZE_SMALL_CODE)
 	void  ( *fieldIndexTableRemove)(struct J9JavaVM* javaVM, struct J9Class *ramClass) ;
 #endif /* J9VM_SIZE_SMALL_CODE */
