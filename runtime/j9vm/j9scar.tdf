@@ -105,8 +105,8 @@ TraceExit=Trc_SC_CurrentLoadedClass_Exit Overhead=1 Level=1 Template="JVM_Curren
 TraceEntry=Trc_SC_CurrentTimeMillis_Entry Overhead=1 Level=1 Template="JVM_CurrentTimeMillis(unused=%d)"
 TraceExit=Trc_SC_CurrentTimeMillis_Exit Overhead=1 Level=1 Template="JVM_CurrentTimeMillis -- return %lld"
 
-TraceEntry=Trc_SC_CX8Field_Entry Overhead=1 Level=1 Template="JVM_CX8Field(obj=%p, field=%p, oldval=%llx, newval=%llx)"
-TraceExit=Trc_SC_CX8Field_Exit Overhead=1 Level=1 Template="JVM_CX8Field -- return %d"
+TraceEntry=Trc_SC_CX8Field_Entry Obsolete Overhead=1 Level=1 Template="JVM_CX8Field(obj=%p, field=%p, oldval=%llx, newval=%llx)"
+TraceExit=Trc_SC_CX8Field_Exit Obsolete Overhead=1 Level=1 Template="JVM_CX8Field -- return %d"
 
 TraceException=Trc_SC_DefineClassWithSource Overhead=1 Level=1 Template="JVM_DefineClassWithSource not implemented"
 TraceException=Trc_SC_DumpThreads Overhead=1 Level=1 Template="JVM_DumpThreads not implemented"
