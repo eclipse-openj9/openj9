@@ -6005,6 +6005,7 @@ typedef struct J9JavaVM {
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 	omrthread_monitor_t delayedLockingOperationsMutex;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+	UDATA asyncGetCallTraceUsed;
 	U_32 compatibilityFlags;
 } J9JavaVM;
 

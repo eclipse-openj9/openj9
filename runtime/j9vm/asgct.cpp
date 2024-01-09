@@ -213,6 +213,7 @@ void AsyncGetCallTrace(ASGCT_CallTrace *trace, jint depth, void *ucontext)
 		PORT_ACCESS_FROM_JAVAVM(BFUjavaVM);
 		ASGCT_parms parms = { trace, depth, ucontext, currentThread, num_frames, NULL, NULL, NULL, NULL, NULL, 0 };
 		UDATA result = 0;
+		BFUjavaVM->asyncGetCallTraceUsed = 1;
 		j9sig_protect(
 				protectedASGCT, (void*)&parms, 
 				emptySignalHandler, NULL,
