@@ -764,7 +764,7 @@ final class MethodHandleResolver {
 
 /*[IF JAVA_SPEC_VERSION >= 16]*/
 	/**
-	 * This method is intended for resolving calls to the MethodHandle methods prior to the upcall,
+	 * This method is intended for resolving calls to the MethodHandle methods prior to the downcall/upcall,
 	 * which yields two values in a two element array. The first array element is a MemberName
 	 * object which specifies the upcall method to be invoked. The second array element is a
 	 * MethodType object given the defining class is a MethodHandle.
@@ -780,7 +780,7 @@ final class MethodHandleResolver {
 	 * @throws InternalError if invoked for the OpenJ9 MethodHandles
 	 */
 	@SuppressWarnings("unused")
-	private static final Object upcallLinkCallerMethod(Class<?> callerClass, MethodType calleeType) throws Throwable {
+	private static final Object ffiCallLinkCallerMethod(Class<?> callerClass, MethodType calleeType) throws Throwable {
 /*[IF OPENJDK_METHODHANDLES]*/
 		Object[] result = new Object[2];
 		Object[] appendixResult = new Object[1];

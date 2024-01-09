@@ -5230,6 +5230,7 @@ typedef struct J9VMThread {
 	 *		* java/lang/invoke/MethodHandle.linkToSpecial
 	 *		* java/lang/invoke/MethodHandle.linkToVirtual
 	 *		* java/lang/invoke/MethodHandle.linkToInterface
+	 *		* java/lang/invoke/MethodHandle.linkToNative
 	 *		the compiled code performs a store to this field right before the INL call. The
 	 *		stored value represents the number of stack slots occupied by the args, and the
 	 *		interpreter uses the value to locate the beginning of the arguments on the stack.

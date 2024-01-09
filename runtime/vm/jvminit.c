@@ -4160,6 +4160,12 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 	if (FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXNOKEEPJNIIDS, NULL) != -1) {
 		vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_NEVER_KEEP_JNI_IDS;
 	}
+#if JAVA_SPEC_VERSION >= 22
+#define VMOPT_XFFIPROTO "-Xffiproto"
+	if (FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XFFIPROTO, NULL) != -1) {
+		vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_FFI_PROTO;
+	}
+#endif /* JAVA_SPEC_VERSION >= 22 */
 
 	return JNI_OK;
 }

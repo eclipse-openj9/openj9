@@ -154,6 +154,8 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	<classref name="openj9/internal/criu/JVMRestoreException" flags="opt_criuSupport"/>
 
 	<!-- Class references needed to support Foreign Linker API. -->
+	<classref name="java/lang/invoke/NativeMethodHandle" flags="opt_openjdkFfi" versions="22-"/>
+
 	<classref name="openj9/internal/foreign/abi/InternalDowncallHandler" flags="opt_openjdkFfi" versions="17-"/>
 	<classref name="openj9/internal/foreign/abi/InternalUpcallHandler" flags="opt_openjdkFfi" versions="17-"/>
 	<classref name="openj9/internal/foreign/abi/UpcallMHMetaData" flags="opt_openjdkFfi" versions="17-"/>
@@ -423,11 +425,15 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	<fieldref class="jdk/internal/vm/Continuation" name="scopedValueCache" signature="[Ljava/lang/Object;" versions="19-"/>
 
 	<!-- Field references needed to support Foreign Linker API. -->
-	<fieldref class="openj9/internal/foreign/abi/InternalDowncallHandler" name="cifNativeThunkAddr" signature="J" flags="opt_openjdkFfi" versions="17-"/>
+	<fieldref class="java/lang/invoke/NativeMethodHandle" name="invokeCache" signature="[Ljava/lang/Object;" flags="opt_openjdkFfi" versions="22-"/>
+	<fieldref class="java/lang/invoke/NativeMethodHandle" name="nep" signature="Ljava/lang/invoke/MethodHandle;" flags="opt_openjdkFfi" versions="22-"/>
+
 	<fieldref class="openj9/internal/foreign/abi/InternalDowncallHandler" name="argTypesAddr" signature="J" flags="opt_openjdkFfi" versions="17-"/>
+	<fieldref class="openj9/internal/foreign/abi/InternalDowncallHandler" name="boundMH" signature="Ljava/lang/invoke/MethodHandle;" flags="opt_openjdkFfi" versions="22-"/>
+	<fieldref class="openj9/internal/foreign/abi/InternalDowncallHandler" name="cifNativeThunkAddr" signature="J" flags="opt_openjdkFfi" versions="17-"/>
+	<fieldref class="openj9/internal/foreign/abi/InternalDowncallHandler" name="invokeCache" signature="[Ljava/lang/Object;" flags="opt_openjdkFfi" versions="22-"/>
 
 	<fieldref class="openj9/internal/foreign/abi/UpcallMHMetaData" name="calleeMH" signature="Ljava/lang/invoke/MethodHandle;" flags="opt_openjdkFfi" versions="17-"/>
-	<fieldref class="openj9/internal/foreign/abi/UpcallMHMetaData" name="calleeType" signature="Ljava/lang/invoke/MethodType;" flags="opt_openjdkFfi" versions="17-"/>
 	<fieldref class="openj9/internal/foreign/abi/UpcallMHMetaData" name="invokeCache" signature="[Ljava/lang/Object;" flags="opt_openjdkFfi" versions="17-"/>
 	<fieldref class="openj9/internal/foreign/abi/UpcallMHMetaData" name="nativeArgArray" signature="[Ljava/lang/Object;" flags="opt_openjdkFfi" versions="17-"/>
 
@@ -485,7 +491,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	<staticmethodref class="java/lang/invoke/MethodHandleResolver" name="linkCallerMethod" signature="(Ljava/lang/Class;ILjava/lang/Class;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/Object;" flags="opt_openjdkMethodhandle"/>
 
 	<!-- Static method references needed to support Foreign Linker API. -->
-	<staticmethodref class="java/lang/invoke/MethodHandleResolver" name="upcallLinkCallerMethod" signature="(Ljava/lang/Class;Ljava/lang/invoke/MethodType;)Ljava/lang/Object;" versions="17-"/>
+	<staticmethodref class="java/lang/invoke/MethodHandleResolver" name="ffiCallLinkCallerMethod" signature="(Ljava/lang/Class;Ljava/lang/invoke/MethodType;)Ljava/lang/Object;" versions="17-"/>
 
 	<staticmethodref class="jdk/internal/loader/NativeLibraries" name="load" signature="(Ljdk/internal/loader/NativeLibraries$NativeLibraryImpl;Ljava/lang/String;ZZZ)Z" versions="15-18"/>
 	<staticmethodref class="jdk/internal/loader/NativeLibraries" name="load" signature="(Ljdk/internal/loader/NativeLibraries$NativeLibraryImpl;Ljava/lang/String;ZZ)Z" versions="19-"/>

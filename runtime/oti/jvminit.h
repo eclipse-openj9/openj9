@@ -580,6 +580,10 @@ enum INIT_STAGE {
 
 #define VMOPT_XXCONTINUATIONCACHE "-XX:ContinuationCache:"
 
+#if JAVA_SPEC_VERSION >= 22
+#define VMOPT_XFFIPROTO "-Xffiproto"
+#endif /* JAVA_SPEC_VERSION >= 22 */
+
 #define MAPOPT_AGENTLIB_JDWP_EQUALS "-agentlib:jdwp="
 #define MAPOPT_XRUNJDWP "-Xrunjdwp:"
 

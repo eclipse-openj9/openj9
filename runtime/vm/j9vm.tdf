@@ -904,12 +904,12 @@ TraceExit=Trc_VM_JNI_isVirtualThread_Exit Overhead=1 Level=4 Template="JNI IsVir
 
 TraceEvent=Trc_VM_criu_runDelayedLockRelatedOperations_runDelayedInterrupt Overhead=1 Level=3 Template="Checkpoint thread calling delayed Thread.interrupt() op=%zu on instance=%p"
 
-TraceEntry=Trc_VM_sendResolveUpcallInvokeHandle_Entry Overhead=1 Level=3 Template="sendResolveUpcallInvokeHandle"
-TraceEvent=Trc_VM_sendResolveUpcallInvokeHandle_upcallMetaDataHandler Overhead=1 Level=3 Template="sendResolveUpcallInvokeHandle --> UpcallMetaData Handler = %p"
-TraceExit=Trc_VM_sendResolveUpcallInvokeHandle_Exit Overhead=1 Level=3 Template="sendResolveUpcallInvokeHandle"
+TraceEntry=Trc_VM_sendResolveFfiCallInvokeHandle_Entry Overhead=1 Level=3 Template="sendResolveFfiCallInvokeHandle"
+TraceEvent=Trc_VM_sendResolveFfiCallInvokeHandle_ffiCallHandler Overhead=1 Level=3 Template="sendResolveFfiCallInvokeHandle --> Downcall/Upcall Handler = %p"
+TraceExit=Trc_VM_sendResolveFfiCallInvokeHandle_Exit Overhead=1 Level=3 Template="sendResolveFfiCallInvokeHandle"
 
-TraceEntry=Trc_VM_resolveUpcallInvokeHandle_Entry Overhead=1 Level=3 Template="resolveUpcallInvokeHandle"
-TraceExit=Trc_VM_resolveUpcallInvokeHandle_Exit Overhead=1 Level=3 Template="resolveUpcallInvokeHandle --> invokeCache=%p"
+TraceEntry=Trc_VM_resolveFfiCallInvokeHandle_Entry Overhead=1 Level=3 Template="resolveFfiCallInvokeHandle"
+TraceExit=Trc_VM_resolveFfiCallInvokeHandle_Exit Overhead=1 Level=3 Template="resolveFfiCallInvokeHandle --> invokeCache=%p"
 
 TraceEntry=Trc_VM_subAllocateThunkFromHeap_Entry NoEnv Overhead=1 Level=3 Template="Enter subAllocateThunkFromHeap - The requested thunk size(%zu)"
 TraceEvent=Trc_VM_subAllocateThunkFromHeap_suballoc_thunk_add_hashtable_failed NoEnv Overhead=1 Level=3 Template="subAllocateThunkFromHeap - Failed to add an entry of the hashtable for a thunk with the requested size(%zu) from the heap(%p)"
