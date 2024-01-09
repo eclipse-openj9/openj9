@@ -5717,6 +5717,7 @@ JVM_Timeout(jint descriptor, jint timeout)
 }
 
 
+#if JAVA_SPEC_VERSION < 22
 /**
  * @return Is 8 byte compare and swap directly supported?
  *
@@ -5733,35 +5734,7 @@ JVM_SupportsCX8(void)
 
 	return JNI_TRUE;
 }
-
-
-/**
- * Perform an atomic compare and swap on a volatile long field.
- *
- * @arg[in] env the JNI environment
- * @arg[in] obj the jobject to which the instance field belongs, or the jclass to which the static field belongs
- * @arg[in] field the field to perform the compare and swap on
- * @arg[in] oldval if the current value in field is not oldval, it is unchanged
- * @arg[in] newval if the current value in field is oldval, newval is atomically stored into the field
- *
- * @return JNI_TRUE if newval was stored into the field, or JNI_FALSE if the fields value was not oldval
- *
- * @note The field must be volatile.
- * @note If obj is null this function produces undefined behaviour.
- *
- * @note This function is used in 1.4 if JVM_SupportsCX8 returns true.
- * @note In 1.5 it is unused.
- */
-jboolean JNICALL
-JVM_CX8Field(JNIEnv* env, jobject obj, jfieldID field, jlong oldval, jlong newval)
-{
-	jboolean result = JNI_FALSE;
-
-	Trc_SC_CX8Field_Entry(env, obj, field, oldval, newval);
-	exit(230);
-
-	return result;
-}
+#endif /* JAVA_SPEC_VERSION < 22 */
 
 
 /**

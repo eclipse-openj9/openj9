@@ -107,8 +107,8 @@ TraceExit=Trc_SunVMI_CurrentLoadedClass_Exit Overhead=1 Level=1 Template="JVM_Cu
 TraceEntry=Trc_SunVMI_CurrentTimeMillis_Entry Overhead=1 Level=1 Template="JVM_CurrentTimeMillis(unused=%d)"
 TraceExit=Trc_SunVMI_CurrentTimeMillis_Exit Overhead=1 Level=1 Template="JVM_CurrentTimeMillis -- return %lld"
 
-TraceEntry=Trc_SunVMI_CX8Field_Entry Overhead=1 Level=1 Template="JVM_CX8Field(obj=%p, field=%p, oldval=%llx, newval=%llx)"
-TraceExit=Trc_SunVMI_CX8Field_Exit Overhead=1 Level=1 Template="JVM_CX8Field -- return %d"
+TraceEntry=Trc_SunVMI_CX8Field_Entry Obsolete Overhead=1 Level=1 Template="JVM_CX8Field(obj=%p, field=%p, oldval=%llx, newval=%llx)"
+TraceExit=Trc_SunVMI_CX8Field_Exit Obsolete Overhead=1 Level=1 Template="JVM_CX8Field -- return %d"
 
 TraceException=Trc_SunVMI_DefineClassWithSource Overhead=1 Level=1 Template="JVM_DefineClassWithSource not implemented"
 TraceException=Trc_SunVMI_DumpThreads Overhead=1 Level=1 Template="JVM_DumpThreads not implemented"
@@ -277,7 +277,7 @@ TraceEntry=Trc_SunVMI_SocketClose_Entry NoEnv Overhead=1 Level=1 Template="JVM_S
 TraceExit-Exception=Trc_SunVMI_SocketClose_bad_descriptor NoEnv Overhead=1 Level=1 Template="JVM_SocketClose -- bad descriptor"
 TraceExit=Trc_SunVMI_SocketClose_Exit NoEnv Overhead=1 Level=1 Template="JVM_SocketClose -- return %d (expected return value is 1)"
 
-TraceEvent=Trc_SunVMI_SupportsCX8 NoEnv Overhead=1 Level=1 Template="JVM_SupportsCX8"
+TraceEvent=Trc_SunVMI_SupportsCX8 Obsolete NoEnv Overhead=1 Level=1 Template="JVM_SupportsCX8"
 
 TraceEntry=Trc_SunVMI_Sync_Entry NoEnv Overhead=1 Level=1 Template="JVM_Sync(descriptor=%d)"
 TraceExit-Exception=Trc_SunVMI_Sync_bad_descriptor NoEnv Overhead=1 Level=1 Template="JVM_Sync -- bad descriptor"
