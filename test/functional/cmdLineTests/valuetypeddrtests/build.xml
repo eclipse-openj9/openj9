@@ -27,7 +27,8 @@
 	<description>
 		Build valuetype ddr tests
 	</description>
-
+	<property name="LIB" value="asm_all,testng,jcommander" />
+	<import file="${TEST_ROOT}/TKG/scripts/getDependencies.xml" />
 	<import file="${TEST_ROOT}/functional/cmdLineTests/buildTools.xml"/>
 
 	<!-- set properties for this build -->
@@ -40,7 +41,7 @@
 		</copy>
 	</target>
 
-	<target name="build" depends="buildCmdLineTestTools">
+	<target name="build" depends="buildCmdLineTestTools,getDependentLibs">
 		<if>
 			<equals arg1="${JDK_VERSION}" arg2="Valhalla"/>
 			<then>
