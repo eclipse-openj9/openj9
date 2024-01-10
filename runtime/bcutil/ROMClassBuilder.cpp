@@ -325,7 +325,12 @@ ROMClassBuilder::handleAnonClassName(J9CfrClassFile *classfile, bool *isLambda, 
 
 	/* check if adding host package name to anonymous class is needed */
 	UDATA newHostPackageLength = 0;
-	if (memcmp(originalStringBytes, hostPackageName, hostPackageLength) != 0) {
+	if ((0 != memcmp(originalStringBytes, hostPackageName, hostPackageLength))
+#if JAVA_SPEC_VERSION >= 22
+	/* Don't add the host package name if a package name already exists in the class name. */
+	&& (NULL == strchr(originalStringBytes, '/'))
+#endif /* JAVA_SPEC_VERSION >= 22 */
+	) {
 		newHostPackageLength = hostPackageLength + 1;
 	}
 	UDATA newAnonClassNameLength = originalStringLength + 1 + ROM_ADDRESS_LENGTH + 1 + newHostPackageLength;
