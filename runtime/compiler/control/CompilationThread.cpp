@@ -12219,8 +12219,11 @@ TR_LowPriorityCompQueue::TR_LowPriorityCompQueue()
    : _firstLPQentry(NULL), _lastLPQentry(NULL), _sizeLPQ(0), _LPQWeight(0),
      _trackingEnabled(false), _spine(NULL), _STAT_compReqQueuedByIProfiler(0), _STAT_conflict(0),
      _STAT_staleScrubbed(0), _STAT_bypass(0), _STAT_compReqQueuedByJIT(0), _STAT_LPQcompFromIprofiler(0),
-     _STAT_LPQcompFromInterpreter(0), _STAT_LPQcompUpgrade(0), _STAT_compReqQueuedByInterpreter(0),
-     _STAT_numFailedToEnqueueInLPQ(0)
+     _STAT_LPQcompFromInterpreter(0), _STAT_LPQcompUpgrade(0),
+#if defined(J9VM_OPT_JITSERVER)
+      _STAT_compReqQueuedByJITServer(0), _STAT_LPQcompServerUnavailable(0),
+#endif /* defined(J9VM_OPT_JITSERVER) */
+     _STAT_compReqQueuedByInterpreter(0), _STAT_numFailedToEnqueueInLPQ(0)
    {
    }
 
@@ -12477,6 +12480,10 @@ void TR_LowPriorityCompQueue::incStatsCompFromLPQ(uint8_t reason)
          _STAT_LPQcompFromInterpreter++; break;
       case TR_MethodToBeCompiled::REASON_UPGRADE:
          _STAT_LPQcompUpgrade++; break;
+#if defined(J9VM_OPT_JITSERVER)
+      case TR_MethodToBeCompiled::REASON_SERVER_UNAVAILABLE:
+         _STAT_LPQcompServerUnavailable++; break;
+#endif /* defined (J9VM_OPT_JITSERVER) */
       default:
          TR_ASSERT(false, "No other known reason for LPQ compilations\n");
       }
@@ -12491,6 +12498,10 @@ void TR_LowPriorityCompQueue::incStatsReqQueuedToLPQ(uint8_t reason)
          _STAT_compReqQueuedByInterpreter++; break;
       case TR_MethodToBeCompiled::REASON_UPGRADE:
          _STAT_compReqQueuedByJIT++; break;
+#if defined(J9VM_OPT_JITSERVER)
+      case TR_MethodToBeCompiled::REASON_SERVER_UNAVAILABLE:
+         _STAT_compReqQueuedByJITServer++; break;
+#endif /* defined (J9VM_OPT_JITSERVER) */
       default:
          TR_ASSERT(false, "No other known reason for LPQ compilations\n");
       }
@@ -12499,13 +12510,21 @@ void TR_LowPriorityCompQueue::incStatsReqQueuedToLPQ(uint8_t reason)
 void TR_LowPriorityCompQueue::printStats() const
    {
    fprintf(stderr, "Stats for LPQ:\n");
+#if defined(J9VM_OPT_JITSERVER)
+   fprintf(stderr, "   Requests for LPQ = %4u (Sources: IProfiler=%3u Interpreter=%3u JIT=%3u JITServer=%3u)\n",
+      _STAT_compReqQueuedByIProfiler + _STAT_compReqQueuedByInterpreter + _STAT_compReqQueuedByJIT + _STAT_compReqQueuedByJITServer,
+      _STAT_compReqQueuedByIProfiler, _STAT_compReqQueuedByInterpreter, _STAT_compReqQueuedByJIT, _STAT_compReqQueuedByJITServer);
+   fprintf(stderr, "   Comps.  from LPQ = %4u (Sources: IProfiler=%3u Interpreter=%3u JIT=%3u JITServer=%3u)\n",
+      _STAT_LPQcompFromIprofiler + _STAT_LPQcompFromInterpreter + _STAT_LPQcompUpgrade + _STAT_LPQcompServerUnavailable,
+      _STAT_LPQcompFromIprofiler, _STAT_LPQcompFromInterpreter, _STAT_LPQcompUpgrade, _STAT_LPQcompServerUnavailable);
+#else
    fprintf(stderr, "   Requests for LPQ = %4u (Sources: IProfiler=%3u Interpreter=%3u JIT=%3u)\n",
       _STAT_compReqQueuedByIProfiler + _STAT_compReqQueuedByInterpreter + _STAT_compReqQueuedByJIT,
       _STAT_compReqQueuedByIProfiler, _STAT_compReqQueuedByInterpreter, _STAT_compReqQueuedByJIT);
    fprintf(stderr, "   Comps.  from LPQ = %4u (Sources: IProfiler=%3u Interpreter=%3u JIT=%3u)\n",
       _STAT_LPQcompFromIprofiler + _STAT_LPQcompFromInterpreter + _STAT_LPQcompUpgrade,
       _STAT_LPQcompFromIprofiler, _STAT_LPQcompFromInterpreter, _STAT_LPQcompUpgrade);
-
+#endif /* defined(J9VM_OPT_JITSERVER) */
    fprintf(stderr, "   Conflicts        = %4u (tried to cache j9method that didn't have space)\n", _STAT_conflict);
    fprintf(stderr, "   Stale entries    = %4u\n", _STAT_staleScrubbed); // we want very few of these, hopefully 0
    fprintf(stderr, "   Bypass ocurrences= %4u (normal comp req hapened before the fast LPQ comp req)\n", _STAT_bypass);
