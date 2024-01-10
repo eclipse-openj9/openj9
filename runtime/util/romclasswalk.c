@@ -155,11 +155,20 @@ void allSlotsInROMClassDo(J9ROMClass* romClass,
 	SLOT_CALLBACK(romClass, J9ROM_U32,  romClass, invokeCacheCount);
 #else /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 	SLOT_CALLBACK(romClass, J9ROM_U32,  romClass, methodTypeCount);
+	SLOT_CALLBACK(romClass, J9ROM_U32,  romClass, varHandleMethodTypeCount);
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
+	SLOT_CALLBACK(romClass, J9ROM_U32,  romClass, bsmCount);
+	SLOT_CALLBACK(romClass, J9ROM_U32,  romClass, callSiteCount);
+	SLOT_CALLBACK(romClass, J9ROM_SRP,  romClass, callSiteData);
+	SLOT_CALLBACK(romClass, J9ROM_U32,  romClass, classFileSize);
+	SLOT_CALLBACK(romClass, J9ROM_U32,  romClass, classFileCPCount);
 	SLOT_CALLBACK(romClass, J9ROM_U16,  romClass, staticSplitMethodRefCount);
 	SLOT_CALLBACK(romClass, J9ROM_U16,  romClass, specialSplitMethodRefCount);
 	SLOT_CALLBACK(romClass, J9ROM_SRP,  romClass, staticSplitMethodRefIndexes);
 	SLOT_CALLBACK(romClass, J9ROM_SRP,  romClass, specialSplitMethodRefIndexes);
+#if defined(J9VM_OPT_METHOD_HANDLE)
+	SLOT_CALLBACK(romClass, J9ROM_SRP,  romClass, varHandleMethodTypeLookupTable);
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 
 	/* walk interfaces SRPs block */
 	srpCursor = J9ROMCLASS_INTERFACES(romClass);
