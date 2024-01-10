@@ -378,7 +378,7 @@ You must install a number of software dependencies to create a suitable build en
 
 - [Cygwin](https://cygwin.com/install.html), which provides a Unix-style command line interface. Install all packages in the `Devel` category. In the `Archive` category, install the packages `zip` and `unzip`. In the `Utils` category, install the `cpio` package. Install any further package dependencies that are identified by the installer. More information about using Cygwin can be found [here](https://cygwin.com/docs.html).
 - [Windows JDK 17](https://api.adoptopenjdk.net/v3/binary/latest/17/ga/windows/x64/jdk/openj9/normal/adoptopenjdk), which is used as the boot JDK.
-- [Microsoft Visual Studio 2019](https://aka.ms/vs/16/release/vs_community.exe), which is the default compiler level used by OpenJDK17.
+- [Microsoft Visual Studio 2022](https://aka.ms/vs/17/release/vs_community.exe), which is the default compiler level used by OpenJDK17.
 - [Freemarker V2.3.8](https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download) - only when building with `--with-cmake=no`
 - [LLVM/Clang](https://releases.llvm.org/7.0.0/LLVM-7.0.0-win64.exe)
 - [NASM Assembler v2.13.03 or newer](https://www.nasm.us/pub/nasm/releasebuilds/?C=M;O=D)
@@ -402,18 +402,18 @@ cd /cygdrive/c/temp
 
 - Run the following command:
 ```
-wget https://aka.ms/vs/16/release/vs_community.exe -O vs2019.exe
+wget https://aka.ms/vs/17/release/vs_community.exe -O vs2022.exe
 ```
 
-- Before installing Visual Studio, change the permissions on the installation file by running `chmod u+x vs2019.exe`.
-- Install Visual Studio by running the file `vs2019.exe` (There is no special step required for installing. Please follow the guide of the installer to install all desired components, the C++ compiler is required).
+- Before installing Visual Studio, change the permissions on the installation file by running `chmod u+x vs2022.exe`.
+- Install Visual Studio by running the file `vs2022.exe` (There is no special step required for installing. Please follow the guide of the installer to install all desired components, the C++ compiler is required).
 
 Not all of the shared libraries that are included with Visual Studio are registered during installation.
 In particular, the `msdia140.dll` libraries must be registered manually by running command prompt as administrator.  To do so, execute the following from a command prompt:
 
 ```
-regsvr32 "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\DIA SDK\bin\msdia140.dll"
-regsvr32 "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\DIA SDK\bin\amd64\msdia140.dll"
+regsvr32 "C:\Program Files (x86)\Microsoft Visual Studio\2022\Community\DIA SDK\bin\msdia140.dll"
+regsvr32 "C:\Program Files (x86)\Microsoft Visual Studio\2022\Community\DIA SDK\bin\amd64\msdia140.dll"
 ```
 
 - When building with `--with-cmake=no`, unpack the Freemarker archive:
