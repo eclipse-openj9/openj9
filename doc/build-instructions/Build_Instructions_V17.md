@@ -72,7 +72,7 @@ If you want to build a binary by using a Docker container, follow these steps to
 
 2. Next, run the following command to build a Docker image, called **openj9**:
 ```
-bash mkdocker.sh --tag=openj9 --dist=ubuntu --version=20 --gitcache=no --jdk=17 --build
+bash mkdocker.sh --tag=openj9 --dist=ubuntu --version=22 --gitcache=no --jdk=17 --build
 ```
 
 3. Start a Docker container from the **openj9** image with the following command, where `-v` maps any directory, `<host_directory>`,
@@ -90,7 +90,7 @@ Now that you have the Docker image running, you are ready to move to the next st
 If you don't want to user Docker, you can still build directly on your Ubuntu system or in a Ubuntu virtual machine. Use the output of the following command like a recipe card to determine the software dependencies that must be installed on the system, plus a few configuration steps.
 
 ```
-bash mkdocker.sh --tag=openj9 --dist=ubuntu --version=20 --gitcache=no --jdk=17 --print
+bash mkdocker.sh --tag=openj9 --dist=ubuntu --version=22 --gitcache=no --jdk=17 --print
 ```
 
 1. Install the list of dependencies that can be obtained with the `apt-get` command from the following section of the Dockerfile:
@@ -100,11 +100,11 @@ apt-get update \
     ...
 ```
 
-2. The previous step installed g++-10 and gcc-10 packages, which might be different
+2. The previous step installed g++-11 and gcc-11 packages, which might be different
 than the default version installed on your system. Export variables to set the
 version used in the build.
 ```
-export CC=gcc-10 CXX=g++-10
+export CC=gcc-11 CXX=g++-11
 ```
 
 3. Download and setup the boot JDK using the latest AdoptOpenJDK v17 build.
@@ -721,7 +721,7 @@ bash get_source.sh
 
 You must install a number of software dependencies to create a suitable build environment on your AArch64 Linux system:
 
-- GNU C/C++ compiler (The Docker image uses GCC 7.5)
+- GNU C/C++ compiler 10.3 (The Docker image uses GCC 7.5)
 - [AArch64 Linux JDK](https://api.adoptopenjdk.net/v3/binary/latest/17/ga/linux/aarch64/jdk/openj9/normal/adoptopenjdk), which is used as the boot JDK.
 - [Freemarker V2.3.8](https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download) - Only when building with `--with-cmake=no`
 
