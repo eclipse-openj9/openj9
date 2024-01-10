@@ -280,6 +280,10 @@ static intptr_t getS390Description(struct J9PortLibrary *portLibrary, J9Processo
 static intptr_t getRISCV64Description(struct J9PortLibrary *portLibrary, J9ProcessorDesc *desc);
 #endif /* defined(RISCV64) */
 
+#if defined(J9AARCH64)
+static intptr_t getAArch64Description(struct J9PortLibrary *portLibrary, J9ProcessorDesc *desc);
+#endif /* defined(J9AARCH64) */
+
 #if (defined(LINUXPPC) || defined(AIXPPC))
 static J9ProcessorArchitecture mapPPCProcessor(const char *processorName);
 static void setFeature(J9ProcessorDesc *desc, uint32_t feature);
@@ -445,6 +449,8 @@ j9sysinfo_get_processor_description(struct J9PortLibrary *portLibrary, J9Process
 		rc = getS390Description(portLibrary, desc);
 #elif defined(RISCV64)
 		rc = getRISCV64Description(portLibrary, desc);
+#elif defined(J9AARCH64)
+		rc = getAArch64Description(portLibrary, desc);
 #endif
 	}
 
@@ -1229,6 +1235,16 @@ getRISCV64Description(struct J9PortLibrary *portLibrary, J9ProcessorDesc *desc)
 	return 0;
 }
 #endif /* defined(RISCV64) */
+
+#if defined(J9AARCH64)
+static intptr_t
+getAArch64Description(struct J9PortLibrary *portLibrary, J9ProcessorDesc *desc)
+{
+	desc->processor = PROCESOR_AARCH64_UNKNOWN;
+	desc->physicalProcessor = desc->processor;
+	return 0;
+}
+#endif /* defined(J9AARCH64) */
 
 BOOLEAN
 j9sysinfo_processor_has_feature(struct J9PortLibrary *portLibrary, J9ProcessorDesc *desc, uint32_t feature)
