@@ -156,7 +156,12 @@ internalDefineClass(
 		if ((NULL != hostClass) && (J2SE_VERSION(vm) >= J2SE_V11)) {
 			J9ROMClass *hostROMClass = hostClass->romClass;
 			/* From Java 9 and onwards, set IllegalArgumentException when host class and anonymous class have different packages. */
-			if (!hasSamePackageName(romClass, hostROMClass)) {
+			if (!hasSamePackageName(romClass, hostROMClass)
+#if JAVA_SPEC_VERSION >= 22
+			/* The below error only applies if the host class is not an interface. */
+			&& !J9ROMCLASS_IS_INTERFACE(hostROMClass)
+#endif /* JAVA_SPEC_VERSION >= 22 */
+			) {
 				omrthread_monitor_exit(vm->classTableMutex);
 				setIllegalArgumentExceptionHostClassAnonClassHaveDifferentPackages(vmThread, romClass, hostROMClass);
 				freeAnonROMClass(vm, romClass);
