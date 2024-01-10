@@ -250,7 +250,7 @@ TraceEntry=Trc_SC_RecvFrom_Entry NoEnv Overhead=1 Level=1 Template="JVM_RecvFrom
 TraceExit=Trc_SC_RecvFrom_Exit NoEnv Overhead=1 Level=1 Template="JVM_RecvFrom -- return %d, *length=%d"
 
 TraceEvent=Trc_SC_RegisterSignal NoEnv Overhead=1 Level=1 Template="JVM_RegisterSignal (not implemented -- returning -1)"
-TraceEvent=Trc_SC_RegisterUnsafeMethods Overhead=1 Level=1 Template="JVM_RegisterUnsafeMethods (not implemented -- returning)"
+TraceEvent=Trc_SC_RegisterUnsafeMethods Obsolete Overhead=1 Level=1 Template="JVM_RegisterUnsafeMethods (not implemented -- returning)"
 
 TraceEntry=Trc_SC_Send_Entry NoEnv Overhead=1 Level=1 Template="JVM_Send(descriptor=%d, buffer=%p, length=%d, flags=%d)"
 TraceExit=Trc_SC_Send_Exit NoEnv Overhead=1 Level=1 Template="JVM_Send -- return %d"
