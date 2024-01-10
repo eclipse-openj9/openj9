@@ -1203,8 +1203,13 @@ J9::Simplifier::simplifyIndirectLoadPatterns(TR::Node *node)
 
          TR::SymbolReference *childSymref = firstChild->getSymbolReference();
 
+         // Temporarily disable simplification of j9class->java/lang/Class->j9class to j9class
+         // The potential introduction of an l2a is causing problems for l2aEvaluator,
+         // which makes the assumption that l2a is only used for compressed references
+#if 0
          if (symRefPairMatches(nodeSymref, childSymref, getSymRefTab()->findClassFromJavaLangClassSymbolRef(), getSymRefTab()->findJavaLangClassFromClassSymbolRef()))
             fieldsAreComplementary = true;
+#endif
 
          if (symRefPairMatches(nodeSymref, childSymref, getSymRefTab()->findClassFromJavaLangClassAsPrimitiveSymbolRef(), getSymRefTab()->findJavaLangClassFromClassSymbolRef()))
             fieldsAreComplementary = true;
