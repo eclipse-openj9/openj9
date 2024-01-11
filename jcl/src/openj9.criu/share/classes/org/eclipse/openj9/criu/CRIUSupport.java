@@ -93,12 +93,12 @@ public final class CRIUSupport {
 	}
 
 	/**
-	 * Queries if CRIU support is enabled and j9criu29 library has been loaded.
+	 * Queries if CRIU support is enabled and criu library has been loaded.
 	 *
 	 * @return TRUE if support is enabled and the library is loaded, FALSE otherwise
 	 */
 	public static boolean isCRIUSupportEnabled() {
-		return InternalCRIUSupport.isCRIUSupportEnabled();
+		return InternalCRIUSupport.isCRIUSupportEnabledAndNativeLoaded();
 	}
 
 	/**
