@@ -575,12 +575,12 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
             }
          else // ROM class not in shared class cache (no space or ineligible - maybe because of implicit SCC)
             {
-            // SCC is used, either explicit or implicit; this is a sign that start-up may be important
-            // If there is enough CPU power to compile sooner, do so by using lower counts
-            // but only for the classes loaded during startup
+            // For an implicit SCC, if there is enough CPU power to compile sooner,
+            // do so by using lower counts, but only for the classes loaded during startup
             if (!TR::Options::getCountsAreProvidedByUser() && !countInOptionSet)
                {
                if (TR::Options::getCmdLineOptions()->getOption(TR_UseLowerCountsForNonSCCMethodsDuringStartup) &&
+                   J9_ARE_NO_BITS_SET(jitConfig->javaVM->sharedClassConfig->runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_CACHE_NON_BOOT_CLASSES) &&
                    (jitConfig->javaVM->phase != J9VM_PHASE_NOT_STARTUP) &&
                    TR::Compiler->target.numberOfProcessors() >= TR_NUMPROC_FOR_LARGE_SMP)
                   {
