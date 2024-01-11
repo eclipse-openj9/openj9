@@ -115,7 +115,6 @@ jvm_add_exports(jvm
 	_JVM_Recv@16
 	_JVM_RecvFrom@24
 	_JVM_RegisterSignal@8
-	_JVM_RegisterUnsafeMethods@8
 	_JVM_Send@16
 	_JVM_SendTo@24
 	_JVM_SetLength@12

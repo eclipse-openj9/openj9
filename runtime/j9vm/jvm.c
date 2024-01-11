@@ -5728,19 +5728,6 @@ JVM_SupportsCX8(void)
 }
 #endif /* JAVA_SPEC_VERSION < 22 */
 
-
-/**
- * Method stub for method not yet implemented. Required for 1.4 support.
- */
-void JNICALL
-JVM_RegisterUnsafeMethods(JNIEnv* env, jclass unsafeClz)
-{
-
-	Trc_SC_RegisterUnsafeMethods(env);
-
-}
-
-
 jint JNICALL
 JVM_ActiveProcessorCount(void)
 {
