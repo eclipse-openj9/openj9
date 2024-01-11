@@ -724,14 +724,14 @@ JVM_ExpandStackFrameInfo(JNIEnv *env, jobject object)
 {
 	assert(!"JVM_ExpandStackFrameInfo unimplemented");
 }
-#endif /* JAVA_SPEC_VERSION >= 22 */
 
-#if JAVA_SPEC_VERSION >= 23
 JNIEXPORT void JNICALL
 JVM_VirtualThreadDisableSuspend(JNIEnv *env, jobject vthread, jboolean enter)
 {
-	assert(!"JVM_VirtualThreadDisableSuspend unimplemented");
+	/* TODO: Add implementation.
+	 * See https://github.com/eclipse-openj9/openj9/issues/18671 for more details.
+	 */
 }
-#endif /* JAVA_SPEC_VERSION >= 23 */
+#endif /* JAVA_SPEC_VERSION >= 22 */
 
 } /* extern "C" */
