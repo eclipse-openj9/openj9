@@ -35,9 +35,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			-DRESJAR=$(CMDLINETESTER_RESJAR) \
 			-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) \
 			-DJDMPVIEW_EXE=$(Q)$(TEST_JDK_HOME)$(D)bin$(D)jdmpview$(EXECUTABLE_SUFFIX)$(Q) \
-			-DASMJAR=$(Q)$(JVM_TEST_ROOT)$(D)TKG$(D)lib$(D)asm-all.jar$(Q) \
-			-DJCOMMANDERJAR=$(Q)$(JVM_TEST_ROOT)$(D)TKG$(D)lib$(D)jcommander.jar$(Q) \
-			-DTESTNGJAR=$(Q)$(JVM_TEST_ROOT)$(D)TKG$(D)lib$(D)testng.jar$(Q) \
+			-DASMJAR=$(Q)$(LIB_DIR)$(D)asm-all.jar$(Q) \
+			-DJCOMMANDERJAR=$(Q)$(LIB_DIR)$(D)jcommander.jar$(Q) \
+			-DTESTNGJAR=$(Q)$(LIB_DIR)$(D)testng.jar$(Q) \
 			-DVALUETYPEJAR=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)Valhalla$(D)ValhallaTests.jar$(Q) \
 			-DCPDL=$(Q)$(P)$(Q) \
 			-jar $(CMDLINETESTER_JAR) \
@@ -74,9 +74,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			-DRESJAR=$(CMDLINETESTER_RESJAR) \
 			-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) \
 			-DJDMPVIEW_EXE=$(Q)$(TEST_JDK_HOME)$(D)bin$(D)jdmpview$(EXECUTABLE_SUFFIX)$(Q) \
-			-DASMJAR=$(Q)$(JVM_TEST_ROOT)$(D)TKG$(D)lib$(D)asm-all.jar$(Q) \
-			-DJCOMMANDERJAR=$(Q)$(JVM_TEST_ROOT)$(D)TKG$(D)lib$(D)jcommander.jar$(Q) \
-			-DTESTNGJAR=$(Q)$(JVM_TEST_ROOT)$(D)TKG$(D)lib$(D)testng.jar$(Q) \
+			-DASMJAR=$(Q)$(LIB_DIR)$(D)asm-all.jar$(Q) \
+			-DJCOMMANDERJAR=$(Q)$(LIB_DIR)$(D)jcommander.jar$(Q) \
+			-DTESTNGJAR=$(Q)$(LIB_DIR)$(D)testng.jar$(Q) \
 			-DVALUETYPEJAR=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)Valhalla$(D)ValhallaTests.jar$(Q) \
 			-DCPDL=$(Q)$(P)$(Q) \
 			-jar $(CMDLINETESTER_JAR) \
@@ -114,9 +114,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			-DOPT=-Xint \
 			-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) \
 			-DJDMPVIEW_EXE=$(Q)$(TEST_JDK_HOME)$(D)bin$(D)jdmpview$(EXECUTABLE_SUFFIX)$(Q) \
-			-DASMJAR=$(Q)$(JVM_TEST_ROOT)$(D)TKG$(D)lib$(D)asm-all.jar$(Q) \
-			-DJCOMMANDERJAR=$(Q)$(JVM_TEST_ROOT)$(D)TKG$(D)lib$(D)jcommander.jar$(Q) \
-			-DTESTNGJAR=$(Q)$(JVM_TEST_ROOT)$(D)TKG$(D)lib$(D)testng.jar$(Q) \
+			-DASMJAR=$(Q)$(LIB_DIR)$(D)asm-all.jar$(Q) \
+			-DJCOMMANDERJAR=$(Q)$(LIB_DIR)$(D)jcommander.jar$(Q) \
+			-DTESTNGJAR=$(Q)$(LIB_DIR)$(D)testng.jar$(Q) \
 			-DVALUETYPEJAR=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)Valhalla$(D)ValhallaTests.jar$(Q) \
 			-DCPDL=$(Q)$(P)$(Q) \
 			-jar $(CMDLINETESTER_JAR) \
@@ -154,9 +154,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) \
 			-DOPT=-Xjit \
 			-DJDMPVIEW_EXE=$(Q)$(TEST_JDK_HOME)$(D)bin$(D)jdmpview$(EXECUTABLE_SUFFIX)$(Q) \
-			-DASMJAR=$(Q)$(JVM_TEST_ROOT)$(D)TKG$(D)lib$(D)asm-all.jar$(Q) \
-			-DJCOMMANDERJAR=$(Q)$(JVM_TEST_ROOT)$(D)TKG$(D)lib$(D)jcommander.jar$(Q) \
-			-DTESTNGJAR=$(Q)$(JVM_TEST_ROOT)$(D)TKG$(D)lib$(D)testng.jar$(Q) \
+			-DASMJAR=$(Q)$(LIB_DIR)$(D)asm-all.jar$(Q) \
+			-DJCOMMANDERJAR=$(Q)$(LIB_DIR)$(D)jcommander.jar$(Q) \
+			-DTESTNGJAR=$(Q)$(LIB_DIR)$(D)testng.jar$(Q) \
 			-DVALUETYPEJAR=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)Valhalla$(D)ValhallaTests.jar$(Q) \
 			-DCPDL=$(Q)$(P)$(Q) \
 			-jar $(CMDLINETESTER_JAR) \
