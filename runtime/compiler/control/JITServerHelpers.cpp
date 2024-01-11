@@ -34,6 +34,7 @@
 #include "runtime/JITServerSharedROMClassCache.hpp"
 #include "romclasswalk.h"
 #include "util_api.h"// for allSlotsInROMClassDo()
+#include "stackmap_api.h"// for fixReturnBytecodes()
 
 
 uint64_t     JITServerHelpers::_waitTimeMs = 0;
@@ -65,34 +66,177 @@ copyUTF8(J9UTF8 *dst, const J9UTF8 *src)
    return getUTF8Size(src);
    }
 
+// ROM methods in ROM classes can have debug information. Currently, this debug
+// information is stored either inline in full, or in the local SCC (with a
+// single J9SRP to the debug information stored inline in its place). See
+// ROMClassWriter::writeMethodDebugInfo() in bcutil/ROMClassWriter.cpp for the
+// exact format, and allSlotsInMethodDebugInfoDo() in util/romclasswalk.c for
+// an example of working with the raw ROMClass data.
+//
+// Since this information is irrelevant to the operation of the JIT, we don't
+// want this debug information to affect the hash of the ROM class. Thus, part
+// of ROM class packing involves taking spans of inline debug information
+// in the ROM methods of the class and shrinking it to the width of a single
+// (zeroed-out) J9SRP.
+//
+// A ROM class can be divided into alternating segments of debug and non-debug
+// information, starting and ending with non-debug segments. This class holds a
+// _segments vector that, after an initial traversal of the ROM class, records
+// the start of each segment and how much that segment will need to be shifted
+// toward the start of the packed ROM class to compensate for the stripped-out
+// debug information.
+class ROMSegmentMap
+   {
+public:
+   struct Segment
+      {
+      size_t newBoundaryOffset() const { return _boundaryOffset - _shift; }
+
+      const size_t _boundaryOffset;
+      const size_t _shift;
+      };
+
+   ROMSegmentMap(TR_Memory *trMemory, const J9ROMClass *romClass) :
+      _accumulatedShift(0),
+      _segments({{0, 0}}, decltype(_segments)::allocator_type(trMemory->currentStackRegion()))
+      {}
+
+   // Note: segments must be added in increasing memory order. This function preserves the debug/non-debug
+   // alternation property mentioned in _segments.
+   void registerDebugInfoSegment(const J9ROMClass *romClass, const uint8_t *debugInfoSegmentStart, size_t debugInfoSize);
+
+   size_t removedDebugInfoSize() const { return _accumulatedShift; }
+   const Vector<Segment>& getSegments() const { return _segments; }
+
+   // Given an offset into the old ROM class before the UTF8 string section, compute the corresponding offset
+   // in the packed ROM class
+   size_t newOffsetFromOld(size_t oldOffset) const;
+
+private:
+   // The total bytes that will have been removed from the ROM class given the segments in _segments.
+   // (Note that the space between the segments will never increase during packing).
+   size_t _accumulatedShift;
+   // The segments in a ROM class. The first segment marks the start of non-debug info, then
+   // the segments alternate between starting debug info and non-debug info. Thus the first,
+   // last, and even-indexed segments will all be non-debug info, and the rest will be debug info.
+   Vector<Segment> _segments;
+   };
+
+void
+ROMSegmentMap::registerDebugInfoSegment(const J9ROMClass *romClass, const uint8_t *debugInfoSegmentStart, size_t debugInfoSegmentSize)
+   {
+   // We need to record (the beginnings of) two segments in the original ROM class:
+   // 1. [debugInfoSegmentStart, debugInfoSegmentStart + debugInfoSegmentSize)
+   // 2. [debugInfoSegmentStart + debugInfoSegmentSize, <start of next segment>)
+   //
+   // Addresses in segment (1) are debug info and compressed to the single address
+   // debugInfoSegmentStart, then shifted toward the start of the ROM class uniformly
+   // by _accumulatedShift.
+   // Addresses in segment (2) are non-debug info and shifted toward the start of the
+   // ROM class uniformly by the updated _accumulatedShift.
+   size_t debugOffset = debugInfoSegmentStart - (uint8_t *)romClass;
+   TR_ASSERT(_segments.empty() || (_segments.back()._boundaryOffset < debugOffset), "Debug info addresses must be traversed in memory order");
+   // Start of segment (1) above - i.e., start of debug info
+   _segments.push_back({debugOffset, _accumulatedShift});
+   // Segment (1), of size debugInfoSegmentSize, is going to be compressed to the size of a single J9SRP, so
+   // addresses after this segment will be shifted toward the start by this amount plus any previous
+   // accumulated shift.
+   _accumulatedShift += debugInfoSegmentSize - sizeof(J9SRP);
+   // Start of segment (2) above - i.e., start of the subsequent non-debug info segment
+   _segments.push_back({debugOffset + debugInfoSegmentSize, _accumulatedShift});
+   }
+
+size_t
+ROMSegmentMap::newOffsetFromOld(size_t oldOffset) const
+   {
+   TR_ASSERT(!_segments.empty(), "Segment map must be populated");
+
+   Segment find = {oldOffset, 0};
+   // Finds the first s for which s._boundaryOffset > oldOffset (the upper segment boundary).
+   auto it = std::lower_bound(_segments.begin(), _segments.end(), find, [](Segment x, Segment y) { return x._boundaryOffset <= y._boundaryOffset; });
+
+   // We want the lower segment boundary, the last segment s for which s._boundaryOffset <= oldOffset.
+   size_t index = 0;
+   if (it == _segments.end())
+      {
+      index = _segments.size() - 1;
+      }
+   else
+      {
+      // Because {0, 0} is the first element of _segments, if we found an upper boundary then it is necessarily not the first element of _segments
+      index = it - _segments.begin() - 1;
+      }
+
+   Segment startSegment = _segments[index];
+   // Even-indexed segments are non-debug info
+   if (index % 2 == 0)
+      return oldOffset - startSegment._shift;
+   else
+      return startSegment._boundaryOffset - startSegment._shift;
+   }
+
 // State maintained while iterating over UTF8 strings in a ROMClass
 struct ROMClassPackContext
    {
-   ROMClassPackContext(TR_Memory *trMemory, size_t origSize) :
-      _origSize(origSize), _callback(NULL), _stringsSize(0),
-      _utf8SectionStart((const uint8_t *)-1), _utf8SectionEnd(NULL), _utf8SectionSize(0),
+   ROMClassPackContext(TR_Memory *trMemory, const J9ROMClass *romClass, size_t origSize, bool noDebugInfoStripping) :
+      _segmentMap(trMemory, romClass),
+      _origRomClassStart((const uint8_t *)romClass), _noDebugInfoStripping(noDebugInfoStripping), _origSize(origSize),
+      _callback(NULL), _preStringSize(0), _stringsSize(0),
+      _origUtf8SectionStart((const uint8_t *)-1), _origUtf8SectionEnd(NULL), _utf8SectionSize(0),
       _strToOffsetMap(decltype(_strToOffsetMap)::allocator_type(trMemory->currentStackRegion())),
+      _srpCallback(NULL), _wsrpCallback(NULL),
+      _newUtf8SectionStart((const uint8_t *)-1),
       _packedRomClass(NULL), _cursor(NULL) {}
 
-   bool isInline(const void *address, const J9ROMClass *romClass)
+   bool isInline(const void *address, const J9ROMClass *romClass) const
       {
       return (address >= romClass) && (address < (uint8_t *)romClass + _origSize);
       }
 
-   typedef void (*Callback)(const J9ROMClass *, const J9SRP *, const char *, ROMClassPackContext &);
+   // Given an address within the original ROM class, returns the corresponding address in the
+   // packed ROM class.
+   const uint8_t *newAddressFromOld(const uint8_t *oldAddr) const;
 
+   typedef void (*Callback)(const J9ROMClass *, const J9SRP *, const char *, ROMClassPackContext &);
+   typedef void (*WSRPCallback)(const J9ROMClass *, const J9WSRP *, const char *, ROMClassPackContext &);
+
+   ROMSegmentMap _segmentMap;
+   const uint8_t *_origRomClassStart;
+   bool _noDebugInfoStripping;
    const size_t _origSize;
    Callback _callback;
+   // The size of the original ROM class before the UTF8 section, not including any padding that was added during
+   // ROM class writing, to be calculated during sectionEndCallback(). This will always be exactly zero or four bytes
+   // less than (_origUtf8SectionStart - _origRomClassStart).
+   size_t _preStringSize;
    size_t _stringsSize;
-   const uint8_t *_utf8SectionStart;
-   const uint8_t *_utf8SectionEnd;// only needed for assertions
+   const uint8_t *_origUtf8SectionStart;
+   const uint8_t *_origUtf8SectionEnd;// only needed for assertions
    size_t _utf8SectionSize;// only needed for assertions
    // Maps original strings to their offsets from UTF8 section start in the packed ROMClass
    // Offset value -1 signifies that the string is skipped
    UnorderedMap<const J9UTF8 *, size_t> _strToOffsetMap;
    J9ROMClass *_packedRomClass;
+   Callback _srpCallback;
+   WSRPCallback _wsrpCallback;
+   const uint8_t *_newUtf8SectionStart;
    uint8_t *_cursor;
    };
+
+const uint8_t *
+ROMClassPackContext::newAddressFromOld(const uint8_t *oldAddr) const
+   {
+   TR_ASSERT(isInline(oldAddr, (const J9ROMClass *)_origRomClassStart), "Address must be within the original ROM class");
+   // If we aren't stripping debug info, the offset can be transferred directly.
+   if (_noDebugInfoStripping)
+      return (const uint8_t *)_packedRomClass + (oldAddr - _origRomClassStart);
+
+   // The UTF8 section is shifted as a block to its new start.
+   if (oldAddr >= _origUtf8SectionStart)
+      return _newUtf8SectionStart + (oldAddr - _origUtf8SectionStart);
+   else
+      return (const uint8_t *)_packedRomClass + _segmentMap.newOffsetFromOld(oldAddr - _origRomClassStart);
+   }
 
 static bool
 shouldSkipSlot(const char *slotName)
@@ -128,8 +272,8 @@ sizeInfoCallback(const J9ROMClass *romClass, const J9SRP *origSrp, const char *s
 
    if (ctx.isInline(str, romClass))
       {
-      ctx._utf8SectionStart = std::min(ctx._utf8SectionStart, (const uint8_t *)str);
-      ctx._utf8SectionEnd = std::max(ctx._utf8SectionEnd, (const uint8_t *)str + size);
+      ctx._origUtf8SectionStart = std::min(ctx._origUtf8SectionStart, (const uint8_t *)str);
+      ctx._origUtf8SectionEnd = std::max(ctx._origUtf8SectionEnd, (const uint8_t *)str + size);
       ctx._utf8SectionSize += size;
       }
    }
@@ -143,7 +287,7 @@ packCallback(const J9ROMClass *romClass, const J9SRP *origSrp, const char *slotN
       return;
 
    auto str = NNSRP_PTR_GET(origSrp, const J9UTF8 *);
-   auto srp = (J9SRP *)((uint8_t *)ctx._packedRomClass + ((uint8_t *)origSrp - (uint8_t *)romClass));
+   auto srp = (J9SRP *)ctx.newAddressFromOld((uint8_t *)origSrp);
 
    // Zero out skipped string SRPs
    if (shouldSkipSlot(slotName))
@@ -156,7 +300,7 @@ packCallback(const J9ROMClass *romClass, const J9SRP *origSrp, const char *slotN
 
    auto it = ctx._strToOffsetMap.find(str);
    TR_ASSERT(it != ctx._strToOffsetMap.end(), "UTF8 slot %s not visited in 1st pass", slotName);
-   auto dst = (uint8_t *)ctx._packedRomClass + (ctx._utf8SectionStart - (uint8_t *)romClass) + it->second;
+   auto dst = ctx._newUtf8SectionStart + it->second;
 
    NNSRP_PTR_SET(srp, dst);
    if (dst == ctx._cursor)
@@ -173,12 +317,72 @@ utf8SlotCallback(const J9ROMClass *romClass, const J9SRP *srp, const char *slotN
       ctx._callback(romClass, srp, slotName, ctx);
    }
 
+static void
+adjustSRPCallback(const J9ROMClass *romClass, const J9SRP *origSrp, const char *slotName, ROMClassPackContext &ctx)
+   {
+   if (!ctx.isInline(origSrp, romClass))
+      return;
+   auto srp = (J9SRP *)ctx.newAddressFromOld((uint8_t *)origSrp);
+   auto origDest = NNSRP_PTR_GET(origSrp, uint8_t *);
+   if (ctx.isInline(origDest, romClass))
+      {
+      auto dst = ctx.newAddressFromOld(origDest);
+      NNSRP_PTR_SET(srp, dst);
+      }
+   else
+      {
+      SRP_PTR_SET_TO_NULL(srp);
+      }
+   }
+
+static void
+adjustWSRPCallback(const J9ROMClass *romClass, const J9WSRP *origSrp, const char *slotName, ROMClassPackContext &ctx)
+   {
+   if (!ctx.isInline(origSrp, romClass))
+      return;
+   auto srp = (J9WSRP *)ctx.newAddressFromOld((uint8_t *)origSrp);
+   auto origDest = NNWSRP_PTR_GET(origSrp, uint8_t *);
+   if (ctx.isInline(origDest, romClass))
+      {
+      auto dst = ctx.newAddressFromOld(origDest);
+      NNWSRP_PTR_SET(srp, dst);
+      }
+   else
+      {
+      WSRP_PTR_SET_TO_NULL(srp);
+      }
+   }
+
+static void
+srpSlotCallback(const J9ROMClass *romClass, const J9SRP *srp, const char *slotName, void *userData)
+   {
+   auto &ctx = *(ROMClassPackContext *)userData;
+   if (ctx._srpCallback && *srp)
+      ctx._srpCallback(romClass, srp, slotName, ctx);
+   }
+
+static void
+wsrpSlotCallback(const J9ROMClass *romClass, const J9WSRP *srp, const char *slotName, void *userData)
+   {
+   auto &ctx = *(ROMClassPackContext *)userData;
+   if (ctx._wsrpCallback && *srp)
+      ctx._wsrpCallback(romClass, srp, slotName, ctx);
+   }
+
 // Invoked for each slot in a ROMClass. Calls ctx._callback for all non-null SRPs to UTF8 strings.
 static void
 slotCallback(J9ROMClass *romClass, uint32_t slotType, void *slotPtr, const char *slotName, void *userData)
    {
    switch (slotType)
       {
+      case J9ROM_SRP:
+         srpSlotCallback(romClass, (const J9SRP *)slotPtr, slotName, userData);
+         break;
+
+      case J9ROM_WSRP:
+         wsrpSlotCallback(romClass, (const J9WSRP *)slotPtr, slotName, userData);
+         break;
+
       case J9ROM_UTF8:
          utf8SlotCallback(romClass, (const J9SRP *)slotPtr, slotName, userData);
          break;
@@ -189,6 +393,7 @@ slotCallback(J9ROMClass *romClass, uint32_t slotType, void *slotPtr, const char 
             utf8SlotCallback(romClass, &nas->name, slotName, userData);
             utf8SlotCallback(romClass, &nas->signature, slotName, userData);
             }
+         srpSlotCallback(romClass, (const J9SRP *)slotPtr, slotName, userData);
          break;
       }
    }
@@ -251,6 +456,39 @@ packArrayROMClassData(const J9ROMClass *romClass, ROMClassPackContext &ctx)
       }
    }
 
+// Calculate the size of the portion of a ROM class that occurs before its UTF8 string section (the pre-string section),
+// without any padding that may have been added during initial ROM class writing.
+//
+// Why is this necessary? The sections inside a ROMClass before the UTF8 string section are 32-bit aligned, but the
+// entire pre-string section needs to be 64-bit aligned. That means exactly four bytes of padding may have been added
+// to the end of the pre-string section during initial ROM class building. When we strip out the debug
+// info from a ROM class, we might reintroduce a misalignment in this pre-string section. Two scenarios are possible:
+//
+// 1. The original ROM class was padded, in which case the solution is to drop that four bytes of padding
+// 2. The original ROM class was not padded, in which case the solution is to introduce four bytes of padding
+//
+// We can only distinguish between scenarios (1) and (2) if we know the unpadded size of the pre-string section.
+// Once we have this information, we can calculate the aligned and padded size of the pre-string section (currently called the
+// packedNonStringSize) properly in packROMClass.
+static void
+sectionEndCallback(J9ROMClass *romClass, void *sectionPtr, uintptr_t sectionSize, const char *sectionName, void *userData)
+   {
+   auto ctx = (ROMClassPackContext *)userData;
+   // Important ROM class walker properties that allow us to calculate the _preStringSize in parallel with the UTF8 string section
+   // start:
+   //
+   // 1. The ROM class walker only visits sections that are entirely within the pre-string section or entirely outside the ROM class
+   // 2. The sections entirely cover the pre-string section, up to but not including any padding that was added during writing
+   //
+   // That the _preStringSize ends up being where we expect it to be (equal to the starting offset of the UTF8 string section up to
+   // alignment padding) is checked in a fatal assert when we calculate the packedNonStringSize in packROMClass.
+   if (ctx->isInline(sectionPtr, romClass))
+      {
+      size_t endOffset = ((uint8_t *)sectionPtr - (uint8_t *)romClass) + sectionSize;
+      ctx->_preStringSize = std::max(ctx->_preStringSize, endOffset);
+      }
+   }
+
 // Packs a ROMClass to be transferred to the server.
 //
 // The result is allocated from the stack region of trMemory (as well as temporary data
@@ -280,7 +518,7 @@ packArrayROMClassData(const J9ROMClass *romClass, ROMClassPackContext &ctx)
 // - ROMClass walk visits all the strings that the ROMClass references.
 //
 J9ROMClass *
-JITServerHelpers::packROMClass(J9ROMClass *romClass, TR_Memory *trMemory, size_t &packedSize, size_t expectedSize)
+JITServerHelpers::packROMClass(J9ROMClass *romClass, TR_Memory *trMemory, TR_J9VMBase *fej9, size_t &packedSize, size_t expectedSize)
    {
    auto name = J9ROMCLASS_CLASSNAME(romClass);
    // Primitive ROMClasses have different layout (see runtime/vm/romclasses.c): the last
@@ -288,6 +526,30 @@ JITServerHelpers::packROMClass(J9ROMClass *romClass, TR_Memory *trMemory, size_t
    // generic packing implementation. Pretend that its romSize only includes the header.
    size_t origRomSize = J9ROMCLASS_IS_PRIMITIVE_TYPE(romClass) ? sizeof(*romClass) : romClass->romSize;
    packedSize = origRomSize;
+
+   bool isSharedROMClass = fej9->sharedCache() && fej9->sharedCache()->isROMClassInSharedCache(romClass);
+   // Shared ROM classes have their return bytecodes fixed when they are created, so we can perform simpler
+   // normalization for them, and of course if there are no ROM methods there is nothing to fix up.
+   bool needsBytecodeFixing = isSharedROMClass || (romClass->romMethodCount > 0);
+
+   // Walk the methods first to see if any of the debug info is inline, and force debug
+   // info stripping in that case.
+   bool needsDebugInfoStripping = false;
+   J9ROMMethod *romMethod = J9ROMCLASS_ROMMETHODS(romClass);
+   for (size_t i = 0; i < romClass->romMethodCount; ++i)
+      {
+      if (J9ROMMETHOD_HAS_DEBUG_INFO(romMethod))
+         {
+         auto debugInfo = methodDebugInfoFromROMMethod(romMethod);
+         // Low bit being set indicates inline debug info
+         if (1 == (debugInfo->srpToVarInfo & 1))
+            {
+            needsDebugInfoStripping = true;
+            break;
+            }
+         }
+      romMethod = nextROMMethod(romMethod);
+      }
 
    // Remove intermediate class data (not used by JIT)
    uint8_t *icData = J9ROMCLASS_INTERMEDIATECLASSDATA(romClass);
@@ -298,13 +560,66 @@ JITServerHelpers::packROMClass(J9ROMClass *romClass, TR_Memory *trMemory, size_t
       packedSize -= romClass->intermediateClassDataLength;
       }
 
-   ROMClassPackContext ctx(trMemory, origRomSize);
+   ROMClassPackContext ctx(trMemory, romClass, origRomSize, !needsDebugInfoStripping);
 
+   // Populate the segment map
+   romMethod = J9ROMCLASS_ROMMETHODS(romClass);
+   if (needsDebugInfoStripping)
+      {
+      for (size_t i = 0; i < romClass->romMethodCount; ++i)
+         {
+         if (J9ROMMETHOD_HAS_DEBUG_INFO(romMethod))
+            {
+            auto debugInfo = methodDebugInfoFromROMMethod(romMethod);
+            size_t inlineSize = 0;
+            // Low bit set indicates that the debug info is inline
+            if (1 == (*((U_32 *)debugInfo) & 1))
+               inlineSize = *((U_32 *)debugInfo) & ~1;
+            else
+               inlineSize = sizeof(J9SRP);
+
+            ctx._segmentMap.registerDebugInfoSegment(romClass, (const uint8_t *)debugInfo, inlineSize);
+            }
+         romMethod = nextROMMethod(romMethod);
+         }
+      }
+
+   // The size of the original ROM class before the UTF8 section, including padding.
    size_t copySize = 0;
+   // The size of the packed ROM class before the UTF8 section, including padding.
+   size_t packedNonStringSize = 0;
    if (isArrayROMClass(romClass))
       {
       copySize = sizeof(*romClass);
+      packedNonStringSize = copySize;
       packedSize = getArrayROMClassPackedSize(romClass);
+      }
+   else if (needsDebugInfoStripping)
+      {
+      // 1st pass: iterate all strings in the ROMClass to compute its total size (including
+      // interned strings) and map the strings to their locations in the packed ROMClass.
+      // Also compute the _preStringSize of the ROM class.
+      ctx._callback = sizeInfoCallback;
+      allSlotsInROMClassDo(romClass, slotCallback, sectionEndCallback, NULL, &ctx);
+      // Handle the case when all strings are interned
+      auto classEnd = (const uint8_t *)romClass + packedSize;
+      ctx._origUtf8SectionStart = std::min(ctx._origUtf8SectionStart, classEnd);
+
+      auto end = ctx._origUtf8SectionEnd ? ctx._origUtf8SectionEnd : classEnd;
+      TR_ASSERT_FATAL(ctx._utf8SectionSize == end - ctx._origUtf8SectionStart,
+                      "Missed strings in ROMClass %.*s UTF8 section: %zu != %zu",
+                      name->length, name->data, ctx._utf8SectionSize, end - ctx._origUtf8SectionStart);
+      end = (const uint8_t *)OMR::alignNoCheck((uintptr_t)end, sizeof(uint64_t));
+      TR_ASSERT_FATAL(end == classEnd, "UTF8 section not stored at the end of ROMClass %.*s: %p != %p",
+                      name->length, name->data, end, classEnd);
+      TR_ASSERT_FATAL(OMR::alignNoCheck(ctx._preStringSize, sizeof(uint64_t)) == (ctx._origUtf8SectionStart - ctx._origRomClassStart),
+                      "Pre-string end offset in ROMClass %.*s must be within padding of the UTF8 section start: %lu %lu",
+                      name->length, name->data, ctx._preStringSize, ctx._origUtf8SectionStart - ctx._origRomClassStart);
+      copySize = ctx._origUtf8SectionStart - (const uint8_t *)romClass;
+      // See sectionEndCallback() for why this can't be calculated as,
+      // say, OMR::alignNoCheck(copySize - ctx._segmentMap.removedDebugInfoSize(), sizeof(uint64_t))
+      packedNonStringSize = OMR::alignNoCheck(ctx._preStringSize - ctx._segmentMap.removedDebugInfoSize(), sizeof(uint64_t));
+      packedSize = OMR::alignNoCheck(packedNonStringSize + ctx._stringsSize, sizeof(uint64_t));
       }
    else
       {
@@ -314,17 +629,18 @@ JITServerHelpers::packROMClass(J9ROMClass *romClass, TR_Memory *trMemory, size_t
       allSlotsInROMClassDo(romClass, slotCallback, NULL, NULL, &ctx);
       // Handle the case when all strings are interned
       auto classEnd = (const uint8_t *)romClass + packedSize;
-      ctx._utf8SectionStart = std::min(ctx._utf8SectionStart, classEnd);
+      ctx._origUtf8SectionStart = std::min(ctx._origUtf8SectionStart, classEnd);
 
-      auto end = ctx._utf8SectionEnd ? ctx._utf8SectionEnd : classEnd;
-      TR_ASSERT_FATAL(ctx._utf8SectionSize == end - ctx._utf8SectionStart,
+      auto end = ctx._origUtf8SectionEnd ? ctx._origUtf8SectionEnd : classEnd;
+      TR_ASSERT_FATAL(ctx._utf8SectionSize == end - ctx._origUtf8SectionStart,
                       "Missed strings in ROMClass %.*s UTF8 section: %zu != %zu",
-                      name->length, name->data, ctx._utf8SectionSize, end - ctx._utf8SectionStart);
+                      name->length, name->data, ctx._utf8SectionSize, end - ctx._origUtf8SectionStart);
       end = (const uint8_t *)OMR::alignNoCheck((uintptr_t)end, sizeof(uint64_t));
       TR_ASSERT_FATAL(end == classEnd, "UTF8 section not stored at the end of ROMClass %.*s: %p != %p",
                       name->length, name->data, end, classEnd);
 
-      copySize = ctx._utf8SectionStart - (const uint8_t *)romClass;
+      copySize = ctx._origUtf8SectionStart - (const uint8_t *)romClass;
+      packedNonStringSize = copySize;
       packedSize = OMR::alignNoCheck(copySize + ctx._stringsSize, sizeof(uint64_t));
       }
 
@@ -338,25 +654,68 @@ JITServerHelpers::packROMClass(J9ROMClass *romClass, TR_Memory *trMemory, size_t
    ctx._packedRomClass = (J9ROMClass *)trMemory->allocateStackMemory(packedSize);
    if (!ctx._packedRomClass)
       throw std::bad_alloc();
-   memcpy(ctx._packedRomClass, romClass, copySize);
+   ctx._newUtf8SectionStart = (const uint8_t *)ctx._packedRomClass + packedNonStringSize;
+
+   // Copy the pre-string section of the original ROM class to the packed ROM class.
+   if (needsDebugInfoStripping)
+      {
+      // Non-shared, non-array ROM classes need to have their inline debug info stripped.
+      auto segments = ctx._segmentMap.getSegments();
+      // We will have recorded k+1 starts of non-debug info segments, interspersed with the starts of k debug info segments. (k can be zero).
+      TR_ASSERT(segments.size() % 2 == 1, "ROM class %.*s has an even number of segments", name->length, name->data);
+      // First we copy over the initial 2k (non-debug, debug) pairs
+      for (size_t i = 0; i < segments.size() - 1; i += 2)
+         {
+         auto nonDebugSegment = segments[i];
+         auto debugSegment = segments[i+1];
+         auto nonDebugSrc = (uint8_t *)romClass + nonDebugSegment._boundaryOffset;
+         auto nonDebugDest = (uint8_t *)ctx._packedRomClass + nonDebugSegment.newBoundaryOffset();
+         auto debugSrc = (uint8_t *)romClass + debugSegment._boundaryOffset;
+         auto debugDest = (uint8_t *)ctx._packedRomClass + debugSegment.newBoundaryOffset();
+         memcpy(nonDebugDest, nonDebugSrc, debugSrc - nonDebugSrc);
+         memset(debugDest, 0, sizeof(J9SRP));
+         }
+
+      // Copy the last run of non-debug info
+      auto finalSegment = segments.back();
+      size_t finalCopySize = ctx._preStringSize - finalSegment._boundaryOffset;
+      memcpy((uint8_t *)ctx._packedRomClass + finalSegment.newBoundaryOffset(),
+             (uint8_t *)romClass + finalSegment._boundaryOffset,
+             finalCopySize);
+
+      // Zero-out the padding before the UTF8 section
+      size_t paddingByteSize = packedNonStringSize - (ctx._preStringSize - ctx._segmentMap.removedDebugInfoSize());
+      memset((uint8_t *)ctx._packedRomClass + (packedNonStringSize - paddingByteSize), 0, paddingByteSize);
+      }
+   else
+      {
+      memcpy(ctx._packedRomClass, romClass, copySize);
+      }
+
    ctx._packedRomClass->romSize = packedSize;
-   ctx._cursor = (uint8_t *)ctx._packedRomClass + copySize;
+   ctx._cursor = (uint8_t *)ctx._packedRomClass + packedNonStringSize;
 
    // Zero out SRP to intermediate class data
    ctx._packedRomClass->intermediateClassData = 0;
    ctx._packedRomClass->intermediateClassDataLength = 0;
 
-   // Zero out SRPs to out-of-line method debug info
-   J9ROMMethod *romMethod = J9ROMCLASS_ROMMETHODS(ctx._packedRomClass);
-   for (size_t i = 0; i < ctx._packedRomClass->romMethodCount; ++i)
+   // Zero out SRPs to out-of-line method debug info.
+   // ROM classes had their debug info stripped and zeroed
+   // out when the pre-string section of the ROM class was copied above, if we
+   // stripped out their debug info.
+   if (!needsDebugInfoStripping)
       {
-      if (J9ROMMETHOD_HAS_DEBUG_INFO(romMethod))
+      J9ROMMethod *romMethod = J9ROMCLASS_ROMMETHODS(ctx._packedRomClass);
+      for (size_t i = 0; i < ctx._packedRomClass->romMethodCount; ++i)
          {
-         auto debugInfo = methodDebugInfoFromROMMethod(romMethod);
-         if (!(debugInfo->srpToVarInfo & 1))
+         if (J9ROMMETHOD_HAS_DEBUG_INFO(romMethod))
+            {
+            auto debugInfo = methodDebugInfoFromROMMethod(romMethod);
+            TR_ASSERT_FATAL(!(debugInfo->srpToVarInfo & 1), "ROM class %.*s has inline debug info that should have been stripped", name->length, name->data);
             debugInfo->srpToVarInfo = 0;
+            }
+         romMethod = nextROMMethod(romMethod);
          }
-      romMethod = nextROMMethod(romMethod);
       }
 
    if (isArrayROMClass(romClass))
@@ -365,8 +724,11 @@ JITServerHelpers::packROMClass(J9ROMClass *romClass, TR_Memory *trMemory, size_t
       }
    else
       {
-      // 2nd pass: copy all strings to their locations in the packed ROMClass
+      // 2nd pass: copy all strings to their locations in the packed ROMClass, and, if debug info was stripped,
+      // adjust all SRPs that were invalidated by discarding the method debug info.
       ctx._callback = packCallback;
+      ctx._srpCallback = needsDebugInfoStripping ? adjustSRPCallback : NULL;
+      ctx._wsrpCallback = needsDebugInfoStripping ? adjustWSRPCallback : NULL;
       allSlotsInROMClassDo(romClass, slotCallback, NULL, NULL, &ctx);
       }
 
@@ -375,6 +737,9 @@ JITServerHelpers::packROMClass(J9ROMClass *romClass, TR_Memory *trMemory, size_t
    TR_ASSERT_FATAL(end == (uint8_t *)ctx._packedRomClass + packedSize, "Invalid final cursor position: %p != %p",
                    end, (uint8_t *)ctx._packedRomClass + packedSize);
    memset(ctx._cursor, 0, end - ctx._cursor);
+
+   if (needsBytecodeFixing)
+      fixReturnBytecodes(fej9->getJ9JITConfig()->javaVM->portLibrary, ctx._packedRomClass);
 
    return ctx._packedRomClass;
    }
@@ -657,9 +1022,9 @@ JITServerHelpers::packRemoteROMClassInfo(J9Class *clazz, J9VMThread *vmThread, T
    if (serializeClass)
       {
       TR::StackMemoryRegion stackMemoryRegion(*trMemory);
-      size_t packedSize;
-      J9ROMClass *packedROMClass = packROMClass(clazz->romClass, trMemory, packedSize);
-      packedROMClassStr = std::string((const char *)packedROMClass, packedSize);
+      size_t hashedSize;
+      J9ROMClass *packedROMClass = packROMClass(clazz->romClass, trMemory, fe, hashedSize);
+      packedROMClassStr = std::string((const char *)packedROMClass, packedROMClass->romSize);
       }
 
    int32_t arrayElementSize = vmThread->javaVM->internalVMFunctions->arrayElementSize((J9ArrayClass*)clazz);

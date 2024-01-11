@@ -95,7 +95,7 @@ public:
    // structures used for packing). This function should be used with TR::StackMemoryRegion.
    // If passed non-zero expectedSize, and it doesn't match the resulting packedSize
    // (which is returned to the caller by reference), this function returns NULL.
-   static J9ROMClass *packROMClass(J9ROMClass *romClass, TR_Memory *trMemory, size_t &packedSize, size_t expectedSize = 0);
+   static J9ROMClass *packROMClass(J9ROMClass *romClass, TR_Memory *trMemory, TR_J9VMBase *fej9, size_t &packedSize, size_t expectedSize = 0);
 
    static ClassInfoTuple packRemoteROMClassInfo(J9Class *clazz, J9VMThread *vmThread, TR_Memory *trMemory, bool serializeClass);
    static void freeRemoteROMClass(J9ROMClass *romClass, TR_PersistentMemory *persistentMemory);

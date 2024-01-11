@@ -306,7 +306,7 @@ JITServerAOTDeserializer::isClassMatching(const ClassSerializationRecord *record
    TR::StackMemoryRegion stackMemoryRegion(*comp->trMemory());
 
    size_t packedSize;
-   J9ROMClass *packedROMClass = JITServerHelpers::packROMClass(ramClass->romClass, comp->trMemory(),
+   J9ROMClass *packedROMClass = JITServerHelpers::packROMClass(ramClass->romClass, comp->trMemory(), comp->fej9(),
                                                                packedSize, record->romClassSize());
    if (!packedROMClass)
       {
