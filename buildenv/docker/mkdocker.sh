@@ -53,6 +53,7 @@ if [ $arch = x86_64 -o $arch = ppc64le ] ; then
 fi
   echo "  bash mkdocker.sh --tag=openj9/ub18  --dist=ubuntu --version=18 --build"
   echo "  bash mkdocker.sh --tag=openj9/ub20  --dist=ubuntu --version=20 --build"
+  echo "  bash mkdocker.sh --tag=openj9/ub22  --dist=ubuntu --version=22 --build"
   exit 1
 }
 
@@ -172,7 +173,7 @@ validate_options() {
           fi
           if [ $arch = x86_64 ] ; then
             # Certificates are old on CentOS:6 so we can't expect wget to check.
-            wget_O="wget --progress=dot:mega --no-check-certificate -O"
+            wget_O="wget --no-check-certificate --progress=dot:mega -O"
           fi
           ;;
         7)
@@ -189,10 +190,10 @@ validate_options() {
       ;;
     ubuntu)
       case $version in
-        18 | 20)
+        18 | 20 | 22)
           version=$version.04
           ;;
-        18.04 | 20.04)
+        18.04 | 20.04 | 22.04)
           ;;
         unspecified)
           echo "Unspecified Ubuntu version: use '--version' option" >&2
@@ -230,8 +231,8 @@ validate_options() {
       s390x)
         # overwrite CRIU version
         criu=3.12
-        if [ $dist != ubuntu ] ; then
-          echo "CRIU is only supported on ubuntu for s390x" >&2
+        if [ $dist:$version != ubuntu:18.04 ] ; then
+          echo "CRIU is only supported on ubuntu:18.04 for s390x" >&2
           exit 1
         fi
         ;;
@@ -254,7 +255,7 @@ validate_options() {
     esac
   fi
 
-  all_versions="8 11 17 21 next"
+  all_versions="8 11 17 21 22 next"
   local -A known_version
   local version
   for version in $all_versions ; do
@@ -356,7 +357,9 @@ fi
   echo "    libdwarf \\"
   echo "    libdwarf-devel \\"
   echo "    libffi-devel \\"
+if [ $version != 6 ] ; then
   echo "    libstdc++-static \\"
+fi
   echo "    libX11-devel \\"
   echo "    libXext-devel \\"
   echo "    libXi-devel \\"
@@ -515,11 +518,16 @@ fi
 }
 
 install_ubuntu_packages() {
+  echo "ARG DEBIAN_FRONTEND=noninteractive"
+  echo "ENV TZ=America/Toronto"
+  echo ""
   echo "RUN apt-get update \\"
+if [ $version != 22.04 ] ; then
   echo " && apt-get install -qq -y --no-install-recommends \\"
   echo "    software-properties-common \\"
   echo " && add-apt-repository ppa:ubuntu-toolchain-r/test \\"
   echo " && apt-get update \\"
+fi
   echo " && apt-get install -qq -y --no-install-recommends \\"
   echo "    ant \\"
   echo "    ant-contrib \\"
@@ -528,14 +536,20 @@ install_ubuntu_packages() {
   echo "    ca-certificates \\"
   echo "    cmake \\"
   echo "    cpio \\"
+if [ $criu != no ] && [ $version != 20.04 ] ; then
+  echo "    criu \\"
+fi
   echo "    curl \\"
   echo "    file \\"
 if [ $version = 18.04 ] ; then
   echo "    g++-8 \\"
   echo "    gcc-8 \\"
-else
+elif [ $version = 20.04 ] ; then
   echo "    g++-10 \\"
   echo "    gcc-10 \\"
+else
+  echo "    g++-11 \\"
+  echo "    gcc-11 \\"
 fi
   echo "    gdb \\"
   echo "    git \\"
@@ -680,7 +694,7 @@ bootjdk_version() {
     8 | 11 | 17)
       echo $jdk_version
       ;;
-    21 | next)
+    21 | 22 | next)
       echo "20"
       ;;
     *)
