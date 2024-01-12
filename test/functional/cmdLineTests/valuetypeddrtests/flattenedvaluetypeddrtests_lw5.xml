@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+
+<!--
+  Copyright IBM Corp. and others 2019
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] https://openjdk.org/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
+-->
+
+<!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
+
+<suite id="J9 Value Type ddr test with flattening enabled" timeout="600">
+	<variable name="ARGS" value="-Xint --enable-preview -XX:ValueTypeFlatteningThreshold=999999 -XX:+EnableArrayFlattening -Xverify:none --add-opens java.base/jdk.internal.misc=ALL-UNNAMED" />
+	<variable name="ARGS_NOCR" value="-Xint --enable-preview -Xnocompressedrefs -XX:ValueTypeFlatteningThreshold=999999 -XX:+EnableArrayFlattening -Xverify:none --add-opens java.base/jdk.internal.misc=ALL-UNNAMED" />
+	<variable name="JARS" value="-cp $ASMJAR$$CPDL$$JCOMMANDERJAR$$CPDL$$TESTNGJAR$$CPDL$$VALUETYPEJAR$" />
+	<variable name="PROGRAM" value="org.openj9.test.lworld.DDRValueTypeTest" />
+	<variable name="DUMPFILE" value="j9core.dmp" />
+
+	<test id="Create core file">
+		<exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
+		<exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
+		<exec command="rm -f $DUMPFILE$" />
+		<exec command="rm -f core*" />
+		<command showMatch="yes">$EXE$ -Xmx24m $ARGS$ $JARS$ $PROGRAM$</command>
+		<output regex="no" type="success" showMatch="yes">System dump written</output>
+		<saveoutput regex="no" type="required" saveName="DUMPFILE" splitIndex="1" splitBy="System dump written to ">System dump written to </saveoutput>
+		<output regex="no" type="failure">Exception caught!</output>
+	</test>
+
+	<test id="Run !threads">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!threads</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">!stack 0x</output>
+		<saveoutput regex="no" type="required" saveName="mainThreadId" splitIndex="1" splitBy="!stack ">!stack 0x</saveoutput>
+		<output regex="no" type="failure">DDR is not enabled for this core file</output>
+	</test>
+
+	<test id="Run !stackslots $mainThreadId$">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!stackslots $mainThreadId$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">I-Slot: a0[0x</output>
+		<saveoutput regex="no" type="required" saveName="objectAddr" splitIndex="1" splitBy="= " showMatch="yes">I-Slot: a0[0x</saveoutput>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+
+	<test id="Run !j9object $objectAddr$ to display container array contents">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!j9object $objectAddr$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">!J9IndexableObject 0x</output>
+		<saveoutput regex="no" type="required" saveName="valueAddr" splitIndex="1" splitBy="= !j9object " showMatch="yes">[0] = !fj9object 0x</saveoutput>
+		<saveoutput regex="no" type="required" saveName="arrayAddr" splitIndex="1" splitBy="= !j9object " showMatch="yes">[2] = !fj9object 0x</saveoutput>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+
+	<test id="Run !j9object $valueAddr$ to show the fields of the reference object">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!j9object $valueAddr$</input>
+			<input>quit</input>
+		</command>
+		<output regex="yes" javaUtilPattern="yes" type="success" showMatch="yes">Triangle2D; tri = !j9object 0x.* tri \(offset = 0\)</output>
+		<output regex="yes" javaUtilPattern="yes" type="success" showMatch="yes">FlattenedLine2D; line = !j9object 0x.* line \(offset = 56\)</output>
+		<output regex="yes" javaUtilPattern="yes" type="success" showMatch="yes">ValueInt; i = !j9object 0x.* i \(offset = 72\)</output>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+
+	<test id="Run !j9object $valueAddr$ i to show the int contents of the reference object">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!j9object $valueAddr$ i</input>
+			<input>quit</input>
+		</command>
+		<output regex="yes" javaUtilPattern="yes" type="success" showMatch="yes">I i = 0x12123434 \(offset = 0\) \(.*ValueInt\)</output>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+
+	<test id="Run !j9object $arrayAddr$ to display flattened array contents">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!j9object $arrayAddr$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">!J9IndexableObject 0x</output>
+		<saveoutput regex="no" type="required" saveName="arrayIndex1Addr" splitIndex="1" splitBy="!j9object " showMatch="yes">[0] = !j9object 0x</saveoutput>
+		<saveoutput regex="no" type="required" saveName="arrayIndex2Addr" splitIndex="1" splitBy="!j9object " showMatch="yes">[1] = !j9object 0x</saveoutput>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+
+	<test id="Run !j9object $arrayIndex1Addr$.i to show value of the variable i">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!j9object $arrayIndex1Addr$.i</input>
+			<input>quit</input>
+		</command>
+		<output regex="yes" javaUtilPattern="yes" type="success" showMatch="yes">I i = 0x12123434 \(offset = 0\) \(.*ValueInt\)</output>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+
+	<test id="Run !j9object $arrayIndex2Addr$.i to show the value of the variable i">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!j9object $arrayIndex2Addr$.i</input>
+			<input>quit</input>
+		</command>
+		<output regex="yes" javaUtilPattern="yes" type="success" showMatch="yes">I i = 0x45456767 \(offset = 0\) \(.*ValueInt\)</output>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+
+	<test id="Run !flatobject $arrayIndex1Addr$ to recursively show the contents of the object">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!flatobject $arrayIndex1Addr$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">I i = 0x12123434</output>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+
+	<test id="Run !flatobject $arrayIndex2Addr$ to recursively show the contents of the object">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!flatobject $arrayIndex2Addr$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">I i = 0x45456767</output>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+
+	<test id="Run !flatobject $valueAddr$ to show the all fields of AssortedValueWithSingleAlignment. Make sure all the flattened fields have the correct values">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!flatobject $valueAddr$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">AssortedValueWithSingleAlignment</output>
+		<output regex="yes" javaUtilPattern="yes" type="required" showMatch="yes">Point2D point (.)* \(offset = 48\)[\n\r](.)*I x = 0xFFEEFFEE[\n\r](.)*I y = 0xAABBAABB</output>
+		<output regex="no" type="success" showMatch="yes">FlattenedLine2D</output>
+		<output regex="yes" javaUtilPattern="yes" type="required" showMatch="yes">Point2D st (.)*[\n\r](.)*I x = 0xFFEEFFEE[\n\r](.)*I y = 0xAABBAABB</output>
+		<output regex="yes" javaUtilPattern="yes" type="required" showMatch="yes">Point2D en (.)*[\n\r](.)*I x = 0xCCDDCCDD[\n\r](.)*I y = 0x33443344</output>
+		<output regex="yes" javaUtilPattern="yes" type="required" showMatch="yes">ValueInt i (.)* \(offset = 72\)[\n\r](.)*I i = 0x12123434</output>
+		<output regex="yes" javaUtilPattern="yes" type="required" showMatch="yes">ValueFloat f (.)* \(offset = 76\)[\n\r](.)*F f = 0x7F7FFFFF</output>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+
+	<test id="Create nocompressedrefs core file">
+		<command showMatch="yes">$EXE$ -Xmx24m $ARGS_NOCR$ $JARS$ $PROGRAM$</command>
+		<output regex="no" type="success" showMatch="yes">System dump written</output>
+		<saveoutput regex="no" type="required" saveName="DUMPFILE" splitIndex="1" splitBy="System dump written to ">System dump written to </saveoutput>
+		<output regex="no" type="failure">Exception caught!</output>
+	</test>
+
+	<test id="Run !threads on nocompressedrefs core">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!threads</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">!stack 0x</output>
+		<saveoutput regex="no" type="required" saveName="mainThreadId" splitIndex="1" splitBy="!stack ">!stack 0x</saveoutput>
+		<output regex="no" type="failure">DDR is not enabled for this core file</output>
+	</test>
+
+	<test id="Run !stackslots $mainThreadId$ on nocompressedrefs core">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!stackslots $mainThreadId$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">I-Slot: a0[0x</output>
+		<saveoutput regex="no" type="required" saveName="objectAddr" splitIndex="1" splitBy="= " showMatch="yes">I-Slot: a0[0x</saveoutput>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+
+	<test id="Run !j9object $objectAddr$ to display container array contents on nocompressedrefs core">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!j9object $objectAddr$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">!J9IndexableObject 0x</output>
+		<saveoutput regex="no" type="required" saveName="valueAddr" splitIndex="1" splitBy="= !j9object " showMatch="yes">[0] = !fj9object 0x</saveoutput>
+		<saveoutput regex="no" type="required" saveName="arrayAddr" splitIndex="1" splitBy="= !j9object " showMatch="yes">[2] = !fj9object 0x</saveoutput>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+
+	<test id="Run !j9object $valueAddr$ to show the fields are all at 8 bytes aligned offsets on nocompressedrefs core">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!j9object $valueAddr$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">AssortedValueWithSingleAlignment</output>
+		<output regex="no" type="required" showMatch="yes">(offset = 0)</output>
+		<output regex="no" type="required" showMatch="yes">(offset = 48)</output>
+		<output regex="no" type="required" showMatch="yes">(offset = 56)</output>
+		<output regex="no" type="required" showMatch="yes">(offset = 72)</output>
+		<output regex="no" type="required" showMatch="yes">(offset = 80)</output>
+		<output regex="no" type="required" showMatch="yes">(offset = 88)</output>
+
+		<output regex="no" type="failure">(offset = 4)</output>
+		<output regex="no" type="failure">(offset = 12)</output>
+		<output regex="no" type="failure">(offset = 20)</output>
+		<output regex="no" type="failure">(offset = 28)</output>
+		<output regex="no" type="failure">(offset = 36)</output>
+		<output regex="no" type="failure">(offset = 44)</output>
+		<output regex="no" type="failure">(offset = 52)</output>
+		<output regex="no" type="failure">(offset = 60)</output>
+		<output regex="no" type="failure">(offset = 68)</output>
+		<output regex="no" type="failure">(offset = 76)</output>
+		<output regex="no" type="failure">(offset = 84)</output>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+
+</suite>
