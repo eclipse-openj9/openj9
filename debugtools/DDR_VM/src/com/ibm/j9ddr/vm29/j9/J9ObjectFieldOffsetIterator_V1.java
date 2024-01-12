@@ -26,6 +26,7 @@ import static com.ibm.j9ddr.vm29.j9.ObjectFieldInfo.BACKFILL_SIZE;
 import static com.ibm.j9ddr.vm29.j9.ObjectFieldInfo.LOCKWORD_SIZE;
 import static com.ibm.j9ddr.vm29.j9.ObjectFieldInfo.NO_BACKFILL_AVAILABLE;
 import static com.ibm.j9ddr.vm29.j9.ObjectFieldInfo.fj9object_t_SizeOf;
+import static com.ibm.j9ddr.vm29.structure.J9FieldFlags.J9FieldFlagIsNullRestricted;
 import static com.ibm.j9ddr.vm29.structure.J9FieldFlags.J9FieldFlagObject;
 import static com.ibm.j9ddr.vm29.structure.J9FieldFlags.J9FieldSizeDouble;
 import static com.ibm.j9ddr.vm29.structure.J9JavaAccessFlags.J9AccStatic;
@@ -219,7 +220,9 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 			} else {
 				if (walkFlags.anyBitsIn(J9VM_FIELD_OFFSET_WALK_INCLUDE_INSTANCE)) {
 					if (modifiers.anyBitsIn(J9FieldFlagObject)) {
-						if (valueTypeHelper.isFlattenableFieldSignature(J9ROMFieldShapeHelper.getSignature(localField))) {
+						if (valueTypeHelper.isFlattenableFieldSignature(J9ROMFieldShapeHelper.getSignature(localField))
+							|| modifiers.anyBitsIn(J9FieldFlagIsNullRestricted)
+						) {
 							J9ClassPointer fieldClass = valueTypeHelper.findJ9ClassInFlattenedClassCacheWithFieldName(instanceClass, J9ROMFieldShapeHelper.getName(localField));
 							if (valueTypeHelper.isJ9FieldIsFlattened(fieldClass, localField)) {
 								UDATA size = null;

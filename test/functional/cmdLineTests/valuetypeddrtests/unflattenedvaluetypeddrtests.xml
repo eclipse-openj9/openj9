@@ -93,7 +93,7 @@
 			<input>!fj9object $intAddr1$</input>
 			<input>quit</input>
 		</command>
-		<output regex="no" type="success" showMatch="yes">I i = 0x12123434 (offset = 0) (ValueInt)</output>
+		<output regex="yes" javaUtilPattern="yes" type="success" showMatch="yes">I i = 0x12123434 \(offset = 0\) \(.*ValueInt\)</output>
 		<output regex="no" type="failure">Problem running command</output>
 	</test>
 
@@ -114,7 +114,7 @@
 			<input>!fj9object $intAddr2$</input>
 			<input>quit</input>
 		</command>
-		<output regex="no" type="success" showMatch="yes">I i = 0x45456767 (offset = 0) (ValueInt)</output>
+		<output regex="yes" javaUtilPattern="yes" type="success" showMatch="yes">I i = 0x45456767 \(offset = 0\) \(.*ValueInt\)</output>
 		<output regex="no" type="failure">Problem running command</output>
 	</test>
 

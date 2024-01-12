@@ -52,7 +52,7 @@ extern "C" {
 
 #define LOCAL_INTERFACE_ARRAY_SIZE 10
 
-#define DEFAULLT_NUMBER_OF_ENTRIES_IN_FLATTENED_CLASS_CACHE 8
+#define DEFAULT_NUMBER_OF_ENTRIES_IN_FLATTENED_CLASS_CACHE 8
 
 enum J9ClassFragments {
 	RAM_CLASS_HEADER_FRAGMENT,
@@ -1975,8 +1975,12 @@ loadFlattenableFieldValueClasses(J9VMThread *currentThread, J9ClassLoader *class
 					goto done;
 				} else {
 					J9ROMClass *valueROMClass = valueClass->romClass;
-
-					if (!J9ROMCLASS_IS_PRIMITIVE_VALUE_TYPE(valueROMClass)) {
+					/* This restriction has been relaxed from J9ROMCLASS_IS_PRIMITIVE_VALUE_TYPE
+					 * to prevent errors while using the J9ClassIsPrimitiveValueType flag to indicate
+					 * flattening eligibility for nullrestricted fields. Eventually this case will be
+					 * removed with Q types.
+					 */
+					if (!J9ROMCLASS_IS_VALUE(valueROMClass)) {
 						J9UTF8 *badClass = NNSRP_GET(valueROMClass->className, J9UTF8*);
 						setCurrentExceptionNLSWithArgs(currentThread, J9NLS_VM_ERROR_QTYPE_NOT_VALUE_TYPE, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, J9UTF8_LENGTH(badClass), J9UTF8_DATA(badClass));
 						result = FALSE;
@@ -2356,8 +2360,15 @@ nativeOOM:
 		if (J9ROMCLASS_IS_VALUE(romClass)) {
 			classFlags |= J9ClassIsValueType;
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-			if (J9ROMCLASS_IS_PRIMITIVE_VALUE_TYPE(romClass)) {
+			if (J9ROMCLASS_IS_PRIMITIVE_VALUE_TYPE(romClass)
+				|| (J9_ARE_ALL_BITS_SET(romClass->optionalFlags, J9_ROMCLASS_OPTINFO_IMPLICITCREATION_ATTRIBUTE)
+				&& J9_ARE_ALL_BITS_SET(getImplicitCreationFlags(romClass), J9AccImplicitCreateHasDefaultValue))
+			) {
 				UDATA instanceSize = state->ramClass->totalInstanceSize;
+				/* This ram class flag is not correct for the nullrestricted value class case
+				 * since the meaning of primitive and nullrestricted don't fully overlap.
+				 * Using it for now to enable flattening of nullrestricted fields.
+				 */
 				classFlags |= J9ClassIsPrimitiveValueType;
 				if ((instanceSize <= javaVM->valueFlatteningThreshold)
 					&& !J9ROMCLASS_IS_CONTENDED(romClass)
@@ -3550,7 +3561,7 @@ internalCreateRAMClassFromROMClass(J9VMThread *vmThread, J9ClassLoader *classLoa
 	UDATA romFieldCount = romClass->romFieldCount;
 	UDATA valueTypeFlags = 0;
 	UDATA flattenedClassCacheAllocSize = sizeof(J9FlattenedClassCache) + (sizeof(J9FlattenedClassCacheEntry) * romFieldCount);
-	U_8 flattenedClassCacheBuffer[sizeof(J9FlattenedClassCache) + (sizeof(J9FlattenedClassCacheEntry) * DEFAULLT_NUMBER_OF_ENTRIES_IN_FLATTENED_CLASS_CACHE)] = {0};
+	U_8 flattenedClassCacheBuffer[sizeof(J9FlattenedClassCache) + (sizeof(J9FlattenedClassCacheEntry) * DEFAULT_NUMBER_OF_ENTRIES_IN_FLATTENED_CLASS_CACHE)] = {0};
 	J9FlattenedClassCache *flattenedClassCache = (J9FlattenedClassCache *) flattenedClassCacheBuffer;
 	PORT_ACCESS_FROM_VMC(vmThread);
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
@@ -3663,7 +3674,7 @@ retry:
 		}
 	}
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-	if (romFieldCount > DEFAULLT_NUMBER_OF_ENTRIES_IN_FLATTENED_CLASS_CACHE) {
+	if (romFieldCount > DEFAULT_NUMBER_OF_ENTRIES_IN_FLATTENED_CLASS_CACHE) {
 		flattenedClassCache = (J9FlattenedClassCache *) j9mem_allocate_memory(flattenedClassCacheAllocSize, J9MEM_CATEGORY_CLASSES);
 		if (NULL == flattenedClassCache) {
 			setNativeOutOfMemoryError(vmThread, 0, 0);
