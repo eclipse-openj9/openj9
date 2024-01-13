@@ -437,6 +437,30 @@ public:
       return getVolatileReferenceFieldAt(objectPointer, getInstanceFieldOffset(getObjectClass(objectPointer), fieldName, fieldSignature));
       }
 
+   /**
+    * @brief Get the known object index of a MethodHandle cached in a VarHandle's MH table
+    * corresponding to the access descriptor. When the VarHandle is known, we can evaluate
+    * the result of java/lang/invoke/Invokers.checkVarHandleGenericType at compile time and
+    * obtain the MethodHandle which can then allow us to inline the call target.
+    *
+    * @param comp the compilation
+    * @param vhIndex the VarHandle object index
+    * @param adIndex the AccessDescriptor object index
+    * @return TR::KnownObjectTable::Index the MH object index if success, TR::KnownObjectTable::UNKNOWN otherwise
+    */
+   TR::KnownObjectTable::Index getMethodHandleTableEntryIndex(TR::Compilation *comp, TR::KnownObjectTable::Index vhIndex, TR::KnownObjectTable::Index adIndex);
+
+   /**
+    * @brief Get the Direct VarHandle target object index. This function evaluates the result of
+    * java/lang/invoke/Invokers.directVarHandleTarget and java/lang/invoke/VarHandle.asDirect
+    * at compile time.
+    *
+    * @param comp the compilation
+    * @param vhIndex the VarHandle object
+    * @return TR::KnownObjectTable::Index the direct VH object index if success, TR::KnownObjectTable::UNKNOWN otherwise
+    */
+   TR::KnownObjectTable::Index getDirectVarHandleTargetIndex(TR::Compilation * comp, TR::KnownObjectTable::Index vhIndex);
+
    virtual TR::Method * createMethod(TR_Memory *, TR_OpaqueClassBlock *, int32_t);
    virtual TR_ResolvedMethod * createResolvedMethod(TR_Memory *, TR_OpaqueMethodBlock *, TR_ResolvedMethod * = 0, TR_OpaqueClassBlock * = 0);
    virtual TR_ResolvedMethod * createResolvedMethodWithVTableSlot(TR_Memory *, uint32_t vTableSlot, TR_OpaqueMethodBlock * aMethod, TR_ResolvedMethod * owningMethod = 0, TR_OpaqueClassBlock * classForNewInstance = 0);

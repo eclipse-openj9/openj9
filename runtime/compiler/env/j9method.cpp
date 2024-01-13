@@ -3636,6 +3636,7 @@ void TR_ResolvedJ9Method::construct()
       {  TR::java_lang_invoke_VarHandle_getAndBitwiseXor          ,   21, "getAndBitwiseXor_impl",                 (int16_t)-1, "*"},
       {  TR::java_lang_invoke_VarHandle_getAndBitwiseXorAcquire   ,   28, "getAndBitwiseXorAcquire_impl",         (int16_t)-1, "*"},
       {  TR::java_lang_invoke_VarHandle_getAndBitwiseXorRelease   ,   28, "getAndBitwiseXorRelease_impl",         (int16_t)-1, "*"},
+      {x(TR::java_lang_invoke_VarHandle_asDirect                  ,       "asDirect",                             "()Ljava/lang/invoke/VarHandle;")},
       {  TR::unknownMethod}
       };
 
@@ -3680,10 +3681,12 @@ void TR_ResolvedJ9Method::construct()
 
    static X InvokersMethods[] =
       {
-      {TR::java_lang_invoke_Invokers_checkCustomized,            15,       "checkCustomized",             (int16_t)-1, "*"},
-      {TR::java_lang_invoke_Invokers_checkExactType,             14,       "checkExactType",              (int16_t)-1, "*"},
-      {TR::java_lang_invoke_Invokers_getCallSiteTarget,          17,       "getCallSiteTarget",           (int16_t)-1, "*"},
-      {TR::unknownMethod}
+      {  TR::java_lang_invoke_Invokers_checkCustomized,            15,     "checkCustomized",             (int16_t)-1, "*"},
+      {  TR::java_lang_invoke_Invokers_checkExactType,             14,     "checkExactType",              (int16_t)-1, "*"},
+      {  TR::java_lang_invoke_Invokers_getCallSiteTarget,          17,     "getCallSiteTarget",           (int16_t)-1, "*"},
+      {x(TR::java_lang_invoke_Invokers_directVarHandleTarget,              "directVarHandleTarget",       "(Ljava/lang/invoke/VarHandle;)Ljava/lang/invoke/VarHandle;")},
+      {x(TR::java_lang_invoke_Invokers_checkVarHandleGenericType,          "checkVarHandleGenericType",   "(Ljava/lang/invoke/VarHandle;Ljava/lang/invoke/VarHandle$AccessDescriptor;)Ljava/lang/invoke/MethodHandle;")},
+      {  TR::unknownMethod}
       };
 
    static X AsTypeHandleMethods[] =

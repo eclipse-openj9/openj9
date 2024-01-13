@@ -2537,6 +2537,15 @@ J9::TransformUtil::knownObjectFromFinalStatic(
       return TR::KnownObjectTable::UNKNOWN;
 
    static const char *foldVarHandle = feGetEnv("TR_FoldVarHandleWithoutFear");
+
+   bool canFoldVarHandleWithoutFear = false;
+
+   // in Java 17 and above, it is not possible to remove the final attribute of a field
+   // to make it writable via reflection.
+#if JAVA_SPEC_VERSION >= 17
+   canFoldVarHandleWithoutFear = true;
+#endif
+
    int32_t clazzNameLength = 0;
    char *clazzName = fej9->getClassNameChars(declaringClass, clazzNameLength);
    bool createKnownObject = false;
@@ -2545,7 +2554,7 @@ J9::TransformUtil::knownObjectFromFinalStatic(
       {
       createKnownObject = true;
       }
-   else if (foldVarHandle
+   else if ((foldVarHandle || canFoldVarHandleWithoutFear)
             && (clazzNameLength != 16 || strncmp(clazzName, "java/lang/System", 16)))
       {
       TR_OpaqueClassBlock *varHandleClass =  fej9->getSystemClassFromClassName("java/lang/invoke/VarHandle", 26);
