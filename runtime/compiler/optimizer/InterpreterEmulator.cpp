@@ -257,6 +257,27 @@ void InterpreterEmulator::mergeOperandArray(OperandArray *first, OperandArray *s
       }
    }
 
+/**
+ * \brief Add a required constant with \p value at the current bytecode index.
+ *
+ * There must not already be one.
+ *
+ * \param value the constant value
+ * \return a reference to the created TR::RequiredConst
+ */
+TR::RequiredConst &
+InterpreterEmulator::addRequiredConst(TR::AnyConst value)
+   {
+   TR::Region &stackRegion = comp()->trMemory()->currentStackRegion();
+   auto insertResult = _calltarget->_requiredConsts.insert(
+      std::make_pair(_bcIndex, TR::RequiredConst(value, stackRegion)));
+
+   auto it = insertResult.first;
+   bool isNewEntry = insertResult.second;
+   TR_ASSERT_FATAL(isNewEntry, "multiple required consts at bcIndex %d", _bcIndex);
+   return it->second; // value
+   }
+
 void
 InterpreterEmulator::maintainStackForIf(TR_J9ByteCode bc)
    {
@@ -410,6 +431,12 @@ InterpreterEmulator::maintainStackForGetField()
             debugTrace(tracer(), "dereference obj%d (%p)from field %s(offset = %d) of base obj%d(%p)\n",
                   newOperand->getKnownObjectIndex(), (void *)fieldAddress, _calltarget->_calleeMethod->fieldName(cpIndex, len, this->trMemory()),
                   fieldOffset, baseObjectIndex, baseObjectAddress);
+
+            if (resultIndex != TR::KnownObjectTable::UNKNOWN)
+               {
+               auto value = TR::AnyConst::makeKnownObject(resultIndex);
+               addRequiredConst(value);
+               }
             }
          }
       }
@@ -766,7 +793,10 @@ InterpreterEmulator::maintainStackForGetStatic()
          comp(), owningMethod, cpIndex, dataAddress, TR::Address, recField, &value);
 
       if (gotValue && value.isKnownObject())
+         {
          knownObjectIndex = value.getKnownObjectIndex();
+         addRequiredConst(value);
+         }
       }
 
    if (knownObjectIndex != TR::KnownObjectTable::UNKNOWN)
@@ -1082,6 +1112,35 @@ InterpreterEmulator::getReturnValue(TR_ResolvedMethod *callee)
       default:
          break;
       }
+
+   if (result != NULL)
+      {
+      if (result->asIconst() != NULL)
+         {
+         auto value = TR::AnyConst::makeInt32(result->asIconst()->intValue);
+         addRequiredConst(value);
+         }
+      else if (result->asKnownObject() != NULL)
+         {
+         auto i = result->asKnownObject()->getKnownObjectIndex();
+         auto value = TR::AnyConst::makeKnownObject(i);
+         addRequiredConst(value);
+         }
+      else if (result->asMutableCallsiteTargetOperand() != NULL)
+         {
+         // These are handled differently, so nothing to do here.
+         }
+      else
+         {
+         TR::StringBuf buf(comp()->trMemory()->currentStackRegion());
+         result->printToString(&buf);
+         TR_ASSERT_FATAL(
+            false,
+            "failed to record required constant call result: %s",
+            buf.text());
+         }
+      }
+
    return result;
    }
 

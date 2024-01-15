@@ -36,6 +36,7 @@
 #include "ilgen/IlGeneratorMethodDetails_inlines.hpp"
 #include "infra/Cfg.hpp"
 #include "infra/Checklist.hpp"
+#include "infra/String.hpp"
 #include "env/VMJ9.h"
 #include "ilgen/J9ByteCodeIlGenerator.hpp"
 #include "optimizer/BoolArrayStoreTransformer.hpp"
@@ -72,7 +73,15 @@ TR_J9ByteCodeIlGenerator::TR_J9ByteCodeIlGenerator(
      _invokeHandleGenericCalls(NULL),
      _invokeDynamicCalls(NULL),
      _ilGenMacroInvokeExactCalls(NULL),
-     _methodHandleInvokeCalls(NULL)
+     _methodHandleInvokeCalls(NULL),
+     _requiredConsts(
+        (
+           comp->currentILGenCallTarget() == NULL
+           || comp->currentILGenCallTarget()->_requiredConsts.empty()
+        )
+        ? NULL
+        : &comp->currentILGenCallTarget()->_requiredConsts),
+     _foldedRequiredConsts(NULL)
    {
    static const char *noLookahead = feGetEnv("TR_noLookahead");
    _noLookahead = (noLookahead || comp->getOption(TR_DisableLookahead)) ? true : false;
@@ -139,9 +148,18 @@ TR_J9ByteCodeIlGenerator::genIL()
 
    TR::StackMemoryRegion stackMemoryRegion(*trMemory());
 
+   if (_requiredConsts != NULL)
+      {
+      _foldedRequiredConsts =
+         new (stackMemoryRegion) TR::set<int32_t>(stackMemoryRegion);
+      }
+
    comp()->setCurrentIlGenerator(this);
 
    bool success = internalGenIL();
+
+   if (success && _requiredConsts != NULL)
+      assertFoldedAllRequiredConsts();
 
    if (success && !comp()->isPeekingMethod())
       {
@@ -188,6 +206,96 @@ TR_J9ByteCodeIlGenerator::genIL()
    comp()->setCurrentIlGenerator(0);
 
    return success;
+   }
+
+void TR_J9ByteCodeIlGenerator::assertFoldedAllRequiredConsts()
+   {
+   // The elements of _foldedRequiredConsts should be identical to the
+   // keys of _requiredConsts corresponding to bytecode indices for which IL
+   // was generated.
+   bool ok = true;
+
+   // Iteration should produce the same sequence (after ignoring ungenerated
+   // bytecode) because both containers are maintained in sorted order.
+   auto itF = _foldedRequiredConsts->begin();
+   auto endF = _foldedRequiredConsts->end();
+   auto itR = _requiredConsts->begin();
+   auto endR = _requiredConsts->end();
+   while (itF != endF && itR != endR)
+      {
+      if (!isGenerated(itR->first))
+         {
+         itR++;
+         continue;
+         }
+
+      if (*itF != itR->first)
+         {
+         ok = false;
+         break;
+         }
+
+      itF++;
+      itR++;
+      }
+
+   while (itR != endR && !isGenerated(itR->first))
+      itR++;
+
+   if (ok && itF == endF && itR == endR)
+      return; // all good
+
+   // mismatch
+   TR::StringBuf msg(comp()->trMemory()->currentStackRegion());
+   msg.appendf("Required constants bytecode index set mismatch:\n");
+
+   msg.appendf("Expected: ");
+   bool first = true;
+   for (itR = _requiredConsts->begin(); itR != endR; itR++)
+      {
+      if (!isGenerated(itR->first))
+         continue;
+
+      msg.appendf("%s%d", first ? "" : ", ", itR->first);
+      }
+
+   msg.appendf("\nFolded  : ");
+   if (_foldedRequiredConsts->empty())
+      {
+      msg.appendf("(none)");
+      }
+   else
+      {
+      first = true;
+      for (itF = _foldedRequiredConsts->begin(); itF != endF; itF++)
+         msg.appendf("%s%d", first ? "" : ", ", *itF);
+      }
+
+   msg.appendf("\ninline call stack:");
+
+   char sigBuf[256];
+
+   int32_t atBcIndex = -1;
+   int32_t siteIndex = comp()->getCurrentInlinedSiteIndex();
+   while (siteIndex >= 0)
+      {
+      TR_InlinedCallSite &ics = comp()->getInlinedCallSite(siteIndex);
+      TR_ByteCodeInfo bci = ics._byteCodeInfo;
+      msg.appendf("\n");
+      if (atBcIndex >= 0)
+         msg.appendf("at %d ", atBcIndex);
+
+      const char *sig = fe()->sampleSignature(
+         ics._methodInfo, sigBuf, sizeof(sigBuf), comp()->trMemory());
+
+      msg.appendf("in %s", sig);
+      atBcIndex = ics._byteCodeInfo.getByteCodeIndex();
+      siteIndex = ics._byteCodeInfo.getCallerIndex();
+      }
+
+   msg.appendf("\nat %d in %s", atBcIndex, comp()->signature());
+
+   TR_ASSERT_FATAL(false, "%s", msg.text());
    }
 
 bool TR_J9ByteCodeIlGenerator::internalGenIL()

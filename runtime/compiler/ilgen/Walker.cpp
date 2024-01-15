@@ -3510,11 +3510,31 @@ TR_J9ByteCodeIlGenerator::genInvokeWithVFTChild(TR::SymbolReference *symRef)
    return genInvoke(symRef, vftLoad);
    }
 
-
-
-
 TR::Node*
 TR_J9ByteCodeIlGenerator::genInvoke(TR::SymbolReference * symRef, TR::Node *indirectCallFirstChild, TR::Node *invokedynamicReceiver)
+   {
+   TR::KnownObjectTable::Index requiredKoi;
+   TR::Node *callNode = genInvokeInner(
+      symRef, indirectCallFirstChild, invokedynamicReceiver, &requiredKoi);
+
+   if (requiredKoi == TR::KnownObjectTable::UNKNOWN)
+      return callNode;
+
+   TR_ASSERT_FATAL(
+      callNode != NULL,
+      "required constant at bc index %d (invoke*): missing call node",
+      _bcIndex);
+
+   markRequiredKnownObjectIndex(callNode, requiredKoi);
+   return callNode;
+   }
+
+TR::Node*
+TR_J9ByteCodeIlGenerator::genInvokeInner(
+   TR::SymbolReference * symRef,
+   TR::Node *indirectCallFirstChild,
+   TR::Node *invokedynamicReceiver,
+   TR::KnownObjectTable::Index *requiredKoi)
    {
    TR::MethodSymbol * symbol = symRef->getSymbol()->castToMethodSymbol();
    bool isStatic     = symbol->isStatic();
@@ -3522,6 +3542,18 @@ TR_J9ByteCodeIlGenerator::genInvoke(TR::SymbolReference * symRef, TR::Node *indi
 
    TR::Method * calledMethod = symbol->getMethod();
    int32_t numArgs = calledMethod->numberOfExplicitParameters() + (isStatic ? 0 : 1);
+
+   if (pushRequiredConst(requiredKoi))
+      {
+      TR::Node *result = pop();
+
+      int32_t argsToPop = numArgs - int32_t(invokedynamicReceiver != NULL);
+      for (int32_t i = 0; i < argsToPop; i++)
+         pop();
+
+      push(result);
+      return NULL; // no call node
+      }
 
    TR::ILOpCodes opcode = TR::BadILOp;
    switch (symbol->getRecognizedMethod())
@@ -4679,17 +4711,44 @@ TR_J9ByteCodeIlGenerator::chopPlaceholder(TR::Node *placeholder, int32_t firstCh
 bool
 TR_J9ByteCodeIlGenerator::runMacro(TR::SymbolReference * symRef)
    {
+   TR::MethodSymbol * symbol = symRef->getSymbol()->castToMethodSymbol();
+   TR::RecognizedMethod recognizedMethod = symbol->getMandatoryRecognizedMethod();
+   if (_requiredConsts != NULL)
+      {
+      switch (recognizedMethod)
+         {
+         case TR::java_lang_invoke_ILGenMacros_isCustomThunk:
+         case TR::java_lang_invoke_ILGenMacros_isShareableThunk:
+            {
+            auto entry = _requiredConsts->find(_bcIndex);
+            if (entry != _requiredConsts->end())
+               {
+               // This call has been constant-folded by InterpreterEmulator.
+               // Skip running the macro so that the folding can be repeated in
+               // the same way as for other calls. It will definitely be folded
+               // because the repeat folding is not optional.
+               //
+               // This strategy is possible here only because these particular
+               // macros have the same effect on the stack as the original call
+               // would. (Many of the other macros have a custom effect on the
+               // stack, e.g. due to placeholders.)
+               //
+               return false;
+               }
+            }
+         }
+      }
+
    // Give FE first kick at the can
    //
    if (runFEMacro(symRef))
       return true;
 
-   TR::MethodSymbol * symbol = symRef->getSymbol()->castToMethodSymbol();
    int32_t archetypeParmCount = symbol->getMethod()->numberOfExplicitParameters() + (symbol->isStatic() ? 0 : 1);
 
    TR_ASSERT(symbol->isStatic(), "Macro methods must be static or else signature processing gets complicated by the implicit receiver");
 
-   switch (symRef->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod())
+   switch (recognizedMethod)
       {
       case TR::java_lang_invoke_ILGenMacros_numArguments:
          {
@@ -4993,6 +5052,11 @@ TR_J9ByteCodeIlGenerator::loadInstance(TR::SymbolReference * symRef)
    TR::Node * address = pop();
    TR::Node * load, *dummyLoad;
    TR::Node * treeTopNode = 0;
+
+   TR::KnownObjectTable::Index requiredKoi;
+   if (pushRequiredConst(&requiredKoi))
+      return;
+
    TR::ILOpCodes op = _generateReadBarriersForFieldWatch ? comp()->il.opCodeForIndirectReadBarrier(type): comp()->il.opCodeForIndirectLoad(type);
    dummyLoad = load = TR::Node::createWithSymRef(op, 1, 1, address, symRef);
 
@@ -5016,7 +5080,6 @@ TR_J9ByteCodeIlGenerator::loadInstance(TR::SymbolReference * symRef)
 
    if (type == TR::Address)
       {
-
       if (comp()->useCompressedPointers())
          {
          if (!symRefTab()->isFieldClassObject(symRef))
@@ -5033,6 +5096,8 @@ TR_J9ByteCodeIlGenerator::loadInstance(TR::SymbolReference * symRef)
             }
          }
       }
+
+   markRequiredKnownObjectIndex(load, requiredKoi);
 
    static char *disableFinalFieldFoldingInILGen = feGetEnv("TR_DisableFinalFieldFoldingInILGen");
    static char *disableInstanceFinalFieldFoldingInILGen = feGetEnv("TR_DisableInstanceFinalFieldFoldingInILGen");
@@ -5190,6 +5255,10 @@ TR_J9ByteCodeIlGenerator::loadStatic(int32_t cpIndex)
    {
    if (_generateReadBarriersForFieldWatch && comp()->compileRelocatableCode())
       comp()->failCompilation<J9::AOTNoSupportForAOTFailure>("NO support for AOT in field watch");
+
+   TR::KnownObjectTable::Index requiredKoi;
+   if (pushRequiredConst(&requiredKoi))
+      return;
 
    TR::SymbolReference * symRef = symRefTab()->findOrCreateStaticSymbol(_methodSymbol, cpIndex, false);
    if (comp()->getOption(TR_TraceILGen))
@@ -5363,141 +5432,42 @@ TR_J9ByteCodeIlGenerator::loadStatic(int32_t cpIndex)
       }
 
    TR::DataType type = symbol->getDataType();
-   bool isResolved = !symRef->isUnresolved();
-   TR_OpaqueClassBlock * classOfStatic = isResolved ? _method->classOfStatic(cpIndex) : 0;
-   if (classOfStatic == NULL)
-      {
-      int         len = 0;
-      char * classNameOfFieldOrStatic = NULL;
-      classNameOfFieldOrStatic = symRef->getOwningMethod(comp())->classNameOfFieldOrStatic(symRef->getCPIndex(), len);
-      if (classNameOfFieldOrStatic)
-         {
-         classNameOfFieldOrStatic = TR::Compiler->cls.classNameToSignature(classNameOfFieldOrStatic, len, comp());
-         TR_OpaqueClassBlock * curClass = fej9->getClassFromSignature(classNameOfFieldOrStatic, len, symRef->getOwningMethod(comp()));
-         TR_OpaqueClassBlock * owningClass = comp()->getJittedMethodSymbol()->getResolvedMethod()->containingClass();
-         if (owningClass == curClass)
-            classOfStatic = curClass;
-         }
-      }
-
-
-   bool isClassInitialized = false;
-   TR_PersistentClassInfo * classInfo = _noLookahead ? 0 :
-      comp()->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(classOfStatic, comp());
-   if (classInfo && classInfo->isInitialized())
-      isClassInitialized = true;
-
-   /*
-   if (classOfStatic)
-      {
-      char *name; int32_t len;
-      name = comp()->fej9->getClassNameChars(classOfStatic, len);
-      printf("class name %s class init %d class %p classInfo %p no %d hotness %d\n", name, isClassInitialized, classOfStatic, classInfo, _noLookahead, comp()->getMethodHotness()); fflush(stdout);
-      }
-   */
-
-   bool canOptimizeFinalStatic = false;
-   if (isResolved && symbol->isFinal() && !symRef->isUnresolved() &&
-       classOfStatic != comp()->getSystemClassPointer() &&
-       isClassInitialized)
-      {
-      //if (type == TR::Address)
-         {
-
-         // todo: figure out why classInfo would be NULL here?
-         if (!classInfo->getFieldInfo())
-            performClassLookahead(classInfo);
-         }
-
-      if (classInfo->getFieldInfo() && !classInfo->cannotTrustStaticFinal())
-         canOptimizeFinalStatic = true;
-      }
-
-   TR::VMAccessCriticalSection loadStaticCriticalSection(fej9,
-                                                          TR::VMAccessCriticalSection::tryToAcquireVMAccess,
-                                                          comp());
-
    TR::Node * load = NULL;
 
-   if (canOptimizeFinalStatic &&
-       loadStaticCriticalSection.hasVMAccess())
+   if (_generateReadBarriersForFieldWatch)
       {
-      void * p = symbol->getStaticAddress();
-
-      switch (type)
-         {
-         case TR::Address:
-            if ((void *)comp()->fej9()->getStaticReferenceFieldAtAddress((uintptr_t)p) == 0)
-               {
-               loadConstant(TR::aconst, 0);
-               break;
-               }
-            else
-               {
-               // the address isn't constant, because a GC could move it, however is it nonnull
-               //
-               load = TR::Node::createLoad(symRef);
-               load->setIsNonNull(true);
-               push(load);
-               break;
-               }
-         case TR::Double:  loadConstant(TR::dconst, *(double *) p); break;
-         case TR::Int64:   loadConstant(TR::lconst, *(int64_t *)p); break;
-         case TR::Float:   loadConstant(TR::fconst, *(float *)  p); break;
-         case TR::Int32:
-         default:         loadConstant(TR::iconst, *(int32_t *)p); break;
-         }
-      }
-   else if (symbol->isVolatile() && type == TR::Int64 && isResolved && comp()->target().is32Bit() &&
-            !comp()->cg()->getSupportsInlinedAtomicLongVolatiles() && 0)
-      {
-      TR::SymbolReference * volatileLongSymRef =
-          comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_volatileReadLong, false, false, true);
-      TR::Node * statics = TR::Node::createWithSymRef(TR::loadaddr, 0, symRef);
-      TR::Node * call = TR::Node::createWithSymRef(TR::lcall, 1, 1, statics, volatileLongSymRef);
-
-      handleSideEffect(call);
-
-      genTreeTop(call);
-      push(call);
+      void * staticClass = method()->classOfStatic(cpIndex);
+      loadSymbol(TR::loadaddr, symRefTab()->findOrCreateClassSymbol(_methodSymbol, cpIndex, staticClass, true /* cpIndexOfStatic */));
+      load = TR::Node::createWithSymRef(comp()->il.opCodeForDirectReadBarrier(type), 1, pop(), 0, symRef);
       }
    else
+      load = TR::Node::createWithSymRef(comp()->il.opCodeForDirectLoad(type), 0, symRef);
+
+   TR::Node * treeTopNode = 0;
+   if (symRef->isUnresolved())
+      treeTopNode = genResolveCheck(load);
+   else if (symbol->isVolatile() || _generateReadBarriersForFieldWatch)
+      treeTopNode = load;
+
+   if (treeTopNode)
       {
-      if (_generateReadBarriersForFieldWatch)
-         {
-         void * staticClass = method()->classOfStatic(cpIndex);
-         loadSymbol(TR::loadaddr, symRefTab()->findOrCreateClassSymbol(_methodSymbol, cpIndex, staticClass, true /* cpIndexOfStatic */));
-         load = TR::Node::createWithSymRef(comp()->il.opCodeForDirectReadBarrier(type), 1, pop(), 0, symRef);
-         }
-      else
-         load = TR::Node::createWithSymRef(comp()->il.opCodeForDirectLoad(type), 0, symRef);
-
-      TR::Node * treeTopNode = 0;
-      if (symRef->isUnresolved())
-         treeTopNode = genResolveCheck(load);
-      else if (symbol->isVolatile() || _generateReadBarriersForFieldWatch)
-         treeTopNode = load;
-
-      if (treeTopNode)
-         {
-         handleSideEffect(treeTopNode);
-         genTreeTop(treeTopNode);
-         }
-
-      push(load);
+      handleSideEffect(treeTopNode);
+      genTreeTop(treeTopNode);
       }
+
+   push(load);
+
+   markRequiredKnownObjectIndex(load, requiredKoi);
 
    static char *disableFinalFieldFoldingInILGen = feGetEnv("TR_DisableFinalFieldFoldingInILGen");
    static char *disableStaticFinalFieldFoldingInILGen = feGetEnv("TR_DisableStaticFinalFieldFoldingInILGen");
-   if (load &&
-       !disableFinalFieldFoldingInILGen &&
+   if (!disableFinalFieldFoldingInILGen &&
        !disableStaticFinalFieldFoldingInILGen &&
        symbol->isFinal() &&
        TR::TransformUtil::canFoldStaticFinalField(comp(), load) == TR_yes)
       {
       TR::TransformUtil::foldReliableStaticFinalField(comp(), load);
       }
-
    }
 
 TR::Node *
@@ -7931,4 +7901,155 @@ void TR_J9ByteCodeIlGenerator::performClassLookahead(TR_PersistentClassInfo *cla
    TR_ClassLookahead classLookahead(classInfo, fej9(), comp(), _classLookaheadSymRefTab);
    classLookahead.perform();
    comp()->setCurrentSymRefTab(callerCurrentSymRefTab);
+   }
+
+/**
+ * \brief Push a required constant if possible and, if necessary, create the
+ * corresponding fear point and commit any deferred OSR assumptions it needs.
+ *
+ * If the value is a known object, it isn't yet possible to fabricate the
+ * reference, so the value will not be pushed. Instead, its known object index
+ * will be provided to the caller for use with markRequiredKnownObjectIndex().
+ * However, if OSR assumptions are needed, they will still be committed and the
+ * fear point will still be created. In this case, the only part that's truly
+ * required is taking care of assumptions and the fear point, since without a
+ * way to guarantee we'll see the same reference at runtime, we can't avoid
+ * assuming that repeating the operation will produce the same result (as long
+ * as OSR assumptions hold). But we have the known object index anyway, so we
+ * might as well use it in the IL.
+ *
+ * \param[out] koi the known object index if any, or else UNKNOWN
+ * \return true if the value was pushed, false otherwise
+ */
+bool
+TR_J9ByteCodeIlGenerator::pushRequiredConst(TR::KnownObjectTable::Index *koi)
+   {
+   *koi = TR::KnownObjectTable::UNKNOWN;
+
+   if (_requiredConsts == NULL)
+      return false;
+
+   auto entry = _requiredConsts->find(_bcIndex);
+   if (entry == _requiredConsts->end())
+      return false;
+
+   dumpOptDetails(
+      comp(), "Folding required constant at bc index %d\n", _bcIndex);
+
+   TR::AnyConst value = entry->second._value;
+   auto &assumptions = entry->second._assumptions;
+   if (!assumptions.empty())
+      {
+      TR_ASSERT_FATAL(
+         comp()->isFearPointPlacementUnrestricted(),
+         "placement must be unrestricted for required const fear point @ bc index %d",
+         _bcIndex);
+
+      TR::Node *bciNode = NULL;
+      genTreeTop(TR::Node::createOSRFearPointHelperCall(bciNode));
+      for (auto it = assumptions.begin(); it != assumptions.end(); it++)
+         (*it)->commit(comp());
+      }
+
+   if (value.isKnownObject())
+      {
+      if (comp()->getKnownObjectTable()->isNull(value.getKnownObjectIndex()))
+         {
+         value = TR::AnyConst::makeAddress(0);
+         }
+      else
+         {
+         *koi = value.getKnownObjectIndex();
+         return false; // did not push
+         }
+      }
+
+   if (value.isInt32())
+      loadConstant(TR::iconst, (int32_t)value.getInt32());
+   else if (value.isInt64())
+      loadConstant(TR::lconst, (int64_t)value.getInt64());
+   else if (value.isFloat())
+      loadConstant(TR::fconst, value.getFloat());
+   else if (value.isDouble())
+      loadConstant(TR::dconst, value.getDouble());
+   else if (value.isAddress())
+      loadConstant(TR::aconst, (void*)value.getAddress());
+   else
+      {
+      TR_ASSERT_FATAL(
+         false,
+         "unexpected constant type %s",
+         value.isInt8() ? "Int8"
+         : value.isInt16() ? "Int16"
+         : "???");
+      }
+
+   _foldedRequiredConsts->insert(_bcIndex);
+   return true;
+   }
+
+/**
+ * \brief Mark \p node with the known object index from pushRequiredConst().
+ *
+ * \param node the node to be marked as a known object
+ * \param koi the known object index if any, or else UNKNOWN
+ */
+void
+TR_J9ByteCodeIlGenerator::markRequiredKnownObjectIndex(
+   TR::Node *node,
+   TR::KnownObjectTable::Index koi)
+   {
+   if (koi == TR::KnownObjectTable::UNKNOWN)
+      return;
+
+   TR_ASSERT_FATAL(
+      !comp()->getKnownObjectTable()->isNull(koi), "unexpected null index");
+
+   _foldedRequiredConsts->insert(_bcIndex);
+
+   TR::SymbolReference *symRef = node->getSymbolReference();
+   TR::KnownObjectTable::Index symRefKoi = symRef->getKnownObjectIndex();
+   TR::KnownObjectTable::Index nodeKoi = node->getKnownObjectIndex();
+   TR_ASSERT_FATAL(
+      symRefKoi == TR::KnownObjectTable::UNKNOWN
+      || nodeKoi == TR::KnownObjectTable::UNKNOWN
+      || symRefKoi == nodeKoi,
+      "node n%un [%p] obj%d disagrees with symref #%d obj%d",
+      node->getGlobalIndex(),
+      node,
+      nodeKoi,
+      symRef->getReferenceNumber(),
+      symRefKoi);
+
+   TR::KnownObjectTable::Index existingKoi =
+      symRefKoi != TR::KnownObjectTable::UNKNOWN ? symRefKoi : nodeKoi;
+
+   if (existingKoi != TR::KnownObjectTable::UNKNOWN && existingKoi != koi)
+      {
+      // This can only correctly happen if the constant requires an assumption
+      // that has already been invalidated.
+      //
+      // Otherwise, it could be that a necessary assumption is missing (which
+      // would be a JIT bug), or it could be that the program has used Unsafe
+      // (or similar) to modify something we've justifiably allowed ourselves
+      // to assume is immutable, which is undefined behaviour.
+      //
+      // We could try to assert here that there is an invalidated assumption.
+      // But if one of these potential bugs were to occur, then most likely the
+      // assertion would pass anyway and the unexpected modification would only
+      // happen afterward.
+      //
+      comp()->failCompilation<TR::CompilationInterrupted>(
+         "required constant OSR assumption invalidated");
+      }
+
+   node->setKnownObjectIndex(koi);
+   if (symRefKoi == TR::KnownObjectTable::UNKNOWN && node->getOpCode().isLoadVar())
+      {
+      TR::SymbolReference *improvedSymRef =
+         comp()->getSymRefTab()->findOrCreateSymRefWithKnownObject(symRef, koi);
+
+      if (improvedSymRef->hasKnownObjectIndex())
+         node->setSymbolReference(improvedSymRef);
+      }
    }

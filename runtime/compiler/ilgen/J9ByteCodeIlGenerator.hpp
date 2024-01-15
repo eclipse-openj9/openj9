@@ -34,8 +34,11 @@
 #include "ilgen/IlGen.hpp"
 #include "infra/Checklist.hpp"
 #include "infra/Link.hpp"
+#include "infra/map.hpp"
+#include "infra/set.hpp"
 #include "infra/Stack.hpp"
 #include "env/VMJ9.h"
+#include "optimizer/CallInfo.hpp"
 
 class TR_InlineBlocks;
 class TR_PersistentClassInfo;
@@ -147,6 +150,11 @@ private:
    bool         runMacro(TR::SymbolReference *);
    bool         runFEMacro(TR::SymbolReference *);
    TR::Node *    genInvoke(TR::SymbolReference *, TR::Node *indirectCallFirstChild, TR::Node *invokedynamicReceiver = NULL);
+   TR::Node *    genInvokeInner(
+      TR::SymbolReference *,
+      TR::Node *indirectCallFirstChild,
+      TR::Node *invokedynamicReceiver,
+      TR::KnownObjectTable::Index *requiredKoi);
 
    TR::Node *    genInvokeDirect(TR::SymbolReference *symRef){ return genInvoke(symRef, NULL); }
    TR::Node *    genInvokeWithVFTChild(TR::SymbolReference *);
@@ -374,6 +382,10 @@ private:
 
    bool hasFPU();
 
+   bool pushRequiredConst(TR::KnownObjectTable::Index *koi);
+   void markRequiredKnownObjectIndex(TR::Node *node, TR::KnownObjectTable::Index koi);
+   void assertFoldedAllRequiredConsts();
+
    // data
    //
    TR::SymbolReferenceTable *         _symRefTab;
@@ -424,6 +436,9 @@ private:
    static const int32_t              _numDecFormatRenames = 9;
    static struct methodRenamePair    _decFormatRenames[_numDecFormatRenames];
    TR::SymbolReference               *_decFormatRenamesDstSymRef[_numDecFormatRenames];
+
+   const TR::map<int32_t, TR::RequiredConst> * const _requiredConsts; // from current inline call target
+   TR::set<int32_t>                 *_foldedRequiredConsts; // to make sure none were missed
    };
 
 #endif
