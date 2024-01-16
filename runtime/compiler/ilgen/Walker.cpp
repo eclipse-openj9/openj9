@@ -7197,14 +7197,44 @@ TR_J9ByteCodeIlGenerator::storeFlattenableInstance(int32_t cpIndex)
    char * fieldNamePrefix = getTopLevelPrefixForFlattenedFields(owningMethod, cpIndex, prefixLen, comp()->trMemory()->currentStackRegion());
 
    TR_OpaqueClassBlock * containingClass = owningMethod->definingClassFromCPFieldRef(comp(), cpIndex, _methodSymbol->isStatic());
-   const TR::TypeLayout *containingClassLayout = comp()->typeLayout(containingClass);
+   const TR::TypeLayout * containingClassLayout = comp()->typeLayout(containingClass);
    size_t fieldCount = containingClassLayout->count();
 
    TR::Node * value = pop();
    TR::Node * address = pop();
 
+   if (fieldCount == 0)
+      {
+      if (comp()->getOption(TR_TraceILGen))
+         {
+         traceMsg(comp(), "%s: cpIndex %d fieldCount 0 value n%dn isNonNull %d address n%dn isNonNull %d\n", __FUNCTION__, cpIndex,
+            value->getGlobalIndex(), value->isNonNull(), address->getGlobalIndex(), address->isNonNull());
+         }
+
+      // If the field count is greater than zero, the NULLCHKs will be added in the process of
+      // generating IL for the loadInstance and storeInstance below.
+      // If the field count is zero, the NULLCHKs on the references for the value and the target
+      // of the assignments need to be added here.
+
+      // Null value cannot be stored into a field whose type is null-restricted value class
+      if (!value->isNonNull() && owningMethod->isFieldNullRestricted(comp(), cpIndex, false /* isStatic */, true /* isStore */))
+         {
+         TR::Node * passThruNode = TR::Node::create(TR::PassThrough, 1, value);
+         genTreeTop(genNullCheck(passThruNode));
+         }
+
+      // If objectref is null, the putfield instruction is expected to throw a NullPointerException
+      if (!address->isNonNull())
+         {
+         TR::Node * passThruNode = TR::Node::create(TR::PassThrough, 1, address);
+         genTreeTop(genNullCheck(passThruNode));
+         }
+
+      return;
+      }
+
    int len;
-   const char *fieldClassChars = owningMethod->fieldSignatureChars(cpIndex, len);
+   const char * fieldClassChars = owningMethod->fieldSignatureChars(cpIndex, len);
    TR_OpaqueClassBlock * fieldClass = fej9()->getClassFromSignature(fieldClassChars, len, owningMethod);
 
    for (size_t idx = 0; idx < fieldCount; idx++)
