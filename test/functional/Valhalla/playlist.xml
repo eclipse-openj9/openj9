@@ -301,10 +301,9 @@
 			<variation>-Xint -XX:ValueTypeFlatteningThreshold=99999 -XX:-EnableArrayFlattening</variation>
 			<variation>-Xint -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
 			<variation>-Xjit:count=0</variation>
-			<!-- https://github.com/eclipse-openj9/openj9/issues/18742 -->
-			<!--<variation>-Xjit:count=1,disableAsyncCompilation</variation>
+			<variation>-Xjit:count=1,disableAsyncCompilation</variation>
 			<variation>-Xjit:count=1,disableAsyncCompilation -XX:ValueTypeFlatteningThreshold=99999 -XX:-EnableArrayFlattening</variation>
-			<variation>-Xjit:count=1,disableAsyncCompilation -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation> -->
+			<variation>-Xjit:count=1,disableAsyncCompilation -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 		--enable-preview \
