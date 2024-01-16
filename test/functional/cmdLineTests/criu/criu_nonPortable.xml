@@ -206,7 +206,7 @@
   </test>
 
   <test id="Create CRIU checkpoint image and restore once - testMXBeanUpTime">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -Xtrace:print={j9jcl.533,j9vm.684-696,j9vm.699,j9vm.717-743} --add-exports java.base/openj9.internal.criu=ALL-UNNAMED" $MAINCLASS_TIMECHANGE$ testMXBeanUpTime 1 false false</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -Xtrace:print={j9jcl.533,j9vm.684-696,j9vm.699,j9vm.717-743} --add-exports java.base/openj9.internal.criu=ALL-UNNAMED" -Xdump:java+system+jit:events=throw+systhrow,filter=org/eclipse/openj9/criu/JVMCheckpointException $MAINCLASS_TIMECHANGE$ testMXBeanUpTime 1 false false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="success" caseSensitive="yes" regex="no">PASSED: testMXBeanUpTime()</output>
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
