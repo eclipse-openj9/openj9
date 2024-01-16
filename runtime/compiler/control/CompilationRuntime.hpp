@@ -172,6 +172,10 @@ class TR_LowPriorityCompQueue
       uint32_t _STAT_LPQcompFromIprofiler; // first time compilations coming from LPQ
       uint32_t _STAT_LPQcompFromInterpreter;
       uint32_t _STAT_LPQcompUpgrade;
+#if defined(J9VM_OPT_JITSERVER)
+      uint32_t _STAT_compReqQueuedByJITServer;
+      uint32_t _STAT_LPQcompServerUnavailable;
+#endif /* defined(J9VM_OPT_JITSERVER) */
       // stats written by application threads
       uint32_t _STAT_compReqQueuedByInterpreter;
       uint32_t _STAT_numFailedToEnqueueInLPQ;
