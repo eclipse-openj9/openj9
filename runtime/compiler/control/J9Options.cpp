@@ -57,7 +57,32 @@
 #include "j9jitnls.h"
 #endif
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Winvalid-offsetof"
+#elif defined(__GNUC__) || defined(__GNUG__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Winvalid-offsetof"
+#elif defined(__ibmxl__) && defined(TR_TARGET_POWER)
+#pragma report(disable, "CCN1281")
+// #pragma report(disable, "CCN287")
+#elif defined(__ibmxl__) && defined(J9ZOS390)
+#pragma report(disable, "CCN6281")
+#endif
+
 #define SET_OPTION_BIT(x)   TR::Options::setBit,   offsetof(OMR::Options,_options[(x)&TR_OWM]), ((x)&~TR_OWM)
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#elif defined(__GNUC__) || defined(__GNUG__)
+#pragma GCC diagnostic pop
+#elif defined(__ibmxl__) && defined(TR_TARGET_POWER)
+#pragma report(enable, "CCN1281")
+// #pragma report(enable, "CCN287")
+#elif defined(__ibmxl__) && defined(J9ZOS390)
+#pragma report(enable, "CCN6281")
+#endif
+
 //Default code cache total max memory percentage set to 25% of physical RAM for low memory systems
 #define CODECACHE_DEFAULT_MAXRAMPERCENTAGE 25
 // For use with TPROF only, disable JVMPI hooks even if -Xrun is specified.

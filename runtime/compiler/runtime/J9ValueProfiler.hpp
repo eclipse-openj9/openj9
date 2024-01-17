@@ -339,8 +339,31 @@ class TR_HashTableProfilerInfo : public TR_AbstractHashTableProfilerInfo
        TR_AbstractHashTableProfilerInfo(bci, bits, hash, kind)
       {}
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Winvalid-offsetof"
+#elif defined(__GNUC__) || defined(__GNUG__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Winvalid-offsetof"
+#elif defined(__ibmxl__) && defined(TR_TARGET_POWER)
+#pragma report(disable, "CCN1281")
+// #pragma report(disable, "CCN287")
+#elif defined(__ibmxl__) && defined(J9ZOS390)
+#pragma report(disable, "CCN6281")
+#endif
    size_t getLockOffset() { return offsetof(TR_HashTableProfilerInfo<T>, _metaData.otherIndex); }
    size_t getHashOffset() { return offsetof(TR_HashTableProfilerInfo<T>, _hashConfig); }
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#elif defined(__GNUC__) || defined(__GNUG__)
+#pragma GCC diagnostic pop
+#elif defined(__ibmxl__) && defined(TR_TARGET_POWER)
+#pragma report(enable, "CCN1281")
+// #pragma report(enable, "CCN287")
+#elif defined(__ibmxl__) && defined(J9ZOS390)
+#pragma report(enable, "CCN6281")
+#endif
+
    TR::DataType getDataType() { return sizeof(T) <= 4 ? TR::Int32 : TR::Int64; }
 
    /**
@@ -404,8 +427,31 @@ class TR_EmbeddedHashTable : public TR_HashTableProfilerInfo<T>
       }
 
    bool resetLowFreqKeys();
+
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Winvalid-offsetof"
+#elif defined(__GNUC__) || defined(__GNUG__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Winvalid-offsetof"
+#elif defined(__ibmxl__) && defined(TR_TARGET_POWER)
+#pragma report(disable, "CCN1281")
+// #pragma report(disable, "CCN287")
+#elif defined(__ibmxl__) && defined(J9ZOS390)
+#pragma report(disable, "CCN6281")
+#endif
    size_t getKeysOffset() { return offsetof(this_t, _keys); }
    size_t getFreqOffset() { return offsetof(this_t, _freqs); }
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#elif defined(__GNUC__) || defined(__GNUG__)
+#pragma GCC diagnostic pop
+#elif defined(__ibmxl__) && defined(TR_TARGET_POWER)
+#pragma report(enable, "CCN1281")
+// #pragma report(enable, "CCN287")
+#elif defined(__ibmxl__) && defined(J9ZOS390)
+#pragma report(enable, "CCN6281")
+#endif
 
    protected:
    typedef TR_EmbeddedHashTable<T, bits> this_t;
