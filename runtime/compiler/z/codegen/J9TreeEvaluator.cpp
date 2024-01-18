@@ -9008,14 +9008,14 @@ J9::Z::TreeEvaluator::VMifInstanceOfEvaluator(TR::Node * node, TR::CodeGenerator
  * @return Returns a register containing objectClassPointer
  */
 static TR::Register*
-generateCheckForValueMonitorEnterOrExit(TR::Node *node, TR::LabelSymbol* mergeLabel, TR::LabelSymbol *helperCallLabel, TR::CodeGenerator *cg)
+generateCheckForValueMonitorEnterOrExit(TR::Node *node, TR::LabelSymbol* mergeLabel, TR::LabelSymbol *helperCallLabel, TR::CodeGenerator *cg, TR_S390ScratchRegisterManager *srm)
    {
    TR::Register *objReg = cg->evaluate(node->getFirstChild());
-   TR::Register *objectClassReg = cg->allocateRegister();
+   TR::Register *objectClassReg = srm->findOrCreateScratchRegister();
 
    TR::TreeEvaluator::genLoadForObjectHeadersMasked(cg, node, objectClassReg, generateS390MemoryReference(objReg, TR::Compiler->om.offsetOfObjectVftField(), cg), NULL);
 
-   TR::Register *tempReg = cg->allocateRegister();
+   TR::Register *tempReg = srm->findOrCreateScratchRegister();
    generateLoad32BitConstant(cg, node, J9_CLASS_DISALLOWS_LOCKING_FLAGS, tempReg, false);
 
    TR::MemoryReference *classFlagsMemRef = generateS390MemoryReference(objectClassReg, static_cast<uint32_t>(static_cast<TR_J9VMBase *>(cg->comp()->fe())->getOffsetOfClassFlags()), cg);
@@ -9061,7 +9061,7 @@ generateCheckForValueMonitorEnterOrExit(TR::Node *node, TR::LabelSymbol* mergeLa
       helperCallOOLSection->swapInstructionListsWithCompilation();
       }
 
-   cg->stopUsingRegister(tempReg);
+   srm->reclaimScratchRegister(tempReg);
    return objectClassReg;
    }
 
@@ -9087,7 +9087,7 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       }
 
 
-   TR_S390ScratchRegisterManager *srm = cg->generateScratchRegisterManager();
+   TR_S390ScratchRegisterManager *srm = cg->generateScratchRegisterManager(2);
 
    TR::Node                *objNode                   = node->getFirstChild();
    TR::Register            *objReg                    = cg->evaluate(objNode);
@@ -9135,7 +9135,7 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       // If we are generating code for MonitorCacheLookup then we will not have a separate OOL for inlineRecursive, and callLabel points
       // to the OOL Containing only helper call. Otherwise, OOL will have other code apart from helper call which we do not want to execute
       // for ValueType or ValueBased object and in that scenario we will need to generate another OOL that just contains helper call.
-      objectClassReg = generateCheckForValueMonitorEnterOrExit(node, cFlowRegionEnd, lwOffset <= 0 ? callLabel : NULL, cg);
+      objectClassReg = generateCheckForValueMonitorEnterOrExit(node, cFlowRegionEnd, lwOffset <= 0 ? callLabel : NULL, cg, srm);
       }
    TR::RegisterDependencyConditions * conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, numDeps, cg);
 
@@ -9144,8 +9144,6 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
    conditions->addPostCondition(objReg, TR::RealRegister::AssignAny);
    conditions->addPostCondition(monitorReg, TR::RealRegister::AssignAny);
-   if (objectClassReg != NULL)
-      conditions->addPostCondition(objectClassReg, TR::RealRegister::AssignAny);
 
    static const char * peekFirst = feGetEnv("TR_PeekingMonEnter");
    // This debug option is for printing the locking mechanism.
@@ -9162,9 +9160,7 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       if (objectClassReg == NULL)
          {
          tempMR = generateS390MemoryReference(objReg, TR::Compiler->om.offsetOfObjectVftField(), cg);
-         // TODO We don't need objectClassReg except in this ifCase. We can use scratchRegisterManager to allocate one here.
-         objectClassReg = cg->allocateRegister();
-         conditions->addPostCondition(objectClassReg, TR::RealRegister::AssignAny);
+         objectClassReg = srm->findOrCreateScratchRegister();
          TR::TreeEvaluator::genLoadForObjectHeadersMasked(cg, node, objectClassReg, tempMR, NULL);
          }
       int32_t offsetOfLockOffset = offsetof(J9Class, lockOffset);
@@ -9204,8 +9200,7 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
             debugObj->addInstructionComment(cursor, "Denotes start of OOL monent monitorLookupCache");
             }
 
-         lookupOffsetReg = cg->allocateRegister();
-         OOLConditions->addPostCondition(lookupOffsetReg, TR::RealRegister::AssignAny);
+         lookupOffsetReg = srm->findOrCreateScratchRegister();
 
          int32_t offsetOfMonitorLookupCache = offsetof(J9VMThread, objectMonitorLookupCache);
          int32_t t = trailingZeroes(TR::Compiler->om.getObjectAlignmentInBytes());
@@ -9252,6 +9247,8 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
             startICF = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, helperCallLabel);
             }
 
+         srm->reclaimScratchRegister(lookupOffsetReg);
+
          int32_t offsetOfMonitor = offsetof(J9ObjectMonitor, monitor);
          temp2MR = generateS390MemoryReference(tempRegister, offsetOfMonitor, cg);
          generateRXInstruction(cg, TR::InstOpCode::getCmpOpCode(), node, objReg, temp2MR);
@@ -9295,6 +9292,9 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
          generateS390LabelInstruction(cg, TR::InstOpCode::label, node, helperCallLabel );
          TR::RegisterDependencyConditions *deps = NULL;
          dummyResultReg = helperLink->buildDirectDispatch(node, &deps);
+
+         srm->addScratchRegistersToDependencyList(OOLConditions);
+
          TR::RegisterDependencyConditions *mergeConditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(OOLConditions, deps, cg);
          generateS390LabelInstruction(cg, TR::InstOpCode::label, node, helperReturnOOLLabel , mergeConditions);
 
@@ -9326,20 +9326,14 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
    if (reserveLocking)
       {
-
-      // TODO - ScratchRegisterManager Should Manage these temporary Registers.
-      if (wasteReg)
-         cg->stopUsingRegister(wasteReg);
       cg->stopUsingRegister(monitorReg);
       // TODO : objectClassReg contains the J9Class for object which is set in lwOffset <= 0 case. Usually that is NULL in the following function call
       return reservationLockEnter(node, lwOffset, objectClassReg, cg, helperLink);
       }
 
-   if (normalLockWithReservationPreserving)
-      {
-      lockPreservingReg = cg->allocateRegister();
-      conditions->addPostCondition(lockPreservingReg, TR::RealRegister::AssignAny);
-      }
+   if (objectClassReg)
+      srm->reclaimScratchRegister(objectClassReg);
+
    const char* debugCounterNamePrefix = normalLockWithReservationPreserving? "LockEnt/Preserving": "LockEnt/Normal";
    // Opcodes:
    bool use64b = true;
@@ -9426,8 +9420,7 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
       TR::MemoryReference * tempMR = generateS390MemoryReference(baseReg, lwOffset, cg);
       TR::MemoryReference * tempMR1 = generateS390MemoryReference(baseReg, lwOffset, cg);
-      wasteReg = cg->allocateRegister();
-      conditions->addPostCondition(wasteReg, TR::RealRegister::AssignAny);
+      wasteReg = srm->findOrCreateScratchRegister();
       // Loading Lock value into monitorReg
       generateRXInstruction(cg, loadOp, node, monitorReg, tempMR);
       generateRIInstruction(cg, loadHalfWordImmOp, node, wasteReg,
@@ -9443,6 +9436,7 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       generateRRInstruction(cg, andOp, node, wasteReg, monitorReg);
       if (normalLockWithReservationPreserving)
          {
+         lockPreservingReg = srm->findOrCreateScratchRegister();
          generateRRInstruction(cg,loadRegOp, node, lockPreservingReg, metaReg);
          generateRILInstruction(cg, orImmOp, node, lockPreservingReg, LOCK_RESERVATION_BIT);
          }
@@ -9452,6 +9446,11 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       // if comparison fails (masked lock value != R13) that means another thread owns the lock.
       // In this case we call helper function and let the VM handle the situation.
       startICF = generateS390CompareAndBranchInstruction(cg, compareOp, node, wasteReg, normalLockWithReservationPreserving ? lockPreservingReg : metaReg, TR::InstOpCode::COND_BNE, callHelper, false, false);
+      srm->reclaimScratchRegister(wasteReg);
+      if (normalLockWithReservationPreserving)
+         {
+         srm->reclaimScratchRegister(lockPreservingReg);
+         }
 
       cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "%s/Recursive", debugCounterNamePrefix), 1, TR::DebugCounter::Undetermined);
       // In case of recursive lock, the counter should be incremented.
@@ -9476,6 +9475,8 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       cursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, node, callHelper);
       }
 
+   srm->addScratchRegistersToDependencyList(conditions);
+
    cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "%s/VMHelper", debugCounterNamePrefix), 1, TR::DebugCounter::Undetermined);
    TR::RegisterDependencyConditions *deps = NULL;
    dummyResultReg = inlineRecursive ? helperLink->buildDirectDispatch(node, &deps) : helperLink->buildDirectDispatch(node);
@@ -9498,17 +9499,10 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, cFlowRegionEnd, conditions);
 
+   srm->stopUsingRegisters();
    cg->stopUsingRegister(monitorReg);
-   if (wasteReg)
-      cg->stopUsingRegister(wasteReg);
-   if (objectClassReg)
-      cg->stopUsingRegister(objectClassReg);
-   if (lookupOffsetReg)
-      cg->stopUsingRegister(lookupOffsetReg);
-   if (tempRegister && (tempRegister != objectClassReg))
+   if (tempRegister)
       cg->stopUsingRegister(tempRegister);
-   if (lockPreservingReg)
-      cg->stopUsingRegister(lockPreservingReg);
    cg->decReferenceCount(objNode);
    return NULL;
    }
@@ -9560,6 +9554,8 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
    TR::LabelSymbol *callHelper                     = generateLabelSymbol(cg);
    TR::LabelSymbol *returnLabel                    = generateLabelSymbol(cg);
 
+   TR_S390ScratchRegisterManager *srm = cg->generateScratchRegisterManager(2);
+
    int32_t numDeps = 4;
    if (lwOffset <=0)
       {
@@ -9576,7 +9572,7 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
    if (isMonitorValueBasedOrValueType == TR_maybe)
       {
       numDeps += 1;
-      objectClassReg = generateCheckForValueMonitorEnterOrExit(node, cFlowRegionEnd, lwOffset <= 0 ? callLabel : NULL, cg);
+      objectClassReg = generateCheckForValueMonitorEnterOrExit(node, cFlowRegionEnd, lwOffset <= 0 ? callLabel : NULL, cg, srm);
       }
    TR::RegisterDependencyConditions * conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, numDeps, cg);
 
@@ -9591,8 +9587,6 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
 
    conditions->addPostCondition(objReg, TR::RealRegister::AssignAny);
    conditions->addPostCondition(monitorReg, TR::RealRegister::AssignAny);
-   if (objectClassReg != NULL)
-      conditions->addPostCondition(objectClassReg, TR::RealRegister::AssignAny);
 
 
    if (lwOffset <= 0)
@@ -9606,8 +9600,7 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
       if (objectClassReg == NULL)
          {
          tempMR = generateS390MemoryReference(objReg, TR::Compiler->om.offsetOfObjectVftField(), cg);
-         objectClassReg = cg->allocateRegister();
-         conditions->addPostCondition(objectClassReg, TR::RealRegister::AssignAny);
+         objectClassReg = srm->findOrCreateScratchRegister();
          TR::TreeEvaluator::genLoadForObjectHeadersMasked(cg, node, objectClassReg, tempMR, NULL);
          }
       int32_t offsetOfLockOffset = offsetof(J9Class, lockOffset);
@@ -9763,6 +9756,7 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
       cg->stopUsingRegister(monitorReg);
       return reservationLockExit(node, lwOffset, objectClassReg, cg, helperLink);
       }
+   srm->reclaimScratchRegister(objectClassReg);
    ////////////
    // Opcodes:
    bool use64b = true;
@@ -9898,6 +9892,7 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
       else
          cg->generateDebugCounter("LockExit/Normal/VMHelper", 1, TR::DebugCounter::Undetermined);
       }
+   srm->addScratchRegistersToDependencyList(conditions);
    TR::RegisterDependencyConditions *deps = NULL;
    TR::Register *dummyResultReg = inlineRecursive ? helperLink->buildDirectDispatch(node, &deps) : helperLink->buildDirectDispatch(node);
    TR::RegisterDependencyConditions *mergeConditions = NULL;
@@ -9918,12 +9913,11 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
 
    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, cFlowRegionEnd, conditions);
 
+   srm->stopUsingRegisters();
    cg->stopUsingRegister(monitorReg);
-   if (objectClassReg)
-      cg->stopUsingRegister(objectClassReg);
    if (lookupOffsetReg)
       cg->stopUsingRegister(lookupOffsetReg);
-   if (tempRegister && (tempRegister != objectClassReg))
+   if (tempRegister)
       cg->stopUsingRegister(tempRegister);
    if (scratchRegister)
       cg->stopUsingRegister(scratchRegister);
