@@ -67,22 +67,23 @@ public class Log {
 	 * directly.
 	 * @throws SecurityException
 	 */
-    private static void checkLegacySecurityPermssion() throws SecurityException {
-    	if (!("false".equalsIgnoreCase(com.ibm.oti.vm.VM.getVMLangAccess()	//$NON-NLS-1$
-    		.internalGetProperties().getProperty(LEGACY_LOG_PERMISSION_PROPERTY)))) {
-    		checkLogSecurityPermssion();
-    	}
-    }
-	
-    private static void checkLogSecurityPermssion() throws SecurityException {
+	private static void checkLegacySecurityPermssion() throws SecurityException {
+		if (!("false".equalsIgnoreCase(com.ibm.oti.vm.VM //$NON-NLS-1$
+				.internalGetProperties().getProperty(LEGACY_LOG_PERMISSION_PROPERTY)))
+		) {
+			checkLogSecurityPermssion();
+		}
+	}
+
+	private static void checkLogSecurityPermssion() throws SecurityException {
 		/* Check the caller has LogPermission. */
 		@SuppressWarnings("removal")
 		SecurityManager manager = System.getSecurityManager();
-		if( manager != null ) {
+		if (manager != null) {
 			manager.checkPermission(LOG_PERMISSION);
 		}
-    }
-    
+	}
+
 	/*
 	 * Log should not be instantiated.
 	 */
