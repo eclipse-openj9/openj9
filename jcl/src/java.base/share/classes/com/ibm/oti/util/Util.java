@@ -49,11 +49,10 @@ import com.ibm.oti.vm.VMLangAccess;
 public final class Util {
 
 	private static final Charset defaultEncoding;
-	private static final VMLangAccess vmLangAccess;
+	private static final VMLangAccess vmLangAccess = VM.getVMLangAccess();
 
 	static {
-		vmLangAccess = VM.getVMLangAccess();
-		String encoding = vmLangAccess.internalGetProperties().getProperty("os.encoding"); //$NON-NLS-1$
+		String encoding = VM.internalGetProperties().getProperty("os.encoding"); //$NON-NLS-1$
 		Charset charset = null;
 		if (encoding != null) {
 			try {

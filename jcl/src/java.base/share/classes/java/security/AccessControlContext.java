@@ -98,7 +98,7 @@ public final class AccessControlContext {
 static int debugSetting() {
 	if (debugSetting != -1) return debugSetting;
 	debugSetting = 0;
-	String value = com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties().getProperty("java.security.debug"); //$NON-NLS-1$
+	String value = com.ibm.oti.vm.VM.internalGetProperties().getProperty("java.security.debug"); //$NON-NLS-1$
 	if (value == null) return debugSetting;
 	StreamTokenizer tokenizer = new StreamTokenizer(new StringReader(value));
 	tokenizer.resetSyntax();

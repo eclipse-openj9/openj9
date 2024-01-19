@@ -20,20 +20,19 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
-
 package openj9.internal.tools.attach.target;
 
 import static openj9.internal.tools.attach.target.IPC.LOGGING_DISABLED;
 import static openj9.internal.tools.attach.target.IPC.LOGGING_ENABLED;
 import static openj9.internal.tools.attach.target.IPC.loggingStatus;
 
+import com.ibm.oti.vm.VM;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Properties;
 import java.util.Vector;
-
-import com.ibm.oti.vm.VM;
 
 /**
  * This class handles incoming attachment requests from other VMs. Must be
@@ -107,7 +106,7 @@ public class AttachHandler extends Thread {
 	 * but parse it lazily because we rarely need the value.
 	 */
 	public final static String allowAttachSelf =
-			VM.getVMLangAccess().internalGetProperties().getProperty("jdk.attach.allowAttachSelf" //$NON-NLS-1$
+			VM.internalGetProperties().getProperty("jdk.attach.allowAttachSelf" //$NON-NLS-1$
 /*[IF JAVA_SPEC_VERSION >= 9]*/
 					, "false" //$NON-NLS-1$
 /*[ELSE] JAVA_SPEC_VERSION >= 9 */
@@ -147,7 +146,7 @@ public class AttachHandler extends Thread {
 		/*[PR Jazz 59196 LIR: Disable attach API by default on z/OS (31972)]*/
 		boolean enableAttach = !IPC.isZOS;
 		/* the system property overrides the default */
-		String enableAttachProp = com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties().getProperty("com.ibm.tools.attach.enable");  //$NON-NLS-1$
+		String enableAttachProp = VM.internalGetProperties().getProperty("com.ibm.tools.attach.enable");  //$NON-NLS-1$
 		if (null != enableAttachProp) {
 			if (enableAttachProp.equalsIgnoreCase("no")) { //$NON-NLS-1$
 				enableAttach = false;
@@ -227,7 +226,7 @@ public class AttachHandler extends Thread {
 	 */
 	public void run() {
 		/* Set  the current thread as a System Thread */
-		com.ibm.oti.vm.VM.markCurrentThreadAsSystem();
+		VM.markCurrentThreadAsSystem();
 
 		synchronized (stateSync) { /* CMVC 161729 : shutdown hook may already be running */
 			if (AttachStateValues.ATTACH_UNINITIALIZED == getAttachState()) {
@@ -262,23 +261,24 @@ public class AttachHandler extends Thread {
 	}
 
 	private boolean initialize() throws IOException {
-		String loggingProperty = com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties().getProperty(LOGGING_ENABLE_PROPERTY);
-		String logName = com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties().getProperty(LOG_NAME_PROPERTY);
+		final Properties internalProperties = VM.internalGetProperties();
+		String loggingProperty = internalProperties.getProperty(LOGGING_ENABLE_PROPERTY);
+		String logName = internalProperties.getProperty(LOG_NAME_PROPERTY);
 		if ((null != logName) && !logName.equals("")) { //$NON-NLS-1$
 			logName = logName + '_';
 		} else {
 			logName = ""; //$NON-NLS-1$
 		}
 
-		nameProperty = com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties().getProperty(DISPLAYNAME_PROPERTY);
-		pidProperty = validateVmId(com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties().getProperty(VMID_PROPERTY));
+		nameProperty = internalProperties.getProperty(DISPLAYNAME_PROPERTY);
+		pidProperty = validateVmId(internalProperties.getProperty(VMID_PROPERTY));
 		if ((null == pidProperty) || (0 == pidProperty.length())) {
 			/* CMVC 161414 - PIDs and UIDs are long */
 			long pid = IPC.getProcessId();
 			pidProperty = Long.toString(pid);
 		}
 		if (null == nameProperty) {
-			nameProperty = com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties().getProperty("sun.java.command"); //$NON-NLS-1$
+			nameProperty = internalProperties.getProperty("sun.java.command"); //$NON-NLS-1$
 		}
 		synchronized (IPC.accessorMutex) {
 			if ((null == IPC.logStream) && (null != loggingProperty)
@@ -527,7 +527,7 @@ public class AttachHandler extends Thread {
 			/*[PR CMVC 188652]  Suppress OOM messages from attach API*/
 			try {
 				/* Set  the current thread as a System Thread */
-				com.ibm.oti.vm.VM.markCurrentThreadAsSystem();
+				VM.markCurrentThreadAsSystem();
 				if (LOGGING_DISABLED != loggingStatus) {
 					IPC.logMessage("shutting down attach API : " + mainHandler); //$NON-NLS-1$
 				}
@@ -708,8 +708,9 @@ public class AttachHandler extends Thread {
 		Attachment.saveLocalConnectorAddress();
 		//If we don't have a local connector address, just continue and get the others
 		Properties agentProperties = new Properties();
+		final Properties internalProperties = VM.internalGetProperties();
 		for (String pName: agentPropertyNames) {
-			String pValue = com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties().getProperty(pName);
+			String pValue = internalProperties.getProperty(pName);
 			if (null != pValue) {
 				agentProperties.put(pName, pValue);
 			}
