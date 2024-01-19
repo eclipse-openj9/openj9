@@ -367,32 +367,34 @@ TR_MethodHandleTransformer::getObjectInfoOfNode(TR::Node* node)
       {
       auto rm = symbol->castToMethodSymbol()->getMandatoryRecognizedMethod();
       switch (rm)
-        {
-        case TR::java_lang_invoke_DirectMethodHandle_internalMemberName:
-        case TR::java_lang_invoke_DirectMethodHandle_internalMemberNameEnsureInit:
-           {
-           auto mhIndex = getObjectInfoOfNode(node->getFirstArgument());
-           if (knot && isKnownObject(mhIndex) && !knot->isNull(mhIndex))
-              {
-              auto mnIndex = comp()->fej9()->getMemberNameFieldKnotIndexFromMethodHandleKnotIndex(comp(), mhIndex, "member");
-              if (trace())
-                 traceMsg(comp(), "Get DirectMethodHandle.member known object %d, update node n%dn known object\n", mnIndex, node->getGlobalIndex());
-              node->setKnownObjectIndex(mnIndex);
-              return mnIndex;
-              }
-           }
-        case TR::java_lang_invoke_DirectMethodHandle_constructorMethod:
-           {
-           auto mhIndex = getObjectInfoOfNode(node->getFirstArgument());
-           if (knot && isKnownObject(mhIndex) && !knot->isNull(mhIndex))
-              {
-              auto mnIndex = comp()->fej9()->getMemberNameFieldKnotIndexFromMethodHandleKnotIndex(comp(), mhIndex, "initMethod");
-              if (trace())
-                 traceMsg(comp(), "Get DirectMethodHandle.initMethod known object %d, update node n%dn known object\n", mnIndex, node->getGlobalIndex());
-              node->setKnownObjectIndex(mnIndex);
-              return mnIndex;
-              }
-           }
+         {
+         case TR::java_lang_invoke_DirectMethodHandle_internalMemberName:
+         case TR::java_lang_invoke_DirectMethodHandle_internalMemberNameEnsureInit:
+            {
+            auto mhIndex = getObjectInfoOfNode(node->getFirstArgument());
+            if (knot && isKnownObject(mhIndex) && !knot->isNull(mhIndex))
+               {
+               auto mnIndex = comp()->fej9()->getMemberNameFieldKnotIndexFromMethodHandleKnotIndex(comp(), mhIndex, "member");
+               if (trace())
+                  traceMsg(comp(), "Get DirectMethodHandle.member known object %d, update node n%dn known object\n", mnIndex, node->getGlobalIndex());
+               node->setKnownObjectIndex(mnIndex);
+               return mnIndex;
+               }
+            break;
+            }
+         case TR::java_lang_invoke_DirectMethodHandle_constructorMethod:
+            {
+            auto mhIndex = getObjectInfoOfNode(node->getFirstArgument());
+            if (knot && isKnownObject(mhIndex) && !knot->isNull(mhIndex))
+               {
+               auto mnIndex = comp()->fej9()->getMemberNameFieldKnotIndexFromMethodHandleKnotIndex(comp(), mhIndex, "initMethod");
+               if (trace())
+                  traceMsg(comp(), "Get DirectMethodHandle.initMethod known object %d, update node n%dn known object\n", mnIndex, node->getGlobalIndex());
+               node->setKnownObjectIndex(mnIndex);
+               return mnIndex;
+               }
+            break;
+            }
 
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
          case TR::java_lang_invoke_DelegatingMethodHandle_getTarget:
