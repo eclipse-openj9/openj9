@@ -122,7 +122,7 @@ public final class InternalCRIUSupport {
 	/**
 	 * Queries if CRIU Checkpoint is allowed.
 	 * isCRIUSupportEnabled() is invoked first to check if CRIU support is enabled,
-	 * and j9criu29 is to be lazily loaded at checkpointJVM().
+	 * and criu library has been loaded.
 	 *
 	 * @return true if Checkpoint is allowed, otherwise false
 	 */
@@ -204,20 +204,8 @@ public final class InternalCRIUSupport {
 
 	private static boolean loadNativeLibrary() {
 		if (!nativeLoaded) {
-			try {
-				AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
-					System.loadLibrary("j9criu29"); //$NON-NLS-1$
-					return null;
-				});
-				if (setupJNIFieldIDsAndCRIUAPI()) {
-					nativeLoaded = true;
-				}
-			} catch (UnsatisfiedLinkError e) {
-				errorMsg = e.getMessage();
-				Properties internalProperties = com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties();
-				if (internalProperties.getProperty("enable.j9internal.checkpoint.hook.api.debug") != null) { //$NON-NLS-1$
-					e.printStackTrace();
-				}
+			if (setupJNIFieldIDsAndCRIUAPI()) {
+				nativeLoaded = true;
 			}
 		}
 
@@ -270,7 +258,7 @@ public final class InternalCRIUSupport {
 	}
 
 	/**
-	 * Queries if CRIU support is enabled and j9criu29 library has been loaded.
+	 * Queries if CRIU support is enabled and criu library has been loaded.
 	 *
 	 * @return TRUE if support is enabled and the library is loaded, FALSE otherwise
 	 */
@@ -868,7 +856,7 @@ public final class InternalCRIUSupport {
 	 *                                       restore
 	 */
 	public synchronized void checkpointJVM() {
-		if (isCRIUSupportEnabled()) {
+		if (isCRIUSupportEnabledAndNativeLoaded()) {
 			if (isCheckpointAllowed()) {
 				/* Add env variables restore hook. */
 				String envFilePath = null;
@@ -886,13 +874,8 @@ public final class InternalCRIUSupport {
 
 				J9InternalCheckpointHookAPI.runPreCheckpointHooksConcurrentThread();
 				System.gc();
-				try {
-					checkpointJVMImpl(imageDir, leaveRunning, shellJob, extUnixSupport, logLevel, logFile, fileLocks,
-							workDir, tcpEstablished, autoDedup, trackMemory, unprivileged, optionsFile, envFilePath);
-				} catch (UnsatisfiedLinkError ule) {
-					errorMsg = ule.getMessage();
-					throw new InternalError("There is a problem with libj9criu in the JDK"); //$NON-NLS-1$
-				}
+				checkpointJVMImpl(imageDir, leaveRunning, shellJob, extUnixSupport, logLevel, logFile, fileLocks,
+						workDir, tcpEstablished, autoDedup, trackMemory, unprivileged, optionsFile, envFilePath);
 				J9InternalCheckpointHookAPI.runPostRestoreHooksConcurrentThread();
 			} else {
 				throw new UnsupportedOperationException(
