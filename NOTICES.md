@@ -104,7 +104,7 @@ possession, or use, and re-export of encryption software, to see if this is perm
 
 This project may leverage the following third party content when building and at runtime.
 
-Checkpoint/Restore In Userspace (CRIU) (3.17.1)
+Checkpoint/Restore In Userspace (CRIU) (3.18)
 
 * License: GPL v2, LGPL v2.1 [https://github.com/checkpoint-restore/criu/blob/criu-dev/COPYING](https://github.com/checkpoint-restore/criu/blob/criu-dev/COPYING)
 * Project: https://criu.org/Main_Page
