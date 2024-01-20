@@ -1346,7 +1346,7 @@ TR_ResolvedJ9JITServerMethod::createResolvedMethodMirror(TR_ResolvedJ9JITServerM
       resolvedMethod = new (trMemory->trHeapMemory()) TR_ResolvedRelocatableJ9Method(method, fe, trMemory, owningMethod, vTableSlot);
    if (!resolvedMethod) throw std::bad_alloc();
 
-   packMethodInfo(methodInfo, resolvedMethod, fe);
+   packMethodInfo(methodInfo, resolvedMethod, fe, trMemory);
    }
 
 void
@@ -1407,11 +1407,11 @@ TR_ResolvedJ9JITServerMethod::createResolvedMethodFromJ9MethodMirror(TR_Resolved
 #endif
       }
 
-   packMethodInfo(methodInfo, resolvedMethod, fe);
+   packMethodInfo(methodInfo, resolvedMethod, fe, trMemory);
    }
 
 void
-TR_ResolvedJ9JITServerMethod::packMethodInfo(TR_ResolvedJ9JITServerMethodInfo &methodInfo, TR_ResolvedJ9Method *resolvedMethod, TR_FrontEnd *fe)
+TR_ResolvedJ9JITServerMethod::packMethodInfo(TR_ResolvedJ9JITServerMethodInfo &methodInfo, TR_ResolvedJ9Method *resolvedMethod, TR_FrontEnd *fe, TR_Memory *trMemory)
    {
    auto &methodInfoStruct = std::get<0>(methodInfo);
    if (!resolvedMethod)
@@ -1455,15 +1455,20 @@ TR_ResolvedJ9JITServerMethod::packMethodInfo(TR_ResolvedJ9JITServerMethodInfo &m
    methodInfoStruct.isChangesCurrentThread = static_cast<TR_J9VMBase *>(fe)->isChangesCurrentThread(resolvedMethod);
 
    TR_PersistentJittedBodyInfo *bodyInfo = NULL;
+   TR_PersistentMethodInfo *persistentMethodInfo = NULL;
    // Method may not have been compiled
    if (!resolvedMethod->isInterpreted() && !resolvedMethod->isJITInternalNative())
       {
       bodyInfo = resolvedMethod->getExistingJittedBodyInfo();
+      if (bodyInfo)
+         {
+         persistentMethodInfo = bodyInfo->getMethodInfo();
+         }
       }
 
    // set string info fields (they cannot be inside of the struct)
    std::string jbi = bodyInfo ? std::string((char*)bodyInfo, sizeof(TR_PersistentJittedBodyInfo)) : std::string();
-   std::string methodInfoStr = bodyInfo ? std::string((char*)bodyInfo->getMethodInfo(), sizeof(TR_PersistentMethodInfo)) : std::string();
+   std::string methodInfoStr = persistentMethodInfo ? std::string((char*)persistentMethodInfo, sizeof(TR_PersistentMethodInfo)) : std::string();
    std::get<1>(methodInfo) = jbi;
    std::get<2>(methodInfo) = methodInfoStr;
 
@@ -1471,6 +1476,16 @@ TR_ResolvedJ9JITServerMethod::packMethodInfo(TR_ResolvedJ9JITServerMethodInfo &m
    // fanin info is not used at cold opt level, so there is no point sending this information to the server
    JITClientIProfiler *iProfiler = (JITClientIProfiler *)((TR_J9VMBase *) fe)->getIProfiler();
    std::get<3>(methodInfo) = (comp && comp->getOptLevel() >= warm && iProfiler) ? iProfiler->serializeIProfilerMethodEntry(resolvedMethod->getPersistentIdentifier()) : std::string();
+
+   // set PersistentProfileInfo string
+   std::string recentProfileInfoStr;
+   std::string bestProfileInfoStr;
+   if (persistentMethodInfo)
+      {
+      J9::Recompilation::serializePersistentProfileInfo(persistentMethodInfo, recentProfileInfoStr, bestProfileInfoStr, trMemory);
+      }
+   std::get<4>(methodInfo) = recentProfileInfoStr;
+   std::get<5>(methodInfo) = bestProfileInfoStr;
    }
 
 void
@@ -1532,6 +1547,14 @@ TR_ResolvedJ9JITServerMethod::unpackMethodInfo(TR_OpaqueMethodBlock * aMethod, T
    const std::string &entryStr = std::get<3>(methodInfo);
    const auto serialEntry = (TR_ContiguousIPMethodHashTableEntry*) &entryStr[0];
    _iProfilerMethodEntry = (iProfiler && !entryStr.empty()) ? iProfiler->deserializeMethodEntry(serialEntry, trMemory) : NULL;
+
+   if (_bodyInfo)
+      {
+      const std::string &recentProfileInfoStr = std::get<4>(methodInfo);
+      const std::string &bestProfileInfoStr = std::get<5>(methodInfo);
+      J9::Recompilation::deserializePersistentProfileInfo(_bodyInfo->getMethodInfo(), recentProfileInfoStr, bestProfileInfoStr);
+      _bodyInfo->setProfileInfo(_bodyInfo->getMethodInfo()->getRecentProfileInfo());
+      }
    }
 
 bool

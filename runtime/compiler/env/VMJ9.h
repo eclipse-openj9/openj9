@@ -287,6 +287,7 @@ public:
    virtual bool needRelocationsForCurrentMethodStartPC() { return false; }
    virtual bool needRelocationsForBodyInfoData() { return false; }
    virtual bool needRelocationsForPersistentInfoData() { return false; }
+   virtual bool needRelocationsForPersistentProfileInfoData() { return false; }
    virtual bool needRelocationsForLookupEvaluationData() { return false; }
    virtual bool nopsAlsoProcessedByRelocations() { return false; }
    virtual bool needRelocatableTarget() { return false; }
@@ -1552,6 +1553,7 @@ public:
    virtual bool               needRelocationsForLookupEvaluationData()        { return true; }
    virtual bool               needRelocationsForBodyInfoData()                { return true; }
    virtual bool               needRelocationsForPersistentInfoData()          { return true; }
+   virtual bool               needRelocationsForPersistentProfileInfoData()   { return true; }
    virtual bool               nopsAlsoProcessedByRelocations()                { return true; }
    virtual bool               supportsGuardMerging()                          { return false; }
    virtual bool               canDevirtualizeDispatch()                       { return false; }

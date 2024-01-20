@@ -567,7 +567,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       auto req = stream->readCompileRequest<
          uint64_t, uint32_t, uint32_t, J9Method *, J9Class *, TR_OptimizationPlan, std::string,
          J9::IlGeneratorMethodDetailsType, std::vector<TR_OpaqueClassBlock *>, std::vector<TR_OpaqueClassBlock *>,
-         JITServerHelpers::ClassInfoTuple, std::string, std::string, std::string, std::string,
+         JITServerHelpers::ClassInfoTuple, std::string, std::string, std::string, std::string, std::string, std::string,
          bool, bool, bool, uint32_t, uintptr_t *, std::vector<J9Class *>, std::vector<J9Class *>,
          std::vector<JITServerHelpers::ClassInfoTuple>, std::vector<uintptr_t>
       >();
@@ -585,17 +585,19 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       auto &classInfoTuple          = std::get<10>(req);
       auto &clientOptStr            = std::get<11>(req);
       auto &recompInfoStr           = std::get<12>(req);
-      auto &chtableUnloads          = std::get<13>(req);
-      auto &chtableMods             = std::get<14>(req);
-      useAotCompilation             = std::get<15>(req);
-      bool isInStartupPhase         = std::get<16>(req);
-      bool aotCacheLoad             = std::get<17>(req);
-      _methodIndex                  = std::get<18>(req);
-      uintptr_t *classChain         = std::get<19>(req);
-      auto &ramClassChain           = std::get<20>(req);
-      auto &uncachedRAMClasses      = std::get<21>(req);
-      auto &uncachedClassInfos      = std::get<22>(req);
-      auto &newKnownIds             = std::get<23>(req);
+      auto &recentProfileInfoStr    = std::get<13>(req);
+      auto &bestProfileInfoStr      = std::get<14>(req);
+      auto &chtableUnloads          = std::get<15>(req);
+      auto &chtableMods             = std::get<16>(req);
+      useAotCompilation             = std::get<17>(req);
+      bool isInStartupPhase         = std::get<18>(req);
+      bool aotCacheLoad             = std::get<19>(req);
+      _methodIndex                  = std::get<20>(req);
+      uintptr_t *classChain         = std::get<21>(req);
+      auto &ramClassChain           = std::get<22>(req);
+      auto &uncachedRAMClasses      = std::get<23>(req);
+      auto &uncachedClassInfos      = std::get<24>(req);
+      auto &newKnownIds             = std::get<25>(req);
 
       TR_ASSERT_FATAL(TR::Compiler->persistentMemory() == compInfo->persistentMemory(),
                       "per-client persistent memory must not be set at this point");
@@ -836,7 +838,8 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
          {
          _recompilationMethodInfo = new (clientSession->persistentMemory()) TR_PersistentMethodInfo();
          memcpy(_recompilationMethodInfo, recompInfoStr.data(), sizeof(TR_PersistentMethodInfo));
-         J9::Recompilation::resetPersistentProfileInfo(_recompilationMethodInfo);
+         J9::Recompilation::deserializePersistentProfileInfo(_recompilationMethodInfo, recentProfileInfoStr, bestProfileInfoStr);
+         _recompilationMethodInfo->setOptimizationPlan(NULL);
          }
       // Get the ROMClass for the method to be compiled if it is already cached
       // Or read it from the compilation request and cache it otherwise
@@ -1363,6 +1366,18 @@ TR::CompilationInfoPerThreadRemote::cacheResolvedMethod(TR_ResolvedMethodKey key
       entry = (TR_ContiguousIPMethodHashTableEntry*) trMemory->allocateHeapMemory(sizeof(TR_ContiguousIPMethodHashTableEntry), TR_MemoryBase::Recompilation);
       memcpy(entry, std::get<3>(methodInfo).data(), sizeof(TR_ContiguousIPMethodHashTableEntry));
       }
+   TR_PersistentProfileInfo *recentProfileInfo = NULL;
+   if (!std::get<4>(methodInfo).empty())
+      {
+      recentProfileInfo = (TR_PersistentProfileInfo *)trMemory->allocateHeapMemory(sizeof(TR_PersistentProfileInfo), TR_MemoryBase::Recompilation);
+      memcpy(recentProfileInfo, std::get<4>(methodInfo).data(), sizeof(TR_PersistentProfileInfo));
+      }
+   TR_PersistentProfileInfo *bestProfileInfo = NULL;
+   if (!std::get<5>(methodInfo).empty())
+      {
+      bestProfileInfo = (TR_PersistentProfileInfo *)trMemory->allocateHeapMemory(sizeof(TR_PersistentProfileInfo), TR_MemoryBase::Recompilation);
+      memcpy(bestProfileInfo, std::get<5>(methodInfo).data(), sizeof(TR_PersistentProfileInfo));
+      }
 
    TR_ResolvedMethodCacheEntry cacheEntry;
    cacheEntry.method = method;
@@ -1371,6 +1386,8 @@ TR::CompilationInfoPerThreadRemote::cacheResolvedMethod(TR_ResolvedMethodKey key
    cacheEntry.persistentBodyInfo = bodyInfo;
    cacheEntry.persistentMethodInfo = pMethodInfo;
    cacheEntry.IPMethodInfo = entry;
+   cacheEntry.recentProfileInfo = recentProfileInfo;
+   cacheEntry.bestProfileInfo = bestProfileInfo;
 
    // time-to-live for cached unresolved methods.
    // Irrelevant for resolved methods.
@@ -1421,7 +1438,9 @@ TR::CompilationInfoPerThreadRemote::getCachedResolvedMethod(TR_ResolvedMethodKey
       TR_ResolvedJ9JITServerMethodInfo methodInfo = make_tuple(methodInfoStruct,
          methodCacheEntry.persistentBodyInfo ? std::string((const char*)methodCacheEntry.persistentBodyInfo, sizeof(TR_PersistentJittedBodyInfo)) : std::string(),
          methodCacheEntry.persistentMethodInfo ? std::string((const char*)methodCacheEntry.persistentMethodInfo, sizeof(TR_PersistentMethodInfo)) : std::string(),
-         methodCacheEntry.IPMethodInfo ? std::string((const char*)methodCacheEntry.IPMethodInfo, sizeof(TR_ContiguousIPMethodHashTableEntry)) : std::string());
+         methodCacheEntry.IPMethodInfo ? std::string((const char*)methodCacheEntry.IPMethodInfo, sizeof(TR_ContiguousIPMethodHashTableEntry)) : std::string(),
+         methodCacheEntry.recentProfileInfo ? std::string((const char*)methodCacheEntry.bestProfileInfo, sizeof(TR_PersistentProfileInfo)) : std::string(),
+         methodCacheEntry.bestProfileInfo ? std::string((const char*)methodCacheEntry.bestProfileInfo, sizeof(TR_PersistentProfileInfo)) : std::string());
       // Re-add validation record
       if (comp->compileRelocatableCode() && comp->getOption(TR_UseSymbolValidationManager) && !comp->getSymbolValidationManager()->inHeuristicRegion())
          {

@@ -1111,8 +1111,21 @@ populateBodyInfo(
          // Later, we should probably reconsider what the structure for this whole method is and where it all belongs.
          //
          bool retryCompilation = false;
+         TR_PersistentJittedBodyInfo *bodyInfoSrc = recompInfo->getJittedBodyInfo();
+         TR_PersistentMethodInfo *methodInfoSrc = recompInfo->getMethodInfo();
+         TR_PersistentProfileInfo *recentProfileInfo = methodInfoSrc->getRecentProfileInfo();
+         TR_PersistentProfileInfo *bestProfileInfo = methodInfoSrc->getBestProfileInfo();
          uint32_t bytesAllocated = 0;
          uint32_t bytesRequested = sizeof(TR_PersistentMethodInfo) + sizeof(TR_PersistentJittedBodyInfo);
+         if (recentProfileInfo)
+            {
+            bytesRequested += recentProfileInfo->getSizeForSerialization();
+
+            if ((NULL != bestProfileInfo) && (bestProfileInfo != recentProfileInfo))
+               {
+               bytesRequested += bestProfileInfo->getSizeForSerialization();
+               }
+            }
          uint8_t *persistentInfo = vm->allocateDataCacheRecord(
             bytesRequested,
             comp,
@@ -1136,8 +1149,6 @@ populateBodyInfo(
          uint8_t *locationPersistentJittedBodyInfo = persistentInfo; // AOT data cache allocations should already be pointer aligned.
          uint8_t *locationPersistentMethodInfo = persistentInfo + sizeof(TR_PersistentJittedBodyInfo);
 
-         TR_PersistentJittedBodyInfo *bodyInfoSrc = recompInfo->getJittedBodyInfo();
-         TR_PersistentMethodInfo *methodInfoSrc = recompInfo->getMethodInfo();
          methodInfoSrc->setIsInDataCache(true);
          bodyInfoSrc->setIsRemoteCompileBody(true);
          data->bodyInfo = locationPersistentJittedBodyInfo;
@@ -1150,11 +1161,29 @@ populateBodyInfo(
          memcpy(locationPersistentMethodInfo, methodInfoSrc, sizeof(TR_PersistentMethodInfo));
          recompInfo->setMethodInfo((TR_PersistentMethodInfo *)locationPersistentMethodInfo);
          newBodyInfo->setMethodInfo((TR_PersistentMethodInfo *)locationPersistentMethodInfo);
+         if (recentProfileInfo)
+            {
+            uint8_t *buffer = (uint8_t *)(locationPersistentMethodInfo + sizeof(TR_PersistentMethodInfo));
+            recentProfileInfo->serialize(buffer);
+
+            if ((NULL != bestProfileInfo) && (bestProfileInfo != recentProfileInfo))
+               {
+               bestProfileInfo->serialize(buffer);
+               }
+            }
 
          J9JITDataCacheHeader *aotMethodHeader = (J9JITDataCacheHeader *)comp->getAotMethodDataStart();
          TR_AOTMethodHeader *aotMethodHeaderEntry =  (TR_AOTMethodHeader *)(aotMethodHeader + 1);
          aotMethodHeaderEntry->offsetToPersistentInfo = ((char *) persistentInfo - sizeof(J9JITDataCacheHeader) - (char *)aotMethodHeader);
 
+         if (recentProfileInfo)
+            {
+            TR_PersistentProfileInfo::decRefCount(recentProfileInfo);
+            }
+         if (bestProfileInfo)
+            {
+            TR_PersistentProfileInfo::decRefCount(bestProfileInfo);
+            }
          //Free the old copies of body/method info
          TR_Memory::jitPersistentFree(bodyInfoSrc);
          TR_Memory::jitPersistentFree(methodInfoSrc);

@@ -4956,6 +4956,11 @@ J9::CodeGenerator::needRelocationsForPersistentInfoData()
    }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
+bool
+J9::CodeGenerator::needRelocationsForPersistentProfileInfoData()
+   {
+   return self()->fej9()->needRelocationsForPersistentProfileInfoData();
+   }
 
 bool
 J9::CodeGenerator::isMethodInAtomicLongGroup(TR::RecognizedMethod rm)
