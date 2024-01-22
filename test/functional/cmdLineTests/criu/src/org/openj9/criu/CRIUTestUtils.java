@@ -29,12 +29,27 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Date;
+import java.util.Scanner;
 
-import org.eclipse.openj9.criu.CRIUSupport;
-import org.eclipse.openj9.criu.SystemRestoreException;
+import org.eclipse.openj9.criu.*;
 
 public class CRIUTestUtils {
 	public final static Path imagePath = Paths.get("cpData");
+
+	public static void printLogFile(String imagePath) {
+		try {
+			Path path = Paths.get(imagePath, "criu.log");
+			Scanner contents = new Scanner(path);
+			System.out.println("-------------- Start of checkpoint criu.log -------------");
+			while (contents.hasNext()) {
+				System.out.println(contents.nextLine());
+			}
+			System.out.println("-------------- End of checkpoint criu.log -------------");
+
+		} catch (IOException e) {
+			System.out.println("failed to print log file");
+		}
+	}
 
 	public static void deleteCheckpointDirectory(Path path) {
 		try {
@@ -74,9 +89,12 @@ public class CRIUTestUtils {
 					criu = new CRIUSupport(path);
 				}
 				showThreadCurrentTime("Performing CRIUSupport.checkpointJVM()");
-				criu.setLeaveRunning(false).setShellJob(true).setFileLocks(true).checkpointJVM();
+				criu.setLogLevel(4).setLeaveRunning(false).setShellJob(true).setFileLocks(true).checkpointJVM();
 			} catch (SystemRestoreException e) {
 				e.printStackTrace();
+			} catch (SystemCheckpointException e1) {
+				printLogFile(path.toAbsolutePath().toString());
+				throw e1;
 			}
 			if (deleteDir) {
 				deleteCheckpointDirectory(path);
@@ -100,9 +118,12 @@ public class CRIUTestUtils {
 		if (criu != null) {
 			try {
 				showThreadCurrentTime("Performing CRIUSupport.checkpointJVM()");
-				criu.checkpointJVM();
+				criu.setLogLevel(4).checkpointJVM();
 			} catch (SystemRestoreException e) {
 				e.printStackTrace();
+			} catch (SystemCheckpointException e1) {
+				printLogFile(path.toAbsolutePath().toString());
+				throw e1;
 			}
 			if (deleteDir) {
 				deleteCheckpointDirectory(path);
