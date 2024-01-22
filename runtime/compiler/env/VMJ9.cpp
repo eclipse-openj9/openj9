@@ -814,6 +814,12 @@ TR_J9VMBase::TR_J9VMBase(
 #if defined(J9VM_OPT_JITSERVER)
       || (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
 #endif /* defined(J9VM_OPT_JITSERVER) */
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+      || (vmThread
+          && jitConfig->javaVM->sharedClassConfig
+          && jitConfig->javaVM->internalVMFunctions->isDebugOnRestoreEnabled(vmThread)
+          && jitConfig->javaVM->internalVMFunctions->isCheckpointAllowed(vmThread))
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
       )
       // shared classes and AOT must be enabled, or we should be on the JITServer with remote AOT enabled
       {
