@@ -4255,6 +4255,7 @@ typedef struct J9CRIUCheckpointState {
 	void (*criuSetWorkDirFdFunctionPointerType)(int workDirFD);
 	int (*criuInitOptsFunctionPointerType)(void);
 	int (*criuDumpFunctionPointerType)(void);
+	void (*criuSetGhostFileLimitFunctionPointerType)(U_32 ghostFileLimit);
 	UDATA libCRIUHandle;
 	struct J9VMInitArgs *restoreArgsList;
 	char *restoreArgsChars;
@@ -5054,7 +5055,7 @@ typedef struct J9InternalVMFunctions {
 	jobject (*getRestoreSystemProperites)(struct J9VMThread *currentThread);
 	BOOLEAN (*setupJNIFieldIDsAndCRIUAPI)(JNIEnv *env, jclass *currentExceptionClass, IDATA *systemReturnCode, const char **nlsMsgFormat);
 	void JNICALL (*criuCheckpointJVMImpl)(JNIEnv *env, jstring imagesDir, jboolean leaveRunning, jboolean shellJob, jboolean extUnixSupport, jint logLevel, jstring logFile,
-			jboolean fileLocks, jstring workDir, jboolean tcpEstablished, jboolean autoDedup, jboolean trackMemory, jboolean unprivileged, jstring optionsFile, jstring environmentFile);
+			jboolean fileLocks, jstring workDir, jboolean tcpEstablished, jboolean autoDedup, jboolean trackMemory, jboolean unprivileged, jstring optionsFile, jstring environmentFile, jlong ghostFileLimit);
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 	j9object_t (*getClassNameString)(struct J9VMThread *currentThread, j9object_t classObject, jboolean internAndAssign);
 	j9object_t* (*getDefaultValueSlotAddress)(struct J9Class *clazz);
