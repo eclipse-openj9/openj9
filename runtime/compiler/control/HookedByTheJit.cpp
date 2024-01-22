@@ -1369,7 +1369,11 @@ static void jitMethodSampleInterrupt(J9VMThread* vmThread, IDATA handlerKey, voi
            * optimization that statistically should be useful.
            */
           && !compInfo->getCRRuntime()->shouldSuspendThreadsForCheckpoint()
-#endif
+
+          /* Don't sample methods for recompilation pre-checkpoint if Debug On Restore is enabled */
+          && (!jitConfig->javaVM->internalVMFunctions->isCheckpointAllowed(vmThread)
+              || !jitConfig->javaVM->internalVMFunctions->isDebugOnRestoreEnabled(vmThread))
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
           && !compInfo->getPersistentInfo()->getDisableFurtherCompilation())
          {
          static char *enableDebugDLT = feGetEnv("TR_DebugDLT");
@@ -1424,6 +1428,10 @@ static void jitMethodSampleInterrupt(J9VMThread* vmThread, IDATA handlerKey, voi
            * optimization that statistically should be useful.
            */
           && !compInfo->getCRRuntime()->shouldSuspendThreadsForCheckpoint()
+
+          /* Don't sample methods for recompilation pre-checkpoint if Debug On Restore is enabled */
+          && (!jitConfig->javaVM->internalVMFunctions->isCheckpointAllowed(vmThread)
+              || !jitConfig->javaVM->internalVMFunctions->isDebugOnRestoreEnabled(vmThread))
 #endif
           && !compInfo->getPersistentInfo()->getDisableFurtherCompilation())
          {
