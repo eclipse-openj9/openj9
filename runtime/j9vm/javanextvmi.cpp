@@ -575,7 +575,14 @@ JVM_GetClassFileVersion(JNIEnv *env, jclass cls)
 }
 
 JNIEXPORT void JNICALL
-JVM_VirtualThreadHideFrames(JNIEnv *env, jobject vthread, jboolean hide)
+JVM_VirtualThreadHideFrames(
+		JNIEnv *env,
+#if JAVA_SPEC_VERSION >= 23
+		jclass clz,
+#else /* JAVA_SPEC_VERSION >= 23 */
+		jobject vthread,
+#endif /* JAVA_SPEC_VERSION >= 23 */
+		jboolean hide)
 {
 	J9VMThread *currentThread = (J9VMThread *)env;
 	J9InternalVMFunctions const * const vmFuncs = currentThread->javaVM->internalVMFunctions;
@@ -591,8 +598,11 @@ JVM_VirtualThreadHideFrames(JNIEnv *env, jobject vthread, jboolean hide)
 	 */
 	bool hiddenFrames = J9_ARE_ALL_BITS_SET(currentThread->privateFlags, J9_PRIVATE_FLAGS_VIRTUAL_THREAD_HIDDEN_FRAMES);
 	if (hide) {
-		Assert_SC_true(!hiddenFrames && (vThreadObj == J9_JNI_UNWRAP_REFERENCE(vthread)));
-		enterVThreadTransitionCritical(currentThread, vthread);
+		Assert_SC_true(!hiddenFrames);
+#if JAVA_SPEC_VERSION < 23
+		Assert_SC_true(vThreadObj == J9_JNI_UNWRAP_REFERENCE(vthread));
+#endif /* JAVA_SPEC_VERSION < 23 */
+		enterVThreadTransitionCritical(currentThread, (jobject)&currentThread->threadObject);
 	}
 
 	VM_VMHelpers::virtualThreadHideFrames(currentThread, hide);
@@ -726,7 +736,14 @@ JVM_ExpandStackFrameInfo(JNIEnv *env, jobject object)
 }
 
 JNIEXPORT void JNICALL
-JVM_VirtualThreadDisableSuspend(JNIEnv *env, jobject vthread, jboolean enter)
+JVM_VirtualThreadDisableSuspend(
+		JNIEnv *env,
+#if JAVA_SPEC_VERSION >= 23
+		jclass clz,
+#else /* JAVA_SPEC_VERSION >= 23 */
+		jobject vthread,
+#endif /* JAVA_SPEC_VERSION >= 23 */
+		jboolean enter)
 {
 	/* TODO: Add implementation.
 	 * See https://github.com/eclipse-openj9/openj9/issues/18671 for more details.
