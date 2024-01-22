@@ -1750,9 +1750,10 @@ static jvmtiIterationControl
 wrap_stringPrimitiveCallback(J9JavaVM * vm, J9JVMTIHeapData * iteratorData)
 {
 	jvmtiIterationControl rc = JVMTI_ITERATION_ABORT;
-	jlong tag;
-	jint stringLength, i;
-	jchar * stringValue;
+	jlong tag = 0;
+	jint stringLength = 0;
+	jint i = 0;
+	jchar * stringValue = NULL;
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	j9object_t bytes = J9VMJAVALANGSTRING_VALUE(iteratorData->currentThread, iteratorData->object);
 	UDATA offset = 0;
@@ -1774,7 +1775,7 @@ wrap_stringPrimitiveCallback(J9JavaVM * vm, J9JVMTIHeapData * iteratorData)
 		/* Decompress the string byte at a time, this probably can't be
 		 */
 		for (i = 0; i < stringLength; i++) {
-			stringValue[i] = J9JAVAARRAYOFBYTE_LOAD(iteratorData->currentThread, bytes, offset);
+			stringValue[i] = (U_8)J9JAVAARRAYOFBYTE_LOAD(iteratorData->currentThread, bytes, offset);
 			offset++;
 		}
 	} else {
