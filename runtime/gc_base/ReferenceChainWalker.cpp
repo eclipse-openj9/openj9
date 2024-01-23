@@ -36,6 +36,7 @@
 #include "Forge.hpp"
 #include "GCExtensions.hpp"
 #include "Heap.hpp"
+#include "HeapIteratorAPI.h"
 #include "HeapRegionIterator.hpp"
 #include "MixedObjectDeclarationOrderIterator.hpp"
 #include "ModronAssertions.h"
@@ -645,10 +646,11 @@ MM_ReferenceChainWalker::doStackSlot(J9Object **slotPtr, void *walkState, const 
 
 	/* Only report heap objects */
 	if (isHeapObject(slotValue) && !_heap->objectIsInGap(slotValue)) {
+		J9MM_StackSlotDescriptor stackSlotDescriptor = { ((J9StackWalkState *)walkState)->walkThread, (J9StackWalkState *)walkState };
 		if (J9_STACKWALK_SLOT_TYPE_JNI_LOCAL == ((J9StackWalkState *)walkState)->slotType) {
-			doSlot(slotPtr, J9GC_ROOT_TYPE_JNI_LOCAL, -1, NULL);
+			doSlot(slotPtr, J9GC_ROOT_TYPE_JNI_LOCAL, -1, (J9Object *)&stackSlotDescriptor);
 		} else {
-			doSlot(slotPtr, J9GC_ROOT_TYPE_STACK_SLOT, -1, (J9Object *)walkState);
+			doSlot(slotPtr, J9GC_ROOT_TYPE_STACK_SLOT, -1, (J9Object *)&stackSlotDescriptor);
 		}
 	}
 }
@@ -677,8 +679,11 @@ MM_ReferenceChainWalker::doVMThreadSlot(J9Object **slotPtr, GC_VMThreadIterator 
 		doSlot(slotPtr, J9GC_ROOT_TYPE_THREAD_SLOT, -1, NULL);
 		break;
 	case vmthreaditerator_state_jni_slots:
-		doSlot(slotPtr, J9GC_ROOT_TYPE_JNI_LOCAL, -1, NULL);
-		break;
+		{
+			J9MM_StackSlotDescriptor stackSlotDescriptor = {vmThreadIterator->getVMThread(), NULL};
+			doSlot(slotPtr, J9GC_ROOT_TYPE_JNI_LOCAL, -1, (J9Object*)&stackSlotDescriptor);
+			break;
+		}
 #if defined(J9VM_INTERP_HOT_CODE_REPLACEMENT)
 	case vmthreaditerator_state_monitor_records:
 		if (isHeapObject(slotValue) && !_heap->objectIsInGap(slotValue)) {
