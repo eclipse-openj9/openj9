@@ -448,7 +448,7 @@ public:
     * @param adIndex the AccessDescriptor object index
     * @return TR::KnownObjectTable::Index the MH object index if success, TR::KnownObjectTable::UNKNOWN otherwise
     */
-   TR::KnownObjectTable::Index getMethodHandleTableEntryIndex(TR::Compilation *comp, TR::KnownObjectTable::Index vhIndex, TR::KnownObjectTable::Index adIndex);
+   virtual TR::KnownObjectTable::Index getMethodHandleTableEntryIndex(TR::Compilation *comp, TR::KnownObjectTable::Index vhIndex, TR::KnownObjectTable::Index adIndex);
 
    /**
     * @brief Get the Direct VarHandle target object index. This function evaluates the result of
