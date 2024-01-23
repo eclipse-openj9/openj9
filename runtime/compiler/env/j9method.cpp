@@ -3581,6 +3581,7 @@ void TR_ResolvedJ9Method::construct()
       {  TR::java_lang_invoke_MethodHandle_linkToSpecial            ,   13, "linkToSpecial",                (int16_t)-1, "*"},
       {  TR::java_lang_invoke_MethodHandle_linkToVirtual            ,   13, "linkToVirtual",                (int16_t)-1, "*"},
       {  TR::java_lang_invoke_MethodHandle_linkToInterface          ,   15, "linkToInterface",                (int16_t)-1, "*"},
+      {  TR::java_lang_invoke_MethodHandle_linkToNative             ,   12, "linkToNative",               (int16_t)-1, "*"},
       {  TR::unknownMethod}
       };
 
@@ -5660,6 +5661,7 @@ TR_J9MethodBase::isSignaturePolymorphicMethod(TR::Compilation * comp)
       case TR::java_lang_invoke_MethodHandle_linkToSpecial:
       case TR::java_lang_invoke_MethodHandle_linkToVirtual:
       case TR::java_lang_invoke_MethodHandle_linkToInterface:
+      case TR::java_lang_invoke_MethodHandle_linkToNative:
          return true;
       default:
         return false;
@@ -6514,7 +6516,8 @@ TR_ResolvedJ9Method::shouldCompileTimeResolveMethod(I_32 cpIndex)
       if ((methodNameLength == 11 &&
             !strncmp(methodName, "invokeBasic", methodNameLength)) ||
          (methodNameLength == 12 &&
-            !strncmp(methodName, "linkToStatic", methodNameLength)) ||
+            (!strncmp(methodName, "linkToStatic", methodNameLength) ||
+             !strncmp(methodName, "linkToNative", methodNameLength))) ||
          (methodNameLength == 13 &&
             (!strncmp(methodName, "linkToSpecial", methodNameLength) ||
              !strncmp(methodName, "linkToVirtual", methodNameLength))) ||
