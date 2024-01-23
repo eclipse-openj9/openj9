@@ -125,7 +125,7 @@ classHashEqualFn(void *tableNode, void *queryNode, void *userData)
 	BOOLEAN isTableNodeHiddenClass = (TYPE_CLASS == tableNodeType)
 									&& (TAG_RAM_CLASS == (tableNodeTag & MASK_RAM_CLASS))
 									&& J9ROMCLASS_IS_HIDDEN(((KeyHashTableClassEntry*)tableNode)->ramClass->romClass);
-	
+
 	if (isTableNodeHiddenClass) {
 		/* Hidden class is keyed on its rom address, not on its name. */
 		PORT_ACCESS_FROM_JAVAVM(javaVM);
@@ -149,7 +149,7 @@ classHashEqualFn(void *tableNode, void *queryNode, void *userData)
 				U_8 c = 0;
 
 				if (isCompressed) {
-					unicode = J9JAVAARRAYOFBYTE_LOAD_VM(javaVM, charArray, i);
+					unicode = (U_8)J9JAVAARRAYOFBYTE_LOAD_VM(javaVM, charArray, i);
 				} else {
 					unicode = J9JAVAARRAYOFCHAR_LOAD_VM(javaVM, charArray, i);
 				}
@@ -246,7 +246,7 @@ classHashFn(void *key, void *userData)
 
 			if (IS_STRING_COMPRESSED_VM(javaVM, stringObject)) {
 				while (i < end) {
-					hash = (hash << 5) - hash + J9JAVAARRAYOFBYTE_LOAD_VM(javaVM, charArray, i);
+					hash = (hash << 5) - hash + (U_8)J9JAVAARRAYOFBYTE_LOAD_VM(javaVM, charArray, i);
 					++i;
 				}
 			} else {
