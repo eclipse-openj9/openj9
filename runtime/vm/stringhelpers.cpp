@@ -75,8 +75,8 @@ compareCompressedUnicode(J9VMThread *vmThread, j9object_t unicodeBytes1, j9objec
 	if (unicodeBytes1 != unicodeBytes2) {
 		UDATA i = 0;
 		while (0 != length) {
-			U_16 unicodeChar1 = (U_16)J9JAVAARRAYOFBYTE_LOAD(vmThread, unicodeBytes1, i);
-			U_16 unicodeChar2 = (U_16)J9JAVAARRAYOFBYTE_LOAD(vmThread, unicodeBytes2, i);
+			U_16 unicodeChar1 = (U_8)J9JAVAARRAYOFBYTE_LOAD(vmThread, unicodeBytes1, i);
+			U_16 unicodeChar2 = (U_8)J9JAVAARRAYOFBYTE_LOAD(vmThread, unicodeBytes2, i);
 			if (unicodeChar1 != unicodeChar2) {
 				result = 0;
 				break;
@@ -103,7 +103,7 @@ compareCompressedUnicodeToUncompressedUnicode(J9VMThread *vmThread, j9object_t u
 	UDATA i = 0;
 	while (0 != length) {
 		U_16 unicodeChar1 = J9JAVAARRAYOFCHAR_LOAD(vmThread, unicodeBytes1, i);
-		U_16 unicodeChar2 = (U_16)J9JAVAARRAYOFBYTE_LOAD(vmThread, unicodeBytes2, i);
+		U_16 unicodeChar2 = (U_8)J9JAVAARRAYOFBYTE_LOAD(vmThread, unicodeBytes2, i);
 		if (unicodeChar1 != unicodeChar2) {
 			result = 0;
 			break;
@@ -129,7 +129,7 @@ compareStrings(J9VMThread *vmThread, j9object_t string1, j9object_t string2)
 		UDATA stringLength1 = J9VMJAVALANGSTRING_LENGTH(vmThread, string1);
 		UDATA stringLength2 = J9VMJAVALANGSTRING_LENGTH(vmThread, string2);
 
-	        if (stringLength1 != stringLength2) {
+		if (stringLength1 != stringLength2) {
 			result = 0;
 		} else {
 			j9object_t unicodeBytes1 = J9VMJAVALANGSTRING_VALUE(vmThread, string1);
@@ -177,8 +177,8 @@ compareStringToUTF8(J9VMThread *vmThread, j9object_t string, UDATA translateDots
 
 	if (IS_STRING_COMPRESSED(vmThread, string)) {
 		while ((tmpUtfLength != 0) && (tmpStringLength != 0)) {
-			U_16 unicodeChar = (U_16)J9JAVAARRAYOFBYTE_LOAD(vmThread, unicodeBytes, i);
-			U_16 utfChar;
+			U_16 unicodeChar = (U_8)J9JAVAARRAYOFBYTE_LOAD(vmThread, unicodeBytes, i);
+			U_16 utfChar = 0;
 			UDATA consumed = decodeUTF8Char(tmpUtfData, &utfChar);
 
 			if (translateDots) {
