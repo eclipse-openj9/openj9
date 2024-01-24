@@ -69,7 +69,7 @@ opens jdk.internal.access to
 /*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 /*[IF CRAC_SUPPORT]*/
 exports jdk.crac;
-/*[ENDIF] CRAC_SUPPORT*/
+/*[ENDIF] CRAC_SUPPORT */
 exports jdk.internal.misc to
     openj9.criu;
 exports openj9.internal.criu to

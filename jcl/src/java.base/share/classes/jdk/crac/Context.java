@@ -26,7 +26,7 @@ package jdk.crac;
  * A Resource that allows other Resources to be registered with it.
  */
 public abstract class Context<R extends Resource> {
-	final static boolean debug = System.getProperty("enable.jdk.crac.api.debug") != null; //$NON-NLS-1$
+	static final boolean debug = System.getProperty("enable.jdk.crac.api.debug") != null; //$NON-NLS-1$
 
 	protected Context() {
 	}

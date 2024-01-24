@@ -76,7 +76,7 @@ public final class InternalCRIUSupport {
 	private static native boolean isCRaCSupportEnabledImpl();
 	private static String cracCheckpointToDir = "";
 	private static native String getCRaCCheckpointToDirImpl();
-/*[ENDIF] CRAC_SUPPORT*/
+/*[ENDIF] CRAC_SUPPORT */
 
 	/**
 	 * Retrieve the elapsed time between Checkpoint and Restore.
@@ -111,7 +111,7 @@ public final class InternalCRIUSupport {
 		boolean result = criuSupportEnabled;
 /*[IF CRAC_SUPPORT]*/
 		result |= cracSupportEnabled;
-/*[ENDIF] CRAC_SUPPORT*/
+/*[ENDIF] CRAC_SUPPORT */
 		return result;
 	}
 
@@ -124,7 +124,7 @@ public final class InternalCRIUSupport {
 	public synchronized static boolean isCRaCSupportEnabled() {
 		return cracSupportEnabled;
 	}
-/*[ENDIF] CRAC_SUPPORT*/
+/*[ENDIF] CRAC_SUPPORT */
 
 	/**
 	 * Queries if CRIU support is enabled.
@@ -151,7 +151,7 @@ public final class InternalCRIUSupport {
 
 	/**
 	 * Queries if CRIU Checkpoint is allowed.
-	 * isCRaCorCRIUSupportEnabled() is invoked first to check if CRac or CRIU support is enabled,
+	 * isCRaCorCRIUSupportEnabled() is invoked first to check if CRaC or CRIU support is enabled,
 	 * and criu library has been loaded.
 	 *
 	 * @return true if Checkpoint is allowed, otherwise false
@@ -161,7 +161,7 @@ public final class InternalCRIUSupport {
 		if (criuSupportEnabled
 /*[IF CRAC_SUPPORT]*/
 			|| cracSupportEnabled
-/*[ENDIF] CRAC_SUPPORT*/
+/*[ENDIF] CRAC_SUPPORT */
 		) {
 			checkpointAllowed = isCheckpointAllowedImpl();
 		}
@@ -180,7 +180,7 @@ public final class InternalCRIUSupport {
 		}
 		return cracCheckpointToDir;
 	}
-/*[ENDIF] CRAC_SUPPORT*/
+/*[ENDIF] CRAC_SUPPORT */
 
 	/**
 	 *
@@ -950,7 +950,7 @@ public final class InternalCRIUSupport {
 						"Running in non-portable mode (only one checkpoint is allowed), and we have already checkpointed once"); //$NON-NLS-1$
 			}
 		} else {
-			throw new UnsupportedOperationException("CRAC or CRIU support is not enabled"); //$NON-NLS-1$
+			throw new UnsupportedOperationException("CRaC or CRIU support is not enabled"); //$NON-NLS-1$
 		}
 	}
 }
