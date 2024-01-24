@@ -4029,9 +4029,11 @@ J9::Z::CodeGenerator::inlineDirectCall(
       {
       switch (methodSymbol->getRecognizedMethod())
          {
+         case TR::java_lang_StringLatin1_indexOfChar:
          case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfLatin1:
             resultReg = TR::TreeEvaluator::inlineIntrinsicIndexOf(node, cg, true);
             return true;
+         case TR::java_lang_StringUTF16_indexOfCharUnsafe:
          case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfUTF16:
             resultReg = TR::TreeEvaluator::inlineIntrinsicIndexOf(node, cg, false);
             return true;

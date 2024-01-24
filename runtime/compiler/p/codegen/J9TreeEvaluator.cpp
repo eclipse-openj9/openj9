@@ -10823,11 +10823,14 @@ static TR::Register *inlineIntrinsicIndexOf_P10(TR::Node *node, TR::CodeGenerato
    auto vectorCompareOp = isLatin1 ? TR::InstOpCode::vcmpequb_r : TR::InstOpCode::vcmpequh_r;
    TR::InstOpCode::Mnemonic scalarLoadOp = isLatin1 ? TR::InstOpCode::lbzx : TR::InstOpCode::lhzx;
 
-
-   TR::Register *array = cg->evaluate(node->getChild(1));
-   TR::Register *ch = cg->evaluate(node->getChild(2));
-   TR::Register *offset = cg->evaluate(node->getChild(3));
-   TR::Register *length = cg->evaluate(node->getChild(4));
+   // This evaluator function handles different indexOf() intrinsics, some of which are static calls without a
+   // receiver. Hence, the need for static call check.
+   const bool isStaticCall = node->getSymbolReference()->getSymbol()->castToMethodSymbol()->isStatic();
+   const uint8_t firstCallArgIdx = isStaticCall ? 0 : 1;
+   TR::Register *array = cg->evaluate(node->getChild(firstCallArgIdx));
+   TR::Register *ch = cg->evaluate(node->getChild(firstCallArgIdx+1));
+   TR::Register *offset = cg->evaluate(node->getChild(firstCallArgIdx+2));
+   TR::Register *length = cg->gprClobberEvaluate(node->getChild(firstCallArgIdx+3));
 
    TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *mainLoop = generateLabelSymbol(cg);
@@ -10980,11 +10983,14 @@ static TR::Register *inlineIntrinsicIndexOf_P10(TR::Node *node, TR::CodeGenerato
 
    node->setRegister(result);
 
-   cg->decReferenceCount(node->getChild(0));
-   cg->decReferenceCount(node->getChild(1));
-   cg->decReferenceCount(node->getChild(2));
-   cg->decReferenceCount(node->getChild(3));
-   cg->decReferenceCount(node->getChild(4));
+   if (!isStaticCall)
+      {
+      cg->recursivelyDecReferenceCount(node->getChild(0));
+      }
+   for (int32_t i = firstCallArgIdx; i < node->getNumChildren(); i++)
+      {
+      cg->decReferenceCount(node->getChild(i));
+      }
 
    return result;
    }
@@ -10998,10 +11004,14 @@ static TR::Register *inlineIntrinsicIndexOf(TR::Node *node, TR::CodeGenerator *c
    auto vectorCompareOp = isLatin1 ? TR::InstOpCode::vcmpequb_r : TR::InstOpCode::vcmpequh_r;
    auto scalarLoadOp = isLatin1 ? TR::InstOpCode::lbzx : TR::InstOpCode::lhzx;
 
-   TR::Register *array = cg->evaluate(node->getChild(1));
-   TR::Register *ch = cg->evaluate(node->getChild(2));
-   TR::Register *offset = cg->evaluate(node->getChild(3));
-   TR::Register *length = cg->evaluate(node->getChild(4));
+   // This evaluator function handles different indexOf() intrinsics, some of which are static calls without a
+   // receiver. Hence, the need for static call check.
+   const bool isStaticCall = node->getSymbolReference()->getSymbol()->castToMethodSymbol()->isStatic();
+   const uint8_t firstCallArgIdx = isStaticCall ? 0 : 1;
+   TR::Register *array = cg->evaluate(node->getChild(firstCallArgIdx));
+   TR::Register *ch = cg->evaluate(node->getChild(firstCallArgIdx+1));
+   TR::Register *offset = cg->evaluate(node->getChild(firstCallArgIdx+2));
+   TR::Register *length = cg->gprClobberEvaluate(node->getChild(firstCallArgIdx+3));
 
    TR::Register *cr0 = cg->allocateRegister(TR_CCR);
    TR::Register *cr6 = cg->allocateRegister(TR_CCR);
@@ -11048,13 +11058,13 @@ static TR::Register *inlineIntrinsicIndexOf(TR::Node *node, TR::CodeGenerator *c
       generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, endAddress, endAddress, endAddress);
       }
 
-   if (node->getChild(3)->getReferenceCount() == 1)
+   if (node->getChild(firstCallArgIdx+2)->getReferenceCount() == 1)
       srm->donateScratchRegister(offset);
-   if (node->getChild(4)->getReferenceCount() == 1)
+   if (node->getChild(firstCallArgIdx+3)->getReferenceCount() == 1)
       srm->donateScratchRegister(length);
 
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, arrAddress, array, TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
-   if (node->getChild(1)->getReferenceCount() == 1)
+   if (node->getChild(firstCallArgIdx)->getReferenceCount() == 1)
       srm->donateScratchRegister(array);
 
    // Handle the first character using a simple scalar compare. Otherwise, first character matches
@@ -11090,7 +11100,7 @@ static TR::Register *inlineIntrinsicIndexOf(TR::Node *node, TR::CodeGenerator *c
    // Splat the value to be compared against and its bitwise complement into two vector registers
    // for later use
    generateTrg1Src1Instruction(cg, TR::InstOpCode::mtvsrwz, node, targetVector, ch);
-   if (node->getChild(2)->getReferenceCount() == 1)
+   if (node->getChild(firstCallArgIdx+1)->getReferenceCount() == 1)
       srm->donateScratchRegister(ch);
    if (isLatin1)
       generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::vspltb, node, targetVector, targetVector, 7);
@@ -11301,16 +11311,16 @@ static TR::Register *inlineIntrinsicIndexOf(TR::Node *node, TR::CodeGenerator *c
 
    TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 15 + srm->numAvailableRegisters(), cg->trMemory());
 
-   if (node->getChild(1)->getReferenceCount() != 1)
+   if (node->getChild(firstCallArgIdx)->getReferenceCount() != 1)
       {
       deps->addPostCondition(array, TR::RealRegister::NoReg);
       deps->getPostConditions()->getRegisterDependency(deps->getAddCursorForPost() - 1)->setExcludeGPR0();
       }
-   if (node->getChild(2)->getReferenceCount() != 1)
+   if (node->getChild(firstCallArgIdx+1)->getReferenceCount() != 1)
       deps->addPostCondition(ch, TR::RealRegister::NoReg);
-   if (node->getChild(3)->getReferenceCount() != 1)
+   if (node->getChild(firstCallArgIdx+2)->getReferenceCount() != 1)
       deps->addPostCondition(offset, TR::RealRegister::NoReg);
-   if (node->getChild(4)->getReferenceCount() != 1)
+   if (node->getChild(firstCallArgIdx+3)->getReferenceCount() != 1)
       deps->addPostCondition(length, TR::RealRegister::NoReg);
 
    deps->addPostCondition(cr0, TR::RealRegister::cr0);
@@ -11338,11 +11348,14 @@ static TR::Register *inlineIntrinsicIndexOf(TR::Node *node, TR::CodeGenerator *c
 
    node->setRegister(result);
 
-   cg->decReferenceCount(node->getChild(0));
-   cg->decReferenceCount(node->getChild(1));
-   cg->decReferenceCount(node->getChild(2));
-   cg->decReferenceCount(node->getChild(3));
-   cg->decReferenceCount(node->getChild(4));
+   if (!isStaticCall)
+      {
+      cg->recursivelyDecReferenceCount(node->getChild(0));
+      }
+   for (int32_t i = firstCallArgIdx; i < node->getNumChildren(); i++)
+      {
+      cg->decReferenceCount(node->getChild(i));
+      }
 
    return result;
    }
@@ -11772,11 +11785,14 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
             }
          break;
 
+      case TR::java_lang_StringLatin1_indexOfChar:
+      case TR::java_lang_StringUTF16_indexOfCharUnsafe:
       case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfLatin1:
       case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfUTF16:
          if (cg->getSupportsInlineStringIndexOf())
             {
-            bool isLatin1 = methodSymbol->getRecognizedMethod() == TR::com_ibm_jit_JITHelpers_intrinsicIndexOfLatin1;
+            bool isLatin1 = (methodSymbol->getRecognizedMethod() == TR::com_ibm_jit_JITHelpers_intrinsicIndexOfLatin1) ||
+                            (methodSymbol->getRecognizedMethod() == TR::java_lang_StringLatin1_indexOfChar);
             if (comp->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P10))
                resultReg = inlineIntrinsicIndexOf_P10(node, cg, isLatin1);
             else

@@ -1681,11 +1681,14 @@ TR::Register *
 J9::Z::TreeEvaluator::inlineIntrinsicIndexOf(TR::Node * node, TR::CodeGenerator * cg, bool isLatin1)
    {
    cg->generateDebugCounter("z13/simd/indexOf", 1, TR::DebugCounter::Free);
-
-   TR::Register* array = cg->evaluate(node->getChild(1));
-   TR::Register* ch = cg->evaluate(node->getChild(2));
-   TR::Register* offset = cg->evaluate(node->getChild(3));
-   TR::Register* length = cg->gprClobberEvaluate(node->getChild(4));
+   // This evaluator function handles different indexOf() intrinsics, some of which are static calls without a
+   // receiver. Hence, the need for static call check.
+   const bool isStaticCall = node->getSymbolReference()->getSymbol()->castToMethodSymbol()->isStatic();
+   const uint8_t firstCallArgIdx = isStaticCall ? 0 : 1;
+   TR::Register* array = cg->evaluate(node->getChild(firstCallArgIdx));
+   TR::Register* ch = cg->evaluate(node->getChild(firstCallArgIdx+1));
+   TR::Register* offset = cg->evaluate(node->getChild(firstCallArgIdx+2));
+   TR::Register* length = cg->gprClobberEvaluate(node->getChild(firstCallArgIdx+3));
 
 
    const int32_t sizeOfVector = cg->machine()->getVRFSize();
@@ -1818,11 +1821,14 @@ J9::Z::TreeEvaluator::inlineIntrinsicIndexOf(TR::Node * node, TR::CodeGenerator 
 
    node->setRegister(indexRegister);
 
-   cg->recursivelyDecReferenceCount(node->getChild(0));
-   cg->decReferenceCount(node->getChild(1));
-   cg->decReferenceCount(node->getChild(2));
-   cg->decReferenceCount(node->getChild(3));
-   cg->decReferenceCount(node->getChild(4));
+   if (!isStaticCall)
+      {
+      cg->recursivelyDecReferenceCount(node->getChild(0));
+      }
+   for (int32_t i = firstCallArgIdx; i < node->getNumChildren(); i++)
+      {
+      cg->decReferenceCount(node->getChild(i));
+      }
 
    return indexRegister;
    }

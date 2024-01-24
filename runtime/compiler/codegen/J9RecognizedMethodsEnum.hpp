@@ -222,6 +222,7 @@
    java_lang_String_startsWith,
 
    java_lang_StringLatin1_indexOf,
+   java_lang_StringLatin1_indexOfChar,
 
    java_lang_StringUTF16_charAt,
    java_lang_StringUTF16_checkIndex,
@@ -230,6 +231,7 @@
    java_lang_StringUTF16_compareValues,
    java_lang_StringUTF16_getChar,
    java_lang_StringUTF16_indexOf,
+   java_lang_StringUTF16_indexOfCharUnsafe,
    java_lang_StringUTF16_length,
    java_lang_StringUTF16_newBytesFor,
    java_lang_StringUTF16_putChar,
