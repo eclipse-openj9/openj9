@@ -3630,11 +3630,25 @@ retry:
 				 * Therefore for classes loaded by bootloader from boot classpath,
 				 * J9Class.module should be set to J9JavaVM.unamedModuleForSystemLoader.
 				 */
+				bool findModule = false;
+				J9ClassLoader *findModuleClassLoader = classLoader;
 				if (J9_ARE_ANY_BITS_SET(options, J9_FINDCLASS_FLAG_ANON | J9_FINDCLASS_FLAG_HIDDEN)) {
-					module = hostClass->module;
+#if JAVA_SPEC_VERSION >= 22
+					/* In JDK22, MethodHandleProxies.asInterfaceInstance was reimplemented using a more
+					 * direct MethodHandle approach to improve performance. This approach introduces hidden
+					 * classes which have an interface for its host class. A dynamic module is created for
+					 * each such hidden class. The below code correctly finds and sets java.lang.Class.module
+					 * for such hidden classes.
+					 */
+					if (J9ROMCLASS_IS_INTERFACE(hostClass->romClass) && (classLoader != hostClassLoader)) {
+						findModuleClassLoader = hostClassLoader;
+						findModule = true;
+					} else
+#endif /* JAVA_SPEC_VERSION >= 22 */
+					{
+						module = hostClass->module;
+					}
 				} else {
-					bool findModule = false;
-
 					if (classLoader != javaVM->systemClassLoader) {
 						findModule = true;
 					} else if ((LOAD_LOCATION_PATCH_PATH == locationType)
@@ -3655,15 +3669,18 @@ retry:
 						}
 					}
 
-					if (findModule) {
-						U_32 pkgNameLength = (U_32) packageNameLength(romClass);
-
-						omrthread_monitor_enter(javaVM->classLoaderModuleAndLocationMutex);
-						module = findModuleForPackage(vmThread, classLoader, J9UTF8_DATA(className), pkgNameLength);
-						omrthread_monitor_exit(javaVM->classLoaderModuleAndLocationMutex);
-					} else {
+					if (!findModule) {
 						module = javaVM->unamedModuleForSystemLoader;
 					}
+				}
+				if (findModule) {
+					U_32 pkgNameLength = (U_32)packageNameLength(romClass);
+					omrthread_monitor_t classLoaderModuleAndLocationMutex = javaVM->classLoaderModuleAndLocationMutex;
+					omrthread_monitor_enter(classLoaderModuleAndLocationMutex);
+					module = findModuleForPackage(vmThread, findModuleClassLoader, J9UTF8_DATA(className), pkgNameLength);
+					omrthread_monitor_exit(classLoaderModuleAndLocationMutex);
+				} else {
+					Assert_VM_true((module == javaVM->unamedModuleForSystemLoader) || (module == hostClass->module));
 				}
 			} else {
 				/* Ignore locationType and assign all classes created before the java.base module is created to java.base.
