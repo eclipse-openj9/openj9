@@ -1702,8 +1702,8 @@ Only available on zOS</description>
 		<ifRemoved>No java.math.BigInteger natives available.</ifRemoved>
 	</flag>
 	<flag id="opt_cracSupport">
-		<description>Enables support for CRAC Java APIs</description>
-		<ifRemoved>No support for CRAC Java APIs</ifRemoved>
+		<description>Enables support for CRaC Java APIs</description>
+		<ifRemoved>No support for CRaC Java APIs</ifRemoved>
 	</flag>
 	<flag id="opt_criuSupport">
 		<description>Enables support for CRIU Java APIs</description>
