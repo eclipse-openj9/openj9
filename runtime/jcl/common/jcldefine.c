@@ -114,21 +114,6 @@ defineClassCommon(JNIEnv *env, jobject classLoaderObject,
 			 */
 			*options |= J9_FINDCLASS_FLAG_NAME_IS_INVALID;
 		}
-
-		if (J9_ARE_ANY_BITS_SET(*options, J9_FINDCLASS_FLAG_HIDDEN | J9_FINDCLASS_FLAG_UNSAFE)) {
-			/*
-			 * Prevent generated LambdaForm classes from MethodHandles to be stored to the shared cache.
-			 * When there are a large number of such classes in the shared cache, they trigger a lot of class comparisons.
-			 * Performance can be much worse (compared to shared cache turned off).
-			 */
-#define J9NON_SHARING_CLASS_NAME "java/lang/invoke/LambdaForm$"
-			if ((utf8Length > LITERAL_STRLEN(J9NON_SHARING_CLASS_NAME))
-				&& J9UTF8_LITERAL_EQUALS(utf8Name, LITERAL_STRLEN(J9NON_SHARING_CLASS_NAME), J9NON_SHARING_CLASS_NAME)
-			) {
-				*options |= J9_FINDCLASS_FLAG_DO_NOT_SHARE;
-			}
-#undef J9NON_SHARING_CLASS_NAME
-		}
 	}
 
 	if (isContiguousClassBytes) {
