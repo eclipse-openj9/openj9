@@ -61,6 +61,14 @@
 			</else>
 		</if>
 		<if>
+			<not>
+				<contains string="${TEST_FLAG}" substring="CRAC" />
+			</not>
+			<then>
+				<property name="excludeTestJDKCRAC" value="org/openj9/criu/TestJDKCRAC.java" />
+			</then>
+		</if>
+		<if>
 			<equals arg1="${JDK_VERSION}" arg2="8" />
 			<then>
 				<property name="excludeJDK11UpTimeoutAdjustmentTest" value="org/openj9/criu/JDK11UpTimeoutAdjustmentTest.java" />
@@ -81,6 +89,7 @@
 				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
 					<compilerarg line="${addExports}" />
 					<compilerarg line="${enablePreview}" />
+					<exclude name="${excludeTestJDKCRAC}" />
 					<exclude name="${excludeTestMachineResourceChange}" />
 					<src path="${src}" />
 					<src path="${TestUtilities}" />
@@ -112,7 +121,10 @@
 
 	<target name="build" depends="buildCmdLineTestTools">
 		<if>
-			<contains string="${TEST_FLAG}" substring="CRIU" />
+			<or>
+				<contains string="${TEST_FLAG}" substring="CRAC" />
+				<contains string="${TEST_FLAG}" substring="CRIU" />
+			</or>
 			<then>
 				<antcall target="clean" inheritall="true" />
 			</then>

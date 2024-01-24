@@ -675,11 +675,17 @@ if(J9VM_OPT_CRIU_SUPPORT)
 		Java_openj9_internal_criu_InternalCRIUSupport_enableCRIUSecProviderImpl
 		Java_openj9_internal_criu_InternalCRIUSupport_getCheckpointRestoreNanoTimeDeltaImpl
 		Java_openj9_internal_criu_InternalCRIUSupport_getLastRestoreTimeImpl
-		Java_openj9_internal_criu_InternalCRIUSupport_getRestoreSystemProperites;
+		Java_openj9_internal_criu_InternalCRIUSupport_getRestoreSystemProperites
 		Java_openj9_internal_criu_InternalCRIUSupport_isCheckpointAllowedImpl
 		Java_openj9_internal_criu_InternalCRIUSupport_isCRIUSupportEnabledImpl
-		Java_openj9_internal_criu_InternalCRIUSupport_setupJNIFieldIDsAndCRIUAPI;
+		Java_openj9_internal_criu_InternalCRIUSupport_setupJNIFieldIDsAndCRIUAPI
 	)
+	if(J9VM_OPT_CRAC_SUPPORT)
+		omr_add_exports(jclse
+			Java_openj9_internal_criu_InternalCRIUSupport_getCRaCCheckpointToDirImpl
+			Java_openj9_internal_criu_InternalCRIUSupport_isCRaCSupportEnabledImpl
+		)
+	endif()
 endif()
 
 # Java 19 only
