@@ -129,5 +129,26 @@ Java_openj9_internal_criu_InternalCRIUSupport_getRestoreSystemProperites(JNIEnv 
 
 	return systemProperties;
 }
+
+#if defined(J9VM_OPT_CRAC_SUPPORT)
+jstring JNICALL
+Java_openj9_internal_criu_InternalCRIUSupport_getCRaCCheckpointToDirImpl(JNIEnv *env, jclass unused)
+{
+	jstring result = NULL;
+	char *cracCheckpointToDir = ((J9VMThread*)env)->javaVM->checkpointState.cracCheckpointToDir;
+
+	if (NULL != cracCheckpointToDir) {
+		result = env->NewStringUTF(cracCheckpointToDir);
+	}
+
+	return result;
+}
+
+jboolean JNICALL
+Java_openj9_internal_criu_InternalCRIUSupport_isCRaCSupportEnabledImpl(JNIEnv *env, jclass unused)
+{
+	return J9_ARE_ANY_BITS_SET(((J9VMThread*)env)->javaVM->checkpointState.flags, J9VM_CRAC_IS_CHECKPOINT_ENABLED);
+}
+#endif /* defined(J9VM_OPT_CRAC_SUPPORT) */
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 }

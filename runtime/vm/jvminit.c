@@ -3916,11 +3916,35 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 		}
 	}
 
+#if defined(J9VM_OPT_CRAC_SUPPORT)
+	{
+		IDATA xxCRaCCheckpointToIndex = FIND_AND_CONSUME_VMARG(STARTSWITH_MATCH, VMOPT_XXCRACCHECKPOINTTO, NULL);
+		if (xxCRaCCheckpointToIndex >= 0) {
+			PORT_ACCESS_FROM_JAVAVM(vm);
+			if (J9_ARE_ANY_BITS_SET(vm->checkpointState.flags, J9VM_CRIU_IS_CHECKPOINT_ENABLED)) {
+				/* -XX:+EnableCRIUSupport was specified which is incompatible with CRaC */
+				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_VM_CRIU_CRAC_INCOMPATIBLE_SETTING, NULL);
+				return JNI_ERR;
+			} else {
+				char *cracCheckpointToValue = NULL;
+
+				optionValueOperations(PORTLIB, vm->vmArgsArray, xxCRaCCheckpointToIndex, GET_OPTION, &cracCheckpointToValue, 0, '=', 0, NULL);
+				Trc_VM_crac_checkpointTo(cracCheckpointToValue);
+				vm->checkpointState.cracCheckpointToDir = cracCheckpointToValue;
+
+				vm->checkpointState.flags |= J9VM_CRAC_IS_CHECKPOINT_ENABLED | J9VM_CRIU_IS_CHECKPOINT_ALLOWED;
+				vm->portLibrary->isCheckPointAllowed = TRUE;
+				j9port_control(J9PORT_CTLDATA_CRIU_SUPPORT_FLAGS, OMRPORT_CRIU_SUPPORT_ENABLED);
+			}
+		}
+	}
+#endif /* defined(J9VM_OPT_CRAC_SUPPORT) */
+
 	{
 		IDATA enableCRIUSecProvider = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXENABLECRIUSECPROVIDER, NULL);
 		IDATA disableCRIUSecProvider = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXDISABLECRIUSECPROVIDER, NULL);
 		if (enableCRIUSecProvider >= disableCRIUSecProvider) {
-			if (J9_ARE_ANY_BITS_SET(vm->checkpointState.flags, J9VM_CRIU_IS_CHECKPOINT_ENABLED)) {
+			if (J9_IS_CRIU_OR_CRAC_CHECKPOINT_ENABLED(vm)) {
 				vm->checkpointState.flags |= J9VM_CRIU_ENABLE_CRIU_SEC_PROVIDER;
 			}
 		}
@@ -3930,7 +3954,7 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 		IDATA enableCRIUNonPortableMode = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXENABLECRIUNONPORTABLEMODE, NULL);
 		IDATA disableCRIUNonPortableMode = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXDISABLECRIUNONPORTABLEMODE, NULL);
 		if (enableCRIUNonPortableMode >= disableCRIUNonPortableMode) {
-			if (J9_ARE_ALL_BITS_SET(vm->checkpointState.flags, J9VM_CRIU_IS_CHECKPOINT_ENABLED)) {
+			if (J9_IS_CRIU_OR_CRAC_CHECKPOINT_ENABLED(vm)) {
 				vm->checkpointState.flags |= J9VM_CRIU_IS_NON_PORTABLE_RESTORE_MODE;
 			}
 		}
@@ -3940,7 +3964,7 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 		IDATA enableJVMRestorePortableeMode = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXENABLEJVMRESTOREPORTABLEMODE, NULL);
 		IDATA disableJVMRestorePortableMode = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXDISABLEJVMRESTOREPORTABLEMODE, NULL);
 		if (enableJVMRestorePortableeMode > disableJVMRestorePortableMode) {
-			if (J9_ARE_ALL_BITS_SET(vm->checkpointState.flags, J9VM_CRIU_IS_CHECKPOINT_ENABLED)) {
+			if (J9_IS_CRIU_OR_CRAC_CHECKPOINT_ENABLED(vm)) {
 				vm->checkpointState.flags |= J9VM_CRIU_IS_PORTABLE_JVM_RESTORE_MODE;
 			}
 		}

@@ -95,7 +95,7 @@ public final class CRIUSupport {
 	/**
 	 * Queries if CRIU support is enabled and criu library has been loaded.
 	 *
-	 * @return TRUE if support is enabled and the library is loaded, FALSE otherwise
+	 * @return TRUE if CRIU support is enabled and the library is loaded, FALSE otherwise
 	 */
 	public static boolean isCRIUSupportEnabled() {
 		return InternalCRIUSupport.isCRIUSupportEnabledAndNativeLoaded();
@@ -511,16 +511,20 @@ public final class CRIUSupport {
 	 * @throws JVMRestoreException           if an error occurred during or after restore
 	 */
 	public synchronized void checkpointJVM() {
-		try {
-			internalCRIUSupport.checkpointJVM();
-		} catch (openj9.internal.criu.JVMCheckpointException jce) {
-			throw new JVMCheckpointException(jce.getMessage(), 0, jce);
-		} catch (openj9.internal.criu.JVMRestoreException jre) {
-			throw new JVMRestoreException(jre.getMessage(), 0, jre);
-		} catch (openj9.internal.criu.SystemCheckpointException sce) {
-			throw new JVMCheckpointException(sce.getMessage(), 0, sce);
-		} catch (openj9.internal.criu.SystemRestoreException sre) {
-			throw new JVMRestoreException(sre.getMessage(), 0, sre);
+		if (isCRIUSupportEnabled()) {
+			try {
+				internalCRIUSupport.checkpointJVM();
+			} catch (openj9.internal.criu.JVMCheckpointException jce) {
+				throw new JVMCheckpointException(jce.getMessage(), 0, jce);
+			} catch (openj9.internal.criu.JVMRestoreException jre) {
+				throw new JVMRestoreException(jre.getMessage(), 0, jre);
+			} catch (openj9.internal.criu.SystemCheckpointException sce) {
+				throw new JVMCheckpointException(sce.getMessage(), 0, sce);
+			} catch (openj9.internal.criu.SystemRestoreException sre) {
+				throw new JVMRestoreException(sre.getMessage(), 0, sre);
+			}
+		} else {
+			throw new UnsupportedOperationException("CRIU support is not enabled"); //$NON-NLS-1$
 		}
 	}
 }

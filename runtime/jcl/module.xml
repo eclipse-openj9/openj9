@@ -28,6 +28,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	<xi:include href="uma/se6_vm-side_natives_exports.xml"></xi:include>
 	<xi:include href="uma/se6_vm-side_lifecycle_exports.xml"></xi:include>
 	<xi:include href="uma/attach_exports.xml"></xi:include>
+	<xi:include href="uma/crac_exports.xml"></xi:include>
 	<xi:include href="uma/criu_exports.xml"></xi:include>
 	<xi:include href="uma/se7_exports.xml"></xi:include>
 	<xi:include href="uma/se626_orb_ludcl_exports.xml"></xi:include>
@@ -100,6 +101,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<group name="sun_misc_Unsafe_inl"/>
 			<group name="attach">
 				<include-if condition="spec.flags.opt_sidecar"/>
+			</group>
+			<group name="crac">
+				<include-if condition="spec.flags.opt_cracSupport"/>
 			</group>
 			<group name="criu">
 				<include-if condition="spec.flags.opt_criuSupport"/>

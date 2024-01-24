@@ -4211,6 +4211,7 @@ typedef struct J9DelayedLockingOpertionsRecord {
 #define J9VM_CRIU_IS_THROW_ON_DELAYED_CHECKPOINT_ENABLED 0x10
 #define J9VM_CRIU_IS_PORTABLE_JVM_RESTORE_MODE 0x20
 #define J9VM_CRIU_ENABLE_CRIU_SEC_PROVIDER 0x40
+#define J9VM_CRAC_IS_CHECKPOINT_ENABLED 0x80
 
 typedef struct J9CRIUCheckpointState {
 	U_32 flags;
@@ -4256,6 +4257,9 @@ typedef struct J9CRIUCheckpointState {
 	struct J9VMInitArgs *restoreArgsList;
 	char *restoreArgsChars;
 	IDATA jucForkJoinPoolParallelismOffset;
+#if defined(J9VM_OPT_CRAC_SUPPORT)
+	char *cracCheckpointToDir;
+#endif /* defined(J9VM_OPT_CRAC_SUPPORT) */
 } J9CRIUCheckpointState;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
@@ -5030,8 +5034,9 @@ typedef struct J9InternalVMFunctions {
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 	BOOLEAN (*jvmCheckpointHooks)(struct J9VMThread *currentThread);
 	BOOLEAN (*jvmRestoreHooks)(struct J9VMThread *currentThread);
+	BOOLEAN (*isCRaCorCRIUSupportEnabled)(struct J9VMThread *currentThread);
+	BOOLEAN (*isCRaCorCRIUSupportEnabled_VM)(struct J9JavaVM *vm);
 	BOOLEAN (*isCRIUSupportEnabled)(struct J9VMThread *currentThread);
-	BOOLEAN (*isCRIUSupportEnabled_VM)(struct J9JavaVM *vm);
 	BOOLEAN (*enableCRIUSecProvider)(struct J9VMThread *currentThread);
 	BOOLEAN (*isCheckpointAllowed)(struct J9VMThread *currentThread);
 	BOOLEAN (*isNonPortableRestoreMode)(struct J9VMThread *currentThread);
