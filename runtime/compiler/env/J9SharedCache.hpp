@@ -225,6 +225,20 @@ public:
    virtual bool isOffsetInSharedCache(uintptr_t encoded_offset, void *ptr = NULL);
 
    /**
+    * \brief Checks whether the J9ROMClass underlying the given class exists in the SCC
+    *
+    * \param[in] clazz The J9Class * to check
+    * \param[out] cacheOffset If the J9ROMClass associated to the J9Class is in the SCC and this parameter
+    *             is not NULL the result of converting romClass into an offset will
+    *             be returned here. If it does not point into the SCC, this
+    *             parameter is ignored.
+    * \return True if romClass points into the SCC, false otherwise.
+    */
+   virtual bool isClassInSharedCache(TR_OpaqueClassBlock *clazz, uintptr_t *cacheOffset = NULL);
+   virtual bool isClassInSharedCache(J9Class *clazz, uintptr_t *cacheOffset = NULL)
+      { return isClassInSharedCache(reinterpret_cast<TR_OpaqueClassBlock *>(clazz), cacheOffset); }
+
+   /**
     * \brief Checks whether the specified J9ROMClass exists in the SCC
     *
     * \param[in] romClass The J9ROMClass * to check

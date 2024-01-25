@@ -7902,7 +7902,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
 
             // Eligibility checks
             && !entry->_doNotUseAotCodeFromSharedCache
-            && fe->sharedCache()->isROMClassInSharedCache(J9_CLASS_FROM_METHOD(method)->romClass)
+            && fe->sharedCache()->isClassInSharedCache(J9_CLASS_FROM_METHOD(method))
             && !_compInfo.isMethodIneligibleForAot(method)
             && (!TR::Options::getAOTCmdLineOptions()->getOption(TR_AOTCompileOnlyFromBootstrap)
                 || fe->isClassLibraryMethod((TR_OpaqueMethodBlock *)method), true)
