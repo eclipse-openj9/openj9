@@ -410,8 +410,10 @@ _IF([(19 <= JAVA_SPEC_VERSION) && (JAVA_SPEC_VERSION < 21)],
 	[_X(JVM_VirtualThreadUnmountEnd, JNICALL, false, void, JNIEnv *env, jobject thread, jboolean lastUnmount)])
 _IF([JAVA_SPEC_VERSION >= 20],
 	[_X(JVM_GetClassFileVersion, JNICALL, false, jint, JNIEnv *env, jclass cls)])
-_IF([JAVA_SPEC_VERSION >= 20],
+_IF([(20 <= JAVA_SPEC_VERSION) && (JAVA_SPEC_VERSION < 23)],
 	[_X(JVM_VirtualThreadHideFrames, JNICALL, false, void, JNIEnv *env, jobject vthread, jboolean hide)])
+_IF([JAVA_SPEC_VERSION >= 23],
+	[_X(JVM_VirtualThreadHideFrames, JNICALL, false, void, JNIEnv *env, jclass clz, jboolean hide)])
 _IF([JAVA_SPEC_VERSION >= 21],
 	[_X(JVM_IsForeignLinkerSupported, JNICALL, false, jboolean, void)])
 _IF([JAVA_SPEC_VERSION >= 21],
@@ -428,5 +430,7 @@ _IF([defined(J9VM_OPT_VALHALLA_VALUE_TYPES)],
 	[_X(JVM_IsValhallaEnabled, JNICALL, false, jboolean, void)])
 _IF([JAVA_SPEC_VERSION >= 22],
 	[_X(JVM_ExpandStackFrameInfo, JNICALL, false, void, JNIEnv *env, jobject object)])
-_IF([JAVA_SPEC_VERSION >= 22],
+_IF([JAVA_SPEC_VERSION == 22],
 	[_X(JVM_VirtualThreadDisableSuspend, JNICALL, false, void, JNIEnv *env, jobject vthread, jboolean enter)])
+_IF([JAVA_SPEC_VERSION >= 23],
+	[_X(JVM_VirtualThreadDisableSuspend, JNICALL, false, void, JNIEnv *env, jclass clz, jboolean enter)])
