@@ -590,14 +590,31 @@ public class LinearDumper implements IClassWalkCallbacks {
 						
 						if ("classAndFlags".equals(region.name)) {
 							String flags = "";
-							if (0 != (J9JavaAccessFlags.J9StaticFieldRefBaseType & slotAddressOriginal)) {
-								flags += "J9StaticFieldRefBaseType, ";
+							if (0 == (J9JavaAccessFlags.J9PutfieldNarrowing & slotAddressOriginal)) {
+								if (0 != (J9JavaAccessFlags.J9StaticFieldRefBaseType & slotAddressOriginal)) {
+									flags += "J9StaticFieldRefBaseType, ";
+								}
+								
+								if (0 != (J9JavaAccessFlags.J9StaticFieldRefDouble & slotAddressOriginal)) {
+									flags += "J9StaticFieldRefDouble, ";
+								}
+							} else {
+								if (J9JavaAccessFlags.J9StaticFieldRefTypeObject == (J9JavaAccessFlags.J9StaticFieldRefTypeMask & slotAddressOriginal)) {
+									flags += "J9StaticFieldRefTypeObject, ";
+								} else if (J9JavaAccessFlags.J9StaticFieldRefTypeBoolean == (J9JavaAccessFlags.J9StaticFieldRefTypeMask & slotAddressOriginal)) {
+									flags += "J9StaticFieldRefTypeBoolean, ";
+								} else if (J9JavaAccessFlags.J9StaticFieldRefTypeByte == (J9JavaAccessFlags.J9StaticFieldRefTypeMask & slotAddressOriginal)) {
+									flags += "J9StaticFieldRefTypeByte, ";
+								} else if (J9JavaAccessFlags.J9StaticFieldRefTypeChar == (J9JavaAccessFlags.J9StaticFieldRefTypeMask & slotAddressOriginal)) {
+									flags += "J9StaticFieldRefTypeChar, ";
+								} else if (J9JavaAccessFlags.J9StaticFieldRefTypeShort == (J9JavaAccessFlags.J9StaticFieldRefTypeMask & slotAddressOriginal)) {
+									flags += "J9StaticFieldRefTypeShort, ";
+								} else if (J9JavaAccessFlags.J9StaticFieldRefTypeIntFloat == (J9JavaAccessFlags.J9StaticFieldRefTypeMask & slotAddressOriginal)) {
+									flags += "J9StaticFieldRefTypeIntFloat, ";
+								} else if (J9JavaAccessFlags.J9StaticFieldRefTypeLongDouble == (J9JavaAccessFlags.J9StaticFieldRefTypeMask & slotAddressOriginal)) {
+									flags += "J9StaticFieldRefTypeLongDouble, ";									
+								}
 							}
-							
-							if (0 != (J9JavaAccessFlags.J9StaticFieldRefDouble & slotAddressOriginal)) {
-								flags += "J9StaticFieldRefDouble, ";
-							}
-							
 							if (0 != (J9JavaAccessFlags.J9StaticFieldRefVolatile & slotAddressOriginal)) {
 								flags += "J9StaticFieldRefVolatile, ";
 							}
