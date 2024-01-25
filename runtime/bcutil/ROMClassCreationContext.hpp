@@ -182,6 +182,7 @@ public:
 	U_8 *classFileBytes() const { return _classFileBytes; }
 	UDATA classFileSize() const { return _classFileSize; }
 	UDATA findClassFlags() const {return _findClassFlags; }
+	void addFindClassFlags(UDATA flag) { _findClassFlags |= flag; }
 	U_8* className() const {return _className; }
 	UDATA classNameLength() const {return _classNameLength; }
 	U_8* hostPackageName() const {return _hostPackageName; }

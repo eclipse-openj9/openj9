@@ -260,7 +260,7 @@ ROMClassBuilder::injectInterfaces(ClassFileOracle *classFileOracle)
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
 BuildResult
-ROMClassBuilder::handleAnonClassName(J9CfrClassFile *classfile, bool *isLambda, ROMClassCreationContext *context)
+ROMClassBuilder::handleAnonClassName(J9CfrClassFile *classfile, bool *isShareableLambda, ROMClassCreationContext *context)
 {
 	J9CfrConstantPoolInfo* constantPool = classfile->constantPool;
 	U_32 cpThisClassUTF8Slot = constantPool[classfile->thisClass].slot1;
@@ -270,13 +270,30 @@ ROMClassBuilder::handleAnonClassName(J9CfrClassFile *classfile, bool *isLambda, 
 	U_32 i = 0;
 	BOOLEAN stringOrNASReferenceToClassName = FALSE;
 	BOOLEAN newCPEntry = TRUE;
+	bool isLambdaForm = false;
 	BuildResult result = OK;
 	char buf[ROM_ADDRESS_LENGTH + 1] = {0};
 	U_8 *hostPackageName = context->hostPackageName();
 	UDATA hostPackageLength = context->hostPackageLength();
 	PORT_ACCESS_FROM_PORT(_portLibrary);
 
-#if defined(J9VM_OPT_OPENJDK_METHODHANDLE) && (JAVA_SPEC_VERSION >= 15)
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	/*
+	 * Prevent generated LambdaForm classes from MethodHandles to be stored to the shared cache.
+	 * When there are a large number of such classes in the shared cache, they trigger a lot of class comparisons.
+	 * Performance can be much worse (compared to shared cache turned off).
+	 */
+#define J9_LAMBDA_FORM_CLASSNAME "java/lang/invoke/LambdaForm$"
+	UDATA lambdaFormComparatorLength = LITERAL_STRLEN(J9_LAMBDA_FORM_CLASSNAME);
+	if (originalStringLength > lambdaFormComparatorLength) {
+		if (0 == memcmp(originalStringBytes, J9_LAMBDA_FORM_CLASSNAME, lambdaFormComparatorLength)) {
+			context->addFindClassFlags(J9_FINDCLASS_FLAG_DO_NOT_SHARE);
+			isLambdaForm = true;
+		}
+	}
+#undef J9_LAMBDA_FORM_CLASSNAME
+
+#if JAVA_SPEC_VERSION >= 15
 	/* InjectedInvoker is a hidden class without the strong attribute set. It
 	 * is created by MethodHandleImpl.makeInjectedInvoker on the OpenJDK side.
 	 * So, OpenJ9 does not have control over the implementation of InjectedInvoker.
@@ -321,7 +338,8 @@ ROMClassBuilder::handleAnonClassName(J9CfrClassFile *classfile, bool *isLambda, 
 		}
 #undef J9_INJECTED_INVOKER_CLASSNAME
 	}
-#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) && (JAVA_SPEC_VERSION >= 15) */
+#endif /* JAVA_SPEC_VERSION >= 15 */
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 	/* check if adding host package name to anonymous class is needed */
 	UDATA newHostPackageLength = 0;
@@ -336,8 +354,10 @@ ROMClassBuilder::handleAnonClassName(J9CfrClassFile *classfile, bool *isLambda, 
 	UDATA newAnonClassNameLength = originalStringLength + 1 + ROM_ADDRESS_LENGTH + 1 + newHostPackageLength;
 
 	/* check if the class is a lambda class */
-	if (NULL != getLastDollarSignOfLambdaClassName(originalStringBytes, originalStringLength)) {
-		*isLambda = true;
+	if (!isLambdaForm
+		&& (NULL != getLastDollarSignOfLambdaClassName(originalStringBytes, originalStringLength))
+	) {
+		*isShareableLambda = true;
 	}
 
 	/* Find if there are any Constant_String or CFR_CONSTANT_NameAndType references to the className.
@@ -521,9 +541,9 @@ ROMClassBuilder::prepareAndLaydown( BufferManager *bufferManager, ClassFileParse
 	 */
 	Trc_BCU_Assert_False(context->isRetransforming() && !context->isRetransformAllowed());
 
-	bool isLambda = false;
+	bool isShareableLambda = false;
 	if (context->isClassAnon() || context->isClassHidden()) {
-		BuildResult res = handleAnonClassName(classFileParser->getParsedClassFile(), &isLambda, context);
+		BuildResult res = handleAnonClassName(classFileParser->getParsedClassFile(), &isShareableLambda, context);
 		if (OK != res) {
 			return res;
 		}
@@ -578,7 +598,7 @@ ROMClassBuilder::prepareAndLaydown( BufferManager *bufferManager, ClassFileParse
 
 	U_32 romSize = 0;
 	U_32 sizeToCompareForLambda = 0;
-	if (isLambda) {
+	if (isShareableLambda) {
 		/* 
 		 * romSize calculated from getSizeInfo() does not involve StringInternManager. It is only accurate for string intern disabled classes. 
 		 * Lambda classes in java 15 and up are strong hidden classes (defined with Option.STONG), which has the same lifecycle as its
@@ -600,7 +620,7 @@ ROMClassBuilder::prepareAndLaydown( BufferManager *bufferManager, ClassFileParse
 		bool romClassIsShared = (j9shr_Query_IsAddressInCache(_javaVM, romClass, romClass->romSize) ? true : false);
 
 		if (compareROMClassForEquality((U_8*)romClass, romClassIsShared, &romClassWriter,
-				&srpOffsetTable, &srpKeyProducer, &classFileOracle, modifiers, extraModifiers, optionalFlags, context, sizeToCompareForLambda, isLambda)
+				&srpOffsetTable, &srpKeyProducer, &classFileOracle, modifiers, extraModifiers, optionalFlags, context, sizeToCompareForLambda, isShareableLambda)
 		) {
 			return OK;
 		} else {
@@ -684,7 +704,7 @@ ROMClassBuilder::prepareAndLaydown( BufferManager *bufferManager, ClassFileParse
 				}
 				context->recordROMClass(existingROMClass);
 				if (compareROMClassForEquality((U_8*)existingROMClass, /* romClassIsShared = */ true, &romClassWriter,
-						&srpOffsetTable, &srpKeyProducer, &classFileOracle, modifiers, extraModifiers, optionalFlags, context, sizeToCompareForLambda, isLambda)
+						&srpOffsetTable, &srpKeyProducer, &classFileOracle, modifiers, extraModifiers, optionalFlags, context, sizeToCompareForLambda, isShareableLambda)
 				) {
 					/*
 					 * Found an existing ROMClass in the shared cache that is equivalent
@@ -1432,11 +1452,11 @@ bool
 ROMClassBuilder::compareROMClassForEquality(U_8 *romClass,bool romClassIsShared,
 		ROMClassWriter *romClassWriter, SRPOffsetTable *srpOffsetTable, SRPKeyProducer *srpKeyProducer,
 		ClassFileOracle *classFileOracle, U_32 modifiers, U_32 extraModifiers, U_32 optionalFlags,
-		ROMClassCreationContext * context, U_32 sizeToCompareForLambda, bool isLambda)
+		ROMClassCreationContext * context, U_32 sizeToCompareForLambda, bool isShareableLambda)
 {
 	bool ret = false;
 
-	if (isLambda) {
+	if (isShareableLambda) {
 		int maxVariance = 9;
 		if (abs((int)(sizeToCompareForLambda - ((J9ROMClass *)romClass)->classFileSize)) > maxVariance) {
 			/* 
@@ -1452,7 +1472,7 @@ ROMClassBuilder::compareROMClassForEquality(U_8 *romClass,bool romClassIsShared,
 			 */
 			ret = false;
 		} else {
-			ComparingCursor compareCursor(_javaVM, srpOffsetTable, srpKeyProducer, classFileOracle, romClass, romClassIsShared, context, isLambda);
+			ComparingCursor compareCursor(_javaVM, srpOffsetTable, srpKeyProducer, classFileOracle, romClass, romClassIsShared, context, isShareableLambda);
 			romClassWriter->writeROMClass(&compareCursor,
 					&compareCursor,
 					&compareCursor,
@@ -1464,7 +1484,7 @@ ROMClassBuilder::compareROMClassForEquality(U_8 *romClass,bool romClassIsShared,
 			ret = compareCursor.isEqual();
 		}
 	} else {
-		ComparingCursor compareCursor(_javaVM, srpOffsetTable, srpKeyProducer, classFileOracle, romClass, romClassIsShared, context, isLambda);
+		ComparingCursor compareCursor(_javaVM, srpOffsetTable, srpKeyProducer, classFileOracle, romClass, romClassIsShared, context, isShareableLambda);
 		romClassWriter->writeROMClass(&compareCursor,
 				&compareCursor,
 				&compareCursor,
