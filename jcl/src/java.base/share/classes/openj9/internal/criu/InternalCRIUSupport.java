@@ -69,6 +69,7 @@ public final class InternalCRIUSupport {
 	private static native boolean enableCRIUSecProviderImpl();
 	private static native long getCheckpointRestoreNanoTimeDeltaImpl();
 	private static native long getLastRestoreTimeImpl();
+	private static native long getProcessRestoreStartTimeImpl();
 	private static native boolean isCRIUSupportEnabledImpl();
 	private static native boolean isCheckpointAllowedImpl();
 /*[IF CRAC_SUPPORT]*/
@@ -95,11 +96,22 @@ public final class InternalCRIUSupport {
 	 * Retrieve the time when the last restore occurred. In the case of multiple
 	 * restores the previous times are overwritten.
 	 *
-	 * @return the time in milliseconds since the start of the epoch, -1 if restore
+	 * @return the time in nanoseconds since the start of the epoch, -1 if restore
 	 *         has not occurred.
 	 */
 	public static long getLastRestoreTime() {
 		return getLastRestoreTimeImpl();
+	}
+
+	/**
+	 * Get the start time of the CRIU process that restores the java process.
+	 * The time that is set by the restored java process when it resumes from
+	 * checkpoint can be retrieved with {@link #getLastRestoreTime()}.
+	 *
+	 * @return the time in nanoseconds since the epoch, -1 if restore has not occurred.
+	 */
+	public static long getProcessRestoreStartTime() {
+		return getProcessRestoreStartTimeImpl();
 	}
 
 	/**
