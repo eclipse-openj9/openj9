@@ -2280,6 +2280,27 @@ j9sysinfo_test_get_l1dcache_line_size(struct J9PortLibrary *portLibrary)
 	return reportTestExit(portLibrary, testName);
 }
 
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+I_32
+j9sysinfo_test_get_process_start_time(struct J9PortLibrary *portLibrary)
+{
+	PORT_ACCESS_FROM_PORT(portLibrary);
+	const char *testName = "j9sysinfo_test_get_process_start_time";
+	UDATA pid = j9sysinfo_get_pid();
+	U_64 processStartTimeInNanoseconds = 0;
+	I_32 rc = j9sysinfo_get_process_start_time(pid, &processStartTimeInNanoseconds);
+	if ((0 != rc) || (0 == processStartTimeInNanoseconds)) {
+		outputErrorMessage(
+			PORTTEST_ERROR_ARGS,
+			"j9sysinfo_get_process_start_time, pid=%zu, processStartTimeInNanoseconds=%llu, rc=%d.\n",
+			pid,
+			processStartTimeInNanoseconds,
+			rc);
+	}
+	return reportTestExit(portLibrary, testName);
+}
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+
 /*
  * pass in the port library to do sysinfo tests
  */
@@ -2350,6 +2371,9 @@ j9sysinfo_runTests(struct J9PortLibrary *portLibrary, char *argv0)
 	/* Not supported on Z & OSX (and Windows, of course).  Enable, when available. */
 	rc |= j9sysinfo_test_get_open_file_count(portLibrary);
 #endif /* defined(LINUX) || defined(AIXPPC) */
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	rc |= j9sysinfo_test_get_process_start_time(portLibrary);
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 	/* Output results */
 	j9tty_printf(PORTLIB, "\nSysinfo test done%s\n\n", rc == TEST_PASS ? "." : ", failures detected.");

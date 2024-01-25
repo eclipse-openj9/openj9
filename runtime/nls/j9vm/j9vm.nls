@@ -2313,3 +2313,10 @@ J9NLS_VM_CRIU_CRAC_INCOMPATIBLE_SETTING.explanation=-XX:+EnableCRIUSupport and -
 J9NLS_VM_CRIU_CRAC_INCOMPATIBLE_SETTING.system_action=The JVM will fail to start.
 J9NLS_VM_CRIU_CRAC_INCOMPATIBLE_SETTING.user_response=Remove one of the options from the command line.
 # END NON-TRANSLATABLE
+
+J9NLS_VM_CRIU_J9_GET_PROCESS_START_TIME_FAILURE=j9sysinfo_get_process_start_time failed with errno=%zi
+# START NON-TRANSLATABLE
+J9NLS_VM_CRIU_J9_GET_PROCESS_START_TIME_FAILURE.explanation=j9sysinfo_get_process_start_time failed.
+J9NLS_VM_CRIU_J9_GET_PROCESS_START_TIME_FAILURE.system_action=The JVM will throw a JVMRestoreException.
+J9NLS_VM_CRIU_J9_GET_PROCESS_START_TIME_FAILURE.user_response=View CRIU documentation to determine how to resolve the error.
+# END NON-TRANSLATABLE
