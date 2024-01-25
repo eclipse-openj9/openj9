@@ -811,6 +811,13 @@ TR_J9SharedCache::isROMStructureInSharedCache(void *romStructure, uintptr_t *cac
    }
 
 bool
+TR_J9SharedCache::isClassInSharedCache(TR_OpaqueClassBlock *clazz, uintptr_t *cacheOffset)
+   {
+   J9ROMClass *romClass = reinterpret_cast<J9ROMClass *>(fe()->getPersistentClassPointerFromClassPointer(clazz));
+   return isROMClassInSharedCache(romClass, cacheOffset);
+   }
+
+bool
 TR_J9SharedCache::isROMClassInSharedCache(J9ROMClass *romClass, uintptr_t *cacheOffset)
    {
    return isROMStructureInSharedCache(romClass, cacheOffset);
