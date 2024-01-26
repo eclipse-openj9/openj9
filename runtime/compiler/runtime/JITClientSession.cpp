@@ -413,7 +413,7 @@ ClientSessionData::ClassInfo::ClassInfo(TR_PersistentMemory *persistentMemory) :
    _totalInstanceSize(0),
    _constantPool(NULL),
    _classFlags(0),
-   _classChainOffsetIdentifyingLoader(0),
+   _classChainOffsetIdentifyingLoader(TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET),
    _classNameIdentifyingLoader(),
    _aotCacheClassRecord(NULL),
    _arrayElementSize(0),
@@ -841,7 +841,7 @@ ClientSessionData::getClassRecord(ClientSessionData::ClassInfo &classInfo, bool 
       auto &name = classInfo._classNameIdentifyingLoader;
       if (name.empty())
          {
-         TR_ASSERT(!classInfo._classChainOffsetIdentifyingLoader,
+         TR_ASSERT(TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET != classInfo._classChainOffsetIdentifyingLoader,
                    "Valid class chain offset but missing class name identifying loader");
          missingLoaderInfo = true;
          return NULL;

@@ -89,7 +89,7 @@ public:
    void *_constantPool;                         // constant pool owning the cp entry, initialized based on _method
    TR_OpaqueClassBlock *_clazz;                 // class on which assumption is formed
    uintptr_t _classChainOffset;                 // class chain offset for clazz: captures the assumption
-                                                // == NULL for TR_ValidateStaticField validations
+                                                // == TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET for TR_ValidateStaticField validations
 #if defined(J9VM_OPT_JITSERVER)
    const AOTCacheClassChainRecord *_aotCacheClassChainRecord; // NULL at JITServer if compiled method won't be cached
                                                               // Always NULL at JIT client

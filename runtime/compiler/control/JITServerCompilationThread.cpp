@@ -894,8 +894,8 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       entry._stream = stream; // Add the stream to the entry
 
       auto aotCache = clientSession->getOrCreateAOTCache(stream);
-      _aotCacheStore = classChainOffset && aotCache && JITServerAOTCacheMap::cacheHasSpace();
-      aotCacheLoad = aotCacheLoad && classChainOffset && aotCache;
+      _aotCacheStore = (TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET != classChainOffset) && aotCache && JITServerAOTCacheMap::cacheHasSpace();
+      aotCacheLoad = aotCacheLoad && (TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET != classChainOffset) && aotCache;
       if (aotCache && !aotCacheLoad)
          aotCache->incNumCacheBypasses();
 

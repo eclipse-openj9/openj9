@@ -158,7 +158,7 @@ struct ClassValidationRecord : public SymbolValidationRecord
 struct ClassValidationRecordWithChain : public ClassValidationRecord
    {
    ClassValidationRecordWithChain(TR_ExternalRelocationTargetKind kind, TR_OpaqueClassBlock *clazz)
-      : ClassValidationRecord(kind), _class(clazz), _classChainOffset(0)
+      : ClassValidationRecord(kind), _class(clazz), _classChainOffset(TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET)
       {
 #if defined(J9VM_OPT_JITSERVER)
       _aotCacheClassChainRecord = NULL;
@@ -887,7 +887,7 @@ private:
    struct ClassChainInfo
       {
       ClassChainInfo()
-         : _baseComponent(NULL), _baseComponentClassChainOffset(0), _arrayDims(0)
+         : _baseComponent(NULL), _baseComponentClassChainOffset(TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET), _arrayDims(0)
          {
 #if defined(J9VM_OPT_JITSERVER)
          _baseComponentAOTCacheClassChainRecord = NULL;

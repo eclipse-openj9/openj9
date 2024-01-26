@@ -251,7 +251,7 @@ TR::SymbolValidationManager::populateWellKnownClasses()
       int32_t len = (int32_t)strlen(name);
       TR_OpaqueClassBlock *wkClass = _fej9->getSystemClassFromClassName(name, len);
 
-      uintptr_t chainOffset = 0;
+      uintptr_t chainOffset = TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET;
       if (wkClass == NULL)
          {
          traceMsg(_comp, "well-known class %s not found\n", name);
@@ -272,7 +272,7 @@ TR::SymbolValidationManager::populateWellKnownClasses()
 #endif /* defined(J9VM_OPT_JITSERVER) */
          }
 
-      if (chainOffset == 0)
+      if (TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET == chainOffset)
          {
          traceMsg(_comp, "no class chain for well-known class %s\n", name);
          SVM_ASSERT_NONFATAL(
@@ -606,7 +606,7 @@ TR::SymbolValidationManager::getClassChainInfo(
       // primitive because primitives always satisfy isAlreadyValidated().
       const AOTCacheClassChainRecord *classChainRecord = NULL;
       info._baseComponentClassChainOffset = _fej9->sharedCache()->rememberClass(info._baseComponent, &classChainRecord);
-      if (info._baseComponentClassChainOffset == 0)
+      if (TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET == info._baseComponentClassChainOffset)
          {
          _region.deallocate(record);
          return false;
@@ -637,7 +637,7 @@ TR::SymbolValidationManager::appendClassChainInfoRecords(
       }
 
    // If necessary, remember to validate the class chain of the base component type
-   if (info._baseComponentClassChainOffset != 0)
+   if (TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET != info._baseComponentClassChainOffset)
       {
       appendNewRecord(
          info._baseComponent,
@@ -695,7 +695,7 @@ TR::SymbolValidationManager::addClassRecordWithChain(TR::ClassValidationRecordWi
       {
       const AOTCacheClassChainRecord *classChainRecord = NULL;
       record->_classChainOffset = _fej9->sharedCache()->rememberClass(record->_class, &classChainRecord);
-      if (record->_classChainOffset == 0)
+      if (TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET == record->_classChainOffset)
          {
          _region.deallocate(record);
          return false;
@@ -799,7 +799,7 @@ TR::SymbolValidationManager::addProfiledClassRecord(TR_OpaqueClassBlock *clazz)
 
    const AOTCacheClassChainRecord *classChainRecord = NULL;
    uintptr_t classChainOffset = _fej9->sharedCache()->rememberClass(clazz, &classChainRecord);
-   if (classChainOffset == 0)
+   if (TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET == classChainOffset)
       return false;
 
    if (!isAlreadyValidated(clazz))

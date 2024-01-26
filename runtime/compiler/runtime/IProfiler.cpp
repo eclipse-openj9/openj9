@@ -3118,7 +3118,7 @@ TR_IPBCDataCallGraph::createPersistentCopy(TR_J9SharedCache *sharedCache, TR_IPB
          if (sharedCache->isROMClassInSharedCache(romClass))
             {
             uintptr_t classChainOffset = sharedCache->rememberClass(clazz);
-            if (classChainOffset)
+            if (TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET != classChainOffset)
                {
                store->_csInfo.setClazz(0, classChainOffset);
                store->_csInfo._weight[0] = _csInfo._weight[indexMaxWeight];
@@ -3127,7 +3127,7 @@ TR_IPBCDataCallGraph::createPersistentCopy(TR_J9SharedCache *sharedCache, TR_IPB
                uintptr_t classChainOffsetOfCLInSharedCache = sharedCache->getClassChainOffsetIdentifyingLoaderNoThrow(clazz);
                // The chain that identifies the class loader is stored at index 1
                store->_csInfo.setClazz(1, classChainOffsetOfCLInSharedCache);
-               if (classChainOffsetOfCLInSharedCache == 0)
+               if (TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET == classChainOffsetOfCLInSharedCache)
                   if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseIProfilerPersistence))
                      TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "createPersistentCopy: Cannot store CallGraphEntry because classChain identifying classloader is 0");
                }

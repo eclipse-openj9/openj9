@@ -175,7 +175,7 @@ public:
 
    virtual bool canRememberClass(TR_OpaqueClassBlock *classPtr)
       {
-      return rememberClass((J9Class *)classPtr, NULL, false) != 0;
+      return rememberClass((J9Class *)classPtr, NULL, false) != TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET;
       }
 
    virtual uintptr_t rememberClass(TR_OpaqueClassBlock *classPtr,

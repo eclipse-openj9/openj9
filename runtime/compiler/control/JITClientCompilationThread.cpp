@@ -2145,7 +2145,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          std::vector<J9Class *> ramClassChain;
          std::vector<J9Class *> uncachedRAMClasses;
          std::vector<JITServerHelpers::ClassInfoTuple> uncachedClassInfos;
-         if (create && getClasses && classChainOffset)
+         if (create && getClasses && (TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET != classChainOffset))
             {
             // The first word of the class chain data stores the size of the whole record in bytes, so the number of classes
             // is 1 less than the necessary class chain length.
@@ -3159,14 +3159,14 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
       ? std::string((const char *)compiler->getRecompilationInfo()->getMethodInfo(), sizeof(TR_PersistentMethodInfo))
       : std::string();
 
-   uintptr_t classChainOffset = 0;
+   uintptr_t classChainOffset = TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET;
    std::vector<J9Class *> ramClassChain;
    std::vector<J9Class *> uncachedRAMClasses;
    std::vector<JITServerHelpers::ClassInfoTuple> uncachedClassInfos;
    if (aotCacheStore || aotCacheLoad)
       {
       classChainOffset = compiler->fej9vm()->sharedCache()->rememberClass(clazz);
-      if (classChainOffset)
+      if (TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET != classChainOffset)
          {
          // The first word of the class chain data stores the size of the whole record in bytes, so the number of classes
          // is 1 less than the necessary class chain length.

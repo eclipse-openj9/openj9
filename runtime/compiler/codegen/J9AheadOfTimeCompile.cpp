@@ -50,8 +50,8 @@ J9::AheadOfTimeCompile::getClassChainOffset(TR_OpaqueClassBlock *classToRemember
    TR_J9VMBase *fej9 = (TR_J9VMBase *)self()->comp()->fe();
    TR_SharedCache *sharedCache = fej9->sharedCache();
    uintptr_t classChainOffset = sharedCache->rememberClass(classToRemember, &classChainRecord);
-   if (classChainOffset == 0)
-      self()->comp()->failCompilation<J9::ClassChainPersistenceFailure>("classChainOffset == 0");
+   if (TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET == classChainOffset)
+      self()->comp()->failCompilation<J9::ClassChainPersistenceFailure>("classChainOffset == INVALID_CLASS_CHAIN_OFFSET");
    return classChainOffset;
    }
 

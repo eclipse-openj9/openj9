@@ -993,7 +993,7 @@ TR_ResolvedRelocatableJ9Method::TR_ResolvedRelocatableJ9Method(TR_OpaqueMethodBl
    TR::Compilation *comp = TR::comp();
    if (comp && this->TR_ResolvedMethod::getRecognizedMethod() != TR::unknownMethod)
       {
-      if (0 != fej9->sharedCache()->rememberClass(containingClass()))
+      if (TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET != fej9->sharedCache()->rememberClass(containingClass()))
          {
          if (comp->getOption(TR_UseSymbolValidationManager))
             {
@@ -1374,7 +1374,7 @@ TR_ResolvedRelocatableJ9Method::storeValidationRecordIfNecessary(TR::Compilation
 
    // all kinds of validations may need to rely on the entire class chain, so make sure we can build one first
    uintptr_t classChainOffset = fej9->sharedCache()->rememberClass(definingClass);
-   if (0 == classChainOffset)
+   if (TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET == classChainOffset)
       return false;
 
    bool inLocalList = false;

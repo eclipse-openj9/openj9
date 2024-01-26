@@ -190,7 +190,7 @@ TR_PersistentClassLoaderTable::associateClassLoaderWithClass(J9VMThread *vmThrea
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    uintptr_t classChainOffset = _sharedCache->rememberClass(clazz);
-   if (classChainOffset == 0)
+   if (TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET == classChainOffset)
       {
 #if defined(J9VM_OPT_JITSERVER)
       if (useAOTCache && TR::Options::getVerboseOption(TR_VerboseJITServer))

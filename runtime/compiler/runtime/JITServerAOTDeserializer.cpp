@@ -524,7 +524,7 @@ JITServerAOTDeserializer::cacheRecord(const ClassChainSerializationRecord *recor
 
    // Create the class chain in the local SCC or find the existing one
    uintptr_t offset = _sharedCache->rememberClass((TR_OpaqueClassBlock *)ramClasses[0]);
-   if (0 == offset)
+   if (TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET == offset)
       {
       if (TR::Options::getVerboseOption(TR_VerboseJITServer))
          TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
