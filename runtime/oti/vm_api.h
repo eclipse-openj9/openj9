@@ -576,6 +576,15 @@ BOOLEAN
 isJVMInPortableRestoreMode(J9VMThread *currentThread);
 
 /**
+ * @brief Queries if debug on restore (specified via
+ * -XX:+DebugOnRestore) is supported. If so, the JVM
+ * will run in FSD mode pre-checkpoint and will transition out
+ * FSD mode on restore (unless debug is specified post restore).
+ */
+BOOLEAN
+isDebugOnRestoreEnabled(J9VMThread *currentThread);
+
+/**
  * @brief JVM hooks to run before performing a JVM checkpoint
  *
  * @param currentThread vmthread token

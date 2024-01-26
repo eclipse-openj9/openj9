@@ -177,6 +177,12 @@ isJVMInPortableRestoreMode(J9VMThread *currentThread)
 	return (!isNonPortableRestoreMode(currentThread) || J9_ARE_ALL_BITS_SET(currentThread->javaVM->checkpointState.flags, J9VM_CRIU_IS_PORTABLE_JVM_RESTORE_MODE)) && isCRaCorCRIUSupportEnabled(currentThread);
 }
 
+BOOLEAN
+isDebugOnRestoreEnabled(J9VMThread *currentThread)
+{
+	return J9_ARE_ALL_BITS_SET(currentThread->javaVM->checkpointState.flags, J9VM_CRIU_SUPPORT_DEBUG_ON_RESTORE) && isCRaCorCRIUSupportEnabled(currentThread);
+}
+
 /**
  * This adds an internal CRIU hook to trace all heap objects of instanceType and its subclasses if specified.
  *
