@@ -696,11 +696,15 @@ TR::SymbolValidationManager::addClassRecordWithChain(TR::ClassValidationRecordWi
    if (!_fej9->isPrimitiveClass(record->_class))
       {
       const AOTCacheClassChainRecord *classChainRecord = NULL;
-      record->_classChain = _fej9->sharedCache()->rememberClass(record->_class, &classChainRecord);
-      if (record->_classChain == NULL)
+      void *classChain = _fej9->sharedCache()->rememberClass(record->_class, &classChainRecord);
+      if (classChain == NULL)
          {
          _region.deallocate(record);
          return false;
+         }
+      else
+         {
+         record->_classChainOffset = _fej9->sharedCache()->offsetInSharedCacheFromPointer(classChain);
          }
 
 #if defined(J9VM_OPT_JITSERVER)
@@ -1661,7 +1665,7 @@ void TR::ClassValidationRecordWithChain::printFields()
    {
    traceMsg(TR::comp(), "\t_class=0x%p\n", _class);
    printClass(_class);
-   traceMsg(TR::comp(), "\t_classChain=0x%p\n", _classChain);
+   traceMsg(TR::comp(), "\t_classChainOffset=%" OMR_PRIuPTR "\n", _classChainOffset);
    }
 
 bool TR::ClassByNameRecord::isLessThanWithinKind(SymbolValidationRecord *other)

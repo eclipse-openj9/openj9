@@ -766,11 +766,9 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
 
          TR::ClassByNameRecord *svmRecord = reinterpret_cast<TR::ClassByNameRecord *>(relocation->getTargetAddress());
 
-         uintptr_t classChainOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, svmRecord->_classChain);
-
          cbnRecord->setClassID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_class));
          cbnRecord->setBeholderID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_beholder));
-         cbnRecord->setClassChainOffset(reloTarget, classChainOffsetInSharedCache,
+         cbnRecord->setClassChainOffset(reloTarget, svmRecord->_classChainOffset,
                                         self(), svmRecord->getAOTCacheClassChainRecord());
          }
          break;
@@ -875,14 +873,11 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          TR::SystemClassByNameRecord *svmRecord = reinterpret_cast<TR::SystemClassByNameRecord *>(relocation->getTargetAddress());
 
          TR_OpaqueClassBlock *classToValidate = svmRecord->_class;
-         void *classChainForClassToValidate = svmRecord->_classChain;
-
-         // Store class chain to get name of class. Checking the class chain for
-         // this record eliminates the need for a separate class chain validation.
-         uintptr_t classChainOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, classChainForClassToValidate);
 
          scmRecord->setSystemClassID(reloTarget, symValManager->getSymbolIDFromValue(classToValidate));
-         scmRecord->setClassChainOffset(reloTarget, classChainOffsetInSharedCache,
+         // Store class chain to get name of class. Checking the class chain for
+         // this record eliminates the need for a separate class chain validation.
+         scmRecord->setClassChainOffset(reloTarget, svmRecord->_classChainOffset,
                                         self(), svmRecord->getAOTCacheClassChainRecord());
          }
          break;
