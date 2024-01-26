@@ -924,14 +924,11 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          TR::ClassChainRecord *svmRecord = reinterpret_cast<TR::ClassChainRecord *>(relocation->getTargetAddress());
 
          TR_OpaqueClassBlock *classToValidate = svmRecord->_class;
-         void *classChainForClassToValidate = svmRecord->_classChain;
-
-         // Store class chain to get name of class. Checking the class chain for
-         // this record eliminates the need for a separate class chain validation.
-         uintptr_t classChainOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, classChainForClassToValidate);
 
          ccRecord->setClassID(reloTarget, symValManager->getSymbolIDFromValue(classToValidate));
-         ccRecord->setClassChainOffset(reloTarget, classChainOffsetInSharedCache,
+         // Store class chain to get name of class. Checking the class chain for
+         // this record eliminates the need for a separate class chain validation.
+         ccRecord->setClassChainOffset(reloTarget, svmRecord->_classChainOffset,
                                        self(), svmRecord->getAOTCacheClassChainRecord());
          }
          break;

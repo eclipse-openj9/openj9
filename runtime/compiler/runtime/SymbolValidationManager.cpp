@@ -606,12 +606,15 @@ TR::SymbolValidationManager::getClassChainInfo(
       // info._baseComponent is a non-array reference type. It can't be a
       // primitive because primitives always satisfy isAlreadyValidated().
       const AOTCacheClassChainRecord *classChainRecord = NULL;
-      info._baseComponentClassChain =
-         _fej9->sharedCache()->rememberClass(info._baseComponent, &classChainRecord);
-      if (info._baseComponentClassChain == NULL)
+      void *classChain = _fej9->sharedCache()->rememberClass(info._baseComponent, &classChainRecord);
+      if (classChain == NULL)
          {
          _region.deallocate(record);
          return false;
+         }
+      else
+         {
+         info._baseComponentClassChainOffset = _fej9->sharedCache()->offsetInSharedCacheFromPointer(classChain);
          }
 #if defined(J9VM_OPT_JITSERVER)
       info._baseComponentAOTCacheClassChainRecord = classChainRecord;
@@ -639,13 +642,13 @@ TR::SymbolValidationManager::appendClassChainInfoRecords(
       }
 
    // If necessary, remember to validate the class chain of the base component type
-   if (info._baseComponentClassChain != NULL)
+   if (info._baseComponentClassChainOffset != 0)
       {
       appendNewRecord(
          info._baseComponent,
          new (_region) ClassChainRecord(
             info._baseComponent,
-            info._baseComponentClassChain
+            info._baseComponentClassChainOffset
 #if defined(J9VM_OPT_JITSERVER)
             , info._baseComponentAOTCacheClassChainRecord
 #endif /* defined(J9VM_OPT_JITSERVER) */
@@ -1892,7 +1895,7 @@ void TR::ClassChainRecord::printFields()
    traceMsg(TR::comp(), "ClassChainRecord\n");
    traceMsg(TR::comp(), "\t_class=0x%p\n", _class);
    printClass(_class);
-   traceMsg(TR::comp(), "\t_classChain=0x%p\n", _classChain);
+   traceMsg(TR::comp(), "\t_classChainOffset=%" OMR_PRIuPTR "\n", _classChainOffset);
    }
 
 bool TR::MethodFromClassRecord::isLessThanWithinKind(
