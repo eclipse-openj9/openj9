@@ -2049,6 +2049,7 @@ TR_ResolvedRelocatableJ9JITServerMethod::storeValidationRecordIfNecessary(TR::Co
    void *classChain = fej9->sharedCache()->rememberClass(definingClass, &classChainRecord);
    if (!classChain)
       return false;
+   uintptr_t classChainOffset = fej9->sharedCache()->offsetInSharedCacheFromPointer(classChain);
 
    bool inLocalList = false;
    TR::list<TR::AOTClassInfo*>* aotClassInfo = comp->_aotClassInfo;
@@ -2068,7 +2069,7 @@ TR_ResolvedRelocatableJ9JITServerMethod::storeValidationRecordIfNecessary(TR::Co
                inLocalList = (TR::Compiler->cls.romClassOf((TR_OpaqueClassBlock *) definingClass) ==
                               TR::Compiler->cls.romClassOf((TR_OpaqueClassBlock *) ((*info)->_clazz)));
             else
-               inLocalList = (classChain == (*info)->_classChain &&
+               inLocalList = (classChainOffset == (*info)->_classChainOffset &&
                               cpIndex == (*info)->_cpIndex &&
                               ramMethod == (J9Method *)(*info)->_method);
 
@@ -2092,7 +2093,7 @@ TR_ResolvedRelocatableJ9JITServerMethod::storeValidationRecordIfNecessary(TR::Co
       }
 
    TR::AOTClassInfo *classInfo = new (comp->trHeapMemory()) TR::AOTClassInfo(
-      fej9, (TR_OpaqueClassBlock *)definingClass, (void *)classChain,
+      fej9, (TR_OpaqueClassBlock *)definingClass, classChainOffset,
       (TR_OpaqueMethodBlock *)ramMethod, cpIndex, reloKind, classChainRecord
    );
    if (classInfo)
