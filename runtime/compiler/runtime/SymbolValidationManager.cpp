@@ -803,9 +803,10 @@ TR::SymbolValidationManager::addProfiledClassRecord(TR_OpaqueClassBlock *clazz)
    void *classChain = _fej9->sharedCache()->rememberClass(clazz, &classChainRecord);
    if (classChain == NULL)
       return false;
+   uintptr_t classChainOffset = _fej9->sharedCache()->offsetInSharedCacheFromPointer(classChain);
 
    if (!isAlreadyValidated(clazz))
-      appendNewRecord(clazz, new (_region) ProfiledClassRecord(clazz, classChain, classChainRecord));
+      appendNewRecord(clazz, new (_region) ProfiledClassRecord(clazz, classChainOffset, classChainRecord));
 
    addMultipleArrayRecords(clazz, arrayDims);
    return true;
@@ -1691,7 +1692,7 @@ void TR::ProfiledClassRecord::printFields()
    traceMsg(TR::comp(), "ProfiledClassRecord\n");
    traceMsg(TR::comp(), "\t_class=0x%p\n", _class);
    printClass(_class);
-   traceMsg(TR::comp(), "\t_classChain=0x%p\n", _classChain);
+   traceMsg(TR::comp(), "\t_classChainOffset=%" OMR_PRIuPTR "\n", _classChainOffset);
    }
 
 bool TR::ClassFromCPRecord::isLessThanWithinKind(SymbolValidationRecord *other)

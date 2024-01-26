@@ -196,10 +196,10 @@ struct ClassByNameRecord : public ClassValidationRecordWithChain
 
 struct ProfiledClassRecord : public ClassValidationRecord
    {
-   ProfiledClassRecord(TR_OpaqueClassBlock *clazz, void *classChain,
+   ProfiledClassRecord(TR_OpaqueClassBlock *clazz, uintptr_t classChainOffset,
                        const AOTCacheClassChainRecord *aotCacheClassChainRecord = NULL)
       : ClassValidationRecord(TR_ValidateProfiledClass),
-        _class(clazz), _classChain(classChain)
+        _class(clazz), _classChainOffset(classChainOffset)
       {
 #if defined(J9VM_OPT_JITSERVER)
       _aotCacheClassChainRecord = aotCacheClassChainRecord;
@@ -216,7 +216,7 @@ struct ProfiledClassRecord : public ClassValidationRecord
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    TR_OpaqueClassBlock *_class;
-   void *_classChain;
+   uintptr_t _classChainOffset;
 #if defined(J9VM_OPT_JITSERVER)
    const AOTCacheClassChainRecord *_aotCacheClassChainRecord;
 #endif /* defined(J9VM_OPT_JITSERVER) */
