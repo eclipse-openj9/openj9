@@ -251,7 +251,7 @@ TR::SymbolValidationManager::populateWellKnownClasses()
       int32_t len = (int32_t)strlen(name);
       TR_OpaqueClassBlock *wkClass = _fej9->getSystemClassFromClassName(name, len);
 
-      void *chain = NULL;
+      uintptr_t chainOffset = 0;
       if (wkClass == NULL)
          {
          traceMsg(_comp, "well-known class %s not found\n", name);
@@ -264,15 +264,15 @@ TR::SymbolValidationManager::populateWellKnownClasses()
          {
 #if defined(J9VM_OPT_JITSERVER)
          auto recordPtr = &classChainRecords[_wellKnownClasses.size()];
-         chain = _fej9->sharedCache()->rememberClass(wkClass, recordPtr);
+         chainOffset = _fej9->sharedCache()->rememberClass(wkClass, recordPtr);
          if (aotCacheStore && !*recordPtr)
             missingClassChainRecords = true;
 #else /* defined(J9VM_OPT_JITSERVER) */
-         chain = _fej9->sharedCache()->rememberClass(wkClass);
+         chainOffset = _fej9->sharedCache()->rememberClass(wkClass);
 #endif /* defined(J9VM_OPT_JITSERVER) */
          }
 
-      if (chain == NULL)
+      if (chainOffset == 0)
          {
          traceMsg(_comp, "no class chain for well-known class %s\n", name);
          SVM_ASSERT_NONFATAL(
@@ -287,8 +287,7 @@ TR::SymbolValidationManager::populateWellKnownClasses()
 
       includedClasses |= 1 << i;
       _wellKnownClasses.push_back(wkClass);
-      if (!_fej9->sharedCache()->isPointerInSharedCache(chain, nextClassChainOffset++))
-         SVM_ASSERT_NONFATAL(false, "Failed to get SCC offset for well-known class %s chain %p", name, chain);
+      *nextClassChainOffset++ = chainOffset;
       }
 
    *classCount = _wellKnownClasses.size();
@@ -606,15 +605,11 @@ TR::SymbolValidationManager::getClassChainInfo(
       // info._baseComponent is a non-array reference type. It can't be a
       // primitive because primitives always satisfy isAlreadyValidated().
       const AOTCacheClassChainRecord *classChainRecord = NULL;
-      void *classChain = _fej9->sharedCache()->rememberClass(info._baseComponent, &classChainRecord);
-      if (classChain == NULL)
+      info._baseComponentClassChainOffset = _fej9->sharedCache()->rememberClass(info._baseComponent, &classChainRecord);
+      if (info._baseComponentClassChainOffset == 0)
          {
          _region.deallocate(record);
          return false;
-         }
-      else
-         {
-         info._baseComponentClassChainOffset = _fej9->sharedCache()->offsetInSharedCacheFromPointer(classChain);
          }
 #if defined(J9VM_OPT_JITSERVER)
       info._baseComponentAOTCacheClassChainRecord = classChainRecord;
@@ -699,15 +694,11 @@ TR::SymbolValidationManager::addClassRecordWithChain(TR::ClassValidationRecordWi
    if (!_fej9->isPrimitiveClass(record->_class))
       {
       const AOTCacheClassChainRecord *classChainRecord = NULL;
-      void *classChain = _fej9->sharedCache()->rememberClass(record->_class, &classChainRecord);
-      if (classChain == NULL)
+      record->_classChainOffset = _fej9->sharedCache()->rememberClass(record->_class, &classChainRecord);
+      if (record->_classChainOffset == 0)
          {
          _region.deallocate(record);
          return false;
-         }
-      else
-         {
-         record->_classChainOffset = _fej9->sharedCache()->offsetInSharedCacheFromPointer(classChain);
          }
 
 #if defined(J9VM_OPT_JITSERVER)
@@ -807,10 +798,9 @@ TR::SymbolValidationManager::addProfiledClassRecord(TR_OpaqueClassBlock *clazz)
    clazz = getBaseComponentClass(clazz, arrayDims);
 
    const AOTCacheClassChainRecord *classChainRecord = NULL;
-   void *classChain = _fej9->sharedCache()->rememberClass(clazz, &classChainRecord);
-   if (classChain == NULL)
+   uintptr_t classChainOffset = _fej9->sharedCache()->rememberClass(clazz, &classChainRecord);
+   if (classChainOffset == 0)
       return false;
-   uintptr_t classChainOffset = _fej9->sharedCache()->offsetInSharedCacheFromPointer(classChain);
 
    if (!isAlreadyValidated(clazz))
       appendNewRecord(clazz, new (_region) ProfiledClassRecord(clazz, classChainOffset, classChainRecord));

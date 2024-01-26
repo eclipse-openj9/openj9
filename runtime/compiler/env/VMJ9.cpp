@@ -9416,7 +9416,7 @@ bool
 TR_J9SharedCacheVM::canRememberClass(TR_OpaqueClassBlock *classPtr)
    {
    if (_sharedCache)
-      return (_sharedCache->rememberClass((J9Class *)classPtr, NULL, false) != NULL);
+      return (_sharedCache->rememberClass((J9Class *)classPtr, NULL, false) != 0);
    return false;
    }
 

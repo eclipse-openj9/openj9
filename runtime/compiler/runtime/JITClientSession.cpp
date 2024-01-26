@@ -952,7 +952,7 @@ ClientSessionData::getMethodRecord(J9Method *method, J9Class *definingClass, JIT
    }
 
 const AOTCacheClassChainRecord *
-ClientSessionData::getClassChainRecord(J9Class *clazz, uintptr_t *classChain,
+ClientSessionData::getClassChainRecord(J9Class *clazz, uintptr_t classChainOffset,
                                        const std::vector<J9Class *> &ramClassChain, JITServer::ServerStream *stream,
                                        bool &missingLoaderInfo)
    {
@@ -1043,7 +1043,7 @@ ClientSessionData::getClassChainRecord(J9Class *clazz, uintptr_t *classChain,
    // Cache the new class chain record
    auto record = _aotCache->getClassChainRecord(classRecords, ramClassChain.size());
    OMR::CriticalSection cs(getClassChainDataMapMonitor());
-   auto result = getClassChainDataMap().insert({ clazz, { classChain, record } });
+   auto result = getClassChainDataMap().insert({ clazz, { classChainOffset, record } });
    if (!result.second)
       result.first->second._aotCacheClassChainRecord = record;
    return record;

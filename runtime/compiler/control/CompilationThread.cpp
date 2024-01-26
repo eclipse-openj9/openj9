@@ -7909,7 +7909,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
 
             // Ensure we can generate a class chain for the class of the
             // method to be compiled
-            && (NULL != fe->sharedCache()->rememberClass(J9_CLASS_FROM_METHOD(method)))
+            && (0 != fe->sharedCache()->rememberClass(J9_CLASS_FROM_METHOD(method)))
 
             // Do not perform AOT compilation if field watch is enabled; there
             // is no benefit to having an AOT body with field watch as it increases

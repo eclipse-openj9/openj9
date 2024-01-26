@@ -189,8 +189,8 @@ TR_PersistentClassLoaderTable::associateClassLoaderWithClass(J9VMThread *vmThrea
    uint16_t nameLength = J9UTF8_LENGTH(nameStr);
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
-   void *chain = _sharedCache->rememberClass(clazz);
-   if (!chain)
+   uintptr_t classChainOffset = _sharedCache->rememberClass(clazz);
+   if (classChainOffset == 0)
       {
 #if defined(J9VM_OPT_JITSERVER)
       if (useAOTCache && TR::Options::getVerboseOption(TR_VerboseJITServer))
@@ -201,6 +201,7 @@ TR_PersistentClassLoaderTable::associateClassLoaderWithClass(J9VMThread *vmThrea
 #endif /* defined(J9VM_OPT_JITSERVER) */
       return;
       }
+   void *chain = _sharedCache->pointerFromOffsetInSharedCache(classChainOffset);
    TR_ASSERT(_sharedCache->isPointerInSharedCache(chain), "Class chain must be in SCC");
 
    info = new (_persistentMemory) TR_ClassLoaderInfo(loader, chain);

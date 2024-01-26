@@ -2046,10 +2046,9 @@ TR_ResolvedRelocatableJ9JITServerMethod::storeValidationRecordIfNecessary(TR::Co
 
    // all kinds of validations may need to rely on the entire class chain, so make sure we can build one first
    const AOTCacheClassChainRecord *classChainRecord = NULL;
-   void *classChain = fej9->sharedCache()->rememberClass(definingClass, &classChainRecord);
-   if (!classChain)
+   uintptr_t classChainOffset = fej9->sharedCache()->rememberClass(definingClass, &classChainRecord);
+   if (0 == classChainOffset)
       return false;
-   uintptr_t classChainOffset = fej9->sharedCache()->offsetInSharedCacheFromPointer(classChain);
 
    bool inLocalList = false;
    TR::list<TR::AOTClassInfo*>* aotClassInfo = comp->_aotClassInfo;

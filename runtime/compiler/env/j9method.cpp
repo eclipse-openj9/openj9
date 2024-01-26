@@ -993,7 +993,7 @@ TR_ResolvedRelocatableJ9Method::TR_ResolvedRelocatableJ9Method(TR_OpaqueMethodBl
    TR::Compilation *comp = TR::comp();
    if (comp && this->TR_ResolvedMethod::getRecognizedMethod() != TR::unknownMethod)
       {
-      if (fej9->sharedCache()->rememberClass(containingClass()))
+      if (0 != fej9->sharedCache()->rememberClass(containingClass()))
          {
          if (comp->getOption(TR_UseSymbolValidationManager))
             {
@@ -1372,13 +1372,10 @@ TR_ResolvedRelocatableJ9Method::storeValidationRecordIfNecessary(TR::Compilation
    J9UTF8 *className = J9ROMCLASS_CLASSNAME(definingClass->romClass);
    traceMsg(comp, "\tdefiningClass name %.*s\n", J9UTF8_LENGTH(className), J9UTF8_DATA(className));
 
-   void *classChain = NULL;
-
    // all kinds of validations may need to rely on the entire class chain, so make sure we can build one first
-   classChain = fej9->sharedCache()->rememberClass(definingClass);
-   if (!classChain)
+   uintptr_t classChainOffset = fej9->sharedCache()->rememberClass(definingClass);
+   if (0 == classChainOffset)
       return false;
-   uintptr_t classChainOffset = fej9->sharedCache()->offsetInSharedCacheFromPointer(classChain);
 
    bool inLocalList = false;
    TR::list<TR::AOTClassInfo*>* aotClassInfo = comp->_aotClassInfo;

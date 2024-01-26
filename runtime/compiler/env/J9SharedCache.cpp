@@ -858,7 +858,7 @@ TR_J9SharedCache::createClassKey(UDATA classOffsetInCache, char *key, uint32_t &
    convertUnsignedOffsetToASCII(classOffsetInCache, key);
    }
 
-uintptr_t *
+uintptr_t
 TR_J9SharedCache::rememberClass(J9Class *clazz, const AOTCacheClassChainRecord **classChainRecord, bool create)
    {
    uintptr_t *chainData = NULL;
@@ -873,7 +873,7 @@ TR_J9SharedCache::rememberClass(J9Class *clazz, const AOTCacheClassChainRecord *
    if (!isROMClassInSharedCache(romClass, &classOffsetInCache))
       {
       LOG(1,"\trom class not in shared cache, returning\n");
-      return NULL;
+      return 0;
       }
 
    char key[17]; // longest possible key length is way less than 16 digits
@@ -885,16 +885,18 @@ TR_J9SharedCache::rememberClass(J9Class *clazz, const AOTCacheClassChainRecord *
    chainData = findChainForClass(clazz, key, keyLength);
    if (chainData != NULL)
       {
+      uintptr_t chainOffset = 0;
       if (classMatchesCachedVersion(clazz, chainData))
          {
          LOG(1, "\tcurrent class and class chain found (%p) are identical; returning the class chain\n", chainData);
+         chainOffset = offsetInSharedCacheFromPointer(chainData);
          }
       else
          {
-         LOG(1, "\tcurrent class and class chain found (%p) do not match, so cannot use class chain; returning NULL\n", chainData);
-         chainData = NULL;
+         LOG(1, "\tcurrent class and class chain found (%p) do not match, so cannot use class chain; returning 0\n", chainData);
+         chainOffset = 0;
          }
-      return chainData;
+      return chainOffset;
       }
 
    int32_t numSuperclasses = fe()->numSuperclasses(clazz);
@@ -907,19 +909,19 @@ TR_J9SharedCache::rememberClass(J9Class *clazz, const AOTCacheClassChainRecord *
    if (chainLength > maxClassChainLength * sizeof(uintptr_t))
       {
       LOG(1, "\t\t > %u so bailing\n", maxClassChainLength);
-      return NULL;
+      return 0;
       }
 
    if (!fillInClassChain(clazz, chainData, chainLength, numSuperclasses, numInterfaces))
       {
       LOG(1, "\tfillInClassChain failed, bailing\n");
-      return NULL;
+      return 0;
       }
 
    if (!create)
       {
       LOG(1, "\tnot asked to create but could create, returning non-null\n");
-      return (uintptr_t *)0x1;
+      return 1;
       }
 
    uintptr_t chainDataLength = chainData[0];
@@ -948,7 +950,7 @@ TR_J9SharedCache::rememberClass(J9Class *clazz, const AOTCacheClassChainRecord *
       setStoreSharedDataFailedLength(chainDataLength);
       }
 #endif
-   return chainData;
+   return offsetInSharedCacheFromPointer(chainData);
    }
 
 UDATA
@@ -1361,13 +1363,13 @@ TR_J9JITServerSharedCache::TR_J9JITServerSharedCache(TR_J9VMBase *fe)
    _stream = NULL;
    }
 
-uintptr_t *
+uintptr_t
 TR_J9JITServerSharedCache::rememberClass(J9Class *clazz, const AOTCacheClassChainRecord **classChainRecord, bool create)
    {
    TR_ASSERT_FATAL(classChainRecord || !create, "Must pass classChainRecord if creating class chain at JITServer");
    TR_ASSERT(_stream, "stream must be initialized by now");
 
-   uintptr_t *classChain = NULL;
+   uintptr_t classChainOffset = 0;
    TR::Compilation *comp = TR::compInfoPT->getCompilation();
    ClientSessionData *clientData = comp->getClientData();
    bool needClassChainRecord = create && comp->isAOTCacheStore();
@@ -1380,51 +1382,51 @@ TR_J9JITServerSharedCache::rememberClass(J9Class *clazz, const AOTCacheClassChai
       auto it = cache.find(clazz);
       if (it != cache.end())
          {
-         classChain = it->second._classChain;
+         classChainOffset = it->second._classChainOffset;
          record = it->second._aotCacheClassChainRecord;
          }
       }
 
    // If the class chain is cached and the AOT cache record is either cached or not needed, return the cached values
-   if (classChain && (record || !needClassChainRecord))
+   if (classChainOffset && (record || !needClassChainRecord))
       {
       if (classChainRecord)
          *classChainRecord = record;
-      return classChain;
+      return classChainOffset;
       }
 
    // Request missing class chain information from the client
    _stream->write(JITServer::MessageType::SharedCache_rememberClass, clazz, create, needClassChainRecord);
-   auto recv = _stream->read<uintptr_t *, std::vector<J9Class *>, std::vector<J9Class *>,
+   auto recv = _stream->read<uintptr_t, std::vector<J9Class *>, std::vector<J9Class *>,
                              std::vector<JITServerHelpers::ClassInfoTuple>>();
-   if (classChain)
-      TR_ASSERT_FATAL(std::get<0>(recv) == classChain, "Received mismatching class chain: %p != %p",
-                      std::get<0>(recv), classChain);
-   classChain = std::get<0>(recv);
+   if (classChainOffset)
+      TR_ASSERT_FATAL(std::get<0>(recv) == classChainOffset, "Received mismatching class chain offset: %" OMR_PRIuPTR " != %" OMR_PRIuPTR,
+                      std::get<0>(recv), classChainOffset);
+   classChainOffset = std::get<0>(recv);
    auto &ramClassChain = std::get<1>(recv);
    auto &uncachedRAMClasses = std::get<2>(recv);
    auto &uncachedClassInfos = std::get<3>(recv);
 
    // Cache the result if the class chain was succesfully created at the client
-   if (classChain && create)
+   if (classChainOffset && create)
       {
       if (needClassChainRecord)
          {
          JITServerHelpers::cacheRemoteROMClassBatch(clientData, uncachedRAMClasses, uncachedClassInfos);
          // This call will cache both the class chain and the AOT cache record in the client session
          bool missingLoaderInfo = false;
-         record = clientData->getClassChainRecord(clazz, classChain, ramClassChain, _stream, missingLoaderInfo);
+         record = clientData->getClassChainRecord(clazz, classChainOffset, ramClassChain, _stream, missingLoaderInfo);
          if (classChainRecord)
             *classChainRecord = record;
          }
       else
          {
          OMR::CriticalSection classChainDataMapMonitor(clientData->getClassChainDataMapMonitor());
-         cache.insert({ clazz, { classChain, NULL } });
+         cache.insert({ clazz, { classChainOffset, NULL } });
          }
       }
 
-   return classChain;
+   return classChainOffset;
    }
 
 J9SharedClassCacheDescriptor *

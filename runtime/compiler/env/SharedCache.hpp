@@ -41,7 +41,7 @@ public:
    virtual bool isMostlyFull() { return false; }
 
    virtual bool canRememberClass(TR_OpaqueClassBlock *clazz) { return false; }
-   virtual uintptr_t *rememberClass(TR_OpaqueClassBlock *clazz, const AOTCacheClassChainRecord **classChainRecord = NULL) { return NULL; }
+   virtual uintptr_t rememberClass(TR_OpaqueClassBlock *clazz, const AOTCacheClassChainRecord **classChainRecord = NULL) { return 0; }
    virtual bool classMatchesCachedVersion(TR_OpaqueClassBlock *clazz, uintptr_t *chainData = NULL) { return false; }
 
    virtual void *pointerFromOffsetInSharedCache(uintptr_t offset) { return NULL; }
