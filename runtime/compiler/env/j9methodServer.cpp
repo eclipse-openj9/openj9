@@ -1512,6 +1512,7 @@ TR_ResolvedJ9JITServerMethod::unpackMethodInfo(TR_OpaqueMethodBlock * aMethod, T
    _isForceInline = methodInfoStruct.isForceInline;
    _isDontInline = methodInfoStruct.isDontInline;
    _isIntrinsicCandidate = methodInfoStruct.isIntrinsicCandidate;
+   _isChangesCurrentThread = methodInfoStruct.isChangesCurrentThread;
 
    auto &bodyInfoStr = std::get<1>(methodInfo);
    auto &methodInfoStr = std::get<2>(methodInfo);
