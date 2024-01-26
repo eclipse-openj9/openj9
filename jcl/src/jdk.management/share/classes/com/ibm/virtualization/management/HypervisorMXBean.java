@@ -53,9 +53,8 @@ import java.lang.management.PlatformManagedObject;
  *          indeterminate.
  * </ul>
  * <br>
- * <table border="1">
- * <caption><b>Usage example for the {@link HypervisorMXBean}</b></caption>
- * <tr> <td> <pre>
+ * <b>Usage example for the {@link HypervisorMXBean}</b>
+ * <pre>
  * {@code
  *   ...
  *   try {
@@ -73,7 +72,7 @@ import java.lang.management.PlatformManagedObject;
  *	// Exception Handling
  *   }
  * }
- * </pre></td></tr></table>
+ * </pre>
  *
  * @since 1.7.1
  */

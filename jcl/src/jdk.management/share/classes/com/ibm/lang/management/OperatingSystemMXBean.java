@@ -23,18 +23,17 @@
 package com.ibm.lang.management;
 
 /**
- * OpenJ9 platform management extension interface for the Operating System on which the Java Virtual Machine is running.
+ * <p>OpenJ9 platform management extension interface for the Operating System on which the Java Virtual Machine is running.</p>
  * <br>
- * <table border="1">
- * <caption><b>Usage example for the {@link com.ibm.lang.management.OperatingSystemMXBean}</b></caption>
- * <tr> <td> <pre>
+ * <b>Usage example for the {@link com.ibm.lang.management.OperatingSystemMXBean}</b>
+ * <pre>
  * {@code
  * ...
  * com.ibm.lang.management.OperatingSystemMXBean osmxbean = null;
  * osmxbean = (com.ibm.lang.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
  * ...
  * }
- * </pre></td></tr></table>
+ * </pre>
  * <br>
  *
  * The following methods depend on certain information that is not available on z/OS;
