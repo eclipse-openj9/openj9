@@ -3978,6 +3978,14 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 		}
 	}
 
+	{
+		IDATA enableSupportDebugOnRestore = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXENABLEDEBUGONRESTORE, NULL);
+		IDATA disableSupportDebugOnRestore = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXDISABLEDEBUGONRESTORE, NULL);
+		if (enableSupportDebugOnRestore > disableSupportDebugOnRestore) {
+			vm->checkpointState.flags |= J9VM_CRIU_SUPPORT_DEBUG_ON_RESTORE;
+		}
+	}
+
 	vm->checkpointState.lastRestoreTimeInNanoseconds = -1;
 	vm->checkpointState.processRestoreStartTimeInNanoseconds = -1;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
