@@ -63,9 +63,7 @@ import java.lang.management.PlatformManagedObject;
  *     <li>Collecting transaction metrics for a specific set of application threads over a specific duration.
  * </ol>
  * <br>
- * <table border="1">
- * <caption><b>Usage example for the {@link JvmCpuMonitorMXBean}</b></caption>
- * <tr> <td>
+ * <b>Usage example for the {@link JvmCpuMonitorMXBean}</b>
  * <pre>
  * {@code
  *   ...
@@ -84,8 +82,7 @@ import java.lang.management.PlatformManagedObject;
  *      // Exception Handling
  *   }
  * }
- * </pre></td></tr>
- * </table>
+ * </pre>
  */
 public interface JvmCpuMonitorMXBean extends PlatformManagedObject {
 	

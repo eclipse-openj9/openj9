@@ -30,11 +30,10 @@ import java.lang.management.PlatformManagedObject;
  * <p>
  * This interface provides APIs to dynamically trigger dump agents. APIs are also available to
  * configure dump options.
- * This MXBean reuses the methods in com.ibm.jvm.Dump API 
+ * This MXBean reuses the methods in com.ibm.jvm.Dump API.
+ * </p>
  * <br>
- * <table border="1">
- * <caption><b>Usage example for the {@link OpenJ9DiagnosticsMXBean}</b></caption>
- * <tr> <td>
+ * <b>Usage example for the {@link OpenJ9DiagnosticsMXBean}</b>
  * <pre>
  * {@code
  *   ...
@@ -53,8 +52,7 @@ import java.lang.management.PlatformManagedObject;
  *      // Exception Handling
  *   }
  * }
- * </pre></td></tr>
- * </table>
+ * </pre>
  */
 public interface OpenJ9DiagnosticsMXBean extends PlatformManagedObject {
 	/**
