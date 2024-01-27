@@ -47,7 +47,7 @@ import com.sun.tools.attach.AttachNotSupportedException;
 import com.sun.tools.attach.VirtualMachine;
 
 @SuppressWarnings("nls")
-abstract class AttachApiTest {
+public abstract class AttachApiTest {
 
 	protected static Logger logger = Logger.getLogger(AttachApiTest.class);
 	protected String testName;

@@ -150,7 +150,7 @@
 		<command>
 			$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -Xdump \
 			-DSCRIPPATH=$(TEST_RESROOT)$(D)cracScript.sh -DTEST_RESROOT=$(TEST_RESROOT) \
-			-DJAVA_COMMAND=$(JAVA_COMMAND) -DJVM_OPTIONS=$(Q)$(JVM_OPTIONS)$(Q) \
+			-DJAVA_COMMAND=$(JAVA_COMMAND) -DJVM_OPTIONS=$(Q)$(JVM_OPTIONS)$(Q) -DTESTNG=$(TESTNG) \
 			-jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)criu_nonPortable_jdk_crac.xml$(Q) \
 			-explainExcludes -xids all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
 			$(TEST_STATUS)

@@ -32,7 +32,7 @@ import openj9.internal.criu.JVMRestoreException;
  * The CRIU Support API.
  */
 public class Core {
-	private static CRIUSupportContext<?> globalContext = new CRIUSupportContext<>();
+	private static CRIUSupportContext<?> globalContext;
 
 	/**
 	 * Get a global context.
@@ -40,6 +40,9 @@ public class Core {
 	 * @return a Context
 	 */
 	public static Context<Resource> getGlobalContext() {
+		if ((globalContext == null) && InternalCRIUSupport.isCRaCSupportEnabled()) {
+			globalContext = new CRIUSupportContext<>();
+		}
 		return (Context<Resource>)globalContext;
 	}
 
@@ -52,7 +55,7 @@ public class Core {
 	public static void checkpointRestore() throws CheckpointException, RestoreException {
 		if (InternalCRIUSupport.isCRaCSupportEnabled()) {
 			try {
-				globalContext.checkpointJVM();
+				((CRIUSupportContext<?>)getGlobalContext()).checkpointJVM();
 			} catch (Throwable t) {
 				throw new CheckpointException(t);
 			}
@@ -63,7 +66,9 @@ public class Core {
 }
 
 class CRIUSupportContext<R extends Resource> extends Context<R> {
-	private InternalCRIUSupport internalCRIUSupport = new InternalCRIUSupport(
+	// InternalCRIUSupport.getCRaCCheckpointToDir() is not null if
+	// InternalCRIUSupport.isCRaCSupportEnabled() returns true before creating CRIUSupportContext<>().
+	private final InternalCRIUSupport internalCRIUSupport = new InternalCRIUSupport(
 			Paths.get(InternalCRIUSupport.getCRaCCheckpointToDir())).setLeaveRunning(false).setShellJob(true)
 			.setFileLocks(true);
 
