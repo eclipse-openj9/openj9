@@ -222,22 +222,23 @@ public class JITServerTest {
 		}
 	}
 
-	private static int countStringInFile(String stringToLookFor, File file1) throws FileNotFoundException,IOException {
+	// Count the number of lines that contain a match for the given regex
+	private static int countRegexLinesInFile(String regexToLookFor, File file1) throws FileNotFoundException,IOException {
 		int count = 0;
 		String line = null;
 		String[] buffer;
 
 		BufferedReader bfReader = new BufferedReader(new FileReader(file1));
 		while((line = bfReader.readLine()) != null)   {
-			if (line.contains(stringToLookFor))
+			if (line.split(regexToLookFor, 2).length > 1)
 				count++;
 		}
-		logger.info("File: "+file1.getName()+" has "+count+" occurences of the word "+stringToLookFor);
+		logger.info("File: "+file1.getName()+" has "+count+" lines with the regex \""+regexToLookFor+"\"");
 		bfReader.close();
 		return count;
         }
 
-	private static boolean checkLogFiles(String fileNamePattern, String stringToLookFor) {
+	private static boolean checkLogFiles(String fileNamePattern, String regexToLookFor) {
 		boolean foundMatch = false;
 		try{
 			File f = new File(System.getProperty("user.dir"));
@@ -255,8 +256,8 @@ public class JITServerTest {
 				logger.info("No files matching the pattern " + fileNamePattern + " in current directory.");
 
 			for (int i = 0; i < files.length; i++) {
-				logger.info("Checking file " + files[i] + " for string "+ stringToLookFor );
-				if (countStringInFile(stringToLookFor,files[i]) > 0){
+				logger.info("Checking file " + files[i] + " for string "+ regexToLookFor );
+				if (countRegexLinesInFile(regexToLookFor,files[i]) > 0){
 					foundMatch = true;
 					break;
 				}
@@ -643,8 +644,11 @@ public class JITServerTest {
 				AssertJUnit.fail("The cache test_jitscc should have been destroyed.");
 
 			logger.info("Checking if serialization of methods are logged at the server");
-			if(!checkLogFiles("testServerAOTCache.server.jitverboselog.out.*" , "serialization"))
+			if(!checkLogFiles("testServerAOTCache.server.jitverboselog.out.*" , "serialization")) {
+				logger.info("No serialized methods found at the server. Stopping server...");
+				destroyAndCheckProcess(server, serverBuilder);
 				AssertJUnit.fail("There are no serialized methods at the server.");
+			}
 
 			logger.info("Restarting client...");
 			int randomLogId = new Random().nextInt();
@@ -662,8 +666,15 @@ public class JITServerTest {
 			destroyCache("test_jitscc");
 			Thread.sleep(DESTROY_SCC_WAIT_TIME_MS);
 
-			if(!checkLogFiles("testServerAOTCache.client"+randomLogId+".jitverboselog.out.*", "remote deserialized"))
+			if(!checkLogFiles("testServerAOTCache.client"+randomLogId+".jitverboselog.out.*", "remote deserialized")) {
+				logger.info("No deserialized methods found at the client.");
+				if(!checkLogFiles("testServerAOTCache.client"+randomLogId+".jitverboselog.out.*", "\\+.* remote")) {
+					logger.info("No successful remote compilations found at the client.");
+				}
+				logger.info("Stopping server...");
+				destroyAndCheckProcess(server, serverBuilder);
 				AssertJUnit.fail("There are no deserialized methods at the client.");
+			}
 
 			logger.info("Stopping server...");
 			destroyAndCheckProcess(server, serverBuilder);
