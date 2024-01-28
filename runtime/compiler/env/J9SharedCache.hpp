@@ -225,16 +225,18 @@ public:
    virtual bool isOffsetInSharedCache(uintptr_t encoded_offset, void *ptr = NULL);
 
    /**
-    * \brief Checks whether the specified J9ROMClass exists in the SCC
+    * \brief Checks whether the J9ROMClass underlying the given class exists in the SCC
     *
-    * \param[in] romClass The J9ROMClass * to check
-    * \param[out] cacheOffset If the J9ROMClass is in the SCC and this parameter
+    * \param[in] clazz The J9Class * to check
+    * \param[out] cacheOffset If the J9ROMClass associated to the J9Class is in the SCC and this parameter
     *             is not NULL the result of converting romClass into an offset will
-    *             be returned here. If romClass does not point into the SCC, this
+    *             be returned here. If it does not point into the SCC, this
     *             parameter is ignored.
     * \return True if romClass points into the SCC, false otherwise.
     */
-   virtual bool isROMClassInSharedCache(J9ROMClass *romClass, uintptr_t *cacheOffset = NULL);
+   virtual bool isClassInSharedCache(TR_OpaqueClassBlock *clazz, uintptr_t *cacheOffset = NULL);
+   virtual bool isClassInSharedCache(J9Class *clazz, uintptr_t *cacheOffset = NULL)
+      { return isClassInSharedCache(reinterpret_cast<TR_OpaqueClassBlock *>(clazz)); }
 
    /**
     * \brief Checks whether the specified offset is within the ROMClass section
@@ -504,6 +506,18 @@ private:
     * \return True if offset is within the ROMClass section of the SCC, false otherwise
     */
    virtual bool isOffsetinROMClassesSectionInCache(const J9SharedClassCacheDescriptor *cacheDesc, uintptr_t offset);
+
+   /**
+    * \brief Checks whether the specified J9ROMClass exists in the SCC
+    *
+    * \param[in] romClass The J9ROMClass * to check
+    * \param[out] cacheOffset If the J9ROMClass is in the SCC and this parameter
+    *             is not NULL the result of converting romClass into an offset will
+    *             be returned here. If romClass does not point into the SCC, this
+    *             parameter is ignored.
+    * \return True if romClass points into the SCC, false otherwise.
+    */
+   virtual bool isROMClassInSharedCache(J9ROMClass *romClass, uintptr_t *cacheOffset = NULL);
 
    /**
     * \brief Gets the cached result of a prior class chain validation
