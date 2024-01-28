@@ -51,7 +51,8 @@ public:
 
    virtual J9ROMClass *romClassFromOffsetInSharedCache(uintptr_t offset) { return NULL; }
    virtual uintptr_t offsetInSharedCacheFromROMClass(J9ROMClass *romClass) { return 0; }
-   virtual bool isROMClassInSharedCache(J9ROMClass *romClass, uintptr_t *cacheOffset = NULL) { return false; }
+   virtual uintptr_t offsetInSharedCacheFromClass(TR_OpaqueClassBlock *clazz) { return 0; }
+   virtual bool isClassInSharedCache(TR_OpaqueClassBlock *clazz, uintptr_t *cacheOffset = NULL) { return false; }
    virtual bool isROMClassOffsetInSharedCache(uintptr_t offset, J9ROMClass **romClassPtr = NULL) { return false; }
 
    virtual J9ROMMethod *romMethodFromOffsetInSharedCache(uintptr_t offset) { return NULL; }
