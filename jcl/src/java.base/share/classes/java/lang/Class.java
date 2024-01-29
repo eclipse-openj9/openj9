@@ -134,13 +134,13 @@ import jdk.internal.reflect.CallerSensitiveAdapter;
  *     <code>int</code> base type.</dd>
  * <dt><em>Classes representing array classes</em></dt>
  * <dd>These are Classes which represent the classes of
- *     Java arrays. There is one such Class for all array 
+ *     Java arrays. There is one such Class for all array
  *     instances of a given arity (number of dimensions)
  *     and leaf component type. In this case, the name of the
- *     class is one or more left square brackets (one per 
+ *     class is one or more left square brackets (one per
  *     dimension in the array) followed by the signature ofP
  *     the class representing the leaf component type, which
- *     can be either an object type or a base type. The 
+ *     can be either an object type or a base type. The
  *     signature of a Class representing an array type
  *     is the same as its name.</dd>
  * </dl>
@@ -167,7 +167,7 @@ public final class Class<T> implements java.io.Serializable, GenericDeclaration,
 	 */
 /*[ENDIF]*/
 	static final Class<?>[] EmptyParameters = new Class<?>[0];
-	
+
 	/*[PR VMDESIGN 485]*/
 	private transient long vmRef;
 	private transient ClassLoader classLoader;
@@ -214,25 +214,25 @@ public final class Class<T> implements java.io.Serializable, GenericDeclaration,
 	}
 	private transient EnumVars<T> enumVars;
 	private static long enumVarsOffset = -1;
-	
+
 	transient J9VMInternals.ClassInitializationLock initializationLock;
-	
+
 	private transient Object methodHandleCache;
-	
+
 	/*[PR Jazz 85476] Address locking contention on classRepository in getGeneric*() methods */
 	private transient ClassRepositoryHolder classRepoHolder;
 
 /*[IF JAVA_SPEC_VERSION >= 11]*/
 	private static ReflectionFactory reflectionFactory;
 /*[ENDIF] JAVA_SPEC_VERSION >= 11 */
-	
-	/* Helper class to hold the ClassRepository. We use a Class with a final 
+
+	/* Helper class to hold the ClassRepository. We use a Class with a final
 	 * field to ensure that we have both safe initialization and safe publication.
 	 */
 	private static final class ClassRepositoryHolder {
 		static final ClassRepositoryHolder NullSingleton = new ClassRepositoryHolder(null);
 		final ClassRepository classRepository;
-		
+
 		ClassRepositoryHolder(ClassRepository classRepo) {
 			classRepository = classRepo;
 		}
@@ -289,15 +289,15 @@ public final class Class<T> implements java.io.Serializable, GenericDeclaration,
 	private transient boolean cachedCheckInnerClassAttr;
 
 	private static Annotation[] EMPTY_ANNOTATION_ARRAY = new Annotation[0];
-	
+
 	static MethodHandles.Lookup implLookup;
 
 	private static final Unsafe unsafe = Unsafe.getUnsafe();
-	
+
 	static Unsafe getUnsafe() {
 		return unsafe;
 	}
-	
+
 /*[IF JAVA_SPEC_VERSION >= 11]*/
 	private Class<?> nestHost;
 /*[ENDIF] JAVA_SPEC_VERSION >= 11 */
@@ -319,11 +319,11 @@ private Class() {}
 
 /*
  * Ensure the caller has the requested type of access.
- * 
+ *
  * @param		security			the current SecurityManager
  * @param		callerClassLoader	the ClassLoader of the caller of the original protected API
  * @param		type				type of access, PUBLIC, DECLARED or INVALID
- * 
+ *
  */
 void checkMemberAccess(SecurityManager security, ClassLoader callerClassLoader, int type) {
 	if (callerClassLoader != ClassLoader.bootstrapClassLoader) {
@@ -334,7 +334,7 @@ void checkMemberAccess(SecurityManager security, ClassLoader callerClassLoader, 
 			security.checkPermission(SecurityConstants.CHECK_MEMBER_ACCESS_PERMISSION);
 		}
 		/*[PR CMVC 195558, 197433, 198986] Various fixes. */
-		if (sun.reflect.misc.ReflectUtil.needsPackageAccessCheck(callerClassLoader, loader)) {	
+		if (sun.reflect.misc.ReflectUtil.needsPackageAccessCheck(callerClassLoader, loader)) {
 			if (Proxy.isProxyClass(this)) {
 				sun.reflect.misc.ReflectUtil.checkProxyPackageAccess(callerClassLoader, this.getInterfaces());
 			} else {
@@ -349,12 +349,12 @@ void checkMemberAccess(SecurityManager security, ClassLoader callerClassLoader, 
 
 /**
  * Ensure the caller has the requested type of access.
- * 
+ *
  * This helper method is only called by getClasses, and skip security.checkPackageAccess()
  * when the class is a ProxyClass and the package name is sun.proxy.
  *
  * @param		type			type of access, PUBLIC or DECLARED
- * 
+ *
  */
 private void checkNonSunProxyMemberAccess(SecurityManager security, ClassLoader callerClassLoader, int type) {
 	if (callerClassLoader != ClassLoader.bootstrapClassLoader) {
@@ -364,7 +364,7 @@ private void checkNonSunProxyMemberAccess(SecurityManager security, ClassLoader 
 		}
 		String packageName = this.getPackageName();
 		if (!(Proxy.isProxyClass(this) && packageName.equals(sun.reflect.misc.ReflectUtil.PROXY_PACKAGE)) &&
-				packageName != null && packageName != "" && sun.reflect.misc.ReflectUtil.needsPackageAccessCheck(callerClassLoader, loader)) //$NON-NLS-1$	
+				packageName != null && packageName != "" && sun.reflect.misc.ReflectUtil.needsPackageAccessCheck(callerClassLoader, loader)) //$NON-NLS-1$
 		{
 			security.checkPackageAccess(packageName);
 		}
@@ -390,7 +390,7 @@ private static void forNameAccessCheck(final SecurityManager sm, final Class<?> 
  * Answers a Class object which represents the class
  * named by the argument. The name should be the name
  * of a class as described in the class definition of
- * java.lang.Class, however Classes representing base 
+ * java.lang.Class, however Classes representing base
  * types can not be found using this method.
  *
  * @param		className	The name of the non-base type class to find
@@ -494,19 +494,19 @@ boolean casAnnotationType(AnnotationType oldType, AnnotationType newType) {
 	return getUnsafe().compareAndSetObject(localAnnotationVars, localTypeOffset, oldType, newType);
 /*[ELSE]
 	return getUnsafe().compareAndSwapObject(localAnnotationVars, localTypeOffset, oldType, newType);
-/*[ENDIF]*/	
+/*[ENDIF]*/
 }
 
 /**
  * Answers a Class object which represents the class
  * named by the argument. The name should be the name
  * of a class as described in the class definition of
- * java.lang.Class, however Classes representing base 
+ * java.lang.Class, however Classes representing base
  * types can not be found using this method.
  * Security rules will be obeyed.
- * 
+ *
  * @param		className			The name of the non-base type class to find
- * @param		initializeBoolean	A boolean indicating whether the class should be 
+ * @param		initializeBoolean	A boolean indicating whether the class should be
  *									initialized
  * @param		classLoader			The classloader to use to load the class
  * @return		the named class.
@@ -596,19 +596,19 @@ private static Class<?> forNameHelper(
 /*[IF Sidecar19-SE]*/
 /**
  * Answers a Class object which represents the class
- * with the given name in the given module. 
- * The name should be the name of a class as described 
- * in the class definition of java.lang.Class, 
- * however Classes representing base 
+ * with the given name in the given module.
+ * The name should be the name of a class as described
+ * in the class definition of java.lang.Class,
+ * however Classes representing base
  * types can not be found using this method.
  * It does not invoke the class initializer.
- * Note that this method does not check whether the 
- * requested class is accessible to its caller. 
+ * Note that this method does not check whether the
+ * requested class is accessible to its caller.
  * Security rules will be obeyed.
- * 
+ *
  * @param module The name of the module
  * @param name The name of the non-base type class to find
- * 
+ *
  * @return The Class object representing the named class
  *
  * @see	java.lang.Class
@@ -623,7 +623,7 @@ public static Class<?> forName(Module module, String name)
 	SecurityManager sm = null;
 	ClassLoader classLoader;
 	Class<?> c;
-	
+
 	if ((null == module) || (null == name)) {
 		throw new NullPointerException();
 	}
@@ -705,7 +705,7 @@ private static Class<?> forNameHelper(Module module, String name, Class<?> calle
 	} else {
 		classLoader = module.getClassLoader();
 	}
-	
+
 	try {
 		if (classLoader == null) {
 			c = ClassLoader.bootstrapClassLoader.loadClass(module, name);
@@ -717,9 +717,9 @@ private static Class<?> forNameHelper(Module module, String name, Class<?> calle
 		return null;
 	}
 	if (null != c) {
-		/* If the class loader of the given module defines other modules and 
-		 * the given name is a class defined in a different module, 
-		 * this method returns null after the class is loaded. 
+		/* If the class loader of the given module defines other modules and
+		 * the given name is a class defined in a different module,
+		 * this method returns null after the class is loaded.
 		 */
 		if (c.getModule() != module) {
 			return null;
@@ -734,11 +734,11 @@ private static Class<?> forNameHelper(Module module, String name, Class<?> calle
  * Answers a Class object which represents the class
  * named by the argument. The name should be the name
  * of a class as described in the class definition of
- * java.lang.Class, however Classes representing base 
+ * java.lang.Class, however Classes representing base
  * types can not be found using this method.
  *
  * @param		className			The name of the non-base type class to find
- * @param		initializeBoolean	A boolean indicating whether the class should be 
+ * @param		initializeBoolean	A boolean indicating whether the class should be
  *									initialized
  * @param		classLoader			The classloader to use to load the class
  * @return		the named class.
@@ -842,10 +842,10 @@ ClassLoader getClassLoader0() {
 /**
  * Return the ClassLoader for this Class without doing any security
  * checks. The bootstrap ClassLoader is returned, unlike getClassLoader()
- * which returns null in place of the bootstrap ClassLoader. 
- * 
+ * which returns null in place of the bootstrap ClassLoader.
+ *
  * @return the ClassLoader
- * 
+ *
  * @see ClassLoader#isASystemClassLoader()
  */
 ClassLoader getClassLoaderImpl()
@@ -885,7 +885,7 @@ private NoSuchMethodException newNoSuchMethodException(String name, Class<?>[] t
  * @return		the constructor described by the arguments.
  * @throws		NoSuchMethodException if the constructor could not be found.
  * @throws		SecurityException if member access is not allowed
- * 
+ *
  * @see			#getConstructors
  */
 @CallerSensitive
@@ -930,7 +930,7 @@ public Constructor<T> getConstructor(Class<?>... parameterTypes) throws NoSuchMe
  * @param		parameterTypes	the types of the arguments.
  * @param		signature		the signature of the method.
  * @return		the constructor described by the arguments.
- * 
+ *
  * @see			#getConstructors
  */
 private native Constructor<T> getConstructorImpl(Class<?> parameterTypes[], String signature);
@@ -942,7 +942,7 @@ private native Constructor<T> getConstructorImpl(Class<?> parameterTypes[], Stri
  *
  * @return		all visible constructors starting from the receiver.
  * @throws		SecurityException if member access is not allowed
- * 
+ *
  * @see			#getMethods
  */
 @CallerSensitive
@@ -974,15 +974,15 @@ public Constructor<?>[] getConstructors() throws SecurityException {
  * context.
  *
  * @return		all visible constructors starting from the receiver.
- * 
+ *
  * @see			#getMethods
  */
 private native Constructor<T>[] getConstructorsImpl();
 
 /**
- * Answers an array containing all class members of the class 
- * which the receiver represents. Note that some of the fields 
- * which are returned may not be visible in the current 
+ * Answers an array containing all class members of the class
+ * which the receiver represents. Note that some of the fields
+ * which are returned may not be visible in the current
  * execution context.
  *
  * @return		the class' class members
@@ -1004,9 +1004,9 @@ public Class<?>[] getDeclaredClasses() throws SecurityException {
 }
 
 /**
- * Answers an array containing all class members of the class 
- * which the receiver represents. Note that some of the fields 
- * which are returned may not be visible in the current 
+ * Answers an array containing all class members of the class
+ * which the receiver represents. Note that some of the fields
+ * which are returned may not be visible in the current
  * execution context.
  *
  * @return		the class' class members
@@ -1023,7 +1023,7 @@ private native Class<?>[] getDeclaredClassesImpl();
  * @return		the constructor described by the arguments.
  * @throws		NoSuchMethodException if the constructor could not be found.
  * @throws		SecurityException if member access is not allowed
- * 
+ *
  * @see			#getConstructors
  */
 @CallerSensitive
@@ -1045,7 +1045,7 @@ public Constructor<T> getDeclaredConstructor(Class<?>... parameterTypes) throws 
 	/*[PR CMVC 192714,194493] prepare the class before attempting to access members */
 	J9VMInternals.prepare(this);
 
-	Constructor<T> rc; 
+	Constructor<T> rc;
 	// Handle the default constructor case upfront
 	if (parameterTypes.length == 0) {
 		rc = getDeclaredConstructorImpl(parameterTypes, "()V"); //$NON-NLS-1$
@@ -1068,7 +1068,7 @@ public Constructor<T> getDeclaredConstructor(Class<?>... parameterTypes) throws 
  * @param		parameterTypes	the types of the arguments.
  * @param		signature		the signature of the method.
  * @return		the constructor described by the arguments.
- * 
+ *
  * @see			#getConstructors
  */
 private native Constructor<T> getDeclaredConstructorImpl(Class<?>[] parameterTypes, String signature);
@@ -1081,7 +1081,7 @@ private native Constructor<T> getDeclaredConstructorImpl(Class<?>[] parameterTyp
  *
  * @return		the receiver's constructors.
  * @throws		SecurityException if member access is not allowed
- * 
+ *
  * @see			#getMethods
  */
 @CallerSensitive
@@ -1098,12 +1098,12 @@ public Constructor<?>[] getDeclaredConstructors() throws SecurityException {
 	if (cachedConstructors != null) {
 		return cachedConstructors;
 	}
-	
+
 	/*[PR CMVC 192714,194493] prepare the class before attempting to access members */
 	J9VMInternals.prepare(this);
 
 	Constructor<T>[] ctors = getDeclaredConstructorsImpl();
-	
+
 	return cacheConstructors(ctors, CacheKey.DeclaredConstructorsKey);
 }
 
@@ -1114,7 +1114,7 @@ public Constructor<?>[] getDeclaredConstructors() throws SecurityException {
  * in the current execution context.
  *
  * @return		the receiver's constructors.
- * 
+ *
  * @see			#getMethods
  */
 private native Constructor<T>[] getDeclaredConstructorsImpl();
@@ -1128,7 +1128,7 @@ private native Constructor<T>[] getDeclaredConstructorsImpl();
  * @return		the field in the receiver named by the argument.
  * @throws		NoSuchFieldException if the requested field could not be found
  * @throws		SecurityException if member access is not allowed
- * 
+ *
  * @see			#getDeclaredFields
  */
 @CallerSensitive
@@ -1167,13 +1167,13 @@ private Field getDeclaredFieldInternal(String name, boolean doCache) throws NoSu
 	J9VMInternals.prepare(this);
 
 	Field field = getDeclaredFieldImpl(name);
-	
+
 	/*[PR JAZZ 102876] IBM J9VM not using Reflection.filterFields API to hide the sensitive fields */
 	Field[] fields = Reflection.filterFields(this, new Field[] {field});
 	if (0 == fields.length) {
 		throw new NoSuchFieldException(name);
 	}
-	
+
 	if (doCache) {
 		return cacheField(fields[0]);
 	} else {
@@ -1189,7 +1189,7 @@ private Field getDeclaredFieldInternal(String name, boolean doCache) throws NoSu
  * @param		name		The name of the field to look for.
  * @return		the field in the receiver named by the argument.
  * @throws		NoSuchFieldException If the given field does not exist
- * 
+ *
  * @see			#getDeclaredFields
  */
 private native Field getDeclaredFieldImpl(String name) throws NoSuchFieldException;
@@ -1202,7 +1202,7 @@ private native Field getDeclaredFieldImpl(String name) throws NoSuchFieldExcepti
  *
  * @return		the receiver's fields.
  * @throws		SecurityException If member access is not allowed
- * 
+ *
  * @see			#getFields
  */
 @CallerSensitive
@@ -1235,7 +1235,7 @@ public Field[] getDeclaredFields() throws SecurityException {
  * in the current execution context.
  *
  * @return		the receiver's fields.
- * 
+ *
  * @see			#getFields
  */
 private native Field[] getDeclaredFieldsImpl();
@@ -1243,7 +1243,7 @@ private native Field[] getDeclaredFieldsImpl();
 /*[IF JAVA_SPEC_VERSION >= 11]*/
 /**
  * Answers a list of method objects which represent the public methods
- * described by the arguments. Note that the associated method may not 
+ * described by the arguments. Note that the associated method may not
  * be visible from the current execution context.
  * An empty list is returned if the method can't be found.
  *
@@ -1287,8 +1287,8 @@ private List<Method> lookupCachedDeclaredPublicMethods(CacheKey cacheKey) {
 @CallerSensitive
 private List<Method> cacheDeclaredPublicMethods(List<Method> methods, CacheKey cacheKey) {
 	if (!reflectCacheEnabled
-		|| (reflectCacheAppOnly && ClassLoader.getStackClassLoader(2) == ClassLoader.bootstrapClassLoader) 
-	) {	
+		|| (reflectCacheAppOnly && ClassLoader.getStackClassLoader(2) == ClassLoader.bootstrapClassLoader)
+	) {
 		return methods;
 	}
 	if (reflectCacheDebug) {
@@ -1317,8 +1317,8 @@ private List<Method> cacheDeclaredPublicMethods(List<Method> methods, CacheKey c
 
 /**
  * A helper method for reflection debugging
- * 
- * @param parameters parameters[i].getName() to be appended 
+ *
+ * @param parameters parameters[i].getName() to be appended
  * @param posInsert parameters to be appended AFTER msgs[posInsert]
  * @param msgs a message array
  */
@@ -1369,7 +1369,7 @@ public Method getDeclaredMethod(String name, Class<?>... parameterTypes) throws 
  * This native iterates over methods matching the provided name and signature
  * in the receiver class. The startingPoint parameter is passed the last
  * method returned (or null on the first use), and the native returns the next
- * matching method or null if there are no more matches. 
+ * matching method or null if there are no more matches.
  * Note that the associated method may not be visible from the
  * current execution context.
  *
@@ -1378,7 +1378,7 @@ public Method getDeclaredMethod(String name, Class<?>... parameterTypes) throws 
  * @param		partialSignature	the signature of the method, without return type.
  * @param		startingPoint		the method to start searching after, or null to start at the beginning
  * @return		the next Method described by the arguments
- * 
+ *
  * @see			#getMethods
  */
 private native Method getDeclaredMethodImpl(String name, Class<?>[] parameterTypes, String partialSignature, Method startingPoint);
@@ -1485,7 +1485,7 @@ public Class<?> getDeclaringClass() {
 		 */
 		return null;
 	}
-	
+
 	/*[MSG "K0555", "incompatible InnerClasses attribute between \"{0}\" and \"{1}\""]*/
 	throw new IncompatibleClassChangeError(
 			com.ibm.oti.util.Msg.getString("K0555", this.getName(), declaringClass.getName())); //$NON-NLS-1$
@@ -1517,7 +1517,7 @@ private native boolean isCircularDeclaringClass();
 
 /**
  * Returns true if the class passed in to the method is a declared class of
- * this class. 
+ * this class.
  *
  * @param		aClass		The class to validate
  * @return		true if aClass a declared class of this class
@@ -1549,14 +1549,14 @@ private native Class<?> getDeclaringClassImpl();
 
 /**
  * Answers a Field object describing the field in the receiver
- * named by the argument which must be visible from the current 
+ * named by the argument which must be visible from the current
  * execution context.
  *
  * @param		name		The name of the field to look for.
  * @return		the field in the receiver named by the argument.
  * @throws		NoSuchFieldException If the given field does not exist
  * @throws		SecurityException If access is denied
- * 
+ *
  * @see			#getDeclaredFields
  */
 @CallerSensitive
@@ -1578,7 +1578,7 @@ public Field getField(String name) throws NoSuchFieldException, SecurityExceptio
 	J9VMInternals.prepare(this);
 
 	Field field = getFieldImpl(name);
-	
+
 	if (0 == Reflection.filterFields(this, new Field[] {field}).length) {
 		throw new NoSuchFieldException(name);
 	}
@@ -1588,7 +1588,7 @@ public Field getField(String name) throws NoSuchFieldException, SecurityExceptio
 
 /**
  * Answers a Field object describing the field in the receiver
- * named by the argument which must be visible from the current 
+ * named by the argument which must be visible from the current
  * execution context.
  *
  * @param		name		The name of the field to look for.
@@ -1626,9 +1626,9 @@ public Field[] getFields() throws SecurityException {
 
 	/*[PR CMVC 192714,194493] prepare the class before attempting to access members */
 	J9VMInternals.prepare(this);
-	
+
 	Field[] fields = getFieldsImpl();
-	
+
 	return cacheFields(Reflection.filterFields(this, fields), CacheKey.PublicFieldsKey);
 }
 
@@ -1691,7 +1691,7 @@ public Method getMethod(String name, Class<?>... parameterTypes) throws NoSuchMe
 }
 
 /**
- * Helper method throws NoSuchMethodException when throwException is true, otherwise returns null. 
+ * Helper method throws NoSuchMethodException when throwException is true, otherwise returns null.
  */
 private Method throwExceptionOrReturnNull(boolean throwException, String name, Class<?>... parameterTypes) throws NoSuchMethodException {
 	if (throwException) {
@@ -1772,7 +1772,7 @@ Method getMethodHelper(
 			return null;
 		}
 	}
-	
+
 	if (forDeclaredMethod) {
 		result = getDeclaredMethodImpl(name, parameterTypes, strSig, null);
 	} else {
@@ -1784,7 +1784,7 @@ Method getMethodHelper(
 				candidateFromInterface = true;
 			}
 		} else {
-			result = getMethodImpl(name, parameterTypes, strSig);
+			result = getMethodImpl(name, parameterTypes, strSig, publicOnly);
 			/* Retrieve the specified method implemented by the superclass from the top to the bottom. */
 			if ((result != null) && result.getDeclaringClass().isInterface()) {
 				HashMap<Class<?>, HashMap<MethodInfo, MethodInfo>> infoCache = new HashMap<>(16);
@@ -1799,7 +1799,7 @@ Method getMethodHelper(
 	}
 	if (0 == Reflection.filterMethods(this, new Method[] {result}).length) {
 		return throwExceptionOrReturnNull(throwException, name, parameterTypes);
-	}	
+	}
 
 	/*[PR 127079] Use declaring classloader for Methods */
 	/*[PR CMVC 104523] ensure parameter types are visible in the receiver's class loader */
@@ -1822,7 +1822,7 @@ Method getMethodHelper(
 	if ((methodList != null) && publicMethodInitialResult) {
 		methodList.add(result);
 	}
-	
+
 	/* [PR 113003] The native is called repeatedly until it returns null,
 	 * as each call returns another match if one exists. The first call uses
 	 * getMethodImpl which searches across superclasses and interfaces, but
@@ -1881,15 +1881,15 @@ Method getMethodHelper(
  *         otherwise, return the method of the first interface from the top superclass
  *         if the return types of all specified methods are identical.
  */
-private Method getMostSpecificMethodFromAllInterfacesOfAllSuperclasses(HashMap<Class<?>, HashMap<MethodInfo, MethodInfo>> infoCache, 
-	String name, Class<?>... parameterTypes) 
+private Method getMostSpecificMethodFromAllInterfacesOfAllSuperclasses(HashMap<Class<?>, HashMap<MethodInfo, MethodInfo>> infoCache,
+	String name, Class<?>... parameterTypes)
 {
 	Method candidateMethod = null;
 	if (this != Object.class) {
 		/* get to the top superclass first. if all return types end up being the same the interfaces from this superclass have priority. */
 		Class superclz = getSuperclass();
 		candidateMethod = superclz.getMostSpecificMethodFromAllInterfacesOfAllSuperclasses(infoCache, name, parameterTypes);
-		
+
 		/* search all interfaces of current class, comparing against result from previous superclass. */
 		candidateMethod = getMostSpecificMethodFromAllInterfacesOfCurrentClass(infoCache, candidateMethod, name, parameterTypes);
 	}
@@ -1897,7 +1897,7 @@ private Method getMostSpecificMethodFromAllInterfacesOfAllSuperclasses(HashMap<C
 }
 
 /**
- * Helper method searches all interfaces implemented by the current class or interface 
+ * Helper method searches all interfaces implemented by the current class or interface
  * for the most specific method declared in one of these interfaces.
  *
  * @param infoCache
@@ -1908,7 +1908,7 @@ private Method getMostSpecificMethodFromAllInterfacesOfAllSuperclasses(HashMap<C
  *         otherwise if return types from all qualifying methods are identical, return an arbitrary method.
  */
 private Method getMostSpecificMethodFromAllInterfacesOfCurrentClass(HashMap<Class<?>, HashMap<MethodInfo, MethodInfo>> infoCache,
-	Method potentialCandidate, String name, Class<?>... parameterTypes) 
+	Method potentialCandidate, String name, Class<?>... parameterTypes)
 {
 	Method bestMethod = potentialCandidate;
 	/* if infoCache is passed in, reuse from superclass */
@@ -1948,8 +1948,8 @@ private static Method getMostSpecificInterfaceMethod(String name, Class<?>[] par
 	}
 
 	/* match name and parameters to user specification */
-	if (!candidateMethod.getDeclaringClass().isInterface() 
-		|| !candidateMethod.getName().equals(name) 
+	if (!candidateMethod.getDeclaringClass().isInterface()
+		|| !candidateMethod.getName().equals(name)
 		|| !doParameterTypesMatch(candidateMethod.getParameterTypes(), parameterTypes)
 	) {
 		return bestMethod;
@@ -1971,7 +1971,7 @@ private static Method getMostSpecificInterfaceMethod(String name, Class<?>[] par
 		/* if all return types end up being the same, non-static methods take priority over static methods and sub-interfaces take
 			priority over superinterface */
 			if ((Modifier.isStatic(bestModifiers) && !Modifier.isStatic(candidateModifiers))
-				|| methodAOverridesMethodB(candidateDeclaringClass, Modifier.isAbstract(candidateModifiers), candidateDeclaringClass.isInterface(), 
+				|| methodAOverridesMethodB(candidateDeclaringClass, Modifier.isAbstract(candidateModifiers), candidateDeclaringClass.isInterface(),
 				bestDeclaringClass, Modifier.isAbstract(bestModifiers), bestDeclaringClass.isInterface())
 		) {
 			bestMethod = candidateMethod;
@@ -2013,7 +2013,7 @@ private static boolean doParameterTypesMatch(Class<?>[] paramList1, Class<?>[] p
  *
  * @see			#getMethods
  */
-private native Method getMethodImpl(String name, Class<?>[] parameterTypes, String partialSignature);
+private native Method getMethodImpl(String name, Class<?>[] parameterTypes, String partialSignature, boolean mustBePublic);
 
 /**
  * Answers an array containing Method objects describing
@@ -2063,15 +2063,15 @@ public Method[] getMethods() throws SecurityException {
 		}
 	}
 	methods = myMethodList.toArray(new Method[myMethodList.size()]);
-	return cacheMethods(Reflection.filterMethods(this, methods), CacheKey.PublicMethodsKey);	
+	return cacheMethods(Reflection.filterMethods(this, methods), CacheKey.PublicMethodsKey);
 }
 
 private HashMap<MethodInfo, MethodInfo> getMethodSet(
-		HashMap<Class<?>, HashMap<MethodInfo, MethodInfo>> infoCache, 
+		HashMap<Class<?>, HashMap<MethodInfo, MethodInfo>> infoCache,
 		boolean virtualOnly, boolean localInterfacesOnly) {
 	/* virtualOnly must be false only for the bottom class of the hierarchy */
 	HashMap<MethodInfo, MethodInfo> myMethods = infoCache.get(this);
-	if (null == myMethods) { 
+	if (null == myMethods) {
 		/* haven't visited this class.  Initialize with the methods from the VTable which take priority */
 		myMethods = new HashMap<>(16);
 		if (!isInterface() && !localInterfacesOnly) {
@@ -2080,7 +2080,7 @@ private HashMap<MethodInfo, MethodInfo> getMethodSet(
 			Method methods[] = null; /* this includes the superclass's virtual and static methods. */
 			Set<MethodInfo> methodFilter = null;
 			boolean noHotswap = true;
-			do { 
+			do {
 				/* atomically get the list of methods, iterate if a hotswap occurred */
 				vCount = getVirtualMethodCountImpl(); /* returns only public methods */
 				sCount = getStaticMethodCountImpl();
@@ -2099,7 +2099,7 @@ private HashMap<MethodInfo, MethodInfo> getMethodSet(
 				if (prevMI != null) {
 					/* As per Java spec:
 					 * For methods with same signature (name, parameter types) and return type,
-					 * only the most specific method should be selected. 
+					 * only the most specific method should be selected.
 					 * Method N is more specific than M if:
 					 * N is declared by a class and M is declared by an interface; or
 					 * N and M are both declared by either classes or interfaces and N's
@@ -2125,7 +2125,7 @@ private HashMap<MethodInfo, MethodInfo> getMethodSet(
 		} else {
 			if (!localInterfacesOnly || isInterface()) {
 				/* this is an interface and doesn't have a vTable, but may have static or private methods */
-				for (Method m: getDeclaredMethods()) { 
+				for (Method m: getDeclaredMethods()) {
 					int methodModifiers = m.getModifiers();
 					if ((virtualOnly && Modifier.isStatic(methodModifiers)) || !Modifier.isPublic(methodModifiers)){
 						continue;
@@ -2149,23 +2149,23 @@ private HashMap<MethodInfo, MethodInfo> getMethodSet(
  * @return list of methods with their various declarations
  */
 private HashMap<MethodInfo, MethodInfo> addInterfaceMethods(
-		HashMap<Class<?>, HashMap<MethodInfo, MethodInfo>> infoCache, 
-		Set<MethodInfo> methodFilter, 
+		HashMap<Class<?>, HashMap<MethodInfo, MethodInfo>> infoCache,
+		Set<MethodInfo> methodFilter,
 		HashMap<MethodInfo, MethodInfo> myMethods, boolean localInterfacesOnly) {
 	boolean addToCache = false;
 	boolean updateList = (null != myMethods);
 	if (!updateList) {
 		myMethods = infoCache.get(this);
 	}
-	if (null == myMethods) { 
+	if (null == myMethods) {
 		/* haven't visited this class */
-		myMethods = new HashMap<>();	
+		myMethods = new HashMap<>();
 		addToCache = true;
 		updateList = true;
 	}
 	if (updateList) {
 		Class mySuperclass = getSuperclass();
-		if (!isInterface() && (Object.class != mySuperclass)) { 
+		if (!isInterface() && (Object.class != mySuperclass)) {
 			/* some interface methods are visible via the superclass */
 			HashMap<MethodInfo, MethodInfo> superclassMethods = mySuperclass.addInterfaceMethods(infoCache, methodFilter, null, localInterfacesOnly);
 			for (MethodInfo otherInfo: superclassMethods.values()) {
@@ -2184,7 +2184,7 @@ private HashMap<MethodInfo, MethodInfo> addInterfaceMethods(
 		}
 	}
 	if (addToCache) {
-		infoCache.put(this, myMethods); 
+		infoCache.put(this, myMethods);
 		/* save results for future use */
 	}
 	return myMethods;
@@ -2193,12 +2193,12 @@ private HashMap<MethodInfo, MethodInfo> addInterfaceMethods(
 /* this is called only to add methods from implemented interfaces of a class or superinterfaces of an interface */
 private void addMethod(HashMap<MethodInfo,  MethodInfo>  myMethods, MethodInfo otherMi) {
 	 MethodInfo oldMi = myMethods.get(otherMi);
-	if (null == oldMi) { 
+	if (null == oldMi) {
 		/* haven't seen this method's name & sig */
-		oldMi = new MethodInfo(otherMi); 
+		oldMi = new MethodInfo(otherMi);
 		/* create a new MethodInfo object and add mi's Method objects to it */
 		myMethods.put(oldMi, oldMi);
-	} else { 
+	} else {
 		/* NB: the vTable has an abstract method for each method declared in the implemented interfaces */
 		oldMi.update(otherMi); /* add the new method as appropriate */
 	}
@@ -2211,7 +2211,7 @@ private native boolean getStaticMethodsImpl(Method[] array, int start, int count
 private native Object[] allocateAndFillArray(int size);
 
 /**
- * Answers an integer which is the receiver's modifiers. 
+ * Answers an integer which is the receiver's modifiers.
  * Note that the constants which describe the bits which are
  * returned are implemented in class java.lang.reflect.Modifier
  * which may not be available on the target.
@@ -2223,7 +2223,7 @@ public int getModifiers() {
 	int rawModifiers = getModifiersImpl();
 	if (isArray()) {
 		rawModifiers &= Modifier.PUBLIC | Modifier.PRIVATE | Modifier.PROTECTED |
-				Modifier.ABSTRACT | Modifier.FINAL;	
+				Modifier.ABSTRACT | Modifier.FINAL;
 	} else {
 		int masks = Modifier.PUBLIC | Modifier.PRIVATE | Modifier.PROTECTED |
 				Modifier.STATIC | Modifier.FINAL | Modifier.INTERFACE |
@@ -2246,12 +2246,12 @@ private native int getModifiersImpl();
 /*[IF Sidecar19-SE]*/
 /**
  * Answers the module to which the receiver belongs.
- * If this class doesn't belong to a named module, the unnamedModule of the classloader 
+ * If this class doesn't belong to a named module, the unnamedModule of the classloader
  * loaded this class is returned;
  * If this class represents an array type, the module for the element type is returned;
  * If this class represents a primitive type or void, module java.base is returned.
- * 
- * @return the module to which the receiver belongs 
+ *
+ * @return the module to which the receiver belongs
  */
 public Module getModule()
 {
@@ -2279,12 +2279,12 @@ public String getName() {
 }
 
 /**
- * Answers the ProtectionDomain of the receiver. 
+ * Answers the ProtectionDomain of the receiver.
  * <p>
  * Note: In order to conserve space in embedded targets, we allow this
- * method to answer null for classes in the system protection domain 
- * (i.e. for system classes). System classes are always given full 
- * permissions (i.e. AllPermission). This is not changeable via the 
+ * method to answer null for classes in the system protection domain
+ * (i.e. for system classes). System classes are always given full
+ * permissions (i.e. AllPermission). This is not changeable via the
  * java.security.Policy.
  *
  * @return		ProtectionDomain
@@ -2448,7 +2448,7 @@ public InputStream getResourceAsStream(String resName) {
 	InputStream result = null;
 /*[IF Sidecar19-SE]*/
 	Module thisModule = getModule();
-	
+
 	if (useModularSearch(absoluteResName, thisModule, System.getCallerClass())) {
 		try {
 			result = thisModule.getResourceAsStream(absoluteResName);
@@ -2471,10 +2471,10 @@ public InputStream getResourceAsStream(String resName) {
 /*[IF Sidecar19-SE]*/
 /**
  * Indicate if the package should be looked up in a module or via the class path.
- * Look up the resource in the module if the module is named 
+ * Look up the resource in the module if the module is named
  * and is the same module as the caller or the package is open to the caller.
  * The default package (i.e. resources at the root of the module) is considered open.
- * 
+ *
  * @param absoluteResName name of resource, including package
  * @param thisModule module of the current class
  * @param callerClass class of method calling getResource() or getResourceAsStream()
@@ -2510,7 +2510,7 @@ private boolean useModularSearch(String absoluteResName, Module thisModule, Clas
 /**
  * Answers a String object which represents the class's
  * signature, as described in the class definition of
- * java.lang.Class. 
+ * java.lang.Class.
  *
  * @return		the signature of the class.
  *
@@ -2543,14 +2543,14 @@ private String getSignature() {
  * receiver, or null if there are no signers.
  *
  * @return		the signers of the receiver.
- * 
+ *
  * @see			#getMethods
  */
 public Object[] getSigners() {
 	/*[PR CMVC 93861] allow setSigners() for bootstrap classes */
 	 return getClassLoaderImpl().getSigners(this);
 }
- 
+
 /**
  * Answers the Class which represents the receiver's
  * superclass. For Classes which represent base types,
@@ -2577,19 +2577,19 @@ public native boolean isArray();
 /**
  * Answers true if the type represented by the argument
  * can be converted via an identity conversion or a widening
- * reference conversion (i.e. if either the receiver or the 
- * argument represent primitive types, only the identity 
+ * reference conversion (i.e. if either the receiver or the
+ * argument represent primitive types, only the identity
  * conversion applies).
  *
  * @return		<code>true</code>
  *					the argument can be assigned into the receiver
- *              <code>false</code> 
+ *              <code>false</code>
  *					the argument cannot be assigned into the receiver
  * @param		cls	Class
  *					the class to test
  * @throws	NullPointerException
  *					if the parameter is null
- *					
+ *
  */
 public native boolean isAssignableFrom(Class<?> cls);
 
@@ -2600,9 +2600,9 @@ public native boolean isAssignableFrom(Class<?> cls);
  *
  * @return		<code>true</code>
  *					the argument can be cast to the type of the receiver
- *              <code>false</code> 
- *					the argument is null or cannot be cast to the 
- *					type of the receiver 
+ *              <code>false</code>
+ *					the argument is null or cannot be cast to the
+ *					type of the receiver
  *
  * @param		object Object
  *					the object to test
@@ -2618,7 +2618,7 @@ public native boolean isInstance(Object object);
  *                  if it does not represent an interface
  */
 public boolean isInterface() {
-	// This code has been inlined in toGenericString. toGenericString 
+	// This code has been inlined in toGenericString. toGenericString
 	// must be modified to reflect any changes to this implementation.
 	return !isArray() && (getModifiersImpl() & 512 /* AccInterface */) != 0;
 }
@@ -2755,7 +2755,7 @@ public T newInstance() throws IllegalAccessException, InstantiationException {
 
 /**
  * Used as a prototype for the jit.
- * 
+ *
  * @param 		callerClass
  * @return		the object
  * @throws 		InstantiationException
@@ -2785,7 +2785,7 @@ private String toResourceName(String resName) {
 	// Turn package name into a directory path
 	if (resName.length() > 0 && resName.charAt(0) == '/')
 		return resName.substring(1);
-	
+
 	Class<?> thisObject = this;
 	while (thisObject.isArray()) {
 		thisObject = thisObject.getComponentType();
@@ -2840,15 +2840,15 @@ private String toStringImpl() {
  */
 public String toGenericString() {
 	if (isPrimitive()) return getName();
-	
-	StringBuilder result = new StringBuilder(); 
+
+	StringBuilder result = new StringBuilder();
 	int modifiers = getModifiers();
-	
+
 	// Checks for isInterface, isAnnotation and isEnum have been inlined
 	// in order to avoid multiple calls to isArray and getModifiers
 	boolean isArray = isArray();
 	boolean isInterface = !isArray && (0 != (modifiers & Modifier.INTERFACE));
-	
+
 /*[IF INLINE-TYPES]*/
 	String valueType;
 	if (Modifier.VALUE == (Modifier.VALUE & modifiers)) {
@@ -2878,9 +2878,9 @@ public String toGenericString() {
 		kindOfType = "record "; //$NON-NLS-1$
 /*[ENDIF] JAVA_SPEC_VERSION >= 14 */
 	} else {
-		kindOfType = "class "; //$NON-NLS-1$	
+		kindOfType = "class "; //$NON-NLS-1$
 	}
-	
+
 	// Remove "interface" from modifiers (is included as kind of type)
 	if (isInterface) {
 		modifiers -= Modifier.INTERFACE;
@@ -2895,7 +2895,7 @@ public String toGenericString() {
 	 */
 	modifiers &= ~(Modifier.IDENTITY | Modifier.VALUE | Modifier.STRICT);
 /*[ENDIF] INLINE-TYPES */
-	
+
 	// Build generic string
 /*[IF Sidecar19-SE]*/
 	if (isArray) {
@@ -2926,7 +2926,7 @@ public String toGenericString() {
 /*[ENDIF] INLINE-TYPES */
 	result.append(kindOfType);
 	result.append(getName());
-	
+
 	appendTypeParameters(result);
 	return result.toString();
 }
@@ -3015,9 +3015,9 @@ static Class<?> getPrimitiveClass(String name) {
 
 /**
  * Returns the assertion status for this class.
- * Assertion is enabled/disabled based on 
+ * Assertion is enabled/disabled based on
  * classloader default, package or class default at runtime
- * 
+ *
  * @since 1.4
  *
  * @return		the assertion status for this class
@@ -3049,28 +3049,28 @@ static final native Class<?> getStackClass(int depth);
 /**
  * Walk the stack and answer an array containing the maxDepth
  * most recent classes on the stack of the calling thread.
- * 
+ *
  * Starting with the caller of the caller of getStackClasses(), return an
  * array of not more than maxDepth Classes representing the classes of
  * running methods on the stack (including native methods).  Frames
  * representing the VM implementation of java.lang.reflect are not included
  * in the list.  If stopAtPrivileged is true, the walk will terminate at any
  * frame running one of the following methods:
- * 
+ *
  * <code><ul>
  * <li>java/security/AccessController.doPrivileged(Ljava/security/PrivilegedAction;)Ljava/lang/Object;</li>
  * <li>java/security/AccessController.doPrivileged(Ljava/security/PrivilegedExceptionAction;)Ljava/lang/Object;</li>
  * <li>java/security/AccessController.doPrivileged(Ljava/security/PrivilegedAction;Ljava/security/AccessControlContext;)Ljava/lang/Object;</li>
  * <li>java/security/AccessController.doPrivileged(Ljava/security/PrivilegedExceptionAction;Ljava/security/AccessControlContext;)Ljava/lang/Object;</li>
  * </ul></code>
- * 
+ *
  * If one of the doPrivileged methods is found, the walk terminate and that frame is NOT included in the returned array.
  *
  * Notes: <ul>
  * 	 <li> This method operates on the defining classes of methods on stack.
  *		NOT the classes of receivers. </li>
  *
- *	 <li> The item at index zero in the result array describes the caller of 
+ *	 <li> The item at index zero in the result array describes the caller of
  *		the caller of this method. </li>
  *</ul>
  *
@@ -3166,10 +3166,10 @@ static Class<?> currentLoadedClass() {
 /**
  * Return the specified Annotation for this Class. Inherited Annotations
  * are searched.
- * 
+ *
  * @param annotation the Annotation type
  * @return the specified Annotation or null
- * 
+ *
  * @since 1.5
  */
 public <A extends Annotation> A getAnnotation(Class<A> annotation) {
@@ -3183,14 +3183,14 @@ public <A extends Annotation> A getAnnotation(Class<A> annotation) {
 
 /**
  * Return the directly declared Annotations for this Class, including the Annotations
- * inherited from superclasses. 
- * If an annotation type has been included before, then next occurrences will not be included. 
- * 
- * Repeated annotations are not included since they will be stored in their container annotation. 
- * But container annotations are included. (If a container annotation is repeatable and it is repeated, 
- * then these container annotations' container annotation is included. ) 
- * @return an array of Annotation 
- * 
+ * inherited from superclasses.
+ * If an annotation type has been included before, then next occurrences will not be included.
+ *
+ * Repeated annotations are not included since they will be stored in their container annotation.
+ * But container annotations are included. (If a container annotation is repeatable and it is repeated,
+ * then these container annotations' container annotation is included. )
+ * @return an array of Annotation
+ *
  * @since 1.5
  */
 public Annotation[] getAnnotations() {
@@ -3203,11 +3203,11 @@ public Annotation[] getAnnotations() {
 }
 
 /**
- * Looks through directly declared annotations for this class, not including Annotations inherited from superclasses. 
- * 
+ * Looks through directly declared annotations for this class, not including Annotations inherited from superclasses.
+ *
  * @param annotation the Annotation to search for
  * @return directly declared annotation of specified annotation type.
- * 
+ *
  * @since 1.8
  */
 public <A extends Annotation> A getDeclaredAnnotation(Class<A> annotation) {
@@ -3229,7 +3229,7 @@ public AnnotatedType[] getAnnotatedInterfaces() {
 
 /**
  * Return the annotated superclass of this class.
- * @return null if this class is Object, an interface, a primitive type, or an array type.  Otherwise return (possibly empty) AnnotatedType. 
+ * @return null if this class is Object, an interface, a primitive type, or an array type.  Otherwise return (possibly empty) AnnotatedType.
  */
 public AnnotatedType getAnnotatedSuperclass() {
 	if (this.equals(Object.class) || this.isInterface() || this.isPrimitive() || this.isArray()) {
@@ -3240,9 +3240,9 @@ public AnnotatedType getAnnotatedSuperclass() {
 
 /**
  * Answers the type name of the class which the receiver represents.
- * 
+ *
  * @return the fully qualified type name, with brackets if an array class
- * 
+ *
  * @since 1.8
  */
 @Override
@@ -3263,12 +3263,12 @@ public String getTypeName() {
 
 /**
  * Returns the annotations only for this Class, not including Annotations inherited from superclasses.
- * It includes all the directly declared annotations. 
- * Repeated annotations are not included but their container annotation does. 
- * 
+ * It includes all the directly declared annotations.
+ * Repeated annotations are not included but their container annotation does.
+ *
  * @return an array of declared annotations
  *
- * 
+ *
  * @since 1.5
  */
 public Annotation[] getDeclaredAnnotations() {
@@ -3281,7 +3281,7 @@ public Annotation[] getDeclaredAnnotations() {
 }
 
 /**
- * Gets the specified type annotations of this class. 
+ * Gets the specified type annotations of this class.
  * <br>
  * Terms used for annotations :<br><br>
  * Repeatable Annotation :
@@ -3309,11 +3309,11 @@ public Annotation[] getDeclaredAnnotations() {
  * <p>If the specified type is not repeatable annotation, then returned array size will be 0 or 1.
  * If specified type is repeatable annotation, then all the annotations of that type will be returned. Array size might be 0, 1 or more.</p>
  *
- * It does not search through super classes. 
- * 
+ * It does not search through super classes.
+ *
  * @param annotationClass the annotation type to search for
  * @return array of declared annotations in the specified annotation type
- * 
+ *
  * @since 1.8
  */
 public <A extends Annotation> A[] getDeclaredAnnotationsByType(Class<A> annotationClass) {
@@ -3324,7 +3324,7 @@ public <A extends Annotation> A[] getDeclaredAnnotationsByType(Class<A> annotati
 private <A extends Annotation> ArrayList<A> internalGetDeclaredAnnotationsByType(Class<A> annotationClass) {
 	AnnotationCache currentAnnotationCache = getAnnotationCache();
 	ArrayList<A> annotationsList = new ArrayList<>();
-	
+
 	LinkedHashMap<Class<? extends Annotation>, Annotation> map = currentAnnotationCache.directAnnotationMap;
 	if (map != null) {
 		Repeatable repeatable = annotationClass.getDeclaredAnnotation(Repeatable.class);
@@ -3354,21 +3354,21 @@ private <A extends Annotation> ArrayList<A> internalGetDeclaredAnnotationsByType
 }
 
 /**
- * Gets the specified type annotations of this class. 
+ * Gets the specified type annotations of this class.
  * If the specified type is not repeatable annotation, then returned array size will be 0 or 1.
  * If specified type is repeatable annotation, then all the annotations of that type will be returned. Array size might be 0, 1 or more.
- * 
- * It searches through superclasses until it finds the inherited specified annotationClass. 
- * 
+ *
+ * It searches through superclasses until it finds the inherited specified annotationClass.
+ *
  * @param annotationClass the annotation type to search for
  * @return array of declared annotations in the specified annotation type
- * 
+ *
  * @since 1.8
  */
 public <A extends Annotation> A[] getAnnotationsByType(Class<A> annotationClass)
 {
 	ArrayList<A> annotationsList = internalGetDeclaredAnnotationsByType(annotationClass);
-	
+
 	if (annotationClass.isInheritedAnnotationType()) {
 		Class<?> sc = this;
 		while (0 == annotationsList.size()) {
@@ -3537,7 +3537,7 @@ private static long getFieldOffset(String fieldName) {
 
 /**
  * Gets the array of containedType from the value() method.
- * 
+ *
  * @param container the annotation which is the container of the repeated annotation
  * @param containerType the annotationType() of the container. This implements the value() method.
  * @param containedType the annotationType() stored in the container
@@ -3548,7 +3548,7 @@ private static Annotation[] getAnnotationsArrayFromValue(Annotation container, C
 		MethodHandle valueMethod = containerType.getValueMethod(containedType);
 		if (valueMethod != null) {
 			Object children = valueMethod.invoke(container);
-			/*  
+			/*
 			 * Check whether value is Annotation array or not
 			 */
 			if (children instanceof Annotation[]) {
@@ -3560,7 +3560,7 @@ private static Annotation[] getAnnotationsArrayFromValue(Annotation container, C
 		throw e;
 	} catch (Throwable t) {
 		throw new RuntimeException(t);
-	}	
+	}
 }
 
 private boolean isInheritedAnnotationType() {
@@ -3581,7 +3581,7 @@ private LinkedHashMap<Class<? extends Annotation>, Annotation> buildAnnotations(
 	if (superAnnotations != null) {
 		for (Map.Entry<Class<? extends Annotation>, Annotation> entry : superAnnotations.entrySet()) {
 			Class<? extends Annotation> annotationType = entry.getKey();
-			// if the annotation is Inherited store the annotation 
+			// if the annotation is Inherited store the annotation
 			if (annotationType.isInheritedAnnotationType()) {
 				if (annotationsMap == null) {
 					annotationsMap = new LinkedHashMap<>((superAnnotations.size() + (directAnnotationsMap != null ? directAnnotationsMap.size() : 0)) * 4 / 3);
@@ -3600,14 +3600,14 @@ private LinkedHashMap<Class<? extends Annotation>, Annotation> buildAnnotations(
 }
 
 /**
- * Gets all the direct annotations. 
+ * Gets all the direct annotations.
  * It does not include repeated annotations for this class, it includes their container annotation(s).
- * 
+ *
  * @return array of all the direct annotations.
  */
 private AnnotationCache getAnnotationCache() {
 	AnnotationCache annotationCacheResult = annotationCache;
-	
+
 	if (annotationCacheResult == null) {
 		byte[] annotationsData = getDeclaredAnnotationsData();
 		if (annotationsData == null) {
@@ -3619,7 +3619,7 @@ private AnnotationCache getAnnotationCache() {
 								annotationsData,
 								cp,
 								this));
-			
+
 			LinkedHashMap<Class<? extends Annotation>, Annotation> directAnnotationsMap = new LinkedHashMap<>(directAnnotations.length * 4 / 3);
 			for (Annotation annotation : directAnnotations) {
 				Class<? extends Annotation> annotationType = annotation.annotationType();
@@ -3627,7 +3627,7 @@ private AnnotationCache getAnnotationCache() {
 			}
 			annotationCacheResult = new AnnotationCache(directAnnotationsMap, buildAnnotations(directAnnotationsMap));
 		}
-		
+
 		// Don't bother with synchronization. Since it is just a cache, it doesn't matter if it gets overwritten
 		// because multiple threads create the cache at the same time
 		long localAnnotationCacheOffset = annotationCacheOffset;
@@ -3656,13 +3656,13 @@ private native byte[] getDeclaredAnnotationsData();
 
 /**
  * Answer if this class is an Annotation.
- * 
- * @return true if this class is an Annotation 
- * 
+ *
+ * @return true if this class is an Annotation
+ *
  * @since 1.5
  */
 public boolean isAnnotation() {
-	// This code has been inlined in toGenericString. toGenericString 
+	// This code has been inlined in toGenericString. toGenericString
 	// must be modified to reflect any changes to this implementation.
 	/*[PR CMVC 89373] Ensure Annotation subclass is not annotation */
 	return !isArray() && (getModifiersImpl() & ANNOTATION) != 0;
@@ -3671,10 +3671,10 @@ public boolean isAnnotation() {
 /**
  * Answer if the specified Annotation exists for this Class. Inherited
  * Annotations are searched.
- * 
+ *
  * @param annotation the Annotation type
  * @return true if the specified Annotation exists
- * 
+ *
  * @since 1.5
  */
 public boolean isAnnotationPresent(Class<? extends Annotation> annotation) {
@@ -3683,14 +3683,14 @@ public boolean isAnnotationPresent(Class<? extends Annotation> annotation) {
 }
 
 /**
- * Cast this Class to a subclass of the specified Class. 
+ * Cast this Class to a subclass of the specified Class.
  * @param <U> the type for casting to
  * @param cls the Class to cast to
  * @return this Class, cast to a subclass of the specified Class
- * 
+ *
  * @throws ClassCastException if this Class is not the same or a subclass
  *		of the specified Class
- * 
+ *
  * @since 1.5
  */
 public <U> Class<? extends U> asSubclass(Class<U> cls) {
@@ -3700,15 +3700,15 @@ public <U> Class<? extends U> asSubclass(Class<U> cls) {
 }
 
 /**
- * Cast the specified object to this Class. 
- * 
+ * Cast the specified object to this Class.
+ *
  * @param object the object to cast
- * 
+ *
  * @return the specified object, cast to this Class
- * 
+ *
  * @throws ClassCastException if the specified object cannot be cast
  *		to this Class
- * 
+ *
  * @since 1.5
  */
 public T cast(Object object) {
@@ -3721,13 +3721,13 @@ public T cast(Object object) {
 
 /**
  * Answer if this Class is an enum.
- * 
+ *
  * @return true if this Class is an enum
- * 
+ *
  * @since 1.5
  */
 public boolean isEnum() {
-	// This code has been inlined in toGenericString. toGenericString 
+	// This code has been inlined in toGenericString. toGenericString
 	// must be modified to reflect any changes to this implementation.
 	/*[PR CMVC 89071] Ensure class with enum access flag (modifier) !isEnum() */
 	return !isArray() && (getModifiersImpl() & ENUM) != 0 &&
@@ -3763,7 +3763,7 @@ private EnumVars<T> getEnumVars() {
 }
 
 /**
- * 
+ *
  * @return Map keyed by enum name, of uncloned and cached enum constants in this class
  */
 Map<String, T> enumConstantDirectory() {
@@ -3778,7 +3778,7 @@ Map<String, T> enumConstantDirectory() {
 			 * Class#valueOf() is the caller of this method,
 			 * according to the spec it throws IllegalArgumentException if the class is not an Enum.
 			 */
-			/*[MSG "K0564", "{0} is not an Enum"]*/			
+			/*[MSG "K0564", "{0} is not an Enum"]*/
 			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0564", getName())); //$NON-NLS-1$
 		}
 		int enumsLength = enums.length;
@@ -3791,7 +3791,7 @@ Map<String, T> enumConstantDirectory() {
 		for (int i = 0; i < enumsLength; i++) {
 			map.put(((Enum<?>) enums[i]).name(), enums[i]);
 		}
-		
+
 		if (EnumVars.enumDirOffset == -1) {
 			try {
 				Field enumDirField = EnumVars.class.getDeclaredField("cachedEnumConstantDirectory"); //$NON-NLS-1$
@@ -3814,9 +3814,9 @@ Map<String, T> enumConstantDirectory() {
 /**
  * Answer the shared uncloned array of enum constants for this Class. Returns null if
  * this class is not an enum.
- * 
+ *
  * @return the array of enum constants, or null
- * 
+ *
  * @since 1.5
  */
 /*[PR CMVC 189091] Perf: EnumSet.allOf() is slow */
@@ -3836,14 +3836,14 @@ T[] getEnumConstantsShared() {
 					return method;
 				}
 			};
-			
+
 			Method values = AccessController.doPrivileged(privilegedAction);
 			Object rawEnums = values.invoke(this);
 			if ((rawEnums == null) || !rawEnums.getClass().isArray()) {
 				return null;
 			}
 			enums = (T[])rawEnums;
-			
+
 			long localEnumConstantsOffset = EnumVars.enumConstantsOffset;
 			if (localEnumConstantsOffset == -1) {
 				try {
@@ -3865,16 +3865,16 @@ T[] getEnumConstantsShared() {
 			enums = null;
 		}
 	}
-	
-	return enums;	 
+
+	return enums;
 }
 
 /**
  * Answer the array of enum constants for this Class. Returns null if
  * this class is not an enum.
- * 
+ *
  * @return the array of enum constants, or null
- * 
+ *
  * @since 1.5
  */
 public T[] getEnumConstants() {
@@ -3892,9 +3892,9 @@ public T[] getEnumConstants() {
 /**
  * Answer if this Class is synthetic. A synthetic Class is created by
  * the compiler.
- * 
+ *
  * @return true if this Class is synthetic.
- * 
+ *
  * @since 1.5
  */
 public boolean isSynthetic() {
@@ -3933,7 +3933,7 @@ private ClassRepositoryHolder getClassRepositoryHolder() {
  * on this Class.
  *
  * @return		the TypeVariable[] for the generic parameters
- * 
+ *
  * @since 1.5
  */
 @SuppressWarnings("unchecked")
@@ -3968,7 +3968,7 @@ public Type[] getGenericInterfaces() {
  * answers null.
  *
  * @return		the Type for the receiver's superclass.
- * 
+ *
  * @since 1.5
  */
 public Type getGenericSuperclass() {
@@ -3983,14 +3983,14 @@ private native Object getEnclosingObject();
 
 /**
  * If this Class is defined inside a constructor, return the Constructor.
- * 
+ *
  * @return the enclosing Constructor or null
  * @throws SecurityException if declared member access or package access is not allowed
- * 
+ *
  * @since 1.5
- * 
+ *
  * @see #isAnonymousClass()
- * @see #isLocalClass() 
+ * @see #isLocalClass()
  */
 @CallerSensitive
 public Constructor<?> getEnclosingConstructor() throws SecurityException {
@@ -4011,14 +4011,14 @@ public Constructor<?> getEnclosingConstructor() throws SecurityException {
 
 /**
  * If this Class is defined inside a method, return the Method.
- * 
+ *
  * @return the enclosing Method or null
  * @throws SecurityException if declared member access or package access is not allowed
- * 
+ *
  * @since 1.5
- * 
+ *
  * @see #isAnonymousClass()
- * @see #isLocalClass() 
+ * @see #isLocalClass()
  */
 @CallerSensitive
 public Method getEnclosingMethod() throws SecurityException {
@@ -4043,12 +4043,12 @@ private native Class<?> getEnclosingObjectClass();
  * Return the enclosing Class of this Class. Unlike getDeclaringClass(),
  * this method works on any nested Class, not just classes nested directly
  * in other classes.
- * 
+ *
  * @return the enclosing Class or null
  * @throws SecurityException if package access is not allowed
- * 
+ *
  * @since 1.5
- * 
+ *
  * @see #getDeclaringClass()
  * @see #isAnonymousClass()
  * @see #isLocalClass()
@@ -4082,7 +4082,7 @@ public Class<?> getEnclosingClass() throws SecurityException {
 			enclosingClass.checkMemberAccess(security, callerClassLoader, MEMBER_INVALID_TYPE);
 		}
 	}
-	
+
 	return enclosingClass;
 }
 
@@ -4092,11 +4092,11 @@ private native String getSimpleNameImpl();
  * Return the simple name of this Class. The simple name does not include
  * the package or the name of the enclosing class. The simple name of an
  * anonymous class is "".
- * 
+ *
  * @return the simple name
- * 
+ *
  * @since 1.5
- * 
+ *
  * @see #isAnonymousClass()
  */
 public String getSimpleName() {
@@ -4124,10 +4124,10 @@ public String getSimpleName() {
 	String simpleName = baseType.getSimpleNameImpl();
 	String fullName = baseType.getName();
 	if (simpleName == null) {
-		/** 
+		/**
 		 * It is a base class, an anonymous class, or a hidden class.
 		 * Call getEnclosingClass() instead of getEnclosingObjectClass() to check getDeclaringClass() first. Hidden class test expects
-		 * NoClassDefFoundError from getDeclaringClass(). 
+		 * NoClassDefFoundError from getDeclaringClass().
 		 */
 		Class<?> parent = baseType.getEnclosingClass();
 		if (parent != null) {
@@ -4184,11 +4184,11 @@ public String getSimpleName() {
  * Return the canonical name of this Class. The canonical name is null
  * for a local or anonymous class. The canonical name includes the package
  * and the name of the enclosing class.
- * 
+ *
  * @return the canonical name or null
- * 
+ *
  * @since 1.5
- * 
+ *
  * @see #isAnonymousClass()
  * @see #isLocalClass()
  */
@@ -4236,7 +4236,7 @@ public String getCanonicalName() {
 		String simpleName = baseType.getName().substring(declaringClass.getName().length() + 1);
 		canonicalName = declaringClassCanonicalName + '.' + simpleName;
 	}
-	
+
 	if (arrayCount > 0) {
 		StringBuilder result = new StringBuilder(canonicalName);
 		for (int i=0; i<arrayCount; i++) {
@@ -4250,11 +4250,11 @@ public String getCanonicalName() {
 /**
  * Answer if this Class is anonymous. An unnamed Class defined
  * inside a method.
- * 
+ *
  * @return true if this Class is anonymous.
- * 
+ *
  * @since 1.5
- * 
+ *
  * @see #isLocalClass()
  */
 public boolean isAnonymousClass() {
@@ -4264,11 +4264,11 @@ public boolean isAnonymousClass() {
 /**
  * Answer if this Class is local. A named Class defined inside
  * a method.
- * 
+ *
  * @return true if this Class is local.
- * 
+ *
  * @since 1.5
- * 
+ *
  * @see #isAnonymousClass()
  */
 public boolean isLocalClass() {
@@ -4278,11 +4278,11 @@ public boolean isLocalClass() {
 /**
  * Answer if this Class is a member Class. A Class defined inside another
  * Class.
- * 
+ *
  * @return true if this Class is local.
- * 
+ *
  * @since 1.5
- * 
+ *
  * @see #isLocalClass()
  */
 public boolean isMemberClass() {
@@ -4291,19 +4291,19 @@ public boolean isMemberClass() {
 
 /**
  * Compute the signature for get*Method()
- * 
- * @param		throwException  if NoSuchMethodException is thrown 
+ *
+ * @param		throwException  if NoSuchMethodException is thrown
  * @param		name			the name of the method
  * @param		parameterTypes	the types of the arguments
  * @return 		the signature string
  * @throws		NoSuchMethodException if one of the parameter types cannot be found in the local class loader
- * 
+ *
  * @see #getDeclaredMethod
  * @see #getMethod
  */
 private String getParameterTypesSignature(boolean throwException, String name, Class<?>[] parameterTypes, String returnTypeSignature) throws NoSuchMethodException {
 	int total = 2;
-	String[] sigs = new String[parameterTypes.length];	
+	String[] sigs = new String[parameterTypes.length];
 	for(int i = 0; i < parameterTypes.length; i++) {
 		Class<?> parameterType = parameterTypes[i];
 		/*[PR 103441] should throw NoSuchMethodException */
@@ -4402,7 +4402,7 @@ private class MethodInfo {
 	private Class<?>[] paramTypes;
 	private Class<?> returnType;
 	private java.lang.String methodName;
-	
+
 	public MethodInfo(Method myMethod) {
 		me = myMethod;
 		methodName = myMethod.getName();
@@ -4418,7 +4418,7 @@ private class MethodInfo {
 		this.paramTypes = otherMi.paramTypes;
 		this.returnType = otherMi.returnType;
 		this.myHash = otherMi.myHash;
-	
+
 		if (null != otherMi.jlrMethods) {
 			jlrMethods = (ArrayList<Method>) otherMi.jlrMethods.clone();
 		} else {
@@ -4468,15 +4468,15 @@ private class MethodInfo {
 			if (m1Parms[i] != m2Parms[i]) {
 				return false;
 			}
-		}	
+		}
 		return true;
 	}
-	
+
 	/**
 	 * Add a method to the list.  newMethod may be discarded if it is masked by an incumbent method in the list.
 	 * Also, an incumbent method may be removed if newMethod masks it.
 	 * In general, a target class inherits a method from its direct superclass or directly implemented interfaces unless:
-	 * 	- the method is static or private and the declaring class is not the target class 
+	 * 	- the method is static or private and the declaring class is not the target class
 	 * 	- the target class declares the method (concrete or abstract)
 	 * 	- the method is default and a superclass of the target class contains a concrete implementation of the method
 	 * 	- a more specific implemented interface contains a concrete implementation
@@ -4484,14 +4484,14 @@ private class MethodInfo {
 	 */
 	void update(Method newMethod) {
 		int newModifiers = newMethod.getModifiers();
-		if (!Modifier.isPublic(newModifiers)) { /* can't see the method */ 
+		if (!Modifier.isPublic(newModifiers)) { /* can't see the method */
 			return;
 		}
 		Class<?> newMethodClass = newMethod.getDeclaringClass();
 		boolean newMethodIsAbstract = Modifier.isAbstract(newModifiers);
 		boolean newMethodClassIsInterface = newMethodClass.isInterface();
-		
-		if (null == jlrMethods) { 
+
+		if (null == jlrMethods) {
 			/* handle the common case of a single declaration */
 			if (!newMethod.equals(me)) {
 				Class<?> incumbentMethodClass = me.getDeclaringClass();
@@ -4501,14 +4501,14 @@ private class MethodInfo {
 					if (methodAOverridesMethodB(newMethodClass, newMethodIsAbstract, newMethodClassIsInterface,
 							incumbentMethodClass, incumbentIsAbstract, incumbentClassIsInterface)
 					) {
-						me = newMethod; 
+						me = newMethod;
 					} else if (!methodAOverridesMethodB(incumbentMethodClass, incumbentIsAbstract, incumbentClassIsInterface,
 							newMethodClass, newMethodIsAbstract, newMethodClassIsInterface)
-					) { 
+					) {
 						/* we need to store both */
 						jlrMethods = new ArrayList<>(2);
 						jlrMethods.add(me);
-						jlrMethods.add(newMethod);				
+						jlrMethods.add(newMethod);
 					}
 				}
 			}
@@ -4532,14 +4532,14 @@ private class MethodInfo {
 								incumbentMethodClass, incumbentIsAbstract, incumbentClassIsInterface)
 						) {
 							if (!replacedMethod) {
-								/* preserve ordering by removing old and appending new instead of directly replacing. */ 
+								/* preserve ordering by removing old and appending new instead of directly replacing. */
 								jlrMethods.remove(methodCursor);
 								jlrMethods.add(newMethod);
 								increment = 0;
 								replacedMethod = true;
 							} else {
 								jlrMethods.remove(methodCursor);
-								increment = 0; 
+								increment = 0;
 								/* everything slid over one slot */
 							}
 							addMethod = false;
@@ -4563,13 +4563,13 @@ private class MethodInfo {
 			update(otherMi.me);
 		} else for (Method m: otherMi.jlrMethods) {
 			update(m);
-		}		
+		}
 	}
 	@Override
 	public int hashCode() {
 		return myHash;
 	}
-	
+
 }
 
 static boolean methodAOverridesMethodB(Class<?> methodAClass,	boolean methodAIsAbstract, boolean methodAClassIsInterface,
@@ -4798,7 +4798,7 @@ private ReflectCache acquireReflectCache() {
 			if (theUnsafe.compareAndSetObject(this, cacheOffset, null, newCache)) {
 /*[ELSE]
 			if (theUnsafe.compareAndSwapObject(this, cacheOffset, null, newCache)) {
-/*[ENDIF]*/			
+/*[ENDIF]*/
 				cache = newCache;
 				break;
 			}
@@ -4899,7 +4899,7 @@ private Method cacheMethod(Method method) {
 			}
 		}
 		try {
-			// cache the Method with the largest depth with a null returnType		
+			// cache the Method with the largest depth with a null returnType
 			CacheKey lookupKey = CacheKey.newMethodKey(method.getName(), parameterTypes, null);
 			cache.insert(lookupKey, method);
 		} finally {
@@ -4962,7 +4962,7 @@ private Field cacheField(Field field) {
 		reflectCacheDebugHelper(null, 0, "cache Field: ", getName(), ".", field.getName());	//$NON-NLS-1$ //$NON-NLS-2$
 	}
 	/*[PR 124746] Field cache cannot handle same field name with multiple types */
-	CacheKey typedKey = CacheKey.newFieldKey(field.getName(), field.getType());  
+	CacheKey typedKey = CacheKey.newFieldKey(field.getName(), field.getType());
 	Class<?> declaringClass = field.getDeclaringClass();
 	ReflectCache cache = declaringClass.acquireReflectCache();
 	try {
@@ -5369,14 +5369,14 @@ private native Class<?> getNestHostImpl();
  * Answers the nest member classes of the receiver's nest host.
  *
  * @return		the host class of the receiver.
- * 
+ *
  * @implNote This implementation does not remove duplicate nest members if they are present.
  */
 private native Class<?>[] getNestMembersImpl();
 
 /**
  * Answers the host class of the receiver's nest.
- * 
+ *
  * @throws SecurityException if nestHost is not same as the current class, a security manager
  *	is present, the classloader of the caller is not the same or an ancestor of nestHost
  * 	class, and checkPackageAccess() denies access
@@ -5413,7 +5413,7 @@ public Class<?> getNestHost() throws SecurityException {
 
 /**
  * Returns true if the class passed has the same nest top as this class.
- * 
+ *
  * @param that The class to compare
  * @return true if class is a nestmate of this class; false otherwise.
  *
@@ -5512,11 +5512,11 @@ SecurityException {
 	private native Class<?> arrayTypeImpl();
 
 	/**
-	 * Answers a Class object which represents the receiver's component type if the receiver 
-	 * represents an array type. The component type of an array type is the type of the elements 
+	 * Answers a Class object which represents the receiver's component type if the receiver
+	 * represents an array type. The component type of an array type is the type of the elements
 	 * of the array.
 	 *
-	 * @return the component type of the receiver. Returns null if the receiver does 
+	 * @return the component type of the receiver. Returns null if the receiver does
 	 * not represent an array.
 	 */
 	public Class<?> componentType() {
@@ -5524,9 +5524,9 @@ SecurityException {
 	}
 
 	/**
-	 * Returns the nominal descriptor of this Class instance, or an empty Optional 
+	 * Returns the nominal descriptor of this Class instance, or an empty Optional
 	 * if construction is not possible.
-	 * 
+	 *
 	 * @return Optional with a nominal descriptor of Class instance
 	 */
 	public Optional<ClassDesc> describeConstable() {
@@ -5540,7 +5540,7 @@ SecurityException {
 		}
 		if (clazz.isHidden()) {
 			/* It is always an empty Optional for hidden classes. */
-			return Optional.empty(); 
+			return Optional.empty();
 		}
 /*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
@@ -5550,7 +5550,7 @@ SecurityException {
 
 	/**
 	 * Return field descriptor of Class instance.
-	 * 
+	 *
 	 * @return field descriptor of Class instance
 	 */
 	public String descriptorString() {
@@ -5611,7 +5611,7 @@ SecurityException {
 /*[IF JAVA_SPEC_VERSION >= 14]*/
 	/**
 	 * Returns true if the class instance is a record.
-	 * 
+	 *
 	 * @return true for a record class, false otherwise
 	 */
 	public boolean isRecord() {
@@ -5622,16 +5622,16 @@ SecurityException {
 		return isRecordImpl();
 /*[ENDIF] JAVA_SPEC_VERSION >= 16*/
 	}
-	
+
 	private native boolean isRecordImpl();
 
 	/**
 	 * Returns an array of RecordComponent objects for a record class.
-	 * 
+	 *
 	 * @return array of RecordComponent objects, one for each component in the record.
 	 * For a class that is not a record, null is returned.
 	 * For a record with no components an empty array is returned.
-	 * 
+	 *
 	 * @throws SecurityException if declared member access or package access is not allowed
 	 */
 	@CallerSensitive
@@ -5656,7 +5656,7 @@ SecurityException {
 /*[IF JAVA_SPEC_VERSION >= 15]*/
 	/**
 	 * Returns true if class or interface is sealed.
-	 * 
+	 *
 	 * @return true if class is sealed, false otherwise
 	 */
 	public native boolean isSealed();
@@ -5664,16 +5664,16 @@ SecurityException {
 	private native boolean isHiddenImpl();
 	/**
 	 * Returns true if the class is a hidden class.
-	 * 
+	 *
 	 * @return true for a hidden class, false otherwise
 	 */
 	public boolean isHidden() {
-		return isHiddenImpl(); 
+		return isHiddenImpl();
 	}
 
 	/**
 	 * Returns the classData stored in the class.
-	 * 
+	 *
 	 * @return the classData (Object).
 	 */
 	Object getClassData() {
@@ -5691,11 +5691,11 @@ SecurityException {
 	 * The order of any classes returned in the array is unspecified, and any classes
 	 * that cannot be loaded are not included in the returned array. The returned array
 	 * may be empty if there are no permitted subclasses.
-	 * 
+	 *
 	 * @return array of Class objects if permitted subclasses exist or null if not a sealed class.
-	 * 
+	 *
 	 * @throws SecurityException if access to any of the classes returned in the array is denied
-	 * 
+	 *
 	 * @since 16
 	 */
 	@CallerSensitive
