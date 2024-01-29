@@ -1223,26 +1223,6 @@ checkIfSafeToCheckpoint(J9VMThread *currentThread)
 	return notSafeToCheckpoint;
 }
 
-static VMINLINE void
-acquireSafeOrExcusiveVMAccess(J9VMThread *currentThread, J9InternalVMFunctions *vmFuncs, bool isSafe)
-{
-	if (isSafe) {
-		vmFuncs->acquireSafePointVMAccess(currentThread);
-	} else {
-		vmFuncs->acquireExclusiveVMAccess(currentThread);
-	}
-}
-
-static VMINLINE void
-releaseSafeOrExcusiveVMAccess(J9VMThread *currentThread, J9InternalVMFunctions *vmFuncs, bool isSafe)
-{
-	if (isSafe) {
-		vmFuncs->releaseSafePointVMAccess(currentThread);
-	} else {
-		vmFuncs->releaseExclusiveVMAccess(currentThread);
-	}
-}
-
 /**
  * Read buffer pointed to by cursor and add replace the characters sequences "\r\n"
  * and "\n" with a null terminator "\0". The input buffer must be NULL terminated.
@@ -1658,23 +1638,23 @@ criuCheckpointJVMImpl(JNIEnv *env,
 			vm->checkpointState.criuSetWorkDirFdFunctionPointerType(workDirFD);
 		}
 
-		acquireSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
+		VM_VMHelpers::acquireSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
 
 		notSafeToCheckpoint = checkIfSafeToCheckpoint(currentThread);
 
 		for (UDATA i = 0; (0 != notSafeToCheckpoint) && (i <= maxRetries); i++) {
-			releaseSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
+			VM_VMHelpers::releaseSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
 			vmFuncs->internalExitVMToJNI(currentThread);
 			omrthread_sleep(sleepMilliseconds);
 			vmFuncs->internalEnterVMFromJNI(currentThread);
-			acquireSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
+			VM_VMHelpers::acquireSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
 			notSafeToCheckpoint = checkIfSafeToCheckpoint(currentThread);
 		}
 
 		if ((J9VM_DELAYCHECKPOINT_NOTCHECKPOINTSAFE == notSafeToCheckpoint)
 			|| ((J9VM_DELAYCHECKPOINT_CLINIT == notSafeToCheckpoint) && J9_ARE_ALL_BITS_SET(vm->checkpointState.flags, J9VM_CRIU_IS_THROW_ON_DELAYED_CHECKPOINT_ENABLED))
 		) {
-			releaseSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
+			VM_VMHelpers::releaseSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
 			currentExceptionClass = vm->checkpointState.criuJVMCheckpointExceptionClass;
 			systemReturnCode = vm->checkpointState.maxRetryForNotCheckpointSafe;
 			nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_VM_CRIU_MAX_RETRY_FOR_NOTCHECKPOINTSAFE_REACHED, NULL);
@@ -1688,7 +1668,7 @@ criuCheckpointJVMImpl(JNIEnv *env,
 		toggleSuspendOnJavaThreads(currentThread, TRUE, FALSE);
 
 		vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_CRIU_SINGLE_THREAD_MODE|J9_EXTENDED_RUNTIME2_CRIU_SINGLE_THROW_BLOCKING_EXCEPTIONS;
-		releaseSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
+		VM_VMHelpers::releaseSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
 
 		VM_VMHelpers::setVMState(currentThread, J9VMSTATE_CRIU_SUPPORT_CHECKPOINT_PHASE_JAVA_HOOKS);
 
@@ -1719,7 +1699,7 @@ criuCheckpointJVMImpl(JNIEnv *env,
 		vm->memoryManagerFunctions->j9gc_prepare_for_checkpoint(currentThread);
 		vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_CRIU_SINGLE_THROW_BLOCKING_EXCEPTIONS;
 
-		acquireSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
+		VM_VMHelpers::acquireSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
 
 		VM_VMHelpers::setVMState(currentThread, J9VMSTATE_CRIU_SUPPORT_CHECKPOINT_PHASE_INTERNAL_HOOKS);
 
@@ -1828,7 +1808,7 @@ criuCheckpointJVMImpl(JNIEnv *env,
 			toggleSuspendOnJavaThreads(currentThread, FALSE, TRUE);
 		}
 
-		releaseSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
+		VM_VMHelpers::releaseSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
 
 		if (FALSE == vm->memoryManagerFunctions->j9gc_reinitialize_for_restore(currentThread, &nlsMsgFormat)) {
 			currentExceptionClass = vm->checkpointState.criuJVMRestoreExceptionClass;
@@ -1901,14 +1881,14 @@ criuCheckpointJVMImpl(JNIEnv *env,
 		}
 
 wakeJavaThreads:
-		acquireSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
+		VM_VMHelpers::acquireSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
 
 wakeJavaThreadsWithExclusiveVMAccess:
 
 		vm->extendedRuntimeFlags2 &= ~(J9_EXTENDED_RUNTIME2_CRIU_SINGLE_THROW_BLOCKING_EXCEPTIONS|J9_EXTENDED_RUNTIME2_CRIU_SINGLE_THREAD_MODE);
 		toggleSuspendOnJavaThreads(currentThread, FALSE, FALSE);
 
-		releaseSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
+		VM_VMHelpers::releaseSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
 
 		VM_VMHelpers::setVMState(currentThread, J9VMSTATE_CRIU_SUPPORT_RESTORE_PHASE_END);
 closeWorkDirFD:

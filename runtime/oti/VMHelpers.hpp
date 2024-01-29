@@ -2167,6 +2167,44 @@ exit:
 		return result;
 	}
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+
+	/**
+	 * If isSafe is true, acquire safe point VM access; otherwise, acquire
+	 * exclusive VM access. Current thread must enter the VM prior to
+	 * invoking this function.
+	 *
+	 * @param[in] currentThread the current J9VMThread
+	 * @param[in] vmFuncs pointer to VM internal functions struct
+	 * @param[in] isSafe true for safe point and false for exclusive VM access
+	 */
+	static VMINLINE void
+	acquireSafeOrExcusiveVMAccess(J9VMThread *currentThread, J9InternalVMFunctions *vmFuncs, bool isSafe)
+	{
+		if (isSafe) {
+			vmFuncs->acquireSafePointVMAccess(currentThread);
+		} else {
+			vmFuncs->acquireExclusiveVMAccess(currentThread);
+		}
+	}
+
+	/**
+	 * If isSafe is true, release safe point VM access; otherwise, release
+	 * exclusive VM access. Current thread must enter the VM prior to
+	 * invoking this function.
+	 *
+	 * @param[in] currentThread the current J9VMThread
+	 * @param[in] vmFuncs pointer to VM internal functions struct
+	 * @param[in] isSafe true for safe point and false for exclusive VM access
+	 */
+	static VMINLINE void
+	releaseSafeOrExcusiveVMAccess(J9VMThread *currentThread, J9InternalVMFunctions *vmFuncs, bool isSafe)
+	{
+		if (isSafe) {
+			vmFuncs->releaseSafePointVMAccess(currentThread);
+		} else {
+			vmFuncs->releaseExclusiveVMAccess(currentThread);
+		}
+	}
 };
 
 #endif /* VMHELPERS_HPP_ */
