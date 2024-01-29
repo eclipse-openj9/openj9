@@ -1185,6 +1185,16 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, result, knot->getPointerLocation(mhIndex), knot->getPointerLocation(expectedTypeIndex));
          }
          break;
+      case MessageType::VM_getMethodHandleTableEntryIndex:
+         {
+         auto recv = client->getRecvData<TR::KnownObjectTable::Index, TR::KnownObjectTable::Index>();
+         TR::KnownObjectTable::Index mhIndex = fe->getMethodHandleTableEntryIndex(comp, std::get<0>(recv), std::get<1>(recv));
+         uintptr_t* mhObj = NULL;
+         if (mhIndex != TR::KnownObjectTable::UNKNOWN)
+            mhObj = knot->getPointerLocation(mhIndex);
+         client->write(response, mhIndex, mhObj);
+         }
+         break;
 #endif // J9VM_OPT_OPENJDK_METHODHANDLE
       case MessageType::VM_isStable:
          {
