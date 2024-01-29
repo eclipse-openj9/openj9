@@ -5043,6 +5043,100 @@ TR_J9VMBase::getMemberNameFieldKnotIndexFromMethodHandleKnotIndex(TR::Compilatio
    return knot->getOrCreateIndex(mnObject);
    }
 
+TR::KnownObjectTable::Index
+TR_J9VMBase::getMethodHandleTableEntryIndex(TR::Compilation *comp, TR::KnownObjectTable::Index vhIndex, TR::KnownObjectTable::Index adIndex)
+   {
+   TR::VMAccessCriticalSection getMethodHandleTableEntryIndex(this);
+   TR::KnownObjectTable::Index result = TR::KnownObjectTable::UNKNOWN;
+   TR::KnownObjectTable *knot = comp->getKnownObjectTable();
+   if (!knot) return result;
+
+   uintptr_t varHandleObj = knot->getPointer(vhIndex);
+   uintptr_t accessDescriptorObj = knot->getPointer(adIndex);
+   uintptr_t mhTable = 0;
+   uintptr_t mtTable = 0;
+#if JAVA_SPEC_VERSION <= 17
+   uintptr_t typesAndInvokersObj = getReferenceField(varHandleObj,
+                                                      "typesAndInvokers",
+                                                      "Ljava/lang/invoke/VarHandle$TypesAndInvokers;");
+   if (!typesAndInvokersObj) return result;
+
+   mhTable = getReferenceField(typesAndInvokersObj,
+                                 "methodHandle_table",
+                                 "[Ljava/lang/invoke/MethodHandle;");
+
+   mtTable = getReferenceField(typesAndInvokersObj,
+                                    "methodType_table",
+                                    "[Ljava/lang/invoke/MethodType;");
+#else
+   mhTable = getReferenceField(varHandleObj,
+                                 "methodHandleTable",
+                                 "[Ljava/lang/invoke/MethodHandle;");
+
+   mtTable = getReferenceField(varHandleObj,
+                                 "methodTypeTable",
+                                 "[Ljava/lang/invoke/MethodType;");
+#endif // JAVA_SPEC_VERSION <= 17
+   if (!mhTable || !mtTable) return result;
+
+#if JAVA_SPEC_VERSION >= 17
+   // if the VarHandle has invokeExact behaviour, then the MethodType in
+   // AccessDescriptor.symbolicMethodTypeExact field must match the corresponding
+   // entry in the VarHandle's method type table, failing which
+   // WrongMethodTypeException should be thrown.
+   int32_t varHandleExactFieldOffset =
+         getInstanceFieldOffset(getObjectClass(varHandleObj), "exact", "Z");
+   int32_t varHandleHasInvokeExactBehaviour = getInt32FieldAt(varHandleObj, varHandleExactFieldOffset);
+   if (varHandleHasInvokeExactBehaviour)
+      {
+      int32_t mtEntryIndex = getInt32Field(accessDescriptorObj, "type");
+      uintptr_t methodTypeTableEntryObj = getReferenceElement(mtTable, mtEntryIndex);
+      if (!methodTypeTableEntryObj) return result;
+      uintptr_t symbolicMTExactObj = getReferenceField(accessDescriptorObj,
+                                                         "symbolicMethodTypeExact",
+                                                         "Ljava/lang/invoke/MethodType;");
+      if (methodTypeTableEntryObj != symbolicMTExactObj)
+         return result;
+      }
+#endif // JAVA_SPEC_VERSION >= 17
+
+   int32_t mhEntryIndex = getInt32Field(accessDescriptorObj, "mode");
+   uintptr_t methodHandleObj = getReferenceElement(mhTable, mhEntryIndex);
+
+   if (!methodHandleObj) return result;
+
+   // For the MethodHandle obtained from the VarHandle's MH table, the type must match
+   // the MethodType in AccessDescriptor.symbolicMethodTypeInvoker field, failing which
+   // the MH obtained cannot be used directly without asType conversion
+   uintptr_t methodTypeObj = getReferenceField(methodHandleObj,
+                                                "type",
+                                                "Ljava/lang/invoke/MethodType;");
+   uintptr_t symbolicMTInvokerObj = getReferenceField(accessDescriptorObj,
+                                                      "symbolicMethodTypeInvoker",
+                                                      "Ljava/lang/invoke/MethodType;");
+   if (methodTypeObj != symbolicMTInvokerObj)
+      return result;
+
+   result = knot->getOrCreateIndex(methodHandleObj);
+
+   return result;
+   }
+
+
+TR::KnownObjectTable::Index
+TR_J9VMBase::getDirectVarHandleTargetIndex(TR::Compilation* comp, TR::KnownObjectTable::Index vhIndex)
+   {
+   // Since IndirectVarHandle.asDirect can override VarHandle.asDirect, an exact type check here is necessary
+   const char * varHandleClassName = "java/lang/invoke/VarHandle";
+   TR_OpaqueClassBlock * varHandleClass =
+      getSystemClassFromClassName(varHandleClassName, strlen(varHandleClassName));
+   TR_OpaqueClassBlock * objectClass = getObjectClassFromKnownObjectIndex(comp, vhIndex);
+   if (NULL == varHandleClass || NULL == objectClass || varHandleClass != objectClass)
+      return TR::KnownObjectTable::UNKNOWN;
+
+   return vhIndex;
+   }
+
 bool
 TR_J9VMBase::isMethodHandleExpectedType(
    TR::Compilation *comp,

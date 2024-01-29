@@ -5308,6 +5308,7 @@ bool TR_J9InlinerPolicy::isJSR292SmallGetterMethod(TR_ResolvedMethod *resolvedMe
       case TR::java_lang_invoke_MethodHandleImpl_ArrayAccessor_lengthS:
       case TR::java_lang_invoke_MethodHandleImpl_ArrayAccessor_lengthC:
       case TR::java_lang_invoke_MethodHandleImpl_ArrayAccessor_lengthL:
+      case TR::java_lang_invoke_VarHandle_asDirect:
          return true;
 
       default:
