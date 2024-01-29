@@ -440,7 +440,7 @@ JITServerAOTDeserializer::cacheRecord(const ClassSerializationRecord *record, TR
 
    // Check that the ROMClass is in the SCC and get its SCC offset
    uintptr_t offset = (uintptr_t)-1;
-   if (!_sharedCache->isClassInSharedCache(ramClass, &offset))
+   if (!_sharedCache->isROMClassInSharedCache(ramClass->romClass, &offset))
       {
       if (TR::Options::getVerboseOption(TR_VerboseJITServer))
          TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "ERROR: ROMClass %p %.*s ID %zu is not in SCC",

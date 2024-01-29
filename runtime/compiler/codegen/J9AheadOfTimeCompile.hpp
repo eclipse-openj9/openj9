@@ -194,10 +194,10 @@ protected:
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    /**
-    * @brief TR_J9SharedCache::offsetInSharedCacheFrom* asserts if the persistent pointer
-    * (J9ROMClass, J9ROMMethod) underlying the value passed in does not exist in the SCC.
-    * Under HCR, when an agent redefines a class, it causes the J9Class pointer to stay the
-    * same, but the J9ROMClass pointer changes. This means that if the compiler has a
+    * @brief TR_J9SharedCache::offsetInSharedCacheFrom* asserts if the pointer
+    * passed in does not exist in the SCC. Under HCR, when an agent redefines
+    * a class, it causes the J9Class pointer to stay the same, but the
+    * J9ROMClass pointer changes. This means that if the compiler has a
     * reference to a J9Class who J9ROMClass was in the SCC at one point in the
     * compilation, it may no longer be so at another point in the compilation.
     *
@@ -206,9 +206,9 @@ protected:
     * compilation, the compiler will fail the compile if such a redefinition
     * occurred.
     *
-    * Calling TR_J9SharedCache::offsetInSharedCacheFromClass after such a
+    * Calling TR_J9SharedCache::offsetInSharedCacheFromPointer after such a
     * redefinition could result in an assert. Therefore, this method exists as
-    * a wrapper around TR_J9SharedCache::isClassInSharedCache which doesn't
+    * a wrapper around TR_J9SharedCache::isROMClassInSharedCache which doesn't
     * assert and conveniently, updates the location referred to by the cacheOffset
     * pointer passed in as a parameter.
     *
@@ -216,10 +216,10 @@ protected:
     * compilation. If the ptr is in the SCC, then the cacheOffset will be updated.
     *
     * @param sharedCache pointer to the TR_SharedCache object
-    * @param clazz J9Class * whose J9ROMClass offset in the SCC is required
+    * @param romClass J9ROMClass * whose offset in the SCC is required
     * @return The offset into the SCC of romClass
     */
-   uintptr_t offsetInSharedCacheFromClass(TR_SharedCache *sharedCache, TR_OpaqueClassBlock *clazz);
+   uintptr_t offsetInSharedCacheFromROMClass(TR_SharedCache *sharedCache, J9ROMClass *romClass);
 
    /**
     * @brief Same circumstance as offsetInSharedCacheFromROMClass above
