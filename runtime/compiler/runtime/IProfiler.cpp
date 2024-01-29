@@ -3055,7 +3055,7 @@ TR_IPBCDataCallGraph::canBePersisted(TR_J9SharedCache *sharedCache, TR::Persiste
             return IPBC_ENTRY_PERSIST_UNLOADED;
             }
 
-         if (!sharedCache->isClassInSharedCache(clazz))
+         if (!sharedCache->isROMClassInSharedCache(clazz->romClass))
             {
             releaseEntry(); // release the lock on the entry
             return IPBC_ENTRY_PERSIST_NOTINSCC;
@@ -3114,7 +3114,8 @@ TR_IPBCDataCallGraph::createPersistentCopy(TR_J9SharedCache *sharedCache, TR_IPB
       TR_OpaqueClassBlock *clazz =  (TR_OpaqueClassBlock*)_csInfo.getClazz(indexMaxWeight);
       if (!info->isUnloadedClass(clazz, true))
          {
-         if (sharedCache->isClassInSharedCache(clazz))
+         J9ROMClass *romClass = ((J9Class*)clazz)->romClass;
+         if (sharedCache->isROMClassInSharedCache(romClass))
             {
             uintptr_t *classChain = sharedCache->rememberClass(clazz);
             if (classChain)

@@ -464,7 +464,7 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
          TR_J9VMBase *fej9 = TR_J9VMBase::get(jitConfig, vmThread, TR_J9VMBase::AOT_VM);
          TR_J9SharedCache *sc = fej9 ? fej9->sharedCache() : NULL;
 #if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
-         if (sc && sc->isClassInSharedCache(J9_CLASS_FROM_METHOD(method)))
+         if (sc && sc->isROMClassInSharedCache(J9_CLASS_FROM_METHOD(method)->romClass))
             {
             PORT_ACCESS_FROM_JAVAVM(jitConfig->javaVM);
             I_64 sharedQueryTime = 0;
@@ -642,7 +642,7 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
       int32_t sigLen = sprintf(buf, "%.*s.%.*s%.*s", J9UTF8_LENGTH(className), utf8Data(className), J9UTF8_LENGTH(name), utf8Data(name), J9UTF8_LENGTH(signature), utf8Data(signature));
       printf("Initial: Signature %s Count %d isLoopy %d isAOT %" OMR_PRIuPTR " is in SCC %d SCCContainsProfilingInfo %d \n",buf,TR::CompilationInfo::getInvocationCount(method),J9ROMMETHOD_HAS_BACKWARDS_BRANCHES(romMethod),
             TR::Options::sharedClassCache() ? jitConfig->javaVM->sharedClassConfig->existsCachedCodeForROMMethod(vmThread, romMethod) : 0,
-            TR::Options::sharedClassCache() ? TR_J9VMBase::get(jitConfig, vmThread, TR_J9VMBase::AOT_VM)->sharedCache()->isClassInSharedCache(J9_CLASS_FROM_METHOD(method)) : 0,containsInfo) ; fflush(stdout);
+            TR::Options::sharedClassCache() ? TR_J9VMBase::get(jitConfig, vmThread, TR_J9VMBase::AOT_VM)->sharedCache()->isROMClassInSharedCache(J9_CLASS_FROM_METHOD(method)->romClass) : 0,containsInfo) ; fflush(stdout);
       }
    }
 
