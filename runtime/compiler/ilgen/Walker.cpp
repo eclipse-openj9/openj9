@@ -2809,8 +2809,6 @@ TR_J9ByteCodeIlGenerator::genInvokeStatic(int32_t cpIndex)
    if (comp()->getOption(TR_TraceILGen))
       traceMsg(comp(), "  genInvokeStatic(%d) // %s\n", cpIndex, comp()->getDebug()->getName(methodSymRef));
 
-   _staticMethodInvokeEncountered = true;
-
    if (runMacro(methodSymRef))
       {
       if (comp()->compileRelocatableCode())
@@ -5193,7 +5191,6 @@ TR_J9ByteCodeIlGenerator::loadStatic(int32_t cpIndex)
    if (_generateReadBarriersForFieldWatch && comp()->compileRelocatableCode())
       comp()->failCompilation<J9::AOTNoSupportForAOTFailure>("NO support for AOT in field watch");
 
-   _staticFieldReferenceEncountered = true;
    TR::SymbolReference * symRef = symRefTab()->findOrCreateStaticSymbol(_methodSymbol, cpIndex, false);
    if (comp()->getOption(TR_TraceILGen))
       traceMsg(comp(), "load static symref %d created with knownObjectIndex %d", symRef->getReferenceNumber(), symRef->getKnownObjectIndex());
@@ -7354,7 +7351,6 @@ TR_J9ByteCodeIlGenerator::storeStatic(int32_t cpIndex)
    if (_generateWriteBarriersForFieldWatch && comp()->compileRelocatableCode())
       comp()->failCompilation<J9::AOTNoSupportForAOTFailure>("NO support for AOT in field watch");
 
-   _staticFieldReferenceEncountered = true;
    TR::Node * value = pop();
 
    TR_ResolvedJ9Method * owningMethod = static_cast<TR_ResolvedJ9Method*>(_methodSymbol->getResolvedMethod());

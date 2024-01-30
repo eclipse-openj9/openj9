@@ -344,9 +344,6 @@ TR_J9ByteCodeIlGenerator::genILFromByteCodes()
          }
       }
 
-   _staticFieldReferenceEncountered = false;
-   _staticMethodInvokeEncountered = false;
-
    // Allocate zero-length bit vectors before walker so that the bit vectors can grow on the right
    // stack memory region
    //

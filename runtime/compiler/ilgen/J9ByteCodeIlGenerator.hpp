@@ -408,12 +408,6 @@ private:
    TR_BitVector                     *_invokeDynamicCalls;
    TR_BitVector                     *_ilGenMacroInvokeExactCalls;
 
-   // TenantScope field support, set to 'true' if a get/put static is encountered
-   // when option TR_DisableMultiTenancy is on and current method contains static
-   // field and method reference/invoke, skip compilation for such method
-   bool                              _staticFieldReferenceEncountered;
-   bool                              _staticMethodInvokeEncountered;
-
    TR_OpaqueClassBlock              *_invokeSpecialInterface;
    TR_BitVector                     *_invokeSpecialInterfaceCalls;
    bool                              _invokeSpecialSeen;
