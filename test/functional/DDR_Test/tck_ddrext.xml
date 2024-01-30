@@ -158,23 +158,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 				<classpath refid="tck.class.path" />
 			</common-elements>
 			<modular-elements>
-				<jvmarg value="--add-exports=openj9.dtfj/com.ibm.j9ddr=ALL-UNNAMED" />
-				<jvmarg value="--add-exports=openj9.dtfj/com.ibm.j9ddr.corereaders=ALL-UNNAMED" />
-				<jvmarg value="--add-exports=openj9.dtfj/com.ibm.j9ddr.corereaders.memory=ALL-UNNAMED" />
-				<jvmarg value="--add-exports=openj9.dtfj/com.ibm.j9ddr.corereaders.osthread=ALL-UNNAMED" />
-				<jvmarg value="--add-exports=openj9.dtfj/com.ibm.j9ddr.events=ALL-UNNAMED" />
 				<jvmarg value="--add-exports=openj9.dtfj/com.ibm.j9ddr.tools.ddrinteractive=ALL-UNNAMED" />
-				<jvmarg value="--add-exports=openj9.dtfj/com.ibm.j9ddr.tools.ddrinteractive.annotations=ALL-UNNAMED" />
-				<jvmarg value="--add-exports=openj9.dtfj/com.ibm.j9ddr.util=ALL-UNNAMED" />
-				<jvmarg value="--add-exports=openj9.dtfj/com.ibm.j9ddr.view.dtfj.image=ALL-UNNAMED" />
-				<jvmarg value="--add-exports=openj9.dtfj/com.ibm.j9ddr.vm29.j9=ALL-UNNAMED" />
-				<jvmarg value="--add-exports=openj9.dtfj/com.ibm.j9ddr.vm29.j9.gc=ALL-UNNAMED" />
-				<jvmarg value="--add-exports=openj9.dtfj/com.ibm.j9ddr.vm29.j9.walkers=ALL-UNNAMED" />
-				<jvmarg value="--add-exports=openj9.dtfj/com.ibm.j9ddr.vm29.pointer=ALL-UNNAMED" />
-				<jvmarg value="--add-exports=openj9.dtfj/com.ibm.j9ddr.vm29.pointer.generated=ALL-UNNAMED" />
-				<jvmarg value="--add-exports=openj9.dtfj/com.ibm.j9ddr.vm29.pointer.helper=ALL-UNNAMED" />
-				<jvmarg value="--add-exports=openj9.dtfj/com.ibm.j9ddr.vm29.tools.ddrinteractive=ALL-UNNAMED" />
-				<jvmarg value="--add-exports=openj9.dtfj/com.ibm.j9ddr.vm29.types=ALL-UNNAMED" />
 			</modular-elements>
 		</java-wrapper>
 	</target>
