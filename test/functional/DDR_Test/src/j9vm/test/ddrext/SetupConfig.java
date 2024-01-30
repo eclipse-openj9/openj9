@@ -68,6 +68,12 @@ public class SetupConfig {
 		if (ddrInstance == null) {
 			if (coreFile != null) {
 				try {
+					/*
+					 * In modular VMs, the static initializer of ImageFactory
+					 * exports the packages to which we need access.
+					 */
+					Class.forName("com.ibm.dtfj.image.j9.ImageFactory");
+
 					DDROutputStream ps = getPrintStream();
 					ddrInstance = new DDRInteractive(coreFile, ps);
 					log.info("Created new DDR Interactive instance using core file : "
