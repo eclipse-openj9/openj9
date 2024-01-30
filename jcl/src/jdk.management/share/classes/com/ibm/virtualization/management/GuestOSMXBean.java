@@ -49,9 +49,7 @@ import java.lang.management.*;
  *      </ul>
  * </ol>
  * <br>
- * <table border="1">
- * <caption><b>Usage example for the {@link GuestOSMXBean}</b></caption>
- * <tr> <td>
+ * <b>Usage example for the {@link GuestOSMXBean}</b>
  * <pre>
  * {@code
  *   ...
@@ -70,7 +68,7 @@ import java.lang.management.*;
  *	// Exception Handling
  *   }
  * }
- * </pre></td></tr></table>
+ * </pre>
  *
  * @since 1.7.1
  */
