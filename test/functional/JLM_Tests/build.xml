@@ -44,6 +44,18 @@
 		<fail message="BUILD_ROOT must be defined." unless="BUILD_ROOT" />
 		<mkdir dir="${DEST}" />
 		<mkdir dir="${build}" />
+		<if>
+			<not>
+				<contains string="${TEST_FLAG}" substring="CRAC" />
+			</not>
+			<then>
+				<property name="excludeTestCRaCMXBean" value="org/openj9/test/java/lang/management/TestCRaCMXBean.java"/>
+				<property name="replaceTestng" value="testng.xml" />
+				<exec executable="awk" input="${src}/../testng.xml" output="${build}/testng.xml">
+					<arg value="/&lt;test name=&quot;testCRaCMXBean&quot;&gt;/,/&lt;\/test&gt;/{next} 1"/>
+				</exec>
+			</then>
+		</if>
 	</target>
 
 	<target name="compile" depends="init,getDependentLibs" description="using java ${JDK_VERSION} to compile the source ">
@@ -93,6 +105,7 @@
 						<!-- Java 9-18 -->
 						<javac srcdir="${srcpath}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" classpathref="build.cp">
 							<compilerarg line='${addExports} ${TestUtilitiesExports}' />
+							<exclude name="${excludeTestCRaCMXBean}" />
 						</javac>
 					</then>
 					<else>
@@ -102,6 +115,7 @@
 							<!-- exclude tests that depend on SecurityManager -->
 							<exclude name="org/openj9/test/java/lang/management/TestSharedClassMemoryMXBean_SM.java" />
 							<exclude name="org/openj9/test/java/lang/management/TestRegression_SM.java" />
+							<exclude name="${excludeTestCRaCMXBean}" />
 						</javac>
 					</else>
 				</if>
@@ -114,12 +128,21 @@
 		<mkdir dir="${DEST}"/>
 		<jar jarfile="${DEST}/jlm_tests.jar" filesonly="true">
 			<fileset dir="${build}"/>
-			<fileset dir="${src}"/>
-			<fileset dir="${src}/../" includes="*.properties,*.xml" />
+			<fileset dir="${src}">
+				<exclude name="${excludeTestCRaCMXBean}" />
+			</fileset>
+			<fileset dir="${src}/../" includes="*.properties,*.xml">
+				<exclude name="${replaceTestng}" />
+			</fileset>
 		</jar>
 		<copy todir="${DEST}">
-			<fileset dir="${src}/../" includes="*.xml" />
+			<fileset dir="${src}/../" includes="*.xml">
+				<exclude name="${replaceTestng}" />
+			</fileset>
 			<fileset dir="${src}/../" includes="*.mk" />
+			<fileset dir="${build}">
+				<include name="${replaceTestng}" />
+			</fileset>
 		</copy>
 	</target>
 

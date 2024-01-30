@@ -173,4 +173,9 @@
 			<class name="org.openj9.test.softmx.SoftmxUserScenarioTest" />
 		</classes>
 	</test>
+	<test name="testCRaCMXBean">
+		<classes>
+			<class name="org.openj9.test.java.lang.management.TestCRaCMXBean" />
+		</classes>
+	</test>
 </suite> <!-- JLM_Tests_Suite -->

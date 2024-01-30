@@ -1,6 +1,6 @@
-/*[INCLUDE-IF JAVA_SPEC_VERSION >= 9]*/
+/*[INCLUDE-IF CRAC_SUPPORT]*/
 /*******************************************************************************
- * Copyright IBM Corp. and others 2016
+ * Copyright IBM Corp. and others 2024
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,11 +20,9 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
-
-exports com.ibm.lang.management;
-exports openj9.lang.management;
-exports com.ibm.virtualization.management;
-provides sun.management.spi.PlatformMBeanProvider with com.ibm.lang.management.internal.PlatformMBeanProvider;
-/*[IF CRAC_SUPPORT]*/
-exports jdk.crac.management;
-/*[ENDIF] CRAC_SUPPORT*/
+/**
+ * This package contains a management interface of the CRaC functionality in the Java virtual machine.
+ *
+ * The jdk.crac.management API doc is https://crac.github.io/openjdk-builds/javadoc/api/jdk.management/jdk/crac/management/package-summary.html.
+ */
+package jdk.crac.management;
