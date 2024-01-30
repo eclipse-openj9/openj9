@@ -298,7 +298,7 @@ ClientSessionData::processIllegalFinalFieldModificationList(const std::vector<TR
             it->second._classFlags |= J9ClassHasIllegalFinalFieldModifications;
             if (TR::Options::getVerboseOption(TR_VerboseJITServer))
                TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
-                  "compThreadID=%d found clazz %p in the cache and updated bit J9ClassHasIllegalFinalFieldModifications to 1\n", compThreadID, clazz);
+                  "compThreadID=%d found clazz %p in the cache and updated bit J9ClassHasIllegalFinalFieldModifications to 1", compThreadID, clazz);
             }
          }
       }
