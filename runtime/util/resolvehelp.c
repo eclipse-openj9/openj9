@@ -61,6 +61,15 @@ getMethodForSpecialSend(J9VMThread *vmStruct, J9Class *currentClass, J9Class *re
 				J9Class *superclass = currentClass->superclasses[currentDepth - 1];
 
 				if (isInterfaceMethod) {
+					/* From JVMS: "If the symbolic reference names a class (not an interface),
+					 * then that class is a superclass of the current class."
+					 * If the referenced class and current class are the same make sure to
+					 * treat that class as the superclass.
+					 */
+					if (resolvedClass == currentClass) {
+						superclass = resolvedClass;
+					}
+
 					/* CMVC 170457: Algorithm for invokespecial lookup is wrong.
 					 * New Algorithm:
 					 * 1) Find the vtable index for J9Method in the resolved class.
@@ -82,6 +91,8 @@ getMethodForSpecialSend(J9VMThread *vmStruct, J9Class *currentClass, J9Class *re
 				} else {
 					/* In order to support non-vTable methods in a super invoke, perform the lookup rather than
 					 * looking in the vTable.
+					 * We have already called this method and determined a result was not
+					 * found in the current class or current class's interfaces. Start at its superclass.
 					 */
 					method = (J9Method *)vmFuncs->javaLookupMethod(vmStruct, superclass, J9ROMMETHOD_NAMEANDSIGNATURE(J9_ROM_METHOD_FROM_RAM_METHOD(method)), currentClass, lookupOptions);
 				}
