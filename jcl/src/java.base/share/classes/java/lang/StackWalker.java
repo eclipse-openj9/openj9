@@ -64,6 +64,7 @@ public final class StackWalker {
 	/*[IF JAVA_SPEC_VERSION >= 22]*/
 	private static final int J9_DROP_METHOD_INFO       = 0x10;
 	/*[ENDIF] JAVA_SPEC_VERSION >= 22 */
+	private static final int J9_GET_CALLER_CLASS       = 0x20;
 
 	/* Map the given options to the corresponding set of flags. */
 	private static int flagsFor(Set<Option> options) {
@@ -239,7 +240,7 @@ public final class StackWalker {
 		 * Get the top two stack frames: the client calling getCallerClass and
 		 * the client's caller. Ignore reflection and special frames.
 		 */
-		List<StackFrame> result = StackWalker.walkWrapperImpl(J9_RETAIN_CLASS_REFERENCE, "getCallerClass", //$NON-NLS-1$
+		List<StackFrame> result = StackWalker.walkWrapperImpl(J9_RETAIN_CLASS_REFERENCE | J9_GET_CALLER_CLASS, "getCallerClass", //$NON-NLS-1$
 				s -> s.limit(2).collect(Collectors.toList()));
 		if (result.size() < 2) {
 			/*[MSG "K0640", "getCallerClass() called from method with no caller"]*/
