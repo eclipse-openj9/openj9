@@ -61,7 +61,7 @@ static UDATA frameIteratorGetAccSnapshotHelper(J9VMThread * currentThread, J9Sta
 static j9object_t storePDobjectsHelper(J9VMThread* vmThread, J9Class* arrayClass, J9StackWalkState* walkState, j9object_t contextObject, U_32 arraySize, UDATA framesWalked, I_32 startPos, BOOLEAN dupCallerPD);
 static BOOLEAN checkInnerClassHelper(J9Class* declaringClass, J9Class* declaredClass);
 
-jobject JNICALL 
+jobject JNICALL
 Java_java_lang_Class_getDeclaredAnnotationsData(JNIEnv *env, jobject jlClass)
 {
 	jobject result = NULL;
@@ -473,7 +473,7 @@ retry:
 	J9ROMClass *romClass = clazz->romClass;
 	U_32 size = 0;
 	UDATA preCount = vm->hotSwapCount;
-	
+
 	/* primitives/arrays don't have local methods */
 	if (!J9ROMCLASS_IS_PRIMITIVE_OR_ARRAY(romClass)) {
 		J9Method *currentMethod = clazz->ramMethods;
@@ -486,7 +486,7 @@ retry:
 			currentMethod += 1;
 		}
 	}
-	
+
 	if (NULL != arrayClass) {
 		resultObject = mmFuncs->J9AllocateIndexableObject(currentThread, arrayClass, size, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
 		if (vm->hotSwapCount != preCount) {
@@ -638,7 +638,7 @@ retry:
 	J9ROMClass *romClass = clazz->romClass;
 	U_32 size = romClass->innerClassCount;
 	UDATA preCount = vm->hotSwapCount;
-	
+
 	if (NULL != arrayClass) {
 		resultObject = mmFuncs->J9AllocateIndexableObject(currentThread, arrayClass, size, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
 		if (vm->hotSwapCount != preCount) {
@@ -690,7 +690,7 @@ Java_java_lang_Class_getDeclaredMethodImpl(JNIEnv *env, jobject recv, jobject na
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	j9object_t resultObject = NULL;
 	vmFuncs->internalEnterVMFromJNI(currentThread);
-	
+
 retry:
 	J9Class *clazz = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, J9_JNI_UNWRAP_REFERENCE(recv));
 	if ((NULL == name) || (NULL == partialSignature)) {
@@ -748,13 +748,13 @@ Java_java_lang_Class_getDeclaredMethodsImpl(JNIEnv *env, jobject recv)
 	j9object_t resultObject = NULL;
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 	J9Class *arrayClass = fetchArrayClass(currentThread, J9VMJAVALANGREFLECTMETHOD_OR_NULL(vm));
-	
+
 retry:
 	J9Class *clazz = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, J9_JNI_UNWRAP_REFERENCE(recv));
 	J9ROMClass *romClass = clazz->romClass;
 	U_32 size = 0;
 	UDATA preCount = vm->hotSwapCount;
-	
+
 	/* primitives/arrays don't have local methods */
 	if (!J9ROMCLASS_IS_PRIMITIVE_OR_ARRAY(romClass)) {
 		J9Method *currentMethod = clazz->ramMethods;
@@ -767,7 +767,7 @@ retry:
 			currentMethod += 1;
 		}
 	}
-	
+
 	if (NULL != arrayClass) {
 		resultObject = mmFuncs->J9AllocateIndexableObject(currentThread, arrayClass, size, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
 		if (vm->hotSwapCount != preCount) {
@@ -904,7 +904,7 @@ Java_java_lang_Class_getFieldsImpl(JNIEnv *env, jobject recv)
 }
 
 jobject JNICALL
-Java_java_lang_Class_getMethodImpl(JNIEnv *env, jobject recv, jobject name, jobject parameterTypes, jobject partialSignature)
+Java_java_lang_Class_getMethodImpl(JNIEnv *env, jobject recv, jobject name, jobject parameterTypes, jobject partialSignature, jboolean mustBePublic)
 {
 	J9VMThread *currentThread = (J9VMThread*)env;
 	J9JavaVM *vm = currentThread->javaVM;
@@ -968,7 +968,9 @@ _done:
 
 			if (NULL != currentMethod) {
 				J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(currentMethod);
-				if (J9_ARE_ALL_BITS_SET(romMethod->modifiers, J9AccPublic) && !isSpecialMethod(romMethod)) {
+				if ((!mustBePublic || J9_ARE_ALL_BITS_SET(romMethod->modifiers, J9AccPublic))
+					&& !isSpecialMethod(romMethod)
+				) {
 					j9object_t parameterTypesObject = NULL;
 					if (NULL != parameterTypes) {
 						parameterTypesObject = J9_JNI_UNWRAP_REFERENCE(parameterTypes);
@@ -1228,7 +1230,7 @@ frameIteratorGetAccSnapshotHelper(J9VMThread * currentThread, J9StackWalkState *
 
 /**
  * PrivilegedFrameIterator method to perform stack walking for doPrivileged & doPrivilegedWithCombiner methods
- * For doPrivileged methods, this finds the callers of each doPrivileged method and the AccessControlContext discovered during stack walking, 
+ * For doPrivileged methods, this finds the callers of each doPrivileged method and the AccessControlContext discovered during stack walking,
  * 		either from a privilege frame or the contextObject from current thread
  * For doPrivilegedWithCombiner, this finds the caller of doPrivilegedWithCombiner method, and the AccessControlContext
  * 		discovered during stack walking, either from a privilege frame or the contextObject from current thread
@@ -1364,8 +1366,8 @@ isPrivilegedFrameIteratorGetAccSnapshot(J9VMThread * currentThread, J9StackWalkS
  * 	ProtectionDomain elements after AccessControlContext object could be in one of following two formats:
  * 	For doPrivileged methods - flag forDoPrivilegedWithCombiner is false:
  * 		the ProtectionDomain element might be null, first ProtectionDomain element is a duplicate of the ProtectionDomain of the caller of doPrivileged
- * 		rest of ProtectionDomain elements are from the callers discovered during stack walking 
- * 		the start index of the actual ProtectionDomain element is 2 of the object array returned 		
+ * 		rest of ProtectionDomain elements are from the callers discovered during stack walking
+ * 		the start index of the actual ProtectionDomain element is 2 of the object array returned
  * 	For doPrivilegedWithCombiner methods - flag forDoPrivilegedWithCombiner is true:
  * 		there are only two ProtectionDomain elements, first one is the ProtectionDomain of the caller of doPrivileged
  * 		and the other is the ProtectionDomain of the caller of doPrivilegedWithCombiner
@@ -1381,11 +1383,11 @@ isPrivilegedFrameIteratorGetAccSnapshot(J9VMThread * currentThread, J9StackWalkS
  * 				the start index of the actual ProtectionDomain element is 1 of this ProtectionDomain objects array
  * 			For doPrivilegedWithCombiner methods - flag forDoPrivilegedWithCombiner is true:
  * 				an array of ProtectionDomain objects with only two elements
- * 				first one is the ProtectionDomain of the caller of doPrivileged 
+ * 				first one is the ProtectionDomain of the caller of doPrivileged
  * 				and the other is the ProtectionDomain of the caller of doPrivilegedWithCombiner
  * 		Third element is an array of Limited Permission objects
  * 		Repeating this format:
- * 			AccessControlContext object, 
+ * 			AccessControlContext object,
  * 			ProtectionDomain objects array with same format above when flag forDoPrivilegedWithCombiner is false
  * 			 or just the ProtectionDomain of the caller of doPrivileged in case of flag forDoPrivilegedWithCombiner is true
  * 			Permission object array
@@ -1949,7 +1951,7 @@ _done:
 #endif /* JAVA_SPEC_VERSION >= 11 */
 }
 
-jboolean JNICALL 
+jboolean JNICALL
 Java_java_lang_Class_isHiddenImpl(JNIEnv *env, jobject recv)
 {
 #if JAVA_SPEC_VERSION >= 15
