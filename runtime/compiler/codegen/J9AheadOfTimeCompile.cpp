@@ -49,10 +49,10 @@ J9::AheadOfTimeCompile::getClassChainOffset(TR_OpaqueClassBlock *classToRemember
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)self()->comp()->fe();
    TR_SharedCache *sharedCache = fej9->sharedCache();
-   void *classChain = sharedCache->rememberClass(classToRemember, &classChainRecord);
-   if (!classChain)
-      self()->comp()->failCompilation<J9::ClassChainPersistenceFailure>("classChain == NULL");
-   return self()->offsetInSharedCacheFromPointer(sharedCache, classChain);
+   uintptr_t classChainOffset = sharedCache->rememberClass(classToRemember, &classChainRecord);
+   if (TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET == classChainOffset)
+      self()->comp()->failCompilation<J9::ClassChainPersistenceFailure>("classChainOffset == INVALID_CLASS_CHAIN_OFFSET");
+   return classChainOffset;
    }
 
 #if defined(J9VM_OPT_JITSERVER)
@@ -477,12 +477,11 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          TR_RelocationRecordValidateInstanceField *fieldRecord = reinterpret_cast<TR_RelocationRecordValidateInstanceField *>(reloRecord);
          uintptr_t inlinedSiteIndex = reinterpret_cast<uintptr_t>(relocation->getTargetAddress());
          TR::AOTClassInfo *aotCI = reinterpret_cast<TR::AOTClassInfo *>(relocation->getTargetAddress2());
-         uintptr_t classChainOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, aotCI->_classChain);
 
          fieldRecord->setInlinedSiteIndex(reloTarget, inlinedSiteIndex);
          fieldRecord->setConstantPool(reloTarget, reinterpret_cast<uintptr_t>(aotCI->_constantPool));
          fieldRecord->setCpIndex(reloTarget, static_cast<uintptr_t>(aotCI->_cpIndex));
-         fieldRecord->setClassChainOffsetInSharedCache(reloTarget, classChainOffsetInSharedCache,
+         fieldRecord->setClassChainOffsetInSharedCache(reloTarget, aotCI->_classChainOffset,
                                                        self(), aotCI->getAOTCacheClassChainRecord());
          }
          break;
@@ -595,12 +594,10 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          uintptr_t inlinedSiteIndex = reinterpret_cast<uintptr_t>(relocation->getTargetAddress());
          TR::AOTClassInfo *aotCI = reinterpret_cast<TR::AOTClassInfo *>(relocation->getTargetAddress2());
 
-         uintptr_t classChainOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, aotCI->_classChain);
-
          vcRecord->setInlinedSiteIndex(reloTarget, inlinedSiteIndex);
          vcRecord->setConstantPool(reloTarget, reinterpret_cast<uintptr_t>(aotCI->_constantPool));
          vcRecord->setCpIndex(reloTarget, aotCI->_cpIndex);
-         vcRecord->setClassChainOffsetInSharedCache(reloTarget, classChainOffsetInSharedCache,
+         vcRecord->setClassChainOffsetInSharedCache(reloTarget, aotCI->_classChainOffset,
                                                     self(), aotCI->getAOTCacheClassChainRecord());
          }
          break;
@@ -738,12 +735,9 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
 
          uintptr_t classChainOffsetInSharedCacheForCL = sharedCache->getClassChainOffsetIdentifyingLoader(classToValidate);
 
-         void *classChainForClassToValidate = aotCI->_classChain;
-         uintptr_t classChainOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, classChainForClassToValidate);
-
          vacRecord->setClassChainIdentifyingLoaderOffset(reloTarget, classChainOffsetInSharedCacheForCL,
                                                          self(), aotCI->getAOTCacheClassChainRecord());
-         vacRecord->setClassChainOffsetForClassBeingValidated(reloTarget, classChainOffsetInSharedCache,
+         vacRecord->setClassChainOffsetForClassBeingValidated(reloTarget, aotCI->_classChainOffset,
                                                               self(), aotCI->getAOTCacheClassChainRecord());
          }
          break;
@@ -766,11 +760,9 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
 
          TR::ClassByNameRecord *svmRecord = reinterpret_cast<TR::ClassByNameRecord *>(relocation->getTargetAddress());
 
-         uintptr_t classChainOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, svmRecord->_classChain);
-
          cbnRecord->setClassID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_class));
          cbnRecord->setBeholderID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_beholder));
-         cbnRecord->setClassChainOffset(reloTarget, classChainOffsetInSharedCache,
+         cbnRecord->setClassChainOffset(reloTarget, svmRecord->_classChainOffset,
                                         self(), svmRecord->getAOTCacheClassChainRecord());
          }
          break;
@@ -782,16 +774,13 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          TR::ProfiledClassRecord *svmRecord = reinterpret_cast<TR::ProfiledClassRecord *>(relocation->getTargetAddress());
 
          TR_OpaqueClassBlock *classToValidate = svmRecord->_class;
-         void *classChainForClassToValidate = svmRecord->_classChain;
 
          //store the classchain's offset for the classloader for the class
          uintptr_t classChainOffsetInSharedCacheForCL = sharedCache->getClassChainOffsetIdentifyingLoader(classToValidate);
 
-         //store the classchain's offset for the class that needs to be validated in the second run
-         uintptr_t classChainOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, classChainForClassToValidate);
-
          pcRecord->setClassID(reloTarget, symValManager->getSymbolIDFromValue(classToValidate));
-         pcRecord->setClassChainOffset(reloTarget, classChainOffsetInSharedCache,
+         //store the classchain's offset for the class that needs to be validated in the second run
+         pcRecord->setClassChainOffset(reloTarget, svmRecord->_classChainOffset,
                                        self(), svmRecord->getAOTCacheClassChainRecord());
          pcRecord->setClassChainOffsetForClassLoader(reloTarget, classChainOffsetInSharedCacheForCL,
                                                      self(), svmRecord->getAOTCacheClassChainRecord());
@@ -878,14 +867,11 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          TR::SystemClassByNameRecord *svmRecord = reinterpret_cast<TR::SystemClassByNameRecord *>(relocation->getTargetAddress());
 
          TR_OpaqueClassBlock *classToValidate = svmRecord->_class;
-         void *classChainForClassToValidate = svmRecord->_classChain;
-
-         // Store class chain to get name of class. Checking the class chain for
-         // this record eliminates the need for a separate class chain validation.
-         uintptr_t classChainOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, classChainForClassToValidate);
 
          scmRecord->setSystemClassID(reloTarget, symValManager->getSymbolIDFromValue(classToValidate));
-         scmRecord->setClassChainOffset(reloTarget, classChainOffsetInSharedCache,
+         // Store class chain to get name of class. Checking the class chain for
+         // this record eliminates the need for a separate class chain validation.
+         scmRecord->setClassChainOffset(reloTarget, svmRecord->_classChainOffset,
                                         self(), svmRecord->getAOTCacheClassChainRecord());
          }
          break;
@@ -932,14 +918,11 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          TR::ClassChainRecord *svmRecord = reinterpret_cast<TR::ClassChainRecord *>(relocation->getTargetAddress());
 
          TR_OpaqueClassBlock *classToValidate = svmRecord->_class;
-         void *classChainForClassToValidate = svmRecord->_classChain;
-
-         // Store class chain to get name of class. Checking the class chain for
-         // this record eliminates the need for a separate class chain validation.
-         uintptr_t classChainOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, classChainForClassToValidate);
 
          ccRecord->setClassID(reloTarget, symValManager->getSymbolIDFromValue(classToValidate));
-         ccRecord->setClassChainOffset(reloTarget, classChainOffsetInSharedCache,
+         // Store class chain to get name of class. Checking the class chain for
+         // this record eliminates the need for a separate class chain validation.
+         ccRecord->setClassChainOffset(reloTarget, svmRecord->_classChainOffset,
                                        self(), svmRecord->getAOTCacheClassChainRecord());
          }
          break;

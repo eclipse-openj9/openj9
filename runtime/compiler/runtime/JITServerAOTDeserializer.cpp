@@ -523,8 +523,8 @@ JITServerAOTDeserializer::cacheRecord(const ClassChainSerializationRecord *recor
       }
 
    // Create the class chain in the local SCC or find the existing one
-   uintptr_t *chain = _sharedCache->rememberClass((TR_OpaqueClassBlock *)ramClasses[0]);
-   if (!chain)
+   uintptr_t offset = _sharedCache->rememberClass((TR_OpaqueClassBlock *)ramClasses[0]);
+   if (TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET == offset)
       {
       if (TR::Options::getVerboseOption(TR_VerboseJITServer))
          TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
@@ -534,16 +534,7 @@ JITServerAOTDeserializer::cacheRecord(const ClassChainSerializationRecord *recor
       return false;
       }
 
-   uintptr_t offset = (uintptr_t)-1;
-   if (!_sharedCache->isPointerInSharedCache(chain, &offset))
-      {
-      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
-            "ERROR: Failed to get SCC offset for class chain %p ID %zu for class %.*s ID %zu",
-            chain, record->id(), ROMCLASS_NAME(ramClasses[0]->romClass), record->list().ids()[0]
-         );
-      return false;
-      }
+   uintptr_t *chain = (uintptr_t *)_sharedCache->pointerFromOffsetInSharedCache(offset);
    uintptr_t chainLength = chain[0] / sizeof(chain[0]) - 1;
    uintptr_t *chainItems = chain + 1;
 

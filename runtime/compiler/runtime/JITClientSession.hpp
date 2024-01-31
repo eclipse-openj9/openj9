@@ -346,7 +346,7 @@ public:
 
    struct ClassChainData
       {
-      uintptr_t *_classChain;
+      uintptr_t _classChainOffset;
       const AOTCacheClassChainRecord *_aotCacheClassChainRecord;
       };
 
@@ -477,7 +477,7 @@ public:
    const AOTCacheMethodRecord *getMethodRecord(J9Method *method, J9Class *definingClass, JITServer::ServerStream *stream);
    // If this function sets the missingLoaderInfo flag then a NULL result is due to missing class loader info; otherwise that
    // result is due to a failure to allocate.
-   const AOTCacheClassChainRecord *getClassChainRecord(J9Class *clazz, uintptr_t *classChain,
+   const AOTCacheClassChainRecord *getClassChainRecord(J9Class *clazz, uintptr_t classChainOffset,
                                                        const std::vector<J9Class *> &ramClassChain, JITServer::ServerStream *stream,
                                                        bool &missingLoaderInfo);
 

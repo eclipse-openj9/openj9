@@ -251,7 +251,7 @@ TR::SymbolValidationManager::populateWellKnownClasses()
       int32_t len = (int32_t)strlen(name);
       TR_OpaqueClassBlock *wkClass = _fej9->getSystemClassFromClassName(name, len);
 
-      void *chain = NULL;
+      uintptr_t chainOffset = TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET;
       if (wkClass == NULL)
          {
          traceMsg(_comp, "well-known class %s not found\n", name);
@@ -264,15 +264,15 @@ TR::SymbolValidationManager::populateWellKnownClasses()
          {
 #if defined(J9VM_OPT_JITSERVER)
          auto recordPtr = &classChainRecords[_wellKnownClasses.size()];
-         chain = _fej9->sharedCache()->rememberClass(wkClass, recordPtr);
+         chainOffset = _fej9->sharedCache()->rememberClass(wkClass, recordPtr);
          if (aotCacheStore && !*recordPtr)
             missingClassChainRecords = true;
 #else /* defined(J9VM_OPT_JITSERVER) */
-         chain = _fej9->sharedCache()->rememberClass(wkClass);
+         chainOffset = _fej9->sharedCache()->rememberClass(wkClass);
 #endif /* defined(J9VM_OPT_JITSERVER) */
          }
 
-      if (chain == NULL)
+      if (TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET == chainOffset)
          {
          traceMsg(_comp, "no class chain for well-known class %s\n", name);
          SVM_ASSERT_NONFATAL(
@@ -287,8 +287,7 @@ TR::SymbolValidationManager::populateWellKnownClasses()
 
       includedClasses |= 1 << i;
       _wellKnownClasses.push_back(wkClass);
-      if (!_fej9->sharedCache()->isPointerInSharedCache(chain, nextClassChainOffset++))
-         SVM_ASSERT_NONFATAL(false, "Failed to get SCC offset for well-known class %s chain %p", name, chain);
+      *nextClassChainOffset++ = chainOffset;
       }
 
    *classCount = _wellKnownClasses.size();
@@ -606,9 +605,8 @@ TR::SymbolValidationManager::getClassChainInfo(
       // info._baseComponent is a non-array reference type. It can't be a
       // primitive because primitives always satisfy isAlreadyValidated().
       const AOTCacheClassChainRecord *classChainRecord = NULL;
-      info._baseComponentClassChain =
-         _fej9->sharedCache()->rememberClass(info._baseComponent, &classChainRecord);
-      if (info._baseComponentClassChain == NULL)
+      info._baseComponentClassChainOffset = _fej9->sharedCache()->rememberClass(info._baseComponent, &classChainRecord);
+      if (TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET == info._baseComponentClassChainOffset)
          {
          _region.deallocate(record);
          return false;
@@ -639,13 +637,13 @@ TR::SymbolValidationManager::appendClassChainInfoRecords(
       }
 
    // If necessary, remember to validate the class chain of the base component type
-   if (info._baseComponentClassChain != NULL)
+   if (TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET != info._baseComponentClassChainOffset)
       {
       appendNewRecord(
          info._baseComponent,
          new (_region) ClassChainRecord(
             info._baseComponent,
-            info._baseComponentClassChain
+            info._baseComponentClassChainOffset
 #if defined(J9VM_OPT_JITSERVER)
             , info._baseComponentAOTCacheClassChainRecord
 #endif /* defined(J9VM_OPT_JITSERVER) */
@@ -696,8 +694,8 @@ TR::SymbolValidationManager::addClassRecordWithChain(TR::ClassValidationRecordWi
    if (!_fej9->isPrimitiveClass(record->_class))
       {
       const AOTCacheClassChainRecord *classChainRecord = NULL;
-      record->_classChain = _fej9->sharedCache()->rememberClass(record->_class, &classChainRecord);
-      if (record->_classChain == NULL)
+      record->_classChainOffset = _fej9->sharedCache()->rememberClass(record->_class, &classChainRecord);
+      if (TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET == record->_classChainOffset)
          {
          _region.deallocate(record);
          return false;
@@ -800,12 +798,12 @@ TR::SymbolValidationManager::addProfiledClassRecord(TR_OpaqueClassBlock *clazz)
    clazz = getBaseComponentClass(clazz, arrayDims);
 
    const AOTCacheClassChainRecord *classChainRecord = NULL;
-   void *classChain = _fej9->sharedCache()->rememberClass(clazz, &classChainRecord);
-   if (classChain == NULL)
+   uintptr_t classChainOffset = _fej9->sharedCache()->rememberClass(clazz, &classChainRecord);
+   if (TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET == classChainOffset)
       return false;
 
    if (!isAlreadyValidated(clazz))
-      appendNewRecord(clazz, new (_region) ProfiledClassRecord(clazz, classChain, classChainRecord));
+      appendNewRecord(clazz, new (_region) ProfiledClassRecord(clazz, classChainOffset, classChainRecord));
 
    addMultipleArrayRecords(clazz, arrayDims);
    return true;
@@ -1660,7 +1658,7 @@ void TR::ClassValidationRecordWithChain::printFields()
    {
    traceMsg(TR::comp(), "\t_class=0x%p\n", _class);
    printClass(_class);
-   traceMsg(TR::comp(), "\t_classChain=0x%p\n", _classChain);
+   traceMsg(TR::comp(), "\t_classChainOffset=%" OMR_PRIuPTR "\n", _classChainOffset);
    }
 
 bool TR::ClassByNameRecord::isLessThanWithinKind(SymbolValidationRecord *other)
@@ -1691,7 +1689,7 @@ void TR::ProfiledClassRecord::printFields()
    traceMsg(TR::comp(), "ProfiledClassRecord\n");
    traceMsg(TR::comp(), "\t_class=0x%p\n", _class);
    printClass(_class);
-   traceMsg(TR::comp(), "\t_classChain=0x%p\n", _classChain);
+   traceMsg(TR::comp(), "\t_classChainOffset=%" OMR_PRIuPTR "\n", _classChainOffset);
    }
 
 bool TR::ClassFromCPRecord::isLessThanWithinKind(SymbolValidationRecord *other)
@@ -1887,7 +1885,7 @@ void TR::ClassChainRecord::printFields()
    traceMsg(TR::comp(), "ClassChainRecord\n");
    traceMsg(TR::comp(), "\t_class=0x%p\n", _class);
    printClass(_class);
-   traceMsg(TR::comp(), "\t_classChain=0x%p\n", _classChain);
+   traceMsg(TR::comp(), "\t_classChainOffset=%" OMR_PRIuPTR "\n", _classChainOffset);
    }
 
 bool TR::MethodFromClassRecord::isLessThanWithinKind(
