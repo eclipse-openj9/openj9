@@ -88,7 +88,7 @@ public final class AccessControlContext {
 	static final int DEBUG_ACCESS_FAILURE = 8;
 	static final int DEBUG_ACCESS_THREAD = 0x10;
 	static final int DEBUG_ALL = 0xff;
-	
+
 	static final class AccessCache {
 		ProtectionDomain[] pdsImplied;
 		Permission[] permsImplied;
@@ -687,7 +687,7 @@ static boolean checkPermissionWithCache(
 			} else {
 				pdCombined = activeDC.combine((ProtectionDomain[])pdsContext, accNext.context);
 			}
-			checkPermissionWithCache(perm, activeDC, pdCombined, debug, accNext.doPrivilegedAcc, accNext.isLimitedContext, accNext.limitedPerms, accNext.nextStackAcc, cacheChecked);			
+			checkPermissionWithCache(perm, activeDC, pdCombined, debug, accNext.doPrivilegedAcc, accNext.isLimitedContext, accNext.limitedPerms, accNext.nextStackAcc, cacheChecked);
 		}
 		return false; // NOT implied by any limited permission
 	}
@@ -726,7 +726,7 @@ private boolean debugHelper(Permission perm) {
  *                  the permission to check
  * @exception   java.security.AccessControlException
  *                  thrown when perm is not granted.
- * @exception   NullPointerException 
+ * @exception   NullPointerException
  *                  if perm is null
  */
 public void checkPermission(Permission perm) throws AccessControlException {

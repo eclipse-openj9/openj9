@@ -23,7 +23,7 @@
 
 /**
  * Defines API for creating diagnostic dump files, querying and controlling OS logging,
- * querying Java heap and OS memory stats, and controlling and logging trace file output. 
+ * querying Java heap and OS memory stats, and controlling and logging trace file output.
  */
 @SuppressWarnings("module")
 module openj9.jvm {

@@ -27,7 +27,7 @@ import com.ibm.oti.vm.J9UnmodifiableClass;
 @J9UnmodifiableClass
 class VarHandleInternal {
 	/*[IF ]*/
-	/* Methods with VarHandle send target 
+	/* Methods with VarHandle send target
 	 * The 'ignored' object parameter is required to work around a javac bug
 	 * which will be fixed in b141.
 	 */

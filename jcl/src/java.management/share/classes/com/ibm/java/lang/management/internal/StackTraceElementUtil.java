@@ -32,7 +32,7 @@ import javax.management.openmbean.OpenType;
 import javax.management.openmbean.SimpleType;
 
 /**
- * Support for the {@link StackTraceElement} class. 
+ * Support for the {@link StackTraceElement} class.
  */
 public final class StackTraceElementUtil {
 
@@ -71,9 +71,9 @@ public final class StackTraceElementUtil {
 
 	private static SoftReference<String[]> methodNameCache = null;
 	private static SoftReference<String[]> returnTypeCache = null;
-	/* 
-	 * the following three methods, fromArray, toCompositeData, and getCompositeType 
-	 * must respect the ordering for the methods 
+	/*
+	 * the following three methods, fromArray, toCompositeData, and getCompositeType
+	 * must respect the ordering for the methods
 	 */
 	private static String[] getMethodNames() {
 		String[] methodNames = null;
@@ -81,17 +81,17 @@ public final class StackTraceElementUtil {
 			methodNames = methodNameCache.get();
 		}
 		if (null == methodNames) {
-			methodNames =new String[] {"className",  //$NON-NLS-1$ 
-					"methodName", //$NON-NLS-1$ 
-					"fileName",  //$NON-NLS-1$ 
-					"lineNumber",  //$NON-NLS-1$ 
-					"nativeMethod", //$NON-NLS-1$ 
+			methodNames =new String[] {"className",  //$NON-NLS-1$
+					"methodName", //$NON-NLS-1$
+					"fileName",  //$NON-NLS-1$
+					"lineNumber",  //$NON-NLS-1$
+					"nativeMethod", //$NON-NLS-1$
 					/*[IF Sidecar19-SE]*/
-					"moduleName",  //$NON-NLS-1$ 
-					"moduleVersion",  //$NON-NLS-1$ 
-					"classLoaderName" //$NON-NLS-1$ 
+					"moduleName",  //$NON-NLS-1$
+					"moduleVersion",  //$NON-NLS-1$
+					"classLoaderName" //$NON-NLS-1$
 					/*[ENDIF]*/
-			}; 
+			};
 			methodNameCache = new SoftReference<>(methodNames);
 		}
 		return methodNames;
@@ -102,7 +102,7 @@ public final class StackTraceElementUtil {
 		if (null != returnTypeCache) {
 			returnTypes = returnTypeCache.get();
 		}
-		if (null == returnTypes) { 
+		if (null == returnTypes) {
 			returnTypes = new String[] {
 				"java.lang.String", //$NON-NLS-1$
 				"java.lang.String", //$NON-NLS-1$
@@ -122,14 +122,14 @@ public final class StackTraceElementUtil {
 
 	private static Object[] getValues(StackTraceElement element) {
 		Object[] values = {
-				element.getClassName(), 
+				element.getClassName(),
 				element.getMethodName(),
-				element.getFileName(), 
+				element.getFileName(),
 				Integer.valueOf(element.getLineNumber()),
 				Boolean.valueOf(element.isNativeMethod()),
 				/*[IF Sidecar19-SE]*/
-				element.getModuleName(), 
-				element.getModuleVersion(), 
+				element.getModuleName(),
+				element.getModuleVersion(),
 				element.getClassLoaderName()
 				/*[ENDIF]*/
 				};
@@ -205,7 +205,7 @@ public final class StackTraceElementUtil {
 				/*[ENDIF]*/
 				StackTraceElement element = new StackTraceElement(
 						/*[IF Sidecar19-SE]*/
-						moduleNameVal, 
+						moduleNameVal,
 						moduleVersionVal,
 						classLoaderNameVal,
 						/*[ENDIF]*/
@@ -232,7 +232,7 @@ public final class StackTraceElementUtil {
 					SimpleType.STRING, SimpleType.STRING,SimpleType.STRING,
 					/*[ENDIF]*/
 					};
-		
+
 			try {
 				compositeType = new CompositeType(
 						StackTraceElement.class.getName(),

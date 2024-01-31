@@ -35,7 +35,7 @@ import sun.misc.Unsafe;
 import sun.reflect.CallerSensitive;
 import sun.reflect.ConstantPool;
 /*[ENDIF]*/
- 
+
 /**
  * Represents the running virtual machine. All VM specific API
  * are implemented on this class.
@@ -50,7 +50,7 @@ public final class VM {
 	public static final int OBJECT_HEADER_SHAPE_MASK;
 	public static final int OBJECT_HEADER_SIZE;
 	public static final int FJ9OBJECT_SIZE;
-	
+
 	public static final int J9_GC_WRITE_BARRIER_TYPE;
 	public static final int J9_GC_WRITE_BARRIER_TYPE_NONE;
 	public static final int J9_GC_WRITE_BARRIER_TYPE_ALWAYS;
@@ -72,7 +72,7 @@ public final class VM {
 	public static final int J9_GC_POLICY_BALANCED;
 	public static final int J9_GC_POLICY_METRONOME;
 	public static final int J9_GC_POLICY_NOGC;
-	
+
 	public static final int J9CLASS_INSTANCESIZE_OFFSET;
 	public static final int J9CLASS_INSTANCE_DESCRIPTION_OFFSET;
 	public static final int J9CLASS_LOCK_OFFSET_OFFSET;
@@ -83,16 +83,16 @@ public final class VM {
 	public static final int J9CLASS_SUPERCLASSES_OFFSET;
 	public static final int J9CLASS_ROMCLASS_OFFSET;
 	public static final int J9CLASS_SIZE;
-	
+
 	public static final int J9_JAVA_CLASS_DEPTH_MASK;
 	public static final int J9_JAVA_CLASS_MASK;
-	
+
 	public static final int J9ROMCLASS_MODIFIERS_OFFSET;
-	
+
 	public static final int ADDRESS_SIZE;
 
 	public static final int J9_ACC_CLASS_ARRAY;
-	
+
 	public static final int J9_ACC_CLASS_INTERNAL_PRIMITIVE_TYPE;
 
 	public static final int J9CLASS_INIT_SUCCEEDED;
@@ -101,25 +101,25 @@ public final class VM {
 	 *  - J9_JIT_STRING_DEDUP_POLICY_DISABLED
 	 *  - J9_JIT_STRING_DEDUP_POLICY_FAVOUR_HIGHER
 	 *  - J9_JIT_STRING_DEDUP_POLICY_FAVOUR_LOWER
-	 */	
+	 */
 	public static final int J9_JIT_STRING_DEDUP_POLICY;
-	
+
 	/* Hint values for J9_JIT_STRING_DEDUP_POLICY */
 	public static final int J9_JIT_STRING_DEDUP_POLICY_DISABLED = 0;
 	public static final int J9_JIT_STRING_DEDUP_POLICY_FAVOUR_LOWER = 1;
 	public static final int J9_JIT_STRING_DEDUP_POLICY_FAVOUR_HIGHER = 2;
-	
+
 	/* Determines whether String compression is enabled at VM startup */
 	public static final boolean J9_STRING_COMPRESSION_ENABLED;
-	
+
 	public static final int OBJECT_HEADER_HAS_BEEN_MOVED_IN_CLASS;
-	
+
 	public static final boolean IS_BIG_ENDIAN;
-	
+
 	public static final int J9_CLASSLOADER_TYPE_OTHERS;
 	public static final int J9_CLASSLOADER_TYPE_BOOT;
 	public static final int J9_CLASSLOADER_TYPE_PLATFORM;
-	
+
 	/* Lock reservation */
 	public static final int J9CLASS_RESERVABLE_LOCK_WORD_INIT;
 	public static final int OBJECT_HEADER_LOCK_RESERVED;
@@ -145,7 +145,7 @@ public final class VM {
 		OBJECT_HEADER_SHAPE_MASK = 0;
 		OBJECT_HEADER_SIZE = 0;
 		FJ9OBJECT_SIZE = 0;
-		
+
 		J9_GC_WRITE_BARRIER_TYPE = 0;
 		J9_GC_WRITE_BARRIER_TYPE_NONE = 0;
 		J9_GC_WRITE_BARRIER_TYPE_ALWAYS = 0;
@@ -167,7 +167,7 @@ public final class VM {
 		J9_GC_POLICY_BALANCED = 0;
 		J9_GC_POLICY_METRONOME = 0;
 		J9_GC_POLICY_NOGC = 0;
-		
+
 		J9CLASS_INSTANCESIZE_OFFSET = 0;
 		J9CLASS_INSTANCE_DESCRIPTION_OFFSET = 0;
 		J9CLASS_LOCK_OFFSET_OFFSET = 0;
@@ -178,24 +178,24 @@ public final class VM {
 		J9CLASS_SUPERCLASSES_OFFSET = 0;
 		J9CLASS_ROMCLASS_OFFSET = 0;
 		J9CLASS_SIZE = 0;
-		
+
 		J9_JAVA_CLASS_DEPTH_MASK = 0;
 		J9_JAVA_CLASS_MASK = 0;
-		
+
 		J9ROMCLASS_MODIFIERS_OFFSET = 0;
-		
+
 		ADDRESS_SIZE = 0;
-		
+
 		J9_ACC_CLASS_INTERNAL_PRIMITIVE_TYPE = 0;
 		J9_ACC_CLASS_ARRAY = 0;
 		J9CLASS_INIT_SUCCEEDED = 0;
-		
+
 		J9_JIT_STRING_DEDUP_POLICY = 0;
-		
+
 		J9_STRING_COMPRESSION_ENABLED = false;
-		
+
 		OBJECT_HEADER_HAS_BEEN_MOVED_IN_CLASS = 0;
-		
+
 		IS_BIG_ENDIAN = false;
 
 		J9_CLASSLOADER_TYPE_OTHERS = 0;
@@ -235,7 +235,7 @@ static final native Class getStackClass(int depth);
  * Returns the ClassLoader of the method (including natives) at the
  * specified depth on the stack of the calling thread. Frames representing
  * the VM implementation of java.lang.reflect are not included in the list.
- * 
+ *
  * This is not a public method as it can return the bootstrap class
  * loader, which should not be accessed by non-bootstrap classes.
  *
@@ -246,9 +246,9 @@ static final native Class getStackClass(int depth);
  *	 <li> The item at depth zero is the caller of this method </li>
  * </ul>
  *
- * @param depth the stack depth of the requested ClassLoader 
+ * @param depth the stack depth of the requested ClassLoader
  * @return the ClassLoader at the specified depth
- * 
+ *
  * @see java.lang.ClassLoader#getStackClassLoader
  */
 @CallerSensitive
@@ -260,28 +260,28 @@ static final native ClassLoader getStackClassLoader(int depth);
  * @param loader
  *            ClassLoader the ClassLoader instance
  * @param loaderType
- *            J9_CLASSLOADER_TYPE_BOOT     - bootstrap classloader 
- *            J9_CLASSLOADER_TYPE_PLATFORM - platform classloader 
+ *            J9_CLASSLOADER_TYPE_BOOT     - bootstrap classloader
+ *            J9_CLASSLOADER_TYPE_PLATFORM - platform classloader
  *            J9_CLASSLOADER_TYPE_OTHERS   - other classloader
  * @param parallelCapable
  *            true if the loader has registered as parallel capable
  */
 public final static native void initializeClassLoader(ClassLoader loader, int loaderType, boolean parallelCapable);
 
-public final static native long getProcessId(); 
-public final static native long getUid(); 
+public final static native long getProcessId();
+public final static native long getUid();
 /**
  * Return whether or not a ClassLoader is the bootstrap class loader.
  *
  * @param 		loader the ClassLoader instance to test
  * @return	true if the specified ClassLoader is the bootstrap ClassLoader
  */
-static private final native boolean isBootstrapClassLoader(ClassLoader loader); 
+static private final native boolean isBootstrapClassLoader(ClassLoader loader);
 
 /**
- * Ensures that the caller of the method where this check is made is a bootstrap class. 
- * 
- * @throws SecurityException if the caller of the method where this check is made is not a bootstrap class 
+ * Ensures that the caller of the method where this check is made is a bootstrap class.
+ *
+ * @throws SecurityException if the caller of the method where this check is made is not a bootstrap class
  */
 @CallerSensitive
 public static void ensureCalledFromBootstrapClass() {
@@ -316,7 +316,7 @@ public static void setClassPathImpl(ClassLoader classLoader, String classPath) {
 
 /**
  * Leaving this method around for older Eclipse installations which may call it.
- * 
+ *
  * @deprecated	No longer used for hot-swap
  */
 @Deprecated
@@ -352,14 +352,14 @@ public static void initializeVM() {
 /**
  * Internal use only. Shutdown the JCL. Do not create new Threads.
  * If shutting down without calling Runtime.exit(),
- * or Runtime.halt(), 
+ * or Runtime.halt(),
  * daemon threads will still be running. If shutting down from a call
  * to System.exit(), JNI DestroyJavaVM(),
  * or Runtime.halt(),
  * all threads will still be running.
  * Called after java.lang.Runtime shutdownHooks have been run,
- * and after any finalization.  
- * 
+ * and after any finalization.
+ *
  * @see #deleteOnExit()
  * @see #closeJars()
  */
@@ -380,10 +380,10 @@ static final int CPE_TYPE_UNUSABLE = 5;
  * 		CPE_TYPE_JAR
  * 		CPE_TYPE_JIMAGE
  *		CPE_TYPE_UNUSABLE
- * 
+ *
  * @param classLoader the ClassLoader
  * @param cpIndex the index on the class path
- * 
+ *
  * @return a int which specifies the class path entry type
  */
 static final native int getClassPathEntryType(Object classLoader, int cpIndex);
@@ -416,7 +416,7 @@ private static native byte[][] getVMArgsImpl();
 
 /**
  * Return the number of entries on the bootclasspath.
- * 
+ *
  * @return an int which is the number of entries on the bootclasspath
  */
 static native int getClassPathCount();
@@ -424,9 +424,9 @@ static native int getClassPathCount();
 /**
  * Return the specified bootclasspath entry. Directory entries
  * are terminated with a file separator character.
- * 
- * @param index the index of the bootclasspath entry 
- * 
+ *
+ * @param index the index of the bootclasspath entry
+ *
  * @return a byte array containing the bootclasspath entry
  * 			specified in the vm options
  */
@@ -435,12 +435,12 @@ static native byte[] getPathFromClassPath(int index);
 /**
  * This method will cause the GC to do a local collection.
  */
-public static native void localGC();  
+public static native void localGC();
 
 /**
  * This method will cause the GC to do a global collection.
  */
-public static native void globalGC();  
+public static native void globalGC();
 
 /**
  * Answer if native implementations should be used.
@@ -458,9 +458,9 @@ public final static boolean useNatives() {
  * instances or the operation is determined to be invalid during due to
  * specific vm states.
  * <p>
- * 
+ *
  * @return a integer with a count of all the instances of clazz in the heal
- * 
+ *
  * @param clazz
  *            the class which is being looked for
  * @param all
@@ -478,27 +478,27 @@ static private native int allInstances(Class clazz, Object[] all);
  * match and the bytes are not already set to the same value The bytes being
  * set already could happen frequently as this primitive will be used
  * repeatedly to remerge strings in the runtime
- * 
+ *
  * @param s1
  *            the original string, this string is unmodified by the
  *            primitive
  * @param s2
  *            the duplicateString string, this string is modified by the
  *            primitive if the offsets match.
- * 
- * 
+ *
+ *
  */
 static private native int setCommonData(String s1, String s2);
 
 /**
  * Find allInstances of String in the system and return an array containing
  * them.
- * 
+ *
  * @return return an array containing all the strings in the system. The
  *         array may contain NULL references.
  */
-static private String[] allStrings() { 
-	int count = allInstances(String.class, null); 
+static private String[] allStrings() {
+	int count = allInstances(String.class, null);
 	String[] result = new String[count];
 	/*
 	 * if the number of strings is zero then don't bother with a second
@@ -507,7 +507,7 @@ static private String[] allStrings() {
 	 * constructed.
 	 */
 	if (count != 0) {
-		allInstances(String.class, result); 
+		allInstances(String.class, result);
 	}
 	return result;
 }
@@ -517,8 +517,8 @@ static private String[] allStrings() {
  * This call is a hint to the VM that it should attempt to optimized String
  * footprint.
  * If the VM is in a state where the merging is not possible, the operation may be
- * quietly declined in which case the number of strings merged is 0. 
- * 
+ * quietly declined in which case the number of strings merged is 0.
+ *
  * @return a count of number of merged duplicate strings performed by the merging call removeStringDuplicates.
  */
 public static int removeStringDuplicates() {

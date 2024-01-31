@@ -32,7 +32,7 @@ import com.ibm.jzos.ZFile;
 /**
  * A wrapper class which converts z/OS record I/O to random access image input
  * stream I/O
- * 
+ *
  * @author ajohnson
  */
 public class MVSImageInputStream extends ImageInputStreamImpl {
@@ -44,7 +44,7 @@ public class MVSImageInputStream extends ImageInputStreamImpl {
 
 	/**
 	 * Open the file
-	 * 
+	 *
 	 * @param filename
 	 * @throws FileNotFoundException
 	 */
@@ -77,7 +77,7 @@ public class MVSImageInputStream extends ImageInputStreamImpl {
 
 		int recordOffset = (int) (streamPos % recordLength); // offset within the record
 		int n = 0;
-		
+
 		if (recordOffset != 0) {
 			// We can only read one record's worth, so limit the length of the temp buffer to that
 			if (recordOffset + len > recordLength) {

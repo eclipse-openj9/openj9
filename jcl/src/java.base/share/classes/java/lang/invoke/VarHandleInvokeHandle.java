@@ -26,7 +26,7 @@ import java.lang.invoke.VarHandle.AccessMode;
 
 /**
  * Base class for VarHandleInvokers.
- * 
+ *
  * Invokers are the MethodHandle-subclasses required to implement
  * the invokeExact and invoke MethodHandle combinators.
  */

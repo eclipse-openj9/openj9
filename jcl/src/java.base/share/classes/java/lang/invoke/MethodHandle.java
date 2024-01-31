@@ -79,17 +79,17 @@ import com.ibm.oti.vm.VMLangAccess;
  * <li>invokeWithArguments - using a Object array to hold the correct number of arguments</li>
  * </ol>
  * <p>
- * In the case of #invokeExact, if the arguments do not match, based on a check of the MethodHandle's {@link #type()}, 
+ * In the case of #invokeExact, if the arguments do not match, based on a check of the MethodHandle's {@link #type()},
  * a WrongMethodTypeException will be thrown.
  * <p>
- * In the case of #invoke, each of the arguments will be converted to the correct type, before the call is initiated. 
+ * In the case of #invoke, each of the arguments will be converted to the correct type, before the call is initiated.
  * If the conversion cannot occur, a WrongMethodTypeException will be thrown.
  * <p>
  * Similar to #invoke, #invokeWithArguments will convert each of the arguments and place them on the stack before
  * the call is initiated. If the conversion cannot occur, a WrongMethodTypeException will be thrown.
  * <p>
  * A MethodHandle can be created using the MethodHandles factory.
- * 
+ *
  * @since 1.7
  */
 @VMCONSTANTPOOL_CLASS
@@ -138,9 +138,9 @@ public abstract class MethodHandle
 
 /*[IF Sidecar18-SE-OpenJ9]
 	MethodHandle asTypeCache = null;
-	LambdaForm form = null;	
-/*[ENDIF]*/	
-	
+	LambdaForm form = null;
+/*[ENDIF]*/
+
 	static final int PUBLIC_FINAL_NATIVE = Modifier.PUBLIC | Modifier.FINAL | Modifier.NATIVE | 0x1000 /* Synthetic */;
 
 	private static final int CUSTOM_THUNK_INVOCATION_COUNT = 1000;
@@ -187,14 +187,14 @@ public abstract class MethodHandle
 		thunks = ThunkTuple.copyOf(thunks);
 		requestCustomThunkFromJit(thunks);
 	}
-	
+
 	private native void requestCustomThunkFromJit(ThunkTuple tt);
 
 	@VMCONSTANTPOOL_FIELD
 	final MethodType type;		/* Type of the MethodHandle */
 	@VMCONSTANTPOOL_FIELD
 	final byte kind;				/* The kind (STATIC/SPECIAL/etc) of this MethodHandle */
-	
+
 	@VMCONSTANTPOOL_FIELD
 	int invocationCount; /* used to determine how many times the MH has been invoked*/
 
@@ -250,14 +250,14 @@ public abstract class MethodHandle
 	/*[IF Sidecar19-SE]*/
 	private static MethodHandle asType(MethodHandle mh, MethodType newType, VarHandle varHandle) { return mh.asType(newType.appendParameterTypes(varHandle.getClass())); }
 	/*[ENDIF]*/
-	
+
 	// Handy array to use to eliminate some corner cases without allocating new objects
 	static final Class<?>[] EMPTY_CLASS_ARRAY = {};
 
 	// }}} JIT support
-	
+
 	CacheKey cacheKey;			/* Strong reference to a CacheKey to ensure the WeakHashMap doesn't immediately collect the item */
-	
+
 	MethodHandle(MethodType type, byte kind, Object thunkArg) {
 		this.kind = kind;
 		/* Must be called last as it may use previously set fields to modify the MethodType */
@@ -268,7 +268,7 @@ public abstract class MethodHandle
 		/* Touch thunks.invokeExactThunk so that its constant pool entry is resolved by the time it is used by the JIT */
 		long i = thunks.invokeExactThunk;
 	}
-	
+
 	MethodHandle(MethodHandle original, MethodType newType) {
 		this.kind = original.kind;
 		this.type = newType;
@@ -276,59 +276,59 @@ public abstract class MethodHandle
 		this.thunks = original.thunks;
 		this.previousAsType = original.previousAsType;
 	}
-	
+
 	Class<?> getDefc() throws InternalError {
 		/*[MSG "K05da", "Method is invalid on non-primitive MethodHandles."]*/
 		throw new InternalError(Msg.getString("K05da")); //$NON-NLS-1$
 	}
-	
+
 	Class<?> getReferenceClass() throws InternalError {
 		/*[MSG "K05da", "Method is invalid on non-primitive MethodHandles."]*/
 		throw new InternalError(Msg.getString("K05da")); //$NON-NLS-1$
 	}
-	
+
 	Class<?> getSpecialCaller() throws InternalError {
 		/*[MSG "K05da", "Method is invalid on non-primitive MethodHandles."]*/
 		throw new InternalError(Msg.getString("K05da")); //$NON-NLS-1$
 	}
-	
+
 	String getMethodName() throws InternalError {
 		/*[MSG "K05da", "Method is invalid on non-primitive MethodHandles."]*/
 		throw new InternalError(Msg.getString("K05da")); //$NON-NLS-1$
 	}
-	
+
 	int getModifiers() throws InternalError {
 		/*[MSG "K05da", "Method is invalid on non-primitive MethodHandles."]*/
 		throw new InternalError(Msg.getString("K05da")); //$NON-NLS-1$
 	}
-	
+
 	/*
 	 * Marker interface for javac to recognize the polymorphic signature of the annotated methods.
 	 */
 	@Retention(RetentionPolicy.RUNTIME)
 	@interface PolymorphicSignature{};
-	
+
 	@Retention(RetentionPolicy.RUNTIME)
 	@Target({ElementType.METHOD})
 	@interface FrameIteratorSkip{};
-	
+
 	/**
-	 * Invoke the receiver MethodHandle against the supplied arguments.  The types of the arguments 
+	 * Invoke the receiver MethodHandle against the supplied arguments.  The types of the arguments
 	 * must be an exact match for the MethodType of the MethodHandle.
-	 * 
+	 *
 	 * @param args The argument list for the polymorphic signature call
-	 * 
+	 *
 	 * @return The return value of the method
 	 * @throws Throwable - To ensure type safety, must be marked as throwing Throwable.
 	 * @throws WrongMethodTypeException - If the resolved method type is not exactly equal to the MethodHandle's type
 	 */
 	public final native @PolymorphicSignature Object invokeExact(Object... args) throws Throwable, WrongMethodTypeException;
-	
+
 	/**
-	 * Invoke the receiver MethodHandle against the supplied arguments.  If the types of the arguments 
-	 * are not an exact match for the MethodType of the MethodHandle, conversions will be applied as 
+	 * Invoke the receiver MethodHandle against the supplied arguments.  If the types of the arguments
+	 * are not an exact match for the MethodType of the MethodHandle, conversions will be applied as
 	 * possible.  The signature and the MethodHandle's MethodType must have the same number of arguments.
-	 * 
+	 *
 	 * @param args The argument list for the polymorphic signature call
 	 * @return The return value of the method.  May be converted according to the conversion rules.
 	 * @throws Throwable - To ensure type safety, must be marked as throwing Throwable.
@@ -336,11 +336,11 @@ public abstract class MethodHandle
 	 * @throws ClassCastException - if a conversion fails
 	 */
 	public final native @PolymorphicSignature Object invoke(Object... args) throws Throwable, WrongMethodTypeException, ClassCastException;
-	
+
 	/**
 	 * The MethodType of the MethodHandle.  Invocation must match this MethodType.
 	 *
-	 * @return the MethodType of the MethodHandle.  
+	 * @return the MethodType of the MethodHandle.
 	 */
 	public MethodType type() {
 		return type;
@@ -348,51 +348,51 @@ public abstract class MethodHandle
 
 	/**
 	 * Produce a MethodHandle that has an array of type <i>arrayClass</i> as its last argument and replaces the
-	 * array with <i>spreadCount</i> arguments from the array before calling the original MethodHandle.  The 
-	 * MethodType of new the methodhandle and the original methodhandle will differ only in the regards to the 
+	 * array with <i>spreadCount</i> arguments from the array before calling the original MethodHandle.  The
+	 * MethodType of new the methodhandle and the original methodhandle will differ only in the regards to the
 	 * last arguments.
 	 * <p>
 	 * The array must contain exactly <i>spreadCount</i> arguments to be passed to the original methodhandle.  The array
-	 * may be null in the case when <i>spreadCount</i> is zero.  Incorrect argument array size will cause the method to 
+	 * may be null in the case when <i>spreadCount</i> is zero.  Incorrect argument array size will cause the method to
 	 * throw an <code>IllegalArgumentException</code> instead of invoking the target.
-	 * 
+	 *
 	 * @param arrayClass - the source array for the spread arguments
 	 * @param spreadCount - how many arguments to spread from the arrayClass
 	 * @return a MethodHandle able to replace to the last parameter with <i>spreadCount</i> number of arguments
 	 * @throws IllegalArgumentException - if arrayClass is not an array, the methodhandle has too few or too many parameters to satisfy spreadCount
-	 * @throws WrongMethodTypeException - if it cannot convert from one MethodType to the new type. 
+	 * @throws WrongMethodTypeException - if it cannot convert from one MethodType to the new type.
 	 */
 	public MethodHandle asSpreader(Class<?> arrayClass, int spreadCount) throws IllegalArgumentException, WrongMethodTypeException {
 		return asSpreaderCommon(type.parameterCount() - spreadCount, arrayClass, spreadCount);
 	}
-	
+
 	/*[IF Sidecar19-SE]*/
 	/**
-	 * Produce a MethodHandle that has an array of type <i>arrayClass</i> as its argument at the specified position 
+	 * Produce a MethodHandle that has an array of type <i>arrayClass</i> as its argument at the specified position
 	 * and replaces the array with <i>spreadCount</i> arguments from the array before calling the original MethodHandle.
-	 * The MethodType of new the methodhandle and the original methodhandle will differ only in the regards to the 
+	 * The MethodType of new the methodhandle and the original methodhandle will differ only in the regards to the
 	 * argument at the specified position.
 	 * <p>
 	 * The array must contain exactly <i>spreadCount</i> arguments to be passed to the original methodhandle.  The array
-	 * may be null in the case when <i>spreadCount</i> is zero.  Incorrect argument array size will cause the method to 
+	 * may be null in the case when <i>spreadCount</i> is zero.  Incorrect argument array size will cause the method to
 	 * throw an <code>IllegalArgumentException</code> instead of invoking the target.
-	 * 
+	 *
 	 * @param spreadPosition - the starting position to spread
 	 * @param arrayClass - the source array for the spread arguments
 	 * @param spreadCount - how many arguments to spread from the arrayClass
 	 * @return a MethodHandle able to replace to the specified parameter with <i>spreadCount</i> number of arguments
 	 * @throws IllegalArgumentException - if arrayClass is not an array, the methodhandle has too few or too many parameters to satisfy spreadCount
-	 * @throws WrongMethodTypeException - if it cannot convert from one MethodType to the new type. 
+	 * @throws WrongMethodTypeException - if it cannot convert from one MethodType to the new type.
 	 */
 	public MethodHandle asSpreader(int spreadPosition, Class<?> arrayClass, int spreadCount) throws IllegalArgumentException, WrongMethodTypeException {
 		return asSpreaderCommon(spreadPosition, arrayClass, spreadCount);
 	}
 	/*[ENDIF]*/
-	
+
 	/* The common code shared by asSpreader() with the last argument and with the argument at the specified position */
 	private final MethodHandle asSpreaderCommon(int spreadPosition, Class<?> arrayClass, int spreadCount) throws IllegalArgumentException, WrongMethodTypeException {
 		final int length = type.parameterCount();
-		
+
 		if (!arrayClass.isArray() || (spreadPosition < 0) || (spreadPosition > length)) {
 			throw new IllegalArgumentException();
 		}
@@ -406,36 +406,36 @@ public abstract class MethodHandle
 			collectType = type.insertParameterTypes(spreadPosition, arrayClass);
 		} else {
 			Class<?> componentType = arrayClass.getComponentType();
-			
+
 			collectType = type.changeParameterType(spreadPosition, arrayClass);
 			if (spreadCount > 1) {
 				/* Drop the remaining parameters by (spreadCount - 1) right after the specified position */
 				collectType = collectType.dropParameterTypes(spreadPosition + 1, spreadPosition + spreadCount);
 			}
-			
+
 			Class<?>[] parameters = type.ptypes().clone();
 			Arrays.fill(parameters, spreadPosition, spreadPosition + spreadCount, componentType);
 			adapted = asType(MethodType.methodType(type.returnType(), parameters));
 		}
 		return new SpreadHandle(adapted, collectType, arrayClass, spreadCount, spreadPosition);
 	}
-	
+
 
 	/**
 	 * Returns a MethodHandle that collects the requested incoming arguments, which must match the
 	 * types in MethodType incomingArgs, into an array of <i>arrayClass</i>, called T.
-	 * 
+	 *
 	 * This method can only be called on MethodHandles that have type() such that their last parameter
-	 * can be assigned to from an instance of <i>arrayClass</i>.  An IllegalArgumentException will be 
+	 * can be assigned to from an instance of <i>arrayClass</i>.  An IllegalArgumentException will be
 	 * thrown if this is not the case.
-	 * 
+	 *
 	 * This take a MH with type (Something, Something, K)R and presents a MethodType with the form
 	 * (Something, Something, T, T, T)R. Where K is assignable to from an array of <i>arrayClass</i> T.
-	 * 
+	 *
 	 * @param arrayClass - the class of the collect array.  Usually matches the type of the last argument.
 	 * @param collectCount - the number of arguments of type 'T' to collect
 	 * @return a MethodHandle which will collect <i>collectCount</i> arguments and pass them as the final argument
-	 * 
+	 *
 	 * @throws IllegalArgumentException if arrayClass is not an array or is not assignable to the last parameter of the MethodHandle, or collectCount is an invalid array size (less than 0 or more than 254)
 	 * @throws WrongMethodTypeException if an asType call would fail when converting the final parameter to arrayClass
 	 * @throws NullPointerException if arrayClass is null
@@ -443,17 +443,17 @@ public abstract class MethodHandle
 	public MethodHandle asCollector(Class<?> arrayClass, int collectCount) throws IllegalArgumentException, WrongMethodTypeException, NullPointerException {
 		return asCollectorCommon(type.parameterCount() - 1, arrayClass, collectCount);
 	}
-	
+
 	/*[IF Sidecar19-SE]*/
 	/**
 	 * Returns a MethodHandle that collects the requested incoming arguments, which must match the
 	 * types in MethodType incomingArgs, into an array of <i>arrayClass</i>, called T.
-	 * 
+	 *
 	 * @param collectPosition - the starting position for the arguments to collect.
 	 * @param arrayClass - the class of the collect array.  It matches the type of the argument at the specified position.
 	 * @param collectCount - the number of arguments of type 'T' to collect
 	 * @return a MethodHandle which will collect <i>collectCount</i> arguments and pass them as the final argument
-	 * 
+	 *
 	 * @throws IllegalArgumentException if arrayClass is not an array or is not assignable to the last parameter of the MethodHandle, or collectCount is an invalid array size (less than 0 or more than 254)
 	 * @throws WrongMethodTypeException if an asType call would fail when converting the final parameter to arrayClass
 	 * @throws NullPointerException if arrayClass is null
@@ -462,7 +462,7 @@ public abstract class MethodHandle
 		return asCollectorCommon(collectPosition, arrayClass, collectCount);
 	}
 	/*[ENDIF]*/
-	
+
 	/* The common code shared by asCollector() with the last argument and with the argument at the specified position */
 	private final MethodHandle asCollectorCommon(int collectPosition, Class<?> arrayClass, int collectCount) throws IllegalArgumentException, WrongMethodTypeException, NullPointerException {
 		int parameterCount = type.parameterCount();
@@ -479,25 +479,25 @@ public abstract class MethodHandle
 		}
 		return new CollectHandle(asType(type.changeParameterType(collectPosition, arrayClass)), collectCount, collectPosition);
 	}
-	
+
 	@VMCONSTANTPOOL_FIELD
 	private MethodHandle previousAsType;
 
 	/**
-	 * Returns a MethodHandle that presents as being of MethodType newType.  It will 
+	 * Returns a MethodHandle that presents as being of MethodType newType.  It will
 	 * convert the arguments used to match type().  If a conversion is invalid, a
 	 * ClassCastException will be thrown.
-	 * 
-	 * If newType == type(), then the original MethodHandle may be returned. 
-	 * 
+	 *
+	 * If newType == type(), then the original MethodHandle may be returned.
+	 *
 	 * TODO: Describe the type conversion rules here.
 	 * If the return type T1 is void, any returned value is discarded
 	 * If the return type T0 is void and T1 a reference, a null value is introduced.
-	 * If the return type T0 is void and T1 a primitive, a zero value is introduced. 
-	 *  
+	 * If the return type T0 is void and T1 a primitive, a zero value is introduced.
+	 *
 	 * @param newType the MethodType for invoking this method with
 	 * @return A MethodHandle with MethodType newType
-	 * 
+	 *
 	 * @throws ClassCastException if any of the requested coercions are invalid.
 	 */
 	public MethodHandle asType(MethodType newType) throws ClassCastException {
@@ -528,18 +528,18 @@ public abstract class MethodHandle
 
 	/* Unused class parameter is necessary to work around a javac bug */
 	private static final native int vmRefFieldOffset(Class<?> unused);
-	
-	
+
+
 	/**
 	 * Invoke the MethodHandle using an Object[] of arguments.  The array must contain at exactly type().parameterCount() arguments.
-	 * 
+	 *
 	 * Each of the arguments in the array will be coerced to the appropriate type, if possible, based on the MethodType.
-	 * 
+	 *
 	 * @param args An array of Arguments, with length at exactly type().parameterCount() to be used in the call.
 	 * @return An Object
-	 * 
+	 *
 	 * @throws Throwable May throw anything depending on the receiver MethodHandle.
-	 * @throws WrongMethodTypeException if the target cannot be adjusted to the number of Objects being passed 
+	 * @throws WrongMethodTypeException if the target cannot be adjusted to the number of Objects being passed
 	 * @throws ClassCastException if an argument cannot be converted
 	 */
 	public Object invokeWithArguments(Object... args) throws Throwable, WrongMethodTypeException, ClassCastException {
@@ -558,7 +558,7 @@ public abstract class MethodHandle
 		}
 		return this.asSpreader(Object[].class, argsLength).invoke(args);
 	}
-	
+
 	private static WrongMethodTypeException newWrongMethodTypeException(MethodType type, Object[] args, int argsLength) {
 		Class<?>[] classes = new Class<?>[argsLength];
 		for (int i = 0; i < argsLength; i++) {
@@ -594,7 +594,7 @@ public abstract class MethodHandle
 					return MethodHandles.spreadInvoker(MethodType.genericMethodType(len), 0);
 			}
 		}
-		
+
 		final static MethodHandle spreader_0 = MethodHandles.spreadInvoker(MethodType.genericMethodType(0), 0);
 		final static MethodHandle spreader_1 = MethodHandles.spreadInvoker(MethodType.genericMethodType(1), 0);
 		final static MethodHandle spreader_2 = MethodHandles.spreadInvoker(MethodType.genericMethodType(2), 0);
@@ -603,33 +603,33 @@ public abstract class MethodHandle
 		final static MethodHandle spreader_5 = MethodHandles.spreadInvoker(MethodType.genericMethodType(5), 0);
 		final static MethodHandle spreader_6 = MethodHandles.spreadInvoker(MethodType.genericMethodType(6), 0);
 		final static MethodHandle spreader_7 = MethodHandles.spreadInvoker(MethodType.genericMethodType(7), 0);
-		
+
 	}
-	
+
 	/**
 	 * Helper method to call {@link #invokeWithArguments(Object[])}.
-	 * 
+	 *
 	 * @param args - An array of arguments, with length at exactly type().parameterCount() to be used in the call.
 	 * @return An Object
 	 * @throws Throwable May throw anything depending on the receiver MethodHandle.
-	 * @throws WrongMethodTypeException if the target cannot be adjusted to the number of Objects being passed 
+	 * @throws WrongMethodTypeException if the target cannot be adjusted to the number of Objects being passed
 	 * @throws ClassCastException if an argument cannot be converted
 	 * @throws NullPointerException if the args list is null
 	 */
 	public Object invokeWithArguments(List<?> args) throws Throwable, WrongMethodTypeException, ClassCastException, NullPointerException {
 		return invokeWithArguments(args.toArray());
 	}
-	
+
 	/**
 	 * Create an varargs collector adapter on this MethodHandle.
-	 * 
+	 *
 	 * For {@link #asVarargsCollector(Class)} MethodHandles, <i>invokeExact</i> requires that the arguments
 	 * exactly match the underlying MethodType.
 	 * <p>
 	 * <i>invoke</i> acts as normally unless the arities differ.  In that case, the trailing
 	 * arguments are converted as though by a call to {@link #asCollector(Class, int)} before invoking the underlying
 	 * methodhandle.
-	 * 
+	 *
 	 * @param arrayParameter - the type of the array to collect the arguments into
 	 * @return a varargs-collector methodhandle.
 	 * @throws IllegalArgumentException - if the arrayParameter is not an array class or cannot be assigned to the last parameter of the MethodType
@@ -647,26 +647,26 @@ public abstract class MethodHandle
 
 	/**
 	 * Determine whether this is an {@link #asVarargsCollector(Class)} MethodHandle.
-	 * 
+	 *
 	 * @return true if an {@link #asVarargsCollector(Class)} handle, false otherwise.
 	 */
 	public boolean isVarargsCollector() {
 		return (this instanceof VarargsCollectorHandle);
 	}
-	
+
 	/*[IF Sidecar19-SE]*/
 	/**
 	 * Return a MethodHandle that is wrapped with an asVarargsCollector adapter
 	 * if the handle is allowed to be variable arity.
-	 * 
+	 *
 	 * @param isVarArityNeeded - a boolean flag to tell whether the handle is converted to be variable arity or not.
 	 * @return a MethodHandle with variable arity or fixed arity if isVarArityNeeded is false
-	 * 
+	 *
 	 * @throws IllegalArgumentException if isVarArity is true but there is no trailing array parameter in the parameter list of the handle.
 	 */
 	public MethodHandle withVarargs(boolean isVarArityNeeded) throws IllegalArgumentException {
 		MethodHandle result = this;
-		
+
 		if (isVarArityNeeded) {
 			/* Convert the handle if initially not with variable arity */
 			if (!this.isVarargsCollector()) {
@@ -674,7 +674,7 @@ public abstract class MethodHandle
 				if (void.class == lastClass) { /* there were no arguments */
 					throw new IllegalArgumentException();
 				}
-				/* IllegalArgumentException will be thrown out from asVarargsCollector 
+				/* IllegalArgumentException will be thrown out from asVarargsCollector
 				 * if no trailing array parameter in this handle.
 				 */
 				result = this.asVarargsCollector(lastClass);
@@ -682,13 +682,13 @@ public abstract class MethodHandle
 		} else {
 			result = this.asFixedArity();
 		}
-		
+
 		return result;
 	}
 	/*[ENDIF]*/
 
 	/**
-	 * 
+	 *
 	 * @return Whether MethodHandles.revealDirect can be called on this MethodHandle
 	 */
 	boolean canRevealDirect() {
@@ -702,16 +702,16 @@ public abstract class MethodHandle
 	boolean directHandleOriginatedInFindVirtual() {
 		return false;
 	}
-	
+
 	/**
 	 * Return a fixed arity version of the current MethodHandle.
-	 * 
+	 *
 	 * <p>
 	 * This is identical to the current method handle if {@link #isVarargsCollector()} is false.
 	 * <p>
-	 * If the current method is a varargs collector, then the returned handle will be the same 
-	 * but without the varargs nature.  
-	 * 
+	 * If the current method is a varargs collector, then the returned handle will be the same
+	 * but without the varargs nature.
+	 *
 	 * @return a fixed arity version of the current method handle
 	 */
 	public MethodHandle asFixedArity() {
@@ -720,9 +720,9 @@ public abstract class MethodHandle
 
 /*[IF JAVA_SPEC_VERSION >= 12]*/
 	/**
-	 * Returns the nominal descriptor of this MethodHandle instance, or an empty Optional 
+	 * Returns the nominal descriptor of this MethodHandle instance, or an empty Optional
 	 * if construction is not possible.
-	 * 
+	 *
 	 * @return Optional with a nominal descriptor of MethodHandle instance
 	 */
 	public Optional<MethodHandleDesc> describeConstable() {
@@ -762,7 +762,7 @@ public abstract class MethodHandle
 					}
 					break;
 				case MethodHandleInfo.REF_newInvokeSpecial:
-					handleKind = DirectMethodHandleDesc.Kind.CONSTRUCTOR;	
+					handleKind = DirectMethodHandleDesc.Kind.CONSTRUCTOR;
 					break;
 				case MethodHandleInfo.REF_invokeInterface:
 					handleKind = DirectMethodHandleDesc.Kind.INTERFACE_VIRTUAL;
@@ -880,13 +880,13 @@ public abstract class MethodHandle
 		return true;
 	}
 	/**
-	 * Create an interception point to allow PermuteHandle to merge 
+	 * Create an interception point to allow PermuteHandle to merge
 	 * permute(permute(originalHandle, ...), ...).
 	 * This should only be directly called by:
 	 * <ul>
 	 * <li>{@link MethodHandles#permuteArguments(MethodHandle, MethodType, int...)}</i>
 	 * <li>{@link MethodHandles#insertArguments(MethodHandle, int, Object...)}</i>
-	 * </ul> 
+	 * </ul>
 	 */
 	MethodHandle permuteArguments(MethodType permuteType, int... permute) {
 		if (isUnnecessaryPermute(permuteType, permute)) {
@@ -923,7 +923,7 @@ public abstract class MethodHandle
 	final void dumpTo(java.io.PrintStream out) {
 		dumpTo(out, "", "", new java.util.HashSet()); //$NON-NLS-1$ //$NON-NLS-2$
 	}
-	
+
 	final void dumpTo(java.io.PrintStream out, String prefix, String label, java.util.Set<MethodHandle> alreadyDumped) {
 		boolean isRepeat = alreadyDumped.contains(this);
 		String id = super.toString();
@@ -959,11 +959,11 @@ public abstract class MethodHandle
 	}
 
 	/*[ENDIF]*/
-	
+
 	/*
 	 * Used to convert an invokehandlegeneric bytecode into an AsTypeHandle + invokeExact OR to
 	 * convert an InvokeGenericHandle into an AsTypeHandle.
-	 * 
+	 *
 	 * Allows us to only have the conversion logic for the AsTypeHandle and not worry about any
 	 * other similar conversions.
 	 */
@@ -978,7 +978,7 @@ public abstract class MethodHandle
 		}
 		return asType(newType);
 	}
-	
+
 	/*[IF ]*/
 	/*
 	 * Used to preserve the MH on the stack when avoiding the call-in for
@@ -1019,7 +1019,7 @@ public abstract class MethodHandle
 	private MethodHandle foldHandlePlaceHolder() {
 		return this;
 	}
-	
+
 	/*[IF ]*/
 	/*
 	 * Used to preserve the MH on the stack when avoiding the call-in for
@@ -1032,11 +1032,11 @@ public abstract class MethodHandle
 	private MethodHandle guardWithTestPlaceHolder() {
 		return this;
 	}
-	
+
 	/*[IF ]*/
 	/*
-	 * Used to preserve the MH, index, parentOffset and nextOffset on the 
-	 * stack when avoiding the call-in for FilterArgumentHandle.  Must   
+	 * Used to preserve the MH, index, parentOffset and nextOffset on the
+	 * stack when avoiding the call-in for FilterArgumentHandle.  Must
 	 * return 'this' so stackmapper will keep the MH and index alive.
 	 */
 	/*[ENDIF]*/
@@ -1045,7 +1045,7 @@ public abstract class MethodHandle
 	private MethodHandle filterArgumentsPlaceHolder(int index, int parentOffset, int nextOffset) {
 		return this;
 	}
-	
+
 	/*
 	 * TODO: Javadoc this and it's contract
 	 */
@@ -1055,32 +1055,32 @@ public abstract class MethodHandle
 
 	static final void enforceArityLimit(byte kind, MethodType type) {
 		int argumentSlots = type.argSlots;
-		
-		/* The upper limit of argument slots is 255. For a constructor, 
+
+		/* The upper limit of argument slots is 255. For a constructor,
 		 * there should be at most 253 argument slots, one slot for
-		 * MethodHandle itself and one slot for the placeholder of a 
+		 * MethodHandle itself and one slot for the placeholder of a
 		 * newly created object at the native level. So the slot occupied
 		 * by the placeholder must be counted in when doing the arity check.
 		 */
 		if (KIND_CONSTRUCTOR == kind) {
 			argumentSlots += 1;
 		}
-		
+
 		if (argumentSlots > 254) {
 			throwIllegalArgumentExceptionForMTArgCount(argumentSlots);
 		}
 	}
-	
+
 	static void throwIllegalArgumentExceptionForMTArgCount(int argSlots) {
 		/*[MSG "K0578", "MethodHandle would consume more than 255 argument slots (\"{0}\")"]*/
 		throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0578", argSlots + 1)); //$NON-NLS-1$
 	}
-	
+
 	static void throwIllegalArgumentExceptionForMHArgCount() {
 		/*[MSG "K0579", "The MethodHandle has too few or too many parameters"]*/
 		throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0579")); //$NON-NLS-1$
 	}
-	
+
 	String mapKindToBytecode() {
 		switch(kind) {
 		case KIND_GETFIELD: 			return "getField"; //$NON-NLS-1$
@@ -1102,9 +1102,9 @@ public abstract class MethodHandle
 /*[IF JAVA_SPEC_VERSION >= 15]*/
 	/**
 	 * Append to a list the child MethodHandle(s) which form "this" (parent MethodHandle).
-	 * 
-	 * @param relatedMHs the list where the child MethodHandle(s) are added. 
-	 * 
+	 *
+	 * @param relatedMHs the list where the child MethodHandle(s) are added.
+	 *
 	 * @return true if MethodHandles are added to the list, and false otherwise.
 	 */
 	abstract boolean addRelatedMHs(List<MethodHandle> relatedMHs);
@@ -1114,30 +1114,30 @@ public abstract class MethodHandle
 	MethodHandle(MethodType mt, LambdaForm lf) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-	
+
 	MethodHandle getTarget() {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-	
+
 	MethodHandle setVarargs(MemberName member) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-	
+
 	MethodHandle asTypeUncached(MethodType newType) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-	
+
 	boolean viewAsTypeChecks(MethodType newType, boolean strict) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-	
+
 	MethodHandle viewAsType(MethodType mt, boolean flag) {
 		return this.cloneWithNewType(mt);
 	}
-	
+
 	MemberName internalMemberName() {
 		/*[IF JAVA_SPEC_VERSION >= 11]*/
-		/* Note: so far this method is only invoked by java.lang.invoke.ConstantBootstraps.getStaticFinal() 
+		/* Note: so far this method is only invoked by java.lang.invoke.ConstantBootstraps.getStaticFinal()
 		 * to return a MemberName object, and only MemberName.isFinal() is invoked.
 		 */
 		return new MemberName(this);
@@ -1145,11 +1145,11 @@ public abstract class MethodHandle
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 		/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 	}
-	
+
 	BoundMethodHandle rebind() {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-	
+
 /*[IF Sidecar18-SE-OpenJ9]*/
 	void customize() {
 		// this is an empty implementation to satisfy RI specific method calls
@@ -1174,27 +1174,27 @@ public abstract class MethodHandle
 	final Object invokeBasic(Object... objs) throws java.lang.Throwable {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-	
+
 	MethodHandle withInternalMemberName(MemberName mn, boolean flag) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-	
+
 	LambdaForm internalForm() {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-	
+
 	boolean isInvokeSpecial() {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-	
+
 	Class<?> internalCallerClass() {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-	
+
 	MethodHandleImpl.Intrinsic intrinsicName() {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-	
+
 	Object internalProperties() {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
@@ -1292,7 +1292,7 @@ class ThunkKey {
 	}
 
 	public int hashCode() {
-		/*[IF ]*/ 
+		/*[IF ]*/
 		/* Rely on the fact that MethodType caches its hashcode */
 		/*[ENDIF]*/
 		return thunkableType.hashCode();
@@ -1324,7 +1324,7 @@ final class ThunkKeyWithInt extends ThunkKey {
 	private final int extraInt;
 	public ThunkKeyWithInt(MethodType thunkableType, int extraInt){ super(thunkableType); this.extraInt = extraInt; }
 	private int hashcode = 0;
-	
+
 	public boolean equals(Object other) {
 		if (other instanceof ThunkKeyWithInt)
 			return ((ThunkKeyWithInt)other).equalsThunkKeyWithInt(this);
@@ -1348,7 +1348,7 @@ final class ThunkKeyWithLong extends ThunkKey {
 	private final long extraLong;
 	public ThunkKeyWithLong(MethodType thunkableType, long extraLong){ super(thunkableType); this.extraLong = extraLong; }
 	private int hashcode = 0;
-	
+
 	public boolean equals(Object other) {
 		if (other instanceof ThunkKeyWithLong)
 			return ((ThunkKeyWithLong)other).equalsThunkKeyWithLong(this);
@@ -1372,7 +1372,7 @@ final class ThunkKeyWithObject extends ThunkKey {
 	private final Object extraObject;
 	public ThunkKeyWithObject(MethodType thunkableType, Object extraObject){ super(thunkableType); this.extraObject = extraObject; }
 	private int hashcode = 0;
-	
+
 	public boolean equals(Object other) {
 		if (other instanceof ThunkKeyWithObject)
 			return ((ThunkKeyWithObject)other).equalsThunkKeyWithObject(this);
@@ -1396,7 +1396,7 @@ final class ThunkKeyWithObjectArray extends ThunkKey {
 	private final Object[] extraObjectArray;
 	public ThunkKeyWithObjectArray(MethodType thunkableType, Object[] extraObjectArray){ super(thunkableType); this.extraObjectArray = extraObjectArray; }
 	private int hashcode = 0;
-	
+
 	public boolean equals(Object other) {
 		if (other instanceof ThunkKeyWithObjectArray) {
 			return ((ThunkKeyWithObjectArray)other).equalsThunkKeyWithObjectArray(this);
@@ -1421,7 +1421,7 @@ final class ThunkKeyWithIntArray extends ThunkKey {
 	private final int[] extraIntArray;
 	public ThunkKeyWithIntArray(MethodType thunkableType, int[] extraIntArray){ super(thunkableType); this.extraIntArray = extraIntArray; }
 	private int hashcode = 0;
-	
+
 	public boolean equals(Object other) {
 		if (other instanceof ThunkKeyWithIntArray) {
 			return ((ThunkKeyWithIntArray)other).equalsThunkKeyWithIntArray(this);
@@ -1438,7 +1438,7 @@ final class ThunkKeyWithIntArray extends ThunkKey {
 		if (hashcode == 0) {
 			hashcode = super.hashCode() ^ Arrays.hashCode(extraIntArray);
 		}
-		return hashcode; 
+		return hashcode;
 	}
 }
 
@@ -1446,7 +1446,7 @@ final class ThunkTuple {
 	final String thunkableSignature;
 	@VMCONSTANTPOOL_FIELD
 	int invocationCount; /* used to determine how many times the thunkTuple has been invoked */
-	
+
 	/*[IF ]*/
 	// Support natives defined in the JIT dll
 	/*[ENDIF]*/
@@ -1454,7 +1454,7 @@ final class ThunkTuple {
 	static {
 		registerNatives();
 	}
-	
+
 	/*[IF ]*/
 	// Mutable fields updated by the JIT
 	// These don't need to be volatile:
@@ -1491,7 +1491,7 @@ final class ThunkTuple {
 	public static void load(){}
 
 	private static native void finalizeImpl(long invokeExactThunk);
-	
+
 	@Override
 	protected void finalize() throws Throwable {
 		finalizeImpl(invokeExactThunk);
@@ -1548,7 +1548,7 @@ final class ILGenMacros {
 	public static final native int    firstN          (int n, int argPlaceholder);
 	public static final native int    dropFirstN      (int n, int argPlaceholder);
 	public static final native int    lastN           (int n, int argPlaceholder);
-	public static final native int    middleN         (int startIndex, int n, int argPlaceholder); 
+	public static final native int    middleN         (int startIndex, int n, int argPlaceholder);
 	public static final native Object rawNew          (Class<?> c);
 
 	// Calls to these will disappear and be replaced by their arguments,
@@ -1574,7 +1574,7 @@ final class ILGenMacros {
 	public static final native int    placeholder         (int arg1, Object arg2, int arg3);
 	public static final native int    placeholder         (int arg1, Object arg2, Object arg3, int arg4);
 	public static final native int    placeholder         (int arg1, Object arg2, Object arg3, Object arg4, int arg5);
-	
+
 	// Macros that take object expressions as arguments.
 	// Only certain kinds of expressions are permitted: either 'this', or 'this' followed by a sequence of getfields.
 	public static final native int    parameterCount  (MethodHandle handle);
@@ -1628,7 +1628,7 @@ final class ILGenMacros {
 /*
  * Comparators are used by MutableCallSite to determine if the newTarget is
  * "equivalent" to the original target.
- * 
+ *
  * Comparators currently only stop comparing at MethodHandle boundaries.
  */
 abstract class Comparator {
@@ -1639,7 +1639,7 @@ abstract class Comparator {
 	// invalidation are necessary, but such an object is not thread-safe if it
 	// also contains the state of the comparison operation.
 	/*[ENDIF]*/
-	
+
 	public abstract void fail();
 	public abstract boolean failed();
 
@@ -1655,13 +1655,13 @@ abstract class Comparator {
 	void compareStructuralParameter (float  p1, float  p2){ compareStructuralParameter((Float)p1, (Float)p2); }
 	void compareStructuralParameter (double p1, double p2){ compareStructuralParameter((Double)p1, (Double)p2); }
 	@SuppressWarnings("boxing")
- 	void compareStructuralParameter (int[]  p1, int[]  p2){
- 		compareStructuralParameter((Integer)p1.length, (Integer)p2.length);
- 		int p1_length = p1.length;
- 		for (int i = 0; i < p1_length; i++) {
- 			compareStructuralParameter((Integer)p1[i], (Integer)p2[i]);	
- 		}
- 	}
+	void compareStructuralParameter (int[]  p1, int[]  p2){
+		compareStructuralParameter((Integer)p1.length, (Integer)p2.length);
+		int p1_length = p1.length;
+		for (int i = 0; i < p1_length; i++) {
+			compareStructuralParameter((Integer)p1[i], (Integer)p2[i]);
+		}
+	}
 
 	abstract void compareChildHandle (MethodHandle p1, MethodHandle p2);
 }
@@ -1675,20 +1675,20 @@ final class StructuralComparator extends Comparator {
 	final java.util.ArrayList<MethodHandle> visitQ = new java.util.ArrayList<MethodHandle>();
 	boolean hasFailed = false;
 
-	public void fail() { 
-		hasFailed = true; 
+	public void fail() {
+		hasFailed = true;
 	}
 	public boolean failed() {
-		return hasFailed; 
+		return hasFailed;
 	}
 	public void failUnless(boolean condition) {
 		if (!condition) {
-			hasFailed = true; 
+			hasFailed = true;
 		}
 	}
 
 	StructuralComparator() {}
-	public static StructuralComparator get() { 
+	public static StructuralComparator get() {
 		return new StructuralComparator();
 	}
 
@@ -1725,10 +1725,10 @@ final class StructuralComparator extends Comparator {
 		compareStructuralParameter(p1.length, p2.length);
 		int p1_length = p1.length;
 		for (int i = 0; i < p1_length; i++) {
-			compareStructuralParameter(p1[i], p2[i]);	
+			compareStructuralParameter(p1[i], p2[i]);
 		}
 	}
-	
+
 	// Queue child handles rather than recursing
 	void compareChildHandle(MethodHandle p1, MethodHandle p2) {
 		if (!failed()) {

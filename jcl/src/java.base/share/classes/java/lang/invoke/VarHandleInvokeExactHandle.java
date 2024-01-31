@@ -35,7 +35,7 @@ final class VarHandleInvokeExactHandle extends VarHandleInvokeHandle {
 	VarHandleInvokeExactHandle(VarHandleInvokeExactHandle originalHandle, MethodType newType) {
 		super(originalHandle, newType);
 	}
-	
+
 	@Override
 	boolean canRevealDirect() {
 		/* This is invokevirtual of VarHandle.invokeExact() */

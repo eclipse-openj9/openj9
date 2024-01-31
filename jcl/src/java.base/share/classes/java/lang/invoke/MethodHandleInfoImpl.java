@@ -34,7 +34,7 @@ import java.security.PrivilegedAction;
 
 final class MethodHandleInfoImpl implements MethodHandleInfo {
 	private final PrimitiveHandle mh;
-	
+
 	MethodHandleInfoImpl(PrimitiveHandle primitiveHandle) {
 		this.mh = primitiveHandle;
 	}
@@ -60,7 +60,7 @@ final class MethodHandleInfoImpl implements MethodHandleInfo {
 		if (isMethod() || isConstructor()) {
 			return	(mh.rawModifiers & (
 						Modifier.methodModifiers() | // JLS 8.4.3
-						0x0080 | 0x0040 | 0x1000 // ACC_VARARGS | ACC_BRIDGE | ACC_SYNTHETIC 
+						0x0080 | 0x0040 | 0x1000 // ACC_VARARGS | ACC_BRIDGE | ACC_SYNTHETIC
 					));
 		} else if (isField()) {
 			return	(mh.rawModifiers & (
@@ -110,8 +110,8 @@ final class MethodHandleInfoImpl implements MethodHandleInfo {
 			/*[MSG "K0590", "Can't unreflect @SignaturePolymorphic method: {0}"]*/
 			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0590", this)); //$NON-NLS-1$
 		}
-		
-		// Get the underlying Member 
+
+		// Get the underlying Member
 		Member member = null;
 		final Class<?> defc = getDeclaringClass();
 		final boolean isPublic = Modifier.isPublic(getModifiers());
@@ -127,7 +127,7 @@ final class MethodHandleInfoImpl implements MethodHandleInfo {
 							result = defc.getDeclaredField(getName());
 						}
 					// Method
-					} else if (isMethod()) { 
+					} else if (isMethod()) {
 						if (isPublic) {
 							result = defc.getMethod(getName(), getMethodType().ptypes());
 						} else {
@@ -160,21 +160,21 @@ final class MethodHandleInfoImpl implements MethodHandleInfo {
 	 */
 	private boolean requiresReceiver() {
 		int kind = getReferenceKind();
-		return (REF_getField == kind) 
-			|| (REF_putField == kind) 
-			|| (REF_invokeInterface == kind) 
-			|| (REF_invokeSpecial == kind) 
+		return (REF_getField == kind)
+			|| (REF_putField == kind)
+			|| (REF_invokeInterface == kind)
+			|| (REF_invokeSpecial == kind)
 			|| (REF_invokeVirtual == kind);
 	}
-	
+
 	boolean isMethod() {
 		return (getReferenceKind() >= REF_invokeVirtual) && !isConstructor();
 	}
-	
+
 	boolean isField() {
 		return getReferenceKind() <= REF_putStatic;
 	}
-	
+
 	boolean isConstructor() {
 		return getReferenceKind() == REF_newInvokeSpecial;
 	}
@@ -183,6 +183,5 @@ final class MethodHandleInfoImpl implements MethodHandleInfo {
 	public String toString() {
 		return MethodHandleInfo.toString(getReferenceKind(), getDeclaringClass(), getName(), getMethodType());
 	}
-	
-}
 
+}

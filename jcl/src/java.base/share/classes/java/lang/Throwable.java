@@ -33,7 +33,7 @@ import com.ibm.oti.util.Msg;
 import com.ibm.oti.util.Util;
 import static com.ibm.oti.util.Util.appendTo;
 import static com.ibm.oti.util.Util.appendLnTo;
- 
+
 /**
  * This class is the superclass of all classes which
  * can be thrown by the virtual machine. The two direct
@@ -41,7 +41,7 @@ import static com.ibm.oti.util.Util.appendLnTo;
  * and unrecoverable errors (Error). This class provides
  * common methods for accessing a string message which
  * provides extra information about the circumstances in
- * which the throwable was created, and for filling in a 
+ * which the throwable was created, and for filling in a
  * walkback (i.e. a record of the call stack at a
  * particular point in time) which can be printed later.
  *
@@ -67,7 +67,7 @@ public class Throwable implements java.io.Serializable {
 
 	/**
 	 * An object which describes the walkback. This field is stored
-	 * by the fillInStackTrace() native, and used by the 
+	 * by the fillInStackTrace() native, and used by the
 	 * J9VMInternals.getStackTrace() native.
 	 */
 	private transient Object walkback;
@@ -82,13 +82,13 @@ public class Throwable implements java.io.Serializable {
 	private static final Throwable[] ZeroElementArray = new Throwable[0];
 	private static final StackTraceElement[] ZeroStackTraceElementArray = new StackTraceElement[0];
 	/**
-	 * The list containing the exceptions suppressed 
+	 * The list containing the exceptions suppressed
 	 */
 	private List<Throwable> suppressedExceptions = Collections.EMPTY_LIST;
 	private transient boolean disableWritableStackTrace;
-	
+
 /**
- * Constructs a new instance of this class with its 
+ * Constructs a new instance of this class with its
  * walkback filled in.
  */
 public Throwable () {
@@ -97,7 +97,7 @@ public Throwable () {
 }
 
 /**
- * Constructs a new instance of this class with its 
+ * Constructs a new instance of this class with its
  * walkback and message filled in.
  *
  * @param		detailMessage String
@@ -109,7 +109,7 @@ public Throwable (String detailMessage) {
 }
 
 /**
- * Constructs a new instance of this class with its 
+ * Constructs a new instance of this class with its
  * walkback, message and cause filled in.
  *
  * @param		detailMessage String
@@ -123,7 +123,7 @@ public Throwable (String detailMessage, Throwable throwable) {
 }
 
 /**
- * Constructs a new instance of this class with its 
+ * Constructs a new instance of this class with its
  * walkback and cause filled in.
  *
  * @param		throwable The cause of this Throwable
@@ -135,30 +135,30 @@ public Throwable (Throwable throwable) {
 }
 
 /**
- * Constructs a new instance of this class with its walkback, message 
- * and cause filled in. 
- * enableSuppression and enableWritableStackTrace are true by default 
+ * Constructs a new instance of this class with its walkback, message
+ * and cause filled in.
+ * enableSuppression and enableWritableStackTrace are true by default
  * in other constructors
  * If enableSuppression is false, suppression is disabled, getSuppressed()
- * returns a zero-length array and calls to addSuppressed(Throwable) have 
+ * returns a zero-length array and calls to addSuppressed(Throwable) have
  * no effect.
  * If enableWritableStackTrace is false, fillInStackTrace() will not be
- * called within this constructor, stackTrace field will be set to null, 
+ * called within this constructor, stackTrace field will be set to null,
  * subsequent calls to fillInStackTrace() and setStackTrace(StackTraceElement[])
  * will not set the stack trace, and  getStackTrace() will return a zero
  * length array.
- * 
+ *
  * @param		detailMessage String
  *				The detail message for the exception.
  * @param		throwable The cause of this Throwable
- * @param		enableSuppression boolean 
+ * @param		enableSuppression boolean
  * 				enable or disable suppression
  * @param		enableWritableStackTrace boolean
  * 				whether the stack trace is writable
- * 
+ *
  * @since 1.7
  */
-protected Throwable(String detailMessage, Throwable throwable, 
+protected Throwable(String detailMessage, Throwable throwable,
 		boolean enableSuppression, boolean enableWritableStackTrace) {
 	super ();
 
@@ -168,7 +168,7 @@ protected Throwable(String detailMessage, Throwable throwable,
 	if (enableSuppression == false)	{
 		suppressedExceptions = null;
 	}
-	
+
 	if (enableWritableStackTrace == false)	{
 		this.disableWritableStackTrace = true;
 	} else {
@@ -177,19 +177,19 @@ protected Throwable(String detailMessage, Throwable throwable,
 }
 
 /**
- * Record in the receiver a walkback from the point 
+ * Record in the receiver a walkback from the point
  * where this message was sent. The message is
  * public so that code which catches a throwable and
  * then <em>re-throws</em> it can adjust the walkback
  * to represent the location where the exception was
  * re-thrown.
- * 
+ *
  * @return the receiver
  */
 public native Throwable fillInStackTrace();
 
 /**
- * Answers the extra information message which was provided 
+ * Answers the extra information message which was provided
  * when the throwable was created. If no message was provided
  * at creation time, then answer null.
  *
@@ -202,7 +202,7 @@ public String getMessage() {
 
 /*[PR 1FDRSWI] : J9JCL:ALL - Plum Hall failures. (Added getLocalizedMessage)*/
 /**
- * Answers the extra information message which was provided 
+ * Answers the extra information message which was provided
  * when the throwable was created. If no message was provided
  * at creation time, then answer null. Subclasses may override
  * this method to answer localized text for the message.
@@ -242,11 +242,11 @@ public void setStackTrace(StackTraceElement[] trace) {
 			throw new NullPointerException();
 		}
 	}
-	
+
 	if (disableWritableStackTrace) {
 		return;
 	}
-	
+
 	stackTrace = localCopy;
 }
 
@@ -261,10 +261,10 @@ public void printStackTrace () {
 /**
  * Count the number of duplicate stack frames, starting from
  * the end of the stack.
- * 
+ *
  * @param currentStack a stack to compare
  * @param parentStack a stack to compare
- *  
+ *
  * @return the number of duplicate stack frames.
  */
 private static int countDuplicates(StackTraceElement[] currentStack, StackTraceElement[] parentStack) {
@@ -299,8 +299,8 @@ StackTraceElement[] getInternalStackTrace() {
 		// the instance variable and any memory ordering issues
 		localStackTrace = J9VMInternals.getStackTrace(this, true);
 		stackTrace = localStackTrace;
-	} 
-	
+	}
+
 	return localStackTrace;
 }
 
@@ -330,7 +330,7 @@ public void printStackTrace(PrintWriter err) {
  * Outputs representation of the receiver's
  * walkback on the Appendable specified by the argument.
  *
- * @param	appendable Appendable 
+ * @param	appendable Appendable
  *		The Appendable object to the walkback will be written.
  */
 private void printStackTraceHelper(Appendable appendable) {
@@ -381,7 +381,7 @@ public String toString () {
  *
  * @exception	IllegalArgumentException when the cause is the receiver
  * @exception	IllegalStateException when the cause has already been initialized
- * 
+ *
  * @return		the receiver.
  */
 public synchronized Throwable initCause(Throwable throwable) {
@@ -398,9 +398,9 @@ public synchronized Throwable initCause(Throwable throwable) {
 
 /**
  * Helper method to set Throwable cause without going through public method initCause.
- * There is no need for synchronization for this helper method cause the only caller Throwable 
+ * There is no need for synchronization for this helper method cause the only caller Throwable
  * object is instantiated within J9VMInternals.copyThrowable and not exposed to others.
- * Synchronization need to be considered if this assumption is NOT true.  
+ * Synchronization need to be considered if this assumption is NOT true.
  *
  * @param		throwable The cause of this Throwable
  *
@@ -432,12 +432,12 @@ private void writeObject(ObjectOutputStream s) throws IOException {
 	s.defaultWriteObject();
 }
 
-private void readObject(ObjectInputStream s) 
+private void readObject(ObjectInputStream s)
 	throws IOException, ClassNotFoundException	{
 	s.defaultReadObject();
-	
+
 	disableWritableStackTrace = (stackTrace == null);
-	
+
 	if (stackTrace != null) {
 		if (stackTrace.length == 1) {
 			if (stackTrace[0] == null) {
@@ -456,8 +456,8 @@ private void readObject(ObjectInputStream s)
 			}
 		}
 	}
-	
-	
+
+
 	if (suppressedExceptions != null) {
 		List<Throwable> newList = Collections.EMPTY_LIST;
 		try {
@@ -501,19 +501,19 @@ private void readObject(ObjectInputStream s)
  * to try to continue printing as much as possible of the stack trace even in the presence of
  * OutOfMemoryErrors (CMVC 97756).
  *
- * @param	err	
- * 			the specified print stream/writer 
- * @param	parentStack	
+ * @param	err
+ * 			the specified print stream/writer
+ * @param	parentStack
  * 			parent stack elements
- * @param	indents	
+ * @param	indents
  * 			number of indents (\t) to be printed
- * @param	suppressed	
+ * @param	suppressed
  * 			if this is an exception suppressed
  * @param	exceptionChainSet
  * 			set of exceptions in the exception chain
- * 
- * @return	an array of stack trace elements printed 
- * 
+ *
+ * @return	an array of stack trace elements printed
+ *
  */
 private StackTraceElement[] printStackTrace(
 		Appendable err, StackTraceElement[] parentStack, int indents, boolean suppressed, Set<Throwable> exceptionChainSet) {
@@ -621,16 +621,16 @@ private StackTraceElement[] printStackTrace(
 			appendTo(err, "\t... ", indents); //$NON-NLS-1$
 			appendTo(err, duplicates);
 			appendTo(err, " more"); //$NON-NLS-1$
-        	}		
+		}
 		appendLnTo(err);
 	}
-    
+
 	synchronized (this) {
 		if (suppressedExceptions != null) {
 			for (Throwable t : suppressedExceptions) {
 				StackTraceElement[] stackSuppressed;
 				stackSuppressed = t.printStackTrace(err, stack, indents + 1, true, exceptionChainSet);
-				
+
 				Throwable throwableSuppressed = t.getCause();
 				while (throwableSuppressed != null && stackSuppressed != null) {
 					stackSuppressed = throwableSuppressed.printStackTrace(err, stackSuppressed, indents + 1, false, exceptionChainSet);
@@ -644,23 +644,23 @@ private StackTraceElement[] printStackTrace(
 
 /**
  * The specified exception is going to be suppressed in order to give priority
- * to this exception (primary exception) and to be appended to the list of 
- * suppressed exceptions. 
- * 
+ * to this exception (primary exception) and to be appended to the list of
+ * suppressed exceptions.
+ *
  * This method is typically called by the automatically generated code from the
- * try-with-resources statement. 
- * 
+ * try-with-resources statement.
+ *
  * @param 	exception Throwable
- * 			an exception to be suppressed and added to 
+ * 			an exception to be suppressed and added to
  * 			the list of suppressed exceptions
- * 
- * @throws	IllegalArgumentException 	
- * 			if exception is this throwable, can't suppress itself  
- * @throws	NullPointerException 			
+ *
+ * @throws	IllegalArgumentException
+ * 			if exception is this throwable, can't suppress itself
+ * @throws	NullPointerException
  * 			if exception is null and there is an exception suppressed before
- * 
+ *
  * @since 1.7
- * 
+ *
  */
 public final void addSuppressed(Throwable exception) {
 	/*[PR CMVC 181567] Java7:JCK:java_lang/Throwable/SuppressedTests fails */
@@ -668,7 +668,7 @@ public final void addSuppressed(Throwable exception) {
 		/*[MSG "K0563", "Null not permitted when an exception has already been suppressed"]*/
 		throw new NullPointerException(com.ibm.oti.util.Msg.getString("K0563")); //$NON-NLS-1$
 	}
-	
+
 	if (exception == this) {
 		/*[MSG "K0559", "A throwable cannot suppress itself"]*/
 		throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0559")); //$NON-NLS-1$
@@ -684,15 +684,15 @@ public final void addSuppressed(Throwable exception) {
 }
 
 /**
- * Returns an array of exceptions suppressed, typically by the automatically 
- * generated code from the try-with-resources statement, in order to give 
- * priority to this exception (primary exception). 
- * 
+ * Returns an array of exceptions suppressed, typically by the automatically
+ * generated code from the try-with-resources statement, in order to give
+ * priority to this exception (primary exception).
+ *
  * @return	an array of exceptions representing all exceptions suppressed to
  * 			give priority to this exception (primary exception)
- * 
+ *
  * @since 1.7
- * 
+ *
  */
 public final Throwable[] getSuppressed() {
 	synchronized (this) {

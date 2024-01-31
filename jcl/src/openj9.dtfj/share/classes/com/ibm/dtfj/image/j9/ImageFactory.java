@@ -72,7 +72,7 @@ public class ImageFactory implements com.ibm.dtfj.image.ImageFactory {
 
 	/*[IF Sidecar19-SE]*/
 	static {
-		/* 
+		/*
 		 * Even though j9ddr classes are within the module openj9.dtfj, they
 		 * appear at runtime to be in the un-named module because they're
 		 * defined by a custom class loader. The following programmatically
@@ -110,11 +110,11 @@ public class ImageFactory implements com.ibm.dtfj.image.ImageFactory {
 		}
 	}
 	/*[ENDIF] Sidecar19-SE*/
-	
+
 	/**
 	 * This public constructor is intended for use with Class.newInstance().
 	 * This class will generally be referred to by name (e.g. using Class.forName()).
-	 * 
+	 *
 	 * @see com.ibm.dtfj.image.ImageFactory
 	 */
 	public ImageFactory() {
@@ -170,7 +170,7 @@ public class ImageFactory implements com.ibm.dtfj.image.ImageFactory {
 					}
 					imageReference.image = null;
 				}
-				// Final fallback is to get a native-only DDR Image (no JRE), if the source is a core dump 
+				// Final fallback is to get a native-only DDR Image (no JRE), if the source is a core dump
 				if (imageReference.image == null && source.getType().equals(ImageSourceType.CORE)) {
 					com.ibm.dtfj.image.ImageFactory factory = createImageFactory(FACTORY_DDR);
 					if (factory != null) {
@@ -188,10 +188,10 @@ public class ImageFactory implements com.ibm.dtfj.image.ImageFactory {
 		printExceptions();
 		return images.toArray(new Image[images.size()]);
 	}
-	
+
 	/**
 	 * Creates a new Image object based on the contents of imageFile
-	 * 
+	 *
 	 * @param imageFile a file with Image information, typically a core file but may also be a container such as a zip
 	 * @return an instance of Image (null if no image can be constructed from the given file)
 	 * @throws IOException
@@ -274,7 +274,7 @@ public class ImageFactory implements com.ibm.dtfj.image.ImageFactory {
 
 	/**
 	 * Creates a new Image object based on the contents of input stream
-	 * 
+	 *
 	 * @param imageFile a file with Image information, typically a core file but may also be a container such as a zip
 	 * @return an instance of Image (null if no image can be constructed from the given file)
 	 * @throws IOException
@@ -283,10 +283,10 @@ public class ImageFactory implements com.ibm.dtfj.image.ImageFactory {
 	public Image getImage(ImageInputStream in, URI sourceID) throws IOException {
 		return getImage(in , null, sourceID);
 	}
-	
+
 	/**
 	 * Creates a new Image object based on the contents of input stream
-	 * 
+	 *
 	 * @param imageFile a file with Image information, typically a core file but may also be a container such as a zip
 	 * @return an instance of Image (null if no image can be constructed from the given file)
 	 * @throws IOException
@@ -322,10 +322,10 @@ public class ImageFactory implements com.ibm.dtfj.image.ImageFactory {
 			return new File(tmpdir);
 		}
 	}
-	
+
 	/**
 	 * Creates a new Image object based on the contents of imageFile and metadata
-	 * 
+	 *
 	 * @param imageFile a file with Image information, typically a core file
 	 * @param metadata a file with additional Image information. This is an implementation defined file
 	 * @return an instance of Image
@@ -394,9 +394,9 @@ public class ImageFactory implements com.ibm.dtfj.image.ImageFactory {
 	 * Throw an IOException unless we have already hit one and only one while
 	 * trying to open a dump in which case throw that to give the caller a
 	 * bit more information.
-	 * 
+	 *
 	 * This method will always throw an IOException and never returns normally.
-	 * 
+	 *
 	 * @param newExceptionMessage
 	 * @throws IOException
 	 */
@@ -433,7 +433,7 @@ public class ImageFactory implements com.ibm.dtfj.image.ImageFactory {
 		}
 		return false; //return unable to create image
 	}
-	
+
 	/**
 	 * Attempt to create an image and check for the presence of a Java runtime
 	 * @param imageFile
@@ -473,7 +473,7 @@ public class ImageFactory implements com.ibm.dtfj.image.ImageFactory {
 
 	/**
 	 * Checks to see if the supplied image has an available DTFJ Java Runtime. This is to force the parsing of the jextract XML
-	 * for legacy DTFJ and blob parsing for DDR. It does not make any guarantees about the quality and availability of the 
+	 * for legacy DTFJ and blob parsing for DDR. It does not make any guarantees about the quality and availability of the
 	 * run time data.
 	 * @return true if a non-corrupt runtime is returned
 	 */

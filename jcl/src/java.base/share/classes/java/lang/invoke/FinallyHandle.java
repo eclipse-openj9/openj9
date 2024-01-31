@@ -38,7 +38,7 @@ final class FinallyHandle extends PassThroughHandle {
 		this.finallyTarget = finallyHandle.finallyTarget;
 	}
 
-	public static FinallyHandle get(MethodHandle tryTarget, MethodHandle finallyTarget, MethodHandle equivalent) { 
+	public static FinallyHandle get(MethodHandle tryTarget, MethodHandle finallyTarget, MethodHandle equivalent) {
 		return new FinallyHandle(tryTarget, finallyTarget, equivalent);
 	}
 
@@ -71,11 +71,11 @@ final class FinallyHandle extends PassThroughHandle {
 		c.compareChildHandle(left.tryTarget, this.tryTarget);
 		c.compareChildHandle(left.finallyTarget, this.finallyTarget);
 	}
-	
+
 	MethodHandle cloneWithNewType(MethodType newType) {
 		return new FinallyHandle(this, newType);
 	}
-	
+
 	@FrameIteratorSkip
 	private final void invokeExact_thunkArchetype_V(int argPlaceholder) throws Throwable {
 		if (ILGenMacros.isShareableThunk()) {
@@ -84,7 +84,7 @@ final class FinallyHandle extends PassThroughHandle {
 		if (!ILGenMacros.isCustomThunk()) {
 			doCustomizationLogic();
 		}
-		
+
 		Throwable finallyThrowable = null;
 		try {
 			ILGenMacros.invokeExact_V(tryTarget, argPlaceholder);
@@ -92,9 +92,9 @@ final class FinallyHandle extends PassThroughHandle {
 			finallyThrowable = tryThrowable;
 			throw tryThrowable;
 		} finally {
-			ILGenMacros.invokeExact_V(finallyTarget, 
-									ILGenMacros.placeholder(finallyThrowable, 
-									ILGenMacros.firstN(numFinallyTargetArgsToPassThrough(), 
+			ILGenMacros.invokeExact_V(finallyTarget,
+									ILGenMacros.placeholder(finallyThrowable,
+									ILGenMacros.firstN(numFinallyTargetArgsToPassThrough(),
 									argPlaceholder)));
 		}
 	}
@@ -108,7 +108,7 @@ final class FinallyHandle extends PassThroughHandle {
 		if (!ILGenMacros.isCustomThunk()) {
 			doCustomizationLogic();
 		}
-		
+
 		Throwable finallyThrowable = null;
 		boolean result = false;
 		try {
@@ -117,9 +117,9 @@ final class FinallyHandle extends PassThroughHandle {
 			finallyThrowable = tryThrowable;
 			throw tryThrowable;
 		} finally {
-			return ILGenMacros.invokeExact_Z(finallyTarget, 
-											ILGenMacros.placeholder(finallyThrowable, result, 
-											ILGenMacros.firstN(numFinallyTargetArgsToPassThrough(), 
+			return ILGenMacros.invokeExact_Z(finallyTarget,
+											ILGenMacros.placeholder(finallyThrowable, result,
+											ILGenMacros.firstN(numFinallyTargetArgsToPassThrough(),
 											argPlaceholder)));
 		}
 	}
@@ -133,7 +133,7 @@ final class FinallyHandle extends PassThroughHandle {
 		if (!ILGenMacros.isCustomThunk()) {
 			doCustomizationLogic();
 		}
-		
+
 		Throwable finallyThrowable = null;
 		byte result = 0x0;
 		try {
@@ -142,9 +142,9 @@ final class FinallyHandle extends PassThroughHandle {
 			finallyThrowable = tryThrowable;
 			throw tryThrowable;
 		} finally {
-			return ILGenMacros.invokeExact_B(finallyTarget, 
-											ILGenMacros.placeholder(finallyThrowable, result, 
-											ILGenMacros.firstN(numFinallyTargetArgsToPassThrough(), 
+			return ILGenMacros.invokeExact_B(finallyTarget,
+											ILGenMacros.placeholder(finallyThrowable, result,
+											ILGenMacros.firstN(numFinallyTargetArgsToPassThrough(),
 											argPlaceholder)));
 		}
 	}
@@ -158,7 +158,7 @@ final class FinallyHandle extends PassThroughHandle {
 		if (!ILGenMacros.isCustomThunk()) {
 			doCustomizationLogic();
 		}
-		
+
 		Throwable finallyThrowable = null;
 		short result = 0;
 		try {
@@ -167,9 +167,9 @@ final class FinallyHandle extends PassThroughHandle {
 			finallyThrowable = tryThrowable;
 			throw tryThrowable;
 		} finally {
-			return ILGenMacros.invokeExact_S(finallyTarget, 
-											ILGenMacros.placeholder(finallyThrowable, result, 
-											ILGenMacros.firstN(numFinallyTargetArgsToPassThrough(), 
+			return ILGenMacros.invokeExact_S(finallyTarget,
+											ILGenMacros.placeholder(finallyThrowable, result,
+											ILGenMacros.firstN(numFinallyTargetArgsToPassThrough(),
 											argPlaceholder)));
 		}
 	}
@@ -183,7 +183,7 @@ final class FinallyHandle extends PassThroughHandle {
 		if (!ILGenMacros.isCustomThunk()) {
 			doCustomizationLogic();
 		}
-		
+
 		Throwable finallyThrowable = null;
 		int result = 0;
 		try {
@@ -192,9 +192,9 @@ final class FinallyHandle extends PassThroughHandle {
 			finallyThrowable = tryThrowable;
 			throw tryThrowable;
 		} finally {
-			return ILGenMacros.invokeExact_X(finallyTarget, 
-											ILGenMacros.placeholder(finallyThrowable, result, 
-											ILGenMacros.firstN(numFinallyTargetArgsToPassThrough(), 
+			return ILGenMacros.invokeExact_X(finallyTarget,
+											ILGenMacros.placeholder(finallyThrowable, result,
+											ILGenMacros.firstN(numFinallyTargetArgsToPassThrough(),
 											argPlaceholder)));
 		}
 	}
@@ -208,7 +208,7 @@ final class FinallyHandle extends PassThroughHandle {
 		if (!ILGenMacros.isCustomThunk()) {
 			doCustomizationLogic();
 		}
-		
+
 		Throwable finallyThrowable = null;
 		long result = 0L;
 		try {
@@ -217,13 +217,13 @@ final class FinallyHandle extends PassThroughHandle {
 			finallyThrowable = tryThrowable;
 			throw tryThrowable;
 		} finally {
-			return ILGenMacros.invokeExact_J(finallyTarget, 
-											ILGenMacros.placeholder(finallyThrowable, result, 
-											ILGenMacros.firstN(numFinallyTargetArgsToPassThrough(), 
+			return ILGenMacros.invokeExact_J(finallyTarget,
+											ILGenMacros.placeholder(finallyThrowable, result,
+											ILGenMacros.firstN(numFinallyTargetArgsToPassThrough(),
 											argPlaceholder)));
 		}
 	}
-	
+
 	@FrameIteratorSkip
 	@SuppressWarnings("finally")
 	private final float invokeExact_thunkArchetype_F(int argPlaceholder) throws Throwable {
@@ -233,7 +233,7 @@ final class FinallyHandle extends PassThroughHandle {
 		if (!ILGenMacros.isCustomThunk()) {
 			doCustomizationLogic();
 		}
-		
+
 		Throwable finallyThrowable = null;
 		float result = 0.0F;
 		try {
@@ -242,13 +242,13 @@ final class FinallyHandle extends PassThroughHandle {
 			finallyThrowable = tryThrowable;
 			throw tryThrowable;
 		} finally {
-			return ILGenMacros.invokeExact_F(finallyTarget, 
-											ILGenMacros.placeholder(finallyThrowable, result, 
-											ILGenMacros.firstN(numFinallyTargetArgsToPassThrough(), 
+			return ILGenMacros.invokeExact_F(finallyTarget,
+											ILGenMacros.placeholder(finallyThrowable, result,
+											ILGenMacros.firstN(numFinallyTargetArgsToPassThrough(),
 											argPlaceholder)));
 		}
 	}
-	
+
 	@FrameIteratorSkip
 	@SuppressWarnings("finally")
 	private final double invokeExact_thunkArchetype_D(int argPlaceholder) throws Throwable {
@@ -258,7 +258,7 @@ final class FinallyHandle extends PassThroughHandle {
 		if (!ILGenMacros.isCustomThunk()) {
 			doCustomizationLogic();
 		}
-		
+
 		Throwable finallyThrowable = null;
 		double result = 0.0D;
 		try {
@@ -267,13 +267,13 @@ final class FinallyHandle extends PassThroughHandle {
 			finallyThrowable = tryThrowable;
 			throw tryThrowable;
 		} finally {
-			return ILGenMacros.invokeExact_D(finallyTarget, 
-											ILGenMacros.placeholder(finallyThrowable, result, 
-											ILGenMacros.firstN(numFinallyTargetArgsToPassThrough(), 
+			return ILGenMacros.invokeExact_D(finallyTarget,
+											ILGenMacros.placeholder(finallyThrowable, result,
+											ILGenMacros.firstN(numFinallyTargetArgsToPassThrough(),
 											argPlaceholder)));
 		}
 	}
-	
+
 	@FrameIteratorSkip
 	@SuppressWarnings("finally")
 	private final Object invokeExact_thunkArchetype_L(int argPlaceholder) throws Throwable {
@@ -283,7 +283,7 @@ final class FinallyHandle extends PassThroughHandle {
 		if (!ILGenMacros.isCustomThunk()) {
 			doCustomizationLogic();
 		}
-		
+
 		Throwable finallyThrowable = null;
 		Object result = null;
 		try {
@@ -292,9 +292,9 @@ final class FinallyHandle extends PassThroughHandle {
 			finallyThrowable = tryThrowable;
 			throw tryThrowable;
 		} finally {
-			return ILGenMacros.invokeExact_L(finallyTarget, 
-											ILGenMacros.placeholder(finallyThrowable, result, 
-											ILGenMacros.firstN(numFinallyTargetArgsToPassThrough(), 
+			return ILGenMacros.invokeExact_L(finallyTarget,
+											ILGenMacros.placeholder(finallyThrowable, result,
+											ILGenMacros.firstN(numFinallyTargetArgsToPassThrough(),
 											argPlaceholder)));
 		}
 	}

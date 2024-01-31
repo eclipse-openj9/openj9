@@ -35,7 +35,7 @@ import javax.management.openmbean.OpenType;
 import javax.management.openmbean.SimpleType;
 
 /**
- * Support for the {@link ThreadInfo} class. 
+ * Support for the {@link ThreadInfo} class.
  */
 public final class ThreadInfoUtil {
 

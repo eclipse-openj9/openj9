@@ -51,7 +51,7 @@ public interface LoggingMXBean {
     /**
      * Returns the string name of the specified {@link Logger}instance's
      * current log level.
-     * 
+     *
      * @param loggerName
      *            the name of a particular <code>Logger</code> instance
      * @return if <code>loggerName</code> resolves to an existing registered
@@ -66,16 +66,16 @@ public interface LoggingMXBean {
     public String getLoggerLevel(String loggerName);
 
     /**
-     * Returns a list of the names of all of the currently registered 
+     * Returns a list of the names of all of the currently registered
      * <code>Logger</code> instances.
      * @return a list of the names of all registered <code>Logger</code> objects.
      */
     public List<String> getLoggerNames();
-    
+
     /**
      * Returns the name of the parent {@link Logger}of the specified registered
      * <code>Logger</code>,<code>loggerName</code>.
-     * 
+     *
      * @param loggerName
      *            the name of a particular <code>Logger</code> instance
      * @return if <code>loggerName</code> resolves to an existing registered
@@ -88,24 +88,24 @@ public interface LoggingMXBean {
      *         value is returned.
      */
     public String getParentLoggerName(String loggerName);
-    
+
     /**
-     * Attempts to update the log level of the {@link Logger} with name 
+     * Attempts to update the log level of the {@link Logger} with name
      * <code>loggerName</code> to <code>levelName</code>.
      * <p>
      * If <code>levelName</code> is <code>null</code> then the <code>Logger</code>
-     * instance's log level is set to be <code>null</code> with the result that 
+     * instance's log level is set to be <code>null</code> with the result that
      * it will inherit its log level from its nearest parent which does not have
      * a <code>null</code> log level value.
      * </p>
      * @param loggerName the name of a registered <code>Logger</code>
-     * @param levelName the name of the new log level. May be <code>null</code>, 
+     * @param levelName the name of the new log level. May be <code>null</code>,
      * in which case <code>loggerName</code> will inherit the log level of its
      * closest parent with a non-<code>null</code> log level.
      * @throws IllegalArgumentException if there is no <code>Logger</code>
-     * with the name <code>loggerName</code>. Also may be thrown if 
+     * with the name <code>loggerName</code>. Also may be thrown if
      * <code>loggerName</code> is not a known log level name.
-     * @throws SecurityException if there is a security manager active and 
+     * @throws SecurityException if there is a security manager active and
      * the caller does not have {@link LoggingPermission} of &quot;control&quot;.
      */
     public void setLoggerLevel(String loggerName, String levelName);

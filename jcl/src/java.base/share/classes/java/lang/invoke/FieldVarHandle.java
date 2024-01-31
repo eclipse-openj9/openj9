@@ -44,7 +44,7 @@ abstract class FieldVarHandle extends VarHandle {
 
 	/**
 	 * Constructs a VarHandle referencing a field.
-	 * 
+	 *
 	 * @param lookupClass The class where we start the lookup of the field
 	 * @param fieldName The field name
 	 * @param fieldType The exact type of the field
@@ -65,10 +65,10 @@ abstract class FieldVarHandle extends VarHandle {
 
 		checkSetterFieldFinality(handleTable);
 	}
-	
+
 	/**
 	 * Constructs a VarHandle referencing the field represented by the {@link java.lang.reflect.Field}.
-	 * 
+	 *
 	 * @param field The {@link java.lang.reflect.Field} to create a VarHandle for.
 	 * @param isStatic A boolean value indicating whether the field is static
 	 * @param coordinateTypes An ordered array of the parameter classes required for invoking an AccessMode on the VarHandle.
@@ -103,10 +103,10 @@ abstract class FieldVarHandle extends VarHandle {
 	/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 
 	/**
-	 * Checks whether the field referenced by this VarHandle, is final. 
-	 * If so, MethodHandles in the handleTable that represent access modes that may modify the field, 
+	 * Checks whether the field referenced by this VarHandle, is final.
+	 * If so, MethodHandles in the handleTable that represent access modes that may modify the field,
 	 * are replaced by a MethodHandle that throws an exception when invoked.
-	 * 
+	 *
 	 * @param handleTable The array of MethodHandles implementing the AccessModes.
 	 */
 	void checkSetterFieldFinality(MethodHandle[] handleTable) {
@@ -126,29 +126,29 @@ abstract class FieldVarHandle extends VarHandle {
 			}
 		}
 	}
-	
+
 	/**
 	 * checkSetterFieldFinality replaces MethodHandles in the handleTable with this method
-	 * to throw an exception when the field referenced by the VarHandle is final. 
+	 * to throw an exception when the field referenced by the VarHandle is final.
 	 */
 	private static void finalityCheckFailedExceptionThrower() {
 		/*[MSG "K0629", "Modification access modes are not allowed on final fields."]*/
 		throw new UnsupportedOperationException(com.ibm.oti.util.Msg.getString("K0629")); //$NON-NLS-1$
 	}
-	
+
 	/**
 	 * Looks up a field in a class (lookupClass) given a name and a signature.
-	 * 
+	 *
 	 * @param lookupClass The class where we start the lookup of the field
 	 * @param name The field name
 	 * @param signature Equivalent of the String returned by MethodTypeHelper.getBytecodeStringName
 	 * @param type The exact type of the field. This must match the signature.
 	 * @param isStatic A boolean value indicating whether the field is static.
 	 * @param accessClass The class being used to look up the field.
-	 * @return This is the value that should be assigned to the vmslot field. 
-	 * 	It represents the offset to access the field. In the error cases, 
+	 * @return This is the value that should be assigned to the vmslot field.
+	 * 	It represents the offset to access the field. In the error cases,
 	 * 	this method returns -1 for instance fields, and 0 for static fields.
-	 * 
+	 *
 	 * This method may throw any of the following exceptions or others related to field resolution.
 	 * @throws IllegalAccessError
 	 * @throws IncompatibleClassChangeError
@@ -157,21 +157,21 @@ abstract class FieldVarHandle extends VarHandle {
 	 * @throws OutOfMemoryError
 	 */
 	native long lookupField(Class<?> lookupClass, String name, String signature, Class<?> type, boolean isStatic, Class<?> accessClass);
-	
+
 	/**
 	 * Gets the offset for a field given a {@link java.lang.reflect.Field}. This method also sets the modifiers.
-	 * 
+	 *
 	 * @param field The {@link java.lang.reflect.Field} to get the offset for.
 	 * @param isStatic A boolean value indicating whether the field is static.
 	 * @return
 	 */
 	native long unreflectField(Field field, boolean isStatic);
-	
+
 	@Override
 	final Class<?> getDefiningClass() {
 		return definingClass;
 	}
-	
+
 	@Override
 	final String getFieldName() {
 		return fieldName;

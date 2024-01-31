@@ -33,14 +33,14 @@ import javax.imageio.stream.ImageInputStream;
 
 /**
  * Simple file manager for dealing with files that are intended to be read directly.
- * 
+ *
  * @author adam
  *
  */
 public class SimpleFileManager extends FileManager {
 	protected final File managedFile;			//the file to manage
 	private long filesize = Long.MAX_VALUE;		//file size for the file, default will pass any test and is set by getStream()
-	
+
 	public SimpleFileManager(File file) {
 		managedFile = file;
 	}
@@ -63,7 +63,7 @@ public class SimpleFileManager extends FileManager {
 		iis.close();		//file contents not recognised so close stream and exit
 		throw new IOException("No Image sources were found for " + managedFile.getAbsolutePath());
 	}
-	
+
 	private boolean identifiedCoreFile(ArrayList<ManagedImageSource> candidates, ImageInputStream iis) throws IOException {
 		if(FileSniffer.isCoreFile(iis, filesize)) {
 			ManagedImageSource candidate = new ManagedImageSource(managedFile.getName(), ImageSourceType.CORE);
@@ -92,7 +92,7 @@ public class SimpleFileManager extends FileManager {
 		}
 		return false;
 	}
-	
+
 	private boolean identifiedPHD(ArrayList<ManagedImageSource> candidates, ImageInputStream iis) throws IOException {
 		if(FileSniffer.isPHDFile(iis, filesize)) {
 			ManagedImageSource candidate = new ManagedImageSource(managedFile.getName(), ImageSourceType.PHD);
@@ -115,7 +115,7 @@ public class SimpleFileManager extends FileManager {
 		}
 		return false;
 	}
-	
+
 	public ImageInputStream getStream() throws IOException {
 		if (managedFile.exists()) {
 			// found it in HFS on z/OS or normally on other platforms

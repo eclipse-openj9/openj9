@@ -253,7 +253,7 @@ final class Attachment extends Thread implements Response {
 					++argsStart;
 				}
 				++argsStart; /* skip over the null, if any */
-				
+
 				Properties agentProperties = null;
 				if (argsStart < cmdBytes.length) {
 					agentProperties = IPC.receiveProperties(new ByteArrayInputStream(cmdBytes, argsStart, cmdBytes.length - argsStart), false);
@@ -288,7 +288,7 @@ final class Attachment extends Thread implements Response {
 						+ " unexpected exception or error: " + e.toString()); //$NON-NLS-1$
 			} catch (IOException e1) {
 				IPC.logMessage("IOException sending error response" + e1.toString()); //$NON-NLS-1$
-			}		
+			}
 			return true;
 		}
 		return false;
@@ -301,7 +301,7 @@ final class Attachment extends Thread implements Response {
 	private void replyWithProperties(Properties props) throws IOException {
 		IPC.sendProperties(props, responseStream);
 	}
-	
+
 	/**
 	 * close socket and other cleanup
 	 */
@@ -324,7 +324,7 @@ final class Attachment extends Thread implements Response {
 	/**
 	 * parse and execute a loadAgent command. Set the error string if there is a
 	 * problem
-	 * 
+	 *
 	 * @param cmd
 	 *            command string of the form
 	 *            "ATTACH_LOADAGENT(agentname,options)" or
@@ -364,7 +364,7 @@ final class Attachment extends Thread implements Response {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param agentLibrary
 	 *            name of the agent library
 	 * @param options

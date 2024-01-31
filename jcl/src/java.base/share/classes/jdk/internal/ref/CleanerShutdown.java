@@ -33,7 +33,7 @@ import java.security.PrivilegedAction;
 
 @SuppressWarnings("javadoc")
 public class CleanerShutdown {
-	
+
 	public static void shutdownCleaner() {
 		Cleaner commonCleaner = CleanerFactory.cleaner();
 		CleanerImpl commonCleanerImpl = CleanerImpl.getCleanerImpl(commonCleaner);
@@ -46,7 +46,7 @@ public class CleanerShutdown {
 				/* do nothing */
 			}
 		}
-		
+
 		try {
 			Method phantomRemove = PhantomCleanable.class.getDeclaredMethod("remove", (Class<?>[]) null); //$NON-NLS-1$
 			AccessController.doPrivileged((PrivilegedAction<Void>) () -> {

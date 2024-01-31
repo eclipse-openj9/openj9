@@ -113,7 +113,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	/**
 	 * Copy bytes from value starting at srcIndex into the bytes array starting at
 	 * destIndex. No range checking is needed. Caller ensures bytes is in UTF16.
-	 * 
+	 *
 	 * @param bytes copy destination
 	 * @param srcIndex index into value
 	 * @param destIndex index into bytes
@@ -133,7 +133,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		}
 	}
 /*[ENDIF] JAVA_SPEC_VERSION >= 16 */
-	
+
 	// no range checking, caller ensures bytes is in UTF16
 	// coder is one of LATIN1 or UTF16
 	void getBytes(byte[] bytes, int offset, byte coder) {
@@ -719,7 +719,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 				StringLatin1.inflate(s.value, 0, value, 0, slen);
 			} else {
 				decompressedArrayCopy(s.value, 0, value, 0, slen);
-			}		
+			}
 
 			helpers.putCharInArrayByIndex(value, slen, c);
 
@@ -8575,7 +8575,7 @@ written authorization of the copyright holder.
 	 * @return the formatted result
 	 *
 	 * @see #format(String, Object...)
-	 * 
+	 *
 	 * @since 15
 	 */
 	public String formatted(Object... args) {
@@ -8587,8 +8587,8 @@ written authorization of the copyright holder.
 	 * removes the trailing spaces in every line from the string
 	 *
 	 * @return this string with incidental whitespaces removed from every line
-	 * 
-	 * @since 15 
+	 *
+	 * @since 15
 	 */
 	public String stripIndent() {
 		if (isEmpty()) {
@@ -8656,7 +8656,7 @@ written authorization of the copyright holder.
 	 *
 	 * @throws IllegalArgumentException
 	 *          If invalid escape sequence is detected
-	 * 
+	 *
 	 * @since 15
 	 */
 	public String translateEscapes() {
@@ -8701,7 +8701,7 @@ written authorization of the copyright holder.
 				case '2':
 				case '3':
 					octal = charArray[index] - '0';
-					/* If the octal escape sequence only has a single digit, then translate the escape and search for next escape sequence 
+					/* If the octal escape sequence only has a single digit, then translate the escape and search for next escape sequence
 					 * If there is more than one digit, fall though to case 4-7 and save the current digit as the first digit of the sequence
 					 */
 					if ((index < strLength - 1) && ('0' <= charArray[index + 1]) && ('7' >= charArray[index + 1])) {
@@ -8727,7 +8727,7 @@ written authorization of the copyright holder.
 					break;
 				/**
 				 * JEP 368: Text Blocks (Second Preview)
-				 * '\r', "\r\n" and '\n' are ignored as per new continuation \<line-terminator> escape sequence 
+				 * '\r', "\r\n" and '\n' are ignored as per new continuation \<line-terminator> escape sequence
 				 * i.e. ignore line terminator and continue line
 				 * */
 				case '\r':

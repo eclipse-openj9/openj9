@@ -36,7 +36,7 @@ import java.security.PrivilegedAction;
 /**
  * BootstrapClassLoaders load classes out of the file system,
  * from the directories and jars on the system class path.
- * The system class path can be set using the command line 
+ * The system class path can be set using the command line
  * option "-scp <paths>", and can be read from the system
  * property "sun.boot.class.path".
  *
@@ -101,7 +101,7 @@ protected Package getPackage(String name) {
 }
 
 protected Package[] getPackages() {
-	return VM.getVMLangAccess().getSystemPackages();	
+	return VM.getVMLangAccess().getSystemPackages();
 }
 
 /*[PR 123807] Design 450 SE.JVMTI: JVMTI 1.1: New ClassLoaderSearch API */
@@ -117,7 +117,7 @@ private void appendToClassPathForInstrumentation(String jarPath) throws Throwabl
 		// Note: No java-level synchronization is required to call the native.
 		/*[PR CMVC 164017] appendToClassPathForInstrumentation uses UTF8 file path */
 		int newCount = addJar(com.ibm.oti.util.Util.getBytes(jarPath));
-		
+
 		int[] newTypes = new int[newCount];
 		System.arraycopy(types, 0, newTypes, 0, newCount - 1);
 		types = newTypes;

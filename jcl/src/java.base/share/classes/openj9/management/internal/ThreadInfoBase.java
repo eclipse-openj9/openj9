@@ -289,7 +289,7 @@ public class ThreadInfoBase {
 	}
 
 	/**
-	 * @return true if in native code 
+	 * @return true if in native code
 	 */
 	public boolean isInNative() {
 		return inNative;

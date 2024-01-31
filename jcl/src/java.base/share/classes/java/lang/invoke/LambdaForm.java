@@ -121,7 +121,7 @@ class LambdaForm {
 		}
 		/*[ENDIF]*/
 	}
-	
+
 	enum BasicType {
 		L_TYPE,
 		I_TYPE,

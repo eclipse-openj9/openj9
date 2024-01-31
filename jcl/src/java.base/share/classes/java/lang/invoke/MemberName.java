@@ -60,23 +60,23 @@ final class MemberName {
 	public boolean isVarargs() {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-	
+
 	public boolean isMethodHandleInvoke() {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-	
+
 	public String getName() {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-	
+
 	public MethodType getInvocationType() {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-	
+
 	public Class<?> getReturnType() {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-	
+
 	public boolean isNative() {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}

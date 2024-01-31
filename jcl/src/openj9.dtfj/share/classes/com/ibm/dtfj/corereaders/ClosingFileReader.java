@@ -38,10 +38,10 @@ import javax.imageio.stream.ImageInputStreamImpl;
  * A wrapper around the functionality that we require from RandomAccessFiles but with the added auto-closing
  * functionality that we require.  Since it is not always easy to determine who "owns" a file and we do not want
  * to introduce the concept of state, this class will manage all such file ownership.
- * 
+ *
  * We now also extend javax.imageio.stream.ImageInputStreamImpl as a convenient common interface that we can
  * share with the zebedee corefile reader
- * 
+ *
  * @author jmdisher
  */
 public class ClosingFileReader extends ImageInputStreamImpl implements ResourceReleaser
@@ -57,12 +57,12 @@ public class ClosingFileReader extends ImageInputStreamImpl implements ResourceR
 	private long _bufferEnd = -1;
 	private boolean deleteOnClose = false;
 	private int _page_size = PAGE_SIZE;
-	
+
 	/**
 	 * Interface that mimics java.io.RandomAccessFile, so we can have basic plus
 	 * an alternative implementation for z/OS native record-based files
 	 */
-	private static interface IRandomAccessFile 
+	private static interface IRandomAccessFile
 	{
 		public void close() throws IOException;
 		public long length() throws IOException;
@@ -71,27 +71,27 @@ public class ClosingFileReader extends ImageInputStreamImpl implements ResourceR
 		public void readFully(byte[] b, int off, int len) throws IOException;
 		public void seek(long pos) throws IOException;
 	}
-	
+
 	/**
 	 * com.ibm.recordio does not provide file length, so we use an EOF exception
 	 */
-	private static class EORFException extends EOFException 
+	private static class EORFException extends EOFException
 	{
 		private static final long serialVersionUID = 1L;
 		public int bytesRead;
-		
+
 		public EORFException(int n) {
 			bytesRead = n;
 		}
 	}
-	
+
 	/**
 	 * Base implementation of IRandomAccessFile - delegates to java.io.RandomAccessFile
 	 */
 	private static class BaseRandomAccessFile implements IRandomAccessFile
 	{
 		private RandomAccessFile _file;
-		
+
 		public BaseRandomAccessFile(File file, String mode) throws FileNotFoundException {
 			_file = new RandomAccessFile( file, mode);
 		}
@@ -123,7 +123,7 @@ public class ClosingFileReader extends ImageInputStreamImpl implements ResourceR
 		private ImageInputStream _file;
 		public StreamRandomAccessFile(ImageInputStream file) {
 			_file = file;
-		}		
+		}
 		public void close() throws IOException
 		{
 			_file.close();
@@ -144,14 +144,14 @@ public class ClosingFileReader extends ImageInputStreamImpl implements ResourceR
 		public void readFully(byte[] b, int off, int len) throws IOException
 		{
 			int sofar = 0;
-					
+
 			do {
 				int nbytes = _file.read(b, off + sofar, len - sofar);
 				//if (nbytes <= 0) throw new EORFException(sofar);
 				if (nbytes <= 0) throw new EOFException();
 				sofar += nbytes;
 			} while (sofar < len);
-			
+
 		}
 		public void seek(long pos) throws IOException
 		{
@@ -171,7 +171,7 @@ public class ClosingFileReader extends ImageInputStreamImpl implements ResourceR
 		private long _seekOffset = 0;
 		private long _recordNumber = 0;
 		private long _bufferValid = 0;
-		
+
 		public ZosRandomAccessFile(File file, String mode) throws IOException {
 			try {
 				// create a com.ibm.recordio.RecordFile first
@@ -180,21 +180,21 @@ public class ClosingFileReader extends ImageInputStreamImpl implements ResourceR
 				_recordLength = _zFile.getLrecl();
 				_recordBuffer = new byte[_recordLength];
 			} catch (IOException e) {
-				throw new FileNotFoundException(e.toString());			
+				throw new FileNotFoundException(e.toString());
 			} catch (LinkageError e) {
 				throw new FileNotFoundException(e.toString());
 			}
 		}
-		
+
 		public void close() throws IOException {
 			_zFile.close();
 		}
-		
+
 		public long length() throws IOException {
 			// com.ibm.recordio does not provide file length, so we handle using EOF
 			return -1;
 		}
-		
+
 		public int read() throws IOException {
 			byte b[] = new byte[1];
 			try {
@@ -204,11 +204,11 @@ public class ClosingFileReader extends ImageInputStreamImpl implements ResourceR
 				return -1;
 			}
 		}
-		
+
 		public void readFully(byte[] b) throws IOException {
 			readFully(b, 0, b.length);
 		}
-		
+
 		public void readFully(byte[] b, int off, int len) throws IOException {
 			//System.out.println("Read seekOff="+_seekOffset+" off="+off+" len="+len);
 			int sofar = 0;
@@ -218,7 +218,7 @@ public class ClosingFileReader extends ImageInputStreamImpl implements ResourceR
 					// copy bytes from partial record
 					// If there is data in the buffer then use that, otherwise read a new record
 					long nbytes;
-					
+
 					nbytes = _bufferValid > 0 ? _bufferValid : _zFile.read(_recordBuffer);
 					// Have we been unable to read up to the required start point?
 					if (nbytes < _seekOffset) throw new EORFException(sofar);
@@ -241,7 +241,7 @@ public class ClosingFileReader extends ImageInputStreamImpl implements ResourceR
 						_bufferValid = 0;
 					}
 					//System.out.println("Read3 "+off+" "+sofar+" "+len+" "+nbytes+" b="+b.length+" val="+b[0]);
-				} else {			
+				} else {
 					// Read a full record directly into the output buffer
 					int nbytes;
 					nbytes = _zFile.read(b, off + sofar, len - sofar);
@@ -252,7 +252,7 @@ public class ClosingFileReader extends ImageInputStreamImpl implements ResourceR
 				}
 			}
 		}
-		
+
 		public void seek(long pos) throws IOException {
 			//System.out.println("Seek "+pos);
 			long newRecordNumber = pos/_recordLength;
@@ -291,7 +291,7 @@ public class ClosingFileReader extends ImageInputStreamImpl implements ResourceR
 		_file = new BaseRandomAccessFile(_fileRef, "r");
 		/*[ENDIF] PLATFORM-mz31 | PLATFORM-mz64 | ! ( Sidecar18-SE-OpenJ9 | Sidecar19-SE )*/
 	}
-	
+
 	/**
 	 * Create a closing file reader from a stream
 	 * @param file An ImageInputStream
@@ -313,7 +313,7 @@ public class ClosingFileReader extends ImageInputStreamImpl implements ResourceR
 		this(file);
 		if (deleteOnCloseOrExit) {
 			deleteOnClose = true;
-			/*  
+			/*
 			 * Ensure this file is closed on shutdown so that it can be deleted if required.
 			 */
 			Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -327,14 +327,14 @@ public class ClosingFileReader extends ImageInputStreamImpl implements ResourceR
 			});
 		}
 	}
-	
+
 	public byte[] readBytes(int n) throws IOException
 	{
 		byte[] buffer = new byte[n];
 		readFully(buffer);
 		return buffer;
 	}
-	
+
 	public int readInt() throws IOException
 	{
 		byte[] buffer = new byte[4];
@@ -344,12 +344,12 @@ public class ClosingFileReader extends ImageInputStreamImpl implements ResourceR
 				| ((buffer[2] & 0xFFL) << 8)
 				| (buffer[3] & 0xFFL));
 	}
-	
+
 	public void seek(long position) throws IOException
 	{
 		streamPos = position;
 	}
-	
+
 	public long readLong() throws IOException
 	{
 		byte[] buffer = new byte[8];
@@ -363,7 +363,7 @@ public class ClosingFileReader extends ImageInputStreamImpl implements ResourceR
 				| ((buffer[6] & 0xFFL) << 8)
 				| (buffer[7] & 0xFFL));
 	}
-	
+
 	public short readShort() throws IOException
 	{
 		byte[] buffer = new byte[2];
@@ -371,14 +371,14 @@ public class ClosingFileReader extends ImageInputStreamImpl implements ResourceR
 		return (short)(((buffer[0] & 0xFF) << 8)
 				| (buffer[1] & 0xFF));
 	}
-	
+
 	public byte readByte() throws IOException
 	{
 		byte[] buffer = new byte[1];
 		readFully(buffer);
 		return buffer[0];
 	}
-	
+
 	public void finalize() throws Throwable
 	{
 		try {
@@ -387,14 +387,14 @@ public class ClosingFileReader extends ImageInputStreamImpl implements ResourceR
 			super.finalize();
 		}
 	}
-	
+
 	public void readFully(byte[] buffer) throws IOException
 	{
 		int x  = 0;
 		while (x < buffer.length) {
 			int chunk = Math.min(_buffer.length, buffer.length - x);
 			int didRead = read(buffer, x, chunk);
-			
+
 			if (didRead <= 0) {
 				//make sure that we don't loop here on EOF
 				throw new EOFException("Read "+x+" bytes ");
@@ -402,7 +402,7 @@ public class ClosingFileReader extends ImageInputStreamImpl implements ResourceR
 			x+= didRead;
 		}
 	}
-	
+
 	/**
 	 * @param buffer
 	 * @param bStart
@@ -425,7 +425,7 @@ public class ClosingFileReader extends ImageInputStreamImpl implements ResourceR
 			long fHigh = streamPos + length;
 			long overlapStart = Math.max(bLow, fLow);
 			long overlapEnd = Math.min(bHigh, fHigh);
-			
+
 			if ((overlapEnd <= overlapStart) || (streamPos < _bufferBase)) {
 				//disjoint memory regions - recache before read
 				_recache();
@@ -434,7 +434,7 @@ public class ClosingFileReader extends ImageInputStreamImpl implements ResourceR
 				overlapStart = Math.max(bLow, fLow);
 				overlapEnd = Math.min(bHigh, fHigh);
 			}
-			
+
 			// By this point, the region in [start, end) is in the buffer and can be read (be sure to correct for the delta from the _bufferBase)
 			//now read
 			int offset = (int)(overlapStart - _bufferBase);
@@ -457,10 +457,10 @@ public class ClosingFileReader extends ImageInputStreamImpl implements ResourceR
 		}
 		return readSize;
 	}
-	
+
 	/**
 	 * Updates the cache to hold the data following the current _readPointer
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	private void _recache() throws IOException
 	{
@@ -481,7 +481,7 @@ public class ClosingFileReader extends ImageInputStreamImpl implements ResourceR
 				// exception tells us how many bytes were left
 				_file.seek(aligned);
 				_file.readFully(_buffer, 0, e.bytesRead);
-				_bufferEnd = aligned + e.bytesRead;				
+				_bufferEnd = aligned + e.bytesRead;
 			} catch (EOFException e) {
 				//check how big the file is and make sure that we only read what is there
 				if (fileLength != -1) {
@@ -494,7 +494,7 @@ public class ClosingFileReader extends ImageInputStreamImpl implements ResourceR
 					_bufferEnd = aligned;
 					for (int i = 0; i < _buffer.length; ++i) {
 						int r = _file.read();
-						if (r == -1) break;						
+						if (r == -1) break;
 						_buffer[i] = (byte)r;
 						++_bufferEnd;
 					}
@@ -505,7 +505,7 @@ public class ClosingFileReader extends ImageInputStreamImpl implements ResourceR
 			throw new EOFException("trying to cache beyond end of file");
 		}
 	}
-	
+
 	/**
 	 * Currently this attempts to fill the entire buffer
 	 */
@@ -513,15 +513,15 @@ public class ClosingFileReader extends ImageInputStreamImpl implements ResourceR
 	{
 		return read(buffer, 0, buffer.length);
 	}
-	
-	public int read() throws IOException 
+
+	public int read() throws IOException
 	{
 		byte b[] = new byte[1];
 		int r = read(b);
 		if (r < 0) return r;
 		return b[0] & 0xff;
 	}
-	
+
 	public long length()
 	{
 		try {
@@ -530,7 +530,7 @@ public class ClosingFileReader extends ImageInputStreamImpl implements ResourceR
 			return -1L;
 		}
 	}
-	
+
 	public void close() throws IOException
 	{
 		_file.close();
@@ -538,27 +538,27 @@ public class ClosingFileReader extends ImageInputStreamImpl implements ResourceR
 			_fileRef.delete();
 		}
 	}
-	
+
 	/**
 	 * @return A new stream for reading from the underlying file
-	 * 
+	 *
 	 * @throws FileNotFoundException If this file has moved since the ClosingFileReader was created (since we would have failed in the constructor if the file was ever there)
 	 */
 	public InputStream streamFromFile() throws FileNotFoundException
 	{
 		return new FileInputStream(_fileRef);
 	}
-	
+
 	public URI getURIOfFile() {
 		return _fileRef.toURI();
 	}
-	
+
 	public String getAbsolutePath()
 	{
 		if (_fileRef == null) return null;
 		return _fileRef.getAbsolutePath();
 	}
-	
+
 	public boolean isMVSFile()
 	{
 		/*[IF PLATFORM-mz31 | PLATFORM-mz64 | ! ( Sidecar18-SE-OpenJ9 | Sidecar19-SE )]*/
@@ -569,6 +569,6 @@ public class ClosingFileReader extends ImageInputStreamImpl implements ResourceR
 	}
 
 	public void releaseResources() throws IOException {
-		close();		
+		close();
 	}
 }

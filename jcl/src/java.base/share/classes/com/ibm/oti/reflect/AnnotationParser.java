@@ -56,26 +56,26 @@ public class AnnotationParser {
 	public static Annotation[][] parseParameterAnnotations(Method method) {
 		return parseParameterAnnotations(getParameterAnnotationsData(method), method.getDeclaringClass(), method.getParameterTypes().length);
 	}
-	
+
 	/**
 	 * @param clazz class for which annotations are to be retrieved
 	 * @return annotation attribute bytes, or null if clazz is null.
 	 */
 	public static  byte[] getAnnotationsData(java.lang.Class clazz) {
-		byte[] result = null; 
+		byte[] result = null;
 		if (null != clazz) {
 			result = getAnnotationsDataImpl(clazz);
 		}
 		return result;
 	};
-	
+
 	public static Object parseDefaultValue(Method method) {
 		byte[] elementValueData = getDefaultValueData(method);
 		if (elementValueData == null) return null;
 		ByteBuffer buf = ByteBuffer.wrap(elementValueData);
 		Class clazz = method.getDeclaringClass();
 		Object internalConstantPool = VM.getVMLangAccess().getInternalConstantPoolFromClass(clazz);
-		
+
 		/* The AnnotationParser boxes primitive return types */
 		Class returnType = method.getReturnType();
 		if (returnType.isPrimitive()) {

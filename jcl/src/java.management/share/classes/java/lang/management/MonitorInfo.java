@@ -74,7 +74,7 @@ public class MonitorInfo extends LockInfo {
 		/* MonitorInfoBase's constructor validates the arguments. */
 		baseInfo = new MonitorInfoBase(className, identityHashCode, stackDepth, stackFrame);
 	}
-	
+
 	MonitorInfo(MonitorInfoBase base) {
 		super(base);
 		baseInfo = base;

@@ -58,12 +58,12 @@ public class TraceFormat
 {
 	Object options[][] = {
 			{"timezoneoffset", Integer.valueOf(-1), "An offset in hours to add to the time stamps", Boolean.FALSE, Boolean.FALSE},
-			
+
 			{"tag", Integer.valueOf(-1), "A string that's prepended to the formatted trace point string to help track and compare trace from multiple JVMs", Boolean.FALSE, Boolean.FALSE},
 	};
 
 	private static Map indentMap = new HashMap();
-	
+
 	/**
 	 * @param args
 	 */
@@ -80,7 +80,7 @@ public class TraceFormat
 		ProgramOption.addOption(Verbose.class);
 		ProgramOption.addOption(Debug.class);
 		ProgramOption.addOption(Statistics.class);
-		
+
 		/* The trace context holds the configuration and state for the parsing */
 		TraceContext context;
 
@@ -89,7 +89,7 @@ public class TraceFormat
 			for (int i = 0; i < args.length; i++) {
 				ProgramOption.addArgument(args[i]);
 			}
-	
+
 			ProgramOption.applyDefaults();
 		} catch (IllegalArgumentException e) {
 			System.err.println(e.getMessage());
@@ -117,11 +117,11 @@ public class TraceFormat
 		PrintStream error = null;
 		PrintStream warning = null;
 		PrintStream debug = null;
-		
+
 		if (debugLevel.intValue() > 0) {
 			debug = System.err;
 		}
-		
+
 		try {
 			while (true) {
 				try {
@@ -178,7 +178,7 @@ public class TraceFormat
 			Long id = (Long)itr.next();
 			context.addThreadToFilter(id);
 		}
-		
+
 		context.setTimeZoneOffset(timezone.intValue());
 
 		/* add any remaining dat files */
@@ -204,7 +204,7 @@ public class TraceFormat
 		long startBlock = start;
 		long recordsProcessed = 0;
 		long totalBytes = 0;
-		
+
 		/* loop over the generational files and add the blocks to the context */
 		for (int i = 0; i < inputFiles.size(); i++) {
 			long offset = context.getHeaderSize();
@@ -229,7 +229,7 @@ public class TraceFormat
 				recordsInData++;
 			}
 		}
-		
+
 		/* output the summary information */
 		output.println(context.summary());
 
@@ -242,7 +242,7 @@ public class TraceFormat
 		if (!summary.booleanValue()) {
 			/* output the section header line and the column headings for the trace point data section */
 			output.println("                Trace Formatted Data " + System.getProperty("line.separator"));
-			
+
 			String columnHeader;
 			if (timezone.intValue() == 0) {
 				columnHeader = "Time (UTC)          ";
@@ -263,13 +263,13 @@ public class TraceFormat
 			columnHeader += " Tracepoint ID       Type        Tracepoint Data";
 			output.println(columnHeader);
 		}
-		
+
 		/* start reading tracepoints */
 		itr = context.getTracepoints();
 
 		String totalMbytes = (float)totalBytes/(float)(1024*1024) + "Mb";
 		context.message(context, "Processing " + totalMbytes + " of binary trace data");
-		
+
 		TraceThread thread = null;
 		String indent = "";
 		while (itr.hasNext()) {
@@ -300,31 +300,31 @@ public class TraceFormat
 					 */
 					context.error(context, "Underflow accessing parameter data for trace point "+component+"."+tpID);
 				}
-	
+
 				StringBuilder formatted = new StringBuilder();
 				if (formatTime.booleanValue()) {
 					formatted.append(tracepoint.getFormattedTime());
 				} else {
 					formatted.append(tracepoint.getRawTime());
 				}
-				
+
 				/* append thread id */
 				formatted.append(" ").append((current != thread ? "*" : " "));
 				formatted.append(context.formatPointer(current.getThreadID()));
 				formatted.append(" ");
-	
+
 				/* append component and padding - add container if this is a sub component.
-				 * e.g j9codertvm(j9jit).91 vs j9jit.18 */			
+				 * e.g j9codertvm(j9jit).91 vs j9jit.18 */
 				String fullTracepointID = String.format((container != null ? "%s(%s).%d" : "%1$s.%3$d"), component, container, tpID);
-				
+
 				/* Left justify but include a space in the formatting as a column separator in case of very long component id's. */
 				formatted.append(String.format("%-19s ", fullTracepointID));
-				
+
 				formatted.append(tracepoint.getType());
-				
+
 				if (indenting.booleanValue()) {
 					indent = indentMap.get(current).toString();
-	
+
 					/* we remove the indent before appending for exit */
 					if (tracepoint.getTypeAsInt() == TracePoint.EXIT_TYPE || tracepoint.getTypeAsInt() == TracePoint.EXIT_EXCPT_TYPE) {
 						try {
@@ -335,12 +335,12 @@ public class TraceFormat
 							indentMap.put(current, "");
 						}
 					}
-	
+
 					formatted.append(indent);
 				}
-	
+
 				formatted.append(parameters.length() > 0 ? ((parameters.charAt(0) == '*' ? " " : "") + parameters) : "");
-	
+
 				if (indenting.booleanValue()) {
 					/* juggle the indent for the thread */
 					if (tracepoint.getTypeAsInt() == TracePoint.ENTRY_TYPE || tracepoint.getTypeAsInt() == TracePoint.ENTRY_EXCPT_TYPE) {
@@ -391,7 +391,7 @@ public class TraceFormat
 			float Mbps = (recordsInData * context.getRecordSize()) / (1024.0f * 1024.0f * TimeUnit.NANOSECONDS.toSeconds(end - start));
 			context.message(context, "Total processing time " + TimeUnit.NANOSECONDS.toMillis(end - start) + "ms (" + Mbps + "Mb/s)");
 		}
-		
+
 		if (statistics) {
 			context.message(context, context.statistics());
 		}
@@ -401,7 +401,7 @@ public class TraceFormat
 
 class Debug extends ProgramOption {
 	int debug;
-	
+
 	String getDescription() {
 		return "If specified this option will cause debug data to be written to stderr. The default debug level is 1, increasing this will increase the amount of data supplied.";
 	}
@@ -409,7 +409,7 @@ class Debug extends ProgramOption {
 	String getName() {
 		return "debug";
 	}
-	
+
 	String getUsage() {
 		return "-debug=level";
 	}
@@ -424,7 +424,7 @@ class Debug extends ProgramOption {
 		} catch (NumberFormatException e) {
 			debug = -1;
 		}
-		
+
 		if (debug < 0) {
 			throw new IllegalArgumentException("The value \""+value+"\" specified for verbose is not valid, must be a positive integer");
 		}
@@ -437,12 +437,12 @@ class Debug extends ProgramOption {
 	void setDefault() {
 		debug = 0;
 	}
-	
+
 }
 
 class Verbose extends ProgramOption {
 	boolean verbose;
-	
+
 	String getDescription() {
 		return "If specified this option will cause warning and error messages to be printed to stderr. By default a count of each is displayed";
 	}
@@ -450,7 +450,7 @@ class Verbose extends ProgramOption {
 	String getName() {
 		return "verbose";
 	}
-	
+
 	String getUsage() {
 		return "-verbose";
 	}
@@ -476,12 +476,12 @@ class Verbose extends ProgramOption {
 	void setDefault() {
 		verbose = false;
 	}
-	
+
 }
 
 class Statistics extends ProgramOption {
 	boolean statistics;
-	
+
 	String getDescription() {
 		return "If specified this will cause some statistics to be reported:" +System.getProperty("line.separator")+
 				"		bytes of data by component" +System.getProperty("line.separator")+
@@ -493,7 +493,7 @@ class Statistics extends ProgramOption {
 	String getName() {
 		return "statistics";
 	}
-	
+
 	String getUsage() {
 		return "-statistics";
 	}
@@ -519,7 +519,7 @@ class Statistics extends ProgramOption {
 	void setDefault() {
 		statistics = false;
 	}
-	
+
 }
 
 class MessageFile extends ProgramOption {
@@ -540,7 +540,7 @@ class MessageFile extends ProgramOption {
 	String getName() {
 		return "datfile";
 	}
-	
+
 	String getUsage() {
 		return "-datfile=file";
 	}
@@ -548,7 +548,7 @@ class MessageFile extends ProgramOption {
 	Object getValue() {
 		return messageFiles;
 	}
-	
+
 	void setValue(String value) throws IllegalArgumentException {
 		/* This could be just the one file or could be a comma separated list */
 		StringTokenizer st = new StringTokenizer(value, ",");
@@ -567,11 +567,11 @@ class MessageFile extends ProgramOption {
 			throw new IllegalArgumentException("The application does not have permission to access the specified dat file, \""+token+"\"");
 		}
 	}
-	
+
 	void setDefault() {
 		String dir = System.getProperty("java.home");
 		dir = dir.concat(File.separator).concat("lib").concat(File.separator);
-		
+
 		setValue(dir + "J9TraceFormat.dat");
 		setValue(dir + "OMRTraceFormat.dat");
 		/*[IF !Sidecar18-SE-OpenJ9]*/
@@ -594,7 +594,7 @@ class Threads extends ProgramOption {
 	String getName() {
 		return "threads";
 	}
-	
+
 	String getUsage() {
 		return "-threads=id[,id]";
 	}
@@ -602,7 +602,7 @@ class Threads extends ProgramOption {
 	Object getValue() {
 		return threads;
 	}
-	
+
 	void setValue(String value) throws IllegalArgumentException {
 		/* This could be just the one file or could be a comma separated list */
 		StringTokenizer st = new StringTokenizer(value, ",");
@@ -611,7 +611,7 @@ class Threads extends ProgramOption {
 			while (st.hasMoreTokens()) {
 				token = st.nextToken();
 				Long id;
-				
+
 				/* construct Long's from the id's */
 				if (token.startsWith("0x")) {
 					id = Long.valueOf(token.substring(2), 16);
@@ -624,14 +624,14 @@ class Threads extends ProgramOption {
 			throw new IllegalArgumentException("The specified thread id, \""+token+"\" is not valid. Id's must be a number");
 		}
 	}
-	
+
 	void setDefault() {
 	}
 }
 
 class Timezone extends ProgramOption {
 	Integer timezone;
-	
+
 	String getDescription() {
 		return "Specifies the offset from UTC/GMT to apply when formatting timestamps, as +|-HH:MM";
 	}
@@ -661,7 +661,7 @@ class Timezone extends ProgramOption {
  			}
 			timezone = (hours * 60) + minutes;
 			if (value.substring(0,1).equals("-")) {
-				timezone = -timezone;	
+				timezone = -timezone;
 			}
 		} catch (NumberFormatException e) {
 			throw new IllegalArgumentException("The specified timezone offset \""+value+"\" is not valid. Format is +|-HH:MM");
@@ -672,7 +672,7 @@ class Timezone extends ProgramOption {
 		/* if specified with no value, default to the current timezone. Convert from millis to minutes */
 		timezone = Integer.valueOf((TimeZone.getDefault().getRawOffset() + TimeZone.getDefault().getDSTSavings())/(1000 * 60));
 	}
-	
+
 	void setDefault() {
 		/* default value is false */
 		timezone = Integer.valueOf(0);
@@ -681,7 +681,7 @@ class Timezone extends ProgramOption {
 
 class Indent extends ProgramOption {
 	boolean indent;
-	
+
 	String getDescription() {
 		return "Specifies whether to indent the trace point text to illustrate the call flow for the thread.";
 	}
@@ -712,7 +712,7 @@ class Indent extends ProgramOption {
 		/* if specified with no value, default to true */
 		indent = true;
 	}
-	
+
 	void setDefault() {
 		/* default value is false */
 		indent = false;
@@ -721,7 +721,7 @@ class Indent extends ProgramOption {
 
 class Summary extends ProgramOption {
 	boolean summary;
-	
+
 	String getDescription() {
 		return "Instructs the formatter to produce only summary information about the data";
 	}
@@ -752,7 +752,7 @@ class Summary extends ProgramOption {
 		/* if specified with no value, default to true */
 		summary = true;
 	}
-	
+
 	void setDefault() {
 		/* default value is false */
 		summary = false;
@@ -774,11 +774,11 @@ class InputFile extends ProgramOption {
 	Object getValue() {
 		return inputFiles;
 	}
-	
+
 	boolean required() {
 		return true;
 	}
-	
+
 	void setDefault() {
 		/* pulls the first Anonymous argument out of the list and uses that */
 		if (ProgramOption.AnonymousArgs.isEmpty()) {
@@ -797,7 +797,7 @@ class InputFile extends ProgramOption {
 
 			/* if this was a generational file pattern then replace the token and try again */
 			if (value.indexOf('#') != -1) {
-				
+
 				/* TODO: we've had to remove record level sorting due to the problems with NTP updates.
 				 * Until we've got sorting for the generational files this needs to be disabled
 				 */
@@ -824,7 +824,7 @@ class InputFile extends ProgramOption {
 
 class FormatTimestamp extends ProgramOption {
 	boolean formatTimestamp;
-	
+
 	String getDescription() {
 		return "Specifies whether to format the tracepoint time stamps. Default is yes.";
 	}
@@ -855,7 +855,7 @@ class FormatTimestamp extends ProgramOption {
 		/* if specified with no value, default to true */
 		formatTimestamp = true;
 	}
-	
+
 	void setDefault() {
 		/* by default we format timestamps */
 		formatTimestamp = true;
@@ -864,7 +864,7 @@ class FormatTimestamp extends ProgramOption {
 
 class OutputFile extends ProgramOption {
 	PrintWriter outputStream;
-	
+
 	String getDescription() {
 		return "The output file containing the formatted trace data. The default is to append \".fmt\" to the input file name";
 	}
@@ -895,7 +895,7 @@ class OutputFile extends ProgramOption {
 			sb.append(System.getProperty("line.separator")+help());
 			throw new IllegalArgumentException(sb.toString());
 		}
-		
+
 	}
 
 	void setValue(String value) throws IllegalArgumentException {
@@ -928,11 +928,11 @@ abstract class ProgramOption {
 	/* The configuration as specified by the user, merged with defaults */
 	final static HashMap Configuration = new HashMap();
 	final static List AnonymousArgs = new LinkedList();
-	
+
 	/* The set of available options */
 	final static HashMap options = new HashMap();
 	static HashMap defaultOptions = null;
-	
+
 	abstract String getDescription();
 	abstract String getName();
 	abstract Object getValue();
@@ -946,7 +946,7 @@ abstract class ProgramOption {
 	String getUsage() {
 		return getName();
 	}
-	
+
 	/* This method takes the string value specified for the option on the command line and
 	 * parses it into whatever internal representation is required.
 	 */
@@ -954,12 +954,12 @@ abstract class ProgramOption {
 
 	/* If an option is explicitly specified without a value this method is invoked. Subclasses should
 	 * override this method if an option has an automatic value, e.g. -timezone applies the
-	 * users current timezone. 
+	 * users current timezone.
 	 */
 	void setAutomatic() {
 		throw new IllegalArgumentException("Value must be specified for "+getName());
 	}
-	
+
 
 	/* If an option is allowed but isn't specified on the command line the it is still added to the
 	 * options set, but with it's default value. If a subclass describes an optional argument then this
@@ -986,19 +986,19 @@ abstract class ProgramOption {
 	}
 
 	/* This function takes an argument from the command line, checks there's a class to process it
-	 * and stores it's value 
+	 * and stores it's value
 	 */
 	static void addArgument(String arg) throws IllegalArgumentException {
 		String key = arg;
 		String value = null;
-		
+
 		/* strip the leading '-' if present */
 		if (arg.charAt(0) == '-') {
 			key = arg.substring(1);
 		} else {
 			/* this argument isn't a key value pair so just stash it and return */
 			AnonymousArgs.add(arg);
-			return; 
+			return;
 		}
 
 
@@ -1017,7 +1017,7 @@ abstract class ProgramOption {
 			key = key.substring(0, key.indexOf('='));
 			value = arg.substring(arg.indexOf('=') + 1);
 		}
-		
+
 		if (options.containsKey(key)) {
 			/* Find the option */
 			Class type = (Class)options.get(key);
@@ -1092,14 +1092,14 @@ abstract class ProgramOption {
 				} else {
 					synopsis.append(" ["+usage+"]");
 				}
-				
+
 				/* construct the option description */
 				sb.append(name+ ": "+option.getDescription()+System.getProperty("line.separator")+System.getProperty("line.separator"));
 			} catch (Exception e) {
 				System.err.println("Error while constructing default values");
 			}
 		}
-		
+
 		return help.append(synopsis).append(System.getProperty("line.separator")+System.getProperty("line.separator")).append(sb).toString();
 	}
 }
