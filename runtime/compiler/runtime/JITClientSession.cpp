@@ -298,7 +298,7 @@ ClientSessionData::processIllegalFinalFieldModificationList(const std::vector<TR
             it->second._classFlags |= J9ClassHasIllegalFinalFieldModifications;
             if (TR::Options::getVerboseOption(TR_VerboseJITServer))
                TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
-                  "compThreadID=%d found clazz %p in the cache and updated bit J9ClassHasIllegalFinalFieldModifications to 1\n", compThreadID, clazz);
+                  "compThreadID=%d found clazz %p in the cache and updated bit J9ClassHasIllegalFinalFieldModifications to 1", compThreadID, clazz);
             }
          }
       }
@@ -413,7 +413,7 @@ ClientSessionData::ClassInfo::ClassInfo(TR_PersistentMemory *persistentMemory) :
    _totalInstanceSize(0),
    _constantPool(NULL),
    _classFlags(0),
-   _classChainOffsetIdentifyingLoader(0),
+   _classChainOffsetIdentifyingLoader(TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET),
    _classNameIdentifyingLoader(),
    _aotCacheClassRecord(NULL),
    _arrayElementSize(0),
@@ -841,7 +841,7 @@ ClientSessionData::getClassRecord(ClientSessionData::ClassInfo &classInfo, bool 
       auto &name = classInfo._classNameIdentifyingLoader;
       if (name.empty())
          {
-         TR_ASSERT(!classInfo._classChainOffsetIdentifyingLoader,
+         TR_ASSERT(TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET != classInfo._classChainOffsetIdentifyingLoader,
                    "Valid class chain offset but missing class name identifying loader");
          missingLoaderInfo = true;
          return NULL;
@@ -952,7 +952,7 @@ ClientSessionData::getMethodRecord(J9Method *method, J9Class *definingClass, JIT
    }
 
 const AOTCacheClassChainRecord *
-ClientSessionData::getClassChainRecord(J9Class *clazz, uintptr_t *classChain,
+ClientSessionData::getClassChainRecord(J9Class *clazz, uintptr_t classChainOffset,
                                        const std::vector<J9Class *> &ramClassChain, JITServer::ServerStream *stream,
                                        bool &missingLoaderInfo)
    {
@@ -1043,7 +1043,7 @@ ClientSessionData::getClassChainRecord(J9Class *clazz, uintptr_t *classChain,
    // Cache the new class chain record
    auto record = _aotCache->getClassChainRecord(classRecords, ramClassChain.size());
    OMR::CriticalSection cs(getClassChainDataMapMonitor());
-   auto result = getClassChainDataMap().insert({ clazz, { classChain, record } });
+   auto result = getClassChainDataMap().insert({ clazz, { classChainOffset, record } });
    if (!result.second)
       result.first->second._aotCacheClassChainRecord = record;
    return record;

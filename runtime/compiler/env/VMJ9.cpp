@@ -7321,6 +7321,19 @@ TR_J9VM::getClassFromSignature(const char * sig, int32_t sigLength, J9ConstantPo
    return returnValue; // 0 means failure
    }
 
+uint32_t
+TR_J9VMBase::numInterfacesImplemented(J9Class *clazz)
+   {
+   uint32_t count=0;
+   J9ITable *element = TR::Compiler->cls.iTableOf(convertClassPtrToClassOffset(clazz));
+   while (element != NULL)
+      {
+      count++;
+      element = TR::Compiler->cls.iTableNext(element);
+      }
+   return count;
+   }
+
 TR_EstimateCodeSize *
 TR_J9VMBase::getCodeEstimator(TR::Compilation *comp)
    {
@@ -9403,7 +9416,7 @@ bool
 TR_J9SharedCacheVM::canRememberClass(TR_OpaqueClassBlock *classPtr)
    {
    if (_sharedCache)
-      return (_sharedCache->rememberClass((J9Class *)classPtr, NULL, false) != NULL);
+      return (_sharedCache->rememberClass((J9Class *)classPtr, NULL, false) != TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET);
    return false;
    }
 

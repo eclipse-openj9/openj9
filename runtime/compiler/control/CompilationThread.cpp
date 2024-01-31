@@ -7902,14 +7902,14 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
 
             // Eligibility checks
             && !entry->_doNotUseAotCodeFromSharedCache
-            && fe->sharedCache()->isROMClassInSharedCache(J9_CLASS_FROM_METHOD(method)->romClass)
+            && fe->sharedCache()->isClassInSharedCache(J9_CLASS_FROM_METHOD(method))
             && !_compInfo.isMethodIneligibleForAot(method)
             && (!TR::Options::getAOTCmdLineOptions()->getOption(TR_AOTCompileOnlyFromBootstrap)
                 || fe->isClassLibraryMethod((TR_OpaqueMethodBlock *)method), true)
 
             // Ensure we can generate a class chain for the class of the
             // method to be compiled
-            && (NULL != fe->sharedCache()->rememberClass(J9_CLASS_FROM_METHOD(method)))
+            && (TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET != fe->sharedCache()->rememberClass(J9_CLASS_FROM_METHOD(method)))
 
             // Do not perform AOT compilation if field watch is enabled; there
             // is no benefit to having an AOT body with field watch as it increases

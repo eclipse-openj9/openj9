@@ -56,14 +56,14 @@ public:
    AOTClassInfo(
          TR_FrontEnd *fe,
          TR_OpaqueClassBlock *clazz,
-         void *classChain,
+         uintptr_t classChainOffset,
          TR_OpaqueMethodBlock *method,
          uint32_t cpIndex,
          TR_ExternalRelocationTargetKind reloKind,
          const AOTCacheClassChainRecord *aotCacheClassChainRecord = NULL
    ) :
       _clazz(clazz),
-      _classChain(classChain),
+      _classChainOffset(classChainOffset),
       _method(method),
       _constantPool((void *) ((TR_J9VMBase *)fe)->getConstantPoolFromMethod(method)),
       _cpIndex(cpIndex),
@@ -88,8 +88,8 @@ public:
                                                 // _method must be compiled method or some method in the inlined site table
    void *_constantPool;                         // constant pool owning the cp entry, initialized based on _method
    TR_OpaqueClassBlock *_clazz;                 // class on which assumption is formed
-   void *_classChain;                           // class chain for clazz: captures the assumption
-                                                // == NULL for TR_ValidateStaticField validations
+   uintptr_t _classChainOffset;                 // class chain offset for clazz: captures the assumption
+                                                // == TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET for TR_ValidateStaticField validations
 #if defined(J9VM_OPT_JITSERVER)
    const AOTCacheClassChainRecord *_aotCacheClassChainRecord; // NULL at JITServer if compiled method won't be cached
                                                               // Always NULL at JIT client

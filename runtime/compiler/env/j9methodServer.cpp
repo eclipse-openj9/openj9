@@ -1390,7 +1390,7 @@ TR_ResolvedJ9JITServerMethod::createResolvedMethodFromJ9MethodMirror(TR_Resolved
             isSystemClassLoader = ((void*)fej9->vmThread()->javaVM->systemClassLoader->classLoaderObject ==  (void*)fej9->getClassLoader(clazzOfInlinedMethod));
             }
 
-         if (fej9->sharedCache()->isROMClassInSharedCache(J9_CLASS_FROM_METHOD(j9method)->romClass))
+         if (fej9->sharedCache()->isClassInSharedCache(J9_CLASS_FROM_METHOD(j9method)))
             {
             bool sameLoaders = false;
             TR_J9VMBase *fej9 = (TR_J9VMBase *)fe;
@@ -2046,8 +2046,8 @@ TR_ResolvedRelocatableJ9JITServerMethod::storeValidationRecordIfNecessary(TR::Co
 
    // all kinds of validations may need to rely on the entire class chain, so make sure we can build one first
    const AOTCacheClassChainRecord *classChainRecord = NULL;
-   void *classChain = fej9->sharedCache()->rememberClass(definingClass, &classChainRecord);
-   if (!classChain)
+   uintptr_t classChainOffset = fej9->sharedCache()->rememberClass(definingClass, &classChainRecord);
+   if (TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET == classChainOffset)
       return false;
 
    bool inLocalList = false;
@@ -2068,7 +2068,7 @@ TR_ResolvedRelocatableJ9JITServerMethod::storeValidationRecordIfNecessary(TR::Co
                inLocalList = (TR::Compiler->cls.romClassOf((TR_OpaqueClassBlock *) definingClass) ==
                               TR::Compiler->cls.romClassOf((TR_OpaqueClassBlock *) ((*info)->_clazz)));
             else
-               inLocalList = (classChain == (*info)->_classChain &&
+               inLocalList = (classChainOffset == (*info)->_classChainOffset &&
                               cpIndex == (*info)->_cpIndex &&
                               ramMethod == (J9Method *)(*info)->_method);
 
@@ -2092,7 +2092,7 @@ TR_ResolvedRelocatableJ9JITServerMethod::storeValidationRecordIfNecessary(TR::Co
       }
 
    TR::AOTClassInfo *classInfo = new (comp->trHeapMemory()) TR::AOTClassInfo(
-      fej9, (TR_OpaqueClassBlock *)definingClass, (void *)classChain,
+      fej9, (TR_OpaqueClassBlock *)definingClass, classChainOffset,
       (TR_OpaqueMethodBlock *)ramMethod, cpIndex, reloKind, classChainRecord
    );
    if (classInfo)

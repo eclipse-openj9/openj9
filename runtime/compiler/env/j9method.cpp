@@ -794,10 +794,11 @@ static intptr_t getInitialCountForMethod(TR_ResolvedMethod *rm, TR::Compilation 
 #if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
    if (TR::Options::sharedClassCache())
       {
+      J9Class *ramClass = m->constantPoolHdr();
       J9ROMClass *romClass = m->romClassPtr();
       J9ROMMethod *romMethod = m->romMethod();
 
-      if (!comp->fej9()->sharedCache()->isROMClassInSharedCache(romClass))
+      if (!comp->fej9()->sharedCache()->isClassInSharedCache(ramClass))
          {
 #if defined(J9ZOS390)
           // Do not change the counts on zos at the moment since the shared cache capacity is higher on this platform
@@ -993,7 +994,7 @@ TR_ResolvedRelocatableJ9Method::TR_ResolvedRelocatableJ9Method(TR_OpaqueMethodBl
    TR::Compilation *comp = TR::comp();
    if (comp && this->TR_ResolvedMethod::getRecognizedMethod() != TR::unknownMethod)
       {
-      if (fej9->sharedCache()->rememberClass(containingClass()))
+      if (TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET != fej9->sharedCache()->rememberClass(containingClass()))
          {
          if (comp->getOption(TR_UseSymbolValidationManager))
             {
@@ -1372,11 +1373,9 @@ TR_ResolvedRelocatableJ9Method::storeValidationRecordIfNecessary(TR::Compilation
    J9UTF8 *className = J9ROMCLASS_CLASSNAME(definingClass->romClass);
    traceMsg(comp, "\tdefiningClass name %.*s\n", J9UTF8_LENGTH(className), J9UTF8_DATA(className));
 
-   void *classChain = NULL;
-
    // all kinds of validations may need to rely on the entire class chain, so make sure we can build one first
-   classChain = fej9->sharedCache()->rememberClass(definingClass);
-   if (!classChain)
+   uintptr_t classChainOffset = fej9->sharedCache()->rememberClass(definingClass);
+   if (TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET == classChainOffset)
       return false;
 
    bool inLocalList = false;
@@ -1396,7 +1395,7 @@ TR_ResolvedRelocatableJ9Method::storeValidationRecordIfNecessary(TR::Compilation
             if (isStatic)
                inLocalList = (definingClass->romClass == ((J9Class *)((*info)->_clazz))->romClass);
             else
-               inLocalList = (classChain == (*info)->_classChain &&
+               inLocalList = (classChainOffset == (*info)->_classChainOffset &&
                               cpIndex == (*info)->_cpIndex &&
                               ramMethod == (J9Method *)(*info)->_method);
 
@@ -1419,7 +1418,7 @@ TR_ResolvedRelocatableJ9Method::storeValidationRecordIfNecessary(TR::Compilation
       return true;
       }
 
-   TR::AOTClassInfo *classInfo = new (comp->trHeapMemory()) TR::AOTClassInfo(fej9, (TR_OpaqueClassBlock *)definingClass, (void *) classChain, (TR_OpaqueMethodBlock *)ramMethod, cpIndex, reloKind);
+   TR::AOTClassInfo *classInfo = new (comp->trHeapMemory()) TR::AOTClassInfo(fej9, (TR_OpaqueClassBlock *)definingClass, classChainOffset, (TR_OpaqueMethodBlock *)ramMethod, cpIndex, reloKind);
    if (classInfo)
       {
       traceMsg(comp, "\tCreated new AOT class info %p\n", classInfo);
@@ -1847,7 +1846,7 @@ TR_ResolvedRelocatableJ9Method::createResolvedMethodFromJ9Method(TR::Compilation
          isSystemClassLoader = ((void*)_fe->vmThread()->javaVM->systemClassLoader->classLoaderObject ==  (void*)_fe->getClassLoader(clazzOfInlinedMethod));
          }
 
-      bool methodInSCC = _fe->sharedCache()->isROMClassInSharedCache(J9_CLASS_FROM_METHOD(j9method)->romClass);
+      bool methodInSCC = _fe->sharedCache()->isClassInSharedCache(J9_CLASS_FROM_METHOD(j9method));
       if (methodInSCC)
          {
          bool sameLoaders = false;

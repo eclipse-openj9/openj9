@@ -568,7 +568,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
          uint64_t, uint32_t, uint32_t, J9Method *, J9Class *, TR_OptimizationPlan, std::string,
          J9::IlGeneratorMethodDetailsType, std::vector<TR_OpaqueClassBlock *>, std::vector<TR_OpaqueClassBlock *>,
          JITServerHelpers::ClassInfoTuple, std::string, std::string, std::string, std::string,
-         bool, bool, bool, uint32_t, uintptr_t *, std::vector<J9Class *>, std::vector<J9Class *>,
+         bool, bool, bool, uint32_t, uintptr_t, std::vector<J9Class *>, std::vector<J9Class *>,
          std::vector<JITServerHelpers::ClassInfoTuple>, std::vector<uintptr_t>
       >();
 
@@ -591,7 +591,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       bool isInStartupPhase         = std::get<16>(req);
       bool aotCacheLoad             = std::get<17>(req);
       _methodIndex                  = std::get<18>(req);
-      uintptr_t *classChain         = std::get<19>(req);
+      uintptr_t classChainOffset    = std::get<19>(req);
       auto &ramClassChain           = std::get<20>(req);
       auto &uncachedRAMClasses      = std::get<21>(req);
       auto &uncachedClassInfos      = std::get<22>(req);
@@ -894,8 +894,8 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       entry._stream = stream; // Add the stream to the entry
 
       auto aotCache = clientSession->getOrCreateAOTCache(stream);
-      _aotCacheStore = classChain && aotCache && JITServerAOTCacheMap::cacheHasSpace();
-      aotCacheLoad = aotCacheLoad && classChain && aotCache;
+      _aotCacheStore = (TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET != classChainOffset) && aotCache && JITServerAOTCacheMap::cacheHasSpace();
+      aotCacheLoad = aotCacheLoad && (TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET != classChainOffset) && aotCache;
       if (aotCache && !aotCacheLoad)
          aotCache->incNumCacheBypasses();
 
@@ -904,7 +904,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
          // Get defining class chain record to use as a part of the key to lookup or store the method in AOT cache
          JITServerHelpers::cacheRemoteROMClassBatch(clientSession, uncachedRAMClasses, uncachedClassInfos);
          bool missingLoaderInfo = false;
-         _definingClassChainRecord = clientSession->getClassChainRecord(clazz, classChain, ramClassChain, stream, missingLoaderInfo);
+         _definingClassChainRecord = clientSession->getClassChainRecord(clazz, classChainOffset, ramClassChain, stream, missingLoaderInfo);
          if (!_definingClassChainRecord)
             {
             if (TR::Options::getVerboseOption(TR_VerboseJITServer))

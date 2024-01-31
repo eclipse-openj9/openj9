@@ -1895,7 +1895,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          // Collect AOT stats
          TR_ResolvedJ9Method *resolvedMethod = std::get<0>(methodInfo).remoteMirror;
 
-         isRomClassForMethodInSC = fe->sharedCache()->isROMClassInSharedCache(J9_CLASS_FROM_METHOD(j9method)->romClass);
+         isRomClassForMethodInSC = fe->sharedCache()->isClassInSharedCache(J9_CLASS_FROM_METHOD(j9method));
 
          J9Class *j9clazz = (J9Class *) J9_CLASS_FROM_CP(((J9RAMConstantPoolItem *) J9_CP_FROM_METHOD(((J9Method *)j9method))));
          TR_OpaqueClassBlock *clazzOfInlinedMethod = fe->convertClassPtrToClassOffset(j9clazz);
@@ -2141,18 +2141,19 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          auto clazz = std::get<0>(recv);
          bool create = std::get<1>(recv);
          bool getClasses = std::get<2>(recv);
-         uintptr_t *classChain = fe->sharedCache()->rememberClass(clazz, NULL, create);
+         uintptr_t classChainOffset = fe->sharedCache()->rememberClass(clazz, NULL, create);
          std::vector<J9Class *> ramClassChain;
          std::vector<J9Class *> uncachedRAMClasses;
          std::vector<JITServerHelpers::ClassInfoTuple> uncachedClassInfos;
-         if (create && getClasses && classChain)
+         if (create && getClasses && (TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET != classChainOffset))
             {
-            // The first word of the class chain data stores the size of the whole record in bytes
-            uintptr_t numClasses = classChain[0] / sizeof(classChain[0]) - 1;
+            // The first word of the class chain data stores the size of the whole record in bytes, so the number of classes
+            // is 1 less than the necessary class chain length.
+            uintptr_t numClasses = fe->necessaryClassChainLength(clazz) - 1;
             ramClassChain = JITServerHelpers::getRAMClassChain(clazz, numClasses, vmThread, trMemory, compInfo,
                                                                uncachedRAMClasses, uncachedClassInfos);
             }
-         client->write(response, classChain, ramClassChain, uncachedRAMClasses, uncachedClassInfos);
+         client->write(response, classChainOffset, ramClassChain, uncachedRAMClasses, uncachedClassInfos);
          }
          break;
       case MessageType::SharedCache_addHint:
@@ -3158,17 +3159,18 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
       ? std::string((const char *)compiler->getRecompilationInfo()->getMethodInfo(), sizeof(TR_PersistentMethodInfo))
       : std::string();
 
-   uintptr_t *classChain = NULL;
+   uintptr_t classChainOffset = TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET;
    std::vector<J9Class *> ramClassChain;
    std::vector<J9Class *> uncachedRAMClasses;
    std::vector<JITServerHelpers::ClassInfoTuple> uncachedClassInfos;
    if (aotCacheStore || aotCacheLoad)
       {
-      classChain = compiler->fej9vm()->sharedCache()->rememberClass(clazz);
-      if (classChain)
+      classChainOffset = compiler->fej9vm()->sharedCache()->rememberClass(clazz);
+      if (TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET != classChainOffset)
          {
-         // The first word of the class chain data stores the size of the whole record in bytes
-         uintptr_t numClasses = classChain[0] / sizeof(classChain[0]) - 1;
+         // The first word of the class chain data stores the size of the whole record in bytes, so the number of classes
+         // is 1 less than the necessary class chain length.
+         uintptr_t numClasses = compiler->fej9vm()->necessaryClassChainLength(clazz) - 1;
          ramClassChain = JITServerHelpers::getRAMClassChain(clazz, numClasses, vmThread, compiler->trMemory(),
                                                             compInfo, uncachedRAMClasses, uncachedClassInfos);
          }
@@ -3239,7 +3241,7 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
          detailsStr, details.getType(), unloadedClasses, illegalModificationList, classInfoTuple, optionsStr,
          recompMethodInfoStr, chtableUpdates.first, chtableUpdates.second, useAotCompilation,
          TR::Compiler->vm.isVMInStartupPhase(compInfoPT->getJitConfig()), aotCacheLoad, methodIndex,
-         classChain, ramClassChain, uncachedRAMClasses, uncachedClassInfos, newKnownIds
+         classChainOffset, ramClassChain, uncachedRAMClasses, uncachedClassInfos, newKnownIds
       );
 
       JITServer::MessageType response;

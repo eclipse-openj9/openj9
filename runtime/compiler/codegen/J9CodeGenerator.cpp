@@ -2570,7 +2570,7 @@ static void addValidationRecords(TR::CodeGenerator *cg)
          {
          traceMsg(cg->comp(), "processing AOT class info: %p in %s\n", *info, cg->comp()->signature());
          traceMsg(cg->comp(), "ramMethod: %p cp: %p cpIndex: %x relo %d\n", (*info)->_method, (*info)->_constantPool, (*info)->_cpIndex, (*info)->_reloKind);
-         traceMsg(cg->comp(), "clazz: %p classChain: %p\n", (*info)->_clazz, (*info)->_classChain);
+         traceMsg(cg->comp(), "clazz: %p classChainOffset: %" OMR_PRIuPTR "\n", (*info)->_clazz, (*info)->_classChainOffset);
 
          TR_OpaqueMethodBlock *ramMethod = (*info)->_method;
 
