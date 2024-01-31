@@ -45,10 +45,15 @@ namespace TR { class Monitor; }
 // The deserializer cache stores pointers to "RAM" entities, which have to be invalidated when classes and
 // class loaders are unloaded, and SCC offsets to "ROM" entities, which always remain valid once cached.
 //
-// JIT client can reconnect do a different JITServer instance after the previous instance fails or shuts down.
+// A JIT client can reconnect to a different JITServer instance after the previous instance fails or shuts down.
 // Since AOT cache record IDs are specific to a JITServer instance, the deserializer cache must be purged
-// upon connecting to a new instance. This is done in the reset() function. Any concurrent deserialization
-// (of a method received just before the server failure) detects that a reset is in progress and fails.
+// upon connecting to a new instance. This is done in the reset() function, which will be called by some compilation thread
+// in handleServerMessage(). To ensure that compilations on other threads are notified of a reset, the reset() function sets
+// a flag indicating a reset occurred in every compilation thread. Every lookup or store operation involving the deserializer's
+// caches will first acquire the appropriate monitor and check whether or not the current thread was notified of a reset.
+// If it was, the operations will set a bool &wasReset flag to notify the caller of that fact, so it can abort whatever it was doing.
+// The only exceptions are the invalidate* methods, which are called only when the current thread has exclusive VM access,
+// and so no compilation thread could possibly be attempting to reset the deserializer at the same time they are called.
 class JITServerAOTDeserializer
    {
 public:
@@ -70,12 +75,12 @@ public:
    // Invalidates all cached serialization records. Must be called when the client
    // connects to a new server instance (e.g. upon receving a VM_getVMInfo message),
    // before attempting to deserialize any method received from the new server instance.
-   void reset();
+   void reset(TR::CompilationInfoPerThread *compInfoPT);
 
    // IDs of records newly cached during deserialization of an AOT method are sent to the JITServer with
    // the next compilation request, so that the server can update its set of known IDs for this client.
    // This function returns the list of IDs cached since the last call, and clears the set of new known IDs.
-   std::vector<uintptr_t/*idAndType*/> getNewKnownIds();
+   std::vector<uintptr_t/*idAndType*/> getNewKnownIds(TR::Compilation *comp);
 
    void incNumCacheBypasses() { ++_numCacheBypasses; }
    void incNumCacheMisses() { ++_numCacheMisses; }
@@ -97,7 +102,7 @@ private:
       uintptr_t _loaderChainSCCOffset;
       };
 
-   bool isResetInProgress(bool &wasReset) { return _resetInProgress ? (wasReset = true) : false; }
+   bool deserializerWasReset(TR::Compilation *comp, bool &wasReset);
 
    //NOTE: All the functions below that take a 'bool &wasReset' argument set it to true
    //      if the operation failed due to a concurrent reset of the deserializer.
@@ -112,7 +117,7 @@ private:
    // Returns true if ROMClass hash matches the one in the serialization record
    bool isClassMatching(const ClassSerializationRecord *record, J9Class *ramClass, TR::Compilation *comp);
 
-   bool cacheRecord(const ClassLoaderSerializationRecord *record, bool &isNew, bool &wasReset);
+   bool cacheRecord(const ClassLoaderSerializationRecord *record, TR::Compilation *comp, bool &isNew, bool &wasReset);
    bool cacheRecord(const ClassSerializationRecord *record, TR::Compilation *comp, bool &isNew, bool &wasReset);
    bool cacheRecord(const MethodSerializationRecord *record, TR::Compilation *comp, bool &isNew, bool &wasReset);
    bool cacheRecord(const ClassChainSerializationRecord *record, TR::Compilation *comp, bool &isNew, bool &wasReset);
@@ -122,17 +127,20 @@ private:
    // Returns the class loader for given class loader ID, either cached or
    // looked up using the cached SCC offset if the class loader was unloaded.
    // The SCC offset of the identifying class chain is returned in loaderSCCOffset.
-   J9ClassLoader *getClassLoader(uintptr_t id, uintptr_t &loaderSCCOffset, bool &wasReset);
+   J9ClassLoader *getClassLoader(uintptr_t id, uintptr_t &loaderSCCOffset, TR::Compilation *comp, bool &wasReset);
    // Returns the RAMClass for given class ID, either cached or
    // looked up using the cached SCC offsets if the class was unloaded.
    J9Class *getRAMClass(uintptr_t id, TR::Compilation *comp, bool &wasReset);
 
    // Returns -1 on failure
-   uintptr_t getSCCOffset(AOTSerializationRecordType type, uintptr_t id, bool &wasReset);
+   uintptr_t getSCCOffset(AOTSerializationRecordType type, uintptr_t id, TR::Compilation *comp, bool &wasReset);
 
    bool deserializationFailure(const SerializedAOTMethod *method, TR::Compilation *comp, bool wasReset);
    // Returns false on failure
    bool updateSCCOffsets(SerializedAOTMethod *method, TR::Compilation *comp, bool &wasReset, bool &usesSVM);
+
+   template<typename V> V
+   findInMap(const PersistentUnorderedMap<uintptr_t, V> &map, uintptr_t id, TR::Monitor *monitor, TR::Compilation *comp, bool &wasReset);
 
    TR_PersistentClassLoaderTable *const _loaderTable;
    TR_J9SharedCache *const _sharedCache;

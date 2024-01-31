@@ -513,6 +513,11 @@ class CompilationInfoPerThread : public TR::CompilationInfoPerThreadBase
    J9ROMClass               *getAndCacheRemoteROMClass(J9Class *clazz);
    J9ROMClass               *getRemoteROMClassIfCached(J9Class *clazz);
    PersistentUnorderedSet<TR_OpaqueClassBlock*> *getClassesThatShouldNotBeNewlyExtended() const { return _classesThatShouldNotBeNewlyExtended; }
+   bool                      getDeserializerWasReset() const { return _deserializerWasReset; }
+   // Called externally by a compilation thread that is resetting the JITServer AOT deserializer
+   void                      setDeserializerWasReset() { _deserializerWasReset = true; }
+   // Called by the current compilation thread at the beginning of a remote compilation to clear the _deserializerWasReset flag
+   void                      clearDeserializerWasReset() { _deserializerWasReset = false; }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    protected:
@@ -537,6 +542,8 @@ class CompilationInfoPerThread : public TR::CompilationInfoPerThreadBase
    // The following hastable caches <classLoader,classname> --> <J9Class> mappings
    // The cache only lives during a compilation due to class unloading concerns
    PersistentUnorderedSet<TR_OpaqueClassBlock*> *_classesThatShouldNotBeNewlyExtended;
+   // A flag notifying this thread that the JITServer AOT deserializer was reset.
+   bool _deserializerWasReset;
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    }; // CompilationInfoPerThread
