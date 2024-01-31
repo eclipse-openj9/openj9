@@ -333,6 +333,10 @@ public final class StackWalker {
 	 * StackWalker.
 	 */
 	public static enum Option {
+		/**
+		 * Allow clients to obtain a method's Class object.
+		 */
+		RETAIN_CLASS_REFERENCE,
 		/*[IF JAVA_SPEC_VERSION >= 22]*/
 		/**
 		 * A client may use this option to signal that method information is not
@@ -341,10 +345,6 @@ public final class StackWalker {
 		 */
 		DROP_METHOD_INFO,
 		/*[ENDIF] JAVA_SPEC_VERSION >= 22 */
-		/**
-		 * Allow clients to obtain a method's Class object.
-		 */
-		RETAIN_CLASS_REFERENCE,
 		/**
 		 * Include stack frames for reflection methods.
 		 */
