@@ -152,13 +152,13 @@ J9::AheadOfTimeCompile::offsetInSharedCacheFromPointer(TR_SharedCache *sharedCac
    }
 
 uintptr_t
-J9::AheadOfTimeCompile::offsetInSharedCacheFromROMClass(TR_SharedCache *sharedCache, J9ROMClass *romClass)
+J9::AheadOfTimeCompile::offsetInSharedCacheFromClass(TR_SharedCache *sharedCache, TR_OpaqueClassBlock *clazz)
    {
    uintptr_t offset = 0;
-   if (sharedCache->isROMClassInSharedCache(romClass, &offset))
+   if (sharedCache->isClassInSharedCache(clazz, &offset))
       return offset;
    else
-      self()->comp()->failCompilation<J9::ClassChainPersistenceFailure>("Failed to find romClass %p in SCC", romClass);
+      self()->comp()->failCompilation<J9::ClassChainPersistenceFailure>("Failed to find clazz %p in SCC", clazz);
 
    return offset;
    }
@@ -549,8 +549,7 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
             flags |= methodTracingEnabled;
 
          TR_OpaqueClassBlock *inlinedMethodClass = resolvedMethod->containingClass();
-         J9ROMClass *romClass = reinterpret_cast<J9ROMClass *>(fej9->getPersistentClassPointerFromClassPointer(inlinedMethodClass));
-         uintptr_t romClassOffsetInSharedCache = self()->offsetInSharedCacheFromROMClass(sharedCache, romClass);
+         uintptr_t romClassOffsetInSharedCache = self()->offsetInSharedCacheFromClass(sharedCache, inlinedMethodClass);
 
          imRecord->setReloFlags(reloTarget, flags);
          imRecord->setInlinedSiteIndex(reloTarget, inlinedSiteIndex);
@@ -576,8 +575,7 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          uintptr_t inlinedSiteIndex = reinterpret_cast<uintptr_t>(relocation->getTargetAddress());
          TR::AOTClassInfo *aotCI = reinterpret_cast<TR::AOTClassInfo *>(relocation->getTargetAddress2());
 
-         J9ROMClass *romClass = reinterpret_cast<J9ROMClass *>(fej9->getPersistentClassPointerFromClassPointer(aotCI->_clazz));
-         uintptr_t romClassOffsetInSharedCache = self()->offsetInSharedCacheFromROMClass(sharedCache, romClass);
+         uintptr_t romClassOffsetInSharedCache = self()->offsetInSharedCacheFromClass(sharedCache, aotCI->_clazz);
 
          vsfRecord->setInlinedSiteIndex(reloTarget, inlinedSiteIndex);
          vsfRecord->setConstantPool(reloTarget, reinterpret_cast<uintptr_t>(aotCI->_constantPool));
@@ -618,9 +616,11 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          TR_ResolvedMethod *inlinedMethod = comp->getInlinedResolvedMethod(inlinedSiteIndex);
          TR_OpaqueClassBlock *inlinedCodeClass = reinterpret_cast<TR_OpaqueClassBlock *>(inlinedMethod->classOfMethod());
 
-         J9ROMClass *romClass = reinterpret_cast<J9ROMClass *>(fej9->getPersistentClassPointerFromClassPointer(inlinedCodeClass));
-         uintptr_t romClassOffsetInSharedCache = self()->offsetInSharedCacheFromROMClass(sharedCache, romClass);
-         traceMsg(comp, "class is %p, romclass is %p, offset is %llu\n", inlinedCodeClass, romClass, romClassOffsetInSharedCache);
+         uintptr_t romClassOffsetInSharedCache = self()->offsetInSharedCacheFromClass(sharedCache, inlinedCodeClass);
+         traceMsg(comp, "class is %p, romclass is %p, offset is %llu\n",
+                  inlinedCodeClass,
+                  reinterpret_cast<J9ROMClass *>(fej9->getPersistentClassPointerFromClassPointer(inlinedCodeClass)),
+                  romClassOffsetInSharedCache);
 
          uintptr_t classChainIdentifyingLoaderOffsetInSharedCache = sharedCache->getClassChainOffsetIdentifyingLoader(inlinedCodeClass);
 
