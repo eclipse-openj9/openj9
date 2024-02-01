@@ -45,9 +45,13 @@ import sun.misc.VMSupport;
 /*[ENDIF] Sidecar19-SE */
 import static openj9.internal.tools.attach.target.IPC.LOCAL_CONNECTOR_ADDRESS;
 
+/*[IF CRIU_SUPPORT]*/
+import openj9.internal.criu.NotCheckpointSafe;
+/*[ENDIF] CRIU_SUPPORT */
+
 /**
  * This class handles established connections initiated by another VM
- * 
+ *
  */
 final class Attachment extends Thread implements Response {
 
@@ -71,7 +75,7 @@ final class Attachment extends Thread implements Response {
 		static final Throwable managementAgentMethodThrowable;
 		static {
 			managementAgentMethodThrowable = AccessController.doPrivileged((PrivilegedAction<Throwable>) () -> {
-				String agentClassName = 
+				String agentClassName =
 						/*[IF Sidecar19-SE]*/
 						"jdk.internal.agent.Agent"; //$NON-NLS-1$
 						/*[ELSE] Sidecar19-SE
@@ -132,7 +136,7 @@ final class Attachment extends Thread implements Response {
 
 	/**
 	 * Create an attachment with a socket connection to the attacher
-	 * 
+	 *
 	 * @param portNum
 	 *            for socket to connect to attacher
 	 * @return true if successfully connected
@@ -201,6 +205,9 @@ final class Attachment extends Thread implements Response {
 	 *            function when requested by the attacher.
 	 * @return true on error, detach command, or command socket closed
 	 */
+/*[IF CRIU_SUPPORT]*/
+	@NotCheckpointSafe
+/*[ENDIF] CRIU_SUPPORT */
 	boolean doCommand(InputStream cmdStream, OutputStream respStream) {
 		try {
 			byte[] cmdBytes = AttachmentConnection.streamReceiveBytes(cmdStream, true);
@@ -237,7 +244,7 @@ final class Attachment extends Thread implements Response {
 					return false;
 				}
 			} else if (cmd.startsWith(Command.START_MANAGEMENT_AGENT)) {
-				/* 
+				/*
 				 * Check if the Properties argument is embedded with the command.
 				 * If so, it will be separated by a null byte
 				 */

@@ -32,6 +32,9 @@ import java.util.function.Function;
 
 import com.ibm.oti.vm.VM;
 
+/*[IF CRAC_SUPPORT]*/
+import openj9.internal.criu.InternalCRIUSupport;
+/*[ENDIF] CRAC_SUPPORT */
 import openj9.internal.management.ClassLoaderInfoBaseImpl;
 import openj9.management.internal.IDCacheInitializer;
 import openj9.management.internal.InvalidDumpOptionExceptionBase;
@@ -77,6 +80,13 @@ public class DiagnosticUtils {
 	 * Run Get the stack traces and other thread information.
 	 */
 	private static final String DIAGNOSTICS_THREAD_PRINT = "Thread.print"; //$NON-NLS-1$
+
+/*[IF CRAC_SUPPORT]*/
+	/**
+	 * Generate a checkpoint via CRIUSupport using a compatability name.
+	 */
+	private static final String DIAGNOSTICS_JDK_CHECKPOINT = "JDK.checkpoint"; //$NON-NLS-1$
+/*[ENDIF] CRAC_SUPPORT */
 
 	/**
 	 * Run System.gc();
@@ -400,6 +410,21 @@ public class DiagnosticUtils {
 
 	}
 
+/*[IF CRAC_SUPPORT]*/
+	private static DiagnosticProperties doCheckpointJVM(String diagnosticCommand) {
+		Thread checkpointThread = new Thread(() -> {
+			try {
+				jdk.crac.Core.checkpointRestore();
+			} catch (Throwable t) {
+				t.printStackTrace();
+			}
+		});
+		checkpointThread.start();
+
+		return DiagnosticProperties.makeStringResult("JVM checkpoint requested"); //$NON-NLS-1$
+	}
+/*[ENDIF] CRAC_SUPPORT */
+
 	/* Help strings for the jcmd utilities */
 	@SuppressWarnings("nls")
 	private static final String DIAGNOSTICS_HELP_HELP = "Show help for a command%n"
@@ -447,6 +472,12 @@ public class DiagnosticUtils {
 			+ "          agentLibrary: the absolute path of the agent%n"
 			+ "          agent option: (Optional) the agent option string%n";
 
+/*[IF CRAC_SUPPORT]*/
+	private static final String DIAGNOSTICS_JDK_CHECKPOINT_HELP = "Produce a JVM checkpoint via CRIUSupport.%n" //$NON-NLS-1$
+			+ FORMAT_PREFIX + DIAGNOSTICS_JDK_CHECKPOINT + "%n" //$NON-NLS-1$
+			+ "NOTE: this utility might significantly affect the performance of the target VM.%n"; //$NON-NLS-1$
+/*[ENDIF] CRAC_SUPPORT */
+
 	/* Initialize the command and help text tables */
 	static {
 		IDCacheInitializer.init();
@@ -485,5 +516,12 @@ public class DiagnosticUtils {
 
 		commandTable.put(DIAGNOSTICS_LOAD_JVMTI_AGENT, DiagnosticUtils::loadJVMTIAgent);
 		helpTable.put(DIAGNOSTICS_LOAD_JVMTI_AGENT, DIAGNOSTICS_LOAD_JVMTI_AGENT_HELP);
+
+/*[IF CRAC_SUPPORT]*/
+		if (InternalCRIUSupport.isCRaCSupportEnabled()) {
+			commandTable.put(DIAGNOSTICS_JDK_CHECKPOINT, DiagnosticUtils::doCheckpointJVM);
+			helpTable.put(DIAGNOSTICS_JDK_CHECKPOINT, DIAGNOSTICS_JDK_CHECKPOINT_HELP);
+		}
+/*[ENDIF] CRAC_SUPPORT */
 	}
 }
