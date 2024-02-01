@@ -164,6 +164,7 @@ class PersistentInfo : public OMR::PersistentInfoConnector
          _JITServerPort(38400),
          _socketTimeoutMs(0),
          _clientUID(0),
+         _serverUID(0),
          _JITServerMetricsPort(38500),
          _requireJITServer(false),
          _localSyncCompiles(true),
