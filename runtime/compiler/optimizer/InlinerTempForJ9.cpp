@@ -1009,22 +1009,44 @@ TR_J9InlinerPolicy::genCodeForUnsafeGetPut(TR::Node* unsafeAddress,
       if (arrayBlockNeeded)
       {
          //switch indirectAccessBlock and directAccessBlock
-         TR::Block *indirectPrevBlock = indirectAccessBlock->getEntry()->getPrevTreeTop()->getEnclosingBlock();
-         TR::Block *indirectNextBlock = indirectAccessBlock->getExit()->getNextTreeTop()->getEnclosingBlock();
-         TR::Block *directPrevBlock = directAccessBlock->getEntry()->getPrevTreeTop()->getEnclosingBlock();
-         TR::Block *directNextBlock = directAccessBlock->getExit()->getNextTreeTop()->getEnclosingBlock();
+	      TR::TreeTop *indirectPrevTreeTop = indirectAccessBlock->getEntry()->getPrevTreeTop();
+         TR::TreeTop *indirectNextTreeTop = indirectAccessBlock->getExit()->getNextTreeTop();
+         TR::TreeTop *directPrevTreeTop = directAccessBlock->getEntry()->getPrevTreeTop();
+         TR::TreeTop *directNextTreeTop = directAccessBlock->getExit()->getNextTreeTop();
 
-         indirectAccessBlock->getEntry()->setPrevTreeTop(directPrevBlock->getExit());
-         directPrevBlock->getExit()->setNextTreeTop(indirectAccessBlock->getEntry());
-         indirectAccessBlock->getExit()->setNextTreeTop(directNextBlock->getEntry());
-         directNextBlock->getEntry()->setPrevTreeTop(indirectAccessBlock->getExit());
+         if (directPrevTreeTop)
+         {
+            indirectAccessBlock->getEntry()->setPrevTreeTop(directPrevTreeTop->getEnclosingBlock()->getExit());
+            directPrevTreeTop->getEnclosingBlock()->getExit()->setNextTreeTop(indirectAccessBlock->getEntry());
+         }
+         else
+            indirectAccessBlock->getEntry()->setPrevTreeTop(NULL);
+               
+         if (directNextTreeTop)
+         {
+            indirectAccessBlock->getExit()->setNextTreeTop(directNextTreeTop->getEnclosingBlock()->getEntry());
+            directNextTreeTop->getEnclosingBlock()->getEntry()->setPrevTreeTop(indirectAccessBlock->getExit());
+         }
+         else
+            indirectAccessBlock->getExit()->setNextTreeTop(NULL);
 
-         directAccessBlock->getEntry()->setPrevTreeTop(indirectPrevBlock->getExit());
-         indirectPrevBlock->getExit()->setNextTreeTop(directAccessBlock->getEntry());
-         directAccessBlock->getExit()->setNextTreeTop(indirectNextBlock->getEntry());
-         indirectNextBlock->getEntry()->setPrevTreeTop(directAccessBlock->getExit());
+         if (indirectPrevTreeTop)
+         {
+            directAccessBlock->getEntry()->setPrevTreeTop(indirectPrevTreeTop->getEnclosingBlock()->getExit());
+            indirectPrevTreeTop->getEnclosingBlock()->getExit()->setNextTreeTop(directAccessBlock->getEntry());
+         }
+         else
+            directAccessBlock->getEntry()->setPrevTreeTop(NULL);
 
-         if (indirectPrevBlock == lowTagCmpTree->getEnclosingBlock())
+         if (indirectNextTreeTop)
+         {
+            directAccessBlock->getExit()->setNextTreeTop(indirectNextTreeTop->getEnclosingBlock()->getEntry());
+            indirectNextTreeTop->getEnclosingBlock()->getEntry()->setPrevTreeTop(directAccessBlock->getExit());
+         }
+         else
+            directAccessBlock->getExit()->setNextTreeTop(NULL);
+
+         if (indirectPrevTreeTop && indirectPrevTreeTop->getEnclosingBlock() == lowTagCmpTree->getEnclosingBlock())
          {
             //add goto to the end of indirectAccessBlock, since it's no longer on the fallthrough path
             indirectAccessBlock->append(TR::TreeTop::create(comp(), TR::Node::create(indirectAccessBlock->getEntry()->getNode(), TR::Goto, 0, directAccessBlock->getExit()->getNextTreeTop())));
