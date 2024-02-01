@@ -3200,9 +3200,8 @@ gcReinitializeDefaultsForRestore(J9VMThread* vmThread)
 	 */
 	extensions->usablePhysicalMemory = omrsysinfo_get_addressable_physical_memory();
 	/* If the thread count is being forced, check its validity and display a warning message if it is invalid, then mark it as invalid. */
-	if (extensions->gcThreadCountForced && (extensions->gcThreadCount < extensions->dispatcher->threadCountMaximum())) {
+	if (extensions->gcThreadCountSpecified && (extensions->gcThreadCount < extensions->dispatcher->threadCountMaximum())) {
 		j9nls_printf(PORTLIB, J9NLS_WARNING, J9NLS_GC_THREAD_VALUE_MUST_BE_ABOVE_WARN, (UDATA)extensions->dispatcher->threadCountMaximum());
-		extensions->gcThreadCountForced = false;
 	}
 
 	/**

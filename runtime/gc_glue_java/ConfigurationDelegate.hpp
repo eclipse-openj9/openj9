@@ -27,8 +27,10 @@
 #include "j9cfg.h"
 #include "j9consts.h"
 #include "j9nonbuilder.h"
+#include "modronnls.h"
 #include "omrgcconsts.h"
 #include "sizeclasses.h"
+
 
 #include "ClassLoaderManager.hpp"
 #include "ConcurrentGC.hpp"
@@ -344,7 +346,22 @@ public:
 	{
 		_maximumDefaultNumberOfGCThreads = maxGCThreads;
 	}
-
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	void checkPointGCThreadCountVerifyAndAdjust(MM_EnvironmentBase *env)
+	{
+		MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
+		if (!extensions->userSpecifiedParameters._checkpointGCThreads._wasSpecified) {
+			extensions->checkpointGCthreadCount = OMR_MIN(extensions->checkpointGCthreadCount, extensions->gcThreadCount);
+		} else if (extensions->checkpointGCthreadCount > extensions->gcThreadCount) {
+			PORT_ACCESS_FROM_ENVIRONMENT(env);
+			if (extensions->gcThreadCountSpecified) {
+				j9nls_printf(PORTLIB, J9NLS_WARNING, J9NLS_CHECKPOINTGCTHREAD_VALUE_MUST_BE_AT_MOST_SPECIFIED_GCTHREAD_VALUE_WARN, extensions->checkpointGCthreadCount, extensions->gcThreadCount);
+			} else {
+				j9nls_printf(PORTLIB, J9NLS_WARNING, J9NLS_CHECKPOINTGCTHREAD_VALUE_MUST_BE_AT_MOST_HEURISTIC_GCTHREAD_VALUE_WARN, extensions->checkpointGCthreadCount, extensions->gcThreadCount);
+			}
+		}
+	}
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 	MM_GCPolicy getGCPolicy() { return _gcPolicy; }
 
 	/**

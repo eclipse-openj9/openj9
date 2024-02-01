@@ -1435,7 +1435,7 @@ gcParseXXArguments(J9JavaVM *vm)
 		PORT_ACCESS_FROM_JAVAVM(vm);
 
 		if (-1 != FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, "-XX:CheckpointGCThreads=", NULL)) {
-			result = option_set_to_opt_integer(vm, "-XX:CheckpointGCThreads=", &index, EXACT_MEMORY_MATCH, &extensions->checkpointGCthreadCount);
+			result = option_set_to_opt_integer(vm, "-XX:CheckpointGCThreads=", &index, EXACT_MEMORY_MATCH, &extensions->userSpecifiedParameters._checkpointGCThreads._valueSpecified);
 			if (OPTION_OK != result) {
 				if (OPTION_MALFORMED == result) {
 					j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_MUST_BE_NUMBER, "-XX:CheckpointGCThreads=");
@@ -1445,10 +1445,12 @@ gcParseXXArguments(J9JavaVM *vm)
 				goto _error;
 			}
 
-			if (0 == extensions->checkpointGCthreadCount) {
+			if (0 == extensions->userSpecifiedParameters._checkpointGCThreads._valueSpecified) {
 				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_VALUE_MUST_BE_ABOVE, "-XX:CheckpointGCThreads=", (UDATA)0);
 				goto _error;
 			}
+			extensions->userSpecifiedParameters._checkpointGCThreads._wasSpecified = true;
+			extensions->checkpointGCthreadCount = extensions->userSpecifiedParameters._checkpointGCThreads._valueSpecified;
 		}
 	}
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
