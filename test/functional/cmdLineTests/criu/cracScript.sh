@@ -27,21 +27,22 @@ echo "start running script";
 # $1 is the TEST_ROOT
 # $2 is the JAVA_COMMAND
 # $3 is the JVM_OPTIONS
-# $4 is the MAINCLASS
-# $5 is the APP ARGS
-# $6 is the NUM_CHECKPOINT
-# $7 is the KEEP_CHECKPOINT
-# $8 is the KEEP_TEST_OUTPUT
+# $4 is the TESTNG
+# $5 is the MAINCLASS
+# $6 is the APP ARGS
+# $7 is the NUM_CHECKPOINT
+# $8 is the KEEP_CHECKPOINT
+# $9 is the KEEP_TEST_OUTPUT
 
 echo "export GLIBC_TUNABLES=glibc.cpu.hwcaps=-XSAVEC,-XSAVE,-AVX2,-ERMS,-AVX,-AVX_Fast_Unaligned_Load";
 export GLIBC_TUNABLES=glibc.pthread.rseq=0:glibc.cpu.hwcaps=-XSAVEC,-XSAVE,-AVX2,-ERMS,-AVX,-AVX_Fast_Unaligned_Load
 echo "export LD_BIND_NOT=on";
 export LD_BIND_NOT=on
-echo "$2 $3 -cp "$1/criu.jar" $4 $5 $6"
-$2 $3 -cp "$1/criu.jar" $4 $5 $6 >testOutput 2>&1;
+echo "$2 $3 -cp "$1/criu.jar:$4" $5 $6 $7"
+$2 $3 -cp "$1/criu.jar:$4" $5 $6 $7 >testOutput 2>&1;
 
-if [ "$7" != true ]; then
-    NUM_CHECKPOINT=$6
+if [ "$8" != true ]; then
+    NUM_CHECKPOINT=$7
     for ((i=0; i<$NUM_CHECKPOINT; i++)); do
         sleep 2;
         criu restore -D ./cpData --shell-job >criuOutput 2>&1;
@@ -50,8 +51,8 @@ fi
 
 cat testOutput criuOutput;
 
-if  [ "$7" != true ]; then
-    if [ "$8" != true ]; then
+if  [ "$8" != true ]; then
+    if [ "$9" != true ]; then
         rm -rf testOutput criuOutput
         echo "Removed test output files"
     fi

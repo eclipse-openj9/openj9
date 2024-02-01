@@ -48,7 +48,7 @@ import com.sun.tools.attach.VirtualMachineDescriptor;
 import com.sun.tools.attach.spi.AttachProvider;
 
 @SuppressWarnings("nls")
-class TargetManager {
+public class TargetManager {
 	static final String OPENJ9_INTERNAL_TOOLS_ATTACH_TARGET_ATTACH_HANDLER = "openj9.internal.tools.attach.target.AttachHandler";
 	private static Logger logger = Logger.getLogger(TargetManager.class);
 	public static final String PID_PREAMBLE = "pid=";
@@ -58,7 +58,8 @@ class TargetManager {
 	public static final String STATUS_DUPLICATE_VMID = "duplicate_vmid";
 	public static final String STATUS_INIT_FAIL = "attach_init_fail";
 
-	String targetId, displayName;
+	public String targetId;
+	String displayName;
 	private Process proc;
 	private BufferedWriter targetInWriter;
 	private BufferedReader targetOutReader;
@@ -330,7 +331,7 @@ class TargetManager {
 		return target;
 	}
 
-	boolean syncWithTarget() {
+	public boolean syncWithTarget() {
 		targetVmStatus = readTargetPidAndStatus();
 		if (!TargetStatus.INIT_SUCCESS.equals(targetVmStatus)) {
 			logger.info("TargetManager.syncWithTarget() failed!");

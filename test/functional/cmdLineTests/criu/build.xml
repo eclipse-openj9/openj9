@@ -35,6 +35,7 @@
 	<property name="src" location="./src"/>
 	<property name="TestUtilities" location="../../TestUtilities/src"/>
 	<property name="build" location="./bin"/>
+	<property name="TestUtilitiesJ9" location="../../TestUtilitiesJ9/src" />
 
 	<target name="init">
 		<mkdir dir="${DEST}" />
@@ -93,6 +94,7 @@
 					<exclude name="${excludeTestMachineResourceChange}" />
 					<src path="${src}" />
 					<src path="${TestUtilities}" />
+					<src path="${TestUtilitiesJ9}" />
 					<classpath>
 						<pathelement location="${LIB_DIR}/testng.jar"/>
 					</classpath>
