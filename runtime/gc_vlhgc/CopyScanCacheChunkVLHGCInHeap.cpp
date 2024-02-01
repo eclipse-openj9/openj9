@@ -31,7 +31,7 @@
 uintptr_t
 MM_CopyScanCacheChunkVLHGCInHeap::numberOfCachesInChunk(MM_EnvironmentVLHGC *env)
 {
-	uintptr_t tlhMinimumSize = MM_GCExtensions::getExtensions(env)->tlhMinimumSize;
+	uintptr_t tlhMinimumSize = MM_GCExtensions::getExtensions(env)->scavengerScanCacheMinimumSize;
 	uintptr_t sizeToAllocate = sizeof(MM_CopyScanCacheChunkVLHGCInHeap);
 	uintptr_t numberOfCaches = 1;
 

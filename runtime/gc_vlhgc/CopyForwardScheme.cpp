@@ -261,7 +261,7 @@ MM_CopyForwardScheme::initialize(MM_EnvironmentVLHGC *env)
 	UDATA minCacheCount = threadCount * cachesPerThread;
 	
 	/* Estimate how many caches we might need to describe the entire heap */
-	UDATA heapCaches = extensions->memoryMax / extensions->tlhMaximumSize;
+	UDATA heapCaches = extensions->memoryMax / extensions->scavengerScanCacheMaximumSize;
 
 	/* use whichever value is higher */
 	UDATA totalCacheCount = OMR_MAX(minCacheCount, heapCaches);
@@ -297,8 +297,8 @@ MM_CopyForwardScheme::initialize(MM_EnvironmentVLHGC *env)
 	}
 
 	/* Set the min/max sizes for copy scan cache allocation when allocating a general purpose area (does not include non-standard sized objects) */
-	_minCacheSize = _extensions->tlhMinimumSize;
-	_maxCacheSize = _extensions->tlhMaximumSize;
+	_minCacheSize = _extensions->scavengerScanCacheMinimumSize;
+	_maxCacheSize = _extensions->scavengerScanCacheMaximumSize;
 
 	/* Cached pointer to the inter region remembered set */
 	_interRegionRememberedSet = MM_GCExtensions::getExtensions(env)->interRegionRememberedSet;
