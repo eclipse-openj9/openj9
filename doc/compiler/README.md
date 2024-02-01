@@ -118,10 +118,12 @@ In the end code generators perform binary encoding to write the appropriate bits
     * [Value Propagation (OMR)](https://github.com/eclipse/omr/blob/master/doc/compiler/optimizer/ValuePropagation.md)
     * [Overview of Value Propagation Compiler Optimization (YouTube)](https://youtu.be/694S8Tblfcg)
   * Hot Code Replacement (HCR)
-    * [Next Gen HCR (OpenJ9)](hcr/NextGenHCR.md)
+    * [Next Gen HCR (OpenJ9)](hcr/OSR.md)
   * On Stack Replacement (OSR)
-    * [OSR Helpers (OMR)](https://github.com/eclipse/omr/blob/master/doc/compiler/osr/OSR.md)
+    * [Introduction to OSR (OMR)](https://github.com/eclipse/omr/blob/master/doc/compiler/osr/OSR.md)
+    * [OSR-based Optimizations (OpenJ9)](hcr/OSR.md)
     * [Improved JVM Debug Mode Based on OSR (OpenJ9)](https://blog.openj9.org/2019/04/30/introduction-to-full-speed-debug-base-on-osr/)
+  * [Method Handles (OpenJ9)](methodHandles/MethodHandles.md)
 </details>
 
 * <details><summary><b>4. Code Generator</b></summary>
