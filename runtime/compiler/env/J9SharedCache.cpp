@@ -899,8 +899,14 @@ TR_J9SharedCache::rememberClass(J9Class *clazz, const AOTCacheClassChainRecord *
       uintptr_t chainOffset = TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET;
       if (classMatchesCachedVersion(clazz, chainData))
          {
-         LOG(1, "\tcurrent class and class chain found (%p) are identical; returning the class chain\n", chainData);
-         chainOffset = offsetInSharedCacheFromPointer(chainData);
+         if (isPointerInSharedCache(chainData, &chainOffset))
+            {
+            LOG(1, "\tcurrent class and class chain found (%p) are identical; returning the class chain\n", chainData);
+            }
+         else
+            {
+            LOG(1, "\tcurrent class and class chain found (%p) are identical but its offset isn't available yet; returning INVALID_CLASS_CHAIN_OFFSET\n", chainData);
+            }
          }
       else
          {
@@ -960,11 +966,9 @@ TR_J9SharedCache::rememberClass(J9Class *clazz, const AOTCacheClassChainRecord *
       setStoreSharedDataFailedLength(chainDataLength);
       }
 #endif
-   uintptr_t chainOffset = 0;
-   if (isPointerInSharedCache(chainData, &chainOffset))
-      return chainOffset;
-   else
-      return TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET;
+   uintptr_t chainOffset = TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET;
+   isPointerInSharedCache(chainData, &chainOffset);
+   return chainOffset;
    }
 
 UDATA
