@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar19-SE-OpenJ9 & !OPENJDK_METHODHANDLES]*/
+/*[INCLUDE-IF (JAVA_SPEC_VERSION >= 9) & !OPENJDK_METHODHANDLES]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2017
  *

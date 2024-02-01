@@ -107,12 +107,12 @@ public class AttachHandler extends Thread {
 	 * but parse it lazily because we rarely need the value.
 	 */
 	public final static String allowAttachSelf =
-			VM.getVMLangAccess().internalGetProperties().getProperty("jdk.attach.allowAttachSelf", //$NON-NLS-1$
-/*[IF Sidecar19-SE]*/
-					"false" //$NON-NLS-1$
-/*[ELSE]
-					"true" //$NON-NLS-1$
-/*[ENDIF]*/
+			VM.getVMLangAccess().internalGetProperties().getProperty("jdk.attach.allowAttachSelf" //$NON-NLS-1$
+/*[IF JAVA_SPEC_VERSION >= 9]*/
+					, "false" //$NON-NLS-1$
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
+					, "true" //$NON-NLS-1$
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 					);
 
 	/* only the attach handler thread uses syncFileLock */

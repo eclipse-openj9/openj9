@@ -37,15 +37,15 @@ import java.nio.charset.Charset;
 import java.util.function.Function;
 import java.util.Optional;
 /*[ENDIF] JAVA_SPEC_VERSION >= 12 */
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 import java.util.Spliterator;
 import java.util.stream.StreamSupport;
 
 import jdk.internal.misc.Unsafe;
 import java.util.stream.IntStream;
-/*[ELSE] Sidecar19-SE*/
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 import sun.misc.Unsafe;
-/*[ENDIF] Sidecar19-SE*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9*/
 
 /*[IF JAVA_SPEC_VERSION >= 11]*/
 import java.util.stream.Stream;
@@ -87,7 +87,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		}
 	}
 
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 	// DO NOT CHANGE OR MOVE THIS LINE
 	// IT MUST BE THE FIRST THING IN THE INITIALIZATION
 	private static final long serialVersionUID = -6849794470754667710L;
@@ -4097,7 +4097,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	}
 	/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 
-/*[ELSE] Sidecar19-SE*/
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 	// DO NOT CHANGE OR MOVE THIS LINE
 	// IT MUST BE THE FIRST THING IN THE INITIALIZATION
 	private static final long serialVersionUID = -6849794470754667710L;
@@ -8461,7 +8461,7 @@ written authorization of the copyright holder.
 		return stringJoiner.toString();
 	}
 
-/*[ENDIF] Sidecar19-SE*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 /*[IF JAVA_SPEC_VERSION >= 12]*/
 	/**

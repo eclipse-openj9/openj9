@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar16]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2012
  *
@@ -25,11 +25,11 @@ package com.ibm.oti.vm;
 
 import java.util.Properties;
 
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 import jdk.internal.reflect.ConstantPool;
-/*[ELSE]*/
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 import sun.reflect.ConstantPool;
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 /**
  * Interface to allow privileged access to classes
@@ -37,12 +37,12 @@ import sun.reflect.ConstantPool;
  * implementation.
  */
 public interface VMLangAccess {
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 	/**
 	 * Answer the platform class loader.
 	 */
 	public ClassLoader getPlatformClassLoader();
-/*[ENDIF] Sidecar19-SE*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 	/**
 	 * Uses native to find and load a class using the VM
@@ -112,8 +112,7 @@ public interface VMLangAccess {
 	 */
 	public Properties internalGetProperties();
 
-
-	/*[IF !Sidecar19-SE]*/
+	/*[IF JAVA_SPEC_VERSION == 8]*/
 	/**
 	 * Returns the system packages for the bootloader
 	 * @return An array of packages defined by the bootloader
@@ -126,7 +125,7 @@ public interface VMLangAccess {
 	 * @return The package
 	 */
 	public Package getSystemPackage(String name);
-	/*[ENDIF]*/
+	/*[ENDIF] JAVA_SPEC_VERSION == 8 */
 
 	/**
 	 * Returns an InternalConstantPool object.
@@ -162,7 +161,7 @@ public interface VMLangAccess {
 	 */
 	public Object getInternalConstantPoolFromClass(Class clazz);
 
-	/*[IF Sidecar19-SE]*/
+	/*[IF JAVA_SPEC_VERSION >= 9]*/
 	/**
 	 * Adds a class's package its classloader's package table.
 	 * This is typically used when a class is defined without using ClassLoader.defineClass().
@@ -170,7 +169,7 @@ public interface VMLangAccess {
 	 * @param loader classloader used to define the class
 	 */
 	public void addPackageToList(Class<?> newClass, ClassLoader loader);
-	/*[ENDIF] Sidecar19-SE */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 	/**
 	 * Create a thread that it has runnable as its run object, has threadName as its name, has contextClassLoader as its context ClassLoader,

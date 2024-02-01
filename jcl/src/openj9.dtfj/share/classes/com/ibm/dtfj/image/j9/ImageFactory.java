@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar18-SE]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2004
  *
@@ -52,9 +52,9 @@ import com.ibm.dtfj.utils.file.J9FileImageInputStream;
 import com.ibm.dtfj.utils.file.ManagedImageSource;
 import com.ibm.dtfj.utils.file.MultipleCandidateException;
 
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 import jdk.internal.module.Modules;
-/*[ENDIF] Sidecar19-SE*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 public class ImageFactory implements com.ibm.dtfj.image.ImageFactory {
 
@@ -70,7 +70,7 @@ public class ImageFactory implements com.ibm.dtfj.image.ImageFactory {
 	private ClassLoader imageFactoryClassLoader;
 	private File tmpdir = null; // the directory which holds any extracted files
 
-	/*[IF Sidecar19-SE]*/
+	/*[IF JAVA_SPEC_VERSION >= 9]*/
 	static {
 		/*
 		 * Even though j9ddr classes are within the module openj9.dtfj, they
@@ -109,7 +109,7 @@ public class ImageFactory implements com.ibm.dtfj.image.ImageFactory {
 			throw new InternalError("Failed to adjust module exports", e); //$NON-NLS-1$
 		}
 	}
-	/*[ENDIF] Sidecar19-SE*/
+	/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 	/**
 	 * This public constructor is intended for use with Class.newInstance().

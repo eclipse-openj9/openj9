@@ -23,21 +23,21 @@
 package com.ibm.oti.shared;
 
 import java.net.URL;
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 import java.util.Set;
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 /**
  * <p>SharedClassHelperFactory provides an interface that is
  * used to create various types of SharedClassHelper for ClassLoaders.</p>
  *
-/*[IF Sidecar19-SE]
+/*[IF JAVA_SPEC_VERSION >= 9]
  * <p>ClassLoaders and each type of SharedClassHelpers have a one-to-one relationship.</p>
-/*[ELSE]
+/*[ELSE] JAVA_SPEC_VERSION >= 9
  * <p>ClassLoaders and SharedClassHelpers have a one-to-one relationship.
  * Any attempts to get a helper for a ClassLoader that already has a different type of helper
  * will result in a HelperAlreadyDefinedException.</p>
-/*[ENDIF]
+/*[ENDIF] JAVA_SPEC_VERSION >= 9
  *
  * There are 3 different types of SharedClassHelper:<br>
  * <ol>
@@ -80,15 +80,15 @@ public interface SharedClassHelperFactory {
 	 * @return		SharedClassTokenHelper.
 	 * 					A new or existing SharedClassTokenHelper
 	 *
-	/*[IF !Sidecar19-SE]
+	/*[IF JAVA_SPEC_VERSION == 8]
 	 * @throws 		HelperAlreadyDefinedException
 	 * 					when another helper has been already defined for this class loader.
-	/*[ENDIF]
+	/*[ENDIF] JAVA_SPEC_VERSION == 8
 	 */
 	public SharedClassTokenHelper getTokenHelper(ClassLoader loader)
-	/*[IF !Sidecar19-SE]*/
+	/*[IF JAVA_SPEC_VERSION == 8]*/
 			throws HelperAlreadyDefinedException
-	/*[ENDIF]*/
+	/*[ENDIF] JAVA_SPEC_VERSION == 8 */
 	;
 
 	/**
@@ -109,15 +109,15 @@ public interface SharedClassHelperFactory {
 	 * @param 		filter SharedClassURLFilter.
 	 * 					Specify a filter which limits the classes that are found or stored in the cache
 	 *
-	/*[IF !Sidecar19-SE]
+	/*[IF JAVA_SPEC_VERSION == 8]
 	 * @throws 		HelperAlreadyDefinedException
 	 * 					when another helper has been already defined for this class loader
-	/*[ENDIF]
+	/*[ENDIF] JAVA_SPEC_VERSION == 8
 	 */
 	public SharedClassTokenHelper getTokenHelper(ClassLoader loader, SharedClassFilter filter)
-	/*[IF !Sidecar19-SE]*/
+	/*[IF JAVA_SPEC_VERSION == 8]*/
 			throws HelperAlreadyDefinedException
-	/*[ENDIF]*/
+	/*[ENDIF] JAVA_SPEC_VERSION == 8 */
 	;
 
 	/**
@@ -135,15 +135,15 @@ public interface SharedClassHelperFactory {
 	 * @return		SharedClassURLHelper.
 	 * 					A new or existing SharedClassURLHelper
 	 *
-	/*[IF !Sidecar19-SE]
+	/*[IF JAVA_SPEC_VERSION == 8]
 	 * @throws 		HelperAlreadyDefinedException
 	 * 					when another helper has been already defined for this class loader
-	/*[ENDIF]
+	/*[ENDIF] JAVA_SPEC_VERSION == 8
 	 */
 	public SharedClassURLHelper getURLHelper(ClassLoader loader)
-	/*[IF !Sidecar19-SE]*/
+	/*[IF JAVA_SPEC_VERSION == 8]*/
 			throws HelperAlreadyDefinedException
-	/*[ENDIF]*/
+	/*[ENDIF] JAVA_SPEC_VERSION == 8 */
 	;
 
 	/**
@@ -167,11 +167,11 @@ public interface SharedClassHelperFactory {
 	 * 					A new or existing SharedClassURLClasspathHelper
 	 *
 	 * @throws 		HelperAlreadyDefinedException
-	/*[IF Sidecar19-SE]
+	/*[IF JAVA_SPEC_VERSION >= 9]
 	 * 					when another SharedClassURLClasspathHelper has been already defined for this class loader
-	/*[ELSE]
+	/*[ELSE] JAVA_SPEC_VERSION >= 9
 	 * 					when another helper has been already defined for this class loader
-	/*[ENDIF]
+	/*[ENDIF] JAVA_SPEC_VERSION >= 9
 	 */
 	public SharedClassURLClasspathHelper getURLClasspathHelper(ClassLoader loader, URL[] classpath) throws HelperAlreadyDefinedException;
 
@@ -201,11 +201,11 @@ public interface SharedClassHelperFactory {
 	 * 					A new or existing SharedClassURLClasspathHelper
 	 *
 	 * @throws 		HelperAlreadyDefinedException
-	/*[IF Sidecar19-SE]
+	/*[IF JAVA_SPEC_VERSION >= 9]
 	 * 					when another SharedClassURLClasspathHelper has been already defined for this class loader
-	/*[ELSE]
+	/*[ELSE] JAVA_SPEC_VERSION >= 9
 	 * 					when another helper has been already defined for this class loader
-	/*[ENDIF]
+	/*[ENDIF] JAVA_SPEC_VERSION >= 9
 	 */
 	public SharedClassURLClasspathHelper getURLClasspathHelper(ClassLoader loader, URL[] classpath, SharedClassFilter filter) throws HelperAlreadyDefinedException;
 
@@ -229,15 +229,15 @@ public interface SharedClassHelperFactory {
 	 * @return		SharedClassURLHelper.
 	 * 					A new or existing SharedClassURLHelper
 	 *
-	/*[IF !Sidecar19-SE]
+	/*[IF JAVA_SPEC_VERSION == 8]
 	 * @throws 		HelperAlreadyDefinedException
 	 * 					when another helper has been already defined for this class loader
-	/*[ENDIF]
+	/*[ENDIF] JAVA_SPEC_VERSION == 8
 	 */
 	public SharedClassURLHelper getURLHelper(ClassLoader loader, SharedClassFilter filter)
-	/*[IF !Sidecar19-SE]*/
+	/*[IF JAVA_SPEC_VERSION == 8]*/
 			throws HelperAlreadyDefinedException
-	/*[ENDIF]*/
+	/*[ENDIF] JAVA_SPEC_VERSION == 8 */
 	;
 
 	/**
@@ -253,21 +253,21 @@ public interface SharedClassHelperFactory {
 	 * @return		SharedClassHelper.
 	 * 					A helper if one exists for this ClassLoader or null otherwise.
 	 *
-	/*[IF Sidecar19-SE]
+	/*[IF JAVA_SPEC_VERSION >= 9]
 	 *
 	 * @throws 		IllegalStateException
 	 * 					If this ClassLoader has more than one helper.
 	 *
 	 * @deprecated Use findHelpersForClassLoader(ClassLoader loader) instead.
 	 *
-	/*[ENDIF]
+	/*[ENDIF] JAVA_SPEC_VERSION >= 9
 	 */
-	/*[IF Sidecar19-SE]*/
+	/*[IF JAVA_SPEC_VERSION >= 9]*/
 	@Deprecated(forRemoval=false, since="9")
-	/*[ENDIF]*/
+	/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 	public SharedClassHelper findHelperForClassLoader(ClassLoader loader);
 
-	/*[IF Sidecar19-SE]*/
+	/*[IF JAVA_SPEC_VERSION >= 9]*/
 	/**
 	 * <p>Utility function that returns a set of SharedClassHelper for a given ClassLoader.</p>
 	 * <p>Can be used to determine whether a given ClassLoader already has a specific helper, before calling a getter method.</p>
@@ -281,6 +281,6 @@ public interface SharedClassHelperFactory {
 	 * 					A set of helpers exist for this ClassLoader.
 	 */
 	public Set<SharedClassHelper> findHelpersForClassLoader(ClassLoader loader);
-	/*[ENDIF]*/
+	/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 }

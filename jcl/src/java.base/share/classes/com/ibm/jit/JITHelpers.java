@@ -1,5 +1,4 @@
-/*[INCLUDE-IF Sidecar17]*/
-
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 package com.ibm.jit;
 
 /*******************************************************************************
@@ -28,15 +27,15 @@ import com.ibm.oti.vm.J9UnmodifiableClass;
 import java.lang.reflect.Field;
 import java.lang.reflect.Array;
 import com.ibm.oti.vm.VM;
-/*[IF Sidecar19-SE]
+/*[IF JAVA_SPEC_VERSION >= 9]
 import jdk.internal.misc.Unsafe;
 import jdk.internal.reflect.Reflection;
 import jdk.internal.reflect.CallerSensitive;
-/*[ELSE]*/
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 import sun.misc.Unsafe;
 import sun.reflect.Reflection;
 import sun.reflect.CallerSensitive;
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 /**
  * The <code>JITHelpers</code> class contains methods used by the JIT to optimize certain primitive operations.
@@ -315,27 +314,27 @@ public final class JITHelpers {
 	}
 
 	public boolean compareAndSwapIntInObject(Object obj, long offset, int expected, int value) {
-/*[IF Sidecar19-SE-OpenJ9]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 		return unsafe.compareAndSetInt(obj, offset, expected, value);
-/*[ELSE]
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 		return unsafe.compareAndSwapInt(obj, offset, expected, value);
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 	}
 
 	public boolean compareAndSwapLongInObject(Object obj, long offset, long expected, long value) {
-/*[IF Sidecar19-SE-OpenJ9]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 		return unsafe.compareAndSetLong(obj, offset, expected, value);
-/*[ELSE]
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 		return unsafe.compareAndSwapLong(obj, offset, expected, value);
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 	}
 
 	public boolean compareAndSwapObjectInObject(Object obj, long offset, Object expected, Object value) {
-/*[IF Sidecar19-SE-OpenJ9]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 		return unsafe.compareAndSetObject(obj, offset, expected, value);
-/*[ELSE]
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 		return unsafe.compareAndSwapObject(obj, offset, expected, value);
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 	}
 
 	public byte getByteFromArray(Object obj, long offset) {
@@ -419,27 +418,27 @@ public final class JITHelpers {
 	}
 
 	public boolean compareAndSwapIntInArray(Object obj, long offset, int expected, int value) {
-/*[IF Sidecar19-SE-OpenJ9]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 		return unsafe.compareAndSetInt(obj, offset, expected, value);
-/*[ELSE]
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 		return unsafe.compareAndSwapInt(obj, offset, expected, value);
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 	}
 
 	public boolean compareAndSwapLongInArray(Object obj, long offset, long expected, long value) {
-/*[IF Sidecar19-SE-OpenJ9]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 		return unsafe.compareAndSetLong(obj, offset, expected, value);
-/*[ELSE]
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 		return unsafe.compareAndSwapLong(obj, offset, expected, value);
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 	}
 
 	public boolean compareAndSwapObjectInArray(Object obj, long offset, Object expected, Object value) {
-/*[IF Sidecar19-SE-OpenJ9]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 		return unsafe.compareAndSetObject(obj, offset, expected, value);
-/*[ELSE]
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 		return unsafe.compareAndSwapObject(obj, offset, expected, value);
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 	}
 
 	public char byteToCharUnsigned(byte b) {

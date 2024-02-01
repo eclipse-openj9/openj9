@@ -35,7 +35,7 @@ import java.security.*;
 import java.lang.reflect.Method;
 import java.lang.reflect.Constructor;
 
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 import jdk.internal.misc.Unsafe;
 /*[IF JAVA_SPEC_VERSION > 11]*/
 import jdk.internal.access.SharedSecrets;
@@ -48,16 +48,14 @@ import jdk.internal.reflect.Reflection;
 import jdk.internal.reflect.CallerSensitive;
 import java.util.*;
 import java.util.function.*;
-/*[ELSE]
+import com.ibm.gpu.spi.GPUAssist;
+import com.ibm.gpu.spi.GPUAssistHolder;
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 import sun.misc.Unsafe;
 import sun.misc.SharedSecrets;
 import sun.misc.VM;
 import sun.reflect.CallerSensitive;
-/*[ENDIF]*/
-/*[IF Sidecar19-SE]*/
-import com.ibm.gpu.spi.GPUAssist;
-import com.ibm.gpu.spi.GPUAssistHolder;
-/*[ENDIF] Sidecar19-SE */
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 /*[IF PLATFORM-mz31 | PLATFORM-mz64 | !Sidecar18-SE-OpenJ9]*/
 import com.ibm.jvm.io.ConsolePrintStream;
 /*[ENDIF] PLATFORM-mz31 | PLATFORM-mz64 | !Sidecar18-SE-OpenJ9 */
@@ -160,9 +158,9 @@ public final class System {
 	private static String stderrProp;
 	/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
 
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 	static java.lang.ModuleLayer	bootLayer;
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 	// Initialize all the slots in System on first use.
 	static {
@@ -473,11 +471,11 @@ static void completeInitialization() {
 	Method hook;
 	try {
 		/*[PR 167854] - Please note the incorrect name of the class is correct - somewhere the spelling was wrong and we just need to use the incorrect spelling */
-		/*[IF Sidecar19-SE]*/
+		/*[IF JAVA_SPEC_VERSION >= 9]*/
 		systemInitialization = Class.forName("com.ibm.utils.SystemIntialization"); //$NON-NLS-1$
-		/*[ELSE]*/
+		/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 		systemInitialization = Class.forName("com.ibm.misc.SystemIntialization"); //$NON-NLS-1$
-		/*[ENDIF]*/
+		/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 	} catch (ClassNotFoundException e) {
 		// Assume this is a raw configuration and suppress the exception
 	} catch (Exception e) {
@@ -491,19 +489,19 @@ static void completeInitialization() {
 	} catch (Exception e) {
 		throw new InternalError(e.toString());
 	}
-	/*[ENDIF]*/ // Sidecar18-SE-OpenJ9
+	/*[ENDIF] !Sidecar18-SE-OpenJ9 */
 
-	/*[IF (Sidecar18-SE-OpenJ9|Sidecar19-SE)&!(PLATFORM-mz31|PLATFORM-mz64)]*/
+	/*[IF Sidecar18-SE-OpenJ9 & !( PLATFORM-mz31 | PLATFORM-mz64 )]*/
 	InputStream tempIn = new BufferedInputStream(new FileInputStream(FileDescriptor.in));
 	setIn(tempIn);
 	/*[IF JAVA_SPEC_VERSION >= 20]*/
 	initialIn = tempIn;
 	/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
-	/*[ELSE]*/
+	/*[ELSE] Sidecar18-SE-OpenJ9 & !( PLATFORM-mz31 | PLATFORM-mz64 ) */
 	/*[PR 100718] Initialize System.in after the main thread*/
 	setIn(com.ibm.jvm.io.ConsoleInputStream.localize(new BufferedInputStream(new FileInputStream(FileDescriptor.in))));
-	/*[ENDIF]*/ //Sidecar18-SE-OpenJ9|Sidecar19-SE
-	/*[ENDIF]*/ //!Sidecar19-SE_RAWPLUSJ9
+	/*[ENDIF] Sidecar18-SE-OpenJ9 & !( PLATFORM-mz31 | PLATFORM-mz64 ) */
+	/*[ENDIF] !Sidecar19-SE_RAWPLUSJ9 */
 
 	/*[PR 102344] call Terminator.setup() after Thread init */
 	Terminator.setup();
@@ -520,7 +518,7 @@ static void completeInitialization() {
 	/*[ENDIF]*/	//!Sidecar19-SE_RAWPLUSJ9&!Sidecar18-SE-OpenJ9
 }
 
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 static void initGPUAssist() {
 	Properties props = internalGetProperties();
 
@@ -553,7 +551,7 @@ static void initGPUAssist() {
 
 	GPUAssistHolder.instance = AccessController.doPrivileged(finder);
 }
-/*[ENDIF] Sidecar19-SE */
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 /**
  * Sets the value of the static slot "in" in the receiver
@@ -752,14 +750,14 @@ private static void ensureProperties(boolean isInitialization) {
 	/* VersionProps.init requires systemProperties to be set */
 	systemProperties = initializedProperties;
 
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 	java.lang.VersionProps.init();
-/*[ELSE]
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 	sun.misc.Version.init();
 
 	StringBuffer.initFromSystemProperties(systemProperties);
 	StringBuilder.initFromSystemProperties(systemProperties);
-/*[ENDIF] Sidecar19-SE */
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 /*[ENDIF] JAVA_SPEC_VERSION > 11 */
 
 /*[IF JAVA_SPEC_VERSION > 11]*/
@@ -1711,7 +1709,7 @@ public static String lineSeparator() {
 	 return lineSeparator;
 }
 
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 /**
  * Return an instance of Logger.
  *
@@ -2006,5 +2004,5 @@ public interface Logger {
 	 */
 	public void log(Level level, ResourceBundle bundle, String msg, Object... values);
 }
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 }

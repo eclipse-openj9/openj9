@@ -20,11 +20,11 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 package com.ibm.jvm.traceformat;
-/*[ELSE]
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 package com.ibm.jvm;
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 import java.io.File;
 import java.io.FileNotFoundException;

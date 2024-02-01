@@ -28,9 +28,9 @@ import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 import sun.security.util.FilePermCompat;
-/*[ENDIF] Sidecar19-SE*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 import sun.security.util.SecurityConstants;
 
 /**
@@ -525,11 +525,11 @@ static int checkPermWithCachedPDsImplied(Permission perm, Object[] toCheck, Acce
 					}
 				}
 			}
-			/*[IF Sidecar19-SE]*/
+			/*[IF JAVA_SPEC_VERSION >= 9]*/
 			if (!((ProtectionDomain) domain).impliesWithAltFilePerm(perm)) {
-			/*[ELSE]*/
+			/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 			if (!((ProtectionDomain) domain).implies(perm)) {
-			/*[ENDIF] Sidecar19-SE*/
+			/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 				return i; // NOT implied
 			}
 		}
@@ -586,9 +586,9 @@ static boolean checkPermWithCachedPermImplied(Permission perm, Permission[] perm
 					}
 				}
 			}
-			/*[IF Sidecar19-SE]*/
+			/*[IF JAVA_SPEC_VERSION >= 9]*/
 			permsLimited[j] = FilePermCompat.newPermPlusAltPath(permsLimited[j]);
-			/*[ENDIF] Sidecar19-SE*/
+			/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 			if (!notImplied && permsLimited[j].implies(perm)) {
 				success = true; // just implied
 				if (null != cacheChecked) {

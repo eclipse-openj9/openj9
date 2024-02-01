@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar18-SE & !Sidecar19-SE]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION == 8]*/
 /*[IF] Final copyright notice is included. */
 /*******************************************************************************
  * Copyright IBM Corp. and others 2010

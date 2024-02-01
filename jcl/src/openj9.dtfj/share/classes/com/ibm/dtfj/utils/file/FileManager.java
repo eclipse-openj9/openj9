@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar18-SE]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2011
  *
@@ -86,7 +86,7 @@ public abstract class FileManager {
 			// found it in HFS on z/OS or normally on other platforms so return true
 			return true;
 		}
-		/*[IF PLATFORM-mz31 | PLATFORM-mz64 | ! ( Sidecar18-SE-OpenJ9 | Sidecar19-SE )]*/
+		/*[IF PLATFORM-mz31 | PLATFORM-mz64 | !Sidecar18-SE-OpenJ9]*/
 		String os = System.getProperty("os.name"); //$NON-NLS-1$
 		if (os == null) {
 			// cannot perform the check so default to true to allow processing to continue blind
@@ -108,7 +108,7 @@ public abstract class FileManager {
 				// ignore
 			}
 		}
-		/*[ENDIF] PLATFORM-mz31 | PLATFORM-mz64 | ! ( Sidecar18-SE-OpenJ9 | Sidecar19-SE )*/
+		/*[ENDIF] PLATFORM-mz31 | PLATFORM-mz64 | !Sidecar18-SE-OpenJ9 */
 		return false;
 	}
 

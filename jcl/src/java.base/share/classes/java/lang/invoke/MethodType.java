@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar18-SE & !OPENJDK_METHODHANDLES]*/
+/*[INCLUDE-IF !OPENJDK_METHODHANDLES]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2009
  *
@@ -79,9 +79,9 @@ public final class MethodType implements Serializable
 {
 	static final Class<?>[] EMTPY_PARAMS = new Class<?>[0];
 
-	/*[IF Sidecar19-SE-OpenJ9]*/
+	/*[IF JAVA_SPEC_VERSION >= 9]*/
 	private MethodTypeForm form;
-	/*[ENDIF]*/
+	/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 	private static Map<MethodType, WeakReference<MethodType>> internTable = Collections.synchronizedMap(new WeakHashMap<MethodType, WeakReference<MethodType>>());
 	// lock object to control insertion of new MTs
@@ -983,7 +983,7 @@ public final class MethodType implements Serializable
 		return rtype;
 	}
 
-/*[IF Sidecar19-SE-OpenJ9]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 	MethodType asCollectorType(Class<?> clz, int num1, int num2) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
@@ -997,12 +997,12 @@ public final class MethodType implements Serializable
 		return argSlots;
 	}
 	/*[ENDIF] JAVA_SPEC_VERSION >= 10 */
-/*[ELSE]*/
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 	MethodType asCollectorType(Class<?> clz, int num1) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-/*[ENDIF]*/
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
+/*[ENDIF] Sidecar18-SE-OpenJ9 */
 
 /*[IF JAVA_SPEC_VERSION >= 12]*/
 	/**

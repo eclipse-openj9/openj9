@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar18-SE]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2020
  *
@@ -32,13 +32,13 @@ import com.ibm.oti.util.Msg;
 import com.ibm.oti.vm.VM;
 import com.ibm.oti.vm.VMLangAccess;
 
-/*[IF Sidecar19-SE]
+/*[IF JAVA_SPEC_VERSION >= 9]
 import jdk.internal.misc.Unsafe;
 import jdk.internal.reflect.ConstantPool;
-/*[ELSE]*/
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 import sun.misc.Unsafe;
 import sun.reflect.ConstantPool;
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 import com.ibm.jit.JITHelpers;
 
@@ -398,11 +398,11 @@ final class MethodHandleResolver {
 /*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 		} catch(Throwable e) {
 
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 			if (e instanceof Error) {
 				throw e;
 			}
-/*[ENDIF] Sidecar19-SE */
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 			if (type == null) {
 				throw new BootstrapMethodError(e);

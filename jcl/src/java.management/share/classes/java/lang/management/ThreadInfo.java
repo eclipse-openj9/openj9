@@ -78,10 +78,10 @@ public class ThreadInfo {
 	 * @param lockInfo
 	 * @param lockedMonitors
 	 * @param lockedSynchronizers
-/*[IF Sidecar19-SE]
+/*[IF JAVA_SPEC_VERSION >= 9]
 	 * @param daemon
 	 * @param priority
-/*[ENDIF]
+/*[ENDIF] JAVA_SPEC_VERSION >= 9
 	 */
 	private ThreadInfo(long threadIdVal, String threadNameVal,
 			Thread.State threadStateVal, boolean suspendedVal,
@@ -90,9 +90,9 @@ public class ThreadInfo {
 			long lockOwnerIdVal, String lockOwnerNameVal,
 			StackTraceElement[] stackTraceVal, LockInfo lockInfo,
 			MonitorInfo[] lockedMonitors, LockInfo[] lockedSynchronizers
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 			, boolean daemon, int priority
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 	) {
 		MonitorInfoBase[] monInfoBases = null;
 		if (null != lockedMonitors) {
@@ -112,9 +112,9 @@ public class ThreadInfo {
 		baseInfo = new ThreadInfoBase(threadIdVal, threadNameVal, threadStateVal, suspendedVal, inNativeVal,
 				blockedCountVal, blockedTimeVal, waitedCountVal, waitedTimeVal, lockNameVal, lockOwnerIdVal,
 				lockOwnerNameVal, stackTraceVal, lckInfo, monInfoBases, lockedSyncs
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 				, daemon, priority
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 				);
 	}
 
@@ -416,10 +416,10 @@ public class ThreadInfo {
 	 *             <li><code>blockedTime</code>(<code>java.lang.Long</code>)
 	 *             <li><code>waitedCount</code>(<code>java.lang.Long</code>)
 	 *             <li><code>waitedTime</code> (<code>java.lang.Long</code>)
-/*[IF Sidecar19-SE]
+/*[IF JAVA_SPEC_VERSION >= 9]
 	 *             <li><code>daemon</code> (<code>java.lang.Boolean</code>)
 	 *             <li><code>priority</code> (<code>java.lang.Integer</code>)
-/*[ENDIF]
+/*[ENDIF] JAVA_SPEC_VERSION >= 9
 	 *             <li><code>lockInfo</code> (<code>javax.management.openmbean.CompositeData</code>)
 	 *             which holds the simple attributes <code>className</code>(<code>java.lang.String</code>),
 	 *             <code>identityHashCode</code>(<code>java.lang.Integer</code>).
@@ -436,10 +436,10 @@ public class ThreadInfo {
 	 *             correspond to a <code>java.lang.StackTraceElement</code>
 	 *             and have the following attributes :
 	 *             <ul>
-/*[IF Sidecar19-SE]
+/*[IF JAVA_SPEC_VERSION >= 9]
 	 *             <li><code>moduleName</code>(<code>java.lang.String</code>)
 	 *             <li><code>moduleVersion</code>(<code>java.lang.String</code>)
-/*[ENDIF]
+/*[ENDIF] JAVA_SPEC_VERSION >= 9
 	 *             <li><code>className</code> (<code>java.lang.String</code>)
 	 *             <li><code>methodName</code> (<code>java.lang.String</code>)
 	 *             <li><code>fileName</code> (<code>java.lang.String</code>)
@@ -476,10 +476,10 @@ public class ThreadInfo {
 			MonitorInfo[] lockedMonitorVals;
 			LockInfo[] lockedSynchronizerVals;
 
-			/*[IF Sidecar19-SE]*/
+			/*[IF JAVA_SPEC_VERSION >= 9]*/
 			boolean daemonVal;
 			int priorityVal;
-			/*[ENDIF]*/
+			/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 			try {
 				// Set the mandatory attributes - if any of these are
@@ -509,10 +509,10 @@ public class ThreadInfo {
 				CompositeData[] stackTraceDataVal = (CompositeData[]) cd.get("stackTrace"); //$NON-NLS-1$
 				stackTraceVals = StackTraceElementUtil.fromArray(stackTraceDataVal);
 
-				/*[IF Sidecar19-SE]*/
+				/*[IF JAVA_SPEC_VERSION >= 9]*/
 				daemonVal = ((Boolean) cd.get("daemon")).booleanValue(); //$NON-NLS-1$
 				priorityVal = ((Integer) cd.get("priority")).intValue(); //$NON-NLS-1$
-				/*[ENDIF]*/
+				/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 			} catch (NullPointerException | InvalidKeyException e) {
 				// throw an IllegalArgumentException as the CompositeData
 				// object does not contain an expected key
@@ -532,9 +532,9 @@ public class ThreadInfo {
 					waitedCountVal, waitedTimeVal, lockNameVal, lockOwnerIdVal,
 					lockOwnerNameVal, stackTraceVals, lockInfoVal,
 					lockedMonitorVals, lockedSynchronizerVals
-					/*[IF Sidecar19-SE]*/
+					/*[IF JAVA_SPEC_VERSION >= 9]*/
 					, daemonVal, priorityVal
-					/*[ENDIF]*/
+					/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 			);
 		}
 
@@ -624,8 +624,7 @@ public class ThreadInfo {
 		return result;
 	}
 
-	/*[IF Sidecar19-SE]*/
-
+	/*[IF JAVA_SPEC_VERSION >= 9]*/
 	/**
 	 * Returns a <code>boolean</code> indication of whether or not the thread
 	 * represented by this <code>ThreadInfo</code> is currently a daemon thread.
@@ -644,8 +643,7 @@ public class ThreadInfo {
 	public int getPriority() {
 		return baseInfo.getPriority();
 	}
-
-	/*[ENDIF]*/
+	/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 	/**
 	 * @return a text description of this thread.

@@ -1,7 +1,5 @@
-/*[INCLUDE-IF Sidecar16 & !Sidecar19-SE]*/
-
+/*[INCLUDE-IF JAVA_SPEC_VERSION == 8]*/
 package com.ibm.oti.vm;
-
 /*******************************************************************************
  * Copyright IBM Corp. and others 1998
  *

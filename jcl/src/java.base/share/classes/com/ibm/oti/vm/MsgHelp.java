@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar16]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2003
  *
@@ -26,11 +26,11 @@ import java.util.*;
 import java.io.IOException;
 import java.io.InputStream;
 
-/*[IF Sidecar19-SE]
+/*[IF JAVA_SPEC_VERSION >= 9]
 import jdk.internal.reflect.CallerSensitive;
-/*[ELSE]*/
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 import sun.reflect.CallerSensitive;
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 /**
  * This class contains helper methods for loading resource
@@ -174,27 +174,26 @@ public static Hashtable loadMessages(String resourceName) throws IOException {
 	region = defLocale.getCountry();
 	if (region.length() == 0) region = "US"; //$NON-NLS-1$
 	variant = defLocale.getVariant();
-/*[IF !Sidecar19-SE]
+/*[IF JAVA_SPEC_VERSION == 8]
 	final ClassLoader loader = com.ibm.oti.vm.VM.getStackClassLoader(1);
 	if (null == loader) {
 		return null;
 	}
-/*[ENDIF]*/
-/*[IF Sidecar19-SE]*/
+/*[ELSE] JAVA_SPEC_VERSION == 8 */
 	Module module = MsgHelp.class.getModule();
 	if (module == null) {
 		/* Too early in bootstrap - modules not initialized yet */
 		return null;
 	}
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION == 8 */
 
 	if (variant.length() > 0) {
 		resName = resourceName + "_" + language + "_" + region + "_" + variant + ".properties"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-/*[IF Sidecar19-SE]
+/*[IF JAVA_SPEC_VERSION >= 9]
 		resourceStream = module.getResourceAsStream(resName);
-/*[ELSE]*/
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 		resourceStream = loader.getResourceAsStream(resName);
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 		if (resourceStream != null) {
 			props.load(resourceStream);
 			/*[PR CMVC 182098] Perf: zWAS ftprint regressed 6% Java7 vs 626FP1 (MsgHelp) */
@@ -204,11 +203,11 @@ public static Hashtable loadMessages(String resourceName) throws IOException {
 	}
 
 	resName = resourceName + "_" + language + "_" + region + ".properties"; //$NON-NLS-1$  //$NON-NLS-2$ //$NON-NLS-3$
-/*[IF Sidecar19-SE]
+/*[IF JAVA_SPEC_VERSION >= 9]
 	resourceStream = module.getResourceAsStream(resName);
-/*[ELSE]*/
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 	resourceStream = loader.getResourceAsStream(resName);
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 	if (resourceStream != null) {
 		props.load(resourceStream);
 		resourceStream.close();
@@ -216,22 +215,22 @@ public static Hashtable loadMessages(String resourceName) throws IOException {
 	}
 
 	resName = resourceName + "_" + language + ".properties"; //$NON-NLS-1$  //$NON-NLS-2$
-/*[IF Sidecar19-SE]
+/*[IF JAVA_SPEC_VERSION >= 9]
 	resourceStream = module.getResourceAsStream(resName);
-/*[ELSE]*/
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 	resourceStream = loader.getResourceAsStream(resName);
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 	if (resourceStream != null) {
 		props.load(resourceStream);
 		resourceStream.close();
 		return props;
 	}
 
-/*[IF Sidecar19-SE]
+/*[IF JAVA_SPEC_VERSION >= 9]
 	resourceStream = module.getResourceAsStream(resourceName + ".properties"); //$NON-NLS-1$
-/*[ELSE]*/
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 	resourceStream = loader.getResourceAsStream(resourceName + ".properties"); //$NON-NLS-1$
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 	if (resourceStream != null) {
 		props.load(resourceStream);
 		resourceStream.close();

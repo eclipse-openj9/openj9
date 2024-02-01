@@ -26,12 +26,11 @@ package java.lang;
 import java.util.Objects;
 import java.util.Properties;
 
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 import jdk.internal.reflect.ConstantPool;
-/*[ELSE]*/
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 import sun.reflect.ConstantPool;
-/*[ENDIF]*/
-
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 import com.ibm.oti.vm.*;
 import com.ibm.jit.JITHelpers;
@@ -63,7 +62,7 @@ final class VMAccess implements VMLangAccess {
 	}
 
 
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 	/**
 	 * Answer the platform class loader.
 	 */
@@ -71,7 +70,7 @@ final class VMAccess implements VMLangAccess {
 	public ClassLoader getPlatformClassLoader() {
 		return jdk.internal.loader.ClassLoaders.platformClassLoader();
 	}
-/*[ENDIF] Sidecar19-SE*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 	/**
 	 * Set the extension class loader. It can only be set once.
@@ -163,8 +162,7 @@ final class VMAccess implements VMLangAccess {
 		return System.internalGetProperties();
 	}
 
-
-	/*[IF !Sidecar19-SE]*/
+	/*[IF JAVA_SPEC_VERSION == 8]*/
 	/**
 	 * Returns the system packages for the bootloader
 	 * @return An array of packages defined by the bootloader
@@ -183,7 +181,7 @@ final class VMAccess implements VMLangAccess {
 	public Package getSystemPackage(String name) {
 		return Package.getSystemPackage(name);
 	}
-	/*[ENDIF]*/
+	/*[ENDIF] JAVA_SPEC_VERSION == 8 */
 
 	/**
 	 * Returns an InternalConstantPool object.
@@ -236,7 +234,7 @@ final class VMAccess implements VMLangAccess {
 		return getInternalConstantPoolFromJ9Class(j9class);
 	}
 
-	/*[IF Sidecar19-SE]*/
+	/*[IF JAVA_SPEC_VERSION >= 9]*/
 	@Override
 	public void addPackageToList(java.lang.Class<?> newClass, ClassLoader loader) {
 		java.lang.ClassLoader packageLoader = loader;
@@ -245,7 +243,7 @@ final class VMAccess implements VMLangAccess {
 		}
 		packageLoader.addPackageToList(newClass);
 	}
-	/*[ENDIF] Sidecar19-SE */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 	@Override
 	public Thread createThread(Runnable runnable, String threadName, boolean isSystemThreadGroup, boolean inheritThreadLocals, boolean isDaemon, ClassLoader contextClassLoader) {
@@ -279,5 +277,5 @@ final class VMAccess implements VMLangAccess {
 	public boolean getIncludeModuleVersion(StackTraceElement element) {
 		return element.getIncludeModuleVersion();
 	}
-	/*[ENDIF] JAVA_SPEC_VERSION >= 11*/
+	/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 }

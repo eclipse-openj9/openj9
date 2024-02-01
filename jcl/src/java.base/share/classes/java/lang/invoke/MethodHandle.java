@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar17 & !OPENJDK_METHODHANDLES]*/
+/*[INCLUDE-IF !OPENJDK_METHODHANDLES]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2009
  *
@@ -50,7 +50,7 @@ import java.util.Optional;
 // {{{ JIT support
 import java.util.concurrent.ConcurrentHashMap;
 
-/*[IF Sidecar19-SE]
+/*[IF JAVA_SPEC_VERSION >= 9]
 import jdk.internal.misc.Unsafe;
 /*[IF JAVA_SPEC_VERSION >= 12]*/
 import jdk.internal.access.SharedSecrets;
@@ -58,12 +58,11 @@ import jdk.internal.access.SharedSecrets;
 import jdk.internal.misc.SharedSecrets;
 /*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 import jdk.internal.reflect.ConstantPool;
-/*[ELSE]*/
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 import sun.misc.Unsafe;
 import sun.misc.SharedSecrets;
 import sun.reflect.ConstantPool;
-
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 import com.ibm.jit.JITHelpers;
 import com.ibm.oti.util.Msg;
 // }}} JIT support
@@ -247,9 +246,9 @@ public abstract class MethodHandle
 	private static MethodHandle asType(MethodHandle mh, MethodType newType) {
 		return mh.asType(newType);
 	}
-	/*[IF Sidecar19-SE]*/
+	/*[IF JAVA_SPEC_VERSION >= 9]*/
 	private static MethodHandle asType(MethodHandle mh, MethodType newType, VarHandle varHandle) { return mh.asType(newType.appendParameterTypes(varHandle.getClass())); }
-	/*[ENDIF]*/
+	/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 	// Handy array to use to eliminate some corner cases without allocating new objects
 	static final Class<?>[] EMPTY_CLASS_ARRAY = {};
@@ -366,7 +365,7 @@ public abstract class MethodHandle
 		return asSpreaderCommon(type.parameterCount() - spreadCount, arrayClass, spreadCount);
 	}
 
-	/*[IF Sidecar19-SE]*/
+	/*[IF JAVA_SPEC_VERSION >= 9]*/
 	/**
 	 * Produce a MethodHandle that has an array of type <i>arrayClass</i> as its argument at the specified position
 	 * and replaces the array with <i>spreadCount</i> arguments from the array before calling the original MethodHandle.
@@ -387,7 +386,7 @@ public abstract class MethodHandle
 	public MethodHandle asSpreader(int spreadPosition, Class<?> arrayClass, int spreadCount) throws IllegalArgumentException, WrongMethodTypeException {
 		return asSpreaderCommon(spreadPosition, arrayClass, spreadCount);
 	}
-	/*[ENDIF]*/
+	/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 	/* The common code shared by asSpreader() with the last argument and with the argument at the specified position */
 	private final MethodHandle asSpreaderCommon(int spreadPosition, Class<?> arrayClass, int spreadCount) throws IllegalArgumentException, WrongMethodTypeException {
@@ -444,7 +443,7 @@ public abstract class MethodHandle
 		return asCollectorCommon(type.parameterCount() - 1, arrayClass, collectCount);
 	}
 
-	/*[IF Sidecar19-SE]*/
+	/*[IF JAVA_SPEC_VERSION >= 9]*/
 	/**
 	 * Returns a MethodHandle that collects the requested incoming arguments, which must match the
 	 * types in MethodType incomingArgs, into an array of <i>arrayClass</i>, called T.
@@ -461,7 +460,7 @@ public abstract class MethodHandle
 	public MethodHandle asCollector(int collectPosition, Class<?> arrayClass, int collectCount) throws IllegalArgumentException, WrongMethodTypeException, NullPointerException {
 		return asCollectorCommon(collectPosition, arrayClass, collectCount);
 	}
-	/*[ENDIF]*/
+	/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 	/* The common code shared by asCollector() with the last argument and with the argument at the specified position */
 	private final MethodHandle asCollectorCommon(int collectPosition, Class<?> arrayClass, int collectCount) throws IllegalArgumentException, WrongMethodTypeException, NullPointerException {
@@ -654,7 +653,7 @@ public abstract class MethodHandle
 		return (this instanceof VarargsCollectorHandle);
 	}
 
-	/*[IF Sidecar19-SE]*/
+	/*[IF JAVA_SPEC_VERSION >= 9]*/
 	/**
 	 * Return a MethodHandle that is wrapped with an asVarargsCollector adapter
 	 * if the handle is allowed to be variable arity.
@@ -685,7 +684,7 @@ public abstract class MethodHandle
 
 		return result;
 	}
-	/*[ENDIF]*/
+	/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 	/**
 	 *

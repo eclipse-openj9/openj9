@@ -1,5 +1,4 @@
 /*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
-
 package com.ibm.oti.vm;
 /*******************************************************************************
  * Copyright IBM Corp. and others 1998
@@ -26,15 +25,15 @@ package com.ibm.oti.vm;
 import com.ibm.oti.util.Msg;
 import com.ibm.oti.util.Util;
 
-/*[IF Sidecar19-SE]
+/*[IF JAVA_SPEC_VERSION >= 9]
 import jdk.internal.misc.Unsafe;
 import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.ConstantPool;
-/*[ELSE]*/
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 import sun.misc.Unsafe;
 import sun.reflect.CallerSensitive;
 import sun.reflect.ConstantPool;
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 /**
  * Represents the running virtual machine. All VM specific API

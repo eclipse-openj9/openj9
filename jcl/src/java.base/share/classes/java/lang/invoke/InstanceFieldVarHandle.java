@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar19-SE & !OPENJDK_METHODHANDLES]*/
+/*[INCLUDE-IF (JAVA_SPEC_VERSION >= 9) & !OPENJDK_METHODHANDLES]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2016
  *
@@ -153,20 +153,12 @@ final class InstanceFieldVarHandle extends FieldVarHandle {
 
 			private static final boolean compareAndSet(Object receiver, Object testValue, Object newValue, VarHandle varHandle) {
 				receiver.getClass();
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.compareAndSetObject(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ELSE]
-				return _unsafe.compareAndSwapObject(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final Object compareAndExchange(Object receiver, Object testValue, Object newValue, VarHandle varHandle) {
 				receiver.getClass();
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.compareAndExchangeObject(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ELSE]
-				return _unsafe.compareAndExchangeObjectVolatile(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final Object compareAndExchangeAcquire(Object receiver, Object testValue, Object newValue, VarHandle varHandle) {
@@ -181,38 +173,22 @@ final class InstanceFieldVarHandle extends FieldVarHandle {
 
 			private static final boolean weakCompareAndSet(Object receiver, Object testValue, Object newValue, VarHandle varHandle) {
 				receiver.getClass();
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetObjectPlain(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapObject(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final boolean weakCompareAndSetAcquire(Object receiver, Object testValue, Object newValue, VarHandle varHandle) {
 				receiver.getClass();
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetObjectAcquire(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapObjectAcquire(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final boolean weakCompareAndSetRelease(Object receiver, Object testValue, Object newValue, VarHandle varHandle) {
 				receiver.getClass();
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetObjectRelease(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapObjectRelease(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final boolean weakCompareAndSetPlain(Object receiver, Object testValue, Object newValue, VarHandle varHandle) {
 				receiver.getClass();
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetObjectPlain(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapObject(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final Object getAndSet(Object receiver, Object value, VarHandle varHandle) {
@@ -322,20 +298,12 @@ final class InstanceFieldVarHandle extends FieldVarHandle {
 
 			private static final boolean compareAndSet(Object receiver, byte testValue, byte newValue, VarHandle varHandle) {
 				receiver.getClass();
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.compareAndSetInt(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ELSE]
-				return _unsafe.compareAndSwapInt(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final byte compareAndExchange(Object receiver, byte testValue, byte newValue, VarHandle varHandle) {
 				receiver.getClass();
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return (byte)_unsafe.compareAndExchangeInt(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ELSE]
-				return (byte)_unsafe.compareAndExchangeIntVolatile(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final byte compareAndExchangeAcquire(Object receiver, byte testValue, byte newValue, VarHandle varHandle) {
@@ -350,38 +318,22 @@ final class InstanceFieldVarHandle extends FieldVarHandle {
 
 			private static final boolean weakCompareAndSet(Object receiver, byte testValue, byte newValue, VarHandle varHandle) {
 				receiver.getClass();
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetInt(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapIntVolatile(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final boolean weakCompareAndSetAcquire(Object receiver, byte testValue, byte newValue, VarHandle varHandle) {
 				receiver.getClass();
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetIntAcquire(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapIntAcquire(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final boolean weakCompareAndSetRelease(Object receiver, byte testValue, byte newValue, VarHandle varHandle) {
 				receiver.getClass();
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetIntRelease(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapIntRelease(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final boolean weakCompareAndSetPlain(Object receiver, byte testValue, byte newValue, VarHandle varHandle) {
 				receiver.getClass();
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetIntPlain(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapInt(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final byte getAndSet(Object receiver, byte value, VarHandle varHandle) {
@@ -503,20 +455,12 @@ final class InstanceFieldVarHandle extends FieldVarHandle {
 
 			private static final boolean compareAndSet(Object receiver, char testValue, char newValue, VarHandle varHandle) {
 				receiver.getClass();
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.compareAndSetInt(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ELSE]
-				return _unsafe.compareAndSwapInt(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final char compareAndExchange(Object receiver, char testValue, char newValue, VarHandle varHandle) {
 				receiver.getClass();
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return (char)_unsafe.compareAndExchangeInt(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ELSE]
-				return (char)_unsafe.compareAndExchangeIntVolatile(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final char compareAndExchangeAcquire(Object receiver, char testValue, char newValue, VarHandle varHandle) {
@@ -531,38 +475,22 @@ final class InstanceFieldVarHandle extends FieldVarHandle {
 
 			private static final boolean weakCompareAndSet(Object receiver, char testValue, char newValue, VarHandle varHandle) {
 				receiver.getClass();
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetInt(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapIntVolatile(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final boolean weakCompareAndSetAcquire(Object receiver, char testValue, char newValue, VarHandle varHandle) {
 				receiver.getClass();
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetIntAcquire(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapIntAcquire(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final boolean weakCompareAndSetRelease(Object receiver, char testValue, char newValue, VarHandle varHandle) {
 				receiver.getClass();
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetIntRelease(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapIntRelease(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final boolean weakCompareAndSetPlain(Object receiver, char testValue, char newValue, VarHandle varHandle) {
 				receiver.getClass();
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetIntPlain(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapInt(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final char getAndSet(Object receiver, char value, VarHandle varHandle) {
@@ -684,20 +612,12 @@ final class InstanceFieldVarHandle extends FieldVarHandle {
 
 			private static final boolean compareAndSet(Object receiver, double testValue, double newValue, VarHandle varHandle) {
 				receiver.getClass();
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.compareAndSetDouble(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ELSE]
-				return _unsafe.compareAndSwapDouble(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final double compareAndExchange(Object receiver, double testValue, double newValue, VarHandle varHandle) {
 				receiver.getClass();
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.compareAndExchangeDouble(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ELSE]
-				return _unsafe.compareAndExchangeDoubleVolatile(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final double compareAndExchangeAcquire(Object receiver, double testValue, double newValue, VarHandle varHandle) {
@@ -712,38 +632,22 @@ final class InstanceFieldVarHandle extends FieldVarHandle {
 
 			private static final boolean weakCompareAndSet(Object receiver, double testValue, double newValue, VarHandle varHandle) {
 				receiver.getClass();
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetDouble(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapDoubleVolatile(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final boolean weakCompareAndSetAcquire(Object receiver, double testValue, double newValue, VarHandle varHandle) {
 				receiver.getClass();
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetDoubleAcquire(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapDoubleAcquire(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final boolean weakCompareAndSetRelease(Object receiver, double testValue, double newValue, VarHandle varHandle) {
 				receiver.getClass();
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetDoubleRelease(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapDoubleRelease(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final boolean weakCompareAndSetPlain(Object receiver, double testValue, double newValue, VarHandle varHandle) {
 				receiver.getClass();
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetDoublePlain(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapDouble(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final double getAndSet(Object receiver, double value, VarHandle varHandle) {
@@ -856,20 +760,12 @@ final class InstanceFieldVarHandle extends FieldVarHandle {
 
 			private static final boolean compareAndSet(Object receiver, float testValue, float newValue, VarHandle varHandle) {
 				receiver.getClass();
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.compareAndSetFloat(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ELSE]
-				return _unsafe.compareAndSwapFloat(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final float compareAndExchange(Object receiver, float testValue, float newValue, VarHandle varHandle) {
 				receiver.getClass();
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.compareAndExchangeFloat(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ELSE]
-				return _unsafe.compareAndExchangeFloatVolatile(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final float compareAndExchangeAcquire(Object receiver, float testValue, float newValue, VarHandle varHandle) {
@@ -884,38 +780,22 @@ final class InstanceFieldVarHandle extends FieldVarHandle {
 
 			private static final boolean weakCompareAndSet(Object receiver, float testValue, float newValue, VarHandle varHandle) {
 				receiver.getClass();
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetFloat(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapFloatVolatile(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final boolean weakCompareAndSetAcquire(Object receiver, float testValue, float newValue, VarHandle varHandle) {
 				receiver.getClass();
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetFloatAcquire(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapFloatAcquire(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final boolean weakCompareAndSetRelease(Object receiver, float testValue, float newValue, VarHandle varHandle) {
 				receiver.getClass();
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetFloatRelease(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapFloatRelease(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final boolean weakCompareAndSetPlain(Object receiver, float testValue, float newValue, VarHandle varHandle) {
 				receiver.getClass();
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetFloatPlain(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapFloat(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final float getAndSet(Object receiver, float value, VarHandle varHandle) {
@@ -1028,20 +908,12 @@ final class InstanceFieldVarHandle extends FieldVarHandle {
 
 			private static final boolean compareAndSet(Object receiver, int testValue, int newValue, VarHandle varHandle) {
 				receiver.getClass();
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.compareAndSetInt(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ELSE]
-				return _unsafe.compareAndSwapInt(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final int compareAndExchange(Object receiver, int testValue, int newValue, VarHandle varHandle) {
 				receiver.getClass();
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.compareAndExchangeInt(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ELSE]
-				return _unsafe.compareAndExchangeIntVolatile(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final int compareAndExchangeAcquire(Object receiver, int testValue, int newValue, VarHandle varHandle) {
@@ -1056,38 +928,22 @@ final class InstanceFieldVarHandle extends FieldVarHandle {
 
 			private static final boolean weakCompareAndSet(Object receiver, int testValue, int newValue, VarHandle varHandle) {
 				receiver.getClass();
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetInt(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapIntVolatile(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final boolean weakCompareAndSetAcquire(Object receiver, int testValue, int newValue, VarHandle varHandle) {
 				receiver.getClass();
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetIntAcquire(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapIntAcquire(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final boolean weakCompareAndSetRelease(Object receiver, int testValue, int newValue, VarHandle varHandle) {
 				receiver.getClass();
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetIntRelease(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapIntRelease(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final boolean weakCompareAndSetPlain(Object receiver, int testValue, int newValue, VarHandle varHandle) {
 				receiver.getClass();
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetIntPlain(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapInt(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final int getAndSet(Object receiver, int value, VarHandle varHandle) {
@@ -1209,20 +1065,12 @@ final class InstanceFieldVarHandle extends FieldVarHandle {
 
 			private static final boolean compareAndSet(Object receiver, long testValue, long newValue, VarHandle varHandle) {
 				receiver.getClass();
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.compareAndSetLong(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ELSE]
-				return _unsafe.compareAndSwapLong(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final long compareAndExchange(Object receiver, long testValue, long newValue, VarHandle varHandle) {
 				receiver.getClass();
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.compareAndExchangeLong(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ELSE]
-				return _unsafe.compareAndExchangeLongVolatile(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final long compareAndExchangeAcquire(Object receiver, long testValue, long newValue, VarHandle varHandle) {
@@ -1237,38 +1085,22 @@ final class InstanceFieldVarHandle extends FieldVarHandle {
 
 			private static final boolean weakCompareAndSet(Object receiver, long testValue, long newValue, VarHandle varHandle) {
 				receiver.getClass();
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetLong(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapLongVolatile(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final boolean weakCompareAndSetAcquire(Object receiver, long testValue, long newValue, VarHandle varHandle) {
 				receiver.getClass();
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetLongAcquire(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapLongAcquire(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final boolean weakCompareAndSetRelease(Object receiver, long testValue, long newValue, VarHandle varHandle) {
 				receiver.getClass();
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetLongRelease(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapLongRelease(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final boolean weakCompareAndSetPlain(Object receiver, long testValue, long newValue, VarHandle varHandle) {
 				receiver.getClass();
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetLongPlain(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapLong(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final long getAndSet(Object receiver, long value, VarHandle varHandle) {
@@ -1390,20 +1222,12 @@ final class InstanceFieldVarHandle extends FieldVarHandle {
 
 			private static final boolean compareAndSet(Object receiver, short testValue, short newValue, VarHandle varHandle) {
 				receiver.getClass();
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.compareAndSetInt(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ELSE]
-				return _unsafe.compareAndSwapInt(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final short compareAndExchange(Object receiver, short testValue, short newValue, VarHandle varHandle) {
 				receiver.getClass();
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return (short)_unsafe.compareAndExchangeInt(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ELSE]
-				return (short)_unsafe.compareAndExchangeIntVolatile(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final short compareAndExchangeAcquire(Object receiver, short testValue, short newValue, VarHandle varHandle) {
@@ -1418,38 +1242,22 @@ final class InstanceFieldVarHandle extends FieldVarHandle {
 
 			private static final boolean weakCompareAndSet(Object receiver, short testValue, short newValue, VarHandle varHandle) {
 				receiver.getClass();
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetInt(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapIntVolatile(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final boolean weakCompareAndSetAcquire(Object receiver, short testValue, short newValue, VarHandle varHandle) {
 				receiver.getClass();
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetIntAcquire(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapIntAcquire(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final boolean weakCompareAndSetRelease(Object receiver, short testValue, short newValue, VarHandle varHandle) {
 				receiver.getClass();
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetIntRelease(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapIntRelease(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final boolean weakCompareAndSetPlain(Object receiver, short testValue, short newValue, VarHandle varHandle) {
 				receiver.getClass();
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetIntPlain(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapInt(receiver, ((FieldVarHandle)varHandle).vmslot, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final short getAndSet(Object receiver, short value, VarHandle varHandle) {
@@ -1571,20 +1379,12 @@ final class InstanceFieldVarHandle extends FieldVarHandle {
 
 			private static final boolean compareAndSet(Object receiver, boolean testValue, boolean newValue, VarHandle varHandle) {
 				receiver.getClass();
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.compareAndSetInt(receiver, ((FieldVarHandle)varHandle).vmslot, testValue ? 1: 0, newValue ? 1 : 0);
-/*[ELSE]
-				return _unsafe.compareAndSwapInt(receiver, ((FieldVarHandle)varHandle).vmslot, testValue ? 1: 0, newValue ? 1 : 0);
-/*[ENDIF]*/
 			}
 
 			private static final boolean compareAndExchange(Object receiver, boolean testValue, boolean newValue, VarHandle varHandle) {
 				receiver.getClass();
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return (0 != _unsafe.compareAndExchangeInt(receiver, ((FieldVarHandle)varHandle).vmslot, testValue ? 1: 0, newValue ? 1 : 0));
-/*[ELSE]
-				return (0 != _unsafe.compareAndExchangeIntVolatile(receiver, ((FieldVarHandle)varHandle).vmslot, testValue ? 1: 0, newValue ? 1 : 0));
-/*[ENDIF]*/
 			}
 
 			private static final boolean compareAndExchangeAcquire(Object receiver, boolean testValue, boolean newValue, VarHandle varHandle) {
@@ -1599,38 +1399,22 @@ final class InstanceFieldVarHandle extends FieldVarHandle {
 
 			private static final boolean weakCompareAndSet(Object receiver, boolean testValue, boolean newValue, VarHandle varHandle) {
 				receiver.getClass();
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetInt(receiver, ((FieldVarHandle)varHandle).vmslot, testValue ? 1: 0, newValue ? 1 : 0);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapIntVolatile(receiver, ((FieldVarHandle)varHandle).vmslot, testValue ? 1: 0, newValue ? 1 : 0);
-/*[ENDIF]*/
 			}
 
 			private static final boolean weakCompareAndSetAcquire(Object receiver, boolean testValue, boolean newValue, VarHandle varHandle) {
 				receiver.getClass();
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetIntAcquire(receiver, ((FieldVarHandle)varHandle).vmslot, testValue ? 1: 0, newValue ? 1 : 0);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapIntAcquire(receiver, ((FieldVarHandle)varHandle).vmslot, testValue ? 1: 0, newValue ? 1 : 0);
-/*[ENDIF]*/
 			}
 
 			private static final boolean weakCompareAndSetRelease(Object receiver, boolean testValue, boolean newValue, VarHandle varHandle) {
 				receiver.getClass();
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetIntRelease(receiver, ((FieldVarHandle)varHandle).vmslot, testValue ? 1: 0, newValue ? 1 : 0);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapIntRelease(receiver, ((FieldVarHandle)varHandle).vmslot, testValue ? 1: 0, newValue ? 1 : 0);
-/*[ENDIF]*/
 			}
 
 			private static final boolean weakCompareAndSetPlain(Object receiver, boolean testValue, boolean newValue, VarHandle varHandle) {
 				receiver.getClass();
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetIntPlain(receiver, ((FieldVarHandle)varHandle).vmslot, testValue ? 1: 0, newValue ? 1 : 0);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapInt(receiver, ((FieldVarHandle)varHandle).vmslot, testValue ? 1: 0, newValue ? 1 : 0);
-/*[ENDIF]*/
 			}
 
 			private static final boolean getAndSet(Object receiver, boolean value, VarHandle varHandle) {

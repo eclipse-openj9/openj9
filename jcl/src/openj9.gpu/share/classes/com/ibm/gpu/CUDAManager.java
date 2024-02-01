@@ -38,12 +38,12 @@ import java.util.TreeMap;
 import com.ibm.cuda.Cuda;
 import com.ibm.cuda.CudaDevice;
 
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
-/*[ELSE]
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 import sun.misc.Unsafe;
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 /**
  * This class contains information important to IBM GPU enabled functions.
@@ -335,12 +335,12 @@ public final class CUDAManager {
 
 	private CUDADevice[] devices;
 
-	/*[IF Sidecar19-SE]*/
+	/*[IF JAVA_SPEC_VERSION >= 9]*/
 	private final VarHandle devicesHandle;
-	/*[ELSE]
+	/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 	private final long devicesOffset;
 	private final Unsafe unsafe;
-	/*[ENDIF]*/
+	/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 	private boolean doSortOnGPU;
 
@@ -359,13 +359,13 @@ public final class CUDAManager {
 		// set this early for better feedback
 		verboseOutput = getProperty("com.ibm.gpu.verbose") != null; //$NON-NLS-1$
 
-		/*[IF Sidecar19-SE]*/
+		/*[IF JAVA_SPEC_VERSION >= 9]*/
 		try {
 			devicesHandle = MethodHandles.lookup().findVarHandle(CUDAManager.class, "devices", CUDADevice[].class); //$NON-NLS-1$
 		} catch (IllegalAccessException | NoSuchFieldException e) {
 			throw new InternalError(e.toString(), e);
 		}
-		/*[ELSE]
+		/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 		try {
 			unsafe = Unsafe.getUnsafe();
 			devicesOffset = unsafe.objectFieldOffset(CUDAManager.class.getDeclaredField("devices")); //$NON-NLS-1$
@@ -374,7 +374,7 @@ public final class CUDAManager {
 			error.initCause(e);
 			throw error;
 		}
-		/*[ENDIF]*/
+		/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 		Configuration configuration = new Configuration(this);
 
@@ -515,11 +515,11 @@ public final class CUDAManager {
 
 				if (allDevices == null) {
 					allDevices = findDevices();
-					/*[IF Sidecar19-SE]*/
+					/*[IF JAVA_SPEC_VERSION >= 9]*/
 					devicesHandle.setRelease(this, allDevices);
-					/*[ELSE]
+					/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 					unsafe.putOrderedObject(this, devicesOffset, allDevices);
-					/*[ENDIF]*/
+					/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 				}
 			}
 		}

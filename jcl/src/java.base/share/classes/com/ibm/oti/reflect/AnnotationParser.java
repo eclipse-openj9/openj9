@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar16]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 package com.ibm.oti.reflect;
 
 /*******************************************************************************
@@ -28,11 +28,11 @@ import java.nio.ByteBuffer;
 import java.lang.reflect.Method;
 import java.lang.reflect.Field;
 import java.lang.reflect.Constructor;
-/*[IF Sidecar19-SE]
+/*[IF JAVA_SPEC_VERSION >= 9]
 import jdk.internal.reflect.ConstantPool;
-/*[ELSE]*/
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 import sun.reflect.ConstantPool;
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 import com.ibm.oti.vm.VM;
 
 public class AnnotationParser {

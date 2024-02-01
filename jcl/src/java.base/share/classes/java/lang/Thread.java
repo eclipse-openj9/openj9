@@ -1,4 +1,4 @@
-/*[INCLUDE-IF (JAVA_SPEC_VERSION >= 8) & (JAVA_SPEC_VERSION < 19)]*/
+/*[INCLUDE-IF (8 <= JAVA_SPEC_VERSION) & (JAVA_SPEC_VERSION < 19)]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 1998
  *
@@ -320,7 +320,7 @@ public Thread(ThreadGroup group, Runnable runnable, String threadName, long stac
 	this.stackSize = stack;
 }
 
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 /**
  * Constructs a new Thread with a runnable object, the given name, the thread stack size,
  * the flag to inherit initial values for inheritable thread-local variables and
@@ -342,7 +342,7 @@ public Thread(ThreadGroup group, Runnable runnable, String threadName, long stac
 	this(group, runnable, threadName, null, inheritThreadLocals);
 	this.stackSize = stack;
 }
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 /**
  * Constructs a new Thread with a runnable object, the given name and
@@ -582,11 +582,11 @@ public static native Thread currentThread();
  *
  * @deprecated May cause deadlocks.
  */
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 @Deprecated(forRemoval=true, since="1.5")
-/*[ELSE]*/
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 @Deprecated
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 public void destroy() {
 	/*[PR 121318] Should throw NoSuchMethodError */
 	throw new NoSuchMethodError();
@@ -1112,14 +1112,14 @@ public static void sleep(long time, int nanos) throws InterruptedException {
 
 private static native void sleepImpl(long time, int nanos) throws InterruptedException;
 
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 /**
  * Hints to the run-time that a spin loop is being performed
  * which helps the thread in the spin loop not to use as much power.
  *
  */
 public static native void onSpinWait();
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 /**
  * Starts the new Thread of execution. The <code>run()</code> method of the receiver
@@ -1196,11 +1196,11 @@ public final void stop() {
  *
  * @deprecated
  */
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 @Deprecated(forRemoval=true, since="1.2")
-/*[ELSE]*/
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 @Deprecated
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 public final void stop(Throwable throwable) {
 	throw new UnsupportedOperationException();
 }

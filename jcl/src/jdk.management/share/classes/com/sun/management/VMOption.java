@@ -1,5 +1,4 @@
-/*[INCLUDE-IF Sidecar19-SE & (JAVA_SPEC_VERSION <= 20)]*/
-
+/*[INCLUDE-IF (9 <= JAVA_SPEC_VERSION) & (JAVA_SPEC_VERSION <= 20)]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2017
  *

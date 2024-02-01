@@ -44,12 +44,12 @@ public class SharedClassCacheInfo {
 	 * Specifies a Java 8 cache.
 	 */
 	static final public int JVMLEVEL_JAVA8 = 4;
-	/*[IF Sidecar19-SE]*/
+	/*[IF JAVA_SPEC_VERSION >= 9]*/
 	/**
 	 * Specifies a Java 9 cache.
 	 */
 	static final public int JVMLEVEL_JAVA9 = 5;
-	/*[ENDIF] Sidecar19-SE */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 	/**
 	 * Specifies a 32-bit cache.
 	 */

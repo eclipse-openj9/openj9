@@ -42,14 +42,14 @@ import java.io.PrintStream;
 import java.net.URL;
 import java.nio.charset.Charset;
 
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 import jdk.internal.ref.CleanerShutdown;
 import jdk.internal.ref.CleanerImpl;
 import jdk.internal.misc.InnocuousThread;
 import jdk.internal.misc.Unsafe;
-/*[ELSE]*/
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 import sun.misc.Unsafe;
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 import com.ibm.oti.util.Msg;
 
 @J9UnmodifiableClass
@@ -121,7 +121,7 @@ final class J9VMInternals {
 		ClassLoader.completeInitialization();
 		threadCompleteInitialization();
 
-		/*[IF Sidecar19-SE]*/
+		/*[IF JAVA_SPEC_VERSION >= 9]*/
 		System.initGPUAssist();
 
 		if (Boolean.getBoolean("ibm.java9.forceCommonCleanerShutdown")) { //$NON-NLS-1$
@@ -170,7 +170,7 @@ final class J9VMInternals {
 			};
 			Runtime.getRuntime().addShutdownHook(new Thread(runnable, "CommonCleanerShutdown", true, false, false, null)); //$NON-NLS-1$
 		}
-		/*[ENDIF] Sidecar19-SE */
+		/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 	}
 
 	/**

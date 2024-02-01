@@ -1,4 +1,4 @@
-/*[INCLUDE-IF PLATFORM-mz31 | PLATFORM-mz64 | ! ( Sidecar18-SE-OpenJ9 | Sidecar19-SE )]*/
+/*[INCLUDE-IF PLATFORM-mz31 | PLATFORM-mz64 | !Sidecar18-SE-OpenJ9]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2012
  *

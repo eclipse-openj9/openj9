@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar19-SE & !OPENJDK_METHODHANDLES]*/
+/*[INCLUDE-IF (JAVA_SPEC_VERSION >= 9) & !OPENJDK_METHODHANDLES]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2016
  *
@@ -279,20 +279,12 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 
 			private static final boolean compareAndSet(byte[] receiver, int index, double testValue, double newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.compareAndSetDouble(receiver, offset, testValue, newValue);
-/*[ELSE]
-				return _unsafe.compareAndSwapDouble(receiver, offset, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final double compareAndExchange(byte[] receiver, int index, double testValue, double newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.compareAndExchangeDouble(receiver, offset, testValue, newValue);
-/*[ELSE]
-				return _unsafe.compareAndExchangeDoubleVolatile(receiver, offset, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final double compareAndExchangeAcquire(byte[] receiver, int index, double testValue, double newValue, VarHandle varHandle) {
@@ -307,38 +299,22 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 
 			private static final boolean weakCompareAndSet(byte[] receiver, int index, double testValue, double newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetDoublePlain(receiver, offset, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapDouble(receiver, offset, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final boolean weakCompareAndSetAcquire(byte[] receiver, int index, double testValue, double newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetDoubleAcquire(receiver, offset, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapDoubleAcquire(receiver, offset, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final boolean weakCompareAndSetRelease(byte[] receiver, int index, double testValue, double newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetDoubleRelease(receiver, offset, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapDoubleRelease(receiver, offset, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final boolean weakCompareAndSetPlain(byte[] receiver, int index, double testValue, double newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetDoublePlain(receiver, offset, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapDouble(receiver, offset, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final double getAndSet(byte[] receiver, int index, double value, VarHandle varHandle) {
@@ -450,20 +426,12 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 
 			private static final boolean compareAndSet(byte[] receiver, int index, float testValue, float newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.compareAndSetFloat(receiver, offset, testValue, newValue);
-/*[ELSE]
-				return _unsafe.compareAndSwapFloat(receiver, offset, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final float compareAndExchange(byte[] receiver, int index, float testValue, float newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.compareAndExchangeFloat(receiver, offset, testValue, newValue);
-/*[ELSE]
-				return _unsafe.compareAndExchangeFloatVolatile(receiver, offset, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final float compareAndExchangeAcquire(byte[] receiver, int index, float testValue, float newValue, VarHandle varHandle) {
@@ -478,38 +446,22 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 
 			private static final boolean weakCompareAndSet(byte[] receiver, int index, float testValue, float newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetFloatPlain(receiver, offset, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapFloat(receiver, offset, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final boolean weakCompareAndSetAcquire(byte[] receiver, int index, float testValue, float newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetFloatAcquire(receiver, offset, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapFloatAcquire(receiver, offset, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final boolean weakCompareAndSetRelease(byte[] receiver, int index, float testValue, float newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetFloatRelease(receiver, offset, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapFloatRelease(receiver, offset, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final boolean weakCompareAndSetPlain(byte[] receiver, int index, float testValue, float newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetFloatPlain(receiver, offset, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapFloat(receiver, offset, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final float getAndSet(byte[] receiver, int index, float value, VarHandle varHandle) {
@@ -621,20 +573,12 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 
 			private static final boolean compareAndSet(byte[] receiver, int index, int testValue, int newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.compareAndSetInt(receiver, offset, testValue, newValue);
-/*[ELSE]
-				return _unsafe.compareAndSwapInt(receiver, offset, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final int compareAndExchange(byte[] receiver, int index, int testValue, int newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.compareAndExchangeInt(receiver, offset, testValue, newValue);
-/*[ELSE]
-				return _unsafe.compareAndExchangeIntVolatile(receiver, offset, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final int compareAndExchangeAcquire(byte[] receiver, int index, int testValue, int newValue, VarHandle varHandle) {
@@ -649,38 +593,22 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 
 			private static final boolean weakCompareAndSet(byte[] receiver, int index, int testValue, int newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetIntPlain(receiver, offset, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapInt(receiver, offset, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final boolean weakCompareAndSetAcquire(byte[] receiver, int index, int testValue, int newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetIntAcquire(receiver, offset, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapIntAcquire(receiver, offset, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final boolean weakCompareAndSetRelease(byte[] receiver, int index, int testValue, int newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetIntRelease(receiver, offset, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapIntRelease(receiver, offset, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final boolean weakCompareAndSetPlain(byte[] receiver, int index, int testValue, int newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetIntPlain(receiver, offset, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapInt(receiver, offset, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final int getAndSet(byte[] receiver, int index, int value, VarHandle varHandle) {
@@ -804,20 +732,12 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 
 			private static final boolean compareAndSet(byte[] receiver, int index, long testValue, long newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.compareAndSetLong(receiver, offset, testValue, newValue);
-/*[ELSE]
-				return _unsafe.compareAndSwapLong(receiver, offset, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final long compareAndExchange(byte[] receiver, int index, long testValue, long newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.compareAndExchangeLong(receiver, offset, testValue, newValue);
-/*[ELSE]
-				return _unsafe.compareAndExchangeLongVolatile(receiver, offset, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final long compareAndExchangeAcquire(byte[] receiver, int index, long testValue, long newValue, VarHandle varHandle) {
@@ -832,38 +752,22 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 
 			private static final boolean weakCompareAndSet(byte[] receiver, int index, long testValue, long newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetLongPlain(receiver, offset, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapLong(receiver, offset, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final boolean weakCompareAndSetAcquire(byte[] receiver, int index, long testValue, long newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetLongAcquire(receiver, offset, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapLongAcquire(receiver, offset, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final boolean weakCompareAndSetRelease(byte[] receiver, int index, long testValue, long newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetLongRelease(receiver, offset, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapLongRelease(receiver, offset, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final boolean weakCompareAndSetPlain(byte[] receiver, int index, long testValue, long newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetLongPlain(receiver, offset, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapLong(receiver, offset, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final long getAndSet(byte[] receiver, int index, long value, VarHandle varHandle) {
@@ -1267,20 +1171,12 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 
 			private static final boolean compareAndSet(byte[] receiver, int index, double testValue, double newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.compareAndSetDouble(receiver, offset, convertEndian(testValue), convertEndian(newValue));
-/*[ELSE]
-				return _unsafe.compareAndSwapDouble(receiver, offset, convertEndian(testValue), convertEndian(newValue));
-/*[ENDIF]*/
 			}
 
 			private static final double compareAndExchange(byte[] receiver, int index, double testValue, double newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
-/*[IF Sidecar19-SE-OpenJ9]*/
 				double result = _unsafe.compareAndExchangeDouble(receiver, offset, convertEndian(testValue), convertEndian(newValue));
-/*[ELSE]
-				double result = _unsafe.compareAndExchangeDoubleVolatile(receiver, offset, convertEndian(testValue), convertEndian(newValue));
-/*[ENDIF]*/
 				return convertEndian(result);
 			}
 
@@ -1298,38 +1194,22 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 
 			private static final boolean weakCompareAndSet(byte[] receiver, int index, double testValue, double newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetDoublePlain(receiver, offset, convertEndian(testValue), convertEndian(newValue));
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapDouble(receiver, offset, convertEndian(testValue), convertEndian(newValue));
-/*[ENDIF]*/
 			}
 
 			private static final boolean weakCompareAndSetAcquire(byte[] receiver, int index, double testValue, double newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetDoubleAcquire(receiver, offset, convertEndian(testValue), convertEndian(newValue));
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapDoubleAcquire(receiver, offset, convertEndian(testValue), convertEndian(newValue));
-/*[ENDIF]*/
 			}
 
 			private static final boolean weakCompareAndSetRelease(byte[] receiver, int index, double testValue, double newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetDoubleRelease(receiver, offset, convertEndian(testValue), convertEndian(newValue));
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapDoubleRelease(receiver, offset, convertEndian(testValue), convertEndian(newValue));
-/*[ENDIF]*/
 			}
 
 			private static final boolean weakCompareAndSetPlain(byte[] receiver, int index, double testValue, double newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetDoublePlain(receiver, offset, convertEndian(testValue), convertEndian(newValue));
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapDouble(receiver, offset, convertEndian(testValue), convertEndian(newValue));
-/*[ENDIF]*/
 			}
 
 			private static final double getAndSet(byte[] receiver, int index, double value, VarHandle varHandle) {
@@ -1448,20 +1328,12 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 
 			private static final boolean compareAndSet(byte[] receiver, int index, float testValue, float newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.compareAndSetFloat(receiver, offset, convertEndian(testValue), convertEndian(newValue));
-/*[ELSE]
-				return _unsafe.compareAndSwapFloat(receiver, offset, convertEndian(testValue), convertEndian(newValue));
-/*[ENDIF]*/
 			}
 
 			private static final float compareAndExchange(byte[] receiver, int index, float testValue, float newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
-/*[IF Sidecar19-SE-OpenJ9]*/
 				float result = _unsafe.compareAndExchangeFloat(receiver, offset, convertEndian(testValue), convertEndian(newValue));
-/*[ELSE]
-				float result = _unsafe.compareAndExchangeFloatVolatile(receiver, offset, convertEndian(testValue), convertEndian(newValue));
-/*[ENDIF]*/
 				return convertEndian(result);
 			}
 
@@ -1479,38 +1351,22 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 
 			private static final boolean weakCompareAndSet(byte[] receiver, int index, float testValue, float newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetFloatPlain(receiver, offset, convertEndian(testValue), convertEndian(newValue));
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapFloat(receiver, offset, convertEndian(testValue), convertEndian(newValue));
-/*[ENDIF]*/
 			}
 
 			private static final boolean weakCompareAndSetAcquire(byte[] receiver, int index, float testValue, float newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetFloatAcquire(receiver, offset, convertEndian(testValue), convertEndian(newValue));
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapFloatAcquire(receiver, offset, convertEndian(testValue), convertEndian(newValue));
-/*[ENDIF]*/
 			}
 
 			private static final boolean weakCompareAndSetRelease(byte[] receiver, int index, float testValue, float newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetFloatRelease(receiver, offset, convertEndian(testValue), convertEndian(newValue));
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapFloatRelease(receiver, offset, convertEndian(testValue), convertEndian(newValue));
-/*[ENDIF]*/
 			}
 
 			private static final boolean weakCompareAndSetPlain(byte[] receiver, int index, float testValue, float newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetFloatPlain(receiver, offset, convertEndian(testValue), convertEndian(newValue));
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapFloat(receiver, offset, convertEndian(testValue), convertEndian(newValue));
-/*[ENDIF]*/
 			}
 
 			private static final float getAndSet(byte[] receiver, int index, float value, VarHandle varHandle) {
@@ -1629,20 +1485,12 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 
 			private static final boolean compareAndSet(byte[] receiver, int index, int testValue, int newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.compareAndSetInt(receiver, offset, convertEndian(testValue), convertEndian(newValue));
-/*[ELSE]
-				return _unsafe.compareAndSwapInt(receiver, offset, convertEndian(testValue), convertEndian(newValue));
-/*[ENDIF]*/
 			}
 
 			private static final int compareAndExchange(byte[] receiver, int index, int testValue, int newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
-/*[IF Sidecar19-SE-OpenJ9]*/
 				int result = _unsafe.compareAndExchangeInt(receiver, offset, convertEndian(testValue), convertEndian(newValue));
-/*[ELSE]
-				int result = _unsafe.compareAndExchangeIntVolatile(receiver, offset, convertEndian(testValue), convertEndian(newValue));
-/*[ENDIF]*/
 				return convertEndian(result);
 			}
 
@@ -1660,38 +1508,22 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 
 			private static final boolean weakCompareAndSet(byte[] receiver, int index, int testValue, int newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetIntPlain(receiver, offset, convertEndian(testValue), convertEndian(newValue));
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapInt(receiver, offset, convertEndian(testValue), convertEndian(newValue));
-/*[ENDIF]*/
 			}
 
 			private static final boolean weakCompareAndSetAcquire(byte[] receiver, int index, int testValue, int newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetIntAcquire(receiver, offset, convertEndian(testValue), convertEndian(newValue));
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapIntAcquire(receiver, offset, convertEndian(testValue), convertEndian(newValue));
-/*[ENDIF]*/
 			}
 
 			private static final boolean weakCompareAndSetRelease(byte[] receiver, int index, int testValue, int newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetIntRelease(receiver, offset, convertEndian(testValue), convertEndian(newValue));
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapIntRelease(receiver, offset, convertEndian(testValue), convertEndian(newValue));
-/*[ENDIF]*/
 			}
 
 			private static final boolean weakCompareAndSetPlain(byte[] receiver, int index, int testValue, int newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetIntPlain(receiver, offset, convertEndian(testValue), convertEndian(newValue));
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapInt(receiver, offset, convertEndian(testValue), convertEndian(newValue));
-/*[ENDIF]*/
 			}
 
 			private static final int getAndSet(byte[] receiver, int index, int value, VarHandle varHandle) {
@@ -1834,20 +1666,12 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 
 			private static final boolean compareAndSet(byte[] receiver, int index, long testValue, long newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.compareAndSetLong(receiver, offset, convertEndian(testValue), convertEndian(newValue));
-/*[ELSE]
-				return _unsafe.compareAndSwapLong(receiver, offset, convertEndian(testValue), convertEndian(newValue));
-/*[ENDIF]*/
 			}
 
 			private static final long compareAndExchange(byte[] receiver, int index, long testValue, long newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
-/*[IF Sidecar19-SE-OpenJ9]*/
 				long result = _unsafe.compareAndExchangeLong(receiver, offset, convertEndian(testValue), convertEndian(newValue));
-/*[ELSE]
-				long result = _unsafe.compareAndExchangeLongVolatile(receiver, offset, convertEndian(testValue), convertEndian(newValue));
-/*[ENDIF]*/
 				return convertEndian(result);
 			}
 
@@ -1865,38 +1689,22 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 
 			private static final boolean weakCompareAndSet(byte[] receiver, int index, long testValue, long newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetLongPlain(receiver, offset, convertEndian(testValue), convertEndian(newValue));
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapLong(receiver, offset, convertEndian(testValue), convertEndian(newValue));
-/*[ENDIF]*/
 			}
 
 			private static final boolean weakCompareAndSetAcquire(byte[] receiver, int index, long testValue, long newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetLongAcquire(receiver, offset, convertEndian(testValue), convertEndian(newValue));
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapLongAcquire(receiver, offset, convertEndian(testValue), convertEndian(newValue));
-/*[ENDIF]*/
 			}
 
 			private static final boolean weakCompareAndSetRelease(byte[] receiver, int index, long testValue, long newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetLongRelease(receiver, offset, convertEndian(testValue), convertEndian(newValue));
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapLongRelease(receiver, offset, convertEndian(testValue), convertEndian(newValue));
-/*[ENDIF]*/
 			}
 
 			private static final boolean weakCompareAndSetPlain(byte[] receiver, int index, long testValue, long newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetLongPlain(receiver, offset, convertEndian(testValue), convertEndian(newValue));
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapLong(receiver, offset, convertEndian(testValue), convertEndian(newValue));
-/*[ENDIF]*/
 			}
 
 			private static final long getAndSet(byte[] receiver, int index, long value, VarHandle varHandle) {

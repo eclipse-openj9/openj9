@@ -32,9 +32,9 @@ package java.lang;
  *
  * @see			Cloneable
  */
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 @Deprecated(forRemoval=true, since="9")
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 public final class Compiler {
 
 private Compiler() {}

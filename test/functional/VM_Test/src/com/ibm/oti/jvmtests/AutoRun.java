@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar19-SE]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 9]*/
 package com.ibm.oti.jvmtests;
 
 /*******************************************************************************
@@ -30,17 +30,17 @@ import junit.textui.TestRunner;
 
 public class AutoRun {
 
-	public static void main(String[] args){
+	public static void main(String[] args) {
 		TestResult result = junit.textui.TestRunner.run(suite());
-		/*if it fails it prints a detailed message, but if successful it only prints OK */ 
-		if (result.wasSuccessful()) {	
+		/*if it fails it prints a detailed message, but if successful it only prints OK */
+		if (result.wasSuccessful()) {
 			System.out.println("All tests were successful");
 		} else {
 			System.exit(-2);
 		}
 	}
-	
-	public static Test suite(){
+
+	public static Test suite() {
 		TestSuite theSuite = new TestSuite("JVM Natives Tests");
 		theSuite.addTest(new TestSuite(GetNanoTimeAdjustment.class));
 		return theSuite;

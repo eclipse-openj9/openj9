@@ -115,11 +115,11 @@ class LambdaForm {
 			throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 		}
 
-		/*[IF Sidecar18-SE-OpenJ9&!Sidecar19-SE-OpenJ9]*/
+		/*[IF JAVA_SPEC_VERSION == 8]*/
 		MethodHandle resolve() {
 			throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 		}
-		/*[ENDIF]*/
+		/*[ENDIF] JAVA_SPEC_VERSION == 8 */
 	}
 
 	enum BasicType {

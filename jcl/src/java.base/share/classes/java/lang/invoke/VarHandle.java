@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar19-SE & !OPENJDK_METHODHANDLES]*/
+/*[INCLUDE-IF (JAVA_SPEC_VERSION >= 9) & !OPENJDK_METHODHANDLES]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2017
  *
@@ -32,11 +32,7 @@ import java.util.ArrayList;
 /*[IF JAVA_SPEC_VERSION >= 12]*/
 import java.util.Optional;
 /*[ENDIF] JAVA_SPEC_VERSION >= 12 */
-/*[IF Sidecar19-SE]
 import jdk.internal.misc.Unsafe;
-/*[ELSE]*/
-import sun.misc.Unsafe;
-/*[ENDIF]*/
 /*[IF JAVA_SPEC_VERSION >= 12]*/
 import java.lang.constant.ClassDesc;
 import java.lang.constant.Constable;

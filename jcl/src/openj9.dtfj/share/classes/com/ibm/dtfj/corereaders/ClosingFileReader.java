@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar18-SE]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2004
  *
@@ -159,7 +159,7 @@ public class ClosingFileReader extends ImageInputStreamImpl implements ResourceR
 		}
 	}
 
-	/*[IF PLATFORM-mz31 | PLATFORM-mz64 | ! ( Sidecar18-SE-OpenJ9 | Sidecar19-SE )]*/
+	/*[IF PLATFORM-mz31 | PLATFORM-mz64 | !Sidecar18-SE-OpenJ9]*/
 	/**
 	 * z/OS native implementation of IRandomAccessFile - wrappers com.ibm.recordio.RandomAccessRecordFile
 	 */
@@ -265,12 +265,12 @@ public class ClosingFileReader extends ImageInputStreamImpl implements ResourceR
 			_seekOffset = pos%_recordLength;
 		}
 	}
-	/*[ENDIF] PLATFORM-mz31 | PLATFORM-mz64 | ! ( Sidecar18-SE-OpenJ9 | Sidecar19-SE )]*/
+	/*[ENDIF] PLATFORM-mz31 | PLATFORM-mz64 | !Sidecar18-SE-OpenJ9]*/
 
 	public ClosingFileReader(File file) throws IOException
 	{
 		_fileRef = file;
-		/*[IF PLATFORM-mz31 | PLATFORM-mz64 | ! ( Sidecar18-SE-OpenJ9 | Sidecar19-SE )]*/
+		/*[IF PLATFORM-mz31 | PLATFORM-mz64 | !Sidecar18-SE-OpenJ9]*/
 		try {
 			_file = new BaseRandomAccessFile(_fileRef, "r");
 		} catch (FileNotFoundException e1) {
@@ -287,9 +287,9 @@ public class ClosingFileReader extends ImageInputStreamImpl implements ResourceR
 				throw e;
 			}
 		}
-		/*[ELSE] PLATFORM-mz31 | PLATFORM-mz64 | ! ( Sidecar18-SE-OpenJ9 | Sidecar19-SE )*/
+		/*[ELSE] PLATFORM-mz31 | PLATFORM-mz64 | !Sidecar18-SE-OpenJ9 */
 		_file = new BaseRandomAccessFile(_fileRef, "r");
-		/*[ENDIF] PLATFORM-mz31 | PLATFORM-mz64 | ! ( Sidecar18-SE-OpenJ9 | Sidecar19-SE )*/
+		/*[ENDIF] PLATFORM-mz31 | PLATFORM-mz64 | !Sidecar18-SE-OpenJ9 */
 	}
 
 	/**
@@ -561,11 +561,11 @@ public class ClosingFileReader extends ImageInputStreamImpl implements ResourceR
 
 	public boolean isMVSFile()
 	{
-		/*[IF PLATFORM-mz31 | PLATFORM-mz64 | ! ( Sidecar18-SE-OpenJ9 | Sidecar19-SE )]*/
+		/*[IF PLATFORM-mz31 | PLATFORM-mz64 | !Sidecar18-SE-OpenJ9]*/
 		return _file instanceof ZosRandomAccessFile;
-		/*[ELSE]
+		/*[ELSE] PLATFORM-mz31 | PLATFORM-mz64 | !Sidecar18-SE-OpenJ9 */
 		return false;
-		/*[ENDIF]*/
+		/*[ENDIF] PLATFORM-mz31 | PLATFORM-mz64 | !Sidecar18-SE-OpenJ9 */
 	}
 
 	public void releaseResources() throws IOException {

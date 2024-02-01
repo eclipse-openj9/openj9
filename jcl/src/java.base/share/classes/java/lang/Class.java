@@ -68,7 +68,7 @@ import com.ibm.oti.vm.VM;
 import static com.ibm.oti.util.Util.doesClassLoaderDescendFrom;
 /*[ENDIF] JAVA_SPEC_VERSION >= 11*/
 
-/*[IF Sidecar19-SE]
+/*[IF JAVA_SPEC_VERSION >= 9]
 import jdk.internal.misc.Unsafe;
 /*[IF JAVA_SPEC_VERSION >= 15]*/
 import jdk.internal.access.SharedSecrets;
@@ -79,13 +79,13 @@ import java.io.IOException;
 import jdk.internal.reflect.Reflection;
 import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.ConstantPool;
-/*[ELSE]*/
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 import sun.misc.Unsafe;
 import sun.misc.SharedSecrets;
 import sun.reflect.Reflection;
 import sun.reflect.CallerSensitive;
 import sun.reflect.ConstantPool;
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 import java.util.ArrayList;
 import java.lang.annotation.Repeatable;
@@ -172,9 +172,9 @@ public final class Class<T> implements java.io.Serializable, GenericDeclaration,
 	private transient long vmRef;
 	private transient ClassLoader classLoader;
 
-	/*[IF Sidecar19-SE]*/
+	/*[IF JAVA_SPEC_VERSION >= 9]*/
 	private transient Module module;
-	/*[ENDIF]*/
+	/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 	/*[PR CMVC 125822] Move RAM class fields onto the heap to fix hotswap crash */
 	private transient ProtectionDomain protectionDomain;
@@ -490,11 +490,11 @@ boolean casAnnotationType(AnnotationType oldType, AnnotationType newType) {
 		localTypeOffset = getUnsafe().objectFieldOffset(field);
 		AnnotationVars.annotationTypeOffset = localTypeOffset;
 	}
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 	return getUnsafe().compareAndSetObject(localAnnotationVars, localTypeOffset, oldType, newType);
-/*[ELSE]
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 	return getUnsafe().compareAndSwapObject(localAnnotationVars, localTypeOffset, oldType, newType);
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 }
 
 /**
@@ -593,7 +593,7 @@ private static Class<?> forNameHelper(
 }
 /*[ENDIF] JAVA_SPEC_VERSION >= 18 */
 
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 /**
  * Answers a Class object which represents the class
  * with the given name in the given module.
@@ -728,7 +728,7 @@ private static Class<?> forNameHelper(Module module, String name, Class<?> calle
 	return c;
 }
 /*[ENDIF] JAVA_SPEC_VERSION >= 18 */
-/*[ENDIF] Sidecar19-SE */
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 /**
  * Answers a Class object which represents the class
@@ -2243,7 +2243,7 @@ public int getModifiers() {
 
 private native int getModifiersImpl();
 
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 /**
  * Answers the module to which the receiver belongs.
  * If this class doesn't belong to a named module, the unnamedModule of the classloader
@@ -2257,7 +2257,7 @@ public Module getModule()
 {
 	return module;
 }
-/*[ENDIF] Sidecar19-SE */
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 /**
  * Answers the name of the class which the receiver represents.
@@ -2359,13 +2359,13 @@ private static String getNonArrayClassPackageName(Class<?> clz) {
  *
  * @see			#getPackage
  */
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 public
-/*[ENDIF] Sidecar19-SE */
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 String getPackageName() {
 	String packageName = this.packageNameString;
 	if (null == packageName) {
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 		if (isPrimitive()) {
 			packageName = "java.lang"; //$NON-NLS-1$
 		} else if (isArray()) {
@@ -2381,9 +2381,9 @@ String getPackageName() {
 		} else {
 			packageName = getNonArrayClassPackageName(this);
 		}
-/*[ELSE] Sidecar19-SE */
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 		packageName = getNonArrayClassPackageName(this);
-/*[ENDIF] Sidecar19-SE */
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 		this.packageNameString = packageName;
 	}
 	return packageName;
@@ -2400,14 +2400,14 @@ String getPackageName() {
  *
  * @see			java.lang.ClassLoader
  */
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 @CallerSensitive
-/*[ENDIF] Sidecar19-SE */
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 public URL getResource(String resName) {
 	ClassLoader loader = this.getClassLoaderImpl();
 	String absoluteResName = this.toResourceName(resName);
 	URL result = null;
-	/*[IF Sidecar19-SE]*/
+	/*[IF JAVA_SPEC_VERSION >= 9]*/
 	Module thisModule = getModule();
 	if (useModularSearch(absoluteResName, thisModule, System.getCallerClass())) {
 		try {
@@ -2417,7 +2417,7 @@ public URL getResource(String resName) {
 		}
 	}
 	if (null == result)
-		/*[ENDIF] Sidecar19-SE */
+		/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 	{
 		if (loader == ClassLoader.bootstrapClassLoader) {
 			result =ClassLoader.getSystemResource(absoluteResName);
@@ -2439,14 +2439,14 @@ public URL getResource(String resName) {
  *
  * @see			java.lang.ClassLoader
  */
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 @CallerSensitive
-/*[ENDIF] Sidecar19-SE */
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 public InputStream getResourceAsStream(String resName) {
 	ClassLoader loader = this.getClassLoaderImpl();
 	String absoluteResName = this.toResourceName(resName);
 	InputStream result = null;
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 	Module thisModule = getModule();
 
 	if (useModularSearch(absoluteResName, thisModule, System.getCallerClass())) {
@@ -2457,7 +2457,7 @@ public InputStream getResourceAsStream(String resName) {
 		}
 	}
 	if (null == result)
-/*[ENDIF] Sidecar19-SE */
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 	{
 		if (loader == ClassLoader.bootstrapClassLoader) {
 			result = ClassLoader.getSystemResourceAsStream(absoluteResName);
@@ -2468,7 +2468,7 @@ public InputStream getResourceAsStream(String resName) {
 	return result;
 }
 
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 /**
  * Indicate if the package should be looked up in a module or via the class path.
  * Look up the resource in the module if the module is named
@@ -2504,7 +2504,7 @@ private boolean useModularSearch(String absoluteResName, Module thisModule, Clas
 	}
 	return visible;
 }
-/*[ENDIF] Sidecar19-SE */
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 
 /**
@@ -2716,9 +2716,9 @@ boolean isPrimitiveValueType() {
  * @throws		InstantiationException if the instance could not be created.
  */
 @CallerSensitive
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 @Deprecated(forRemoval=false, since="9")
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 public T newInstance() throws IllegalAccessException, InstantiationException {
 	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
@@ -2829,11 +2829,11 @@ private String toStringImpl() {
  * <code>&#64;interface</code>, or
  * the empty string for primitive types. The type parameter list is
  * omitted if there are no type parameters.
-/*[IF Sidecar19-SE]
+/*[IF JAVA_SPEC_VERSION >= 9]
  * For array classes, the string has the following format instead:
  * <i>name&lt;typeparam1, typeparam2, ...&gt;</i> followed by a number of
  * <code>[]</code> pairs, one pair for each dimension of the array.
-/*[ENDIF]
+/*[ENDIF] JAVA_SPEC_VERSION >= 9
  *
  * @return a formatted string describing this class
  * @since 1.8
@@ -2897,7 +2897,7 @@ public String toGenericString() {
 /*[ENDIF] INLINE-TYPES */
 
 	// Build generic string
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 	if (isArray) {
 		int depth = 0;
 		Class inner = this;
@@ -2916,7 +2916,7 @@ public String toGenericString() {
 		}
 		return result.toString();
 	}
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 	result.append(Modifier.toString(modifiers));
 	if (result.length() > 0) {
 		result.append(' ');
@@ -2973,15 +2973,15 @@ public Package getPackage() {
 	if (null == packageName) {
 		return null;
 	} else {
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 		if (this.classLoader == ClassLoader.bootstrapClassLoader) {
 			return jdk.internal.loader.BootLoader.getDefinedPackage(packageName);
 		} else {
 			return getClassLoaderImpl().getDefinedPackage(packageName);
 		}
-/*[ELSE]
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 		return getClassLoaderImpl().getPackage(packageName);
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 	}
 }
 
@@ -3399,11 +3399,11 @@ AnnotationVars getAnnotationVars() {
 			if (annotationVars == null) {
 				// Lazy initialization of a non-volatile field. Ensure the Object is initialized
 				// and flushed to memory before assigning to the annotationVars field.
-				/*[IF Sidecar19-SE]
+				/*[IF JAVA_SPEC_VERSION >= 9]
 				getUnsafe().putObjectRelease(this, annotationVarsOffset, tempAnnotationVars);
-				/*[ELSE]*/
+				/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 				getUnsafe().putOrderedObject(this, annotationVarsOffset, tempAnnotationVars);
-				/*[ENDIF]*/
+				/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 			} else {
 				tempAnnotationVars = annotationVars;
 			}
@@ -3430,11 +3430,11 @@ private MethodHandle getValueMethod(final Class<? extends Annotation> containedT
 		    			long implLookupOffset = getUnsafe().staticFieldOffset(implLookupField);
 			    		// Lazy initialization of a non-volatile field. Ensure the Object is initialized
 			    		// and flushed to memory before assigning to the implLookup field.
-						/*[IF Sidecar19-SE]
+						/*[IF JAVA_SPEC_VERSION >= 9]
 						getUnsafe().putObjectRelease(Class.class, implLookupOffset, localImplLookup);
-						/*[ELSE]*/
+						/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 		    			getUnsafe().putOrderedObject(Class.class, implLookupOffset, localImplLookup);
-						/*[ENDIF]*/
+						/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 		    		}
 		    		MethodHandle handle = localImplLookup.findVirtual(Class.this, "value", methodType); //$NON-NLS-1$
 		    		if (AnnotationVars.valueMethodOffset == -1) {
@@ -3443,11 +3443,11 @@ private MethodHandle getValueMethod(final Class<? extends Annotation> containedT
 		    		}
 		    		// Lazy initialization of a non-volatile field. Ensure the Object is initialized
 		    		// and flushed to memory before assigning to the valueMethod field.
-					/*[IF Sidecar19-SE]
+					/*[IF JAVA_SPEC_VERSION >= 9]
 					getUnsafe().putObjectRelease(localAnnotationVars, AnnotationVars.valueMethodOffset, handle);
-					/*[ELSE]*/
+					/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 		    		getUnsafe().putOrderedObject(localAnnotationVars, AnnotationVars.valueMethodOffset, handle);
-					/*[ENDIF]*/
+					/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 		    		return handle;
 		    	} catch (NoSuchMethodException e) {
 		    		return null;
@@ -3642,11 +3642,11 @@ private AnnotationCache getAnnotationCache() {
 		}
 		// Lazy initialization of a non-volatile field. Ensure the Object is initialized
 		// and flushed to memory before assigning to the annotationCache field.
-		/*[IF Sidecar19-SE]*/
+		/*[IF JAVA_SPEC_VERSION >= 9]*/
 		getUnsafe().putObjectRelease(this, localAnnotationCacheOffset, annotationCacheResult);
-		/*[ELSE]*/
+		/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 		getUnsafe().putOrderedObject(this, localAnnotationCacheOffset, annotationCacheResult);
-		/*[ENDIF]*/
+		/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 	}
 	return annotationCacheResult;
 }
@@ -3753,11 +3753,11 @@ private EnumVars<T> getEnumVars() {
 		tempEnumVars = new EnumVars<>();
 		// Lazy initialization of a non-volatile field. Ensure the Object is initialized
 		// and flushed to memory before assigning to the enumVars field.
-		/*[IF Sidecar19-SE]
+		/*[IF JAVA_SPEC_VERSION >= 9]
 		getUnsafe().putObjectRelease(this, localEnumVarsOffset, tempEnumVars);
-		/*[ELSE]*/
+		/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 		getUnsafe().putOrderedObject(this, localEnumVarsOffset, tempEnumVars);
-		/*[ENDIF]*/
+		/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 	}
 	return tempEnumVars;
 }
@@ -3802,11 +3802,11 @@ Map<String, T> enumConstantDirectory() {
 		}
 		// Lazy initialization of a non-volatile field. Ensure the Object is initialized
 		// and flushed to memory before assigning to the cachedEnumConstantDirectory field.
-		/*[IF Sidecar19-SE]
+		/*[IF JAVA_SPEC_VERSION >= 9]
 		getUnsafe().putObjectRelease(localEnumVars, EnumVars.enumDirOffset, map);
-		/*[ELSE]*/
+		/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 		getUnsafe().putOrderedObject(localEnumVars, EnumVars.enumDirOffset, map);
-		/*[ENDIF]*/
+		/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 	}
 	return map;
 }
@@ -3856,11 +3856,11 @@ T[] getEnumConstantsShared() {
 			}
 			// Lazy initialization of a non-volatile field. Ensure the Object is initialized
 			// and flushed to memory before assigning to the cachedEnumConstants field.
-			/*[IF Sidecar19-SE]
+			/*[IF JAVA_SPEC_VERSION >= 9]
 			getUnsafe().putObjectRelease(localEnumVars, localEnumConstantsOffset, enums);
-			/*[ELSE]*/
+			/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 			getUnsafe().putOrderedObject(localEnumVars, localEnumConstantsOffset, enums);
-			/*[ENDIF]*/
+			/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | PrivilegedActionException e) {
 			enums = null;
 		}
@@ -4143,7 +4143,7 @@ public String getSimpleName() {
 			}
 		}
 	}
-	/*[IF !Sidecar19-SE]*/
+	/*[IF JAVA_SPEC_VERSION == 8]*/
 	/* In Java 8, the simple name needs to match the full name*/
 	else if (!fullName.endsWith(simpleName)) {
 		Class<?> parent = baseType.getEnclosingObjectClass();
@@ -4169,7 +4169,7 @@ public String getSimpleName() {
 			simpleName = fullName.substring(index);
 		}
 	}
-	/*[ENDIF] !Sidecar19-SE*/
+	/*[ENDIF] JAVA_SPEC_VERSION == 8 */
 	if (arrayCount > 0) {
 		StringBuilder result = new StringBuilder(simpleName);
 		for (int i=0; i<arrayCount; i++) {
@@ -4576,13 +4576,13 @@ static boolean methodAOverridesMethodB(Class<?> methodAClass,	boolean methodAIsA
 		Class<?> methodBClass, boolean methodBIsAbstract, boolean methodBClassIsInterface) {
 	return (methodBIsAbstract && methodBClassIsInterface && !methodAIsAbstract && !methodAClassIsInterface) ||
 			(methodBClass.isAssignableFrom(methodAClass)
-					/*[IF !Sidecar19-SE]*/
+					/*[IF JAVA_SPEC_VERSION == 8]*/
 					/*
 					 * In Java 8, abstract methods in subinterfaces do not hide abstract methods in superinterfaces.
 					 * This is fixed in Java 9.
 					 */
 					&& (!methodAClassIsInterface || !methodAIsAbstract)
-					/*[ENDIF]*/
+					/*[ENDIF] JAVA_SPEC_VERSION == 8 */
 					);
 }
 
@@ -4794,11 +4794,11 @@ private ReflectCache acquireReflectCache() {
 		ReflectCache newCache = new ReflectCache(this);
 		do {
 			// Some thread will insert this new cache making it available to all.
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 			if (theUnsafe.compareAndSetObject(this, cacheOffset, null, newCache)) {
-/*[ELSE]
+/*[ELSE] JAVA_SPEC_VERSION >= 9
 			if (theUnsafe.compareAndSwapObject(this, cacheOffset, null, newCache)) {
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 				cache = newCache;
 				break;
 			}
@@ -4824,11 +4824,11 @@ private static long getReflectCacheOffset() {
 void setReflectCache(ReflectCache cache) {
 	// Lazy initialization of a non-volatile field. Ensure the Object is initialized
 	// and flushed to memory before assigning to the annotationCache field.
-	/*[IF Sidecar19-SE]
+	/*[IF JAVA_SPEC_VERSION >= 9]
 	getUnsafe().putObjectRelease(this, getReflectCacheOffset(), cache);
-	/*[ELSE]*/
+	/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 	getUnsafe().putOrderedObject(this, getReflectCacheOffset(), cache);
-	/*[ENDIF]*/
+	/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 }
 
 private ReflectCache peekReflectCache() {
@@ -5342,7 +5342,7 @@ ConstantPool getConstantPool(Object internalCP) {
 	return VM.getVMLangAccess().getConstantPool(internalCP);
 }
 
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 Map<Class<? extends Annotation>, Annotation> getDeclaredAnnotationMap() {
 	throw new Error("Class.getDeclaredAnnotationMap() unimplemented"); //$NON-NLS-1$
 }
@@ -5355,7 +5355,7 @@ byte[] getRawTypeAnnotations() {
 static byte[] getExecutableTypeAnnotationBytes(Executable exec) {
 	throw new Error("Class.getExecutableTypeAnnotationBytes() unimplemented"); //$NON-NLS-1$
 }
-/*[ENDIF] Sidecar19-SE*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 /*[IF JAVA_SPEC_VERSION >= 11]*/
 /**

@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar18-SE & !OPENJDK_METHODHANDLES]*/
+/*[INCLUDE-IF !OPENJDK_METHODHANDLES]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2014
  *
@@ -77,10 +77,10 @@ final class MethodHandleInfoImpl implements MethodHandleInfo {
 		if (mh.directHandleOriginatedInFindVirtual()
 		|| (MethodHandle.KIND_INVOKEEXACT == mh.kind)
 		|| (MethodHandle.KIND_INVOKEGENERIC == mh.kind)
-		/*[IF Sidecar19-SE]*/
+		/*[IF JAVA_SPEC_VERSION >= 9]*/
 		|| (MethodHandle.KIND_VARHANDLEINVOKEEXACT == mh.kind)
 		|| (MethodHandle.KIND_VARHANDLEINVOKEGENERIC == mh.kind)
-		/*[ENDIF]*/
+		/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 		) {
 			return REF_invokeVirtual;
 		}
@@ -103,9 +103,9 @@ final class MethodHandleInfoImpl implements MethodHandleInfo {
 
 		/* Access mode methods in VarHandle are signature-polymorphic */
 		if ((MethodHandle.KIND_INVOKEEXACT == mh.kind) || (MethodHandle.KIND_INVOKEGENERIC == mh.kind)
-		/*[IF Sidecar19-SE]*/
+		/*[IF JAVA_SPEC_VERSION >= 9]*/
 		|| (MethodHandle.KIND_VARHANDLEINVOKEEXACT == mh.kind) || (MethodHandle.KIND_VARHANDLEINVOKEGENERIC == mh.kind)
-		/*[ENDIF]*/
+		/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 		) {
 			/*[MSG "K0590", "Can't unreflect @SignaturePolymorphic method: {0}"]*/
 			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0590", this)); //$NON-NLS-1$

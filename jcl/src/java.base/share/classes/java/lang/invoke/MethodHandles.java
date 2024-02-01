@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar18-SE & !OPENJDK_METHODHANDLES]*/
+/*[INCLUDE-IF !OPENJDK_METHODHANDLES]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2009
  *
@@ -42,7 +42,7 @@ import com.ibm.oti.vm.VM;
 import com.ibm.oti.vm.VMLangAccess;
 import static com.ibm.oti.util.Util.doesClassLoaderDescendFrom;
 
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 import java.util.AbstractList;
 import java.util.Iterator;
 import java.util.ArrayList;
@@ -52,7 +52,6 @@ import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.Reflection;
 import java.lang.invoke.VarHandle.AccessMode;
 import java.lang.reflect.Array;
-/*[IF Sidecar19-SE-OpenJ9]*/
 /*[IF JAVA_SPEC_VERSION >= 12]*/
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.access.JavaLangAccess;
@@ -66,13 +65,10 @@ import java.security.ProtectionDomain;
 import jdk.internal.org.objectweb.asm.ClassReader;
 import jdk.internal.org.objectweb.asm.Opcodes;
 import jdk.internal.org.objectweb.asm.Type;
-/*[ELSE] Sidecar19-SE-OpenJ9
-import java.lang.reflect.Module;
-/*[ENDIF] Sidecar19-SE-OpenJ9*/
-/*[ELSE] Sidecar19-SE*/
+/*[ELSE] JAVA_SPEC_VERSION >= 9
 import sun.reflect.CallerSensitive;
 import sun.reflect.Reflection;
-/*[ENDIF] Sidecar19-SE*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 /*[IF JAVA_SPEC_VERSION >= 15]*/
 import jdk.internal.misc.Unsafe;
@@ -136,7 +132,7 @@ public class MethodHandles {
 		 */
 		public static final int PACKAGE = 0x8;
 
-		/*[IF Sidecar19-SE]*/
+		/*[IF JAVA_SPEC_VERSION >= 9]*/
 		/**
 		 * Bit flag 0x10 representing <i>module</i> access.  See {@link #lookupModes()}.
 		 */
@@ -148,7 +144,7 @@ public class MethodHandles {
 		 * where the public type is exported unconditionally.
 		 */
 		public static final int UNCONDITIONAL = 0x20;
-		/*[ENDIF] Sidecar19-SE*/
+		/*[ENDIF] JAVA_SPEC_VERSION >= 9*/
 
 		static final int INTERNAL_PRIVILEGED = 0x80;
 
@@ -157,12 +153,12 @@ public class MethodHandles {
 
 		private static final int FULL_ACCESS_MASK = PUBLIC | PRIVATE | PROTECTED | PACKAGE | MODULE | ORIGINAL;
 		/*[ELSE] JAVA_SPEC_VERSION >= 16*/
-		/*[IF Sidecar19-SE-OpenJ9]*/
+		/*[IF JAVA_SPEC_VERSION >= 9]*/
 		private static final int FULL_ACCESS_MASK = PUBLIC | PRIVATE | PROTECTED | PACKAGE | MODULE;
-		/*[ELSE]*/
+		/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 		private static final int FULL_ACCESS_MASK = PUBLIC | PRIVATE | PROTECTED | PACKAGE;
-		/*[ENDIF] Sidecar19-SE-OpenJ9*/
-		/*[ENDIF] JAVA_SPEC_VERSION >= 16*/
+		/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
+		/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
 
 		private static final int NO_ACCESS = 0;
 
@@ -428,7 +424,7 @@ public class MethodHandles {
 			checkAccess(handle.getDefc(), handle.getReferenceClass(), handle.getMethodName(), handle.getModifiers(), handle, skipAccessCheckPara);
 		}
 
-		/*[IF Sidecar19-SE]*/
+		/*[IF JAVA_SPEC_VERSION >= 9]*/
 		void checkAccess(VarHandle handle, boolean skipAccessCheckPara) throws IllegalAccessException {
 			if (INTERNAL_PRIVILEGED == accessMode) {
 				// Full access for use by MH implementation.
@@ -455,7 +451,7 @@ public class MethodHandles {
 
 			checkClassAccess(clazz);
 		}
-		/*[ENDIF]*/
+		/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 		/**
 		 * Checks whether {@link #accessClass} can access a specific member of the {@code referenceClass}.
@@ -480,7 +476,7 @@ public class MethodHandles {
 			}
 			checkClassAccess(referenceClass);
 
-			/*[IF Sidecar19-SE]*/
+			/*[IF JAVA_SPEC_VERSION >= 9]*/
 			if (null != handle && !skipAccessCheckPara) {
 				MethodType type = handle.type();
 				Module accessModule = accessClass.getModule();
@@ -503,7 +499,7 @@ public class MethodHandles {
 					throw err;
 				}
 			}
-			/*[ENDIF]*/
+			/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 			if (Modifier.isPublic(memberModifiers)) {
 				/* checkClassAccess already determined that we have more than "no access" (public access) */
 				return;
@@ -609,13 +605,13 @@ public class MethodHandles {
 		 * @throws IllegalAccessException If the {@link Class} is not accessible from {@link #accessClass}.
 		 */
 		private void checkClassAccess(Class<?> targetClass) throws IllegalAccessException {
-			/*[IF Sidecar19-SE]*/
+			/*[IF JAVA_SPEC_VERSION >= 9]*/
 			/*[IF JAVA_SPEC_VERSION >= 14]*/
 			checkClassModuleVisibility(accessMode, accessClass, prevAccessClass, targetClass);
 			/*[ELSE] JAVA_SPEC_VERSION >= 14 */
 			checkClassModuleVisibility(accessMode, accessClass.getModule(), targetClass);
 			/*[ENDIF] JAVA_SPEC_VERSION >= 14*/
-			/*[ENDIF]*/
+			/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 			if (NO_ACCESS != accessMode) {
 				/* A protected class (must be a member class) is compiled to a public class as
@@ -800,7 +796,7 @@ public class MethodHandles {
 			return handle;
 		}
 
-		/*[IF Sidecar19-SE]*/
+		/*[IF JAVA_SPEC_VERSION >= 9]*/
 		/**
 		 * Return a MethodHandle to a virtual method.  The method will be looked up in the first argument
 		 * (aka receiver) prior to dispatch.  The type of the MethodHandle will be that of the method
@@ -816,7 +812,7 @@ public class MethodHandles {
 		 * @throws NoSuchMethodException - if clazz has no virtual method named methodName with signature matching type
 		 * @throws SecurityException - if any installed SecurityManager denies access to the method
 		 */
-		 /*[ELSE]
+		/*[ELSE] JAVA_SPEC_VERSION >= 9
 		/**
 		 * Return a MethodHandle to a virtual method.  The method will be looked up in the first argument
 		 * (aka receiver) prior to dispatch.  The type of the MethodHandle will be that of the method
@@ -831,7 +827,7 @@ public class MethodHandles {
 		 * @throws NoSuchMethodException - if clazz has no virtual method named methodName with signature matching type
 		 * @throws SecurityException - if any installed SecurityManager denies access to the method
 		 */
-		/*[ENDIF]*/
+		/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 		public MethodHandle findVirtual(Class<?> clazz, String methodName, MethodType type) throws IllegalAccessException, NoSuchMethodException {
 			nullCheck(clazz, methodName, type);
 
@@ -874,7 +870,7 @@ public class MethodHandles {
 			return handle;
 		}
 
-		/*[IF Sidecar19-SE]*/
+		/*[IF JAVA_SPEC_VERSION >= 9]*/
 		/**
 		 * Get module name for exception messages.
 		 * Returns the string representation of this module in case it is a unnamed module.
@@ -999,7 +995,7 @@ public class MethodHandles {
 			/*[MSG "K0679", "Module '{0}' no access to: package '{1}' because module '{0}' can't read module '{2}'"]*/
 			throw new IllegalAccessException(Msg.getString(msgId, getModuleName(accessModule), targetClassPackageName, getModuleName(targetModule)));
 		}
-		/*[ENDIF]*/
+		/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 		/**
 		 * Restrict the receiver as indicated in the JVMS for invokespecial and invokevirtual.
@@ -1112,7 +1108,7 @@ public class MethodHandles {
 					return new InvokeGenericHandle(type);
 				}
 			}
-			/*[IF Sidecar19-SE]*/
+			/*[IF JAVA_SPEC_VERSION >= 9]*/
 			/* If the requested method is a signature-polymorphic access mode method in VarHandle,
 			 * the resulting method handle should be equivalent to one produced by varHandleInvoker().
 			 */
@@ -1124,7 +1120,7 @@ public class MethodHandles {
 					}
 				}
 			}
-			/*[ENDIF]*/
+			/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 			return null;
 		}
 
@@ -1293,9 +1289,9 @@ public class MethodHandles {
 			/*[IF ]*/
 			/* If the new lookup class differs from the old one, protected members will not be accessible by virtue of inheritance. (Protected members may continue to be accessible because of package sharing.) */
 			/*[ENDIF]*/
-			/*[IF !Sidecar19-SE-OpenJ9]
+			/*[IF JAVA_SPEC_VERSION == 8]
 			newAccessMode &= ~PROTECTED;
-			/*[ELSE]*/
+			/*[ELSE] JAVA_SPEC_VERSION == 8 */
 			/*[IF JAVA_SPEC_VERSION < 14]*/
 			/* The UNCONDITIONAL bit is discarded if the new lookup class differs from the old one in Java 9 */
 			newAccessMode &= ~UNCONDITIONAL;
@@ -1331,7 +1327,7 @@ public class MethodHandles {
 					newAccessMode &= ~MODULE;
 				}
 			}
-			/*[ENDIF] Sidecar19-SE-OpenJ9*/
+			/*[ENDIF] JAVA_SPEC_VERSION == 8 */
 
 			/*[IF ]*/
 			/* If the new lookup class is in a different package than the old one, protected and default (package) members will not be accessible. */
@@ -1344,13 +1340,13 @@ public class MethodHandles {
 				Class<?> a = getUltimateEnclosingClassOrSelf(accessClass);
 				Class<?> l = getUltimateEnclosingClassOrSelf(lookupClass);
 				if (a != l) {
-				/*[IF Sidecar19-SE-OpenJ9]
+				/*[IF JAVA_SPEC_VERSION >= 9]
 				/* If the new lookup class is not within the same package member as the old one, private and protected members will not be accessible. */
 					newAccessMode &= ~(PRIVATE | PROTECTED);
-				/*[ELSE]*/
+				/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 				/* If the new lookup class is not within the same package member as the old one, private members will not be accessible. */
 					newAccessMode &= ~PRIVATE;
-				/*[ENDIF] Sidecar19-SE-OpenJ9*/
+				/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 				}
 			}
 
@@ -1531,7 +1527,7 @@ public class MethodHandles {
 						/* JDK9 and beyond allow accessible private interface methods.
 						 * JDK8 throws AbstractMethodError for private interface methods.
 						 */
-						/*[IF !Sidecar19-SE]*/
+						/*[IF JAVA_SPEC_VERSION == 8]*/
 						/*insert the 'receiver' into the MethodType just as is done by InterfaceHandle */
 						type = type.insertParameterTypes(0, declaringClass);
 
@@ -1550,9 +1546,9 @@ public class MethodHandles {
 							handle = handle.asVarargsCollector(lastClass);
 						}
 						return handle;
-						/*[ELSE]
+						/*[ELSE] JAVA_SPEC_VERSION == 8
 						handle = new DirectHandle(method, MethodHandle.KIND_SPECIAL, declaringClass, true);
-						/*[ENDIF]*/
+						/*[ENDIF] JAVA_SPEC_VERSION == 8 */
 					} else {
 						handle = new InterfaceHandle(method);
 					}
@@ -1831,7 +1827,7 @@ public class MethodHandles {
 			case PUBLIC:
 				toString += "/public"; //$NON-NLS-1$
 				break;
-			/*[IF Sidecar19-SE-OpenJ9]
+			/*[IF JAVA_SPEC_VERSION >= 9]
 			/*[IF JAVA_SPEC_VERSION >= 14]*/
 			case UNCONDITIONAL:
 				toString += "/publicLookup"; //$NON-NLS-1$
@@ -1861,14 +1857,14 @@ public class MethodHandles {
 				toString += "/private"; //$NON-NLS-1$
 				break;
 			/*[ENDIF] JAVA_SPEC_VERSION >= 14 */
-			/*[ELSE]*/
+			/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 			case PUBLIC | PACKAGE:
 				toString += "/package"; //$NON-NLS-1$
 				break;
 			case PUBLIC | PACKAGE | PRIVATE:
 				toString += "/private"; //$NON-NLS-1$
 				break;
-			/*[ENDIF] Sidecar19-SE-OpenJ9*/
+			/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 			}
 			return toString;
 		}
@@ -1958,7 +1954,7 @@ public class MethodHandles {
 			return result;
 		}
 
-		/*[IF Sidecar19-SE]*/
+		/*[IF JAVA_SPEC_VERSION >= 9]*/
 		/**
 		 * Factory method for obtaining a VarHandle referencing a non-static field.
 		 *
@@ -2080,7 +2076,7 @@ public class MethodHandles {
 			return targetClass;
 		}
 
-		/*[IF Sidecar19-SE-OpenJ9]*/
+		/*[IF JAVA_SPEC_VERSION >= 9]*/
 		/**
 		 * Return a class object with the same class loader, the same package and
 		 * the same protection domain as the lookup's lookup class.
@@ -2149,7 +2145,7 @@ public class MethodHandles {
 
 			return targetClass;
 		}
-		/*[ENDIF] Sidecar19-SE-OpenJ9*/
+		/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 		/**
 		 * Return a MethodHandles.Lookup object without the requested lookup mode.
@@ -2276,7 +2272,7 @@ public class MethodHandles {
 			return (!isWeakenedLookup() && (MODULE == (accessMode & MODULE)));
 		}
 		/*[ENDIF] JAVA_SPEC_VERSION >= 14*/
-		/*[ENDIF] Sidecar19-SE */
+		/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 		/*[IF JAVA_SPEC_VERSION >= 15]*/
 		/**
@@ -2507,7 +2503,7 @@ public class MethodHandles {
 		return Lookup.PUBLIC_LOOKUP;
 	}
 
-	/*[IF Sidecar19-SE-OpenJ9]*/
+	/*[IF JAVA_SPEC_VERSION >= 9]*/
 	/**
 	 * Return a MethodHandles.Lookup object with full capabilities including the access
 	 * to the <code>private</code> members in the requested class
@@ -2584,7 +2580,7 @@ public class MethodHandles {
 		return new Lookup(targetClass);
 		/*[ENDIF] JAVA_SPEC_VERSION >= 14*/
 	}
-	/*[ENDIF] Sidecar19-SE-OpenJ9*/
+	/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 	/**
 	 * Gets the underlying Member of the provided <code>target</code> MethodHandle. This is done through an unchecked crack of the MethodHandle.
@@ -2776,7 +2772,7 @@ public class MethodHandles {
 		return result;
 	}
 
-	/*[IF Sidecar19-SE]*/
+	/*[IF JAVA_SPEC_VERSION >= 9]*/
 	/**
 	 * Produce a MethodHandle that implements a try-finally block.
 	 *
@@ -2866,7 +2862,7 @@ public class MethodHandles {
 			}
 		}
 	}
-	/*[ENDIF]*/
+	/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 	/**
 	 * Produce a MethodHandle that acts as an identity function.  It will accept a single
@@ -3030,7 +3026,7 @@ public class MethodHandles {
 		}
 	}
 
-	/*[IF Sidecar19-SE]*/
+	/*[IF JAVA_SPEC_VERSION >= 9]*/
 	/**
 	 * Factory method for creating a VarHandle for accessing elements of an array.
 	 *
@@ -3120,7 +3116,7 @@ public class MethodHandles {
 	public static MethodHandle varHandleInvoker(VarHandle.AccessMode accessMode, MethodType expectedType) {
 		return new VarHandleInvokeGenericHandle(accessMode, expectedType);
 	}
-	/*[ENDIF]*/
+	/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 	/**
 	 * Return a MethodHandle that will throw the passed in Exception object.  The return type is largely
@@ -3518,7 +3514,7 @@ public class MethodHandles {
 		return foldArgumentsCommon(handle, 0, preprocessor, EMPTY_ARG_POSITIONS);
 	}
 
-	/*[IF Sidecar19-SE]*/
+	/*[IF JAVA_SPEC_VERSION >= 9]*/
 	/**
 	 * Produce a MethodHandle that preprocesses some of the arguments by calling the preprocessor handle.
 	 *
@@ -3563,7 +3559,7 @@ public class MethodHandles {
 		}
 		return foldArgumentsCommon(handle, foldPosition, preprocessor, passedInargumentIndices);
 	}
-	/*[ENDIF]*/
+	/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 	/* The common code shared by foldArguments with and without the fold position specified */
 	private static final MethodHandle foldArgumentsCommon(MethodHandle handle, int foldPosition, MethodHandle preprocessor, int... argumentIndices) throws NullPointerException, IllegalArgumentException {
@@ -3839,7 +3835,7 @@ public class MethodHandles {
 		return dropArgumentsUnsafe(originalHandle, location, valueTypesCopy);
 	}
 
-	/*[IF Sidecar19-SE]*/
+	/*[IF JAVA_SPEC_VERSION >= 9]*/
 	/**
 	 * This method returns a method handle that delegates to the original method handle,
 	 * skipping over a specified number of arguments at the given location. The type of the
@@ -3908,7 +3904,7 @@ public class MethodHandles {
 		assert(validatePermutationArray(permuteType, originalType, permute));
 		return originalHandle.permuteArguments(permuteType, permute);
 	}
-	/*[ENDIF]*/
+	/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 	/* A helper method to invoke argument transformation helpers */
 	private static MethodHandle buildTransformHandle(ArgumentHelper helper, MethodType mtype){
@@ -4037,7 +4033,7 @@ public class MethodHandles {
 		return originalHandle.insertArguments(insertHandle, asTypedOriginalHandle, location, values);
 	}
 
-	/*[IF Sidecar19-SE]*/
+	/*[IF JAVA_SPEC_VERSION >= 9]*/
 	/**
 	 * Return a MethodHandle that produces an array of the requested type with the passed-in length.
 	 * The MethodHandle will have a MethodType of '(I)arrayType'.
@@ -5404,7 +5400,7 @@ public class MethodHandles {
 			}
 		}
 	}
-	/*[ENDIF]*/
+	/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 	private static final class CatchHelper implements ArgumentHelper {
 		private final MethodHandle tryTarget;
@@ -5433,7 +5429,7 @@ public class MethodHandles {
 		}
 	}
 
-	/*[IF Sidecar19-SE]*/
+	/*[IF JAVA_SPEC_VERSION >= 9]*/
 	private static final class FinallyHelper implements ArgumentHelper {
 		private final MethodHandle tryTarget;
 		private final MethodHandle finallyTarget;
@@ -5490,7 +5486,7 @@ public class MethodHandles {
 			return result;
 		}
 	}
-	/*[ENDIF]*/
+	/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 	/**
 	 * Helper class used by collectArguments.
@@ -5814,5 +5810,5 @@ public class MethodHandles {
 	static MethodHandle basicInvoker(MethodType mt) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-	/*[ENDIF]*/
+	/*[ENDIF] Sidecar18-SE-OpenJ9 */
 }

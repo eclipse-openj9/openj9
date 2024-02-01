@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar18-SE & !OPENJDK_METHODHANDLES]*/
+/*[INCLUDE-IF !OPENJDK_METHODHANDLES]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2012
  *
@@ -37,13 +37,13 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.WeakHashMap;
 
-/*[IF Sidecar19-SE]
+/*[IF JAVA_SPEC_VERSION >= 9]
 import jdk.internal.misc.Unsafe;
 import sun.security.util.IOUtils;
-/*[ELSE]*/
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 import sun.misc.Unsafe;
 import sun.misc.IOUtils;
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 import com.ibm.oti.vm.VMLangAccess;
 
@@ -102,12 +102,12 @@ final class SecurityFrameInjector {
 					securityFrameClassBytes = AccessController.doPrivileged(new PrivilegedAction<byte[]>() {
 						public byte[] run() {
 							try {
-								/*[IF Sidecar19-SE]*/
+								/*[IF JAVA_SPEC_VERSION >= 9]*/
 								return Lookup.class.getResourceAsStream("/java/lang/invoke/SecurityFrame.class").readAllBytes(); //$NON-NLS-1$
-								/*[ELSE]*/
+								/*[ELSE]JAVA_SPEC_VERSION >= 9 */
 								InputStream is = Lookup.class.getResourceAsStream("/java/lang/invoke/SecurityFrame.class"); //$NON-NLS-1$
 								return IOUtils.readFully(is, Integer.MAX_VALUE, false);
-								/*[ENDIF]*/
+								/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 							} catch(java.io.IOException e) {
 								/*[MSG "K056A", "Unable to read java.lang.invoke.SecurityFrame.class bytes"]*/
 								throw new Error(com.ibm.oti.util.Msg.getString("K056A"), e); //$NON-NLS-1$
@@ -319,4 +319,3 @@ final class SecurityFrameInjector {
 	}
 
 }
-

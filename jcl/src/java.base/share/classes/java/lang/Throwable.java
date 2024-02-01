@@ -461,14 +461,14 @@ private void readObject(ObjectInputStream s)
 	if (suppressedExceptions != null) {
 		List<Throwable> newList = Collections.EMPTY_LIST;
 		try {
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 			Module classModule = suppressedExceptions.getClass().getModule();
 			if (Object.class.getModule().equals(classModule)) {
-/*[ELSE]*/
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 			ClassLoader listClassLoader = suppressedExceptions.getClass().getClassLoader();
 			/* null ClassLoader from getClassLoader() call represents the bootstrap ClassLoader */
 			if (listClassLoader == null) {
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 				int listSize = suppressedExceptions.size();
 				if (listSize != 0) {
 					newList = new ArrayList<Throwable>(listSize);

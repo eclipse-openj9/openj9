@@ -846,12 +846,10 @@ private void setParent(ThreadGroup parent) {
  */
 /*[IF JAVA_SPEC_VERSION >= 16]*/
 @Deprecated(forRemoval = true, since = "1.2")
-/*[ELSE]*/
-/*[IF Sidecar19-SE]*/
+/*[ELSEIF JAVA_SPEC_VERSION >= 9] JAVA_SPEC_VERSION >= 16 */
 @Deprecated(forRemoval = false, since = "1.2")
-/*[ELSE] Sidecar19-SE */
+/*[ELSE] JAVA_SPEC_VERSION >= 16 */
 @Deprecated
-/*[ENDIF] Sidecar19-SE */
 /*[ENDIF] JAVA_SPEC_VERSION >= 16 */
 public final void stop() {
 	/*[PR CMVC 73122] Stop the running thread last */

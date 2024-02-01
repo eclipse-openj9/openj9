@@ -30,11 +30,11 @@ import java.lang.reflect.Method;
  * Stub class to compile OpenJDK j.l.i.MethodHandleImpl
  */
 final class MemberName {
-	/*[IF Sidecar18-SE-OpenJ9&!Sidecar19-SE-OpenJ9]*/
+	/*[IF JAVA_SPEC_VERSION == 8]*/
 	static final class Factory {
 		public static Factory INSTANCE = null;
 	}
-	/*[ENDIF]*/
+	/*[ENDIF] JAVA_SPEC_VERSION == 8 */
 
 	/*[IF JAVA_SPEC_VERSION >= 11]*/
 	private MethodHandle mh;

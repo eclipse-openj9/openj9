@@ -32,10 +32,10 @@ final class MethodTypeForm {
 	static final int LF_GWC = 16;
 	static final int LF_GWT = 17;
 
-	/*[IF Sidecar19-SE-OpenJ9]*/
+	/*[IF JAVA_SPEC_VERSION >= 9]*/
 	static final int LF_TF = 18;
 	static final int LF_LOOP = 19;
-	/*[ENDIF]*/
+	/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 	/*[IF JAVA_SPEC_VERSION >= 17]*/
 	static final int LF_COLLECTOR = 25;

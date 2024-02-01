@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar17 & !OPENJDK_METHODHANDLES]*/
+/*[INCLUDE-IF (JAVA_SPEC_VERSION >= 8) & !OPENJDK_METHODHANDLES]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2011
  *
@@ -22,11 +22,11 @@
  *******************************************************************************/
 package java.lang.invoke;
 
-/*[IF Sidecar19-SE]
+/*[IF JAVA_SPEC_VERSION >= 9]
 import jdk.internal.ref.Cleaner;
-/*[ELSE]*/
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 import sun.misc.Cleaner;
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 import static java.lang.invoke.MethodHandleResolver.UNSAFE;
 
@@ -161,11 +161,11 @@ public class MutableCallSite extends CallSite {
 				if (StructuralComparator.get().handlesAreEquivalent(oldTarget, newTarget)) {
 					// Equivalence check saved us a thaw, so it's worth doing them every time.
 					equivalenceInterval = 1;
-/*[IF Sidecar19-SE-OpenJ9]*/
+/*[IF (JAVA_SPEC_VERSION >= 9)]*/
 					UNSAFE.compareAndSetObject(this, targetFieldOffset, oldTarget, newTarget);
-/*[ELSE]
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 					UNSAFE.compareAndSwapObject(this, targetFieldOffset, oldTarget, newTarget);
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 				} else {
 					thaw(oldTarget, newTarget);
 					// Equivalence check was useless; wait longer before doing another one.

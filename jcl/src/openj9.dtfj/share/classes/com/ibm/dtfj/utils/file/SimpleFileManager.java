@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar18-SE]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2011
  *
@@ -122,7 +122,7 @@ public class SimpleFileManager extends FileManager {
 			filesize = managedFile.length();
 			return new FileImageInputStream(managedFile);
 		}
-		/*[IF PLATFORM-mz31 | PLATFORM-mz64 | ! ( Sidecar18-SE-OpenJ9 | Sidecar19-SE )]*/
+		/*[IF PLATFORM-mz31 | PLATFORM-mz64 | !Sidecar18-SE-OpenJ9]*/
 		String os = System.getProperty("os.name"); //$NON-NLS-1$
 		if (os == null) {
 			throw new IOException("Cannot determine the system type from os.name"); //$NON-NLS-1$
@@ -138,7 +138,7 @@ public class SimpleFileManager extends FileManager {
 				// drop through to throw FileNotFoundException below (with absolute path)
 			}
 		}
-		/*[ENDIF] PLATFORM-mz31 | PLATFORM-mz64 | ! ( Sidecar18-SE-OpenJ9 | Sidecar19-SE )*/
+		/*[ENDIF] PLATFORM-mz31 | PLATFORM-mz64 | !Sidecar18-SE-OpenJ9 */
 		throw new FileNotFoundException("The specified file " + managedFile.getAbsolutePath() + " was not found");
 	}
 }

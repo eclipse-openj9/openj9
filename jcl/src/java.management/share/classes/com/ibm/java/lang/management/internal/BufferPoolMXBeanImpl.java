@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar17]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2005
  *
@@ -31,14 +31,12 @@ import javax.management.ObjectName;
 /*[IF JAVA_SPEC_VERSION >= 15]*/
 import jdk.internal.misc.VM.BufferPool;
 import jdk.internal.access.SharedSecrets;
-/*[ELSE]
-/*[IF Sidecar19-SE]
+/*[ELSEIF JAVA_SPEC_VERSION >= 9] JAVA_SPEC_VERSION >= 15 */
 import jdk.internal.misc.JavaNioAccess.BufferPool;
 import jdk.internal.misc.SharedSecrets;
-/*[ELSE]
+/*[ELSE] JAVA_SPEC_VERSION >= 15 */
 import sun.misc.JavaNioAccess.BufferPool;
 import sun.misc.SharedSecrets;
-/*[ENDIF] Sidecar19-SE */
 /*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
 /**

@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar18-SE]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 1998
  *
@@ -26,9 +26,9 @@ import java.io.*;
 import java.security.CodeSource;
 import java.security.ProtectionDomain;
 
-/*[IF !Sidecar19-SE]
+/*[IF JAVA_SPEC_VERSION == 8]
 import com.ibm.oti.vm.AbstractClassLoader;
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION == 8 */
 import com.ibm.oti.vm.VM;
 
 import java.net.URL;
@@ -85,14 +85,14 @@ public abstract class ClassLoader {
 	 * This is the bootstrap ClassLoader
 	 */
 	static ClassLoader bootstrapClassLoader;
-	/*[IF Sidecar19-SE]*/
+	/*[IF JAVA_SPEC_VERSION >= 9]*/
 	private ServicesCatalog servicesCatalog;
 	private final Module unnamedModule;
 	private final String classLoaderName;
 	private final static String DELEGATING_CL = "jdk.internal.reflect.DelegatingClassLoader"; //$NON-NLS-1$
-	/*[ELSE]
+	/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 	private final static String DELEGATING_CL = "sun.reflect.DelegatingClassLoader"; //$NON-NLS-1$
-	/*[ENDIF]*/
+	/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 	private boolean isDelegatingCL = false;
 
 	/*
@@ -114,12 +114,12 @@ public abstract class ClassLoader {
 	private boolean defaultAssertionStatus;
 	private Map<String, Boolean> packageAssertionStatus;
 	private Map<String, Boolean> classAssertionStatus;
-	/*[IF Sidecar19-SE]*/
+	/*[IF JAVA_SPEC_VERSION >= 9]*/
 	private final Hashtable<String, NamedPackage> packages = new Hashtable<>();
 	private volatile ConcurrentHashMap<?, ?> classLoaderValueMap;
-	/*[ELSE]
+	/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 	private final Hashtable<String, Package> packages = new Hashtable<>();
-	/*[ENDIF] Sidecar19-SE*/
+	/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 	/*[PR CMVC 94437] fix deadlocks */
 	/*[PR 122459] LIR646 - Remove use of generic object for synchronization */
 	private static final class LazyInitLock { LazyInitLock() {} }
@@ -144,11 +144,11 @@ public abstract class ClassLoader {
 	private Map<String, java.lang.invoke.MethodType> methodTypeFromMethodDescriptorStringCache;
 
 	private static boolean allowArraySyntax;
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 	private static boolean lazyClassLoaderInit = true;
-/*[ELSE]
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 	private static boolean lazyClassLoaderInit = false;
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 	private static boolean specialLoaderInited = false;
 	private static InternalAnonymousClassLoader internalAnonClassLoader;
 /*[IF JAVA_SPEC_VERSION >= 15]*/
@@ -261,7 +261,7 @@ public abstract class ClassLoader {
 			}
 		}
 
-		/*[IF Sidecar19-SE]*/
+		/*[IF JAVA_SPEC_VERSION >= 9]*/
 		jdk.internal.misc.VM.initLevel(1);
 		/*
 		 * Following code ensures that the field jdk.internal.reflect.langReflectAccess
@@ -288,9 +288,9 @@ public abstract class ClassLoader {
 		System.checkTmpDir();
 		System.initSecurityManager(applicationClassLoader);
 		jdk.internal.misc.VM.initLevel(3);
-		/*[ELSE]*/
+		/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 		applicationClassLoader = sun.misc.Launcher.getLauncher().getClassLoader();
-		/*[ENDIF]*/
+		/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 		/* Find the extension class loader */
 		ClassLoader tempLoader = applicationClassLoader;
@@ -346,7 +346,7 @@ protected ClassLoader(ClassLoader parentLoader) {
 	this(checkSecurityPermission(), null, parentLoader);
 }
 
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 /**
  * Constructs a class loader with the specified name and the given
  * class loader as its parent.
@@ -366,7 +366,7 @@ protected ClassLoader(ClassLoader parentLoader) {
 protected ClassLoader(String classLoaderName, ClassLoader parentLoader) {
 	this(checkSecurityPermission(), classLoaderName, parentLoader);
 }
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 private ClassLoader(Void staticMethodHolder, String classLoaderName, ClassLoader parentLoader) {
 	// This assumes that DelegatingClassLoader is constructed via ClassLoader(parentLoader)
@@ -441,12 +441,11 @@ private ClassLoader(Void staticMethodHolder, String classLoaderName, ClassLoader
  *
  * @deprecated Use defineClass(String, byte[], int, int)
  */
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 @Deprecated(forRemoval=false, since="1.1")
-/*[ELSE]*/
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 @Deprecated
-/*[ENDIF]*/
-
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 protected final Class<?> defineClass (byte [] classRep, int offset, int length) throws ClassFormatError {
 	return defineClass ((String) null, classRep, offset, length);
 }
@@ -478,16 +477,16 @@ private String checkClassName(String className) {
 		String packageName = className.substring(0, index);
 		/*[PR 94856]*/
 		if (className.startsWith("java.")) { //$NON-NLS-1$
-			/*[IF Sidecar19-SE]*/
+			/*[IF JAVA_SPEC_VERSION >= 9]*/
 			/*[PR RTC 115588: java.* classes can be loaded by the platform class loader]*/
 			ClassLoader platformCL = ClassLoaders.platformClassLoader();
 			if (!(this == platformCL || this.isAncestorOf(platformCL))) {
-			/*[ENDIF]*/
+			/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 				/*[MSG "K01d2", "{1} - protected system package '{0}'"]*/
 				throw new SecurityException(com.ibm.oti.util.Msg.getString("K01d2", packageName, className)); //$NON-NLS-1$
-			/*[IF Sidecar19-SE]*/
+			/*[IF JAVA_SPEC_VERSION >= 9]*/
 			}
-			/*[ENDIF]*/
+			/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 		}
 		return packageName;
 	}
@@ -584,9 +583,9 @@ final Class<?> defineClassInternal(
 			}
 		}
 	}
-	/*[IF Sidecar19-SE]*/
+	/*[IF JAVA_SPEC_VERSION >= 9]*/
 	addPackageToList(answer);
-	/*[ENDIF] Sidecar19-SE */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 	/*[PR CMVC 89001] Verbose output when loading non-bootstrap classes */
 	if (isVerbose) {
@@ -615,7 +614,7 @@ final Class<?> defineClassInternal(
 }
 /*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 /**
  * This class is a function that maps a package name to a newly created
  * {@code NamedPackage} object for use below in updating the {@code packages} map.
@@ -645,7 +644,7 @@ void addPackageToList(Class<?> newClass) {
 		packages.computeIfAbsent(newClass.getPackageName(), new NamedPackageProvider(newClass));
 	}
 }
-/*[ENDIF] Sidecar19-SE */
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 /*[PR CMVC 89001] Verbose output when loading non-bootstrap classes */
 private native boolean isVerboseImpl();
@@ -747,7 +746,7 @@ protected Class<?> findClass (String className) throws ClassNotFoundException {
 	throw new ClassNotFoundException();
 }
 
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 /**
  * Overridden by subclasses that support the loading from modules.
  * When the moduleName is null, the default implementation invokes findClass(String),
@@ -774,7 +773,7 @@ protected Class<?> findClass(String moduleName, String className) {
 	}
 	return classFound;
 }
-/*[ENDIF] Sidecar19-SE */
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 /**
  * Attempts to find and return a class which has already
@@ -855,11 +854,11 @@ public final ClassLoader getParent() {
 public URL getResource (String resName) {
 	URL result = null;
 	if (null == parent) {
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 		result =  BootLoader.findResource(resName);
-/*[ELSE]
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 		result = bootstrapClassLoader.findResource(resName);
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 	} else {
 		result = parent.getResource(resName);
 	}
@@ -947,11 +946,11 @@ public Enumeration<URL> getResources(String resName) throws IOException {
 		resources = parent.getResources(resName);
 	} else if (this != bootstrapClassLoader) {
 		resources =
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 		BootLoader.findResources(resName);
-/*[ELSE]
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 		bootstrapClassLoader.getResources(resName);
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 	}
 
 	Enumeration<URL> localResources = findResources(resName);
@@ -1030,7 +1029,7 @@ static void completeInitialization() {
 	initSystemClassLoader = true;
 }
 
-/*[IF Sidecar18-SE-OpenJ9|Sidecar19-SE]*/
+/*[IF Sidecar18-SE-OpenJ9]*/
 //Returns incoming class's classloader without going through security checking
 static ClassLoader getClassLoader(Class<?> clz) {
 	if (null != clz) {
@@ -1039,9 +1038,9 @@ static ClassLoader getClassLoader(Class<?> clz) {
 		return null;
 	}
 }
-/*[ENDIF]*/
+/*[ENDIF] Sidecar18-SE-OpenJ9 */
 
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 /**
  * Return the Platform classloader.
  *
@@ -1086,7 +1085,7 @@ final Class<?> loadLocalClass(java.lang.String name) {
 public String getName() {
 	return classLoaderName;
 }
-/*[ENDIF] Sidecar19-SE */
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 /**
  * Convenience operation to obtain a reference to the system class loader.
@@ -1204,7 +1203,7 @@ public static InputStream getSystemResourceAsStream(String resName) {
 	return getSystemClassLoader().getResourceAsStream(resName);
 }
 
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 /**
  * Answers the unnamed Module of this class loader.
  *
@@ -1214,7 +1213,7 @@ public final Module getUnnamedModule()
 {
 	return this.unnamedModule;
 }
-/*[ENDIF] Sidecar19-SE */
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 /**
  * Invoked by the Virtual Machine when resolving class references.
@@ -1256,13 +1255,13 @@ public Class<?> loadClass(String className) throws ClassNotFoundException {
 /*[PR CMVC 180958] SVT:HRT:deadlock following class library change to classloader */
 protected Class<?> loadClass(final String className, boolean resolveClass) throws ClassNotFoundException {
 	return loadClassHelper(className, resolveClass, true
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 		, null
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 		);
 }
 
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 /**
  * Invoked by package access methods such as java.lang.Package.getPackageInfo()
  * resolveClass flag is false, delegateToParent flag is false as well.
@@ -1290,7 +1289,7 @@ final Class<?> loadClass(Module module, String className) {
 	}
 	return localClass;
 }
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 /**
  * Attempts to load the type <code>className</code> in the running VM,
  * optionally linking the type after a successful load.
@@ -1309,9 +1308,9 @@ final Class<?> loadClass(Module module, String className) {
  *					the Class object.
  */
 Class<?> loadClassHelper(final String className, boolean resolveClass, boolean delegateToParent
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 	, Module module
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 	) throws ClassNotFoundException {
 	Object lock = isParallelCapable ? getClassLoadingLock(className) : this;
 
@@ -1346,27 +1345,26 @@ Class<?> loadClassHelper(final String className, boolean resolveClass, boolean d
 
 			// not findLoadedClass or by parent.loadClass, try locally
 			if (loadedClass == null) {
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 				if (module == null) {
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 					loadedClass = findClass(className);
-/*[IF Sidecar19-SE]*/
-				}
-				else {
+/*[IF JAVA_SPEC_VERSION >= 9]*/
+				} else {
 					loadedClass = findClass(module.getName(), className);
 				}
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 			}
 		}
 
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 		if (module != null && loadedClass != null) {
-			Module	moduleLoadedClass = loadedClass.getModule();
+			Module moduleLoadedClass = loadedClass.getModule();
 			if (module != moduleLoadedClass) {
 				return null;
 			}
 		}
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 		// resolve if required
 		if (resolveClass) resolveClass(loadedClass);
@@ -1622,14 +1620,14 @@ protected String findLibrary(String libName) {
  *
  * @return		The package requested
  */
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 public
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 final Package getDefinedPackage(String name) {
-	/*[IF Sidecar19-SE]*/
+	/*[IF JAVA_SPEC_VERSION >= 9]*/
 	Package pkg = null;
 	synchronized(packages) {
-		NamedPackage	np = packages.get(name);
+		NamedPackage np = packages.get(name);
 		if (null != np) {
 			if (np instanceof Package) {
 				pkg = (Package)np;
@@ -1640,12 +1638,12 @@ final Package getDefinedPackage(String name) {
 		}
 	}
 	return pkg;
-	/*[ELSE]*/
+	/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 	return packages.get(name);
-	/*[ENDIF] Sidecar19-SE*/
+	/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 }
 
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 /**
  * Answers all the packages defined by this classloader.
  *
@@ -1660,28 +1658,28 @@ public final Package[] getDefinedPackages() {
 		}
 	}
 }
-/*[ENDIF] Sidecar19-SE*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 /**
  * Attempt to locate the requested package. If no package information
  * can be located, null is returned.
  *
  * @param		name		The name of the package to find
  * @return		The package requested, or null
-/*[IF Sidecar19-SE]
+/*[IF JAVA_SPEC_VERSION >= 9]
  *
  * @deprecated Use getDefinedPackage(String)
-/*[ENDIF]
+/*[ENDIF] JAVA_SPEC_VERSION >= 9
  */
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 @Deprecated(forRemoval=false, since="9")
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 protected Package getPackage(String name) {
 	if (this == bootstrapClassLoader) {
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 		return BootLoader.getDefinedPackage(name);
-/*[ELSE]*/
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 		return getDefinedPackage(name);
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 	} else {
 		Package p = getDefinedPackage(name);
 		if (p == null) {
@@ -1696,11 +1694,11 @@ protected Package getPackage(String name) {
 }
 
 private Package[] getPackagesHelper(
-		/*[IF Sidecar19-SE]*/
+		/*[IF JAVA_SPEC_VERSION >= 9]*/
 		Hashtable<?, NamedPackage>
-		/*[ELSE]
+		/*[ELSE] JAVA_SPEC_VERSION >= 9
 		Hashtable<?, Package>
-		/*[ENDIF] Sidecar19-SE*/
+		/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 		localPackages, Package[] ancestorsPackages) {
 	int resultSize = localPackages.size();
 	if (ancestorsPackages != null) {
@@ -1713,15 +1711,15 @@ private Package[] getPackagesHelper(
 		System.arraycopy(ancestorsPackages, 0, result, 0, i);
 	}
 
-	/*[IF Sidecar19-SE]*/
+	/*[IF JAVA_SPEC_VERSION >= 9]*/
 	Package[] pkgs = packages().toArray(Package[]::new);
 	System.arraycopy(pkgs, 0, result, i, pkgs.length);
-	/*[ELSE]
+	/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 	Enumeration<Package> myPkgs = localPackages.elements();
 	while (myPkgs.hasMoreElements()) {
 		result[i++] = myPkgs.nextElement();
 	}
-	/*[ENDIF] Sidecar19-SE*/
+	/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 	return result;
 }
@@ -1732,55 +1730,55 @@ private Package[] getPackagesHelper(
  * @return		All the packages known to this classloader
  */
 protected Package[] getPackages() {
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 	if (this == bootstrapClassLoader) {
 		return BootLoader.packages().toArray(Package[]::new);
 	}
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 	Package[] ancestorsPackages = null;
 	if (parent == null) {
-/*[IF !Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION == 8]*/
 		if (this != bootstrapClassLoader) {
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION == 8 */
 			ancestorsPackages = bootstrapClassLoader.getPackages();
-/*[IF !Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION == 8]*/
 		}
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION == 8 */
 	} else {
 		ancestorsPackages = parent.getPackages();
 	}
 
-	/*[IF Sidecar19-SE]*/
+	/*[IF JAVA_SPEC_VERSION >= 9]*/
 	Hashtable<?, NamedPackage> localPackages = packages;
-	/*[ELSE]
+	/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 	Hashtable<?, Package> localPackages = packages;
-	/*[ENDIF] Sidecar19-SE*/
+	/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 	boolean rtExceptionThrown = false;
 	do {
 		try {
 			Package[] result;
-			/*[IF Sidecar19-SE]*/
+			/*[IF JAVA_SPEC_VERSION >= 9]*/
 			if (rtExceptionThrown) {
 				synchronized(packages) {
 					result = getPackagesHelper(localPackages, ancestorsPackages);
 				}
 			} else {
-			/*[ENDIF] Sidecar19-SE*/
+			/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 				result = getPackagesHelper(localPackages, ancestorsPackages);
-			/*[IF Sidecar19-SE]*/
+			/*[IF JAVA_SPEC_VERSION >= 9]*/
 			}
-			/*[ENDIF] Sidecar19-SE*/
+			/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 			return result;
 		} catch(RuntimeException ex) {
 			if (rtExceptionThrown) {
 				throw ex;
 			}
 			rtExceptionThrown = true;
-			/*[IF !Sidecar19-SE]*/
+			/*[IF JAVA_SPEC_VERSION == 8]*/
 			localPackages = (Hashtable<?, Package>)packages.clone();
-			/*[ENDIF] Sidecar19-SE*/
+			/*[ENDIF] JAVA_SPEC_VERSION == 8 */
 		}
 	} while (true);
 }
@@ -1809,11 +1807,11 @@ protected Package definePackage(
 	throws IllegalArgumentException
 {
 	synchronized(packages) {
-		/*[IF Sidecar19-SE]*/
+		/*[IF JAVA_SPEC_VERSION >= 9]*/
 		if (packages.containsKey(name)) {
-		/*[ELSE]
+		/*[ELSE] JAVA_SPEC_VERSION >= 9
 		if (null != getPackage(name)) {
-		/*[ENDIF]*/
+		/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 			/*[MSG "K0053", "Package {0} already defined."]*/
 			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0053", name)); //$NON-NLS-1$
 		} else {
@@ -2311,11 +2309,11 @@ boolean getDefaultAssertionStatus() {
  */
 private void initializeClassLoaderAssertStatus() {
 	/*[PR CMVC 130382] Optimize checking ClassLoader assertion status */
-	/*[IF Sidecar19-SE]*/
+	/*[IF JAVA_SPEC_VERSION >= 9]*/
 	boolean bootLoader = bootstrapClassLoader == this;
-	/*[ELSE]
+	/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 	boolean bootLoader = bootstrapClassLoader == null;
-	/*[ENDIF]*/
+	/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 	if (!bootLoader && !checkAssertionOptions) {
 		// if the bootLoader didn't find any assertion options, other
@@ -2464,7 +2462,7 @@ Map<String, java.lang.invoke.MethodType> getMethodTypeCache() {
 	return methodTypeFromMethodDescriptorStringCache;
 }
 
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 ServicesCatalog createOrGetServicesCatalog() {
 	if (null == this.servicesCatalog) {
 		this.servicesCatalog = ServicesCatalog.create();
@@ -2476,9 +2474,6 @@ ServicesCatalog getServicesCatalog() {
 	return this.servicesCatalog;
 }
 
-/*[ENDIF] Sidecar19-SE*/
-
-/*[IF Sidecar19-SE]*/
 /**
  * Answers an URL which can be used to access the resource
  * described by resName, using the class loader's resource lookup
@@ -2567,8 +2562,7 @@ public Stream<URL> resources(String name) {
 public final boolean isRegisteredAsParallelCapable() {
 	return isParallelCapable;
 }
-
-/*[ENDIF] Sidecar19-SE*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 /*[IF JAVA_SPEC_VERSION >= 19]*/
 static void checkClassLoaderPermission(ClassLoader classLoader, Class<?> caller) {

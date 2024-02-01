@@ -38,7 +38,7 @@ import java.util.List;
 import javax.management.MBeanNotificationInfo;
 import javax.management.ObjectName;
 
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 import com.ibm.sharedclasses.spi.SharedClassProvider;
 import java.net.URL;
 import java.security.BasicPermission;
@@ -46,9 +46,9 @@ import java.util.ServiceLoader;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.IntConsumer;
 import java.util.function.UnaryOperator;
-/*[ELSE]
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 import com.ibm.oti.shared.SharedClassStatistics;
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 /**
  * Runtime type for {@link MemoryMXBean}.
@@ -96,7 +96,7 @@ public class MemoryMXBeanImpl extends LazyDelegatingNotifier implements MemoryMX
 
 	private ObjectName objectName;
 
-	/*[IF Sidecar19-SE]*/
+	/*[IF JAVA_SPEC_VERSION >= 9]*/
 	/**
 	 * The SharedClassProvider class to be used when shared classes are disabled.
 	 */
@@ -223,7 +223,7 @@ public class MemoryMXBeanImpl extends LazyDelegatingNotifier implements MemoryMX
 	}
 
 	private final SharedClassProviderHolder sharedClassProviderHolder;
-	/*[ENDIF] Sidecar19-SE */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 	/**
 	 * Constructor intentionally private to prevent instantiation by others.
@@ -237,9 +237,9 @@ public class MemoryMXBeanImpl extends LazyDelegatingNotifier implements MemoryMX
 		createMemoryPools();
 		createMemoryManagers();
 		setManagedMemoryPoolsForManagers();
-		/*[IF Sidecar19-SE]*/
+		/*[IF JAVA_SPEC_VERSION >= 9]*/
 		sharedClassProviderHolder = new SharedClassProviderHolder();
-		/*[ENDIF]*/
+		/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 	}
 
 	private void setManagedMemoryPoolsForManagers() {
@@ -568,66 +568,66 @@ public class MemoryMXBeanImpl extends LazyDelegatingNotifier implements MemoryMX
 	 * {@inheritDoc}
 	 */
 	public long getSharedClassCacheSize() {
-		/*[IF Sidecar19-SE]*/
+		/*[IF JAVA_SPEC_VERSION >= 9]*/
 		return sharedClassProviderHolder.get().getCacheSize();
-		/*[ELSE]
+		/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 		return SharedClassStatistics.maxSizeBytes();
-		/*[ENDIF]*/
+		/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
 	public long getSharedClassCacheSoftmxBytes() {
-		/*[IF Sidecar19-SE]*/
+		/*[IF JAVA_SPEC_VERSION >= 9]*/
 		return sharedClassProviderHolder.get().getSoftmxBytes();
-		/*[ELSE]
+		/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 		return SharedClassStatistics.softmxBytes();
-		/*[ENDIF]*/
+		/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
 	public long getSharedClassCacheMinAotBytes() {
-		/*[IF Sidecar19-SE]*/
+		/*[IF JAVA_SPEC_VERSION >= 9]*/
 		return sharedClassProviderHolder.get().getMinAotBytes();
-		/*[ELSE]
+		/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 		return SharedClassStatistics.minAotBytes();
-		/*[ENDIF]*/
+		/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
 	public long getSharedClassCacheMaxAotBytes() {
-		/*[IF Sidecar19-SE]*/
+		/*[IF JAVA_SPEC_VERSION >= 9]*/
 		return sharedClassProviderHolder.get().getMaxAotBytes();
-		/*[ELSE]
+		/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 		return SharedClassStatistics.maxAotBytes();
-		/*[ENDIF]*/
+		/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
 	public long getSharedClassCacheMinJitDataBytes() {
-		/*[IF Sidecar19-SE]*/
+		/*[IF JAVA_SPEC_VERSION >= 9]*/
 		return sharedClassProviderHolder.get().getMinJitDataBytes();
-		/*[ELSE]
+		/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 		return SharedClassStatistics.minJitDataBytes();
-		/*[ENDIF]*/
+		/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
 	public long getSharedClassCacheMaxJitDataBytes() {
-		/*[IF Sidecar19-SE]*/
+		/*[IF JAVA_SPEC_VERSION >= 9]*/
 		return sharedClassProviderHolder.get().getMaxJitDataBytes();
-		/*[ELSE]
+		/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 		return SharedClassStatistics.maxJitDataBytes();
-		/*[ENDIF]*/
+		/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 	}
 
 	/**
@@ -770,11 +770,11 @@ public class MemoryMXBeanImpl extends LazyDelegatingNotifier implements MemoryMX
 	 * {@inheritDoc}
 	 */
 	public long getSharedClassCacheFreeSpace() {
-		/*[IF Sidecar19-SE]*/
+		/*[IF JAVA_SPEC_VERSION >= 9]*/
 		return sharedClassProviderHolder.get().getFreeSpace();
-		/*[ELSE]
+		/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 		return SharedClassStatistics.freeSpaceBytes();
-		/*[ENDIF]*/
+		/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 	}
 
 	/**

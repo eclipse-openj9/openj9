@@ -28,13 +28,13 @@ import java.util.Map;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 
-/*[IF Sidecar19-SE]
+/*[IF JAVA_SPEC_VERSION >= 9]
 import jdk.internal.misc.Unsafe;
 import jdk.internal.reflect.CallerSensitive;
-/*[ELSE]*/
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 import sun.reflect.CallerSensitive;
 import sun.misc.Unsafe;
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 public class ORBVMHelpers {
 

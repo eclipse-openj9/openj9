@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar17]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2016
  *
@@ -52,11 +52,11 @@ public final class StackTraceElementUtil {
 	 *             <code>StackTraceElement</code> with the following
 	 *             attributes:
 	 *             <ul>
-/*[IF Sidecar19-SE]
+/*[IF JAVA_SPEC_VERSION >= 9]
 	 *             <li><code>moduleName</code>(<code>java.lang.String</code>)
 	 *             <li><code>moduleVersion</code>(<code>java.lang.String</code>)
 	 *             <li><code>classLoaderName</code>(<code>java.lang.String</code>)
-/*[ENDIF]
+/*[ENDIF] JAVA_SPEC_VERSION >= 9
 	 *             <li><code>className</code>(<code>java.lang.String</code>)
 	 *             <li><code>methodName</code>(
 	 *             <code>java.lang.String</code>)
@@ -86,11 +86,11 @@ public final class StackTraceElementUtil {
 					"fileName",  //$NON-NLS-1$
 					"lineNumber",  //$NON-NLS-1$
 					"nativeMethod", //$NON-NLS-1$
-					/*[IF Sidecar19-SE]*/
+					/*[IF JAVA_SPEC_VERSION >= 9]*/
 					"moduleName",  //$NON-NLS-1$
 					"moduleVersion",  //$NON-NLS-1$
 					"classLoaderName" //$NON-NLS-1$
-					/*[ENDIF]*/
+					/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 			};
 			methodNameCache = new SoftReference<>(methodNames);
 		}
@@ -109,11 +109,11 @@ public final class StackTraceElementUtil {
 				"java.lang.String", //$NON-NLS-1$
 				"java.lang.Integer", //$NON-NLS-1$
 				"java.lang.Boolean", //$NON-NLS-1$
-				/*[IF Sidecar19-SE]*/
+				/*[IF JAVA_SPEC_VERSION >= 9]*/
 				"java.lang.String", //$NON-NLS-1$
 				"java.lang.String", //$NON-NLS-1$
 				"java.lang.String" //$NON-NLS-1$
-				/*[ENDIF]*/
+				/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 				};
 		}
 		returnTypeCache = new SoftReference<>(returnTypes);
@@ -127,11 +127,11 @@ public final class StackTraceElementUtil {
 				element.getFileName(),
 				Integer.valueOf(element.getLineNumber()),
 				Boolean.valueOf(element.isNativeMethod()),
-				/*[IF Sidecar19-SE]*/
+				/*[IF JAVA_SPEC_VERSION >= 9]*/
 				element.getModuleName(),
 				element.getModuleVersion(),
 				element.getClassLoaderName()
-				/*[ENDIF]*/
+				/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 				};
 		return values;
 	}
@@ -152,11 +152,11 @@ public final class StackTraceElementUtil {
 	 *             not correspond to a <code>StackTraceElement</code> with the
 	 *             following attributes:
 	 *             <ul>
-/*[IF Sidecar19-SE]
+/*[IF JAVA_SPEC_VERSION >= 9]
 	 *             <li><code>moduleName</code>(<code>java.lang.String</code>)
 	 *             <li><code>moduleVersion</code>(<code>java.lang.String</code>)
 	 *             <li><code>classLoaderName</code>(<code>java.lang.String</code>)
-/*[ENDIF]
+/*[ENDIF] JAVA_SPEC_VERSION >= 9
 	 *             <li><code>className</code>(<code>java.lang.String</code>)
 	 *             <li><code>methodName</code>(
 	 *             <code>java.lang.String</code>)
@@ -198,17 +198,17 @@ public final class StackTraceElementUtil {
 				int lineNumberVal = ((Integer) attributeVals[3]).intValue();
 				@SuppressWarnings("unused")
 				boolean nativeMethodVal = ((Boolean) attributeVals[4]).booleanValue();
-				/*[IF Sidecar19-SE]*/
+				/*[IF JAVA_SPEC_VERSION >= 9]*/
 				String moduleNameVal = (String) attributeVals[5];
 				String moduleVersionVal = (String) attributeVals[6];
 				String classLoaderNameVal = (String) attributeVals[7];
-				/*[ENDIF]*/
+				/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 				StackTraceElement element = new StackTraceElement(
-						/*[IF Sidecar19-SE]*/
+						/*[IF JAVA_SPEC_VERSION >= 9]*/
 						moduleNameVal,
 						moduleVersionVal,
 						classLoaderNameVal,
-						/*[ENDIF]*/
+						/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 						classNameVal, methodNameVal, fileNameVal, lineNumberVal
 						);
 				result[i] = element;
@@ -228,9 +228,9 @@ public final class StackTraceElementUtil {
 			OpenType<?>[] types = {
 					SimpleType.STRING, SimpleType.STRING, SimpleType.STRING,
 					SimpleType.INTEGER, SimpleType.BOOLEAN ,
-					/*[IF Sidecar19-SE]*/
+					/*[IF JAVA_SPEC_VERSION >= 9]*/
 					SimpleType.STRING, SimpleType.STRING,SimpleType.STRING,
-					/*[ENDIF]*/
+					/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 					};
 
 			try {
