@@ -48,6 +48,7 @@ OutOfLineINL_openj9_internal_foreign_abi_InternalUpcallHandler_allocateUpcallStu
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	J9UpcallMetaData *upcallMetaData = NULL;
 	j9object_t mhMetaData = NULL;
+	j9object_t invokeCache = NULL;
 	J9UpcallNativeSignature *nativeSig = NULL;
 	J9UpcallSigType *sigArray = NULL;
 	void *thunkAddr = NULL;
@@ -119,15 +120,25 @@ OutOfLineINL_openj9_internal_foreign_abi_InternalUpcallHandler_allocateUpcallStu
 		goto freeAllMemoryThenExit;
 	}
 
-	/* The resolution is performed by MethodHandleResolver.upcallLinkCallerMethod()
+	/* The resolution is performed by MethodHandleResolver.ffiCallLinkCallerMethod()
 	 * to obtain a MemberName object plus appendix in a two element object array.
 	 */
 	VM_OutOfLineINL_Helpers::buildInternalNativeStackFrame(currentThread, method);
-	resolveUpcallInvokeHandle(currentThread, upcallMetaData);
+	invokeCache = resolveFfiCallInvokeHandle(
+			currentThread,
+			J9VMOPENJ9INTERNALFOREIGNABIUPCALLMHMETADATA_CALLEEMH(
+					currentThread,
+					J9_JNI_UNWRAP_REFERENCE(upcallMetaData->mhMetaData)));
 	if (VM_VMHelpers::exceptionPending(currentThread)) {
 		rc = GOTO_THROW_CURRENT_EXCEPTION;
 		goto freeAllMemoryThenExit;
 	}
+
+	VM_AtomicSupport::writeBarrier();
+	J9VMOPENJ9INTERNALFOREIGNABIUPCALLMHMETADATA_SET_INVOKECACHE(
+			currentThread,
+			J9_JNI_UNWRAP_REFERENCE(upcallMetaData->mhMetaData),
+			invokeCache);
 	VM_OutOfLineINL_Helpers::restoreInternalNativeStackFrame(currentThread);
 
 	thunkAddr = vmFuncs->createUpcallThunk(upcallMetaData);

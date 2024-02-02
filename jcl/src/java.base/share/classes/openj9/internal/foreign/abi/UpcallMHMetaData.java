@@ -55,13 +55,8 @@ final class UpcallMHMetaData {
 	 * in native2InterpJavaUpcallImpl for call-in so as to invoke the method handle.
 	 */
 	private final MethodHandle calleeMH;
-	/* The method type of the target method handle which is mainly used by
-	 * MethodHandleResolver.upcallLinkCallerMethod() to populate
-	 * the cache array as below.
-	 */
-	private final MethodType calleeType;
-	/* The cache array store MemberName and appendix which are populated
-	 * by MethodHandleResolver.upcallLinkCallerMethod().
+	/* The cache array stores MemberName and appendix which are populated
+	 * by MethodHandleResolver.ffiCallLinkCallerMethod().
 	 */
 	private Object[] invokeCache;
 	/* The argument array stores the memory specific argument (struct/pointer) object
@@ -93,7 +88,6 @@ final class UpcallMHMetaData {
 	/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 	{
 		calleeMH = targetHandle;
-		calleeType = targetHandle.type();
 		nativeArgArray = new Object[nativeArgCount];
 		/* Only hold the confined scope (owned by the current thread) or
 		 * the global scope (created once and shared by any thread) will

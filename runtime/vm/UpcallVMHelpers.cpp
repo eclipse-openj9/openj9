@@ -160,9 +160,13 @@ getReturnTypeFromMetaData(J9UpcallMetaData *data)
 {
 	J9JavaVM *vm = data->vm;
 	J9VMThread *currentThread = currentVMThread(vm);
-	j9object_t methodType = J9VMOPENJ9INTERNALFOREIGNABIUPCALLMHMETADATA_CALLEETYPE(currentThread,
-			J9_JNI_UNWRAP_REFERENCE(data->mhMetaData));
-	J9Class *retTypeClass = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread,
+	j9object_t methodType = J9VMJAVALANGINVOKEMETHODHANDLE_TYPE(
+			currentThread,
+			J9VMOPENJ9INTERNALFOREIGNABIUPCALLMHMETADATA_CALLEEMH(
+					currentThread,
+					J9_JNI_UNWRAP_REFERENCE(data->mhMetaData)));
+	J9Class *retTypeClass = J9VM_J9CLASS_FROM_HEAPCLASS(
+			currentThread,
 			J9VMJAVALANGINVOKEMETHODTYPE_RTYPE(currentThread, methodType));
 	J9UpcallNativeSignature *nativeSig = data->nativeFuncSignature;
 	J9UpcallSigType *sigArray = nativeSig->sigArray;
@@ -318,8 +322,8 @@ native2InterpJavaUpcallImpl(J9UpcallMetaData *data, void *argsListPointer)
 
 	if (buildCallInStackFrameHelper(currentThread, &newELS, returnsObject)) {
 		j9object_t mhMetaData = NULL;
+		j9object_t upcallMH = NULL;
 		j9object_t nativeArgArray = NULL;
-		j9object_t methodType = NULL;
 		j9object_t argTypes = NULL;
 
 		/* Store the allocated memory objects for the struct/pointer arguments to the java array. */
@@ -328,14 +332,14 @@ native2InterpJavaUpcallImpl(J9UpcallMetaData *data, void *argsListPointer)
 		}
 
 		mhMetaData = J9_JNI_UNWRAP_REFERENCE(data->mhMetaData);
+		upcallMH = J9VMOPENJ9INTERNALFOREIGNABIUPCALLMHMETADATA_CALLEEMH(currentThread, mhMetaData);
 		nativeArgArray = J9VMOPENJ9INTERNALFOREIGNABIUPCALLMHMETADATA_NATIVEARGARRAY(currentThread, mhMetaData);
-		methodType = J9VMOPENJ9INTERNALFOREIGNABIUPCALLMHMETADATA_CALLEETYPE(currentThread, mhMetaData);
-		argTypes = J9VMJAVALANGINVOKEMETHODTYPE_PTYPES(currentThread, methodType);
+		argTypes = J9VMJAVALANGINVOKEMETHODTYPE_PTYPES(currentThread, J9VMJAVALANGINVOKEMETHODHANDLE_TYPE(currentThread, upcallMH));
 
 		/* The argument list of the upcall method handle on the stack includes the target method handle,
-		 * the method arguments and the appendix which is set via MethodHandleResolver.upcallLinkCallerMethod().
+		 * the method arguments and the appendix which is set via MethodHandleResolver.ffiCallLinkCallerMethod().
 		 */
-		*(j9object_t*)--(currentThread->sp) = J9VMOPENJ9INTERNALFOREIGNABIUPCALLMHMETADATA_CALLEEMH(currentThread, mhMetaData);
+		*(j9object_t*)--(currentThread->sp) = upcallMH;
 
 		for (I_32 argIndex = 0; argIndex < paramCount; argIndex++) {
 			U_8 argSigType = sigArray[argIndex].type & J9_FFI_UPCALL_SIG_TYPE_MASK;
@@ -619,7 +623,8 @@ storeMemArgObjectsToJavaArray(J9UpcallMetaData *data, void *argsListPointer, J9V
 		 * in createMemAddressObject/createMemSegmentObject) when allocating memory for the next
 		 * struct/pointer of the argument list.
 		 */
-		nativeArgArray = J9VMOPENJ9INTERNALFOREIGNABIUPCALLMHMETADATA_NATIVEARGARRAY(currentThread,
+		nativeArgArray = J9VMOPENJ9INTERNALFOREIGNABIUPCALLMHMETADATA_NATIVEARGARRAY(
+				currentThread,
 				J9_JNI_UNWRAP_REFERENCE(data->mhMetaData));
 		J9JAVAARRAYOFOBJECT_STORE(currentThread, nativeArgArray, argIndex, memArgObject);
 	}
@@ -714,8 +719,10 @@ createMemSegmentObject(J9UpcallMetaData *data, I_64 offset, I_64 sigTypeSize)
 
 	J9VMJDKINTERNALFOREIGNNATIVEMEMORYSEGMENTIMPL_SET_MIN(currentThread, memSegmtObject, offset);
 	J9VMJDKINTERNALFOREIGNNATIVEMEMORYSEGMENTIMPL_SET_LENGTH(currentThread, memSegmtObject, sigTypeSize);
-	J9VMJDKINTERNALFOREIGNNATIVEMEMORYSEGMENTIMPL_SET_SCOPE(currentThread, memSegmtObject,
-					J9VMOPENJ9INTERNALFOREIGNABIUPCALLMHMETADATA_SCOPE(currentThread, mhMetaData));
+	J9VMJDKINTERNALFOREIGNNATIVEMEMORYSEGMENTIMPL_SET_SCOPE(
+			currentThread,
+			memSegmtObject,
+			J9VMOPENJ9INTERNALFOREIGNABIUPCALLMHMETADATA_SCOPE(currentThread, mhMetaData));
 
 done:
 	return memSegmtObject;
