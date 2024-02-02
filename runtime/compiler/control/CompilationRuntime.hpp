@@ -1314,6 +1314,16 @@ public:
    bool methodCanBeJITServerAOTCacheLoaded(const char *methodSig, TR::Method::Type ty);
 
    bool methodCanBeRemotelyCompiled(const char *methodSig, TR::Method::Type ty);
+
+   /**
+   * @brief Notify every compilation thread that a JITServer AOT deserializer reset has occurred
+   *
+   * This function sets the _deserializerWasReset flag in every compilation thread. This function
+   * must be called with the appropriate deserializer monitors in hand. See
+   * JITServerAOTDeserializer::reset() for details.
+   *
+   */
+   void notifyCompilationThreadsOfDeserializerReset();
 #endif /* defined(J9VM_OPT_JITSERVER) */
    uint32_t getNumTotalCompilations() const { return _numSyncCompilations + _numAsyncCompilations; }
    uint32_t getNumCompsUsedForCompDensityCalculations() const { return _numCompsUsedForCompDensityCalculations; }

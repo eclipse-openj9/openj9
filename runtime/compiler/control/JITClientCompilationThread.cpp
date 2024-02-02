@@ -239,9 +239,10 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
             }
 
          auto deserializer = compInfo->getJITServerAOTDeserializer();
-         // Reset AOT deserializer if connected to a new server (cached serialization records are now invalid)
-         if (deserializer && (previousUID != serverUID))
-            deserializer->reset();
+         // Reset AOT deserializer if connected to a new server (cached serialization records are now invalid),
+         // except if this is the first server this client has connected to.
+         if (deserializer && (0 != previousUID) && (previousUID != serverUID))
+            deserializer->reset(compInfoPT);
 
          client->write(response, ranges, unloadedClasses->getMaxRanges(), serializedCHTable);
 
@@ -3185,7 +3186,20 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
          }
       }
 
-   std::vector<uintptr_t> newKnownIds = deserializer ? deserializer->getNewKnownIds() : std::vector<uintptr_t>();
+   // This thread may have been notified at some point in the past that the deserializer was reset.
+   // Since this is the start of a new compilation, we must clear the reset flag in order to detect
+   // a concurrent deserializer reset during the course of this compilation. This clearing must
+   // happen while this thread does not hold any data that might have come from an old server
+   // connection or the deserializer's caches before they were reset. We also want to do this as late
+   // as possible in the current compilation.
+   //
+   // In practical terms, this means that the flag must be cleared right before the first time this
+   // thread:
+   // 1. Requests an AOT cache store or load from the server, or
+   // 2. Accesses the JITServer AOT deserializer in any way.
+   // That moment is currently right here, when we get the new known IDs that are cached in the deserializer.
+   ((TR::CompilationInfoPerThread *)compInfoPT)->clearDeserializerWasReset();
+   std::vector<uintptr_t> newKnownIds = deserializer ? deserializer->getNewKnownIds(compiler) : std::vector<uintptr_t>();
 
    // TODO: make this a synchronized region to avoid bad_alloc exceptions
    compInfo->getSequencingMonitor()->enter();
