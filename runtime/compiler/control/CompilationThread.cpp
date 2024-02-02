@@ -1136,6 +1136,7 @@ TR::CompilationInfoPerThread::CompilationInfoPerThread(TR::CompilationInfo &comp
       {
       _classesThatShouldNotBeNewlyExtended = NULL;
       }
+   _deserializerWasReset = false;
 #endif /* defined(J9VM_OPT_JITSERVER) */
    }
 
@@ -13463,5 +13464,16 @@ bool
 TR::CompilationInfo::methodCanBeRemotelyCompiled(const char *methodSig, TR::Method::Type ty)
    {
    return queryJITServerFilter(methodSig, ty, TR::Options::_JITServerRemoteExcludeFilters);
+   }
+
+void
+TR::CompilationInfo::notifyCompilationThreadsOfDeserializerReset()
+   {
+   for (int32_t i = getFirstCompThreadID(); i <= getLastCompThreadID(); i++)
+      {
+      TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
+      TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
+      curCompThreadInfoPT->setDeserializerWasReset();
+      }
    }
 #endif /* defined(J9VM_OPT_JITSERVER) */
