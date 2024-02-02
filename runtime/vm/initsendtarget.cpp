@@ -55,6 +55,10 @@ initializeMethodRunAddressMethodHandle(J9Method *method)
 			case 12:
 				if (J9UTF8_LITERAL_EQUALS(methodName, methodNameLength, "linkToStatic")) {
 					methodRunAddress = J9_BCLOOP_ENCODE_SEND_TARGET(J9_BCLOOP_SEND_TARGET_METHODHANDLE_LINKTOSTATICSPECIAL);
+#if JAVA_SPEC_VERSION >= 22
+				}  else if (J9UTF8_LITERAL_EQUALS(methodName, methodNameLength, "linkToNative")) {
+					methodRunAddress = J9_BCLOOP_ENCODE_SEND_TARGET(J9_BCLOOP_SEND_TARGET_METHODHANDLE_LINKTONATIVE);
+#endif /* JAVA_SPEC_VERSION >= 22 */
 				}
 				break;
 			case 13:

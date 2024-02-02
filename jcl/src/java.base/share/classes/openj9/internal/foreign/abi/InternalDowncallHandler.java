@@ -47,6 +47,9 @@ import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySegment.Scope;
 import java.lang.foreign.SegmentAllocator;
 import java.lang.foreign.ValueLayout;
+/*[IF JAVA_SPEC_VERSION >= 22]*/
+import jdk.internal.access.SharedSecrets;
+/*[ENDIF] JAVA_SPEC_VERSION >= 22 */
 import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.LinkerOptions;
 import jdk.internal.foreign.MemorySessionImpl;
@@ -84,6 +87,7 @@ public class InternalDowncallHandler {
 	private long argTypesAddr;
 	private MemoryLayout[] argLayoutArray;
 	private MemoryLayout realReturnLayout;
+	private MethodHandle boundMH;
 
 	/* The hashtables of sessions/scopes is intended for multithreading in which case
 	 * the same downcall handler might hold various sessions/scopes being used by
@@ -136,7 +140,15 @@ public class InternalDowncallHandler {
 	private static final MethodHandle longObjToMemAddrRetFilter;
 	/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 	private static final MethodHandle objToMemSegmtRetFilter;
-
+	/*[IF JAVA_SPEC_VERSION >= 22]*/
+	private static native boolean isFfiProtoEnabled();
+	private static boolean isFfiProtoOn = isFfiProtoEnabled();
+	/* This native resolves the downcall handle via MethodHandleResolver.ffiCallLinkCallerMethod()
+	 * given the handle must be resolved in advance when calling into the interpreter via
+	 * MH.linkToNative().
+	 */
+	private static native void setNativeInvokeCache(MethodHandle handle);
+	/*[ENDIF] JAVA_SPEC_VERSION >= 22 */
 	private static synchronized native void resolveRequiredFields();
 	private native void initCifNativeThunkData(String[] argLayouts, String retLayout, boolean newArgTypes, int varArgIndex);
 	/*[IF JAVA_SPEC_VERSION >= 21]*/
@@ -495,15 +507,32 @@ public class InternalDowncallHandler {
 			MethodType nativeMethodType = methodType(Object.class, Addressable.class, SegmentAllocator.class, long[].class);
 			/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 
-			MethodHandle boundHandle = lookup.bind(this, "runNativeMethod", nativeMethodType);
+			boundMH = lookup.bind(this, "runNativeMethod", nativeMethodType);
 
 			/* Replace the original handle with the specified types of the C function. */
-			boundHandle = permuteMH(boundHandle, funcMethodType);
-			return boundHandle;
+			boundMH = permuteMH(boundMH, funcMethodType);
+
+			/*[IF JAVA_SPEC_VERSION >= 22]*/
+			return isFfiProtoOn ? getNativeMHWithInvokeCache(boundMH) : boundMH;
+			/*[ELSE] JAVA_SPEC_VERSION >= 22 */
+			return boundMH;
+			/*[ENDIF] JAVA_SPEC_VERSION >= 22 */
 		} catch (ReflectiveOperationException e) {
 			throw new InternalError(e);
 		}
 	}
+
+	/*[IF JAVA_SPEC_VERSION >= 22]*/
+	/* Generate the native MethodHandle with the resolved bound handle. */
+	private MethodHandle getNativeMHWithInvokeCache(MethodHandle handle) {
+		MethodHandle nativeMH = SharedSecrets.getJavaLangInvokeAccess().nativeMethodHandle(handle);
+		/* The cache array declared in the NativeMethodHandle (OpenJDK) stores MemberName
+		 * and appendix resolved from the bound handle.
+		 */
+		setNativeInvokeCache(nativeMH);
+		return nativeMH;
+	}
+	/*[ENDIF] JAVA_SPEC_VERSION >= 22 */
 
 	/* Collect and convert the passed-in arguments to an Object array for the underlying native call. */
 	private MethodHandle permuteMH(MethodHandle targetHandle, MethodType nativeMethodType) throws NullPointerException, WrongMethodTypeException {

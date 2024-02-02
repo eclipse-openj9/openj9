@@ -129,13 +129,18 @@ isMethodHandleINL(U_8 *methodName, U_16 methodNameLength)
 		}
 		break;
 	case 12:
-		if (J9UTF8_LITERAL_EQUALS(methodName, methodNameLength, "linkToStatic")) {
+		if (J9UTF8_LITERAL_EQUALS(methodName, methodNameLength, "linkToStatic")
+#if JAVA_SPEC_VERSION >= 22
+			|| J9UTF8_LITERAL_EQUALS(methodName, methodNameLength, "linkToNative")
+#endif /* JAVA_SPEC_VERSION >= 22 */
+		) {
 			isMethodHandle = TRUE;
 		}
 		break;
 	case 13:
 		if (J9UTF8_LITERAL_EQUALS(methodName, methodNameLength, "linkToSpecial")
-		||  J9UTF8_LITERAL_EQUALS(methodName, methodNameLength, "linkToVirtual")) {
+			|| J9UTF8_LITERAL_EQUALS(methodName, methodNameLength, "linkToVirtual")
+		) {
 			isMethodHandle = TRUE;
 		}
 		break;
@@ -2290,31 +2295,29 @@ resolveInvokeDynamic(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA callSite
 
 #if JAVA_SPEC_VERSION >= 16
 /**
- * @brief The function calls into the interpreter via sendResolveUpcallInvokeHandle()
- * to fetch the MemberName object plus appendix intended for the upcall method.
+ * @brief The function calls into the interpreter via sendResolveFfiCallInvokeHandle()
+ * to fetch the MemberName object plus appendix intended for the downcall/upcall method.
  *
  * @param vmThread the pointer to J9VMThread
- * @param data the pointer to J9UpcallMetaData
- * @return void
+ * @param handle the downcall/upcall MethodHandle object
+ * @return the cache array that stores MemberName and appendix
  */
-void
-resolveUpcallInvokeHandle(J9VMThread *vmThread, J9UpcallMetaData *data)
+j9object_t
+resolveFfiCallInvokeHandle(J9VMThread *vmThread, j9object_t handle)
 {
 	j9object_t invokeCache = NULL;
-	Trc_VM_resolveUpcallInvokeHandle_Entry(vmThread);
+	Trc_VM_resolveFfiCallInvokeHandle_Entry(vmThread);
 
-	sendResolveUpcallInvokeHandle(vmThread, data);
+	sendResolveFfiCallInvokeHandle(vmThread, handle);
 	invokeCache = (j9object_t)vmThread->returnValue;
 	if (VM_VMHelpers::exceptionPending(vmThread)) {
 		/* Already a pending exception */
 		invokeCache = NULL;
 	} else if (NULL == invokeCache) {
 		setCurrentExceptionUTF(vmThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
-	} else {
-		j9object_t mhMetaData = J9_JNI_UNWRAP_REFERENCE(data->mhMetaData);
-		J9VMOPENJ9INTERNALFOREIGNABIUPCALLMHMETADATA_SET_INVOKECACHE(vmThread, mhMetaData, invokeCache);
 	}
 
-	Trc_VM_resolveUpcallInvokeHandle_Exit(vmThread, invokeCache);
+	Trc_VM_resolveFfiCallInvokeHandle_Exit(vmThread, invokeCache);
+	return invokeCache;
 }
 #endif /* JAVA_SPEC_VERSION >= 16 */

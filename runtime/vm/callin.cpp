@@ -1407,31 +1407,27 @@ restoreCallInFrameHelper(J9VMThread *currentThread)
 }
 
 void JNICALL
-sendResolveUpcallInvokeHandle(J9VMThread *currentThread, J9UpcallMetaData *data)
+sendResolveFfiCallInvokeHandle(J9VMThread *currentThread, j9object_t handle)
 {
 	J9VMEntryLocalStorage newELS;
-	Trc_VM_sendResolveUpcallInvokeHandle_Entry(currentThread);
+	Trc_VM_sendResolveFfiCallInvokeHandle_Entry(currentThread);
 
 	if (buildCallInStackFrame(currentThread, &newELS, true, false)) {
-		J9JavaVM *vm = data->vm;
-		j9object_t mhMetaData = J9_JNI_UNWRAP_REFERENCE(data->mhMetaData);
+		J9JavaVM *vm = currentThread->javaVM;
 
-		/* Set all required arguments for MethodHandleResolver.upcallLinkCallerMethod() on the stack
-		 * to fetch the MemberName object plus appendix intended for the upcall method handle.
+		/* Set all required arguments for MethodHandleResolver.ffiCallLinkCallerMethod() on the stack
+		 * to fetch the MemberName object plus appendix intended for the downcall/upcall method handle.
 		 */
-		if (NULL != mhMetaData) {
-			Trc_VM_sendResolveUpcallInvokeHandle_upcallMetaDataHandler(currentThread,
-					J9VMOPENJ9INTERNALFOREIGNABIUPCALLMHMETADATA_CALLEEMH(currentThread, mhMetaData));
-			*(j9object_t*)--currentThread->sp = J9VM_J9CLASS_TO_HEAPCLASS(J9VMOPENJ9INTERNALFOREIGNABIINTERNALDOWNCALLHANDLER(vm));
-			*(j9object_t*)--currentThread->sp = J9VMOPENJ9INTERNALFOREIGNABIUPCALLMHMETADATA_CALLEETYPE(currentThread, mhMetaData);
-			currentThread->returnValue = J9_BCLOOP_RUN_METHOD;
-			currentThread->returnValue2 = (UDATA)J9VMJAVALANGINVOKEMETHODHANDLERESOLVER_UPCALLLINKCALLERMETHOD_METHOD(vm);
-			c_cInterpreter(currentThread);
-		}
+		Trc_VM_sendResolveFfiCallInvokeHandle_ffiCallHandler(currentThread, handle);
+		*(j9object_t *)--currentThread->sp = J9VM_J9CLASS_TO_HEAPCLASS(J9VMOPENJ9INTERNALFOREIGNABIINTERNALDOWNCALLHANDLER(vm));
+		*(j9object_t *)--currentThread->sp = J9VMJAVALANGINVOKEMETHODHANDLE_TYPE(currentThread, handle);
+		currentThread->returnValue = J9_BCLOOP_RUN_METHOD;
+		currentThread->returnValue2 = (UDATA)J9VMJAVALANGINVOKEMETHODHANDLERESOLVER_FFICALLLINKCALLERMETHOD_METHOD(vm);
+		c_cInterpreter(currentThread);
 		restoreCallInFrame(currentThread);
 	}
 
-	Trc_VM_sendResolveUpcallInvokeHandle_Exit(currentThread);
+	Trc_VM_sendResolveFfiCallInvokeHandle_Exit(currentThread);
 }
 #endif /* JAVA_SPEC_VERSION >= 16 */
 } /* extern "C" */
