@@ -222,13 +222,14 @@ protected:
    uintptr_t offsetInSharedCacheFromClass(TR_SharedCache *sharedCache, TR_OpaqueClassBlock *clazz);
 
    /**
-    * @brief Same circumstance as offsetInSharedCacheFromROMClass above
+    * @brief Same circumstance as offsetInSharedCacheFromClass above
     *
     * @param sharedCache pointer to the TR_SharedCache object
-    * @param romMethod J9ROMMethod * whose offset in the SCC is required
+    * @param method J9Method * whose J9ROMMethod offset in the SCC is required
+    * @param definingClass the defining J9Class * of method
     * @return The offset into the SCC of romMethod
     */
-   uintptr_t offsetInSharedCacheFromROMMethod(TR_SharedCache *sharedCache, J9ROMMethod *romMethod);
+   uintptr_t offsetInSharedCacheFromMethod(TR_SharedCache *sharedCache, TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *definingClass);
 
    /**
     * @brief Wrapper around TR_J9SharedCache::offsetInSharedCacheFromPointer for

@@ -147,7 +147,7 @@ public:
     * \brief Converts a J9ROMMethod * pointer into the SCC into an offset.
     *
     * \param[in] romMethod The J9ROMMethod * to convert
-    * \return An offset. Raises a fatal assertion before returning 0 if the pointer is invalid.
+    * \return An offset. Raises a fatal assertion before returning INVALID_ROM_METHOD_OFFSET if the pointer is invalid.
     */
    virtual uintptr_t offsetInSharedCacheFromROMMethod(J9ROMMethod *romMethod);
 
@@ -261,6 +261,18 @@ public:
     * \return True if the offset is within the shared cache, false otherwise.
     */
    virtual bool isROMClassOffsetInSharedCache(uintptr_t offset, J9ROMClass **romClassPtr = NULL);
+
+   /**
+    * \brief Checks whether the persisent representation of a J9Method exists in the SCC
+    *
+    * \param[in] method The J9Method * to check
+    * \param[in] definingClass The defining class of method. Unused in the base J9SharedCache implementation of this method.
+    * \param[out] cacheOffset If the J9ROMMethod of the J9Method is in the SCC and this parameter
+    *             is not NULL the result of converting that J9ROMMethod into an offset will
+    *             be returned here. If it is not in the SCC, this parameter is ignored.
+    * \return True if the J9Method's romMethod exists in the SCC, false otherwise.
+    */
+   virtual bool isMethodInSharedCache(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *definingClass, uintptr_t *cacheOffset = NULL);
 
    /**
     * \brief Checks whether the specified J9ROMMethod exists in the SCC
@@ -377,6 +389,19 @@ protected:
    static inline uintptr_t encodeOffsetFromEnd(uintptr_t offset) { return ((offset << 1) | OFFSET_FROM_END); }
    static inline uintptr_t decodeOffsetFromEnd(uintptr_t offset) { return (offset >> 1); }
 
+   /**
+    * \brief Checks whether the specified pointer points into the ROMClass section
+    *        of the shared cache.
+    *
+    * \param[in] romStructure The pointer to check
+    * \param[out] cacheOffset If romStructure points into the shared cache and this parameter
+    *             is not NULL the result of converting romStructure into an offset will be
+    *             returned here. If romStructure does not point into the shared cache this
+    *             parameter is ignored.
+    * \return True if the pointer points into the shared cache, false otherwise.
+    */
+   bool isROMStructureInSharedCache(void *romStructure, uintptr_t *cacheOffset = NULL);
+
 private:
    // This class is intended to be a POD; keep it simple.
    struct SCCHint
@@ -426,19 +451,6 @@ private:
     * \return An offset. Raises a fatal assertion before returning 0 if the pointer is invalid.
     */
    uintptr_t offsetInSharedcacheFromROMStructure(void *romStructure);
-
-   /**
-    * \brief Checks whether the specified pointer points into the ROMClass section
-    *        of the shared cache.
-    *
-    * \param[in] romStructure The pointer to check
-    * \param[out] cacheOffset If romStructure points into the shared cache and this parameter
-    *             is not NULL the result of converting romStructure into an offset will be
-    *             returned here. If romStructure does not point into the shared cache this
-    *             parameter is ignored.
-    * \return True if the pointer points into the shared cache, false otherwise.
-    */
-   bool isROMStructureInSharedCache(void *romStructure, uintptr_t *cacheOffset = NULL);
 
    /**
     * \brief Checks whether the specified offset is within the ROMClass section
@@ -589,6 +601,10 @@ public:
 
    virtual UDATA rememberDebugCounterName(const char *name) override { TR_ASSERT_FATAL(false, "called"); return 0;}
    virtual const char *getDebugCounterName(UDATA offset) override { TR_ASSERT_FATAL(false, "called"); return NULL;}
+
+   virtual bool isMethodInSharedCache(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *definingClass, uintptr_t *cacheOffset = NULL) override;
+   virtual bool isROMMethodInSharedCache(J9ROMMethod *romMethod, uintptr_t *cacheOffset = NULL) override { TR_ASSERT_FATAL(false, "called"); return false; }
+   virtual uintptr_t offsetInSharedCacheFromROMMethod(J9ROMMethod *romMethod) override { TR_ASSERT_FATAL(false, "called"); return TR_SharedCache::INVALID_ROM_METHOD_OFFSET; }
 
    virtual bool classMatchesCachedVersion(J9Class *clazz, UDATA *chainData=NULL) override { TR_ASSERT_FATAL(false, "called"); return false;}
 

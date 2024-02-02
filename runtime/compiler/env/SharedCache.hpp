@@ -57,7 +57,8 @@ public:
    virtual bool isROMClassOffsetInSharedCache(uintptr_t offset, J9ROMClass **romClassPtr = NULL) { return false; }
 
    virtual J9ROMMethod *romMethodFromOffsetInSharedCache(uintptr_t offset) { return NULL; }
-   virtual uintptr_t offsetInSharedCacheFromROMMethod(J9ROMMethod *romMethod) { return 0; }
+   virtual uintptr_t offsetInSharedCacheFromROMMethod(J9ROMMethod *romMethod) { return INVALID_ROM_METHOD_OFFSET; }
+   virtual bool isMethodInSharedCache(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *definingClass, uintptr_t *cacheOffset = NULL) { return false; }
    virtual bool isROMMethodInSharedCache(J9ROMMethod *romMethod, uintptr_t *cacheOffset = NULL) { return false; }
    virtual bool isROMMethodOffsetInSharedCache(uintptr_t offset, J9ROMMethod **romMethodPtr = NULL) { return false; }
 
@@ -76,6 +77,10 @@ public:
    // A uintptr_t value that can never represent a class chain in an SCC. Used to check the return value of rememberClass,
    // and also useful to represent "class chain not present" in places where a class chain offset is optional.
    static const uintptr_t INVALID_CLASS_CHAIN_OFFSET = 0;
+
+   // A uintptr_t value that can never represent a ROM method in an SCC. Used to check the return value of isMethodInSharedCache
+   // and related methods.
+   static const uintptr_t INVALID_ROM_METHOD_OFFSET = 1;
 
 private:
 

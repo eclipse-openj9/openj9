@@ -725,7 +725,13 @@ TR_J9SharedCache::offsetInSharedCacheFromROMClass(J9ROMClass *romClass)
 uintptr_t
 TR_J9SharedCache::offsetInSharedCacheFromROMMethod(J9ROMMethod *romMethod)
    {
-   return offsetInSharedcacheFromROMStructure(romMethod);
+   uintptr_t offset = INVALID_ROM_METHOD_OFFSET;
+   if (isROMMethodInSharedCache(romMethod, &offset))
+      {
+      return offset;
+      }
+   TR_ASSERT_FATAL(false, "Shared cache ROM method pointer %p out of bounds", romMethod);
+   return offset;
    }
 
 uintptr_t
@@ -831,6 +837,13 @@ bool
 TR_J9SharedCache::isROMMethodInSharedCache(J9ROMMethod *romMethod, uintptr_t *cacheOffset)
    {
    return isROMStructureInSharedCache(romMethod, cacheOffset);
+   }
+
+bool
+TR_J9SharedCache::isMethodInSharedCache(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *definingClass, uintptr_t *cacheOffset)
+   {
+   J9ROMMethod *romMethod = fe()->getROMMethodFromRAMMethod(reinterpret_cast<J9Method *>(method));
+   return isROMMethodInSharedCache(romMethod, cacheOffset);
    }
 
 bool
@@ -1452,6 +1465,17 @@ TR_J9JITServerSharedCache::getCacheDescriptorList()
    {
    auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(_stream);
    return vmInfo->_j9SharedClassCacheDescriptorList;
+   }
+
+bool
+TR_J9JITServerSharedCache::isMethodInSharedCache(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *definingClass, uintptr_t *cacheOffset)
+   {
+   // TODO: The definingClass parameter of this method is currently unused, but it will become necessary when AOT cache stores are
+   // allowed at the server without a client SCC.
+   J9ROMMethod *romMethod = fe()->getROMMethodFromRAMMethod(reinterpret_cast<J9Method *>(method));
+   // We use isROMStructureInSharedCache directly because we want to forbid
+   // isROMMethodInSharedCache from being used at the server
+   return isROMStructureInSharedCache(romMethod, cacheOffset);
    }
 
 uintptr_t
