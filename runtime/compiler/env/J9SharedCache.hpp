@@ -338,7 +338,40 @@ public:
 
    uintptr_t getClassChainOffsetIdentifyingLoaderNoThrow(TR_OpaqueClassBlock *clazz);
 
+   /**
+    * \brief Store the given well-known classes object in the SCC
+    *
+    * A word of caution: there is an important difference in the encoding of a well-known classes object
+    * (the classChainOffsets parameter to this function) compared to a class chain. A class chain is a
+    * (uintptr_t *classChain) value whose first element is the total size of classChain in bytes, with
+    * subsequent elements being offsets to ROM classes. A well-known classes object is a
+    * (uintptr_t *classChainOffsets) value whose first element is the number of subsequent elements,
+    * with subsequent elements being offsets to class chains.
+    *
+    * \param[in] vmThread VM thread
+    * \param[in] classChainOffsets The well-known classes object
+    * \param[in] classChainOffsetsSize The number of elements in classChainOffsets
+    * \param[in] includedClasses An encoding of the well-known classes object, where the ith bit is set
+    *                            exactly when the well-known class at index i of the names[] array of
+    *                            TR::SymbolValidationManager::populateWellKnownClasses() is included in
+    *                            the object.
+    * \return Returns a pointer to the data stored in the local SCC, or NULL if the data could not be stored.
+    */
+   virtual const void *storeWellKnownClasses(J9VMThread *vmThread, uintptr_t *classChainOffsets, size_t classChainOffsetsSize, unsigned int includedClasses);
    virtual const void *storeSharedData(J9VMThread *vmThread, const char *key, const J9SharedDataDescriptor *descriptor);
+
+   /**
+    * \brief Fill the given buffer with the SCC key for the well-known classes object with the given
+    *        includedClasses
+    *
+    * \param[out] buffer The buffer to fill with the SCC key
+    * \param[out] size The size of buffer
+    * \param[in] includedClasses An encoding of the well-known classes object, where the ith bit is set
+    *                            exactly when the well-known class at index i of the names[] array of
+    *                            TR::SymbolValidationManager::populateWellKnownClasses() is included in
+    *                            the object.
+    */
+   static void buildWellKnownClassesSCCKey(char *buffer, size_t size, unsigned int includedClasses);
 
    enum TR_J9SharedCacheDisabledReason
       {

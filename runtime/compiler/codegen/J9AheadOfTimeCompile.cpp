@@ -152,6 +152,12 @@ J9::AheadOfTimeCompile::offsetInSharedCacheFromPointer(TR_SharedCache *sharedCac
    }
 
 uintptr_t
+J9::AheadOfTimeCompile::offsetInSharedCacheFromWellKnownClasses(TR_SharedCache *sharedCache, void *wellKnownClassesPtr)
+   {
+   return offsetInSharedCacheFromPointer(sharedCache, wellKnownClassesPtr);
+   }
+
+uintptr_t
 J9::AheadOfTimeCompile::offsetInSharedCacheFromClass(TR_SharedCache *sharedCache, TR_OpaqueClassBlock *clazz)
    {
    uintptr_t offset = 0;
@@ -2455,7 +2461,7 @@ void J9::AheadOfTimeCompile::processRelocations()
          TR::SymbolValidationManager *svm = comp->getSymbolValidationManager();
          void *offsets = const_cast<void *>(svm->wellKnownClassChainOffsets());
          uintptr_t *wkcOffsetAddr = (uintptr_t *)relocationDataCursor;
-         *wkcOffsetAddr = self()->offsetInSharedCacheFromPointer(fej9->sharedCache(), offsets);
+         *wkcOffsetAddr = self()->offsetInSharedCacheFromWellKnownClasses(fej9->sharedCache(), offsets);
 #if defined(J9VM_OPT_JITSERVER)
          self()->addWellKnownClassesSerializationRecord(svm->aotCacheWellKnownClassesRecord(), wkcOffsetAddr);
 #endif /* defined(J9VM_OPT_JITSERVER) */

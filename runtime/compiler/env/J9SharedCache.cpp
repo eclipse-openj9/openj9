@@ -38,6 +38,7 @@
 #include "env/VerboseLog.hpp"
 #include "exceptions/PersistenceFailure.hpp"
 #include "infra/CriticalSection.hpp"
+#include "infra/String.hpp"
 #include "runtime/CodeRuntime.hpp"
 #include "runtime/IProfiler.hpp"
 #include "runtime/RuntimeAssumptions.hpp"
@@ -1385,6 +1386,27 @@ TR_J9SharedCache::storeSharedData(J9VMThread *vmThread, const char *key, const J
 #else
    return NULL;
 #endif
+   }
+
+void
+TR_J9SharedCache::buildWellKnownClassesSCCKey(char *buffer, size_t size, unsigned int includedClasses)
+   {
+   TR::snprintfNoTrunc(buffer, size, "AOTWellKnownClasses:%x", includedClasses);
+   }
+
+const void *
+TR_J9SharedCache::storeWellKnownClasses(J9VMThread *vmThread, uintptr_t *classChainOffsets, size_t classChainOffsetsSize, unsigned int includedClasses)
+   {
+   char key[128];
+   buildWellKnownClassesSCCKey(key, sizeof(key), includedClasses);
+
+   J9SharedDataDescriptor dataDescriptor;
+   dataDescriptor.address = (U_8*)classChainOffsets;
+   dataDescriptor.length = classChainOffsetsSize * sizeof (classChainOffsets[0]);
+   dataDescriptor.type = J9SHR_DATA_TYPE_JITHINT;
+   dataDescriptor.flags = 0;
+
+   return storeSharedData(vmThread, key, &dataDescriptor);
    }
 
 #if defined(J9VM_OPT_JITSERVER)

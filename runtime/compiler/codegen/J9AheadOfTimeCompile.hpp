@@ -242,6 +242,15 @@ protected:
    uintptr_t offsetInSharedCacheFromPointer(TR_SharedCache *sharedCache, void *ptr);
 
    /**
+    * @brief Same circumstance as offsetinSharedCacheFromClass above.
+    *
+    * @param sharedCache pointer to the TR_SharedCache object
+    * @param wellKnownClassesPtr well-known classes pointer whose offset in the SCC is required
+    * @return The offset into the SCC of wellKnownClassesPtr
+    */
+   uintptr_t offsetInSharedCacheFromWellKnownClasses(TR_SharedCache *sharedCache, void *wellKnownClassesPtr);
+
+   /**
     * @brief Initialization of relocation record headers for whom data for the fields are acquired
     *        in a manner that is common on all platforms
     *
