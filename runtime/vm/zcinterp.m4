@@ -78,6 +78,9 @@ PLACE_LABEL(L_CINTERP)
     LHI_GPR r0,J9TR_bcloop_exit_interpreter
     CLR_GPR CRINT,r0
     je LABEL_NAME(L_EXIT)
+    LHI_GPR r0,J9TR_bcloop_reenter_interpreter
+    CLR_GPR CRINT,r0
+    je LABEL_NAME(L_CINTERP)
     RESTORE_LR
     RESTORE_PRESERVED_REGS_AND_SWITCH_TO_JAVA_STACK
     BRANCH_VIA_VMTHREAD(J9TR_VMThread_tempSlot)
