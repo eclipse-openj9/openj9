@@ -837,13 +837,31 @@ illegalAccess:
 
 			if ((NULL != ramCPEntry) && J9_ARE_NO_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_NO_CP_UPDATE)) {
 				UDATA localClassAndFlagsData = (UDATA)localClassAndFlags;
-				/* Add bits to the class for base type and double wide field. */
-				if ((modifiers & J9FieldFlagObject) != J9FieldFlagObject) {
-					localClassAndFlagsData |= J9StaticFieldRefBaseType;
-					if ((modifiers & J9FieldSizeDouble) == J9FieldSizeDouble) {
-						localClassAndFlagsData |= J9StaticFieldRefDouble;
-					} else if (J9FieldTypeBoolean == (modifiers & J9FieldTypeMask)) {
-						localClassAndFlagsData |= J9StaticFieldRefBoolean;
+				/* Add bits to the class for the field type */
+				if ((modifiers & J9FieldFlagObject) == J9FieldFlagObject) {
+					localClassAndFlagsData |= J9StaticFieldRefTypeObject;
+				} else {
+					switch(modifiers & J9FieldTypeMask) {
+					case J9FieldTypeBoolean:
+						localClassAndFlagsData |= J9StaticFieldRefTypeBoolean;
+						break;
+					case J9FieldTypeByte:
+						localClassAndFlagsData |= J9StaticFieldRefTypeByte;
+						break;
+					case J9FieldTypeChar:
+						localClassAndFlagsData |= J9StaticFieldRefTypeChar;
+						break;
+					case J9FieldTypeShort:
+						localClassAndFlagsData |= J9StaticFieldRefTypeShort;
+						break;
+					case J9FieldTypeInt:
+					case J9FieldTypeFloat:
+						localClassAndFlagsData |= J9StaticFieldRefTypeIntFloat;
+						break;
+					case J9FieldTypeLong:
+					case J9FieldTypeDouble:
+						localClassAndFlagsData |= J9StaticFieldRefTypeLongDouble;
+						break;
 					}
 				}
 				/* Set the volatile, final and setter bits in the flags as needed */
