@@ -378,7 +378,9 @@ const char * J9::Options::_externalOptionStrings[J9::ExternalOptions::TR_NumExte
    "-XX:-JITServerAOTCacheDelayMethodRelocation", // = 69
    "-XX:+IProfileDuringStartupPhase",     // = 70
    "-XX:-IProfileDuringStartupPhase",     // = 71
-   // TR_NumExternalOptions                  = 72
+   "-XX:+JITServerAOTCacheIgnoreLocalSCC", // = 72
+   "-XX:-JITServerAOTCacheIgnoreLocalSCC", // = 73
+   // TR_NumExternalOptions                  = 74
    };
 
 //************************************************************************
@@ -2430,6 +2432,20 @@ bool J9::Options::preProcessJitServer(J9JavaVM *vm, J9JITConfig *jitConfig)
             if (xxJITServerAOTCacheDelayMethodRelocationArgIndex > xxDisableJITServerAOTCacheDelayMethodRelocationArgIndex)
                {
                compInfo->getPersistentInfo()->setJITServerAOTCacheDelayMethodRelocation(true);
+               }
+
+            const char *xxJITServerAOTCacheIgnoreLocalSCC =
+               J9::Options::_externalOptionStrings[J9::ExternalOptions::XXplusJITServerAOTCacheIgnoreLocalSCC];
+            const char *xxDisableJITServerAOTCacheIgnoreLocalSCC =
+               J9::Options::_externalOptionStrings[J9::ExternalOptions::XXminusJITServerAOTCacheIgnoreLocalSCC];
+            int32_t xxJITServerAOTCacheIgnoreLocalSCCArgIndex =
+               FIND_ARG_IN_VMARGS(EXACT_MATCH, xxJITServerAOTCacheIgnoreLocalSCC, 0);
+            int32_t xxDisableJITServerAOTCacheIgnoreLocalSCCArgIndex =
+               FIND_ARG_IN_VMARGS(EXACT_MATCH, xxDisableJITServerAOTCacheIgnoreLocalSCC, 0);
+
+            if (xxJITServerAOTCacheIgnoreLocalSCCArgIndex > xxDisableJITServerAOTCacheIgnoreLocalSCCArgIndex)
+               {
+               compInfo->getPersistentInfo()->setJITServerAOTCacheIgnoreLocalSCC(true);
                }
             }
 #if defined(J9VM_OPT_CRIU_SUPPORT)
