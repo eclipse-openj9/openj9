@@ -1854,7 +1854,24 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
             return;
          break;
          }
-
+      case TR::java_lang_StringLatin1_indexOfChar:
+      case TR::java_lang_StringUTF16_indexOfCharUnsafe:
+         {
+         TR::Node *sourceStringNode = node->getFirstChild();
+         TR::Node *targetCharNode = node->getSecondChild();
+         TR::Node *startNode = node->getChild(2);
+         TR::Node *lengthNode = node->getChild(3);
+         bool is16Bit = rm == TR::java_lang_StringUTF16_indexOfCharUnsafe;
+         if (transformIndexOfKnownString(
+               node,
+               sourceStringNode,
+               targetCharNode,
+               startNode,
+               lengthNode,
+               is16Bit))
+            return;
+         break;
+         }
       default:
          break;
       }

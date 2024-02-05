@@ -9497,10 +9497,14 @@ static TR::Register* inlineIntrinsicIndexOf(TR::Node* node, TR::CodeGenerator* c
       shift = 1;
       }
 
-   auto array = cg->evaluate(node->getChild(1));
-   auto ch = cg->evaluate(node->getChild(2));
-   auto offset = cg->evaluate(node->getChild(3));
-   auto length = cg->evaluate(node->getChild(4));
+   // This evaluator function handles different indexOf() intrinsics, some of which are static calls without a
+   // receiver. Hence, the need for static call check.
+   const bool isStaticCall = node->getSymbolReference()->getSymbol()->castToMethodSymbol()->isStatic();
+   const uint8_t firstCallArgIdx = isStaticCall ? 0 : 1;
+   auto array = cg->evaluate(node->getChild(firstCallArgIdx));
+   auto ch = cg->evaluate(node->getChild(firstCallArgIdx+1));
+   auto offset = cg->evaluate(node->getChild(firstCallArgIdx+2));
+   auto length = cg->evaluate(node->getChild(firstCallArgIdx+3));
 
    auto ECX = cg->allocateRegister();
    auto result = cg->allocateRegister();
@@ -9584,11 +9588,14 @@ static TR::Register* inlineIntrinsicIndexOf(TR::Node* node, TR::CodeGenerator* c
 
 
    node->setRegister(result);
-   cg->recursivelyDecReferenceCount(node->getChild(0));
-   cg->decReferenceCount(node->getChild(1));
-   cg->decReferenceCount(node->getChild(2));
-   cg->decReferenceCount(node->getChild(3));
-   cg->decReferenceCount(node->getChild(4));
+   if (!isStaticCall)
+      {
+      cg->recursivelyDecReferenceCount(node->getChild(0));
+      }
+   for (int32_t i = firstCallArgIdx; i < node->getNumChildren(); i++)
+      {
+      cg->decReferenceCount(node->getChild(i));
+      }
    return result;
    }
 
@@ -11638,11 +11645,13 @@ J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::CodeGenerator *c
 
    switch (symbol->getMandatoryRecognizedMethod())
       {
+      case TR::java_lang_StringLatin1_indexOfChar:
       case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfLatin1:
          if (cg->getSupportsInlineStringIndexOf())
             return inlineIntrinsicIndexOf(node, cg, true);
          break;
 
+      case TR::java_lang_StringUTF16_indexOfCharUnsafe:
       case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfUTF16:
          if (cg->getSupportsInlineStringIndexOf())
             return inlineIntrinsicIndexOf(node, cg, false);

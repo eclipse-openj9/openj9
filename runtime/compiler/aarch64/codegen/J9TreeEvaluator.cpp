@@ -6292,13 +6292,14 @@ static TR::Register* inlineIntrinsicIndexOf(TR::Node* node, TR::CodeGenerator* c
     *
     */
 
-   /*
-    * We omit to evaluate the first child (receiver) as it is not used.
-    */
-   TR::Node *arrayNode = node->getSecondChild();
-   TR::Node *charNode = node->getThirdChild();
-   TR::Node *offsetNode = node->getChild(3);
-   TR::Node *lengthNode = node->getChild(4);
+   // This evaluator function handles different indexOf() intrinsics, some of which are static calls without a
+   // receiver. Hence, the need for static call check.
+   const bool isStaticCall = node->getSymbolReference()->getSymbol()->castToMethodSymbol()->isStatic();
+   const uint8_t firstCallArgIdx = isStaticCall ? 0 : 1;
+   TR::Node *arrayNode = node->getChild(firstCallArgIdx);
+   TR::Node *charNode = node->getChild(firstCallArgIdx + 1);
+   TR::Node *offsetNode = node->getChild(firstCallArgIdx + 2);
+   TR::Node *lengthNode = node->getChild(firstCallArgIdx + 3);
    TR::Register *arrayReg = cg->evaluate(arrayNode);
    TR::Register *charReg = cg->evaluate(charNode);
    const bool isOffsetConstZero = offsetNode->isConstZeroValue();
@@ -6479,11 +6480,14 @@ static TR::Register* inlineIntrinsicIndexOf(TR::Node* node, TR::CodeGenerator* c
    node->setRegister(resultReg);
    cg->stopUsingRegister(zeroReg);
    srm->stopUsingRegisters();
-   cg->recursivelyDecReferenceCount(node->getFirstChild());
-   cg->decReferenceCount(arrayNode);
-   cg->decReferenceCount(charNode);
-   cg->decReferenceCount(offsetNode);
-   cg->decReferenceCount(lengthNode);
+   if (!isStaticCall)
+      {
+      cg->recursivelyDecReferenceCount(node->getFirstChild());
+      }
+   for (int32_t i = firstCallArgIdx; i < node->getNumChildren(); i++)
+      {
+      cg->decReferenceCount(node->getChild(i));
+      }
 
    return resultReg;
    }
@@ -6503,6 +6507,7 @@ J9::ARM64::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
       {
       switch (methodSymbol->getMandatoryRecognizedMethod())
          {
+         case TR::java_lang_StringLatin1_indexOfChar:
          case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfLatin1:
             if (cg->getSupportsInlineStringIndexOf())
                {
@@ -6511,6 +6516,7 @@ J9::ARM64::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
                }
             break;
 
+         case TR::java_lang_StringUTF16_indexOfCharUnsafe:
          case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfUTF16:
             if (cg->getSupportsInlineStringIndexOf())
                {

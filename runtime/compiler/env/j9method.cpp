@@ -3194,6 +3194,7 @@ void TR_ResolvedJ9Method::construct()
    static X StringLatin1Methods[] =
       {
       { x(TR::java_lang_StringLatin1_indexOf,                                 "indexOf",       "([BI[BII)I")},
+      { x(TR::java_lang_StringLatin1_indexOfChar,                             "indexOfChar",   "([BIII)I")},
       { x(TR::java_lang_StringLatin1_inflate,                                 "inflate",       "([BI[CII)V")},
       { TR::unknownMethod }
       };
@@ -3207,6 +3208,7 @@ void TR_ResolvedJ9Method::construct()
       { x(TR::java_lang_StringUTF16_compareValues,                            "compareValues",      "([B[BII)I")},
       { x(TR::java_lang_StringUTF16_getChar,                                  "getChar",            "([BI)C")},
       { x(TR::java_lang_StringUTF16_indexOf,                                  "indexOf",            "([BI[BII)I")},
+      { x(TR::java_lang_StringUTF16_indexOfCharUnsafe,                        "indexOfCharUnsafe",  "([BIII)I")},
       { x(TR::java_lang_StringUTF16_length,                                   "length",             "([B)I")},
       { x(TR::java_lang_StringUTF16_newBytesFor,                              "newBytesFor",        "(I)[B")},
       { x(TR::java_lang_StringUTF16_putChar,                                  "putChar",            "([BII)V")},
