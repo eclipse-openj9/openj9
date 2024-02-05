@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar18-SE]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2011
  *
@@ -35,16 +35,16 @@ import com.ibm.dtfj.image.ImageFactory;
 
 /**
  * Class which manages the files on the local system.
- * 
+ *
  * @author adam
  *
  */
 public abstract class FileManager {
 	public final static long MIN_CORE_SIZE = 20971520;		//20MB
 	protected final static Logger logger = Logger.getLogger(ImageFactory.DTFJ_LOGGER_NAME);
-	
+
 	public abstract List<ManagedImageSource> getImageSources() throws IOException;
-	
+
 	/**
 	 * Gets a stream for the file which is being managed, this could be an archive file or a normal file.
 	 * If this is a compressed file then the stream returned will be a 'raw' stream onto file itself.
@@ -52,7 +52,7 @@ public abstract class FileManager {
 	 * @throws IOException
 	 */
 	public abstract ImageInputStream getStream() throws IOException;
-	
+
 	/**
 	 * Creates a unique temporary directory under the specified parent
 	 * @param parent
@@ -70,7 +70,7 @@ public abstract class FileManager {
 		logger.fine("Created temporary directory for extracted files : " + tmpdir.getAbsolutePath());
 		return tmpdir;
 	}
-	
+
 
 	/**
 	 * A platform aware file existence checker that allows for MVS datasets on z/OS
@@ -86,7 +86,7 @@ public abstract class FileManager {
 			// found it in HFS on z/OS or normally on other platforms so return true
 			return true;
 		}
-		/*[IF PLATFORM-mz31 | PLATFORM-mz64 | ! ( Sidecar18-SE-OpenJ9 | Sidecar19-SE )]*/
+		/*[IF PLATFORM-mz31 | PLATFORM-mz64 | !Sidecar18-SE-OpenJ9]*/
 		String os = System.getProperty("os.name"); //$NON-NLS-1$
 		if (os == null) {
 			// cannot perform the check so default to true to allow processing to continue blind
@@ -108,13 +108,13 @@ public abstract class FileManager {
 				// ignore
 			}
 		}
-		/*[ENDIF] PLATFORM-mz31 | PLATFORM-mz64 | ! ( Sidecar18-SE-OpenJ9 | Sidecar19-SE )*/
+		/*[ENDIF] PLATFORM-mz31 | PLATFORM-mz64 | !Sidecar18-SE-OpenJ9 */
 		return false;
 	}
-	
+
 	/**
 	 * Factory method for getting the correct manager to deal with the supplied file
-	 * 
+	 *
 	 * @param file
 	 * @return
 	 */
@@ -133,7 +133,7 @@ public abstract class FileManager {
 		}
 		return new SimpleFileManager(file);
 	}
-	
+
 	public static boolean isArchive(File file) {
 		String name = file.getName().toLowerCase();
 		try {
@@ -149,7 +149,7 @@ public abstract class FileManager {
 		}
 		return false;
 	}
-	
+
 	/**
 	 * Generate a list of possible javacore names from a given phd name.
 	 * @param name the heap dump
@@ -165,8 +165,8 @@ public abstract class FileManager {
 			// Name may be of form heapdump.20081016.125646.7376.0001.phd
 			// with metafile javacore.20081016.125646.7376.0002.txt
 			// or heapdump.20081016.125646.7376.phd
-			// with metafile javacore.20081016.125646.7376.txt  
-			// or heapdump.20081106.111729.675904.phd 
+			// with metafile javacore.20081016.125646.7376.txt
+			// or heapdump.20081106.111729.675904.phd
 			// with metafile javacore.20081106.111729.675904.txt
 			// or heapdump.20081016.125646.7376.0001.phd.gz
 			// with metafile javacore.20081016.125646.7376.0002.txt
@@ -190,7 +190,7 @@ public abstract class FileManager {
 		//could not determine any possible matches so return an empty array
 		return new String[]{};
 	}
-	
+
 	protected String genJavacoreName(String[] s, int inc, int componentToInc) {
 		StringBuffer sb = new StringBuffer(s[0]);
 		for (int i = 1; i < s.length - 1; ++i) {

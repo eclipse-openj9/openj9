@@ -246,11 +246,11 @@ private static boolean checkPermissionHelper(Permission perm, AccessControlConte
 			if (pDomains != null) {
 				for (int i = 0; i < length ; ++i) {
 					// invoke PD within acc.context first
-					/*[IF Sidecar19-SE]*/
+					/*[IF JAVA_SPEC_VERSION >= 9]*/
 					if ((pDomains[length - i - 1] != null) && !pDomains[length - i - 1].impliesWithAltFilePerm(perm)) {
-					/*[ELSE]*/
+					/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 					if ((pDomains[length - i - 1] != null) && !pDomains[length - i - 1].implies(perm)) {
-					/*[ENDIF] Sidecar19-SE*/
+					/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 						throwACE((debug & AccessControlContext.DEBUG_ACCESS_DENIED) != 0, perm, pDomains[length - i - 1], false);
 					}
 				}

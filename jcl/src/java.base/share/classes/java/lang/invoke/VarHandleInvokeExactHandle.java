@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar19-SE & !OPENJDK_METHODHANDLES]*/
+/*[INCLUDE-IF (JAVA_SPEC_VERSION >= 9) & !OPENJDK_METHODHANDLES]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2016
  *
@@ -35,7 +35,7 @@ final class VarHandleInvokeExactHandle extends VarHandleInvokeHandle {
 	VarHandleInvokeExactHandle(VarHandleInvokeExactHandle originalHandle, MethodType newType) {
 		super(originalHandle, newType);
 	}
-	
+
 	@Override
 	boolean canRevealDirect() {
 		/* This is invokevirtual of VarHandle.invokeExact() */

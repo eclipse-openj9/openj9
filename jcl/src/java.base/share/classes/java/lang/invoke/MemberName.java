@@ -30,11 +30,11 @@ import java.lang.reflect.Method;
  * Stub class to compile OpenJDK j.l.i.MethodHandleImpl
  */
 final class MemberName {
-	/*[IF Sidecar18-SE-OpenJ9&!Sidecar19-SE-OpenJ9]*/
+	/*[IF JAVA_SPEC_VERSION == 8]*/
 	static final class Factory {
 		public static Factory INSTANCE = null;
 	}
-	/*[ENDIF]*/
+	/*[ENDIF] JAVA_SPEC_VERSION == 8 */
 
 	/*[IF JAVA_SPEC_VERSION >= 11]*/
 	private MethodHandle mh;
@@ -60,23 +60,23 @@ final class MemberName {
 	public boolean isVarargs() {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-	
+
 	public boolean isMethodHandleInvoke() {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-	
+
 	public String getName() {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-	
+
 	public MethodType getInvocationType() {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-	
+
 	public Class<?> getReturnType() {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-	
+
 	public boolean isNative() {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}

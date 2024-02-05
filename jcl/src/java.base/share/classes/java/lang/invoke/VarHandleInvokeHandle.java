@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar19-SE & !OPENJDK_METHODHANDLES]*/
+/*[INCLUDE-IF (JAVA_SPEC_VERSION >= 9) & !OPENJDK_METHODHANDLES]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2016
  *
@@ -26,7 +26,7 @@ import java.lang.invoke.VarHandle.AccessMode;
 
 /**
  * Base class for VarHandleInvokers.
- * 
+ *
  * Invokers are the MethodHandle-subclasses required to implement
  * the invokeExact and invoke MethodHandle combinators.
  */

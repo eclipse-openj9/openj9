@@ -38,11 +38,11 @@ import java.util.Properties;
 
 import java.util.ServiceLoader;
 
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 import jdk.internal.vm.VMSupport;
-/*[ELSE] Sidecar19-SE
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 import sun.misc.VMSupport;
-/*[ENDIF] Sidecar19-SE */
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 import static openj9.internal.tools.attach.target.IPC.LOCAL_CONNECTOR_ADDRESS;
 
 /*[IF CRIU_SUPPORT]*/
@@ -76,17 +76,17 @@ final class Attachment extends Thread implements Response {
 		static {
 			managementAgentMethodThrowable = AccessController.doPrivileged((PrivilegedAction<Throwable>) () -> {
 				String agentClassName =
-						/*[IF Sidecar19-SE]*/
+						/*[IF JAVA_SPEC_VERSION >= 9]*/
 						"jdk.internal.agent.Agent"; //$NON-NLS-1$
-						/*[ELSE] Sidecar19-SE
+						/*[ELSE] JAVA_SPEC_VERSION >= 9
 						"sun.management.Agent"; //$NON-NLS-1$
-						/*[ENDIF] Sidecar19-SE */
+						/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 				IPC.logMessage("Loading " + agentClassName); //$NON-NLS-1$
 				Throwable mamtTemp = null;
 				try {
 					Class<?> agentClass = null;
 					Class<?> startRemoteArgumentType = null;
-					/*[IF Sidecar19-SE]*/
+					/*[IF JAVA_SPEC_VERSION >= 9]*/
 					String jmaName = "jdk.management.agent"; //$NON-NLS-1$
 					java.lang.Module jmaModule = jdk.internal.module.Modules.loadModule(jmaName);
 					/* this should not happen because loadModule() should throw java.lang.module.FindException */
@@ -98,15 +98,15 @@ final class Attachment extends Thread implements Response {
 					if (null == agentClass) {
 						throw new ClassNotFoundException("Cannot load " + agentClassName); //$NON-NLS-1$
 					}
-					/*[ELSE] Sidecar19-SE */
+					/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 					agentClass = Class.forName(agentClassName);
-					/*[ENDIF] Sidecar19-SE */
+					/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
-					/*[IF Sidecar19-SE | Sidecar18-SE-OpenJ9]*/
+					/*[IF (JAVA_SPEC_VERSION >= 9) | Sidecar18-SE-OpenJ9]*/
 					startRemoteArgumentType = String.class;
-					/*[ELSE] Sidecar19-SE | Sidecar18-SE-OpenJ9 */
+					/*[ELSE] (JAVA_SPEC_VERSION >= 9) | Sidecar18-SE-OpenJ9 */
 					startRemoteArgumentType = Properties.class;
-					/*[ENDIF] Sidecar19-SE | Sidecar18-SE-OpenJ9 */
+					/*[ENDIF] (JAVA_SPEC_VERSION >= 9) | Sidecar18-SE-OpenJ9 */
 					startLocalManagementAgentMethod = agentClass.getDeclaredMethod(START_LOCAL_MANAGEMENT_AGENT);
 					startRemoteManagementAgentMethod = agentClass.getDeclaredMethod(START_REMOTE_MANAGEMENT_AGENT, startRemoteArgumentType);
 					startLocalManagementAgentMethod.setAccessible(true);
@@ -253,7 +253,7 @@ final class Attachment extends Thread implements Response {
 					++argsStart;
 				}
 				++argsStart; /* skip over the null, if any */
-				
+
 				Properties agentProperties = null;
 				if (argsStart < cmdBytes.length) {
 					agentProperties = IPC.receiveProperties(new ByteArrayInputStream(cmdBytes, argsStart, cmdBytes.length - argsStart), false);
@@ -288,7 +288,7 @@ final class Attachment extends Thread implements Response {
 						+ " unexpected exception or error: " + e.toString()); //$NON-NLS-1$
 			} catch (IOException e1) {
 				IPC.logMessage("IOException sending error response" + e1.toString()); //$NON-NLS-1$
-			}		
+			}
 			return true;
 		}
 		return false;
@@ -301,7 +301,7 @@ final class Attachment extends Thread implements Response {
 	private void replyWithProperties(Properties props) throws IOException {
 		IPC.sendProperties(props, responseStream);
 	}
-	
+
 	/**
 	 * close socket and other cleanup
 	 */
@@ -324,7 +324,7 @@ final class Attachment extends Thread implements Response {
 	/**
 	 * parse and execute a loadAgent command. Set the error string if there is a
 	 * problem
-	 * 
+	 *
 	 * @param cmd
 	 *            command string of the form
 	 *            "ATTACH_LOADAGENT(agentname,options)" or
@@ -364,7 +364,7 @@ final class Attachment extends Thread implements Response {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param agentLibrary
 	 *            name of the agent library
 	 * @param options
@@ -422,13 +422,13 @@ final class Attachment extends Thread implements Response {
 			IPC.logMessage("startAgent"); //$NON-NLS-1$
 			if (null != MethodRefsHolder.startRemoteManagementAgentMethod) {
 				Object startArgument;
-				/*[IF Sidecar19-SE | Sidecar18-SE-OpenJ9]*/
+				/*[IF (JAVA_SPEC_VERSION >= 9) | Sidecar18-SE-OpenJ9]*/
 				startArgument = agentProperties.entrySet().stream()
 						.map(entry -> entry.getKey() + "=" + entry.getValue()) //$NON-NLS-1$
 						.collect(java.util.stream.Collectors.joining(",")); //$NON-NLS-1$
-				/*[ELSE] Sidecar19-SE | Sidecar18-SE-OpenJ9 */
+				/*[ELSE] (JAVA_SPEC_VERSION >= 9) | Sidecar18-SE-OpenJ9 */
 				startArgument = agentProperties;
-				/*[ENDIF] Sidecar19-SE | Sidecar18-SE-OpenJ9 */
+				/*[ENDIF] (JAVA_SPEC_VERSION >= 9) | Sidecar18-SE-OpenJ9 */
 				MethodRefsHolder.startRemoteManagementAgentMethod.invoke(null, startArgument);
 				return true;
 			}

@@ -30,16 +30,12 @@ import com.ibm.oti.vm.VM;
 /*[IF JAVA_SPEC_VERSION >= 12]*/
 import jdk.internal.access.JavaLangRefAccess;
 import jdk.internal.access.SharedSecrets;
-/*[ELSE] JAVA_SPEC_VERSION >= 12
-/*[IF Sidecar19-SE]
+/*[ELSEIF JAVA_SPEC_VERSION >= 9] JAVA_SPEC_VERSION >= 12 */
 import jdk.internal.misc.JavaLangRefAccess;
 import jdk.internal.misc.SharedSecrets;
-/*[ELSE]
-/*[IF Sidecar18-SE-OpenJ9]
+/*[ELSEIF Sidecar18-SE-OpenJ9] JAVA_SPEC_VERSION >= 129 */
 import sun.misc.JavaLangRefAccess;
 import sun.misc.SharedSecrets;
-/*[ENDIF]*/
-/*[ENDIF]*/
 /*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 
 /*[IF CRIU_SUPPORT]*/
@@ -54,7 +50,7 @@ import openj9.internal.criu.NotCheckpointSafe;
  * @since		1.2
  */
 /*[IF JAVA_SPEC_VERSION < 19]*/
-public abstract	class Reference<T> extends Object {
+public abstract class Reference<T> extends Object {
 /*[ELSE] JAVA_SPEC_VERSION < 19
 public abstract sealed class Reference<T> extends Object permits PhantomReference, SoftReference, WeakReference, FinalReference {
 /*[ENDIF] JAVA_SPEC_VERSION < 19 */
@@ -78,7 +74,7 @@ public abstract sealed class Reference<T> extends Object permits PhantomReferenc
 		});
 	}
 
-	/*[IF Sidecar18-SE-OpenJ9 | Sidecar19-SE]*/
+	/*[IF Sidecar18-SE-OpenJ9 | (JAVA_SPEC_VERSION >= 9)]*/
 	/**
 	 *  Wait for progress in reference processing.
 	 * return false if there is no processing reference,
@@ -86,7 +82,7 @@ public abstract sealed class Reference<T> extends Object permits PhantomReferenc
 	 */
 	static private native boolean waitForReferenceProcessingImpl();
 
-	/*[IF Sidecar19-SE]*/
+	/*[IF JAVA_SPEC_VERSION >= 9]*/
 	static {
 		SharedSecrets.setJavaLangRefAccess(new JavaLangRefAccess() {
 			public boolean waitForReferenceProcessing() throws InterruptedException {
@@ -115,8 +111,7 @@ public abstract sealed class Reference<T> extends Object permits PhantomReferenc
 	private static boolean waitForReferenceProcessing() throws InterruptedException {
 		return waitForReferenceProcessingImpl();
 	}
-
-	/*[ELSE]
+	/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 	static {
 		SharedSecrets.setJavaLangRefAccess(new JavaLangRefAccess() {
 			public boolean tryHandlePendingReference() {
@@ -124,9 +119,8 @@ public abstract sealed class Reference<T> extends Object permits PhantomReferenc
 			}
 		});
 	}
-
-	/*[ENDIF]*/
-	/*[ENDIF]*/
+	/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
+	/*[ENDIF] Sidecar18-SE-OpenJ9 | (JAVA_SPEC_VERSION >= 9) */
 
 	/**
 	 * Make the referent null.  This does not force the reference object to be enqueued.
@@ -265,7 +259,7 @@ public abstract sealed class Reference<T> extends Object permits PhantomReferenc
 		}
 	}
 
-	/*[IF Sidecar19-SE]*/
+	/*[IF JAVA_SPEC_VERSION >= 9]*/
 	/**
 	 * Used to keep the referenced object strongly reachable so that it is not reclaimable by garbage collection.
 	 *
@@ -274,7 +268,7 @@ public abstract sealed class Reference<T> extends Object permits PhantomReferenc
 	 */
 	public static void reachabilityFence(java.lang.Object ref) {
 	}
-	/*[ENDIF]*/
+	/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 	/**
 	 * This method will always throw CloneNotSupportedException. A clone of this instance will not be returned

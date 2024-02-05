@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar19-SE & !OPENJDK_METHODHANDLES]*/
+/*[INCLUDE-IF (JAVA_SPEC_VERSION >= 9) & !OPENJDK_METHODHANDLES]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2016
  *
@@ -34,10 +34,10 @@ import jdk.internal.misc.Unsafe;
 
 final class ByteBufferViewVarHandle extends ViewVarHandle {
 	private final static Class<?>[] COORDINATE_TYPES = new Class<?>[] {ByteBuffer.class, int.class};
-	
+
 	/**
-	 * Populates the static MethodHandle[] corresponding to the provided type. 
-	 * 
+	 * Populates the static MethodHandle[] corresponding to the provided type.
+	 *
 	 * @param type The type to create MethodHandles for.
 	 * @param byteOrder The byteOrder of the ByteBuffer(s) that will be used.
 	 * @return The populated MethodHandle[].
@@ -45,7 +45,7 @@ final class ByteBufferViewVarHandle extends ViewVarHandle {
 	static final MethodHandle[] populateMHs(Class<?> type, ByteOrder byteOrder) {
 		Class<? extends ByteBufferViewVarHandleOperations> operationsClass = null;
 		boolean convertEndian = (byteOrder != ByteOrder.nativeOrder());
-		
+
 		if (int.class == type) {
 			operationsClass = convertEndian ? OpIntConvertEndian.class : OpInt.class;
 		} else if (long.class == type) {
@@ -62,21 +62,21 @@ final class ByteBufferViewVarHandle extends ViewVarHandle {
 			/*[MSG "K0624", "{0} is not a supported view type."]*/
 			throw new UnsupportedOperationException(com.ibm.oti.util.Msg.getString("K0624", type)); //$NON-NLS-1$
 		}
-		
+
 		MethodType getter = methodType(type, ByteBuffer.class, int.class, VarHandle.class);
 		MethodType setter = methodType(void.class, ByteBuffer.class, int.class, type, VarHandle.class);
 		MethodType compareAndSet = methodType(boolean.class, ByteBuffer.class, int.class, type, type, VarHandle.class);
 		MethodType compareAndExchange = compareAndSet.changeReturnType(type);
 		MethodType getAndSet = setter.changeReturnType(type);
 		MethodType[] lookupTypes = populateMTs(getter, setter, compareAndSet, compareAndExchange, getAndSet);
-		
+
 		return populateMHs(operationsClass, lookupTypes, lookupTypes);
 	}
-	
+
 	/**
 	 * Constructs a VarHandle that can access elements of a byte array as wider types.
-	 * 
-	 * @param viewArrayType The component type used when viewing elements of the array. 
+	 *
+	 * @param viewArrayType The component type used when viewing elements of the array.
 	 */
 	ByteBufferViewVarHandle(Class<?> viewArrayType, ByteOrder byteOrder) {
 		super(viewArrayType, COORDINATE_TYPES, populateMHs(viewArrayType, byteOrder), 0);
@@ -87,9 +87,9 @@ final class ByteBufferViewVarHandle extends ViewVarHandle {
 	 */
 	@SuppressWarnings("unused")
 	static class ByteBufferViewVarHandleOperations extends ViewVarHandle.ViewVarHandleOperations {
-		
+
 		/**
-		 * A ByteBuffer may be on-heap or off-heap. On-heap buffers are backed by a byte[], 
+		 * A ByteBuffer may be on-heap or off-heap. On-heap buffers are backed by a byte[],
 		 * and off-heap buffers have a base memory address. This class abstracts away the
 		 * difference so that a buffer element can simply be referenced by base and offset.
 		 */
@@ -98,10 +98,10 @@ final class ByteBufferViewVarHandle extends ViewVarHandle {
 			private static final MethodHandle directBufferAddressMH;
 			private static final MethodHandle onHeapBufferArrayMH;
 			private static final MethodHandle bufferOffsetMH;
-			
+
 			final Object base;
 			final long offset;
-			
+
 			static {
 				MethodHandle addressMH = null;
 				MethodHandle arrayMH = null;
@@ -117,7 +117,7 @@ final class ByteBufferViewVarHandle extends ViewVarHandle {
 				onHeapBufferArrayMH = arrayMH;
 				bufferOffsetMH = offsetMH;
 			}
-			
+
 			BufferElement(ByteBuffer buffer, int viewTypeSize, int index) {
 				if (buffer.isDirect()) {
 					this.base = null;
@@ -127,7 +127,7 @@ final class ByteBufferViewVarHandle extends ViewVarHandle {
 					this.offset = computeOffset(buffer, index, viewTypeSize);
 				}
 			}
-			
+
 			private final byte[] getArray(ByteBuffer buffer) {
 				try {
 					return (byte[])onHeapBufferArrayMH.invokeExact(buffer);
@@ -135,7 +135,7 @@ final class ByteBufferViewVarHandle extends ViewVarHandle {
 					throw new InternalError("Could not get ByteBuffer backing array", e);
 				}
 			}
-			
+
 			private static final long computeOffset(ByteBuffer buffer, int index, int viewTypeSize) {
 				int arrayOffset = 0;
 				try {
@@ -145,7 +145,7 @@ final class ByteBufferViewVarHandle extends ViewVarHandle {
 				}
 				return (long)INDEX_OFFSET + arrayOffset + index;
 			}
-			
+
 			private static final long computeAddress(ByteBuffer buffer, int index, int viewTypeSize) {
 				long base = 0;
 				try {
@@ -170,7 +170,7 @@ final class ByteBufferViewVarHandle extends ViewVarHandle {
 
 		static final class OpChar extends ByteBufferViewVarHandleOperations {
 			private static final int BYTES = Character.BYTES;
-			
+
 			private static final char get(ByteBuffer receiver, int index, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, true, true);
 				return _unsafe.getChar(be.base, be.offset);
@@ -307,10 +307,10 @@ final class ByteBufferViewVarHandle extends ViewVarHandle {
 				throw operationNotSupported(varHandle);
 			}
 		}
-		
+
 		static final class OpDouble extends ByteBufferViewVarHandleOperations {
 			private static final int BYTES = Double.BYTES;
-			
+
 			private static final double get(ByteBuffer receiver, int index, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, true, true);
 				return _unsafe.getDouble(be.base, be.offset);
@@ -353,20 +353,12 @@ final class ByteBufferViewVarHandle extends ViewVarHandle {
 
 			private static final boolean compareAndSet(ByteBuffer receiver, int index, double testValue, double newValue, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, false, false);
-/*[IF Sidecar19-SE-OpenJ9]*/				
-				return _unsafe.compareAndSetDouble(be.base, be.offset, testValue, newValue);	
-/*[ELSE]
-				return _unsafe.compareAndSwapDouble(be.base, be.offset, testValue, newValue);
-/*[ENDIF]*/				
+				return _unsafe.compareAndSetDouble(be.base, be.offset, testValue, newValue);
 			}
 
 			private static final double compareAndExchange(ByteBuffer receiver, int index, double testValue, double newValue, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, false, false);
-/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.compareAndExchangeDouble(be.base, be.offset, testValue, newValue);
-/*[ELSE]
-				return _unsafe.compareAndExchangeDoubleVolatile(be.base, be.offset, testValue, newValue);
-/*[ENDIF]*/				
 			}
 
 			private static final double compareAndExchangeAcquire(ByteBuffer receiver, int index, double testValue, double newValue, VarHandle varHandle) {
@@ -381,38 +373,22 @@ final class ByteBufferViewVarHandle extends ViewVarHandle {
 
 			private static final boolean weakCompareAndSet(ByteBuffer receiver, int index, double testValue, double newValue, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, false, false);
-/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetDoublePlain(be.base, be.offset, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapDouble(be.base, be.offset, testValue, newValue);
-/*[ENDIF]*/				
 			}
 
 			private static final boolean weakCompareAndSetAcquire(ByteBuffer receiver, int index, double testValue, double newValue, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, false, false);
-/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetDoubleAcquire(be.base, be.offset, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapDoubleAcquire(be.base, be.offset, testValue, newValue);
-/*[ENDIF]*/				
 			}
 
 			private static final boolean weakCompareAndSetRelease(ByteBuffer receiver, int index, double testValue, double newValue, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, false, false);
-/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetDoubleRelease(be.base, be.offset, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapDoubleRelease(be.base, be.offset, testValue, newValue);
-/*[ENDIF]*/				
 			}
 
 			private static final boolean weakCompareAndSetPlain(ByteBuffer receiver, int index, double testValue, double newValue, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, false, false);
-/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetDoublePlain(be.base, be.offset, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapDouble(be.base, be.offset, testValue, newValue);
-/*[ENDIF]*/
 			}
 
 			private static final double getAndSet(ByteBuffer receiver, int index, double value, VarHandle varHandle) {
@@ -478,10 +454,10 @@ final class ByteBufferViewVarHandle extends ViewVarHandle {
 				throw operationNotSupported(varHandle);
 			}
 		}
-		
+
 		static final class OpFloat extends ByteBufferViewVarHandleOperations {
 			private static final int BYTES = Float.BYTES;
-			
+
 			private static final float get(ByteBuffer receiver, int index, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, true, true);
 				return _unsafe.getFloat(be.base, be.offset);
@@ -524,20 +500,12 @@ final class ByteBufferViewVarHandle extends ViewVarHandle {
 
 			private static final boolean compareAndSet(ByteBuffer receiver, int index, float testValue, float newValue, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, false, false);
-/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.compareAndSetFloat(be.base, be.offset, testValue, newValue);
-/*[ELSE]
-				return _unsafe.compareAndSwapFloat(be.base, be.offset, testValue, newValue);
-/*[ENDIF]*/				
 			}
 
 			private static final float compareAndExchange(ByteBuffer receiver, int index, float testValue, float newValue, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, false, false);
-/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.compareAndExchangeFloat(be.base, be.offset, testValue, newValue);
-/*[ELSE]
-				return _unsafe.compareAndExchangeFloatVolatile(be.base, be.offset, testValue, newValue);
-/*[ENDIF]*/				
 			}
 
 			private static final float compareAndExchangeAcquire(ByteBuffer receiver, int index, float testValue, float newValue, VarHandle varHandle) {
@@ -552,38 +520,22 @@ final class ByteBufferViewVarHandle extends ViewVarHandle {
 
 			private static final boolean weakCompareAndSet(ByteBuffer receiver, int index, float testValue, float newValue, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, false, false);
-/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetFloatPlain(be.base, be.offset, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapFloat(be.base, be.offset, testValue, newValue);
-/*[ENDIF]*/				
 			}
 
 			private static final boolean weakCompareAndSetAcquire(ByteBuffer receiver, int index, float testValue, float newValue, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, false, false);
-/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetFloatAcquire(be.base, be.offset, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapFloatAcquire(be.base, be.offset, testValue, newValue);
-/*[ENDIF]*/				
 			}
 
 			private static final boolean weakCompareAndSetRelease(ByteBuffer receiver, int index, float testValue, float newValue, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, false, false);
-/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetFloatRelease(be.base, be.offset, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapFloatRelease(be.base, be.offset, testValue, newValue);
-/*[ENDIF]*/				
 			}
 
 			private static final boolean weakCompareAndSetPlain(ByteBuffer receiver, int index, float testValue, float newValue, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, false, false);
-/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetFloatPlain(be.base, be.offset, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapFloat(be.base, be.offset, testValue, newValue);
-/*[ENDIF]*/				
 			}
 
 			private static final float getAndSet(ByteBuffer receiver, int index, float value, VarHandle varHandle) {
@@ -649,10 +601,10 @@ final class ByteBufferViewVarHandle extends ViewVarHandle {
 				throw operationNotSupported(varHandle);
 			}
 		}
-		
+
 		static final class OpInt extends ByteBufferViewVarHandleOperations {
 			private static final int BYTES = Integer.BYTES;
-			
+
 			private static final int get(ByteBuffer receiver, int index, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, true, true);
 				return _unsafe.getInt(be.base, be.offset);
@@ -695,20 +647,12 @@ final class ByteBufferViewVarHandle extends ViewVarHandle {
 
 			private static final boolean compareAndSet(ByteBuffer receiver, int index, int testValue, int newValue, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, false, false);
-/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.compareAndSetInt(be.base, be.offset, testValue, newValue);
-/*[ELSE]
-				return _unsafe.compareAndSwapInt(be.base, be.offset, testValue, newValue);
-/*[ENDIF]*/				
 			}
 
 			private static final int compareAndExchange(ByteBuffer receiver, int index, int testValue, int newValue, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, false, false);
-/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.compareAndExchangeInt(be.base, be.offset, testValue, newValue);
-/*[ELSE]
-				return _unsafe.compareAndExchangeIntVolatile(be.base, be.offset, testValue, newValue);
-/*[ENDIF]*/				
 			}
 
 			private static final int compareAndExchangeAcquire(ByteBuffer receiver, int index, int testValue, int newValue, VarHandle varHandle) {
@@ -723,38 +667,22 @@ final class ByteBufferViewVarHandle extends ViewVarHandle {
 
 			private static final boolean weakCompareAndSet(ByteBuffer receiver, int index, int testValue, int newValue, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, false, false);
-/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetIntPlain(be.base, be.offset, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapInt(be.base, be.offset, testValue, newValue);
-/*[ENDIF]*/				
 			}
 
 			private static final boolean weakCompareAndSetAcquire(ByteBuffer receiver, int index, int testValue, int newValue, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, false, false);
-/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetIntAcquire(be.base, be.offset, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapIntAcquire(be.base, be.offset, testValue, newValue);
-/*[ENDIF]*/				
 			}
 
 			private static final boolean weakCompareAndSetRelease(ByteBuffer receiver, int index, int testValue, int newValue, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, false, false);
-/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetIntRelease(be.base, be.offset, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapIntRelease(be.base, be.offset, testValue, newValue);
-/*[ENDIF]*/				
 			}
 
 			private static final boolean weakCompareAndSetPlain(ByteBuffer receiver, int index, int testValue, int newValue, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, false, false);
-/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetIntPlain(be.base, be.offset, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapInt(be.base, be.offset, testValue, newValue);
-/*[ENDIF]*/				
 			}
 
 			private static final int getAndSet(ByteBuffer receiver, int index, int value, VarHandle varHandle) {
@@ -832,10 +760,10 @@ final class ByteBufferViewVarHandle extends ViewVarHandle {
 				return _unsafe.getAndBitwiseXorIntRelease(be.base, be.offset, value);
 			}
 		}
-		
+
 		static final class OpLong extends ByteBufferViewVarHandleOperations {
 			private static final int BYTES = Long.BYTES;
-			
+
 			private static final long get(ByteBuffer receiver, int index, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, true, true);
 				return _unsafe.getLong(be.base, be.offset);
@@ -878,20 +806,12 @@ final class ByteBufferViewVarHandle extends ViewVarHandle {
 
 			private static final boolean compareAndSet(ByteBuffer receiver, int index, long testValue, long newValue, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, false, false);
-/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.compareAndSetLong(be.base, be.offset, testValue, newValue);
-/*[ELSE]
-				return _unsafe.compareAndSwapLong(be.base, be.offset, testValue, newValue);
-/*[ENDIF]*/				
 			}
 
 			private static final long compareAndExchange(ByteBuffer receiver, int index, long testValue, long newValue, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, false, false);
-/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.compareAndExchangeLong(be.base, be.offset, testValue, newValue);
-/*[ELSE]
-				return _unsafe.compareAndExchangeLongVolatile(be.base, be.offset, testValue, newValue);
-/*[ENDIF]*/				
 			}
 
 			private static final long compareAndExchangeAcquire(ByteBuffer receiver, int index, long testValue, long newValue, VarHandle varHandle) {
@@ -906,38 +826,22 @@ final class ByteBufferViewVarHandle extends ViewVarHandle {
 
 			private static final boolean weakCompareAndSet(ByteBuffer receiver, int index, long testValue, long newValue, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, false, false);
-/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetLongPlain(be.base, be.offset, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapLong(be.base, be.offset, testValue, newValue);
-/*[ENDIF]*/				
 			}
 
 			private static final boolean weakCompareAndSetAcquire(ByteBuffer receiver, int index, long testValue, long newValue, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, false, false);
-/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetLongAcquire(be.base, be.offset, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapLongAcquire(be.base, be.offset, testValue, newValue);
-/*[ENDIF]*/				
 			}
 
 			private static final boolean weakCompareAndSetRelease(ByteBuffer receiver, int index, long testValue, long newValue, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, false, false);
-/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetLongRelease(be.base, be.offset, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapLongRelease(be.base, be.offset, testValue, newValue);
-/*[ENDIF]*/				
 			}
 
 			private static final boolean weakCompareAndSetPlain(ByteBuffer receiver, int index, long testValue, long newValue, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, false, false);
-/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetLongPlain(be.base, be.offset, testValue, newValue);
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapLong(be.base, be.offset, testValue, newValue);
-/*[ENDIF]*/				
 			}
 
 			private static final long getAndSet(ByteBuffer receiver, int index, long value, VarHandle varHandle) {
@@ -1015,10 +919,10 @@ final class ByteBufferViewVarHandle extends ViewVarHandle {
 				return _unsafe.getAndBitwiseXorLongRelease(be.base, be.offset, value);
 			}
 		}
-		
+
 		static final class OpShort extends ByteBufferViewVarHandleOperations {
 			private static final int BYTES = Short.BYTES;
-			
+
 			private static final short get(ByteBuffer receiver, int index, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, true, true);
 				return _unsafe.getShort(be.base, be.offset);
@@ -1151,10 +1055,10 @@ final class ByteBufferViewVarHandle extends ViewVarHandle {
 				throw operationNotSupported(varHandle);
 			}
 		}
-		
+
 		static final class OpCharConvertEndian extends ByteBufferViewVarHandleOperations {
 			private static final int BYTES = Character.BYTES;
-			
+
 			private static final char get(ByteBuffer receiver, int index, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, true, true);
 				char result = _unsafe.getChar(be.base, be.offset);
@@ -1291,10 +1195,10 @@ final class ByteBufferViewVarHandle extends ViewVarHandle {
 				throw operationNotSupported(varHandle);
 			}
 		}
-		
+
 		static final class OpDoubleConvertEndian extends ByteBufferViewVarHandleOperations {
 			private static final int BYTES = Double.BYTES;
-			
+
 			private static final double get(ByteBuffer receiver, int index, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, true, true);
 				double result = _unsafe.getDouble(be.base, be.offset);
@@ -1341,20 +1245,12 @@ final class ByteBufferViewVarHandle extends ViewVarHandle {
 
 			private static final boolean compareAndSet(ByteBuffer receiver, int index, double testValue, double newValue, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, false, false);
-/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.compareAndSetDouble(be.base, be.offset, convertEndian(testValue), convertEndian(newValue));
-/*[ELSE]
-				return _unsafe.compareAndSwapDouble(be.base, be.offset, convertEndian(testValue), convertEndian(newValue));
-/*[ENDIF]*/				
 			}
 
 			private static final double compareAndExchange(ByteBuffer receiver, int index, double testValue, double newValue, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, false, false);
-/*[IF Sidecar19-SE-OpenJ9]*/				
 				double result = _unsafe.compareAndExchangeDouble(be.base, be.offset, convertEndian(testValue), convertEndian(newValue));
-/*[ELSE]
-				double result = _unsafe.compareAndExchangeDoubleVolatile(be.base, be.offset, convertEndian(testValue), convertEndian(newValue));
-/*[ENDIF]*/				
 				return convertEndian(result);
 			}
 
@@ -1372,38 +1268,22 @@ final class ByteBufferViewVarHandle extends ViewVarHandle {
 
 			private static final boolean weakCompareAndSet(ByteBuffer receiver, int index, double testValue, double newValue, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, false, false);
-/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetDoublePlain(be.base, be.offset, convertEndian(testValue), convertEndian(newValue));
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapDouble(be.base, be.offset, convertEndian(testValue), convertEndian(newValue));
-/*[ENDIF]*/				
 			}
 
 			private static final boolean weakCompareAndSetAcquire(ByteBuffer receiver, int index, double testValue, double newValue, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, false, false);
-/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetDoubleAcquire(be.base, be.offset, convertEndian(testValue), convertEndian(newValue));
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapDoubleAcquire(be.base, be.offset, convertEndian(testValue), convertEndian(newValue));
-/*[ENDIF]*/				
 			}
 
 			private static final boolean weakCompareAndSetRelease(ByteBuffer receiver, int index, double testValue, double newValue, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, false, false);
-/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetDoubleRelease(be.base, be.offset, convertEndian(testValue), convertEndian(newValue));
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapDoubleRelease(be.base, be.offset, convertEndian(testValue), convertEndian(newValue));
-/*[ENDIF]*/				
 			}
 
 			private static final boolean weakCompareAndSetPlain(ByteBuffer receiver, int index, double testValue, double newValue, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, false, false);
-/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetDoublePlain(be.base, be.offset, convertEndian(testValue), convertEndian(newValue));
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapDouble(be.base, be.offset, convertEndian(testValue), convertEndian(newValue));
-/*[ENDIF]*/
 			}
 
 			private static final double getAndSet(ByteBuffer receiver, int index, double value, VarHandle varHandle) {
@@ -1472,10 +1352,10 @@ final class ByteBufferViewVarHandle extends ViewVarHandle {
 				throw operationNotSupported(varHandle);
 			}
 		}
-		
+
 		static final class OpFloatConvertEndian extends ByteBufferViewVarHandleOperations {
 			private static final int BYTES = Float.BYTES;
-			
+
 			private static final float get(ByteBuffer receiver, int index, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, true, true);
 				float result = _unsafe.getFloat(be.base, be.offset);
@@ -1522,20 +1402,12 @@ final class ByteBufferViewVarHandle extends ViewVarHandle {
 
 			private static final boolean compareAndSet(ByteBuffer receiver, int index, float testValue, float newValue, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, false, false);
-/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.compareAndSetFloat(be.base, be.offset, convertEndian(testValue), convertEndian(newValue));
-/*[ELSE]
-				return _unsafe.compareAndSwapFloat(be.base, be.offset, convertEndian(testValue), convertEndian(newValue));
-/*[ENDIF]*/				
 			}
 
 			private static final float compareAndExchange(ByteBuffer receiver, int index, float testValue, float newValue, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, false, false);
-/*[IF Sidecar19-SE-OpenJ9]*/
 				float result = _unsafe.compareAndExchangeFloat(be.base, be.offset, convertEndian(testValue), convertEndian(newValue));
-/*[ELSE]
-				float result = _unsafe.compareAndExchangeFloatVolatile(be.base, be.offset, convertEndian(testValue), convertEndian(newValue));
-/*[ENDIF]*/				
 				return convertEndian(result);
 			}
 
@@ -1553,38 +1425,22 @@ final class ByteBufferViewVarHandle extends ViewVarHandle {
 
 			private static final boolean weakCompareAndSet(ByteBuffer receiver, int index, float testValue, float newValue, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, false, false);
-/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetFloatPlain(be.base, be.offset, convertEndian(testValue), convertEndian(newValue));
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapFloat(be.base, be.offset, convertEndian(testValue), convertEndian(newValue));
-/*[ENDIF]*/				
 			}
 
 			private static final boolean weakCompareAndSetAcquire(ByteBuffer receiver, int index, float testValue, float newValue, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, false, false);
-/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetFloatAcquire(be.base, be.offset, convertEndian(testValue), convertEndian(newValue));
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapFloatAcquire(be.base, be.offset, convertEndian(testValue), convertEndian(newValue));
-/*[ENDIF]*/				
 			}
 
 			private static final boolean weakCompareAndSetRelease(ByteBuffer receiver, int index, float testValue, float newValue, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, false, false);
-/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetFloatRelease(be.base, be.offset, convertEndian(testValue), convertEndian(newValue));
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapFloatRelease(be.base, be.offset, convertEndian(testValue), convertEndian(newValue));
-/*[ENDIF]*/				
 			}
 
 			private static final boolean weakCompareAndSetPlain(ByteBuffer receiver, int index, float testValue, float newValue, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, false, false);
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetFloatPlain(be.base, be.offset, convertEndian(testValue), convertEndian(newValue));
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapFloat(be.base, be.offset, convertEndian(testValue), convertEndian(newValue));
-/*[ENDIF]*/				
 			}
 
 			private static final float getAndSet(ByteBuffer receiver, int index, float value, VarHandle varHandle) {
@@ -1653,10 +1509,10 @@ final class ByteBufferViewVarHandle extends ViewVarHandle {
 				throw operationNotSupported(varHandle);
 			}
 		}
-		
+
 		static final class OpIntConvertEndian extends ByteBufferViewVarHandleOperations {
 			private static final int BYTES = Integer.BYTES;
-			
+
 			private static final int get(ByteBuffer receiver, int index, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, true, true);
 				int result = _unsafe.getInt(be.base, be.offset);
@@ -1703,20 +1559,12 @@ final class ByteBufferViewVarHandle extends ViewVarHandle {
 
 			private static final boolean compareAndSet(ByteBuffer receiver, int index, int testValue, int newValue, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, false, false);
-/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.compareAndSetInt(be.base, be.offset, convertEndian(testValue), convertEndian(newValue));
-/*[ELSE]
-				return _unsafe.compareAndSwapInt(be.base, be.offset, convertEndian(testValue), convertEndian(newValue));
-/*[ENDIF]*/				
 			}
 
 			private static final int compareAndExchange(ByteBuffer receiver, int index, int testValue, int newValue, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, false, false);
-/*[IF Sidecar19-SE-OpenJ9]*/
 				int result = _unsafe.compareAndExchangeInt(be.base, be.offset, convertEndian(testValue), convertEndian(newValue));
-/*[ELSE]
-				int result = _unsafe.compareAndExchangeIntVolatile(be.base, be.offset, convertEndian(testValue), convertEndian(newValue));
-/*[ENDIF]*/				
 				return convertEndian(result);
 			}
 
@@ -1734,38 +1582,22 @@ final class ByteBufferViewVarHandle extends ViewVarHandle {
 
 			private static final boolean weakCompareAndSet(ByteBuffer receiver, int index, int testValue, int newValue, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, false, false);
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetIntPlain(be.base, be.offset, convertEndian(testValue), convertEndian(newValue));
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapInt(be.base, be.offset, convertEndian(testValue), convertEndian(newValue));
-/*[ENDIF]*/				
 			}
 
 			private static final boolean weakCompareAndSetAcquire(ByteBuffer receiver, int index, int testValue, int newValue, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, false, false);
-/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetIntAcquire(be.base, be.offset, convertEndian(testValue), convertEndian(newValue));
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapIntAcquire(be.base, be.offset, convertEndian(testValue), convertEndian(newValue));
-/*[ENDIF]*/				
 			}
 
 			private static final boolean weakCompareAndSetRelease(ByteBuffer receiver, int index, int testValue, int newValue, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, false, false);
-/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetIntRelease(be.base, be.offset, convertEndian(testValue), convertEndian(newValue));
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapIntRelease(be.base, be.offset, convertEndian(testValue), convertEndian(newValue));
-/*[ENDIF]*/				
 			}
 
 			private static final boolean weakCompareAndSetPlain(ByteBuffer receiver, int index, int testValue, int newValue, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, false, false);
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetIntPlain(be.base, be.offset, convertEndian(testValue), convertEndian(newValue));
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapInt(be.base, be.offset, convertEndian(testValue), convertEndian(newValue));
-/*[ENDIF]*/				
 			}
 
 			private static final int getAndSet(ByteBuffer receiver, int index, int value, VarHandle varHandle) {
@@ -1858,10 +1690,10 @@ final class ByteBufferViewVarHandle extends ViewVarHandle {
 				return convertEndian(result);
 			}
 		}
-		
+
 		static final class OpLongConvertEndian extends ByteBufferViewVarHandleOperations {
 			private static final int BYTES = Long.BYTES;
-			
+
 			private static final long get(ByteBuffer receiver, int index, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, true, true);
 				long result = _unsafe.getLong(be.base, be.offset);
@@ -1908,20 +1740,12 @@ final class ByteBufferViewVarHandle extends ViewVarHandle {
 
 			private static final boolean compareAndSet(ByteBuffer receiver, int index, long testValue, long newValue, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, false, false);
-/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.compareAndSetLong(be.base, be.offset, convertEndian(testValue), convertEndian(newValue));
-/*[ELSE]
-				return _unsafe.compareAndSwapLong(be.base, be.offset, convertEndian(testValue), convertEndian(newValue));
-/*[ENDIF]*/				
 			}
 
 			private static final long compareAndExchange(ByteBuffer receiver, int index, long testValue, long newValue, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, false, false);
-/*[IF Sidecar19-SE-OpenJ9]*/
 				long result = _unsafe.compareAndExchangeLong(be.base, be.offset, convertEndian(testValue), convertEndian(newValue));
-/*[ELSE]
-				long result = _unsafe.compareAndExchangeLongVolatile(be.base, be.offset, convertEndian(testValue), convertEndian(newValue));
-/*[ENDIF]*/				
 				return convertEndian(result);
 			}
 
@@ -1939,38 +1763,22 @@ final class ByteBufferViewVarHandle extends ViewVarHandle {
 
 			private static final boolean weakCompareAndSet(ByteBuffer receiver, int index, long testValue, long newValue, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, false, false);
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetLongPlain(be.base, be.offset, convertEndian(testValue), convertEndian(newValue));
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapLong(be.base, be.offset, convertEndian(testValue), convertEndian(newValue));
-/*[ENDIF]*/				
 			}
 
 			private static final boolean weakCompareAndSetAcquire(ByteBuffer receiver, int index, long testValue, long newValue, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, false, false);
-/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetLongAcquire(be.base, be.offset, convertEndian(testValue), convertEndian(newValue));
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapLongAcquire(be.base, be.offset, convertEndian(testValue), convertEndian(newValue));
-/*[ENDIF]*/				
 			}
 
 			private static final boolean weakCompareAndSetRelease(ByteBuffer receiver, int index, long testValue, long newValue, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, false, false);
-/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetLongRelease(be.base, be.offset, convertEndian(testValue), convertEndian(newValue));
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapLongRelease(be.base, be.offset, convertEndian(testValue), convertEndian(newValue));
-/*[ENDIF]*/				
 			}
 
 			private static final boolean weakCompareAndSetPlain(ByteBuffer receiver, int index, long testValue, long newValue, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, false, false);
-/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetLongPlain(be.base, be.offset, convertEndian(testValue), convertEndian(newValue));
-/*[ELSE]
-				return _unsafe.weakCompareAndSwapLong(be.base, be.offset, convertEndian(testValue), convertEndian(newValue));
-/*[ENDIF]*/				
 			}
 
 			private static final long getAndSet(ByteBuffer receiver, int index, long value, VarHandle varHandle) {
@@ -2063,10 +1871,10 @@ final class ByteBufferViewVarHandle extends ViewVarHandle {
 				return convertEndian(result);
 			}
 		}
-		
+
 		static final class OpShortConvertEndian extends ByteBufferViewVarHandleOperations {
 			private static final int BYTES = Short.BYTES;
-			
+
 			private static final short get(ByteBuffer receiver, int index, VarHandle varHandle) {
 				BufferElement be = checkAndGetBufferElement(receiver, BYTES, index, true, true);
 				short result = _unsafe.getShort(be.base, be.offset);

@@ -27,34 +27,34 @@ package com.ibm.oti.shared;
  * provides methods to retrieve that information.
  */
 public class SharedClassCacheInfo {
-	
+
 	/**
-	 * Specifies a Java 5 cache. 
+	 * Specifies a Java 5 cache.
 	 */
 	static final public int JVMLEVEL_JAVA5 = 1;
 	/**
-	 * Specifies a Java 6 cache. 
+	 * Specifies a Java 6 cache.
 	 */
 	static final public int JVMLEVEL_JAVA6 = 2;
 	/**
-	 * Specifies a Java 7 cache. 
+	 * Specifies a Java 7 cache.
 	 */
 	static final public int JVMLEVEL_JAVA7 = 3;
 	/**
-	 * Specifies a Java 8 cache. 
+	 * Specifies a Java 8 cache.
 	 */
 	static final public int JVMLEVEL_JAVA8 = 4;
-	/*[IF Sidecar19-SE]*/
+	/*[IF JAVA_SPEC_VERSION >= 9]*/
 	/**
 	 * Specifies a Java 9 cache.
 	 */
 	static final public int JVMLEVEL_JAVA9 = 5;
-	/*[ENDIF] Sidecar19-SE */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 	/**
 	 * Specifies a 32-bit cache.
 	 */
 	static final public int ADDRESS_MODE_32 = 32;
-	
+
 	/**
 	 * Specifies a 64-bit cache.
 	 */
@@ -71,7 +71,7 @@ public class SharedClassCacheInfo {
 	 * The compressedRefs mode is unknown for the cache.
 	 */
 	static final public int COMPRESSED_REFS_UNKNOWN = -1;
-	
+
 	private String name;
 	private boolean isCompatible;
 	private boolean isPersistent;
@@ -86,7 +86,7 @@ public class SharedClassCacheInfo {
 	private int cacheType;
 	private long softMaxBytes;
 	private int layer;
-	
+
 	/**
 	 * Gets the cache name for the shared class cache.
 	 *
@@ -95,16 +95,16 @@ public class SharedClassCacheInfo {
 	public String getCacheName() {
 		return name;
 	}
-	
+
 	/**
-	 * Checks the compatibility of the shared class cache with this JVM. 
+	 * Checks the compatibility of the shared class cache with this JVM.
 	 *
 	 * @return		true if cache is compatible with this JVM, false otherwise.
 	 */
 	public boolean isCacheCompatible() {
 		return isCompatible;
 	}
-	
+
 	/**
 	 * Checks if the shared class cache is persistent.
 	 *
@@ -116,7 +116,7 @@ public class SharedClassCacheInfo {
 	public boolean isCachePersistent() {
 		return isPersistent;
 	}
-	
+
 	/**
 	 * Check the type of the shared class cache.
 	 *
@@ -127,28 +127,28 @@ public class SharedClassCacheInfo {
 	public int getCacheType() {
 		return cacheType;
 	}
-	
+
 	/**
-	 * Gets the OS shared memory ID associated with the shared class cache. 
+	 * Gets the OS shared memory ID associated with the shared class cache.
 	 *
-	 * @return		A valid value if cache is non-persistent and shared memory id is available, else -1. 
+	 * @return		A valid value if cache is non-persistent and shared memory id is available, else -1.
 	 */
 	public int getOSshmid() {
 		return osShmid;
 	}
-	
+
 	/**
-	 * Gets the OS semaphore ID associated with the shared class cache. 
+	 * Gets the OS semaphore ID associated with the shared class cache.
 	 *
-	 * @return		A valid value if cache is non-persistent and semaphore id is available, else -1. 
+	 * @return		A valid value if cache is non-persistent and semaphore id is available, else -1.
 	 */
 	public int getOSsemid() {
 		return osSemid;
 	}
-	
+
 	/**
 	 * Gets the time when the shared class cache was last detached.
-	 * 
+	 *
 	 * @return		Date, or null if last detach time is not available.
 	 */
 	public java.util.Date getLastDetach() {
@@ -158,57 +158,57 @@ public class SharedClassCacheInfo {
 			return new java.util.Date(lastDetach);
 		}
 	}
-	
+
 	/**
-	 * Gets the JVM level for the shared class cache.  
+	 * Gets the JVM level for the shared class cache.
 	/*[IF JAVA_SPEC_VERSION >= 10]
 	 * Starting from Java 10, the JVM LEVEL equals to the java version number on which the share class cache is created.
 	/*[ENDIF] JAVA_SPEC_VERSION >= 10
 	 *
 	 * @return		A JVMLEVEL constant.
-	 */					
+	 */
 	public int getCacheJVMLevel() {
 		return modLevel;
 	}
-	
+
 	/**
-	 * Gets the address mode for the shared class cache. 
+	 * Gets the address mode for the shared class cache.
 	 *
 	 * @return		Either {@link SharedClassCacheInfo#ADDRESS_MODE_32} or
-	 * 				{@link SharedClassCacheInfo#ADDRESS_MODE_64} 
-	 */			
+	 * 				{@link SharedClassCacheInfo#ADDRESS_MODE_64}
+	 */
 	public int getCacheAddressMode() {
 		final int addrModeMask = 0xFFFF;
 		return addrMode & addrModeMask;
 	}
-	
+
 	/**
 	 * Checks if the shared class cache is corrupt.
 	 *
-	 * @return		true if the cache is corrupt, false otherwise. 
-	 */		
+	 * @return		true if the cache is corrupt, false otherwise.
+	 */
 	public boolean isCacheCorrupt() {
 		return isCorrupt;
 	}
-	
+
 	/**
 	 * Gets total usable shared class cache size. Returns -1 if cache is incompatible.
 	 *
-	 * @return		Number of usable bytes in cache. 
-	 */		
+	 * @return		Number of usable bytes in cache.
+	 */
 	public long getCacheSize() {
 		return cacheSize;
 	}
-	
+
 	/**
 	 * Gets the amount of free bytes in the shared class cache. Returns -1 if cache is incompatible.
 	 *
 	 * @return		long
-	 */		
+	 */
 	public long getCacheFreeBytes() {
 		return freeBytes;
 	}
-	
+
 	/**
 	 * Get the soft limit for available space in the cache in bytes. Returns -1 if cache is incompatible or cache size if it is not set.
 	 *
@@ -217,19 +217,19 @@ public class SharedClassCacheInfo {
 	public long getCacheSoftMaxBytes() {
 		return softMaxBytes;
 	}
-	
+
 	/**
-	 * Get the compressedRefs mode for the shared class cache. 
+	 * Get the compressedRefs mode for the shared class cache.
 	 *
 	 * @return		Either {@link SharedClassCacheInfo#COMPRESSED_REFS} or
 	 * 				{@link SharedClassCacheInfo#NON_COMPRESSED_REFS} or
 	 * 				{@link SharedClassCacheInfo#COMPRESSED_REFS_UNKNOWN}
-	 */			
+	 */
 	public int getCacheCompressedRefsMode() {
 		final int compressedRefsMask = 0x10000;
 		final int noncompressedRefsMask = 0x20000;
 		int ret = NON_COMPRESSED_REFS;
-		
+
 		if (compressedRefsMask == (addrMode & compressedRefsMask)) {
 			ret = COMPRESSED_REFS;
 		} else if (noncompressedRefsMask == (addrMode & noncompressedRefsMask)) {
@@ -239,12 +239,12 @@ public class SharedClassCacheInfo {
 		}
 		return ret;
 	}
-	
+
 	/**
-	 * Get the layer number for the shared class cache. 
+	 * Get the layer number for the shared class cache.
 	 *
-	 * @return		The shared cache layer number or -1 if the shared cache does not have a layer number 
-	 */		
+	 * @return		The shared cache layer number or -1 if the shared cache does not have a layer number
+	 */
 	public int getCacheLayer() {
 		return layer;
 	}
@@ -266,17 +266,17 @@ public class SharedClassCacheInfo {
 	 * @param		cacheType		Cache type
 	 * @param		softMaxBytes	Soft limit for the available space in bytes
 	 * @param		layer			The layer number
-	 */		
+	 */
 	SharedClassCacheInfo(String name,
-						boolean isCompatible, 
-						boolean isPersistent, 
-						int osShmid, 
+						boolean isCompatible,
+						boolean isPersistent,
+						int osShmid,
 						int osSemid,
-						long lastDetach, 
-						int modLevel, 
-						int addrMode, 
-						boolean isCorrupt, 
-						long cacheSize, 
+						long lastDetach,
+						int modLevel,
+						int addrMode,
+						boolean isCorrupt,
+						long cacheSize,
 						long freeBytes,
 						int cacheType,
 						long softMaxBytes,

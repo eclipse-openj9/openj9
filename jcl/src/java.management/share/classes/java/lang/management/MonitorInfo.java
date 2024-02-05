@@ -74,7 +74,7 @@ public class MonitorInfo extends LockInfo {
 		/* MonitorInfoBase's constructor validates the arguments. */
 		baseInfo = new MonitorInfoBase(className, identityHashCode, stackDepth, stackFrame);
 	}
-	
+
 	MonitorInfo(MonitorInfoBase base) {
 		super(base);
 		baseInfo = base;
@@ -127,10 +127,10 @@ public class MonitorInfo extends LockInfo {
 	 *             to a <code>java.lang.StackTraceElement</code> which has the
 	 *             following attributes:
 	 *             <ul>
-/*[IF Sidecar19-SE]
+/*[IF JAVA_SPEC_VERSION >= 9]
 	 *             <li><code>moduleName</code>(<code>java.lang.String</code>)
 	 *             <li><code>moduleVersion</code>(<code>java.lang.String</code>)
-/*[ENDIF]
+/*[ENDIF] JAVA_SPEC_VERSION >= 9
 	 *             <li><code>className</code> (<code>java.lang.String</code>)
 	 *             <li><code>methodName</code> (<code>java.lang.String</code>)
 	 *             <li><code>fileName</code> (<code>java.lang.String</code>)

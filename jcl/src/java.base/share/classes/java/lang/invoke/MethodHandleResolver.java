@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar18-SE]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2020
  *
@@ -32,13 +32,13 @@ import com.ibm.oti.util.Msg;
 import com.ibm.oti.vm.VM;
 import com.ibm.oti.vm.VMLangAccess;
 
-/*[IF Sidecar19-SE]
+/*[IF JAVA_SPEC_VERSION >= 9]
 import jdk.internal.misc.Unsafe;
 import jdk.internal.reflect.ConstantPool;
-/*[ELSE]*/
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 import sun.misc.Unsafe;
 import sun.reflect.ConstantPool;
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 import com.ibm.jit.JITHelpers;
 
@@ -58,7 +58,7 @@ final class MethodHandleResolver {
 	static final Unsafe UNSAFE = Unsafe.getUnsafe();
 
 	static final JITHelpers JITHELPERS = JITHelpers.getHelpers();
-	
+
 	private static final int BSM_ARGUMENT_SIZE = Short.SIZE / Byte.SIZE;
 	private static final int BSM_ARGUMENT_COUNT_OFFSET = BSM_ARGUMENT_SIZE;
 	private static final int BSM_ARGUMENTS_OFFSET = BSM_ARGUMENT_SIZE * 2;
@@ -77,28 +77,28 @@ final class MethodHandleResolver {
 	private static final native int getCPTypeAt(Object internalConstantPool, int index);
 
 	/*
-	 * sun.reflect.ConstantPool doesn't have a getMethodTypeAt method.  This is the 
+	 * sun.reflect.ConstantPool doesn't have a getMethodTypeAt method.  This is the
 	 * equivalent for MethodType.
 	 */
 	private static final native MethodType getCPMethodTypeAt(Object internalConstantPool, int index);
 
 	/*
-	 * sun.reflect.ConstantPool doesn't have a getMethodHandleAt method.  This is the 
+	 * sun.reflect.ConstantPool doesn't have a getMethodHandleAt method.  This is the
 	 * equivalent for MethodHandle.
 	 */
 	private static final native MethodHandle getCPMethodHandleAt(Object internalConstantPool, int index);
 
-	
+
 	/**
 	 * Get the class name from a constant pool class element, which is located
 	 * at the specified <i>index</i> in <i>internalConstantPool</i>.
-	 * 
+	 *
 	 * @param   internalConstantPool the constant pool as an InternalConstantPool object
 	 * @param   index the constant pool index
-	 * 
+	 *
 	 * @return  instance of String which contains the class name or NULL in
 	 *          case of error
-	 * 
+	 *
 	 * @throws  NullPointerException if <i>internalConstantPool</i> is null
 	 * @throws  IllegalArgumentException if <i>index</i> has wrong constant pool type
 	 */
@@ -106,7 +106,7 @@ final class MethodHandleResolver {
 
 /*[IF JAVA_SPEC_VERSION >= 11]*/
 	/*
-	 * sun.reflect.ConstantPool doesn't have a getConstantDynamicAt method.  This is the 
+	 * sun.reflect.ConstantPool doesn't have a getConstantDynamicAt method.  This is the
 	 * equivalent for ConstantDynamic.
 	 */
 	private static final native Object getCPConstantDynamicAt(Object internalConstantPool, int index);
@@ -185,7 +185,7 @@ final class MethodHandleResolver {
 				throw new BootstrapMethodError(msg, e);
 			}
 		}
-		
+
 		return result;
 	}
 /*[ENDIF] JAVA_SPEC_VERSION >= 11*/
@@ -237,7 +237,7 @@ final class MethodHandleResolver {
 		return result;
 	}
 /*[ENDIF] !OPENJDK_METHODHANDLES*/
-	
+
 	@SuppressWarnings("unused")
 	private static final Object resolveInvokeDynamic(long j9class, String name, String methodDescriptor, long bsmData) throws Throwable {
 /*[IF OPENJDK_METHODHANDLES]*/
@@ -333,7 +333,7 @@ final class MethodHandleResolver {
 			}
 		}
 		return (Object)result;
-/*[ELSE] OPENJDK_METHODHANDLES*/	
+/*[ELSE] OPENJDK_METHODHANDLES*/
 		MethodHandle result = null;
 		MethodType type = null;
 
@@ -343,7 +343,7 @@ final class MethodHandleResolver {
 			VMLangAccess access = VM.getVMLangAccess();
 			Object internalConstantPool = access.getInternalConstantPoolFromJ9Class(j9class);
 			Class<?> classObject = getClassFromJ9Class(j9class);
-			
+
 			type = MethodTypeHelper.vmResolveFromMethodDescriptorString(methodDescriptor, access.getClassloader(classObject), null);
 			final MethodHandles.Lookup lookup = new MethodHandles.Lookup(classObject, false);
 			try {
@@ -366,7 +366,7 @@ final class MethodHandleResolver {
 			staticArgs[BSM_LOOKUP_ARGUMENT_INDEX] = lookup;
 			staticArgs[BSM_NAME_ARGUMENT_INDEX] = name;
 			staticArgs[BSM_TYPE_ARGUMENT_INDEX] = type;
-		
+
 			/* Static optional arguments */
 			int bsmTypeArgCount = bsm.type().parameterCount();
 			for (int i = 0; i < bsmArgCount; i++) {
@@ -398,29 +398,29 @@ final class MethodHandleResolver {
 /*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 		} catch(Throwable e) {
 
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 			if (e instanceof Error) {
 				throw e;
 			}
-/*[ENDIF] Sidecar19-SE */
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 			if (type == null) {
 				throw new BootstrapMethodError(e);
 			}
-			
+
 			/* create an exceptionHandle with appropriate drop adapter and install that */
 			try {
 				MethodHandle thrower = MethodHandles.throwException(type.returnType(), BootstrapMethodError.class);
 				MethodHandle constructor = IMPL_LOOKUP.findConstructor(BootstrapMethodError.class, MethodType.methodType(void.class, Throwable.class));
 				result = MethodHandles.foldArguments(thrower, constructor.bindTo(e));
-				result = MethodHandles.dropArguments(result, 0, type.parameterList()); 
+				result = MethodHandles.dropArguments(result, 0, type.parameterList());
 			} catch (IllegalAccessException iae) {
 				throw new Error(iae);
 			} catch (NoSuchMethodException nsme) {
 				throw new Error(nsme);
 			}
 		}
-		
+
 		return result;
 /*[ENDIF] OPENJDK_METHODHANDLES*/
 	}
@@ -428,10 +428,10 @@ final class MethodHandleResolver {
 /*[IF OPENJDK_METHODHANDLES & (JAVA_SPEC_VERSION >= 11)]*/
 	/**
 	 * Check access to the parameter and return classes within incoming MethodType.
-	 * 
+	 *
 	 * @param lookup the Lookup object used for the access check.
 	 * @param type the incoming MethodType.
-	 * 
+	 *
 	 * @throws IllegalAccessError if an inaccessible class is found.
 	 */
 	private static final void inaccessibleTypeCheck(Lookup lookup, MethodType type) throws IllegalAccessError {
@@ -523,7 +523,7 @@ final class MethodHandleResolver {
 				lookup.accessCheckArgRetTypes(type);
 				result = lookup.findStatic(referenceClazz, name, type);
 				break;
-			case 7: /* invokeSpecial */ 
+			case 7: /* invokeSpecial */
 				type = MethodTypeHelper.vmResolveFromMethodDescriptorString(typeDescriptor, loader, null);
 				lookup.accessCheckArgRetTypes(type);
 				result = lookup.findSpecial(referenceClazz, name, type, currentClass);
@@ -551,9 +551,9 @@ final class MethodHandleResolver {
 		}
 /*[ENDIF] OPENJDK_METHODHANDLES*/
 	}
-	
+
 /*[IF !OPENJDK_METHODHANDLES]*/
-	/* Convert the field type descriptor into a MethodType so we can reuse the parsing logic in 
+	/* Convert the field type descriptor into a MethodType so we can reuse the parsing logic in
 	 * #fromMethodDescriptorString().  The verifier checks to ensure that the typeDescriptor is
 	 * a valid field descriptor so adding the "()V" around it is valid.
 	 */
@@ -564,7 +564,7 @@ final class MethodHandleResolver {
 	}
 /*[ENDIF] !OPENJDK_METHODHANDLES*/
 
-	
+
 	/**
 	 * Gets class object from RAM class address
 	 * @param j9class RAM class address
@@ -581,7 +581,7 @@ final class MethodHandleResolver {
 		Objects.requireNonNull(classObject);
 		return classObject;
 	}
-	
+
 	private static final Class<?> fromFieldDescriptorString(String fieldDescriptor, ClassLoader classLoader) {
 		ArrayList<Class<?>> classList = new ArrayList<Class<?>>();
 		int length = fieldDescriptor.length();
@@ -597,7 +597,7 @@ final class MethodHandleResolver {
 
 		return classList.get(0);
 	}
-	
+
 	/**
 	 * Retrieve a static argument of the bootstrap method at argIndex from constant pool
 	 * @param access
@@ -606,7 +606,7 @@ final class MethodHandleResolver {
 	 * @param bsm bootstrap method
 	 * @param bsmArgs starting address of bootstrap arguments in the RAM class call site
 	 * @param bsmTypeArgCount number of bootstrap arguments
-	 * @param argIndex index of bsm argument starting from zero. Argument should be in addition to the first three 
+	 * @param argIndex index of bsm argument starting from zero. Argument should be in addition to the first three
 	 * 	mandatory arguments (3+): MethodHandles.Lookup, String, MethodType
 	 * @return additional argument from the constant pool
 	 * @throws Throwable any throwable will be handled by the caller
@@ -615,7 +615,7 @@ final class MethodHandleResolver {
 		/* Check if we need to treat the last parameter specially when handling primitives.
 		 * The type of the varargs array will determine how primitive ints from the constantpool
 		 * get boxed: {Boolean, Byte, Short, Character or Integer}.
-		 */ 
+		 */
 		boolean treatLastArgAsVarargs = bsm.isVarargsCollector();
 
 		/* The ConstantPool natives expect an InternalConstantPool to extract the j9constantpool
@@ -643,7 +643,7 @@ final class MethodHandleResolver {
 			if (treatLastArgAsVarargs && (staticArgIndex >= (bsmTypeArgCount - 1))) {
 				argClass = bsm.type().lastParameterType().getComponentType(); /* varargs component type */
 			} else {
-				/* Verify that a call to MethodType.parameterType will not cause an ArrayIndexOutOfBoundsException. 
+				/* Verify that a call to MethodType.parameterType will not cause an ArrayIndexOutOfBoundsException.
 				* If the number of static arguments is greater than the number of argument slots in the bsm
 				* leave argClass unset. A more meaningful user error WrongMethodTypeException will be thrown later on.
 				*/
@@ -687,31 +687,31 @@ final class MethodHandleResolver {
 		default:
 			// Do nothing. The null check below will throw the appropriate exception.
 		}
-		
+
 		cpEntry.getClass();	// Implicit NPE
 		return cpEntry;
 	}
-	
+
 	/**
 	 * Retrieve the class name of the constant pool class element located at the specified
 	 * index in internalConstantPool. Then, throw a NoClassDefFoundError with the cause
-	 * set as ClassNotFoundException. The message of NoClassDefFoundError and 
+	 * set as ClassNotFoundException. The message of NoClassDefFoundError and
 	 * ClassNotFoundException contains the name of the class, which couldn't be found.
-	 * 
+	 *
 	 * @param   internalConstantPool the constant pool as an InternalConstantPool object
 	 * @param   index the integer value of the constant pool index
-	 * 
+	 *
 	 * @return  Throwable to prevent any fall through case
-	 * 
+	 *
 	 * @throws  NoClassDefFoundError with the cause set as ClassNotFoundException
 	 */
 	private static final Throwable throwNoClassDefFoundError(Object internalConstantPool, int index) {
 		String className = getCPClassNameAt(internalConstantPool, index);
 		NoClassDefFoundError noClassDefFoundError = new NoClassDefFoundError(className);
 		noClassDefFoundError.initCause(new ClassNotFoundException(className));
-		throw noClassDefFoundError;	
+		throw noClassDefFoundError;
 	}
-	
+
 	static long getJ9ClassFromClass(Class<?> c) {
 		if (JITHELPERS.is32Bit()) {
 			return JITHELPERS.getJ9ClassFromClass32(c);

@@ -26,19 +26,19 @@ import java.lang.management.PlatformLoggingMXBean;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.Optional;
-/*[ELSE]*/
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 import java.util.logging.LoggingMXBean;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 import javax.management.ObjectName;
 
@@ -48,13 +48,13 @@ import javax.management.ObjectName;
  * @since 1.5
  */
 public final class LoggingMXBeanImpl
-/*[IF !Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION == 8]*/
 		extends javax.management.StandardMBean
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION == 8 */
 		implements
-/*[IF !Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION == 8]*/
 			LoggingMXBean,
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION == 8 */
 			PlatformLoggingMXBean {
 
 	private static final LoggingMXBeanImpl instance = createInstance();
@@ -63,7 +63,7 @@ public final class LoggingMXBeanImpl
 	@SuppressWarnings("removal")
 	/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 	private static LoggingMXBeanImpl createInstance() {
-		/*[IF Sidecar19-SE]*/
+		/*[IF JAVA_SPEC_VERSION >= 9]*/
 		final Optional<Module> java_logging = ModuleLayer.boot().findModule("java.logging"); //$NON-NLS-1$
 
 		if (!java_logging.isPresent()) {
@@ -82,12 +82,12 @@ public final class LoggingMXBeanImpl
 		};
 
 		return AccessController.doPrivileged(action);
-		/*[ELSE]
+		/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 		return new LoggingMXBeanImpl();
-		/*[ENDIF]*/
+		/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 	}
 
-	/*[IF Sidecar19-SE]*/
+	/*[IF JAVA_SPEC_VERSION >= 9]*/
 	private final Field logManager_LOGGING_MXBEAN_NAME;
 	private final Method logManager_getLogManager;
 	private final Method logManager_getLogger;
@@ -100,7 +100,7 @@ public final class LoggingMXBeanImpl
 	private final Method logger_getName;
 	private final Method logger_getParent;
 	private final Method logger_setLevel;
-	/*[ENDIF]*/
+	/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 	/**
 	 * the object name
@@ -110,7 +110,7 @@ public final class LoggingMXBeanImpl
 	/**
 	 * Constructor intentionally private to prevent instantiation by others.
 	 */
-	/*[IF Sidecar19-SE]*/
+	/*[IF JAVA_SPEC_VERSION >= 9]*/
 	private LoggingMXBeanImpl(Module logging) throws Exception {
 		super();
 
@@ -133,11 +133,11 @@ public final class LoggingMXBeanImpl
 		logger_getParent = loggerClass.getMethod("getParent"); //$NON-NLS-1$
 		logger_setLevel = loggerClass.getMethod("setLevel", levelClass); //$NON-NLS-1$
 	}
-	/*[ELSE]*/
+	/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 	private LoggingMXBeanImpl() {
 		super(PlatformLoggingMXBean.class, true);
 	}
-	/*[ENDIF]*/
+	/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 	/**
 	 * {@inheritDoc}
@@ -145,16 +145,16 @@ public final class LoggingMXBeanImpl
 	@Override
 	public ObjectName getObjectName() {
 		if (objectName == null) {
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 			try {
 				objectName = ManagementUtils.createObjectName((String) logManager_LOGGING_MXBEAN_NAME.get(null));
 			} catch (IllegalAccessException e) {
 				/* The field is public so this should never happen. */
 				throw new InternalError(e);
 			}
-/*[ELSE]*/
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 			objectName = ManagementUtils.createObjectName(LogManager.LOGGING_MXBEAN_NAME);
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 		}
 		return objectName;
 	}
@@ -175,26 +175,26 @@ public final class LoggingMXBeanImpl
 	public String getLoggerLevel(String loggerName) {
 		String result = null;
 
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 		try {
 			Object logger = getLoggerFromName(loggerName);
-/*[ELSE]
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 			Logger logger = LogManager.getLogManager().getLogger(loggerName);
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 			if (logger != null) {
 				// The named Logger exists. Now attempt to obtain its log level.
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 				Object level = logger_getLevel.invoke(logger);
-/*[ELSE]
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 				Level level = logger.getLevel();
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 				if (level != null) {
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 					result = (String) level_getName.invoke(level);
-/*[ELSE]
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 					result = level.getName();
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 				} else {
 					// A null return from getLevel() means that the Logger
 					// is inheriting its log level from an ancestor. Return an
@@ -202,11 +202,11 @@ public final class LoggingMXBeanImpl
 					result = ""; //$NON-NLS-1$
 				}
 			}
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 		} catch (Exception e) {
 			throw handleError(e);
 		}
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 		return result;
 	}
@@ -220,16 +220,16 @@ public final class LoggingMXBeanImpl
 		List<String> result = new ArrayList<>();
 		Enumeration<?> enumeration;
 
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 		try {
 			Object logManagerInstance = logManager_getLogManager.invoke(null);
 			enumeration = (Enumeration<?>) logManager_getLoggerNames.invoke(logManagerInstance);
 		} catch (Exception e) {
 			throw handleError(e);
 		}
-/*[ELSE]*/
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 		enumeration = LogManager.getLogManager().getLoggerNames();
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 		if (enumeration != null) {
 			while (enumeration.hasMoreElements()) {
 				result.add((String) enumeration.nextElement());
@@ -246,36 +246,36 @@ public final class LoggingMXBeanImpl
 	public String getParentLoggerName(String loggerName) {
 		String result = null;
 
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 		try {
 			Object logger = getLoggerFromName(loggerName);
-/*[ELSE]
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 			Logger logger = LogManager.getLogManager().getLogger(loggerName);
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 			if (logger != null) {
 				// The named Logger exists. Now attempt to obtain its parent.
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 				Object parent = logger_getParent.invoke(logger);
-/*[ELSE]
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 				Logger parent = logger.getParent();
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 				if (parent != null) {
 					// There is a parent
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 					result = (String) logger_getName.invoke(parent);
-/*[ELSE]
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 					result = parent.getName();
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 				} else {
 					// logger must be the root Logger
 					result = ""; //$NON-NLS-1$
 				}
 			}
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 		} catch (Exception e) {
 			throw handleError(e);
 		}
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 		return result;
 	}
@@ -285,23 +285,23 @@ public final class LoggingMXBeanImpl
 	 */
 	@Override
 	public void setLoggerLevel(String loggerName, String levelName) {
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 		final Object logger;
 		try {
 			logger = getLoggerFromName(loggerName);
 		} catch (Exception e) {
 			throw handleError(e);
 		}
-/*[ELSE]
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 		final Logger logger = LogManager.getLogManager().getLogger(loggerName);
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 		if (logger != null) {
 			// The named Logger exists. Now attempt to set its level. The
 			// below attempt to parse a Level from the supplied levelName
 			// will throw an IllegalArgumentException if levelName is not
 			// a valid level name.
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 			try {
 				Object newLevel = null;
 				if (levelName != null) {
@@ -311,13 +311,13 @@ public final class LoggingMXBeanImpl
 			} catch (Exception e) {
 				throw handleError(e);
 			}
-/*[ELSE]*/
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 			Level newLevel = null;
 			if (levelName != null) {
 				newLevel = Level.parse(levelName);
 			}
 			logger.setLevel(newLevel);
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 		} else {
 			// Named Logger does not exist.
 			/*[MSG "K05E7", "Unable to find Logger with name {0}."]*/
@@ -325,7 +325,7 @@ public final class LoggingMXBeanImpl
 		}
 	}
 
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 	private Object getLoggerFromName(String loggerName) throws Exception {
 		Object logManagerInstance = logManager_getLogManager.invoke(null);
 		return logManager_getLogger.invoke(logManagerInstance, loggerName);
@@ -347,6 +347,6 @@ public final class LoggingMXBeanImpl
 
 		throw new InternalError(error.toString(), error);
 	}
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 }

@@ -36,9 +36,9 @@ package java.lang;
  */
 public class ThreadGroup implements Thread.UncaughtExceptionHandler {
 
-	private String name;					// Name of this ThreadGroup		
+	private String name;					// Name of this ThreadGroup
 	private int maxPriority = Thread.MAX_PRIORITY;		// Maximum priority for Threads inside this ThreadGroup
-	ThreadGroup parent;			// The ThreadGroup to which this ThreadGroup belongs			
+	ThreadGroup parent;			// The ThreadGroup to which this ThreadGroup belongs
 	/*[PR 93952]*/
 	int numThreads;
 	private Thread[] childrenThreads = new Thread[5];		// The Threads this ThreadGroup contains
@@ -55,8 +55,8 @@ public class ThreadGroup implements Thread.UncaughtExceptionHandler {
 	// Locked when using the childrenThreads field
 	private Object childrenThreadsLock = new ChildrenThreadsLock();
 
-	private boolean isDaemon;			// Whether this ThreadGroup is a daemon ThreadGroup or not	
-	private boolean isDestroyed;			// Whether this ThreadGroup has already been destroyed or not	
+	private boolean isDaemon;			// Whether this ThreadGroup is a daemon ThreadGroup or not
+	private boolean isDestroyed;			// Whether this ThreadGroup has already been destroyed or not
 	/*[PR CMVC 99507] Do not destroy daemon group if threads have been added but not started */
 	private int addedNotStartedThreads;	// Threads that have been added but not yet started
 
@@ -80,7 +80,7 @@ private ThreadGroup() {
  *
  * @see			java.lang.Thread#currentThread
  */
- 
+
 public ThreadGroup(String name) {
 	this(Thread.currentThread().getThreadGroup(), name);
 }
@@ -138,13 +138,13 @@ public int activeCount() {
 				count++;
 			}
 		}
-		
+
 	}
 	synchronized ( this.childrenGroupsLock ) { // Lock this subpart of the tree as we walk
 		for (int i = 0; i < numGroups; i++)
 			count += this.childrenGroups[i].activeCount();
 	}
-	return count;	
+	return count;
 }
 /**
  * Returns the number of ThreadGroups which are children of
@@ -152,7 +152,7 @@ public int activeCount() {
  *
  * @return		Number of children ThreadGroups
  */
- 
+
 public int activeGroupCount() {
 	int count = 0;
 	synchronized (this.childrenGroupsLock) { // Lock this subpart of the tree as we walk
@@ -160,7 +160,7 @@ public int activeGroupCount() {
 			// One for this group & the subgroups
 			count += 1 + this.childrenGroups[i].activeGroupCount();
 	}
-	return count;	
+	return count;
 }
 
 final void checkNewThread(Thread thread) throws IllegalThreadStateException {
@@ -184,7 +184,7 @@ final void checkNewThread(Thread thread) throws IllegalThreadStateException {
  *
  * @see			#remove(java.lang.Thread)
  */
- 
+
 final void add(Thread thread) throws IllegalThreadStateException {
 	synchronized (this.childrenThreadsLock) {
 		/*[PR 1FJC24P] testing state has to be done inside synchronized */
@@ -300,20 +300,20 @@ private void destroyImpl(){
 			if (numThreads > 0)
 /*[MSG "K0057", "Has threads"]*/
 				throw new IllegalThreadStateException(com.ibm.oti.util.Msg.getString("K0057")); //$NON-NLS-1$
-		
+
 			int toDestroy = numGroups;
 			// Call recursively for subgroups
 			for (int i = 0 ; i < toDestroy; i++) {
-				// We always get the first element - remember, 
+				// We always get the first element - remember,
 				// when the child dies it removes itself from our collection. See removeFromParent().
 				this.childrenGroups[0].destroy();
 			}
 		/*[PR CMVC 137999] move enclosing braces to avoid deadlock (allow parent to be removed outside of locks) */
 		}
-		// Now that the ThreadGroup is really destroyed it can be tagged as so			
+		// Now that the ThreadGroup is really destroyed it can be tagged as so
 		/*[PR 1FJJ0N7] Comment and code have to be consistent */
 		this.isDestroyed = true;
-	}		
+	}
 
 }
 /**
@@ -321,13 +321,13 @@ private void destroyImpl(){
  * if the receiver is a daemon ThreadGroup.
  *
  * @see			#destroy
- * @see			#setDaemon 
- * @see			#isDaemon 
+ * @see			#setDaemon
+ * @see			#isDaemon
  */
- 
+
 private void destroyIfEmptyDaemon() {
 	boolean shouldRemoveFromParent = false;
-	
+
 	// Has to be non-destroyed daemon to make sense
 	synchronized (this.childrenThreadsLock) {
 		/*[PR 1FJC24P] testing state has to be done inside synchronized */
@@ -337,14 +337,14 @@ private void destroyIfEmptyDaemon() {
 				numThreads == 0)
 		{
 			synchronized (this.childrenGroupsLock) {
-				if (numGroups == 0) { 
+				if (numGroups == 0) {
 					destroyImpl();
 					shouldRemoveFromParent = true;
 				}
 			}
 		}
 	}
-	
+
 	if (shouldRemoveFromParent) {
 		removeFromParent();
 	}
@@ -371,7 +371,7 @@ private void removeFromParent() {
  * @return		How many Threads were copied over
  *
  */
- 
+
 public int enumerate(Thread[] threads) {
 	return enumerate(threads, true);
 }
@@ -389,7 +389,7 @@ public int enumerate(Thread[] threads) {
  * @return		How many Threads were copied over
  *
  */
- 
+
 public int enumerate(Thread[] threads, boolean recurse) {
 	return enumerateGeneric(threads, recurse, 0, true);
 }
@@ -403,7 +403,7 @@ public int enumerate(Thread[] threads, boolean recurse) {
  * @return		How many ThreadGroups were copied over
  *
  */
- 
+
 public int enumerate(ThreadGroup[] groups) {
 	return enumerate(groups, true);
 }
@@ -421,7 +421,7 @@ public int enumerate(ThreadGroup[] groups) {
  * @return		How many ThreadGroups were copied over
  *
  */
- 
+
 public int enumerate(ThreadGroup[] groups, boolean recurse) {
 	return enumerateGeneric(groups, recurse, 0, false);
 }
@@ -439,7 +439,7 @@ public int enumerate(ThreadGroup[] groups, boolean recurse) {
  * @param		enumeratingThreads		Indicates whether we are enumerating Threads or ThreadGroups
  * @return		How many elements were enumerated/copied over
  */
- 
+
 private int enumerateGeneric(Object[] enumeration, boolean recurse, int enumerationIndex, boolean enumeratingThreads) {
 	checkAccess();
 
@@ -448,7 +448,7 @@ private int enumerateGeneric(Object[] enumeration, boolean recurse, int enumerat
 	synchronized (syncLock) { // Lock this subpart of the tree as we walk
 		/*[PR CMVC 94112] ArrayIndexOutOfBoundsException when enumerating Threads.*/
 		Object[] immediateCollection = enumeratingThreads ? (Object[])childrenThreads : (Object[])childrenGroups;
-		
+
 		for (int i = enumeratingThreads ? numThreads : numGroups; --i >= 0;) {
 			if (!enumeratingThreads || ((Thread)immediateCollection[i]).isAlive()) {
 				if (enumerationIndex >= enumeration.length) return enumerationIndex;
@@ -483,7 +483,7 @@ private int enumerateGeneric(Object[] enumeration, boolean recurse, int enumerat
  * @param		enumeratingThreads		Indicates whether we are enumerating Threads or ThreadGroups
  * @return		How many elements were enumerated/copied over
  */
- 
+
 int enumerateDeadThreads(Object[] enumeration, int enumerationIndex) {
 	boolean recurse = true;
 	boolean enumeratingThreads = true;
@@ -493,7 +493,7 @@ int enumerateDeadThreads(Object[] enumeration, int enumerationIndex) {
 	synchronized (syncLock) { // Lock this subpart of the tree as we walk
 		/*[PR CMVC 94112] ArrayIndexOutOfBoundsException when enumerating Threads.*/
 		Object[] immediateCollection = enumeratingThreads ? (Object[])childrenThreads : (Object[])childrenGroups;
-		
+
 		for (int i = enumeratingThreads ? numThreads : numGroups; --i >= 0;) {
 			if (!enumeratingThreads || !((Thread)immediateCollection[i]).isAlive()) {
 				if (enumerationIndex >= enumeration.length) return enumerationIndex;
@@ -521,7 +521,7 @@ int enumerateDeadThreads(Object[] enumeration, int enumerationIndex) {
  *
  * @see			#setMaxPriority
  */
- 
+
 public final int getMaxPriority() {
 	return maxPriority;
 }
@@ -530,7 +530,7 @@ public final int getMaxPriority() {
  *
  * @return		the receiver's name (a java.lang.String)
  */
- 
+
 public final String getName() {
 	return name;
 }
@@ -541,21 +541,21 @@ public final String getName() {
  * @return		the parent ThreadGroup
  *
  */
- 
+
  public final ThreadGroup getParent() {
 	/*[PR 97314]*/
 	if (parent != null)
 		parent.checkAccess();
 	else {
-		/*[IF] user created threadgroups can set the name to be system, however in 
+		/*[IF] user created threadgroups can set the name to be system, however in
 		 * the test below the name hasn't been set yet if the parent is null, and a
-		 * nullpointerexception was thrown during threadgroup creation. */  
-		/*[ENDIF]*/		
+		 * nullpointerexception was thrown during threadgroup creation. */
+		/*[ENDIF]*/
 		/*[MSG "K0550", "current thread cannot modify this thread group"]*/
 		if (this.name == null || !this.name.equalsIgnoreCase("system")) //$NON-NLS-1$
 			throw new SecurityException(com.ibm.oti.util.Msg.getString("K0550")); //$NON-NLS-1$
 	}
-	
+
 	return parent;
 }
 /**
@@ -582,7 +582,7 @@ public final void interrupt() {
  *
  * @return		if the receiver is a daemon ThreadGroup
  *
- * @see			#setDaemon 
+ * @see			#setDaemon
  * @see			#destroy
 /*[IF JAVA_SPEC_VERSION >= 16]
  * @deprecated
@@ -620,7 +620,7 @@ public boolean isDestroyed() {
  * Threads and ThreadGroups in the receiver (and recursively). Proper indentation
  * is done to suggest the nesting of groups inside groups and threads inside groups.
  */
- 
+
 public void list() {
 	System.out.println();	// We start in a fresh line
 	list(0);
@@ -664,7 +664,7 @@ private void list(int levels) {
  * @return		if the receiver is parent of the ThreadGroup passed as parameter
  *
  */
- 
+
  public final boolean parentOf(ThreadGroup g) {
 	while (g != null) {
 		if (this == g) return true;
@@ -686,7 +686,7 @@ private void list(int levels) {
 
 	/*[PR JAZZ 86608] Hang because ThreadGroup.remove synchronizes childrenThreadsLock and then synchronizes ThreadGroup itself */
 	boolean isThreadGroupEmpty = false;
-	
+
 	synchronized (this.childrenThreadsLock) {
 		for (int i=0; i<numThreads; i++) {
 			/*[PR CMVC 109438] Dead Threads not removed from ThreadGroups */
@@ -702,7 +702,7 @@ private void list(int levels) {
 			}
 		}
 	}
-    
+
 	/*[PR CMVC 114880] ThreadGroup is not notified when all threads complete */
     if (isThreadGroupEmpty) {
 		synchronized (this) {
@@ -772,7 +772,7 @@ public final void resume() {
  *
  * @throws		SecurityException 	if <code>checkAccess()</code> for the parent group fails with a SecurityException
  *
- * @see			#isDaemon 
+ * @see			#isDaemon
  * @see			#destroy
 /*[IF JAVA_SPEC_VERSION >= 16]
  * @deprecated
@@ -792,7 +792,7 @@ public final void setDaemon(boolean isDaemon) {
  * One can never change the maximum priority of a ThreadGroup to be
  * higher than it was. Such an attempt will not result in an exception, it will
  * simply leave the ThreadGroup with its current maximum priority.
- * 
+ *
  * @param		newMax		the new maximum priority to be set
  *
  * @throws		SecurityException 			if <code>checkAccess()</code> fails with a SecurityException
@@ -813,7 +813,7 @@ public final void setMaxPriority(int newMax) {
 		this.maxPriority = parentPriority <= newMax ? parentPriority : newMax;
 		synchronized (this.childrenGroupsLock) { // Lock this subpart of the tree as we walk
 			for (int i = 0 ; i < numGroups; i++)
-				this.childrenGroups[i].setMaxPriority(newMax); 
+				this.childrenGroups[i].setMaxPriority(newMax);
 		}
 	}
 }
@@ -826,7 +826,7 @@ public final void setMaxPriority(int newMax) {
  * @see			#getParent
  * @see			#parentOf
  */
- 
+
 private void setParent(ThreadGroup parent) {
 	if (parent != null) parent.add(this);
 	this.parent = parent;
@@ -846,12 +846,10 @@ private void setParent(ThreadGroup parent) {
  */
 /*[IF JAVA_SPEC_VERSION >= 16]*/
 @Deprecated(forRemoval = true, since = "1.2")
-/*[ELSE]*/
-/*[IF Sidecar19-SE]*/
+/*[ELSEIF JAVA_SPEC_VERSION >= 9] JAVA_SPEC_VERSION >= 16 */
 @Deprecated(forRemoval = false, since = "1.2")
-/*[ELSE] Sidecar19-SE */
+/*[ELSE] JAVA_SPEC_VERSION >= 16 */
 @Deprecated
-/*[ENDIF] Sidecar19-SE */
 /*[ENDIF] JAVA_SPEC_VERSION >= 16 */
 public final void stop() {
 	/*[PR CMVC 73122] Stop the running thread last */

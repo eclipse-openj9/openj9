@@ -96,10 +96,10 @@ public boolean equals(Object o) {
  *					The virtual machine ignores any exceptions
  *					which are thrown during finalization.
  *
-/*[IF Sidecar19-SE]
+/*[IF JAVA_SPEC_VERSION >= 9]
  * @deprecated  May cause performance issues, deadlocks and hangs.
  *              Errors in  finalizers can lead to resource leaks.
-/*[ENDIF]
+/*[ENDIF] JAVA_SPEC_VERSION >= 9
  */
 /*[IF]
 	We leave this one in even if no Thread flag because the user can still

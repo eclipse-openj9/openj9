@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar19-SE]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 9]*/
 package com.ibm.oti.jvmtests;
 
 /*******************************************************************************
@@ -25,7 +25,7 @@ package com.ibm.oti.jvmtests;
 
 public class SupportJVM {
 	public native static long GetNanoTimeAdjustment(long time);
-	
+
 	static {
 		System.loadLibrary("j9vmtest");
 	}

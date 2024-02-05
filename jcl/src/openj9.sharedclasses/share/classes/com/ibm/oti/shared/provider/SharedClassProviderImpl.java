@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar19-SE & SharedClasses]*/
+/*[INCLUDE-IF (JAVA_SPEC_VERSION >= 9) & SharedClasses]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2017
  *
