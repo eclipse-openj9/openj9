@@ -696,9 +696,9 @@ void JNICALL Java_jdk_internal_misc_Unsafe_freeDBBMemory(JNIEnv *env, jobject re
 jlong JNICALL Java_jdk_internal_misc_Unsafe_reallocateDBBMemory(JNIEnv *env, jobject receiver, jlong address, jlong size);
 
 void JNICALL Java_jdk_internal_misc_Unsafe_copySwapMemory0(JNIEnv *env, jobject receiver, jobject obj1, jlong size1, jobject obj2, jlong size2, jlong size3, jlong size4);
-jobject JNICALL Java_jdk_internal_misc_Unsafe_compareAndExchangeObjectVolatile(JNIEnv *env, jobject receiver, jobject obj1, jlong size, jobject obj2, jobject obj3);
-jint JNICALL Java_jdk_internal_misc_Unsafe_compareAndExchangeIntVolatile(JNIEnv *env, jobject receiver, jobject obj1, jlong size1, jint size2, jint size3);
-jlong JNICALL Java_jdk_internal_misc_Unsafe_compareAndExchangeLongVolatile(JNIEnv *env, jobject receiver, jobject obj1, jlong size1, jlong size2, jlong size3);
+jint JNICALL Java_jdk_internal_misc_Unsafe_compareAndExchangeInt(JNIEnv *env, jobject receiver, jobject obj1, jlong size1, jint size2, jint size3);
+jlong JNICALL Java_jdk_internal_misc_Unsafe_compareAndExchangeLong(JNIEnv *env, jobject receiver, jobject obj1, jlong size1, jlong size2, jlong size3);
+jobject JNICALL Java_jdk_internal_misc_Unsafe_compareAndExchangeObject(JNIEnv *env, jobject receiver, jobject obj1, jlong size, jobject obj2, jobject obj3);
 
 /* vector natives */
 jint JNICALL
