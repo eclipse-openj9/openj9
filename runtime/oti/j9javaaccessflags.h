@@ -149,22 +149,27 @@
 #define J9_JAVA_CLASS_FINALIZER_CHECK_MASK (J9AccClassFinalizeNeeded | J9AccClassOwnableSynchronizer | J9AccClassContinuation)
 #define J9_JAVA_MODIFIERS_SPECIAL_OBJECT (J9AccClassFinalizeNeeded | J9AccClassReferenceMask)
 
-/* static field flags (classAndFlags) */
-#define J9StaticFieldRefBaseType 0x1
-#define J9StaticFieldRefDouble 0x2
-#define J9StaticFieldRefVolatile 0x4
-#define J9StaticFieldRefBoolean 0x8
+/* Inform DDR that the static field ref constants support proper narrowing  */
+#define J9PutfieldNarrowing 1
+
+/* static field flags (low 8 bits of flagsAndClass) - low 3 bits are the field type for primitibve types */
+#define J9StaticFieldRefFlagBits 0xFF
+#define J9StaticFieldRefTypeMask 0x7
+#define J9StaticFieldRefTypeObject 0x0
+#define J9StaticFieldRefTypeBoolean 0x1
+#define J9StaticFieldRefTypeByte 0x2
+#define J9StaticFieldRefTypeChar 0x3
+#define J9StaticFieldRefTypeShort 0x4
+#define J9StaticFieldRefTypeIntFloat 0x5
+#define J9StaticFieldRefTypeLongDouble 0x6
+#define J9StaticFieldRefTypeUnused_0x7 0x7
+#define J9StaticFieldRefVolatile 0x8
 #define J9StaticFieldRefPutResolved 0x10
 #define J9StaticFieldRefFinal 0x20
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 #define J9StaticFieldIsNullRestricted 0x40
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
-/* flag mask for classAndFlags*/
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-#define J9StaticFieldRefFlagBits 0x7F
-#else /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
-#define J9StaticFieldRefFlagBits 0x3F
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+#define J9StaticFieldRefUnused_0x80 0x80
 
 /* ImplicitCreation attribute flags */
 #define J9AccImplicitCreateHasDefaultValue 0x1
