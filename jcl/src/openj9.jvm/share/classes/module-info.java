@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar19-SE]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 9]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2017
  *
@@ -23,7 +23,7 @@
 
 /**
  * Defines API for creating diagnostic dump files, querying and controlling OS logging,
- * querying Java heap and OS memory stats, and controlling and logging trace file output. 
+ * querying Java heap and OS memory stats, and controlling and logging trace file output.
  */
 @SuppressWarnings("module")
 module openj9.jvm {

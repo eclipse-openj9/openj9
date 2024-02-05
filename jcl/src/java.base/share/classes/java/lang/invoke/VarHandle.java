@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar19-SE & !OPENJDK_METHODHANDLES]*/
+/*[INCLUDE-IF (JAVA_SPEC_VERSION >= 9) & !OPENJDK_METHODHANDLES]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2017
  *
@@ -32,11 +32,7 @@ import java.util.ArrayList;
 /*[IF JAVA_SPEC_VERSION >= 12]*/
 import java.util.Optional;
 /*[ENDIF] JAVA_SPEC_VERSION >= 12 */
-/*[IF Sidecar19-SE]
 import jdk.internal.misc.Unsafe;
-/*[ELSE]*/
-import sun.misc.Unsafe;
-/*[ENDIF]*/
 /*[IF JAVA_SPEC_VERSION >= 12]*/
 import java.lang.constant.ClassDesc;
 import java.lang.constant.Constable;
@@ -56,14 +52,14 @@ import java.lang.reflect.Method;
 /*[ENDIF] JAVA_SPEC_VERSION >= 14 */
 
 /**
- * Dynamically typed reference to a field, allowing read and write operations, 
+ * Dynamically typed reference to a field, allowing read and write operations,
  * both atomic and with/without memory barriers. See {@link AccessMode} for
  * supported operations.
- * 
+ *
  * VarHandle instances are created through the MethodHandles factory API.
- * 
+ *
  */
-public abstract class VarHandle extends VarHandleInternal 
+public abstract class VarHandle extends VarHandleInternal
 /*[IF JAVA_SPEC_VERSION >= 12]*/
 	implements Constable
 /*[ENDIF] JAVA_SPEC_VERSION >= 12 */
@@ -76,157 +72,157 @@ public abstract class VarHandle extends VarHandleInternal
 		 * The {@link AccessMode} corresponding to {@link VarHandle#get(Object...) get(Object...)}.
 		 */
 		GET("get", AccessType.GET, false), //$NON-NLS-1$
-		
+
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#set(Object...) set(Object...)}.
 		 */
 		SET("set", AccessType.SET, true), //$NON-NLS-1$
-		
+
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#getVolatile(Object...) getVolatile(Object...)}.
 		 */
 		GET_VOLATILE("getVolatile", AccessType.GET, false), //$NON-NLS-1$
-		
+
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#setVolatile(Object...) setVolatile(Object...)}.
 		 */
 		SET_VOLATILE("setVolatile", AccessType.SET, true), //$NON-NLS-1$
-		
+
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#getOpaque(Object...) getOpaque(Object...)}.
 		 */
 		GET_OPAQUE("getOpaque", AccessType.GET, false), //$NON-NLS-1$
-		
+
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#setOpaque(Object...) setOpaque(Object...)}.
 		 */
 		SET_OPAQUE("setOpaque", AccessType.SET, true), //$NON-NLS-1$
-		
+
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#getAcquire(Object...) getAcquire(Object...)}.
 		 */
 		GET_ACQUIRE("getAcquire", AccessType.GET, false), //$NON-NLS-1$
-		
+
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#setRelease(Object...) setRelease(Object...)}.
 		 */
 		SET_RELEASE("setRelease", AccessType.SET, true), //$NON-NLS-1$
-		
+
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#compareAndSet(Object...) compareAndSet(Object...)}.
 		 */
 		COMPARE_AND_SET("compareAndSet", AccessType.COMPARE_AND_SET, true), //$NON-NLS-1$
-		
+
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#compareAndExchange(Object...) compareAndExchange(Object...)}.
 		 */
 		COMPARE_AND_EXCHANGE("compareAndExchange", AccessType.COMPARE_AND_EXCHANGE, true), //$NON-NLS-1$
-		
+
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#compareAndExchangeAcquire(Object...) compareAndExchangeAcquire(Object...)}.
 		 */
 		COMPARE_AND_EXCHANGE_ACQUIRE("compareAndExchangeAcquire", AccessType.COMPARE_AND_EXCHANGE, true), //$NON-NLS-1$
-		
+
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#compareAndExchangeRelease(Object...) compareAndExchangeRelease(Object...)}.
 		 */
 		COMPARE_AND_EXCHANGE_RELEASE("compareAndExchangeRelease", AccessType.COMPARE_AND_EXCHANGE, true), //$NON-NLS-1$
-		
+
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#weakCompareAndSet(Object...) weakCompareAndSet(Object...)}.
 		 */
 		WEAK_COMPARE_AND_SET("weakCompareAndSet", AccessType.COMPARE_AND_SET, true), //$NON-NLS-1$
-		
+
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#weakCompareAndSetAcquire(Object...) weakCompareAndSetAcquire(Object...)}.
 		 */
 		WEAK_COMPARE_AND_SET_ACQUIRE("weakCompareAndSetAcquire", AccessType.COMPARE_AND_SET, true), //$NON-NLS-1$
-		
+
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#weakCompareAndSetRelease(Object...) weakCompareAndSetRelease(Object...)}.
 		 */
 		WEAK_COMPARE_AND_SET_RELEASE("weakCompareAndSetRelease", AccessType.COMPARE_AND_SET, true), //$NON-NLS-1$
-		
+
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#weakCompareAndSetPlain(Object...) weakCompareAndSetPlain(Object...)}.
 		 */
 		WEAK_COMPARE_AND_SET_PLAIN("weakCompareAndSetPlain", AccessType.COMPARE_AND_SET, true), //$NON-NLS-1$
-		
+
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#getAndSet(Object...) getAndSet(Object...)}.
 		 */
 		GET_AND_SET("getAndSet", AccessType.GET_AND_UPDATE, true), //$NON-NLS-1$
-		
+
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#getAndSetAcquire(Object...) getAndSetAcquire(Object...)}.
 		 */
 		GET_AND_SET_ACQUIRE("getAndSetAcquire", AccessType.GET_AND_UPDATE, true), //$NON-NLS-1$
-		
+
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#getAndSetRelease(Object...) getAndSetRelease(Object...)}.
 		 */
 		GET_AND_SET_RELEASE("getAndSetRelease", AccessType.GET_AND_UPDATE, true), //$NON-NLS-1$
-		
+
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#getAndAdd(Object...) getAndAdd(Object...)}.
 		 */
 		GET_AND_ADD("getAndAdd", AccessType.GET_AND_UPDATE, true), //$NON-NLS-1$
-		
+
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#getAndAddAcquire(Object...) getAndAddAcquire(Object...)}.
 		 */
 		GET_AND_ADD_ACQUIRE("getAndAddAcquire", AccessType.GET_AND_UPDATE, true), //$NON-NLS-1$
-		
+
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#getAndAddRelease(Object...) getAndAddRelease(Object...)}.
 		 */
 		GET_AND_ADD_RELEASE("getAndAddRelease", AccessType.GET_AND_UPDATE, true), //$NON-NLS-1$
-		
+
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#getAndBitwiseAnd(Object...) getAndBitwiseAnd(Object...)}.
 		 */
 		GET_AND_BITWISE_AND("getAndBitwiseAnd", AccessType.GET_AND_UPDATE, true), //$NON-NLS-1$
-		
+
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#getAndBitwiseAndAcquire(Object...) getAndBitwiseAndAcquire(Object...)}.
 		 */
 		GET_AND_BITWISE_AND_ACQUIRE("getAndBitwiseAndAcquire", AccessType.GET_AND_UPDATE, true), //$NON-NLS-1$
-		
+
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#getAndBitwiseAndRelease(Object...) getAndBitwiseAndRelease(Object...)}.
 		 */
 		GET_AND_BITWISE_AND_RELEASE("getAndBitwiseAndRelease", AccessType.GET_AND_UPDATE, true), //$NON-NLS-1$
-		
+
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#getAndBitwiseOr(Object...) getAndBitwiseOr(Object...)}.
 		 */
 		GET_AND_BITWISE_OR("getAndBitwiseOr", AccessType.GET_AND_UPDATE, true), //$NON-NLS-1$
-		
+
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#getAndBitwiseOrAcquire(Object...) getAndBitwiseOrAcquire(Object...)}.
 		 */
 		GET_AND_BITWISE_OR_ACQUIRE("getAndBitwiseOrAcquire", AccessType.GET_AND_UPDATE, true), //$NON-NLS-1$
-		
+
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#getAndBitwiseOrRelease(Object...) getAndBitwiseOrRelease(Object...)}.
 		 */
 		GET_AND_BITWISE_OR_RELEASE("getAndBitwiseOrRelease", AccessType.GET_AND_UPDATE, true), //$NON-NLS-1$
-		
+
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#getAndBitwiseXor(Object...) getAndBitwiseXor(Object...)}.
 		 */
 		GET_AND_BITWISE_XOR("getAndBitwiseXor", AccessType.GET_AND_UPDATE, true), //$NON-NLS-1$
-		
+
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#getAndBitwiseXorAcquire(Object...) getAndBitwiseXorAcquire(Object...)}.
 		 */
 		GET_AND_BITWISE_XOR_ACQUIRE("getAndBitwiseXorAcquire", AccessType.GET_AND_UPDATE, true), //$NON-NLS-1$
-		
+
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#getAndBitwiseXorRelease(Object...) getAndBitwiseXorRelease(Object...)}.
 		 */
 		GET_AND_BITWISE_XOR_RELEASE("getAndBitwiseXorRelease", AccessType.GET_AND_UPDATE, true); //$NON-NLS-1$
-		
+
 		AccessType at;
 		boolean isSetter;
 		private String methodName;
@@ -244,7 +240,7 @@ public abstract class VarHandle extends VarHandleInternal
 			this.at = signatureType;
 			this.isSetter = isSetter;
 		}
-		
+
 		/**
 		 * @return The name of the method associated with this AccessMode.
 		 */
@@ -254,7 +250,7 @@ public abstract class VarHandle extends VarHandleInternal
 
 		/**
 		 * Gets the AccessMode associated with the provided method name.
-		 * 
+		 *
 		 * @param methodName The name of the method associated with the AccessMode being requested.
 		 * @return The AccessMode associated with the provided method name.
 		 */
@@ -268,7 +264,7 @@ public abstract class VarHandle extends VarHandleInternal
 			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0633", methodName)); //$NON-NLS-1$
 		}
 	}
-	
+
 	enum AccessType {
 		GET(Object.class),
 		SET(void.class),
@@ -286,11 +282,11 @@ public abstract class VarHandle extends VarHandleInternal
 
 		/**
 		 * Gets the MethodType associated with the AccessType.
-		 * 
+		 *
 		 * This method gets invoked by the derived VarHandle classes through accessModeTypeUncached.
-		 * 
+		 *
 		 * OpenJ9 only uses it to retrieve the receiver class, which is not available from VarForm.
-		 * 
+		 *
 		 * @param receiver class of the derived VarHandle.
 		 * @param type is the field type or value type.
 		 * @param args is the list of intermediate argument classes in the derived VarHandle's
@@ -336,7 +332,7 @@ public abstract class VarHandle extends VarHandleInternal
 			return MethodType.methodType(returnType, paramList);
 		}
 	}
-	
+
 	static final Unsafe _unsafe = Unsafe.getUnsafe();
 	static final Lookup _lookup = Lookup.IMPL_LOOKUP;
 
@@ -350,7 +346,7 @@ public abstract class VarHandle extends VarHandleInternal
 				ArrayIndexOutOfBoundsException> AIOOBE_SUPPLIER = null;
 	VarForm vform = null;
 /*[ENDIF] JAVA_SPEC_VERSION >= 14 */
-	
+
 /*[IF JAVA_SPEC_VERSION >= 15]*/
 	MethodHandle[] handleTable;
 /*[ELSE]*/
@@ -366,8 +362,8 @@ public abstract class VarHandle extends VarHandleInternal
 /*[ENDIF] JAVA_SPEC_VERSION >= 16 */
 
 	/**
-	 * Constructs a generic VarHandle instance. 
-	 * 
+	 * Constructs a generic VarHandle instance.
+	 *
 	 * @param fieldType The type of the field referenced by this VarHandle.
 	 * @param coordinateTypes An array of the argument types required to utilize the access modes on this VarHandle.
 	 * @param handleTable An array of MethodHandles referencing the methods corresponding to this VarHandle's access modes.
@@ -415,7 +411,7 @@ public abstract class VarHandle extends VarHandleInternal
 			/* Direct VarHandle. */
 			AccessMode[] accessModes = AccessMode.values();
 			int numAccessModes = accessModes.length;
-	
+
 			/* The first argument in AccessType.GET MethodType is the receiver class. */
 			Class<?> receiverActual = accessModeTypeUncached(
 					/*[IF JAVA_SPEC_VERSION >= 16]*/
@@ -426,7 +422,7 @@ public abstract class VarHandle extends VarHandleInternal
 				).parameterType(0);
 
 			Class<?> receiverVarForm = varForm.methodType_table[AccessType.GET.ordinal()].parameterType(0);
-			
+
 			/* Specify the exact operation method types if the actual receiver doesn't match the
 			 * receiver derived from VarForm.
 			 */
@@ -434,10 +430,10 @@ public abstract class VarHandle extends VarHandleInternal
 			if (receiverActual != receiverVarForm) {
 				operationMTsExact = new MethodType[numAccessModes];
 			}
-			
+
 			MethodType[] operationMTs = new MethodType[numAccessModes];
 			Class<?> operationsClass = null;
-	
+
 			for (int i = 0; i < numAccessModes; i++) {
 				MemberName memberName = varForm.memberName_table[i];
 				if (memberName != null) {
@@ -453,29 +449,29 @@ public abstract class VarHandle extends VarHandleInternal
 					}
 				}
 			}
-	
+
 			MethodType getter = operationMTs[AccessMode.GET.ordinal()];
 			MethodType setter = operationMTs[AccessMode.SET.ordinal()];
-			
+
 			if (operationMTsExact != null) {
 				getter = operationMTsExact[AccessMode.GET.ordinal()];
 				setter = operationMTsExact[AccessMode.SET.ordinal()];
 			}
-	
+
 			this.fieldType = setter.parameterType(setter.parameterCount() - 1);
-			
+
 			/* The first VarHandle parameter type should be removed from the getter in order to derive
-			 * the coordinate types. 
+			 * the coordinate types.
 			 */
 			Class<?>[] getterParams = getter.parameterArray();
 			this.coordinateTypes = Arrays.copyOfRange(getterParams, 1, getterParams.length);
-			
+
 			if (operationMTsExact != null) {
 				this.handleTable = populateMHsJEP370(operationsClass, operationMTs, operationMTsExact);
 			} else {
 				this.handleTable = populateMHsJEP370(operationsClass, operationMTs, operationMTs);
 			}
-			
+
 			this.modifiers = 0;
 			this.vform = varForm;
 		}
@@ -483,7 +479,7 @@ public abstract class VarHandle extends VarHandleInternal
 
 	/**
 	 * This is derived from populateMHs in order to support the OpenJDK VarHandle operations classes, which
-	 * don't extend the VarHandleOperations class. 
+	 * don't extend the VarHandleOperations class.
 	 *
 	 * @param operationsClass the class which has all AccessMode methods defined.
 	 * @param lookupTypes the method types for the AccessMode methods in the operationsClass.
@@ -526,7 +522,7 @@ public abstract class VarHandle extends VarHandleInternal
 	 * Generate a MethodHandle which translates:
 	 *     FROM {Receiver, Intermediate ..., Value, VarHandle}ReturnType
 	 *     TO   {VarHandle, Receiver, Intermediate ..., Value}ReturnType
-	 *     
+	 *
 	 * @param methodHandle to be permuted.
 	 * @return the adapter MethodHandle which performs the translation.
 	 */
@@ -572,13 +568,13 @@ public abstract class VarHandle extends VarHandleInternal
 		int parameterCount = permuteMethodType.parameterCount();
 		Class<?>[] params = permuteMethodType.parameterArray();
 		int[] reorder = new int[parameterCount];
-		
+
 		if (parameterCount > 0) {
 			permuteMethodType = permuteMethodType.changeParameterType(0, params[parameterCount - 1]);
 			for (int i = 1; i < parameterCount; i++) {
 				permuteMethodType = permuteMethodType.changeParameterType(i, params[i - 1]);
 			}
-			
+
 			/**
 			 * reorder specifies the mapping between PermuteType and HandleType.
 			 * reorder = {1, 2, ..., parameterCount - 1, 0}
@@ -588,7 +584,7 @@ public abstract class VarHandle extends VarHandleInternal
 				reorder[i] = i + 1;
 			}
 		}
-		
+
 		return MethodHandles.permuteArguments(methodHandle, permuteMethodType, reorder);
 	}
 
@@ -597,7 +593,7 @@ public abstract class VarHandle extends VarHandleInternal
 	 *
 	 * @param target the target VarHandle for the Indirect VarHandle.
 	 * @param handleFactory used to transform an AccessMode MethodHandle accordingly.
-	 * 
+	 *
 	 * @return a MethodHandle array which is used to initialize the handleTable.
 	 */
 	static MethodHandle[] populateMHsJEP383(VarHandle target, BiFunction<AccessMode, MethodHandle, MethodHandle> handleFactory) {
@@ -640,19 +636,19 @@ public abstract class VarHandle extends VarHandleInternal
 		/*[MSG "K0627", "Expected override of this method."]*/
 		throw new InternalError(com.ibm.oti.util.Msg.getString("K0627")); //$NON-NLS-1$
 	}
-	
+
 	String getFieldName() {
 		/*[MSG "K0627", "Expected override of this method."]*/
 		throw new InternalError(com.ibm.oti.util.Msg.getString("K0627")); //$NON-NLS-1$
 	}
-	
+
 	int getModifiers() {
 		return modifiers;
 	}
-	
+
 	/**
 	 * Get the type of the field this {@link VarHandle} refers to.
-	 * 
+	 *
 	 * @return The field type
 	 */
 	/*[IF JAVA_SPEC_VERSION >= 15]*/
@@ -662,13 +658,13 @@ public abstract class VarHandle extends VarHandleInternal
 	/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 		return this.fieldType;
 	}
-	
+
 	/**
 	 * Different parameters are required in order to access the field referenced
-	 * by this {@link VarHandle} depending on the type of the {@link VarHandle}, 
+	 * by this {@link VarHandle} depending on the type of the {@link VarHandle},
 	 * e.g. instance field, static field, or array element. This method provides
 	 * a list of the access parameters for this {@link VarHandle} instance.
-	 * 
+	 *
 	 * @return The parameters required to access the field.
 	 */
 	/*[IF JAVA_SPEC_VERSION >= 15]*/
@@ -681,9 +677,9 @@ public abstract class VarHandle extends VarHandleInternal
 
 /*[IF JAVA_SPEC_VERSION >= 12]*/
 	/**
-	 * Returns the nominal descriptor of this VarHandle instance, or an empty Optional 
+	 * Returns the nominal descriptor of this VarHandle instance, or an empty Optional
 	 * if construction is not possible.
-	 * 
+	 *
 	 * @return Optional with a nominal descriptor of VarHandle instance
 	 */
 	public Optional<VarHandleDesc> describeConstable() {
@@ -693,7 +689,7 @@ public abstract class VarHandle extends VarHandleInternal
 
 	/**
 	 * Returns a text representation of the VarHandle instance.
-	 * 
+	 *
 	 * @return String representation of VarHandle instance
 	 */
 	@Override
@@ -707,11 +703,11 @@ public abstract class VarHandle extends VarHandleInternal
 
 	/**
 	 * Each {@link AccessMode}, e.g. get and set, requires different parameters
-	 * in addition to the {@link VarHandle#coordinateTypes() coordinateTypes()}. 
+	 * in addition to the {@link VarHandle#coordinateTypes() coordinateTypes()}.
 	 * This method provides the {@link MethodType} for a specific {@link AccessMode},
 	 * including the {@link VarHandle#coordinateTypes() coordinateTypes()}.
-	 * 
-	 * @param accessMode The {@link AccessMode} to get the {@link MethodType} for. 
+	 *
+	 * @param accessMode The {@link AccessMode} to get the {@link MethodType} for.
 	 * @return The {@link MethodType} corresponding to the provided {@link AccessMode}.
 	 */
 	public final MethodType accessModeType(AccessMode accessMode) {
@@ -734,11 +730,11 @@ public abstract class VarHandle extends VarHandleInternal
 		}
 		return modifiedType;
 	}
-	
+
 	/**
 	 * This is a helper method to allow sub-class ViewVarHandle provide its own implementation
 	 * while making isAccessModeSupported(accessMode) final to satisfy signature tests.
-	 * 
+	 *
 	 * @param accessMode The {@link AccessMode} to check support for.
 	 * @return A boolean value indicating whether the {@link AccessMode} is supported.
 	 */
@@ -789,23 +785,23 @@ public abstract class VarHandle extends VarHandleInternal
 			throw new InternalError("Invalid AccessMode"); //$NON-NLS-1$
 		}
 	}
-	
+
 	/**
-	 * Not all AccessMode are supported for all {@link VarHandle} instances, e.g. 
-	 * because of the field type and/or field modifiers. This method indicates whether 
+	 * Not all AccessMode are supported for all {@link VarHandle} instances, e.g.
+	 * because of the field type and/or field modifiers. This method indicates whether
 	 * a specific {@link AccessMode} is supported by this {@link VarHandle} instance.
-	 * 
+	 *
 	 * @param accessMode The {@link AccessMode} to check support for.
 	 * @return A boolean value indicating whether the {@link AccessMode} is supported.
 	 */
 	public final boolean isAccessModeSupported(AccessMode accessMode) {
 		return isAccessModeSupportedHelper(accessMode);
 	}
-	
+
 	/**
 	 * This method creates a {@link MethodHandle} for a specific {@link AccessMode}.
 	 * The {@link MethodHandle} is bound to this {@link VarHandle} instance.
-	 * 
+	 *
 	 * @param accessMode The {@link AccessMode} to create a {@link MethodHandle} for.
 	 * @return A {@link MethodHandle} for the specified {@link AccessMode}, bound to
 	 * 			this {@link VarHandle} instance.
@@ -856,15 +852,15 @@ public abstract class VarHandle extends VarHandleInternal
 			mh = mh.asType(MethodType.methodType(mt.returnType()));
 			mh = MethodHandles.dropArguments(mh, 0, mt.ptypes());
 		}
-		
+
 		return mh;
 	}
-	
+
 	private final static void throwUnsupportedOperationException() {
 		/*[MSG "K0629", "Modification access modes are not allowed on final fields."]*/
 		throw new UnsupportedOperationException(com.ibm.oti.util.Msg.getString("K0629")); //$NON-NLS-1$
 	}
-	
+
 	/**
 	 * Inserts a complete memory fence, ensuring that no loads/stores before this
 	 * fence are reordered with any loads/stores after the fence.
@@ -872,16 +868,16 @@ public abstract class VarHandle extends VarHandleInternal
 	public static void fullFence() {
 		_unsafe.fullFence();
 	}
-	
+
 	/**
 	 * Inserts an acquire memory fence, ensuring that no loads before this fence
-	 * are reordered with any loads/stores after the fence. 
+	 * are reordered with any loads/stores after the fence.
 	 */
 	public static void acquireFence() {
 		// TODO: loadLoad + loadStore
 		_unsafe.loadFence();
 	}
-	
+
 	/**
 	 * Inserts a release memory fence, ensuring that no loads and stores before
 	 * this fence are reordered with any stores after the fence.
@@ -890,7 +886,7 @@ public abstract class VarHandle extends VarHandleInternal
 		// TODO: storeStore + loadStore
 		_unsafe.storeFence();
 	}
-	
+
 	/**
 	 * Inserts a load memory fence, ensuring that no loads before the fence are
 	 * reordered with any loads after the fence.
@@ -898,7 +894,7 @@ public abstract class VarHandle extends VarHandleInternal
 	public static void loadLoadFence() {
 		_unsafe.loadLoadFence();
 	}
-	
+
 	/**
 	 * Inserts a store memory fence, ensuring that no stores before the fence are
 	 * reordered with any stores after the fence.
@@ -906,402 +902,402 @@ public abstract class VarHandle extends VarHandleInternal
 	public static void storeStoreFence() {
 		_unsafe.storeStoreFence();
 	}
-	
+
 	/*[IF ]*/
 	/* Methods with native send target */
 	/*[ENDIF]*/
 	/**
-	 * Gets the value of the field referenced by this {@link VarHandle}. 
+	 * Gets the value of the field referenced by this {@link VarHandle}.
 	 * This is a non-volatile operation.
-	 * 
+	 *
 	 * @param args The arguments for this operation are determined by the field type
-	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()}) 
+	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()})
 	 * 				and the access parameters (see {@link VarHandle#coordinateTypes() coordinateTypes()}).
 	 * @return The value stored in the field
 	 */
 	public final native @PolymorphicSignature Object get(Object... args);
-	
+
 	/**
-	 * Sets the value of the field referenced by this {@link VarHandle}. 
+	 * Sets the value of the field referenced by this {@link VarHandle}.
 	 * This is a non-volatile operation.
-	 * 
+	 *
 	 * @param args The arguments for this operation are determined by the field type
-	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()}) 
+	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()})
 	 * 				and the access parameters (see {@link VarHandle#coordinateTypes() coordinateTypes()}).
 	 */
 	public final native @PolymorphicSignature void set(Object... args);
-	
+
 	/**
 	 * Atomically gets the value of the field referenced by this {@link VarHandle}.
-	 * 
+	 *
 	 * @param args The arguments for this operation are determined by the field type
-	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()}) 
+	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()})
 	 * 				and the access parameters (see {@link VarHandle#coordinateTypes() coordinateTypes()}).
 	 * @return The value stored in the field
 	 */
 	public final native @PolymorphicSignature Object getVolatile(Object... args);
-	
+
 	/**
 	 * Atomically sets the value of the field referenced by this {@link VarHandle}.
-	 * 
+	 *
 	 * @param args The arguments for this operation are determined by the field type
-	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()}) 
+	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()})
 	 * 				and the access parameters (see {@link VarHandle#coordinateTypes() coordinateTypes()}).
 	 */
 	public final native @PolymorphicSignature void setVolatile(Object... args);
-	
+
 	/**
 	 * Gets the value of the field referenced by this {@link VarHandle}.
 	 * The operation is in program order, but does enforce ordering with respect to other threads.
-	 * 
+	 *
 	 * @param args The arguments for this operation are determined by the field type
-	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()}) 
+	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()})
 	 * 				and the access parameters (see {@link VarHandle#coordinateTypes() coordinateTypes()}).
 	 * @return The value stored in the field
 	 */
 	public final native @PolymorphicSignature Object getOpaque(Object... args);
-	
+
 	/**
 	 * Sets the value of the field referenced by this {@link VarHandle}.
 	 * The operation is in program order, but does enforce ordering with respect to other threads.
-	 * 
+	 *
 	 * @param args The arguments for this operation are determined by the field type
-	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()}) 
+	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()})
 	 * 				and the access parameters (see {@link VarHandle#coordinateTypes() coordinateTypes()}).
 	 */
 	public final native @PolymorphicSignature void setOpaque(Object... args);
-	
+
 	/**
 	 * Gets the value of the field referenced by this {@link VarHandle} using acquire semantics.
 	 * Preceding loads will not be reordered with subsequent loads/stores.
-	 * 
+	 *
 	 * @param args The arguments for this operation are determined by the field type
-	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()}) 
+	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()})
 	 * 				and the access parameters (see {@link VarHandle#coordinateTypes() coordinateTypes()}).
 	 * @return The value stored in the field
 	 */
 	public final native @PolymorphicSignature Object getAcquire(Object... args);
-		
+
 	/**
 	 * Sets the value of the field referenced by this {@link VarHandle} using acquire semantics.
 	 * Preceding loads and stores will not be reordered after this access.
-	 * 
+	 *
 	 * @param args The arguments for this operation are determined by the field type
-	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()}) 
+	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()})
 	 * 				and the access parameters (see {@link VarHandle#coordinateTypes() coordinateTypes()}).
 	 */
 	public final native @PolymorphicSignature void setRelease(Object... args);
-	
+
 	/**
 	 * Atomically sets the value of the field referenced by this {@link VarHandle} if the
 	 * field value before this operation equaled the expected value.
 	 * The get operation has the memory semantics of {@link VarHandle#getVolatile(Object...) getVolatile(Object...)}.
 	 * The set operation has the memory semantics of {@link VarHandle#setVolatile(Object...) setVolatile(Object...)}.
-	 * 
+	 *
 	 * @param args The arguments for this operation are determined by the field type
-	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()}) 
+	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()})
 	 * 				and the access parameters (see {@link VarHandle#coordinateTypes() coordinateTypes()}).
 	 * @return A boolean value indicating whether the field was updated
 	 */
 	public final native @PolymorphicSignature boolean compareAndSet(Object... args);
-	
+
 	/**
 	 * Atomically sets the value of the field referenced by this {@link VarHandle} if the
 	 * field value before this operation equaled the expected value.
 	 * The get operation has the memory semantics of {@link VarHandle#getVolatile(Object...) getVolatile(Object...)}.
 	 * The set operation has the memory semantics of {@link VarHandle#setVolatile(Object...) setVolatile(Object...)}.
-	 * 
+	 *
 	 * @param args The arguments for this operation are determined by the field type
-	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()}) 
+	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()})
 	 * 				and the access parameters (see {@link VarHandle#coordinateTypes() coordinateTypes()}).
 	 * @return The value of the field before this operation
 	 */
 	public final native @PolymorphicSignature Object compareAndExchange(Object... args);
-	
+
 	/**
 	 * Atomically sets the value of the field referenced by this {@link VarHandle} if the
 	 * field value before this operation equaled the expected value.
 	 * The get operation has the memory semantics of {@link VarHandle#getAcquire(Object...) getAcquire(Object...)}.
 	 * The set operation has the memory semantics of {@link VarHandle#set(Object...) set(Object...)}.
-	 * 
+	 *
 	 * @param args The arguments for this operation are determined by the field type
-	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()}) 
+	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()})
 	 * 				and the access parameters (see {@link VarHandle#coordinateTypes() coordinateTypes()}).
 	 * @return The value of the field before this operation
 	 */
 	public final native @PolymorphicSignature Object compareAndExchangeAcquire(Object... args);
-	
+
 	/**
 	 * Atomically sets the value of the field referenced by this {@link VarHandle} if the
 	 * field value before this operation equaled the expected value.
 	 * The get operation has the memory semantics of {@link VarHandle#get(Object...) get(Object...)}.
 	 * The set operation has the memory semantics of {@link VarHandle#setRelease(Object...) setRelease(Object...)}.
-	 * 
+	 *
 	 * @param args The arguments for this operation are determined by the field type
-	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()}) 
+	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()})
 	 * 				and the access parameters (see {@link VarHandle#coordinateTypes() coordinateTypes()}).
 	 * @return The value of the field before this operation
 	 */
 	public final native @PolymorphicSignature Object compareAndExchangeRelease(Object... args);
-	
+
 	/**
 	 * Sets the value of the field referenced by this {@link VarHandle} if the
 	 * field value before this operation equaled the expected value.
 	 * The get operation has the memory semantics of {@link VarHandle#get(Object...) get(Object...)}.
 	 * The set operation has the memory semantics of {@link VarHandle#set(Object...) set(Object...)}.
-	 * 
+	 *
 	 * @param args The arguments for this operation are determined by the field type
-	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()}) 
+	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()})
 	 * 				and the access parameters (see {@link VarHandle#coordinateTypes() coordinateTypes()}).
 	 * @return A boolean value indicating whether the field was updated
 	 */
 	public final native @PolymorphicSignature boolean weakCompareAndSet(Object... args);
-	
+
 	/**
 	 * Sets the value of the field referenced by this {@link VarHandle} if the
 	 * field value before this operation equaled the expected value.
 	 * The get operation has the memory semantics of {@link VarHandle#getAcquire(Object...) getAcquire(Object...)}.
 	 * The set operation has the memory semantics of {@link VarHandle#set(Object...) set(Object...)}.
-	 * 
+	 *
 	 * @param args The arguments for this operation are determined by the field type
-	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()}) 
+	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()})
 	 * 				and the access parameters (see {@link VarHandle#coordinateTypes() coordinateTypes()}).
 	 * @return A boolean value indicating whether the field was updated
 	 */
 	public final native @PolymorphicSignature boolean weakCompareAndSetAcquire(Object... args);
-	
+
 	/**
 	 * Sets the value of the field referenced by this {@link VarHandle} if the
 	 * field value before this operation equaled the expected value.
 	 * The get operation has the memory semantics of {@link VarHandle#get(Object...) get(Object...)}.
 	 * The set operation has the memory semantics of {@link VarHandle#setRelease(Object...) setRelease(Object...)}.
-	 * 
+	 *
 	 * @param args The arguments for this operation are determined by the field type
-	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()}) 
+	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()})
 	 * 				and the access parameters (see {@link VarHandle#coordinateTypes() coordinateTypes()}).
 	 * @return A boolean value indicating whether the field was updated
 	 */
 	public final native @PolymorphicSignature boolean weakCompareAndSetRelease(Object... args);
-	
+
 	/**
 	 * Sets the value of the field referenced by this {@link VarHandle} if the
 	 * field value before this operation equaled the expected value.
 	 * The get operation has the memory semantics of {@link VarHandle#get(Object...) get(Object...)}.
 	 * The set operation has the memory semantics of {@link VarHandle#set(Object...) set(Object...)}.
-	 * 
+	 *
 	 * @param args The arguments for this operation are determined by the field type
-	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()}) 
+	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()})
 	 * 				and the access parameters (see {@link VarHandle#coordinateTypes() coordinateTypes()}).
 	 * @return A boolean value indicating whether the field was updated
 	 */
 	public final native @PolymorphicSignature boolean weakCompareAndSetPlain(Object... args);
-	
+
 	/**
 	 * Atomically sets the value of the field referenced by this {@link VarHandle}
 	 * and returns the value of the field prior to the update.
 	 * The get operation has the memory semantics of {@link VarHandle#getVolatile(Object...) getVolatile(Object...)}.
 	 * The set operation has the memory semantics of {@link VarHandle#setVolatile(Object...) setVolatile(Object...)}.
-	 * 
+	 *
 	 * @param args The arguments for this operation are determined by the field type
-	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()}) 
+	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()})
 	 * 				and the access parameters (see {@link VarHandle#coordinateTypes() coordinateTypes()}).
 	 * @return The value stored in the field prior to the update
 	 */
 	public final native @PolymorphicSignature Object getAndSet(Object... args);
-	
+
 	/**
 	 * Atomically sets the value of the field referenced by this {@link VarHandle}
 	 * and returns the value of the field prior to the update.
 	 * The get operation has the memory semantics of {@link VarHandle#getAcquire(Object...) getAcquire(Object...)}.
 	 * The set operation has the memory semantics of {@link VarHandle#set(Object...) set(Object...)}.
-	 * 
+	 *
 	 * @param args The arguments for this operation are determined by the field type
-	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()}) 
+	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()})
 	 * 				and the access parameters (see {@link VarHandle#coordinateTypes() coordinateTypes()}).
 	 * @return The value stored in the field prior to the update
 	 */
 	public final native @PolymorphicSignature Object getAndSetAcquire(Object... args);
-	
+
 	/**
 	 * Atomically sets the value of the field referenced by this {@link VarHandle}
 	 * and returns the value of the field prior to the update.
 	 * The get operation has the memory semantics of {@link VarHandle#set(Object...) get(Object...)}.
 	 * The set operation has the memory semantics of {@link VarHandle#setRelease(Object...) setRelease(Object...)}.
-	 * 
+	 *
 	 * @param args The arguments for this operation are determined by the field type
-	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()}) 
+	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()})
 	 * 				and the access parameters (see {@link VarHandle#coordinateTypes() coordinateTypes()}).
 	 * @return The value stored in the field prior to the update
 	 */
 	public final native @PolymorphicSignature Object getAndSetRelease(Object... args);
-	
+
 	/**
 	 * Atomically adds to the current value of the field referenced by this {@link VarHandle}
 	 * and returns the value of the field prior to the update.
 	 * The get operation has the memory semantics of {@link VarHandle#getVolatile(Object...) getVolatile(Object...)}.
 	 * The set operation has the memory semantics of {@link VarHandle#setVolatile(Object...) setVolatile(Object...)}.
-	 * 
+	 *
 	 * @param args The arguments for this operation are determined by the field type
-	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()}) 
+	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()})
 	 * 				and the access parameters (see {@link VarHandle#coordinateTypes() coordinateTypes()}).
 	 * @return The value stored in the field prior to the update
 	 */
 	public final native @PolymorphicSignature Object getAndAdd(Object... args);
-	
+
 	/**
 	 * Atomically adds to the current value of the field referenced by this {@link VarHandle}
 	 * and returns the value of the field prior to the update.
 	 * The get operation has the memory semantics of {@link VarHandle#getAcquire(Object...) getAcquire(Object...)}.
 	 * The set operation has the memory semantics of {@link VarHandle#set(Object...) set(Object...)}.
-	 * 
+	 *
 	 * @param args The arguments for this operation are determined by the field type
-	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()}) 
+	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()})
 	 * 				and the access parameters (see {@link VarHandle#coordinateTypes() coordinateTypes()}).
 	 * @return The value stored in the field prior to the update
 	 */
 	public final native @PolymorphicSignature Object getAndAddAcquire(Object... args);
-	
+
 	/**
 	 * Atomically adds to the current value of the field referenced by this {@link VarHandle}
 	 * and returns the value of the field prior to the update.
 	 * The get operation has the memory semantics of {@link VarHandle#get(Object...) get(Object...)}.
 	 * The set operation has the memory semantics of {@link VarHandle#setRelease(Object...) setRelease(Object...)}.
-	 * 
+	 *
 	 * @param args The arguments for this operation are determined by the field type
-	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()}) 
+	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()})
 	 * 				and the access parameters (see {@link VarHandle#coordinateTypes() coordinateTypes()}).
 	 * @return The value stored in the field prior to the update
 	 */
 	public final native @PolymorphicSignature Object getAndAddRelease(Object... args);
-	
+
 	/**
 	 * Atomically ANDs the provided value and the current value of the field referenced by this {@link VarHandle}
 	 * and returns the value of the field prior to the update.
 	 * The get operation has the memory semantics of {@link VarHandle#getVolatile(Object...) getVolatile(Object...)}.
 	 * The set operation has the memory semantics of {@link VarHandle#setVolatile(Object...) setVolatile(Object...)}.
-	 * 
+	 *
 	 * @param args The arguments for this operation are determined by the field type
-	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()}) 
+	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()})
 	 * 				and the access parameters (see {@link VarHandle#coordinateTypes() coordinateTypes()}).
 	 * @return The value stored in the field prior to the update
 	 */
 	public final native @PolymorphicSignature Object getAndBitwiseAnd(Object... args);
-	
+
 	/**
 	 * Atomically ANDs the provided value and the current value of the field referenced by this {@link VarHandle}
 	 * and returns the value of the field prior to the update.
 	 * The get operation has the memory semantics of {@link VarHandle#getAcquire(Object...) getAcquire(Object...)}.
 	 * The set operation has the memory semantics of {@link VarHandle#set(Object...) set(Object...)}.
-	 * 
+	 *
 	 * @param args The arguments for this operation are determined by the field type
-	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()}) 
+	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()})
 	 * 				and the access parameters (see {@link VarHandle#coordinateTypes() coordinateTypes()}).
 	 * @return The value stored in the field prior to the update
 	 */
 	public final native @PolymorphicSignature Object getAndBitwiseAndAcquire(Object... args);
-	
+
 	/**
 	 * Atomically ANDs the provided value and the current value of the field referenced by this {@link VarHandle}
 	 * and returns the value of the field prior to the update.
 	 * The get operation has the memory semantics of {@link VarHandle#get(Object...) (Object...)}.
 	 * The set operation has the memory semantics of {@link VarHandle#setRelease(Object...) setRelease(Object...)}.
-	 * 
+	 *
 	 * @param args The arguments for this operation are determined by the field type
-	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()}) 
+	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()})
 	 * 				and the access parameters (see {@link VarHandle#coordinateTypes() coordinateTypes()}).
 	 * @return The value stored in the field prior to the update
 	 */
 	public final native @PolymorphicSignature Object getAndBitwiseAndRelease(Object... args);
-	
+
 	/**
 	 * Atomically ORs the provided value and the current value of the field referenced by this {@link VarHandle}
 	 * and returns the value of the field prior to the update.
 	 * The get operation has the memory semantics of {@link VarHandle#getVolatile(Object...) getVolatile(Object...)}.
 	 * The set operation has the memory semantics of {@link VarHandle#setVolatile(Object...) setVolatile(Object...)}.
-	 * 
+	 *
 	 * @param args The arguments for this operation are determined by the field type
-	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()}) 
+	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()})
 	 * 				and the access parameters (see {@link VarHandle#coordinateTypes() coordinateTypes()}).
 	 * @return The value stored in the field prior to the update
 	 */
 	public final native @PolymorphicSignature Object getAndBitwiseOr(Object... args);
-	
+
 	/**
 	 * Atomically ORs the provided value and the current value of the field referenced by this {@link VarHandle}
 	 * and returns the value of the field prior to the update.
 	 * The get operation has the memory semantics of {@link VarHandle#getAcquire(Object...) getAcquire(Object...)}.
 	 * The set operation has the memory semantics of {@link VarHandle#set(Object...) set(Object...)}.
-	 * 
+	 *
 	 * @param args The arguments for this operation are determined by the field type
-	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()}) 
+	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()})
 	 * 				and the access parameters (see {@link VarHandle#coordinateTypes() coordinateTypes()}).
 	 * @return The value stored in the field prior to the update
 	 */
 	public final native @PolymorphicSignature Object getAndBitwiseOrAcquire(Object... args);
-	
+
 	/**
 	 * Atomically ORs the provided value and the current value of the field referenced by this {@link VarHandle}
 	 * and returns the value of the field prior to the update.
 	 * The get operation has the memory semantics of {@link VarHandle#get(Object...) get(Object...)}.
 	 * The set operation has the memory semantics of {@link VarHandle#setRelease(Object...) setRelease(Object...)}.
-	 * 
+	 *
 	 * @param args The arguments for this operation are determined by the field type
-	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()}) 
+	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()})
 	 * 				and the access parameters (see {@link VarHandle#coordinateTypes() coordinateTypes()}).
 	 * @return The value stored in the field prior to the update
 	 */
 	public final native @PolymorphicSignature Object getAndBitwiseOrRelease(Object... args);
-	
+
 	/**
 	 * Atomically XORs the provided value and the current value of the field referenced by this {@link VarHandle}
 	 * and returns the value of the field prior to the update.
 	 * The get operation has the memory semantics of {@link VarHandle#getVolatile(Object...) getVolatile(Object...)}.
 	 * The set operation has the memory semantics of {@link VarHandle#setVolatile(Object...) setVolatile(Object...)}.
-	 * 
+	 *
 	 * @param args The arguments for this operation are determined by the field type
-	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()}) 
+	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()})
 	 * 				and the access parameters (see {@link VarHandle#coordinateTypes() coordinateTypes()}).
 	 * @return The value stored in the field prior to the update
 	 */
 	public final native @PolymorphicSignature Object getAndBitwiseXor(Object... args);
-	
+
 	/**
 	 * Atomically XORs the provided value and the current value of the field referenced by this {@link VarHandle}
 	 * and returns the value of the field prior to the update.
 	 * The get operation has the memory semantics of {@link VarHandle#getAcquire(Object...) getAcquire(Object...)}.
 	 * The set operation has the memory semantics of {@link VarHandle#set(Object...) set(Object...)}.
-	 * 
+	 *
 	 * @param args The arguments for this operation are determined by the field type
-	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()}) 
+	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()})
 	 * 				and the access parameters (see {@link VarHandle#coordinateTypes() coordinateTypes()}).
 	 * @return The value stored in the field prior to the update
 	 */
 	public final native @PolymorphicSignature Object getAndBitwiseXorAcquire(Object... args);
-	
+
 	/**
 	 * Atomically XORs the provided value and the current value of the field referenced by this {@link VarHandle}
 	 * and returns the value of the field prior to the update.
 	 * The get operation has the memory semantics of {@link VarHandle#get(Object...) get(Object...)}.
 	 * The set operation has the memory semantics of {@link VarHandle#setRelease(Object...) setRelease(Object...)}.
-	 * 
+	 *
 	 * @param args The arguments for this operation are determined by the field type
-	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()}) 
+	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()})
 	 * 				and the access parameters (see {@link VarHandle#coordinateTypes() coordinateTypes()}).
 	 * @return The value stored in the field prior to the update
 	 */
 	public final native @PolymorphicSignature Object getAndBitwiseXorRelease(Object... args);
-	
+
 	static MethodHandle[] populateMHs(
 			Class<? extends VarHandleOperations> operationsClass, MethodType[] lookupTypes, MethodType[] exactTypes) {
 		MethodHandle[] operationMHs = new MethodHandle[AccessMode.values().length];
-		
+
 		try {
 			/* Lookup the MethodHandles corresponding to access modes. */
 			for (AccessMode accessMode : AccessMode.values()) {
 				int index = accessMode.ordinal();
 				operationMHs[index] = _lookup.findStatic(operationsClass, accessMode.methodName(), lookupTypes[index]);
 			}
-			
+
 			/* If we provided a different set of exactTypes, clone the MethodHandles with the exact types. */
 			if (lookupTypes != exactTypes) {
 				for (AccessMode accessMode : AccessMode.values()) {
@@ -1315,13 +1311,13 @@ public abstract class VarHandle extends VarHandleInternal
 			error.initCause(e);
 			throw error;
 		}
-		
+
 		return operationMHs;
 	}
-	
+
 	static MethodType[] populateMTs(MethodType getter, MethodType setter, MethodType compareAndSet, MethodType compareAndExchange, MethodType getAndSet) {
 		MethodType[] operationMTs = new MethodType[AccessMode.values().length];
-		
+
 		operationMTs[AccessMode.GET.ordinal()] = getter;
 		operationMTs[AccessMode.SET.ordinal()] = setter;
 		operationMTs[AccessMode.GET_VOLATILE.ordinal()] = getter;
@@ -1353,10 +1349,10 @@ public abstract class VarHandle extends VarHandleInternal
 		operationMTs[AccessMode.GET_AND_BITWISE_XOR.ordinal()] = getAndSet;
 		operationMTs[AccessMode.GET_AND_BITWISE_XOR_ACQUIRE.ordinal()] = getAndSet;
 		operationMTs[AccessMode.GET_AND_BITWISE_XOR_RELEASE.ordinal()] = getAndSet;
-		
+
 		return operationMTs;
 	}
-	
+
 	static class VarHandleOperations {
 		static UnsupportedOperationException operationNotSupported(VarHandle varHandle) {
 			/*[MSG "K0620", "This VarHandle operation is not supported by type {0}."]*/
@@ -1415,7 +1411,7 @@ public abstract class VarHandle extends VarHandleInternal
 
 		/**
 		 * Create a nominal descriptor for a VarHandle.
-		 * 
+		 *
 		 * @param type kind of VarHandleDesc to be created
 		 * @param declaringClassDesc ClassDesc describing the declaring class for the field (null for array)
 		 * @param name unqualified String name of the field ("_" for array)
@@ -1429,7 +1425,7 @@ public abstract class VarHandle extends VarHandleInternal
 
 		/**
 		 * Creates a VarHandleDesc describing a VarHandle for an array type.
-		 * 
+		 *
 		 * @param arrayClassDesc ClassDesc describing the array type
 		 * @return VarHandleDesc describing a VarHandle for an array type
 		 * @throws NullPointerException if there is a null argument
@@ -1445,7 +1441,7 @@ public abstract class VarHandle extends VarHandleInternal
 
 		/**
 		 * Creates a VarHandleDesc describing an instance field.
-		 * 
+		 *
 		 * @param declaringClassDesc ClassDesc describing the declaring class for the field
 		 * @param name unqualified String name of the field
 		 * @param fieldTypeDesc ClassDesc describing the field type
@@ -1461,7 +1457,7 @@ public abstract class VarHandle extends VarHandleInternal
 
 		/**
 		 * Creates a VarHandleDesc describing a static field.
-		 * 
+		 *
 		 * @param declaringClassDesc ClassDesc describing the declaring class for the field
 		 * @param name unqualified String name of the field
 		 * @param fieldTypeDesc ClassDesc describing the field type
@@ -1477,7 +1473,7 @@ public abstract class VarHandle extends VarHandleInternal
 
 		/**
 		 * Resolve nominal VarHandle descriptor reflectively.
-		 * 
+		 *
 		 * @param lookup provides name resolution and access control context
 		 * @return resolved VarHandle
 		 * @throws ReflectiveOperationException if field, class, or method could not be resolved
@@ -1512,12 +1508,12 @@ public abstract class VarHandle extends VarHandleInternal
 					/*[MSG "K0619", "Malformated VarHandleDesc, {0} could not be retrieved."]*/
 					throw new InternalError(com.ibm.oti.util.Msg.getString("K0619", "field type")); //$NON-NLS-1$ //$NON-NLS-2$
 			}
-			
+
 			return result;
 		}
 
 		/**
-		 * Returns a string containing a concise, human-readable representation of the VarHandleDesc. 
+		 * Returns a string containing a concise, human-readable representation of the VarHandleDesc.
 		 * Description includes the bootstrap method, name, type, and bootstrap arguments.
 		 *
 		 * @return String that textually represents the Object instance
@@ -1544,7 +1540,7 @@ public abstract class VarHandle extends VarHandleInternal
 
 		/**
 		 * Returns a ClassDesc describing the variable represented by this VarHandleDesc.
-		 * 
+		 *
 		 * @return ClassDesc of variable type
 		 */
 		public ClassDesc varType() {
@@ -1553,7 +1549,7 @@ public abstract class VarHandle extends VarHandleInternal
 
 		/**
 		 * Helper to retrieve declaring class descriptor from superclass bootstrap arguments.
-		 * 
+		 *
 		 * @return ClassDesc declaring class descriptor
 		 * @throws InternalError if VarHandleDesc was created improperly or instance is not a field
 		 */
@@ -1569,7 +1565,7 @@ public abstract class VarHandle extends VarHandleInternal
 
 		/**
 		 * Helper to retrieve field type descriptor from superclass bootstrap arguments.
-		 * 
+		 *
 		 * @return ClassDesc field type descriptor
 		 * @throws InternalError if VarHandleDesc was created improperly or instance is not a field
 		 */
@@ -1585,7 +1581,7 @@ public abstract class VarHandle extends VarHandleInternal
 
 		/**
 		 * Helper to retrieve array type descriptor from superclass bootstrap arguments.
-		 * 
+		 *
 		 * @return ClassDesc array type descriptor
 		 * @throws InternalError if VarHandleDesc was created improperly or instance is not an array type
 		 */
@@ -1597,7 +1593,7 @@ public abstract class VarHandle extends VarHandleInternal
 				throw new InternalError(com.ibm.oti.util.Msg.getString("K0619", "array type descriptor")); //$NON-NLS-1$ //$NON-NLS-2$
 			}
 			return (ClassDesc)args[0];
-		}		
+		}
 	}
 /*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 
@@ -1606,7 +1602,7 @@ public abstract class VarHandle extends VarHandleInternal
 	 * Return the target VarHandle. For a direct VarHandle, the target
 	 * VarHandle is null. An indirect VarHandle will override this method to
 	 * return a non-null target VarHandle.
-	 * 
+	 *
 	 * @return null for the target VarHandle.
 	 */
 	VarHandle target() {
@@ -1615,9 +1611,9 @@ public abstract class VarHandle extends VarHandleInternal
 
 	/**
 	 * Return the direct-target VarHandle. For a direct VarHandle, the
-	 * direct-target is itself. An indirect VarHandle will override this method 
+	 * direct-target is itself. An indirect VarHandle will override this method
 	 * to return a direct-target, which should be a direct VarHandle.
-	 * 
+	 *
 	 * @return "this" for a direct VarHandle.
 	 */
 	VarHandle asDirect() {
@@ -1628,18 +1624,18 @@ public abstract class VarHandle extends VarHandleInternal
 	 * Return true for a direct VarHandle and false for an indirect VarHandle.
 	 * An indirect VarHandle will override this method to return false. By
 	 * default, all VarHandles are direct VarHandles.
-	 * 
+	 *
 	 * @return true for a direct VarHandle and false for an indirect VarHandle.
 	 */
 	boolean isDirect() {
 		return true;
 	}
-	
+
 	/**
 	 * Return the direct-target VarHandle for the input varHandle.
-	 * 
+	 *
 	 * @param varHandle the input VarHandle.
-	 * 
+	 *
 	 * @return the direct-target VarHandle for the input VarHandle.
 	 */
 	private static VarHandle asDirect(VarHandle varHandle) {
@@ -1648,9 +1644,9 @@ public abstract class VarHandle extends VarHandleInternal
 
 	/**
 	 * Return the MethodHandle corresponding to the integer-value of the AccessMode.
-	 * 
+	 *
 	 * @param i integer value of the AccessMode.
-	 * 
+	 *
 	 * @return the MethodHandle corresponding to the integer-value of the AccessMode.
 	 */
 	MethodHandle getMethodHandle(int i) {

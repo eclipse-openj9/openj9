@@ -41,7 +41,7 @@ import java.util.Map;
 import com.ibm.oti.reflect.AnnotationParser;
 import com.ibm.oti.reflect.TypeAnnotationParser;
 
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 /*[IF JAVA_SPEC_VERSION >= 20]*/
 import java.io.InputStream;
 /*[ENDIF] JAVA_SPEC_VERSION >= 20 */
@@ -76,10 +76,10 @@ import jdk.internal.vm.ContinuationScope;
 import jdk.internal.vm.StackableScope;
 import jdk.internal.vm.ThreadContainer;
 /*[ENDIF] JAVA_SPEC_VERSION >= 19 */
-/*[ELSE] Sidecar19-SE */
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 import sun.misc.JavaLangAccess;
 import sun.reflect.ConstantPool;
-/*[ENDIF] Sidecar19-SE */
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 import sun.nio.ch.Interruptible;
 import sun.reflect.annotation.AnnotationType;
 
@@ -231,7 +231,7 @@ final class Access implements JavaLangAccess {
 		throw new Error("invokeFinalize unimplemented"); //$NON-NLS-1$
 	}
 
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 	public Class<?> findBootstrapClassOrNull(ClassLoader classLoader, String name) {
 		return VMAccess.findClassOrNull(name, ClassLoader.bootstrapClassLoader);
 	}
@@ -297,7 +297,7 @@ final class Access implements JavaLangAccess {
 		return targetClassLoader.defineClassInternal(className, classRep, 0, classRep.length, protectionDomain, true /* allowNullProtectionDomain */);
 	}
 
-/*[IF Sidecar19-SE-OpenJ9]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 	public Stream<ModuleLayer> layers(ModuleLayer ml) {
 		return ml.layers();
 	}
@@ -371,7 +371,7 @@ final class Access implements JavaLangAccess {
 	public boolean isReflectivelyExported(Module fromModule, String pkg, Module toModule) {
 		return fromModule.isReflectivelyExported(pkg, toModule);
 	}
-/*[ENDIF] Sidecar19-SE-OpenJ9 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 /*[IF JAVA_SPEC_VERSION >= 10]*/
 	public String newStringUTF8NoRepl(byte[] bytes, int offset, int length) {
@@ -784,5 +784,5 @@ final class Access implements JavaLangAccess {
 	}
 /*[ENDIF] INLINE-TYPES */
 
-/*[ENDIF] Sidecar19-SE */
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 }

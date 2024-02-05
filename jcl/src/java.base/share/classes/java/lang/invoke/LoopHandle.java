@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar19-SE & !OPENJDK_METHODHANDLES]*/
+/*[INCLUDE-IF (JAVA_SPEC_VERSION >= 9) & !OPENJDK_METHODHANDLES]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2017
  *
@@ -24,7 +24,7 @@ package java.lang.invoke;
 
 final class LoopHandle extends PassThroughHandle {
 	private final MethodHandle[][] handleClauses;
-	
+
 	protected LoopHandle(MethodHandle equivalent, MethodHandle[][] handleClauses) {
 		super(equivalent, infoAffectingThunks(handleClauses[0][0].type.parameterCount()));
 		this.handleClauses = handleClauses;
@@ -49,7 +49,7 @@ final class LoopHandle extends PassThroughHandle {
 	@Override
 	protected final ThunkTable thunkTable(){ return _thunkTable; }
 
-	
+
 	@SuppressWarnings("boxing")
 	private static Object infoAffectingThunks(int numLoopTargetArgs) {
 		// The number of arguments passed to the loop target affects the code generated in the thunks
@@ -62,14 +62,14 @@ final class LoopHandle extends PassThroughHandle {
 		int numLoopTargetArgs = (Integer)arg;
 		return thunkTable().get(new ThunkKeyWithInt(ThunkKey.computeThunkableType(type()), numLoopTargetArgs));
 	}
-	
+
 	/*
 	 * The following method is not implemented by JIT team for now
 	@FrameIteratorSkip
 	private final int invokeExact_thunkArchetype_X(int argPlaceholder) {
 	}
 	*/
-	
+
 	// }}} JIT support
 
 	@Override
@@ -83,7 +83,7 @@ final class LoopHandle extends PassThroughHandle {
 
 	final void compareWithLoop(LoopHandle left, Comparator c) {
 		c.compareStructuralParameter(left.handleClauses, this.handleClauses);
-		
+
 		int countOfClause = this.handleClauses.length;
 		for (int clauseIndex = 0; clauseIndex < countOfClause; clauseIndex++) {
 			MethodHandle[] leftCurrentClause = left.handleClauses[clauseIndex];

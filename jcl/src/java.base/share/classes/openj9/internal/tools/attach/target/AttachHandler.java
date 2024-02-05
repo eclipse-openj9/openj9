@@ -38,7 +38,7 @@ import com.ibm.oti.vm.VM;
 /**
  * This class handles incoming attachment requests from other VMs. Must be
  * public because it is used by java.lang.System
- * 
+ *
  */
 public class AttachHandler extends Thread {
 
@@ -91,7 +91,7 @@ public class AttachHandler extends Thread {
 	}
 
 	private static boolean doCancelNotify;
-	
+
 	/**
 	 * used to force an attacher to ignore its own notifications
 	 */
@@ -103,18 +103,18 @@ public class AttachHandler extends Thread {
 	private static int numberOfTargets;
 	/**
 	 * As of Java 9, a VM cannot attach to itself unless explicitly enabled.
-	 * Grab the setting before the application has a chance to change it, 
+	 * Grab the setting before the application has a chance to change it,
 	 * but parse it lazily because we rarely need the value.
 	 */
-	public final static String allowAttachSelf = 
-			VM.getVMLangAccess().internalGetProperties().getProperty("jdk.attach.allowAttachSelf", //$NON-NLS-1$
-/*[IF Sidecar19-SE]*/
-					"false" //$NON-NLS-1$
-/*[ELSE]
-					"true" //$NON-NLS-1$
-/*[ENDIF]*/
-					);  
-	
+	public final static String allowAttachSelf =
+			VM.getVMLangAccess().internalGetProperties().getProperty("jdk.attach.allowAttachSelf" //$NON-NLS-1$
+/*[IF JAVA_SPEC_VERSION >= 9]*/
+					, "false" //$NON-NLS-1$
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
+					, "true" //$NON-NLS-1$
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
+					);
+
 	/* only the attach handler thread uses syncFileLock */
 	/* [PR Jazz 30075] Make syncFileLock an instance variable since it is accessed only by the attachHandler singleton. */
 	FileLock syncFileLock;
@@ -129,7 +129,7 @@ public class AttachHandler extends Thread {
 
 	/**
 	 * start the attach handler, create files , semaphore, etc.
-	 * 
+	 *
 	 * @note This is on the VM startup critical path.
 	 */
 	static void initializeAttachAPI() {
@@ -142,7 +142,7 @@ public class AttachHandler extends Thread {
 		/*
 		 *  set default behaviour:
 		 *  Java 6 R24 and later: disabled by default on z/OS, enabled on all other platforms
-		 *  Java 5: disabled by default on all platforms 
+		 *  Java 5: disabled by default on all platforms
 		 */
 		/*[PR Jazz 59196 LIR: Disable attach API by default on z/OS (31972)]*/
 		boolean enableAttach = !IPC.isZOS;
@@ -187,10 +187,10 @@ public class AttachHandler extends Thread {
 		try {
 			/*[PR Jazz 31593] stress failures caused by long wait times for lock file ]*/
 			if (CommonDirectory.tryObtainControllerLock("AttachHandler.createFiles(" + newDisplayName + ")_1")) { //$NON-NLS-1$ //$NON-NLS-2$
-				/* 
-				 * Non-blocking lock attempt succeeded. 
+				/*
+				 * Non-blocking lock attempt succeeded.
 				 * clean up garbage files from crashed processes or other failures.
-				 * This operation is optional: if there is contention for the lock, 
+				 * This operation is optional: if there is contention for the lock,
 				 * the first process in will do the cleanup.
 				 */
 				CommonDirectory.deleteStaleDirectories(pidProperty);
@@ -203,12 +203,12 @@ public class AttachHandler extends Thread {
 			}
 			CommonDirectory.createNotificationFile();
 			/*[PR Jazz 31593 create the file artifacts after we have cleaned the directory]*/
-			if (isAttachApiTerminated()) { 
+			if (isAttachApiTerminated()) {
 				return false; /* abort if we decided to shut down */
 			}
 			String myId = TargetDirectory.createMyDirectory(pidProperty, true);
 			/*[PR RTC 80844 problem in initialization, or we are shutting down ]*/
-			if (null == myId) { 
+			if (null == myId) {
 				return false;
 			}
 			setVmId(myId); /* may need to tweak the ID */
@@ -258,7 +258,7 @@ public class AttachHandler extends Thread {
 		} catch (IOException e) {
 			setAttachState(AttachStateValues.ATTACH_TERMINATED);
 			return;
-		}	
+		}
 	}
 
 	private boolean initialize() throws IOException {
@@ -269,7 +269,7 @@ public class AttachHandler extends Thread {
 		} else {
 			logName = ""; //$NON-NLS-1$
 		}
-		
+
 		nameProperty = com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties().getProperty(DISPLAYNAME_PROPERTY);
 		pidProperty = validateVmId(com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties().getProperty(VMID_PROPERTY));
 		if ((null == pidProperty) || (0 == pidProperty.length())) {
@@ -289,11 +289,11 @@ public class AttachHandler extends Thread {
 				IPC.printMessageWithHeader("AttachHandler initialized", IPC.logStream); //$NON-NLS-1$
 				loggingStatus = LOGGING_ENABLED;
 			} else {
-				loggingStatus = LOGGING_DISABLED;			
-			}			
+				loggingStatus = LOGGING_DISABLED;
+			}
 		}
-		
-		
+
+
 		synchronized (stateSync) {
 			if (isAttachApiTerminated()) {
 				IPC.logMessage("cancel initialize before prepareCommonDirectory"); //$NON-NLS-1$
@@ -313,14 +313,14 @@ public class AttachHandler extends Thread {
 			terminate(false);
 			return false; /* CMVC 161135. Force the run() method to stop. */
 		}
-		
+
 		File syncFileObjectTemp = TargetDirectory.getSyncFileObject();
 		if (isAttachApiTerminated() || (null == syncFileObjectTemp)) {
 			IPC.logMessage("cancel initialize before creating syncFileLock"); //$NON-NLS-1$
 			return false;
-		}		
+		}
 		/* the syncFileObject was created by createFiles() (above) */
-		syncFileLock = new FileLock(syncFileObjectTemp.getAbsolutePath(), TargetDirectory.SYNC_FILE_PERMISSIONS); 
+		syncFileLock = new FileLock(syncFileObjectTemp.getAbsolutePath(), TargetDirectory.SYNC_FILE_PERMISSIONS);
 		/* give other users read permission to the sync file */
 
 		return true;
@@ -372,11 +372,11 @@ public class AttachHandler extends Thread {
 	 * @return true if the caller should destroy the semaphore
 	 */
 	protected boolean terminate(boolean wakeHandler) {
-		
+
 		if (LOGGING_DISABLED != loggingStatus) {
 			IPC.logMessage("AttachHandler terminate: Attach API is being shut down, currentAttachThread = " + currentAttachThread); //$NON-NLS-1$
 		}
-		
+
 		synchronized (stateSync) {
 			/*[PR CMVC 161729 : shutdown hook may run before the initializer]*/
 			AttachStateValues myAttachState = getAttachState();
@@ -409,7 +409,7 @@ public class AttachHandler extends Thread {
 			}
 		}
 		FileLock.shutDown();
-		
+
 		return terminateWaitLoop(wakeHandler, 0);
 	}
 
@@ -426,12 +426,12 @@ public class AttachHandler extends Thread {
 		/*[PR CMVC 187777 : non-clean shutdown in life cycle tests]*/
 		/*
 		 * If multiple VMs shut down simultaneously, there is contention for the lock file.
-		 * If someone else has the lock file, it is likely but not guaranteed 
+		 * If someone else has the lock file, it is likely but not guaranteed
 		 * that they will post to the semaphore and wake up this VM.
-		 * 
-		 * Try to get the lock file, but give up after a timeout. If this VM is 
-		 * notified and terminates in the meantime, don't bother notifying. 
-		 * 
+		 *
+		 * Try to get the lock file, but give up after a timeout. If this VM is
+		 * notified and terminates in the meantime, don't bother notifying.
+		 *
 		 * Note that the controller lock is not held while waiting to shut down.
 		 */
 		long lockDeadline = System.nanoTime() + shutdownTimeoutMs*1000000/10; /* let the file lock use only a fraction of the timeout budget */
@@ -453,16 +453,16 @@ public class AttachHandler extends Thread {
 				IPC.logMessage("VM already notified for termination, abandoning controller lock"); //$NON-NLS-1$
 			}
 			if (gotLock) {
-				/* 
-				 * We grabbed the lock to notify the wait loop.  
-				 * Release it because the wait loop does not need to be notified. 
-				 */ 
+				/*
+				 * We grabbed the lock to notify the wait loop.
+				 * Release it because the wait loop does not need to be notified.
+				 */
 				CommonDirectory.releaseControllerLock("AttachHandler.terminateWaitLoop(" + wakeHandler + "," + retryNumber + ")_3"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 				gotLock = false;
 			}
 		}
 
-		if (gotLock) {	
+		if (gotLock) {
 			try {
 				if (LOGGING_DISABLED != loggingStatus) {
 					IPC.logMessage("AttachHandler terminate obtained controller lock"); //$NON-NLS-1$
@@ -474,14 +474,14 @@ public class AttachHandler extends Thread {
 				int numTargets = CommonDirectory.countTargetDirectories() + retryNumber;
 				setNumberOfTargets(numTargets);
 				if (numTargets <= 1) {
-					/* 
+					/*
 					 * if this VM is the only one running, don't need to lock sync files.
 					 * numTargets may be 0 if my directory was deleted accidentally.
 					 */
 					setDoCancelNotify(false); /* cancelNotify re-opens the semaphore */
-					/* 
-					 * CMVC 162086: destroy does not always interrupt a semaphore wait. 
-					 * Therefore, notify myself 
+					/*
+					 * CMVC 162086: destroy does not always interrupt a semaphore wait.
+					 * Therefore, notify myself
 					 */
 					if (wakeHandler) {
 						CommonDirectory.notifyVm(1, true, "AttachHandler.terminateWaitLoop_1"); //$NON-NLS-1$
@@ -505,9 +505,9 @@ public class AttachHandler extends Thread {
 					IPC.logMessage("AttachHandler terminate released controller lock"); //$NON-NLS-1$
 				}
 			}
-		} else { 
+		} else {
 			/*
-			 * Either the handler has already terminated, or we cannot get the lock. In the latter case, clean up as best we can 
+			 * Either the handler has already terminated, or we cannot get the lock. In the latter case, clean up as best we can
 			 */
 			IPC.logMessage("AttachHandler tryObtainControllerLock failed"); //$NON-NLS-1$
 		}
@@ -544,9 +544,9 @@ public class AttachHandler extends Thread {
 					 */
 					mainHandler.join(shutdownTimeoutMs/2); /* don't let the join use all the time */
 					/*[PR CMVC 164479] AIX sometimes hangs in File.exists.  See if a ridiculously long timeout makes a difference*/
-					/* 
+					/*
 					 * currentAttachThread is the same as mainHandler before the wait loop launches.
-					 * In that case, the join is redundant but harmless. 
+					 * In that case, the join is redundant but harmless.
 					 */
 					int timeout = 100;
 					int retryNumber = 0;
@@ -586,34 +586,34 @@ public class AttachHandler extends Thread {
 				} else {
 					CommonDirectory.closeSemaphore();
 					if (LOGGING_DISABLED != loggingStatus) {
-						IPC.logMessage("AttachHandler closed semaphore"); //$NON-NLS-1$ 
+						IPC.logMessage("AttachHandler closed semaphore"); //$NON-NLS-1$
 					}
 				}
 				if (null != IPC.logStream) {
-					/* 
+					/*
 					 * Defer closing the file as long as possible.
 					 * logStream is a PrintStream, which never throws IOException, so any further writes will be silently ignored.
 					 */
 					IPC.logStream.close();
 				}
 			} catch (OutOfMemoryError e) {
-				/* 
+				/*
 				 * note that this may leave the wait loop running or fail to clean up file system artifacts.
 				 * These are recoverable conditions, though.
 				 */
 				IPC.tracepoint(IPC.TRACEPOINT_STATUS_OOM_DURING_TERMINATE, e.getMessage());
 				return;
 			}
-		} 
+		}
 	}
 
 	/**
 	 * Checks if the attach API is initialized.  If not, it waits until it changes to the initialized or terminated state.
 	 * This is called by an application thread. attachState is initialized to ATTACH_UNINITIALIZED during class initialization.
-	 * 
-	 * This is provided for the benefit of applications which use attach API to load JVMTI agents 
+	 *
+	 * This is provided for the benefit of applications which use attach API to load JVMTI agents
 	 * into their own JVMs.
-	 * 
+	 *
 	 * @return true if the attach API was successfully initialized, false if the API is stopped, encountered an error, or timed out.
 	 */
 	public static boolean waitForAttachApiInitialization() {
@@ -625,9 +625,9 @@ public class AttachHandler extends Thread {
 			} else if (AttachStateValues.ATTACH_TERMINATED == currentState) {
 				status = false; /* initialization failed or was not enabled */
 			} else {
-				/* 
-				 * normal state sequence: UNINITIALIZED->STARTING->INITIALIZED->TERMINATED. 
-				 * May skip from UNINITIALIZED or STARTING directly to TERMINATED. 
+				/*
+				 * normal state sequence: UNINITIALIZED->STARTING->INITIALIZED->TERMINATED.
+				 * May skip from UNINITIALIZED or STARTING directly to TERMINATED.
 				 */
 				int waitCycles = 2; /* at most 2 state transitions are required to get to INITIALIZED. */
 				status = false; /* default value */
@@ -718,9 +718,9 @@ public class AttachHandler extends Thread {
 	}
 
 	/**
-	 * This is provided for the benefit of applications which use attach API to load JVMTI agents 
+	 * This is provided for the benefit of applications which use attach API to load JVMTI agents
 	 * into their own JVMs.
-	 * 
+	 *
 	 * @return True if the Attach API is set up and the VM can attach to other
 	 *         VMs and receive attach requests.
 	 */
@@ -731,7 +731,7 @@ public class AttachHandler extends Thread {
 	/*
 	 * @return true if the attach API has not started launching (i.e. disabled)
 	 * or is shutting down
-	 * 
+	 *
 	 */
 	public static boolean isAttachApiTerminated() {
 		return (AttachStateValues.ATTACH_TERMINATED == getAttachState());
@@ -759,7 +759,7 @@ public class AttachHandler extends Thread {
 	 * Set the waitingForSemaphore true if the attach API is not being shut down and return true,
 	 * otherwise set it false and return false. This is thread safe and coordinated with the overall
 	 * attach API state.
-	 * 
+	 *
 	 * @return true is the attach API is not being shut down
 	 */
 	static boolean startWaitingForSemaphore() {
@@ -820,7 +820,7 @@ public class AttachHandler extends Thread {
 
 	/**
 	 * This field is static final, so no synchronization required.
-	 * 
+	 *
 	 * @return the main AttachHandler created by the factory
 	 */
 	public static AttachHandler getMainHandler() {
@@ -828,9 +828,9 @@ public class AttachHandler extends Thread {
 	}
 
 	/**
-	 * This is provided for the benefit of applications which use attach API to load JVMTI agents 
+	 * This is provided for the benefit of applications which use attach API to load JVMTI agents
 	 * into their own JVMs.
-	 * 
+	 *
 	 * @return ID of this VM
 	 */
 	public static String getVmId() {

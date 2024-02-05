@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar17]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2016
  *
@@ -61,10 +61,10 @@ public final class MonitorInfoUtil {
 	 *             to a <code>java.lang.StackTraceElement</code> which has the
 	 *             following attributes:
 	 *             <ul>
-	/*[IF Sidecar19-SE]
+	/*[IF JAVA_SPEC_VERSION >= 9]
 	 *             <li><code>moduleName</code>(<code>java.lang.String</code>)
 	 *             <li><code>moduleVersion</code>(<code>java.lang.String</code>)
-	/*[ENDIF]
+	/*[ENDIF] JAVA_SPEC_VERSION >= 9
 	 *             <li><code>className</code> (<code>java.lang.String</code>)
 	 *             <li><code>methodName</code> (<code>java.lang.String</code>)
 	 *             <li><code>fileName</code> (<code>java.lang.String</code>)

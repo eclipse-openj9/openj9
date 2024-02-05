@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar18-SE]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2019
  *
@@ -53,10 +53,10 @@ public class ThreadInfoBase {
 	private LockInfoBase[] lockedSynchronizers = new LockInfoBase[0];
 	private MonitorInfoBase[] lockedMonitors = new MonitorInfoBase[0];
 	private String cachedToStringResult;
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 	private final boolean daemon;
 	private final int priority;
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 	/**
 	 * used by ThreadInfo's constructor only
@@ -76,18 +76,18 @@ public class ThreadInfoBase {
 	 * @param lockInfoVal
 	 * @param lockedMonitorsVal
 	 * @param lockedSynchronizersVal
-/*[IF Sidecar19-SE]
+/*[IF JAVA_SPEC_VERSION >= 9]
 	 * @param daemon
 	 * @param priority
-/*[ENDIF]
+/*[ENDIF] JAVA_SPEC_VERSION >= 9
 	 */
 	public ThreadInfoBase(long threadIdVal, String threadNameVal, Thread.State threadStateVal, boolean suspendedVal,
 			boolean inNativeVal, long blockedCountVal, long blockedTimeVal, long waitedCountVal, long waitedTimeVal,
 			String lockNameVal, long lockOwnerIdVal, String lockOwnerNameVal, StackTraceElement[] stackTraceVal,
 			LockInfoBase lockInfoVal, MonitorInfoBase[] lockedMonitorsVal, LockInfoBase[] lockedSynchronizersVal
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 			, boolean daemonVal, int priorityVal
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 	) {
 		threadId = threadIdVal;
 		nativeTId = -1;
@@ -106,10 +106,10 @@ public class ThreadInfoBase {
 		blockingLockInfo = lockInfoVal;
 		lockedMonitors = lockedMonitorsVal;
 		lockedSynchronizers = lockedSynchronizersVal;
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 		daemon = daemonVal;
 		priority = priorityVal;
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 	}
 
 	@SuppressWarnings("unused")
@@ -121,10 +121,10 @@ public class ThreadInfoBase {
 		threadId = thread.getId();
 		nativeTId = nativeId;
 		threadName = thread.getName();
-		/*[IF Sidecar19-SE]*/
+		/*[IF JAVA_SPEC_VERSION >= 9]*/
 		daemon = thread.isDaemon();
 		priority = thread.getPriority();
-		/*[ENDIF]*/
+		/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 		// Use the supplied state int to index into the array returned
 		// by values() which should be all thread states in the order
@@ -224,10 +224,10 @@ public class ThreadInfoBase {
 					&& (ti.waitedTime == waitedTime)
 					&& (ti.inNative == inNative)
 					&& (ti.suspended == suspended)
-					/*[IF Sidecar19-SE]*/
+					/*[IF JAVA_SPEC_VERSION >= 9]*/
 					&& (ti.daemon == daemon)
 					&& (ti.priority == priority)
-					/*[ENDIF]*/
+					/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 					&& ti.threadName.equals(threadName)
 					&& ti.threadState.equals(threadState)
 					&& Objects.equals(ti.lockName, lockName)
@@ -247,9 +247,9 @@ public class ThreadInfoBase {
 				+ lockOwnerName + stackTrace.length + threadId + threadName
 				+ threadState + waitedCount + waitedTime + inNative
 				+ suspended
-/*[IF Sidecar19-SE]*/
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 				+ daemon + priority
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 		).hashCode();
 	}
 
@@ -289,7 +289,7 @@ public class ThreadInfoBase {
 	}
 
 	/**
-	 * @return true if in native code 
+	 * @return true if in native code
 	 */
 	public boolean isInNative() {
 		return inNative;
@@ -371,7 +371,7 @@ public class ThreadInfoBase {
 	public MonitorInfoBase[] getLockedMonitors() {
 		return lockedMonitors;
 	}
-	/*[IF Sidecar19-SE]*/
+	/*[IF JAVA_SPEC_VERSION >= 9]*/
 
 	/**
 	 * @return true if this is a daemon thread
@@ -386,5 +386,5 @@ public class ThreadInfoBase {
 	public int getPriority() {
 		return priority;
 	}
-	/*[ENDIF]*/
+	/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 }

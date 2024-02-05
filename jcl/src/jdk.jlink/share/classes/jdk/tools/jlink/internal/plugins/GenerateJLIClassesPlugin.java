@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar19-SE]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 9]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2018
  *
@@ -33,7 +33,7 @@ import java.util.Set;
  * one because the default relies on Hotspot-specific code.
  * Removing this class entirely causes the build to fail when
  * using the default module-info.java file for the jlink module.
- * So we create the class, but include no code that affects any 
+ * So we create the class, but include no code that affects any
  * change.
  */
 public class GenerateJLIClassesPlugin implements Plugin
@@ -49,7 +49,7 @@ public class GenerateJLIClassesPlugin implements Plugin
    public ResourcePool transform(ResourcePool rp, ResourcePoolBuilder rpb){
       return null;
    }
-   
+
   /**
    * This method tells the caller that this plugin is disabled,
    * and should not be used.
@@ -60,4 +60,3 @@ public class GenerateJLIClassesPlugin implements Plugin
        return EnumSet.of(State.DISABLED, State.FUNCTIONAL);
    }
 }
-

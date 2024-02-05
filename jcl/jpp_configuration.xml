@@ -102,7 +102,7 @@
 	<configuration
 		  label="JAVA11"
 		  outputpath="JAVA11/src"
-		  flags="Sidecar18-SE-OpenJ9,DAA,Sidecar19-SE,Sidecar19-SE-OpenJ9"
+		  flags="Sidecar18-SE-OpenJ9,DAA"
 		  dependencies="SIDECAR18-SE"
 		  jdkcompliance="11">
 		<classpathentry kind="src" path="src/java.base/share/classes"/>

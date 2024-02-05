@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar17]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2016
  *
@@ -32,7 +32,7 @@ import javax.management.openmbean.OpenType;
 import javax.management.openmbean.SimpleType;
 
 /**
- * Support for the {@link StackTraceElement} class. 
+ * Support for the {@link StackTraceElement} class.
  */
 public final class StackTraceElementUtil {
 
@@ -52,11 +52,11 @@ public final class StackTraceElementUtil {
 	 *             <code>StackTraceElement</code> with the following
 	 *             attributes:
 	 *             <ul>
-/*[IF Sidecar19-SE]
+/*[IF JAVA_SPEC_VERSION >= 9]
 	 *             <li><code>moduleName</code>(<code>java.lang.String</code>)
 	 *             <li><code>moduleVersion</code>(<code>java.lang.String</code>)
 	 *             <li><code>classLoaderName</code>(<code>java.lang.String</code>)
-/*[ENDIF]
+/*[ENDIF] JAVA_SPEC_VERSION >= 9
 	 *             <li><code>className</code>(<code>java.lang.String</code>)
 	 *             <li><code>methodName</code>(
 	 *             <code>java.lang.String</code>)
@@ -71,9 +71,9 @@ public final class StackTraceElementUtil {
 
 	private static SoftReference<String[]> methodNameCache = null;
 	private static SoftReference<String[]> returnTypeCache = null;
-	/* 
-	 * the following three methods, fromArray, toCompositeData, and getCompositeType 
-	 * must respect the ordering for the methods 
+	/*
+	 * the following three methods, fromArray, toCompositeData, and getCompositeType
+	 * must respect the ordering for the methods
 	 */
 	private static String[] getMethodNames() {
 		String[] methodNames = null;
@@ -81,17 +81,17 @@ public final class StackTraceElementUtil {
 			methodNames = methodNameCache.get();
 		}
 		if (null == methodNames) {
-			methodNames =new String[] {"className",  //$NON-NLS-1$ 
-					"methodName", //$NON-NLS-1$ 
-					"fileName",  //$NON-NLS-1$ 
-					"lineNumber",  //$NON-NLS-1$ 
-					"nativeMethod", //$NON-NLS-1$ 
-					/*[IF Sidecar19-SE]*/
-					"moduleName",  //$NON-NLS-1$ 
-					"moduleVersion",  //$NON-NLS-1$ 
-					"classLoaderName" //$NON-NLS-1$ 
-					/*[ENDIF]*/
-			}; 
+			methodNames =new String[] {"className",  //$NON-NLS-1$
+					"methodName", //$NON-NLS-1$
+					"fileName",  //$NON-NLS-1$
+					"lineNumber",  //$NON-NLS-1$
+					"nativeMethod", //$NON-NLS-1$
+					/*[IF JAVA_SPEC_VERSION >= 9]*/
+					"moduleName",  //$NON-NLS-1$
+					"moduleVersion",  //$NON-NLS-1$
+					"classLoaderName" //$NON-NLS-1$
+					/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
+			};
 			methodNameCache = new SoftReference<>(methodNames);
 		}
 		return methodNames;
@@ -102,18 +102,18 @@ public final class StackTraceElementUtil {
 		if (null != returnTypeCache) {
 			returnTypes = returnTypeCache.get();
 		}
-		if (null == returnTypes) { 
+		if (null == returnTypes) {
 			returnTypes = new String[] {
 				"java.lang.String", //$NON-NLS-1$
 				"java.lang.String", //$NON-NLS-1$
 				"java.lang.String", //$NON-NLS-1$
 				"java.lang.Integer", //$NON-NLS-1$
 				"java.lang.Boolean", //$NON-NLS-1$
-				/*[IF Sidecar19-SE]*/
+				/*[IF JAVA_SPEC_VERSION >= 9]*/
 				"java.lang.String", //$NON-NLS-1$
 				"java.lang.String", //$NON-NLS-1$
 				"java.lang.String" //$NON-NLS-1$
-				/*[ENDIF]*/
+				/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 				};
 		}
 		returnTypeCache = new SoftReference<>(returnTypes);
@@ -122,16 +122,16 @@ public final class StackTraceElementUtil {
 
 	private static Object[] getValues(StackTraceElement element) {
 		Object[] values = {
-				element.getClassName(), 
+				element.getClassName(),
 				element.getMethodName(),
-				element.getFileName(), 
+				element.getFileName(),
 				Integer.valueOf(element.getLineNumber()),
 				Boolean.valueOf(element.isNativeMethod()),
-				/*[IF Sidecar19-SE]*/
-				element.getModuleName(), 
-				element.getModuleVersion(), 
+				/*[IF JAVA_SPEC_VERSION >= 9]*/
+				element.getModuleName(),
+				element.getModuleVersion(),
 				element.getClassLoaderName()
-				/*[ENDIF]*/
+				/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 				};
 		return values;
 	}
@@ -152,11 +152,11 @@ public final class StackTraceElementUtil {
 	 *             not correspond to a <code>StackTraceElement</code> with the
 	 *             following attributes:
 	 *             <ul>
-/*[IF Sidecar19-SE]
+/*[IF JAVA_SPEC_VERSION >= 9]
 	 *             <li><code>moduleName</code>(<code>java.lang.String</code>)
 	 *             <li><code>moduleVersion</code>(<code>java.lang.String</code>)
 	 *             <li><code>classLoaderName</code>(<code>java.lang.String</code>)
-/*[ENDIF]
+/*[ENDIF] JAVA_SPEC_VERSION >= 9
 	 *             <li><code>className</code>(<code>java.lang.String</code>)
 	 *             <li><code>methodName</code>(
 	 *             <code>java.lang.String</code>)
@@ -198,17 +198,17 @@ public final class StackTraceElementUtil {
 				int lineNumberVal = ((Integer) attributeVals[3]).intValue();
 				@SuppressWarnings("unused")
 				boolean nativeMethodVal = ((Boolean) attributeVals[4]).booleanValue();
-				/*[IF Sidecar19-SE]*/
+				/*[IF JAVA_SPEC_VERSION >= 9]*/
 				String moduleNameVal = (String) attributeVals[5];
 				String moduleVersionVal = (String) attributeVals[6];
 				String classLoaderNameVal = (String) attributeVals[7];
-				/*[ENDIF]*/
+				/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 				StackTraceElement element = new StackTraceElement(
-						/*[IF Sidecar19-SE]*/
-						moduleNameVal, 
+						/*[IF JAVA_SPEC_VERSION >= 9]*/
+						moduleNameVal,
 						moduleVersionVal,
 						classLoaderNameVal,
-						/*[ENDIF]*/
+						/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 						classNameVal, methodNameVal, fileNameVal, lineNumberVal
 						);
 				result[i] = element;
@@ -228,11 +228,11 @@ public final class StackTraceElementUtil {
 			OpenType<?>[] types = {
 					SimpleType.STRING, SimpleType.STRING, SimpleType.STRING,
 					SimpleType.INTEGER, SimpleType.BOOLEAN ,
-					/*[IF Sidecar19-SE]*/
+					/*[IF JAVA_SPEC_VERSION >= 9]*/
 					SimpleType.STRING, SimpleType.STRING,SimpleType.STRING,
-					/*[ENDIF]*/
+					/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 					};
-		
+
 			try {
 				compositeType = new CompositeType(
 						StackTraceElement.class.getName(),

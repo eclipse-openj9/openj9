@@ -1,5 +1,4 @@
-/*[INCLUDE-IF Sidecar17]*/
-
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 package com.ibm.jit;
 
 /*******************************************************************************
@@ -28,15 +27,15 @@ import com.ibm.oti.vm.J9UnmodifiableClass;
 import java.lang.reflect.Field;
 import java.lang.reflect.Array;
 import com.ibm.oti.vm.VM;
-/*[IF Sidecar19-SE]
+/*[IF JAVA_SPEC_VERSION >= 9]
 import jdk.internal.misc.Unsafe;
 import jdk.internal.reflect.Reflection;
 import jdk.internal.reflect.CallerSensitive;
-/*[ELSE]*/
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 import sun.misc.Unsafe;
 import sun.reflect.Reflection;
 import sun.reflect.CallerSensitive;
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 /**
  * The <code>JITHelpers</code> class contains methods used by the JIT to optimize certain primitive operations.
@@ -97,7 +96,7 @@ public final class JITHelpers {
 
 	/**
 	 * Java implementation of the native getSuperclass
-	 * 
+	 *
 	 * @param clazz
 	 *           The class to introspect (must not be null).
 	 * @return The superclass, or null for primitive types, interfaces and java.lang.Object.
@@ -263,7 +262,7 @@ public final class JITHelpers {
 	 * checks for and handles: 1) standard fields in normal objects 2) static fields from classes 3) entries from arrays This sequence is branchy and
 	 * hard for us to optimize. The better solution in cases where we know the type of object is to use case specific accessors which are the methods
 	 * below. Be careful that you know the type of the object you are getting from before using these.
-	 * 
+	 *
 	 * NOTE: JIT assumes that obj is non-null and offset is positive - breaking this assumption is just asking for trouble.
 	 */
 	public int getIntFromObject(Object obj, long offset) {
@@ -315,27 +314,27 @@ public final class JITHelpers {
 	}
 
 	public boolean compareAndSwapIntInObject(Object obj, long offset, int expected, int value) {
-/*[IF Sidecar19-SE-OpenJ9]*/				
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 		return unsafe.compareAndSetInt(obj, offset, expected, value);
-/*[ELSE]
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 		return unsafe.compareAndSwapInt(obj, offset, expected, value);
-/*[ENDIF]*/		
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 	}
 
 	public boolean compareAndSwapLongInObject(Object obj, long offset, long expected, long value) {
-/*[IF Sidecar19-SE-OpenJ9]*/				
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 		return unsafe.compareAndSetLong(obj, offset, expected, value);
-/*[ELSE]
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 		return unsafe.compareAndSwapLong(obj, offset, expected, value);
-/*[ENDIF]*/		
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 	}
 
 	public boolean compareAndSwapObjectInObject(Object obj, long offset, Object expected, Object value) {
-/*[IF Sidecar19-SE-OpenJ9]*/				
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 		return unsafe.compareAndSetObject(obj, offset, expected, value);
-/*[ELSE]
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 		return unsafe.compareAndSwapObject(obj, offset, expected, value);
-/*[ENDIF]*/		
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 	}
 
 	public byte getByteFromArray(Object obj, long offset) {
@@ -419,27 +418,27 @@ public final class JITHelpers {
 	}
 
 	public boolean compareAndSwapIntInArray(Object obj, long offset, int expected, int value) {
-/*[IF Sidecar19-SE-OpenJ9]*/				
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 		return unsafe.compareAndSetInt(obj, offset, expected, value);
-/*[ELSE]
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 		return unsafe.compareAndSwapInt(obj, offset, expected, value);
-/*[ENDIF]*/		
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 	}
 
 	public boolean compareAndSwapLongInArray(Object obj, long offset, long expected, long value) {
-/*[IF Sidecar19-SE-OpenJ9]*/				
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 		return unsafe.compareAndSetLong(obj, offset, expected, value);
-/*[ELSE]
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 		return unsafe.compareAndSwapLong(obj, offset, expected, value);
-/*[ENDIF]*/		
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 	}
 
 	public boolean compareAndSwapObjectInArray(Object obj, long offset, Object expected, Object value) {
-/*[IF Sidecar19-SE-OpenJ9]*/				
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 		return unsafe.compareAndSetObject(obj, offset, expected, value);
-/*[ELSE]
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 		return unsafe.compareAndSwapObject(obj, offset, expected, value);
-/*[ENDIF]*/		
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 	}
 
 	public char byteToCharUnsigned(byte b) {
@@ -504,7 +503,7 @@ public final class JITHelpers {
 
 	public byte getByteFromArrayByIndex(Object obj, int index) {
 		Class<?> clazz = obj.getClass();
-		
+
 		if (clazz == byte[].class) {
 			return ((byte[]) obj)[index];
 		} else if (clazz == char[].class) {
@@ -579,7 +578,7 @@ public final class JITHelpers {
 	 *     - 1 <= s2len <= s2Value.length * 2
 	 *     - 0 <= start < s1len
 	 * <blockquote><pre>
-	 * 
+	 *
 	 * @param s1Value the source character array to search in.
 	 * @param s1len   the length (in number of characters) of the source array.
 	 * @param s2Value the target character array to search for.
@@ -593,7 +592,7 @@ public final class JITHelpers {
 
 		while (true) {
 			int i = intrinsicIndexOfLatin1(s1Value, (byte)firstChar, start, s1len);
-						
+
 			// Handles subCount > count || start >= count
 			if (i == -1 || s2len + i > s1len) {
 				return -1;
@@ -612,7 +611,7 @@ public final class JITHelpers {
 			start = i + 1;
 		}
 	}
-	
+
 	/**
 	 * Returns the first index of the target character array within the source character array starting from the specified
 	 * offset.
@@ -625,7 +624,7 @@ public final class JITHelpers {
 	 *     - 1 <= s2len <= s2Value.length
 	 *     - 0 <= start < s1len
 	 * <blockquote><pre>
-	 * 
+	 *
 	 * @param s1Value the source character array to search in.
 	 * @param s1len   the length (in number of characters) of the source array.
 	 * @param s2Value the target character array to search for.
@@ -639,7 +638,7 @@ public final class JITHelpers {
 
 		while (true) {
 			int i = intrinsicIndexOfUTF16(s1Value, firstChar, start, s1len);
-			
+
 			// Handles subCount > count || start >= count
 			if (i == -1 || s2len + i > s1len) {
 				return -1;
@@ -668,7 +667,7 @@ public final class JITHelpers {
 	 *     - 0 <= offset < length <= array.length * 1 (if array instanceof byte[])
 	 *     - 0 <= offset < length <= array.length * 2 (if array instanceof char[])
 	 * <blockquote><pre>
-	 * 
+	 *
 	 * @param array  the source character array to search in.
 	 * @param ch     the character to search for.
 	 * @param offset the starting offset (in number of characters) to search from.
@@ -694,7 +693,7 @@ public final class JITHelpers {
 	 *     - 0 <= offset < length <= array.length * 1 (if array instanceof byte[])
 	 *     - 0 <= offset < length <= array.length * 2 (if array instanceof char[])
 	 * <blockquote><pre>
-	 * 
+	 *
 	 * @param array  the source character array to search in.
 	 * @param ch     the character to search for.
 	 * @param offset the starting offset (in number of characters) to search from.
@@ -729,7 +728,7 @@ public final class JITHelpers {
 
 	/**
 	 * Called by the JIT on 32bit platforms to copy a source object's contents to a destination object as part of a clone. This is a shallow copy only.
-	 * 
+	 *
 	 * @param srcObj
 	 *           The object whose fields are to be copied
 	 * @param destObj
@@ -782,7 +781,7 @@ public final class JITHelpers {
 
 	/**
 	 * Called by the JIT on 64bit platforms to copy a source object's contents to a destination object as part of a clone. This is a shallow copy only.
-	 * 
+	 *
 	 * @param srcObj
 	 *           The object whose fields are to be copied
 	 * @param destObj
@@ -846,7 +845,7 @@ public final class JITHelpers {
 
 	/**
 	 * Java implementation of optimized clone.
-	 * 
+	 *
 	 * @param srcObj
 	 *           The source object of the clone.
 	 * @return The cloned object.
@@ -1091,11 +1090,11 @@ public final class JITHelpers {
 		return lwValue;
 	}
 
-	/**		
-	 * Determines whether the underlying platform's memory model is big-endian.		
-	 * 		
-	 * @return True if the underlying platform's memory model is big-endian, false otherwise.		
-	 */		
+	/**
+	 * Determines whether the underlying platform's memory model is big-endian.
+	 *
+	 * @return True if the underlying platform's memory model is big-endian, false otherwise.
+	 */
 	private native static final boolean isBigEndian();
 
 	/* Placeholder for JIT GPU optimizations - this method never actually gets run */

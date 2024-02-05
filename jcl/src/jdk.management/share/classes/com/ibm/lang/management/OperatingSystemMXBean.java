@@ -128,11 +128,11 @@ public interface OperatingSystemMXBean extends com.sun.management.OperatingSyste
 	/**
 	 * Deprecated. Use getProcessCpuTime()
 	 */
-	/*[IF Sidecar19-SE]
+	/*[IF JAVA_SPEC_VERSION >= 9]
 	@Deprecated(forRemoval = true, since = "1.8")
-	/*[ELSE]*/
+	/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 	@Deprecated
-	/*[ENDIF]*/
+	/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 	public long getProcessCpuTimeByNS();
 /*[ENDIF] JAVA_SPEC_VERSION < 19 */
 
@@ -154,11 +154,11 @@ public interface OperatingSystemMXBean extends com.sun.management.OperatingSyste
 	/**
 	 * Deprecated.  Use getCommittedVirtualMemorySize()
 	 */
-	/*[IF Sidecar19-SE]
+	/*[IF JAVA_SPEC_VERSION >= 9]
 	@Deprecated(forRemoval = true, since = "1.8")
-	/*[ELSE]*/
+	/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 	@Deprecated
-	/*[ENDIF]*/
+	/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 	public long getProcessVirtualMemorySize();
 /*[ENDIF] JAVA_SPEC_VERSION < 19 */
 

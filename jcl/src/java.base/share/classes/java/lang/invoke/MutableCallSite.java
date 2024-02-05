@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar17 & !OPENJDK_METHODHANDLES]*/
+/*[INCLUDE-IF (JAVA_SPEC_VERSION >= 8) & !OPENJDK_METHODHANDLES]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2011
  *
@@ -22,11 +22,11 @@
  *******************************************************************************/
 package java.lang.invoke;
 
-/*[IF Sidecar19-SE]
+/*[IF JAVA_SPEC_VERSION >= 9]
 import jdk.internal.ref.Cleaner;
-/*[ELSE]*/
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 import sun.misc.Cleaner;
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 import static java.lang.invoke.MethodHandleResolver.UNSAFE;
 
@@ -34,13 +34,13 @@ import static java.lang.invoke.MethodHandleResolver.UNSAFE;
  * A MutableCallSite acts as though its target MethodHandle were a normal variable.
  * <p>
  * Because it is an ordinary variable, other threads may not immediately observe the value of a
- * {@link #setTarget(MethodHandle)} unless external synchronization is used.  If the result of 
+ * {@link #setTarget(MethodHandle)} unless external synchronization is used.  If the result of
  * a {@link #setTarget(MethodHandle)} call must be observed by other threads, the {@link #syncAll(MutableCallSite[])}
  * method may be used to force it to be synchronized.
  * <p>
- * The {@link #syncAll(MutableCallSite[])} call is likely to be expensive and should be used sparingly.  Calls to 
+ * The {@link #syncAll(MutableCallSite[])} call is likely to be expensive and should be used sparingly.  Calls to
  * {@link #syncAll(MutableCallSite[])} should be batched whenever possible.
- * 
+ *
  * @since 1.7
  */
 public class MutableCallSite extends CallSite {
@@ -48,10 +48,10 @@ public class MutableCallSite extends CallSite {
 	static {
 		registerNatives();
 	}
-	private MutableCallSiteDynamicInvokerHandle cachedDynamicInvoker; 
-	
+	private MutableCallSiteDynamicInvokerHandle cachedDynamicInvoker;
+
 	final private GlobalRefCleaner globalRefCleaner;
-	
+
 	/* Field bypassBase is dependent on field targetFieldOffset */
 	private static final long targetFieldOffset = initializeTargetFieldOffset();
 	private static long initializeTargetFieldOffset(){
@@ -70,11 +70,11 @@ public class MutableCallSite extends CallSite {
 	/*[ENDIF]*/
 	private volatile MethodHandle target;
 	private volatile MethodHandle epoch;  // A previous target that was equivalent to target, in the sense of StructuralComparator.handlesAreEquivalent
-	
+
 	/**
 	 * Create a MutableCallSite permanently set to the same type as the <i>mutableTarget</i> and using
 	 * the <i>mutableTarget</i> as the initial target value.
-	 * 
+	 *
 	 * @param mutableTarget - the initial target of the CallSite
 	 * @throws NullPointerException - if the <i>mutableTarget</i> is null.
 	 */
@@ -86,11 +86,11 @@ public class MutableCallSite extends CallSite {
 		globalRefCleaner = new GlobalRefCleaner();
 		Cleaner.create(this, globalRefCleaner);
 	}
-	
+
 	/**
 	 * Create a MutableCallSite with the MethodType <i>type</i> and an
 	 * initial target that throws IllegalStateException.
-	 * 
+	 *
 	 * @param type - the permanent type of this CallSite.
 	 * @throws NullPointerException - if the type is null.
 	 */
@@ -103,7 +103,7 @@ public class MutableCallSite extends CallSite {
 		globalRefCleaner = new GlobalRefCleaner();
 		Cleaner.create(this, globalRefCleaner);
 	}
-	
+
 	@Override
 	public final MethodHandle dynamicInvoker() {
 		if (null == cachedDynamicInvoker) {
@@ -145,27 +145,27 @@ public class MutableCallSite extends CallSite {
 			 * target.  We use equivalenceCounter and equivalenceInterval to limit how often we
 			 * check structural equivalence.  If new targets are equivalent, then it is worthwhile
 			 * to always do the check.  Once they start being different, than we start to back off
-			 * on how frequently we check as the check itself must walk the two handle graphs and 
+			 * on how frequently we check as the check itself must walk the two handle graphs and
 			 * this is expensive.
 			 *
 			 * It is important that every path in here sets this.target exactly once, or else we
 			 * need to start worrying about race conditions.
-			 * 
+			 *
 			 * PR 56302: Set target using CAS to avoid racing with thaw() and ending up with target
 			 * and epoch that are not equivalent.  If the CAS fails, that means we're in a race;
 			 * it is valid to behave as though we won the race, and then the other thread overwrote
-			 * the target field afterward.  Hence, it's valid to take no action when the CAS fails. 
+			 * the target field afterward.  Hence, it's valid to take no action when the CAS fails.
 			 */
 			/*[ENDIF]*/
 			if (--equivalenceCounter <= 0) {
 				if (StructuralComparator.get().handlesAreEquivalent(oldTarget, newTarget)) {
 					// Equivalence check saved us a thaw, so it's worth doing them every time.
 					equivalenceInterval = 1;
-/*[IF Sidecar19-SE-OpenJ9]*/				
+/*[IF (JAVA_SPEC_VERSION >= 9)]*/
 					UNSAFE.compareAndSetObject(this, targetFieldOffset, oldTarget, newTarget);
-/*[ELSE]
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 					UNSAFE.compareAndSwapObject(this, targetFieldOffset, oldTarget, newTarget);
-/*[ENDIF]*/					
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 				} else {
 					thaw(oldTarget, newTarget);
 					// Equivalence check was useless; wait longer before doing another one.
@@ -272,11 +272,11 @@ public class MutableCallSite extends CallSite {
 	 * Loads of the target from any of the CallSites that has already begun will continue to use the old value.
 	 * <p>
 	 * If any of the elements in the <i>sites</i> array is null, a NullPointerException will be raised.  It is undefined whether any
-	 * of the sites may have been synchronized. 
+	 * of the sites may have been synchronized.
 	 * <p>
-	 * Note: it is valid for an implementation to use a volatile variable for the target value of MutableCallSite.  In that case, 
+	 * Note: it is valid for an implementation to use a volatile variable for the target value of MutableCallSite.  In that case,
 	 * the {@link #syncAll(MutableCallSite[])} call becomes a no-op.
-	 *  
+	 *
 	 * @param sites - the array of MutableCallSites to force to be synchronized.
 	 * @throws NullPointerException - if sites or any of its elements are null.
 	 */
@@ -285,7 +285,7 @@ public class MutableCallSite extends CallSite {
 			sites[i].freeze(); // Throws NPE if null
 		}
 	}
-	
+
 	/*
 	 * Native that releases the globalRef allocated during JIT compilation.
 	 */
@@ -294,14 +294,14 @@ public class MutableCallSite extends CallSite {
 }
 
 /*
- * A Runnable used by the sun.misc.Cleaner that will free the JNI 
+ * A Runnable used by the sun.misc.Cleaner that will free the JNI
  * GlobalRef allocated during compilation if required.
  */
 final class GlobalRefCleaner implements Runnable {
-	// Will be updated during JIT compilation.  'bypassOffset' is treated 
+	// Will be updated during JIT compilation.  'bypassOffset' is treated
 	// as though it were returned from Unsafe.staticFieldOffset(bypassBase, ...).
 	long bypassOffset = 0;
-	
+
 	public void run() {
 		if (bypassOffset != 0) {
 			MutableCallSite.freeGlobalRef(bypassOffset);
