@@ -38,16 +38,18 @@ struct TR_ClassLoaderInfo
 
    TR_ClassLoaderInfo(void *loader, void *chain, J9UTF8 *nameStr) :
       _loader(loader), _loaderTableNext(NULL),
-      _chain(chain), _chainTableNext(NULL),
+      _chain(chain), _chainTableNext(NULL)
 #if defined(J9VM_OPT_JITSERVER)
-      _nameStr(nameStr), _nameTableNext(NULL)
+      , _nameStr(nameStr), _nameTableNext(NULL)
 #endif /* defined(J9VM_OPT_JITSERVER) */
       { }
 
+#if defined(J9VM_OPT_JITSERVER)
    const J9UTF8 *name() const
       {
       return _nameStr;
       }
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
    template<TableKind T> TR_ClassLoaderInfo *&next();
    template<TableKind T> bool equals(const void *key) const;
