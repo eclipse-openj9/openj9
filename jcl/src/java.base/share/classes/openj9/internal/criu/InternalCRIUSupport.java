@@ -231,7 +231,7 @@ public final class InternalCRIUSupport {
 
 	private static native String[] getRestoreSystemProperites();
 
-	static {
+	private static void initializeUnsafe() {
 		AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
 			try {
 				Field f = Unsafe.class.getDeclaredField("theUnsafe"); //$NON-NLS-1$
@@ -807,6 +807,10 @@ public final class InternalCRIUSupport {
 	private void registerRestoreEnvVariables() {
 		if (this.envFile == null) {
 			return;
+		}
+
+		if (unsafe == null) {
+			initializeUnsafe();
 		}
 
 		J9InternalCheckpointHookAPI.registerPostRestoreHook(HookMode.SINGLE_THREAD_MODE, RESTORE_ENVIRONMENT_VARIABLES_PRIORITY,
