@@ -386,6 +386,14 @@ JITServerAOTDeserializer::cacheRecord(const ClassLoaderSerializationRecord *reco
          );
       return false;
       }
+   else if (!chain)
+      {
+      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+            "ERROR: Found class loader but not chain for first loaded class %.*s", RECORD_NAME(record)
+         );
+      return false;
+      }
 
    uintptr_t offset = _sharedCache->offsetInSharedCacheFromPointer(chain);
    addToMaps(_classLoaderIdMap, _classLoaderPtrMap, it, record->id(), { loader, offset }, loader);
