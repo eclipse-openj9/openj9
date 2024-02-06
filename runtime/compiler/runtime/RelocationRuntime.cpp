@@ -242,7 +242,9 @@ TR_RelocationRuntime::prepareRelocateAOTCodeAndData(J9VMThread* vmThread,
                                                     TR::Options *options,
                                                     TR::Compilation *comp,
                                                     TR_ResolvedMethod *resolvedMethod,
-                                                    uint8_t *existingCode)
+                                                    uint8_t *existingCode,
+                                                    TR_J9SharedCache *cacheOverride
+                                                    )
    {
    _currentThread = vmThread;
    _fe = theFE;
@@ -268,7 +270,7 @@ TR_RelocationRuntime::prepareRelocateAOTCodeAndData(J9VMThread* vmThread,
    TR_ASSERT(_options, "Options were not correctly initialized.");
    _reloLogger->setupOptions(_options);
 
-   TR_RelocationRuntime::IsRelocating startRelocating(this);
+   TR_RelocationRuntime::IsRelocating startRelocating(this, cacheOverride);
 
    uint8_t *tempCodeStart, *tempDataStart;
    uint8_t *oldDataStart, *oldCodeStart, *newCodeStart;

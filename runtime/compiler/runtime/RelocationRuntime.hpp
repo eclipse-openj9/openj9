@@ -225,15 +225,25 @@ class TR_RelocationRuntime {
       class IsRelocating
          {
          public:
-         IsRelocating(TR_RelocationRuntime *reloRuntime) : _reloRuntime(reloRuntime)
+         IsRelocating(TR_RelocationRuntime *reloRuntime, TR_J9SharedCache *cacheOverride) : _reloRuntime(reloRuntime)
             {
             TR_ASSERT_FATAL(!_reloRuntime->isRelocating(), "Cannot already be relocating a method");
             _reloRuntime->setIsRelocating();
+
+            TR_J9VMBase *fej9vm = _reloRuntime->fej9();
+            _restoreCache = fej9vm->sharedCache();
+            if (NULL != cacheOverride)
+               fej9vm->setSharedCache(cacheOverride);
             }
-         ~IsRelocating() { _reloRuntime->resetIsRelocating(); }
+         ~IsRelocating()
+            {
+            _reloRuntime->resetIsRelocating();
+            _reloRuntime->fej9()->setSharedCache(_restoreCache);
+            }
 
          private:
          TR_RelocationRuntime *_reloRuntime;
+         TR_J9SharedCache *_restoreCache;
          };
 
       TR_ALLOC(TR_Memory::Relocation)
@@ -293,7 +303,8 @@ class TR_RelocationRuntime {
                                                          TR::Options *options,
                                                          TR::Compilation *compilation,
                                                          TR_ResolvedMethod *resolvedMethod,
-                                                         uint8_t *existingCode = NULL);
+                                                         uint8_t *existingCode = NULL,
+                                                         TR_J9SharedCache *cacheOverride = NULL);
 
       virtual bool storeAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread);
       virtual const TR_AOTHeader *getStoredAOTHeader(J9VMThread *curThread);
