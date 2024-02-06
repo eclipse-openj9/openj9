@@ -1383,6 +1383,7 @@ public:
 
    virtual TR_J9SharedCache *sharedCache() { return _sharedCache; }
    virtual void              freeSharedCache();
+   virtual void              setSharedCache(TR_J9SharedCache *sharedCache) { _sharedCache = sharedCache; }
 
    const char *getByteCodeName(uint8_t opcode);
 
