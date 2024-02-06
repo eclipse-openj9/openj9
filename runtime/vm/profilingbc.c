@@ -122,9 +122,7 @@ profilingBytecodeBufferFullHookRegistered(J9JavaVM* vm)
 
 #ifdef J9VM_GC_DYNAMIC_CLASS_UNLOADING
 	/* make sure that we flush any profiling data when a class is unloaded */
-	if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_CLASSES_UNLOAD, flushForClassesUnload, OMR_GET_CALLSITE(), iprofilerBufferSize)
-	|| (*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_ANON_CLASSES_UNLOAD, flushForClassesUnload, OMR_GET_CALLSITE(), iprofilerBufferSize)
-	) {
+	if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_CLASSES_UNLOAD, flushForClassesUnload, OMR_GET_CALLSITE(), iprofilerBufferSize)) {
 		Trc_VM_profilingBytecodeBufferFullHookRegistered_ClassUnloadHookFailed();
 		Assert_VM_unreachable();
 	}
