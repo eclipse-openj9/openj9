@@ -333,8 +333,7 @@ public final class InternalCRIUSupport {
 	 * @return TRUE if CRaC or CRIU support is enabled and the library is loaded, FALSE otherwise.
 	 */
 	public static boolean isCRaCorCRIUSupportEnabledAndNativeLoaded() {
-		init();
-		return (nativeLoaded && isCRaCorCRIUSupportEnabled());
+		return (isNativeLoaded() && isCRaCorCRIUSupportEnabled());
 	}
 
 	/**
@@ -343,8 +342,7 @@ public final class InternalCRIUSupport {
 	 * @return TRUE if CRIU support is enabled and the library is loaded, FALSE otherwise.
 	 */
 	public static boolean isCRIUSupportEnabledAndNativeLoaded() {
-		init();
-		return (nativeLoaded && isCRIUSupportEnabled());
+		return (isNativeLoaded() && isCRIUSupportEnabled());
 	}
 
 	/**
