@@ -563,6 +563,12 @@ TR_J9SharedCache::pointerFromOffsetInSharedCache(uintptr_t offset)
    }
 
 void *
+TR_J9SharedCache::lookupClassLoaderAssociatedWithClassChain(void *chainData)
+   {
+   return persistentClassLoaderTable()->lookupClassLoaderAssociatedWithClassChain(chainData);
+   }
+
+void *
 TR_J9SharedCache::romStructureFromOffsetInSharedCache(uintptr_t offset)
    {
    void *romStructure = NULL;
