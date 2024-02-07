@@ -42,6 +42,8 @@ cInterpreter:
 	ldr r15,[r4,{#}J9TR_JavaVM_bytecodeLoop]
 	cmp r0,{#}J9TR_bcloop_exit_interpreter
 	beq .L_cInterpExit
+	cmp r0,{#}J9TR_bcloop_reenter_interpreter
+	beq cInterpreter
 	RESTORE_PRESERVED_REGS
 	RESTORE_LR
 	SWITCH_TO_JAVA_STACK

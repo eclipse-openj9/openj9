@@ -189,6 +189,25 @@ public:
  * Function members
  */
 private:
+
+	VMINLINE bool
+	interpreterReentryRequested()
+	{
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+		return VM_VMHelpers::interpreterReentryRequested(_currentThread);
+#else /* J9VM_OPT_CRIU_SUPPORT */
+		return false;
+#endif /* J9VM_OPT_CRIU_SUPPORT */
+	}
+
+	VMINLINE VM_BytecodeAction
+	reenterInterpreter(UDATA reentryAction)
+	{
+		_currentThread->returnValue = reentryAction;
+		_nextAction = J9_BCLOOP_REENTER_INTERPRETER;
+		return GOTO_DONE;
+	}
+
 #if defined(J9VM_OPT_METHOD_HANDLE)
 	/**
 	 * Run a methodHandle using the MethodHandle interpreter/
@@ -1447,66 +1466,74 @@ obj:
 	VMINLINE VM_BytecodeAction
 	checkAsync(REGISTER_ARGS_LIST)
 	{
-		/* The current stack frame may be one of the following:
-		 *
-		 * 1) Special frame
-		 *
-		 *	1a) INL frame (for an INL which returns void)
-		 *
-		 *		No frame build is required, and the restoreSpecialStackFrameAndDrop will remove the
-		 *		argument from the stack before resuming execution.
-		 *
-		 *	1b) An immediate async is pending
-		 *
-		 *		The stack is already in a walkable state, and the restore and executeCurrentBytecode
-		 *		will not take place.
-		 *
-		 * 2) Bytecode or JNI call-in frame
-		 *
-		 *	Build a generic special frame, tear it down when done.
-		 */
 		VM_BytecodeAction rc = EXECUTE_BYTECODE;
-		bool inlFrame = false;
-		UDATA *bp = NULL;
-		if ((UDATA)_pc <= J9SF_MAX_SPECIAL_FRAME_TYPE) {
-			if (J9SF_FRAME_TYPE_NATIVE_METHOD == (UDATA)_pc) {
-				inlFrame = true;
-				bp = ((UDATA*)(((J9SFNativeMethodFrame*)((UDATA)_sp + (UDATA)_literals)) + 1)) - 1;
-			}
+
+		/* Check for interpreter re-entry first because we will come back to checkAsync
+		 * immediately upon re-entry to the interpreter.
+		 */
+		if (interpreterReentryRequested()) {
+			rc = reenterInterpreter(J9_BCLOOP_CHECK_ASYNC);
 		} else {
-			buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
-			bp = _arg0EA;
-		}
-		UDATA relativeBP = bp - _arg0EA;
-		updateVMStruct(REGISTER_ARGS);
-		UDATA action = javaCheckAsyncMessages(_currentThread, TRUE);
-		VMStructHasBeenUpdated(REGISTER_ARGS);
-		switch(action) {
-		case J9_CHECK_ASYNC_THROW_EXCEPTION:
-			rc = GOTO_THROW_CURRENT_EXCEPTION;
-			break;
-#if defined(DEBUG_VERSION)
-		case J9_CHECK_ASYNC_POP_FRAMES:
-			rc = HANDLE_POP_FRAMES;
-			break;
-#endif
-		default:
-			restoreSpecialStackFrameAndDrop(REGISTER_ARGS, _arg0EA + relativeBP);
-			if (inlFrame) {
-				_pc += 3;
+			/* The current stack frame may be one of the following:
+			 *
+			 * 1) Special frame
+			 *
+			 *	1a) INL frame (for an INL which returns void)
+			 *
+			 *		No frame build is required, and the restoreSpecialStackFrameAndDrop will remove the
+			 *		argument from the stack before resuming execution.
+			 *
+			 *	1b) An immediate async is pending
+			 *
+			 *		The stack is already in a walkable state, and the restore and executeCurrentBytecode
+			 *		will not take place.
+			 *
+			 * 2) Bytecode or JNI call-in frame
+			 *
+			 *	Build a generic special frame, tear it down when done.
+			 */
+			bool inlFrame = false;
+			UDATA *bp = NULL;
+			if ((UDATA)_pc <= J9SF_MAX_SPECIAL_FRAME_TYPE) {
+				if (J9SF_FRAME_TYPE_NATIVE_METHOD == (UDATA)_pc) {
+					inlFrame = true;
+					bp = ((UDATA*)(((J9SFNativeMethodFrame*)((UDATA)_sp + (UDATA)_literals)) + 1)) - 1;
+				}
+			} else {
+				buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
+				bp = _arg0EA;
 			}
-			break;
+			UDATA relativeBP = bp - _arg0EA;
+			updateVMStruct(REGISTER_ARGS);
+			UDATA action = javaCheckAsyncMessages(_currentThread, TRUE);
+			VMStructHasBeenUpdated(REGISTER_ARGS);
+			switch(action) {
+			case J9_CHECK_ASYNC_THROW_EXCEPTION:
+				rc = GOTO_THROW_CURRENT_EXCEPTION;
+				break;
+	#if defined(DEBUG_VERSION)
+			case J9_CHECK_ASYNC_POP_FRAMES:
+				rc = HANDLE_POP_FRAMES;
+				break;
+	#endif
+			default:
+				restoreSpecialStackFrameAndDrop(REGISTER_ARGS, _arg0EA + relativeBP);
+				if (inlFrame) {
+					_pc += 3;
+				}
+				break;
+			}
 		}
 		return rc;
 	}
 
 	VMINLINE bool immediateAsyncPending()
 	{
-#if defined(DEBUG_VERSION)
+#if defined(DEBUG_VERSION) || defined(J9VM_OPT_CRIU_SUPPORT)
 		return VM_VMHelpers::immediateAsyncPending(_currentThread);
-#else
+#else /* defined(DEBUG_VERSION) || defined(J9VM_OPT_CRIU_SUPPORT) */
 		return false;
-#endif
+#endif /* defined(DEBUG_VERSION) || defined(J9VM_OPT_CRIU_SUPPORT) */
 	}
 
 	VMINLINE VM_BytecodeAction
@@ -1865,7 +1892,14 @@ throwStackOverflow:
 			}
 #if defined(DO_HOOKS)
 			rc = REPORT_METHOD_ENTER;
-#endif
+			if (interpreterReentryRequested()) {
+				rc = reenterInterpreter(J9_BCLOOP_REPORT_METHOD_ENTER);
+			}
+#else /* DO_HOOKS */
+			if (interpreterReentryRequested()) {
+				rc = reenterInterpreter(J9_BCLOOP_EXECUTE_BYTECODE);
+			}
+#endif /* DO_HOOKS */
 		}
 done:
 		return rc;
@@ -2341,6 +2375,9 @@ done:
 			*(U_32 *)_sp = (U_32)_currentThread->returnValue;
 		}
 		rc = EXECUTE_BYTECODE;
+		if (interpreterReentryRequested()) {
+			rc = reenterInterpreter(J9_BCLOOP_EXECUTE_BYTECODE);
+		}
 done:
 		return rc;
 	}

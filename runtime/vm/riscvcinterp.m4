@@ -70,6 +70,8 @@ cInterpreter:
     jalr ra, s8, 0
     li s7, J9TR_bcloop_exit_interpreter
     beq a0, s7, .L_cInterpExit
+    li s7, J9TR_bcloop_reenter_interpreter
+    beq a0, s7, cInterpreter
     RESTORE_PRESERVED_REGS
     RESTORE_FPLR
     SWITCH_TO_JAVA_STACK
