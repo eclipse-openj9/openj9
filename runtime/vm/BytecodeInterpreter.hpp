@@ -7243,17 +7243,20 @@ retry:
 		{
 			J9Class *fieldClass = (J9Class*)(classAndFlags & ~(UDATA)J9StaticFieldRefFlagBits);
 			bool isVolatile = (0 != (classAndFlags & J9StaticFieldRefVolatile));
-			if (classAndFlags & J9StaticFieldRefBaseType) {
-				if (classAndFlags & J9StaticFieldRefDouble) {
-					_sp -= 2;
-					*(U_64*)_sp = _objectAccessBarrier.inlineStaticReadU64(_currentThread, fieldClass, (U_64 *)valueAddress, isVolatile);
-				} else {
-					_sp -= 1;
-					*(U_32*)_sp = _objectAccessBarrier.inlineStaticReadU32(_currentThread, fieldClass, (U_32 *)valueAddress, isVolatile);
-				}
-			} else {
+
+			switch(classAndFlags & J9StaticFieldRefTypeMask) {
+			case J9StaticFieldRefTypeObject:
 				_sp -= 1;
 				*(j9object_t*)_sp = _objectAccessBarrier.inlineStaticReadObject(_currentThread, fieldClass, (j9object_t *)valueAddress, isVolatile);
+				break;
+			case J9StaticFieldRefTypeLongDouble:
+				_sp -= 2;
+				*(U_64*)_sp = _objectAccessBarrier.inlineStaticReadU64(_currentThread, fieldClass, (U_64 *)valueAddress, isVolatile);
+				break;
+			default:
+				_sp -= 1;
+				*(U_32*)_sp = _objectAccessBarrier.inlineStaticReadU32(_currentThread, fieldClass, (U_32 *)valueAddress, isVolatile);
+				break;
 			}
 		}
 		_pc += 3;
@@ -7329,21 +7332,35 @@ done:
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 			J9Class *fieldClass = (J9Class*)(classAndFlags & ~(UDATA)J9StaticFieldRefFlagBits);
 			bool isVolatile = (0 != (classAndFlags & J9StaticFieldRefVolatile));
-			if (classAndFlags & J9StaticFieldRefBaseType) {
-				if (classAndFlags & J9StaticFieldRefDouble) {
-					_objectAccessBarrier.inlineStaticStoreU64(_currentThread, fieldClass, (U_64*)valueAddress, *(U_64*)_sp, isVolatile);
-					_sp += 2;
-				} else {
-					U_32 value = *(U_32*)_sp;
-					if (J9_ARE_ALL_BITS_SET(classAndFlags, J9StaticFieldRefBoolean)) {
-						value &= 1;
-					}
-					_objectAccessBarrier.inlineStaticStoreU32(_currentThread, fieldClass, (U_32*)valueAddress, value, isVolatile);
-					_sp += 1;
-				}
-			} else {
+			switch(classAndFlags & J9StaticFieldRefTypeMask) {
+			case J9StaticFieldRefTypeObject:
 				_objectAccessBarrier.inlineStaticStoreObject(_currentThread, fieldClass, (j9object_t*)valueAddress, *(j9object_t*)_sp, isVolatile);
 				_sp += 1;
+				break;
+			case J9StaticFieldRefTypeBoolean:
+				_objectAccessBarrier.inlineStaticStoreU32(_currentThread, fieldClass, (U_32*)valueAddress, *(U_32*)_sp & 1, isVolatile);
+				_sp += 1;
+				break;
+			case J9StaticFieldRefTypeByte:
+				_objectAccessBarrier.inlineStaticStoreU32(_currentThread, fieldClass, (U_32*)valueAddress, (U_32)(I_32)(I_8)*(U_32*)_sp, isVolatile);
+				_sp += 1;
+				break;
+			case J9StaticFieldRefTypeChar:
+				_objectAccessBarrier.inlineStaticStoreU32(_currentThread, fieldClass, (U_32*)valueAddress, *(U_32*)_sp &= 0xFFFF, isVolatile);
+				_sp += 1;
+				break;
+			case J9StaticFieldRefTypeShort:
+				_objectAccessBarrier.inlineStaticStoreU32(_currentThread, fieldClass, (U_32*)valueAddress, (U_32)(I_32)(I_16)*(U_32*)_sp, isVolatile);
+				_sp += 1;
+				break;
+			case J9StaticFieldRefTypeIntFloat:
+				_objectAccessBarrier.inlineStaticStoreU32(_currentThread, fieldClass, (U_32*)valueAddress, *(U_32*)_sp, isVolatile);
+				_sp += 1;
+				break;
+			case J9StaticFieldRefTypeLongDouble:
+				_objectAccessBarrier.inlineStaticStoreU64(_currentThread, fieldClass, (U_64*)valueAddress, *(U_64*)_sp, isVolatile);
+				_sp += 2;
+				break;
 			}
 		}
 		_pc += 3;
@@ -7546,8 +7563,19 @@ done:
 					goto done;
 				}
 				U_32 value = *(U_32*)_sp;
-				if (J9FieldTypeBoolean == (flags & J9FieldTypeMask)) {
+				switch(flags & J9FieldTypeMask) {
+				case J9FieldTypeBoolean:
 					value &= 1;
+					break;
+				case J9FieldTypeByte:
+					value = (U_32)(I_32)(I_8)value;
+					break;
+				case J9FieldTypeChar:
+					value &= 0xFFFF;
+					break;
+				case J9FieldTypeShort:
+					value = (U_32)(I_32)(I_16)value;
+					break;
 				}
 				_objectAccessBarrier.inlineMixedObjectStoreU32(_currentThread, objectref, newValueOffset, value, isVolatile);
 				_sp += 2;
@@ -9820,7 +9848,22 @@ retry:
 				VM_ValueTypeHelpers::putFlattenableField(_currentThread, _objectAccessBarrier, ramFieldRef, copyObjectRef, *(j9object_t*)_sp);
 				_sp += 1;
 			} else {
-				_objectAccessBarrier.inlineMixedObjectStoreU32(_currentThread, copyObjectRef, newValueOffset, *(U_32*)_sp, isVolatile);
+				U_32 value = *(U_32*)_sp;
+				switch(flags & J9FieldTypeMask) {
+				case J9FieldTypeBoolean:
+					value &= 1;
+					break;
+				case J9FieldTypeByte:
+					value = (U_32)(I_32)(I_8)value;
+					break;
+				case J9FieldTypeChar:
+					value &= 0xFFFF;
+					break;
+				case J9FieldTypeShort:
+					value = (U_32)(I_32)(I_16)value;
+					break;
+				}
+				_objectAccessBarrier.inlineMixedObjectStoreU32(_currentThread, copyObjectRef, newValueOffset, value, isVolatile);
 				_sp += 1;
 			}
 		}
