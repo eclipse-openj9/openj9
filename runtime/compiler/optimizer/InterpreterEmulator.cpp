@@ -20,6 +20,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 #include "optimizer/InterpreterEmulator.hpp"
+#include "optimizer/J9DeferredOSRAssumptions.hpp"
 #include "optimizer/J9EstimateCodeSize.hpp"
 #include "env/VMAccessCriticalSection.hpp"
 #include "env/JSR292Methods.h"
@@ -1060,24 +1061,33 @@ void InterpreterEmulator::maintainStackForGetStatic()
 
     TR_YesNoMaybe canFold = TR_no;
     TR::Symbol::RecognizedField recField = TR::Symbol::UnknownField;
+    TR_OpaqueClassBlock *declaringClass = NULL;
     if (resolved && isFinal) {
         bool isStatic = true;
         recField = TR::Symbol::searchRecognizedField(comp(), owningMethod, cpIndex, isStatic);
 
-        TR_OpaqueClassBlock *declaringClass = owningMethod->getDeclaringClassFromFieldOrStatic(comp(), cpIndex);
+        declaringClass = owningMethod->getDeclaringClassFromFieldOrStatic(comp(), cpIndex);
 
         canFold = TR::TransformUtil::canFoldStaticFinalField(comp(), declaringClass, recField, owningMethod, cpIndex);
     }
 
     TR::KnownObjectTable::Index knownObjectIndex = TR::KnownObjectTable::UNKNOWN;
-    if (canFold == TR_yes && type == TR::Address) {
+    if (type == TR::Address
+        && (canFold == TR_yes
+            || (canFold == TR_maybe && TR::TransformUtil::enableEarlyGuardedStaticFinalFieldFolding()
+                && TR::TransformUtil::canDoGuardedStaticFinalFieldFolding(comp())
+                && comp()->isFearPointPlacementUnrestricted()))) {
         TR::AnyConst value = TR::AnyConst::makeAddress(0);
         bool gotValue = TR::TransformUtil::staticFinalFieldValue(comp(), owningMethod, cpIndex, dataAddress,
             TR::Address, recField, &value);
 
         if (gotValue && value.isKnownObject()) {
             knownObjectIndex = value.getKnownObjectIndex();
-            addRequiredConst(value);
+            TR::RequiredConst &reqConst = addRequiredConst(value);
+            if (canFold == TR_maybe) {
+                TR::Region &stackRegion = comp()->trMemory()->currentStackRegion();
+                reqConst._assumptions.push_back(new (stackRegion) TR::DeferredStaticFinalOSRAssumption(declaringClass));
+            }
         }
     }
 
