@@ -50,7 +50,7 @@ FUNC_LABEL(cInterpreter):
 	cmp x0, {#}J9TR_bcloop_exit_interpreter
 	beq .L_cInterpExit
 	cmp x0, {#}J9TR_bcloop_reenter_interpreter
-	beq FUNC_LABEL(cInterpreter
+	beq FUNC_LABEL(cInterpreter)
 	RESTORE_PRESERVED_REGS
 	RESTORE_FPLR
 	SWITCH_TO_JAVA_STACK
