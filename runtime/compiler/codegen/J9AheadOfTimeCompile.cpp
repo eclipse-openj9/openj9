@@ -164,13 +164,13 @@ J9::AheadOfTimeCompile::offsetInSharedCacheFromClass(TR_SharedCache *sharedCache
    }
 
 uintptr_t
-J9::AheadOfTimeCompile::offsetInSharedCacheFromROMMethod(TR_SharedCache *sharedCache, J9ROMMethod *romMethod)
+J9::AheadOfTimeCompile::offsetInSharedCacheFromMethod(TR_SharedCache *sharedCache, TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *definingClass)
    {
-   uintptr_t offset = 0;
-   if (sharedCache->isROMMethodInSharedCache(romMethod, &offset))
+   uintptr_t offset = TR_SharedCache::INVALID_ROM_METHOD_OFFSET;
+   if (sharedCache->isMethodInSharedCache(method, definingClass, &offset))
       return offset;
    else
-      self()->comp()->failCompilation<J9::ClassChainPersistenceFailure>("Failed to find romMethod %p in SCC", romMethod);
+      self()->comp()->failCompilation<J9::ClassChainPersistenceFailure>("Failed to find method %p in SCC", method);
 
    return offset;
    }
@@ -1047,16 +1047,14 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          TR::MethodFromClassAndSigRecord *svmRecord = reinterpret_cast<TR::MethodFromClassAndSigRecord *>(relocation->getTargetAddress());
 
          // Store rom method to get name of method
-         J9Method *methodToValidate = reinterpret_cast<J9Method *>(svmRecord->_method);
-         J9ROMMethod *romMethod = static_cast<TR_J9VM *>(fej9)->getROMMethodFromRAMMethod(methodToValidate);
-         uintptr_t romMethodOffsetInSharedCache = self()->offsetInSharedCacheFromROMMethod(sharedCache, romMethod);
+         uintptr_t methodOffsetInSharedCache = self()->offsetInSharedCacheFromMethod(sharedCache, svmRecord->_method, svmRecord->_definingClass);
 
          mfcsRecord->setMethodID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_method));
          mfcsRecord->setDefiningClassID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_definingClass));
          mfcsRecord->setBeholderID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_beholder));
          mfcsRecord->setLookupClassID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_lookupClass));
-         mfcsRecord->setRomMethodOffsetInSCC(reloTarget, romMethodOffsetInSharedCache, self(),
-                                             methodToValidate, svmRecord->_definingClass);
+         mfcsRecord->setRomMethodOffsetInSCC(reloTarget, methodOffsetInSharedCache, self(),
+                                             reinterpret_cast<J9Method *>(svmRecord->_method), svmRecord->_definingClass);
          }
          break;
 
