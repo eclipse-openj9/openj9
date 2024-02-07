@@ -35,6 +35,11 @@
 #include "j2sever.h"
 #include "zip_api.h"
 
+#if defined(AIXPPC)
+#include <errno.h>
+#include <sys/ldr.h>
+#endif /* defined(AIXPPC) */
+
 #define _UTE_STATIC_
 #include "ut_j9jvmti.h"
 
@@ -1061,6 +1066,169 @@ createXrunLibraries(J9JavaVM * vm)
 	return JNI_OK;
 }
 
+#if defined(AIXPPC)
+/**
+ * Check if the first dirLen bytes of the file name is a library path.
+ *
+ * @param[in] fileName the file name containing a path
+ * @param[in] dirLen the number of bytes to be compared
+ * @param[in] libpath the library path returned from loadquery(L_GETLIBPATH)
+ *
+ * @return TRUE if the first dirLen bytes of the file name is a library path, FALSE otherwise
+ */
+static BOOLEAN
+isFileNameInLibPath(const char *fileName, UDATA dirLen, char *libpath)
+{
+	BOOLEAN result = FALSE;
+	char *path = NULL;
+	char *strTokPtr = NULL;
+
+	for (path = strtok_r(libpath, ":", &strTokPtr);
+			NULL != path;
+			path = strtok_r(NULL, ":", &strTokPtr)
+	) {
+		if ((0 == strncmp(fileName, path, dirLen)) && ('\0' == path[dirLen])) {
+			/* a match found */
+			result = TRUE;
+			Trc_JVMTI_isFileNameInLibPath_path_match(fileName, path, dirLen);
+			break;
+		}
+		/* continue to search the libpath */
+		Trc_JVMTI_isFileNameInLibPath_path_not_match(fileName, path, dirLen);
+	}
+	return result;
+}
+
+/**
+ * Check if an object file loaded is the same as an agent library to be loaded.
+ *
+ * @param[in] fileName the object file name retrieved va loadquery(L_GETINFO)
+ * @param[in] libName the agent library name to be searched
+ * @param[in] decorate a boolean indicating if the prefix/suffix to the library name is to be added
+ * @param[in] isLibraryPath a boolean indicating if the libName contains a path separator
+ * @param[in] libNameSo the platform independent agent library name added prefix(lib) and suffix(.so)
+ * @param[in] libNameAr the platform independent agent library name added prefix(lib) and suffix(.a)
+ * @param[in] libpath the library path returned via loadquery(L_GETLIBPATH)
+ *
+ * @return TRUE if the agent library is the same as the object file, FALSE otherwise
+ */
+static BOOLEAN
+searchObjectFileFromLDInfo(const char *fileName, const char *libName, BOOLEAN decorate, BOOLEAN isLibraryPath,
+		const char *libNameSo, const char *libNameAr, char *libpath)
+{
+	BOOLEAN result = FALSE;
+	/* locate the last occurrence of file path separator in the object file */
+	const char *tmp = strrchr(fileName, '/');
+	if (NULL == tmp) {
+		/* this object file has no path separator */
+		if (decorate) {
+			/* compare with libName added the prefix/suffix */
+			if ((0 == strcmp(fileName, libNameSo))
+				|| (0 == strcmp(fileName, libNameAr))
+			) {
+				result = TRUE;
+			}
+		} else {
+			if (!isLibraryPath) {
+				/* libName has no path separator, compare the whole file names */
+				if (0 == strcmp(fileName, libName)) {
+					result = TRUE;
+				}
+			}
+			/* if libName contains a path separator, it can't be the same library as this fileName */
+		}
+	} else {
+		/* find the library name of this object file */
+		const char *tmpLibName = tmp + 1;
+		if (decorate) {
+			/* compare with libName added the prefix/suffix */
+			if ((0 == strcmp(tmpLibName, libNameSo))
+				|| (0 == strcmp(tmpLibName, libNameAr))
+			) {
+				/* check if this object file path is part of libpath */
+				UDATA dirLen = tmp - fileName;
+				result = isFileNameInLibPath(fileName, dirLen, libpath);
+			}
+		} else {
+			/* check if libName contains a path separator */
+			if (isLibraryPath) {
+				/* compare the library directly with the object file loaded */
+				if (0 == strcmp(fileName, libName)) {
+					Trc_JVMTI_searchObjectFileFromLDInfo_library_object_file_found(fileName);
+					result = TRUE;
+				} else {
+					Trc_JVMTI_searchObjectFileFromLDInfo_library_object_file_not_found(fileName, libName);
+				}
+			} else {
+				/* libName has no path separator, compare the whole file names */
+				if (0 == strcmp(tmpLibName, libName)) {
+					/* check if this object file path is part of libpath */
+					UDATA dirLen = tmp - fileName;
+					result = isFileNameInLibPath(fileName, dirLen, libpath);
+				}
+			}
+		}
+	}
+	return result;
+}
+
+/**
+ * Retrieve a list of all object files loaded for the current process via loadquery(L_GETINFO).
+ * This helper method reallocates the buffer if the initial allocation is insufficient.
+ * The caller is responsible for freeing the buffer allocated.
+ *
+ * @param[in] vm Java VM
+ *
+ * @return a pointer to struct ld_info holding the object files if succeeded, otherwise NULL
+ */
+static struct ld_info *
+loadqueryGetObjectFiles(J9JavaVM *vm)
+{
+	PORT_ACCESS_FROM_JAVAVM(vm);
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	/* Use the same initial buffer size as omrintrospect_backtrace_symbols_raw()
+	 * in omr/port/aix/omrosbacktrace_impl.c.
+	 */
+	UDATA objectFileSize = 150 * sizeof(struct ld_info);
+	void *tmpBuffer = j9mem_allocate_memory(objectFileSize, J9MEM_CATEGORY_JVMTI);
+	if (NULL == tmpBuffer) {
+		Trc_JVMTI_loadqueryGetObjectFiles_OOM(objectFileSize);
+		vmFuncs->setNativeOutOfMemoryError(vm->mainThread, 0, 0);
+	} else {
+		Trc_JVMTI_loadqueryGetObjectFiles_allocate_memory(tmpBuffer, objectFileSize);
+		for (;;) {
+			int rc = loadquery(L_GETINFO, tmpBuffer, objectFileSize);
+			if (-1 != rc) {
+				/* loadquery() completed successfully */
+				break;
+			}
+			if (ENOMEM == errno) {
+				void *newBuffer = NULL;
+				/* insufficient buffer size, increase it */
+				objectFileSize *= 2;
+				newBuffer = j9mem_reallocate_memory(tmpBuffer, objectFileSize, J9MEM_CATEGORY_JVMTI);
+				if (NULL == newBuffer) {
+					Trc_JVMTI_loadqueryGetObjectFiles_OOM(objectFileSize);
+					vmFuncs->setNativeOutOfMemoryError(vm->mainThread, 0, 0);
+					j9mem_free_memory(tmpBuffer);
+					tmpBuffer = NULL;
+					break;
+				}
+				tmpBuffer = newBuffer;
+				Trc_JVMTI_loadqueryGetObjectFiles_allocate_memory(tmpBuffer, objectFileSize);
+			} else {
+				/* other errors - EINVAL or EFAULT */
+				Trc_JVMTI_loadqueryGetObjectFiles_loadquery_errno(errno);
+				j9mem_free_memory(tmpBuffer);
+				tmpBuffer = NULL;
+				break;
+			}
+		}
+	}
+	return (struct ld_info *)tmpBuffer;
+}
+#endif /* defined(AIXPPC) */
+
 /**
  * Test if an agent library was already loaded.
  *
@@ -1074,8 +1242,10 @@ static BOOLEAN
 isAgentLibraryLoaded(J9JavaVM *vm, const char *library, BOOLEAN decorate)
 {
 	BOOLEAN result = FALSE;
+	UDATA libraryLen = strlen(library);
 
-	if (NULL != findAgentLibrary(vm, library, strlen(library))) {
+	Trc_JVMTI_isAgentLibraryLoaded_library_decorate(library, decorate);
+	if (NULL != findAgentLibrary(vm, library, libraryLen)) {
 		result = TRUE;
 	} else {
 		/* J9PORT_SLOPEN_NO_LOAD is only supported on Linux/OSX/Win32 platforms. */
@@ -1110,6 +1280,88 @@ isAgentLibraryLoaded(J9JavaVM *vm, const char *library, BOOLEAN decorate)
 			j9mem_free_memory(agentPath);
 		}
 		Trc_JVMTI_isAgentLibraryLoaded_result(library, agentPath, result);
+#elif defined(AIXPPC) /* defined(LINUX) || defined(OSX) || defined(WIN32) */
+		/* The incoming library & decorate could be in the following cases:
+		 * - JvmtiAgent1 & TRUE
+		 * - libJvmtiAgent1.so & FALSE
+		 * - /path/to/libJvmtiAgent1.so & FALSE
+		 */
+		PORT_ACCESS_FROM_JAVAVM(vm);
+		/* retrieve a list of all object files loaded for the current process */
+		struct ld_info *objectFiles = loadqueryGetObjectFiles(vm);
+		if (NULL != objectFiles) {
+			J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+			char *libNameSo = NULL;
+			char *libNameAr = NULL;
+			char *libpath = NULL;
+			UDATA libpathSize = 0;
+			char *envLibPath = NULL;
+			char *fileName = NULL;
+			BOOLEAN isLibraryPath = FALSE;
+			struct ld_info *cursor = NULL;
+
+			if (decorate) {
+				/* the library is a platform independent name */
+				/* either object suffix is acceptable */
+				UDATA sizeLibNameSo = libraryLen + sizeof("lib.so");
+				UDATA sizeLibNameAr = libraryLen + sizeof("lib.a");
+				libNameSo = (char *)j9mem_allocate_memory(sizeLibNameSo, J9MEM_CATEGORY_JVMTI);
+				libNameAr = (char *)j9mem_allocate_memory(sizeLibNameAr, J9MEM_CATEGORY_JVMTI);
+				if ((NULL != libNameSo) && (NULL != libNameAr)) {
+					j9str_printf(PORTLIB, libNameSo, sizeLibNameSo, "lib%s.so", library);
+					j9str_printf(PORTLIB, libNameAr, sizeLibNameAr, "lib%s.a", library);
+					Trc_JVMTI_isAgentLibraryLoaded_libNames(libNameSo, libNameAr);
+				} else {
+					Trc_JVMTI_isAgentLibraryLoaded_OOM("libNameSo or libNameAr");
+					vmFuncs->setNativeOutOfMemoryError(vm->mainThread, 0, 0);
+					goto failed;
+				}
+			} else {
+				/* check if library contains a path separator */
+				isLibraryPath = (NULL != strrchr(library, '/'));
+			}
+
+			/* Because redirector adds onto LIBPATH, fetching LIBPATH via getenv is more
+			 * accurate than fetching LIBPATH from loadquery using L_GETLIBATH flag.
+			 */
+			envLibPath = getenv("LIBPATH");
+			if (NULL != envLibPath) {
+				libpathSize = strlen(envLibPath) + 1;
+				libpath = j9mem_allocate_memory(libpathSize, J9MEM_CATEGORY_JVMTI);
+				if (NULL == libpath) {
+					Trc_JVMTI_isAgentLibraryLoaded_OOM("libpath");
+					vmFuncs->setNativeOutOfMemoryError(vm->mainThread, 0, 0);
+					goto failed;
+				}
+				/* copy it to avoid the modification by putenv() */
+				memcpy(libpath, envLibPath, libpathSize);
+			} else {
+				/* assign it an empty string */
+				libpath = (char *)"";
+			}
+			Trc_JVMTI_isAgentLibraryLoaded_loadquery_getlibpath(libpath, libpathSize);
+			for (cursor = objectFiles;;) {
+				/* objectFiles is not NULL */
+				if (0 == cursor->ldinfo_next) {
+					/* last entry, exit */
+					break;
+				}
+				fileName = cursor->ldinfo_filename;
+				Trc_JVMTI_isAgentLibraryLoaded_ldinfo_filename_decorate(fileName, decorate);
+				result = searchObjectFileFromLDInfo(fileName, library, decorate, isLibraryPath, libNameSo, libNameAr, libpath);
+				if (result) {
+					break;
+				}
+				cursor = (struct ld_info *)((char *)cursor + cursor->ldinfo_next);
+			}
+failed:
+			if (libpathSize > 0) {
+				j9mem_free_memory(libpath);
+			}
+			j9mem_free_memory(libNameSo);
+			j9mem_free_memory(libNameAr);
+			j9mem_free_memory(objectFiles);
+		}
 #endif /* defined(LINUX) || defined(OSX) || defined(WIN32) */
 	}
 
