@@ -130,6 +130,8 @@ ifdef({ASM_J9VM_ENV_DATA64},{
 	CALL_INDIRECT
 	cmpliaddr r3,J9TR_bcloop_exit_interpreter
 	beq .L_cInterpExit
+	cmpliaddr r3,J9TR_bcloop_reenter_interpreter
+	beq .L_cInterpOnCStack
 	RESTORE_PRESERVED_REGS
 	RESTORE_LR
 	SWITCH_TO_JAVA_STACK

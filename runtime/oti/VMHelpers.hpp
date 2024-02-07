@@ -803,7 +803,7 @@ done:
 	static VMINLINE bool
 	immediateAsyncPending(J9VMThread *currentThread)
 	{
-		return (0 != (currentThread->publicFlags & J9_PUBLIC_FLAGS_POP_FRAMES_INTERRUPT));
+		return J9_ARE_ANY_BITS_SET(currentThread->publicFlags, J9_PUBLIC_FLAGS_POP_FRAMES_INTERRUPT);
 	}
 
 	/**
@@ -2170,6 +2170,34 @@ exit:
 		return result;
 	}
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+
+	/**
+	 * Query and reset the current thread's interpreter re-entry flag.
+	 *
+	 * @param[in] currentThread the current J9VMThread
+	 *
+	 * @return true if re-entry requested, false if not
+	 */
+	static VMINLINE bool
+	interpreterReentryRequested(J9VMThread *currentThread)
+	{
+		bool rc = J9_ARE_ANY_BITS_SET(currentThread->privateFlags2, J9_PRIVATE_FLAGS2_REENTER_INTERPRETER);
+		currentThread->privateFlags2 &= ~(UDATA)J9_PRIVATE_FLAGS2_REENTER_INTERPRETER;
+		return rc;
+	}
+
+	/**
+	 * Request interpreter re-entry on a J9VMThread. The target thread must either be
+	 * the current thread or not have VM access (e.g. halted by exclusive VM access).
+	 *
+	 * @param[in] targetThread the target J9VMThread
+	 */
+	static VMINLINE void
+	requestInterpreterReentry(J9VMThread *targetThread)
+	{
+		targetThread->privateFlags2 |= J9_PRIVATE_FLAGS2_REENTER_INTERPRETER;
+		indicateAsyncMessagePending(targetThread);
+	}
 };
 
 #endif /* VMHELPERS_HPP_ */

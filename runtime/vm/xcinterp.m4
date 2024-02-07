@@ -168,6 +168,8 @@ C_FUNCTION_SYMBOL(cInterpreter):
 	CALL_C_ADDR_WITH_VMTHREAD(uword ptr J9TR_JavaVM_bytecodeLoop[_rax],0)
 	cmp _rax,J9TR_bcloop_exit_interpreter
 	je SHORT_JMP cInterpExit
+	cmp _rax,J9TR_bcloop_reenter_interpreter
+	je SHORT_JMP C_FUNCTION_SYMBOL(cInterpreter)
 	RESTORE_PRESERVED_REGS
 	SWITCH_TO_JAVA_STACK
 	jmp uword ptr J9TR_VMThread_tempSlot[_rbp]

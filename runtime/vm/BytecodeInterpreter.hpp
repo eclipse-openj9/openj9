@@ -189,6 +189,25 @@ public:
  * Function members
  */
 private:
+
+	VMINLINE bool
+	interpreterReentryRequested()
+	{
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+		return VM_VMHelpers::interpreterReentryRequested(_currentThread);
+#else /* J9VM_OPT_CRIU_SUPPORT */
+		return false;
+#endif /* J9VM_OPT_CRIU_SUPPORT */
+	}
+
+	VMINLINE VM_BytecodeAction
+	reenterInterpreter(UDATA reentryAction)
+	{
+		_currentThread->returnValue = reentryAction;
+		_nextAction = J9_BCLOOP_REENTER_INTERPRETER;
+		return GOTO_DONE;
+	}
+
 #if defined(J9VM_OPT_METHOD_HANDLE)
 	/**
 	 * Run a methodHandle using the MethodHandle interpreter/
@@ -1447,66 +1466,74 @@ obj:
 	VMINLINE VM_BytecodeAction
 	checkAsync(REGISTER_ARGS_LIST)
 	{
-		/* The current stack frame may be one of the following:
-		 *
-		 * 1) Special frame
-		 *
-		 *	1a) INL frame (for an INL which returns void)
-		 *
-		 *		No frame build is required, and the restoreSpecialStackFrameAndDrop will remove the
-		 *		argument from the stack before resuming execution.
-		 *
-		 *	1b) An immediate async is pending
-		 *
-		 *		The stack is already in a walkable state, and the restore and executeCurrentBytecode
-		 *		will not take place.
-		 *
-		 * 2) Bytecode or JNI call-in frame
-		 *
-		 *	Build a generic special frame, tear it down when done.
-		 */
 		VM_BytecodeAction rc = EXECUTE_BYTECODE;
-		bool inlFrame = false;
-		UDATA *bp = NULL;
-		if ((UDATA)_pc <= J9SF_MAX_SPECIAL_FRAME_TYPE) {
-			if (J9SF_FRAME_TYPE_NATIVE_METHOD == (UDATA)_pc) {
-				inlFrame = true;
-				bp = ((UDATA*)(((J9SFNativeMethodFrame*)((UDATA)_sp + (UDATA)_literals)) + 1)) - 1;
-			}
+
+		/* Check for interpreter re-entry first because we will come back to checkAsync
+		 * immediately upon re-entry to the interpreter.
+		 */
+		if (interpreterReentryRequested()) {
+			rc = reenterInterpreter(J9_BCLOOP_CHECK_ASYNC);
 		} else {
-			buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
-			bp = _arg0EA;
-		}
-		UDATA relativeBP = bp - _arg0EA;
-		updateVMStruct(REGISTER_ARGS);
-		UDATA action = javaCheckAsyncMessages(_currentThread, TRUE);
-		VMStructHasBeenUpdated(REGISTER_ARGS);
-		switch(action) {
-		case J9_CHECK_ASYNC_THROW_EXCEPTION:
-			rc = GOTO_THROW_CURRENT_EXCEPTION;
-			break;
-#if defined(DEBUG_VERSION)
-		case J9_CHECK_ASYNC_POP_FRAMES:
-			rc = HANDLE_POP_FRAMES;
-			break;
-#endif
-		default:
-			restoreSpecialStackFrameAndDrop(REGISTER_ARGS, _arg0EA + relativeBP);
-			if (inlFrame) {
-				_pc += 3;
+			/* The current stack frame may be one of the following:
+			 *
+			 * 1) Special frame
+			 *
+			 *	1a) INL frame (for an INL which returns void)
+			 *
+			 *		No frame build is required, and the restoreSpecialStackFrameAndDrop will remove the
+			 *		argument from the stack before resuming execution.
+			 *
+			 *	1b) An immediate async is pending
+			 *
+			 *		The stack is already in a walkable state, and the restore and executeCurrentBytecode
+			 *		will not take place.
+			 *
+			 * 2) Bytecode or JNI call-in frame
+			 *
+			 *	Build a generic special frame, tear it down when done.
+			 */
+			bool inlFrame = false;
+			UDATA *bp = NULL;
+			if ((UDATA)_pc <= J9SF_MAX_SPECIAL_FRAME_TYPE) {
+				if (J9SF_FRAME_TYPE_NATIVE_METHOD == (UDATA)_pc) {
+					inlFrame = true;
+					bp = ((UDATA*)(((J9SFNativeMethodFrame*)((UDATA)_sp + (UDATA)_literals)) + 1)) - 1;
+				}
+			} else {
+				buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
+				bp = _arg0EA;
 			}
-			break;
+			UDATA relativeBP = bp - _arg0EA;
+			updateVMStruct(REGISTER_ARGS);
+			UDATA action = javaCheckAsyncMessages(_currentThread, TRUE);
+			VMStructHasBeenUpdated(REGISTER_ARGS);
+			switch(action) {
+			case J9_CHECK_ASYNC_THROW_EXCEPTION:
+				rc = GOTO_THROW_CURRENT_EXCEPTION;
+				break;
+	#if defined(DEBUG_VERSION)
+			case J9_CHECK_ASYNC_POP_FRAMES:
+				rc = HANDLE_POP_FRAMES;
+				break;
+	#endif
+			default:
+				restoreSpecialStackFrameAndDrop(REGISTER_ARGS, _arg0EA + relativeBP);
+				if (inlFrame) {
+					_pc += 3;
+				}
+				break;
+			}
 		}
 		return rc;
 	}
 
 	VMINLINE bool immediateAsyncPending()
 	{
-#if defined(DEBUG_VERSION)
+#if defined(DEBUG_VERSION) || defined(J9VM_OPT_CRIU_SUPPORT)
 		return VM_VMHelpers::immediateAsyncPending(_currentThread);
-#else
+#else /* defined(DEBUG_VERSION) || defined(J9VM_OPT_CRIU_SUPPORT) */
 		return false;
-#endif
+#endif /* defined(DEBUG_VERSION) || defined(J9VM_OPT_CRIU_SUPPORT) */
 	}
 
 	VMINLINE VM_BytecodeAction
@@ -1865,7 +1892,14 @@ throwStackOverflow:
 			}
 #if defined(DO_HOOKS)
 			rc = REPORT_METHOD_ENTER;
-#endif
+			if (interpreterReentryRequested()) {
+				rc = reenterInterpreter(J9_BCLOOP_REPORT_METHOD_ENTER);
+			}
+#else /* DO_HOOKS */
+			if (interpreterReentryRequested()) {
+				rc = reenterInterpreter(J9_BCLOOP_EXECUTE_BYTECODE);
+			}
+#endif /* DO_HOOKS */
 		}
 done:
 		return rc;
@@ -2341,6 +2375,9 @@ done:
 			*(U_32 *)_sp = (U_32)_currentThread->returnValue;
 		}
 		rc = EXECUTE_BYTECODE;
+		if (interpreterReentryRequested()) {
+			rc = reenterInterpreter(J9_BCLOOP_EXECUTE_BYTECODE);
+		}
 done:
 		return rc;
 	}
@@ -7206,17 +7243,20 @@ retry:
 		{
 			J9Class *fieldClass = (J9Class*)(classAndFlags & ~(UDATA)J9StaticFieldRefFlagBits);
 			bool isVolatile = (0 != (classAndFlags & J9StaticFieldRefVolatile));
-			if (classAndFlags & J9StaticFieldRefBaseType) {
-				if (classAndFlags & J9StaticFieldRefDouble) {
-					_sp -= 2;
-					*(U_64*)_sp = _objectAccessBarrier.inlineStaticReadU64(_currentThread, fieldClass, (U_64 *)valueAddress, isVolatile);
-				} else {
-					_sp -= 1;
-					*(U_32*)_sp = _objectAccessBarrier.inlineStaticReadU32(_currentThread, fieldClass, (U_32 *)valueAddress, isVolatile);
-				}
-			} else {
+
+			switch(classAndFlags & J9StaticFieldRefTypeMask) {
+			case J9StaticFieldRefTypeObject:
 				_sp -= 1;
 				*(j9object_t*)_sp = _objectAccessBarrier.inlineStaticReadObject(_currentThread, fieldClass, (j9object_t *)valueAddress, isVolatile);
+				break;
+			case J9StaticFieldRefTypeLongDouble:
+				_sp -= 2;
+				*(U_64*)_sp = _objectAccessBarrier.inlineStaticReadU64(_currentThread, fieldClass, (U_64 *)valueAddress, isVolatile);
+				break;
+			default:
+				_sp -= 1;
+				*(U_32*)_sp = _objectAccessBarrier.inlineStaticReadU32(_currentThread, fieldClass, (U_32 *)valueAddress, isVolatile);
+				break;
 			}
 		}
 		_pc += 3;
@@ -7292,21 +7332,35 @@ done:
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 			J9Class *fieldClass = (J9Class*)(classAndFlags & ~(UDATA)J9StaticFieldRefFlagBits);
 			bool isVolatile = (0 != (classAndFlags & J9StaticFieldRefVolatile));
-			if (classAndFlags & J9StaticFieldRefBaseType) {
-				if (classAndFlags & J9StaticFieldRefDouble) {
-					_objectAccessBarrier.inlineStaticStoreU64(_currentThread, fieldClass, (U_64*)valueAddress, *(U_64*)_sp, isVolatile);
-					_sp += 2;
-				} else {
-					U_32 value = *(U_32*)_sp;
-					if (J9_ARE_ALL_BITS_SET(classAndFlags, J9StaticFieldRefBoolean)) {
-						value &= 1;
-					}
-					_objectAccessBarrier.inlineStaticStoreU32(_currentThread, fieldClass, (U_32*)valueAddress, value, isVolatile);
-					_sp += 1;
-				}
-			} else {
+			switch(classAndFlags & J9StaticFieldRefTypeMask) {
+			case J9StaticFieldRefTypeObject:
 				_objectAccessBarrier.inlineStaticStoreObject(_currentThread, fieldClass, (j9object_t*)valueAddress, *(j9object_t*)_sp, isVolatile);
 				_sp += 1;
+				break;
+			case J9StaticFieldRefTypeBoolean:
+				_objectAccessBarrier.inlineStaticStoreU32(_currentThread, fieldClass, (U_32*)valueAddress, *(U_32*)_sp & 1, isVolatile);
+				_sp += 1;
+				break;
+			case J9StaticFieldRefTypeByte:
+				_objectAccessBarrier.inlineStaticStoreU32(_currentThread, fieldClass, (U_32*)valueAddress, (U_32)(I_32)(I_8)*(U_32*)_sp, isVolatile);
+				_sp += 1;
+				break;
+			case J9StaticFieldRefTypeChar:
+				_objectAccessBarrier.inlineStaticStoreU32(_currentThread, fieldClass, (U_32*)valueAddress, *(U_32*)_sp &= 0xFFFF, isVolatile);
+				_sp += 1;
+				break;
+			case J9StaticFieldRefTypeShort:
+				_objectAccessBarrier.inlineStaticStoreU32(_currentThread, fieldClass, (U_32*)valueAddress, (U_32)(I_32)(I_16)*(U_32*)_sp, isVolatile);
+				_sp += 1;
+				break;
+			case J9StaticFieldRefTypeIntFloat:
+				_objectAccessBarrier.inlineStaticStoreU32(_currentThread, fieldClass, (U_32*)valueAddress, *(U_32*)_sp, isVolatile);
+				_sp += 1;
+				break;
+			case J9StaticFieldRefTypeLongDouble:
+				_objectAccessBarrier.inlineStaticStoreU64(_currentThread, fieldClass, (U_64*)valueAddress, *(U_64*)_sp, isVolatile);
+				_sp += 2;
+				break;
 			}
 		}
 		_pc += 3;
@@ -7509,8 +7563,19 @@ done:
 					goto done;
 				}
 				U_32 value = *(U_32*)_sp;
-				if (J9FieldTypeBoolean == (flags & J9FieldTypeMask)) {
+				switch(flags & J9FieldTypeMask) {
+				case J9FieldTypeBoolean:
 					value &= 1;
+					break;
+				case J9FieldTypeByte:
+					value = (U_32)(I_32)(I_8)value;
+					break;
+				case J9FieldTypeChar:
+					value &= 0xFFFF;
+					break;
+				case J9FieldTypeShort:
+					value = (U_32)(I_32)(I_16)value;
+					break;
 				}
 				_objectAccessBarrier.inlineMixedObjectStoreU32(_currentThread, objectref, newValueOffset, value, isVolatile);
 				_sp += 2;
@@ -9783,7 +9848,22 @@ retry:
 				VM_ValueTypeHelpers::putFlattenableField(_currentThread, _objectAccessBarrier, ramFieldRef, copyObjectRef, *(j9object_t*)_sp);
 				_sp += 1;
 			} else {
-				_objectAccessBarrier.inlineMixedObjectStoreU32(_currentThread, copyObjectRef, newValueOffset, *(U_32*)_sp, isVolatile);
+				U_32 value = *(U_32*)_sp;
+				switch(flags & J9FieldTypeMask) {
+				case J9FieldTypeBoolean:
+					value &= 1;
+					break;
+				case J9FieldTypeByte:
+					value = (U_32)(I_32)(I_8)value;
+					break;
+				case J9FieldTypeChar:
+					value &= 0xFFFF;
+					break;
+				case J9FieldTypeShort:
+					value = (U_32)(I_32)(I_16)value;
+					break;
+				}
+				_objectAccessBarrier.inlineMixedObjectStoreU32(_currentThread, copyObjectRef, newValueOffset, value, isVolatile);
 				_sp += 1;
 			}
 		}
