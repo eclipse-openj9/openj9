@@ -1292,6 +1292,16 @@ bool J9::TransformUtil::canDoGuardedStaticFinalFieldFolding(TR::Compilation *com
     return !comp->getOption(TR_DisableGuardedStaticFinalFieldFolding) && comp->canAddOSRAssumptions();
 }
 
+bool J9::TransformUtil::enableEarlyGuardedStaticFinalFieldFolding()
+{
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+    static const bool enable = feGetEnv("TR_enableEarlyGuardedSFFF") != NULL;
+    return enable;
+#else
+    return false;
+#endif
+}
+
 /** \brief
  *     Try to fold static final field with protection
  *
