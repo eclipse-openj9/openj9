@@ -196,6 +196,14 @@ public:
       return classMatchesCachedVersion((J9Class *) classPtr, chainData);
       }
 
+   /**
+    * \brief Converts a pointer to a class chain associated to a class loader in the SCC into a J9ClassLoader,
+    *        if it can be found in the running JVM.
+    *
+    * \param[in] chainData The pointer to convert, which should have come from pointerFromOffsetInSharedCache().
+    * \return A pointer. Raises a fatal assertion before returning NULL if the pointer is invalid.
+    */
+   virtual void *lookupClassLoaderAssociatedWithClassChain(void *chainData);
    virtual TR_OpaqueClassBlock *lookupClassFromChainAndLoader(uintptr_t *chainData, void *classLoader);
 
    /**
@@ -608,6 +616,7 @@ public:
 
    virtual bool classMatchesCachedVersion(J9Class *clazz, UDATA *chainData=NULL) override { TR_ASSERT_FATAL(false, "called"); return false;}
 
+   virtual void *lookupClassLoaderAssociatedWithClassChain(void *chainData) override { TR_ASSERT_FATAL(false, "called"); return NULL; }
    virtual TR_OpaqueClassBlock *lookupClassFromChainAndLoader(uintptr_t *chainData, void *classLoader) override { TR_ASSERT_FATAL(false, "called"); return NULL;}
 
    static void setSharedCacheDisabledReason(TR_J9SharedCacheDisabledReason state) { TR_ASSERT_FATAL(false, "called"); }

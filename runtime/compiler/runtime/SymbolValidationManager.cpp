@@ -1217,7 +1217,7 @@ TR::SymbolValidationManager::validateClassByNameRecord(uint16_t classID, uint16_
 bool
 TR::SymbolValidationManager::validateProfiledClassRecord(uint16_t classID, void *classChainIdentifyingLoader, void *classChainForClassBeingValidated)
    {
-   J9ClassLoader *classLoader = (J9ClassLoader *) _fej9->sharedCache()->persistentClassLoaderTable()->lookupClassLoaderAssociatedWithClassChain(classChainIdentifyingLoader);
+   J9ClassLoader *classLoader = (J9ClassLoader *) _fej9->sharedCache()->lookupClassLoaderAssociatedWithClassChain(classChainIdentifyingLoader);
    if (classLoader == NULL)
       return false;
 
