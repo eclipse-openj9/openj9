@@ -147,7 +147,7 @@ public class TestUtils {
 		    config.put("cmd.runCompileSimpleApp","%java5c_exe% %1%/SimpleApp.java");
 		    config.put("cmd.runCompileSimpleApp2","%java5c_exe% %1%/SimpleApp2.java");
 		    config.put("cmd.runJarClassesInDir","%java5jar_exe% cf MySimpleApp.jar -C %1% .");
-		    config.put("cmd.runProgramSimpleApp","%java_exe% "+(isRealtimeDefined ? "-Xrealtime " : "")+"-Xshareclasses:"+(isRealtimeDefined ? "grow," : "")+"persistent,name=%1%,verbose  -classpath %2% SimpleApp");
+		    config.put("cmd.runProgramSimpleApp","%java_exe% "+(isRealtimeDefined ? "-Xrealtime " : "")+"-Xshareclasses:"+(isRealtimeDefined ? "grow," : "")+"persistent,name=%1%,verbose -Xscmx16m -classpath %2% SimpleApp");
 		    
 		    System.out.println("\n--------- PROGRAM RUN COMMANDLINE INFO ---------");
 		    System.out.println("java_exe =\t" + config.get("java_exe"));
