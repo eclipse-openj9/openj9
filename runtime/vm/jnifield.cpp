@@ -364,6 +364,8 @@ setBooleanField(JNIEnv *env, jobject obj, jfieldID fieldID, jboolean value)
 	J9JNIFieldID *j9FieldID = (J9JNIFieldID *)fieldID;
 	UDATA valueOffset = j9FieldID->offset;
 
+	value &= 1;
+
 	if (J9_EVENT_IS_HOOKED(vm->hookInterface, J9HOOK_VM_PUT_FIELD)) {
 		j9object_t object = J9_JNI_UNWRAP_REFERENCE(obj);
 		if (J9_ARE_ANY_BITS_SET(J9OBJECT_CLAZZ(currentThread, object)->classFlags, J9ClassHasWatchedFields)) {
@@ -384,7 +386,7 @@ setBooleanField(JNIEnv *env, jobject obj, jfieldID fieldID, jboolean value)
 
 	j9object_t object = J9_JNI_UNWRAP_REFERENCE(obj);
 	valueOffset += J9VMTHREAD_OBJECT_HEADER_SIZE(currentThread);
-	J9OBJECT_U32_STORE(currentThread, object, valueOffset, (U_32) (value & 1));
+	J9OBJECT_U32_STORE(currentThread, object, valueOffset, (U_32)value);
 
 	if (isVolatile) {
 		VM_AtomicSupport::readWriteBarrier();
