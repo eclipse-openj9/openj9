@@ -1230,7 +1230,7 @@ getS390Description(struct J9PortLibrary *portLibrary, J9ProcessorDesc *desc)
 static intptr_t
 getRISCV64Description(struct J9PortLibrary *portLibrary, J9ProcessorDesc *desc)
 {
-	desc->processor = PROCESOR_RISCV64_UNKNOWN;
+	desc->processor = PROCESSOR_RISCV64_UNKNOWN;
 	desc->physicalProcessor = desc->processor;
 	return 0;
 }
@@ -1240,7 +1240,7 @@ getRISCV64Description(struct J9PortLibrary *portLibrary, J9ProcessorDesc *desc)
 static intptr_t
 getAArch64Description(struct J9PortLibrary *portLibrary, J9ProcessorDesc *desc)
 {
-	desc->processor = PROCESOR_AARCH64_UNKNOWN;
+	desc->processor = PROCESSOR_AARCH64_UNKNOWN;
 	desc->physicalProcessor = desc->processor;
 	return 0;
 }
