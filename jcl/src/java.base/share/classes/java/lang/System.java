@@ -696,7 +696,11 @@ private static void ensureProperties(boolean isInitialization) {
 
 	/*[IF CRIU_SUPPORT]*/
 	initializedProperties.put("org.eclipse.openj9.criu.isCRIUCapable", "true"); //$NON-NLS-1$ //$NON-NLS-2$
-	/*[ENDIF] CRIU_SUPPORT*/
+	// CRIU support is required by CRaC
+	/*[IF CRAC_SUPPORT]*/
+	initializedProperties.put("org.eclipse.openj9.criu.isCRaCCapable", "true"); //$NON-NLS-1$ //$NON-NLS-2$
+	/*[ENDIF] CRAC_SUPPORT */
+	/*[ENDIF] CRIU_SUPPORT */
 
 	String[] list = getPropertyList();
 	for (int i = 0; i < list.length; i += 2) {
