@@ -39,16 +39,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	<property name="COREGEN" value="j9vm.test.corehelper.CoreGen" />
 	<property name="TEST_LIB_PATH" value="" />
 
-	<!-- MacOSX needs to set TEST_LIB_PATH_VAL for testDDRExtJunit_MonitorsAndDeadlock* to load native library -->
-	<if>
-		<contains string="${os.name}" substring="Mac OS X" />
-		<then>
-			<property name="TEST_LIB_PATH_VAL" value="${TEST_LIB_PATH}" />
-		</then>
-		<else>
-			<property name="TEST_LIB_PATH_VAL" value="" />
-		</else>
-	</if>
 	<property name="dump.name" value="DDREXT.J9CORE.DMP" />
 	<property name="system.dump" value="${REPORTDIR}/${dump.name}" />
 	<if>
@@ -106,11 +96,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		</java>
 	</target>
 
-	<!-- MacOSX needs -XstartOnFirstThread -->
-	<condition property="StartOnFirstThread" value="-XstartOnFirstThread" else="">
-		<os family="mac" />
-	</condition>
-
 	<if>
 		<equals arg1="${JDK_VERSION}" arg2="8" />
 		<then>
@@ -149,6 +134,11 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	</if>
 
 	<target name="TCK.run.tests.ddrext" depends="TCK.destroy.cache">
+		<!-- MacOSX needs -XstartOnFirstThread -->
+		<condition property="StartOnFirstThread" value="-XstartOnFirstThread" else="">
+			<os family="mac" />
+		</condition>
+
 		<echo>Running the DDR Extension Test</echo>
 		<java-wrapper fork="true" jvm="${JAVA_COMMAND}" classname="j9vm.test.ddrext.AutoRun"
 			timeout="1200000" failonerror="true">
@@ -184,6 +174,11 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	</target>
 
 	<target name="TCK.generate.dump" depends="TCK.initialize.cache">
+		<!-- MacOSX needs to set TEST_LIB_PATH_VAL for testDDRExtJunit_MonitorsAndDeadlock* to load native libraries. -->
+		<condition property="TEST_LIB_PATH_VAL" value="${TEST_LIB_PATH}" else="">
+			<os family="mac" />
+		</condition>
+
 		<echo>Generate dump file</echo>
 		<echo>JAVA_COMMAND: ${JAVA_COMMAND}</echo>
 		<echo>DUMP_OPTION: ${DUMP_OPTION}</echo>
