@@ -898,3 +898,66 @@ JITServerLocalSCCAOTDeserializer::updateSCCOffsets(SerializedAOTMethod *method, 
 
    return true;
    }
+
+JITServerNoSCCAOTDeserializer::JITServerNoSCCAOTDeserializer(TR_PersistentClassLoaderTable *loaderTable) :
+   JITServerAOTDeserializer(loaderTable)
+   { }
+
+
+void
+JITServerNoSCCAOTDeserializer::invalidateClassLoader(J9VMThread *vmThread, J9ClassLoader *loader)
+   {
+   }
+
+void
+JITServerNoSCCAOTDeserializer::invalidateClass(J9VMThread *vmThread, J9Class *ramClass)
+   {
+   }
+
+void
+JITServerNoSCCAOTDeserializer::clearCachedData()
+   {
+   getNewKnownIds().clear();
+   }
+
+bool
+JITServerNoSCCAOTDeserializer::cacheRecord(const ClassLoaderSerializationRecord *record, TR::Compilation *comp, bool &isNew, bool &wasReset)
+   {
+   return false;
+   }
+
+bool
+JITServerNoSCCAOTDeserializer::cacheRecord(const ClassSerializationRecord *record, TR::Compilation *comp, bool &isNew, bool &wasReset)
+   {
+   return false;
+   }
+
+bool
+JITServerNoSCCAOTDeserializer::cacheRecord(const MethodSerializationRecord *record, TR::Compilation *comp, bool &isNew, bool &wasReset)
+   {
+   return false;
+   }
+
+bool
+JITServerNoSCCAOTDeserializer::cacheRecord(const ClassChainSerializationRecord *record, TR::Compilation *comp, bool &isNew, bool &wasReset)
+   {
+   return false;
+   }
+
+bool
+JITServerNoSCCAOTDeserializer::cacheRecord(const WellKnownClassesSerializationRecord *record, TR::Compilation *comp, bool &isNew, bool &wasReset)
+   {
+   return false;
+   }
+
+bool
+JITServerNoSCCAOTDeserializer::cacheRecord(const ThunkSerializationRecord *record, TR::Compilation *comp, bool &isNew, bool &wasReset)
+   {
+   return false;
+   }
+
+bool
+JITServerNoSCCAOTDeserializer::updateSCCOffsets(SerializedAOTMethod *method, TR::Compilation *comp, bool &wasReset, bool &usesSVM)
+   {
+   return false;
+   }

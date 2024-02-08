@@ -254,4 +254,41 @@ private:
    PersistentUnorderedMap<uintptr_t/*ID*/, uintptr_t/*SCC offset*/> _wellKnownClassesMap;
    };
 
+// This deserializer implements the following scheme:
+//
+// 1. AOT cache serialization records are resolved into their corresponding "RAM" entities.
+// 2. The RAM entities are cached, to avoid deserializing the same record multiple times
+// 3. The offsets in the cached AOT method are updated with the idAndType of the corresponding
+//    serialization record, to act as "AOT cache offsets" in lieu of local SCC offsets.
+class JITServerNoSCCAOTDeserializer : public JITServerAOTDeserializer
+   {
+public:
+   TR_PERSISTENT_ALLOC(TR_Memory::JITServerAOTCache)
+
+   JITServerNoSCCAOTDeserializer(TR_PersistentClassLoaderTable *loaderTable);
+
+   virtual void invalidateClassLoader(J9VMThread *vmThread, J9ClassLoader *loader) override;
+   virtual void invalidateClass(J9VMThread *vmThread, J9Class *ramClass) override;
+
+   static uintptr_t offsetId(uintptr_t offset)
+      { return AOTSerializationRecord::getId(offset); }
+   static AOTSerializationRecordType offsetType(uintptr_t offset)
+      { return AOTSerializationRecord::getType(offset); }
+
+private:
+   virtual void clearCachedData() override;
+
+   virtual bool cacheRecord(const ClassLoaderSerializationRecord *record, TR::Compilation *comp, bool &isNew, bool &wasReset) override;
+   virtual bool cacheRecord(const ClassSerializationRecord *record, TR::Compilation *comp, bool &isNew, bool &wasReset) override;
+   virtual bool cacheRecord(const MethodSerializationRecord *record, TR::Compilation *comp, bool &isNew, bool &wasReset) override;
+   virtual bool cacheRecord(const ClassChainSerializationRecord *record, TR::Compilation *comp, bool &isNew, bool &wasReset) override;
+   virtual bool cacheRecord(const WellKnownClassesSerializationRecord *record, TR::Compilation *comp, bool &isNew, bool &wasReset) override;
+   virtual bool cacheRecord(const ThunkSerializationRecord *record, TR::Compilation *comp, bool &isNew, bool &wasReset) override;
+
+   virtual bool updateSCCOffsets(SerializedAOTMethod *method, TR::Compilation *comp, bool &wasReset, bool &usesSVM) override;
+
+   static uintptr_t encodeOffset(const AOTSerializationRecord *record)
+      { return AOTSerializationRecord::idAndType(record->id(), record->type()); }
+   };
+
 #endif /* JITSERVER_AOT_DESERIALIZER_H */
