@@ -36,9 +36,9 @@ OutOfLineINL_jdk_internal_misc_Unsafe_fullFence(J9VMThread *currentThread, J9Met
 	return EXECUTE_BYTECODE;
 }
 
-/* sun.misc.Unsafe: public final native java.lang.Object compareAndExchangeObjectVolatile(java.lang.Object obj, long offset, java.lang.Object compareValue, java.lang.Object swapValue); */
+/* sun.misc.Unsafe: public final native java.lang.Object compareAndExchangeObject(java.lang.Object obj, long offset, java.lang.Object compareValue, java.lang.Object swapValue); */
 VM_BytecodeAction
-OutOfLineINL_jdk_internal_misc_Unsafe_compareAndExchangeObjectVolatile(J9VMThread *currentThread, J9Method *method)
+OutOfLineINL_jdk_internal_misc_Unsafe_compareAndExchangeObject(J9VMThread *currentThread, J9Method *method)
 {
 	j9object_t *swapValue = (j9object_t*)currentThread->sp;
 	j9object_t *compareValue = (j9object_t*)(currentThread->sp + 1);
@@ -60,9 +60,9 @@ OutOfLineINL_jdk_internal_misc_Unsafe_compareAndExchangeObjectVolatile(J9VMThrea
 	return EXECUTE_BYTECODE;
 }
 
-/* sun.misc.Unsafe: public final native int compareAndExchangeIntVolatile(java.lang.Object obj, long offset, int compareValue, int swapValue); */
+/* sun.misc.Unsafe: public final native int compareAndExchangeInt(java.lang.Object obj, long offset, int compareValue, int swapValue); */
 VM_BytecodeAction
-OutOfLineINL_jdk_internal_misc_Unsafe_compareAndExchangeIntVolatile(J9VMThread *currentThread, J9Method *method)
+OutOfLineINL_jdk_internal_misc_Unsafe_compareAndExchangeInt(J9VMThread *currentThread, J9Method *method)
 {
 	U_32 swapValue = *(U_32*)currentThread->sp;
 	U_32 compareValue = *(U_32*)(currentThread->sp + 1);
@@ -84,9 +84,9 @@ OutOfLineINL_jdk_internal_misc_Unsafe_compareAndExchangeIntVolatile(J9VMThread *
 	return EXECUTE_BYTECODE;
 }
 
-/* sun.misc.Unsafe: public final native long compareAndExchangeLongVolatile(java.lang.Object obj, long offset, long compareValue, long swapValue); */
+/* sun.misc.Unsafe: public final native long compareAndExchangeLong(java.lang.Object obj, long offset, long compareValue, long swapValue); */
 VM_BytecodeAction
-OutOfLineINL_jdk_internal_misc_Unsafe_compareAndExchangeLongVolatile(J9VMThread *currentThread, J9Method *method)
+OutOfLineINL_jdk_internal_misc_Unsafe_compareAndExchangeLong(J9VMThread *currentThread, J9Method *method)
 {
 	U_64 swapValue = *(U_64*)currentThread->sp;
 	U_64 compareValue = *(U_64*)(currentThread->sp + 2);
@@ -108,4 +108,4 @@ OutOfLineINL_jdk_internal_misc_Unsafe_compareAndExchangeLongVolatile(J9VMThread 
 	return EXECUTE_BYTECODE;
 }
 
-}
+} /* extern "C" */
