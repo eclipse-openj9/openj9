@@ -77,6 +77,27 @@ public:
 private:
 
 	/**
+	 * Narrow a 32-bit value (via masking or sign-extension) based on its
+	 * type (boolean, byte, char, short).
+	 *
+	 * @param fieldClass[in] J9Class representing the primitive type
+	 * @param value[in/out] The value to narrow (in place)
+	 */
+	VMINLINE void
+	narrow32BitValue(J9Class *fieldClass, U_32 &value) const
+	{
+		if (fieldClass == _vm->booleanReflectClass) {
+			value &= 1;
+		} else if (fieldClass == _vm->byteReflectClass) {
+			value = (U_32)(I_32)(I_8)value;
+		} else if (fieldClass == _vm->charReflectClass) {
+			value &= 0xFFFF;
+		} else if (fieldClass == _vm->shortReflectClass) {
+			value = (U_32)(I_32)(I_16)value;
+		}
+	}
+
+	/**
 	 * Fetch the vmSlot field from the j.l.i.PrimitiveHandle.
 	 * Note, the meaning of the vmSlot field depends on the type of the MethodHandle.
 	 * @param primitiveHandle[in] A PrimitiveHandle object
