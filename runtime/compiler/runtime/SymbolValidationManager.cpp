@@ -29,7 +29,6 @@
 #include "compile/J9Compilation.hpp"
 #include "control/CompilationRuntime.hpp"
 #include "control/CompilationThread.hpp"
-#include "infra/String.hpp"
 #include "runtime/RelocationRuntime.hpp"
 #include "runtime/SymbolValidationManager.hpp"
 
@@ -196,12 +195,6 @@ TR::SymbolValidationManager::getSystemClassNotWorthRemembering(int idx)
    }
 
 void
-TR::SymbolValidationManager::getWellKnownClassesSCCKey(char *buffer, size_t size, unsigned int includedClasses)
-   {
-   TR::snprintfNoTrunc(buffer, size, "AOTWellKnownClasses:%x", includedClasses);
-   }
-
-void
 TR::SymbolValidationManager::populateWellKnownClasses()
    {
 #define REQUIRED_WELL_KNOWN_CLASS_COUNT 0
@@ -304,20 +297,7 @@ TR::SymbolValidationManager::populateWellKnownClasses()
       }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
-   char key[128];
-   getWellKnownClassesSCCKey(key, sizeof(key), includedClasses);
-
-   J9SharedDataDescriptor dataDescriptor;
-   dataDescriptor.address = (U_8*)classChainOffsets;
-   dataDescriptor.length = (1 + _wellKnownClasses.size()) * sizeof (classChainOffsets[0]);
-   dataDescriptor.type = J9SHR_DATA_TYPE_JITHINT;
-   dataDescriptor.flags = 0;
-
-   _wellKnownClassChainOffsets =
-      _fej9->sharedCache()->storeSharedData(
-         _vmThread,
-         key,
-         &dataDescriptor);
+   _wellKnownClassChainOffsets = _fej9->sharedCache()->storeWellKnownClasses(_vmThread, classChainOffsets, 1 + _wellKnownClasses.size(), includedClasses);
 
 #if defined(J9VM_OPT_JITSERVER)
    if (_wellKnownClassChainOffsets && clientData)

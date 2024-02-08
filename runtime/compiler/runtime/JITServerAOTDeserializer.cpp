@@ -605,15 +605,8 @@ JITServerAOTDeserializer::cacheRecord(const WellKnownClassesSerializationRecord 
          return false;
       }
 
-   // Get the key that it will be stored under in the local SCC
-   char key[128];
-   TR::SymbolValidationManager::getWellKnownClassesSCCKey(key, sizeof(key), record->includedClasses());
-   J9SharedDataDescriptor desc = { .address = (uint8_t *)chainOffsets,
-                                   .length = (1 + record->list().length()) * sizeof(chainOffsets[0]),
-                                   .type = J9SHR_DATA_TYPE_JITHINT };
-
    // Store the "well-known classes" object in the local SCC or find the existing one
-   const void *wkcOffsets = _sharedCache->storeSharedData(comp->j9VMThread(), key, &desc);
+   const void *wkcOffsets = _sharedCache->storeWellKnownClasses(comp->j9VMThread(), chainOffsets, 1 + record->list().length(), record->includedClasses());
    if (!wkcOffsets)
       {
       if (TR::Options::getVerboseOption(TR_VerboseJITServer))

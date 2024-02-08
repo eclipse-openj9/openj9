@@ -724,7 +724,6 @@ public:
 
    #define WELL_KNOWN_CLASS_COUNT 9
 
-   static void getWellKnownClassesSCCKey(char *buffer, size_t size, unsigned int includedClasses);
    void populateWellKnownClasses();
    bool validateWellKnownClasses(const uintptr_t *wellKnownClassChainOffsets);
    bool isWellKnownClass(TR_OpaqueClassBlock *clazz);
