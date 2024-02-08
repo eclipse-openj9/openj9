@@ -312,6 +312,8 @@ class TR_RelocationRuntime {
       virtual bool validateAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread);
       virtual OMRProcessorDesc getProcessorDescriptionFromSCC(J9VMThread *curThread);
 
+      static void fillAOTHeader(J9JavaVM *vm, TR_FrontEnd *fe, TR_AOTHeader *header);
+
       static uintptr_t   getGlobalValue(uint32_t g)
          {
          TR_ASSERT(g >= 0 && g < TR_NumGlobalValueItems, "invalid index for global item");
@@ -405,6 +407,8 @@ class TR_RelocationRuntime {
       static const char *_reloErrorCodeNames[];
 
    protected:
+      static uintptr_t generateFeatureFlags(TR_FrontEnd *fe);
+      static uint32_t getCurrentLockwordOptionHashValue(J9JavaVM *vm);
 
       J9JITConfig *_jitConfig;
       J9JavaVM *_javaVM;
@@ -481,7 +485,6 @@ public:
       virtual OMRProcessorDesc getProcessorDescriptionFromSCC(J9VMThread *curThread);
 
 private:
-      uint32_t getCurrentLockwordOptionHashValue(J9JavaVM *vm) const;
       virtual uint8_t * allocateSpaceInCodeCache(UDATA codeSize);
       virtual uint8_t * allocateSpaceInDataCache(UDATA metaDataSize, UDATA type);
       virtual void initializeAotRuntimeInfo();
@@ -493,8 +496,6 @@ private:
       bool generateError(U_32 module_name, U_32 reason, const char *assumeMessage);
 
       bool _sharedCacheIsFull;
-
-      static uintptr_t generateFeatureFlags(TR_FrontEnd *fe);
 
       static const char aotHeaderKey[];
       static const UDATA aotHeaderKeyLength;
