@@ -528,9 +528,10 @@ JITServerHelpers::packROMClass(J9ROMClass *romClass, TR_Memory *trMemory, TR_J9V
    packedSize = origRomSize;
 
    bool isSharedROMClass = fej9->sharedCache() && fej9->sharedCache()->isROMClassInSharedCache(romClass);
-   // Shared ROM classes have their return bytecodes fixed when they are created, so we can perform simpler
-   // normalization for them, and of course if there are no ROM methods there is nothing to fix up.
-   bool needsBytecodeFixing = isSharedROMClass || (romClass->romMethodCount > 0);
+   // Shared ROM classes have their return bytecodes fixed when they are created, and of course if
+   // there are no ROM methods there is nothing to fix up. N.B. unnecessary return bytecode fixing
+   // won't cause any errors; it's just a waste of time.
+   bool needsBytecodeFixing = !(isSharedROMClass || (romClass->romMethodCount == 0));
 
    // Walk the methods first to see if any of the debug info is inline, and force debug
    // info stripping in that case.
@@ -695,14 +696,9 @@ JITServerHelpers::packROMClass(J9ROMClass *romClass, TR_Memory *trMemory, TR_J9V
    ctx._packedRomClass->romSize = packedSize;
    ctx._cursor = (uint8_t *)ctx._packedRomClass + packedNonStringSize;
 
-   // Zero out SRP to intermediate class data
-   ctx._packedRomClass->intermediateClassData = 0;
-   ctx._packedRomClass->intermediateClassDataLength = 0;
-
-   // Zero out SRPs to out-of-line method debug info.
-   // ROM classes had their debug info stripped and zeroed
-   // out when the pre-string section of the ROM class was copied above, if we
-   // stripped out their debug info.
+   // If we had to strip out any inline debug info, we also (effectively) zeroed out
+   // all the SRPs to any out-of-line debug info that may also have been in the ROM class.
+   // Otherwise we must zero out the SRPs to out-of-line method debug info.
    if (!needsDebugInfoStripping)
       {
       J9ROMMethod *romMethod = J9ROMCLASS_ROMMETHODS(ctx._packedRomClass);
@@ -731,6 +727,11 @@ JITServerHelpers::packROMClass(J9ROMClass *romClass, TR_Memory *trMemory, TR_J9V
       ctx._wsrpCallback = needsDebugInfoStripping ? adjustWSRPCallback : NULL;
       allSlotsInROMClassDo(romClass, slotCallback, NULL, NULL, &ctx);
       }
+
+   // Zero out SRP to intermediate class data. This needs to be done after adjustWSRPCallback
+   // have run - otherwise the intermediateClassData WSRP being NULL while the original isn't will confuse it.
+   ctx._packedRomClass->intermediateClassData = 0;
+   ctx._packedRomClass->intermediateClassDataLength = 0;
 
    // Pad to required alignment
    auto end = (uint8_t *)OMR::alignNoCheck((uintptr_t)ctx._cursor, sizeof(uint64_t));
