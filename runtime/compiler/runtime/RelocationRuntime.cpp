@@ -874,6 +874,132 @@ TR_RelocationRuntime::aotMethodHeaderVersionsMatch()
    return true;
    }
 
+void
+TR_RelocationRuntime::fillAOTHeader(J9JavaVM *vm, TR_FrontEnd *fe, TR_AOTHeader *aotHeader)
+   {
+   PORT_ACCESS_FROM_JAVAVM(vm);
+
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)fe;
+
+   memset(aotHeader, 0, sizeof(TR_AOTHeader));
+   aotHeader->eyeCatcher = TR_AOTHeaderEyeCatcher;
+
+   TR_Version *aotHeaderVersion = &aotHeader->version;
+   aotHeaderVersion->structSize = sizeof(TR_Version);
+   aotHeaderVersion->majorVersion = TR_AOTHeaderMajorVersion;
+   aotHeaderVersion->minorVersion = TR_AOTHeaderMinorVersion;
+   strncpy(aotHeaderVersion->vmBuildVersion, EsBuildVersionString, sizeof(aotHeaderVersion->vmBuildVersion) - 1);
+   aotHeaderVersion->vmBuildVersion[sizeof(aotHeaderVersion->vmBuildVersion) - 1] = '\0';
+   strncpy(aotHeaderVersion->jitBuildVersion, TR_BUILD_NAME, sizeof(aotHeaderVersion->jitBuildVersion) - 1);
+   aotHeaderVersion->jitBuildVersion[sizeof(aotHeaderVersion->jitBuildVersion) - 1] = '\0';
+
+   aotHeader->gcPolicyFlag = vm->memoryManagerFunctions->j9gc_modron_getWriteBarrierType(vm);
+   aotHeader->lockwordOptionHashValue = getCurrentLockwordOptionHashValue(vm);
+   aotHeader->compressedPointerShift = vm->memoryManagerFunctions->j9gc_objaccess_compressedPointersShift(vm->internalVMFunctions->currentVMThread(vm));
+   aotHeader->processorDescription = TR::Compiler->relocatableTarget.cpu.getProcessorDescription();
+
+   // Set up other feature flags
+   aotHeader->featureFlags = generateFeatureFlags(fe);
+
+   // Set ArrayLet Size if supported
+   aotHeader->arrayLetLeafSize = TR::Compiler->om.arrayletLeafSize();
+   }
+
+// The method CS::Hash_FNV is being used to compute the hash value
+// Notice that currently CS2::Hash_FNV is a hash function that never returns 0
+uint32_t
+TR_RelocationRuntime::getCurrentLockwordOptionHashValue(J9JavaVM *vm)
+   {
+   IDATA currentLockwordArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::Xlockword], NULL);
+   uint32_t currentLockwordOptionHashValue = 0;
+   if (currentLockwordArgIndex >= 0)
+      {
+      char * currentLockwordOption = NULL;
+      GET_OPTION_VALUE(currentLockwordArgIndex, ':', &currentLockwordOption);
+      currentLockwordOptionHashValue = CS2::Hash_FNV((unsigned char*)currentLockwordOption, strlen(currentLockwordOption));
+      }
+   return currentLockwordOptionHashValue;
+   }
+
+uintptr_t
+TR_RelocationRuntime::generateFeatureFlags(TR_FrontEnd *fe)
+   {
+   uintptr_t featureFlags = 0;
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)fe;
+
+   featureFlags |= TR_FeatureFlag_sanityCheckBegin;
+
+   if (TR::Compiler->relocatableTarget.isSMP())
+      featureFlags |= TR_FeatureFlag_IsSMP;
+
+   if (TR::Options::useCompressedPointers())
+      featureFlags |= TR_FeatureFlag_UsesCompressedPointers;
+
+   if (TR::Options::getCmdLineOptions()->getOption(TR_DisableTraps))
+      featureFlags |= TR_FeatureFlag_DisableTraps;
+
+   if (TR::Options::getCmdLineOptions()->getOption(TR_TLHPrefetch))
+      featureFlags |= TR_FeatureFlag_TLHPrefetch;
+
+   if (TR::CodeCacheManager::instance()->codeCacheConfig().needsMethodTrampolines())
+      featureFlags |= TR_FeatureFlag_MethodTrampolines;
+
+   if (TR::Options::getCmdLineOptions()->getOption(TR_FullSpeedDebug))
+      featureFlags |= TR_FeatureFlag_FSDEnabled;
+
+   if (TR::Options::getCmdLineOptions()->getOption(TR_EnableHCR))
+      featureFlags |= TR_FeatureFlag_HCREnabled;
+
+#ifdef TR_TARGET_S390
+   if (TR::Compiler->relocatableTarget.cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_FACILITY))
+      featureFlags |= TR_FeatureFlag_SIMDEnabled;
+#endif
+
+   if (TR::Compiler->om.readBarrierType() != gc_modron_readbar_none)
+      {
+      featureFlags |= TR_FeatureFlag_ConcurrentScavenge;
+
+#ifdef TR_TARGET_S390
+      if (!TR::Compiler->relocatableTarget.cpu.supportsFeature(OMR_FEATURE_S390_GUARDED_STORAGE))
+         featureFlags |= TR_FeatureFlag_SoftwareReadBarrier;
+#endif
+      }
+
+   if (TR::Compiler->om.isIndexableDataAddrPresent())
+      featureFlags |= TR_FeatureFlag_ArrayHeaderShape;
+
+   if (fej9->isAsyncCompilation())
+      featureFlags |= TR_FeatureFlag_AsyncCompilation;
+
+
+   if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableTM) &&
+       !TR::Options::getAOTCmdLineOptions()->getOption(TR_DisableTM))
+      {
+      if (TR::Compiler->relocatableTarget.cpu.supportsTransactionalMemoryInstructions())
+         {
+         featureFlags |= TR_FeatureFlag_UsesTM;
+         }
+      }
+
+   if (TR::Options::getCmdLineOptions()->isVariableHeapBaseForBarrierRange0())
+      featureFlags |= TR_FeatureFlag_IsVariableHeapBaseForBarrierRange0;
+
+   if (TR::Options::getCmdLineOptions()->isVariableHeapSizeForBarrierRange0())
+      featureFlags |= TR_FeatureFlag_IsVariableHeapSizeForBarrierRange0;
+
+   if (TR::Options::getCmdLineOptions()->isVariableActiveCardTableBase())
+      featureFlags |= TR_FeatureFlag_IsVariableActiveCardTableBase;
+
+   TR::CompilationInfo *compInfo = TR::CompilationInfo::get();
+   TR_PersistentCHTable *cht = compInfo->getPersistentInfo()->getPersistentCHTable();
+   if (!TR::Options::getAOTCmdLineOptions()->getOption(TR_DisableCHOpts)
+       && cht && cht->isActive())
+      {
+      featureFlags |= TR_FeatureFlag_CHTableEnabled;
+      }
+
+   return featureFlags;
+   }
 
 bool
 TR_RelocationRuntime::storeAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread)
@@ -1109,22 +1235,6 @@ TR_SharedCacheRelocationRuntime::checkAOTHeaderFlags(const TR_AOTHeader *hdrInCa
       generateError(J9NLS_RELOCATABLE_CODE_UNKNOWN_PROBLEM, "AOT header validation failed: Unkown problem with processor features.");
    }
 
-// The method CS::Hash_FNV is being used to compute the hash value
-// Notice that currently CS2::Hash_FNV is a hash function that never returns 0
-uint32_t
-TR_SharedCacheRelocationRuntime::getCurrentLockwordOptionHashValue(J9JavaVM *vm) const
-   {
-   IDATA currentLockwordArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::Xlockword], NULL);
-   uint32_t currentLockwordOptionHashValue = 0;
-   if (currentLockwordArgIndex >= 0)
-      {
-      char * currentLockwordOption = NULL;
-      GET_OPTION_VALUE(currentLockwordArgIndex, ':', &currentLockwordOption);
-      currentLockwordOptionHashValue = CS2::Hash_FNV((unsigned char*)currentLockwordOption, strlen(currentLockwordOption));
-      }
-   return currentLockwordOptionHashValue;
-   }
-
 OMRProcessorDesc
 TR_SharedCacheRelocationRuntime::getProcessorDescriptionFromSCC(J9VMThread *curThread)
    {
@@ -1266,35 +1376,10 @@ TR_AOTHeader *
 TR_SharedCacheRelocationRuntime::createAOTHeader(TR_FrontEnd *fe)
    {
    PORT_ACCESS_FROM_JAVAVM(javaVM());
-
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)fe;
-   TR_AOTHeader * aotHeader = (TR_AOTHeader *)j9mem_allocate_memory(sizeof(TR_AOTHeader), J9MEM_CATEGORY_JIT);
+   TR_AOTHeader *aotHeader = (TR_AOTHeader *)j9mem_allocate_memory(sizeof(TR_AOTHeader), J9MEM_CATEGORY_JIT);
 
    if (aotHeader)
-      {
-      memset(aotHeader, 0, sizeof(TR_AOTHeader));
-      aotHeader->eyeCatcher = TR_AOTHeaderEyeCatcher;
-
-      TR_Version *aotHeaderVersion = &aotHeader->version;
-      aotHeaderVersion->structSize = sizeof(TR_Version);
-      aotHeaderVersion->majorVersion = TR_AOTHeaderMajorVersion;
-      aotHeaderVersion->minorVersion = TR_AOTHeaderMinorVersion;
-      strncpy(aotHeaderVersion->vmBuildVersion, EsBuildVersionString, sizeof(aotHeaderVersion->vmBuildVersion) - 1);
-      aotHeaderVersion->vmBuildVersion[sizeof(aotHeaderVersion->vmBuildVersion) - 1] = '\0';
-      strncpy(aotHeaderVersion->jitBuildVersion, TR_BUILD_NAME, sizeof(aotHeaderVersion->jitBuildVersion) - 1);
-      aotHeaderVersion->jitBuildVersion[sizeof(aotHeaderVersion->jitBuildVersion) - 1] = '\0';
-
-      aotHeader->gcPolicyFlag = javaVM()->memoryManagerFunctions->j9gc_modron_getWriteBarrierType(javaVM());
-      aotHeader->lockwordOptionHashValue = getCurrentLockwordOptionHashValue(javaVM());
-      aotHeader->compressedPointerShift = javaVM()->memoryManagerFunctions->j9gc_objaccess_compressedPointersShift(javaVM()->internalVMFunctions->currentVMThread(javaVM()));
-      aotHeader->processorDescription = TR::Compiler->relocatableTarget.cpu.getProcessorDescription();
-
-      // Set up other feature flags
-      aotHeader->featureFlags = generateFeatureFlags(fe);
-
-      // Set ArrayLet Size if supported
-      aotHeader->arrayLetLeafSize = TR::Compiler->om.arrayletLeafSize();
-      }
+      fillAOTHeader(javaVM(), fe, aotHeader);
 
    return aotHeader;
    }
@@ -1366,86 +1451,6 @@ TR_SharedCacheRelocationRuntime::storeAOTHeader(TR_FrontEnd *fe, J9VMThread *cur
       TR_J9SharedCache::setStoreSharedDataFailedLength(aotHeaderLen);
       return false;
       }
-   }
-
-uintptr_t
-TR_SharedCacheRelocationRuntime::generateFeatureFlags(TR_FrontEnd *fe)
-   {
-   uintptr_t featureFlags = 0;
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)fe;
-
-   featureFlags |= TR_FeatureFlag_sanityCheckBegin;
-
-   if (TR::Compiler->relocatableTarget.isSMP())
-      featureFlags |= TR_FeatureFlag_IsSMP;
-
-   if (TR::Options::useCompressedPointers())
-      featureFlags |= TR_FeatureFlag_UsesCompressedPointers;
-
-   if (TR::Options::getCmdLineOptions()->getOption(TR_DisableTraps))
-      featureFlags |= TR_FeatureFlag_DisableTraps;
-
-   if (TR::Options::getCmdLineOptions()->getOption(TR_TLHPrefetch))
-      featureFlags |= TR_FeatureFlag_TLHPrefetch;
-
-   if (TR::CodeCacheManager::instance()->codeCacheConfig().needsMethodTrampolines())
-      featureFlags |= TR_FeatureFlag_MethodTrampolines;
-
-   if (TR::Options::getCmdLineOptions()->getOption(TR_FullSpeedDebug))
-      featureFlags |= TR_FeatureFlag_FSDEnabled;
-
-   if (TR::Options::getCmdLineOptions()->getOption(TR_EnableHCR))
-      featureFlags |= TR_FeatureFlag_HCREnabled;
-
-#ifdef TR_TARGET_S390
-   if (TR::Compiler->relocatableTarget.cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_FACILITY))
-      featureFlags |= TR_FeatureFlag_SIMDEnabled;
-#endif
-
-   if (TR::Compiler->om.readBarrierType() != gc_modron_readbar_none)
-      {
-      featureFlags |= TR_FeatureFlag_ConcurrentScavenge;
-
-#ifdef TR_TARGET_S390
-      if (!TR::Compiler->relocatableTarget.cpu.supportsFeature(OMR_FEATURE_S390_GUARDED_STORAGE))
-         featureFlags |= TR_FeatureFlag_SoftwareReadBarrier;
-#endif
-      }
-
-   if (TR::Compiler->om.isIndexableDataAddrPresent())
-      featureFlags |= TR_FeatureFlag_ArrayHeaderShape;
-
-   if (fej9->isAsyncCompilation())
-      featureFlags |= TR_FeatureFlag_AsyncCompilation;
-
-
-   if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableTM) &&
-       !TR::Options::getAOTCmdLineOptions()->getOption(TR_DisableTM))
-      {
-      if (TR::Compiler->relocatableTarget.cpu.supportsTransactionalMemoryInstructions())
-         {
-         featureFlags |= TR_FeatureFlag_UsesTM;
-         }
-      }
-
-   if (TR::Options::getCmdLineOptions()->isVariableHeapBaseForBarrierRange0())
-      featureFlags |= TR_FeatureFlag_IsVariableHeapBaseForBarrierRange0;
-
-   if (TR::Options::getCmdLineOptions()->isVariableHeapSizeForBarrierRange0())
-      featureFlags |= TR_FeatureFlag_IsVariableHeapSizeForBarrierRange0;
-
-   if (TR::Options::getCmdLineOptions()->isVariableActiveCardTableBase())
-      featureFlags |= TR_FeatureFlag_IsVariableActiveCardTableBase;
-
-   TR::CompilationInfo *compInfo = TR::CompilationInfo::get();
-   TR_PersistentCHTable *cht = compInfo->getPersistentInfo()->getPersistentCHTable();
-   if (!TR::Options::getAOTCmdLineOptions()->getOption(TR_DisableCHOpts)
-       && cht && cht->isActive())
-      {
-      featureFlags |= TR_FeatureFlag_CHTableEnabled;
-      }
-
-   return featureFlags;
    }
 
 void TR_RelocationRuntime::initializeHWProfilerRecords(TR::Compilation *comp)
