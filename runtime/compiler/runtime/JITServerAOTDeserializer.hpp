@@ -269,6 +269,7 @@ public:
 
    virtual void invalidateClassLoader(J9VMThread *vmThread, J9ClassLoader *loader) override;
    virtual void invalidateClass(J9VMThread *vmThread, J9Class *ramClass) override;
+   void invalidateMethod(J9Method *method);
 
    static uintptr_t offsetId(uintptr_t offset)
       { return AOTSerializationRecord::getId(offset); }
@@ -305,6 +306,9 @@ private:
 
    PersistentUnorderedMap<uintptr_t/*ID*/, ClassEntry> _classIdMap;
    PersistentUnorderedMap<J9Class *, uintptr_t/*ID*/> _classPtrMap;
+
+   PersistentUnorderedMap<uintptr_t/*ID*/, J9Method *> _methodIdMap;
+   PersistentUnorderedMap<J9Method *, uintptr_t> _methodPtrMap;
 
    };
 

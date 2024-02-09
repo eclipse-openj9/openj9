@@ -904,7 +904,9 @@ JITServerNoSCCAOTDeserializer::JITServerNoSCCAOTDeserializer(TR_PersistentClassL
    _classLoaderIdMap(decltype(_classLoaderIdMap)::allocator_type(TR::Compiler->persistentAllocator())),
    _classLoaderPtrMap(decltype(_classLoaderPtrMap)::allocator_type(TR::Compiler->persistentAllocator())),
    _classIdMap(decltype(_classIdMap)::allocator_type(TR::Compiler->persistentAllocator())),
-   _classPtrMap(decltype(_classPtrMap)::allocator_type(TR::Compiler->persistentAllocator()))
+   _classPtrMap(decltype(_classPtrMap)::allocator_type(TR::Compiler->persistentAllocator())),
+   _methodIdMap(decltype(_methodIdMap)::allocator_type(TR::Compiler->persistentAllocator())),
+   _methodPtrMap(decltype(_methodPtrMap)::allocator_type(TR::Compiler->persistentAllocator()))
    { }
 
 
@@ -956,8 +958,29 @@ JITServerNoSCCAOTDeserializer::invalidateClass(J9VMThread *vmThread, J9Class *ra
 
    _classPtrMap.erase(p_it);
 
+   // Invalidate any methods that might have this RAM class recorded as
+   // their defining class.
+   for (uint32_t i = 0; i < ramClass->romClass->romMethodCount; i++)
+      invalidateMethod(&ramClass->ramMethods[i]);
+
    if (TR::Options::getVerboseOption(TR_VerboseJITServer))
       TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Invalidated RAMClass %p ID %zu", ramClass, id);
+   }
+
+void
+JITServerNoSCCAOTDeserializer::invalidateMethod(J9Method *method)
+   {
+   auto p_it = _methodPtrMap.find(method);
+   if (p_it == _methodPtrMap.end()) // Not cached or already marked as invalid
+      return;
+
+   uintptr_t id = p_it->second;
+   auto i_it = _methodIdMap.find(id);
+   TR_ASSERT(i_it != _methodIdMap.end(), "Broken two-way map");
+
+   i_it->second = NULL;
+   if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Invalidated RAMMethod %p ID %zu", method, id);
    }
 
 void
@@ -968,6 +991,9 @@ JITServerNoSCCAOTDeserializer::clearCachedData()
 
    _classIdMap.clear();
    _classPtrMap.clear();
+
+   _methodIdMap.clear();
+   _methodPtrMap.clear();
 
    getNewKnownIds().clear();
    }
@@ -1068,7 +1094,46 @@ JITServerNoSCCAOTDeserializer::cacheRecord(const ClassSerializationRecord *recor
 bool
 JITServerNoSCCAOTDeserializer::cacheRecord(const MethodSerializationRecord *record, TR::Compilation *comp, bool &isNew, bool &wasReset)
    {
-   return false;
+   OMR::CriticalSection cs(getMethodMonitor());
+   if (deserializerWasReset(comp, wasReset))
+      return false;
+
+   auto it = _methodIdMap.find(record->id());
+   if (it != _methodIdMap.end())
+      {
+      if (it->second)
+         {
+         return true;
+         }
+      else
+         {
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "ERROR: Mismatching or unloaded method ID %zu", record->id());
+         return false;
+         }
+      }
+   isNew = true;
+
+   // Get the defining RAM class for this method using its ID. If it can't be found,
+   // it was marked as invalid. We don't support reloading, so simply fail here in
+   // that case.
+   auto ramClass = findInMap(_classIdMap, record->definingClassId(), getClassMonitor(), comp, wasReset)._ramClass;
+   if (!ramClass)
+      return false;
+
+   // Get RAMMethod (and its ROMMethod) in defining RAMClass by index
+   TR_ASSERT(record->index() < ramClass->romClass->romMethodCount, "Invalid method index");
+   J9Method *ramMethod = &ramClass->ramMethods[record->index()];
+   J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(ramMethod);
+
+   addToMaps(_methodIdMap, _methodPtrMap, it, record->id(), ramMethod, ramMethod);
+
+   if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+         "Cached method record ID %zu -> { %p, %zu } for method %.*s.%.*s%.*s",
+         record->id(), ramMethod, record->definingClassId(), ROMCLASS_NAME(ramClass->romClass), ROMMETHOD_NAS(romMethod)
+      );
+   return true;
    }
 
 bool
