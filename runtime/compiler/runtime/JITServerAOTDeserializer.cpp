@@ -900,13 +900,31 @@ JITServerLocalSCCAOTDeserializer::updateSCCOffsets(SerializedAOTMethod *method, 
    }
 
 JITServerNoSCCAOTDeserializer::JITServerNoSCCAOTDeserializer(TR_PersistentClassLoaderTable *loaderTable) :
-   JITServerAOTDeserializer(loaderTable)
+   JITServerAOTDeserializer(loaderTable),
+   _classLoaderIdMap(decltype(_classLoaderIdMap)::allocator_type(TR::Compiler->persistentAllocator())),
+   _classLoaderPtrMap(decltype(_classLoaderPtrMap)::allocator_type(TR::Compiler->persistentAllocator()))
    { }
 
 
 void
 JITServerNoSCCAOTDeserializer::invalidateClassLoader(J9VMThread *vmThread, J9ClassLoader *loader)
    {
+   assertExclusiveVmAccess(vmThread);
+
+   auto p_it = _classLoaderPtrMap.find(loader);
+   if (p_it == _classLoaderPtrMap.end())// Not cached
+      return;
+
+   uintptr_t id = p_it->second;
+   auto i_it = _classLoaderIdMap.find(id);
+   TR_ASSERT(i_it != _classLoaderIdMap.end(), "Broken two-way map");
+
+   // Mark entry as unloaded
+   i_it->second = NULL;
+   _classLoaderPtrMap.erase(p_it);
+
+   if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Invalidated class loader %p ID %zu", loader, id);
    }
 
 void
@@ -917,13 +935,43 @@ JITServerNoSCCAOTDeserializer::invalidateClass(J9VMThread *vmThread, J9Class *ra
 void
 JITServerNoSCCAOTDeserializer::clearCachedData()
    {
+   _classLoaderIdMap.clear();
+   _classLoaderPtrMap.clear();
+
    getNewKnownIds().clear();
    }
 
 bool
 JITServerNoSCCAOTDeserializer::cacheRecord(const ClassLoaderSerializationRecord *record, TR::Compilation *comp, bool &isNew, bool &wasReset)
    {
-   return false;
+   OMR::CriticalSection cs(getClassLoaderMonitor());
+   if (deserializerWasReset(comp, wasReset))
+      return false;
+
+   auto it = _classLoaderIdMap.find(record->id());
+   if (it != _classLoaderIdMap.end())
+      return true;
+   isNew = true;
+
+   // Lookup the class loader using the name of the first class that it loaded
+   auto loader = (J9ClassLoader *)getLoaderTable()->lookupClassLoaderAssociatedWithClassName(record->name(), record->nameLength());
+   if (!loader)
+      {
+      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+            "ERROR: Failed to find class loader for first loaded class %.*s", RECORD_NAME(record)
+         );
+      return false;
+      }
+
+   addToMaps(_classLoaderIdMap, _classLoaderPtrMap, it, record->id(), loader, loader);
+
+   if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+         "Cached class loader record ID %zu -> { %p } for first loaded class %.*s",
+         record->id(), loader, RECORD_NAME(record)
+      );
+   return true;
    }
 
 bool

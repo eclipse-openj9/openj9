@@ -289,6 +289,10 @@ private:
 
    static uintptr_t encodeOffset(const AOTSerializationRecord *record)
       { return AOTSerializationRecord::idAndType(record->id(), record->type()); }
+
+   PersistentUnorderedMap<uintptr_t/*ID*/, J9ClassLoader *> _classLoaderIdMap;
+   PersistentUnorderedMap<J9ClassLoader *, uintptr_t/*ID*/> _classLoaderPtrMap;
+
    };
 
 #endif /* JITSERVER_AOT_DESERIALIZER_H */
