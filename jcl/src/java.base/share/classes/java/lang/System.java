@@ -1184,6 +1184,7 @@ static void checkTmpDir() {
 	/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 }
 
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 static void initSecurityManager(ClassLoader applicationClassLoader) {
 	String javaSecurityManager = internalGetProperties().getProperty("java.security.manager"); //$NON-NLS-1$
 	if (null == javaSecurityManager) {
@@ -1219,6 +1220,7 @@ static void initSecurityManager(ClassLoader applicationClassLoader) {
 		}
 	}
 }
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 /**
  * Sets the active security manager. Note that once

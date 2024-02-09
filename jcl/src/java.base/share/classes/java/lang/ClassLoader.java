@@ -289,6 +289,10 @@ public abstract class ClassLoader {
 		System.initSecurityManager(applicationClassLoader);
 		jdk.internal.misc.VM.initLevel(3);
 		/*[ELSE] JAVA_SPEC_VERSION >= 9 */
+		String smvalue = System.internalGetProperties().getProperty("java.security.manager"); //$NON-NLS-1$
+		if ("allow".equals(smvalue) || "disallow".equals(smvalue)) { //$NON-NLS-1$ //$NON-NLS-2$
+			System.internalGetProperties().remove("java.security.manager"); //$NON-NLS-1$
+		}
 		applicationClassLoader = sun.misc.Launcher.getLauncher().getClassLoader();
 		/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
