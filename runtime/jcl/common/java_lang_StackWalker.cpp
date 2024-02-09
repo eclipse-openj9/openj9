@@ -41,6 +41,7 @@ extern "C" {
 #if JAVA_SPEC_VERSION >= 22
 #define J9_DROP_METHOD_INFO       0x10
 #endif /* JAVA_SPEC_VERSION >= 22 */
+#define J9_GET_CALLER_CLASS       0x20
 
 #define J9_FRAME_VALID            0x80
 
@@ -109,9 +110,11 @@ Java_java_lang_StackWalker_walkWrapperImpl(JNIEnv *env, jclass clazz, jint flags
 			| J9_STACKWALK_INCLUDE_NATIVES | J9_STACKWALK_VISIBLE_ONLY;
 	/* Unless -XX:+ShowHiddenFrames or StackWalker.Option.SHOW_HIDDEN_FRAMES
 	 * has been specified, skip hidden method frames.
+	 * If this is called from getCallerClass() API, then always skip hidden frames.
 	 */
-	if (J9_ARE_NO_BITS_SET(vm->runtimeFlags, J9_RUNTIME_SHOW_HIDDEN_FRAMES)
-			&& J9_ARE_NO_BITS_SET((UDATA)flags, J9_SHOW_HIDDEN_FRAMES)
+	if (J9_ARE_ANY_BITS_SET((UDATA)flags, J9_GET_CALLER_CLASS)
+	|| (J9_ARE_NO_BITS_SET(vm->runtimeFlags, J9_RUNTIME_SHOW_HIDDEN_FRAMES)
+		&& J9_ARE_NO_BITS_SET((UDATA)flags, J9_SHOW_HIDDEN_FRAMES))
 	) {
 		walkState->flags |= J9_STACKWALK_SKIP_HIDDEN_FRAMES;
 	}
