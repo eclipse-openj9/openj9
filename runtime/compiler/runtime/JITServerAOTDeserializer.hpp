@@ -295,11 +295,17 @@ private:
 
    virtual bool updateSCCOffsets(SerializedAOTMethod *method, TR::Compilation *comp, bool &wasReset, bool &usesSVM) override;
 
+   bool revalidateClassChain(uintptr_t *classChain, TR::Compilation *comp, bool &wasReset);
+   void getRAMClassChain(TR::Compilation *comp, J9Class *clazz, J9Class **chainBuffer, size_t &chainLength);
+
    static uintptr_t encodeOffset(const AOTSerializationRecord *record)
       { return AOTSerializationRecord::idAndType(record->id(), record->type()); }
 
    static uintptr_t encodeClassOffset(uintptr_t id)
       { return AOTSerializationRecord::idAndType(id, AOTSerializationRecordType::Class); }
+
+   static uintptr_t encodeClassChainOffset(uintptr_t id)
+      { return AOTSerializationRecord::idAndType(id, AOTSerializationRecordType::ClassChain); }
 
    PersistentUnorderedMap<uintptr_t/*ID*/, J9ClassLoader *> _classLoaderIdMap;
    PersistentUnorderedMap<J9ClassLoader *, uintptr_t/*ID*/> _classLoaderPtrMap;
@@ -310,6 +316,7 @@ private:
    PersistentUnorderedMap<uintptr_t/*ID*/, J9Method *> _methodIdMap;
    PersistentUnorderedMap<J9Method *, uintptr_t> _methodPtrMap;
 
+   PersistentUnorderedMap<uintptr_t/*ID*/, uintptr_t * /*deserializer chain*/> _classChainMap;
    };
 
 #endif /* JITSERVER_AOT_DESERIALIZER_H */

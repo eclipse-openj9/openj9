@@ -906,7 +906,8 @@ JITServerNoSCCAOTDeserializer::JITServerNoSCCAOTDeserializer(TR_PersistentClassL
    _classIdMap(decltype(_classIdMap)::allocator_type(TR::Compiler->persistentAllocator())),
    _classPtrMap(decltype(_classPtrMap)::allocator_type(TR::Compiler->persistentAllocator())),
    _methodIdMap(decltype(_methodIdMap)::allocator_type(TR::Compiler->persistentAllocator())),
-   _methodPtrMap(decltype(_methodPtrMap)::allocator_type(TR::Compiler->persistentAllocator()))
+   _methodPtrMap(decltype(_methodPtrMap)::allocator_type(TR::Compiler->persistentAllocator())),
+   _classChainMap(decltype(_classChainMap)::allocator_type(TR::Compiler->persistentAllocator()))
    { }
 
 
@@ -994,6 +995,10 @@ JITServerNoSCCAOTDeserializer::clearCachedData()
 
    _methodIdMap.clear();
    _methodPtrMap.clear();
+
+   for (auto &kv : _classChainMap)
+      TR::Compiler->persistentGlobalMemory()->freePersistentMemory(kv.second);
+   _classChainMap.clear();
 
    getNewKnownIds().clear();
    }
@@ -1136,10 +1141,146 @@ JITServerNoSCCAOTDeserializer::cacheRecord(const MethodSerializationRecord *reco
    return true;
    }
 
+// We confirmed that the first class in the chain had a RAM class chain that was equal to
+// what was recorded at compile time, but that may have changed (due to class redefinition or
+// invalidation somewhere along the chain). Since we don't support class reloading, we only
+// have to check that the individual class entries remain valid.
+bool
+JITServerNoSCCAOTDeserializer::revalidateClassChain(uintptr_t *classChain, TR::Compilation *comp, bool &wasReset)
+   {
+   size_t chainLength = classChain[0] / sizeof(classChain[0]) - 1;
+   uintptr_t *chainData = classChain + 1;
+   for (size_t i = 0; i < chainLength; ++i)
+      {
+      auto ramClass = findInMap(_classIdMap, offsetId(chainData[i]), getClassMonitor(), comp, wasReset)._ramClass;
+      if (!ramClass)
+         return false;
+      }
+   return true;
+   }
+
+void
+JITServerNoSCCAOTDeserializer::getRAMClassChain(TR::Compilation *comp, J9Class *clazz, J9Class **chainBuffer, size_t &chainLength)
+   {
+   chainLength = comp->fej9()->necessaryClassChainLength(clazz) - 1;
+
+   J9Class **cursor = chainBuffer;
+   *cursor++ = clazz;
+   for (size_t i = 0; i < J9CLASS_DEPTH(clazz); ++i)
+      *cursor++ = clazz->superclasses[i];
+   for (auto it = (J9ITable *)clazz->iTable; it; it = it->next)
+      *cursor++ = it->interfaceClass;
+   TR_ASSERT((cursor - chainBuffer) == chainLength, "Invalid RAM class chain length: %zu != %zu", cursor - chainBuffer, chainLength);
+   }
+
+// Add a value (which must have been allocated with TR::Compiler->persistentGlobalMemory()->allocatePersistentMemory) to the given map
+template<typename K, typename V, typename H> static void
+addToChainMap(PersistentUnorderedMap<K, V *, H> &map,
+              const typename PersistentUnorderedMap<K, V *, H>::const_iterator &it,
+              const K &key, V *value)
+   {
+   try
+      {
+      map.insert(it, { key, value });
+      }
+   catch (...)
+      {
+      TR::Compiler->persistentGlobalMemory()->freePersistentMemory(value);
+      throw;
+      }
+   }
+
 bool
 JITServerNoSCCAOTDeserializer::cacheRecord(const ClassChainSerializationRecord *record, TR::Compilation *comp, bool &isNew, bool &wasReset)
    {
-   return false;
+   OMR::CriticalSection cs(getClassChainMonitor());
+   if (deserializerWasReset(comp, wasReset))
+      return false;
+
+   auto it = _classChainMap.find(record->id());
+   if (it != _classChainMap.end())
+      {
+      if (revalidateClassChain(it->second, comp, wasReset))
+         {
+         return true;
+         }
+      else
+         {
+         TR::Compiler->persistentGlobalMemory()->freePersistentMemory(it->second);
+         it->second = NULL;
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+               "Invalidated cached class chain record ID %zu", record->id()
+            );
+         return false;
+         }
+      }
+   isNew = true;
+
+   // Get the RAM class chain for the first class referenced in the class chain serialization record
+   auto firstClass = findInMap(_classIdMap, record->list().ids()[0], getClassMonitor(), comp, wasReset)._ramClass;
+   if (!firstClass)
+      return false;
+   J9Class *ramClassChain[TR_J9SharedCache::maxClassChainLength];
+   size_t ramClassChainLength = 0;
+   getRAMClassChain(comp, firstClass, ramClassChain, ramClassChainLength);
+
+   // Check that it has the expected length
+   if (record->list().length() != ramClassChainLength)
+      {
+      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+            "ERROR: Class chain length mismatch for class %.*s ID %zu: %zu != %zu",
+            ROMCLASS_NAME(firstClass->romClass), record->list().ids()[0], ramClassChainLength, record->list().length()
+         );
+      return false;
+      }
+
+   // Validate each class in the server's chain (which should all be cached by now)
+   for (size_t i = 0; i < ramClassChainLength; ++i)
+      {
+      auto ramClass = findInMap(_classIdMap, record->list().ids()[i], getClassMonitor(), comp, wasReset)._ramClass;
+      if (!ramClass)
+         {
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+               "ERROR: Class %.*s ID %zu mismatch or invalidation in class chain ID %zu for class %.*s ID %zu",
+               ROMCLASS_NAME(ramClassChain[i]->romClass), record->list().ids()[i], record->id(),
+               ROMCLASS_NAME(firstClass->romClass), record->list().ids()[0]
+            );
+         return false;
+         }
+
+      if (ramClass != ramClassChain[i])
+         {
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+               "ERROR: Class %.*s mismatch in class chain ID %zu for class %.*s ID %zu",
+               ROMCLASS_NAME(ramClassChain[i]->romClass), record->id(),
+               ROMCLASS_NAME(firstClass->romClass), record->list().ids()[0]
+            );
+         return false;
+         }
+      }
+
+   // Chain validation is now complete
+   size_t chainSize = (record->list().length() + 1) * sizeof(uintptr_t); // offset chains are expected to store their size in bytes in their first entry
+   auto deserializerChain = (uintptr_t *)TR::Compiler->persistentGlobalMemory()->allocatePersistentMemory(chainSize);
+   if (!deserializerChain)
+      throw std::bad_alloc();
+
+   deserializerChain[0] = chainSize;
+   uintptr_t *deserializerChainData = deserializerChain + 1;
+   for (size_t i = 0; i < record->list().length(); ++i)
+      deserializerChainData[i] = encodeClassOffset(record->list().ids()[i]);
+   addToChainMap(_classChainMap, it, record->id(), deserializerChain);
+
+   if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+         "Cached class chain record ID %zu -> { %p } for class %.*s ID %zu",
+         record->id(), firstClass, ROMCLASS_NAME(firstClass->romClass), record->list().ids()[0]
+      );
+   return true;
    }
 
 bool
