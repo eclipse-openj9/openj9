@@ -1381,7 +1381,49 @@ JITServerNoSCCAOTDeserializer::cacheRecord(const ThunkSerializationRecord *recor
    }
 
 bool
-JITServerNoSCCAOTDeserializer::updateSCCOffsets(SerializedAOTMethod *method, TR::Compilation *comp, bool &wasReset, bool &usesSVM)
+JITServerNoSCCAOTDeserializer::updateSCCOffsets(SerializedAOTMethod *method, TR::Compilation *comp,
+                                                   bool &wasReset, bool &usesSVM)
    {
-   return false;
+   //NOTE: Defining class chain record is validated by now; there is no corresponding SCC offset to be updated
+
+   auto header = (const TR_AOTMethodHeader *)(method->data() + sizeof(J9JITDataCacheHeader));
+   TR_ASSERT_FATAL((header->minorVersion == TR_AOTMethodHeader_MinorVersion) &&
+                   (header->majorVersion == TR_AOTMethodHeader_MajorVersion),
+                   "Invalid TR_AOTMethodHeader version: %d.%d", header->majorVersion, header->minorVersion);
+   TR_ASSERT_FATAL((header->offsetToRelocationDataItems != 0) || (method->numRecords() == 0),
+                   "Unexpected %zu serialization records in serialized method %s with no relocation data",
+                   method->numRecords(), comp->signature());
+   usesSVM = (header->flags & TR_AOTMethodHeader_UsesSymbolValidationManager) != 0;
+
+   uint8_t *start = method->data() + header->offsetToRelocationDataItems;
+   uint8_t *end = start + *(uintptr_t *)start;// Total size of relocation data is stored in the first word
+
+   for (size_t i = 0; i < method->numRecords(); ++i)
+      {
+      // Get the SCC offset of the corresponding entity in the local SCC
+      const SerializedSCCOffset &serializedOffset = method->offsets()[i];
+
+      // Thunks do not use their SCC offset entries
+      if (serializedOffset.recordType() == AOTSerializationRecordType::Thunk)
+         continue;
+
+      uintptr_t offset = encodeOffset(serializedOffset);
+
+      // Update the SCC offset stored in AOT method relocation data
+      uint8_t *ptr = start + serializedOffset.reloDataOffset();
+      TR_ASSERT_FATAL((ptr >= start + sizeof(uintptr_t)/*skip the size word*/) && (ptr < end),
+                      "Out-of-bounds relocation data offset %zu in serialized method %s",
+                      serializedOffset.reloDataOffset(), comp->signature());
+#if defined(DEBUG)
+      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+            "Updating offset %zu -> %zu for record type %u ID %zu at relo data offset %zu in serialized method %s",
+            *(uintptr_t *)ptr, offset, serializedOffset.recordType(), serializedOffset.recordId(),
+            serializedOffset.reloDataOffset(), comp->signature()
+         );
+#endif /* defined(DEBUG) */
+      *(uintptr_t *)ptr = offset;
+      }
+
+   return true;
    }

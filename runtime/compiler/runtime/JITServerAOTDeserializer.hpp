@@ -303,6 +303,9 @@ private:
    static uintptr_t encodeOffset(const AOTSerializationRecord *record)
       { return AOTSerializationRecord::idAndType(record->id(), record->type()); }
 
+   static uintptr_t encodeOffset(const SerializedSCCOffset &serializedOffset)
+      { return AOTSerializationRecord::idAndType(serializedOffset.recordId(), serializedOffset.recordType()); }
+
    static uintptr_t encodeClassOffset(uintptr_t id)
       { return AOTSerializationRecord::idAndType(id, AOTSerializationRecordType::Class); }
 
