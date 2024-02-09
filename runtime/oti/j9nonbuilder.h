@@ -3468,6 +3468,7 @@ typedef struct J9ClassLoader {
 	omrthread_monitor_t hotFieldPoolMutex;
 	omrthread_rwmutex_t cpEntriesMutex;
 	UDATA initClassPathEntryCount;
+	UDATA asyncGetCallTraceUsed;
 } J9ClassLoader;
 
 #define J9CLASSLOADER_SHARED_CLASSES_ENABLED  8
@@ -6007,7 +6008,6 @@ typedef struct J9JavaVM {
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 	omrthread_monitor_t delayedLockingOperationsMutex;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
-	UDATA asyncGetCallTraceUsed;
 	U_32 compatibilityFlags;
 } J9JavaVM;
 
