@@ -276,6 +276,13 @@ public:
       { return AOTSerializationRecord::getType(offset); }
 
 private:
+   struct ClassEntry
+      {
+      // NULL if class ID is invalid (was not found or its hash didn't match), or class was unloaded
+      J9Class *_ramClass;
+      uintptr_t _classLoaderId;
+      };
+
    virtual void clearCachedData() override;
 
    virtual bool cacheRecord(const ClassLoaderSerializationRecord *record, TR::Compilation *comp, bool &isNew, bool &wasReset) override;
@@ -290,8 +297,14 @@ private:
    static uintptr_t encodeOffset(const AOTSerializationRecord *record)
       { return AOTSerializationRecord::idAndType(record->id(), record->type()); }
 
+   static uintptr_t encodeClassOffset(uintptr_t id)
+      { return AOTSerializationRecord::idAndType(id, AOTSerializationRecordType::Class); }
+
    PersistentUnorderedMap<uintptr_t/*ID*/, J9ClassLoader *> _classLoaderIdMap;
    PersistentUnorderedMap<J9ClassLoader *, uintptr_t/*ID*/> _classLoaderPtrMap;
+
+   PersistentUnorderedMap<uintptr_t/*ID*/, ClassEntry> _classIdMap;
+   PersistentUnorderedMap<J9Class *, uintptr_t/*ID*/> _classPtrMap;
 
    };
 

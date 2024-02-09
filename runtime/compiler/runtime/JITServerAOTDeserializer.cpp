@@ -902,7 +902,9 @@ JITServerLocalSCCAOTDeserializer::updateSCCOffsets(SerializedAOTMethod *method, 
 JITServerNoSCCAOTDeserializer::JITServerNoSCCAOTDeserializer(TR_PersistentClassLoaderTable *loaderTable) :
    JITServerAOTDeserializer(loaderTable),
    _classLoaderIdMap(decltype(_classLoaderIdMap)::allocator_type(TR::Compiler->persistentAllocator())),
-   _classLoaderPtrMap(decltype(_classLoaderPtrMap)::allocator_type(TR::Compiler->persistentAllocator()))
+   _classLoaderPtrMap(decltype(_classLoaderPtrMap)::allocator_type(TR::Compiler->persistentAllocator())),
+   _classIdMap(decltype(_classIdMap)::allocator_type(TR::Compiler->persistentAllocator())),
+   _classPtrMap(decltype(_classPtrMap)::allocator_type(TR::Compiler->persistentAllocator()))
    { }
 
 
@@ -930,6 +932,32 @@ JITServerNoSCCAOTDeserializer::invalidateClassLoader(J9VMThread *vmThread, J9Cla
 void
 JITServerNoSCCAOTDeserializer::invalidateClass(J9VMThread *vmThread, J9Class *ramClass)
    {
+   assertExclusiveVmAccess(vmThread);
+
+   auto p_it = _classPtrMap.find(ramClass);
+   if (p_it == _classPtrMap.end()) // Not cached or already marked invalid
+      return;
+
+   uintptr_t id = p_it->second;
+   auto i_it = _classIdMap.find(id);
+   TR_ASSERT(i_it != _classIdMap.end(), "Broken two-way map");
+
+   if (i_it->second._ramClass)
+      {
+      // Class ID is valid. Keep the entry, but mark it as unloaded.
+      i_it->second._ramClass = NULL;
+      }
+   else
+      {
+      // Class ID is invalid. Remove the entry so that it can be replaced
+      // if a matching version of the class is ever loaded in the future.
+      _classIdMap.erase(i_it);
+      }
+
+   _classPtrMap.erase(p_it);
+
+   if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Invalidated RAMClass %p ID %zu", ramClass, id);
    }
 
 void
@@ -937,6 +965,9 @@ JITServerNoSCCAOTDeserializer::clearCachedData()
    {
    _classLoaderIdMap.clear();
    _classLoaderPtrMap.clear();
+
+   _classIdMap.clear();
+   _classPtrMap.clear();
 
    getNewKnownIds().clear();
    }
@@ -977,7 +1008,61 @@ JITServerNoSCCAOTDeserializer::cacheRecord(const ClassLoaderSerializationRecord 
 bool
 JITServerNoSCCAOTDeserializer::cacheRecord(const ClassSerializationRecord *record, TR::Compilation *comp, bool &isNew, bool &wasReset)
    {
-   return false;
+   OMR::CriticalSection cs(getClassMonitor());
+   if (deserializerWasReset(comp, wasReset))
+      return false;
+
+   auto it = _classIdMap.find(record->id());
+   if (it != _classIdMap.end())
+      {
+      if (it->second._ramClass)
+         {
+         return true;
+         }
+      else
+         {
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "ERROR: Mismatching class ID %zu", record->id());
+         return false;
+         }
+      }
+   isNew = true;
+
+   // The class loader for this class record should already have been deserialized, so if we can't find a
+   // loader for this ID then it must have been marked as unloaded. We don't support loader reloading, so
+   // we simply fail to deserialize here.
+   auto loader = findInMap(_classLoaderIdMap, record->classLoaderId(), getClassLoaderMonitor(), comp, wasReset);
+   if (!loader)
+      return false;
+
+   // Lookup the RAMClass by name in the class loader
+   J9Class *ramClass = jitGetClassInClassloaderFromUTF8(comp->j9VMThread(), loader, (char *)record->name(),
+                                                        record->nameLength());
+   if (!ramClass)
+      {
+      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+            "ERROR: Failed to find class %.*s ID %zu in class loader %p",
+            RECORD_NAME(record), record->id(), loader
+         );
+      return false;
+      }
+
+   // Check that the ROMClass hash matches, otherwise remember that it doesn't
+   if (!isClassMatching(record, ramClass, comp))
+      {
+      _classIdMap.insert(it, { record->id(), { NULL, record->classLoaderId() } });
+      return false;
+      }
+
+   addToMaps(_classIdMap, _classPtrMap, it, record->id(), { ramClass, record->classLoaderId() }, ramClass);
+
+   if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+         "Cached class record ID %zu -> { %p, %zu } for class %.*s",
+         record->id(), ramClass, record->classLoaderId(), RECORD_NAME(record)
+      );
+   return true;
    }
 
 bool
