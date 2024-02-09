@@ -900,8 +900,6 @@ setupJNIFieldIDsAndCRIUAPI(JNIEnv *env, jclass *currentExceptionClass, IDATA *sy
 	PORT_ACCESS_FROM_VMC(currentThread);
 	IDATA libCRIUReturnCode = 0;
 
-	UT_MODULE_LOADED(J9_UTINTERFACE_FROM_VM(vm));
-
 	criuJVMCheckpointExceptionClass = env->FindClass("openj9/internal/criu/JVMCheckpointException");
 	Assert_VM_criu_notNull(criuJVMCheckpointExceptionClass);
 	vmCheckpointState->criuJVMCheckpointExceptionClass = (jclass)env->NewGlobalRef(criuJVMCheckpointExceptionClass);
