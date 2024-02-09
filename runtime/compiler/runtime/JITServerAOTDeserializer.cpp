@@ -907,7 +907,8 @@ JITServerNoSCCAOTDeserializer::JITServerNoSCCAOTDeserializer(TR_PersistentClassL
    _classPtrMap(decltype(_classPtrMap)::allocator_type(TR::Compiler->persistentAllocator())),
    _methodIdMap(decltype(_methodIdMap)::allocator_type(TR::Compiler->persistentAllocator())),
    _methodPtrMap(decltype(_methodPtrMap)::allocator_type(TR::Compiler->persistentAllocator())),
-   _classChainMap(decltype(_classChainMap)::allocator_type(TR::Compiler->persistentAllocator()))
+   _classChainMap(decltype(_classChainMap)::allocator_type(TR::Compiler->persistentAllocator())),
+   _wellKnownClassesMap(decltype(_wellKnownClassesMap)::allocator_type(TR::Compiler->persistentAllocator()))
    { }
 
 
@@ -999,6 +1000,10 @@ JITServerNoSCCAOTDeserializer::clearCachedData()
    for (auto &kv : _classChainMap)
       TR::Compiler->persistentGlobalMemory()->freePersistentMemory(kv.second);
    _classChainMap.clear();
+
+   for (auto &kv : _wellKnownClassesMap)
+      TR::Compiler->persistentGlobalMemory()->freePersistentMemory(kv.second);
+   _wellKnownClassesMap.clear();
 
    getNewKnownIds().clear();
    }
@@ -1283,10 +1288,63 @@ JITServerNoSCCAOTDeserializer::cacheRecord(const ClassChainSerializationRecord *
    return true;
    }
 
+// See revalidateClassChain()
+bool
+JITServerNoSCCAOTDeserializer::revalidateWellKnownClasses(uintptr_t *wellKnownClassesChain, TR::Compilation *comp, bool &wasReset)
+   {
+   size_t chainLength = wellKnownClassesChain[0];
+   uintptr_t *chainData = wellKnownClassesChain + 1;
+   for (size_t i = 0; i < chainLength; ++i)
+      {
+      auto classChain = findInMap(_classChainMap, offsetId(chainData[i]), getClassChainMonitor(), comp, wasReset);
+      if (!classChain)
+         return false;
+      }
+   return true;
+   }
+
 bool
 JITServerNoSCCAOTDeserializer::cacheRecord(const WellKnownClassesSerializationRecord *record, TR::Compilation *comp, bool &isNew, bool &wasReset)
    {
-   return false;
+   OMR::CriticalSection cs(getWellKnownClassesMonitor());
+   if (deserializerWasReset(comp, wasReset))
+      return false;
+
+   auto it = _wellKnownClassesMap.find(record->id());
+   if (it != _wellKnownClassesMap.end())
+      {
+      if (revalidateWellKnownClasses(it->second, comp, wasReset))
+         {
+         return true;
+         }
+      else
+         {
+         TR::Compiler->persistentGlobalMemory()->freePersistentMemory(it->second);
+         it->second = NULL;
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+               "Invalidated cached well-known classes record ID %zu", record->id()
+            );
+         return false;
+         }
+      }
+   isNew = true;
+
+   // Initialize the "well-known classes" object (see SymbolValidationManager::populateWellKnownClasses()).
+   TR_ASSERT(record->list().length() <= WELL_KNOWN_CLASS_COUNT, "Too many well-known classes");
+   // The first entry of the chain offsets contains the number of entries (and not the size in bytes as with class chains)
+   auto chainOffsets = (uintptr_t *)TR::Compiler->persistentGlobalMemory()->allocatePersistentMemory((1 + record->list().length()) * sizeof(uintptr_t));
+   chainOffsets[0] = record->list().length();
+   auto chainData = chainOffsets + 1;
+   // Get the class chain SCC offsets for each class chain ID (which should already be cached and (re)validated).
+   for (size_t i = 0; i < record->list().length(); ++i)
+      chainData[i] = encodeClassChainOffset(record->list().ids()[i]);
+
+   addToChainMap(_wellKnownClassesMap, it, record->id(), chainOffsets);
+
+   if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Cached well-known classes record ID %zu", record->id());
+   return true;
    }
 
 bool

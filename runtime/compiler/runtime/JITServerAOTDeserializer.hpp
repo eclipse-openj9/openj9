@@ -298,6 +298,8 @@ private:
    bool revalidateClassChain(uintptr_t *classChain, TR::Compilation *comp, bool &wasReset);
    void getRAMClassChain(TR::Compilation *comp, J9Class *clazz, J9Class **chainBuffer, size_t &chainLength);
 
+   bool revalidateWellKnownClasses(uintptr_t *wellKnownClassesChain, TR::Compilation *comp, bool &wasReset);
+
    static uintptr_t encodeOffset(const AOTSerializationRecord *record)
       { return AOTSerializationRecord::idAndType(record->id(), record->type()); }
 
@@ -317,6 +319,8 @@ private:
    PersistentUnorderedMap<J9Method *, uintptr_t> _methodPtrMap;
 
    PersistentUnorderedMap<uintptr_t/*ID*/, uintptr_t * /*deserializer chain*/> _classChainMap;
+
+   PersistentUnorderedMap<uintptr_t/*ID*/, uintptr_t * /*deserializer chain offsets*/> _wellKnownClassesMap;
    };
 
 #endif /* JITSERVER_AOT_DESERIALIZER_H */
