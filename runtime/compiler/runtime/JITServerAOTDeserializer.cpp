@@ -20,6 +20,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
+#include "jitprotos.h"
 #include "AtomicSupport.hpp"
 #include "control/CompilationThread.hpp"
 #include "control/CompilationRuntime.hpp"
@@ -29,7 +30,9 @@
 #include "env/StackMemoryRegion.hpp"
 #include "env/VerboseLog.hpp"
 #include "infra/CriticalSection.hpp"
+#include "runtime/CodeCacheExceptions.hpp"
 #include "runtime/JITServerAOTDeserializer.hpp"
+#include "runtime/RelocationTarget.hpp"
 
 #define RECORD_NAME(record) (int)(record)->nameLength(), (const char *)(record)->name()
 #define LENGTH_AND_DATA(str) J9UTF8_LENGTH(str), (const char *)J9UTF8_DATA(str)
@@ -1350,7 +1353,31 @@ JITServerNoSCCAOTDeserializer::cacheRecord(const WellKnownClassesSerializationRe
 bool
 JITServerNoSCCAOTDeserializer::cacheRecord(const ThunkSerializationRecord *record, TR::Compilation *comp, bool &isNew, bool &wasReset)
    {
-   return false;
+   // Unlike the rest of the cacheRecord functions, we do not need to acquire a monitor here, as we can rely on
+   // the internal synchronization of getJ2IThunk and setJ2IThunk. Since we don't touch any internal caches, we can
+   // skip checking for a reset.
+
+   auto fej9vm = comp->fej9vm();
+   void *thunk = fej9vm->getJ2IThunk((char *)record->signature(), record->signatureSize(), comp);
+   if (thunk)
+      return true;
+   isNew = true;
+
+   TR::CompilationInfoPerThread *compInfoPT = fej9vm->_compInfoPT;
+   uint8_t *thunkStart = TR_JITServerRelocationRuntime::copyDataToCodeCache(record->thunkStart(), record->thunkSize(), fej9vm);
+   if (!thunkStart)
+      compInfoPT->getCompilation()->failCompilation<TR::CodeCacheError>("Failed to allocate space in the code cache");
+
+   auto thunkAddress = thunkStart + 8;
+   void *vmHelper = j9ThunkVMHelperFromSignature(fej9vm->_jitConfig, record->signatureSize(), (char *)record->signature());
+   compInfoPT->reloRuntime()->reloTarget()->performThunkRelocation(reinterpret_cast<uint8_t *>(thunkAddress), (uintptr_t)vmHelper);
+
+   fej9vm->setJ2IThunk((char *)record->signature(), record->signatureSize(), thunkAddress, comp);
+
+   if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Cached thunk record ID %zu -> for thunk %.*s",
+                                     record->id(), record->signatureSize(), record->signature());
+   return true;
    }
 
 bool
