@@ -393,6 +393,9 @@ x86-64_mac:
     build: 'ci.role.build && hw.arch.x86 && sw.os.mac.10_15'
   build_env:
     vars: 'OPENJ9_JAVA_OPTIONS=-Xdump:system+java:events=systhrow,filter=java/lang/ClassCastException,request=exclusive+prepwalk+preempt'
+  extra_test_labels:
+    22: '!sw.os.mac.10_15'
+    next: '!sw.os.mac.10_15'
 #========================================#
 # Mac M1 Aarch64
 #========================================#
