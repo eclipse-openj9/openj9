@@ -2319,6 +2319,7 @@ bool TR::CompilationInfo::shouldRetryCompilation(TR_MethodToBeCompiled *entry, T
             case compilationStreamVersionIncompatible:
             case compilationStreamLostMessage:
             case aotCacheDeserializationFailure:
+            case aotDeserializerReset:
 #endif
             case compilationInterrupted:
             case compilationCodeReservationFailure:
@@ -11695,6 +11696,10 @@ TR::CompilationInfoPerThreadBase::processException(
    catch (const J9::AOTCacheDeserializationFailure &e)
       {
       // error code was already set in remoteCompile()
+      }
+   catch (const J9::AOTDeserializerReset &e)
+      {
+      _methodBeingCompiled->_compErrCode = aotDeserializerReset;
       }
 #endif /* defined(J9VM_OPT_JITSERVER) */
    catch (...)

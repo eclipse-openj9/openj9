@@ -148,6 +148,16 @@ class AOTCacheDeserializationFailure : public virtual RuntimeFailure
    {
    virtual const char *what() const throw() { return "AOT cache deserialization failure"; }
    };
+
+/**
+ * JITServer AOT Deserializer Reset exception type.
+ *
+ * Thrown when a concurrent JITServer AOT deserializer reset has been detected.
+ */
+class AOTDeserializerReset : public virtual RuntimeFailure
+   {
+   virtual const char *what() const throw() { return "AOT deserializer reset"; }
+   };
 #endif /* defined(J9VM_OPT_JITSERVER) */
 }
 

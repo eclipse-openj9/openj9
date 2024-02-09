@@ -263,6 +263,8 @@ private:
 class JITServerNoSCCAOTDeserializer : public JITServerAOTDeserializer
    {
 public:
+   friend class TR_J9DeserializerSharedCache;
+
    TR_PERSISTENT_ALLOC(TR_Memory::JITServerAOTCache)
 
    JITServerNoSCCAOTDeserializer(TR_PersistentClassLoaderTable *loaderTable);
@@ -299,6 +301,11 @@ private:
    void getRAMClassChain(TR::Compilation *comp, J9Class *clazz, J9Class **chainBuffer, size_t &chainLength);
 
    bool revalidateWellKnownClasses(uintptr_t *wellKnownClassesChain, TR::Compilation *comp, bool &wasReset);
+
+   J9ROMClass *romClassFromOffsetInSharedCache(uintptr_t offset, TR::Compilation *comp, bool &wasReset);
+   void *pointerFromOffsetInSharedCache(uintptr_t offset, TR::Compilation *comp, bool &wasReset);
+   J9ROMMethod *romMethodFromOffsetInSharedCache(uintptr_t offset, TR::Compilation *comp, bool &wasReset);
+   J9Class *classFromOffset(uintptr_t offset, TR::Compilation *comp, bool &wasReset);
 
    static uintptr_t encodeOffset(const AOTSerializationRecord *record)
       { return AOTSerializationRecord::idAndType(record->id(), record->type()); }

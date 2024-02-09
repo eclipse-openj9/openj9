@@ -1427,3 +1427,64 @@ JITServerNoSCCAOTDeserializer::updateSCCOffsets(SerializedAOTMethod *method, TR:
 
    return true;
    }
+
+J9ROMClass *
+JITServerNoSCCAOTDeserializer::romClassFromOffsetInSharedCache(uintptr_t offset, TR::Compilation *comp, bool &wasReset)
+   {
+   auto clazz = classFromOffset(offset, comp, wasReset);
+   if (clazz)
+      return clazz->romClass;
+
+   return NULL;
+   }
+
+J9Class *
+JITServerNoSCCAOTDeserializer::classFromOffset(uintptr_t offset, TR::Compilation *comp, bool &wasReset)
+   {
+   TR_ASSERT_FATAL(offsetType(offset) == AOTSerializationRecordType::Class, "Offset %zu must be to a class", offset);
+   return findInMap(_classIdMap, offsetId(offset), getClassMonitor(), comp, wasReset)._ramClass;
+   }
+
+// Return a pointer to the entity referred to by the given offset. Note that for class chains identifying class loaders,
+// we simply return the cached (J9ClassLoader *) directly.
+void *
+JITServerNoSCCAOTDeserializer::pointerFromOffsetInSharedCache(uintptr_t offset, TR::Compilation *comp, bool &wasReset)
+   {
+   auto id = offsetId(offset);
+   auto ty = AOTSerializationRecord::getType(offset);
+
+   void *ptr = NULL;
+
+   switch (ty)
+      {
+      case AOTSerializationRecordType::ClassLoader:
+         ptr = findInMap(_classLoaderIdMap, id, getClassLoaderMonitor(), comp, wasReset);
+         break;
+
+      case AOTSerializationRecordType::ClassChain:
+         ptr = findInMap(_classChainMap, id, getClassChainMonitor(), comp, wasReset);
+         break;
+
+      case AOTSerializationRecordType::WellKnownClasses:
+         ptr = findInMap(_wellKnownClassesMap, id, getWellKnownClassesMonitor(), comp, wasReset);
+         break;
+
+      default:
+         // Only the above types of offsets are ever looked up during relocation
+         TR_ASSERT_FATAL(false, "Offset %zu ID %zu type %zu into deserializer cache is not a supported type");
+         break;
+      }
+
+   return ptr;
+   }
+
+J9ROMMethod *
+JITServerNoSCCAOTDeserializer::romMethodFromOffsetInSharedCache(uintptr_t offset, TR::Compilation *comp, bool &wasReset)
+   {
+   TR_ASSERT_FATAL(offsetType(offset) == AOTSerializationRecordType::Method, "Offset %zu must be to a method", offset);
+   auto romMethod = findInMap(_methodIdMap, offsetId(offset), getMethodMonitor(), comp, wasReset);
+   if (romMethod)
+      return J9_ROM_METHOD_FROM_RAM_METHOD(romMethod);
+
+   return NULL;
+   }
