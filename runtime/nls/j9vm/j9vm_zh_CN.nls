@@ -2199,6 +2199,7 @@ J9NLS_VM_COMPATIBILITY_UNSUPPORTED.user_response=Remove the option from the comm
 
 J9NLS_VM_CRIU_CANNOT_SET_UNPRIVILEGED=\u65e0\u6cd5\u8bbe\u7f6e CRIU \u65e0\u7279\u6743\u65b9\u5f0f\uff0cerrno=%li
 # START NON-TRANSLATABLE
+J9NLS_VM_CRIU_CANNOT_SET_UNPRIVILEGED.sample_input_1=-8
 J9NLS_VM_CRIU_CANNOT_SET_UNPRIVILEGED.explanation=An error occurred when the JVM attempted set CRIU unprivileged mode.
 J9NLS_VM_CRIU_CANNOT_SET_UNPRIVILEGED.system_action=The JVM will throw a SystemCheckpointException.
 J9NLS_VM_CRIU_CANNOT_SET_UNPRIVILEGED.user_response=Ensure that CRIU supports unprivileged mode.
@@ -2206,6 +2207,7 @@ J9NLS_VM_CRIU_CANNOT_SET_UNPRIVILEGED.user_response=Ensure that CRIU supports un
 
 J9NLS_VM_CRIU_DUMP_FAILED=\u65e0\u6cd5\u8f6c\u50a8 JVM \u8fdb\u7a0b\uff0cerr=%li
 # START NON-TRANSLATABLE
+J9NLS_VM_CRIU_DUMP_FAILED.sample_input_1=-7
 J9NLS_VM_CRIU_DUMP_FAILED.explanation=An error occurred when the JVM attempted to dump the process via criu_dump.
 J9NLS_VM_CRIU_DUMP_FAILED.system_action=The JVM will throw a SystemCheckpointException.
 J9NLS_VM_CRIU_DUMP_FAILED.user_response=View CRIU documentation to determine how to resolve the error.
@@ -2213,6 +2215,7 @@ J9NLS_VM_CRIU_DUMP_FAILED.user_response=View CRIU documentation to determine how
 
 J9NLS_VM_CRIU_FAILED_DELAY_LOCK_RELATED_OPS=\u65e0\u6cd5\u6210\u529f\u8fd0\u884c\u5ef6\u8fdf\u7684\u9501\u5b9a\u76f8\u5173\u64cd\u4f5c\uff0cerrno=%li
 # START NON-TRANSLATABLE
+J9NLS_VM_CRIU_FAILED_DELAY_LOCK_RELATED_OPS.sample_input_1=-6
 J9NLS_VM_CRIU_FAILED_DELAY_LOCK_RELATED_OPS.explanation=An error occurred when the JVM attempted to run delayed identity operations.
 J9NLS_VM_CRIU_FAILED_DELAY_LOCK_RELATED_OPS.system_action=The JVM will throw a JVMRestoreException.
 J9NLS_VM_CRIU_FAILED_DELAY_LOCK_RELATED_OPS.user_response=View CRIU documentation to determine how to resolve the error.
@@ -2220,6 +2223,7 @@ J9NLS_VM_CRIU_FAILED_DELAY_LOCK_RELATED_OPS.user_response=View CRIU documentatio
 
 J9NLS_VM_CRIU_FAILED_TO_CONVERT_JAVA_STRING=\u65e0\u6cd5\u5c06 java \u5b57\u7b26\u4e32\u8f6c\u6362\u4e3a\u672c\u673a\u7f16\u7801\uff0cerr=%li
 # START NON-TRANSLATABLE
+J9NLS_VM_CRIU_FAILED_TO_CONVERT_JAVA_STRING.sample_input_1=-5
 J9NLS_VM_CRIU_FAILED_TO_CONVERT_JAVA_STRING.explanation=An error occurred when the JVM attempted to convert a java string to native encoding.
 J9NLS_VM_CRIU_FAILED_TO_CONVERT_JAVA_STRING.system_action=The JVM will throw a JVMCheckpointException.
 J9NLS_VM_CRIU_FAILED_TO_CONVERT_JAVA_STRING.user_response=Ensure the specified input strings are valid.
@@ -2234,11 +2238,14 @@ J9NLS_VM_CRIU_FAILED_TO_ENABLE_ALL_RESTORE_OPTIONS.user_response=Check documenta
 
 J9NLS_VM_CRIU_FAILED_TO_CLOSE_DIR=\u65e0\u6cd5\u5173\u95ed\u68c0\u67e5\u70b9\u6570\u636e\u76ee\u5f55\uff0cerrno=%li
 # START NON-TRANSLATABLE
+J9NLS_VM_CRIU_FAILED_TO_CLOSE_DIR.sample_input_1=-4
 J9NLS_VM_CRIU_FAILED_TO_CLOSE_DIR.explanation=An error occurred when the JVM attempted to close the specified directory.
 J9NLS_VM_CRIU_FAILED_TO_CLOSE_DIR.system_action=The JVM will throw a SystemRestoreException or SystemCheckpointException.
+J9NLS_VM_CRIU_FAILED_TO_CLOSE_DIR.user_response=Ensure the specified directory is accessible.
 
 J9NLS_VM_CRIU_FAILED_TO_CLOSE_WORK_DIR=Could not close the work directory, errno=%li
 # START NON-TRANSLATABLE
+J9NLS_VM_CRIU_FAILED_TO_CLOSE_WORK_DIR.sample_input_1=-3
 J9NLS_VM_CRIU_FAILED_TO_CLOSE_WORK_DIR.explanation=An error occurred when the JVM attempted to close the specified directory.
 J9NLS_VM_CRIU_FAILED_TO_CLOSE_WORK_DIR.system_action=The JVM will throw a SystemRestoreException or SystemCheckpointException.
 J9NLS_VM_CRIU_FAILED_TO_CLOSE_WORK_DIR.user_response=Ensure the specified directory is accessible.
@@ -2246,6 +2253,7 @@ J9NLS_VM_CRIU_FAILED_TO_CLOSE_WORK_DIR.user_response=Ensure the specified direct
 
 J9NLS_VM_CRIU_FAILED_TO_OPEN_DIR=\u65e0\u6cd5\u6253\u5f00\u68c0\u67e5\u70b9\u6570\u636e\u76ee\u5f55\uff0cerrno=%li
 # START NON-TRANSLATABLE
+J9NLS_VM_CRIU_FAILED_TO_OPEN_DIR.sample_input_1=-2
 J9NLS_VM_CRIU_FAILED_TO_OPEN_DIR.explanation=An error occurred when the JVM attempted to open the specified directory.
 J9NLS_VM_CRIU_FAILED_TO_OPEN_DIR.system_action=The JVM will throw a JVMCheckpointException.
 J9NLS_VM_CRIU_FAILED_TO_OPEN_DIR.user_response=Ensure the specified directory is accessible.
@@ -2253,6 +2261,7 @@ J9NLS_VM_CRIU_FAILED_TO_OPEN_DIR.user_response=Ensure the specified directory is
 
 J9NLS_VM_CRIU_FAILED_TO_OPEN_WORK_DIR=\u65e0\u6cd5\u6253\u5f00\u5de5\u4f5c\u76ee\u5f55\uff0cerrno=%li
 # START NON-TRANSLATABLE
+J9NLS_VM_CRIU_FAILED_TO_OPEN_WORK_DIR.sample_input_1=-22
 J9NLS_VM_CRIU_FAILED_TO_OPEN_WORK_DIR.explanation=An error occurred when the JVM attempted to open the specified directory.
 J9NLS_VM_CRIU_FAILED_TO_OPEN_WORK_DIR.system_action=The JVM will throw a JVMCheckpointException.
 J9NLS_VM_CRIU_FAILED_TO_OPEN_WORK_DIR.user_response=Ensure the specified directory is accessible.
@@ -2260,6 +2269,7 @@ J9NLS_VM_CRIU_FAILED_TO_OPEN_WORK_DIR.user_response=Ensure the specified directo
 
 J9NLS_VM_CRIU_INIT_FAILED=\u65e0\u6cd5\u521d\u59cb\u5316 CRIU \u9009\u9879\uff0cerr=%li
 # START NON-TRANSLATABLE
+J9NLS_VM_CRIU_INIT_FAILED.sample_input_1=-4
 J9NLS_VM_CRIU_INIT_FAILED.explanation=An error occurred when the JVM attempted to initialize CRIU options.
 J9NLS_VM_CRIU_INIT_FAILED.system_action=The JVM will throw a SystemCheckpointException.
 J9NLS_VM_CRIU_INIT_FAILED.user_response=View CRIU documentation to determine how to resolve the error.
@@ -2267,6 +2277,7 @@ J9NLS_VM_CRIU_INIT_FAILED.user_response=View CRIU documentation to determine how
 
 J9NLS_VM_CRIU_J9_CURRENT_TIME_NANOS_FAILURE=j9time_current_time_nanos  \u5931\u8d25\uff0cerrno =%li
 # START NON-TRANSLATABLE
+J9NLS_VM_CRIU_J9_CURRENT_TIME_NANOS_FAILURE.sample_input_1=-8
 J9NLS_VM_CRIU_J9_CURRENT_TIME_NANOS_FAILURE.explanation=j9time_current_time_nanos failed.
 J9NLS_VM_CRIU_J9_CURRENT_TIME_NANOS_FAILURE.system_action=The JVM will throw a JVMCheckpointException.
 J9NLS_VM_CRIU_J9_CURRENT_TIME_NANOS_FAILURE.user_response=View CRIU documentation to determine how to resolve the error.
@@ -2274,6 +2285,7 @@ J9NLS_VM_CRIU_J9_CURRENT_TIME_NANOS_FAILURE.user_response=View CRIU documentatio
 
 J9NLS_VM_CRIU_LOADING_LIBCRIU_FAILED=JVM \u5c1d\u8bd5\u88c5\u5165 libcriu.so \u4f46\u65e0\u6cd5\u88c5\u5165\uff1a%li
 # START NON-TRANSLATABLE
+J9NLS_VM_CRIU_LOADING_LIBCRIU_FAILED.sample_input_1=-12
 J9NLS_VM_CRIU_LOADING_LIBCRIU_FAILED.explanation=CRIUSupport::checkpointJVM failed.
 J9NLS_VM_CRIU_LOADING_LIBCRIU_FAILED.system_action=The JVM will throw a SystemCheckpointException.
 J9NLS_VM_CRIU_LOADING_LIBCRIU_FAILED.user_response=Make sure libcriu is installed on your system and is on the library load path.
@@ -2281,6 +2293,7 @@ J9NLS_VM_CRIU_LOADING_LIBCRIU_FAILED.user_response=Make sure libcriu is installe
 
 J9NLS_VM_CRIU_LOADING_LIBCRIU_FUNCTIONS_FAILED=JVM \u5728 libcriu.so \u4e2d\u627e\u4e0d\u5230\u5173\u952e criu \u51fd\u6570\uff1a%li
 # START NON-TRANSLATABLE
+J9NLS_VM_CRIU_LOADING_LIBCRIU_FUNCTIONS_FAILED.sample_input_1=-16
 J9NLS_VM_CRIU_LOADING_LIBCRIU_FUNCTIONS_FAILED.explanation=CRIUSupport::checkpointJVM failed.
 J9NLS_VM_CRIU_LOADING_LIBCRIU_FUNCTIONS_FAILED.system_action=The JVM will throw a SystemCheckpointException.
 J9NLS_VM_CRIU_LOADING_LIBCRIU_FUNCTIONS_FAILED.user_response=Check your installation of criu with `criu check`.
@@ -2295,6 +2308,7 @@ J9NLS_VM_CRIU_LOADING_OPTIONS_FILE_FAILED.user_response=Check the arguments to C
 
 J9NLS_VM_CRIU_MAX_RETRY_FOR_NOTCHECKPOINTSAFE_REACHED=JVM \u5c1d\u8bd5\u6267\u884c\u68c0\u67e5\u70b9\uff0c\u4f46\u7531\u4e8e\u5728 @NotCheckpointSafe \u5b89\u5168\u5e27\u4e2d\u6267\u884c\u4ee3\u7801\u800c\u65e0\u6cd5\u6267\u884c\u68c0\u67e5\u70b9\u3002 \u91cd\u8bd5\u6b21\u6570\uff1a%li
 # START NON-TRANSLATABLE
+J9NLS_VM_CRIU_MAX_RETRY_FOR_NOTCHECKPOINTSAFE_REACHED.sample_input_1=5
 J9NLS_VM_CRIU_MAX_RETRY_FOR_NOTCHECKPOINTSAFE_REACHED.explanation=CRIUSupport::checkpointJVM failed.
 J9NLS_VM_CRIU_MAX_RETRY_FOR_NOTCHECKPOINTSAFE_REACHED.system_action=The JVM will throw a JVMCheckpointException.
 J9NLS_VM_CRIU_MAX_RETRY_FOR_NOTCHECKPOINTSAFE_REACHED.user_response=View CRIU documentation to determine how to resolve the error.
@@ -2302,7 +2316,23 @@ J9NLS_VM_CRIU_MAX_RETRY_FOR_NOTCHECKPOINTSAFE_REACHED.user_response=View CRIU do
 
 J9NLS_VM_CRIU_NEGATIVE_CHECKPOINT_RESTORE_TIME_DELTA=\u4e3a checkpointRestoreTimeDelta \u8ba1\u7b97\u7684\u8d1f\u503c =%zd
 # START NON-TRANSLATABLE
+J9NLS_VM_CRIU_NEGATIVE_CHECKPOINT_RESTORE_TIME_DELTA.sample_input_1=-12345
 J9NLS_VM_CRIU_NEGATIVE_CHECKPOINT_RESTORE_TIME_DELTA.explanation=checkpointRestoreTimeDelta is expected not to be negative.
 J9NLS_VM_CRIU_NEGATIVE_CHECKPOINT_RESTORE_TIME_DELTA.system_action=The JVM will throw a JVMRestoreException.
 J9NLS_VM_CRIU_NEGATIVE_CHECKPOINT_RESTORE_TIME_DELTA.user_response=View CRIU documentation to determine how to resolve the error.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_CRIU_CRAC_INCOMPATIBLE_SETTING=\u547d\u4ee4\u884c\u9009\u9879 -XX: +EnableCRIUSupport \u548c -XX:CRaCCheckpoint\u5230 = [DIR] \u4e0d\u517c\u5bb9\u3002
+# START NON-TRANSLATABLE
+J9NLS_VM_CRIU_CRAC_INCOMPATIBLE_SETTING.explanation=-XX:+EnableCRIUSupport and -XX:CRaCCheckpointTo=[DIR] are specified at the same time.
+J9NLS_VM_CRIU_CRAC_INCOMPATIBLE_SETTING.system_action=The JVM will fail to start.
+J9NLS_VM_CRIU_CRAC_INCOMPATIBLE_SETTING.user_response=Remove one of the options from the command line.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_CRIU_J9_GET_PROCESS_START_TIME_FAILURE=j9sysinfo_get_process_start_time \u5931\u8d25\uff0c errno= %zi
+# START NON-TRANSLATABLE
+J9NLS_VM_CRIU_J9_GET_PROCESS_START_TIME_FAILURE.sample_input_1=-34
+J9NLS_VM_CRIU_J9_GET_PROCESS_START_TIME_FAILURE.explanation=j9sysinfo_get_process_start_time failed.
+J9NLS_VM_CRIU_J9_GET_PROCESS_START_TIME_FAILURE.system_action=The JVM will throw a JVMRestoreException.
+J9NLS_VM_CRIU_J9_GET_PROCESS_START_TIME_FAILURE.user_response=View CRIU documentation to determine how to resolve the error.
 # END NON-TRANSLATABLE
