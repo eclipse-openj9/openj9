@@ -13353,14 +13353,19 @@ bool TR::CompilationInfo::canProcessJProfilingRequest()
 bool
 TR::CompilationInfo::canRelocateMethod(TR::Compilation *comp)
    {
+#if defined(J9VM_OPT_JITSERVER)
+   if (comp->isDeserializedAOTMethod())
+      {
+      if (comp->getPersistentInfo()->getJITServerAOTCacheIgnoreLocalSCC())
+         return true;
+      if (comp->getPersistentInfo()->getJITServerAOTCacheDelayMethodRelocation())
+         return false;
+      }
+#endif /* defined(J9VM_OPT_JITSERVER) */
+
    // Delay relocation by default, unless this option is enabled
    if (!comp->getOption(TR_DisableDelayRelocationForAOTCompilations))
       return false;
-
-#if defined(J9VM_OPT_JITSERVER)
-   if (comp->isDeserializedAOTMethod() && comp->getPersistentInfo()->getJITServerAOTCacheDelayMethodRelocation())
-      return false;
-#endif /* defined(J9VM_OPT_JITSERVER) */
 
    TR_Debug *debug = TR::Options::getDebug();
    TR_FilterBST *filter = NULL;

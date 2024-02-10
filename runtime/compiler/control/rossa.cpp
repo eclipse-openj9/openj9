@@ -2129,6 +2129,13 @@ aboutToBootstrap(J9JavaVM * javaVM, J9JITConfig * jitConfig)
             return -1;
             }
          compInfo->setJITServerAOTDeserializer(deserializer);
+         auto deserializerSharedCache = new (PERSISTENT_NEW) TR_J9DeserializerSharedCache(vm, deserializer);
+         if (!deserializerSharedCache)
+            {
+            fprintf(stderr, "Could not create JITServer AOT deserializer cache\n");
+            return -1;
+            }
+         compInfo->setDeserializerSharedCache(deserializerSharedCache);
          }
       else if (TR::Options::sharedClassCache())
          {
