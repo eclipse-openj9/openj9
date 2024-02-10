@@ -2962,9 +2962,11 @@ remoteCompilationEnd(J9VMThread *vmThread, TR::Compilation *comp, TR_ResolvedMet
             {
             if (TR::Options::getVerboseOption(TR_VerboseJITServer))
                {
+               auto errorCode = compInfoPT->reloRuntime()->getReloErrorCode();
                TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
-                                              "JITClient: AOT Relocation failure: %d",
-                                              compInfoPT->reloRuntime()->returnCode());
+                                              "JITClient: AOT Relocation failure: %d %d (%s)",
+                                              compInfoPT->reloRuntime()->returnCode(),
+                                              errorCode, compInfoPT->reloRuntime()->getReloErrorCodeName(errorCode));
                }
 
             Trc_JITServerRelocationAOTFailure(vmThread, compInfoPT->reloRuntime()->returnCode());
