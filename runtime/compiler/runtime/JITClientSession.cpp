@@ -1049,6 +1049,13 @@ ClientSessionData::getClassChainRecord(J9Class *clazz, uintptr_t classChainOffse
    return record;
    }
 
+bool
+ClientSessionData::useServerOffsets(JITServer::ServerStream *stream)
+   {
+   auto *vmInfo = getOrCacheVMInfo(stream);
+   return vmInfo->_useServerOffsets;
+   }
+
 
 ClientSessionHT*
 ClientSessionHT::allocate()

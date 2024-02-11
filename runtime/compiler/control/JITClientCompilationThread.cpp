@@ -533,6 +533,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
                TR_RelocationRuntime::fillAOTHeader(javaVM, fe, &vmInfo._aotHeader);
                }
             }
+         vmInfo._useServerOffsets = false;
          vmInfo._inSnapshotMode = fe->inSnapshotMode();
          vmInfo._isPortableRestoreMode = fe->isPortableRestoreModeEnabled();
          vmInfo._isSnapshotModeEnabled = fe->isSnapshotModeEnabled();
