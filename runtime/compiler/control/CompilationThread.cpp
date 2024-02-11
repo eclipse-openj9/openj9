@@ -7703,6 +7703,12 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
    entry->setAotCodeToBeRelocated(NULL);  // make sure decision to load AOT comes from below and not previous compilation/relocation pass
    entry->_doAotLoad = false;
 
+#if defined(J9VM_OPT_JITSERVER)
+   entry->_useAOTCacheCompilation = false;
+   bool eligibleForRemoteAOTNoSCCCompile = false;
+   entry->_doNotLoadFromJITServerAOTCache = entry->_doNotLoadFromJITServerAOTCache || _jitConfig->inlineFieldWatches;
+#endif /* defined(J9VM_OPT_JITSERVER) */
+
 #if defined(J9VM_INTERP_AOT_RUNTIME_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
    if (entry->_methodIsInSharedCache == TR_yes     // possible AOT load
        && !TR::CompilationInfo::isCompiled(method)
@@ -7882,13 +7888,11 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
       else
          {
          TR::IlGeneratorMethodDetails & details = entry->getMethodDetails();
-         eligibleForRelocatableCompile =
-
-            // Shared Classes Enabled
-            TR::Options::sharedClassCache()
-
+         // Test for this method's suitability for a relocatable compile, ignoring any
+         // local SCC criteria.
+         bool withoutSCCEligibleForRelocatableCompile =
             // Unsupported compilations
-            && !entry->isJNINative()
+            !entry->isJNINative()
             && !details.isNewInstanceThunk()
             && !details.isMethodHandleThunk()
             && !entry->isDLTCompile()
@@ -7896,36 +7900,56 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
             // Only generate AOT compilations for first time compiles
             && !TR::CompilationInfo::isCompiled(method)
 
-            // If using a loadLimit/loadLimitFile, don't do an AOT compilation
-            // for a method body that's already in the SCC
-            && entry->_methodIsInSharedCache != TR_yes
-
             // See eclipse-openj9/openj9#11879 for details
             && (!TR::Options::getCmdLineOptions()->getOption(TR_FullSpeedDebug)
                 || !entry->_oldStartPC)
 
             // Eligibility checks
-            && !entry->_doNotUseAotCodeFromSharedCache
-            && fe->sharedCache()->isClassInSharedCache(J9_CLASS_FROM_METHOD(method))
             && !_compInfo.isMethodIneligibleForAot(method)
             && (!TR::Options::getAOTCmdLineOptions()->getOption(TR_AOTCompileOnlyFromBootstrap)
                 || fe->isClassLibraryMethod((TR_OpaqueMethodBlock *)method), true)
-
-            // Ensure we can generate a class chain for the class of the
-            // method to be compiled
-            && (TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET != fe->sharedCache()->rememberClass(J9_CLASS_FROM_METHOD(method)))
 
             // Do not perform AOT compilation if field watch is enabled; there
             // is no benefit to having an AOT body with field watch as it increases
             // the validation complexity, and in case the fields being watched changes,
             // the AOT body cannot be loaded
             && !_jitConfig->inlineFieldWatches;
+
+         eligibleForRelocatableCompile =
+            withoutSCCEligibleForRelocatableCompile
+
+            // Shared Classes Enabled
+            && TR::Options::sharedClassCache()
+
+            // If using a loadLimit/loadLimitFile, don't do an AOT compilation
+            // for a method body that's already in the SCC
+            && entry->_methodIsInSharedCache != TR_yes
+
+            // Eligibility checks
+            && !entry->_doNotUseAotCodeFromSharedCache
+            && fe->sharedCache()->isClassInSharedCache(J9_CLASS_FROM_METHOD(method))
+
+            // Ensure we can generate a class chain for the class of the
+            // method to be compiled
+            && (TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET != fe->sharedCache()->rememberClass(J9_CLASS_FROM_METHOD(method)));
+
+#if defined(J9VM_OPT_JITSERVER)
+         eligibleForRemoteAOTNoSCCCompile =
+            withoutSCCEligibleForRelocatableCompile
+            && persistentInfo->getRemoteCompilationMode() == JITServer::CLIENT
+            && persistentInfo->getJITServerUseAOTCache() // Ideally we would check if the options allow us to use the AOT cache for this method
+            && persistentInfo->getJITServerAOTCacheIgnoreLocalSCC() // Need to be using the new implementation
+            && !entry->_doNotLoadFromJITServerAOTCache
+            && !_compInfo.getLowCompDensityMode() // AOT req is sent to JITServer and we don't want to send JITServer any messages in this mode
+            && !cannotDoRemoteCompilation; // Make sure remote compilations are possible (no strong guarantees)
+#endif /* defined(J9VM_OPT_JITSERVER) */
          }
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
       _compInfo.acquireCompMonitor(vmThread);
       bool checkpointInProgress = _compInfo.isCheckpointInProgress();
       _compInfo.releaseCompMonitor(vmThread);
+      eligibleForRemoteAOTNoSCCCompile = eligibleForRemoteAOTNoSCCCompile && !checkpointInProgress;
 #endif
 
       bool sharedClassTest = eligibleForRelocatableCompile
@@ -7992,7 +8016,33 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
                }
             }
          }
+#if defined(J9VM_OPT_JITSERVER)
+      else if (eligibleForRemoteAOTNoSCCCompile)
+         {
+         if (TR::Options::getAOTCmdLineOptions()->getOption(TR_ForceAOT))
+            {
+            // TODO: is -Xaot:forceaot recognized when -Xshareclasses:none is specified?
+            canDoRelocatableCompile = true;
+            }
+         else if (!preferLocalComp(entry))
+            {
+            // Even if this compilation is too expensive to be performed locally,
+            // we may still want to refrain from generating too many remote AOT
+            // compilations, because of the negative effect of GCR. Smaller methods
+            // can be jitted remotely (no AOT) because the server would not save too
+            // much CPU by using its AOT cache.
+            //
+            J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+            if (J9ROMMETHOD_HAS_BACKWARDS_BRANCHES(romMethod) ||
+                  TR::CompilationInfo::getMethodBytecodeSize(method) >= TR::Options::_smallMethodBytecodeSizeThresholdForJITServerAOTCache)
+               {
+               canDoRelocatableCompile = true;
+               }
+            }
+         }
+#endif /* defined(J9VM_OPT_JITSERVER) */
       }
+
 #endif // defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
 
    // If we are allowed to do relocatable compilations, just do it
@@ -8012,9 +8062,16 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
          if (persistentInfo->getRemoteCompilationMode() == JITServer::CLIENT)
             {
             if (cannotDoRemoteCompilation)
+               {
                downgradeLocalCompilationIfLowPhysicalMemory(entry);
-            else // AOT compilations are more expensive, so they should all be done remotely
+               }
+            else
+               {
+               // AOT compilations are more expensive, so they should all be done remotely
                entry->setRemoteCompReq();
+               if (eligibleForRemoteAOTNoSCCCompile)
+                  entry->_useAOTCacheCompilation = true;
+               }
             }
 #endif /* defined(J9VM_OPT_JITSERVER) */
          }
