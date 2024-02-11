@@ -67,6 +67,7 @@ public:
    //NOTE: 0 signifies an invalid record ID
    uintptr_t id() const { return getId(_idAndType); }
    AOTSerializationRecordType type() const { return getType(_idAndType); }
+   uintptr_t idAndType() const { return _idAndType; }
    const uint8_t *end() const { return (const uint8_t *)this + size(); }
 
    static const AOTSerializationRecord *get(const std::string &str)
