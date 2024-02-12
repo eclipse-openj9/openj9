@@ -243,7 +243,7 @@ The following instructions guide you through the process of building an OpenJDK 
 You must install the following AIX Licensed Program Products (LPPs):
 
 - [Java7_64](https://developer.ibm.com/javasdk/support/aix-download-service/)
-- [xlc/C++ 13.1.3](https://www.ibm.com/developerworks/downloads/r/xlcplusaix/)
+- [xlc/C++ 16](https://www.ibm.com/developerworks/downloads/r/xlcplusaix/)
 - x11.adt.ext
 
 A number of RPM packages are also required. The easiest method for installing these packages is to use `yum`, because `yum` takes care of any additional dependent packages for you.
