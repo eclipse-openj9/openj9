@@ -104,6 +104,7 @@ asyncFrameIterator(J9VMThread * currentThread, J9StackWalkState * walkState)
 		frame->lineno = (jint)walkState->bytecodePCOffset;
 	}
 	walkState->userData1 = (void*)(frame + 1);
+	declaringClass->classLoader->asyncGetCallTraceUsed = 1;
 	return J9_STACKWALK_KEEP_ITERATING;
 }
 
@@ -213,7 +214,6 @@ void AsyncGetCallTrace(ASGCT_CallTrace *trace, jint depth, void *ucontext)
 		PORT_ACCESS_FROM_JAVAVM(BFUjavaVM);
 		ASGCT_parms parms = { trace, depth, ucontext, currentThread, num_frames, NULL, NULL, NULL, NULL, NULL, 0 };
 		UDATA result = 0;
-		BFUjavaVM->asyncGetCallTraceUsed = 1;
 		j9sig_protect(
 				protectedASGCT, (void*)&parms, 
 				emptySignalHandler, NULL,
