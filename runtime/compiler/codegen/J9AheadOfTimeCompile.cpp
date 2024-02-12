@@ -154,6 +154,21 @@ J9::AheadOfTimeCompile::offsetInSharedCacheFromPointer(TR_SharedCache *sharedCac
 uintptr_t
 J9::AheadOfTimeCompile::offsetInSharedCacheFromWellKnownClasses(TR_SharedCache *sharedCache, void *wellKnownClassesPtr)
    {
+#if defined(J9VM_OPT_JITSERVER)
+   TR::Compilation *comp = self()->comp();
+   ClientSessionData *clientData = comp->getClientData();
+   // This is a server compilation that is ignoring the client's SCC, so just return the
+   // idAndType of the cached AOT cache well-known classes serialization record.
+   if (clientData && clientData->useServerOffsets(comp->getStream()) && comp->isAOTCacheStore())
+      {
+      auto record = comp->getSymbolValidationManager()->aotCacheWellKnownClassesRecord();
+      if (record)
+         return record->data().idAndType();
+      else
+         comp->failCompilation<J9::ClassChainPersistenceFailure>("Failed to find cached well-known classes record in SVM");
+      }
+#endif /* defined(J9VM_OPT_JITSERVER) */
+
    return offsetInSharedCacheFromPointer(sharedCache, wellKnownClassesPtr);
    }
 

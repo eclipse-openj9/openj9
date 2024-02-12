@@ -1049,6 +1049,13 @@ ClientSessionData::getClassChainRecord(J9Class *clazz, uintptr_t classChainOffse
    return record;
    }
 
+const AOTCacheWellKnownClassesRecord *
+ClientSessionData::getWellKnownClassesRecord(const AOTCacheClassChainRecord *const *chainRecords,
+                                             size_t length, uintptr_t includedClasses)
+   {
+   return _aotCache->getWellKnownClassesRecord(chainRecords, length, includedClasses);
+   }
+
 bool
 ClientSessionData::useServerOffsets(JITServer::ServerStream *stream)
    {

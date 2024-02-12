@@ -483,6 +483,8 @@ public:
    const AOTCacheClassChainRecord *getClassChainRecord(J9Class *clazz, uintptr_t classChainOffset,
                                                        const std::vector<J9Class *> &ramClassChain, JITServer::ServerStream *stream,
                                                        bool &missingLoaderInfo);
+   const AOTCacheWellKnownClassesRecord *getWellKnownClassesRecord(const AOTCacheClassChainRecord *const *chainRecords,
+                                                       size_t length, uintptr_t includedClasses);
 
    JITServerAOTCache::KnownIdSet &getAOTCacheKnownIds() { return _aotCacheKnownIds; }
    TR::Monitor *getAOTCacheKnownIdsMonitor() const { return _aotCacheKnownIdsMonitor; }

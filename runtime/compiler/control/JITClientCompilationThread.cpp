@@ -29,6 +29,7 @@
 #include "control/CompilationThread.hpp"
 #include "control/JITServerHelpers.hpp"
 #include "control/MethodToBeCompiled.hpp"
+#include "env/ClassLoaderTable.hpp"
 #include "env/ClassTableCriticalSection.hpp"
 #include "env/J2IThunk.hpp"
 #include "env/j9methodServer.hpp"
@@ -1905,7 +1906,8 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          // Collect AOT stats
          TR_ResolvedJ9Method *resolvedMethod = std::get<0>(methodInfo).remoteMirror;
 
-         isRomClassForMethodInSC = fe->sharedCache()->isClassInSharedCache(J9_CLASS_FROM_METHOD(j9method));
+         if (fe->sharedCache())
+            isRomClassForMethodInSC = fe->sharedCache()->isClassInSharedCache(J9_CLASS_FROM_METHOD(j9method));
 
          J9Class *j9clazz = (J9Class *) J9_CLASS_FROM_CP(((J9RAMConstantPoolItem *) J9_CP_FROM_METHOD(((J9Method *)j9method))));
          TR_OpaqueClassBlock *clazzOfInlinedMethod = fe->convertClassPtrToClassOffset(j9clazz);
@@ -2135,27 +2137,30 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          bool getName = std::get<1>(recv);
          auto sharedCache = fe->sharedCache();
          uintptr_t *chain = NULL;
-         uintptr_t offset = sharedCache->getClassChainOffsetIdentifyingLoader(j9class, &chain);
+         uintptr_t offset = sharedCache ? sharedCache->getClassChainOffsetIdentifyingLoader(j9class, &chain) : TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET;
          std::string nameStr;
-         if (getName && chain)
+         if (getName)
             {
-            const J9UTF8 *name = J9ROMCLASS_CLASSNAME(sharedCache->startingROMClassOfClassChain(chain));
-            nameStr = std::string((const char *)J9UTF8_DATA(name), J9UTF8_LENGTH(name));
+            // We need to get the name even if chain lookup failed (perhaps due to a non-existent local SCC)
+            auto name = fe->getPersistentInfo()->getPersistentClassLoaderTable()->lookupClassNameAssociatedWithClassLoader(fe->getClassLoader(j9class));
+            if (name)
+               nameStr = std::string((const char *)J9UTF8_DATA(name), J9UTF8_LENGTH(name));
             }
          client->write(response, offset, nameStr);
          }
          break;
       case MessageType::SharedCache_rememberClass:
          {
-         auto recv = client->getRecvData<J9Class *, bool, bool>();
+         auto recv = client->getRecvData<J9Class *, bool, bool, bool>();
          auto clazz = std::get<0>(recv);
          bool create = std::get<1>(recv);
-         bool getClasses = std::get<2>(recv);
-         uintptr_t classChainOffset = fe->sharedCache()->rememberClass(clazz, NULL, create);
+         bool needClientOffset = std::get<2>(recv);
+         bool getClasses = std::get<3>(recv);
+         uintptr_t classChainOffset = needClientOffset ? fe->sharedCache()->rememberClass(clazz, NULL, create) : TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET;
          std::vector<J9Class *> ramClassChain;
          std::vector<J9Class *> uncachedRAMClasses;
          std::vector<JITServerHelpers::ClassInfoTuple> uncachedClassInfos;
-         if (create && getClasses && (TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET != classChainOffset))
+         if (create && getClasses)
             {
             // The first word of the class chain data stores the size of the whole record in bytes, so the number of classes
             // is 1 less than the necessary class chain length.
