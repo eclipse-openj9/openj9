@@ -1245,6 +1245,7 @@ ROMClassWriter::writeMethods(Cursor *cursor, Cursor *lineNumberCursor, Cursor *v
 	 *  - allSlotsInROMMethodsSectionDo() in util/romclasswalk.c
 	 *  - dbgNextROMMethod() in dbgext/j9dbgext.c
 	 *  - createBreakpointedMethod() in jvmti/jvmtiHelpers.cpp
+	 *  - JITServerHelpers::packROMClass() in compiler/control/JITServerHelpers.cpp
 	 * All the above are involved in walking or walking over ROMMethods.
 	 *
 	 */
