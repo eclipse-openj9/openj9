@@ -2121,7 +2121,7 @@ aboutToBootstrap(J9JavaVM * javaVM, J9JITConfig * jitConfig)
       {
       if (TR::Options::sharedClassCache())
          {
-         auto deserializer = new (PERSISTENT_NEW) JITServerAOTDeserializer(persistentInfo->getPersistentClassLoaderTable());
+         auto deserializer = new (PERSISTENT_NEW) JITServerLocalSCCAOTDeserializer(persistentInfo->getPersistentClassLoaderTable());
          if (!deserializer)
             return -1;
          compInfo->setJITServerAOTDeserializer(deserializer);
