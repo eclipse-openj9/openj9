@@ -984,6 +984,9 @@ JITServerNoSCCAOTDeserializer::invalidateMethod(J9Method *method)
    TR_ASSERT(i_it != _methodIdMap.end(), "Broken two-way map");
 
    i_it->second = NULL;
+
+   _methodPtrMap.erase(p_it);
+
    if (TR::Options::getVerboseOption(TR_VerboseJITServer))
       TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Invalidated RAMMethod %p ID %zu", method, id);
    }
