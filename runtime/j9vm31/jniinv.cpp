@@ -65,8 +65,23 @@ JNI_GetDefaultJavaVMInitArgs(void * vm_args)
 	J9_CEL4RO64_ArgType argTypes[NUM_ARGS] = { CEL4RO64_type_uint32_ptr };
 	uint64_t argValues[NUM_ARGS] = { (uint64_t)vm_args };
 	jint returnValue = JNI_ERR;
-	uint32_t cel4ro64ReturnCode = j9_cel4ro64_load_query_call_function(
-			LIBJVM_NAME, "JNI_GetDefaultJavaVMInitArgs",
+	uint32_t cel4ro64ReturnCode = J9_CEL4RO64_RETCODE_OK;
+
+	static uint64_t GetDefaultJavaVMInitArgsFD = 0; /* Cached value of GetDefaultJavaVMInitArgs function descriptor. */
+
+	/* Lazy initialization of function descriptor on first invocation. */
+	if (0 == GetDefaultJavaVMInitArgsFD) {
+		cel4ro64ReturnCode = j9_cel4ro64_load_query_function_descriptor(
+			LIBJVM_NAME, "JNI_GetDefaultJavaVMInitArgs", &GetDefaultJavaVMInitArgsFD);
+
+		if (J9_CEL4RO64_RETCODE_OK != cel4ro64ReturnCode) {
+			fprintf(stderr, "JNI_GetDefaultJavaVMInitArgs function query failed. CEL4RO64 rc: %d - %s\n", cel4ro64ReturnCode, j9_cel4ro64_get_error_message(cel4ro64ReturnCode));
+			return JNI_ERR;
+		}
+	}
+
+	cel4ro64ReturnCode = j9_cel4ro64_call_function(
+			GetDefaultJavaVMInitArgsFD,
 			argTypes, argValues, NUM_ARGS, CEL4RO64_type_jint, &returnValue);
 
 	if (J9_CEL4RO64_RETCODE_OK != cel4ro64ReturnCode) {
@@ -117,8 +132,23 @@ JNI_CreateJavaVM(JavaVM **pvm, void **penv, void *vm_args)
 	J9_CEL4RO64_ArgType argTypes[NUM_ARGS] = { CEL4RO64_type_JavaVM64, CEL4RO64_type_JNIEnv64, CEL4RO64_type_uint32_ptr };
 	uint64_t argValues[NUM_ARGS] = { (uint64_t)&JavaVM64Result, (uint64_t)&JNIEnv64Result, (uint64_t)vm_args };
 	jint returnValue = JNI_ERR;
-	uint32_t cel4ro64ReturnCode = j9_cel4ro64_load_query_call_function(
-			LIBJVM_NAME, "JNI_CreateJavaVM",
+	uint32_t cel4ro64ReturnCode = J9_CEL4RO64_RETCODE_OK;
+
+	static uint64_t JNI_CreateJavaVMFD = 0; /* Cached value of JNI_CreateJavaVM function descriptor. */
+
+	/* Lazy initialization of function descriptor on first invocation. */
+	if (0 == JNI_CreateJavaVMFD) {
+		cel4ro64ReturnCode = j9_cel4ro64_load_query_function_descriptor(
+			LIBJVM_NAME, "JNI_CreateJavaVM", &JNI_CreateJavaVMFD);
+
+		if (J9_CEL4RO64_RETCODE_OK != cel4ro64ReturnCode) {
+			fprintf(stderr, "JNI_CreateJavaVM function query failed. CEL4RO64 rc: %d - %s\n", cel4ro64ReturnCode, j9_cel4ro64_get_error_message(cel4ro64ReturnCode));
+			return JNI_ERR;
+		}
+	}
+
+	cel4ro64ReturnCode = j9_cel4ro64_call_function(
+			JNI_CreateJavaVMFD,
 			argTypes, argValues, NUM_ARGS, CEL4RO64_type_jint, &returnValue);
 
 	if (J9_CEL4RO64_RETCODE_OK != cel4ro64ReturnCode) {
@@ -153,8 +183,23 @@ JNI_GetCreatedJavaVMs(JavaVM **vmBuf, jsize bufLen, jsize *nVMs)
 
 	uint64_t argValues[NUM_ARGS] = { (uint64_t)tempJavaVM64Buffer, bufLen, (uint64_t)nVMs };
 	jint returnValue = JNI_ERR;
-	uint32_t cel4ro64ReturnCode = j9_cel4ro64_load_query_call_function(
-			LIBJVM_NAME, "JNI_GetCreatedJavaVMs",
+	uint32_t cel4ro64ReturnCode = J9_CEL4RO64_RETCODE_OK;
+
+	static uint64_t JNI_GetCreatedJavaVMsFD = 0; /* Cached value of JNI_GetCreatedJavaVMs function descriptor. */
+
+	/* Lazy initialization of function descriptor on first invocation. */
+	if (0 == JNI_GetCreatedJavaVMsFD) {
+		cel4ro64ReturnCode = j9_cel4ro64_load_query_function_descriptor(
+			LIBJVM_NAME, "JNI_GetCreatedJavaVMs", &JNI_GetCreatedJavaVMsFD);
+
+		if (J9_CEL4RO64_RETCODE_OK != cel4ro64ReturnCode) {
+			fprintf(stderr, "JNI_GetCreatedJavaVMs function query failed. CEL4RO64 rc: %d - %s\n", cel4ro64ReturnCode, j9_cel4ro64_get_error_message(cel4ro64ReturnCode));
+			return JNI_ERR;
+		}
+	}
+
+	cel4ro64ReturnCode = j9_cel4ro64_call_function(
+			JNI_GetCreatedJavaVMsFD,
 			argTypes, argValues, NUM_ARGS, CEL4RO64_type_jint, &returnValue);
 
 	if (J9_CEL4RO64_RETCODE_OK != cel4ro64ReturnCode) {
@@ -179,8 +224,24 @@ DestroyJavaVM(JavaVM *vm)
 	J9_CEL4RO64_ArgType argTypes[NUM_ARGS] = { CEL4RO64_type_JavaVM64 };
 	uint64_t argValues[NUM_ARGS] = { JAVAVM64_FROM_JAVAVM31(vm)};
 	jint returnValue = JNI_ERR;
-	uint32_t cel4ro64ReturnCode = j9_cel4ro64_load_query_call_function(
-			LIBJ9VM29_NAME, "DestroyJavaVM",
+
+	uint32_t cel4ro64ReturnCode = J9_CEL4RO64_RETCODE_OK;
+
+	static uint64_t DestroyJavaVMFD = 0; /* Cached value of DestroyJavaVM function descriptor. */
+
+	/* Lazy initialization of function descriptor on first invocation. */
+	if (0 == DestroyJavaVMFD) {
+		cel4ro64ReturnCode = j9_cel4ro64_load_query_function_descriptor(
+			LIBJ9VM29_NAME, "DestroyJavaVM", &DestroyJavaVMFD);
+
+		if (J9_CEL4RO64_RETCODE_OK != cel4ro64ReturnCode) {
+			fprintf(stderr, "DestroyJavaVM function query failed. CEL4RO64 rc: %d - %s\n", cel4ro64ReturnCode, j9_cel4ro64_get_error_message(cel4ro64ReturnCode));
+			return JNI_ERR;
+		}
+	}
+
+	cel4ro64ReturnCode = j9_cel4ro64_call_function(
+			DestroyJavaVMFD,
 			argTypes, argValues, NUM_ARGS, CEL4RO64_type_jint, &returnValue);
 
 	if (J9_CEL4RO64_RETCODE_OK != cel4ro64ReturnCode) {
@@ -207,14 +268,27 @@ AttachCurrentThread(JavaVM *vm, void **penv, void *args)
 	jint returnValue = JNI_ERR;
 	uint32_t cel4ro64ReturnCode = J9_CEL4RO64_RETCODE_OK;
 
+	static uint64_t AttachCurrentThreadFD = 0; /* Cached value of AttachCurrentThread function descriptor. */
+
+	/* Lazy initialization of function descriptor on first invocation. */
+	if (0 == AttachCurrentThreadFD) {
+		cel4ro64ReturnCode = j9_cel4ro64_load_query_function_descriptor(
+			LIBJ9VM29_NAME, "AttachCurrentThread", &AttachCurrentThreadFD);
+
+		if (J9_CEL4RO64_RETCODE_OK != cel4ro64ReturnCode) {
+			fprintf(stderr, "AttachCurrentThread function query failed. CEL4RO64 rc: %d - %s\n", cel4ro64ReturnCode, j9_cel4ro64_get_error_message(cel4ro64ReturnCode));
+			return JNI_ERR;
+		}
+	}
+
 	/* Zero initialize reservedNamePadding in JavaVMAttachArgs. */
 	JavaVMAttachArgs *vmAttachArgs = ((JavaVMAttachArgs *) args);
 	if (NULL != vmAttachArgs) {
 		vmAttachArgs->reservedNamePadding = NULL;
 	}
 
-	cel4ro64ReturnCode = j9_cel4ro64_load_query_call_function(
-			LIBJ9VM29_NAME, "AttachCurrentThread",
+	cel4ro64ReturnCode = j9_cel4ro64_call_function(
+			AttachCurrentThreadFD,
 			argTypes, argValues, NUM_ARGS, CEL4RO64_type_jint, &returnValue);
 
 	if (J9_CEL4RO64_RETCODE_OK != cel4ro64ReturnCode) {
@@ -239,8 +313,23 @@ DetachCurrentThread(JavaVM *vm) {
 	J9_CEL4RO64_ArgType argTypes[NUM_ARGS] = { CEL4RO64_type_JavaVM64 };
 	uint64_t argValues[NUM_ARGS] = { JAVAVM64_FROM_JAVAVM31(vm) };
 	jint returnValue = JNI_ERR;
-	uint32_t cel4ro64ReturnCode = j9_cel4ro64_load_query_call_function(
-			LIBJ9VM29_NAME, "DetachCurrentThread",
+	uint32_t cel4ro64ReturnCode = J9_CEL4RO64_RETCODE_OK;
+
+	static uint64_t DetachCurrentThreadFD = 0; /* Cached value of DetachCurrentThread function descriptor. */
+
+	/* Lazy initialization of function descriptor on first invocation. */
+	if (0 == DetachCurrentThreadFD) {
+		cel4ro64ReturnCode = j9_cel4ro64_load_query_function_descriptor(
+			LIBJ9VM29_NAME, "DetachCurrentThread", &DetachCurrentThreadFD);
+
+		if (J9_CEL4RO64_RETCODE_OK != cel4ro64ReturnCode) {
+			fprintf(stderr, "DetachCurrentThread function query failed. CEL4RO64 rc: %d - %s\n", cel4ro64ReturnCode, j9_cel4ro64_get_error_message(cel4ro64ReturnCode));
+			return JNI_ERR;
+		}
+	}
+
+	cel4ro64ReturnCode = j9_cel4ro64_call_function(
+			DetachCurrentThreadFD,
 			argTypes, argValues, NUM_ARGS, CEL4RO64_type_jint, &returnValue);
 
 	if (J9_CEL4RO64_RETCODE_OK != cel4ro64ReturnCode) {
@@ -258,8 +347,23 @@ GetEnv(JavaVM *vm, void **penv, jint version)
 	J9_CEL4RO64_ArgType argTypes[NUM_ARGS] = { CEL4RO64_type_JavaVM64, CEL4RO64_type_JNIEnv64, CEL4RO64_type_jint };
 	uint64_t argValues[NUM_ARGS] = { JAVAVM64_FROM_JAVAVM31(vm), (uint64_t)&JNIEnv64Result, version };
 	jint returnValue = JNI_ERR;
-	uint32_t cel4ro64ReturnCode = j9_cel4ro64_load_query_call_function(
-			LIBJ9VM29_NAME, "GetEnv",
+	uint32_t cel4ro64ReturnCode = J9_CEL4RO64_RETCODE_OK;
+
+	static uint64_t GetEnvFD = 0; /* Cached value of GetEnv function descriptor. */
+
+	/* Lazy initialization of function descriptor on first invocation. */
+	if (0 == GetEnvFD) {
+		cel4ro64ReturnCode = j9_cel4ro64_load_query_function_descriptor(
+			LIBJ9VM29_NAME, "GetEnv", &GetEnvFD);
+
+		if (J9_CEL4RO64_RETCODE_OK != cel4ro64ReturnCode) {
+			fprintf(stderr, "GetEnv function query failed. CEL4RO64 rc: %d - %s\n", cel4ro64ReturnCode, j9_cel4ro64_get_error_message(cel4ro64ReturnCode));
+			return JNI_ERR;
+		}
+	}
+
+	cel4ro64ReturnCode = j9_cel4ro64_call_function(
+			GetEnvFD,
 			argTypes, argValues, NUM_ARGS, CEL4RO64_type_jint, &returnValue);
 
 	if (J9_CEL4RO64_RETCODE_OK != cel4ro64ReturnCode) {
@@ -288,14 +392,27 @@ AttachCurrentThreadAsDaemon(JavaVM *vm, void **penv, void *args)
 	jint returnValue = JNI_ERR;
 	uint32_t cel4ro64ReturnCode = J9_CEL4RO64_RETCODE_OK;
 
+	static uint64_t AttachCurrentThreadAsDaemonFD = 0; /* Cached value of AttachCurrentThreadAsDaemon function descriptor. */
+
+	/* Lazy initialization of function descriptor on first invocation. */
+	if (0 == AttachCurrentThreadAsDaemonFD) {
+		cel4ro64ReturnCode = j9_cel4ro64_load_query_function_descriptor(
+			LIBJ9VM29_NAME, "AttachCurrentThreadAsDaemon", &AttachCurrentThreadAsDaemonFD);
+
+		if (J9_CEL4RO64_RETCODE_OK != cel4ro64ReturnCode) {
+			fprintf(stderr, "AttachCurrentThreadAsDaemon function query failed. CEL4RO64 rc: %d - %s\n", cel4ro64ReturnCode, j9_cel4ro64_get_error_message(cel4ro64ReturnCode));
+			return JNI_ERR;
+		}
+	}
+
 	/* Zero initialize reservedNamePadding in JavaVMAttachArgs. */
 	JavaVMAttachArgs *vmAttachArgs = ((JavaVMAttachArgs *) args);
 	if (NULL != vmAttachArgs) {
 		vmAttachArgs->reservedNamePadding = NULL;
 	}
 
-	cel4ro64ReturnCode = j9_cel4ro64_load_query_call_function(
-			LIBJ9VM29_NAME, "AttachCurrentThreadAsDaemon",
+	cel4ro64ReturnCode = j9_cel4ro64_call_function(
+			AttachCurrentThreadAsDaemonFD,
 			argTypes, argValues, NUM_ARGS, CEL4RO64_type_jint, &returnValue);
 
 	if (J9_CEL4RO64_RETCODE_OK != cel4ro64ReturnCode) {
