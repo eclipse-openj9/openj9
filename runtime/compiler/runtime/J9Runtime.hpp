@@ -198,6 +198,7 @@ typedef struct TR_AOTMethodHeader {
 #define TR_AOTMethodHeader_IsNotCapableOfExceptionHook               0x00000100
 #define TR_AOTMethodHeader_UsesOSR                                   0x00000200
 #define TR_AOTMethodHeader_MethodTracingEnabled                      0x00000400
+#define TR_AOTMethodHeader_UsesFSD                                   0x00000800
 
 
 typedef struct TR_AOTInliningStats

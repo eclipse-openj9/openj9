@@ -104,6 +104,8 @@
 			<variation>-Xgcpolicy:optavgpause</variation>
 			<variation>-Xgcpolicy:gencon -Xgcthreads64 -XX:CheckpointGCThreads=1</variation>
 			<variation>-Xgcpolicy:gencon -Xgcthreads1</variation>
+			<variation>-XX:+DebugOnRestore -Xjit</variation>
+			<variation>-XX:+DebugOnRestore -Xjit:count=0</variation>
 		</variations>
 		<disables>
 			<disable>
@@ -140,6 +142,7 @@
 			<variation>-Xgcpolicy:optavgpause</variation>
 			<variation>-Xgcpolicy:gencon -Xgcthreads64 -XX:CheckpointGCThreads=1</variation>
 			<variation>-Xgcpolicy:gencon -Xgcthreads1</variation>
+			<variation>-XX:+DebugOnRestore</variation>
 		</variations>
 		<disables>
 			<disable>
@@ -174,6 +177,8 @@
 			<variation>-Xjit</variation>
 			<variation>-Xjit:count=0</variation>
 			<variation>-Xjit:vlog=vlog</variation>
+			<variation>-XX:+DebugOnRestore -Xjit</variation>
+			<variation>-XX:+DebugOnRestore -Xjit:count=0</variation>
 		</variations>
 		<disables>
 			<disable>
