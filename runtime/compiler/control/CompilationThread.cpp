@@ -7444,13 +7444,15 @@ TR::CompilationInfoPerThreadBase::generatePerfToolEntry()
       }
    if (getPerfFile())
       {
-      j9jit_fprintf(getPerfFile(), "%p %lX %s_%s\n", getMetadata()->startPC, getMetadata()->endWarmPC - getMetadata()->startPC,
-         getCompilation()->signature(), getCompilation()->getHotnessName(getCompilation()->getMethodHotness()));
+      j9jit_fprintf(getPerfFile(), "%p %lX %s_%s%s\n", getMetadata()->startPC, getMetadata()->endWarmPC - getMetadata()->startPC,
+         getCompilation()->signature(), getCompilation()->getHotnessName(getCompilation()->getMethodHotness()),
+         getMetadata()->flags & JIT_METADATA_IS_FSD_COMP ? "_fsd" : "");
       // If there is a cold section, add another line
       if (getMetadata()->startColdPC)
          {
-         j9jit_fprintf(getPerfFile(), "%p %lX %s_%s\n", getMetadata()->startColdPC, getMetadata()->endPC - getMetadata()->startColdPC,
-            getCompilation()->signature(), getCompilation()->getHotnessName(getCompilation()->getMethodHotness())); // should we change the name of the method?
+         j9jit_fprintf(getPerfFile(), "%p %lX %s_%s%s\n", getMetadata()->startColdPC, getMetadata()->endPC - getMetadata()->startColdPC,
+            getCompilation()->signature(), getCompilation()->getHotnessName(getCompilation()->getMethodHotness()),
+            getMetadata()->flags & JIT_METADATA_IS_FSD_COMP ? "_fsd" : ""); // should we change the name of the method?
          }
       // Flushing degrades performance, but ensures that we have the data
       // written even if the JVM is abruptly terminated
@@ -9259,6 +9261,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                   {
                   options->setInsertGCRTrees(); // This is a recommendation not a directive
                   }
+
                // Disable some expensive optimizations
                if (options->getOptLevel() <= warm && !options->getOption(TR_EnableExpensiveOptsAtWarm))
                   {
@@ -11251,6 +11254,9 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
 
             if (isJniNative)
                TR_VerboseLog::write(" JNI"); // flag JNI compilations
+
+            if (compiler->getOption(TR_FullSpeedDebug))
+               TR_VerboseLog::write(" FSD");
 
             if (compiler->getOption(TR_EnableOSR))
                TR_VerboseLog::write(" OSR");

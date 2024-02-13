@@ -69,6 +69,7 @@ bool enableCompiledMethodLoadHookOnly = false;
 // Static data initialization
 // -----------------------------------------------------------------------------
 
+J9::Options::FSDInitStatus J9::Options::_fsdInitStatus = J9::Options::FSDInitStatus::FSDInit_NotInitialized;
 bool J9::Options::_doNotProcessEnvVars = false; // set through XX options in Java
 bool J9::Options::_reportByteCodeInfoAtCatchBlock = false;
 int32_t J9::Options::_samplingFrequencyInIdleMode = 1000; // ms
@@ -2872,6 +2873,60 @@ J9::Options::fePostProcessAOT(void * base)
    return true;
    }
 
+bool
+J9::Options::isFSDNeeded(J9JavaVM *javaVM, J9HookInterface **vmHooks)
+   {
+   return
+#if defined(J9VM_JIT_FULL_SPEED_DEBUG)
+      (javaVM->requiredDebugAttributes & J9VM_DEBUG_ATTRIBUTE_CAN_ACCESS_LOCALS) ||
+#endif
+#if defined (J9VM_INTERP_HOT_CODE_REPLACEMENT)
+      (*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_POP_FRAMES_INTERRUPT) ||
+#endif
+      (*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_BREAKPOINT) ||
+      (*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_FRAME_POPPED) ||
+      (*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_FRAME_POP) ||
+      (*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_GET_FIELD) ||
+      (*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_PUT_FIELD) ||
+      (*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_GET_STATIC_FIELD) ||
+      (*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_PUT_STATIC_FIELD) ||
+      (*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_SINGLE_STEP);
+   }
+
+J9::Options::FSDInitStatus
+J9::Options::initializeFSDIfNeeded(J9JavaVM *javaVM, J9HookInterface **vmHooks, bool &doAOT)
+   {
+   if (self()->isFSDNeeded(javaVM, vmHooks))
+      {
+      static bool TR_DisableFullSpeedDebug = (feGetEnv("TR_DisableFullSpeedDebug") != NULL);
+      static bool TR_DisableFullSpeedDebugAOT = (feGetEnv("TR_DisableFullSpeedDebugAOT") != NULL);
+#if defined(J9VM_JIT_FULL_SPEED_DEBUG)
+      if (TR_DisableFullSpeedDebug)
+         {
+         return FSDInitStatus::FSDInit_Error;
+         }
+      else if (TR_DisableFullSpeedDebugAOT)
+         {
+         doAOT = false;
+         }
+
+      self()->setOption(TR_FullSpeedDebug);
+      self()->setOption(TR_DisableDirectToJNI);
+      //setOption(TR_DisableNoVMAccess);
+      //setOption(TR_DisableAsyncCompilation);
+      //setOption(TR_DisableInterpreterProfiling, true);
+
+      initializeFSD(javaVM);
+
+      _fsdInitStatus = FSDInitStatus::FSDInit_Initialized;
+#else
+      _fsdInitStatus = FSDInitStatus::FSDInit_Error;
+#endif
+      }
+
+   return _fsdInitStatus;
+   }
+
 bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
    {
    // vmPostProcess is called indirectly from the JIT_INITIALIZED phase
@@ -2887,6 +2942,7 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
    J9JITConfig * jitConfig = (J9JITConfig*)base;
    J9JavaVM * javaVM = jitConfig->javaVM;
    J9HookInterface * * vmHooks = javaVM->internalVMFunctions->getVMHookInterface(javaVM);
+   J9VMThread * vmThread = javaVM->internalVMFunctions->currentVMThread(javaVM);
 
    TR_J9VMBase * vm = TR_J9VMBase::get(jitConfig, 0);
    TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
@@ -2915,46 +2971,19 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
 #endif
 
    // Determine whether or not to call the hooked helpers
-   //
-   if (
-#if defined(J9VM_JIT_FULL_SPEED_DEBUG)
-       (javaVM->requiredDebugAttributes & J9VM_DEBUG_ATTRIBUTE_CAN_ACCESS_LOCALS) ||
-#endif
-#if defined (J9VM_INTERP_HOT_CODE_REPLACEMENT)
-       (*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_POP_FRAMES_INTERRUPT) ||
-#endif
-       (*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_BREAKPOINT) ||
-       (*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_FRAME_POPPED) ||
-       (*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_FRAME_POP) ||
-       (*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_GET_FIELD) ||
-       (*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_PUT_FIELD) ||
-       (*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_GET_STATIC_FIELD) ||
-       (*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_PUT_STATIC_FIELD) ||
-       (*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_SINGLE_STEP))
+   FSDInitStatus fsdStatus = initializeFSDIfNeeded(javaVM, vmHooks, doAOT);
+   if (fsdStatus == FSDInitStatus::FSDInit_Error)
       {
-         static bool TR_DisableFullSpeedDebug = (feGetEnv("TR_DisableFullSpeedDebug") != NULL);
-         static bool TR_DisableFullSpeedDebugAOT = (feGetEnv("TR_DisableFullSpeedDebugAOT") != NULL);
-#if defined(J9VM_JIT_FULL_SPEED_DEBUG)
-         if (TR_DisableFullSpeedDebug)
-            {
-            return false;
-            }
-         else if (TR_DisableFullSpeedDebugAOT)
-            {
-            doAOT = false;
-            }
-
-         self()->setOption(TR_FullSpeedDebug);
-         self()->setOption(TR_DisableDirectToJNI);
-         //setOption(TR_DisableNoVMAccess);
-         //setOption(TR_DisableAsyncCompilation);
-         //setOption(TR_DisableInterpreterProfiling, true);
-
-         initializeFSD(javaVM);
-#else
-         return false;
-#endif
+      return false;
       }
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+   else if (fsdStatus == FSDInitStatus::FSDInit_NotInitialized
+            && javaVM->internalVMFunctions->isDebugOnRestoreEnabled(vmThread))
+      {
+      self()->setOption(TR_FullSpeedDebug);
+      self()->setOption(TR_DisableDirectToJNI);
+      }
+#endif
 
    bool exceptionEventHooked = false;
    if ((*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_EXCEPTION_CATCH))
@@ -3593,3 +3622,53 @@ J9::Options::closeLogFileForClientOptions()
       }
    }
 #endif /* defined(J9VM_OPT_JITSERVER) */
+
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+void
+J9::Options::resetFSDOptions()
+   {
+   // TODO: Need to handle if these options were set/unset as part of
+   // the post restore options processing.
+
+   setOption(TR_EnableHCR);
+
+   setOption(TR_FullSpeedDebug, false);
+   setOption(TR_DisableDirectToJNI, false);
+
+   setReportByteCodeInfoAtCatchBlock(false);
+   setOption(TR_DisableProfiling, false);
+   setOption(TR_DisableNewInstanceImplOpt, false);
+   setDisabled(OMR::redundantGotoElimination, false);
+   setDisabled(OMR::loopReplicator, false);
+   setOption(TR_DisableMethodHandleThunks, false);
+   }
+
+void
+J9::Options::resetFSDOptionsForAll()
+   {
+   resetFSDOptions();
+   for (auto optionSet = _optionSets; optionSet; optionSet = optionSet->getNext())
+      {
+      optionSet->getOptions()->resetFSDOptions();
+      }
+   }
+
+J9::Options::FSDInitStatus
+J9::Options::resetFSD(J9JavaVM *vm, J9VMThread *vmThread, bool &doAOT)
+   {
+   J9HookInterface ** vmHooks = vm->internalVMFunctions->getVMHookInterface(vm);
+   auto fsdStatusJIT = getCmdLineOptions()->initializeFSDIfNeeded(vm, vmHooks, doAOT);
+   auto fsdStatusAOT = getAOTCmdLineOptions()->initializeFSDIfNeeded(vm, vmHooks, doAOT);
+   TR_ASSERT_FATAL (fsdStatusJIT == fsdStatusAOT, "fsdStatusJIT=%d != fsdStatusAOT=%d!\n", fsdStatusJIT, fsdStatusAOT);
+
+   if (fsdStatusJIT == TR::Options::FSDInitStatus::FSDInit_NotInitialized
+       && !vm->internalVMFunctions->isCheckpointAllowed(vmThread)
+       && vm->internalVMFunctions->isDebugOnRestoreEnabled(vmThread))
+      {
+      getCmdLineOptions()->resetFSDOptionsForAll();
+      getAOTCmdLineOptions()->resetFSDOptionsForAll();
+      }
+
+   return fsdStatusJIT;
+   }
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */

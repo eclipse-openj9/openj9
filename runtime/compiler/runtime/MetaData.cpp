@@ -1621,6 +1621,11 @@ createMethodMetaData(
          aotMethodHeaderEntry->flags |= TR_AOTMethodHeader_TMDisabled;
          }
 
+      if (comp->getOption(TR_FullSpeedDebug))
+         {
+         aotMethodHeaderEntry->flags |= TR_AOTMethodHeader_UsesFSD;
+         }
+
       // totalAllocated space is in comp object
       TR_ASSERT(comp->getTotalNeededDataCacheSpace() == aotMethodHeaderEntry->compileMethodDataSize, "Size missmatach");
       }
