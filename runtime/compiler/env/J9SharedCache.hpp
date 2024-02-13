@@ -37,6 +37,7 @@ class TR_J9VMBase;
 class TR_ResolvedMethod;
 namespace TR { class CompilationInfo; }
 #if defined(J9VM_OPT_JITSERVER)
+namespace TR { class CompilationInfoPerThread; }
 namespace JITServer { class ServerStream; }
 #endif
 
@@ -663,6 +664,7 @@ public:
    virtual J9SharedClassCacheDescriptor *getCacheDescriptorList();
 
    void setStream(JITServer::ServerStream *stream) { _stream = stream; }
+   void setCompInfoPT(TR::CompilationInfoPerThread *compInfoPT) { _compInfoPT = compInfoPT; }
    virtual const void *storeSharedData(J9VMThread *vmThread, const char *key, const J9SharedDataDescriptor *descriptor) override;
 
 private:
@@ -685,6 +687,7 @@ private:
       }
 
    JITServer::ServerStream *_stream;
+   TR::CompilationInfoPerThread *_compInfoPT;
    };
 #endif /* defined(J9VM_OPT_JITSERVER) */
 

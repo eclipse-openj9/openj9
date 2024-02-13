@@ -43,7 +43,6 @@
 #include "runtime/IProfiler.hpp"
 #include "runtime/RuntimeAssumptions.hpp"
 #if defined(J9VM_OPT_JITSERVER)
-#include "control/CompilationThread.hpp" // for TR::compInfoPT
 #include "control/JITServerHelpers.hpp"
 #include "runtime/JITClientSession.hpp"
 #endif
@@ -1417,9 +1416,8 @@ TR_J9SharedCache::storeWellKnownClasses(J9VMThread *vmThread, uintptr_t *classCh
 
 #if defined(J9VM_OPT_JITSERVER)
 TR_J9JITServerSharedCache::TR_J9JITServerSharedCache(TR_J9VMBase *fe)
-   : TR_J9SharedCache(fe)
+   : TR_J9SharedCache(fe), _stream(NULL), _compInfoPT(NULL)
    {
-   _stream = NULL;
    }
 
 uintptr_t
@@ -1429,7 +1427,7 @@ TR_J9JITServerSharedCache::rememberClass(J9Class *clazz, const AOTCacheClassChai
    TR_ASSERT(_stream, "stream must be initialized by now");
 
    uintptr_t clientClassChainOffset = TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET;
-   TR::Compilation *comp = TR::compInfoPT->getCompilation();
+   TR::Compilation *comp = _compInfoPT->getCompilation();
    ClientSessionData *clientData = comp->getClientData();
    bool needClassChainRecord = comp->isAOTCacheStore();
    bool useServerOffsets = clientData->useServerOffsets(_stream) && needClassChainRecord;
@@ -1505,7 +1503,7 @@ J9SharedClassCacheDescriptor *
 TR_J9JITServerSharedCache::getCacheDescriptorList()
    {
    TR_ASSERT(_stream, "stream must be initialized by now");
-   TR::Compilation *comp = TR::compInfoPT->getCompilation();
+   TR::Compilation *comp = _compInfoPT->getCompilation();
    ClientSessionData *clientData = comp->getClientData();
    bool useServerOffsets = clientData->useServerOffsets(_stream) && comp->isAOTCacheStore();
    TR_ASSERT_FATAL(!useServerOffsets, "Unsupported when ignoring the client SCC");
@@ -1518,7 +1516,7 @@ bool
 TR_J9JITServerSharedCache::isClassInSharedCache(TR_OpaqueClassBlock *clazz, uintptr_t *cacheOffset)
    {
    TR_ASSERT(_stream, "stream must be initialized by now");
-   TR::Compilation *comp = TR::compInfoPT->getCompilation();
+   TR::Compilation *comp = _compInfoPT->getCompilation();
    ClientSessionData *clientData = comp->getClientData();
    bool useServerOffsets = clientData->useServerOffsets(_stream) && comp->isAOTCacheStore();
 
@@ -1544,7 +1542,7 @@ TR_J9JITServerSharedCache::isClassInSharedCache(TR_OpaqueClassBlock *clazz, uint
 bool
 TR_J9JITServerSharedCache::isMethodInSharedCache(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *definingClass, uintptr_t *cacheOffset)
    {
-   TR::Compilation *comp = TR::compInfoPT->getCompilation();
+   TR::Compilation *comp = _compInfoPT->getCompilation();
    ClientSessionData *clientData = comp->getClientData();
    bool useServerOffsets = clientData->useServerOffsets(_stream) && comp->isAOTCacheStore();
 
@@ -1576,7 +1574,7 @@ TR_J9JITServerSharedCache::getClassChainOffsetIdentifyingLoader(TR_OpaqueClassBl
    TR_ASSERT(!classChain, "Must always be NULL at JITServer");
    TR_ASSERT(_stream, "stream must be initialized by now");
 
-   TR::Compilation *comp = TR::compInfoPT->getCompilation();
+   TR::Compilation *comp = _compInfoPT->getCompilation();
    ClientSessionData *clientData = comp->getClientData();
    bool useServerOffsets = clientData->useServerOffsets(_stream) && comp->isAOTCacheStore();
 
@@ -1625,7 +1623,7 @@ void
 TR_J9JITServerSharedCache::addHint(J9Method * method, TR_SharedCacheHint theHint)
    {
    TR_ASSERT(_stream, "stream must be initialized by now");
-   auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(_stream);
+   auto *vmInfo = _compInfoPT->getClientData()->getOrCacheVMInfo(_stream);
    if (vmInfo->_hasSharedClassCache)
       {
       _stream->write(JITServer::MessageType::SharedCache_addHint, method, theHint);
@@ -1638,7 +1636,7 @@ const void *
 TR_J9JITServerSharedCache::storeSharedData(J9VMThread *vmThread, const char *key, const J9SharedDataDescriptor *descriptor)
    {
    TR_ASSERT(_stream, "stream must be initialized by now");
-   TR::Compilation *comp = TR::compInfoPT->getCompilation();
+   TR::Compilation *comp = _compInfoPT->getCompilation();
    ClientSessionData *clientData = comp->getClientData();
    bool useServerOffsets = clientData->useServerOffsets(_stream) && comp->isAOTCacheStore();
    TR_ASSERT_FATAL(!useServerOffsets, "Unsupported when ignoring the client SCC");
