@@ -171,6 +171,12 @@ final class J9VMInternals {
 			Runtime.getRuntime().addShutdownHook(new Thread(runnable, "CommonCleanerShutdown", true, false, false, null)); //$NON-NLS-1$
 		}
 		/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
+/*[IF CRAC_SUPPORT]*/
+		if (openj9.internal.criu.InternalCRIUSupport.isCRaCSupportEnabled()) {
+			// export java.base/jdk.crac unconditionally
+			J9VMInternals.class.getModule().implAddExports("jdk.crac"); //$NON-NLS-1$
+		}
+/*[ENDIF] CRAC_SUPPORT */
 	}
 
 	/**

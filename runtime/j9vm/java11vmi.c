@@ -142,43 +142,55 @@ hashPackageTableDelete(J9VMThread * currentThread, J9ClassLoader * classLoader, 
 	return rc;
 }
 
-/** @todo The strings below need to be NLS and also provide more debug info. */
+/**
+ * A modularity helper method to throw an exception according to the incoming error code.
+ *
+ * @param[in] currentThread the current J9VMThread
+ * @param[in] errCode a modularity error code
+ *
+ * @return Void
+ */
 static void
 throwExceptionHelper(J9VMThread *currentThread, UDATA errCode)
 {
 	if (ERRCODE_SUCCESS != errCode) {
-		J9JavaVM const * const vm = currentThread->javaVM;
-		J9InternalVMFunctions const * const vmFuncs = vm->internalVMFunctions;
+		OMRPORT_ACCESS_FROM_J9VMTHREAD(currentThread);
+		U_32 moduleName = 0;
+		U_32 messageNumber = 0;
 		const char *msg = NULL;
 
 		switch (errCode) {
 		case ERRCODE_GENERAL_FAILURE:
-			msg = "general failure";
+			moduleName = J9NLS_VM_MODULARITY_GENERAL_FAILURE__MODULE;
+			messageNumber = J9NLS_VM_MODULARITY_GENERAL_FAILURE__ID;
 			break;
 		case ERRCODE_PACKAGE_ALREADY_DEFINED:
-			msg = "a package in the list has already been defined";
+			moduleName = J9NLS_VM_MODULARITY_PACKAGE_ALREADY_DEFINED__MODULE;
+			messageNumber = J9NLS_VM_MODULARITY_PACKAGE_ALREADY_DEFINED__ID;
 			break;
 		case ERRCODE_MODULE_ALREADY_DEFINED:
-			msg = "the module has already been defined";
+			moduleName = J9NLS_VM_MODULARITY_MODULE_ALREADY_DEFINED__MODULE;
+			messageNumber = J9NLS_VM_MODULARITY_MODULE_ALREADY_DEFINED__ID;
 			break;
 		case ERRCODE_HASHTABLE_OPERATION_FAILED:
-			msg = "hash operation failed";
+			moduleName = J9NLS_VM_MODULARITY_HASH_OPERATION_FAILED__MODULE;
+			messageNumber = J9NLS_VM_MODULARITY_HASH_OPERATION_FAILED__ID;
 			break;
 		case ERRCODE_DUPLICATE_PACKAGE_IN_LIST:
-			msg = "the list contains duplicate packages";
+			moduleName = J9NLS_VM_MODULARITY_DUPLICATED_PACKAGE_FOUND__MODULE;
+			messageNumber = J9NLS_VM_MODULARITY_DUPLICATED_PACKAGE_FOUND__ID;
 			break;
 		case ERRCODE_MODULE_WASNT_FOUND:
-			msg = "module was not found";
+			moduleName = J9NLS_VM_MODULARITY_MODULE_NOT_FOUND__MODULE;
+			messageNumber = J9NLS_VM_MODULARITY_MODULE_NOT_FOUND__ID;
 			break;
 		case ERRCODE_PACKAGE_WASNT_FOUND:
-			msg = "package was not found";
-			break;
-		default:
-			Assert_SC_unreachable();
+			moduleName = J9NLS_VM_MODULARITY_PACKAGE_NOT_FOUND__MODULE;
+			messageNumber = J9NLS_VM_MODULARITY_PACKAGE_NOT_FOUND__ID;
 			break;
 		}
-
-		vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, msg);
+		msg = OMRPORTLIB->nls_lookup_message(OMRPORTLIB, J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, moduleName, messageNumber, NULL);
+		currentThread->javaVM->internalVMFunctions->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, msg);
 	}
 }
 
@@ -900,7 +912,6 @@ JVM_DefineModule(JNIEnv * env, jobject module, jboolean isOpen, jstring version,
 							vm->runtimeFlags |= J9_RUNTIME_JAVA_BASE_MODULE_CREATED;
 							Trc_MODULE_defineModule(currentThread, "java.base", j9mod);
 						}
-
 						TRIGGER_J9HOOK_VM_MODULE_LOAD(vm->hookInterface, currentThread, j9mod);
 					} else {
 						throwExceptionHelper(currentThread, rc);
@@ -1240,13 +1251,12 @@ JVM_AddModulePackage(JNIEnv * env, jobject module, const char *package)
 	f_monitorEnter(vm->classLoaderModuleAndLocationMutex);
 	{
 		J9Module * const j9mod = getJ9Module(currentThread, module);
-		UDATA rc = addPackageDefinition(currentThread, j9mod, package);
-		if (ERRCODE_SUCCESS != rc) {
-			throwExceptionHelper(currentThread, rc);
-		} else {
+		if (addPackageDefinition(currentThread, j9mod, package)) {
 			if (TrcEnabled_Trc_MODULE_addModulePackage) {
 				trcModulesAddModulePackage(currentThread, j9mod, package);
 			}
+		} else {
+			throwExceptionHelper(currentThread, ERRCODE_GENERAL_FAILURE);
 		}
 	}
 	f_monitorExit(vm->classLoaderModuleAndLocationMutex);
