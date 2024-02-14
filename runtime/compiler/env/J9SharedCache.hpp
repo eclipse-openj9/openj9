@@ -37,6 +37,7 @@ class TR_J9VMBase;
 class TR_ResolvedMethod;
 namespace TR { class CompilationInfo; }
 #if defined(J9VM_OPT_JITSERVER)
+namespace TR { class CompilationInfoPerThread; }
 namespace JITServer { class ServerStream; }
 #endif
 
@@ -643,6 +644,7 @@ public:
    virtual UDATA rememberDebugCounterName(const char *name) override { TR_ASSERT_FATAL(false, "called"); return 0;}
    virtual const char *getDebugCounterName(UDATA offset) override { TR_ASSERT_FATAL(false, "called"); return NULL;}
 
+   virtual bool isClassInSharedCache(TR_OpaqueClassBlock *clazz, uintptr_t *cacheOffset = NULL) override;
    virtual bool isMethodInSharedCache(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *definingClass, uintptr_t *cacheOffset = NULL) override;
    virtual bool isROMMethodInSharedCache(J9ROMMethod *romMethod, uintptr_t *cacheOffset = NULL) override { TR_ASSERT_FATAL(false, "called"); return false; }
    virtual uintptr_t offsetInSharedCacheFromROMMethod(J9ROMMethod *romMethod) override { TR_ASSERT_FATAL(false, "called"); return TR_SharedCache::INVALID_ROM_METHOD_OFFSET; }
@@ -662,6 +664,7 @@ public:
    virtual J9SharedClassCacheDescriptor *getCacheDescriptorList();
 
    void setStream(JITServer::ServerStream *stream) { _stream = stream; }
+   void setCompInfoPT(TR::CompilationInfoPerThread *compInfoPT) { _compInfoPT = compInfoPT; }
    virtual const void *storeSharedData(J9VMThread *vmThread, const char *key, const J9SharedDataDescriptor *descriptor) override;
 
 private:
@@ -684,6 +687,7 @@ private:
       }
 
    JITServer::ServerStream *_stream;
+   TR::CompilationInfoPerThread *_compInfoPT;
    };
 #endif /* defined(J9VM_OPT_JITSERVER) */
 

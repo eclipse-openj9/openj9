@@ -46,6 +46,7 @@
 #include "env/VMAccessCriticalSection.hpp"
 #include "env/KnownObjectTable.hpp"
 #include "env/VerboseLog.hpp"
+#include "exceptions/PersistenceFailure.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
 #include "ilgen/IlGenRequest.hpp"
@@ -1579,9 +1580,22 @@ J9::Compilation::addSerializationRecord(const AOTCacheRecord *record, uintptr_t 
    {
    TR_ASSERT_FATAL(_aotCacheStore, "Trying to add serialization record for compilation that is not an AOT cache store");
    if (record)
+      {
       _serializationRecords.push_back({ record, reloDataOffset });
+      }
    else
-      _aotCacheStore = false;// Serialization failed; method won't be stored in AOT cache
+      {
+      ClientSessionData *clientData = getClientData();
+      bool useServerOffsets = clientData->useServerOffsets(getStream());
+      // If we're ignoring the client's SCC then this compilation must succeed as an AOT store, because
+      // this method must go through the client's deserializer before relocation.
+      // Otherwise, we can simply stop maintaining AOT cache records for this compilation and continue
+      // with the compilation without subsequently storing it in the AOT cache.
+      if (useServerOffsets)
+         failCompilation<J9::PersistenceFailure>("Serialization record at offset %zu must not be NULL", reloDataOffset);
+      else
+         _aotCacheStore = false;
+      }
    }
 
 void
@@ -1600,7 +1614,16 @@ J9::Compilation::addThunkRecord(const AOTCacheThunkRecord *record)
       }
    else
       {
-      _aotCacheStore = false;// Serialization failed; method won't be stored in AOT cache
+      ClientSessionData *clientData = getClientData();
+      bool useServerOffsets = clientData->useServerOffsets(getStream());
+      // If we're ignoring the client's SCC then this compilation must succeed as an AOT store, because
+      // this method must go through the client's deserializer before relocation.
+      // Otherwise, we can simply stop maintaining AOT cache records for this compilation and continue
+      // with the compilation without subsequently storing it in the AOT cache.
+      if (useServerOffsets)
+         failCompilation<J9::PersistenceFailure>("Thunk record must not be NULL");
+      else
+         _aotCacheStore = false;
       }
    }
 #endif /* defined(J9VM_OPT_JITSERVER) */
