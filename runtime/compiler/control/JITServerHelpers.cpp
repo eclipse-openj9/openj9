@@ -25,6 +25,7 @@
 #include "control/CompilationRuntime.hpp"
 #include "control/JITServerCompilationThread.hpp"
 #include "control/MethodToBeCompiled.hpp"
+#include "env/ClassLoaderTable.hpp"
 #include "env/StackMemoryRegion.hpp"
 #include "infra/CriticalSection.hpp"
 #include "infra/Statistics.hpp"
@@ -1013,10 +1014,14 @@ JITServerHelpers::packRemoteROMClassInfo(J9Class *clazz, J9VMThread *vmThread, T
       sharedCache->getClassChainOffsetIdentifyingLoaderNoFail((TR_OpaqueClassBlock *)clazz, &classChainIdentifyingLoader) : 0;
 
    std::string classNameIdentifyingLoader;
-   if (fe->getPersistentInfo()->getJITServerUseAOTCache() && classChainIdentifyingLoader)
+   if (fe->getPersistentInfo()->getJITServerUseAOTCache())
       {
-      const J9UTF8 *name = J9ROMCLASS_CLASSNAME(sharedCache->startingROMClassOfClassChain(classChainIdentifyingLoader));
-      classNameIdentifyingLoader = std::string((const char *)J9UTF8_DATA(name), J9UTF8_LENGTH(name));
+      auto loader = fe->getClassLoader((TR_OpaqueClassBlock *)clazz);
+      auto nameInfo = fe->getPersistentInfo()->getPersistentClassLoaderTable()->lookupClassNameAssociatedWithClassLoader(loader);
+      if (nameInfo)
+         {
+         classNameIdentifyingLoader = std::string((const char *)J9UTF8_DATA(nameInfo), J9UTF8_LENGTH(nameInfo));
+         }
       }
 
    std::string packedROMClassStr;

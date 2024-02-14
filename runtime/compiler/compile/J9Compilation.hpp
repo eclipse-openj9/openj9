@@ -375,13 +375,15 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
    Vector<std::pair<const AOTCacheRecord *, uintptr_t>> &getSerializationRecords() { return _serializationRecords; }
    // Adds an AOT cache record and the corresponding offset into AOT relocation data to the list that
    // will be used when the result of this out-of-process compilation is serialized and stored in
-   // JITServer AOT cache. If record is NULL, fails serialization by setting _aotCacheStore to false.
+   // JITServer AOT cache. If record is NULL, fails serialization by setting _aotCacheStore to false if we are not
+   // ignoring the client's SCC, and otherwise fails the compilation entirely.
    void addSerializationRecord(const AOTCacheRecord *record, uintptr_t reloDataOffset);
 
    UnorderedSet<const AOTCacheThunkRecord *> &getThunkRecords() { return _thunkRecords; }
    // Adds an AOT cache thunk record to the set of thunks that this compilation depends on, and also adds it
    // to the list of records that this compilation depends on if the thunk record is new. If the record is NULL,
-   // fails serialization by setting _aotCacheStore to false.
+   // fails serialization by setting _aotCacheStore to false if we are not ignoring the client's SCC, and otherwise
+   // fails the compilation entirely.
    void addThunkRecord(const AOTCacheThunkRecord *record);
 #endif /* defined(J9VM_OPT_JITSERVER) */
 

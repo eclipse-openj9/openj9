@@ -288,7 +288,18 @@ TR::SymbolValidationManager::populateWellKnownClasses()
 #if defined(J9VM_OPT_JITSERVER)
    if (clientData)
       {
-      // This is an out-of-process compilation; check the cache in the client session first
+      // This is an out-of-process compilation.
+
+      // If we're ignoring the client's SCC, we can skip client consultation here
+      if (aotCacheStore && clientData->useServerOffsets(_comp->getStream()))
+         {
+         // getWellKnownClassesRecord expects the number of well-known classes, not the number of elements in the object
+         _aotCacheWellKnownClassesRecord = clientData->getWellKnownClassesRecord(classChainRecords, _wellKnownClasses.size(), includedClasses);
+         // TODO: I think _wellKnownClassChainOffsets can remain NULL
+         return;
+         }
+
+      // Otherwise check the cache in the client session first
       _wellKnownClassChainOffsets = clientData->getCachedWellKnownClassChainOffsets(
          includedClasses, _wellKnownClasses.size(), classChainOffsets + 1, _aotCacheWellKnownClassesRecord
       );
