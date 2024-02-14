@@ -42,9 +42,6 @@
 #endif
 
 
-#define SEGMENT_TYPE(flags,type) ((flags & MEMORY_TYPE_MASK) == type)
-
-
 typedef struct J9Relocation {
     U_8* loadBase;
     U_8* loadTop;
@@ -155,23 +152,23 @@ I_32 numCodeSets (void);
 
 #if !defined(J9_SOFT_FLOAT) && (defined(_X86_) || defined (__i386__) || defined(J9HAMMER) || (defined(OSX) && !defined(J9AARCH64)))
 
-#define 	J9_SETUP_FPU_STATE() helperInitializeFPU()
+#define J9_SETUP_FPU_STATE() helperInitializeFPU()
 
 #else
 
-#define 	J9_SETUP_FPU_STATE()
+#define J9_SETUP_FPU_STATE()
 
 #endif
 
 
 
-#ifdef WIN64 
+#ifdef WIN64
 
 /*HACK */
 
 #undef  J9_SETUP_FPU_STATE
 
-#define 	J9_SETUP_FPU_STATE()
+#define J9_SETUP_FPU_STATE()
 
 #endif
 
@@ -1000,7 +997,7 @@ extern J9_CFUNC int
 initJVMRI PROTOTYPE(( J9JavaVM * vm ));
 
 struct DgRasInterface ;
-extern J9_CFUNC int 
+extern J9_CFUNC int
 fillInDgRasInterface PROTOTYPE((struct DgRasInterface *dri));
 
 extern J9_CFUNC int
