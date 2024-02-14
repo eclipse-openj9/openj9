@@ -805,14 +805,15 @@ getThreadState(J9VMThread *currentThread, j9object_t threadObject)
 	jint state = getThreadStateHelper(currentThread, threadObject, vmThread);
 
 #if JAVA_SPEC_VERSION >= 19
-	if (J9_ARE_ANY_BITS_SET(state, JVMTI_THREAD_STATE_RUNNABLE)) {
+	if (J9_ARE_ANY_BITS_SET(state, JVMTI_THREAD_STATE_ALIVE)) {
 		if ((NULL != vmThread->currentContinuation)
 		&& (vmThread->threadObject != vmThread->carrierThreadObject)
 		) {
 			/* If a virtual thread is mounted on a carrier thread, then the carrier thread
-			 * is considered implicitly parked.
+			 * is considered implicitly parked, and all other bits except ALIVE and SUSPENDED
+			 * are removed from the bitmask.
 			 */
-			state &= ~JVMTI_THREAD_STATE_RUNNABLE;
+			state &= (JVMTI_THREAD_STATE_ALIVE | JVMTI_THREAD_STATE_SUSPENDED);
 			state |= JVMTI_THREAD_STATE_WAITING_INDEFINITELY;
 			state |= JVMTI_THREAD_STATE_WAITING;
 		}
