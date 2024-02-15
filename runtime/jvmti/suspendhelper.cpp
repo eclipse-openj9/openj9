@@ -49,7 +49,7 @@ suspendThread(J9VMThread *currentThread, jthread thread, BOOLEAN allowNull, BOOL
 	 * suspended threads without invoking getVMThread -> acquireVThreadInspector. This approach
 	 * can be taken for both platform and virtual threads.
 	 */
-	if (0 != J9OBJECT_U32_LOAD(currentThread, threadObject, vm->isSuspendedInternalOffset)) {
+	if (VM_VMHelpers::isThreadSuspended(currentThread, threadObject)) {
 		rc = JVMTI_ERROR_THREAD_SUSPENDED;
 		goto done;
 	}
@@ -93,10 +93,11 @@ suspendThread(J9VMThread *currentThread, jthread thread, BOOLEAN allowNull, BOOL
 #if JAVA_SPEC_VERSION >= 19
 		/* Re-fetch object to correctly set the field since VM access was re-acquired. */
 		threadObject = (NULL == thread) ? currentThread->threadObject : J9_JNI_UNWRAP_REFERENCE(thread);
-		if (0 != J9OBJECT_U32_LOAD(currentThread, threadObject, vm->isSuspendedInternalOffset)) {
+		if (VM_VMHelpers::isThreadSuspended(currentThread, threadObject)) {
 			rc = JVMTI_ERROR_THREAD_SUSPENDED;
 		} else {
-			J9OBJECT_U32_STORE(currentThread, threadObject, vm->isSuspendedInternalOffset, 1);
+			U_64 internalSuspendState = (U_64)VM_VMHelpers::getCarrierVMThread(currentThread, threadObject);
+			J9OBJECT_U64_STORE(currentThread, threadObject, vm->internalSuspendStateOffset, (internalSuspendState | J9_VIRTUALTHREAD_INTERNAL_STATE_SUSPENDED));
 		}
 #endif /* JAVA_SPEC_VERSION >= 19 */
 		releaseVMThread(currentThread, targetThread, thread);

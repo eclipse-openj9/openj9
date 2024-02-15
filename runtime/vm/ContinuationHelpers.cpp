@@ -536,6 +536,22 @@ retry:
 	threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
 	vthreadInspectorCount = J9OBJECT_I64_LOAD(currentThread, threadObj, vm->virtualThreadInspectorCountOffset);
 	if (vthreadInspectorCount < 0) {
+		if (VM_VMHelpers::isThreadSuspended(currentThread, threadObj)) {
+			/* Thread is suspended, so we can directly allow access to thread without waiting for transition to complete.
+			 * Decrement the inspector count to represent inspector during suspended transition.
+			 */
+			if (!objectAccessBarrier.inlineMixedObjectCompareAndSwapU64(
+					currentThread,
+					threadObj,
+					vm->virtualThreadInspectorCountOffset,
+					(U_64)vthreadInspectorCount,
+					((U_64)(vthreadInspectorCount - 1)))
+			) {
+				goto retry;
+			} else {
+				return TRUE;
+			}
+		}
 		/* Thread is in transition, wait. */
 		vmFuncs->internalReleaseVMAccess(currentThread);
 		VM_AtomicSupport::yieldCPU();
@@ -547,11 +563,11 @@ retry:
 			return FALSE;
 		}
 	} else if (!objectAccessBarrier.inlineMixedObjectCompareAndSwapU64(
-															currentThread,
-															threadObj,
-															vm->virtualThreadInspectorCountOffset,
-															(U_64)vthreadInspectorCount,
-															((U_64)(vthreadInspectorCount + 1)))
+			currentThread,
+			threadObj,
+			vm->virtualThreadInspectorCountOffset,
+			(U_64)vthreadInspectorCount,
+			((U_64)(vthreadInspectorCount + 1)))
 	) {
 		/* Field updated by another thread, try again. */
 		if (spin) {
@@ -570,17 +586,34 @@ releaseVThreadInspector(J9VMThread *currentThread, jobject thread)
 	MM_ObjectAccessBarrierAPI objectAccessBarrier = MM_ObjectAccessBarrierAPI(currentThread);
 	j9object_t threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
 	I_64 vthreadInspectorCount = J9OBJECT_I64_LOAD(currentThread, threadObj, vm->virtualThreadInspectorCountOffset);
-	/* vthreadInspectorCount must be greater than 0 before decrement. */
-	Assert_VM_true(vthreadInspectorCount > 0);
-	while (!objectAccessBarrier.inlineMixedObjectCompareAndSwapU64(
-														currentThread,
-														threadObj,
-														vm->virtualThreadInspectorCountOffset,
-														(U_64)vthreadInspectorCount,
-														((U_64)(vthreadInspectorCount - 1)))
-	) {
-		/* Field updated by another thread, try again. */
-		vthreadInspectorCount = J9OBJECT_I64_LOAD(currentThread, threadObj, vm->virtualThreadInspectorCountOffset);
+	BOOLEAN inTransition = (NULL != VM_VMHelpers::getCarrierVMThread(currentThread, threadObj));
+
+	/* If a thread is in transition, then access maybe allowed during this phase with negative inspector count. */
+	if (inTransition) {
+		Assert_VM_true(vthreadInspectorCount < -1);
+		while (!objectAccessBarrier.inlineMixedObjectCompareAndSwapU64(
+				currentThread,
+				threadObj,
+				vm->virtualThreadInspectorCountOffset,
+				(U_64)vthreadInspectorCount,
+				((U_64)(vthreadInspectorCount + 1)))
+		) {
+			/* Field updated by another thread, try again. */
+			vthreadInspectorCount = J9OBJECT_I64_LOAD(currentThread, threadObj, vm->virtualThreadInspectorCountOffset);
+		}
+	} else {
+		/* vthreadInspectorCount must be greater than 0 before decrement. */
+		Assert_VM_true(vthreadInspectorCount > 0);
+		while (!objectAccessBarrier.inlineMixedObjectCompareAndSwapU64(
+				currentThread,
+				threadObj,
+				vm->virtualThreadInspectorCountOffset,
+				(U_64)vthreadInspectorCount,
+				((U_64)(vthreadInspectorCount - 1)))
+		) {
+			/* Field updated by another thread, try again. */
+			vthreadInspectorCount = J9OBJECT_I64_LOAD(currentThread, threadObj, vm->virtualThreadInspectorCountOffset);
+		}
 	}
 }
 } /* extern "C" */

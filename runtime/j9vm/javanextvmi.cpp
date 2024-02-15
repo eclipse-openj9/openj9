@@ -274,7 +274,8 @@ enterVThreadTransitionCritical(J9VMThread *currentThread, jobject thread)
 	MM_ObjectAccessBarrierAPI objectAccessBarrier = MM_ObjectAccessBarrierAPI(currentThread);
 	j9object_t threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
 
-	while(!objectAccessBarrier.inlineMixedObjectCompareAndSwapU64(currentThread, threadObj, vm->virtualThreadInspectorCountOffset, 0, (U_64)-1)) {
+retry:
+	while (!objectAccessBarrier.inlineMixedObjectCompareAndSwapU64(currentThread, threadObj, vm->virtualThreadInspectorCountOffset, 0, ~(U_64)0)) {
 		/* Thread is being inspected or unmounted, wait. */
 		vmFuncs->internalReleaseVMAccess(currentThread);
 		VM_AtomicSupport::yieldCPU();
@@ -282,13 +283,47 @@ enterVThreadTransitionCritical(J9VMThread *currentThread, jobject thread)
 		vmFuncs->internalAcquireVMAccess(currentThread);
 		threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
 	}
+
+	/* Link the current J9VMThread with the virtual thread object. */
+	if (!objectAccessBarrier.inlineMixedObjectCompareAndSwapU64(currentThread, threadObj, vm->internalSuspendStateOffset, J9_VIRTUALTHREAD_INTERNAL_STATE_NONE, (U_64)currentThread)) {
+		/* If virtual thread is suspended while unmounted, reset the inspectorCount and do a wait and retry. */
+		if (VM_VMHelpers::isThreadSuspended(currentThread, threadObj)) {
+			J9OBJECT_I64_STORE(currentThread, threadObj, vm->virtualThreadInspectorCountOffset, 0);
+		}
+		vmFuncs->internalReleaseVMAccess(currentThread);
+		/* Spin is used instead of the halt flag as we cannot guarantee suspend flag is still set now.
+		 *
+		 * TODO: Dynamically increase the sleep time to a bounded maximum.
+		 */
+		f_threadSleep(10);
+		/* After wait, the thread may suspend here. */
+		vmFuncs->internalAcquireVMAccess(currentThread);
+		threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
+		goto retry;
+	}
 }
 
 static void
-exitVThreadTransitionCritical(J9VMThread *currentThread, j9object_t vthread)
+exitVThreadTransitionCritical(J9VMThread *currentThread, jobject thread)
 {
-	Assert_SC_true(-1 == J9OBJECT_I64_LOAD(currentThread, vthread, currentThread->javaVM->virtualThreadInspectorCountOffset));
-	J9OBJECT_I64_STORE(currentThread, vthread, currentThread->javaVM->virtualThreadInspectorCountOffset, 0);
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	j9object_t vthread = J9_JNI_UNWRAP_REFERENCE(thread);
+	MM_ObjectAccessBarrierAPI objectAccessBarrier = MM_ObjectAccessBarrierAPI(currentThread);
+
+	/* Remove J9VMThread address from internalSuspendedState field, as the thread state is no longer in a transition. */
+	while (!objectAccessBarrier.inlineMixedObjectCompareAndSwapU64(currentThread, vthread, vm->internalSuspendStateOffset, (U_64)currentThread, J9_VIRTUALTHREAD_INTERNAL_STATE_NONE)) {
+		/* Wait if the suspend flag is set. */
+		vmFuncs->internalReleaseVMAccess(currentThread);
+		VM_AtomicSupport::yieldCPU();
+		/* After wait, the thread may suspend here. */
+		vmFuncs->internalAcquireVMAccess(currentThread);
+		vthread = J9_JNI_UNWRAP_REFERENCE(thread);
+	}
+
+	/* Update to virtualThreadInspectorCount must be after clearing isSuspendedInternal field to retain sync ordering. */
+	Assert_SC_true(-1 == J9OBJECT_I64_LOAD(currentThread, vthread, vm->virtualThreadInspectorCountOffset));
+	J9OBJECT_I64_STORE(currentThread, vthread, vm->virtualThreadInspectorCountOffset, 0);
 }
 
 static void
@@ -301,7 +336,7 @@ setContinuationStateToLastUnmount(J9VMThread *currentThread, jobject thread)
 	ContinuationState volatile *continuationStatePtr = VM_ContinuationHelpers::getContinuationStateAddress(currentThread, continuationObj);
 	/* Used in JVMTI to not suspend the virtual thread once it enters the last unmount phase. */
 	VM_ContinuationHelpers::setLastUnmount(continuationStatePtr);
-	exitVThreadTransitionCritical(currentThread, threadObj);
+	exitVThreadTransitionCritical(currentThread, thread);
 }
 
 /* Caller must have VMAccess. */
@@ -328,27 +363,6 @@ virtualThreadMountBegin(JNIEnv *env, jobject thread)
 	}
 
 	enterVThreadTransitionCritical(currentThread, thread);
-
-	/* Virtual thread is being mounted but it has been suspended. Spin until the
-	 * virtual thread is resumed. The virtual thread should not be mounted until
-	 * it is resumed.
-	 */
-	J9JavaVM *vm = currentThread->javaVM;
-	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
-	threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
-	while (0 != J9OBJECT_U32_LOAD(currentThread, threadObj, vm->isSuspendedInternalOffset)) {
-		exitVThreadTransitionCritical(currentThread, threadObj);
-		vmFuncs->internalReleaseVMAccess(currentThread);
-		/* Spin is used instead of the halt flag; otherwise, the carrier thread will
-		 * show as suspended.
-		 *
-		 * TODO: Dynamically increase the sleep time to a bounded maximum.
-		 */
-		f_threadSleep(10);
-		vmFuncs->internalAcquireVMAccess(currentThread);
-		enterVThreadTransitionCritical(currentThread, thread);
-		threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
-	}
 
 	VM_VMHelpers::virtualThreadHideFrames(currentThread, JNI_TRUE);
 }
@@ -378,7 +392,7 @@ virtualThreadMountEnd(JNIEnv *env, jobject thread)
 	VM_VMHelpers::virtualThreadHideFrames(currentThread, JNI_FALSE);
 
 	/* Allow thread to be inspected again. */
-	exitVThreadTransitionCritical(currentThread, threadObj);
+	exitVThreadTransitionCritical(currentThread, thread);
 
 	TRIGGER_J9HOOK_VM_VIRTUAL_THREAD_MOUNT(vm->hookInterface, currentThread);
 }
@@ -412,13 +426,12 @@ virtualThreadUnmountBegin(JNIEnv *env, jobject thread)
 
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	j9object_t carrierThreadObject = currentThread->carrierThreadObject;
-	threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
 	/* Virtual thread is being umounted. If its carrier thread is suspended, spin until
 	 * the carrier thread is resumed. The carrier thread should not be mounted until it
 	 * is resumed.
 	 */
-	while (0 != J9OBJECT_U32_LOAD(currentThread, carrierThreadObject, vm->isSuspendedInternalOffset)) {
-		exitVThreadTransitionCritical(currentThread, threadObj);
+	while (VM_VMHelpers::isThreadSuspended(currentThread, carrierThreadObject)) {
+		exitVThreadTransitionCritical(currentThread, thread);
 		vmFuncs->internalReleaseVMAccess(currentThread);
 		/* Spin is used instead of the halt flag; otherwise, the virtual thread will
 		 * show as suspended.
@@ -429,7 +442,6 @@ virtualThreadUnmountBegin(JNIEnv *env, jobject thread)
 		vmFuncs->internalAcquireVMAccess(currentThread);
 		enterVThreadTransitionCritical(currentThread, thread);
 		carrierThreadObject = currentThread->carrierThreadObject;
-		threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
 	}
 
 	VM_VMHelpers::virtualThreadHideFrames(currentThread, JNI_TRUE);
@@ -467,7 +479,7 @@ virtualThreadUnmountEnd(JNIEnv *env, jobject thread)
 	VM_VMHelpers::virtualThreadHideFrames(currentThread, JNI_FALSE);
 
 	/* Allow thread to be inspected again. */
-	exitVThreadTransitionCritical(currentThread, threadObj);
+	exitVThreadTransitionCritical(currentThread, thread);
 }
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
@@ -609,7 +621,7 @@ JVM_VirtualThreadHideFrames(
 
 	if (!hide) {
 		Assert_SC_true(hiddenFrames);
-		exitVThreadTransitionCritical(currentThread, vThreadObj);
+		exitVThreadTransitionCritical(currentThread, (jobject)&currentThread->threadObject);
 	}
 
 	vmFuncs->internalExitVMToJNI(currentThread);
