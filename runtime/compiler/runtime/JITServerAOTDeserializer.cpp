@@ -933,7 +933,7 @@ JITServerNoSCCAOTDeserializer::invalidateClassLoader(J9VMThread *vmThread, J9Cla
    _classLoaderPtrMap.erase(p_it);
 
    if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Invalidated class loader %p ID %zu", loader, id);
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Invalidated class loader %p ID %zu in the deserializer cache", loader, id);
    }
 
 void
@@ -969,7 +969,7 @@ JITServerNoSCCAOTDeserializer::invalidateClass(J9VMThread *vmThread, J9Class *ra
       invalidateMethod(&ramClass->ramMethods[i]);
 
    if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Invalidated RAMClass %p ID %zu", ramClass, id);
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Invalidated RAMClass %p ID %zu in the deserializer cache", ramClass, id);
    }
 
 void
@@ -988,7 +988,7 @@ JITServerNoSCCAOTDeserializer::invalidateMethod(J9Method *method)
    _methodPtrMap.erase(p_it);
 
    if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Invalidated RAMMethod %p ID %zu", method, id);
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Invalidated RAMMethod %p ID %zu in the deserializer cache", method, id);
    }
 
 void
@@ -1093,7 +1093,14 @@ JITServerNoSCCAOTDeserializer::cacheRecord(const ClassSerializationRecord *recor
    // Check that the ROMClass hash matches, otherwise remember that it doesn't
    if (!isClassMatching(record, ramClass, comp))
       {
-      _classIdMap.insert(it, { record->id(), { NULL, record->classLoaderId() } });
+      // We add {ID, NULL} and {ramClass, ID} to their respective maps because
+      //
+      // 1. We need to record the fact that the ramClass we just found doesn't match, to avoid looking up the exact
+      //    same RAM class in future deserializations of this class record. (We don't report this class record ID as being
+      //    new to the server if we fail to cache it, so the server will keep sending us this exact class record).
+      // 2. If ramClass ever gets unloaded, we want invalidateClass to be able to remove both entries from the maps, so that
+      //    in subsequent deserializations we can attempt to find a new candidate ramClass that might end up matching after all.
+      addToMaps(_classIdMap, _classPtrMap, it, record->id(), { NULL, record->classLoaderId() }, ramClass);
       return false;
       }
 
