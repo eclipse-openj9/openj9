@@ -105,7 +105,6 @@ Java_java_lang_StackWalker_walkWrapperImpl(JNIEnv *env, jclass clazz, jint flags
 	memset(&newWalkState, 0, sizeof(J9StackWalkState));
 	newWalkState.previous = walkState;
 	vmThread->stackWalkState = &newWalkState;
-	walkState = &newWalkState;
 	walkState->walkThread = vmThread;
 	walkState->flags = J9_STACKWALK_ITERATE_FRAMES | J9_STACKWALK_WALK_TRANSLATE_PC
 			| J9_STACKWALK_INCLUDE_NATIVES | J9_STACKWALK_VISIBLE_ONLY;
