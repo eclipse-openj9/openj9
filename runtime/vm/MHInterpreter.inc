@@ -462,7 +462,9 @@ VM_MHInterpreter::dispatchLoop(j9object_t methodHandle)
 						nextAction = THROW_NPE;
 						goto done;
 					}
-					_objectAccessBarrier->inlineMixedObjectStoreU32(_currentThread, objectref, fieldOffset, *(U_32*)_currentThread->sp, isVolatile);
+					U_32 value = *(U_32*)_currentThread->sp;
+					narrow32BitValue(fieldClass, value);
+					_objectAccessBarrier->inlineMixedObjectStoreU32(_currentThread, objectref, fieldOffset, value, isVolatile);
 					_currentThread->sp += 2;
 				}
 			} else {
@@ -522,19 +524,19 @@ VM_MHInterpreter::dispatchLoop(j9object_t methodHandle)
 			J9Class *fieldClass = J9VM_J9CLASS_FROM_HEAPCLASS(_currentThread, fieldClassObject);
 			U_32 modifiers = getPrimitiveHandleModifiers(methodHandle);
 			bool isVolatile = (J9StaticFieldRefVolatile == (modifiers & J9StaticFieldRefVolatile));
-			{
-				if (J9ROMCLASS_IS_PRIMITIVE_TYPE(fieldClass->romClass)) {
-					if (8 == ((J9ROMReflectClass *)(fieldClass->romClass))->elementSize) {
-						_objectAccessBarrier->inlineStaticStoreU64(_currentThread, defc, (U_64*)srcAddress, *(U_64*)_currentThread->sp, isVolatile);
-						_currentThread->sp += 3;
-					} else {
-						_objectAccessBarrier->inlineStaticStoreU32(_currentThread, defc, (U_32*)srcAddress, *(U_32*)_currentThread->sp, isVolatile);
-						_currentThread->sp += 2;
-					}
+			if (J9ROMCLASS_IS_PRIMITIVE_TYPE(fieldClass->romClass)) {
+				if (8 == ((J9ROMReflectClass *)(fieldClass->romClass))->elementSize) {
+					_objectAccessBarrier->inlineStaticStoreU64(_currentThread, defc, (U_64*)srcAddress, *(U_64*)_currentThread->sp, isVolatile);
+					_currentThread->sp += 3;
 				} else {
-					_objectAccessBarrier->inlineStaticStoreObject(_currentThread, defc, (j9object_t*)srcAddress, *(j9object_t*)_currentThread->sp, isVolatile);
+					U_32 value = *(U_32*)_currentThread->sp;
+					narrow32BitValue(fieldClass, value);
+					_objectAccessBarrier->inlineStaticStoreU32(_currentThread, defc, (U_32*)srcAddress, value, isVolatile);
 					_currentThread->sp += 2;
 				}
+			} else {
+				_objectAccessBarrier->inlineStaticStoreObject(_currentThread, defc, (j9object_t*)srcAddress, *(j9object_t*)_currentThread->sp, isVolatile);
+				_currentThread->sp += 2;
 			}
 			goto returnFromSend;
 		}
