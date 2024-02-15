@@ -26,7 +26,7 @@
 #include "rommeth.h"
 #include "vmhook.h"
 
-#if defined(LINUX) && defined(J9VM_ARCH_X86) && defined(J9VM_ENV_DATA64)
+#if defined(LINUX) && (defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_POWER)) && defined(J9VM_ENV_DATA64)
 #include <ucontext.h>
 #define ASGCT_SUPPORTED
 #endif /* defined(LINUX) && defined(J9VM_ARCH_X86) && defined(J9VM_ENV_DATA64) */
@@ -47,7 +47,7 @@ ticks_unknown_state         = -7, // ¯\_(ツ)_/¯
 ticks_thread_exit           = -8, // dying thread
 ticks_deopt                 = -9, // mid-deopting code
 ticks_safepoint             = -10 // ¯\_(ツ)_/¯
-}; 
+};
 
 typedef struct {
 	jint lineno;
@@ -61,6 +61,17 @@ typedef struct {
 } ASGCT_CallTrace;
 
 #if defined(ASGCT_SUPPORTED)
+
+#if defined(J9VM_ARCH_X86)
+#define J9VM_GET_PC(ucontext) ((ucontext_t*)(ucontext))->uc_mcontext.gregs[REG_RIP]
+#define J9VM_GET_SP(ucontext) ((ucontext_t*)(ucontext))->uc_mcontext.gregs[REG_RSP]
+#define REGISTER greg_t
+#elif defined(J9VM_ARCH_POWER) /* defined(J9VM_ARCH_X86) */
+#define J9VM_GET_PC(ucontext) ((ucontext_t*)(ucontext))->uc_mcontext.gp_regs[PT_NIP]
+#define J9VM_GET_SP(ucontext) ((ucontext_t*)(ucontext))->uc_mcontext.gp_regs[PT_R1]
+#define REGISTER elf_greg_t
+#endif /* defined(J9VM_ARCH_X86) */
+
 
 extern J9JavaVM *BFUjavaVM;
 
@@ -76,7 +87,7 @@ asyncFrameIterator(J9VMThread * currentThread, J9StackWalkState * walkState)
 	UDATA methodIndex = getMethodIndexUnchecked(method);
 	/* If any of the following are true, trigger a SEGV which will
 	 * be caught in the caller.
-	 * 
+	 *
 	 * - method index is invalid (i.e. method was invalid)
 	 * - method IDs for the class not pre-initialized
 	 * - method ID for the method not pre-initialized
@@ -160,11 +171,10 @@ protectedASGCT(J9PortLibrary *portLib, void *arg)
 	if (NULL != jitConfig) {
 		void *ucontext = parms->ucontext;
 		if (NULL != ucontext) {
-			greg_t *regs = ((ucontext_t*)ucontext)->uc_mcontext.gregs;
-			greg_t rip = regs[REG_RIP];
-			J9JITExceptionTable *metaData = jitConfig->jitGetExceptionTableFromPC(currentThread, rip);
+			REGISTER pc = J9VM_GET_PC(ucontext);
+			J9JITExceptionTable *metaData = jitConfig->jitGetExceptionTableFromPC(currentThread, pc);
 			if (NULL != metaData) {
-				greg_t rsp = regs[REG_RSP];
+				REGISTER sp = J9VM_GET_SP(ucontext);
 				/* Build a JIT resolve frame on the C stack to avoid writing to the java
 				 * stack in the signal handler. Update the J9VMThread roots to point to
 				 * the resolve frame (will be restored in the caller).
@@ -172,8 +182,8 @@ protectedASGCT(J9PortLibrary *portLib, void *arg)
 				resolveFrame.savedJITException = NULL;
 				resolveFrame.specialFrameFlags = J9_SSF_JIT_RESOLVE;
 				resolveFrame.parmCount = 0;
-				resolveFrame.returnAddress = (U_8*)rip;
-				resolveFrame.taggedRegularReturnSP = (UDATA*)(((U_8 *)rsp) + J9SF_A0_INVISIBLE_TAG);
+				resolveFrame.returnAddress = (U_8*)pc;
+				resolveFrame.taggedRegularReturnSP = (UDATA*)(((U_8 *)sp) + J9SF_A0_INVISIBLE_TAG);
 				currentThread->pc = (U_8*)J9SF_FRAME_TYPE_JIT_RESOLVE;
 				currentThread->arg0EA = (UDATA*)&(resolveFrame.taggedRegularReturnSP);
 				currentThread->literals = NULL;
@@ -215,9 +225,9 @@ void AsyncGetCallTrace(ASGCT_CallTrace *trace, jint depth, void *ucontext)
 		ASGCT_parms parms = { trace, depth, ucontext, currentThread, num_frames, NULL, NULL, NULL, NULL, NULL, 0 };
 		UDATA result = 0;
 		j9sig_protect(
-				protectedASGCT, (void*)&parms, 
+				protectedASGCT, (void*)&parms,
 				emptySignalHandler, NULL,
-				J9PORT_SIG_FLAG_SIGALLSYNC | J9PORT_SIG_FLAG_MAY_RETURN, 
+				J9PORT_SIG_FLAG_SIGALLSYNC | J9PORT_SIG_FLAG_MAY_RETURN,
 				&result);
 		num_frames = parms.num_frames;
 		currentThread = parms.currentThread;
