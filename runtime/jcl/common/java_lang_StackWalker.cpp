@@ -102,6 +102,7 @@ Java_java_lang_StackWalker_walkWrapperImpl(JNIEnv *env, jclass clazz, jint flags
 	J9StackWalkState *walkState = vmThread->stackWalkState;
 
 	Assert_JCL_notNull (stackWalkerMethod);
+	/* Consume thread's stateWalkState, push a new entry to thread for use during Java callout. */
 	memset(&newWalkState, 0, sizeof(J9StackWalkState));
 	newWalkState.previous = walkState;
 	vmThread->stackWalkState = &newWalkState;
@@ -146,6 +147,8 @@ Java_java_lang_StackWalker_walkWrapperImpl(JNIEnv *env, jclass clazz, jint flags
 	if (NULL == walkerMethodChars) { /* native out of memory exception pending */
 		return NULL;
 	}
+	/* Ensure userData1/2 used by stackFrameFilter function is set properly. */
+	walkState->userData1 = NULL;
 	walkState->userData2 = (void *)walkerMethodChars;
 	UDATA walkStateResult = vm->walkStackFrames(vmThread, walkState);
 	Assert_JCL_true(walkStateResult == J9_STACKWALK_RC_NONE);
