@@ -24,6 +24,12 @@
 #include "jvmti_internal.h"
 #include "objhelp.h"
 
+#if JAVA_SPEC_VERSION >= 19
+#include "VMHelpers.hpp"
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
+extern "C" {
+
 static jvmtiError jvmtiGetOrSetLocal (jvmtiEnv* env, jthread thread, jint depth, jint slot, void* value_ptr, char signature, jboolean isSet, jboolean getLocalInstance);
 
 
@@ -327,7 +333,7 @@ jvmtiGetOrSetLocal(jvmtiEnv *env,
 
 #if JAVA_SPEC_VERSION >= 20
 			if ((currentThread != targetThread)
-			&& (0 == J9OBJECT_U32_LOAD(currentThread, threadObject, vm->isSuspendedInternalOffset))
+			&& (!VM_VMHelpers::isThreadSuspended(currentThread, threadObject))
 			) {
 				rc = JVMTI_ERROR_THREAD_NOT_SUSPENDED;
 				goto release;
@@ -350,12 +356,12 @@ jvmtiGetOrSetLocal(jvmtiEnv *env,
 			}
 #endif /* JAVA_SPEC_VERSION < 20 */
 
-			rc = findDecompileInfo(currentThread, threadToWalk, (UDATA)depth, &walkState);
+			rc = (jvmtiError)(IDATA)findDecompileInfo(currentThread, threadToWalk, (UDATA)depth, &walkState);
 			if (JVMTI_ERROR_NONE == rc) {
 				UDATA validateRC = 0;
 				BOOLEAN slotValid = TRUE;
 				UDATA *slotAddress = NULL;
-				J9Method *ramMethod = walkState.userData3;
+				J9Method *ramMethod = (J9Method *)walkState.userData3;
 				U_32 offsetPC = (U_32)(UDATA)walkState.userData4;
 				J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(ramMethod);
 
@@ -484,3 +490,5 @@ release:
 }
 
 #endif /* J9VM_OPT_DEBUG_INFO_SERVER */
+
+} /* extern "C" */

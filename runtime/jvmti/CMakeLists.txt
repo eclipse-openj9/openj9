@@ -32,7 +32,7 @@ j9vm_add_library(j9jvmti SHARED
 	jvmtiEventManagement.c
 	jvmtiExtensionMechanism.c
 	jvmtiField.c
-	jvmtiForceEarlyReturn.c
+	jvmtiForceEarlyReturn.cpp
 	jvmtiFunctionTable.c
 	jvmtiGeneral.c
 	jvmtiHeap.c
@@ -40,13 +40,13 @@ j9vm_add_library(j9jvmti SHARED
 	jvmtiHelpers.cpp
 	jvmtiHook.c
 	jvmtiJNIFunctionInterception.c
-	jvmtiLocalVariable.c
+	jvmtiLocalVariable.cpp
 	jvmtiMemory.c
 	jvmtiMethod.c
 	jvmtiModules.c
 	jvmtiObject.c
 	jvmtiRawMonitor.c
-	jvmtiStackFrame.c
+	jvmtiStackFrame.cpp
 	jvmtiStartup.c
 	jvmtiSystemProperties.c
 	jvmtiThread.cpp
