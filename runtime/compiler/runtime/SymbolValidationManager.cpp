@@ -90,10 +90,13 @@ TR::SymbolValidationManager::SymbolValidationManager(TR::Region &region, TR_Reso
 #if defined(J9VM_OPT_JITSERVER)
    auto stream = TR::CompilationInfo::getStream();
    if (stream && _fej9->sharedCache())
+      {
       // because a different VM is used here, a new Shared Cache object was created, so
-      // need to update stream
-      // JITServer TODO: we update stream in multiple places, better to change it to only one
+      // need to update stream and compInfoPT
+      // JITServer TODO: we update stream and compInfoPT in multiple places, better to change it to only one
       ((TR_J9JITServerSharedCache *) _fej9->sharedCache())->setStream(stream);
+      ((TR_J9JITServerSharedCache *) _fej9->sharedCache())->setCompInfoPT(_fej9->_compInfoPT);
+      }
 #endif
 
    defineGuaranteedID(NULL, TR::SymbolType::typeOpaque);
