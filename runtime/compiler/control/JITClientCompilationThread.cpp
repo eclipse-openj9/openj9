@@ -2150,10 +2150,18 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          std::string nameStr;
          if (getName)
             {
-            // We need to get the name even if chain lookup failed (perhaps due to a non-existent local SCC)
-            auto name = fe->getPersistentInfo()->getPersistentClassLoaderTable()->lookupClassNameAssociatedWithClassLoader(fe->getClassLoader(j9class));
-            if (name)
+            if (chain)
+               {
+               const J9UTF8 *name = J9ROMCLASS_CLASSNAME(sharedCache->startingROMClassOfClassChain(chain));
                nameStr = std::string((const char *)J9UTF8_DATA(name), J9UTF8_LENGTH(name));
+               }
+            else if (comp->ignoringLocalSCC())
+               {
+               // We need to get the name even if chain lookup failed (perhaps due to a non-existent local SCC)
+               auto name = fe->getPersistentInfo()->getPersistentClassLoaderTable()->lookupClassNameAssociatedWithClassLoader(fe->getClassLoader(j9class));
+               if (name)
+                  nameStr = std::string((const char *)J9UTF8_DATA(name), J9UTF8_LENGTH(name));
+               }
             }
          client->write(response, offset, nameStr);
          }
