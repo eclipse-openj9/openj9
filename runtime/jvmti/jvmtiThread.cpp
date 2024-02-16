@@ -442,15 +442,24 @@ jvmtiInterruptThread(jvmtiEnv *env,
 	J9JavaVM *vm = JAVAVM_FROM_ENV(env);
 	J9VMThread *currentThread = NULL;
 	jvmtiError rc = JVMTI_ERROR_NONE;
+#if JAVA_SPEC_VERSION >= 19
+	BOOLEAN isVirtualThread = FALSE;
+	J9Class *vThreadClass = NULL;
+	jclass vThreadJClass = NULL;
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
 	Trc_JVMTI_jvmtiInterruptThread_Entry(env);
 
 	rc = getCurrentVMThread(vm, &currentThread);
 	if (JVMTI_ERROR_NONE == rc) {
 		J9VMThread *targetThread = NULL;
+		J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+#if JAVA_SPEC_VERSION >= 19
+		JNIEnv *jniEnv = (JNIEnv *)currentThread;
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
-		vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
-		
+		vmFuncs->internalEnterVMFromJNI(currentThread);
+
 		ENSURE_PHASE_LIVE(env);
 		ENSURE_CAPABILITY(env, can_signal_thread);
 
@@ -459,7 +468,15 @@ jvmtiInterruptThread(jvmtiEnv *env,
 				J9JVMTI_GETVMTHREAD_ERROR_ON_NULL_JTHREAD | J9JVMTI_GETVMTHREAD_ERROR_ON_DEAD_THREAD);
 		if (JVMTI_ERROR_NONE == rc) {
 #if JAVA_SPEC_VERSION >= 19
-			if (NULL != targetThread)
+			j9object_t threadObject = J9_JNI_UNWRAP_REFERENCE(thread);
+			isVirtualThread = IS_JAVA_LANG_VIRTUALTHREAD(currentThread, threadObject);
+
+			if (isVirtualThread && (NULL == vm->vThreadInterrupt)) {
+				vThreadClass = J9VMJAVALANGVIRTUALTHREAD_OR_NULL(vm);
+				vThreadJClass = (jclass)vmFuncs->j9jni_createLocalRef(jniEnv, vThreadClass->classObject);
+			}
+
+			if ((NULL != targetThread) && !isVirtualThread)
 #endif /* JAVA_SPEC_VERSION >= 19 */
 			{
 				omrthread_interrupt(targetThread->osThread);
@@ -472,8 +489,30 @@ jvmtiInterruptThread(jvmtiEnv *env,
 			releaseVMThread(currentThread, targetThread, thread);
 		}
 done:
-		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
+		vmFuncs->internalExitVMToJNI(currentThread);
+
+#if JAVA_SPEC_VERSION >= 19
+		if ((JVMTI_ERROR_NONE == rc) && isVirtualThread) {
+			if (NULL == vm->vThreadInterrupt) {
+				jmethodID vThreadInterrupt = jniEnv->GetMethodID(vThreadJClass, "interrupt", "()V");
+
+				if (NULL == vThreadInterrupt) {
+					rc = JVMTI_ERROR_INTERNAL;
+					goto exit;
+				}
+
+				vm->vThreadInterrupt = vThreadInterrupt;
+			}
+
+			jniEnv->CallObjectMethod(thread, vm->vThreadInterrupt);
+
+			if (jniEnv->ExceptionOccurred()) {
+				rc = JVMTI_ERROR_INTERNAL;
+			}
+		}
 	}
+exit:
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
 	TRACE_JVMTI_RETURN(jvmtiInterruptThread);
 }
