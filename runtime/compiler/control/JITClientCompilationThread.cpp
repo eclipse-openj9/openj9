@@ -206,6 +206,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
       {
       case MessageType::compilationCode:
       case MessageType::compilationFailure:
+      case MessageType::AOTCache_storedAOTMethod:
       case MessageType::AOTCache_serializedAOTMethod:
       case MessageType::compilationThreadCrashed:
          done = true;
@@ -533,7 +534,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
                vmInfo._aotHeader = *storedHeader;
                }
             }
-         vmInfo._useServerOffsets = false;
+         vmInfo._useServerOffsets = comp->getPersistentInfo()->getJITServerAOTCacheIgnoreLocalSCC();
          vmInfo._inSnapshotMode = fe->inSnapshotMode();
          vmInfo._isPortableRestoreMode = fe->isPortableRestoreModeEnabled();
          vmInfo._isSnapshotModeEnabled = fe->isSnapshotModeEnabled();
@@ -3105,13 +3106,24 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
    TR::PersistentInfo *persistentInfo = compInfo->getPersistentInfo();
    bool useAotCompilation = entry->_useAotCompilation;
 
-   bool aotCacheStore = useAotCompilation &&
-                        persistentInfo->getJITServerUseAOTCache() &&
-                        compInfo->methodCanBeJITServerAOTCacheStored(compiler->signature(), compilee->convertToMethod()->methodType());
-   bool aotCacheLoad = persistentInfo->getJITServerUseAOTCache() &&
-                       !TR::CompilationInfo::isCompiled(method) &&
-                       !entry->_doNotLoadFromJITServerAOTCache &&
-                       compInfo->methodCanBeJITServerAOTCacheLoaded(compiler->signature(), compilee->convertToMethod()->methodType());
+   bool aotCacheStore = false;
+   bool aotCacheLoad = false;
+   if (persistentInfo->getJITServerAOTCacheIgnoreLocalSCC())
+      {
+      aotCacheStore = entry->_useAOTCacheCompilation &&
+                      compInfo->methodCanBeJITServerAOTCacheStored(compiler->signature(), compilee->convertToMethod()->methodType());
+      aotCacheLoad = persistentInfo->getJITServerUseAOTCache() &&
+                     !TR::CompilationInfo::isCompiled(method) &&
+                     !entry->_doNotLoadFromJITServerAOTCache &&
+                     compInfo->methodCanBeJITServerAOTCacheLoaded(compiler->signature(), compilee->convertToMethod()->methodType());
+      }
+   else
+      {
+      aotCacheStore = useAotCompilation && persistentInfo->getJITServerUseAOTCache() &&
+                      compInfo->methodCanBeJITServerAOTCacheStored(compiler->signature(), compilee->convertToMethod()->methodType());
+      aotCacheLoad = aotCacheStore && !entry->_doNotLoadFromJITServerAOTCache &&
+                     compInfo->methodCanBeJITServerAOTCacheLoaded(compiler->signature(), compilee->convertToMethod()->methodType());
+      }
    auto deserializer = compInfo->getJITServerAOTDeserializer();
    if (!aotCacheLoad && deserializer)
       deserializer->incNumCacheBypasses();
@@ -3200,8 +3212,7 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
    std::vector<JITServerHelpers::ClassInfoTuple> uncachedClassInfos;
    if (aotCacheStore || aotCacheLoad)
       {
-      // TODO: this check should omit the aotCacheStore part when we support ignoring the local SCC during AOT cache stores.
-      if (aotCacheStore || !compiler->getPersistentInfo()->getJITServerAOTCacheIgnoreLocalSCC())
+      if (!compiler->getPersistentInfo()->getJITServerAOTCacheIgnoreLocalSCC())
          {
          classChainOffset = compiler->fej9vm()->sharedCache()->rememberClass(clazz);
          if (TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET == classChainOffset)
@@ -3222,6 +3233,7 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
       ramClassChain = JITServerHelpers::getRAMClassChain(clazz, numClasses, vmThread, compiler->trMemory(),
                                                          compInfo, uncachedRAMClasses, uncachedClassInfos);
       }
+   compiler->setIgnoringLocalSCC(aotCacheStore && compiler->getPersistentInfo()->getJITServerAOTCacheIgnoreLocalSCC());
 
    // This thread may have been notified at some point in the past that the deserializer was reset.
    // Since this is the start of a new compilation, we must clear the reset flag in order to detect
@@ -3291,7 +3303,7 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
          persistentInfo->getClientUID(), seqNo, lastCriticalSeqNo, method, clazz, *entry->_optimizationPlan,
          detailsStr, details.getType(), unloadedClasses, illegalModificationList, classInfoTuple, optionsStr,
          recompMethodInfoStr, chtableUpdates.first, chtableUpdates.second, useAotCompilation,
-         TR::Compiler->vm.isVMInStartupPhase(compInfoPT->getJitConfig()), aotCacheLoad, methodIndex,
+         TR::Compiler->vm.isVMInStartupPhase(compInfoPT->getJitConfig()), aotCacheStore, aotCacheLoad, methodIndex,
          classChainOffset, ramClassChain, uncachedRAMClasses, uncachedClassInfos, newKnownIds
       );
 
@@ -3327,6 +3339,52 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
 
          if (aotCacheLoad)
             deserializer->incNumCacheMisses();
+         }
+      else if (JITServer::MessageType::AOTCache_storedAOTMethod == response)
+         {
+         auto recv = client->getRecvData<
+            std::string, std::vector<std::string>, CHTableCommitData, std::vector<TR_OpaqueClassBlock*>, std::string,
+            std::vector<TR_ResolvedJ9Method*>, TR_OptimizationPlan, std::vector<SerializedRuntimeAssumption>,
+            JITServer::ServerMemoryState, JITServer::ServerActiveThreadsState, std::vector<TR_OpaqueMethodBlock *>
+         >();
+         auto &methodStr = std::get<0>(recv);
+         auto &records = std::get<1>(recv);
+         chTableData = std::get<2>(recv);
+         classesThatShouldNotBeNewlyExtended = std::get<3>(recv);
+         logFileStr = std::get<4>(recv);
+         resolvedMirrorMethodsPersistIPInfo = std::get<5>(recv);
+         modifiedOptPlan = std::get<6>(recv);
+         serializedRuntimeAssumptions = std::get<7>(recv);
+         JITServer::ServerMemoryState nextMemoryState = std::get<8>(recv);
+         JITServer::ServerActiveThreadsState nextActiveThreadState = std::get<9>(recv);
+         methodsRequiringTrampolines = std::get<10>(recv);
+
+         updateCompThreadActivationPolicy(compInfoPT, nextMemoryState, nextActiveThreadState);
+
+         if (aotCacheLoad)
+            deserializer->incNumCacheMisses();
+
+         auto method = SerializedAOTMethod::get(methodStr);
+         bool usesSVM = false;
+         if (deserializer->deserialize(method, records, compiler, usesSVM))
+            {
+            compiler->setDeserializedAOTMethodStore(true);
+            compiler->setDeserializedAOTMethod(true);
+            compiler->setDeserializedAOTMethodUsingSVM(usesSVM);
+            statusCode = compilationOK;
+            codeCacheStr = std::string((const char *)method->code(), method->codeSize());
+            dataCacheStr = std::string((const char *)method->data(), method->dataSize());
+            // Remaining values are already set to empty defaults
+            }
+         else
+            {
+            entry->_compErrCode = aotCacheDeserializationFailure;
+            entry->_doNotLoadFromJITServerAOTCache = true;
+            if (entry->_compilationAttemptsLeft > 0)
+               entry->_tryCompilingAgain = true;
+            compiler->failCompilation<J9::AOTCacheDeserializationFailure>(
+               "Failed to deserialize AOT cache method %s", compiler->signature());
+            }
          }
       else if (JITServer::MessageType::AOTCache_serializedAOTMethod == response)
          {
@@ -3518,6 +3576,8 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
       }
    catch (const J9::AOTCacheDeserializationFailure &e)
       {
+      if (compiler->getPersistentInfo()->getJITServerAOTCacheIgnoreLocalSCC())
+         entry->_doNotLoadFromJITServerAOTCache = true;
       throw;
       }
    catch (...)
@@ -3608,7 +3668,7 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
                }
             }
 
-         if (!compiler->getOption(TR_DisableCHOpts) && !useAotCompilation && !compiler->isDeserializedAOTMethod())
+         if (!compiler->getOption(TR_DisableCHOpts) && !useAotCompilation && (compiler->isDeserializedAOTMethodStore() || !compiler->isDeserializedAOTMethod()))
             {
             TR::ClassTableCriticalSection commit(compiler->fe());
 

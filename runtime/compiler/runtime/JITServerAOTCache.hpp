@@ -433,11 +433,12 @@ public:
    // Note that the SCC offsets corresponding to AOTCacheThunkRecord records will not be used, as thunks are defined
    // globally in each client and are addressed by signature.
    // Returns true if the method was successfully added, false otherwise (if a method already exists for this key).
+   // If the method record was successfully created, a pointer to the resulting record is stored in methodRecord.
    bool storeMethod(const AOTCacheClassChainRecord *definingClassChainRecord, uint32_t index,
                     TR_Hotness optLevel, const AOTCacheAOTHeaderRecord *aotHeaderRecord,
                     const Vector<std::pair<const AOTCacheRecord *, uintptr_t/*reloDataOffset*/>> &records,
                     const void *code, size_t codeSize, const void *data, size_t dataSize,
-                    const char *signature, uint64_t clientUID);
+                    const char *signature, uint64_t clientUID, const CachedAOTMethod *&methodRecord);
 
    // Lookup a serialized method for the given key (see comment for storeMethod() above)
    // in the cache. Returns NULL if no such method exists in the cache.

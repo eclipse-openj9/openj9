@@ -214,6 +214,25 @@ public:
             TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Could not finish compilation: %s", e.what());
          }
       }
+   /**
+      @brief Function invoked by server when AOT cache store ignoring local SCC is completed successfully
+
+      This should be the last message sent by a server as a response to a compilation request.
+      It includes a variable number of parameters with compilation artifacts (including the serialized method).
+   */
+   template <typename... T>
+   void finishAotStoreCompilation(T... args)
+      {
+      try
+         {
+         write(MessageType::AOTCache_storedAOTMethod, args...);
+         }
+      catch (std::exception &e)
+         {
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Could not finish compilation: %s", e.what());
+         }
+      }
 
    /**
       @brief Function invoked by server when compilation is aborted

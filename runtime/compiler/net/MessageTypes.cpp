@@ -28,6 +28,7 @@ const char *messageNames[] =
    {
    "compilationCode",
    "compilationFailure",
+   "AOTCache_storedAOTMethod",
    "AOTCache_serializedAOTMethod",
    "mirrorResolvedJ9Method",
    "get_params_to_construct_TR_j9method",
