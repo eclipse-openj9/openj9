@@ -45,6 +45,7 @@
 #if defined(J9VM_OPT_JITSERVER)
 #include "control/JITServerHelpers.hpp"
 #include "runtime/JITClientSession.hpp"
+#include "runtime/JITServerAOTDeserializer.hpp"
 #endif
 
 #define LOG(logLevel, format, ...)               \
@@ -148,7 +149,10 @@ TR_J9SharedCache::TR_J9SharedCache(TR_J9VMBase *fe)
    _numDigitsForCacheOffsets = 8;
 
 #if defined(J9VM_OPT_JITSERVER)
-   TR_ASSERT_FATAL(_sharedCacheConfig || _compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER, "Must have _sharedCacheConfig");
+   TR_ASSERT_FATAL(_sharedCacheConfig || _compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER
+                                      || (_compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT
+                                          && _compInfo->getPersistentInfo()->getJITServerUseAOTCache()),
+                  "Must have _sharedCacheConfig");
 #else
    TR_ASSERT_FATAL(_sharedCacheConfig, "Must have _sharedCacheConfig");
 #endif
@@ -1645,6 +1649,110 @@ TR_J9JITServerSharedCache::storeSharedData(J9VMThread *vmThread, const char *key
 
    _stream->write(JITServer::MessageType::SharedCache_storeSharedData, std::string(key, strlen(key)), *descriptor, dataStr);
    return std::get<0>(_stream->read<const void *>());
+   }
+
+TR_J9DeserializerSharedCache::TR_J9DeserializerSharedCache(TR_J9VMBase *fe, JITServerNoSCCAOTDeserializer *deserializer)
+   : TR_J9SharedCache(fe)
+   {
+   _deserializer = deserializer;
+   }
+
+J9ROMClass *
+TR_J9DeserializerSharedCache::romClassFromOffsetInSharedCache(uintptr_t offset)
+   {
+   TR::Compilation *comp = TR::compInfoPT->getCompilation();
+   bool wasReset = false;
+   auto romClass = _deserializer->romClassFromOffsetInSharedCache(offset, comp, wasReset);
+   if (wasReset)
+      comp->failCompilation<J9::AOTDeserializerReset>(
+         "Deserializer reset during relocation of method %s", comp->signature());
+   TR_ASSERT_FATAL(romClass, "ROM class for offset %zu could not be found",
+                   offset,
+                   JITServerNoSCCAOTDeserializer::offsetId(offset),
+                   JITServerNoSCCAOTDeserializer::offsetType(offset));
+   return romClass;
+   }
+
+void *
+TR_J9DeserializerSharedCache::pointerFromOffsetInSharedCache(uintptr_t offset)
+   {
+   TR::Compilation *comp = TR::compInfoPT->getCompilation();
+   bool wasReset = false;
+   auto ptr = _deserializer->pointerFromOffsetInSharedCache(offset, comp, wasReset);
+   if (wasReset)
+      comp->failCompilation<J9::AOTDeserializerReset>(
+         "Deserializer reset during relocation of method %s", comp->signature());
+   TR_ASSERT_FATAL(ptr, "Pointer for offset %zu ID %zu type %u could not be found",
+                   offset,
+                   JITServerNoSCCAOTDeserializer::offsetId(offset),
+                   JITServerNoSCCAOTDeserializer::offsetType(offset));
+   return ptr;
+   }
+
+void *
+TR_J9DeserializerSharedCache::lookupClassLoaderAssociatedWithClassChain(void *chainData)
+   {
+   // We return chainData directly because the only thing this function can be called on is the result of
+   // TR_J9DeserializerSharedCache::pointerFromOffsetInSharedCache(), and that will return a (J9ClassLoader *)
+   // directly when given a class loader offset.
+   return chainData;
+   }
+
+bool
+TR_J9DeserializerSharedCache::classMatchesCachedVersion(J9Class *clazz, UDATA *chainData)
+   {
+   // During deserialization, we find a matching J9Class for the first entry of the chainData, meaning that
+   // its ROM class chain matches what was recorded during compilation. This provides the same guarantees
+   // that TR_J9SharedCache::validateClassChain() does, which is what TR_J9SharedCache::validateClassChain()
+   // uses to verify that the given clazz matches chainData. Thus we only have to check that that cached J9Class
+   // is equal to the one we are trying to validate.
+   TR::Compilation *comp = TR::compInfoPT->getCompilation();
+   bool wasReset = false;
+   auto ramClass = _deserializer->classFromOffset(chainData[1], comp, wasReset);
+   if (wasReset)
+      comp->failCompilation<J9::AOTDeserializerReset>(
+         "Deserializer reset during relocation of method %s", comp->signature());
+   TR_ASSERT_FATAL(ramClass, "RAM class for offset %zu ID %zu type %zu could not be found",
+                   chainData[1],
+                   JITServerNoSCCAOTDeserializer::offsetId(chainData[1]),
+                   JITServerNoSCCAOTDeserializer::offsetType(chainData[1]));
+   return ramClass == clazz;
+   }
+
+TR_OpaqueClassBlock *
+TR_J9DeserializerSharedCache::lookupClassFromChainAndLoader(uintptr_t *chainData, void *classLoader)
+   {
+   // The base TR_J9SharedCache::lookupClassFromChainAndLoader(), when given a class chain and class loader, will look in the loader
+   // a J9Class correspoding to the first class in the chain. If one could be found, it then verifies that the class matches the cached version.
+   // We do not need to perform that checking here, because during deserialization we will have already resolved the first class in the chain to
+   // a J9Class and verified that it matches. Thus we can simply return that cached first J9Class.
+   TR::Compilation *comp = TR::compInfoPT->getCompilation();
+   bool wasReset = false;
+   auto clazz = _deserializer->classFromOffset(chainData[1], comp, wasReset);
+   if (wasReset)
+      comp->failCompilation<J9::AOTDeserializerReset>(
+         "Deserializer reset during relocation of method %s", comp->signature());
+   TR_ASSERT_FATAL(clazz, "Class for offset %zu could not be found",
+                   chainData[1],
+                   JITServerNoSCCAOTDeserializer::offsetId(chainData[1]),
+                   JITServerNoSCCAOTDeserializer::offsetType(chainData[1]));
+   return reinterpret_cast<TR_OpaqueClassBlock *>(clazz);
+   }
+
+J9ROMMethod *
+TR_J9DeserializerSharedCache::romMethodFromOffsetInSharedCache(uintptr_t offset)
+   {
+   TR::Compilation *comp = TR::compInfoPT->getCompilation();
+   bool wasReset = false;
+   auto romMethod = _deserializer->romMethodFromOffsetInSharedCache(offset, comp, wasReset);
+   if (wasReset)
+      comp->failCompilation<J9::AOTDeserializerReset>(
+         "Deserializer reset during relocation of method %s", comp->signature());
+   TR_ASSERT_FATAL(romMethod, "ROM method for offset %zu ID %zu type %zu could not be found",
+                   offset,
+                   JITServerNoSCCAOTDeserializer::offsetId(offset),
+                   JITServerNoSCCAOTDeserializer::offsetType(offset));
+   return romMethod;
    }
 
 #endif

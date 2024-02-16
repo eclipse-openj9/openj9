@@ -382,6 +382,20 @@ TR_PersistentClassLoaderTable::lookupClassLoaderAndChainAssociatedWithClassName(
    return { info->_loader, info->_chain };
    }
 
+void *
+TR_PersistentClassLoaderTable::lookupClassLoaderAssociatedWithClassName(const uint8_t *data, size_t length) const
+   {
+   assertCurrentThreadCanRead();
+
+   NameKey key { data, length };
+   size_t index;
+   TR_ClassLoaderInfo *prev;
+   TR_ClassLoaderInfo *info = lookup<Name>(_nameTable, index, prev, &key);
+   if (!info)
+      return NULL;
+   return info->_loader;
+   }
+
 const J9UTF8 *
 TR_PersistentClassLoaderTable::lookupClassNameAssociatedWithClassLoader(void *loader) const
    {
