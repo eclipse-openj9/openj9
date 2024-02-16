@@ -20,6 +20,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
+#include "jitprotos.h"
 #include "AtomicSupport.hpp"
 #include "control/CompilationThread.hpp"
 #include "control/CompilationRuntime.hpp"
@@ -29,7 +30,9 @@
 #include "env/StackMemoryRegion.hpp"
 #include "env/VerboseLog.hpp"
 #include "infra/CriticalSection.hpp"
+#include "runtime/CodeCacheExceptions.hpp"
 #include "runtime/JITServerAOTDeserializer.hpp"
+#include "runtime/RelocationTarget.hpp"
 
 #define RECORD_NAME(record) (int)(record)->nameLength(), (const char *)(record)->name()
 #define LENGTH_AND_DATA(str) J9UTF8_LENGTH(str), (const char *)J9UTF8_DATA(str)
@@ -897,4 +900,601 @@ JITServerLocalSCCAOTDeserializer::updateSCCOffsets(SerializedAOTMethod *method, 
       }
 
    return true;
+   }
+
+JITServerNoSCCAOTDeserializer::JITServerNoSCCAOTDeserializer(TR_PersistentClassLoaderTable *loaderTable) :
+   JITServerAOTDeserializer(loaderTable),
+   _classLoaderIdMap(decltype(_classLoaderIdMap)::allocator_type(TR::Compiler->persistentAllocator())),
+   _classLoaderPtrMap(decltype(_classLoaderPtrMap)::allocator_type(TR::Compiler->persistentAllocator())),
+   _classIdMap(decltype(_classIdMap)::allocator_type(TR::Compiler->persistentAllocator())),
+   _classPtrMap(decltype(_classPtrMap)::allocator_type(TR::Compiler->persistentAllocator())),
+   _methodIdMap(decltype(_methodIdMap)::allocator_type(TR::Compiler->persistentAllocator())),
+   _methodPtrMap(decltype(_methodPtrMap)::allocator_type(TR::Compiler->persistentAllocator())),
+   _classChainMap(decltype(_classChainMap)::allocator_type(TR::Compiler->persistentAllocator())),
+   _wellKnownClassesMap(decltype(_wellKnownClassesMap)::allocator_type(TR::Compiler->persistentAllocator()))
+   { }
+
+
+void
+JITServerNoSCCAOTDeserializer::invalidateClassLoader(J9VMThread *vmThread, J9ClassLoader *loader)
+   {
+   assertExclusiveVmAccess(vmThread);
+
+   auto p_it = _classLoaderPtrMap.find(loader);
+   if (p_it == _classLoaderPtrMap.end())// Not cached
+      return;
+
+   uintptr_t id = p_it->second;
+   auto i_it = _classLoaderIdMap.find(id);
+   TR_ASSERT(i_it != _classLoaderIdMap.end(), "Broken two-way map");
+
+   // Mark entry as unloaded
+   i_it->second = NULL;
+   _classLoaderPtrMap.erase(p_it);
+
+   if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Invalidated class loader %p ID %zu in the deserializer cache", loader, id);
+   }
+
+void
+JITServerNoSCCAOTDeserializer::invalidateClass(J9VMThread *vmThread, J9Class *ramClass)
+   {
+   assertExclusiveVmAccess(vmThread);
+
+   auto p_it = _classPtrMap.find(ramClass);
+   if (p_it == _classPtrMap.end()) // Not cached or already marked invalid
+      return;
+
+   uintptr_t id = p_it->second;
+   auto i_it = _classIdMap.find(id);
+   TR_ASSERT(i_it != _classIdMap.end(), "Broken two-way map");
+
+   if (i_it->second._ramClass)
+      {
+      // Class ID is valid. Keep the entry, but mark it as unloaded.
+      i_it->second._ramClass = NULL;
+      }
+   else
+      {
+      // Class ID is invalid. Remove the entry so that it can be replaced
+      // if a matching version of the class is ever loaded in the future.
+      _classIdMap.erase(i_it);
+      }
+
+   _classPtrMap.erase(p_it);
+
+   // Invalidate any methods that might have this RAM class recorded as
+   // their defining class.
+   for (uint32_t i = 0; i < ramClass->romClass->romMethodCount; i++)
+      invalidateMethod(&ramClass->ramMethods[i]);
+
+   if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Invalidated RAMClass %p ID %zu in the deserializer cache", ramClass, id);
+   }
+
+void
+JITServerNoSCCAOTDeserializer::invalidateMethod(J9Method *method)
+   {
+   auto p_it = _methodPtrMap.find(method);
+   if (p_it == _methodPtrMap.end()) // Not cached or already marked as invalid
+      return;
+
+   uintptr_t id = p_it->second;
+   auto i_it = _methodIdMap.find(id);
+   TR_ASSERT(i_it != _methodIdMap.end(), "Broken two-way map");
+
+   i_it->second = NULL;
+
+   _methodPtrMap.erase(p_it);
+
+   if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Invalidated RAMMethod %p ID %zu in the deserializer cache", method, id);
+   }
+
+void
+JITServerNoSCCAOTDeserializer::clearCachedData()
+   {
+   _classLoaderIdMap.clear();
+   _classLoaderPtrMap.clear();
+
+   _classIdMap.clear();
+   _classPtrMap.clear();
+
+   _methodIdMap.clear();
+   _methodPtrMap.clear();
+
+   for (auto &kv : _classChainMap)
+      TR::Compiler->persistentGlobalMemory()->freePersistentMemory(kv.second);
+   _classChainMap.clear();
+
+   for (auto &kv : _wellKnownClassesMap)
+      TR::Compiler->persistentGlobalMemory()->freePersistentMemory(kv.second);
+   _wellKnownClassesMap.clear();
+
+   getNewKnownIds().clear();
+   }
+
+bool
+JITServerNoSCCAOTDeserializer::cacheRecord(const ClassLoaderSerializationRecord *record, TR::Compilation *comp, bool &isNew, bool &wasReset)
+   {
+   OMR::CriticalSection cs(getClassLoaderMonitor());
+   if (deserializerWasReset(comp, wasReset))
+      return false;
+
+   auto it = _classLoaderIdMap.find(record->id());
+   if (it != _classLoaderIdMap.end())
+      return true;
+   isNew = true;
+
+   // Lookup the class loader using the name of the first class that it loaded
+   auto loader = (J9ClassLoader *)getLoaderTable()->lookupClassLoaderAssociatedWithClassName(record->name(), record->nameLength());
+   if (!loader)
+      {
+      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+            "ERROR: Failed to find class loader for first loaded class %.*s", RECORD_NAME(record)
+         );
+      return false;
+      }
+
+   addToMaps(_classLoaderIdMap, _classLoaderPtrMap, it, record->id(), loader, loader);
+
+   if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+         "Cached class loader record ID %zu -> { %p } for first loaded class %.*s",
+         record->id(), loader, RECORD_NAME(record)
+      );
+   return true;
+   }
+
+bool
+JITServerNoSCCAOTDeserializer::cacheRecord(const ClassSerializationRecord *record, TR::Compilation *comp, bool &isNew, bool &wasReset)
+   {
+   OMR::CriticalSection cs(getClassMonitor());
+   if (deserializerWasReset(comp, wasReset))
+      return false;
+
+   auto it = _classIdMap.find(record->id());
+   if (it != _classIdMap.end())
+      {
+      if (it->second._ramClass)
+         {
+         return true;
+         }
+      else
+         {
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "ERROR: Mismatching class ID %zu", record->id());
+         return false;
+         }
+      }
+   isNew = true;
+
+   // The class loader for this class record should already have been deserialized, so if we can't find a
+   // loader for this ID then it must have been marked as unloaded. We don't support loader reloading, so
+   // we simply fail to deserialize here.
+   auto loader = findInMap(_classLoaderIdMap, record->classLoaderId(), getClassLoaderMonitor(), comp, wasReset);
+   if (!loader)
+      return false;
+
+   // Lookup the RAMClass by name in the class loader
+   J9Class *ramClass = jitGetClassInClassloaderFromUTF8(comp->j9VMThread(), loader, (char *)record->name(),
+                                                        record->nameLength());
+   if (!ramClass)
+      {
+      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+            "ERROR: Failed to find class %.*s ID %zu in class loader %p",
+            RECORD_NAME(record), record->id(), loader
+         );
+      return false;
+      }
+
+   // Check that the ROMClass hash matches, otherwise remember that it doesn't
+   if (!isClassMatching(record, ramClass, comp))
+      {
+      // We add {ID, NULL} and {ramClass, ID} to their respective maps because
+      //
+      // 1. We need to record the fact that the ramClass we just found doesn't match, to avoid looking up the exact
+      //    same RAM class in future deserializations of this class record. (We don't report this class record ID as being
+      //    new to the server if we fail to cache it, so the server will keep sending us this exact class record).
+      // 2. If ramClass ever gets unloaded, we want invalidateClass to be able to remove both entries from the maps, so that
+      //    in subsequent deserializations we can attempt to find a new candidate ramClass that might end up matching after all.
+      addToMaps(_classIdMap, _classPtrMap, it, record->id(), { NULL, record->classLoaderId() }, ramClass);
+      return false;
+      }
+
+   addToMaps(_classIdMap, _classPtrMap, it, record->id(), { ramClass, record->classLoaderId() }, ramClass);
+
+   if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+         "Cached class record ID %zu -> { %p, %zu } for class %.*s",
+         record->id(), ramClass, record->classLoaderId(), RECORD_NAME(record)
+      );
+   return true;
+   }
+
+bool
+JITServerNoSCCAOTDeserializer::cacheRecord(const MethodSerializationRecord *record, TR::Compilation *comp, bool &isNew, bool &wasReset)
+   {
+   OMR::CriticalSection cs(getMethodMonitor());
+   if (deserializerWasReset(comp, wasReset))
+      return false;
+
+   auto it = _methodIdMap.find(record->id());
+   if (it != _methodIdMap.end())
+      {
+      if (it->second)
+         {
+         return true;
+         }
+      else
+         {
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "ERROR: Mismatching or unloaded method ID %zu", record->id());
+         return false;
+         }
+      }
+   isNew = true;
+
+   // Get the defining RAM class for this method using its ID. If it can't be found,
+   // it was marked as invalid. We don't support reloading, so simply fail here in
+   // that case.
+   auto ramClass = findInMap(_classIdMap, record->definingClassId(), getClassMonitor(), comp, wasReset)._ramClass;
+   if (!ramClass)
+      return false;
+
+   // Get RAMMethod (and its ROMMethod) in defining RAMClass by index
+   TR_ASSERT(record->index() < ramClass->romClass->romMethodCount, "Invalid method index");
+   J9Method *ramMethod = &ramClass->ramMethods[record->index()];
+   J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(ramMethod);
+
+   addToMaps(_methodIdMap, _methodPtrMap, it, record->id(), ramMethod, ramMethod);
+
+   if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+         "Cached method record ID %zu -> { %p, %zu } for method %.*s.%.*s%.*s",
+         record->id(), ramMethod, record->definingClassId(), ROMCLASS_NAME(ramClass->romClass), ROMMETHOD_NAS(romMethod)
+      );
+   return true;
+   }
+
+// We confirmed that the first class in the chain had a RAM class chain that was equal to
+// what was recorded at compile time, but that may have changed (due to class redefinition or
+// invalidation somewhere along the chain). Since we don't support class reloading, we only
+// have to check that the individual class entries remain valid.
+bool
+JITServerNoSCCAOTDeserializer::revalidateClassChain(uintptr_t *classChain, TR::Compilation *comp, bool &wasReset)
+   {
+   size_t chainLength = classChain[0] / sizeof(classChain[0]) - 1;
+   uintptr_t *chainData = classChain + 1;
+   for (size_t i = 0; i < chainLength; ++i)
+      {
+      auto ramClass = findInMap(_classIdMap, offsetId(chainData[i]), getClassMonitor(), comp, wasReset)._ramClass;
+      if (!ramClass)
+         return false;
+      }
+   return true;
+   }
+
+void
+JITServerNoSCCAOTDeserializer::getRAMClassChain(TR::Compilation *comp, J9Class *clazz, J9Class **chainBuffer, size_t &chainLength)
+   {
+   chainLength = comp->fej9()->necessaryClassChainLength(clazz) - 1;
+
+   J9Class **cursor = chainBuffer;
+   *cursor++ = clazz;
+   for (size_t i = 0; i < J9CLASS_DEPTH(clazz); ++i)
+      *cursor++ = clazz->superclasses[i];
+   for (auto it = (J9ITable *)clazz->iTable; it; it = it->next)
+      *cursor++ = it->interfaceClass;
+   TR_ASSERT((cursor - chainBuffer) == chainLength, "Invalid RAM class chain length: %zu != %zu", cursor - chainBuffer, chainLength);
+   }
+
+// Add a value (which must have been allocated with TR::Compiler->persistentGlobalMemory()->allocatePersistentMemory) to the given map
+template<typename K, typename V, typename H> static void
+addToChainMap(PersistentUnorderedMap<K, V *, H> &map,
+              const typename PersistentUnorderedMap<K, V *, H>::const_iterator &it,
+              const K &key, V *value)
+   {
+   try
+      {
+      map.insert(it, { key, value });
+      }
+   catch (...)
+      {
+      TR::Compiler->persistentGlobalMemory()->freePersistentMemory(value);
+      throw;
+      }
+   }
+
+bool
+JITServerNoSCCAOTDeserializer::cacheRecord(const ClassChainSerializationRecord *record, TR::Compilation *comp, bool &isNew, bool &wasReset)
+   {
+   OMR::CriticalSection cs(getClassChainMonitor());
+   if (deserializerWasReset(comp, wasReset))
+      return false;
+
+   auto it = _classChainMap.find(record->id());
+   if (it != _classChainMap.end())
+      {
+      if (revalidateClassChain(it->second, comp, wasReset))
+         {
+         return true;
+         }
+      else
+         {
+         TR::Compiler->persistentGlobalMemory()->freePersistentMemory(it->second);
+         it->second = NULL;
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+               "Invalidated cached class chain record ID %zu", record->id()
+            );
+         return false;
+         }
+      }
+   isNew = true;
+
+   // Get the RAM class chain for the first class referenced in the class chain serialization record
+   auto firstClass = findInMap(_classIdMap, record->list().ids()[0], getClassMonitor(), comp, wasReset)._ramClass;
+   if (!firstClass)
+      return false;
+   J9Class *ramClassChain[TR_J9SharedCache::maxClassChainLength];
+   size_t ramClassChainLength = 0;
+   getRAMClassChain(comp, firstClass, ramClassChain, ramClassChainLength);
+
+   // Check that it has the expected length
+   if (record->list().length() != ramClassChainLength)
+      {
+      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+            "ERROR: Class chain length mismatch for class %.*s ID %zu: %zu != %zu",
+            ROMCLASS_NAME(firstClass->romClass), record->list().ids()[0], ramClassChainLength, record->list().length()
+         );
+      return false;
+      }
+
+   // Validate each class in the server's chain (which should all be cached by now)
+   for (size_t i = 0; i < ramClassChainLength; ++i)
+      {
+      auto ramClass = findInMap(_classIdMap, record->list().ids()[i], getClassMonitor(), comp, wasReset)._ramClass;
+      if (!ramClass)
+         {
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+               "ERROR: Class %.*s ID %zu mismatch or invalidation in class chain ID %zu for class %.*s ID %zu",
+               ROMCLASS_NAME(ramClassChain[i]->romClass), record->list().ids()[i], record->id(),
+               ROMCLASS_NAME(firstClass->romClass), record->list().ids()[0]
+            );
+         return false;
+         }
+
+      if (ramClass != ramClassChain[i])
+         {
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+               "ERROR: Class %.*s mismatch in class chain ID %zu for class %.*s ID %zu",
+               ROMCLASS_NAME(ramClassChain[i]->romClass), record->id(),
+               ROMCLASS_NAME(firstClass->romClass), record->list().ids()[0]
+            );
+         return false;
+         }
+      }
+
+   // Chain validation is now complete
+   size_t chainSize = (record->list().length() + 1) * sizeof(uintptr_t); // offset chains are expected to store their size in bytes in their first entry
+   auto deserializerChain = (uintptr_t *)TR::Compiler->persistentGlobalMemory()->allocatePersistentMemory(chainSize);
+   if (!deserializerChain)
+      throw std::bad_alloc();
+
+   deserializerChain[0] = chainSize;
+   uintptr_t *deserializerChainData = deserializerChain + 1;
+   for (size_t i = 0; i < record->list().length(); ++i)
+      deserializerChainData[i] = encodeClassOffset(record->list().ids()[i]);
+   addToChainMap(_classChainMap, it, record->id(), deserializerChain);
+
+   if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+         "Cached class chain record ID %zu -> { %p } for class %.*s ID %zu",
+         record->id(), firstClass, ROMCLASS_NAME(firstClass->romClass), record->list().ids()[0]
+      );
+   return true;
+   }
+
+// See revalidateClassChain()
+bool
+JITServerNoSCCAOTDeserializer::revalidateWellKnownClasses(uintptr_t *wellKnownClassesChain, TR::Compilation *comp, bool &wasReset)
+   {
+   size_t chainLength = wellKnownClassesChain[0];
+   uintptr_t *chainData = wellKnownClassesChain + 1;
+   for (size_t i = 0; i < chainLength; ++i)
+      {
+      auto classChain = findInMap(_classChainMap, offsetId(chainData[i]), getClassChainMonitor(), comp, wasReset);
+      if (!classChain)
+         return false;
+      }
+   return true;
+   }
+
+bool
+JITServerNoSCCAOTDeserializer::cacheRecord(const WellKnownClassesSerializationRecord *record, TR::Compilation *comp, bool &isNew, bool &wasReset)
+   {
+   OMR::CriticalSection cs(getWellKnownClassesMonitor());
+   if (deserializerWasReset(comp, wasReset))
+      return false;
+
+   auto it = _wellKnownClassesMap.find(record->id());
+   if (it != _wellKnownClassesMap.end())
+      {
+      if (revalidateWellKnownClasses(it->second, comp, wasReset))
+         {
+         return true;
+         }
+      else
+         {
+         TR::Compiler->persistentGlobalMemory()->freePersistentMemory(it->second);
+         it->second = NULL;
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+               "Invalidated cached well-known classes record ID %zu", record->id()
+            );
+         return false;
+         }
+      }
+   isNew = true;
+
+   // Initialize the "well-known classes" object (see SymbolValidationManager::populateWellKnownClasses()).
+   TR_ASSERT(record->list().length() <= WELL_KNOWN_CLASS_COUNT, "Too many well-known classes");
+   // The first entry of the chain offsets contains the number of entries (and not the size in bytes as with class chains)
+   auto chainOffsets = (uintptr_t *)TR::Compiler->persistentGlobalMemory()->allocatePersistentMemory((1 + record->list().length()) * sizeof(uintptr_t));
+   chainOffsets[0] = record->list().length();
+   auto chainData = chainOffsets + 1;
+   // Get the class chain SCC offsets for each class chain ID (which should already be cached and (re)validated).
+   for (size_t i = 0; i < record->list().length(); ++i)
+      chainData[i] = encodeClassChainOffset(record->list().ids()[i]);
+
+   addToChainMap(_wellKnownClassesMap, it, record->id(), chainOffsets);
+
+   if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Cached well-known classes record ID %zu", record->id());
+   return true;
+   }
+
+bool
+JITServerNoSCCAOTDeserializer::cacheRecord(const ThunkSerializationRecord *record, TR::Compilation *comp, bool &isNew, bool &wasReset)
+   {
+   // Unlike the rest of the cacheRecord functions, we do not need to acquire a monitor here, as we can rely on
+   // the internal synchronization of getJ2IThunk and setJ2IThunk. Since we don't touch any internal caches, we can
+   // skip checking for a reset.
+
+   auto fej9vm = comp->fej9vm();
+   void *thunk = fej9vm->getJ2IThunk((char *)record->signature(), record->signatureSize(), comp);
+   if (thunk)
+      return true;
+   isNew = true;
+
+   TR::CompilationInfoPerThread *compInfoPT = fej9vm->_compInfoPT;
+   uint8_t *thunkStart = TR_JITServerRelocationRuntime::copyDataToCodeCache(record->thunkStart(), record->thunkSize(), fej9vm);
+   if (!thunkStart)
+      compInfoPT->getCompilation()->failCompilation<TR::CodeCacheError>("Failed to allocate space in the code cache");
+
+   auto thunkAddress = thunkStart + 8;
+   void *vmHelper = j9ThunkVMHelperFromSignature(fej9vm->_jitConfig, record->signatureSize(), (char *)record->signature());
+   compInfoPT->reloRuntime()->reloTarget()->performThunkRelocation(reinterpret_cast<uint8_t *>(thunkAddress), (uintptr_t)vmHelper);
+
+   fej9vm->setJ2IThunk((char *)record->signature(), record->signatureSize(), thunkAddress, comp);
+
+   if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Cached thunk record ID %zu -> for thunk %.*s",
+                                     record->id(), record->signatureSize(), record->signature());
+   return true;
+   }
+
+bool
+JITServerNoSCCAOTDeserializer::updateSCCOffsets(SerializedAOTMethod *method, TR::Compilation *comp,
+                                                   bool &wasReset, bool &usesSVM)
+   {
+   //NOTE: Defining class chain record is validated by now; there is no corresponding SCC offset to be updated
+
+   auto header = (const TR_AOTMethodHeader *)(method->data() + sizeof(J9JITDataCacheHeader));
+   TR_ASSERT_FATAL((header->minorVersion == TR_AOTMethodHeader_MinorVersion) &&
+                   (header->majorVersion == TR_AOTMethodHeader_MajorVersion),
+                   "Invalid TR_AOTMethodHeader version: %d.%d", header->majorVersion, header->minorVersion);
+   TR_ASSERT_FATAL((header->offsetToRelocationDataItems != 0) || (method->numRecords() == 0),
+                   "Unexpected %zu serialization records in serialized method %s with no relocation data",
+                   method->numRecords(), comp->signature());
+   usesSVM = (header->flags & TR_AOTMethodHeader_UsesSymbolValidationManager) != 0;
+
+   uint8_t *start = method->data() + header->offsetToRelocationDataItems;
+   uint8_t *end = start + *(uintptr_t *)start;// Total size of relocation data is stored in the first word
+
+   for (size_t i = 0; i < method->numRecords(); ++i)
+      {
+      // Get the SCC offset of the corresponding entity in the local SCC
+      const SerializedSCCOffset &serializedOffset = method->offsets()[i];
+
+      // Thunks do not use their SCC offset entries
+      if (serializedOffset.recordType() == AOTSerializationRecordType::Thunk)
+         continue;
+
+      uintptr_t offset = encodeOffset(serializedOffset);
+
+      // Update the SCC offset stored in AOT method relocation data
+      uint8_t *ptr = start + serializedOffset.reloDataOffset();
+      TR_ASSERT_FATAL((ptr >= start + sizeof(uintptr_t)/*skip the size word*/) && (ptr < end),
+                      "Out-of-bounds relocation data offset %zu in serialized method %s",
+                      serializedOffset.reloDataOffset(), comp->signature());
+#if defined(DEBUG)
+      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+            "Updating offset %zu -> %zu for record type %u ID %zu at relo data offset %zu in serialized method %s",
+            *(uintptr_t *)ptr, offset, serializedOffset.recordType(), serializedOffset.recordId(),
+            serializedOffset.reloDataOffset(), comp->signature()
+         );
+#endif /* defined(DEBUG) */
+      *(uintptr_t *)ptr = offset;
+      }
+
+   return true;
+   }
+
+J9ROMClass *
+JITServerNoSCCAOTDeserializer::romClassFromOffsetInSharedCache(uintptr_t offset, TR::Compilation *comp, bool &wasReset)
+   {
+   auto clazz = classFromOffset(offset, comp, wasReset);
+   if (clazz)
+      return clazz->romClass;
+
+   return NULL;
+   }
+
+J9Class *
+JITServerNoSCCAOTDeserializer::classFromOffset(uintptr_t offset, TR::Compilation *comp, bool &wasReset)
+   {
+   TR_ASSERT_FATAL(offsetType(offset) == AOTSerializationRecordType::Class, "Offset %zu must be to a class", offset);
+   return findInMap(_classIdMap, offsetId(offset), getClassMonitor(), comp, wasReset)._ramClass;
+   }
+
+// Return a pointer to the entity referred to by the given offset. Note that for class chains identifying class loaders,
+// we simply return the cached (J9ClassLoader *) directly.
+void *
+JITServerNoSCCAOTDeserializer::pointerFromOffsetInSharedCache(uintptr_t offset, TR::Compilation *comp, bool &wasReset)
+   {
+   auto id = offsetId(offset);
+   auto ty = AOTSerializationRecord::getType(offset);
+
+   void *ptr = NULL;
+
+   switch (ty)
+      {
+      case AOTSerializationRecordType::ClassLoader:
+         ptr = findInMap(_classLoaderIdMap, id, getClassLoaderMonitor(), comp, wasReset);
+         break;
+
+      case AOTSerializationRecordType::ClassChain:
+         ptr = findInMap(_classChainMap, id, getClassChainMonitor(), comp, wasReset);
+         break;
+
+      case AOTSerializationRecordType::WellKnownClasses:
+         ptr = findInMap(_wellKnownClassesMap, id, getWellKnownClassesMonitor(), comp, wasReset);
+         break;
+
+      default:
+         // Only the above types of offsets are ever looked up during relocation
+         TR_ASSERT_FATAL(false, "Offset %zu ID %zu type %zu into deserializer cache is not a supported type");
+         break;
+      }
+
+   return ptr;
+   }
+
+J9ROMMethod *
+JITServerNoSCCAOTDeserializer::romMethodFromOffsetInSharedCache(uintptr_t offset, TR::Compilation *comp, bool &wasReset)
+   {
+   TR_ASSERT_FATAL(offsetType(offset) == AOTSerializationRecordType::Method, "Offset %zu must be to a method", offset);
+   auto romMethod = findInMap(_methodIdMap, offsetId(offset), getMethodMonitor(), comp, wasReset);
+   if (romMethod)
+      return J9_ROM_METHOD_FROM_RAM_METHOD(romMethod);
+
+   return NULL;
    }

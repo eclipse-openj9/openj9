@@ -254,4 +254,83 @@ private:
    PersistentUnorderedMap<uintptr_t/*ID*/, uintptr_t/*SCC offset*/> _wellKnownClassesMap;
    };
 
+// This deserializer implements the following scheme:
+//
+// 1. AOT cache serialization records are resolved into their corresponding "RAM" entities.
+// 2. The RAM entities are cached, to avoid deserializing the same record multiple times
+// 3. The offsets in the cached AOT method are updated with the idAndType of the corresponding
+//    serialization record, to act as "AOT cache offsets" in lieu of local SCC offsets.
+class JITServerNoSCCAOTDeserializer : public JITServerAOTDeserializer
+   {
+public:
+   friend class TR_J9DeserializerSharedCache;
+
+   TR_PERSISTENT_ALLOC(TR_Memory::JITServerAOTCache)
+
+   JITServerNoSCCAOTDeserializer(TR_PersistentClassLoaderTable *loaderTable);
+
+   virtual void invalidateClassLoader(J9VMThread *vmThread, J9ClassLoader *loader) override;
+   virtual void invalidateClass(J9VMThread *vmThread, J9Class *ramClass) override;
+   void invalidateMethod(J9Method *method);
+
+   static uintptr_t offsetId(uintptr_t offset)
+      { return AOTSerializationRecord::getId(offset); }
+   static AOTSerializationRecordType offsetType(uintptr_t offset)
+      { return AOTSerializationRecord::getType(offset); }
+
+private:
+   struct ClassEntry
+      {
+      // NULL if class ID is invalid (was not found or its hash didn't match), or class was unloaded
+      J9Class *_ramClass;
+      uintptr_t _classLoaderId;
+      };
+
+   virtual void clearCachedData() override;
+
+   virtual bool cacheRecord(const ClassLoaderSerializationRecord *record, TR::Compilation *comp, bool &isNew, bool &wasReset) override;
+   virtual bool cacheRecord(const ClassSerializationRecord *record, TR::Compilation *comp, bool &isNew, bool &wasReset) override;
+   virtual bool cacheRecord(const MethodSerializationRecord *record, TR::Compilation *comp, bool &isNew, bool &wasReset) override;
+   virtual bool cacheRecord(const ClassChainSerializationRecord *record, TR::Compilation *comp, bool &isNew, bool &wasReset) override;
+   virtual bool cacheRecord(const WellKnownClassesSerializationRecord *record, TR::Compilation *comp, bool &isNew, bool &wasReset) override;
+   virtual bool cacheRecord(const ThunkSerializationRecord *record, TR::Compilation *comp, bool &isNew, bool &wasReset) override;
+
+   virtual bool updateSCCOffsets(SerializedAOTMethod *method, TR::Compilation *comp, bool &wasReset, bool &usesSVM) override;
+
+   bool revalidateClassChain(uintptr_t *classChain, TR::Compilation *comp, bool &wasReset);
+   void getRAMClassChain(TR::Compilation *comp, J9Class *clazz, J9Class **chainBuffer, size_t &chainLength);
+
+   bool revalidateWellKnownClasses(uintptr_t *wellKnownClassesChain, TR::Compilation *comp, bool &wasReset);
+
+   J9ROMClass *romClassFromOffsetInSharedCache(uintptr_t offset, TR::Compilation *comp, bool &wasReset);
+   void *pointerFromOffsetInSharedCache(uintptr_t offset, TR::Compilation *comp, bool &wasReset);
+   J9ROMMethod *romMethodFromOffsetInSharedCache(uintptr_t offset, TR::Compilation *comp, bool &wasReset);
+   J9Class *classFromOffset(uintptr_t offset, TR::Compilation *comp, bool &wasReset);
+
+   static uintptr_t encodeOffset(const AOTSerializationRecord *record)
+      { return AOTSerializationRecord::idAndType(record->id(), record->type()); }
+
+   static uintptr_t encodeOffset(const SerializedSCCOffset &serializedOffset)
+      { return AOTSerializationRecord::idAndType(serializedOffset.recordId(), serializedOffset.recordType()); }
+
+   static uintptr_t encodeClassOffset(uintptr_t id)
+      { return AOTSerializationRecord::idAndType(id, AOTSerializationRecordType::Class); }
+
+   static uintptr_t encodeClassChainOffset(uintptr_t id)
+      { return AOTSerializationRecord::idAndType(id, AOTSerializationRecordType::ClassChain); }
+
+   PersistentUnorderedMap<uintptr_t/*ID*/, J9ClassLoader *> _classLoaderIdMap;
+   PersistentUnorderedMap<J9ClassLoader *, uintptr_t/*ID*/> _classLoaderPtrMap;
+
+   PersistentUnorderedMap<uintptr_t/*ID*/, ClassEntry> _classIdMap;
+   PersistentUnorderedMap<J9Class *, uintptr_t/*ID*/> _classPtrMap;
+
+   PersistentUnorderedMap<uintptr_t/*ID*/, J9Method *> _methodIdMap;
+   PersistentUnorderedMap<J9Method *, uintptr_t> _methodPtrMap;
+
+   PersistentUnorderedMap<uintptr_t/*ID*/, uintptr_t * /*deserializer chain*/> _classChainMap;
+
+   PersistentUnorderedMap<uintptr_t/*ID*/, uintptr_t * /*deserializer chain offsets*/> _wellKnownClassesMap;
+   };
+
 #endif /* JITSERVER_AOT_DESERIALIZER_H */
