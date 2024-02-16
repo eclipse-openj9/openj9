@@ -11344,6 +11344,8 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
                TR_VerboseLog::write(" remote");
                if (compiler->isDeserializedAOTMethod())
                   TR_VerboseLog::write(" deserialized");
+               if (compiler->isDeserializedAOTMethodStore())
+                  TR_VerboseLog::write(" aotStored");
                }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 

@@ -2918,10 +2918,16 @@ remoteCompilationEnd(J9VMThread *vmThread, TR::Compilation *comp, TR_ResolvedMet
          TR_ASSERT_FATAL(comp->cg(), "CodeGenerator must be allocated");
          int32_t returnCode = 0;
 
+         const char *compilationType = "newly compiled";
+         if (comp->isDeserializedAOTMethodStore())
+            compilationType = "deserialized newly compiled";
+         else if (comp->isDeserializedAOTMethod())
+            compilationType = "deserialized";
+
          if (TR::Options::getVerboseOption(TR_VerboseJITServer))
             TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
                "JITClient: Applying remote AOT relocations to %s AOT body for %s @ %s",
-               comp->isDeserializedAOTMethod() ? "deserialized" : "newly compiled",
+               compilationType,
                comp->signature(), comp->getHotnessName()
             );
 

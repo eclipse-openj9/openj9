@@ -366,6 +366,9 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
    bool isDeserializedAOTMethod() const { return _deserializedAOTMethod; }
    void setDeserializedAOTMethod(bool deserialized) { _deserializedAOTMethod = deserialized; }
 
+   bool isDeserializedAOTMethodStore() const { return _deserializedAOTMethodStore; }
+   void setDeserializedAOTMethodStore(bool deserializedStore) { _deserializedAOTMethodStore = deserializedStore; }
+
    bool isDeserializedAOTMethodUsingSVM() const { return _deserializedAOTMethodUsingSVM; }
    void setDeserializedAOTMethodUsingSVM(bool usingSVM) { _deserializedAOTMethodUsingSVM = usingSVM; }
 
@@ -503,6 +506,9 @@ private:
    // True if this remote compilation resulted in deserializing an AOT method
    // received from the JITServer AOT cache; always false at the server
    bool _deserializedAOTMethod;
+   // True if this remote compilation resulted in deserializing an AOT method
+   // that was compiled as an AOT cache store; always false at the server
+   bool _deserializedAOTMethodStore;
    // True if this deserialized AOT method received from the
    // JITServer AOT cache uses SVM; always false at the server
    bool _deserializedAOTMethodUsingSVM;
