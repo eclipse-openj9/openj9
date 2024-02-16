@@ -510,9 +510,9 @@ done:
 				rc = JVMTI_ERROR_INTERNAL;
 			}
 		}
-	}
-exit:
+exit:;
 #endif /* JAVA_SPEC_VERSION >= 19 */
+	}
 
 	TRACE_JVMTI_RETURN(jvmtiInterruptThread);
 }
