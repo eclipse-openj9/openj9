@@ -721,9 +721,10 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          auto &serializedThunk = std::get<1>(recv);
 
          void *thunkAddress;
-         if (!comp->compileRelocatableCode())
+         if (!comp->compileRelocatableCode() || comp->ignoringLocalSCC())
             {
-            // For non-AOT, copy thunk to code cache and relocate the vm helper address right away
+            // For non-AOT, copy thunk to code cache and relocate the vm helper address right away.
+            // Also do this if we're ignoring the local SCC.
             uint8_t *thunkStart = TR_JITServerRelocationRuntime::copyDataToCodeCache(serializedThunk.data(), serializedThunk.size(), fe);
             if (!thunkStart)
                compInfoPT->getCompilation()->failCompilation<TR::CodeCacheError>("Failed to allocate space in the code cache");
@@ -1256,6 +1257,8 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          int32_t cpIndex = std::get<1>(recv);
          int32_t isStore = std::get<2>(recv);
          int32_t needAOTValidation = std::get<3>(recv);
+         // TODO: I'm fairly sure this should be false always
+         needAOTValidation = needAOTValidation && !comp->ignoringLocalSCC();
          void *address;
          TR::DataType type = TR::NoType;
          bool volatileP = true;
@@ -1309,6 +1312,8 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          I_32 cpIndex = std::get<1>(recv);
          bool isStore = std::get<2>(recv);
          bool needAOTValidation = std::get<3>(recv);
+         // TODO: I'm fairly sure this should be false always
+         needAOTValidation = needAOTValidation && !comp->ignoringLocalSCC();
          U_32 fieldOffset;
          TR::DataType type = TR::NoType;
          bool volatileP = true;
@@ -1934,6 +1939,8 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          I_32 cpIndex = std::get<1>(recv);
          bool isStore = std::get<2>(recv);
          bool needAOTValidation = std::get<3>(recv);
+         // TODO: I'm fairly sure this should be false always
+         needAOTValidation = needAOTValidation && !comp->ignoringLocalSCC();
          U_32 fieldOffset;
          TR::DataType type = TR::NoType;
          bool volatileP = true;
@@ -1957,6 +1964,8 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          int32_t cpIndex = std::get<1>(recv);
          int32_t isStore = std::get<2>(recv);
          int32_t needAOTValidation = std::get<3>(recv);
+         // TODO: I'm fairly sure this should be false always
+         needAOTValidation = needAOTValidation && !comp->ignoringLocalSCC();
          void *address;
          TR::DataType type = TR::NoType;
          bool volatileP = true;

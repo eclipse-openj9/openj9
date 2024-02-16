@@ -201,6 +201,7 @@ J9::Compilation::Compilation(int32_t id,
    _deserializedAOTMethodStore(false),
    _deserializedAOTMethodUsingSVM(false),
    _aotCacheStore(false),
+   _ignoringLocalSCC(false),
    _serializationRecords(decltype(_serializationRecords)::allocator_type(heapMemoryRegion)),
    _thunkRecords(decltype(_thunkRecords)::allocator_type(heapMemoryRegion)),
 #endif /* defined(J9VM_OPT_JITSERVER) */
