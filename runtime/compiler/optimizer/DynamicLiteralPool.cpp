@@ -223,7 +223,7 @@ bool TR_DynamicLiteralPool::visitTreeTop(TR::TreeTop * tt, TR::Node *grandParent
          addNewAloadChild(node);
          }
       // add extra aload child for float conversions
-      else if (opCodeValue==TR::fbits2i || opCodeValue==TR::dbits2l)
+      else if ((opCodeValue==TR::fbits2i || opCodeValue==TR::dbits2l) && node->normalizeNanValues())
          {
          addNewAloadChild(node);
          }
