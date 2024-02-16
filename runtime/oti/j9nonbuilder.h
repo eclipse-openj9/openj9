@@ -5929,7 +5929,7 @@ typedef struct J9JavaVM {
 	jmethodID addUses;
 	jmethodID addProvides;
 #if JAVA_SPEC_VERSION >= 19
-       jmethodID vThreadInterrupt;
+	jmethodID vThreadInterrupt;
 #endif /* JAVA_SPEC_VERSION >= 19 */
 	UDATA addModulesCount;
 	UDATA safePointState;
