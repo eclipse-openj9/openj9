@@ -139,7 +139,7 @@ convertToJavaFullyQualifiedName(J9VMThread *vmThread, J9UTF8 *fullyQualifiedName
 		char *cursor = result;
 		char *end = result + length;
 
-		memcpy(result, J9UTF8_DATA(fullyQualifiedNameUTF), length);
+        result = reinterpret_cast<char *>(J9UTF8_DATA(fullyQualifiedNameUTF));
 		while (cursor < end) {
 			if ('/' == *cursor) {
 				*cursor = '.';

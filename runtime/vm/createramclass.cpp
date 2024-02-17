@@ -3290,7 +3290,7 @@ fail:
 
 				/* fill in superclass array */
 				if (superclassCount != 0) {
-					memcpy(ramClass->superclasses, superclass->superclasses, superclassCount * sizeof(UDATA));
+                    ramClass->superclasses = superclass->superclasses;
 				}
 				ramClass->superclasses[superclassCount] = superclass;
 

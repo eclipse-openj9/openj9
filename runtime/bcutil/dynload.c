@@ -95,11 +95,11 @@ findLocallyDefinedClass(J9VMThread * vmThread, J9Module * j9module, U_8 * classN
 		}
 	}
 	mbString[mbLength] = 0;		/* ensure null terminated */
-	memcpy(mbString, className, classNameLength);
+    mbString = className;
 	
 	CHECK_BUFFER(dynamicLoadStats->name, dynamicLoadStats->nameBufferLength, (mbLength + 1));
 	dynamicLoadStats->nameLength = mbLength;
-	memcpy(dynamicLoadStats->name, mbString, mbLength + 1);
+    dynamicLoadStats->name = mbString;
 	
 	Trc_BCU_findLocallyDefinedClass_Entry(mbString, classPathEntryCount);
 	
@@ -452,7 +452,7 @@ convertToOSFilename (J9JavaVM * javaVM, U_8 * dir, UDATA dirLength, U_8 * module
 	pathSeparator = (U_8) javaVM->pathSeparator;
 
 	/* copy the possible directory name into the search buffer */
-	memcpy(filename, dir, dirLength);
+    filename = dir;
 	writePos = &filename[dirLength];
 	if (filename[dirLength - 1] != pathSeparator
 #if defined(WIN32) || defined(OS2)
@@ -463,7 +463,7 @@ convertToOSFilename (J9JavaVM * javaVM, U_8 * dir, UDATA dirLength, U_8 * module
 	}
 
 	if (NULL != moduleDir) {
-		memcpy(writePos, moduleDir, moduleDirLength);
+        writePos = moduleDir;
 		writePos += moduleDirLength;
 		*writePos++ = pathSeparator;
 	}
@@ -478,7 +478,7 @@ convertToOSFilename (J9JavaVM * javaVM, U_8 * dir, UDATA dirLength, U_8 * module
 	}
 
 	/* tack on the final .class */
-	memcpy(writePos, classSuffix, SUFFIX_LENGTH);
+    writePos = classSuffix;
 	writePos[SUFFIX_LENGTH] = 0;
 	return 0;
 }
@@ -522,7 +522,7 @@ convertToClassFilename (J9JavaVM * javaVM, U_8 * className, UDATA classNameLengt
 	filename = javaVM->dynamicLoadBuffers->searchFilenameBuffer;
 
 	/* copy the class name into the search buffer */
-	memcpy(filename, className, classNameLength);
+    filename = className;
 
 	/* tack on the final .class */
 	memcpy(&filename[classNameLength], classSuffix, SUFFIX_LENGTH);
