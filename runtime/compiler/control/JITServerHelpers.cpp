@@ -460,17 +460,14 @@ packArrayROMClassData(const J9ROMClass *romClass, ROMClassPackContext &ctx)
 // Calculate the size of the portion of a ROM class that occurs before its UTF8 string section (the pre-string section),
 // without any padding that may have been added during initial ROM class writing.
 //
-// Why is this necessary? The sections inside a ROMClass before the UTF8 string section are 32-bit aligned, but the
-// entire pre-string section needs to be 64-bit aligned. That means exactly four bytes of padding may have been added
-// to the end of the pre-string section during initial ROM class building. When we strip out the debug
-// info from a ROM class, we might reintroduce a misalignment in this pre-string section. Two scenarios are possible:
-//
-// 1. The original ROM class was padded, in which case the solution is to drop that four bytes of padding
-// 2. The original ROM class was not padded, in which case the solution is to introduce four bytes of padding
-//
-// We can only distinguish between scenarios (1) and (2) if we know the unpadded size of the pre-string section.
-// Once we have this information, we can calculate the aligned and padded size of the pre-string section (currently called the
-// packedNonStringSize) properly in packROMClass.
+// Why is this necessary? The sections inside a ROMClass before the UTF8 string section are not, taken together,
+// necessarily 64-bit aligned. The ROM class format requires the entire pre-string segment of the ROM class to
+// be 64-bit aligned, so padding may have been added between the last pre-string section and the UTF8 string section.
+// When we strip out the debug info from a ROM class, we might reintroduce a misalignment in this pre-string section.
+// Fixing this misalignment might require us to add more padding, or to drop some of the padding that was already added
+// during ROM class writing. We can only decide to do one or the other if we know the unpadded size of the pre-string
+// section. Once we have this information, we can calculate the aligned and padded size of the pre-string section
+// (currently called the packedNonStringSize) properly in packROMClass.
 static void
 sectionEndCallback(J9ROMClass *romClass, void *sectionPtr, uintptr_t sectionSize, const char *sectionName, void *userData)
    {
@@ -614,6 +611,10 @@ JITServerHelpers::packROMClass(J9ROMClass *romClass, TR_Memory *trMemory, TR_J9V
       end = (const uint8_t *)OMR::alignNoCheck((uintptr_t)end, sizeof(uint64_t));
       TR_ASSERT_FATAL(end == classEnd, "UTF8 section not stored at the end of ROMClass %.*s: %p != %p",
                       name->length, name->data, end, classEnd);
+      // A note to future debuggers: if the assert below failed and
+      // ctx._preString < ctx._origUtf8SectionStart - ctx._origRomClassStart, then the most likely cause is that someone added a
+      // new section to J9ROMClass and neglected to update romclasswalk.c. Either that or the size of a section is being calculated
+      // incorrectly.
       TR_ASSERT_FATAL(OMR::alignNoCheck(ctx._preStringSize, sizeof(uint64_t)) == (ctx._origUtf8SectionStart - ctx._origRomClassStart),
                       "Pre-string end offset in ROMClass %.*s must be within padding of the UTF8 section start: %lu %lu",
                       name->length, name->data, ctx._preStringSize, ctx._origUtf8SectionStart - ctx._origRomClassStart);

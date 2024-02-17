@@ -46,6 +46,9 @@ static void allSlotsInBytecodesDo (J9ROMClass* romClass, J9ROMMethod* method, J9
 static void allSlotsInCPShapeDescriptionDo (J9ROMClass* romClass, J9ROMClassWalkCallbacks* callbacks, void* userData);
 static void allSlotsInCallSiteDataDo (J9ROMClass* romClass, J9ROMClassWalkCallbacks* callbacks, void* userData);
 static UDATA allSlotsInMethodParametersDataDo(J9ROMClass* romClass, U_8* cursor, J9ROMClassWalkCallbacks* callbacks, void* userData);
+#if defined(J9VM_OPT_METHOD_HANDLE)
+static void allSlotsInVarHandleMethodTypeLookupTableDo(J9ROMClass* romClass, J9ROMClassWalkCallbacks* callbacks, void* userData);
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 static void allSlotsInStaticSplitMethodRefIndexesDo (J9ROMClass* romClass, J9ROMClassWalkCallbacks* callbacks, void* userData);
 static void allSlotsInSpecialSplitMethodRefIndexesDo (J9ROMClass* romClass, J9ROMClassWalkCallbacks* callbacks, void* userData);
 static void allSlotsInSourceDebugExtensionDo (J9ROMClass* romClass, J9SourceDebugExtension* sde, J9ROMClassWalkCallbacks* callbacks, void* userData);
@@ -55,7 +58,7 @@ static void nullSectionCallback(J9ROMClass*, void*, UDATA, const char*, void*);
 static BOOLEAN defaultValidateRangeCallback(J9ROMClass*, void*, UDATA, void*);
 
 #define SLOT_CALLBACK(romClassPtr, slotType, structure, slotName) callbacks->slotCallback(romClassPtr, slotType, &structure->slotName, #slotName, userData)
-/* 
+/*
  * Walk all slots in the J9ROMClass, calling callback for each slot.
  * Identify the type of slot using one of the J9ROM_ constants defined in the header file.
  * Note that NAS and UTF8 slots are treated specially, since, as invariants, they may
@@ -236,6 +239,9 @@ void allSlotsInROMClassDo(J9ROMClass* romClass,
 	allSlotsInConstantPoolDo(romClass, callbacks, userData);
 	allSlotsInCallSiteDataDo(romClass, callbacks, userData);
 	allSlotsInOptionalInfoDo(romClass, callbacks, userData);
+#if defined(J9VM_OPT_METHOD_HANDLE)
+	allSlotsInVarHandleMethodTypeLookupTableDo(romClass, callbacks, userData);
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 	allSlotsInStaticSplitMethodRefIndexesDo(romClass, callbacks, userData);
 	allSlotsInSpecialSplitMethodRefIndexesDo(romClass, callbacks, userData);
 }
@@ -328,7 +334,7 @@ static J9ROMMethod* allSlotsInROMMethodDo(J9ROMClass* romClass, J9ROMMethod* met
 		cursor += allSlotsInAnnotationDo(romClass, (U_32 *)cursor, "methodAnnotation", callbacks, userData);
 	}
 
-	
+
 	if (J9ROMMETHOD_HAS_PARAMETER_ANNOTATIONS(method)) {
 		cursor += allSlotsInAnnotationDo(romClass, (U_32 *)cursor, "parameterAnnotations", callbacks, userData);
 	}
@@ -336,7 +342,7 @@ static J9ROMMethod* allSlotsInROMMethodDo(J9ROMClass* romClass, J9ROMMethod* met
 	if (J9ROMMETHOD_HAS_DEFAULT_ANNOTATION(method)) {
 		cursor += allSlotsInAnnotationDo(romClass, (U_32 *)cursor, "defaultAnnotation", callbacks, userData);
 	}
-	
+
 	if (J9ROMMETHOD_HAS_METHOD_TYPE_ANNOTATIONS(extendedModifiers)) {
 		cursor += allSlotsInAnnotationDo(romClass, (U_32 *)cursor, "methodTypeAnnotations", callbacks, userData);
 	}
@@ -362,7 +368,7 @@ static J9ROMMethod* allSlotsInROMMethodDo(J9ROMClass* romClass, J9ROMMethod* met
 	}
 
 	if (J9ROMMETHOD_HAS_METHOD_PARAMETERS(method)) {
-	
+
 		cursor += allSlotsInMethodParametersDataDo(romClass, (U_8*)cursor, callbacks, userData);
 	}
 
@@ -465,7 +471,7 @@ static void allSlotsInBytecodesDo(J9ROMClass* romClass, J9ROMMethod* method, J9R
 	BOOLEAN rangeValid;
 
 	/* bytecodeSizeLow already walked */
-	length = J9_BYTECODE_SIZE_FROM_ROM_METHOD(method); 
+	length = J9_BYTECODE_SIZE_FROM_ROM_METHOD(method);
 
 	if (length == 0) return;
 	pc = bytecodes = J9_BYTECODE_START_FROM_ROM_METHOD(method); /* endian safe */
@@ -497,7 +503,7 @@ static void allSlotsInBytecodesDo(J9ROMClass* romClass, J9ROMMethod* method, J9R
 				callbacks->slotCallback(romClass, J9ROM_U8, pc, "bcArg8", userData);
 				pc += 1;
 				break;
-				
+
 			/* Single 16-bit argument */
 			case JBinvokeinterface2:
 				callbacks->slotCallback(romClass, J9ROM_U8, pc, "bcArg8", userData);
@@ -618,7 +624,7 @@ static void allSlotsInBytecodesDo(J9ROMClass* romClass, J9ROMMethod* method, J9R
 					pc += 4;
 				}
 				break;
-				
+
 
 			case JBlookupswitch:
 				switch((pc - bytecodes - 1) % 4) {
@@ -823,7 +829,7 @@ static void allSlotsInRecordDo(J9ROMClass* romClass, U_32* recordPointer, J9ROMC
 	callbacks->sectionCallback(romClass, recordPointer, (UDATA)cursor - (UDATA)recordPointer, "recordInfo", userData);
 }
 
-static void 
+static void
 allSlotsInPermittedSubclassesDo(J9ROMClass* romClass, U_32* permittedSubclassesPointer, J9ROMClassWalkCallbacks* callbacks, void* userData)
 {
 	BOOLEAN rangeValid = FALSE;
@@ -838,7 +844,7 @@ allSlotsInPermittedSubclassesDo(J9ROMClass* romClass, U_32* permittedSubclassesP
 	callbacks->slotCallback(romClass, J9ROM_U32, cursor, "permittedSubclassesCount", userData);
 	cursor += 1;
 	permittedSubclassesCount = *permittedSubclassesPointer;
-	
+
 	for (; permittedSubclassesCount > 0; permittedSubclassesCount--) {
 		rangeValid = callbacks->validateRangeCallback(romClass, cursor, sizeof(U_32), userData);
 		if (FALSE == rangeValid) {
@@ -902,7 +908,7 @@ allSlotsInImplicitCreationAttributeDo(J9ROMClass* romClass, U_32* implicitCreati
 /*
  * See ROMClassWriter::writeOptionalInfo for illustration of the layout.
  */
-static void 
+static void
 allSlotsInOptionalInfoDo(J9ROMClass* romClass, J9ROMClassWalkCallbacks* callbacks, void* userData)
 {
 	U_32 *optionalInfo;
@@ -1019,7 +1025,30 @@ allSlotsInOptionalInfoDo(J9ROMClass* romClass, J9ROMClassWalkCallbacks* callback
 	callbacks->sectionCallback(romClass, optionalInfo, (UDATA)cursor - (UDATA)optionalInfo, "optionalInfo", userData);
 }
 
-static void 
+#if defined(J9VM_OPT_METHOD_HANDLE)
+static void
+allSlotsInVarHandleMethodTypeLookupTableDo(J9ROMClass* romClass, J9ROMClassWalkCallbacks* callbacks, void* userData)
+{
+	U_32 count = romClass->varHandleMethodTypeCount;
+
+	if (count > 0) {
+		U_16 *cursor = J9ROMCLASS_VARHANDLEMETHODTYPELOOKUPTABLE(romClass);
+		BOOLEAN rangeValid = callbacks->validateRangeCallback(romClass, cursor, count * sizeof(U_16), userData);
+
+		if (rangeValid) {
+			U_32 i = 0;
+
+			callbacks->sectionCallback(romClass, cursor, count * sizeof(U_16), "varHandleMethodTypeLookupTable", userData);
+			for (i = 0; i < count; i++) {
+				callbacks->slotCallback(romClass, J9ROM_U16, cursor, "cpIndex", userData);
+				cursor += 1;
+			}
+		}
+	}
+}
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
+
+static void
 allSlotsInStaticSplitMethodRefIndexesDo(J9ROMClass* romClass, J9ROMClassWalkCallbacks* callbacks, void* userData)
 {
 	U_16 count = romClass->staticSplitMethodRefCount;
@@ -1040,7 +1069,7 @@ allSlotsInStaticSplitMethodRefIndexesDo(J9ROMClass* romClass, J9ROMClassWalkCall
 	}
 }
 
-static void 
+static void
 allSlotsInSpecialSplitMethodRefIndexesDo(J9ROMClass* romClass, J9ROMClassWalkCallbacks* callbacks, void* userData)
 {
 	U_16 count = romClass->specialSplitMethodRefCount;
@@ -1441,7 +1470,7 @@ static void allSlotsInCallSiteDataDo (J9ROMClass* romClass, J9ROMClassWalkCallba
 	 *			U_16 argument[argumentCount];
 	 *		} bootStrapMethodData[romClass->bsmCount];
 	 * }
-	 * 
+	 *
 	 * Note: SRP is 32 bits
 	 */
 	BOOLEAN rangeValid;
