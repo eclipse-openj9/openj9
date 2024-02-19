@@ -188,7 +188,9 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
       {
       // Inform the server if compilation is not yet complete
       if ((response != MessageType::compilationCode) &&
-          (response != MessageType::compilationFailure))
+          (response != MessageType::compilationFailure) &&
+          (response != MessageType::AOTCache_serializedAOTMethod) &&
+          (response != MessageType::AOTCache_storedAOTMethod))
          client->writeError(JITServer::MessageType::compilationInterrupted, 0 /* placeholder */);
 
       if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITServer, TR_VerboseCompilationDispatch))
