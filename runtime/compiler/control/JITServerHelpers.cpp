@@ -1015,7 +1015,8 @@ JITServerHelpers::packRemoteROMClassInfo(J9Class *clazz, J9VMThread *vmThread, T
       sharedCache->getClassChainOffsetIdentifyingLoaderNoFail((TR_OpaqueClassBlock *)clazz, &classChainIdentifyingLoader) : 0;
 
    std::string classNameIdentifyingLoader;
-   if (fe->getPersistentInfo()->getJITServerUseAOTCache())
+   if (fe->getPersistentInfo()->getJITServerUseAOTCache() &&
+       (fe->getPersistentInfo()->getJITServerAOTCacheIgnoreLocalSCC() || classChainIdentifyingLoader))
       {
       auto loader = fe->getClassLoader((TR_OpaqueClassBlock *)clazz);
       auto nameInfo = fe->getPersistentInfo()->getPersistentClassLoaderTable()->lookupClassNameAssociatedWithClassLoader(loader);

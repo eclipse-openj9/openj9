@@ -158,8 +158,14 @@ struct TR_MethodToBeCompiled
    bool _remoteCompReq;
    // Flag used to determine whether a cold local compilation should be upgraded by LPQ
    bool _shouldUpgradeOutOfProcessCompilation;
-   // Set at the client after a failed AOT deserialization or load to bypass AOT cache on the next compilation attempt
+   // Set at the client after a failed AOT deserialization or load.
+   // If set, the client will not request an AOT cache store or load on the next compilation attempt.
+   // In particular, _useAOTCacheCompilation will be false if this is true.
    bool _doNotLoadFromJITServerAOTCache;
+   // Set at the client in preCompilationTasks; will cause the client to request that the
+   // method be stored in the JITServer's AOT cache. Only used when getJITServerAOTCacheIgnoreLocalSCC()
+   // is true.
+   bool _useAOTCacheCompilation;
    // Cache original optLevel when transforming a remote sync compilation to a local cheap one
    TR_Hotness _origOptLevel;
    // A non-NULL field denotes an out-of-process compilation request

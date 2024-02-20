@@ -125,7 +125,9 @@ enum ExternalOptions
    XXminusJITServerAOTCacheDelayMethodRelocation = 69,
    XXplusIProfileDuringStartupPhase            = 70,
    XXminusIProfileDuringStartupPhase           = 71,
-   TR_NumExternalOptions                       = 72
+   XXplusJITServerAOTCacheIgnoreLocalSCC       = 72,
+   XXminusJITServerAOTCacheIgnoreLocalSCC      = 73,
+   TR_NumExternalOptions                       = 74
    };
 
 class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
