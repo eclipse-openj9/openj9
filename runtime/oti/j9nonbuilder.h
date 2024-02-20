@@ -3582,6 +3582,9 @@ typedef struct J9ROMClass {
 #endif /* JAVA_SPEC_VERSION >= 11 */
 #define J9ROMCLASS_OPTIONALINFO(base) SRP_GET((base)->optionalInfo, U_32*)
 #define J9ROMCLASS_CALLSITEDATA(base) SRP_GET((base)->callSiteData, U_8*)
+#if defined(J9VM_OPT_METHOD_HANDLE)
+#define J9ROMCLASS_VARHANDLEMETHODTYPELOOKUPTABLE(base) SRP_GET((base)->varHandleMethodTypeLookupTable, U_16*)
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 #define J9ROMCLASS_STATICSPLITMETHODREFINDEXES(base) SRP_GET((base)->staticSplitMethodRefIndexes, U_16*)
 #define J9ROMCLASS_SPECIALSPLITMETHODREFINDEXES(base) SRP_GET((base)->specialSplitMethodRefIndexes, U_16*)
 
