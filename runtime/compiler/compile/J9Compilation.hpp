@@ -366,11 +366,17 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
    bool isDeserializedAOTMethod() const { return _deserializedAOTMethod; }
    void setDeserializedAOTMethod(bool deserialized) { _deserializedAOTMethod = deserialized; }
 
+   bool isDeserializedAOTMethodStore() const { return _deserializedAOTMethodStore; }
+   void setDeserializedAOTMethodStore(bool deserializedStore) { _deserializedAOTMethodStore = deserializedStore; }
+
    bool isDeserializedAOTMethodUsingSVM() const { return _deserializedAOTMethodUsingSVM; }
    void setDeserializedAOTMethodUsingSVM(bool usingSVM) { _deserializedAOTMethodUsingSVM = usingSVM; }
 
    bool isAOTCacheStore() const { return _aotCacheStore; }
    void setAOTCacheStore(bool store) { _aotCacheStore = store; }
+
+   bool ignoringLocalSCC() const { return _ignoringLocalSCC; }
+   void setIgnoringLocalSCC(bool ignoringLocalSCC) { _ignoringLocalSCC = ignoringLocalSCC; }
 
    Vector<std::pair<const AOTCacheRecord *, uintptr_t>> &getSerializationRecords() { return _serializationRecords; }
    // Adds an AOT cache record and the corresponding offset into AOT relocation data to the list that
@@ -503,12 +509,18 @@ private:
    // True if this remote compilation resulted in deserializing an AOT method
    // received from the JITServer AOT cache; always false at the server
    bool _deserializedAOTMethod;
+   // True if this remote compilation resulted in deserializing an AOT method
+   // that was compiled as an AOT cache store; always false at the server
+   bool _deserializedAOTMethodStore;
    // True if this deserialized AOT method received from the
    // JITServer AOT cache uses SVM; always false at the server
    bool _deserializedAOTMethodUsingSVM;
    // True if the result of this out-of-process compilation will be
    // stored in JITServer AOT cache; always false at the client
    bool _aotCacheStore;
+   // True at the client if the compilation is to be stored in the AOT cache at the server and the
+   // client is ignoring the local SCC; always false at the server
+   bool _ignoringLocalSCC;
    // List of AOT cache records and corresponding offsets into AOT relocation data that will
    // be used to store the result of this compilation in AOT cache; always empty at the client
    Vector<std::pair<const AOTCacheRecord *, uintptr_t>> _serializationRecords;

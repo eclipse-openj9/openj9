@@ -102,6 +102,7 @@ Java_java_lang_StackWalker_walkWrapperImpl(JNIEnv *env, jclass clazz, jint flags
 	J9StackWalkState *walkState = vmThread->stackWalkState;
 
 	Assert_JCL_notNull (stackWalkerMethod);
+	/* Consume thread's stateWalkState, push a new entry to thread for use during Java callout. */
 	memset(&newWalkState, 0, sizeof(J9StackWalkState));
 	newWalkState.previous = walkState;
 	vmThread->stackWalkState = &newWalkState;
@@ -146,11 +147,12 @@ Java_java_lang_StackWalker_walkWrapperImpl(JNIEnv *env, jclass clazz, jint flags
 	if (NULL == walkerMethodChars) { /* native out of memory exception pending */
 		return NULL;
 	}
+	/* Ensure userData1/2 used by stackFrameFilter function is set properly. */
+	walkState->userData1 = (void *)(UDATA)flags;
 	walkState->userData2 = (void *)walkerMethodChars;
 	UDATA walkStateResult = vm->walkStackFrames(vmThread, walkState);
 	Assert_JCL_true(walkStateResult == J9_STACKWALK_RC_NONE);
 	walkState->flags |= J9_STACKWALK_RESUME;
-	walkState->userData1 = (void *)(UDATA)flags;
 	if (J9SF_FRAME_TYPE_END_OF_STACK != walkState->pc) {
 		/* indicate the we have the topmost client method's frame */
 		walkState->userData1 = (void *)((UDATA)walkState->userData1 | J9_FRAME_VALID);
@@ -210,11 +212,12 @@ Java_java_lang_StackWalker_walkContinuationImpl(JNIEnv *env, jclass clazz, jint 
 	walkState.frameWalkFunction = stackFrameFilter;
 
 	/* walking unmounted Continuation will not require skipping StackWalker methods */
+	walkState.userData1 = (void *)(UDATA)flags;
 	walkState.userData2 = NULL;
 	UDATA walkStateResult = vm->walkStackFrames(vmThread, &walkState);
 	Assert_JCL_true(walkStateResult == J9_STACKWALK_RC_NONE);
 	walkState.flags |= J9_STACKWALK_RESUME;
-	walkState.userData1 = (void *)(UDATA)flags;
+
 	if (J9SF_FRAME_TYPE_END_OF_STACK != walkState.pc) {
 		/* indicate the we have the topmost client method's frame */
 		walkState.userData1 = (void *)((UDATA)walkState.userData1 | J9_FRAME_VALID);

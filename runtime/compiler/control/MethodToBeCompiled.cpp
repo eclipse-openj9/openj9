@@ -93,6 +93,7 @@ void TR_MethodToBeCompiled::initialize(TR::IlGeneratorMethodDetails &details, vo
    _remoteCompReq = false;
    _shouldUpgradeOutOfProcessCompilation = false;
    _doNotLoadFromJITServerAOTCache = false;
+   _useAOTCacheCompilation = false;
    _origOptLevel = unknownHotness;
    _stream = NULL;
 #endif /* defined(J9VM_OPT_JITSERVER) */

@@ -32,6 +32,7 @@ enum MessageType : uint16_t
    {
    compilationCode, // Send the compiled code back to the client
    compilationFailure,
+   AOTCache_storedAOTMethod, // Final response to a compilation request that was an AOT cache store that ignored the client SCC
    AOTCache_serializedAOTMethod,// Final response to a compilation request that was an AOT cache hit
    mirrorResolvedJ9Method,
    get_params_to_construct_TR_j9method,

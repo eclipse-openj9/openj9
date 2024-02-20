@@ -220,6 +220,11 @@ TR_J9VMBase::createResolvedMethodWithSignature(TR_Memory * trMemory, TR_OpaqueMe
       {
 #if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT)
 #if defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
+#if defined(J9VM_OPT_JITSERVER)
+      if (_compInfoPT->getMethodBeingCompiled()->_useAOTCacheCompilation)
+         result = new (trMemory->trHeapMemory()) TR_ResolvedRelocatableJ9Method(aMethod, this, trMemory, owningMethod, vTableSlot);
+      else
+#endif /* defined(J9VM_OPT_JITSERVER) */
       if (TR::Options::sharedClassCache())
          {
          result = new (trMemory->trHeapMemory()) TR_ResolvedRelocatableJ9Method(aMethod, this, trMemory, owningMethod, vTableSlot);
@@ -992,6 +997,11 @@ TR_ResolvedRelocatableJ9Method::TR_ResolvedRelocatableJ9Method(TR_OpaqueMethodBl
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)fe;
    TR::Compilation *comp = TR::comp();
+#if defined(J9VM_OPT_JITSERVER)
+   if (fej9->_compInfoPT->getMethodBeingCompiled()->_useAOTCacheCompilation)
+      return;
+   else
+#endif /* defined(J9VM_OPT_JITSERVER) */
    if (comp && this->TR_ResolvedMethod::getRecognizedMethod() != TR::unknownMethod)
       {
       if (TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET != fej9->sharedCache()->rememberClass(containingClass()))
@@ -1345,6 +1355,13 @@ TR_ResolvedRelocatableJ9Method::storeValidationRecordIfNecessary(TR::Compilation
    bool fieldInfoCanBeUsed = false;
    TR_AOTStats *aotStats = ((TR_JitPrivateConfig *)fej9->_jitConfig->privateConfig)->aotStats;
    bool isStatic = false;
+
+#if defined(J9VM_OPT_JITSERVER)
+   // If this compilation is tied to a remote compilation that is ignoring the client's SCC, none of the below is necessary, as
+   // all of it will be done at the server.
+   if (comp->ignoringLocalSCC())
+      return true;
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
    TR::CompilationInfo *compInfo = TR::CompilationInfo::get(fej9->_jitConfig);
 
@@ -1846,7 +1863,11 @@ TR_ResolvedRelocatableJ9Method::createResolvedMethodFromJ9Method(TR::Compilation
          isSystemClassLoader = ((void*)_fe->vmThread()->javaVM->systemClassLoader->classLoaderObject ==  (void*)_fe->getClassLoader(clazzOfInlinedMethod));
          }
 
-      bool methodInSCC = _fe->sharedCache()->isClassInSharedCache(J9_CLASS_FROM_METHOD(j9method));
+      bool ignoringLocalSCC = false;
+#if defined(J9VM_OPT_JITSERVER)
+      ignoringLocalSCC = comp->ignoringLocalSCC();
+#endif /* defined(J9VM_OPT_JITSERVER) */
+      bool methodInSCC = ignoringLocalSCC || _fe->sharedCache()->isClassInSharedCache(J9_CLASS_FROM_METHOD(j9method));
       if (methodInSCC)
          {
          bool sameLoaders = false;
@@ -1856,7 +1877,7 @@ TR_ResolvedRelocatableJ9Method::createResolvedMethodFromJ9Method(TR::Compilation
              isSystemClassLoader)
             {
             resolvedMethod = new (comp->trHeapMemory()) TR_ResolvedRelocatableJ9Method((TR_OpaqueMethodBlock *) j9method, _fe, comp->trMemory(), this, vTableSlot);
-            if (comp->getOption(TR_UseSymbolValidationManager))
+            if (!ignoringLocalSCC && comp->getOption(TR_UseSymbolValidationManager))
                {
                TR::SymbolValidationManager *svm = comp->getSymbolValidationManager();
                if (!svm->isAlreadyValidated(resolvedMethod->containingClass()))
