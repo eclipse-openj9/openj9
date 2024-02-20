@@ -236,7 +236,11 @@ TR_PersistentClassLoaderTable::associateClassLoaderWithClass(J9VMThread *vmThrea
    // If we are using the JITServer AOT cache and ignoring the local SCC, we need to remember the name of clazz
    // with or without chain. Otherwise (not using AOT cache or not ignoring the local SCC) there is no point in continuing
    // without a chain.
-   if (!chain && (!useAOTCache || !_persistentMemory->getPersistentInfo()->getJITServerAOTCacheIgnoreLocalSCC()))
+   if (!chain
+#if defined(J9VM_OPT_JITSERVER)
+       && (!useAOTCache || !_persistentMemory->getPersistentInfo()->getJITServerAOTCacheIgnoreLocalSCC())
+#endif /* defined(J9VM_OPT_JITSERVER) */
+      )
       return;
    TR_ASSERT(!_sharedCache || !chain || _sharedCache->isPointerInSharedCache(chain), "Class chain must be in SCC");
 

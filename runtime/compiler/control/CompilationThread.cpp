@@ -7949,7 +7949,9 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
       _compInfo.acquireCompMonitor(vmThread);
       bool checkpointInProgress = _compInfo.isCheckpointInProgress();
       _compInfo.releaseCompMonitor(vmThread);
+#if defined(J9VM_OPT_JITSERVER)
       eligibleForRemoteAOTNoSCCCompile = eligibleForRemoteAOTNoSCCCompile && !checkpointInProgress;
+#endif /* defined(J9VM_OPT_JITSERVER) */
 #endif
 
       bool sharedClassTest = eligibleForRelocatableCompile
