@@ -1410,8 +1410,24 @@ done:
 	{
 		J9VMThread *targetThread = J9VMJAVALANGTHREAD_THREADREF(currentThread, threadObject);
 		bool result = false;
+#if JAVA_SPEC_VERSION >= 19
+		/* Check if the mounted thread is suspended. */
+		U_32 isSuspended = 0;
+		if (NULL != targetThread) {
+			isSuspended = J9OBJECT_U32_LOAD(currentThread, targetThread->threadObject, currentThread->javaVM->isSuspendedInternalOffset);
+		}
+#endif /* JAVA_SPEC_VERSION >= 19 */
 		/* If the thread is alive, ask the OS thread.  Otherwise, answer false. */
-		if (J9VMJAVALANGTHREAD_STARTED(currentThread, threadObject) && (NULL != targetThread)) {
+		if ((NULL != targetThread)
+		&& J9VMJAVALANGTHREAD_STARTED(currentThread, threadObject)
+#if JAVA_SPEC_VERSION >= 19
+		/* Thread.deadInterrupt is Thread.interrupted in OJDK's Thread implementation.
+		 * In JDK19+, OJDK's Thread implementation is used. If the mounted thread is
+		 * suspended, use Thread.interrupted to derive if the thread is interrupted.
+		 */
+		&& (0 == isSuspended)
+#endif /* JAVA_SPEC_VERSION >= 19 */
+		) {
 			if (omrthread_interrupted(targetThread->osThread)) {
 				result = true;
 			}
@@ -2043,8 +2059,26 @@ exit:
 	threadInterruptImpl(J9VMThread *currentThread, j9object_t targetObject)
 	{
 		J9VMThread *targetThread = J9VMJAVALANGTHREAD_THREADREF(currentThread, targetObject);
-		if (J9VMJAVALANGTHREAD_STARTED(currentThread, targetObject) && (NULL != targetThread)) {
-			void (*sidecarInterruptFunction)(J9VMThread*) = currentThread->javaVM->sidecarInterruptFunction;
+		J9JavaVM *vm = currentThread->javaVM;
+#if JAVA_SPEC_VERSION >= 19
+		/* Check if the mounted thread is suspended. */
+		U_32 isSuspended = 0;
+		if (NULL != targetThread) {
+			isSuspended = J9OBJECT_U32_LOAD(currentThread, targetThread->threadObject, vm->isSuspendedInternalOffset);
+		}
+#endif /* JAVA_SPEC_VERSION >= 19 */
+		if ((NULL != targetThread)
+		&& J9VMJAVALANGTHREAD_STARTED(currentThread, targetObject)
+#if JAVA_SPEC_VERSION >= 19
+		/* Thread.deadInterrupt is Thread.interrupted in OJDK's Thread implementation.
+		 * In JDK19+, OJDK's Thread implementation is used. If the mounted thread is
+		 * suspended, only set Thread.interrupted to TRUE and do not wake/interrupt
+		 * the thread.
+		 */
+		&& (0 == isSuspended)
+#endif /* JAVA_SPEC_VERSION >= 19 */
+		) {
+			void (*sidecarInterruptFunction)(J9VMThread*) = vm->sidecarInterruptFunction;
 			if (NULL != sidecarInterruptFunction) {
 				sidecarInterruptFunction(targetThread);
 			}
