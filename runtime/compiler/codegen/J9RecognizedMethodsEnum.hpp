@@ -1186,6 +1186,7 @@
    java_lang_StringCoding_StringDecoder_decode,
    java_lang_StringCoding_StringEncoder_encode,
    java_lang_StringCoding_implEncodeISOArray,
+   java_lang_StringCoding_implEncodeAsciiArray,
    java_lang_StringCoding_encode8859_1,
    java_lang_StringCoding_encodeASCII,
    java_lang_StringCoding_encodeUTF8,
