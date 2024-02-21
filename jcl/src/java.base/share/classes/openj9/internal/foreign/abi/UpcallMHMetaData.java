@@ -34,15 +34,19 @@ import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment.Scope;
+import jdk.internal.foreign.MemorySessionImpl;
 import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.LinkerOptions;
-import jdk.internal.foreign.MemorySessionImpl;
 /*[ELSE] JAVA_SPEC_VERSION >= 21 */
 import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
 /*[ENDIF] JAVA_SPEC_VERSION >= 21 */
+
+/*[IF JAVA_SPEC_VERSION >= 22]*/
+import static java.lang.foreign.ValueLayout.*;
+/*[ENDIF] JAVA_SPEC_VERSION >= 22 */
 
 /**
  * The meta data consists of the callee MH and a cache of 2 elements for MH resolution,
@@ -127,11 +131,15 @@ final class UpcallMHMetaData {
 	 * The method is shared in downcall and upcall.
 	 */
 	/*[IF JAVA_SPEC_VERSION >= 21]*/
-	static void validateNativeArgRetSegmentOfPtr(MemorySegment argRetSegmentOfPtr) {
+	static void validateNativeArgRetSegmentOfPtr(MemorySegment argRetSegmentOfPtr, LinkerOptions options) {
 		if (argRetSegmentOfPtr == null) {
 			throw new NullPointerException("A null pointer is not allowed.");
 		}
-		if (!argRetSegmentOfPtr.isNative()) {
+		if (!argRetSegmentOfPtr.isNative()
+		/*[IF JAVA_SPEC_VERSION >= 22]*/
+			&& !options.allowsHeapAccess()
+		/*[ENDIF] JAVA_SPEC_VERSION >= 22 */
+		) {
 			throw new IllegalArgumentException("Heap segment not allowed: " + argRetSegmentOfPtr);
 		}
 	}
