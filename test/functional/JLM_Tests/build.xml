@@ -80,6 +80,7 @@
 						<pathelement location="${LIB_DIR}/commons-exec.jar" />
 						<pathelement location="${TEST_JDK_HOME}/lib/tools.jar" />
 					</classpath>
+					<exclude name="${excludeTestCRaCMXBean}" />
 				</javac>
 			</then>
 			<else>
