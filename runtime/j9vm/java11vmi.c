@@ -142,34 +142,43 @@ hashPackageTableDelete(J9VMThread * currentThread, J9ClassLoader * classLoader, 
 	return rc;
 }
 
-/** @todo The strings below need to be NLS and also provide more debug info */
+/** @todo The strings below need to be NLS and also provide more debug info. */
 static void
-throwExceptionHelper(J9VMThread * currentThread, UDATA errCode)
+throwExceptionHelper(J9VMThread *currentThread, UDATA errCode)
 {
-	J9JavaVM const * const vm = currentThread->javaVM;
-	J9InternalVMFunctions const * const vmFuncs = vm->internalVMFunctions;
-
-	J9_DECLARE_CONSTANT_UTF8(errGeneralFailure, "general failure");
-	J9_DECLARE_CONSTANT_UTF8(errPackageAlreadyDefined, "a package in the list has already been define");
-	J9_DECLARE_CONSTANT_UTF8(errModuleAlreadyDefined, "the module has already been defined");
-	J9_DECLARE_CONSTANT_UTF8(errHashTableOperationFailed, "hash operation failed");
-	J9_DECLARE_CONSTANT_UTF8(errDuplicatePackageInList, "the list contains duplicate packages");
-	J9_DECLARE_CONSTANT_UTF8(errModuleWasntFound, "module was not found");
-	J9_DECLARE_CONSTANT_UTF8(errPackageWasntFound, "package was not found");
-
-	static J9UTF8 const * const errMessages[] = {
-		NULL,                                  /* ERRCODE_SUCCESS */
-		(J9UTF8*)&errGeneralFailure,           /* ERRCODE_GENERAL_FAILURE */
-		(J9UTF8*)&errPackageAlreadyDefined,    /* ERRCODE_PACKAGE_ALREADY_DEFINED */
-		(J9UTF8*)&errModuleAlreadyDefined,     /* ERRCODE_MODULE_ALREADY_DEFINED */
-		(J9UTF8*)&errHashTableOperationFailed, /* ERRCODE_HASHTABLE_OPERATION_FAILED */
-		(J9UTF8*)&errDuplicatePackageInList,   /* ERRCODE_DUPLICATE_PACKAGE_IN_LIST */
-		(J9UTF8*)&errModuleWasntFound,         /* ERRCODE_MODULE_WASNT_FOUND */
-		(J9UTF8*)&errPackageWasntFound         /* ERRCODE_PACKAGE_WASNT_FOUND */
-	};
-
 	if (ERRCODE_SUCCESS != errCode) {
-		vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, (const char*)errMessages[errCode]);
+		J9JavaVM const * const vm = currentThread->javaVM;
+		J9InternalVMFunctions const * const vmFuncs = vm->internalVMFunctions;
+		const char *msg = NULL;
+
+		switch (errCode) {
+		case ERRCODE_GENERAL_FAILURE:
+			msg = "general failure";
+			break;
+		case ERRCODE_PACKAGE_ALREADY_DEFINED:
+			msg = "a package in the list has already been defined";
+			break;
+		case ERRCODE_MODULE_ALREADY_DEFINED:
+			msg = "the module has already been defined";
+			break;
+		case ERRCODE_HASHTABLE_OPERATION_FAILED:
+			msg = "hash operation failed";
+			break;
+		case ERRCODE_DUPLICATE_PACKAGE_IN_LIST:
+			msg = "the list contains duplicate packages";
+			break;
+		case ERRCODE_MODULE_WASNT_FOUND:
+			msg = "module was not found";
+			break;
+		case ERRCODE_PACKAGE_WASNT_FOUND:
+			msg = "package was not found";
+			break;
+		default:
+			Assert_SC_unreachable();
+			break;
+		}
+
+		vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, msg);
 	}
 }
 
