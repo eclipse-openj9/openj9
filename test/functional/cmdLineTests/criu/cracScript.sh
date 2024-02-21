@@ -49,7 +49,11 @@ if [ "$8" != true ]; then
     done
 fi
 
-cat testOutput criuOutput;
+if [ -e criuOutput ]; then
+    cat testOutput criuOutput
+else
+    cat testOutput
+fi
 
 if  [ "$8" != true ]; then
     if [ "$9" != true ]; then

@@ -28,6 +28,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
+import jdk.crac.management.CRaCMXBean;
 
 import openj9.internal.criu.InternalCRIUSupport;
 
@@ -64,6 +67,18 @@ public class TestJDKCRAC extends AttachApiTest {
 			case "JDK.checkpoint":
 				testJDKCRaC.testJcmdCheckpoint(test);
 				break;
+			case "testCRaCMXBeanGetUptimeSinceRestore":
+				testJDKCRaC.testCRaCMXBeanGetUptimeSinceRestore();
+				break;
+			case "testCRaCMXBeanGetRestoreTime":
+				testJDKCRaC.testCRaCMXBeanGetRestoreTime();
+				break;
+			case "testCRaCMXBeanGetObjectName":
+				testJDKCRaC.testCRaCMXBeanGetObjectName();
+				break;
+			case "testCRaCMXBeanGetObjectNameThrowsInternalError":
+				testJDKCRaC.testCRaCMXBeanGetObjectNameThrowsInternalError();
+				break;
 			default:
 				throw new RuntimeException("incorrect test name");
 			}
@@ -71,9 +86,7 @@ public class TestJDKCRAC extends AttachApiTest {
 	}
 
 	private void testJDKCheckpoint() throws Exception {
-		CRIUTestUtils.showThreadCurrentTime("Pre-checkpoint - jdk.crac.Core.checkpointRestore()");
-		jdk.crac.Core.checkpointRestore();
-		CRIUTestUtils.showThreadCurrentTime("Post-checkpoint - jdk.crac.Core.checkpointRestore()");
+		checkpointRestore();
 	}
 
 	private void testJcmdCheckpoint(String command) throws IOException {
@@ -92,5 +105,115 @@ public class TestJDKCRAC extends AttachApiTest {
 		Optional<String> searchResult = StringUtilities.searchSubstring(expectedString, jcmdOutput);
 		System.out.println("jcmdOutput = " + jcmdOutput);
 		assertTrue(searchResult.isPresent(), ERROR_EXPECTED_STRING_NOT_FOUND + " in jcmd output: " + expectedString);
+	}
+
+	private void testCRaCMXBeanGetUptimeSinceRestore() throws Exception {
+		CRaCMXBean cracMXBean = CRaCMXBean.getCRaCMXBean();
+		long uptimeSinceRestore = cracMXBean.getUptimeSinceRestore();
+		if (uptimeSinceRestore != -1) {
+			System.out.println("FAILED: CRaCMXBean.getUptimeSinceRestore() - " + uptimeSinceRestore
+					+ " is not -1 before restore");
+		}
+		long beforeCheckpointTime = System.currentTimeMillis();
+		checkpointRestore();
+		uptimeSinceRestore = cracMXBean.getUptimeSinceRestore();
+		long afterRestoreTime = System.currentTimeMillis();
+		long uptimeSinceRestoreLowerBound = 0;
+		long uptimeSinceRestoreUpperBound = afterRestoreTime - beforeCheckpointTime;
+		if (uptimeSinceRestoreLowerBound >= uptimeSinceRestore) {
+			System.out.println("FAILED: CRaCMXBean.getUptimeSinceRestore() - " + uptimeSinceRestore
+					+ " is less than or equal to uptimeSinceRestoreLowerBound - " + uptimeSinceRestoreLowerBound);
+		} else if (uptimeSinceRestore >= uptimeSinceRestoreUpperBound) {
+			System.out.println("FAILED: CRaCMXBean.getUptimeSinceRestore() - " + uptimeSinceRestore
+					+ " is more than or equal to uptimeSinceRestoreUpperBound - " + uptimeSinceRestoreUpperBound);
+		} else {
+			System.out.println("PASSED: CRaCMXBean.getUptimeSinceRestore() - " + uptimeSinceRestore
+					+ " is between uptimeSinceRestoreLowerBound - " + uptimeSinceRestoreLowerBound
+					+ " and uptimeSinceRestoreUpperBound - " + uptimeSinceRestoreUpperBound);
+		}
+	}
+
+	private void testCRaCMXBeanGetRestoreTime() throws Exception {
+		CRaCMXBean cracMXBean = CRaCMXBean.getCRaCMXBean();
+		long restoreTime = cracMXBean.getRestoreTime();
+		if (restoreTime != -1) {
+			System.out.println("FAILED: CRaCMXBean.getRestoreTime() - " + restoreTime
+					+ " is not -1 before restore");
+		}
+		long beforeCheckpointTime = System.currentTimeMillis();
+		checkpointRestore();
+		restoreTime = cracMXBean.getRestoreTime();
+		long afterRestoreTime = System.currentTimeMillis();
+		if (beforeCheckpointTime >= restoreTime) {
+			System.out.println("FAILED: CRaCMXBean.getRestoreTime() - " + restoreTime
+					+ " is less than or equal to beforeCheckpointTime - " + beforeCheckpointTime);
+		} else if (restoreTime >= afterRestoreTime) {
+			System.out.println("FAILED: CRaCMXBean.getRestoreTime() - " + restoreTime
+					+ " is more than or equal to afterRestoreTime - " + afterRestoreTime);
+		} else {
+			System.out.println("PASSED: CRaCMXBean.getRestoreTime() - " + restoreTime
+					+ " is between beforeCheckpointTime - " + beforeCheckpointTime
+					+ " and afterRestoreTime - " + afterRestoreTime);
+		}
+	}
+
+	private void testCRaCMXBeanGetObjectName() throws Exception {
+		CRaCMXBean cracMXBean = CRaCMXBean.getCRaCMXBean();
+		ObjectName objectName = cracMXBean.getObjectName();
+		if (objectName == null) {
+			System.out.println("FAILED: CRaCMXBean.getObjectName() - " + objectName + " is null");
+		}
+		String objectNameString = objectName.toString();
+		if (!objectNameString.equals(CRaCMXBean.CRAC_MXBEAN_NAME)) {
+			System.out.println("FAILED: CRaCMXBean.getObjectName().toString() - " + objectNameString
+					+ " is not CRaCMXBean.CRAC_MXBEAN_NAME - " + CRaCMXBean.CRAC_MXBEAN_NAME);
+		} else {
+			System.out.println("PASSED: CRaCMXBean.getObjectName() - " + objectName + " is valid");
+		}
+	}
+
+	private void testCRaCMXBeanGetObjectNameThrowsInternalError() throws Exception {
+		String malformedCRaCMXBeanName = "InvalidObjectName!@#";
+		CRaCMXBean cracMXBean = new TestCRaCMXBeanImpl(malformedCRaCMXBeanName);
+		try {
+			ObjectName objectName = cracMXBean.getObjectName();
+			System.out.println("FAILED: CRaCMXBean.getObjectName() - " + objectName
+					+ " did not throw InternalError with malformedCRaCMXBeanName - " + malformedCRaCMXBeanName);
+		} catch (InternalError e) {
+			System.out.println("PASSED: CRaCMXBean.getObjectName() threw InternalError with malformedCRaCMXBeanName - " + malformedCRaCMXBeanName);
+		}
+	}
+
+	private static void checkpointRestore() throws Exception {
+		CRIUTestUtils.showThreadCurrentTime("Pre-checkpoint - jdk.crac.Core.checkpointRestore()");
+		jdk.crac.Core.checkpointRestore();
+		CRIUTestUtils.showThreadCurrentTime("Post-checkpoint - jdk.crac.Core.checkpointRestore()");
+	}
+
+	private static class TestCRaCMXBeanImpl implements CRaCMXBean {
+		private final String malformedCRaCMXBeanName;
+
+		public TestCRaCMXBeanImpl(String malformedCRaCMXBeanName) {
+			this.malformedCRaCMXBeanName = malformedCRaCMXBeanName;
+		}
+
+		@Override
+		public long getUptimeSinceRestore() {
+			return -1;
+		}
+
+		@Override
+		public long getRestoreTime() {
+			return -1;
+		}
+
+		@Override
+		public ObjectName getObjectName() {
+			try {
+				return ObjectName.getInstance(malformedCRaCMXBeanName);
+			} catch (MalformedObjectNameException e) {
+				throw new InternalError(e);
+			}
+		}
 	}
 }
