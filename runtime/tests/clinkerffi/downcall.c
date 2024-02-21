@@ -713,7 +713,7 @@ add3ByteStructs_returnStruct(stru_3_Bytes arg1, stru_3_Bytes arg2)
 short
 addCharAndCharsFromStruct(short arg1, stru_2_Chars arg2)
 {
-	short result = arg1 + arg2.elem1 + arg2.elem2 - 2 * 'A';
+	short result = arg1 + arg2.elem1 + arg2.elem2 - (2 * 'A');
 	return result;
 }
 
@@ -728,7 +728,7 @@ addCharAndCharsFromStruct(short arg1, stru_2_Chars arg2)
 short
 addCharFromPointerAndCharsFromStruct(short *arg1, stru_2_Chars arg2)
 {
-	short result = *arg1 + arg2.elem1 + arg2.elem2 - 2 * 'A';
+	short result = *arg1 + arg2.elem1 + arg2.elem2 - (2 * 'A');
 	return result;
 }
 
@@ -743,7 +743,7 @@ addCharFromPointerAndCharsFromStruct(short *arg1, stru_2_Chars arg2)
 short *
 addCharFromPointerAndCharsFromStruct_returnCharPointer(short *arg1, stru_2_Chars arg2)
 {
-	*arg1 = *arg1 + arg2.elem1 + arg2.elem2 - 2 * 'A';
+	*arg1 = *arg1 + arg2.elem1 + arg2.elem2 - (2 * 'A');
 	return arg1;
 }
 
@@ -758,7 +758,7 @@ addCharFromPointerAndCharsFromStruct_returnCharPointer(short *arg1, stru_2_Chars
 short
 addCharAndCharsFromStructPointer(short arg1, stru_2_Chars *arg2)
 {
-	short result = arg1 + arg2->elem1 + arg2->elem2 - 2 * 'A';
+	short result = arg1 + arg2->elem1 + arg2->elem2 - (2 * 'A');
 	return result;
 }
 
@@ -773,7 +773,7 @@ addCharAndCharsFromStructPointer(short arg1, stru_2_Chars *arg2)
 short
 addCharAndCharsFromNestedStruct(short arg1, stru_NestedStruct_Char arg2)
 {
-	short result = arg1 + arg2.elem2 + arg2.elem1.elem1 + arg2.elem1.elem2 - 3 * 'A';
+	short result = arg1 + arg2.elem2 + arg2.elem1.elem1 + arg2.elem1.elem2 - (3 * 'A');
 	return result;
 }
 
@@ -788,7 +788,7 @@ addCharAndCharsFromNestedStruct(short arg1, stru_NestedStruct_Char arg2)
 short
 addCharAndCharsFromNestedStruct_reverseOrder(short arg1, stru_Char_NestedStruct arg2)
 {
-	short result = arg1 + arg2.elem1 + arg2.elem2.elem1 + arg2.elem2.elem2 - 3 * 'A';
+	short result = arg1 + arg2.elem1 + arg2.elem2.elem1 + arg2.elem2.elem2 - (3 * 'A');
 	return result;
 }
 
@@ -803,7 +803,7 @@ addCharAndCharsFromNestedStruct_reverseOrder(short arg1, stru_Char_NestedStruct 
 short
 addCharAndCharsFromStructWithNestedCharArray(short arg1, stru_NestedCharArray_Char arg2)
 {
-	short result = arg1 + arg2.elem1[0] + arg2.elem1[1] + arg2.elem2 - 3 * 'A';
+	short result = arg1 + arg2.elem1[0] + arg2.elem1[1] + arg2.elem2 - (3 * 'A');
 	return result;
 }
 
@@ -818,7 +818,7 @@ addCharAndCharsFromStructWithNestedCharArray(short arg1, stru_NestedCharArray_Ch
 short
 addCharAndCharsFromStructWithNestedCharArray_reverseOrder(short arg1, stru_Char_NestedCharArray arg2)
 {
-	short result = arg1 + arg2.elem2[0] + arg2.elem2[1] + arg2.elem1 - 3 * 'A';
+	short result = arg1 + arg2.elem2[0] + arg2.elem2[1] + arg2.elem1 - (3 * 'A');
 	return result;
 }
 
@@ -835,7 +835,7 @@ addCharAndCharsFromStructWithNestedStructArray(short arg1, stru_NestedStruArray_
 {
 	short result = arg1 + arg2.elem2
 			+ arg2.elem1[0].elem1 + arg2.elem1[0].elem2
-			+ arg2.elem1[1].elem1 + arg2.elem1[1].elem2 - 5 * 'A';
+			+ arg2.elem1[1].elem1 + arg2.elem1[1].elem2 - (5 * 'A');
 	return result;
 }
 
@@ -852,7 +852,7 @@ addCharAndCharsFromStructWithNestedStructArray_reverseOrder(short arg1, stru_Cha
 {
 	short result = arg1 + arg2.elem1
 			+ arg2.elem2[0].elem1 + arg2.elem2[0].elem2
-			+ arg2.elem2[1].elem1 + arg2.elem2[1].elem2 - 5 * 'A';
+			+ arg2.elem2[1].elem1 + arg2.elem2[1].elem2 - (5 * 'A');
 	return result;
 }
 
@@ -2367,7 +2367,7 @@ add3ByteUnions_returnUnion(union_3_Bytes arg1, union_3_Bytes arg2)
 short
 addCharAndCharsFromUnion(short arg1, union_2_Chars arg2)
 {
-	short result = arg1 + arg2.elem1 + arg2.elem2 - 2 * 'A';
+	short result = arg1 + arg2.elem1 + arg2.elem2 - (2 * 'A');
 	return result;
 }
 
@@ -2382,7 +2382,7 @@ addCharAndCharsFromUnion(short arg1, union_2_Chars arg2)
 short
 addCharAndCharsFromUnionPtr(short arg1, union_2_Chars *arg2)
 {
-	short result = arg1 + arg2->elem1 + arg2->elem2 - 2 * 'A';
+	short result = arg1 + arg2->elem1 + arg2->elem2 - (2 * 'A');
 	return result;
 }
 
@@ -2397,7 +2397,7 @@ addCharAndCharsFromUnionPtr(short arg1, union_2_Chars *arg2)
 short
 addCharAndCharsFromNestedUnion(short arg1, union_NestedUnion_Char arg2)
 {
-	short result = arg1 + arg2.elem2 + arg2.elem1.elem1 + arg2.elem1.elem2 - 3 * 'A';
+	short result = arg1 + arg2.elem2 + arg2.elem1.elem1 + arg2.elem1.elem2 - (3 * 'A');
 	return result;
 }
 
@@ -2412,7 +2412,7 @@ addCharAndCharsFromNestedUnion(short arg1, union_NestedUnion_Char arg2)
 short
 addCharAndCharsFromNestedUnion_reverseOrder(short arg1, union_Char_NestedUnion arg2)
 {
-	short result = arg1 + arg2.elem1 + arg2.elem2.elem1 + arg2.elem2.elem2 - 3 * 'A';
+	short result = arg1 + arg2.elem1 + arg2.elem2.elem1 + arg2.elem2.elem2 - (3 * 'A');
 	return result;
 }
 
@@ -2427,7 +2427,7 @@ addCharAndCharsFromNestedUnion_reverseOrder(short arg1, union_Char_NestedUnion a
 short
 addCharAndCharsFromUnionWithNestedCharArray(short arg1, union_NestedCharArray_Char arg2)
 {
-	short result = arg1 + arg2.elem1[0] + arg2.elem1[1] + arg2.elem2 - 3 * 'A';
+	short result = arg1 + arg2.elem1[0] + arg2.elem1[1] + arg2.elem2 - (3 * 'A');
 	return result;
 }
 
@@ -2442,7 +2442,7 @@ addCharAndCharsFromUnionWithNestedCharArray(short arg1, union_NestedCharArray_Ch
 short
 addCharAndCharsFromUnionWithNestedCharArray_reverseOrder(short arg1, union_Char_NestedCharArray arg2)
 {
-	short result = arg1 + arg2.elem2[0] + arg2.elem2[1] + arg2.elem1 - 3 * 'A';
+	short result = arg1 + arg2.elem2[0] + arg2.elem2[1] + arg2.elem1 - (3 * 'A');
 	return result;
 }
 
@@ -2459,7 +2459,7 @@ addCharAndCharsFromUnionWithNestedUnionArray(short arg1, union_NestedUnionArray_
 {
 	short result = arg1 + arg2.elem2
 			+ arg2.elem1[0].elem1 + arg2.elem1[0].elem2
-			+ arg2.elem1[1].elem1 + arg2.elem1[1].elem2 - 5 * 'A';
+			+ arg2.elem1[1].elem1 + arg2.elem1[1].elem2 - (5 * 'A');
 	return result;
 }
 
@@ -2476,7 +2476,7 @@ addCharAndCharsFromUnionWithNestedUnionArray_reverseOrder(short arg1, union_Char
 {
 	short result = arg1 + arg2.elem1
 			+ arg2.elem2[0].elem1 + arg2.elem2[0].elem2
-			+ arg2.elem2[1].elem1 + arg2.elem2[1].elem2 - 5 * 'A';
+			+ arg2.elem2[1].elem1 + arg2.elem2[1].elem2 - (5 * 'A');
 	return result;
 }
 
@@ -4010,7 +4010,7 @@ add2ByteUnions_returnUnion_Nested2ByteStruct(union_Byte_NestedStruct_2_Bytes arg
 short
 addCharAndCharsFromStruct_Nested2CharUnion(short arg1, stru_Char_NestedUnion_2_Chars arg2)
 {
-	short result = arg1 + arg2.elem1 + arg2.elem2.elem1 + arg2.elem2.elem2 - 3 * 'A';
+	short result = arg1 + arg2.elem1 + arg2.elem2.elem1 + arg2.elem2.elem2 - (3 * 'A');
 	return result;
 }
 
@@ -4024,7 +4024,7 @@ addCharAndCharsFromStruct_Nested2CharUnion(short arg1, stru_Char_NestedUnion_2_C
 short
 addCharAndCharsFromUnion_Nested2CharStruct(short arg1, union_Char_NestedStruct_2_Chars arg2)
 {
-	short result = arg1 + arg2.elem1 + arg2.elem2.elem1 + arg2.elem2.elem2 - 3 * 'A';
+	short result = arg1 + arg2.elem1 + arg2.elem2.elem1 + arg2.elem2.elem2 - (3 * 'A');
 	return result;
 }
 
@@ -4039,7 +4039,7 @@ short
 addCharAndCharsFromUnion_Nested4CharStruct(short arg1, union_Char_NestedStruct_4_Chars arg2)
 {
 	short result = arg1 + arg2.elem1 + arg2.elem2.elem1
-			+ arg2.elem2.elem2 + arg2.elem2.elem3 + arg2.elem2.elem4 - 5 * 'A';
+			+ arg2.elem2.elem2 + arg2.elem2.elem3 + arg2.elem2.elem4 - (5 * 'A');
 	return result;
 }
 
@@ -4524,4 +4524,148 @@ addIntAndShortsFromUnion_Nested4ShortStruct(int arg1, union_Int_NestedStruct_4_S
 	int intSum = arg1 + arg2.elem2.elem1
 			+ arg2.elem2.elem2 + arg2.elem2.elem3 + + arg2.elem2.elem4;
 	return intSum;
+}
+
+/**
+ * Get a new struct by adding each boolean element of three structs
+ * (dereferenced from pointers) with two booleans.
+ *
+ * @param arg1 a pointer to on-heap struct with two booleans
+ * @param arg2 a pointer to off-heap struct with two booleans
+ * @param arg3 a pointer to on-heap struct with two booleans
+ * @return a struct with two booleans
+ */
+stru_2_Bools
+addBoolsFromMultipleStructPtrs_returnStruct(stru_2_Bools *arg1, stru_2_Bools *arg2, stru_2_Bools *arg3)
+{
+	stru_2_Bools boolStruct;
+	boolStruct.elem1 = arg1->elem1 ^ arg2->elem1 ^ arg3->elem1;
+	boolStruct.elem2 = arg1->elem2 ^ arg2->elem2 ^ arg3->elem2;
+	return boolStruct;
+}
+
+/**
+ * Get a new struct by adding each byte element of three structs
+ * (dereferenced from pointers) with two bytes.
+ *
+ * @param arg1 a pointer to on-heap struct with two bytes
+ * @param arg2 a pointer to off-heap struct with two bytes
+ * @param arg3 a pointer to on-heap struct with two bytes
+ * @return a struct with two bytes
+ */
+stru_2_Bytes
+addBytesFromMultipleStructPtrs_returnStruct(stru_2_Bytes *arg1, stru_2_Bytes *arg2, stru_2_Bytes *arg3)
+{
+	stru_2_Bytes byteStruct;
+	byteStruct.elem1 = arg1->elem1 + arg2->elem1 + arg3->elem1;
+	byteStruct.elem2 = arg1->elem2 + arg2->elem2 + arg3->elem2;
+	return byteStruct;
+}
+
+/**
+ * Get a new struct by adding each char element of three structs
+ * (dereferenced from pointers) with two chars.
+ *
+ * @param arg1 a pointer to on-heap struct with two chars
+ * @param arg2 a pointer to off-heap struct with two chars
+ * @param arg3 a pointer to on-heap struct with two chars
+ * @return a struct with two chars
+ */
+stru_2_Chars
+addCharsFromMultipleStructPtrs_returnStruct(stru_2_Chars *arg1, stru_2_Chars *arg2, stru_2_Chars *arg3)
+{
+	stru_2_Chars charStruct;
+	charStruct.elem1 = arg1->elem1 + arg2->elem1 + arg3->elem1 - (2 * 'A');
+	charStruct.elem2 = arg1->elem2 + arg2->elem2 + arg3->elem2 - (2 * 'A');
+	return charStruct;
+}
+
+/**
+ * Get a new struct by adding each short element of three structs
+ * (dereferenced from pointers) with two shorts.
+ *
+ * @param arg1 a pointer to on-heap struct with two shorts
+ * @param arg2 a pointer to off-heap struct with two shorts
+ * @param arg3 a pointer to on-heap struct with two shorts
+ * @return a struct with two shorts
+ */
+stru_2_Shorts
+addShortsFromMultipleStructPtrs_returnStruct(stru_2_Shorts *arg1, stru_2_Shorts *arg2, stru_2_Shorts *arg3)
+{
+	stru_2_Shorts shortStruct;
+	shortStruct.elem1 = arg1->elem1 + arg2->elem1 + arg3->elem1;
+	shortStruct.elem2 = arg1->elem2 + arg2->elem2 + arg3->elem2;
+	return shortStruct;
+}
+
+/**
+ * Get a new struct by adding each integer element of three structs
+ * (dereferenced from pointers) with two integers.
+ *
+ * @param arg1 a pointer to on-heap struct with two integers
+ * @param arg2 a pointer to off-heap struct with two integers
+ * @param arg3 a pointer to on-heap struct with two integers
+ * @return a struct with two integers
+ */
+stru_2_Ints
+addIntsFromMultipleStructPtrs_returnStruct(stru_2_Ints *arg1, stru_2_Ints *arg2, stru_2_Ints *arg3)
+{
+	stru_2_Ints intStruct;
+	intStruct.elem1 = arg1->elem1 + arg2->elem1 + arg3->elem1;
+	intStruct.elem2 = arg1->elem2 + arg2->elem2 + arg3->elem2;
+	return intStruct;
+}
+
+/**
+ * Get a new struct by adding each long element of three structs
+ * (dereferenced from pointers) with two longs.
+ *
+ * @param arg1 a pointers to on-heap struct with two longs
+ * @param arg2 a pointers to off-heap struct with two longs
+ * @param arg3 a pointers to on-heap struct with two longs
+ * @return a struct with two longs
+ */
+stru_2_Longs
+addLongsFromMultipleStructPtrs_returnStruct(stru_2_Longs *arg1, stru_2_Longs *arg2, stru_2_Longs *arg3)
+{
+	stru_2_Longs longStruct;
+	longStruct.elem1 = arg1->elem1 + arg2->elem1 + arg3->elem1;
+	longStruct.elem2 = arg1->elem2 + arg2->elem2 + arg3->elem2;
+	return longStruct;
+}
+
+/**
+ * Get a new struct by adding each float element of three structs
+ * (dereferenced from pointers) with two floats.
+ *
+ * @param arg1 a pointers to on-heap struct with two floats
+ * @param arg2 a pointers to off-heap struct with two floats
+ * @param arg3 a pointers to on-heap struct with two floats
+ * @return a struct with two floats
+ */
+stru_2_Floats
+addFloatsFromMultipleStructPtrs_returnStruct(stru_2_Floats *arg1, stru_2_Floats *arg2, stru_2_Floats *arg3)
+{
+	stru_2_Floats floatStruct;
+	floatStruct.elem1 = arg1->elem1 + arg2->elem1 + arg3->elem1;
+	floatStruct.elem2 = arg1->elem2 + arg2->elem2 + arg3->elem2;
+	return floatStruct;
+}
+
+/**
+ * Get a new struct by adding each double element of three structs
+ * (dereferenced from pointers) with two doubles.
+ *
+ * @param arg1 a pointers to on-heap struct with two doubles
+ * @param arg2 a pointers to off-heap struct with two doubles
+ * @param arg3 a pointers to on-heap struct with two doubles
+ * @return a struct with two doubles
+ */
+stru_2_Doubles
+addDoublesFromMultipleStructPtrs_returnStruct(stru_2_Doubles *arg1, stru_2_Doubles *arg2, stru_2_Doubles *arg3)
+{
+	stru_2_Doubles doubleStruct;
+	doubleStruct.elem1 = arg1->elem1 + arg2->elem1 + arg3->elem1;
+	doubleStruct.elem2 = arg1->elem2 + arg2->elem2 + arg3->elem2;
+	return doubleStruct;
 }

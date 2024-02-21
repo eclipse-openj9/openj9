@@ -301,13 +301,4 @@ public class PrimitiveTypeTests2 {
 		MemorySegment formatSegmt = arena.allocateFrom("\n%d + %d = %d\n");
 		mh.invoke(functionSymbol, formatSegmt, 15, 27, 42);
 	}
-
-	@Test
-	public void test_validateTrivialOption_2() throws Throwable {
-		FunctionDescriptor fd = FunctionDescriptor.of(JAVA_INT, JAVA_INT);
-		MemorySegment functionSymbol = nativeLibLookup.find("validateTrivialOption").get();
-		MethodHandle mh = linker.downcallHandle(fd, Linker.Option.critical(false));
-		int result = (int)mh.invokeExact(functionSymbol, 111);
-		Assert.assertEquals(result, 111);
-	}
 }
