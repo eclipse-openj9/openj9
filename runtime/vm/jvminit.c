@@ -1995,8 +1995,10 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 #if (defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390) || defined(J9VM_ARCH_POWER) || defined(J9VM_ARCH_AARCH64))
 				IDATA argIndexXXPortableSharedCache = 0;
 				IDATA argIndexXXNoPortableSharedCache = 0;
+#if defined(J9VM_OPT_JITSERVER)
 				IDATA argIndexXXJITServerAOTCache = 0;
 				IDATA argIndexXXNoJITServerAOTCache = 0;
+#endif /* defined(J9VM_OPT_JITSERVER) */
 #endif /* defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390) || defined(J9VM_ARCH_POWER) || defined(J9VM_ARCH_AARCH64) */
 
 				vm->sharedClassPreinitConfig = NULL;
