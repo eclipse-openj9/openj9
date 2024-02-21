@@ -73,6 +73,9 @@ exports jdk.crac;
 exports jdk.internal.misc to
     openj9.criu;
 exports openj9.internal.criu to
+/*[IF CRAC_SUPPORT]*/
+    jdk.management,
+/*[ENDIF] CRAC_SUPPORT */
     openj9.criu;
 exports openj9.internal.criu.security to
     openj9.criu;

@@ -774,6 +774,12 @@ public final class ManagementUtils {
 				.addInterface(openj9.lang.management.OpenJ9DiagnosticsMXBean.class)
 				.validateAndRegister();
 
+/*[IF CRAC_SUPPORT]*/
+			create(jdk.crac.management.CRaCMXBean.CRAC_MXBEAN_NAME, jdk.crac.management.CRaCMXBeanImpl.getInstance())
+				.addInterface(jdk.crac.management.CRaCMXBean.class)
+				.validateAndRegister();
+/*[ENDIF] CRAC_SUPPORT */
+
 			// Register standard optional beans for JDK8.
 			create(ManagementFactory.COMPILATION_MXBEAN_NAME, CompilationMXBeanImpl.getInstance())
 				.addInterface(java.lang.management.CompilationMXBean.class)
