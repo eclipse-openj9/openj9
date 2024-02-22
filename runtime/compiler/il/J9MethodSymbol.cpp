@@ -541,6 +541,94 @@ J9::MethodSymbol::safeToSkipNonNullableArrayNullStoreCheck()
    return false;
    }
 
+static TR::RecognizedMethod canSkipFlattenableArrayElementNonHelperCall[] = {
+   TR::java_lang_invoke_CollectHandle_invokeExact,
+   TR::java_util_ArrayList_add,
+   TR::java_util_ArrayList_ensureCapacity,
+   TR::java_util_ArrayList_remove,
+   TR::java_util_ArrayList_set,
+   TR::java_util_Hashtable_get,
+   TR::java_util_Hashtable_put,
+   TR::java_util_Hashtable_clone,
+   TR::java_util_Hashtable_putAll,
+   TR::java_util_Hashtable_rehash,
+   TR::java_util_Hashtable_remove,
+   TR::java_util_Hashtable_contains,
+   TR::java_util_Hashtable_getEntry,
+   TR::java_util_Hashtable_getEnumeration,
+   TR::java_util_Hashtable_elements,
+   TR::java_util_HashtableHashEnumerator_hasMoreElements,
+   TR::java_util_HashtableHashEnumerator_nextElement,
+   TR::java_util_HashMap_rehash,
+   TR::java_util_HashMap_analyzeMap,
+   TR::java_util_HashMap_calculateCapacity,
+   TR::java_util_HashMap_findNullKeyEntry,
+   TR::java_util_HashMap_get,
+   TR::java_util_HashMap_getNode,
+   TR::java_util_HashMap_putImpl,
+   TR::java_util_HashMap_findNonNullKeyEntry,
+   TR::java_util_HashMap_resize,
+   TR::java_util_HashMap_prepareArray,
+   TR::java_util_HashMap_keysToArray,
+   TR::java_util_HashMap_valuesToArray,
+   TR::java_util_HashMapHashIterator_nextNode,
+   TR::java_util_HashMapHashIterator_init,
+   TR::java_util_Vector_addElement,
+   TR::java_util_Vector_contains,
+   TR::java_util_Vector_subList,
+   TR::java_util_concurrent_ConcurrentHashMap_addCount,
+   TR::java_util_concurrent_ConcurrentHashMap_tryPresize,
+   TR::java_util_concurrent_ConcurrentHashMap_transfer,
+   TR::java_util_concurrent_ConcurrentHashMap_fullAddCount,
+   TR::java_util_concurrent_ConcurrentHashMap_helpTransfer,
+   TR::java_util_concurrent_ConcurrentHashMap_initTable,
+   TR::java_util_concurrent_ConcurrentHashMap_tabAt,
+   TR::java_util_concurrent_ConcurrentHashMap_casTabAt,
+   TR::java_util_concurrent_ConcurrentHashMap_setTabAt,
+   TR::java_util_concurrent_ConcurrentHashMap_TreeBin_lockRoot,
+   TR::java_util_concurrent_ConcurrentHashMap_TreeBin_contendedLock,
+   TR::java_util_concurrent_ConcurrentHashMap_TreeBin_find,
+   TR::java_util_TreeMap_all,
+   TR::java_util_EnumMap_put,
+   TR::java_util_EnumMap_typeCheck,
+   TR::java_util_EnumMap__init_,
+   // TR::java_util_EnumMap__nec_, // Disable it for now because EnumMap.toArray might deal with null-restricted arrays which are flattenable
+   TR::java_util_HashMap_all,
+   // TR::java_util_ArrayList_all, // Disable it for now because ArrayList.toArray might deal with null-restricted arrays which are flattenable
+   TR::java_util_Hashtable_all,
+   // TR::java_util_concurrent_ConcurrentHashMap_all, // Disable it for now because ConcurrentHashMap.toArray might deal with null-restricted arrays which are flattenable
+   // TR::java_util_Vector_all, // Disable it for now because Vector.toArray might deal with null-restricted arrays which are flattenable
+
+   // The following list is identified after running sanity.functional tests
+   // TR::java_util_AbstractCollection_all, // Disable it for now because AbstractCollection.toArray might deal with null-restricted arrays which are flattenable
+   // TR::java_util_ArrayDeque_all, // Disable it for now because ArrayDeque.toArray might deal with null-restricted arrays which are flattenable
+   // TR::java_util_IdentityHashMap_all, // Disable it for now because IdentityHashMap.toArray might deal with null-restricted arrays which are flattenable
+   // TR::java_util_ImmutableCollections_all, // Disable it for now because ImmutableCollections.toArray might deal with null-restricted arrays which are flattenable
+   // TR::java_util_LinkedList_all, // Disable it for now because LinkedList.toArray might deal with null-restricted arrays which are flattenable
+   TR::java_util_Map_all,
+   TR::java_util_regex_Pattern_all,
+   TR::java_util_stream_Nodes_all,
+   TR::java_util_WeakHashMap_all,
+
+   TR::java_lang_Class_all,
+
+   TR::unknownMethod
+};
+
+bool
+J9::MethodSymbol::safeToSkipFlattenableArrayElementNonHelperCall()
+   {
+   TR::RecognizedMethod methodId = self()->getRecognizedMethod();
+   if (methodId == TR::unknownMethod)
+      return false;
+
+   for (int i = 0; canSkipFlattenableArrayElementNonHelperCall[i] != TR::unknownMethod; ++i)
+      if (canSkipFlattenableArrayElementNonHelperCall[i] == methodId)
+         return true;
+
+   return false;
+   }
+
 // Which recognized methods are known to require no checking when lowering to TR::arraycopy
 //
 static TR::RecognizedMethod canSkipChecksOnArrayCopies[] =

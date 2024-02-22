@@ -68,6 +68,7 @@ public:
    bool safeToSkipCheckCasts();
    bool safeToSkipArrayStoreChecks();
    bool safeToSkipNonNullableArrayNullStoreCheck();
+   bool safeToSkipFlattenableArrayElementNonHelperCall();
    bool safeToSkipZeroInitializationOnNewarrays();
    bool safeToSkipChecksOnArrayCopies();
 
