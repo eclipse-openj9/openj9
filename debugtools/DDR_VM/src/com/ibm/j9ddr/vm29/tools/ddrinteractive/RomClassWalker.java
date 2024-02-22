@@ -68,12 +68,15 @@ import com.ibm.j9ddr.vm29.j9.walkers.LocalVariableTable;
 import com.ibm.j9ddr.vm29.j9.walkers.LocalVariableTableIterator;
 import com.ibm.j9ddr.vm29.pointer.I32Pointer;
 import com.ibm.j9ddr.vm29.pointer.I64Pointer;
+import com.ibm.j9ddr.vm29.pointer.Pointer;
 import com.ibm.j9ddr.vm29.pointer.PointerPointer;
 import com.ibm.j9ddr.vm29.pointer.SelfRelativePointer;
 import com.ibm.j9ddr.vm29.pointer.StructurePointer;
 import com.ibm.j9ddr.vm29.pointer.U16Pointer;
 import com.ibm.j9ddr.vm29.pointer.U32Pointer;
 import com.ibm.j9ddr.vm29.pointer.U8Pointer;
+import com.ibm.j9ddr.vm29.pointer.VoidPointer;
+import com.ibm.j9ddr.vm29.pointer.generated.J9BuildFlags;
 import com.ibm.j9ddr.vm29.pointer.generated.J9EnclosingObjectPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ExceptionHandlerPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ExceptionInfoPointer;
@@ -158,7 +161,7 @@ public class RomClassWalker extends ClassWalker {
 		allSlotsInROMFieldsSectionDo();
 		allSlotsInCPShapeDescriptionDo();
 		allSlotsInOptionalInfoDo();
-
+		allSlotsInVarHandleMethodTypeLookupTableDo();
 		allSlotsInStaticSplitMethodRefIndexesDo();
 		allSlotsInSpecialSplitMethodRefIndexesDo();
 	}
@@ -773,6 +776,29 @@ public class RomClassWalker extends ClassWalker {
 			classWalkerCallback.addSection(clazz, cursor, count.longValue(), "intermediateClassDataSection", true);
 		}
 	}
+
+	void allSlotsInVarHandleMethodTypeLookupTableDo() throws CorruptDataException
+	{
+		if (J9BuildFlags.J9VM_OPT_METHOD_HANDLE && !J9BuildFlags.J9VM_OPT_OPENJDK_METHODHANDLE) {
+			try {
+				int count = romClass.varHandleMethodTypeCount().intValue();
+
+				if (count > 0) {
+					Pointer cursorVoidEA = romClass.varHandleMethodTypeLookupTableEA();
+					VoidPointer cursorVoid = SelfRelativePointer.cast(cursorVoidEA).get();
+					U16Pointer cursor = U16Pointer.cast(cursorVoid);
+
+					classWalkerCallback.addSection(clazz, cursor, count * U16.SIZEOF, "varHandleMethodTypeLookupTable", true);
+					for (int i = 0; i < count; i++) {
+						classWalkerCallback.addSlot(clazz, SlotType.J9_U16, cursor.add(i), "cpIndex");
+					}
+				}
+			} catch (NoSuchFieldException e) {
+				throw new CorruptDataException(e);
+			}
+		}
+	}
+
 	void allSlotsInStaticSplitMethodRefIndexesDo() throws CorruptDataException
 	{
 		int count = romClass.staticSplitMethodRefCount().intValue();
