@@ -1316,7 +1316,7 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-		<test>
+	<test>
 		<testCaseName>testCRaCMXBean</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
@@ -1340,7 +1340,6 @@
 		</groups>
 		<impls>
 			<impl>openj9</impl>
-			<impl>ibm</impl>
 		</impls>
 	</test>
 </playlist>
