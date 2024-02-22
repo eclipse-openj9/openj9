@@ -6063,7 +6063,7 @@ typedef struct J9JavaVM {
 
 #if JAVA_SPEC_VERSION >= 16
 #if JAVA_SPEC_VERSION >= 22
-#define J9_FFI_DOWNCALL_HEAP_ARGUMENT_ID 0x1
+#define J9_FFI_DOWNCALL_HEAP_ARGUMENT_ID J9CONST_U64(0xFFFFFFFFFFFFFFFF)
 #endif /* JAVA_SPEC_VERSION >= 22 */
 
 /* The mask for the signature type identifier */

@@ -94,7 +94,7 @@ public class InternalDowncallHandler {
 	/* The identifier denotes the passed-in argument is a heap segment which helps
 	 * extract the address from the heap argument's base object in native.
 	 */
-	private static final long DOWNCALL_HEAP_ARGUMENT_ID = 0x1;
+	private static final long DOWNCALL_HEAP_ARGUMENT_ID = 0xFFFFFFFFFFFFFFFFL;
 
 	/* The ThreadLocal holds the information of the heap argument which includes
 	 * the base object array, the offset array plus the current heap argument index

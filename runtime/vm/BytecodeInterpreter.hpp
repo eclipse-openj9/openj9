@@ -5288,7 +5288,7 @@ done:
 				/* ffi_call expects the address of the pointer is the address of the stackslot. */
 				pointerValues[i] = (U_64)ffiArgs[i];
 #if JAVA_SPEC_VERSION >= 22
-				if ((U_64)J9_FFI_DOWNCALL_HEAP_ARGUMENT_ID == pointerValues[i]) {
+				if (J9_FFI_DOWNCALL_HEAP_ARGUMENT_ID == pointerValues[i]) {
 					j9object_t heapBase = (j9object_t)J9JAVAARRAYOFOBJECT_LOAD(
 							_currentThread,
 							J9_JNI_UNWRAP_REFERENCE(_sp + 11), /* The heap base array. */
