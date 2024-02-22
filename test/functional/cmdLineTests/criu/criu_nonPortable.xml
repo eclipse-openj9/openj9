@@ -37,7 +37,9 @@
   <variable name="OPTION_SET_SECURITYMANAGER" value="-Djava.security.manager" />
   <variable name="MAINCLASS_ENVVAR_TEST" value="org.openj9.criu.EnvVarFileTest" />
   <variable name="MAINCLASS_USERNAME_TEST" value="org.openj9.criu.UsernameTest" />
+  <variable name="MAINCLASS_GHOSTFILE_TEST" value="org.openj9.criu.TestGhostFile" />
   <variable name="XDUMP_DYNAMIC" value="-Xdump:dynamic" />
+  <variable name="STD_CMD_OPTS" value="--add-exports java.base/openj9.internal.criu=ALL-UNNAMED" />
 
   <test id="Create and Restore Criu Checkpoint Image once">
     <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_SIMPLE$ 1 1 false false</command>
@@ -190,7 +192,7 @@
   </test>
 
   <test id="Create CRIU checkpoint image and restore once - testGetLastRestoreTime">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -Xtrace:print={j9vm.684-696,j9vm.699,j9vm.717-743,j9vm.746-747} --add-exports java.base/openj9.internal.criu=ALL-UNNAMED" $MAINCLASS_TIMECHANGE$ testGetLastRestoreTime 1 false false</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -Xtrace:print={j9vm.684-696,j9vm.699,j9vm.717-743,j9vm.746-747} $STD_CMD_OPTS$" $MAINCLASS_TIMECHANGE$ testGetLastRestoreTime 1 false false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="success" caseSensitive="yes" regex="no">PASSED: InternalCRIUSupport.getLastRestoreTime()</output>
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
@@ -206,7 +208,7 @@
   </test>
 
   <test id="Create CRIU checkpoint image and restore once - testGetProcessRestoreStartTime">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -Xtrace:print={j9vm.684-696,j9vm.699,j9vm.717-743,j9vm.746-747} --add-exports java.base/openj9.internal.criu=ALL-UNNAMED" $MAINCLASS_TIMECHANGE$ testGetProcessRestoreStartTime 1 false false</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -Xtrace:print={j9vm.684-696,j9vm.699,j9vm.717-743,j9vm.746-747} $STD_CMD_OPTS$" $MAINCLASS_TIMECHANGE$ testGetProcessRestoreStartTime 1 false false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="success" caseSensitive="yes" regex="no">PASSED: InternalCRIUSupport.getProcessRestoreStartTime()</output>
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
@@ -222,7 +224,7 @@
   </test>
 
   <test id="Create CRIU checkpoint image and restore once - testMXBeanUpTime">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -Xtrace:print={j9jcl.533,j9vm.684-696,j9vm.699,j9vm.717-743} --add-exports java.base/openj9.internal.criu=ALL-UNNAMED" -Xdump:java+system+jit:events=throw+systhrow,filter=org/eclipse/openj9/criu/JVMCheckpointException $MAINCLASS_TIMECHANGE$ testMXBeanUpTime 1 false false</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -Xtrace:print={j9jcl.533,j9vm.684-696,j9vm.699,j9vm.717-743} $STD_CMD_OPTS$" -Xdump:java+system+jit:events=throw+systhrow,filter=org/eclipse/openj9/criu/JVMCheckpointException $MAINCLASS_TIMECHANGE$ testMXBeanUpTime 1 false false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="success" caseSensitive="yes" regex="no">PASSED: testMXBeanUpTime()</output>
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
@@ -274,7 +276,7 @@
   </test>
 
   <test id="Create and Restore Criu Checkpoint Image once - CheckpointDeadlock">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ --add-opens java.base/jdk.internal.misc=ALL-UNNAMED  --add-exports java.base/openj9.internal.criu=ALL-UNNAMED" $MAINCLASS_DEADLOCK_TEST$ CheckpointDeadlock 1</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ --add-opens java.base/jdk.internal.misc=ALL-UNNAMED  $STD_CMD_OPTS$" $MAINCLASS_DEADLOCK_TEST$ CheckpointDeadlock 1 false false</command>
     <output type="success" caseSensitive="yes" regex="no">User requested Java dump using</output>
     <output type="success" caseSensitive="yes" regex="no">TEST PASSED</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
@@ -291,7 +293,7 @@
   </test>
 
   <test id="Create and Restore Criu Checkpoint Image once - NotCheckpointSafeDeadlock">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -XX:+ThrowOnDelayedCheckpointOperation -Xtrace:print=j9vm.731 --add-opens java.base/jdk.internal.misc=ALL-UNNAMED  --add-exports java.base/openj9.internal.criu=ALL-UNNAMED" $MAINCLASS_DEADLOCK_TEST$ NotCheckpointSafeDeadlock 1</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -XX:+ThrowOnDelayedCheckpointOperation -Xtrace:print=j9vm.731 --add-opens java.base/jdk.internal.misc=ALL-UNNAMED  $STD_CMD_OPTS$" $MAINCLASS_DEADLOCK_TEST$ NotCheckpointSafeDeadlock 1 false false</command>
     <output type="success" caseSensitive="yes" regex="no">User requested Java dump using</output>
     <output type="success" caseSensitive="yes" regex="no">TEST PASSED</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
@@ -309,7 +311,7 @@
   </test>
 
   <test id="Create and Restore Criu Checkpoint Image once - MethodTypeDeadlockTest">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -XX:+ThrowOnDelayedCheckpointOperation -XX:sleepMillisecondsForNotCheckpointSafe=20 -Xtrace:print=j9vm.731 --add-opens java.base/jdk.internal.misc=ALL-UNNAMED  --add-exports java.base/openj9.internal.criu=ALL-UNNAMED" $MAINCLASS_DEADLOCK_TEST$ MethodTypeDeadlockTest 1</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -XX:+ThrowOnDelayedCheckpointOperation -XX:sleepMillisecondsForNotCheckpointSafe=20 -Xtrace:print=j9vm.731 --add-opens java.base/jdk.internal.misc=ALL-UNNAMED  $STD_CMD_OPTS$" $MAINCLASS_DEADLOCK_TEST$ MethodTypeDeadlockTest 1 false false</command>
     <output type="success" caseSensitive="yes" regex="no">User requested Java dump using</output>
     <output type="success" caseSensitive="yes" regex="no">TEST PASSED</output>
     <output type="failure" caseSensitive="yes" regex="no">TEST FAILED</output>
@@ -328,7 +330,7 @@
   </test>
 
   <test id="Create and Restore Criu Checkpoint Image once - clinitTest">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -XX:+ThrowOnDelayedCheckpointOperation -Xdump:system:events=user -Xtrace:print=j9vm.731 --add-opens java.base/jdk.internal.misc=ALL-UNNAMED  --add-exports java.base/openj9.internal.criu=ALL-UNNAMED" $MAINCLASS_DEADLOCK_TEST$ ClinitTest 1</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -XX:+ThrowOnDelayedCheckpointOperation -Xdump:system:events=user -Xtrace:print=j9vm.731 --add-opens java.base/jdk.internal.misc=ALL-UNNAMED  $STD_CMD_OPTS$" $MAINCLASS_DEADLOCK_TEST$ ClinitTest 1 false false</command>
     <output type="success" caseSensitive="yes" regex="no">User requested Java dump using</output>
     <output type="success" caseSensitive="yes" regex="no">TEST PASSED</output>
     <output type="failure" caseSensitive="yes" regex="no">TEST FAILED</output>
@@ -347,7 +349,7 @@
   </test>
 
   <test id="Create and Restore Criu Checkpoint Image once - clinitTest2">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -XX:-ThrowOnDelayedCheckpointOperation -Xdump:system:events=user -Xtrace:print=j9vm.731 --add-opens java.base/jdk.internal.misc=ALL-UNNAMED  --add-exports java.base/openj9.internal.criu=ALL-UNNAMED" $MAINCLASS_DEADLOCK_TEST$ ClinitTest 1</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -XX:-ThrowOnDelayedCheckpointOperation -Xdump:system:events=user -Xtrace:print=j9vm.731 --add-opens java.base/jdk.internal.misc=ALL-UNNAMED  $STD_CMD_OPTS$" $MAINCLASS_DEADLOCK_TEST$ ClinitTest 1 false false</command>
     <output type="success" caseSensitive="yes" regex="no">User requested Java dump using</output>
     <output type="success" caseSensitive="yes" regex="no">TEST PASSED</output>
     <output type="failure" caseSensitive="yes" regex="no">TEST FAILED</output>
@@ -383,7 +385,7 @@
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="Properties test1">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ PropertiesTest1 1</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ PropertiesTest1 1 false false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
@@ -401,7 +403,7 @@
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="Properties test2">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ PropertiesTest2 1</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ PropertiesTest2 1 false false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
@@ -419,7 +421,7 @@
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="Properties test3">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ PropertiesTest3 1</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ PropertiesTest3 1 false false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
@@ -437,11 +439,12 @@
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="Properties test4">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ PropertiesTest4 1</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ PropertiesTest4 1 false false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
     <output type="success" caseSensitive="yes" regex="no">Failed to load options from the options file</output>
+     <output type="success" caseSensitive="yes" regex="no">The JVM could not enable all the restore options specified</output>
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
     <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
     <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
@@ -453,7 +456,7 @@
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="Test setting SecurityManager via -Djava.security.manager">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $OPTION_SET_SECURITYMANAGER$ $MAINCLASS_TEST_SECURITYMANAGER$ setSMCommandOption 1</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $OPTION_SET_SECURITYMANAGER$ $MAINCLASS_TEST_SECURITYMANAGER$ setSMCommandOption 1 false false</command>
     <output type="success" caseSensitive="no" regex="no">UnsupportedOperationException: Enabling a SecurityManager currently unsupported</output>
     <output type="failure" caseSensitive="yes" regex="no">TEST FAILED</output>
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
@@ -467,7 +470,7 @@
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="Test setting SecurityManager programmatically">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_TEST_SECURITYMANAGER$ setSMProgrammatically 1</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_TEST_SECURITYMANAGER$ setSMProgrammatically 1 false false</command>
     <output type="success" caseSensitive="no" regex="no">TEST PASSED</output>
     <output type="failure" caseSensitive="yes" regex="no">TEST FAILED</output>
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
@@ -482,7 +485,7 @@
   </test>
 
   <test id="Envvar test1">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest1 1</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest1 1 false false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
@@ -498,7 +501,7 @@
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="Envvar test2">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest2 1</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest2 1 false false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
@@ -514,7 +517,7 @@
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="Envvar test3">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest3 1</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest3 1 false false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
@@ -530,8 +533,9 @@
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="Envvar test4">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest4 1</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest4 1 false false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="success" caseSensitive="no" regex="no">Failed to setup new environment variables</output>
     <output type="failure" caseSensitive="yes" regex="no">failed env var test</output>
     <output type="failure" caseSensitive="yes" regex="no">Post-checkpoint</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
@@ -546,7 +550,7 @@
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="Envvar test5">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -Xtrace:print=j9vm.735" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest5 1</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -Xtrace:print=j9vm.735" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest5 1 false false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
@@ -565,8 +569,8 @@
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="Envvar test6">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -Xtrace:print=j9vm.735" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest6 1</command>
-    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -Xtrace:print=j9vm.735" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest6 1 false false</command>
+    <output type="success" caseSensitive="no" regex="no">Post-checkpoint</output>
     <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
     <output type="success" caseSensitive="yes" regex="no">Failed to load options from the options file</output>
@@ -584,7 +588,7 @@
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="Envvar test7">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -Xtrace:print=j9vm.735" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest7 1</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -Xtrace:print=j9vm.735" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest7 1 false false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
@@ -603,7 +607,7 @@
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="Envvar test8">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -Xtrace:print=j9vm.735" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest8 1</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -Xtrace:print=j9vm.735" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest8 1 false false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
@@ -622,7 +626,7 @@
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="Envvar test9">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest9 1</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest9 1 false false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
@@ -638,8 +642,9 @@
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="Envvar test10">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest10 1</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest10 1 false false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
+     <output type="success" caseSensitive="yes" regex="no">The JVM could not enable all the restore options specified</output>
     <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
     <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
@@ -654,7 +659,7 @@
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="Envvar test11">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest11 1</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest11 1 false false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
@@ -670,7 +675,7 @@
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="Envvar test12">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -Xtrace:print=j9vm.735" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest12 1</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -Xtrace:print=j9vm.735" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest12 1 false false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
@@ -689,7 +694,7 @@
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="Envvar test13">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest13 1</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest13 1 false false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
@@ -706,7 +711,7 @@
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="Envvar test14">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest14 1</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest14 1 false false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
@@ -723,7 +728,7 @@
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="Envvar test15">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest15 1</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest15 1 false false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
@@ -740,7 +745,7 @@
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="Envvar test16">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest16 1</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest16 1 false false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
@@ -757,7 +762,7 @@
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="Restore trace options test with no trace options specified before checkpoint - 1">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ TraceOptionsTest1 1</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ TraceOptionsTest1 1 false false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
     <output type="success" caseSensitive="yes" regex="no">terminateRemainingThreads</output>
@@ -777,7 +782,7 @@
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
   </test>
   <test id="Restore trace options test with no trace options specified before checkpoint - 2">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ TraceOptionsTest2 1</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ TraceOptionsTest2 1 false false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
     <output type="success" caseSensitive="yes" regex="no">terminateRemainingThreads</output>
@@ -796,7 +801,7 @@
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="Restore trace options test with no trace options specified before checkpoint - 3">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ TraceOptionsTest3 1</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ TraceOptionsTest3 1 false false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
     <output type="success" caseSensitive="yes" regex="no">terminateRemainingThreads</output>
@@ -813,7 +818,7 @@
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="Restore dump options test with no dump options specified before checkpoint">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ DumpOptionsTest 1</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ DumpOptionsTest 1 false false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
     <output type="success" caseSensitive="yes" regex="no">Processing dump event "vmstop"</output>
@@ -830,7 +835,7 @@
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="criuCheckpoint dump options test with no dump options specified before checkpoint">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -Xdump:java:events=criuCheckpoint" $MAINCLASS_OPTIONSFILE_TEST$ criuDumpOptionsTest 1</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -Xdump:java:events=criuCheckpoint" $MAINCLASS_OPTIONSFILE_TEST$ criuDumpOptionsTest 1 false false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
     <output type="success" caseSensitive="yes" regex="no">Processing dump event "criuCheckpoint"</output>
@@ -847,7 +852,7 @@
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="criuCheckpoint dump options test with no dump options specified before checkpoint">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -Xdump:java:events=criuRestore" $MAINCLASS_OPTIONSFILE_TEST$ criuDumpOptionsTest 1</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -Xdump:java:events=criuRestore" $MAINCLASS_OPTIONSFILE_TEST$ criuDumpOptionsTest 1 false false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
     <output type="success" caseSensitive="yes" regex="no">Processing dump event "criuRestore"</output>
@@ -864,7 +869,7 @@
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="criuRestore dump options test with no dump options specified before checkpoint">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ criuRestoreDumpOptionsTest 1</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ criuRestoreDumpOptionsTest 1 false false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
     <output type="success" caseSensitive="yes" regex="no">Processing dump event "criuRestore"</output>
@@ -881,7 +886,7 @@
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
   <test id="Restore dump options test with no dump options specified before checkpoint and -Xdump:dynamic required">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ $XDUMP_DYNAMIC$" $MAINCLASS_OPTIONSFILE_TEST$ dumpOptionsTestRequireDynamic 1</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ $XDUMP_DYNAMIC$" $MAINCLASS_OPTIONSFILE_TEST$ dumpOptionsTestRequireDynamic 1 false false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
     <output type="success" caseSensitive="yes" regex="no">Processing dump event "vmstop"</output>
@@ -902,7 +907,7 @@
   </test>
 
   <test id="Username test">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_USERNAME_TEST$ unusedArgument 1</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_USERNAME_TEST$ unusedArgument 1 false false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="success" caseSensitive="yes" regex="no">SUCCESS</output>
     <output type="failure" caseSensitive="yes" regex="no">FAILURE</output>
@@ -984,7 +989,7 @@
   <test id="Create and Restore Criu Checkpoint Image once - TestConcurrentModePostRestoreHookThrowException">
     <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_CONCURRENT_MODE_HOOK$ TestConcurrentModePostRestoreHookThrowException 1 false false</command>
     <output type="success" caseSensitive="yes" regex="no">RuntimeException: TestConcurrentModePostRestoreHookThrowException() within postRestoreHook</output>
-    <output type="success" caseSensitive="yes" regex="no">JVMRestoreException: Exception thrown when running user post-restore hook multi-threaded hook</output>
+    <output type="success" caseSensitive="yes" regex="no">Exception thrown when running user post-restore hook concurrent mode hook</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
     <output type="required" caseSensitive="no" regex="no">Killed</output>
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
@@ -1047,12 +1052,93 @@
   </test>
 
   <test id="Create CRIU checkpoint image and restore once - testTimeCompensation">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -Xtrace:print={j9jcl.533,j9vm.684-696,j9vm.699,j9vm.717-743} --add-exports java.base/openj9.internal.criu=ALL-UNNAMED" $MAINCLASS_TIMECHANGE$ testTimeCompensation 1 false false</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -Xtrace:print={j9jcl.533,j9vm.684-696,j9vm.699,j9vm.717-743} $STD_CMD_OPTS$" $MAINCLASS_TIMECHANGE$ testTimeCompensation 1 false false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="success" caseSensitive="yes" regex="no">PASSED: testTimeCompensation</output>
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
     <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
     <output type="failure" caseSensitive="yes" regex="no">FAILED: testTimeCompensation</output>
+    <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+  </test>
+
+  <test id="Test Ghost File Limit -- negative">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ $STD_CMD_OPTS$" $MAINCLASS_GHOSTFILE_TEST$ negative 1 false false</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="success" caseSensitive="yes" regex="no">PASSED</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <output type="failure" caseSensitive="yes" regex="no">Can't dump ghost file</output>
+    <output type="failure" caseSensitive="yes" regex="no">FAILED</output>
+    <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+  </test>
+  <test id="Test Ghost File Limit -- atLimit">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ $STD_CMD_OPTS$" $MAINCLASS_GHOSTFILE_TEST$ atLimit 1 false false</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="success" caseSensitive="yes" regex="no">PASSED</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <output type="failure" caseSensitive="yes" regex="no">Can't dump ghost file</output>
+    <output type="failure" caseSensitive="yes" regex="no">FAILED</output>
+    <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+  </test>
+  <test id="Test Ghost File Limit -- aboveLimit ">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ $STD_CMD_OPTS$" $MAINCLASS_GHOSTFILE_TEST$ aboveLimit 1 false false</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="success" caseSensitive="yes" regex="no">PASSED</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <output type="failure" caseSensitive="yes" regex="no">Can't dump ghost file</output>
+    <output type="failure" caseSensitive="yes" regex="no">FAILED</output>
+    <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+  </test>
+  <test id="Test Ghost File Limit -- belowLimit">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ $STD_CMD_OPTS$" $MAINCLASS_GHOSTFILE_TEST$ belowLimit 1 false false</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="success" caseSensitive="yes" regex="no">PASSED</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <output type="failure" caseSensitive="yes" regex="no">Can't dump ghost file</output>
+    <output type="failure" caseSensitive="yes" regex="no">FAILED</output>
+    <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+  </test>
+  <test id="Test Ghost File Limit -- zero">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ $STD_CMD_OPTS$" $MAINCLASS_GHOSTFILE_TEST$ zero 1 false false</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="success" caseSensitive="yes" regex="no">PASSED</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <output type="failure" caseSensitive="yes" regex="no">Can't dump ghost file</output>
+    <output type="failure" caseSensitive="yes" regex="no">FAILED</output>
     <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
     <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
     <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
