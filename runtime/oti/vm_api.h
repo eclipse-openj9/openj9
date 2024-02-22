@@ -699,12 +699,13 @@ setupJNIFieldIDsAndCRIUAPI(JNIEnv *env, jclass *currentExceptionClass, IDATA *sy
  * @param[in] unprivileged controls whether CRIU will be invoked in privileged or unprivileged mode
  * @param[in] optionsFile the file that contains the new JVM options to be added on restore
  * @param[in] environmentFile the file that contains the new environment variables to be added
+ * @param[in] ghostFileLimit the size limit for ghost files
  *
  * @return void
  */
 void JNICALL
 criuCheckpointJVMImpl(JNIEnv *env, jstring imagesDir, jboolean leaveRunning, jboolean shellJob, jboolean extUnixSupport, jint logLevel, jstring logFile, jboolean fileLocks,
-		jstring workDir, jboolean tcpEstablished, jboolean autoDedup, jboolean trackMemory, jboolean unprivileged, jstring optionsFile, jstring environmentFile);
+		jstring workDir, jboolean tcpEstablished, jboolean autoDedup, jboolean trackMemory, jboolean unprivileged, jstring optionsFile, jstring environmentFile, jlong ghostFileLimit);
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 /* ---------------- classloadersearch.c ---------------- */
