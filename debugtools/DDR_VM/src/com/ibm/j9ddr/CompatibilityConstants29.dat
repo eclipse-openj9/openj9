@@ -34,6 +34,14 @@
 
 CLimits.USHRT_MAX = 0xFFFF
 
+/* The below two fields match the current flags in the internal
+ * builds. If the OpenJ9 MethodHandles are disabled and OpenJDK
+ * MethodHandles are enabled in the internal builds, then they
+ * should be updated as follows:
+ *    J9BuildFlags.J9VM_OPT_METHOD_HANDLE = 0
+ *    J9BuildFlags.J9VM_OPT_OPENJDK_METHODHANDLE = 1
+ */
+J9BuildFlags.J9VM_OPT_METHOD_HANDLE = 1
 J9BuildFlags.J9VM_OPT_OPENJDK_METHODHANDLE = 0
 
 J9CfrClassFile.CFR_METHOD_EXT_HAS_SCOPED_ANNOTATION = 0
