@@ -89,15 +89,8 @@ latestUserDefinedLoaderIterator(J9VMThread * currentThread, J9StackWalkState * w
 	J9Class * currentClass = J9_CLASS_FROM_CP(walkState->constantPool);
 	J9ClassLoader * classLoader = currentClass->classLoader;
 
-	/* Ignore jdk/internal/loader/ClassLoaders$PlatformClassLoader (Java 9+).
-	 * In Java 9+, vm->extensionClassLoader is the PlatformClassLoader.
-	 */
-	BOOLEAN isPlatformClassLoader = FALSE;
-	if ((J2SE_VERSION(vm) >= J2SE_V11) && (classLoader == vm->extensionClassLoader)) {
-		isPlatformClassLoader = TRUE;
-	}
-
-	if ((classLoader != vm->systemClassLoader) && !isPlatformClassLoader) {
+	/* Ignore the system and extension/platform classloader. In jdk9+, vm->extensionClassLoader is the PlatformClassLoader. */
+	if ((classLoader != vm->systemClassLoader) && (classLoader != vm->extensionClassLoader)) {
 		J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 
 		Assert_SunVMI_mustHaveVMAccess(currentThread);
