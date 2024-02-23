@@ -1571,6 +1571,12 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 -->
 	<test>
 		<testCaseName>JCL_TEST_Java-Security_SE80</testCaseName>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/16900</comment>
+				<testflag>FIPS140_2</testflag>
+			</disable>
+		</disables>
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
@@ -1605,6 +1611,12 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 -->
 	<test>
 		<testCaseName>JCL_TEST_Java-Security</testCaseName>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/16900</comment>
+				<testflag>FIPS140_2</testflag>
+			</disable>
+		</disables>
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
