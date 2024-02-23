@@ -2953,4 +2953,324 @@ public class StructTests2 {
 			Assert.assertEquals((double)doubleHandle3.get(resultSegmt, 0L), 88.579D, 0.001D);
 		}
 	}
+
+	@Test
+	public void test_addBoolsFromMultipleStructPtrs_returnStruct_2() throws Throwable {
+		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_BOOLEAN.withName("elem1"), JAVA_BOOLEAN.withName("elem2"));
+		VarHandle boolHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));
+		VarHandle boolHandle2 = structLayout.varHandle(PathElement.groupElement("elem2"));
+
+		FunctionDescriptor fd = FunctionDescriptor.of(structLayout, ADDRESS, ADDRESS, ADDRESS);
+		MemorySegment functionSymbol = nativeLibLookup.find("addBoolsFromMultipleStructPtrs_returnStruct").get();
+		MethodHandle mh = linker.downcallHandle(fd, Linker.Option.critical(true));
+
+		try (Arena arena = Arena.ofConfined()) {
+			MemorySegment structSegmt1 = MemorySegment.ofArray(new byte[2]);
+			boolHandle1.set(structSegmt1, 0L, true);
+			boolHandle2.set(structSegmt1, 0L, false);
+			MemorySegment structSegmt2 = arena.allocate(structLayout);
+			boolHandle1.set(structSegmt2, 0L, true);
+			boolHandle2.set(structSegmt2, 0L, false);
+			MemorySegment structSegmt3 = MemorySegment.ofArray(new byte[2]);
+			boolHandle1.set(structSegmt3, 0L, true);
+			boolHandle2.set(structSegmt3, 0L, false);
+
+			MemorySegment resultSegmt = (MemorySegment)mh.invokeExact(functionSymbol, (SegmentAllocator)arena, structSegmt1, structSegmt2, structSegmt3);
+			Assert.assertEquals(boolHandle1.get(resultSegmt, 0L), true);
+			Assert.assertEquals(boolHandle2.get(resultSegmt, 0L), false);
+		}
+	}
+
+	@Test
+	public void test_addBytesFromMultipleStructPtrs_returnStruct_2() throws Throwable {
+		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_BYTE.withName("elem1"), JAVA_BYTE.withName("elem2"));
+		VarHandle byteHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));
+		VarHandle byteHandle2 = structLayout.varHandle(PathElement.groupElement("elem2"));
+
+		FunctionDescriptor fd = FunctionDescriptor.of(structLayout, ADDRESS, ADDRESS, ADDRESS);
+		MemorySegment functionSymbol = nativeLibLookup.find("addBytesFromMultipleStructPtrs_returnStruct").get();
+		MethodHandle mh = linker.downcallHandle(fd, Linker.Option.critical(true));
+
+		try (Arena arena = Arena.ofConfined()) {
+			MemorySegment structSegmt1 = MemorySegment.ofArray(new byte[2]);
+			byteHandle1.set(structSegmt1, 0L, (byte)1);
+			byteHandle2.set(structSegmt1, 0L, (byte)2);
+			MemorySegment structSegmt2 = arena.allocate(structLayout);
+			byteHandle1.set(structSegmt2, 0L, (byte)3);
+			byteHandle2.set(structSegmt2, 0L, (byte)4);
+			MemorySegment structSegmt3 = MemorySegment.ofArray(new byte[2]);
+			byteHandle1.set(structSegmt3, 0L, (byte)5);
+			byteHandle2.set(structSegmt3, 0L, (byte)6);
+
+			MemorySegment resultSegmt = (MemorySegment)mh.invokeExact(functionSymbol, (SegmentAllocator)arena, structSegmt1, structSegmt2, structSegmt3);
+			Assert.assertEquals((byte)byteHandle1.get(resultSegmt, 0L), 9);
+			Assert.assertEquals((byte)byteHandle2.get(resultSegmt, 0L), 12);
+		}
+	}
+
+	@Test
+	public void test_addCharsFromMultipleStructPtrs_returnStruct_2() throws Throwable {
+		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_CHAR.withName("elem1"), JAVA_CHAR.withName("elem2"));
+		VarHandle charHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));
+		VarHandle charHandle2 = structLayout.varHandle(PathElement.groupElement("elem2"));
+
+		FunctionDescriptor fd = FunctionDescriptor.of(structLayout, ADDRESS, ADDRESS, ADDRESS);
+		MemorySegment functionSymbol = nativeLibLookup.find("addCharsFromMultipleStructPtrs_returnStruct").get();
+		MethodHandle mh = linker.downcallHandle(fd, Linker.Option.critical(true));
+
+		try (Arena arena = Arena.ofConfined()) {
+			MemorySegment structSegmt1 = MemorySegment.ofArray(new char[2]);
+			charHandle1.set(structSegmt1, 0L, 'A');
+			charHandle2.set(structSegmt1, 0L, 'B');
+			MemorySegment structSegmt2 = arena.allocate(structLayout);
+			charHandle1.set(structSegmt2, 0L, 'C');
+			charHandle2.set(structSegmt2, 0L, 'D');
+			MemorySegment structSegmt3 = MemorySegment.ofArray(new char[2]);
+			charHandle1.set(structSegmt3, 0L, 'E');
+			charHandle2.set(structSegmt3, 0L, 'F');
+
+			MemorySegment resultSegmt = (MemorySegment)mh.invokeExact(functionSymbol, (SegmentAllocator)arena, structSegmt1, structSegmt2, structSegmt3);
+			Assert.assertEquals(charHandle1.get(resultSegmt, 0L), 'G');
+			Assert.assertEquals(charHandle2.get(resultSegmt, 0L), 'J');
+		}
+	}
+
+	@Test
+	public void test_addShortsFromMultipleStructPtrs_returnStruct_2() throws Throwable {
+		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_SHORT.withName("elem1"), JAVA_SHORT.withName("elem2"));
+		VarHandle shortHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));
+		VarHandle shortHandle2 = structLayout.varHandle(PathElement.groupElement("elem2"));
+
+		FunctionDescriptor fd = FunctionDescriptor.of(structLayout, ADDRESS, ADDRESS, ADDRESS);
+		MemorySegment functionSymbol = nativeLibLookup.find("addShortsFromMultipleStructPtrs_returnStruct").get();
+		MethodHandle mh = linker.downcallHandle(fd, Linker.Option.critical(true));
+
+		try (Arena arena = Arena.ofConfined()) {
+			MemorySegment structSegmt1 = MemorySegment.ofArray(new short[2]);
+			shortHandle1.set(structSegmt1, 0L, (short)56);
+			shortHandle2.set(structSegmt1, 0L, (short)45);
+			MemorySegment structSegmt2 = arena.allocate(structLayout);
+			shortHandle1.set(structSegmt2, 0L, (short)78);
+			shortHandle2.set(structSegmt2, 0L, (short)67);
+			MemorySegment structSegmt3 = MemorySegment.ofArray(new short[2]);
+			shortHandle1.set(structSegmt3, 0L, (short)13);
+			shortHandle2.set(structSegmt3, 0L, (short)24);
+
+			MemorySegment resultSegmt = (MemorySegment)mh.invokeExact(functionSymbol, (SegmentAllocator)arena, structSegmt1, structSegmt2, structSegmt3);
+			Assert.assertEquals((short)shortHandle1.get(resultSegmt, 0L), 147);
+			Assert.assertEquals((short)shortHandle2.get(resultSegmt, 0L), 136);
+		}
+	}
+
+	@Test
+	public void test_addIntsFromMultipleStructPtrs_returnStruct_2() throws Throwable {
+		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_INT.withName("elem1"), JAVA_INT.withName("elem2"));
+		VarHandle intHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));
+		VarHandle intHandle2 = structLayout.varHandle(PathElement.groupElement("elem2"));
+
+		FunctionDescriptor fd = FunctionDescriptor.of(structLayout, ADDRESS, ADDRESS, ADDRESS);
+		MemorySegment functionSymbol = nativeLibLookup.find("addIntsFromMultipleStructPtrs_returnStruct").get();
+		MethodHandle mh = linker.downcallHandle(fd, Linker.Option.critical(true));
+
+		try (Arena arena = Arena.ofConfined()) {
+			MemorySegment structSegmt1 = MemorySegment.ofArray(new int[2]);
+			intHandle1.set(structSegmt1, 0L, 11223344);
+			intHandle2.set(structSegmt1, 0L, 55667788);
+			MemorySegment structSegmt2 = arena.allocate(structLayout);
+			intHandle1.set(structSegmt2, 0L, 99001122);
+			intHandle2.set(structSegmt2, 0L, 33445566);
+			MemorySegment structSegmt3 = MemorySegment.ofArray(new int[2]);
+			intHandle1.set(structSegmt3, 0L, 44332211);
+			intHandle2.set(structSegmt3, 0L, 98756432);
+
+			MemorySegment resultSegmt = (MemorySegment)mh.invokeExact(functionSymbol, (SegmentAllocator)arena, structSegmt1, structSegmt2, structSegmt3);
+			Assert.assertEquals(intHandle1.get(resultSegmt, 0L), 154556677);
+			Assert.assertEquals(intHandle2.get(resultSegmt, 0L), 187869786);
+		}
+	}
+
+	@Test
+	public void test_addLongsFromMultipleStructPtrs_returnStruct_2() throws Throwable {
+		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_LONG.withName("elem1"), JAVA_LONG.withName("elem2"));
+		VarHandle longHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));
+		VarHandle longHandle2 = structLayout.varHandle(PathElement.groupElement("elem2"));
+
+		FunctionDescriptor fd = FunctionDescriptor.of(structLayout, ADDRESS, ADDRESS, ADDRESS);
+		MemorySegment functionSymbol = nativeLibLookup.find("addLongsFromMultipleStructPtrs_returnStruct").get();
+		MethodHandle mh = linker.downcallHandle(fd, Linker.Option.critical(true));
+
+		try (Arena arena = Arena.ofConfined()) {
+			MemorySegment structSegmt1 = MemorySegment.ofArray(new long[2]);
+			longHandle1.set(structSegmt1, 0L, 987654321987L);
+			longHandle2.set(structSegmt1, 0L, 123456789123L);
+			MemorySegment structSegmt2 = arena.allocate(structLayout);
+			longHandle1.set(structSegmt2, 0L, 224466880022L);
+			longHandle2.set(structSegmt2, 0L, 113355779911L);
+			MemorySegment structSegmt3 = MemorySegment.ofArray(new long[2]);
+			longHandle1.set(structSegmt3, 0L, 112233445566L);
+			longHandle2.set(structSegmt3, 0L, 204060801030L);
+
+			MemorySegment resultSegmt = (MemorySegment)mh.invokeExact(functionSymbol, (SegmentAllocator)arena, structSegmt1, structSegmt2, structSegmt3);
+			Assert.assertEquals(longHandle1.get(resultSegmt, 0L), 1324354647575L);
+			Assert.assertEquals(longHandle2.get(resultSegmt, 0L), 440873370064L);
+		}
+	}
+
+	@Test
+	public void test_addFloatsFromMultipleStructPtrs_returnStruct_2() throws Throwable {
+		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_FLOAT.withName("elem1"), JAVA_FLOAT.withName("elem2"));
+		VarHandle floatHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));
+		VarHandle floatHandle2 = structLayout.varHandle(PathElement.groupElement("elem2"));
+
+		FunctionDescriptor fd = FunctionDescriptor.of(structLayout, ADDRESS, ADDRESS, ADDRESS);
+		MemorySegment functionSymbol = nativeLibLookup.find("addFloatsFromMultipleStructPtrs_returnStruct").get();
+		MethodHandle mh = linker.downcallHandle(fd, Linker.Option.critical(true));
+
+		try (Arena arena = Arena.ofConfined()) {
+			MemorySegment structSegmt1 = MemorySegment.ofArray(new float[2]);
+			floatHandle1.set(structSegmt1, 0L, 25.12F);
+			floatHandle2.set(structSegmt1, 0L, 11.23F);
+			MemorySegment structSegmt2 = arena.allocate(structLayout);
+			floatHandle1.set(structSegmt2, 0L, 24.34F);
+			floatHandle2.set(structSegmt2, 0L, 13.45F);
+			MemorySegment structSegmt3 = MemorySegment.ofArray(new float[2]);
+			floatHandle1.set(structSegmt3, 0L, 21.29F);
+			floatHandle2.set(structSegmt3, 0L, 15.25F);
+
+			MemorySegment resultSegmt = (MemorySegment)mh.invokeExact(functionSymbol, (SegmentAllocator)arena, structSegmt1, structSegmt2, structSegmt3);
+			Assert.assertEquals((float)floatHandle1.get(resultSegmt, 0L), 70.75F, 0.01F);
+			Assert.assertEquals((float)floatHandle2.get(resultSegmt, 0L), 39.93F, 0.01F);
+		}
+	}
+
+	@Test
+	public void test_addDoublesFromMultipleStructPtrs_returnStruct_2() throws Throwable {
+		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_DOUBLE.withName("elem1"), JAVA_DOUBLE.withName("elem2"));
+		VarHandle doubleHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));
+		VarHandle doubleHandle2 = structLayout.varHandle(PathElement.groupElement("elem2"));
+
+		FunctionDescriptor fd = FunctionDescriptor.of(structLayout, ADDRESS, ADDRESS, ADDRESS);
+		MemorySegment functionSymbol = nativeLibLookup.find("addDoublesFromMultipleStructPtrs_returnStruct").get();
+		MethodHandle mh = linker.downcallHandle(fd, Linker.Option.critical(true));
+
+		try (Arena arena = Arena.ofConfined()) {
+			MemorySegment structSegmt1 = MemorySegment.ofArray(new double[2]);
+			doubleHandle1.set(structSegmt1, 0L, 11.222D);
+			doubleHandle2.set(structSegmt1, 0L, 22.333D);
+			MemorySegment structSegmt2 = arena.allocate(structLayout);
+			doubleHandle1.set(structSegmt2, 0L, 33.444D);
+			doubleHandle2.set(structSegmt2, 0L, 44.555D);
+			MemorySegment structSegmt3 = MemorySegment.ofArray(new double[2]);
+			doubleHandle1.set(structSegmt3, 0L, 66.775D);
+			doubleHandle2.set(structSegmt3, 0L, 88.999D);
+
+			MemorySegment resultSegmt = (MemorySegment)mh.invokeExact(functionSymbol, (SegmentAllocator)arena, structSegmt1, structSegmt2, structSegmt3);
+			Assert.assertEquals((double)doubleHandle1.get(resultSegmt, 0L), 111.441D, 0.001D);
+			Assert.assertEquals((double)doubleHandle2.get(resultSegmt, 0L), 155.887D, 0.001D);
+		}
+	}
+
+	@Test
+	public void test_addBoolFromStructPtrsWithOffset_2() throws Throwable {
+		FunctionDescriptor fd = FunctionDescriptor.of(JAVA_BOOLEAN, JAVA_BOOLEAN, ADDRESS);
+		MemorySegment functionSymbol = nativeLibLookup.find("addBoolAndBoolsFromStructPointerWithXor").get();
+		MethodHandle mh = linker.downcallHandle(fd, Linker.Option.critical(true));
+
+		try (Arena arena = Arena.ofConfined()) {
+			MemorySegment structSegmt = MemorySegment.ofArray(new byte[]{(byte)0, (byte)1, (byte)1});
+			boolean result = (boolean)mh.invoke(functionSymbol, true, structSegmt.asSlice(JAVA_BOOLEAN.byteSize()));
+			Assert.assertEquals(result, true);
+		}
+	}
+
+	@Test
+	public void test_addByteFromStructPtrsWithOffset_2() throws Throwable {
+		FunctionDescriptor fd = FunctionDescriptor.of(JAVA_BYTE, JAVA_BYTE, ADDRESS);
+		MemorySegment functionSymbol = nativeLibLookup.find("addByteAndBytesFromStructPointer").get();
+		MethodHandle mh = linker.downcallHandle(fd, Linker.Option.critical(true));
+
+		try (Arena arena = Arena.ofConfined()) {
+			MemorySegment structSegmt = MemorySegment.ofArray(new byte[]{(byte)13, (byte)25, (byte)37});
+			byte result = (byte)mh.invoke(functionSymbol, (byte)45, structSegmt.asSlice(JAVA_BYTE.byteSize()));
+			Assert.assertEquals(result, 107);
+		}
+	}
+
+	@Test
+	public void test_addCharFromStructPtrsWithOffset_2() throws Throwable {
+		FunctionDescriptor fd = FunctionDescriptor.of(JAVA_CHAR, JAVA_CHAR, ADDRESS);
+		MemorySegment functionSymbol = nativeLibLookup.find("addCharAndCharsFromStructPointer").get();
+		MethodHandle mh = linker.downcallHandle(fd, Linker.Option.critical(true));
+
+		try (Arena arena = Arena.ofConfined()) {
+			MemorySegment structSegmt = MemorySegment.ofArray(new char[]{'A', 'B', 'C'});
+			char result = (char)mh.invoke(functionSymbol, 'D', structSegmt.asSlice(JAVA_CHAR.byteSize()));
+			Assert.assertEquals(result, 'G');
+		}
+	}
+
+	@Test
+	public void test_addShortFromStructPtrsWithOffset_2() throws Throwable {
+		FunctionDescriptor fd = FunctionDescriptor.of(JAVA_SHORT, JAVA_SHORT, ADDRESS);
+		MemorySegment functionSymbol = nativeLibLookup.find("addShortAndShortsFromStructPointer").get();
+		MethodHandle mh = linker.downcallHandle(fd, Linker.Option.critical(true));
+
+		try (Arena arena = Arena.ofConfined()) {
+			MemorySegment structSegmt = MemorySegment.ofArray(new short[]{(short)113, (short)235, (short)378});
+			short result = (short)mh.invoke(functionSymbol, (short)459, structSegmt.asSlice(JAVA_SHORT.byteSize()));
+			Assert.assertEquals(result, 1072);
+		}
+	}
+
+	@Test
+	public void test_addIntFromStructPtrsWithOffset_2() throws Throwable {
+		FunctionDescriptor fd = FunctionDescriptor.of(JAVA_INT, JAVA_INT, ADDRESS);
+		MemorySegment functionSymbol = nativeLibLookup.find("addIntAndIntsFromStructPointer").get();
+		MethodHandle mh = linker.downcallHandle(fd, Linker.Option.critical(true));
+
+		try (Arena arena = Arena.ofConfined()) {
+			MemorySegment structSegmt = MemorySegment.ofArray(new int[]{13151, 25281, 46371});
+			int result = (int)mh.invoke(functionSymbol, 87462, structSegmt.asSlice(JAVA_INT.byteSize()));
+			Assert.assertEquals(result, 159114);
+		}
+	}
+
+	@Test
+	public void test_addLongFromStructPtrsWithOffset_2() throws Throwable {
+		FunctionDescriptor fd = FunctionDescriptor.of(JAVA_LONG, JAVA_LONG, ADDRESS);
+		MemorySegment functionSymbol = nativeLibLookup.find("addLongAndLongsFromStructPointer").get();
+		MethodHandle mh = linker.downcallHandle(fd, Linker.Option.critical(true));
+
+		try (Arena arena = Arena.ofConfined()) {
+			MemorySegment structSegmt = MemorySegment.ofArray(new long[]{112233445566L, 204060801030L, 103050709010L});
+			long result = (long)mh.invoke(functionSymbol, 224466880022L, structSegmt.asSlice(JAVA_LONG.byteSize()));
+			Assert.assertEquals(result, 531578390062L);
+		}
+	}
+
+	@Test
+	public void test_addFloatFromStructPtrsWithOffset_2() throws Throwable {
+		FunctionDescriptor fd = FunctionDescriptor.of(JAVA_FLOAT, JAVA_FLOAT, ADDRESS);
+		MemorySegment functionSymbol = nativeLibLookup.find("addFloatAndFloatsFromStructPointer").get();
+		MethodHandle mh = linker.downcallHandle(fd, Linker.Option.critical(true));
+
+		try (Arena arena = Arena.ofConfined()) {
+			MemorySegment structSegmt = MemorySegment.ofArray(new float[]{11.22F, 22.33F, 13.24F});
+			float result = (float)mh.invoke(functionSymbol, 35.68F, structSegmt.asSlice(JAVA_FLOAT.byteSize()));
+			Assert.assertEquals(result, 71.25F, 0.01F);
+		}
+	}
+
+	@Test
+	public void test_addDoubleFromStructPtrsWithOffset_2() throws Throwable {
+		FunctionDescriptor fd = FunctionDescriptor.of(JAVA_DOUBLE, JAVA_DOUBLE, ADDRESS);
+		MemorySegment functionSymbol = nativeLibLookup.find("addDoubleAndDoublesFromStructPointer").get();
+		MethodHandle mh = linker.downcallHandle(fd, Linker.Option.critical(true));
+
+		try (Arena arena = Arena.ofConfined()) {
+			MemorySegment structSegmt = MemorySegment.ofArray(new double[]{11.222D, 22.333D, 13.248D});
+			double result = (double)mh.invoke(functionSymbol, 66.776D, structSegmt.asSlice(JAVA_DOUBLE.byteSize()));
+			Assert.assertEquals(result, 102.357D, 0.001D);
+		}
+	}
 }

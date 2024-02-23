@@ -5437,7 +5437,7 @@ typedef struct J9VMThread {
 	J9VMContinuation **continuationT1Cache;
 #endif /* JAVA_SPEC_VERSION >= 19 */
 #if JAVA_SPEC_VERSION >= 21
-	BOOLEAN isInTrivialDownCall;
+	BOOLEAN isInCriticalDownCall;
 #endif /* JAVA_SPEC_VERSION >= 21 */
 } J9VMThread;
 
@@ -6062,6 +6062,9 @@ typedef struct J9JavaVM {
 #define J9JAVAVM_DISCONTIGUOUS_INDEXABLE_HEADER_SIZE(vm) ((vm)->discontiguousIndexableHeaderSize)
 
 #if JAVA_SPEC_VERSION >= 16
+#if JAVA_SPEC_VERSION >= 22
+#define J9_FFI_DOWNCALL_HEAP_ARGUMENT_ID J9CONST_U64(0xFFFFFFFFFFFFFFFF)
+#endif /* JAVA_SPEC_VERSION >= 22 */
 
 /* The mask for the signature type identifier */
 #define J9_FFI_UPCALL_SIG_TYPE_MASK 0xF

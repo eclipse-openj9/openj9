@@ -65,7 +65,7 @@ public class InvalidDownCallTests {
 		FunctionDescriptor fd = FunctionDescriptor.ofVoid(JAVA_INT, MemoryLayout.paddingLayout(JAVA_INT.byteSize()));
 		MemorySegment functionSymbol = nativeLibLookup.find("add2IntsReturnVoid").get();
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
-		fail("Failed to throw out IllegalArgumentException in the case of the invalid MemoryLayout");
+		fail("Failed to throw IllegalArgumentException in the case of the invalid MemoryLayout");
 	}
 
 	@Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Unsupported padding layout.*")
@@ -73,7 +73,7 @@ public class InvalidDownCallTests {
 		MemorySegment functionSymbol = defaultLibLookup.find("strlen").get();
 		FunctionDescriptor fd = FunctionDescriptor.of(JAVA_LONG, MemoryLayout.paddingLayout(JAVA_LONG.byteSize()));
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
-		fail("Failed to throw out IllegalArgumentException in the case of the invalid MemoryLayout");
+		fail("Failed to throw IllegalArgumentException in the case of the invalid MemoryLayout");
 	}
 
 	@Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Unsupported padding layout.*")
@@ -81,7 +81,7 @@ public class InvalidDownCallTests {
 		MemorySegment functionSymbol = defaultLibLookup.find("strlen").get();
 		FunctionDescriptor fd = FunctionDescriptor.of(MemoryLayout.paddingLayout(JAVA_LONG.byteSize()), JAVA_LONG);
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
-		fail("Failed to throw out IllegalArgumentException in the case of the invalid MemoryLayout");
+		fail("Failed to throw IllegalArgumentException in the case of the invalid MemoryLayout");
 	}
 
 	@Test(expectedExceptions = NullPointerException.class)
@@ -91,7 +91,7 @@ public class InvalidDownCallTests {
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 
 		int result = (int)mh.invoke(19202122, null);
-		fail("Failed to throw out NullPointerException in the case of the null value");
+		fail("Failed to throw NullPointerException in the case of the null value");
 	}
 
 	@Test(expectedExceptions = WrongMethodTypeException.class)
@@ -110,7 +110,7 @@ public class InvalidDownCallTests {
 			intHandle2.set(structSegmt1, 0L, 55667788);
 
 			MemorySegment resultSegmt = (MemorySegment)mh.invokeExact((SegmentAllocator)arena, structSegmt1, null);
-			fail("Failed to throw out WrongMethodTypeException in the case of the null value");
+			fail("Failed to throw WrongMethodTypeException in the case of the null value");
 		}
 	}
 
@@ -139,19 +139,8 @@ public class InvalidDownCallTests {
 			intHandle2.set(structSegmt1, 0L, 55667788);
 
 			MemorySegment resultSegmt = (MemorySegment)mh.invokeExact((SegmentAllocator)arena, structSegmt1, MemorySegment.NULL);
-			fail("Failed to throw out NullPointerException in the case of the null segment");
+			fail("Failed to throw NullPointerException in the case of the null segment");
 		}
-	}
-
-	@Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Heap segment not allowed.*")
-	public void test_heapSegmentForPtrArgument() throws Throwable {
-		FunctionDescriptor fd = FunctionDescriptor.of(JAVA_INT, JAVA_INT, ADDRESS);
-		MemorySegment functionSymbol = nativeLibLookup.find("addIntAndIntsFromStructPointer").get();
-		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
-
-		MemorySegment structSegmt = MemorySegment.ofArray(new int[]{11121314, 15161718});
-		int result = (int)mh.invoke(19202122, structSegmt);
-		fail("Failed to throw out IllegalArgumentException in the case of the heap segment");
 	}
 
 	public void test_heapSegmentForStructArgument() throws Throwable {
@@ -173,5 +162,16 @@ public class InvalidDownCallTests {
 			Assert.assertEquals(intHandle1.get(resultSegmt, 0L), 110224466);
 			Assert.assertEquals(intHandle2.get(resultSegmt, 0L), 89113354);
 		}
+	}
+
+	@Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Heap segment not allowed.*")
+	public void test_disallowedHeapSegmentForPtrArgument() throws Throwable {
+		FunctionDescriptor fd = FunctionDescriptor.of(JAVA_INT, JAVA_INT, ADDRESS);
+		MemorySegment functionSymbol = nativeLibLookup.find("addIntAndIntsFromStructPointer").get();
+		MethodHandle mh = linker.downcallHandle(functionSymbol, fd, Linker.Option.critical(false));
+
+		MemorySegment structSegmt = MemorySegment.ofArray(new int[]{11121314, 15161718});
+		int result = (int)mh.invoke(19202122, structSegmt);
+		fail("Failed to throw IllegalArgumentException when the heap segment is disallowed in native");
 	}
 }
