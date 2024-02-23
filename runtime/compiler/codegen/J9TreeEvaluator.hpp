@@ -170,6 +170,7 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::TreeEvaluatorConnector
    static TR::Register *pdModifyPrecisionEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *countDigitsEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *BCDCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *storeStoreFenceEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 
    static uint32_t calculateInstanceOfOrCheckCastSequences(TR::Node *instanceOfOrCheckCastNode, InstanceOfOrCheckCastSequences *sequences, TR_OpaqueClassBlock **compileTimeGuessClass, TR::CodeGenerator *cg, InstanceOfOrCheckCastProfiledClasses *profiledClassList, uint32_t *numberOfProfiledClass, uint32_t maxProfileClass, float *topClassProbability, bool *topClassWasCastClass);
 

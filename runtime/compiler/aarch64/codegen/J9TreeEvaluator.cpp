@@ -86,6 +86,7 @@ extern void TEMPORARY_initJ9ARM64TreeEvaluatorTable(TR::CodeGenerator *cg)
    tet[TR::allocationFence] = TR::TreeEvaluator::flushEvaluator;
    tet[TR::loadFence] = TR::TreeEvaluator::flushEvaluator;
    tet[TR::storeFence] = TR::TreeEvaluator::flushEvaluator;
+   tet[TR::storeStoreFence] = TR::TreeEvaluator::flushEvaluator;
    tet[TR::fullFence] = TR::TreeEvaluator::flushEvaluator;
    tet[TR::frem] = TR::TreeEvaluator::fremEvaluator;
    tet[TR::drem] = TR::TreeEvaluator::dremEvaluator;
@@ -2672,9 +2673,16 @@ J9::ARM64::TreeEvaluator::flushEvaluator(TR::Node *node, TR::CodeGenerator *cg)
          // dmb ishld (Inner Shareable load barrier)
          imm = 0x9;
          }
+      else if (op == TR::storeStoreFence)
+         {
+         // TR::storeStoreFence is used for storeStoreFence.
+         // Stores before the barrier are ordered before stores after the barrier.
+         // dmb ishst (Inner Shareable store barrier)
+         imm = 0xA;
+         }
       else if (op == TR::storeFence)
          {
-         // TR::storeFence is used for both storeStoreFence and releaseFence.
+         // TR::storeFence is used for releaseFence.
          // Loads/Stores before the barrier are ordered before stores after the barrier.
          // dmb ish (Inner Shareable full barrier)
          imm = 0xB;

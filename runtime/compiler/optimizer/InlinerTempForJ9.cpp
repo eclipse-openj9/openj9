@@ -2032,6 +2032,8 @@ TR_J9InlinerPolicy::inlineUnsafeCall(TR::ResolvedMethodSymbol *calleeSymbol, TR:
          return createUnsafeFence(callNodeTreeTop, callNode, TR::storeFence);
       case TR::sun_misc_Unsafe_fullFence:
          return createUnsafeFence(callNodeTreeTop, callNode, TR::fullFence);
+      case TR::jdk_internal_misc_Unsafe_storeStoreFence:
+         return createUnsafeFence(callNodeTreeTop, callNode, TR::storeStoreFence);
 
       case TR::sun_misc_Unsafe_staticFieldBase:
          return false; // todo
