@@ -144,6 +144,8 @@ In the end code generators perform binary encoding to write the appropriate bits
 
   * [Overview of Compilation Control](control/CompilationControl.md)
   * [Options Processing](control/OptionsProcessing.md)
+  * [Options Processing Post Restore](control/OptionsPostRestore.md)
+  * [Checkpoint Restore Coordination](control/CheckpointRestoreCoordination.md)
 </details>
 
 * <details><summary><b>6. Profiling</b></summary>

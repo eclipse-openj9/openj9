@@ -825,126 +825,16 @@ public:
    /**
     * @brief Work that is necessary prior to taking a snapshot. This includes:
     *        - Setting the _checkpointStatus state.
-    *        - Suspending all compilation threads.
-    *        - Waiting until all compilation threads are suspended.
-    *
-    * Normal Execution (steps 5&6 can be interchanged)
-    * ================================================
-    * 1. Hook Thread acquires Comp Monitor
-    * 2. Hook Thread signals Comp Threads to suspend
-    * 3. Hook Thread acquires CR Monitor, releases Comp Monitor, and waits on
-    *    CR Monitor
-    * 4. Comp Threads acquire Comp Monitor and CompThread Monitor, and change
-    *    state to COMPTHREAD_SUSPENDED
-    * 5. Comp Threads acquire CR Monitor, call notifyAll, and release CR
-    *    Monitor
-    * 6. Hook Thread wakes up with CR Monitor in hand, releases CR Monitor, and
-    *    blocks on Comp Monitor
-    * 7. Comp Threads release Comp Monitor and wait on CompThread Monitor
-    * 8. Hook Thread acquires Comp Monitor, ensures state has changed to
-    *    COMPTHREAD_SUSPENDED for the current compInfoPT
-    * 9. Hook Thread checks the next compInfoPT, waiting on the CR Monitor if
-    *    needed (it will release the Comp Monitor prior to waiting)
-    * 10. Hook Thread releases Comp Monitor, returns from the hook
-    *
-    *
-    * JIT Dump
-    * ========
-    * - Crash on application thread:
-    *    - Hook Thread running prepareForCheckpoint will run as normal
-    *       - Comp Threads will suspend themselves
-    *       - Hook Thread will wait till all Comp Threads are suspended
-    *       - Hook Thread will return from the jit hook
-    *       - VM will need to ensure it doesn't invoke criu API
-    *
-    * - Crash on compilation thread:
-    *    - Crashing Comp Thread will return to the VM and terminate process
-    *      (https://github.com/eclipse-openj9/openj9/blob/500e0a26e2c5be6ead0f838495ae8d8cc34821e1/runtime/compiler/control/CompilationThread.cpp#L3442-L3447)
-    *    - Possible scenarios for Hook Thread:
-    *       1. Hook Thread will try to acquire the Comp Monitor to signal Comp
-    *          Threads to suspend but will end up blocking until the JVM
-    *          terminates
-    *       2. Hook Thread will manage to signal Comp Threads to suspend, but
-    *          will remain waiting on the CR Monitor for the crashed Comp
-    *          Thread to suspend until the JVM terminates
-    *    - VM will need to ensure it doesn't invoke criu API
-    *
-    *
-    * Normal Shutdown
-    * ===============
-    * - Scenario 1
-    *    1. Hook Thread waits on CR Monitor
-    *    2. Comp Thread goes to suspend, already has Comp Monitor in hand
-    *    3. Shutdown Thread blocks on the Comp Monitor
-    *    4. Comp Thread updates state to COMPTHREAD_SUSPENDED, acquires CR
-    *       Monitor, and calls notifyAll
-    *    5. Comp Thread releases CR Monitor, releases Comp Monitor, and waits
-    *       on CompThread Monitor
-    *    6. Hook Thread wakes up with CR Monitor in hand, releases CR Monitor,
-    *       acquires Comp Monitor and continues on to next thread
-    *    7. Hook Thread checks state and moves onto the next threads possibly
-    *       finding them all suspended.
-    *    8. Hook Thread release Comp Monitor and returns from hook
-    *    9. Shutdown Thread goes through the sequence of stopping all threads
-    *
-    * - Scenario 2
-    *    Repeat steps 1-5 from Scenario 1
-    *    6. Shutdown Thread acquires Comp Monitor
-    *    7. Hook Thread wakes up with CR Monitor in hand, releases CR Monitor
-    *       and blocks on the Comp Monitor
-    *    8. Shutdown Thread sets checkpoint to be interrupted flag.
-    *       Additionally (though irrelevant in this scenario) it also
-    *       acquires the CR Monitor, calls notify, and releases CR Monitor.
-    *    9. Shutdown Thread finishes stopping all threads, releases Comp
-    *       Monitor
-    *    10. Hook Thread acquires Comp Monitor, sees that the checkpoint should
-    *        be interrupted
-    *    11. Hook Thread breaks out of the loops, releases Comp Monitor, and
-    *        returns from hook
-    *
-    * - Scenario 3
-    *    1. Hook Thread waits on CR Monitor
-    *    2. Shutdown Thread acquires Comp Monitor
-    *    3. Comp Thread blocks on the Comp Monitor in order to (eventually)
-    *       suspend itself
-    *    4. Shutdown Thread sets checkpoint to be interrupted flag, acquires CR
-    *       Monitor, calls notify, and releases CR Monitor
-    *    5. Shutdown Thread goes about the task of stopping Comp Threads
-    *    6. Hook Thread wakes up with CR Monitor in hand, releases CR Monitor
-    *       and blocks on the Comp Monitor
-    *    7. Shutdown Thread finishes stopping all threads, releases Comp
-    *       Monitor (steps 5 & 6 can be interchanged with the same following
-    *       steps)
-    *    8. Hook Thread acquires Comp Monitor, sees that the checkpoint should
-    *       be interrupted
-    *    9. Hook Thread breaks out of the loops, releases Comp Monitor, and
-    *       returns from hook
-    *
-    * It should be noted that when the Hook Thread runs prepareForCheckpoint,
-    * either it will succeed in signalling the Comp Threads to suspend, or it
-    * will wait indefinitely on the Comp Monitor (in the case of a JIT Dump) or
-    * it will abort after acquring the Comp Monitor if the Shutdown Thread
-    * already finished its task. Once the Hook Thread reaches the point where
-    * it waits on the CR Monitor, the scenarioes above can occur.
-    *
-    *
-    * Shutdown during JIT Dump
-    * ========================
-    * - Crash on application thread
-    *    - same as Normal Shutdown
-    *
-    * - Crash on compilation thread
-    *    - In all of the above scenarios:
-    *       - Hook Thread remains waiting on CR Monitor
-    *       - Shutdown Thread blocks on the Comp Monitor
-    *       - Comp Thread returns to VM and terminates the process
+    *        - Suspending all compiler threads.
+    *        - Waiting until all compiler threads are suspended.
     */
    void prepareForCheckpoint();
 
    /**
     * @brief Work that is necessary after the JVM has been restored. This includes:
     *        - Resetting the _checkpointStatus state.
-    *        - Resuming all suspended compilation threads.
+    *        - Processing post-restore options.
+    *        - Resuming all suspended compiler threads.
     */
    void prepareForRestore();
 #endif
