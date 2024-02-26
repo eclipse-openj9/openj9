@@ -97,39 +97,23 @@ private:
 				case 'B': /* byte */
 				case 'C': /* char */
 				case 'I': /* int */
-				case 'S': { /* short */
-					I_32 lhsValue = objectAccessBarrier.inlineMixedObjectReadI32(currentThread, lhs, startOffset + result->offset);
-					I_32 rhsValue = objectAccessBarrier.inlineMixedObjectReadI32(currentThread, rhs, startOffset + result->offset);
-					if (lhsValue != rhsValue) {
-						rc = false;
-						goto done;
-					}
-					break;
-				}
-				case 'J': { /* long */
-					I_64 lhsValue = objectAccessBarrier.inlineMixedObjectReadI64(currentThread, lhs, startOffset + result->offset);
-					I_64 rhsValue = objectAccessBarrier.inlineMixedObjectReadI64(currentThread, rhs, startOffset + result->offset);
-					if (lhsValue != rhsValue) {
-						rc = false;
-						goto done;
-					}
-					break;
-				}
-				case 'D': { /* double */
-					U_64 lhsValue = objectAccessBarrier.inlineMixedObjectReadU64(currentThread, lhs, startOffset + result->offset);
-					U_64 rhsValue = objectAccessBarrier.inlineMixedObjectReadU64(currentThread, rhs, startOffset + result->offset);
-
-					if (!checkDoubleEquality(lhsValue, rhsValue)) {
-						rc = false;
-						goto done;
-					}
-					break;
-				}
+				case 'S': /* short */
 				case 'F': { /* float */
 					U_32 lhsValue = objectAccessBarrier.inlineMixedObjectReadU32(currentThread, lhs, startOffset + result->offset);
 					U_32 rhsValue = objectAccessBarrier.inlineMixedObjectReadU32(currentThread, rhs, startOffset + result->offset);
 
-					if (!checkFloatEquality(lhsValue, rhsValue)) {
+					if (lhsValue != rhsValue) {
+						rc = false;
+						goto done;
+					}
+					break;
+				}
+				case 'J':  /* long */
+				case 'D': { /* double */
+					U_64 lhsValue = objectAccessBarrier.inlineMixedObjectReadU64(currentThread, lhs, startOffset + result->offset);
+					U_64 rhsValue = objectAccessBarrier.inlineMixedObjectReadU64(currentThread, rhs, startOffset + result->offset);
+
+					if (lhsValue != rhsValue) {
 						rc = false;
 						goto done;
 					}
@@ -207,31 +191,6 @@ private:
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	}
 
-	static VMINLINE bool
-	checkDoubleEquality(U_64 a, U_64 b)
-	{
-		bool result = false;
-
-		if (a == b) {
-			result = true;
-		} else if (IS_NAN_DBL(*(jdouble*)&a) && IS_NAN_DBL(*(jdouble*)&b)) {
-			result = true;
-		}
-		return result;
-	}
-
-	static VMINLINE bool
-	checkFloatEquality(U_32 a, U_32 b)
-	{
-		bool result = false;
-
-		if (a == b) {
-			result = true;
-		} else if (IS_NAN_SNGL(*(jfloat*)&a) && IS_NAN_SNGL(*(jfloat*)&b)) {
-			result = true;
-		}
-		return result;
-	}
 protected:
 
 public:
