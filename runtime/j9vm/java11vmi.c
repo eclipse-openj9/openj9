@@ -188,6 +188,9 @@ throwExceptionHelper(J9VMThread *currentThread, UDATA errCode)
 			moduleName = J9NLS_VM_MODULARITY_PACKAGE_NOT_FOUND__MODULE;
 			messageNumber = J9NLS_VM_MODULARITY_PACKAGE_NOT_FOUND__ID;
 			break;
+		default:
+			Assert_SC_unreachable();
+			break;
 		}
 		msg = OMRPORTLIB->nls_lookup_message(OMRPORTLIB, J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, moduleName, messageNumber, NULL);
 		currentThread->javaVM->internalVMFunctions->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, msg);
