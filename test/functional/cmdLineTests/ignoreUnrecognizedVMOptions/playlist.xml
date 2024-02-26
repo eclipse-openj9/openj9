@@ -58,4 +58,25 @@
 			<impl>openj9</impl>
 		</impls>
 	</test>
+	<test>
+		<testCaseName>cmdLineTester_deprecatedvmoptions</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -DTESTDIR=$(Q)$(TEST_RESROOT)$(Q) -DRESJAR=$(CMDLINETESTER_RESJAR) -DEXE=$(SQ)$(JAVA_COMMAND)$(SQ) -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)deprecatedvmoptions.xml$(Q) -explainExcludes -nonZeroExitWhenError; \
+	$(TEST_STATUS)</command>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<impls>
+			<impl>ibm</impl>
+			<impl>openj9</impl>
+		</impls>
+		<versions>
+			<version>22+</version>
+		</versions>
+	</test>
 </playlist>
