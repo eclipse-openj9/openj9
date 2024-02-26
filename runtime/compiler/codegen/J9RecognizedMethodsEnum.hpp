@@ -1046,6 +1046,7 @@
    java_lang_invoke_MethodHandle_linkToSpecial,
    java_lang_invoke_MethodHandle_linkToVirtual,
    java_lang_invoke_MethodHandle_linkToInterface,
+   java_lang_invoke_MethodHandle_linkToNative,
    java_lang_invoke_MethodHandleImpl_ArrayAccessor_getElementI,
    java_lang_invoke_MethodHandleImpl_ArrayAccessor_getElementJ,
    java_lang_invoke_MethodHandleImpl_ArrayAccessor_getElementF,
