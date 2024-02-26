@@ -779,7 +779,7 @@ J9::CodeGenerator::lowerTreeIfNeeded(
    if (node->getOpCode().isCall() &&
        !node->getSymbol()->castToMethodSymbol()->isHelper())
       {
-      TR::RecognizedMethod rm = node->getSymbol()->castToMethodSymbol()->getRecognizedMethod();
+      TR::RecognizedMethod rm = node->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod();
 
       if(rm == TR::java_lang_invoke_MethodHandle_invokeBasic ||
         rm == TR::java_lang_invoke_MethodHandle_linkToStatic ||
@@ -843,6 +843,26 @@ J9::CodeGenerator::lowerTreeIfNeeded(
             floatTemp1StoreNode->setByteCodeIndex(node->getByteCodeIndex());
             TR::TreeTop::create(self()->comp(), tt->getPrevTreeTop(), floatTemp1StoreNode);
             }
+         }
+      else if (rm == TR::java_lang_invoke_MethodHandle_linkToNative)
+         {
+         // The interpreter will push one extra argument (the appendix) for the
+         // callee to accept. This dummy null argument reserves space for the
+         // appendix on the stack. The interpreter will pop it before
+         // rearranging the arguments and pushing the appendix.
+         //
+         // Without reserving space in this way, pushing the appendix would
+         // introduce an unexpected offset into the stack pointer. Effectively,
+         // the VM would think that all of the arguments were passed from the
+         // JIT frame, resulting in an incorrect stack pointer on return or
+         // during stack walking.
+         //
+         // Note that while linkToNative() is also signature-polymorphic, it is
+         // not necessary to store the argument count into tempSlot. The VM has
+         // an alternative way to determine it.
+         //
+         TR::Node *dummyNull = TR::Node::aconst(node, 0);
+         node->addChildren(&dummyNull, 1);
          }
       }
 
