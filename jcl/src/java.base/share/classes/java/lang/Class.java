@@ -1499,11 +1499,13 @@ public Class<?> getDeclaringClass() {
  * when the enclosing class is the declaring class.
  */
 private void checkInnerClassAttrOfEnclosingClass() {
-	Class<?> enclosingClass = getEnclosingObjectClass();
-	if ((enclosingClass != null) && !enclosingClass.isClassAnEnclosedClass(this)) {
-		/*[MSG "K0555", "incompatible InnerClasses attribute between \"{0}\" and \"{1}\""]*/
-		throw new IncompatibleClassChangeError(
-				com.ibm.oti.util.Msg.getString("K0555", this.getName(), enclosingClass.getName())); //$NON-NLS-1$
+	if (getSimpleNameImpl() != null) {
+		Class<?> enclosingClass = getEnclosingObjectClass();
+		if ((enclosingClass != null) && !enclosingClass.isClassAnEnclosedClass(this)) {
+			/*[MSG "K0555", "incompatible InnerClasses attribute between \"{0}\" and \"{1}\""]*/
+			throw new IncompatibleClassChangeError(
+					com.ibm.oti.util.Msg.getString("K0555", this.getName(), enclosingClass.getName())); //$NON-NLS-1$
+		}
 	}
 }
 
