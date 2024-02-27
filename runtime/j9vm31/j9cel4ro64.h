@@ -46,6 +46,12 @@ extern "C" {
 #define J9_CEL4RO64_RETCODE_ERROR_FAILED_QUERY_TARGET_FUNC       0x5
 #define J9_CEL4RO64_RETCODE_ERROR_LE_RUNTIME_SUPPORT_NOT_FOUND   0x6
 
+/* Locally allocated control block lengths. */
+/*   For use with j9_cel4ro64_call_function - Sufficient space for 10 arguments. */
+#define MAX_LOCAL_CONTROL_BLOCK_LENGTH_FOR_CALL sizeof(J9_CEL4RO64_controlBlock) + sizeof(uint64_t) * 10 + sizeof(uint32_t)
+/*   For use with j9_cel4ro64_load_query_function_descriptor - Sufficient space for 48 total chars for module/function names. */
+#define MAX_LOCAL_CONTROL_BLOCK_LENGTH_FOR_QUERY sizeof(J9_CEL4RO64_infoBlock) + 2 * sizeof(int32_t) + 48
+
 /* Fixed length Control Block structure RO64_CB */
 typedef struct J9_CEL4RO64_controlBlock {
 	uint32_t version;            /**< (Input) A integer which contains the version of RO64_INFO. */
@@ -143,6 +149,20 @@ uint32_t
 j9_cel4ro64_load_query_call_function(
 	const char* moduleName, const char* functionName, J9_CEL4RO64_ArgType *argTypes,
 	uint64_t *argValues, uint32_t numArgs, J9_CEL4RO64_ArgType returnType, void *returnStorage);
+
+/**
+ * A helper routine to allocate the CEL4RO64 control blocks and related structures
+ * for target shared library and function. Returns the 64-bit function descriptor
+ * in returnStorage parameter.
+ * @param[in] moduleName The name of the target library to load.
+ * @param[in] functionName The name of the target function to lookup.
+ * @param[in] returnStorage The storage location to store the target function descriptor.
+ *
+ * @return The return code of the CEL4RO64 call - 0 implies success.
+ */
+uint32_t
+j9_cel4ro64_load_query_function_descriptor(
+	const char* moduleName, const char* functionName, void *returnStorage);
 
 /**
  * A helper routine to confirm LE support of CEL4RO64

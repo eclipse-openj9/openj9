@@ -207,7 +207,9 @@ j9_cel4ro64_call_function(
 {
 	uint32_t retcode = J9_CEL4RO64_RETCODE_OK;
 	uint32_t argumentAreaInBytes = (0 == numArgs) ? 0 : (sizeof(uint64_t) * numArgs + sizeof(uint32_t));  /* 8 byte slots + 4 byte length member. */
-	J9_CEL4RO64_controlBlock *controlBlock = NULL;
+	uint32_t controlBlockLength = sizeof(J9_CEL4RO64_controlBlock) + argumentAreaInBytes;
+	uint8_t localControlBlock[MAX_LOCAL_CONTROL_BLOCK_LENGTH_FOR_CALL] = {0};
+	J9_CEL4RO64_controlBlock *controlBlock = (J9_CEL4RO64_controlBlock *)localControlBlock;
 
 	/* The CEL4RO64 function may not be available if the LE ++APAR is not installed. */
 	if (!j9_cel4ro64_isSupported()) {
@@ -215,7 +217,10 @@ j9_cel4ro64_call_function(
 		return J9_CEL4RO64_RETCODE_ERROR_LE_RUNTIME_SUPPORT_NOT_FOUND;
 	}
 
-	controlBlock = (J9_CEL4RO64_controlBlock *)malloc(sizeof(J9_CEL4RO64_controlBlock) + argumentAreaInBytes);
+	/* If required control block length exceeds size of localControlBlock, manually malloc the storage. */
+	if (MAX_LOCAL_CONTROL_BLOCK_LENGTH_FOR_CALL < controlBlockLength) {
+		controlBlock = (J9_CEL4RO64_controlBlock *)malloc(controlBlockLength);
+	}
 
 	if (NULL == controlBlock) {
 		retcode = J9_CEL4RO64_RETCODE_ERROR_STORAGE_ISSUE;
@@ -246,7 +251,9 @@ j9_cel4ro64_call_function(
 		populateReturnValue(controlBlock, returnType, returnStorage);
 	}
 
-	free(controlBlock);
+	if (MAX_LOCAL_CONTROL_BLOCK_LENGTH_FOR_CALL < controlBlockLength) {
+		free(controlBlock);
+	}
 	return retcode;
 }
 
@@ -332,6 +339,78 @@ j9_cel4ro64_load_query_call_function(
 	}
 
 	free(infoBlock);
+	return retcode;
+}
+
+uint32_t
+j9_cel4ro64_load_query_function_descriptor(
+	const char* moduleName, const char* functionName, void *returnStorage)
+{
+	uint32_t retcode = J9_CEL4RO64_RETCODE_OK;
+	uint32_t IPBLength = 0;
+	uint32_t moduleNameLength = strlen(moduleName);
+	uint32_t functionNameLength = strlen(functionName);
+	uint8_t localControlBlock[MAX_LOCAL_CONTROL_BLOCK_LENGTH_FOR_QUERY] = {0};
+	J9_CEL4RO64_infoBlock *infoBlock = (J9_CEL4RO64_infoBlock *)localControlBlock;
+	J9_CEL4RO64_controlBlock *controlBlock = NULL;
+	J9_CEL4RO64_module *moduleBlock = NULL;
+	J9_CEL4RO64_function *functionBlock = NULL;
+
+	/* The CEL4RO64 function may not be available if the LE ++APAR is not installed. */
+	if (!j9_cel4ro64_isSupported()) {
+		fprintf(stderr, "CEL4RO64: %s\n", j9_cel4ro64_get_error_message(J9_CEL4RO64_RETCODE_ERROR_LE_RUNTIME_SUPPORT_NOT_FOUND));
+		return J9_CEL4RO64_RETCODE_ERROR_LE_RUNTIME_SUPPORT_NOT_FOUND;
+	}
+
+	IPBLength = sizeof(J9_CEL4RO64_infoBlock) + moduleNameLength + functionNameLength +
+	            sizeof(moduleBlock->length) + sizeof(functionBlock->length);
+
+	/* If required control block length exceeds size of localControlBlock, manually malloc the storage. */
+	if (MAX_LOCAL_CONTROL_BLOCK_LENGTH_FOR_QUERY < IPBLength) {
+		infoBlock = (J9_CEL4RO64_infoBlock *) malloc(IPBLength);
+	}
+
+	if (NULL == infoBlock) {
+		fprintf(stderr, "CEL4RO64: malloc failed: %s\n", j9_cel4ro64_get_error_message(retcode));
+		return J9_CEL4RO64_RETCODE_ERROR_STORAGE_ISSUE;
+	}
+
+	controlBlock = &(infoBlock->ro64ControlBlock);
+
+	/* Initialize the control block members and calculate the various offsets. */
+	controlBlock->version = 1;
+	controlBlock->flags = (J9_CEL4RO64_FLAG_LOAD_DLL | J9_CEL4RO64_FLAG_QUERY_TARGET_FUNC);
+	controlBlock->moduleOffset = sizeof(J9_CEL4RO64_controlBlock);
+	if (0 == moduleNameLength) {
+		controlBlock->functionOffset = controlBlock->moduleOffset;
+	} else {
+		controlBlock->functionOffset = controlBlock->moduleOffset + moduleNameLength + sizeof(moduleBlock->length);
+	}
+
+	controlBlock->argumentsOffset = 0;
+
+	/* For DLL load operations, we need a module name specified. */
+	moduleBlock = (J9_CEL4RO64_module *)((char *)(controlBlock) + controlBlock->moduleOffset);
+	infoBlock->ro64Module = moduleBlock;
+	moduleBlock->length = moduleNameLength;
+	strncpy(moduleBlock->moduleName, moduleName, moduleNameLength);
+
+	/* For DLL query operations, we need a function name specified. */
+	functionBlock = (J9_CEL4RO64_function *)((char *)(controlBlock) + controlBlock->functionOffset);
+	infoBlock->ro64Function = functionBlock;
+	functionBlock->length = functionNameLength;
+	strncpy(functionBlock->functionName, functionName, functionNameLength);
+
+	CEL4RO64_FNPTR(controlBlock);
+	retcode = controlBlock->retcode;
+	if ((J9_CEL4RO64_RETCODE_OK == retcode)) {
+		/* Return the 64-bit target function descriptor. */
+		*((uint64_t*)returnStorage) = controlBlock->functionDescriptor;
+	}
+
+	if (MAX_LOCAL_CONTROL_BLOCK_LENGTH_FOR_QUERY < IPBLength) {
+		free(infoBlock);
+	}
 	return retcode;
 }
 
