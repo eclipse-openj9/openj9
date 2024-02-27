@@ -438,6 +438,7 @@ J9::Compilation::isConverterMethod(TR::RecognizedMethod rm)
       case TR::java_lang_String_decodeUTF8_UTF16:
       case TR::sun_nio_cs_ISO_8859_1_Decoder_decodeISO8859_1:
       case TR::sun_nio_cs_US_ASCII_Encoder_encodeASCII:
+      case TR::java_lang_StringCoding_implEncodeAsciiArray:
       case TR::sun_nio_cs_US_ASCII_Decoder_decodeASCII:
       case TR::sun_nio_cs_ext_SBCS_Encoder_encodeSBCS:
       case TR::sun_nio_cs_ext_SBCS_Decoder_decodeSBCS:
@@ -477,6 +478,7 @@ J9::Compilation::canTransformConverterMethod(TR::RecognizedMethod rm)
          return genTRxx || self()->cg()->getSupportsArrayTranslateTROTNoBreak() || genSIMD;
 
       case TR::sun_nio_cs_US_ASCII_Encoder_encodeASCII:
+      case TR::java_lang_StringCoding_implEncodeAsciiArray:
       case TR::sun_nio_cs_UTF_8_Encoder_encodeUTF_8:
          return genTRxx || self()->cg()->getSupportsArrayTranslateTRTO() || genSIMD;
 
