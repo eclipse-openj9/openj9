@@ -409,6 +409,21 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
     */
    bool canAddOSRAssumptions();
 
+   /**
+    * \brief Determine whether fear points may be placed (almost) anywhere.
+    *
+    * If the result is true, then prior to fear point analysis, the compiler
+    * must ensure that OSR induction remains possible at every OSR yield point.
+    * As such, fear points may be placed almost anywhere in the method.
+    *
+    * \warning This does not allow fear points to be placed on the taken side
+    * of a guard (except after an OSR yield point, e.g. a cold call). That
+    * restriction is due to a limitation of the fear point analysis.
+    *
+    * \return true if fear points may be placed (almost) anywhere
+    */
+   bool isFearPointPlacementUnrestricted() { return false; }
+
    // Flag to record whether fear-point analysis has already been done.
    void setFearPointAnalysisDone() { _wasFearPointAnalysisDone = true; }
    bool wasFearPointAnalysisDone() { return _wasFearPointAnalysisDone; }

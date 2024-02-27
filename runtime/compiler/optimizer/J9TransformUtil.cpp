@@ -1061,6 +1061,10 @@ static TR_YesNoMaybe safeToAddFearPointAt(TR::Optimization* opt, TR::TreeTop* tt
       return TR_yes;
       }
 
+   TR_ASSERT_FATAL(
+      !comp->isFearPointPlacementUnrestricted(),
+      "unrestricted fear point placement should have prevented prohibition");
+
    // Look for an OSR point dominating tt in block
    TR::Block* block = tt->getEnclosingBlock();
    TR::TreeTop* firstTT = block->getEntry();
@@ -2316,6 +2320,10 @@ void J9::TransformUtil::removePotentialOSRPointHelperCalls(TR::Compilation* comp
  */
 void J9::TransformUtil::prohibitOSROverRange(TR::Compilation* comp, TR::TreeTop* start, TR::TreeTop* end)
    {
+   TR_ASSERT_FATAL(
+      !comp->isFearPointPlacementUnrestricted(),
+      "disallowed attempt to prohibit OSR");
+
    TR_ASSERT(start->getEnclosingBlock() == end->getEnclosingBlock(), "Does not support range across blocks");
    TR_ASSERT(comp->supportsInduceOSR() && comp->isOSRTransitionTarget(TR::postExecutionOSR) && comp->getOSRMode() == TR::voluntaryOSR,
              "prohibitOSROverRange only works in certain modes");
