@@ -122,6 +122,14 @@ private:
 	void scanArrayObject(MM_EnvironmentBase *env, J9Object *objectPtr, MM_MemoryPool *memoryPool, MM_HeapRegionManager *manager, uintptr_t memoryType);
 
 	bool isContinuationListEmpty(MM_EnvironmentBase *env);
+
+	/**
+	 * Scan all objects from class loader.
+	 * @param env thread GC environment
+	 * @param classLoader class loader address
+	 */
+	void scanClassloader(MM_EnvironmentBase *env, J9ClassLoader *classLoader);
+
 protected:
 	/* Family of yielding methods to be overridden by incremental scanners such
 	 * as the RealtimeRootScanner. The default implementations of these do

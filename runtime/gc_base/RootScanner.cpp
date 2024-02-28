@@ -395,44 +395,44 @@ MM_RootScanner::scanPermanentClasses(MM_EnvironmentBase *env)
 {
 	reportScanningStarted(RootScannerEntity_PermanentClasses);
 
-	J9MemorySegment *segment = NULL;
-	J9Class *clazz = NULL;
-
 	/* Do systemClassLoader */
-	if (NULL != static_cast<J9JavaVM*>(_omrVM->_language_vm)->systemClassLoader) {
-		GC_ClassLoaderSegmentIterator segmentIterator(static_cast<J9JavaVM*>(_omrVM->_language_vm)->systemClassLoader, MEMORY_TYPE_RAM_CLASS);
-		while(NULL != (segment = segmentIterator.nextSegment())) {
-			if(_singleThread || J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
-				GC_ClassHeapIterator classHeapIterator(static_cast<J9JavaVM*>(_omrVM->_language_vm), segment);
-				while(NULL != (clazz = classHeapIterator.nextClass())) {
-					doClass(clazz);
-					if (shouldYieldFromClassScan(100000)) {
-						yield();
-					}
-				}
-			}
-		}
-	}
+	scanClassloader(env, static_cast<J9JavaVM*>(_omrVM->_language_vm)->systemClassLoader);
 
 	/* Do applicationClassLoader */
-	if (NULL != static_cast<J9JavaVM*>(_omrVM->_language_vm)->applicationClassLoader) {
-		GC_ClassLoaderSegmentIterator segmentIterator(static_cast<J9JavaVM*>(_omrVM->_language_vm)->applicationClassLoader, MEMORY_TYPE_RAM_CLASS);
-		while(NULL != (segment = segmentIterator.nextSegment())) {
-			if(_singleThread || J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
-				GC_ClassHeapIterator classHeapIterator(static_cast<J9JavaVM*>(_omrVM->_language_vm), segment);
-				while(NULL != (clazz = classHeapIterator.nextClass())) {
-					doClass(clazz);
-					if (shouldYieldFromClassScan(100000)) {
-						yield();
-					}
-				}
-			}
-		}
-	}
+	scanClassloader(env, static_cast<J9JavaVM*>(_omrVM->_language_vm)->applicationClassLoader);
 
 	condYield();
 
 	reportScanningEnded(RootScannerEntity_PermanentClasses);
+}
+
+/**
+ * Scan all objects from class loader.
+ */
+void
+MM_RootScanner::scanClassloader(MM_EnvironmentBase *env, J9ClassLoader *classLoader)
+{
+	J9MemorySegment *segment = NULL;
+	J9Class *clazz = NULL;
+
+	if (NULL != classLoader) {
+		GC_ClassLoaderSegmentIterator segmentIterator(classLoader, MEMORY_TYPE_RAM_CLASS);
+		while (NULL != (segment = segmentIterator.nextSegment())) {
+			if (_singleThread || J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
+				GC_ClassHeapIterator classHeapIterator(static_cast<J9JavaVM*>(_omrVM->_language_vm), segment);
+				while (NULL != (clazz = classHeapIterator.nextClass())) {
+					doClass(clazz);
+					if (shouldYieldFromClassScan(100000)) {
+						yield();
+					}
+				}
+			}
+		}
+
+		if (_singleThread || J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
+			scanModularityObjects(classLoader);
+		}
+	}
 }
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 
