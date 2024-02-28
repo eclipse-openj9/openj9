@@ -1074,7 +1074,7 @@
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
     <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
     <output type="failure" caseSensitive="yes" regex="no">Can't dump ghost file</output>
-    <output type="failure" caseSensitive="yes" regex="no">FAILED</output>
+    <output type="failure" caseSensitive="yes" regex="no">TEST FAILED</output>
     <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
     <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
     <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
@@ -1090,7 +1090,7 @@
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
     <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
     <output type="failure" caseSensitive="yes" regex="no">Can't dump ghost file</output>
-    <output type="failure" caseSensitive="yes" regex="no">FAILED</output>
+    <output type="failure" caseSensitive="yes" regex="no">TEST FAILED</output>
     <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
     <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
     <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
@@ -1106,7 +1106,7 @@
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
     <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
     <output type="failure" caseSensitive="yes" regex="no">Can't dump ghost file</output>
-    <output type="failure" caseSensitive="yes" regex="no">FAILED</output>
+    <output type="failure" caseSensitive="yes" regex="no">TEST FAILED</output>
     <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
     <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
     <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
@@ -1122,7 +1122,7 @@
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
     <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
     <output type="failure" caseSensitive="yes" regex="no">Can't dump ghost file</output>
-    <output type="failure" caseSensitive="yes" regex="no">FAILED</output>
+    <output type="failure" caseSensitive="yes" regex="no">TEST FAILED</output>
     <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
     <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
     <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
@@ -1138,7 +1138,7 @@
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
     <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
     <output type="failure" caseSensitive="yes" regex="no">Can't dump ghost file</output>
-    <output type="failure" caseSensitive="yes" regex="no">FAILED</output>
+    <output type="failure" caseSensitive="yes" regex="no">TEST FAILED</output>
     <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
     <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
     <output type="success" caseSensitive="yes" regex="no">do not match expected</output>

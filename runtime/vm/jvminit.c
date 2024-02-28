@@ -4442,17 +4442,17 @@ unloadDLL(void* dllLoadInfo, void* userDataTemp)
 	Also walks the ignoredOptionTable and if it sees any of those options in the vm_args and marks them as ignored */
 
 static void
-registerIgnoredOptions(J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args)
+registerIgnoredOptions(J9PortLibrary *portLibrary, J9VMInitArgs *j9vm_args)
 {
-	UDATA i;
-	char* option;
+	UDATA i = 0;
+	const char *option = NULL;
 	const struct J9VMIgnoredOption *ignoredOptionTablePtr = (const struct J9VMIgnoredOption *)GLOBAL_TABLE(ignoredOptionTable);
 
 	PORT_ACCESS_FROM_PORT(portLibrary);
 
-	for (i=0; i<j9vm_args->nOptions; i++) {
+	for (i = 0; i < j9vm_args->nOptions; i++) {
 		option = getOptionString(j9vm_args, i);				/* may return mapped value */
-		if ((strlen(option)>2) && option[0]=='-') {
+		if ((strlen(option) > 2) && ('-' == option[0])) {
 			switch (option[1]) {
 				/* Mark all -D options as non-consumable */
 				case 'D' :
@@ -4463,8 +4463,19 @@ registerIgnoredOptions(J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args)
 	}
 
 	/* Mark all ignored options as consumed */
-	for (i=0; i<ignoredOptionTableSize; i++) {
-		findArgInVMArgs( PORTLIB, j9vm_args, ignoredOptionTablePtr[i].match, ignoredOptionTablePtr[i].optionName, NULL, TRUE);
+	for (i = 0; i < ignoredOptionTableSize; i++) {
+		const char *optionName = ignoredOptionTablePtr[i].optionName;
+#if JAVA_SPEC_VERSION >= 22
+		IDATA index =
+#endif /* JAVA_SPEC_VERSION >= 22 */
+				findArgInVMArgs( PORTLIB, j9vm_args, ignoredOptionTablePtr[i].match, optionName, NULL, TRUE);
+#if JAVA_SPEC_VERSION >= 22
+		if ((index >= 0)
+			&& ((0 == strcmp(VMOPT_XDEBUG, optionName)) || (0 == strcmp(VMOPT_XNOAGENT, optionName)))
+		) {
+			j9nls_printf(PORTLIB, J9NLS_WARNING, J9NLS_VM_DEPRECATED_OPTION, JAVA_VM_NAME, optionName);
+		}
+#endif /* JAVA_SPEC_VERSION >= 22 */
 	}
 }
 
