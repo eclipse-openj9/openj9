@@ -24,6 +24,7 @@ package com.ibm.oti.vm;
 
 import com.ibm.oti.util.Msg;
 import com.ibm.oti.util.Util;
+import java.util.Properties;
 
 /*[IF JAVA_SPEC_VERSION >= 9]
 import jdk.internal.misc.Unsafe;
@@ -615,5 +616,25 @@ public static ConstantPool getConstantPoolFromAnnotationBytes(Class<?> clazz, by
 	}
 	Object internalCP = getVMLangAccess().createInternalConstantPool(ramCPAddr);
 	return getVMLangAccess().getConstantPool(internalCP);
+}
+
+/**
+ * Answers the system properties without any security checks.
+ *
+ *  Important notes similar to VMLangAccess.internalGetProperties():
+ *  1. This API must NOT be exposed to application code directly or indirectly;
+ *  2. This method can only be used to retrieve system properties for internal usage,
+ *      i.e., there is no security exception expected;
+ *  3. If there is an application caller in the call stack, AND the application caller(s)
+ *      have to be checked for permission to retrieve the system properties specified,
+ *      then this API should NOT be used even though the immediate caller is in the bootstrap path.
+ *
+ * Note that this is not a copy so changes made to the returned Properties object will be reflected
+ * in subsequent calls to System.getProperty() and System.getProperties().
+ *
+ * @return the system properties
+ */
+public static Properties internalGetProperties() {
+	return getVMLangAccess().internalGetProperties();
 }
 }

@@ -88,7 +88,7 @@ public final class ManagementUtils {
 	public static final boolean VERBOSE_MODE;
 
 	static {
-		Properties properties = com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties();
+		Properties properties = com.ibm.oti.vm.VM.internalGetProperties();
 		String thisOs = properties.getProperty("os.name"); //$NON-NLS-1$
 
 		isUnix = "aix".equalsIgnoreCase(thisOs) //$NON-NLS-1$

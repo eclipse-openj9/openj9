@@ -97,7 +97,7 @@ public class IPC {
 	public static final boolean useFileLockWatchdog;
 
 	static {
-		Properties props = VM.getVMLangAccess().internalGetProperties();
+		Properties props = VM.internalGetProperties();
 		String osName = props.getProperty("os.name"); //$NON-NLS-1$
 		boolean tempIsZos = false;
 		boolean tempIsWindows = false;
@@ -345,7 +345,7 @@ public class IPC {
 		String tmpDir = getTempDirImpl();
 		if (null == tmpDir) {
 			logMessage("Could not get system temporary directory. Trying " + JAVA_IO_TMPDIR); //$NON-NLS-1$
-			tmpDir = VM.getVMLangAccess().internalGetProperties().getProperty(JAVA_IO_TMPDIR);
+			tmpDir = VM.internalGetProperties().getProperty(JAVA_IO_TMPDIR);
 		}
 		return tmpDir;
 	}

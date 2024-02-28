@@ -103,7 +103,7 @@ public final class Advertisement {
 	private static StringBuilder createAdvertContent(String vmId, String displayName) {
 		StringBuilder contentBuffer = new StringBuilder(512); 
 		addKeyAsciiValue(contentBuffer, KEY_VERSION, "0.1"); //$NON-NLS-1$
-		addKeyValue(contentBuffer, KEY_USER_ID, com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties().getProperty("user.name")); //$NON-NLS-1$
+		addKeyValue(contentBuffer, KEY_USER_ID, com.ibm.oti.vm.VM.internalGetProperties().getProperty("user.name")); //$NON-NLS-1$
 		/* CMVC 161414 - PIDs and UIDs are long */
 		addKeyAsciiValue(contentBuffer, KEY_USER_UID ,Long.toString(IPC.getUid()));
 		addKeyAsciiValue(contentBuffer, KEY_PROCESS_ID, Long.toString(IPC.getProcessId()));

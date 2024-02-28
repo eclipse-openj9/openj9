@@ -53,7 +53,7 @@ final class SharedClassHelperFactoryImpl extends SharedAbstractHelperFactory imp
 	private static SharedClassFilter getGlobalSharingFilter() {
 		if (globalSharingFilter == null) {
 			try {
-				String className = com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties().getProperty(GLOBAL_SHARING_FILTER);
+				String className = com.ibm.oti.vm.VM.internalGetProperties().getProperty(GLOBAL_SHARING_FILTER);
 				if (null != className) {
 					Class<?> filterClass = Class.forName(className);
 					globalSharingFilter = SharedClassFilter.class.cast(filterClass.getDeclaredConstructor().newInstance());
