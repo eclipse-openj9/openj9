@@ -627,7 +627,7 @@ runInternalJVMRestoreHooks(J9VMThread *currentThread, const char **nlsMsgFormat)
 	if (result) {
 		if ((NULL != classIterationRestoreHookRecords) && (pool_numElements(classIterationRestoreHookRecords)) > 0) {
 			J9ClassWalkState j9ClassWalkState = {0};
-			J9Class *clazz = vm->internalVMFunctions->allClassesStartDo(&j9ClassWalkState, vm, NULL);
+			J9Class *clazz = allClassesStartDo(&j9ClassWalkState, vm, NULL);
 			while (NULL != clazz) {
 				J9InternalClassIterationRestoreHookRecord *hookRecord = (J9InternalClassIterationRestoreHookRecord*)pool_startDo(classIterationRestoreHookRecords, &walkState);
 				while (NULL != hookRecord) {
@@ -686,7 +686,6 @@ BOOLEAN
 runDelayedLockRelatedOperations(J9VMThread *currentThread)
 {
 	J9JavaVM *vm = currentThread->javaVM;
-	J9InternalVMFunctions* vmFuncs = vm->internalVMFunctions;
 	J9DelayedLockingOpertionsRecord *delayedLockingOperation = static_cast<J9DelayedLockingOpertionsRecord*>(J9_LINKED_LIST_START_DO(vm->checkpointState.delayedLockingOperationsRoot));
 	BOOLEAN rc = TRUE;
 
@@ -751,7 +750,7 @@ exitMonitor:
 		}
 
 next:
-		vmFuncs->j9jni_deleteGlobalRef((JNIEnv*) currentThread, delayedLockingOperation->globalObjectRef, JNI_FALSE);
+		j9jni_deleteGlobalRef((JNIEnv*) currentThread, delayedLockingOperation->globalObjectRef, JNI_FALSE);
 		J9DelayedLockingOpertionsRecord *lastOperation = delayedLockingOperation;
 		delayedLockingOperation = J9_LINKED_LIST_NEXT_DO(vm->checkpointState.delayedLockingOperationsRoot, delayedLockingOperation);
 		pool_removeElement(vm->checkpointState.delayedLockingOperationsRecords, lastOperation);
@@ -786,7 +785,6 @@ getRestoreSystemProperites(J9VMThread *currentThread)
 		JavaVMInitArgs *restorArgs = vm->checkpointState.restoreArgsList->actualVMArgs;
 		 J9CmdLineOption *j9Options = vm->checkpointState.restoreArgsList->j9Options;
 		J9MemoryManagerFunctions *mmfns = vm->memoryManagerFunctions;
-		J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 		PORT_ACCESS_FROM_JAVAVM(vm);
 
 		UDATA count = 0;
@@ -800,13 +798,13 @@ getRestoreSystemProperites(J9VMThread *currentThread)
 			}
 		}
 
-		vmFuncs->internalEnterVMFromJNI(currentThread);
+		internalEnterVMFromJNI(currentThread);
 
 		UDATA arrayEntries = count * 2;
 		j9object_t newArray = mmfns->J9AllocateIndexableObject(currentThread, ((J9Class*) J9VMJAVALANGSTRING_OR_NULL(vm))->arrayClass, arrayEntries, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
 
 		if (NULL == newArray) {
-			vmFuncs->setHeapOutOfMemoryError(currentThread);
+			setHeapOutOfMemoryError(currentThread);
 			goto done;
 		}
 
@@ -832,13 +830,13 @@ getRestoreSystemProperites(J9VMThread *currentThread)
 
 				propNameCopy = (char *)getMUtf8String(vm, optionString + 2, propNameLen);
 				if (NULL == propNameCopy) {
-					vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+					setNativeOutOfMemoryError(currentThread, 0, 0);
 					goto done;
 				}
 				propValueCopy = (char *)getMUtf8String(vm, propValue, valueLength);
 				if (NULL == propValueCopy) {
 					j9mem_free_memory(propNameCopy);
-					vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+					setNativeOutOfMemoryError(currentThread, 0, 0);
 					goto done;
 				}
 				PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, (j9object_t)newArray);
@@ -846,7 +844,7 @@ getRestoreSystemProperites(J9VMThread *currentThread)
 				if (NULL == newObject) {
 					j9mem_free_memory(propNameCopy);
 					j9mem_free_memory(propValueCopy);
-					vmFuncs->setHeapOutOfMemoryError(currentThread);
+					setHeapOutOfMemoryError(currentThread);
 					goto done;
 				}
 				newArray = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
@@ -859,7 +857,7 @@ getRestoreSystemProperites(J9VMThread *currentThread)
 				if (NULL == newObject) {
 					j9mem_free_memory(propNameCopy);
 					j9mem_free_memory(propValueCopy);
-					vmFuncs->setHeapOutOfMemoryError(currentThread);
+					setHeapOutOfMemoryError(currentThread);
 					goto done;
 				}
 				newArray = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
@@ -874,13 +872,13 @@ getRestoreSystemProperites(J9VMThread *currentThread)
 			}
 		}
 
-		returnProperties = vmFuncs->j9jni_createLocalRef((JNIEnv*)currentThread, newArray);
+		returnProperties = j9jni_createLocalRef((JNIEnv*)currentThread, newArray);
 		if (NULL == returnProperties) {
-			vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+			setNativeOutOfMemoryError(currentThread, 0, 0);
 		}
 
 done:
-		vmFuncs->internalExitVMToJNI(currentThread);
+		internalExitVMToJNI(currentThread);
 	}
 
 	return returnProperties;
@@ -896,7 +894,7 @@ setupJNIFieldIDsAndCRIUAPI(JNIEnv *env, jclass *currentExceptionClass, IDATA *sy
 	jclass criuSystemCheckpointExceptionClass = NULL;
 	jclass criuJVMRestoreExceptionClass = NULL;
 	jclass criuSystemRestoreExceptionClass = NULL;
-	BOOLEAN returnCode = TRUE;
+	bool returnCode = true;
 	PORT_ACCESS_FROM_VMC(currentThread);
 	IDATA libCRIUReturnCode = 0;
 
@@ -931,7 +929,7 @@ setupJNIFieldIDsAndCRIUAPI(JNIEnv *env, jclass *currentExceptionClass, IDATA *sy
 		Trc_VM_criu_setupJNIFieldIDsAndCRIUAPI_null_init(currentThread,
 				vmCheckpointState->criuSystemRestoreExceptionInit, vmCheckpointState->criuJVMRestoreExceptionInit,
 				vmCheckpointState->criuSystemCheckpointExceptionInit, vmCheckpointState->criuJVMCheckpointExceptionInit);
-		returnCode = FALSE;
+		returnCode = false;
 		goto done;
 	}
 
@@ -940,14 +938,13 @@ setupJNIFieldIDsAndCRIUAPI(JNIEnv *env, jclass *currentExceptionClass, IDATA *sy
 		|| (NULL == vmCheckpointState->criuJVMRestoreExceptionClass)
 		|| (NULL == vmCheckpointState->criuSystemRestoreExceptionClass)
 	) {
-		J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
-		vmFuncs->internalEnterVMFromJNI(currentThread);
-		vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
-		vmFuncs->internalExitVMToJNI(currentThread);
+		internalEnterVMFromJNI(currentThread);
+		setNativeOutOfMemoryError(currentThread, 0, 0);
+		internalExitVMToJNI(currentThread);
 		Trc_VM_criu_setupJNIFieldIDsAndCRIUAPI_null_exception_class(currentThread,
 				vmCheckpointState->criuJVMCheckpointExceptionClass, vmCheckpointState->criuSystemCheckpointExceptionClass,
 				vmCheckpointState->criuJVMRestoreExceptionClass, vmCheckpointState->criuSystemRestoreExceptionClass);
-		returnCode = FALSE;
+		returnCode = false;
 		goto done;
 	}
 
@@ -957,7 +954,7 @@ setupJNIFieldIDsAndCRIUAPI(JNIEnv *env, jclass *currentExceptionClass, IDATA *sy
 		*systemReturnCode = libCRIUReturnCode;
 		*nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_VM_CRIU_LOADING_LIBCRIU_FAILED, NULL);
 		Trc_VM_criu_setupJNIFieldIDsAndCRIUAPI_load_criu_failure(currentThread, systemReturnCode);
-		returnCode = FALSE;
+		returnCode = false;
 		goto done;
 	}
 
@@ -983,7 +980,7 @@ setupJNIFieldIDsAndCRIUAPI(JNIEnv *env, jclass *currentExceptionClass, IDATA *sy
 		*systemReturnCode = 1;
 		*nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_VM_CRIU_LOADING_LIBCRIU_FUNCTIONS_FAILED, NULL);
 		Trc_VM_criu_setupJNIFieldIDsAndCRIUAPI_not_find_criu_methods(currentThread, 1);
-		returnCode = FALSE;
+		returnCode = false;
 		goto done;
 	}
 
@@ -1023,8 +1020,6 @@ done:
 static IDATA
 getNativeString(J9VMThread *currentThread, j9object_t javaString, char **nativeString, IDATA nativeStringBufSize)
 {
-	J9JavaVM *vm = currentThread->javaVM;
-	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	char mutf8StringBuf[STRING_BUFFER_SIZE];
 	char *mutf8String = NULL;
 	UDATA mutf8StringSize = 0;
@@ -1034,7 +1029,7 @@ getNativeString(J9VMThread *currentThread, j9object_t javaString, char **nativeS
 	PORT_ACCESS_FROM_VMC(currentThread);
 	OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
 
-	mutf8String = vmFuncs->copyStringToUTF8WithMemAlloc(currentThread, javaString, J9_STR_NULL_TERMINATE_RESULT, "", 0, mutf8StringBuf, STRING_BUFFER_SIZE, &mutf8StringSize);
+	mutf8String = copyStringToUTF8WithMemAlloc(currentThread, javaString, J9_STR_NULL_TERMINATE_RESULT, "", 0, mutf8StringBuf, STRING_BUFFER_SIZE, &mutf8StringSize);
 	if (NULL == mutf8String) {
 		res = J9_NATIVE_STRING_OUT_OF_MEMORY;
 		goto free;
@@ -1133,7 +1128,6 @@ static void
 toggleSuspendOnJavaThreads(J9VMThread *currentThread, BOOLEAN suspend, BOOLEAN toggleDebugThreads)
 {
 	J9JavaVM *vm = currentThread->javaVM;
-	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 
 	Assert_VM_criu_true((J9_XACCESS_EXCLUSIVE == vm->exclusiveAccessState) || (J9_XACCESS_EXCLUSIVE == vm->safePointState));
 
@@ -1144,9 +1138,9 @@ toggleSuspendOnJavaThreads(J9VMThread *currentThread, BOOLEAN suspend, BOOLEAN t
 		) {
 			if (shouldToggleJavaThread(walkThread, toggleDebugThreads)) {
 				if (suspend) {
-					vmFuncs->setHaltFlag(walkThread, J9_PUBLIC_FLAGS_HALT_THREAD_FOR_CHECKPOINT);
+					setHaltFlag(walkThread, J9_PUBLIC_FLAGS_HALT_THREAD_FOR_CHECKPOINT);
 				} else {
-					vmFuncs->clearHaltFlag(walkThread, J9_PUBLIC_FLAGS_HALT_THREAD_FOR_CHECKPOINT);
+					clearHaltFlag(walkThread, J9_PUBLIC_FLAGS_HALT_THREAD_FOR_CHECKPOINT);
 				}
 			}
 		}
@@ -1225,22 +1219,22 @@ checkIfSafeToCheckpoint(J9VMThread *currentThread)
 }
 
 static VMINLINE void
-acquireSafeOrExcusiveVMAccess(J9VMThread *currentThread, J9InternalVMFunctions *vmFuncs, bool isSafe)
+acquireSafeOrExcusiveVMAccess(J9VMThread *currentThread, bool isSafe)
 {
 	if (isSafe) {
-		vmFuncs->acquireSafePointVMAccess(currentThread);
+		acquireSafePointVMAccess(currentThread);
 	} else {
-		vmFuncs->acquireExclusiveVMAccess(currentThread);
+		acquireExclusiveVMAccess(currentThread);
 	}
 }
 
 static VMINLINE void
-releaseSafeOrExcusiveVMAccess(J9VMThread *currentThread, J9InternalVMFunctions *vmFuncs, bool isSafe)
+releaseSafeOrExcusiveVMAccess(J9VMThread *currentThread, bool isSafe)
 {
 	if (isSafe) {
-		vmFuncs->releaseSafePointVMAccess(currentThread);
+		releaseSafePointVMAccess(currentThread);
 	} else {
-		vmFuncs->releaseExclusiveVMAccess(currentThread);
+		releaseExclusiveVMAccess(currentThread);
 	}
 }
 
@@ -1465,7 +1459,6 @@ criuCheckpointJVMImpl(JNIEnv *env,
 {
 	J9VMThread *currentThread = (J9VMThread*)env;
 	J9JavaVM *vm = currentThread->javaVM;
-	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	J9PortLibrary *portLibrary = vm->portLibrary;
 
 	jclass currentExceptionClass = NULL;
@@ -1474,7 +1467,7 @@ criuCheckpointJVMImpl(JNIEnv *env,
 	UDATA msgCharLength = 0;
 	IDATA systemReturnCode = 0;
 	const char *dlerrorReturnString = NULL;
-	BOOLEAN setupCRIU = TRUE;
+	bool setupCRIU = true;
 	PORT_ACCESS_FROM_VMC(currentThread);
 
 	Trc_VM_criu_checkpointJVMImpl_Entry(currentThread);
@@ -1484,7 +1477,7 @@ criuCheckpointJVMImpl(JNIEnv *env,
 
 	vm->checkpointState.checkpointThread = currentThread;
 
-	if (vmFuncs->isCheckpointAllowed(currentThread) && setupCRIU) {
+	if (isCheckpointAllowed(currentThread) && setupCRIU) {
 #if defined(LINUX)
 		j9object_t cpDir = NULL;
 		j9object_t log = NULL;
@@ -1503,7 +1496,7 @@ criuCheckpointJVMImpl(JNIEnv *env,
 		char *optionsFileChars = optionsFileBuf;
 		char envFileBuf[STRING_BUFFER_SIZE];
 		char *envFileChars = envFileBuf;
-		BOOLEAN isAfterCheckpoint = FALSE;
+		bool hasDumpSucceeded = false;
 		I_64 checkpointNanoTimeMonotonic = 0;
 		I_64 restoreNanoTimeMonotonic = 0;
 		U_64 checkpointNanoUTCTime = 0;
@@ -1512,7 +1505,7 @@ criuCheckpointJVMImpl(JNIEnv *env,
 		bool safePoint = J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_OSR_SAFE_POINT);
 		UDATA maxRetries = vm->checkpointState.maxRetryForNotCheckpointSafe;
 		UDATA sleepMilliseconds = vm->checkpointState.sleepMillisecondsForNotCheckpointSafe;
-		BOOLEAN syslogFlagNone = TRUE;
+		bool syslogFlagNone = true;
 		char *syslogOptions = NULL;
 		I_32 syslogBufferSize = 0;
 		UDATA oldVMState = VM_VMHelpers::setVMState(currentThread, J9VMSTATE_CRIU_SUPPORT_CHECKPOINT_PHASE_START);
@@ -1520,8 +1513,9 @@ criuCheckpointJVMImpl(JNIEnv *env,
 		UDATA criuRestorePid = 0;
 		U_32 intGhostFileLimit = 0;
 		IDATA criuDumpReturnCode = 0;
+		bool restoreFailure = false;
 
-		vmFuncs->internalEnterVMFromJNI(currentThread);
+		internalEnterVMFromJNI(currentThread);
 
 		Assert_VM_criu_notNull(imagesDir);
 		cpDir = J9_JNI_UNWRAP_REFERENCE(imagesDir);
@@ -1530,7 +1524,7 @@ criuCheckpointJVMImpl(JNIEnv *env,
 		case J9_NATIVE_STRING_NO_ERROR:
 			break;
 		case J9_NATIVE_STRING_OUT_OF_MEMORY:
-			vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+			setNativeOutOfMemoryError(currentThread, 0, 0);
 			goto freeDir;
 		case J9_NATIVE_STRING_FAIL_TO_CONVERT:
 			currentExceptionClass = vm->checkpointState.criuJVMCheckpointExceptionClass;
@@ -1545,7 +1539,7 @@ criuCheckpointJVMImpl(JNIEnv *env,
 			case J9_NATIVE_STRING_NO_ERROR:
 				break;
 			case J9_NATIVE_STRING_OUT_OF_MEMORY:
-				vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+				setNativeOutOfMemoryError(currentThread, 0, 0);
 				goto freeLog;
 			case J9_NATIVE_STRING_FAIL_TO_CONVERT:
 				currentExceptionClass = vm->checkpointState.criuJVMCheckpointExceptionClass;
@@ -1561,7 +1555,7 @@ criuCheckpointJVMImpl(JNIEnv *env,
 			case J9_NATIVE_STRING_NO_ERROR:
 				break;
 			case J9_NATIVE_STRING_OUT_OF_MEMORY:
-				vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+				setNativeOutOfMemoryError(currentThread, 0, 0);
 				goto freeOptionsFile;
 			case J9_NATIVE_STRING_FAIL_TO_CONVERT:
 				currentExceptionClass = vm->checkpointState.criuJVMCheckpointExceptionClass;
@@ -1579,7 +1573,7 @@ criuCheckpointJVMImpl(JNIEnv *env,
 			case J9_NATIVE_STRING_NO_ERROR:
 				break;
 			case J9_NATIVE_STRING_OUT_OF_MEMORY:
-				vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+				setNativeOutOfMemoryError(currentThread, 0, 0);
 				goto freeEnvFile;
 			case J9_NATIVE_STRING_FAIL_TO_CONVERT:
 				currentExceptionClass = vm->checkpointState.criuJVMCheckpointExceptionClass;
@@ -1597,7 +1591,7 @@ criuCheckpointJVMImpl(JNIEnv *env,
 			case J9_NATIVE_STRING_NO_ERROR:
 				break;
 			case J9_NATIVE_STRING_OUT_OF_MEMORY:
-				vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+				setNativeOutOfMemoryError(currentThread, 0, 0);
 				goto freeWorkDir;
 			case J9_NATIVE_STRING_FAIL_TO_CONVERT:
 				currentExceptionClass = vm->checkpointState.criuJVMCheckpointExceptionClass;
@@ -1669,23 +1663,23 @@ criuCheckpointJVMImpl(JNIEnv *env,
 			vm->checkpointState.criuSetWorkDirFdFunctionPointerType(workDirFD);
 		}
 
-		acquireSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
+		acquireSafeOrExcusiveVMAccess(currentThread, safePoint);
 
 		notSafeToCheckpoint = checkIfSafeToCheckpoint(currentThread);
 
 		for (UDATA i = 0; (0 != notSafeToCheckpoint) && (i <= maxRetries); i++) {
-			releaseSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
-			vmFuncs->internalExitVMToJNI(currentThread);
+			releaseSafeOrExcusiveVMAccess(currentThread, safePoint);
+			internalExitVMToJNI(currentThread);
 			omrthread_sleep(sleepMilliseconds);
-			vmFuncs->internalEnterVMFromJNI(currentThread);
-			acquireSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
+			internalEnterVMFromJNI(currentThread);
+			acquireSafeOrExcusiveVMAccess(currentThread, safePoint);
 			notSafeToCheckpoint = checkIfSafeToCheckpoint(currentThread);
 		}
 
 		if ((J9VM_DELAYCHECKPOINT_NOTCHECKPOINTSAFE == notSafeToCheckpoint)
 			|| ((J9VM_DELAYCHECKPOINT_CLINIT == notSafeToCheckpoint) && J9_ARE_ALL_BITS_SET(vm->checkpointState.flags, J9VM_CRIU_IS_THROW_ON_DELAYED_CHECKPOINT_ENABLED))
 		) {
-			releaseSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
+			releaseSafeOrExcusiveVMAccess(currentThread, safePoint);
 			currentExceptionClass = vm->checkpointState.criuJVMCheckpointExceptionClass;
 			systemReturnCode = vm->checkpointState.maxRetryForNotCheckpointSafe;
 			nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_VM_CRIU_MAX_RETRY_FOR_NOTCHECKPOINTSAFE_REACHED, NULL);
@@ -1699,11 +1693,11 @@ criuCheckpointJVMImpl(JNIEnv *env,
 		toggleSuspendOnJavaThreads(currentThread, TRUE, FALSE);
 
 		vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_CRIU_SINGLE_THREAD_MODE|J9_EXTENDED_RUNTIME2_CRIU_SINGLE_THROW_BLOCKING_EXCEPTIONS;
-		releaseSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
+		releaseSafeOrExcusiveVMAccess(currentThread, safePoint);
 
 		VM_VMHelpers::setVMState(currentThread, J9VMSTATE_CRIU_SUPPORT_CHECKPOINT_PHASE_JAVA_HOOKS);
 
-		if (FALSE == vmFuncs->jvmCheckpointHooks(currentThread)) {
+		if (FALSE == jvmCheckpointHooks(currentThread)) {
 			/* throw the pending exception */
 			goto wakeJavaThreads;
 		}
@@ -1730,12 +1724,12 @@ criuCheckpointJVMImpl(JNIEnv *env,
 		vm->memoryManagerFunctions->j9gc_prepare_for_checkpoint(currentThread);
 		vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_CRIU_SINGLE_THROW_BLOCKING_EXCEPTIONS;
 
-		acquireSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
+		acquireSafeOrExcusiveVMAccess(currentThread, safePoint);
 
 		VM_VMHelpers::setVMState(currentThread, J9VMSTATE_CRIU_SUPPORT_CHECKPOINT_PHASE_INTERNAL_HOOKS);
 
 		/* Run internal checkpoint hooks, after iterating heap objects */
-		if (FALSE == vmFuncs->runInternalJVMCheckpointHooks(currentThread, &nlsMsgFormat)) {
+		if (FALSE == runInternalJVMCheckpointHooks(currentThread, &nlsMsgFormat)) {
 			currentExceptionClass = vm->checkpointState.criuJVMCheckpointExceptionClass;
 			goto wakeJavaThreadsWithExclusiveVMAccess;
 		}
@@ -1747,10 +1741,10 @@ criuCheckpointJVMImpl(JNIEnv *env,
 		syslogOptions = (char *)j9mem_allocate_memory(STRING_BUFFER_SIZE, J9MEM_CATEGORY_VM);
 		if (NULL == syslogOptions) {
 			systemReturnCode = J9_NATIVE_STRING_OUT_OF_MEMORY;
-			vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+			setNativeOutOfMemoryError(currentThread, 0, 0);
 			goto wakeJavaThreadsWithExclusiveVMAccess;
 		}
-		systemReturnCode = vmFuncs->queryLogOptions(vm, STRING_BUFFER_SIZE, syslogOptions, &syslogBufferSize);
+		systemReturnCode = queryLogOptions(vm, STRING_BUFFER_SIZE, syslogOptions, &syslogBufferSize);
 		if (JVMTI_ERROR_NONE != systemReturnCode) {
 			currentExceptionClass = vm->checkpointState.criuJVMCheckpointExceptionClass;
 			nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_JVMTI_COM_IBM_LOG_QUERY_OPT_ERROR, NULL);
@@ -1761,16 +1755,35 @@ criuCheckpointJVMImpl(JNIEnv *env,
 		if (0 != strcmp(syslogOptions, "none")) {
 			/* Not -Xsyslog:none, close the system logger handle before checkpoint. */
 			j9port_control(OMRPORT_CTLDATA_SYSLOG_CLOSE, 0);
-			syslogFlagNone = FALSE;
+			syslogFlagNone = false;
 		}
 
 		TRIGGER_J9HOOK_VM_CRIU_CHECKPOINT(vm->hookInterface, currentThread);
 
 		malloc_trim(0);
 		Trc_VM_criu_before_checkpoint(currentThread, j9time_nano_time(), j9time_current_time_nanos(&success));
+
 		VM_VMHelpers::setVMState(currentThread, J9VMSTATE_CRIU_SUPPORT_CHECKPOINT_PHASE_END);
+
+		/* Pre-checkpoint */
 		criuDumpReturnCode = vm->checkpointState.criuDumpFunctionPointerType();
-		VM_VMHelpers::setVMState(currentThread, J9VMSTATE_CRIU_SUPPORT_RESTORE_PHASE_START);
+
+		/* The dump succeeded if criuDumpReturnCode is >= 0 */
+		if (criuDumpReturnCode >= 0) {
+			/* Set this if the dump succeeded, it means we are in the restore process.
+			 * If it doesnt succeed we still need to run some of the restore code as
+			 * some threads are waiting to be notified.
+			 */
+			hasDumpSucceeded = true;
+		}
+
+		if (hasDumpSucceeded) {
+			VM_VMHelpers::setVMState(currentThread, J9VMSTATE_CRIU_SUPPORT_RESTORE_PHASE_START);
+		} else {
+			VM_VMHelpers::setVMState(currentThread, J9VMSTATE_CRIU_SUPPORT_CHECKPOINT_FAILED_PHASE_START);
+		}
+
+		/* Need to get restore time for trace point. */
 		restoreNanoTimeMonotonic = j9time_nano_time();
 		restoreNanoUTCTime = j9time_current_time_nanos(&success);
 		if (0 == success) {
@@ -1781,38 +1794,40 @@ criuCheckpointJVMImpl(JNIEnv *env,
 				J9NLS_VM_CRIU_J9_CURRENT_TIME_NANOS_FAILURE,
 				NULL);
 			j9mem_free_memory(syslogOptions);
-			goto wakeJavaThreadsWithExclusiveVMAccess;
+			restoreFailure = true;
 		}
-		vm->checkpointState.lastRestoreTimeInNanoseconds = (I_64)restoreNanoUTCTime;
+
+		/* Set total restore time for InternalCRIUSupport API. */
+		if (hasDumpSucceeded) {
+			vm->checkpointState.lastRestoreTimeInNanoseconds = (I_64)restoreNanoUTCTime;
+		}
+
 		Trc_VM_criu_after_dump(currentThread, restoreNanoTimeMonotonic, vm->checkpointState.lastRestoreTimeInNanoseconds);
-		criuRestorePid = j9sysinfo_get_ppid();
-		systemReturnCode = j9sysinfo_get_process_start_time(criuRestorePid, &restoreNanoUTCTime);
-		if (0 != systemReturnCode) {
-			currentExceptionClass = vm->checkpointState.criuSystemRestoreExceptionClass;
-			nlsMsgFormat = j9nls_lookup_message(
-				J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
-				J9NLS_VM_CRIU_J9_GET_PROCESS_START_TIME_FAILURE,
-				NULL);
-			j9mem_free_memory(syslogOptions);
-			goto wakeJavaThreadsWithExclusiveVMAccess;
-		}
-		vm->checkpointState.processRestoreStartTimeInNanoseconds = (I_64)restoreNanoUTCTime;
-		Trc_VM_criu_process_restore_start_after_dump(currentThread, criuRestorePid, vm->checkpointState.processRestoreStartTimeInNanoseconds);
+
 		if (!syslogFlagNone) {
 			/* Re-open the system logger, and set options with saved string value. */
 			j9port_control(J9PORT_CTLDATA_SYSLOG_OPEN, 0);
-			vmFuncs->setLogOptions(vm, syslogOptions);
+			setLogOptions(vm, syslogOptions);
 		}
 		j9mem_free_memory(syslogOptions);
 
-		if (criuDumpReturnCode >= 0) {
-			/* Set this if the dump succeeded. If it doesnt succeed we still need to run some of the restore
-			 * code as some threads are waiting to be notified.
-			 */
-			isAfterCheckpoint = TRUE;
-		}
+		if (hasDumpSucceeded) {
+			/* Calculate restore time excluding `criu restore ...` for MXBean API. */
+			criuRestorePid = j9sysinfo_get_ppid();
+			systemReturnCode = j9sysinfo_get_process_start_time(criuRestorePid, &restoreNanoUTCTime);
+			if (0 != systemReturnCode) {
+				currentExceptionClass = vm->checkpointState.criuSystemRestoreExceptionClass;
+				nlsMsgFormat = j9nls_lookup_message(
+					J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+					J9NLS_VM_CRIU_J9_GET_PROCESS_START_TIME_FAILURE,
+					NULL);
+				j9mem_free_memory(syslogOptions);
+				restoreFailure = true;
+			}
+			vm->checkpointState.processRestoreStartTimeInNanoseconds = (I_64)restoreNanoUTCTime;
+			Trc_VM_criu_process_restore_start_after_dump(currentThread, criuRestorePid, vm->checkpointState.processRestoreStartTimeInNanoseconds);
 
-		if (isAfterCheckpoint) {
+			/* Load restore arguments from restore file or env vars. */
 			switch (loadRestoreArguments(currentThread, optionsFileChars, envFileChars)) {
 			case RESTORE_ARGS_RETURN_OPTIONS_FILE_FAILED:
 				currentExceptionClass = vm->checkpointState.criuJVMRestoreExceptionClass;
@@ -1821,16 +1836,21 @@ criuCheckpointJVMImpl(JNIEnv *env,
 					/* fallthrough */
 			case RESTORE_ARGS_RETURN_OOM:
 				/* exception is already set */
-				goto wakeJavaThreadsWithExclusiveVMAccess;
+				restoreFailure = true;
+				break;
 			case RESTORE_ARGS_RETURN_OK:
 				break;
 			}
 		}
 
-		VM_VMHelpers::setVMState(currentThread, J9VMSTATE_CRIU_SUPPORT_RESTORE_PHASE_JAVA_HOOKS);
+		if (hasDumpSucceeded) {
+			VM_VMHelpers::setVMState(currentThread, J9VMSTATE_CRIU_SUPPORT_RESTORE_PHASE_JAVA_HOOKS);
+		} else {
+			VM_VMHelpers::setVMState(currentThread, J9VMSTATE_CRIU_SUPPORT_CHECKPOINT_FAILED_PHASE_JAVA_HOOKS);
+		}
 
-		/* Run internal restore hooks, and cleanup */
-		if (FALSE == vmFuncs->runInternalJVMRestoreHooks(currentThread, &nlsMsgFormat)) {
+		/* Run internal restore hooks, and cleanup. Must be run even if we fail restore to re-enable system threads. */
+		if (FALSE == runInternalJVMRestoreHooks(currentThread, &nlsMsgFormat)) {
 			currentExceptionClass = vm->checkpointState.criuJVMRestoreExceptionClass;
 			goto wakeJavaThreadsWithExclusiveVMAccess;
 		}
@@ -1840,7 +1860,7 @@ criuCheckpointJVMImpl(JNIEnv *env,
 			toggleSuspendOnJavaThreads(currentThread, FALSE, TRUE);
 		}
 
-		releaseSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
+		releaseSafeOrExcusiveVMAccess(currentThread, safePoint);
 
 		if (FALSE == vm->memoryManagerFunctions->j9gc_reinitialize_for_restore(currentThread, &nlsMsgFormat)) {
 			currentExceptionClass = vm->checkpointState.criuJVMRestoreExceptionClass;
@@ -1856,6 +1876,7 @@ criuCheckpointJVMImpl(JNIEnv *env,
 			goto wakeJavaThreads;
 		}
 		Trc_VM_criu_after_checkpoint(currentThread, restoreNanoTimeMonotonic, restoreNanoUTCTime);
+
 		/* JVM downtime between checkpoint and restore is calculated with j9time_current_time_nanos()
 		 * which is expected to be accurate in scenarios such as host rebooting, CRIU image moving across timezones.
 		 */
@@ -1869,8 +1890,9 @@ criuCheckpointJVMImpl(JNIEnv *env,
 			currentExceptionClass = vm->checkpointState.criuJVMRestoreExceptionClass;
 			nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
 					J9NLS_VM_CRIU_NEGATIVE_CHECKPOINT_RESTORE_TIME_DELTA, NULL);
-			goto wakeJavaThreads;
+			restoreFailure = true;
 		}
+
 		/* j9time_nano_time() might be based on a different starting point in scenarios
 		 * such as host rebooting, CRIU image moving across timezones.
 		 * The adjustment calculated below is expected to be same as checkpointRestoreTimeDelta
@@ -1881,21 +1903,23 @@ criuCheckpointJVMImpl(JNIEnv *env,
 		Trc_VM_criu_restore_nano_times(currentThread, restoreNanoUTCTime, checkpointNanoUTCTime, vm->checkpointState.checkpointRestoreTimeDelta,
 				restoreNanoTimeMonotonic, checkpointNanoTimeMonotonic, portLibrary->nanoTimeMonotonicClockDelta);
 
-		VM_VMHelpers::setVMState(currentThread, J9VMSTATE_CRIU_SUPPORT_RESTORE_PHASE_INTERNAL_HOOKS);
+		if (hasDumpSucceeded) {
+			VM_VMHelpers::setVMState(currentThread, J9VMSTATE_CRIU_SUPPORT_RESTORE_PHASE_INTERNAL_HOOKS);
+		} else {
+			VM_VMHelpers::setVMState(currentThread, J9VMSTATE_CRIU_SUPPORT_CHECKPOINT_FAILED_PHASE_INTERNAL_HOOKS);
+		}
 
-		if (isAfterCheckpoint && (FALSE == vmFuncs->jvmRestoreHooks(currentThread))) {
+		if (restoreFailure) {
+			goto wakeJavaThreads;
+		}
+
+		/* Run Java restore hooks. */
+		if (hasDumpSucceeded && (FALSE == jvmRestoreHooks(currentThread))) {
 			/* throw the pending exception */
 			goto wakeJavaThreads;
 		}
 
-		if (FALSE == vmFuncs->runDelayedLockRelatedOperations(currentThread)) {
-			currentExceptionClass = vm->checkpointState.criuJVMRestoreExceptionClass;
-			systemReturnCode = 0;
-			nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
-					J9NLS_VM_CRIU_FAILED_DELAY_LOCK_RELATED_OPS, NULL);
-		}
-
-		if (isAfterCheckpoint && (NULL != vm->checkpointState.restoreArgsList)) {
+		if (hasDumpSucceeded && (NULL != vm->checkpointState.restoreArgsList)) {
 			J9VMInitArgs *restoreArgsList = vm->checkpointState.restoreArgsList;
 			/* mark -Xoptionsfile= as consumed */
 			FIND_AND_CONSUME_ARG(restoreArgsList, STARTSWITH_MATCH, VMOPT_XOPTIONSFILE_EQUALS, NULL);
@@ -1904,7 +1928,7 @@ criuCheckpointJVMImpl(JNIEnv *env,
 
 			bool dontIgnoreUnsupportedRestoreOptions = (ignoreEnabled < 0) || (ignoreEnabled < ignoreDisabled);
 
-			if ((FALSE == vmFuncs->checkArgsConsumed(vm, vm->portLibrary, restoreArgsList)) && dontIgnoreUnsupportedRestoreOptions) {
+			if ((FALSE == checkArgsConsumed(vm, vm->portLibrary, restoreArgsList)) && dontIgnoreUnsupportedRestoreOptions) {
 				currentExceptionClass = vm->checkpointState.criuJVMRestoreExceptionClass;
 				systemReturnCode = 0;
 				nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
@@ -1913,20 +1937,33 @@ criuCheckpointJVMImpl(JNIEnv *env,
 		}
 
 wakeJavaThreads:
-		acquireSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
+		/* Needs to be run unconditionally as there may have been locking events in the checkpoint side. */
+		if (FALSE == runDelayedLockRelatedOperations(currentThread)) {
+			currentExceptionClass = vm->checkpointState.criuJVMRestoreExceptionClass;
+			systemReturnCode = 0;
+			nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+					J9NLS_VM_CRIU_FAILED_DELAY_LOCK_RELATED_OPS, NULL);
+		}
+
+		acquireSafeOrExcusiveVMAccess(currentThread, safePoint);
 
 wakeJavaThreadsWithExclusiveVMAccess:
 
 		vm->extendedRuntimeFlags2 &= ~(J9_EXTENDED_RUNTIME2_CRIU_SINGLE_THROW_BLOCKING_EXCEPTIONS|J9_EXTENDED_RUNTIME2_CRIU_SINGLE_THREAD_MODE);
 		toggleSuspendOnJavaThreads(currentThread, FALSE, FALSE);
 
-		releaseSafeOrExcusiveVMAccess(currentThread, vmFuncs, safePoint);
+		releaseSafeOrExcusiveVMAccess(currentThread, safePoint);
 
-		VM_VMHelpers::setVMState(currentThread, J9VMSTATE_CRIU_SUPPORT_RESTORE_PHASE_END);
+		if (hasDumpSucceeded) {
+			VM_VMHelpers::setVMState(currentThread, J9VMSTATE_CRIU_SUPPORT_RESTORE_PHASE_END);
+		} else {
+			VM_VMHelpers::setVMState(currentThread, J9VMSTATE_CRIU_SUPPORT_CHECKPOINT_FAILED_PHASE_END);
+		}
+
 closeWorkDirFD:
 		if ((0 != close(workDirFD)) && (NULL == currentExceptionClass)) {
 			systemReturnCode = errno;
-			if (isAfterCheckpoint) {
+			if (hasDumpSucceeded) {
 				currentExceptionClass = vm->checkpointState.criuSystemRestoreExceptionClass;
 			} else {
 				currentExceptionClass = vm->checkpointState.criuSystemCheckpointExceptionClass;
@@ -1936,7 +1973,7 @@ closeWorkDirFD:
 closeDirFD:
 		if ((0 != close(dirFD)) && (NULL == currentExceptionClass)) {
 			systemReturnCode = errno;
-			if (isAfterCheckpoint) {
+			if (hasDumpSucceeded) {
 				currentExceptionClass = vm->checkpointState.criuSystemRestoreExceptionClass;
 			} else {
 				currentExceptionClass = vm->checkpointState.criuSystemCheckpointExceptionClass;
@@ -1971,7 +2008,7 @@ freeDir:
 		}
 
 		VM_VMHelpers::setVMState(currentThread, oldVMState);
-		vmFuncs->internalExitVMToJNI(currentThread);
+		internalExitVMToJNI(currentThread);
 #endif /* defined(LINUX) */
 	}
 
