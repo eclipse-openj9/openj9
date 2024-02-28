@@ -41,7 +41,12 @@ public class Core {
 	 */
 	public static Context<Resource> getGlobalContext() {
 		if ((globalContext == null) && InternalCRIUSupport.isCRaCSupportEnabled()) {
-			globalContext = new CRIUSupportContext<>();
+			try {
+				globalContext = new CRIUSupportContext<>();
+			} catch (IllegalArgumentException e) {
+				System.err.println("Invalid checkpoint directory supplied: " + InternalCRIUSupport.getCRaCCheckpointToDir()); //$NON-NLS-1$
+				throw e;
+			}
 		}
 		return (Context<Resource>)globalContext;
 	}
@@ -69,7 +74,10 @@ class CRIUSupportContext<R extends Resource> extends Context<R> {
 	// InternalCRIUSupport.getCRaCCheckpointToDir() is not null if
 	// InternalCRIUSupport.isCRaCSupportEnabled() returns true before creating CRIUSupportContext<>().
 	private final InternalCRIUSupport internalCRIUSupport = new InternalCRIUSupport(
-			Paths.get(InternalCRIUSupport.getCRaCCheckpointToDir())).setLeaveRunning(false).setShellJob(true)
+			Paths.get(InternalCRIUSupport.getCRaCCheckpointToDir()))
+			.setLeaveRunning(false)
+			.setShellJob(true)
+			.setTCPEstablished(true)
 			.setFileLocks(true);
 
 	@Override
@@ -111,6 +119,12 @@ class CRIUSupportContext<R extends Resource> extends Context<R> {
 	}
 
 	public void checkpointJVM() {
-		internalCRIUSupport.checkpointJVM();
+		try {
+			internalCRIUSupport.checkpointJVM();
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw e;
+		}
+
 	}
 }
