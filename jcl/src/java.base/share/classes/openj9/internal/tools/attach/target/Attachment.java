@@ -22,10 +22,12 @@
  *******************************************************************************/
 package openj9.internal.tools.attach.target;
 
+import com.ibm.oti.vm.VM;
+
 import java.io.ByteArrayInputStream;
 import java.io.Closeable;
-import java.io.IOException;
 import java.io.InputStream;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -35,7 +37,6 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.Objects;
 import java.util.Properties;
-
 import java.util.ServiceLoader;
 
 /*[IF JAVA_SPEC_VERSION >= 9]*/
@@ -227,8 +228,8 @@ final class Attachment extends Thread implements Response {
 							+ " " + attachError); //$NON-NLS-1$
 				}
 			} else if (cmd.startsWith(Command.GET_SYSTEM_PROPERTIES)) {
-				Properties internalProperties = com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties();
-				String argumentString = String.join(" ", com.ibm.oti.vm.VM.getVMArgs()); //$NON-NLS-1$
+				Properties internalProperties = VM.internalGetProperties();
+				String argumentString = String.join(" ", VM.getVMArgs()); //$NON-NLS-1$
 				Properties newProperties = (Properties) internalProperties.clone();
 				newProperties.put("sun.jvm.args", argumentString); //$NON-NLS-1$
 				replyWithProperties(newProperties);
@@ -468,7 +469,7 @@ final class Attachment extends Thread implements Response {
 	}
 
 	static String saveLocalConnectorAddress() {
-		Properties systemProperties = com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties();
+		Properties systemProperties = VM.internalGetProperties();
 		String addr;
 		synchronized (systemProperties) {
 			addr = systemProperties.getProperty(LOCAL_CONNECTOR_ADDRESS);

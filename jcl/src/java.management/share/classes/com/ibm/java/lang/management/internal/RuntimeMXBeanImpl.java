@@ -72,7 +72,7 @@ public class RuntimeMXBeanImpl implements RuntimeMXBean {
 		}
 
 		checkMonitorPermission();
-		return VM.getVMLangAccess().internalGetProperties().getProperty("sun.boot.class.path"); //$NON-NLS-1$
+		return VM.internalGetProperties().getProperty("sun.boot.class.path"); //$NON-NLS-1$
 	}
 
 	/**
