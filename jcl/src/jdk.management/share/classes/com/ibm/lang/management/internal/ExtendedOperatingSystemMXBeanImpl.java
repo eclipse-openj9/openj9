@@ -90,7 +90,7 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 		}
 
 		/* add configurable model numbers if any */
-		String emuHwProperty = com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties().getProperty("com.ibm.lang.management.OperatingSystemMXBean.zos.emulatedHardwareModels"); //$NON-NLS-1$
+		String emuHwProperty = VM.internalGetProperties().getProperty("com.ibm.lang.management.OperatingSystemMXBean.zos.emulatedHardwareModels"); //$NON-NLS-1$
 
 		if (null != emuHwProperty) {
 			for (String emuHw : emuHwProperty.split("[;,]")) { //$NON-NLS-1$
@@ -518,7 +518,7 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 	@Override
 	public final boolean isHardwareEmulated() throws UnsupportedOperationException {
 		if (HwEmulResult.UNKNOWN == isHwEmulated) {
-			String osName = com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties().getProperty("os.name"); //$NON-NLS-1$
+			String osName = VM.internalGetProperties().getProperty("os.name"); //$NON-NLS-1$
 			String hwModel = getHardwareModel();
 
 			if ((null != osName) && (null != hwModel)) {

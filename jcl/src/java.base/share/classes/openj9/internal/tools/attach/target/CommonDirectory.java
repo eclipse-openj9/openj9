@@ -93,7 +93,7 @@ public abstract class CommonDirectory {
 
 	private static void initialize() {
 		/* Set the common directory used by all VMs.  Defaults to /tmp/.com_ibm_tools_attach */
-		String ipcDirProperty = com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties().getProperty(COM_IBM_TOOLS_ATTACH_DIRECTORY, 
+		String ipcDirProperty = com.ibm.oti.vm.VM.internalGetProperties().getProperty(COM_IBM_TOOLS_ATTACH_DIRECTORY,
 				(new File(systemTmpDir,".com_ibm_tools_attach")).getPath()); //$NON-NLS-1$
 		/*[PR CMVC 165300 restriction on embedded blanks was unnecessary. Also, trailing separators were redundant. ]*/
 		if (LOGGING_DISABLED != loggingStatus) {

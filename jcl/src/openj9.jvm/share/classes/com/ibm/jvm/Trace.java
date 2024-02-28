@@ -281,8 +281,9 @@ public final class Trace {
 	 * @throws SecurityException
 	 */
 	private static void checkLegacySecurityPermssion() throws SecurityException {
-		if (!("false".equalsIgnoreCase(com.ibm.oti.vm.VM.getVMLangAccess() //$NON-NLS-1$
-				.internalGetProperties().getProperty(LEGACY_TRACE_PERMISSION_PROPERTY)))) {
+		if (!("false".equalsIgnoreCase(com.ibm.oti.vm.VM //$NON-NLS-1$
+				.internalGetProperties().getProperty(LEGACY_TRACE_PERMISSION_PROPERTY)))
+		) {
 			checkTraceSecurityPermssion();
 		}
 	}
