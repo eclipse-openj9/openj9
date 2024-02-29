@@ -389,8 +389,7 @@ bool J9::ValuePropagation::transformIndexOfKnownString(
             else
                {
                uintptr_t element = TR::Compiler->om.getAddressOfElement(comp(), string, i + TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
-               uint8_t chByte  = *((uint8_t*)element);
-               ch = chByte;
+               ch  = *((uint8_t*)element);
                }
             }
          else
@@ -426,8 +425,7 @@ bool J9::ValuePropagation::transformIndexOfKnownString(
          else
             {
             uintptr_t element = TR::Compiler->om.getAddressOfElement(comp(), string, start + TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
-            int8_t chByte  = *((uint8_t*)element);
-            ch = chByte;
+            ch  = *((uint8_t*)element);
             }
          }
       else
@@ -464,8 +462,7 @@ bool J9::ValuePropagation::transformIndexOfKnownString(
             else
                {
                uintptr_t element = TR::Compiler->om.getAddressOfElement(comp(), string, i + TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
-               int8_t chByte  = *((uint8_t*)element);
-               ch = chByte;
+               ch  = *((uint8_t*)element);
                }
             }
          else
