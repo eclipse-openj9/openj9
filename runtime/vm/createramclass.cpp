@@ -1926,7 +1926,7 @@ checkSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J
  *
  * 4. Sets the J9ClassCanSupportFastSubstitutability flag in
  * valuetypeFlags given that the class does not contain any field of
- * type double (D), float (F), nullable-class/interface type (L) or null-free
+ * nullable-class/interface type (L) or null-free
  * class type (Q) that are not both flattened and recursively compatible for
  * the fast substitutability optimization.
  *
@@ -2004,7 +2004,6 @@ loadFlattenableFieldValueClasses(J9VMThread *currentThread, J9ClassLoader *class
 				break;
 			}
 			case 'D':
-				eligibleForFastSubstitutability = false;
 				/* Fall through */
 			case 'J':
 				*valueTypeFlags |= J9ClassLargestAlignmentConstraintDouble;
@@ -2051,9 +2050,6 @@ loadFlattenableFieldValueClasses(J9VMThread *currentThread, J9ClassLoader *class
 				}
 				break;
 			}
-			case 'F':
-				eligibleForFastSubstitutability = false;
-				break;
 			case '[':
 				*valueTypeFlags |= (J9ClassLargestAlignmentConstraintReference | J9ClassHasReferences);
 				break;
