@@ -48,9 +48,9 @@ extern "C" {
 
 /* Locally allocated control block lengths. */
 /*   For use with j9_cel4ro64_call_function - Sufficient space for 10 arguments. */
-#define MAX_LOCAL_CONTROL_BLOCK_LENGTH_FOR_CALL sizeof(J9_CEL4RO64_controlBlock) + sizeof(uint64_t) * 10 + sizeof(uint32_t)
+#define MAX_LOCAL_CONTROL_BLOCK_LENGTH_FOR_CALL (sizeof(J9_CEL4RO64_controlBlock) + (10 * sizeof(uint64_t)) + sizeof(uint32_t))
 /*   For use with j9_cel4ro64_load_query_function_descriptor - Sufficient space for 48 total chars for module/function names. */
-#define MAX_LOCAL_CONTROL_BLOCK_LENGTH_FOR_QUERY sizeof(J9_CEL4RO64_infoBlock) + 2 * sizeof(int32_t) + 48
+#define MAX_LOCAL_CONTROL_BLOCK_LENGTH_FOR_QUERY (sizeof(J9_CEL4RO64_infoBlock) + (2 * sizeof(int32_t)) + 48)
 
 /* Fixed length Control Block structure RO64_CB */
 typedef struct J9_CEL4RO64_controlBlock {
