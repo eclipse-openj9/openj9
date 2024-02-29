@@ -547,18 +547,21 @@ TR_JProfilingValue::addProfilingTrees(
       {
       TR_PersistentProfileInfo *profileInfo = comp->getRecompilationInfo()->findOrCreateProfileInfo();
       TR_BlockFrequencyInfo *bfi = TR_BlockFrequencyInfo::get(profileInfo);
-      TR::Node *loadIsQueuedForRecompilation = TR::Node::createWithSymRef(value, TR::iload, 0, comp->getSymRefTab()->createKnownStaticDataSymbolRef(bfi->getIsQueuedForRecompilation(), TR::Int32));
-      TR::Node *checkIfQueueForRecompilation = TR::Node::createif(TR::ificmpeq, loadIsQueuedForRecompilation, TR::Node::iconst(value, -1), mainlineReturn->getEntry());
-      TR::TreeTop *checkIfNeedToProfileValue = TR::TreeTop::create(comp, checkIfQueueForRecompilation);
-      iter->append(checkIfNeedToProfileValue);
-      if (origBlockGlRegDeps != NULL)
+      if (bfi != NULL)
          {
-         TR::Node *exitGlRegDeps = copyGlRegDeps(comp, origBlockGlRegDeps);
-         checkIfQueueForRecompilation->addChildren(&exitGlRegDeps, 1);
+         TR::Node *loadIsQueuedForRecompilation = TR::Node::createWithSymRef(value, TR::iload, 0, comp->getSymRefTab()->createKnownStaticDataSymbolRef(bfi->getIsQueuedForRecompilation(), TR::Int32));
+         TR::Node *checkIfQueueForRecompilation = TR::Node::createif(TR::ificmpeq, loadIsQueuedForRecompilation, TR::Node::iconst(value, -1), mainlineReturn->getEntry());
+         TR::TreeTop *checkIfNeedToProfileValue = TR::TreeTop::create(comp, checkIfQueueForRecompilation);
+         iter->append(checkIfNeedToProfileValue);
+         if (origBlockGlRegDeps != NULL)
+            {
+            TR::Node *exitGlRegDeps = copyGlRegDeps(comp, origBlockGlRegDeps);
+            checkIfQueueForRecompilation->addChildren(&exitGlRegDeps, 1);
+            }
+         lastBranchToMainlineReturnTT = checkIfNeedToProfileValue;
+         if (trace)
+            traceMsg(comp, "\t\t\tCheck if queued for recompilation test performed in block_%d: n%dn\n", iter->getNumber(), checkIfQueueForRecompilation->getGlobalIndex());
          }
-      lastBranchToMainlineReturnTT = checkIfNeedToProfileValue;
-      if (trace)
-         traceMsg(comp, "\t\t\tCheck if queued for recompilation test performed in block_%d\n", iter->getNumber());
       }
 
    /* In case profiling vft , need to do null test for the object. */

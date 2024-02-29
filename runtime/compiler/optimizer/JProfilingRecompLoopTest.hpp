@@ -53,7 +53,7 @@ class TR_JProfilingRecompLoopTest : public TR::Optimization
       }
    virtual int32_t perform();
    virtual const char *optDetailString() const throw();
-   void addRecompilationTests(TR::Compilation *comp, RecompilationTestLocationsInfo &testLocations);
+   void addRecompilationTests(TR::Compilation *comp, RecompilationTestLocationsInfo &testLocations, TR_BlockFrequencyInfo *bfi);
    bool isByteCodeInfoInCurrentTestLocationList(TR_ByteCodeInfo &bci, TR::list<TR_ByteCodeInfo, TR::Region&> &addedLocationBCIList);
    static int32_t maxLoopRecompilationThreshold;
    };
