@@ -2921,6 +2921,35 @@ public String toGenericString() {
 	if (result.length() > 0) {
 		result.append(' ');
 	}
+
+	/*[IF JAVA_SPEC_VERSION >= 23]*/
+	if (Modifier.isFinal(modifiers)) {
+		// A final class can be neither sealed nor non-sealed.
+	} else if (isSealed()) {
+		result.append("sealed "); //$NON-NLS-1$
+	} else {
+		// A non-sealed class must have a direct superclass
+		// or a direct superinterface that is sealed.
+		Class<?> superclass = getSuperclass();
+
+		if ((superclass != null) && superclass.isSealed()) {
+			result.append("non-sealed "); //$NON-NLS-1$
+		} else {
+			for (Class<?> superinterface : getInterfaces()) {
+				if (superinterface.isSealed()) {
+					result.append("non-sealed "); //$NON-NLS-1$
+					break;
+				}
+			}
+		}
+	}
+	/*[ELSEIF]*/
+	// The "sealed" and "non-sealed" modifiers should apply starting with
+	// Java 17 (see section 8.1.1.2 of the Java Language Specification
+	// Java SE 17 Edition). However, for consistency with openjdk, only
+	// include them for Java 23 and later.
+	/*[ENDIF] JAVA_SPEC_VERSION >= 23 */
+
 /*[IF INLINE-TYPES]*/
 	result.append(valueType);
 /*[ENDIF] INLINE-TYPES */
