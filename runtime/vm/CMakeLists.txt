@@ -80,6 +80,7 @@ endif()
 
 set(main_sources
 	annsup.c
+	ArrayCopyHelpers.cpp
 	AsyncMessageHandler.cpp
 	bchelper.c
 	bindnatv.cpp
