@@ -90,6 +90,11 @@ J9::ARM64::CodeGenerator::initialize()
       {
       cg->setSupportsInlineStringIndexOf();
       }
+   static bool disableInlineStringLatin1Inflate = feGetEnv("TR_disableInlineStringLatin1Inflate") != NULL;
+   if ((!TR::Compiler->om.canGenerateArraylets()) && (!disableInlineStringLatin1Inflate))
+      {
+      cg->setSupportsInlineStringLatin1Inflate();
+      }
    if (comp->fej9()->hasFixedFrameC_CallingConvention())
       cg->setHasFixedFrameC_CallingConvention();
    }
