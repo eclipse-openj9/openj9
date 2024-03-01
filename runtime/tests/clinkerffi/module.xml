@@ -333,6 +333,14 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<export name="addLongsFromMultipleStructPtrs_returnStruct"/>
 		<export name="addFloatsFromMultipleStructPtrs_returnStruct"/>
 		<export name="addDoublesFromMultipleStructPtrs_returnStruct"/>
+		<export name="setBoolFromArrayPtrWithXor"/>
+		<export name="addByteFromArrayPtrByOne"/>
+		<export name="addCharFromArrayPtrByOne"/>
+		<export name="addShortFromArrayPtrByOne"/>
+		<export name="addIntFromArrayPtrByOne"/>
+		<export name="addLongFromArrayPtrByOne"/>
+		<export name="addFloatFromArrayPtrByOne"/>
+		<export name="addDoubleFromArrayPtrByOne"/>
 		<export name="add2BoolsWithOrByUpcallMH"/>
 		<export name="addBoolAndBoolFromPointerWithOrByUpcallMH"/>
 		<export name="addBoolAndBoolFromNativePtrWithOrByUpcallMH"/>

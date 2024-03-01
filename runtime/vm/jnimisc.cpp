@@ -45,21 +45,6 @@
 extern "C" {
 
 #if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT)
-
-#define JAVA_OFFLOAD_SWITCH_ON_WITH_REASON_IF_LIMIT_EXCEEDED(currentThread, reason, length) \
-	do { \
-		if ((length) > J9_JNI_OFFLOAD_SWITCH_THRESHOLD) { \
-			javaOffloadSwitchOnWithReason(currentThread, reason); \
-		} \
-	} while(0)
-
-#define JAVA_OFFLOAD_SWITCH_OFF_WITH_REASON_IF_LIMIT_EXCEEDED(currentThread, reason, length) \
-	do { \
-		if ((length) > J9_JNI_OFFLOAD_SWITCH_THRESHOLD) { \
-			javaOffloadSwitchOffWithReason(currentThread, reason); \
-		} \
-	} while(0)
-
 /**
  * Switch onto the zaap processor if not already running there.
  *
@@ -96,12 +81,6 @@ javaOffloadSwitchOffWithReason(J9VMThread *currentThread, UDATA reason)
 		}
 	}
 }
-
-#else /* J9VM_OPT_JAVA_OFFLOAD_SUPPORT */
-
-#define JAVA_OFFLOAD_SWITCH_ON_WITH_REASON_IF_LIMIT_EXCEEDED(currentThread, reason, length)
-#define JAVA_OFFLOAD_SWITCH_OFF_WITH_REASON_IF_LIMIT_EXCEEDED(currentThread, reason, length)
-
 #endif /* J9VM_OPT_JAVA_OFFLOAD_SUPPORT */
 
 
@@ -660,25 +639,9 @@ getArrayElementsImpl(JNIEnv *env, jarray array, jboolean *isCopy, jboolean ensur
 		elems = vm->memoryManagerFunctions->j9gc_objaccess_jniGetPrimitiveArrayCritical(currentThread, array, isCopy);
 	} else {
 		VM_VMAccess::inlineEnterVMFromJNI(currentThread);
-		j9object_t arrayObject = J9_JNI_UNWRAP_REFERENCE(array);
-		UDATA logElementSize = ((J9ROMArrayClass*)J9OBJECT_CLAZZ(currentThread, arrayObject)->romClass)->arrayShape & 0x0000FFFF;
-		UDATA byteCount = (UDATA)J9INDEXABLEOBJECT_SIZE(currentThread, arrayObject) << logElementSize;
-
-		if (ensureMem32) {
-			elems = jniArrayAllocateMemory32FromThread(currentThread, ROUND_UP_TO_POWEROF2(byteCount, sizeof(UDATA)));
-		} else {
-			elems = jniArrayAllocateMemoryFromThread(currentThread, ROUND_UP_TO_POWEROF2(byteCount, sizeof(UDATA)));
-		}
-		if (NULL == elems) {
-			gpCheckSetNativeOutOfMemoryError(currentThread, 0, 0);
-		} else {
-			JAVA_OFFLOAD_SWITCH_ON_WITH_REASON_IF_LIMIT_EXCEEDED(currentThread, J9_JNI_OFFLOAD_SWITCH_GET_ARRAY_ELEMENTS, byteCount);
-			/* No guarantee of native memory alignment, so copy byte-wise */
-			VM_ArrayCopyHelpers::memcpyFromArray(currentThread, arrayObject, (UDATA)0, (UDATA)0, byteCount, elems);
-			if (NULL != isCopy) {
-				*isCopy = JNI_TRUE;
-			}
-			JAVA_OFFLOAD_SWITCH_OFF_WITH_REASON_IF_LIMIT_EXCEEDED(currentThread, J9_JNI_OFFLOAD_SWITCH_GET_ARRAY_ELEMENTS, byteCount);
+		elems = memcpyFromHeapArray(currentThread, J9_JNI_UNWRAP_REFERENCE(array), ensureMem32);
+		if ((NULL != elems) && (NULL != isCopy)) {
+			*isCopy = JNI_TRUE;
 		}
 		VM_VMAccess::inlineExitVMToJNI(currentThread);
 	}
@@ -708,24 +671,7 @@ releaseArrayElementsImpl(JNIEnv *env, jarray array, void *elems, jint mode, jboo
 		vm->memoryManagerFunctions->j9gc_objaccess_jniReleasePrimitiveArrayCritical(currentThread, array, elems, mode);
 	} else {
 		VM_VMAccess::inlineEnterVMFromJNI(currentThread);
-		/* Abort means do not copy the buffer, but do free it */
-		if (JNI_ABORT != mode) {
-			j9object_t arrayObject = J9_JNI_UNWRAP_REFERENCE(array);
-			UDATA logElementSize = ((J9ROMArrayClass*)J9OBJECT_CLAZZ(currentThread, arrayObject)->romClass)->arrayShape  & 0x0000FFFF;
-			UDATA byteCount = (UDATA)J9INDEXABLEOBJECT_SIZE(currentThread, arrayObject) << logElementSize;
-			JAVA_OFFLOAD_SWITCH_ON_WITH_REASON_IF_LIMIT_EXCEEDED(currentThread, J9_JNI_OFFLOAD_SWITCH_RELEASE_ARRAY_ELEMENTS, byteCount);
-			/* No guarantee of native memory alignment, so copy byte-wise */
-			VM_ArrayCopyHelpers::memcpyToArray(currentThread, arrayObject, (UDATA)0, (UDATA)0, byteCount, elems);
-			JAVA_OFFLOAD_SWITCH_OFF_WITH_REASON_IF_LIMIT_EXCEEDED(currentThread, J9_JNI_OFFLOAD_SWITCH_RELEASE_ARRAY_ELEMENTS, byteCount);
-		}
-		/* Commit means copy the data but do not free the buffer - all other modes free the buffer */
-		if (JNI_COMMIT != mode) {
-			if (ensureMem32) {
-				jniArrayFreeMemory32FromThread(currentThread, elems);
-			} else {
-				jniArrayFreeMemoryFromThread(currentThread, elems);
-			}
-		}
+		memcpyToHeapArray(currentThread, J9_JNI_UNWRAP_REFERENCE(array), elems, mode, ensureMem32);
 		VM_VMAccess::inlineExitVMToJNI(currentThread);
 	}
 }
