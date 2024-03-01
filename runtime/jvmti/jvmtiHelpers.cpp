@@ -739,19 +739,35 @@ getThreadStateHelper(J9VMThread *currentThread, j9object_t threadObject, J9VMThr
 		if (vmstate & J9VMTHREAD_STATE_SUSPENDED) {
 			state |= JVMTI_THREAD_STATE_SUSPENDED;
 		}
+
+		if (vmstate & J9VMTHREAD_STATE_INTERRUPTED) {
+			state |= JVMTI_THREAD_STATE_INTERRUPTED;
+		}
+
 #if JAVA_SPEC_VERSION >= 19
-		/* Based on the isSuspendedInternal field, set the JVMTI
-		 * thread state to suspended for the corresponding thread.
+		/* Based on the isSuspendedInternal field, set the JVMTI thread state to suspended for
+		 * the corresponding thread.
 		 */
 		if (0 != J9OBJECT_U32_LOAD(currentThread, threadObject, currentThread->javaVM->isSuspendedInternalOffset)) {
 			state |= JVMTI_THREAD_STATE_SUSPENDED;
 		} else {
 			state &= ~JVMTI_THREAD_STATE_SUSPENDED;
 		}
-#endif /* JAVA_SPEC_VERSION >= 19 */
-		if (vmstate & J9VMTHREAD_STATE_INTERRUPTED) {
+
+		/* Thread.deadInterrupt is Thread.interrupted in OJDK's Thread implementation. In JDK19+,
+		 * OJDK's Thread implementation is used, and multiple thread objects can be associated to
+		 * a J9VMThread: a virtual thread and its carrier thread. If a virtual thread is mounted,
+		 * then the carrier thread is unmounted and vice-versa. In such cases, J9VMThread's state
+		 * should not be used to determine if a thread object is interrupted. Instead,
+		 * Thread.interrupted is used to determine if a thread object is interrupted.
+		 */
+		if (J9VMJAVALANGTHREAD_DEADINTERRUPT(currentThread, threadObject)) {
 			state |= JVMTI_THREAD_STATE_INTERRUPTED;
+		} else {
+			state &= ~JVMTI_THREAD_STATE_INTERRUPTED;
 		}
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
 #if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
 		if (vmThread->inNative) {
 			state |= JVMTI_THREAD_STATE_IN_NATIVE;
@@ -890,6 +906,19 @@ getVirtualThreadState(J9VMThread *currentThread, jthread thread)
 			rc |= JVMTI_THREAD_STATE_SUSPENDED;
 		} else {
 			rc &= ~JVMTI_THREAD_STATE_SUSPENDED;
+		}
+
+		/* Thread.deadInterrupt is Thread.interrupted in OJDK's Thread implementation. In JDK19+,
+		 * OJDK's Thread implementation is used, and multiple thread objects can be associated to
+		 * a J9VMThread: a virtual thread and its carrier thread. If a virtual thread is mounted,
+		 * then the carrier thread is unmounted and vice-versa. In such cases, J9VMThread's state
+		 * should not be used to determine if a thread object is interrupted. Instead,
+		 * Thread.interrupted is used to determine if a thread object is interrupted.
+		 */
+		if (J9VMJAVALANGTHREAD_DEADINTERRUPT(currentThread, vThreadObject)) {
+			rc |= JVMTI_THREAD_STATE_INTERRUPTED;
+		} else {
+			rc &= ~JVMTI_THREAD_STATE_INTERRUPTED;
 		}
 		releaseVMThread(currentThread, targetThread, thread);
 	} else {
