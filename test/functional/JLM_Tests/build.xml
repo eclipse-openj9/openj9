@@ -51,9 +51,9 @@
 			<then>
 				<property name="excludeTestCRaCMXBean" value="org/openj9/test/java/lang/management/TestCRaCMXBean.java"/>
 				<property name="replaceTestng" value="testng.xml" />
-				<exec executable="awk" input="${src}/../testng.xml" output="${build}/testng.xml">
-					<arg value="/&lt;test name=&quot;testCRaCMXBean&quot;&gt;/,/&lt;\/test&gt;/{next} 1"/>
-				</exec>
+				<xslt in="testng.xml" out="${build}/testng.xml" style="testng_filter.xsl">
+					<param name="testName" expression="testCRaCMXBean"/>
+				</xslt>
 			</then>
 		</if>
 	</target>
