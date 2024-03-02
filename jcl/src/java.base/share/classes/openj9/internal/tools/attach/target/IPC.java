@@ -79,10 +79,13 @@ public class IPC {
 	public static final String PROPERTY_DIAGNOSTICS_ERRORTYPE = OPENJ9_DIAGNOSTICS_PREFIX + "errortype"; //$NON-NLS-1$
 	public static final String PROPERTY_DIAGNOSTICS_ERRORMSG = OPENJ9_DIAGNOSTICS_PREFIX + "errormsg"; //$NON-NLS-1$
 	/**
+	 * True if operating system is Linux.
+	 */
+	public static final boolean isLinux;
+	/**
 	 * True if operating system is Windows.
 	 */
 	public static final boolean isWindows;
-
 	/**
 	 * True if operating system is z/OS.
 	 */
@@ -101,22 +104,26 @@ public class IPC {
 		String osName = props.getProperty("os.name"); //$NON-NLS-1$
 		boolean tempIsZos = false;
 		boolean tempIsWindows = false;
+		boolean tempIsLinux = false;
 		if (null != osName) {
 			if (osName.equalsIgnoreCase("z/OS")) { //$NON-NLS-1$
 				tempIsZos = true;
 			} else if (osName.startsWith("Windows")) { //$NON-NLS-1$
 				tempIsWindows = true;
+			} else if (osName.startsWith("Linux")) { //$NON-NLS-1$
+				tempIsLinux = true;
 			}
 		}
 		isZOS = tempIsZos;
 		isWindows = tempIsWindows;
+		isLinux = tempIsLinux;
 
 		String propUseFileLockWatchdog = props.getProperty(COM_IBM_TOOLS_ATTACH_USE_FILELOCK_WATCHDOG);
 		if (propUseFileLockWatchdog == null) {
 			// no system property com.ibm.tools.attach.useFileLockWatchdog is specified
 			useFileLockWatchdog = !isZOS;
 		} else {
-			useFileLockWatchdog = "true".equalsIgnoreCase(propUseFileLockWatchdog);
+			useFileLockWatchdog = "true".equalsIgnoreCase(propUseFileLockWatchdog); //$NON-NLS-1$
 		}
 	}
 
