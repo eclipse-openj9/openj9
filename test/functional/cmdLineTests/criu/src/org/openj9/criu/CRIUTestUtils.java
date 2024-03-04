@@ -134,9 +134,9 @@ public class CRIUTestUtils {
 	}
 
 	public static void showThreadCurrentTime(String logStr) {
-		System.out.println(logStr + ", current thread name: " + Thread.currentThread().getName() + ", " + new Date()
-				+ ", System.currentTimeMillis(): " + System.currentTimeMillis() + ", System.nanoTime(): "
-				+ System.nanoTime());
+		System.out.println(Thread.currentThread().getName() + ": " + new Date() + ", " + logStr
+				+ ", System.currentTimeMillis(): " + System.currentTimeMillis()
+				+ ", System.nanoTime(): " + System.nanoTime());
 	}
 
 
