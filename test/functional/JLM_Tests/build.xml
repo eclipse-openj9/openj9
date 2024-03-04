@@ -1,27 +1,25 @@
 <?xml version="1.0"?>
-
 <!--
-  Copyright IBM Corp. and others 2016
+Copyright IBM Corp. and others 2016
 
-  This program and the accompanying materials are made available under
-  the terms of the Eclipse Public License 2.0 which accompanies this
-  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
-  or the Apache License, Version 2.0 which accompanies this distribution and
-  is available at https://www.apache.org/licenses/LICENSE-2.0.
+This program and the accompanying materials are made available under
+the terms of the Eclipse Public License 2.0 which accompanies this
+distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+or the Apache License, Version 2.0 which accompanies this distribution and
+is available at https://www.apache.org/licenses/LICENSE-2.0.
 
-  This Source Code may also be made available under the following
-  Secondary Licenses when the conditions for such availability set
-  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
-  General Public License, version 2 with the GNU Classpath
-  Exception [1] and GNU General Public License, version 2 with the
-  OpenJDK Assembly Exception [2].
+This Source Code may also be made available under the following
+Secondary Licenses when the conditions for such availability set
+forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+General Public License, version 2 with the GNU Classpath
+Exception [1] and GNU General Public License, version 2 with the
+OpenJDK Assembly Exception [2].
 
-  [1] https://www.gnu.org/software/classpath/license.html
-  [2] https://openjdk.org/legal/assembly-exception.html
+[1] https://www.gnu.org/software/classpath/license.html
+[2] https://openjdk.org/legal/assembly-exception.html
 
-  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
+SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 -->
-
 <project name="JLM_Tests" default="build" basedir=".">
 
 	<description>
@@ -44,18 +42,9 @@
 		<fail message="BUILD_ROOT must be defined." unless="BUILD_ROOT" />
 		<mkdir dir="${DEST}" />
 		<mkdir dir="${build}" />
-		<if>
-			<not>
-				<contains string="${TEST_FLAG}" substring="CRAC" />
-			</not>
-			<then>
-				<property name="excludeTestCRaCMXBean" value="org/openj9/test/java/lang/management/TestCRaCMXBean.java"/>
-				<property name="replaceTestng" value="testng.xml" />
-				<xslt in="testng.xml" out="${build}/testng.xml" style="testng_filter.xsl">
-					<param name="testName" expression="testCRaCMXBean"/>
-				</xslt>
-			</then>
-		</if>
+		<condition property="excludeTestCRaCMXBean" value="" else="org/openj9/test/java/lang/management/TestCRaCMXBean.java">
+			<contains string="${TEST_FLAG}" substring="CRAC" />
+		</condition>
 	</target>
 
 	<target name="compile" depends="init,getDependentLibs" description="using java ${JDK_VERSION} to compile the source ">
@@ -65,7 +54,7 @@
 		<echo>===executable:                   ${compiler.javac}</echo>
 		<echo>===debug:                        on</echo>
 		<echo>===destdir:                      ${build}</echo>
-		
+
 		<if>
 			<equals arg1="${JDK_VERSION}" arg2="8"/>
 			<then>
@@ -133,17 +122,10 @@
 				<exclude name="${excludeTestCRaCMXBean}" />
 			</fileset>
 			<fileset dir="${src}/../" includes="*.properties,*.xml">
-				<exclude name="${replaceTestng}" />
 			</fileset>
 		</jar>
 		<copy todir="${DEST}">
-			<fileset dir="${src}/../" includes="*.xml">
-				<exclude name="${replaceTestng}" />
-			</fileset>
-			<fileset dir="${src}/../" includes="*.mk" />
-			<fileset dir="${build}">
-				<include name="${replaceTestng}" />
-			</fileset>
+			<fileset dir="${src}/../" includes="*.mk,*.xml" />
 		</copy>
 	</target>
 
@@ -155,7 +137,7 @@
 	<target name="build" >
 		<if>
 			<or>
-				<equals arg1="${JDK_IMPL}" arg2="ibm"  />
+				<equals arg1="${JDK_IMPL}" arg2="ibm" />
 				<equals arg1="${JDK_IMPL}" arg2="openj9" />
 			</or>
 			<then>
