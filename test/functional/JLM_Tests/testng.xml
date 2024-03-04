@@ -22,7 +22,6 @@
   SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 -->
 
-<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
 <suite name="JLM_Tests_Suite" parallel="none" verbose="2">
 	<listeners>
 		<listener class-name="org.openj9.test.util.IncludeExcludeTestAnnotationTransformer" />
