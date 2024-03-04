@@ -51,20 +51,20 @@ private:
 	UDATA const _bitVectorSize; /**< The size of each bit vector in UDATAs */
 	J9Pool *_bitVectorPool; /**< A pool of bit vectors to associate with J9ClassLoaders */
 	MM_LightweightNonReentrantLock _lock; /**< A lock to protect _bitVectorPool */
-	UDATA * _bitsToClear; /**< A bit vector which is built up before a garbage collection */
+	UDATA *_bitsToClear; /**< A bit vector which is built up before a garbage collection */
 	
 private:
-	MM_ClassLoaderRememberedSet(MM_EnvironmentBase* env);
+	MM_ClassLoaderRememberedSet(MM_EnvironmentBase *env);
 	
 	/**
 	 * Allocation helper for J9Pool.
 	 */
-	static void * poolAllocateHelper(void* userData, U_32 size, const char* callSite, U_32 memoryCategory, U_32 type, U_32* doInit);
+	static void *poolAllocateHelper(void *userData, U_32 size, const char *callSite, U_32 memoryCategory, U_32 type, U_32 *doInit);
 
 	/**
 	 * Deallocation helper for J9Pool.
 	 */
-	static void poolFreeHelper(void* userData, void* address, U_32 type);
+	static void poolFreeHelper(void *userData, void *address, U_32 type);
 	
 	/**
 	 * Upgrade the specified class loader from a single remembered region to a full bit vector.
@@ -72,7 +72,7 @@ private:
 	 * @param env[in] the current thread
 	 * @param gcRememberedSetAddress[in/out] an address of gcRememberedSet slot
 	 */
-	void installBitVector(MM_EnvironmentBase* env, volatile UDATA *gcRememberedSetAddress);
+	void installBitVector(MM_EnvironmentBase *env, volatile UDATA *gcRememberedSetAddress);
 	
 	/**
 	 * Atomically set the specified bit in the specified bit vector.
@@ -80,7 +80,7 @@ private:
 	 * @param bitVector[in] the bitVector to modify
 	 * @param bit the index of the bit to set
 	 */
-	void setBit(MM_EnvironmentBase* env, volatile UDATA* bitVector, UDATA bit);
+	void setBit(MM_EnvironmentBase *env, volatile UDATA *bitVector, UDATA bit);
 	
 	/**
 	 * Determine if the specified gcRememberedSet field value represents an overflowed set.
@@ -118,7 +118,7 @@ private:
 	 * @param bit the index of the bit to test
 	 * @return true if the bit is set, false otherwise 
 	 */
-	bool isBitSet(MM_EnvironmentBase* env, volatile UDATA* bitVector, UDATA bit);
+	bool isBitSet(MM_EnvironmentBase *env, volatile UDATA *bitVector, UDATA bit);
 	
 	/**
 	 * Implementation helper for rememberInstance() based on region index.
@@ -127,7 +127,7 @@ private:
 	 * @param regionIndex[in] the region index to remember
 	 * @param gcRememberedSetAddress[in/out] an address of gcRememberedSet slot
 	 */
-	void rememberRegionInternal(MM_EnvironmentBase* env, UDATA regionIndex, volatile UDATA *gcRememberedSetAddress);
+	void rememberRegionInternal(MM_EnvironmentBase *env, UDATA regionIndex, volatile UDATA *gcRememberedSetAddress);
 
 	/**
 	 * Implementation helper for isRemembered().
@@ -164,18 +164,18 @@ private:
 
 protected:
 public:
-	static MM_ClassLoaderRememberedSet *newInstance(MM_EnvironmentBase* env);
+	static MM_ClassLoaderRememberedSet *newInstance(MM_EnvironmentBase *env);
 	virtual void kill(MM_EnvironmentBase *env);
 
 	/*
 	 * Initialize ClassLoaderRememberedSet
 	 */
-	bool initialize(MM_EnvironmentBase* env);
+	bool initialize(MM_EnvironmentBase *env);
 
 	/*
 	 * Teardown ClassLoaderRememberedSet
 	 */	
-	virtual void tearDown(MM_EnvironmentBase* env);
+	virtual void tearDown(MM_EnvironmentBase *env);
 
 	/**
 	 * Update the remembered set data for the specified object's class loader to record the object.
@@ -185,7 +185,7 @@ public:
 	 * @param env[in] the current thread
 	 * @param object[in] the object to remember
 	 */
-	void rememberInstance(MM_EnvironmentBase* env, J9Object* object);
+	void rememberInstance(MM_EnvironmentBase *env, J9Object *object);
 
 	/**
 	 * Determine if there are any instances of classes defined by specified class loader.
@@ -210,7 +210,7 @@ public:
 	 * @param object[in] the object to test
 	 * @return true if the object is properly remembered  
 	 */
-	bool isInstanceRemembered(MM_EnvironmentBase *env, J9Object* object);
+	bool isInstanceRemembered(MM_EnvironmentBase *env, J9Object *object);
 	
 	/**
 	 * Delete any resources associated with the remembered set for the specified class loader.

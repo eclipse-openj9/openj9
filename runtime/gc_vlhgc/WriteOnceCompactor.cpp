@@ -114,7 +114,7 @@ MM_ParallelWriteOnceCompactTask::cleanup(MM_EnvironmentBase *envBase)
 	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._compactStats.merge(&env->_compactVLHGCStats);
 	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._irrsStats.merge(&env->_irrsStats);
 
-	if(!env->isMainThread()) {
+	if (!env->isMainThread()) {
 		env->_cycleState = NULL;
 	}
 
@@ -462,7 +462,7 @@ MM_WriteOnceCompactor::initRegionCompactDataForCompactSet(MM_EnvironmentVLHGC *e
 	MM_HeapRegionDescriptorVLHGC *region = NULL;
 	GC_HeapRegionIteratorVLHGC regionIterator(_regionManager);
 	
-	while(NULL != (region = regionIterator.nextRegion())) {
+	while (NULL != (region = regionIterator.nextRegion())) {
 		if (region->_compactData._shouldCompact) {
 			void *lowAddress = region->getLowAddress();
 			region->_compactData._compactDestination = NULL;
@@ -1549,12 +1549,12 @@ MM_WriteOnceCompactor::flushRememberedSetIntoCardTable(MM_EnvironmentVLHGC *env)
 	MM_HeapRegionDescriptorVLHGC *region = NULL;
 	while (NULL != (region = regionIterator.nextRegion())) {
 		if (NULL != region->getMemoryPool()) {
-			if(region->_compactData._shouldCompact) {
-				if(J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
+			if (region->_compactData._shouldCompact) {
+				if (J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
 					Assert_MM_true(region->getRememberedSetCardList()->isAccurate());
 					UDATA card = 0;
 					GC_RememberedSetCardListCardIterator rsclCardIterator(region->getRememberedSetCardList());
-					while(0 != (card = rsclCardIterator.nextReferencingCard(env))) {
+					while (0 != (card = rsclCardIterator.nextReferencingCard(env))) {
 						/* For Marking purposes we do not need to track references within Collection Set */
 						MM_HeapRegionDescriptorVLHGC *targetRegion = _interRegionRememberedSet->tableDescriptorForRememberedSetCard(card);
 						if ((!targetRegion->_compactData._shouldCompact) && (targetRegion->containsObjects())) {
@@ -1681,7 +1681,7 @@ public:
 		Assert_MM_unreachable();
 	}
 	virtual void scanFinalizableObjects(MM_EnvironmentBase *env) {
-		if(_singleThread || J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
+		if (_singleThread || J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
 			reportScanningStarted(RootScannerEntity_FinalizableObjects);
 			_compactScheme->fixupFinalizableObjects(MM_EnvironmentVLHGC::getEnvironment(env));
 			reportScanningEnded(RootScannerEntity_FinalizableObjects);
@@ -1701,7 +1701,7 @@ MM_WriteOnceCompactor::fixupRoots(MM_EnvironmentVLHGC *env)
 	 */
 	GC_ClassLoaderIterator classLoaderIterator(_javaVM->classLoaderBlocks);
 	J9ClassLoader *classLoader = NULL;
-	while((classLoader = classLoaderIterator.nextSlot()) != NULL) {
+	while ((classLoader = classLoaderIterator.nextSlot()) != NULL) {
 		if (0 == (classLoader->gcFlags & J9_GC_CLASS_LOADER_DEAD)) {
 			/* TODO: we could optimize this by only examining class loaders in fixup regions */
 			if (J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
@@ -1717,7 +1717,9 @@ MM_WriteOnceCompactor::fixupRoots(MM_EnvironmentVLHGC *env)
 					}
 				} else { 
 					/* Only system/app classloaders can have a null classloader object (only during early bootstrap) */
-					Assert_MM_true((classLoader == _javaVM->systemClassLoader) || (classLoader == _javaVM->applicationClassLoader));
+					Assert_MM_true((classLoader == _javaVM->systemClassLoader)
+							|| (classLoader == _javaVM->applicationClassLoader)
+							|| (classLoader == _javaVM->extensionClassLoader));
 				}
 			}
 		}
@@ -1823,7 +1825,7 @@ public:
 
 	virtual void doClassLoader(J9ClassLoader *classLoader)
 	{
-		if(J9_GC_CLASS_LOADER_DEAD != (classLoader->gcFlags & J9_GC_CLASS_LOADER_DEAD)) {
+		if (J9_GC_CLASS_LOADER_DEAD != (classLoader->gcFlags & J9_GC_CLASS_LOADER_DEAD)) {
 			doSlot(&classLoader->classLoaderObject);
 		}
 	}
@@ -1877,7 +1879,7 @@ MM_WriteOnceCompactor::verifyHeap(MM_EnvironmentVLHGC *env, bool beforeCompactio
 	GC_HeapRegionIteratorVLHGC regionIterator(_regionManager);
 	MM_HeapRegionDescriptorVLHGC *region = NULL;
 
-	while(NULL != (region = regionIterator.nextRegion())) {
+	while (NULL != (region = regionIterator.nextRegion())) {
 		void *lowAddress = region->getLowAddress();
 		void *highAddress = region->getHighAddress();
 		MM_HeapMapIterator markedObjectIterator(_extensions,
@@ -1919,7 +1921,7 @@ MM_WriteOnceCompactor::recycleFreeRegionsAndFixFreeLists(MM_EnvironmentVLHGC *en
 	/* try walking the regions and recycling any regions with free pools */
 	GC_HeapRegionIteratorVLHGC regionIterator(_regionManager);
 	MM_HeapRegionDescriptorVLHGC *region = NULL;
-	while(NULL != (region = regionIterator.nextRegion())) {
+	while (NULL != (region = regionIterator.nextRegion())) {
 		if (region->_compactData._shouldCompact) {
 			MM_MemoryPool *regionPool = region->getMemoryPool();
 			Assert_MM_true(NULL != regionPool);
@@ -1964,7 +1966,7 @@ MM_WriteOnceCompactor::fixupArrayletLeafRegionSpinePointers()
 	GC_HeapRegionIteratorVLHGC regionIterator(_regionManager);
 	MM_HeapRegionDescriptorVLHGC *region = NULL;
 	
-	while(NULL != (region = regionIterator.nextRegion())) {
+	while (NULL != (region = regionIterator.nextRegion())) {
 		J9IndexableObject *spine = region->_allocateData.getSpine();
 		
 		if (NULL != spine) {
@@ -1979,7 +1981,7 @@ MM_WriteOnceCompactor::fixupArrayletLeafRegionSpinePointers()
 				 * this method) so we can't assert anything about the state of the previous region.
 				 */
 				Assert_MM_true( newSpineRegion->containsObjects() );
-				if(spineRegion != newSpineRegion) {
+				if (spineRegion != newSpineRegion) {
 					/* we need to move the leaf to another region's leaf list since its spine has moved */
 					region->_allocateData.removeFromArrayletLeafList();
 					region->_allocateData.addToArrayletLeafList(newSpineRegion);
@@ -1997,7 +1999,7 @@ MM_WriteOnceCompactor::fixupArrayletLeafRegionContentsAndObjectLists(MM_Environm
 	GC_HeapRegionIteratorVLHGC regionIterator(_regionManager);
 	MM_HeapRegionDescriptorVLHGC *region = NULL;
 	
-	while(NULL != (region = regionIterator.nextRegion())) {
+	while (NULL != (region = regionIterator.nextRegion())) {
 		if (region->_compactData._shouldFixup) {  
 			Assert_MM_true(region->isArrayletLeaf());
 			J9Object* spineObject = (J9Object*)region->_allocateData.getSpine();
@@ -2073,7 +2075,7 @@ MM_WriteOnceCompactor::clearMarkMapCompactSet(MM_EnvironmentVLHGC *env, MM_MarkM
 	GC_HeapRegionIteratorVLHGC regionIterator(_regionManager);
 	MM_HeapRegionDescriptorVLHGC *region = NULL;
 	
-	while(NULL != (region = regionIterator.nextRegion())) {
+	while (NULL != (region = regionIterator.nextRegion())) {
 		if (region->_compactData._shouldCompact) {
 			if (J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
 				markMap->setBitsForRegion(env, region, true);
@@ -2090,7 +2092,7 @@ MM_WriteOnceCompactor::planCompaction(MM_EnvironmentVLHGC *env, UDATA *objectCou
 	GC_HeapRegionIteratorVLHGC regionIterator(_regionManager);
 	MM_HeapRegionDescriptorVLHGC *region = NULL;
 	
-	while(NULL != (region = regionIterator.nextRegion())) {
+	while (NULL != (region = regionIterator.nextRegion())) {
 		if (region->_compactData._shouldCompact) {
 			if (J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
 				Assert_MM_true(0 == region->_criticalRegionsInUse);
@@ -2384,7 +2386,7 @@ MM_WriteOnceCompactor::setupMoveWorkStack(MM_EnvironmentVLHGC *env)
 	_moveFinished = false;
 	_rebuildFinished = false;
 	
-	while(NULL != (region = regionIterator.nextRegion())) {
+	while (NULL != (region = regionIterator.nextRegion())) {
 		if (region->_compactData._shouldCompact) {
 			if (NULL == endOfQueue) {
 				endOfQueue = region;
@@ -2419,7 +2421,7 @@ MM_WriteOnceCompactor::popWork(MM_EnvironmentVLHGC *env)
 				MM_HeapRegionDescriptorVLHGC *region = NULL;
 				GC_HeapRegionIteratorVLHGC regionIterator(_regionManager);
 				UDATA compactRegions = 0;
-				while(NULL != (region = regionIterator.nextRegion())) {
+				while (NULL != (region = regionIterator.nextRegion())) {
 					if (region->_compactData._shouldCompact) {
 						compactRegions += 1;
 					}
@@ -2523,7 +2525,7 @@ MM_WriteOnceCompactor::popRebuildWork(MM_EnvironmentVLHGC *env)
 				/* ensure that none of the regions in the compact set are still in a work list and that no regions are blocked */
 				MM_HeapRegionDescriptorVLHGC *region = NULL;
 				GC_HeapRegionIteratorVLHGC regionIterator(_regionManager);
-				while(NULL != (region = regionIterator.nextRegion())) {
+				while (NULL != (region = regionIterator.nextRegion())) {
 					if (region->_compactData._shouldCompact) {
 						Assert_MM_true(NULL == region->_compactData._nextInWorkList);
 						Assert_MM_true(NULL == region->_compactData._blockedList);
@@ -2786,15 +2788,15 @@ MM_WriteOnceCompactor::rememberClassLoaders(MM_EnvironmentVLHGC *env)
 	if (J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
 		GC_ClassLoaderIterator classLoaderIterator(_javaVM->classLoaderBlocks);
 		J9ClassLoader *classLoader = NULL;
-		while((classLoader = classLoaderIterator.nextSlot()) != NULL) {
-			if(J9_ARE_ANY_BITS_SET(classLoader->flags, J9CLASSLOADER_ANON_CLASS_LOADER)) {
+		while ((classLoader = classLoaderIterator.nextSlot()) != NULL) {
+			if (J9_ARE_ANY_BITS_SET(classLoader->flags, J9CLASSLOADER_ANON_CLASS_LOADER)) {
 				/* Anonymous classloader should be scanned on level of classes */
 				GC_ClassLoaderSegmentIterator segmentIterator(classLoader, MEMORY_TYPE_RAM_CLASS);
 				J9MemorySegment *segment = NULL;
-				while(NULL != (segment = segmentIterator.nextSegment())) {
+				while (NULL != (segment = segmentIterator.nextSegment())) {
 					GC_ClassHeapIterator classHeapIterator(_javaVM, segment);
 					J9Class *clazz = NULL;
-					while(NULL != (clazz = classHeapIterator.nextClass())) {
+					while (NULL != (clazz = classHeapIterator.nextClass())) {
 						Assert_MM_true(!J9_ARE_ANY_BITS_SET(clazz->classDepthAndFlags, J9AccClassDying));
 						Assert_MM_true(!J9_ARE_ANY_BITS_SET(J9CLASS_EXTENDED_FLAGS(clazz), J9ClassGCScanned));
 						J9Object* classObject = clazz->classObject;
@@ -2827,17 +2829,17 @@ MM_WriteOnceCompactor::rebuildNextMarkMapFromClassLoaders(MM_EnvironmentVLHGC *e
 	if (J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
 		GC_ClassLoaderIterator classLoaderIterator(_javaVM->classLoaderBlocks);
 		J9ClassLoader *classLoader = NULL;
-		while((classLoader = classLoaderIterator.nextSlot()) != NULL) {
-			if(J9_ARE_ANY_BITS_SET(classLoader->flags, J9CLASSLOADER_ANON_CLASS_LOADER)) {
+		while ((classLoader = classLoaderIterator.nextSlot()) != NULL) {
+			if (J9_ARE_ANY_BITS_SET(classLoader->flags, J9CLASSLOADER_ANON_CLASS_LOADER)) {
 				/* Anonymous classloader should be scanned on level of classes */
 				GC_ClassLoaderSegmentIterator segmentIterator(classLoader, MEMORY_TYPE_RAM_CLASS);
 				J9MemorySegment *segment = NULL;
-				while(NULL != (segment = segmentIterator.nextSegment())) {
+				while (NULL != (segment = segmentIterator.nextSegment())) {
 					GC_ClassHeapIterator classHeapIterator(_javaVM, segment);
 					J9Class *clazz = NULL;
-					while(NULL != (clazz = classHeapIterator.nextClass())) {
+					while (NULL != (clazz = classHeapIterator.nextClass())) {
 						Assert_MM_true(!J9_ARE_ANY_BITS_SET(clazz->classDepthAndFlags, J9AccClassDying));
-						if(J9_ARE_ANY_BITS_SET(J9CLASS_EXTENDED_FLAGS(clazz), J9ClassGCScanned)) {
+						if (J9_ARE_ANY_BITS_SET(J9CLASS_EXTENDED_FLAGS(clazz), J9ClassGCScanned)) {
 							J9Object* classObject = clazz->classObject;
 							Assert_MM_true(NULL != classObject);
 							_nextMarkMap->atomicSetBit(classObject);
@@ -2869,7 +2871,7 @@ MM_WriteOnceCompactor::clearClassLoaderRememberedSetsForCompactSet(MM_Environmen
 	classLoaderRememberedSet->resetRegionsToClear(env);
 	MM_HeapRegionDescriptorVLHGC *region = NULL;
 	GC_HeapRegionIteratorVLHGC regionIterator(_regionManager);
-	while(NULL != (region = regionIterator.nextRegion())) {
+	while (NULL != (region = regionIterator.nextRegion())) {
 		if (region->_compactData._shouldCompact) {
 			classLoaderRememberedSet->prepareToClearRememberedSetForRegion(env, region);
 		}

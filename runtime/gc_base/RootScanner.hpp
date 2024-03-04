@@ -395,7 +395,7 @@ public:
 	}
 
 	/** General object slot handler to be reimplemented by specializing class. This handler is called for every reference to a J9Object. */
-	virtual void doSlot(J9Object** slotPtr) = 0;
+	virtual void doSlot(J9Object **slotPtr) = 0;
 
 	/** General class slot handler to be reimplemented by specializing class. This handler is called for every reference to a J9Class. */
 	virtual void doClassSlot(J9Class *classPtr);
@@ -407,7 +407,7 @@ public:
 	 * Scan object field
 	 * @param slotObject for field
 	 */
-	virtual void doFieldSlot(GC_SlotObject * slotObject);
+	virtual void doFieldSlot(GC_SlotObject *slotObject);
 	
 	virtual void scanRoots(MM_EnvironmentBase *env);
 	virtual void scanClearable(MM_EnvironmentBase *env);
@@ -425,11 +425,11 @@ public:
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 	virtual CompletePhaseCode scanClassesComplete(MM_EnvironmentBase *env);
 
- 	virtual bool scanOneThread(MM_EnvironmentBase *env, J9VMThread* walkThread, void* localData);
+	virtual bool scanOneThread(MM_EnvironmentBase *env, J9VMThread *walkThread, void *localData);
 	
 	virtual void scanClassLoaders(MM_EnvironmentBase *env);
 	virtual void scanThreads(MM_EnvironmentBase *env);
- 	virtual void scanSingleThread(MM_EnvironmentBase *env, J9VMThread* walkThread);
+	virtual void scanSingleThread(MM_EnvironmentBase *env, J9VMThread *walkThread);
 #if defined(J9VM_GC_FINALIZATION)
 	virtual void scanFinalizableObjects(MM_EnvironmentBase *env);
 	virtual void scanUnfinalizedObjects(MM_EnvironmentBase *env);

@@ -195,7 +195,7 @@ MM_ParallelGlobalMarkTask::cleanup(MM_EnvironmentBase *envBase)
 	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._markStats.merge(&env->_markVLHGCStats);
 	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._workPacketStats.merge(&env->_workPacketStats);
 
-	if(!env->isMainThread()) {
+	if (!env->isMainThread()) {
 		env->_cycleState = NULL;
 	}
 
@@ -418,7 +418,7 @@ bool
 MM_GlobalMarkingScheme::isMarked(J9Object *objectPtr)
 {
 	bool shouldCheck = isHeapObject(objectPtr);
-	if(shouldCheck) {
+	if (shouldCheck) {
 		return _markMap->isBitSet(objectPtr);
 	}
 
@@ -435,7 +435,7 @@ MM_GlobalMarkingScheme::markObjectNoCheck(MM_EnvironmentVLHGC *env, J9Object *ob
 	}
 
 	/* mark successful - Attempt to add to the work stack */
-	if(!leafType) {
+	if (!leafType) {
 		env->_workStack.push(env, objectPtr);
 	}
 
@@ -480,7 +480,7 @@ MM_GlobalMarkingScheme::markObjectClass(MM_EnvironmentVLHGC *env, J9Object *obje
 {
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 	_extensions->classLoaderRememberedSet->rememberInstance(env, objectPtr);
-	if(isDynamicClassUnloadingEnabled()) {
+	if (isDynamicClassUnloadingEnabled()) {
 		j9object_t classObject = (j9object_t)J9GC_J9OBJECT_CLAZZ(objectPtr, env)->classObject;
 		Assert_MM_true(J9_INVALID_OBJECT != classObject);
 		markObjectNoCheck(env, classObject, false);
@@ -549,7 +549,7 @@ MM_GlobalMarkingScheme::scanMixedObject(MM_EnvironmentVLHGC *env, J9Object *obje
 
 	while (scanPtr < endScanPtr) {
 		/* Determine if the slot should be processed */
-		if(descriptionBits & 1) {
+		if (descriptionBits & 1) {
 			/* As this function can be invoked during concurrent mark the slot is
 			 * volatile so we must ensure that the compiler generates the correct
 			 * code if markObject() is inlined.
@@ -650,7 +650,7 @@ MM_GlobalMarkingScheme::scanReferenceMixedObject(MM_EnvironmentVLHGC *env, J9Obj
 	leafPtr = (UDATA *)J9GC_J9OBJECT_CLAZZ(objectPtr, env)->instanceLeafDescription;
 #endif /* J9VM_GC_LEAF_BITS */
 
-	if(((UDATA)descriptionPtr) & 1) {
+	if (((UDATA)descriptionPtr) & 1) {
 		descriptionBits = ((UDATA)descriptionPtr) >> 1;
 #if defined(J9VM_GC_LEAF_BITS)
 		leafBits = ((UDATA)leafPtr) >> 1;
@@ -664,7 +664,7 @@ MM_GlobalMarkingScheme::scanReferenceMixedObject(MM_EnvironmentVLHGC *env, J9Obj
 	descriptionIndex = J9_OBJECT_DESCRIPTION_SIZE - 1;
 
 	bool const compressed = env->compressObjectReferences();
-	while(scanPtr < endScanPtr) {
+	while (scanPtr < endScanPtr) {
 		/* Determine if the slot should be processed */
 		if ((descriptionBits & 1) && ((scanPtr != referentPtr.readAddressFromSlot()) || referentMustBeMarked)) {
 			/* As this function can be invoked during concurrent mark the slot is
@@ -687,7 +687,7 @@ MM_GlobalMarkingScheme::scanReferenceMixedObject(MM_EnvironmentVLHGC *env, J9Obj
 #if defined(J9VM_GC_LEAF_BITS)
 		leafBits >>= 1;
 #endif /* J9VM_GC_LEAF_BITS */
-		if(descriptionIndex-- == 0) {
+		if (descriptionIndex-- == 0) {
 			descriptionBits = *descriptionPtr++;
 #if defined(J9VM_GC_LEAF_BITS)
 			leafBits = *leafPtr++;
@@ -748,7 +748,7 @@ MM_GlobalMarkingScheme::scanPointerArrayObject(MM_EnvironmentVLHGC *env, J9Index
 {
 	UDATA bytesScanned = 0;
 	UDATA workItem = (UDATA)env->_workStack.peek(env);
-	if( PACKET_ARRAY_SPLIT_TAG == (workItem & PACKET_ARRAY_SPLIT_TAG) ) {
+	if ( PACKET_ARRAY_SPLIT_TAG == (workItem & PACKET_ARRAY_SPLIT_TAG) ) {
 		env->_workStack.pop(env);
 		UDATA index = workItem >> PACKET_ARRAY_SPLIT_SHIFT;
 		bytesScanned = scanPointerArrayObjectSplit(env, objectPtr, index, reason);
@@ -916,11 +916,14 @@ MM_GlobalMarkingScheme::scanClassLoaderObject(MM_EnvironmentVLHGC *env, J9Object
 void
 MM_GlobalMarkingScheme::scanClassLoaderSlots(MM_EnvironmentVLHGC *env, J9ClassLoader *classLoader, ScanReason reason)
 {
-	if(NULL != classLoader){
+	if (NULL != classLoader){
 		/* This method should only be necessary for the system class loader and application class loader since they may not
 		 * necessarily have a class loader object but still need to keep their loaded classes alive
 		 */
-		Assert_MM_true((classLoader == _javaVM->systemClassLoader) || (classLoader == _javaVM->applicationClassLoader));
+		Assert_MM_true((classLoader == _javaVM->systemClassLoader)
+				|| (classLoader == _javaVM->applicationClassLoader)
+				|| (classLoader == _javaVM->extensionClassLoader));
+
 		if (NULL != classLoader->classLoaderObject) {
 			markObject(env, classLoader->classLoaderObject);
 		} else {
@@ -1174,7 +1177,7 @@ private:
 	}
 
 	virtual void doClassLoader(J9ClassLoader *classLoader) {
-		if(0 == (classLoader->gcFlags & J9_GC_CLASS_LOADER_DEAD)) {
+		if (0 == (classLoader->gcFlags & J9_GC_CLASS_LOADER_DEAD)) {
 			_markingScheme->markObject((MM_EnvironmentVLHGC *)_env, classLoader->classLoaderObject);
 		}
 	}
@@ -1209,7 +1212,7 @@ public:
 #endif /* J9VM_GC_FINALIZATION */
 		scanJNIGlobalReferences(env);
 
-		if(_stringTableAsRoot){
+		if (_stringTableAsRoot){
 			scanStringTable(env);
 		}
 	}
@@ -1324,7 +1327,7 @@ private:
 	virtual void doMonitorReference(J9ObjectMonitor *objectMonitor, GC_HashTableIterator *monitorReferenceIterator) {
 		J9ThreadAbstractMonitor * monitor = (J9ThreadAbstractMonitor*)objectMonitor->monitor;
 		MM_EnvironmentVLHGC::getEnvironment(_env)->_markVLHGCStats._monitorReferenceCandidates += 1;
-		if(!_markingScheme->isMarked((J9Object *)monitor->userData)) {
+		if (!_markingScheme->isMarked((J9Object *)monitor->userData)) {
 			monitorReferenceIterator->removeSlot();
 			MM_EnvironmentVLHGC::getEnvironment(_env)->_markVLHGCStats._monitorReferenceCleared += 1;
 			/* We must call objectMonitorDestroy (as opposed to omrthread_monitor_destroy) when the
@@ -1343,7 +1346,7 @@ private:
 
 	virtual void doJNIWeakGlobalReference(J9Object **slotPtr) {
 		J9Object *objectPtr = *slotPtr;
-		if(objectPtr && !_markingScheme->isMarked(objectPtr)) {
+		if (objectPtr && !_markingScheme->isMarked(objectPtr)) {
 			*slotPtr = NULL;
 		}
 	}
@@ -1351,7 +1354,7 @@ private:
 #if defined(J9VM_GC_MODRON_SCAVENGER)
 	virtual void doRememberedSetSlot(J9Object **slotPtr, GC_RememberedSetSlotIterator *rememberedSetSlotIterator) {
 		J9Object *objectPtr = *slotPtr;
-		if( (objectPtr == NULL) || !_markingScheme->isMarked(objectPtr)) {
+		if ( (objectPtr == NULL) || !_markingScheme->isMarked(objectPtr)) {
 			rememberedSetSlotIterator->removeSlot();
 		}
 	}
@@ -1359,7 +1362,7 @@ private:
 
 	virtual void doStringTableSlot(J9Object **slotPtr, GC_StringTableIterator *stringTableIterator) {
 		MM_EnvironmentVLHGC::getEnvironment(_env)->_markVLHGCStats._stringConstantsCandidates += 1;
-		if(!_markingScheme->isMarked(*slotPtr)) {
+		if (!_markingScheme->isMarked(*slotPtr)) {
 			MM_EnvironmentVLHGC::getEnvironment(_env)->_markVLHGCStats._stringConstantsCleared += 1;
 			stringTableIterator->removeSlot();
 		}
@@ -1381,7 +1384,7 @@ private:
 	 */
 	virtual void doStringCacheTableSlot(J9Object **slotPtr) {
 		J9Object *objectPtr = *slotPtr;
-		if((NULL != objectPtr) && (!_markingScheme->isMarked(*slotPtr))) {
+		if ((NULL != objectPtr) && (!_markingScheme->isMarked(*slotPtr))) {
 			*slotPtr = NULL;
 		}	
 	}
@@ -1394,7 +1397,7 @@ private:
 
 #if defined(J9VM_OPT_JVMTI)
 	virtual void doJVMTIObjectTagSlot(J9Object **slotPtr, GC_JVMTIObjectTagTableIterator *objectTagTableIterator) {
-		if(!_markingScheme->isMarked(*slotPtr)) {
+		if (!_markingScheme->isMarked(*slotPtr)) {
 			objectTagTableIterator->removeSlot();
 		}
 	}
@@ -1417,9 +1420,9 @@ MM_GlobalMarkingScheme::cleanCardTableForGlobalCollect(MM_EnvironmentVLHGC *env,
 
 	GC_HeapRegionIterator regionIterator(_heapRegionManager);
 	MM_HeapRegionDescriptor *region = NULL;
-	while(NULL != (region = regionIterator.nextRegion())) {
+	while (NULL != (region = regionIterator.nextRegion())) {
 		if (region->containsObjects()) {
-			if(J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
+			if (J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
 				_extensions->cardTable->cleanCardsInRegion(env, cardCleaner, region);
 			}
 		}
@@ -1435,9 +1438,9 @@ MM_GlobalMarkingScheme::initializeMarkMap(MM_EnvironmentVLHGC *env)
 {
 	MM_HeapRegionDescriptorVLHGC *region = NULL;
 	GC_HeapRegionIteratorVLHGC regionIterator(_extensions->getHeap()->getHeapRegionManager());
-	while(NULL != (region = regionIterator.nextRegion())) {
+	while (NULL != (region = regionIterator.nextRegion())) {
 		if (region->isCommitted()) {
-			if(J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
+			if (J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
 				if (region->_nextMarkMapCleared) {
 					region->_nextMarkMapCleared = false;
 					if (_extensions->tarokEnableExpensiveAssertions) {
@@ -1482,7 +1485,7 @@ void
 MM_GlobalMarkingScheme::markLiveObjectsRoots(MM_EnvironmentVLHGC *env)
 {
 	/* cleaning cards is now considered a root marking operation */
-	switch(env->_cycleState->_collectionType) {
+	switch (env->_cycleState->_collectionType) {
 	case MM_CycleState::CT_GLOBAL_MARK_PHASE:
 	{
 		if (0 == env->_cycleState->_currentIncrement) {
@@ -1514,14 +1517,15 @@ MM_GlobalMarkingScheme::markLiveObjectsRoots(MM_EnvironmentVLHGC *env)
 		
 	/* Mark root set classes */
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
-	if(isDynamicClassUnloadingEnabled()) {
+	if (isDynamicClassUnloadingEnabled()) {
 		/* TODO: This code belongs somewhere else? */
 		/* Setting the permanent class loaders to scanned without a locked operation is safe
 		 * Class loaders will not be rescanned until a thread synchronize is executed
 		 */
-		if(env->isMainThread()) {
+		if (env->isMainThread()) {
 			scanClassLoaderSlots(env, _javaVM->systemClassLoader);
 			scanClassLoaderSlots(env, _javaVM->applicationClassLoader);
+			scanClassLoaderSlots(env, _javaVM->extensionClassLoader);
 		}
 	}
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
@@ -1552,7 +1556,7 @@ MM_GlobalMarkingScheme::markLiveObjectsComplete(MM_EnvironmentVLHGC *env)
 		env->_cycleState->_referenceObjectOptions |= MM_CycleState::references_clear_weak;
 		MM_HeapRegionDescriptorVLHGC *region = NULL;
 		GC_HeapRegionIteratorVLHGC regionIterator(_heapRegionManager);
-		while(NULL != (region = regionIterator.nextRegion())) {
+		while (NULL != (region = regionIterator.nextRegion())) {
 			if (region->containsObjects()) {
 				region->getReferenceObjectList()->startSoftReferenceProcessing();
 				region->getReferenceObjectList()->startWeakReferenceProcessing();
@@ -1694,10 +1698,10 @@ MM_GlobalMarkingScheme::scanSoftReferenceObjects(MM_EnvironmentVLHGC *env)
 
 	MM_HeapRegionDescriptorVLHGC *region = NULL;
 	GC_HeapRegionIteratorVLHGC regionIterator(_heapRegionManager);
-	while(NULL != (region = regionIterator.nextRegion())) {
+	while (NULL != (region = regionIterator.nextRegion())) {
 		if (region->containsObjects()) {
 			if (!region->getReferenceObjectList()->wasSoftListEmpty()) {
-				if(J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
+				if (J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
 					processReferenceList(env, region->getReferenceObjectList()->getPriorSoftList(), &env->_markVLHGCStats._softReferenceStats);
 				}
 			}
@@ -1716,7 +1720,7 @@ MM_GlobalMarkingScheme::scanPhantomReferenceObjects(MM_EnvironmentVLHGC *env)
 	if (env->_currentTask->synchronizeGCThreadsAndReleaseSingleThread(env, UNIQUE_ID)) {
 		MM_HeapRegionDescriptorVLHGC *region = NULL;
 		GC_HeapRegionIteratorVLHGC regionIterator(_heapRegionManager);
-		while(NULL != (region = regionIterator.nextRegion())) {
+		while (NULL != (region = regionIterator.nextRegion())) {
 			if (region->containsObjects()) {
 				region->getReferenceObjectList()->startPhantomReferenceProcessing();
 			}
@@ -1726,10 +1730,10 @@ MM_GlobalMarkingScheme::scanPhantomReferenceObjects(MM_EnvironmentVLHGC *env)
 	
 	MM_HeapRegionDescriptorVLHGC *region = NULL;
 	GC_HeapRegionIteratorVLHGC regionIterator(_heapRegionManager);
-	while(NULL != (region = regionIterator.nextRegion())) {
+	while (NULL != (region = regionIterator.nextRegion())) {
 		if (region->containsObjects()) {
 			if (!region->getReferenceObjectList()->wasPhantomListEmpty()) {
-				if(J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
+				if (J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
 					processReferenceList(env, region->getReferenceObjectList()->getPriorPhantomList(), &env->_markVLHGCStats._phantomReferenceStats);
 				}
 			}
