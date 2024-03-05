@@ -108,6 +108,9 @@ OEVP_DigestFinal_ex_t * OEVP_DigestFinal_ex = NULL;
 OEVP_sha256_t * OEVP_sha256 = NULL;
 
 OERR_print_errors_fp_t * OERR_print_errors_fp = NULL;
+OERR_peek_error_t * OERR_peek_error = NULL;
+OERR_get_error_t * OERR_get_error = NULL;
+OERR_error_string_n_t * OERR_error_string_n = NULL;
 
 int OSSL102_OOPENSSL_init_ssl(uint64_t opts, const void * settings)
    {
@@ -380,6 +383,9 @@ void dbgPrintSymbols()
    printf(" EVP_sha256 %p\n", OEVP_sha256);
 
    printf(" ERR_print_errors_fp %p\n", OERR_print_errors_fp);
+   printf(" ERR_peek_error %p\n", OERR_peek_error);
+   printf(" ERR_get_error %p\n", OERR_get_error);
+   printf(" ERR_error_string_n %p\n", OERR_error_string_n);
 
    printf("=============================================================\n\n");
    }
@@ -515,6 +521,9 @@ bool loadLibsslAndFindSymbols()
    OEVP_sha256 = (OEVP_sha256_t *)findLibsslSymbol(handle, "EVP_sha256");
 
    OERR_print_errors_fp = (OERR_print_errors_fp_t *)findLibsslSymbol(handle, "ERR_print_errors_fp");
+   OERR_peek_error = (OERR_peek_error_t *)findLibsslSymbol(handle, "ERR_peek_error");
+   OERR_get_error = (OERR_get_error_t *)findLibsslSymbol(handle, "ERR_get_error");
+   OERR_error_string_n = (OERR_error_string_n_t *)findLibsslSymbol(handle, "ERR_error_string_n");
 
    if (
        (OOpenSSL_version == NULL) ||
@@ -582,7 +591,10 @@ bool loadLibsslAndFindSymbols()
        (OEVP_DigestFinal_ex == NULL) ||
        (OEVP_sha256 == NULL) ||
 
-       (OERR_print_errors_fp == NULL)
+       (OERR_print_errors_fp == NULL) ||
+       (OERR_peek_error == NULL) ||
+       (OERR_get_error == NULL) ||
+       (OERR_error_string_n == NULL)
       )
       {
       printf("#JITServer: Failed to load all the required OpenSSL symbols\n");

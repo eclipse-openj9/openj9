@@ -45,10 +45,34 @@
 #include "runtime/Listener.hpp"
 
 static bool
-handleOpenSSLConnectionError(int connfd, SSL *&ssl, BIO *&bio, const char *errMsg)
+handleOpenSSLConnectionError(int connfd, SSL *&ssl, BIO *&bio, const char *errMsg, int ret, TR::CompilationInfo *compInfo)
    {
+   int errnoCopy = errno;
+   int sslError = SSL_ERROR_NONE;
+   unsigned long errorCode = 0;
+   int errorReason = 0;
+   char errorString[256] = {0};
+
+   // Filter out SSL_R_UNEXPECTED_EOF_WHILE_READING errors that were introduced in SSL version 3
+   // These can appear if Kubernetes readiness/liveness probes are used on the TCP encrypted channel
+   if (ret <= 0)
+      {
+      sslError = (*OSSL_get_error)(ssl, ret);
+      // Get earliest error code from the thread's error queue without modifying it.
+      errorCode = (*OERR_peek_error)();
+      errorReason = ERR_GET_REASON(errorCode);
+      (*OERR_error_string_n)(errorCode, errorString, sizeof(errorString));
+      if (sslError == SSL_ERROR_SSL && errorReason == SSL_R_UNEXPECTED_EOF_WHILE_READING)
+         {
+         // Take this error out of the queue so that it doesn't get printed
+         errorCode = (*OERR_get_error)();
+         }
+      }
    if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-       TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "%s: errno=%d", errMsg, errno);
+       TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "t=%lu %s: errno=%d sslError=%d errorString=%s",
+                                      (unsigned long)compInfo->getPersistentInfo()->getElapsedTime(),
+                                      errMsg, errnoCopy, sslError, errorString);
+   // Print the error strings for all errors that OpenSSL has recorded and empty the error queue
    (*OERR_print_errors_fp)(stderr);
 
    if (bio)
@@ -61,25 +85,32 @@ handleOpenSSLConnectionError(int connfd, SSL *&ssl, BIO *&bio, const char *errMs
    }
 
 static bool
-acceptOpenSSLConnection(SSL_CTX *sslCtx, int connfd, BIO *&bio)
+acceptOpenSSLConnection(SSL_CTX *sslCtx, int connfd, BIO *&bio, TR::CompilationInfo *compInfo)
    {
+   if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "t=%lu Accepting SSL connection on socket 0x%x",
+                                     (unsigned long)compInfo->getPersistentInfo()->getElapsedTime(), connfd);
    SSL *ssl = NULL;
    bio = (*OBIO_new_ssl)(sslCtx, false);
    if (!bio)
-      return handleOpenSSLConnectionError(connfd, ssl, bio, "Error creating new BIO");
+      return handleOpenSSLConnectionError(connfd, ssl, bio, "Error creating new BIO", 1 /*ret*/, compInfo);
 
-   if ((*OBIO_ctrl)(bio, BIO_C_GET_SSL, false, (char *) &ssl) != 1) // BIO_get_ssl(bio, &ssl)
-      return handleOpenSSLConnectionError(connfd, ssl, bio, "Failed to get BIO SSL");
+   int ret = (*OBIO_ctrl)(bio, BIO_C_GET_SSL, false, (char *) &ssl); // BIO_get_ssl(bio, &ssl)
+   if (ret != 1)
+       return handleOpenSSLConnectionError(connfd, ssl, bio, "Failed to get BIO SSL", ret, compInfo);
 
-   if ((*OSSL_set_fd)(ssl, connfd) != 1)
-      return handleOpenSSLConnectionError(connfd, ssl, bio, "Error setting SSL file descriptor");
+   ret = (*OSSL_set_fd)(ssl, connfd);
+   if (ret != 1)
+      return handleOpenSSLConnectionError(connfd, ssl, bio, "Error setting SSL file descriptor", ret, compInfo);
 
-   if ((*OSSL_accept)(ssl) <= 0)
-      return handleOpenSSLConnectionError(connfd, ssl, bio, "Error accepting SSL connection");
+   ret = (*OSSL_accept)(ssl);
+   if (ret != 1)
+      return handleOpenSSLConnectionError(connfd, ssl, bio, "Error accepting SSL connection", ret, compInfo);
 
    if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "SSL connection on socket 0x%x, Version: %s, Cipher: %s\n",
-                                                     connfd, (*OSSL_get_version)(ssl), (*OSSL_get_cipher)(ssl));
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "t=%lu SSL connection on socket 0x%x, Version: %s, Cipher: %s",
+                                     (unsigned long)compInfo->getPersistentInfo()->getElapsedTime(),
+                                     connfd, (*OSSL_get_version)(ssl), (*OSSL_get_cipher)(ssl));
    return true;
    }
 
@@ -214,7 +245,7 @@ TR_Listener::serveRemoteCompilationRequests(BaseCompileDispatcher *compiler)
                }
 
             BIO *bio = NULL;
-            if (sslCtx && !acceptOpenSSLConnection(sslCtx, connfd, bio))
+            if (sslCtx && !acceptOpenSSLConnection(sslCtx, connfd, bio, compInfo))
                continue;
 
             JITServer::ServerStream *stream = new (TR::Compiler->persistentGlobalAllocator()) JITServer::ServerStream(connfd, bio);
