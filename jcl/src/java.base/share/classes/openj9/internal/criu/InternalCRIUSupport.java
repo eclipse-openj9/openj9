@@ -22,6 +22,8 @@
  *******************************************************************************/
 package openj9.internal.criu;
 
+import com.ibm.oti.vm.VM;
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -971,6 +973,42 @@ public final class InternalCRIUSupport {
 
 				J9InternalCheckpointHookAPI.registerPostRestoreHook(HookMode.SINGLE_THREAD_MODE, RESTORE_CLEAR_INETADDRESS_CACHE_PRIORITY, "Clear InetAddress cache on restore", InternalCRIUSupport::clearInetAddressCache); //$NON-NLS-1$
 				J9InternalCheckpointHookAPI.registerPostRestoreHook(HookMode.SINGLE_THREAD_MODE, RESTORE_ENVIRONMENT_VARIABLES_PRIORITY, "Restore system properties", InternalCRIUSupport::setRestoreJavaProperties); //$NON-NLS-1$
+
+				/* Add option overrides. */
+				Properties props = VM.internalGetProperties();
+
+				String unprivilegedOpt = props.getProperty("openj9.internal.criu.unprivilegedMode"); //$NON-NLS-1$
+				if (unprivilegedOpt != null) {
+						setUnprivileged(Boolean.parseBoolean(unprivilegedOpt));
+				}
+
+				String tcpEstablishedOpt = props.getProperty("openj9.internal.criu.tcpEstablished"); //$NON-NLS-1$
+				if (tcpEstablishedOpt != null) {
+					setTCPEstablished(Boolean.parseBoolean(tcpEstablishedOpt));
+				}
+
+				String ghostFileLimitOpt = props.getProperty("openj9.internal.criu.ghostFileLimit"); //$NON-NLS-1$
+				if (ghostFileLimitOpt != null) {
+					try {
+						setGhostFileLimit(Long.parseLong(ghostFileLimitOpt));
+					} catch (NumberFormatException e) {
+						System.err.println("Invalid value specified: `-Dopenj9.internal.criu.ghostFileLimit=" + ghostFileLimitOpt + "`."); //$NON-NLS-1$ //$NON-NLS-2$
+					}
+				}
+
+				String logLevelOpt =  props.getProperty("openj9.internal.criu.logLevel"); //$NON-NLS-1$
+				if (logLevelOpt != null) {
+					try {
+						setLogLevel(Integer.parseInt(logLevelOpt));
+					} catch (NumberFormatException e) {
+						System.err.println("Invalid value specified: `-Dopenj9.internal.criu.logLevel=" + logLevelOpt + "` ."); //$NON-NLS-1$ //$NON-NLS-2$
+					}
+				}
+
+				String logFileOpt =  props.getProperty("openj9.internal.criu.logFile"); //$NON-NLS-1$
+				if (logFileOpt != null) {
+					setLogFile(logFileOpt);
+				}
 
 				/* Add security provider hooks. */
 				SecurityProviders.registerResetCRIUState();
