@@ -73,9 +73,11 @@ static J9UTF8 *
 copyJ9UTF8(const J9UTF8 *nameStr, TR_PersistentMemory *persistentMemory)
    {
    size_t nameSize = J9UTF8_TOTAL_SIZE(nameStr);
+
    void *ptr = persistentMemory->allocatePersistentMemory(nameSize);
    if (!ptr)
-      throw std::bad_alloc();
+      return NULL;
+
    memcpy(ptr, nameStr, nameSize);
    return (J9UTF8 *)ptr;
    }
@@ -233,17 +235,6 @@ TR_PersistentClassLoaderTable::associateClassLoaderWithClass(J9VMThread *vmThrea
          }
       }
 
-   // If we are using the JITServer AOT cache and ignoring the local SCC, we need to remember the name of clazz
-   // with or without chain. Otherwise (not using AOT cache or not ignoring the local SCC) there is no point in continuing
-   // without a chain.
-   if (!chain
-#if defined(J9VM_OPT_JITSERVER)
-       && (!useAOTCache || !_persistentMemory->getPersistentInfo()->getJITServerAOTCacheIgnoreLocalSCC())
-#endif /* defined(J9VM_OPT_JITSERVER) */
-      )
-      return;
-   TR_ASSERT(!_sharedCache || !chain || _sharedCache->isPointerInSharedCache(chain), "Class chain must be in SCC");
-
    J9UTF8 *nameStr = NULL;
 #if defined(J9VM_OPT_JITSERVER)
    if (useAOTCache)
@@ -251,6 +242,12 @@ TR_PersistentClassLoaderTable::associateClassLoaderWithClass(J9VMThread *vmThrea
       nameStr = (_sharedCache && _sharedCache->isROMClassInSharedCache(romClass)) ? romName : copyJ9UTF8(romName, _persistentMemory);
       }
 #endif /* defined(J9VM_OPT_JITSERVER) */
+
+   // If we could not retrieve a chain for the class and could not retrieve a name for the class, then
+   // there is no point in continuing.
+   if (!chain && !nameStr)
+      return;
+   TR_ASSERT(!_sharedCache || !chain || _sharedCache->isPointerInSharedCache(chain), "Class chain must be in SCC");
 
    info = new (_persistentMemory) TR_ClassLoaderInfo(loader, chain, nameStr);
    if (!info)
@@ -293,7 +290,7 @@ TR_PersistentClassLoaderTable::associateClassLoaderWithClass(J9VMThread *vmThrea
       }
 
 #if defined(J9VM_OPT_JITSERVER)
-   if (useAOTCache)
+   if (nameStr)
       {
       // Lookup by class name and check if it was already associated with another class loader
       NameKey key { name, nameLength };
