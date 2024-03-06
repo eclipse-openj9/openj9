@@ -23,6 +23,7 @@
 package jit.test.recognizedMethod;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
+import java.util.Random;
 
 public class TestJavaLangMath {
 
@@ -54,5 +55,95 @@ public class TestJavaLangMath {
         AssertJUnit.assertEquals(7.5d, Math.sqrt(56.25d));
         AssertJUnit.assertEquals(Double.POSITIVE_INFINITY, Math.sqrt(Double.POSITIVE_INFINITY));
         AssertJUnit.assertTrue(Double.isNaN(Math.sqrt(Double.NaN)));
+    }
+
+    /**
+    * Tests all execution paths defined by the {@link Math.max} method, for float and double data types.
+    */
+    @Test(groups = {"level.sanity"}, invocationCount=2)
+    public void test_java_lang_Math_max() {
+        // Test Math.max for double type with NaN & +0/-0 values
+        AssertJUnit.assertTrue(Double.isNaN(Math.max(Double.NaN, Double.NaN)));
+        AssertJUnit.assertTrue(Double.isNaN(Math.max(Double.NaN, 0.0)));
+        AssertJUnit.assertTrue(Double.isNaN(Math.max(0.0, Double.NaN)));
+        AssertJUnit.assertTrue(Double.isNaN(Math.max(Double.NaN, -0.0)));
+        AssertJUnit.assertTrue(Double.isNaN(Math.max(-0.0, Double.NaN)));
+        AssertJUnit.assertEquals(0.0, Math.max(0.0, -0.0), 0.0);
+        AssertJUnit.assertEquals(0.0, Math.max(-0.0, 0.0), 0.0);
+
+        // Test Math.max for float type with NaN & +0/-0 values
+        AssertJUnit.assertTrue(Float.isNaN(Math.max(Float.NaN, Float.NaN)));
+        AssertJUnit.assertTrue(Float.isNaN(Math.max(Float.NaN, 0.0f)));
+        AssertJUnit.assertTrue(Float.isNaN(Math.max(0.0f, Float.NaN)));
+        AssertJUnit.assertTrue(Float.isNaN(Math.max(Float.NaN, -0.0f)));
+        AssertJUnit.assertTrue(Float.isNaN(Math.max(-0.0f, Float.NaN)));
+        AssertJUnit.assertEquals(0.0f, Math.max(0.0f, -0.0f), 0.0f);
+        AssertJUnit.assertEquals(0.0f, Math.max(-0.0f, 0.0f), 0.0f);
+
+        //Test Math.max with variation of random negative & positive doubles
+        Random random = new Random();
+        double d1 = -random.nextDouble() * 100; // ensures number is negative and within a reasonable range
+        double d2 = -random.nextDouble() * 100;
+        double d3 = random.nextDouble() * 100; // ensures number is positive and within a reasonable range
+        double d4 = random.nextDouble() * 100;
+        AssertJUnit.assertEquals(Math.max(d1, d2), (d1 > d2) ? d1 : d2, 0.0);
+        AssertJUnit.assertEquals(Math.max(d2, d3), (d2 > d3) ? d2 : d3, 0.0);
+        AssertJUnit.assertEquals(Math.max(d3, d4), (d3 > d4) ? d3 : d4, 0.0);
+        AssertJUnit.assertEquals(Math.max(d1, d4), (d1 > d4) ? d1 : d4, 0.0);
+
+        //Test Math.max with variation of random negative & positive floats
+        float f1 = -random.nextFloat() * 100; // ensures number is negative and within a reasonable range
+        float f2 = -random.nextFloat() * 100;
+        float f3 = random.nextFloat() * 100; // ensures number is positive and within a reasonable range
+        float f4 = random.nextFloat() * 100;
+        AssertJUnit.assertEquals(Math.max(f1, f2), (f1 > f2) ? f1 : f2, 0.0f);
+        AssertJUnit.assertEquals(Math.max(f2, f3), (f2 > f3) ? f2 : f3, 0.0f);
+        AssertJUnit.assertEquals(Math.max(f3, f4), (f3 > f4) ? f3 : f4, 0.0f);
+        AssertJUnit.assertEquals(Math.max(f1, f4), (f1 > f4) ? f1 : f4, 0.0f);
+    }
+
+    /**
+    * Tests all execution paths defined by the {@link Math.min} method, for float and double data types.
+    */
+    @Test(groups = {"level.sanity"}, invocationCount=2)
+    public void test_java_lang_Math_min() {
+        // Test Math.min for double type with NaN & +0/-0 values
+        AssertJUnit.assertTrue(Double.isNaN(Math.min(Double.NaN, Double.NaN)));
+        AssertJUnit.assertTrue(Double.isNaN(Math.min(Double.NaN, 0.0)));
+        AssertJUnit.assertTrue(Double.isNaN(Math.min(0.0, Double.NaN)));
+        AssertJUnit.assertTrue(Double.isNaN(Math.min(Double.NaN, -0.0)));
+        AssertJUnit.assertTrue(Double.isNaN(Math.min(-0.0, Double.NaN)));
+        AssertJUnit.assertEquals(-0.0, Math.min(0.0, -0.0), 0.0);
+        AssertJUnit.assertEquals(-0.0, Math.min(-0.0, 0.0), 0.0);
+
+        // Test Math.min for float type with NaN & +0/-0 values
+        AssertJUnit.assertTrue(Float.isNaN(Math.min(Float.NaN, Float.NaN)));
+        AssertJUnit.assertTrue(Float.isNaN(Math.min(Float.NaN, 0.0f)));
+        AssertJUnit.assertTrue(Float.isNaN(Math.min(0.0f, Float.NaN)));
+        AssertJUnit.assertTrue(Float.isNaN(Math.min(Float.NaN, -0.0f)));
+        AssertJUnit.assertTrue(Float.isNaN(Math.min(-0.0f, Float.NaN)));
+        AssertJUnit.assertEquals(-0.0f, Math.min(0.0f, -0.0f), 0.0f);
+        AssertJUnit.assertEquals(-0.0f, Math.min(-0.0f, 0.0f), 0.0f);
+
+        //Test Math.min with variation of random negative & positive doubles
+        Random random = new Random();
+        double d1 = -random.nextDouble() * 100; // ensures number is negative and within a reasonable range
+        double d2 = -random.nextDouble() * 100;
+        double d3 = random.nextDouble() * 100; // ensures number is positive and within a reasonable range
+        double d4 = random.nextDouble() * 100;
+        AssertJUnit.assertEquals(Math.min(d1, d2), (d1 < d2) ? d1 : d2, 0.0);
+        AssertJUnit.assertEquals(Math.min(d2, d3), (d2 < d3) ? d2 : d3, 0.0);
+        AssertJUnit.assertEquals(Math.min(d3, d4), (d3 < d4) ? d3 : d4, 0.0);
+        AssertJUnit.assertEquals(Math.min(d1, d4), (d1 < d4) ? d1 : d4, 0.0);
+
+        //Test Math.min with variation of random negative & positive floats
+        float f1 = -random.nextFloat() * 100; // ensures number is negative and within a reasonable range
+        float f2 = -random.nextFloat() * 100;
+        float f3 = random.nextFloat() * 100; // ensures number is positive and within a reasonable range
+        float f4 = random.nextFloat() * 100;
+        AssertJUnit.assertEquals(Math.min(f1, f2), (f1 < f2) ? f1 : f2, 0.0f);
+        AssertJUnit.assertEquals(Math.min(f2, f3), (f2 < f3) ? f2 : f3, 0.0f);
+        AssertJUnit.assertEquals(Math.min(f3, f4), (f3 < f4) ? f3 : f4, 0.0f);
+        AssertJUnit.assertEquals(Math.min(f1, f4), (f1 < f4) ? f1 : f4, 0.0f);
     }
 }
