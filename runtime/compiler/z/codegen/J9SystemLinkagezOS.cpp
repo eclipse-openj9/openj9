@@ -187,8 +187,8 @@ J9::Z::zOSSystemLinkage::generateInstructionsForCall(TR::Node * callNode, TR::Re
     * The BASR and NOP padding must stick together and can't have reverse spills in the middle.
     * Hence, splitting the dependencies to avoid spill instructions.
     */
-   TR::RegisterDependencyConditions* callPreDeps = new (self()->trHeapMemory()) TR::RegisterDependencyConditions(deps->getPreConditions(), NULL, deps->getAddCursorForPre(), 0, codeGen);
-   TR::RegisterDependencyConditions* callPostDeps = new (self()->trHeapMemory()) TR::RegisterDependencyConditions(NULL, deps->getPostConditions(), 0, deps->getAddCursorForPost(), codeGen);
+   TR::RegisterDependencyConditions* callPreDeps = new (trHeapMemory()) TR::RegisterDependencyConditions(deps->getPreConditions(), NULL, deps->getAddCursorForPre(), 0, codeGen);
+   TR::RegisterDependencyConditions* callPostDeps = new (trHeapMemory()) TR::RegisterDependencyConditions(NULL, deps->getPostConditions(), 0, deps->getAddCursorForPost(), codeGen);
 
    gcPoint = generateRRInstruction(codeGen, TR::InstOpCode::BASR, callNode, systemReturnAddressRegister, systemEntryPointRegister, callPreDeps);
    if (isJNIGCPoint)
