@@ -5781,7 +5781,7 @@ continuationIteratorCallback(J9VMThread *vmThread, J9MM_IterateObjectDescriptor 
 		jcw->_OutputStream.writeCharacters("3XMVTHDINFO        \"");
 		jcw->_OutputStream.writeCharacters(threadName);
 		jcw->_OutputStream.writeCharacters("\" [");
-		jcw->_OutputStream.writeCharacters(isMounted ? "mounted" : "unmounted");
+		jcw->_OutputStream.writeCharacters(isMounted ? "unmounted carrier" : "unmounted");
 		jcw->_OutputStream.writeCharacters("] J9VMContinuation:");
 		jcw->_OutputStream.writePointer(continuation);
 		jcw->_OutputStream.writeCharacters(", java/lang/Thread:");
@@ -5826,8 +5826,9 @@ continuationIteratorCallback(J9VMThread *vmThread, J9MM_IterateObjectDescriptor 
 		if (j9sig_protect(protectedWalkJavaStack, &closure, handlerJavaThreadWalk, jcw, J9PORT_SIG_FLAG_SIGALLSYNC | J9PORT_SIG_FLAG_MAY_RETURN, &sink) != 0) {
 			jcw->_OutputStream.writeCharacters("3XMTHREADINFO3           No Java callstack associated with this thread\n");
 		}
+		jcw->_OutputStream.writeCharacters("NULL\n");
 	}
-	jcw->_OutputStream.writeCharacters("NULL\n");
+
 	return JVMTI_ITERATION_CONTINUE;
 }
 #endif /* JAVA_SPEC_VERSION >= 21 */
