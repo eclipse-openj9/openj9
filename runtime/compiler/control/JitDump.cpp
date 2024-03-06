@@ -629,7 +629,7 @@ runJitdump(char *label, J9RASdumpContext *context, J9RASdumpAgent *agent)
                // request the compilation
                jitDumpRecompileWithTracing(
                   crashedThread,
-                  (J9Method *)(comp->getCurrentMethod()->getPersistentIdentifier()),
+                  (J9Method *)(comp->getMethodBeingCompiled()->getPersistentIdentifier()),
                   compInfo,
                   (TR_Hotness)comp->getOptLevel(),
                   comp->isProfilingCompilation(),
