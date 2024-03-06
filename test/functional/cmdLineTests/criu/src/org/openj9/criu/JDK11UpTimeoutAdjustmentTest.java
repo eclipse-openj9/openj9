@@ -21,6 +21,7 @@
  *******************************************************************************/
 package org.openj9.criu;
 
+import java.util.Date;
 import jdk.internal.misc.Unsafe;
 import openj9.internal.criu.InternalCRIUSupport;
 import org.eclipse.openj9.criu.CRIUSupport;
@@ -57,10 +58,12 @@ public class JDK11UpTimeoutAdjustmentTest {
 		switch (testName) {
 		case "testThreadPark":
 			testThreadParkHelper("testThreadPark NO C/R");
+			testResult.lockStatus.set(0);
 			testThread = testThreadPark();
 			break;
 		case "testThreadSleep":
 			testThreadSleepHelper("testThreadSleep NO C/R");
+			testResult.lockStatus.set(0);
 			testThread = testThreadSleep();
 			break;
 		case "testObjectWaitNotify":
@@ -68,10 +71,12 @@ public class JDK11UpTimeoutAdjustmentTest {
 			break;
 		case "testObjectWaitTimedNoNanoSecond":
 			testObjectWaitTimedHelper("testObjectWaitTimedNoNanoSecond NO C/R", msTime2s, 0);
+			testResult.lockStatus.set(0);
 			testThread = testObjectWaitTimedNoNanoSecond();
 			break;
 		case "testObjectWaitTimedWithNanoSecond":
 			testObjectWaitTimedHelper("testObjectWaitTimedWithNanoSecond NO C/R", msTime2s, nsTime500kns);
+			testResult.lockStatus.set(0);
 			testThread = testObjectWaitTimedWithNanoSecond();
 			break;
 		default:
@@ -129,7 +134,8 @@ public class JDK11UpTimeoutAdjustmentTest {
 	public static void showMessages(String logStr, long expectedTime, boolean isMillis, long elapsedTime,
 			long startNanoTime, long endNanoTime) {
 		long crDeltaNs = InternalCRIUSupport.getCheckpointRestoreNanoTimeDelta();
-		System.out.println(logStr + expectedTime + " " + (isMillis ? "ms" : "ns")
+		System.out.println(Thread.currentThread().getName() + ": " + new Date() + ", "
+				+ logStr + expectedTime + " " + (isMillis ? "ms" : "ns")
 				+ ", but the actual elapsed time was: " + elapsedTime + "ns (~" + (elapsedTime / NANOS_PER_MILLI)
 				+ "ms) with startNanoTime = " + startNanoTime + "ns, and endNanoTime = " + endNanoTime
 				+ "ns, CheckpointRestoreNanoTimeDelta: " + crDeltaNs + "ns (~" + (crDeltaNs / NANOS_PER_MILLI) + "ms)");
