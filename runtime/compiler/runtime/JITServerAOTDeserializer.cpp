@@ -102,6 +102,7 @@ JITServerAOTDeserializer::reset(TR::CompilationInfoPerThread *compInfoPT)
    OMR::CriticalSection cccs(_classChainMonitor);
    OMR::CriticalSection mcs(_methodMonitor);
    OMR::CriticalSection ccs(_classMonitor);
+   OMR::CriticalSection clcs(_classLoaderMonitor);
 
    // Notify each compilation thread that the deserializer was reset
    compInfoPT->getCompilationInfo()->notifyCompilationThreadsOfDeserializerReset();
