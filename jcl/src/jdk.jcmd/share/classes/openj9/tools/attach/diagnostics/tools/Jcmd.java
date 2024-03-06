@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar18-SE]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2019
  *
@@ -20,7 +20,6 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
-
 package openj9.tools.attach.diagnostics.tools;
 
 import java.io.IOException;
@@ -31,6 +30,7 @@ import com.sun.tools.attach.VirtualMachineDescriptor;
 import com.sun.tools.attach.spi.AttachProvider;
 
 import openj9.internal.tools.attach.target.DiagnosticUtils;
+import openj9.internal.tools.attach.target.IPC;
 import openj9.tools.attach.diagnostics.attacher.AttacherDiagnosticsProvider;
 
 /**
@@ -40,13 +40,15 @@ import openj9.tools.attach.diagnostics.attacher.AttacherDiagnosticsProvider;
 public class Jcmd {
 
 	@SuppressWarnings("nls")
-	private static final String HELPTEXT = "Usage : jcmd <vmid> <arguments>%n"
+	private static final String HELPTEXT = "Usage : jcmd <vmid | display name | 0> <arguments>%n"
 			+ "%n"
 			+ "   -J : supply arguments to the Java VM running jcmd%n" 
 			+ "   -l : list JVM processes on the local machine%n"
 			+ "   -h : print this help message%n"
 			+ "%n"
-			+ "   <vmid> : Attach API VM ID as shown in jps or other Attach API-based tools%n"
+			+ "   <vmid> : Attach API VM ID as shown in jcmd or other Attach API-based tools%n"
+			+ "   <display name> : this argument is used to match (either fully or partially) the display name as shown in jcmd or other Attach API-based tools%n"
+			+ "   <0> : the jcmd command will be sent to all Java processes detected by this utility%n"
 			+ "%n"
 			+ "   arguments:%n" 
 			+ "      help : print the list of diagnostic commands%n"
@@ -65,47 +67,65 @@ public class Jcmd {
 	 * @param args Application arguments.  See help text for details.
 	 */
 	public static void main(String[] args) {
-		String command = null;
-		/* An empty argument list is a request for a list of VMs */
+		if ((args.length == 1) && Arrays.stream(HELP_OPTIONS).anyMatch(args[0]::equals)) {
+			System.out.printf(HELPTEXT);
+			return;
+		}
+
+		List<AttachProvider> providers = AttachProvider.providers();
+		if ((providers == null) || providers.isEmpty()) {
+			System.err.println("no attach providers available"); //$NON-NLS-1$
+			return;
+		}
+
+		AttachProvider openj9Provider = providers.get(0);
+		List<VirtualMachineDescriptor> vmds = openj9Provider.listVirtualMachines();
+		if ((vmds == null) || vmds.isEmpty()) {
+			System.err.println("no VMs found"); //$NON-NLS-1$
+			return;
+		}
+
+		/* An empty argument list is a request for a list of VMs. */
 		final String firstArgument = (0 == args.length) ? "-l" : args[0]; //$NON-NLS-1$
 		if ("-l".equals(firstArgument)) { //$NON-NLS-1$
-			List<AttachProvider> providers = AttachProvider.providers();
-			AttachProvider myProvider = null;
-			if (!providers.isEmpty()) {
-				myProvider = providers.get(0);
+			for (VirtualMachineDescriptor vmd : vmds) {
+				StringBuilder outputBuffer = new StringBuilder(vmd.id());
+				Util.getTargetInformation(openj9Provider, vmd, false, false, true, outputBuffer);
+				System.out.println(outputBuffer.toString());
 			}
-			if (null == myProvider) {
-				System.err.println("no attach providers available"); //$NON-NLS-1$
-			} else {
-				for (VirtualMachineDescriptor vmd : myProvider.listVirtualMachines()) {
-					StringBuilder outputBuffer = new StringBuilder(vmd.id());
-					Util.getTargetInformation(myProvider, vmd, false, false, true, outputBuffer);
-					System.out.println(outputBuffer.toString());
-				}
-			}
-		} else if ((args.length == 1) && (null != firstArgument) && Arrays.stream(HELP_OPTIONS).anyMatch(firstArgument::equals)) {	
-			System.out.printf(HELPTEXT);
 		} else {
-			command = DiagnosticUtils.makeJcmdCommand(args, 1);
+			String command = DiagnosticUtils.makeJcmdCommand(args, 1);
 			if (command.isEmpty()) {
 				System.err.printf("There is no jcmd command.%n"); //$NON-NLS-1$
 				System.out.printf(HELPTEXT);
 			} else {
-				String vmid = firstArgument;
 				AttacherDiagnosticsProvider diagProvider = new AttacherDiagnosticsProvider();
-				try {
-					diagProvider.attach(vmid);
-					try {
-						Util.runCommandAndPrintResult(diagProvider, command, command); // $NON-NLS-1$
-					} finally {
-						diagProvider.detach();
+				List<String> vmids = Util.findMatchVMIDs(vmds, firstArgument);
+				boolean exceptionThrown = false;
+				for (String vmid : vmids) {
+					if (!vmid.equals(firstArgument)) {
+						// skip following if firstArgument is a VMID
+						// keep the output compatible with the old behavior (only one VMID accepted)
+						System.out.println(vmid + ":"); //$NON-NLS-1$
 					}
-				} catch (IOException e) {
-					Util.handleCommandException(vmid, e);
+					try {
+						IPC.logMessage("attaching vmid = " + vmid); //$NON-NLS-1$
+						diagProvider.attach(vmid);
+						try {
+							Util.runCommandAndPrintResult(diagProvider, command, command);
+						} finally {
+							diagProvider.detach();
+						}
+					} catch (IOException e) {
+						Util.handleCommandException(vmid, e);
+						exceptionThrown = true;
+						// keep iterating the rest of VMIDs
+					}
+				}
+				if (exceptionThrown) {
 					System.out.printf(HELPTEXT);
 				}
 			}
 		}
 	}
-
 }

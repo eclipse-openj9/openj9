@@ -473,9 +473,7 @@ public final class OpenJ9VirtualMachine extends VirtualMachine implements Respon
 				}
 
 				if (descriptor.id().equals(AttachHandler.getVmId())) {
-					String allowAttachSelf_Value = AttachHandler.allowAttachSelf;
-					boolean selfAttachAllowed = "".equals(allowAttachSelf_Value) || Boolean.parseBoolean(allowAttachSelf_Value); //$NON-NLS-1$
-					if (!selfAttachAllowed) {
+					if (!AttachHandler.selfAttachAllowed) {
 						/*[MSG "K0646", "Late attach connection to self disabled. Set jdk.attach.allowAttachSelf=true"]*/
 						throw new IOException(getString("K0646")); //$NON-NLS-1$
 					}
