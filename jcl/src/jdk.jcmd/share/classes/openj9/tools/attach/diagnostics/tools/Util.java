@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar18-SE]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2019
  *
@@ -20,15 +20,20 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
-
 package openj9.tools.attach.diagnostics.tools;
+
+import com.sun.tools.attach.AttachNotSupportedException;
+import com.sun.tools.attach.VirtualMachine;
+import com.sun.tools.attach.VirtualMachineDescriptor;
+import com.sun.tools.attach.spi.AttachProvider;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.IOException;
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -36,13 +41,9 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
+import openj9.internal.tools.attach.target.AttachHandler;
 import openj9.internal.tools.attach.target.DiagnosticProperties;
 import openj9.internal.tools.attach.target.IPC;
-import com.sun.tools.attach.AttachNotSupportedException;
-import com.sun.tools.attach.VirtualMachine;
-import com.sun.tools.attach.VirtualMachineDescriptor;
-import com.sun.tools.attach.spi.AttachProvider;
-
 import openj9.tools.attach.diagnostics.attacher.AttacherDiagnosticsProvider;
 
 /**
@@ -184,5 +185,50 @@ public class Util {
 	 */
 	static boolean checkHelpOption(String option) {
 		return Arrays.stream(HELP_OPTIONS).anyMatch(option::equalsIgnoreCase);
+	}
+
+	static List<String> findMatchVMIDs(List<VirtualMachineDescriptor> vmds, String firstArg) {
+		IPC.logMessage("findMatchVMIDs firstArg = " + firstArg); //$NON-NLS-1$
+		ArrayList<String> vmids = new ArrayList<>();
+		String currentVMID = AttachHandler.getVmId();
+		try {
+			long pid = Long.parseLong(firstArg);
+			boolean includeAllVMIDs = (pid == 0);
+			// this is the virtual machine identifier which is usually an OS process ID
+			for (VirtualMachineDescriptor vmd : vmds) {
+				String vmid = vmd.id();
+				if (includeAllVMIDs || firstArg.equals(vmid)) {
+					IPC.logMessage("add vmid = " + vmid); //$NON-NLS-1$
+					if (vmid.equals(currentVMID) && !AttachHandler.selfAttachAllowed) {
+						IPC.logMessage("skip self, vmid = " + vmid); //$NON-NLS-1$
+					} else {
+						vmids.add(vmid);
+					}
+					if (!includeAllVMIDs) {
+						// exit if not include all VMIDs
+						break;
+					}
+				}
+			}
+		} catch (NumberFormatException nfe) {
+			// the firstArg is not 0 or a unique VMID, search for matching
+			for (VirtualMachineDescriptor vmd : vmds) {
+				String displayName = vmd.displayName();
+				if ((displayName != null) && displayName.contains(firstArg)) {
+					String vmid = vmd.id();
+					if (vmid.equals(currentVMID) && !AttachHandler.selfAttachAllowed) {
+						IPC.logMessage("skip self, vmid = " + vmid //$NON-NLS-1$
+								+ " with displayName = " + displayName); //$NON-NLS-1$
+					} else {
+						IPC.logMessage("find a match: vmid = " + vmid //$NON-NLS-1$
+								+ " in displayName = " + displayName); //$NON-NLS-1$
+						vmids.add(vmid);
+					}
+				} else {
+					IPC.logMessage("skip displayName = " + displayName); //$NON-NLS-1$
+				}
+			}
+		}
+		return vmids;
 	}
 }
