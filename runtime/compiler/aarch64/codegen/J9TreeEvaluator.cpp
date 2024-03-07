@@ -6492,6 +6492,272 @@ static TR::Register* inlineIntrinsicIndexOf(TR::Node* node, TR::CodeGenerator* c
    return resultReg;
    }
 
+/**
+ * @brief Generates inlined instructions equivalent to java/lang/StringLatin1.inflate(byte[] src, int srcOff, char[] dst, int dstOff, int len)
+ *
+ * @param node: node
+ * @param cg: Code Generator
+ * @returns register
+ */
+static TR::Register *inlineStringLatin1Inflate(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   /*
+    *    cbz      lengthReg, LDONE
+    *    add      srcAddrReg, srcReg, srcOffsetReg
+    *    add      dstAddrReg, dstReg, dstOffsetReg, lsl #1
+    *    cmp      lengthReg, #2
+    *    b.cs     GEQ2Bytes
+    *    ldrb     dataReg, [srcAddrReg]
+    *    strh     dataReg, [dstAddrReg]
+    *    b        LDONE
+    * GEQ2Bytes:
+    *    add      srcEndReg, srcAddrReg, lengthReg
+    *    add      dstEndReg, dstAddrReg, lengthReg, lsl #1
+    *    cmp      lengthReg, #4
+    *    b.hi     GEQ4Bytes
+    *    vldrimmh vtmp0Reg, [srcAddrReg]
+    *    vldurh   vtmp1Reg, [srcEndReg, #-2]
+    *    uxtl     vtmp0Reg.8h, vtmp0Reg.8b
+    *    uxtl     vtmp1Reg.8h, vtmp1Reg.8b
+    *    vstrimms vtmp0Reg, [dstAddrReg]
+    *    vsturs   vtmp1Reg, [dstEndReg, #-4]
+    *    b        LDONE
+    * GEQ4Bytes:
+    *    cmp      lengthReg, #8
+    *    b.hi     GEQ8Bytes
+    *    vldrimms vtmp0Reg, [srcAddrReg]
+    *    vldurs   vtmp1Reg, [srcEndReg, #-4]
+    *    uxtl     vtmp0Reg.8h, vtmp0Reg.8b
+    *    uxtl     vtmp1Reg.8h, vtmp1Reg.8b
+    *    vstrimmd vtmp0Reg, [dstAddrReg]
+    *    vsturd   vtmp1Reg, [dstEndReg, #-8]
+    *    b        LDONE
+    * GEQ8Bytes:
+    *    subs     lengthReg, lengthReg, #16
+    *    b.hi     Loop
+    *    vldrimmd vtmp0Reg, [srcAddrReg]
+    *    vldrud   vtmp1Reg, [srcEndReg, #-8]
+    *    uxtl     vtmp0Reg.8h, vtmp0Reg.8b
+    *    uxtl     vtmp1Reg.8h, vtmp1Reg.8b
+    *    vstrimmq vtmp0Reg, [dstAddrReg]
+    *    vsturq   vtmp1Reg, [dstEndReg, #-16]
+    *    b        LDONE
+    * Loop:
+    *    subs     lengthReg, lengthReg, #16
+    *    vldppostd vtmp0Reg, vtmp1Reg, [srcAddrReg], #16
+    *    uxtl     vtmp0Reg.8h, vtmp0Reg.8b
+    *    uxtl     vtmp1Reg.8h, vtmp1Reg.8b
+    *    vstppostq vtmp0Reg, vtmp1Reg, [dstAddrReg], #32
+    *    b.hi     Loop
+    *    vldpoffd	vtmp0Reg, vtmp1Reg, [srcEndReg, #-16]
+    *    uxtl     vtmp0Reg.8h, vtmp0Reg.8b
+    *    uxtl     vtmp1Reg.8h, vtmp1Reg.8b
+    *    vstpoffq	vtmp0Reg, vtmp1Reg, [dstEndReg, #-32]
+    * LDONE:
+    */
+   TR_ASSERT_FATAL(cg->comp()->target().is64Bit(), "StringLatin1.inflate only supported on 64-bit targets");
+   TR_ASSERT_FATAL(cg->getSupportsInlineStringLatin1Inflate(), "Inlining of StringLatin1.inflate not supported");
+   TR_ASSERT_FATAL(!TR::Compiler->om.canGenerateArraylets(), "StringLatin1.inflate intrinsic is not supported with arraylets");
+   TR_ASSERT_FATAL_WITH_NODE(node, node->getNumChildren() == 5, "Wrong number of children in inlineStringLatin1Inflate");
+
+   TR::Node *srcNode = node->getFirstChild();
+   TR::Node *srcOffsetNode = node->getSecondChild();
+   TR::Node *dstNode = node->getThirdChild();
+   TR::Node *dstOffsetNode = node->getChild(3);
+   TR::Node *lengthNode = node->getChild(4);
+
+   TR_ARM64ScratchRegisterManager *srm = cg->generateScratchRegisterManager();
+   TR::Register *srcReg = cg->evaluate(srcNode);
+   TR::Register *srcAddrReg = (srcNode->getReferenceCount() > 1) ? srm->findOrCreateScratchRegister() : srcReg;
+   const bool isSrcOffsetConstZero = srcOffsetNode->isConstZeroValue();
+   TR::Register *srcOffsetReg = isSrcOffsetConstZero ? NULL : cg->evaluate(srcOffsetNode);
+   TR::Register *dstReg = cg->evaluate(dstNode);
+   TR::Register *dstAddrReg = (dstNode->getReferenceCount() > 1) ? srm->findOrCreateScratchRegister() : dstReg;
+   const bool isDstOffsetConstZero = dstOffsetNode->isConstZeroValue();
+   TR::Register *dstOffsetReg = isDstOffsetConstZero ? NULL : cg->evaluate(dstOffsetNode);
+   TR::Register *savedLengthReg = cg->evaluate(lengthNode);
+
+   TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
+   TR_Debug *debugObj = cg->getDebug();
+
+   auto branchToDoneIfZeroInstr = generateCompareBranchInstruction(cg, TR::InstOpCode::cbzw, node, savedLengthReg, doneLabel);
+   if (debugObj)
+      {
+      debugObj->addInstructionComment(branchToDoneIfZeroInstr, "Branch to doneLabel if the length is 0");
+      }
+
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmx, node, srcAddrReg, srcReg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmx, node, dstAddrReg, dstReg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
+   if (!isSrcOffsetConstZero)
+      {
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::addx, node, srcAddrReg, srcAddrReg, srcOffsetReg);
+      }
+   if (!isDstOffsetConstZero)
+      {
+      generateTrg1Src2ShiftedInstruction(cg, TR::InstOpCode::addx, node, dstAddrReg, dstAddrReg, dstOffsetReg, TR::SH_LSL, 1);
+      }
+   TR::Register *lengthReg = (lengthNode->getReferenceCount() > 1) ? srm->findOrCreateScratchRegister() : savedLengthReg;
+   if (lengthNode->getReferenceCount() > 1)
+      {
+      generateMovInstruction(cg, node, lengthReg, savedLengthReg);
+      }
+   TR::LabelSymbol *GEQ8BytesLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *GEQ4BytesLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *GEQ2BytesLabel = generateLabelSymbol(cg);
+   TR::Register *vtmp0Reg = srm->findOrCreateScratchRegister(TR_VRF);
+   TR::Register *vtmp1Reg = srm->findOrCreateScratchRegister(TR_VRF);
+   TR::Register *srcEndReg = NULL;
+   TR::Register *dstEndReg = NULL;
+
+   generateCompareImmInstruction(cg, node, lengthReg, 2);
+   auto branchToGEQ2BytesLabelInstr = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, GEQ2BytesLabel, TR::CC_CS);
+   if (debugObj)
+      {
+      debugObj->addInstructionComment(branchToGEQ2BytesLabelInstr, "Branch to GEQ2BytesLabel if the length >= 2");
+      }
+   TR::Compilation *comp = cg->comp();
+   if (comp->getOptions()->enableDebugCounters())
+      {
+      cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "cg.StringLatin1Inflate/(%s)/%s/01",
+                                                                        comp->signature(),
+                                                                        comp->getHotnessName()), *srm);
+      }
+   TR::Register *dataReg = srm->findOrCreateScratchRegister();
+   generateTrg1MemInstruction(cg, TR::InstOpCode::ldrbimm, node, dataReg, TR::MemoryReference::createWithDisplacement(cg, srcAddrReg, 0));
+   generateMemSrc1Instruction(cg, TR::InstOpCode::strhimm, node, TR::MemoryReference::createWithDisplacement(cg, dstAddrReg, 0), dataReg);
+   auto branchToDoneLabelInstr = generateLabelInstruction(cg, TR::InstOpCode::b, node, doneLabel);
+   srm->reclaimScratchRegister(dataReg);
+
+   auto GEQ2BytesLabelInstr = generateLabelInstruction(cg, TR::InstOpCode::label, node, GEQ2BytesLabel);
+   srcEndReg = srm->findOrCreateScratchRegister();
+   dstEndReg = srm->findOrCreateScratchRegister();
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::addx, node, srcEndReg, srcAddrReg, lengthReg);
+   generateTrg1Src2ShiftedInstruction(cg, TR::InstOpCode::addx, node, dstEndReg, dstAddrReg, lengthReg, TR::SH_LSL, 1);
+   generateCompareImmInstruction(cg, node, lengthReg, 4);
+   auto branchToGEQ4BytesLabelInstr = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, GEQ4BytesLabel, TR::CC_HI);
+   if (debugObj)
+      {
+      debugObj->addInstructionComment(branchToDoneLabelInstr, "Branch to doneLabel");
+      debugObj->addInstructionComment(GEQ2BytesLabelInstr, "GEQ2BytesLabel");
+      debugObj->addInstructionComment(branchToGEQ4BytesLabelInstr, "Branch to GEQ4BytesLabel if the length > 4");
+      }
+   if (comp->getOptions()->enableDebugCounters())
+      {
+      cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "cg.StringLatin1Inflate/(%s)/%s/02",
+                                                                        comp->signature(),
+                                                                        comp->getHotnessName()), *srm);
+      }
+   generateTrg1MemInstruction(cg, TR::InstOpCode::vldrimmh, node, vtmp0Reg, TR::MemoryReference::createWithDisplacement(cg, srcAddrReg, 0));
+   generateTrg1MemInstruction(cg, TR::InstOpCode::vldurh, node, vtmp1Reg, TR::MemoryReference::createWithDisplacement(cg, srcEndReg, -2));
+   generateVectorUXTLInstruction(cg, TR::Int8, node, vtmp0Reg, vtmp0Reg, false);
+   generateVectorUXTLInstruction(cg, TR::Int8, node, vtmp1Reg, vtmp1Reg, false);
+   generateMemSrc1Instruction(cg, TR::InstOpCode::vstrimms, node, TR::MemoryReference::createWithDisplacement(cg, dstAddrReg, 0), vtmp0Reg);
+   generateMemSrc1Instruction(cg, TR::InstOpCode::vsturs, node, TR::MemoryReference::createWithDisplacement(cg, dstEndReg, -4), vtmp1Reg);
+   auto branchToDoneLabelInstr2 = generateLabelInstruction(cg, TR::InstOpCode::b, node, doneLabel);
+
+   auto GEQ4BytesLabelInstr = generateLabelInstruction(cg, TR::InstOpCode::label, node, GEQ4BytesLabel);
+   generateCompareImmInstruction(cg, node, lengthReg, 8);
+   auto branchToGEQ8BytesLabelInstr = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, GEQ8BytesLabel, TR::CC_HI);
+   if (debugObj)
+      {
+      debugObj->addInstructionComment(branchToDoneLabelInstr2, "Branch to doneLabel");
+      debugObj->addInstructionComment(GEQ4BytesLabelInstr, "GEQ4BytesLabel");
+      debugObj->addInstructionComment(branchToGEQ8BytesLabelInstr, "Branch to GEQ8BytesLabel if the length > 8");
+      }
+   if (comp->getOptions()->enableDebugCounters())
+      {
+      cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "cg.StringLatin1Inflate/(%s)/%s/04",
+                                                                        comp->signature(),
+                                                                        comp->getHotnessName()), *srm);
+      }
+   generateTrg1MemInstruction(cg, TR::InstOpCode::vldrimms, node, vtmp0Reg, TR::MemoryReference::createWithDisplacement(cg, srcAddrReg, 0));
+   generateTrg1MemInstruction(cg, TR::InstOpCode::vldurs, node, vtmp1Reg, TR::MemoryReference::createWithDisplacement(cg, srcEndReg, -4));
+   generateVectorUXTLInstruction(cg, TR::Int8, node, vtmp0Reg, vtmp0Reg, false);
+   generateVectorUXTLInstruction(cg, TR::Int8, node, vtmp1Reg, vtmp1Reg, false);
+   generateMemSrc1Instruction(cg, TR::InstOpCode::vstrimmd, node, TR::MemoryReference::createWithDisplacement(cg, dstAddrReg, 0), vtmp0Reg);
+   generateMemSrc1Instruction(cg, TR::InstOpCode::vsturd, node, TR::MemoryReference::createWithDisplacement(cg, dstEndReg, -8), vtmp1Reg);
+   auto branchToDoneLabelInstr3 = generateLabelInstruction(cg, TR::InstOpCode::b, node, doneLabel);
+
+   TR::LabelSymbol *loopLabel = generateLabelSymbol(cg);
+   auto GEQ8BytesLabelInstr = generateLabelInstruction(cg, TR::InstOpCode::label, node, GEQ8BytesLabel);
+
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::subsimmw, node, lengthReg, lengthReg, 16);
+   auto branchToLoopLabelInstr = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, loopLabel, TR::CC_HI);
+   if (debugObj)
+      {
+      debugObj->addInstructionComment(branchToDoneLabelInstr3, "Branch to doneLabel");
+      debugObj->addInstructionComment(GEQ8BytesLabelInstr, "GEQ8BytesLabel");
+      debugObj->addInstructionComment(branchToLoopLabelInstr, "Branch to loopLabel if the length > 16");
+      }
+   if (comp->getOptions()->enableDebugCounters())
+      {
+      cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "cg.StringLatin1Inflate/(%s)/%s/08",
+                                                                        comp->signature(),
+                                                                        comp->getHotnessName()), *srm);
+      }
+   generateTrg1MemInstruction(cg, TR::InstOpCode::vldrimmd, node, vtmp0Reg, TR::MemoryReference::createWithDisplacement(cg, srcAddrReg, 0));
+   generateTrg1MemInstruction(cg, TR::InstOpCode::vldurd, node, vtmp1Reg, TR::MemoryReference::createWithDisplacement(cg, srcEndReg, -8));
+   generateVectorUXTLInstruction(cg, TR::Int8, node, vtmp0Reg, vtmp0Reg, false);
+   generateVectorUXTLInstruction(cg, TR::Int8, node, vtmp1Reg, vtmp1Reg, false);
+   generateMemSrc1Instruction(cg, TR::InstOpCode::vstrimmq, node, TR::MemoryReference::createWithDisplacement(cg, dstAddrReg, 0), vtmp0Reg);
+   generateMemSrc1Instruction(cg, TR::InstOpCode::vsturq, node, TR::MemoryReference::createWithDisplacement(cg, dstEndReg, -16), vtmp1Reg);
+   auto branchToDoneLabelInstr4 = generateLabelInstruction(cg, TR::InstOpCode::b, node, doneLabel);
+
+   auto loopLabelInstr = generateLabelInstruction(cg, TR::InstOpCode::label, node, loopLabel);
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::subsimmw, node, lengthReg, lengthReg, 16);
+   generateTrg2MemInstruction(cg, TR::InstOpCode::vldppostd, node, vtmp0Reg, vtmp1Reg, TR::MemoryReference::createWithDisplacement(cg, srcAddrReg, 16));
+   generateVectorUXTLInstruction(cg, TR::Int8, node, vtmp0Reg, vtmp0Reg, false);
+   generateVectorUXTLInstruction(cg, TR::Int8, node, vtmp1Reg, vtmp1Reg, false);
+   generateMemSrc2Instruction(cg, TR::InstOpCode::vstppostq, node, TR::MemoryReference::createWithDisplacement(cg, dstAddrReg, 32), vtmp0Reg, vtmp1Reg);
+   auto branchBackwardToLoopLabelInstr = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, loopLabel, TR::CC_HI);
+   generateTrg2MemInstruction(cg, TR::InstOpCode::vldpoffd, node, vtmp0Reg, vtmp1Reg, TR::MemoryReference::createWithDisplacement(cg, srcEndReg, -16));
+   generateVectorUXTLInstruction(cg, TR::Int8, node, vtmp0Reg, vtmp0Reg, false);
+   generateVectorUXTLInstruction(cg, TR::Int8, node, vtmp1Reg, vtmp1Reg, false);
+   generateMemSrc2Instruction(cg, TR::InstOpCode::vstpoffq, node, TR::MemoryReference::createWithDisplacement(cg, dstEndReg, -32), vtmp0Reg, vtmp1Reg);
+   if (debugObj)
+      {
+      debugObj->addInstructionComment(branchToDoneLabelInstr4, "Branch to doneLabel");
+      debugObj->addInstructionComment(loopLabelInstr, "loopLabel");
+      debugObj->addInstructionComment(branchBackwardToLoopLabelInstr, "Branch to loopLabel if the remaining length > 16");
+      }
+   if (comp->getOptions()->enableDebugCounters())
+      {
+      cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "cg.StringLatin1Inflate/(%s)/%s/16",
+                                                                        comp->signature(),
+                                                                        comp->getHotnessName()), *srm);
+      }
+   const int numDependencies = srm->numAvailableRegisters() +
+                               ((srcNode->getReferenceCount() == 1) ? 1 : 0) +
+                               ((dstNode->getReferenceCount() == 1) ? 1 : 0) +
+                               ((lengthNode->getReferenceCount() == 1) ? 1 : 0);
+   TR::RegisterDependencyConditions *conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, numDependencies, cg->trMemory());
+   if (srcNode->getReferenceCount() == 1)
+      {
+      conditions->addPostCondition(srcAddrReg, TR::RealRegister::NoReg);
+      }
+   if (dstNode->getReferenceCount() == 1)
+      {
+      conditions->addPostCondition(dstAddrReg, TR::RealRegister::NoReg);
+      }
+   if (lengthNode->getReferenceCount() == 1)
+      {
+      conditions->addPostCondition(lengthReg, TR::RealRegister::NoReg);
+     }
+   srm->addScratchRegistersToDependencyList(conditions);
+   auto doneLabelInstr = generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, conditions);
+   if (debugObj)
+      {
+      debugObj->addInstructionComment(doneLabelInstr, "doneLabel");
+      }
+   srm->stopUsingRegisters();
+   for (int i = 0; i < 5; i++)
+      {
+      cg->decReferenceCount(node->getChild(i));
+      }
+
+   return NULL;
+   }
+
 bool
 J9::ARM64::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&resultReg)
    {
@@ -6604,6 +6870,14 @@ J9::ARM64::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
          case TR::java_lang_StrictMath_fma_F:
             resultReg = inlineFPTrg1Src3(node, TR::InstOpCode::fmadds, cg);
             return true;
+
+         case TR::java_lang_StringLatin1_inflate:
+            if (cg->getSupportsInlineStringLatin1Inflate())
+               {
+               resultReg = inlineStringLatin1Inflate(node, cg);
+               return true;
+               }
+            break;
 
          case TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z:
             {
