@@ -1652,16 +1652,15 @@ TR_J9JITServerSharedCache::storeSharedData(J9VMThread *vmThread, const char *key
    return std::get<0>(_stream->read<const void *>());
    }
 
-TR_J9DeserializerSharedCache::TR_J9DeserializerSharedCache(TR_J9VMBase *fe, JITServerNoSCCAOTDeserializer *deserializer)
-   : TR_J9SharedCache(fe)
+TR_J9DeserializerSharedCache::TR_J9DeserializerSharedCache(TR_J9VMBase *fe, JITServerNoSCCAOTDeserializer *deserializer, TR::CompilationInfoPerThread *compInfoPT)
+   : TR_J9SharedCache(fe), _deserializer(deserializer), _compInfoPT(compInfoPT)
    {
-   _deserializer = deserializer;
    }
 
 J9ROMClass *
 TR_J9DeserializerSharedCache::romClassFromOffsetInSharedCache(uintptr_t offset)
    {
-   TR::Compilation *comp = TR::compInfoPT->getCompilation();
+   TR::Compilation *comp = _compInfoPT->getCompilation();
    bool wasReset = false;
    auto romClass = _deserializer->romClassFromOffsetInSharedCache(offset, comp, wasReset);
    if (wasReset)
@@ -1677,7 +1676,7 @@ TR_J9DeserializerSharedCache::romClassFromOffsetInSharedCache(uintptr_t offset)
 void *
 TR_J9DeserializerSharedCache::pointerFromOffsetInSharedCache(uintptr_t offset)
    {
-   TR::Compilation *comp = TR::compInfoPT->getCompilation();
+   TR::Compilation *comp = _compInfoPT->getCompilation();
    bool wasReset = false;
    auto ptr = _deserializer->pointerFromOffsetInSharedCache(offset, comp, wasReset);
    if (wasReset)
@@ -1707,7 +1706,7 @@ TR_J9DeserializerSharedCache::classMatchesCachedVersion(J9Class *clazz, UDATA *c
    // that TR_J9SharedCache::validateClassChain() does, which is what TR_J9SharedCache::validateClassChain()
    // uses to verify that the given clazz matches chainData. Thus we only have to check that that cached J9Class
    // is equal to the one we are trying to validate.
-   TR::Compilation *comp = TR::compInfoPT->getCompilation();
+   TR::Compilation *comp = _compInfoPT->getCompilation();
    bool wasReset = false;
    auto ramClass = _deserializer->classFromOffset(chainData[1], comp, wasReset);
    if (wasReset)
@@ -1727,7 +1726,7 @@ TR_J9DeserializerSharedCache::lookupClassFromChainAndLoader(uintptr_t *chainData
    // a J9Class correspoding to the first class in the chain. If one could be found, it then verifies that the class matches the cached version.
    // We do not need to perform that checking here, because during deserialization we will have already resolved the first class in the chain to
    // a J9Class and verified that it matches. Thus we can simply return that cached first J9Class.
-   TR::Compilation *comp = TR::compInfoPT->getCompilation();
+   TR::Compilation *comp = _compInfoPT->getCompilation();
    bool wasReset = false;
    auto clazz = _deserializer->classFromOffset(chainData[1], comp, wasReset);
    if (wasReset)
@@ -1743,7 +1742,7 @@ TR_J9DeserializerSharedCache::lookupClassFromChainAndLoader(uintptr_t *chainData
 J9ROMMethod *
 TR_J9DeserializerSharedCache::romMethodFromOffsetInSharedCache(uintptr_t offset)
    {
-   TR::Compilation *comp = TR::compInfoPT->getCompilation();
+   TR::Compilation *comp = _compInfoPT->getCompilation();
    bool wasReset = false;
    auto romMethod = _deserializer->romMethodFromOffsetInSharedCache(offset, comp, wasReset);
    if (wasReset)

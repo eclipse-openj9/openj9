@@ -2970,7 +2970,13 @@ remoteCompilationEnd(J9VMThread *vmThread, TR::Compilation *comp, TR_ResolvedMet
             TR_J9VMBase *fe = TR_J9VMBase::get(jitConfig, vmThread);
             TR_J9SharedCache *cacheOverride = NULL;
             if (comp->isDeserializedAOTMethod() && compInfo->getPersistentInfo()->getJITServerAOTCacheIgnoreLocalSCC())
-               cacheOverride = compInfo->getDeserializerSharedCache();
+               {
+               auto deserializerSCC = fe->deserializerSharedCache();
+               // This should be extremely rare
+               if (!deserializerSCC)
+                  comp->failCompilation<TR::CompilationException>("Deserializer was not allocated in compilation thread");
+               cacheOverride = deserializerSCC;
+               }
             metaData = entry->_compInfoPT->reloRuntime()->prepareRelocateAOTCodeAndData(
                vmThread, fe, comp->cg()->getCodeCache(), (J9JITDataCacheHeader *)dataCacheStr.data(),
                method, false, comp->getOptions(), comp, compilee, (uint8_t *)codeCacheStr.data(), cacheOverride

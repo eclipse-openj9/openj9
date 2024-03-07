@@ -714,7 +714,7 @@ class TR_J9DeserializerSharedCache : public TR_J9SharedCache
 public:
    TR_ALLOC(TR_Memory::SharedCache)
 
-   TR_J9DeserializerSharedCache(TR_J9VMBase *fe, JITServerNoSCCAOTDeserializer *deserializer);
+   TR_J9DeserializerSharedCache(TR_J9VMBase *fe, JITServerNoSCCAOTDeserializer *deserializer, TR::CompilationInfoPerThread *compInfoPT);
 
    virtual void *pointerFromOffsetInSharedCache(uintptr_t offset) override;
    virtual void *lookupClassLoaderAssociatedWithClassChain(void *chainData) override;
@@ -766,6 +766,7 @@ public:
 
 private:
    JITServerNoSCCAOTDeserializer *_deserializer;
+   TR::CompilationInfoPerThread *_compInfoPT;
    };
 
 #endif /* defined(J9VM_OPT_JITSERVER) */

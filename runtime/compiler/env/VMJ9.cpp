@@ -753,8 +753,24 @@ TR_J9VMBase::get(J9JITConfig * jitConfig, J9VMThread * vmThread, VM_TYPE vmType)
                if (vmWithoutThreadInfo->_compInfo)
                   {
                   TR::CompilationInfoPerThread *compInfoPT = vmWithoutThreadInfo->_compInfo->getCompInfoForThread(vmThread);
-                  vmWithThreadInfo->_vmThreadIsCompilationThread = (compInfoPT ? TR_yes : TR_no);
                   vmWithThreadInfo->_compInfoPT = compInfoPT;
+                  if (compInfoPT)
+                     {
+                     vmWithThreadInfo->_vmThreadIsCompilationThread = TR_yes;
+#if defined(J9VM_OPT_JITSERVER)
+                     auto deserializer = vmWithoutThreadInfo->_compInfo->getJITServerAOTDeserializer();
+                     if (deserializer && vmWithoutThreadInfo->_compInfo->getPersistentInfo()->getJITServerAOTCacheIgnoreLocalSCC())
+                        {
+                        vmWithThreadInfo->_deserializerSharedCache =
+                           new (vmWithoutThreadInfo->_compInfo->persistentMemory())
+                               TR_J9DeserializerSharedCache(vmWithThreadInfo, (JITServerNoSCCAOTDeserializer *)deserializer, compInfoPT);
+                        }
+#endif /* defined(J9VM_OPT_JITSERVER) */
+                     }
+                  else
+                     {
+                     vmWithThreadInfo->_vmThreadIsCompilationThread = TR_no;
+                     }
                   }
                }
             else
@@ -783,6 +799,9 @@ TR_J9VMBase::TR_J9VMBase(
      _vmThreadIsCompilationThread(TR_maybe),
      _compInfoPT(NULL),
      _shouldSleep(false)
+#if defined(J9VM_OPT_JITSERVER)
+     ,_deserializerSharedCache(NULL)
+#endif /* defined(J9VM_OPT_JITSERVER) */
    {
    for (int32_t i = 0; i < UT_MODULE_INFO.count; ++i)
       if (UT_ACTIVE[i])
@@ -842,6 +861,15 @@ TR_J9VMBase::freeSharedCache()
       jitPersistentFree(_sharedCache);
       _sharedCache = NULL;
       }
+
+#if defined(J9VM_OPT_JITSERVER)
+   if (_deserializerSharedCache)
+      {
+      jitPersistentFree(_deserializerSharedCache);
+      _deserializerSharedCache = NULL;
+      }
+#endif /* defined(J9VM_OPT_JITSERVER) */
+
    }
 
 TR::CompilationInfo * getCompilationInfo(J9JITConfig * jitConfig)
