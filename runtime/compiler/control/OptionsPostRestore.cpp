@@ -338,8 +338,20 @@ J9::OptionsPostRestore::processJitServerOptions()
          GET_OPTION_VALUE_RESTORE_ARGS(_argIndexJITServerAOTCacheName, '=', &name);
          _compInfo->getPersistentInfo()->setJITServerAOTCacheName(name);
          }
+
+      uint64_t oldClientUID = _compInfo->getPersistentInfo()->getClientUID();
+
+      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestore))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "oldClientUID = %llu", oldClientUID);
+
       // Re-compute client UID post restore
       uint64_t clientUID = JITServerHelpers::generateUID();
+      while(clientUID == oldClientUID)
+         clientUID = JITServerHelpers::generateUID();
+
+      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestore))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "clientUID = %llu", clientUID);
+
       _jitConfig->clientUID = clientUID;
       _compInfo->getPersistentInfo()->setClientUID(clientUID);
       _compInfo->getPersistentInfo()->setServerUID(0);
