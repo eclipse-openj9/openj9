@@ -101,6 +101,60 @@ shouldEnableJITServerAOTCacheLayer(J9JavaVM* vm, U_64 runtimeFlags)
 }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
+static void
+parseXXOptions(J9JavaVM* vm, U_64 *runtimeFlags)
+{
+	/* Check for -XX:ShareClassesEnableBCI and -XX:ShareClassesDisableBCI; whichever comes later wins.
+	 * These options should be checked before parseArgs() to allow -Xshareclasses:[enable|disable]BCI to override this option.
+	 *
+	 * Note: Please also change the function checkArgsConsumed() in runtime/vm/jvminit.c when adding new options,
+	 * in order to quietly consume the options if it is used without -Xshareclasses
+	 */
+	IDATA argIndex1 = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXSHARECLASSESENABLEBCI, NULL);
+	IDATA argIndex2 = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXSHARECLASSESDISABLEBCI, NULL);
+	if (argIndex1 > argIndex2) {
+		*runtimeFlags |= J9SHR_RUNTIMEFLAG_ENABLE_BCI;
+	} else if (argIndex2 > argIndex1) {
+		*runtimeFlags |= J9SHR_RUNTIMEFLAG_DISABLE_BCI;
+	}
+	/* Check for -XX:+ShareAnonymousClasses and -XX:-ShareAnonymousClasses; whichever comes later wins. Enable is set by default so we just need to disable when that's the case. */
+	argIndex1 = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXENABLESHAREANONYMOUSCLASSES, NULL);
+	argIndex2 = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXDISABLESHAREANONYMOUSCLASSES, NULL);
+	if (argIndex2 > argIndex1) {
+		*runtimeFlags &= (~J9SHR_RUNTIMEFLAG_ENABLE_SHAREANONYMOUSCLASSES);
+	}
+
+	/* Check for -XX:+ShareUnsafeClasses and -XX:-ShareUnsafeClasses; whichever comes later wins. Enable is set by default so we just need to disable when that's the case. */
+	argIndex1 = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXENABLESHAREUNSAFECLASSES, NULL);
+	argIndex2 = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXDISABLESHAREUNSAFECLASSES, NULL);
+	if (argIndex2 > argIndex1) {
+		*runtimeFlags &= (~J9SHR_RUNTIMEFLAG_ENABLE_SHAREUNSAFECLASSES);
+	}
+}
+
+static void
+updateSharedCacheAPI(J9JavaVM* vm, U_64 *runtimeFlags, U_64 runtimeFlags2, UDATA verboseFlags)
+{
+	J9SharedCacheAPI* sharedCacheAPI = vm->sharedCacheAPI;
+	if (J9_ARE_ALL_BITS_SET(*runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_PERSISTENT_CACHE)) {
+		sharedCacheAPI->cacheType = J9PORT_SHR_CACHE_TYPE_PERSISTENT;
+	} else {
+		sharedCacheAPI->cacheType = J9PORT_SHR_CACHE_TYPE_NONPERSISTENT;
+	}
+#if defined(J9VM_OPT_JITSERVER)
+	/* Check if a new layer needs to be created for the JITServer AOT cache */
+	if (shouldEnableJITServerAOTCacheLayer(vm, *runtimeFlags)) {
+		*runtimeFlags &= ~J9SHR_RUNTIMEFLAG_ENABLE_READONLY;
+		sharedCacheAPI->usingJITServerAOTCacheLayer = TRUE;
+	}
+#endif /* defined(J9VM_OPT_JITSERVER) */
+
+	/* set runtimeFlags and verboseFlags here as they will be used later in j9shr_getCacheDir() */
+	sharedCacheAPI->runtimeFlags = *runtimeFlags;
+	sharedCacheAPI->runtimeFlags2 = runtimeFlags2;
+	sharedCacheAPI->verboseFlags = verboseFlags;
+}
+
 IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 {
 	IDATA returnVal = J9VMDLLMAIN_OK;
@@ -113,6 +167,9 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 		IDATA index = FIND_ARG_IN_VMARGS( OPTIONAL_LIST_MATCH, OPT_XSHARECLASSES, NULL);
 
 		U_64 runtimeFlags = getDefaultRuntimeFlags();
+		U_64 runtimeFlags2 = 0;
+		IDATA shareOrphansArgIndex1 = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXENABLESHAREORPHANS, NULL);
+		IDATA shareOrphansArgIndex2 = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXDISABLESHAREORPHANS, NULL);
 
 		runtimeFlags |= ((j9shr_isPlatformDefaultPersistent(vm) == TRUE) ? J9SHR_RUNTIMEFLAG_ENABLE_PERSISTENT_CACHE : 0);
 
@@ -128,6 +185,7 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 		vm->sharedCacheAPI->maxJIT = -1;
 		vm->sharedCacheAPI->layer = -1;
 		if (index >= 0) {
+			/* -Xshareclasses is specified */
 			char optionsBuffer[SHR_SUBOPT_BUFLEN];
 			char* optionsBufferPtr = (char*)optionsBuffer;
 			IDATA parseRc = OPTION_OK;
@@ -150,8 +208,6 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 				IDATA ret = 0;
 				BOOLEAN usingDefaultDir = TRUE;
 #endif
-				IDATA argIndex1 = -1;
-				IDATA argIndex2 = -1;
 
 				/* reset and disablecorruptcachedumps are special options
 				 * They are appended to the next option which is not special
@@ -197,39 +253,27 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 				} while (matchedOneSpecialOptions);
 				optionsBufferPtr = optionsBuffer;
 
-				/* Check for -XX:ShareClassesEnableBCI and -XX:ShareClassesDisableBCI; whichever comes later wins.
-				 * These options should be checked before parseArgs() to allow -Xshareclasses:[enable|disable]BCI to override this option.
-				 *
-				 * Note: Please also change the function checkArgsConsumed() in runtime/vm/jvminit.c when adding new options,
-				 * in order to quietly consume the options if it is used without -Xshareclasses
-				 */
-				argIndex1 = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXSHARECLASSESENABLEBCI, NULL);
-				argIndex2 = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXSHARECLASSESDISABLEBCI, NULL);
-				if (argIndex1 > argIndex2) {
-					runtimeFlags |= J9SHR_RUNTIMEFLAG_ENABLE_BCI;
-				} else if (argIndex2 > argIndex1) {
-					runtimeFlags |= J9SHR_RUNTIMEFLAG_DISABLE_BCI;
-				}
-
-				/* Check for -XX:+ShareAnonymousClasses and -XX:-ShareAnonymousClasses; whichever comes later wins. Enable is set by default so we just need to disable when that's the case. */
-				argIndex1 = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXENABLESHAREANONYMOUSCLASSES, NULL);
-				argIndex2 = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXDISABLESHAREANONYMOUSCLASSES, NULL);
-				if (argIndex2 > argIndex1) {
-					runtimeFlags &= (~J9SHR_RUNTIMEFLAG_ENABLE_SHAREANONYMOUSCLASSES);
-				}
-
-				/* Check for -XX:+ShareUnsafeClasses and -XX:-ShareUnsafeClasses; whichever comes later wins. Enable is set by default so we just need to disable when that's the case. */
-				argIndex1 = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXENABLESHAREUNSAFECLASSES, NULL);
-				argIndex2 = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXDISABLESHAREUNSAFECLASSES, NULL);
-				if (argIndex2 > argIndex1) {
-					runtimeFlags &= (~J9SHR_RUNTIMEFLAG_ENABLE_SHAREUNSAFECLASSES);
-				}
+				parseXXOptions(vm, &runtimeFlags);
 
 				vm->sharedCacheAPI->parseResult = parseArgs(vm, optionsBufferPtr, &runtimeFlags, &verboseFlags, &cacheName, &modContext,
 								&expireTime, &ctrlDirName, &cacheDirPermStr, &methodSpecs, &printStatsOptions, &storageKeyTesting);
 				if ((RESULT_PARSE_FAILED == vm->sharedCacheAPI->parseResult)
 				){
 					return J9VMDLLMAIN_FAILED;
+				}
+
+				/* Do not turn on class sharing for all class loaders if "cacheRetransformed" is specified,
+				 * as romclass is using SRPs pointing to its intermediateClassData which can be in the native memory rather than in the shared cache.
+				 * Do not turn on this feature in the default mode. (i.e. -Xsharclasses is not specified in the command line)
+				 */
+				if (J9_ARE_NO_BITS_SET(runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_CACHERETRANSFORMED)
+					&& J9_ARE_ALL_BITS_SET(runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_CACHE_NON_BOOT_CLASSES)
+				) {
+					/* Check for -XX:+ShareOrphans and -XX:-ShareOrphans whichever comes later wins. The default behaviour is -XX:-ShareOrphans.
+					 */
+					if (shareOrphansArgIndex2 < shareOrphansArgIndex1) {
+						runtimeFlags2 |= J9SHR_RUNTIMEFLAG2_ENABLE_CACHEORPHAN;
+					}
 				}
 
 				if (cacheName != NULL) {
@@ -268,24 +312,7 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 					memcpy(vm->sharedCacheAPI->methodSpecs, methodSpecs, strlen(methodSpecs) + 1);
 				}
 
-				if (runtimeFlags & J9SHR_RUNTIMEFLAG_ENABLE_PERSISTENT_CACHE) {
-					vm->sharedCacheAPI->cacheType = J9PORT_SHR_CACHE_TYPE_PERSISTENT;
-				} else {
-					vm->sharedCacheAPI->cacheType = J9PORT_SHR_CACHE_TYPE_NONPERSISTENT;
-				}
-
-#if defined(J9VM_OPT_JITSERVER)
-				/* Check if a new layer needs to be created for the JITServer AOT cache */
-				if (shouldEnableJITServerAOTCacheLayer(vm, runtimeFlags)) {
-					runtimeFlags &= ~J9SHR_RUNTIMEFLAG_ENABLE_READONLY;
-					vm->sharedCacheAPI->usingJITServerAOTCacheLayer = TRUE;
-				}
-#endif /* defined(J9VM_OPT_JITSERVER) */
-
-				/* set runtimeFlags and verboseFlags here as they will be used later in j9shr_getCacheDir() */
-				vm->sharedCacheAPI->runtimeFlags = runtimeFlags;
-				vm->sharedCacheAPI->verboseFlags = verboseFlags;
-
+				updateSharedCacheAPI(vm, &runtimeFlags, runtimeFlags2, verboseFlags);
 #if !defined(WIN32) && !defined(WIN64)
 				if (NULL != ctrlDirName) {
 					/* Get platform default cache directory */
@@ -324,7 +351,17 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 				}
 				return J9VMDLLMAIN_FAILED;
 			}
+		} else if (shareOrphansArgIndex2 < shareOrphansArgIndex1) {
+			/* -Xshareclasses is not specified, but -XX:+ShareOrphans is specified. */
+			vm->sharedCacheAPI->sharedCacheEnabled = TRUE;
+			/* -XX:+ShareOrphans automatically turns on -Xshareclasses. Set xShareClassesPresent to TRUE */
+			vm->sharedCacheAPI->xShareClassesPresent = TRUE;
+			parseXXOptions(vm, &runtimeFlags);
+			runtimeFlags2 |= J9SHR_RUNTIMEFLAG2_ENABLE_CACHEORPHAN;
+			updateSharedCacheAPI(vm, &runtimeFlags, runtimeFlags2, J9SHR_VERBOSEFLAG_ENABLE_VERBOSE_DEFAULT);
+			vm->sharedCacheAPI->cacheDirPerm = J9SH_DIRPERM_ABSENT;
 		} else {
+			/* -Xshareclasses is not specified. -XX:+ShareOrphans is not specified. */
 			OMRPORT_ACCESS_FROM_J9PORT(vm->portLibrary);
 			vm->sharedCacheAPI->xShareClassesPresent = FALSE;
 			if (J9_SHARED_CACHE_DEFAULT_BOOT_SHARING(vm)) {

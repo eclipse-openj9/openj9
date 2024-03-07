@@ -937,7 +937,8 @@ typedef struct J9CudaGlobals {
 typedef enum J9SharedClassCacheMode {
 	J9SharedClassCacheBootstrapOnly,
 	J9SharedClassCacheBoostrapAndExtension,
-	J9SharedClassCacheUserDefined
+	J9SharedClassCacheClassesWithCPInfo,
+	J9SharedClassCacheClassesAllLoaders
 } J9SharedClassCacheMode;
 
 typedef struct J9SharedClassTransaction {
@@ -1261,6 +1262,7 @@ typedef struct J9SharedCacheAPI {
 	char* modContext;
 	char* expireTime;
 	U_64 runtimeFlags;
+	U_64 runtimeFlags2;
 	UDATA verboseFlags;
 	UDATA cacheType;
 	UDATA parseResult;
@@ -1299,6 +1301,7 @@ typedef struct J9SharedClassConfig {
 	struct J9ClassPathEntry* lastBootstrapCPE;
 	void* bootstrapCPI;
 	U_64 runtimeFlags;
+	U_64 runtimeFlags2;
 	UDATA verboseFlags;
 	UDATA findClassCntr;
 	omrthread_monitor_t configMonitor;

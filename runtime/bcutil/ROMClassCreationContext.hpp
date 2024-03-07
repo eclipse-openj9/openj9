@@ -299,12 +299,14 @@ public:
 			&& isClassLoaderSharedClassesEnabled()
 			&& (!isClassUnsafe() || isUnsafeClassSharingEnabled())
 			&& (!isClassHidden() || isHiddenClassSharingEnabled())
-			&& !(isSharedClassesBCIEnabled()
-			&& (classFileBytesReplaced() || isCreatingIntermediateROMClass()))
+			&& !(isSharedClassesBCIEnabled() && (classFileBytesReplaced() || isCreatingIntermediateROMClass()))
 			&& (LOAD_LOCATION_PATCH_PATH != loadLocation())
 		) {
+			Trc_BCU_isROMClassShareable_TRUE(_classNameLength, _className);
 			return true;
 		} else {
+			Trc_BCU_isROMClassShareable_FALSE(_classNameLength, _className, isSharedClassesEnabled(), isClassLoaderSharedClassesEnabled(),
+					isSharedClassesEnabled() && isSharedClassesBCIEnabled(), classFileBytesReplaced(), isCreatingIntermediateROMClass(), loadLocation());
 			return false;
 		}
 	}

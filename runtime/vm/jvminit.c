@@ -2027,7 +2027,6 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
 				vm->sharedClassPreinitConfig = NULL;
-
 				argIndex = FIND_ARG_IN_VMARGS(OPTIONAL_LIST_MATCH, VMOPT_XSHARECLASSES, NULL);
 				if (argIndex >= 0) {
 					char optionsBuffer[2 * J9SH_MAXPATH];
@@ -2064,9 +2063,19 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 				argIndexXXNoJITServerAOTCacheIgnoreLocalSCC = FIND_ARG_IN_VMARGS(EXACT_MATCH, "-XX:-JITServerAOTCacheIgnoreLocalSCC", NULL);
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
-				if (((!J9_SHARED_CACHE_DEFAULT_BOOT_SHARING(vm)) && (argIndex < 0))
-					|| (TRUE == sharedClassDisabled)
+				if (!sharedClassDisabled
+					&& !J9_SHARED_CACHE_DEFAULT_BOOT_SHARING(vm)
+					&& (argIndex < 0)
 				) {
+					IDATA shareOrphansArgIndex1 = FIND_ARG_IN_VMARGS(EXACT_MATCH, VMOPT_XXENABLESHAREORPHANS, NULL);
+					IDATA shareOrphansArgIndex2 = FIND_ARG_IN_VMARGS(EXACT_MATCH, VMOPT_XXDISABLESHAREORPHANS, NULL);
+					/* -XX:+ShareOrphans turns on class sharing automatically. */
+					if (shareOrphansArgIndex2 >= shareOrphansArgIndex1) {
+						sharedClassDisabled = TRUE;
+					}
+				}
+
+				if (sharedClassDisabled) {
 					if (argIndex2 >= 0) {
 						/* If -Xscmx used without -Xshareclasses, don't bomb out with "unrecognised option" */
 						j9nls_printf(PORTLIB, J9NLS_INFO, J9NLS_VM_XSCMX_IGNORED);
