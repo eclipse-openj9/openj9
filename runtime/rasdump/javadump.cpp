@@ -5763,12 +5763,11 @@ regionIteratorCallback(J9JavaVM* virtualMachine, J9MM_IterateRegionDescriptor* r
 static jvmtiIterationControl
 continuationIteratorCallback(J9VMThread *vmThread, J9MM_IterateObjectDescriptor *object, void *userData)
 {
-	PORT_ACCESS_FROM_VMC(vmThread);
-	JavaCoreDumpWriter *jcw = (JavaCoreDumpWriter *)userData;
-	J9InternalVMFunctions *vmFuncs = vmThread->javaVM->internalVMFunctions;
-	j9object_t vthread = J9VMJDKINTERNALVMCONTINUATION_VTHREAD(vmThread, object->object);
 	J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(vmThread, object->object);
 	if (NULL != continuation) {
+		PORT_ACCESS_FROM_VMC(vmThread);
+		JavaCoreDumpWriter *jcw = (JavaCoreDumpWriter *)userData;
+		j9object_t vthread = J9VMJDKINTERNALVMCONTINUATION_VTHREAD(vmThread, object->object);
 		j9object_t threadObj = vthread;
 		ContinuationState continuationState = *VM_ContinuationHelpers::getContinuationStateAddress(vmThread, object->object);
 		BOOLEAN isMounted = VM_ContinuationHelpers::isFullyMounted(continuationState);
@@ -5803,7 +5802,7 @@ continuationIteratorCallback(J9VMThread *vmThread, J9MM_IterateObjectDescriptor 
 		J9VMThread stackThread = {0};
 		J9VMEntryLocalStorage els = {0};
 
-		vmFuncs->copyFieldsFromContinuation(vmThread, &stackThread, &els, continuation);
+		vmThread->javaVM->internalVMFunctions->copyFieldsFromContinuation(vmThread, &stackThread, &els, continuation);
 		walkState.walkThread = &stackThread;
 
 		walkState.flags =
