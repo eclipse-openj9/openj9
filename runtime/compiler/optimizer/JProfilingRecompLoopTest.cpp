@@ -40,7 +40,7 @@ int32_t TR_JProfilingRecompLoopTest::maxLoopRecompilationThreshold = 10000;
 /**
  * A utility function that iterates through the TR::list of byte code info and checks if passed bytecode info exists in list
  * by checking bytecode index and caller index of the bytecode info
- */ 
+ */
 bool
 TR_JProfilingRecompLoopTest::isByteCodeInfoInCurrentTestLocationList(TR_ByteCodeInfo &bci, TR::list<TR_ByteCodeInfo, TR::Region&> &addedLocationBCIList)
    {
@@ -48,7 +48,7 @@ TR_JProfilingRecompLoopTest::isByteCodeInfoInCurrentTestLocationList(TR_ByteCode
       {
       TR_ByteCodeInfo iterBCI = *iter;
       if (iterBCI.getByteCodeIndex() == bci.getByteCodeIndex() && iterBCI.getCallerIndex() == bci.getCallerIndex())
-         return true;   
+         return true;
       }
    return false;
    }
@@ -62,6 +62,16 @@ TR_JProfilingRecompLoopTest::perform()
          traceMsg(comp(), "JProfiling for profiling compilations has not been enabled, skip JProfilingRecompLoopTest\n");
       return 0;
       }
+
+   TR_PersistentProfileInfo *profileInfo = comp()->getRecompilationInfo()->findOrCreateProfileInfo();
+   TR_BlockFrequencyInfo *bfi = TR_BlockFrequencyInfo::get(profileInfo);
+   if (!bfi)
+      {
+      if (trace())
+         traceMsg(comp(), "Block frequency info does not exist, skip JProfilingRecompLoopTest\n");
+      return 0;
+      }
+
    RecompilationTestLocationsInfo testLocations(RecompilationTestLocationInfoAllocator(comp()->trMemory()->currentStackRegion()));
    TR::TreeTop *cursor = comp()->getStartTree();
    TR::CFG *cfg = comp()->getFlowGraph();
@@ -74,11 +84,11 @@ TR_JProfilingRecompLoopTest::perform()
          currentBlock = cursor->getNode()->getBlock();
          /**
            * As we are already walking down the tree tops, we can get the enclosing block by tracking TR::BBStart nodes and currentBlock contains
-           * this information. 
+           * this information.
            * We also keep local list of ByteCodeInfo for each test locations (asyncchecknode) in the extended basic blocks.
            * This can avoid adding multiple tests for multiple locations with same byte code info in extended basic block.
            * As soon as we encounter a block which is not extensions of previous block, we clear the list of byte code info.
-           */    
+           */
          if (!currentBlock->isExtensionOfPreviousBlock() && !addedLocationBCIList.empty())
             addedLocationBCIList.clear();
          }
@@ -100,15 +110,15 @@ TR_JProfilingRecompLoopTest::perform()
                }
             }
          }
-      cursor = cursor->getNextTreeTop(); 
+      cursor = cursor->getNextTreeTop();
       }
    if (!testLocations.empty())
-      addRecompilationTests(comp(), testLocations);
+      addRecompilationTests(comp(), testLocations, bfi);
    return 1;
    }
 
 /**   \brief   Adds trees and control flow to check the loop raw frequency and trip recompilation of the method
- *             if it has spent enough time in the loop. 
+ *             if it has spent enough time in the loop.
  *    \details Iterates a list of recompilation test locations passed by callee and adds the following trees and blocks.
  *             -----------------
  *             |...            |    <-- originalBlock
@@ -145,18 +155,17 @@ TR_JProfilingRecompLoopTest::perform()
  *                   --------------------------------                                              |
  *                   |treeTops after insertion Point|  <--- remainingCodeBlock                     |
  *                   |from original block           |                                              |
- *                   |...                           |<----------------------------------------------   
+ *                   |...                           |<----------------------------------------------
  *                   --------------------------------
  *    \param comp Current compilation object
  *    \param testLocations RecompilationTestLocation list containing TreeTops after which test are required to be added
- *                         And corresponding to that location, a loop nesting depth 
+ *                         And corresponding to that location, a loop nesting depth
+ *    \param bfi block frequency info from the persistent profile info
  */
 
-void 
-TR_JProfilingRecompLoopTest::addRecompilationTests(TR::Compilation *comp, RecompilationTestLocationsInfo &testLocations)
+void
+TR_JProfilingRecompLoopTest::addRecompilationTests(TR::Compilation *comp, RecompilationTestLocationsInfo &testLocations, TR_BlockFrequencyInfo *bfi)
    {
-   TR_PersistentProfileInfo *profileInfo = comp->getRecompilationInfo()->findOrCreateProfileInfo();
-   TR_BlockFrequencyInfo *bfi = TR_BlockFrequencyInfo::get(profileInfo);
    TR::CFG *cfg = comp->getFlowGraph();
    // TODO: We should do experiment with fixing the structure instead of invalidating and do compile time
    // Experiment to see which is better.
@@ -164,7 +173,7 @@ TR_JProfilingRecompLoopTest::addRecompilationTests(TR::Compilation *comp, Recomp
 
    // Following environment sets up the base recompilation threshold for the loop.
    // This base recompile threshold in conjunction with the depth in loop is compared with the raw count of the
-   // loop to decide if we have run this loop enough time to trip method recompilation. 
+   // loop to decide if we have run this loop enough time to trip method recompilation.
    static int32_t recompileThreshold = comp->getOptions()->getJProfilingLoopRecompThreshold();
    if (trace())
       traceMsg(comp, "Loop Recompilation Base Threshold = %d\n",recompileThreshold);
@@ -179,9 +188,9 @@ TR_JProfilingRecompLoopTest::addRecompilationTests(TR::Compilation *comp, Recomp
       if (trace())
          traceMsg(comp, "block_%d, n%dn, depth = %d\n",originalBlock->getNumber(), asyncCheckTreeTop->getNode()->getGlobalIndex(), depth);
       TR_ByteCodeInfo bci = asyncCheckTreeTop->getNode()->getByteCodeInfo();
-      
+
       TR::Node *root = bfi->generateBlockRawCountCalculationSubTree(comp, node, trace());
-      
+
       // If we got a bad counters/ bad block frequency info, above API would return NULL, if that is the case we can not generate a recompilation test for that location.
       if (!root)
          {
@@ -194,7 +203,7 @@ TR_JProfilingRecompLoopTest::addRecompilationTests(TR::Compilation *comp, Recomp
       TR::Block *remainingCodeBlock = originalBlock->split(asyncCheckTreeTop->getNextTreeTop(), cfg, true, true);
       TR::Block *callRecompileBlock = TR::Block::createEmptyBlock(node, comp, UNKNOWN_COLD_BLOCK_COUNT);
       callRecompileBlock->setIsCold(true);
-      
+
       // jitRetranslateCallerWithPrep Helper call
       TR::TreeTop *callTree = TR::TransformUtil::generateRetranslateCallerWithPrepTrees(node, TR_PersistentMethodInfo::RecompDueToJProfiling, comp);
       callTree->getNode()->setIsProfilingCode();
@@ -204,7 +213,7 @@ TR_JProfilingRecompLoopTest::addRecompilationTests(TR::Compilation *comp, Recomp
       "recompilationHelper/(%s)/%d",
       comp->signature(),depth);
       TR::DebugCounter::prependDebugCounter(comp, name, callTree);
-      
+
       // Code to calculate the raw frequency of loop from block counters and comparing with the adjusted recompilation threshold.
       // threshold for this particular test location is calculated from the base recompile threshold and the nesting depth of the loop
       // Putting a higher threshold limit to 10K currently to prohibit running profiling body for too long.
