@@ -351,6 +351,43 @@ public class TestJcmd extends AttachApiTest {
 		}
 	}
 
+	private static final String DISPLAYNAME_GC_CLASS_HISTOGRAM = "TargetVM_GC.class_histogram_all";
+
+	private void testDisplayNameHelper(String targetName) throws IOException {
+		TargetManager tgt = new TargetManager(TestConstants.TARGET_VM_CLASS, null, DISPLAYNAME_GC_CLASS_HISTOGRAM,
+				Collections.singletonList("-Xmx10M"), Collections.emptyList());
+		tgt.syncWithTarget();
+		String targetId = tgt.targetId;
+		assertNotNull(targetId, ERROR_TARGET_NOT_LAUNCH);
+
+		List<String> args = new ArrayList<>();
+		args.add(targetName);
+		args.add(GC_CLASS_HISTOGRAM);
+		args.add("all");
+		List<String> jcmdOutput = runCommandAndLogOutput(args);
+		String expectedString = commandExpectedOutputs.getOrDefault(GC_CLASS_HISTOGRAM,
+				"Test error: expected output not defined");
+		log("Expected string: " + expectedString);
+		Optional<String> searchResult = StringUtilities.searchSubstring(expectedString, jcmdOutput);
+		assertTrue(searchResult.isPresent(), "Expected string not found: " + expectedString);
+		log(EXPECTED_STRING_FOUND);
+	}
+
+	@Test
+	public void testMatchDisplayNameFully() throws IOException {
+		testDisplayNameHelper(DISPLAYNAME_GC_CLASS_HISTOGRAM);
+	}
+
+	@Test
+	public void testMatchDisplayNamePartially() throws IOException {
+		testDisplayNameHelper(DISPLAYNAME_GC_CLASS_HISTOGRAM.substring(1, DISPLAYNAME_GC_CLASS_HISTOGRAM.length() - 2));
+	}
+
+	@Test
+	public void testAllVMID() throws IOException {
+		testDisplayNameHelper("0");
+	}
+
 	@BeforeMethod
 	protected void setUp(Method testMethod) {
 		testName = testMethod.getName();

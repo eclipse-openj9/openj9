@@ -106,23 +106,26 @@ public class AttachHandler extends Thread {
 	private static int numberOfTargets;
 	/**
 	 * As of Java 9, a VM cannot attach to itself unless explicitly enabled.
-	 * Grab the setting before the application has a chance to change it,
-	 * but parse it lazily because we rarely need the value.
+	 * Grab the setting before the application has a chance to change it.
 	 */
-	public final static String allowAttachSelf =
-			VM.internalGetProperties().getProperty("jdk.attach.allowAttachSelf" //$NON-NLS-1$
-/*[IF JAVA_SPEC_VERSION >= 9]*/
-					, "false" //$NON-NLS-1$
-/*[ELSE] JAVA_SPEC_VERSION >= 9 */
-					, "true" //$NON-NLS-1$
-/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
-					);
+	public static final boolean selfAttachAllowed;
 
 	/* only the attach handler thread uses syncFileLock */
 	/* [PR Jazz 30075] Make syncFileLock an instance variable since it is accessed only by the attachHandler singleton. */
 	FileLock syncFileLock;
 
 	static volatile Thread fileAccessTimeUpdaterThread;
+
+	static {
+		String allowAttachSelf = VM.internalGetProperties().getProperty("jdk.attach.allowAttachSelf" //$NON-NLS-1$
+		/*[IF JAVA_SPEC_VERSION >= 9]*/
+				, "false" //$NON-NLS-1$
+		/*[ELSE] JAVA_SPEC_VERSION >= 9 */
+				, "true" //$NON-NLS-1$
+		/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
+		);
+		selfAttachAllowed = "".equals(allowAttachSelf) || Boolean.parseBoolean(allowAttachSelf); //$NON-NLS-1$
+	}
 
 	/**
 	 * Keep the constructor private
