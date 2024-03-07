@@ -964,3 +964,5 @@ TraceEvent=Trc_VM_criu_after_dump Obsolete Overhead=1 Level=2 Template="After ch
 TraceEvent=Trc_VM_crac_checkpointTo NoEnv Overhead=1 Level=3 Template="-XX:CRaCCheckpointTo=%s"
 TraceEvent=Trc_VM_criu_after_dump Overhead=1 Level=2 Template="After checkpoint criu_dump(), restoreNanoTimeMonotonic (%lld), lastRestoreTimeInNanoseconds (%lld)"
 TraceEvent=Trc_VM_criu_process_restore_start_after_dump Overhead=1 Level=2 Template="After checkpoint criu_dump(), restorePid (%zu), processRestoreStartTimeInNanoseconds (%lld)"
+
+TraceEvent=Trc_VM_initializeImpl_clinitFailed Overhead=1 Level=2 Template="Clinit of clazz=%p failed with an exception."

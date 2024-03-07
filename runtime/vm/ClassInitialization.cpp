@@ -121,6 +121,7 @@ initializeImpl(J9VMThread *currentThread, J9Class *clazz)
 		sendClinit(currentThread, clazz);
 		clazz = VM_VMHelpers::currentClass(clazz);
 		if (VM_VMHelpers::exceptionPending(currentThread)) {
+			Trc_VM_initializeImpl_clinitFailed(currentThread, clazz);
 			TRIGGER_J9HOOK_VM_CLASS_INITIALIZE_FAILED(vm->hookInterface, currentThread, clazz);
 			goto done;
 		}
@@ -234,7 +235,7 @@ performVerification(J9VMThread *currentThread, J9Class *clazz)
 			U_32 modifiers = field->modifiers;
 			if (J9_ARE_ALL_BITS_SET(modifiers, J9AccStatic)) {
 				const bool hasConstantValue = J9_ARE_ALL_BITS_SET(modifiers, J9FieldFlagConstant);
-			
+
 				if (J9_ARE_ALL_BITS_SET(modifiers, J9FieldFlagObject)) {
 					if (hasConstantValue) {
 						U_32 index = *(U_32*)romFieldInitialValueAddress(field);
@@ -329,14 +330,14 @@ setInitStatus(J9VMThread *currentThread, J9Class *clazz, UDATA status, j9object_
 	return initializationLock;
 }
 
-void  
+void
 prepareClass(J9VMThread *currentThread, J9Class *clazz)
 {
 	classInitStateMachine(currentThread, clazz, J9_CLASS_INIT_PREPARED);
 }
 
 
-void  
+void
 initializeClass(J9VMThread *currentThread, J9Class *clazz)
 {
 	classInitStateMachine(currentThread, clazz, J9_CLASS_INIT_INITIALIZED);
@@ -521,9 +522,9 @@ doVerify:
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 				if (J9_IS_J9CLASS_VALUETYPE(clazz)) {
 					PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, initializationLock);
-					/* Preparation is the earliest point where the defaultValue would needed. 
-					* I.e pre-filling static fields. Therefore, the defaultValue must be allocated at 
-					* the end of verification 
+					/* Preparation is the earliest point where the defaultValue would needed.
+					* I.e pre-filling static fields. Therefore, the defaultValue must be allocated at
+					* the end of verification
 					*/
 					j9object_t defaultValue = vm->memoryManagerFunctions->J9AllocateObject(currentThread, clazz, J9_GC_ALLOCATE_OBJECT_TENURED | J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
 					initializationLock = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);

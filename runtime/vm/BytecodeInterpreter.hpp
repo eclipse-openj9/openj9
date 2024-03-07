@@ -8366,6 +8366,7 @@ retry:
 				rc = GOTO_ASYNC_CHECK;
 				goto done;
 			} else if (VM_VMHelpers::exceptionPending(_currentThread)) {
+				printf("exception on class init, clazz=%p\n", resolvedClass);
 				rc = GOTO_THROW_CURRENT_EXCEPTION;
 				goto done;
 			}
@@ -8381,6 +8382,7 @@ retry:
 			rc = GOTO_ASYNC_CHECK;
 			goto done;
 		} else if (VM_VMHelpers::exceptionPending(_currentThread)) {
+			printf("exception on class resolve, clazz=%p\n", resolvedClass);
 			rc = GOTO_THROW_CURRENT_EXCEPTION;
 			goto done;
 		}
