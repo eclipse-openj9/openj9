@@ -5780,9 +5780,7 @@ continuationIteratorCallback(J9VMThread *vmThread, J9MM_IterateObjectDescriptor 
 		/* Write the first thread descriptor word. */
 		jcw->_OutputStream.writeCharacters("3XMVTHDINFO        \"");
 		jcw->_OutputStream.writeCharacters(threadName);
-		jcw->_OutputStream.writeCharacters("\" [");
-		jcw->_OutputStream.writeCharacters(isMounted ? "unmounted carrier" : "unmounted");
-		jcw->_OutputStream.writeCharacters("] J9VMContinuation:");
+		jcw->_OutputStream.writeCharacters("\" J9VMContinuation:");
 		jcw->_OutputStream.writePointer(continuation);
 		jcw->_OutputStream.writeCharacters(", java/lang/Thread:");
 		jcw->_OutputStream.writePointer(threadObj);
