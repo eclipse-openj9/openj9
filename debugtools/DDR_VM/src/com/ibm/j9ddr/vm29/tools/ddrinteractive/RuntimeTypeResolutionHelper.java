@@ -34,15 +34,15 @@ import com.ibm.j9ddr.vm29.pointer.VoidPointer;
 
 public class RuntimeTypeResolutionHelper
 {
-	
+
 	// Design 42819
 	// Discover runtime type based on identifier field.
 	public static String findRuntimeType(String type, Pointer ptr, Context context)
-	{	
+	{
 		StructureDescriptor fieldOwner = null;
 		FieldDescriptor typeIdField = null;
-		String classType = null;	
-		
+		String classType = null;
+
 		// If it *is* a class or structure (vs. for example simple char*, etc.)
 		// n.b. The magic "_typeId" field may be in any of the superclasses,
 		// not just as the top of the hierarchy, so we have to look at each level.
@@ -51,9 +51,9 @@ public class RuntimeTypeResolutionHelper
 				classType = StructureCommandUtil.typeToCommand(type).substring(1); // Skip the "!"
 				do {
 					fieldOwner = StructureCommandUtil.getStructureDescriptor(classType, context);
-					if (null != fieldOwner) {	
+					if (null != fieldOwner) {
 						for (FieldDescriptor aField : fieldOwner.getFields()) {
-							if (aField.getDeclaredName().equals("_typeId")) {
+							if (aField.isPresent() && aField.getDeclaredName().equals("_typeId")) {
 								typeIdField = aField;
 								break;
 							}
@@ -64,11 +64,11 @@ public class RuntimeTypeResolutionHelper
 					}
 				} while (
 						(null == typeIdField)
-						&& (null != classType) 
+						&& (null != classType)
 						&& (null != fieldOwner)
 						&& (classType.length() > 0));
 			}
-		
+
 			if (null != typeIdField) {
 				VoidPointer untypedStrPtr = PointerPointer.cast(ptr).addOffset(typeIdField.getOffset()).at(0);
 				if (untypedStrPtr.notNull()) {
@@ -82,5 +82,5 @@ public class RuntimeTypeResolutionHelper
 		}
 		return RuntimeTypeResolutionUtils.cleanTypeStr(type);
 	}
-	
+
 }

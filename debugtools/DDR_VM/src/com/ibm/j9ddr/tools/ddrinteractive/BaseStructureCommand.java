@@ -40,13 +40,13 @@ import com.ibm.j9ddr.StructureReader.StructureDescriptor;
 public abstract class BaseStructureCommand implements ICommand
 {
 
-	private final List<IFieldFormatter> fieldFormatters = new LinkedList<IFieldFormatter>();
-	private final List<IStructureFormatter> structureFormatters = new LinkedList<IStructureFormatter>();
-	
+	private final List<IFieldFormatter> fieldFormatters = new LinkedList<>();
+	private final List<IStructureFormatter> structureFormatters = new LinkedList<>();
+
 	{
 		registerStructureFormatter(new DefaultStructureFormatter());
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.j9ddr.tools.ddrinteractive.ICommand#recognises(java.lang.String)
 	 */
@@ -55,15 +55,15 @@ public abstract class BaseStructureCommand implements ICommand
 		if (command.length() < 2) {
 			return false;
 		}
-		
+
 		//Strip the !
 		command = command.substring(1);
-		
+
 		StructureDescriptor desc = StructureCommandUtil.getStructureDescriptor(command, context);
-		
+
 		return desc != null;
 	}
-	
+
 	/**
 	 * Inserts supplied field formatter at the head of the list.
 	 * @param formatter
@@ -73,10 +73,10 @@ public abstract class BaseStructureCommand implements ICommand
 		if (formatter == null) {
 			throw new IllegalArgumentException("Field formatter cannot be null");
 		}
-		
+
 		fieldFormatters.add(0, formatter);
 	}
-	
+
 	/**
 	 * Inserts supplied structure formatter at the head of the list.
 	 * @param formatter
@@ -86,10 +86,10 @@ public abstract class BaseStructureCommand implements ICommand
 		if (formatter == null) {
 			throw new IllegalArgumentException("Structure formatter cannot be null");
 		}
-		
+
 		structureFormatters.add(0, formatter);
 	}
-	
+
 	/**
 	 * Inserts supplied structure formatter at the end of the list.
 	 * @param formatter
@@ -99,13 +99,12 @@ public abstract class BaseStructureCommand implements ICommand
 		if (formatter == null) {
 			throw new IllegalArgumentException("Structure formatter cannot be null");
 		}
-		
-		if(structureFormatters.size() > 0) {
+
+		if (structureFormatters.size() > 0) {
 			structureFormatters.remove(structureFormatters.size() - 1);
 		}
 		structureFormatters.add(formatter);
 	}
-	
 
 	public final void run(String command, String[] args, Context context, PrintStream out) throws DDRInteractiveCommandException
 	{
@@ -113,51 +112,54 @@ public abstract class BaseStructureCommand implements ICommand
 			out.println("Missing address argument. Usage: " + command + " <address>");
 			return;
 		}
-		
-		boolean is64BitPlatform = (context.process.bytesPerPointer() == 8) ? true : false;
+
+		boolean is64BitPlatform = (context.process.bytesPerPointer() == 8);
 		long address = CommandUtils.parsePointer(args[0], is64BitPlatform);
 
 		String[] extraArgs = new String[args.length - 1];
-		
+
 		for (int i = 0; i < extraArgs.length; i++) {
 			extraArgs[i] = args[i + 1];
 		}
-		
+
 		formatStructure(command.substring(1), address, out, context, extraArgs);
 	}
-	
+
 	protected class DefaultStructureFormatter extends BaseStructureFormatter
 	{
 
 		@Override
-		public FormatWalkResult format(String type, long address, PrintStream out, Context context, List<IFieldFormatter> fieldFormatters, String[] extraArgs) 
+		public FormatWalkResult format(String type, long address, PrintStream out, Context context, List<IFieldFormatter> fieldFormatters, String[] extraArgs)
 		{
 			setFieldFormatters(fieldFormatters);
-			
-			List<StructureDescriptor> inheritanceStack = new LinkedList<StructureDescriptor>();
-			
+
+			List<StructureDescriptor> inheritanceStack = new LinkedList<>();
+
 			String current = type;
-			
+
 			while (current != null && current.length() > 0) {
 				StructureDescriptor desc = StructureCommandUtil.getStructureDescriptor(current, context);
-				
+
 				inheritanceStack.add(0, desc);
-				
+
 				current = desc.getSuperName();
 			}
-			
+
 			StructureDescriptor specifiedType = inheritanceStack.get(inheritanceStack.size() - 1);
-			
+
 			out.print(specifiedType.getName());
 			out.print(" at ");
 			out.print("0x");
 			out.print(Long.toHexString(address));
 			out.print(" {");
 			out.println();
-			
+
 			for (StructureDescriptor desc : inheritanceStack) {
 				out.println(String.format("  Fields for %s:", desc.getName()));
 				for (FieldDescriptor thisField : desc.getFields()) {
+					if (!thisField.isPresent()) {
+						continue;
+					}
 					out.print("\t0x");
 					out.print(Integer.toHexString(thisField.getOffset()));
 					out.print(": ");
@@ -174,43 +176,43 @@ public abstract class BaseStructureCommand implements ICommand
 					out.println();
 				}
 			}
-			
+
 			out.println("}");
-			
+
 			return FormatWalkResult.STOP_WALKING;
 		}
 	}
 
-	private void formatStructure(String type, long address, PrintStream out, Context context, String[] extraArgs) 
+	private void formatStructure(String type, long address, PrintStream out, Context context, String[] extraArgs)
 	{
 		/* Take a copy of the field formatters list - it could be changed as part of the walk */
-		List<IFieldFormatter> localFieldFormatters = new ArrayList<IFieldFormatter>(fieldFormatters);
-		
+		List<IFieldFormatter> localFieldFormatters = new ArrayList<>(fieldFormatters);
+
 		for (IStructureFormatter formatter : structureFormatters) {
 			FormatWalkResult result = formatter.preFormat(type, address, out, context, localFieldFormatters, extraArgs);
-			
+
 			if (result == FormatWalkResult.STOP_WALKING) {
 				break;
 			}
 		}
-		
+
 		boolean found = false;
 		for (IStructureFormatter formatter : structureFormatters) {
 			FormatWalkResult result = formatter.format(type, address, out, context, localFieldFormatters, extraArgs);
-			
+
 			if (result == FormatWalkResult.STOP_WALKING) {
 				found = true;
 				break;
 			}
 		}
-		
-		if (! found) {
+
+		if (!found) {
 			out.println("<<Couldn't format " + type + ">>");
 		}
-		
+
 		for (IStructureFormatter formatter : structureFormatters) {
 			FormatWalkResult result = formatter.postFormat(type, address, out, context, localFieldFormatters, extraArgs);
-			
+
 			if (result == FormatWalkResult.STOP_WALKING) {
 				break;
 			}
@@ -221,7 +223,7 @@ public abstract class BaseStructureCommand implements ICommand
 	{
 		return Collections.singleton("<struct> <address>\t\tFormat <struct> at <address>");
 	}
-	
+
 	public Set<String> getCommandNames()
 	{
 		/* TODO: reach for structure names here */
