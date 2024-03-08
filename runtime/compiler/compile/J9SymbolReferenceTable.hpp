@@ -443,7 +443,9 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
    List<TR::SymbolReference> *dynamicMethodSymrefsByCallSiteIndex(int32_t index);
    bool isFieldClassObject(TR::SymbolReference *symRef);
    bool isFieldTypeBool(TR::SymbolReference *symRef);
+   bool isFieldTypeChar(TR::SymbolReference *symRef);
    bool isStaticTypeBool(TR::SymbolReference *symRef);
+   bool isStaticTypeChar(TR::SymbolReference *symRef);
    bool isReturnTypeBool(TR::SymbolReference *symRef);
 
    /*

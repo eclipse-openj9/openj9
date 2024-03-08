@@ -1838,6 +1838,11 @@ static bool isSignatureTypeBool(const char *fieldSignature, int32_t len)
    return len == 1 && fieldSignature[0] == 'Z';
    }
 
+static bool isSignatureTypeChar(const char *fieldSignature, int32_t len)
+   {
+   return len == 1 && fieldSignature[0] == 'C';
+   }
+
 static bool isSignatureReturnTypeBool(const char *methodSignature, int32_t len)
    {
    TR_ASSERT(len > 1, "Method signature is unexpectedly short %d", len);
@@ -1862,6 +1867,25 @@ J9::SymbolReferenceTable::isStaticTypeBool(TR::SymbolReference *symRef)
    dumpOptDetails(comp(), "got static signature as %.*s\n", len, fieldSignature);
    return isSignatureTypeBool(fieldSignature, len);
    }
+
+bool
+J9::SymbolReferenceTable::isFieldTypeChar(TR::SymbolReference *symRef)
+   {
+   int32_t len;
+   const char *fieldSignature = symRef->getOwningMethod(comp())->fieldSignatureChars(symRef->getCPIndex(), len);
+   dumpOptDetails(comp(), "got field signature as %.*s\n", len, fieldSignature);
+   return isSignatureTypeChar(fieldSignature, len);
+   }
+
+bool
+J9::SymbolReferenceTable::isStaticTypeChar(TR::SymbolReference *symRef)
+   {
+   int32_t len;
+   const char *fieldSignature = symRef->getOwningMethod(comp())->staticSignatureChars(symRef->getCPIndex(), len);
+   dumpOptDetails(comp(), "got static signature as %.*s\n", len, fieldSignature);
+   return isSignatureTypeChar(fieldSignature, len);
+   }
+
 
 bool
 J9::SymbolReferenceTable::isReturnTypeBool(TR::SymbolReference *symRef)

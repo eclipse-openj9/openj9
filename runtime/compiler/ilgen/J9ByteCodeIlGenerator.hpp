@@ -205,6 +205,7 @@ private:
    void         storeFlattenableInstance(int32_t);
    void         storeFlattenableInstanceWithHelper(int32_t);
    void         storeStatic(int32_t);
+   TR::Node*    narrowIntStoreIfRequired(TR::Node *value, TR::SymbolReference *symRef);
    void         storeAuto(TR::DataType type, int32_t slot, bool isAdjunct = false);
    void         storeArrayElement(TR::DataType dt){ storeArrayElement(dt, comp()->il.opCodeForIndirectArrayStore(dt)); }
    void         storeArrayElement(TR::DataType dt, TR::ILOpCodes opCode, bool checks = true);
