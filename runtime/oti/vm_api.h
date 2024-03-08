@@ -716,6 +716,16 @@ setupJNIFieldIDsAndCRIUAPI(JNIEnv *env, jclass *currentExceptionClass, IDATA *sy
 void JNICALL
 criuCheckpointJVMImpl(JNIEnv *env, jstring imagesDir, jboolean leaveRunning, jboolean shellJob, jboolean extUnixSupport, jint logLevel, jstring logFile, jboolean fileLocks,
 		jstring workDir, jboolean tcpEstablished, jboolean autoDedup, jboolean trackMemory, jboolean unprivileged, jstring optionsFile, jstring environmentFile, jlong ghostFileLimit);
+
+/**
+ * Disclaim all class loader memory segments.
+ *
+ * @param[in] currentThread instance of J9VMThread
+ *
+ * @return 0 if successful, -1 if madvise returns an error
+ */
+I_32
+disclaimAllClassMemory(J9VMThread *currentThread);
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 /* ---------------- classloadersearch.c ---------------- */
@@ -4118,7 +4128,6 @@ initializeNativeLibrary(J9JavaVM * javaVM, J9NativeLibrary* library);
 I_32
 invoke31BitJNI_OnXLoad(J9JavaVM *vm, void *handle, jboolean isOnLoad, void *reserved);
 #endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) && (JAVA_SPEC_VERSION >= 17) */
-
 
 /* ---------------- vmhook.c ---------------- */
 
