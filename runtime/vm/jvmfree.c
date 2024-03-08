@@ -438,4 +438,3 @@ cleanUpClassLoader(J9VMThread *vmThread, J9ClassLoader* classLoader)
 	Trc_VM_cleanUpClassLoaders_Exit(vmThread);
 }
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
-
