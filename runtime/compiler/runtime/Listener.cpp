@@ -114,6 +114,55 @@ acceptOpenSSLConnection(SSL_CTX *sslCtx, int connfd, BIO *&bio, TR::CompilationI
    return true;
    }
 
+static int
+openCommunicationSocket(uint32_t port)
+   {
+   int sockfd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
+   if (sockfd < 0)
+      {
+      perror("can't open server socket");
+      return sockfd;
+      }
+      // see `man 7 socket` for option explanations
+   int flag = true;
+   int retCode = 0;
+   retCode = setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &flag, sizeof(flag));
+   if (retCode < 0)
+      {
+      perror("Can't set SO_REUSEADDR");
+      close(sockfd);
+      return retCode;
+      }
+   retCode = setsockopt(sockfd, SOL_SOCKET, SO_KEEPALIVE, &flag, sizeof(flag));
+   if (retCode < 0)
+      {
+      perror("Can't set SO_KEEPALIVE");
+      close(sockfd);
+      return retCode;
+      }
+   struct sockaddr_in serv_addr;
+   memset(&serv_addr, 0, sizeof(serv_addr));
+   serv_addr.sin_family = AF_INET;
+   serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+   serv_addr.sin_port = htons(port);
+
+   retCode = bind(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
+   if (retCode < 0)
+      {
+      perror("can't bind server address");
+      close(sockfd);
+      return retCode;
+      }
+   retCode = listen(sockfd, SOMAXCONN);
+   if (retCode < 0)
+      {
+      perror("listen failed");
+      close(sockfd);
+      return retCode;
+      }
+   return sockfd;
+   }
+
 TR_Listener::TR_Listener()
    : _listenerThread(NULL), _listenerMonitor(NULL), _listenerOSThread(NULL),
    _listenerThreadAttachAttempted(false), _listenerThreadExitFlag(false)
@@ -140,47 +189,49 @@ TR_Listener::serveRemoteCompilationRequests(BaseCompileDispatcher *compiler)
       }
 
    uint32_t port = info->getJITServerPort();
-   uint32_t timeoutMs = info->getSocketTimeout();
-   struct pollfd pfd = {0};
-   int sockfd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
-   if (sockfd < 0)
+   int sockfd = openCommunicationSocket(port);
+   if (sockfd >= 0)
       {
-      perror("can't open server socket");
+      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+         {
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "t=%lu Communication socket opened on port %u",
+                                        (unsigned long)compInfo->getPersistentInfo()->getElapsedTime(), port);
+         }
+      }
+   else
+      {
+      fprintf(stderr, "Failed to open server socket on port %d\n", port);
       exit(1);
       }
 
-   // see `man 7 socket` for option explanations
-   int flag = true;
-   if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &flag, sizeof(flag)) < 0)
+   // If desired, open readiness/liveness socket to be used by Kubernetes. This is unencrypted.
+   uint32_t healthPort = info->getJITServerHealthPort();
+   int healthSockfd = -1;
+   if (healthPort > 0)
       {
-      perror("Can't set SO_REUSEADDR");
-      exit(1);
-      }
-   if (setsockopt(sockfd, SOL_SOCKET, SO_KEEPALIVE, &flag, sizeof(flag)) < 0)
-      {
-      perror("Can't set SO_KEEPALIVE");
-      exit(1);
-      }
-
-   struct sockaddr_in serv_addr;
-   memset(&serv_addr, 0, sizeof(serv_addr));
-   serv_addr.sin_family = AF_INET;
-   serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-   serv_addr.sin_port = htons(port);
-
-   if (bind(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
-      {
-      perror("can't bind server address");
-      exit(1);
-      }
-   if (listen(sockfd, SOMAXCONN) < 0)
-      {
-      perror("listen failed");
-      exit(1);
+      healthSockfd = openCommunicationSocket(healthPort);
+      if (healthSockfd >= 0)
+         {
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+            {
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "t=%lu Health socket opened on port %u",
+                                           (unsigned long)compInfo->getPersistentInfo()->getElapsedTime(), healthPort);
+            }
+         }
+      else
+         {
+         fprintf(stderr, "Failed to open health socket on port %d\n", healthPort);
+         exit(1);
+         }
       }
 
-   pfd.fd = sockfd;
-   pfd.events = POLLIN;
+   // The following array accomodates two descriptors: healthSockfd and sockfd.
+   // The first one is used for readiness/liveness probes, the second one is used for compilation requests.
+   // If we don't want to use readiness/liveness probes, healthSockfd will be -1 and will be ignored by poll().
+   struct pollfd pfd[2] = {{.fd = healthSockfd, .events = POLLIN, .revents = 0},
+                           {.fd = sockfd,       .events = POLLIN, .revents = 0}
+                          };
+   static const size_t numFds = sizeof(pfd) / sizeof(pfd[0]);
 
    while (!getListenerThreadExitFlag())
       {
@@ -189,7 +240,7 @@ TR_Listener::serveRemoteCompilationRequests(BaseCompileDispatcher *compiler)
       socklen_t clilen = sizeof(cli_addr);
       int connfd = -1;
 
-      rc = poll(&pfd, 1, OPENJ9_LISTENER_POLL_TIMEOUT);
+      rc = poll(pfd, numFds, OPENJ9_LISTENER_POLL_TIMEOUT);
       if (getListenerThreadExitFlag()) // if we are exiting, no need to check poll() status
          {
          break;
@@ -210,49 +261,64 @@ TR_Listener::serveRemoteCompilationRequests(BaseCompileDispatcher *compiler)
             exit(1);
             }
          }
-      else if (pfd.revents != POLLIN)
+      // Check which file descriptor is ready
+      for (size_t fdIndex = 0; fdIndex < numFds; fdIndex++)
          {
-         fprintf(stderr, "Unexpected event occurred during poll for new connection: revents=%d\n", pfd.revents);
-         exit(1);
-         }
-      do
-         {
-         /* at this stage we should have a valid request for new connection */
-         connfd = accept(sockfd, (struct sockaddr *)&cli_addr, &clilen);
-         if (connfd < 0)
+         if (pfd[fdIndex].revents == 0) // No event on this file descriptor
+            continue;
+         // We have an event and that event can only be POLLIN
+         TR_ASSERT_FATAL(pfd[fdIndex].revents == POLLIN, "Unexpected event occurred during poll for new connection: socketIndex=%zu revents=%d\n", fdIndex, pfd[fdIndex].revents);
+
+         // At this stage we should have a valid request for a new connection
+         pfd[fdIndex].revents = 0; // Reset the event for the next poll operation
+         do
             {
-            if ((EAGAIN != errno) && (EWOULDBLOCK != errno))
+            connfd = accept(pfd[fdIndex].fd, (struct sockaddr *)&cli_addr, &clilen);
+            if (connfd < 0)
                {
-               if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+               if ((EAGAIN != errno) && (EWOULDBLOCK != errno))
                   {
-                  TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Error accepting connection: errno=%d: %s",
-                                                 errno, strerror(errno));
+                  if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+                     {
+                     TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Error accepting connection: errno=%d: %s",
+                                                   errno, strerror(errno));
+                     }
                   }
                }
-            }
-         else
-            {
-            struct timeval timeout = { timeoutMs / 1000, (timeoutMs % 1000) * 1000 };
-            if (setsockopt(connfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0)
+            else // accept() succeeded
                {
-               perror("Can't set option SO_RCVTIMEO on connfd socket");
-               exit(1);
-               }
-            if (setsockopt(connfd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout)) < 0)
-               {
-               perror("Can't set option SO_SNDTIMEO on connfd socket");
-               exit(1);
-               }
+               if (fdIndex == 0) // readiness/liveness probe socket
+                  {
+                  close(connfd);
+                  connfd = -1;
+                  }
+               else // compilation request socket
+                  {
+                  // Set the socket timeout (in milliseconds
+                  uint32_t timeoutMs = info->getSocketTimeout();
+                  struct timeval timeout = { timeoutMs / 1000, (timeoutMs % 1000) * 1000 };
+                  if (setsockopt(connfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0)
+                     {
+                     perror("Can't set option SO_RCVTIMEO on connfd socket");
+                     exit(1);
+                     }
+                  if (setsockopt(connfd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout)) < 0)
+                     {
+                     perror("Can't set option SO_SNDTIMEO on connfd socket");
+                     exit(1);
+                     }
 
-            BIO *bio = NULL;
-            if (sslCtx && !acceptOpenSSLConnection(sslCtx, connfd, bio, compInfo))
-               continue;
+                  BIO *bio = NULL;
+                  if (sslCtx && !acceptOpenSSLConnection(sslCtx, connfd, bio, compInfo))
+                     continue;
 
-            JITServer::ServerStream *stream = new (TR::Compiler->persistentGlobalAllocator()) JITServer::ServerStream(connfd, bio);
-            compiler->compile(stream);
-            }
-         } while ((-1 != connfd) && !getListenerThreadExitFlag());
-      }
+                  JITServer::ServerStream *stream = new (TR::Compiler->persistentGlobalAllocator()) JITServer::ServerStream(connfd, bio);
+                  compiler->compile(stream);
+                  }
+               }
+            } while ((connfd >= 0) && !getListenerThreadExitFlag());
+         }
+      } //  while (!getListenerThreadExitFlag())
 
    // The following piece of code will be executed only if the server shuts down properly
    close(sockfd);

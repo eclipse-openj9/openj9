@@ -166,6 +166,7 @@ class PersistentInfo : public OMR::PersistentInfoConnector
          _clientUID(0),
          _serverUID(0),
          _JITServerMetricsPort(38500),
+         _JITServerHealthPort(38600),
          _requireJITServer(false),
          _localSyncCompiles(true),
          _JITServerUseAOTCache(false),
@@ -354,6 +355,8 @@ class PersistentInfo : public OMR::PersistentInfoConnector
    void setServerUID(uint64_t val) { _serverUID = val; }
    uint32_t getJITServerMetricsPort() const { return _JITServerMetricsPort; }
    void setJITServerMetricsPort(uint32_t port) { _JITServerMetricsPort = port; }
+   uint32_t getJITServerHealthPort() const { return _JITServerHealthPort; }
+   void setJITServerHealthPort(uint32_t port) { _JITServerHealthPort = port; }
    bool getRequireJITServer() const { return _requireJITServer; }
    void setRequireJITServer(bool requireJITServer) { _requireJITServer = requireJITServer; }
    bool isLocalSyncCompiles() const { return _localSyncCompiles; }
@@ -461,6 +464,7 @@ class PersistentInfo : public OMR::PersistentInfoConnector
    uint64_t    _clientUID;
    uint64_t    _serverUID; // At the client, this represents the UID of the server the client is connected to
    uint32_t    _JITServerMetricsPort; // Port for receiving http metrics requests from Prometheus; only used at server
+   uint32_t    _JITServerHealthPort; // Port for receiving readiness/liveness probes from Kubernetes; only used at server
    bool        _requireJITServer;
    bool        _localSyncCompiles;
    bool        _JITServerUseAOTCache;

@@ -380,7 +380,10 @@ const char * J9::Options::_externalOptionStrings[J9::ExternalOptions::TR_NumExte
    "-XX:-IProfileDuringStartupPhase",     // = 71
    "-XX:+JITServerAOTCacheIgnoreLocalSCC", // = 72
    "-XX:-JITServerAOTCacheIgnoreLocalSCC", // = 73
-   // TR_NumExternalOptions                  = 74
+   "-XX:+JITServerHealthProbes",          // = 74
+   "-XX:-JITServerHealthProbes",          // = 75
+   "-XX:JITServerHealthProbePort=",       // = 76
+   // TR_NumExternalOptions                  = 77
    };
 
 //************************************************************************
@@ -2260,6 +2263,28 @@ bool J9::Options::preProcessJitServer(J9JavaVM *vm, J9JITConfig *jitConfig)
          // Increase the default timeout value for JITServer.
          // It can be overridden with -XX:JITServerTimeout= option in JITServerParseCommonOptions().
          compInfo->getPersistentInfo()->setSocketTimeout(DEFAULT_JITSERVER_TIMEOUT);
+
+         const char *xxEnableHealthProbes  = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXplusHealthProbes];
+         const char *xxDisableHealthProbes = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXminusHealthProbes];
+         int32_t xxEnableProbesArgIndex  = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxEnableHealthProbes, 0);
+         int32_t xxDisableProbesArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxDisableHealthProbes, 0);
+         if (xxEnableProbesArgIndex >= xxDisableProbesArgIndex) // probes are enabled by default
+            {
+            // Default port is already set at 38600; see if the user wants to change that
+            const char *xxJITServerHealthPortOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXJITServerHealthProbePortOption];
+            int32_t xxJITServerHealthPortArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITServerHealthPortOption, 0);
+            if (xxJITServerHealthPortArgIndex >= 0)
+               {
+               UDATA port = 0;
+               IDATA ret = GET_INTEGER_VALUE(xxJITServerHealthPortArgIndex, xxJITServerHealthPortOption, port);
+               if (ret == OPTION_OK)
+                  compInfo->getPersistentInfo()->setJITServerHealthPort(port);
+               }
+            }
+         else
+            {
+            compInfo->getPersistentInfo()->setJITServerHealthPort(0); // This means don't open dedicated port for health probes
+            }
 
          // Check if we should open the port for the MetricsServer
          const char *xxEnableMetricsServer  = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXplusMetricsServer];
