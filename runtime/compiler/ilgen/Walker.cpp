@@ -6233,6 +6233,11 @@ TR_J9ByteCodeIlGenerator::genWithField(TR::SymbolReference * symRef, TR_OpaqueCl
    TR::Node *newFieldValue = pop();
    TR::Node *originalObject = pop();
 
+   if (symRef->getSymbol()->getType().isIntegral())
+      {
+      newFieldValue = narrowIntStoreIfRequired(newFieldValue, symRef);
+      }
+
    /*
     * Insert nullchk for the original object as requested by the JVM spec.
     * Especially in case of value type class with a single field, the nullchk is still
@@ -6999,6 +7004,48 @@ TR_J9ByteCodeIlGenerator::storeInstance(int32_t cpIndex)
    storeInstance(symRef);
    }
 
+TR::Node*
+TR_J9ByteCodeIlGenerator::narrowIntStoreIfRequired(TR::Node *value, TR::SymbolReference *symRef)
+   {
+   TR::DataType type = symRef->getSymbol()->getDataType();
+
+   // Per the JVM spec, putstatic/putfield/withfield opcodes must adhere to field type compatibility.
+   // Integer values on the stack must be narrowed when stored into smaller types like bool, byte,
+   // char, and short fields. For byte and short fields, narrowing involves conversion from integer
+   // to byte/short, then back to integer. For bool and char types, which are unsigned, narrowing
+   // entails ANDing the value with a mask matching the type width.
+
+   switch (type)
+      {
+      case TR::Int8:
+         if (symRefTab()->isStaticTypeBool(symRef))
+            {
+            value = TR::Node::create(TR::iand, 2, value, TR::Node::create(TR::iconst, 0, 1));
+            }
+         else
+            {
+            value = TR::Node::create(TR::i2b, 1, value);
+            value = TR::Node::create(TR::b2i, 1, value);
+            }
+         break;
+      case TR::Int16:
+         if (symRefTab()->isStaticTypeChar(symRef))
+            {
+            value = TR::Node::create(TR::iand, 2, value, TR::Node::create(TR::iconst, 0, 0xffff));
+            }
+         else
+            {
+            value = TR::Node::create(TR::i2s, 1, value);
+            value = TR::Node::create(TR::s2i, 1, value);
+            }
+         break;
+      default:
+         break;
+      }
+
+   return value;
+   }
+
 void
 TR_J9ByteCodeIlGenerator::storeInstance(TR::SymbolReference * symRef)
    {
@@ -7020,8 +7067,8 @@ TR_J9ByteCodeIlGenerator::storeInstance(TR::SymbolReference * symRef)
       }
    else
       {
-      if (type == TR::Int8 && symRefTab()->isFieldTypeBool(symRef))
-         value = TR::Node::create(TR::iand, 2, value, TR::Node::create(TR::iconst, 0, 1));
+      if (type.isIntegral())
+         value = narrowIntStoreIfRequired(value, symRef);
       node = TR::Node::createWithSymRef(comp()->il.opCodeForIndirectStore(type), 2, 2, addressNode, value, symRef);
       }
 
@@ -7304,8 +7351,9 @@ TR_J9ByteCodeIlGenerator::storeStatic(int32_t cpIndex)
    TR::Node * node;
 
    TR_J9VMBase *fej9 = (TR_J9VMBase *)fe();
-   if (type == TR::Int8 && symRefTab()->isStaticTypeBool(symRef))
-      value = TR::Node::create(TR::iand, 2, value, TR::Node::create(TR::iconst, 0, 1));
+
+   if (type.isIntegral())
+      value = narrowIntStoreIfRequired(value, symRef);
 
    if ((type == TR::Address && _generateWriteBarriersForGC) || _generateWriteBarriersForFieldWatch)
       {
