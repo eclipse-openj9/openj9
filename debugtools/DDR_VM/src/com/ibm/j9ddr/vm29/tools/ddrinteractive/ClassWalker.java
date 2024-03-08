@@ -90,7 +90,11 @@ public abstract class ClassWalker {
 			throw new CorruptDataException("Structure \"" + structureName + "\" can not be found.");
 		}
 
-		for ( FieldDescriptor fd : sd.getFields() ) {
+		for (FieldDescriptor fd : sd.getFields()) {
+			if (!fd.isPresent()) {
+				continue;
+			}
+
 			/* Get the name of the field from field descriptor */
 			String outName = fd.getName();
 			/* Get SlotType by using field type name */
