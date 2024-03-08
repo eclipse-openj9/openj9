@@ -980,3 +980,5 @@ TraceEvent=Trc_VM_criu_allocateVMThread_set_haltflag noEnv Overhead=1 Level=5 Te
 TraceEvent=Trc_VM_criu_toggleSuspendOnJavaThreads_start Test Overhead=1 Level=5 Template="toggleSuspendOnJavaThreads with currentThreadName(%s) suspendResumeFlag(%u)"
 TraceEvent=Trc_VM_criu_toggleSuspendOnJavaThreads_walkStatus Overhead=1 Level=5 Template="toggleSuspendOnJavaThreads (%s) walkThread(%p)"
 TraceEvent=Trc_VM_criu_toggleSuspendOnJavaThreads_walkThread Test Overhead=1 Level=5 Template="toggleSuspendOnJavaThreads with walkThreadName(%s) suspendResumeFlag(%u) walkThread(%p) currentThread(%p)"
+
+TraceEvent=Trc_VM_criu_disclaimAllClassMemory_segment Overhead=1 Level=5 Template="disclaimAllClassMemory segment (%p): baseAddress=%p, heapBase=%p, size=%u, type=%x"
