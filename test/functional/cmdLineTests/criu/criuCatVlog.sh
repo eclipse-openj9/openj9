@@ -34,17 +34,21 @@ cat_prev_output() {
     echo ""
 }
 
-if [ -f "$1" ]; then
-    echo "Outputting vlog $1"
-    cat $1
+VLOG_TO_CAT=$1
+CHECK_PREVIOUS_TEST_OUTPUT=$2
+DELETE_PREV_TEST_OUTPUT=$3
+
+if [ -f "$VLOG_TO_CAT" ]; then
+    echo "Outputting vlog $VLOG_TO_CAT"
+    cat $VLOG_TO_CAT
     echo ""
 
-    if [ "$2" == true ]; then
+    if [ "$CHECK_PREVIOUS_TEST_OUTPUT" == true ]; then
         cat_prev_output
     fi
 else
-    if [ "$2" == true ]; then
-        echo "vlog $1 does not exist"
+    if [ "$CHECK_PREVIOUS_TEST_OUTPUT" == true ]; then
+        echo "vlog $VLOG_TO_CAT does not exist"
         echo ""
 
         cat_prev_output
@@ -56,9 +60,13 @@ if [ $? -eq 0 ]; then
     echo "CAT VLOG FORCE PASS"
 fi
 
-if [ "$3" == true ]; then
+if [ "$DELETE_PREV_TEST_OUTPUT" == true ]; then
     rm -rf testOutput criuOutput
     echo "Removed test output files"
 fi
+
+# Remove this vlog; this will prevent errors in subsequent tests in case those
+# tests fail to restore for known reasons.
+rm -f $VLOG_TO_CAT
 
 echo "finished script";
