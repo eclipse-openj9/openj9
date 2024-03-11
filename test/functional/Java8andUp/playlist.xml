@@ -1616,6 +1616,10 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 				<comment>https://github.com/eclipse-openj9/openj9/issues/16900</comment>
 				<testflag>FIPS140_2</testflag>
 			</disable>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/19116</comment>
+				<platform>.*aix.*</platform>
+			</disable>
 		</disables>
 		<variations>
 			<variation>NoOptions</variation>
