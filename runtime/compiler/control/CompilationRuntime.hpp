@@ -80,6 +80,9 @@ class JITServerAOTCacheMap;
 class JITServerAOTDeserializer;
 class JITServerSharedROMClassCache;
 #endif /* defined(J9VM_OPT_JITSERVER) */
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+namespace TR { class CRRuntime; }
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 struct TR_SignatureCountPair
 {
@@ -396,17 +399,6 @@ public:
       UNDEFINED_ACTION
       };
 
-#if defined(J9VM_OPT_CRIU_SUPPORT)
-   enum TR_CheckpointStatus
-      {
-      NO_CHECKPOINT_IN_PROGRESS,
-      COMPILE_METHODS_FOR_CHECKPOINT,
-      SUSPEND_THREADS_FOR_CHECKPOINT,
-      INTERRUPT_CHECKPOINT,
-      READY_FOR_CHECKPOINT_RESTORE
-      };
-#endif
-
    struct DLT_record
       {
       DLT_record         *_next;
@@ -709,47 +701,6 @@ public:
    void waitOnCompMonitor(J9VMThread *vmThread);
    intptr_t waitOnCompMonitorTimed(J9VMThread *vmThread, int64_t millis, int32_t nanos);
 
-#if defined(J9VM_OPT_CRIU_SUPPORT)
-   /* The CR Monitor (Checkpoint/Restore Monitor) must always be acquired with the Comp Monitor
-    * in hand. If waiting on the CR Monitor, the Comp Monitor should be released. After being
-    * notified, the CR Monitor should be released before re-acquiring the Comp Monitor.
-    */
-   TR::Monitor *getCRMonitor() { return _crMonitor; }
-   void acquireCRMonitor();
-   void releaseCRMonitor();
-   void waitOnCRMonitor();
-
-   /* The following APIs should only be invoked with the Comp Monitor in hand. */
-   bool isCheckpointInProgress()            { return _checkpointStatus != TR_CheckpointStatus::NO_CHECKPOINT_IN_PROGRESS;      }
-   void resetCheckpointInProgress()         {        _checkpointStatus  = TR_CheckpointStatus::NO_CHECKPOINT_IN_PROGRESS;      }
-   bool shouldCompileMethodsForCheckpoint() { return _checkpointStatus == TR_CheckpointStatus::COMPILE_METHODS_FOR_CHECKPOINT; }
-   void setCompileMethodsForCheckpoint()    {        _checkpointStatus  = TR_CheckpointStatus::COMPILE_METHODS_FOR_CHECKPOINT; }
-   bool shouldSuspendThreadsForCheckpoint() { return _checkpointStatus == TR_CheckpointStatus::SUSPEND_THREADS_FOR_CHECKPOINT; }
-   void setSuspendThreadsForCheckpoint()    {        _checkpointStatus  = TR_CheckpointStatus::SUSPEND_THREADS_FOR_CHECKPOINT; }
-   bool readyForCheckpointRestore()         { return _checkpointStatus == TR_CheckpointStatus::READY_FOR_CHECKPOINT_RESTORE;   }
-   void setReadyForCheckpointRestore()      {        _checkpointStatus  = TR_CheckpointStatus::READY_FOR_CHECKPOINT_RESTORE;   }
-   bool shouldCheckpointBeInterrupted()     { return _checkpointStatus == TR_CheckpointStatus::INTERRUPT_CHECKPOINT;           }
-   void interruptCheckpoint()               {        _checkpointStatus  = TR_CheckpointStatus::INTERRUPT_CHECKPOINT;           }
-
-   void setVMMethodTraceEnabled(bool trace) { _vmMethodTraceEnabled = trace; }
-   bool isVMMethodTraceEnabled()            { return _vmMethodTraceEnabled;  }
-
-   void setVMExceptionEventsHooked(bool trace) { _vmExceptionEventsHooked = trace; }
-   bool isVMExceptionEventsHooked()            { return _vmExceptionEventsHooked;  }
-
-#if defined(J9VM_OPT_JITSERVER)
-   bool canPerformRemoteCompilationInCRIUMode()                   { return _canPerformRemoteCompilationInCRIUMode;       }
-   void setCanPerformRemoteCompilationInCRIUMode(bool remoteComp) { _canPerformRemoteCompilationInCRIUMode = remoteComp; }
-
-   bool remoteCompilationRequestedAtBootstrap()                   { return _remoteCompilationRequestedAtBootstrap;       }
-   void setRemoteCompilationRequestedAtBootstrap(bool remoteComp) { _remoteCompilationRequestedAtBootstrap = remoteComp; }
-
-   bool remoteCompilationExplicitlyDisabledAtBootstrap()                   { return _remoteCompilationExplicitlyDisabledAtBootstrap;       }
-   void setRemoteCompilationExplicitlyDisabledAtBootstrap(bool remoteComp) { _remoteCompilationExplicitlyDisabledAtBootstrap = remoteComp; }
-#endif
-
-#endif // #if defined(J9VM_OPT_CRIU_SUPPORT)
-
    TR_PersistentMemory *     persistentMemory() { return _persistentMemory; }
 
    TR::PersistentInfo    * getPersistentInfo() { return persistentMemory()->getPersistentInfo(); }
@@ -820,24 +771,6 @@ public:
     *        CPU resources.
     */
    void resumeCompilationThread();
-
-#if defined(J9VM_OPT_CRIU_SUPPORT)
-   /**
-    * @brief Work that is necessary prior to taking a snapshot. This includes:
-    *        - Setting the _checkpointStatus state.
-    *        - Suspending all compiler threads.
-    *        - Waiting until all compiler threads are suspended.
-    */
-   void prepareForCheckpoint();
-
-   /**
-    * @brief Work that is necessary after the JVM has been restored. This includes:
-    *        - Resetting the _checkpointStatus state.
-    *        - Processing post-restore options.
-    *        - Resuming all suspended compiler threads.
-    */
-   void prepareForRestore();
-#endif
 
    void purgeMethodQueue(TR_CompilationErrorCode errorCode);
    void *compileMethod(J9VMThread * context, TR::IlGeneratorMethodDetails &details, void *oldStartPC,
@@ -1229,6 +1162,11 @@ public:
    static void storeAOTInSharedCache(J9VMThread *vmThread, J9ROMMethod *romMethod, const U_8 *dataStart, UDATA dataSize, const U_8 *codeStart, UDATA codeSize, TR::Compilation *comp, J9JITConfig *jitConfig, TR_MethodToBeCompiled *entry);
 #endif
 
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+   TR::CRRuntime *getCRRuntime() { return _crRuntime; }
+   void setCRRuntime(TR::CRRuntime *crRuntime) { _crRuntime = crRuntime; }
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+
    static int32_t         VERY_SMALL_QUEUE;
    static int32_t         SMALL_QUEUE;
    static int32_t         MEDIUM_LARGE_QUEUE;
@@ -1295,18 +1233,6 @@ private:
    struct DLT_record     *_dltHash[DLT_HASHSIZE];
 #endif
    DLTTracking           *_dltHT;
-
-#if defined(J9VM_OPT_CRIU_SUPPORT)
-   TR::Monitor *_crMonitor;
-   TR_CheckpointStatus _checkpointStatus;
-   bool _vmMethodTraceEnabled;
-   bool _vmExceptionEventsHooked;
-#if defined(J9VM_OPT_JITSERVER)
-   bool _canPerformRemoteCompilationInCRIUMode;
-   bool _remoteCompilationRequestedAtBootstrap;
-   bool _remoteCompilationExplicitlyDisabledAtBootstrap;
-#endif
-#endif // #if defined(J9VM_OPT_CRIU_SUPPORT)
 
    TR::Monitor *_vlogMonitor;
    TR::Monitor *_rtlogMonitor;
@@ -1464,67 +1390,8 @@ private:
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-   /**
-    * @brief Release the comp monitor in order to wait on the CR Monitor;
-    *        release the CR Monitor and reacquire the comp monitor once notified.
-    *
-    * IMPORTANT: There should be no return, or C++ exception thrown, after
-    *            releasing the Comp Monitor until it is re-acquired.
-    *            The Comp Monitor may be acquired in an OMR::CriticalSection
-    *            object; a return, or thrown exception, will destruct this
-    *            object as part leaving the scope, or stack unwinding, which
-    *            will attempt to release the monitor in its destructor.
-    *
-    * @param vmThread The J9VMThread
-    */
-   void releaseCompMonitorUntilNotifiedOnCRMonitor(J9VMThread *vmThread) throw();
-
-   /**
-    * @brief Compile methods for checkpoint.
-    *
-    * IMPORTANT: Must be called with the comp monitor in hand.
-    *
-    * @param vmThread The J9VMThread
-    *
-    * @return false if the checkpoint is interrupted, true otherwise.
-    *
-    */
-   bool compileMethodsForCheckpoint(J9VMThread *vmThread);
-
-   /**
-    * @brief Suspend compilation threads for checkpoint.
-    *
-    * IMPORTANT: Must be called with the comp monitor in hand.
-    *
-    * @param vmThread The J9VMThread
-    *
-    * @return false false if the checkpoint is interrupted, true otherwise.
-    */
-   bool suspendCompThreadsForCheckpoint(J9VMThread *vmThread);
-
-   /**
-    * @brief Suspend all JIT threads such as
-    *        * Compilation Threads
-    *        * Sampler Thread
-    *
-    * @param vmThread The J9VMThread
-    *
-    * @return false if the checkpoint is interrupted, true otherwise.
-    */
-   bool suspendJITThreadsForCheckpoint(J9VMThread *vmThread);
-
-   /**
-    * @brief Resume all JIT threads suspended by suspendCompilerThreadsForCheckpoint
-    *
-    * @param vmThread The J9VMThread
-    */
-   void resumeJITThreadsForRestore(J9VMThread *vmThread);
-
-   /**
-    * @brief Reset Start Time post retore
-    */
-   void resetStartTime();
-#endif
+   TR::CRRuntime *_crRuntime;
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
    }; // CompilationInfo
 }
 

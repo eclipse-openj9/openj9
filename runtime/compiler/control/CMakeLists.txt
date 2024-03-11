@@ -30,7 +30,6 @@ j9jit_files(
 	control/J9Recompilation.cpp
 	control/JitDump.cpp
 	control/MethodToBeCompiled.cpp
-	control/OptionsPostRestore.cpp
 	control/rossa.cpp
 )
 
@@ -39,5 +38,11 @@ if(J9VM_OPT_JITSERVER)
 		control/JITClientCompilationThread.cpp
 		control/JITServerCompilationThread.cpp
 		control/JITServerHelpers.cpp
+	)
+endif()
+
+if(J9VM_OPT_CRIU_SUPPORT)
+	j9jit_files(
+		control/OptionsPostRestore.cpp
 	)
 endif()

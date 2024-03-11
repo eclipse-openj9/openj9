@@ -289,7 +289,6 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/control/J9Options.cpp \
     compiler/control/JitDump.cpp \
     compiler/control/MethodToBeCompiled.cpp \
-    compiler/control/OptionsPostRestore.cpp \
     compiler/control/rossa.cpp \
     compiler/env/ClassLoaderTable.cpp \
     compiler/env/CpuUtilization.cpp \
@@ -421,6 +420,12 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/runtime/JITServerStatisticsThread.cpp \
     compiler/runtime/Listener.cpp \
     compiler/runtime/MetricsServer.cpp
+endif
+
+ifneq ($(J9VM_OPT_CRIU_SUPPORT),)
+JIT_PRODUCT_SOURCE_FILES+=\
+    compiler/control/OptionsPostRestore.cpp \
+    compiler/runtime/CRRuntime.cpp
 endif
 
 -include $(JIT_MAKE_DIR)/files/extra.mk

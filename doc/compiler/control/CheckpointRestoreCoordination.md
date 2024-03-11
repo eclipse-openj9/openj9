@@ -47,7 +47,7 @@ respectively.
 When the application signals to the VM that a checkpoint should occur, the VM
 calls `jitHookPrepareCheckpoint` as part of the checkpoint process. This calls
 the top level method in the compiler that performs the necessary coordination:
-`TR::CompilationInfo::prepareForCheckpoint`.
+`TR::CRRuntime::prepareForCheckpoint`.
 Once the coordination is complete, the executing thread returns to the VM, which
 eventually invokes CRIU to checkpoint itself.
 
@@ -55,20 +55,20 @@ On restore, the VM calls `jitHookPrepareRestore` as part of the restore process.
 This first checks if further checkpointing is not allowed in order to remove the
 portability restrictions on the target CPU. It then calls the top level method
 in the compiler that performs the necessary coordination:
-`TR::CompilationInfo::prepareForRestore`. Once the coordination is complete,
+`TR::CRRuntime::prepareForRestore`. Once the coordination is complete,
 the executing thread returns to the VM, which eventually resumes the
 application.
 
 # Preparing for Checkpoint
 
-As mentioned above, `TR::CompilationInfo::prepareForCheckpoint` handles all the
+As mentioned above, `TR::CRRuntime::prepareForCheckpoint` handles all the
 coordination needed to prepare the compiler for checkpoint. This is a very
 complex set of operations as it involves coordinating multiple threads, as well
 as being aware of events such as shutdown.
 
 First, this method releases VM Access and acquires the Compilation Monitor. It
 then checks if the checkpoint should be interrupted. It uses the
-`TR::CompilationInfo::_checkpointStatus` member variable to determine the state
+`TR::CRRuntime::_checkpointStatus` member variable to determine the state
 of the checkpoint. The status transitions as follows:
 
 1. `TR_CheckpointStatus::NO_CHECKPOINT_IN_PROGRESS`
@@ -89,7 +89,7 @@ Next it triggers compilation of any methods that should be compiled proactively
 and waits for them to finish.
 
 Then, it calls
-`TR::CompilationInfo::suspendJITThreadsForCheckpoint` which:
+`TR::CRRuntime::suspendJITThreadsForCheckpoint` which:
 
 1. Suspends Compilation Threads
 2. Suspends the Sampler Thread
@@ -161,7 +161,7 @@ The Checkpointing Thread at this point has the Comp Monitor in hand.
 
 In steps 7 and 8, in addition to checking the Compilation Thread State, the
 Checkpointing Thread also checks if the checkpoint should be interrupted, and
-returns from `TR::CompilationInfo::suspendCompThreadsForCheckpoint` if so. This
+returns from `TR::CRRuntime::suspendCompThreadsForCheckpoint` if so. This
 is because when the Checkpointing Thread releases the Comp Monitor to wait on
 the CR Monitor, the Shutdown Thread can acquire the Comp Monitor to begin the
 shutdown process.
@@ -208,7 +208,7 @@ Repeat steps 1-5 from Scenario 1
 6. The Shutdown Thread acquires the Comp Monitor
 7. The Checkpointing Thread wakes up with the CR Monitor in hand, releases the
    CR Monitor and blocks on the Comp Monitor
-8. The Shutdown Thread sets `TR::CompilationInfo::_checkpointStatus` to
+8. The Shutdown Thread sets `TR::CRRuntime::_checkpointStatus` to
    `TR_CheckpointStatus::INTERRUPT_CHECKPOINT`. Additionally (though irrelevant
    in this scenario) it also acquires the CR Monitor, calls `notify`, and
    releases the CR Monitor
@@ -224,7 +224,7 @@ Repeat steps 1-5 from Scenario 1
 2. The Shutdown Thread acquires the Comp Monitor
 3. The Comp Thread blocks on the Comp Monitor in order to (eventually) suspend
    itself
-4. The Shutdown Thread sets `TR::CompilationInfo::_checkpointStatus` to
+4. The Shutdown Thread sets `TR::CRRuntime::_checkpointStatus` to
    `TR_CheckpointStatus::INTERRUPT_CHECKPOINT`, acquires the CR Monitor, calls
    `notify`, and releases the CR Monitor
 5. The Shutdown Thread goes about the task of stopping the Comp Threads
@@ -277,7 +277,7 @@ already have been set to `TR_CheckpointStatus::SUSPEND_THREADS_FOR_CHECKPOINT`.
    `TR::CompilationInfo::SAMPLE_THR_SUSPENDED`; if it's not then it releases
    the Sampler Monitor, acquires the CR Monitor, releases the Comp Monitor, and
    waits on the CR Monitor
-4. The Sampler Thread checks if the `TR::CompilationInfo::_checkpointStatus` is
+4. The Sampler Thread checks if the `TR::CRRuntime::_checkpointStatus` is
    set to `TR_CheckpointStatus::SUSPEND_THREADS_FOR_CHECKPOINT`; if so it
    acquires the Comp Monitor[^2]
 5. The Sampler Thread acquires the Sampler Monitor
@@ -385,7 +385,7 @@ State.
 
 # Preparing for Restore
 
-As mentioned above, `TR::CompilationInfo::prepareForRestore` handles all the
+As mentioned above, `TR::CRRuntime::prepareForRestore` handles all the
 coordination needed to prepare the compiler for restore.
 
 First this method calls `J9::OptionsPostRestore::processOptionsPostRestore` to

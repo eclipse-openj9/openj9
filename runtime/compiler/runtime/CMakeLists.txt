@@ -73,3 +73,9 @@ if(J9VM_OPT_JITSERVER)
 		runtime/MetricsServer.cpp
 	)
 endif()
+
+if(J9VM_OPT_CRIU_SUPPORT)
+	j9jit_files(
+		runtime/CRRuntime.cpp
+	)
+endif()

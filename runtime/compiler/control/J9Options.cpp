@@ -52,6 +52,9 @@
 #include "env/j9methodServer.hpp"
 #include "control/JITServerCompilationThread.hpp"
 #endif /* defined(J9VM_OPT_JITSERVER) */
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+#include "runtime/CRRuntime.hpp"
+#endif /* if defined(J9VM_OPT_CRIU_SUPPORT) */
 
 #if defined(J9VM_OPT_SHARED_CLASSES)
 #include "j9jitnls.h"
@@ -2379,9 +2382,9 @@ bool J9::Options::preProcessJitServer(J9JavaVM *vm, J9JITConfig *jitConfig)
 #if defined(J9VM_OPT_CRIU_SUPPORT)
             if (implicitClientMode && useJitServerExplicitlySpecified)
                {
-               compInfo->setRemoteCompilationRequestedAtBootstrap(true);
+               compInfo->getCRRuntime()->setRemoteCompilationRequestedAtBootstrap(true);
                if (ifuncs->isJVMInPortableRestoreMode(currentThread))
-                   compInfo->setCanPerformRemoteCompilationInCRIUMode(true);
+                   compInfo->getCRRuntime()->setCanPerformRemoteCompilationInCRIUMode(true);
                }
 #endif
 
@@ -2451,7 +2454,7 @@ bool J9::Options::preProcessJitServer(J9JavaVM *vm, J9JITConfig *jitConfig)
 #if defined(J9VM_OPT_CRIU_SUPPORT)
          else if (useJitServerExplicitlyDisabled)
             {
-            compInfo->setRemoteCompilationExplicitlyDisabledAtBootstrap(true);
+            compInfo->getCRRuntime()->setRemoteCompilationExplicitlyDisabledAtBootstrap(true);
             }
 #endif // #if defined(J9VM_OPT_CRIU_SUPPORT)
          }
