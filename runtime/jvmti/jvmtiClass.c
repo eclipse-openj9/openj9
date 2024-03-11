@@ -1131,7 +1131,6 @@ redefineClassesCommon(jvmtiEnv* env,
 	J9HashTable * methodEquivalences = NULL;
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
 	j9object_t memberNamesToFix = NULL;
-	UDATA savedAllowUserHeapWalkFlag = 0;
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 #ifdef J9VM_INTERP_NATIVE_SUPPORT
 	J9JVMTIHCRJitEventData jitEventData;
@@ -1224,24 +1223,6 @@ redefineClassesCommon(jvmtiEnv* env,
 			}
 		}
 	}
-
-#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
-	/* Eliminate dark matter so that none will be encountered in prepareToFixMemberNames(). */
-	savedAllowUserHeapWalkFlag = vm->requiredDebugAttributes & J9VM_DEBUG_ATTRIBUTE_ALLOW_USER_HEAP_WALK;
-	vm->requiredDebugAttributes |= J9VM_DEBUG_ATTRIBUTE_ALLOW_USER_HEAP_WALK;
-
-	/* This is to help with Metronome to avoid requesting Exclusive if we already have SafePoint, which may not look as Exclusive to the requester thread */
-	vm->alreadyHaveExclusive = TRUE;
-
-	vm->memoryManagerFunctions->j9gc_modron_global_collect_with_overrides(currentThread, J9MMCONSTANT_EXPLICIT_GC_EXCLUSIVE_VMACCESS_ALREADY_ACQUIRED);
-
-	vm->alreadyHaveExclusive = FALSE;
-
-	if (0 == savedAllowUserHeapWalkFlag) {
-		/* Clear the flag to restore its original value. */
-		vm->requiredDebugAttributes &= ~J9VM_DEBUG_ATTRIBUTE_ALLOW_USER_HEAP_WALK;
-	}
-#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 	/* Determine all ROM classes which need a new RAM class, and pair them with their current RAM class. */
 	rc = determineClassesToRecreate(currentThread, class_count, specifiedClasses, &classPairs,

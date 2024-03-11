@@ -3244,7 +3244,7 @@ fail:
 			 *            + J9ClassIsPrimitiveValueType
 			 *           + J9ClassAllowsNonAtomicCreation
 			 *
-			 *         + Unused
+			 *         + J9ClassNeedToPruneMemberNames
 			 *        + Unused
 			 *       + Unused
 			 *      + Unused

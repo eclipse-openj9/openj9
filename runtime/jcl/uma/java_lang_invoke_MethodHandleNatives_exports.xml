@@ -40,4 +40,5 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	<export name="Java_java_lang_invoke_MethodHandleNatives_getConstant">
 		<exclude-if condition="spec.java9"/>
 	</export>
+	<export name="Java_java_lang_invoke_MethodHandleNatives_markClassForMemberNamePruning" />
 </exports>
