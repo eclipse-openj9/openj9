@@ -35,10 +35,10 @@ import com.ibm.j9ddr.vm29.types.UDATA;
 
 public class SegmentsUtil {
 	private static final String nl = System.getProperty("line.separator");
-	
+
 	public static void dbgDumpSegmentList(PrintStream out, J9MemorySegmentListPointer segmentListPointer) throws CorruptDataException {
 		String fmt = null;
-		if (J9BuildFlags.env_data64) {
+		if (J9BuildFlags.J9VM_ENV_DATA64) {
 			out.append("+----------------+----------------+----------------+----------------+--------+--------+\n");
 			out.append("|    segment     |     start      |     alloc      |      end       |  type  |  size  |\n");
 			out.append("+----------------+----------------+----------------+----------------+--------+--------+\n");
@@ -57,15 +57,15 @@ public class SegmentsUtil {
 
 			totalMemory += seg.size().longValue();
 			totalMemoryInUse += seg.heapAlloc().sub(seg.heapBase()).longValue();
-			
+
 			String msg = String.format(fmt, seg.getAddress(), seg.heapBase().getAddress(), seg.heapAlloc().getAddress(), seg.heapTop().getAddress()
 					, seg.type().longValue(), seg.size().longValue());
 			out.append(msg);
 			out.append(nl);
 			seg = segmentListPointer.nextSegment();
 		}
-		
-		if (J9BuildFlags.env_data64) {
+
+		if (J9BuildFlags.J9VM_ENV_DATA64) {
 			out.append("+----------------+----------------+----------------+----------------+--------+--------+\n");
 		} else {
 			out.append("+--------+--------+--------+--------+--------+--------+\n");
@@ -73,10 +73,10 @@ public class SegmentsUtil {
 		printMemoryUsed(out, totalMemory, totalMemoryInUse);
 		out.append(nl);
 	}
-	
+
 	public static void dbgDumpJITCodeSegmentList(PrintStream out, J9MemorySegmentListPointer segmentListPointer) throws CorruptDataException {
 		String fmt = null;
-		if (J9BuildFlags.env_data64) {
+		if (J9BuildFlags.J9VM_ENV_DATA64) {
 			out.append("+----------------+----------------+----------------+----------------+----------------+--------+\n");
 			out.append("|    segment     |     start      |    warmAlloc   |    coldAlloc   |      end       |  size  |\n");
 			out.append("+----------------+----------------+----------------+----------------+----------------+--------+\n");
@@ -98,9 +98,9 @@ public class SegmentsUtil {
 			long coldAlloc = UDATAPointer.cast(heapBase.add(UDATA.SIZEOF)).at(0).longValue();
 
 			totalMemory += seg.size().longValue();
-			totalMemoryInUse += (warmAlloc - seg.heapBase().longValue()) + 
+			totalMemoryInUse += (warmAlloc - seg.heapBase().longValue()) +
 								(seg.heapTop().longValue() - coldAlloc);
-			
+
 			String msg = String.format(fmt, seg.getAddress(), seg.heapBase().getAddress(), warmAlloc, coldAlloc, seg.heapTop().getAddress()
 					, seg.size().longValue());
 			out.append(msg);
@@ -108,7 +108,7 @@ public class SegmentsUtil {
 			seg = segmentListPointer.nextSegment();
 		}
 
-		if (J9BuildFlags.env_data64) {
+		if (J9BuildFlags.J9VM_ENV_DATA64) {
 			out.append("+----------------+----------------+----------------+----------------+----------------+--------+\n");
 		} else {
 			out.append("+--------+--------+--------+--------+--------+--------+\n");
@@ -116,7 +116,7 @@ public class SegmentsUtil {
 		printMemoryUsed(out, totalMemory, totalMemoryInUse);
 		out.append(nl);
 	}
-	
+
 	private static void printMemoryUsed(PrintStream out, long totalMemory, long totalMemoryInUse) {
 		long totalMemoryFree = totalMemory - totalMemoryInUse;
 		out.println(String.format("Total memory:           %016d (%016x)", totalMemory, totalMemory));
@@ -167,7 +167,7 @@ public class SegmentsUtil {
 		}
 	}
 
-	private static void addSegmentsToArrayList(J9MemorySegmentListPointer segmentListPointer, ArrayList<J9MemorySegmentPointer> segmentArray, int segmentType) 
+	private static void addSegmentsToArrayList(J9MemorySegmentListPointer segmentListPointer, ArrayList<J9MemorySegmentPointer> segmentArray, int segmentType)
 			throws CorruptDataException
 	{
 		MemorySegmentIterator segmentIterator = new MemorySegmentIterator(segmentListPointer, segmentType, false);
@@ -179,13 +179,13 @@ public class SegmentsUtil {
 	}
 
 	private static J9MemorySegmentPointer[] getSortedSegments(J9JavaVMPointer vm, int segmentType) throws CorruptDataException {
-		ArrayList<J9MemorySegmentPointer> segmentArray = new ArrayList<J9MemorySegmentPointer>();
+		ArrayList<J9MemorySegmentPointer> segmentArray = new ArrayList<>();
 
 		try {
 			addSegmentsToArrayList(vm.memorySegments(), segmentArray, segmentType);
 			addSegmentsToArrayList(vm.classMemorySegments(), segmentArray, segmentType);
 
-			if (J9BuildFlags.interp_nativeSupport) {
+			if (J9BuildFlags.J9VM_INTERP_NATIVE_SUPPORT) {
 				/* readJavaVM also reads converts the JITConfig pointer. */
 				if (!vm.jitConfig().isNull()) {
 					addSegmentsToArrayList(vm.jitConfig().codeCacheList(), segmentArray, segmentType);
@@ -255,7 +255,7 @@ public class SegmentsUtil {
 		out.append("Overlapping segments:");
 		out.append(nl);
 		String fmt;
-		if (J9BuildFlags.env_data64) {
+		if (J9BuildFlags.J9VM_ENV_DATA64) {
 			out.append("+----------------+----------------+----------------+----------------+--------+--------+\n");
 			out.append("|    segment     |     start      |     alloc      |      end       |  type  |  size  |\n");
 			out.append("+----------------+----------------+----------------+----------------+--------+--------+\n");

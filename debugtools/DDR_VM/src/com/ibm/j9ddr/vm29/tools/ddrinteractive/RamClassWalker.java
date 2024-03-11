@@ -232,7 +232,7 @@ public class RamClassWalker extends ClassWalker {
 					/*
 					 * Add the method after the iTable. We add i + 1 to the
 					 * iTable.nextEA() because we do not want to print the
-					 * iTable.nextEA() but actually the value after it which 
+					 * iTable.nextEA() but actually the value after it which
 					 * will be a method
 					 */
 					classWalkerCallback.addSlot(clazz, SlotType.J9_iTableMethod, iTable.nextEA().add(i + 1), "method", "!j9method");
@@ -439,7 +439,7 @@ public class RamClassWalker extends ClassWalker {
 		}
 
 		UDATA staticSlotCount = ramClass.romClass().objectStaticCount().add(ramClass.romClass().singleScalarStaticCount());
-		if (J9BuildFlags.env_data64) {
+		if (J9BuildFlags.J9VM_ENV_DATA64) {
 			staticSlotCount = staticSlotCount.add(ramClass.romClass().doubleScalarStaticCount());
 		} else {
 			staticSlotCount = staticSlotCount.add(1).bitAnd(~1L).add(ramClass.romClass().doubleScalarStaticCount().mult(2));

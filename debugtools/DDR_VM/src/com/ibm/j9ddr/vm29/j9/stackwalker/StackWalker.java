@@ -258,12 +258,12 @@ public class StackWalker
 			walkState.argCount = new UDATA(0);
 			walkState.frameFlags = new UDATA(0);
 
-			if (J9BuildFlags.interp_nativeSupport) {
+			if (J9BuildFlags.J9VM_INTERP_NATIVE_SUPPORT) {
 				walkState.jitInfo = J9JITExceptionTablePointer.NULL;
 				walkState.inlineDepth = 0;
 				walkState.inlinerMap = null;
 
-				if (J9BuildFlags.jit_fullSpeedDebug) {
+				if (J9BuildFlags.J9VM_JIT_FULL_SPEED_DEBUG) {
 					walkState.decompilationRecord = J9JITDecompilationInfoPointer.NULL;
 					walkState.resolveFrameFlags = new UDATA(0);
 				}
@@ -288,22 +288,22 @@ public class StackWalker
 
 						/* fetch the Java stack for the platform directly from the register file */
 						String javaSPName = "";
-						if (J9BuildFlags.arch_power) {
+						if (J9BuildFlags.J9VM_ARCH_POWER) {
 							/* AIX shows as POWER not PPC */
 							/* gpr14 */
 							javaSPName = "gpr14";
-						} else if (J9BuildFlags.arch_s390) {
+						} else if (J9BuildFlags.J9VM_ARCH_S390) {
 							/* r5 */
 							javaSPName = "r5";
-						} else if (J9BuildFlags.arch_x86) {
-							if (J9BuildFlags.env_data64) {
+						} else if (J9BuildFlags.J9VM_ARCH_X86) {
+							if (J9BuildFlags.J9VM_ENV_DATA64) {
 								/* rsp */
 								javaSPName = "rsp";
 							} else {
 								/* esp */
 								javaSPName = "esp";
 							}
-						} else if (J9BuildFlags.arch_aarch64) {
+						} else if (J9BuildFlags.J9VM_ARCH_AARCH64) {
 							javaSPName = "r20";
 						} else {
 							throw new IllegalArgumentException("Unsupported platform");
@@ -381,9 +381,9 @@ public class StackWalker
 					+ ", A0 = "
 					+ walkState.arg0EA.getHexAddress()
 					+ ", j2iFrame = "
-					+ (J9BuildFlags.interp_nativeSupport ? walkState.j2iFrame.getHexAddress() : "0")
+					+ (J9BuildFlags.J9VM_INTERP_NATIVE_SUPPORT ? walkState.j2iFrame.getHexAddress() : "0")
 					+ ", decomp = "
-					+ (J9BuildFlags.jit_fullSpeedDebug ? walkState.decompilationStack.getHexAddress() : "0")
+					+ (J9BuildFlags.J9VM_JIT_FULL_SPEED_DEBUG ? walkState.decompilationStack.getHexAddress() : "0")
 			);
 
 
@@ -395,7 +395,7 @@ public class StackWalker
 
 			//TODO missing initializeObjectSlotBitVector
 
-			if (J9BuildFlags.interp_nativeSupport) {
+			if (J9BuildFlags.J9VM_INTERP_NATIVE_SUPPORT) {
 				if (walkState.flags == J9_STACKWALK_ITERATE_O_SLOTS) {
 					walkState.flags |= J9_STACKWALK_SKIP_INLINES;
 				}
@@ -447,11 +447,11 @@ public class StackWalker
 						} else if (walkState.pc.getAddress() == J9SF_FRAME_TYPE_METHODTYPE) {
 							swPrintf(walkState, 200, "PC Switch: MethodType");
 								walkMethodTypeFrame(walkState);
-						} else if (J9BuildFlags.interp_nativeSupport
+						} else if (J9BuildFlags.J9VM_INTERP_NATIVE_SUPPORT
 								&& walkState.pc.getAddress() == J9SF_FRAME_TYPE_JIT_RESOLVE) {
 							swPrintf(walkState, 200, "PC Switch: JIT Resolve");
 							walkJITResolveFrame(walkState);
-						} else if (J9BuildFlags.interp_nativeSupport
+						} else if (J9BuildFlags.J9VM_INTERP_NATIVE_SUPPORT
 								&& walkState.pc.getAddress() == J9SF_FRAME_TYPE_JIT_JNI_CALLOUT) {
 							swPrintf(walkState, 200, "PC Switch: JIT_JNI_CALLOUT");
 							walkJITJNICalloutFrame(walkState);
@@ -508,7 +508,7 @@ public class StackWalker
 					 * Call the JIT walker if the current frame is a transition from
 					 * the JIT to the interpreter
 					 */
-					if (J9BuildFlags.interp_nativeSupport) {
+					if (J9BuildFlags.J9VM_INTERP_NATIVE_SUPPORT) {
 						if (startAtJITFrame || (walkState.frameFlags.longValue() & J9_STACK_FLAGS_JIT_TRANSITION_TO_INTERPRETER_MASK) != 0) {
 							// jitFrame:
 							startAtJITFrame = false;
@@ -821,7 +821,7 @@ public class StackWalker
 					return FrameCallbackResult.KEEP_ITERATING;
 				}
 
-				if ((!J9BuildFlags.interp_nativeSupport)
+				if ((!J9BuildFlags.J9VM_INTERP_NATIVE_SUPPORT)
 						|| walkState.jitInfo.isNull()) {
 
 					if (walkState.bp.at(0).anyBitsIn(J9SF_A0_INVISIBLE_TAG)) {
@@ -1015,7 +1015,7 @@ public class StackWalker
 					walkState.bp = walkState.bp.sub(1);
 				}
 
-				if (J9BuildFlags.interp_nativeSupport
+				if (J9BuildFlags.J9VM_INTERP_NATIVE_SUPPORT
 						&& walkState.bp.eq(walkState.j2iFrame)) {
 					walkState.unwindSP = walkState.bp.subOffset(J9SFJ2IFrame.SIZEOF)
 							.addOffset(UDATA.SIZEOF);
@@ -1225,7 +1225,7 @@ public class StackWalker
 				}
 			}
 
-			if (J9BuildFlags.interp_nativeSupport) {
+			if (J9BuildFlags.J9VM_INTERP_NATIVE_SUPPORT) {
 				J9VMEntryLocalStoragePointer els = walkState.oldEntryLocalStorage;
 				walkState.fillElsFields(els);
 

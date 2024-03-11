@@ -202,7 +202,7 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 						if (modifiers.anyBitsIn(J9FieldSizeDouble)) {
 							/* Add single scalar and object counts together, round up to 2 and divide by 2 to get number of doubles used by singles */
 							UDATA doubleSlots;
-							if (J9BuildFlags.env_data64) {
+							if (J9BuildFlags.J9VM_ENV_DATA64) {
 								doubleSlots = new UDATA(romClass.objectStaticCount().add(romClass.singleScalarStaticCount()));
 							} else {
 								doubleSlots = new UDATA(romClass.objectStaticCount().add(romClass.singleScalarStaticCount()).add(1)).rightShift(1);

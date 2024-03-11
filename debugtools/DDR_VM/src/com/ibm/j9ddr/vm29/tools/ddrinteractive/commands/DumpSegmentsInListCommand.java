@@ -41,8 +41,8 @@ public class DumpSegmentsInListCommand extends Command
 	public void run(String command, String[] args, Context context, PrintStream out) throws DDRInteractiveCommandException 
 	{
 		try {
-			long address = CommandUtils.parsePointer(args[0], J9BuildFlags.env_data64);
-			
+			long address = CommandUtils.parsePointer(args[0], J9BuildFlags.J9VM_ENV_DATA64);
+
 			J9MemorySegmentListPointer list = J9MemorySegmentListPointer.cast(address);
 			SegmentsUtil.dbgDumpSegmentList(out, list);
 		} catch (CorruptDataException e) {

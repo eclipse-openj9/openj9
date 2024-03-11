@@ -118,7 +118,7 @@ public class MarkMapCommand extends Command
 	protected void isMarked(String[] args, Context context, PrintStream out) throws DDRInteractiveCommandException
 	{
 		try {
-			long address = CommandUtils.parsePointer(args[1], J9BuildFlags.env_data64);
+			long address = CommandUtils.parsePointer(args[1], J9BuildFlags.J9VM_ENV_DATA64);
 			J9ObjectPointer object = J9ObjectPointer.cast(address);
 			
 			MarkedObject result = markMap.queryObject(object);
@@ -139,7 +139,7 @@ public class MarkMapCommand extends Command
 	protected void near(String[] args, Context context, PrintStream out) throws DDRInteractiveCommandException
 	{
 		try {
-			long address = CommandUtils.parsePointer(args[1], J9BuildFlags.env_data64);
+			long address = CommandUtils.parsePointer(args[1], J9BuildFlags.J9VM_ENV_DATA64);
 			J9ObjectPointer object = J9ObjectPointer.cast(address);
 			J9ObjectPointer base = object.untag(markMap.getPageSize(object) - 1);
 			J9ObjectPointer top = base.addOffset(markMap.getPageSize(object));
@@ -154,8 +154,8 @@ public class MarkMapCommand extends Command
 	protected void scanRange(String[] args, Context context, PrintStream out) throws DDRInteractiveCommandException
 	{
 		try {
-			long baseAddress = CommandUtils.parsePointer(args[1], J9BuildFlags.env_data64);
-			long topAddress = CommandUtils.parsePointer(args[2], J9BuildFlags.env_data64);
+			long baseAddress = CommandUtils.parsePointer(args[1], J9BuildFlags.J9VM_ENV_DATA64);
+			long topAddress = CommandUtils.parsePointer(args[2], J9BuildFlags.J9VM_ENV_DATA64);
 			J9ObjectPointer base = J9ObjectPointer.cast(baseAddress);
 			J9ObjectPointer top = J9ObjectPointer.cast(topAddress);
 			
@@ -186,7 +186,7 @@ public class MarkMapCommand extends Command
 	protected void markBits(String[] args, Context context, PrintStream out) throws DDRInteractiveCommandException
 	{
 		try {
-			long address = CommandUtils.parsePointer(args[1], J9BuildFlags.env_data64);
+			long address = CommandUtils.parsePointer(args[1], J9BuildFlags.J9VM_ENV_DATA64);
 			J9ObjectPointer object = J9ObjectPointer.cast(address);
 			
 			J9ObjectPointer base = J9ObjectPointer.cast(address).untag(markMap.getPageSize(object) - 1);
@@ -224,7 +224,7 @@ public class MarkMapCommand extends Command
 	
 	protected void fromBits(String[] args, Context context, PrintStream out) throws DDRInteractiveCommandException
 	{
-		long address = CommandUtils.parsePointer(args[1], J9BuildFlags.env_data64);
+		long address = CommandUtils.parsePointer(args[1], J9BuildFlags.J9VM_ENV_DATA64);
 		UDATAPointer markSlot = UDATAPointer.cast(address);
 
 		UDATAPointer base = markMap.getHeapMapBits();
@@ -253,7 +253,7 @@ public class MarkMapCommand extends Command
 	protected void findSource(String[] args, Context context, PrintStream out) throws DDRInteractiveCommandException
 	{
 		try {
-			long address = CommandUtils.parsePointer(args[1], J9BuildFlags.env_data64);
+			long address = CommandUtils.parsePointer(args[1], J9BuildFlags.J9VM_ENV_DATA64);
 			J9ObjectPointer object = J9ObjectPointer.cast(address);
 			
 			J9ObjectPointer scanPtr = J9ObjectPointer.cast(markMap.getHeapBase());
@@ -355,18 +355,18 @@ public class MarkMapCommand extends Command
 					throw new DDRInteractiveCommandException("Only valid when running balanced!");
 				}
 			} else {
-				long address = CommandUtils.parsePointer(args[1], J9BuildFlags.env_data64);
+				long address = CommandUtils.parsePointer(args[1], J9BuildFlags.J9VM_ENV_DATA64);
 				MM_HeapMapPointer heapMap = MM_HeapMapPointer.cast(address);
 				newMap = GCHeapMap.fromHeapMap(heapMap);
 			}
-			
+
 			/* Quick test for validity */
 			newMap.queryObject(J9ObjectPointer.cast(newMap.getHeapBase()));
 			newMap.queryObject(J9ObjectPointer.cast(newMap.getHeapTop().subOffset(newMap.getObjectGrain())));
 		} catch (CorruptDataException e) {
 			throw new DDRInteractiveCommandException(e);
 		}
-		
+
 		/* If we got here, the new map must be ok */
 		if (newMap != null) {
 			markMap = newMap;

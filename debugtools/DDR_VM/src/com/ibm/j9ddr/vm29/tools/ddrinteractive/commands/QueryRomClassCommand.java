@@ -57,9 +57,9 @@ public class QueryRomClassCommand extends Command
 		}
 		try {
 			String[] queries = args[0].split(",");
-			
-			long address = CommandUtils.parsePointer(queries[0], J9BuildFlags.env_data64);
-			
+
+			long address = CommandUtils.parsePointer(queries[0], J9BuildFlags.J9VM_ENV_DATA64);
+
 			J9ROMClassPointer romClass = J9ROMClassPointer.cast(address);
 			queries[0] = "";
 

@@ -44,9 +44,9 @@ import com.ibm.j9ddr.vm29.types.IDATA;
 import com.ibm.j9ddr.vm29.types.UDATA;
 
 class ObjectMonitor_V1 extends ObjectMonitor
-{	
+{
 	private static HashMap<J9ObjectPointer, List<J9VMThreadPointer>> blockedThreadsCache;
-	
+
 	private J9VMThreadPointer owner;
 	private long count;
 	private boolean isInflated;
@@ -55,7 +55,7 @@ class ObjectMonitor_V1 extends ObjectMonitor
 	private ArrayList<J9VMThreadPointer> waitingThreads;
 	private ArrayList<J9VMThreadPointer> blockedThreads;
 	private boolean ownerAndCountInitialized = false;
-	private J9ObjectMonitorPointer j9objectMonitor;	// the entry in the monitor table corresponding to an inflated object monitor
+	private J9ObjectMonitorPointer j9objectMonitor; // the entry in the monitor table corresponding to an inflated object monitor
 	private J9ObjectPointer object;
 
 	/* Do not instantiate. Use the factory */
@@ -65,7 +65,7 @@ class ObjectMonitor_V1 extends ObjectMonitor
 		j9objectMonitor = MonitorTableList.peek(object);
 		initializeLockword();
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.j9ddr.vm29.j9.ObjectMonitor#getObject()
 	 */
@@ -73,7 +73,7 @@ class ObjectMonitor_V1 extends ObjectMonitor
 	{
 		return object;
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.j9ddr.vm29.j9.ObjectMonitor#getLockword()
 	 */
@@ -81,12 +81,12 @@ class ObjectMonitor_V1 extends ObjectMonitor
 	{
 		return lockword;
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.j9ddr.vm29.j9.ObjectMonitor#getInflatedMonitor()
 	 */
 	@Override
-	public J9ThreadAbstractMonitorPointer getInflatedMonitor() 
+	public J9ThreadAbstractMonitorPointer getInflatedMonitor()
 	{
 		return monitor;
 	}
@@ -95,11 +95,11 @@ class ObjectMonitor_V1 extends ObjectMonitor
 	 * @see com.ibm.j9ddr.vm29.j9.ObjectMonitor#getInflatedMonitor()
 	 */
 	@Override
-	public J9ObjectMonitorPointer getJ9ObjectMonitorPointer() 
+	public J9ObjectMonitorPointer getJ9ObjectMonitorPointer()
 	{
 		return j9objectMonitor;
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.j9ddr.vm29.j9.ObjectMonitor#getOwner()
 	 */
@@ -110,13 +110,13 @@ class ObjectMonitor_V1 extends ObjectMonitor
 		}
 		return owner;
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.j9ddr.vm29.j9.ObjectMonitor#getCount()
 	 */
 	public long getCount() throws CorruptDataException
 	{
-		if(!ownerAndCountInitialized) {
+		if (!ownerAndCountInitialized) {
 			initializeOwnerAndCount();
 		}
 		return count;
@@ -129,7 +129,7 @@ class ObjectMonitor_V1 extends ObjectMonitor
 	{
 		return isInflated;
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.j9ddr.vm29.j9.ObjectMonitor#isInTable()
 	 */
@@ -137,46 +137,46 @@ class ObjectMonitor_V1 extends ObjectMonitor
 	{
 		return j9objectMonitor.notNull();
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.j9ddr.vm29.j9.ObjectMonitor#getWaitingThreads()
 	 */
 	public List<J9VMThreadPointer> getWaitingThreads() throws CorruptDataException
 	{
-		if(waitingThreads == null) {
+		if (waitingThreads == null) {
 			initializeWaitingThreads();
 		}
 		return waitingThreads;
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.j9ddr.vm29.j9.ObjectMonitor#getBlockedThreads()
 	 */
 	public List<J9VMThreadPointer> getBlockedThreads() throws CorruptDataException
 	{
-		if(blockedThreads == null) {
+		if (blockedThreads == null) {
 			initializeBlockedThreads();
 		}
 		return blockedThreads;
 	}
-	
+
 	public boolean isContended() throws CorruptDataException
 	{
-		if(isInflated) {
-			return getBlockedThreads().size() > 0;		
+		if (isInflated) {
+			return getBlockedThreads().size() > 0;
 		} else {
 			return lockword.allBitsIn(OBJECT_HEADER_LOCK_FLC);
 		}
 	}
-	
+
 	private void initializeOwnerAndCount() throws CorruptDataException
 	{
-		if(isInflated) {
+		if (isInflated) {
 			J9ThreadPointer osOwner = monitor.owner();
-			if(osOwner.notNull()) {
+			if (osOwner.notNull()) {
 				owner = J9ThreadHelper.getVMThread(osOwner);
 				count = monitor.count().longValue();
-				if(count == 0) {
+				if (count == 0) {
 					owner = J9VMThreadPointer.NULL;
 				}
 			} else {
@@ -184,17 +184,17 @@ class ObjectMonitor_V1 extends ObjectMonitor
 			}
 		} else {
 			owner = J9VMThreadPointer.cast(lockword.untag(OBJECT_HEADER_LOCK_BITS_MASK));
-			if(owner.notNull()) {
-				UDATA base = UDATA.cast(lockword).bitAnd(OBJECT_HEADER_LOCK_BITS_MASK).rightShift((int)OBJECT_HEADER_LOCK_RECURSION_OFFSET);
-				if(J9BuildFlags.thr_lockReservation) {
-					if(!lockword.allBitsIn(OBJECT_HEADER_LOCK_RESERVED)) {
+			if (owner.notNull()) {
+				UDATA base = UDATA.cast(lockword).bitAnd(OBJECT_HEADER_LOCK_BITS_MASK).rightShift((int) OBJECT_HEADER_LOCK_RECURSION_OFFSET);
+				if (J9BuildFlags.J9VM_THR_LOCK_RESERVATION) {
+					if (!lockword.allBitsIn(OBJECT_HEADER_LOCK_RESERVED)) {
 						base = base.add(1);
 					}
 					count = base.longValue();
 				} else {
 					count = base.add(1).longValue();
 				}
-				if(count == 0) {
+				if (count == 0) {
 					/* this can happen if the lock is reserved but unowned */
 					owner = J9VMThreadPointer.NULL;
 				}
@@ -202,39 +202,39 @@ class ObjectMonitor_V1 extends ObjectMonitor
 		}
 		ownerAndCountInitialized = true;
 	}
-	
+
 	private void initializeWaitingThreads() throws CorruptDataException
 	{
-		waitingThreads = new ArrayList<J9VMThreadPointer>();
-		if(!isInflated) {
+		waitingThreads = new ArrayList<>();
+		if (!isInflated) {
 			return;
 		}
 		J9ThreadPointer thread = monitor.waiting();
-		while(thread.notNull()) {
+		while (thread.notNull()) {
 			J9VMThreadPointer vmThread = J9ThreadHelper.getVMThread(thread);
-			if(vmThread.notNull()) {
+			if (vmThread.notNull()) {
 				waitingThreads.add(vmThread);
 			}
 			thread = thread.next();
 		}
 	}
-	
+
 	private void initializeBlockedThreads() throws CorruptDataException
 	{
-		blockedThreads = new ArrayList<J9VMThreadPointer>();
-		if(isInflated) {
-			if(OmrBuildFlags.OMR_THR_THREE_TIER_LOCKING) {
+		blockedThreads = new ArrayList<>();
+		if (isInflated) {
+			if (OmrBuildFlags.OMR_THR_THREE_TIER_LOCKING) {
 				J9ThreadPointer thread = J9ThreadMonitorHelper.getBlockingField(monitor);
-				while(thread.notNull()) {
+				while (thread.notNull()) {
 					J9VMThreadPointer vmThread = J9ThreadHelper.getVMThread(thread);
-					if(vmThread.notNull()) {
+					if (vmThread.notNull()) {
 						blockedThreads.add(vmThread);
 					}
 					thread = thread.next();
 				}
 			} else {
 				List<J9VMThreadPointer> list = getBlockedThreads(object);
-				if(list != null) {
+				if (list != null) {
 					blockedThreads.addAll(list);
 				}
 			}
@@ -252,26 +252,26 @@ class ObjectMonitor_V1 extends ObjectMonitor
 	private void initializeLockword() throws CorruptDataException
 	{
 		lockword = J9ObjectMonitorPointer.NULL;
-		
+
 		// TODO : why isn't there a cast UDATA->IDATA?
 		IDATA lockOffset = new IDATA(J9ObjectHelper.clazz(object).lockOffset());
 		// TODO : why isn't there an int/long comparison
-		if(lockOffset.gte(new IDATA(0))) {
-			lockword = ObjectMonitorReferencePointer.cast(object.addOffset(lockOffset.longValue())).at(0);			
+		if (lockOffset.gte(new IDATA(0))) {
+			lockword = ObjectMonitorReferencePointer.cast(object.addOffset(lockOffset.longValue())).at(0);
 		} else {
 			if (j9objectMonitor.notNull()) {
 				lockword = j9objectMonitor.alternateLockword();
 			}
 		}
-		
-		if(lockword.notNull()) {
+
+		if (lockword.notNull()) {
 			isInflated = lockword.allBitsIn(OBJECT_HEADER_LOCK_INFLATED);
 			if (isInflated) {
 				/* knowing it's inflated we could extract the J9ObjectMonitor doing:
-				 * 
+				 *
 				 * 		J9ObjectMonitorPointer.cast(lockword.untag(OBJECT_HEADER_LOCK_INFLATED));
-				 *	
-				 *...but we already have it so why bother 
+				 *
+				 *...but we already have it so why bother
 				 */
 				monitor = J9ThreadAbstractMonitorPointer.cast(j9objectMonitor.monitor());
 			}
@@ -280,19 +280,19 @@ class ObjectMonitor_V1 extends ObjectMonitor
 
 	private static List<J9VMThreadPointer> getBlockedThreads(J9ObjectPointer blockingObject) throws CorruptDataException
 	{
-		// Repeatedly walking the thread list could get expensive. 
-		// Do a single walk and cache all the results. 
-		if(blockedThreadsCache == null) {
-			blockedThreadsCache = new HashMap<J9ObjectPointer, List<J9VMThreadPointer>>();
+		// Repeatedly walking the thread list could get expensive.
+		// Do a single walk and cache all the results.
+		if (blockedThreadsCache == null) {
+			blockedThreadsCache = new HashMap<>();
 			GCVMThreadListIterator iterator = GCVMThreadListIterator.from();
 			while (iterator.hasNext()) {
 				J9VMThreadPointer vmThread = iterator.next();
-				if(vmThread.publicFlags().allBitsIn(J9Consts.J9_PUBLIC_FLAGS_THREAD_BLOCKED)) {
-					J9ObjectPointer object = vmThread.blockingEnterObject(); 
-					if(object.notNull()) {
+				if (vmThread.publicFlags().allBitsIn(J9Consts.J9_PUBLIC_FLAGS_THREAD_BLOCKED)) {
+					J9ObjectPointer object = vmThread.blockingEnterObject();
+					if (object.notNull()) {
 						List<J9VMThreadPointer> list = blockedThreadsCache.get(object);
-						if(list == null) {
-							list = new ArrayList<J9VMThreadPointer>();
+						if (list == null) {
+							list = new ArrayList<>();
 							blockedThreadsCache.put(object, list);
 						}
 						list.add(vmThread);
@@ -302,18 +302,17 @@ class ObjectMonitor_V1 extends ObjectMonitor
 		}
 		return blockedThreadsCache.get(blockingObject);
 	}
-	
+
 	@Override
 	public int hashCode() {
 		return super.hashCode();
 	}
 
 	public int compareTo(ObjectMonitor objectMonitor) {
-		
 		int result = 0;
-		ObjectMonitor_V1 objectMonitor_V1 = (ObjectMonitor_V1)objectMonitor;
+		ObjectMonitor_V1 objectMonitor_V1 = (ObjectMonitor_V1) objectMonitor;
 		result = this.object.compare(objectMonitor_V1.object);
 		return result;
 	}
-	
+
 }

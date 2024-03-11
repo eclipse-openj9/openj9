@@ -36,7 +36,7 @@ import com.ibm.j9ddr.vm29.pointer.helper.J9ObjectHelper;
 /**
  * Handles converting !fj9object into !j9object
  */
-public class CompressedRefMappingCommand extends Command 
+public class CompressedRefMappingCommand extends Command
 {
 
 	public CompressedRefMappingCommand()
@@ -45,26 +45,25 @@ public class CompressedRefMappingCommand extends Command
 		addCommand("fj9objecttoj9object", "<address>", "Convert the compressed refs address to a j9object address.");
 		addCommand("j9objecttofj9object", "<address>", "Convert the j9object address to a compressed refs address.");
 	}
-	
+
 	private void printHelp(PrintStream out) {
 		out.append("Usage: \n");
 		out.append("  !fj9object <address>\n");
 		out.append("  !fj9objecttoj9object <address>\n");
 		out.append("  !j9objecttofj9object <address>\n");
 	}
-	
-	public void run(String command, String[] args, Context context,	PrintStream out) throws DDRInteractiveCommandException 
+
+	public void run(String command, String[] args, Context context,	PrintStream out) throws DDRInteractiveCommandException
 	{
 		if (args.length == 0) {
 			printHelp(out);
 			return;
 		}
-		
-		long address = CommandUtils.parsePointer(args[0], J9BuildFlags.env_data64);
+
+		long address = CommandUtils.parsePointer(args[0], J9BuildFlags.J9VM_ENV_DATA64);
 
 		VoidPointer ptr = VoidPointer.cast(address);
-		
-		
+
 		if (command.startsWith("!fj9object")) {
 			J9ObjectPointer mappedValue;
 			if (J9ObjectHelper.compressObjectReferences) {
@@ -72,11 +71,11 @@ public class CompressedRefMappingCommand extends Command
 			} else {
 				mappedValue = J9ObjectPointer.cast(ptr);
 			}
-		
+
 			if (command.startsWith("!fj9objecttoj9object")) {
 				out.println(String.format("!fj9object %s -> !j9object %s", ptr.getHexAddress(), mappedValue.getHexAddress()));
 			} else {
-				context.execute("!j9object", new String[]{mappedValue.getHexAddress()}, out);
+				context.execute("!j9object", new String[] { mappedValue.getHexAddress() }, out);
 			}
 		} else {
 			long tokenValue;

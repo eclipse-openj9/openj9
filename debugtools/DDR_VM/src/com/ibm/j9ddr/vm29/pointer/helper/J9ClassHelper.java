@@ -57,16 +57,16 @@ import com.ibm.j9ddr.vm29.types.Scalar;
 import com.ibm.j9ddr.vm29.types.U32;
 import com.ibm.j9ddr.vm29.types.UDATA;
 
-public class J9ClassHelper 
+public class J9ClassHelper
 {
 
 	private static HashMap<Long, HashMap<String, J9ObjectFieldOffset>> classToFieldOffsetCacheMap = new HashMap<Long, HashMap<String, J9ObjectFieldOffset>>();
-	
+
 	private static final Map<String, Character>TYPE_MAP;
 	private static final int MAXIMUM_ARRAY_ARITY = 100;
-	
+
 	static {
-		TYPE_MAP = new HashMap<String, Character>();
+		TYPE_MAP = new HashMap<>();
 		TYPE_MAP.put("void", 'V');
 		TYPE_MAP.put("boolean", 'Z');
 		TYPE_MAP.put("byte", 'B');
@@ -76,31 +76,31 @@ public class J9ClassHelper
 		TYPE_MAP.put("long", 'J');
 		TYPE_MAP.put("float", 'F');
 		TYPE_MAP.put("double", 'D');
-	};
-	
+	}
+
 	public static boolean isArrayClass(J9ClassPointer clazz) throws CorruptDataException
 	{
 		return classDepthAndFlags(clazz).anyBitsIn(J9JavaAccessFlags.J9AccClassRAMArray);
 	}
-	
+
 	public static String getName(J9ClassPointer clazz) throws CorruptDataException
 	{
-		return J9UTF8Helper.stringValue(clazz.romClass().className()); 
+		return J9UTF8Helper.stringValue(clazz.romClass().className());
 	}
-	
-	public static String getSignature(J9ClassPointer clazz) throws CorruptDataException 
+
+	public static String getSignature(J9ClassPointer clazz) throws CorruptDataException
 	{
 		String result;
 		if (isArrayClass(clazz)) {
 			result = getArrayName(clazz);
-		} else {			
+		} else {
 			String className = getName(clazz);
 			Character type = TYPE_MAP.get(className);
 			if (type != null) {
 				result = type.toString();
 			} else {
 				result = 'L' + className + ';';
-			}			
+			}
 		}
 		return result;
 	}
@@ -108,27 +108,27 @@ public class J9ClassHelper
 	public static String getArrayName(J9ClassPointer clazz) throws CorruptDataException
 	{
 		J9ArrayClassPointer arrayClass = J9ArrayClassPointer.cast(clazz);
-		
+
 		StringBuilder name = new StringBuilder();
-		
+
 		int arity = 0;
 		try {
 			arity = arrayClass.arity().intValue();
 		} catch (InvalidDataTypeException e) {
 			throw new AddressedCorruptDataException(arrayClass.getAddress(), "Array arity larger than MAXINT");
 		}
-		
+
 		if (arity > MAXIMUM_ARRAY_ARITY) {
 			//Doubtful
 			throw new AddressedCorruptDataException(arrayClass.getAddress(), "Very high arity " + arity + " from array class 0x" + Long.toHexString(arrayClass.getAddress()));
 		}
-		
+
 		for (int i = 0; i < arity; i++) {
 			name.append('[');
 		}
-		
+
 		String elementClassName = J9ClassHelper.getName(arrayClass.leafComponentType());
-		
+
 		Character type = TYPE_MAP.get(elementClassName);
 		if (type != null) {
 			name.append(type);
@@ -140,24 +140,24 @@ public class J9ClassHelper
 
 		return name.toString();
 	}
-	
+
 	public static String getJavaName(J9ClassPointer clazz) throws CorruptDataException
 	{
 		String baseName = getName(clazz);
 		char ch = baseName.charAt(0);
-		if(ch != '[') {
+		if (ch != '[') {
 			return baseName;
 		}
 		J9ArrayClassPointer arrayClass = J9ArrayClassPointer.cast(clazz);
 		int arity = arrayClass.arity().intValue();
 		StringBuilder buf = new StringBuilder();
-		for(int i = 0; i < arity; i++) {
+		for (int i = 0; i < arity; i++) {
 			buf.append("[]");
 		}
 		String aritySuffix = buf.toString();
 
 		ch = baseName.charAt(1);
-		switch(ch) {
+		switch (ch) {
 		case 'B': return "byte" + aritySuffix;
 		case 'C': return "char" + aritySuffix;
 		case 'D': return "double" + aritySuffix;
@@ -169,35 +169,35 @@ public class J9ClassHelper
 		case 'Z': return "boolean" + aritySuffix;
 
 		case 'L':
-		/*[IF INLINE-TYPES]*/
+			/*[IF INLINE-TYPES]*/
 		case 'Q':
-		/*[ENDIF] INLINE-TYPES */
+			/*[ENDIF] INLINE-TYPES */
 			return getName(arrayClass.leafComponentType()) + aritySuffix;
 		}
-		
+
 		// Should never happen
 		return baseName;
 	}
 
-	public static String formatFullInteractive(J9ClassPointer clazz) 
+	public static String formatFullInteractive(J9ClassPointer clazz)
 	{
 		String prefix = clazz.formatFullInteractive();
 		String suffix;
 		try {
 			suffix = String.format("\nClass name: %s\nTo view instance shape, use !j9classshape %s", J9ClassHelper.getName(clazz), clazz.getHexAddress());
 		} catch (CorruptDataException e) {
-			suffix = String.format("\nClass name: <ERROR>\n To view instance shape, use !j9classshape %s", clazz.getHexAddress());		
+			suffix = String.format("\nClass name: <ERROR>\n To view instance shape, use !j9classshape %s", clazz.getHexAddress());
 		}
 		return prefix + suffix;
 	}
 
-	public static Iterator<J9ObjectFieldOffset> getFieldOffsets(J9ClassPointer clazz) throws CorruptDataException 
+	public static Iterator<J9ObjectFieldOffset> getFieldOffsets(J9ClassPointer clazz) throws CorruptDataException
 	{
 		U32 flags = new U32(J9VM_FIELD_OFFSET_WALK_INCLUDE_STATIC | J9VM_FIELD_OFFSET_WALK_INCLUDE_INSTANCE);
 		return J9ObjectFieldOffsetIterator.J9ObjectFieldOffsetIteratorFor(clazz, superclass(clazz), flags);
 	}
-	
-	public static J9ClassPointer superclass(J9ClassPointer clazz) throws CorruptDataException 
+
+	public static J9ClassPointer superclass(J9ClassPointer clazz) throws CorruptDataException
 	{
 		long index = classDepth(clazz).longValue() - 1;
 		if (index < 0) {
@@ -206,13 +206,13 @@ public class J9ClassHelper
 		VoidPointer j9ClassInstancePointer = clazz.superclasses().at(index);
 		return J9ClassPointer.cast(j9ClassInstancePointer);
 	}
-	
+
 	private static HashMap<String, J9ObjectFieldOffset> getFieldOffsetCache(J9ClassPointer clazz)
 	{
 		Long classAddr = Long.valueOf(clazz.getAddress());
 		HashMap<String, J9ObjectFieldOffset> fieldOffsetCache = classToFieldOffsetCacheMap.get(classAddr);
-		
-		if(null != fieldOffsetCache) { 
+
+		if (null != fieldOffsetCache) {
 			return fieldOffsetCache;
 		} else {
 			fieldOffsetCache = new HashMap<String, J9ObjectFieldOffset>();
@@ -220,33 +220,33 @@ public class J9ClassHelper
 			return fieldOffsetCache ;
 		}
 	}
-	
-	public static J9ObjectFieldOffset checkFieldOffsetCache(J9ClassPointer clazz, String fieldName, String signature) 
+
+	public static J9ObjectFieldOffset checkFieldOffsetCache(J9ClassPointer clazz, String fieldName, String signature)
 	{
 		HashMap<String, J9ObjectFieldOffset> fieldOffsetCache = getFieldOffsetCache(clazz);
-		
+
 		return fieldOffsetCache.get(fieldName + "." + signature);
 	}
-	
-	public static void setFieldOffsetCache(J9ClassPointer clazz, J9ObjectFieldOffset offset, String fieldName, String signature) 
+
+	public static void setFieldOffsetCache(J9ClassPointer clazz, J9ObjectFieldOffset offset, String fieldName, String signature)
 	{
 		HashMap<String, J9ObjectFieldOffset> fieldOffsetCache = getFieldOffsetCache(clazz);
-		
+
 		fieldOffsetCache.put(fieldName + "." + signature, offset);
 	}
-	
+
 	public static boolean isSameOrSuperClassOf(J9ClassPointer superClazz, J9ClassPointer clazz) throws CorruptDataException
 	{
 		long superClassDepth = classDepth(superClazz).longValue();
-		if(superClazz.eq(clazz)) {
+		if (superClazz.eq(clazz)) {
 			return true;
 		}
-		if(classDepth(clazz).longValue() > superClassDepth) {
+		if (classDepth(clazz).longValue() > superClassDepth) {
 			return superClazz.eq(clazz.superclasses().at(superClassDepth));
 		}
 		return false;
 	}
-	
+
 	public static J9VTableHeaderPointer vTableHeader(J9ClassPointer clazz)
 	{
 		J9VTableHeaderPointer pointer = J9VTableHeaderPointer.cast(clazz.add(1));
@@ -276,7 +276,7 @@ public class J9ClassHelper
 		 * 		4. iTable
 		 * 		5. Static slots
 		 * 		6. Constant pool
-		 * 
+		 *
 		 * Array classes omit 1, 3, 5 and 6.
 		 */
 
@@ -302,19 +302,19 @@ public class J9ClassHelper
 
 		if (!J9ROMClassHelper.isArray(clazz.romClass())) {
 			// Fragment 1. RAM methods + extended method block
-			UDATA ramMethodsSize = clazz.romClass().romMethodCount().mult((int)J9Method.SIZEOF);
+			UDATA ramMethodsSize = clazz.romClass().romMethodCount().mult((int) J9Method.SIZEOF);
 			size = size.add(ramMethodsSize);
 			if (vm.runtimeFlags().allBitsIn(J9Consts.J9_RUNTIME_EXTENDED_METHOD_BLOCK)) {
 				UDATA extendedMethodBlockSize = Scalar.roundToSizeofUDATA(new UDATA(clazz.romClass().romMethodCount()));
 				size = size.add(extendedMethodBlockSize);
 			}
-			
+
 			// Fragment 3. Instance description
 			if (!clazz.instanceDescription().anyBitsIn(1)) {
 				UDATA highestBitInSlot = new UDATA(UDATA.SIZEOF * 8 - 1);
 				UDATA instanceDescriptionSize = clazz.totalInstanceSize().rightShift((int) (ObjectReferencePointer.SIZEOF >> 2) + 1);
 				instanceDescriptionSize = instanceDescriptionSize.add(highestBitInSlot).bitAnd(highestBitInSlot.bitNot());
-				if (J9BuildFlags.gc_leafBits) {
+				if (J9BuildFlags.J9VM_GC_LEAF_BITS) {
 					instanceDescriptionSize = instanceDescriptionSize.mult(2);
 				}
 				size = size.add(instanceDescriptionSize);
@@ -322,18 +322,18 @@ public class J9ClassHelper
 
 			// Fragment 5. Static slots
 			UDATA staticSlotCount = clazz.romClass().objectStaticCount().add(clazz.romClass().singleScalarStaticCount());
-			if (J9BuildFlags.env_data64) {
+			if (J9BuildFlags.J9VM_ENV_DATA64) {
 				staticSlotCount = staticSlotCount.add(clazz.romClass().doubleScalarStaticCount());
 			} else {
 				staticSlotCount = staticSlotCount.add(1).bitAnd(~1L).add(clazz.romClass().doubleScalarStaticCount().mult(2));
 			}
 			size = size.add(Scalar.convertSlotsToBytes(new UDATA(staticSlotCount)));
-			
+
 			// Fragment 6. Constant pool
 			UDATA constantPoolSlotCount = clazz.romClass().ramConstantPoolCount().mult(2);
 			size = size.add(Scalar.convertSlotsToBytes(new UDATA(constantPoolSlotCount)));
 		}
-		
+
 		// Fragment 2. Superclasses
 		UDATA classDepth = classDepthAndFlags(clazz).bitAnd(J9JavaAccessFlags.J9AccClassDepthMask);
 		if (classDepth.eq(0)) {
@@ -342,13 +342,13 @@ public class J9ClassHelper
 		} else {
 			size = size.add(Scalar.convertSlotsToBytes(classDepth));
 		}
-		
+
 		// Fragment 4. iTable
 		if (clazz.iTable().notNull()) {
 			J9ClassPointer superclass = J9ClassPointer.cast(clazz.superclasses().at(classDepth.sub(1)));
 			if (superclass.isNull() || !superclass.iTable().eq(clazz.iTable())) {
 				J9ITablePointer iTable = J9ITablePointer.cast(clazz.iTable());
-	
+
 				// Scan to the last iTable belonging to classPointer
 				if (superclass.isNull()) {
 					while (iTable.next().notNull()) {
@@ -359,25 +359,25 @@ public class J9ClassHelper
 						iTable = iTable.next();
 					}
 				}
-				
+
 				// Find the end of the last iTable
 				if (clazz.romClass().modifiers().allBitsIn(J9JavaAccessFlags.J9AccInterface)) {
 					iTable = iTable.add(1);
 				} else {
 					iTable = iTable.add(1).addOffset(iTable.interfaceClass().romClass().romMethodCount().mult(UDATA.SIZEOF));
 				}
-				
+
 				size = size.add(iTable.getAddress() - clazz.iTable().getAddress());
 			}
 		}
-	
+
 		return size;
 	}
-	
+
 	private static final int SYNTHETIC = 0x1000;
 	private static final int ANNOTATION = 0x2000;
 	private static final int ENUM = 0x4000;
-	
+
 	/**
 	 * Returns class modifiers as returned from java.lang.Class.getModifiers()
 	 * @param j9class Class to get modifiers for
@@ -387,7 +387,7 @@ public class J9ClassHelper
 	public static int getJavaLangClassModifiers(J9ClassPointer j9class) throws CorruptDataException
 	{
 		int rawModifiers = getRawModifiers(j9class);
-		
+
 		if (J9ClassHelper.isArrayClass(j9class)) {
 			rawModifiers &= (Modifier.PUBLIC | Modifier.PRIVATE | Modifier.PROTECTED |
 				Modifier.ABSTRACT | Modifier.FINAL);
@@ -396,13 +396,13 @@ public class J9ClassHelper
 							Modifier.STATIC | Modifier.FINAL | Modifier.INTERFACE |
 							Modifier.ABSTRACT | SYNTHETIC | ENUM | ANNOTATION);
 		}
-		
+
 		return rawModifiers;
 	}
-	
+
 	/**
 	 * Returns "raw" modifiers
-	 * 
+	 *
 	 * @param j9class
 	 * @return
 	 * @throws CorruptDataException
@@ -411,33 +411,33 @@ public class J9ClassHelper
 	{
 		if (J9ClassHelper.isArrayClass(j9class)) {
 			J9ArrayClassPointer arrayClass = J9ArrayClassPointer.cast(j9class);
-			
+
 			UDATA modifiers = arrayClass.leafComponentType().romClass().modifiers();
 
 			//OR in the bogus Sun bits
 			modifiers = modifiers.bitOr(J9JavaAccessFlags.J9AccAbstract);
 			modifiers = modifiers.bitOr(J9JavaAccessFlags.J9AccFinal);
-			
+
 			return modifiers.intValue();
 		} else {
 			UDATA modifiers = j9class.romClass().modifiers();
-			
+
 			if (j9class.romClass().outerClassName().notNull()) {
 				modifiers = j9class.romClass().memberAccessFlags();
 			}
-			
+
 			return modifiers.intValue();
 		}
 	}
-	
+
 	public static UDATA classDepthAndFlags(J9ClassPointer j9class) throws CorruptDataException {
 		return j9class.classDepthAndFlags();
 	}
-	
+
 	public static UDATA classDepth(J9ClassPointer j9class) throws CorruptDataException {
 		return classDepthAndFlags(j9class).bitAnd(J9JavaAccessFlags.J9AccClassDepthMask);
 	}
-	
+
 	public static U32 extendedClassFlags(J9ClassPointer j9class) throws CorruptDataException {
 		return new U32(j9class.classFlags());
 	}
@@ -453,12 +453,12 @@ public class J9ClassHelper
 	public static J9ClassPointer currentClass(J9ClassPointer j9class) throws CorruptDataException {
 		return isObsolete(j9class) ? j9class.arrayClass() : j9class;
 	}
-	
+
 	/*
 	 * Returns a program space pointer to the matching J9Method for the
 	 * specified class and PC.
 	 */
-	public static J9MethodPointer getMethodFromPCAndClass(J9ClassPointer localClass, U8Pointer pc) throws CorruptDataException 
+	public static J9MethodPointer getMethodFromPCAndClass(J9ClassPointer localClass, U8Pointer pc) throws CorruptDataException
 	{
 		J9ROMClassPointer localROMClass = localClass.romClass();
 		for (int i = 0; i < localROMClass.romMethodCount().longValue(); i++) {
@@ -473,35 +473,35 @@ public class J9ClassHelper
 		}
 		return J9MethodPointer.NULL;
 	}
-	
+
 	public static boolean isSwappedOut(J9ClassPointer clazz) throws CorruptDataException
 	{
 		return classDepthAndFlags(clazz).allBitsIn(J9JavaAccessFlags.J9AccClassHotSwappedOut);
 	}
-	
-	public static boolean hasValidEyeCatcher(J9ClassPointer clazz) throws CorruptDataException 
+
+	public static boolean hasValidEyeCatcher(J9ClassPointer clazz) throws CorruptDataException
 	{
 		return clazz.eyecatcher().eq(0x99669966L);
 	}
-	
+
 	// the method is in hshelp.c for native
 	public static boolean areExtensionsEnabled() throws CorruptDataException
 	{
 		J9JavaVMPointer vm = J9RASHelper.getVM(DataType.getJ9RASPointer());
-		
+
 		/* If -Xfuture is specified (i.e. JCK testing mode), adhere strictly to the specification */
-		if(vm.runtimeFlags().allBitsIn(J9Consts.J9_RUNTIME_XFUTURE)) {
+		if (vm.runtimeFlags().allBitsIn(J9Consts.J9_RUNTIME_XFUTURE)) {
 			return false;
 		}
 
-		if(J9BuildFlags.interp_nativeSupport) {
-			if(J9BuildFlags.jit_fullSpeedDebug) {
+		if (J9BuildFlags.J9VM_INTERP_NATIVE_SUPPORT) {
+			if (J9BuildFlags.J9VM_JIT_FULL_SPEED_DEBUG) {
 				/* Enable RedefineClass and RetransformClass extensions only if we are in full speed debug.
 				 * Currently this is always true since acquiring the redefine capability forces us into FSD.
 				 */
-				if(vm.jitConfig().notNull()) {
+				if (vm.jitConfig().notNull()) {
 					/* JIT is available and initialized for this platform */
-					if(!vm.jitConfig().fsdEnabled().eq(0)) {
+					if (!vm.jitConfig().fsdEnabled().eq(0)) {
 						return true;
 					} else {
 						/* but FSD is not enabled */
@@ -514,16 +514,16 @@ public class J9ClassHelper
 				}
 			} else {
 				/* We have JIT but no FSD, do not allow extensions */
-				if(vm.jitConfig().notNull()) {
+				if (vm.jitConfig().notNull()) {
 					return false;
 				}
 			}
 		} else {
 			/* No JIT, extensions are always allowed */
 		}
-	    return true;		
+		return true;
 	}
-	
+
 	public static boolean isAnonymousClass(J9ClassPointer clazz) throws CorruptDataException
 	{
 		return J9ROMClassHelper.isAnonymousClass(clazz.romClass());

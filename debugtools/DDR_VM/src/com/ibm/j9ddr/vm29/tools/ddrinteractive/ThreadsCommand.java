@@ -40,16 +40,15 @@ import com.ibm.j9ddr.vm29.types.U8;
 import com.ibm.j9ddr.vm29.types.UDATA;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.MonitorsCommand;
 
-
-public class ThreadsCommand extends  Command 
+public class ThreadsCommand extends Command
 {
 	private static final String nl = System.getProperty("line.separator");
 
-	public ThreadsCommand() 
+	public ThreadsCommand()
 	{
 		addCommand("threads", "cmd|help", "Lists VM threads");
 	}
-	
+
 	public void run(String command, String[] args, Context context, PrintStream out) throws DDRInteractiveCommandException {
 		if (args.length == 0) {
 			displayThreads(out);
@@ -69,7 +68,7 @@ public class ThreadsCommand extends  Command
 				} else if (argument.equalsIgnoreCase("flags")) {
 					flags(out);
 				} else if (argument.equalsIgnoreCase("debugEventData")) {
-					if (J9BuildFlags.interp_debugSupport) {
+					if (J9BuildFlags.J9VM_INTERP_DEBUG_SUPPORT) {
 						debugEventData(out);
 					}
 				} else if (argument.equalsIgnoreCase("search")) {
@@ -97,12 +96,12 @@ public class ThreadsCommand extends  Command
 				threadName = threadName.add(1);
 			}
 		}
-		
+
 		return sb.toString();
 	}
-	
+
 	private void trace(PrintStream out) throws DDRInteractiveCommandException {
-		// 					
+		//
 
 		try {
 			J9JavaVMPointer vm = J9RASHelper.getVM(DataType.getJ9RASPointer());
@@ -110,12 +109,12 @@ public class ThreadsCommand extends  Command
 			if (mainThread.notNull()) {
 				J9VMThreadPointer threadCursor = vm.mainThread();
 
-				do {		
-					out.append(String.format("    !stack 0x%s  !j9vmthread 0x%s  !j9thread 0x%s  tid 0x%s (%d) !utthreaddata 0x%s // %s", 
-							Long.toHexString(threadCursor.getAddress()), 
-							Long.toHexString(threadCursor.getAddress()), 
-							Long.toHexString(threadCursor.osThread().getAddress()), 
-							Long.toHexString(threadCursor.osThread().tid().longValue()), 
+				do {
+					out.append(String.format("    !stack 0x%s  !j9vmthread 0x%s  !j9thread 0x%s  tid 0x%s (%d) !utthreaddata 0x%s // %s",
+							Long.toHexString(threadCursor.getAddress()),
+							Long.toHexString(threadCursor.getAddress()),
+							Long.toHexString(threadCursor.osThread().getAddress()),
+							Long.toHexString(threadCursor.osThread().tid().longValue()),
 							threadCursor.osThread().tid().longValue(),
 							Long.toHexString(threadCursor.omrVMThread()._trace$uteThread().getAddress()),
 							getThreadName(threadCursor)));
@@ -131,22 +130,22 @@ public class ThreadsCommand extends  Command
 
 	/**
 	 * Prints all of the J9ObjectMonitors in the list of monitor tables.
-	 *  
+	 *
 	 * NOTE: It does not dump system monitors found in the thread lib monitor_pool
-	 * 
+	 *
 	 * @param out the PrintStream to write output to
-	 * 
+	 *
 	 * @see {@link MonitorsCommand}
 	 */
 	private void monitors(PrintStream out) throws DDRInteractiveCommandException {
 		try {
 			MonitorTableListIterator iterator = new MonitorTableListIterator();
 			MonitorTable previousMonitorTable = null;
-			
-			while(iterator.hasNext()) {
+
+			while (iterator.hasNext()) {
 				J9ObjectMonitorPointer objectMonitorPointer = iterator.next();
 				MonitorTable currentMonitorTable = iterator.currentMonitorTable();
-				
+
 				if (!currentMonitorTable.equals(previousMonitorTable)) {
 					/* Print header for new monitor table */
 					out.append("Table = " + currentMonitorTable.getTableName() + ", itemCount=" + currentMonitorTable.getCount());
@@ -154,7 +153,7 @@ public class ThreadsCommand extends  Command
 				}
 				out.append(String.format("\n    !j9thread 0x%s    !j9threadmonitor 0x%s", Long.toHexString(objectMonitorPointer.monitor().owner().getAddress()), Long.toHexString(objectMonitorPointer.monitor().getAddress())));
 				out.append(nl);
-			
+
 				previousMonitorTable = currentMonitorTable;
 			}
 		} catch (CorruptDataException e) {
@@ -171,10 +170,10 @@ public class ThreadsCommand extends  Command
 
 				do {
 					if (threadCursor.osThread().tid().eq(tid)) {
-						out.println(String.format("\t!stack 0x%08x\t!j9vmthread 0x%08x\t!j9thread 0x%08x\ttid 0x%x (%d) // %s", 
-								threadCursor.getAddress(), 
-								threadCursor.getAddress(), 
-								threadCursor.osThread().getAddress(), 
+						out.println(String.format("\t!stack 0x%08x\t!j9vmthread 0x%08x\t!j9thread 0x%08x\ttid 0x%x (%d) // %s",
+								threadCursor.getAddress(),
+								threadCursor.getAddress(),
+								threadCursor.osThread().getAddress(),
 								threadCursor.osThread().tid().longValue(),
 								threadCursor.osThread().tid().longValue(),
 								getThreadName(threadCursor)));
@@ -195,7 +194,7 @@ public class ThreadsCommand extends  Command
 			if (mainThread.notNull()) {
 				J9VMThreadPointer threadCursor = vm.mainThread();
 
-				do {//					
+				do {//
 					out.append(String.format("    !j9vmthread 0x%s %s %s %s %s %s %s %s %s", Long.toHexString(threadCursor.getAddress()), Long.toHexString(threadCursor.debugEventData1().longValue()), Long.toHexString(threadCursor.debugEventData2().longValue()), Long.toHexString(threadCursor.debugEventData3().longValue()), Long.toHexString(threadCursor.debugEventData4()
 							.longValue()), Long.toHexString(threadCursor.debugEventData5().longValue()), Long.toHexString(threadCursor.debugEventData6().longValue()), Long.toHexString(threadCursor.debugEventData7().longValue()), Long.toHexString(threadCursor.debugEventData8().longValue())));
 					out.append(nl);
@@ -205,7 +204,6 @@ public class ThreadsCommand extends  Command
 		} catch (CorruptDataException e) {
 			throw new DDRInteractiveCommandException(e);
 		}
-
 	}
 
 	private void flags(PrintStream out) throws DDRInteractiveCommandException {
@@ -216,7 +214,7 @@ public class ThreadsCommand extends  Command
 				J9VMThreadPointer threadCursor = vm.mainThread();
 
 				do {
-					out.append(String.format("    !j9vmthread 0x%s publicFlags=%s privateFlags=%s inNative=%s // %s", 
+					out.append(String.format("    !j9vmthread 0x%s publicFlags=%s privateFlags=%s inNative=%s // %s",
 							Long.toHexString(threadCursor.getAddress()),
 							Long.toHexString(threadCursor.publicFlags().longValue()),
 							Long.toHexString(threadCursor.privateFlags().longValue()),
@@ -241,9 +239,9 @@ public class ThreadsCommand extends  Command
 				J9VMThreadPointer threadCursor = vm.mainThread();
 
 				do {
-					out.println(String.format("\t!stack 0x%08x\t!j9vmthread 0x%08x\t!j9thread 0x%08x\ttid 0x%x (%d) // %s", 
-							threadCursor.getAddress(), 
-							threadCursor.getAddress(), 
+					out.println(String.format("\t!stack 0x%08x\t!j9vmthread 0x%08x\t!j9thread 0x%08x\ttid 0x%x (%d) // %s",
+							threadCursor.getAddress(),
+							threadCursor.getAddress(),
 							threadCursor.osThread().getAddress(),
 							threadCursor.osThread().tid().longValue(),
 							threadCursor.osThread().tid().longValue(),
@@ -269,7 +267,7 @@ public class ThreadsCommand extends  Command
 		out.append(nl);
 		out.append("!threads flags      -- print the public and private flags field for each thread");
 		out.append(nl);
-		if (J9BuildFlags.interp_debugSupport) {
+		if (J9BuildFlags.J9VM_INTERP_DEBUG_SUPPORT) {
 			out.append("!threads debugEventData -- print the debugEventData fields for each thread");
 			out.append(nl);
 		}
@@ -289,9 +287,9 @@ public class ThreadsCommand extends  Command
 				J9VMThreadPointer threadCursor = vm.mainThread();
 
 				do {
-					out.println(String.format("\t!stack 0x%08x\t!j9vmthread 0x%08x\t!j9thread 0x%08x\ttid 0x%x (%d) // (%s)", 
-							threadCursor.getAddress(), 
-							threadCursor.getAddress(), 
+					out.println(String.format("\t!stack 0x%08x\t!j9vmthread 0x%08x\t!j9thread 0x%08x\ttid 0x%x (%d) // (%s)",
+							threadCursor.getAddress(),
+							threadCursor.getAddress(),
 							threadCursor.osThread().getAddress(),
 							threadCursor.osThread().tid().longValue(),
 							threadCursor.osThread().tid().longValue(),

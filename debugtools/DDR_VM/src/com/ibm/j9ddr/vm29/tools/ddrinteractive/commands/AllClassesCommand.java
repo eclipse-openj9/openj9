@@ -42,28 +42,27 @@ import com.ibm.j9ddr.vm29.pointer.helper.J9ClassHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9RASHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9UTF8Helper;
 
-
-public class AllClassesCommand extends Command 
+public class AllClassesCommand extends Command
 {
 	private static final String nl = System.getProperty("line.separator");
 	private static final String rangeDelim = "..";
-	
+
 	private boolean dumpROMClasses;
 	private boolean dumpRAMClasses;
 	private U8Pointer rangeStart;
 	private U8Pointer rangeEnd;
-	
+
 	public AllClassesCommand()
 	{
 		addCommand("allclasses", "[help|rom|ram [startAddr..endAddr]]", "Dump a list of loaded ROM/RAM classes. Use 'help' to see more details about the usage.");
 	}
-	
-	private void init() 
+
+	private void init()
 	{
 		dumpROMClasses = dumpRAMClasses = false;
 		rangeStart = rangeEnd = null;
 	}
-	
+
 	private void printHelp(PrintStream out) {
 		CommandUtils.dbgPrint(out, "!allclasses rom [startAddr..endAddr]   -- Dump a list of J9ROMClasses in the given range. If no range is given, all J9ROMClasses are displayed.\n");
 		CommandUtils.dbgPrint(out, "                                          Note that 'startAddr' in the range should point to valid J9ROMClass.\n");
@@ -71,23 +70,23 @@ public class AllClassesCommand extends Command
 		CommandUtils.dbgPrint(out, "User may specify both 'rom' and 'ram' to dump J9ROMClasses and J9Classes\n");
 		CommandUtils.dbgPrint(out, "Note: if no argument is specified, then all J9ROMClasses and J9Classes will be displayed\n");
 	}
-	
+
 	private boolean getRange(PrintStream out, String arg) throws DDRInteractiveCommandException {
 		String addr;
-		
+
 		addr = arg.substring(0, arg.indexOf(rangeDelim));
-		rangeStart = U8Pointer.cast(CommandUtils.parsePointer(addr, J9BuildFlags.env_data64));
-		
+		rangeStart = U8Pointer.cast(CommandUtils.parsePointer(addr, J9BuildFlags.J9VM_ENV_DATA64));
+
 		addr = arg.substring(arg.indexOf(rangeDelim) + rangeDelim.length());
-		rangeEnd = U8Pointer.cast(CommandUtils.parsePointer(addr, J9BuildFlags.env_data64));
-		
+		rangeEnd = U8Pointer.cast(CommandUtils.parsePointer(addr, J9BuildFlags.J9VM_ENV_DATA64));
+
 		if (rangeStart.getAddress() >= rangeEnd.getAddress()) {
 			out.append("Invalid range specified. Ensure 'startAddr' < 'endAddr'" + nl);
 			return false;
 		}
 		return true;
 	}
-	
+
 	private boolean parseROMRAMRange(PrintStream out, String arg) throws DDRInteractiveCommandException {
 		if (arg.equals("rom")) {
 			if (dumpROMClasses) {
@@ -109,7 +108,7 @@ public class AllClassesCommand extends Command
 		}
 		return true;
 	}
-	
+
 	private boolean parseROMRAM(PrintStream out, String arg) throws DDRInteractiveCommandException {
 		if (arg.equals("rom")) {
 			if (dumpROMClasses) {
@@ -129,7 +128,7 @@ public class AllClassesCommand extends Command
 		}
 		return true;
 	}
-	
+
 	private boolean parseRange(PrintStream out, String arg) throws DDRInteractiveCommandException {
 		if (arg.indexOf(rangeDelim) != -1) {
 			return getRange(out, arg);
@@ -138,11 +137,11 @@ public class AllClassesCommand extends Command
 			return false;
 		}
 	}
-	
+
 	private boolean parseArgs(PrintStream out, String[] args) throws DDRInteractiveCommandException {
 		if (args.length > 3) {
-			/* Maximum 3 arguments can be specified as in: 
-			 * 	!allclasses rom ram 0x1000..0x2000 
+			/* Maximum 3 arguments can be specified as in:
+			 * 	!allclasses rom ram 0x1000..0x2000
 			 */
 			out.append("Invalid number of arguments" + nl);
 			return false;
@@ -179,17 +178,17 @@ public class AllClassesCommand extends Command
 		}
 		return true;
 	}
-	
-	public void run(String command, String[] args, Context context, PrintStream out) throws DDRInteractiveCommandException 
+
+	public void run(String command, String[] args, Context context, PrintStream out) throws DDRInteractiveCommandException
 	{
 		init();
-		
+
 		if (args != null) {
 			if (!parseArgs(out, args)) {
 				return;
 			}
 		}
-		
+
 		boolean useRange = (rangeStart != null && rangeEnd != null);
 
 		/* If none of "rom" or "ram" is specified, then list both type of classes */
@@ -208,7 +207,7 @@ public class AllClassesCommand extends Command
 					J9ClassPointer classPointer = J9ClassPointer.NULL;
 					try {
 						classPointer = (J9ClassPointer) classSegmentIterator.next();
-		
+
 						if (useRange) {
 							if (classPointer.getAddress() < rangeStart.getAddress() ||
 								classPointer.getAddress() >= rangeEnd.getAddress()) {
@@ -245,10 +244,10 @@ public class AllClassesCommand extends Command
 					}
 				}
 			}
-			
+
 			if (dumpROMClasses) {
 				ROMClassesIterator iterator = null;
-				
+
 				out.append(nl);
 				if (useRange) {
 					iterator = new ROMClassesRangeIterator(out, rangeStart, rangeEnd);

@@ -42,7 +42,7 @@ public class SearchStringTableCommand extends Command{
 	public void run(String command, String[] args, Context context, PrintStream out) throws DDRInteractiveCommandException {
 		try {
 			if (1 == args.length) {
-				J9ObjectPointer objectPointer = J9ObjectPointer.cast(CommandUtils.parsePointer(args[0], J9BuildFlags.env_data64));
+				J9ObjectPointer objectPointer = J9ObjectPointer.cast(CommandUtils.parsePointer(args[0], J9BuildFlags.J9VM_ENV_DATA64));
 				J9ObjectPointer data = StringTable.from().search(objectPointer);
 				
 				if (data.notNull()) {
