@@ -62,6 +62,13 @@
 	</test>
 	<test>
 		<testCaseName>JLM_Tests_interface</testCaseName>
+		<disables>
+			<disable>
+				<comment>github_ibm/runtimes/backlog/issues/1371</comment>
+				<impl>openj9</impl>
+				<testflag>FIPS140_2</testflag>
+			</disable>
+		</disables>
 		<variations>
 			<variation>NoOptions</variation>
 			<variation>-XX:+HeapManagementMXBeanCompatibility</variation>
@@ -133,6 +140,13 @@
 	</test>
 	<test>
 		<testCaseName>JLM_Tests_class</testCaseName>
+		<disables>
+			<disable>
+				<comment>github_ibm/runtimes/backlog/issues/1371</comment>
+				<impl>openj9</impl>
+				<testflag>FIPS140_2</testflag>
+			</disable>
+		</disables>
 		<variations>
 			<variation>NoOptions</variation>
 			<variation>-XX:+HeapManagementMXBeanCompatibility</variation>
@@ -196,6 +210,13 @@
 	</test>
 	<test>
 		<testCaseName>JLM_Tests_IBMinternal</testCaseName>
+		<disables>
+			<disable>
+				<comment>github_ibm/runtimes/backlog/issues/1371</comment>
+				<impl>openj9</impl>
+				<testflag>FIPS140_2</testflag>
+			</disable>
+		</disables>
 		<variations>
 			<variation>NoOptions</variation>
 			<variation>-XX:+HeapManagementMXBeanCompatibility</variation>
@@ -228,6 +249,13 @@
 	</test>
 	<test>
 		<testCaseName>testSoftMxLocal</testCaseName>
+		<disables>
+			<disable>
+				<comment>github_ibm/runtimes/backlog/issues/1371</comment>
+				<impl>openj9</impl>
+				<testflag>FIPS140_2</testflag>
+			</disable>
+		</disables>
 		<variations>
 			<variation>Mode110</variation>
 			<variation>Mode119</variation>
