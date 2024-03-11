@@ -761,6 +761,24 @@
     <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
+
+  <test id="Test checkTransitionToDebugInterpreter with env var file">
+    <!-- The transition to the debug interpreter currently only works with -Xint, which will be removed when the jit changes are completed. -->
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -XX:+DebugOnRestore -Xint" $MAINCLASS_ENVVAR_TEST$ testCheckTransitionToDebugInterpreterWithEnvVarFile 1 false false</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+  </test>
+
   <test id="Restore trace options test with no trace options specified before checkpoint - 1">
     <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ TraceOptionsTest1 1 false false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
@@ -895,6 +913,23 @@
     <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
     <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
     <output type="failure" caseSensitive="yes" regex="no">Dump option unrecognized: -Xdump:nofailover</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+  </test>
+
+  <test id="Test checkTransitionToDebugInterpreter with options file">
+    <!-- The transition to the debug interpreter currently only works with -Xint, which will be removed when the jit changes are completed. -->
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -XX:+DebugOnRestore -Xint" $MAINCLASS_OPTIONSFILE_TEST$ testCheckTransitionToDebugInterpreterWithOptionsFile 1 false false</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
     <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
     <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->

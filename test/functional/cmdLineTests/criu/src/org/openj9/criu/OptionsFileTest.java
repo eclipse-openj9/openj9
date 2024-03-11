@@ -71,6 +71,9 @@ public class OptionsFileTest {
 		case "JitOptionsTest":
 			jitOptionsTest(args);
 			break;
+		case "testCheckTransitionToDebugInterpreterWithOptionsFile":
+			testCheckTransitionToDebugInterpreterWithOptionsFile();
+			break;
 		default:
 			throw new RuntimeException("incorrect parameters");
 		}
@@ -332,4 +335,15 @@ public class OptionsFileTest {
 		}
 	}
 
+	static void testCheckTransitionToDebugInterpreterWithOptionsFile() {
+		String optionsContents = "-XX:+DebugInterpreter";
+		Path optionsFilePath = CRIUTestUtils.createOptionsFile("options", optionsContents);
+		Path imagePath = Paths.get("cpData");
+		CRIUTestUtils.createCheckpointDirectory(imagePath);
+		CRIUSupport criuSupport = new CRIUSupport(imagePath);
+		criuSupport.registerRestoreOptionsFile(optionsFilePath);
+		System.out.println("Pre-checkpoint");
+		CRIUTestUtils.checkPointJVM(criuSupport, imagePath, true);
+		System.out.println("Post-checkpoint");
+	}
 }
