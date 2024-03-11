@@ -217,7 +217,7 @@ public class J9MemTagCommands extends Command implements IEventListener
 
 		J9MemTagIterator it = J9MemTagIterator.iterateFreedHeaders(startAddress, endAddress);
 
-		if (J9BuildFlags.env_data64) {
+		if (J9BuildFlags.J9VM_ENV_DATA64) {
 			out.println("+------------------------------------------+------------------+-------------------+");
 			out.println("|          address      |      size        |    org size      | callsite          |");
 			out.println("+------------------------------------------+------------------+-------------------+");
@@ -308,7 +308,7 @@ public class J9MemTagCommands extends Command implements IEventListener
 
 			long baseAddress = J9MemTagHelper.j9mem_get_memory_base(freedHeader).getAddress();
 
-			if (J9BuildFlags.env_data64) {
+			if (J9BuildFlags.J9VM_ENV_DATA64) {
 				out.format(" !j9x 0x%016X 0x%016X ", baseAddress, allocSize);
 				if (allocSize == freedHeader.allocSize().longValue()) {
 					out.format("%18s ", "");
@@ -474,7 +474,7 @@ public class J9MemTagCommands extends Command implements IEventListener
 			return;
 		}
 
-		address = CommandUtils.parsePointer(args[0], J9BuildFlags.env_data64);
+		address = CommandUtils.parsePointer(args[0], J9BuildFlags.J9VM_ENV_DATA64);
 
 		out.format("Searching memory allocation header for %s%n", U8Pointer.cast(address).getHexAddress());
 

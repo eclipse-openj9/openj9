@@ -84,7 +84,7 @@ public class SetVMCommand extends Command
 			return;
 		}
 		
-		long address = CommandUtils.parsePointer(args[0], J9BuildFlags.env_data64);
+		long address = CommandUtils.parsePointer(args[0], J9BuildFlags.J9VM_ENV_DATA64);
 		
 		J9JavaVMPointer vmPtr = J9JavaVMPointer.cast(address);
 		if (testJavaVMPtr(vmPtr)) {

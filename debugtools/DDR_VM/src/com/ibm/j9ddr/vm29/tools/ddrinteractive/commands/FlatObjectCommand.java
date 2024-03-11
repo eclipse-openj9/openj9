@@ -91,7 +91,7 @@ public class FlatObjectCommand extends Command {
 		}
 
 		try {
-			long address = CommandUtils.parsePointer(argElements[0], J9BuildFlags.env_data64);
+			long address = CommandUtils.parsePointer(argElements[0], J9BuildFlags.J9VM_ENV_DATA64);
 			String nestingHeirarchy = null;
 
 			if (1 < args.length) {

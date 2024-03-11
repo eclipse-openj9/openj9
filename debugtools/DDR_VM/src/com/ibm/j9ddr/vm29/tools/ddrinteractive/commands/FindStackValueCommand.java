@@ -61,7 +61,7 @@ public class FindStackValueCommand extends Command
 		}
 
 		try {
-			long address = CommandUtils.parsePointer(args[0], J9BuildFlags.env_data64);
+			long address = CommandUtils.parsePointer(args[0], J9BuildFlags.J9VM_ENV_DATA64);
 			UDATA value = new UDATA(address);
 			GCVMThreadListIterator gcvmThreadListIterator = GCVMThreadListIterator.from();
 

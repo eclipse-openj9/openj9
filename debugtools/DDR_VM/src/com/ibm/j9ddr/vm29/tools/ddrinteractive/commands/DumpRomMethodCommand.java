@@ -54,7 +54,7 @@ public class DumpRomMethodCommand extends Command {
 	private static final String COMMAND_DESCRIPTION = "dump all the rommethods corresponding to RAM method address <addr>, or to <name> (with wildcards)";
 	private final long dumpFlags;
 	public DumpRomMethodCommand() {
-		dumpFlags = J9BuildFlags.env_littleEndian ?  BCT_LittleEndianOutput: BCT_BigEndianOutput;
+		dumpFlags = J9BuildFlags.J9VM_ENV_LITTLE_ENDIAN ?  BCT_LittleEndianOutput: BCT_BigEndianOutput;
 		addCommand(DUMPROMMETHOD, COMMAND_SYNTAX, COMMAND_DESCRIPTION);
 	}
 
@@ -75,30 +75,30 @@ public class DumpRomMethodCommand extends Command {
 				}
 				/* decimal or hexadecimal */
 
-				long methodAddress = CommandUtils.parsePointer(args[1], J9BuildFlags.env_data64);
+				long methodAddress = CommandUtils.parsePointer(args[1], J9BuildFlags.J9VM_ENV_DATA64);
 				J9MethodPointer ramMethod =  J9MethodPointer.cast(methodAddress);
 				if (ramMethod.isNull()) {
 					CommandUtils.dbgPrint(out, "bad ram method addr\n");
 					return;
 				}
-				methodIterator = romMethodIteratorFromRamMethod(ramMethod);			
+				methodIterator = romMethodIteratorFromRamMethod(ramMethod);
 
 			} else if (selector.equals("-o")) {
 				if (args.length != 2) {
 					printUsage(out);
 					return;
 				}
-				long methodAddress = CommandUtils.parsePointer(args[1], J9BuildFlags.env_data64);
+				long methodAddress = CommandUtils.parsePointer(args[1], J9BuildFlags.J9VM_ENV_DATA64);
 				J9ROMMethodPointer romMethod =  J9ROMMethodPointer.cast(methodAddress);
 				if (romMethod.isNull()) {
 					CommandUtils.dbgPrint(out, "bad rom method addr\n");
 					return;
 				}
-				
+
 				J9ROMMethodPointer bytecodesStart = romMethod.add(1); /* bytecodes immediately follow the J9ROMMethod struct */
 				U8Pointer pc = U8Pointer.cast(bytecodesStart.getAddress());
 				J9MethodPointer ramMethod = J9JavaVMHelper.getMethodFromPC(J9RASHelper.getVM(DataType.getJ9RASPointer()), pc);
-				methodIterator = romMethodIteratorFromRamMethod(ramMethod);			
+				methodIterator = romMethodIteratorFromRamMethod(ramMethod);
 			} else {
 				try {
 					methodIterator = new FilteredROMMethodsIterator(out, context, selector);
@@ -130,13 +130,14 @@ public class DumpRomMethodCommand extends Command {
 		methodIterator = methodInfoVector;
 		return methodIterator;
 	}
-	 /**
-     * Prints the usage for the dumprommethod command.
-     *
-     * @param out  the PrintStream the usage statement prints to
-     */
-	private void printUsage (PrintStream out) {
-		out.println(DUMPROMMETHOD+" "+COMMAND_SYNTAX+": "+COMMAND_DESCRIPTION);
+
+	/**
+	 * Prints the usage for the dumprommethod command.
+	 *
+	 * @param out  the PrintStream the usage statement prints to
+	 */
+	private void printUsage(PrintStream out) {
+		out.println(DUMPROMMETHOD + " " + COMMAND_SYNTAX + ": " + COMMAND_DESCRIPTION);
 		out.println("<name> is classname.methodname(signature.  package names are separated by '/'. Signature is optional ");
 	}
 

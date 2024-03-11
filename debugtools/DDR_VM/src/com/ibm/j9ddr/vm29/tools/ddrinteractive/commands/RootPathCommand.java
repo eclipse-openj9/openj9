@@ -255,7 +255,7 @@ public class RootPathCommand extends Command
 			}
 			break;
 		case 1:
-			long address = CommandUtils.parsePointer(args[0], J9BuildFlags.env_data64);
+			long address = CommandUtils.parsePointer(args[0], J9BuildFlags.J9VM_ENV_DATA64);
 			final J9ObjectPointer objectToFind = J9ObjectPointer.cast(address);
 			
 			try {

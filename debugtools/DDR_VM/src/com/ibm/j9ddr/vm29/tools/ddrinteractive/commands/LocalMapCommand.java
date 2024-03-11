@@ -63,7 +63,7 @@ public class LocalMapCommand extends Command
 		}
 		J9JavaVMPointer vm = J9RASHelper.getVM(DataType.getJ9RASPointer());
 		
-		long address = CommandUtils.parsePointer(args[0], J9BuildFlags.env_data64);
+		long address = CommandUtils.parsePointer(args[0], J9BuildFlags.J9VM_ENV_DATA64);
 		
 		U8Pointer pc = U8Pointer.cast(address);
 		CommandUtils.dbgPrint(out, "Searching for PC=%d in VM=%s...\n", pc.longValue(), vm.getHexAddress());

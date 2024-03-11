@@ -182,7 +182,7 @@ public class J9ConstantPoolCommand extends Command {
 			final J9JavaVMPointer vm = J9RASHelper.getVM(DataType.getJ9RASPointer());
 			final J9InitializerMethodsPointer initializerMethods = vm.initialMethods();
 
-			long address = CommandUtils.parsePointer(args[0], J9BuildFlags.env_data64);
+			long address = CommandUtils.parsePointer(args[0], J9BuildFlags.J9VM_ENV_DATA64);
 			final J9ClassPointer ramClass = J9ClassPointer.cast(address);
 			final J9ROMClassPointer romClass = ramClass.romClass();
 

@@ -36,14 +36,14 @@ import com.ibm.j9ddr.vm29.pointer.helper.J9ObjectHelper;
 class GCScavengerForwardedHeader_V1 extends GCScavengerForwardedHeader
 {
 	/* combine the flags into one mask which should be stripped from the pointer in order to remove all tags */
-	private static final int ALL_TAGS = (int)(MM_ScavengerForwardedHeader.FORWARDED_TAG | MM_ScavengerForwardedHeader.GROW_TAG);
-	
+	private static final int ALL_TAGS = (int) (MM_ScavengerForwardedHeader.FORWARDED_TAG | MM_ScavengerForwardedHeader.GROW_TAG);
+
 	/* Do not instantiate. Use the factory */
 	protected GCScavengerForwardedHeader_V1(J9ObjectPointer object)
 	{
 		super(object);
 	}
-	
+
 	@Override
 	public J9ObjectPointer getForwardedObject() throws CorruptDataException
 	{
@@ -56,7 +56,7 @@ class GCScavengerForwardedHeader_V1 extends GCScavengerForwardedHeader
 
 	protected J9ObjectPointer getForwardedObjectNoCheck() throws CorruptDataException
 	{
-		if(J9ObjectHelper.compressObjectReferences && !J9BuildFlags.env_littleEndian) {
+		if (J9ObjectHelper.compressObjectReferences && !J9BuildFlags.J9VM_ENV_LITTLE_ENDIAN) {
 			/* compressed big endian - read two halves separately */
 			U32 low = U32Pointer.cast(objectPointer.clazzEA()).at(0).bitAnd(~ALL_TAGS);
 			U32 high = U32Pointer.cast(objectPointer.clazzEA()).at(1);
@@ -94,7 +94,7 @@ class GCScavengerForwardedHeader_V1 extends GCScavengerForwardedHeader
 	{
 		J9ObjectPointer forwardedObject = getForwardedObjectNoCheck();
 		UDATA forwardedObjectSize;
-		if(ObjectModel.hasBeenMoved(forwardedObject) && !ObjectModel.hasBeenHashed(forwardedObject)) {
+		if (ObjectModel.hasBeenMoved(forwardedObject) && !ObjectModel.hasBeenHashed(forwardedObject)) {
 			//this hashed but not moved yet object just has been forwarded
 			//so hash slot was added which increase size of the object
 			forwardedObjectSize = ObjectModel.getSizeInBytesWithHeader(forwardedObject);

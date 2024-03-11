@@ -63,7 +63,7 @@ public class ContinuationStackWalkCommand extends Command {
 				CommandUtils.dbgPrint(out, "Exactly one argument (address) must be provided.\n");
 				return;
 			}
-			long address = CommandUtils.parsePointer(args[0], J9BuildFlags.env_data64);
+			long address = CommandUtils.parsePointer(args[0], J9BuildFlags.J9VM_ENV_DATA64);
 			if (0 == address) {
 				CommandUtils.dbgPrint(out, "Address must be non-zero.\n");
 				return;

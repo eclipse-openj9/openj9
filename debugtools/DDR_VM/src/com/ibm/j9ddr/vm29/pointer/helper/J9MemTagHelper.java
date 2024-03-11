@@ -42,9 +42,9 @@ import com.ibm.j9ddr.vm29.types.UDATA;
  */
 public class J9MemTagHelper
 {
-	
+
 	public static final long ROUNDING_GRANULARITY = 8;
-	
+
 	public static IDATA J9PORT_MEMTAG_HEADER_TAG_CORRUPTED = new IDATA(0x00000001);
 	public static IDATA J9PORT_MEMTAG_FOOTER_TAG_CORRUPTED = new IDATA(0x00000002);
 	public static IDATA J9PORT_MEMTAG_FOOTER_PADDING_CORRUPTED = new IDATA(0x00000004);
@@ -53,15 +53,15 @@ public class J9MemTagHelper
 
 	/**
 	 * Performs validation checks on the memory block starting at memoryPointer.
-	 * 
+	 *
 	 * The memory passed in could fall into one of three categories:
 	 * 1) It could be a valid J9MemTag region with valid headers and footers
 	 * 2) It could be not be a J9MemTag region
 	 * 3) It could be a J9MemTag region with some corruption in either the header, footer or padding
-	 * 
+	 *
 	 * @param[in] portLibrary The port library
 	 * @param[in] memoryPointer address returned by @ref j9mem_allocate_memory()
-	 * 
+	 *
 	 * @throws CorruptDataException if the tags are corrupted, or the memory is inaccessible. (Option 3)
 	 * @return J9PORT_MEMTAG_NOT_A_TAG if memoryPointer address is not a tag
 	 * 		   J9PORT_MEMTAG_HEADER_TAG_CORRUPTED if memoryPointer address is valid tag region but header tag is corrupted.
@@ -70,7 +70,7 @@ public class J9MemTagHelper
 	 * 		   J9PORT_MEMTAG_VALID_TAG if memoryPointer address is valid tag and header/footer are not corrupted.
 	 * @note memoryPointer may not be NULL.
 	 */
-	public static IDATA j9mem_check_tags(VoidPointer memoryPointer, long headerEyecatcher, long footerEyecatcher) throws J9MemTagCheckError 
+	public static IDATA j9mem_check_tags(VoidPointer memoryPointer, long headerEyecatcher, long footerEyecatcher) throws J9MemTagCheckError
 	{
 		J9MemTagPointer headerTagAddress = j9mem_get_header_tag(memoryPointer);
 		J9MemTagPointer footerTagAddress = J9MemTagPointer.NULL;
@@ -79,9 +79,9 @@ public class J9MemTagHelper
 			footerTagAddress = j9mem_get_footer_tag(headerTagAddress);
 			checkTagSumCheck(headerTagAddress, headerEyecatcher);
 		} catch (J9MemTagCheckError e) {
-			/* Corruption here either means the header tag is mangled, or the header eyecatcher isn't actually the start of a 
+			/* Corruption here either means the header tag is mangled, or the header eyecatcher isn't actually the start of a
 			 * J9MemTag block.
-			 * 
+			 *
 			 * If we can find a valid footerTag, then we'll believe this is a mangled header.
 			 */
 			try {
@@ -97,12 +97,12 @@ public class J9MemTagHelper
 				return J9PORT_MEMTAG_NOT_A_TAG;
 			}
 		} catch (CorruptDataException e) {
-			/* CorruptDataException here will mean MemoryFault. Which means we can't read the 
+			/* CorruptDataException here will mean MemoryFault. Which means we can't read the
 			 * entire header tag - so we assume this isn't a valid J9MemTag
 			 */
 			return J9PORT_MEMTAG_NOT_A_TAG;
 		}
-	
+
 		try {
 			checkTagSumCheck(footerTagAddress, footerEyecatcher);
 		} catch (J9MemTagCheckError e) {
@@ -120,7 +120,7 @@ public class J9MemTagHelper
 			 */
 			throw new J9MemTagCheckError(headerTagAddress, e);
 		}
-	
+
 		try {
 			checkPadding(headerTagAddress);
 		} catch (J9MemTagCheckError e) {
@@ -138,26 +138,26 @@ public class J9MemTagHelper
 			 */
 			throw new J9MemTagCheckError(headerTagAddress, e);
 		}
-		
+
 		return J9PORT_MEMTAG_VALID_TAG;
 	}
 
 	/**
 	 * Checks that the memory tag is not corrupt.
-	 * 
+	 *
 	 * @param[in] tagAddress the in-process or out-of-process address of the
 	 *            header/footer memory tag
 	 * @param[in] eyeCatcher the eyecatcher corresponding to the memory tag
-	 * 
+	 *
 	 * @return 0 if the sum check is successful, non-zero otherwise
 	 * @throws CorruptDataException
 	 */
-	public static void checkTagSumCheck(J9MemTagPointer tag, long eyeCatcher) throws CorruptDataException 
+	public static void checkTagSumCheck(J9MemTagPointer tag, long eyeCatcher) throws CorruptDataException
 	{
 		int sum = 0;
 		U32Pointer slots;
-		
-		if (! checkEyecatcher(tag, eyeCatcher)) {
+
+		if (!checkEyecatcher(tag, eyeCatcher)) {
 			throw new J9MemTagCheckError(tag, "Wrong eyecatcher. Expected 0x" + Long.toHexString(eyeCatcher) + " but was " + UDATA.cast(tag).getHexValue());
 		}
 
@@ -169,8 +169,8 @@ public class J9MemTagHelper
 		for (int i = 0; i < (J9MemTag.SIZEOF / U32.SIZEOF); i++) {
 			sum ^= slots.at(i).longValue();
 		}
-		
-		if (J9BuildFlags.env_data64) {
+
+		if (J9BuildFlags.J9VM_ENV_DATA64) {
 			U32 a = new U32(UDATA.cast(tag).rightShift(32));
 			U32 b = new U32(UDATA.cast(tag).bitAnd(U32.MAX));
 			sum ^= a.longValue() ^ b.longValue();
@@ -179,7 +179,7 @@ public class J9MemTagHelper
 		}
 
 		if (sum != 0) {
-			throw new J9MemTagCheckError(tag,"J9MemTag sumcheck failed: " + sum);
+			throw new J9MemTagCheckError(tag, "J9MemTag sumcheck failed: " + sum);
 		}
 	}
 
@@ -189,7 +189,6 @@ public class J9MemTagHelper
 		return tag.eyeCatcher().eq(eyeCatcher);
 	}
 
-	
 	/**
 	 * Given the address of the headerEyecatcher for the memory block, return
 	 * the memory pointer that was returned by j9mem_allocate_memory() when the
@@ -203,20 +202,19 @@ public class J9MemTagHelper
 	/**
 	 * Given the address of the headerEyecatcher for the memory block, return
 	 * the address of the corresponding footer tag.
-	 * 
+	 *
 	 * @throws CorruptDataException
 	 */
-	public static J9MemTagPointer j9mem_get_footer_tag(J9MemTagPointer headerEyeCatcherAddress) throws CorruptDataException 
+	public static J9MemTagPointer j9mem_get_footer_tag(J9MemTagPointer headerEyeCatcherAddress) throws CorruptDataException
 	{
 		UDATA footerOffset = ROUNDED_FOOTER_OFFSET(headerEyeCatcherAddress.allocSize());
 		return J9MemTagPointer.cast(U8Pointer.cast(headerEyeCatcherAddress).add(footerOffset));
 	}
-	
 
 	/**
 	 * Given the address returned by @ref j9mem_allocate_memory(), return
 	 * address of the header tag for the memory block
-	 * 
+	 *
 	 */
 	public static J9MemTagPointer j9mem_get_header_tag(VoidPointer memoryPointer) {
 		return J9MemTagPointer.cast(U8Pointer.cast(memoryPointer).sub(J9MemTag.SIZEOF));
@@ -225,16 +223,15 @@ public class J9MemTagHelper
 	/**
 	 * Checks that the padding associated with the memory block has not been
 	 * corrupted
-	 * 
+	 *
 	 * @param[in] headerTagAddress the address of the header memory tag for the
 	 *            memory block.
-	 * 
+	 *
 	 * @return 0 if no corruption was detected, otherwise non-zero.
 	 * @throws CorruptDataException
 	 */
-	public static void checkPadding(J9MemTagPointer headerTagAddress) throws CorruptDataException 
+	public static void checkPadding(J9MemTagPointer headerTagAddress) throws CorruptDataException
 	{
-
 		U8Pointer padding = U8Pointer.cast(j9mem_get_footer_padding(headerTagAddress));
 
 		while (!(UDATA.cast(padding).bitAnd(ROUNDING_GRANULARITY - 1)).eq(0)) {
@@ -249,42 +246,42 @@ public class J9MemTagHelper
 	/**
 	 * Given the address of the headerEyecatcher for the memory block, return
 	 * the address of the footer padding.
-	 * 
+	 *
 	 * Note that there not be any padding, in which case this returns the same
 	 * as @ref j9mem_get_footer_tag(), the address of the footer tag.
-	 * 
+	 *
 	 * @throws CorruptDataException
 	 */
-	public static VoidPointer j9mem_get_footer_padding(J9MemTagPointer headerEyeCatcherAddress) throws CorruptDataException 
+	public static VoidPointer j9mem_get_footer_padding(J9MemTagPointer headerEyeCatcherAddress) throws CorruptDataException
 	{
 		UDATA cursor = UDATA.cast(U8Pointer.cast(headerEyeCatcherAddress).add(J9MemTag.SIZEOF));
 		U8Pointer padding = U8Pointer.cast(cursor.add(headerEyeCatcherAddress.allocSize()));
 
 		return VoidPointer.cast(padding);
 	}
-	
-	public static UDATA ROUNDED_FOOTER_OFFSET(UDATA number) 
+
+	public static UDATA ROUNDED_FOOTER_OFFSET(UDATA number)
 	{
 		UDATA mask = new UDATA(ROUNDING_GRANULARITY - 1);
 		UDATA a = mask.add(number).add(J9MemTag.SIZEOF);
 		UDATA b = mask.bitNot();
 		return a.bitAnd(b);
 	}
-	
+
 	public static class J9MemTagCheckError extends AddressedCorruptDataException
 	{
 		/**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = -8326638947722902353L;
 		private final J9MemTagPointer memTag;
-		
+
 		J9MemTagCheckError(J9MemTagPointer memTag, String message)
 		{
 			super(memTag.getAddress(), message);
 			this.memTag = memTag;
 		}
-		
+
 		public J9MemTagCheckError(J9MemTagPointer memTag,
 				CorruptDataException e)
 		{

@@ -41,7 +41,7 @@ public class ObjectHash {
 		UDATA salt = new U32(1421595292).bitXor(new U32(UDATA.cast(vm)));
 		J9IdentityHashDataPointer hashData = vm.identityHashData();
 		UDATA saltPolicy = hashData.hashSaltPolicy();
-		
+
 		/* Replacing case statement in C with an if-else if statements since case expressions must use constant */
 		if (saltPolicy.eq(J9IdentityHashData.J9_IDENTITY_HASH_SALT_POLICY_STANDARD)) {
 			/* Gencon/optavgpause/optthruput use the default salt for non heap and
@@ -68,7 +68,7 @@ public class ObjectHash {
 			 * hashData->hashData2 is heapTop
 			 * hashData->hashData3 is log of regionSize
 			 */
-			
+
 			if (objectPointer.gte(hashData.hashData1())) {
 				if (objectPointer.lt(hashData.hashData2())) {
 					UDATA heapDelta = objectPointer.sub(hashData.hashData1());
@@ -79,17 +79,17 @@ public class ObjectHash {
 				}
 			} else {
 				/* not in the heap so use default salt */
-			}			
+			}
 		} else if (saltPolicy.eq(J9IdentityHashData.J9_IDENTITY_HASH_SALT_POLICY_NONE)) {
 			/* Use default salt */
 		} else {
 			/* Unrecognized salt policy.  Should assert but we are in util */
 			throw new CorruptDataException("Invalid salt policy");
 		}
-		
+
 		return new U32(salt);
 	}
-	
+
 	static U32 rotateLeft(U32 value, int count)
 	{
 		return value.leftShift(count).bitXor(value.rightShift(32 - count));
@@ -100,7 +100,7 @@ public class ObjectHash {
 		final U32 MUL1 = new U32(0xcc9e2d51);
 		final U32 MUL2 = new U32(0x1b873593);
 		final U32 ADD1 = new U32(0xe6546b64);
-		
+
 		datum = datum.mult(MUL1);
 		datum = rotateLeft(datum, 15);
 		datum = datum.mult(MUL2);
@@ -108,10 +108,10 @@ public class ObjectHash {
 		hashValue = rotateLeft(hashValue, 13);
 		hashValue = hashValue.mult(5);
 		hashValue = hashValue.add(ADD1);
-		
+
 		return hashValue;
 	}
-	
+
 	private static I32 inlineConvertValueToHash(J9JavaVMPointer vm, UDATA objectPointer) throws CorruptDataException
 	{
 		final U32 MUL1 = new U32(0x85ebca6b);
@@ -119,15 +119,15 @@ public class ObjectHash {
 
 		U32 hashValue = getSalt(vm, objectPointer);
 		UDATA shiftedAddress = objectPointer.div(ObjectModel.getObjectAlignmentInBytes());
-		
+
 		U32 datum = new U32(shiftedAddress.bitAnd(0xffffffff));
 		hashValue = mix(hashValue, datum);
 
-		if (J9BuildFlags.env_data64) {
+		if (J9BuildFlags.J9VM_ENV_DATA64) {
 			datum = new U32(shiftedAddress.rightShift(32));
 			hashValue = mix(hashValue, datum);
 		}
-		
+
 		hashValue = hashValue.bitXor(UDATA.SIZEOF);
 
 		hashValue = hashValue.bitXor(hashValue.rightShift(16));

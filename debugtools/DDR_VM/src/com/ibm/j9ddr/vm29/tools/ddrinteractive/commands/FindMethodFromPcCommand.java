@@ -49,8 +49,8 @@ public class FindMethodFromPcCommand extends Command
 	public void run(String command, String[] args, Context context, PrintStream out) throws DDRInteractiveCommandException 
 	{
 		try {
-			long address = CommandUtils.parsePointer(args[0], J9BuildFlags.env_data64);
-			
+			long address = CommandUtils.parsePointer(args[0], J9BuildFlags.J9VM_ENV_DATA64);
+
 			U8Pointer pc = U8Pointer.cast(address);
 			J9JavaVMPointer vm = J9RASHelper.getVM(DataType.getJ9RASPointer());
 
@@ -63,7 +63,7 @@ public class FindMethodFromPcCommand extends Command
 			J9MethodPointer result = J9JavaVMHelper.getMethodFromPC(vm, pc);
 			if (!result.isNull()) {
 				CommandUtils.dbgPrint(out, "!j9method %s %s\n", result.getHexAddress(), J9MethodHelper.getName(result));
-				CommandUtils.dbgPrint(out, "Bytecode PC offset = %s\n", pc.sub(result.bytecodes()).getHexValue());	
+				CommandUtils.dbgPrint(out, "Bytecode PC offset = %s\n", pc.sub(result.bytecodes()).getHexValue());
 			} else {
 				CommandUtils.dbgPrint(out, "Not found\n");
 			}

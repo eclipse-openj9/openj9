@@ -73,14 +73,14 @@ public class StackWalkCommand extends Command
 				CommandUtils.dbgPrint(out, "\t!stack thread,sp,a0,pc,literals\n");
 				CommandUtils.dbgPrint(out, "\t!stack thread,sp,a0,pc,literals,els\n");
 				CommandUtils.dbgPrint(out, "\tUse !stackslots instead of !stack to see slot values\n");
-				if (J9BuildFlags.interp_nativeSupport) {
+				if (J9BuildFlags.J9VM_INTERP_NATIVE_SUPPORT) {
 					CommandUtils.dbgPrint(out, "\tUse !jitstack or !jitstackslots to start the walk at a JIT frame\n");
 				}
 				// dbgPrintRegisters(1);
 				return;
 			}
 
-			long address = CommandUtils.parsePointer(realArgs[0], J9BuildFlags.env_data64);
+			long address = CommandUtils.parsePointer(realArgs[0], J9BuildFlags.J9VM_ENV_DATA64);
 			if (0 == address) {
 				/* Parse error is captured in CommandUtils.parsePointer method and message is printed */
 				return;
@@ -94,16 +94,16 @@ public class StackWalkCommand extends Command
 			walkState.flags = J9_STACKWALK_RECORD_BYTECODE_PC_OFFSET;
 
 			if (realArgs.length >= 5) {
-				address = CommandUtils.parsePointer(realArgs[1], J9BuildFlags.env_data64);
+				address = CommandUtils.parsePointer(realArgs[1], J9BuildFlags.J9VM_ENV_DATA64);
 				sp = UDATAPointer.cast(address);
 
-				address = CommandUtils.parsePointer(realArgs[2], J9BuildFlags.env_data64);
+				address = CommandUtils.parsePointer(realArgs[2], J9BuildFlags.J9VM_ENV_DATA64);
 				arg0EA = UDATAPointer.cast(address);
 
-				address = CommandUtils.parsePointer(realArgs[3], J9BuildFlags.env_data64);
+				address = CommandUtils.parsePointer(realArgs[3], J9BuildFlags.J9VM_ENV_DATA64);
 				pc = U8Pointer.cast(address);
 
-				address = CommandUtils.parsePointer(realArgs[4], J9BuildFlags.env_data64);
+				address = CommandUtils.parsePointer(realArgs[4], J9BuildFlags.J9VM_ENV_DATA64);
 				literals = J9MethodPointer.cast(address);
 			} else {
 				sp = thread.sp();
@@ -113,10 +113,10 @@ public class StackWalkCommand extends Command
 			}
 
 			if (realArgs.length >= 6) {
-				address = CommandUtils.parsePointer(realArgs[5], J9BuildFlags.env_data64);
+				address = CommandUtils.parsePointer(realArgs[5], J9BuildFlags.J9VM_ENV_DATA64);
 				entryLocalStorage = J9VMEntryLocalStoragePointer.cast(address);
 			} else {
-				if (J9BuildFlags.interp_nativeSupport) {
+				if (J9BuildFlags.J9VM_INTERP_NATIVE_SUPPORT) {
 					entryLocalStorage = thread.entryLocalStorage();
 				}
 			}

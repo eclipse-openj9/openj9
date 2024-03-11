@@ -34,22 +34,21 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9ROMClassPointer;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ROMClassHelper;
 import com.ibm.j9ddr.vm29.structure.J9ConstantPool;
 
-public class CPDescriptionCommand extends Command 
+public class CPDescriptionCommand extends Command
 {
 	public CPDescriptionCommand()
 	{
 		addCommand("cpdescription", "<address>", "Dump the cpdescription for the J9ROMClass");
 	}
-	
-	
-	public void run(String command, String[] args, Context context, PrintStream out) throws DDRInteractiveCommandException 
+
+	public void run(String command, String[] args, Context context, PrintStream out) throws DDRInteractiveCommandException
 	{
 		try {
-			long address = CommandUtils.parsePointer(args[0], J9BuildFlags.env_data64);
+			long address = CommandUtils.parsePointer(args[0], J9BuildFlags.J9VM_ENV_DATA64);
 			J9ROMClassPointer romClass = J9ROMClassPointer.cast(address);
 			U32Pointer cpDescription = J9ROMClassHelper.cpShapeDescription(romClass);
 			final long cpCount = romClass.romConstantPoolCount().longValue();
-			
+
 			final long numberOfLongs = (cpCount + J9ConstantPool.J9_CP_DESCRIPTIONS_PER_U32 - 1) / J9ConstantPool.J9_CP_DESCRIPTIONS_PER_U32;
 
 			out.append("CP Shape Description:" + nl);
@@ -60,7 +59,7 @@ public class CPDescriptionCommand extends Command
 					if (k == cpCount) {
 						break;
 					}
-					out.append("[" + k + "] = " + (int) (descriptionLong & J9ConstantPool.J9_CP_DESCRIPTION_MASK)+ nl);
+					out.append("[" + k + "] = " + (int) (descriptionLong & J9ConstantPool.J9_CP_DESCRIPTION_MASK) + nl);
 					descriptionLong >>= J9ConstantPool.J9_CP_BITS_PER_DESCRIPTION;
 				}
 			}

@@ -61,7 +61,7 @@ public class DumpRomClassCommand extends Command {
 			if (args.length == 2 && args[1].equals("maps")) {
 				maps |= J9BCTranslationData.BCT_DumpMaps;
 			}
-			if (J9BuildFlags.env_littleEndian) {
+			if (J9BuildFlags.J9VM_ENV_LITTLE_ENDIAN) {
 				maps |= J9BCTranslationData.BCT_LittleEndianOutput;
 			} else {
 				maps |= J9BCTranslationData.BCT_BigEndianOutput;
@@ -96,7 +96,7 @@ public class DumpRomClassCommand extends Command {
 						searchClassName));
 			} else {
 				/* treat argument as address */
-				long addr = CommandUtils.parsePointer(args[0], J9BuildFlags.env_data64);
+				long addr = CommandUtils.parsePointer(args[0], J9BuildFlags.J9VM_ENV_DATA64);
 
 				J9ROMClassPointer clazz = J9ROMClassPointer.cast(addr);
 				J9BCUtil.j9bcutil_dumpRomClass(out, clazz, maps);

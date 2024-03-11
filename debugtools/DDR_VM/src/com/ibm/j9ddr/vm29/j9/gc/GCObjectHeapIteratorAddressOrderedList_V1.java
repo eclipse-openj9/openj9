@@ -53,28 +53,28 @@ class GCObjectHeapIteratorAddressOrderedList_V1 extends GCObjectHeapIterator
 	protected U8Pointer scanPtrTop;
 	protected U8Pointer[][] excludedRanges;
 	protected int currentExcludedRange;
-	
+
 	protected GCObjectHeapIteratorAddressOrderedList_V1(U8Pointer base, U8Pointer top, boolean includeLiveObjects, boolean includeDeadObjects) throws CorruptDataException
 	{
 		super(includeLiveObjects, includeDeadObjects);
-		
+
 		currentObject = null;
 		scanPtr = base;
 		scanPtrTop = top;
-		
-		ArrayList<U8Pointer[]> excludedRangeList = new ArrayList<U8Pointer[]>();
+
+		ArrayList<U8Pointer[]> excludedRangeList = new ArrayList<>();
 		GCVMThreadListIterator threadIterator = new GCVMThreadListIterator();
 		boolean scavengerEnabled = false;
-		if (J9BuildFlags.gc_modronScavenger) {
+		if (J9BuildFlags.J9VM_GC_MODRON_SCAVENGER) {
 			if (getExtensions().scavengerEnabled()) {
 				scavengerEnabled = true;
 			}
 		}
 		while (threadIterator.hasNext()) {
 			J9VMThreadPointer vmThread = threadIterator.next();
-			
+
 			/* Check for TLHes */
-			if (J9BuildFlags.gc_inlinedAllocFields) {
+			if (J9BuildFlags.J9VM_GC_INLINED_ALLOC_FIELDS) {
 				U8Pointer heapTop = adjustedToRange(vmThread.heapTop(), base, top);
 				if (heapTop.notNull()) {
 					U8Pointer heapAlloc = adjustedToRange(vmThread.heapAlloc(), base, top);
@@ -91,9 +91,9 @@ class GCObjectHeapIteratorAddressOrderedList_V1 extends GCObjectHeapIterator
 						}
 					}
 				}
-				
+
 				/* Check non-zeroed TLH as well if it is enabled */
-				if (J9BuildFlags.gc_nonZeroTLH) {
+				if (J9BuildFlags.J9VM_GC_NON_ZERO_TLH) {
 					heapTop = adjustedToRange(vmThread.nonZeroHeapTop(), base, top);
 					if (heapTop.notNull()) {
 						U8Pointer heapAlloc = adjustedToRange(vmThread.nonZeroHeapAlloc(), base, top);
@@ -112,7 +112,7 @@ class GCObjectHeapIteratorAddressOrderedList_V1 extends GCObjectHeapIterator
 			} else {
 				throw new UnsupportedOperationException("No support for non-gc_inlinedAllocFields VMs");
 			}
-			
+
 			/* If we're in the middle of a scavenge, record the CopyScanCache data */
 			if (scavengerEnabled) {
 				MM_EnvironmentStandardPointer env = MM_EnvironmentStandardPointer.cast(vmThread.gcExtensions());
@@ -132,12 +132,12 @@ class GCObjectHeapIteratorAddressOrderedList_V1 extends GCObjectHeapIterator
 					U8Pointer cacheTop = adjustedToRange(U8Pointer.cast(tenureCache.cacheTop()), base, top);
 					if (isSomethingToAdd(cacheAlloc, cacheTop)) {
 						excludedRangeList.add(new U8Pointer[] {cacheAlloc, cacheTop});
-					}					
+					}
 				}
 			}
 		}
-		excludedRangeList.add(new U8Pointer[] {scanPtrTop, scanPtrTop}); 
-		Collections.sort(excludedRangeList, new Comparator<U8Pointer[]>() 
+		excludedRangeList.add(new U8Pointer[] {scanPtrTop, scanPtrTop});
+		Collections.sort(excludedRangeList, new Comparator<U8Pointer[]>()
 			{
 				public int compare(U8Pointer[] o1, U8Pointer[] o2)
 				{
@@ -187,7 +187,7 @@ class GCObjectHeapIteratorAddressOrderedList_V1 extends GCObjectHeapIterator
 		} else if (start.gt(end)) {
 			throw new CorruptDataException("Memory range: Start address is higher then end address");
 		}
-		
+
 		return result;
 	}
 
@@ -206,35 +206,35 @@ class GCObjectHeapIteratorAddressOrderedList_V1 extends GCObjectHeapIterator
 						scanPtr = scanPtr.add(holeObjectSize);
 					} else {
 						scanPtr = scanPtr.add(ObjectModel.getConsumedSizeInBytesWithHeader(currentObject));
-					}		
+					}
 					currentObject = null;
 				}
-			
+
 				// Make sure that pointer is not set too high
 				// taken size can be bogus because of data corruption
 				// so we need to skip check for ranges in this case
 				if (scanPtr.gte(scanPtrTop)) {
 					return;
 				}
-				
+
 				// Move past any TLH regions.
 				while (scanPtr.gt(excludedRanges[currentExcludedRange][1])) {
 					currentExcludedRange++;
 				}
 				if (scanPtr.gte(excludedRanges[currentExcludedRange][0])) {
-					// We're in an unused TLH region. 
+					// We're in an unused TLH region.
 					// TODO : this should report as a hole
 					scanPtr = U8Pointer.cast(excludedRanges[currentExcludedRange][1]);
 					currentExcludedRange++;
 					continue;
 				}
-			
+
 				// Make sure we haven't run past the end
 				if (scanPtr.gte(scanPtrTop)) {
 					return;
 				}
-				
-				// Found a candidate entity. 
+
+				// Found a candidate entity.
 				currentObject = J9ObjectPointer.cast(scanPtr);
 				if (!(includeLiveObjects && includeDeadObjects)) {
 					// If we're filtering by type make sure this one is suitable.
@@ -274,7 +274,7 @@ class GCObjectHeapIteratorAddressOrderedList_V1 extends GCObjectHeapIterator
 			throw new NoSuchElementException("An address to advance is out of range");
 		}
 	}
-	
+
 	@Override
 	public J9ObjectPointer next()
 	{
@@ -294,6 +294,6 @@ class GCObjectHeapIteratorAddressOrderedList_V1 extends GCObjectHeapIterator
 			return currentObject;
 		} else {
 			throw new NoSuchElementException("There are no more items available through this iterator");
-		}		
+		}
 	}
 }

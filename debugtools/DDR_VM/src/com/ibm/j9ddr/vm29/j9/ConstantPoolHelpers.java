@@ -45,67 +45,67 @@ import com.ibm.j9ddr.vm29.types.U32;
 /* This class takes the place of oti/j9cp.h */
 public class ConstantPoolHelpers
 {
-	
+
 	private static J9ObjectFieldOffset vmRefOffset = null;
-	
+
 	private ConstantPoolHelpers() {}
-	
+
 	public static UDATAPointer J9_AFTER_CLASS(J9ClassPointer clazz)
 	{
 		return UDATAPointer.cast(clazz.add(1));
 	}
-	
+
 	public static J9ConstantPoolPointer J9_CP_FROM_METHOD(J9MethodPointer method) throws CorruptDataException
 	{
 		return method.constantPool().untag(J9_STARTPC_STATUS);
 	}
-	
+
 	/**
-	 *  use J9ClassPointer.ramConstantPool() instead? 
+	 *  use J9ClassPointer.ramConstantPool() instead?
 	 */
 	public static J9ConstantPoolPointer J9_CP_FROM_CLASS(J9ClassPointer clazz) throws CorruptDataException
 	{
 		return J9ConstantPoolPointer.cast(clazz.ramMethods().add(clazz.romClass().romMethodCount()));
 	}
-	
+
 	/**
-	 *  use J9ConstantPoolPointer.ramClass() instead? 
+	 *  use J9ConstantPoolPointer.ramClass() instead?
 	 */
 	public static J9ClassPointer J9_CLASS_FROM_CP(J9ConstantPoolPointer cp) throws CorruptDataException
 	{
 		return cp.ramClass();
 	}
-	
+
 	public static J9ClassPointer J9_CLASS_FROM_METHOD(J9MethodPointer method) throws CorruptDataException
 	{
 		return J9_CLASS_FROM_CP(J9_CP_FROM_METHOD(method));
 	}
-	
+
 	/**
-	 *  use J9ConstantPoolPointer.romConstantPool() instead? 
+	 *  use J9ConstantPoolPointer.romConstantPool() instead?
 	 */
 	public static J9ROMConstantPoolItemPointer J9_ROM_CP_FROM_CP(J9ConstantPoolPointer cp) throws CorruptDataException
 	{
 		return cp.romConstantPool();
 	}
-	
+
 	/**
-	 *  use J9ROMClassPointer.romConstantPool() instead? 
+	 *  use J9ROMClassPointer.romConstantPool() instead?
 	 */
 	public static J9ROMConstantPoolItemPointer J9_ROM_CP_FROM_ROM_CLASS(J9ROMClassPointer romClass) throws CorruptDataException
 	{
 		return J9ROMConstantPoolItemPointer.cast(romClass.add(1));
 	}
-	
+
 	public static boolean J9_IS_CLASS_OBSOLETE(J9ClassPointer clazz) throws CorruptDataException
 	{
-		if (J9BuildFlags.interp_hotCodeReplacement) {
+		if (J9BuildFlags.J9VM_INTERP_HOT_CODE_REPLACEMENT) {
 			return J9ClassHelper.isSwappedOut(clazz);
 		} else {
 			return false;
 		}
 	}
-	
+
 	public static J9ClassPointer J9_CURRENT_CLASS(J9ClassPointer clazz) throws CorruptDataException
 	{
 		if (J9_IS_CLASS_OBSOLETE(clazz)) {
@@ -114,7 +114,7 @@ public class ConstantPoolHelpers
 			return clazz;
 		}
 	}
-	
+
 	public static J9ClassPointer J9VM_J9CLASS_FROM_HEAPCLASS(J9ObjectPointer clazzObject) throws CorruptDataException
 	{
 		if (clazzObject.isNull()) {
@@ -140,19 +140,19 @@ public class ConstantPoolHelpers
 			throw new CorruptDataException("Unable to find field offset for the 'vmRef' field");
 		}
 	}
-	
+
 	public static J9ObjectPointer J9VM_J9CLASS_TO_HEAPCLASS(J9ClassPointer clazz) throws CorruptDataException
 	{
 		if (clazz.isNull()) {
 			return J9ObjectPointer.NULL;
 		}
 		return J9ObjectPointer.cast(clazz.classObject());
-	}	
-	
+	}
+
 	/**
-	 * This method is Java implementation of the define J9_CP_TYPE in j9cp.h in VM. 
-	 * It basically find out the type of the constant pool entry at the given index.  
-	 * 
+	 * This method is Java implementation of the define J9_CP_TYPE in j9cp.h in VM.
+	 * It basically find out the type of the constant pool entry at the given index.
+	 *
 	 * #define J9_CP_TYPE(cpShapeDescription, index) \
 	 *	(((cpShapeDescription)[(index) / J9_CP_DESCRIPTIONS_PER_U32] >> \
 	 *	(((index) % J9_CP_DESCRIPTIONS_PER_U32) * J9_CP_BITS_PER_DESCRIPTION)) & J9_CP_DESCRIPTION_MASK)
@@ -162,7 +162,7 @@ public class ConstantPoolHelpers
 	 * @return Type
 	 * @throws CorruptDataException
 	 */
-	public static long J9_CP_TYPE(U32Pointer cpShapeDescription, int index) throws CorruptDataException 
+	public static long J9_CP_TYPE(U32Pointer cpShapeDescription, int index) throws CorruptDataException
 	{
 		U32 cpDescription = cpShapeDescription.at(index / J9_CP_DESCRIPTIONS_PER_U32);
 		long shapeDesc = cpDescription.rightShift((int) ((index % J9_CP_DESCRIPTIONS_PER_U32) * J9_CP_BITS_PER_DESCRIPTION)).bitAnd(J9_CP_DESCRIPTION_MASK).longValue();
