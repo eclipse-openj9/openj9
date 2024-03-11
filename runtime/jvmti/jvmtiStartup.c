@@ -1102,7 +1102,7 @@ isFileNameInLibPath(const char *fileName, UDATA dirLen, char *libpath)
 /**
  * Check if an object file loaded is the same as an agent library to be loaded.
  *
- * @param[in] fileName the object file name retrieved va loadquery(L_GETINFO)
+ * @param[in] fileName the object file name retrieved via loadquery(L_GETINFO)
  * @param[in] libName the agent library name to be searched
  * @param[in] decorate a boolean indicating if the prefix/suffix to the library name is to be added
  * @param[in] isLibraryPath a boolean indicating if the libName contains a path separator
