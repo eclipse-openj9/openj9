@@ -28,17 +28,20 @@ echo "start running script";
 # $2 is the TEST_JDK_BIN
 # $3 is the JITServer Options
 # $4 is the JVM Options
-# %5 is the Metrics
+# $5 is the Metrics
+# $6 is a boolean for testing the health port
 
 TEST_ROOT=$1
 TEST_JDK_BIN=$2
 JITSERVER_OPTS="$3"
 JVM_OPTS="$4"
 METRICS=$5
+HEALTHPORTTEST=$6
 
 source $TEST_ROOT/jitserverconfig.sh
 
 JITSERVER_PORT=$(random_port)
+HEALTH_PORT=$(random_port)
 
 JITSERVER_SSL="-XX:JITServerSSLRootCerts"
 
@@ -55,7 +58,7 @@ if [ "$METRICS" == true ]; then
     METRICS_OPTS="-XX:+JITServerMetrics -XX:JITServerMetricsPort=$METRICS_PORT"
 fi
 
-JITSERVER_OPTIONS="-XX:JITServerPort=$JITSERVER_PORT $METRICS_OPTS $JITSERVER_OPTS $SSL_OPTS"
+JITSERVER_OPTIONS="-XX:JITServerPort=$JITSERVER_PORT -XX:JITServerHealthProbePort=$HEALTH_PORT $METRICS_OPTS $JITSERVER_OPTS $SSL_OPTS"
 
 echo "Starting $TEST_JDK_BIN/jitserver $JITSERVER_OPTIONS"
 $TEST_JDK_BIN/jitserver $JITSERVER_OPTIONS &
@@ -72,6 +75,10 @@ if [ "$JITSERVER_EXISTS" == 0 ]; then
 
     if [ "$METRICS" == true ]; then
         curl http://localhost:$METRICS_PORT/metrics
+    fi
+
+    if [ "$HEALTHPORTTEST" == true ]; then
+        curl localhost:$HEALTH_PORT
     fi
 
     ps | grep $JITSERVER_PID | grep 'jitserver'

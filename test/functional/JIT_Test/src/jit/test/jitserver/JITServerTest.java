@@ -60,13 +60,13 @@ public class JITServerTest {
 	private static final String JITSERVER_PORT_OPTION_FORMAT_STRING = "-XX:JITServerPort=%d";
 	private final String aotCacheOption = "-XX:+JITServerUseAOTCache";
 
-        private static final String CLIENT_EXE = System.getProperty("CLIENT_EXE");
-        // This handy regex pattern uses positive lookahead to match a string containing either zero or an even number of " (double quote) characters.
-        // If a character is followed by this pattern it means that the character itself is not in a quoted string, otherwise it would be followed by
-        // an odd number of " characters. Note that this doesn't handle ' (single quote) characters.
-        private static final String QUOTES_LOOKAHEAD_PATTERN = "(?=([^\"]*\"[^\"]*\")*[^\"]*$)";
-        // We want to split the client program string on whitespace, unless the space appears in a quoted string.
-        private static final String SPLIT_ARGS_PATTERN = "\\s+" + QUOTES_LOOKAHEAD_PATTERN;
+	private static final String CLIENT_EXE = System.getProperty("CLIENT_EXE");
+	// This handy regex pattern uses positive lookahead to match a string containing either zero or an even number of " (double quote) characters.
+	// If a character is followed by this pattern it means that the character itself is not in a quoted string, otherwise it would be followed by
+	// an odd number of " characters. Note that this doesn't handle ' (single quote) characters.
+	private static final String QUOTES_LOOKAHEAD_PATTERN = "(?=([^\"]*\"[^\"]*\")*[^\"]*$)";
+    // We want to split the client program string on whitespace, unless the space appears in a quoted string.
+    private static final String SPLIT_ARGS_PATTERN = "\\s+" + QUOTES_LOOKAHEAD_PATTERN;
 
 	JITServerTest() {
 		AssertJUnit.assertEquals("Tests have only been validated on Linux. Other platforms are currently unsupported.", "Linux", System.getProperty("os.name"));
@@ -91,9 +91,9 @@ public class JITServerTest {
 
 		clientBuilder = new ProcessBuilder(stripQuotesFromEachArg(String.join(" ", CLIENT_EXE, portOption, "-XX:+UseJITServer", CLIENT_PROGRAM).split(SPLIT_ARGS_PATTERN)));
 		if (CLIENT_PROGRAM.contains(aotCacheOption))
-                        serverBuilder = new ProcessBuilder(stripQuotesFromEachArg(String.join(" ", SERVER_EXE, portOption, aotCacheOption).split(SPLIT_ARGS_PATTERN)));
-                else
-			serverBuilder = new ProcessBuilder(stripQuotesFromEachArg(String.join(" ", SERVER_EXE, portOption).split(SPLIT_ARGS_PATTERN)));
+			serverBuilder = new ProcessBuilder(stripQuotesFromEachArg(String.join(" ", SERVER_EXE, portOption, "-XX:-JITServerHealthProbes", aotCacheOption).split(SPLIT_ARGS_PATTERN)));
+		else
+			serverBuilder = new ProcessBuilder(stripQuotesFromEachArg(String.join(" ", SERVER_EXE, portOption, "-XX:-JITServerHealthProbes").split(SPLIT_ARGS_PATTERN)));
 
 		// Redirect stderr to stdout, one log for each of the client and server is sufficient.
 		clientBuilder.redirectErrorStream(true);
