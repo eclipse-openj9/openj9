@@ -30,14 +30,14 @@
 #include "HeapRegionDescriptorVLHGC.hpp"
 #include "HeapRegionIteratorVLHGC.hpp"
 
-MM_HeapRegionManagerVLHGC::MM_HeapRegionManagerVLHGC(MM_EnvironmentBase *env, UDATA regionSize, UDATA tableDescriptorSize, MM_RegionDescriptorInitializer regionDescriptorInitializer, MM_RegionDescriptorDestructor regionDescriptorDestructor)
+MM_HeapRegionManagerVLHGC::MM_HeapRegionManagerVLHGC(MM_EnvironmentBase *env, uintptr_t regionSize, uintptr_t tableDescriptorSize, MM_RegionDescriptorInitializer regionDescriptorInitializer, MM_RegionDescriptorDestructor regionDescriptorDestructor)
 	: MM_HeapRegionManagerTarok(env, regionSize, tableDescriptorSize, regionDescriptorInitializer, regionDescriptorDestructor)
 {
 	_typeId = __FUNCTION__;
 }
 
 MM_HeapRegionManagerVLHGC *
-MM_HeapRegionManagerVLHGC::newInstance(MM_EnvironmentBase *env, UDATA regionSize, UDATA tableDescriptorSize, MM_RegionDescriptorInitializer regionDescriptorInitializer, MM_RegionDescriptorDestructor regionDescriptorDestructor)
+MM_HeapRegionManagerVLHGC::newInstance(MM_EnvironmentBase *env, uintptr_t regionSize, uintptr_t tableDescriptorSize, MM_RegionDescriptorInitializer regionDescriptorInitializer, MM_RegionDescriptorDestructor regionDescriptorDestructor)
 {
 	MM_HeapRegionManagerVLHGC *regionManager = (MM_HeapRegionManagerVLHGC *)env->getForge()->allocate(sizeof(MM_HeapRegionManagerVLHGC), MM_AllocationCategory::FIXED, J9_GET_CALLSITE());
 	if (NULL != regionManager) {
@@ -72,14 +72,14 @@ MM_HeapRegionManagerVLHGC::enableRegionsInTable(MM_EnvironmentBase *env, MM_Memo
 	void *highHeapEdge = memoryManager->getHeapTop(handle);
 	
 	/* ask for the number of affinity leaders since that will ensure that is how we will logically split up the regions - we only use physical details for binding */
-	UDATA nodeCount = 0;
+	uintptr_t nodeCount = 0;
 	J9MemoryNodeDetail const* affinityLeaders = extensions->_numaManager.getAffinityLeaders(&nodeCount);
-	UDATA nodeToBind = 0;
+	uintptr_t nodeToBind = 0;
 	if (nodeCount > 0) {
 		nodeToBind = affinityLeaders[0].j9NodeNumber;
 	}
 
-	UDATA forceNode = extensions->fvtest_tarokForceNUMANode;
+	uintptr_t forceNode = extensions->fvtest_tarokForceNUMANode;
 	if (0 == forceNode) {
 		/* force interleave */
 		nodeToBind = 0;
@@ -95,13 +95,13 @@ MM_HeapRegionManagerVLHGC::enableRegionsInTable(MM_EnvironmentBase *env, MM_Memo
 	bool hasPhysicalNUMASupport = extensions->_numaManager.isPhysicalNUMASupported();
 	if (nodeCount > 1) {
 		/* get the card table since we need to set its affinity, as well */
-		UDATA heapRemaining = memoryManager->getMaximumSize(handle);
+		uintptr_t heapRemaining = memoryManager->getMaximumSize(handle);
 		/* because page size and region size are both powers of 2, the max is equivalent to the lowest-common-multiple */
-		UDATA granularity = OMR_MAX(memoryManager->getPageSize(handle), getRegionSize());
-		UDATA heapAddress = (UDATA)memoryManager->getHeapBase(handle);
-		for (UDATA nextNodeIndex = 1; nextNodeIndex <= nodeCount; nextNodeIndex++) {
-			UDATA nodesRemaining = nodeCount + 1 - nextNodeIndex;
-			UDATA thisNodeSize = MM_Math::roundToCeiling(granularity, heapRemaining / nodesRemaining);
+		uintptr_t granularity = OMR_MAX(memoryManager->getPageSize(handle), getRegionSize());
+		uintptr_t heapAddress = (uintptr_t)memoryManager->getHeapBase(handle);
+		for (uintptr_t nextNodeIndex = 1; nextNodeIndex <= nodeCount; nextNodeIndex++) {
+			uintptr_t nodesRemaining = nodeCount + 1 - nextNodeIndex;
+			uintptr_t thisNodeSize = MM_Math::roundToCeiling(granularity, heapRemaining / nodesRemaining);
 			if (0 < thisNodeSize) {
 				void *topOfExtent = (void*)(heapAddress + thisNodeSize);
 				if (topOfExtent > highHeapEdge) {
@@ -110,7 +110,7 @@ MM_HeapRegionManagerVLHGC::enableRegionsInTable(MM_EnvironmentBase *env, MM_Memo
 					 */
 					topOfExtent = highHeapEdge;
 					/* adjust thisNodeSize as well */
-					thisNodeSize = (UDATA)topOfExtent - heapAddress;
+					thisNodeSize = (uintptr_t)topOfExtent - heapAddress;
 				}
 				if (hasPhysicalNUMASupport) {
 					result = memoryManager->setNumaAffinity(handle, nodeToBind, (void*)heapAddress, thisNodeSize);
@@ -137,7 +137,7 @@ MM_HeapRegionManagerVLHGC::enableRegionsInTable(MM_EnvironmentBase *env, MM_Memo
 		}
 	} else {
 		if ((hasPhysicalNUMASupport) && (nodeToBind > 0)) {
-			UDATA nodeSize = (UDATA)highHeapEdge - (UDATA)lowHeapEdge;
+			uintptr_t nodeSize = (uintptr_t)highHeapEdge - (uintptr_t)lowHeapEdge;
 			result = memoryManager->setNumaAffinity(handle, nodeToBind, lowHeapEdge, nodeSize);
 			if (result) {
 				/* also set the memory affinity for the corresponding CardTable extent */
@@ -154,8 +154,8 @@ MM_HeapRegionManagerVLHGC::enableRegionsInTable(MM_EnvironmentBase *env, MM_Memo
 	return result;
 }
 
-MM_HeapMemorySnapshot*
-MM_HeapRegionManagerVLHGC::getHeapMemorySnapshot(MM_GCExtensionsBase *extensions, MM_HeapMemorySnapshot* snapshot, bool gcEnd)
+MM_HeapMemorySnapshot *
+MM_HeapRegionManagerVLHGC::getHeapMemorySnapshot(MM_GCExtensionsBase *extensions, MM_HeapMemorySnapshot *snapshot, bool gcEnd)
 {
 	MM_Heap *heap = extensions->getHeap();
 	snapshot->_totalHeapSize = heap->getActiveMemorySize();
@@ -169,13 +169,13 @@ MM_HeapRegionManagerVLHGC::getHeapMemorySnapshot(MM_GCExtensionsBase *extensions
 	snapshot->_totalRegionSurvivorSize = 0;
 	snapshot->_freeRegionSurvivorSize = 0;
 
-	UDATA regionSize = getRegionSize();
+	uintptr_t regionSize = getRegionSize();
 	GC_HeapRegionIteratorVLHGC regionIterator(this);
 
 	MM_HeapRegionDescriptorVLHGC *region = NULL;
-	UDATA age = 0;
-	UDATA free = 0;
-	UDATA allocateEdenTotal = 0;
+	uintptr_t age = 0;
+	uintptr_t free = 0;
+	uintptr_t allocateEdenTotal = 0;
 
 
 	while (NULL != (region = regionIterator.nextRegion())) {
@@ -191,10 +191,7 @@ MM_HeapRegionManagerVLHGC::getHeapMemorySnapshot(MM_GCExtensionsBase *extensions
 				free = 0;
 			}
 			age = region->getLogicalAge();
-			/* increment logic age for regions happens after getHeapMemorySnapshot(),
-			 * which is triggered by gcEnd event, so at gcEnd, counts any of regions with logic age = 0 as survivor regions.
-			 * TODO: increment logic age for regions should be called before gcEnd */
-			if ((0 == age) && !gcEnd) {
+			if (0 == age) {
 				allocateEdenTotal += regionSize;
 				snapshot->_freeRegionEdenSize += free;
 			} else if (extensions->tarokRegionMaxAge == age) {

@@ -40,10 +40,10 @@ public:
 	 */
 	virtual bool enableRegionsInTable(MM_EnvironmentBase *env, MM_MemoryHandle *handle);
 
-	virtual MM_HeapMemorySnapshot* getHeapMemorySnapshot(MM_GCExtensionsBase *extensions, MM_HeapMemorySnapshot* snapshot, bool gcEnd);
+	virtual MM_HeapMemorySnapshot *getHeapMemorySnapshot(MM_GCExtensionsBase *extensions, MM_HeapMemorySnapshot *snapshot, bool gcEnd);
 
-	static MM_HeapRegionManagerVLHGC *newInstance(MM_EnvironmentBase *env, UDATA regionSize, UDATA tableDescriptorSize, MM_RegionDescriptorInitializer regionDescriptorInitializer, MM_RegionDescriptorDestructor regionDescriptorDestructor);
-	MM_HeapRegionManagerVLHGC(MM_EnvironmentBase *env, UDATA regionSize, UDATA tableDescriptorSize, MM_RegionDescriptorInitializer regionDescriptorInitializer, MM_RegionDescriptorDestructor regionDescriptorDestructor);
+	static MM_HeapRegionManagerVLHGC *newInstance(MM_EnvironmentBase *env, uintptr_t regionSize, uintptr_t tableDescriptorSize, MM_RegionDescriptorInitializer regionDescriptorInitializer, MM_RegionDescriptorDestructor regionDescriptorDestructor);
+	MM_HeapRegionManagerVLHGC(MM_EnvironmentBase *env, uintptr_t regionSize, uintptr_t tableDescriptorSize, MM_RegionDescriptorInitializer regionDescriptorInitializer, MM_RegionDescriptorDestructor regionDescriptorDestructor);
 
 protected:
 	virtual bool initialize(MM_EnvironmentBase *env);
