@@ -234,6 +234,8 @@ public:
 		onStarted = 1,
 	};
 	TimingAddContinuationInList timingAddContinuationInList;
+	bool testContainerMemLimit; /**< if set simulates a container with memory limit set - for GC testing only*/
+	double testRAMSizePercentage; /**< a percentage to increase/decrease usablePhysicalMemory - for GC testing only, only applies to CRIU restore VM */
 protected:
 private:
 protected:
@@ -430,6 +432,8 @@ public:
 		, forceGPFOnHeapInitializationError(false)
 		, continuationListOption(enable_continuation_list)
 		, timingAddContinuationInList(onCreated)
+		, testContainerMemLimit(false)
+		, testRAMSizePercentage(-1.0)
 	{
 		_typeId = __FUNCTION__;
 	}
