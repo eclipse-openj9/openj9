@@ -1,0 +1,1067 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+
+<!--
+  Copyright IBM Corp. and others 2022
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] https://openjdk.org/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
+-->
+<!-- Please refer to https://github.com/eclipse-openj9/openj9/issues/18217#issuecomment-1799794593 -->
+<!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
+
+<suite id="J9 Criu Command-Line Option Tests" timeout="300">
+  <variable name="MAINCLASS_OPTIONSFILE_TEST" value="org.openj9.criu.SoftmxTest" />
+  <test id="Create Criu Checkpoint with softmx 1 dynamic none@50">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ HalfSize 1 false false true false false false false 3 8</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
+    <output type="failure" caseSensitive="yes" regex="no">java.lang.NullPointerException</output>
+    <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="success" caseSensitive="yes" regex="no">The proposed softmx equals the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the denominator should never be 0</output>
+    <output type="success" caseSensitive="yes" regex="no">Skip. Machine RAM too large</output>
+  </test>
+  <test id="Create Criu Checkpoint with softmx 1 dynamic none@100">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ FullSize 1 false false true false false false false 0 0</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
+    <output type="failure" caseSensitive="yes" regex="no">java.lang.NullPointerException</output>
+    <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="success" caseSensitive="yes" regex="no">SoftMX value is 0 as expected</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the denominator should never be 0</output>
+    <output type="success" caseSensitive="yes" regex="no">Skip. Machine RAM too large</output>
+  </test>
+  <test id="Create Criu Checkpoint with softmx 1 dynamic none@150">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ OneAndHalfSize 1 false false true false false false false 0 0</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
+    <output type="failure" caseSensitive="yes" regex="no">java.lang.NullPointerException</output>
+    <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="success" caseSensitive="yes" regex="no">SoftMX value is 0 as expected</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the denominator should never be 0</output>
+    <output type="success" caseSensitive="yes" regex="no">Skip. Machine RAM too large</output>
+  </test>
+  <test id="Create Criu Checkpoint with softmx 2 dynamic xmx@50">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ HalfSize 1 false false true true false false false 3 8</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
+    <output type="failure" caseSensitive="yes" regex="no">java.lang.NullPointerException</output>
+    <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="success" caseSensitive="yes" regex="no">The proposed softmx equals the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the denominator should never be 0</output>
+    <output type="success" caseSensitive="yes" regex="no">Skip. Machine RAM too large</output>
+  </test>
+
+  <test id="Create Criu Checkpoint with softmx 2 dynamic xmx@100">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ FullSize 1 false false true true false false false 3 4</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
+    <output type="failure" caseSensitive="yes" regex="no">java.lang.NullPointerException</output>
+    <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="success" caseSensitive="yes" regex="no">The proposed softmx equals the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the denominator should never be 0</output>
+    <output type="success" caseSensitive="yes" regex="no">Skip. Machine RAM too large</output>
+  </test>
+
+  <test id="Create Criu Checkpoint with softmx 2 dynamic xmx@150">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ OneAndHalfSize 1 false false true true false false false 9 8</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
+    <output type="failure" caseSensitive="yes" regex="no">java.lang.NullPointerException</output>
+    <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="success" caseSensitive="yes" regex="no">The proposed softmx equals the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the denominator should never be 0</output>
+    <output type="success" caseSensitive="yes" regex="no">Skip. Machine RAM too large</output>
+  </test>
+
+  <test id="Create Criu Checkpoint with softmx 3 dynamic MaxRAMPercentage@50">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ HalfSize 1 false false true false true false false 1 4</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
+    <output type="failure" caseSensitive="yes" regex="no">java.lang.NullPointerException</output>
+    <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="success" caseSensitive="yes" regex="no">The proposed softmx equals the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the denominator should never be 0</output>
+    <output type="success" caseSensitive="yes" regex="no">Skip. Machine RAM too large</output>
+  </test>
+
+  <test id="Create Criu Checkpoint with softmx 3 dynamic MaxRAMPercentage@100">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ FullSize 1 false false true false true false false 0 0</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
+    <output type="failure" caseSensitive="yes" regex="no">java.lang.NullPointerException</output>
+    <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="success" caseSensitive="yes" regex="no">SoftMX value is 0 as expected</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the denominator should never be 0</output>
+    <output type="success" caseSensitive="yes" regex="no">Skip. Machine RAM too large</output>
+  </test>
+
+  <test id="Create Criu Checkpoint with softmx 3 dynamic MaxRAMPercentage@150">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ OneAndHalfSize 1 false false true false true false false 0 0</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
+    <output type="failure" caseSensitive="yes" regex="no">java.lang.NullPointerException</output>
+    <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="success" caseSensitive="yes" regex="no">SoftMX value is 0 as expected</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the denominator should never be 0</output>
+    <output type="success" caseSensitive="yes" regex="no">Skip. Machine RAM too large</output>
+  </test>
+  <test id="Create Criu Checkpoint with softmx 4 dynamic Xmx MaxRAMPercentage@50">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ HalfSize 1 false false true true true false false 3 8</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
+    <output type="failure" caseSensitive="yes" regex="no">java.lang.NullPointerException</output>
+    <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="success" caseSensitive="yes" regex="no">The proposed softmx equals the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the denominator should never be 0</output>
+    <output type="success" caseSensitive="yes" regex="no">Skip. Machine RAM too large</output>
+  </test>
+  <test id="Create Criu Checkpoint with softmx 4 dynamic Xmx MaxRAMPercentage@100">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ FullSize 1 false false true true true false false 3 4</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
+    <output type="failure" caseSensitive="yes" regex="no">java.lang.NullPointerException</output>
+    <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="success" caseSensitive="yes" regex="no">The proposed softmx equals the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the denominator should never be 0</output>
+    <output type="success" caseSensitive="yes" regex="no">Skip. Machine RAM too large</output>
+  </test>
+
+  <test id="Create Criu Checkpoint with softmx 4 dynamic Xmx MaxRAMPercentage@150">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ OneAndHalfSize 1 false false true true true false false 9 8</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
+    <output type="failure" caseSensitive="yes" regex="no">java.lang.NullPointerException</output>
+    <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="success" caseSensitive="yes" regex="no">The proposed softmx equals the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the denominator should never be 0</output>
+    <output type="success" caseSensitive="yes" regex="no">Skip. Machine RAM too large</output>
+  </test>
+  <test id="Create Criu Checkpoint with softmx 5 dynamic xms@50">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ HalfSize 1 false false true false false true false 1 2</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
+    <output type="failure" caseSensitive="yes" regex="no">java.lang.NullPointerException</output>
+    <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="success" caseSensitive="yes" regex="no">The proposed softmx equals the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the denominator should never be 0</output>
+    <output type="success" caseSensitive="yes" regex="no">Skip. Machine RAM too large</output>
+  </test>
+  <test id="Create Criu Checkpoint with softmx 5 dynamic xms@100">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ FullSize 1 false false true false false true false 0 0</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
+    <output type="failure" caseSensitive="yes" regex="no">java.lang.NullPointerException</output>
+    <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="success" caseSensitive="yes" regex="no">SoftMX value is 0 as expected</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the denominator should never be 0</output>
+    <output type="success" caseSensitive="yes" regex="no">Skip. Machine RAM too large</output>
+  </test>
+
+  <test id="Create Criu Checkpoint with softmx 5 dynamic xms@150">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ OneAndHalfSize 1 false false true false false true false 0 0</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
+    <output type="failure" caseSensitive="yes" regex="no">java.lang.NullPointerException</output>
+    <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="success" caseSensitive="yes" regex="no">SoftMX value is 0 as expected</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the denominator should never be 0</output>
+    <output type="success" caseSensitive="yes" regex="no">Skip. Machine RAM too large</output>
+  </test>
+
+  <test id="Create Criu Checkpoint with softmx 6 dynamic softmx@50">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ HalfSize 1 false false true false false false true 3 8</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
+    <output type="failure" caseSensitive="yes" regex="no">java.lang.NullPointerException</output>
+    <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="success" caseSensitive="yes" regex="no">The proposed softmx equals the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the denominator should never be 0</output>
+    <output type="success" caseSensitive="yes" regex="no">Skip. Machine RAM too large</output>
+  </test>
+
+  <test id="Create Criu Checkpoint with softmx 6 dynamic softmx@100">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ FullSize 1 false false true false false false true 0 0</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
+    <output type="failure" caseSensitive="yes" regex="no">java.lang.NullPointerException</output>
+    <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="success" caseSensitive="yes" regex="no">SoftMX value is 0 as expected</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the denominator should never be 0</output>
+    <output type="success" caseSensitive="yes" regex="no">Skip. Machine RAM too large</output>
+  </test>
+  <test id="Create Criu Checkpoint with softmx 6 dynamic softmx@150">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ OneAndHalfSize 1 false false true false false false true 0 0</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
+    <output type="failure" caseSensitive="yes" regex="no">java.lang.NullPointerException</output>
+    <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="success" caseSensitive="yes" regex="no">SoftMX value is 0 as expected</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the denominator should never be 0</output>
+    <output type="success" caseSensitive="yes" regex="no">Skip. Machine RAM too large</output>
+  </test>
+  <test id="Create Criu Checkpoint with softmx 7 dynamic softmxRestore@50">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ HalfSizeSoftmxRestore 1 false false true false false false false 3 8</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
+    <output type="failure" caseSensitive="yes" regex="no">java.lang.NullPointerException</output>
+    <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="success" caseSensitive="yes" regex="no">The proposed softmx equals the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the denominator should never be 0</output>
+    <output type="success" caseSensitive="yes" regex="no">Skip. Machine RAM too large</output>
+  </test>
+
+  <test id="Create Criu Checkpoint with softmx 7 dynamic softmxRestore@100">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ FullSizeSoftmxRestore 1 false false true false false false false 0 0</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
+    <output type="failure" caseSensitive="yes" regex="no">java.lang.NullPointerException</output>
+    <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="success" caseSensitive="yes" regex="no">SoftMX value is 0 as expected</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the denominator should never be 0</output>
+    <output type="success" caseSensitive="yes" regex="no">Skip. Machine RAM too large</output>
+  </test>
+  <test id="Create Criu Checkpoint with softmx 7 dynamic softmxRestore@150">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ OneAndHalfSizeSoftmxRestore 1 false false true false false false false 0 0</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
+    <output type="failure" caseSensitive="yes" regex="no">java.lang.NullPointerException</output>
+    <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="success" caseSensitive="yes" regex="no">SoftMX value is 0 as expected</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the denominator should never be 0</output>
+    <output type="success" caseSensitive="yes" regex="no">Skip. Machine RAM too large</output>
+  </test>
+  <test id="Create Criu Checkpoint with softmx 8 dynamic softmx softmxRestore@50">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ HalfSizeSoftmxRestore 1 false false true false false false true 3 8</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
+    <output type="failure" caseSensitive="yes" regex="no">java.lang.NullPointerException</output>
+    <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="success" caseSensitive="yes" regex="no">The proposed softmx equals the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the denominator should never be 0</output>
+    <output type="success" caseSensitive="yes" regex="no">Skip. Machine RAM too large</output>
+  </test>
+  <test id="Create Criu Checkpoint with softmx 8 dynamic softmx softmxRestore@100">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ FullSizeSoftmxRestore 1 false false true false false false true 0 0</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
+    <output type="failure" caseSensitive="yes" regex="no">java.lang.NullPointerException</output>
+    <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="success" caseSensitive="yes" regex="no">SoftMX value is 0 as expected</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the denominator should never be 0</output>
+    <output type="success" caseSensitive="yes" regex="no">Skip. Machine RAM too large</output>
+  </test>
+  <test id="Create Criu Checkpoint with softmx 8 dynamic softmx softmxRestore@150">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ OneAndHalfSizeSoftmxRestore 1 false false true false false false true 0 0</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
+    <output type="failure" caseSensitive="yes" regex="no">java.lang.NullPointerException</output>
+    <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="success" caseSensitive="yes" regex="no">SoftMX value is 0 as expected</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the denominator should never be 0</output>
+    <output type="success" caseSensitive="yes" regex="no">Skip. Machine RAM too large</output>
+  </test>
+  <test id="Create Criu Checkpoint with softmx 9 none@50">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ HalfSize 1 false false false false false false false 3 8</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="success " caseSensitive="yes" regex="no">Post-checkpoint</output>
+    <output type="failure" caseSensitive="yes" regex="no">java.lang.NullPointerException</output>
+    <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="success" caseSensitive="yes" regex="no">The proposed softmx equals the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the denominator should never be 0</output>
+    <output type="success" caseSensitive="yes" regex="no">Skip. Machine RAM too large</output>
+  </test>
+  <test id="Create Criu Checkpoint with softmx 9 none@100">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ FullSize 1 false false false false false false false 0 0</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
+    <output type="failure" caseSensitive="yes" regex="no">java.lang.NullPointerException</output>
+    <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="success" caseSensitive="yes" regex="no">SoftMX value is 0 as expected</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the denominator should never be 0</output>
+    <output type="success" caseSensitive="yes" regex="no">Skip. Machine RAM too large</output>
+  </test>
+  <test id="Create Criu Checkpoint with softmx 9 none@150">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ OneAndHalfSize 1 false false false false false false false 0 0</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
+    <output type="failure" caseSensitive="yes" regex="no">java.lang.NullPointerException</output>
+    <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="success" caseSensitive="yes" regex="no">SoftMX value is 0 as expected</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the denominator should never be 0</output>
+    <output type="success" caseSensitive="yes" regex="no">Skip. Machine RAM too large</output>
+  </test>
+
+  <test id="Create Criu Checkpoint with softmx 10 xmx@50">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ HalfSize 1 false false false true false false false 0 0</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
+    <output type="failure" caseSensitive="yes" regex="no">java.lang.NullPointerException</output>
+    <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="success" caseSensitive="yes" regex="no">SoftMX value is 0 as expected</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the denominator should never be 0</output>
+    <output type="success" caseSensitive="yes" regex="no">Skip. Machine RAM too large</output>
+  </test>
+
+  <test id="Create Criu Checkpoint with softmx 10 xmx@100">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ FullSize 1 false false false true false false false 0 0</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
+    <output type="failure" caseSensitive="yes" regex="no">java.lang.NullPointerException</output>
+    <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="success" caseSensitive="yes" regex="no">SoftMX value is 0 as expected</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the denominator should never be 0</output>
+    <output type="success" caseSensitive="yes" regex="no">Skip. Machine RAM too large</output>
+  </test>
+
+  <test id="Create Criu Checkpoint with softmx 10 xmx@150">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ OneAndHalfSize 1 false false false true false false false 0 0</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
+    <output type="failure" caseSensitive="yes" regex="no">java.lang.NullPointerException</output>
+    <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="success" caseSensitive="yes" regex="no">SoftMX value is 0 as expected</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the denominator should never be 0</output>
+    <output type="success" caseSensitive="yes" regex="no">Skip. Machine RAM too large</output>
+  </test>
+
+  <test id="Create Criu Checkpoint with softmx 11 MaxRAMPercentage@50">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ HalfSize 1 false false false false true false false 1 4</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
+    <output type="failure" caseSensitive="yes" regex="no">java.lang.NullPointerException</output>
+    <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="success" caseSensitive="yes" regex="no">The proposed softmx equals the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the denominator should never be 0</output>
+    <output type="success" caseSensitive="yes" regex="no">Skip. Machine RAM too large</output>
+  </test>
+
+  <test id="Create Criu Checkpoint with softmx 11 MaxRAMPercentage@100">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ FullSize 1 false false false false true false false 0 0</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
+    <output type="failure" caseSensitive="yes" regex="no">java.lang.NullPointerException</output>
+    <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="success" caseSensitive="yes" regex="no">SoftMX value is 0 as expected</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the denominator should never be 0</output>
+    <output type="success" caseSensitive="yes" regex="no">Skip. Machine RAM too large</output>
+  </test>
+
+  <test id="Create Criu Checkpoint with softmx 11 MaxRAMPercentage@150">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ OneAndHalfSize 1 false false false false true false false 0 0</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
+    <output type="failure" caseSensitive="yes" regex="no">java.lang.NullPointerException</output>
+    <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="success" caseSensitive="yes" regex="no">SoftMX value is 0 as expected</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the denominator should never be 0</output>
+    <output type="success" caseSensitive="yes" regex="no">Skip. Machine RAM too large</output>
+  </test>
+
+  <test id="Create Criu Checkpoint with softmx 12 xmx MaxRAMPercentage@50">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ HalfSize 1 false false false true true false false 0 0</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
+    <output type="failure" caseSensitive="yes" regex="no">java.lang.NullPointerException</output>
+    <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="success" caseSensitive="yes" regex="no">SoftMX value is 0 as expected</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the denominator should never be 0</output>
+    <output type="success" caseSensitive="yes" regex="no">Skip. Machine RAM too large</output>
+  </test>
+
+  <test id="Create Criu Checkpoint with softmx 12 xmx MaxRAMPercentage@100">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ FullSize 1 false false false true true false false 0 0</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
+    <output type="failure" caseSensitive="yes" regex="no">java.lang.NullPointerException</output>
+    <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="success" caseSensitive="yes" regex="no">SoftMX value is 0 as expected</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the denominator should never be 0</output>
+    <output type="success" caseSensitive="yes" regex="no">Skip. Machine RAM too large</output>
+  </test>
+
+  <test id="Create Criu Checkpoint with softmx 12 xmx MaxRAMPercentage@150">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ OneAndHalfSize 1 false false false true true false false 0 0</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
+    <output type="failure" caseSensitive="yes" regex="no">java.lang.NullPointerException</output>
+    <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="success" caseSensitive="yes" regex="no">SoftMX value is 0 as expected</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the denominator should never be 0</output>
+    <output type="success" caseSensitive="yes" regex="no">Skip. Machine RAM too large</output>
+  </test>
+
+  <test id="Create Criu Checkpoint with softmx 13 xms@50">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ HalfSize 1 false false false false false true false 1 2</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
+    <output type="failure" caseSensitive="yes" regex="no">java.lang.NullPointerException</output>
+    <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="success" caseSensitive="yes" regex="no">The proposed softmx equals the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the denominator should never be 0</output>
+    <output type="success" caseSensitive="yes" regex="no">Skip. Machine RAM too large</output>
+  </test>
+
+  <test id="Create Criu Checkpoint with softmx 13 xms@100">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ FullSize 1 false false false false false true false 0 0</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
+    <output type="failure" caseSensitive="yes" regex="no">java.lang.NullPointerException</output>
+    <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="success" caseSensitive="yes" regex="no">SoftMX value is 0 as expected</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the denominator should never be 0</output>
+    <output type="success" caseSensitive="yes" regex="no">Skip. Machine RAM too large</output>
+  </test>
+
+  <test id="Create Criu Checkpoint with softmx 13 xms@150">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ OneAndHalfSize 1 false false false false false true false 0 0</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
+    <output type="failure" caseSensitive="yes" regex="no">java.lang.NullPointerException</output>
+    <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="success" caseSensitive="yes" regex="no">SoftMX value is 0 as expected</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the denominator should never be 0</output>
+    <output type="success" caseSensitive="yes" regex="no">Skip. Machine RAM too large</output>
+  </test>
+
+  <test id="Create Criu Checkpoint with softmx 14 softmx@50">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ HalfSize 1 false false false false false false true 1 2</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
+    <output type="failure" caseSensitive="yes" regex="no">java.lang.NullPointerException</output>
+    <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="success" caseSensitive="yes" regex="no">The proposed softmx equals the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the denominator should never be 0</output>
+    <output type="success" caseSensitive="yes" regex="no">Skip. Machine RAM too large</output>
+  </test>
+
+  <test id="Create Criu Checkpoint with softmx 14 softmx@100">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ FullSize 1 false false false false false false true 1 2</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
+    <output type="failure" caseSensitive="yes" regex="no">java.lang.NullPointerException</output>
+    <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="success" caseSensitive="yes" regex="no">The proposed softmx equals the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the denominator should never be 0</output>
+    <output type="success" caseSensitive="yes" regex="no">Skip. Machine RAM too large</output>
+  </test>
+
+  <test id="Create Criu Checkpoint with softmx 14 softmx@150">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ OneAndHalfSize 1 false false false false false false true 1 2</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
+    <output type="failure" caseSensitive="yes" regex="no">java.lang.NullPointerException</output>
+    <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="success" caseSensitive="yes" regex="no">The proposed softmx equals the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the denominator should never be 0</output>
+    <output type="success" caseSensitive="yes" regex="no">Skip. Machine RAM too large</output>
+  </test>
+
+  <test id="Create Criu Checkpoint with softmx 15 softmxRestore@50">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ HalfSizeSoftmxRestore 1 false false false false false false false 3 8</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
+    <output type="failure" caseSensitive="yes" regex="no">java.lang.NullPointerException</output>
+    <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="success" caseSensitive="yes" regex="no">The proposed softmx equals the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the denominator should never be 0</output>
+    <output type="success" caseSensitive="yes" regex="no">Skip. Machine RAM too large</output>
+  </test>
+
+  <test id="Create Criu Checkpoint with softmx 15 softmxRestore@100">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ FullSizeSoftmxRestore 1 false false false false false false false 3 8</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
+    <output type="failure" caseSensitive="yes" regex="no">java.lang.NullPointerException</output>
+    <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="success" caseSensitive="yes" regex="no">The proposed softmx equals the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the denominator should never be 0</output>
+    <output type="success" caseSensitive="yes" regex="no">Skip. Machine RAM too large</output>
+  </test>
+
+  <test id="Create Criu Checkpoint with softmx 15 softmxRestore@150">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ OneAndHalfSizeSoftmxRestore 1 false false false false false false false 3 8</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
+    <output type="failure" caseSensitive="yes" regex="no">java.lang.NullPointerException</output>
+    <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="success" caseSensitive="yes" regex="no">The proposed softmx equals the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the denominator should never be 0</output>
+    <output type="success" caseSensitive="yes" regex="no">Skip. Machine RAM too large</output>
+  </test>
+
+  <test id="Create Criu Checkpoint with softmx 16 softmx softmxRestore@50">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ HalfSizeSoftmxRestore 1 false false false false false false true 3 8</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
+    <output type="failure" caseSensitive="yes" regex="no">java.lang.NullPointerException</output>
+    <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="success" caseSensitive="yes" regex="no">The proposed softmx equals the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the denominator should never be 0</output>
+    <output type="success" caseSensitive="yes" regex="no">Skip. Machine RAM too large</output>
+  </test>
+
+  <test id="Create Criu Checkpoint with softmx 16 softmx softmxRestore@100">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ FullSizeSoftmxRestore 1 false false false false false false true 3 8</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
+    <output type="failure" caseSensitive="yes" regex="no">java.lang.NullPointerException</output>
+    <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="success" caseSensitive="yes" regex="no">The proposed softmx equals the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the denominator should never be 0</output>
+    <output type="success" caseSensitive="yes" regex="no">Skip. Machine RAM too large</output>
+  </test>
+  <test id="Create Criu Checkpoint with softmx 16 softmx softmxRestore@150">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_OPTIONSFILE_TEST$ OneAndHalfSizeSoftmxRestore 1 false false false false false false true 3 8</command>
+    <output type="success" caseSensitive="no" regex="no">Killed</output>
+    <output type="failure" caseSensitive="yes" regex="no">failed properties test</output>
+    <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
+    <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
+    <output type="failure" caseSensitive="yes" regex="no">java.lang.NullPointerException</output>
+    <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="success" caseSensitive="yes" regex="no">The proposed softmx equals the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
+    <output type="failure" caseSensitive="yes" regex="no">Error condition: the denominator should never be 0</output>
+    <output type="success" caseSensitive="yes" regex="no">Skip. Machine RAM too large</output>
+  </test>
+</suite>
