@@ -1663,7 +1663,7 @@ TR_J9ByteCodeIlGenerator::stashArgumentsForOSR(TR_J9ByteCode byteCode)
    // regardless of the number of arguments needed by the generated call.
    //
    // The generated call requires one (in resolved case) or two (in unresolved case)
-   // implicit arguments, so we need to substract them to get the actual number of
+   // implicit arguments, so we need to subtract them to get the actual number of
    // arguments needed.
    // The reason why we don't need to stash the implicit arguments is because when we
    // transition to the VM, VM will push the implicit argument onto the stack, this is
