@@ -502,6 +502,8 @@ J9::OptionsPostRestore::invalidateCompiledMethodsIfNeeded(bool invalidateAll)
                    shouldInvalidateCompiledMethod(method, fej9, compilationFiltersExist))
                   {
                   invalidateCompiledMethod(method, fej9);
+                  if (!invalidateAll)
+                     _compInfo->getCRRuntime()->removeMethodsFromMemoizedCompilations<J9Method>(method);
                   }
                }
             }
@@ -509,6 +511,9 @@ J9::OptionsPostRestore::invalidateCompiledMethodsIfNeeded(bool invalidateAll)
          j9clazz = javaVM->internalVMFunctions->allClassesNextDo(&classWalkState);
          }
       javaVM->internalVMFunctions->allClassesEndDo(&classWalkState);
+
+      if (invalidateAll)
+         _compInfo->getCRRuntime()->purgeMemoizedCompilations();
 
       j9nls_printf(PORTLIB, (UDATA) J9NLS_WARNING, J9NLS_JIT_CHECKPOINT_RESTORE_CODE_INVALIDATED);
       }
