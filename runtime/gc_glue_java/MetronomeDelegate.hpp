@@ -55,13 +55,13 @@ private:
 
 public:
 	void yieldWhenRequested(MM_EnvironmentBase *env);
-	static int J9THREAD_PROC metronomeAlarmThreadWrapper(void* userData);
-	static uintptr_t signalProtectedFunction(J9PortLibrary *privatePortLibrary, void* userData);	
+	static int J9THREAD_PROC metronomeAlarmThreadWrapper(void *userData);
+	static uintptr_t signalProtectedFunction(J9PortLibrary *privatePortLibrary, void *userData);
 
 	MM_MetronomeDelegate(MM_EnvironmentBase *env) :
 		_extensions(MM_GCExtensions::getExtensions(env)),
 		_realtimeGC(NULL),
-		_javaVM((J9JavaVM*)env->getOmrVM()->_language_vm) {}
+		_javaVM((J9JavaVM *)env->getOmrVM()->_language_vm) {}
 
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
  	bool _unmarkedImpliesClasses; /**< if true the mark bit can be used to check is class alive or not */
@@ -120,7 +120,7 @@ public:
 	 * @param classLoaderUnloadCountResult[out] returns the number of class loaders about to be unloaded
 	 * @param classLoaderUnloadListResult[out] returns a linked list of class loaders about to be unloaded
 	 */
-	void processDyingClasses(MM_EnvironmentRealtime *env, UDATA* classUnloadCountResult, UDATA* anonymousClassUnloadCount, UDATA* classLoaderUnloadCountResult, J9ClassLoader** classLoaderUnloadListResult);
+	void processDyingClasses(MM_EnvironmentRealtime *env, UDATA *classUnloadCountResult, UDATA *anonymousClassUnloadCount, UDATA *classLoaderUnloadCountResult, J9ClassLoader **classLoaderUnloadListResult);
 	void processUnlinkedClassLoaders(MM_EnvironmentBase *env, J9ClassLoader *deadClassLoaders);
 	void updateClassUnloadStats(MM_EnvironmentBase *env, UDATA classUnloadCount, UDATA anonymousClassUnloadCount, UDATA classLoaderUnloadCount);
 
@@ -133,7 +133,7 @@ public:
 	 * @param classUnloadCountOut[out] number of classes dying added to the list
 	 * @return new root to list of dying classes
 	 */
-	J9Class *addDyingClassesToList(MM_EnvironmentRealtime *env, J9ClassLoader * classLoader, bool setAll, J9Class *classUnloadListStart, UDATA *classUnloadCountResult);
+	J9Class *addDyingClassesToList(MM_EnvironmentRealtime *env, J9ClassLoader *classLoader, bool setAll, J9Class *classUnloadListStart, UDATA *classUnloadCountResult);
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 
 	void yieldFromClassUnloading(MM_EnvironmentRealtime *env);
@@ -145,17 +145,17 @@ public:
 	UDATA getContinuationObjectListCount(MM_EnvironmentBase *env) { return _extensions->gcThreadCount; }
 	UDATA getReferenceObjectListCount(MM_EnvironmentBase *env) { return _extensions->gcThreadCount; }
 
-	void defaultMemorySpaceAllocated(MM_GCExtensionsBase *extensions, void* defaultMemorySpace);
-	MM_RealtimeAccessBarrier* allocateAccessBarrier(MM_EnvironmentBase *env);
+	void defaultMemorySpaceAllocated(MM_GCExtensionsBase *extensions, void *defaultMemorySpace);
+	MM_RealtimeAccessBarrier *allocateAccessBarrier(MM_EnvironmentBase *env);
 	void enableDoubleBarrier(MM_EnvironmentBase* env);
-	void disableDoubleBarrierOnThread(MM_EnvironmentBase* env, OMR_VMThread* vmThread);
-	void disableDoubleBarrier(MM_EnvironmentBase* env);
+	void disableDoubleBarrierOnThread(MM_EnvironmentBase *env, OMR_VMThread *vmThread);
+	void disableDoubleBarrier(MM_EnvironmentBase *env);
 
 	/* New methods */
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
-	bool doClassTracing(MM_EnvironmentRealtime* env);
+	bool doClassTracing(MM_EnvironmentRealtime *env);
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
-	bool doTracing(MM_EnvironmentRealtime* env);
+	bool doTracing(MM_EnvironmentRealtime *env);
 
 	/*
 	 * These functions are used by classic Metronome gang-scheduling and
@@ -208,7 +208,7 @@ public:
 	scanPointerArraylet(MM_EnvironmentRealtime *env, fomrobject_t *arraylet)
 	{
 		fomrobject_t *startScanPtr = arraylet;
-		fomrobject_t *endScanPtr = (fomrobject_t*)((uintptr_t)startScanPtr + _javaVM->arrayletLeafSize);
+		fomrobject_t *endScanPtr = (fomrobject_t *)((uintptr_t)startScanPtr + _javaVM->arrayletLeafSize);
 		return scanPointerRange(env, startScanPtr, endScanPtr);
 	}
 
@@ -216,7 +216,7 @@ public:
 	scanObject(MM_EnvironmentRealtime *env, omrobjectptr_t objectPtr)
 	{
 		UDATA pointersScanned = 0;
-		switch(_extensions->objectModel.getScanType(objectPtr)) {
+		switch (_extensions->objectModel.getScanType(objectPtr)) {
 		case GC_ObjectModel::SCAN_MIXED_OBJECT_LINKED:
 		case GC_ObjectModel::SCAN_ATOMIC_MARKABLE_REFERENCE_OBJECT:
 		case GC_ObjectModel::SCAN_MIXED_OBJECT:
@@ -250,20 +250,20 @@ public:
 		UDATA pointerField = 0;
 	
 		if (env->compressObjectReferences()) {
-			uint32_t *scanPtr = (uint32_t*)startScanPtr;
-			uint32_t *endPtr = (uint32_t*)endScanPtr;
+			uint32_t *scanPtr = (uint32_t *)startScanPtr;
+			uint32_t *endPtr = (uint32_t *)endScanPtr;
 			pointerField = endPtr - scanPtr;
-			while(scanPtr < endPtr) {
-				GC_SlotObject slotObject(_javaVM->omrVM, (fj9object_t*)scanPtr);
+			while (scanPtr < endPtr) {
+				GC_SlotObject slotObject(_javaVM->omrVM, (fj9object_t *)scanPtr);
 				_markingScheme->markObject(env, slotObject.readReferenceFromSlot());
 				scanPtr++;
 			}
 		} else {
-			uintptr_t *scanPtr = (uintptr_t*)startScanPtr;
-			uintptr_t *endPtr = (uintptr_t*)endScanPtr;
+			uintptr_t *scanPtr = (uintptr_t *)startScanPtr;
+			uintptr_t *endPtr = (uintptr_t *)endScanPtr;
 			pointerField = endPtr - scanPtr;
-			while(scanPtr < endPtr) {
-				GC_SlotObject slotObject(_javaVM->omrVM, (fj9object_t*)scanPtr);
+			while (scanPtr < endPtr) {
+				GC_SlotObject slotObject(_javaVM->omrVM, (fj9object_t *)scanPtr);
 				_markingScheme->markObject(env, slotObject.readReferenceFromSlot());
 				scanPtr++;
 			}
@@ -280,17 +280,17 @@ public:
 		bool const compressed = env->compressObjectReferences();
 		fj9object_t *scanPtr = _extensions->mixedObjectModel.getHeadlessObject(objectPtr);
 		UDATA objectSize = _extensions->mixedObjectModel.getSizeInBytesWithHeader(objectPtr);
-		fj9object_t *endScanPtr = (fj9object_t*)(((U_8 *)objectPtr) + objectSize);
-		UDATA *descriptionPtr;
-		UDATA descriptionBits;
-		UDATA descriptionIndex;
+		fj9object_t *endScanPtr = (fj9object_t *)(((U_8 *)objectPtr) + objectSize);
+		UDATA *descriptionPtr = NULL;
+		UDATA descriptionBits = 0;
+		UDATA descriptionIndex = 0;
 #if defined(J9VM_GC_LEAF_BITS)
-		UDATA *leafPtr;
-		UDATA leafBits;
+		UDATA *leafPtr = NULL;
+		UDATA leafBits = 0;
 #endif /* J9VM_GC_LEAF_BITS */
 		
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
-		if(isDynamicClassUnloadingEnabled()) {
+		if (isDynamicClassUnloadingEnabled()) {
 			markClassOfObject(env, objectPtr);
 		}
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
@@ -300,7 +300,7 @@ public:
 		leafPtr = (UDATA *)J9GC_J9OBJECT_CLAZZ(objectPtr, env)->instanceLeafDescription;
 #endif /* J9VM_GC_LEAF_BITS */
 
-		if(((UDATA)descriptionPtr) & 1) {
+		if (((UDATA)descriptionPtr) & 1) {
 			descriptionBits = ((UDATA)descriptionPtr) >> 1;
 #if defined(J9VM_GC_LEAF_BITS)
 			leafBits = ((UDATA)leafPtr) >> 1;
@@ -314,9 +314,9 @@ public:
 		descriptionIndex = J9_OBJECT_DESCRIPTION_SIZE - 1;
 
 		UDATA pointerFields = 0;
-		while(scanPtr < endScanPtr) {
+		while (scanPtr < endScanPtr) {
 			/* Determine if the slot should be processed */
-			if(descriptionBits & 1) {
+			if (descriptionBits & 1) {
 				pointerFields++;
 				GC_SlotObject slotObject(_javaVM->omrVM, scanPtr);
 #if defined(J9VM_GC_LEAF_BITS)
@@ -329,7 +329,7 @@ public:
 #if defined(J9VM_GC_LEAF_BITS)
 			leafBits >>= 1;
 #endif /* J9VM_GC_LEAF_BITS */
-			if(descriptionIndex-- == 0) {
+			if (descriptionIndex-- == 0) {
 				descriptionBits = *descriptionPtr++;
 #if defined(J9VM_GC_LEAF_BITS)
 				leafBits = *leafPtr++;
@@ -351,7 +351,7 @@ public:
 		bool const compressed = env->compressObjectReferences();
 		
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
-		if(isDynamicClassUnloadingEnabled()) {
+		if (isDynamicClassUnloadingEnabled()) {
 			markClassOfObject(env, (J9Object *)objectPtr);
 		}
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
@@ -380,9 +380,9 @@ public:
 				UDATA arrayletSize = _extensions->indexableObjectModel.arrayletSize(objectPtr, i);
 				/* need to check leaf pointer because this can be a partially allocated arraylet (not all leafs are allocated) */
 				GC_SlotObject slotObject(_javaVM->omrVM, GC_SlotObject::addToSlotAddress(arrayoid, i, compressed));
-				fj9object_t *startScanPtr = (fj9object_t*) (slotObject.readReferenceFromSlot());
+				fj9object_t *startScanPtr = (fj9object_t *) (slotObject.readReferenceFromSlot());
 				if (NULL != startScanPtr) {
-					fj9object_t *endScanPtr = (fj9object_t*)((uintptr_t)startScanPtr + arrayletSize);
+					fj9object_t *endScanPtr = (fj9object_t *)((uintptr_t)startScanPtr + arrayletSize);
 					if (i == (numArraylets - 1)) {
 						pointerFields += scanPointerRange(env, startScanPtr, endScanPtr);
 						if (canSetAsScanned) {
@@ -411,17 +411,17 @@ public:
 		bool const compressed = env->compressObjectReferences();
 		fj9object_t *scanPtr = _extensions->mixedObjectModel.getHeadlessObject(objectPtr);
 		UDATA objectSize = _extensions->mixedObjectModel.getSizeInBytesWithHeader(objectPtr);
-		fj9object_t *endScanPtr = (fj9object_t*)(((U_8 *)objectPtr) + objectSize);
-		UDATA *descriptionPtr;
-		UDATA descriptionBits;
-		UDATA descriptionIndex;
+		fj9object_t *endScanPtr = (fj9object_t *)(((U_8 *)objectPtr) + objectSize);
+		UDATA *descriptionPtr = NULL;
+		UDATA descriptionBits = 0;
+		UDATA descriptionIndex = 0;
 #if defined(J9VM_GC_LEAF_BITS)
-		UDATA *leafPtr;
-		UDATA leafBits;
+		UDATA *leafPtr = NULL;
+		UDATA leafBits = 0;
 #endif /* J9VM_GC_LEAF_BITS */
 		
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
-		if(isDynamicClassUnloadingEnabled()) {
+		if (isDynamicClassUnloadingEnabled()) {
 			markClassOfObject(env, objectPtr);
 		}
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
@@ -431,7 +431,7 @@ public:
 		leafPtr = (UDATA *)J9GC_J9OBJECT_CLAZZ(objectPtr, env)->instanceLeafDescription;
 #endif /* J9VM_GC_LEAF_BITS */
 
-		if(((UDATA)descriptionPtr) & 1) {
+		if (((UDATA)descriptionPtr) & 1) {
 			descriptionBits = ((UDATA)descriptionPtr) >> 1;
 #if defined(J9VM_GC_LEAF_BITS)
 			leafBits = ((UDATA)leafPtr) >> 1;
@@ -485,9 +485,9 @@ public:
 		}
 		
 		UDATA pointerFields = 0;
-		while(scanPtr < endScanPtr) {
+		while (scanPtr < endScanPtr) {
 			/* Determine if the slot should be processed */
-			if((descriptionBits & 1) && ((scanPtr != referentPtr.readAddressFromSlot()) || referentMustBeMarked)) {
+			if ((descriptionBits & 1) && ((scanPtr != referentPtr.readAddressFromSlot()) || referentMustBeMarked)) {
 				pointerFields++;
 				GC_SlotObject slotObject(_javaVM->omrVM, scanPtr);
 #if defined(J9VM_GC_LEAF_BITS)
@@ -500,7 +500,7 @@ public:
 #if defined(J9VM_GC_LEAF_BITS)
 			leafBits >>= 1;
 #endif /* J9VM_GC_LEAF_BITS */
-			if(descriptionIndex-- == 0) {
+			if (descriptionIndex-- == 0) {
 				descriptionBits = *descriptionPtr++;
 #if defined(J9VM_GC_LEAF_BITS)
 				leafBits = *leafPtr++;
@@ -547,7 +547,7 @@ private:
 	 * @param region[in] the region all the objects in the list belong to
 	 * @param headOfList[in] the first object in the linked list
 	 */
-	void processReferenceList(MM_EnvironmentRealtime *env, MM_HeapRegionDescriptorRealtime* region, J9Object* headOfList, MM_ReferenceStats *referenceStats);
+	void processReferenceList(MM_EnvironmentRealtime *env, MM_HeapRegionDescriptorRealtime *region, J9Object *headOfList, MM_ReferenceStats *referenceStats);
 
 	/**
 	 * Called by the root scanner to scan all SoftReference objects discovered by the mark phase,
@@ -562,6 +562,15 @@ private:
 	 * @param env[in] the current thread
 	 */
 	void scanPhantomReferenceObjects(MM_EnvironmentRealtime *env);
+
+	/**
+	 * Set permanent ClassLoader Marked.
+	 *
+	 * @param env environment for calling thread
+	 * @param classLoader ClassLoader to be set marked
+	 */
+	void markPermanentClassloader(MM_EnvironmentRealtime *env, J9ClassLoader *classLoader);
+
 
 	/*
 	 * Friends

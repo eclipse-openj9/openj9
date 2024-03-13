@@ -50,11 +50,11 @@ MM_ClassLoaderRememberedSet::MM_ClassLoaderRememberedSet(MM_EnvironmentBase *env
 }
 
 MM_ClassLoaderRememberedSet*
-MM_ClassLoaderRememberedSet::newInstance(MM_EnvironmentBase* env)
+MM_ClassLoaderRememberedSet::newInstance(MM_EnvironmentBase *env)
 {
-	MM_ClassLoaderRememberedSet* classLoaderRememberedSet = (MM_ClassLoaderRememberedSet*)env->getForge()->allocate(sizeof(MM_ClassLoaderRememberedSet), MM_AllocationCategory::REMEMBERED_SET, J9_GET_CALLSITE());
+	MM_ClassLoaderRememberedSet *classLoaderRememberedSet = (MM_ClassLoaderRememberedSet *)env->getForge()->allocate(sizeof(MM_ClassLoaderRememberedSet), MM_AllocationCategory::REMEMBERED_SET, J9_GET_CALLSITE());
 	if (classLoaderRememberedSet) {
-		new(classLoaderRememberedSet) MM_ClassLoaderRememberedSet(env);
+		new (classLoaderRememberedSet) MM_ClassLoaderRememberedSet(env);
 		if (!classLoaderRememberedSet->initialize(env)) {
 			classLoaderRememberedSet->kill(env);
 			classLoaderRememberedSet = NULL;
@@ -64,7 +64,7 @@ MM_ClassLoaderRememberedSet::newInstance(MM_EnvironmentBase* env)
 }
 
 bool
-MM_ClassLoaderRememberedSet::initialize(MM_EnvironmentBase* env)
+MM_ClassLoaderRememberedSet::initialize(MM_EnvironmentBase *env)
 {
 	if (!_lock.initialize(env, &_extensions->lnrlOptions, "MM_ClassLoaderRememberedSet:_lock")) {
 		return false;
@@ -75,7 +75,7 @@ MM_ClassLoaderRememberedSet::initialize(MM_EnvironmentBase* env)
 		if (NULL == _bitVectorPool) {
 			return false;
 		}
-		_bitsToClear = (UDATA*)pool_newElement(_bitVectorPool);
+		_bitsToClear = (UDATA *)pool_newElement(_bitVectorPool);
 		if (NULL == _bitsToClear) {
 			return false;
 		}
@@ -88,7 +88,7 @@ MM_ClassLoaderRememberedSet::initialize(MM_EnvironmentBase* env)
 }
 
 void
-MM_ClassLoaderRememberedSet::tearDown(MM_EnvironmentBase* env)
+MM_ClassLoaderRememberedSet::tearDown(MM_EnvironmentBase *env)
 {
 	if (NULL != _bitVectorPool) {
 		pool_kill(_bitVectorPool);
@@ -106,25 +106,25 @@ MM_ClassLoaderRememberedSet::kill(MM_EnvironmentBase *env)
 }
 
 void * 
-MM_ClassLoaderRememberedSet::poolAllocateHelper(void* userData, U_32 size, const char* callSite, U_32 memoryCategory, U_32 type, U_32* doInit)
+MM_ClassLoaderRememberedSet::poolAllocateHelper(void *userData, U_32 size, const char *callSite, U_32 memoryCategory, U_32 type, U_32 *doInit)
 {
 	/* We ignore the memoryCategory, type and doInit arguments */
-	MM_ClassLoaderRememberedSet *classLoaderRememberedSet = (MM_ClassLoaderRememberedSet*)userData;
-	MM_Forge* forge = classLoaderRememberedSet->_extensions->getForge();
+	MM_ClassLoaderRememberedSet *classLoaderRememberedSet = (MM_ClassLoaderRememberedSet *)userData;
+	MM_Forge *forge = classLoaderRememberedSet->_extensions->getForge();
 	return forge->allocate(size, MM_AllocationCategory::REMEMBERED_SET, callSite);
 }
 
 void 
-MM_ClassLoaderRememberedSet::poolFreeHelper(void* userData, void* address, U_32 type)
+MM_ClassLoaderRememberedSet::poolFreeHelper(void *userData, void *address, U_32 type)
 {
 	/* we ignore the type argument */
-	MM_ClassLoaderRememberedSet *classLoaderRememberedSet = (MM_ClassLoaderRememberedSet*)userData;
-	MM_Forge* forge = classLoaderRememberedSet->_extensions->getForge();
+	MM_ClassLoaderRememberedSet *classLoaderRememberedSet = (MM_ClassLoaderRememberedSet *)userData;
+	MM_Forge *forge = classLoaderRememberedSet->_extensions->getForge();
 	forge->free(address);
 }
 
 void
-MM_ClassLoaderRememberedSet::rememberInstance(MM_EnvironmentBase* env, J9Object* object) 
+MM_ClassLoaderRememberedSet::rememberInstance(MM_EnvironmentBase *env, J9Object *object)
 {
 	Assert_MM_true(NULL != object);
 	UDATA regionIndex = _regionManager->physicalTableDescriptorIndexForAddress(object);
@@ -150,7 +150,7 @@ MM_ClassLoaderRememberedSet::rememberInstance(MM_EnvironmentBase* env, J9Object*
 }
 
 void
-MM_ClassLoaderRememberedSet::rememberRegionInternal(MM_EnvironmentBase* env, UDATA regionIndex, volatile UDATA *gcRememberedSetAddress)
+MM_ClassLoaderRememberedSet::rememberRegionInternal(MM_EnvironmentBase *env, UDATA regionIndex, volatile UDATA *gcRememberedSetAddress)
 {
 	UDATA taggedRegionIndex = asTaggedRegionIndex(regionIndex);
 
@@ -177,7 +177,7 @@ MM_ClassLoaderRememberedSet::rememberRegionInternal(MM_EnvironmentBase* env, UDA
 }
 
 void
-MM_ClassLoaderRememberedSet::installBitVector(MM_EnvironmentBase* env, volatile UDATA *gcRememberedSetAddress)
+MM_ClassLoaderRememberedSet::installBitVector(MM_EnvironmentBase *env, volatile UDATA *gcRememberedSetAddress)
 {
 	_lock.acquire();
 	UDATA gcRememberedSet = *gcRememberedSetAddress;
@@ -191,7 +191,7 @@ MM_ClassLoaderRememberedSet::installBitVector(MM_EnvironmentBase* env, volatile 
 			Assert_MM_false(_extensions->tarokEnableIncrementalClassGC);
 			*gcRememberedSetAddress = UDATA_MAX;
 		} else {
-			volatile UDATA* bitVector = (volatile UDATA*)pool_newElement(_bitVectorPool);
+			volatile UDATA *bitVector = (volatile UDATA *)pool_newElement(_bitVectorPool);
 			if (NULL == bitVector) {
 				*gcRememberedSetAddress = UDATA_MAX;
 			} else {
@@ -205,7 +205,7 @@ MM_ClassLoaderRememberedSet::installBitVector(MM_EnvironmentBase* env, volatile 
 }
 
 void
-MM_ClassLoaderRememberedSet::setBit(MM_EnvironmentBase* env, volatile UDATA* bitVector, UDATA bit)
+MM_ClassLoaderRememberedSet::setBit(MM_EnvironmentBase *env, volatile UDATA *bitVector, UDATA bit)
 {
 	UDATA wordIndex = bit / BITS_PER_UDATA;
 	UDATA bitIndex = bit % BITS_PER_UDATA;
@@ -220,7 +220,7 @@ MM_ClassLoaderRememberedSet::setBit(MM_EnvironmentBase* env, volatile UDATA* bit
 }
 
 bool
-MM_ClassLoaderRememberedSet::isBitSet(MM_EnvironmentBase* env, volatile UDATA* bitVector, UDATA bit)
+MM_ClassLoaderRememberedSet::isBitSet(MM_EnvironmentBase *env, volatile UDATA *bitVector, UDATA bit)
 {
 	UDATA wordIndex = bit / BITS_PER_UDATA;
 	UDATA bitIndex = bit % BITS_PER_UDATA;
@@ -266,7 +266,7 @@ MM_ClassLoaderRememberedSet::isRememberedInternal(MM_EnvironmentBase *env, UDATA
 		isRemembered = true;
 	} else {
 		/* a bit vector is installed. Check to see if it's all zero */
-		volatile UDATA* bitVector = (volatile UDATA*)gcRememberedSet;
+		volatile UDATA *bitVector = (volatile UDATA *)gcRememberedSet;
 		for (UDATA i = 0; i < _bitVectorSize; i++) {
 			if (0 != bitVector[i]) {
 				isRemembered = true;
@@ -278,7 +278,7 @@ MM_ClassLoaderRememberedSet::isRememberedInternal(MM_EnvironmentBase *env, UDATA
 }
 
 bool
-MM_ClassLoaderRememberedSet::isInstanceRemembered(MM_EnvironmentBase *env, J9Object* object)
+MM_ClassLoaderRememberedSet::isInstanceRemembered(MM_EnvironmentBase *env, J9Object *object)
 {
 	bool isRemembered = false;
 	Assert_MM_true(NULL != object);
@@ -319,7 +319,7 @@ MM_ClassLoaderRememberedSet::isRegionRemembered(MM_EnvironmentBase *env, UDATA r
 		isRemembered = false;
 	} else {
 		/* this remembered set must be an inflated bit vector */
-		isRemembered = isBitSet(env, (volatile UDATA*)gcRememberedSet, regionIndex);
+		isRemembered = isBitSet(env, (volatile UDATA *)gcRememberedSet, regionIndex);
 	}
 	
 	return isRemembered;
@@ -344,7 +344,7 @@ MM_ClassLoaderRememberedSet::killRememberedSetInternal(MM_EnvironmentBase *env, 
 			/* inflated remembered set */
 			_lock.acquire();
 			Assert_MM_true(NULL != _bitVectorPool);
-			pool_removeElement(_bitVectorPool, (void*)gcRememberedSet);
+			pool_removeElement(_bitVectorPool, (void *)gcRememberedSet);
 			_lock.release();
 		}
 	}
@@ -372,15 +372,15 @@ MM_ClassLoaderRememberedSet::clearRememberedSets(MM_EnvironmentBase *env)
 	Assert_MM_true(NULL != _bitsToClear);
 	GC_ClassLoaderIterator classLoaderIterator(javaVM->classLoaderBlocks);
 	J9ClassLoader *classLoader = NULL;
-	while(NULL != (classLoader = classLoaderIterator.nextSlot())) {
-		if(J9_ARE_ANY_BITS_SET(classLoader->flags, J9CLASSLOADER_ANON_CLASS_LOADER)) {
+	while (NULL != (classLoader = classLoaderIterator.nextSlot())) {
+		if (J9_ARE_ANY_BITS_SET(classLoader->flags, J9CLASSLOADER_ANON_CLASS_LOADER)) {
 			/* Anonymous classloader should be scanned on level of classes every time */
 			GC_ClassLoaderSegmentIterator segmentIterator(classLoader, MEMORY_TYPE_RAM_CLASS);
 			J9MemorySegment *segment = NULL;
-			while(NULL != (segment = segmentIterator.nextSegment())) {
+			while (NULL != (segment = segmentIterator.nextSegment())) {
 				GC_ClassHeapIterator classHeapIterator(javaVM, segment);
 				J9Class *clazz = NULL;
-				while(NULL != (clazz = classHeapIterator.nextClass())) {
+				while (NULL != (clazz = classHeapIterator.nextClass())) {
 					/* class should not be unloaded otherwise gcLink is used to form list of unloaded classes */
 					Assert_MM_true(!J9_ARE_ANY_BITS_SET(clazz->classDepthAndFlags, J9AccClassDying));
 					clearRememberedSetsInternal(env, (volatile UDATA *)&clazz->gcLink);
@@ -409,7 +409,7 @@ MM_ClassLoaderRememberedSet::clearRememberedSetsInternal(MM_EnvironmentBase *env
 		}
 	} else {
 		/* a bit vector is installed */
-		volatile UDATA* bitVector = (volatile UDATA *)gcRememberedSet;
+		volatile UDATA *bitVector = (volatile UDATA *)gcRememberedSet;
 		for (UDATA i = 0; i < _bitVectorSize; i++) {
 			if ((0 != _bitsToClear[i]) && (0 != bitVector[i])) {
 				bitVector[i] &= ~_bitsToClear[i];
@@ -432,5 +432,10 @@ MM_ClassLoaderRememberedSet::setupBeforeGC(MM_EnvironmentBase *env)
 	if (NULL != javaVM->applicationClassLoader) {
 		killRememberedSet(env, javaVM->applicationClassLoader);
 		javaVM->applicationClassLoader->gcRememberedSet = UDATA_MAX;
+	}
+
+	if (NULL != javaVM->extensionClassLoader) {
+		killRememberedSet(env, javaVM->extensionClassLoader);
+		javaVM->extensionClassLoader->gcRememberedSet = UDATA_MAX;
 	}
 }
