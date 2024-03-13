@@ -2229,7 +2229,7 @@ bool TR::CompilationInfo::shouldAbortCompilation(TR_MethodToBeCompiled *entry, T
 // This method has side-effects, It modifies the optimization plan and persistentMethodInfo
 // This method is executed with compilationMonitor in hand
 //
-bool TR::CompilationInfo::shouldRetryCompilation(TR_MethodToBeCompiled *entry, TR::Compilation *comp)
+bool TR::CompilationInfo::shouldRetryCompilation(J9VMThread *vmThread, TR_MethodToBeCompiled *entry, TR::Compilation *comp)
    {
    // The JITServer should not retry compilations on it's own,
    // it should let the client make that decision
@@ -2462,7 +2462,29 @@ bool TR::CompilationInfo::shouldRetryCompilation(TR_MethodToBeCompiled *entry, T
    // don't carry the decision to generate AOT code to the next compilation
    // because it may no longer be the right thing to do at that point
    if (tryCompilingAgain)
+      {
       entry->_useAotCompilation = false;
+      }
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+   else if (entry->_compErrCode != compilationOK)
+      {
+      TR::CompilationInfo *compInfo = entry->_compInfoPT->getCompilationInfo();
+      J9JavaVM *javaVM = compInfo->getJITConfig()->javaVM;
+      if (javaVM->internalVMFunctions->isDebugOnRestoreEnabled(vmThread)
+          && javaVM->internalVMFunctions->isCheckpointAllowed(vmThread)
+          && !compInfo->getCRRuntime()->isCheckpointInProgress())
+         {
+         if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestoreDetails))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Pushing failed compilation %p", entry->getMethodDetails().getMethod());
+
+         TR_FilterBST *filter = NULL;
+         OMR::CriticalSection pushFailedComp(compInfo->getCRRuntime()->getCRRuntimeMonitor());
+         if (comp && entry->_compInfoPT->methodCanBeCompiled(comp->trMemory(), comp->fej9(), comp->getMethodBeingCompiled(), filter))
+            compInfo->getCRRuntime()->pushFailedCompilation(entry->getMethodDetails().getMethod());
+         }
+      }
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+
 
    return tryCompilingAgain;
    }
@@ -6843,7 +6865,7 @@ TR::CompilationInfoPerThreadBase::installAotCachedMethod(
          {
          entry->_compErrCode = returnCode;
          entry->setAotCodeToBeRelocated(NULL); // reset if relocation failed
-         entry->_tryCompilingAgain = _compInfo.shouldRetryCompilation(entry, compiler); // this will set entry->_doNotUseAotCodeFromSharedCache = true;
+         entry->_tryCompilingAgain = _compInfo.shouldRetryCompilation(vmThread, entry, compiler); // this will set entry->_doNotUseAotCodeFromSharedCache = true;
 
          // Feature [Defect 172216/180384]: Implement hints for failed AOT validations.  The idea is that the failed validations are due to the
          // fact that AOT methods are loaded at a lower count than when they were compiled so the JVM is given less opportunity to resolve things.
@@ -7931,7 +7953,7 @@ TR::CompilationInfoPerThreadBase::postCompilationTasks(J9VMThread * vmThread,
       {
       metaData = 0;
       }
-   else if (TR::CompilationInfo::shouldRetryCompilation(entry, _compiler))
+   else if (TR::CompilationInfo::shouldRetryCompilation(vmThread, entry, _compiler))
       {
       startPC = entry->_oldStartPC; // startPC == oldStartPC means compilation failure
       entry->_tryCompilingAgain = true;
@@ -10523,6 +10545,26 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
             else
                {
                jitMethodTranslated(vmThread, method, startPC);
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+               if (jitConfig->javaVM->internalVMFunctions->isCheckpointAllowed(vmThread)
+                   && jitConfig->javaVM->internalVMFunctions->isDebugOnRestoreEnabled(vmThread))
+                  {
+                  if (comp->getRecompilationInfo() && comp->getRecompilationInfo()->getJittedBodyInfo())
+                     {
+                     if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestoreDetails))
+                        TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Will force %p to be recompiled post-restore", method);
+
+                     OMR::CriticalSection pushForcedRecomp(compInfo->getCRRuntime()->getCRRuntimeMonitor());
+                     compInfo->getCRRuntime()->pushForcedRecompilation(method);
+                     }
+                  else
+                     {
+                     if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestoreDetails))
+                        TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Cannot force %p to be recompiled post-restore because the bodyInfo does not exist", method);
+                     }
+                  }
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+
                }
             }
          }
@@ -10864,6 +10906,8 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
                   case TR_PersistentMethodInfo::RecompDueToEdo:
                      catchBlockCounter = bodyInfo->getMethodInfo()->getCatchBlockCounter();
                      recompReason = 'E'; break;
+                  case TR_PersistentMethodInfo::RecompDueToCRIU:
+                     recompReason = 'F'; break;
                   } // end switch
                bodyInfo->getMethodInfo()->setReasonForRecompilation(0); // reset the flags
                }

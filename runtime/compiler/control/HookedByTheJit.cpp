@@ -1895,6 +1895,7 @@ static void jitHookClassesUnload(J9HookInterface * * hookInterface, UDATA eventN
    J9VMThread * vmThread = unloadedEvent->currentThread;
    J9JITConfig * jitConfig = vmThread->javaVM->jitConfig;
 
+   TR_J9VMBase * vmj9 = TR_J9VMBase::get(jitConfig, vmThread);
    TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
    TR::PersistentInfo * persistentInfo = compInfo->getPersistentInfo();
 
@@ -1956,6 +1957,10 @@ static void jitHookClassesUnload(J9HookInterface * * hookInterface, UDATA eventN
             {
             clazz = ((TR_J9VMBase *)fe)->convertClassPtrToClassOffset(j9clazz);
             table->classGotUnloadedPost(fe,clazz); // side-effect: builds the array of visited superclasses
+
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+            compInfo->getCRRuntime()->removeMethodsFromMemoizedCompilations(vmj9, clazz);
+#endif // defined(J9VM_OPT_CRIU_SUPPORT)
             }
          j9clazz = vmThread->javaVM->internalVMFunctions->allClassesNextDo(&classWalkState);
          }
@@ -2055,7 +2060,9 @@ static void jitHookAnonClassesUnload(J9HookInterface * * hookInterface, UDATA ev
       }
 
    J9JITConfig *jitConfig = vmThread->javaVM->jitConfig;
+   TR_J9VMBase * vmj9 = TR_J9VMBase::get(jitConfig, vmThread);
    TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
+
 #if defined(J9VM_JIT_DYNAMIC_LOOP_TRANSFER)
    compInfo->cleanDLTRecordOnUnload();
    if (compInfo->getDLT_HT())
@@ -2068,7 +2075,6 @@ static void jitHookAnonClassesUnload(J9HookInterface * * hookInterface, UDATA ev
 #if defined(J9VM_INTERP_PROFILING_BYTECODES)
    if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableIProfilerThread))
       {
-      TR_J9VMBase * vmj9 = (TR_J9VMBase *)(TR_J9VMBase::get(jitConfig, vmThread));
       TR_IProfiler *iProfiler = vmj9->getIProfiler();
       if (iProfiler) // even if Iprofiler is disabled, there might be some buffers in the queue
          {           // which need to be invalidated
@@ -2085,6 +2091,11 @@ static void jitHookAnonClassesUnload(J9HookInterface * * hookInterface, UDATA ev
    for (J9Class* j9clazz = unloadedEvent->anonymousClassesToUnload; j9clazz; j9clazz = j9clazz->gcLink)
       {
       cgOnClassUnloading(j9clazz);
+
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+      compInfo->getCRRuntime()->removeMethodsFromMemoizedCompilations(vmj9, reinterpret_cast<TR_OpaqueClassBlock *>(j9clazz));
+#endif // defined(J9VM_OPT_CRIU_SUPPORT)
+
       j9clazz->classLoader = NULL;
       }
    }
@@ -2494,6 +2505,10 @@ void jitClassesRedefined(J9VMThread * currentThread, UDATA classCount, J9JITRede
          reportHookDetail(currentThread, "jitClassesRedefined", "  Notify CHTable on class old=%p fresh=%p", oldClass, freshClass);
          table->classGotRedefined(fe, oldClass, freshClass);
          }
+
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+      compInfo->getCRRuntime()->removeMethodsFromMemoizedCompilations(fe, oldClass);
+#endif // defined(J9VM_OPT_CRIU_SUPPORT)
 
       classPair = (J9JITRedefinedClass *) ((char *) classPair->methodList + (classPair->methodCount * sizeof(struct J9JITMethodEquivalence)));
       }
@@ -6204,7 +6219,11 @@ static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
    CompilationDensity compDensity;
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
-   TR_J9VMBase *fe = TR_J9VMBase::get(jitConfig, 0);
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+   bool forcedRecompilations = false;
+#endif
+
+   TR_J9VMBase *fe = TR_J9VMBase::get(jitConfig, samplerThread);
 
    j9thread_set_name(j9thread_self(), "JIT Sampler");
    while (!shutdownSamplerThread)
@@ -6218,7 +6237,8 @@ static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
          crtTime += samplingPeriod;
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-         if (vm->internalVMFunctions->isCheckpointAllowed(samplerThread)
+         if (vm->internalVMFunctions->isCheckpointAllowed(samplerThread))
+            {
             /* It's ok to not acquire the comp monitor here. Even if at this
              * point a checkpoint isn't in progress but later it is, the
              * checkpoint will not complete until the sampler thread suspends
@@ -6230,9 +6250,16 @@ static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
              * isn't true (e.g., due to shutdown), then the sampler thread will
              * not suspend itself.
              */
-             && compInfo->getCRRuntime()->shouldSuspendThreadsForCheckpoint())
+            if (compInfo->getCRRuntime()->shouldSuspendThreadsForCheckpoint())
+               suspendSamplerThreadForCheckpoint(samplerThread,jitConfig, compInfo);
+            }
+         else if (vm->internalVMFunctions->isDebugOnRestoreEnabled(samplerThread))
             {
-            suspendSamplerThreadForCheckpoint(samplerThread,jitConfig, compInfo);
+            if (!forcedRecompilations && jitConfig->javaVM->phase == J9VM_PHASE_NOT_STARTUP)
+               {
+               forcedRecompilations = true;
+               compInfo->getCRRuntime()->recompileMethodsCompiledPreCheckpoint();
+               }
             }
 #endif // #if defined(J9VM_OPT_CRIU_SUPPORT)
 

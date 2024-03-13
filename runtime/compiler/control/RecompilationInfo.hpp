@@ -229,6 +229,8 @@ class TR_PersistentMethodInfo
       RecompDueToRI                        = 0x000A0000,
       RecompDueToJProfiling                = 0x000B0000,
       RecompDueToInlinedMethodRedefinition = 0x000C0000,
+      RecompDueToCRIU                      = 0x000D0000,
+
       // NOTE: recompilations due to EDO decrementation cannot be tracked precisely
       // because they are triggered from a snippet (must change the code for snippet)
       // Also, the recompilations after a profiling step cannot be marked as such.

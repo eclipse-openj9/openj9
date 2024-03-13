@@ -452,7 +452,7 @@ public:
    static bool createCompilationInfo(J9JITConfig * jitConfig);
    static void freeCompilationInfo(J9JITConfig *jitConfig);
    static TR::CompilationInfo *get(J9JITConfig * = 0) { return _compilationRuntime; }
-   static bool shouldRetryCompilation(TR_MethodToBeCompiled *entry, TR::Compilation *comp);
+   static bool shouldRetryCompilation(J9VMThread *vmThread, TR_MethodToBeCompiled *entry, TR::Compilation *comp);
    static bool shouldAbortCompilation(TR_MethodToBeCompiled *entry, TR::PersistentInfo *persistentInfo);
    static bool canRelocateMethod(TR::Compilation * comp);
    static int computeCompilationThreadPriority(J9JavaVM *vm);
