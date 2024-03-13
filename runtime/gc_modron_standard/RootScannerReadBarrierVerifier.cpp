@@ -51,11 +51,10 @@ MM_RootScannerReadBarrierVerifier::doJNIWeakGlobalReference(omrobjectptr_t *slot
 void
 MM_RootScannerReadBarrierVerifier::scanClass(MM_EnvironmentBase *env)
 {
-	OMR_VMThread *omrVMThread = env->getOmrVMThread();
-	GC_SegmentIterator segmentIterator(static_cast<J9JavaVM*>(omrVMThread->_vm->_language_vm)->classMemorySegments, MEMORY_TYPE_RAM_CLASS);
+	GC_SegmentIterator segmentIterator(_javaVM->classMemorySegments, MEMORY_TYPE_RAM_CLASS);
 
 	while (J9MemorySegment *segment = segmentIterator.nextSegment()) {
-		GC_ClassHeapIterator classHeapIterator(static_cast<J9JavaVM*>(omrVMThread->_vm->_language_vm), segment);
+		GC_ClassHeapIterator classHeapIterator(_javaVM, segment);
 		J9Class *clazz = NULL;
 
 		while (NULL != (clazz = classHeapIterator.nextClass())) {
