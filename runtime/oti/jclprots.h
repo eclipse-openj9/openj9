@@ -1285,12 +1285,16 @@ Java_jdk_internal_foreign_abi_UpcallStubs_freeUpcallStub0(JNIEnv *env, jclass cl
 void JNICALL
 Java_jdk_internal_misc_ScopedMemoryAccess_registerNatives(JNIEnv *env, jclass clazz);
 
+#if JAVA_SPEC_VERSION >= 22
+void JNICALL
+Java_jdk_internal_misc_ScopedMemoryAccess_closeScope0(JNIEnv *env, jobject instance, jobject scope, jobject error);
+#elif (JAVA_SPEC_VERSION >= 19) && (JAVA_SPEC_VERSION < 22) /* JAVA_SPEC_VERSION >= 22 */
 jboolean JNICALL
-#if JAVA_SPEC_VERSION >= 19
 Java_jdk_internal_misc_ScopedMemoryAccess_closeScope0(JNIEnv *env, jobject instance, jobject scope);
-#else /* JAVA_SPEC_VERSION >= 19 */
+#else /* JAVA_SPEC_VERSION >= 22 */
+jboolean JNICALL
 Java_jdk_internal_misc_ScopedMemoryAccess_closeScope0(JNIEnv *env, jobject instance, jobject scope, jobject exception);
-#endif /* JAVA_SPEC_VERSION >= 19 */
+#endif /* JAVA_SPEC_VERSION >= 22 */
 #endif /* JAVA_SPEC_VERSION >= 16 */
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)

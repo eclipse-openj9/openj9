@@ -5090,6 +5090,7 @@ typedef struct J9InternalVMFunctions {
 	float (JNICALL *native2InterpJavaUpcallF)(struct J9UpcallMetaData *data, void *argsListPointer);
 	double (JNICALL *native2InterpJavaUpcallD)(struct J9UpcallMetaData *data, void *argsListPointer);
 	U_8 * (JNICALL *native2InterpJavaUpcallStruct)(struct J9UpcallMetaData *data, void *argsListPointer);
+	BOOLEAN (*hasMemoryScope)(struct J9VMThread *walkThread, j9object_t scope);
 #endif /* JAVA_SPEC_VERSION >= 16 */
 #if JAVA_SPEC_VERSION >= 19
 	void (*copyFieldsFromContinuation)(struct J9VMThread *currentThread, struct J9VMThread *vmThread, struct J9VMEntryLocalStorage *els, struct J9VMContinuation *continuation);
@@ -5456,6 +5457,10 @@ typedef struct J9VMThread {
 #if JAVA_SPEC_VERSION >= 21
 	BOOLEAN isInCriticalDownCall;
 #endif /* JAVA_SPEC_VERSION >= 21 */
+#if JAVA_SPEC_VERSION >= 22
+	j9object_t scopedError;
+	j9object_t closeScopeObj;
+#endif /* JAVA_SPEC_VERSION >= 22 */
 } J9VMThread;
 
 #define J9VMTHREAD_ALIGNMENT  0x100
