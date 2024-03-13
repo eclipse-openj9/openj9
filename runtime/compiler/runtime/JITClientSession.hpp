@@ -490,15 +490,18 @@ public:
    TR::Monitor *getAOTCacheKnownIdsMonitor() const { return _aotCacheKnownIdsMonitor; }
 
    bool useServerOffsets(JITServer::ServerStream *stream);
+
 private:
    void destroyMonitors();
 
    // If this function sets the missingLoaderInfo flag then a NULL result is due to missing class loader info; otherwise that
    // result is due to a failure to allocate.
-   const AOTCacheClassRecord *getClassRecord(ClientSessionData::ClassInfo &classInfo, bool &missingLoaderInfo);
+   const AOTCacheClassRecord *getClassRecord(ClassInfo &classInfo, bool &missingLoaderInfo,
+                                             J9Class *&uncachedBaseComponent);
    // If this function sets one of the two boolean flags then a NULL result is due to one of those error conditions; otherwise
    // that result is due to a failure to allocate.
-   const AOTCacheClassRecord *getClassRecord(J9Class *clazz, bool &missingLoaderInfo, bool &uncachedClass);
+   const AOTCacheClassRecord *getClassRecord(J9Class *clazz, bool &missingLoaderInfo,
+                                             bool &uncachedClass, J9Class *&uncachedBaseComponent);
 
    const uint64_t _clientUID;
    int64_t  _timeOfLastAccess; // in ms

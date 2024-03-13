@@ -19,6 +19,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
+
 #ifndef JITSERVER_ROMCLASS_HASH_H
 #define JITSERVER_ROMCLASS_HASH_H
 
@@ -29,6 +30,8 @@
 #include "infra/Assert.hpp"
 
 struct J9ROMClass;
+class TR_J9VMBase;
+class TR_Memory;
 
 
 // Assuming a 256-bit hash such as SHA-256
@@ -44,8 +47,10 @@ static_assert(ROMCLASS_HASH_BITS % (CHAR_BIT * sizeof(size_t)) == 0,
 struct JITServerROMClassHash
    {
 public:
-   JITServerROMClassHash() { memset(_data, 0, sizeof(_data)); }
-   JITServerROMClassHash(const J9ROMClass *romClass);
+   JITServerROMClassHash() : _data() { }
+   JITServerROMClassHash(const J9ROMClass *romClass) { init(romClass, romClass->romSize); }
+   JITServerROMClassHash(const JITServerROMClassHash &objectArrayHash,
+                         const JITServerROMClassHash &baseComponentHash, size_t numDimensions);
 
    bool operator==(const JITServerROMClassHash &h) const
       {
@@ -62,7 +67,16 @@ public:
 
    const char *toString(char *buffer, size_t size) const;
 
+   static const JITServerROMClassHash &getObjectArrayHash(const J9ROMClass *objectArrayROMClass,
+                                                          TR_Memory &trMemory, TR_J9VMBase *fej9);
+
 private:
+   void init(const void *data, size_t size);
+   void init(const J9ROMClass *romClass, TR_Memory &trMemory, TR_J9VMBase *fej9);
+
+   static volatile bool _cachedObjectArrayHash;
+   static JITServerROMClassHash _objectArrayHash;
+
    size_t _data[ROMCLASS_HASH_WORDS];
    };
 
