@@ -4310,6 +4310,13 @@ void JitShutdown(J9JITConfig * jitConfig)
 
    TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
 
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+   if (jitConfig->javaVM->internalVMFunctions->isCRaCorCRIUSupportEnabled(vmThread))
+      {
+      compInfo->getCRRuntime()->stopCRRuntimeThread();
+      }
+#endif // if defined(J9VM_OPT_CRIU_SUPPORT)
+
    TR_HWProfiler *hwProfiler = ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->hwProfiler;
    if (compInfo->getPersistentInfo()->isRuntimeInstrumentationEnabled())
       {
@@ -6984,6 +6991,8 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
    J9HookInterface * * gcHooks = javaVM->memoryManagerFunctions->j9gc_get_hook_interface(javaVM);
    J9HookInterface * * gcOmrHooks = javaVM->memoryManagerFunctions->j9gc_get_omr_hook_interface(javaVM->omrVM);
 
+   J9VMThread *vmThread = javaVM->internalVMFunctions->currentVMThread(javaVM);
+
    PORT_ACCESS_FROM_JAVAVM(javaVM);
 
    if (TR::Options::getCmdLineOptions()->getOption(TR_noJitDuringBootstrap) ||
@@ -7137,7 +7146,15 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
          if (TR::Options::getCmdLineOptions()->getOption(TR_VerboseInterpreterProfiling))
             j9tty_printf(PORTLIB, "Succesfully installed J9HOOK_VM_PROFILING_BYTECODE_BUFFER_FULL listener\n");
          }
-#endif
+#endif // if defined (J9VM_INTERP_PROFILING_BYTECODES)
+
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+      if (jitConfig->javaVM->internalVMFunctions->isCheckpointAllowed(vmThread))
+         {
+         compInfo->getCRRuntime()->startCRRuntimeThread(javaVM);
+         }
+#endif // if defined(J9VM_OPT_CRIU_SUPPORT)
+
       if (compInfo->getPersistentInfo()->isRuntimeInstrumentationEnabled())
          {
          if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableHWProfilerThread))

@@ -69,8 +69,12 @@ class ReleaseVMAccessAndAcquireMonitor
 TR::CRRuntime::CRRuntime(J9JITConfig *jitConfig, TR::CompilationInfo *compInfo) :
    _jitConfig(jitConfig),
    _compInfo(compInfo),
-   _crMonitor(TR::Monitor::create("JIT-CheckpointRestoreMonitor")),
    _compMonitor(compInfo->getCompilationMonitor()),
+   _crMonitor(TR::Monitor::create("JIT-CheckpointRestoreMonitor")),
+   _crRuntimeMonitor(TR::Monitor::create("JIT-CRRuntimeMonitor")),
+   _crRuntimeThread(NULL),
+   _crRuntimeOSThread(NULL),
+   _crRuntimeThreadLifetimeState(TR_CRRuntimeThreadLifetimeStates::CR_THR_NOT_CREATED),
    _checkpointStatus(TR_CheckpointStatus::NO_CHECKPOINT_IN_PROGRESS)
    {
    // TR::CompilationInfo is initialized in the JIT_INITIALIZED bootstrap
@@ -124,6 +128,24 @@ void
 TR::CRRuntime::releaseCompMonitor()
    {
    _compMonitor->exit();
+   }
+
+void
+TR::CRRuntime::acquireCRRuntimeMonitor()
+   {
+   _crRuntimeMonitor->enter();
+   }
+
+void
+TR::CRRuntime::releaseCRRuntimeMonitor()
+   {
+   _crRuntimeMonitor->exit();
+   }
+
+void
+TR::CRRuntime::waitOnCRRuntimeMonitor()
+   {
+   _crRuntimeMonitor->wait();
    }
 
 /* IMPORTANT: There should be no return, or C++ exception thrown, after
@@ -364,7 +386,8 @@ TR::CRRuntime::resetStartTime()
                                        (uint32_t)persistentInfo->getStartTime(), (uint32_t)persistentInfo->getElapsedTime());
    }
 
-void TR::CRRuntime::prepareForCheckpoint()
+void
+TR::CRRuntime::prepareForCheckpoint()
    {
    J9JavaVM   *vm       = getJITConfig()->javaVM;
    J9VMThread *vmThread = vm->internalVMFunctions->currentVMThread(vm);
@@ -419,7 +442,8 @@ void TR::CRRuntime::prepareForCheckpoint()
       TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Ready for checkpoint");
    }
 
-void TR::CRRuntime::prepareForRestore()
+void
+TR::CRRuntime::prepareForRestore()
    {
    J9JavaVM   *vm       = getJITConfig()->javaVM;
    J9VMThread *vmThread = vm->internalVMFunctions->currentVMThread(vm);
@@ -467,4 +491,131 @@ void TR::CRRuntime::prepareForRestore()
 
    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestore))
       TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Ready for restore");
+   }
+
+void
+TR::CRRuntime::process()
+   {
+   acquireCRRuntimeMonitor();
+   do
+      {
+      while (getCRRuntimeThreadLifetimeState() == TR_CRRuntimeThreadLifetimeStates::CR_THR_INITIALIZED)
+         {
+         waitOnCRRuntimeMonitor();
+         }
+
+      if (getCRRuntimeThreadLifetimeState() == TR_CRRuntimeThreadLifetimeStates::CR_THR_STOPPING)
+         {
+         releaseCRRuntimeMonitor();
+         break;
+         }
+      }
+   while (true);
+   }
+
+static int32_t J9THREAD_PROC crRuntimeThreadProc(void * entryarg)
+   {
+   J9JITConfig *jitConfig = (J9JITConfig *) entryarg;
+   J9JavaVM *vm = jitConfig->javaVM;
+   TR::CompilationInfo *compInfo = TR::CompilationInfo::get(jitConfig);
+   TR::CRRuntime *crRuntime = compInfo->getCRRuntime();
+   J9VMThread *crRuntimeThread = NULL;
+
+   PORT_ACCESS_FROM_JITCONFIG(jitConfig);
+
+   int rc = vm->internalVMFunctions->internalAttachCurrentThread(vm, &crRuntimeThread, NULL,
+                                  J9_PRIVATE_FLAGS_DAEMON_THREAD | J9_PRIVATE_FLAGS_NO_OBJECT |
+                                  J9_PRIVATE_FLAGS_SYSTEM_THREAD | J9_PRIVATE_FLAGS_ATTACHED_THREAD,
+                                  crRuntime->getCRRuntimeOSThread());
+
+   crRuntime->getCRRuntimeMonitor()->enter();
+   if (rc == JNI_OK)
+      {
+      crRuntime->setCRRuntimeThread(crRuntimeThread);
+      j9thread_set_name(j9thread_self(), "CR Runtime");
+      crRuntime->setCRRuntimeThreadLifetimeState(TR::CRRuntime::CR_THR_INITIALIZED);
+      }
+   else
+      {
+      crRuntime->setCRRuntimeThreadLifetimeState(TR::CRRuntime::CR_THR_FAILED_TO_ATTACH);
+      }
+   crRuntime->getCRRuntimeMonitor()->notifyAll();
+   crRuntime->getCRRuntimeMonitor()->exit();
+
+   // attaching the CR Runtime Thread failed
+   if (rc != JNI_OK)
+      return JNI_ERR;
+
+   crRuntime->process();
+
+   vm->internalVMFunctions->DetachCurrentThread((JavaVM *) vm);
+   crRuntime->setCRRuntimeThread(NULL);
+   crRuntime->getCRRuntimeMonitor()->enter();
+   crRuntime->setCRRuntimeThreadLifetimeState(TR::CRRuntime::CR_THR_DESTROYED);
+   crRuntime->getCRRuntimeMonitor()->notifyAll();
+   j9thread_exit((J9ThreadMonitor*)crRuntime->getCRRuntimeMonitor()->getVMMonitor());
+
+   return 0;
+   }
+
+void
+TR::CRRuntime::startCRRuntimeThread(J9JavaVM *javaVM)
+   {
+   PORT_ACCESS_FROM_JAVAVM(javaVM);
+
+   //256KB stack size
+   const UDATA defaultOSStackSize = javaVM->defaultOSStackSize;
+   UDATA priority = J9THREAD_PRIORITY_NORMAL;
+
+   // create the CR Runtime Thread
+   if (javaVM->internalVMFunctions->createThreadWithCategory(&_crRuntimeOSThread,
+                                                            defaultOSStackSize,
+                                                            priority,
+                                                            0,
+                                                            &crRuntimeThreadProc,
+                                                            javaVM->jitConfig,
+                                                            J9THREAD_CATEGORY_SYSTEM_JIT_THREAD))
+      {
+      j9tty_printf(PORTLIB, "Error: Unable to create CR Runtime Thread\n");
+      }
+   else
+      {
+      // Must wait here until the thread gets created; otherwise an early
+      // shutdown does not know whether or not to destroy the thread
+      getCRRuntimeMonitor()->enter();
+      while (getCRRuntimeThreadLifetimeState() == TR_CRRuntimeThreadLifetimeStates::CR_THR_NOT_CREATED)
+         getCRRuntimeMonitor()->wait();
+      getCRRuntimeMonitor()->exit();
+
+      // At this point the CR Runtime thread should have attached successfully
+      // and changed the state to CR_THR_INITIALIZED, or failed to attach and
+      // changed the state to CR_THR_FAILED_TO_ATTACH
+      if (getCRRuntimeThreadLifetimeState() == TR_CRRuntimeThreadLifetimeStates::CR_THR_FAILED_TO_ATTACH)
+         {
+         _crRuntimeThread = NULL;
+         j9tty_printf(PORTLIB, "Error: Unable to attach CR Runtime Thread\n");
+         }
+      }
+   }
+
+void
+TR::CRRuntime::stopCRRuntimeThread()
+   {
+   PORT_ACCESS_FROM_JITCONFIG(_jitConfig);
+
+   getCRRuntimeMonitor()->enter();
+   if (!getCRRuntimeThread()) // We could not create the CR Runtime Thread
+      {
+      getCRRuntimeMonitor()->exit();
+      return;
+      }
+
+   setCRRuntimeThreadLifetimeState(TR_CRRuntimeThreadLifetimeStates::CR_THR_STOPPING);
+   while (getCRRuntimeThreadLifetimeState() == TR_CRRuntimeThreadLifetimeStates::CR_THR_STOPPING)
+      {
+      getCRRuntimeMonitor()->notifyAll();
+      getCRRuntimeMonitor()->wait();
+      }
+
+   getCRRuntimeMonitor()->exit();
    }

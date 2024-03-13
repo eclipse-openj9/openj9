@@ -22,8 +22,7 @@
 #ifndef CR_RUNTIME_HPP
 #define CR_RUNTIME_HPP
 
-#include "j9cfg.h"
-
+#include "j9.h"
 #include "env/TRMemory.hpp"
 
 extern "C" {
@@ -52,6 +51,16 @@ class CRRuntime
       READY_FOR_CHECKPOINT_RESTORE
       };
 
+   enum TR_CRRuntimeThreadLifetimeStates
+      {
+      CR_THR_NOT_CREATED = 0,
+      CR_THR_FAILED_TO_ATTACH,
+      CR_THR_INITIALIZED,
+      CR_THR_STOPPING,
+      CR_THR_DESTROYED,
+      CR_THR_LAST_STATE // must be the last one
+      };
+
    CRRuntime(J9JITConfig *jitConfig, TR::CompilationInfo *compInfo);
 
    /* The CR Monitor (Checkpoint/Restore Monitor) must always be acquired with
@@ -63,6 +72,17 @@ class CRRuntime
    void acquireCRMonitor();
    void releaseCRMonitor();
    void waitOnCRMonitor();
+
+   /* The CR Runtime Monitor can be acquired with the Comp Monitor in hand.
+    * However, if a does not already have the Comp Monitor, it should NOT
+    * do so it once it acquires the CR Runtime Monitor. If the Comp Monitor is
+    * desired, the CR Runtime Monitor should be released and re-acquired AFTER
+    * acquring the Comp Monitor.
+    */
+   TR::Monitor* getCRRuntimeMonitor() { return _crRuntimeMonitor;  }
+   void acquireCRRuntimeMonitor();
+   void releaseCRRuntimeMonitor();
+   void waitOnCRRuntimeMonitor();
 
    /* The following APIs should only be invoked with the Comp Monitor in hand. */
    bool isCheckpointInProgress()            { return _checkpointStatus != TR_CheckpointStatus::NO_CHECKPOINT_IN_PROGRESS;      }
@@ -92,6 +112,20 @@ class CRRuntime
    bool remoteCompilationExplicitlyDisabledAtBootstrap()                   { return _remoteCompilationExplicitlyDisabledAtBootstrap;       }
    void setRemoteCompilationExplicitlyDisabledAtBootstrap(bool remoteComp) { _remoteCompilationExplicitlyDisabledAtBootstrap = remoteComp; }
 #endif
+
+   TR_CRRuntimeThreadLifetimeStates getCRRuntimeThreadLifetimeState()           { return _crRuntimeThreadLifetimeState;  }
+   void setCRRuntimeThreadLifetimeState(TR_CRRuntimeThreadLifetimeStates state) { _crRuntimeThreadLifetimeState = state; }
+
+   j9thread_t getCRRuntimeOSThread()             { return _crRuntimeOSThread;   }
+   J9VMThread *getCRRuntimeThread()              { return _crRuntimeThread;     }
+   void setCRRuntimeThread(J9VMThread *vmThread) { _crRuntimeThread = vmThread; }
+   void startCRRuntimeThread(J9JavaVM *javaVM);
+   void stopCRRuntimeThread();
+
+   /**
+    * @brief Processing method that the CR Runtime Thread executes.
+    */
+   void process();
 
    /**
    * @brief Work that is necessary prior to taking a snapshot. This includes:
@@ -188,7 +222,12 @@ class CRRuntime
 
    TR::Monitor *_compMonitor;
    TR::Monitor *_crMonitor;
+   TR::Monitor *_crRuntimeMonitor;
 
+   J9VMThread *_crRuntimeThread;
+   j9thread_t _crRuntimeOSThread;
+
+   TR_CRRuntimeThreadLifetimeStates _crRuntimeThreadLifetimeState;
    TR_CheckpointStatus _checkpointStatus;
 
    bool _vmMethodTraceEnabled;
