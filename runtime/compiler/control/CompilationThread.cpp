@@ -7940,6 +7940,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
             && persistentInfo->getJITServerUseAOTCache() // Ideally we would check if the options allow us to use the AOT cache for this method
             && persistentInfo->getJITServerAOTCacheIgnoreLocalSCC() // Need to be using the new implementation
             && !entry->_doNotLoadFromJITServerAOTCache
+            && !persistentInfo->doNotRequestJITServerAOTCacheStore()
             && !_compInfo.getLowCompDensityMode() // AOT req is sent to JITServer and we don't want to send JITServer any messages in this mode
             && !cannotDoRemoteCompilation; // Make sure remote compilations are possible (no strong guarantees)
 #endif /* defined(J9VM_OPT_JITSERVER) */

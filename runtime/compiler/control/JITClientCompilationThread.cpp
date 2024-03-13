@@ -190,7 +190,8 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
       if ((response != MessageType::compilationCode) &&
           (response != MessageType::compilationFailure) &&
           (response != MessageType::AOTCache_serializedAOTMethod) &&
-          (response != MessageType::AOTCache_storedAOTMethod))
+          (response != MessageType::AOTCache_storedAOTMethod) &&
+          (response != MessageType::AOTCache_failure))
          client->writeError(JITServer::MessageType::compilationInterrupted, 0 /* placeholder */);
 
       if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITServer, TR_VerboseCompilationDispatch))
@@ -210,6 +211,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
       case MessageType::compilationFailure:
       case MessageType::AOTCache_storedAOTMethod:
       case MessageType::AOTCache_serializedAOTMethod:
+      case MessageType::AOTCache_failure:
       case MessageType::compilationThreadCrashed:
          done = true;
          break;
@@ -242,11 +244,18 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
             compInfo->getclassesCachedAtServer().clear();
             }
 
-         auto deserializer = compInfo->getJITServerAOTDeserializer();
-         // Reset AOT deserializer if connected to a new server (cached serialization records are now invalid),
-         // except if this is the first server this client has connected to.
-         if (deserializer && (0 != previousUID) && (previousUID != serverUID))
-            deserializer->reset(compInfoPT);
+         // This is a connection to a new server after a previous disconnection
+         if ((0 != previousUID) && (previousUID != serverUID))
+            {
+            // Reset AOT deserializer (cached serialization records are now invalid)
+            auto deserializer = compInfo->getJITServerAOTDeserializer();
+            if (deserializer)
+               deserializer->reset(compInfoPT);
+
+            // Do not forbid AOT cache stores or loads (this server might be able to fulfill them)
+            compInfo->getPersistentInfo()->setDoNotRequestJITServerAOTCacheLoad(false);
+            compInfo->getPersistentInfo()->setDoNotRequestJITServerAOTCacheStore(false);
+            }
 
          client->write(response, ranges, unloadedClasses->getMaxRanges(), serializedCHTable);
 
@@ -3123,6 +3132,7 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
       aotCacheStore = entry->_useAOTCacheCompilation &&
                       compInfo->methodCanBeJITServerAOTCacheStored(compiler->signature(), compilee->convertToMethod()->methodType());
       aotCacheLoad = persistentInfo->getJITServerUseAOTCache() &&
+                     !persistentInfo->doNotRequestJITServerAOTCacheLoad() &&
                      !TR::CompilationInfo::isCompiled(method) &&
                      !entry->_doNotLoadFromJITServerAOTCache &&
                      compInfo->methodCanBeJITServerAOTCacheLoaded(compiler->signature(), compilee->convertToMethod()->methodType());
@@ -3501,6 +3511,36 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
          JITServerHelpers::postStreamFailure(OMRPORT_FROM_J9PORT(compInfoPT->getJitConfig()->javaVM->portLibrary), compInfo, false, false);
          entry->_compErrCode = compilationFailure;
          compiler->failCompilation<JITServer::ServerCompilationFailure>("JITServer compilation thread has crashed.");
+         }
+      else if (JITServer::MessageType::AOTCache_failure == response)
+         {
+         auto recv = client->getRecvData<bool, bool>();
+         bool aotCacheUnavailable = std::get<0>(recv);
+         bool aotCacheStoreUnavailable = std::get<1>(recv);
+
+         auto persistentInfo = compInfo->getPersistentInfo();
+         if (aotCacheUnavailable)
+            {
+            persistentInfo->setDoNotRequestJITServerAOTCacheLoad(true);
+            persistentInfo->setDoNotRequestJITServerAOTCacheStore(true);
+            if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+               TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+                  "Server AOT cache unavailable (serverUID=%llu). Disabling future AOT cache requests for this server.",
+                  (unsigned long long)persistentInfo->getServerUID());
+            }
+         else if (aotCacheStoreUnavailable)
+            {
+            persistentInfo->setDoNotRequestJITServerAOTCacheStore(true);
+            if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+               TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+                  "Cannot store methods in server AOT cache (serverUID=%llu). Disabling future AOT cache store requests for this server.",
+                  (unsigned long long)persistentInfo->getServerUID());
+            }
+         entry->_compErrCode = compilationFailure;
+         entry->_doNotLoadFromJITServerAOTCache = true;
+         if (entry->_compilationAttemptsLeft > 0)
+            entry->_tryCompilingAgain = true;
+         compiler->failCompilation<JITServer::ServerCompilationFailure>("JITServer compilation failed.");
          }
       else
          {
