@@ -810,6 +810,12 @@ JITServerAOTCache::getClassLoaderRecord(const uint8_t *name, size_t nameLength)
 const AOTCacheClassRecord *
 JITServerAOTCache::getClassRecord(const AOTCacheClassLoaderRecord *classLoaderRecord, const J9ROMClass *romClass)
    {
+   // The current implementation cannot handle array ROM classes  - the name must be recorded
+   // properly and the hash of the class must incorporate the array ROM class, the arity of the array,
+   // and the element ROM class.
+   if (J9ROMCLASS_IS_ARRAY(romClass))
+      return NULL;
+
    JITServerROMClassHash hash;
    if (auto cache = TR::CompilationInfo::get()->getJITServerSharedROMClassCache())
       hash = cache->getHash(romClass);
