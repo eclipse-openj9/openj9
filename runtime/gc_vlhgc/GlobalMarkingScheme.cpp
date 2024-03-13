@@ -1332,14 +1332,14 @@ private:
 			MM_EnvironmentVLHGC::getEnvironment(_env)->_markVLHGCStats._monitorReferenceCleared += 1;
 			/* We must call objectMonitorDestroy (as opposed to omrthread_monitor_destroy) when the
 			 * monitor is not internal to the GC */
-			static_cast<J9JavaVM*>(_omrVM->_language_vm)->internalVMFunctions->objectMonitorDestroy(static_cast<J9JavaVM*>(_omrVM->_language_vm), (J9VMThread *)_env->getLanguageVMThread(), (omrthread_monitor_t)monitor);
+			_javaVM->internalVMFunctions->objectMonitorDestroy(_javaVM, (J9VMThread *)_env->getLanguageVMThread(), (omrthread_monitor_t)monitor);
 		}
 	}
 
 	virtual CompletePhaseCode scanMonitorReferencesComplete(MM_EnvironmentBase *envBase) {
 		MM_EnvironmentVLHGC* env = MM_EnvironmentVLHGC::getEnvironment(envBase);
 		reportScanningStarted(RootScannerEntity_MonitorReferenceObjectsComplete);
-		((J9JavaVM *)env->getLanguageVM())->internalVMFunctions->objectMonitorDestroyComplete((J9JavaVM *)env->getLanguageVM(), (J9VMThread *)env->getLanguageVMThread());
+		_javaVM->internalVMFunctions->objectMonitorDestroyComplete(_javaVM, (J9VMThread *)env->getLanguageVMThread());
 		reportScanningEnded(RootScannerEntity_MonitorReferenceObjectsComplete);
 		return complete_phase_OK;
 	}
@@ -1373,7 +1373,7 @@ private:
 		MM_EnvironmentVLHGC::getEnvironment(_env)->_markVLHGCStats._doubleMappedArrayletsCandidates += 1;
 		if (!_markingScheme->isMarked(objectPtr)) {
 			MM_EnvironmentVLHGC::getEnvironment(_env)->_markVLHGCStats._doubleMappedArrayletsCleared += 1;
-			OMRPORT_ACCESS_FROM_OMRVM(_omrVM);
+			OMRPORT_ACCESS_FROM_OMRVM(_javaVM->omrVM);
 			omrvmem_release_double_mapped_region(identifier->address, identifier->size, identifier);
 		}
     }
