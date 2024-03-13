@@ -84,7 +84,7 @@ MM_MarkingDelegate::initialize(MM_EnvironmentBase *env, MM_MarkingScheme *markin
 void
 MM_MarkingDelegate::clearClassLoadersScannedFlag(MM_EnvironmentBase *env)
 {
-	J9JavaVM *javaVM = (J9JavaVM*)env->getLanguageVM();
+	J9JavaVM *javaVM = (J9JavaVM *)env->getLanguageVM();
 
 	/**
 	 *	ClassLoaders might be scanned already at concurrent stage.
@@ -303,18 +303,30 @@ MM_MarkingDelegate::scanRoots(MM_EnvironmentBase *env, bool processLists)
 		 */
 		if (env->isMainThread()) {
 			J9JavaVM * javaVM = (J9JavaVM*)env->getLanguageVM();
-			((J9ClassLoader *)javaVM->systemClassLoader)->gcFlags |= J9_GC_CLASS_LOADER_SCANNED;
-			_markingScheme->markObject(env, (omrobjectptr_t )((J9ClassLoader *)javaVM->systemClassLoader)->classLoaderObject);
-			if (javaVM->applicationClassLoader) {
-				((J9ClassLoader *)javaVM->applicationClassLoader)->gcFlags |= J9_GC_CLASS_LOADER_SCANNED;
-				_markingScheme->markObject(env, (omrobjectptr_t )((J9ClassLoader *)javaVM->applicationClassLoader)->classLoaderObject);
-			}
+
+			/* Mark systemClassLoader */
+			markPermanentClassloader(env, javaVM->systemClassLoader);
+
+			/* Mark applicationClassLoader */
+			markPermanentClassloader(env, javaVM->applicationClassLoader);
+
+			/* Mark extensionClassLoader */
+			markPermanentClassloader(env, javaVM->extensionClassLoader);
 		}
 	}
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 
 	/* Scan roots */
 	rootMarker.scanRoots(env);
+}
+
+void
+MM_MarkingDelegate::markPermanentClassloader(MM_EnvironmentBase *env, J9ClassLoader *classLoader)
+{
+	if (NULL != classLoader) {
+		classLoader->gcFlags |= J9_GC_CLASS_LOADER_SCANNED;
+		_markingScheme->markObject(env, classLoader->classLoaderObject);
+	}
 }
 
 void

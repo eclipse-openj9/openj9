@@ -72,6 +72,15 @@ private:
 	fomrobject_t *setupReferenceObjectScanner(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, MM_MarkingSchemeScanReason reason);
 	uintptr_t setupPointerArrayScanner(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, MM_MarkingSchemeScanReason reason, uintptr_t *sizeToDo, uintptr_t *slotsToDo);
 
+	/**
+	 * Set permanent ClassLoader Marked.
+	 *
+	 * @param env environment for calling thread
+	 * @param classLoader ClassLoader to be set marked
+	 */
+	void markPermanentClassloader(MM_EnvironmentBase *env, J9ClassLoader *classLoader);
+
+
 protected:
 
 public:
@@ -113,7 +122,11 @@ public:
 
 	void startRootListProcessing(MM_EnvironmentBase *env);
 
-	uintptr_t setupIndexableScanner(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, MM_MarkingSchemeScanReason reason, uintptr_t *sizeToDo, uintptr_t *sizeInElementsToDo, fomrobject_t **basePtr, uintptr_t *flags) { return 0; }
+	uintptr_t
+	setupIndexableScanner(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, MM_MarkingSchemeScanReason reason, uintptr_t *sizeToDo, uintptr_t *sizeInElementsToDo, fomrobject_t **basePtr, uintptr_t *flags)
+	{
+		return 0;
+	}
 
 	void doStackSlot(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, omrobjectptr_t *slotPtr);
 	void scanContinuationNativeSlots(MM_EnvironmentBase *env, omrobjectptr_t objectPtr);
@@ -232,7 +245,7 @@ public:
 	void scanClass(MM_EnvironmentBase *env, J9Class *clazz);
 
 	bool processReference(MM_EnvironmentBase *env, omrobjectptr_t objectPtr);
-	void processReferenceList(MM_EnvironmentBase *env, MM_HeapRegionDescriptorStandard* region, omrobjectptr_t headOfList, MM_ReferenceStats *referenceStats);
+	void processReferenceList(MM_EnvironmentBase *env, MM_HeapRegionDescriptorStandard *region, omrobjectptr_t headOfList, MM_ReferenceStats *referenceStats);
 
 	void handleWorkPacketOverflowItem(MM_EnvironmentBase *env, omrobjectptr_t objectPtr)
 	{

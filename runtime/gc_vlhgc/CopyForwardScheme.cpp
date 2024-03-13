@@ -4374,6 +4374,7 @@ MM_CopyForwardScheme::scanRoots(MM_EnvironmentVLHGC* env)
 		if (J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
 			bool foundSystemClassLoader = false;
 			bool foundApplicationClassLoader = false;
+			bool foundExtensionClassLoader = false;
 			bool foundAnonymousClassLoader = false;
 
 			MM_ClassLoaderRememberedSet *classLoaderRememberedSet = _extensions->classLoaderRememberedSet;
@@ -4401,13 +4402,16 @@ MM_CopyForwardScheme::scanRoots(MM_EnvironmentVLHGC* env)
 						if (classLoaderRememberedSet->isRemembered(env, classLoader)) {
 							foundSystemClassLoader = foundSystemClassLoader || (classLoader == _javaVM->systemClassLoader);
 							foundApplicationClassLoader = foundApplicationClassLoader || (classLoader == _javaVM->applicationClassLoader);
+							foundExtensionClassLoader = foundExtensionClassLoader || (classLoader == _javaVM->extensionClassLoader);
 							if (NULL != classLoader->classLoaderObject) {
 								/* until we decide if class loaders should be common, just relocate this object back into its existing node */
 								MM_AllocationContextTarok *reservingContext = getContextForHeapAddress(classLoader->classLoaderObject);
 								copyAndForward(env, reservingContext, &classLoader->classLoaderObject);
 							} else {
 								/* Only system/app classloaders can have a null classloader object (only during early bootstrap) */
-								Assert_MM_true((classLoader == _javaVM->systemClassLoader) || (classLoader == _javaVM->applicationClassLoader));
+								Assert_MM_true((classLoader == _javaVM->systemClassLoader)
+										|| (classLoader == _javaVM->applicationClassLoader)
+										|| (classLoader == _javaVM->extensionClassLoader));
 
 								/* We will never find the object for this class loader during scanning, so scan its class table immediately */
 								GC_ClassLoaderClassesIterator iterator(_extensions, classLoader);
@@ -4454,6 +4458,7 @@ MM_CopyForwardScheme::scanRoots(MM_EnvironmentVLHGC* env)
 			Assert_MM_true(NULL != _javaVM->systemClassLoader);
 			Assert_MM_true(foundSystemClassLoader);
 			Assert_MM_true( (NULL == _javaVM->applicationClassLoader) || foundApplicationClassLoader );
+			Assert_MM_true( (NULL == _javaVM->extensionClassLoader) || foundExtensionClassLoader );
 			Assert_MM_true(NULL != _javaVM->anonClassLoader);
 			Assert_MM_true(foundAnonymousClassLoader);
 		}
