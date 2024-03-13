@@ -640,8 +640,8 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       auto &chtableMods             = std::get<14>(req);
       useAotCompilation             = std::get<15>(req);
       bool isInStartupPhase         = std::get<16>(req);
-      bool aotCacheStore            = std::get<17>(req);
-      bool aotCacheLoad             = std::get<18>(req);
+      bool requestedAOTCacheStore   = std::get<17>(req);
+      bool requestedAOTCacheLoad    = std::get<18>(req);
       _methodIndex                  = std::get<19>(req);
       uintptr_t classChainOffset    = std::get<20>(req);
       auto &ramClassChain           = std::get<21>(req);
@@ -950,8 +950,8 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       entry._stream = stream; // Add the stream to the entry
 
       auto aotCache = clientSession->getOrCreateAOTCache(stream);
-      _aotCacheStore = aotCacheStore && aotCache && JITServerAOTCacheMap::cacheHasSpace();
-      aotCacheLoad = aotCacheLoad && aotCache;
+      _aotCacheStore = requestedAOTCacheStore && aotCache && JITServerAOTCacheMap::cacheHasSpace();
+      bool aotCacheLoad = requestedAOTCacheLoad && aotCache;
       if (aotCache && !aotCacheLoad)
          aotCache->incNumCacheBypasses();
 
@@ -981,6 +981,23 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
 
       if (aotCacheLoad)
          aotCacheHit = serveCachedAOTMethod(entry, ramMethod, clazz, &clientOptPlan, clientSession, scratchSegmentProvider);
+
+      // If the client requests that the server use AOT cache offsets during AOT cache compilations, then
+      // the client will be ignoring its local SCC (if it even exists) for the duration of the compilation.
+      // This means that if the client requests an AOT cache store in that scenario and the server
+      // cannot fulfill that request, the server must abort the compilation.
+      // If the client isn't requesting server offsets, then the compilation can still continue, albeit as
+      // a regular AOT compilation.
+      if (clientSession->useServerOffsets(stream) &&
+          requestedAOTCacheStore &&
+          !aotCacheHit &&
+          !_aotCacheStore)
+         {
+         abortCompilation = true;
+         bool aotCacheUnavailable = !aotCache;
+         bool aotCacheStoreUnavailable = aotCacheUnavailable || !JITServerAOTCacheMap::cacheHasSpace();
+         stream->write(JITServer::MessageType::AOTCache_failure, aotCacheUnavailable, aotCacheStoreUnavailable);
+         }
       }
    catch (const JITServer::StreamFailure &e)
       {

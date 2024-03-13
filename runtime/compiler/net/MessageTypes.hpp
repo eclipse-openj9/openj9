@@ -34,6 +34,7 @@ enum MessageType : uint16_t
    compilationFailure,
    AOTCache_storedAOTMethod, // Final response to a compilation request that was an AOT cache store that ignored the client SCC
    AOTCache_serializedAOTMethod,// Final response to a compilation request that was an AOT cache hit
+   AOTCache_failure,// Final response to a compilation request that could not be completed due to AOT cache failure
    mirrorResolvedJ9Method,
    get_params_to_construct_TR_j9method,
    getUnloadedClassRangesAndCHTable,
