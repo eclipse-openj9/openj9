@@ -3281,7 +3281,11 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
                j9nls_printf( PORTLIB, J9NLS_WARNING,  J9NLS_RELOCATABLE_CODE_NOT_AVAILABLE_WITH_FSD_JVMPI);
             }
          }
-      else // do AOT
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+      else if (!javaVM->internalVMFunctions->isDebugOnRestoreEnabled(vmThread))
+#else
+      else
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
          {
          // Turn off Iprofiler for the warm runs, but not if we cache only bootstrap classes
          // This is because we may be missing IProfiler information for non-bootstrap classes

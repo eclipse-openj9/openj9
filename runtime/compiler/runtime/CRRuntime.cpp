@@ -40,6 +40,7 @@
 #include "infra/CriticalSection.hpp"
 #include "infra/Monitor.hpp"
 #include "runtime/CRRuntime.hpp"
+#include "runtime/IProfiler.hpp"
 #include "runtime/J9VMAccess.hpp"
 
 #if defined(J9VM_OPT_JITSERVER)
@@ -562,6 +563,14 @@ TR::CRRuntime::suspendJITThreadsForCheckpoint(J9VMThread *vmThread)
 void
 TR::CRRuntime::resumeJITThreadsForRestore(J9VMThread *vmThread)
    {
+   // Allow heuristics to turn on the IProfiler
+   if (_jitConfig->javaVM->internalVMFunctions->isDebugOnRestoreEnabled(vmThread)
+       && !_jitConfig->javaVM->internalVMFunctions->isCheckpointAllowed(vmThread))
+      {
+      turnOffInterpreterProfiling(_jitConfig);
+      TR::Options::getCmdLineOptions()->setOption(TR_NoIProfilerDuringStartupPhase);
+      }
+
    // Resume suspended IProfiler Thread
    TR_IProfiler *iProfiler = TR_J9VMBase::get(getJITConfig(), NULL)->getIProfiler();
    if (iProfiler && iProfiler->getIProfilerMonitor())

@@ -3237,10 +3237,6 @@ static bool updateCHTable(J9VMThread * vmThread, J9Class  * cl)
    return !updateFailed;
    }
 
-void turnOffInterpreterProfiling(J9JITConfig *jitConfig);
-
-
-
 /**
  * @brief  A function to get the available virtual memory.
  *
@@ -4001,28 +3997,6 @@ int32_t returnIprofilerState()
 #define TEST_verbose 0
 #define TEST_events  0
 #define TEST_records 0
-
-void turnOffInterpreterProfiling(J9JITConfig *jitConfig)
-   {
-   // Turn off interpreter profiling
-   //
-   if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableInterpreterProfiling))
-      {
-      if (interpreterProfilingState != IPROFILING_STATE_OFF)
-         {
-         interpreterProfilingState = IPROFILING_STATE_OFF;
-         J9HookInterface ** hook = jitConfig->javaVM->internalVMFunctions->getVMHookInterface(jitConfig->javaVM);
-         (*hook)->J9HookUnregister(hook, J9HOOK_VM_PROFILING_BYTECODE_BUFFER_FULL, jitHookBytecodeProfiling, NULL);
-
-         PORT_ACCESS_FROM_JITCONFIG(jitConfig);
-         if (TR::Options::getCmdLineOptions()->getOption(TR_VerboseInterpreterProfiling))
-            {
-            TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
-            TR_VerboseLog::writeLineLocked(TR_Vlog_IPROFILER,"t=%6u IProfiler stopped", (uint32_t)compInfo->getPersistentInfo()->getElapsedTime());
-            }
-         }
-      }
-   }
 
 /// The following two methods (stopInterpreterProfiling and restartInterpreterProfiling)
 /// are used when we disable/enable JIT compilation at runtime
@@ -7576,3 +7550,27 @@ int32_t waitJITServerTermination(J9JITConfig *jitConfig)
 #endif /* J9VM_OPT_JITSERVER */
 
 } /* extern "C" */
+
+#if defined(J9VM_INTERP_PROFILING_BYTECODES)
+void turnOffInterpreterProfiling(J9JITConfig *jitConfig)
+   {
+   // Turn off interpreter profiling
+   //
+   if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableInterpreterProfiling))
+      {
+      if (interpreterProfilingState != IPROFILING_STATE_OFF)
+         {
+         interpreterProfilingState = IPROFILING_STATE_OFF;
+         J9HookInterface ** hook = jitConfig->javaVM->internalVMFunctions->getVMHookInterface(jitConfig->javaVM);
+         (*hook)->J9HookUnregister(hook, J9HOOK_VM_PROFILING_BYTECODE_BUFFER_FULL, jitHookBytecodeProfiling, NULL);
+
+         PORT_ACCESS_FROM_JITCONFIG(jitConfig);
+         if (TR::Options::getCmdLineOptions()->getOption(TR_VerboseInterpreterProfiling))
+            {
+            TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
+            TR_VerboseLog::writeLineLocked(TR_Vlog_IPROFILER,"t=%6u IProfiler stopped", (uint32_t)compInfo->getPersistentInfo()->getElapsedTime());
+            }
+         }
+      }
+   }
+#endif /* defined(J9VM_INTERP_PROFILING_BYTECODES) */
