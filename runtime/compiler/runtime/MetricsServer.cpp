@@ -859,11 +859,11 @@ MetricsServer::serveMetricsRequests()
       } // end while (!getMetricsThreadExitFlag())
 
    // The following piece of code will be executed only if the server shuts down properly
-   closeSocket(0);
    if (_sslCtx)
       {
       (*OSSL_CTX_free)(_sslCtx);
       }
+   closeSocket(0);
    }
 
 std::string
