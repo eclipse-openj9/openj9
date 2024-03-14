@@ -679,6 +679,18 @@ TR::CRRuntime::prepareForCheckpoint()
       }
 
    setReadyForCheckpointRestore();
+
+   char * printPersistentMem = feGetEnv("TR_PrintPersistentMem");
+   if (printPersistentMem)
+      {
+      if (trPersistentMemory)
+         trPersistentMemory->printMemStats();
+      }
+
+   printIprofilerStats(TR::Options::getCmdLineOptions(),
+                       _jitConfig,
+                       TR_J9VMBase::get(_jitConfig, NULL)->getIProfiler(),
+                       "Checkpoint");
    }
 
    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestore))
