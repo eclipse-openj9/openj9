@@ -52,11 +52,11 @@ MM_RealtimeRootScanner::doClass(J9Class *clazz)
 {
 	GC_ClassIterator objectSlotIterator(_env, clazz);
 	volatile j9object_t *objectSlotPtr = NULL;
-	while((objectSlotPtr = objectSlotIterator.nextSlot()) != NULL) {
+	while ((objectSlotPtr = objectSlotIterator.nextSlot()) != NULL) {
 		/* discard volatile since we must be in stop-the-world mode */
 		doSlot((j9object_t*)objectSlotPtr);
 	}
-	GC_ClassIteratorClassSlots classSlotIterator(static_cast<J9JavaVM*>(_omrVM->_language_vm), clazz);
+	GC_ClassIteratorClassSlots classSlotIterator(_javaVM, clazz);
 	J9Class *classPtr;
 	while (NULL != (classPtr = classSlotIterator.nextSlot())) {
 		doClassSlot(classPtr);
@@ -94,18 +94,18 @@ MM_RealtimeRootScanner::scanThreads(MM_EnvironmentBase *env)
 {
 	reportScanningStarted(RootScannerEntity_Threads);
 
-	GC_VMThreadListIterator vmThreadListIterator(static_cast<J9JavaVM*>(_omrVM->_language_vm));
+	GC_VMThreadListIterator vmThreadListIterator(_javaVM);
 	StackIteratorData localData;
 
 	localData.rootScanner = this;
 	localData.env = env;
 
-	while(J9VMThread *walkThread = vmThreadListIterator.nextVMThread()) {
-		MM_EnvironmentRealtime* walkThreadEnv = MM_EnvironmentRealtime::getEnvironment(walkThread->omrVMThread);
+	while (J9VMThread *walkThread = vmThreadListIterator.nextVMThread()) {
+		MM_EnvironmentRealtime *walkThreadEnv = MM_EnvironmentRealtime::getEnvironment(walkThread->omrVMThread);
 		if (GC_UNMARK == walkThreadEnv->_allocationColor) {
 			if (GC_UNMARK == MM_AtomicOperations::lockCompareExchangeU32(&walkThreadEnv->_allocationColor, GC_UNMARK, GC_MARK)) {
-				if (scanOneThread(env, walkThread, (void*) &localData)) {
-					vmThreadListIterator.reset(static_cast<J9JavaVM*>(_omrVM->_language_vm)->mainThread);
+				if (scanOneThread(env, walkThread, (void *)&localData)) {
+					vmThreadListIterator.reset(_javaVM->mainThread);
 				}
 			}
 		}
@@ -120,7 +120,7 @@ MM_RealtimeRootScanner::scanThreads(MM_EnvironmentBase *env)
  * been scanned in this cycle.
  **/
 bool
-MM_RealtimeRootScanner::scanOneThread(MM_EnvironmentBase *envBase, J9VMThread* walkThread, void* localData)
+MM_RealtimeRootScanner::scanOneThread(MM_EnvironmentBase *envBase, J9VMThread *walkThread, void *localData)
 {
 	MM_EnvironmentRealtime *env = MM_EnvironmentRealtime::getEnvironment(envBase);
 	
@@ -147,12 +147,12 @@ MM_RealtimeRootScanner::scanOneThread(MM_EnvironmentBase *envBase, J9VMThread* w
 }
 
 void
-MM_RealtimeRootScanner::scanOneThreadImpl(MM_EnvironmentRealtime *env, J9VMThread* walkThread, void* localData)
+MM_RealtimeRootScanner::scanOneThreadImpl(MM_EnvironmentRealtime *env, J9VMThread *walkThread, void *localData)
 {
 }
 
 void
-MM_RealtimeRootScanner::reportThreadCount(MM_EnvironmentBase* env)
+MM_RealtimeRootScanner::reportThreadCount(MM_EnvironmentBase *env)
 {
 	PORT_ACCESS_FROM_ENVIRONMENT(env);
 	j9tty_printf(PORTLIB, "Scanned %d threads for %s\n", _threadCount, scannerName());
@@ -170,7 +170,7 @@ MM_RealtimeRootScanner::scanAtomicRoots(MM_EnvironmentRealtime *env)
 
 	scanJNIGlobalReferences(env);
 
-	if(_stringTableAsRoot && (!_nurseryReferencesOnly && !_nurseryReferencesPossibly)){
+	if (_stringTableAsRoot && (!_nurseryReferencesOnly && !_nurseryReferencesPossibly)){
 		scanStringTable(env);
 	}
 }
@@ -179,7 +179,7 @@ void
 MM_RealtimeRootScanner::doStringTableSlot(J9Object **slotPtr, GC_StringTableIterator *stringTableIterator)
 {
 	_env->getGCEnvironment()->_markJavaStats._stringConstantsCandidates += 1;
-	if(!_markingScheme->isMarked(*slotPtr)) {
+	if (!_markingScheme->isMarked(*slotPtr)) {
 		_env->getGCEnvironment()->_markJavaStats._stringConstantsCleared += 1;
 		stringTableIterator->removeSlot();
 	}
@@ -192,7 +192,7 @@ void
 MM_RealtimeRootScanner::doStringCacheTableSlot(J9Object **slotPtr) 
 {
 	J9Object *objectPtr = *slotPtr;
-	if((NULL != objectPtr) && (!_markingScheme->isMarked(*slotPtr))) {
+	if ((NULL != objectPtr) && (!_markingScheme->isMarked(*slotPtr))) {
 		*slotPtr = NULL;
 	}	
 }
@@ -286,9 +286,9 @@ void
 MM_RealtimeRootScanner::scanMonitorLookupCaches(MM_EnvironmentBase *env)
 {
 	reportScanningStarted(RootScannerEntity_MonitorLookupCaches);
-	GC_VMThreadListIterator vmThreadListIterator(static_cast<J9JavaVM*>(_omrVM->_language_vm));
-	while(J9VMThread *walkThread = vmThreadListIterator.nextVMThread()) {
-		MM_EnvironmentRealtime* walkThreadEnv = MM_EnvironmentRealtime::getEnvironment(walkThread->omrVMThread);
+	GC_VMThreadListIterator vmThreadListIterator(_javaVM);
+	while (J9VMThread *walkThread = vmThreadListIterator.nextVMThread()) {
+		MM_EnvironmentRealtime *walkThreadEnv = MM_EnvironmentRealtime::getEnvironment(walkThread->omrVMThread);
 		if (FALSE == walkThreadEnv->_monitorCacheCleared) {
 			if (FALSE == MM_AtomicOperations::lockCompareExchangeU32(&walkThreadEnv->_monitorCacheCleared, FALSE, TRUE)) {
 				j9objectmonitor_t *objectMonitorLookupCache = walkThread->objectMonitorLookupCache;
@@ -297,7 +297,7 @@ MM_RealtimeRootScanner::scanMonitorLookupCaches(MM_EnvironmentBase *env)
 					doMonitorLookupCacheSlot(&objectMonitorLookupCache[cacheIndex]);
 				}
 				if (condYield()) {
-					vmThreadListIterator.reset(static_cast<J9JavaVM*>(_omrVM->_language_vm)->mainThread);
+					vmThreadListIterator.reset(_javaVM->mainThread);
 				}
 			}
 		}
