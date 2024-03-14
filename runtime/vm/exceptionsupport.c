@@ -491,11 +491,13 @@ isExceptionTypeCaughtByHandler(J9VMThread *currentThread, J9Class *thrownExcepti
 			syncDecompilationStackAfterReleasingVMAccess(currentThread, walkState, TRUE);
 		}
 		
-		/* If we were unable to load the class, then we can only say that the exception is not caught */
-
-		if (caughtExceptionClass == NULL) {
-			currentThread->currentException = NULL;
-			return FALSE;
+		/*
+		 * If the exception class in the catch block cannot be resolved,
+		 * instead of throwing the originally thrown exception,
+		 * we throw an exception related to the resolution failure.
+		 */
+		if (NULL == caughtExceptionClass) {
+			return TRUE;
 		}
 	}
 
