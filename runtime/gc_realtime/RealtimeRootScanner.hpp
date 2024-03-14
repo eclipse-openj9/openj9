@@ -70,7 +70,7 @@ public:
 private:
 protected:
 public:
-	virtual void doClass(J9Class* clazz);
+	virtual void doClass(J9Class *clazz);
 
 #if defined(J9VM_GC_REALTIME) 
 	void doStringTableSlot(J9Object **slotPtr, GC_StringTableIterator *stringTableIterator);
@@ -78,8 +78,8 @@ public:
 #endif /* J9VM_GC_REALTIME */
 
 	virtual void scanThreads(MM_EnvironmentBase *env);
-	virtual bool scanOneThread(MM_EnvironmentBase *env, J9VMThread* walkThread, void* localData);
-	virtual void scanOneThreadImpl(MM_EnvironmentRealtime *env, J9VMThread* walkThread, void* localData);
+	virtual bool scanOneThread(MM_EnvironmentBase *env, J9VMThread *walkThread, void *localData);
+	virtual void scanOneThreadImpl(MM_EnvironmentRealtime *env, J9VMThread *walkThread, void *localData);
 	void reportThreadCount(MM_EnvironmentBase *env);
 	void scanAtomicRoots(MM_EnvironmentRealtime *env);
 
