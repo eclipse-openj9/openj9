@@ -153,6 +153,8 @@ struct TR_MethodToBeCompiled
    uint8_t                _weight; // Up to 256 levels of weight
    uint8_t                _jitStateWhenQueued;
 
+   bool                   _checkpointInProgress;
+
 #if defined(J9VM_OPT_JITSERVER)
    // Comp request should be sent remotely to JITServer
    bool _remoteCompReq;

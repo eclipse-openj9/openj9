@@ -34,89 +34,164 @@
 #include "env/ClassUnloadMonitorCriticalSection.hpp"
 #include "env/Region.hpp"
 #include "env/VerboseLog.hpp"
+#include "env/VMAccessCriticalSection.hpp"
 #include "env/VMJ9.h"
 #include "ilgen/IlGeneratorMethodDetails.hpp"
+#include "infra/CriticalSection.hpp"
+#include "runtime/CRRuntime.hpp"
+#include "runtime/J9VMAccess.hpp"
 
 TR::CompileBeforeCheckpoint::CompileBeforeCheckpoint(TR::Region &region, J9VMThread *vmThread, TR_J9VMBase *fej9, TR::CompilationInfo *compInfo) :
    _region(region),
    _vmThread(vmThread),
    _fej9(fej9),
-   _compInfo(compInfo),
-   _methodsSet(std::less<TR_OpaqueMethodBlock*>(), _region)
+   _compInfo(compInfo)
    {}
 
 void
-TR::CompileBeforeCheckpoint::addMethodToList(TR_OpaqueMethodBlock *method)
+TR::CompileBeforeCheckpoint::queueMethodForCompilationBeforeCheckpoint(J9Method *j9method)
    {
-   if (method && _methodsSet.find(method) == _methodsSet.end())
+   /* Release CR Runtime Monitor since compileMethod below will acquire the
+    * Comp Monitor.
+    */
+   _compInfo->getCRRuntime()->releaseCRRuntimeMonitor();
+
+   J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(j9method);
+   if (
+         /* Method is interpreted */
+         !_compInfo->isCompiled(j9method)
+
+#if !defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+         /* Method is not a thunk archetype */
+         && !_J9ROMMETHOD_J9MODIFIER_IS_SET(romMethod, J9AccMethodFrameIteratorSkip)
+#endif /* !defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
+
+         /* Method is not abstract */
+         && !_J9ROMMETHOD_J9MODIFIER_IS_SET(romMethod, J9AccAbstract)
+      )
       {
-      _methodsSet.insert(method);
+      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestoreDetails))
+         {
+         TR_VerboseLog::CriticalSection cs;
+         TR_VerboseLog::write(TR_Vlog_CHECKPOINT_RESTORE, "Attempting to queue ");
+         _compInfo->printMethodNameToVlog(j9method);
+         TR_VerboseLog::writeLine(" (%p) for compilation", j9method);
+         }
+
+      TR_MethodEvent event;
+      event._eventType = TR_MethodEvent::CompilationBeforeCheckpoint;
+      event._j9method = j9method;
+      event._oldStartPC = 0;
+      event._vmThread = _vmThread;
+      event._classNeedingThunk = 0;
+      bool newPlanCreated;
+      TR_OptimizationPlan *plan = TR::CompilationController::getCompilationStrategy()->processEvent(&event, &newPlanCreated);
+      // the plan needs to be created only when async compilation is possible
+      // Otherwise the compilation will be triggered on next invocation
+      if (plan)
+         {
+         bool queued = false;
+
+            // scope for details
+            {
+            TR::IlGeneratorMethodDetails details(j9method);
+            _compInfo->compileMethod(_vmThread, details, NULL, TR_maybe, NULL, &queued, plan);
+            }
+
+         if (!queued && newPlanCreated)
+            TR_OptimizationPlan::freeOptimizationPlan(plan);
+         }
       }
+
+   /* Reacquire the CR Runtime Monitor */
+   _compInfo->getCRRuntime()->acquireCRRuntimeMonitor();
    }
 
 void
 TR::CompileBeforeCheckpoint::queueMethodsForCompilationBeforeCheckpoint()
    {
-   for (auto iter = _methodsSet.begin(); iter != _methodsSet.end(); iter++)
+   /* Acquire VMAccess to prevent class unloading. VMAccess is also needed
+    * when a thread queues a method for synchronous compilation.
+    */
+   TR::VMAccessCriticalSection vmaCollectMethods(_fej9);
+
+   /* Acquire the CRRuntime Monitor */
+   OMR::CriticalSection collectMethods(_compInfo->getCRRuntime()->getCRRuntimeMonitor());
+
+   J9Method *method;
+   while ((method = _compInfo->getCRRuntime()->popImportantMethodForCR()))
       {
-      TR_OpaqueMethodBlock *method = *iter;
-      J9Method *j9method = reinterpret_cast<J9Method *>(method);
+      queueMethodForCompilationBeforeCheckpoint(method);
+      }
 
-      J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(j9method);
-      if (
-          /* Method is interpreted */
-          !_compInfo->isCompiled(j9method)
-
-          /* Method is not a thunk archetype */
-          && !_J9ROMMETHOD_J9MODIFIER_IS_SET(romMethod, J9AccMethodFrameIteratorSkip)
-
-          /* Method is not abstract */
-          && !_J9ROMMETHOD_J9MODIFIER_IS_SET(romMethod, J9AccAbstract)
-         )
+   while ((method = _compInfo->getCRRuntime()->popFailedCompilation()))
+      {
+      if (_compInfo->getJ9MethodVMExtra(method) == J9_JIT_NEVER_TRANSLATE)
          {
-         if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestoreDetails))
-            {
-            TR_VerboseLog::CriticalSection cs;
-            TR_VerboseLog::write(TR_Vlog_CHECKPOINT_RESTORE, "Attempting to queue ");
-            _compInfo->printMethodNameToVlog(j9method);
-            TR_VerboseLog::writeLine(" (%p) for compilation", j9method);
-            }
-
-         TR_MethodEvent event;
-         event._eventType = TR_MethodEvent::CompilationBeforeCheckpoint;
-         event._j9method = j9method;
-         event._oldStartPC = 0;
-         event._vmThread = _vmThread;
-         event._classNeedingThunk = 0;
-         bool newPlanCreated;
-         TR_OptimizationPlan *plan = TR::CompilationController::getCompilationStrategy()->processEvent(&event, &newPlanCreated);
-         // the plan needs to be created only when async compilation is possible
-         // Otherwise the compilation will be triggered on next invocation
-         if (plan)
-            {
-            bool queued = false;
-
-               // scope for details
-               {
-               TR::IlGeneratorMethodDetails details(j9method);
-               _compInfo->compileMethod(_vmThread, details, NULL, TR_maybe, NULL, &queued, plan);
-               }
-
-            if (!queued && newPlanCreated)
-               TR_OptimizationPlan::freeOptimizationPlan(plan);
-            }
+         TR::CompilationInfo::setInvocationCount(method, 0);
          }
+      queueMethodForCompilationBeforeCheckpoint(method);
       }
    }
 
-void
-TR::CompileBeforeCheckpoint::collectAndCompileMethodsBeforeCheckpoint()
+static void resetFSD(TR::Options *options)
    {
-   /* Read Acquire Class Unload Monitor to prevent class unloading */
-   TR::ClassUnloadMonitorCriticalSection collectMethodsCriticalSection;
+   options->setOption(TR_EnableHCR);
 
-   collectMethodsForCompilationBeforeCheckpoint();
+   options->setOption(TR_FullSpeedDebug, false);
+   options->setOption(TR_DisableDirectToJNI, false);
+
+   options->setReportByteCodeInfoAtCatchBlock(false);
+   options->setOption(TR_DisableGuardedCountingRecompilations, false);
+
+   options->setOption(TR_DisableProfiling, false);
+
+   options->setOption(TR_DisableNewInstanceImplOpt, false);
+
+   options->setDisabled(OMR::redundantGotoElimination, false);
+   options->setDisabled(OMR::loopReplicator, false);
+
+   options->setOption(TR_DisableMethodHandleThunks, false);
+   }
+
+void
+TR::CompileBeforeCheckpoint::compileMethodsBeforeCheckpoint()
+   {
+   J9JavaVM *javaVM = _compInfo->getJITConfig()->javaVM;
+
+   /* If running portable CRIU, don't bother compiling proactively */
+   if (!javaVM->internalVMFunctions->isNonPortableRestoreMode(_vmThread))
+      return;
+
+   /* Proactive compilation should not be FSD compiles */
+   if (javaVM->internalVMFunctions->isDebugOnRestoreEnabled(_vmThread))
+      {
+      resetFSD(TR::Options::getCmdLineOptions());
+      resetFSD(TR::Options::getAOTCmdLineOptions());
+      _compInfo->getCRRuntime()->setCanPerformRemoteCompilationInCRIUMode(false);
+      _compInfo->getPersistentInfo()->setClientUID(0);
+      _compInfo->getPersistentInfo()->setServerUID(0);
+      _fej9->getJ9JITConfig()->clientUID = 0;
+      _fej9->getJ9JITConfig()->serverUID = 0;
+      J9::PersistentInfo::_remoteCompilationMode = JITServer::NONE;
+      }
+
+   /* Release the Comp Monitor, since compileMethod should be called without it
+    * in hand. If running in sync mode, having the monitor in hand before
+    * calling compileMethod will result in a deadlock; although
+    * compileOnSeparateThread releases the compMonitor, the entry count at that
+    * point will be 1, and so this thread will still be the owner of the
+    * monitor.
+    */
+   _compInfo->releaseCompMonitor(_vmThread);
+
+   /* Queue methods for proactive compilation */
    queueMethodsForCompilationBeforeCheckpoint();
+
+   /* Reacquire the Comp Monitor */
+   _compInfo->acquireCompMonitor(_vmThread);
+
+   /* TODO un-reset FSD in case the JVM runs in debug mode post restore */
    }
 
 #endif

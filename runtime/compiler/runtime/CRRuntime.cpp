@@ -36,7 +36,6 @@
 #include "env/RawAllocator.hpp"
 #include "env/SystemSegmentProvider.hpp"
 #include "env/VerboseLog.hpp"
-#include "env/VMAccessCriticalSection.hpp"
 #include "infra/Assert.hpp"
 #include "infra/CriticalSection.hpp"
 #include "infra/Monitor.hpp"
@@ -87,7 +86,8 @@ TR::CRRuntime::CRRuntime(J9JITConfig *jitConfig, TR::CompilationInfo *compInfo) 
    _crRuntimeThreadLifetimeState(TR_CRRuntimeThreadLifetimeStates::CR_THR_NOT_CREATED),
    _checkpointStatus(TR_CheckpointStatus::NO_CHECKPOINT_IN_PROGRESS),
    _failedComps(),
-   _forcedRecomps()
+   _forcedRecomps(),
+   _impMethodForCR()
    {
    // TR::CompilationInfo is initialized in the JIT_INITIALIZED bootstrap
    // stage, whereas J9_EXTENDED_RUNTIME_METHOD_TRACE_ENABLED is set in the
@@ -240,6 +240,7 @@ TR::CRRuntime::removeMethodsFromMemoizedCompilations(T *entryToRemove)
    OMR::CriticalSection removeMemoizedCompilations(getCRRuntimeMonitor());
    removeMemoizedCompilation<T>(_failedComps, entryToRemove);
    removeMemoizedCompilation<T>(_forcedRecomps, entryToRemove);
+   removeMemoizedCompilation<T>(_impMethodForCR, entryToRemove);
    }
 
 void
@@ -257,62 +258,7 @@ TR::CRRuntime::purgeMemoizedCompilations()
    OMR::CriticalSection removeMemoizedCompilations(getCRRuntimeMonitor());
    purgeMemoizedCompilation(_failedComps);
    purgeMemoizedCompilation(_forcedRecomps);
-   }
-
-void
-TR::CRRuntime::triggerCompilationOfFailedCompilationsPreCheckpoint(J9VMThread *vmThread)
-   {
-   TR_J9VMBase *fe = TR_J9VMBase::get(getJITConfig(), vmThread);
-
-   J9Method *method;
-   while ((method = popFailedCompilation()))
-      {
-      if (_compInfo->getJ9MethodVMExtra(method) == J9_JIT_NEVER_TRANSLATE)
-         {
-         if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestoreDetails))
-            TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "%p Resetting %p", vmThread, method);
-         TR::CompilationInfo::setInvocationCount(method, 0);
-         }
-      else if (J9_ARE_ANY_BITS_SET(J9_ROM_METHOD_FROM_RAM_METHOD(method)->modifiers, J9AccNative))
-         {
-         if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestoreDetails))
-            TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "%p Requeuing %p", vmThread, method);
-
-         TR_MethodEvent event;
-         event._eventType = TR_MethodEvent::InterpreterCounterTripped;
-         event._j9method = method;
-         event._oldStartPC = NULL;
-         event._vmThread = vmThread;
-         event._classNeedingThunk = 0;
-         bool newPlanCreated = false;
-         TR_OptimizationPlan *plan = TR::CompilationController::getCompilationStrategy()->processEvent(&event, &newPlanCreated);
-         // The plan needs to be created only when async compilation is possible
-         // Otherwise the compilation will be triggered on next invocation
-         if (plan)
-            {
-            bool queued = false;
-
-            // Release the CR Runtime Monitor here as compileMethod will
-            // eventually acquire the Comp Monitor.
-            releaseCRRuntimeMonitor();
-
-               // scope for details
-               {
-               TR::VMAccessCriticalSection triggerFailedComps(fe);
-
-               TR::IlGeneratorMethodDetails details(method);
-               _compInfo->compileMethod(vmThread, details, NULL, TR_maybe, NULL, &queued, plan);
-               }
-
-            // Re-acquire the CR Runtime Monitor now that this thread does not
-            // have the Comp Monitor in hand.
-            acquireCRRuntimeMonitor();
-
-            if (!queued && newPlanCreated)
-               TR_OptimizationPlan::freeOptimizationPlan(plan);
-            }
-         }
-      }
+   purgeMemoizedCompilation(_impMethodForCR);
    }
 
 void
@@ -415,7 +361,7 @@ bool TR::CRRuntime::compileMethodsForCheckpoint(J9VMThread *vmThread)
       TR::Region compForCheckpointRegion(regionSegmentProvider, rawAllocator);
 
       TR::CompileBeforeCheckpoint compileBeforeCheckpoint(compForCheckpointRegion, vmThread, fej9, getCompInfo());
-      compileBeforeCheckpoint.collectAndCompileMethodsBeforeCheckpoint();
+      compileBeforeCheckpoint.compileMethodsBeforeCheckpoint();
       }
    catch (const std::exception &e)
       {
@@ -749,7 +695,6 @@ TR::CRRuntime::process()
          }
       else if (state == TR_CRRuntimeThreadLifetimeStates::CR_THR_TRIGGER_RECOMP)
          {
-         triggerCompilationOfFailedCompilationsPreCheckpoint(getCRRuntimeThread());
          triggerRecompilationForPreCheckpointGeneratedFSDBodies(getCRRuntimeThread());
 
          // Because the CR Runtime Monitor may have been released, only reset

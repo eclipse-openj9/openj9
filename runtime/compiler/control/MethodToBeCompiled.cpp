@@ -89,6 +89,8 @@ void TR_MethodToBeCompiled::initialize(TR::IlGeneratorMethodDetails &details, vo
    _weight = 0;
    _jitStateWhenQueued = UNDEFINED_STATE;
 
+   _checkpointInProgress = false;
+
 #if defined(J9VM_OPT_JITSERVER)
    _remoteCompReq = false;
    _shouldUpgradeOutOfProcessCompilation = false;
@@ -146,7 +148,7 @@ TR_MethodToBeCompiled::setAotCodeToBeRelocated(const void *m)
    }
 
 #if defined(J9VM_OPT_JITSERVER)
-uint64_t 
+uint64_t
 TR_MethodToBeCompiled::getClientUID() const
    {
    return _stream->getClientId();

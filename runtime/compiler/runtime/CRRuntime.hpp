@@ -127,10 +127,12 @@ class CRRuntime
    /* The following methods should be only be invoked with the CR Runtime
     * Monitor in hand.
     */
-   void pushFailedCompilation(J9Method *method)    { pushMemoizedCompilation(_failedComps, method);   }
-   J9Method * popFailedCompilation()               { return popMemoizedCompilation(_failedComps);     }
-   void pushForcedRecompilation(J9Method *method)  { pushMemoizedCompilation(_forcedRecomps, method); }
-   J9Method * popForcedRecompilation()             { return popMemoizedCompilation(_forcedRecomps);   }
+   void pushFailedCompilation(J9Method *method)    { pushMemoizedCompilation(_failedComps, method);    }
+   J9Method * popFailedCompilation()               { return popMemoizedCompilation(_failedComps);      }
+   void pushForcedRecompilation(J9Method *method)  { pushMemoizedCompilation(_forcedRecomps, method);  }
+   J9Method * popForcedRecompilation()             { return popMemoizedCompilation(_forcedRecomps);    }
+   void pushImportantMethodForCR(J9Method *method) { pushMemoizedCompilation(_impMethodForCR, method); }
+   J9Method * popImportantMethodForCR()            { return popMemoizedCompilation(_impMethodForCR);   }
 
    /**
     * @brief Remove appropriate methods from all of the memoized lists. This
@@ -303,16 +305,6 @@ class CRRuntime
    void purgeMemoizedCompilation(TR_MemoizedCompilations& list);
 
    /**
-    * @brief Trigger compilation of any compilations that failed pre-checkpoint;
-    *        specifically, any compilations added to the _failedComps list.
-    *
-    *        This method is called with the CR Runtime Monitor in hand.
-    *
-    * @param vmThread the J9VMThread
-    */
-   void triggerCompilationOfFailedCompilationsPreCheckpoint(J9VMThread *vmThread);
-
-   /**
     * @brief Trigger recompilation of the compilations that were generated with
     *        FSD enabled pre-checkpoint; specifically, any compilations added to
     *        the _forcedRecomps list.
@@ -338,6 +330,7 @@ class CRRuntime
 
    TR_MemoizedCompilations _failedComps;
    TR_MemoizedCompilations _forcedRecomps;
+   TR_MemoizedCompilations _impMethodForCR;
 
    bool _vmMethodTraceEnabled;
    bool _vmExceptionEventsHooked;

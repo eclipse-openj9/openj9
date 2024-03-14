@@ -435,6 +435,18 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
    int32_t count = -1; // means we didn't set the value yet
 
       {
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+      bool cpAllowedAndDebugOnRestoreEnabled
+         = jitConfig->javaVM->internalVMFunctions->isDebugOnRestoreEnabled(vmThread)
+           && jitConfig->javaVM->internalVMFunctions->isCheckpointAllowed(vmThread);
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+
+      bool sccCounts =
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+         (cpAllowedAndDebugOnRestoreEnabled && jitConfig->javaVM->sharedClassConfig) ||
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+         TR::Options::sharedClassCache();
+
       J9ROMClass *declaringClazz = J9_CLASS_FROM_METHOD(method)->romClass;
       J9UTF8 * className = J9ROMCLASS_CLASSNAME(declaringClazz);
       J9UTF8 * name = J9ROMMETHOD_NAME(romMethod);
@@ -460,7 +472,7 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
                      TR::Options::getHighCodeCacheOccupancyBCount() :
                      TR::Options::getHighCodeCacheOccupancyCount();
          }
-      else if (TR::Options::sharedClassCache())
+      else if (sccCounts)
          {
          // The default FE may not have TR_J9SharedCache object because the FE may have
          // been created before options were processed.
@@ -474,7 +486,18 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
             if (optionsAOT->getOption(TR_EnableSharedCacheTiming))
                sharedQueryTime = j9time_hires_clock(); // may not be good for SMP
 
-            if (jitConfig->javaVM->sharedClassConfig->existsCachedCodeForROMMethod(vmThread, romMethod))
+            bool methodExistsInSCC = jitConfig->javaVM->sharedClassConfig->existsCachedCodeForROMMethod(vmThread, romMethod);
+
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+            if (methodExistsInSCC && cpAllowedAndDebugOnRestoreEnabled)
+               compInfo->getCRRuntime()->pushImportantMethodForCR(method);
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+
+            if (methodExistsInSCC
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+                && !cpAllowedAndDebugOnRestoreEnabled
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+               )
                {
                int32_t scount = optionsAOT->getInitialSCount();
                uint16_t newScount = 0;
