@@ -127,7 +127,10 @@ enum ExternalOptions
    XXminusIProfileDuringStartupPhase           = 71,
    XXplusJITServerAOTCacheIgnoreLocalSCC       = 72,
    XXminusJITServerAOTCacheIgnoreLocalSCC      = 73,
-   TR_NumExternalOptions                       = 74
+   XXplusHealthProbes                          = 74,
+   XXminusHealthProbes                         = 75,
+   XXJITServerHealthProbePortOption            = 76,
+   TR_NumExternalOptions                       = 77
    };
 
 class OMR_EXTENSIBLE Options : public OMR::OptionsConnector

@@ -102,6 +102,9 @@ typedef int OEVP_DigestFinal_ex_t(EVP_MD_CTX *ctx, unsigned char *md, unsigned i
 typedef const EVP_MD * OEVP_sha256_t(void);
 
 typedef void OERR_print_errors_fp_t(FILE *fp);
+typedef unsigned long OERR_peek_error_t();
+typedef unsigned long OERR_get_error_t();
+typedef void OERR_error_string_n_t(unsigned long e, char *buf, size_t len);
 
 extern "C" OOpenSSL_version_t * OOpenSSL_version;
 
@@ -174,6 +177,9 @@ extern "C" OEVP_DigestFinal_ex_t * OEVP_DigestFinal_ex;
 extern "C" OEVP_sha256_t * OEVP_sha256;
 
 extern "C" OERR_print_errors_fp_t * OERR_print_errors_fp;
+extern "C" OERR_peek_error_t * OERR_peek_error;
+extern "C" OERR_get_error_t * OERR_get_error;
+extern "C" OERR_error_string_n_t * OERR_error_string_n;
 
 namespace JITServer
 {
