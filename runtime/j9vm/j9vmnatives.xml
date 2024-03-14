@@ -378,16 +378,22 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<!-- Additions for Java 15 (General) -->
 		<export name="JVM_RegisterLambdaProxyClassForArchiving"/>
 		<export name="JVM_LookupLambdaProxyClassFromArchive"/>
-		<export name="JVM_IsCDSDumpingEnabled"/>
+		<export name="JVM_IsCDSDumpingEnabled">
+			<exclude-if condition="spec.java23"/>
+		</export>
 	</exports>
 
 	<exports group="jdk16">
 		<!-- Additions for Java 16 (General) -->
 		<export name="JVM_DefineArchivedModules"/>
 		<export name="JVM_GetRandomSeedForDumping"/>
-		<export name="JVM_IsSharingEnabled"/>
+		<export name="JVM_IsDumpingClassList">
+			<exclude-if condition="spec.java23"/>
+		</export>
+		<export name="JVM_IsSharingEnabled">
+			<exclude-if condition="spec.java23"/>
+		</export>
 		<export name="JVM_LogLambdaFormInvoker"/>
-		<export name="JVM_IsDumpingClassList"/>
 	</exports>
 
 	<exports group="jdk17">
@@ -451,5 +457,10 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<!-- Additions for Java 22 (General) -->
 		<export name="JVM_ExpandStackFrameInfo"/>
 		<export name="JVM_VirtualThreadDisableSuspend"/>
+	</exports>
+
+	<exports group="jdk23">
+		<!-- Additions for Java 23 (General) -->
+		<export name="JVM_GetCDSConfigStatus"/>
 	</exports>
 </exportlists>
