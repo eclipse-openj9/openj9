@@ -372,16 +372,16 @@ _IF([JAVA_SPEC_VERSION == 15],
 	[_X(JVM_LookupLambdaProxyClassFromArchive, JNICALL, false, jclass, JNIEnv *env, jclass arg1, jstring arg2, jobject arg3, jobject arg4, jobject arg5, jobject arg6, jboolean arg7)])
 _IF([JAVA_SPEC_VERSION >= 16],
 	[_X(JVM_LookupLambdaProxyClassFromArchive, JNICALL, false, jclass, JNIEnv *env, jclass arg1, jstring arg2, jobject arg3, jobject arg4, jobject arg5, jobject arg6)])
-_IF([JAVA_SPEC_VERSION >= 15],
+_IF([(15 <= JAVA_SPEC_VERSION) && (JAVA_SPEC_VERSION < 23)],
 	[_X(JVM_IsCDSDumpingEnabled, JNICALL, false, jboolean, JNIEnv *env)])
-_IF([JAVA_SPEC_VERSION >= 16],
+_IF([(16 <= JAVA_SPEC_VERSION) && (JAVA_SPEC_VERSION < 23)],
+	[_X(JVM_IsDumpingClassList, JNICALL, false, jboolean, JNIEnv *env)])
+_IF([(16 <= JAVA_SPEC_VERSION) && (JAVA_SPEC_VERSION < 23)],
 	[_X(JVM_IsSharingEnabled, JNICALL, false, jboolean, JNIEnv *env)])
 _IF([JAVA_SPEC_VERSION >= 16],
 	[_X(JVM_DefineArchivedModules, JNICALL, false, void, JNIEnv *env, jobject obj1, jobject obj2)])
 _IF([JAVA_SPEC_VERSION >= 16],
 	[_X(JVM_LogLambdaFormInvoker, JNICALL, false, void, JNIEnv *env, jstring str)])
-_IF([JAVA_SPEC_VERSION >= 16],
-	[_X(JVM_IsDumpingClassList, JNICALL, false, jboolean, JNIEnv *env)])
 _X(JVM_IsUseContainerSupport, JNICALL, false, jboolean, JNIEnv *env)
 _X(AsyncGetCallTrace, JNICALL, false, void, void *trace, jint depth, void *ucontext)
 _IF([JAVA_SPEC_VERSION >= 17],
@@ -434,3 +434,5 @@ _IF([JAVA_SPEC_VERSION == 22],
 	[_X(JVM_VirtualThreadDisableSuspend, JNICALL, false, void, JNIEnv *env, jobject vthread, jboolean enter)])
 _IF([JAVA_SPEC_VERSION >= 23],
 	[_X(JVM_VirtualThreadDisableSuspend, JNICALL, false, void, JNIEnv *env, jclass clz, jboolean enter)])
+_IF([JAVA_SPEC_VERSION >= 23],
+	[_X(JVM_GetCDSConfigStatus, JNICALL, false, jint, void)])

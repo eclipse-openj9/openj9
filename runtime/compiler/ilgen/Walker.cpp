@@ -4587,29 +4587,50 @@ break
    // required by this optimization efficiently, we can re-enable this optimization.
    if (cg()->getEnforceStoreOrder() && calledMethod->isConstructor())
       {
+      bool fenceRequired = false;
       if (resolvedMethodSymbol
 #ifdef J9VM_OPT_JITSERVER
          && !cg()->comp()->isOutOfProcessCompilation()
 #endif /* defined(J9VM_OPT_JITSERVER) */
          )
          {
-         J9Class *methodClass = (J9Class *) resolvedMethodSymbol->getResolvedMethod()->containingClass();
-         TR_VMFieldsInfo *fieldsInfoByIndex = new (comp()->trStackMemory()) TR_VMFieldsInfo(comp(), methodClass, 1, stackAlloc);
-         ListIterator<TR_VMField> fieldIter(fieldsInfoByIndex->getFields());
-         for (TR_VMField *field = fieldIter.getFirst(); field; field = fieldIter.getNext())
+         TR_OpaqueClassBlock *methodSymClass = resolvedMethodSymbol->getResolvedMethod()->containingClass();
+         int32_t len;
+         char *className;
+         className = TR::Compiler->cls.classNameChars(comp(), methodSymClass, len);
+         // For classes where we would like to remove Null-Checks, add an allocation fence after the init()
+         // so that we can be sure the fields initialized in the init() are visible to other threads.
+         if ((len==22 && !strncmp(className, "java/lang/StringBuffer", 22)) ||
+             (len==23 && !strncmp(className, "java/lang/StringBuilder", 23)))
             {
-            if ((field->modifiers & J9AccFinal) && methodClass == jitGetDeclaringClassOfROMField(comp()->j9VMThread(), methodClass, field->shape))
-               {
                if (comp()->getOption(TR_TraceILGen))
-                  traceMsg(comp(), "added fence due to field %s \n", field->name);
-               push(callNode->getFirstChild());
-               genFlush(0);
-               pop();
-               break;
+                  traceMsg(comp(), "added post-init fence for recognized class %s\n", className);
+               fenceRequired = true;
+            }
+         else
+            {
+            // Check if there are final fields in the class and add a fence if we see one.
+            // The spec requires that final fields are visible to all threads after the init()
+            J9Class *methodClass = (J9Class *)methodSymClass;
+            TR_VMFieldsInfo *fieldsInfoByIndex = new (comp()->trStackMemory()) TR_VMFieldsInfo(comp(), methodClass, 1, stackAlloc);
+            ListIterator<TR_VMField> fieldIter(fieldsInfoByIndex->getFields());
+            for (TR_VMField *field = fieldIter.getFirst(); field; field = fieldIter.getNext())
+               {
+               if ((field->modifiers & J9AccFinal) && methodClass == jitGetDeclaringClassOfROMField(comp()->j9VMThread(), methodClass, field->shape))
+                  {
+                  if (comp()->getOption(TR_TraceILGen))
+                     traceMsg(comp(), "added fence due to final field %s \n", field->name);
+                  fenceRequired = true;
+                  break;
+                  }
                }
             }
          }
       else
+         {
+         fenceRequired = true;
+         }
+      if (fenceRequired)
          {
          push(callNode->getFirstChild());
          genFlush(0);
@@ -6135,6 +6156,8 @@ TR_J9ByteCodeIlGenerator::genNew(TR::ILOpCodes opCode)
       sig = TR::Compiler->cls.classSignature_DEPRECATED(comp(), clazz, len, comp()->trMemory());
       OMR::ResolvedMethodSymbol *resolvedMethodSymbol = node->getSymbol()->getResolvedMethodSymbol();
 
+      // The following classes contain final fields and therefore need a post-init flush.
+      // The <init> for these classes do not allow the 'this' to escape so we can skip the pre-init flush.
       if (((len == 16) && strncmp(sig, "Ljava/lang/Long;", 16) == 0) ||
           ((len == 16) && strncmp(sig, "Ljava/lang/Byte;", 16) == 0) ||
           ((len == 17) && strncmp(sig, "Ljava/lang/Short;", 17) == 0) ||
@@ -6167,9 +6190,15 @@ TR_J9ByteCodeIlGenerator::genNew(TR::ILOpCodes opCode)
           ((len == 68) && strncmp(sig, "Ljava/util/concurrent/locks/ReentrantReadWriteLock$Sync$HoldCounter;", 68) == 0) ||
           ((len == 25) && strncmp(sig, "Ljava/util/PriorityQueue;", 25) == 0) ||
           ((len == 42) && strncmp(sig, "Ljava/util/concurrent/locks/ReentrantLock;", 42) == 0) ||
-          ((len == 54) && strncmp(sig, "Ljava/util/concurrent/locks/ReentrantLock$NonfairSync;", 54) == 0)
+          ((len == 54) && strncmp(sig, "Ljava/util/concurrent/locks/ReentrantLock$NonfairSync;", 54) == 0) ||
+          // The JIT removes checks for the following classes, therefore we need a post-init flush to ensure fields are non-null.
+          // The <init> for these classes do not allow the 'this' to escape so we can skip the pre-init flush.
+          ((len == 24) && strncmp(sig, "Ljava/lang/StringBuffer;", 24) == 0) ||
+          ((len == 25) && strncmp(sig, "Ljava/lang/StringBuilder;", 25) == 0)
          )
          {
+         if (comp()->getOption(TR_TraceILGen))
+            traceMsg(comp(), "skipping pre-init fence for recognized class %s\n", sig);
          skipFlush = true;
          }
       }

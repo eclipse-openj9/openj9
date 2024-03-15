@@ -60,12 +60,6 @@ JVM_LogLambdaFormInvoker(JNIEnv *env, jstring str)
 {
 	Assert_SC_true(!"JVM_LogLambdaFormInvoker unimplemented");
 }
-
-JNIEXPORT jboolean JNICALL
-JVM_IsDumpingClassList(JNIEnv *env)
-{
-	return JNI_FALSE;
-}
 #endif /* JAVA_SPEC_VERSION >= 16 */
 
 #if JAVA_SPEC_VERSION >= 11
@@ -750,5 +744,14 @@ JVM_VirtualThreadDisableSuspend(
 	 */
 }
 #endif /* JAVA_SPEC_VERSION >= 22 */
+
+#if JAVA_SPEC_VERSION >= 23
+JNIEXPORT jint JNICALL
+JVM_GetCDSConfigStatus()
+{
+	/* OpenJ9 does not support CDS, so we return 0 to indicate that there is no CDS config available. */
+	return 0;
+}
+#endif /* JAVA_SPEC_VERSION >= 23 */
 
 } /* extern "C" */

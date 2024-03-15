@@ -344,18 +344,26 @@ if(NOT JAVA_SPEC_VERSION LESS 15)
 	jvm_add_exports(jvm
 		JVM_RegisterLambdaProxyClassForArchiving
 		JVM_LookupLambdaProxyClassFromArchive
-		JVM_IsCDSDumpingEnabled
 	)
+	if(JAVA_SPEC_VERSION LESS 23)
+		jvm_add_exports(jvm
+			JVM_IsCDSDumpingEnabled
+		)
+	endif()
 endif()
 
 if(NOT JAVA_SPEC_VERSION LESS 16)
 	jvm_add_exports(jvm
 		JVM_DefineArchivedModules
 		JVM_GetRandomSeedForDumping
-		JVM_IsSharingEnabled
 		JVM_LogLambdaFormInvoker
-		JVM_IsDumpingClassList
 	)
+	if(JAVA_SPEC_VERSION LESS 23)
+		jvm_add_exports(jvm
+			JVM_IsDumpingClassList
+			JVM_IsSharingEnabled
+		)
+	endif()
 endif()
 
 if(JAVA_SPEC_VERSION LESS 17)
@@ -443,6 +451,12 @@ else()
 	jvm_add_exports(jvm
 		JVM_ExpandStackFrameInfo
 		JVM_VirtualThreadDisableSuspend
+	)
+endif()
+
+if(NOT JAVA_SPEC_VERSION LESS 23)
+	jvm_add_exports(jvm
+		JVM_GetCDSConfigStatus
 	)
 endif()
 
