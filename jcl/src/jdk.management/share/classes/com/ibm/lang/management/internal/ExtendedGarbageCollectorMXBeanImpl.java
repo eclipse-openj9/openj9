@@ -32,10 +32,8 @@ import com.sun.management.internal.GcInfoUtil;
 
 import java.lang.management.MemoryUsage;
 import java.lang.management.MemoryPoolMXBean;
-import java.lang.management.ManagementFactory;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.List;
 
 /**
  * Runtime type for {@link com.ibm.lang.management.GarbageCollectorMXBean}.
@@ -43,6 +41,8 @@ import java.util.List;
 public final class ExtendedGarbageCollectorMXBeanImpl
 		extends GarbageCollectorMXBeanImpl
 		implements GarbageCollectorMXBean {
+
+	private static String[] poolNames;
 
 	ExtendedGarbageCollectorMXBeanImpl(String domainName, String name, int id, ExtendedMemoryMXBeanImpl memBean) {
 		super(domainName, name, id, memBean);
@@ -81,12 +81,13 @@ public final class ExtendedGarbageCollectorMXBeanImpl
 							long[] initialSize, long[] preUsed, long[] preCommitted, long[] preMax,
 							long[] postUsed, long[] postCommitted, long[] postMax) {
 		/* retrieve the names of MemoryPools*/
-		List<MemoryPoolMXBean> memoryPoolList = ManagementFactory.getMemoryPoolMXBeans();
-		String[] poolNames = new String[memoryPoolList.size()];
-		int idx = 0;
-		for (MemoryPoolMXBean bean : memoryPoolList) {
-			poolNames[idx++] = bean.getName();
+		if (null == poolNames) {
+			poolNames = ExtendedMemoryMXBeanImpl.getInstance().getMemoryPoolMXBeans(false)
+							.stream()
+							.map(MemoryPoolMXBean::getName)
+							.toArray(String[]::new);
 		}
+
 		int poolNamesLength = poolNames.length;
 		/*[IF JAVA_SPEC_VERSION >= 19]
 		Map<String, MemoryUsage> usageBeforeGc = HashMap.newHashMap(poolNamesLength);
@@ -96,7 +97,7 @@ public final class ExtendedGarbageCollectorMXBeanImpl
 		Map<String, MemoryUsage> usageBeforeGc = new HashMap<>(poolNamesLength * 4 / 3);
 		Map<String, MemoryUsage> usageAfterGc = new HashMap<>(poolNamesLength * 4 / 3);
 		/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
-		for (int count = 0; count < poolNames.length; ++count) {
+		for (int count = 0; count < poolNamesLength; ++count) {
 			usageBeforeGc.put(poolNames[count], new MemoryUsage(initialSize[count], preUsed[count], preCommitted[count], preMax[count]));
 			usageAfterGc.put(poolNames[count], new MemoryUsage(initialSize[count], postUsed[count], postCommitted[count], postMax[count]));
 		}
