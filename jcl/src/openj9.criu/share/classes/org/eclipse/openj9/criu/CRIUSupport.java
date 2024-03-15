@@ -79,6 +79,8 @@ public final class CRIUSupport {
 	 * <p>
 	 * {@code fileLocks} = false
 	 * <p>
+	 * {@code ghostFileLimit} = 1 MB
+	 * <p>
 	 * {@code workDir} = imageDir, the directory where the images are to be created.
 	 *
 	 * @param imageDir the directory that will hold the dump files as a
@@ -303,6 +305,21 @@ public final class CRIUSupport {
 	}
 
 	/**
+	 * Set the size limit for ghost files when taking a checkpoint. File limit
+	 * can not be greater than 2^32 - 1 or negative.
+	 *
+	 * Default: 1MB set by CRIU
+	 *
+	 * @param limit the file limit size in bytes.
+	 * @return this
+	 * @throws UnsupportedOperationException if file limit is greater than 2^32 - 1 or negative.
+	 */
+	public CRIUSupport setGhostFileLimit(long limit) {
+		internalCRIUSupport = internalCRIUSupport.setGhostFileLimit(limit);
+		return this;
+	}
+
+	/**
 	 * Append new environment variables to the set returned by ProcessEnvironment.getenv(...) upon
 	 * restore. All pre-existing (environment variables from checkpoint run) env
 	 * vars are retained. All environment variables specified in the envFile are
@@ -519,9 +536,9 @@ public final class CRIUSupport {
 			} catch (openj9.internal.criu.JVMRestoreException jre) {
 				throw new JVMRestoreException(jre.getMessage(), 0, jre);
 			} catch (openj9.internal.criu.SystemCheckpointException sce) {
-				throw new JVMCheckpointException(sce.getMessage(), 0, sce);
+				throw new SystemCheckpointException(sce.getMessage(), 0, sce);
 			} catch (openj9.internal.criu.SystemRestoreException sre) {
-				throw new JVMRestoreException(sre.getMessage(), 0, sre);
+				throw new SystemRestoreException(sre.getMessage(), 0, sre);
 			}
 		} else {
 			throw new UnsupportedOperationException("CRIU support is not enabled"); //$NON-NLS-1$

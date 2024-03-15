@@ -26,15 +26,36 @@ package org.eclipse.openj9.criu;
  * An exception representing a failed system operation before checkpoint.
  */
 public final class SystemCheckpointException extends JVMCRIUException {
-    private static final long serialVersionUID = 1262214147293662586L;
 
-    /**
-     * Creates a SystemCheckpointException with the specified message and error code.
-     *
-     * @param message the message
-     * @param errorCode the error code
-     */
-    public SystemCheckpointException(String message, int errorCode) {
-        super(message, errorCode);
-    }
+	private static final long serialVersionUID = 5269852717246242036L;
+
+	/**
+	 * Creates a SystemCheckpointException with the specified message and a default error code.
+	 *
+	 * @param message   the message
+	 */
+	public SystemCheckpointException(String message) {
+		super(message, 0);
+	}
+
+	/**
+	 * Creates a SystemCheckpointException with the specified message and error code.
+	 *
+	 * @param message   the message
+	 * @param errorCode the error code
+	 */
+	public SystemCheckpointException(String message, int errorCode) {
+		super(message, errorCode);
+	}
+
+	/**
+	 * Creates a SystemCheckpointException with the specified message, error code and throwable that caused the exception.
+	 *
+	 * @param message   the message
+	 * @param errorCode the error code
+	 * @param causedBy  throwable that caused the exception
+	 */
+	public SystemCheckpointException(String message, int errorCode, Throwable causedBy) {
+		super(message, errorCode, causedBy);
+	}
 }
