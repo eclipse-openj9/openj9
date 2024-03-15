@@ -87,6 +87,7 @@ MM_RootScanner::scanModularityObjects(J9ClassLoader * classLoader)
 {
 	if (NULL != classLoader->moduleHashTable) {
 		J9HashTableState moduleWalkState;
+		J9JavaVM *javaVM = static_cast<J9JavaVM*>(_omrVM->_language_vm);
 		J9Module **modulePtr = (J9Module**)hashTableStartDo(classLoader->moduleHashTable, &moduleWalkState);
 		while (NULL != modulePtr) {
 			J9Module * const module = *modulePtr;
@@ -101,8 +102,8 @@ MM_RootScanner::scanModularityObjects(J9ClassLoader * classLoader)
 			modulePtr = (J9Module**)hashTableNextDo(&moduleWalkState);
 		}
 
-		if (classLoader == _javaVM->systemClassLoader) {
-			doSlot(&_javaVM->unamedModuleForSystemLoader->moduleObject);
+		if (classLoader == javaVM->systemClassLoader) {
+			doSlot(&javaVM->unamedModuleForSystemLoader->moduleObject);
 		}
 	}
 }
@@ -302,11 +303,11 @@ MM_RootScanner::scanClasses(MM_EnvironmentBase *env)
 {
 	reportScanningStarted(RootScannerEntity_Classes);
 
-	GC_SegmentIterator segmentIterator(_javaVM->classMemorySegments, MEMORY_TYPE_RAM_CLASS);
+	GC_SegmentIterator segmentIterator(static_cast<J9JavaVM *>(_omrVM->_language_vm)->classMemorySegments, MEMORY_TYPE_RAM_CLASS);
 
 	while (J9MemorySegment *segment = segmentIterator.nextSegment()) {
 		if (_singleThread || J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
-			GC_ClassHeapIterator classHeapIterator(_javaVM, segment);
+			GC_ClassHeapIterator classHeapIterator(static_cast<J9JavaVM *>(_omrVM->_language_vm), segment);
 			J9Class *clazz = NULL;
 			while (NULL != (clazz = classHeapIterator.nextClass())) {
 				doClass(clazz);
@@ -332,7 +333,7 @@ MM_RootScanner::scanVMClassSlots(MM_EnvironmentBase *env)
 	if (_singleThread || J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
 		reportScanningStarted(RootScannerEntity_VMClassSlots);
 
-		GC_VMClassSlotIterator classSlotIterator(_javaVM);
+		GC_VMClassSlotIterator classSlotIterator(static_cast<J9JavaVM *>(_omrVM->_language_vm));
 		J9Class *classPtr;
 
 		while (NULL != (classPtr = classSlotIterator.nextSlot())) {
@@ -395,13 +396,13 @@ MM_RootScanner::scanPermanentClasses(MM_EnvironmentBase *env)
 	reportScanningStarted(RootScannerEntity_PermanentClasses);
 
 	/* Do systemClassLoader */
-	scanClassloader(env, _javaVM->systemClassLoader);
+	scanClassloader(env, static_cast<J9JavaVM *>(_omrVM->_language_vm)->systemClassLoader);
 
 	/* Do applicationClassLoader */
-	scanClassloader(env, _javaVM->applicationClassLoader);
+	scanClassloader(env, static_cast<J9JavaVM *>(_omrVM->_language_vm)->applicationClassLoader);
 
 	/* Do extensionClassLoader */
-	scanClassloader(env, _javaVM->extensionClassLoader);
+	scanClassloader(env, static_cast<J9JavaVM *>(_omrVM->_language_vm)->extensionClassLoader);
 
 	condYield();
 
@@ -421,7 +422,7 @@ MM_RootScanner::scanClassloader(MM_EnvironmentBase *env, J9ClassLoader *classLoa
 		GC_ClassLoaderSegmentIterator segmentIterator(classLoader, MEMORY_TYPE_RAM_CLASS);
 		while (NULL != (segment = segmentIterator.nextSegment())) {
 			if (_singleThread || J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
-				GC_ClassHeapIterator classHeapIterator(_javaVM, segment);
+				GC_ClassHeapIterator classHeapIterator(static_cast<J9JavaVM*>(_omrVM->_language_vm), segment);
 				while (NULL != (clazz = classHeapIterator.nextClass())) {
 					doClass(clazz);
 					if (shouldYieldFromClassScan(100000)) {
@@ -462,7 +463,7 @@ MM_RootScanner::scanClassLoaders(MM_EnvironmentBase *env)
 
 		J9ClassLoader *classLoader;
 
-		GC_ClassLoaderIterator classLoaderIterator(_javaVM->classLoaderBlocks);
+		GC_ClassLoaderIterator classLoaderIterator(static_cast<J9JavaVM *>(_omrVM->_language_vm)->classLoaderBlocks);
 		while ((classLoader = classLoaderIterator.nextSlot()) != NULL) {
 			doClassLoader(classLoader);
 		}
@@ -499,7 +500,7 @@ MM_RootScanner::scanThreads(MM_EnvironmentBase *env)
 	 * list is also locked.
 	 */
 
-	GC_VMThreadListIterator vmThreadListIterator(_javaVM);
+	GC_VMThreadListIterator vmThreadListIterator(static_cast<J9JavaVM *>(_omrVM->_language_vm));
 	StackIteratorData localData;
 
 	localData.rootScanner = this;
@@ -508,7 +509,7 @@ MM_RootScanner::scanThreads(MM_EnvironmentBase *env)
 	while (J9VMThread *walkThread = vmThreadListIterator.nextVMThread()) {
 		if (_singleThread || J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
 			if (scanOneThread(env, walkThread, (void *) &localData)) {
-				vmThreadListIterator.reset(_javaVM->mainThread);
+				vmThreadListIterator.reset(static_cast<J9JavaVM *>(_omrVM->_language_vm)->mainThread);
 			}
 		}
 	}
@@ -620,7 +621,7 @@ MM_RootScanner::scanJNIGlobalReferences(MM_EnvironmentBase *env)
 	if (_singleThread || J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
 		reportScanningStarted(RootScannerEntity_JNIGlobalReferences);
 
-		GC_JNIGlobalReferenceIterator jniGlobalReferenceIterator(_javaVM->jniGlobalReferences);
+		GC_JNIGlobalReferenceIterator jniGlobalReferenceIterator(static_cast<J9JavaVM *>(_omrVM->_language_vm)->jniGlobalReferences);
 		J9Object **slot;
 
 		while ((slot = (J9Object **)jniGlobalReferenceIterator.nextSlot()) != NULL) {
@@ -796,7 +797,7 @@ void
 MM_RootScanner::scanMonitorLookupCaches(MM_EnvironmentBase *env)
 {
 	reportScanningStarted(RootScannerEntity_MonitorLookupCaches);
-	GC_VMThreadListIterator vmThreadListIterator(_javaVM);
+	GC_VMThreadListIterator vmThreadListIterator(static_cast<J9JavaVM *>(_omrVM->_language_vm));
 	while (J9VMThread *walkThread = vmThreadListIterator.nextVMThread()) {
 		if (_singleThread || J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
 			j9objectmonitor_t *objectMonitorLookupCache = walkThread->objectMonitorLookupCache;
@@ -818,7 +819,7 @@ MM_RootScanner::scanMonitorReferences(MM_EnvironmentBase *env)
 	reportScanningStarted(RootScannerEntity_MonitorReferences);
 
 	J9ObjectMonitor *objectMonitor = NULL;
-	J9MonitorTableListEntry *monitorTableList = _javaVM->monitorTableList;
+	J9MonitorTableListEntry *monitorTableList = static_cast<J9JavaVM *>(_omrVM->_language_vm)->monitorTableList;
 	while (NULL != monitorTableList) {
 		J9HashTable *table = monitorTableList->monitorTable;
 		if (NULL != table) {
@@ -844,7 +845,7 @@ MM_RootScanner::scanJNIWeakGlobalReferences(MM_EnvironmentBase *env)
 	if (_singleThread || J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
 		reportScanningStarted(RootScannerEntity_JNIWeakGlobalReferences);
 
-		GC_JNIWeakGlobalReferenceIterator jniWeakGlobalReferenceIterator(_javaVM->jniWeakGlobalReferences);
+		GC_JNIWeakGlobalReferenceIterator jniWeakGlobalReferenceIterator(static_cast<J9JavaVM*>(_omrVM->_language_vm)->jniWeakGlobalReferences);
 		J9Object **slot;
 
 		while ((slot = (J9Object **)jniWeakGlobalReferenceIterator.nextSlot()) != NULL) {
@@ -891,7 +892,7 @@ MM_RootScanner::scanJVMTIObjectTagTables(MM_EnvironmentBase *env)
 	if (_singleThread || J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
 		reportScanningStarted(RootScannerEntity_JVMTIObjectTagTables);
 
-		J9JVMTIData *jvmtiData = J9JVMTI_DATA_FROM_VM(_javaVM);
+		J9JVMTIData *jvmtiData = J9JVMTI_DATA_FROM_VM(static_cast<J9JavaVM *>(_omrVM->_language_vm));
 		J9JVMTIEnv *jvmtiEnv = NULL;
 		J9Object **slotPtr = NULL;
 		if (NULL != jvmtiData) {
@@ -1046,7 +1047,8 @@ MM_RootScanner::scanClearable(MM_EnvironmentBase *env)
 	scanOwnableSynchronizerObjects(env);
 	scanContinuationObjects(env);
 #if JAVA_SPEC_VERSION >= 19
-	J9JITConfig *jitConfig = _javaVM->jitConfig;
+	J9JavaVM *vm = (J9JavaVM *)env->getOmrVM()->_language_vm;
+	J9JITConfig *jitConfig = vm->jitConfig;
 	if ((NULL != jitConfig) && (NULL != jitConfig->methodsToDelete)) {
 		iterateAllContinuationObjects(env);
 	}

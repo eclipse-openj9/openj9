@@ -364,7 +364,7 @@ MM_MarkingSchemeRootClearer::iterateAllContinuationObjects(MM_EnvironmentBase *e
 void
 MM_MarkingSchemeRootClearer::doMonitorReference(J9ObjectMonitor *objectMonitor, GC_HashTableIterator *monitorReferenceIterator)
 {
-	J9ThreadAbstractMonitor *monitor = (J9ThreadAbstractMonitor*)objectMonitor->monitor;
+	J9ThreadAbstractMonitor * monitor = (J9ThreadAbstractMonitor*)objectMonitor->monitor;
 	_env->getGCEnvironment()->_markJavaStats._monitorReferenceCandidates += 1;
 
 	if (!_markingScheme->isMarked((omrobjectptr_t )monitor->userData)) {
@@ -372,15 +372,16 @@ MM_MarkingSchemeRootClearer::doMonitorReference(J9ObjectMonitor *objectMonitor, 
 		_env->getGCEnvironment()->_markJavaStats._monitorReferenceCleared += 1;
 		/* We must call objectMonitorDestroy (as opposed to omrthread_monitor_destroy) when the
 		 * monitor is not internal to the GC */
-		_javaVM->internalVMFunctions->objectMonitorDestroy(_javaVM, (J9VMThread *)_env->getLanguageVMThread(), (omrthread_monitor_t)monitor);
+		static_cast<J9JavaVM*>(_omrVM->_language_vm)->internalVMFunctions->objectMonitorDestroy(static_cast<J9JavaVM*>(_omrVM->_language_vm), (J9VMThread *)_env->getLanguageVMThread(), (omrthread_monitor_t)monitor);
 	}
 }
 
 MM_RootScanner::CompletePhaseCode
 MM_MarkingSchemeRootClearer::scanMonitorReferencesComplete(MM_EnvironmentBase *env)
 {
+	J9JavaVM *javaVM = (J9JavaVM *)env->getLanguageVM();
 	reportScanningStarted(RootScannerEntity_MonitorReferenceObjectsComplete);
-	_javaVM->internalVMFunctions->objectMonitorDestroyComplete(_javaVM, (J9VMThread *)env->getLanguageVMThread());
+	javaVM->internalVMFunctions->objectMonitorDestroyComplete(javaVM, (J9VMThread *)env->getLanguageVMThread());
 	reportScanningEnded(RootScannerEntity_MonitorReferenceObjectsComplete);
 	return complete_phase_OK;
 }

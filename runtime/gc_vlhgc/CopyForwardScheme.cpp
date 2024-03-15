@@ -3801,12 +3801,12 @@ private:
 	virtual void doSlot(J9Object **slotPtr) {
 		if (NULL != *slotPtr) {
 			/* we don't have the context of this slot so just relocate the object into the same node where we found it */
-			MM_AllocationContextTarok *reservingContext = _copyForwardScheme->getContextForHeapAddress(* slotPtr);
+			MM_AllocationContextTarok *reservingContext = _copyForwardScheme->getContextForHeapAddress(*slotPtr);
 			_copyForwardScheme->copyAndForward(MM_EnvironmentVLHGC::getEnvironment(_env), reservingContext, slotPtr);
 		}
 	}
 
-	virtual void doStackSlot(J9Object **slotPtr, void *walkState, const void *stackLocation) {
+	virtual void doStackSlot(J9Object **slotPtr, void *walkState, const void* stackLocation) {
 		if (_copyForwardScheme->isHeapObject(*slotPtr)) {
 			/* heap object - validate and mark */
 			Assert_MM_validStackSlot(MM_StackSlotValidator(MM_StackSlotValidator::COULD_BE_FORWARDED, *slotPtr, stackLocation, walkState).validate(_env));
@@ -3821,7 +3821,7 @@ private:
 	}
 
 	virtual void doVMThreadSlot(J9Object **slotPtr, GC_VMThreadIterator *vmThreadIterator) {
-		if (_copyForwardScheme->isHeapObject(* slotPtr)) {
+		if (_copyForwardScheme->isHeapObject(*slotPtr)) {
 			/* we know that threads are bound to nodes so relocalize this object into the node of the thread which directly references it */
 			J9VMThread *thread = vmThreadIterator->getVMThread();
 			MM_AllocationContextTarok *reservingContext = (MM_AllocationContextTarok *)MM_EnvironmentVLHGC::getEnvironment(thread)->getAllocationContext();
@@ -4015,7 +4015,7 @@ private:
 	}
 
 	virtual void doMonitorReference(J9ObjectMonitor *objectMonitor, GC_HashTableIterator *monitorReferenceIterator) {
-		J9ThreadAbstractMonitor *monitor = (J9ThreadAbstractMonitor*)objectMonitor->monitor;
+		J9ThreadAbstractMonitor * monitor = (J9ThreadAbstractMonitor*)objectMonitor->monitor;
 		MM_EnvironmentVLHGC::getEnvironment(_env)->_copyForwardStats._monitorReferenceCandidates += 1;
 		J9Object *objectPtr = (J9Object *)monitor->userData;
 		if (!_copyForwardScheme->isLiveObject(objectPtr)) {
@@ -4031,15 +4031,15 @@ private:
 				/* We must call objectMonitorDestroy (as opposed to omrthread_monitor_destroy) when the
 				 * monitor is not internal to the GC
 				 */
-				_javaVM->internalVMFunctions->objectMonitorDestroy(_javaVM, (J9VMThread *)_env->getLanguageVMThread(), (omrthread_monitor_t)monitor);
+				static_cast<J9JavaVM*>(_omrVM->_language_vm)->internalVMFunctions->objectMonitorDestroy(static_cast<J9JavaVM*>(_omrVM->_language_vm), (J9VMThread *)_env->getLanguageVMThread(), (omrthread_monitor_t)monitor);
 			}
 		}
 	}
 
 	virtual CompletePhaseCode scanMonitorReferencesComplete(MM_EnvironmentBase *envBase) {
-		MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(envBase);
+		MM_EnvironmentVLHGC* env = MM_EnvironmentVLHGC::getEnvironment(envBase);
 		reportScanningStarted(RootScannerEntity_MonitorReferenceObjectsComplete);
-		_javaVM->internalVMFunctions->objectMonitorDestroyComplete(_javaVM, (J9VMThread *)env->getLanguageVMThread());
+		((J9JavaVM *)env->getLanguageVM())->internalVMFunctions->objectMonitorDestroyComplete((J9JavaVM *)env->getLanguageVM(), (J9VMThread *)env->getLanguageVMThread());
 		reportScanningEnded(RootScannerEntity_MonitorReferenceObjectsComplete);
 		return complete_phase_OK;
 	}
@@ -4081,7 +4081,7 @@ private:
 			if (NULL == objectPtr) {
 				Assert_MM_mustBeClass(_extensions->objectModel.getPreservedClass(&forwardedHeader));
 				env->_copyForwardStats._doubleMappedArrayletsCleared += 1;
-				OMRPORT_ACCESS_FROM_OMRVM(_javaVM->omrVM);
+				OMRPORT_ACCESS_FROM_OMRVM(_omrVM);
 				omrvmem_release_double_mapped_region(identifier->address, identifier->size, identifier);
 			}
 		}

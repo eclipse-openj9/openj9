@@ -77,7 +77,7 @@ protected:
 	MM_EnvironmentBase *_env;
 	MM_GCExtensions *_extensions;
 	MM_CollectorLanguageInterfaceImpl *_clij;
-	J9JavaVM *_javaVM;
+	OMR_VM *_omrVM;
 
 	bool _stringTableAsRoot;  /**< Treat the string table as a hard root */
 	bool _jniWeakGlobalReferencesTableAsRoot;	/**< Treat JNI Weak References Table as a hard root */
@@ -198,7 +198,7 @@ protected:
 		_scanningEntity = scanningEntity;
 		
 		if (_extensions->rootScannerStatsEnabled) {
-			OMRPORT_ACCESS_FROM_OMRVM(_javaVM->omrVM);
+			OMRPORT_ACCESS_FROM_OMRVM(_omrVM);
 			_entityStartScanTime = omrtime_hires_clock();	
 			_entityIncrementStartTime = _entityStartScanTime;
 		}
@@ -231,7 +231,7 @@ protected:
 		Assert_MM_true(_scanningEntity == scannedEntity);
 		
 		if (_extensions->rootScannerStatsEnabled) {
-			OMRPORT_ACCESS_FROM_OMRVM(_javaVM->omrVM);
+ 			OMRPORT_ACCESS_FROM_OMRVM(_omrVM);
  			uint64_t entityEndScanTime = omrtime_hires_clock();
 			
 			_env->_rootScannerStats._statsUsed = true;
@@ -278,7 +278,7 @@ public:
 	reportScanningSuspended()
 	{
 		if (_extensions->rootScannerStatsEnabled) {
-			OMRPORT_ACCESS_FROM_OMRVM(_javaVM->omrVM);
+			OMRPORT_ACCESS_FROM_OMRVM(_omrVM);
 			_entityIncrementEndTime = omrtime_hires_clock();
 			
 			updateScanStats(_entityIncrementEndTime);
@@ -292,7 +292,7 @@ public:
 	reportScanningResumed()
 	{
 		if (_extensions->rootScannerStatsEnabled) {
-			OMRPORT_ACCESS_FROM_OMRVM(_javaVM->omrVM);
+			OMRPORT_ACCESS_FROM_OMRVM(_omrVM);
 			_entityIncrementStartTime = omrtime_hires_clock();
 			_entityIncrementEndTime = 0;	
 		}
@@ -304,7 +304,7 @@ public:
 		, _env(env)
 		, _extensions(MM_GCExtensions::getExtensions(env))
 		, _clij((MM_CollectorLanguageInterfaceImpl *)_extensions->collectorLanguageInterface)
-		, _javaVM((J9JavaVM *)env->getOmrVM()->_language_vm)
+		, _omrVM(env->getOmrVM())
 		, _stringTableAsRoot(true)
 		, _jniWeakGlobalReferencesTableAsRoot(false)
 		, _singleThread(singleThread)
@@ -328,7 +328,7 @@ public:
 	{
 		_typeId = __FUNCTION__;
 		
-		OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
+		OMRPORT_ACCESS_FROM_OMRVM(_omrVM);
 		_entityIncrementStartTime = omrtime_hires_clock();
 
 	}
