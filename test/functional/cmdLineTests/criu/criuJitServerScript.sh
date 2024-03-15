@@ -50,6 +50,7 @@ echo "export LD_BIND_NOT=on";
 export LD_BIND_NOT=on
 
 JITSERVER_PORT=$(random_port)
+HEALTH_PORT=$(random_port)
 JITSERVER_SSL="-XX:JITServerSSLRootCerts"
 if grep -q -- "$JITSERVER_SSL" <<< "$APP_ARGS"; then
     echo "Generate SSL certificates"
@@ -59,7 +60,7 @@ if grep -q -- "$JITSERVER_SSL" <<< "$APP_ARGS"; then
     fi
 fi
 
-JITSERVER_OPTIONS="-XX:JITServerPort=$JITSERVER_PORT $SSL_OPTS"
+JITSERVER_OPTIONS="-XX:JITServerPort=$JITSERVER_PORT -XX:JITServerHealthProbePort=$HEALTH_PORT $SSL_OPTS"
 
 echo "Starting $TEST_JDK_BIN/jitserver $JITSERVER_OPTIONS"
 $TEST_JDK_BIN/jitserver $JITSERVER_OPTIONS &
