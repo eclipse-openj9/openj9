@@ -146,6 +146,12 @@ public:
    // Helper routine to generate a unique ID for the client or server
    static uint64_t generateUID();
 
+   static J9Class *getBaseComponentClass(J9Class *ramClass, uint32_t &numDimensions);
+   static size_t getFullClassNameLength(const J9ROMClass *romClass, const J9ROMClass *baseComponent,
+                                        uint32_t numDimensions);
+   static void getFullClassName(uint8_t *result, size_t length, const J9ROMClass *romClass,
+                                const J9ROMClass *baseComponent, uint32_t numDimensions);
+
 private:
    static void getROMClassData(const ClientSessionData::ClassInfo &classInfo, ClassInfoDataType dataType, void *data);
 

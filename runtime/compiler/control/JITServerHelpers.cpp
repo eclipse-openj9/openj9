@@ -1461,3 +1461,59 @@ JITServerHelpers::generateUID()
       uid = dist(rng);
    return uid;
    }
+
+
+// Copy of TR_J9VM::getBaseComponentClass() for use in contexts without readily available front-end object
+J9Class *
+JITServerHelpers::getBaseComponentClass(J9Class *ramClass, uint32_t &numDimensions)
+   {
+   numDimensions = 0;
+   while (J9ROMCLASS_IS_ARRAY(ramClass->romClass))
+      {
+      auto componentClass = ((J9ArrayClass *)ramClass)->componentType;
+      if (J9ROMCLASS_IS_PRIMITIVE_TYPE(componentClass->romClass))
+         break;
+      ++numDimensions;
+      ramClass = componentClass;
+      }
+   return ramClass;
+   }
+
+size_t
+JITServerHelpers::getFullClassNameLength(const J9ROMClass *romClass, const J9ROMClass *baseComponent,
+                                         uint32_t numDimensions)
+   {
+   if (!numDimensions)
+      return J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(romClass));
+
+   TR_ASSERT(baseComponent, "Invalid arguments");
+   return J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(baseComponent)) + numDimensions +
+          (J9ROMCLASS_IS_ARRAY(baseComponent) ? 0 : 2);
+   }
+
+void
+JITServerHelpers::getFullClassName(uint8_t *name, size_t length, const J9ROMClass *romClass,
+                                   const J9ROMClass *baseComponent, uint32_t numDimensions)
+   {
+   TR_ASSERT(length == getFullClassNameLength(romClass, baseComponent, numDimensions), "Invalid length");
+
+   if (!numDimensions)
+      {
+      memcpy(name, J9UTF8_DATA(J9ROMCLASS_CLASSNAME(romClass)), length);
+      return;
+      }
+
+   TR_ASSERT(baseComponent, "Invalid arguments");
+   bool primitive = J9ROMCLASS_IS_ARRAY(baseComponent);
+   const J9UTF8 *baseName = J9ROMCLASS_CLASSNAME(baseComponent);
+   size_t baseNameLength = J9UTF8_LENGTH(baseName);
+
+   uint32_t i;
+   for (i = 0; i < numDimensions; ++i)
+      name[i] = '[';
+   if (!primitive)
+      name[i++] = 'L';
+   memcpy(name + i, J9UTF8_DATA(baseName), baseNameLength);
+   if (!primitive)
+      name[i + baseNameLength] = ';';
+   }

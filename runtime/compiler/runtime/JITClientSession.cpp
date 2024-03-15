@@ -834,49 +834,60 @@ ClientSessionData::getOrCreateAOTCache(JITServer::ServerStream *stream)
    }
 
 const AOTCacheClassRecord *
-ClientSessionData::getClassRecord(ClientSessionData::ClassInfo &classInfo, bool &missingLoaderInfo)
+ClientSessionData::getClassRecord(ClassInfo &classInfo, bool &missingLoaderInfo, J9Class *&uncachedBaseComponent)
 {
-   if (!classInfo._aotCacheClassRecord)
-      {
-      auto &name = classInfo._classNameIdentifyingLoader;
-      if (name.empty())
-         {
-         TR_ASSERT(TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET != classInfo._classChainOffsetIdentifyingLoader,
-                   "Valid class chain offset but missing class name identifying loader");
-         missingLoaderInfo = true;
-         return NULL;
-         }
+   TR_ASSERT(getROMMapMonitor()->owned_by_self(), "Must hold ROMMapMonitor");
 
-      auto classLoaderRecord = _aotCache->getClassLoaderRecord((const uint8_t *)name.data(), name.size());
-      if (!classLoaderRecord)
+   if (classInfo._aotCacheClassRecord)
+      return classInfo._aotCacheClassRecord;
+
+   const J9ROMClass *baseComponent = NULL;
+   if (classInfo._numDimensions)
+      {
+      auto it = getROMClassMap().find((J9Class *)classInfo._baseComponentClass);
+      if (it == getROMClassMap().end())
          {
+         uncachedBaseComponent = (J9Class *)classInfo._baseComponentClass;
          return NULL;
          }
-      classInfo._aotCacheClassRecord = _aotCache->getClassRecord(classLoaderRecord, classInfo._romClass);
-      if (classInfo._aotCacheClassRecord)
-         {
-         // The name string is no longer needed; free the memory used by it by setting it to an empty string
-         std::string().swap(classInfo._classNameIdentifyingLoader);
-         }
+      baseComponent = it->second._romClass;
       }
 
+   auto &name = classInfo._classNameIdentifyingLoader;
+   if (name.empty())
+      {
+      TR_ASSERT(TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET != classInfo._classChainOffsetIdentifyingLoader,
+                "Valid class chain offset but missing class name identifying loader");
+      missingLoaderInfo = true;
+      return NULL;
+      }
+
+   auto classLoaderRecord = _aotCache->getClassLoaderRecord((const uint8_t *)name.data(), name.size());
+   if (!classLoaderRecord)
+      return NULL; // Reached AOT cache size limit
+
+   classInfo._aotCacheClassRecord = _aotCache->getClassRecord(classLoaderRecord, classInfo._romClass,
+                                                              baseComponent, classInfo._numDimensions);
+   if (!classInfo._aotCacheClassRecord)
+      return NULL; // Reached AOT cache size limit
+
+   // The name string is no longer needed; free the memory used by it by setting it to an empty string
+   std::string().swap(classInfo._classNameIdentifyingLoader);
    return classInfo._aotCacheClassRecord;
 }
 
 const AOTCacheClassRecord *
-ClientSessionData::getClassRecord(J9Class *clazz, bool &missingLoaderInfo, bool &uncachedClass)
+ClientSessionData::getClassRecord(J9Class *clazz, bool &missingLoaderInfo,
+                                  bool &uncachedClass, J9Class *&uncachedBaseComponent)
    {
    TR_ASSERT(getROMMapMonitor()->owned_by_self(), "Must hold ROMMapMonitor");
 
-   auto it = getROMClassMap().find(clazz);
-   if (it == getROMClassMap().end())
-      {
-      uncachedClass = true;
-      return NULL;
-      }
+   auto it = getROMClassMap().find(ramClass);
+   if (it != getROMClassMap().end())
+      return getClassRecord(it->second, missingLoaderInfo, uncachedBaseComponent);
 
-   auto record = getClassRecord(it->second, missingLoaderInfo);
-   return record;
+   uncachedClass = true;
+   return NULL;
    }
 
 const AOTCacheClassRecord *
@@ -884,9 +895,35 @@ ClientSessionData::getClassRecord(J9Class *clazz, JITServer::ServerStream *strea
    {
    const AOTCacheClassRecord *record = NULL;
    bool uncachedClass = false;
+   J9Class *uncachedBaseComponent = NULL;
       {
       OMR::CriticalSection cs(getROMMapMonitor());
-      record = getClassRecord(clazz, missingLoaderInfo, uncachedClass);
+      record = getClassRecord(clazz, missingLoaderInfo, uncachedClass, uncachedBaseComponent);
+      }
+   if (record)
+      return record;
+
+   if (uncachedClass)
+      {
+      // Request and cache class info from the client
+      JITServerHelpers::ClassInfoTuple classInfoTuple;
+      auto romClass = JITServerHelpers::getRemoteROMClass(clazz, stream, _persistentMemory, classInfoTuple);
+      JITServerHelpers::cacheRemoteROMClassOrFreeIt(this, clazz, romClass, classInfoTuple);
+
+      OMR::CriticalSection cs(getROMMapMonitor());
+      record = getClassRecord(clazz, missingLoaderInfo, uncachedClass, uncachedBaseComponent);
+      TR_ASSERT(!uncachedClass, "Class %p must be already cached", clazz);
+      }
+
+   if (uncachedBaseComponent)
+      {
+      JITServerHelpers::ClassInfoTuple classInfoTuple;
+      auto romClass = JITServerHelpers::getRemoteROMClass(uncachedBaseComponent, stream, _persistentMemory, classInfoTuple);
+      JITServerHelpers::cacheRemoteROMClassOrFreeIt(this, uncachedBaseComponent, romClass, classInfoTuple);
+
+      OMR::CriticalSection cs(getROMMapMonitor());
+      record = getClassRecord(clazz, missingLoaderInfo, uncachedClass, uncachedBaseComponent);
+      TR_ASSERT(!uncachedClass && !uncachedBaseComponent, "Class %p and base component must be already cached", clazz);
       }
 
    if (missingLoaderInfo)
@@ -903,7 +940,7 @@ ClientSessionData::getClassRecord(J9Class *clazz, JITServer::ServerStream *strea
          TR_ASSERT(it != getROMClassMap().end(), "Class %p must be already cached", clazz);
          it->second._classChainOffsetIdentifyingLoader = offset;
          it->second._classNameIdentifyingLoader = name;
-         record = getClassRecord(it->second, missingLoaderInfo);
+         record = getClassRecord(it->second, missingLoaderInfo, uncachedBaseComponent);
          TR_ASSERT(!missingLoaderInfo, "Class %p cannot have missing loader info as we've just received it from the client", clazz);
          }
       else if (TR::Options::getVerboseOption(TR_VerboseJITServer))
@@ -913,17 +950,6 @@ ClientSessionData::getClassRecord(J9Class *clazz, JITServer::ServerStream *strea
             (unsigned long long)_clientUID, clazz
          );
          }
-      }
-   else if (uncachedClass)
-      {
-      // Request and cache class info from the client
-      JITServerHelpers::ClassInfoTuple classInfoTuple;
-      auto romClass = JITServerHelpers::getRemoteROMClass(clazz, stream, _persistentMemory, classInfoTuple);
-      JITServerHelpers::cacheRemoteROMClassOrFreeIt(this, clazz, romClass, classInfoTuple);
-
-      OMR::CriticalSection cs(getROMMapMonitor());
-      record = getClassRecord(clazz, missingLoaderInfo, uncachedClass);
-      TR_ASSERT(!uncachedClass, "Class %p cannot be uncached", clazz);
       }
 
    return record;
@@ -970,7 +996,8 @@ ClientSessionData::getClassChainRecord(J9Class *clazz, uintptr_t classChainOffse
    const AOTCacheClassRecord *classRecords[TR_J9SharedCache::maxClassChainLength] = {0};
    size_t uncachedIndexes[TR_J9SharedCache::maxClassChainLength] = {0};
    std::vector<J9Class *> uncachedRAMClasses;
-   uncachedRAMClasses.reserve(ramClassChain.size());
+   uncachedRAMClasses.reserve(ramClassChain.size() + 1);
+   J9Class *baseComponent = NULL;
    size_t missingLoaderRecordIndexes[TR_J9SharedCache::maxClassChainLength] = {0};
    size_t numMissingLoaderRecords = 0;
 
@@ -982,16 +1009,24 @@ ClientSessionData::getClassChainRecord(J9Class *clazz, uintptr_t classChainOffse
          {
          bool missingLoaderRecord = false;
          bool uncachedClass = false;
-         if (!(classRecords[i] = getClassRecord(ramClassChain[i], missingLoaderRecord, uncachedClass)))
+         J9Class *uncachedBaseComponent = NULL;
+         classRecords[i] = getClassRecord(ramClassChain[i], missingLoaderInfo, uncachedClass, uncachedBaseComponent);
+
+         if (!classRecords[i])
             {
-            if (missingLoaderRecord)
-               {
-               missingLoaderRecordIndexes[numMissingLoaderRecords++] = i;
-               }
-            else if (uncachedClass)
+            if (uncachedClass)
                {
                uncachedIndexes[uncachedRAMClasses.size()] = i;
                uncachedRAMClasses.push_back(ramClassChain[i]);
+               }
+            else if (uncachedBaseComponent)
+               {
+               TR_ASSERT_FATAL(i == 0, "Only root class can be an object array");
+               baseComponent = uncachedBaseComponent;
+               }
+            else if (missingLoaderRecord)
+               {
+               missingLoaderRecordIndexes[numMissingLoaderRecords++] = i;
                }
             else
                {
@@ -1000,6 +1035,13 @@ ClientSessionData::getClassChainRecord(J9Class *clazz, uintptr_t classChainOffse
                }
             }
          }
+      }
+
+   size_t numUncachedClasses = uncachedRAMClasses.size();
+   if (baseComponent)
+      {
+      uncachedRAMClasses.push_back(baseComponent);
+      baseComponent = NULL;
       }
 
    if (!uncachedRAMClasses.empty())
@@ -1012,14 +1054,23 @@ ClientSessionData::getClassChainRecord(J9Class *clazz, uintptr_t classChainOffse
 
       // Get class records for newly cached classes, remembering classes with missing class loader info
       OMR::CriticalSection cs(getROMMapMonitor());
-      for (size_t i = 0; i < uncachedRAMClasses.size(); ++i)
+      for (size_t i = 0; i < numUncachedClasses; ++i)
          {
          bool missingLoaderRecord = false;
          bool uncachedClass = false;
-         if (!(classRecords[uncachedIndexes[i]] = getClassRecord(uncachedRAMClasses[i], missingLoaderRecord, uncachedClass)))
+         J9Class *uncachedBaseComponent = NULL;
+         classRecords[uncachedIndexes[i]] = getClassRecord(uncachedRAMClasses[i], missingLoaderRecord,
+                                                           uncachedClass, uncachedBaseComponent);
+
+         if (!classRecords[uncachedIndexes[i]])
             {
             TR_ASSERT(!uncachedClass, "Class %p must be already cached", uncachedRAMClasses[i]);
-            if (missingLoaderRecord)
+            if (uncachedBaseComponent)
+               {
+               TR_ASSERT_FATAL(uncachedIndexes[i] == 0, "Only root class can be an object array");
+               baseComponent = uncachedBaseComponent;
+               }
+            else if (missingLoaderRecord)
                {
                missingLoaderRecordIndexes[numMissingLoaderRecords++] = uncachedIndexes[i];
                }
@@ -1038,6 +1089,14 @@ ClientSessionData::getClassChainRecord(J9Class *clazz, uintptr_t classChainOffse
       size_t idx = missingLoaderRecordIndexes[i];
       if (!(classRecords[idx] = getClassRecord(ramClassChain[idx], stream, missingLoaderInfo)))
          return NULL;
+      }
+
+   if (baseComponent)
+      {
+      bool missingLoaderInfo = false;
+      classRecords[0] = getClassRecord(ramClassChain[0], stream, missingLoaderInfo);
+      if (!classRecords[0])
+         return NULL; // Missing class loader info or reached AOT cache size limit
       }
 
    // Cache the new class chain record
