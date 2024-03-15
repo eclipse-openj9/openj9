@@ -522,6 +522,15 @@ final class Access implements JavaLangAccess {
 		return mod.implAddEnableNativeAccess();
 	}
 
+/*[IF (JAVA_SPEC_VERSION >= 23) & !INLINE-TYPES]*/
+	// This API should be enabled for INLINE-TYPES later.
+	// https://github.com/eclipse-openj9/openj9/issues/19144
+	@Override
+	public boolean addEnableNativeAccess(ModuleLayer moduleLayer, String moduleName) {
+		return moduleLayer.addEnableNativeAccess(moduleName);
+	}
+/*[ENDIF] (JAVA_SPEC_VERSION >= 23) & !INLINE-TYPES */
+
 	public long findNative(ClassLoader loader, String entryName) {
 		return ClassLoader.findNative(loader, entryName);
 	}

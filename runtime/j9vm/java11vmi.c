@@ -1688,12 +1688,14 @@ JVM_LookupLambdaProxyClassFromArchive(JNIEnv *env, jclass arg1, jstring arg2, jo
 	return NULL;
 }
 
+#if JAVA_SPEC_VERSION < 23
 JNIEXPORT jboolean JNICALL
 JVM_IsCDSDumpingEnabled(JNIEnv *env)
 {
 	/* OpenJ9 does not support -Xshare:dump, so we return false unconditionally. */
 	return JNI_FALSE;
 }
+#endif /* JAVA_SPEC_VERSION < 23 */
 #endif /* JAVA_SPEC_VERSION >= 15 */
 
 #if JAVA_SPEC_VERSION >= 16
@@ -1705,13 +1707,20 @@ JVM_GetRandomSeedForDumping()
 	return 0;
 }
 
+#if JAVA_SPEC_VERSION < 23
+JNIEXPORT jboolean JNICALL
+JVM_IsDumpingClassList(JNIEnv *env)
+{
+	return JNI_FALSE;
+}
+
 JNIEXPORT jboolean JNICALL
 JVM_IsSharingEnabled(JNIEnv *env)
 {
 	/* OpenJ9 does not support CDS, so we return false unconditionally. */
 	return JNI_FALSE;
 }
-
+#endif /* JAVA_SPEC_VERSION < 23 */
 #endif /* JAVA_SPEC_VERSION >= 16 */
 
 JNIEXPORT jboolean JNICALL
