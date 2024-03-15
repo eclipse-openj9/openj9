@@ -48,7 +48,7 @@
 #include "ScavengerRootClearer.hpp"
 
 void
-MM_ScavengerRootClearer::processReferenceList(MM_EnvironmentStandard *env, MM_HeapRegionDescriptorStandard* region, omrobjectptr_t headOfList, MM_ReferenceStats *referenceStats)
+MM_ScavengerRootClearer::processReferenceList(MM_EnvironmentStandard *env, MM_HeapRegionDescriptorStandard *region, omrobjectptr_t headOfList, MM_ReferenceStats *referenceStats)
 {
 	/* no list can possibly contain more reference objects than there are bytes in a region. */
 	const uintptr_t maxObjects = region->getSize();

@@ -10066,8 +10066,6 @@ genHeapAlloc(TR::Node * node, TR::Instruction *& iCursor, bool isVariableLen, TR
       static char * disableInitClear = feGetEnv("TR_disableInitClear");
       static char * disableBatchClear = feGetEnv("TR_DisableBatchClear");
 
-      static char * useDualTLH = feGetEnv("TR_USEDUALTLH");
-
       TR::Register * addressReg = NULL, * lengthReg = NULL, * shiftReg = NULL;
       if (disableBatchClear && disableInitClear==NULL)
          {
@@ -10088,7 +10086,7 @@ genHeapAlloc(TR::Node * node, TR::Instruction *& iCursor, bool isVariableLen, TR
          {
          if (disableBatchClear && disableInitClear==NULL)
             iCursor = generateRRInstruction(cg, TR::InstOpCode::LGR, node, lengthReg, sizeReg, iCursor);
-         if (!comp->getOption(TR_DisableDualTLH) && useDualTLH && node->canSkipZeroInitialization())
+         if (!comp->getOption(TR_DisableDualTLH) && node->canSkipZeroInitialization())
             {
             iCursor = generateRXInstruction(cg, TR::InstOpCode::getAddOpCode(), node, sizeReg,
                   generateS390MemoryReference(metaReg, offsetof(J9VMThread, nonZeroHeapAlloc), cg), iCursor);
@@ -10109,7 +10107,7 @@ genHeapAlloc(TR::Node * node, TR::Instruction *& iCursor, bool isVariableLen, TR
          if (disableBatchClear && disableInitClear==NULL)
             iCursor = generateRRInstruction(cg, TR::InstOpCode::LGR, node, lengthReg, sizeReg, iCursor);
 
-         if (!comp->getOption(TR_DisableDualTLH) && useDualTLH && node->canSkipZeroInitialization())
+         if (!comp->getOption(TR_DisableDualTLH) && node->canSkipZeroInitialization())
             {
             iCursor = generateRXInstruction(cg, TR::InstOpCode::getAddOpCode(), node, sizeReg,
                   generateS390MemoryReference(metaReg, offsetof(J9VMThread, nonZeroHeapAlloc), cg), iCursor);
@@ -10135,9 +10133,9 @@ genHeapAlloc(TR::Node * node, TR::Instruction *& iCursor, bool isVariableLen, TR
             }
          }
 
-      if (!comp->getOption(TR_DisableDualTLH) && useDualTLH && node->canSkipZeroInitialization())
+      if (!comp->getOption(TR_DisableDualTLH) && node->canSkipZeroInitialization())
          {
-               iCursor = generateRXInstruction(cg, TR::InstOpCode::getCmpLogicalOpCode(), node, sizeReg,
+         iCursor = generateRXInstruction(cg, TR::InstOpCode::getCmpLogicalOpCode(), node, sizeReg,
                             generateS390MemoryReference(metaReg, offsetof(J9VMThread, nonZeroHeapTop), cg), iCursor);
 
             // Moving the BRC before load so that the return object can be dead right after BRASL when heap alloc OOL opt is enabled
@@ -10150,7 +10148,6 @@ genHeapAlloc(TR::Node * node, TR::Instruction *& iCursor, bool isVariableLen, TR
             {
             secondBRCToOOL = iCursor;
             }
-
 
          iCursor = generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, resReg,
                generateS390MemoryReference(metaReg, offsetof(J9VMThread, nonZeroHeapAlloc), cg), iCursor);
@@ -10171,13 +10168,12 @@ genHeapAlloc(TR::Node * node, TR::Instruction *& iCursor, bool isVariableLen, TR
             secondBRCToOOL = iCursor;
             }
 
-
          iCursor = generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, resReg,
                                    generateS390MemoryReference(metaReg, offsetof(J9VMThread, heapAlloc), cg), iCursor);
          }
 
 
-      if (!comp->getOption(TR_DisableDualTLH) && useDualTLH && node->canSkipZeroInitialization())
+      if (!comp->getOption(TR_DisableDualTLH) && node->canSkipZeroInitialization())
          iCursor = generateRXInstruction(cg, TR::InstOpCode::getStoreOpCode(), node, sizeReg,
                       generateS390MemoryReference(metaReg, offsetof(J9VMThread, nonZeroHeapAlloc), cg), iCursor);
       else
@@ -10365,7 +10361,7 @@ genInitObjectHeader(TR::Node * node, TR::Instruction *& iCursor, TR_OpaqueClassB
       else
          {
          // If the object flags cannot be determined at compile time, we add a load for it.
-         if(!comp->getOption(TR_DisableDualTLH) && useDualTLH && node->canSkipZeroInitialization())
+         if(!comp->getOption(TR_DisableDualTLH) && node->canSkipZeroInitialization())
             iCursor = generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, temp1Reg,
                   generateS390MemoryReference(metaReg, offsetof(J9VMThread, nonZeroAllocateThreadLocalHeap.objectFlags), cg), iCursor);
          else
@@ -10470,9 +10466,9 @@ genInitArrayHeader(TR::Node * node, TR::Instruction *& iCursor, bool isVariableL
                 generateS390MemoryReference(resReg, fej9->getOffsetOfContiguousArraySizeField(), cg), iCursor);
 
    static char * allocZeroArrayWithVM = feGetEnv("TR_VMALLOCZEROARRAY");
-   static char * useDualTLH = feGetEnv("TR_USEDUALTLH");
+
    //write 0
-   if(!comp->getOption(TR_DisableDualTLH) && useDualTLH && node->canSkipZeroInitialization() && allocZeroArrayWithVM == NULL)
+   if(!comp->getOption(TR_DisableDualTLH) && node->canSkipZeroInitialization() && allocZeroArrayWithVM == NULL)
       iCursor = generateRXInstruction(cg, TR::InstOpCode::ST, node, eNumReg,
                       generateS390MemoryReference(resReg, fej9->getOffsetOfDiscontiguousArraySizeField(), cg), iCursor);
    }
@@ -10741,10 +10737,8 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
                }
 
             static char * allocZeroArrayWithVM = feGetEnv("TR_VMALLOCZEROARRAY");
-            // DualTLH: Remove when performance confirmed
-            static char * useDualTLH = feGetEnv("TR_USEDUALTLH");
 
-            if (comp->getOption(TR_DisableDualTLH) && useDualTLH || allocZeroArrayWithVM == NULL)
+            if (comp->getOption(TR_DisableDualTLH) || allocZeroArrayWithVM == NULL)
                {
                iCursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, startOOLLabel, iCursor);
                TR_Debug * debugObj = cg->getDebug();
@@ -10822,12 +10816,11 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
       TR_ASSERT(current != NULL, "Could not get current instruction");
 
-      static char * useDualTLH = feGetEnv("TR_USEDUALTLH");
       //Here we set up backout paths if we overflow nonZeroTLH in genHeapAlloc.
       //If we overflow the nonZeroTLH, set the destination to the right VM runtime helper (eg jitNewObjectNoZeroInit, etc...)
       //The zeroed-TLH versions have their correct destinations already setup in TR_ByteCodeIlGenerator::genNew, TR_ByteCodeIlGenerator::genNewArray, TR_ByteCodeIlGenerator::genANewArray
       //To retrieve the destination node->getSymbolReference() is used below after genHeapAlloc.
-      if(!comp->getOption(TR_DisableDualTLH) && useDualTLH && node->canSkipZeroInitialization())
+      if(!comp->getOption(TR_DisableDualTLH) && node->canSkipZeroInitialization())
          {
          // For value types, the backout path should call jitNewValue helper call which is set up before code gen
          if ((node->getOpCodeValue() == TR::New)
