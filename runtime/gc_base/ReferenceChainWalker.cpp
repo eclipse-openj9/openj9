@@ -421,7 +421,7 @@ MM_ReferenceChainWalker::scanContinuationObject(J9Object *objectPtr)
 void
 MM_ReferenceChainWalker::scanMixedObject(J9Object *objectPtr)
 {
-	GC_MixedObjectDeclarationOrderIterator objectIterator(_javaVM, objectPtr, _shouldPreindexInterfaceFields);
+	GC_MixedObjectDeclarationOrderIterator objectIterator(static_cast<J9JavaVM*>(_omrVM->_language_vm), objectPtr, _shouldPreindexInterfaceFields);
 
 	while (GC_SlotObject *slotObject = objectIterator.nextSlot()) {
 		doFieldSlot(slotObject, J9GC_REFERENCE_TYPE_FIELD, objectIterator.getIndex(), objectPtr);
@@ -434,7 +434,7 @@ MM_ReferenceChainWalker::scanMixedObject(J9Object *objectPtr)
 void
 MM_ReferenceChainWalker::scanPointerArrayObject(J9IndexableObject *objectPtr)
 {
-	GC_PointerArrayIterator pointerArrayIterator(_javaVM, (J9Object *)objectPtr);
+	GC_PointerArrayIterator pointerArrayIterator(static_cast<J9JavaVM*>(_omrVM->_language_vm), (J9Object *)objectPtr);
 
 	while (GC_SlotObject *slotObject = pointerArrayIterator.nextSlot()) {
 		doFieldSlot(slotObject, J9GC_REFERENCE_TYPE_ARRAY, pointerArrayIterator.getIndex(), (J9Object *)objectPtr);
@@ -447,7 +447,7 @@ MM_ReferenceChainWalker::scanPointerArrayObject(J9IndexableObject *objectPtr)
 void
 MM_ReferenceChainWalker::scanReferenceMixedObject(J9Object *objectPtr)
 {
-	GC_MixedObjectDeclarationOrderIterator objectIterator(_javaVM, objectPtr, _shouldPreindexInterfaceFields);
+	GC_MixedObjectDeclarationOrderIterator objectIterator(static_cast<J9JavaVM*>(_omrVM->_language_vm), objectPtr, _shouldPreindexInterfaceFields);
 
 	while (GC_SlotObject *slotObject = objectIterator.nextSlot()) {
 		doFieldSlot(slotObject, J9GC_REFERENCE_TYPE_WEAK_REFERENCE, objectIterator.getIndex(), objectPtr);
@@ -462,7 +462,7 @@ MM_ReferenceChainWalker::scanClass(J9Class *clazz)
 {
 	J9Object* referrer = J9VM_J9CLASS_TO_HEAPCLASS(clazz);
 
-	GC_ClassIteratorDeclarationOrder classIterator(_javaVM, clazz, _shouldPreindexInterfaceFields);
+	GC_ClassIteratorDeclarationOrder classIterator(static_cast<J9JavaVM*>(_omrVM->_language_vm), clazz, _shouldPreindexInterfaceFields);
 	while (volatile j9object_t *slot = classIterator.nextSlot()) {
 		IDATA refType = classIterator.getSlotReferenceType();
 		IDATA index = classIterator.getIndex();
@@ -471,7 +471,7 @@ MM_ReferenceChainWalker::scanClass(J9Class *clazz)
 		doSlot((j9object_t*)slot, refType, index, referrer);
 	}
 
-	GC_ClassIteratorClassSlots classIteratorClassSlots(_javaVM, clazz);
+	GC_ClassIteratorClassSlots classIteratorClassSlots(static_cast<J9JavaVM*>(_omrVM->_language_vm), clazz);
 	while (J9Class *classPtr = classIteratorClassSlots.nextSlot()) {
 		switch (classIteratorClassSlots.getState()) {
 		case classiteratorclassslots_state_constant_pool:

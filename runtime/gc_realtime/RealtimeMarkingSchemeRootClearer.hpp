@@ -63,7 +63,7 @@ public:
 	 * This should not be called
 	 */
 	virtual void
-	doSlot(J9Object **slot)
+	doSlot(J9Object** slot)
 	{
 		Assert_MM_unreachable();
 	}
@@ -83,12 +83,12 @@ public:
 	virtual void
 	doMonitorReference(J9ObjectMonitor *objectMonitor, GC_HashTableIterator *monitorReferenceIterator)
 	{
-		J9ThreadAbstractMonitor *monitor = (J9ThreadAbstractMonitor*)objectMonitor->monitor;
+		J9ThreadAbstractMonitor * monitor = (J9ThreadAbstractMonitor*)objectMonitor->monitor;
 		if (!_markingScheme->isMarked((J9Object *)monitor->userData)) {
 			monitorReferenceIterator->removeSlot();
 			/* We must call objectMonitorDestroy (as opposed to omrthread_monitor_destroy) when the
 			 * monitor is not internal to the GC */
-			_javaVM->internalVMFunctions->objectMonitorDestroy(_javaVM, (J9VMThread *)_env->getLanguageVMThread(), (omrthread_monitor_t)monitor);
+			static_cast<J9JavaVM*>(_omrVM->_language_vm)->internalVMFunctions->objectMonitorDestroy(static_cast<J9JavaVM*>(_omrVM->_language_vm), (J9VMThread *)_env->getLanguageVMThread(), (omrthread_monitor_t)monitor);
 		}
 	}
 	
@@ -106,13 +106,13 @@ public:
 			reportScanningStarted(RootScannerEntity_MonitorReferences);
 		
 			J9ObjectMonitor *objectMonitor = NULL;
-			J9MonitorTableListEntry *monitorTableList = _javaVM->monitorTableList;
+			J9MonitorTableListEntry *monitorTableList = static_cast<J9JavaVM*>(_omrVM->_language_vm)->monitorTableList;
 			while (NULL != monitorTableList) {
 				J9HashTable *table = monitorTableList->monitorTable;
 				if (NULL != table) {
 					GC_HashTableIterator iterator(table);
 					iterator.disableTableGrowth();
-					while (NULL != (objectMonitor = (J9ObjectMonitor *)iterator.nextSlot())) {
+					while (NULL != (objectMonitor = (J9ObjectMonitor*)iterator.nextSlot())) {
 						doMonitorReference(objectMonitor, &iterator);
 						if (shouldYieldFromMonitorScan()) {
 							yield();
@@ -130,7 +130,7 @@ public:
 	virtual CompletePhaseCode scanMonitorReferencesComplete(MM_EnvironmentBase *envBase) {
 		MM_EnvironmentRealtime *env = MM_EnvironmentRealtime::getEnvironment(envBase);
 		reportScanningStarted(RootScannerEntity_MonitorReferenceObjectsComplete);
-		_javaVM->internalVMFunctions->objectMonitorDestroyComplete(_javaVM, (J9VMThread *)env->getLanguageVMThread());
+		((J9JavaVM *)env->getLanguageVM())->internalVMFunctions->objectMonitorDestroyComplete((J9JavaVM *)env->getLanguageVM(), (J9VMThread *)env->getLanguageVMThread());
 		reportScanningEnded(RootScannerEntity_MonitorReferenceObjectsComplete);
 		return complete_phase_OK;
 	}
