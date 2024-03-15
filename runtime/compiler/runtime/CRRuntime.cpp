@@ -87,7 +87,8 @@ TR::CRRuntime::CRRuntime(J9JITConfig *jitConfig, TR::CompilationInfo *compInfo) 
    _checkpointStatus(TR_CheckpointStatus::NO_CHECKPOINT_IN_PROGRESS),
    _failedComps(),
    _forcedRecomps(),
-   _impMethodForCR()
+   _impMethodForCR(),
+   _proactiveCompEnv()
    {
    // TR::CompilationInfo is initialized in the JIT_INITIALIZED bootstrap
    // stage, whereas J9_EXTENDED_RUNTIME_METHOD_TRACE_ENABLED is set in the
@@ -310,6 +311,49 @@ TR::CRRuntime::triggerRecompilationForPreCheckpointGeneratedFSDBodies(J9VMThread
       }
    }
 
+void
+TR::CRRuntime::setupEnvForProactiveCompilation(J9JavaVM *javaVM, J9VMThread *vmThread, TR_J9VMBase *fej9)
+   {
+   /* Proactive compilation should not be FSD compiles */
+   if (javaVM->internalVMFunctions->isDebugOnRestoreEnabled(vmThread))
+      {
+      TR::Options::getCmdLineOptions()->setFSDOptionsForAll(false);
+      TR::Options::getAOTCmdLineOptions()->setFSDOptionsForAll(false);
+#if defined(J9VM_OPT_JITSERVER)
+      _proactiveCompEnv._canDoRemoteComp = _compInfo->getCRRuntime()->canPerformRemoteCompilationInCRIUMode();
+      _proactiveCompEnv._clientUID = _compInfo->getPersistentInfo()->getClientUID();
+      _proactiveCompEnv._serverUID = _compInfo->getPersistentInfo()->getServerUID();
+      _proactiveCompEnv._remoteCompMode = J9::PersistentInfo::_remoteCompilationMode;
+
+      setCanPerformRemoteCompilationInCRIUMode(false);
+      getCompInfo()->getPersistentInfo()->setClientUID(0);
+      getCompInfo()->getPersistentInfo()->setServerUID(0);
+      fej9->getJ9JITConfig()->clientUID = 0;
+      fej9->getJ9JITConfig()->serverUID = 0;
+      J9::PersistentInfo::_remoteCompilationMode = JITServer::NONE;
+#endif // if defined(J9VM_OPT_JITSERVER)
+      }
+   }
+
+void
+TR::CRRuntime::teardownEnvForProactiveCompilation(J9JavaVM *javaVM, J9VMThread *vmThread, TR_J9VMBase *fej9)
+   {
+   /* Proactive compilation should not be FSD compiles */
+   if (javaVM->internalVMFunctions->isDebugOnRestoreEnabled(vmThread))
+      {
+      TR::Options::getCmdLineOptions()->setFSDOptionsForAll(true);
+      TR::Options::getAOTCmdLineOptions()->setFSDOptionsForAll(true);
+#if defined(J9VM_OPT_JITSERVER)
+      setCanPerformRemoteCompilationInCRIUMode(_proactiveCompEnv._canDoRemoteComp);
+      getCompInfo()->getPersistentInfo()->setClientUID(_proactiveCompEnv._clientUID);
+      getCompInfo()->getPersistentInfo()->setServerUID(_proactiveCompEnv._serverUID);
+      fej9->getJ9JITConfig()->clientUID = _proactiveCompEnv._clientUID;
+      fej9->getJ9JITConfig()->serverUID = _proactiveCompEnv._serverUID;
+      J9::PersistentInfo::_remoteCompilationMode = _proactiveCompEnv._remoteCompMode;
+#endif // if defined(J9VM_OPT_JITSERVER)
+      }
+   }
+
 /* IMPORTANT: There should be no return, or C++ exception thrown, after
  *            releasing the Comp Monitor below until it is re-acquired.
  *            The Comp Monitor may be acquired in an OMR::CriticalSection
@@ -344,32 +388,7 @@ bool TR::CRRuntime::compileMethodsForCheckpoint(J9VMThread *vmThread)
    /* Indicate to compilation threads that they should compile methods for checkpoint/restore */
    setCompileMethodsForCheckpoint();
 
-   /* Queue compilation of interpreted methods */
-   try
-      {
-      TR_J9VMBase *fej9 = TR_J9VMBase::get(getJITConfig(), vmThread);
-
-      TR::RawAllocator rawAllocator(getJITConfig()->javaVM);
-      J9::SegmentAllocator segmentAllocator(MEMORY_TYPE_JIT_SCRATCH_SPACE | MEMORY_TYPE_VIRTUAL, *getJITConfig()->javaVM);
-      J9::SystemSegmentProvider regionSegmentProvider(
-         1 << 20,
-         1 << 20,
-         TR::Options::getScratchSpaceLimit(),
-         segmentAllocator,
-         rawAllocator
-         );
-      TR::Region compForCheckpointRegion(regionSegmentProvider, rawAllocator);
-
-      TR::CompileBeforeCheckpoint compileBeforeCheckpoint(compForCheckpointRegion, vmThread, fej9, getCompInfo());
-      compileBeforeCheckpoint.compileMethodsBeforeCheckpoint();
-      }
-   catch (const std::exception &e)
-      {
-      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestore))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Failed to collect methods for compilation before checkpoint");
-      }
-
-   /* Determine whether to wait on the CR Monitor. */
+   /* Wait until existing compilations are done before modifying the env */
    while (getCompInfo()->getMethodQueueSize() && !shouldCheckpointBeInterrupted())
       {
       releaseCompMonitorUntilNotifiedOnCRMonitor();
@@ -381,6 +400,50 @@ bool TR::CRRuntime::compileMethodsForCheckpoint(J9VMThread *vmThread)
       if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestore))
          TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Aborting; checkpoint is interrupted");
       return false;
+      }
+
+      {
+      J9JavaVM *javaVM = getJITConfig()->javaVM;
+      TR_J9VMBase *fej9 = TR_J9VMBase::get(getJITConfig(), vmThread);
+
+      SetupEnvForProactiveComp setupProactiveCompEnv(this, javaVM, vmThread, fej9);
+
+      /* Queue compilation of interpreted methods */
+      try
+         {
+         TR::RawAllocator rawAllocator(javaVM);
+         J9::SegmentAllocator segmentAllocator(MEMORY_TYPE_JIT_SCRATCH_SPACE | MEMORY_TYPE_VIRTUAL, *javaVM);
+         J9::SystemSegmentProvider regionSegmentProvider(
+            1 << 20,
+            1 << 20,
+            TR::Options::getScratchSpaceLimit(),
+            segmentAllocator,
+            rawAllocator
+            );
+         TR::Region compForCheckpointRegion(regionSegmentProvider, rawAllocator);
+
+         TR::CompileBeforeCheckpoint compileBeforeCheckpoint(compForCheckpointRegion, vmThread, fej9, getCompInfo());
+         compileBeforeCheckpoint.compileMethodsBeforeCheckpoint();
+         }
+      catch (const std::exception &e)
+         {
+         if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestore))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Failed to collect methods for compilation before checkpoint");
+         }
+
+      /* Determine whether to wait on the CR Monitor. */
+      while (getCompInfo()->getMethodQueueSize() && !shouldCheckpointBeInterrupted())
+         {
+         releaseCompMonitorUntilNotifiedOnCRMonitor();
+         }
+
+      /* Abort if checkpoint should be interrupted. */
+      if (shouldCheckpointBeInterrupted())
+         {
+         if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestore))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Aborting; checkpoint is interrupted");
+         return false;
+         }
       }
 
    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestore))

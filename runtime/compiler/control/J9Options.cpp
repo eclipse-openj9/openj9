@@ -3735,31 +3735,31 @@ J9::Options::closeLogFileForClientOptions()
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 void
-J9::Options::resetFSDOptions()
+J9::Options::setFSDOptions(bool flag)
    {
    // TODO: Need to handle if these options were set/unset as part of
    // the post restore options processing.
 
-   setOption(TR_EnableHCR);
+   self()->setOption(TR_EnableHCR, !flag);
 
-   setOption(TR_FullSpeedDebug, false);
-   setOption(TR_DisableDirectToJNI, false);
+   self()->setOption(TR_FullSpeedDebug, flag);
+   self()->setOption(TR_DisableDirectToJNI, flag);
 
-   setReportByteCodeInfoAtCatchBlock(false);
-   setOption(TR_DisableProfiling, false);
-   setOption(TR_DisableNewInstanceImplOpt, false);
-   setDisabled(OMR::redundantGotoElimination, false);
-   setDisabled(OMR::loopReplicator, false);
-   setOption(TR_DisableMethodHandleThunks, false);
+   self()->setReportByteCodeInfoAtCatchBlock(flag);
+   self()->setOption(TR_DisableProfiling, flag);
+   self()->setOption(TR_DisableNewInstanceImplOpt, flag);
+   self()->setDisabled(OMR::redundantGotoElimination, flag);
+   self()->setDisabled(OMR::loopReplicator, flag);
+   self()->setOption(TR_DisableMethodHandleThunks, flag);
    }
 
 void
-J9::Options::resetFSDOptionsForAll()
+J9::Options::setFSDOptionsForAll(bool flag)
    {
-   resetFSDOptions();
+   setFSDOptions(flag);
    for (auto optionSet = _optionSets; optionSet; optionSet = optionSet->getNext())
       {
-      optionSet->getOptions()->resetFSDOptions();
+      optionSet->getOptions()->setFSDOptions(flag);
       }
    }
 
@@ -3775,8 +3775,8 @@ J9::Options::resetFSD(J9JavaVM *vm, J9VMThread *vmThread, bool &doAOT)
        && !vm->internalVMFunctions->isCheckpointAllowed(vmThread)
        && vm->internalVMFunctions->isDebugOnRestoreEnabled(vmThread))
       {
-      getCmdLineOptions()->resetFSDOptionsForAll();
-      getAOTCmdLineOptions()->resetFSDOptionsForAll();
+      getCmdLineOptions()->setFSDOptionsForAll(false);
+      getAOTCmdLineOptions()->setFSDOptionsForAll(false);
       }
 
    return fsdStatusJIT;

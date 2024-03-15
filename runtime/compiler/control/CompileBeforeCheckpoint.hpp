@@ -27,11 +27,13 @@
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 
+struct J9JavaVM;
+struct J9VMThread;
+struct J9Method;
+
 namespace TR { class Region; }
 namespace TR { class CompilationInfo; }
 class TR_J9VMBase;
-struct J9VMThread;
-struct J9Method;
 
 namespace TR
 {

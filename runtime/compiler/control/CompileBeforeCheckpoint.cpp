@@ -134,26 +134,6 @@ TR::CompileBeforeCheckpoint::queueMethodsForCompilationBeforeCheckpoint()
       }
    }
 
-static void resetFSD(TR::Options *options)
-   {
-   options->setOption(TR_EnableHCR);
-
-   options->setOption(TR_FullSpeedDebug, false);
-   options->setOption(TR_DisableDirectToJNI, false);
-
-   options->setReportByteCodeInfoAtCatchBlock(false);
-   options->setOption(TR_DisableGuardedCountingRecompilations, false);
-
-   options->setOption(TR_DisableProfiling, false);
-
-   options->setOption(TR_DisableNewInstanceImplOpt, false);
-
-   options->setDisabled(OMR::redundantGotoElimination, false);
-   options->setDisabled(OMR::loopReplicator, false);
-
-   options->setOption(TR_DisableMethodHandleThunks, false);
-   }
-
 void
 TR::CompileBeforeCheckpoint::compileMethodsBeforeCheckpoint()
    {
@@ -162,19 +142,6 @@ TR::CompileBeforeCheckpoint::compileMethodsBeforeCheckpoint()
    /* If running portable CRIU, don't bother compiling proactively */
    if (!javaVM->internalVMFunctions->isNonPortableRestoreMode(_vmThread))
       return;
-
-   /* Proactive compilation should not be FSD compiles */
-   if (javaVM->internalVMFunctions->isDebugOnRestoreEnabled(_vmThread))
-      {
-      resetFSD(TR::Options::getCmdLineOptions());
-      resetFSD(TR::Options::getAOTCmdLineOptions());
-      _compInfo->getCRRuntime()->setCanPerformRemoteCompilationInCRIUMode(false);
-      _compInfo->getPersistentInfo()->setClientUID(0);
-      _compInfo->getPersistentInfo()->setServerUID(0);
-      _fej9->getJ9JITConfig()->clientUID = 0;
-      _fej9->getJ9JITConfig()->serverUID = 0;
-      J9::PersistentInfo::_remoteCompilationMode = JITServer::NONE;
-      }
 
    /* Release the Comp Monitor, since compileMethod should be called without it
     * in hand. If running in sync mode, having the monitor in hand before
@@ -190,8 +157,6 @@ TR::CompileBeforeCheckpoint::compileMethodsBeforeCheckpoint()
 
    /* Reacquire the Comp Monitor */
    _compInfo->acquireCompMonitor(_vmThread);
-
-   /* TODO un-reset FSD in case the JVM runs in debug mode post restore */
    }
 
 #endif
