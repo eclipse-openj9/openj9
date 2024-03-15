@@ -233,6 +233,9 @@ void sidecarExit(J9VMThread* shutdownThread);
 static jint runLoadStage (J9JavaVM *vm, IDATA flags);
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 static void freeClassNativeMemory (J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
+#if JAVA_SPEC_VERSION >= 22
+static void vmHookAnonClassesUnload(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
+#endif /* JAVA_SPEC_VERSION >= 22 */
 #endif /* GC_DYNAMIC_CLASS_UNLOADING */
 static jint runShutdownStage (J9JavaVM* vm, IDATA stage, void* reserved, UDATA filterFlags);
 static jint modifyDllLoadTable (J9JavaVM * vm, J9Pool* loadTable, J9VMInitArgs* j9vm_args);
@@ -7470,7 +7473,11 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 	vmHooks = getVMHookInterface(vm);
-	if(0 != (*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_CLASS_UNLOAD, freeClassNativeMemory, OMR_GET_CALLSITE(), NULL)) {
+	if(0 != (*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_CLASS_UNLOAD, freeClassNativeMemory, OMR_GET_CALLSITE(), NULL)
+#if JAVA_SPEC_VERSION >= 22
+		|| 0 != (*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_ANON_CLASSES_UNLOAD, vmHookAnonClassesUnload, OMR_GET_CALLSITE(), NULL)
+#endif /* JAVA_SPEC_VERSION >= 22 */
+	) {
 		goto error;
 	}
 #endif
@@ -8065,6 +8072,18 @@ freeClassNativeMemory(J9HookInterface** hook, UDATA eventNum, void* eventData, v
 		J9INTERFACECLASS_SET_METHODORDERING(clazz, NULL);
 	}
 }
+
+#if JAVA_SPEC_VERSION >= 22
+static void
+vmHookAnonClassesUnload(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData)
+{
+	J9VMAnonymousClassesUnloadEvent * unloadedEvent = (J9VMAnonymousClassesUnloadEvent *)eventData;
+	J9VMThread * vmThread = unloadedEvent->currentThread;
+	for (J9Class* j9clazz = unloadedEvent->anonymousClassesToUnload; j9clazz; j9clazz = j9clazz->gcLink) {
+		hashClassTablePackageDelete(vmThread, j9clazz->classLoader, j9clazz->romClass);
+	}
+}
+#endif /* JAVA_SPEC_VERSION >= 22 */
 
 #endif /* GC_DYNAMIC_CLASS_UNLOADING */
 
