@@ -47,7 +47,7 @@ class MM_ScavengerRootClearer : public MM_RootScanner
 private:
 	MM_Scavenger *_scavenger;
 
-	void processReferenceList(MM_EnvironmentStandard *env, MM_HeapRegionDescriptorStandard *region, omrobjectptr_t headOfList, MM_ReferenceStats *referenceStats);
+	void processReferenceList(MM_EnvironmentStandard *env, MM_HeapRegionDescriptorStandard* region, omrobjectptr_t headOfList, MM_ReferenceStats *referenceStats);
 	void scavengeReferenceObjects(MM_EnvironmentStandard *env, uintptr_t referenceObjectType);
 #if defined(J9VM_GC_FINALIZATION)
 	void scavengeUnfinalizedObjects(MM_EnvironmentStandard *env);
@@ -202,7 +202,7 @@ public:
 	doMonitorReference(J9ObjectMonitor *objectMonitor, GC_HashTableIterator *monitorReferenceIterator)
 	{
 		bool const compressed = _extensions->compressObjectReferences();
-		J9ThreadAbstractMonitor *monitor = (J9ThreadAbstractMonitor*)objectMonitor->monitor;
+		J9ThreadAbstractMonitor * monitor = (J9ThreadAbstractMonitor*)objectMonitor->monitor;
 		omrobjectptr_t objectPtr = (omrobjectptr_t )monitor->userData;
 		_env->getGCEnvironment()->_scavengerJavaStats._monitorReferenceCandidates += 1;
 		
@@ -217,7 +217,7 @@ public:
 				/* We must call objectMonitorDestroy (as opposed to omrthread_monitor_destroy) when the
 				 * monitor is not internal to the GC
 				 */
-				_javaVM->internalVMFunctions->objectMonitorDestroy(_javaVM, (J9VMThread *)_env->getLanguageVMThread(), (omrthread_monitor_t)monitor);
+				static_cast<J9JavaVM*>(_omrVM->_language_vm)->internalVMFunctions->objectMonitorDestroy(static_cast<J9JavaVM*>(_omrVM->_language_vm), (J9VMThread *)_env->getLanguageVMThread(), (omrthread_monitor_t)monitor);
 			}
 		}
 	}
@@ -226,7 +226,7 @@ public:
 	scanMonitorReferencesComplete(MM_EnvironmentBase *env)
 	{
 		reportScanningStarted(RootScannerEntity_MonitorReferenceObjectsComplete);
-		_javaVM->internalVMFunctions->objectMonitorDestroyComplete(_javaVM, (J9VMThread *)env->getOmrVMThread()->_language_vmthread);
+		static_cast<J9JavaVM*>(_omrVM->_language_vm)->internalVMFunctions->objectMonitorDestroyComplete(static_cast<J9JavaVM*>(_omrVM->_language_vm), (J9VMThread *)env->getOmrVMThread()->_language_vmthread);
 		reportScanningEnded(RootScannerEntity_MonitorReferenceObjectsComplete);
 		return complete_phase_OK;
 	}
