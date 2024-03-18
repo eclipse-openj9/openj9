@@ -438,6 +438,7 @@ J9InternalVMFunctions J9InternalFunctions = {
 	native2InterpJavaUpcallF,
 	native2InterpJavaUpcallD,
 	native2InterpJavaUpcallStruct,
+	hasMemoryScope,
 #endif /* JAVA_SPEC_VERSION >= 16 */
 #if JAVA_SPEC_VERSION >= 19
 	copyFieldsFromContinuation,

@@ -37,49 +37,28 @@ Java_jdk_internal_misc_ScopedMemoryAccess_registerNatives(JNIEnv *env, jclass cl
 {
 }
 
-static UDATA
-closeScope0FrameWalkFunction(J9VMThread *vmThread, J9StackWalkState *walkState)
-{
-	if (JNI_FALSE == *(jboolean *)walkState->userData2) {
-		/* scope has been found */
-		return J9_STACKWALK_STOP_ITERATING;
-	}
-	return J9_STACKWALK_KEEP_ITERATING;
-}
-
-static void
-closeScope0OSlotWalkFunction(J9VMThread *vmThread, J9StackWalkState *walkState, j9object_t *slot, const void *stackLocation)
-{
-	J9Method *method = walkState->method;
-	if (NULL != method) {
-		J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
-		if (NULL != romMethod && J9ROMMETHOD_HAS_EXTENDED_MODIFIERS(romMethod)) {
-			U_32 extraModifiers = getExtendedModifiersDataFromROMMethod(romMethod);
-			if (J9ROMMETHOD_HAS_SCOPED_ANNOTATION(extraModifiers)) {
-				if (*slot == J9_JNI_UNWRAP_REFERENCE(walkState->userData1)) {
-					*(jboolean *)walkState->userData2 = JNI_FALSE;
-				}
-			}
-		}
-	}
-}
-
 /**
  * For each thread, walk Java stack and look for the scope instance. Methods that can take and access a scope
  * instance are marked with the "@Scoped" extended modifier. If the scope instance is found in a method, that
  * method is accessing the memory segment associated with the scope and thus closing the scope will fail.
  */
+#if JAVA_SPEC_VERSION >= 22
+void JNICALL
+Java_jdk_internal_misc_ScopedMemoryAccess_closeScope0(JNIEnv *env, jobject instance, jobject scope, jobject error)
+#elif (JAVA_SPEC_VERSION >= 19) && (JAVA_SPEC_VERSION <= 21) /* JAVA_SPEC_VERSION >= 22 */
 jboolean JNICALL
-#if JAVA_SPEC_VERSION >= 19
 Java_jdk_internal_misc_ScopedMemoryAccess_closeScope0(JNIEnv *env, jobject instance, jobject scope)
-#else /* JAVA_SPEC_VERSION >= 19 */
+#else /* JAVA_SPEC_VERSION >= 22 */
+jboolean JNICALL
 Java_jdk_internal_misc_ScopedMemoryAccess_closeScope0(JNIEnv *env, jobject instance, jobject scope, jobject exception)
-#endif /* JAVA_SPEC_VERSION >= 19 */
+#endif /* JAVA_SPEC_VERSION >= 22 */
 {
 	J9VMThread *currentThread = (J9VMThread *)env;
 	J9JavaVM *vm = currentThread->javaVM;
 	const J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
-	jboolean scopeNotFound = JNI_TRUE;
+#if JAVA_SPEC_VERSION <= 21
+	jboolean scopeFound = JNI_FALSE;
+#endif /* JAVA_SPEC_VERSION <= 21 */
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 
@@ -88,21 +67,29 @@ Java_jdk_internal_misc_ScopedMemoryAccess_closeScope0(JNIEnv *env, jobject insta
 	} else {
 		vmFuncs->acquireExclusiveVMAccess(currentThread);
 		J9VMThread *walkThread = J9_LINKED_LIST_START_DO(vm->mainThread);
+		j9object_t closeScopeObj = J9_JNI_UNWRAP_REFERENCE(scope);
+#if JAVA_SPEC_VERSION >= 22
+		j9object_t errorObj = J9_JNI_UNWRAP_REFERENCE(error);
+#endif /* JAVA_SPEC_VERSION >= 22 */
 		while (NULL != walkThread) {
 			if (VM_VMHelpers::threadCanRunJavaCode(walkThread)) {
-				J9StackWalkState walkState;
-				walkState.walkThread = walkThread;
-				walkState.flags = J9_STACKWALK_ITERATE_FRAMES | J9_STACKWALK_ITERATE_O_SLOTS;
-				walkState.skipCount = 0;
-				walkState.userData1 = (void *)scope;
-				walkState.userData2 = (void *)&scopeNotFound;
-				walkState.frameWalkFunction = closeScope0FrameWalkFunction;
-				walkState.objectSlotWalkFunction = closeScope0OSlotWalkFunction;
+#if JAVA_SPEC_VERSION >= 22
+				/* Skip since an exception is already pending to be thrown.*/
+				if (NULL != walkThread->scopedError) {
+					continue;
+				}
+#endif /* JAVA_SPEC_VERSION >= 22 */
 
-				vm->walkStackFrames(walkThread, &walkState);
-				if (JNI_FALSE == *(jboolean *)walkState.userData2) {
-					/* scope found */
+				if (vmFuncs->hasMemoryScope(walkThread, closeScopeObj)) {
+					/* Scope found. */
+#if JAVA_SPEC_VERSION >= 22
+					setHaltFlag(walkThread, J9_PUBLIC_FLAGS_CLOSE_SCOPE);
+					walkThread->scopedError = errorObj;
+					walkThread->closeScopeObj = closeScopeObj;
+#else /* JAVA_SPEC_VERSION >= 22 */
+					scopeFound = JNI_TRUE;
 					break;
+#endif /* JAVA_SPEC_VERSION >= 22 */
 				}
 			}
 
@@ -112,7 +99,9 @@ Java_jdk_internal_misc_ScopedMemoryAccess_closeScope0(JNIEnv *env, jobject insta
 	}
 
 	vmFuncs->internalExitVMToJNI(currentThread);
-	return scopeNotFound;
+#if JAVA_SPEC_VERSION <= 21
+	return !scopeFound;
+#endif /* JAVA_SPEC_VERSION <= 21 */
 }
 #endif /* JAVA_SPEC_VERSION >= 16 */
 

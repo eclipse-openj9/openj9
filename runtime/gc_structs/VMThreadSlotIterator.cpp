@@ -65,6 +65,12 @@ GC_VMThreadSlotIterator::nextSlot()
 	case 11:
 		return &(_vmThread->scopedValueCache);
 #endif /* JAVA_SPEC_VERSION >= 19 */
+#if JAVA_SPEC_VERSION >= 22
+	case 12:
+		return &(_vmThread->scopedError);
+	case 13:
+		return &(_vmThread->closeScopeObj);
+#endif /* JAVA_SPEC_VERSION >= 22 */
 	default:
 		break;
 	}

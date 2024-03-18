@@ -5258,6 +5258,16 @@ native2InterpJavaUpcallD(J9UpcallMetaData *data, void *argsListPointer);
 U_8 * JNICALL
 native2InterpJavaUpcallStruct(J9UpcallMetaData *data, void *argsListPointer);
 
+/**
+ * @brief Check if the memory's scope exists on the stack of the thread.
+ *
+ * @param[in] walkThread the J9VMThread to be walked
+ * @param[in] scope the object searched during the walk
+ *
+ * @return true if scope is found, false if not
+ */
+BOOLEAN
+hasMemoryScope(J9VMThread *walkThread, j9object_t scope);
 #endif /* JAVA_SPEC_VERSION >= 16 */
 
 #ifdef __cplusplus
