@@ -30,6 +30,7 @@ const char *messageNames[] =
    "compilationFailure",
    "AOTCache_storedAOTMethod",
    "AOTCache_serializedAOTMethod",
+   "AOTCache_failure",
    "mirrorResolvedJ9Method",
    "get_params_to_construct_TR_j9method",
    "getUnloadedClassRangesAndCHTable",
