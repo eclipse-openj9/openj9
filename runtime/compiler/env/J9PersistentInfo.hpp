@@ -165,6 +165,7 @@ class PersistentInfo : public OMR::PersistentInfoConnector
          _socketTimeoutMs(0),
          _clientUID(0),
          _serverUID(0),
+         _hasEverConnectedToServer(false),
          _JITServerMetricsPort(38500),
          _JITServerHealthPort(38600),
          _requireJITServer(false),
@@ -175,6 +176,8 @@ class PersistentInfo : public OMR::PersistentInfoConnector
          _JITServerAOTCacheDir(),
          _JITServerAOTCacheDelayMethodRelocation(false),
          _JITServerAOTCacheIgnoreLocalSCC(false),
+         _doNotRequestJITServerAOTCacheLoad(false),
+         _doNotRequestJITServerAOTCacheStore(false),
 #endif /* defined(J9VM_OPT_JITSERVER) */
       OMR::PersistentInfoConnector(pm)
       {}
@@ -353,6 +356,8 @@ class PersistentInfo : public OMR::PersistentInfoConnector
    void setClientUID(uint64_t val) { _clientUID = val; }
    uint64_t getServerUID() const { return _serverUID; }
    void setServerUID(uint64_t val) { _serverUID = val; }
+   bool hasEverConnectedToServer() const { return _hasEverConnectedToServer; }
+   void setHasEverConnectedToServer() { _hasEverConnectedToServer = true; }
    uint32_t getJITServerMetricsPort() const { return _JITServerMetricsPort; }
    void setJITServerMetricsPort(uint32_t port) { _JITServerMetricsPort = port; }
    uint32_t getJITServerHealthPort() const { return _JITServerHealthPort; }
@@ -373,6 +378,10 @@ class PersistentInfo : public OMR::PersistentInfoConnector
    void setJITServerAOTCacheDelayMethodRelocation(bool b) { _JITServerAOTCacheDelayMethodRelocation = b; }
    bool getJITServerAOTCacheIgnoreLocalSCC() const { return _JITServerAOTCacheIgnoreLocalSCC; }
    void setJITServerAOTCacheIgnoreLocalSCC(bool b) { _JITServerAOTCacheIgnoreLocalSCC = b; }
+   bool doNotRequestJITServerAOTCacheLoad() const { return _doNotRequestJITServerAOTCacheLoad; }
+   void setDoNotRequestJITServerAOTCacheLoad(bool b) { _doNotRequestJITServerAOTCacheLoad = b; }
+   bool doNotRequestJITServerAOTCacheStore() const { return _doNotRequestJITServerAOTCacheStore; }
+   void setDoNotRequestJITServerAOTCacheStore(bool b) { _doNotRequestJITServerAOTCacheStore = b; }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    private:
@@ -463,6 +472,7 @@ class PersistentInfo : public OMR::PersistentInfoConnector
    uint32_t    _socketTimeoutMs; // timeout for communication sockets used in out-of-process JIT compilation
    uint64_t    _clientUID;
    uint64_t    _serverUID; // At the client, this represents the UID of the server the client is connected to
+   bool        _hasEverConnectedToServer; // At the client, true if the client has connected to a server at some point in the past
    uint32_t    _JITServerMetricsPort; // Port for receiving http metrics requests from Prometheus; only used at server
    uint32_t    _JITServerHealthPort; // Port for receiving readiness/liveness probes from Kubernetes; only used at server
    bool        _requireJITServer;
@@ -472,8 +482,12 @@ class PersistentInfo : public OMR::PersistentInfoConnector
    bool        _JITServerUseAOTCachePersistence; // Whether to persist the JITServer AOT caches at the server
    std::string _JITServerAOTCacheDir;  // Directory where the JITServer persistent AOT caches are located
    bool        _JITServerAOTCacheDelayMethodRelocation; // At the client, whether to delay deserialized method relocation or not
-    // At the client, whether or not to use the new AOT cache implementation (with serialization record IDs as SCC offsets)
+   // At the client, whether or not to use the new AOT cache implementation (with serialization record IDs as SCC offsets)
    bool        _JITServerAOTCacheIgnoreLocalSCC;
+   // True if the client should not request AOT cache loads during this server connection
+   bool        _doNotRequestJITServerAOTCacheLoad;
+   // True if the client should not request AOT cache stores during this server connection
+   bool        _doNotRequestJITServerAOTCacheStore;
 #endif /* defined(J9VM_OPT_JITSERVER) */
    };
 
