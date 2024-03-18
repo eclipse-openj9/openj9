@@ -1445,8 +1445,13 @@ TR::Node *TR_VectorAPIExpansion::loadIntrinsicHandler(TR_VectorAPIExpansion *opt
    if (opt->_trace)
       traceMsg(comp, "loadIntrinsicHandler for node %p\n", node);
 
+#if JAVA_SPEC_VERSION <= 21
+   TR::Node *array = node->getChild(5);
+   TR::Node *arrayIndex = node->getChild(6);
+#else
    TR::Node *array = node->getChild(6);
    TR::Node *arrayIndex = node->getChild(7);
+#endif
 
    return transformLoadFromArray(opt, treeTop, node, elementType, vectorLength, numLanes, mode, array, arrayIndex, objType);
    }
@@ -1654,9 +1659,15 @@ TR::Node *TR_VectorAPIExpansion::storeIntrinsicHandler(TR_VectorAPIExpansion *op
    if (opt->_trace)
       traceMsg(comp, "storeIntrinsicHandler for node %p\n", node);
 
+#if JAVA_SPEC_VERSION <= 21
+   TR::Node *valueToWrite = node->getChild(5);
+   TR::Node *array = node->getChild(6);
+   TR::Node *arrayIndex = node->getChild(7);
+#else
    TR::Node *valueToWrite = node->getChild(6);
    TR::Node *array = node->getChild(7);
    TR::Node *arrayIndex = node->getChild(8);
+#endif
 
    return transformStoreToArray(opt, treeTop, node, elementType, vectorLength, numLanes, mode, valueToWrite, array, arrayIndex, objType);
    }
@@ -2639,7 +2650,11 @@ TR_VectorAPIExpansion::methodTableEntry
 TR_VectorAPIExpansion::methodTable[] =
    {
    {loadIntrinsicHandler,                 Unknown, 1, 2, -1, 0, -1, {Unknown, ElementType, NumLanes}},                                           // jdk_internal_vm_vector_VectorSupport_load
+#if JAVA_SPEC_VERSION <= 21
+   {storeIntrinsicHandler,                Unknown, 1, 2,  5, 1, -1, {Unknown, ElementType, NumLanes, Unknown, Unknown, Vector}},                 // jdk_internal_vm_vector_VectorSupport_store
+#else
    {storeIntrinsicHandler,                Unknown, 1, 2,  6, 1, -1, {Unknown, ElementType, NumLanes, Unknown, Unknown, Unknown, Vector}},        // jdk_internal_vm_vector_VectorSupport_store
+#endif
    {binaryIntrinsicHandler,               Vector,  3, 4,  5, 2,  7, {Unknown, Unknown, Unknown, ElementType, NumLanes, Vector, Vector, Mask}},   // jdk_internal_vm_vector_VectorSupport_binaryOp
    {blendIntrinsicHandler,                Vector,  2, 3,  4, 3, -1, {Unknown, Unknown, ElementType, NumLanes, Vector, Vector, Vector, Unknown}}, // jdk_internal_vm_vector_VectorSupport_blend
    {broadcastIntIntrinsicHandler,         Vector,  3, 4,  5, 2,  7, {Unknown, Unknown, Unknown, ElementType, NumLanes, Vector, Unknown, Mask}},  //jdk_internal_vm_vector_VectorSupport_broadcastInt
