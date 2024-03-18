@@ -25,6 +25,13 @@
 	<!-- LoadLibrary test intended for CMVC 201408 -->
 	<test>
 		<testCaseName>cmdLineTester_loadLibraryTests</testCaseName>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/18975</comment>
+				<version>22+</version>
+				<platform>.*windows.*</platform>
+			</disable>
+		</disables>
 		<command>$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -DJAVA_EXE=$(JAVA_COMMAND) -DJAVA_HOME=$(Q)$(JAVA_HOME)$(Q) -DJAVATEST_ROOT=$(JAVATEST_ROOT) -DJVM_TEST_ROOT=$(JVM_TEST_ROOT) \
 	-DPATHSEP=\\\\ -DTESTSJARPATH=$(Q)$(TEST_RESROOT)$(D)loadLibraryTest.jar$(Q) \
 	-DRESJAR=$(CMDLINETESTER_RESJAR) -jar $(CMDLINETESTER_JAR) \
