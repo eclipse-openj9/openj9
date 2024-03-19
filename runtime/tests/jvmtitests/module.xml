@@ -229,6 +229,11 @@
 		<export name="Java_com_ibm_jvmti_tests_samplingObjectAllocation_soae001_check" />
 	</exports>
 
+	<exports group="jdk21">
+		<export name="Java_com_ibm_jvmti_tests_getStackTraceExtended_gste002_anyJittedFrame"/>
+		<export name="Java_com_ibm_jvmti_tests_getThreadListStackTracesExtended_gtlste002_anyJittedFrame"/>
+	</exports>
+
 	<artifact type="shared" name="jvmtitest" bundle="jvmti_test" appendrelease="false">
 		<include-if condition="spec.flags.test_jvmti" />
 		<phase>jvmti_tests</phase>
@@ -239,6 +244,9 @@
 			</group>
 			<group name="jdk11">
 				<include-if condition="spec.java11"/>
+			</group>
+			<group name="jdk21">
+				<include-if condition="spec.java21"/>
 			</group>
 		</exports>
 		<includes>

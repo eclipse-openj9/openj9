@@ -228,3 +228,10 @@ if(NOT JAVA_SPEC_VERSION LESS 11)
 		Java_com_ibm_jvmti_tests_samplingObjectAllocation_soae001_check
 	)
 endif()
+
+if(NOT JAVA_SPEC_VERSION LESS 21)
+	omr_add_exports(jvmtitest
+		Java_com_ibm_jvmti_tests_getStackTraceExtended_gste002_anyJittedFrame
+		Java_com_ibm_jvmti_tests_getThreadListStackTracesExtended_gtlste002_anyJittedFrame
+	)
+endif()

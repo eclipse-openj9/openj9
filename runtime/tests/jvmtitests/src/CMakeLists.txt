@@ -105,11 +105,13 @@ j9vm_add_library(jvmti_test_src STATIC
 	com/ibm/jvmti/tests/getStackTrace/gst002.c
 
 	com/ibm/jvmti/tests/getStackTraceExtended/gste001.c
+	com/ibm/jvmti/tests/getStackTraceExtended/gste002.c
 
 	com/ibm/jvmti/tests/getThreadGroupChildren/gtgc001.c
 	com/ibm/jvmti/tests/getThreadGroupChildren/gtgc002.c
 
 	com/ibm/jvmti/tests/getThreadListStackTracesExtended/gtlste001.c
+	com/ibm/jvmti/tests/getThreadListStackTracesExtended/gtlste002.c
 
 	com/ibm/jvmti/tests/getThreadState/gts001.c
 
