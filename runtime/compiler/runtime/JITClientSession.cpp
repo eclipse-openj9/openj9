@@ -954,7 +954,8 @@ ClientSessionData::getMethodRecord(J9Method *method, J9Class *definingClass, JIT
 const AOTCacheClassChainRecord *
 ClientSessionData::getClassChainRecord(J9Class *clazz, uintptr_t classChainOffset,
                                        const std::vector<J9Class *> &ramClassChain, JITServer::ServerStream *stream,
-                                       bool &missingLoaderInfo)
+                                       bool &missingLoaderInfo,
+                                       bool &referencesArrayClass)
    {
    TR_ASSERT(!ramClassChain.empty() && (ramClassChain.size() <= TR_J9SharedCache::maxClassChainLength),
              "Invalid class chain length: %zu", ramClassChain.size());
@@ -995,7 +996,10 @@ ClientSessionData::getClassChainRecord(J9Class *clazz, uintptr_t classChainOffse
                }
             else
                {
-               // There must have been an allocation failure.
+               // Either the class was an array or there was an allocation failure
+               auto it = getROMClassMap().find(ramClassChain[i]);
+               if (it != getROMClassMap().end())
+                  referencesArrayClass = J9ROMCLASS_IS_ARRAY(it->second._romClass);
                return NULL;
                }
             }
@@ -1025,7 +1029,10 @@ ClientSessionData::getClassChainRecord(J9Class *clazz, uintptr_t classChainOffse
                }
             else
                {
-               // There must have been an allocation failure.
+               // Either the class was an array or there was an allocation failure
+               auto it = getROMClassMap().find(uncachedRAMClasses[i]);
+               if (it != getROMClassMap().end())
+                  referencesArrayClass = J9ROMCLASS_IS_ARRAY(it->second._romClass);
                return NULL;
                }
             }

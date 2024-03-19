@@ -23,6 +23,12 @@
 #include "jvmtiHelpers.h"
 #include "jvmti_internal.h"
 
+#if JAVA_SPEC_VERSION >= 19
+#include "VMHelpers.hpp"
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
+extern "C" {
+
 static jvmtiError JNICALL jvmtiForceEarlyReturn(jvmtiEnv* env, jthread thread, jvmtiParamTypes returnValueType, void *value);
 
 jvmtiError JNICALL
@@ -163,7 +169,7 @@ jvmtiForceEarlyReturn(jvmtiEnv* env,
 
 			if ((currentThread != targetThread)
 #if JAVA_SPEC_VERSION >= 21
-			&& (0 == J9OBJECT_U32_LOAD(currentThread, threadObject, vm->isSuspendedInternalOffset))
+			&& (!VM_VMHelpers::isThreadSuspended(currentThread, threadObject))
 #else /* JAVA_SPEC_VERSION >= 21 */
 			&& OMR_ARE_NO_BITS_SET(targetThread->publicFlags, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND)
 #endif /* JAVA_SPEC_VERSION >= 21 */
@@ -182,23 +188,23 @@ jvmtiForceEarlyReturn(jvmtiEnv* env,
 					threadToWalk = &stackThread;
 				}
 #endif /* JAVA_SPEC_VERSION >= 21 */
-				rc = findDecompileInfo(currentThread, threadToWalk, 0, &walkState);
-  				if (JVMTI_ERROR_NONE == rc) {
-  					J9Method *method = walkState.userData3;
-  					J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
-  					if (romMethod->modifiers & J9AccNative) {
-  						rc = JVMTI_ERROR_OPAQUE_FRAME;
-  					} else {
-  						J9UTF8 *sig = J9ROMMETHOD_SIGNATURE(romMethod);
-  						U_8 *data = J9UTF8_DATA(sig);
-  						U_16 length = J9UTF8_LENGTH(sig);
-  						char signatureType = data[length - 1];
-  						jvmtiParamTypes methodReturnType = JVMTI_TYPE_CVOID;
+				rc = (jvmtiError)(IDATA)findDecompileInfo(currentThread, threadToWalk, 0, &walkState);
+				if (JVMTI_ERROR_NONE == rc) {
+					J9Method *method = (J9Method *)walkState.userData3;
+					J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+					if (J9_ARE_ANY_BITS_SET(romMethod->modifiers, J9AccNative)) {
+						rc = JVMTI_ERROR_OPAQUE_FRAME;
+					} else {
+						J9UTF8 *sig = J9ROMMETHOD_SIGNATURE(romMethod);
+						U_8 *data = J9UTF8_DATA(sig);
+						U_16 length = J9UTF8_LENGTH(sig);
+						char signatureType = data[length - 1];
+						jvmtiParamTypes methodReturnType = JVMTI_TYPE_CVOID;
 
-  						if (('[' == data[length - 2]) || (';' == signatureType)) {
-  							signatureType = 'L';
-  						}
-  						switch(signatureType) {
+						if (('[' == data[length - 2]) || (';' == signatureType)) {
+							signatureType = 'L';
+						}
+						switch(signatureType) {
 						case 'I':
 						case 'B':
 						case 'C':
@@ -265,3 +271,5 @@ done:
 
 	return rc;
 }
+
+} /* extern "C" */

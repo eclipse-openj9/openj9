@@ -75,10 +75,26 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 						<property name="excludeFile" value="" />
 					</else>
 				</if>
+				<!-- Java21 and up tests-->
+				<if>
+					<not>
+						<matches string="${JDK_VERSION}" pattern="^(8|11|17)$$" />
+					</not>
+					<then>
+						<property name="excludeJDK21UpGetStackTraceExtendedTest" value="" />
+						<property name="excludeJDK21UpGetThreadListStackTracesExtendedTest" value="" />
+					</then>
+					<else>
+						<property name="excludeJDK21UpGetStackTraceExtendedTest" value="com/ibm/jvmti/tests/getStackTraceExtended/gste002.java" />
+						<property name="excludeJDK21UpGetThreadListStackTracesExtendedTest" value="com/ibm/jvmti/tests/getThreadListStackTracesExtended/gtlste002.java" />
+					</else>
+				</if>
 				<javac destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
 					<src path="${src}" />
 					<src path="${extraSrc}" />
 					<exclude name="${excludeFile}" />
+					<exclude name="${excludeJDK21UpGetStackTraceExtendedTest}" />
+					<exclude name="${excludeJDK21UpGetThreadListStackTracesExtendedTest}" />
 					<compilerarg line="${addExports}" />
 					<classpath>
 						<pathelement location="${asm.jar}" />

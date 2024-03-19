@@ -1414,7 +1414,7 @@ done:
 		/* Check if the mounted thread is suspended. */
 		U_32 isSuspended = 0;
 		if (NULL != targetThread) {
-			isSuspended = J9OBJECT_U32_LOAD(currentThread, targetThread->threadObject, currentThread->javaVM->isSuspendedInternalOffset);
+			isSuspended = J9OBJECT_U32_LOAD(currentThread, targetThread->threadObject, currentThread->javaVM->internalSuspendStateOffset);
 		}
 #endif /* JAVA_SPEC_VERSION >= 19 */
 		/* If the thread is alive, ask the OS thread.  Otherwise, answer false. */
@@ -2064,7 +2064,7 @@ exit:
 		/* Check if the mounted thread is suspended. */
 		U_32 isSuspended = 0;
 		if (NULL != targetThread) {
-			isSuspended = J9OBJECT_U32_LOAD(currentThread, targetThread->threadObject, vm->isSuspendedInternalOffset);
+			isSuspended = J9OBJECT_U32_LOAD(currentThread, targetThread->threadObject, vm->internalSuspendStateOffset);
 		}
 #endif /* JAVA_SPEC_VERSION >= 19 */
 		if ((NULL != targetThread)
@@ -2108,6 +2108,38 @@ exit:
 		} else {
 			currentThread->privateFlags &= ~(UDATA)J9_PRIVATE_FLAGS_VIRTUAL_THREAD_HIDDEN_FRAMES;
 		}
+	}
+
+	/**
+	 * Check if thread is in the suspended state.
+	 *
+	 * Current thread must have VM access.
+	 *
+	 * @param[in] currentThread the current J9VMThread
+	 * @param[in] thread the target Thread object
+	 * @return true if thread is suspended, false otherwise
+	 */
+	static VMINLINE bool
+	isThreadSuspended(J9VMThread *currentThread, j9object_t thread)
+	{
+		U_64 internalSuspendState = J9OBJECT_U64_LOAD(currentThread, thread, currentThread->javaVM->internalSuspendStateOffset);
+		return J9_ARE_ANY_BITS_SET(internalSuspendState, J9_VIRTUALTHREAD_INTERNAL_STATE_SUSPENDED);
+	}
+
+	/**
+	 * Get the linked carrier J9VMThread from vthread object.
+	 *
+	 * Current thread must have VM access.
+	 *
+	 * @param[in] currentThread the current J9VMThread
+	 * @param[in] thread the target vthread object
+	 * @return J9VMThread of the linked carrier thread, or NULL
+	 */
+	static VMINLINE J9VMThread *
+	getCarrierVMThread(J9VMThread *currentThread, j9object_t thread)
+	{
+		U_64 internalSuspendState = J9OBJECT_U64_LOAD(currentThread, thread, currentThread->javaVM->internalSuspendStateOffset);
+		return (J9VMThread *)(internalSuspendState & J9_VIRTUALTHREAD_INTERNAL_STATE_CARRIERID_MASK);
 	}
 #endif /* JAVA_SPEC_VERSION >= 20 */
 
