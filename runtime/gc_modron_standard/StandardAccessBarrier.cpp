@@ -367,6 +367,7 @@ MM_StandardAccessBarrier::jniGetPrimitiveArrayCritical(J9VMThread* vmThread, jar
 	void *data = NULL;
 	J9JavaVM *javaVM = vmThread->javaVM;
 	J9InternalVMFunctions *functions = javaVM->internalVMFunctions;
+	GC_ArrayObjectModel *indexableObjectModel = &_extensions->indexableObjectModel;
 
 	bool shouldCopy = false;
 	bool alwaysCopyInCritical = (javaVM->runtimeFlags & J9_RUNTIME_ALWAYS_COPY_JNI_CRITICAL) == J9_RUNTIME_ALWAYS_COPY_JNI_CRITICAL;
@@ -374,29 +375,17 @@ MM_StandardAccessBarrier::jniGetPrimitiveArrayCritical(J9VMThread* vmThread, jar
 		shouldCopy = true;
 	}
 
-	if(shouldCopy) {
+	if (shouldCopy) {
 		VM_VMAccess::inlineEnterVMFromJNI(vmThread);
-		J9IndexableObject *arrayObject = (J9IndexableObject*)J9_JNI_UNWRAP_REFERENCE(array);
-		GC_ArrayObjectModel* indexableObjectModel = &_extensions->indexableObjectModel;
-		I_32 sizeInElements = (I_32)indexableObjectModel->getSizeInElements(arrayObject);
-		UDATA sizeInBytes = indexableObjectModel->getDataSizeInBytes(arrayObject);
-		data = functions->jniArrayAllocateMemoryFromThread(vmThread, sizeInBytes);
-		if(NULL == data) {
-			functions->setNativeOutOfMemoryError(vmThread, 0, 0);	// better error message here?
-		} else {
-			indexableObjectModel->memcpyFromArray(data, arrayObject, 0, sizeInElements);
-			if(NULL != isCopy) {
-				*isCopy = JNI_TRUE;
-			}
-		}
-		vmThread->jniCriticalCopyCount += 1;
+		J9IndexableObject *arrayObject = (J9IndexableObject *)J9_JNI_UNWRAP_REFERENCE(array);
+		copyArrayCritical(vmThread, indexableObjectModel, functions, &data, arrayObject, isCopy);
 		VM_VMAccess::inlineExitVMToJNI(vmThread);
 	} else {
 		// acquire access and return a direct pointer
 		MM_JNICriticalRegion::enterCriticalRegion(vmThread, false);
-		J9IndexableObject *arrayObject = (J9IndexableObject*)J9_JNI_UNWRAP_REFERENCE(array);
-		data = (void *)_extensions->indexableObjectModel.getDataPointerForContiguous(arrayObject);
-		if(NULL != isCopy) {
+		J9IndexableObject *arrayObject = (J9IndexableObject *)J9_JNI_UNWRAP_REFERENCE(array);
+		data = (void *)indexableObjectModel->getDataPointerForContiguous(arrayObject);
+		if (NULL != isCopy) {
 			*isCopy = JNI_FALSE;
 		}
 	}
@@ -408,6 +397,7 @@ MM_StandardAccessBarrier::jniReleasePrimitiveArrayCritical(J9VMThread* vmThread,
 {
 	J9JavaVM *javaVM = vmThread->javaVM;
 	J9InternalVMFunctions *functions = javaVM->internalVMFunctions;
+	GC_ArrayObjectModel *indexableObjectModel = &_extensions->indexableObjectModel;
 
 	bool shouldCopy = false;
 	bool alwaysCopyInCritical = (javaVM->runtimeFlags & J9_RUNTIME_ALWAYS_COPY_JNI_CRITICAL) == J9_RUNTIME_ALWAYS_COPY_JNI_CRITICAL;
@@ -415,36 +405,19 @@ MM_StandardAccessBarrier::jniReleasePrimitiveArrayCritical(J9VMThread* vmThread,
 		shouldCopy = true;
 	}
 
-	if(shouldCopy) {
+	if (shouldCopy) {
 		VM_VMAccess::inlineEnterVMFromJNI(vmThread);
-		if(JNI_ABORT != mode) {
-			J9IndexableObject *arrayObject = (J9IndexableObject*)J9_JNI_UNWRAP_REFERENCE(array);
-			GC_ArrayObjectModel* indexableObjectModel = &_extensions->indexableObjectModel;
-			I_32 sizeInElements = (I_32)indexableObjectModel->getSizeInElements(arrayObject);
-			_extensions->indexableObjectModel.memcpyToArray(arrayObject, 0, sizeInElements, elems);
-		}
-
-		// Commit means copy the data but do not free the buffer.
-		// All other modes free the buffer.
-		if(JNI_COMMIT != mode) {
-			functions->jniArrayFreeMemoryFromThread(vmThread, elems);
-		}
-
-		if(vmThread->jniCriticalCopyCount > 0) {
-			vmThread->jniCriticalCopyCount -= 1;
-		} else {
-			Assert_MM_invalidJNICall();
-		}
-
+		J9IndexableObject *arrayObject = (J9IndexableObject *)J9_JNI_UNWRAP_REFERENCE(array);
+		copyBackArrayCritical(vmThread, indexableObjectModel, functions, elems, &arrayObject, mode);
 		VM_VMAccess::inlineExitVMToJNI(vmThread);
 	} else {
+		J9IndexableObject *arrayObject = (J9IndexableObject *)J9_JNI_UNWRAP_REFERENCE(array);
 		/*
 		 * Objects can not be moved if critical section is active
 		 * This trace point will be generated if object has been moved or passed value of elems is corrupted
 		 */
-		J9IndexableObject *arrayObject = (J9IndexableObject*)J9_JNI_UNWRAP_REFERENCE(array);
-		void *data = (void *)_extensions->indexableObjectModel.getDataPointerForContiguous(arrayObject);
-		if(elems != data) {
+		void *data = (void *)indexableObjectModel->getDataPointerForContiguous(arrayObject);
+		if (elems != data) {
 			Trc_MM_JNIReleasePrimitiveArrayCritical_invalid(vmThread, arrayObject, elems, data);
 		}
 
@@ -484,37 +457,12 @@ MM_StandardAccessBarrier::jniGetStringCritical(J9VMThread* vmThread, jstring str
 	if (shouldCopy) {
 		J9Object *stringObject = (J9Object*)J9_JNI_UNWRAP_REFERENCE(str);
 		J9IndexableObject *valueObject = (J9IndexableObject*)J9VMJAVALANGSTRING_VALUE(vmThread, stringObject);
-		jint length = J9VMJAVALANGSTRING_LENGTH(vmThread, stringObject);
-		UDATA sizeInBytes = length * sizeof(jchar);
 
 		if (IS_STRING_COMPRESSED(vmThread, stringObject)) {
 				isCompressed = true;
 		}
-		
-		data = (jchar*)functions->jniArrayAllocateMemoryFromThread(vmThread, sizeInBytes);
-		if (NULL == data) {
-			functions->setNativeOutOfMemoryError(vmThread, 0, 0);	// better error message here?
-		} else {
-			GC_ArrayObjectModel* indexableObjectModel = &_extensions->indexableObjectModel;
-			if (isCompressed) {
-				jint i;
-				
-				for (i = 0; i < length; i++) {
-					data[i] = (jchar)(U_8)J9JAVAARRAYOFBYTE_LOAD(vmThread, (j9object_t)valueObject, i);
-				}
-			} else {
-				if (J9_ARE_ANY_BITS_SET(javaVM->runtimeFlags, J9_RUNTIME_STRING_BYTE_ARRAY)) {
-					// This API determines the stride based on the type of valueObject so in the [B case we must passin the length in bytes
-					indexableObjectModel->memcpyFromArray(data, valueObject, 0, (I_32)sizeInBytes);
-				} else {
-					indexableObjectModel->memcpyFromArray(data, valueObject, 0, length);
-				}
-			}
-			if (NULL != isCopy) {
-				*isCopy = JNI_TRUE;
-			}
-		}
-		vmThread->jniCriticalCopyCount += 1;
+
+		copyStringCritical(vmThread, &_extensions->indexableObjectModel, functions, &data, javaVM, valueObject, stringObject, isCopy, isCompressed);
 	} else {
 		// acquire access and return a direct pointer
 		MM_JNICriticalRegion::enterCriticalRegion(vmThread, hasVMAccess);
@@ -553,14 +501,7 @@ MM_StandardAccessBarrier::jniReleaseStringCritical(J9VMThread* vmThread, jstring
 	}
 
 	if (shouldCopy) {
-		// String data is not copied back
-		functions->jniArrayFreeMemoryFromThread(vmThread, (void*)elems);
-
-		if(vmThread->jniCriticalCopyCount > 0) {
-			vmThread->jniCriticalCopyCount -= 1;
-		} else {
-			Assert_MM_invalidJNICall();
-		}
+		freeStringCritical(vmThread, functions, elems);
 	} else {
 		/*
 		 * We have not put assertion here to check is elems valid for str similar way as in jniReleasePrimitiveArrayCritical

@@ -254,7 +254,7 @@ private:
 	/**
 	 * Fix up the spine pointers of any arraylet leaf regions
 	 */
-	void fixupArrayletLeafRegionSpinePointers();
+	void fixupArrayletLeafRegionSpinePointers(MM_EnvironmentVLHGC *env);
 	
 	/**
 	 * Fix up the data in required arraylet leaf regions, unfinalized lists and ownable synchronizer lists.

@@ -29,6 +29,7 @@
 	<source/>
 	<flags>
 		<flag id="env_data64" value="true"/>
+		<flag id="gc_enableSparseHeapAllocation" value="true"/>
 		<flag id="gc_classesOnHeap" value="true"/>
 		<flag id="gc_compressedPointers" value="true"/>
 		<flag id="gc_objectAccessBarrier" value="true"/>
