@@ -1148,7 +1148,7 @@ setSystemPropertyValue(J9JavaVM * vm, J9VMSystemProperty * property, char * newV
 		PORT_ACCESS_FROM_JAVAVM(vm);
 		/* If the old value of the property was allocated (not static data), then free it */
 
-		if (J9_ARE_ALL_BITS_SET(property->flags, J9SYSPROP_FLAG_VALUE_ALLOCATED)) {
+		if (J9_ARE_ANY_BITS_SET(property->flags, J9SYSPROP_FLAG_VALUE_ALLOCATED)) {
 			j9mem_free_memory(property->value);
 		}
 
@@ -1345,32 +1345,32 @@ getMUtf8String(J9JavaVM *vm, const char *userString, UDATA stringLength)
 
 	U_8 *mutf8Buffer = NULL;
 	U_8 *result = NULL;
-	BOOLEAN doUnicodeConversion = J9_ARE_ALL_BITS_SET(vm->runtimeFlags, J9_RUNTIME_ARGENCODING_UNICODE)
+	BOOLEAN doUnicodeConversion = J9_ARE_ANY_BITS_SET(vm->runtimeFlags, J9_RUNTIME_ARGENCODING_UNICODE)
 					&& containsBackslashU(userString, stringLength);
 
-	if (!doUnicodeConversion && isAscii(userString, stringLength)) { /* This is entirely ASCII */
-		UDATA bufferLength = stringLength+1; /* leave room for the terminating null */
+	if (doUnicodeConversion) {
+		result = unicodeEscapeStringToMUtf8(vm, userString, stringLength);
+	} else if (isAscii(userString, stringLength)) { /* This is entirely ASCII. */
+		UDATA bufferLength = stringLength + 1; /* leave room for the terminating null */
 		mutf8Buffer = j9mem_allocate_memory(bufferLength, OMRMEM_CATEGORY_VM);
 		if (NULL != mutf8Buffer) {
 			memcpy(mutf8Buffer, userString, stringLength);
 			mutf8Buffer[stringLength] = '\0';
 		}
 		result = mutf8Buffer;
-	} else 	if (doUnicodeConversion) {
-		result = unicodeEscapeStringToMUtf8(vm, userString, stringLength);
-	} else 	{
-#ifdef WIN32
-		I_32 fromCode = J9STR_CODE_UTF8; /* commandline arguments should be in UTF-8 */
-#else
+	} else {
+#if defined(WIN32)
+		I_32 fromCode = J9STR_CODE_UTF8; /* command-line arguments should be in UTF-8 */
+#else /* defined(WIN32) */
 		I_32 fromCode = J9STR_CODE_PLATFORM_RAW;
-#endif
-		if (J9_ARE_ALL_BITS_SET(vm->runtimeFlags, J9_RUNTIME_ARGENCODING_UTF8)) {
+#endif /* defined(WIN32) */
+		if (J9_ARE_ANY_BITS_SET(vm->runtimeFlags, J9_RUNTIME_ARGENCODING_UTF8)) {
 			fromCode = J9STR_CODE_UTF8;
-		} else if (J9_ARE_ALL_BITS_SET(vm->runtimeFlags, J9_RUNTIME_ARGENCODING_LATIN)) {
+		} else if (J9_ARE_ANY_BITS_SET(vm->runtimeFlags, J9_RUNTIME_ARGENCODING_LATIN)) {
 			fromCode =  J9STR_CODE_LATIN1;
 		}
 		result = convertString(vm, fromCode, userString, stringLength);
-		if ((NULL == result) && (fromCode != J9STR_CODE_UTF8)) {
+		if ((NULL == result) && (J9STR_CODE_UTF8 != fromCode)) {
 			result = convertString(vm, J9STR_CODE_UTF8, userString, stringLength);
 		}
 	}
