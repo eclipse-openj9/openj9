@@ -99,7 +99,7 @@ public class VMConstantPoolCommand extends Command {
 			J9JavaVMPointer javaVM;
 			javaVM = J9RASHelper.getVM(DataType.getJ9RASPointer());
 			if (args.length == 1) {
-				long vmaddress = CommandUtils.parsePointer(args[0], J9BuildFlags.env_data64);
+				long vmaddress = CommandUtils.parsePointer(args[0], J9BuildFlags.J9VM_ENV_DATA64);
 				if (vmaddress != javaVM.getAddress()) {
 					out.println(args[0] + " is not a valid j9javavm address. Run !findvm to find out the j9javavm address of the current context");
 					return;

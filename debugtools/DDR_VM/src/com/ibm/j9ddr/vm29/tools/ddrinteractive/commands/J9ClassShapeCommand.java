@@ -67,28 +67,27 @@ public class J9ClassShapeCommand extends Command
 		}
 
 		try {
-			
 			J9JavaVMPointer vm = J9RASHelper.getVM(DataType.getJ9RASPointer());
 			J9ClassPointer instanceClass = J9ClassPointer.NULL;
 			String classSelector = args[0];
 			if (classSelector.matches("\\p{Digit}.*")) { /* addresses start with a decimal digit, possibly the '0' in "0x" */
-				instanceClass = J9ClassPointer.cast(CommandUtils.parsePointer(classSelector, J9BuildFlags.env_data64));
+				instanceClass = J9ClassPointer.cast(CommandUtils.parsePointer(classSelector, J9BuildFlags.J9VM_ENV_DATA64));
 			} else {
 				J9ClassPointer candidates[] = findClassByName(vm, classSelector);
 				if (candidates.length == 0) {
-					CommandUtils.dbgPrint(out, "No classes matching \""+classSelector+"\" found\n");
+					CommandUtils.dbgPrint(out, "No classes matching \"" + classSelector + "\" found\n");
 					return;
 				} else if (candidates.length > 1) {
-					CommandUtils.dbgPrint(out, "Multiple classes matching \""+classSelector+"\" found\n");
+					CommandUtils.dbgPrint(out, "Multiple classes matching \"" + classSelector + "\" found\n");
 					return;
 				} else {
 					instanceClass = candidates[0];
 					String javaName = J9ClassHelper.getJavaName(instanceClass);
 					String hexString = instanceClass.getHexAddress();
-					CommandUtils.dbgPrint(out, String.format("!j9class %1$s\n", hexString));					
+					CommandUtils.dbgPrint(out, String.format("!j9class %1$s\n", hexString));
 				}
 			}
-			
+
 			J9ClassPointer previousSuperclass = J9ClassPointer.NULL;
 
 			String className = J9ClassHelper.getName(instanceClass);

@@ -29,7 +29,7 @@ import com.ibm.j9ddr.vm29.pointer.generated.MM_GCExtensionsPointer;
 import com.ibm.j9ddr.vm29.types.UDATA;
 
 public class GCExtensions {
-	
+
 	private static MM_GCExtensionsPointer gcExtensions;
 	private static boolean isSegregatedHeap;
 	private static boolean isMetronomeGC;
@@ -37,38 +37,36 @@ public class GCExtensions {
 	private static boolean isVLHGC;
 	private static boolean scavengerEnabled;
 	private static UDATA softMx;
-	
+
 	/* TODO: lpnguyen, version this */
-	static 
-	{
+	static {
 		try {
 			gcExtensions = GCBase.getExtensions();
-						
-			if(J9BuildFlags.gc_combinationSpec) {
+
+			if (J9BuildFlags.J9VM_GC_COMBINATION_SPEC) {
 				isSegregatedHeap = gcExtensions._isSegregatedHeap();
 				isMetronomeGC = gcExtensions._isMetronomeGC();
 				isStandardGC = gcExtensions._isStandardGC();
 				isVLHGC = gcExtensions._isVLHGC();
 			} else {
-				isSegregatedHeap = J9BuildFlags.gc_segregatedHeap;
-				isMetronomeGC = J9BuildFlags.gc_realtime;
-				isStandardGC = J9BuildFlags.gc_modronStandard;
-				isVLHGC = J9BuildFlags.gc_vlhgc;
+				isSegregatedHeap = J9BuildFlags.J9VM_GC_SEGREGATED_HEAP;
+				isMetronomeGC = J9BuildFlags.J9VM_GC_REALTIME;
+				isStandardGC = J9BuildFlags.J9VM_GC_MODRON_STANDARD;
+				isVLHGC = J9BuildFlags.J9VM_GC_VLHGC;
 			}
-			
-			if (J9BuildFlags.gc_modronScavenger || J9BuildFlags.gc_vlhgc) {
+
+			if (J9BuildFlags.J9VM_GC_MODRON_SCAVENGER || J9BuildFlags.J9VM_GC_VLHGC) {
 				scavengerEnabled = gcExtensions.scavengerEnabled();
 			} else {
 				scavengerEnabled = false;
 			}
 			softMx = gcExtensions.softMx();
-			
 		} catch (CorruptDataException cde) {
 			raiseCorruptDataEvent("Error initializing GCExtensions", cde, true);
 			gcExtensions = null;
 		}
 	}
-	
+
 	public static boolean isSegregatedHeap()
 	{
 		return isSegregatedHeap;
@@ -78,12 +76,12 @@ public class GCExtensions {
 	{
 		return isMetronomeGC;
 	}
-	
+
 	public static boolean isStandardGC()
 	{
 		return isStandardGC;
 	}
-	
+
 	public static boolean isVLHGC()
 	{
 		return isVLHGC;
@@ -93,7 +91,7 @@ public class GCExtensions {
 	{
 		return scavengerEnabled;
 	}
-	
+
 	public static UDATA softMx()
 	{
 		return softMx;

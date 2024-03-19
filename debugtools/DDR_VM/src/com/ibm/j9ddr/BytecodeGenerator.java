@@ -22,7 +22,6 @@
 package com.ibm.j9ddr;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -47,57 +46,78 @@ import jdk.internal.org.objectweb.asm.Type;
  */
 public class BytecodeGenerator {
 
-	private static void addFlagAlias(Map<String, String> map, String name, String alias) {
-		if (map.get(name) == null) {
-			map.put(name, alias);
-		}
+	/**
+	 * Should getFlagCName() be used to adjust fields names for className?
+	 */
+	public static boolean shouldUseCNameFor(String className) {
+		return className.equals("J9BuildFlags");
 	}
 
-	private static Map<String, String> addFlagAliasesFor(Map<String, String> map, String className) {
-		/*
-		 * The DDR tools from OMR, normally generate constants with names as they
-		 * appear in the source code. Unfortunately, the legacy tools used in IBM
-		 * builds yield different names for 'build flags'. A field override was
-		 * added to provide compatibility with those legacy tools for s390
-		 *   J9VM_ARCH_S390=arch_s390
-		 * but not for other architectures. J9ConfigFlags was introduced in an
-		 * attempt to handle this difference in naming convention, but it
-		 * incorrectly assumed the fields it referenced would be dynamically
-		 * generated according to the blob found in the associated core file,
-		 * rather than being fixed at build time. The set of aliases here replaces
-		 * the ineffective mapping in J9ConfigFlags.
-		 * The result is that OpenJ9 builds have additional fields in J9BuildFlags
-		 * that are copied from the OMR-derived names. For example, arch_x86 is
-		 * present when the legacy tools are used; when OMR tools are used, arch_x86
-		 * is a copy of J9VM_ARCH_X86.
-		 *
-		 * Note: Do not add new aliases to this map. Instead, add overrides like
-		 * was done for arch_s390 to retain compatibility with the legacy tools.
-		 */
-		if (className.equals("J9BuildFlags")) {
-			addFlagAlias(map, "arch_arm", "J9VM_ARCH_ARM");
-			addFlagAlias(map, "arch_aarch64", "J9VM_ARCH_AARCH64");
-			addFlagAlias(map, "arch_power", "J9VM_ARCH_POWER");
-			addFlagAlias(map, "arch_riscv", "J9VM_ARCH_RISCV");
-			addFlagAlias(map, "arch_x86", "J9VM_ARCH_X86");
-		}
-		return map;
-	}
+	private static final String[] knownNames = { "AOT", "Arg0EA", "INL", "JIT", "JNI" };
 
-	static Map<String, String> getFlagAliasesFor(String className) {
-		return addFlagAliasesFor(new HashMap<String, String>(), className);
-	}
-
-	public static Map<String, String> getConstantsAndAliases(StructureDescriptor structure) {
-		Map<String, String> map = new TreeMap<>();
-
-		for (ConstantDescriptor constant : structure.getConstants()) {
-			String name = constant.getName();
-
-			map.put(name, null);
+	/**
+	 * This produces the same "cname" as getDataModelExtension()
+	 * in com.ibm.j9.uma.platform.PlatformImplementation for flags
+	 * whose names don't already match what appears in native code.
+	 */
+	public static String getFlagCName(String id) {
+		switch (id) {
+		case "EsVersionMajor":
+		case "EsVersionMajor_DEFINED":
+		case "EsVersionMinor":
+		case "EsVersionMinor_DEFINED":
+		case "JAVA_SPEC_VERSION":
+		case "JAVA_SPEC_VERSION_DEFINED":
+			/*
+			 * These are explicitly listed in j9cfg.h (generated from j9cfg.h.in
+			 * or j9cfg.h.ftl), or they are derived from definitions there: They
+			 * don't need mapping. Also, they are only present in system dumps
+			 * from Semeru VMs and not in those produced by IBM VMs.
+			 */
+			return id;
+		default:
+			if (id.startsWith("J9VM_")) {
+				// This already looks like a cname derived from a definition in j9cfg.h.
+				return id;
+			}
+			break;
 		}
 
-		return addFlagAliasesFor(map, structure.getName());
+		StringBuilder cname = new StringBuilder("J9VM_");
+		boolean addUnderscore = false;
+		int idLength = id.length();
+
+outer:
+		for (int i = 0; i < idLength;) {
+			if (addUnderscore) {
+				cname.append('_');
+				addUnderscore = false;
+			}
+
+			for (String knownName : knownNames) {
+				int knownLength = knownName.length();
+
+				if (id.regionMatches(i, knownName, 0, knownLength)) {
+					cname.append(knownName.toUpperCase());
+					addUnderscore = true;
+					i += knownLength;
+					continue outer;
+				}
+			}
+
+			char ch = id.charAt(i);
+
+			cname.append(Character.toUpperCase(ch));
+			i += 1;
+
+			if (!Character.isUpperCase(ch)) {
+				if (i < idLength && Character.isUpperCase(id.charAt(i))) {
+					addUnderscore = true;
+				}
+			}
+		}
+
+		return cname.toString();
 	}
 
 	public static byte[] getPointerClassBytes(StructureReader reader, StructureTypeManager typeManager,
@@ -126,30 +146,17 @@ final class FlagsHelper extends HelperBase {
 
 		clinit.visitCode();
 
+		boolean useCName = BytecodeGenerator.shouldUseCNameFor(structure.getName());
 		Map<String, Boolean> values = new TreeMap<>();
 
 		for (ConstantDescriptor constant : structure.getConstants()) {
 			String name = constant.getName();
 
+			if (useCName) {
+				name = BytecodeGenerator.getFlagCName(name);
+			}
+
 			values.put(name, Boolean.valueOf(constant.getValue() != 0));
-		}
-
-		Map<String, String> aliases = BytecodeGenerator.getFlagAliasesFor(structure.getName());
-
-		for (Map.Entry<String, String> entry : aliases.entrySet()) {
-			String name = entry.getKey();
-
-			if (Boolean.TRUE.equals(values.get(name))) {
-				continue;
-			}
-
-			Boolean value = values.get(entry.getValue());
-
-			if (value == null) {
-				value = Boolean.FALSE;
-			}
-
-			values.put(name, value);
 		}
 
 		for (Map.Entry<String, Boolean> entry : values.entrySet()) {

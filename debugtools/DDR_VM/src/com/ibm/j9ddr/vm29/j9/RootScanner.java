@@ -77,12 +77,12 @@ import com.ibm.j9ddr.vm29.j9.gc.GCExtensions;
 public abstract class RootScanner
 {
 	private Reachability _reachability = Reachability.STRONG;
-	
-	public static enum Reachability {STRONG, WEAK};
+
+	public static enum Reachability { STRONG, WEAK }
 
 	private J9JavaVMPointer _vm;
 	private MM_GCExtensionsPointer _extensions;
-	
+
 	private boolean _classDataAsRoots = true; /**< Should all classes (and class loaders) be treated as roots. Default true, should set to false when class unloading */
 	private boolean _includeJVMTIObjectTagTables = true; /**< Should the iterator include the JVMTIObjectTagTables. Default true, should set to false when doing JVMTI object walks */
 	private boolean _includeStackFrameClassReferences = true; /**< Should the iterator include Classes which have a method running on the stack */
@@ -93,21 +93,21 @@ public abstract class RootScanner
 	private boolean _nurseryReferencesPossibly = false;  /**< Should the iterator only scan structures that may contain nursery references */
 	private boolean _includeRememberedSetReferences; /**< Should the iterator include references in the Remembered Set (if applicable) */
 	private RootScanner.RootScannerStackWalkerCallbacks _stackWalkerCallbacks = new RootScannerStackWalkerCallbacks();
-	
-	protected RootScanner() throws CorruptDataException 
+
+	protected RootScanner() throws CorruptDataException
 	{
 		_vm = J9RASHelper.getVM(DataType.getJ9RASPointer());
 		_extensions = GCExtensions.getGCExtensionsPointer();
-		_includeRememberedSetReferences = _extensions.scavengerEnabled() ? true : false;
+		_includeRememberedSetReferences = _extensions.scavengerEnabled();
 		/* Doesn't match up with C code exactly, but this seems to make sensible defaults as most GC cycles set things up this way */
 		_stringTableAsRoot = !_extensions.collectStringConstants();
-		if (J9BuildFlags.gc_dynamicClassUnloading) {
+		if (J9BuildFlags.J9VM_GC_DYNAMIC_CLASS_UNLOADING) {
 			_classDataAsRoots = MM_GCExtensions$DynamicClassUnloading.DYNAMIC_CLASS_UNLOADING_NEVER == _extensions.dynamicClassUnloading();
 		} else {
 			_classDataAsRoots = true;
 		}
 	}
-	
+
 	private class RootScannerStackWalkerCallbacks implements IStackWalkerCallbacks
 	{
 		@Override
@@ -115,10 +115,10 @@ public abstract class RootScanner
 		{
 			return FrameCallbackResult.KEEP_ITERATING;
 		}
-	
+
 		@Override
 		public void objectSlotWalkFunction(WalkState walkState, PointerPointer objectSlot, VoidPointer stackLocation)
-		{	
+		{
 			try {
 				J9ObjectPointer object = J9ObjectPointer.cast(objectSlot.at(0));
 				if (object.notNull()) {
@@ -143,87 +143,87 @@ public abstract class RootScanner
 			}
 		}
 	}
-		
-	public void setStringTableAsRoot(boolean stringTableAsRoot) 
+
+	public void setStringTableAsRoot(boolean stringTableAsRoot)
 	{
 		_stringTableAsRoot = stringTableAsRoot;
 	}
-	
+
 	public void setNurseryReferencesOnly(boolean nurseryReferencesOnly)
 	{
-		if (J9BuildFlags.gc_modronScavenger) {
+		if (J9BuildFlags.J9VM_GC_MODRON_SCAVENGER) {
 			throw new UnsupportedOperationException("Not supported with non-scavenger based garbage collection");
 		}
 		_nurseryReferencesOnly = nurseryReferencesOnly;
 	}
-	
+
 	public void setNurseryReferencesPossibly(boolean nurseryReferencesPossibly)
 	{
-		if (J9BuildFlags.gc_modronScavenger) {
+		if (J9BuildFlags.J9VM_GC_MODRON_SCAVENGER) {
 			throw new UnsupportedOperationException("Not supported with non-scavenger based garbage collection");
 		}
 		_nurseryReferencesPossibly = nurseryReferencesPossibly;
 	}
-	
+
 	public void setIncludeRememberedSetReferences(boolean includeRememberedSetReferences)
 	{
-		if (J9BuildFlags.gc_modronScavenger) {
+		if (J9BuildFlags.J9VM_GC_MODRON_SCAVENGER) {
 			throw new UnsupportedOperationException("Not supported with non-scavenger based garbage collection");
 		}
 		_includeRememberedSetReferences = includeRememberedSetReferences;
 	}
-	
+
 	public void setIncludeStackFrameClassReferences(boolean includeStackFrameClassReferences)
 	{
 		_includeStackFrameClassReferences = includeStackFrameClassReferences;
 	}
-	
+
 	public void setClassDataAsRoots(boolean classDataAsRoots)
 	{
-		if (J9BuildFlags.gc_dynamicClassUnloading) {
+		if (J9BuildFlags.J9VM_GC_DYNAMIC_CLASS_UNLOADING) {
 			throw new UnsupportedOperationException("Not supoprted without dynamic class unloading");
 		}
 		_classDataAsRoots = classDataAsRoots;
 	}
-	
-	public void setTrackVisibleStackFrameDepth(boolean trackVisibleStackFrameDepth) 
+
+	public void setTrackVisibleStackFrameDepth(boolean trackVisibleStackFrameDepth)
 	{
 		_trackVisibleStackFrameDepth = trackVisibleStackFrameDepth;
 	}
-	
+
 	public void setScanStackSlots(boolean scanStackSlots)
 	{
 		_scanStackSlots = scanStackSlots;
 	}
-	
+
 	/* In MM_RootScanner all the doXXXSlot methods have a default implementation
-	 * that simply calls doSlot 
+	 * that simply calls doSlot
 	 */
-	/* General object slot handler to be reimplemented by specializing class. 
+	/* General object slot handler to be reimplemented by specializing class.
 	 * This handler is called for every reference to a J9Object. */
 	//protected abstract void doSlot(J9ObjectPointer slot);
 
-	/* General class slot handler to be reimplemented by specializing class. 
+	/* General class slot handler to be reimplemented by specializing class.
 	 * This handler is called for every reference to a J9Class. */
 	protected abstract void doClassSlot(J9ClassPointer slot);
 
-	/* General class handler to be reimplemented by specializing class. 
+	/* General class handler to be reimplemented by specializing class.
 	 * This handler is called once per class. */
 	protected abstract void doClass(J9ClassPointer clazz);
-	
+
 	protected abstract void doClassLoader(J9ClassLoaderPointer slot);
 
 	protected abstract void doWeakReferenceSlot(J9ObjectPointer slot);
 	protected abstract void doSoftReferenceSlot(J9ObjectPointer slot);
 	protected abstract void doPhantomReferenceSlot(J9ObjectPointer slot);
-	
+
 	protected abstract void doFinalizableObject(J9ObjectPointer slot);
 	protected abstract void doUnfinalizedObject(J9ObjectPointer slot);
 	protected abstract void doOwnableSynchronizerObject(J9ObjectPointer slot);
-	
+
 	protected abstract void doMonitorReference(J9ObjectMonitorPointer objectMonitor);
 	protected abstract void doMonitorLookupCacheSlot(J9ObjectMonitorPointer slot);
-	
+
 	protected abstract void doJNIWeakGlobalReference(J9ObjectPointer slot);
 	protected abstract void doJNIGlobalReferenceSlot(J9ObjectPointer slot);
 
@@ -233,7 +233,7 @@ public abstract class RootScanner
 
 	protected abstract void doStringTableSlot(J9ObjectPointer slot);
 	protected abstract void doStringCacheTableSlot(J9ObjectPointer slot);
-	
+
 	protected abstract void doVMClassSlot(J9ClassPointer slot);
 	protected abstract void doVMThreadSlot(J9ObjectPointer slot);
 	protected abstract void doVMThreadJNISlot(J9ObjectPointer slot);
@@ -242,100 +242,115 @@ public abstract class RootScanner
 	protected abstract void doMemorySpaceSlot(J9ObjectPointer slot);
 	protected abstract void doStackSlot(J9ObjectPointer slot);
 
-	
 	protected void doClassSlot(J9ClassPointer slot, VoidPointer address)
 	{
 		doClassSlot(slot);
 	}
+
 	protected void doClass(J9ClassPointer clazz, VoidPointer address)
 	{
 		doClass(clazz);
 	}
+
 	protected void doClassLoader(J9ClassLoaderPointer slot, VoidPointer address)
 	{
 		doClassLoader(slot);
 	}
+
 	protected void doWeakReferenceSlot(J9ObjectPointer slot, VoidPointer address)
 	{
 		doWeakReferenceSlot(slot);
 	}
+
 	protected void doSoftReferenceSlot(J9ObjectPointer slot, VoidPointer address)
 	{
 		doSoftReferenceSlot(slot);
 	}
+
 	protected void doPhantomReferenceSlot(J9ObjectPointer slot, VoidPointer address)
 	{
 		doPhantomReferenceSlot(slot);
 	}
+
 	protected void doMonitorLookupCacheSlot(J9ObjectMonitorPointer objectMonitor, ObjectMonitorReferencePointer slotAddress)
 	{
 		doMonitorLookupCacheSlot(objectMonitor);
 	}
+
 	protected void doJNIWeakGlobalReference(J9ObjectPointer slot, VoidPointer address)
 	{
 		doJNIWeakGlobalReference(slot);
 	}
+
 	protected void doJNIGlobalReferenceSlot(J9ObjectPointer slot, VoidPointer address)
 	{
 		doJNIGlobalReferenceSlot(slot);
 	}
+
 	protected void doRememberedSlot(J9ObjectPointer slot, VoidPointer address)
 	{
 		doRememberedSlot(slot);
 	}
+
 	protected void doJVMTIObjectTagSlot(J9ObjectPointer slot, VoidPointer address)
 	{
 		doJVMTIObjectTagSlot(slot);
 	}
+
 	protected void doStringTableSlot(J9ObjectPointer slot, VoidPointer address)
 	{
 		doStringTableSlot(slot);
 	}
+
 	protected void doStringCacheTableSlot(J9ObjectPointer slot, VoidPointer address)
 	{
 		doStringCacheTableSlot(slot);
 	}
+
 	protected void doVMClassSlot(J9ClassPointer slot, VoidPointer address)
 	{
 		doVMClassSlot(slot);
 	}
+
 	protected void doVMThreadSlot(J9ObjectPointer slot, VoidPointer address)
 	{
 		doVMThreadSlot(slot);
 	}
+
 	protected void doVMThreadJNISlot(J9ObjectPointer slot, VoidPointer address)
 	{
 		doVMThreadJNISlot(slot);
 	}
+
 	protected void doVMThreadMonitorRecordSlot(J9ObjectPointer slot, VoidPointer address)
 	{
 		doVMThreadMonitorRecordSlot(slot);
 	}
-	
+
 	protected void doNonCollectableObjectSlot(J9ObjectPointer slot, VoidPointer address)
 	{
 		doNonCollectableObjectSlot(slot);
 	}
-	
+
 	protected void doMemoryAreaSlot(J9ObjectPointer slot, VoidPointer address)
 	{
 		doMemorySpaceSlot(slot);
 	}
-	
+
 	/* TODO: lpnguyen add J9ObjectReferencePointer, J9ObjectPointerPointer versions of this in case anyone finds it useful to distinguish between the two */
 	protected void doStackSlot(J9ObjectPointer slot, WalkState walkState, VoidPointer stackLocation)
 	{
 		doStackSlot(slot);
 	}
-	
+
 	protected void scanPermanentClasses() throws CorruptDataException
 	{
 		J9ClassLoaderPointer sysClassLoader = _vm.systemClassLoader();
 		J9ClassLoaderPointer appClassLoader = J9ClassLoaderPointer.cast(_vm.applicationClassLoader());
-		
+
 		GCSegmentIterator segmentIterator = GCSegmentIterator.fromJ9MemorySegmentList(_vm.classMemorySegments(), J9MemorySegment.MEMORY_TYPE_RAM_CLASS);
 		setReachability(Reachability.STRONG);
-		
+
 		while (segmentIterator.hasNext()) {
 			J9MemorySegmentPointer segment = segmentIterator.next();
 			if (segment.classLoader().equals(sysClassLoader) || segment.classLoader().equals(appClassLoader)) {
@@ -346,27 +361,27 @@ public abstract class RootScanner
 			}
 		}
 	}
-	
+
 	/**
 	 * Scan all slots which contain references into the heap.
 	 * @note this includes class references.
-	 * @throws CorruptDataException 
+	 * @throws CorruptDataException
 	 */
 	public void scanAllSlots() throws CorruptDataException
 	{
 		scanClasses();
 		scanVMClassSlots();
-		
+
 		scanClassLoaders();
 
 		scanThreads();
-		
-		if(J9BuildFlags.gc_finalization) {
+
+		if (J9BuildFlags.J9VM_GC_FINALIZATION) {
 			scanFinalizableObjects();
 		}
 
 		scanJNIGlobalReferences();
-		
+
 		scanStringTable();
 
 		scanWeakReferenceObjects();
@@ -374,32 +389,32 @@ public abstract class RootScanner
 		scanSoftReferenceObjects();
 		scanPhantomReferenceObjects();
 
-		if(J9BuildFlags.gc_finalization) {
+		if (J9BuildFlags.J9VM_GC_FINALIZATION) {
 			scanUnfinalizedObjects();
 		}
 
 		scanMonitorReferences();
-		
+
 		scanJNIWeakGlobalReferences();
 
-		if(J9BuildFlags.gc_modronScavenger) {
-			if(_extensions.scavengerEnabled()) {
+		if (J9BuildFlags.J9VM_GC_MODRON_SCAVENGER) {
+			if (_extensions.scavengerEnabled()) {
 				scanRememberedSet();
 			}
 		}
 
-		if(J9BuildFlags.opt_jvmti) {
+		if (J9BuildFlags.J9VM_OPT_JVMTI) {
 			scanJVMTIObjectTagTables();
 		}
-		
+
 		scanOwnableSynchronizerObjects();
 	}
-	
+
 	/**
 	 * Scan all root set references from the VM into the heap.
 	 * For all slots that are hard root references into the heap, the appropriate slot handler will be called.
 	 * @note This includes all references to classes.
-	 * @throws CorruptDataException 
+	 * @throws CorruptDataException
 	 */
 	public void scanRoots() throws CorruptDataException
 	{
@@ -411,7 +426,7 @@ public abstract class RootScanner
 		}
 
 		if (!_nurseryReferencesOnly && !_nurseryReferencesPossibly) {
-			if (J9BuildFlags.gc_dynamicClassUnloading) {
+			if (J9BuildFlags.J9VM_GC_DYNAMIC_CLASS_UNLOADING) {
 				if (_classDataAsRoots) {
 					scanClasses();
 					/* We are scanning all classes, no need to include stack frame references */
@@ -419,24 +434,24 @@ public abstract class RootScanner
 				} else {
 					scanPermanentClasses();
 					setIncludeStackFrameClassReferences(true);
-				}	
+				}
 			} else {
 				scanClasses();
 				setIncludeStackFrameClassReferences(false);
 			}
 		}
-		
+
 		scanThreads();
-		if (J9BuildFlags.gc_finalization) {
+		if (J9BuildFlags.J9VM_GC_FINALIZATION) {
 			scanFinalizableObjects();
 		}
 		scanJNIGlobalReferences();
-		
+
 		if (_stringTableAsRoot && (!_nurseryReferencesOnly && !_nurseryReferencesPossibly)) {
 			scanStringTable();
 		}
 	}
-	
+
 	/**
 	 * Scan all clearable root set references from the VM into the heap.
 	 * For all slots that are clearable root references into the heap, the appropriate slot handler will be
@@ -446,28 +461,28 @@ public abstract class RootScanner
 	public void scanClearable() throws CorruptDataException
 	{
 		scanSoftReferenceObjects();
-		
+
 		scanWeakReferenceObjects();
-		
-		if (J9BuildFlags.gc_finalization) {
+
+		if (J9BuildFlags.J9VM_GC_FINALIZATION) {
 			scanUnfinalizedObjects();
 		}
-		
+
 		scanJNIWeakGlobalReferences();
-		
+
 		scanPhantomReferenceObjects();
-		
+
 		scanMonitorLookupCaches();
 
 		scanMonitorReferences();
-		
+
 		if (!_stringTableAsRoot && (!_nurseryReferencesOnly && !_nurseryReferencesPossibly)) {
 			scanStringTable();
 		}
-		
+
 		scanOwnableSynchronizerObjects();
-		
-		if (J9BuildFlags.gc_modronScavenger) {
+
+		if (J9BuildFlags.J9VM_GC_MODRON_SCAVENGER) {
 			/* Remembered set is clearable in a generational system -- if an object in old
 			 * space dies, and it pointed to an object in new space, it needs to be removed
 			 * from the remembered set.
@@ -477,8 +492,8 @@ public abstract class RootScanner
 				scanRememberedSet();
 			}
 		}
-		
-		if (J9BuildFlags.opt_jvmti) {
+
+		if (J9BuildFlags.J9VM_OPT_JVMTI) {
 			if (_includeJVMTIObjectTagTables) {
 				scanJVMTIObjectTagTables();
 			}
@@ -487,11 +502,14 @@ public abstract class RootScanner
 
 	protected void scanJVMTIObjectTagTables() throws CorruptDataException
 	{
-		if(!J9BuildFlags.opt_jvmti) return;
+		if (!J9BuildFlags.J9VM_OPT_JVMTI) {
+			return;
+		}
+
 		setReachability(Reachability.WEAK);
-		
+
 		J9JVMTIDataPointer jvmtiData = J9JVMTIDataPointer.cast(_vm.jvmtiData());
-		if(jvmtiData.notNull()) {
+		if (jvmtiData.notNull()) {
 			GCJVMTIObjectTagTableListIterator objectTagTableList = GCJVMTIObjectTagTableListIterator.fromJ9JVMTIData(jvmtiData);
 			while(objectTagTableList.hasNext()) {
 				J9JVMTIEnvPointer list = objectTagTableList.next();
@@ -503,40 +521,43 @@ public abstract class RootScanner
 			}
 		}
 	}
-	
-	protected void scanNonCollectableObjects() throws CorruptDataException 
+
+	protected void scanNonCollectableObjects() throws CorruptDataException
 	{
 		scanNonCollectableObjectsInternal(J9MemorySegment.MEMORY_TYPE_IMMORTAL);
 		scanNonCollectableObjectsInternal(J9MemorySegment.MEMORY_TYPE_SCOPED);
 	}
-	
+
 	private void scanNonCollectableObjectsInternal(long memoryType) throws CorruptDataException
 	{
 		GCHeapRegionIterator regionIterator = GCHeapRegionIterator.from();
-		while(regionIterator.hasNext()) {
+		while (regionIterator.hasNext()) {
 			GCHeapRegionDescriptor region = regionIterator.next();
-			
-			if(new UDATA(region.getTypeFlags()).allBitsIn(memoryType)) {
+
+			if (new UDATA(region.getTypeFlags()).allBitsIn(memoryType)) {
 				GCObjectHeapIterator objectIterator = GCObjectHeapIterator.fromHeapRegionDescriptor(region, true, false);
 
-				while(objectIterator.hasNext()) {
+				while (objectIterator.hasNext()) {
 					J9ObjectPointer object = objectIterator.next();
 					doClassSlot(J9ObjectHelper.clazz(object));
 					GCObjectIterator fieldIterator = GCObjectIterator.fromJ9Object(object, true);
 					GCObjectIterator fieldAddressIterator = GCObjectIterator.fromJ9Object(object, true);
-					while(fieldIterator.hasNext()) {
+					while (fieldIterator.hasNext()) {
 						doNonCollectableObjectSlot(fieldIterator.next(), fieldAddressIterator.nextAddress());
 					}
 				}
 			}
 		}
 	}
-	
+
 	protected void scanRememberedSet() throws CorruptDataException
 	{
-		if(!J9BuildFlags.gc_modronScavenger) return;
+		if (!J9BuildFlags.J9VM_GC_MODRON_SCAVENGER) {
+			return;
+		}
+
 		setReachability(Reachability.WEAK);
-		
+
 		GCRememberedSetIterator rememberedSetIterator = GCRememberedSetIterator.from();
 		while (rememberedSetIterator.hasNext()) {
 			MM_SublistPuddlePointer puddle = rememberedSetIterator.next();
@@ -544,7 +565,7 @@ public abstract class RootScanner
 			GCRememberedSetSlotIterator addressIterator = GCRememberedSetSlotIterator.fromSublistPuddle(puddle);
 			while (rememberedSetSlotIterator.hasNext()) {
 				doRememberedSlot(rememberedSetSlotIterator.next(), addressIterator.nextAddress());
-			}		
+			}
 		}
 	}
 
@@ -553,7 +574,7 @@ public abstract class RootScanner
 		setReachability(Reachability.WEAK);
 		GCJNIWeakGlobalReferenceIterator jniWeakGlobalReferenceIterator = GCJNIWeakGlobalReferenceIterator.from();
 		GCJNIWeakGlobalReferenceIterator addressIterator = GCJNIWeakGlobalReferenceIterator.from();
-		while(jniWeakGlobalReferenceIterator.hasNext()) {
+		while (jniWeakGlobalReferenceIterator.hasNext()) {
 			doJNIWeakGlobalReference(jniWeakGlobalReferenceIterator.next(), addressIterator.nextAddress());
 		}
 	}
@@ -562,42 +583,45 @@ public abstract class RootScanner
 	{
 		setReachability(Reachability.WEAK);
 		GCMonitorReferenceIterator monitorReferenceIterator = GCMonitorReferenceIterator.from();
-		while(monitorReferenceIterator.hasNext()) {
+		while (monitorReferenceIterator.hasNext()) {
 			doMonitorReference(monitorReferenceIterator.next());
 		}
 	}
 
 	protected void scanUnfinalizedObjects() throws CorruptDataException
 	{
-		if(!J9BuildFlags.gc_finalization) return;
+		if (!J9BuildFlags.J9VM_GC_FINALIZATION) {
+			return;
+		}
+
 		setReachability(Reachability.WEAK);
-		
+
 		GCUnfinalizedObjectListIterator unfinalizedObjectListIterator = GCUnfinalizedObjectListIterator.from();
-		while(unfinalizedObjectListIterator.hasNext()) {
+		while (unfinalizedObjectListIterator.hasNext()) {
 			doUnfinalizedObject(unfinalizedObjectListIterator.next());
 		}
 	}
-	
+
 	protected void scanOwnableSynchronizerObjects() throws CorruptDataException
 	{
 		setReachability(Reachability.WEAK);
-		
-		GCOwnableSynchronizerObjectListIterator ownableSynchronizerObjectListIterator = GCOwnableSynchronizerObjectListIterator .from();
+
+		GCOwnableSynchronizerObjectListIterator ownableSynchronizerObjectListIterator = GCOwnableSynchronizerObjectListIterator.from();
 
 		while (ownableSynchronizerObjectListIterator.hasNext()) {
 			J9ObjectPointer ownableSynchronizerObject = ownableSynchronizerObjectListIterator.next();
 			doOwnableSynchronizerObject(ownableSynchronizerObject);
 		}
 	}
-	
+
 	protected void scanMonitorLookupCaches() throws CorruptDataException
 	{
 		setReachability(Reachability.WEAK);
-		
+
 		GCVMThreadListIterator vmThreadListIterator = GCVMThreadListIterator.from();
 		while (vmThreadListIterator.hasNext()) {
 			J9VMThreadPointer walkThread = vmThreadListIterator.next();
-			
+
 			ObjectMonitorReferencePointer objectMonitorLookupCache = walkThread.objectMonitorLookupCacheEA();
 			for (long cacheIndex = 0; cacheIndex < J9VMThread.J9VMTHREAD_OBJECT_MONITOR_CACHE_SIZE; cacheIndex++) {
 				ObjectMonitorReferencePointer slotAddress = objectMonitorLookupCache.add(cacheIndex);
@@ -605,22 +629,22 @@ public abstract class RootScanner
 			}
 		}
 	}
-	
+
 	protected void scanPhantomReferenceObjects() throws CorruptDataException
 	{
-//		if(!J9BuildFlags.gc_referenceObjects) return;
+//		if (!J9BuildFlags.J9VM_GC_REFERENCE_OBJECTS) return;
 //		setReachability(Reachability.WEAK);
 	}
 
 	protected void scanSoftReferenceObjects() throws CorruptDataException
 	{
-//		if(!J9BuildFlags.gc_referenceObjects) return;
+//		if (!J9BuildFlags.J9VM_GC_REFERENCE_OBJECTS) return;
 //		setReachability(Reachability.WEAK);
 	}
 
 	protected void scanWeakReferenceObjects() throws CorruptDataException
 	{
-//		if(!J9BuildFlags.gc_weakReferenceObjects) return;
+//		if (!J9BuildFlags.J9VM_GC_WEAK_REFERENCE_OBJECTS) return;
 //		setReachability(Reachability.WEAK);
 	}
 
@@ -631,41 +655,43 @@ public abstract class RootScanner
 		} else {
 			setReachability(Reachability.STRONG);
 		}
-		
+
 		GCStringTableIterator stringTableIterator = GCStringTableIterator.from();
 		GCStringTableIterator stringTableAddressIterator = GCStringTableIterator.from();
-		while(stringTableIterator.hasNext()) {
+		while (stringTableIterator.hasNext()) {
 			doStringTableSlot(stringTableIterator.next(), stringTableAddressIterator.nextAddress());
 		}
-		
+
 		GCStringCacheTableIterator cacheIterator = GCStringCacheTableIterator.from();
 		GCStringCacheTableIterator cacheAddressIterator = GCStringCacheTableIterator.from();
-		while(cacheIterator.hasNext()) {
+		while (cacheIterator.hasNext()) {
 			doStringCacheTableSlot(cacheIterator.next(), cacheAddressIterator.nextAddress());
 		}
-		
 	}
 
 	protected void scanJNIGlobalReferences() throws CorruptDataException
 	{
 		setReachability(Reachability.STRONG);
-	
+
 		GCJNIGlobalReferenceIterator jniGlobalReferenceIterator = GCJNIGlobalReferenceIterator.from();
 		GCJNIGlobalReferenceIterator addressIterator = GCJNIGlobalReferenceIterator.from();
-		while(jniGlobalReferenceIterator.hasNext()) {
+		while (jniGlobalReferenceIterator.hasNext()) {
 			doJNIGlobalReferenceSlot(jniGlobalReferenceIterator.next(), addressIterator.nextAddress());
-		}	
+		}
 	}
 
 	protected void scanFinalizableObjects() throws CorruptDataException
 	{
-		if(!J9BuildFlags.gc_finalization) return;
+		if (!J9BuildFlags.J9VM_GC_FINALIZATION) {
+			return;
+		}
+
 		setReachability(Reachability.STRONG);
-		
+
 		/* New style finalizable object list */
 		GCFinalizableObjectIterator finalizableObjectIterator = GCFinalizableObjectIterator.from();
-		while(finalizableObjectIterator.hasNext()) {
-			doFinalizableObject(finalizableObjectIterator.next());	
+		while (finalizableObjectIterator.hasNext()) {
+			doFinalizableObject(finalizableObjectIterator.next());
 		}
 	}
 
@@ -682,21 +708,21 @@ public abstract class RootScanner
 			while (threadSlotIterator.hasNext()) {
 				doVMThreadSlot(threadSlotIterator.next(), threadSlotAddressIterator.nextAddress());
 			}
-			
+
 			GCVMThreadJNISlotIterator jniSlotIterator = GCVMThreadJNISlotIterator.fromJ9VMThread(walkThread);
 			GCVMThreadJNISlotIterator jniSlotAddressIterator = GCVMThreadJNISlotIterator.fromJ9VMThread(walkThread);
 			while (jniSlotIterator.hasNext()) {
 				doVMThreadJNISlot(jniSlotIterator.next(), jniSlotAddressIterator.nextAddress());
 			}
 
-			if (J9BuildFlags.interp_hotCodeReplacement) {
+			if (J9BuildFlags.J9VM_INTERP_HOT_CODE_REPLACEMENT) {
 				GCVMThreadMonitorRecordSlotIterator monitorRecordSlotIterator = GCVMThreadMonitorRecordSlotIterator.fromJ9VMThread(walkThread);
 				GCVMThreadMonitorRecordSlotIterator addressIterator = GCVMThreadMonitorRecordSlotIterator.fromJ9VMThread(walkThread);
 				while (monitorRecordSlotIterator.hasNext()) {
 					doVMThreadMonitorRecordSlot(monitorRecordSlotIterator.next(), addressIterator.nextAddress());
 				}
 			}
-			
+
 			if (_scanStackSlots) {
 				GCVMThreadStackSlotIterator.scanSlots(walkThread, _stackWalkerCallbacks, _includeStackFrameClassReferences, _trackVisibleStackFrameDepth);
 			}
@@ -707,15 +733,15 @@ public abstract class RootScanner
 	{
 		J9ClassLoaderPointer sysClassLoader = _vm.systemClassLoader();
 		J9ClassLoaderPointer appClassLoader = J9ClassLoaderPointer.cast(_vm.applicationClassLoader());
-		
+
 		GCClassLoaderIterator classLoaderIterator = GCClassLoaderIterator.from();
 		while (classLoaderIterator.hasNext()) {
 			J9ClassLoaderPointer loader = classLoaderIterator.next();
-			
+
 			Reachability reachability;
-			if (J9BuildFlags.gc_dynamicClassUnloading) {
+			if (J9BuildFlags.J9VM_GC_DYNAMIC_CLASS_UNLOADING) {
 				long dynamicClassUnloadingFlag = _extensions.dynamicClassUnloading();
-				
+
 				if (MM_GCExtensions$DynamicClassUnloading.DYNAMIC_CLASS_UNLOADING_NEVER == dynamicClassUnloadingFlag) {
 					reachability = Reachability.STRONG;
 				} else {
@@ -728,7 +754,7 @@ public abstract class RootScanner
 			} else {
 				reachability = Reachability.STRONG;
 			}
-			
+
 			setReachability(reachability);
 
 			doClassLoader(loader);
@@ -749,19 +775,18 @@ public abstract class RootScanner
 	{
 		J9ClassLoaderPointer sysClassLoader = _vm.systemClassLoader();
 		J9ClassLoaderPointer appClassLoader = J9ClassLoaderPointer.cast(_vm.applicationClassLoader());
-		
+
 		GCSegmentIterator segmentIterator = GCSegmentIterator.fromJ9MemorySegmentList(_vm.classMemorySegments(), J9MemorySegment.MEMORY_TYPE_RAM_CLASS);
-		
-		
-		while(segmentIterator.hasNext()) {
+
+		while (segmentIterator.hasNext()) {
 			J9MemorySegmentPointer segment = segmentIterator.next();
 			GCClassHeapIterator classHeapIterator = GCClassHeapIterator.fromJ9MemorySegment(segment);
 			while (classHeapIterator.hasNext()) {
 				J9ClassPointer clazz = classHeapIterator.next();
 				Reachability reachability;
-				if (J9BuildFlags.gc_dynamicClassUnloading) {
+				if (J9BuildFlags.J9VM_GC_DYNAMIC_CLASS_UNLOADING) {
 					long dynamicClassUnloadingFlag = _extensions.dynamicClassUnloading();
-					
+
 					if (MM_GCExtensions$DynamicClassUnloading.DYNAMIC_CLASS_UNLOADING_NEVER == dynamicClassUnloadingFlag) {
 						reachability = Reachability.STRONG;
 					} else {
@@ -774,19 +799,19 @@ public abstract class RootScanner
 				} else {
 					reachability = Reachability.STRONG;
 				}
-				
+
 				setReachability(reachability);
-				
+
 				doClass(clazz);
 			}
 		}
 	}
-	
+
 	private void setReachability(Reachability r)
 	{
 		_reachability = r;
 	}
-	
+
 	protected Reachability getReachability()
 	{
 		return _reachability;

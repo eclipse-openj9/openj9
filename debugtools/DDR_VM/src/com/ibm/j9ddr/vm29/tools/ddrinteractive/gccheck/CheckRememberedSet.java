@@ -37,22 +37,21 @@ class CheckRememberedSet extends Check
 	{
 		try {
 			/* no point checking if the scavenger wasn't turned on */
-			if(!J9BuildFlags.gc_modronScavenger || !_extensions.scavengerEnabled()) {
+			if (!J9BuildFlags.J9VM_GC_MODRON_SCAVENGER || !_extensions.scavengerEnabled()) {
 				return;
 			}
-			
+
 			GCRememberedSetIterator remSetIterator = GCRememberedSetIterator.from();
-			while(remSetIterator.hasNext()) {
+			while (remSetIterator.hasNext()) {
 				MM_SublistPuddlePointer puddle = remSetIterator.next();
 				GCRememberedSetSlotIterator remSetSlotIterator = GCRememberedSetSlotIterator.fromSublistPuddle(puddle);
-				while(remSetSlotIterator.hasNext()) {
+				while (remSetSlotIterator.hasNext()) {
 					PointerPointer objectIndirect = PointerPointer.cast(remSetSlotIterator.nextAddress());
-					if(_engine.checkSlotRememberedSet(objectIndirect, puddle)  != J9MODRON_SLOT_ITERATOR_OK) {
+					if (_engine.checkSlotRememberedSet(objectIndirect, puddle) != J9MODRON_SLOT_ITERATOR_OK) {
 						return;
 					}
 				}
 			}
-			
 		} catch (CorruptDataException e) {
 			// TODO: handle exception
 		}
@@ -70,11 +69,11 @@ class CheckRememberedSet extends Check
 		try {
 			GCRememberedSetIterator remSetIterator = GCRememberedSetIterator.from();
 			ScanFormatter formatter = new ScanFormatter(this, "RememberedSet Sublist", getGCExtensions().rememberedSetEA());
-			while(remSetIterator.hasNext()) {
+			while (remSetIterator.hasNext()) {
 				MM_SublistPuddlePointer puddle = remSetIterator.next();
-				formatter.section("puddle", puddle);		
+				formatter.section("puddle", puddle);
 				GCRememberedSetSlotIterator remSetSlotIterator = GCRememberedSetSlotIterator.fromSublistPuddle(puddle);
-				while(remSetSlotIterator.hasNext()) {
+				while (remSetSlotIterator.hasNext()) {
 					formatter.entry(remSetSlotIterator.next());
 				}
 				formatter.endSection();

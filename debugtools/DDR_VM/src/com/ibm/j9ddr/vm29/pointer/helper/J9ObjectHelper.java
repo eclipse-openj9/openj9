@@ -42,7 +42,7 @@ import com.ibm.j9ddr.vm29.structure.J9ObjectFull;
 import com.ibm.j9ddr.vm29.types.*;
 import static com.ibm.j9ddr.vm29.structure.J9Consts.*;
 
-public class J9ObjectHelper 
+public class J9ObjectHelper
 {
 	private static int cacheSize = 32;
 	private static J9ObjectPointer[] keys;
@@ -71,29 +71,29 @@ public class J9ObjectHelper
 					throw new RuntimeException(e);
 				}
 			} else {
-				compressObjectReferences = J9BuildFlags.gc_compressedPointers;
+				compressObjectReferences = J9BuildFlags.J9VM_GC_COMPRESSED_POINTERS;
 			}
 		} catch (CorruptDataException e) {
 			throw new RuntimeException(e);
 		}
 	}
-	
+
 	/**
 	 * Returns TRUE if an object is indexable, FALSE otherwise.
 	 * @param objectPtr Pointer to an object
 	 * @return TRUE if an object is indexable, FALSE otherwise
-	 * @throws CorruptDataException 
-	 */	
+	 * @throws CorruptDataException
+	 */
 	public static boolean isIndexable(J9ObjectPointer objPointer) throws CorruptDataException
-	{		
+	{
 		return ObjectModel.isIndexable(objPointer);
 	}
-	
+
 	public static U32 flags(J9ObjectPointer objPointer) throws CorruptDataException
-	{		
+	{
 		long bitmask = J9Consts.J9_REQUIRED_CLASS_ALIGNMENT - 1;
 		UDATA clazz = rawClazz(objPointer);
-		
+
 		return new U32(clazz.bitAnd(bitmask));
 	}
 
@@ -136,35 +136,33 @@ public class J9ObjectHelper
 		return classPointer;
 	}
 
-	
-	public static UDATA monitor(J9ObjectPointer objPointer) throws CorruptDataException 
+	public static UDATA monitor(J9ObjectPointer objPointer) throws CorruptDataException
 	{
 		// TODO : lockNursery support
-		throw new UnsupportedOperationException("lockNursery not supported yet");			
+		throw new UnsupportedOperationException("lockNursery not supported yet");
 	}
-	
+
 	/**
 	 * Return the name of this J9Object's class
 	 */
-	public static String getClassName(J9ObjectPointer objPointer) throws CorruptDataException 
+	public static String getClassName(J9ObjectPointer objPointer) throws CorruptDataException
 	{
 		return J9ClassHelper.getName(clazz(objPointer));
 	}
-	
-	public static String getJavaName(J9ObjectPointer objPointer) throws CorruptDataException 
+
+	public static String getJavaName(J9ObjectPointer objPointer) throws CorruptDataException
 	{
 		return J9ClassHelper.getJavaName(clazz(objPointer));
 	}
-	
 
-	public static String stringValue(J9ObjectPointer objPointer) throws CorruptDataException 
+	public static String stringValue(J9ObjectPointer objPointer) throws CorruptDataException
 	{
 		if (!J9ObjectHelper.getClassName(objPointer).equals("java/lang/String")) {
 			throw new IllegalArgumentException();
 		}
-		
+
 		// No synchronization needed here because the type of java/lang/String.value is immutable
-		if (isStringBackedByByteArray == null) {			
+		if (isStringBackedByByteArray == null) {
 			try {
 				getObjectField(objPointer, getFieldOffset(objPointer, "value", "[B"));
 
@@ -175,22 +173,22 @@ public class J9ObjectHelper
 				isStringBackedByByteArray = Boolean.valueOf(false);
 			}
 		}
-		
-		J9ObjectPointer valueObject = 
-			isStringBackedByByteArray.booleanValue() ? 
+
+		J9ObjectPointer valueObject =
+			isStringBackedByByteArray.booleanValue() ?
 				getObjectField(objPointer, getFieldOffset(objPointer, "value", "[B")) :
 				getObjectField(objPointer, getFieldOffset(objPointer, "value", "[C"));
-		
+
 		if (valueObject.isNull()) {
 			return "<Uninitialized String>";
 		}
-		
+
 		int stringLength = 0;
-		
+
 		boolean isStringCompressed = false;
 
 		J9IndexableObjectPointer valueArray = J9IndexableObjectPointer.cast(valueObject);
-		
+
 		if (isStringBackedByByteArray.booleanValue()) {
 			byte coder = getByteField(objPointer, getFieldOffset(objPointer, "coder", "B"));
 
@@ -220,7 +218,7 @@ public class J9ObjectHelper
 		}
 
 		char[] charValue = new char[stringLength];
-		
+
 		if (isStringBackedByByteArray.booleanValue()) {
 			byte[] value = (byte[]) J9IndexableObjectHelper.getData(valueArray);
 
@@ -235,7 +233,7 @@ public class J9ObjectHelper
 			}
 		} else {
 			char[] value = (char[]) J9IndexableObjectHelper.getData(valueArray);
-			
+
 			if (isStringCompressed) {
 				for (int i = 0; i < stringLength; ++i) {
 					charValue[i] = byteToCharUnsigned(getByteFromArrayByIndex(value, i));
@@ -246,22 +244,22 @@ public class J9ObjectHelper
 				}
 			}
 		}
-		
-		return new String(charValue);		
+
+		return new String(charValue);
 	}
-	
+
 	/**
 	 * Returns a String field from the object or its super classes.  The field may be
 	 * a static field or an instance field.
-	 * 
+	 *
 	 * @param offset the offset of the field to return
 	 * @return the String value of the field
 	 * @throws CorruptDataException if there is a problem reading the underlying data from the core file
 	 */
-	public static String getStringField(J9ObjectPointer objPointer, J9ObjectFieldOffset offset) throws CorruptDataException 
+	public static String getStringField(J9ObjectPointer objPointer, J9ObjectFieldOffset offset) throws CorruptDataException
 	{
 		J9ObjectPointer stringObject = getObjectField(objPointer, offset);
-		if(stringObject.isNull()) {
+		if (stringObject.isNull()) {
 			return null;
 		}
 		return J9ObjectHelper.stringValue(stringObject);
@@ -270,12 +268,12 @@ public class J9ObjectHelper
 	/**
 	 * Returns an int field from the object or its super classes.  The field may be
 	 * a static field or an instance field.
-	 * 
+	 *
 	 * @param offset the offset of the field to return
 	 * @return the int value of the field
 	 * @throws CorruptDataException if there is a problem reading the underlying data from the core file
 	 */
-	public static int getIntField(J9ObjectPointer objPointer, J9ObjectFieldOffset offset) throws CorruptDataException 
+	public static int getIntField(J9ObjectPointer objPointer, J9ObjectFieldOffset offset) throws CorruptDataException
 	{
 		I32Pointer pointer;
 		if (offset.isStatic()) {
@@ -285,24 +283,24 @@ public class J9ObjectHelper
 		}
 		return pointer.at(0).intValue();
 	}
-	
+
 	/**
 	 * Returns a short field from the object or its super classes.  The field may be
 	 * a static field or an instance field.
-	 * 
+	 *
 	 * @param offset the offset of the field to return
 	 * @return the short value of the field
 	 * @throws CorruptDataException if there is a problem reading the underlying data from the core file
 	 */
-	public static short getShortField(J9ObjectPointer objPointer, J9ObjectFieldOffset offset) throws CorruptDataException 
+	public static short getShortField(J9ObjectPointer objPointer, J9ObjectFieldOffset offset) throws CorruptDataException
 	{
 		return (short)(getIntField(objPointer, offset) & 0xFFFF);
 	}
-	
+
 	/**
 	 * Returns a float field from the object or its super classes.  The field may be
 	 * a static field or an instance field.
-	 * 
+	 *
 	 * @param offset the offset of the field to return
 	 * @return the float value of the field
 	 * @throws CorruptDataException if there is a problem reading the underlying data from the core file
@@ -312,11 +310,11 @@ public class J9ObjectHelper
 		int data = getIntField(objPointer, offset);
 		return Float.intBitsToFloat(data);
 	}
-	
+
 	/**
 	 * Returns a double field from the object or its super classes.  The field may be
 	 * a static field or an instance field.
-	 * 
+	 *
 	 * @param offset the offset of the field to return
 	 * @return the float value of the field
 	 * @throws CorruptDataException if there is a problem reading the underlying data from the core file
@@ -326,55 +324,55 @@ public class J9ObjectHelper
 		long data = getLongField(objPointer, offset);
 		return Double.longBitsToDouble(data);
 	}
-	
+
 	/**
 	 * Returns a char field from the object or its super classes.  The field may be
 	 * a static field or an instance field.
-	 * 
+	 *
 	 * @param offset the offset of the field to return
 	 * @return the char value of the field
 	 * @throws CorruptDataException if there is a problem reading the underlying data from the core file
 	 */
-	public static char getCharField(J9ObjectPointer objPointer, J9ObjectFieldOffset offset) throws CorruptDataException 
+	public static char getCharField(J9ObjectPointer objPointer, J9ObjectFieldOffset offset) throws CorruptDataException
 	{
 		return (char)(getIntField(objPointer, offset) & 0xFFFF);
 	}
-	
+
 	/**
 	 * Returns an byte field from the object or its super classes.  The field may be
 	 * a static field or an instance field.
-	 * 
+	 *
 	 * @param offset the offset of the field to return
 	 * @return the byte value of the field
 	 * @throws CorruptDataException if there is a problem reading the underlying data from the core file
 	 */
 	public static byte getByteField(J9ObjectPointer objPointer, J9ObjectFieldOffset offset) throws CorruptDataException
 	{
-		return (byte)(getIntField(objPointer, offset) & 0xFF); 
+		return (byte)(getIntField(objPointer, offset) & 0xFF);
 	}
-	
+
 	/**
 	 * Returns an boolean field from the object or its super classes.  The field may be
 	 * a static field or an instance field.
-	 * 
+	 *
 	 * @param offset the offset of the field to return
 	 * @return the boolean value of the field
 	 * @throws CorruptDataException if there is a problem reading the underlying data from the core file
 	 */
-	public static boolean getBooleanField(J9ObjectPointer objPointer, J9ObjectFieldOffset offset) throws CorruptDataException 
+	public static boolean getBooleanField(J9ObjectPointer objPointer, J9ObjectFieldOffset offset) throws CorruptDataException
 	{
-		return (getIntField(objPointer, offset) != 0); 
+		return (getIntField(objPointer, offset) != 0);
 	}
-	
+
 	/**
 	 * Returns an long field from the object or its super classes.  The field may be
 	 * a static field or an instance field.
-	 * 
+	 *
 	 * @param offset the offset of the field to return
 	 * @return the long value of the field
 	 * @throws CorruptDataException if there is a problem reading the underlying data from the core file
 	 */
-	public static long getLongField(J9ObjectPointer objPointer, J9ObjectFieldOffset offset) throws CorruptDataException 
+	public static long getLongField(J9ObjectPointer objPointer, J9ObjectFieldOffset offset) throws CorruptDataException
 	{
 		I64Pointer pointer;
 		if (offset.isStatic()) {
@@ -382,18 +380,18 @@ public class J9ObjectHelper
 		} else {
 			pointer = I64Pointer.cast(objPointer.addOffset(offset.getOffsetOrAddress()).addOffset(ObjectModel.getHeaderSize(objPointer)));
 		}
-		 return pointer.at(0).longValue();
+		return pointer.at(0).longValue();
 	}
-	
+
 	/**
 	 * Returns an Object field from the object or its super classes.  The field may be
 	 * a static field or an instance field.
-	 * 
+	 *
 	 * @param offset the offset of the field to return
 	 * @return the J9Object value of the field
 	 * @throws CorruptDataException if there is a problem reading the underlying data from the core file
 	 */
-	public static J9ObjectPointer getObjectField(J9ObjectPointer objPointer, J9ObjectFieldOffset offset) throws CorruptDataException 
+	public static J9ObjectPointer getObjectField(J9ObjectPointer objPointer, J9ObjectFieldOffset offset) throws CorruptDataException
 	{
 		UDATAPointer pointer;
 		if (offset.isStatic()) {
@@ -403,7 +401,7 @@ public class J9ObjectHelper
 			return ObjectReferencePointer.cast(objPointer.addOffset(ObjectModel.getHeaderSize(objPointer)).addOffset(offset.getOffsetOrAddress())).at(0);
 		}
 	}
-	
+
 	public static J9ObjectFieldOffset getFieldOffset(J9ObjectPointer objPointer, String name, String signature) throws CorruptDataException
 	{
 		J9ObjectFieldOffset result = J9ClassHelper.checkFieldOffsetCache(J9ObjectHelper.clazz(objPointer), name, signature);
@@ -413,7 +411,7 @@ public class J9ObjectHelper
 		}
 		return result;
 	}
-	
+
 	// FIXME: Probably want to cache the entire class hierarchy the 1st time through for any field
 	private static J9ObjectFieldOffset readFieldOffset(J9ObjectPointer objPointer, String name, String signature) throws CorruptDataException
 	{
@@ -428,16 +426,15 @@ public class J9ObjectHelper
 			}
 			currentClass = J9ClassHelper.superclass(currentClass);
 		}
-	
+
 		throw new NoSuchElementException(String.format("No field named %s with signature %s in %s", name, signature, J9ObjectHelper.getClassName(objPointer)));
 	}
 
-	
 	private static J9ClassPointer checkClassCache(J9ObjectPointer objPointer)
 	{
 		probes++;
-		for(int i = 0; i < cacheSize; i++) {
-			if(keys[i].equals(objPointer)) {
+		for (int i = 0; i < cacheSize; i++) {
+			if (keys[i].equals(objPointer)) {
 				hits++;
 				counts[i]++;
 				return values[i];
@@ -445,13 +442,13 @@ public class J9ObjectHelper
 		}
 		return null;
 	}
-	
+
 	private static void setClassCache(J9ObjectPointer objPointer, J9ClassPointer classPointer)
 	{
 		int min = counts[0];
 		int minIndex = 0;
-		for(int i = 1; i < cacheSize; i++) {
-			if(counts[i] < min) {
+		for (int i = 1; i < cacheSize; i++) {
+			if (counts[i] < min) {
 				min = counts[i];
 				minIndex = i;
 			}
@@ -460,7 +457,7 @@ public class J9ObjectHelper
 		values[minIndex] = classPointer;
 		counts[minIndex] = 1;
 	}
-	
+
 	private static void initializeCache()
 	{
 		keys = new J9ObjectPointer[cacheSize];
@@ -468,20 +465,20 @@ public class J9ObjectHelper
 		counts = new int[cacheSize];
 		probes = 0;
 		hits = 0;
-		for(int i = 0; i < cacheSize; i++) {
+		for (int i = 0; i < cacheSize; i++) {
 			keys[i] = J9ObjectPointer.NULL;
 		}
 	}
-	
+
 	public static byte getByteFromArrayByIndex(Object obj, int index) {
 		Class<?> clazz = obj.getClass();
-		
+
 		if (clazz == byte[].class) {
 			return ((byte[]) obj)[index];
 		} else if (clazz == char[].class) {
 			char[] array = (char[]) obj;
-			
-			if (J9BuildFlags.env_littleEndian) {
+
+			if (J9BuildFlags.J9VM_ENV_LITTLE_ENDIAN) {
 				if ((index % 2) == 1) {
 					return (byte) ((array[index / 2] & 0xFF00) >>> 8);
 				} else {
@@ -504,10 +501,10 @@ public class J9ObjectHelper
 
 		if (clazz == byte[].class) {
 			index = index << 1;
-			
+
 			byte[] array = (byte[]) obj;
-			
-			if (J9BuildFlags.env_littleEndian) {
+
+			if (J9BuildFlags.J9VM_ENV_LITTLE_ENDIAN) {
 				return (char) ((byteToCharUnsigned(array[index + 1]) << 8) | (byteToCharUnsigned(array[index]) << 0));
 			} else {
 				return (char) ((byteToCharUnsigned(array[index + 1]) << 0) | (byteToCharUnsigned(array[index]) << 8));
@@ -518,11 +515,11 @@ public class J9ObjectHelper
 			throw new RuntimeException("Unknown array type for bit manipulation");
 		}
 	}
-	
+
 	private static char byteToCharUnsigned(byte b) {
 		return (char) ((char) b & (char) 0x00FF);
 	}
-	
+
 	public static void reportClassCacheStats()
 	{
 		double hitRate = (double)hits / (double)probes * 100.0;

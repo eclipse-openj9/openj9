@@ -40,22 +40,21 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9ROMClassPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMMethodPointer;
 import com.ibm.j9ddr.vm29.pointer.helper.J9MethodHelper;
 
-public class BytecodesCommand extends Command 
+public class BytecodesCommand extends Command
 {
 	public BytecodesCommand()
 	{
 		addCommand("bytecodes", "<address>[,maps]", "cfdump the specified J9Method. (maps is optional)");
 	}
-	
-	
+
 	// dbgext_bytecodes
-	public void run(String command, String[] args, Context context, PrintStream out) throws DDRInteractiveCommandException 
+	public void run(String command, String[] args, Context context, PrintStream out) throws DDRInteractiveCommandException
 	{
 		try {
-			long address = CommandUtils.parsePointer(args[0], J9BuildFlags.env_data64);
-			
+			long address = CommandUtils.parsePointer(args[0], J9BuildFlags.J9VM_ENV_DATA64);
+
 			J9MethodPointer ramMethod = J9MethodPointer.cast(address);
-			
+
 			long maps = 0;
 			if (ramMethod.isNull()) {
 				CommandUtils.dbgPrint(out, "bad or missing ram method addr\n");
@@ -68,7 +67,7 @@ public class BytecodesCommand extends Command
 				maps |= BCT_DumpMaps;
 			}
 
-			if (J9BuildFlags.env_littleEndian) {
+			if (J9BuildFlags.J9VM_ENV_LITTLE_ENDIAN) {
 				maps |= BCT_LittleEndianOutput;
 			} else {
 				maps |= BCT_BigEndianOutput;

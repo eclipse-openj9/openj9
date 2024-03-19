@@ -45,7 +45,7 @@ class GCScavengerForwardedHeader_V2 extends GCScavengerForwardedHeader_V1
 	@Override
 	protected J9ObjectPointer getForwardedObjectNoCheck() throws CorruptDataException
 	{
-		if(J9ObjectHelper.compressObjectReferences && !J9BuildFlags.env_littleEndian) {
+		if(J9ObjectHelper.compressObjectReferences && !J9BuildFlags.J9VM_ENV_LITTLE_ENDIAN) {
 			/* compressed big endian - read two halves separately */
 			U32 low = U32Pointer.cast(objectPointer.clazzEA()).at(0).bitAnd(~ALL_TAGS);
 			U32 high = U32Pointer.cast(objectPointer.clazzEA()).at(1);

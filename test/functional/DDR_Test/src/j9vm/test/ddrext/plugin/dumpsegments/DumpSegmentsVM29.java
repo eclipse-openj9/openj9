@@ -41,8 +41,7 @@ import com.ibm.j9ddr.vm29.pointer.helper.J9RASHelper;
 @DebugExtension(VMVersion="29")
 public class DumpSegmentsVM29 extends Command {
 	private J9JavaVMPointer jvm = J9JavaVMPointer.NULL;
-//	private J9JavaVMPointer jvm = null;
-	
+
 	{
 		CommandDescription cd = addCommand("dumpsegs", "<segname(s)>", "Dumps out the segments for a given name");
 		cd.addSubCommand("all", "", "Dumps all memory segments");
@@ -52,18 +51,33 @@ public class DumpSegmentsVM29 extends Command {
 		cd.addSubCommand("jitc", "", "JIT code cache");
 		cd.addSubCommand("Ex", "", "shortcut for !dumpsegs obj,jitc,jitd");
 	}
-	
-	public void run(String command, String[] args, Context context, PrintStream out)
-		throws DDRInteractiveCommandException {
-			// TODO Auto-generated method stub
 
+	public void run(String command, String[] args, Context context, PrintStream out)
+			throws DDRInteractiveCommandException {
+		try {
+			jvm = J9RASHelper.getVM(DataType.getJ9RASPointer());
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new DDRInteractiveCommandException("Could not locate the JVM pointer", e);
+		}
+		if (command.equalsIgnoreCase("!dumpallsegments")) {
 			try {
-				jvm = J9RASHelper.getVM(DataType.getJ9RASPointer());
-			} catch (Exception e) {
+				printAllMemorySegments(out);
+				return;
+			} catch (CorruptDataException e) {
+				// TODO Auto-generated catch block
 				e.printStackTrace();
-				throw new DDRInteractiveCommandException("Could not locate the JVM pointer", e);
 			}
-			if (command.equalsIgnoreCase("!dumpallsegments")) {
+		}
+		if (args.length == 0) {
+			printError("Syntax error!", out);
+			return;
+		}
+		for (int i = 0; i < args.length; i++) {
+			String argument = args[i].toLowerCase();
+			int flag = 0;
+
+			if (argument.contains("all"))
 				try {
 					printAllMemorySegments(out);
 					return;
@@ -71,233 +85,204 @@ public class DumpSegmentsVM29 extends Command {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-			}
-			if( args.length == 0) {
-				printError("Syntax error!", out);
+			if (argument.contains("obj"))
+				try {
+					printObjectMemory(out);
+					flag = 1;
+					out.println();
+				} catch (CorruptDataException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			if (argument.contains("int"))
+				try {
+					printInternalMemory(out);
+					flag = 1;
+					out.println();
+				} catch (CorruptDataException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			if (argument.contains("class"))
+				try {
+					printClassMemory(out);
+					flag = 1;
+					out.println();
+				} catch (CorruptDataException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			if (argument.contains("jitc"))
+				try {
+					printJitCodeCache(out);
+					flag = 1;
+					out.println();
+				} catch (CorruptDataException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			if (argument.contains("jitd"))
+				try {
+					printJitDataCache(out);
+					flag = 1;
+					out.println();
+				} catch (CorruptDataException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			if (flag != 1) {
+				printError("Unknown argument " + args[i], out);
 				return;
 			}
-			for(int i=0 ; i< args.length; i++) {
-				String argument = args[i].toLowerCase();
-				int flag = 0;
+		}
+	}
 
-				if(argument.contains("all"))
-					try {
-						printAllMemorySegments(out);
-						return;
-					} catch (CorruptDataException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-					if(argument.contains("obj"))
-						try {
-							printObjectMemory(out);
-							flag = 1;
-							out.println();
-						} catch (CorruptDataException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-						if(argument.contains("int"))
-							try {
-								printInternalMemory(out);
-								flag = 1;
-								out.println();
-							} catch (CorruptDataException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							}
-							if(argument.contains("class"))
-								try {
-									printClassMemory(out);
-									flag = 1;
-									out.println();
-								} catch (CorruptDataException e) {
-									// TODO Auto-generated catch block
-									e.printStackTrace();
-								}
-								if(argument.contains("jitc"))
-									try {
-										printJitCodeCache(out);
-										flag = 1;
-										out.println();
-									} catch (CorruptDataException e) {
-										// TODO Auto-generated catch block
-										e.printStackTrace();
-									}
-									if(argument.contains("jitd"))
-										try {
-											printJitDataCache(out);
-											flag = 1;
-											out.println();
-										} catch (CorruptDataException e) {
-											// TODO Auto-generated catch block
-											e.printStackTrace();
-										}
-										if(flag!=1) {
-											printError("Unknown argument "+args[i],out);
-											return;
-										}
+	private void printError(String errString, PrintStream out) {
+		// TODO Auto-generated method stub
+		out.println("Err! : " + errString);
+	}
+
+	private void printObjectMemory(PrintStream out) throws CorruptDataException {
+		//		out.println("--Object memory unavailable. Please use !dumpallregions--");
+		try {
+			objectSegmentIterateAndPrint(jvm.objectMemorySegments().longValue(), out, "Object Memory");
+		} catch (DDRInteractiveCommandException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	private void printInternalMemory(PrintStream out) throws CorruptDataException {
+		segmentIterateAndPrint(jvm.memorySegments(), out, "Internal Memory");
+	}
+
+	private void printClassMemory(PrintStream out) throws CorruptDataException {
+		segmentIterateAndPrint(jvm.classMemorySegments(), out, "Class Memory");
+	}
+
+	private void printJitCodeCache(PrintStream out) throws CorruptDataException {
+		if (J9BuildFlags.J9VM_INTERP_NATIVE_SUPPORT) {
+			if (jvm.jitConfig().isNull() == false) {
+				segmentIterateAndPrint(jvm.jitConfig().codeCacheList(), out, "JIT Code Cache");
 			}
 		}
+	}
 
-		private void printError(String errString, PrintStream out) {
-			// TODO Auto-generated method stub
-			out.println("Err! : "+errString);
+	private void printJitDataCache(PrintStream out) throws CorruptDataException {
+		if (J9BuildFlags.J9VM_INTERP_NATIVE_SUPPORT) {
+			if (jvm.jitConfig().isNull() == false) {
+				segmentIterateAndPrint(jvm.jitConfig().dataCacheList(), out, "JIT Data Cache");
+			}
 		}
+	}
 
-		private void printObjectMemory(PrintStream out) throws CorruptDataException {
-			//		out.println("--Object memory unavailable. Please use !dumpallregions--");
+	private void printAllMemorySegments(PrintStream out) throws CorruptDataException {
+		printInternalMemory(out);
+		out.println();
+		printObjectMemory(out);
+		out.println();
+		printClassMemory(out);
+		out.println();
+		printJitCodeCache(out);
+		out.println();
+		printJitDataCache(out);
+		out.println();
+	}
+
+	private void segmentIterateAndPrint(J9MemorySegmentListPointer segmentListPointer, PrintStream out, String memoryDescription) {
+		if (segmentListPointer == null) {
+			return;
+		}
+		boolean reportFlag = false;
+		MemorySegmentIterator segmentIterator = new MemorySegmentIterator(segmentListPointer, MemorySegmentIterator.MEMORY_ALL_TYPES, false);
+		while (segmentIterator.hasNext()) {
+			J9MemorySegmentPointer nextSegment = (J9MemorySegmentPointer) segmentIterator.next();
 			try {
-				objectSegmentIterateAndPrint(jvm.objectMemorySegments().longValue(), out, "Object Memory");
-			} catch (DDRInteractiveCommandException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-
-		private void printInternalMemory(PrintStream out) throws CorruptDataException {
-			segmentIterateAndPrint(jvm.memorySegments(), out, "Internal Memory");
-		}
-
-		private void printClassMemory(PrintStream out) throws CorruptDataException {
-			segmentIterateAndPrint(jvm.classMemorySegments(), out, "Class Memory");
-		}
-
-		private void printJitCodeCache(PrintStream out) throws CorruptDataException {
-			if (J9BuildFlags.interp_nativeSupport) {
-				if (jvm.jitConfig().isNull() == false) {
-					segmentIterateAndPrint(jvm.jitConfig().codeCacheList(), out, "JIT Code Cache");
+				long start = nextSegment.heapBase().longValue();
+				long end = nextSegment.heapTop().longValue();
+				long segment = nextSegment.getAddress();
+				long alloc = nextSegment.heapAlloc().longValue();
+				long type = nextSegment.type().longValue();
+				long size = nextSegment.size().longValue();
+				if (!reportFlag) {
+					reportHeader(segment, out, memoryDescription, J9BuildFlags.J9VM_ENV_DATA64);
+					reportFlag = true;
 				}
-			}
-		}
-
-		private void printJitDataCache(PrintStream out) throws CorruptDataException {
-			if (J9BuildFlags.interp_nativeSupport) {
-				if (jvm.jitConfig().isNull() == false) {
-					segmentIterateAndPrint(jvm.jitConfig().dataCacheList(), out, "JIT Data Cache");
-				}
-			}
-		}
-
-		private void printAllMemorySegments(PrintStream out) throws CorruptDataException {
-			printInternalMemory(out);
-			out.println();
-			printObjectMemory(out);
-			out.println();
-			printClassMemory(out);
-			out.println();
-			printJitCodeCache(out);
-			out.println();
-			printJitDataCache(out);
-			out.println();
-		}
-
-		private void segmentIterateAndPrint(J9MemorySegmentListPointer segmentListPointer, PrintStream out, String memoryDescription) {
-			if(segmentListPointer == null) {
-				return ;
-			}
-			boolean reportFlag = false;
-			MemorySegmentIterator segmentIterator = new MemorySegmentIterator(segmentListPointer, MemorySegmentIterator.MEMORY_ALL_TYPES, false);
-			while (segmentIterator.hasNext()) {
-				J9MemorySegmentPointer nextSegment = (J9MemorySegmentPointer) segmentIterator.next();
-				try {
-					long start = nextSegment.heapBase().longValue();
-					long end = nextSegment.heapTop().longValue();
-					long segment = nextSegment.getAddress();
-					long alloc = nextSegment.heapAlloc().longValue();
-					long type = nextSegment.type().longValue();
-					long size = nextSegment.size().longValue();
-					if(!reportFlag) {
-						reportHeader(segment,out,memoryDescription,J9BuildFlags.env_data64);
-						reportFlag = true;
-					}
-					report(segment, start, alloc, end, type, size, out, memoryDescription, J9BuildFlags.env_data64);
-				} catch (CorruptDataException e) {
-					e.printStackTrace(out);
-				}
-			}
-
-			return ;
-		}
-
-		private void objectSegmentIterateAndPrint(long addr, PrintStream out, String memoryDescription) 
-		throws DDRInteractiveCommandException
-		{
-			boolean reportFlag = false;
-			try {
-				GCHeapRegionIterator gcHeapRegionIterator = GCHeapRegionIterator.from();
-				while(gcHeapRegionIterator.hasNext()) {
-					GCHeapRegionDescriptor heapRegionDescriptorPointer = gcHeapRegionIterator.next();
-
-					long start = heapRegionDescriptorPointer.getLowAddress().getAddress();
-					long end = heapRegionDescriptorPointer.getHighAddress().getAddress();
-					long region = heapRegionDescriptorPointer.getHeapRegionDescriptorPointer().getAddress();
-					long subspace = heapRegionDescriptorPointer.getHeapRegionDescriptorPointer()._memorySubSpace().getAddress();
-					long type = heapRegionDescriptorPointer.getRegionType();
-					long size = heapRegionDescriptorPointer.getSize().longValue();
-					if(!reportFlag) {
-						reportObjectHeader(out, J9BuildFlags.env_data64);
-						reportFlag = true;
-					}
-					reportObjectRegion(region, start, end, subspace, type, size, addr, out, J9BuildFlags.env_data64);
-
-				}
+				report(segment, start, alloc, end, type, size, out, memoryDescription, J9BuildFlags.J9VM_ENV_DATA64);
 			} catch (CorruptDataException e) {
-				throw new DDRInteractiveCommandException(e);
+				e.printStackTrace(out);
 			}
-			return ;
 		}
+	}
 
-		private void reportObjectRegion(long region, long start, long end, long subspace, long type, long size, long addr, PrintStream out, boolean is64Bit) 
-		{
-			if (is64Bit == true) {
-				out.append(String.format(" 0x%016X 0x%016X 0x%016X 0x%016X 0x%016X 0x%016X\n",  region, start, end, subspace, type, size));
-			} else {
-				out.append(String.format(" 0x%08X 0x%08X 0x%08X 0x%08X 0x%08X 0x%08X\n",  region, start, end, subspace, type, size));
-			}
-		}
-		
-		private void reportObjectHeader(PrintStream out, boolean is64Bit) 
-		{
-			out.append(String.format("%s \n", "Object Memory"));
-			if (is64Bit == true) {
-				
-				out.append("+------------------+------------------+------------------+------------------+------------------+------------------+\n");
-				out.append("|     region       |      start       |       end        |     subspace     |      type        |        size      |\n");
-				out.append("+------------------+------------------+------------------+------------------+------------------+------------------+\n");
-				
-			} else {
-				
-				out.append("+----------+----------+----------+----------+----------+----------+\n");
-				out.append("|  region  |  start   |   end    | subspace |   type   |   size   |\n");
-				out.append("+----------+----------+----------+----------+----------+----------+\n");
-				
-			}
-		}
-		
-		private void reportHeader(long segment, PrintStream out, String memoryDescription, boolean is64Bit) 
-		{
-			if (is64Bit == true) {
-				out.append(String.format("%s : - !j9memorysegment 0x%016X\n", memoryDescription, segment));
-				out.append("+------------------+------------------+------------------+------------------+------------------+------------------+\n");
-				out.append("|     segment      |      start       |      alloc       |       end        |      type        |        size      |\n");
-				out.append("+------------------+------------------+------------------+------------------+------------------+------------------+\n");
-			} else {
-				out.append(String.format("%s : - !j9memorysegment 0x%08X\n", memoryDescription, segment));
-				out.append("+----------+----------+----------+----------+----------+----------+\n");
-				out.append("| segment  |  start   |  alloc   |   end    |   type   |   size   |\n");
-				out.append("+----------+----------+----------+----------+----------+----------+\n");
-			}
-		}
+	private void objectSegmentIterateAndPrint(long addr, PrintStream out, String memoryDescription)
+			throws DDRInteractiveCommandException {
+		boolean reportFlag = false;
+		try {
+			GCHeapRegionIterator gcHeapRegionIterator = GCHeapRegionIterator.from();
+			while (gcHeapRegionIterator.hasNext()) {
+				GCHeapRegionDescriptor heapRegionDescriptorPointer = gcHeapRegionIterator.next();
 
-
-		private void report(long segment, long start, long alloc, long end, long type, long size, PrintStream out, String memoryDescription, boolean is64Bit) 
-		{
-			if (is64Bit == true) {
-				out.append(String.format(" 0x%016X 0x%016X 0x%016X 0x%016X 0x%016X 0x%016X\n",  segment, start, alloc,end,type, size));
-			} else {
-				out.append(String.format(" 0x%08X 0x%08X 0x%08X 0x%08X 0x%08X 0x%08X\n",  segment, start, alloc,end,type, size));
+				long start = heapRegionDescriptorPointer.getLowAddress().getAddress();
+				long end = heapRegionDescriptorPointer.getHighAddress().getAddress();
+				long region = heapRegionDescriptorPointer.getHeapRegionDescriptorPointer().getAddress();
+				long subspace = heapRegionDescriptorPointer.getHeapRegionDescriptorPointer()._memorySubSpace().getAddress();
+				long type = heapRegionDescriptorPointer.getRegionType();
+				long size = heapRegionDescriptorPointer.getSize().longValue();
+				if (!reportFlag) {
+					reportObjectHeader(out, J9BuildFlags.J9VM_ENV_DATA64);
+					reportFlag = true;
+				}
+				reportObjectRegion(region, start, end, subspace, type, size, addr, out, J9BuildFlags.J9VM_ENV_DATA64);
 			}
+		} catch (CorruptDataException e) {
+			throw new DDRInteractiveCommandException(e);
 		}
+		return;
+	}
+
+	private void reportObjectRegion(long region, long start, long end, long subspace, long type, long size, long addr, PrintStream out, boolean is64Bit)		{
+		if (is64Bit == true) {
+			out.append(String.format(" 0x%016X 0x%016X 0x%016X 0x%016X 0x%016X 0x%016X\n", region, start, end, subspace, type, size));
+		} else {
+			out.append(String.format(" 0x%08X 0x%08X 0x%08X 0x%08X 0x%08X 0x%08X\n", region, start, end, subspace, type, size));
+		}
+	}
+
+	private void reportObjectHeader(PrintStream out, boolean is64Bit) {
+		out.append(String.format("%s \n", "Object Memory"));
+		if (is64Bit) {
+			out.append("+------------------+------------------+------------------+------------------+------------------+------------------+\n");
+			out.append("|     region       |      start       |       end        |     subspace     |      type        |        size      |\n");
+			out.append("+------------------+------------------+------------------+------------------+------------------+------------------+\n");
+		} else {
+			out.append("+----------+----------+----------+----------+----------+----------+\n");
+			out.append("|  region  |  start   |   end    | subspace |   type   |   size   |\n");
+			out.append("+----------+----------+----------+----------+----------+----------+\n");
+		}
+	}
+
+	private void reportHeader(long segment, PrintStream out, String memoryDescription, boolean is64Bit) {
+		if (is64Bit) {
+			out.append(String.format("%s : - !j9memorysegment 0x%016X\n", memoryDescription, segment));
+			out.append("+------------------+------------------+------------------+------------------+------------------+------------------+\n");
+			out.append("|     segment      |      start       |      alloc       |       end        |      type        |        size      |\n");
+			out.append("+------------------+------------------+------------------+------------------+------------------+------------------+\n");
+		} else {
+			out.append(String.format("%s : - !j9memorysegment 0x%08X\n", memoryDescription, segment));
+			out.append("+----------+----------+----------+----------+----------+----------+\n");
+			out.append("| segment  |  start   |  alloc   |   end    |   type   |   size   |\n");
+			out.append("+----------+----------+----------+----------+----------+----------+\n");
+		}
+	}
+
+	private void report(long segment, long start, long alloc, long end, long type, long size, PrintStream out,
+			String memoryDescription, boolean is64Bit) {
+		if (is64Bit) {
+			out.append(String.format(" 0x%016X 0x%016X 0x%016X 0x%016X 0x%016X 0x%016X\n", segment, start, alloc, end, type, size));
+		} else {
+			out.append(String.format(" 0x%08X 0x%08X 0x%08X 0x%08X 0x%08X 0x%08X\n", segment, start, alloc, end, type, size));
+		}
+	}
 
 }

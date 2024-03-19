@@ -43,7 +43,7 @@ import com.ibm.j9ddr.vm29.pointer.helper.J9RASHelper;
 import com.ibm.j9ddr.vm29.structure.J9VTableHeader;
 import com.ibm.j9ddr.vm29.types.UDATA;
 
-public class J9VTablesCommand extends Command 
+public class J9VTablesCommand extends Command
 {
 	public J9VTablesCommand()
 	{
@@ -62,7 +62,7 @@ public class J9VTablesCommand extends Command
 			long jitVTableOffset;
 			long startIndex;
 
-			long address = CommandUtils.parsePointer(args[0], J9BuildFlags.env_data64);
+			long address = CommandUtils.parsePointer(args[0], J9BuildFlags.J9VM_ENV_DATA64);
 
 			ramClass = J9ClassPointer.cast(address);
 
@@ -84,7 +84,7 @@ public class J9VTablesCommand extends Command
 				startIndex = 2;
 			}
 
-			if (J9BuildFlags.interp_nativeSupport) {
+			if (J9BuildFlags.J9VM_INTERP_NATIVE_SUPPORT) {
 				if (!vm.jitConfig().isNull()) {
 					jitVTable = UDATAPointer.cast(U8Pointer.cast(ramClass).sub(jitVTableOffset));
 				}

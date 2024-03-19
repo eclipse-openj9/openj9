@@ -60,8 +60,6 @@ import java.io.InputStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -73,6 +71,7 @@ import java.util.regex.Pattern;
 import com.ibm.j9ddr.BytecodeGenerator;
 import com.ibm.j9ddr.CTypeParser;
 import com.ibm.j9ddr.StructureReader;
+import com.ibm.j9ddr.StructureReader.ConstantDescriptor;
 import com.ibm.j9ddr.StructureReader.FieldDescriptor;
 import com.ibm.j9ddr.StructureReader.StructureDescriptor;
 import com.ibm.j9ddr.StructureTypeManager;
@@ -187,7 +186,9 @@ public class PointerGenerator {
 	}
 
 	private void generateBuildFlags(StructureDescriptor structure) throws IOException {
-		File javaFile = new File(outputDir, structure.getName() + ".java");
+		String className = structure.getName();
+		boolean useCName = "29".equals(opts.get("-v")) && BytecodeGenerator.shouldUseCNameFor(className);
+		File javaFile = new File(outputDir, className + ".java");
 		List<String> userImports = new ArrayList<>();
 		List<String> userCode = new ArrayList<>();
 		collectMergeData(javaFile, userImports, userCode);
@@ -204,12 +205,11 @@ public class PointerGenerator {
 
 		ByteArrayOutputStream newContents = new ByteArrayOutputStream(length);
 		try (PrintWriter writer = new PrintWriter(newContents)) {
-			String className = structure.getName();
-			Map<String, String> constants = BytecodeGenerator.getConstantsAndAliases(structure);
+			List<ConstantDescriptor> constants = structure.getConstants();
 
 			writeCopyright(writer);
 			writer.format("package %s;%n", opts.get("-p"));
-			writeBuildFlagImports(writer);
+			writeBuildFlagImports(writer, useCName);
 			writer.println();
 			writeClassComment(writer, className);
 			writer.format("public final class %s {%n", className);
@@ -218,9 +218,9 @@ public class PointerGenerator {
 			writer.format("\tprivate %s() {%n", className);
 			writer.format("\t}%n");
 			writer.println();
-			writeBuildFlags(writer, constants.keySet());
+			writeBuildFlags(writer, className, constants, useCName);
 			writer.println();
-			writeBuildFlagsStaticInitializer(writer, className, constants);
+			writeBuildFlagsStaticInitializer(writer, className, constants, useCName);
 			writer.println("}");
 		}
 
@@ -232,7 +232,8 @@ public class PointerGenerator {
 		}
 	}
 
-	private static void writeBuildFlagsStaticInitializer(PrintWriter writer, String className, Map<String, String> constants) {
+	private static void writeBuildFlagsStaticInitializer(PrintWriter writer, String className,
+			List<ConstantDescriptor> constants, boolean useCName) {
 		writer.println("\tstatic {");
 		writer.println("\t\tHashSet<String> flags$ = new HashSet<>();");
 		writer.println();
@@ -245,7 +246,11 @@ public class PointerGenerator {
 		writer.println("\t\t\tClass<?> runtimeClass = ((com.ibm.j9ddr.J9DDRClassLoader) loader$).loadClassRelativeToStream(\"structure." + className + "\", false);");
 		writer.println("\t\t\tfor (Field field : runtimeClass.getFields()) {");
 		writer.println("\t\t\t\tif (field.getLong(runtimeClass) != 0) {");
-		writer.println("\t\t\t\t\tflags$.add(field.getName());");
+		if (useCName) {
+			writer.println("\t\t\t\t\tflags$.add(BytecodeGenerator.getFlagCName(field.getName()));");
+		} else {
+			writer.println("\t\t\t\t\tflags$.add(field.getName());");
+		}
 		writer.println("\t\t\t\t}");
 		writer.println("\t\t\t}");
 		writer.println("\t\t} catch (ClassNotFoundException | IllegalAccessException e) {");
@@ -253,14 +258,14 @@ public class PointerGenerator {
 		writer.println("\t\t}");
 		writer.println();
 
-		for (Map.Entry<String, String> entry : constants.entrySet()) {
-			String name = entry.getKey();
-			String alternate = entry.getValue();
+		for (ConstantDescriptor constant : constants) {
+			String name = constant.getName();
+			String cname = useCName ? BytecodeGenerator.getFlagCName(name) : name;
 
-			writer.format("\t\t%s = flags$.contains(\"%s\")", name, name);
+			writer.format("\t\t%s = flags$.contains(\"%s\")", cname, cname);
 
-			if (alternate != null) {
-				writer.format(" || flags$.contains(\"%s\")", alternate);
+			if (useCName && !name.equals(cname)) {
+				writer.format(" || flags$.contains(\"%s\")", name);
 			}
 
 			writer.println(";");
@@ -424,9 +429,14 @@ public class PointerGenerator {
 		}
 	}
 
-	private static void writeBuildFlags(PrintWriter writer, Collection<String> names) {
+	private static void writeBuildFlags(PrintWriter writer, String className, List<ConstantDescriptor> constants,
+			boolean useCName) {
 		writer.println("\t// Build Flags");
-		for (String name : names) {
+		for (ConstantDescriptor constant : constants) {
+			String name = constant.getName();
+			if (useCName) {
+				name = BytecodeGenerator.getFlagCName(name);
+			}
 			writer.format("\tpublic static final boolean %s;%n", name);
 		}
 	}
@@ -1427,7 +1437,11 @@ public class PointerGenerator {
 		}
 	}
 
-	private static void writeBuildFlagImports(PrintWriter writer) {
+	private static void writeBuildFlagImports(PrintWriter writer, boolean useCName) {
+		writer.println();
+		if (useCName) {
+			writer.println("import com.ibm.j9ddr.BytecodeGenerator;");
+		}
 		writer.println("import java.lang.reflect.Field;");
 		writer.println("import java.util.HashSet;");
 	}
