@@ -1316,10 +1316,31 @@ containsBackslashU(const char *userString, UDATA stringLength) {
 	return FALSE; /* hit the end of the string without encountering \u sequence */
 }
 
+static U_8 *
+convertString(J9JavaVM *vm, I_32 fromCode, const char *userString, UDATA stringLength)
+{
+	PORT_ACCESS_FROM_JAVAVM(vm);
+	U_8 *result = NULL;
+	I_32 bufferLength = j9str_convert(fromCode, J9STR_CODE_MUTF8, userString, stringLength, NULL, 0) + 1; /* +1 for terminating null */
+	if (bufferLength > 0) {
+		U_8 *mutf8Buffer = j9mem_allocate_memory(bufferLength, OMRMEM_CATEGORY_VM);
+		if (NULL != mutf8Buffer) {
+			I_32 resultLength = j9str_convert(fromCode, J9STR_CODE_MUTF8, userString, stringLength,
+					(char *)mutf8Buffer, bufferLength);
+			/* j9str_convert null-terminated the string */
+			if (resultLength >= 0) {
+				result = mutf8Buffer;
+			} else {
+				j9mem_free_memory(mutf8Buffer);
+			}
+		}
+	}
+	return result;
+}
 
-U_8*
-getMUtf8String(J9JavaVM * vm, const char *userString, UDATA stringLength) {
-
+U_8 *
+getMUtf8String(J9JavaVM *vm, const char *userString, UDATA stringLength)
+{
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
 	U_8 *mutf8Buffer = NULL;
@@ -1343,25 +1364,14 @@ getMUtf8String(J9JavaVM * vm, const char *userString, UDATA stringLength) {
 #else
 		I_32 fromCode = J9STR_CODE_PLATFORM_RAW;
 #endif
-		I_32 bufferLength = -1;
 		if (J9_ARE_ALL_BITS_SET(vm->runtimeFlags, J9_RUNTIME_ARGENCODING_UTF8)) {
 			fromCode = J9STR_CODE_UTF8;
 		} else if (J9_ARE_ALL_BITS_SET(vm->runtimeFlags, J9_RUNTIME_ARGENCODING_LATIN)) {
 			fromCode =  J9STR_CODE_LATIN1;
 		}
-		bufferLength = j9str_convert(fromCode, J9STR_CODE_MUTF8, userString, stringLength,
-				NULL, 0);
-		if (bufferLength >= 0) {
-			++bufferLength; /* account for terminating null */
-			mutf8Buffer = j9mem_allocate_memory(bufferLength, OMRMEM_CATEGORY_VM);
-			if (NULL != mutf8Buffer) {
-				I_32 resultLength = j9str_convert(fromCode, J9STR_CODE_MUTF8, userString, stringLength,
-						(char*)mutf8Buffer, bufferLength);
-				/* j9str_convert null-terminated the string */
-				if (resultLength >= 0) {
-					result = mutf8Buffer;
-				}
-			}
+		result = convertString(vm, fromCode, userString, stringLength);
+		if ((NULL == result) && (fromCode != J9STR_CODE_UTF8)) {
+			result = convertString(vm, J9STR_CODE_UTF8, userString, stringLength);
 		}
 	}
 	if (NULL == result) {
