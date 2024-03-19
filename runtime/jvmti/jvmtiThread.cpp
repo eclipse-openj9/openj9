@@ -24,6 +24,10 @@
 #include "jvmtiHelpers.h"
 #include "jvmti_internal.h"
 
+#if JAVA_SPEC_VERSION >= 19
+#include "VMHelpers.hpp"
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
 extern "C" {
 
 typedef struct J9JVMTIRunAgentThreadArgs {
@@ -401,7 +405,7 @@ jvmtiStopThread(jvmtiEnv *env,
 
 			/* Error if a virtual thread is not suspended and not the current thread. */
 			if ((currentThread != targetThread)
-			&& (0 == J9OBJECT_U32_LOAD(currentThread, threadObject, vm->isSuspendedInternalOffset))
+			&& (!VM_VMHelpers::isThreadSuspended(currentThread, threadObject))
 			&& IS_JAVA_LANG_VIRTUALTHREAD(currentThread, threadObject)
 			) {
 				rc = JVMTI_ERROR_THREAD_NOT_SUSPENDED;
@@ -1179,11 +1183,28 @@ resumeThread(J9VMThread *currentThread, jthread thread)
 #if JAVA_SPEC_VERSION >= 19
 		J9JavaVM *vm = currentThread->javaVM;
 		j9object_t threadObject = J9_JNI_UNWRAP_REFERENCE(thread);
+		J9VMThread *carrierVMThread = NULL;
+
+		/* Update internal flag before clearing flag to avoid sync issue. */
+		if (!VM_VMHelpers::isThreadSuspended(currentThread, threadObject)) {
+			rc = JVMTI_ERROR_THREAD_NOT_SUSPENDED;
+		} else {
+			carrierVMThread = VM_VMHelpers::getCarrierVMThread(currentThread, threadObject);
+			J9OBJECT_U64_STORE(currentThread, threadObject, vm->internalSuspendStateOffset, (U_64)carrierVMThread);
+			if (NULL != carrierVMThread) {
+				targetThread = (J9VMThread *)carrierVMThread;
+				/* For virtual thread in transition, ensure thread cannot start running until releaseVMThread is called. */
+				vm->internalVMFunctions->haltThreadForInspection(currentThread, targetThread);
+				threadObject = J9_JNI_UNWRAP_REFERENCE(thread);
+			}
+		}
+
 		/* The J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND will be cleared only
 		 * if the thread is resumed and it has been mounted
 		 * i.e. threadObject == targetThread->threadObject.
+		 * or if the thread is suspended in transition.
 		 */
-		if ((NULL != targetThread) && (threadObject == targetThread->threadObject))
+		if ((NULL != targetThread) && ((threadObject == targetThread->threadObject) || (NULL != carrierVMThread)))
 #endif /* JAVA_SPEC_VERSION >= 19 */
 		{
 			if (OMR_ARE_ANY_BITS_SET(targetThread->publicFlags, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND)) {
@@ -1193,14 +1214,12 @@ resumeThread(J9VMThread *currentThread, jthread thread)
 				rc = JVMTI_ERROR_THREAD_NOT_SUSPENDED;
 			}
 		}
+		releaseVMThread(currentThread, targetThread, thread);
 #if JAVA_SPEC_VERSION >= 19
-		if (0 == J9OBJECT_U32_LOAD(currentThread, threadObject, vm->isSuspendedInternalOffset)) {
-			rc = JVMTI_ERROR_THREAD_NOT_SUSPENDED;
-		} else {
-			J9OBJECT_U32_STORE(currentThread, threadObject, vm->isSuspendedInternalOffset, 0);
+		if (0 != carrierVMThread) {
+			vm->internalVMFunctions->resumeThreadForInspection(currentThread, targetThread);
 		}
 #endif /* JAVA_SPEC_VERSION >= 19 */
-		releaseVMThread(currentThread, targetThread, thread);
 	}
 
 	return rc;
@@ -1382,27 +1401,33 @@ jvmtiSuspendResumeCallBack(J9VMThread *vmThread, J9MM_IterateObjectDescriptor *o
 			J9JavaVM *vm = vmThread->javaVM;
 			J9VMThread *targetThread = NULL;
 			j9object_t carrierThread = (j9object_t)J9VMJAVALANGVIRTUALTHREAD_CARRIERTHREAD(vmThread, vthread);
+			U_64 isSuspendedFlag = J9OBJECT_U64_LOAD(vmThread, vthread, vm->internalSuspendStateOffset);
+			J9VMThread *carrierVMThread = VM_VMHelpers::getCarrierVMThread(vmThread, vthread);
+			bool inTransition = (NULL != carrierVMThread);
 			if (NULL != carrierThread) {
 				targetThread = J9VMJAVALANGTHREAD_THREADREF(vmThread, carrierThread);
 				Assert_JVMTI_notNull(targetThread);
+			} else if (inTransition) {
+				/* Virtual thread during transition. */
+				targetThread = carrierVMThread;
 			}
 			if (data->is_suspend) {
-				if ((NULL != targetThread) && (vthread == targetThread->threadObject)) {
+				J9OBJECT_U64_STORE(vmThread, vthread, vm->internalSuspendStateOffset, (isSuspendedFlag | J9_VIRTUALTHREAD_INTERNAL_STATE_SUSPENDED));
+				if ((NULL != targetThread) && ((vthread == targetThread->threadObject) || inTransition)) {
 					if (OMR_ARE_NO_BITS_SET(targetThread->publicFlags, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND | J9_PUBLIC_FLAGS_STOPPED)) {
 						setHaltFlag(targetThread, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND);
 						Trc_JVMTI_threadSuspended(targetThread);
 					}
 				}
-				J9OBJECT_U32_STORE(vmThread, vthread, vm->isSuspendedInternalOffset, 1);
 			} else {
 				/* Resume the virtual thread. */
-				if ((NULL != targetThread) && (vthread == targetThread->threadObject)) {
+				J9OBJECT_U64_STORE(vmThread, vthread, vm->internalSuspendStateOffset, (isSuspendedFlag & J9_VIRTUALTHREAD_INTERNAL_STATE_CARRIERID_MASK));
+				if ((NULL != targetThread) && ((vthread == targetThread->threadObject) || inTransition)) {
 					if (OMR_ARE_ANY_BITS_SET(targetThread->publicFlags, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND)) {
 						clearHaltFlag(targetThread, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND);
 						Trc_JVMTI_threadResumed(targetThread);
 					}
 				}
-				J9OBJECT_U32_STORE(currentThread, vthread, vm->isSuspendedInternalOffset, 0);
 			}
 		}
 	}

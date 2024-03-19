@@ -6001,7 +6001,7 @@ typedef struct J9JavaVM {
 #if JAVA_SPEC_VERSION >= 19
 	U_64 nextTID;
 	UDATA virtualThreadInspectorCountOffset;
-	UDATA isSuspendedInternalOffset;
+	UDATA internalSuspendStateOffset;
 	UDATA tlsOffset;
 	j9_tls_finalizer_t tlsFinalizers[J9JVMTI_MAX_TLS_KEYS];
 	omrthread_monitor_t tlsFinalizersMutex;

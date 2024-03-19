@@ -570,7 +570,7 @@ jvmtiIsFieldSynthetic(jvmtiEnv* env,
 	jboolean* is_synthetic_ptr);
 
 
-/* ---------------- jvmtiForceEarlyReturn.c ---------------- */
+/* ---------------- jvmtiForceEarlyReturn.cpp ---------------- */
 
 /**
 * @brief
@@ -1525,7 +1525,7 @@ jvmtiSetJNIFunctionTable(jvmtiEnv* env,
 	const jniNativeInterface* function_table);
 
 
-/* ---------------- jvmtiLocalVariable.c ---------------- */
+/* ---------------- jvmtiLocalVariable.cpp ---------------- */
 
 /**
 * @brief
@@ -2068,7 +2068,7 @@ jvmtiRawMonitorWait(jvmtiEnv* env,
 	jlong millis);
 
 
-/* ---------------- jvmtiStackFrame.c ---------------- */
+/* ---------------- jvmtiStackFrame.cpp ---------------- */
 
 /**
 * @brief
