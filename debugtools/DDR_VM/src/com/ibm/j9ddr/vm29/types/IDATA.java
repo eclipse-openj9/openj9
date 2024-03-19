@@ -33,7 +33,7 @@ public class IDATA extends IScalar {
 	public static final IDATA MAX;
 
 	static {
-		if (J9BuildFlags.env_data64) {
+		if (J9BuildFlags.J9VM_ENV_DATA64) {
 			SIZEOF = 8;
 			MASK = 0xFFFFFFFFFFFFFFFFL;
 			MIN = new IDATA(0x8000000000000000L);

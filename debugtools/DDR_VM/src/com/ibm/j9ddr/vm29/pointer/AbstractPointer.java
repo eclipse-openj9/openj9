@@ -55,27 +55,28 @@ public abstract class AbstractPointer extends DataType {
 	static {
 		initializeCache();
 	}
-	
+
 	protected long address;
-	
+
 	protected AbstractPointer(long address) {
 		super();
 		this.address = address;
-		
+
 		if (4 == DataType.getProcess().bytesPerPointer()) {
 			this.address = 0xFFFFFFFFL & address;
 		}
 	}
-	
+
 	public abstract AbstractPointer add(long count);
+
 	public abstract AbstractPointer add(Scalar count);
-	
+
 	public abstract AbstractPointer addOffset(long offset);
 	public abstract AbstractPointer addOffset(Scalar offset);
-	
+
 	public abstract AbstractPointer sub(long count);
 	public abstract AbstractPointer sub(Scalar count);
-	
+
 	public abstract AbstractPointer subOffset(long offset);
 	public abstract AbstractPointer subOffset(Scalar offset);
 
@@ -96,11 +97,11 @@ public abstract class AbstractPointer extends DataType {
 		}
 		return bitmask == (address & bitmask);
 	}
-	
+
 	public boolean anyBitsIn(long bitmask) {
 		return 0 != (address & bitmask);
 	}
-	
+
 	public long longValue() throws CorruptDataException {
 		return address;
 	}
@@ -111,11 +112,11 @@ public abstract class AbstractPointer extends DataType {
 	public boolean isNull() {
 		return address == 0;
 	}
-	
+
 	public boolean notNull() {
 		return address != 0;
 	}
-	
+
 	public boolean eq(Object obj) {
 		return equals(obj);
 	}
@@ -125,19 +126,19 @@ public abstract class AbstractPointer extends DataType {
 		if (obj == null) {
 			return false;
 		}
-		
+
 		if (!(obj instanceof AbstractPointer)) {
 			return false;
 		}
-		
+
 		return address == ((AbstractPointer) obj).address;
 	}
 
 	@Override
 	public int hashCode() {
-		return (int)((0xFFFFFFFFL & address) ^ ((0xFFFFFFFF00000000L & address) >> 32));
+		return (int) ((0xFFFFFFFFL & address) ^ ((0xFFFFFFFF00000000L & address) >> 32));
 	}
-	
+
 	public long getAddress() {
 		return address;
 	}
@@ -153,19 +154,19 @@ public abstract class AbstractPointer extends DataType {
 	public String getHexAddress() {
 		return String.format("0x%0" + (UDATA.SIZEOF * 2) + "X", address);
 	}
-	
+
 	/**
 	 * This method returns the memory values at the given index.
 	 * For StructurePointer instance objects, UDATA.sizeof amount of bytes are read.
-	 * Otherwise, amount of bytes to be read depend on the object type. 
+	 * Otherwise, amount of bytes to be read depend on the object type.
 	 * For instance, if it is I16Pointer, then 2 bytes are read.
-	 * 
+	 *
 	 * Note that this method returns bytes as they appear in the memory. It ignores endian-ization.
-	 * For instance I16 value 0xABCD lays in the memory as CDAB on Little Endian platforms. 
-	 * And this method returns for this I16Pointer 0xCDAB and does not reverse the bytes. 
-	 * 
-	 * 
-	 * @param index Offset of the memory to be read. 
+	 * For instance I16 value 0xABCD lays in the memory as CDAB on Little Endian platforms.
+	 * And this method returns for this I16Pointer 0xCDAB and does not reverse the bytes.
+	 *
+	 *
+	 * @param index Offset of the memory to be read.
 	 * @return String representation of the value at the given index.
 	 * @throws CorruptDataException
 	 */
@@ -182,35 +183,34 @@ public abstract class AbstractPointer extends DataType {
 		for (int i = 0; i < buffer.length; i++) {
 			result += String.format("%02X", buffer[i]);
 		}
-		return result; 
+		return result;
 	}
 
 	/**
 	 * This method returns the memory values at the given index.
 	 * For StructurePointer instance objects, UDATA.sizeof amount of bytes are read.
-	 * Otherwise, amount of bytes to be read depend on the object type. 
+	 * Otherwise, amount of bytes to be read depend on the object type.
 	 * For instance, if it is I16Pointer, then 2 bytes are read.
 	 *
-	 * 
+	 *
 	 * Note that this method returns bytes as they appear in the memory. It ignores endian-ization.
-	 * For instance I16 value 0xABCD lays in the memory as CDAB on Little Endian platforms. 
-	 * And this method returns for this I16Pointer 0xCDAB and does not reverse the bytes. 
-	 * 
-	 * 
-	 * @param index Offset of the memory to be read. 
+	 * For instance I16 value 0xABCD lays in the memory as CDAB on Little Endian platforms.
+	 * And this method returns for this I16Pointer 0xCDAB and does not reverse the bytes.
+	 *
+	 *
+	 * @param index Offset of the memory to be read.
 	 * @return String representation of the value at the given index.
 	 * @throws CorruptDataException
 	 */
 	public String hexAt(Scalar index) throws CorruptDataException {
 		return hexAt(index.longValue());
 	}
-	
-	
+
 	/**
-	 * This method reads number of the bytes depending on the pointers' base size. 
-	 * And if the platform is little endian, it reverses the bytes read and returns it as hex string. 
-	 * If the platform is big endian, then it returns the read bytes as it is as an hex string. 
-	 * 
+	 * This method reads number of the bytes depending on the pointers' base size.
+	 * And if the platform is little endian, it reverses the bytes read and returns it as hex string.
+	 * If the platform is big endian, then it returns the read bytes as it is as an hex string.
+	 *
 	 * @return hex string of the value of this pointer points.
 	 * @throws CorruptDataException
 	 */
@@ -220,12 +220,12 @@ public abstract class AbstractPointer extends DataType {
 		if (this instanceof StructurePointer) {
 			bufferSize = UDATA.SIZEOF;
 		} else {
-			bufferSize = (int)sizeOfBaseType();
+			bufferSize = (int) sizeOfBaseType();
 		}
 		byte[] buffer = new byte[bufferSize];
 		getBytesAtOffset(0, buffer);
 		/* If it is little endian, then swap the bytes since memory is written in reverse order */
-		if (J9BuildFlags.env_littleEndian) {
+		if (J9BuildFlags.J9VM_ENV_LITTLE_ENDIAN) {
 			for (int i = buffer.length - 1; i >= 0; i--) {
 				result += String.format("%02X", buffer[i]);
 			}
@@ -234,70 +234,70 @@ public abstract class AbstractPointer extends DataType {
 				result += String.format("%02X", buffer[i]);
 			}
 		}
-		return result; 
+		return result;
 	}
-	
+
 	protected static IProcess getAddressSpace() {
 		return process;
 	}
-	
+
 	public boolean lt(AbstractPointer pointer) {
-		if (J9BuildFlags.env_data64) {
+		if (J9BuildFlags.J9VM_ENV_DATA64) {
 			return new U64(address).lt(new U64(pointer.address));
 		} else {
 			return address < pointer.address;
 		}
 	}
-	
+
 	public boolean lte(AbstractPointer pointer) {
-		if (J9BuildFlags.env_data64) {
+		if (J9BuildFlags.J9VM_ENV_DATA64) {
 			return new U64(address).lte(new U64(pointer.address));
 		} else {
 			return address <= pointer.address;
 		}
 	}
-	
+
 	public boolean gt(AbstractPointer pointer) {
-		if (J9BuildFlags.env_data64) {
+		if (J9BuildFlags.J9VM_ENV_DATA64) {
 			return new U64(address).gt(new U64(pointer.address));
 		} else {
 			return address > pointer.address;
 		}
 	}
-	
+
 	public boolean gte(AbstractPointer pointer) {
-		if (J9BuildFlags.env_data64) {
+		if (J9BuildFlags.J9VM_ENV_DATA64) {
 			return new U64(address).gte(new U64(pointer.address));
 		} else {
 			return address >= pointer.address;
 		}
 	}
-	
-	public IDATA sub(AbstractPointer pointer) 
+
+	public IDATA sub(AbstractPointer pointer)
 	{
 		if (this.getClass() != pointer.getClass()) {
 			throw new UnsupportedOperationException("Cannot subtract different pointer types. This type = " + this.getClass() + ", parameter type = " + pointer.getClass());
 		}
-		
+
 		IDATA diff = new IDATA(this.address).sub(new IDATA(pointer.address));
-		
+
 		return new IDATA(diff.longValue() / sizeOfBaseType());
 	}
-	
+
 	protected abstract long sizeOfBaseType();
-	
+
 	public int compare(AbstractPointer pointer) {
 		return address == pointer.address ? 0 : lt(pointer) ? -1 : 1;
 	}
-	
+
 	public String toString() {
 		String pointerType = getClass().getName();
 		try {
-			if((this instanceof J9ObjectPointer)||(this instanceof J9IndexableObjectPointer) ||
+			if ((this instanceof J9ObjectPointer)||(this instanceof J9IndexableObjectPointer) ||
 				(this instanceof J9IndexableObjectContiguousPointer) || (this instanceof J9IndexableObjectDiscontiguousPointer)) {
 				pointerType = J9ObjectHelper.getClassName(J9ObjectPointer.cast(this));
 			}
-			if(this instanceof J9ROMFieldShapePointer) {
+			if (this instanceof J9ROMFieldShapePointer) {
 				return J9ROMFieldShapeHelper.toString(J9ROMFieldShapePointer.cast(this));
 			}
 			if (address == 0) {
@@ -309,20 +309,20 @@ public abstract class AbstractPointer extends DataType {
 			return super.toString();
 		}
 	}
-	
+
 	private String getMemString(int words) {
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
 		PrintStream stream = new PrintStream(bos);
 		dumpHex(words, stream);
 		return bos.toString();
 	}
-	
+
 	/**
 	 * Debug assist method.  Display words from the core file start at this pointer.
 	 * @param words
 	 */
 	private void dumpHex(int words, PrintStream stream) {
-		if(isNull()) {
+		if (isNull()) {
 			// Prevent gratuitous MemoryFaults when debugging
 			return;
 		}
@@ -344,7 +344,7 @@ public abstract class AbstractPointer extends DataType {
 		}
 		stream.println();
 	}
-	
+
 	// Probably Nobody outside of generated code should call this
 	protected long getPointerAtOffset(long offset) throws CorruptDataException {
 		if (address == 0) {
@@ -352,14 +352,14 @@ public abstract class AbstractPointer extends DataType {
 		}
 		return getAddressSpace().getPointerAt(address + offset);
 	}
-	
+
 	protected int getIntAtOffset(long offset) throws CorruptDataException {
 		if (address == 0) {
 			throw new NullPointerDereference();
 		}
 		return getAddressSpace().getIntAt(address + offset);
 	}
-	
+
 	protected double getDoubleAtOffset(long offset) throws CorruptDataException {
 		if (address == 0) {
 			throw new NullPointerDereference();
@@ -368,7 +368,7 @@ public abstract class AbstractPointer extends DataType {
 		long bits = getAddressSpace().getLongAt(address + offset);
 		return Double.longBitsToDouble(bits);
 	}
-	
+
 	protected float getFloatAtOffset(long offset) throws CorruptDataException {
 		if (address == 0) {
 			throw new NullPointerDereference();
@@ -377,12 +377,12 @@ public abstract class AbstractPointer extends DataType {
 		int bits = getAddressSpace().getIntAt(address + offset);
 		return Float.intBitsToFloat(bits);
 	}
-	
+
 	protected boolean getBoolAtOffset(long offset) throws CorruptDataException {
 		if (address == 0) {
 			throw new NullPointerDereference();
 		}
-		
+
 		switch (SIZEOF_BOOL) {
 		case 1:
 			return 0 != getAddressSpace().getByteAt(address + offset);
@@ -395,69 +395,69 @@ public abstract class AbstractPointer extends DataType {
 		default:
 			byte[] buffer = new byte[SIZEOF_BOOL];
 			getAddressSpace().getBytesAt(address + offset, buffer);
-			for(int i = 0; i < SIZEOF_BOOL; i++) {
-				if(0 != buffer[i]) {
+			for (int i = 0; i < SIZEOF_BOOL; i++) {
+				if (0 != buffer[i]) {
 					return true;
 				}
 			}
 			return false;
 		}
 	}
-	
+
 	protected UDATA getUDATAAtOffset(long offset) throws CorruptDataException {
 		if (address == 0) {
 			throw new NullPointerDereference();
 		}
-		if (J9BuildFlags.env_data64) {
+		if (J9BuildFlags.J9VM_ENV_DATA64) {
 			return new UDATA(getAddressSpace().getLongAt(address + offset));
 		} else {
 			return new UDATA(getAddressSpace().getIntAt(address + offset));
 		}
 	}
-	
+
 	protected IDATA getIDATAAtOffset(long offset) throws CorruptDataException {
 		if (address == 0) {
 			throw new NullPointerDereference();
 		}
-		if (J9BuildFlags.env_data64) {
+		if (J9BuildFlags.J9VM_ENV_DATA64) {
 			return new IDATA(getAddressSpace().getLongAt(address + offset));
 		} else {
 			return new IDATA(getAddressSpace().getIntAt(address + offset));
 		}
 	}
-	
+
 	protected short getShortAtOffset(long offset) throws CorruptDataException {
 		if (address == 0) {
 			throw new NullPointerDereference();
 		}
 		return getAddressSpace().getShortAt(address + offset);
 	}
-	
+
 	protected byte getByteAtOffset(long offset) throws CorruptDataException {
 		if (address == 0) {
 			throw new NullPointerDereference();
 		}
 		return getAddressSpace().getByteAt(address + offset);
 	}
-	
+
 	public int getBytesAtOffset(long offset, byte[] data) throws CorruptDataException {
 		if (address == 0) {
 			throw new NullPointerDereference();
 		}
 		return getAddressSpace().getBytesAt(address + offset, data);
 	}
-	
+
 	protected char getBaseCharAtOffset(long offset) throws CorruptDataException {
 		return (char) ((int) getShortAtOffset(offset) & 0xFFFF);
 	}
-	
+
 	protected long getLongAtOffset(long offset) throws CorruptDataException {
 		if (address == 0) {
 			throw new NullPointerDereference();
 		}
 		return getAddressSpace().getLongAt(address + offset);
 	}
-	
+
 	protected J9ObjectPointer getObjectReferenceAtOffset(long offset) throws CorruptDataException {
 		if (address == 0) {
 			throw new NullPointerDereference();
@@ -468,13 +468,12 @@ public abstract class AbstractPointer extends DataType {
 			return J9ObjectPointer.cast(getAddressSpace().getPointerAt(address + offset));
 		}
 	}
-	
-	protected J9ClassPointer getObjectClassAtOffset(long offset) throws CorruptDataException 
-	{
+
+	protected J9ClassPointer getObjectClassAtOffset(long offset) throws CorruptDataException {
 		long location = address + offset;
 		long classPointer;
 		if (J9ObjectHelper.compressObjectReferences) {
-			classPointer = (long)getAddressSpace().getIntAt(location) & 0xFFFFFFFFL;
+			classPointer = (long) getAddressSpace().getIntAt(location) & 0xFFFFFFFFL;
 		} else {
 			classPointer = getAddressSpace().getPointerAt(location);
 		}
@@ -482,18 +481,18 @@ public abstract class AbstractPointer extends DataType {
 			throw new MemoryFault(location, "Invalid class address found in object");
 		}
 		J9ClassPointer cp = checkClassCache(classPointer);
-		if(cp == null) {
+		if (cp == null) {
 			cp = J9ClassPointer.cast(classPointer);
 			setClassCache(classPointer, cp);
 		}
 		return cp;
 	}
-	
+
 	private static J9ClassPointer checkClassCache(long pointer)
 	{
 		probes++;
-		for(int i = 0; i < cacheSize; i++) {
-			if(keys[i] == pointer) {
+		for (int i = 0; i < cacheSize; i++) {
+			if (keys[i] == pointer) {
 				hits++;
 				counts[i]++;
 				return values[i];
@@ -501,13 +500,13 @@ public abstract class AbstractPointer extends DataType {
 		}
 		return null;
 	}
-	
+
 	private static void setClassCache(long pointer, J9ClassPointer cp)
 	{
 		int min = counts[0];
 		int minIndex = 0;
-		for(int i = 1; i < cacheSize; i++) {
-			if(counts[i] < min) {
+		for (int i = 1; i < cacheSize; i++) {
+			if (counts[i] < min) {
 				min = counts[i];
 				minIndex = i;
 			}
@@ -516,7 +515,7 @@ public abstract class AbstractPointer extends DataType {
 		values[minIndex] = cp;
 		counts[minIndex] = 1;
 	}
-		
+
 	protected J9ObjectMonitorPointer getObjectMonitorAtOffset(long offset) throws CorruptDataException {
 		if (address == 0) {
 			throw new NullPointerDereference();
@@ -527,38 +526,37 @@ public abstract class AbstractPointer extends DataType {
 			return J9ObjectMonitorPointer.cast(getAddressSpace().getPointerAt(address + offset));
 		}
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @return Full DDR-interactive formatting
 	 */
 	public String formatFullInteractive()
 	{
 		return this.toString();
 	}
-	
+
 	public String getTargetName()
 	{
 		String name = this.getClass().getSimpleName();
-		
+
 		if (name.endsWith("Pointer")) {
 			name = name.substring(0, name.length() - "Pointer".length());
 		}
-		
+
 		return name;
 	}
-	
+
 	@Override
 	public String formatShortInteractive()
 	{
 		String name = getTargetName();
-		
+
 		name = name.toLowerCase();
-		
+
 		return "!" + name + " 0x" + Long.toHexString(this.getAddress());
 	}
-	
-	
+
 	private static void initializeCache()
 	{
 		keys = new long[cacheSize];
@@ -567,7 +565,7 @@ public abstract class AbstractPointer extends DataType {
 		probes = 0;
 		hits = 0;
 	}
-	
+
 	public static void reportClassCacheStats()
 	{
 		double hitRate = (double)hits / (double)probes * 100.0;

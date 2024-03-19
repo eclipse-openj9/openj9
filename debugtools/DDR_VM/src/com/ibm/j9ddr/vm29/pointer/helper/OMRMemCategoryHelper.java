@@ -80,7 +80,7 @@ public class OMRMemCategoryHelper {
 
 		if (memoryCategory.eq(OMRMEM_CATEGORY_PORT_LIBRARY)) {
 			return portGlobals.portLibraryMemoryCategory();
-		} else if (J9BuildFlags.env_data64 && memoryCategory.eq(OMRMEM_CATEGORY_PORT_LIBRARY_UNUSED_ALLOCATE32_REGIONS)) {
+		} else if (J9BuildFlags.J9VM_ENV_DATA64 && memoryCategory.eq(OMRMEM_CATEGORY_PORT_LIBRARY_UNUSED_ALLOCATE32_REGIONS)) {
 			return getUnusedAllocate32HeapRegionsMemoryCategory(portGlobals);
 		} else {
 			OMRMemCategorySetPointer registeredSet = OMRMemCategorySetPointer.NULL;

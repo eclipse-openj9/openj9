@@ -69,34 +69,34 @@ public class FindPatternCommand extends Command
 	 */
 	public void run(String command, String[] args, Context context, PrintStream out) throws DDRInteractiveCommandException 
 	{
-		try {			
+		try {
 			byte[] pattern = null;
 			BigInteger bytesToSearch = CommandUtils.longToBigInteger(UDATA.MAX.longValue());
 			int length = 0;
-			if(args.length != 1) {
+			if (args.length != 1) {
 				printUsage(out);
-				return;				
+				return;
 			}
-			
+
 			String[] realArgs = args[0].split(",");
-			
-			if(realArgs.length == 1) {
+
+			if (realArgs.length == 1) {
 				CommandUtils.dbgError(out, "Error: must specify alignment\n");
 				printUsage(out);
 				return;
 			}
-			
+
 			String hexstring = realArgs[0];
 			int patternAlignment = Integer.parseInt(realArgs[1]);
-			
+
 			long startSearchFrom = 0;
-		
-			if(realArgs.length == 3) {
-				startSearchFrom = CommandUtils.parsePointer(realArgs[2], J9BuildFlags.env_data64);
+
+			if (realArgs.length == 3) {
+				startSearchFrom = CommandUtils.parsePointer(realArgs[2], J9BuildFlags.J9VM_ENV_DATA64);
 				bytesToSearch = bytesToSearch.subtract(CommandUtils.longToBigInteger(startSearchFrom));
 			} else if(realArgs.length == 4) {
-				startSearchFrom = CommandUtils.parsePointer(realArgs[2], J9BuildFlags.env_data64);
-				
+				startSearchFrom = CommandUtils.parsePointer(realArgs[2], J9BuildFlags.J9VM_ENV_DATA64);
+
 				bytesToSearch = CommandUtils.parseNumber(realArgs[3]);
 				if (bytesToSearch.add(CommandUtils.longToBigInteger(startSearchFrom)).toString(CommandUtils.RADIX_HEXADECIMAL).length() > UDATA.SIZEOF ) {
 					out.println("Warning: bytesToSearch value (" 
@@ -105,34 +105,33 @@ public class FindPatternCommand extends Command
 							+ realArgs[2] 
 							+ ").\n Pattern will be searched in all the remaining memory after the search start address");
 					bytesToSearch = CommandUtils.longToBigInteger(UDATA.MAX.longValue()).subtract(CommandUtils.longToBigInteger(startSearchFrom));
-				} 
-
-			} else if(realArgs.length > 4) {
+				}
+			} else if (realArgs.length > 4) {
 				CommandUtils.dbgError(out, "Error: too many arguments\n");
 			}
-			
-			length = hexstring.length() / 2; 
-			if( length > PATTERN_LENGHT) {
+
+			length = hexstring.length() / 2;
+			if (length > PATTERN_LENGHT) {
 				CommandUtils.dbgPrint(out, String.format("Pattern is too long. Truncating to %d bytes\n", PATTERN_LENGHT));
-				length = PATTERN_LENGHT;				
+				length = PATTERN_LENGHT;
 			}
-			
+
 			pattern = new byte[length];
-			
+
 			for (int i = 0; i < length; i++) {
 				int hex1 = hexValue(hexstring.charAt(i * 2));
 				int hex2 = hexValue(hexstring.charAt(i * 2 + 1));
 
-				if ( (hex1 < 0) || (hex2 < 0) ) {
+				if ((hex1 < 0) || (hex2 < 0)) {
 					CommandUtils.dbgError(out, "Error: non-hex value found in hex string\n");
 					return;
 				}
 
 				pattern[i] = (byte) ((hex1 << 4) + hex2);
 			}
-			
+
 			/* ensure that alignment is > 0 */
-			if(patternAlignment == 0) {
+			if (patternAlignment == 0) {
 				patternAlignment = 1;
 			}
 			CommandUtils.dbgPrint(out, String.format("Searching for %d bytes. Alignment = %d, start = %s, bytesToSearch = %s ...\n", length, patternAlignment, U8Pointer.cast(startSearchFrom).getHexAddress(), bytesToSearch.toString()));
@@ -162,5 +161,5 @@ public class FindPatternCommand extends Command
 		} else {
 			return -1;
 		}
-	}	
+	}
 }

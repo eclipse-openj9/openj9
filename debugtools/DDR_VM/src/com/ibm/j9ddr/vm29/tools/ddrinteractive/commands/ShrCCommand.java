@@ -50,7 +50,7 @@ import com.ibm.j9ddr.vm29.pointer.helper.*;
 import com.ibm.j9ddr.vm29.structure.*;
 import com.ibm.j9ddr.vm29.types.*;
 
-public class ShrCCommand extends Command 
+public class ShrCCommand extends Command
 {
 
 	private static final long ORPHAN_STATS = 1;
@@ -74,7 +74,7 @@ public class ShrCCommand extends Command
 			| JITPROFILE_STATS | JITHINT_STATS | ALL_STALE_STATS;
 	private static final int J9SHR_ATTACHED_DATA_TYPE_JITPROFILE = 1;
 	private static final int J9SHR_ATTACHED_DATA_TYPE_JITHINT = 2;
-	
+
 	private static final String rangeDelim = "..";
 	private static long cacheTotalSize = 0;
 
@@ -82,11 +82,11 @@ public class ShrCCommand extends Command
 	{
 		addCommand("shrc", "[command]", "shared class cache operations");
 	}
-	
-	public void run(String command, String[] args, Context context, PrintStream out) throws DDRInteractiveCommandException 
+
+	public void run(String command, String[] args, Context context, PrintStream out) throws DDRInteractiveCommandException
 	{
 		try {
-			if (!J9BuildFlags.opt_sharedClasses) {
+			if (!J9BuildFlags.J9VM_OPT_SHARED_CLASSES) {
 				CommandUtils.dbgPrint(out, "no shared cache\n");
 				return;
 			}
@@ -94,7 +94,7 @@ public class ShrCCommand extends Command
 
 			J9SharedClassConfigPointer sharedClassConfig = vm.sharedClassConfig();
 			CommandUtils.dbgPrint(out, "!j9sharedclassconfig %s\n\n", sharedClassConfig.getHexAddress());
-			
+
 			if (args.length == 0) {
 				printHelp(out);
 			} else if (sharedClassConfig.notNull()) {
@@ -104,19 +104,19 @@ public class ShrCCommand extends Command
 				U8Pointer[] metaEnd = new U8Pointer[1];
 				boolean userSpecRange = false;
 				int layer = metaStartInCache.length - 1;
-				
+
 				initTotalCacheSize(out, sharedClassConfig);
 				/* check if the first parameter specifies the range of metadata region to be used */
 				if (args.length > 1) {
 					/* Presence of '..' indicates user specified the range */
 					if (args[1].indexOf(rangeDelim) != -1) {
 						String addr;
-						
+
 						addr = args[1].substring(0, args[1].indexOf(rangeDelim));
-						metaStart[0] = U8Pointer.cast(CommandUtils.parsePointer(addr, J9BuildFlags.env_data64));
-						
+						metaStart[0] = U8Pointer.cast(CommandUtils.parsePointer(addr, J9BuildFlags.J9VM_ENV_DATA64));
+
 						addr = args[1].substring(args[1].indexOf(rangeDelim) + rangeDelim.length());
-						metaEnd[0] = U8Pointer.cast(CommandUtils.parsePointer(addr, J9BuildFlags.env_data64));
+						metaEnd[0] = U8Pointer.cast(CommandUtils.parsePointer(addr, J9BuildFlags.J9VM_ENV_DATA64));
 						userSpecRange = true;
 					} else if (args[1].indexOf("layer=") != -1) {
 						int topLayer = dbgShrcCacheTopLayer(out, sharedClassConfig);
@@ -143,7 +143,7 @@ public class ShrCCommand extends Command
 							CommandUtils.dbgPrint(out, "User specified metadata region boundary is not valid. Ensure 'end' >= 'start'\n");
 							return;
 						}
-					
+
 						int index1 = getArrayIndexForMetadataAddress(metaStart[0], metaStartInCache, metaEndInCache);
 						int index2 = getArrayIndexForMetadataAddress(metaEnd[0], metaStartInCache, metaEndInCache);
 
@@ -161,7 +161,7 @@ public class ShrCCommand extends Command
 							return;
 						}
 					}
-				} 
+				}
 				if (!userSpecRange) {
 					metaStart = metaStartInCache;
 					metaEnd = metaEndInCache;
@@ -196,8 +196,8 @@ public class ShrCCommand extends Command
 					if (args.length != 2) {
 						CommandUtils.dbgPrint(out, "Usage: !shrc classpath <address>\n");
 					} else {
-						long address = CommandUtils.parsePointer(args[1], J9BuildFlags.env_data64);
-						
+						long address = CommandUtils.parsePointer(args[1], J9BuildFlags.J9VM_ENV_DATA64);
+
 						dbgShrcPrintClasspath(out, ClasspathWrapperPointer.cast(address));
 					}
 				} else if (args[0].equals("findclass")) {
@@ -236,24 +236,24 @@ public class ShrCCommand extends Command
 					if (args.length != 2) {
 						CommandUtils.dbgPrint(out, "Usage: !shrc aotfor <address>\n");
 					} else {
-						long addr = CommandUtils.parsePointer(args[1], J9BuildFlags.env_data64);
-	
+						long addr = CommandUtils.parsePointer(args[1], J9BuildFlags.J9VM_ENV_DATA64);
+
 						dbgShrcPrintAllStats(out, vm, sharedClassConfig, metaStartInCache, metaEndInCache, AOT_STATS | INV_AOT_STATS, null, true, VoidPointer.cast(addr), false);
 					}
 				} else if (args[0].equals("rcfor")) {
 					if (args.length != 2) {
 						CommandUtils.dbgPrint(out, "Usage: !shrc rcfor <address>\n");
 					} else {
-						long addr = CommandUtils.parsePointer(args[1], J9BuildFlags.env_data64);
-	
+						long addr = CommandUtils.parsePointer(args[1], J9BuildFlags.J9VM_ENV_DATA64);
+
 						dbgShrcPrintAllStats(out, vm, sharedClassConfig, metaStartInCache, metaEndInCache, ROMCLASS_STATS | ORPHAN_STATS, null, false, VoidPointer.cast(addr), false);
 					}
 				} else if (args[0].equals("incache")) {
 					if (args.length != 2) {
 						CommandUtils.dbgPrint(out, "Usage: !shrc incache <address>\n");
 					} else {
-						long addr = CommandUtils.parsePointer(args[1], J9BuildFlags.env_data64);
-	
+						long addr = CommandUtils.parsePointer(args[1], J9BuildFlags.J9VM_ENV_DATA64);
+
 						dbgShrcInCache(out, vm, sharedClassConfig, VoidPointer.cast(addr));
 					}
 				} else if (args[0].equals("stats")) {
@@ -265,18 +265,17 @@ public class ShrCCommand extends Command
 					if (args.length != 2) {
 						CommandUtils.dbgPrint(out, "Usage: !shrc method <address>\n");
 					} else {
-						long addr = CommandUtils.parsePointer(args[1], J9BuildFlags.env_data64);
-	
+						long addr = CommandUtils.parsePointer(args[1], J9BuildFlags.J9VM_ENV_DATA64);
+
 						dbgShrcPrintAllStats(out, vm, sharedClassConfig, metaStartInCache, metaEndInCache, FIND_METHOD, null, false, VoidPointer.cast(addr), false);
 					}
 				} else if (args[0].equals("cachelet")) {
 					if (args.length != 2) {
 						CommandUtils.dbgPrint(out, "Usage: !shrc incache <address>\n");
 					} else {
-						long addr = CommandUtils.parsePointer(args[1], J9BuildFlags.env_data64);
+						long addr = CommandUtils.parsePointer(args[1], J9BuildFlags.J9VM_ENV_DATA64);
 						dbgShrcPrintCachelet(out, CacheletWrapperPointer.cast(addr));
 					}
-					
 				/**
 				 * JIT profiling data
 				 */
@@ -306,8 +305,8 @@ public class ShrCCommand extends Command
 					if (args.length != 2) {
 						CommandUtils.dbgPrint(out, "Usage: !shrc jitpfor <address>\n");
 					} else {
-						long addr = CommandUtils.parsePointer(args[1], J9BuildFlags.env_data64);
-	
+						long addr = CommandUtils.parsePointer(args[1], J9BuildFlags.J9VM_ENV_DATA64);
+
 						dbgShrcPrintAllStats(out, vm, sharedClassConfig, metaStartInCache, metaEndInCache, JITPROFILE_STATS, null, false, VoidPointer.cast(addr), false);
 					}
 				/**
@@ -339,9 +338,9 @@ public class ShrCCommand extends Command
 					if (args.length != 2) {
 						CommandUtils.dbgPrint(out, "Usage: !shrc jithfor <address>\n");
 					} else {
-						long addr = CommandUtils.parsePointer(args[1], J9BuildFlags.env_data64);		
+						long addr = CommandUtils.parsePointer(args[1], J9BuildFlags.J9VM_ENV_DATA64);
 						dbgShrcPrintAllStats(out, vm, sharedClassConfig, metaStartInCache, metaEndInCache, JITHINT_STATS, null, false, VoidPointer.cast(addr), false);
-					}			
+					}
 
 				} else if (args[0].equals("rtflags")) {
 					if (sharedClassConfig.notNull()) {
@@ -356,13 +355,13 @@ public class ShrCCommand extends Command
 						UDATA extraFlags = headers[layer].extraFlags();
 						CommandUtils.dbgPrint(out,"Printing the shared classes extra flags present in cache header %s for layer %d\n", extraFlags.getHexValue(), layer);
 						printShCFlags(out, extraFlags, "EXTRA_FLAGS");
-					}	
+					}
 				} else if (args[0].equals("write")) {
 					if (args.length != 2 && args.length != 3) {
 						CommandUtils.dbgPrint(out, "Usage: !shrc write <cachedir> [<cachename>]\n");
 					} else {
 						String cacheDir = args[1];
-						String cacheName = args.length == 3 ? args[2] : null; 
+						String cacheName = args.length == 3 ? args[2] : null;
 						try {
 							dbgShrcWriteCache(out, sharedClassConfig, cacheDir, cacheName);
 						} catch (CorruptDataException e) {
@@ -386,7 +385,7 @@ public class ShrCCommand extends Command
 			throw new DDRInteractiveCommandException(e);
 		}
 	}
-	
+
 	/**
 	 * Find which region a metadata address belongs among metadata regions specified by metaStartArray and metaEndArray
 	 * @param A metadata address
@@ -404,13 +403,13 @@ public class ShrCCommand extends Command
 		}
 		return ret;
 	}
-	
+
 	private void printShCFlags(PrintStream out, UScalar flags, String type) {
 		Field[] ShCFlagsfields = ShCFlags.class.getFields();
 		for (Field field : ShCFlagsfields) {
 			String flagName = field.getName();
 			try {
-				Long flagValue = (Long)field.get(null);
+				Long flagValue = (Long) field.get(null);
 				if (flagName.contains(type)) {
 					if (flags.anyBitsIn(flagValue)) {
 						if (flags.sizeof() == 8) {
@@ -469,17 +468,17 @@ public class ShrCCommand extends Command
 	 */
 	static class CacheFileOutputStream extends FileOutputStream {
 		private String fileName;
-		
+
 		CacheFileOutputStream(File f) throws FileNotFoundException{
 			super(f);
 			this.fileName = f.getAbsolutePath();
 		}
-		
+
 		String getFileName() {
 			return this.fileName;
 		}
 	}
-	
+
 	/**
 	 * Method creates the cache file with the name and in the directory passed in as parameters.
 	 * @param out - the PrintStream used to write progress and/or errors out to console
@@ -498,13 +497,13 @@ public class ShrCCommand extends Command
 				cacheNameString = cacheNamePointer.getCStringAtOffset(0);
 				CommandUtils.dbgPrint(out, "Cache name is %s\n", cacheNameString);
 			}
-			if (cacheName != null) cacheNameString = cacheName; 
+			if (cacheName != null) cacheNameString = cacheName;
 			VoidPointer headerStart = osCache._headerStart();
 			UDATA cacheSize = osCache._cacheSize();
 			CommandUtils.dbgPrint(out, "Cache start 0x%x size %d\n", headerStart.getAddress(), cacheSize.longValue());
 			File outFile = new File(cacheDir, cacheNameString);
 			CommandUtils.dbgPrint(out, "Writing cache to %s\n", outFile.getAbsolutePath());
-			
+
 			try {
 				fout = new CacheFileOutputStream(outFile);
 			} catch (FileNotFoundException e) {
@@ -513,10 +512,10 @@ public class ShrCCommand extends Command
 		}
 		return fout;
 	}
-	
+
 	/**
 	 * Method attempts to write entire shared classes cache from start to finish, including any gaps between segment areas.
-	 * 
+	 *
 	 * @param out - the PrintStream used to write progress and/or errors out to console
 	 * @param sharedClassConfig - the generated J9SharedClassConfigPointer used to get cache header information
 	 * @param cacheDir - the directory in which to write the cache file
@@ -542,10 +541,10 @@ public class ShrCCommand extends Command
 			}
 		}
 	}
-	
-	/** 
+
+	/**
 	 * Method writes the shared classes cache in segments taking care to zero out the gaps between the areas.
-	 * 
+	 *
 	 * @param out - the PrintStream used to write progress and/or errors out to console
 	 * @param sharedClassConfig - the generated J9SharedClassConfigPointer used to get cache header information
 	 * @param cacheDir - the directory in which to write the cache file
@@ -560,65 +559,65 @@ public class ShrCCommand extends Command
 			try {
 				/* write the first 3 areas in cache (header, read/write and classes) */
 				dbgShrcWriteCacheArea(fout, helper.getHeaderStart(), helper.getRomClassesEnd(), false);
-					
+
 				/* zero the gap between classes and metadata */
 				dbgShrcWriteCacheArea(fout, helper.getRomClassesEnd(), helper.getMetaDataEnd(), true);
-					
+
 				/* write the metadata area, note: metadata is written out right to left */
 				dbgShrcWriteCacheArea(fout, helper.getMetaDataEnd(), helper.getMetaDataStart(), false);
-					
+
 				/* write the line number (LN) area */
 				dbgShrcWriteCacheArea(fout, helper.getLineNumberAreaStart(), helper.getLineNumberAreaEnd(), false);
-					
+
 				/* zero the gap between LN and LV areas */
 				dbgShrcWriteCacheArea(fout, helper.getLineNumberAreaEnd(), helper.getLocalVariableAreaEnd(), true);
-					
+
 				/* write the local variable (LV) area, note: LV area written out right to left */
 				dbgShrcWriteCacheArea(fout, helper.getLocalVariableAreaEnd(), helper.getLocalVariableAreaStart(), false);
-					
+
 				CommandUtils.dbgPrint(out, "Cache successfully written to %s\n", fout.getFileName());
 			} catch (IOException e) {
 				CommandUtils.dbgPrint(out, "Error writing %s: %s\n", fout.getFileName(), e.getMessage());
 			} finally {
 				try {
 					fout.close();
-				} catch (IOException e) {				
+				} catch (IOException e) {
 				}
 			}
 		}
 	}
-	
+
 	/**
 	 * Utility method used to write to the newly created cache file
-	 * 
+	 *
 	 * @param fout - FileOutputStream used to write to the file
 	 * @param areaStart - start of the area of cache to write
 	 * @param areaEnd - end of the area of cache to write
 	 * @param zeroFill - boolean to determine to write zeros to the buffer
 	 */
-	private void dbgShrcWriteCacheArea(FileOutputStream fout, UDATA areaStart, UDATA areaEnd, boolean zeroFill) throws CorruptDataException, IOException {	
-			long offset = 0;
-			long start = areaStart.longValue();
-			long end = areaEnd.longValue();
-			long areaSize = end - start;
-			SH_OSCachePointer hStart =  SH_OSCachePointer.cast(start);
-			byte[] buffer = new byte[4096];
-			if (zeroFill) {
-				java.util.Arrays.fill(buffer, (byte) 0x00);
-			}
-			while (offset < areaSize) {
-				if (areaSize - offset < buffer.length) {
-					buffer = new byte[(int)(areaSize - offset)];
-					if (zeroFill) {
-						java.util.Arrays.fill(buffer, (byte) 0x00);
-					}
-				}			
-				if (!zeroFill) {
-					hStart.getBytesAtOffset(offset, buffer);
+	private void dbgShrcWriteCacheArea(FileOutputStream fout, UDATA areaStart, UDATA areaEnd, boolean zeroFill) throws CorruptDataException, IOException {
+		long offset = 0;
+		long start = areaStart.longValue();
+		long end = areaEnd.longValue();
+		long areaSize = end - start;
+		SH_OSCachePointer hStart = SH_OSCachePointer.cast(start);
+		byte[] buffer = new byte[4096];
+		if (zeroFill) {
+			java.util.Arrays.fill(buffer, (byte) 0x00);
+		}
+		while (offset < areaSize) {
+			if (areaSize - offset < buffer.length) {
+				buffer = new byte[(int) (areaSize - offset)];
+				if (zeroFill) {
+					java.util.Arrays.fill(buffer, (byte) 0x00);
 				}
-				fout.write(buffer);
-				offset += buffer.length;
-			}		
+			}
+			if (!zeroFill) {
+				hStart.getBytesAtOffset(offset, buffer);
+			}
+			fout.write(buffer);
+			offset += buffer.length;
+		}
 	}
 
 	private SH_OSCachePointer getOSCache(PrintStream out, J9SharedClassConfigPointer sharedClassConfig) throws CorruptDataException {
@@ -672,30 +671,30 @@ public class ShrCCommand extends Command
 		CommandUtils.dbgPrint(out, "!shrc method <address>                         -- Lookup rom method in cache\n");
 		CommandUtils.dbgPrint(out, "!shrc incache <address>                        -- Lookup address in cache\n");
 		CommandUtils.dbgPrint(out, "!shrc cachelet <address>                       -- Print cachelet at address\n");
-		
+
 		CommandUtils.dbgPrint(out, "!shrc jitpstats [range|layer=<n>] [corrupt]    -- Print jit profile cache contents, add corrupt to only display the corrupted caches\n");
 		CommandUtils.dbgPrint(out, "!shrc findjitp <name>                          -- Find jit profile for named method\n");
-		CommandUtils.dbgPrint(out, "!shrc findjitpp <name>                         -- Find jit profile for named method prefix\n");		
+		CommandUtils.dbgPrint(out, "!shrc findjitpp <name>                         -- Find jit profile for named method prefix\n");
 		CommandUtils.dbgPrint(out, "!shrc jitpfor <address>                        -- Find jit profile for rom method\n");
 
 		CommandUtils.dbgPrint(out, "!shrc jithstats [range|layer=<n>] [corrupt]    -- Print jit hint cache contents, add corrupt to only display the corrupted caches\n");
 		CommandUtils.dbgPrint(out, "!shrc findjith <name>                          -- Find jit hint for named method\n");
-		CommandUtils.dbgPrint(out, "!shrc findjithp <name>                         -- Find jit hint for named method prefix\n");		
+		CommandUtils.dbgPrint(out, "!shrc findjithp <name>                         -- Find jit hint for named method prefix\n");
 		CommandUtils.dbgPrint(out, "!shrc jithfor <address>                        -- Find jit hint for rom method\n");
 
 		CommandUtils.dbgPrint(out, "!shrc rtflags                                  -- Display shared classes runtime flags\n");
 		CommandUtils.dbgPrint(out, "!shrc extraflags [layer=<n>]                   -- Display shared classes extra flags present in cache header\n");
 		CommandUtils.dbgPrint(out, "!shrc write <dir> [<name>]                     -- Write the shared cache to the given directory\n");
 		CommandUtils.dbgPrint(out, "!shrc name                                     -- Display the name of the shared cache\n");
-		
+
 		CommandUtils.dbgPrint(out,  "\nNote: [range] is specified as <start addr>..<end addr> eg 0x1000..0x2000\n");
 	}
 
 	private void dbgShrcPrintAllStats(PrintStream out, J9JavaVMPointer vm, J9SharedClassConfigPointer sharedClassConfig, U8Pointer[] metaStartArray, U8Pointer[] metaEndArray, long statTypes, String searchName, boolean prefix, VoidPointer searchAddress, boolean findCorrupt) throws CorruptDataException {
-		List<J9ROMClassPointer> romClassList = new ArrayList<J9ROMClassPointer>();
+		List<J9ROMClassPointer> romClassList = new ArrayList<>();
 
 		boolean entryFound = false;
-		
+
 		int numRC = 0;
 		int numOrphans = 0;
 		int numStale = 0;
@@ -736,7 +735,7 @@ public class ShrCCommand extends Command
 		long lvtBytes = 0;
 		boolean showAllStaleFlag = ((statTypes & ALL_STALE_STATS) != 0);
 		int topLayer = -1;
-		
+
 		UDATA debugLNTUsed, debugLVTUsed;
 		UDATA[] romclassStartAddress;
 		UDATA[] segmentPtr;
@@ -744,7 +743,7 @@ public class ShrCCommand extends Command
 		topLayer = dbgShrcCacheTopLayer(out, sharedClassConfig);
 		ShrcConfig config = dbgShrcReadConfig(sharedClassConfig, out);
 		J9SharedCacheHeaderPointer[] cacheHeader = config.getCacheStartAddress();
-		U8Pointer[] cacheHeaderPtr = null; 
+		U8Pointer[] cacheHeaderPtr = null;
 
 		if (topLayer >= 0) {
 			cacheHeaderPtr = new U8Pointer[cacheHeader.length];
@@ -759,7 +758,7 @@ public class ShrCCommand extends Command
 		for (int i = 0; i <= J9SHR_DATA_TYPE_MAX; i++) {
 			numByteOfType[i] = 0;
 		}
-		
+
 		for (int i = 0; i < metaStartArray.length; i++) {
 			CommandUtils.dbgPrint(out, "Meta data region to be used: %s..%s\n", metaStartArray[i].getHexAddress(), metaEndArray[i].getHexAddress());
 		}
@@ -771,7 +770,7 @@ public class ShrCCommand extends Command
 			while (iterator.hasNext()) {
 				ShcItemPointer it = iterator.next();
 				U16 itemType = it.dataType();
-	
+
 				J9ROMClassPointer romClass;
 				J9UTF8Pointer romClassName;
 				ROMClassWrapperPointer rcw;
@@ -792,12 +791,12 @@ public class ShrCCommand extends Command
 				CacheletWrapperPointer cachelet;
 				AttachedDataWrapperPointer adw;
 				boolean isStale = ShcItemHdrHelper.CCITEMSTALE(ShcItemHdrPointer.cast(ShcItemHelper.ITEMEND(it)));
-				
+
 				if (isStale) {
 					totalStaleBytes += ShcItemHdrHelper.CCITEMLEN(ShcItemHdrPointer.cast(ShcItemHelper.ITEMEND(it))).longValue();
 					++numStale;
 				}
-				
+
 				if (itemType.eq(TYPE_ORPHAN)) {
 					rcMetaLen += OrphanWrapper.SIZEOF + ShcItem.SIZEOF + ShcItemHdr.SIZEOF;
 					romClass = OrphanWrapperHelper.romClass(OrphanWrapperPointer.cast(ShcItemHelper.ITEMDATA(it)), cacheHeaderPtr);
@@ -851,7 +850,7 @@ public class ShrCCommand extends Command
 									CommandUtils.dbgPrint(out, "!STALE!");
 								}
 								CommandUtils.dbgPrint(out, "\n");
-	
+
 								cpi = ClasspathItemPointer.cast(ClasspathWrapperHelper.CPWDATA(cpw));
 								cpiType = new UDATA(cpi.type());
 								if (cpiType.eq(CP_TYPE_CLASSPATH)) {
@@ -861,7 +860,7 @@ public class ShrCCommand extends Command
 								} else if (cpiType.eq(CP_TYPE_TOKEN)) {
 									CommandUtils.dbgPrint(out, "\tToken !shrc classpath %s\n", cpw.getHexAddress());
 								}
-	
+
 								if (itemType.eq(TYPE_SCOPED_ROMCLASS)) {
 									if (rcPartition.notNull() && rcModContext.isNull()) {
 										CommandUtils.dbgPrint(out, "\tPartition !j9utf8 %s %s\n", rcPartition.getHexAddress(), dbgShrcPrintableString(rcPartition));
@@ -875,16 +874,16 @@ public class ShrCCommand extends Command
 						}
 					}
 					++numRC;
-	
+
 				} else if (itemType.eq(TYPE_CLASSPATH)) {
 					cpw = ClasspathWrapperPointer.cast(ShcItemHelper.ITEMDATA(it));
 					cpi = ClasspathItemPointer.cast(ClasspathWrapperHelper.CPWDATA(cpw));
-	
+
 					if ((statTypes & CLASSPATH_STATS) != 0) {
 						entryFound = true;
 						dbgShrcPrintClasspath(out, cpw);
 					}
-	
+
 					cpiType = new UDATA(cpi.type());
 					if (cpiType.eq(CP_TYPE_CLASSPATH)) {
 						++numCP;
@@ -918,7 +917,7 @@ public class ShrCCommand extends Command
 									CommandUtils.dbgPrint(out, "INVALIDATED");
 								}
 								CommandUtils.dbgPrint(out, "\n\t%s !j9rommethod %s\n", methodName, romMethod.getHexAddress());
-	
+
 								ListIterator<J9ROMClassPointer> iter = romClassList.listIterator(romClassList.size());
 								while (iter.hasPrevious()) {
 									J9ROMClassPointer lastRomClass = iter.previous();
@@ -939,7 +938,7 @@ public class ShrCCommand extends Command
 					boolean jitHint = (J9SHR_ATTACHED_DATA_TYPE_JITHINT == adType);
 					int adUpdateCount = adw.updateCount().intValue();
 					int adCorrupt = adw.corrupt().intValue();
-					
+
 					if (jitHint) {
 						jitHintDataLen += dataLen.longValue();
 						jitHintMetaLen += AttachedDataWrapper.SIZEOF + ShcItem.SIZEOF + ShcItemHdr.SIZEOF;
@@ -956,13 +955,13 @@ public class ShrCCommand extends Command
 							String methodName = J9ROMMethodHelper.getName(romMethod) + J9ROMMethodHelper.getSignature(romMethod);
 							if (matchRomMethodName(searchName, J9ROMMethodHelper.getName(romMethod), J9ROMMethodHelper.getSignature(romMethod), prefix)) {
 								entryFound = true;
-								CommandUtils.dbgPrint(out, "%d: %s %s data !j9x %s,%s  type %d updates %d corrupt %d", 
+								CommandUtils.dbgPrint(out, "%d: %s %s data !j9x %s,%s  type %d updates %d corrupt %d",
 										it.jvmID().longValue(), it.getHexAddress(), (jitHint? "JITHINT": "JITPROFILE"), AttachedDataWrapperHelper.ADWDATA(adw).getHexAddress(), dataLen.getHexValue(), adType, adUpdateCount, adCorrupt);
 								if (isStale) {
 									CommandUtils.dbgPrint(out, "!STALE!");
 								}
 								CommandUtils.dbgPrint(out, "\n\t%s !j9rommethod %s\n", methodName, romMethod.getHexAddress());
-	
+
 								ListIterator<J9ROMClassPointer> iter = romClassList.listIterator(romClassList.size());
 								while (iter.hasPrevious()) {
 									J9ROMClassPointer lastRomClass = iter.previous();
@@ -975,9 +974,9 @@ public class ShrCCommand extends Command
 						}
 					}
 					if (jitHint) {
-						++numJITHint; 
+						++numJITHint;
 					} else {
-						++numJITProfile; 
+						++numJITProfile;
 					}
 				} else if (itemType.eq(TYPE_SCOPE)) {
 					utf8 = J9UTF8Pointer.cast(ShcItemHelper.ITEMDATA(it));
@@ -1001,27 +1000,27 @@ public class ShrCCommand extends Command
 					}
 					if (rwOffset.eq(0)) {
 						byteDataLen += len.longValue();
-						if (((statTypes & BYTE_STATS) != 0) 
+						if (((statTypes & BYTE_STATS) != 0)
 							|| ((statTypes & STARTUPHINT_STATS) != 0)
 						) {
-							if (((statTypes & BYTE_STATS) == 0) 
+							if (((statTypes & BYTE_STATS) == 0)
 								&& (!getType(byteDataType).equals("STARTUPHINT"))
 							) {
 								continue;
-							} 
+							}
 							entryFound = true;
 							CommandUtils.dbgPrint(out, "%d: %s %s BYTEDATA !j9x %s,%s", it.jvmID().longValue(), it.getHexAddress(), getType(byteDataType), ByteDataWrapperHelper.getDataFromByteDataWrapper(bdw, cacheHeaderPtr).getHexAddress(), len.getHexValue());
 						}
 					} else {
 						byteDataRWLen += len.longValue();
 						if (((statTypes & BYTE_STATS) != 0)
-							|| ((statTypes & STARTUPHINT_STATS) != 0)						
+							|| ((statTypes & STARTUPHINT_STATS) != 0)
 						) {
-							if (((statTypes & BYTE_STATS) == 0) 
+							if (((statTypes & BYTE_STATS) == 0)
 								&& (!getType(byteDataType).equals("STARTUPHINT"))
 							) {
 								continue;
-							} 
+							}
 							entryFound = true;
 							CommandUtils.dbgPrint(out, "%d: %s BYTEDATA RW !j9x %s,%s", it.jvmID().longValue(), it.getHexAddress(), ByteDataWrapperHelper.getDataFromByteDataWrapper(bdw, cacheHeaderPtr).getHexAddress(), len.getHexValue());
 						}
@@ -1033,7 +1032,7 @@ public class ShrCCommand extends Command
 						if (isStale) {
 							CommandUtils.dbgPrint(out, "!STALE!");
 						}
-						
+
 						UDATA inPrivateUse = new UDATA(ByteDataWrapperHelper.BDWINPRIVATEUSE(bdw));
 						UDATA privateOwnerID = new UDATA(ByteDataWrapperHelper.BDWPRIVATEOWNERID(bdw));
 						utf8 = J9UTF8Pointer.cast(ByteDataWrapperHelper.BDWTOKEN(bdw, cacheHeaderPtr));
@@ -1057,13 +1056,13 @@ public class ShrCCommand extends Command
 				} else if (itemType.eq(TYPE_CACHELET)) {
 					J9SharedCacheHeaderPointer header;
 					UDATA cacheletRomClassStartAddress, cacheletSegmentPtr;
-					
+
 					cachelet = CacheletWrapperPointer.cast(ShcItemHelper.ITEMDATA(it));
 					header = J9SharedCacheHeaderPointer.cast(CacheletWrapperHelper.CLETDATA(cachelet));
 					cacheletRomClassStartAddress = UDATA.cast(header).add(header.readWriteBytes());
 					cacheletSegmentPtr = UDATA.cast(header).add(header.segmentSRP());
 					totalROMClassBytes += cacheletSegmentPtr.sub(cacheletRomClassStartAddress).longValue();
-					
+
 					cacheletMetaLen += it.dataLen().longValue();
 					if ((statTypes & CACHELET_STATS) != 0) {
 						entryFound = true;
@@ -1130,12 +1129,12 @@ public class ShrCCommand extends Command
 			CommandUtils.dbgPrint(out, "\nCache contains %d classes, %d orphans, %d classpaths, %d URLs, %d tokens\n", numRC, numOrphans, numCP, numURL, numToken);
 			CommandUtils.dbgPrint(out, "%d AOT, %d SCOPES, %d BYTE data, %d UNINDEXED DATA, %d CHARARRAY, %d stale\n", numAOT, numScope, numByte, numUnindexed, numChararray, numStale);
 			CommandUtils.dbgPrint(out, "stale bytes %d\n", totalStaleBytes);
-			
+
 			CommandUtils.dbgPrint(out, "%d JITPROFILE, %d JITHINT\n", numJITProfile, numJITHint);
 			CommandUtils.dbgPrint(out, "AOT data length %d code length %d metadata %d total %d\n", aotDataLen, aotCodeLen, aotMetaLen, aotDataLen + aotCodeLen, aotMetaLen);
 			CommandUtils.dbgPrint(out, "JITPROFILE data length %d metadata %d \n", jitProfileDataLen, jitProfileMetaLen);
 			CommandUtils.dbgPrint(out, "JITHINT data length %d metadata %d \n", jitHintDataLen, jitHintMetaLen);
-			
+
 			CommandUtils.dbgPrint(out, "ROMClass data %d metadata %d\n", totalROMClassBytes, rcMetaLen);
 			CommandUtils.dbgPrint(out, "SCOPE data %d metadata %d total %d\n", scopeDataLen, scopeMetaLen, scopeMetaLen + scopeDataLen);
 			CommandUtils.dbgPrint(out, "BYTE data %d metadata %d rwarea %d\n", byteDataLen, byteMetaLen, byteDataRWLen);
@@ -1176,7 +1175,7 @@ public class ShrCCommand extends Command
 
 		SH_CacheMapPointer cacheMap = sharedClassConfig.sharedClassCache();
 		J9SharedClassCacheDescriptorPointer cacheDescriptor = sharedClassConfig.cacheDescriptorList();
-		
+
 		if (topLayer > 0) {
 			/* get cacheDescriptor of layer 0 cache */
 			cacheDescriptor = cacheDescriptor.previous();
@@ -1188,12 +1187,12 @@ public class ShrCCommand extends Command
 			if (null != cacheDescriptor) {
 				cacheStartAddress[layer] = cacheDescriptor.cacheStartAddress();
 			}
-			
+
 			/* If cacheStartAddress could not get on first try, then
 			 * 2nd try : get cacheStartAddress from sharedClassConfig->sharedClassCache->_cc->_theca
 			 * If cacheStartAddress still could not get on second try, then
 			 * 3rd try : get cacheStartAddress from sharedClassConfig->sharedClassCache->_cc->_oscache->_dataStart
-			 * 
+			 *
 			 * If cacheStartAddress could not get on third try, then return since shared cache is not initialized enough.
 			 */
 			if (cacheStartAddress[layer].isNull()) {
@@ -1228,30 +1227,30 @@ public class ShrCCommand extends Command
 				return null;
 			}
 
-			/* 
+			/*
 			 * TRY TO GET romclassStartAddress
 			 * 1st try : Get it from cacheDescriptor
 			 */
 			if (cacheDescriptor.notNull()) {
 				romclassStartAddress[layer] = UDATA.cast(cacheDescriptor.romclassStartAddress());
 			}
-			
+
 			/*
-			 * If romclassStartAddress could not get on first try, 
+			 * If romclassStartAddress could not get on first try,
 			 * 2nd try : Calculate it manually by adding readWriteBytes to cacheStartAddress.
 			 */
 			if ((0 == romclassStartAddress[layer].longValue()) && (0 != cacheStartAddress[layer].readWriteBytes().longValue())) {
 				romclassStartAddress[layer] = new UDATA(cacheStartAddress[layer].addOffset(cacheStartAddress[layer].readWriteBytes()).longValue());
 			}
-			
+
 			/*
-			 * If romclassStartAddress could not get on the second try, 
+			 * If romclassStartAddress could not get on the second try,
 			 * then print info message and continue running.
 			 */
 			if (0 == romclassStartAddress[layer].longValue()) {
 				CommandUtils.dbgPrint(out, "romclassStartAddress is zero for layer %d\n", layer);
 			}
-			
+
 			/*
 			 * TRY TO GET segmentPtr
 			 * 1st try : Try to get it by resolving segmentSRP from cacheStartAddress
@@ -1262,9 +1261,9 @@ public class ShrCCommand extends Command
 			}
 
 			/*
-			 * If segmentPtr could not get on the second try, 
+			 * If segmentPtr could not get on the second try,
 			 * then print info message and continue running.
-			 * 
+			 *
 			 */
 			if (0 == segmentPtr[layer].longValue()) {
 				CommandUtils.dbgPrint(out, "segmentPtr is zero for layer %d\n", layer);
@@ -1274,7 +1273,7 @@ public class ShrCCommand extends Command
 			}
 			layer += 1;
 		} while (layer <= topLayer);
-		
+
 		return new ShrcConfig(cacheStartAddress, romclassStartAddress, segmentPtr);
 	}
 
@@ -1301,14 +1300,14 @@ public class ShrCCommand extends Command
 			return segmentPtr;
 		}
 	}
-	
+
 	U8Pointer[] getSharedCacheMetadataStart(J9JavaVMPointer vm, PrintStream out) throws CorruptDataException {
 		J9SharedClassConfigPointer sharedConfig = vm.sharedClassConfig();
 		if (sharedConfig.isNull()) {
 			CommandUtils.dbgPrint(out, "SharedClassConfig can not be found.\n");
 			return null;
 		}
-		
+
 		ShrcConfig config = dbgShrcReadConfig(sharedConfig, out);
 		J9SharedCacheHeaderPointer[] header = config.getCacheStartAddress();
 
@@ -1319,14 +1318,14 @@ public class ShrCCommand extends Command
 		}
 		return ret;
 	}
-	
+
 	U8Pointer[] getSharedCacheMetadataEnd(J9JavaVMPointer vm, PrintStream out) throws CorruptDataException {
 		J9SharedClassConfigPointer sharedConfig = vm.sharedClassConfig();
 		if (sharedConfig.isNull()) {
 			CommandUtils.dbgPrint(out, "SharedClassConfig can not be found.\n");
 			return null;
 		}
-		
+
 		ShrcConfig config = dbgShrcReadConfig(sharedConfig, out);
 		J9SharedCacheHeaderPointer[] header = config.getCacheStartAddress();
 
@@ -1341,7 +1340,7 @@ public class ShrCCommand extends Command
 	SharedCacheMetadata[] dbgReadSharedCacheMetadata(J9JavaVMPointer vm, PrintStream out) throws CorruptDataException {
 		U8Pointer heapTop[] = getSharedCacheMetadataEnd(vm, out);
 		U8Pointer heapBase[] = getSharedCacheMetadataStart(vm, out);
-		
+
 		SharedCacheMetadata[] metadata = new SharedCacheMetadata[heapTop.length];
 		for (int i = 0; i < heapTop.length; i++) {
 			if (heapTop[i].isNull() || heapBase[i].isNull()) {
@@ -1359,12 +1358,12 @@ public class ShrCCommand extends Command
 			return null;
 		} else {
 			return metadata;
-		}			
+		}
 	}
-	
+
 	private String getType(UDATA byteDataType) {
 		long type = byteDataType.longValue();
-		
+
 		if (type == J9SHR_DATA_TYPE_HELPER) {
 			return "HELPER";
 		} else if (type == J9SHR_DATA_TYPE_POOL) {
@@ -1380,7 +1379,7 @@ public class ShrCCommand extends Command
 		} else if (type == J9SHR_DATA_TYPE_CACHELET) {
 			return "CACHELET";
 		} else if (type == J9SHR_DATA_TYPE_ZIPCACHE) {
-			return "ZIPCACHE"; 
+			return "ZIPCACHE";
 		} else if (type == J9SHR_DATA_TYPE_STARTUP_HINTS) {
 			return "STARTUPHINT";
 		} else if (type == J9SHR_DATA_TYPE_JITHINT) {
@@ -1429,7 +1428,7 @@ public class ShrCCommand extends Command
 		}
 
 		String methodNameAndSig = methodName + methodSignature;
-		
+
 		if (prefix) {
 			return methodNameAndSig.startsWith(searchName);
 		}
@@ -1437,7 +1436,7 @@ public class ShrCCommand extends Command
 		if (searchName.equals(methodName)) {
 			return true;
 		}
-		
+
 		return searchName.equals(methodNameAndSig);
 	}
 
@@ -1451,7 +1450,6 @@ public class ShrCCommand extends Command
 		CommandUtils.dbgPrint(out, "  numSegments: %d segmentStartOffset: %s lastSegmentAlloc: %s\n", numSegments.longValue(), cw.segmentStartOffset().getHexValue(), cw.lastSegmentAlloc().getHexValue());
 
 		if (numSegments.gt(0)) {
-
 			UDATAPointer segHints = UDATAPointer.NULL;
 			U8Pointer cursor = hints;
 
@@ -1475,10 +1473,9 @@ public class ShrCCommand extends Command
 		J9SharedCacheHeaderPointer header = J9SharedCacheHeaderPointer.cast(CacheletWrapperHelper.CLETDATA(cw));
 		CommandUtils.dbgPrint(out, "  ");
 		dbgShrcHeaderOperations(out, header, VoidPointer.NULL, 1, -1);
-
 	}
 
-	class Touple<V1, V2> {
+	static class Touple<V1, V2> {
 		V1 v1;
 		V2 v2;
 
@@ -1498,18 +1495,18 @@ public class ShrCCommand extends Command
 
 	/**
 	 * A helper class to retrieve cache header information
-	 * 
-	 * @param header - the generated J9SharedCacheHeaderPointer class used to determine 
+	 *
+	 * @param header - the generated J9SharedCacheHeaderPointer class used to determine
 	 * information about the various segments of the cache
-	 * 
+	 *
 	 */
 	static class J9SharedCacheHeaderInfo {
 		private J9SharedCacheHeaderPointer header;
-		
+
 		J9SharedCacheHeaderInfo(J9SharedCacheHeaderPointer header){
 			this.header = header;
 		}
-		
+
 		public J9SharedCacheHeaderPointer getHeader() {
 			return header;
 		}
@@ -1521,115 +1518,115 @@ public class ShrCCommand extends Command
 		public UDATA getHeaderStart() {
 			return UDATA.cast(header);
 		}
-		
+
 		public U32 getTotalBytes() throws CorruptDataException {
 			return new U32(this.header.totalBytes());
 		}
-		
+
 		public U32 getSoftMaxBytes() throws CorruptDataException {
 			return new U32(this.header.softMaxBytes());
 		}
-		
+
 		public U32 getReadWriteBytes() throws CorruptDataException {
 			return new U32(this.header.readWriteBytes());
 		}
-		
+
 		public UDATA getReadWritePtr() throws CorruptDataException {
 			UDATA readWriteSRP = this.header.readWriteSRP();
 			return UDATA.cast(this.header).add(readWriteSRP);
 		}
-		
+
 		public UDATA getReadWriteStart() {
 			return UDATA.cast(this.header).add(J9SharedCacheHeader.SIZEOF);
 		}
-		
+
 		public UDATA getRomClassesStart() throws CorruptDataException {
 			return UDATA.cast(header).add(getReadWriteBytes());
 		}
-		
+
 		public UDATA getRomClassesEnd() throws CorruptDataException {
 			return getSegmentPtr();
 		}
-		
+
 		public UDATA getSegmentPtr() throws CorruptDataException {
 			UDATA segmentSRP = this.header.segmentSRP();
 			return UDATA.cast(this.header).add(segmentSRP);
 		}
-		
+
 		public UDATA getUpdatePtr() throws CorruptDataException {
 			UDATA updateSRP = this.header.updateSRP();
 			return UDATA.cast(this.header).add(updateSRP);
 		}
-		
+
 		public UDATA getDebugAreaSize() throws CorruptDataException {
 			return new UDATA(this.header.debugRegionSize().longValue());
 		}
-		
+
 		public UDATA getMetaDataStart() throws CorruptDataException {
 			return UDATA.cast(this.header).add(getTotalBytes()).sub(getDebugAreaSize());
 		}
-		
+
 		public UDATA getMetaDataEnd() throws CorruptDataException {
 			return getUpdatePtr();
 		}
-		
+
 		public UDATA getDebugAreaStart() throws CorruptDataException {
 			return UDATA.cast(this.header).add(getTotalBytes()).sub(getDebugAreaSize());
 		}
-		
+
 		public UDATA getDebugAreaEnd() throws CorruptDataException {
 			return getDebugAreaStart().add(getDebugAreaSize());
 		}
-		
+
 		public UDATA getLineNumberAreaStart() throws CorruptDataException {
 			return getDebugAreaStart();
 		}
-		
+
 		public UDATA getLineNumberAreaEnd() throws CorruptDataException {
 			/*
-			 * Although lineNumberTableNextSRP and localVariableTableNextSRP are SRPs, 
+			 * Although lineNumberTableNextSRP and localVariableTableNextSRP are SRPs,
 			 * they are defined as UDATA in J9SharedCacheHeader.
 			 * Therefore these SRPs needs to be resolved manually here instead of using SelfRelativePointer class.
-			 */ 
+			 */
 			return new UDATA(this.header.lineNumberTableNextSRPEA().longValue() + this.header.lineNumberTableNextSRP().longValue());
 		}
-		
+
 		public UDATA getLocalVariableAreaStart() throws CorruptDataException {
 			return getDebugAreaEnd();
 		}
-		
+
 		public UDATA getLocalVariableAreaEnd() throws CorruptDataException {
 			return new UDATA(this.header.localVariableTableNextSRPEA().longValue() + this.header.localVariableTableNextSRP().longValue());
 		}
-		
+
 		public UDATA getDebugLVTUsed() throws CorruptDataException {
 			return getDebugAreaEnd().sub(getLocalVariableAreaEnd());
 		}
-		
+
 		public UDATA getDebugLNTUsed() throws CorruptDataException {
 			return getLineNumberAreaEnd().sub(getDebugAreaStart());
 		}
-		
+
 		public I32 getMinAOT() throws CorruptDataException {
 			return new I32(this.header.minAOT());
 		}
-		
+
 		public I32 getMinJIT() throws CorruptDataException {
 			return new I32(this.header.minJIT());
 		}
-		
+
 		public UDATA getAotBytes() throws CorruptDataException {
 			return this.header.aotBytes();
 		}
-		
+
 		public UDATA getJitBytes() throws CorruptDataException {
 			return this.header.jitBytes();
 		}
-		
+
 		public UDATA getCacheFullFlags() throws CorruptDataException {
 			return this.header.cacheFullFlags();
 		}
-		
+
 		/* The equivalent of SH_CompositeCacheImpl::getFreeBlockBytes() */
 		public I32 getFreeBlockBytes() throws CorruptDataException {
 			long retVal;
@@ -1640,7 +1637,7 @@ public class ShrCCommand extends Command
 			UDATA updatePtr = getUpdatePtr();
 			UDATA segmentPtr = getSegmentPtr();
 			long freeBytes = updatePtr.sub(segmentPtr).longValue();
-			
+
 			if (((-1 == minAOT) && (-1 == minJIT)) ||
 				((-1 == minAOT) && (minJIT <= jitBytes)) ||
 				((-1 == minJIT) && (minAOT <= aotBytes)) ||
@@ -1664,26 +1661,26 @@ public class ShrCCommand extends Command
 				 * then free block bytes =  freebytes - bytes not yet used in reserved space of AOT
 				 */
 				retVal = freeBytes - (minAOT - aotBytes);
-			} else	{
-				 /* We are here if both jitBytes and aotBytes are within the their respective reserved space
-				 *  free block bytes = freebytes - bytes not yet used in reserved space of AOT -
-				 *       						   bytes not yet used in reserved space of JIT
-				 */
+			} else {
+				/* We are here if both jitBytes and aotBytes are within the their respective reserved space
+				*  free block bytes = freebytes - bytes not yet used in reserved space of AOT -
+				*       						   bytes not yet used in reserved space of JIT
+				*/
 				retVal = freeBytes - (minJIT - jitBytes) - (minAOT - aotBytes);
 			}
 			/* When creating the cache with -Xscminaot/-Xscminjit > real cache size, minAOT/minJIT will be set to the same size to the real cache size by ensureCorrectCacheSizes(),
 			 * retVal calculated here can be < 0 in this case.
 			 */
-			retVal =  (retVal > 0) ? retVal : 0;
+			retVal = (retVal > 0) ? retVal : 0;
 			return new I32(retVal);
 		}
-		
+
 		public U32 getUsedBytes() throws CorruptDataException {
-			long totalSize = ShrCCommand.cacheTotalSize; 
+			long totalSize = ShrCCommand.cacheTotalSize;
 			/* this.header.totalBytes() does not include OSCache_mmap_header/OSCache_sysv_header, so use ShrCCommand.cacheTotalSize */
 			long freeBlockBytes = getFreeBlockBytes().longValue();
 			long freeDebugSize = getDebugAreaSize().longValue() - getDebugLNTUsed().longValue() - getDebugLVTUsed().longValue();
-			
+
 			if (0 == totalSize) {
 				return null;
 			} else {
@@ -1697,12 +1694,11 @@ public class ShrCCommand extends Command
 			long freeBlockBytes = getFreeBlockBytes().longValue();
 			U32 softMaxBytes = getSoftMaxBytes();
 			U32 usedBytes = getUsedBytes();
-			
-			if (null != usedBytes) {
 
+			if (null != usedBytes) {
 				if (softMaxBytes.eq(U32.MAX)) {
 					ret = totalSize - usedBytes.longValue();
-				} else {	
+				} else {
 					ret = softMaxBytes.sub(usedBytes).longValue();
 				}
 
@@ -1731,12 +1727,12 @@ public class ShrCCommand extends Command
 		UDATA debugLNTNextAdd, debugLVTNextAdd;
 		U32 softMaxBytes;
 		UDATA getFreeAvailableBytes;
-		
+
 		String indent;
 		long freeBytes = 0;
 
 		J9SharedCacheHeaderInfo helper = new J9SharedCacheHeaderInfo(header);
-		
+
 		totalBytes = helper.getTotalBytes();
 		softMaxBytes = helper.getSoftMaxBytes();
 		readWriteBytes = helper.getReadWriteBytes();
@@ -1750,25 +1746,25 @@ public class ShrCCommand extends Command
 		metadataStartAddress = helper.getMetaDataStart();
 		debugAreaStart = helper.getDebugAreaStart();
 		debugAreaEnd = helper.getDebugAreaEnd();
-	
+
 		/* Calculate the amount of LNT and LVT attribute data stored in the cache
-		 * Although lineNumberTableNextSRP and localVariableTableNextSRP are SRPs, 
+		 * Although lineNumberTableNextSRP and localVariableTableNextSRP are SRPs,
 		 * they are defined as UDATA in J9SharedCacheHeader.
 		 * Therefore these SRPs needs to be resolved manually here instead of using SelfRelativePointer class.
-		 */		
+		 */
 		debugLNTNextAdd = helper.getLineNumberAreaEnd(); //new UDATA(header.lineNumberTableNextSRPEA().longValue() + header.lineNumberTableNextSRP().longValue());
 		debugLVTNextAdd = helper.getLocalVariableAreaEnd();//new UDATA(header.localVariableTableNextSRPEA().longValue() + header.localVariableTableNextSRP().longValue());
 		debugLNTUsed = helper.getDebugLNTUsed();
 		debugLVTUsed = helper.getDebugLVTUsed();
-		
-		//Calculate the used portion of the debug area 		
+
+		//Calculate the used portion of the debug area
 		debugAreaUsed = debugLNTUsed.add(debugLVTUsed);
 		if (0 != debugAreaSize.longValue()) {
 			debugAreaPercentUsed = new UDATA((debugAreaUsed.longValue() * 100) / debugAreaSize.longValue());
 		} else {
-			debugAreaPercentUsed = new UDATA(100); 
+			debugAreaPercentUsed = new UDATA(100);
 		}
-		
+
 		getFreeAvailableBytes = helper.getFreeAvailableBytes();
 		if (null != getFreeAvailableBytes) {
 			freeBytes = getFreeAvailableBytes.longValue();
@@ -1802,7 +1798,7 @@ public class ShrCCommand extends Command
 							Long flagValue = (Long)field.get(null);
 
 							if (helper.getCacheFullFlags().anyBitsIn(flagValue)) {
-								CommandUtils.dbgPrint(out, " (J9SHR_AVAILABLE_SPACE_FULL is set)");						
+								CommandUtils.dbgPrint(out, " (J9SHR_AVAILABLE_SPACE_FULL is set)");
 							}
 						} catch (Exception e) {
 							e.printStackTrace();
@@ -1835,12 +1831,12 @@ public class ShrCCommand extends Command
 			CommandUtils.dbgPrint(out, "\n0x%x is in the metadata area", address.getAddress());
 		} else if (!debugAreaSize.eq(0) && address.gte(VoidPointer.cast(metadataStartAddress)) && address.lt(VoidPointer.cast(debugAreaEnd))) {
 			if (address.lt(VoidPointer.cast(debugLNTNextAdd))) {
-				CommandUtils.dbgPrint(out,"\n0x%x is in the line number table of the class debug area", address.getAddress());	
+				CommandUtils.dbgPrint(out,"\n0x%x is in the line number table of the class debug area", address.getAddress());
 			} else if (address.gt(VoidPointer.cast(debugLVTNextAdd))) {
 				CommandUtils.dbgPrint(out,"\n0x%x is in the local variable table of the class debug area", address.getAddress());
 			} else {
 				CommandUtils.dbgPrint(out,"\n0x%x is in the unused part of the class debug area", address.getAddress());
-			}				
+			}
 		} else {
 			return new Touple<Boolean, Long>(false, freeBytes);
 		}
@@ -1887,11 +1883,11 @@ public class ShrCCommand extends Command
 			CommandUtils.dbgPrint(out, "   %d)\t%s: %s \ttimestamp: %s%s\n", i, getProtocolName(cpei.protocol()), cpeiPath, cpei.timestamp().getHexValue(), isStaleCPEntry(cpei) ? " !STALE" : "");
 		}
 	}
-	
+
 	private boolean isStaleCPEntry(ClasspathEntryItemPointer cpei) throws CorruptDataException {
 		return (cpei.flags().longValue() & SharedconstsConstants.MARKED_STALE_FLAG) != 0;
 	}
-	
+
 	private String getProtocolName(UDATA protocol) {
 		long protocolValue = protocol.longValue();
 		if (protocolValue == SharedconstsConstants.PROTO_JAR) {
@@ -1905,10 +1901,10 @@ public class ShrCCommand extends Command
 		}
 		return protocol.getHexValue();
 	}
-	
-	
+
+
 	/* return ADDRESS_NOT_FOUND_IN_CACHE if the address is not in the shared cache.
-	 * If the address is in the share cache: 1. for old cache without layer number, return -1. 2. For cache with layer number, return the layer in which the address is in 
+	 * If the address is in the share cache: 1. for old cache without layer number, return -1. 2. For cache with layer number, return the layer in which the address is in
 	 */
 	private void dbgShrcInCache(PrintStream out, J9JavaVMPointer vm, J9SharedClassConfigPointer sharedClassConfig, VoidPointer address) throws CorruptDataException {
 		boolean found = false;
@@ -1947,7 +1943,7 @@ public class ShrCCommand extends Command
 				} else {
 					layer += 1;
 				}
-			} while (layer < cacheStartAddressArray.length);	
+			} while (layer < cacheStartAddressArray.length);
 		}
 
 		if (address.isNull()) {
@@ -1976,7 +1972,7 @@ public class ShrCCommand extends Command
 			CommandUtils.dbgPrint(out, "\n%s is not in the shared cache\n", U8Pointer.cast(address).getHexAddress());
 		}
 	}
-	
+
 	private void initTotalCacheSize(PrintStream out, J9SharedClassConfigPointer sharedClassConfig) throws CorruptDataException {
 		if (0 == cacheTotalSize) {
 			SH_OSCachePointer osCache = getOSCache(out, sharedClassConfig);
@@ -2020,21 +2016,21 @@ public class ShrCCommand extends Command
 	 * limit to a specific data type, set limitDataType to one of the values in
 	 * shcdatatypes.h If includeStale is zero, stale entries are included in the
 	 * walk. Otherwise, stale entries are skipped.
-	 * 
+	 *
 	 * Note that in the out-of-process version, the metadata area is dbgMalloc'd
 	 * by this function. This memory is freed when nextDo reaches the end of the
 	 * metadata area.
-	 * 
+	 *
 	 * Note also that state->reloc returns the difference in bytes between the
 	 * dbgMalloc'd memory address and the dump address. To get the dump address,
 	 * add state->reloc to any address returned.
-	 * 
+	 *
 	 * @param[in] vm A javavm
 	 * @param[in] state A walk state struct
 	 * @param[in] limitDataType Non-zero if the data type returned should be
 	 *            limited
 	 * @param[in] includeStale Non-zero if stale classes should be included
-	 * 
+	 *
 	 * @return The first item in the cache corresponding to the limits specified
 	 */
 	class SharedClassMetadataIterator implements Iterator<ShcItemPointer> {
@@ -2048,7 +2044,7 @@ public class ShrCCommand extends Command
 		private U16 limitDataType;
 		private boolean includeStale;
 		private PrintStream out;
-		
+
 		private void init(J9JavaVMPointer vm, SharedCacheMetadata cacheMetadata, long limitDataType, boolean includeStale, PrintStream out) throws CorruptDataException {
 			this.next = ShcItemPointer.NULL;
 			this.metaStartInCache = cacheMetadata.getHeapBase();
@@ -2066,7 +2062,7 @@ public class ShrCCommand extends Command
 			SharedCacheMetadata cacheTopLayerMetadata = cacheMetadata[cacheMetadata.length - 1];
 			init(vm, cacheTopLayerMetadata, limitDataType, includeStale, out);
 		}
-		
+
 		public SharedClassMetadataIterator(J9JavaVMPointer vm, U8Pointer metaRegionStart, U8Pointer metaRegionEnd, long limitDataType, boolean includeStale, PrintStream out) throws CorruptDataException {
 			SharedCacheMetadata cacheMetadata = dbgReadSharedCacheMetadata(vm, metaRegionStart, metaRegionEnd, out);
 			init(vm, cacheMetadata, limitDataType, includeStale, out);
@@ -2078,7 +2074,7 @@ public class ShrCCommand extends Command
 			}
 			return next.notNull();
 		}
-		
+
 		public ShcItemPointer next() {
 			if (entry.notNull() && next.isNull()) {
 				next = internalNext();
@@ -2090,7 +2086,7 @@ public class ShrCCommand extends Command
 
 		/**
 		 * Walks a cache in or out of process.
-		 * 
+		 *
 		 * @return The next item in the cache corresponding to the limits
 		 *         specified
 		 */
@@ -2101,18 +2097,18 @@ public class ShrCCommand extends Command
 				ShcItemHdrPointer nextEntry = entry;
 				do {
 					entry = nextEntry;
-					// some sanity check 
-                   	long itemLen = ShcItemHdrHelper.CCITEMLEN(entry).longValue();
-                   	if (itemLen == 0) {
-                   		CommandUtils.dbgPrint(out, "\nCache header !shcitemhdr %s is corrupt because itemLen is 0\n", entry.getHexAddress());
+					// some sanity check
+					long itemLen = ShcItemHdrHelper.CCITEMLEN(entry).longValue();
+					if (itemLen == 0) {
+						CommandUtils.dbgPrint(out, "\nCache header !shcitemhdr %s is corrupt because itemLen is 0\n", entry.getHexAddress());
 						nextEntry = ShcItemHdrPointer.NULL;
-                   		break;
-                    }
+						break;
+					}
 					nextEntry = ShcItemHdrHelper.CCITEMNEXT(entry);
 					if (UDATA.cast(nextEntry).lt(UDATA.cast(metaStartInCache.sub(ShcItemHdr.SIZEOF)))) {
-                		CommandUtils.dbgPrint(out, "\nCache header !shcitemhdr %s is corrupt because itemLen %d is bigger than size of metadata area\n", 
-                				entry.getHexAddress(), itemLen);
-                		nextEntry = ShcItemHdrPointer.NULL;
+						CommandUtils.dbgPrint(out, "\nCache header !shcitemhdr %s is corrupt because itemLen %d is bigger than size of metadata area\n",
+								entry.getHexAddress(), itemLen);
+						nextEntry = ShcItemHdrPointer.NULL;
 						break;
 					}
 					if (UDATA.cast(nextEntry).lt(UDATA.cast(metaStart.sub(ShcItemHdr.SIZEOF)))) {

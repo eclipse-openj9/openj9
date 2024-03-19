@@ -33,12 +33,12 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9BuildFlags;
 
 /**
  * Runs DDR extension !buildflags command.
- * 
+ *
  * The build flags command will print all of the build flags used to compile the jvm.  Optionally
  * it will print all buildflags which match a pattern.
  *
  */
-public class BuildFlagsCommand extends Command 
+public class BuildFlagsCommand extends Command
 {
 
 	/**
@@ -51,14 +51,14 @@ public class BuildFlagsCommand extends Command
 
 	/**
 	 * Run method for !j9buildflags extension.
-	 * 
+	 *
 	 * @param command !j9buildflags
-	 * @param args	Args passed by !j9buildflags extension. 
+	 * @param args	Args passed by !j9buildflags extension.
 	 * @param context Context of current core file.
 	 * @param out PrintStream to print the output to.
 	 * @throws DDRInteractiveCommandException
 	 */
-	public void run(String command, String[] args, Context context, PrintStream out) throws DDRInteractiveCommandException 
+	public void run(String command, String[] args, Context context, PrintStream out) throws DDRInteractiveCommandException
 	{
 		Pattern pattern = null;
 		try {

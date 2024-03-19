@@ -47,9 +47,9 @@ public class HashCodeCommand extends Command {
 		if (args.length != 1) {
 			throw new DDRInteractiveCommandException("This debug extension needs a single address argument: !hashcode <object addr>");
 		}
-		long address = CommandUtils.parsePointer(args[0], J9BuildFlags.env_data64);
+		long address = CommandUtils.parsePointer(args[0], J9BuildFlags.J9VM_ENV_DATA64);
 		final J9ObjectPointer objectPointer = J9ObjectPointer.cast(address);
-		
+
 		try {
 			J9ClassPointer clazz = J9ObjectHelper.clazz(objectPointer);
 			if (!J9ClassHelper.hasValidEyeCatcher(clazz)) {
@@ -59,10 +59,10 @@ public class HashCodeCommand extends Command {
 				throw new DDRInteractiveCommandException("cannot calculate the hashcode of a value type object");
 			}
 		} catch (CorruptDataException cde) {
-			throw new DDRInteractiveCommandException("memory fault de-referencing address argument", cde); 
+			throw new DDRInteractiveCommandException("memory fault de-referencing address argument", cde);
 		}
-		
-		try {		
+
+		try {
 			out.println(ObjectModel.getObjectHashCode(objectPointer).getHexValue());
 		} catch (CorruptDataException cde) {
 			throw new DDRInteractiveCommandException("error calculating hashcode", cde);
