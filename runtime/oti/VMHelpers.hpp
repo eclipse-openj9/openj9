@@ -1412,9 +1412,9 @@ done:
 		bool result = false;
 #if JAVA_SPEC_VERSION >= 19
 		/* Check if the mounted thread is suspended. */
-		U_32 isSuspended = 0;
+		bool isSuspended = false;
 		if (NULL != targetThread) {
-			isSuspended = J9OBJECT_U32_LOAD(currentThread, targetThread->threadObject, currentThread->javaVM->isSuspendedInternalOffset);
+			isSuspended = isThreadSuspended(currentThread, targetThread->threadObject);
 		}
 #endif /* JAVA_SPEC_VERSION >= 19 */
 		/* If the thread is alive, ask the OS thread.  Otherwise, answer false. */
@@ -1425,7 +1425,7 @@ done:
 		 * In JDK19+, OJDK's Thread implementation is used. If the mounted thread is
 		 * suspended, use Thread.interrupted to derive if the thread is interrupted.
 		 */
-		&& (0 == isSuspended)
+		&& (!isSuspended)
 #endif /* JAVA_SPEC_VERSION >= 19 */
 		) {
 			if (omrthread_interrupted(targetThread->osThread)) {
@@ -2062,9 +2062,9 @@ exit:
 		J9JavaVM *vm = currentThread->javaVM;
 #if JAVA_SPEC_VERSION >= 19
 		/* Check if the mounted thread is suspended. */
-		U_32 isSuspended = 0;
+		bool isSuspended = false;
 		if (NULL != targetThread) {
-			isSuspended = J9OBJECT_U32_LOAD(currentThread, targetThread->threadObject, vm->isSuspendedInternalOffset);
+			isSuspended = isThreadSuspended(currentThread, targetThread->threadObject);
 		}
 #endif /* JAVA_SPEC_VERSION >= 19 */
 		if ((NULL != targetThread)
@@ -2075,7 +2075,7 @@ exit:
 		 * suspended, only set Thread.interrupted to TRUE and do not wake/interrupt
 		 * the thread.
 		 */
-		&& (0 == isSuspended)
+		&& (!isSuspended)
 #endif /* JAVA_SPEC_VERSION >= 19 */
 		) {
 			void (*sidecarInterruptFunction)(J9VMThread*) = vm->sidecarInterruptFunction;
