@@ -115,7 +115,7 @@ acceptOpenSSLConnection(SSL_CTX *sslCtx, int connfd, BIO *&bio, TR::CompilationI
    }
 
 static int
-openCommunicationSocket(uint32_t port)
+openCommunicationSocket(uint32_t port, uint32_t &boundPort)
    {
    int sockfd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
    if (sockfd < 0)
@@ -160,6 +160,24 @@ openCommunicationSocket(uint32_t port)
       close(sockfd);
       return retCode;
       }
+
+   if (port == 0)
+      {
+      struct sockaddr_in sock_desc;
+      socklen_t sock_desc_len = sizeof(sock_desc);
+      retCode = getsockname(sockfd, (struct sockaddr *)&sock_desc, &sock_desc_len);
+      if (retCode < 0)
+         {
+         perror("getsockname failed");
+         close(sockfd);
+         return retCode;
+         }
+      boundPort = sock_desc.sin_port;
+      }
+   else
+      {
+      boundPort = port;
+      }
    return sockfd;
    }
 
@@ -189,13 +207,15 @@ TR_Listener::serveRemoteCompilationRequests(BaseCompileDispatcher *compiler)
       }
 
    uint32_t port = info->getJITServerPort();
-   int sockfd = openCommunicationSocket(port);
+   uint32_t boundPort = 0;
+   int sockfd = openCommunicationSocket(port, boundPort);
    if (sockfd >= 0)
       {
+      info->setJITServerPort(boundPort);
       if (TR::Options::getVerboseOption(TR_VerboseJITServer))
          {
          TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "t=%lu Communication socket opened on port %u",
-                                        (unsigned long)compInfo->getPersistentInfo()->getElapsedTime(), port);
+                                        (unsigned long)compInfo->getPersistentInfo()->getElapsedTime(), boundPort);
          }
       }
    else
@@ -206,16 +226,18 @@ TR_Listener::serveRemoteCompilationRequests(BaseCompileDispatcher *compiler)
 
    // If desired, open readiness/liveness socket to be used by Kubernetes. This is unencrypted.
    uint32_t healthPort = info->getJITServerHealthPort();
+   uint32_t boundHealthPort = 0;
    int healthSockfd = -1;
-   if (healthPort > 0)
+   if (info->getJITServerUseHealthPort())
       {
-      healthSockfd = openCommunicationSocket(healthPort);
+      healthSockfd = openCommunicationSocket(healthPort, boundHealthPort);
       if (healthSockfd >= 0)
          {
+         info->setJITServerHealthPort(boundHealthPort);
          if (TR::Options::getVerboseOption(TR_VerboseJITServer))
             {
             TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "t=%lu Health socket opened on port %u",
-                                           (unsigned long)compInfo->getPersistentInfo()->getElapsedTime(), healthPort);
+                                           (unsigned long)compInfo->getPersistentInfo()->getElapsedTime(), boundHealthPort);
             }
          }
       else
