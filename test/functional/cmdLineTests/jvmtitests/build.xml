@@ -51,11 +51,28 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<echo>===debug:                        on</echo>
 		<echo>===destdir:                      ${build}</echo>
 
+		<!-- Define variables to exclude Java21 and up tests for Java 8, 11 and 17. -->
+		<if>
+			<not>
+				<matches string="${JDK_VERSION}" pattern="^(8|11|17)$$" />
+			</not>
+			<then>
+				<property name="excludeJDK21UpGetStackTraceExtendedTest" value="" />
+				<property name="excludeJDK21UpGetThreadListStackTracesExtendedTest" value="" />
+			</then>
+			<else>
+				<property name="excludeJDK21UpGetStackTraceExtendedTest" value="com/ibm/jvmti/tests/getStackTraceExtended/gste002.java" />
+				<property name="excludeJDK21UpGetThreadListStackTracesExtendedTest" value="com/ibm/jvmti/tests/getThreadListStackTracesExtended/gtlste002.java" />
+			</else>
+		</if>
+
 		<if>
 			<equals arg1="${JDK_VERSION}" arg2="8" />
 			<then>
 				<javac destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
 					<src path="${src}" />
+					<exclude name="${excludeJDK21UpGetStackTraceExtendedTest}" />
+					<exclude name="${excludeJDK21UpGetThreadListStackTracesExtendedTest}" />
 					<classpath>
 						<pathelement location="${asm.jar}" />
 						<pathelement location="${TEST_JDK_HOME}/lib/tools.jar" />
@@ -73,20 +90,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 					<else>
 						<property name="extraSrc" value="${src_current}" />
 						<property name="excludeFile" value="" />
-					</else>
-				</if>
-				<!-- Java21 and up tests-->
-				<if>
-					<not>
-						<matches string="${JDK_VERSION}" pattern="^(8|11|17)$$" />
-					</not>
-					<then>
-						<property name="excludeJDK21UpGetStackTraceExtendedTest" value="" />
-						<property name="excludeJDK21UpGetThreadListStackTracesExtendedTest" value="" />
-					</then>
-					<else>
-						<property name="excludeJDK21UpGetStackTraceExtendedTest" value="com/ibm/jvmti/tests/getStackTraceExtended/gste002.java" />
-						<property name="excludeJDK21UpGetThreadListStackTracesExtendedTest" value="com/ibm/jvmti/tests/getThreadListStackTracesExtended/gtlste002.java" />
 					</else>
 				</if>
 				<javac destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
