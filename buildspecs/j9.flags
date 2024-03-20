@@ -353,7 +353,7 @@ Currently only available on linux_x86 and win_x96 32 bit builds.</description>
 		<description>Set on double map. Allows LINUX systems to double map arrays that are stored as arraylets.
 When enabled, a contiguous block of memory is created for each array which data surpasses the size of a region. This contiguous block represents the array as
 if the data was stored in a contiguous region of memory. All of the array data will be stored at their own region (not with spine); hence, all arraylets
-become discontiguous whenever this flag is enabled. Since there won’t be any empty arraylet leaves, then arrayoid NULL pointers are no longer required since
+become discontiguous whenever this flag is enabled. Since there won't be any empty arraylet leaves, then arrayoid NULL pointers are no longer required since
 all data is stored in their own region. It additionaly reduces footprint, mainly for JNI primitive array critical.</description>
 		<ifRemoved></ifRemoved>
 		<requires>
