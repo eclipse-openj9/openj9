@@ -31,6 +31,8 @@
 #include "control/CompilationRuntime.hpp"
 #include "control/CompileBeforeCheckpoint.hpp"
 #include "control/OptimizationPlan.hpp"
+#include "control/Recompilation.hpp"
+#include "control/RecompilationInfo.hpp"
 #include "env/ClassUnloadMonitorCriticalSection.hpp"
 #include "env/Region.hpp"
 #include "env/VerboseLog.hpp"
@@ -49,7 +51,7 @@ TR::CompileBeforeCheckpoint::CompileBeforeCheckpoint(TR::Region &region, J9VMThr
    {}
 
 void
-TR::CompileBeforeCheckpoint::queueMethodForCompilationBeforeCheckpoint(J9Method *j9method)
+TR::CompileBeforeCheckpoint::queueMethodForCompilationBeforeCheckpoint(J9Method *j9method, bool recomp)
    {
    /* Release CR Runtime Monitor since compileMethod below will acquire the
     * Comp Monitor.
@@ -58,8 +60,8 @@ TR::CompileBeforeCheckpoint::queueMethodForCompilationBeforeCheckpoint(J9Method 
 
    J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(j9method);
    if (
-         /* Method is interpreted */
-         !_compInfo->isCompiled(j9method)
+         /* Method is interpreted or recomp */
+         (!_compInfo->isCompiled(j9method) || recomp)
 
 #if !defined(J9VM_OPT_OPENJDK_METHODHANDLE)
          /* Method is not a thunk archetype */
@@ -75,15 +77,27 @@ TR::CompileBeforeCheckpoint::queueMethodForCompilationBeforeCheckpoint(J9Method 
          TR_VerboseLog::CriticalSection cs;
          TR_VerboseLog::write(TR_Vlog_CHECKPOINT_RESTORE, "Attempting to queue ");
          _compInfo->printMethodNameToVlog(j9method);
-         TR_VerboseLog::writeLine(" (%p) for compilation", j9method);
+         TR_VerboseLog::writeLine(" (%p) for %scompilation", j9method, recomp ? "re" : "");
          }
 
       TR_MethodEvent event;
-      event._eventType = TR_MethodEvent::CompilationBeforeCheckpoint;
-      event._j9method = j9method;
-      event._oldStartPC = 0;
-      event._vmThread = _vmThread;
-      event._classNeedingThunk = 0;
+      if (recomp)
+         {
+         event._eventType = TR_MethodEvent::ForcedRecompilationPostRestore;
+         event._j9method = j9method;
+         event._oldStartPC = j9method->extra;
+         event._vmThread = _vmThread;
+         event._classNeedingThunk = 0;
+         }
+      else
+         {
+         event._eventType = TR_MethodEvent::CompilationBeforeCheckpoint;
+         event._j9method = j9method;
+         event._oldStartPC = 0;
+         event._vmThread = _vmThread;
+         event._classNeedingThunk = 0;
+         }
+
       bool newPlanCreated;
       TR_OptimizationPlan *plan = TR::CompilationController::getCompilationStrategy()->processEvent(&event, &newPlanCreated);
       // the plan needs to be created only when async compilation is possible
@@ -95,7 +109,18 @@ TR::CompileBeforeCheckpoint::queueMethodForCompilationBeforeCheckpoint(J9Method 
             // scope for details
             {
             TR::IlGeneratorMethodDetails details(j9method);
-            _compInfo->compileMethod(_vmThread, details, NULL, TR_maybe, NULL, &queued, plan);
+            if (recomp)
+               {
+               TR_PersistentJittedBodyInfo *bodyInfo = TR::Recompilation::getJittedBodyInfoFromPC(j9method->extra);
+               TR_PersistentMethodInfo *methodInfo = bodyInfo->getMethodInfo();
+               methodInfo->setReasonForRecompilation(TR_PersistentMethodInfo::RecompDueToCRIU);
+
+               TR::Recompilation::induceRecompilation(_fej9, j9method->extra, &queued, plan);
+               }
+            else
+               {
+               _compInfo->compileMethod(_vmThread, details, NULL, TR_maybe, NULL, &queued, plan);
+               }
             }
 
          if (!queued && newPlanCreated)
@@ -131,6 +156,11 @@ TR::CompileBeforeCheckpoint::queueMethodsForCompilationBeforeCheckpoint()
          TR::CompilationInfo::setInvocationCount(method, 0);
          }
       queueMethodForCompilationBeforeCheckpoint(method);
+      }
+
+   while ((method = _compInfo->getCRRuntime()->popForcedRecompilation()))
+      {
+      queueMethodForCompilationBeforeCheckpoint(method, true);
       }
    }
 

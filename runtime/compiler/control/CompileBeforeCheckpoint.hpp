@@ -62,7 +62,7 @@ class CompileBeforeCheckpoint
     *
     * @param j9method the J9Method
     */
-   void queueMethodForCompilationBeforeCheckpoint(J9Method *j9method);
+   void queueMethodForCompilationBeforeCheckpoint(J9Method *j9method, bool recomp = false);
 
    /**
     * @brief Iterates over the list of methods to be compiled proactively
