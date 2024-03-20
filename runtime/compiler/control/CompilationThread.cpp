@@ -6949,7 +6949,7 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread * vmThread, TR::Il
       // - The second compilation is queued only when this is the last thread waiting
       //   for the compilation of the method.
       // - If for any reason, the current compilation request is changed to a sync
-      //   compilation from an async compilation, it probably means we can’t do an
+      //   compilation from an async compilation, it probably means we can't do an
       //   async compilation. Don't queue the second async remote compilation.
       if (entry->hasChangedToLocalSyncComp() &&
           (entry->_numThreadsWaiting <= 1) &&

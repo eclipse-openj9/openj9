@@ -39,14 +39,14 @@ enum {
 ticks_no_Java_frame         =  0, // new thread
 ticks_no_class_load         = -1, // jmethodIds are not available
 ticks_GC_active             = -2, // GC action
-ticks_unknown_not_Java      = -3, // ¯\_(ツ)_/¯
-ticks_not_walkable_not_Java = -4, // ¯\_(ツ)_/¯
-ticks_unknown_Java          = -5, // ¯\_(ツ)_/¯
-ticks_not_walkable_Java     = -6, // ¯\_(ツ)_/¯
-ticks_unknown_state         = -7, // ¯\_(ツ)_/¯
+ticks_unknown_not_Java      = -3,
+ticks_not_walkable_not_Java = -4,
+ticks_unknown_Java          = -5,
+ticks_not_walkable_Java     = -6,
+ticks_unknown_state         = -7,
 ticks_thread_exit           = -8, // dying thread
 ticks_deopt                 = -9, // mid-deopting code
-ticks_safepoint             = -10 // ¯\_(ツ)_/¯
+ticks_safepoint             = -10
 };
 
 typedef struct {

@@ -107,7 +107,7 @@ MM_ConfigurationIncrementalGenerational::createHeapWithManager(MM_EnvironmentBas
 	 * try to mmap with huge pages with the respective file descriptor the mmap call
 	 * fails. It would only succeed if MAP_ANON flag was provided, but doing so ignores
 	 * the file descriptor which is the opposite of what we want. In a newer glibc
-	 * version (glibc 2.27 onwards) there’s a new function that does exactly what we
+	 * version (glibc 2.27 onwards) there's a new function that does exactly what we
 	 * want, and that's memfd_create(2); however that's only supported in glibc 2.27. We
 	 * also need to check if region size is a bigger or equal to multiple of page size.
 	 *

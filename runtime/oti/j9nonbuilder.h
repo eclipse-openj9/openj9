@@ -2939,15 +2939,15 @@ typedef struct J9Object {
 	 * The following diagram describes the metadata stored in the low order bit flags of an object class pointer:
 	 *
 	 * Bit   31                23                15                7 6 5 4 3 2 1 0
-	 *      ┌─────────────────────────────────────────────────────────────────────┐
-	 * Word │0 0 0 0 0 0 0 0   0 0 0 0 0 0 0 0   0 0 0 0 0 0 0 0   0 0 0 0 0 0 0 0│
-	 *      └──────────────────────────────────────────────────────┬─┬─┬─┬─┬─┬─┬─┬┘
-	 *                                                             │ │ │ │ │ │ │ │
-	 *                                                             └─┴┬┴─┘ │ │ │ └──► [1] Linked Free Header (Hole)
-	 *                                                                │    │ │ └────► [2] Object has been hashed and moved
-	 *                                                                │    │ └──────► [3] Slot contains forwarded pointer
-	 *                                                                │    └────────► [4] Object has been hashed
-	 *                                                                └─────────────► [5] Nursery age (0 - 14) or various remembered states
+	 *      +---------------------------------------------------------------------+
+	 * Word |0 0 0 0 0 0 0 0   0 0 0 0 0 0 0 0   0 0 0 0 0 0 0 0   0 0 0 0 0 0 0 0|
+	 *      +------------------------------------------------------+-+-+-+-+-+-+-++
+	 *                                                             | | | | | | | |
+	 *                                                             +-+++-+ | | | +--> [1] Linked Free Header (Hole)
+	 *                                                                |    | | +----> [2] Object has been hashed and moved
+	 *                                                                |    | +------> [3] Slot contains forwarded pointer
+	 *                                                                |    +--------> [4] Object has been hashed
+	 *                                                                +-------------> [5] Nursery age (0 - 14) or various remembered states
 	 *
 	 * [1] If bit is 0, the slot represents the start of object, ie object header, which depending of forwarded bit
 	 *     could be class slot or forwarded pointer.

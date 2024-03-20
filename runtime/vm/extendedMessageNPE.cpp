@@ -863,7 +863,7 @@ computeNPEMsgAtPC(J9VMThread *vmThread, J9ROMMethod *romMethod, J9ROMClass *romC
 			*npeMsg = getMsgWithAllocation(vmThread, "%lu", sipushIndex);
 			break;
 		}
-		
+
 		case JBldc:		/* Fall through case !!! */
 		case JBldcw:	/* Fall through case !!! */
 		case JBldc2dw:	/* Fall through case !!! */
@@ -970,7 +970,8 @@ computeNPEMsgAtPC(J9VMThread *vmThread, J9ROMMethod *romMethod, J9ROMClass *romC
 		case JBfload:	/* Fall through case !!! */
 		case JBdload:	/* Fall through case !!! */
 		case JBaload: {
-			/* The index is an unsigned byte that must be an index into the local variable array of the current frame (§2.6).
+			/* The index is an unsigned byte that must be an index into the
+			 * local variable array of the current frame (section 2.6).
 			 * The local variable at index must contain a reference.
 			 */
 			*npeMsg = getLocalsName(vmThread, romMethod, *(bcCurrentPtr + 1), npePC, temps);
@@ -1307,7 +1308,7 @@ getMsgWithAllocation(J9VMThread *vmThread, const char *msgTemplate, ...)
 	/* NULL check omitted since j9str_vprintf accepts NULL (as above) */
 	j9str_vprintf(resultMsg, msgLen, msgTemplate, args);
 	va_end(args);
-	
+
 	Trc_VM_GetMsgWithAllocation_Exit(vmThread, msgTemplate, resultMsg);
 
 	return resultMsg;
