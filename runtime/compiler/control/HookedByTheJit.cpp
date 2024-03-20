@@ -6772,7 +6772,12 @@ static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
             // fprintf(stderr, "samplingPeriod=%u numProcs=%u numActiveThreads=%u samplingFrequency=%d\n", samplingPeriod, compInfo->getNumTargetCPUs(), numActiveThreads, jitConfig->samplingFrequency);
 
             // compute jit state
-            jitStateLogic(jitConfig, compInfo, diffTime); // Update JIT state before going to sleep
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+            if (!jitConfig->javaVM->internalVMFunctions->isCheckpointAllowed(samplerThread))
+#endif
+               {
+               jitStateLogic(jitConfig, compInfo, diffTime); // Update JIT state before going to sleep
+               }
 
             // detect high code cache occupancy
             TR::CodeCacheManager *manager = TR::CodeCacheManager::instance();
