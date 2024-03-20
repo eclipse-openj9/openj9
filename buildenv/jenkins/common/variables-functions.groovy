@@ -622,7 +622,7 @@ def set_build_variables() {
 def set_sdk_variables() {
     set_sdk_versions()
     DATESTAMP = get_date()
-    SDK_FILE_EXT = SPEC.contains('zos') ? '.pax' : '.tar.gz'
+    SDK_FILE_EXT = SPEC.contains('zos') ? '.pax.Z' : '.tar.gz'
     SDK_FILENAME = get_value(VARIABLES.misc.sdk_filename_template, BUILD_IDENTIFIER) ?: get_value(VARIABLES.misc.sdk_filename_template, 'default')
     echo "SDK_FILENAME (before processing):'${SDK_FILENAME}'"
     // If filename has unresolved variables at this point, use Groovy Template Binding engine to resolve them
