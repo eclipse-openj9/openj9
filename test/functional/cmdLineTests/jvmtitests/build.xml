@@ -53,16 +53,14 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 
 		<!-- Define variables to exclude Java21 and up tests for Java 8, 11 and 17. -->
 		<if>
-			<not>
-				<matches string="${JDK_VERSION}" pattern="^(8|11|17)$$" />
-			</not>
+			<matches string="${JDK_VERSION}" pattern="^(8|11|17)$$" />
 			<then>
-				<property name="excludeJDK21UpGetStackTraceExtendedTest" value="" />
-				<property name="excludeJDK21UpGetThreadListStackTracesExtendedTest" value="" />
-			</then>
-			<else>
 				<property name="excludeJDK21UpGetStackTraceExtendedTest" value="com/ibm/jvmti/tests/getStackTraceExtended/gste002.java" />
 				<property name="excludeJDK21UpGetThreadListStackTracesExtendedTest" value="com/ibm/jvmti/tests/getThreadListStackTracesExtended/gtlste002.java" />
+			</then>
+			<else>
+				<property name="excludeJDK21UpGetStackTraceExtendedTest" value="" />
+				<property name="excludeJDK21UpGetThreadListStackTracesExtendedTest" value="" />
 			</else>
 		</if>
 
