@@ -142,10 +142,6 @@ private:
 		} else {
 			if (VM_VMHelpers::objectIsArray(currentThread, object)) {
 				/* Array access */
-				if (offset < arrayBase(currentThread)) {
-					/* Access to the object header */
-					goto instanceField;
-				}
 				if (offsetIsAlignedArrayIndex(currentThread, offset, logElementSize)) {
 					/* Aligned array access */
 					I_32 index = convertOffsetToIndex(currentThread, offset, logElementSize);
@@ -191,7 +187,6 @@ private:
 					value = (I_32)objectAccessBarrier->inlineStaticReadU32(currentThread, fieldClass, (U_32*)valueAddress, isVolatile);
 				}
 			} else {
-instanceField:
 				/* Instance field */
 				value = objectAccessBarrier->inlineMixedObjectReadI32(currentThread, object, offset, isVolatile);
 			}
@@ -218,10 +213,6 @@ instanceField:
 		} else {
 			if (VM_VMHelpers::objectIsArray(currentThread, object)) {
 				/* Array access */
-				if (offset < arrayBase(currentThread)) {
-					/* Access to the object header */
-					goto instanceField;
-				}
 				if (offsetIsAlignedArrayIndex(currentThread, offset, logElementSize)) {
 					/* Aligned array access */
 					I_32 index = convertOffsetToIndex(currentThread, offset, logElementSize);
@@ -267,7 +258,6 @@ instanceField:
 				void *valueAddress = (void*)((UDATA)fieldClass->ramStatics + (offset & ~(UDATA)J9_SUN_FIELD_OFFSET_MASK));
 				objectAccessBarrier->inlineStaticStoreU32(currentThread, fieldClass, (U_32*)valueAddress, (U_32)value, isVolatile);
 			} else {
-instanceField:
 				/* Instance field */
 				objectAccessBarrier->inlineMixedObjectStoreI32(currentThread, object, offset, (I_32)value, isVolatile);
 			}
@@ -285,10 +275,6 @@ instanceField:
 		} else {
 			if (VM_VMHelpers::objectIsArray(currentThread, object)) {
 				/* Array access */
-				if (offset < arrayBase(currentThread)) {
-					/* Access to the object header */
-					goto instanceField;
-				}
 				if (offsetIsAlignedArrayIndex(currentThread, offset, logElementSize)) {
 					/* Aligned array access */
 					I_32 index = convertOffsetToIndex(currentThread, offset, logElementSize);
@@ -305,7 +291,6 @@ instanceField:
 					value = objectAccessBarrier->inlineStaticReadU64(currentThread, fieldClass, (U_64*)valueAddress, isVolatile);
 				}
 			} else {
-instanceField:
 				/* Instance field */
 				value = objectAccessBarrier->inlineMixedObjectReadI64(currentThread, object, offset, isVolatile);
 			}
@@ -323,10 +308,6 @@ instanceField:
 		} else {
 			if (VM_VMHelpers::objectIsArray(currentThread, object)) {
 				/* Array access */
-				if (offset < arrayBase(currentThread)) {
-					/* Access to the object header */
-					goto instanceField;
-				}
 				if (offsetIsAlignedArrayIndex(currentThread, offset, logElementSize)) {
 					/* Aligned array access */
 					I_32 index = convertOffsetToIndex(currentThread, offset, logElementSize);
@@ -345,7 +326,6 @@ instanceField:
 				void *valueAddress = (void*)((UDATA)fieldClass->ramStatics + (offset & ~(UDATA)J9_SUN_FIELD_OFFSET_MASK));
 				objectAccessBarrier->inlineStaticStoreU64(currentThread, fieldClass, (U_64*)valueAddress, (U_64)value, isVolatile);
 			} else {
-instanceField:
 				/* Instance field */
 				objectAccessBarrier->inlineMixedObjectStoreI64(currentThread, object, offset, value, isVolatile);
 			}
@@ -575,11 +555,6 @@ public:
 			result = (compareValue == VM_AtomicSupport::lockCompareExchangeU64((U_64*)offset, compareValue, swapValue));
 		} else {
 			if (VM_VMHelpers::objectIsArray(currentThread, object)) {
-				/* Array access */
-				if (offset < arrayBase(currentThread)) {
-					/* Access to the object header */
-					goto instanceField;
-				}
 				/* Aligned array access */
 				I_32 index = convertOffsetToIndex(currentThread, offset, logElementSize);
 				result = objectAccessBarrier->inlineIndexableObjectCompareAndSwapU64(currentThread, object, index, compareValue, swapValue, true);
@@ -592,7 +567,6 @@ public:
 				void *valueAddress = (void*)((UDATA)fieldClass->ramStatics + (offset & ~(UDATA)J9_SUN_FIELD_OFFSET_MASK));
 				result = objectAccessBarrier->inlineStaticCompareAndSwapU64(currentThread, fieldClass, (U_64*)valueAddress, compareValue, swapValue, true);
 			} else {
-instanceField:
 				/* Instance field */
 				result = objectAccessBarrier->inlineMixedObjectCompareAndSwapU64(currentThread, object, offset, compareValue, swapValue, true);
 			}
@@ -610,11 +584,6 @@ instanceField:
 			result = (compareValue == VM_AtomicSupport::lockCompareExchangeU32((U_32*)offset, compareValue, swapValue));
 		} else {
 			if (VM_VMHelpers::objectIsArray(currentThread, object)) {
-				/* Array access */
-				if (offset < arrayBase(currentThread)) {
-					/* Access to the object header */
-					goto instanceField;
-				}
 				/* Aligned array access */
 				I_32 index = convertOffsetToIndex(currentThread, offset, logElementSize);
 				result = objectAccessBarrier->inlineIndexableObjectCompareAndSwapU32(currentThread, object, index, compareValue, swapValue, true);
@@ -627,7 +596,6 @@ instanceField:
 				void *valueAddress = (void*)((UDATA)fieldClass->ramStatics + (offset & ~(UDATA)J9_SUN_FIELD_OFFSET_MASK));
 				result = objectAccessBarrier->inlineStaticCompareAndSwapU32(currentThread, fieldClass, (U_32*)valueAddress, compareValue, swapValue, true);
 			} else {
-instanceField:
 				/* Instance field */
 				result = objectAccessBarrier->inlineMixedObjectCompareAndSwapU32(currentThread, object, offset, compareValue, swapValue, true);
 			}
@@ -643,6 +611,7 @@ instanceField:
 		j9object_t result = NULL;
 
 		if (VM_VMHelpers::objectIsArray(currentThread, object)) {
+			/* Aligned array access */
 			UDATA index = convertOffsetToIndex(currentThread, offset, logFJ9ObjectSize(currentThread));
 			result = objectAccessBarrier->inlineIndexableObjectCompareAndExchangeObject(currentThread, object, index, *compareValue, *swapValue, true);
 		} else if (offset & J9_SUN_STATIC_FIELD_OFFSET_TAG) {
@@ -670,11 +639,6 @@ instanceField:
 			result = VM_AtomicSupport::lockCompareExchangeU32((U_32*)offset, compareValue, swapValue);
 		} else {
 			if (VM_VMHelpers::objectIsArray(currentThread, object)) {
-				/* Array access */
-				if (offset < arrayBase(currentThread)) {
-					/* Access to the object header */
-					goto instanceField;
-				}
 				/* Aligned array access */
 				I_32 index = convertOffsetToIndex(currentThread, offset, logElementSize);
 				result = objectAccessBarrier->inlineIndexableObjectCompareAndExchangeU32(currentThread, object, index, compareValue, swapValue, true);
@@ -689,7 +653,6 @@ instanceField:
 				void *valueAddress = (void*)((UDATA)fieldClass->ramStatics + (offset & ~(UDATA)J9_SUN_FIELD_OFFSET_MASK));
 				result = objectAccessBarrier->inlineStaticCompareAndExchangeU32(currentThread, fieldClass, (U_32*)valueAddress, compareValue, swapValue, true);
 			} else {
-instanceField:
 				/* Instance field */
 				result = objectAccessBarrier->inlineMixedObjectCompareAndExchangeU32(currentThread, object, offset, compareValue, swapValue, true);
 			}
@@ -707,11 +670,6 @@ instanceField:
 			result = VM_AtomicSupport::lockCompareExchangeU64((U_64*)offset, compareValue, swapValue);
 		} else {
 			if (VM_VMHelpers::objectIsArray(currentThread, object)) {
-				/* Array access */
-				if (offset < arrayBase(currentThread)) {
-					/* Access to the object header */
-					goto instanceField;
-				}
 				/* Aligned array access */
 				I_32 index = convertOffsetToIndex(currentThread, offset, logElementSize);
 				result = objectAccessBarrier->inlineIndexableObjectCompareAndExchangeU64(currentThread, object, index, compareValue, swapValue, true);
@@ -724,7 +682,6 @@ instanceField:
 				void *valueAddress = (void*)((UDATA)fieldClass->ramStatics + (offset & ~(UDATA)J9_SUN_FIELD_OFFSET_MASK));
 				result = objectAccessBarrier->inlineStaticCompareAndExchangeU64(currentThread, fieldClass, (U_64*)valueAddress, compareValue, swapValue, true);
 			} else {
-instanceField:
 				/* Instance field */
 				result = objectAccessBarrier->inlineMixedObjectCompareAndExchangeU64(currentThread, object, offset, compareValue, swapValue, true);
 			}

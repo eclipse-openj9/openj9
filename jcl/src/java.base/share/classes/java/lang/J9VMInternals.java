@@ -480,24 +480,20 @@ final class J9VMInternals {
 	 */
 	static int fastIdentityHashCode(Object anObject) {
 		com.ibm.jit.JITHelpers h = jitHelpers;
-		if (null == h) {
+		if ((null == h) || h.isArray(anObject)) {
 			return identityHashCode(anObject); /* use early returns to make the JIT code faster */
 		}
 		if (h.is32Bit()) {
 			int ptr = h.getIntFromObject(anObject, 0L);
 			if ((ptr & com.ibm.oti.vm.VM.OBJECT_HEADER_HAS_BEEN_MOVED_IN_CLASS) != 0) {
-				if (!h.isArray(anObject)) {
-					int j9class = ptr & com.ibm.oti.vm.VM.J9_JAVA_CLASS_MASK;
-					return h.getIntFromObject(anObject, h.getBackfillOffsetFromJ9Class32(j9class));
-				}
+				int j9class = ptr & com.ibm.oti.vm.VM.J9_JAVA_CLASS_MASK;
+				return h.getIntFromObject(anObject, h.getBackfillOffsetFromJ9Class32(j9class));
 			}
 		} else {
 			long ptr = (com.ibm.oti.vm.VM.FJ9OBJECT_SIZE == 4) ? Integer.toUnsignedLong(h.getIntFromObject(anObject, 0L)) : h.getLongFromObject(anObject, 0L);
 			if ((ptr & com.ibm.oti.vm.VM.OBJECT_HEADER_HAS_BEEN_MOVED_IN_CLASS) != 0) {
-				if (!h.isArray(anObject)) {
-					long j9class = ptr & com.ibm.oti.vm.VM.J9_JAVA_CLASS_MASK;
-					return h.getIntFromObject(anObject, h.getBackfillOffsetFromJ9Class64(j9class));
-				}
+				long j9class = ptr & com.ibm.oti.vm.VM.J9_JAVA_CLASS_MASK;
+				return h.getIntFromObject(anObject, h.getBackfillOffsetFromJ9Class64(j9class));
 			}
 		}
 		return identityHashCode(anObject);
