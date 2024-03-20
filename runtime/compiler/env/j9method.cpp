@@ -21,6 +21,7 @@
  *******************************************************************************/
 
 #include "env/j9method.h"
+#include "env/alloca_openxl.h"
 
 #include <stddef.h>
 #include "bcnames.h"

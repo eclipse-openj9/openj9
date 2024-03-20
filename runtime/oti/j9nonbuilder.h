@@ -1613,7 +1613,7 @@ typedef struct J9ExceptionHandler {
 	U_32 exceptionClassIndex;
 } J9ExceptionHandler;
 
-#if defined(__xlC__) || defined(J9ZOS390)  /* Covers: Z/OS, AIX, Linux PPC*/
+#if defined(__xlC__) || defined(J9ZOS390) || defined(__open_xl__)  /* Covers: AIX, Linux PPC and z/OS. */
 #pragma pack(1)
 #elif defined(__ibmxl__) || defined(__GNUC__) || defined(_MSC_VER) /* Covers: Linux PPC LE, Windows, Linux x86 */
 #pragma pack(push, 1)
@@ -1635,7 +1635,7 @@ typedef struct J9MethodParametersData {
 	J9MethodParameter parameters;
 } J9MethodParametersData;
 
-#if defined(__xlC__) || defined(__ibmxl__) || defined(__GNUC__) || defined(_MSC_VER) || defined(J9ZOS390) || defined(LINUX) || defined(AIXPPC) || defined(WIN32)
+#if defined(__xlC__) || defined(__ibmxl__) || defined(__open_xl__) || defined(__GNUC__) || defined(_MSC_VER) || defined(J9ZOS390) || defined(LINUX) || defined(AIXPPC) || defined(WIN32)
 #pragma pack(pop)
 #else
 #error "Unrecognized compiler. Cannot pack struct J9MethodParameter and J9MethodParametersData."

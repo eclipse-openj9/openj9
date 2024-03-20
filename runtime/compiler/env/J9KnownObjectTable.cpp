@@ -21,6 +21,7 @@
  *******************************************************************************/
 
 #include "compile/Compilation.hpp"
+#include "env/alloca_openxl.h"
 #include "env/j9fieldsInfo.h"
 #include "env/KnownObjectTable.hpp"
 #include "env/StackMemoryRegion.hpp"

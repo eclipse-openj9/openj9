@@ -22,6 +22,7 @@
 
 #include <string.h>
 #include "env/VMJ9.h"
+#include "env/alloca_openxl.h"
 #include "env/ClassLoaderTable.hpp"
 #include "env/JSR292Methods.h"
 #include "env/PersistentCHTable.hpp"

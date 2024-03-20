@@ -32,7 +32,7 @@
 
 #ifdef __GNUC__
 #define trailingZeroes(x) __builtin_ctzl(x)
-#elif defined(__IBMC__) || defined(__ibmxl__)
+#elif defined(__IBMC__) || defined(__ibmxl__) || defined(__open_xl__)
 #define trailingZeroes(x) __cnttz8(x)
 #endif
 
