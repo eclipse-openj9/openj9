@@ -124,6 +124,12 @@ J9::Z::CodeGenerator::initialize()
       cg->setSupportsInlineEncodeASCII();
       }
 
+   static bool disableInlineMath_MaxMin_FD = feGetEnv("TR_disableInlineMath_MaxMin_FD") != NULL;
+   if (!disableInlineMath_MaxMin_FD)
+      {
+      cg->setSupportsInlineMath_MaxMin_FD();
+      }
+
    static bool disableInlineVectorizedMismatch = feGetEnv("TR_disableInlineVectorizedMismatch") != NULL;
    if (cg->getSupportsArrayCmpLen() && !disableInlineVectorizedMismatch)
       {

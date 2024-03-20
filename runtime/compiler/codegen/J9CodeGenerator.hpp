@@ -502,6 +502,16 @@ public:
    */
    void setSupportsInlineVectorizedMismatch() { _j9Flags.set(SupportsInlineVectorizedMismatch); }
 
+   /** \brief
+   *   Determines whether the code generator supports inlining of java_lang_Math_max/min_F/D
+   */
+   bool getSupportsInlineMath_MaxMin_FD() { return _j9Flags.testAny(SupportsInlineMath_MaxMin_FD); }
+
+   /** \brief
+   *   The code generator supports inlining of java_lang_Math_max/min_F/D
+   */
+   void setSupportsInlineMath_MaxMin_FD() { _j9Flags.set(SupportsInlineMath_MaxMin_FD); }
+
    /**
     * \brief
     *    The number of nodes between a monext and the next monent before
@@ -666,6 +676,7 @@ private:
       SupportsInlineEncodeASCII                           = 0x00000400,
       SavesNonVolatileGPRsForGC                           = 0x00000800,
       SupportsInlineVectorizedMismatch                    = 0x00001000,
+      SupportsInlineMath_MaxMin_FD                        = 0x00002000,
       };
 
    flags32_t _j9Flags;
