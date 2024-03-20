@@ -1505,14 +1505,6 @@ J9NLS_CFR_ERR_INVALID_FLAGS_ON_NEW.system_action=The JVM will throw a verificati
 J9NLS_CFR_ERR_INVALID_FLAGS_ON_NEW.user_response=Contact the provider of the class file for a corrected version.
 # END NON-TRANSLATABLE
 
-# <init> is not translatable
-J9NLS_CFR_ERR_INIT_ON_VALUE_CLASS=Methods of value classes cannot be named <init>
-# START NON-TRANSLATABLE
-J9NLS_CFR_ERR_INIT_ON_VALUE_CLASS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
-J9NLS_CFR_ERR_INIT_ON_VALUE_CLASS.system_action=The JVM will throw a verification or classloading related exception such as java.lang.ClassFormatError.
-J9NLS_CFR_ERR_INIT_ON_VALUE_CLASS.user_response=Contact the provider of the class file for a corrected version.
-# END NON-TRANSLATABLE
-
 J9NLS_CFR_ERR_MISSING_ACC_STATIC_ON_ABSTRACT_IDENTITYLESS_CLASS_FIELD=In an abstract non-identity class, each field must be declared static.
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_MISSING_ACC_STATIC_ON_ABSTRACT_IDENTITYLESS_CLASS_FIELD.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.

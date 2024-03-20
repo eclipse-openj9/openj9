@@ -1876,22 +1876,10 @@ checkMethods(J9PortLibrary* portLib, J9CfrClassFile* classfile, U_8* segment, U_
 		} 
 
 		if (nameIndexOK && utf8Equal(&classfile->constantPool[method->nameIndex], "<init>", 6)) {
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-			/**
-			 * The spec says a method of a value class cannot be <init>. A method of an abstract class cannot be <vnew>.
-			 * For a value abstract class, its constructor is compiled into <init> now, so allow <init> in abstract classes.
-			 */
-			if (J9_IS_CLASSFILE_VALUETYPE(classfile) && J9_ARE_NO_BITS_SET(classfile->accessFlags, CFR_ACC_ABSTRACT)) {
-				errorCode = J9NLS_CFR_ERR_INIT_ON_VALUE_CLASS__ID;
+			/* check no invalid flags set */
+			if (value & ~CFR_INIT_METHOD_ACCESS_MASK) {
+				errorCode = J9NLS_CFR_ERR_INIT_METHOD__ID;
 				goto _errorFound;
-			} else
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
-			{
-				/* check no invalid flags set */
-				if (value & ~CFR_INIT_METHOD_ACCESS_MASK) {
-					errorCode = J9NLS_CFR_ERR_INIT_METHOD__ID;
-					goto _errorFound;
-				}
 			}
 
 			/* Java SE 9 Edition:

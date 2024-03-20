@@ -1653,6 +1653,10 @@ public class ValueTypeTests {
 	}
 
 	static void checkObject(Object ...objects) throws Throwable {
-		com.ibm.jvm.Dump.SystemDump();
+		// Access this method reflectively because I'm using OpenJDK to compile with thw lw5 javac
+		//com.ibm.jvm.Dump.SystemDump();
+		Class<?> c = Class.forName("com.ibm.jvm.Dump");
+		java.lang.reflect.Method m = c.getMethod("SystemDump");
+		m.invoke(null);
 	}
 }
