@@ -26,6 +26,18 @@
 #include <openssl/ssl.h>
 #include <openssl/evp.h>
 
+// On older versions of OpenSSL this constant is not defined, so to compile with
+// those versions we supply its current definition. This error reason is documented
+// in the current OpenSSL documentation as being safe for applications to use for
+// control flow decisions (https://www.openssl.org/docs/manmaster/man3/SSL_get_error.html),
+// and it is deliberately not introduced in older versions (see, e.g.,
+// https://www.openssl.org/docs/man1.1.1/man3/SSL_get_error.html) so this definition should
+// be safe, certainly considering its current usage (to filter out unwanted error messages
+// from the OpenSSL error queue).
+#ifndef SSL_R_UNEXPECTED_EOF_WHILE_READING
+#define SSL_R_UNEXPECTED_EOF_WHILE_READING 294
+#endif
+
 typedef const char * OOpenSSL_version_t(int);
 
 typedef void OSSL_load_error_strings_t(void);
