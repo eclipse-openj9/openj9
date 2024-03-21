@@ -52,6 +52,9 @@
 #include "env/j9methodServer.hpp"
 #include "control/JITServerCompilationThread.hpp"
 #endif /* defined(J9VM_OPT_JITSERVER) */
+#ifdef LINUX
+#include <sys/utsname.h> // for uname()
+#endif
 
 #if defined(J9VM_OPT_SHARED_CLASSES)
 #include "j9jitnls.h"
@@ -208,6 +211,8 @@ int32_t J9::Options::_TLHPrefetchLineCount = 0;
 int32_t J9::Options::_TLHPrefetchStaggeredLineCount = 0;
 int32_t J9::Options::_TLHPrefetchBoundaryLineCount = 0;
 int32_t J9::Options::_TLHPrefetchTLHEndLineCount = 0;
+
+int32_t J9::Options::_minTimeBetweenMemoryDisclaims = 5000; // ms
 
 int32_t J9::Options::_numFirstTimeCompilationsToExitIdleMode = 25; // Use a large number to disable the feature
 int32_t J9::Options::_waitTimeToEnterIdleMode = 5000; // ms
@@ -1099,6 +1104,8 @@ TR::OptionTable OMR::Options::_feOptions[] = {
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_minSamplingPeriod, 0, "P%d", NOT_IN_SUBSET},
    {"minSuperclassArraySize=", "I<nnn>\t set the size of the minimum superclass array size",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_minimumSuperclassArraySize, 0, "F%d", NOT_IN_SUBSET},
+   {"minTimeBetweenMemoryDisclaims=",  "M<nnn>\tMinimum time (ms) between two consecutive memory disclaim operations",
+        TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_minTimeBetweenMemoryDisclaims, 5000, "F%d", NOT_IN_SUBSET},
    {"noregmap",           0, RESET_JITCONFIG_RUNTIME_FLAG(J9JIT_CG_REGISTER_MAPS) },
    {"numCodeCachesOnStartup=",   "R<nnn>\tnumber of code caches to create at startup",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_numCodeCachesToCreateAtStartup, 0, "F%d", NOT_IN_SUBSET},
@@ -2771,7 +2778,7 @@ J9::Options::setupJITServerOptions()
       TR::Options::_expensiveCompWeight = TR::CompilationInfo::MAX_WEIGHT;
       }
 
-   if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+   if (self()->getVerboseOption(TR_VerboseJITServer))
       {
       TR::PersistentInfo *persistentInfo = compInfo->getPersistentInfo();
       if (persistentInfo->getRemoteCompilationMode() == JITServer::SERVER)
@@ -2881,6 +2888,26 @@ J9::Options::fePostProcessJIT(void * base)
          TR::Options::getDebug()->printFilters();
          }
       }
+#ifdef LINUX
+   if (!self()->getOption(TR_DisableDataCacheDisclaiming) || !self()->getOption(TR_DisableIProfilerDataDisclaiming))
+      {
+      // We need the kernel to be at least version 5.4
+      struct utsname buffer;
+      unsigned int major;
+      unsigned int minor;
+      if (uname(&buffer) != 0 ||
+          sscanf(buffer.release, "%u.%u", &major, &minor) != 2 ||
+          major < 5 || (major == 5 && minor < 4))
+         {
+         self()->setOption(TR_DisableDataCacheDisclaiming, true);
+         self()->setOption(TR_DisableIProfilerDataDisclaiming, true);
+         if (TR::Options::getVerboseOption(TR_VerbosePerformance))
+            {
+            TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "WARNING: Disclaim feature disabled because either uname() failed or kernel version is not 5.4 or later");
+            }
+         }
+      }
+#endif // LINUX
 
 #if defined(J9VM_OPT_JITSERVER)
    self()->setupJITServerOptions();
