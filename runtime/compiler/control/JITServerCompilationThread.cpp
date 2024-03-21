@@ -960,7 +960,8 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
          // Get defining class chain record to use as a part of the key to lookup or store the method in AOT cache
          JITServerHelpers::cacheRemoteROMClassBatch(clientSession, uncachedRAMClasses, uncachedClassInfos);
          bool missingLoaderInfo = false;
-         _definingClassChainRecord = clientSession->getClassChainRecord(clazz, classChainOffset, ramClassChain, stream, missingLoaderInfo);
+         bool referencesArrayClass = false;
+         _definingClassChainRecord = clientSession->getClassChainRecord(clazz, classChainOffset, ramClassChain, stream, missingLoaderInfo, referencesArrayClass);
          if (!_definingClassChainRecord)
             {
             if (TR::Options::getVerboseOption(TR_VerboseJITServer))
@@ -969,7 +970,8 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
                   "method %p won't be loaded from or stored in AOT cache",
                   (unsigned long long)clientId,
                   clazz,
-                  missingLoaderInfo ? "missing class loader info" : "the AOT cache size limit",
+                  missingLoaderInfo ? "missing class loader info" :
+                     (referencesArrayClass ? "unsupported reference to array class" : "the AOT cache size limit"),
                   ramMethod
                );
             if (aotCacheLoad)

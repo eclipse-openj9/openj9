@@ -1486,7 +1486,8 @@ TR_J9JITServerSharedCache::rememberClass(J9Class *clazz, const AOTCacheClassChai
          // This call will cache both the class chain and the AOT cache record in the client session.
          // The clientClassChainOffset can be invalid - we will attempt to re-cache it if necessary.
          bool missingLoaderInfo = false;
-         record = clientData->getClassChainRecord(clazz, clientClassChainOffset, ramClassChain, _stream, missingLoaderInfo);
+         bool referencesArrayClass = false;
+         record = clientData->getClassChainRecord(clazz, clientClassChainOffset, ramClassChain, _stream, missingLoaderInfo, referencesArrayClass);
          if (classChainRecord)
             *classChainRecord = record;
          }
