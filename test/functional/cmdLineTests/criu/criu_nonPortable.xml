@@ -38,6 +38,7 @@
   <variable name="MAINCLASS_ENVVAR_TEST" value="org.openj9.criu.EnvVarFileTest" />
   <variable name="MAINCLASS_USERNAME_TEST" value="org.openj9.criu.UsernameTest" />
   <variable name="MAINCLASS_GHOSTFILE_TEST" value="org.openj9.criu.TestGhostFile" />
+  <variable name="MAINCLASS_FAILUREPATH_TEST" value="org.openj9.criu.TestCRIUFailurePath" />
   <variable name="XDUMP_DYNAMIC" value="-Xdump:dynamic" />
   <variable name="STD_CMD_OPTS" value="--add-exports java.base/openj9.internal.criu=ALL-UNNAMED" />
 
@@ -1147,4 +1148,22 @@
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
+  <!--
+  <test id="Test CRIU failure paths - - bad dir">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ $STD_CMD_OPTS$" $MAINCLASS_FAILUREPATH_TEST$ badDir 1 false false</command>
+    <output type="success" caseSensitive="yes" regex="no">TEST PASSED</output>
+    <output type="success" caseSensitive="yes" regex="no">Could not dump the JVM processes</output>
+    <output type="success" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.SystemCheckpointException</output>
+    <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
+    <output type="failure" caseSensitive="yes" regex="no">Can't dump ghost file</output>
+    <output type="failure" caseSensitive="yes" regex="no">TEST FAILED</output>
+     If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure.
+    <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
+    <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
+    <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
+     In the past, the failure below was caused by an issue where CRIU can't be found on the PATH.
+    <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+  </test>
+  -->
 </suite>
