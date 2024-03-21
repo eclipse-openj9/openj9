@@ -180,6 +180,23 @@ isDebugOnRestoreEnabled(J9VMThread *currentThread)
 	return J9_ARE_ALL_BITS_SET(currentThread->javaVM->checkpointState.flags, J9VM_CRIU_SUPPORT_DEBUG_ON_RESTORE) && isCRaCorCRIUSupportEnabled(currentThread);
 }
 
+void
+setRequiredGhostFileLimit(J9VMThread *currentThread, U_32 ghostFileLimit)
+{
+	J9JavaVM *vm = currentThread->javaVM;
+
+	/* Different components (VM, JIT, GC, Java code) may require different limits
+	 * for the CRIU ghost files. This function ensures that the set limit is the
+	 * maximum of all the required limits.
+	 */
+	if (ghostFileLimit > vm->checkpointState.requiredGhostFileLimit) {
+		if (vm->checkpointState.criuSetGhostFileLimitFunctionPointerType) {
+			vm->checkpointState.requiredGhostFileLimit = ghostFileLimit;
+			vm->checkpointState.criuSetGhostFileLimitFunctionPointerType(ghostFileLimit);
+		}
+	}
+}
+
 /**
  * This adds an internal CRIU hook to trace all heap objects of instanceType and its subclasses if specified.
  *
@@ -1702,7 +1719,7 @@ criuCheckpointJVMImpl(JNIEnv *env,
 		if (-1 != ghostFileLimit) {
 			intGhostFileLimit = (U_32)(U_64)ghostFileLimit;
 			if (0 != intGhostFileLimit) {
-				vm->checkpointState.criuSetGhostFileLimitFunctionPointerType(intGhostFileLimit);
+				vm->internalVMFunctions->setRequiredGhostFileLimit(currentThread, intGhostFileLimit);
 			}
 		}
 

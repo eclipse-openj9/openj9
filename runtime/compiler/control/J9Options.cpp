@@ -212,6 +212,8 @@ int32_t J9::Options::_TLHPrefetchStaggeredLineCount = 0;
 int32_t J9::Options::_TLHPrefetchBoundaryLineCount = 0;
 int32_t J9::Options::_TLHPrefetchTLHEndLineCount = 0;
 
+int32_t J9::Options::_minTimeBetweenMemoryDisclaims = 5000; // ms
+
 int32_t J9::Options::_numFirstTimeCompilationsToExitIdleMode = 25; // Use a large number to disable the feature
 int32_t J9::Options::_waitTimeToEnterIdleMode = 5000; // ms
 int32_t J9::Options::_waitTimeToEnterDeepIdleMode = 50000; // ms
@@ -1102,6 +1104,8 @@ TR::OptionTable OMR::Options::_feOptions[] = {
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_minSamplingPeriod, 0, "P%d", NOT_IN_SUBSET},
    {"minSuperclassArraySize=", "I<nnn>\t set the size of the minimum superclass array size",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_minimumSuperclassArraySize, 0, "F%d", NOT_IN_SUBSET},
+   {"minTimeBetweenMemoryDisclaims=",  "M<nnn>\tMinimum time (ms) between two consecutive memory disclaim operations",
+        TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_minTimeBetweenMemoryDisclaims, 5000, "F%d", NOT_IN_SUBSET},
    {"noregmap",           0, RESET_JITCONFIG_RUNTIME_FLAG(J9JIT_CG_REGISTER_MAPS) },
    {"numCodeCachesOnStartup=",   "R<nnn>\tnumber of code caches to create at startup",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_numCodeCachesToCreateAtStartup, 0, "F%d", NOT_IN_SUBSET},
@@ -2724,6 +2728,13 @@ J9::Options::fePreProcess(void * base)
    // Forcing inlining of unrecognized intrinsics needs more performance investigation
    self()->setOption(TR_DisableInliningUnrecognizedIntrinsics);
 
+   // Memory disclaiming is available only on Linux
+   if (!TR::Compiler->target.isLinux())
+      {
+      self()->setOption(TR_DisableDataCacheDisclaiming);
+      self()->setOption(TR_DisableIProfilerDataDisclaiming);
+      }
+
    return true;
    }
 
@@ -2774,7 +2785,7 @@ J9::Options::setupJITServerOptions()
       TR::Options::_expensiveCompWeight = TR::CompilationInfo::MAX_WEIGHT;
       }
 
-   if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+   if (self()->getVerboseOption(TR_VerboseJITServer))
       {
       TR::PersistentInfo *persistentInfo = compInfo->getPersistentInfo();
       if (persistentInfo->getRemoteCompilationMode() == JITServer::SERVER)
@@ -2885,11 +2896,66 @@ J9::Options::fePostProcessJIT(void * base)
          }
       }
 
+   if (!self()->getOption(TR_DisableDataCacheDisclaiming) ||
+       !self()->getOption(TR_DisableIProfilerDataDisclaiming))
+      {
+      // Check requirements for memory disclaiming (Linux kernel and default page size)
+      TR::Options::disableMemoryDisclaimIfNeeded(jitConfig);
+      }
+
 #if defined(J9VM_OPT_JITSERVER)
    self()->setupJITServerOptions();
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    return true;
+   }
+
+// This function returns false if the running enviroment is suitable for
+// memory disclaim (Linux kernel >= 5.4 and default page size == 4KB).
+// If the running environment is not suitable, it disables memory disclaim,
+// it issues a message to the verbose log (if enabled) and returns true.
+// The function must be called relatively late, when the cmdLineOptions
+// are allocated and processed and the verbose log is open for writing.
+bool
+J9::Options::disableMemoryDisclaimIfNeeded(J9JITConfig *jitConfig)
+   {
+   J9JavaVM * javaVM = jitConfig->javaVM;
+   PORT_ACCESS_FROM_JAVAVM(javaVM); // for j9vmem_supported_page_sizes
+   OMRPORT_ACCESS_FROM_J9PORT(javaVM->portLibrary); // for omrsysinfo_os_kernel_info
+   bool shouldDisableMemoryDisclaim = false;
+
+   // For memory disclaim to work we need the kernel to be at least version 5.4
+   struct OMROSKernelInfo kernelInfo = {0};
+   if (!omrsysinfo_os_kernel_info(&kernelInfo)
+       || kernelInfo.kernelVersion < 5
+       || (kernelInfo.kernelVersion == 5 && kernelInfo.majorRevision < 4))
+      {
+      shouldDisableMemoryDisclaim = true;
+      if (TR::Options::getVerboseOption(TR_VerbosePerformance))
+         {
+         TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "WARNING: Disclaim feature disabled because either uname() failed or kernel version is not 5.4 or later");
+         }
+      }
+   if (!shouldDisableMemoryDisclaim)
+      {
+      // If the default page size if larger than 4K, the disclaim may not be effective
+      // because touching a page will make a large amount of memory to become resident
+      UDATA *pageSizes = j9vmem_supported_page_sizes(); // // Default page size is always the first element of this array
+      if (pageSizes[0] > 4096)
+         {
+         shouldDisableMemoryDisclaim = true;
+         if (TR::Options::getVerboseOption(TR_VerbosePerformance))
+            {
+            TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "WARNING: Disclaim feature disabled because default page size is larger than 4K");
+            }
+         }
+      }
+   if (shouldDisableMemoryDisclaim)
+      {
+      TR::Options::getCmdLineOptions()->setOption(TR_DisableDataCacheDisclaiming);
+      TR::Options::getCmdLineOptions()->setOption(TR_DisableIProfilerDataDisclaiming);
+      }
+   return shouldDisableMemoryDisclaim;
    }
 
 bool

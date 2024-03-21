@@ -342,6 +342,18 @@ J9MemorySegment * allocateFixedMemorySegmentInList(J9JavaVM *javaVM, J9MemorySeg
 	} else if (J9_ARE_ALL_BITS_SET(type, MEMORY_TYPE_VIRTUAL)) {
 
 		flags = J9PORT_VMEM_MEMORY_MODE_READ | J9PORT_VMEM_MEMORY_MODE_WRITE | J9PORT_VMEM_MEMORY_MODE_VIRTUAL;
+
+		/* DataCache and persistent memory segments can be marked as MEMORY_TYPE_DISCLAIMABLE_TO_FILE
+		 * to indicate the intent of allocating memory backed-up by a file.
+		 * This information is passed to the omr port library by setting the
+		 * flag OMRPORT_VMEM_MEMORY_MODE_SHARE_TMP_FILE_OPEN.
+		 * Note that when setting when the OMRPORT_VMEM_MEMORY_MODE_SHARE_TMP_FILE_OPEN bit,
+		 * we also have to set the OMRPORT_VMEM_MEMORY_MODE_SHARE_FILE_OPEN bit.
+		 */
+		if (J9_ARE_ALL_BITS_SET(type, MEMORY_TYPE_DISCLAIMABLE_TO_FILE)) {
+			flags |= (OMRPORT_VMEM_MEMORY_MODE_SHARE_TMP_FILE_OPEN | OMRPORT_VMEM_MEMORY_MODE_SHARE_FILE_OPEN);
+		}
+
 		if (J9_ARE_NO_BITS_SET(type, MEMORY_TYPE_UNCOMMITTED)) {
 			flags |= J9PORT_VMEM_MEMORY_MODE_COMMIT;
 		}

@@ -2817,6 +2817,8 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 				}
 				vm->checkpointState.sleepMillisecondsForNotCheckpointSafe = sleepMillisecondsForNotCheckpointSafe;
 			}
+
+			vm->checkpointState.requiredGhostFileLimit = 1024 * 1024; /* 1 MB is the default ghost limit set by the CRIU library*/
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 			break;

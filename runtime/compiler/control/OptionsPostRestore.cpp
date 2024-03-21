@@ -771,6 +771,11 @@ J9::OptionsPostRestore::postProcessInternalCompilerOptions()
          }
       }
 
+   if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableDataCacheDisclaiming) ||
+       !TR::Options::getCmdLineOptions()->getOption(TR_DisableIProfilerDataDisclaiming))
+      {
+      TR::Options::disableMemoryDisclaimIfNeeded(_jitConfig);
+      }
    }
 
 void
