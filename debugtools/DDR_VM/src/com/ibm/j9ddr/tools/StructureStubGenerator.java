@@ -276,8 +276,7 @@ public class StructureStubGenerator {
 
 		Collections.sort(fields);
 		for (FieldDescriptor fieldDescriptor : fields) {
-			if (fieldDescriptor.isPresent()
-					&& getOffsetConstant(fieldDescriptor).equals(fieldDescriptor.getName())
+			if (getOffsetConstant(fieldDescriptor).equals(fieldDescriptor.getName())
 					&& !PointerGenerator.omitFieldImplementation(structure, fieldDescriptor)) {
 				if (!headingPrinted) {
 					writer.println("\t// Offsets");
@@ -307,8 +306,7 @@ public class StructureStubGenerator {
 		Collections.sort(fields);
 		for (FieldDescriptor fieldDescriptor : fields) {
 			String fieldName = fieldDescriptor.getName();
-			if (fieldDescriptor.isPresent()
-					&& getOffsetConstant(fieldDescriptor).equals(fieldName)
+			if (getOffsetConstant(fieldDescriptor).equals(fieldName)
 					&& !PointerGenerator.omitFieldImplementation(structure, fieldDescriptor)) {
 				CTypeParser parser = new CTypeParser(fieldDescriptor.getType());
 
