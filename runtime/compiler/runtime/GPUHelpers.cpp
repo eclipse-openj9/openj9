@@ -185,7 +185,7 @@ static void saveSignalHandlers(struct sigaction sigactionArray[], bool trace)
 
       if (sigaction(i, NULL, &sigactionArray[i-1]) != 0) //Saving signal handlers to sigactionArray
          {
-         if (trace) TR_VerboseLog::writeLine(TR_Vlog_GPU, "\tsigaction error: Can't read sigaction for signal %d\n", i);
+         if (trace) TR_VerboseLog::writeLine(TR_Vlog_GPU, "\tsigaction error: Can't read sigaction for signal %d", i);
          }
       }
    }
@@ -199,7 +199,7 @@ static void restoreSignalHandlers(struct sigaction sigactionArray[], bool trace)
 
       if (sigaction(i, &sigactionArray[i-1], NULL) != 0) //Restoring signal handlers from sigactionArray
          {
-         if (trace) TR_VerboseLog::writeLine(TR_Vlog_GPU, "\tsigaction error: Can't set sigaction for signal %d\n", i);
+         if (trace) TR_VerboseLog::writeLine(TR_Vlog_GPU, "\tsigaction error: Can't set sigaction for signal %d", i);
          }
       }
    }
@@ -294,14 +294,14 @@ static bool checkDlError(int tracing, bool isNull)
 
    if (errorMessage)
       {
-      if (tracing > 0) TR_VerboseLog::writeLine(TR_Vlog_GPU, "\tDynamic linking error: %s\n", errorMessage);
+      if (tracing > 0) TR_VerboseLog::writeLine(TR_Vlog_GPU, "\tDynamic linking error: %s", errorMessage);
       return true;
       }
 #endif
 
    if (isNull)
       {
-      if (tracing > 0) TR_VerboseLog::writeLine(TR_Vlog_GPU, "\tDynamic linking error: null pointer while loading shared library\n");
+      if (tracing > 0) TR_VerboseLog::writeLine(TR_Vlog_GPU, "\tDynamic linking error: null pointer while loading shared library");
       return true;
       }
 
@@ -326,7 +326,7 @@ static bool loadNVVMlibrary(int tracing)
       libNvvmPointer = LoadLibrary("nvvm64_20_0.dll");
 
    if (tracing > 0 && !libNvvmPointer)
-      TR_VerboseLog::writeLine(TR_Vlog_GPU, "\tDynamic linking error: Unable to locate NVVM library nvvm64_30_0.dll or nvvm64_20_0.dll\n");
+      TR_VerboseLog::writeLine(TR_Vlog_GPU, "\tDynamic linking error: Unable to locate NVVM library nvvm64_30_0.dll or nvvm64_20_0.dll");
 #endif
 
    if (checkDlError(tracing, !libNvvmPointer)) return false;
@@ -382,7 +382,7 @@ static bool loadCudaRuntimeLibrary(int tracing)
       libCudartPointer = LoadLibrary("cudart64_55.dll");
 
    if (tracing > 0 && !libCudartPointer)
-      TR_VerboseLog::writeLine(TR_Vlog_GPU, "\tDynamic linking error: Unable to locate Cuda Runtime library cudart64_75.dll\n");
+      TR_VerboseLog::writeLine(TR_Vlog_GPU, "\tDynamic linking error: Unable to locate Cuda Runtime library cudart64_75.dll");
 #endif
    if (checkDlError(tracing, !libCudartPointer)) return false;
 
@@ -422,7 +422,7 @@ static bool loadCudaLibrary(int tracing)
    HINSTANCE libCudaPointer = LoadLibrary("nvcuda.dll");
 
    if (tracing > 0 && !libCudaPointer)
-      TR_VerboseLog::writeLine(TR_Vlog_GPU, "\tDynamic linking error: Unable to locate Cuda Driver library nvcuda.dll\n");
+      TR_VerboseLog::writeLine(TR_Vlog_GPU, "\tDynamic linking error: Unable to locate Cuda Driver library nvcuda.dll");
 #endif
    if (checkDlError(tracing, !libCudaPointer)) return false;
 
@@ -546,7 +546,7 @@ static bool loadNVMLLibrary(int tracing)
    HINSTANCE libNvmlPointer = LoadLibrary("nvml.dll");
 
    if (tracing > 0 && !libNvmlPointer)
-      TR_VerboseLog::writeLine(TR_Vlog_GPU, "\tDynamic linking error: Unable to locate NVML library nvml.dll\n");
+      TR_VerboseLog::writeLine(TR_Vlog_GPU, "\tDynamic linking error: Unable to locate NVML library nvml.dll");
 
    checkDlError(tracing, !libNvmlPointer);
 #endif

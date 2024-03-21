@@ -3555,7 +3555,7 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
          if (statusCode == compilationLowPhysicalMemory && otherData != -1) // if failed due to low memory, should've received an updated memory state
             updateCompThreadActivationPolicy(compInfoPT, (JITServer::ServerMemoryState) otherData, JITServer::ServerActiveThreadsState::NORMAL_THREAD);
          if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "remoteCompile: compilationFailure statusCode %u\n", statusCode);
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "remoteCompile: compilationFailure statusCode %u", statusCode);
 
          Trc_JITServerRemoteCompilationFailure(vmThread, statusCode);
          }

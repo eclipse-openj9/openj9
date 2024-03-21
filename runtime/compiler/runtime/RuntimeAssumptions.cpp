@@ -176,7 +176,7 @@ TR_PersistentCHTable::classGotUnloadedPost(
    bool p = TR::Options::getVerboseOption(TR_VerboseHookDetailsClassUnloading);
    if (p)
       {
-      TR_VerboseLog::writeLineLocked(TR_Vlog_HD, "subClasses clean up for unloaded class 0x%p \n", classId);
+      TR_VerboseLog::writeLineLocked(TR_Vlog_HD, "subClasses clean up for unloaded class 0x%p", classId);
       }
 
    cl = findClassInfo(classId);

@@ -350,14 +350,14 @@ TR_J9SharedCache::addHint(J9Method * method, TR_SharedCacheHint theHint)
             else if (store != J9SHR_RESOURCE_STORE_FULL)
                {
                if (_verboseHints)
-                  TR_VerboseLog::writeLineLocked(TR_Vlog_SCHINTS,"hint error: could not be added into SC\n");
+                  TR_VerboseLog::writeLineLocked(TR_Vlog_SCHINTS,"hint error: could not be added into SCC");
                }
             else
                {
                SCfull = true;
                bytesToPersist = scHintDataLength;
                if (_verboseHints)
-                  TR_VerboseLog::writeLineLocked(TR_Vlog_SCHINTS,"hint error: SCC full\n");
+                  TR_VerboseLog::writeLineLocked(TR_Vlog_SCHINTS,"hint error: SCC full");
                }
             }
          else // SCC Full
@@ -421,7 +421,7 @@ TR_J9SharedCache::addHint(J9Method * method, TR_SharedCacheHint theHint)
                   }
                else
                   {
-                  TR_VerboseLog::writeLineLocked(TR_Vlog_SCHINTS,"hint error: could not be updated into SC\n");
+                  TR_VerboseLog::writeLineLocked(TR_Vlog_SCHINTS,"hint error: could not be updated into SCC");
                   }
                }
             }

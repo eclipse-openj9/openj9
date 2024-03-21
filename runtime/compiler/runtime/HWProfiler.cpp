@@ -453,7 +453,7 @@ bool TR_HWProfiler::checkAndTurnBufferProcessingOff()
       {
       if (TR::Options::isAnyVerboseOptionSet(TR_VerboseHWProfiler))
          {
-         TR_VerboseLog::writeLineLocked(TR_Vlog_HWPROFILER, "t=%6u RI continue because QSZ is large: %d\n",
+         TR_VerboseLog::writeLineLocked(TR_Vlog_HWPROFILER, "t=%6u RI continue because QSZ is large: %d",
                                         (uint32_t)_compInfo->getPersistentInfo()->getElapsedTime(),
                                         _compInfo->getMethodQueueSize());
          }
@@ -475,7 +475,7 @@ bool TR_HWProfiler::checkAndTurnBufferProcessingOff()
          if (TR::Options::isAnyVerboseOptionSet(TR_VerboseHWProfiler, TR_VerbosePerformance))
             {
             float recompFrequency = (float)newRecompDecisionsYes / (float)newRecompDecisionsTotal;
-            TR_VerboseLog::writeLineLocked(TR_Vlog_HWPROFILER, "t=%6u RI buffer processing disabled because recomp frequency is %.4f newRecompDecisionsTotal=%llu\n",
+            TR_VerboseLog::writeLineLocked(TR_Vlog_HWPROFILER, "t=%6u RI buffer processing disabled because recomp frequency is %.4f newRecompDecisionsTotal=%llu",
                                            (uint32_t)_compInfo->getPersistentInfo()->getElapsedTime(),
                                            recompFrequency, newRecompDecisionsTotal);
             }
@@ -486,7 +486,7 @@ bool TR_HWProfiler::checkAndTurnBufferProcessingOff()
          if (TR::Options::isAnyVerboseOptionSet(TR_VerboseHWProfiler))
             {
             float recompFrequency = (float)newRecompDecisionsYes / (float)newRecompDecisionsTotal;
-            TR_VerboseLog::writeLineLocked(TR_Vlog_HWPROFILER, "t=%6u RI continue. recomp frequency is %.4f newRecompDecisionsTotal=%llu\n",
+            TR_VerboseLog::writeLineLocked(TR_Vlog_HWPROFILER, "t=%6u RI continue. recomp frequency is %.4f newRecompDecisionsTotal=%llu",
                                            (uint32_t)_compInfo->getPersistentInfo()->getElapsedTime(),
                                            recompFrequency, newRecompDecisionsTotal);
             }
@@ -506,7 +506,7 @@ bool TR_HWProfiler::checkAndTurnBufferProcessingOn()
          restoreBufferProcessingFunctionality();
          if (TR::Options::isAnyVerboseOptionSet(TR_VerboseHWProfiler, TR_VerbosePerformance))
             {
-            TR_VerboseLog::writeLineLocked(TR_Vlog_HWPROFILER, "RI buffer processing re-enabled because Q_SZ=%d\n", _compInfo->getMethodQueueSize());
+            TR_VerboseLog::writeLineLocked(TR_Vlog_HWPROFILER, "RI buffer processing re-enabled because Q_SZ=%d", _compInfo->getMethodQueueSize());
             }
          return true;
          }

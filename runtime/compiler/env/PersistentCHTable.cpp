@@ -714,7 +714,7 @@ TR_PersistentCHTable::classGotUnloaded(
    bool p = TR::Options::getVerboseOption(TR_VerboseHookDetailsClassUnloading);
    if (p)
       {
-      TR_VerboseLog::writeLineLocked(TR_Vlog_HD, "setting class 0x%p as unloaded\n", classId);
+      TR_VerboseLog::writeLineLocked(TR_Vlog_HD, "setting class 0x%p as unloaded", classId);
       }
 
    //if the class was not fully loaded, it might not be in the RAT.

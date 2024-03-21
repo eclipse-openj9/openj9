@@ -1168,7 +1168,7 @@ TR_SharedCacheRelocationRuntime::incompatibleCache(U_32 module_name, U_32 reason
    {
    if (TR::Options::isAnyVerboseOptionSet())
       {
-      TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "%s\n", assumeMessage);
+      TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "%s", assumeMessage);
       }
 
    if (javaVM()->sharedClassConfig->verboseFlags & J9SHR_VERBOSEFLAG_ENABLE_VERBOSE)

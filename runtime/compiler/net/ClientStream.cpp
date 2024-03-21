@@ -122,7 +122,7 @@ int ClientStream::static_init(TR::CompilationInfo *compInfo)
    _sslCtx = ctx;
 
    if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Successfully initialized SSL context (%s) \n", (*OOpenSSL_version)(0));
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Successfully initialized SSL context (%s)", (*OOpenSSL_version)(0));
    return 0;
    }
 
@@ -280,7 +280,7 @@ openSSLConnection(SSL_CTX *ctx, int connfd)
       }
 
    if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "SSL connection on socket 0x%x, Version: %s, Cipher: %s\n",
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "SSL connection on socket 0x%x, Version: %s, Cipher: %s",
                                      connfd, (*OSSL_get_version)(ssl), (*OSSL_get_cipher)(ssl));
    return bio;
    }
