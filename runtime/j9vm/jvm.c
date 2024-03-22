@@ -4399,7 +4399,7 @@ JVM_Available(jint descriptor, jlong* bytes)
 		return JNI_FALSE;
 	}
 
-#if defined(WIN32) && !defined(__IBMC__)
+#if defined(WIN32) && !defined(__IBMC__) && !(defined(__open_xl__) && !defined(__cplusplus))
 	curr = _lseeki64(descriptor, 0, SEEK_CUR);
 	if (curr==-1L) {
 		if (descriptor == 0) {
@@ -4542,7 +4542,7 @@ JVM_Lseek(jint descriptor, jlong bytesToSeek, jint origin)
 	}
 
 #if defined(WIN32)
-#ifdef __IBMC__
+#if defined(__IBMC__) || defined(__open_xl__) && !defined(__cplusplus)
 	result = lseek(descriptor, (long) bytesToSeek, origin);
 #else
 	result = _lseeki64(descriptor, bytesToSeek, origin);
@@ -4642,7 +4642,7 @@ JVM_Open(const char* filename, jint flags, jint mode)
 #define JVM_EEXIST -100
 
 #ifdef WIN32
-#ifdef __IBMC__
+#if defined(__IBMC__) || defined(__open_xl__) && !defined(__cplusplus)
 #define EXTRA_OPEN_FLAGS O_NOINHERIT | O_BINARY
 #else
 #define EXTRA_OPEN_FLAGS _O_NOINHERIT | _O_BINARY
