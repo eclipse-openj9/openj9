@@ -132,6 +132,7 @@ option(J9VM_OPT_DYNAMIC_LOAD_SUPPORT "Determines if the dynamic loader is includ
 option(J9VM_OPT_FIPS "Add supports for FIPS")
 option(J9VM_OPT_FRAGMENT_RAM_CLASSES "Transitional flag for the GC during the switch to fragmented RAM class allocation")
 
+option(J9VM_OPT_JFR "Add support for JFR")
 option(J9VM_OPT_JVMTI "Support for the JVMTI interface")
 option(J9VM_OPT_JXE_LOAD_SUPPORT "Controls if main will allow -jxe: and relocate the disk image for you.")
 
