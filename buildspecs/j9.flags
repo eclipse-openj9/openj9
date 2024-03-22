@@ -1762,6 +1762,10 @@ Only available on zOS</description>
 			<require flag="module_ifa"/>
 		</requires>
 	</flag>
+	<flag id="opt_jfr">
+		<description>Enables support for JFR</description>
+		<ifRemoved>No support for JFR</ifRemoved>
+	</flag>
 	<flag id="opt_jitserver">
 		<description>JITServer support is enabled in the buildspec.</description>
 		<ifRemoved></ifRemoved>
