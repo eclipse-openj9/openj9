@@ -87,7 +87,9 @@
 #define J9ClassHasIdentity 0x80000
 #define J9ClassEnsureHashed 0x100000
 #define J9ClassHasOffloadAllowSubtasksNatives 0x200000
+/* TODO J9ClassAllowsInitialDefaultValue replaces J9ClassIsPrimitiveValueType for lw5 */
 #define J9ClassIsPrimitiveValueType 0x400000
+#define J9ClassAllowsInitialDefaultValue 0x400000
 #define J9ClassAllowsNonAtomicCreation 0x800000
 
 /* @ddr_namespace: map_to_type=J9FieldFlags */

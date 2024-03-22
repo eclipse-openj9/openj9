@@ -1976,7 +1976,8 @@ loadFlattenableFieldValueClasses(J9VMThread *currentThread, J9ClassLoader *class
 				} else {
 					J9ROMClass *valueROMClass = valueClass->romClass;
 					/* This restriction has been relaxed from J9ROMCLASS_IS_PRIMITIVE_VALUE_TYPE
-					 * to prevent errors while using the J9ClassIsPrimitiveValueType flag to indicate
+					 * to prevent errors while using the J9ClassAllowsInitialDefaultValue flag, which
+					 * is reusing the value forJ9ClassIsPrimitiveValueType, to indicate
 					 * flattening eligibility for nullrestricted fields. Eventually this case will be
 					 * removed with Q types.
 					 */
@@ -2347,8 +2348,7 @@ nativeOOM:
 			classFlags |= J9ClassAllowsNonAtomicCreation;
 		}
 		if (J9_ARE_ALL_BITS_SET(implicitCreationFlags, J9AccImplicitCreateHasDefaultValue)) {
-			/* J9ClassIsValueType is being reused here intentionally */
-			classFlags |= J9ClassIsValueType;
+			classFlags |= J9ClassAllowsInitialDefaultValue;
 		}
 	}
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
@@ -2357,15 +2357,12 @@ nativeOOM:
 			classFlags |= J9ClassIsValueType;
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 			if (J9ROMCLASS_IS_PRIMITIVE_VALUE_TYPE(romClass)
-				|| (J9_ARE_ALL_BITS_SET(romClass->optionalFlags, J9_ROMCLASS_OPTINFO_IMPLICITCREATION_ATTRIBUTE)
-				&& J9_ARE_ALL_BITS_SET(getImplicitCreationFlags(romClass), J9AccImplicitCreateHasDefaultValue))
+				|| J9_ARE_ALL_BITS_SET(classFlags, J9ClassAllowsInitialDefaultValue)
 			) {
 				UDATA instanceSize = state->ramClass->totalInstanceSize;
-				/* This ram class flag is not correct for the nullrestricted value class case
-				 * since the meaning of primitive and nullrestricted don't fully overlap.
-				 * Using it for now to enable flattening of nullrestricted fields.
-				 */
-				classFlags |= J9ClassIsPrimitiveValueType;
+				if (J9ROMCLASS_IS_PRIMITIVE_VALUE_TYPE(romClass)) {
+					classFlags |= J9ClassIsPrimitiveValueType;
+				}
 				if ((instanceSize <= javaVM->valueFlatteningThreshold)
 					&& !J9ROMCLASS_IS_CONTENDED(romClass)
 				) {
@@ -3237,7 +3234,7 @@ fail:
 			 *
 			 *              + J9ClassEnsureHashed (inherited)
 			 *             + J9ClassHasOffloadAllowSubtasksNatives
-			 *            + J9ClassIsPrimitiveValueType
+			 *            + J9ClassIsPrimitiveValueType | J9ClassAllowsInitialDefaultValue
 			 *           + J9ClassAllowsNonAtomicCreation
 			 *
 			 *         + Unused
