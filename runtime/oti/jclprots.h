@@ -1017,6 +1017,7 @@ void JNICALL Java_java_lang_invoke_MethodHandleNatives_registerNatives(JNIEnv *e
 #if JAVA_SPEC_VERSION == 8
 jint JNICALL Java_java_lang_invoke_MethodHandleNatives_getConstant(JNIEnv *env, jclass clazz, jint kind);
 #endif /* JAVA_SPEC_VERSION == 8 */
+void JNICALL Java_java_lang_invoke_MethodHandleNatives_markClassForMemberNamePruning(JNIEnv *env, jclass clazz, jclass c);
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 /* java_lang_invoke_VarHandle.c */

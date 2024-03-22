@@ -977,6 +977,18 @@ freeJavaVM(J9JavaVM * vm)
 		vm->realtimeSizeClasses = NULL;
 	}
 
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	if (NULL != vm->memberNameListsMutex) {
+		omrthread_monitor_destroy(vm->memberNameListsMutex);
+		vm->memberNameListsMutex = NULL;
+	}
+
+	if (NULL != vm->memberNameListNodePool) {
+		pool_kill(vm->memberNameListNodePool);
+		vm->memberNameListNodePool = NULL;
+	}
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
+
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 	{
 		J9Pool *hookRecords = vm->checkpointState.hookRecords;
@@ -7168,6 +7180,18 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 	/* Default to using lazy in all but realtime */
 	vm->extendedRuntimeFlags |= J9_EXTENDED_RUNTIME_LAZY_SYMBOL_RESOLUTION;
 
+	/* Initialize the pool and mutex for per-class MemberName lists. */
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	vm->memberNameListNodePool = pool_new(sizeof(J9MemberNameListNode), 0, 0, 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(portLibrary));
+	if (NULL == vm->memberNameListNodePool) {
+		goto error;
+	}
+
+	if (0 != omrthread_monitor_init_with_name(&vm->memberNameListsMutex, 0, "MemberName lists mutex")) {
+		goto error;
+	}
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
+
 	/* Scans cmd-line arguments in order */
 	if (JNI_OK != processVMArgsFromFirstToLast(vm)) {
 		goto error;
@@ -8062,8 +8086,10 @@ static void
 freeClassNativeMemory(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData)
 {
 	J9VMClassUnloadEvent * data = eventData;
+	J9VMThread *currentThread = data->currentThread;
+	J9JavaVM *vm = currentThread->javaVM;
 	J9Class * clazz = data->clazz;
-	PORT_ACCESS_FROM_VMC(data->currentThread);
+	PORT_ACCESS_FROM_JAVAVM(vm);
 
 	/* Free the ID table for this class, but do not free any of the IDs.  They will be freed by killing their
 		pools when the class loader is unloaded.
@@ -8077,6 +8103,29 @@ freeClassNativeMemory(J9HookInterface** hook, UDATA eventNum, void* eventData, v
 		j9mem_free_memory(J9INTERFACECLASS_METHODORDERING(clazz));
 		J9INTERFACECLASS_SET_METHODORDERING(clazz, NULL);
 	}
+
+	/* Free the MemberName list. */
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	omrthread_monitor_enter(vm->memberNameListsMutex);
+
+	if (NULL != clazz->memberNames) {
+		J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+		J9MemberNameListNode *node = clazz->memberNames;
+		clazz->memberNames = NULL;
+		while (NULL != node) {
+			J9MemberNameListNode *next = node->next;
+			/* The weak JNI ref must have been cleared by now. Otherwise, the
+			 * MemberName is still live, and this class should be too.
+			 */
+			Assert_VM_true(NULL == J9_JNI_UNWRAP_REFERENCE(node->memberName));
+			vmFuncs->j9jni_deleteGlobalRef((JNIEnv*)currentThread, node->memberName, JNI_TRUE);
+			pool_removeElement(vm->memberNameListNodePool, node);
+			node = next;
+		}
+	}
+
+	omrthread_monitor_exit(vm->memberNameListsMutex);
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 }
 
 #endif /* GC_DYNAMIC_CLASS_UNLOADING */

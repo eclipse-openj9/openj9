@@ -89,6 +89,7 @@
 #define J9ClassHasOffloadAllowSubtasksNatives 0x200000
 #define J9ClassIsPrimitiveValueType 0x400000
 #define J9ClassAllowsNonAtomicCreation 0x800000
+#define J9ClassNeedToPruneMemberNames 0x1000000
 
 /* @ddr_namespace: map_to_type=J9FieldFlags */
 
@@ -3251,6 +3252,13 @@ typedef struct J9ClassLocation {
 #define LOAD_LOCATION_CLASSPATH 2
 #define LOAD_LOCATION_MODULE 3
 
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+typedef struct J9MemberNameListNode {
+	jobject memberName;
+	struct J9MemberNameListNode *next;
+} J9MemberNameListNode;
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
+
 typedef struct J9Class {
 	UDATA eyecatcher;
 	struct J9ROMClass* romClass;
@@ -3314,6 +3322,10 @@ typedef struct J9Class {
 #endif /* JAVA_SPEC_VERSION >= 11 */
 	struct J9FlattenedClassCache* flattenedClassCache;
 	struct J9ClassHotFieldsInfo* hotFieldsInfo;
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	/* A linked list of weak global references to every resolved MemberName whose clazz is this class. */
+	J9MemberNameListNode *memberNames;
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 } J9Class;
 
 /* Interface classes can never be instantiated, so the following fields in J9Class will not be used:
@@ -3406,6 +3418,10 @@ typedef struct J9ArrayClass {
 	/* Added temporarily for consistency */
 	UDATA flattenedElementSize;
 	struct J9ClassHotFieldsInfo* hotFieldsInfo;
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	/* A linked list of weak global references to every resolved MemberName whose clazz is this class. */
+	J9MemberNameListNode *memberNames;
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 } J9ArrayClass;
 
 
@@ -6033,6 +6049,14 @@ typedef struct J9JavaVM {
 	omrthread_monitor_t delayedLockingOperationsMutex;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 	U_32 compatibilityFlags;
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	/* Protects access globally to memberNameListNodePool, J9Class::memberNames
+	 * (for every class), and all nodes in each of those lists.
+	 */
+	omrthread_monitor_t memberNameListsMutex;
+	/* Pool for allocating J9MemberNameListNode. */
+	struct J9Pool *memberNameListNodePool;
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 } J9JavaVM;
 
 #define J9VM_PHASE_STARTUP  1

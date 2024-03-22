@@ -90,9 +90,6 @@ static int compareClassDepth (const void *leftPair, const void *rightPair);
 static UDATA utfsAreIdentical(J9UTF8 * utf1, J9UTF8 * utf2);
 static UDATA areUTFPairsIdentical(J9UTF8 * leftUtf1, J9UTF8 * leftUtf2, J9UTF8 * rightUtf1, J9UTF8 * rightUtf2);
 static jvmtiError fixJNIMethodID(J9VMThread *currentThread, J9Method *oldMethod, J9Method *newMethod, BOOLEAN equivalent, UDATA extensionsUsed);
-#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
-static jvmtiIterationControl prepareToFixMemberNamesObjectIteratorCallback(J9JavaVM *vm, J9MM_IterateObjectDescriptor *objectDesc, void *userData);
-#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 static jvmtiIterationControl fixHeapRefsHeapIteratorCallback(J9JavaVM *vm, J9MM_IterateHeapDescriptor *heapDesc, void *userData);
 static jvmtiIterationControl fixHeapRefsSpaceIteratorCallback(J9JavaVM *vm, J9MM_IterateSpaceDescriptor *spaceDesc, void *userData);
@@ -1704,69 +1701,75 @@ fixJNIRefs(J9VMThread * currentThread, J9HashTable * classPairs, BOOLEAN fastHCR
 }
 
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
-typedef struct J9PrepareToFixMemberNameIterData {
-	J9VMThread *currentThread;
-	J9HashTable *classHashTable;
-	j9object_t firstAffectedMemberName;
-} J9PrepareToFixMemberNameIterData;
-
 j9object_t
 prepareToFixMemberNames(J9VMThread *currentThread, J9HashTable *classHashTable)
 {
 	j9object_t firstAffectedMemberName = NULL;
 	if (NULL != classHashTable) {
-		PORT_ACCESS_FROM_JAVAVM(currentThread->javaVM);
+		J9JavaVM *vm = currentThread->javaVM;
+		PORT_ACCESS_FROM_JAVAVM(vm);
+		J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+		J9HashTableState hashTableState;
+		J9JVMTIClassPair *classPair = NULL;
 
-		J9PrepareToFixMemberNameIterData data;
-		data.currentThread = currentThread;
-		data.classHashTable = classHashTable;
-		data.firstAffectedMemberName = NULL;
+		omrthread_monitor_enter(vm->memberNameListsMutex);
 
-		/* Iterate over all objects and find all affected MemberName instances. */
-		currentThread->javaVM->memoryManagerFunctions->j9mm_iterate_all_objects(currentThread->javaVM, PORTLIB, 0, prepareToFixMemberNamesObjectIteratorCallback, &data);
-		firstAffectedMemberName = data.firstAffectedMemberName;
+		classPair = hashTableStartDo(classHashTable, &hashTableState);
+		while (NULL != classPair) {
+			J9Class *affectedClass = classPair->originalRAMClass;
+			J9MemberNameListNode **listNode = &affectedClass->memberNames;
+			while (NULL != *listNode) {
+				j9object_t object = J9_JNI_UNWRAP_REFERENCE((*listNode)->memberName);
+				if (NULL == object) {
+					/* The MemberName has been collected, so we might as well remove this entry now. */
+					J9MemberNameListNode *next = (*listNode)->next;
+					vmFuncs->j9jni_deleteGlobalRef((JNIEnv*)currentThread, (*listNode)->memberName, JNI_TRUE);
+					pool_removeElement(vm->memberNameListNodePool, *listNode);
+					*listNode = next;
+				} else {
+					J9Class *clazz = J9OBJECT_CLAZZ_VM(vm, object);
+					UDATA vmtarget = 0;
+					j9object_t membernameClazz = NULL;
+					jint flags = 0;
+
+					/* The object from the list entry must be a MemberName. */
+					Assert_hshelp_true(clazz == J9VMJAVALANGINVOKEMEMBERNAME_OR_NULL(vm));
+
+					/* It must be resolved, i.e. vmtarget must be nonzero. */
+					vmtarget = (UDATA)J9OBJECT_U64_LOAD(currentThread, object, vm->vmtargetOffset);
+					Assert_hshelp_true(0 != vmtarget);
+
+					/* Its clazz field must identify affectedClass. */
+					membernameClazz = J9VMJAVALANGINVOKEMEMBERNAME_CLAZZ(currentThread, object);
+					Assert_hshelp_true(J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, membernameClazz) == affectedClass);
+
+					/* Add this MemberName to the list if it needs to be fixed up. */
+					flags = J9VMJAVALANGINVOKEMEMBERNAME_FLAGS(currentThread, object);
+					if (J9_ARE_ANY_BITS_SET(flags, MN_IS_METHOD | MN_IS_CONSTRUCTOR | MN_IS_FIELD)) {
+						if (J9_ARE_ANY_BITS_SET(flags, MN_IS_METHOD | MN_IS_CONSTRUCTOR)) {
+							/* Set vmindex temporarily to the J9JNIMethodID for vmtarget. The method ID will
+							 * be updated first, and then it will be used to fix the MemberName afterward.
+							 */
+							J9JNIMethodID *methodID = vmFuncs->getJNIMethodID(currentThread, (J9Method *)vmtarget);
+							J9OBJECT_U64_STORE(currentThread, object, vm->vmindexOffset, (U_64)(UDATA)methodID);
+						}
+
+						/* Temporarily take over vmtarget as the next pointer for a linked list of all affected MemberName instances. */
+						J9OBJECT_U64_STORE(currentThread, object, vm->vmtargetOffset, (U_64)(UDATA)firstAffectedMemberName);
+						firstAffectedMemberName = object;
+					}
+
+					listNode = &(*listNode)->next;
+				}
+			}
+
+			classPair = hashTableNextDo(&hashTableState);
+		}
+
+		omrthread_monitor_exit(vm->memberNameListsMutex);
 	}
 
 	return firstAffectedMemberName;
-}
-
-static jvmtiIterationControl
-prepareToFixMemberNamesObjectIteratorCallback(J9JavaVM *vm, J9MM_IterateObjectDescriptor *objectDesc, void *userData)
-{
-	J9PrepareToFixMemberNameIterData *data = userData;
-	J9VMThread *currentThread = data->currentThread;
-	J9HashTable *classHashTable = data->classHashTable;
-	j9object_t object = objectDesc->object;
-	J9Class *clazz = J9OBJECT_CLAZZ_VM(vm, object);
-
-	if (clazz == J9VMJAVALANGINVOKEMEMBERNAME_OR_NULL(vm)) {
-		UDATA vmtarget = (UDATA)J9OBJECT_U64_LOAD(currentThread, object, vm->vmtargetOffset);
-		if (0 != vmtarget) {
-			J9JVMTIClassPair exemplar;
-			J9JVMTIClassPair *result = NULL;
-			j9object_t membernameClazz = J9VMJAVALANGINVOKEMEMBERNAME_CLAZZ(currentThread, object);
-			exemplar.originalRAMClass = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, membernameClazz);
-			result = hashTableFind(classHashTable, &exemplar);
-			if (NULL != result) {
-				jint flags = J9VMJAVALANGINVOKEMEMBERNAME_FLAGS(currentThread, object);
-				if (J9_ARE_ANY_BITS_SET(flags, MN_IS_METHOD | MN_IS_CONSTRUCTOR | MN_IS_FIELD)) {
-					if (J9_ARE_ANY_BITS_SET(flags, MN_IS_METHOD | MN_IS_CONSTRUCTOR)) {
-						/* Set vmindex temporarily to the J9JNIMethodID for vmtarget. The method ID will
-						 * be updated first, and then it will be used to fix the MemberName afterward.
-						 */
-						J9JNIMethodID *methodID = currentThread->javaVM->internalVMFunctions->getJNIMethodID(currentThread, (J9Method *)vmtarget);
-						J9OBJECT_U64_STORE(currentThread, object, vm->vmindexOffset, (U_64)(UDATA)methodID);
-					}
-
-					/* Temporarily take over vmtarget as the next pointer for a linked list of all affected MemberName instances. */
-					J9OBJECT_U64_STORE(currentThread, object, vm->vmtargetOffset, (U_64)(UDATA)data->firstAffectedMemberName);
-					data->firstAffectedMemberName = object;
-				}
-			}
-		}
-	}
-
-	return JVMTI_ITERATION_CONTINUE;
 }
 
 void
