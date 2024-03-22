@@ -2249,9 +2249,8 @@ fixJNIRefs (J9VMThread * currentThread, J9HashTable* classHashTable, BOOLEAN fas
  * vmtarget is temporarily repurposed as the next pointer for an intrusive
  * linked list of all MemberName objects to fix up. This list allows the same
  * MemberNames to be processed again by fixMemberNames() without needing to
- * iterate over all objects a second time and without needing to identify the
- * same MemberNames after java/lang/Class instances and JNI method/field IDs
- * have been updated.
+ * identify the same MemberNames after java/lang/Class instances and JNI
+ * method/field IDs have been updated.
  *
  * For MemberNames representing methods (MN_IS_METHOD, MN_IS_CONSTRUCTOR),
  * vmindex is temporarily set to point to the corresponding J9JNIMethodID,

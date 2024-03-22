@@ -649,6 +649,7 @@ if(J9VM_OPT_OPENJDK_METHODHANDLE)
 		Java_java_lang_invoke_MethodHandleNatives_setCallSiteTargetVolatile
 		Java_java_lang_invoke_MethodHandleNatives_getNamedCon
 		Java_java_lang_invoke_MethodHandleNatives_registerNatives
+		Java_java_lang_invoke_MethodHandleNatives_markClassForMemberNamePruning
 	)
 	if(JAVA_SPEC_VERSION EQUAL 8)
 		omr_add_exports(jclse Java_java_lang_invoke_MethodHandleNatives_getConstant)
