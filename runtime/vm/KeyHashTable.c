@@ -57,6 +57,8 @@ static UDATA classLocationHashEqualFn(void *leftKey, void *rightKey, void *userD
 
 static void addLocationGeneratedClass(J9VMThread *vmThread, J9ClassLoader *classLoader, KeyHashTableClassEntry *existingPackageEntry, IDATA entryIndex, I_32 locationType);
 
+static BOOLEAN isMHProxyPackage(J9ROMClass *romClass);
+
 #if defined(J9_EXTENDED_DEBUG)
 static void checkClassAlignment(J9Class *clazz, char const *caller)
 {
@@ -439,6 +441,28 @@ hashClassTableDelete(J9ClassLoader *classLoader, U_8 *className, UDATA className
 	return hashTableRemove(table, &key);
 }
 
+UDATA
+hashClassTablePackageDelete(J9VMThread *vmThread, J9ClassLoader* classLoader, J9ROMClass* romClass)
+{
+	if (isMHProxyPackage(romClass)) {
+		/* This generated package only exists for one hidden class and should be
+		 * removed when its rom class is unloaded. hashClassTable package id's rely
+		 * on there being a valid rom class.
+		 */
+		UDATA result = 0;
+		KeyHashTableClassEntry key;
+		key.tag = (UDATA)romClass | TAG_ROM_CLASS;
+		omrthread_monitor_enter(vmThread->javaVM->classTableMutex);
+		result = hashTableRemove(classLoader->classHashTable, &key);
+		J9UTF8* className = J9ROMCLASS_CLASSNAME(romClass);
+		Trc_VM_hashClassTablePackageDelete(vmThread, romClass, J9UTF8_LENGTH(className), J9UTF8_DATA(className));
+		omrthread_monitor_exit(vmThread->javaVM->classTableMutex);
+		return result;
+	} else {
+		return 0;
+	}
+}
+
 void
 hashClassTableReplace(J9VMThread *vmThread, J9ClassLoader *classLoader, J9Class *originalClass, J9Class *replacementClass)
 {
@@ -543,6 +567,16 @@ hashClassTableNextDo(J9HashTableState *walkState)
 	return (NULL == next) ? NULL : next->ramClass;
 }
 
+static BOOLEAN
+isMHProxyPackage(J9ROMClass *romClass) {
+	const char* mhproxy = "jdk/MHProxy";
+	/* Classes that are not strongly tied to the classloader will have
+	 * J9AccClassAnonClass set. See java.lang.invoke.MethodHandles
+	 */
+	return _J9ROMCLASS_J9MODIFIER_IS_SET(romClass, J9AccClassAnonClass) &&
+		J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(J9ROMCLASS_CLASSNAME(romClass)), sizeof(mhproxy) - 1, mhproxy);
+}
+
 UDATA
 hashPkgTableIDFor(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass, IDATA entryIndex, I_32 locationType)
 {
@@ -566,6 +600,16 @@ hashPkgTableIDFor(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *
 		UDATA packageID = 0;
 		KeyHashTableClassEntry *result = NULL;
 		BOOLEAN peekOnly = (J9_CP_INDEX_PEEK == entryIndex);
+
+#if JAVA_SPEC_VERSION >= 22
+		/* OpenJ9 issue 18907 fix rely's on this assertion.
+		 * Generated package names for hidden classes have a
+		 * one to one relationship with the generated class.
+		 */
+		if (isMHProxyPackage(romClass)) {
+			Assert_VM_true(NULL == hashTableFind(table, &key));
+		}
+#endif /* JAVA_SPEC_VERSION >= 22 */
 
 		if (peekOnly) {
 			result = hashTableFind(table, &key);
