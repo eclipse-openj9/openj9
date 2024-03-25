@@ -78,4 +78,7 @@ j9jit_files(
 	optimizer/VectorAPIExpansion.cpp
 	optimizer/VPBCDConstraint.cpp
 	optimizer/TreeLowering.cpp
+	optimizer/abstractinterpreter/J9IDTBuilder.cpp
+	optimizer/abstractinterpreter/AbsInterpreter.cpp
+	optimizer/abstractinterpreter/AbsStackMachineState.cpp
 )
