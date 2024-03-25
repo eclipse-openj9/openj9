@@ -1955,43 +1955,6 @@ loadFlattenableFieldValueClasses(J9VMThread *currentThread, J9ClassLoader *class
 		UDATA signatureLength = J9UTF8_LENGTH(signature);
 		if (J9_ARE_NO_BITS_SET(modifiers, J9AccStatic)) {
 			switch (signatureChars[0]) {
-			case 'Q':
-			{
-				J9Class *valueClass = internalFindClassUTF8(currentThread, signatureChars + 1, signatureLength - 2, classLoader, classPreloadFlags);
-				if (NULL == valueClass) {
-					result = FALSE;
-					goto done;
-				} else {
-					J9ROMClass *valueROMClass = valueClass->romClass;
-					/* This restriction has been relaxed from J9ROMCLASS_IS_PRIMITIVE_VALUE_TYPE
-					 * to prevent errors while using the J9ClassAllowsInitialDefaultValue flag, which
-					 * is reusing the value forJ9ClassIsPrimitiveValueType, to indicate
-					 * flattening eligibility for nullrestricted fields. Eventually this case will be
-					 * removed with Q types.
-					 */
-					if (!J9ROMCLASS_IS_VALUE(valueROMClass)) {
-						J9UTF8 *badClass = NNSRP_GET(valueROMClass->className, J9UTF8*);
-						setCurrentExceptionNLSWithArgs(currentThread, J9NLS_VM_ERROR_QTYPE_NOT_VALUE_TYPE, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, J9UTF8_LENGTH(badClass), J9UTF8_DATA(badClass));
-						result = FALSE;
-						goto done;
-					}
-
-					if (!J9_IS_FIELD_FLATTENED(valueClass, field)) {
-						*valueTypeFlags |= (J9ClassContainsUnflattenedFlattenables | J9ClassHasReferences);
-						eligibleForFastSubstitutability = false;
-					} else if (J9_ARE_NO_BITS_SET(valueClass->classFlags, J9ClassCanSupportFastSubstitutability)) {
-						eligibleForFastSubstitutability = false;
-					}
-
-					J9FlattenedClassCacheEntry *entry = J9_VM_FCC_ENTRY_FROM_FCC(flattenedClassCache, flattenableFieldCount);
-					entry->clazz = valueClass;
-					entry->field = field;
-					entry->offset = UDATA_MAX;
-					flattenableFieldCount += 1;
-				}
-				*valueTypeFlags |= (valueClass->classFlags & (J9ClassLargestAlignmentConstraintDouble | J9ClassLargestAlignmentConstraintReference | J9ClassHasReferences));
-				break;
-			}
 			case 'D':
 				/* Fall through */
 			case 'J':
@@ -2049,7 +2012,7 @@ loadFlattenableFieldValueClasses(J9VMThread *currentThread, J9ClassLoader *class
 				break;
 			}
 		} else {
-			if ('Q' == signatureChars[0] || J9_ARE_ALL_BITS_SET(modifiers, J9FieldFlagIsNullRestricted)) {
+			if (J9_ARE_ALL_BITS_SET(modifiers, J9FieldFlagIsNullRestricted)) {
 				J9FlattenedClassCacheEntry *entry = J9_VM_FCC_ENTRY_FROM_FCC(flattenedClassCache, flattenableFieldCount);
 				entry->clazz = (J9Class *) J9_VM_FCC_CLASS_FLAGS_STATIC_FIELD;
 				entry->field = field;
