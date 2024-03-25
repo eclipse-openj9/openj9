@@ -275,7 +275,6 @@ enum MessageType : uint16_t
    KnownObjectTable_getPointer,
    KnownObjectTable_getExistingIndexAt,
    // for KnownObjectTable outside J9::KnownObjectTable class
-   KnownObjectTable_symbolReferenceTableCreateKnownObject,
    KnownObjectTable_mutableCallSiteEpoch,
    KnownObjectTable_dereferenceKnownObjectField,
    KnownObjectTable_dereferenceKnownObjectField2,

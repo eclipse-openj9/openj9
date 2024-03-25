@@ -437,6 +437,7 @@ class InterpreterEmulator : public TR_ByteCodeIteratorWithState<TR_J9ByteCode, J
        */
       void mergeOperandArray(OperandArray *first, OperandArray *second);
 
+      TR::RequiredConst &addRequiredConst(TR::AnyConst value);
 
       TR_LogTracer *_tracer;
       TR_EstimateCodeSize *_ecs;

@@ -27,6 +27,7 @@
 #include "control/CompilationRuntime.hpp"
 #endif /* defined(J9VM_OPT_JITSERVER) */
 #include "env/CompilerEnv.hpp"
+#include "il/AnyConst.hpp"
 #include "il/Block.hpp"
 #include "il/Block_inlines.hpp"
 #include "il/Node.hpp"
@@ -896,34 +897,34 @@ J9::TransformUtil::foldStaticFinalFieldAssumingProtection(TR::Compilation *comp,
    return false;
    }
 
-/** \brief
- *     Compile time query that answers if a direct load for static can be folded by compiler.
- *
- *  \param comp
- *     The compilation object.
- *
- *  \param node
- *     The node which is a load of a static final field.
- *
- *  \return
- *    True TR_yes if the field is allowlisted and can be folded.
- *    True TR_maybe if the field is a generic static final and can be folded with protection.
- *    True TR_no if the field is cannot be folded due to being unresolved, already been written post initialization, or owning class uninitialized, etc.
- */
 TR_YesNoMaybe
 J9::TransformUtil::canFoldStaticFinalField(TR::Compilation *comp, TR::Node* node)
    {
    TR_ASSERT(node->getOpCode().isLoadVarDirect() && node->isLoadOfStaticFinalField(), "Expecting direct load of static final field on %s %p", node->getOpCode().getName(), node);
    TR::SymbolReference *symRef = node->getSymbolReference();
    TR::Symbol           *sym    = node->getSymbol();
-   TR_J9VMBase *fej9 = comp->fej9();
 
    if (symRef->isUnresolved()
        || !sym->isStaticField()
        || !sym->isFinal())
       return TR_no;
 
-   TR_OpaqueClassBlock* declaringClass = symRef->getOwningMethod(comp)->getClassFromFieldOrStatic(comp, symRef->getCPIndex(), true);
+   TR_ResolvedMethod *owningMethod = symRef->getOwningMethod(comp);
+   TR_OpaqueClassBlock* declaringClass = owningMethod->getClassFromFieldOrStatic(comp, symRef->getCPIndex(), true);
+   TR::Symbol::RecognizedField recField = sym->getRecognizedField();
+   return TR::TransformUtil::canFoldStaticFinalField(
+      comp, declaringClass, recField, owningMethod, symRef->getCPIndex());
+   }
+
+TR_YesNoMaybe
+J9::TransformUtil::canFoldStaticFinalField(
+   TR::Compilation *comp,
+   TR_OpaqueClassBlock *declaringClass,
+   TR::Symbol::RecognizedField recField,
+   TR_ResolvedMethod *owningMethod,
+   int32_t cpIndex)
+   {
+   TR_J9VMBase *fej9 = comp->fej9();
 
    // Can't trust final statics unless class init is finished
    //
@@ -938,10 +939,58 @@ J9::TransformUtil::canFoldStaticFinalField(TR::Compilation *comp, TR::Node* node
    if (len == 16 && !strncmp(name, "java/lang/System", 16))
       return TR_no;
 
+   // Static initializer can produce different values in different runs
+   // so for AOT we cannot allow this transformation. However for String
+   // we will embed some bits in the aotMethodHeader for this method.
+   // The string compression enabled bit is set in staticFinalFieldValue().
+   if (comp->compileRelocatableCode())
+      {
+      if (recField == TR::Symbol::Java_lang_String_enableCompression)
+         return TR_yes;
+      else
+         return TR_no;
+      }
+
+   // in Java 17 and above, it is not possible to remove the final attribute of a field
+   // to make it writable via reflection.
+#if JAVA_SPEC_VERSION >= 17
+   // In classes with version 53 and later, putstatic can write to static final
+   // fields only during class initialization.
+   //
+   // We can also trust our own JCL classes not to use putstatic to modify
+   // static final fields after initialization.
+   //
+   J9ROMClass *romClass = TR::Compiler->cls.romClassOf(declaringClass);
+   if (romClass->majorVersion >= 53 || fej9->isClassLibraryClass(declaringClass))
+      {
+      // Both putstatic and reflection have been ruled out, so fields declared
+      // in declaringClass must not be modified. We do not support modifying
+      // them using Unsafe.
+      //
+      // For the time being, limit aggressive folding here to static final
+      // fields with declared type VarHandle.
+      //
+      static const bool disableAggressiveVarHandleSFFF =
+         feGetEnv("TR_disableAggressiveVarHandleSFFF17") != NULL;
+
+      if (!disableAggressiveVarHandleSFFF && cpIndex >= 0)
+         {
+         int32_t len;
+         const char *sig = owningMethod->fieldSignatureChars(cpIndex, len);
+         const char *vhSig = "Ljava/lang/invoke/VarHandle;";
+         if (len == (int32_t)strlen(vhSig) && !strncmp(sig, vhSig, len))
+            return TR_yes;
+         }
+      }
+#endif
+
    if (!comp->getOption(TR_RestrictStaticFieldFolding) ||
-       sym->getRecognizedField() == TR::Symbol::assertionsDisabled ||
+       recField == TR::Symbol::assertionsDisabled ||
        J9::TransformUtil::foldFinalFieldsIn(declaringClass, name, len, true, comp))
       return TR_yes;
+
+   if (TR::Compiler->cls.classHasIllegalStaticFinalFieldModification(declaringClass))
+      return TR_no;
 
    return TR_maybe;
    }
@@ -1012,6 +1061,10 @@ static TR_YesNoMaybe safeToAddFearPointAt(TR::Optimization* opt, TR::TreeTop* tt
       return TR_yes;
       }
 
+   TR_ASSERT_FATAL(
+      !comp->isFearPointPlacementUnrestricted(),
+      "unrestricted fear point placement should have prevented prohibition");
+
    // Look for an OSR point dominating tt in block
    TR::Block* block = tt->getEnclosingBlock();
    TR::TreeTop* firstTT = block->getEntry();
@@ -1054,8 +1107,7 @@ static TR_YesNoMaybe safeToAddFearPointAt(TR::Optimization* opt, TR::TreeTop* tt
 
 static bool isVarHandleFolding(TR::Compilation* comp, TR_OpaqueClassBlock* declaringClass, char* fieldSignature, int32_t fieldSigLength)
    {
-   if (comp->getMethodSymbol()->hasMethodHandleInvokes()
-       && !TR::Compiler->cls.classHasIllegalStaticFinalFieldModification(declaringClass))
+   if (comp->getMethodSymbol()->hasMethodHandleInvokes())
       {
       if (fieldSigLength == 28 && !strncmp(fieldSignature, "Ljava/lang/invoke/VarHandle;", 28))
          return true;
@@ -1098,6 +1150,13 @@ bool J9::TransformUtil::attemptGenericStaticFinalFieldFolding(TR::Optimization* 
    return J9::TransformUtil::attemptStaticFinalFieldFoldingImpl(opt, currentTree, node, false);
    }
 
+bool J9::TransformUtil::canDoGuardedStaticFinalFieldFolding(
+   TR::Compilation *comp)
+   {
+   return !comp->getOption(TR_DisableGuardedStaticFinalFieldFolding)
+      && comp->canAddOSRAssumptions();
+   }
+
 /** \brief
  *     Try to fold static final field with protection
  *
@@ -1132,14 +1191,7 @@ bool J9::TransformUtil::attemptStaticFinalFieldFoldingImpl(TR::Optimization* opt
       return false;
       }
 
-   if (comp->getOption(TR_DisableGuardedStaticFinalFieldFolding))
-      {
-      return false;
-      }
-
-   if (!comp->supportsInduceOSR()
-       || !comp->isOSRTransitionTarget(TR::postExecutionOSR)
-       || comp->getOSRMode() != TR::voluntaryOSR)
+   if (!TR::TransformUtil::canDoGuardedStaticFinalFieldFolding(comp))
       {
       return false;
       }
@@ -1147,8 +1199,7 @@ bool J9::TransformUtil::attemptStaticFinalFieldFoldingImpl(TR::Optimization* opt
    int32_t cpIndex = symRef->getCPIndex();
    TR_OpaqueClassBlock* declaringClass = symRef->getOwningMethod(comp)->getClassFromFieldOrStatic(comp, cpIndex);
    if (J9::TransformUtil::canFoldStaticFinalField(comp, node) != TR_maybe
-       || !declaringClass
-       || TR::Compiler->cls.classHasIllegalStaticFinalFieldModification(declaringClass))
+       || !declaringClass)
       {
       return false;
       }
@@ -1234,37 +1285,12 @@ J9::TransformUtil::foldStaticFinalFieldImpl(TR::Compilation *comp, TR::Node *nod
        || symRef->hasKnownObjectIndex())
       return false;
 
-   // Static initializer can produce different values in different runs
-   // so for AOT we cannot allow this transformation. However for String
-   // we will embed some bits in the aotMethodHeader for this method
-   if (comp->compileRelocatableCode())
-      {
-      if (sym->getRecognizedField() == TR::Symbol::Java_lang_String_enableCompression)
-         {
-         // Add the flags in TR_AOTMethodHeader
-         TR_AOTMethodHeader *aotMethodHeaderEntry = comp->getAotMethodHeaderEntry();
-         aotMethodHeaderEntry->flags |= TR_AOTMethodHeader_UsesEnableStringCompressionFolding;
-         TR_ASSERT(node->getDataType() == TR::Int32, "Java_lang_String_enableCompression must be Int32");
-         bool fieldValue = ((TR_J9VM *) comp->fej9())->dereferenceStaticFinalAddress(sym->castToStaticSymbol()->getStaticAddress(), TR::Int32).dataInt32Bit != 0;
-         bool compressionEnabled = comp->fej9()->isStringCompressionEnabledVM();
-         TR_ASSERT((fieldValue && compressionEnabled) || (!fieldValue && !compressionEnabled),
-            "java/lang/String.enableCompression and javaVM->strCompEnabled must be in sync");
-         if (fieldValue)
-            aotMethodHeaderEntry->flags |= TR_AOTMethodHeader_StringCompressionEnabled;
-         }
-      else
-         {
-         return false;
-         }
-      }
-
    // Note that the load type can differ from the symbol type, eg. Java uses
    // integer loads for the sub-integer types.  The sub-integer types are
    // included below just for completeness, but we likely never hit them.
    //
    TR::DataType loadType = node->getDataType();
    bool typeIsConstible = false;
-   bool symrefIsImprovable  = false;
    switch (loadType)
       {
       case TR::Int8:
@@ -1276,100 +1302,203 @@ J9::TransformUtil::foldStaticFinalFieldImpl(TR::Compilation *comp, TR::Node *nod
          typeIsConstible = true;
          break;
       case TR::Address:
-         symrefIsImprovable = !symRef->hasKnownObjectIndex();
          break;
       default:
-         break;
+         return false;
       }
 
+   TR_ResolvedMethod *owningMethod = symRef->getOwningMethod(comp);
    TR::StaticSymbol *staticSym = sym->castToStaticSymbol();
-   TR_StaticFinalData data = ((TR_J9VM *) comp->fej9())->dereferenceStaticFinalAddress(staticSym->getStaticAddress(), loadType);
+   int32_t cpIndex = symRef->getCPIndex();
+   void *staticAddr = staticSym->getStaticAddress();
+   TR::Symbol::RecognizedField recField = sym->getRecognizedField();
+   TR::AnyConst value = TR::AnyConst::makeAddress(0);
+   bool gotValue = TR::TransformUtil::staticFinalFieldValue(
+      comp, owningMethod, cpIndex, staticAddr, loadType, recField, &value);
+
+   if (!gotValue)
+      return false;
+
    if (typeIsConstible)
       {
       if (performTransformation(comp, "O^O foldStaticFinalField: turn [%p] %s %s into load const\n", node, node->getOpCode().getName(), symRef->getName(comp->getDebug())))
          {
-         TR::VMAccessCriticalSection isConsitble(comp->fej9());
          prepareNodeToBeLoadConst(node);
          switch (loadType)
             {
             case TR::Int8:
                TR::Node::recreate(node, TR::bconst);
-               node->setByte(data.dataInt8Bit);
+               node->setByte(value.getInt8());
                break;
             case TR::Int16:
                TR::Node::recreate(node, TR::sconst);
-               node->setShortInt(data.dataInt16Bit);
+               node->setShortInt(value.getInt16());
                break;
             case TR::Int32:
                TR::Node::recreate(node, TR::iconst);
-               node->setInt(data.dataInt32Bit);
+               node->setInt(value.getInt32());
                break;
             case TR::Int64:
                TR::Node::recreate(node, TR::lconst);
-               node->setLongInt(data.dataInt64Bit);
+               node->setLongInt(value.getInt64());
                break;
             case TR::Float:
                TR::Node::recreate(node, TR::fconst);
-               node->setFloat(data.dataFloat);
+               node->setFloat(value.getFloat());
                break;
             case TR::Double:
                TR::Node::recreate(node, TR::dconst);
-               node->setDouble(data.dataDouble);
+               node->setDouble(value.getDouble());
                break;
             default:
-               TR_ASSERT(0, "Unexpected type %s", loadType.toString());
+               TR_ASSERT_FATAL(false, "Unexpected type %s", loadType.toString());
                break;
             }
-         }
-      TR::DebugCounter::incStaticDebugCounter(comp, TR::DebugCounter::debugCounterName(comp, "foldFinalField.const/(%s)/%s/(%s)",
-                                                         comp->signature(),
-                                                         comp->getHotnessName(comp->getMethodHotness()),
-                                                         symRef->getName(comp->getDebug())));
-      return true;
-      }
-   else if (data.dataAddress == 0) // Seems ok just to check for a static to be NULL without vm access
-      {
-      switch (staticSym->getRecognizedField())
-         {
-         // J9VMInternals.jitHelpers is initialized after the class has been
-         // initialized via an Unsafe helper - don't fold null in to improve perf
-         case TR::Symbol::Java_lang_J9VMInternals_jitHelpers:
-            return false;
-         default:
-            if (performTransformation(comp, "O^O transformDirectLoad: [%p] field is null - change to aconst NULL\n", node))
-               {
-               prepareNodeToBeLoadConst(node);
-               TR::Node::recreate(node, TR::aconst);
-               node->setAddress(0);
-               node->setIsNull(true);
-               node->setIsNonNull(false);
-               TR::DebugCounter::incStaticDebugCounter(comp, TR::DebugCounter::debugCounterName(comp, "foldFinalField.null/(%s)/%s/(%s)", comp->signature(), comp->getHotnessName(comp->getMethodHotness()), symRef->getName(comp->getDebug())));
-               return true;
-               }
-         }
-      }
-   else if (symrefIsImprovable)
-      {
-      uintptr_t *refLocation = (uintptr_t*)staticSym->getStaticAddress();
-      TR::SymbolReference *improvedSymRef = comp->getSymRefTab()->findOrCreateSymRefWithKnownObject(node->getSymbolReference(), refLocation);
-      if (improvedSymRef->hasKnownObjectIndex()
-         && performTransformation(comp, "O^O transformDirectLoad: [%p] use object-specific symref #%d (=obj%d) for %s %s\n",
-            node,
-            improvedSymRef->getReferenceNumber(),
-            improvedSymRef->getKnownObjectIndex(),
-            node->getOpCode().getName(),
-            symRef->getName(comp->getDebug())))
-         {
-         node->setSymbolReference(improvedSymRef);
-         bool isNull = comp->getKnownObjectTable()->isNull(improvedSymRef->getKnownObjectIndex());
-         node->setIsNull(isNull);
-         node->setIsNonNull (!isNull);
-         TR::DebugCounter::incStaticDebugCounter(comp, TR::DebugCounter::debugCounterName(comp, "foldFinalField.knownObject/(%s)/%s/(%s)", comp->signature(), comp->getHotnessName(comp->getMethodHotness()), symRef->getName(comp->getDebug())));
+
+         TR::DebugCounter::incStaticDebugCounter(comp, TR::DebugCounter::debugCounterName(comp, "foldFinalField.const/(%s)/%s/(%s)",
+                                                            comp->signature(),
+                                                            comp->getHotnessName(comp->getMethodHotness()),
+                                                            symRef->getName(comp->getDebug())));
          return true;
          }
       }
+   else if (value.isAddress() && value.getAddress() == 0)
+      {
+      if (performTransformation(comp, "O^O transformDirectLoad: [%p] field is null - change to aconst NULL\n", node))
+         {
+         prepareNodeToBeLoadConst(node);
+         TR::Node::recreate(node, TR::aconst);
+         node->setAddress(0);
+         TR::DebugCounter::incStaticDebugCounter(comp, TR::DebugCounter::debugCounterName(comp, "foldFinalField.null/(%s)/%s/(%s)", comp->signature(), comp->getHotnessName(comp->getMethodHotness()), symRef->getName(comp->getDebug())));
+         return true;
+         }
+      }
+   else if (value.isKnownObject())
+      {
+      TR::KnownObjectTable::Index koi = value.getKnownObjectIndex();
+      if (!performTransformation(comp, "O^O transformDirectLoad: mark n%un [%p] as obj%d\n",
+            node->getGlobalIndex(),
+            node,
+            koi))
+         return false;
+
+      TR::SymbolReference *improvedSymRef =
+         comp->getSymRefTab()->findOrCreateSymRefWithKnownObject(
+            node->getSymbolReference(), koi);
+
+      node->setSymbolReference(improvedSymRef);
+      node->setIsNull(false);
+      node->setIsNonNull(true);
+      TR::DebugCounter::incStaticDebugCounter(comp, TR::DebugCounter::debugCounterName(comp, "foldFinalField.knownObject/(%s)/%s/(%s)", comp->signature(), comp->getHotnessName(comp->getMethodHotness()), symRef->getName(comp->getDebug())));
+      return true;
+      }
 
    return false; // Indicates we did nothing
+   }
+
+bool
+J9::TransformUtil::staticFinalFieldValue(
+   TR::Compilation *comp,
+   TR_ResolvedMethod *owningMethod,
+   int32_t cpIndex,
+   void *staticAddr,
+   TR::DataType loadType,
+   TR::Symbol::RecognizedField recField,
+   TR::AnyConst *outValue)
+   {
+   TR_J9VM *fej9 = (TR_J9VM *)comp->fej9();
+   TR_StaticFinalData data = fej9->dereferenceStaticFinalAddress(staticAddr, loadType);
+
+   if (comp->compileRelocatableCode())
+      {
+      TR_ASSERT_FATAL(
+         recField == TR::Symbol::Java_lang_String_enableCompression,
+         "folding unexpected static final in AOT");
+
+      // Add the flags in TR_AOTMethodHeader
+      TR_AOTMethodHeader *aotMethodHeaderEntry = comp->getAotMethodHeaderEntry();
+      aotMethodHeaderEntry->flags |= TR_AOTMethodHeader_UsesEnableStringCompressionFolding;
+      TR_ASSERT_FATAL(loadType == TR::Int32, "Java_lang_String_enableCompression must be Int32");
+      bool fieldValue = data.dataInt32Bit != 0;
+      bool compressionEnabled = comp->fej9()->isStringCompressionEnabledVM();
+      TR_ASSERT_FATAL(
+         fieldValue == compressionEnabled,
+         "java/lang/String.enableCompression and javaVM->strCompEnabled must be in sync");
+      if (fieldValue)
+         aotMethodHeaderEntry->flags |= TR_AOTMethodHeader_StringCompressionEnabled;
+      }
+
+   switch (loadType)
+      {
+      case TR::Int8:
+         *outValue = TR::AnyConst::makeInt8(data.dataInt8Bit);
+         return true;
+
+      case TR::Int16:
+         *outValue = TR::AnyConst::makeInt16(data.dataInt16Bit);
+         return true;
+
+      case TR::Int32:
+         *outValue = TR::AnyConst::makeInt32(data.dataInt32Bit);
+         return true;
+
+      case TR::Int64:
+         *outValue = TR::AnyConst::makeInt64(data.dataInt64Bit);
+         return true;
+
+      case TR::Float:
+         *outValue = TR::AnyConst::makeFloat(data.dataFloat);
+         return true;
+
+      case TR::Double:
+         *outValue = TR::AnyConst::makeDouble(data.dataDouble);
+         return true;
+
+      case TR::Address:
+         // address logic follows
+         break;
+
+      default:
+         return false;
+      }
+
+   if (data.dataAddress == 0)
+      {
+      // J9VMInternals.jitHelpers is initialized after the class has been
+      // initialized via an Unsafe helper - don't fold null in to improve perf
+      if (recField == TR::Symbol::Java_lang_J9VMInternals_jitHelpers)
+         return false;
+
+      *outValue = TR::AnyConst::makeAddress(0);
+      return true;
+      }
+
+   // The value is a known object.
+   TR::KnownObjectTable *knot = comp->getOrCreateKnownObjectTable();
+   if (knot == NULL)
+      return false;
+
+   uintptr_t *refLocation = (uintptr_t*)staticAddr;
+   TR::KnownObjectTable::Index koi = knot->getOrCreateIndexAt(refLocation);
+   if (koi == TR::KnownObjectTable::UNKNOWN)
+      return false;
+
+   // It's possible to get the null index if the field was mutated between
+   // dereferenceStaticFinalAddress() and getOrCreateIndexAt(). This will be
+   // exceedingly rare for any field that should be folded. In this case, just
+   // give up to avoid setting *outValue to the null index.
+   if (knot->isNull(koi))
+      return false;
+
+   if (cpIndex >= 0)
+      {
+      int32_t stableArrayRank = isArrayWithStableElements(cpIndex, owningMethod, comp);
+      if (stableArrayRank > 0)
+         knot->addStableArray(koi, stableArrayRank);
+      }
+
+   *outValue = TR::AnyConst::makeKnownObject(koi);
+   return true;
    }
 
 bool
@@ -2191,6 +2320,10 @@ void J9::TransformUtil::removePotentialOSRPointHelperCalls(TR::Compilation* comp
  */
 void J9::TransformUtil::prohibitOSROverRange(TR::Compilation* comp, TR::TreeTop* start, TR::TreeTop* end)
    {
+   TR_ASSERT_FATAL(
+      !comp->isFearPointPlacementUnrestricted(),
+      "disallowed attempt to prohibit OSR");
+
    TR_ASSERT(start->getEnclosingBlock() == end->getEnclosingBlock(), "Does not support range across blocks");
    TR_ASSERT(comp->supportsInduceOSR() && comp->isOSRTransitionTarget(TR::postExecutionOSR) && comp->getOSRMode() == TR::voluntaryOSR,
              "prohibitOSROverRange only works in certain modes");
@@ -2579,97 +2712,4 @@ J9::TransformUtil::refineMethodHandleLinkTo(TR::Compilation* comp, TR::TreeTop* 
 #else
    return false;
 #endif
-   }
-
-TR::KnownObjectTable::Index
-J9::TransformUtil::knownObjectFromFinalStatic(
-   TR::Compilation *comp,
-   TR_ResolvedMethod *owningMethod,
-   int32_t cpIndex,
-   void *dataAddress)
-   {
-   if (comp->compileRelocatableCode())
-      return TR::KnownObjectTable::UNKNOWN;
-
-   TR::KnownObjectTable *knot = comp->getOrCreateKnownObjectTable();
-   if (knot == NULL)
-      return TR::KnownObjectTable::UNKNOWN;
-
-#if defined(J9VM_OPT_JITSERVER)
-   if (comp->isOutOfProcessCompilation())
-      {
-      TR_ResolvedJ9JITServerMethod *serverMethod = static_cast<TR_ResolvedJ9JITServerMethod*>(owningMethod);
-      TR_ResolvedMethod *clientMethod = serverMethod->getRemoteMirror();
-
-      auto stream = TR::CompilationInfo::getStream();
-      stream->write(JITServer::MessageType::KnownObjectTable_symbolReferenceTableCreateKnownObject, dataAddress, clientMethod, cpIndex);
-
-      auto recv = stream->read<TR::KnownObjectTable::Index, uintptr_t*>();
-      TR::KnownObjectTable::Index knownObjectIndex = std::get<0>(recv);
-      uintptr_t *objectPointerReference = std::get<1>(recv);
-
-      if (knownObjectIndex != TR::KnownObjectTable::UNKNOWN)
-         {
-         knot->updateKnownObjectTableAtServer(knownObjectIndex, objectPointerReference);
-         }
-
-      return knownObjectIndex;
-      }
-#endif /* defined(J9VM_OPT_JITSERVER) */
-
-   TR::VMAccessCriticalSection getObjectReferenceLocation(comp);
-   TR_J9VMBase *fej9 = comp->fej9();
-
-   // Could return the null index when the reference is null, but current
-   // callers aren't interested in it.
-   if (*((uintptr_t*)dataAddress) == 0)
-      return TR::KnownObjectTable::UNKNOWN;
-
-   TR_OpaqueClassBlock *declaringClass = owningMethod->getDeclaringClassFromFieldOrStatic(comp, cpIndex);
-   if (!declaringClass || !fej9->isClassInitialized(declaringClass))
-      return TR::KnownObjectTable::UNKNOWN;
-
-   static const char *foldVarHandle = feGetEnv("TR_FoldVarHandleWithoutFear");
-
-   bool canFoldVarHandleWithoutFear = false;
-
-   // in Java 17 and above, it is not possible to remove the final attribute of a field
-   // to make it writable via reflection.
-#if JAVA_SPEC_VERSION >= 17
-   canFoldVarHandleWithoutFear = true;
-#endif
-
-   int32_t clazzNameLength = 0;
-   char *clazzName = fej9->getClassNameChars(declaringClass, clazzNameLength);
-   bool createKnownObject = false;
-
-   if (J9::TransformUtil::foldFinalFieldsIn(declaringClass, clazzName, clazzNameLength, true, comp))
-      {
-      createKnownObject = true;
-      }
-   else if ((foldVarHandle || canFoldVarHandleWithoutFear)
-            && (clazzNameLength != 16 || strncmp(clazzName, "java/lang/System", 16)))
-      {
-      TR_OpaqueClassBlock *varHandleClass =  fej9->getSystemClassFromClassName("java/lang/invoke/VarHandle", 26);
-      TR_OpaqueClassBlock *objectClass = TR::Compiler->cls.objectClass(comp, *((uintptr_t*)dataAddress));
-
-      if (varHandleClass != NULL
-          && objectClass != NULL
-          && fej9->isInstanceOf(objectClass, varHandleClass, true, true))
-         {
-         createKnownObject = true;
-         }
-      }
-
-   if (!createKnownObject)
-      return TR::KnownObjectTable::UNKNOWN;
-
-   TR::KnownObjectTable::Index index = knot->getOrCreateIndexAt((uintptr_t*)dataAddress);
-
-   int32_t stableArrayRank = isArrayWithStableElements(cpIndex, owningMethod, comp);
-
-   if (stableArrayRank > 0)
-      knot->addStableArray(index, stableArrayRank);
-
-   return index;
    }

@@ -526,10 +526,15 @@ J9::KnownObjectTable::dumpTo(TR::FILE *file, TR::Compilation *comp)
 void
 J9::KnownObjectTable::addStableArray(Index index, int32_t stableArrayRank)
    {
-   uintptr_t    object = self()->getPointer(index);
-   TR_J9VMBase *j9fe = (TR_J9VMBase*)self()->fe();
-   J9Class      *clazz  = (J9Class*)j9fe->getObjectClass(object);
-   TR_ASSERT_FATAL((clazz->romClass->modifiers & J9AccClassArray), "addStableArray can only be called for arrays\n");
+   TR_J9VMBase *fej9 = static_cast<TR_J9VMBase*>(fe());
+   TR_OpaqueClassBlock *clazz =
+      fej9->getObjectClassFromKnownObjectIndex(comp(), index);
+
+   // Null is only possible on failure to get VM access. Most of the time we
+   // should find the class successfully anyway, so check only in that case.
+   TR_ASSERT_FATAL(
+      clazz == NULL || fej9->isClassArray(clazz),
+      "addStableArray can only be called for arrays");
 
    if (_stableArrayRanks[index] < stableArrayRank)
       {
