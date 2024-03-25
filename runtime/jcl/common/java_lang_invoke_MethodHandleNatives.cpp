@@ -83,6 +83,79 @@ isPolymorphicMHMethod(J9JavaVM *vm, J9Class *declaringClass, J9UTF8 *methodName)
 	return false;
 }
 
+/**
+ * @brief Add a MemberName to the list of MemberNames for the J9Class that will
+ * correspond to its clazz field.
+ *
+ * This must be done immediately prior to initializing vmtarget.
+ *
+ * clazzObject must be the value of the MemberName's clazz field, or the value
+ * that will be assigned to clazz immediately upon success.
+ *
+ * On error, the current exception will be set:
+ * - to OutOfMemoryError for allocation failure.
+ *
+ * The caller must have VM access.
+ *
+ * @param[in] currentThread the J9VMThread of the current thread
+ * @param[in] memberNameObject the MemberName object to add to the list
+ * @param[in] clazzObject the value of memberNameObject.clazz
+ * @return true for success, or false on error
+ */
+static bool
+addMemberNameToClass(J9VMThread *currentThread, j9object_t memberNameObject, j9object_t clazzObject)
+{
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	J9Class *j9clazz = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, clazzObject);
+
+	jobject weakRef = vmFuncs->j9jni_createGlobalRef((JNIEnv*)currentThread, memberNameObject, JNI_TRUE);
+
+	omrthread_monitor_enter(vm->memberNameListsMutex);
+
+	if (J9_ARE_ALL_BITS_SET(j9clazz->classFlags, J9ClassNeedToPruneMemberNames)) {
+		VM_AtomicSupport::bitAndU32((volatile uint32_t*)&j9clazz->classFlags, ~(uint32_t)J9ClassNeedToPruneMemberNames);
+
+		/* Remove all entries of memberNames for which the JNI weak ref has been cleared. */
+		J9MemberNameListNode **cur = &j9clazz->memberNames;
+		while (NULL != *cur) {
+			j9object_t obj = J9_JNI_UNWRAP_REFERENCE((*cur)->memberName);
+			if (NULL == obj) {
+				/* The MemberName has been collected. Remove this entry. */
+				J9MemberNameListNode *next = (*cur)->next;
+				vmFuncs->j9jni_deleteGlobalRef((JNIEnv*)currentThread, (*cur)->memberName, JNI_TRUE);
+				pool_removeElement(vm->memberNameListNodePool, *cur);
+				*cur = next;
+			} else {
+				cur = &(*cur)->next;
+			}
+		}
+	}
+
+	J9MemberNameListNode *node = (J9MemberNameListNode *)pool_newElement(vm->memberNameListNodePool);
+
+	bool success = false;
+	if ((NULL != weakRef) && (NULL != node)) {
+		/* Initialize node and push it onto the front of the list. */
+		node->memberName = weakRef;
+		node->next = j9clazz->memberNames;
+		j9clazz->memberNames = node;
+		success = true;
+	} else {
+		/* Failed to allocate either weakRef or node. */
+		if (NULL != node) {
+			pool_removeElement(vm->memberNameListNodePool, node);
+		}
+		if (NULL != weakRef) {
+			vmFuncs->j9jni_deleteGlobalRef((JNIEnv*)currentThread, weakRef, JNI_TRUE);
+		}
+		vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+	}
+
+	omrthread_monitor_exit(vm->memberNameListsMutex);
+	return success;
+}
+
 /* Private MemberName object init helper
  *
  * Set the MemberName fields based on the refObject given:
@@ -205,16 +278,18 @@ initImpl(J9VMThread *currentThread, j9object_t membernameObject, j9object_t refO
 	}
 
 	if (!VM_VMHelpers::exceptionPending(currentThread)) {
-		J9VMJAVALANGINVOKEMEMBERNAME_SET_FLAGS(currentThread, membernameObject, flags);
-		J9VMJAVALANGINVOKEMEMBERNAME_SET_NAME(currentThread, membernameObject, nameObject);
-		if (NULL != typeObject) {
-			Assert_JCL_true(OMR_ARE_ALL_BITS_SET(flags, MN_IS_FIELD));
-			J9VMJAVALANGINVOKEMEMBERNAME_SET_TYPE(currentThread, membernameObject, typeObject);
+		if (addMemberNameToClass(currentThread, membernameObject, clazzObject)) {
+			J9VMJAVALANGINVOKEMEMBERNAME_SET_FLAGS(currentThread, membernameObject, flags);
+			J9VMJAVALANGINVOKEMEMBERNAME_SET_NAME(currentThread, membernameObject, nameObject);
+			if (NULL != typeObject) {
+				Assert_JCL_true(OMR_ARE_ALL_BITS_SET(flags, MN_IS_FIELD));
+				J9VMJAVALANGINVOKEMEMBERNAME_SET_TYPE(currentThread, membernameObject, typeObject);
+			}
+			J9VMJAVALANGINVOKEMEMBERNAME_SET_CLAZZ(currentThread, membernameObject, clazzObject);
+			J9OBJECT_U64_STORE(currentThread, membernameObject, vm->vmindexOffset, (U_64)vmindex);
+			J9OBJECT_U64_STORE(currentThread, membernameObject, vm->vmtargetOffset, (U_64)target);
+			Trc_JCL_java_lang_invoke_MethodHandleNatives_initImpl_setData(currentThread, flags, nameObject, typeObject, clazzObject, vmindex, target);
 		}
-		J9VMJAVALANGINVOKEMEMBERNAME_SET_CLAZZ(currentThread, membernameObject, clazzObject);
-		J9OBJECT_U64_STORE(currentThread, membernameObject, vm->vmindexOffset, (U_64)vmindex);
-		J9OBJECT_U64_STORE(currentThread, membernameObject, vm->vmtargetOffset, (U_64)target);
-		Trc_JCL_java_lang_invoke_MethodHandleNatives_initImpl_setData(currentThread, flags, nameObject, typeObject, clazzObject, vmindex, target);
 	}
 }
 
@@ -724,6 +799,7 @@ Java_java_lang_invoke_MethodHandleNatives_expand(JNIEnv *env, jclass clazz, jobj
  * If the resolution failed with no exception,
  *   - Throw NoSuchFieldError for field MemberName issues.
  *   - Throw NoSuchMethodError for method/constructor MemberName issues.
+ *   - Throw OutOfMemoryError for failure to allocate memory.
  *   - Throw LinkageError for other issues.
  */
 jobject JNICALL
@@ -1089,14 +1165,16 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(
 			if ((0 != target) && ((0 != vmindex) || J9_ARE_ANY_BITS_SET(flags, MN_IS_METHOD | MN_IS_CONSTRUCTOR))) {
 				/* Refetch reference after GC point */
 				membernameObject = J9_JNI_UNWRAP_REFERENCE(self);
-				J9VMJAVALANGINVOKEMEMBERNAME_SET_FLAGS(currentThread, membernameObject, new_flags);
-				J9VMJAVALANGINVOKEMEMBERNAME_SET_CLAZZ(currentThread, membernameObject, new_clazz);
-				J9OBJECT_U64_STORE(currentThread, membernameObject, vm->vmindexOffset, (U_64)vmindex);
-				J9OBJECT_U64_STORE(currentThread, membernameObject, vm->vmtargetOffset, (U_64)target);
+				if (addMemberNameToClass(currentThread, membernameObject, new_clazz)) {
+					J9VMJAVALANGINVOKEMEMBERNAME_SET_FLAGS(currentThread, membernameObject, new_flags);
+					J9VMJAVALANGINVOKEMEMBERNAME_SET_CLAZZ(currentThread, membernameObject, new_clazz);
+					J9OBJECT_U64_STORE(currentThread, membernameObject, vm->vmindexOffset, (U_64)vmindex);
+					J9OBJECT_U64_STORE(currentThread, membernameObject, vm->vmtargetOffset, (U_64)target);
 
-				Trc_JCL_java_lang_invoke_MethodHandleNatives_resolve_resolved(env, vmindex, target, new_clazz, new_flags);
+					Trc_JCL_java_lang_invoke_MethodHandleNatives_resolve_resolved(env, vmindex, target, new_clazz, new_flags);
 
-				result = vmFuncs->j9jni_createLocalRef(env, membernameObject);
+					result = vmFuncs->j9jni_createLocalRef(env, membernameObject);
+				}
 			}
 
 			if ((NULL == result)
@@ -1791,6 +1869,27 @@ Java_java_lang_invoke_MethodHandleNatives_getConstant(JNIEnv *env, jclass clazz,
 	return 0;
 }
 #endif /* JAVA_SPEC_VERSION == 8 */
+
+/**
+ * static native void markClassForMemberNamePruning(Class<?> c);
+ *
+ * Inform the VM that a MemberName belonging to class c has been collected.
+ */
+void JNICALL
+Java_java_lang_invoke_MethodHandleNatives_markClassForMemberNamePruning(JNIEnv *env, jclass clazz, jclass c)
+{
+	J9VMThread *currentThread = (J9VMThread*)env;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+	J9Class *j9c = J9VM_J9CLASS_FROM_JCLASS(currentThread, c);
+	if (NULL == j9c) {
+		vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
+	} else {
+		VM_AtomicSupport::bitOrU32((volatile uint32_t*)&j9c->classFlags, J9ClassNeedToPruneMemberNames);
+	}
+	vmFuncs->internalExitVMToJNI(currentThread);
+}
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 #if defined (J9VM_OPT_METHOD_HANDLE) || defined(J9VM_OPT_OPENJDK_METHODHANDLE)
