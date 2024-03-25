@@ -110,6 +110,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<flag id="opt_criuSupport" value="false"/>
 		<flag id="opt_fragmentRamClasses" value="true"/>
 		<flag id="opt_inlineJsrs" value="true"/>
+		<flag id="opt_jfr" value="false"/>
 		<flag id="opt_jitserver" value="false"/>
 		<flag id="opt_methodHandle" value="true"/>
 		<flag id="opt_methodHandleCommon" value="true"/>
