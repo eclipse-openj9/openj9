@@ -238,7 +238,7 @@ public class MonitorsCommand extends Command
 		
 		try {
 		
-			long address = CommandUtils.parsePointer(args[1], J9BuildFlags.env_data64);
+			long address = CommandUtils.parsePointer(args[1], J9BuildFlags.J9VM_ENV_DATA64);
 			VoidPointer ptr = VoidPointer.cast(address);
 			
 			J9JavaVMPointer vm = J9RASHelper.getVM(DataType.getJ9RASPointer());
@@ -309,7 +309,7 @@ public class MonitorsCommand extends Command
 		
 		try {
 
-			long address = CommandUtils.parsePointer(args[1], J9BuildFlags.env_data64);
+			long address = CommandUtils.parsePointer(args[1], J9BuildFlags.J9VM_ENV_DATA64);
 			VoidPointer ptr = VoidPointer.cast(address);
 
 			J9JavaVMPointer vm = J9RASHelper.getVM(DataType.getJ9RASPointer());
@@ -392,7 +392,7 @@ public class MonitorsCommand extends Command
 		
 		try {
 
-			long address = CommandUtils.parsePointer(args[1], J9BuildFlags.env_data64);
+			long address = CommandUtils.parsePointer(args[1], J9BuildFlags.J9VM_ENV_DATA64);
 			VoidPointer ptr = VoidPointer.cast(address);
 			
 			J9JavaVMPointer vm = J9RASHelper.getVM(DataType.getJ9RASPointer());
@@ -665,15 +665,15 @@ public class MonitorsCommand extends Command
 			out.println("This command takes one address argument: \"!monitors table <address>\"");
 			return;
 		}
-		
+
 		try {
 			StringBuilder builder = new StringBuilder();
 
-			long address = CommandUtils.parsePointer(args[1], J9BuildFlags.env_data64);
+			long address = CommandUtils.parsePointer(args[1], J9BuildFlags.J9VM_ENV_DATA64);
 			VoidPointer ptr = VoidPointer.cast(address);
 
 			MonitorTableListIterator iterator = new MonitorTableListIterator();
-			
+
 			boolean foundTable = false;
 			while (iterator.hasNext()) {
 				J9ObjectMonitorPointer objectMonitorPointer = iterator.next();
@@ -683,9 +683,9 @@ public class MonitorsCommand extends Command
 					foundTable = true;
 				}
 			}
-			
+
 			out.append(builder);
-			
+
 			if (false == foundTable) {
 				out.append(String.format("Could not find any J9MonitorTableListEntryPointer at address %s\n", ptr.getHexAddress()));
 			}
@@ -693,8 +693,7 @@ public class MonitorsCommand extends Command
 			throw new DDRInteractiveCommandException(e);
 		}
 	}
-	
-	
+
 	/**
 	 * See {@link MonitorsCommand#helpCommand(String[], PrintStream)} for
 	 * function documentation
@@ -705,9 +704,8 @@ public class MonitorsCommand extends Command
 	 *            the output stream
 	 */
 	private void tablesCommand(String[] args, PrintStream out) throws DDRInteractiveCommandException
-	{	
+	{
 		try {
-			
 			MonitorTableListIterator iterator = new MonitorTableListIterator();
 			MonitorTable previousMonitorTable = null;
 
@@ -726,8 +724,7 @@ public class MonitorsCommand extends Command
 			throw new DDRInteractiveCommandException(e);
 		}
 	}
-	
-	
+
 	/**
 	 * See {@link MonitorsCommand#helpCommand(String[], PrintStream)} for
 	 * function documentation
@@ -762,10 +759,8 @@ public class MonitorsCommand extends Command
 		} catch (CorruptDataException e) {
 			throw new DDRInteractiveCommandException(e);
 		}
-
 	}
-	
-	
+
 	/**
 	 * Helper to print out details for an object monitor.
 	 * 
@@ -781,8 +776,7 @@ public class MonitorsCommand extends Command
 		writeObjectMonitorToBuffer(filter, objectMonitor, buf);
 		out.print(buf.toString());
 	}
-	
-	
+
 	/**
 	 * Helper to write details for an object monitor to a buffer.
 	 * 
@@ -791,12 +785,10 @@ public class MonitorsCommand extends Command
 	 * @throws CorruptDataException
 	 */
 	private void writeObjectMonitorToBuffer(FilterOptions filter, ObjectMonitor objMon, StringBuilder out) throws CorruptDataException
-	{	
-		
+	{
 		if (filter.shouldPrint(objMon)) {
-		
 			out.append(String.format("Object monitor for %s\t\n", objMon.getObject().formatShortInteractive()));
-		
+
 			if (objMon.isInflated()) {
 				out.append("\tInflated\n");
 			} else {
@@ -808,25 +800,25 @@ public class MonitorsCommand extends Command
 					out.append("\tFlatlocked\n");
 				}
 			}
-			
+
 			J9ObjectMonitorPointer j9ObjMonPtr = objMon.getJ9ObjectMonitorPointer();
-			
+
 			if (j9ObjMonPtr.notNull()) {
 				out.append(String.format("\t%s   %s\n",
 						j9ObjMonPtr.formatShortInteractive(),
 						j9ObjMonPtr.monitor().formatShortInteractive()));
 			}
-				
+
 			J9VMThreadPointer ownerThreadPointer = objMon.getOwner();
-			
+
 			if (ownerThreadPointer.notNull()) {
 				out.append(String.format("\tOwner:\t%s\t%s\n", 
 						ownerThreadPointer.formatShortInteractive(),
 						J9VMThreadHelper.getName(ownerThreadPointer)));
 			}
-			
+
 			if (!objMon.getBlockedThreads().isEmpty()) {
-				out.append(String.format("\t%s\t\n","Blocking (Enter Waiter):"));
+				out.append(String.format("\t%s\t\n", "Blocking (Enter Waiter):"));
 				for (J9VMThreadPointer threadPtr : objMon.getBlockedThreads()) {
 					out.append(String.format("\t\t%s\t%s\n", 
 							threadPtr.formatShortInteractive(),
@@ -834,19 +826,18 @@ public class MonitorsCommand extends Command
 				}
 			}
 			if (!objMon.getWaitingThreads().isEmpty()) {
-				out.append(String.format("\t%s\t\n","Waiting (Notify Waiter):"));
+				out.append(String.format("\t%s\t\n", "Waiting (Notify Waiter):"));
 				for (J9VMThreadPointer threadPtr : objMon.getWaitingThreads()) {
 					out.append(String.format("\t\t%s\t%s\n", 
 							threadPtr.formatShortInteractive(),
 							J9VMThreadHelper.getName(threadPtr)));
 				}
 			}
-			
+
 			out.append(nl);
-		}		
+		}
 	}
-	
-	
+
 	/**
 	 * Helper to print out details for a system monitor.
 	 * 
@@ -861,8 +852,7 @@ public class MonitorsCommand extends Command
 		writeSystemMonitorToBuffer(filter, monitor, buf);
 		out.print(buf.toString());
 	}
-	
-	
+
 	/**
 	 * Helper to write details for a system monitor to a buffer.
 	 * 
@@ -874,29 +864,29 @@ public class MonitorsCommand extends Command
 	private void writeSystemMonitorToBuffer(FilterOptions filter, SystemMonitor monitor, StringBuilder out) throws CorruptDataException
 	{
 		if (filter.shouldPrint(monitor)) {
-		
+
 			out.append(String.format("%s\t%s\n", monitor.getRawMonitor().formatShortInteractive(), monitor.getName()));
-			
+
 			// Step 1: Check for owner:
 			J9ThreadPointer ownerPtr = monitor.getOwner();
-			
+
 			if (!ownerPtr.isNull()) {
 				out.append(String.format("\tOwner:\t%s\n", ownerPtr.formatShortInteractive()));
 			}
-			
+
 			// Step 2: Check if there are blocked (enter waiters) threads:
 			List<String> blockedThreads = threadsListHelper(monitor.getBlockedThreads());
-			
+
 			if (!blockedThreads.isEmpty()) {
 				out.append("\tBlocking (Enter Waiter):\n");
 				for (String aThread : blockedThreads) {
 					out.append(String.format("\t\t%s\n", aThread));
 				}
 			}
-			
+
 			// Step 3: Check if there are waiting (notify waiters) threads:
 			List<String> notifyThreads = threadsListHelper(monitor.getWaitingThreads());
-			
+
 			if (!notifyThreads.isEmpty()) {
 				out.append("\tWaiting (Notify Waiter):\n");
 				for (String aThread : notifyThreads) {
@@ -905,8 +895,7 @@ public class MonitorsCommand extends Command
 			}
 		}
 	}
-	
-	
+
 	/**
 	 * See {@link MonitorsCommand#helpCommand(String[], PrintStream)} for
 	 * function documentation
@@ -918,13 +907,12 @@ public class MonitorsCommand extends Command
 	 */
 	private void allCommand(String[] args, PrintStream out) throws DDRInteractiveCommandException
 	{
-		
 		FilterOptions filter = FilterOptions.defaultOption();
 		if (args.length > 0) {
 			// For !monitors [ owned | waiting | blocked | active | all ]
 			filter = FilterOptions.parseOption(args[0]);
 		}
-		
+
 		out.println("----------------");
 		out.println("Object Monitors:");
 		out.println("----------------");
@@ -945,7 +933,7 @@ public class MonitorsCommand extends Command
 	 */
 	private void helpCommand(String[] args, PrintStream out)
 	{
-		String blob = 
+		String blob =
 				"!monitors table <address> [ owned | waiting | blocked | active | all ]\n"
 				+ "	- dump object monitor tables individually\n"
 				+ "	- see \"!monitors system\" for owned/waiting/blocked/active/all description\n"

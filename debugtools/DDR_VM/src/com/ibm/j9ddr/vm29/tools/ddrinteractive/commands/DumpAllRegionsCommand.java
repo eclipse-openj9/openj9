@@ -32,11 +32,11 @@ import com.ibm.j9ddr.vm29.j9.gc.GCHeapRegionDescriptor;
 import com.ibm.j9ddr.vm29.j9.gc.GCHeapRegionIterator;
 import com.ibm.j9ddr.vm29.pointer.generated.J9BuildFlags;
 
-public class DumpAllRegionsCommand extends Command 
+public class DumpAllRegionsCommand extends Command
 {
 	private static final String nl = System.getProperty("line.separator");
 
-	private static String[] regionTypesString = new String[(int)MM_HeapRegionDescriptor$RegionType.LAST_REGION_TYPE];
+	private static String[] regionTypesString = new String[(int) MM_HeapRegionDescriptor$RegionType.LAST_REGION_TYPE];
 
 	public DumpAllRegionsCommand()
 	{
@@ -44,14 +44,14 @@ public class DumpAllRegionsCommand extends Command
 		addCommand("dumpallregions", "cmd|help", "dump all regions in the GC");
 	}
 
-	public void run(String command, String[] args, Context context, PrintStream out) throws DDRInteractiveCommandException 
+	public void run(String command, String[] args, Context context, PrintStream out) throws DDRInteractiveCommandException
 	{
 		boolean statsRequested = false;
 		boolean skipReport = false;
-		
+
 		if (0 != args.length) {
 			String argument = args[0];
-			
+
 			if(argument.equalsIgnoreCase("help")) {
 				help(out);
 				return;
@@ -60,20 +60,20 @@ public class DumpAllRegionsCommand extends Command
 
 			skipReport = statsRequested;
 		}
-		
+
 		try {
 			GCHeapRegionIterator gcHeapRegionIterator = GCHeapRegionIterator.from();
 			int[] stats = new int[regionTypesString.length];
 			int total = 0;
-			
+
 			String header1, header2, header3;
 			String footer;
 			String formatString;
 			String regionType;
 
 			initializeStats(stats);
-			
-			if(J9BuildFlags.env_data64) {
+
+			if(J9BuildFlags.J9VM_ENV_DATA64) {
 				header1 = "+----------------+----------------+----------------+----------------+--------+----------------+----------------------\n";
 				header2 = "|    region      |     start      |      end       |    subspace    | flags  |      size      |      region type     \n";
 				header3 = "+----------------+----------------+----------------+----------------+--------+----------------+----------------------\n";
@@ -86,16 +86,16 @@ public class DumpAllRegionsCommand extends Command
 				formatString = " %08x %08x %08x %08x %08x %8x %s\n";
 				footer =  "+--------+--------+--------+--------+--------+--------+----------------------\n";
 			}
-			
+
 			if (!skipReport) {
 				out.append(header1);
 				out.append(header2);
 				out.append(header3);
 			}
-		
-			while(gcHeapRegionIterator.hasNext()) {
+
+			while (gcHeapRegionIterator.hasNext()) {
 				GCHeapRegionDescriptor heapRegionDescriptor = gcHeapRegionIterator.next();
-				int index = (int)heapRegionDescriptor.getRegionType();
+				int index = (int) heapRegionDescriptor.getRegionType();
 				total += 1;
 				if (index < regionTypesString.length) {
 					regionType = regionTypesString[index];
@@ -104,8 +104,8 @@ public class DumpAllRegionsCommand extends Command
 					regionType = "Unknown";
 				}
 				if (!skipReport) {
-					out.append(String.format(formatString, 
-							heapRegionDescriptor.getHeapRegionDescriptorPointer().getAddress(), 
+					out.append(String.format(formatString,
+							heapRegionDescriptor.getHeapRegionDescriptorPointer().getAddress(),
 							heapRegionDescriptor.getLowAddress().getAddress(),
 							heapRegionDescriptor.getHighAddress().getAddress(),
 							heapRegionDescriptor.getSubSpace().getAddress(),
@@ -116,26 +116,25 @@ public class DumpAllRegionsCommand extends Command
 					);
 				}
 			}
-		
+
 			if (!skipReport) {
 				out.append(footer);
 			}
-			
-			if(statsRequested) {
+
+			if (statsRequested) {
 				String formatStringStats = " \t%s: %d\n";
-	
+
 				for (int i = 0; i < regionTypesString.length; i++) {
-					if(0 != stats[i]) {
+					if (0 != stats[i]) {
 						out.append(String.format(formatStringStats, regionTypesString[i], stats[i]));
 					}
 				}
 				out.append(String.format(formatStringStats, "++++ TOTAL", total));
 			}
-			
+
 		} catch (CorruptDataException e) {
 			throw new DDRInteractiveCommandException(e);
 		}
-
 	}
 
 	private void initializeStats(int[] stats) {
@@ -143,69 +142,69 @@ public class DumpAllRegionsCommand extends Command
 			stats[i] = 0;
 		}
 	}
-	
+
 	private void initializeRegionTypes()
 	{
-		for(int i = 0; i < regionTypesString.length; i++) {
+		for (int i = 0; i < regionTypesString.length; i++) {
 			regionTypesString[i] = "Unknown";
 		}
-	
+
 		try {
-			regionTypesString[(int)MM_HeapRegionDescriptor$RegionType.RESERVED] = "RESERVED";
+			regionTypesString[(int) MM_HeapRegionDescriptor$RegionType.RESERVED] = "RESERVED";
 		} catch (NoSuchFieldError e) {
 		}
-		
+
 		try {
-			regionTypesString[(int)MM_HeapRegionDescriptor$RegionType.FREE] = "FREE";
+			regionTypesString[(int) MM_HeapRegionDescriptor$RegionType.FREE] = "FREE";
 		} catch (NoSuchFieldError e) {
 		}
-		
+
 		try {
-			regionTypesString[(int)MM_HeapRegionDescriptor$RegionType.SEGREGATED_SMALL] = "SEGREGATED_SMALL";
+			regionTypesString[(int) MM_HeapRegionDescriptor$RegionType.SEGREGATED_SMALL] = "SEGREGATED_SMALL";
 		} catch (NoSuchFieldError e) {
 		}
-		
+
 		try {
-			regionTypesString[(int)MM_HeapRegionDescriptor$RegionType.SEGREGATED_LARGE] = "SEGREGATED_LARGE";
+			regionTypesString[(int) MM_HeapRegionDescriptor$RegionType.SEGREGATED_LARGE] = "SEGREGATED_LARGE";
 		} catch (NoSuchFieldError e) {
 		}
-		
+
 		try {
-			regionTypesString[(int)MM_HeapRegionDescriptor$RegionType.ARRAYLET_LEAF] = "ARRAYLET_LEAF";
+			regionTypesString[(int) MM_HeapRegionDescriptor$RegionType.ARRAYLET_LEAF] = "ARRAYLET_LEAF";
 		} catch (NoSuchFieldError e) {
 		}
-		
+
 		try {
-			regionTypesString[(int)MM_HeapRegionDescriptor$RegionType.ADDRESS_ORDERED] = "ADDRESS_ORDERED";
+			regionTypesString[(int) MM_HeapRegionDescriptor$RegionType.ADDRESS_ORDERED] = "ADDRESS_ORDERED";
 		} catch (NoSuchFieldError e) {
 		}
-		
+
 		try {
-			regionTypesString[(int)MM_HeapRegionDescriptor$RegionType.ADDRESS_ORDERED_IDLE] = "ADDRESS_ORDERED_IDLE";
+			regionTypesString[(int) MM_HeapRegionDescriptor$RegionType.ADDRESS_ORDERED_IDLE] = "ADDRESS_ORDERED_IDLE";
 		} catch (NoSuchFieldError e) {
 		}
-		
+
 		try {
-			regionTypesString[(int)MM_HeapRegionDescriptor$RegionType.ADDRESS_ORDERED_MARKED] = "ADDRESS_ORDERED_MARKED";
+			regionTypesString[(int) MM_HeapRegionDescriptor$RegionType.ADDRESS_ORDERED_MARKED] = "ADDRESS_ORDERED_MARKED";
 		} catch (NoSuchFieldError e) {
 		}
-		
+
 		try {
-			regionTypesString[(int)MM_HeapRegionDescriptor$RegionType.BUMP_ALLOCATED] = "BUMP_ALLOCATED";
+			regionTypesString[(int) MM_HeapRegionDescriptor$RegionType.BUMP_ALLOCATED] = "BUMP_ALLOCATED";
 		} catch (NoSuchFieldError e) {
 		}
-		
+
 		try {
-			regionTypesString[(int)MM_HeapRegionDescriptor$RegionType.BUMP_ALLOCATED_IDLE] = "BUMP_ALLOCATED_IDLE";
+			regionTypesString[(int) MM_HeapRegionDescriptor$RegionType.BUMP_ALLOCATED_IDLE] = "BUMP_ALLOCATED_IDLE";
 		} catch (NoSuchFieldError e) {
 		}
-		
+
 		try {
-			regionTypesString[(int)MM_HeapRegionDescriptor$RegionType.BUMP_ALLOCATED_MARKED] = "BUMP_ALLOCATED_MARKED";
+			regionTypesString[(int) MM_HeapRegionDescriptor$RegionType.BUMP_ALLOCATED_MARKED] = "BUMP_ALLOCATED_MARKED";
 		} catch (NoSuchFieldError e) {
 		}
 	}
-	
+
 	private void help(PrintStream out) {
 		out.append("!dumpallregions       -- dump all regions");
 		out.append(nl);

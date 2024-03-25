@@ -25,9 +25,9 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9BuildFlags;
 
 /**
  * JIT register map.
- * 
+ *
  * Per-platform register information reproduced here rather than embedded in blob.
- * 
+ *
  * @author andhall
  */
 public class JITRegMap {
@@ -39,8 +39,8 @@ public class JITRegMap {
 	static final int jitCalleeSavedRegisterList[];
 
 	static {
-		if (J9BuildFlags.arch_x86) {
-			if (!J9BuildFlags.env_data64) {
+		if (J9BuildFlags.J9VM_ARCH_X86) {
+			if (!J9BuildFlags.J9VM_ENV_DATA64) {
 				jitRegisterNames = new String[] {
 						"jit_eax",
 						"jit_ebx",
@@ -105,8 +105,8 @@ public class JITRegMap {
 						0x09    /* jit_r9 */
 				};
 			}
-		} else if (J9BuildFlags.arch_power) {
-			if (!J9BuildFlags.env_data64) {
+		} else if (J9BuildFlags.J9VM_ARCH_POWER) {
+			if (!J9BuildFlags.J9VM_ENV_DATA64) {
 				jitRegisterNames = new String[] {
 						"jit_r0",
 						"jit_r1",
@@ -253,8 +253,8 @@ public class JITRegMap {
 						0x10    /* jit_r16 */
 				};
 			}
-		} else if (J9BuildFlags.arch_s390) {
-			if (!J9BuildFlags.env_data64) {
+		} else if (J9BuildFlags.J9VM_ARCH_S390) {
+			if (!J9BuildFlags.J9VM_ENV_DATA64) {
 				jitRegisterNames = new String[] {
 						"jit_r0",
 						"jit_r1",
@@ -370,7 +370,7 @@ public class JITRegMap {
 						0x06	/* jit_r6 */
 				};
 			}
-		} else if (J9BuildFlags.arch_aarch64) {
+		} else if (J9BuildFlags.J9VM_ARCH_AARCH64) {
 			/* 64 bit only */
 			jitRegisterNames = new String[] {
 					"jit_r0",

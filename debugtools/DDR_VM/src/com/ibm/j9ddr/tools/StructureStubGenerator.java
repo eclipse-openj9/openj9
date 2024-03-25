@@ -30,7 +30,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -277,8 +276,7 @@ public class StructureStubGenerator {
 
 		Collections.sort(fields);
 		for (FieldDescriptor fieldDescriptor : fields) {
-			if (fieldDescriptor.isPresent()
-					&& getOffsetConstant(fieldDescriptor).equals(fieldDescriptor.getName())
+			if (getOffsetConstant(fieldDescriptor).equals(fieldDescriptor.getName())
 					&& !PointerGenerator.omitFieldImplementation(structure, fieldDescriptor)) {
 				if (!headingPrinted) {
 					writer.println("\t// Offsets");
@@ -308,8 +306,7 @@ public class StructureStubGenerator {
 		Collections.sort(fields);
 		for (FieldDescriptor fieldDescriptor : fields) {
 			String fieldName = fieldDescriptor.getName();
-			if (fieldDescriptor.isPresent()
-					&& getOffsetConstant(fieldDescriptor).equals(fieldName)
+			if (getOffsetConstant(fieldDescriptor).equals(fieldName)
 					&& !PointerGenerator.omitFieldImplementation(structure, fieldDescriptor)) {
 				CTypeParser parser = new CTypeParser(fieldDescriptor.getType());
 

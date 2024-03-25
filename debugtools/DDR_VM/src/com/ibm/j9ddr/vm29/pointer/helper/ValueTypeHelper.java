@@ -268,7 +268,7 @@ public class ValueTypeHelper {
 		public boolean isJ9ClassIsFlattened(J9ClassPointer clazz) throws CorruptDataException {
 			return J9ClassHelper.extendedClassFlags(clazz).allBitsIn(J9JavaClassFlags.J9ClassIsFlattened);
 		}
-		
+
 		@Override
 		public boolean isJ9FieldIsFlattened(J9ClassPointer fieldClazz, J9ROMFieldShapePointer fieldShape) throws CorruptDataException {
 			UDATA modifiers = fieldShape.modifiers();
@@ -277,7 +277,7 @@ public class ValueTypeHelper {
 			if (classRequires4BytePrePadding(fieldClazz)) {
 				size = size.sub(U32.SIZEOF);
 			}
-			return isJ9ClassIsFlattened(fieldClazz) && 
+			return isJ9ClassIsFlattened(fieldClazz) &&
 					(!modifiers.anyBitsIn(J9JavaAccessFlags.J9AccVolatile) || (size.lte(largeSize)));
 		}
 
@@ -297,9 +297,7 @@ public class ValueTypeHelper {
 	}
 
 	private static boolean checkIfValueTypesAreSupported() {
-		/* Older builds have builds flags in camel case, newer builds have flags capitalized */
-		return J9ConstantHelper.getBoolean(J9BuildFlags.class, "J9VM_OPT_VALHALLA_VALUE_TYPES", false)
-			|| J9ConstantHelper.getBoolean(J9BuildFlags.class, "opt_valhallaValueTypes", false);
+		return J9BuildFlags.J9VM_OPT_VALHALLA_VALUE_TYPES;
 	}
 
 	/**
@@ -458,7 +456,7 @@ public class ValueTypeHelper {
 	public boolean isJ9ClassIsFlattened(J9ClassPointer clazz) throws CorruptDataException {
 		return false;
 	}
-	
+
 	/**
 	 * Queries if a field in a class is flattened
 	 * @param fieldClazz J9Class of the field
@@ -468,7 +466,7 @@ public class ValueTypeHelper {
 	public boolean isJ9FieldIsFlattened(J9ClassPointer fieldClazz, J9ROMFieldShapePointer fieldShape) throws CorruptDataException {
 		return false;
 	}
-	
+
 	/**
 	 * Queries if class is has 4byte pre-padding in the stand-alone case
 	 * @param clazz J9Class

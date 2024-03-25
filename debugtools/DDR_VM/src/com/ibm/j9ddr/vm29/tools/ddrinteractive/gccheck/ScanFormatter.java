@@ -30,77 +30,77 @@ class ScanFormatter
 	protected long _currentCount = 0;
 	protected boolean _displayedData = false;
 	protected CheckReporter _reporter;
-	
+
 	public ScanFormatter(Check check, String title, AbstractPointer pointer)
 	{
 		_reporter = check.getReporter();
 		_reporter.println(String.format("<gc check: Start scan %s (%s)>", title, formatPointer(pointer)));
 	}
-	
+
 	public ScanFormatter(Check check, String title)
 	{
 		_reporter = check.getReporter();
 		_reporter.println(String.format("<gc check: Start scan %s>", title));
 	}
 
-	static String formatPointer(AbstractPointer pointer) 
+	static String formatPointer(AbstractPointer pointer)
 	{
-		if(J9BuildFlags.env_data64) {
+		if (J9BuildFlags.J9VM_ENV_DATA64) {
 			return String.format("%016X", pointer.getAddress());
 		} else {
 			return String.format("%08X", pointer.getAddress());
 		}
 	}
-	
+
 	public void section(String type)
 	{
 		_reporter.println(String.format("  <%s>", type));
 		_currentCount = 0;
 	}
-	
+
 	public void section(String type, AbstractPointer pointer)
 	{
 		_reporter.println(String.format("  <%s (%s)>", type, formatPointer(pointer)));
 		_currentCount = 0;
 	}
-	
+
 	public void endSection()
 	{
-		if((0 != _currentCount) && _displayedData) {
+		if ((0 != _currentCount) && _displayedData) {
 			_reporter.println(">");
 			_currentCount = 0;
 		}
 	}
-	
+
 	public void entry(AbstractPointer pointer)
 	{
-		if(0 == _currentCount) {
+		if (0 == _currentCount) {
 			_reporter.print("    <");
 			_displayedData = true;
 		}
 		_reporter.print(formatPointer(pointer) + " ");
-		
+
 		_currentCount += 1;
-		
-		if(NUMBER_ELEMENTS_DISPLAYED_PER_LINE == _currentCount) {
+
+		if (NUMBER_ELEMENTS_DISPLAYED_PER_LINE == _currentCount) {
 			_reporter.println(">");
 			_currentCount = 0;
 		}
 	}
-	
+
 	public void end(String type, AbstractPointer pointer)
 	{
-		if((0 != _currentCount) && _displayedData) {
+		if ((0 != _currentCount) && _displayedData) {
 			_reporter.println(">");
 		}
 		_reporter.println(String.format("<gc check: End scan %s (%s)>", type, formatPointer(pointer)));
 	}
-	
+
 	public void end(String type)
 	{
-		if((0 != _currentCount) && _displayedData) {
+		if ((0 != _currentCount) && _displayedData) {
 			_reporter.println(">");
 		}
-		_reporter.println(String.format("<gc check: End scan %s>", type));		
+		_reporter.println(String.format("<gc check: End scan %s>", type));
 	}
 }

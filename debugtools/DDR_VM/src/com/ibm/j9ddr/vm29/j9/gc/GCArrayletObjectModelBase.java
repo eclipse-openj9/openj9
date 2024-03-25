@@ -347,7 +347,7 @@ public abstract class GCArrayletObjectModelBase extends GCArrayObjectModel
 			 * spine pointer would be 8 byte aligned, whereas on a 32-bit platform, a single
 			 * spine pointer would not be 8 byte aligned, and would require additional padding.
 			 */
-			if (!J9BuildFlags.env_data64) {
+			if (!J9BuildFlags.J9VM_ENV_DATA64) {
 				/* this cast is ugly.. TODO: lpnguyen. Implement getClassShape(J9ArrayClassPointer clazz) and other similar methods for J9ArrayClassPointers in ObjectModel.
 				 */
 				UDATA classShape = ObjectModel.getClassShape(clazz);

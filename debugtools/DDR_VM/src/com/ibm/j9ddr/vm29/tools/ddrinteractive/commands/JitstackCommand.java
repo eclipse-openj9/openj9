@@ -45,7 +45,7 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9VMEntryLocalStoragePointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9VMThreadPointer;
 import com.ibm.j9ddr.vm29.types.UDATA;
 
-public class JitstackCommand extends Command 
+public class JitstackCommand extends Command
 {
 
 	public JitstackCommand()
@@ -54,13 +54,13 @@ public class JitstackCommand extends Command
 		addCommand("jitstackslots", "<thread>,<sp>,<pc>", "Dump jit stack slots");
 	}
 
-	public void run(String command, String[] args, Context context, PrintStream out) throws DDRInteractiveCommandException 
+	public void run(String command, String[] args, Context context, PrintStream out) throws DDRInteractiveCommandException
 	{
-		if(!J9BuildFlags.interp_nativeSupport) {
+		if (!J9BuildFlags.J9VM_INTERP_NATIVE_SUPPORT) {
 			CommandUtils.dbgPrint(out, "No JIT in this build\n");
 			return;
 		}
-		
+
 		try {
 			String[] realArgs = null;
 			if (args.length != 0) {
@@ -75,18 +75,18 @@ public class JitstackCommand extends Command
 				return;
 			}
 
-			long address = CommandUtils.parsePointer(realArgs[0], J9BuildFlags.env_data64);
-			
+			long address = CommandUtils.parsePointer(realArgs[0], J9BuildFlags.J9VM_ENV_DATA64);
+
 			J9VMThreadPointer thread = J9VMThreadPointer.cast(address);
 			StackWalkerUtils.enableVerboseLogging(2, out);
 			WalkState walkState = new WalkState();
 
-			address = CommandUtils.parsePointer(realArgs[1], J9BuildFlags.env_data64);
+			address = CommandUtils.parsePointer(realArgs[1], J9BuildFlags.J9VM_ENV_DATA64);
 
 			UDATAPointer sp = UDATAPointer.cast(address);
-			
-			address = CommandUtils.parsePointer(realArgs[2], J9BuildFlags.env_data64);
-			
+
+			address = CommandUtils.parsePointer(realArgs[2], J9BuildFlags.J9VM_ENV_DATA64);
+
 			U8Pointer pc = U8Pointer.cast(address);
 
 			UDATAPointer arg0EA = UDATAPointer.NULL;
@@ -94,7 +94,7 @@ public class JitstackCommand extends Command
 			J9VMEntryLocalStoragePointer entryLocalStorage = J9VMEntryLocalStoragePointer.NULL;
 
 			if (realArgs.length == 4) {
-				address = CommandUtils.parsePointer(realArgs[3], J9BuildFlags.env_data64);
+				address = CommandUtils.parsePointer(realArgs[3], J9BuildFlags.J9VM_ENV_DATA64);
 				entryLocalStorage = J9VMEntryLocalStoragePointer.cast(address);
 			} else {
 				entryLocalStorage = thread.entryLocalStorage();
@@ -102,7 +102,7 @@ public class JitstackCommand extends Command
 
 			walkState.flags = J9_STACKWALK_RECORD_BYTECODE_PC_OFFSET;
 			walkState.flags |= J9_STACKWALK_START_AT_JIT_FRAME;
-			
+
 			if (command.equalsIgnoreCase("!jitstackslots")) {
 				walkState.flags |= J9_STACKWALK_ITERATE_O_SLOTS;
 				// 100 is highly arbitrary but basically means "print everything".
