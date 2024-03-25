@@ -4216,7 +4216,7 @@ done:
 		j9object_t cls = *(j9object_t*)_sp;
 		j9object_t result = NULL;
 
-		/* TODO (#14073): update this function to have the same behavior as OpenJDK when cls is null or not a vlauetype (currently OpenJDK segfaults in both those scenarios) */
+		/* TODO (#14073): update this function to have the same behavior as OpenJDK when cls is null or not a valuetype (currently OpenJDK segfaults in both those scenarios) */
 		if (NULL != cls) {
 			J9Class *j9clazz = J9VM_J9CLASS_FROM_HEAPCLASS(_currentThread, cls);
 			if (J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(j9clazz)) {
