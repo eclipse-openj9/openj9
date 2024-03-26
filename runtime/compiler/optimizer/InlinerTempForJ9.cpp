@@ -2492,11 +2492,16 @@ TR_J9InlinerPolicy::callMustBeInlined(TR_CallTarget *calltarget)
    {
    TR_ResolvedMethod *method = calltarget->_calleeMethod;
 
-   if (method->convertToMethod()->isArchetypeSpecimen())
-      return true;
-
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
    if (comp()->fej9()->isLambdaFormGeneratedMethod(method))
       return true;
+
+   if (TR_J9MethodBase::isVarHandleOperationMethod(method->getRecognizedMethod()))
+      return true;
+#else
+   if (method->convertToMethod()->isArchetypeSpecimen())
+      return true;
+#endif
 
    return callMustBeInlinedInCold(method);
    }
