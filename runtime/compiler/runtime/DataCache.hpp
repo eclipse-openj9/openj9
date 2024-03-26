@@ -327,6 +327,7 @@ private:
    int32_t          _numAllocatedCaches;
    uint32_t         _flags;     // for configuration
    J9JITConfig     *_jitConfig;
+   bool             _disclaimEnabled; // If true, data cache segmnets can be disclaimed to a file or swap
 
    // Added as part of data cache reclamation
    const uint32_t _quantumSize;
@@ -337,6 +338,7 @@ private:
    TR_DataCache *allocateNewDataCache(uint32_t minimumSize);
    uint8_t *allocateDataCacheSpace(uint32_t size); // Made private for data cache reclamation.
    void freeDataCacheList(TR_DataCache *& head);
+   int disclaimSegment(J9MemorySegment *seg, bool canDisclaimOnSwap); // disclaim memory used for the indicated segment
 
    // Added as part of data cache reclamation
    void addToPool(Allocation *);
@@ -378,6 +380,7 @@ protected:
 
 public:
    void *operator new (size_t size, void * ptr) { return ptr; }
+   int32_t numAllocatedCaches() const { return _numAllocatedCaches; }
    TR_DataCache *reserveAvailableDataCache(J9VMThread *vmThread, uint32_t sizeHint);
    void makeDataCacheAvailable(TR_DataCache *dataCache); // put back the cache into the _activeDataCacheList
    uint8_t *allocateDataCacheRecord(uint32_t size, uint32_t allocType, uint32_t *allocSizePtr);
@@ -386,13 +389,10 @@ public:
    double computeDataCacheEfficiency();
    uint32_t getTotalSegmentMemoryAllocated() const { return _totalSegmentMemoryAllocated; }
    void freeDataCacheRecord(void *record);
-   void startupOver()
-      {
-      convertDataCachesToAllocations();
-      }
-
+   void startupOver() { convertDataCachesToAllocations(); }
    virtual void printStatistics();
-
+   bool isDisclaimEnabled() const { return _disclaimEnabled; }
+   int disclaimAllDataCaches();
 
    // static methods
    static TR_DataCacheManager* initialize(J9JITConfig * jitConfig);

@@ -388,6 +388,8 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    static int32_t _sleepMsBeforeCheckpoint;
 #endif
 
+   static int32_t _minTimeBetweenMemoryDisclaims; // ms
+
    static int32_t _waitTimeToEnterIdleMode;
    static int32_t _waitTimeToEnterDeepIdleMode;
    static int32_t _waitTimeToExitStartupMode;
