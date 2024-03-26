@@ -205,7 +205,8 @@ J9::Compilation::Compilation(int32_t id,
    _serializationRecords(decltype(_serializationRecords)::allocator_type(heapMemoryRegion)),
    _thunkRecords(decltype(_thunkRecords)::allocator_type(heapMemoryRegion)),
 #endif /* defined(J9VM_OPT_JITSERVER) */
-   _osrProhibitedOverRangeOfTrees(false)
+   _osrProhibitedOverRangeOfTrees(false),
+   _wasFearPointAnalysisDone(false)
    {
    _symbolValidationManager = new (self()->region()) TR::SymbolValidationManager(self()->region(), compilee);
 
@@ -1576,6 +1577,15 @@ bool
 J9::Compilation::incompleteOptimizerSupportForReadWriteBarriers()
    {
    return self()->getOption(TR_EnableFieldWatch);
+   }
+
+bool
+J9::Compilation::canAddOSRAssumptions()
+   {
+   return self()->supportsInduceOSR()
+      && self()->isOSRTransitionTarget(TR::postExecutionOSR)
+      && self()->getOSRMode() == TR::voluntaryOSR
+      && !self()->wasFearPointAnalysisDone();
    }
 
 #if defined(J9VM_OPT_JITSERVER)

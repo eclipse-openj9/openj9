@@ -395,6 +395,39 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
 
    TR::SymbolValidationManager *getSymbolValidationManager() { return _symbolValidationManager; }
 
+   /**
+    * \brief Determine whether it's currently expected to be possible to add
+    * OSR assumptions and corresponding fear points somewhere in the method.
+    *
+    * The result is independent of any particular program point. Even if the
+    * result is true, there may still be restrictions on the placement of fear
+    * points. However, if the result is false, then no fear points can be
+    * placed and no new assumptions can be made.
+    *
+    * \param comp the compilation object
+    * \return true if it's possible in general to add assumptions, false otherwise
+    */
+   bool canAddOSRAssumptions();
+
+   /**
+    * \brief Determine whether fear points may be placed (almost) anywhere.
+    *
+    * If the result is true, then prior to fear point analysis, the compiler
+    * must ensure that OSR induction remains possible at every OSR yield point.
+    * As such, fear points may be placed almost anywhere in the method.
+    *
+    * \warning This does not allow fear points to be placed on the taken side
+    * of a guard (except after an OSR yield point, e.g. a cold call). That
+    * restriction is due to a limitation of the fear point analysis.
+    *
+    * \return true if fear points may be placed (almost) anywhere
+    */
+   bool isFearPointPlacementUnrestricted() { return false; }
+
+   // Flag to record whether fear-point analysis has already been done.
+   void setFearPointAnalysisDone() { _wasFearPointAnalysisDone = true; }
+   bool wasFearPointAnalysisDone() { return _wasFearPointAnalysisDone; }
+
    // Flag to record if any optimization has prohibited OSR over a range of trees
    void setOSRProhibitedOverRangeOfTrees() { _osrProhibitedOverRangeOfTrees = true; }
    bool isOSRProhibitedOverRangeOfTrees() { return _osrProhibitedOverRangeOfTrees; }
@@ -530,6 +563,7 @@ private:
 
    TR::SymbolValidationManager *_symbolValidationManager;
    bool _osrProhibitedOverRangeOfTrees;
+   bool _wasFearPointAnalysisDone;
    };
 
 }

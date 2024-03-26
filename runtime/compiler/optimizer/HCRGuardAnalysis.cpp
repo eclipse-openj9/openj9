@@ -186,6 +186,10 @@ void TR_HCRGuardAnalysis::initializeGenAndKillSetInfo()
             }
          else
             {
+            TR_ASSERT_FATAL(
+               !comp()->isFearPointPlacementUnrestricted(),
+               "unexpected uninducible OSR yield point");
+
             isGen = true;
             isKill = false;
             }

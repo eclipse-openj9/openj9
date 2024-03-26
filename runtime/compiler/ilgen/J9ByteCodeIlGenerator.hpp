@@ -34,8 +34,11 @@
 #include "ilgen/IlGen.hpp"
 #include "infra/Checklist.hpp"
 #include "infra/Link.hpp"
+#include "infra/map.hpp"
+#include "infra/set.hpp"
 #include "infra/Stack.hpp"
 #include "env/VMJ9.h"
+#include "optimizer/CallInfo.hpp"
 
 class TR_InlineBlocks;
 class TR_PersistentClassInfo;
@@ -147,6 +150,11 @@ private:
    bool         runMacro(TR::SymbolReference *);
    bool         runFEMacro(TR::SymbolReference *);
    TR::Node *    genInvoke(TR::SymbolReference *, TR::Node *indirectCallFirstChild, TR::Node *invokedynamicReceiver = NULL);
+   TR::Node *    genInvokeInner(
+      TR::SymbolReference *,
+      TR::Node *indirectCallFirstChild,
+      TR::Node *invokedynamicReceiver,
+      TR::KnownObjectTable::Index *requiredKoi);
 
    TR::Node *    genInvokeDirect(TR::SymbolReference *symRef){ return genInvoke(symRef, NULL); }
    TR::Node *    genInvokeWithVFTChild(TR::SymbolReference *);
@@ -374,6 +382,10 @@ private:
 
    bool hasFPU();
 
+   bool pushRequiredConst(TR::KnownObjectTable::Index *koi);
+   void markRequiredKnownObjectIndex(TR::Node *node, TR::KnownObjectTable::Index koi);
+   void assertFoldedAllRequiredConsts();
+
    // data
    //
    TR::SymbolReferenceTable *         _symRefTab;
@@ -408,12 +420,6 @@ private:
    TR_BitVector                     *_invokeDynamicCalls;
    TR_BitVector                     *_ilGenMacroInvokeExactCalls;
 
-   // TenantScope field support, set to 'true' if a get/put static is encountered
-   // when option TR_DisableMultiTenancy is on and current method contains static
-   // field and method reference/invoke, skip compilation for such method
-   bool                              _staticFieldReferenceEncountered;
-   bool                              _staticMethodInvokeEncountered;
-
    TR_OpaqueClassBlock              *_invokeSpecialInterface;
    TR_BitVector                     *_invokeSpecialInterfaceCalls;
    bool                              _invokeSpecialSeen;
@@ -430,6 +436,9 @@ private:
    static const int32_t              _numDecFormatRenames = 9;
    static struct methodRenamePair    _decFormatRenames[_numDecFormatRenames];
    TR::SymbolReference               *_decFormatRenamesDstSymRef[_numDecFormatRenames];
+
+   const TR::map<int32_t, TR::RequiredConst> * const _requiredConsts; // from current inline call target
+   TR::set<int32_t>                 *_foldedRequiredConsts; // to make sure none were missed
    };
 
 #endif

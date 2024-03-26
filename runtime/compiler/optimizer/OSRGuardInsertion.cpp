@@ -277,6 +277,8 @@ int32_t TR_OSRGuardInsertion::perform()
    cleanUpPotentialOSRPointHelperCalls();
    cleanUpOSRFearPoints();
 
+   comp()->setFearPointAnalysisDone(); // It's no longer possible to create fear points.
+
    return 0;
    }
 

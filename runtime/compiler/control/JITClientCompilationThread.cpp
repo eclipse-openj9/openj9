@@ -2705,27 +2705,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, knot->getExistingIndexAt(objectPointerReference));
          }
          break;
-      case MessageType::KnownObjectTable_symbolReferenceTableCreateKnownObject:
-         {
-         auto recv = client->getRecvData<void *, TR_ResolvedMethod *, int32_t>();
-         void *dataAddress = std::get<0>(recv);
-         TR_ResolvedMethod *owningMethod = std::get<1>(recv);
-         int32_t cpIndex = std::get<2>(recv);
-
-         TR::KnownObjectTable::Index knotIndex =
-            TR::TransformUtil::knownObjectFromFinalStatic(
-               comp, owningMethod, cpIndex, dataAddress);
-
-         uintptr_t *objectPointerReference = NULL;
-         if (knotIndex != TR::KnownObjectTable::UNKNOWN)
-            {
-            objectPointerReference =
-               comp->getKnownObjectTable()->getPointerLocation(knotIndex);
-            }
-
-         client->write(response, knotIndex, objectPointerReference);
-         }
-         break;
       case MessageType::KnownObjectTable_mutableCallSiteEpoch:
          {
          auto recv = client->getRecvData<uintptr_t*, bool>();
