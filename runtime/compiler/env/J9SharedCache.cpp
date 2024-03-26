@@ -1469,7 +1469,7 @@ TR_J9JITServerSharedCache::rememberClass(J9Class *clazz, const AOTCacheClassChai
    _stream->write(JITServer::MessageType::SharedCache_rememberClass, clazz, create, !useServerOffsets, needClassChainRecord);
    auto recv = _stream->read<uintptr_t, std::vector<J9Class *>, std::vector<J9Class *>,
                              std::vector<JITServerHelpers::ClassInfoTuple>>();
-   if (TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET != clientClassChainOffset)
+   if (!useServerOffsets && (TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET != clientClassChainOffset))
       TR_ASSERT_FATAL(std::get<0>(recv) == clientClassChainOffset, "Received mismatching class chain offset: %" OMR_PRIuPTR " != %" OMR_PRIuPTR,
                       std::get<0>(recv), clientClassChainOffset);
    clientClassChainOffset = std::get<0>(recv);
