@@ -4736,6 +4736,8 @@ TR_J9ByteCodeIlGenerator::runMacro(TR::SymbolReference * symRef)
                return false;
                }
             }
+         default:
+            break;
          }
       }
 
