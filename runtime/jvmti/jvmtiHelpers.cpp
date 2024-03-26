@@ -27,6 +27,7 @@
 #if JAVA_SPEC_VERSION >= 19
 #include "HeapIteratorAPI.h"
 #include "ContinuationHelpers.hpp"
+#include "VMHelpers.hpp"
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
 extern "C" {
@@ -167,6 +168,13 @@ getVMThread(J9VMThread *currentThread, jthread thread, J9VMThread **vmThreadPtr,
 		carrierThread = (j9object_t)J9VMJAVALANGVIRTUALTHREAD_CARRIERTHREAD(currentThread, threadObject);
 		if (NULL != carrierThread) {
 			targetThread = J9VMJAVALANGTHREAD_THREADREF(currentThread, carrierThread);
+		}
+		if (J9OBJECT_I64_LOAD(currentThread, threadObject, vm->virtualThreadInspectorCountOffset) < -1) {
+			/* If the virtual thread is suspended in transition, check if the mounting process is already completed. */
+			J9VMThread *carrierVMThread = VM_VMHelpers::getCarrierVMThread(currentThread, threadObject);
+			if (NULL != carrierVMThread->currentContinuation) {
+				targetThread = carrierVMThread;
+			}
 		}
 		isThreadAlive = (JVMTI_VTHREAD_STATE_NEW != vthreadState) && (JVMTI_VTHREAD_STATE_TERMINATED != vthreadState);
 	} else
@@ -740,10 +748,10 @@ getThreadStateHelper(J9VMThread *currentThread, j9object_t threadObject, J9VMThr
 			state |= JVMTI_THREAD_STATE_SUSPENDED;
 		}
 #if JAVA_SPEC_VERSION >= 19
-		/* Based on the isSuspendedInternal field, set the JVMTI
+		/* Based on the internalSuspendState field, set the JVMTI
 		 * thread state to suspended for the corresponding thread.
 		 */
-		if (0 != J9OBJECT_U32_LOAD(currentThread, threadObject, currentThread->javaVM->isSuspendedInternalOffset)) {
+		if (VM_VMHelpers::isThreadSuspended(currentThread, threadObject)) {
 			state |= JVMTI_THREAD_STATE_SUSPENDED;
 		} else {
 			state &= ~JVMTI_THREAD_STATE_SUSPENDED;
@@ -884,9 +892,9 @@ getVirtualThreadState(J9VMThread *currentThread, jthread thread)
 				rc = JVMTI_ERROR_INTERNAL;
 			}
 		}
-		/* Re-fetch object to correctly set the isSuspendedInternal field. */
+		/* Re-fetch object to correctly set the internalSuspendState field. */
 		vThreadObject = J9_JNI_UNWRAP_REFERENCE(thread);
-		if (0 != J9OBJECT_U32_LOAD(currentThread, vThreadObject, vm->isSuspendedInternalOffset)) {
+		if (VM_VMHelpers::isThreadSuspended(currentThread, vThreadObject)) {
 			rc |= JVMTI_THREAD_STATE_SUSPENDED;
 		} else {
 			rc &= ~JVMTI_THREAD_STATE_SUSPENDED;

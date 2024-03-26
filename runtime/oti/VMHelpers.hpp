@@ -2075,6 +2075,38 @@ exit:
 			currentThread->privateFlags &= ~(UDATA)J9_PRIVATE_FLAGS_VIRTUAL_THREAD_HIDDEN_FRAMES;
 		}
 	}
+
+	/**
+	 * Check if thread is in the suspended state.
+	 *
+	 * Current thread must have VM access.
+	 *
+	 * @param[in] currentThread the current J9VMThread
+	 * @param[in] thread the target Thread object
+	 * @return true if thread is suspended, false otherwise
+	 */
+	static VMINLINE bool
+	isThreadSuspended(J9VMThread *currentThread, j9object_t thread)
+	{
+		U_64 internalSuspendState = J9OBJECT_U64_LOAD(currentThread, thread, currentThread->javaVM->internalSuspendStateOffset);
+		return J9_ARE_ANY_BITS_SET(internalSuspendState, J9_VIRTUALTHREAD_INTERNAL_STATE_SUSPENDED);
+	}
+
+	/**
+	 * Get the linked carrier J9VMThread from vthread object.
+	 *
+	 * Current thread must have VM access.
+	 *
+	 * @param[in] currentThread the current J9VMThread
+	 * @param[in] thread the target vthread object
+	 * @return J9VMThread of the linked carrier thread, or NULL
+	 */
+	static VMINLINE J9VMThread *
+	getCarrierVMThread(J9VMThread *currentThread, j9object_t thread)
+	{
+		U_64 internalSuspendState = J9OBJECT_U64_LOAD(currentThread, thread, currentThread->javaVM->internalSuspendStateOffset);
+		return (J9VMThread *)(internalSuspendState & J9_VIRTUALTHREAD_INTERNAL_STATE_CARRIERID_MASK);
+	}
 #endif /* JAVA_SPEC_VERSION >= 20 */
 
 	/**

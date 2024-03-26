@@ -213,7 +213,7 @@ Java_java_lang_Thread_resumeImpl(JNIEnv *env, jobject rcv)
 				vmFuncs->clearHaltFlag(targetThread, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND);
 			}
 #if JAVA_SPEC_VERSION >= 19
-			J9OBJECT_U32_STORE(currentThread, receiverObject, vm->isSuspendedInternalOffset, 0);
+			J9OBJECT_U64_STORE(currentThread, receiverObject, vm->internalSuspendStateOffset, J9_VIRTUALTHREAD_INTERNAL_STATE_NONE);
 #endif /* JAVA_SPEC_VERSION >= 19 */
 		}
 	}
@@ -234,7 +234,7 @@ Java_java_lang_Thread_suspendImpl(JNIEnv *env, jobject rcv)
 	if (J9VMJAVALANGTHREAD_STARTED(currentThread, receiverObject)) {
 		if (NULL != targetThread) {
 #if JAVA_SPEC_VERSION >= 19
-			J9OBJECT_U32_STORE(currentThread, receiverObject, vm->isSuspendedInternalOffset, 1);
+			J9OBJECT_U64_STORE(currentThread, receiverObject, vm->internalSuspendStateOffset, J9_VIRTUALTHREAD_INTERNAL_STATE_SUSPENDED);
 			if (receiverObject == targetThread->threadObject)
 #endif /* JAVA_SPEC_VERSION >= 19 */
 			{
