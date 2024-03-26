@@ -48,6 +48,7 @@
 #include "infra/String.hpp"
 #include "runtime/CodeRuntime.hpp"
 #include "runtime/CodeCacheManager.hpp"
+#include "runtime/Intrinsics.hpp"
 #include "runtime/RuntimeAssumptions.hpp"
 #include "runtime/asmprotos.h"
 #include "runtime/codertinit.hpp"
@@ -1037,6 +1038,7 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_getStateGPU,                (void *)getStateGPU,               TR_Helper);
    SET(TR_flushGPU,                   (void *)flushGPU,                  TR_Helper);
    SET(TR_callGPU,                    (void *)callGPU,                   TR_Helper);
+   SET(TR_intrinsicImplSquareToLen,   (void *)intrinsicImplSquareToLen,  TR_CHelper);
 
 #if defined(TR_HOST_X86) || defined(TR_HOST_POWER)
    SET(TR_referenceArrayCopy,         (void *)jitReferenceArrayCopy,     TR_Helper);

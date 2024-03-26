@@ -115,7 +115,7 @@ J9::MethodSymbol::isPureFunction()
       case TR::java_lang_StrictMath_tan:
       case TR::java_lang_StrictMath_tanh:
       case TR::java_nio_Bits_keepAlive:
-         /*
+         /* TODO(jmesyou): Investigate why these are turned off
       case TR::java_math_BigDecimal_valueOf:
       case TR::java_math_BigDecimal_add:
       case TR::java_math_BigDecimal_subtract:

@@ -30,6 +30,7 @@ j9jit_files(
 	runtime/GPUHelpers.cpp
 	runtime/HookHelpers.cpp
 	runtime/HWProfiler.cpp
+	runtime/Intrinsics.cpp
 	runtime/IProfiler.cpp
 	runtime/J9CodeCache.cpp
 	runtime/J9CodeCacheManager.cpp
