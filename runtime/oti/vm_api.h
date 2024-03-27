@@ -2121,6 +2121,15 @@ UDATA
 hashClassTableDelete(J9ClassLoader *classLoader, U_8 *className, UDATA classNameLength);
 
 /**
+* @brief Remove package entry from hashClassTable
+* @param *classLoader
+* @param *romClass of package to be removed
+* @return UDATA 0 on success, 1 on failure
+*/
+UDATA
+hashClassTablePackageDelete(J9VMThread *vmThread, J9ClassLoader* classLoader, J9ROMClass* romClass);
+
+/**
 * @brief
 * @param *javaVM
 * @param initialSize
