@@ -2283,7 +2283,7 @@ bool J9::Options::preProcessJitServer(J9JavaVM *vm, J9JITConfig *jitConfig)
             }
          else
             {
-            compInfo->getPersistentInfo()->setJITServerHealthPort(0); // This means don't open dedicated port for health probes
+            compInfo->getPersistentInfo()->setJITServerUseHealthPort(false);
             }
 
          // Check if we should open the port for the MetricsServer
