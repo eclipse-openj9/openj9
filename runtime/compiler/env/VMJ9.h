@@ -1357,6 +1357,10 @@ public:
 
    TR_J9SharedCache *     _sharedCache;
 
+#if defined(J9VM_OPT_JITSERVER)
+   TR_J9DeserializerSharedCache *_deserializerSharedCache;
+#endif /* defined(J9VM_OPT_JITSERVER) */
+
    static int32_t *       staticDFPHWAvailField;
    static bool            cachedStaticDFPAvailField;
 
@@ -1384,6 +1388,10 @@ public:
    virtual TR_J9SharedCache *sharedCache() { return _sharedCache; }
    virtual void              freeSharedCache();
    virtual void              setSharedCache(TR_J9SharedCache *sharedCache) { _sharedCache = sharedCache; }
+
+#if defined(J9VM_OPT_JITSERVER)
+   TR_J9DeserializerSharedCache *deserializerSharedCache() const { return _deserializerSharedCache; }
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
    const char *getByteCodeName(uint8_t opcode);
 
