@@ -24,6 +24,7 @@
 
 #include "j9.h"
 #include "env/TRMemory.hpp"
+#include "infra/Link.hpp"
 
 extern "C" {
 struct J9JITConfig;
@@ -56,6 +57,7 @@ class CRRuntime
       CR_THR_NOT_CREATED = 0,
       CR_THR_FAILED_TO_ATTACH,
       CR_THR_INITIALIZED,
+      CR_THR_TRIGGER_RECOMP,
       CR_THR_STOPPING,
       CR_THR_DESTROYED,
       CR_THR_LAST_STATE // must be the last one
@@ -122,6 +124,24 @@ class CRRuntime
    void startCRRuntimeThread(J9JavaVM *javaVM);
    void stopCRRuntimeThread();
 
+   /* The following methods should be only be invoked with the CR Runtime
+    * Monitor in hand.
+    */
+   void pushFailedCompilation(J9Method *method)    { pushMemoizedCompilation(_failedComps, method);   }
+   J9Method * popFailedCompilation()               { return popMemoizedCompilation(_failedComps);     }
+   void pushForcedRecompilation(J9Method *method)  { pushMemoizedCompilation(_forcedRecomps, method); }
+   J9Method * popForcedRecompilation()             { return popMemoizedCompilation(_forcedRecomps);   }
+
+   /**
+    * @brief Remove all methods in the class that is passed in to this method
+    *        from all of the memoizd lists. This method acquires the Comp
+    *        Monitor.
+    *
+    * @param fej9 The Front End
+    * @param clazz The Class whose methods should be removed from the lists
+    */
+   void removeMethodsFromMemoizedCompilations(TR_J9VMBase *fej9, TR_OpaqueClassBlock *clazz);
+
    /**
     * @brief Processing method that the CR Runtime Thread executes.
     */
@@ -144,7 +164,26 @@ class CRRuntime
    */
    void prepareForRestore();
 
+   /**
+    * @brief Notify the CR Runtime Thread to recompile methods that were
+    *        memoized pre-checkpoint.
+    */
+   void recompileMethodsCompiledPreCheckpoint();
+
    private:
+
+   class TR_MemoizedComp : public TR_Link0<TR_MemoizedComp>
+      {
+      public:
+      TR_PERSISTENT_ALLOC(TR_MemoryBase::CompilationInfo);
+
+      TR_MemoizedComp(J9Method *method) { _method = method; }
+      J9Method *getMethod() { return _method; }
+
+      private:
+      J9Method *_method;
+      };
+   typedef TR_LinkHead0<TR_MemoizedComp> TR_MemoizedCompilations;
 
    /* These are private since this monitor should only be externally accessed
     * via the TR::CompilationInfo object.
@@ -217,6 +256,59 @@ class CRRuntime
     */
    void resetStartTime();
 
+   /**
+    * @brief Helper method to push a J9Method onto the front of list that is
+    *        used to memoize a future compilation of said J9Method. This method
+    *        should only be called with the Comp Monitor in hand.
+    *
+    * @param list A reference to the TR_MemoizedCompilations list
+    * @param method The method whose compilation should be memoized
+    */
+   void pushMemoizedCompilation(TR_MemoizedCompilations& list, J9Method *method);
+
+   /**
+    * @brief Helper method to pop a J9Method from a list that is used to memoize
+    *        a future compilation of said J9Method; this action will remove the
+    *        J9Method from the list. This method should only be called with the
+    *        Comp Monitor in hand.
+    *
+    * @param list A reference to the TR_MemoizedCompilations list
+    *
+    * @return the J9Method at the front of the list; NULL if the list is empty.
+    */
+   J9Method * popMemoizedCompilation(TR_MemoizedCompilations& list);
+
+   /**
+    * @brief Helper method to remove a J9Method from a list that is used to
+    *        memoize a future compilation of said J9Method. This method should
+    *        only be called with the Comp Monitor in hand.
+    *
+    * @param list A reference to the TR_MemoizedCompilations list
+    * @param method The method to be removed from the list
+    */
+   void removeMemoizedCompilation(TR_MemoizedCompilations& list, J9Method *method);
+
+   /**
+    * @brief Trigger compilation of any compilations that failed pre-checkpoint;
+    *        specifically, any compilations added to the _failedComps list.
+    *
+    *        This method is called with the CR Runtime Monitor in hand.
+    *
+    * @param vmThread the J9VMThread
+    */
+   void triggerCompilationOfFailedCompilationsPreCheckpoint(J9VMThread *vmThread);
+
+   /**
+    * @brief Trigger recompilation of the compilations that were generated with
+    *        FSD enabled pre-checkpoint; specifically, any compilations added to
+    *        the _forcedRecomps list.
+    *
+    *        This method is called with the CR Runtime Monitor in hand.
+    *
+    * @param vmThread the J9VMThread
+    */
+   void triggerRecompilationForPreCheckpointGeneratedFSDBodies(J9VMThread *vmThread);
+
    J9JITConfig *_jitConfig;
    TR::CompilationInfo *_compInfo;
 
@@ -229,6 +321,9 @@ class CRRuntime
 
    TR_CRRuntimeThreadLifetimeStates _crRuntimeThreadLifetimeState;
    TR_CheckpointStatus _checkpointStatus;
+
+   TR_MemoizedCompilations _failedComps;
+   TR_MemoizedCompilations _forcedRecomps;
 
    bool _vmMethodTraceEnabled;
    bool _vmExceptionEventsHooked;
