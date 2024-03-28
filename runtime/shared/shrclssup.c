@@ -72,6 +72,15 @@ shouldEnableJITServerAOTCacheLayer(J9JavaVM* vm, U_64 runtimeFlags)
 		return FALSE;
 	}
 
+	// If we are ignoring the local SCC (tested by looking for an explicit
+	// -XX:+JITServerAOTCacheIgnoreLocalSCC, since it is disabled by default),
+	// then we do not need the layer.
+	argIndex1 = FIND_ARG_IN_VMARGS(EXACT_MATCH, "-XX:+JITServerAOTCacheIgnoreLocalSCC", NULL);
+	argIndex2 = FIND_ARG_IN_VMARGS(EXACT_MATCH, "-XX:-JITServerAOTCacheIgnoreLocalSCC", NULL);
+	if (argIndex1 > argIndex2) {
+		return FALSE;
+	}
+
 	argIndex1 = FIND_ARG_IN_VMARGS(EXACT_MATCH, "-XX:+JITServerAOTCacheUseTemporaryLayer", NULL);
 	argIndex2 = FIND_ARG_IN_VMARGS(EXACT_MATCH, "-XX:-JITServerAOTCacheUseTemporaryLayer", NULL);
 	// We skip a couple of checks if the layer is explicitly requested - useful
