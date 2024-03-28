@@ -319,7 +319,7 @@ public final class OpenJ9VirtualMachine extends VirtualMachine implements Respon
 	 * @throws IOException in case of a communication error
 	 */
 	public Properties executeDiagnosticCommand(String diagnosticCommand) throws IOException {
-		IPC.logMessage("enter executeDiagnosticCommand ", diagnosticCommand); //$NON-NLS-1$
+		IPC.logMessage("OpenJ9VirtualMachine enter executeDiagnosticCommand ", diagnosticCommand); //$NON-NLS-1$
 		AttachmentConnection.streamSend(commandStream, Command.ATTACH_DIAGNOSTICS_PREFIX + diagnosticCommand);
 		return IPC.receiveProperties(responseStream, true);
 	}

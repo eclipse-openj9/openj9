@@ -52,7 +52,7 @@ public class AttacherDiagnosticsProvider {
 	 * @throws IOException in case of a communication error
 	 */
 	public Properties executeDiagnosticCommand(String diagnosticCommand) throws IOException {
-		IPC.logMessage("enter executeDiagnosticCommand ", diagnosticCommand); //$NON-NLS-1$
+		IPC.logMessage("AttacherDiagnosticsProvider enter executeDiagnosticCommand ", diagnosticCommand); //$NON-NLS-1$
 		checkAttached();
 		Properties info = vm.executeDiagnosticCommand(diagnosticCommand);
 		DiagnosticProperties.dumpPropertiesIfDebug("Properties from target:", info); //$NON-NLS-1$

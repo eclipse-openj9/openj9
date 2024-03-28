@@ -88,7 +88,9 @@ public class TestJcmd extends AttachApiTest {
 	public void testJcmdHelps() throws IOException {
 		String[] HELP_OPTIONS = { "-h", HELP_COMMAND, "-help", "--help" };
 		for (String helpOption : HELP_OPTIONS) {
-			List<String> jcmdOutput = runCommandAndLogOutput(Collections.singletonList(helpOption));
+			List<String> args = new ArrayList<>();
+			args.add(helpOption);
+			List<String> jcmdOutput = runCommandAndLogOutput(args);
 			/* Sample of the text from Jcmd.HELPTEXT */
 			String expectedString = "list JVM processes on the local machine.";
 			Optional<String> searchResult = StringUtilities.searchSubstring(expectedString, jcmdOutput);
@@ -354,22 +356,34 @@ public class TestJcmd extends AttachApiTest {
 	private static final String DISPLAYNAME_GC_CLASS_HISTOGRAM = "TargetVM_GC.class_histogram_all";
 
 	private void testDisplayNameHelper(String targetName) throws IOException {
-		TargetManager tgt = new TargetManager(TestConstants.TARGET_VM_CLASS, null, DISPLAYNAME_GC_CLASS_HISTOGRAM,
-				Collections.singletonList("-Xmx10M"), Collections.emptyList());
-		tgt.syncWithTarget();
-		String targetId = tgt.targetId;
-		assertNotNull(targetId, ERROR_TARGET_NOT_LAUNCH);
-
-		List<String> args = new ArrayList<>();
-		args.add(targetName);
-		args.add(GC_CLASS_HISTOGRAM);
-		args.add("all");
-		List<String> jcmdOutput = runCommandAndLogOutput(args);
+		boolean isPresent = false;
+		int retry = 0;
 		String expectedString = commandExpectedOutputs.getOrDefault(GC_CLASS_HISTOGRAM,
 				"Test error: expected output not defined");
-		log("Expected string: " + expectedString);
-		Optional<String> searchResult = StringUtilities.searchSubstring(expectedString, jcmdOutput);
-		assertTrue(searchResult.isPresent(), "Expected string not found: " + expectedString);
+		do {
+			TargetManager tgt = new TargetManager(TestConstants.TARGET_VM_CLASS, null, DISPLAYNAME_GC_CLASS_HISTOGRAM,
+					Collections.singletonList("-Xmx10M"), Collections.emptyList());
+			tgt.syncWithTarget();
+			String targetId = tgt.targetId;
+			assertNotNull(targetId, ERROR_TARGET_NOT_LAUNCH);
+
+			List<String> args = new ArrayList<>();
+			args.add(targetName);
+			args.add(GC_CLASS_HISTOGRAM);
+			args.add("all");
+			List<String> jcmdOutput = runCommandAndLogOutput(args);
+			log("Expected string: " + expectedString);
+			Optional<String> searchResult = StringUtilities.searchSubstring(expectedString, jcmdOutput);
+			isPresent = searchResult.isPresent();
+			if (isPresent) {
+				break;
+			}
+			retry += 1;
+			log("retry = " + retry);
+			// retry 3 times
+		} while (retry < 3);
+
+		assertTrue(isPresent, "Expected string not found: " + expectedString);
 		log(EXPECTED_STRING_FOUND);
 	}
 

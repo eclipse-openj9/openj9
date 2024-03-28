@@ -223,6 +223,8 @@ public abstract class AttachApiTest {
 	}
 
 	protected List<String> runCommandAndLogOutput(List<String> commandLineOptions) throws IOException {
+		// this api is used by jcmd and jps
+		commandLineOptions.add("-J-Dcom.ibm.tools.attach.logging=yes");
 		List<String> jpsOutput = runCommand(commandLineOptions);
 		StringWriter buff = new StringWriter();
 		PrintWriter buffWriter = new PrintWriter(buff);
