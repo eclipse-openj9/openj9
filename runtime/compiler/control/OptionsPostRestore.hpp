@@ -22,10 +22,6 @@
 #ifndef OPTIONS_POST_RESTORE_HPP
 #define OPTIONS_POST_RESTORE_HPP
 
-#include "j9cfg.h"
-
-#if defined(J9VM_OPT_CRIU_SUPPORT)
-
 struct J9JITConfig;
 struct J9VMThread;
 struct J9Method;
@@ -188,7 +184,5 @@ class OptionsPostRestore
    };
 
 }
-
-#endif // J9VM_OPT_CRIU_SUPPORT
 
 #endif // OPTIONS_POST_RESTORE_HPP

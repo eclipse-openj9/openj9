@@ -75,6 +75,9 @@
 #include "runtime/IProfiler.hpp"
 #include "runtime/J9Profiler.hpp"
 #include "omrformatconsts.h"
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+#include "runtime/CRRuntime.hpp"
+#endif /* if defined(J9VM_OPT_CRIU_SUPPORT) */
 
 #undef  IPROFILER_CONTENDED_LOCKING
 #define ALLOC_HASH_TABLE_SIZE 1201
@@ -4891,7 +4894,7 @@ void
 TR_IProfiler::suspendIProfilerThreadForCheckpoint()
    {
    _compInfo->acquireCompMonitor(_iprofilerThread);
-   if (_compInfo->shouldSuspendThreadsForCheckpoint())
+   if (_compInfo->getCRRuntime()->shouldSuspendThreadsForCheckpoint())
       {
       // Must acquire this with the comp monitor in hand to ensure
       // consistency with the checkpointing thread.
@@ -4916,9 +4919,9 @@ TR_IProfiler::suspendIProfilerThreadForCheckpoint()
       // can only cause a deadlock if the checkpointing thread
       // decides to re-acquire the iprofiler monitor with the CR monitor
       // in hand.
-      _compInfo->acquireCRMonitor();
-      _compInfo->getCRMonitor()->notifyAll();
-      _compInfo->releaseCRMonitor();
+      _compInfo->getCRRuntime()->acquireCRMonitor();
+      _compInfo->getCRRuntime()->getCRMonitor()->notifyAll();
+      _compInfo->getCRRuntime()->releaseCRMonitor();
 
       if (TR::Options::isAnyVerboseOptionSet())
          TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Suspending IProfiler Thread for Checkpoint");

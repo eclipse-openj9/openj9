@@ -45,10 +45,6 @@
 #include "codegen/Instruction.hpp"
 #include "codegen/PrivateLinkage.hpp"
 #include "compile/CompilationTypes.hpp"
-#if defined(J9VM_OPT_CRIU_SUPPORT)
-#include "control/CompileBeforeCheckpoint.hpp"
-#include "control/OptionsPostRestore.hpp"
-#endif
 #include "compile/ResolvedMethod.hpp"
 #include "control/JitDump.hpp"
 #include "control/Recompilation.hpp"
@@ -111,6 +107,9 @@
 #include "net/CommunicationStream.hpp"
 #include "omrformatconsts.h"
 #endif /* defined(J9VM_OPT_JITSERVER) */
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+#include "runtime/CRRuntime.hpp"
+#endif /* if defined(J9VM_OPT_CRIU_SUPPORT) */
 #ifdef COMPRESS_AOT_DATA
 #include "shcdatatypes.h" // For CompiledMethodWrapper
 #ifdef J9ZOS390
@@ -480,7 +479,7 @@ TR_YesNoMaybe TR::CompilationInfo::shouldActivateNewCompThread()
    {
 #if defined(J9VM_OPT_CRIU_SUPPORT)
    // Don't activate any threads until the restore if the threads should be suspended for checkpoint
-   if (shouldSuspendThreadsForCheckpoint())
+   if (getCRRuntime()->shouldSuspendThreadsForCheckpoint())
       return TR_no;
 #endif
    if (isInShutdownMode())
@@ -800,10 +799,19 @@ TR::CompilationInfo::createCompilationInfo(J9JITConfig * jitConfig)
       memset(alloc, 0, sizeof(TR::CompilationInfo));
       _compilationRuntime = new (alloc) TR::CompilationInfo(jitConfig);
       jitConfig->compilationRuntime = (void*)_compilationRuntime;
-      #ifdef DEBUG
+#ifdef DEBUG
          if (debug("traceThreadCompile"))
             _compilationRuntime->_traceCompiling = true;
-      #endif
+#endif /* ifdef DEBUG */
+
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+      /* Do this outside the constructor of TR::CompilationInfo to prevent
+       * TR::CRRuntime from invoking methods on a partially constructed
+       * TR::CompilationInfo.
+       */
+      TR::CRRuntime *crRuntime = new (PERSISTENT_NEW) TR::CRRuntime(jitConfig, _compilationRuntime);
+      _compilationRuntime->setCRRuntime(crRuntime);
+#endif /* if defined(J9VM_OPT_CRIU_SUPPORT) */
       }
    catch (const std::exception &e)
       {
@@ -1188,34 +1196,6 @@ TR::CompilationInfo::CompilationInfo(J9JITConfig *jitConfig) :
    _dltMonitor = TR::Monitor::create("JIT-DLTmonitor");
 #endif
 
-#if defined(J9VM_OPT_CRIU_SUPPORT)
-   _crMonitor = TR::Monitor::create("JIT-CheckpointRestoreMonitor");
-   _checkpointStatus = TR_CheckpointStatus::NO_CHECKPOINT_IN_PROGRESS;
-
-   // TR::CompilationInfo is initialized in the JIT_INITIALIZED bootstrap
-   // stage, whereas J9_EXTENDED_RUNTIME_METHOD_TRACE_ENABLED is set in the
-   // TRACE_ENGINE_INITIALIZED stage, which happens first.
-   _vmMethodTraceEnabled = jitConfig->javaVM->extendedRuntimeFlags & J9_EXTENDED_RUNTIME_METHOD_TRACE_ENABLED;
-
-   // TR::CompilationInfo is initialized in the JIT_INITIALIZED bootstrap
-   // stage, whereas dump agents are initialized in the
-   // PORT_LIBRARY_GUARANTEED stage, which happens first.
-   bool exceptionCatchEventHooked
-      = J9_EVENT_IS_HOOKED(jitConfig->javaVM->hookInterface, J9HOOK_VM_EXCEPTION_CATCH)
-        || J9_EVENT_IS_RESERVED(jitConfig->javaVM->hookInterface, J9HOOK_VM_EXCEPTION_CATCH);
-   bool exceptionThrowEventHooked
-      = J9_EVENT_IS_HOOKED(jitConfig->javaVM->hookInterface, J9HOOK_VM_EXCEPTION_THROW)
-        || J9_EVENT_IS_RESERVED(jitConfig->javaVM->hookInterface, J9HOOK_VM_EXCEPTION_THROW);
-   _vmExceptionEventsHooked = exceptionCatchEventHooked || exceptionThrowEventHooked;
-
-#if defined(J9VM_OPT_JITSERVER)
-   _canPerformRemoteCompilationInCRIUMode = false;
-   _remoteCompilationRequestedAtBootstrap = false;
-   _remoteCompilationExplicitlyDisabledAtBootstrap = false;
-#endif
-
-#endif // #if defined(J9VM_OPT_CRIU_SUPPORT)
-
    _iprofilerBufferArrivalMonitor = TR::Monitor::create("JIT-IProfilerBufferArrivalMonitor");
    _classUnloadMonitor = TR::MonitorTable::get()->getClassUnloadMonitor(); // by this time this variable is initialized
                                              // TODO: hang these monitors to something persistent
@@ -1562,23 +1542,6 @@ void TR::CompilationInfo::releaseCompilationLock()
       releaseCompMonitor(0);
       }
    }
-
-#if defined(J9VM_OPT_CRIU_SUPPORT)
-void TR::CompilationInfo::acquireCRMonitor()
-   {
-   getCRMonitor()->enter();
-   }
-
-void TR::CompilationInfo::releaseCRMonitor()
-   {
-   getCRMonitor()->exit();
-   }
-
-void TR::CompilationInfo::waitOnCRMonitor()
-   {
-   getCRMonitor()->wait();
-   }
-#endif
 
 TR::Monitor * TR::CompilationInfo::createLogMonitor()
    {
@@ -2751,374 +2714,6 @@ void TR::CompilationInfo::resumeCompilationThread()
    releaseCompMonitor(vmThread);
    }
 
-#if defined(J9VM_OPT_CRIU_SUPPORT)
-
-class ReleaseVMAccessAndAcquireMonitor
-   {
-   public:
-   ReleaseVMAccessAndAcquireMonitor(J9VMThread *vmThread, TR::Monitor *monitor)
-      : _hadVMAccess(vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS),
-        _vmThread(vmThread),
-        _monitor(monitor)
-      {
-      if (_hadVMAccess)
-         releaseVMAccessNoSuspend(_vmThread);
-      _monitor->enter();
-      }
-
-   ~ReleaseVMAccessAndAcquireMonitor()
-      {
-      _monitor->exit();
-      if (_hadVMAccess)
-         acquireVMAccessNoSuspend(_vmThread);
-      }
-
-   private:
-   bool         _hadVMAccess;
-   J9VMThread  *_vmThread;
-   TR::Monitor *_monitor;
-   };
-
-/* IMPORTANT: There should be no return, or C++ exception thrown, after
- *            releasing the Comp Monitor below until it is re-acquired.
- *            The Comp Monitor may be acquired in an OMR::CriticalSection
- *            object; a return, or thrown exception, will destruct this
- *            object as part leaving the scope, or stack unwinding, which
- *            will attempt to release the monitor in its destructor.
- */
-void TR::CompilationInfo::releaseCompMonitorUntilNotifiedOnCRMonitor(J9VMThread *vmThread) throw()
-   {
-   TR_ASSERT_FATAL(getCompilationMonitor()->owned_by_self(),
-                   "releaseCompMonitorUntilNotifiedOnCRMonitor should not be called without the Comp Monitor!\n");
-
-   /* Acquire the CR monitor */
-   acquireCRMonitor();
-
-   /* Release the Comp Monitor before waiting */
-   releaseCompMonitor(vmThread);
-
-   /* Wait until notified */
-   waitOnCRMonitor();
-
-   /* Release CR Monitor and re-acquire the Comp Monitor */
-   releaseCRMonitor();
-   acquireCompMonitor(vmThread);
-   }
-
-bool TR::CompilationInfo::compileMethodsForCheckpoint(J9VMThread *vmThread)
-   {
-   if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestore))
-      TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Preparing to compile methods for checkpoint");
-
-   /* Indicate to compilation threads that they should compile methods for checkpoint/restore */
-   setCompileMethodsForCheckpoint();
-
-   /* Queue compilation of interpreted methods */
-   try
-      {
-      TR_J9VMBase *fej9 = TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
-
-      TR::RawAllocator rawAllocator(_jitConfig->javaVM);
-      J9::SegmentAllocator segmentAllocator(MEMORY_TYPE_JIT_SCRATCH_SPACE | MEMORY_TYPE_VIRTUAL, *_jitConfig->javaVM);
-      J9::SystemSegmentProvider regionSegmentProvider(
-         1 << 20,
-         1 << 20,
-         TR::Options::getScratchSpaceLimit(),
-         segmentAllocator,
-         rawAllocator
-         );
-      TR::Region compForCheckpointRegion(regionSegmentProvider, rawAllocator);
-
-      TR::CompileBeforeCheckpoint compileBeforeCheckpoint(compForCheckpointRegion, vmThread, fej9, this);
-      compileBeforeCheckpoint.collectAndCompileMethodsBeforeCheckpoint();
-      }
-   catch (const std::exception &e)
-      {
-      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestore))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Failed to collect methods for compilation before checkpoint");
-      }
-
-   /* Determine whether to wait on the CR Monitor. */
-   while (getMethodQueueSize() && !shouldCheckpointBeInterrupted())
-      {
-      releaseCompMonitorUntilNotifiedOnCRMonitor(vmThread);
-      }
-
-   /* Abort if checkpoint should be interrupted. */
-   if (shouldCheckpointBeInterrupted())
-      {
-      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestore))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Aborting; checkpoint is interrupted");
-      return false;
-      }
-
-   if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestore))
-      TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Done compiling methods for checkpoint");
-
-   return true;
-   }
-
-bool TR::CompilationInfo::suspendCompThreadsForCheckpoint(J9VMThread *vmThread)
-   {
-   if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestore))
-      TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Preparing to suspend threads for checkpoint");
-
-   /* Indicate to compilation threads that they should suspend for checkpoint/restore */
-   setSuspendThreadsForCheckpoint();
-
-   /* Inform compilation threads to suspend themselves. The compilation
-    * threads will complete any in-progress compilations first.
-    */
-   bool purgeMethodQueue = false;
-   suspendCompilationThread(purgeMethodQueue);
-
-   /* With the thread state now updated, notify any active comp threads waiting for work */
-   getCompilationMonitor()->notifyAll();
-
-   /* Wait until all compilation threads are suspended. */
-   for (int32_t i = getFirstCompThreadID(); i <= getLastCompThreadID(); i++)
-      {
-      TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
-      /* Determine whether to wait on the CR Monitor. */
-      while (!shouldCheckpointBeInterrupted()
-             && curCompThreadInfoPT->getCompilationThreadState() != COMPTHREAD_SUSPENDED)
-         {
-         releaseCompMonitorUntilNotifiedOnCRMonitor(vmThread);
-         }
-
-      /* Stop cycling through the threads if checkpointing should be interrupted. */
-      if (shouldCheckpointBeInterrupted())
-         {
-         if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestore))
-            TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Aborting; checkpoint is interrupted");
-         return false;
-         }
-      }
-
-   if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestore))
-      TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Finished suspending threads for checkpoint");
-
-   return true;
-   }
-
-bool
-TR::CompilationInfo::suspendJITThreadsForCheckpoint(J9VMThread *vmThread)
-   {
-   // Suspend compilation threads for checkpoint
-   if (!suspendCompThreadsForCheckpoint(vmThread))
-      return false;
-
-   // Suspend Sampler Thread
-   if (_jitConfig->samplerMonitor)
-      {
-      j9thread_monitor_enter(_jitConfig->samplerMonitor);
-      j9thread_interrupt(_jitConfig->samplerThread);
-
-      // Determine whether to wait on the CR Monitor.
-      //
-      // Note, this thread releases the sampler monitor and then
-      // acquires the CR monitor inside releaseCompMonitorUntilNotifiedOnCRMonitor.
-      while (!shouldCheckpointBeInterrupted()
-             && getSamplingThreadLifetimeState() != TR::CompilationInfo::SAMPLE_THR_SUSPENDED)
-         {
-         j9thread_monitor_exit(_jitConfig->samplerMonitor);
-         releaseCompMonitorUntilNotifiedOnCRMonitor(vmThread);
-         j9thread_monitor_enter(_jitConfig->samplerMonitor);
-         }
-
-      j9thread_monitor_exit(_jitConfig->samplerMonitor);
-      }
-
-   // Suspend IProfiler Thread
-   TR_IProfiler *iProfiler = TR_J9VMBase::get(_jitConfig, NULL)->getIProfiler();
-   if (iProfiler && iProfiler->getIProfilerMonitor())
-      {
-      iProfiler->getIProfilerMonitor()->enter();
-
-      TR_ASSERT_FATAL(iProfiler->getIProfilerThreadLifetimeState() != TR_IProfiler::IPROF_THR_SUSPENDED,
-                      "IProfiler Thread should not already be in state IPROF_THR_SUSPENDED.\n");
-
-      // Don't change the state if the JVM is currently shutting down.
-      if (iProfiler->getIProfilerThreadLifetimeState() != TR_IProfiler::IPROF_THR_STOPPING)
-         iProfiler->setIProfilerThreadLifetimeState(TR_IProfiler::IPROF_THR_SUSPENDING);
-
-      // During shutdown, both the IProfiler Thread and the Shutdown Thread could be
-      // waiting on the IProfiler Monitor, so notifyAll so that the IProfiler Thread
-      // wakes up.
-      iProfiler->getIProfilerMonitor()->notifyAll();
-
-      // Determine whether to wait on the CR Monitor.
-      //
-      // Note, this thread releases the iprofiler monitor and then
-      // acquires the CR monitor inside releaseCompMonitorUntilNotifiedOnCRMonitor.
-      while (!shouldCheckpointBeInterrupted()
-             && iProfiler->getIProfilerThreadLifetimeState() != TR_IProfiler::IPROF_THR_SUSPENDED)
-         {
-         iProfiler->getIProfilerMonitor()->exit();
-         releaseCompMonitorUntilNotifiedOnCRMonitor(vmThread);
-         iProfiler->getIProfilerMonitor()->enter();
-         }
-
-      iProfiler->getIProfilerMonitor()->exit();
-      }
-
-   return !shouldCheckpointBeInterrupted();
-   }
-
-void
-TR::CompilationInfo::resumeJITThreadsForRestore(J9VMThread *vmThread)
-   {
-   // Resume suspended IProfiler Thread
-   TR_IProfiler *iProfiler = TR_J9VMBase::get(_jitConfig, NULL)->getIProfiler();
-   if (iProfiler && iProfiler->getIProfilerMonitor())
-      {
-      iProfiler->getIProfilerMonitor()->enter();
-      iProfiler->setIProfilerThreadLifetimeState(TR_IProfiler::IPROF_THR_RESUMING);
-      iProfiler->getIProfilerMonitor()->notifyAll();
-      iProfiler->getIProfilerMonitor()->exit();
-      }
-
-   // Resume suspended Sampler Thread
-   if (_jitConfig->samplerMonitor)
-      {
-      j9thread_monitor_enter(_jitConfig->samplerMonitor);
-      setSamplingThreadLifetimeState(TR::CompilationInfo::SAMPLE_THR_RESUMING);
-      j9thread_monitor_notify_all(_jitConfig->samplerMonitor);
-      j9thread_monitor_exit(_jitConfig->samplerMonitor);
-      }
-
-   // Resume suspended compilation threads.
-   resumeCompilationThread();
-   }
-
-/* Post-restore, reset the start time. While the Checkpoint phase is
- * conceptually part of building the application, in order to ensure
- * consistency with parts of the compiler that memoize elapsd time,
- * the start time is reset to pretend like the JVM started
- * persistentInfo->getElapsedTime() milliseconds ago. This will impact
- * options such as -XsamplingExpirationTime. However, such an option
- * may not make sense in the context of checkpoint/restore.
- */
-void
-TR::CompilationInfo::resetStartTime()
-   {
-   PORT_ACCESS_FROM_JAVAVM(jitConfig->javaVM);
-   TR::PersistentInfo *persistentInfo = getPersistentInfo();
-
-   if (TR::Options::isAnyVerboseOptionSet())
-      TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Start and elapsed time: startTime=%6u, elapsedTime=%6u",
-                                       (uint32_t)persistentInfo->getStartTime(), (uint32_t)persistentInfo->getElapsedTime());
-
-   uint64_t crtTime = j9time_current_time_millis() - persistentInfo->getElapsedTime();
-   persistentInfo->setStartTime(crtTime);
-
-   if (TR::Options::isAnyVerboseOptionSet())
-      TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Reset start and elapsed time: startTime=%6u, elapsedTime=%6u",
-                                       (uint32_t)persistentInfo->getStartTime(), (uint32_t)persistentInfo->getElapsedTime());
-   }
-
-void TR::CompilationInfo::prepareForCheckpoint()
-   {
-   J9JavaVM   *vm       = _jitConfig->javaVM;
-   J9VMThread *vmThread = vm->internalVMFunctions->currentVMThread(vm);
-
-   if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestore))
-      TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Preparing for checkpoint");
-
-   {
-   ReleaseVMAccessAndAcquireMonitor suspendCompThreadsForCheckpointCriticalSection(vmThread, getCompilationMonitor());
-
-   if (TR::Options::_sleepMsBeforeCheckpoint)
-      {
-      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestore))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Sleeping for %d ms", TR::Options::_sleepMsBeforeCheckpoint);
-
-      releaseCompMonitor(vmThread);
-      j9thread_sleep(static_cast<int64_t>(TR::Options::_sleepMsBeforeCheckpoint));
-      acquireCompMonitor(vmThread);
-      }
-
-   // Check if the checkpoint is interrupted
-   if (shouldCheckpointBeInterrupted())
-      return;
-
-   TR_ASSERT_FATAL(!isCheckpointInProgress(), "Checkpoint already in progress!\n");
-
-   // Compile methods for checkpoint
-   if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableCompilationBeforeCheckpoint))
-      if (!compileMethodsForCheckpoint(vmThread))
-         return;
-
-   // Suspend JIT threads for checkpoint
-   if (!suspendJITThreadsForCheckpoint(vmThread))
-      return;
-
-#if defined(J9VM_OPT_JITSERVER)
-   // If this is a JITServer client that has an SSL context, free that context now
-   if (getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
-      {
-      if (JITServer::CommunicationStream::useSSL())
-         {
-         freeClientSslCertificates();
-         JITServer::ClientStream::freeSSLContext();
-         }
-      }
-#endif
-
-   setReadyForCheckpointRestore();
-   }
-
-   if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestore))
-      TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Ready for checkpoint");
-   }
-
-void TR::CompilationInfo::prepareForRestore()
-   {
-   J9JavaVM   *vm       = _jitConfig->javaVM;
-   J9VMThread *vmThread = vm->internalVMFunctions->currentVMThread(vm);
-
-   PORT_ACCESS_FROM_JAVAVM(vm);
-   OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
-
-   if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestore))
-      TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Preparing for restore");
-
-   // Process the post-restore options
-   J9::OptionsPostRestore::processOptionsPostRestore(vmThread, _jitConfig, this);
-
-   {
-   OMR::CriticalSection resumeCompThreadsCriticalSection(getCompilationMonitor());
-
-   TR_ASSERT_FATAL(readyForCheckpointRestore(), "Not ready for Checkpoint Restore\n");
-
-   // Reset the checkpoint in progress flag.
-   resetCheckpointInProgress();
-
-   // Reset the start time.
-   resetStartTime();
-
-   // Resume JIT threads.
-   resumeJITThreadsForRestore(vmThread);
-   }
-
-   // Check if there is no swap memory post restore
-   J9MemoryInfo memInfo;
-   if ((omrsysinfo_get_memory_info(&memInfo) == 0) && (0 == memInfo.totalSwap))
-      {
-      setIsSwapMemoryDisabled(true);
-      }
-   else
-      {
-      setIsSwapMemoryDisabled(false);
-      }
-   if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCodeCache))
-      TR_VerboseLog::writeLineLocked(TR_Vlog_CODECACHE, "At Checkpoint Restore:: Swap Memory is %s", isSwapMemoryDisabled()? "disabled":"enabled");
-
-   if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestore))
-      TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Ready for restore");
-   }
-#endif // #if defined(J9VM_OPT_CRIU_SUPPORT)
-
 int TR::CompilationInfo::computeCompilationThreadPriority(J9JavaVM *vm)
    {
    int priority = J9THREAD_PRIORITY_USER_MAX; // default value
@@ -3964,10 +3559,10 @@ void TR::CompilationInfo::stopCompilationThreads()
    // blocked on the Comp Monitor and so will abort before
    // incorrectly attempting to suspend stopping or stopped
    // compilation threads.
-   interruptCheckpoint();
-   acquireCRMonitor();
-   getCRMonitor()->notifyAll();
-   releaseCRMonitor();
+   getCRRuntime()->interruptCheckpoint();
+   getCRRuntime()->acquireCRMonitor();
+   getCRRuntime()->getCRMonitor()->notifyAll();
+   getCRRuntime()->releaseCRMonitor();
 #endif
 
    // Cycle through all non-diagnostic threads and stop them
@@ -4409,11 +4004,11 @@ TR::CompilationInfoPerThread::waitForWork()
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
    // Notify the thread waiting in the checkpoint hook.
-   if (_compInfo.shouldCompileMethodsForCheckpoint() && (0 == _compInfo.getMethodQueueSize()))
+   if (_compInfo.getCRRuntime()->shouldCompileMethodsForCheckpoint() && (0 == _compInfo.getMethodQueueSize()))
       {
-      _compInfo.acquireCRMonitor();
-      _compInfo.getCRMonitor()->notifyAll();
-      _compInfo.releaseCRMonitor();
+      _compInfo.getCRRuntime()->acquireCRMonitor();
+      _compInfo.getCRRuntime()->getCRMonitor()->notifyAll();
+      _compInfo.getCRRuntime()->releaseCRMonitor();
       }
 #endif
 
@@ -4441,11 +4036,11 @@ TR::CompilationInfoPerThread::doSuspend()
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
    // Notify the thread waiting in the checkpoint hook.
-   if (_compInfo.shouldSuspendThreadsForCheckpoint())
+   if (_compInfo.getCRRuntime()->shouldSuspendThreadsForCheckpoint())
       {
-      _compInfo.acquireCRMonitor();
-      _compInfo.getCRMonitor()->notifyAll();
-      _compInfo.releaseCRMonitor();
+      _compInfo.getCRRuntime()->acquireCRMonitor();
+      _compInfo.getCRRuntime()->getCRMonitor()->notifyAll();
+      _compInfo.getCRRuntime()->releaseCRMonitor();
       }
 #endif
 
@@ -6408,7 +6003,7 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread * vmThread, TR::Il
    // thread. Note that the diagnostic thread is not counted towards `getNumCompThreadsActive` count.
    if ((getNumCompThreadsActive() == 0
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-        || shouldSuspendThreadsForCheckpoint()
+        || getCRRuntime()->shouldSuspendThreadsForCheckpoint()
 #endif
         || getPersistentInfo()->getDisableFurtherCompilation())
        && !details.isJitDumpMethod())
@@ -7570,7 +7165,7 @@ TR::CompilationInfoPerThreadBase::cannotPerformRemoteComp(
    {
    return
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-          (_jitConfig->javaVM->internalVMFunctions->isCheckpointAllowed(vmThread) && !_compInfo.canPerformRemoteCompilationInCRIUMode()) ||
+          (_jitConfig->javaVM->internalVMFunctions->isCheckpointAllowed(vmThread) && !_compInfo.getCRRuntime()->canPerformRemoteCompilationInCRIUMode()) ||
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
           !JITServer::ClientStream::isServerCompatible(OMRPORT_FROM_J9PORT(_jitConfig->javaVM->portLibrary)) ||
           (!JITServerHelpers::isServerAvailable() && !JITServerHelpers::shouldRetryConnection(OMRPORT_FROM_J9PORT(_jitConfig->javaVM->portLibrary))) ||
@@ -7948,7 +7543,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
       _compInfo.acquireCompMonitor(vmThread);
-      bool checkpointInProgress = _compInfo.isCheckpointInProgress();
+      bool checkpointInProgress = _compInfo.getCRRuntime()->isCheckpointInProgress();
       _compInfo.releaseCompMonitor(vmThread);
 #if defined(J9VM_OPT_JITSERVER)
       eligibleForRemoteAOTNoSCCCompile = eligibleForRemoteAOTNoSCCCompile && !checkpointInProgress;
