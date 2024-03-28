@@ -320,7 +320,6 @@ JIT_HELPER(jitMethodMonitorExitPreservingReservation);
 JIT_HELPER(jitMethodMonitorExitReservedPrimitive);
 JIT_HELPER(jitMethodMonitorExitReserved);
 JIT_HELPER(prefetchTLH);
-JIT_HELPER(newPrefetchTLH);
 
 JIT_HELPER(arrayTranslateTRTO);
 JIT_HELPER(arrayTranslateTROTNoBreak);
@@ -1229,7 +1228,6 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_X86interpreterStaticAndSpecialGlue,               (void *)interpreterStaticAndSpecialGlue,               TR_Helper);
 
    SET(TR_X86prefetchTLH,                (void *)prefetchTLH,                 TR_Helper);
-   SET(TR_X86newPrefetchTLH,             (void *)newPrefetchTLH,              TR_Helper);
    SET(TR_X86CodeCachePrefetchHelper,    (void *)prefetchTLH,                 TR_Helper); // needs to be set while compiling
 
 #ifdef TR_HOST_64BIT
