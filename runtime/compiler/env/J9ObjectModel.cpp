@@ -123,6 +123,12 @@ J9::ObjectModel::areValueTypesEnabled()
    }
 
 bool
+J9::ObjectModel::areValueTypeInstancesCreatedWithBCNew()
+   {
+   return false;
+   }
+
+bool
 J9::ObjectModel::areFlattenableValueTypesEnabled()
    {
 #if defined(J9VM_OPT_JITSERVER)
