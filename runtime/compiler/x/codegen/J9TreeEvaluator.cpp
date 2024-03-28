@@ -6437,47 +6437,32 @@ static void genHeapAlloc(
             useDirectPrefetchCall = true;
             }
 
-         if (!comp->getOption(TR_EnableNewX86PrefetchTLH))
-            {
-            generateRegRegInstruction(TR::InstOpCode::SUB4RegReg, node, tempReg, eaxReal, cg);
+         generateRegRegInstruction(TR::InstOpCode::SUB4RegReg, node, tempReg, eaxReal, cg);
 
-            generateMemRegInstruction(TR::InstOpCode::SUB4MemReg,
-                                      node,
-                                      generateX86MemoryReference(vmThreadReg, tlhPrefetchFTA_offset, cg),
-                                      tempReg, cg);
-            if (!useDirectPrefetchCall)
-               generateLabelInstruction(TR::InstOpCode::JLE4, node, prefetchSnippetLabel, cg);
-            else
-               {
-               generateLabelInstruction(TR::InstOpCode::JG4, node, restartLabel, cg);
-               TR::SymbolReference * helperSymRef = cg->getSymRefTab()->findOrCreateRuntimeHelper(TR_X86CodeCachePrefetchHelper);
-               TR::MethodSymbol *helperSymbol = helperSymRef->getSymbol()->castToMethodSymbol();
-#ifdef J9VM_GC_NON_ZERO_TLH
-               if (!comp->getOption(TR_DisableDualTLH) && node->canSkipZeroInitialization())
-                  {
-                  helperSymbol->setMethodAddress(fej9->getAllocationNoZeroPrefetchCodeSnippetAddress(comp));
-                  }
-               else
-                  {
-                  helperSymbol->setMethodAddress(fej9->getAllocationPrefetchCodeSnippetAddress(comp));
-                  }
-#else
-               helperSymbol->setMethodAddress(fej9->getAllocationPrefetchCodeSnippetAddress(comp));
-#endif
-               generateImmSymInstruction(TR::InstOpCode::CALLImm4, node, (uintptr_t)helperSymbol->getMethodAddress(), helperSymRef, cg);
-               }
-            }
+         generateMemRegInstruction(TR::InstOpCode::SUB4MemReg,
+                                   node,
+                                   generateX86MemoryReference(vmThreadReg, tlhPrefetchFTA_offset, cg),
+                                   tempReg, cg);
+         if (!useDirectPrefetchCall)
+            generateLabelInstruction(TR::InstOpCode::JLE4, node, prefetchSnippetLabel, cg);
          else
             {
-            // This currently only works when 'tlhPrefetchFTA' field is 4 bytes (on 32-bit or a
-            // compressed references build).  True 64-bit support requires this field be widened
-            // to 64-bits.
-            //
-            generateRegMemInstruction(TR::InstOpCode::CMP4RegMem, node,
-                                      tempReg,
-                                      generateX86MemoryReference(vmThreadReg,tlhPrefetchFTA_offset, cg),
-                                      cg);
-            generateLabelInstruction(TR::InstOpCode::JAE4, node, prefetchSnippetLabel, cg);
+            generateLabelInstruction(TR::InstOpCode::JG4, node, restartLabel, cg);
+            TR::SymbolReference * helperSymRef = cg->getSymRefTab()->findOrCreateRuntimeHelper(TR_X86CodeCachePrefetchHelper);
+            TR::MethodSymbol *helperSymbol = helperSymRef->getSymbol()->castToMethodSymbol();
+#ifdef J9VM_GC_NON_ZERO_TLH
+            if (!comp->getOption(TR_DisableDualTLH) && node->canSkipZeroInitialization())
+               {
+               helperSymbol->setMethodAddress(fej9->getAllocationNoZeroPrefetchCodeSnippetAddress(comp));
+               }
+            else
+               {
+               helperSymbol->setMethodAddress(fej9->getAllocationPrefetchCodeSnippetAddress(comp));
+               }
+#else
+            helperSymbol->setMethodAddress(fej9->getAllocationPrefetchCodeSnippetAddress(comp));
+#endif
+            generateImmSymInstruction(TR::InstOpCode::CALLImm4, node, (uintptr_t)helperSymbol->getMethodAddress(), helperSymRef, cg);
             }
 
          generateLabelInstruction(TR::InstOpCode::label, node, restartLabel, cg);
