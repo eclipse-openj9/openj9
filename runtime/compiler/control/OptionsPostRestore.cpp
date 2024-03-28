@@ -20,10 +20,6 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
-#include "j9cfg.h"
-
-#if defined(J9VM_OPT_CRIU_SUPPORT)
-
 #include "j9.h"
 #include "j9nonbuilder.h"
 #include "jvminit.h"
@@ -49,6 +45,7 @@
 #include "net/ClientStream.hpp"
 #endif
 #include "runtime/CodeRuntime.hpp"
+#include "runtime/CRRuntime.hpp"
 
 #define FIND_AND_CONSUME_RESTORE_ARG(match, optionName, optionValue) FIND_AND_CONSUME_ARG(vm->checkpointState.restoreArgsList, match, optionName, optionValue)
 #define FIND_ARG_IN_RESTORE_ARGS(match, optionName, optionValue) FIND_ARG_IN_ARGS(vm->checkpointState.restoreArgsList, match, optionName, optionValue)
@@ -307,9 +304,9 @@ J9::OptionsPostRestore::processJitServerOptions()
 #if defined(J9VM_OPT_JITSERVER)
    bool jitserverEnabled
       = ((_argIndexUseJITServer > _argIndexDisableUseJITServer)
-          && !_compInfo->remoteCompilationExplicitlyDisabledAtBootstrap())
+          && !_compInfo->getCRRuntime()->remoteCompilationExplicitlyDisabledAtBootstrap())
         || ((_argIndexUseJITServer == _argIndexDisableUseJITServer)
-             && _compInfo->remoteCompilationRequestedAtBootstrap());
+             && _compInfo->getCRRuntime()->remoteCompilationRequestedAtBootstrap());
 
    if (jitserverEnabled)
       {
@@ -358,7 +355,7 @@ J9::OptionsPostRestore::processJitServerOptions()
       _jitConfig->clientUID = clientUID;
       _compInfo->getPersistentInfo()->setClientUID(clientUID);
       _compInfo->getPersistentInfo()->setServerUID(0);
-      _compInfo->setCanPerformRemoteCompilationInCRIUMode(true);
+      _compInfo->getCRRuntime()->setCanPerformRemoteCompilationInCRIUMode(true);
 
       // If encryption is desired, load and initialize the SSL
       if (_compInfo->useSSL())
@@ -372,7 +369,7 @@ J9::OptionsPostRestore::processJitServerOptions()
       }
    else
       {
-      _compInfo->setCanPerformRemoteCompilationInCRIUMode(false);
+      _compInfo->getCRRuntime()->setCanPerformRemoteCompilationInCRIUMode(false);
       _compInfo->getPersistentInfo()->setClientUID(0);
       _compInfo->getPersistentInfo()->setServerUID(0);
       _jitConfig->clientUID = 0;
@@ -702,19 +699,19 @@ J9::OptionsPostRestore::postProcessInternalCompilerOptions()
       invalidateAll = true;
       disableAOT = true;
       }
-   else if (!_compInfo->isVMMethodTraceEnabled()
+   else if (!_compInfo->getCRRuntime()->isVMMethodTraceEnabled()
             && (vm->extendedRuntimeFlags & J9_EXTENDED_RUNTIME_METHOD_TRACE_ENABLED))
       {
-      _compInfo->setVMMethodTraceEnabled(true);
+      _compInfo->getCRRuntime()->setVMMethodTraceEnabled(true);
       invalidateAll = true;
       disableAOT = true;
       }
-   else if (!_compInfo->isVMExceptionEventsHooked()
+   else if (!_compInfo->getCRRuntime()->isVMExceptionEventsHooked()
             && (exceptionCatchEventHooked || exceptionThrowEventHooked))
       {
       if (exceptionCatchEventHooked)
          _jitConfig->jitExceptionCaught = jitExceptionCaught;
-      _compInfo->setVMExceptionEventsHooked(true);
+      _compInfo->getCRRuntime()->setVMExceptionEventsHooked(true);
       invalidateAll = true;
       disableAOT = true;
       }
@@ -873,5 +870,3 @@ J9::OptionsPostRestore::processOptionsPostRestore(J9VMThread *vmThread, J9JITCon
          TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Failed to process options post restore");
       }
    }
-
-#endif // J9VM_OPT_CRIU_SUPPORT

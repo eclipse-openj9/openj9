@@ -91,6 +91,9 @@
 #include "runtime/Listener.hpp"
 #include "runtime/MetricsServer.hpp"
 #endif /* defined(J9VM_OPT_JITSERVER) */
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+#include "runtime/CRRuntime.hpp"
+#endif /* if defined(J9VM_OPT_CRIU_SUPPORT) */
 
 extern "C" {
 struct J9JavaVM;
@@ -1365,7 +1368,7 @@ static void jitMethodSampleInterrupt(J9VMThread* vmThread, IDATA handlerKey, voi
            * flag is checked with the monitor in hand. This is more of an
            * optimization that statistically should be useful.
            */
-          && !compInfo->shouldSuspendThreadsForCheckpoint()
+          && !compInfo->getCRRuntime()->shouldSuspendThreadsForCheckpoint()
 #endif
           && !compInfo->getPersistentInfo()->getDisableFurtherCompilation())
          {
@@ -1420,7 +1423,7 @@ static void jitMethodSampleInterrupt(J9VMThread* vmThread, IDATA handlerKey, voi
            * flag is checked with the monitor in hand. This is more of an
            * optimization that statistically should be useful.
            */
-          && !compInfo->shouldSuspendThreadsForCheckpoint()
+          && !compInfo->getCRRuntime()->shouldSuspendThreadsForCheckpoint()
 #endif
           && !compInfo->getPersistentInfo()->getDisableFurtherCompilation())
          {
@@ -1857,7 +1860,7 @@ static void jitHookPrepareCheckpoint(J9HookInterface * * hookInterface, UDATA ev
    J9JITConfig * jitConfig = javaVM->jitConfig;
 
    TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
-   compInfo->prepareForCheckpoint();
+   compInfo->getCRRuntime()->prepareForCheckpoint();
    }
 
 static void jitHookPrepareRestore(J9HookInterface * * hookInterface, UDATA eventNum, void * eventData, void * userData)
@@ -1881,7 +1884,7 @@ static void jitHookPrepareRestore(J9HookInterface * * hookInterface, UDATA event
       }
 
    TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
-   compInfo->prepareForRestore();
+   compInfo->getCRRuntime()->prepareForRestore();
    }
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
@@ -4307,6 +4310,13 @@ void JitShutdown(J9JITConfig * jitConfig)
 
    TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
 
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+   if (jitConfig->javaVM->internalVMFunctions->isCRaCorCRIUSupportEnabled(vmThread))
+      {
+      compInfo->getCRRuntime()->stopCRRuntimeThread();
+      }
+#endif // if defined(J9VM_OPT_CRIU_SUPPORT)
+
    TR_HWProfiler *hwProfiler = ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->hwProfiler;
    if (compInfo->getPersistentInfo()->isRuntimeInstrumentationEnabled())
       {
@@ -5932,7 +5942,7 @@ public:
 static void suspendSamplerThreadForCheckpoint(J9VMThread *samplerThread, J9JITConfig *jitConfig, TR::CompilationInfo *compInfo)
    {
    compInfo->acquireCompMonitor(samplerThread);
-   if (compInfo->shouldSuspendThreadsForCheckpoint())
+   if (compInfo->getCRRuntime()->shouldSuspendThreadsForCheckpoint())
       {
       PORT_ACCESS_FROM_JITCONFIG(jitConfig);
 
@@ -5958,9 +5968,9 @@ static void suspendSamplerThreadForCheckpoint(J9VMThread *samplerThread, J9JITCo
       // can only cause a deadlock if the checkpointing thread
       // decides to re-acquire the sampler monitor with the CR monitor
       // in hand.
-      compInfo->acquireCRMonitor();
-      compInfo->getCRMonitor()->notifyAll();
-      compInfo->releaseCRMonitor();
+      compInfo->getCRRuntime()->acquireCRMonitor();
+      compInfo->getCRRuntime()->getCRMonitor()->notifyAll();
+      compInfo->getCRRuntime()->releaseCRMonitor();
 
       if (TR::Options::isAnyVerboseOptionSet())
          TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Suspending Sampler Thread for Checkpoint");
@@ -6220,7 +6230,7 @@ static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
              * isn't true (e.g., due to shutdown), then the sampler thread will
              * not suspend itself.
              */
-             && compInfo->shouldSuspendThreadsForCheckpoint())
+             && compInfo->getCRRuntime()->shouldSuspendThreadsForCheckpoint())
             {
             suspendSamplerThreadForCheckpoint(samplerThread,jitConfig, compInfo);
             }
@@ -6981,6 +6991,8 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
    J9HookInterface * * gcHooks = javaVM->memoryManagerFunctions->j9gc_get_hook_interface(javaVM);
    J9HookInterface * * gcOmrHooks = javaVM->memoryManagerFunctions->j9gc_get_omr_hook_interface(javaVM->omrVM);
 
+   J9VMThread *vmThread = javaVM->internalVMFunctions->currentVMThread(javaVM);
+
    PORT_ACCESS_FROM_JAVAVM(javaVM);
 
    if (TR::Options::getCmdLineOptions()->getOption(TR_noJitDuringBootstrap) ||
@@ -7134,7 +7146,15 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
          if (TR::Options::getCmdLineOptions()->getOption(TR_VerboseInterpreterProfiling))
             j9tty_printf(PORTLIB, "Succesfully installed J9HOOK_VM_PROFILING_BYTECODE_BUFFER_FULL listener\n");
          }
-#endif
+#endif // if defined (J9VM_INTERP_PROFILING_BYTECODES)
+
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+      if (jitConfig->javaVM->internalVMFunctions->isCheckpointAllowed(vmThread))
+         {
+         compInfo->getCRRuntime()->startCRRuntimeThread(javaVM);
+         }
+#endif // if defined(J9VM_OPT_CRIU_SUPPORT)
+
       if (compInfo->getPersistentInfo()->isRuntimeInstrumentationEnabled())
          {
          if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableHWProfilerThread))
