@@ -106,6 +106,7 @@
 #define JSR292_forGenericInvoke    "forGenericInvoke"
 #define JSR292_forGenericInvokeSig "(Ljava/lang/invoke/MethodType;Z)Ljava/lang/invoke/MethodHandle;"
 
+static TR::SymbolReference * createLoadFieldSymRef(TR::Compilation * comp, TR_OpaqueClassBlock * fieldClass, const char * fieldname, bool nullIfNotFound = false);
 
 static void printStack(TR::Compilation *comp, TR_Stack<TR::Node*> *stack, const char *message)
    {
@@ -3510,6 +3511,62 @@ TR_J9ByteCodeIlGenerator::genInvokeWithVFTChild(TR::SymbolReference *symRef)
    return genInvoke(symRef, vftLoad);
    }
 
+/** @brief
+  *   Tries to find the corresponding symbol reference for the field `value` that is returned by the implementations of
+  *   BOXED_TYPE.TYPEValue() method based  on the recognized method.
+  *   If the method is not one of the recognized getter methods, this method has a fatal assert.
+  *
+  * @param generator
+  *   The current IL generator instance.
+  * @param method
+  *   The recognized method, one of the getters belonging to a primitive boxed class.
+  * @return
+  *   The symbol reference for the field holding the primitive value.
+  */
+static TR::SymbolReference * getPrimitiveValueFieldSymbolReference(TR_J9ByteCodeIlGenerator * generator, TR::RecognizedMethod method)
+   {
+   const char * className = NULL;
+   switch (method)
+      {
+      case TR::java_lang_Boolean_booleanValue:
+         className = "Ljava/lang/Boolean;";
+         break;
+      case TR::java_lang_Byte_byteValue:
+         className = "Ljava/lang/Byte;";
+         break;
+      case TR::java_lang_Character_charValue:
+         className = "Ljava/lang/Character;";
+         break;
+      case TR::java_lang_Short_shortValue:
+         className = "Ljava/lang/Short;";
+         break;
+      case TR::java_lang_Integer_intValue:
+         className = "Ljava/lang/Integer;";
+         break;
+      case TR::java_lang_Long_longValue:
+         className = "Ljava/lang/Long;";
+         break;
+      case TR::java_lang_Float_floatValue:
+         className = "Ljava/lang/Float;";
+         break;
+      case TR::java_lang_Double_doubleValue:
+         className = "Ljava/lang/Double;";
+         break;
+      default:
+         TR_ASSERT_FATAL(false, "unrecognized unboxing method");
+      }
+   TR_OpaqueClassBlock * fieldClass = generator->fej9()->getClassFromSignature(className, strlen(className), generator->method());
+
+   // It's possible that the class is NULL because of a failed lookup during AOT. The lookup for the resolved class in
+   // the Share Class Cache (SCC) may return NULL when AOT is enabled. As there is no way to resolve a field lookup
+   // without a resolved class, we return NULL to disable the unboxing optimization.
+   // See eclipse-openj9/openj9#9416 for further information.
+   if (!fieldClass)
+      return NULL;
+
+   return createLoadFieldSymRef(generator->comp(), fieldClass, "value", /*nullIfNotFound*/ true);
+   }
+
 TR::Node*
 TR_J9ByteCodeIlGenerator::genInvoke(TR::SymbolReference * symRef, TR::Node *indirectCallFirstChild, TR::Node *invokedynamicReceiver)
    {
@@ -3556,8 +3613,30 @@ TR_J9ByteCodeIlGenerator::genInvokeInner(
       }
 
    TR::ILOpCodes opcode = TR::BadILOp;
-   switch (symbol->getRecognizedMethod())
+   switch (auto method = symbol->getRecognizedMethod())
       {
+      // Eliminate calls to unboxing methods if they can be replaced with a load of the
+      // `value` field. If the `value` field symbol reference cannot be found, e.g.
+      // The underlying implementation of the boxed class has changed, emit the call
+      // to getter as normal.
+      case TR::java_lang_Boolean_booleanValue:
+      case TR::java_lang_Byte_byteValue:
+      case TR::java_lang_Character_charValue:
+      case TR::java_lang_Short_shortValue:
+      case TR::java_lang_Integer_intValue:
+      case TR::java_lang_Long_longValue:
+      case TR::java_lang_Float_floatValue:
+      case TR::java_lang_Double_doubleValue:
+         if (comp()->getOption(TR_DisableIntrinsics))
+            break;
+
+         if (auto fieldSymRef = getPrimitiveValueFieldSymbolReference(this, method))
+            {
+            loadInstance(fieldSymRef);
+            return NULL;
+            }
+
+         break;
       case TR::java_lang_Integer_valueOf:
          // TODO: It's gross that ilgen knows what a dememoization opportunity is.  This should be refactored.
          _methodSymbol->setHasDememoizationOpportunities(true);
@@ -6308,7 +6387,7 @@ TR_J9ByteCodeIlGenerator::genFlattenableWithFieldWithHelper(int32_t fieldCpIndex
    push(helperCallNode);
    }
 
-static TR::SymbolReference * createLoadFieldSymRef(TR::Compilation * comp, TR_OpaqueClassBlock * fieldClass, const char * fieldname)
+static TR::SymbolReference * createLoadFieldSymRef(TR::Compilation * comp, TR_OpaqueClassBlock * fieldClass, const char * fieldname, bool nullIfNotFound)
    {
    const TR::TypeLayout *fieldClassLayout = comp->typeLayout(fieldClass);
    size_t fieldClassFieldCount = fieldClassLayout->count();
@@ -6331,7 +6410,8 @@ static TR::SymbolReference * createLoadFieldSymRef(TR::Compilation * comp, TR_Op
          }
       }
 
-   TR_ASSERT_FATAL(false, "Did not find the matching fieldname %s", fieldname);
+   TR_ASSERT_FATAL(nullIfNotFound, "Did not find the matching fieldname %s", fieldname);
+
    return NULL;
    }
 
