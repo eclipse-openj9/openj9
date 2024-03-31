@@ -427,6 +427,19 @@ J9::CodeCacheManager::allocateCodeCacheSegment(size_t segmentSize,
       }
 #endif
 
+#ifdef LINUX
+      if (_disclaimEnabled)
+         {
+         // If swap is enabled, we can allocate memory with mmap(MAP_ANOYNMOUS|MAP_PRIVATE) and disclaim to swap
+         // If swap is not enabled we can disclaim to a backing file
+         TR::CompilationInfo * compInfo = TR::CompilationInfo::get(_jitConfig);
+         if (!TR::Options::getCmdLineOptions()->getOption(TR_DisclaimMemoryOnSwap) || compInfo->isSwapMemoryDisabled())
+            {
+            segmentType |= MEMORY_TYPE_DISCLAIMABLE_TO_FILE;
+            }
+         }
+#endif
+
    mcc_printf("TR::CodeCache::allocate : requesting %d bytes\n", codeCacheSizeToAllocate);
    mcc_printf("TR::CodeCache::allocate : javaVM = %p\n", javaVM);
    mcc_printf("TR::CodeCache::allocate : codeCacheList = %p\n", jitConfig->codeCacheList);
@@ -487,6 +500,7 @@ J9::CodeCacheManager::allocateCodeCacheSegment(size_t segmentSize,
             }
          TR_VerboseLog::writeLineLocked(TR_Vlog_CODECACHE, verboseLogString, codeCacheSegment->baseAddress, codeCacheSegment->heapTop, alignment, largeCodePageSize);
          }
+
 #ifdef LINUX
       if (0 != madvise((void *)codeCacheSegment->baseAddress, (codeCacheSegment->heapTop - codeCacheSegment->baseAddress), MADV_HUGEPAGE))
          {
@@ -496,11 +510,21 @@ J9::CodeCacheManager::allocateCodeCacheSegment(size_t segmentSize,
             }
          }
 #endif // LINUX
+
+      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "Allocated new code cache segment %p starting at address %p %d Kb",
+                                        codeCacheSegment,
+                                        codeCacheSegment->heapBase,
+                                        _jitConfig->codeCacheKB);
       }
    else
       {
       // TODO: we should generate a trace point
       mcc_printf("TR::CodeCache::allocate : codeCacheSegment is NULL, %p\n",codeCacheSegment);
+
+      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "Failed to allocate new code cache segment of %d Kb", _jitConfig->codeCacheKB);
+
       return 0;
       }
 
@@ -787,4 +811,27 @@ J9::CodeCacheManager::printOccupancyStats()
       {
       codeCache->printOccupancyStats();
       }
+   }
+
+
+int32_t
+J9::CodeCacheManager::disclaimAllCodeCaches()
+   {
+   if (!_disclaimEnabled)
+      return 0;
+
+   int32_t numDisclaimed = 0;
+
+#ifdef LINUX
+   TR::CompilationInfo *compInfo = TR::CompilationInfo::get(_jitConfig);
+   bool canDisclaimOnSwap = TR::Options::getCmdLineOptions()->getOption(TR_DisclaimMemoryOnSwap) && !compInfo->isSwapMemoryDisabled();
+
+   CacheListCriticalSection scanCacheList(self());
+   for (TR::CodeCache *codeCache = self()->getFirstCodeCache(); codeCache; codeCache = codeCache->next())
+      {
+      numDisclaimed += codeCache->disclaim(self(), canDisclaimOnSwap);
+      }
+#endif // LINUX
+
+   return numDisclaimed;
    }

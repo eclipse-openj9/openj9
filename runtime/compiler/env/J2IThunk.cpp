@@ -62,7 +62,8 @@ TR_MHJ2IThunk::allocate(
    else
 #endif /* defined(J9VM_OPT_JITSERVER) */
       {
-      result = (TR_MHJ2IThunk*)cg->allocateCodeMemory(totalSize, true, false);
+      bool disclaim = TR::Options::getCmdLineOptions()->getOption(TR_EnableCodeCacheDisclaiming);
+      result = (TR_MHJ2IThunk*)cg->allocateCodeMemory(totalSize, !disclaim, false);
       }
    omrthread_jit_write_protect_disable();
    result->_codeSize  = codeSize;
