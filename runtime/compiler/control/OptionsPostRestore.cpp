@@ -90,6 +90,8 @@ J9::OptionsPostRestore::OptionsPostRestore(J9VMThread *vmThread, J9JITConfig *ji
       = J9::Options::_xrsSync
         || options->getOption(TR_NoResumableTrapHandler)
         || options->getOption(TR_DisableTraps);
+
+   _enableCodeCacheDisclaimingPreCheckpoint = options->getOption(TR_EnableCodeCacheDisclaiming);
    }
 
 void
@@ -804,8 +806,19 @@ J9::OptionsPostRestore::postProcessInternalCompilerOptions()
          }
       }
 
+
+   if (!_enableCodeCacheDisclaimingPreCheckpoint &&
+       TR::Options::getCmdLineOptions()->getOption(TR_EnableCodeCacheDisclaiming))
+      {
+      TR::Options::getCmdLineOptions()->setOption(TR_EnableCodeCacheDisclaiming, false);
+
+      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
+          TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "WARNING: Code Cache disclaiming disabled since it was disabled before checkpoint");
+      }
+
    if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableDataCacheDisclaiming) ||
-       !TR::Options::getCmdLineOptions()->getOption(TR_DisableIProfilerDataDisclaiming))
+       !TR::Options::getCmdLineOptions()->getOption(TR_DisableIProfilerDataDisclaiming) ||
+       TR::Options::getCmdLineOptions()->getOption(TR_EnableCodeCacheDisclaiming))
       {
       TR::Options::disableMemoryDisclaimIfNeeded(_jitConfig);
       }
