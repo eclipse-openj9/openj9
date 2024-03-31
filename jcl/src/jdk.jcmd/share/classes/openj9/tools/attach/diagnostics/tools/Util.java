@@ -53,7 +53,9 @@ import openj9.tools.attach.diagnostics.attacher.AttacherDiagnosticsProvider;
 public class Util {
 	private static final String SUN_JAVA_COMMAND = "sun.java.command"; //$NON-NLS-1$
 	private static final String SUN_JVM_ARGS = "sun.jvm.args"; //$NON-NLS-1$
-	
+	// rety 3 times by default in case of SocketException
+	static final int retry = Integer.getInteger("com.ibm.tools.attach.retry", 3).intValue(); //$NON-NLS-1$
+
 	/**
 	 * Read the text from an input stream, split it into separate strings at line breaks,
 	 * remove blank lines, and strip leading and trailing whitespace.
@@ -79,6 +81,7 @@ public class Util {
 		Properties props = diagProvider.executeDiagnosticCommand(cmd);
 		DiagnosticProperties.dumpPropertiesIfDebug(commandName + " result:", props); //$NON-NLS-1$
 		String responseString = new DiagnosticProperties(props).printStringResult();
+		IPC.logMessage("Util.runCommandAndPrintResult(): " + responseString); //$NON-NLS-1$
 		System.out.print(responseString);
 	}
 
@@ -191,6 +194,7 @@ public class Util {
 		IPC.logMessage("findMatchVMIDs firstArg = " + firstArg); //$NON-NLS-1$
 		ArrayList<String> vmids = new ArrayList<>();
 		String currentVMID = AttachHandler.getVmId();
+		IPC.logMessage("findMatchVMIDs currentVMID = " + currentVMID); //$NON-NLS-1$
 		try {
 			long pid = Long.parseLong(firstArg);
 			boolean includeAllVMIDs = (pid == 0);
@@ -198,9 +202,9 @@ public class Util {
 			for (VirtualMachineDescriptor vmd : vmds) {
 				String vmid = vmd.id();
 				if (includeAllVMIDs || firstArg.equals(vmid)) {
-					IPC.logMessage("add vmid = " + vmid); //$NON-NLS-1$
+					IPC.logMessage("add vmid(firstArg) = " + vmid); //$NON-NLS-1$
 					if (vmid.equals(currentVMID) && !AttachHandler.selfAttachAllowed) {
-						IPC.logMessage("skip self, vmid = " + vmid); //$NON-NLS-1$
+						IPC.logMessage("skip self, vmid(firstArg) = " + vmid); //$NON-NLS-1$
 					} else {
 						vmids.add(vmid);
 					}
@@ -208,6 +212,8 @@ public class Util {
 						// exit if not include all VMIDs
 						break;
 					}
+				} else {
+					IPC.logMessage("skip vmid(firstArg) != " + vmid); //$NON-NLS-1$
 				}
 			}
 		} catch (NumberFormatException nfe) {
@@ -228,6 +234,9 @@ public class Util {
 					IPC.logMessage("skip displayName = " + displayName); //$NON-NLS-1$
 				}
 			}
+		}
+		if (vmids.isEmpty()) {
+			IPC.logMessage("Util.findMatchVMIDs() returns empty vmids"); //$NON-NLS-1$
 		}
 		return vmids;
 	}
