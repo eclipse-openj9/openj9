@@ -25,13 +25,14 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Properties;
-
+import org.testng.log4testng.Logger;
 
 public class TargetVM {
 
 	public static final String WAITING_FOR_INITIALIZATION = "STATUS_WAIT_INITIALIZATION"; //$NON-NLS-1$
 	private static final String propertyKey = "j9vm.test.attach.testproperty2"; //$NON-NLS-1$
 	private static final String propertyValue = "5678def"; //$NON-NLS-1$
+	private static final Logger logger = Logger.getLogger(TargetVM.class);
 
 	/**
 	 * @param args
@@ -42,12 +43,17 @@ public class TargetVM {
 		Properties p = new Properties();
 		p.setProperty(propertyKey, propertyValue);
 		/* use the object so the code cannot be reordered */
+		String logMsg;
 		if (!propertyValue.equals(p.getProperty(propertyKey))) {
-			System.err.println("This should never happen"); //$NON-NLS-1$
+			logMsg = "This should never happen";
+			System.err.println(logMsg); //$NON-NLS-1$
+			logger.error(logMsg);
 		}
 		BufferedReader inRdr = new BufferedReader(new InputStreamReader(
 				System.in));
-		System.err.println(new java.util.Date() + " : TargetVM starting");
+		logMsg = new java.util.Date() + " : TargetVM starting";
+		System.err.println(logMsg);
+		logger.info(logMsg);
 		long pid = 0;
 		try {
 			pid = TargetManager.getProcessId();
@@ -63,35 +69,51 @@ public class TargetVM {
 				System.out.flush();
 				System.out.println("failed");
 				System.err.println("initialization failed");
+				logger.error("TargetVM initialization failed, exit before sleep 10s");
 				Thread.sleep(10000); /*
 									 * give the launching process a chance to
 									 * connect
 									 */
 				return;
 			}
+			logMsg = "before waitForTermination()";
+			System.out.println(logMsg);
+			logger.info(logMsg);
 			String cmd = "";
 			cmd = waitForTermination(inRdr, pid, cmd);
 			if (null == cmd) {
-				System.out.println(pid + " stdin closed unexpectedly");
+				logMsg = pid + " stdin closed unexpectedly";
 			} else {
-				System.out.println(new java.util.Date() + " : " + pid + " terminated by \"" + cmd + "\"");
+				logMsg = new java.util.Date() + " : " + pid + " terminated by \"" + cmd + "\"";
 			}
+			System.out.println(logMsg);
+			logger.info(logMsg);
 			/* force a reference to keep the Properties object alive */
 			if (!propertyValue.equals(p.getProperty(propertyKey))) {
-				System.err.println("This should never happen"); //$NON-NLS-1$
+				logMsg = "This should never happen";
+				System.err.println(logMsg); //$NON-NLS-1$
+				logger.error(logMsg);
 			}
 		} catch (Throwable e) {
-			System.out.println(pid + " failed");
-			System.err.println(pid + " failed");
-			System.err.println("Throwable: " + e.getMessage());
+			logMsg = pid + " failed";
+			logger.error(logMsg);
+			System.out.println(logMsg);
+			System.err.println(logMsg);
+			logMsg = "Throwable: " + e.getMessage();
+			System.err.println(logMsg);
+			logger.error(logMsg);
 			e.printStackTrace(System.err);
 		} finally {
 			System.out.flush();
 			System.err.flush();
-			System.out.println(new java.util.Date() + " : terminated from System.out");
+			logMsg = new java.util.Date() + " : terminated from System.out";
+			System.out.println(logMsg);
+			logger.info(logMsg);
 			System.out.flush();
 			System.out.close();
-			System.err.println(new java.util.Date() + " : terminated from System.err");
+			logMsg = new java.util.Date() + " : terminated from System.err";
+			logger.error(logMsg);
+			System.err.println(logMsg);
 			System.err.flush();
 			System.err.close();
 		}
@@ -100,8 +122,10 @@ public class TargetVM {
 	private static String waitForTermination(BufferedReader inRdr, long pid,
 			String cmd) throws IOException {
 		while ((null != cmd) && !cmd.contains(TargetManager.TARGETVM_STOP)) {
-			System.out.println(new java.util.Date() + " : waitForTermination: " + pid + " received \"" + cmd + "\"");
+			String logMsg = new java.util.Date() + " : waitForTermination: " + pid + " received \"" + cmd + "\"";
+			System.out.println(logMsg);
 			System.out.flush();
+			logger.info(logMsg);
 			cmd = inRdr.readLine();
 		}
 		return cmd;

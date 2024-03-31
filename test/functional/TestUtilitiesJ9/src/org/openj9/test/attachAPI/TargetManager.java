@@ -71,7 +71,7 @@ public class TargetManager {
 	private String targetVmid;
 	public static final String TARGETVM_START = "targetvm_start";
 	public static final String TARGETVM_STOP = "targetvm_stop";
-	private static boolean doLogging = false;
+	private static boolean doLogging = true; // enable doLogging by default
 	private static final String DEFAULT_IPC_DIR = ".com_ibm_tools_attach";
 	public TargetStatus targetVmStatus;
 	private boolean active = true;
