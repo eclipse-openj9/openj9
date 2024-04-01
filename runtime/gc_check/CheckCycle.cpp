@@ -42,7 +42,7 @@
 #include "CheckVMThreads.hpp"
 #include "CheckVMThreadStacks.hpp"
 #include "FixDeadObjects.hpp"
-#include "GCExtensionsBase.hpp"
+#include "GCExtensions.hpp"
 
 #define TOTAL_NUM_CHECKS (sizeof(GC_CheckCycle::funcArray) / sizeof(GC_CheckCycle::funcStruct))
 const GC_CheckCycle::funcStruct GC_CheckCycle::funcArray[] = {
@@ -169,7 +169,8 @@ GC_CheckCycle::generateCheckList(UDATA scanFlags)
 bool
 GC_CheckCycle::initialize(const char *options)
 {
-	GCCHK_Extensions *extensions = (GCCHK_Extensions *)((MM_GCExtensions*)_javaVM->gcExtensions)->gcchkExtensions;
+	MM_GCExtensions *gcextensions = MM_GCExtensions::getExtensions(_javaVM);
+	GCCHK_Extensions *extensions = (GCCHK_Extensions *)gcextensions->gcchkExtensions;
 	UDATA scanFlags = 0, checkFlags = 0, miscFlags;
 	char *scan_start = (char *)options;
 	const char *scan_limit = options + strlen(options);
@@ -429,6 +430,17 @@ failure:
 void
 GC_CheckCycle::run(GCCheckInvokedBy invokedBy, UDATA filterFlags)
 {
+	UDATA originalMiscFlags = _miscFlags;
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(_javaVM);
+	/* Enable recognition of Forwarded Pointers through existing midscavenge
+	 * logic during Concurrent Copy phase of Concurrent Scavenge.
+	 * Also suppress reporting of discovered Forwarded Pointers.
+	 */
+	if (extensions->isConcurrentScavengerInProgress()) {
+		_miscFlags |= J9MODRON_GCCHK_MISC_MIDSCAVENGE;
+		_miscFlags &= ~J9MODRON_GCCHK_VERBOSE;
+		_miscFlags |= J9MODRON_GCCHK_MISC_QUIET;
+	}
 	_invokedBy = invokedBy;
 	_engine->startCheckCycle(_javaVM, this);
 	
@@ -448,6 +460,7 @@ GC_CheckCycle::run(GCCheckInvokedBy invokedBy, UDATA filterFlags)
 		}
 	}
 	_engine->endCheckCycle(_javaVM);
+	_miscFlags = originalMiscFlags;
 }
 
 /**
