@@ -4182,6 +4182,18 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 		}
 	}
 
+#if defined(J9VM_OPT_JFR)
+	{
+		IDATA flightRecorder = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXFLIGHTRECORDER, NULL);
+		IDATA noFlightRecorder = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXNOFLIGHTRECORDER, NULL);
+		if (flightRecorder > noFlightRecorder) {
+			vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_JFR_ENABLED;
+		} else if (flightRecorder < noFlightRecorder) {
+			vm->extendedRuntimeFlags2 &= ~(UDATA)J9_EXTENDED_RUNTIME2_JFR_ENABLED;
+		}
+	}
+#endif /* defined(J9VM_OPT_JFR) */
+
 	if (FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXKEEPJNIIDS, NULL) != -1) {
 		vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_ALWAYS_KEEP_JNI_IDS;
 	}
