@@ -26,7 +26,7 @@
 #include "rommeth.h"
 #include "vmhook.h"
 
-#if defined(LINUX) && (defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_POWER)) && defined(J9VM_ENV_DATA64)
+#if defined(LINUX) && (defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_POWER) || defined(J9VM_ARCH_S390)) && defined(J9VM_ENV_DATA64)
 #include <ucontext.h>
 #define ASGCT_SUPPORTED
 #endif /* defined(LINUX) && defined(J9VM_ARCH_X86) && defined(J9VM_ENV_DATA64) */
@@ -70,7 +70,11 @@ typedef struct {
 #define J9VM_GET_PC(ucontext) ((ucontext_t*)(ucontext))->uc_mcontext.gp_regs[PT_NIP]
 #define J9VM_GET_SP(ucontext) ((ucontext_t*)(ucontext))->uc_mcontext.gp_regs[PT_R1]
 #define REGISTER elf_greg_t
-#endif /* defined(J9VM_ARCH_X86) */
+#elif defined(J9VM_ARCH_S390)
+#define J9VM_GET_PC(ucontext) ((ucontext_t*)(ucontext))->uc_mcontext.psw.addr
+#define J9VM_GET_SP(ucontext) ((ucontext_t*)(ucontext))->uc_mcontext.gregs[15]
+#define REGISTER greg_t
+#endif /* defined(J9VM_ARCH_S390) */
 
 
 extern J9JavaVM *BFUjavaVM;
