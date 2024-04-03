@@ -26,7 +26,6 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Collections;
@@ -55,9 +54,7 @@ public class TestJps extends AttachApiTest {
 		TargetManager tgtMgr = new TargetManager(TARGET_VM_CLASS, null);
 		assertTrue(CHILD_PROCESS_DID_NOT_LAUNCH, tgtMgr.syncWithTarget());
 		// Allow jps to be attached on z/OS, like other platforms
-		List<String> args = new ArrayList<>();
-		args.add("-J-Dcom.ibm.tools.attach.enable=yes"); //$NON-NLS-1$
-		List<String> jpsOutput = runCommandAndLogOutput(args);
+		List<String> jpsOutput = runCommandAndLogOutput(Collections.singletonList("-J-Dcom.ibm.tools.attach.enable=yes"));
 		assertTrue(TEST_PROCESS_ID_MISSING, StringUtilities.searchSubstring(vmId, jpsOutput).isPresent());
 		assertTrue("jps is missing", StringUtilities.searchSubstring(JPS_Class, jpsOutput).isPresent()); //$NON-NLS-1$
 		assertTrue(CHILD_IS_MISSING, StringUtilities.searchSubstring(tgtMgr.targetId, jpsOutput).isPresent());
@@ -68,9 +65,7 @@ public class TestJps extends AttachApiTest {
 	public void testJpsPackageName() throws IOException {
 		TargetManager tgtMgr = new TargetManager(TARGET_VM_CLASS, null);
 		assertTrue(CHILD_PROCESS_DID_NOT_LAUNCH, tgtMgr.syncWithTarget());
-		List<String> args = new ArrayList<>();
-		args.add("-l"); //$NON-NLS-1$
-		List<String> jpsOutput = runCommandAndLogOutput(args);
+		List<String> jpsOutput = runCommandAndLogOutput(Collections.singletonList("-l")); //$NON-NLS-1$
 		Optional<String> searchResult = StringUtilities.searchSubstring(tgtMgr.targetId, jpsOutput);
 		assertTrue(CHILD_IS_MISSING, searchResult.isPresent());
 		assertTrue(WRONG_PKG_NAME + searchResult.get(), searchResult.get().contains(TargetVM.class.getPackage().getName()));
@@ -83,9 +78,8 @@ public class TestJps extends AttachApiTest {
 		TargetManager tgtMgr2 = new TargetManager(TARGET_VM_CLASS, "SomeRandomId"); //$NON-NLS-1$
 		assertTrue(CHILD_PROCESS_DID_NOT_LAUNCH, tgtMgr1.syncWithTarget());
 		assertTrue(CHILD_PROCESS_DID_NOT_LAUNCH, tgtMgr2.syncWithTarget());
-		List<String> args = new ArrayList<>();
-		args.add("-q"); //$NON-NLS-1$
-		List<String> jpsOutput = runCommandAndLogOutput(args);
+		List<String> jpsOutput = runCommandAndLogOutput(Collections.singletonList("-q")); //$NON-NLS-1$
+
 		boolean searchResult = StringUtilities.contains(vmId, jpsOutput);
 		assertTrue(TEST_PROCESS_ID_MISSING + ": " + vmId, searchResult); //$NON-NLS-1$
 		
@@ -105,9 +99,7 @@ public class TestJps extends AttachApiTest {
 		List<String> targetArgs = Arrays.asList("foo", "bar");  //$NON-NLS-1$//$NON-NLS-2$
 		TargetManager tgtMgr = new TargetManager(TARGET_VM_CLASS, null, targetArgs);
 		assertTrue(CHILD_PROCESS_DID_NOT_LAUNCH, tgtMgr.syncWithTarget());
-		List<String> args = new ArrayList<>();
-		args.add("-m"); //$NON-NLS-1$
-		List<String> jpsOutput = runCommandAndLogOutput(args);
+		List<String> jpsOutput = runCommandAndLogOutput(Collections.singletonList("-m")); //$NON-NLS-1$
 		String needle = tgtMgr.targetId + " TargetVM";
 		Optional<String> searchResult = StringUtilities.searchPrefixSubstring(needle, jpsOutput);
 		assertTrue(CHILD_IS_MISSING, searchResult.isPresent());
@@ -122,9 +114,7 @@ public class TestJps extends AttachApiTest {
 		List<String> vmArgs = Collections.singletonList("-Dfoo=bar"); //$NON-NLS-1$
 		TargetManager tgtMgr = new TargetManager(TARGET_VM_CLASS, null, null, vmArgs, null);
 		assertTrue(CHILD_PROCESS_DID_NOT_LAUNCH, tgtMgr.syncWithTarget());
-		List<String> args = new ArrayList<>();
-		args.add("-v"); //$NON-NLS-1$
-		List<String> jpsOutput = runCommandAndLogOutput(args);
+		List<String> jpsOutput = runCommandAndLogOutput(Collections.singletonList("-v")); //$NON-NLS-1$
 		String needle = tgtMgr.targetId + " TargetVM";
 		Optional<String> searchResult = StringUtilities.searchPrefixSubstring(needle, jpsOutput);
 		assertTrue(CHILD_IS_MISSING, searchResult.isPresent());
@@ -139,9 +129,7 @@ public class TestJps extends AttachApiTest {
 		List<String> targetArgs = Arrays.asList("foo", "bar");  //$NON-NLS-1$//$NON-NLS-2$
 		TargetManager tgtMgr = new TargetManager(TARGET_VM_CLASS, null, targetArgs);
 		assertTrue(CHILD_PROCESS_DID_NOT_LAUNCH, tgtMgr.syncWithTarget());
-		List<String> args = new ArrayList<>();
-		args.add("-ml"); //$NON-NLS-1$
-		List<String> jpsOutput = runCommandAndLogOutput(args);
+		List<String> jpsOutput = runCommandAndLogOutput(Collections.singletonList("-ml")); //$NON-NLS-1$
 		String needle = tgtMgr.targetId + " org.openj9.test.attachAPI.TargetVM";
 		Optional<String> searchResult = StringUtilities.searchPrefixSubstring(needle, jpsOutput);
 		assertTrue(CHILD_IS_MISSING, searchResult.isPresent());

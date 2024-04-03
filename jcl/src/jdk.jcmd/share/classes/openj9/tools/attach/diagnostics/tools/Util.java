@@ -53,7 +53,7 @@ import openj9.tools.attach.diagnostics.attacher.AttacherDiagnosticsProvider;
 public class Util {
 	private static final String SUN_JAVA_COMMAND = "sun.java.command"; //$NON-NLS-1$
 	private static final String SUN_JVM_ARGS = "sun.jvm.args"; //$NON-NLS-1$
-	// rety 3 times by default in case of SocketException
+	// retry 3 times by default in case of SocketException
 	static final int retry = Integer.getInteger("com.ibm.tools.attach.retry", 3).intValue(); //$NON-NLS-1$
 
 	/**
