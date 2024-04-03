@@ -930,7 +930,7 @@ void J9::X86::PrivateLinkage::createPrologue(TR::Instruction *cursor)
 
       if (numReferenceLocalSlotsToInitialize > 0 || numInternalPointerSlotsToInitialize > 0)
          {
-         cursor = new (trHeapMemory()) TR::X86RegRegInstruction(cursor, TR::InstOpCode::XORRegReg(), scratchReg, scratchReg, cg());
+         cursor = new (trHeapMemory()) TR::X86RegRegInstruction(cursor, TR::InstOpCode::XOR4RegReg, scratchReg, scratchReg, cg());
 
          // Initialize locals that are live on entry
          //

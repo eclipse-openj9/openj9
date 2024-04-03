@@ -1694,7 +1694,7 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    if (isIndexableDataAddrPresent)
       {
       // No offset is needed since 1st dimension array is contiguous.
-      generateRegRegInstruction(TR::InstOpCode::XORRegReg(), node, temp3Reg, temp3Reg, cg);
+      generateRegRegInstruction(TR::InstOpCode::XOR4RegReg, node, temp3Reg, temp3Reg, cg);
       generateLabelInstruction(TR::InstOpCode::JMP4, node, populateFirstDimDataAddrSlot, cg);
       }
    else
@@ -3629,7 +3629,7 @@ TR::Register * highestOneBit(TR::Node *node, TR::CodeGenerator *cg, TR::Register
    // shl r1, r2
    TR::Register *scratchReg = cg->allocateRegister();
    TR::Register *bsrReg = cg->allocateRegister();
-   generateRegRegInstruction(TR::InstOpCode::XORRegReg(is64Bit), node, scratchReg, scratchReg, cg);
+   generateRegRegInstruction(TR::InstOpCode::XOR4RegReg, node, scratchReg, scratchReg, cg);
    generateRegRegInstruction(TR::InstOpCode::BSRRegReg(is64Bit), node, bsrReg, reg, cg);
    generateRegInstruction(TR::InstOpCode::SETNE1Reg, node, scratchReg, cg);
    TR::RegisterDependencyConditions  *shiftDependencies = generateRegisterDependencyConditions((uint8_t)1, 1, cg);
@@ -3762,7 +3762,7 @@ TR::Register *numberOfLeadingZeros(TR::Node *node, TR::CodeGenerator *cg, TR::Re
    // ret r1
    TR::Register *maskReg = cg->allocateRegister();
    TR::Register *bsrReg = cg->allocateRegister();
-   generateRegRegInstruction(TR::InstOpCode::XORRegReg(is64Bit), node, maskReg, maskReg, cg);
+   generateRegRegInstruction(TR::InstOpCode::XOR4RegReg, node, maskReg, maskReg, cg);
    generateRegRegInstruction(TR::InstOpCode::BSRRegReg(is64Bit), node, bsrReg, reg, cg);
    generateRegInstruction(TR::InstOpCode::SETE1Reg, node, maskReg, cg);
    generateRegInstruction(TR::InstOpCode::DECReg(is64Bit), node, maskReg, cg);
@@ -3841,7 +3841,7 @@ TR::Register * numberOfTrailingZeros(TR::Node *node, TR::CodeGenerator *cg, TR::
    TR::Register *bsfReg = cg->allocateRegister();
    TR::Register *tempReg = cg->allocateRegister();
    TR::Register *maskReg = cg->allocateRegister();
-   generateRegRegInstruction(TR::InstOpCode::XORRegReg(is64Bit), node, tempReg, tempReg, cg);
+   generateRegRegInstruction(TR::InstOpCode::XOR4RegReg, node, tempReg, tempReg, cg);
    generateRegRegInstruction(TR::InstOpCode::BSFRegReg(is64Bit), node, bsfReg, reg, cg);
    generateRegInstruction(TR::InstOpCode::SETE1Reg, node, tempReg, cg);
    generateRegRegInstruction(TR::InstOpCode::MOVRegReg(is64Bit), node, maskReg, tempReg, cg);
@@ -5582,7 +5582,7 @@ J9::X86::TreeEvaluator::VMmonexitEvaluator(
       {
       unlockedReg = cg->allocateRegister();
       eaxReal     = cg->allocateRegister();
-      generateRegRegInstruction(TR::InstOpCode::XORRegReg(), node, unlockedReg, unlockedReg, cg);
+      generateRegRegInstruction(TR::InstOpCode::XOR4RegReg, node, unlockedReg, unlockedReg, cg);
       generateRegImmInstruction(TR::InstOpCode::MOVRegImm4(), node, eaxReal, INC_DEC_VALUE, cg);
 
       TR::InstOpCode::Mnemonic op = cg->comp()->target().isSMP() ? TR::InstOpCode::LCMPXCHGMemReg(gen64BitInstr) : TR::InstOpCode::CMPXCHGMemReg(gen64BitInstr);
@@ -5840,7 +5840,7 @@ static void genHeapAlloc(
       // heap allocation, so proceed
       if (sizeReg)
          {
-         generateRegRegInstruction(TR::InstOpCode::XORRegReg(), node, eaxReal, eaxReal, cg);
+         generateRegRegInstruction(TR::InstOpCode::XOR4RegReg, node, eaxReal, eaxReal, cg);
 
          // make sure size isn't too big
          // convert max object size to num elements because computing an object size from num elements may overflow
@@ -6214,7 +6214,7 @@ static void genHeapAlloc(
 #endif
             {
 #ifdef J9VM_INTERP_FLAGS_IN_CLASS_SLOT
-         generateRegRegInstruction(TR::InstOpCode::XORRegReg(), node, tempReg, tempReg, cg);
+         generateRegRegInstruction(TR::InstOpCode::XOR4RegReg, node, tempReg, tempReg, cg);
 #endif
 
 
@@ -7211,7 +7211,7 @@ static bool genZeroInitObject2(
          {
          generateRegInstruction(TR::InstOpCode::PUSHReg, node, targetReg, cg);
          }
-      generateRegRegInstruction(TR::InstOpCode::XORRegReg(), node, targetReg, targetReg, cg);
+      generateRegRegInstruction(TR::InstOpCode::XOR4RegReg, node, targetReg, targetReg, cg);
       generateInstruction(TR::InstOpCode::REPSTOSB, node, cg);
       if (comp->target().is64Bit())
          {
@@ -7467,7 +7467,7 @@ static bool genZeroInitObject(
          generateRegInstruction(TR::InstOpCode::PUSHReg, node, targetReg, cg);
          }
 
-      generateRegRegInstruction(TR::InstOpCode::XORRegReg(), node, targetReg, targetReg, cg);
+      generateRegRegInstruction(TR::InstOpCode::XOR4RegReg, node, targetReg, targetReg, cg);
 
       // We just pushed targetReg on the stack and zeroed it out. targetReg contained the address of the
       // beginning of the header. We want to use the 0-reg to initialize the monitor slot, so we use
@@ -7500,7 +7500,7 @@ static bool genZeroInitObject(
 
    if (numSlots > 0)
       {
-      generateRegRegInstruction(TR::InstOpCode::XORRegReg(), node, tempReg, tempReg, cg);
+      generateRegRegInstruction(TR::InstOpCode::XOR4RegReg, node, tempReg, tempReg, cg);
 
       bool initLw = (node->getOpCodeValue() != TR::New);
       int lwOffset = fej9->getByteOffsetToLockword(clazz);
@@ -7907,7 +7907,7 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
          static bool UseOldBVI = feGetEnv("TR_UseOldBVI");
          if (UseOldBVI)
             {
-            generateRegRegInstruction(TR::InstOpCode::XORRegReg(), node, tempReg, tempReg, cg);
+            generateRegRegInstruction(TR::InstOpCode::XOR4RegReg, node, tempReg, tempReg, cg);
             while (bvi.hasMoreElements())
                {
                generateMemRegInstruction(TR::InstOpCode::S4MemReg, node,
@@ -8106,7 +8106,7 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
             fej9->getOffsetOfDiscontiguousDataAddrField(), fej9->getOffsetOfContiguousDataAddrField());
 
          discontiguousDataAddrOffsetReg = cg->allocateRegister();
-         generateRegRegInstruction(TR::InstOpCode::XORRegReg(), node, discontiguousDataAddrOffsetReg, discontiguousDataAddrOffsetReg, cg);
+         generateRegRegInstruction(TR::InstOpCode::XOR4RegReg, node, discontiguousDataAddrOffsetReg, discontiguousDataAddrOffsetReg, cg);
          generateRegImmInstruction(TR::InstOpCode::CMPRegImm4(), node, sizeReg, 1, cg);
          generateRegImmInstruction(TR::InstOpCode::ADCRegImm4(), node, discontiguousDataAddrOffsetReg, 0, cg);
          dataAddrMR = generateX86MemoryReference(targetReg, discontiguousDataAddrOffsetReg, 3, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg);
@@ -12356,7 +12356,7 @@ J9::X86::TreeEvaluator::stringCaseConversionHelper(TR::Node *node, TR::CodeGener
    generateRegImmInstruction(TR::InstOpCode::MOV4RegImm4, node, result, 1, cg);
 
    // initialize the loop counter
-   cursor = generateRegRegInstruction(TR::InstOpCode::XORRegReg(), node, counter, counter, cg); iComment("initialize loop counter");
+   cursor = generateRegRegInstruction(TR::InstOpCode::XOR4RegReg, node, counter, counter, cg); iComment("initialize loop counter");
 
    //calculate the residueStartLength. Later instructions compare the counter with this length and decide when to jump to the residue handling sequence
    generateRegRegInstruction(TR::InstOpCode::MOVRegReg(), node, residueStartLength, length, cg);
@@ -12449,7 +12449,7 @@ J9::X86::TreeEvaluator::stringCaseConversionHelper(TR::Node *node, TR::CodeGener
 
    // 4. handle invalid case
    generateLabelInstruction(TR::InstOpCode::label, node, failLabel, cg);
-   generateRegRegInstruction(TR::InstOpCode::XORRegReg(), node, result, result, cg);
+   generateRegRegInstruction(TR::InstOpCode::XOR4RegReg, node, result, result, cg);
 
    generateLabelInstruction(TR::InstOpCode::label, node, endLabel, deps, cg);
    node->setRegister(result);
