@@ -88,9 +88,7 @@ public class TestJcmd extends AttachApiTest {
 	public void testJcmdHelps() throws IOException {
 		String[] HELP_OPTIONS = { "-h", HELP_COMMAND, "-help", "--help" };
 		for (String helpOption : HELP_OPTIONS) {
-			List<String> args = new ArrayList<>();
-			args.add(helpOption);
-			List<String> jcmdOutput = runCommandAndLogOutput(args);
+			List<String> jcmdOutput = runCommandAndLogOutput(Collections.singletonList(helpOption));
 			/* Sample of the text from Jcmd.HELPTEXT */
 			String expectedString = "list JVM processes on the local machine.";
 			Optional<String> searchResult = StringUtilities.searchSubstring(expectedString, jcmdOutput);
