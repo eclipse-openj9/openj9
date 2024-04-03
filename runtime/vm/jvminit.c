@@ -2006,15 +2006,18 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 				IDATA argIndex8 = 0;
 				IDATA argIndex9 = 0;
 				BOOLEAN sharedClassDisabled = FALSE;
+				BOOLEAN processPortableSharedCacheFlag = FALSE;
 
 #if (defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390) || defined(J9VM_ARCH_POWER) || defined(J9VM_ARCH_AARCH64))
 				IDATA argIndexXXPortableSharedCache = 0;
 				IDATA argIndexXXNoPortableSharedCache = 0;
+#endif /* defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390) || defined(J9VM_ARCH_POWER) || defined(J9VM_ARCH_AARCH64) */
 #if defined(J9VM_OPT_JITSERVER)
 				IDATA argIndexXXJITServerAOTCache = 0;
 				IDATA argIndexXXNoJITServerAOTCache = 0;
+				IDATA argIndexXXJITServerAOTCacheIgnoreLocalSCC = 0;
+				IDATA argIndexXXNoJITServerAOTCacheIgnoreLocalSCC = 0;
 #endif /* defined(J9VM_OPT_JITSERVER) */
-#endif /* defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390) || defined(J9VM_ARCH_POWER) || defined(J9VM_ARCH_AARCH64) */
 
 				vm->sharedClassPreinitConfig = NULL;
 
@@ -2046,11 +2049,13 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 #if (defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390) || defined(J9VM_ARCH_POWER) || defined(J9VM_ARCH_AARCH64))
 				argIndexXXPortableSharedCache = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXPORTABLESHAREDCACHE, NULL);
 				argIndexXXNoPortableSharedCache = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXNOPORTABLESHAREDCACHE, NULL);
+#endif /* defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390) || defined(J9VM_ARCH_POWER) || defined(J9VM_ARCH_AARCH64) */
 #if defined(J9VM_OPT_JITSERVER)
 				argIndexXXJITServerAOTCache = FIND_ARG_IN_VMARGS(EXACT_MATCH, "-XX:+JITServerUseAOTCache", NULL);
 				argIndexXXNoJITServerAOTCache = FIND_ARG_IN_VMARGS(EXACT_MATCH, "-XX:-JITServerUseAOTCache", NULL);
+				argIndexXXJITServerAOTCacheIgnoreLocalSCC = FIND_ARG_IN_VMARGS(EXACT_MATCH, "-XX:+JITServerAOTCacheIgnoreLocalSCC", NULL);
+				argIndexXXNoJITServerAOTCacheIgnoreLocalSCC = FIND_ARG_IN_VMARGS(EXACT_MATCH, "-XX:-JITServerAOTCacheIgnoreLocalSCC", NULL);
 #endif /* defined(J9VM_OPT_JITSERVER) */
-#endif /* defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390) || defined(J9VM_ARCH_POWER) || defined(J9VM_ARCH_AARCH64) */
 
 				if (((!J9_SHARED_CACHE_DEFAULT_BOOT_SHARING(vm)) && (argIndex < 0))
 					|| (TRUE == sharedClassDisabled)
@@ -2133,27 +2138,34 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 
 					if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_AOT)) {
 #if (defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390) || defined(J9VM_ARCH_POWER) || defined(J9VM_ARCH_AARCH64))
-						if (argIndexXXPortableSharedCache > argIndexXXNoPortableSharedCache) {
-							vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_ENABLE_PORTABLE_SHARED_CACHE;
-						} else if (argIndexXXPortableSharedCache == argIndexXXNoPortableSharedCache) {
-							/* both "-XX:+PortableSharedCache" and "-XX:-PortableSharedCache" were not found thus following the default behavior for portable shared cache */
-							OMRPORT_ACCESS_FROM_J9PORT(vm->portLibrary);
-							BOOLEAN inContainer = omrsysinfo_is_running_in_container();
-							/* by default, enable portable shared cache in containers and disable otherwise */
-							if (TRUE == inContainer) {
-								vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_ENABLE_PORTABLE_SHARED_CACHE;
-							}
-						}
+						processPortableSharedCacheFlag = TRUE;
 #endif /* defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390) || defined(J9VM_ARCH_POWER) || defined(J9VM_ARCH_AARCH64) */
 					}
 				}
-#if (defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390) || defined(J9VM_ARCH_POWER) || defined(J9VM_ARCH_AARCH64)) && defined(J9VM_OPT_JITSERVER)
-				// Regardless of whether or not the local SCC is enabled, we still need to enable portable AOT if
-				// the options suggest we're going to connect to a JITServer AOT cache.
-				if (argIndexXXJITServerAOTCache > argIndexXXNoJITServerAOTCache) {
-					vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_ENABLE_PORTABLE_SHARED_CACHE;
+#if defined(J9VM_OPT_JITSERVER)
+				if ((argIndexXXJITServerAOTCache > argIndexXXNoJITServerAOTCache)
+					&& (argIndexXXJITServerAOTCacheIgnoreLocalSCC > argIndexXXNoJITServerAOTCacheIgnoreLocalSCC)
+				) {
+					/* If we are using the JITServer AOT cache and ignoring the local SCC (which we detect by checking
+					 * for an explicit -XX:+JITServerAOTCacheIgnoreLocalSCC, since it's off by default) then the portable
+					 * SCC flag must still be set as necessary, even if the SCC itself is disabled. */
+					processPortableSharedCacheFlag = TRUE;
 				}
-#endif /* defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390) || defined(J9VM_ARCH_POWER) || defined(J9VM_ARCH_AARCH64) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
+
+				if (TRUE == processPortableSharedCacheFlag) {
+					if (argIndexXXPortableSharedCache > argIndexXXNoPortableSharedCache) {
+						vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_ENABLE_PORTABLE_SHARED_CACHE;
+					} else if (argIndexXXPortableSharedCache == argIndexXXNoPortableSharedCache) {
+						/* both "-XX:+PortableSharedCache" and "-XX:-PortableSharedCache" were not found thus following the default behavior for portable shared cache */
+						OMRPORT_ACCESS_FROM_J9PORT(vm->portLibrary);
+						BOOLEAN inContainer = omrsysinfo_is_running_in_container();
+						if (TRUE == inContainer) {
+							/* by default, enable portable shared cache in containers and disable otherwise */
+							vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_ENABLE_PORTABLE_SHARED_CACHE;
+						}
+					}
+				}
 			}
 #endif
 
