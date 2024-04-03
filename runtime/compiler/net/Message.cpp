@@ -119,7 +119,7 @@ Message::print()
    {
    const MetaData *metaData = getMetaData();
    TR_VerboseLog::CriticalSection vlogLock;
-   TR_VerboseLog::writeLine(TR_Vlog_JITServer, "Message: type=%d numDataPoints=%u version=%lu numDescriptors=%lu\n",
+   TR_VerboseLog::writeLine(TR_Vlog_JITServer, "Message: type=%d numDataPoints=%u version=%lu numDescriptors=%lu",
                             metaData->_type, metaData->_numDataPoints, metaData->_version, _descriptorOffsets.size());
    uint32_t numDescriptorsPrinted = 0;
    for (uint32_t i = 0; i < _descriptorOffsets.size(); i += numDescriptorsPrinted)

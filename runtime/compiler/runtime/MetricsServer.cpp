@@ -90,7 +90,7 @@ HttpGetRequest::ReturnCodes HttpGetRequest::acceptSSLConnection()
       {
       if (TR::Options::getVerboseOption(TR_VerboseJITServer))
          {
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "SSL connection on socket 0x%x, Version: %s, Cipher: %s\n",
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "SSL connection on socket 0x%x, Version: %s, Cipher: %s",
                                         _sockfd, (*OSSL_get_version)(_incompleteSSLConnection), (*OSSL_get_cipher)(_incompleteSSLConnection));
          }
       return SSL_CONNECTION_ESTABLISHED;
@@ -238,7 +238,7 @@ HttpGetRequest::readHttpGetRequest()
       if (bytesRead < 4)
          {
          if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "MetricsServer: Too few bytes received when reading from socket  %d\n", socket);
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "MetricsServer: Too few bytes received when reading from socket  %d", socket);
          return READ_ERROR;
          }
       if (strncmp(_buf, "GET ", 4) != 0)
@@ -648,7 +648,7 @@ MetricsServer::handleDataForConnectedSocket(nfds_t sockIndex, MetricsDatabase &m
    if (_pfd[sockIndex].revents & (POLLRDHUP | POLLERR | POLLHUP | POLLNVAL))
       {
       if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "MetricsServer error on socket %d revents=%d\n", _pfd[sockIndex].fd, _pfd[sockIndex].revents);
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "MetricsServer error on socket %d revents=%d", _pfd[sockIndex].fd, _pfd[sockIndex].revents);
       closeSocket(sockIndex);
       }
    else if (_requests[sockIndex].getRequestState() == HttpGetRequest::EstablishingSSLConnection)

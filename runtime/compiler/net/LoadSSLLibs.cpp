@@ -606,7 +606,7 @@ bool loadLibsslAndFindSymbols()
       }
 
    if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Built against (%s); Loaded with (%s)\n",
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Built against (%s); Loaded with (%s)",
          OPENSSL_VERSION_TEXT, (*OOpenSSL_version)(0));
 
    return true;
