@@ -110,7 +110,7 @@ bool ServerStream::createSSLContext(SSL_CTX *&ctx, const char *sessionContextID,
    (*OSSL_CTX_set_verify)(ctx, SSL_VERIFY_PEER, NULL);
 
    if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Successfully initialized SSL context (%s)\n", (*OOpenSSL_version)(0));
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Successfully initialized SSL context (%s)", (*OOpenSSL_version)(0));
 
    return true;
    }

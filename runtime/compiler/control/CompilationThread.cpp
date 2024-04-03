@@ -4177,7 +4177,7 @@ TR::CompilationInfoPerThread::processEntries()
                      }
                   if (TR::Options::getVerboseOption(TR_VerboseCompilationDispatch))
                      {
-                     TR_VerboseLog::writeLineLocked(TR_Vlog_DISPATCH, "compThreadID=%d woke up after timeout on compMonitor\n", getCompThreadId());
+                     TR_VerboseLog::writeLineLocked(TR_Vlog_DISPATCH, "compThreadID=%d woke up after timeout on compMonitor", getCompThreadId());
                      }
                   }
                }
@@ -4929,14 +4929,14 @@ TR::CompilationInfo::addMethodToBeCompiled(TR::IlGeneratorMethodDetails & detail
          if (queueWeight != _queueWeight) //QW
             {
             if (TR::Options::isAnyVerboseOptionSet())
-               TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "Discrepancy for queue weight while adding to queue: computed=%u recorded=%u\n", queueWeight, _queueWeight);
+               TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "Discrepancy for queue weight while adding to queue: computed=%u recorded=%u", queueWeight, _queueWeight);
             // correction
             _queueWeight = queueWeight;
             }
          if (numEntries != _numQueuedMethods)
             {
             if (TR::Options::isAnyVerboseOptionSet())
-               TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "Discrepancy for queue size while adding to queue: Before adding numEntries=%d  _numQueuedMethods=%d\n", numEntries, _numQueuedMethods);
+               TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "Discrepancy for queue size while adding to queue: Before adding numEntries=%d  _numQueuedMethods=%d", numEntries, _numQueuedMethods);
             TR_ASSERT(false, "Discrepancy for queue size while adding to queue");
             }
          }
@@ -10777,7 +10777,7 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
 
       if (_jitConfig->runtimeFlags & J9JIT_TOSS_CODE)
          {
-         TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "JIT %s OK\n", compiler->signature());
+         TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "JIT %s OK", compiler->signature());
          }
       else
          {

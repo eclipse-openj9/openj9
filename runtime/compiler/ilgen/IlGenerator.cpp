@@ -503,7 +503,7 @@ TR_J9ByteCodeIlGenerator::genILFromByteCodes()
          }
       else
          {
-         //TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,"Saved a GCR gen body nmayHaveInlineableCall=%d  mayHaveLoops=%d _maxByteCodeIndex=%d\n", _methodSymbol->mayHaveInlineableCall(), _methodSymbol->mayHaveLoops(), _maxByteCodeIndex);
+         //TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,"Saved a GCR gen body nmayHaveInlineableCall=%d  mayHaveLoops=%d _maxByteCodeIndex=%d", _methodSymbol->mayHaveInlineableCall(), _methodSymbol->mayHaveLoops(), _maxByteCodeIndex);
          // stats
          comp()->getPersistentInfo()->incNumGCRSaves();
          }

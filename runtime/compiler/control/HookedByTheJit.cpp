@@ -1922,7 +1922,7 @@ static void jitHookClassesUnload(J9HookInterface * * hookInterface, UDATA eventN
    bool p = TR::Options::getVerboseOption(TR_VerboseHookDetailsClassUnloading);
    if (p)
       {
-      TR_VerboseLog::writeLineLocked(TR_Vlog_HD, "Classes unloaded \n");
+      TR_VerboseLog::writeLineLocked(TR_Vlog_HD, "Classes unloaded");
       }
 
    //All work here is only done if there is a chtable. Small have no table, thus nothing to do.
@@ -1995,7 +1995,7 @@ static void jitHookAnonClassesUnload(J9HookInterface * * hookInterface, UDATA ev
    UDATA anonymousClassUnloadCount = unloadedEvent->anonymousClassUnloadCount;
 
    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseClassUnloading))
-      TR_VerboseLog::writeLineLocked(TR_Vlog_GC, "jitHookAnonClassesUnload: unloading %u anonymous classes\n", (uint32_t)anonymousClassUnloadCount);
+      TR_VerboseLog::writeLineLocked(TR_Vlog_GC, "jitHookAnonClassesUnload: unloading %u anonymous classes", (uint32_t)anonymousClassUnloadCount);
 
    // Create a dummy classLoader and change j9class->classLoader to point to this fake one
    J9ClassLoader dummyClassLoader;
@@ -2039,7 +2039,7 @@ static void jitHookAnonClassesUnload(J9HookInterface * * hookInterface, UDATA ev
    if (fullChainOfMetaData)
       {
       if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseClassUnloading))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_GC, "jitHookAnonClassesUnload: will remove %u metadata entities\n", numMetaData);
+         TR_VerboseLog::writeLineLocked(TR_Vlog_GC, "jitHookAnonClassesUnload: will remove %u metadata entities", numMetaData);
       // Attach the full chain to the dummy classloader
       dummyClassLoader.jitMetaDataList = fullChainOfMetaData;
       // Perform the cleanup
@@ -2050,7 +2050,7 @@ static void jitHookAnonClassesUnload(J9HookInterface * * hookInterface, UDATA ev
    if (needsMCCCleaning)
       {
       if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseClassUnloading))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_GC, "jitHookAnonClassesUnload: will perform MCC cleaning\n");
+         TR_VerboseLog::writeLineLocked(TR_Vlog_GC, "jitHookAnonClassesUnload: will perform MCC cleaning");
       TR::CodeCacheManager::instance()->onClassUnloading(&dummyClassLoader);
       }
 
@@ -2126,7 +2126,7 @@ static void jitHookClassUnload(J9HookInterface * * hookInterface, UDATA eventNum
    bool p = TR::Options::getVerboseOption(TR_VerboseHookDetailsClassUnloading);
    if (p)
       {
-      TR_VerboseLog::writeLineLocked(TR_Vlog_HD, "Class unloading for class=0x%p\n", j9clazz);
+      TR_VerboseLog::writeLineLocked(TR_Vlog_HD, "Class unloading for class=0x%p", j9clazz);
       }
 
    PORT_ACCESS_FROM_JAVAVM(vmThread->javaVM);
@@ -2215,7 +2215,7 @@ static void jitHookClassLoaderUnload(J9HookInterface * * hookInterface, UDATA ev
    bool p = TR::Options::getVerboseOption(TR_VerboseHookDetailsClassUnloading);
    if (p)
       {
-      TR_VerboseLog::writeLineLocked(TR_Vlog_HD, "Class unloading for classLoader=0x%p\n", classLoader);
+      TR_VerboseLog::writeLineLocked(TR_Vlog_HD, "Class unloading for classLoader=0x%p", classLoader);
       }
    compInfo->getPersistentInfo()->incGlobalClassUnloadID();
 
@@ -3136,7 +3136,7 @@ static bool updateCHTable(J9VMThread * vmThread, J9Class  * cl)
    if (p)
       {
       name = vm->getClassNameChars(clazz, len);
-      TR_VerboseLog::writeLineLocked(TR_Vlog_HD, "--updt-- %.*s\n", len, name);
+      TR_VerboseLog::writeLineLocked(TR_Vlog_HD, "--updt-- %.*s", len, name);
       }
 
    int32_t classDepth = J9CLASS_DEPTH(cl) - 1;
@@ -3149,7 +3149,7 @@ static bool updateCHTable(J9VMThread * vmThread, J9Class  * cl)
       if (p)
          {
          name = vm->getClassNameChars(superClazz, len);
-         TR_VerboseLog::writeLineLocked(TR_Vlog_HD, "\textending %.*s\n", len, name);
+         TR_VerboseLog::writeLineLocked(TR_Vlog_HD, "\textending %.*s", len, name);
          }
       if (table)
          {
@@ -3166,7 +3166,7 @@ static bool updateCHTable(J9VMThread * vmThread, J9Class  * cl)
             if (p)
                {
                name = vm->getClassNameChars(superClazz, len);
-               TR_VerboseLog::writeLineLocked(TR_Vlog_HD, "\textending interface %.*s\n", len, name);
+               TR_VerboseLog::writeLineLocked(TR_Vlog_HD, "\textending interface %.*s", len, name);
                }
             if (table)
                {
@@ -3759,7 +3759,7 @@ void jitHookClassLoadHelper(J9VMThread *vmThread,
    if (p)
       {
       getClassNameIfNecessary(vm, clazz, className, classNameLen);
-      TR_VerboseLog::writeLineLocked(TR_Vlog_HD, "--load-- loader %p, class %p : %.*s\n", classLoader, cl, classNameLen, className);
+      TR_VerboseLog::writeLineLocked(TR_Vlog_HD, "--load-- loader %p, class %p : %.*s", classLoader, cl, classNameLen, className);
       }
 
    // add the newInstance hook
@@ -3882,7 +3882,7 @@ void jitHookClassPreinitializeHelper(J9VMThread *vmThread,
       {
       int32_t len;
       char * className = vm->getClassNameChars(clazz, len);
-      TR_VerboseLog::writeLineLocked(TR_Vlog_HD, "--init-- %.*s\n", len, className);
+      TR_VerboseLog::writeLineLocked(TR_Vlog_HD, "--init-- %.*s", len, className);
       }
 
    jitAcquireClassTableMutex(vmThread);
@@ -5146,7 +5146,7 @@ static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInf
       }
    if(TR::Options::getVerboseOption(TR_VerboseJitMemory))
       {
-      TR_VerboseLog::writeLine(TR_Vlog_MEMORY, "FIXME: Report JIT memory usage\n");
+      TR_VerboseLog::writeLine(TR_Vlog_MEMORY, "FIXME: Report JIT memory usage");
       }
 
    // Allocate the tracking hashtable if needed
@@ -6387,7 +6387,7 @@ static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
                   TR_VerboseLog::writeLine(TR_Vlog_INFO, "Free Physical Memory: Unavailable");
 
                //TR_VerboseLog::writeLine(TR_Vlog_MEMORY,"t=%6u JIT memory usage", (uint32_t)crtTime);
-               //TR_VerboseLog::writeLine(TR_Vlog_MEMORY, "FIXME: Report JIT memory usage\n");
+               //TR_VerboseLog::writeLine(TR_Vlog_MEMORY, "FIXME: Report JIT memory usage");
                // Show stats on assumptions
                // assumptionTableMutex is not used, so the numbers may be a little off
                TR_VerboseLog::writeLine(TR_Vlog_MEMORY,"\tStats on assumptions:");
