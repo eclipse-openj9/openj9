@@ -339,10 +339,10 @@ def build() {
 def get_compile_command() {
     def make_target = ''
     if ((SDK_VERSION == "17") && SPEC.contains('zos')) {
-         make_target = 'images test-image'
+         make_target = 'images test-image debug-image'
     } else if ((SDK_VERSION == "21") && SPEC.contains('zos')) {
-         make_target = 'images'
-   } else {
+         make_target = 'images debug-image'
+    } else {
          make_target = 'all'
     }
     return "make ${EXTRA_MAKE_OPTIONS} ${make_target}"
