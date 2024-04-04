@@ -270,7 +270,15 @@ TR_J9InlinerPolicy::determineInliningHeuristic(TR::ResolvedMethodSymbol *callerS
 
 void TR_MultipleCallTargetInliner::generateNodeEstimate::operator ()(TR_CallTarget *ct, TR::Compilation *comp)
    {
-   int32_t size = getJ9InitialBytecodeSize(ct->_calleeMethod, 0, comp);
+   static const char *qq1 = feGetEnv("TR_NodeEstimateNumerator");
+   static const uint32_t userNumer = ( qq1 ) ? atoi(qq1) : 1;
+   uint32_t numer = userNumer;
+   if (!qq1)
+      numer = comp->getOptLevel() >= hot ? 1 : 4;
+   static const char *qq2 = feGetEnv("TR_NodeEstimateDenominator");
+   static const uint32_t denom = ( qq2 ) ? atoi(qq2) : 1;
+
+   int32_t size = (numer * getJ9InitialBytecodeSize(ct->_calleeMethod, 0, comp))/denom;
 
    // only scale the inlining size when the method is non-empty - conversion of
    // NaN/Inf to int is undefined and an empty method partially inlined instead
@@ -3244,11 +3252,14 @@ bool TR_MultipleCallTargetInliner::inlineCallTargets(TR::ResolvedMethodSymbol *c
          recursivelyWalkCallTargetAndPerformAction(calltarget, myEstimate);
          estimatedNumberOfNodes += myEstimate.getNodeEstimate();
 
-         debugTrace(tracer(),"Estimated Number of Nodes is %d after calltarget %p",estimatedNumberOfNodes,calltarget);
+         if (comp()->trace(OMR::inlining))
+            traceMsg(comp(), "Estimated Number of Nodes is %d after calltarget %p", estimatedNumberOfNodes,calltarget);
+
+         debugTrace(tracer(),"Estimated Number of Nodes is %d after calltarget %p", estimatedNumberOfNodes,calltarget);
 
          float factor = 1.1F;          // this factor was chosen based on a study of a large WAS app that showed that getMaxBytecodeindex was 92% accurate compared to nodes generated
 
-         if ((uint32_t)(estimatedNumberOfNodes*factor) > _nodeCountThreshold)
+         if ((uint32_t)estimatedNumberOfNodes > ((uint32_t) _nodeCountThreshold * factor))
             {
             callTargetToChop = calltarget;
             debugTrace(tracer(),"estimate nodes exceeds _nodeCountThreshold, chopped off targets starting from %p, lastTargetToInline %p\n", callTargetToChop, prev);
