@@ -21,13 +21,20 @@
  *******************************************************************************/
 
 #include <algorithm>
-#include "runtime/DataCache.hpp"
-#include "infra/Monitor.hpp"
-#include "infra/CriticalSection.hpp"
+#include "control/CompilationRuntime.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
-#include "env/VMJ9.h"
 #include "env/VerboseLog.hpp"
+#include "env/VMJ9.h"
+#include "infra/CriticalSection.hpp"
+#include "infra/Monitor.hpp"
+#include "runtime/DataCache.hpp"
+#ifdef LINUX
+#include <sys/mman.h> // for madvise
+#ifndef MADV_PAGEOUT
+#define MADV_PAGEOUT     21
+#endif // MADV_PAGEOUT
+#endif // LINUX
 
 //--------------------- DataCacheManager ----------------
 
@@ -150,6 +157,7 @@ TR_DataCacheManager::TR_DataCacheManager(J9JITConfig *jitConfig, TR::Monitor *mo
    {
    TR_ASSERT( (_quantumSize % sizeof(UDATA)) == 0, "Chunks need to be aligned with pointer size");
    TR_ASSERT( (_quantumSize * _minQuanta) >= sizeof(Allocation), "Allocation won't fit in free blocks" );
+   _disclaimEnabled = TR::Options::getCmdLineOptions()->getOption(TR_DisableDataCacheDisclaiming) ? false : true;
    // Add trace point if we have disabled reclamation
 #if defined(DATA_CACHE_DEBUG)
    if (!_newImplementation)
@@ -245,13 +253,29 @@ TR_DataCache* TR_DataCacheManager::allocateNewDataCache(uint32_t minimumSize)
          if (dataCache)
             {
             // Compute the size for the segment
-            int32_t segSize = std::max(_jitConfig->dataCacheKB * 1024, static_cast<UDATA>(minimumSize));
+            UDATA segSize = std::max(_jitConfig->dataCacheKB * 1024, static_cast<UDATA>(minimumSize));
 
             //--- allocate the segment for the dataCache
             J9MemorySegment *dataCacheSeg = NULL;
+            UDATA memoryType = MEMORY_TYPE_RAM;
+#ifdef LINUX
+            if (_disclaimEnabled)
+               {
+               UDATA defaultPageSize = j9vmem_supported_page_sizes()[0];
+               segSize = OMR::align(segSize, defaultPageSize); // Round up to a multiple of default page size if needed
+               memoryType |= MEMORY_TYPE_VIRTUAL; // Use mmap for allocation
+               // If swap is enabled, we can allocate memory with mmap(MAP_ANOYNMOUS|MAP_PRIVATE) and disclaim to swap
+               // If swap is not enabled we can disclaim to a backing file
+               TR::CompilationInfo * compInfo = TR::CompilationInfo::get(_jitConfig);
+               if (!TR::Options::getCmdLineOptions()->getOption(TR_DisclaimMemoryOnSwap) || compInfo->isSwapMemoryDisabled())
+                  {
+                  memoryType |= MEMORY_TYPE_DISCLAIMABLE_TO_FILE;
+                  }
+               }
+#endif
                {
                OMR::CriticalSection criticalSection(_mutex);
-               dataCacheSeg = _jitConfig->javaVM->internalVMFunctions->allocateMemorySegmentInList(_jitConfig->javaVM, _jitConfig->dataCacheList, segSize, MEMORY_TYPE_RAM, J9MEM_CATEGORY_JIT_DATA_CACHE);
+               dataCacheSeg = _jitConfig->javaVM->internalVMFunctions->allocateMemorySegmentInList(_jitConfig->javaVM, _jitConfig->dataCacheList, segSize, memoryType, J9MEM_CATEGORY_JIT_DATA_CACHE);
                if (dataCacheSeg)
                   _jitConfig->dataCache = dataCacheSeg; // for maximum compatibility with the old implementation
                }
@@ -268,13 +292,41 @@ TR_DataCache* TR_DataCacheManager::allocateNewDataCache(uint32_t minimumSize)
                _numAllocatedCaches++;
                _totalSegmentMemoryAllocated += (uint32_t)allocatedSize;
 #ifdef DATA_CACHE_DEBUG
-               fprintf(stderr, "Allocated a new segment %p of size %d for TR_DataCache %p heapAlloc=%p\n",
+               fprintf(stderr, "Allocated a new segment %p of size %zu for TR_DataCache %p heapAlloc=%p\n",
                   dataCacheSeg, segSize, dataCache, dataCacheSeg->heapAlloc);
 #endif
+               if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
+                  TR_VerboseLog::writeLine(TR_Vlog_INFO, "Allocated new data cache segment starting at address %p", dataCacheSeg->heapBase);
+#ifdef LINUX
+               if (_disclaimEnabled)
+                  {
+                  // The start address must be page aligned because we obtained it from mmap
+                  TR_ASSERT_FATAL(OMR::alignedNoCheck((uintptr_t)dataCacheSeg->heapBase, j9vmem_supported_page_sizes()[0]), "Start address of the segment is not page aligned");
+
+                  // Use small pages for data caches to improve RSS
+                  size_t segLength = dataCacheSeg->heapTop - dataCacheSeg->heapBase;
+                  if (madvise(dataCacheSeg->heapBase, segLength, MADV_NOHUGEPAGE) != 0)
+                     {
+                     if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
+                        TR_VerboseLog::writeLine(TR_Vlog_INFO, "Failed to set MADV_NOHUGEPAGE for data cache");
+                     }
+                  // If the memory segment is backed by a file, disable read-ahead
+                  // so that touching one byte brings a single page in
+                  if (dataCacheSeg->vmemIdentifier.allocator == OMRPORT_VMEM_RESERVE_USED_MMAP_SHM)
+                     {
+                     if (madvise(dataCacheSeg->heapBase, segLength, MADV_RANDOM) != 0)
+                        {
+                        if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
+                           TR_VerboseLog::writeLine(TR_Vlog_INFO, "Failed to set MADV_RANDOM for data cache");
+                        }
+                     }
+                  }
+#endif // LINUX
                }
             else
                {
-               TR_VerboseLog::writeLine(TR_Vlog_INFO, "Failed to allocate %d Kb data cache", _jitConfig->dataCacheKB);
+               if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
+                  TR_VerboseLog::writeLine(TR_Vlog_INFO, "Failed to allocate %d Kb data cache", _jitConfig->dataCacheKB);
                j9mem_free_memory(dataCache);
                dataCache = NULL;
                _jitConfig->runtimeFlags |= J9JIT_DATA_CACHE_FULL;  // prevent future allocations
@@ -678,6 +730,89 @@ double TR_DataCacheManager::computeDataCacheEfficiency()
    return 100.0 * (_totalSegmentMemoryAllocated - availableSpaceActive - availableSpaceRetired) / _totalSegmentMemoryAllocated;
    }
 
+// Note: this method has high overhead. Use it only for debugging
+extern "C" {
+#ifdef LINUX
+   int countPresentPagesInSegment(const J9MemorySegment *segment, int &swappedCount, int &filePageCount);
+#endif
+}
+
+//#define DEBUG_DISCLAIM
+//----------------------------- disclaimSegment -----------------------------
+// Disclaim memory for the given segment
+// Return 1 if the memory segment was disclaimed, or 0 otherwise
+// Used with DataCacheManager mutex in hand
+// Side effect: may disable disclaiming if the kernel does not support it
+//---------------------------------------------------------------------------
+int TR_DataCacheManager::disclaimSegment(J9MemorySegment *segment, bool canDisclaimOnSwap)
+   {
+   int disclaimDone = 0;
+#ifdef LINUX
+   if (segment->vmemIdentifier.allocator == OMRPORT_VMEM_RESERVE_USED_MMAP_SHM || // Can disclaim to file
+       ((segment->vmemIdentifier.mode & J9PORT_VMEM_MEMORY_MODE_VIRTUAL) && canDisclaimOnSwap)) // Can disclaim to swap
+      {
+      size_t segLength = segment->heapTop - segment->heapBase;
+#ifdef DEBUG_DISCLAIM
+      int swappedCount = 0;
+      int filePageCount = 0;
+      int numPresentPages = countPresentPagesInSegment(segment, swappedCount, filePageCount);
+      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
+         TR_VerboseLog::writeLine(TR_Vlog_PERF, "Will disclaim data cache segment %p of size %zu. Present pages =%d swapped=%d fileMapped=%d\n",
+              segment, segLength, numPresentPages, swappedCount, filePageCount);
+#endif // DEBUG_DISCLAIM
+      int ret = madvise(segment->heapBase, segLength, MADV_PAGEOUT);
+      if (ret != 0)
+         {
+         // madvise() could fail with EINVAL if MADV_PAGEOUT is not supported by the kernel
+         if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
+            TR_VerboseLog::writeLine(TR_Vlog_PERF, "WARNING: Failed to use madvise to disclaim memory for data cache");
+         if (ret == EINVAL)
+            {
+            _disclaimEnabled = false; // Don't try to disclaim again, since support seems to be missing
+            if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
+               TR_VerboseLog::writeLine(TR_Vlog_PERF, "WARNING: Disabling data cache disclaiming from now on");
+            }
+         }
+      else
+         {
+         disclaimDone = 1;
+#ifdef DEBUG_DISCLAIM
+         swappedCount = 0;
+         filePageCount = 0;
+         numPresentPages = countPresentPagesInSegment(segment, swappedCount, filePageCount);
+         if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
+            TR_VerboseLog::writeLine(TR_Vlog_PERF, "Disclaimed data cache segment %p of size %zu. Present pages =%d swapped=%d fileMapped=%d\n",
+                 segment, segLength, numPresentPages, swappedCount, filePageCount);
+#endif // DEBUG_DISCLAIM
+         }
+      }
+   else // Cannot disclaim because the memory is not backed by a file and swap is not present
+      {
+      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
+         TR_VerboseLog::writeLine(TR_Vlog_PERF, "WARNING: Data cache segment %p is not backed by a file/swap", segment);
+      }
+#endif // LINUX
+   return disclaimDone;
+   }
+
+// Return the number of segments disclaimed
+int TR_DataCacheManager::disclaimAllDataCaches()
+   {
+   if (!_disclaimEnabled)
+      return 0;
+   int numDisclaimed = 0;
+#ifdef LINUX
+   TR::CompilationInfo *compInfo = TR::CompilationInfo::get(_jitConfig);
+   bool canDisclaimOnSwap = TR::Options::getCmdLineOptions()->getOption(TR_DisclaimMemoryOnSwap) && !compInfo->isSwapMemoryDisabled();
+   OMR::CriticalSection criticalSection(_mutex);
+   // Traverses all dataCache segments
+   for (J9MemorySegment *dataCacheSeg = _jitConfig->dataCacheList->nextSegment; dataCacheSeg; dataCacheSeg = dataCacheSeg->nextSegment)
+      {
+      numDisclaimed += disclaimSegment(dataCacheSeg, canDisclaimOnSwap);
+      }
+#endif // LINUX
+   return numDisclaimed;
+   }
 
 
 void *

@@ -4285,6 +4285,7 @@ typedef struct J9CRIUCheckpointState {
 #if defined(J9VM_OPT_CRAC_SUPPORT)
 	char *cracCheckpointToDir;
 #endif /* defined(J9VM_OPT_CRAC_SUPPORT) */
+	U_32 requiredGhostFileLimit;
 } J9CRIUCheckpointState;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
@@ -5068,6 +5069,7 @@ typedef struct J9InternalVMFunctions {
 	BOOLEAN (*isNonPortableRestoreMode)(struct J9VMThread *currentThread);
 	BOOLEAN (*isJVMInPortableRestoreMode)(struct J9VMThread *currentThread);
 	BOOLEAN (*isDebugOnRestoreEnabled)(struct J9VMThread *currentThread);
+	void (*setRequiredGhostFileLimit)(struct J9VMThread *currentThread, U_32 ghostFileLimit);
 	BOOLEAN (*runInternalJVMCheckpointHooks)(struct J9VMThread *currentThread, const char **nlsMsgFormat);
 	BOOLEAN (*runInternalJVMRestoreHooks)(struct J9VMThread *currentThread, const char **nlsMsgFormat);
 	BOOLEAN (*runDelayedLockRelatedOperations)(struct J9VMThread *currentThread);

@@ -415,6 +415,7 @@ J9InternalVMFunctions J9InternalFunctions = {
 	isNonPortableRestoreMode,
 	isJVMInPortableRestoreMode,
 	isDebugOnRestoreEnabled,
+	setRequiredGhostFileLimit,
 	runInternalJVMCheckpointHooks,
 	runInternalJVMRestoreHooks,
 	runDelayedLockRelatedOperations,

@@ -585,6 +585,16 @@ BOOLEAN
 isDebugOnRestoreEnabled(J9VMThread *currentThread);
 
 /**
+ * @brief Sets the maximum size for the CRIU ghost files.
+ * If the new limit is smaller or equal to the previous limit,
+ * then this function does nothing.
+ * @param currentThread vmthread token
+ * @param ghostFileLimit the new size limit for ghost files
+ */
+void
+setRequiredGhostFileLimit(J9VMThread *currentThread, U_32 ghostFileLimit);
+
+/**
  * @brief JVM hooks to run before performing a JVM checkpoint
  *
  * @param currentThread vmthread token

@@ -435,6 +435,13 @@ TR::CRRuntime::prepareForCheckpoint()
       }
 #endif
 
+   // Make sure the limit for the ghost files is at least as big as the data cache size
+   if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableDataCacheDisclaiming))
+      {
+      U_32 ghostFileLimit = vm->jitConfig->dataCacheKB * 1024; // convert to bytes
+      vm->internalVMFunctions->setRequiredGhostFileLimit(vmThread, ghostFileLimit);
+      }
+
    setReadyForCheckpointRestore();
    }
 
