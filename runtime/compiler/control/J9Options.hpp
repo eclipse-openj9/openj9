@@ -388,6 +388,8 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    static int32_t _sleepMsBeforeCheckpoint;
 #endif
 
+   static int32_t _minTimeBetweenMemoryDisclaims; // ms
+
    static int32_t _waitTimeToEnterIdleMode;
    static int32_t _waitTimeToEnterDeepIdleMode;
    static int32_t _waitTimeToExitStartupMode;
@@ -625,6 +627,8 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
 
    bool isFSDNeeded(J9JavaVM *javaVM, J9HookInterface **vmHooks);
    FSDInitStatus initializeFSDIfNeeded(J9JavaVM *javaVM, J9HookInterface **vmHooks, bool &doAOT);
+
+   static bool disableMemoryDisclaimIfNeeded(J9JITConfig *jitConfig);
 
 #if defined(J9VM_OPT_JITSERVER)
    void setupJITServerOptions();
