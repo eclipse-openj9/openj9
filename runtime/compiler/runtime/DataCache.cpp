@@ -21,6 +21,7 @@
  *******************************************************************************/
 
 #include <algorithm>
+#include "OMR/Bytes.hpp"
 #include "control/CompilationRuntime.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
@@ -31,6 +32,9 @@
 #include "runtime/DataCache.hpp"
 #ifdef LINUX
 #include <sys/mman.h> // for madvise
+#ifndef MADV_NOHUGEPAGE
+#define MADV_NOHUGEPAGE  15
+#endif // MADV_NOHUGEPAGE
 #ifndef MADV_PAGEOUT
 #define MADV_PAGEOUT     21
 #endif // MADV_PAGEOUT
@@ -262,7 +266,7 @@ TR_DataCache* TR_DataCacheManager::allocateNewDataCache(uint32_t minimumSize)
             if (_disclaimEnabled)
                {
                UDATA defaultPageSize = j9vmem_supported_page_sizes()[0];
-               segSize = OMR::align(segSize, defaultPageSize); // Round up to a multiple of default page size if needed
+               segSize = OMR::align((size_t)segSize, (size_t)defaultPageSize); // Round up to a multiple of default page size if needed
                memoryType |= MEMORY_TYPE_VIRTUAL; // Use mmap for allocation
                // If swap is enabled, we can allocate memory with mmap(MAP_ANOYNMOUS|MAP_PRIVATE) and disclaim to swap
                // If swap is not enabled we can disclaim to a backing file
