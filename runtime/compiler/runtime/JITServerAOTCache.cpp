@@ -1045,8 +1045,7 @@ JITServerAOTCache::storeMethod(const AOTCacheClassChainRecord *definingClassChai
             "AOT cache %s: method %s @ %s index %u class ID %zu AOT header ID %zu already exists",
             _name.c_str(), signature, levelName, index, definingClassId, aotHeaderRecord->data().id()
          );
-      methodRecord = it->second;
-      return true;
+      return false;
       }
 
    auto method = CachedAOTMethod::create(definingClassChainRecord, index, optLevel, aotHeaderRecord,
