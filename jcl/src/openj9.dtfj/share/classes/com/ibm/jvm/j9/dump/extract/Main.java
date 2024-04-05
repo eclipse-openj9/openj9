@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar18-SE]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
  * Copyright IBM Corp. and others 2004
  *
@@ -51,9 +51,9 @@ import com.ibm.dtfj.corereaders.ICoreFileReader;
 
 public class Main {
 
-	private static class DummyBuilder implements Builder {
+	private static final class DummyBuilder implements Builder {
 
-		private static class Register {
+		private static final class Register {
 			final String name;
 			final long value;
 
@@ -67,7 +67,7 @@ public class Main {
 		 * Support for the "-p" option.  If this is non-null, absolute paths
 		 * will be resolved against this path as their root.
 		 */
-		private File _virtualRootDirectory = null;
+		private final File _virtualRootDirectory;
 
 		/**
 		 * Used to get around a problem on AIX where the core specifies the main
@@ -77,7 +77,7 @@ public class Main {
 		 *
 		 * The members are File objects representing the directories to search.
 		 */
-		private List<File> _successfulSearchPaths = new ArrayList<>();
+		private final List<File> _successfulSearchPaths;
 
 		private final long _environmentPointer;
 
@@ -87,14 +87,14 @@ public class Main {
 		 * @param environment Address of environment section. Can be 0.
 		 */
 		public DummyBuilder(File rootDirectory, long environment) {
+			super();
 			_virtualRootDirectory = rootDirectory;
-
 			// See comment about AIX above. In Java 6 the JVM libraries have moved to platform directories in sdk/jre/lib
 			// and the main binary is still in sdk/jre/bin, so fix is to prime the extra search paths with sdk/jre/bin.
-			String jre_bin = System.getProperty("java.home") + File.separator + "bin"; //$NON-NLS-1$ //$NON-NLS-2$
-			File javaPath = new File(jre_bin);
-			_successfulSearchPaths.add(javaPath);
-			this._environmentPointer = environment;
+			String java_home = System.getProperty("java.home"); //$NON-NLS-1$
+			_successfulSearchPaths = new ArrayList<>();
+			_successfulSearchPaths.add(new File(java_home, "bin")); //$NON-NLS-1$
+			_environmentPointer = environment;
 		}
 
 		@Override
@@ -212,7 +212,7 @@ public class Main {
 
 		@Override
 		public void setExecutableUnavailable(String description) {
-			// Do nothing
+			// do nothing
 		}
 
 		@Override
@@ -222,22 +222,22 @@ public class Main {
 
 		@Override
 		public void setOSType(String osType) {
-			// Do nothing
+			// do nothing
 		}
 
 		@Override
 		public void setCPUType(String cpuType) {
-			// Do nothing
+			// do nothing
 		}
 
 		@Override
 		public void setCPUSubType(String subType) {
-			// Do nothing
+			// do nothing
 		}
 
 		@Override
 		public void setCreationTime(long millis) {
-			// Do nothing
+			// do nothing
 		}
 
 		@Override
@@ -246,21 +246,15 @@ public class Main {
 		}
 	}
 
-	private final String _dumpName;
-	private final File _virtualRootDirectory;
-	private final boolean _verbose;
-	private final boolean _excludeCoreFile;
-	private static boolean _throwExceptions;
-	private ICoreFileReader _dump;
 	private static final String J9_LIB_NAME = "j9jextract"; //$NON-NLS-1$
+
 	/* This is the buffer size used when copying files into the ZIP stream.
 	 * Making it bigger should improve performance on z/OS and there is only
 	 * one instance of this, anyway.
 	 */
 	private static final int ZIP_BUFFER_SIZE = 8 * 4096;
-	private final DummyBuilder _builder;
 
-	// jextract return codes
+	// return codes
 	private static int JEXTRACT_SUCCESS = 0;
 	private static int JEXTRACT_SYNTAX_ERROR = 1;
 	private static int JEXTRACT_FILE_ERROR = 2;
@@ -270,70 +264,9 @@ public class Main {
 	private static int JEXTRACT_INTERNAL_ERROR = 6;
 
 	public static void main(String[] args) {
-		String dumpName = null;
-		String outputName = null;
-		File virtualRootDirectory = null;
-		boolean ignoreOptions = false;
-		boolean verbose = false;
-		boolean throwExceptions = false;
-		boolean disableBuildIdCheck = false;
-		boolean excludeCoreFile = false;
+		Main dumper = new Main(args);
 
-		if (args.length == 0) {
-			usageMessage(null, JEXTRACT_SUCCESS);
-		}
-
-		for (int i = 0; i < args.length; i++) {
-			if (!ignoreOptions && args[i].startsWith("-")) { //$NON-NLS-1$
-				if ("--".equals(args[i])) { //$NON-NLS-1$
-					ignoreOptions = true;
-				} else if ("-help".equals(args[i])) { //$NON-NLS-1$
-					usageMessage(null, JEXTRACT_SUCCESS);
-				} else if ("-f".equals(args[i])) { //$NON-NLS-1$
-					// The next argument is the name of the executable
-					i++;
-					ensure(i < args.length && !args[i].startsWith("-"), //$NON-NLS-1$
-							"Syntax error: -f option specified with no filename following"); //$NON-NLS-1$
-					File file = new File(args[i]);
-					ensure(file.exists() && file.canRead(),
-							"File specified using -f option (\"" + args[i] + "\") not found."); //$NON-NLS-1$ //$NON-NLS-2$
-					// Pass the executable name into the core readers via a system property
-					System.setProperty("com.ibm.dtfj.corereaders.executable", args[i]); //$NON-NLS-1$
-				} else if ("-p".equals(args[i])) { //$NON-NLS-1$
-					// The next argument is the root directory which we should prepend to all paths (relative or absolute)
-					i++;
-					ensure(i < args.length && !args[i].startsWith("-"), //$NON-NLS-1$
-							"Syntax error: -p option specified but no virtual root directory given"); //$NON-NLS-1$
-					File file = new File(args[i]);
-					ensure(file.exists() && file.canRead() && file.isDirectory(),
-							"Virtual directory specified using -p option (\"" + args[i] + "\") does not exist as a readable directory."); //$NON-NLS-1$ //$NON-NLS-2$
-					virtualRootDirectory = new File(args[i]);
-				} else if (args[i].equals("-v")) { //$NON-NLS-1$
-					verbose = true;
-				} else if (args[i].equals("-e")) { //$NON-NLS-1$
-					throwExceptions = true;
-				} else if (args[i].equals("-r")) { //$NON-NLS-1$
-					disableBuildIdCheck = true;
-				} else if (args[i].equals("-x")) { //$NON-NLS-1$
-					excludeCoreFile = true;
-				} else {
-					usageMessage("Unrecognized option: " + args[i], JEXTRACT_SYNTAX_ERROR); //$NON-NLS-1$
-				}
-			} else if (dumpName == null) {
-				dumpName = args[i];
-			} else if (outputName == null) {
-				outputName = args[i];
-			} else {
-				usageMessage("Too many file arguments: " + args[i], JEXTRACT_SYNTAX_ERROR); //$NON-NLS-1$
-			}
-		}
-
-		ensure(null != dumpName, "No dump file specified"); //$NON-NLS-1$
-
-		Main dumper = new Main(dumpName, virtualRootDirectory, verbose, throwExceptions, disableBuildIdCheck, excludeCoreFile);
-
-		dumper.runZip(outputName);
-		report("jextract complete."); //$NON-NLS-1$
+		dumper.runZip();
 
 		if (dumper._dump != null) {
 			try {
@@ -344,13 +277,22 @@ public class Main {
 		}
 	}
 
-	private static void ensure(boolean condition, String errorMessage) {
+	private final DummyBuilder _builder;
+	private final List<String> _diagnostics;
+	private final ICoreFileReader _dump;
+	private final String _dumpName;
+	private final boolean _excludeCoreFile;
+	private final boolean _throwExceptions;
+	private final boolean _verbose;
+	private final String _zipFileName;
+
+	private void ensure(boolean condition, String errorMessage) {
 		if (false == condition) {
 			usageMessage(errorMessage, JEXTRACT_SYNTAX_ERROR);
 		}
 	}
 
-	private static void usageMessage(String message, int code) {
+	private void usageMessage(String message, int code) {
 		report("Usage: jextract [options] dump_name [output_filename]"); //$NON-NLS-1$
 		report("  output filename defaults to dump_name.zip"); //$NON-NLS-1$
 		report("  options:"); //$NON-NLS-1$
@@ -365,7 +307,7 @@ public class Main {
 		errorMessage(message, code);
 	}
 
-	private static void errorMessage(String message, int code) {
+	private void errorMessage(String message, int code) {
 		if (_throwExceptions) {
 			throw new JExtractFatalException(message, code);
 		} else {
@@ -376,7 +318,7 @@ public class Main {
 		}
 	}
 
-	private static void errorMessage(String message, int code, Throwable throwable) {
+	private void errorMessage(String message, int code, Throwable throwable) {
 		throwable.printStackTrace();
 		if (_throwExceptions) {
 			throw new JExtractFatalException(message, code);
@@ -388,15 +330,80 @@ public class Main {
 		}
 	}
 
-	private Main(String dumpName, File virtualRootDirectory, boolean verbose, boolean throwExceptions,
-			boolean disableBuildIdCheck, boolean excludeCoreFile) {
-		// System.err.println("Main.Main entered dn=" + dumpName + " vrd=" + virtualRootDirectory + " v=" + verbose);
+	private Main(String[] args) {
+		super();
+		_diagnostics = new ArrayList<>();
+
+		boolean disableBuildIdCheck = false;
+		String dumpName = null;
+		boolean excludeCoreFile = false;
+		boolean ignoreOptions = false;
+		String outputName = null;
+		boolean throwExceptions = false;
+		boolean verbose = false;
+		File virtualRootDirectory = null;
+
+		if (args.length == 0) {
+			usageMessage(null, JEXTRACT_SUCCESS);
+		}
+
+		for (int i = 0; i < args.length; i++) {
+			String arg = args[i];
+			if (!ignoreOptions && arg.startsWith("-")) { //$NON-NLS-1$
+				if ("--".equals(arg)) { //$NON-NLS-1$
+					ignoreOptions = true;
+				} else if ("-help".equals(arg)) { //$NON-NLS-1$
+					usageMessage(null, JEXTRACT_SUCCESS);
+				} else if ("-f".equals(arg)) { //$NON-NLS-1$
+					// The next argument is the name of the executable
+					i += 1;
+					ensure(i < args.length && !args[i].startsWith("-"), //$NON-NLS-1$
+							"Syntax error: -f option specified with no filename following"); //$NON-NLS-1$
+					arg = args[i];
+					File file = new File(arg);
+					ensure(file.exists() && file.canRead(),
+							"File specified using -f option (\"" + arg + "\") not found."); //$NON-NLS-1$ //$NON-NLS-2$
+					// Pass the executable name into the core readers via a system property
+					System.setProperty("com.ibm.dtfj.corereaders.executable", arg); //$NON-NLS-1$
+				} else if ("-p".equals(arg)) { //$NON-NLS-1$
+					// The next argument is the root directory which we should prepend to all paths (relative or absolute)
+					i += 1;
+					ensure(i < args.length && !args[i].startsWith("-"), //$NON-NLS-1$
+							"Syntax error: -p option specified but no virtual root directory given"); //$NON-NLS-1$
+					arg = args[i];
+					File file = new File(arg);
+					ensure(file.exists() && file.canRead() && file.isDirectory(),
+							"Virtual directory specified using -p option (\"" + arg + "\") does not exist as a readable directory."); //$NON-NLS-1$ //$NON-NLS-2$
+					virtualRootDirectory = new File(arg);
+				} else if (arg.equals("-v")) { //$NON-NLS-1$
+					verbose = true;
+				} else if (arg.equals("-e")) { //$NON-NLS-1$
+					throwExceptions = true;
+				} else if (arg.equals("-r")) { //$NON-NLS-1$
+					disableBuildIdCheck = true;
+				} else if (arg.equals("-x")) { //$NON-NLS-1$
+					excludeCoreFile = true;
+				} else {
+					usageMessage("Unrecognized option: " + arg, JEXTRACT_SYNTAX_ERROR); //$NON-NLS-1$
+				}
+			} else if (dumpName == null) {
+				dumpName = arg;
+			} else if (outputName == null) {
+				outputName = arg;
+			} else {
+				usageMessage("Too many file arguments: " + arg, JEXTRACT_SYNTAX_ERROR); //$NON-NLS-1$
+			}
+		}
+
+		if (dumpName == null) {
+			usageMessage("No dump file specified", JEXTRACT_SYNTAX_ERROR); //$NON-NLS-1$
+		}
 
 		_dumpName = dumpName;
-		_virtualRootDirectory = virtualRootDirectory;
 		_verbose = verbose;
 		_throwExceptions = throwExceptions;
 		_excludeCoreFile = excludeCoreFile;
+		_zipFileName = (null != outputName) ? outputName : dumpName.concat(".zip"); //$NON-NLS-1$
 
 		try {
 			System.loadLibrary(J9_LIB_NAME);
@@ -426,34 +433,43 @@ public class Main {
 			errorMessage(e.getMessage(), JEXTRACT_FILE_ERROR);
 		}
 
+		ICoreFileReader dump = null;
+
 		try {
-			_dump = DumpFactory.createDumpForCore(reader, _verbose);
+			dump = DumpFactory.createDumpForCore(reader, _verbose);
 		} catch (Exception e) {
 			errorMessage("Error. Unexpected Exception occurred opening: " + dumpName, JEXTRACT_FILE_ERROR, e); //$NON-NLS-1$
 		}
 
-		if (null == _dump) {
+		if (null == dump) {
 			errorMessage("Error. Dump type not recognised, file: " + dumpName, JEXTRACT_FILE_ERROR); //$NON-NLS-1$
+			try {
+				reader.close();
+			} catch (IOException e) {
+				// ignore
+			}
 		}
-		if (_dump.isTruncated()) {
+
+		if (dump.isTruncated()) {
 			report("Warning: dump file is truncated. Extracted information may be incomplete."); //$NON-NLS-1$
 		}
 
 		long environmentPointer = 0;
 		try {
-			environmentPointer = getEnvironmentPointer(_dump.getAddressSpace(), disableBuildIdCheck);
+			environmentPointer = getEnvironmentPointer(dump.getAddressSpace(), disableBuildIdCheck);
 		} catch (Throwable t) {
 			errorMessage("Error. Unable to locate executable for " + dumpName, JEXTRACT_INTERNAL_ERROR, t); //$NON-NLS-1$
 		}
 
-		_builder = new DummyBuilder(_virtualRootDirectory, environmentPointer);
+		_builder = new DummyBuilder(virtualRootDirectory, environmentPointer);
+		_dump = dump;
 		// extract does the bulk of core-reader processing
 		_dump.extract(_builder);
 
 		report("Read memory image from " + _dumpName); //$NON-NLS-1$
 	}
 
-	private void runZip(String outputName) {
+	private void runZip() {
 		// Zip up the dump, libraries and (optionally) XML file
 		Set<String> files = new LinkedHashSet<>();
 		files.add(_dumpName);
@@ -482,33 +498,35 @@ public class Main {
 				files.add(omrtrace);
 			}
 
-			// Add the debugger extension library into the zip, available only on AIX
+			// Add the debugger extension library into the zip, available only on AIX.
 			String osName = System.getProperty("os.name"); //$NON-NLS-1$
 			if ("AIX".equalsIgnoreCase(osName)) { //$NON-NLS-1$
 				files.add("libdbx_j9.so"); //$NON-NLS-1$
 			}
 		} catch (Exception e) {
-			// Ignore
+			// ignore
 		}
 
-		String zipFileName = (null != outputName) ? outputName : _dumpName.concat(".zip"); //$NON-NLS-1$
 		Set<String> excluded = _excludeCoreFile ? Collections.singleton(_dumpName) : Collections.emptySet();
 		try {
-			createZipFromFileNames(zipFileName, files, excluded, _builder);
+			createZipFromFileNames(files, excluded, _builder);
 		} catch (Exception e) {
 			errorMessage(e.getMessage(), JEXTRACT_INTERNAL_ERROR, e);
 		}
+
+		report("jextract complete."); //$NON-NLS-1$
 	}
 
-	private static void report(String message) {
+	private void report(String message) {
 		System.err.println(message);
+		_diagnostics.add(message);
 	}
 
-	private static void createZipFromFileNames(String zipFileName, Collection<String> fileNames,
-			Collection<String> excludedNames, Builder fileResolver) throws Exception {
-		report("Creating archive file: " + zipFileName); //$NON-NLS-1$
+	private void createZipFromFileNames(Collection<String> fileNames, Collection<String> excludedNames,
+			Builder fileResolver) throws Exception {
+		report("Creating archive file: " + _zipFileName); //$NON-NLS-1$
 		try {
-			ZipOutputStream zip = new ZipOutputStream(new FileOutputStream(zipFileName));
+			ZipOutputStream zip = new ZipOutputStream(new FileOutputStream(_zipFileName));
 			if (!excludedNames.isEmpty()) {
 				final String excludedFilesFileName = "excluded-files.txt"; //$NON-NLS-1$
 
@@ -579,10 +597,40 @@ public class Main {
 					zip.closeEntry();
 				}
 			}
+
+			// Add execution log
+			{
+				final String diagnosticLogFileName = "execution-log.txt"; //$NON-NLS-1$
+
+				report("Adding \"" + diagnosticLogFileName + "\""); //$NON-NLS-1$ //$NON-NLS-2$
+
+				ZipEntry zipEntry = new ZipEntry(diagnosticLogFileName);
+
+				zipEntry.setTime(System.currentTimeMillis());
+
+				zip.putNextEntry(zipEntry);
+
+				try {
+					@SuppressWarnings("resource" /* we can't close noteWriter */)
+					PrintWriter noteWriter = new PrintWriter(new OutputStreamWriter(zip, StandardCharsets.UTF_8));
+
+					noteWriter.println("Execution log"); //$NON-NLS-1$
+					noteWriter.println("============="); //$NON-NLS-1$
+
+					for (String message : _diagnostics) {
+						noteWriter.println(message);
+					}
+
+					noteWriter.flush();
+				} finally {
+					zip.closeEntry();
+				}
+			}
+
 			try {
 				zip.close();
 			} catch (IOException e) {
-				throw new Exception("Failure closing archive file (" + zipFileName + ") : " + e.getMessage()); //$NON-NLS-1$ //$NON-NLS-2$
+				throw new Exception("Failure closing archive file (" + _zipFileName + "): " + e.getMessage()); //$NON-NLS-1$ //$NON-NLS-2$
 			}
 		} catch (FileNotFoundException e) {
 			throw new Exception("Could not find archive file to output to: " + e.getMessage()); //$NON-NLS-1$
