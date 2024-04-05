@@ -4439,6 +4439,167 @@ void JitShutdown(J9JITConfig * jitConfig)
    TRC_JIT_ShutDownEnd(vmThread, "end of JitShutdown function");
    }
 
+#if defined (LINUX)
+//   Since Linux 4.0 only users with the CAP_SYS_ADMIN capability can get PFNs.
+//   In 4.0 and 4.1 opens by unprivileged fail with -EPERM.  Starting from
+//   4.2 the PFN field is zeroed if the user does not have CAP_SYS_ADMIN.
+//   Reason: information about PFNs helps in exploiting Rowhammer vulnerability.
+//   See https://www.kernel.org/doc/Documentation/admin-guide/mm/pagemap.rst
+typedef struct __attribute__ ((__packed__))
+   {
+   union
+      {
+      uint64_t _pmd; // page memory descriptor
+      uint64_t _pageFrameNumber : 55; // bits 0..54 represent the page frame number (PFN) if present
+                                      // if not present, they represent the swap type and offset
+      struct
+         {
+         uint64_t _swapType: 5;    // swap type if swapped
+         uint64_t _swapOffset: 50; // swap offset if swapped
+         uint64_t _softDirty: 1;   // bit 55: pte is soft dirty
+         uint64_t _exclusive: 1;   // bit 56: page exclussively mapped
+         uint64_t _wp:1;           // bit 57: pte is uffd-wp write-protected (since 5.13)
+         uint64_t _zero: 3;        // bits 58..60 are zero
+         uint64_t _filePage: 1;    // bit 61: page is file-page or shared-anon
+         uint64_t _swapped: 1;     // bit 62: page is swapped
+         uint64_t _present: 1;     // bit 63: page is present
+         };
+       };
+   } pmd_t;
+
+// The following function is used to count the number of pages from a given
+// memory range that are present in physical memory, swapped or file-paged
+// It is used for diagnostics only since it has a large runtime overhead
+#include <fcntl.h> // open, O_RDONLY
+int countPresentPages(uintptr_t startAddr, uintptr_t endAddr, int &swappedCount, int &filePageCount)
+   {
+   int presentCount = 0;
+   size_t pageSize = sysconf(_SC_PAGESIZE);
+   if (startAddr >= endAddr)
+      return -1;
+
+   static const char *pagemapPath = "/proc/self/pagemap";
+
+   int pagemapfd = open(pagemapPath, O_RDONLY);
+   if (pagemapfd < 0)
+      {
+      perror("cannot open pagemap file");
+      return -1;
+      }
+   for (uintptr_t i = startAddr; i < endAddr; i += pageSize)
+      {
+      pmd_t pmd;
+      // read at given offset
+      if (pread(pagemapfd, &pmd._pmd, sizeof(pmd._pmd), (i / pageSize) * sizeof(pmd)) != sizeof(pmd))
+         {
+         perror("cannot read from pagemap file");
+         close(pagemapfd);
+         return -1;
+         }
+      if (pmd._pmd)
+         {
+         if (pmd._present)
+            {
+            presentCount++;
+            }
+         else
+            {
+            if (pmd._swapped)
+               swappedCount++;
+            if (pmd._filePage)
+               filePageCount++;
+            }
+         }
+      }
+    close(pagemapfd);
+    return presentCount;
+   }
+
+
+int countPresentPagesInSegment(const J9MemorySegment *segment, int &swappedCount, int &filePageCount)
+   {
+   return countPresentPages((uintptr_t)segment->heapBase, (uintptr_t)segment->heapTop, swappedCount, filePageCount);
+   }
+#endif // LINUX
+
+// getRSS_kb() returns the Resident Set Size (RSS) of the current process in kilobytes.
+// It collects this information from the "VmRSS" field in the /proc/self/status pseudofile
+// on Linux systems. It is used for diagnostics only.
+size_t getRSS_Kb()
+   {
+   size_t rss = 0;
+#if defined (LINUX)
+   ::FILE* statFile = fopen("/proc/self/status", "r");
+   if (statFile)
+      {
+      static const int bufferSize = 128;
+      char buffer[bufferSize];
+      bool foundRSS= false;
+
+      // Looking for something like
+      // VmRSS:    290028 kB
+      while (fgets(buffer, bufferSize, statFile))
+         {
+         if (strncmp(buffer, "VmRSS:", 6) == 0)
+            {
+            if (sscanf(buffer, "VmRSS: %zu kB", &rss) == 1)
+               foundRSS = true;
+            break;
+            }
+         }
+      fclose(statFile);
+      if (!foundRSS)
+         rss = 0;
+      }
+#endif // LINUX
+   return rss;
+   }
+
+void disclaimDataCaches(uint64_t crtElapsedTime)
+   {
+   size_t rssBefore = getRSS_Kb();
+   int numDisclaimed = TR_DataCacheManager::getManager()->disclaimAllDataCaches();
+   size_t rssAfter = getRSS_Kb();
+   if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "t=%u JIT disclaimed %d Data Cache segments  RSS before=%zu KB, RSS after=%zu KB, delta=%zu KB",
+                                     (uint32_t)crtElapsedTime, numDisclaimed, rssBefore, rssAfter, rssBefore - rssAfter);
+   }
+
+void memoryDisclaimLogic(TR::CompilationInfo *compInfo, uint64_t crtElapsedTime, uint8_t jitState)
+   {
+   static uint64_t lastDataCacheDisclaimTime = 0;
+   static int32_t  lastNumAllocatedDataCaches = 0;
+
+   J9JITConfig *jitConfig = compInfo->getJITConfig();
+
+#if defined(J9VM_OPT_JITSERVER)
+   if (J9::PersistentInfo::_remoteCompilationMode == JITServer::SERVER)
+      return;
+#endif
+   // Don't do anything during startup phase
+   J9JavaVM *javaVM = jitConfig->javaVM;
+   if (javaVM->phase != J9VM_PHASE_NOT_STARTUP || jitState == STARTUP_STATE)
+      return;
+
+   if (TR_DataCacheManager::getManager()->isDisclaimEnabled())
+      {
+      // Ensure we don't do it too often
+      if (crtElapsedTime > lastDataCacheDisclaimTime + TR::Options::_minTimeBetweenMemoryDisclaims)
+         {
+         // Disclaim if at least one data cache has been allocated since the last disclaim
+         // or if there was a large time interval since the last disclaim
+         if (TR_DataCacheManager::getManager()->numAllocatedCaches() > lastNumAllocatedDataCaches ||
+             crtElapsedTime > lastDataCacheDisclaimTime + 12 * TR::Options::_minTimeBetweenMemoryDisclaims)
+            {
+            disclaimDataCaches(crtElapsedTime);
+            lastDataCacheDisclaimTime = crtElapsedTime; // Update the time when disclaim was last performed
+            lastNumAllocatedDataCaches = TR_DataCacheManager::getManager()->numAllocatedCaches();
+            }
+         }
+      }
+   }
+
+
 static void samplingObservationsLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInfo)
    {
    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseHeartbeat))
@@ -5127,6 +5288,8 @@ static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInf
             }
          }
       }
+
+   memoryDisclaimLogic(compInfo, crtElapsedTime, newState);
 
    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseJitState))
       {

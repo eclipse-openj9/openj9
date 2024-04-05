@@ -50,6 +50,7 @@
 #include "env/PersistentInfo.hpp"
 #include "env/jittypes.h"
 #include "env/VerboseLog.hpp"
+#include "env/VMAccessCriticalSection.hpp"
 #include "il/Block.hpp"
 #include "il/DataTypes.hpp"
 #include "il/Node.hpp"
@@ -4814,22 +4815,11 @@ void TR_IProfiler::dumpIPBCDataCallGraph(J9VMThread* vmThread)
       return;
       }
 
-   // Need to have VM access to block GC from invalidating entries
-   // Application threads may still add data, but that is safe
-   // Ideally we should use  TR::VMAccessCriticalSection dumpInfoCS(fe);
-   // here, but this construct wants asserts that an application thread must have vmAccess.
-   // This might not be true at shutdown when dumpInfo is likely to be called
-   //
-   bool haveAcquiredVMAccess = false;
-   if (!(vmThread->publicFlags &  J9_PUBLIC_FLAGS_VM_ACCESS)) // I don't already have VM access
-      {
-      acquireVMAccessNoSuspend(vmThread);
-      haveAcquiredVMAccess = true;
-      }
-
    J9JavaVM *javaVM = vmThread->javaVM;
    J9InternalVMFunctions *vmFunctions = javaVM->internalVMFunctions;
    TR_J9VMBase * fe = TR_J9VMBase::get(javaVM->jitConfig, vmThread);
+
+   TR::VMAccessCriticalSection dumpCallGraph(fe);
 
    fprintf(stderr, "Aggregating per method ...\n");
    for (int32_t bucket = 0; bucket < TR::Options::_iProfilerBcHashTableSize; bucket++)
@@ -4883,8 +4873,6 @@ void TR_IProfiler::dumpIPBCDataCallGraph(J9VMThread* vmThread)
          }
       }
    aggregationHT.sortByNameAndPrint(fe);
-   if (haveAcquiredVMAccess)
-      releaseVMAccessNoSuspend(vmThread);
 
    fprintf(stderr, "Finished dumping info\n");
    }
