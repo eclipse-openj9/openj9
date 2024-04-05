@@ -5806,12 +5806,16 @@ static void deleteMethodHandleRef(J9::MethodHandleThunkDetails & details, J9VMTh
       vmThread->javaVM->internalVMFunctions->j9jni_deleteGlobalRef((JNIEnv*)vmThread, (jobject)details.getArgRef(), false);
    }
 
-
+/**
+ * @attention Must be called with VMAccess in hand.
+ */
 void *TR::CompilationInfo::compileMethod(J9VMThread * vmThread, TR::IlGeneratorMethodDetails & details, void *oldStartPC,
                                         TR_YesNoMaybe requireAsyncCompile,
                                         TR_CompilationErrorCode *compErrCode,
                                         bool *queued, TR_OptimizationPlan * optimizationPlan)
    {
+   TR_ASSERT_FATAL(vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS, "%p does not have VMAccess\n", vmThread);
+
    TR_J9VMBase * fe = TR_J9VMBase::get(_jitConfig, vmThread);
    TR_ASSERT(!fe->isAOT_DEPRECATED_DO_NOT_USE(), "We need a non-AOT vm here.");
 
@@ -5952,6 +5956,9 @@ extern bool
 validateSharedClassAOTHeader(J9JavaVM *javaVM, J9VMThread *curThread, TR::CompilationInfo *compInfo, TR_FrontEnd *fe);
 #endif
 
+/**
+ * @attention Must be called with VMAccess in hand.
+ */
 void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread * vmThread, TR::IlGeneratorMethodDetails & details,
                                                   void *oldStartPC, TR_YesNoMaybe requireAsyncCompile,
                                                   TR_CompilationErrorCode *compErrCode,

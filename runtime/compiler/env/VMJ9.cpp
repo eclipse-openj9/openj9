@@ -278,50 +278,46 @@ TR_J9VMBase::instanceOfOrCheckCastNoCacheUpdate(J9Class *instanceClass, J9Class*
    return ::instanceOfOrCheckCastNoCacheUpdate(instanceClass, castClass);
    }
 
-// Points to address: what if vmThread is not the compilation thread.
 // What if the compilation thread does not have the classUnloadMonitor.
 // What if jitConfig does not exist.
 // What if we already have the compilationShouldBeInterrupted flag set.
 // How do we set the error code when we throw an exception
 
-// IMPORTANT: acquireVMAccessIfNeeded could throw an exception,
-// hence it is important to call this within a try block.
+// IMPORTANT: acquireVMAccessIfNeeded could throw an exception if the vmThread
+// **IS** a Compilation Thread; hence it is important to call this within a try
+// block.
 bool acquireVMaccessIfNeeded(J9VMThread *vmThread, TR_YesNoMaybe isCompThread)
       {
-      bool haveAcquiredVMAccess = false;
-      if (TR::Options::getCmdLineOptions() == 0 || // if options haven't been created yet, there is no danger
-          TR::Options::getCmdLineOptions()->getOption(TR_DisableNoVMAccess))
-          return false; // don't need to acquire VM access
-
       // we need to test if the thread has VM access
       TR_ASSERT(vmThread, "vmThread must be not null");
 
-      // We need to acquire VMaccess only for the compilation thread
-      if (isCompThread == TR_no)
-         {
-         TR_ASSERT((vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS), "Must have vm access if this is not a compilation thread");
-         return false;
-         }
+      bool haveAcquiredVMAccess = false;
+      J9JITConfig *jitConfig = vmThread->javaVM->jitConfig;
+      TR::CompilationInfo *compInfo = TR::CompilationInfo::get(jitConfig);
+      TR::CompilationInfoPerThread *compInfoPT = isCompThread != TR_no
+                                                 ? compInfo->getCompInfoForThread(vmThread)
+                                                 : NULL;
 
-      // scan all compilation threads
-      J9JITConfig        *jitConfig = vmThread->javaVM->jitConfig;
-      TR::CompilationInfo *compInfo  = TR::CompilationInfo::get(jitConfig);
-      TR::CompilationInfoPerThread *compInfoPT = compInfo->getCompInfoForThread(vmThread);
-
-      // We need to acquire VMaccess only for the compilation thread
-      if (isCompThread == TR_maybe)
+      // If the current thread is not a compilation thread, acquire VM Access
+      // and return immediately.
+      if (!compInfoPT)
          {
-         if (!compInfoPT)
+         if (!(vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS))
             {
-            TR_ASSERT((vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS), "Must have vm access if this is not a compilation thread");
-            return false;
+            acquireVMAccessNoSuspend(vmThread);
+            haveAcquiredVMAccess = true;
             }
+         return haveAcquiredVMAccess;
          }
 
       // At this point we know we deal with a compilation thread
-      TR_ASSERT(compInfoPT, "A compilation thread must have an associated compilationInfo");
 
-      if (!(vmThread->publicFlags &  J9_PUBLIC_FLAGS_VM_ACCESS)) // I don't already have VM access
+      if (TR::Options::getCmdLineOptions() == 0 || // if options haven't been created yet, there is no danger
+          TR::Options::getCmdLineOptions()->getOption(TR_DisableNoVMAccess))
+         return false; // don't need to acquire VM access
+
+      // I don't already have VM access
+      if (!(vmThread->publicFlags &  J9_PUBLIC_FLAGS_VM_ACCESS))
          {
          if (0 == vmThread->javaVM->internalVMFunctions->internalTryAcquireVMAccessWithMask(vmThread, J9_PUBLIC_FLAGS_HALT_THREAD_ANY_NO_JAVA_SUSPEND))
             {
