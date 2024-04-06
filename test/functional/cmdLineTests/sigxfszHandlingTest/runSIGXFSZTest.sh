@@ -26,7 +26,7 @@
 TEST_CMD=$1
 
 # Set the file size limit to raise SIGXFSZ signal
-ulimit -f 4000
+ulimit -f 6000
 
 # Print the value of the file size limit
 ulimit -f
