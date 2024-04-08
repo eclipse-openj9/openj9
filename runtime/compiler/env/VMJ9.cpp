@@ -4053,6 +4053,21 @@ TR_J9VMBase::initializeLocalArrayHeader(TR::Compilation * comp, TR::Node * alloc
    TR::Node* node = TR::Node::create(allocationNode, TR::iconst, 0, instanceSize);
    node = TR::Node::createWithSymRef(TR::istorei, 2, 2, allocationNode, node, arraySizeSymRef);
    prevTree = TR::TreeTop::create(comp, prevTree, node);
+
+#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+   if (TR::Compiler->om.isIndexableDataAddrPresent())
+      {
+      // -----------------------------------------------------------------------------------
+      // Initialize data address field
+      // -----------------------------------------------------------------------------------
+      TR::SymbolReference *dataAddrFieldOffsetSymRef = comp->getSymRefTab()->findOrCreateContiguousArrayDataAddrFieldShadowSymRef();
+      TR::Node *headerSizeNode = TR::Node::lconst(allocationNode, TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
+      TR::Node *startOfDataNode = TR::Node::create(TR::aladd, 2, allocationNode, headerSizeNode);
+
+      TR::Node *storeDataAddrPointerNode = TR::Node::createWithSymRef(TR::astorei, 2, allocationNode, startOfDataNode, 0, dataAddrFieldOffsetSymRef);
+      prevTree = TR::TreeTop::create(comp, prevTree, storeDataAddrPointerNode);
+      }
+#endif /* J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION */
    }
 
 
