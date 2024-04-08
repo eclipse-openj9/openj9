@@ -1058,6 +1058,23 @@ def set_job_variables(job_type) {
     USE_TESTENV_PROPERTIES = params.USE_TESTENV_PROPERTIES ?: false
     echo "Using USE_TESTENV_PROPERTIES = ${USE_TESTENV_PROPERTIES}"
 
+    // If personal repo and branch are set, test jobs need to be regenerated (with LIGHT_WEIGHT_CHECKOUT = false)
+    // to take personal repo and branch.
+    // Therefore, set LIGHT_WEIGHT_CHECKOUTto false and GENERATE_JOBS to true.
+    // This is a known Jenkins issue: https://issues.jenkins.io/browse/JENKINS-42971
+    if (!ADOPTOPENJDK_REPO.contains("adoptium/aqa-tests")) {
+        LIGHT_WEIGHT_CHECKOUT = false
+        GENERATE_JOBS = true
+    }
+
+    echo "------ Test Pipeline Parameters ------"
+    echo "ADOPTOPENJDK_REPO = ${ADOPTOPENJDK_REPO}"
+    echo "ADOPTOPENJDK_BRANCH = ${ADOPTOPENJDK_BRANCH}"
+    echo "EXTRA_OPTIONS = ${EXTRA_OPTIONS}"
+    echo "GENERATE_JOBS = ${GENERATE_JOBS}"
+    echo "LIGHT_WEIGHT_CHECKOUT = ${LIGHT_WEIGHT_CHECKOUT}"
+    echo "--------------------------------------"
+
     switch (job_type) {
         case "build":
             // set the node the Jenkins build would run on
