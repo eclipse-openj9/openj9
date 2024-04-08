@@ -356,7 +356,6 @@ J9::ARM64::TreeEvaluator::generateFillInDataBlockSequenceForUnresolvedField(TR::
    {
    TR::Compilation *comp = cg->comp();
    TR::SymbolReference *symRef = node->getSymbolReference();
-   bool is64Bit = comp->target().is64Bit();
    bool isStatic = symRef->getSymbol()->getKind() == TR::Symbol::IsStatic;
 
    TR_RuntimeHelper helperIndex = isWrite? (isStatic ?  TR_jitResolveStaticFieldSetterDirect: TR_jitResolveFieldSetterDirect):
@@ -6555,7 +6554,6 @@ static TR::Register *inlineStringLatin1Inflate(TR::Node *node, TR::CodeGenerator
     *    vstpoffq	vtmp0Reg, vtmp1Reg, [dstEndReg, #-32]
     * LDONE:
     */
-   TR_ASSERT_FATAL(cg->comp()->target().is64Bit(), "StringLatin1.inflate only supported on 64-bit targets");
    TR_ASSERT_FATAL(cg->getSupportsInlineStringLatin1Inflate(), "Inlining of StringLatin1.inflate not supported");
    TR_ASSERT_FATAL(!TR::Compiler->om.canGenerateArraylets(), "StringLatin1.inflate intrinsic is not supported with arraylets");
    TR_ASSERT_FATAL_WITH_NODE(node, node->getNumChildren() == 5, "Wrong number of children in inlineStringLatin1Inflate");
