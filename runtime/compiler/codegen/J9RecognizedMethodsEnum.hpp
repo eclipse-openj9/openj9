@@ -455,6 +455,7 @@
 
    sun_misc_Unsafe_ensureClassInitialized,
    sun_misc_Unsafe_allocateInstance,
+   sun_misc_Unsafe_allocateUninitializedArray0,
 
    jdk_internal_misc_Unsafe_copyMemory0,
    jdk_internal_loader_NativeLibraries_load,
