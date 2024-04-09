@@ -50,8 +50,7 @@ MM_ScavengerBackOutScanner::scanAllSlots(MM_EnvironmentBase *env)
 			if ((MEMORY_TYPE_NEW == (region->getTypeFlags() & MEMORY_TYPE_NEW))) {
 				MM_HeapRegionDescriptorStandardExtension *regionExtension = MM_ConfigurationDelegate::getHeapRegionDescriptorStandardExtension(env, region);
 				for (uintptr_t i = 0; i < regionExtension->_maxListIndex; i++) {
-					MM_ReferenceObjectList *list = &regionExtension->_referenceObjectLists[i];
-					list->resetLists();
+					regionExtension->_referenceObjectLists[i].resetLists();
 				}
 			}
 		}
@@ -61,14 +60,24 @@ MM_ScavengerBackOutScanner::scanAllSlots(MM_EnvironmentBase *env)
 	MM_RootScanner::scanAllSlots(env);
 
 	if (!_extensions->isConcurrentScavengerEnabled()) {
-	/* Back out Ownable Synchronizer Processing */
+		/* Back out Ownable Synchronizer and Continuation Processing */
 		MM_HeapRegionDescriptorStandard *region = NULL;
 		GC_HeapRegionIteratorStandard regionIterator(_extensions->heapRegionManager);
 		while (NULL != (region = regionIterator.nextRegion())) {
 			MM_HeapRegionDescriptorStandardExtension *regionExtension = MM_ConfigurationDelegate::getHeapRegionDescriptorStandardExtension(env, region);
 			for (uintptr_t i = 0; i < regionExtension->_maxListIndex; i++) {
-				MM_OwnableSynchronizerObjectList *list = &regionExtension->_ownableSynchronizerObjectLists[i];
-				list->backoutList();
+				/**
+				 * For Ownable Synchronizers lists, back out all of regions (includes tenure region, which is backed up during startProcessing).
+				 * Tenure list might have gotten new elements during main Scavenge phase and it is important to restore the list, since it will be iterated later during Marking Clearable phase.
+				 */
+				regionExtension->_ownableSynchronizerObjectLists[i].backoutList();
+				if ((MEMORY_TYPE_NEW == (region->getTypeFlags() & MEMORY_TYPE_NEW))) {
+					/**
+					 * For Continuation lists, Consistent with startProcessing that was earlier (in this GC cycle) called only on NEW regions.
+					 * Tenure list cannot get new elements, since they are added only during Scavenge Clearable phase that cannot be reached if there was a Scavenge abort.
+					 */
+					regionExtension->_continuationObjectLists[i].backoutList();
+				}
 			}
 		}
 	}
@@ -319,86 +328,4 @@ MM_ScavengerBackOutScanner::backoutUnfinalizedObjects(MM_EnvironmentStandard *en
 	env->getGCEnvironment()->_unfinalizedObjectBuffer->flush(env);
 }
 #endif /* J9VM_GC_FINALIZATION */
-
-void
-MM_ScavengerBackOutScanner::backoutContinuationObjects(MM_EnvironmentStandard *env)
-{
-	MM_Heap *heap = _extensions->heap;
-	MM_HeapRegionManager *regionManager = heap->getHeapRegionManager();
-	MM_HeapRegionDescriptorStandard *region = NULL;
-	bool const compressed = _extensions->compressObjectReferences();
-
-	GC_HeapRegionIteratorStandard regionIterator(regionManager);
-	while (NULL != (region = regionIterator.nextRegion())) {
-		MM_HeapRegionDescriptorStandardExtension *regionExtension = MM_ConfigurationDelegate::getHeapRegionDescriptorStandardExtension(env, region);
-		for (uintptr_t i = 0; i < regionExtension->_maxListIndex; i++) {
-			MM_ContinuationObjectList *list = &regionExtension->_continuationObjectLists[i];
-			list->startProcessing();
-		}
-	}
-
-#if defined(OMR_GC_CONCURRENT_SCAVENGER)
-	if (_extensions->isConcurrentScavengerEnabled()) {
-		GC_HeapRegionIteratorStandard regionIterator2(regionManager);
-		while (NULL != (region = regionIterator2.nextRegion())) {
-			MM_HeapRegionDescriptorStandardExtension *regionExtension = MM_ConfigurationDelegate::getHeapRegionDescriptorStandardExtension(env, region);
-			for (uintptr_t i = 0; i < regionExtension->_maxListIndex; i++) {
-				MM_ContinuationObjectList *list = &regionExtension->_continuationObjectLists[i];
-				if (!list->wasEmpty()) {
-					omrobjectptr_t object = list->getPriorList();
-					while (NULL != object) {
-						MM_ForwardedHeader forwardHeader(object, compressed);
-						omrobjectptr_t forwardPtr = forwardHeader.getNonStrictForwardedObject();
-						if (NULL != forwardPtr) {
-							if (forwardHeader.isSelfForwardedPointer()) {
-								forwardHeader.restoreSelfForwardedPointer();
-							} else {
-								object = forwardPtr;
-							}
-						}
-
-						omrobjectptr_t next = _extensions->accessBarrier->getContinuationLink(object);
-						env->getGCEnvironment()->_continuationObjectBuffer->add(env, object);
-
-						object = next;
-					}
-				}
-			}
-		}
-	} else
-#endif /* OMR_GC_CONCURRENT_SCAVENGER */
-	{
-		GC_HeapRegionIteratorStandard regionIterator2(regionManager);
-		while (NULL != (region = regionIterator2.nextRegion())) {
-			MM_HeapRegionDescriptorStandardExtension *regionExtension = MM_ConfigurationDelegate::getHeapRegionDescriptorStandardExtension(env, region);
-			for (uintptr_t i = 0; i < regionExtension->_maxListIndex; i++) {
-				MM_ContinuationObjectList *list = &regionExtension->_continuationObjectLists[i];
-				if (!list->wasEmpty()) {
-					omrobjectptr_t object = list->getPriorList();
-					while (NULL != object) {
-						omrobjectptr_t next = NULL;
-						MM_ForwardedHeader forwardHeader(object, compressed);
-						Assert_MM_false(forwardHeader.isForwardedPointer());
-						if (forwardHeader.isReverseForwardedPointer()) {
-							omrobjectptr_t originalObject = forwardHeader.getReverseForwardedPointer();
-							Assert_MM_true(NULL != originalObject);
-							next = _extensions->accessBarrier->getContinuationLink(originalObject);
-							env->getGCEnvironment()->_continuationObjectBuffer->add(env, originalObject);
-						} else {
-							next = _extensions->accessBarrier->getContinuationLink(object);
-							env->getGCEnvironment()->_continuationObjectBuffer->add(env, object);
-						}
-
-						object = next;
-					}
-				}
-			}
-		}
-	}
-
-	/* restore everything to a flushed state before exiting */
-	env->getGCEnvironment()->_continuationObjectBuffer->flush(env);
-
-	/* Done backout */
-}
 #endif /* defined(OMR_GC_MODRON_SCAVENGER) */
