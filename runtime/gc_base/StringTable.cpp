@@ -556,6 +556,7 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 	bool anonClassName = J9_ARE_ANY_BITS_SET(stringFlags, J9_STR_ANON_CLASS_NAME);
 	bool internString = J9_ARE_ANY_BITS_SET(stringFlags, J9_STR_INTERN);
 	UDATA unicodeLength = 0;
+	UDATA zerosFound = 0;
 
 	Trc_MM_createJavaLangString_Entry(vmThread, length, data, stringFlags);
 
@@ -596,6 +597,12 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 	} else {
 		for (UDATA i = 0; i < length; ++i) {
 			if (data[i] > 0x7F) {
+				/* Check for 0 in modified UTF8. */
+				if ((0xC0 == data[i]) && ((i + 1) < length) && (0x80 == data[i + 1])) {
+					zerosFound += 1;
+					i += 1;
+					continue;
+				}
 				isASCII = false;
 				if (compressStrings && (J2SE_VERSION(vm) >= J2SE_V17)) {
 					U_8 *dataTmp = data + i;
@@ -623,7 +630,13 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 
 		if (isASCII) {
 			for (UDATA i = 0; i < length; ++i) {
-				hash = (hash << 5) - hash + data[i];
+				U_8 c = data[i];
+				/* Look for the start of the modified UTF8 sequence for 0, which is validated when isASCII is set. */
+				if (0xC0 == c) {
+					c = 0;
+					i += 1;
+				}
+				hash = (hash << 5) - hash + c;
 			}
 		} else {
 			hash = VM_VMHelpers::computeHashForUTF8(data, length);
@@ -653,7 +666,7 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 
 		if (!isUnicode) {
 			if (isASCII) {
-				unicodeLength = length;
+				unicodeLength = length - zerosFound;
 			} else {
 				UDATA tempLength = length;
 				U_8 *tempData = data;
@@ -707,21 +720,35 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 				UDATA lastSlash = 0;
 				if (translateSlashes) {
 					if (isASCII) {
+						UDATA storeIndex = 0;
 						for (UDATA i = 0; i < length; ++i) {
 							U_8 c = data[i];
 							if ('/' == c) {
 								lastSlash = i;
 								c = '.';
+							/* Look for the start of the modified UTF8 sequence for 0, which is validated when isASCII is set. */
+							} else if (0xC0 == c) {
+								c = 0;
+								i += 1;
 							}
-							J9JAVAARRAYOFBYTE_STORE(vmThread, charArray, i, c);
+							J9JAVAARRAYOFBYTE_STORE(vmThread, charArray, storeIndex, c);
+							storeIndex += 1;
 						}
 					} else {
 						lastSlash = storeLatin1ByteArrayhelper(vmThread, data, length, charArray, true);
 					}
 				} else {
 					if (isASCII) {
+						UDATA storeIndex = 0;
 						for (UDATA i = 0; i < length; ++i) {
-							J9JAVAARRAYOFBYTE_STORE(vmThread, charArray, i, data[i]);
+							U_8 c = data[i];
+							/* Look for the start of the modified UTF8 sequence for 0, which is validated when isASCII is set. */
+							if (0xC0 == c) {
+								c = 0;
+								i += 1;
+							}
+							J9JAVAARRAYOFBYTE_STORE(vmThread, charArray, storeIndex, c);
+							storeIndex += 1;
 						}
 					} else {
 						lastSlash = storeLatin1ByteArrayhelper(vmThread, data, length, charArray, false);
@@ -738,17 +765,31 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 				UDATA lastSlash = 0;
 				if (isASCII) {
 					if (translateSlashes) {
+						IDATA storeIndex = 0;
 						for (UDATA i = 0; i < length; ++i) {
 							U_8 c = data[i];
 							if ('/' == c) {
 								lastSlash = i;
 								c = '.';
+							/* Look for the start of the modified UTF8 sequence for 0, which is validated when isASCII is set. */
+							} else if (0xC0 == c) {
+								c = 0;
+								i += 1;
 							}
-							J9JAVAARRAYOFCHAR_STORE(vmThread, charArray, i, c);
+							J9JAVAARRAYOFCHAR_STORE(vmThread, charArray, storeIndex, c);
+							storeIndex += 1;
 						}
 					} else {
+						UDATA storeIndex = 0;
 						for (UDATA i = 0; i < length; ++i) {
-							J9JAVAARRAYOFCHAR_STORE(vmThread, charArray, i, data[i]);
+							U_8 c = data[i];
+							/* Look for the start of the modified UTF8 sequence for 0, which is validated when isASCII is set. */
+							if (0xC0 == c) {
+								c = 0;
+								i += 1;
+							}
+							J9JAVAARRAYOFCHAR_STORE(vmThread, charArray, storeIndex, c);
+							storeIndex += 1;
 						}
 					}
 				} else {
