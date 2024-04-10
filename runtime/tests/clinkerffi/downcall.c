@@ -94,7 +94,6 @@ addIntAndChar(int intArg, char charArg)
  *
  * @param intArg1 the 1st integer to add
  * @param intArg2 the 2nd integer to add
- * @return void
  */
 void
 add2IntsReturnVoid(int intArg1, int intArg2)
@@ -4668,4 +4667,148 @@ addDoublesFromMultipleStructPtrs_returnStruct(stru_2_Doubles *arg1, stru_2_Doubl
 	doubleStruct.elem1 = arg1->elem1 + arg2->elem1 + arg3->elem1;
 	doubleStruct.elem2 = arg1->elem2 + arg2->elem2 + arg3->elem2;
 	return doubleStruct;
+}
+
+/**
+ * Do xor operation on each boolean of a native array (dereferenced from a pointer to a native array)
+ * and assign the result to the element of a on-heap array at the same index.
+ *
+ * @param size the array size
+ * @param heapPtr a pointer to a on-heap array
+ * @param nativePtr a pointer to a native array
+ */
+void
+setBoolFromArrayPtrWithXor(int size, char *heapPtr, char *nativePtr)
+{
+	int index = 0;
+	while (index < size) {
+		heapPtr[index] = nativePtr[index];
+		index += 1;
+	}
+}
+
+/**
+ * Add each byte of a native array (dereferenced from a pointer to a native array)
+ * by 1 and assign the result to the element of a on-heap array at the same index.
+ *
+ * @param size the array size
+ * @param heapPtr a pointer to a on-heap array
+ * @param nativePtr a pointer to a native array
+ */
+void
+addByteFromArrayPtrByOne(int size, char *heapPtr, char *nativePtr)
+{
+	int index = 0;
+	while (index < size) {
+		heapPtr[index] = nativePtr[index] + 1;
+		index += 1;
+	}
+}
+
+/**
+ * Add each char of a native array (dereferenced from a pointer to a native array)
+ * by 1 and assign the result to the element of a on-heap array at the same index.
+ *
+ * @param size the array size
+ * @param heapPtr a pointer to a on-heap array
+ * @param nativePtr a pointer to a native array
+ */
+void
+addCharFromArrayPtrByOne(int size, short *heapPtr, short *nativePtr)
+{
+	int index = 0;
+	while (index < size) {
+		heapPtr[index] = nativePtr[index] + 1;
+		index += 1;
+	}
+}
+
+/**
+ * Add each short of a native array (dereferenced from a pointer to a native array)
+ * by 1 and assign the result to the element of a on-heap array at the same index.
+ *
+ * @param size the array size
+ * @param heapPtr a pointer to a on-heap array
+ * @param nativePtr a pointer to a native array
+ */
+void
+addShortFromArrayPtrByOne(int size, short *heapPtr, short *nativePtr)
+{
+	int index = 0;
+	while (index < size) {
+		heapPtr[index] = nativePtr[index] + 1;
+		index += 1;
+	}
+}
+
+/**
+ * Add each integer of a native array (dereferenced from a pointer to a native array)
+ * by 1 and assign the result to the element of a on-heap array at the same index.
+ *
+ * @param size the array size
+ * @param heapPtr a pointer to a on-heap array
+ * @param nativePtr a pointer to a native array
+ */
+void
+addIntFromArrayPtrByOne(int size, int *heapPtr, int *nativePtr)
+{
+	int index = 0;
+	while (index < size) {
+		heapPtr[index] = nativePtr[index] + 1;
+		index += 1;
+	}
+}
+
+/**
+ * Add each long of a native array (dereferenced from a pointer to a native array)
+ * by 1 and assign the result to the element of a on-heap array at the same index.
+ *
+ * @param size the array size
+ * @param heapPtr a pointer to a on-heap array
+ * @param nativePtr a pointer to a native array
+ */
+void
+addLongFromArrayPtrByOne(int size, LONG *heapPtr, LONG *nativePtr)
+{
+	int index = 0;
+	while (index < size) {
+		heapPtr[index] = nativePtr[index] + 1;
+		index += 1;
+	}
+}
+
+/**
+ * Add each float of a native array (dereferenced from a pointer to a native array)
+ * by 1 and assign the result to the element of a on-heap array at the same index.
+ *
+ * @param size the array size
+ * @param heapPtr a pointer to a on-heap array
+ * @param nativePtr a pointer to a native array
+ */
+void
+addFloatFromArrayPtrByOne(int size, float *heapPtr, float *nativePtr)
+{
+	int index = 0;
+	while (index < size) {
+		heapPtr[index] = nativePtr[index] + 1;
+		index += 1;
+	}
+}
+
+/**
+ * Add each double of a native array (dereferenced from a pointer to a native array)
+ * by 1 and assign the result to the element of a on-heap array at the same index.
+ *
+ * @param size the array size
+ * @param heapPtr a pointer to a on-heap array
+ * @param nativePtr a pointer to a native array
+ */
+void
+addDoubleFromArrayPtrByOne(int size, double *heapPtr, double *nativePtr)
+{
+	int index = 0;
+	while (index < size) {
+		heapPtr[index] = nativePtr[index] + 1;
+		index += 1;
+	}
 }
