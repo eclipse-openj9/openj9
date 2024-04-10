@@ -41,6 +41,12 @@
 			<class name="org.openj9.test.jep454.downcall.UnionTests"/>
 		</classes>
 	</test>
+	<test name="Jep454Tests_testLinkerFfi_DownCall_HeapArray">
+		<classes>
+			<class name="org.openj9.test.jep454.downcall.HeapArrayTests1"/>
+			<class name="org.openj9.test.jep454.downcall.HeapArrayTests2"/>
+		</classes>
+	</test>
 	<test name="Jep454Tests_testLinkerFfi_UpCall">
 		<classes>
 			<class name="org.openj9.test.jep454.upcall.InvalidUpCallTests"/>
