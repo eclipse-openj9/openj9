@@ -31,6 +31,10 @@
 
 #if defined(J9VM_OPT_JFR)
 
+#include "JFRChunkWriter.hpp"
+
+#undef DEBUG
+
 extern "C" {
 class VM_JFRWriter {
 	/*
@@ -158,8 +162,33 @@ done:
 	flushJFRDataToFile(J9VMThread *currentThread, bool finalWrite)
 	{
 		bool result = true;
+		VM_JFRChunkWriter chunkWriter(currentThread, finalWrite);
 
+		if (!chunkWriter.isOkay()) {
+			result = false;
+			goto fail;
+		}
+
+		chunkWriter.loadEvents();
+		if (!chunkWriter.isOkay()) {
+			result = false;
+			goto fail;
+		}
+
+		chunkWriter.writeJFRChunk();
+		if (!chunkWriter.isOkay()) {
+			result = false;
+			goto fail;
+		}
+
+done:
 		return result;
+
+fail:
+#if defined(DEBUG)
+		j9tty_printf(PORTLIB, "Failed to write chunk to file error code=%d\n", (int) chunkWriter.buildResult());
+#endif /* defined(DEBUG) */
+		goto done;
 	}
 
 };
