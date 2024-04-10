@@ -389,7 +389,7 @@ fixBadUtf8(const U_8 * original, U_8 *corrected, size_t length);
  *
  * @returns the array of interfaces, or NULL on failure (in which case an exception will be pending)
  */
-j9object_t   
+j9object_t
 getInterfacesHelper(J9VMThread *currentThread, j9object_t clazz);
 
 /**
@@ -614,9 +614,10 @@ initializeJFR(J9JavaVM *vm);
  * Take an execution sample of the current thread.
  *
  * @param currentThread[in] the current J9VMThread
+ * @param currentThread[in] the thread being walked
  */
 void
-jfrExecutionSample(J9VMThread *currentThread);
+jfrExecutionSample(J9VMThread *currentThread, J9VMThread *sampleThread);
 
 /**
  * Begin event iteration in a JFR buffer.

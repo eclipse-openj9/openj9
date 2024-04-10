@@ -190,3 +190,15 @@ Java_com_ibm_oti_vm_VM_isJVMInSingleThreadedMode(JNIEnv *env, jclass unused)
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 	return result;
 }
+
+void JNICALL
+Java_com_ibm_oti_vm_VM_executionSample(JNIEnv * env, jclass clazz)
+{
+	J9VMThread *vmThread = (J9VMThread *) env;
+	J9JavaVM *vm = vmThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+
+	vmFuncs->internalEnterVMFromJNI(vmThread);
+	vmThread->javaVM->internalVMFunctions->executionSample(vmThread);
+	vmFuncs->internalExitVMToJNI(vmThread);
+}

@@ -637,4 +637,6 @@ public static ConstantPool getConstantPoolFromAnnotationBytes(Class<?> clazz, by
 public static Properties internalGetProperties() {
 	return getVMLangAccess().internalGetProperties();
 }
+
+public static native void executionSample();
 }
