@@ -45,13 +45,7 @@
 extern "C" {
 
 #if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT)
-/**
- * Switch onto the zaap processor if not already running there.
- *
- * @param currentThread[in] the current J9VMThread
- * @param reason[in] the reason code
- */
-static void
+void
 javaOffloadSwitchOnWithReason(J9VMThread *currentThread, UDATA reason)
 {
 	J9JavaVM *vm = currentThread->javaVM;
@@ -64,13 +58,7 @@ javaOffloadSwitchOnWithReason(J9VMThread *currentThread, UDATA reason)
 	}
 }
 
-/**
- * Switch away from the zaap processor if running there.
- *
- * @param currentThread[in] the current J9VMThread
- * @param reason[in] the reason code
- */
-static void
+void
 javaOffloadSwitchOffWithReason(J9VMThread *currentThread, UDATA reason)
 {
 	J9JavaVM *vm = currentThread->javaVM;
@@ -81,8 +69,7 @@ javaOffloadSwitchOffWithReason(J9VMThread *currentThread, UDATA reason)
 		}
 	}
 }
-#endif /* J9VM_OPT_JAVA_OFFLOAD_SUPPORT */
-
+#endif /* defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT) */
 
 /**
  * Get the array class for a J9Class.
