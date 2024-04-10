@@ -557,6 +557,24 @@ freeAllStructFFITypes(J9VMThread *currentThread, void *cifNode);
 
 #if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT)
 
+/**
+ * Switch onto the zaap processor if not already running there.
+ *
+ * @param currentThread[in] the current J9VMThread
+ * @param reason[in] the reason code
+ */
+void
+javaOffloadSwitchOnWithReason(J9VMThread *currentThread, UDATA reason);
+
+/**
+ * Switch away from the zaap processor if running there.
+ *
+ * @param currentThread[in] the current J9VMThread
+ * @param reason[in] the reason code
+ */
+void
+javaOffloadSwitchOffWithReason(J9VMThread *currentThread, UDATA reason);
+
 #define JAVA_OFFLOAD_SWITCH_ON_WITH_REASON_IF_LIMIT_EXCEEDED(currentThread, reason, length) \
 	do { \
 		if ((length) > J9_JNI_OFFLOAD_SWITCH_THRESHOLD) { \
