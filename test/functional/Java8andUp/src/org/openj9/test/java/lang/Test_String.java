@@ -1007,6 +1007,11 @@ public class Test_String {
 	public void test_lastIndexOf3() {
 		AssertJUnit.assertTrue("Returned incorrect index", hw1.lastIndexOf("World") == 5);
 		AssertJUnit.assertTrue("Found String outside of index", hw1.lastIndexOf("HeKKKKKKKK") == -1);
+
+		/* test https://github.com/eclipse-openj9/openj9/issues/19273 */
+		String s1 = "a";
+		String s2 = "b";
+		AssertJUnit.assertTrue("Incorrect index of \\u0000", (s1 + "\u0000" + s2).lastIndexOf("\u0000") == 1);
 	}
 
 	/**
