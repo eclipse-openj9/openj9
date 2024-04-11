@@ -1470,15 +1470,19 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 		if ((stackTop - popCount) < stackBase) {
 			errorType = J9NLS_BCV_ERR_STACK_UNDERFLOW__ID;
 			verboseErrorCode = BCV_ERR_STACK_UNDERFLOW;
-			/* Given that the actual data type involved has not yet been located through pop operation
-			 * when stack underflow occurs, it needs to step back by 1 slot to the actual data type
-			 * to be manipulated by the opcode.
+			/* Set the error index to the maximal local variable instead of the 1st type
+			 * data on the stack to prevent displaying anything in the case of the stack
+			 * underflow when the garbage data on the empty stack is decoded in generating
+			 * the detailed error message so as to match the RI's behavior.
+			 *
+			 * Note:
+			 * liveStack->stackElements[0] represents the 1st local variable in 'locals'
+			 * while stackBase points to the 1st slot on the 'stack'. Thus, errorStackIndex
+			 * is set to 0 if stackBase points to liveStack->stackElements[0], which means
+			 * there is no variable in 'locals'.
 			 */
-			errorStackIndex = (U_32)(stackTop - liveStack->stackElements - 1);
-			/* Always set to the location of the 1st data type on 'stack' to show up if stackTop <= stackBase */
-			if (stackTop <= stackBase) {
-				errorStackIndex = (U_32)(stackBase - liveStack->stackElements);
-			}
+			errorStackIndex = (stackBase > liveStack->stackElements) ?
+					((U_32)(stackBase - liveStack->stackElements) - 1) : 0;
 			goto _verifyError;
 		}
 
@@ -1801,8 +1805,19 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 				if (stackTop < stackBase) {
 					errorType = J9NLS_BCV_ERR_STACK_UNDERFLOW__ID;
 					verboseErrorCode = BCV_ERR_STACK_UNDERFLOW;
-					/* Always set to the location of the 1st data type on 'stack' to show up if stackTop <= stackBase */
-					errorStackIndex = (U_32)(stackBase - liveStack->stackElements);
+					/* Set the error index to the maximal local variable instead of the 1st type
+					 * data on the stack to prevent displaying anything in the case of the stack
+					 * underflow when the garbage data on the empty stack is decoded in generating
+					 * the detailed error message so as to match the RI's behavior.
+					 *
+					 * Note:
+					 * liveStack->stackElements[0] represents the 1st local variable in 'locals'
+					 * while stackBase points to the 1st slot on the 'stack'. Thus, errorStackIndex
+					 * is set to 0 if stackBase points to liveStack->stackElements[0], which means
+					 * there is no variable in 'locals'.
+					 */
+					errorStackIndex = (stackBase > liveStack->stackElements) ?
+							((U_32)(stackBase - liveStack->stackElements) - 1) : 0;
 					goto _verifyError;
 				}
 
