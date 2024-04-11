@@ -2237,6 +2237,7 @@ bool TR::CompilationInfo::shouldRetryCompilation(TR_MethodToBeCompiled *entry, T
       return false;
 
    bool tryCompilingAgain = false;
+   TR::CompilationInfo *compInfo = entry->_compInfoPT->getCompilationInfo();
    TR::IlGeneratorMethodDetails & details = entry->getMethodDetails();
    J9Method *method = details.getMethod();
 
@@ -2274,7 +2275,7 @@ bool TR::CompilationInfo::shouldRetryCompilation(TR_MethodToBeCompiled *entry, T
 #if defined(J9VM_OPT_JITSERVER)
             case compilationStreamFailure:
                // if -XX:+JITServerRequireServer is used, we would like the client to fail when server crashes
-               if (entry->_compInfoPT->getCompilationInfo()->getPersistentInfo()->getRequireJITServer())
+               if (compInfo->getPersistentInfo()->getRequireJITServer())
                   {
                   TR_ASSERT_FATAL(false, "Option -XX:+JITServerRequireServer is used, terminate the JITClient due to unavailable JITServer.");
                   }
@@ -2458,6 +2459,10 @@ bool TR::CompilationInfo::shouldRetryCompilation(TR_MethodToBeCompiled *entry, T
          TR_ASSERT(0, "multiple aot relocations likely failed for same method");
          }
       }//  if (entry->_compErrCode != compilationOK)
+
+   // If the JVM is shutting down, don't bother trying to compile again
+   if (compInfo->isInShutdownMode())
+      tryCompilingAgain = false;
 
    // don't carry the decision to generate AOT code to the next compilation
    // because it may no longer be the right thing to do at that point
