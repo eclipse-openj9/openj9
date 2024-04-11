@@ -54,6 +54,44 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	</test>
 
 	<test>
+		<testCaseName>Jep454Tests_testLinkerFfi_DownCall_HeapArray</testCaseName>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/18583</comment>
+				<testflag>VTSTANDARD</testflag>
+			</disable>
+		</disables>
+		<variations>
+			<variation>NoOptions</variation>
+			<variation>Mode501</variation>
+			<variation>Mode551</variation>
+		</variations>
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) \
+			-Xmx1G \
+			--enable-native-access=ALL-UNNAMED \
+			-Dforeign.restricted=permit \
+			-cp $(Q)$(LIB_DIR)$(D)asm.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng_220.xml$(Q) -testnames Jep454Tests_testLinkerFfi_DownCall_HeapArray \
+			-groups $(TEST_GROUP) \
+			-excludegroups $(DEFAULT_EXCLUDE); \
+			$(TEST_STATUS)
+		</command>
+		<platformRequirements>bits.64,^arch.arm,^arch.riscv,^os.zos,^os.sunos</platformRequirements>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<impls>
+			<impl>openj9</impl>
+		</impls>
+		<versions>
+			<version>22+</version>
+		</versions>
+	</test>
+
+	<test>
 		<testCaseName>Jep454Tests_testLinkerFfi_UpCall</testCaseName>
 		<disables>
 			<disable>

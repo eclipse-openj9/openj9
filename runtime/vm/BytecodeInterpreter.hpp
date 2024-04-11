@@ -5312,17 +5312,14 @@ done:
 					if (J9ISCONTIGUOUSARRAY(_currentThread, heapBase)) {
 						/* The address is simply the base object plus the offset. */
 						pointerValues[i] = (UDATA)heapBase + heapOffset;
-						curHeapArgIdx += 1;
 					} else {
-						/* TODO: We will need to handle the case of a discontiguous array later. */
-						buildInternalNativeStackFrame(REGISTER_ARGS);
-						updateVMStruct(REGISTER_ARGS);
-						prepareForExceptionThrow(_currentThread);
-						setCurrentExceptionUTF(_currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, NULL);
-						VMStructHasBeenUpdated(REGISTER_ARGS);
-						rc = GOTO_THROW_CURRENT_EXCEPTION;
-						goto done;
+						/* Copy the discontiguous array to native memory to ensure
+						 * its elements can be accessed correctly in the native function.
+						 */
+						void *elems = memcpyFromHeapArray(_currentThread, heapBase, JNI_FALSE);
+						pointerValues[i] = (UDATA)elems;
 					}
+					curHeapArgIdx += 1;
 					/* Set the flag to obtain the VMAccess so as to prevent the GC from
 					 * updating the heap address during the critical downcall.
 					 */
@@ -5395,6 +5392,32 @@ done:
 		bp = _arg0EA - argSlots;
 		recordJNIReturn(REGISTER_ARGS, bp);
 		restoreSpecialStackFrameLeavingArgs(REGISTER_ARGS, bp);
+
+#if JAVA_SPEC_VERSION >= 22
+		/* For each heap argument, copy the corresponding native memory
+		 * to the heap region in the case of the discontiguous array.
+		 */
+		if (isHeapPassed) {
+			curHeapArgIdx = 0;
+			for (U_8 i = 0; i < ffiArgCount; i++) {
+				U_8 argType = LayoutFFITypeHelpers::getJ9NativeTypeCodeFromFFIType(cif->arg_types[i]);
+				if ((J9NtcPointer == argType) && (J9_FFI_DOWNCALL_HEAP_ARGUMENT_ID == (U_64)ffiArgs[i])) {
+					j9object_t heapBase = (j9object_t)J9JAVAARRAYOFOBJECT_LOAD(
+							_currentThread,
+							J9_JNI_UNWRAP_REFERENCE(_sp + 11), /* The heap base array. */
+							curHeapArgIdx);
+					if (NULL == heapBase) {
+						rc = THROW_NPE;
+						goto done;
+					}
+					if (!J9ISCONTIGUOUSARRAY(_currentThread, heapBase)) {
+						memcpyToHeapArray(_currentThread, heapBase, (void *)(UDATA)(pointerValues[i]), 0, JNI_FALSE);
+					}
+					curHeapArgIdx += 1;
+				}
+			}
+		}
+#endif /* JAVA_SPEC_VERSION >= 22 */
 
 #if JAVA_SPEC_VERSION >= 21
 		/* Set the execution state after the downcall as required in the linker options. */

@@ -340,6 +340,14 @@ omr_add_exports(clinkerffitests
 	addLongsFromMultipleStructPtrs_returnStruct
 	addFloatsFromMultipleStructPtrs_returnStruct
 	addDoublesFromMultipleStructPtrs_returnStruct
+	setBoolFromArrayPtrWithXor
+	addByteFromArrayPtrByOne
+	addCharFromArrayPtrByOne
+	addShortFromArrayPtrByOne
+	addIntFromArrayPtrByOne
+	addLongFromArrayPtrByOne
+	addFloatFromArrayPtrByOne
+	addDoubleFromArrayPtrByOne
 	add2BoolsWithOrByUpcallMH
 	addBoolAndBoolFromPointerWithOrByUpcallMH
 	addBoolAndBoolFromNativePtrWithOrByUpcallMH
