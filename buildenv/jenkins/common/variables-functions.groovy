@@ -1058,6 +1058,30 @@ def set_job_variables(job_type) {
     USE_TESTENV_PROPERTIES = params.USE_TESTENV_PROPERTIES ?: false
     echo "Using USE_TESTENV_PROPERTIES = ${USE_TESTENV_PROPERTIES}"
 
+    if (PERSONAL_BUILD && PERSONAL_BUILD.equalsIgnoreCase('true')) {
+        LIGHT_WEIGHT_CHECKOUT = true
+        GENERATE_JOBS = params.AUTOMATIC_GENERATION ? params.AUTOMATIC_GENERATION.toBoolean() : true
+        ADOPTOPENJDK_REPO = params.ADOPTOPENJDK_REPO ?: "https://github.com/adoptium/aqa-tests.git"
+        // If personal repo and branch are set, test jobs need to be regenerated (with LIGHT_WEIGHT_CHECKOUT = false)
+        // to take personal repo and branch.
+        // Therefore, set LIGHT_WEIGHT_CHECKOUTto false and GENERATE_JOBS to true.
+        // This is a known Jenkins issue: https://issues.jenkins.io/browse/JENKINS-42971
+        if (!ADOPTOPENJDK_REPO.contains("adoptium/aqa-tests")) {
+            LIGHT_WEIGHT_CHECKOUT = false
+            GENERATE_JOBS = true
+        }
+        ADOPTOPENJDK_BRANCH = params.ADOPTOPENJDK_BRANCH ?: "master"
+        EXTRA_OPTIONS = (params.EXTRA_OPTIONS) ?: ""
+
+        echo "------ Test Pipeline Parameters ------"
+        echo "ADOPTOPENJDK_REPO = ${ADOPTOPENJDK_REPO}"
+        echo "ADOPTOPENJDK_BRANCH = ${ADOPTOPENJDK_BRANCH}"
+        echo "EXTRA_OPTIONS = ${EXTRA_OPTIONS}"
+        echo "GENERATE_JOBS = ${GENERATE_JOBS}"
+        echo "LIGHT_WEIGHT_CHECKOUT = ${LIGHT_WEIGHT_CHECKOUT}"
+        echo "--------------------------------------"
+    }
+
     switch (job_type) {
         case "build":
             // set the node the Jenkins build would run on
