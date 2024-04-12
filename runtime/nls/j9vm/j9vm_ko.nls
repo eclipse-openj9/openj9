@@ -2336,3 +2336,68 @@ J9NLS_VM_CRIU_J9_GET_PROCESS_START_TIME_FAILURE.explanation=j9sysinfo_get_proces
 J9NLS_VM_CRIU_J9_GET_PROCESS_START_TIME_FAILURE.system_action=The JVM will throw a JVMRestoreException.
 J9NLS_VM_CRIU_J9_GET_PROCESS_START_TIME_FAILURE.user_response=View CRIU documentation to determine how to resolve the error.
 # END NON-TRANSLATABLE
+
+J9NLS_VM_MODULARITY_GENERAL_FAILURE=\uc77c\ubc18 \uc2e4\ud328
+# START NON-TRANSLATABLE
+J9NLS_VM_MODULARITY_GENERAL_FAILURE.explanation=The specified modularity operation failed.
+J9NLS_VM_MODULARITY_GENERAL_FAILURE.system_action=The JVM will fail to start.
+J9NLS_VM_MODULARITY_GENERAL_FAILURE.user_response=Contact your service representative.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_MODULARITY_PACKAGE_ALREADY_DEFINED=\ubaa9\ub85d\uc5d0 \uc788\ub294 \ud328\ud0a4\uc9c0\uac00 \uc774\ubbf8 \uc815\uc758\ub418\uc5b4 \uc788\uc2b5\ub2c8\ub2e4.
+# START NON-TRANSLATABLE
+J9NLS_VM_MODULARITY_PACKAGE_ALREADY_DEFINED.explanation=The specified module package has already been defined.
+J9NLS_VM_MODULARITY_PACKAGE_ALREADY_DEFINED.system_action=The JVM will fail to start.
+J9NLS_VM_MODULARITY_PACKAGE_ALREADY_DEFINED.user_response=Contact your service representative.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_MODULARITY_MODULE_ALREADY_DEFINED=\ubaa8\ub4c8\uc774 \uc774\ubbf8 \uc815\uc758\ub418\uc5c8\uc2b5\ub2c8\ub2e4.
+# START NON-TRANSLATABLE
+J9NLS_VM_MODULARITY_MODULE_ALREADY_DEFINED.explanation=The specified module has already been defined.
+J9NLS_VM_MODULARITY_MODULE_ALREADY_DEFINED.system_action=The JVM will fail to start.
+J9NLS_VM_MODULARITY_MODULE_ALREADY_DEFINED.user_response=Contact your service representative.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_MODULARITY_HASH_OPERATION_FAILED=\ubaa8\ub4c8\ud654 \ud574\uc2dc \uc870\uc791\uc774 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.
+# START NON-TRANSLATABLE
+J9NLS_VM_MODULARITY_HASH_OPERATION_FAILED.explanation=The modularity hash operation failed.
+J9NLS_VM_MODULARITY_HASH_OPERATION_FAILED.system_action=The JVM will fail to start.
+J9NLS_VM_MODULARITY_HASH_OPERATION_FAILED.user_response=Contact your service representative.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_MODULARITY_DUPLICATED_PACKAGE_FOUND=\ubaa9\ub85d\uc5d0 \uc911\ubcf5 \ud328\ud0a4\uc9c0\uac00 \ud3ec\ud568\ub418\uc5b4 \uc788\uc2b5\ub2c8\ub2e4.
+# START NON-TRANSLATABLE
+J9NLS_VM_MODULARITY_DUPLICATED_PACKAGE_FOUND.explanation=The list contains duplicate packages.
+J9NLS_VM_MODULARITY_DUPLICATED_PACKAGE_FOUND.system_action=The JVM will fail to start.
+J9NLS_VM_MODULARITY_DUPLICATED_PACKAGE_FOUND.user_response=Contact your service representative.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_MODULARITY_MODULE_NOT_FOUND=\uc9c0\uc815\ub41c \ubaa8\ub4c8\uc744 \ucc3e\uc744 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.
+# START NON-TRANSLATABLE
+J9NLS_VM_MODULARITY_MODULE_NOT_FOUND.explanation=The specified module was not found.
+J9NLS_VM_MODULARITY_MODULE_NOT_FOUND.system_action=The JVM will fail to start.
+J9NLS_VM_MODULARITY_MODULE_NOT_FOUND.user_response=Contact your service representative.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_MODULARITY_PACKAGE_NOT_FOUND=\uc9c0\uc815\ub41c \ud328\ud0a4\uc9c0\ub97c \ucc3e\uc744 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.
+# START NON-TRANSLATABLE
+J9NLS_VM_MODULARITY_PACKAGE_NOT_FOUND.explanation=The specified package was not found.
+J9NLS_VM_MODULARITY_PACKAGE_NOT_FOUND.system_action=The JVM will fail to start.
+J9NLS_VM_MODULARITY_PACKAGE_NOT_FOUND.user_response=Contact your service representative.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_DEPRECATED_OPTION=%s \uacbd\uace0: %s \uc635\uc158\uc740 JDK 22\uc5d0\uc11c \ub354 \uc774\uc0c1 \uc0ac\uc6a9\ub418\uc9c0 \uc54a\uc73c\uba70 \ud5a5\ud6c4 \ub9b4\ub9ac\uc2a4\uc5d0\uc11c \uc81c\uac70\ub420 \uc218 \uc788\uc2b5\ub2c8\ub2e4.
+# START NON-TRANSLATABLE
+J9NLS_VM_DEPRECATED_OPTION.sample_input_1=Eclipse OpenJ9 VM
+J9NLS_VM_DEPRECATED_OPTION.sample_input_2=-Xdebug
+J9NLS_VM_DEPRECATED_OPTION.explanation=The command line option is deprecated.
+J9NLS_VM_DEPRECATED_OPTION.system_action=The JVM will print a deprecation warning.
+J9NLS_VM_DEPRECATED_OPTION.user_response=Remove the command line option from the command line.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_CRIU_CHECK_TRANSITION_TO_DEBUG_INTERPRETER_FAILED=\ub514\ubc84\uadf8 \uc778\ud130\ud504\ub9ac\ud130\ub85c\uc758 \uc0c1\ud0dc \uc804\uc774 \ud655\uc778\uc5d0 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.
+# START NON-TRANSLATABLE
+J9NLS_VM_CRIU_CHECK_TRANSITION_TO_DEBUG_INTERPRETER_FAILED.explanation=checkTransitionToDebugInterpreter failed.
+J9NLS_VM_CRIU_CHECK_TRANSITION_TO_DEBUG_INTERPRETER_FAILED.system_action=The JVM will throw a JVMRestoreException.
+J9NLS_VM_CRIU_CHECK_TRANSITION_TO_DEBUG_INTERPRETER_FAILED.user_response=View CRIU documentation to determine how to resolve the error.
+# END NON-TRANSLATABLE
