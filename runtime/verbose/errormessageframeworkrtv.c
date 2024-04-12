@@ -222,8 +222,8 @@ pushLiveStackToVerificationTypeBuffer(StackMapFrame* stackMapFrame, J9BytecodeVe
 	U_16 maxLocals = methodInfo->maxLocals;
 	IDATA lastIndex = 0;
 	IDATA slot = 0;
-
-	IDATA errorPositionInclusive = 1;
+	/* Don't print anything on the empty stack. */
+	IDATA errorPositionInclusive = (BCV_ERR_STACK_UNDERFLOW == verifyData->errorDetailCode) ? 0 : 1;
 	IDATA wideType = DATATYPE_1_SLOT;
 	BOOLEAN result = TRUE;
 	BOOLEAN nonTopFound = FALSE;

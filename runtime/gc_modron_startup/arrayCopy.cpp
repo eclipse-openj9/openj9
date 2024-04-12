@@ -119,14 +119,15 @@ referenceArrayCopy(J9VMThread *vmThread, J9IndexableObject *srcObject, J9Indexab
 {
 	if (lengthInSlots > 0) {
 		MM_GCExtensions *ext = MM_GCExtensions::getExtensions(vmThread->javaVM);
+		MM_ObjectAccessBarrier *barrier = ext->accessBarrier;
 
 		Assert_MM_true(ext->indexableObjectModel.isInlineContiguousArraylet(srcObject) && ext->indexableObjectModel.isInlineContiguousArraylet(destObject));
 
-		uintptr_t srcHeaderSize = ext->indexableObjectModel.getHeaderSize(srcObject);
-		uintptr_t destHeaderSize = ext->indexableObjectModel.getHeaderSize(destObject);
 		uintptr_t const referenceSize = J9VMTHREAD_REFERENCE_SIZE(vmThread);
-		I_32 srcIndex = (I_32)(((uintptr_t)srcAddress - (srcHeaderSize + (uintptr_t)srcObject)) / referenceSize);
-		I_32 destIndex = (I_32)(((uintptr_t)destAddress - (destHeaderSize + (uintptr_t)destObject)) / referenceSize);
+		uintptr_t srcDataAddr = (uintptr_t) barrier->getArrayObjectDataAddress(vmThread, srcObject);
+		uintptr_t dstDataAddr = (uintptr_t) barrier->getArrayObjectDataAddress(vmThread, destObject);
+		int32_t srcIndex = (int32_t)(((uintptr_t)srcAddress - srcDataAddr) / referenceSize);
+		int32_t destIndex = (int32_t)(((uintptr_t)destAddress - dstDataAddr) / referenceSize);
 
 		return referenceArrayCopyIndex(vmThread, srcObject, destObject, srcIndex, destIndex, lengthInSlots);
 	}

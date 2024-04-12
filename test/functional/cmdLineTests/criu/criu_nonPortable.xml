@@ -41,6 +41,7 @@
   <variable name="MAINCLASS_FAILUREPATH_TEST" value="org.openj9.criu.TestCRIUFailurePath" />
   <variable name="XDUMP_DYNAMIC" value="-Xdump:dynamic" />
   <variable name="STD_CMD_OPTS" value="--add-exports java.base/openj9.internal.criu=ALL-UNNAMED" />
+  <variable name="XTRACE_CRIU" value="-Xtrace:print={j9vm.684-696,j9vm.699,j9vm.717-747}" />
 
   <test id="Create and Restore Criu Checkpoint Image once">
     <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_SIMPLE$ 1 1 false false</command>
@@ -78,7 +79,7 @@
 
 <!--
   <test id="Create CRIU checkpoint image and restore three times - testSystemNanoTime">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" "$MAINCLASS_TIMECHANGE$ testSystemNanoTime" 3 3 false false</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_TIMECHANGE$ testSystemNanoTime 3 false false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="required" caseSensitive="yes" regex="no">System.nanoTime() before CRIU checkpoint:</output>
     <output type="success" caseSensitive="yes" regex="no">PASSED: System.nanoTime() after CRIU restore:</output>
@@ -91,7 +92,7 @@
  -->
 
   <test id="Create CRIU checkpoint image and restore three times - testSystemNanoTimeJitPreCheckpointCompile">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" "$MAINCLASS_TIMECHANGE$ testSystemNanoTimeJitPreCheckpointCompile" 3 3 false false</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_TIMECHANGE$ testSystemNanoTimeJitPreCheckpointCompile 3 false false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="required" caseSensitive="yes" regex="no">System.nanoTime() before CRIU checkpoint:</output>
     <output type="success" caseSensitive="yes" regex="no">PASSED: System.nanoTime() after CRIU restore:</output>
@@ -108,7 +109,7 @@
   </test>
 
   <test id="Create CRIU checkpoint image and restore three times - testSystemNanoTimeJitPostCheckpointCompile">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" "$MAINCLASS_TIMECHANGE$ testSystemNanoTimeJitPostCheckpointCompile" 3 3 false false</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_TIMECHANGE$ testSystemNanoTimeJitPostCheckpointCompile 3 false false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="required" caseSensitive="yes" regex="no">System.nanoTime() before CRIU checkpoint:</output>
     <output type="success" caseSensitive="yes" regex="no">PASSED: System.nanoTime() after CRIU restore:</output>
@@ -125,13 +126,13 @@
   </test>
 
   <test id="Create CRIU checkpoint image and restore three times - testMillisDelayBeforeCheckpointDone">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" "$MAINCLASS_TIMECHANGE$ testMillisDelayBeforeCheckpointDone" 3 3 false false</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ $XTRACE_CRIU$" $MAINCLASS_TIMECHANGE$ testMillisDelayBeforeCheckpointDone 3 false true</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="required" caseSensitive="yes" regex="no">Start test name: testMillisDelay</output>
-    <output type="success" caseSensitive="yes" regex="no">PASSED: expected MILLIS_DELAY</output>
+    <output type="success" caseSensitive="yes" regex="no">PASSED: expected</output>
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
     <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
-    <output type="failure" caseSensitive="yes" regex="no">FAILED: expected MILLIS_DELAY</output>
+    <output type="failure" caseSensitive="yes" regex="no">FAILED: expected</output>
     <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
     <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
     <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
@@ -141,14 +142,14 @@
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
 
-  <test id="Create CRIU checkpoint image and restore three times - testMillisDelayBeforeCheckpointDone">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" "$MAINCLASS_TIMECHANGE$ testMillisDelayAfterCheckpointDone" 3 3 false false</command>
+  <test id="Create CRIU checkpoint image and restore three times - testMillisDelayAfterCheckpointDone">
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ $XTRACE_CRIU$" $MAINCLASS_TIMECHANGE$ testMillisDelayAfterCheckpointDone 3 false true</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="required" caseSensitive="yes" regex="no">Start test name: testMillisDelay</output>
-    <output type="success" caseSensitive="yes" regex="no">PASSED: expected MILLIS_DELAY</output>
+    <output type="success" caseSensitive="yes" regex="no">PASSED: expected</output>
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
     <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
-    <output type="failure" caseSensitive="yes" regex="no">FAILED: expected MILLIS_DELAY</output>
+    <output type="failure" caseSensitive="yes" regex="no">FAILED: expected</output>
     <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
     <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
     <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
@@ -159,13 +160,13 @@
   </test>
 
   <test id="Create CRIU checkpoint image and restore three times - testDateScheduledBeforeCheckpointDone">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" "$MAINCLASS_TIMECHANGE$ testDateScheduledBeforeCheckpointDone" 3 3 false false</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ $XTRACE_CRIU$" $MAINCLASS_TIMECHANGE$ testDateScheduledBeforeCheckpointDone 3 false false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="required" caseSensitive="yes" regex="no">Start test name: testDateScheduledBeforeCheckpointDone</output>
-    <output type="success" caseSensitive="yes" regex="no">PASSED: expected to run after timeMillisScheduledBeforeCheckpointDone</output>
+    <output type="success" caseSensitive="yes" regex="no">PASSED: expected to run after expectedTime</output>
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
     <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
-    <output type="failure" caseSensitive="yes" regex="no">FAILED: expected to run after timeMillisScheduledBeforeCheckpointDone</output>
+    <output type="failure" caseSensitive="yes" regex="no">FAILED: expected to run after expectedTime</output>
     <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
     <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
     <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
@@ -176,13 +177,13 @@
   </test>
 
   <test id="Create CRIU checkpoint image and restore three times - testDateScheduledAfterCheckpointDone">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" "$MAINCLASS_TIMECHANGE$ testDateScheduledAfterCheckpointDone" 3 3 false false</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ $XTRACE_CRIU$" $MAINCLASS_TIMECHANGE$ testDateScheduledAfterCheckpointDone 3 false false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="required" caseSensitive="yes" regex="no">Start test name: testDateScheduledAfterCheckpointDone</output>
-    <output type="success" caseSensitive="yes" regex="no">PASSED: expected to run after timeMillisScheduledAfterCheckpointDone</output>
+    <output type="success" caseSensitive="yes" regex="no">PASSED: expected to run after expectedTime</output>
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
     <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
-    <output type="failure" caseSensitive="yes" regex="no">FAILED: expected to run after timeMillisScheduledAfterCheckpointDone</output>
+    <output type="failure" caseSensitive="yes" regex="no">FAILED: expected to run after expectedTime</output>
     <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
     <output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
     <output type="success" caseSensitive="yes" regex="no">do not match expected</output>
@@ -193,7 +194,7 @@
   </test>
 
   <test id="Create CRIU checkpoint image and restore once - testGetLastRestoreTime">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -Xtrace:print={j9vm.684-696,j9vm.699,j9vm.717-743,j9vm.746-747} $STD_CMD_OPTS$" $MAINCLASS_TIMECHANGE$ testGetLastRestoreTime 1 false false</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ $XTRACE_CRIU$ $STD_CMD_OPTS$" $MAINCLASS_TIMECHANGE$ testGetLastRestoreTime 1 false false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="success" caseSensitive="yes" regex="no">PASSED: InternalCRIUSupport.getLastRestoreTime()</output>
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
@@ -209,7 +210,7 @@
   </test>
 
   <test id="Create CRIU checkpoint image and restore once - testGetProcessRestoreStartTime">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -Xtrace:print={j9vm.684-696,j9vm.699,j9vm.717-743,j9vm.746-747} $STD_CMD_OPTS$" $MAINCLASS_TIMECHANGE$ testGetProcessRestoreStartTime 1 false false</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ $XTRACE_CRIU$ $STD_CMD_OPTS$" $MAINCLASS_TIMECHANGE$ testGetProcessRestoreStartTime 1 false false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="success" caseSensitive="yes" regex="no">PASSED: InternalCRIUSupport.getProcessRestoreStartTime()</output>
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
@@ -241,7 +242,7 @@
   </test>
 
   <test id="Create Criu Checkpoint Image once and no restore - TestSingleThreadModeCheckpointException">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_SINGLETHREADMODE_CHECKPOINT$ 1 1 true true</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_SINGLETHREADMODE_CHECKPOINT$ unusedArgument 1 true true</command>
     <output type="success" caseSensitive="yes" regex="no">testSingleThreadModeCheckpointExceptionJUCLock: PASSED</output>
     <output type="success" caseSensitive="yes" regex="no">testSingleThreadModeCheckpointExceptionSynMonitor: PASSED</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
@@ -259,7 +260,7 @@
   </test>
 
   <test id="Create and Restore Criu Checkpoint Image once - TestSingleThreadModeRestoreException">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_SINGLETHREADMODE_RESTORE$ 1 1 false false</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_SINGLETHREADMODE_RESTORE$ unusedArgument 1 false false</command>
     <output type="success" caseSensitive="yes" regex="no">testSingleThreadModeRestoreExceptionJUCLock: PASSED</output>
     <output type="success" caseSensitive="yes" regex="no">testSingleThreadModeRestoreExceptionSynLock: PASSED</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
@@ -370,7 +371,7 @@
   </test>
 
   <test id="Create and Restore Criu Checkpoint Image once - TestDelayedOperations">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_DELAYEDOPERATIONS$ 1 1 false false</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_DELAYEDOPERATIONS$ unusedArgument 1 false false</command>
     <output type="success" caseSensitive="yes" regex="no">TestDelayedOperations.testDelayedThreadInterrupt(): PASSED</output>
     <output type="required" caseSensitive="no" regex="no">Killed</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>

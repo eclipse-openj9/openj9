@@ -59,6 +59,7 @@ class TR_MethodEvent
           JitCompilationInducedByDLT,
           HWPRecompilationTrigger,
           CompilationBeforeCheckpoint,
+          ForcedRecompilationPostRestore,
           NumEvents      // must be the last one
    };
    int32_t      _eventType;

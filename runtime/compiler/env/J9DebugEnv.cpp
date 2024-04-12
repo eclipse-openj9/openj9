@@ -32,7 +32,7 @@
 #include "thrtypes.h"
 
 
-#if defined(LINUX) || defined(AIXPPC)
+#if defined(LINUX) || defined(AIXPPC) || defined(OSX)
 #include <signal.h>
 #endif
 
@@ -40,7 +40,7 @@ void
 J9::DebugEnv::breakPoint()
    {
 
-#if defined(LINUX) || defined(AIXPPC)
+#if defined(LINUX) || defined(AIXPPC) || defined(OSX)
    raise(SIGTRAP);
 #elif defined(_MSC_VER)
    DebugBreak();

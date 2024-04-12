@@ -553,8 +553,78 @@ void
 freeAllStructFFITypes(J9VMThread *currentThread, void *cifNode);
 #endif /* JAVA_SPEC_VERSION >= 16 */
 
+/* ------------------- jnimisc.cpp ----------------- */
+
+#if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT)
+
+/**
+ * Switch onto the zaap processor if not already running there.
+ *
+ * @param currentThread[in] the current J9VMThread
+ * @param reason[in] the reason code
+ */
+void
+javaOffloadSwitchOnWithReason(J9VMThread *currentThread, UDATA reason);
+
+/**
+ * Switch away from the zaap processor if running there.
+ *
+ * @param currentThread[in] the current J9VMThread
+ * @param reason[in] the reason code
+ */
+void
+javaOffloadSwitchOffWithReason(J9VMThread *currentThread, UDATA reason);
+
+#define JAVA_OFFLOAD_SWITCH_ON_WITH_REASON_IF_LIMIT_EXCEEDED(currentThread, reason, length) \
+	do { \
+		if ((length) > J9_JNI_OFFLOAD_SWITCH_THRESHOLD) { \
+			javaOffloadSwitchOnWithReason(currentThread, reason); \
+		} \
+	} while (0)
+
+#define JAVA_OFFLOAD_SWITCH_OFF_WITH_REASON_IF_LIMIT_EXCEEDED(currentThread, reason, length) \
+	do { \
+		if ((length) > J9_JNI_OFFLOAD_SWITCH_THRESHOLD) { \
+			javaOffloadSwitchOffWithReason(currentThread, reason); \
+		} \
+	} while (0)
+
+#else /* defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT) */
+
+#define JAVA_OFFLOAD_SWITCH_ON_WITH_REASON_IF_LIMIT_EXCEEDED(currentThread, reason, length)
+#define JAVA_OFFLOAD_SWITCH_OFF_WITH_REASON_IF_LIMIT_EXCEEDED(currentThread, reason, length)
+
+#endif /* defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT) */
+
+/* ------------------- ArrayCopyHelpers.cpp ----------------- */
+
+/**
+ * @brief A helper method which creates a copy of a heap array in native memory.
+ *
+ * @param currentThread the thread performing the copy
+ * @param arrayObject the heap array to copy from
+ * @param ensureMem32 a flag specific to 31-bit z/OS
+ * @return the native array with the copied content
+ */
+void *
+memcpyFromHeapArray(J9VMThread *currentThread, j9object_t arrayObject, jboolean ensureMem32);
+
+/**
+ * @brief A helper method which copies to a heap array from native memory,
+ * then possibly releasing that native memory (to be paired with uses of
+ * memcpyFromHeapArray).
+ *
+ * @param currentThread the thread performing the copy
+ * @param arrayObject the heap array to copy into
+ * @param elems the native memory to copy from
+ * @param mode a code denoting whether to copy/release the native memory
+ * @param ensureMem32 a flag specific to 31-bit z/OS
+*/
+void
+memcpyToHeapArray(J9VMThread *currentThread, j9object_t arrayObject, void *elems, jint mode, jboolean ensureMem32);
+
 #ifdef __cplusplus
-}
+} /* extern "C" */
 #endif
 
 #endif /* vm_internal_h */
