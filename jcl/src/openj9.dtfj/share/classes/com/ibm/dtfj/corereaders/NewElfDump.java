@@ -2276,7 +2276,7 @@ public class NewElfDump extends CoreReaderSupport {
 		file.readFully(signature);
 
 		if (ElfFile.isELF(signature)) {
-			DumpReader reader = readerForEndianess(signature[5], signature[4], file);
+			DumpReader reader = readerForEndianness(signature[5], signature[4], file);
 			ElfFile result = fileForClass(signature[4], reader);
 
 			if (result.getClass().isInstance(container)) {
@@ -2287,7 +2287,7 @@ public class NewElfDump extends CoreReaderSupport {
 		return null;
 	}
 
-	private static DumpReader readerForEndianess(byte endianess, byte clazz, ImageInputStream stream)
+	private static DumpReader readerForEndianness(byte endianness, byte clazz, ImageInputStream stream)
 			throws IOException {
 		boolean is64Bit;
 
@@ -2302,13 +2302,13 @@ public class NewElfDump extends CoreReaderSupport {
 			throw new IOException("Unexpected class flag " + clazz + " detected in ELF file."); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 
-		switch (endianess) {
+		switch (endianness) {
 		case ELFDATA2LSB:
 			return new LittleEndianDumpReader(stream, is64Bit);
 		case ELFDATA2MSB:
 			return new DumpReader(stream, is64Bit);
 		default:
-			throw new IOException("Unknown endianess flag " + endianess + " in ELF core file"); //$NON-NLS-1$ //$NON-NLS-2$
+			throw new IOException("Unknown endianness flag " + endianness + " in ELF core file"); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 	}
 
@@ -2411,7 +2411,7 @@ public class NewElfDump extends CoreReaderSupport {
 		stream.readFully(signature);
 		boolean isLittleEndian = (ELFDATA2LSB == signature[5]);
 		boolean is64Bit = (ELFCLASS64 == signature[4]);
-		DumpReader reader = readerForEndianess(signature[5], signature[4], stream);
+		DumpReader reader = readerForEndianness(signature[5], signature[4], stream);
 		ElfFile file = fileForClass(signature[4], reader);
 		return new NewElfDump(file, reader, isLittleEndian, is64Bit, verbose);
 	}
