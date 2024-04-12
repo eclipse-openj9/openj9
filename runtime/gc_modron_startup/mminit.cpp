@@ -675,12 +675,12 @@ gcStartupHeapManagement(J9JavaVM *javaVM)
 void j9gc_jvmPhaseChange(J9VMThread *currentThread, UDATA phase)
 {
 	J9JavaVM *vm = currentThread->javaVM;
-	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(vm);
+	MM_GCExtensions *ext = MM_GCExtensions::getExtensions(vm);
 	MM_EnvironmentBase env(currentThread->omrVMThread);
 	if (J9VM_PHASE_NOT_STARTUP == phase) {
 
-		if ((NULL != vm->sharedClassConfig) && extensions->useGCStartupHints) {
-			if (extensions->isStandardGC()) {
+		if ((NULL != vm->sharedClassConfig) && ext->useGCStartupHints && (ext->initialMemorySize != ext->memoryMax)) {
+			if (ext->isStandardGC()) {
 				/* read old values from SC */
 				uintptr_t hintDefaultOld = 0;
 				uintptr_t hintTenureOld = 0;
@@ -692,8 +692,8 @@ void j9gc_jvmPhaseChange(J9VMThread *currentThread, UDATA phase)
 				 * For SemiSpace the latter (parent) ones are what we want to deal with (expand), since it's what includes both Allocate And Survivor children.
 				 * For Flat it would probably make no difference if we used parent or child, but let's be consistent and use parent, too.
 				 */
-				MM_MemorySubSpace *defaultMemorySubSpace = extensions->heap->getDefaultMemorySpace()->getDefaultMemorySubSpace()->getParent();
-				MM_MemorySubSpace *tenureMemorySubspace = extensions->heap->getDefaultMemorySpace()->getTenureMemorySubSpace()->getParent();
+				MM_MemorySubSpace *defaultMemorySubSpace = ext->heap->getDefaultMemorySpace()->getDefaultMemorySubSpace()->getParent();
+				MM_MemorySubSpace *tenureMemorySubspace = ext->heap->getDefaultMemorySpace()->getTenureMemorySubSpace()->getParent();
 
 				uintptr_t hintDefault = defaultMemorySubSpace->getActiveMemorySize();
 				uintptr_t hintTenure = 0;
@@ -706,8 +706,8 @@ void j9gc_jvmPhaseChange(J9VMThread *currentThread, UDATA phase)
 				}
 
 				/* Gradually learn, by averaging new values with old values - it may take a few restarts before hint converge to stable values */
-				hintDefault = (uintptr_t)MM_Math::weightedAverage((float)hintDefaultOld, (float)hintDefault, (1.0f - extensions->heapSizeStartupHintWeightNewValue));
-				hintTenure = (uintptr_t)MM_Math::weightedAverage((float)hintTenureOld, (float)hintTenure, (1.0f - extensions->heapSizeStartupHintWeightNewValue));
+				hintDefault = (uintptr_t)MM_Math::weightedAverage((float)hintDefaultOld, (float)hintDefault, (1.0f - ext->heapSizeStartupHintWeightNewValue));
+				hintTenure = (uintptr_t)MM_Math::weightedAverage((float)hintTenureOld, (float)hintTenure, (1.0f - ext->heapSizeStartupHintWeightNewValue));
 
 				vm->sharedClassConfig->storeGCHints(currentThread, hintDefault, hintTenure, true);
 				/* Nothing to do if store fails, storeGCHints already issues a trace point */
@@ -721,12 +721,12 @@ void
 gcExpandHeapOnStartup(J9JavaVM *javaVM)
 {
 	J9SharedClassConfig *sharedClassConfig = javaVM->sharedClassConfig;
-	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(javaVM);
+	MM_GCExtensions *ext = MM_GCExtensions::getExtensions(javaVM);
 	J9VMThread *currentThread = javaVM->internalVMFunctions->currentVMThread(javaVM);
 	MM_EnvironmentBase env(currentThread->omrVMThread);
 
-	if ((NULL != sharedClassConfig) && extensions->useGCStartupHints) {
-		if (extensions->isStandardGC()) {
+	if ((NULL != sharedClassConfig) && ext->useGCStartupHints && (ext->initialMemorySize != ext->memoryMax)) {
+		if (ext->isStandardGC()) {
 			uintptr_t hintDefault = 0;
 			uintptr_t hintTenure = 0;
 
@@ -736,8 +736,8 @@ gcExpandHeapOnStartup(J9JavaVM *javaVM)
 				 * For SemiSpace the latter (parent) ones are what we want to deal with (expand), since it's what includes both Allocate And Survivor children.
 				 * For Flat it would probably make no difference if we used parent or child, but let's be consistent and use parent, too.
 				 */
-				MM_MemorySubSpace *defaultMemorySubSpace = extensions->heap->getDefaultMemorySpace()->getDefaultMemorySubSpace()->getParent();
-				MM_MemorySubSpace *tenureMemorySubspace = extensions->heap->getDefaultMemorySpace()->getTenureMemorySubSpace()->getParent();
+				MM_MemorySubSpace *defaultMemorySubSpace = ext->heap->getDefaultMemorySpace()->getDefaultMemorySubSpace()->getParent();
+				MM_MemorySubSpace *tenureMemorySubspace = ext->heap->getDefaultMemorySpace()->getTenureMemorySubSpace()->getParent();
 
 
 				/* Standard GCs always have Default MSS (which is equal to Tenure for flat heap configuration).
@@ -745,20 +745,20 @@ gcExpandHeapOnStartup(J9JavaVM *javaVM)
 				 * We deal with Tenure only if only not equal to Default (which implies it's generational)
 				 * We are a bit conservative and aim for slightly lower values that historically recorded by hints.
 				 */
-				uintptr_t hintDefaultAdjusted = (uintptr_t)(hintDefault * extensions->heapSizeStartupHintConservativeFactor);
+				uintptr_t hintDefaultAdjusted = (uintptr_t)(hintDefault * ext->heapSizeStartupHintConservativeFactor);
 				uintptr_t defaultCurrent = defaultMemorySubSpace->getActiveMemorySize();
 
 				if (hintDefaultAdjusted > defaultCurrent) {
-					extensions->heap->getResizeStats()->setLastExpandReason(HINT_PREVIOUS_RUNS);
+					ext->heap->getResizeStats()->setLastExpandReason(HINT_PREVIOUS_RUNS);
 					defaultMemorySubSpace->expand(&env, hintDefaultAdjusted - defaultCurrent);
 				}
 
 				if (defaultMemorySubSpace != tenureMemorySubspace) {
-					uintptr_t hintTenureAdjusted = (uintptr_t)(hintTenure * extensions->heapSizeStartupHintConservativeFactor);
+					uintptr_t hintTenureAdjusted = (uintptr_t)(hintTenure * ext->heapSizeStartupHintConservativeFactor);
 					uintptr_t tenureCurrent = tenureMemorySubspace->getActiveMemorySize();
 
 					if (hintTenureAdjusted > tenureCurrent) {
-						extensions->heap->getResizeStats()->setLastExpandReason(HINT_PREVIOUS_RUNS);
+						ext->heap->getResizeStats()->setLastExpandReason(HINT_PREVIOUS_RUNS);
 						tenureMemorySubspace->expand(&env, hintTenureAdjusted - tenureCurrent);
 					}
 				}

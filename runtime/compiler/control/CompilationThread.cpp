@@ -2229,7 +2229,7 @@ bool TR::CompilationInfo::shouldAbortCompilation(TR_MethodToBeCompiled *entry, T
 // This method has side-effects, It modifies the optimization plan and persistentMethodInfo
 // This method is executed with compilationMonitor in hand
 //
-bool TR::CompilationInfo::shouldRetryCompilation(TR_MethodToBeCompiled *entry, TR::Compilation *comp)
+bool TR::CompilationInfo::shouldRetryCompilation(J9VMThread *vmThread, TR_MethodToBeCompiled *entry, TR::Compilation *comp)
    {
    // The JITServer should not retry compilations on it's own,
    // it should let the client make that decision
@@ -2237,6 +2237,7 @@ bool TR::CompilationInfo::shouldRetryCompilation(TR_MethodToBeCompiled *entry, T
       return false;
 
    bool tryCompilingAgain = false;
+   TR::CompilationInfo *compInfo = entry->_compInfoPT->getCompilationInfo();
    TR::IlGeneratorMethodDetails & details = entry->getMethodDetails();
    J9Method *method = details.getMethod();
 
@@ -2274,7 +2275,7 @@ bool TR::CompilationInfo::shouldRetryCompilation(TR_MethodToBeCompiled *entry, T
 #if defined(J9VM_OPT_JITSERVER)
             case compilationStreamFailure:
                // if -XX:+JITServerRequireServer is used, we would like the client to fail when server crashes
-               if (entry->_compInfoPT->getCompilationInfo()->getPersistentInfo()->getRequireJITServer())
+               if (compInfo->getPersistentInfo()->getRequireJITServer())
                   {
                   TR_ASSERT_FATAL(false, "Option -XX:+JITServerRequireServer is used, terminate the JITClient due to unavailable JITServer.");
                   }
@@ -2459,10 +2460,36 @@ bool TR::CompilationInfo::shouldRetryCompilation(TR_MethodToBeCompiled *entry, T
          }
       }//  if (entry->_compErrCode != compilationOK)
 
+   // If the JVM is shutting down, don't bother trying to compile again
+   if (compInfo->isInShutdownMode())
+      tryCompilingAgain = false;
+
    // don't carry the decision to generate AOT code to the next compilation
    // because it may no longer be the right thing to do at that point
    if (tryCompilingAgain)
+      {
       entry->_useAotCompilation = false;
+      }
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+   else if (entry->_compErrCode != compilationOK)
+      {
+      J9JavaVM *javaVM = compInfo->getJITConfig()->javaVM;
+      if (javaVM->internalVMFunctions->isDebugOnRestoreEnabled(vmThread)
+          && javaVM->internalVMFunctions->isCheckpointAllowed(vmThread)
+          && !compInfo->getCRRuntime()->isCheckpointInProgress()
+          && !compInfo->isInShutdownMode())
+         {
+         if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestoreDetails))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Pushing failed compilation %p", entry->getMethodDetails().getMethod());
+
+         TR_FilterBST *filter = NULL;
+         OMR::CriticalSection pushFailedComp(compInfo->getCRRuntime()->getCRRuntimeMonitor());
+         if (comp && entry->_compInfoPT->methodCanBeCompiled(comp->trMemory(), comp->fej9(), comp->getMethodBeingCompiled(), filter))
+            compInfo->getCRRuntime()->pushFailedCompilation(entry->getMethodDetails().getMethod());
+         }
+      }
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+
 
    return tryCompilingAgain;
    }
@@ -2520,6 +2547,11 @@ void TR::CompilationInfo::purgeMethodQueue(TR_CompilationErrorCode errorCode)
    getLowPriorityCompQueue().purgeLPQ();
    // and from JProfiling queue
    getJProfilingCompQueue().purge();
+
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+   // and from the memoized compilations lists
+   getCRRuntime()->purgeMemoizedCompilations();
+#endif
    }
 
 void TR::CompilationInfoPerThread::suspendCompilationThread()
@@ -6850,7 +6882,7 @@ TR::CompilationInfoPerThreadBase::installAotCachedMethod(
          {
          entry->_compErrCode = returnCode;
          entry->setAotCodeToBeRelocated(NULL); // reset if relocation failed
-         entry->_tryCompilingAgain = _compInfo.shouldRetryCompilation(entry, compiler); // this will set entry->_doNotUseAotCodeFromSharedCache = true;
+         entry->_tryCompilingAgain = _compInfo.shouldRetryCompilation(vmThread, entry, compiler); // this will set entry->_doNotUseAotCodeFromSharedCache = true;
 
          // Feature [Defect 172216/180384]: Implement hints for failed AOT validations.  The idea is that the failed validations are due to the
          // fact that AOT methods are loaded at a lower count than when they were compiled so the JVM is given less opportunity to resolve things.
@@ -7939,7 +7971,7 @@ TR::CompilationInfoPerThreadBase::postCompilationTasks(J9VMThread * vmThread,
       {
       metaData = 0;
       }
-   else if (TR::CompilationInfo::shouldRetryCompilation(entry, _compiler))
+   else if (TR::CompilationInfo::shouldRetryCompilation(vmThread, entry, _compiler))
       {
       startPC = entry->_oldStartPC; // startPC == oldStartPC means compilation failure
       entry->_tryCompilingAgain = true;
@@ -10531,6 +10563,26 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
             else
                {
                jitMethodTranslated(vmThread, method, startPC);
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+               if (jitConfig->javaVM->internalVMFunctions->isCheckpointAllowed(vmThread)
+                   && jitConfig->javaVM->internalVMFunctions->isDebugOnRestoreEnabled(vmThread))
+                  {
+                  if (comp->getRecompilationInfo() && comp->getRecompilationInfo()->getJittedBodyInfo())
+                     {
+                     if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestoreDetails))
+                        TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Will force %p to be recompiled post-restore", method);
+
+                     OMR::CriticalSection pushForcedRecomp(compInfo->getCRRuntime()->getCRRuntimeMonitor());
+                     compInfo->getCRRuntime()->pushForcedRecompilation(method);
+                     }
+                  else
+                     {
+                     if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestoreDetails))
+                        TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Cannot force %p to be recompiled post-restore because the bodyInfo does not exist", method);
+                     }
+                  }
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+
                }
             }
          }
@@ -10872,6 +10924,8 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
                   case TR_PersistentMethodInfo::RecompDueToEdo:
                      catchBlockCounter = bodyInfo->getMethodInfo()->getCatchBlockCounter();
                      recompReason = 'E'; break;
+                  case TR_PersistentMethodInfo::RecompDueToCRIU:
+                     recompReason = 'F'; break;
                   } // end switch
                bodyInfo->getMethodInfo()->setReasonForRecompilation(0); // reset the flags
                }

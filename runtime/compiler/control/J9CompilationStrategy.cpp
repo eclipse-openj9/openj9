@@ -198,6 +198,13 @@ TR_OptimizationPlan *J9::CompilationStrategy::processEvent(TR_MethodEvent *event
          *newPlanCreated = true;
          }
          break;
+      case TR_MethodEvent::ForcedRecompilationPostRestore:
+         {
+         hotnessLevel = warm;
+         plan = TR_OptimizationPlan::alloc(hotnessLevel);
+         *newPlanCreated = true;
+         }
+         break;
       default:
          TR_ASSERT(0, "Bad event type %d", event->_eventType);
       }
