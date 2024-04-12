@@ -250,9 +250,9 @@ J9NLS_VERB_CLASS_BAD_CPENTRY_JXE_CORRUPT_IMAGE_HEADER.user_response=Examine the 
 J9NLS_VERB_CLASS_BAD_CPENTRY_JXE_OE_NOT_SUPPORTED=\u00c9rv\u00e9nytelen oszt\u00e1ly\u00fatvonal-bejegyz\u00e9s: %s  (ellenkez\u0151 endian jxe nem t\u00e1mogatott)
 # START NON-TRANSLATABLE
 J9NLS_VERB_CLASS_BAD_CPENTRY_JXE_OE_NOT_SUPPORTED.sample_input_1=/path/java/user.jxe
-J9NLS_VERB_CLASS_BAD_CPENTRY_JXE_OE_NOT_SUPPORTED.explanation=The specified JXE file had incorrect endianess for this platform
+J9NLS_VERB_CLASS_BAD_CPENTRY_JXE_OE_NOT_SUPPORTED.explanation=The specified JXE file had incorrect endianness for this platform
 J9NLS_VERB_CLASS_BAD_CPENTRY_JXE_OE_NOT_SUPPORTED.system_action=The JVM will warn the user and may either ignore the issue or throw a java/io/IOException
-J9NLS_VERB_CLASS_BAD_CPENTRY_JXE_OE_NOT_SUPPORTED.user_response=Replace the JXE file with one of the correct endianess
+J9NLS_VERB_CLASS_BAD_CPENTRY_JXE_OE_NOT_SUPPORTED.user_response=Replace the JXE file with one of the correct endianness
 # END NON-TRANSLATABLE
 
 # Note: %.*s is the thread name
