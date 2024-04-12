@@ -2447,7 +2447,7 @@ TR::TreeTop* generateArraycopyFromSequentialLoads(TR::Compilation* comp, bool tr
    if (trace) traceMsg(comp, "Sequential Load Simplification Candidate - rootNode: %p, newConvertChildNode: %p, newLoadChildNode: %p\n", rootNode, newConvertChildNode, newLoadChildNode);
 
    /*
-    * Check the endianess of the platform and the endianess of the byte array.
+    * Check the endianness of the platform and the endianness of the byte array.
     * If they don't match, byteswaps will be needed.
     */
    if (littleEndianLoad && !comp->target().cpu.isLittleEndian())
@@ -2767,7 +2767,7 @@ TR::TreeTop* generateArraycopyFromSequentialLoads(TR::Compilation* comp, bool tr
       if (trace) traceMsg(comp, "Creating mulNode (%p) with children %p and %p.\n", mulNode, mulNode->getFirstChild(), mulNode->getSecondChild());
 
       TR::Node * shortConversionNode = NULL;
-      /* The location to start the sload from depends on endianess of the byte array. */
+      /* The location to start the sload from depends on endianness of the byte array. */
       if (littleEndianLoad)
          {
          shortConversionNode = byteConversionNodes[0];
@@ -2842,7 +2842,7 @@ TR::TreeTop* generateArraycopyFromSequentialLoads(TR::Compilation* comp, bool tr
       if (trace) traceMsg(comp, "Creating mulNode (%p) with children %p and %p.\n", mulNode, mulNode->getFirstChild(), mulNode->getSecondChild());
 
       TR::Node * lowerIntConversionNode = NULL;
-      /* The location to start the lower iload from depends on endianess of the byte array. */
+      /* The location to start the lower iload from depends on endianness of the byte array. */
       if (littleEndianLoad)
          {
          lowerIntConversionNode = byteConversionNodes[0];
