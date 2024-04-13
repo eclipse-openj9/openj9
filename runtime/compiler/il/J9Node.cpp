@@ -422,7 +422,7 @@ J9::Node::processJNICall(TR::TreeTop *callNodeTreeTop, TR::ResolvedMethodSymbol 
       TR::Node * n = self()->getChild(i);
       if (n->getDataType() == TR::Address)
          {
-         if (n->getOpCode().hasSymbolReference() && n->getSymbol()->isAutoOrParm())
+         if (n->getOpCode().hasSymbolReference() && n->getSymbol()->isAutoOrParm() && n->getReferenceCount() == 1)
             {
             n->decReferenceCount();
             self()->setAndIncChild(i, TR::Node::createWithSymRef(n, TR::loadaddr, 0, n->getSymbolReference()));
