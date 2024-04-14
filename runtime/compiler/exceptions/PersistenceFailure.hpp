@@ -49,6 +49,16 @@ struct ClassChainPersistenceFailure : public virtual PersistenceFailure
    virtual const char* what() const throw() { return "Class chain persistence failure"; }
    };
 
+/**
+ * JITServer AOT cache Persistence Failure exception type.
+ *
+ * Thrown when an error related to creating AOT cache serialization records occurs.
+ */
+struct AOTCachePersistenceFailure : public virtual PersistenceFailure
+   {
+   virtual const char* what() const throw() { return "AOT cache persistence failure"; }
+   };
+
 }
 
 #endif // PERSISTENCE_FAILURE

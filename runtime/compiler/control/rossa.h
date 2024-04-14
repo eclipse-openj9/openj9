@@ -83,6 +83,7 @@ typedef enum {
    compilationStreamInterrupted                         = compilationFirstJITServerFailure + 4, // 52
    aotCacheDeserializationFailure                       = compilationFirstJITServerFailure + 5, // 53
    aotDeserializerReset                                 = compilationFirstJITServerFailure + 6, // 54
+   compilationAOTCachePersistenceFailure                = compilationFirstJITServerFailure + 7, // 55
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    /* must be the last one */
