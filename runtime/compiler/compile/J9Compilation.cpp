@@ -1606,7 +1606,7 @@ J9::Compilation::addSerializationRecord(const AOTCacheRecord *record, uintptr_t 
       // Otherwise, we can simply stop maintaining AOT cache records for this compilation and continue
       // with the compilation without subsequently storing it in the AOT cache.
       if (useServerOffsets)
-         failCompilation<J9::PersistenceFailure>("Serialization record at offset %zu must not be NULL", reloDataOffset);
+         failCompilation<J9::AOTCachePersistenceFailure>("Serialization record at offset %zu must not be NULL", reloDataOffset);
       else
          _aotCacheStore = false;
       }
@@ -1635,7 +1635,7 @@ J9::Compilation::addThunkRecord(const AOTCacheThunkRecord *record)
       // Otherwise, we can simply stop maintaining AOT cache records for this compilation and continue
       // with the compilation without subsequently storing it in the AOT cache.
       if (useServerOffsets)
-         failCompilation<J9::PersistenceFailure>("Thunk record must not be NULL");
+         failCompilation<J9::AOTCachePersistenceFailure>("Thunk record must not be NULL");
       else
          _aotCacheStore = false;
       }

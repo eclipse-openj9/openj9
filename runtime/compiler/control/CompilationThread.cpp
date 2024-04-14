@@ -2256,6 +2256,9 @@ bool TR::CompilationInfo::shouldRetryCompilation(J9VMThread *vmThread, TR_Method
             case compilationAotPatchedCPConstant:
             case compilationAotHasInvokeSpecialInterface:
             case compilationAotClassChainPersistenceFailure:
+#if defined(J9VM_OPT_JITSERVER)
+            case compilationAOTCachePersistenceFailure:
+#endif /* defined (J9VM_OPT_JITSERVER)*/
             case compilationSymbolValidationManagerFailure:
             case compilationAOTNoSupportForAOTFailure:
             case compilationAOTRelocationRecordGenerationFailure:
@@ -11424,6 +11427,10 @@ TR::CompilationInfoPerThreadBase::processException(
    catch (const J9::AOTDeserializerReset &e)
       {
       _methodBeingCompiled->_compErrCode = aotDeserializerReset;
+      }
+   catch (const J9::AOTCachePersistenceFailure &e)
+      {
+      _methodBeingCompiled->_compErrCode = compilationAOTCachePersistenceFailure;
       }
 #endif /* defined(J9VM_OPT_JITSERVER) */
    catch (...)
