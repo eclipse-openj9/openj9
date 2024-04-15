@@ -984,9 +984,11 @@ bool
 MM_StandardAccessBarrier::checkStringConstantsLive(J9JavaVM *javaVM, j9object_t stringOne, j9object_t stringTwo)
 {
 	if (_extensions->isSATBBarrierActive()) {
-		J9VMThread* vmThread =  javaVM->internalVMFunctions->currentVMThread(javaVM);
+		J9VMThread *vmThread = javaVM->internalVMFunctions->currentVMThread(javaVM);
 		stringConstantEscaped(vmThread, (J9Object *)stringOne);
-		stringConstantEscaped(vmThread, (J9Object *)stringTwo);
+		if (stringOne != stringTwo) {
+			stringConstantEscaped(vmThread, (J9Object *)stringTwo);
+		}
 	}
 
 	return true;

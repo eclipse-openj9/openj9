@@ -194,11 +194,16 @@ MM_RealtimeAccessBarrier::checkStringConstantsLive(J9JavaVM *javaVM, j9object_t 
 			/* If this flag is set, we will not scan the remembered set again, so we must
 			 * treat any unmarked string constant as having been cleared.
 			 */
-			return (_realtimeGC->getMarkingScheme()->isMarked((J9Object *)stringOne) && _realtimeGC->getMarkingScheme()->isMarked((J9Object *)stringTwo));
+			MM_RealtimeMarkingScheme *markingScheme = _realtimeGC->getMarkingScheme();
+			return markingScheme->isMarked((J9Object *)stringOne)
+				&& ((stringTwo == stringOne)
+					|| markingScheme->isMarked((J9Object *)stringTwo));
 		} else {
-			J9VMThread* vmThread =  javaVM->internalVMFunctions->currentVMThread(javaVM);
+			J9VMThread *vmThread = javaVM->internalVMFunctions->currentVMThread(javaVM);
 			stringConstantEscaped(vmThread, (J9Object *)stringOne);
-			stringConstantEscaped(vmThread, (J9Object *)stringTwo);
+			if (stringTwo != stringOne) {
+				stringConstantEscaped(vmThread, (J9Object *)stringTwo);
+			}
 		}
 	}
 	return true;
