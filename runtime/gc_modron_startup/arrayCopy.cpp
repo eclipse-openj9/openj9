@@ -50,7 +50,7 @@ extern "C" {
  * @return true if jitted code should always call the C helper for a reference array copy
  * @return false otherwise
  */
-UDATA
+uintptr_t
 alwaysCallReferenceArrayCopyHelper(J9JavaVM *javaVM)
 {
 	return MM_GCExtensions::getExtensions(javaVM)->isMetronomeGC() ? 1 : 0;
@@ -64,19 +64,21 @@ alwaysCallReferenceArrayCopyHelper(J9JavaVM *javaVM)
 static bool
 typeCheckArrayStore(J9VMThread *vmThread, J9Object *object, J9IndexableObject *arrayObj)
 {
-	if (object) {
+	bool result = true;
+
+	if (NULL != object) {
 		J9Class *componentType = ((J9ArrayClass *)J9OBJECT_CLAZZ(vmThread, arrayObj))->componentType;
 		/* Check if we are storing the object into an array of the same type */
 		J9Class *storedClazz = J9OBJECT_CLAZZ(vmThread, object);
 		if (storedClazz != componentType) {
 			/* Check if we are storing the object into an array of Object[] */
-			UDATA classDepth = J9CLASS_DEPTH(componentType);
+			uintptr_t classDepth = J9CLASS_DEPTH(componentType);
 			if (classDepth != 0) {
-				return (0 != instanceOfOrCheckCast(storedClazz, componentType));
+				result = 0 != instanceOfOrCheckCast(storedClazz, componentType);
 			}
 		}
 	}
-	return true;
+	return result;
 }
 
 /**
@@ -88,19 +90,18 @@ arrayStoreCheckRequired(J9VMThread *vmThread, J9IndexableObject *destObject, J9I
 {
 	J9Class *srcClazz = J9OBJECT_CLAZZ(vmThread, srcObject);
 	J9Class *destClazz = J9OBJECT_CLAZZ(vmThread, destObject);
+	bool result = false;
 
 	/* Type checks are not required only if both classes are the same, or
 	 * the source class is a subclass of the dest class
 	 */
 	if (srcClazz != destClazz) {
-		UDATA srcDepth = J9CLASS_DEPTH(srcClazz);
-		UDATA destDepth = J9CLASS_DEPTH(destClazz);
-		if ((srcDepth <= destDepth) || (destClazz->superclasses[srcDepth] != srcClazz)) {
-			return true;
-		}
+		uintptr_t srcDepth = J9CLASS_DEPTH(srcClazz);
+		uintptr_t destDepth = J9CLASS_DEPTH(destClazz);
+		result = (srcDepth <= destDepth) || (destClazz->superclasses[srcDepth] != srcClazz);
 	}
 
-	return false;
+	return result;
 }
 
 /**
@@ -114,9 +115,11 @@ arrayStoreCheckRequired(J9VMThread *vmThread, J9IndexableObject *destObject, J9I
  * @return -1 if the copy succeeded
  * @return the index where the ArrayStoreException occurred, if the copy failed
  */
-I_32
-referenceArrayCopy(J9VMThread *vmThread, J9IndexableObject *srcObject, J9IndexableObject *destObject, fj9object_t *srcAddress, fj9object_t *destAddress, I_32 lengthInSlots)
+int32_t
+referenceArrayCopy(J9VMThread *vmThread, J9IndexableObject *srcObject, J9IndexableObject *destObject, fj9object_t *srcAddress, fj9object_t *destAddress, int32_t lengthInSlots)
 {
+	int32_t result = -1;
+
 	if (lengthInSlots > 0) {
 		MM_GCExtensions *ext = MM_GCExtensions::getExtensions(vmThread->javaVM);
 		MM_ObjectAccessBarrier *barrier = ext->accessBarrier;
@@ -129,10 +132,9 @@ referenceArrayCopy(J9VMThread *vmThread, J9IndexableObject *srcObject, J9Indexab
 		int32_t srcIndex = (int32_t)(((uintptr_t)srcAddress - srcDataAddr) / referenceSize);
 		int32_t destIndex = (int32_t)(((uintptr_t)destAddress - dstDataAddr) / referenceSize);
 
-		return referenceArrayCopyIndex(vmThread, srcObject, destObject, srcIndex, destIndex, lengthInSlots);
+		result = referenceArrayCopyIndex(vmThread, srcObject, destObject, srcIndex, destIndex, lengthInSlots);
 	}
-	return -1;
-
+	return result;
 }
 
 /**
@@ -144,102 +146,102 @@ referenceArrayCopy(J9VMThread *vmThread, J9IndexableObject *srcObject, J9Indexab
  * @return if the copy failed, return the index where the exception occurred. It
  * may be an ArrayStoreException
  */
-I_32
-referenceArrayCopyIndex(J9VMThread *vmThread, J9IndexableObject *srcObject, J9IndexableObject *destObject, I_32 srcIndex, I_32 destIndex, I_32 lengthInSlots)
+int32_t
+referenceArrayCopyIndex(J9VMThread *vmThread, J9IndexableObject *srcObject, J9IndexableObject *destObject, int32_t srcIndex, int32_t destIndex, int32_t lengthInSlots)
 {
-	if (lengthInSlots > 0) {
+	int32_t result = -1;
 
+	if (lengthInSlots > 0) {
 		J9WriteBarrierType wrtbarType = (J9WriteBarrierType)j9gc_modron_getWriteBarrierType(vmThread->javaVM);
 		J9ReferenceArrayCopyTable *table = &MM_GCExtensions::getExtensions(vmThread->javaVM)->referenceArrayCopyTable;
 
 		if ((srcObject == destObject) && (srcIndex < destIndex) && ((srcIndex + lengthInSlots) > destIndex)) {
-			return table->backwardReferenceArrayCopyIndex[wrtbarType](vmThread, srcObject, destObject, srcIndex, destIndex, lengthInSlots);
+			result = table->backwardReferenceArrayCopyIndex[wrtbarType](vmThread, srcObject, destObject, srcIndex, destIndex, lengthInSlots);
+		} else if (arrayStoreCheckRequired(vmThread, destObject, srcObject)) {
+			result = table->forwardReferenceArrayCopyWithCheckIndex[wrtbarType](vmThread, srcObject, destObject, srcIndex, destIndex, lengthInSlots);
+		} else {
+			result = table->forwardReferenceArrayCopyWithoutCheckIndex[wrtbarType](vmThread, srcObject, destObject, srcIndex, destIndex, lengthInSlots);
 		}
-		if (arrayStoreCheckRequired(vmThread, destObject, srcObject)) {
-			return table->forwardReferenceArrayCopyWithCheckIndex[wrtbarType](vmThread, srcObject, destObject, srcIndex, destIndex, lengthInSlots);
-		}
-		return table->forwardReferenceArrayCopyWithoutCheckIndex[wrtbarType](vmThread, srcObject, destObject, srcIndex, destIndex, lengthInSlots);	
 	}
-	return -1;
+	return result;
 }
 
-I_32 
-backwardReferenceArrayCopyAndAlwaysWrtbarIndex(J9VMThread *vmThread, J9IndexableObject *srcObject, J9IndexableObject *destObject, I_32 srcIndex, I_32 destIndex, I_32 lengthInSlots)
+int32_t
+backwardReferenceArrayCopyAndAlwaysWrtbarIndex(J9VMThread *vmThread, J9IndexableObject *srcObject, J9IndexableObject *destObject, int32_t srcIndex, int32_t destIndex, int32_t lengthInSlots)
 {
 	MM_ObjectAccessBarrier *barrier = MM_GCExtensions::getExtensions(vmThread->javaVM)->accessBarrier;
-	I_32 result;	
 	
 	/* Let access barrier specific code try doing an optimized version of the copy (if such exists) */
 	/* -1 copy successful, -2 no copy done, >=0 copy was attempted but and exception was raised (index returned) */	
-	if (-1 <= (result = barrier->backwardReferenceArrayCopyIndex(vmThread, srcObject, destObject, srcIndex, destIndex, lengthInSlots))) {
-		return result;
-	}
+	int32_t result = barrier->backwardReferenceArrayCopyIndex(vmThread, srcObject, destObject, srcIndex, destIndex, lengthInSlots);
 
-	I_32 endSrcIndex = srcIndex;
-	J9Object *copyObject = NULL;
+	if (-1 > result) {
+		int32_t endSrcIndex = srcIndex;
+		J9Object *copyObject = NULL;
 
-	srcIndex += lengthInSlots;
-	destIndex += lengthInSlots;
-	while(srcIndex > endSrcIndex) {
-		srcIndex--;
-		destIndex--;
-		copyObject = J9JAVAARRAYOFOBJECT_LOAD(vmThread, srcObject, srcIndex);
-		J9JAVAARRAYOFOBJECT_STORE(vmThread, destObject, destIndex, copyObject);
+		srcIndex += lengthInSlots;
+		destIndex += lengthInSlots;
+		while (srcIndex > endSrcIndex) {
+			srcIndex -= 1;
+			destIndex -= 1;
+			copyObject = J9JAVAARRAYOFOBJECT_LOAD(vmThread, srcObject, srcIndex);
+			J9JAVAARRAYOFOBJECT_STORE(vmThread, destObject, destIndex, copyObject);
+		}
+		result = -1;
 	}
-	
-	return -1;
+	return result;
 }
 
-I_32 
-forwardReferenceArrayCopyWithCheckAndAlwaysWrtbarIndex(J9VMThread *vmThread, J9IndexableObject *srcObject, J9IndexableObject *destObject, I_32 srcIndex, I_32 destIndex, I_32 lengthInSlots)
+int32_t
+forwardReferenceArrayCopyWithCheckAndAlwaysWrtbarIndex(J9VMThread *vmThread, J9IndexableObject *srcObject, J9IndexableObject *destObject, int32_t srcIndex, int32_t destIndex, int32_t lengthInSlots)
 {
-	I_32 srcEndIndex = srcIndex + lengthInSlots;
+	int32_t srcEndIndex = srcIndex + lengthInSlots;
+	int32_t result = -1;
 	
 	while (srcIndex < srcEndIndex) {
 		J9Object *copyObject = J9JAVAARRAYOFOBJECT_LOAD(vmThread, srcObject, srcIndex);
-		if (!typeCheckArrayStore(vmThread, copyObject, destObject)) {
-			goto error;
+		if (typeCheckArrayStore(vmThread, copyObject, destObject)) {
+			J9JAVAARRAYOFOBJECT_STORE(vmThread, destObject, destIndex, copyObject);
+			srcIndex += 1;
+			destIndex += 1;
+		} else {
+			/* An error has been returned */
+			result = srcIndex;
+			break;
 		}
-		J9JAVAARRAYOFOBJECT_STORE(vmThread, destObject, destIndex, copyObject);
-		srcIndex++;
-		destIndex++;
 	}
 
-	return -1;
-
-error:
-	return srcIndex;
+	return result;
 }
 
-I_32 
-forwardReferenceArrayCopyWithoutCheckAndAlwaysWrtbarIndex(J9VMThread *vmThread, J9IndexableObject *srcObject, J9IndexableObject *destObject, I_32 srcIndex, I_32 destIndex, I_32 lengthInSlots)
+int32_t
+forwardReferenceArrayCopyWithoutCheckAndAlwaysWrtbarIndex(J9VMThread *vmThread, J9IndexableObject *srcObject, J9IndexableObject *destObject, int32_t srcIndex, int32_t destIndex, int32_t lengthInSlots)
 {
 	MM_ObjectAccessBarrier *barrier = MM_GCExtensions::getExtensions(vmThread->javaVM)->accessBarrier;
-	I_32 result;
 	
 	/* Let access barrier specific code try doing an optimized version of the copy (if such exists) */
 	/* -1 copy successful, -2 no copy done, >=0 copy was attempted but and exception was raised (index returned) */
-	if (-1 <= (result = barrier->forwardReferenceArrayCopyIndex(vmThread, srcObject, destObject, srcIndex, destIndex, lengthInSlots))) {
-		return result;
-	}
+	int32_t result = barrier->forwardReferenceArrayCopyIndex(vmThread, srcObject, destObject, srcIndex, destIndex, lengthInSlots);
 
-	I_32 srcEndIndex = srcIndex + lengthInSlots;
+	if (-1 > result) {
+		int32_t srcEndIndex = srcIndex + lengthInSlots;
 	
-	while (srcIndex < srcEndIndex) {
-		J9Object *copyObject = J9JAVAARRAYOFOBJECT_LOAD(vmThread, srcObject, srcIndex);
-		J9JAVAARRAYOFOBJECT_STORE(vmThread, destObject, destIndex, copyObject);
-		srcIndex++;
-		destIndex++;
+		while (srcIndex < srcEndIndex) {
+			J9Object *copyObject = J9JAVAARRAYOFOBJECT_LOAD(vmThread, srcObject, srcIndex);
+			J9JAVAARRAYOFOBJECT_STORE(vmThread, destObject, destIndex, copyObject);
+			srcIndex += 1;
+			destIndex += 1;
+		}
+		result = -1;
 	}
-
-	return -1;
+	return result;
 }
 
 /**
  * Error stub for function table entries that aren't needed by Metronome. 
  */
-I_32
-copyVariantUndefinedIndex(J9VMThread *vmThread, J9IndexableObject *srcObject, J9IndexableObject *destObject, I_32 srcIndex, I_32 destIndex, I_32 lengthInSlots)
+int32_t
+copyVariantUndefinedIndex(J9VMThread *vmThread, J9IndexableObject *srcObject, J9IndexableObject *destObject, int32_t srcIndex, int32_t destIndex, int32_t lengthInSlots)
 {	
 	Assert_MM_unreachable();
 	return srcIndex;
