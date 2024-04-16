@@ -20,10 +20,24 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
+#include "OMR/Bytes.hpp"
+#include "control/CompilationRuntime.hpp"
+#include "control/Options.hpp"
+#include "control/Options_inlines.hpp"
 #include "env/PersistentAllocator.hpp"
+#include "env/VerboseLog.hpp"
 #include "il/DataTypes.hpp"
 #include "infra/Monitor.hpp"
 
+#ifdef LINUX
+#include <sys/mman.h> // for madvise
+#ifndef MADV_NOHUGEPAGE
+#define MADV_NOHUGEPAGE  15
+#endif // MADV_NOHUGEPAGE
+#ifndef MADV_PAGEOUT
+#define MADV_PAGEOUT     21
+#endif // MADV_PAGEOUT
+#endif // LINUX
 
 namespace J9 {
 
@@ -33,16 +47,24 @@ PersistentAllocator::PersistentAllocator(const PersistentAllocatorKit &creationK
 #if defined(J9VM_OPT_JITSERVER)
                      creationKit.javaVM.internalVMFunctions->isJITServerEnabled(&creationKit.javaVM) ?
                      MEMORY_TYPE_VIRTUAL | MEMORY_TYPE_JIT_PERSISTENT : // use virtual memory for JITServer because we need to release memory
-                                                                        // back into the system once allocator is destroyed, which is not 
+                                                                        // back into the system once allocator is destroyed, which is not
                                                                         // guaranteed with regular malloc
 #endif
-                     MEMORY_TYPE_JIT_PERSISTENT, creationKit.javaVM),
+                     MEMORY_TYPE_JIT_PERSISTENT | creationKit.memoryType,
+                     creationKit.javaVM),
    _freeBlocks(),
 #if defined(J9VM_OPT_JITSERVER)
    _isJITServer(creationKit.javaVM.internalVMFunctions->isJITServerEnabled(&creationKit.javaVM)),
 #endif
-   _segments(SegmentContainerAllocator(RawAllocator(&creationKit.javaVM)))
+   _segments(SegmentContainerAllocator(RawAllocator(&creationKit.javaVM))),
+   _numSegments(0),
+   _javaVM(creationKit.javaVM)
    {
+   _disclaimEnabled =
+#if defined(J9VM_OPT_JITSERVER)
+                    !_isJITServer &&
+#endif
+                    (creationKit.memoryType & MEMORY_TYPE_VIRTUAL);
    j9thread_monitor_init_with_name(&_smallBlockMonitor, 0, "JIT-PersistentAllocatorSmallBlockMonitor");
    j9thread_monitor_init_with_name(&_largeBlockMonitor, 0, "JIT-PersistentAllocatorLargeBlockMonitor");
    j9thread_monitor_init_with_name(&_segmentMonitor, 0, "JIT-PersistentAllocatorSegmentMonitor");
@@ -141,7 +163,7 @@ PersistentAllocator::allocateFromIndexedListLocked(size_t allocSize)
             _freeBlocks[LARGE_BLOCK_LIST_INDEX] = reinterpret_cast<Block*>(block->next());
          if (block->next())
             block->next()->setPrevious(block->previous());
-        
+
          // The block that was detached belonged to an interval 'index'.
          // Adjust _startInterval and _endInterval pointers if needed
          index = getInterval(block->size());
@@ -187,7 +209,7 @@ PersistentAllocator::allocateInternal(size_t requestedSize)
    if (requestedSize == 0)
       requestedSize = sizeof(void *);
    TR_ASSERT( sizeof(Block) == mem_round( sizeof(Block) ),"Persistent block size will prevent us from properly aligning allocations.");
- 
+
    size_t const dataSize = mem_round(requestedSize);
    size_t const allocSize = sizeof(Block) + dataSize;
    void * allocation = NULL;
@@ -297,10 +319,45 @@ PersistentAllocator::allocateFromSegmentLocked(size_t allocSize)
    J9MemorySegment *segment = findUsableSegment(allocSize);
    if (!segment)
       {
-      size_t const segmentSize = allocSize < _minimumSegmentSize ? _minimumSegmentSize : allocSize;
+      size_t segmentSize = allocSize < _minimumSegmentSize ? _minimumSegmentSize : allocSize;
+#ifdef LINUX
+   UDATA defaultPageSize = 0;
+   if (_disclaimEnabled)
+      {
+      PORT_ACCESS_FROM_JAVAVM(&_javaVM);
+      defaultPageSize = j9vmem_supported_page_sizes()[0];
+      segmentSize = OMR::align(segmentSize, defaultPageSize); // Round up to a multiple of default page size if needed
+      }
+#endif // LINUX
       segment = _segmentAllocator.allocate(segmentSize, std::nothrow);
-      if (!segment) 
+      if (!segment)
          return NULL;
+#ifdef LINUX
+      if (_disclaimEnabled)
+         {
+         // The start address must be page aligned because we obtained it from mmap
+         TR_ASSERT_FATAL(OMR::alignedNoCheck((uintptr_t)segment->heapBase, defaultPageSize),
+                         "Start address of the persistent segment is not page aligned");
+         size_t segLength = segment->heapTop - segment->heapBase;
+         if (madvise(segment->heapBase, segLength, MADV_NOHUGEPAGE) != 0)
+            {
+            if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
+               TR_VerboseLog::writeLine(TR_Vlog_INFO, "Failed to set MADV_HUGEPAGE for persistent memory segment");
+            }
+         // If the memory segment is backed by a file, disable read-ahead
+         // so that touching one byte brings a single page in
+         if (segment->vmemIdentifier.allocator == OMRPORT_VMEM_RESERVE_USED_MMAP_SHM)
+            {
+            // Disable read-ahead so that touching one byte brings a single page in
+            if (madvise(segment->heapBase, segLength, MADV_RANDOM) != 0)
+               {
+               if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
+                  TR_VerboseLog::writeLine(TR_Vlog_INFO, "Failed to set MADV_RANDOM for persistent memory segment");
+               }
+            }
+         }
+#endif // LINUX
+      _numSegments++;
       try
          {
          _segments.push_front(TR::ref(*segment));
@@ -376,7 +433,7 @@ PersistentAllocator::freeVariableSizeBlock(Block * block)
 #if defined(J9VM_OPT_JITSERVER)
 size_t
 PersistentAllocator::getInterval(size_t blockSize)
-   {  
+   {
    // Find the power-of-two interval that this block size belongs to
    TR_ASSERT(blockSize >= PERSISTENT_BLOCK_SIZE_BUCKETS * sizeof(void *),
              "getInterval should be used only on big blocks. blockSize=%zu", blockSize);
@@ -454,7 +511,7 @@ PersistentAllocator::freeBlockToIndexedList(Block * blockToBeFreed)
                if (_startInterval[index]->size() > block->size())
                   {
                   // block becomes the first entry in this interval
-                  TR_ASSERT(_startInterval[index] == blockIterator, "blockInterator must be first block in this interval"); 
+                  TR_ASSERT(_startInterval[index] == blockIterator, "blockInterator must be first block in this interval");
                   _startInterval[index] = block;
                   }
                else // Insert in the middle or end of interval
@@ -506,10 +563,10 @@ PersistentAllocator::freeBlockToIndexedList(Block * blockToBeFreed)
          _endInterval[index] = block;
          }
       }
-      checkIntegrity("freeVariableSizeBlock end");   
+      checkIntegrity("freeVariableSizeBlock end");
    }
 
-void 
+void
 PersistentAllocator::checkIntegrity(const char msg[])
    {
 #ifdef CHECK_PERSISTENT_ALLOCATOR_INTEGRITY
@@ -524,7 +581,7 @@ PersistentAllocator::checkIntegrity(const char msg[])
          TR_ASSERT_FATAL(block->previous() == prevBlock, "block->previous() != prevBlock");
          }
       }
-   
+
    for (size_t i = 0; i < NUM_INTERVALS; i++)
       {
       if (_startInterval[i])
@@ -581,7 +638,7 @@ PersistentAllocator::freeBlock(Block *block)
       TR::AllocatedMemoryMeter::update_freed(block->size(), persistentAlloc);
       j9thread_monitor_exit(_smallBlockMonitor);
       }
-  
+
    // If this is a small block, add it to the appropriate fixed-size-block
    // chain. Otherwise add it to the variable-size-block chain which is in
    // ascending size order.
@@ -626,6 +683,81 @@ PersistentAllocator::deallocate(void * mem, size_t) throw()
    freeBlock(block);
    }
 
+// Note: this method has high overhead. Use it only for debugging
+extern "C" {
+#ifdef LINUX
+   int countPresentPagesInSegment(const J9MemorySegment *segment, int &swappedCount, int &filePageCount);
+#endif
+}
+
+//#define DEBUG_DISCLAIM
+//----------------------------- disclaimAllSegments -----------------------------
+// Disclaim memory for all the segments belonging to this persistent allocator.
+// Return the number of segments successfully disclaimed
+// Side effect: may disable disclaiming if the kernel does not support it
+//---------------------------------------------------------------------------
+int
+PersistentAllocator::disclaimAllSegments()
+   {
+   if (!isDisclaimEnabled())
+      return 0;
+   int numSegDisclaimed = 0;
+#ifdef LINUX
+   bool verbose = TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance);
+   TR::CompilationInfo *compInfo = TR::CompilationInfo::get(_javaVM.jitConfig);
+   bool canDisclaimOnSwap = TR::Options::getCmdLineOptions()->getOption(TR_DisclaimMemoryOnSwap) && !compInfo->isSwapMemoryDisabled();
+   j9thread_monitor_enter(_segmentMonitor);
+   for (const J9MemorySegment &segment : _segments)
+      {
+      if (segment.vmemIdentifier.allocator == OMRPORT_VMEM_RESERVE_USED_MMAP_SHM || // Can disclaim to file
+        ((segment.vmemIdentifier.mode & J9PORT_VMEM_MEMORY_MODE_VIRTUAL) && canDisclaimOnSwap)) // Can disclaim to swap
+         {
+         size_t segLength = segment.heapTop - segment.heapBase;
+#ifdef DEBUG_DISCLAIM
+         int swappedCount = 0;
+         int filePageCount = 0;
+         int numPresentPages = countPresentPagesInSegment(&segment, swappedCount, filePageCount);
+         fprintf(stderr, "Will disclaim persistent memory segment %p of size %zu. Present pages =%d swapped=%d fileMapped=%d\n",
+                 &segment, segLength, numPresentPages,  swappedCount, filePageCount);
+#endif
+         int ret = madvise(segment.heapBase, segLength, MADV_PAGEOUT);
+         if (ret != 0)
+            {
+            // madvise() could fail with EINVAL if MADV_PAGEOUT is not supported by the kernel
+            if (verbose)
+               TR_VerboseLog::writeLine(TR_Vlog_PERF, "WARNING: Failed to use madvise to disclaim memory for persistent memory");
+            if (ret == EINVAL)
+               {
+               _disclaimEnabled = false; // Don't try to disclaim again, since support seems to be missing
+               if (verbose)
+                  TR_VerboseLog::writeLine(TR_Vlog_PERF, "WARNING: Disabling persistent memory disclaiming for this allocator from now on");
+               }
+            }
+         else
+            {
+#ifdef DEBUG_DISCLAIM
+            swappedCount = 0;
+            filePageCount = 0;
+            numPresentPages = countPresentPagesInSegment(&segment, swappedCount, filePageCount);
+            fprintf(stderr, "Disclaimed persistent memory segment %p of size %zu. Present pages =%d swapped=%d fileMapped=%d\n",
+                    &segment, segLength, numPresentPages, swappedCount, filePageCount);
+#endif
+            if (verbose)
+               TR_VerboseLog::writeLine(TR_Vlog_PERF, "madvise disclaimed persistent segment at address %p size=%zu", segment.heapBase, segLength);
+            numSegDisclaimed++;
+            }
+         }
+      else
+         {
+         // I am not allowed to use disclaim because the memory is not backed by a file
+         if (verbose)
+            TR_VerboseLog::writeLine(TR_Vlog_PERF, "WARNING: Persistent memory segment %p is not backed by a file", &segment);
+         }
+      }
+   j9thread_monitor_exit(_segmentMonitor);
+#endif // LINUX
+   return numSegDisclaimed;
+   }
 } // namespace J9
 
 void *

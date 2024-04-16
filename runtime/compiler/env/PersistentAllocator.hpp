@@ -73,6 +73,10 @@ public:
       return TR::typed_allocator<T, PersistentAllocator& >(*this);
       }
 
+   bool isDisclaimEnabled() const { return _disclaimEnabled; }
+   int disclaimAllSegments();
+   int getNumSegments() const { return _numSegments; }
+
 private:
 
    // Persistent block header
@@ -125,10 +129,13 @@ private:
    typedef TR::typed_allocator<TR::reference_wrapper<J9MemorySegment>, TR::RawAllocator> SegmentContainerAllocator;
    typedef std::deque<TR::reference_wrapper<J9MemorySegment>, SegmentContainerAllocator> SegmentContainer;
    SegmentContainer _segments;
+   int _numSegments;
+   bool _disclaimEnabled;
+   const J9JavaVM &_javaVM;
 
 #if defined(J9VM_OPT_JITSERVER)
    // For JITServer, large freed blocks are put in a doubly linked list ordered by size.
-   // A node in this list (of type ExtendedBlock) could be a single freed block, 
+   // A node in this list (of type ExtendedBlock) could be a single freed block,
    // or a list of freed blocks of same size.
    struct ExtendedBlock
       {
@@ -159,13 +166,13 @@ private:
    Block * allocateFromIndexedListLocked(size_t allocSize);
    void freeBlockToIndexedList(Block *);
    void checkIntegrity(const char msg[]); // for debugging purposes
-   
+
    const bool _isJITServer;
    // Since the list of variable-size blocks (the large ones) can become very big,
    // it may generate a lot of overhead during allocation and deallocation because
    // we need to find the right place in this list which is ordered by block size.
    // To speed-up searching, we logically split the list into several "intervals"
-   // by keeping pointers at nodes whose block sizes are power of two. 
+   // by keeping pointers at nodes whose block sizes are power of two.
    // For instance, we will have pointers for nodes that are 128,
    // 256, 512, ..., 8K, 16K in size. If we search for a block that is 768
    // bytes in size, we don't have to look from the beginning of the list
