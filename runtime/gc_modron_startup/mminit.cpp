@@ -3310,6 +3310,11 @@ initializeIndexableObjectHeaderSizes(J9JavaVM* vm)
 #else /* defined(J9VM_ENV_DATA64) */
 	setIndexableObjectHeaderSizeWithoutDataAddress(vm);
 #endif /* defined(J9VM_ENV_DATA64) */
+	if (MM_GCExtensions::getExtensions(vm)->isVirtualLargeObjectHeapEnabled) {
+		vm->unsafeIndexableHeaderSize = 0;
+	} else {
+		vm->unsafeIndexableHeaderSize = vm->contiguousIndexableHeaderSize;
+	}
 }
 
 #if defined(J9VM_ENV_DATA64)

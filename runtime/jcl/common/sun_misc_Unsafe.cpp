@@ -38,6 +38,7 @@
 #include "ArrayCopyHelpers.hpp"
 #include "AtomicSupport.hpp"
 #include "ObjectMonitor.hpp"
+#include "UnsafeAPI.hpp"
 #include "VMHelpers.hpp"
 
 extern "C" {
@@ -572,7 +573,7 @@ copyMemory(J9VMThread* currentThread, j9object_t sourceObject, UDATA sourceOffse
 		UDATA destOffset, UDATA actualSize)
 {
 	/* Because array data is always 8-aligned, only the alignment of the offsets (and byte size) need be considered */
-	UDATA const headerSize = J9VMTHREAD_CONTIGUOUS_INDEXABLE_HEADER_SIZE(currentThread);
+	UDATA const headerSize = VM_UnsafeAPI::arrayBase(currentThread);
 	UDATA logElementSize = determineCommonAlignment(sourceOffset, destOffset, actualSize);
 	UDATA sourceIndex = (sourceOffset - headerSize) >> logElementSize;
 	UDATA destIndex = (destOffset - headerSize) >> logElementSize;
@@ -595,7 +596,7 @@ static VMINLINE void
 copyMemoryByte(J9VMThread* currentThread, j9object_t sourceObject, UDATA sourceOffset, j9object_t destObject,
 		UDATA destOffset)
 {
-	UDATA const headerSize = J9VMTHREAD_CONTIGUOUS_INDEXABLE_HEADER_SIZE(currentThread);
+	UDATA const headerSize = VM_UnsafeAPI::arrayBase(currentThread);
 	UDATA sourceIndex = sourceOffset - headerSize;
 	UDATA destIndex = destOffset - headerSize;
 
@@ -695,7 +696,7 @@ illegal:
 		if (!J9ROMCLASS_IS_PRIMITIVE_TYPE(((J9ArrayClass*)clazz)->componentType->romClass)) {
 			goto illegal;
 		}
-		offset -= J9VMTHREAD_CONTIGUOUS_INDEXABLE_HEADER_SIZE(currentThread);
+		offset -= VM_UnsafeAPI::arrayBase(currentThread);
 		VM_ArrayCopyHelpers::primitiveArrayFill(currentThread, object, (UDATA)offset, actualSize, (U_8)value);
 	}
 	vmFuncs->internalExitVMToJNI(currentThread);
