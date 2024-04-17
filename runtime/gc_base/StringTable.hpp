@@ -30,6 +30,7 @@
 
 #include "BaseVirtual.hpp"
 
+#include "j9protos.h"
 #include "ModronAssertions.h"
 
 class MM_EnvironmentBase;
