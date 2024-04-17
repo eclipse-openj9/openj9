@@ -20,16 +20,15 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
+#include "StringTable.hpp"
+
 #include "hashtable_api.h"
 #include "j2sever.h"
 #include "j9consts.h"
-#include "j9protos.h"
 #include "objhelp.h"
-#include "ModronAssertions.h"
 
 #include "EnvironmentBase.hpp"
 #include "GCExtensions.hpp"
-#include "StringTable.hpp"
 #include "VMHelpers.hpp"
 
 /* the following is all zeros except the least significant bit */
