@@ -69,11 +69,16 @@ public class VirtualThreadsCommand extends Command {
 		return J9ObjectHelper.getLongField(continuation, vmRefOffset);
 	}
 
-	private static J9ObjectPointer getName(J9ObjectPointer vthread) throws CorruptDataException {
-		if (nameOffset == null) {
-			nameOffset = J9ObjectHelper.getFieldOffset(vthread, "name", "Ljava/lang/String;");
+	private static String getName(J9ObjectPointer vthread) throws CorruptDataException {
+		String name = null;
+		if (vthread.notNull()) {
+			if (nameOffset == null) {
+				nameOffset = J9ObjectHelper.getFieldOffset(vthread, "name", "Ljava/lang/String;");
+			}
+			name = J9ObjectHelper.getStringField(vthread, nameOffset);
 		}
-		return J9ObjectHelper.getObjectField(vthread, nameOffset);
+
+		return (name != null) ? name : "<N/A>";
 	}
 
 	public VirtualThreadsCommand() {
@@ -112,7 +117,7 @@ public class VirtualThreadsCommand extends Command {
 			while (continuation.notNull()) {
 				long vmRef = getVmRef(continuation);
 				J9ObjectPointer vthread = getVirtualThread(continuation);
-				J9ObjectPointer name = getName(vthread);
+				String name = getName(vthread);
 
 				out.format(
 						outputFormat,
@@ -120,7 +125,7 @@ public class VirtualThreadsCommand extends Command {
 						vmRef,
 						continuation.getHexAddress(),
 						vthread.getHexAddress(),
-						J9ObjectHelper.stringValue(name));
+						name);
 				continuation = ObjectReferencePointer.cast(continuation.addOffset(linkOffset)).at(0);
 			}
 			continuationObjectList = continuationObjectList._nextList();
