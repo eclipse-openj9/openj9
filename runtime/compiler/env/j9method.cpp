@@ -4755,6 +4755,10 @@ TR_ResolvedJ9Method::setRecognizedMethodInfo(TR::RecognizedMethod rm)
             case TR::java_lang_Math_min_I:
             case TR::java_lang_Math_max_L:
             case TR::java_lang_Math_min_L:
+            case TR::java_lang_Math_max_F:
+            case TR::java_lang_Math_min_F:
+            case TR::java_lang_Math_max_D:
+            case TR::java_lang_Math_min_D:
             case TR::java_lang_Math_abs_I:
             case TR::java_lang_Math_abs_L:
             case TR::java_lang_Math_abs_F:
