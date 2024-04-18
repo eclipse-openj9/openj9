@@ -53,9 +53,9 @@ private:
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 	omrthread_monitor_t _undeadSegmentListMonitor;
 	J9MemorySegment *_firstUndeadSegment;
-	UDATA _undeadSegmentsTotalSize;
-	UDATA _lastUnloadNumOfClassLoaders;  /**< number of class loaders last seen during a dynamic class unloading pass */
-	UDATA _lastUnloadNumOfAnonymousClasses; /**< number of anonymous classes last seen during a dynamic class unloading pass */
+	uintptr_t _undeadSegmentsTotalSize;
+	uintptr_t _lastUnloadNumOfClassLoaders;  /**< number of class loaders last seen during a dynamic class unloading pass */
+	uintptr_t _lastUnloadNumOfAnonymousClasses; /**< number of anonymous classes last seen during a dynamic class unloading pass */
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 	MM_GlobalCollector *_globalCollector; /**< Pointer to the global collector.  Used for yielding */
 	J9ClassLoader *_classLoaders; /**< Linked list of classloaders */
@@ -101,12 +101,12 @@ public:
 	/**
 	 * Returns the total amount of memory (in bytes) which would be reclaimed if the buffer were to be flushed
 	 */
-	UDATA reclaimableMemory() { return _undeadSegmentsTotalSize; }
+	uintptr_t reclaimableMemory() { return _undeadSegmentsTotalSize; }
 	
 	/**
 	 * Returns the number of class loaders last seen during a dynamic class unloading pass
 	 */
-	UDATA getLastUnloadNumOfClassLoaders() { return _lastUnloadNumOfClassLoaders; }
+	uintptr_t getLastUnloadNumOfClassLoaders() { return _lastUnloadNumOfClassLoaders; }
 
 	/**
 	 * Set the number of class loaders last seen during a dynamic class unloading pass,
@@ -117,7 +117,7 @@ public:
 	/**
 	 * Returns the number of anonymous classes last seen during a dynamic class unloading pass
 	 */
-	UDATA getLastUnloadNumOfAnonymousClasses() { return _lastUnloadNumOfAnonymousClasses; }
+	uintptr_t getLastUnloadNumOfAnonymousClasses() { return _lastUnloadNumOfAnonymousClasses; }
 
 	/**
 	 * Set the number of anonymous classes last seen during a dynamic class unloading pass,
@@ -136,7 +136,7 @@ public:
 	 * @param markMap[in] the markMap to use to test for class loader and classes liveness
 	 * @param classUnloadStats[out] returns the class unloading statistics for classes about to be unloaded
 	 */
-	void cleanUpClassLoadersStart(MM_EnvironmentBase *env, J9ClassLoader* classLoaderUnloadList, MM_HeapMap *markMap, MM_ClassUnloadStats *classUnloadStats);
+	void cleanUpClassLoadersStart(MM_EnvironmentBase *env, J9ClassLoader *classLoaderUnloadList, MM_HeapMap *markMap, MM_ClassUnloadStats *classUnloadStats);
 	
 	/**
 	 * Perform final cleanup for classloader unloading.  The current thread has exclusive access.
@@ -156,7 +156,7 @@ public:
 	 *
 	 * @return the count of classes unloaded
 	 */
-	void cleanUpClassLoadersEnd(MM_EnvironmentBase *env, J9ClassLoader* unloadLink);
+	void cleanUpClassLoadersEnd(MM_EnvironmentBase *env, J9ClassLoader *unloadLink);
 	
 	/**
 	 * Frees all the ROMClass segments in the list reachable from segment following nextSegmentInClassLoader and
@@ -181,7 +181,7 @@ public:
 	 * @param unloadLink[out] a linked list of class loaders to be reclaimed by cleanUpClassLoadersEnd
 	 * @param finalizationRequired[out] set to true if the finalize thread must be started, unmodified otherwise
 	 */
-	void cleanUpClassLoaders(MM_EnvironmentBase *env, J9ClassLoader *classLoadersUnloadedList, J9MemorySegment** reclaimedSegments, J9ClassLoader ** unloadLink, volatile bool* finalizationRequired);
+	void cleanUpClassLoaders(MM_EnvironmentBase *env, J9ClassLoader *classLoadersUnloadedList, J9MemorySegment **reclaimedSegments, J9ClassLoader **unloadLink, volatile bool *finalizationRequired);
 
 	/**
 	 * Attempt to enter the class unload mutex if it is uncontended.
@@ -246,7 +246,7 @@ private:
 	 * @param classUnloadCountOut[out] number of classes dying added to the list
 	 * @return new root to list of dying classes
 	 */
-	J9Class *addDyingClassesToList(MM_EnvironmentBase *env, J9ClassLoader * classLoader, MM_HeapMap *markMap, bool setAll, J9Class *classUnloadListStart, UDATA *classUnloadCountOut);
+	J9Class *addDyingClassesToList(MM_EnvironmentBase *env, J9ClassLoader *classLoader, MM_HeapMap *markMap, bool setAll, J9Class *classUnloadListStart, uintptr_t *classUnloadCountOut);
 
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 
