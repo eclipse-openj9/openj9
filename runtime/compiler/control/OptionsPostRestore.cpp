@@ -537,6 +537,10 @@ J9::OptionsPostRestore::invalidateCompiledMethodsIfNeeded(bool invalidateAll)
 void
 J9::OptionsPostRestore::disableAOTCompilation()
    {
+   static bool aotDisabled = false;
+   if (aotDisabled)
+      return;
+
    // Ideally when disabling AOT, the vmThread->aotVMwithThreadInfo->_sharedCache
    // would also be freed and set to NULL. However, it isn't obvious whether non
    // compilation and java threads that could be running at the moment could make
@@ -554,6 +558,9 @@ J9::OptionsPostRestore::disableAOTCompilation()
    TR::Options::getAOTCmdLineOptions()->setOption(TR_NoStoreAOT);
    TR::Options::setSharedClassCache(false);
    TR_J9SharedCache::setSharedCacheDisabledReason(TR_J9SharedCache::AOT_DISABLED);
+
+   aotDisabled = true;
+   _disableAOTPostRestore = true;
 
    j9nls_printf(PORTLIB, (UDATA) J9NLS_WARNING, J9NLS_JIT_CHECKPOINT_RESTORE_AOT_DISABLED);
    }
@@ -736,7 +743,28 @@ J9::OptionsPostRestore::postProcessInternalCompilerOptions()
 
    // Disable AOT compilation if needed
    if (disableAOT)
+      {
       disableAOTCompilation();
+      }
+   // If at this point AOT is not disabled, then reset all the options and
+   // validate the AOT Header if the validation was delayed pre-checkpoint
+   else if (TR_J9SharedCache::aotHeaderValidationDelayed())
+      {
+      _jitConfig->javaVM->sharedClassConfig->runtimeFlags |= J9SHR_RUNTIMEFLAG_ENABLE_AOT;
+      TR::Options::getAOTCmdLineOptions()->setOption(TR_NoLoadAOT, false);
+      TR::Options::getAOTCmdLineOptions()->setOption(TR_NoStoreAOT, false);
+      TR::Options::setSharedClassCache(true);
+      TR_J9SharedCache::setSharedCacheDisabledReason(TR_J9SharedCache::NOT_DISABLED);
+      TR_J9SharedCache::resetAOTHeaderValidationDelayed();
+
+      TR_J9SharedCache::validateAOTHeader(_jitConfig, _vmThread, _compInfo);
+
+      if (TR::Options::getAOTCmdLineOptions()->getOption(TR_NoStoreAOT))
+         {
+         _jitConfig->javaVM->sharedClassConfig->runtimeFlags &= ~J9SHR_RUNTIMEFLAG_ENABLE_AOT;
+         TR_J9SharedCache::setSharedCacheDisabledReason(TR_J9SharedCache::AOT_DISABLED);
+         }
+      }
 
    // Set option to print code cache if necessary
    if (_argIndexPrintCodeCache > _argIndexDisablePrintCodeCache)
@@ -791,7 +819,7 @@ J9::OptionsPostRestore::processCompilerOptions()
    PORT_ACCESS_FROM_JAVAVM(vm);
 
    bool jitEnabled = TR::Options::canJITCompile();
-   bool aotEnabled = TR::Options::sharedClassCache();
+   bool aotEnabled = TR_J9SharedCache::aotHeaderValidationDelayed() ? true : TR::Options::sharedClassCache();
 
    _argIndexXjit = FIND_AND_CONSUME_RESTORE_ARG(OPTIONAL_LIST_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::Xjit], 0);
    _argIndexXnojit = FIND_AND_CONSUME_RESTORE_ARG(OPTIONAL_LIST_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::Xnojit], 0);
@@ -802,14 +830,19 @@ J9::OptionsPostRestore::processCompilerOptions()
       jitEnabled = (_argIndexXjit > _argIndexXnojit);
 
    // If -Xnoaot was specified pre-checkpoint, there is a lot of infrastructure
-   // that needs to be set up, including validating the existing SCC. For now,
-   // Ignore -Xaot post-restore if -Xnoaot was specified pre-checkpoint.
+   // that needs to be set up. For now, ignore -Xaot post-restore if -Xnoaot
+   // was specified pre-checkpoint.
    if (aotEnabled)
       aotEnabled = (_argIndexXaot >= _argIndexXnoaot);
 
    if (!aotEnabled)
       {
       _disableAOTPostRestore = true;
+      }
+
+   if (_disableAOTPostRestore)
+      {
+      aotEnabled = false;
       disableAOTCompilation();
       }
 
