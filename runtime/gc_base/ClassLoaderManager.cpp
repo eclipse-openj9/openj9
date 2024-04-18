@@ -44,7 +44,7 @@
 
 #if defined(J9VM_GC_REALTIME)
 extern "C" {
-void classLoaderLoadHook(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
+void classLoaderLoadHook(J9HookInterface** hook, uintptr_t eventNum, void *eventData, void *userData);
 }
 #endif /* defined(J9VM_GC_REALTIME) */
 
@@ -53,7 +53,7 @@ MM_ClassLoaderManager::newInstance(MM_EnvironmentBase *env, MM_GlobalCollector *
 {	
 	MM_ClassLoaderManager *classLoaderManager = (MM_ClassLoaderManager *)env->getForge()->allocate(sizeof(MM_ClassLoaderManager), MM_AllocationCategory::FIXED, J9_GET_CALLSITE());
 	if (classLoaderManager) {
-		new(classLoaderManager) MM_ClassLoaderManager(env, globalCollector);
+		new (classLoaderManager) MM_ClassLoaderManager(env, globalCollector);
 		if (!classLoaderManager->initialize(env)) {
 			classLoaderManager->kill(env);
 			classLoaderManager = NULL;   			
@@ -173,7 +173,7 @@ MM_ClassLoaderManager::flushUndeadSegments(MM_EnvironmentBase *env)
 void
 MM_ClassLoaderManager::setLastUnloadNumOfClassLoaders() 
 {
-	_lastUnloadNumOfClassLoaders =  (UDATA)pool_numElements(_javaVM->classLoaderBlocks); 
+	_lastUnloadNumOfClassLoaders =  (uintptr_t)pool_numElements(_javaVM->classLoaderBlocks);
 }
 
 void
@@ -207,8 +207,8 @@ MM_ClassLoaderManager::isTimeForClassUnloading(MM_EnvironmentBase *env)
 
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 
-	UDATA numClassLoaderBlocks = pool_numElements(_javaVM->classLoaderBlocks);
-	UDATA numAnonymousClasses = _javaVM->anonClassCount;
+	uintptr_t numClassLoaderBlocks = pool_numElements(_javaVM->classLoaderBlocks);
+	uintptr_t numAnonymousClasses = _javaVM->anonClassCount;
 
 	Trc_MM_GlobalCollector_isTimeForClassUnloading_Entry(
 			_extensions->dynamicClassUnloading,
@@ -226,7 +226,7 @@ MM_ClassLoaderManager::isTimeForClassUnloading(MM_EnvironmentBase *env)
 	Assert_MM_true(numAnonymousClasses >= _lastUnloadNumOfAnonymousClasses);
 
 	if ( _extensions->dynamicClassUnloading != MM_GCExtensions::DYNAMIC_CLASS_UNLOADING_NEVER ) {
-		UDATA recentlyLoaded = (UDATA) ((numAnonymousClasses - _lastUnloadNumOfAnonymousClasses) *  _extensions->classUnloadingAnonymousClassWeight);
+		uintptr_t recentlyLoaded = (uintptr_t)((numAnonymousClasses - _lastUnloadNumOfAnonymousClasses) *  _extensions->classUnloadingAnonymousClassWeight);
 		/* todo aryoung: _lastUnloadNumOfClassLoaders includes the class loaders which
 		 * were unloaded but still required finalization when the last classUnloading occured.
 		 * This means that the threshold check is wrong when there are classes which require finalization.
@@ -246,7 +246,7 @@ MM_ClassLoaderManager::isTimeForClassUnloading(MM_EnvironmentBase *env)
 
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 J9ClassLoader *
-MM_ClassLoaderManager::identifyClassLoadersToUnload(MM_EnvironmentBase *env, MM_HeapMap *markMap, MM_ClassUnloadStats* classUnloadStats)
+MM_ClassLoaderManager::identifyClassLoadersToUnload(MM_EnvironmentBase *env, MM_HeapMap *markMap, MM_ClassUnloadStats *classUnloadStats)
 {
 	Trc_MM_identifyClassLoadersToUnload_Entry(env->getLanguageVMThread());
 	
@@ -255,25 +255,25 @@ MM_ClassLoaderManager::identifyClassLoadersToUnload(MM_EnvironmentBase *env, MM_
 	classUnloadStats->_classLoaderCandidates = 0;
 
 	GC_ClassLoaderIterator classLoaderIterator(_javaVM->classLoaderBlocks);
-	J9ClassLoader * classLoader = NULL;
-	while( NULL != (classLoader = classLoaderIterator.nextSlot()) ) {
+	J9ClassLoader *classLoader = NULL;
+	while (NULL != (classLoader = classLoaderIterator.nextSlot())) {
 		classUnloadStats->_classLoaderCandidates += 1;
 		/* Check if the class loader is already DEAD - ignore if it is */
-		if( J9_GC_CLASS_LOADER_DEAD == (classLoader->gcFlags & J9_GC_CLASS_LOADER_DEAD) ) {
+		if (J9_GC_CLASS_LOADER_DEAD == (classLoader->gcFlags & J9_GC_CLASS_LOADER_DEAD)) {
 			/* If the class loader is already dead, it should be enqueued or unloading by now */  
-			Assert_MM_true( 0 != (classLoader->gcFlags & (J9_GC_CLASS_LOADER_UNLOADING | J9_GC_CLASS_LOADER_ENQ_UNLOAD)) );
-			Assert_MM_true( 0 == (classLoader->gcFlags & J9_GC_CLASS_LOADER_SCANNED) ); 
+			Assert_MM_true(0 != (classLoader->gcFlags & (J9_GC_CLASS_LOADER_UNLOADING | J9_GC_CLASS_LOADER_ENQ_UNLOAD)));
+			Assert_MM_true(0 == (classLoader->gcFlags & J9_GC_CLASS_LOADER_SCANNED));
 		} else {
 			/* If the class loader isn't already dead, it must not be enqueued or unloading */  
-			Assert_MM_true( 0 == (classLoader->gcFlags & (J9_GC_CLASS_LOADER_UNLOADING | J9_GC_CLASS_LOADER_ENQ_UNLOAD)) );
+			Assert_MM_true(0 == (classLoader->gcFlags & (J9_GC_CLASS_LOADER_UNLOADING | J9_GC_CLASS_LOADER_ENQ_UNLOAD)));
 			Assert_MM_true(NULL == classLoader->unloadLink);
 
 			/* Is the class loader still alive? (object may be NULL while the loader is being initialized) */
 			J9Object *classLoaderObject = classLoader->classLoaderObject;
-			if( (NULL != classLoaderObject) && (!markMap->isBitSet(classLoaderObject)) ) {
+			if ((NULL != classLoaderObject) && (!markMap->isBitSet(classLoaderObject))) {
 				/* Anonymous classloader should not be unloaded */
 				Assert_MM_true(0 == (classLoader->flags & J9CLASSLOADER_ANON_CLASS_LOADER));
-				Assert_MM_true( 0 == (classLoader->gcFlags & J9_GC_CLASS_LOADER_SCANNED) ); 
+				Assert_MM_true(0 == (classLoader->gcFlags & J9_GC_CLASS_LOADER_SCANNED));
 
 				/* add this loader to the linked list of loaders being unloaded in this cycle */
 				classLoader->unloadLink = unloadLink;
@@ -300,11 +300,11 @@ MM_ClassLoaderManager::identifyClassLoadersToUnload(MM_EnvironmentBase *env, MM_
 }
 
 void
-MM_ClassLoaderManager::cleanUpClassLoadersStart(MM_EnvironmentBase *env, J9ClassLoader* classLoaderUnloadList, MM_HeapMap *markMap, MM_ClassUnloadStats *classUnloadStats)
+MM_ClassLoaderManager::cleanUpClassLoadersStart(MM_EnvironmentBase *env, J9ClassLoader *classLoaderUnloadList, MM_HeapMap *markMap, MM_ClassUnloadStats *classUnloadStats)
 {
-	UDATA classUnloadCount = 0;
-	UDATA anonymousClassUnloadCount = 0;
-	UDATA classLoaderUnloadCount = 0;
+	uintptr_t classUnloadCount = 0;
+	uintptr_t anonymousClassUnloadCount = 0;
+	uintptr_t classLoaderUnloadCount = 0;
 	J9VMThread *vmThread = (J9VMThread *)env->getLanguageVMThread();
 
 	J9Class *classUnloadList = NULL;
@@ -335,7 +335,7 @@ MM_ClassLoaderManager::cleanUpClassLoadersStart(MM_EnvironmentBase *env, J9Class
 	classUnloadCount += anonymousClassUnloadCount;
 
 	/* Count all classes loaded by dying class loaders */
-	J9ClassLoader * classLoader = classLoaderUnloadList;
+	J9ClassLoader *classLoader = classLoaderUnloadList;
 	while (NULL != classLoader) {
 		Assert_MM_true( 0 == (classLoader->gcFlags & J9_GC_CLASS_LOADER_SCANNED) );
 		classLoaderUnloadCount += 1;
@@ -376,19 +376,19 @@ MM_ClassLoaderManager::cleanUpClassLoadersStart(MM_EnvironmentBase *env, J9Class
 }
 
 J9Class *
-MM_ClassLoaderManager::addDyingClassesToList(MM_EnvironmentBase *env, J9ClassLoader * classLoader, MM_HeapMap *markMap, bool setAll, J9Class *classUnloadListStart, UDATA *classUnloadCountResult)
+MM_ClassLoaderManager::addDyingClassesToList(MM_EnvironmentBase *env, J9ClassLoader *classLoader, MM_HeapMap *markMap, bool setAll, J9Class *classUnloadListStart, uintptr_t *classUnloadCountResult)
 {
 	J9VMThread *vmThread = (J9VMThread *)env->getLanguageVMThread();
 	J9Class *classUnloadList = classUnloadListStart;
-	UDATA classUnloadCount = 0;
+	uintptr_t classUnloadCount = 0;
 
 	if (NULL != classLoader) {
 		GC_ClassLoaderSegmentIterator segmentIterator(classLoader, MEMORY_TYPE_RAM_CLASS);
 		J9MemorySegment *segment = NULL;
-		while(NULL != (segment = segmentIterator.nextSegment())) {
+		while (NULL != (segment = segmentIterator.nextSegment())) {
 			GC_ClassHeapIterator classHeapIterator(_javaVM, segment);
 			J9Class *clazz = NULL;
-			while(NULL != (clazz = classHeapIterator.nextClass())) {
+			while (NULL != (clazz = classHeapIterator.nextClass())) {
 				J9Object *classObject = clazz->classObject;
 				if (setAll || !markMap->isBitSet(classObject)) {
 
@@ -407,11 +407,11 @@ MM_ClassLoaderManager::addDyingClassesToList(MM_EnvironmentBase *env, J9ClassLoa
 					 * field to J9_INVALID_OBJECT to investigate the origin of a class object
 					 * reference whose class has been unloaded.
 					 */
-					clazz->classObject = (j9object_t) J9_INVALID_OBJECT;
+					clazz->classObject = (j9object_t)J9_INVALID_OBJECT;
 
 					/* Call class unload hook */
 					Trc_MM_cleanUpClassLoadersStart_triggerClassUnload(env->getLanguageVMThread(),clazz,
-								(UDATA) J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(clazz->romClass)),
+								(uintptr_t)J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(clazz->romClass)),
 								J9UTF8_DATA(J9ROMCLASS_CLASSNAME(clazz->romClass)));
 					TRIGGER_J9HOOK_VM_CLASS_UNLOAD(_javaVM->hookInterface, vmThread, clazz);
 
@@ -428,7 +428,7 @@ MM_ClassLoaderManager::addDyingClassesToList(MM_EnvironmentBase *env, J9ClassLoa
 }
 
 void
-MM_ClassLoaderManager::cleanUpClassLoadersEnd(MM_EnvironmentBase *env, J9ClassLoader* unloadLink) 
+MM_ClassLoaderManager::cleanUpClassLoadersEnd(MM_EnvironmentBase *env, J9ClassLoader *unloadLink)
 {
 	J9VMThread *vmThread = (J9VMThread *)env->getLanguageVMThread();
 	J9MemorySegment *reclaimedSegments = NULL;
@@ -458,14 +458,14 @@ MM_ClassLoaderManager::cleanUpSegmentsAlongClassLoaderLink(J9JavaVM *javaVM, J9M
 {
 	while (NULL != segment) {
 		J9MemorySegment *nextSegment = segment->nextSegmentInClassLoader;
-		if (segment->type & MEMORY_TYPE_RAM_CLASS) {
+		if (MEMORY_TYPE_RAM_CLASS == (segment->type & MEMORY_TYPE_RAM_CLASS)) {
 			segment->type |= MEMORY_TYPE_UNDEAD_CLASS;
 			/* we also need to unset the fact that this is a RAM CLASS since some code which walks the segment list is looking for still-valid ones */
 			segment->type &= ~MEMORY_TYPE_RAM_CLASS;
 			segment->nextSegmentInClassLoader = *reclaimedSegments;
 			*reclaimedSegments = segment;
 			segment->classLoader = NULL;
-		} else if (!(segment->type & MEMORY_TYPE_UNDEAD_CLASS)) {
+		} else if (0 == (segment->type & MEMORY_TYPE_UNDEAD_CLASS)) {
 			javaVM->internalVMFunctions->freeMemorySegment(javaVM, segment, 1);
 		}
 		segment = nextSegment;
@@ -548,8 +548,8 @@ MM_ClassLoaderManager::cleanUpSegmentsInAnonymousClassLoader(MM_EnvironmentBase 
 void
 MM_ClassLoaderManager::removeFromSubclassHierarchy(MM_EnvironmentBase *env, J9Class *clazzPtr)
 {
-	J9Class* nextLink = clazzPtr->subclassTraversalLink;
-	J9Class* reverseLink = clazzPtr->subclassTraversalReverseLink;
+	J9Class *nextLink = clazzPtr->subclassTraversalLink;
+	J9Class *reverseLink = clazzPtr->subclassTraversalReverseLink;
 	
 	reverseLink->subclassTraversalLink = nextLink;
 	nextLink->subclassTraversalReverseLink = reverseLink;
@@ -560,7 +560,7 @@ MM_ClassLoaderManager::removeFromSubclassHierarchy(MM_EnvironmentBase *env, J9Cl
 }
 
 void
-MM_ClassLoaderManager::cleanUpClassLoaders(MM_EnvironmentBase *env, J9ClassLoader *classLoadersUnloadedList, J9MemorySegment** reclaimedSegments, J9ClassLoader ** unloadLink, volatile bool* finalizationRequired)
+MM_ClassLoaderManager::cleanUpClassLoaders(MM_EnvironmentBase *env, J9ClassLoader *classLoadersUnloadedList, J9MemorySegment **reclaimedSegments, J9ClassLoader **unloadLink, volatile bool *finalizationRequired)
 {
 	*reclaimedSegments = NULL;
 	*unloadLink = NULL;
@@ -596,7 +596,7 @@ MM_ClassLoaderManager::cleanUpClassLoaders(MM_EnvironmentBase *env, J9ClassLoade
 		/* Determine if the classLoader needs to be enqueued for finalization (for shared library unloading),
 		 * otherwise add it to the list of classLoaders to be unloaded by cleanUpClassLoadersEnd.
 		 */
-		if(((NULL != classLoader->sharedLibraries)
+		if (((NULL != classLoader->sharedLibraries)
 		&& (0 != pool_numElements(classLoader->sharedLibraries)))
 		|| (_extensions->fvtest_forceFinalizeClassLoaders)) {
 			/* Enqueue the class loader for the finalizer */
@@ -698,9 +698,9 @@ MM_ClassLoaderManager::exitClassUnloadMutex(MM_EnvironmentBase *env)
  */
 extern "C" {
 	
-void classLoaderLoadHook(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData)
+void classLoaderLoadHook(J9HookInterface** hook, uintptr_t eventNum, void *eventData, void *userData)
 {
-	J9VMClassLoaderInitializedEvent* event = (J9VMClassLoaderInitializedEvent*)eventData;
+	J9VMClassLoaderInitializedEvent *event = (J9VMClassLoaderInitializedEvent *)eventData;
 	MM_ClassLoaderManager *manager = (MM_ClassLoaderManager *)userData;
 	/* TODO CRGTMP should we be setting the SCANNED bit on the classloader if we are in trace phase? */
 	manager->linkClassLoader(event->classLoader);
