@@ -2766,7 +2766,7 @@ checkClassVersion(J9CfrClassFile* classfile, U_8* segment, U_32 vmVersionShifted
 		errorCode = J9NLS_CFR_ERR_MINOR_VERSION2__ID;
 		if (0 == minorVersion) {
 			return 0;
-		} else if (0xffff == minorVersion) {
+		} else if (0xffff == minorVersion && vmVersionShifted >= BCT_JavaMajorVersionShifted(12)) {
 			errorCode = J9NLS_CFR_ERR_PREVIEW_VERSION_NOT_ENABLED__ID;
 			/* Preview flags won't be set for Java 8 & earlier (excluding cfdump) */
 			if (J9_ARE_ANY_BITS_SET(flags, BCT_AnyPreviewVersion | BCT_EnablePreview)) {
@@ -2775,15 +2775,16 @@ checkClassVersion(J9CfrClassFile* classfile, U_8* segment, U_32 vmVersionShifted
 		}
 	} else if ((majorVersion >= 45) && (majorVersion < maxMajorVersion)) {
 		errorCode = J9NLS_CFR_ERR_MINOR_VERSION2__ID;
-		if (majorVersion <= 55) {
-			/* versions prior to and including Java 11, allow any minor */
+		if (majorVersion <= 55 && vmVersionShifted >= BCT_JavaMajorVersionShifted(12)) {
+			/* Java 12+ allow any minor version for majors 45 - 55 */
 			return 0;
 		}
-		/* only .0 is the only valid minor version for this range */
+		/* Java 12+ only 0 and -1 are valid minor versions as per jvms */
+		/* In prior versions 0 is the only valid minor version to match RI */
 		if (0 == minorVersion) {
 			return 0;
 		}
-		if (0xffff == minorVersion) {
+		if (0xffff == minorVersion && vmVersionShifted >= BCT_JavaMajorVersionShifted(12)) {
 			errorCode = J9NLS_CFR_ERR_PREVIEW_VERSION2__ID;
 			/* Allow cfdump to dump preview classes from other releases */
 			if (J9_ARE_ANY_BITS_SET(flags, BCT_AnyPreviewVersion)) {
