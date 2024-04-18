@@ -532,6 +532,36 @@ final class Access implements JavaLangAccess {
 	public boolean allowSecurityManager() {
 		return System.allowSecurityManager();
 	}
+
+	@Override
+	public int getCharsLatin1(long i, int index, byte[] buf) {
+		return StringLatin1.getChars(i, index, buf);
+	}
+
+	@Override
+	public int getCharsUTF16(long i, int index, byte[] buf) {
+		return StringUTF16.getChars(i, index, buf);
+	}
+
+	@Override
+	public void putCharUTF16(byte[] val, int index, int c) {
+		StringUTF16.putChar(val, index, c);
+	}
+
+	@Override
+	public long stringConcatHelperPrepend(long indexCoder, byte[] buf, String value) {
+		return StringConcatHelper.prepend(indexCoder, buf, value);
+	}
+
+	@Override
+	public long stringConcatMix(long lengthCoder, char value) {
+		return StringConcatHelper.mix(lengthCoder, value);
+	}
+
+	@Override
+	public int stringSize(long x) {
+		return Long.stringSize(x);
+	}
 /*[ENDIF] JAVA_SPEC_VERSION >= 23 */
 
 	public long findNative(ClassLoader loader, String entryName) {
@@ -616,6 +646,7 @@ final class Access implements JavaLangAccess {
 		return StringCoding.countPositives(ba, off, len);
 	}
 
+/*[IF JAVA_SPEC_VERSION < 23]*/
 	public long stringConcatCoder(char value) {
 		return StringConcatHelper.coder(value);
 	}
@@ -627,6 +658,7 @@ final class Access implements JavaLangAccess {
 	public long stringBuilderConcatPrepend(long lengthCoder, byte[] buf, StringBuilder sb) {
 		return sb.prepend(lengthCoder, buf);
 	}
+/*[ENDIF] JAVA_SPEC_VERSION < 23 */
 /*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 /*[ELSE] JAVA_SPEC_VERSION >= 20 */
 	public Object[] extentLocalCache() {
