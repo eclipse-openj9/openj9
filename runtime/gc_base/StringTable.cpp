@@ -575,7 +575,7 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 			for (UDATA i = 0; i < unicodeLength; ++i) {
 				if (unicodeData[i] > 0x7F) {
 					isASCII = false;
-					if (J2SE_VERSION(vm) >= J2SE_V17) {
+					if (J2SE_VERSION(vm) >= J2SE_V11) {
 						for (UDATA j = i; j < unicodeLength; ++j) {
 							if (unicodeData[j] > 0xFF) {
 								isASCIIorLatin1 = false;
@@ -597,7 +597,7 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 		for (UDATA i = 0; i < length; ++i) {
 			if (data[i] > 0x7F) {
 				isASCII = false;
-				if (compressStrings && (J2SE_VERSION(vm) >= J2SE_V17)) {
+				if (compressStrings && (J2SE_VERSION(vm) >= J2SE_V11)) {
 					U_8 *dataTmp = data + i;
 					UDATA lengthTmp = length - i;
 					isASCIIorLatin1 = VM_VMHelpers::isLatin1String(dataTmp, lengthTmp);

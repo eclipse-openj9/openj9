@@ -932,8 +932,11 @@ public class Test_String {
 	 */
 	@Test
 	public void test_indexOf3() {
-		AssertJUnit.assertTrue("Failed to find string", hw1.indexOf("World") > 0);
-		AssertJUnit.assertTrue("Failed to find string", !(hw1.indexOf("ZZ") > 0));
+		AssertJUnit.assertEquals("Failed to find string 1", 5, hw1.indexOf("World"));
+		AssertJUnit.assertEquals("Failed to find string 2", -1, hw1.indexOf("ZZ"));
+		String needle = "\u00b0\u00b1";
+		String hay = new StringBuilder("a").append(needle).toString();
+		AssertJUnit.assertEquals("Failed to find string 3", 1, hay.indexOf(needle));
 	}
 
 	/**
