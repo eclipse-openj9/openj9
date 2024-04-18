@@ -7922,7 +7922,7 @@ J9::ARM64::TreeEvaluator::BNDCHKwithSpineCHKEvaluator(TR::Node *node, TR::CodeGe
             if (indexReg)
                generateTrg1Src2Instruction(cg, TR::InstOpCode::addx, node, loadOrStoreReg, loadOrStoreReg, arrayletOffsetReg);
             else
-               addConstant32(cg, node, loadOrStoreReg, loadOrStoreReg, arrayletOffsetVal);
+               addConstant64(cg, node, loadOrStoreReg, loadOrStoreReg, arrayletOffsetVal);
             }
 
          if (indexReg)
