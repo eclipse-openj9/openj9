@@ -2026,6 +2026,8 @@ aboutToBootstrap(J9JavaVM * javaVM, J9JITConfig * jitConfig)
 #endif
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
+   bool debugOnRestoreEnabled = javaVM->internalVMFunctions->isDebugOnRestoreEnabled(curThread);
+
    /* If the JVM is in CRIU mode and checkpointing is allowed, then the JIT should be
     * limited to the same processor features as those used in Portable AOT mode. This
     * is because, the restore run may not be on the same machine as the one that created
@@ -2050,38 +2052,14 @@ aboutToBootstrap(J9JavaVM * javaVM, J9JITConfig * jitConfig)
          validateSCC = false;
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+      if (debugOnRestoreEnabled)
+         validateSCC = false;
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+
       if (validateSCC)
          {
-         /* If AOT Shared Classes is turned ON, perform compatibility checks for AOT Shared Classes
-          *
-          * This check has to be done after latePostProcessJIT so that all the necessary JIT options
-          * can be set
-          */
-         TR_J9VMBase *fe = TR_J9VMBase::get(jitConfig, curThread);
-         if (!compInfo->reloRuntime()->validateAOTHeader(fe, curThread))
-            {
-            TR_ASSERT_FATAL(static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader != TR_yes,
-                            "aotValidHeader is TR_yes after failing to validate AOT header\n");
-
-            /* If this is the second run, then failing to validate AOT header will cause aotValidHeader
-             * to be TR_no, in which case the SCC is not valid for use. However, if this is the first
-             * run, then aotValidHeader will be TR_maybe; try to store the AOT Header in this case.
-             */
-            if (static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader == TR_no
-                || !compInfo->reloRuntime()->storeAOTHeader(fe, curThread))
-               {
-               static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader = TR_no;
-               TR::Options::getAOTCmdLineOptions()->setOption(TR_NoLoadAOT);
-               TR::Options::getAOTCmdLineOptions()->setOption(TR_NoStoreAOT);
-               TR::Options::setSharedClassCache(false);
-               TR_J9SharedCache::setSharedCacheDisabledReason(TR_J9SharedCache::AOT_DISABLED);
-               }
-            }
-         else
-            {
-            TR::Compiler->relocatableTarget.cpu = TR::CPU::customize(compInfo->reloRuntime()->getProcessorDescriptionFromSCC(curThread));
-            jitConfig->relocatableTargetProcessor = TR::Compiler->relocatableTarget.cpu.getProcessorDescription();
-            }
+         TR_J9SharedCache::validateAOTHeader(jitConfig, curThread, compInfo);
          }
 
       if (TR::Options::getAOTCmdLineOptions()->getOption(TR_NoStoreAOT))
@@ -2108,6 +2086,17 @@ aboutToBootstrap(J9JavaVM * javaVM, J9JITConfig * jitConfig)
             }
 #endif /* defined(J9VM_OPT_JITSERVER) */
          }
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+      else if (debugOnRestoreEnabled)
+         {
+         javaVM->sharedClassConfig->runtimeFlags &= ~J9SHR_RUNTIMEFLAG_ENABLE_AOT;
+         TR::Options::getAOTCmdLineOptions()->setOption(TR_NoLoadAOT);
+         TR::Options::getAOTCmdLineOptions()->setOption(TR_NoStoreAOT);
+         TR::Options::setSharedClassCache(false);
+         TR_J9SharedCache::setSharedCacheDisabledReason(TR_J9SharedCache::AOT_HEADER_VALIDATION_DELAYED);
+         TR_J9SharedCache::setAOTHeaderValidationDelayed();
+         }
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
       if (javaVM->sharedClassConfig->runtimeFlags & J9SHR_RUNTIMEFLAG_ENABLE_READONLY)
          {

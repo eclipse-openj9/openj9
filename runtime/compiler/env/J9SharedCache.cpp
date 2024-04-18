@@ -66,6 +66,45 @@ TR_J9SharedCache::TR_J9SharedCacheDisabledReason TR_J9SharedCache::_sharedCacheS
 TR_YesNoMaybe TR_J9SharedCache::_sharedCacheDisabledBecauseFull = TR_maybe;
 UDATA TR_J9SharedCache::_storeSharedDataFailedLength = 0;
 
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+bool TR_J9SharedCache::_aotHeaderValidationDelayed = false;
+#endif
+
+void
+TR_J9SharedCache::validateAOTHeader(J9JITConfig *jitConfig, J9VMThread *vmThread, TR::CompilationInfo *compInfo)
+   {
+   /* If AOT Shared Classes is turned ON, perform compatibility checks for AOT Shared Classes
+      *
+      * This check has to be done after latePostProcessJIT so that all the necessary JIT options
+      * can be set
+      */
+   TR_J9VMBase *fe = TR_J9VMBase::get(jitConfig, vmThread);
+   if (!compInfo->reloRuntime()->validateAOTHeader(fe, vmThread))
+      {
+      TR_ASSERT_FATAL(static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader != TR_yes,
+                        "aotValidHeader is TR_yes after failing to validate AOT header\n");
+
+      /* If this is the second run, then failing to validate AOT header will cause aotValidHeader
+         * to be TR_no, in which case the SCC is not valid for use. However, if this is the first
+         * run, then aotValidHeader will be TR_maybe; try to store the AOT Header in this case.
+         */
+      if (static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader == TR_no
+            || !compInfo->reloRuntime()->storeAOTHeader(fe, vmThread))
+         {
+         static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader = TR_no;
+         TR::Options::getAOTCmdLineOptions()->setOption(TR_NoLoadAOT);
+         TR::Options::getAOTCmdLineOptions()->setOption(TR_NoStoreAOT);
+         TR::Options::setSharedClassCache(false);
+         TR_J9SharedCache::setSharedCacheDisabledReason(TR_J9SharedCache::AOT_DISABLED);
+         }
+      }
+   else
+      {
+      TR::Compiler->relocatableTarget.cpu = TR::CPU::customize(compInfo->reloRuntime()->getProcessorDescriptionFromSCC(vmThread));
+      jitConfig->relocatableTargetProcessor = TR::Compiler->relocatableTarget.cpu.getProcessorDescription();
+      }
+   }
+
 TR_YesNoMaybe TR_J9SharedCache::isSharedCacheDisabledBecauseFull(TR::CompilationInfo *compInfo)
    {
    if (_sharedCacheDisabledBecauseFull == TR_maybe)
