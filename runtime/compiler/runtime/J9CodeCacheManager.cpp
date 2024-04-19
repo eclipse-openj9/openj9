@@ -283,12 +283,18 @@ J9::CodeCacheManager::allocateCodeCacheSegment(size_t segmentSize,
 
    J9PortVmemParams vmemParams;
    j9vmem_vmem_params_init(&vmemParams);
+   UDATA *pageSizes = j9vmem_supported_page_sizes();
 
    TR::CodeCacheConfig &config = self()->codeCacheConfig();
 
    UDATA ccTotalSizeB = config.codeCacheTotalKB() << 10;
 
-   size_t largeCodePageSize = config.largeCodePageSize();
+   // Determine whether we are actually using large pages.
+   // Note that config.largeCodePageSize() could be set at the default page size (given by pageSize[0])
+   size_t largeCodePageSize = 0;
+   if (config.largeCodePageSize() > pageSizes[0])
+      largeCodePageSize = config.largeCodePageSize();
+
 #if defined(TR_TARGET_POWER) && defined(TR_HOST_POWER)
    /* Use largeCodePageSize on PPC only if its 16M.
     If we pass in any pagesize other than the default page size, the port library picks the shared memory api to allocate which wastes memory */
@@ -302,7 +308,6 @@ J9::CodeCacheManager::allocateCodeCacheSegment(size_t segmentSize,
       vmemParams.pageFlags = config.largeCodePageFlags();
 
       // Recalculate the page size if using large pages
-      UDATA *pageSizes = j9vmem_supported_page_sizes();
       if(vmemParams.pageSize > ccTotalSizeB)
          {
          for (UDATA pageIndex = 0; 0 != pageSizes[pageIndex]; ++pageIndex)
