@@ -98,6 +98,7 @@ misc:
     sanity.openjdk: 'true'
     extended.openjdk: 'true'
     special.openjdk: 'true'
+    extended.functional: 'true'
   sdk_filename_template:
     default: "OpenJ9-JDK${SDK_VERSION}-${SPEC}-${DATESTAMP}${SDK_FILE_EXT}"
 credentials:
