@@ -7644,6 +7644,52 @@ TR_J9VM::inlineNativeCall(TR::Compilation * comp, TR::TreeTop * callNodeTreeTop,
          callNode = TR::Node::createWithSymRef(TR::aloadi, 1, 1, callNode, comp->getSymRefTab()->findOrCreateJavaLangClassFromClassSymbolRef());
          return callNode;
 
+      case TR::java_lang_Class_getStackClass:
+         {
+         if ((isAOT_DEPRECATED_DO_NOT_USE()
+                  && !comp->getOption(TR_UseSymbolValidationManager))
+               || !callNode->getFirstChild()->getOpCode().isLoadConst())
+            {
+            return 0;
+            }
+
+         int32_t callerIndex = callNode->getByteCodeInfo().getCallerIndex();
+         int32_t stackIndex = callNode->getFirstChild()->getInt();
+         int32_t stackIterator = 0;
+         if (stackIndex < 0)
+            return 0;
+
+         // j/l/C.getStackClass returns the class object at the stackIndex.
+         // Following loop walks stack to see if we have inlined the call chain
+         // such that we already know the J9Class* at the given constant stack
+         // index.
+         while (stackIterator != stackIndex)
+            {
+            if (callerIndex == -1)
+               break;
+            callerIndex = comp->getInlinedCallSite(callerIndex)._byteCodeInfo.getCallerIndex();
+            stackIterator++;
+            }
+
+         if (stackIterator == stackIndex)
+            {
+            J9Class *clazz = callerIndex == -1 ? reinterpret_cast<J9Class *>(comp->getJittedMethodSymbol()->getResolvedMethod()->classOfMethod()) :
+                                                 reinterpret_cast<J9Class *>(comp->getInlinedResolvedMethod(callerIndex)->containingClass());
+            int32_t classNameLength;
+            char *className = getClassNameChars(reinterpret_cast<TR_OpaqueClassBlock *>(clazz), classNameLength);
+            if (performTransformation(comp, "O^O inlineNativeCall: Optimize getStackClass call [%p] with loading Class object of %.*s at bytecode %d\n", callNode,
+               classNameLength, className, callNode->getByteCodeInfo().getByteCodeIndex()))
+               {
+               TR::Node::recreate(callNode, TR::loadaddr);
+               callNode->removeAllChildren();
+               TR::SymbolReference *callerClassSymRef = comp->getSymRefTab()->findOrCreateClassSymbol(comp->getMethodSymbol(), -1, convertClassPtrToClassOffset(clazz));
+               callNode->setSymbolReference(callerClassSymRef);
+               callNode = TR::Node::createWithSymRef(TR::aloadi, 1, 1, callNode, comp->getSymRefTab()->findOrCreateJavaLangClassFromClassSymbolRef());
+               return callNode;
+               }
+            }
+         return 0;
+         }
       // Note: these cases are not tested and thus are commented out:
       // - com.ibm.oti.vm.VM.getStackClass(int)
       // - com.ibm.oti.vm.VM.getStackClassLoader(int)

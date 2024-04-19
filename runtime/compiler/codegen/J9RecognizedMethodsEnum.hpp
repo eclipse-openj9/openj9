@@ -63,6 +63,7 @@
    java_lang_Class_isIdentity,
    java_lang_Class_getComponentType,
    java_lang_Class_getModifiersImpl,
+   java_lang_Class_getStackClass,
    java_lang_Class_getSuperclass,
    java_lang_Class_isAssignableFrom,
    java_lang_Class_isInstance,
