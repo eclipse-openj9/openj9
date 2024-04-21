@@ -24,6 +24,12 @@
 	<include>../variables.mk</include>
 	<test>
 		<testCaseName>cmdLineTester_reflectCache</testCaseName>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/19301</comment>
+				<version>23+</version>
+			</disable>
+		</disables>
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
