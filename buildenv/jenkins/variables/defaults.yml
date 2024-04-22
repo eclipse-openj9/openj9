@@ -186,6 +186,16 @@ cuda_default:
   extends: ['cuda']
   extra_configure_options: '--with-cuda=/usr/local/cuda'
 #========================================#
+# Disable javac server
+#========================================#
+disable_javac_server:
+  extra_configure_options:
+    11: '--disable-javac-server'
+    17: '--disable-javac-server'
+    21: '--disable-javac-server'
+    22: '--disable-javac-server'
+    next: '--disable-javac-server'
+#========================================#
 # Valhalla
 #========================================#
 valhalla:
@@ -249,7 +259,7 @@ s390x_linux_jit:
 # AIX PPC 64bits
 #========================================#
 ppc64_aix:
-  extends: ['boot_jdk_default', 'debuginfo', 'openjdk_reference_repo', 'openssl']
+  extends: ['boot_jdk_default', 'debuginfo', 'disable_javac_server', 'openjdk_reference_repo', 'openssl']
   boot_jdk:
     location: '/opt/bootjdks'
     arch: 'ppc64'
@@ -398,7 +408,7 @@ x86-64_mac:
     22: '!sw.os.mac.10_15'
     next: '!sw.os.mac.10_15'
 #========================================#
-# Mac M1 Aarch64
+# Mac Aarch64
 #========================================#
 aarch64_mac:
   extends: ['boot_jdk_default', 'openssl', 'openssl_bundle']
