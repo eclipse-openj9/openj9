@@ -41,6 +41,7 @@
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "compile/Compilation.hpp"
+#include "control/CompilationRuntime.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "control/Recompilation.hpp"
@@ -113,7 +114,7 @@ extern "C" int32_t getCount(J9ROMMethod *romMethod, TR::Options *optionsJIT, TR:
 static J9PortLibrary *staticPortLib = NULL;
 static uint32_t memoryConsumed = 0;
 
-
+TR::PersistentAllocator * TR_IProfiler::_allocator = NULL;
 
 static
 void printHashedCallSite ( TR_IPHashedCallSite * hcs, ::FILE* fout = stderr, void* tag = NULL) {
@@ -194,7 +195,7 @@ bool TR_ReadSampleRequestsHistory::init(int32_t historyBufferSize)
    {
    _crtIndex = 0;
    _historyBufferSize = historyBufferSize;
-   _history =  (TR_ReadSampleRequestsStats *) jitPersistentAlloc(historyBufferSize * sizeof(TR_ReadSampleRequestsStats));
+   _history =  (TR_ReadSampleRequestsStats *) TR_IProfiler::allocator()->allocate(historyBufferSize * sizeof(TR_ReadSampleRequestsStats), std::nothrow);
    if (_history)
       {
       memset(_history, 0, historyBufferSize*sizeof(TR_ReadSampleRequestsStats));
@@ -561,14 +562,36 @@ void *
 TR_IProfiler::operator new (size_t size) throw()
    {
    memoryConsumed += (int32_t)size;
-   void *alloc = jitPersistentAlloc(size);
+   void *alloc = _allocator->allocate(size, std::nothrow);
    return alloc;
+   }
+
+TR::PersistentAllocator *
+TR_IProfiler::createPersistentAllocator(J9JITConfig *jitConfig)
+   {
+   // Create a new persistent allocator, dedicated to IProfiler
+   uint32_t memoryType = 0;
+#ifdef LINUX
+   if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableIProfilerDataDisclaiming))
+      {
+      PORT_ACCESS_FROM_JITCONFIG(jitConfig);
+      memoryType |= MEMORY_TYPE_VIRTUAL; // Force the usage of mmap for allocation
+      TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
+      if (!TR::Options::getCmdLineOptions()->getOption(TR_DisclaimMemoryOnSwap) || compInfo->isSwapMemoryDisabled())
+         {
+         memoryType |= MEMORY_TYPE_DISCLAIMABLE_TO_FILE;
+         }
+      }
+#endif // LINUX
+   TR::PersistentAllocatorKit kit(1 << 20/*1 MB*/, *(jitConfig->javaVM), memoryType);
+   return new (TR::Compiler->rawAllocator) TR::PersistentAllocator(kit);
    }
 
 TR_IProfiler *
 TR_IProfiler::allocate(J9JITConfig *jitConfig)
    {
-   TR_IProfiler * profiler = new (PERSISTENT_NEW) TR_IProfiler(jitConfig);
+   setAllocator(createPersistentAllocator(jitConfig));
+   TR_IProfiler * profiler = new TR_IProfiler(jitConfig);
    return profiler;
 }
 
@@ -578,7 +601,7 @@ TR_IProfiler::TR_IProfiler(J9JITConfig *jitConfig)
      _globalAllocationCount (0), _maxCallFrequency(0), _iprofilerThread(0), _iprofilerOSThread(NULL),
      _workingBufferTail(NULL), _numOutstandingBuffers(0), _numRequests(1), _numRequestsSkipped(0),
      _numRequestsHandedToIProfilerThread(0), _iprofilerMonitor(NULL),
-     _crtProfilingBuffer(NULL), _iprofilerNumRecords(0),
+     _crtProfilingBuffer(NULL), _iprofilerNumRecords(0), _numMethodHashEntries(0),
      _iprofilerThreadLifetimeState(TR_IprofilerThreadLifetimeStates::IPROF_THR_NOT_CREATED)
    {
    PORT_ACCESS_FROM_JITCONFIG(jitConfig);
@@ -594,28 +617,43 @@ TR_IProfiler::TR_IProfiler(J9JITConfig *jitConfig)
    if (TR::Options::getCmdLineOptions()->getOption(TR_DisableInterpreterProfiling))
       _isIProfilingEnabled = false;
 
-   // initialize the monitors
-   _hashTableMonitor = TR::Monitor::create("JIT-InterpreterProfilingMonitor");
-
-   // bytecode hashtable
-   _bcHashTable = (TR_IPBytecodeHashTableEntry**)jitPersistentAlloc(TR::Options::_iProfilerBcHashTableSize*sizeof(TR_IPBytecodeHashTableEntry*));
-   if (_bcHashTable != NULL)
-      memset(_bcHashTable, 0, TR::Options::_iProfilerBcHashTableSize*sizeof(TR_IPBytecodeHashTableEntry*));
-   else
+#if defined(J9VM_OPT_JITSERVER)
+   if (_compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
+      {
+      _hashTableMonitor = NULL;
+      _bcHashTable = NULL;
+#if defined(EXPERIMENTAL_IPROFILER)
+      _allocHashTable =  NULL;
+#endif
+      _methodHashTable = NULL;
+      _readSampleRequestsHistory = NULL;
       _isIProfilingEnabled = false;
+      }
+   else
+#endif
+      {
+      // initialize the monitors
+      _hashTableMonitor = TR::Monitor::create("JIT-InterpreterProfilingMonitor");
+      // bytecode hashtable
+      _bcHashTable = (TR_IPBytecodeHashTableEntry**)_allocator->allocate(TR::Options::_iProfilerBcHashTableSize*sizeof(TR_IPBytecodeHashTableEntry*), std::nothrow);
+      if (_bcHashTable != NULL)
+         memset(_bcHashTable, 0, TR::Options::_iProfilerBcHashTableSize*sizeof(TR_IPBytecodeHashTableEntry*));
+      else
+         _isIProfilingEnabled = false;
 
 #if defined(EXPERIMENTAL_IPROFILER)
-   _allocHashTable = (TR_IPBCDataAllocation**)jitPersistentAlloc(ALLOC_HASH_TABLE_SIZE*sizeof(TR_IPBCDataAllocation*));
-   if (_allocHashTable != NULL)
-      memset(_allocHashTable, 0, ALLOC_HASH_TABLE_SIZE*sizeof(TR_IPBCDataAllocation*));
+      _allocHashTable = (TR_IPBCDataAllocation**)_allocator->allocate(ALLOC_HASH_TABLE_SIZE*sizeof(TR_IPBCDataAllocation*), std::nothrow);
+      if (_allocHashTable != NULL)
+         memset(_allocHashTable, 0, ALLOC_HASH_TABLE_SIZE*sizeof(TR_IPBCDataAllocation*));
 #endif
-   _methodHashTable = (TR_IPMethodHashTableEntry **) jitPersistentAlloc(TR::Options::_iProfilerMethodHashTableSize * sizeof(TR_IPMethodHashTableEntry *));
-   if (_methodHashTable != NULL)
-      memset(_methodHashTable, 0, TR::Options::_iProfilerMethodHashTableSize * sizeof(TR_IPMethodHashTableEntry *));
-   _readSampleRequestsHistory = (TR_ReadSampleRequestsHistory *) jitPersistentAlloc(sizeof (TR_ReadSampleRequestsHistory));
-   if (!_readSampleRequestsHistory || !_readSampleRequestsHistory->init(TR::Options::_iprofilerFailHistorySize))
-      {
-      _isIProfilingEnabled = false;
+      _methodHashTable = (TR_IPMethodHashTableEntry **) _allocator->allocate(TR::Options::_iProfilerMethodHashTableSize * sizeof(TR_IPMethodHashTableEntry *), std::nothrow);
+      if (_methodHashTable != NULL)
+         memset(_methodHashTable, 0, TR::Options::_iProfilerMethodHashTableSize * sizeof(TR_IPMethodHashTableEntry *));
+      _readSampleRequestsHistory = (TR_ReadSampleRequestsHistory *) _allocator->allocate(sizeof (TR_ReadSampleRequestsHistory), std::nothrow);
+      if (!_readSampleRequestsHistory || !_readSampleRequestsHistory->init(TR::Options::_iprofilerFailHistorySize))
+         {
+         _isIProfilingEnabled = false;
+         }
       }
    }
 
@@ -1147,7 +1185,7 @@ TR_IProfiler::findOrCreateMethodEntry(J9Method *callerMethod, J9Method *calleeMe
    else // create a new hash table entry
       {
       memoryConsumed += (int32_t)sizeof(TR_IPMethodHashTableEntry);
-      entry = (TR_IPMethodHashTableEntry *)jitPersistentAlloc(sizeof(TR_IPMethodHashTableEntry));
+      entry = (TR_IPMethodHashTableEntry *)_allocator->allocate(sizeof(TR_IPMethodHashTableEntry), std::nothrow);
       if (entry)
          {
          memset(entry, 0, sizeof(TR_IPMethodHashTableEntry));
@@ -1160,6 +1198,7 @@ TR_IProfiler::findOrCreateMethodEntry(J9Method *callerMethod, J9Method *calleeMe
 
          FLUSH_MEMORY(TR::Compiler->target.isSMP());
          _methodHashTable[bucket] = entry; // chain it
+         _numMethodHashEntries++;
          }
       }
    return entry;
@@ -1198,7 +1237,7 @@ TR_IPMethodHashTableEntry::add(TR_OpaqueMethodBlock *caller, TR_OpaqueMethodBloc
          }
       else
          {
-         TR_IPMethodData* newCaller = (TR_IPMethodData*)jitPersistentAlloc(sizeof(TR_IPMethodData));
+         TR_IPMethodData* newCaller = (TR_IPMethodData*)TR_IProfiler::allocator()->allocate(sizeof(TR_IPMethodData), std::nothrow);
          if (newCaller)
             {
             memset(newCaller, 0, sizeof(TR_IPMethodData));
@@ -2570,6 +2609,7 @@ TR_IProfiler::outputStats()
       }
    fprintf(stderr, "IProfiler: Number of records processed=%" OMR_PRIu64 "\n", _iprofilerNumRecords);
    fprintf(stderr, "IProfiler: Number of hashtable entries=%u\n", countEntries());
+   fprintf(stderr, "IProfiler: Number of methodHash entries=%u\n", _numMethodHashEntries);
    checkMethodHashTable();
    }
 
@@ -2579,12 +2619,12 @@ TR_IPBytecodeHashTableEntry::alignedPersistentAlloc(size_t size)
 #if defined(TR_HOST_64BIT)
    size += 4;
    memoryConsumed += (int32_t)size;
-   void *address = (void *) jitPersistentAlloc(size);
+   void *address = (void *) TR_IProfiler::allocator()->allocate(size, std::nothrow);
 
    return (void *)(((uintptr_t)address + 4) & ~0x7);
 #else
    memoryConsumed += (int32_t)size;
-   return jitPersistentAlloc(size);
+   return TR_IProfiler::allocator()->allocate(size, std::nothrow);
 #endif
    }
 
@@ -4493,7 +4533,7 @@ void *
 TR_IPHashedCallSite::operator new (size_t size) throw()
    {
    memoryConsumed += (int32_t)size;
-   void *alloc = jitPersistentAlloc(size);
+   void *alloc = TR_IProfiler::allocator()->allocate(size, std::nothrow);
    return alloc;
    }
 
@@ -4555,8 +4595,6 @@ CallSiteProfileInfo::getDominantClass(int32_t &sumW, int32_t &maxW)
 class TR_AggregationHT
    {
    public:
-      TR_PERSISTENT_ALLOC(TR_Memory::IProfiler)
-
          class TR_CGChainedEntry
          {
          TR_CGChainedEntry    *_next; // for chaining
@@ -4577,7 +4615,7 @@ class TR_AggregationHT
          public:
             TR_AggregationHTNode(J9ROMMethod *romMethod, J9ROMClass *romClass, TR_IPBCDataCallGraph *entry) : _next(NULL), _romMethod(romMethod), _romClass(romClass)
                {
-               _IPData = new (PERSISTENT_NEW) TR_CGChainedEntry(entry);
+               _IPData = new (*TR_IProfiler::allocator()) TR_CGChainedEntry(entry);
                }
             ~TR_AggregationHTNode()
                {
@@ -4585,7 +4623,7 @@ class TR_AggregationHT
                while (entry)
                   {
                   TR_CGChainedEntry *nextEntry = entry->getNext();
-                  jitPersistentFree(entry);
+                  TR_IProfiler::allocator()->deallocate(entry);
                   entry = nextEntry;
                   }
                }
@@ -4604,7 +4642,7 @@ class TR_AggregationHT
 
       TR_AggregationHT(size_t sz) : _sz(sz), _numTrackedMethods(0)
          {
-         _backbone = new (PERSISTENT_NEW) TR_AggregationHTNode*[sz];
+         _backbone = new (*TR_IProfiler::allocator()) TR_AggregationHTNode*[sz];
          if (!_backbone) // OOM
             {
             _sz = 0;
@@ -4624,11 +4662,11 @@ class TR_AggregationHT
                {
                TR_AggregationHTNode *nextNode = node->getNext();
                node->~TR_AggregationHTNode();
-               jitPersistentFree(node);
+               TR_IProfiler::allocator()->deallocate(node);
                node = nextNode;
                }
             }
-         jitPersistentFree(_backbone);
+         TR_IProfiler::allocator()->deallocate(_backbone);
          }
       size_t hash(J9ROMMethod *romMethod) { return (((uintptr_t)romMethod) >> 3) % _sz; }
       size_t getSize() const { return _sz; }
@@ -4643,7 +4681,7 @@ class TR_AggregationHT
             if (crtMethodNode->getROMMethod() == romMethod)
                {
                // Add a new bc data point to the method entry we found; keep it sorted by pc
-               TR_CGChainedEntry *newEntry = new (PERSISTENT_NEW) TR_CGChainedEntry(cgEntry);
+               TR_CGChainedEntry *newEntry = new (*TR_IProfiler::allocator()) TR_CGChainedEntry(cgEntry);
                if (!newEntry) // OOM
                   {
                   fprintf(stderr, "Cannot allocated memory. Incomplete info will be printed.\n");
@@ -4678,7 +4716,7 @@ class TR_AggregationHT
          if (!crtMethodNode)
             {
             // Add a new entry at the beginning
-            TR_AggregationHTNode *newMethodNode = new (PERSISTENT_NEW) TR_AggregationHTNode(romMethod, romClass, cgEntry);
+            TR_AggregationHTNode *newMethodNode = new (*TR_IProfiler::allocator()) TR_AggregationHTNode(romMethod, romClass, cgEntry);
             if (!newMethodNode || !newMethodNode->getFirstCGEntry()) // OOM
                {
                fprintf(stderr, "Cannot allocated memory. Incomplete info will be printed.\n");
@@ -4707,7 +4745,7 @@ void TR_AggregationHT::sortByNameAndPrint(TR_J9VMBase *fe)
    // Scan the aggregationTable and convert from romMethod to methodName so that
    // we can sort and print the information
    fprintf(stderr, "Creating the sorting array ...\n");
-   SortingPair *sortingArray = (SortingPair *)jitPersistentAlloc(sizeof(SortingPair) * numTrackedMethods());
+   SortingPair *sortingArray = (SortingPair *)TR_IProfiler::allocator()->allocate(sizeof(SortingPair) * numTrackedMethods(), std::nothrow);
    if (!sortingArray)
       {
       fprintf(stderr, "Cannot allocate sorting array. Bailing out.\n");
@@ -4728,7 +4766,7 @@ void TR_AggregationHT::sortByNameAndPrint(TR_J9VMBase *fe)
          J9UTF8* name = J9ROMMETHOD_NAME(romMethod);
          J9UTF8* signature = J9ROMMETHOD_SIGNATURE(romMethod);
          size_t len = J9UTF8_LENGTH(className) + J9UTF8_LENGTH(name) + J9UTF8_LENGTH(signature) + 2;
-         char *wholeName = (char *)jitPersistentAlloc(len);
+         char *wholeName = (char *)TR_IProfiler::allocator()->allocate(len, std::nothrow);
          // If memory cannot be allocated, break
          if (!wholeName)
             {
@@ -4791,8 +4829,8 @@ void TR_AggregationHT::sortByNameAndPrint(TR_J9VMBase *fe)
    // Free the memory we allocated
    for (size_t i = 0; i < numTrackedMethods(); i++)
       if (sortingArray[i]._methodName)
-         jitPersistentFree(sortingArray[i]._methodName);
-   jitPersistentFree(sortingArray);
+         TR_IProfiler::allocator()->deallocate(sortingArray[i]._methodName);
+   TR_IProfiler::allocator()->deallocate(sortingArray);
    }
 
 

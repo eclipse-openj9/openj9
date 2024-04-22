@@ -102,11 +102,10 @@ extern "C" __declspec(dllimport) void __stdcall DebugBreak();
 #endif
 #endif
 
-struct TR_IPHashedCallSite  // TODO: is this needed?
+struct TR_IPHashedCallSite
    {
-   //why do we even need this anymore?
-   TR_PERSISTENT_ALLOC(TR_Memory::IPHashedCallSite)
    void * operator new (size_t size) throw();
+   void operator delete(void *p) throw() {}
    //
    TR_IPHashedCallSite () : _method(NULL), _offset(0) {};
    TR_IPHashedCallSite (J9Method* method, uint32_t offset) : _method(method), _offset(offset) {};
@@ -191,7 +190,6 @@ enum TR_EntryStatusInfo
 class TR_IPBytecodeHashTableEntry
    {
 public:
-   TR_PERSISTENT_ALLOC(TR_Memory::IProfiler)
    static void* alignedPersistentAlloc(size_t size);
    TR_IPBytecodeHashTableEntry(uintptr_t pc) : _next(NULL), _pc(pc), _lastSeenClassUnloadID(-1), _entryFlags(0), _persistFlags(IPBC_ENTRY_CAN_PERSIST_FLAG) {}
 
@@ -254,7 +252,6 @@ protected:
 class TR_IPMethodData
    {
    public:
-   TR_PERSISTENT_ALLOC(TR_Memory::IProfiler)
    TR_IPMethodData() : _method(0),_pcIndex(0),_weight(0) {}
    TR_OpaqueMethodBlock *getMethod() { return _method; }
    void setMethod (TR_OpaqueMethodBlock *meth) { _method = meth; }
@@ -286,8 +283,8 @@ struct TR_IPMethodHashTableEntry
    {
    static const int32_t MAX_IPMETHOD_CALLERS = 20;
    public:
-   TR_PERSISTENT_ALLOC(TR_Memory::IProfiler)
    void * operator new (size_t size) throw();
+   void operator delete(void *p) throw() {}
 
    TR_IPMethodHashTableEntry *_next;   // for chaining in the hashtable
    TR_OpaqueMethodBlock      *_method; // callee
@@ -300,9 +297,9 @@ struct TR_IPMethodHashTableEntry
 class TR_IPBCDataFourBytes : public TR_IPBytecodeHashTableEntry
    {
 public:
-   TR_PERSISTENT_ALLOC(TR_Memory::IPBCDataFourBytes)
    TR_IPBCDataFourBytes(uintptr_t pc) : TR_IPBytecodeHashTableEntry(pc), data(0) {}
    void * operator new (size_t size) throw();
+   void operator delete(void *p) throw() {}
    void * operator new (size_t size, void * placement) {return placement;}
    void operator delete(void *p, void *) {}
 
@@ -331,9 +328,9 @@ private:
 class TR_IPBCDataAllocation : public TR_IPBytecodeHashTableEntry
    {
 public:
-   TR_PERSISTENT_ALLOC(TR_Memory::IPBCDataAllocation)
    TR_IPBCDataAllocation(uintptr_t pc) : TR_IPBytecodeHashTableEntry(pc), clazz(0), method(0), data(0) {}
    void * operator new (size_t size) throw();
+   void operator delete(void *p) throw() {}
    static const uint32_t IPROFILING_INVALID = ~0;
    virtual uintptr_t getData(TR::Compilation *comp = NULL) { return (uint32_t)data; }
    virtual uint32_t* getDataReference() { return &data; }
@@ -357,13 +354,13 @@ private:
 class TR_IPBCDataEightWords : public TR_IPBytecodeHashTableEntry
    {
 public:
-   TR_PERSISTENT_ALLOC(TR_Memory::IPBCDataEightWords)
    TR_IPBCDataEightWords(uintptr_t pc) : TR_IPBytecodeHashTableEntry(pc)
       {
       for (int i = 0; i < SWITCH_DATA_COUNT; i++)
          data[i] = 0;
       };
    void * operator new (size_t size) throw();
+   void operator delete(void *p) throw() {}
    void * operator new (size_t size, void * placement) {return placement;}
    void operator delete(void *p, void *) {}
    static const uint64_t IPROFILING_INVALID = ~0;
@@ -393,12 +390,12 @@ private:
 class TR_IPBCDataCallGraph : public TR_IPBytecodeHashTableEntry
    {
 public:
-   TR_PERSISTENT_ALLOC(TR_Memory::IPBCDataCallGraph)
    TR_IPBCDataCallGraph (uintptr_t pc) : TR_IPBytecodeHashTableEntry(pc)
       {
       _csInfo.initialize();
       }
    void * operator new (size_t size) throw();
+   void operator delete(void *p) throw() {}
    void * operator new (size_t size, void * placement) {return placement;}
    void operator delete(void *p, void *) {}
 
@@ -474,7 +471,6 @@ private:
 
 class TR_ReadSampleRequestsHistory
    {
-   TR_PERSISTENT_ALLOC(TR_Memory::IProfiler);
    #define SAMPLE_CUTOFF 120     // this must be correlated with HISTORY_BUFFER_SIZE
                                   // the bigger the HISTORY_BUFFER_SIZE the bigger SAMPLE_CUTOFF should be
 public:
@@ -501,8 +497,6 @@ class TR_IProfiler : public TR_ExternalProfiler
    {
 public:
 
-   TR_PERSISTENT_ALLOC(TR_Memory::IProfiler);
-
    enum TR_IprofilerThreadLifetimeStates
       {
       IPROF_THR_NOT_CREATED = 0,
@@ -518,12 +512,16 @@ public:
       };
 
    static TR_IProfiler *allocate (J9JITConfig *);
+   static TR::PersistentAllocator *createPersistentAllocator(J9JITConfig *);
+   static TR::PersistentAllocator *allocator() { return _allocator;}
+   static void setAllocator(TR::PersistentAllocator *allocator) { _allocator = allocator; }
    static uint32_t getProfilerMemoryFootprint();
 
    uintptr_t getReceiverClassFromCGProfilingData(TR_ByteCodeInfo &bcInfo, TR::Compilation *comp);
 
    TR_IProfiler (J9JITConfig *);
    void * operator new (size_t) throw();
+   void operator delete(void *p) throw() {}
    void shutdown();
    void outputStats();
    void dumpIPBCDataCallGraph(J9VMThread* currentThread);
@@ -709,6 +707,7 @@ private:
 #endif
 
    // data members
+   static TR::PersistentAllocator *_allocator;
    J9PortLibrary                  *_portLib;
    bool                            _isIProfilingEnabled; // set to TRUE in constructor; set to FALSE in shutdown()
    TR_J9VMBase                    *_vm;
@@ -749,6 +748,7 @@ private:
    uint64_t                        _iprofilerNumRecords; // info stats only
 
    TR_IPMethodHashTableEntry       **_methodHashTable;
+   uint32_t                        _numMethodHashEntries;
 
    uint32_t                        _iprofilerBufferSize;
    TR_ReadSampleRequestsHistory   *_readSampleRequestsHistory;

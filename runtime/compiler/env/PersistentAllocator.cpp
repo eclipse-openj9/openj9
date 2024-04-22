@@ -326,7 +326,7 @@ PersistentAllocator::allocateFromSegmentLocked(size_t allocSize)
       {
       PORT_ACCESS_FROM_JAVAVM(&_javaVM);
       defaultPageSize = j9vmem_supported_page_sizes()[0];
-      segmentSize = OMR::align(segmentSize, defaultPageSize); // Round up to a multiple of default page size if needed
+      segmentSize = OMR::align(segmentSize, (size_t)defaultPageSize); // Round up to a multiple of default page size if needed
       }
 #endif // LINUX
       segment = _segmentAllocator.allocate(segmentSize, std::nothrow);
@@ -742,8 +742,6 @@ PersistentAllocator::disclaimAllSegments()
             fprintf(stderr, "Disclaimed persistent memory segment %p of size %zu. Present pages =%d swapped=%d fileMapped=%d\n",
                     &segment, segLength, numPresentPages, swappedCount, filePageCount);
 #endif
-            if (verbose)
-               TR_VerboseLog::writeLine(TR_Vlog_PERF, "madvise disclaimed persistent segment at address %p size=%zu", segment.heapBase, segLength);
             numSegDisclaimed++;
             }
          }

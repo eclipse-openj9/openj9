@@ -49,7 +49,7 @@ struct TR_ContiguousIPMethodHashTableEntry
 
 /**
  * @class JITServerIProfiler
- * @brief Class for manipulating IProfiler data at the server side 
+ * @brief Class for manipulating IProfiler data at the server side
  *
  * This class is an extension of the TR_IProfiler class so that the server
  * can intercept IProfiler requests from the JIT compiler and redirect them
@@ -71,7 +71,7 @@ struct TR_ContiguousIPMethodHashTableEntry
  * object while the global IProfile cache is stored in `struct J9MethodInfo`
  * which is part of `ClientSessionData` (thus, the global cache is more like
  * a collection of caches, one for each method).
- * As a RAS feature, caching can be disabled if the environment variable 
+ * As a RAS feature, caching can be disabled if the environment variable
  * TR_DisableIPCaching is set.
  * Another RAS feature is the validation of the cached data. For a build with
  * assumes enabled (or for a debug build) every time the server uses a cached
@@ -83,8 +83,6 @@ struct TR_ContiguousIPMethodHashTableEntry
 class JITServerIProfiler : public TR_IProfiler
    {
 public:
-
-   TR_PERSISTENT_ALLOC(TR_Memory::IProfiler);
    static JITServerIProfiler * allocate(J9JITConfig *jitConfig);
    JITServerIProfiler(J9JITConfig *);
 
@@ -100,7 +98,7 @@ public:
 
    virtual int32_t getMaxCallCount() override;
    virtual void setCallCount(TR_OpaqueMethodBlock *method, int32_t bcIndex, int32_t count, TR::Compilation *) override;
-   
+
    virtual void persistIprofileInfo(TR::ResolvedMethodSymbol *methodSymbol, TR_ResolvedMethod *method, TR::Compilation *comp) override;
 
    TR_IPBytecodeHashTableEntry *ipBytecodeHashTableEntryFactory(TR_IPBCDataStorageHeader *storage, uintptr_t pc, TR_Memory* mem, TR_AllocationKind allocKind);
@@ -123,10 +121,10 @@ private:
 
 /**
  * @class JITClientIProfiler
- * @brief Class for manipulating IProfiler data at the client side 
+ * @brief Class for manipulating IProfiler data at the client side
  *
  * This class is an extension of the TR_IProfiler and has the ability of
- * serializing the entire IProfile data for a given method and send it to 
+ * serializing the entire IProfile data for a given method and send it to
  * server.
  */
 
@@ -134,14 +132,13 @@ class JITClientIProfiler : public TR_IProfiler
    {
 public:
 
-   TR_PERSISTENT_ALLOC(TR_Memory::IProfiler);
    static JITClientIProfiler * allocate(J9JITConfig *jitConfig);
    JITClientIProfiler(J9JITConfig *);
-   // NOTE: since the JITClient can act as a regular JVM compiling methods 
+   // NOTE: since the JITClient can act as a regular JVM compiling methods
    // locally, we must not change the behavior of functions used in TR_IProfiler
    // Thus, any virtual function here must call the corresponding method in
    // the base class. It may be better not to override any methods though
- 
+
    bool serializeAndSendIProfileInfoForMethod(TR_OpaqueMethodBlock*method, TR::Compilation *comp, JITServer::ClientStream *client, bool usePersistentCache, bool isCompiled);
    std::string serializeIProfilerMethodEntry(TR_OpaqueMethodBlock *omb);
 
