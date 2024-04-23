@@ -187,7 +187,9 @@ public abstract class ClassLoader {
 
 		/*[PR CMVC 193184] reflect.cache must be enabled here, otherwise performance slow down is experienced */
 		String propValue = System.internalGetProperties().getProperty("reflect.cache"); //$NON-NLS-1$
+/*[IF JAVA_SPEC_VERSION < 23]*/
 		if (propValue != null) propValue = propValue.toLowerCase();
+/*[ENDIF] JAVA_SPEC_VERSION < 23 */
 		/* Do not enable reflect cache if -Dreflect.cache=false is in commandline */
 		boolean reflectCacheEnabled = false;
 		boolean reflectCacheDebug = false;
@@ -255,7 +257,9 @@ public abstract class ClassLoader {
 
 		String lazyValue = System.internalGetProperties().getProperty("java.lang.ClassLoader.lazyInitialization"); //$NON-NLS-1$
 		if (null != lazyValue) {
+/*[IF JAVA_SPEC_VERSION < 23]*/
 			lazyValue = lazyValue.toLowerCase();
+/*[ENDIF] JAVA_SPEC_VERSION < 23 */
 			if ("false".equals(lazyValue)) { //$NON-NLS-1$
 				lazyClassLoaderInit = false;
 			}
@@ -1009,7 +1013,9 @@ static void completeInitialization() {
 	/*[PR CMVC 193137] -Dreflect.cache=boot throws NPE. Caching reflect objects for bootstrap callers should be enabled late to avoid bootstrap problems. */
 	/* Process reflect.cache=boot, other options are processed earlier in initializeClassLoaders() */
 	String propValue = System.internalGetProperties().getProperty("reflect.cache"); //$NON-NLS-1$
+/*[IF JAVA_SPEC_VERSION < 23]*/
 	if (propValue != null) propValue = propValue.toLowerCase();
+/*[ENDIF] JAVA_SPEC_VERSION < 23 */
 	/* Do not enable reflect cache if -Dreflect.cache=false is in commandline */
 	boolean reflectCacheAppOnly = true;
 	if (!"false".equals(propValue)) { //$NON-NLS-1$
