@@ -225,7 +225,7 @@ MM_ClassLoaderManager::isTimeForClassUnloading(MM_EnvironmentBase *env)
 
 	Assert_MM_true(numAnonymousClasses >= _lastUnloadNumOfAnonymousClasses);
 
-	if ( _extensions->dynamicClassUnloading != MM_GCExtensions::DYNAMIC_CLASS_UNLOADING_NEVER ) {
+	if (_extensions->dynamicClassUnloading != MM_GCExtensions::DYNAMIC_CLASS_UNLOADING_NEVER) {
 		uintptr_t recentlyLoaded = (uintptr_t)((numAnonymousClasses - _lastUnloadNumOfAnonymousClasses) *  _extensions->classUnloadingAnonymousClassWeight);
 		/* todo aryoung: _lastUnloadNumOfClassLoaders includes the class loaders which
 		 * were unloaded but still required finalization when the last classUnloading occured.
