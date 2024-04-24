@@ -506,6 +506,11 @@ public:
 #endif /* J9VM_GC_FINALIZATION */
 
 	/**
+	 * During clearabble processing, invoke specific processing/checks after last known phase that scans (and copies) objects.
+	 */
+	virtual void completedObjectScanPhasesCheckpoint() {}
+
+	/**
 	 * @todo Provide function documentation
 	 */
 	virtual void doOwnableSynchronizerObject(J9Object *objectPtr, MM_OwnableSynchronizerObjectList *list);
