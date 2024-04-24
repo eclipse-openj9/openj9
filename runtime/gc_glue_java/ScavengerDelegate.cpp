@@ -653,6 +653,17 @@ MM_ScavengerDelegate::reverseForwardedObject(MM_EnvironmentBase *env, MM_Forward
 		if (NULL != finalizeLinkAddress) {
 			barrier->setFinalizeLink(objectPtr, barrier->getFinalizeLink(fwdObjectPtr));
 		}
+
+		/* fixup the references in the continuation native StackSlots */
+		switch (_extensions->objectModel.getScanType(forwardedClass)) {
+
+		case GC_ObjectModel::SCAN_CONTINUATION_OBJECT:
+			scanContinuationNativeSlots(MM_EnvironmentStandard::getEnvironment(env), objectPtr, SCAN_REASON_BACKOUT);
+			break;
+		default:
+			break;
+		}
+
 	}
 }
 

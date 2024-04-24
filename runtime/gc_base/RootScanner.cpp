@@ -1030,6 +1030,11 @@ MM_RootScanner::scanClearable(MM_EnvironmentBase *env)
 		return ;
 	}
 
+	/* Just completed last phase that may have done any object scanning (or copied objects if a copying collector).
+	 * Collectors have a chance to invoke specific processing and checks.
+	 */
+	completedObjectScanPhasesCheckpoint();
+
 	/*
 	 * clear the following private references once resurrection is completed 
 	 */
