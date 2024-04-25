@@ -1329,8 +1329,6 @@ preallocMethodHashTable(J9VMThread * currentThread, UDATA methodCount, J9HashTab
  * @param methodPairs		A hashtable mapping old and new method pairs
  * @param fastHCR			true for fastHCR, else false
  * @param methodEquivalence	A hashtable of equivalent method pairs
- * @return
- *
  */
 void
 fixVTables_forNormalRedefine(J9VMThread *currentThread, J9HashTable *classPairs, J9HashTable *methodPairs,
@@ -1449,7 +1447,6 @@ fixVTables_forNormalRedefine(J9VMThread *currentThread, J9HashTable *classPairs,
  *
  * @param[in] currentThread
  * @param[in] classPairs
- * @return
  *
  *	A redefined class introduces a set of replacement statics. JIT might hold references to the
  *	statics in the class we have just replaced. It is exceedingly complex to patch those refs
@@ -1889,7 +1886,6 @@ foundITable:
  * @param[in] currentThread    current thread
  * @param[in] classHashTable   hashtable of classes being hotswapped
  * @param[in] methodHashTable  hashtable of methods being hotswapped
- * @return
  *
  *	This call reresolves constant pool items for the passed in class constant pool or jclConstantPool.
  *  For class constant pools we clear the constant pool and run the same type of code as in <code>internalRunPreInitInstructions</code>
@@ -2502,7 +2498,6 @@ flushClassLoaderReflectCache(J9VMThread * currentThread, J9HashTable * classPair
  *
  * @param[in] currentThread
  * @param[in] classPairs
- * @return
  *
  *	Within Project Valhalla nestmates, a nest member class will resolve a link
  *	to its nest host class when necessary to verify private access to another
@@ -4205,7 +4200,6 @@ hshelpUTRegister(J9JavaVM *vm)
  * @param[in]     currentThread
  * @param[in]     jitEventData       event data describing redefined classes
  * @param[in]     extensionsEnabled  specifies if the extensions are enabled, always true if FSD is on
- * @return none
  *
  * Notify the JIT of the changes. Enabled extensions mean that the JIT has
  * been initialized in FSD mode. We need to dump the whole code cache in such a case.

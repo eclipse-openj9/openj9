@@ -163,8 +163,6 @@ testGetConstantPool (JavaVM * vm, jvmtiEnv * jvmti_env, char *args)
  * @param jni_env 
  * @param thread 
  * @param klass 
- * @return 
- * 
  */
 static void JNICALL
 testGetConstantPool_classLoad(jvmtiEnv *jvmti_env, JNIEnv* jni_env, jthread thread, jclass klass)

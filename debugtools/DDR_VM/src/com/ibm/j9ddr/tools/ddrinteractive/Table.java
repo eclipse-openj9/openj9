@@ -35,8 +35,7 @@ public class Table {
 	
 	/**
 	 * Add a header to the table.
-	 * @param row
-	 * @return
+	 * @param title
 	 */
 	public Table (String title)
 	{
@@ -46,7 +45,6 @@ public class Table {
 	/**
 	 * Add a new row to the table.
 	 * @param row
-	 * @return
 	 */
 	public Table row(String... row)
 	{

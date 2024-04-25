@@ -38,8 +38,6 @@
  * @param[in] indentLevel indentation level in number of tabs
  * @param[in] format 	message format
  * @param[in] ... 	message arguments
- * @return
- *
  */
 void JNICALL
 _jvmtiTest_printf(agentEnv *env, int level, int indentLevel, char * format, ...)
