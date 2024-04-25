@@ -6604,7 +6604,7 @@ public final class Unsafe {
 	 * @param clz the class to check
 	 * @return boolean value indicating whether the class is a flattened array
 	 */
-	public native boolean isFlattenedArray(Class<?> clz);
+	public native boolean isFlatArray(Class<?> clz);
 
 	/**
 	 * Determines whether a field is flattened
@@ -6612,7 +6612,7 @@ public final class Unsafe {
 	 * @param field the field to check
 	 * @return boolean value indicating whether the field is flattened
 	 */
-	public native boolean isFlattened(Field field);
+	public native boolean isFlatField(Field field);
 
 	/**
 	 * Determines the size of an object in bytes
@@ -6646,7 +6646,7 @@ public final class Unsafe {
 	 */
 	public final <V> boolean compareAndSetValue(Object obj, long offset, Class<?> clz, V v1, V v2) {
 		boolean result = false;
-		if (isFlattenedArray(obj.getClass()) || isFieldAtOffsetFlattened(obj.getClass(), offset)) {
+		if (isFlatArray(obj.getClass()) || isFieldAtOffsetFlattened(obj.getClass(), offset)) {
 			synchronized (inlineTypesLock) {
 				if (getValue(obj, offset, clz) == v1) {
 					putValue(obj, offset, clz, v2);
@@ -6674,7 +6674,7 @@ public final class Unsafe {
 	 */
 	public final <V> Object compareAndExchangeValue(Object obj, long offset, Class<?> clz, V v1, V v2) {
 		Object result = null;
-		if (isFlattenedArray(obj.getClass()) || isFieldAtOffsetFlattened(obj.getClass(), offset)) {
+		if (isFlatArray(obj.getClass()) || isFieldAtOffsetFlattened(obj.getClass(), offset)) {
 			synchronized (inlineTypesLock) {
 				result = getValue(obj, offset, clz);
 				if (result == v1) {
@@ -6885,7 +6885,7 @@ public final class Unsafe {
 	public final <V> Object getAndSetValue(Object obj, long offset, Class<?> clz, V v) {
 		Object valueAtOffset = null;
 
-		if (isFlattenedArray(obj.getClass()) || isFieldAtOffsetFlattened(obj.getClass(), offset)) {
+		if (isFlatArray(obj.getClass()) || isFieldAtOffsetFlattened(obj.getClass(), offset)) {
 			synchronized (inlineTypesLock) {
 				valueAtOffset = getValue(obj, offset, clz);
 				putValue(obj, offset, clz, v);

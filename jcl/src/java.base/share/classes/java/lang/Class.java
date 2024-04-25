@@ -2231,12 +2231,7 @@ public int getModifiers() {
 				Modifier.STATIC | Modifier.FINAL | Modifier.INTERFACE |
 				Modifier.ABSTRACT | SYNTHETIC | ENUM | ANNOTATION;
 /*[IF INLINE-TYPES]*/
-		/**
-		 * ACC_PRIMITIVE and ACC_STRICT share the same bit (0x0800).
-		 * ACC_PRIMITIVE is applied to classes and ACC_STRICT is applied to methods.
-		 * OpenJDK has not added Modifier.PRIMITIVE yet. It is using Modifier.STRICT for the bit.
-		 */
-		masks |= Modifier.IDENTITY | Modifier.VALUE | Modifier.STRICT;
+		masks |= Modifier.IDENTITY | Modifier.STRICT;
 /*[ENDIF] INLINE-TYPES */
 		rawModifiers &= masks;
 	}
@@ -2853,16 +2848,8 @@ public String toGenericString() {
 
 /*[IF INLINE-TYPES]*/
 	String valueType;
-	if (Modifier.VALUE == (Modifier.VALUE & modifiers)) {
-		/**
-		 * Modifier.PRIMITIVE is not added by OpenJDK yet. It shares the same bit as Modifier.STRICT.
-		 * TODO: Change Modifier.STRICT to Modifier.PRIMITIVE.
-		 */
-		if (Modifier.STRICT == (Modifier.STRICT & modifiers)) {
-			valueType = "primitive "; //$NON-NLS-1$
-		} else {
-			valueType = "value "; //$NON-NLS-1$
-		}
+	if (isValue()) {
+		valueType = "value "; //$NON-NLS-1$
 	} else {
 		valueType = ""; //$NON-NLS-1$
 	}
@@ -2889,13 +2876,11 @@ public String toGenericString() {
 	}
 /*[IF INLINE-TYPES]*/
 	/**
-	 * IDENTITY shares the same bit as SYNCHRONIZED. VALUE shares the same bit as VOLATILE.
+	 * IDENTITY shares the same bit as SYNCHRONIZED.
 	 * Modifier.toString() is used later in this function which translates them to "synchronized" and "volatile",
 	 * which is incorrect. So remove these bits if they are set.
-	 * Modifier.PRIMITIVE is not added by OpenJDK yet. It shares the same bit as Modifier.STRICT.
-	 * TODO: Change Modifier.STRICT to Modifier.PRIMITIVE.
 	 */
-	modifiers &= ~(Modifier.IDENTITY | Modifier.VALUE | Modifier.STRICT);
+	modifiers &= ~(Modifier.IDENTITY | Modifier.STRICT);
 /*[ENDIF] INLINE-TYPES */
 
 	// Build generic string

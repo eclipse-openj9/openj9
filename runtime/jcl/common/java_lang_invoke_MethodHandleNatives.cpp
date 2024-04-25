@@ -213,7 +213,7 @@ initImpl(J9VMThread *currentThread, j9object_t membernameObject, j9object_t refO
 			|| J9ROMFIELD_IS_NULL_RESTRICTED(romField)
 		) {
 			if (vmFuncs->isFlattenableFieldFlattened(fieldID->declaringClass, fieldID->field)) {
-				flags |= MN_FLATTENED;
+				flags |= MN_FLAT_FIELD;
 			}
 		}
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
