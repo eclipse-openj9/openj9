@@ -233,7 +233,6 @@ public class InfoClassCommand extends BaseJdmpviewCommand {
 	 * eliminating the need to iterate over all class loaders (see getRuntimeClasses()).
 	 * @param jr
 	 * @param errOut
-	 * @return
 	 */
 	private void cacheRuntimeClasses() {
 

@@ -126,8 +126,7 @@ public class GenericThread {
 	}
 	
 	/**
-	 * @return
-	 */	
+	 */
 	public void addRegister(Register r) {
 		 registers.add(r); 
 		

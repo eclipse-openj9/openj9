@@ -88,7 +88,6 @@ public class Aix64Dump extends NewAixDump {
 	/**
 	 * Sniff test to see if the stack pointer register value is valid, and set struct sizes accordingly
 	 * @param threadOffset
-	 * @return
 	 */
 	public void calculateThreadStructureSizes(long threadOffset) {
 		long address;

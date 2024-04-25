@@ -519,7 +519,6 @@ public class Main implements Constants {
 	 *
 	 * @param file
 	 * @param desiredContent
-	 * @return
 	 * @throws IOException
 	 */
 	private static void writeToDisk(File file, String desiredContent) throws IOException {

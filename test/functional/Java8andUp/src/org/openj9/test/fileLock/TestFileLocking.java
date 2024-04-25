@@ -184,7 +184,6 @@ public class TestFileLocking {
 	 *            command line arguments
 	 * @param lockerProcessStatus
 	 *            used to synchronize with the main thread.
-	 * @return
 	 */
 	private void startLockerProcess(String lockType, String[] jvmArgs,
 			LinkedBlockingQueue<String> lockerProcessStatus) {
