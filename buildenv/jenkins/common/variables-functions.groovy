@@ -106,7 +106,7 @@ class Buildspec {
         return field
     }
 
-    /* Get a list of values composed by concatinating the values of the
+    /* Get a list of values composed by concatenating the values of the
      * following fields in order:
      * - <parent>.getVectorField()
      * if <name> is a map:
@@ -1345,9 +1345,10 @@ def set_build_extra_options(build_specs=null) {
     if (!build_specs) {
         buildspec = buildspec_manager.getSpec(SPEC)
         // single release
-        EXTRA_GETSOURCE_OPTIONS = params.EXTRA_GETSOURCE_OPTIONS
-        if (!EXTRA_GETSOURCE_OPTIONS) {
-            EXTRA_GETSOURCE_OPTIONS = buildspec.getVectorField("extra_getsource_options", SDK_VERSION).join(" ")
+        EXTRA_GETSOURCE_OPTIONS = buildspec.getVectorField("extra_getsource_options", SDK_VERSION).join(" ")
+        if (params.EXTRA_GETSOURCE_OPTIONS) {
+            // append options from job configuration to those specified in variables file
+            EXTRA_GETSOURCE_OPTIONS = "${EXTRA_GETSOURCE_OPTIONS} ${params.EXTRA_GETSOURCE_OPTIONS}"
         }
 
         EXTRA_CONFIGURE_OPTIONS = params.EXTRA_CONFIGURE_OPTIONS
@@ -1410,8 +1411,15 @@ def set_build_extra_options(build_specs=null) {
                         // lookup default options passed in from top-level Pipeline jobs
                         def extraOptions = params."${it}_JDK${release}_${spec}"
                         // use options from spec when no options have been provided
-                        if (!extraOptions && buildspec) {
-                            extraOptions = buildspec.getVectorField("${it.toLowerCase()}", release).join(" ")
+                        // or join for EXTRA_GETSOURCE_OPTIONS
+                        if (buildspec) {
+                            def specOptions = ''
+                            if ((it == 'EXTRA_GETSOURCE_OPTIONS') || !extraOptions) {
+                                specOptions = buildspec.getVectorField("${it.toLowerCase()}", release).join(" ")
+                            }
+                            extraOptions = extraOptions ?: ''
+                            extraOptions = "${specOptions} ${extraOptions}"
+                            extraOptions = extraOptions.trim()
                         }
                         // look up extra options provided as build parameters from user and append to end
                         def buildExtraOptions = params."${it}"
