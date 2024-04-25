@@ -3011,7 +3011,15 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::sun_misc_Unsafe_ensureClassInitialized,      "ensureClassInitialized",      "(Ljava/lang/Class;)V")},
       {x(TR::sun_misc_Unsafe_allocateInstance,            "allocateInstance",            "(Ljava/lang/Class;)Ljava/lang/Object;")},
       {x(TR::sun_misc_Unsafe_allocateUninitializedArray0, "allocateUninitializedArray0", "(Ljava/lang/Class;I)Ljava/lang/Object;")},
-      {x(TR::jdk_internal_misc_Unsafe_copyMemory0,   "copyMemory0", "(Ljava/lang/Object;JLjava/lang/Object;JJ)V")},
+      {x(TR::jdk_internal_misc_Unsafe_copyMemory0,        "copyMemory0",                 "(Ljava/lang/Object;JLjava/lang/Object;JJ)V")},
+      {x(TR::jdk_internal_misc_Unsafe_putCharUnaligned,   "getCharUnaligned",            "(Ljava/lang/Object;J)C")},
+      {x(TR::jdk_internal_misc_Unsafe_putShortUnaligned,  "gettShortUnaligned",          "(Ljava/lang/Object;J)S")},
+      {x(TR::jdk_internal_misc_Unsafe_putIntUnaligned,    "getIntUnaligned",             "(Ljava/lang/Object;J)I")},
+      {x(TR::jdk_internal_misc_Unsafe_putLongUnaligned,   "getLongUnaligned",            "(Ljava/lang/Object;J)J")},
+      {x(TR::jdk_internal_misc_Unsafe_putCharUnaligned,   "putCharUnaligned",            "(Ljava/lang/Object;JC)V")},
+      {x(TR::jdk_internal_misc_Unsafe_putShortUnaligned,  "putShortUnaligned",           "(Ljava/lang/Object;JS)V")},
+      {x(TR::jdk_internal_misc_Unsafe_putIntUnaligned,    "putIntUnaligned",             "(Ljava/lang/Object;JI)V")},
+      {x(TR::jdk_internal_misc_Unsafe_putLongUnaligned,   "putLongUnaligned",            "(Ljava/lang/Object;JJ)V")},
       {  TR::unknownMethod}
       };
 
