@@ -3010,7 +3010,15 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::sun_misc_Unsafe_ensureClassInitialized,      "ensureClassInitialized",      "(Ljava/lang/Class;)V")},
       {x(TR::sun_misc_Unsafe_allocateInstance,            "allocateInstance",            "(Ljava/lang/Class;)Ljava/lang/Object;")},
       {x(TR::sun_misc_Unsafe_allocateUninitializedArray0, "allocateUninitializedArray0", "(Ljava/lang/Class;I)Ljava/lang/Object;")},
-      {x(TR::jdk_internal_misc_Unsafe_copyMemory0,   "copyMemory0", "(Ljava/lang/Object;JLjava/lang/Object;JJ)V")},
+      {x(TR::jdk_internal_misc_Unsafe_copyMemory0,        "copyMemory0",                 "(Ljava/lang/Object;JLjava/lang/Object;JJ)V")},
+      {x(TR::jdk_internal_misc_Unsafe_getCharUnaligned,   "getCharUnaligned",            "(Ljava/lang/Object;J)C")},
+      {x(TR::jdk_internal_misc_Unsafe_getShortUnaligned,  "getShortUnaligned",           "(Ljava/lang/Object;J)S")},
+      {x(TR::jdk_internal_misc_Unsafe_getIntUnaligned,    "getIntUnaligned",             "(Ljava/lang/Object;J)I")},
+      {x(TR::jdk_internal_misc_Unsafe_getLongUnaligned,   "getLongUnaligned",            "(Ljava/lang/Object;J)J")},
+      {x(TR::jdk_internal_misc_Unsafe_putCharUnaligned,   "putCharUnaligned",            "(Ljava/lang/Object;JC)V")},
+      {x(TR::jdk_internal_misc_Unsafe_putShortUnaligned,  "putShortUnaligned",           "(Ljava/lang/Object;JS)V")},
+      {x(TR::jdk_internal_misc_Unsafe_putIntUnaligned,    "putIntUnaligned",             "(Ljava/lang/Object;JI)V")},
+      {x(TR::jdk_internal_misc_Unsafe_putLongUnaligned,   "putLongUnaligned",            "(Ljava/lang/Object;JJ)V")},
       {  TR::unknownMethod}
       };
 
@@ -5632,6 +5640,14 @@ TR_J9MethodBase::isUnsafeWithObjectArg()
       case TR::sun_misc_Unsafe_putFloatOrdered_jlObjectJF_V:
       case TR::sun_misc_Unsafe_putDoubleOrdered_jlObjectJD_V:
       case TR::sun_misc_Unsafe_putObjectOrdered_jlObjectJjlObject_V:
+      case TR::jdk_internal_misc_Unsafe_getCharUnaligned:
+      case TR::jdk_internal_misc_Unsafe_getShortUnaligned:
+      case TR::jdk_internal_misc_Unsafe_getIntUnaligned:
+      case TR::jdk_internal_misc_Unsafe_getLongUnaligned:
+      case TR::jdk_internal_misc_Unsafe_putCharUnaligned:
+      case TR::jdk_internal_misc_Unsafe_putShortUnaligned:
+      case TR::jdk_internal_misc_Unsafe_putIntUnaligned:
+      case TR::jdk_internal_misc_Unsafe_putLongUnaligned:
          return true;
       default:
          return false;
