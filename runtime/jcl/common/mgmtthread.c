@@ -1277,7 +1277,6 @@ initIDCache_fail:
  * @param[in] currentThread
  * @param[in] allinfo array of ThreadInfo
  * @param[in] allinfolen length of allinfo[]
- * @return n/a
  */
 static void
 freeThreadInfos(J9VMThread *currentThread, ThreadInfo *allinfo, UDATA allinfolen)
@@ -1416,7 +1415,6 @@ getThreadInfo(J9VMThread *currentThread, J9VMThread *targetThread, ThreadInfo *i
  * @param[in] currentThread
  * @param[in] vmThread The thread to be examined.
  * @param[out] tinfo Where the statistics are to be stored. Must be non-NULL.
- * @return n/a
  */
 static void
 getContentionStats(J9VMThread *currentThread, J9VMThread *vmThread, ThreadInfo *tinfo)

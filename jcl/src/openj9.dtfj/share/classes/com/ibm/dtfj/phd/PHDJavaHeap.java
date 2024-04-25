@@ -378,14 +378,15 @@ class PHDJavaHeap implements JavaHeap {
 		}
 		return objects;
 	}
-	
+
+	private static final long NOREFS[] = {};
+
 	/**
 	 * Read a chunk of objects (but not the whole heap at once!)
 	 * @param maxsize number of refs to collect
 	 * @param next Start at object count[0], update count[0] to position after last object in iterator
 	 * @return
 	 */
-	private static final long NOREFS[]={};
 	Map<AddressKey,JavaObject> getObjects(final int maxsize, final int next[], final boolean withRefs) throws IOException {
 		if (LOG) System.err.println("GetObjects "+next[0]+" "+withRefs);
 		final Map<AddressKey,JavaObject> objects = new LinkedHashMap<AddressKey,JavaObject>();
