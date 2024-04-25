@@ -131,7 +131,7 @@ public class IncludeExcludeTestAnnotationTransformer implements IAnnotationTrans
 					groups.addAll(excludeData.getExcludeGroupNames());
 					annotation.setGroups(groups.toArray(new String[0]));
 					String[] testGroups = annotation.getGroups();
-					logger.info("disable method is " + testMethod.getName() + "diabled annotation " + Arrays.toString(testGroups));
+					logger.info("Disable method: " + testMethod.getName() + ". Disable annotation: " + Arrays.toString(testGroups));
 				}
 			}
 		}
