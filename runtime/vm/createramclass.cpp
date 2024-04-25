@@ -1913,7 +1913,7 @@ checkSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 /**
  * This method has four main functions:
- * 1. Attempts to pre-load Q instance fields.
+ * 1. Attempts to load Q instance fields and NullRestricted value classes.
  *
  * 2. Records total number of flattenable instance fields
  * to flattenedClassCache->numberOfEntries.
@@ -1930,6 +1930,9 @@ checkSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J
  * class type (Q) that are not both flattened and recursively compatible for
  * the fast substitutability optimization.
  *
+ * 5. Speculatively preload classes with a preload class attribute. No class loading
+ * errors will be thrown if loading fails at this stage.
+ *
  * Caller must not hold the classTableMutex.
  *
  * Return TRUE on success. On failure, returns FALSE and sets the
@@ -1943,21 +1946,6 @@ loadFlattenableFieldValueClasses(J9VMThread *currentThread, J9ClassLoader *class
 	BOOLEAN result = TRUE;
 	UDATA flattenableFieldCount = 0;
 	bool eligibleForFastSubstitutability = true;
-
-	/* Preload classes marked for preloading */
-	/* Currently classes are preloaded if they are mentioned in the preload attribute or if they are a Q type. In the future (when javac is updated with better support for the preload attribute) the Q type check will be removed. */
-	if (J9_ARE_ALL_BITS_SET(romClass->optionalFlags, J9_ROMCLASS_OPTINFO_PRELOAD_ATTRIBUTE)) {
-		U_32 *numberOfPreloadClassesPtr = getPreloadInfoPtr(romClass);
-
-		for (U_32 i = 0; i < *numberOfPreloadClassesPtr; i++) {
-			J9UTF8 *preloadClassNameUtf8 = preloadClassNameAtIndex(numberOfPreloadClassesPtr, i);
-
-			U_8 *preloadClassName = J9UTF8_DATA(preloadClassNameUtf8);
-			U_16 preloadClassLength = J9UTF8_LENGTH(preloadClassNameUtf8);
-
-			internalFindClassUTF8(currentThread, preloadClassName, preloadClassLength, classLoader, classPreloadFlags);
-		}
-	}
 
 	/* iterate over fields and load classes of fields marked as QTypes */
 	while (NULL != field) {
@@ -2078,6 +2066,22 @@ loadFlattenableFieldValueClasses(J9VMThread *currentThread, J9ClassLoader *class
 	flattenedClassCache->numberOfEntries = flattenableFieldCount;
 	if (NULL != superClazz) {
 		*valueTypeFlags |= (J9ClassHasReferences & superClazz->classFlags);
+	}
+
+	/* Speculatively load classes with a preload attribute.
+	 * By this point classes of fields that may be eligible for
+	 * flattening have already been loaded.
+	 */
+	if (J9_ARE_ALL_BITS_SET(romClass->optionalFlags, J9_ROMCLASS_OPTINFO_PRELOAD_ATTRIBUTE)) {
+		U_32 *numberOfPreloadClassesPtr = getPreloadInfoPtr(romClass);
+
+		for (U_32 i = 0; i < *numberOfPreloadClassesPtr; i++) {
+			J9UTF8 *preloadClassNameUtf8 = preloadClassNameAtIndex(numberOfPreloadClassesPtr, i);
+
+			U_8 *preloadClassName = J9UTF8_DATA(preloadClassNameUtf8);
+			U_16 preloadClassLength = J9UTF8_LENGTH(preloadClassNameUtf8);
+			internalFindClassUTF8(currentThread, preloadClassName, preloadClassLength, classLoader, classPreloadFlags & ~J9_FINDCLASS_FLAG_THROW_ON_FAIL);
+		}
 	}
 done:
 	return result;
