@@ -33,7 +33,7 @@ import com.ibm.virtualization.management.internal.GuestOSProcessorUsageUtil;
  * all physical CPUs assigned to the Guest by the Hypervisor Host.
  * The supported Operating System and Hypervisor combinations are:
  * <ol>
- *     <li>Linux and Windows on VMWare.
+ *     <li>Linux and Windows on VMWare (IBM Java 8 only).
  *     <li>AIX and Linux on PowerVM.
  *     <li>Linux and z/OS on z/VM.
  *     <li>Linux on PowerKVM.

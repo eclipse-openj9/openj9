@@ -32,7 +32,7 @@ import java.lang.management.PlatformManagedObject;
  * <b>Where there are multiple levels of Hypervisor, only the top level Hypervisor information is returned.</b>
  * The supported Hypervisors and the platforms on which they are supported:
  * <ol>
- *     <li>Linux and Windows on VMWare.
+ *     <li>Linux and Windows on VMWare (IBM Java 8 only).
  *     <li>Linux and Windows on KVM.
  *     <li>Windows on Hyper-V.
  *     <li>AIX and Linux on PowerVM.
