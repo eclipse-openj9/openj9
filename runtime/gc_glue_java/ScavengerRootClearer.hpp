@@ -286,6 +286,11 @@ public:
 		_scavenger->pruneRememberedSet(MM_EnvironmentStandard::getEnvironment(env));
 		reportScanningEnded(RootScannerEntity_RememberedSet);
 	}
+
+	virtual void completedObjectScanPhasesCheckpoint() {
+		Assert_MM_false(_extensions->isScavengerBackOutFlagRaised());
+	}
+
 };
 #endif /* defined(OMR_GC_MODRON_SCAVENGER) */
 #endif /* SCAVENGERROOTCLEARER_HPP_ */
