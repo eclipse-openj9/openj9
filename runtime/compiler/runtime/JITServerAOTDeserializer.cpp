@@ -227,19 +227,28 @@ JITServerAOTDeserializer::printStats(FILE *f) const
    );
    }
 
+
 bool
 JITServerAOTDeserializer::isClassMatching(const ClassSerializationRecord *record,
                                           J9Class *ramClass, TR::Compilation *comp)
    {
+   int32_t numDimensions = 0;
+   // Use base (non-SCC) front-end method to avoid needless validations
+   auto baseComponent = (J9Class *)comp->fej9vm()->TR_J9VM::getBaseComponentClass((TR_OpaqueClassBlock *)ramClass,
+                                                                                  numDimensions);
+   TR_ASSERT(numDimensions >= 0, "Invalid number of array dimensions: %d", numDimensions);
+
    TR::StackMemoryRegion stackMemoryRegion(*comp->trMemory());
 
    size_t packedSize;
-   J9ROMClass *packedROMClass = JITServerHelpers::packROMClass(ramClass->romClass, comp->trMemory(), comp->fej9(),
-                                                               packedSize, record->romClassSize());
+   J9ROMClass *packedROMClass = JITServerHelpers::packROMClass((numDimensions ? baseComponent : ramClass)->romClass,
+                                                               comp->trMemory(), comp->fej9(), packedSize,
+                                                               numDimensions ? 0 : record->romClassSize());
    if (!packedROMClass)
       {
       // Packed ROMClass size mismatch. Fail early (no need to compute the hash).
-      TR_ASSERT(packedSize != record->romClassSize(), "packROMClass() returned NULL but expected size matches");
+      TR_ASSERT(!numDimensions && (packedSize != record->romClassSize()),
+                "packROMClass() returned NULL but expected size matches");
       if (TR::Options::getVerboseOption(TR_VerboseJITServer))
          TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
             "ERROR: ROMClass size mismatch for class %.*s ID %zu: %zu != %u",
@@ -250,6 +259,12 @@ JITServerAOTDeserializer::isClassMatching(const ClassSerializationRecord *record
       }
 
    JITServerROMClassHash hash(packedROMClass);
+   if (numDimensions)
+      {
+      auto &arrayHash = JITServerROMClassHash::getObjectArrayHash(ramClass->romClass, *comp->trMemory(), comp->fej9());
+      hash = JITServerROMClassHash(arrayHash, hash, numDimensions);
+      }
+
    if (hash != record->hash())
       {
       if (TR::Options::getVerboseOption(TR_VerboseJITServer))
@@ -268,6 +283,7 @@ JITServerAOTDeserializer::isClassMatching(const ClassSerializationRecord *record
 
    return true;
 }
+
 
 // Atomically (w.r.t. exceptions) insert into two maps. id is the key in map0 and the value in map1.
 template<typename V0, typename K1> static void

@@ -474,33 +474,35 @@ public:
       return _aotHeaderRecord;
       }
 
-   // If this function sets the missingLoaderInfo flag then a NULL result is due to missing class loader info; otherwise that
-   // result is due to a failure to allocate or to the class being an array (and so not supported by the AOT cache).
+   // If this function sets the missingLoaderInfo flag then a NULL result is due to missing class loader info;
+   // otherwise that result is due to reaching the AOT cache size limit.
    const AOTCacheClassRecord *getClassRecord(J9Class *clazz, JITServer::ServerStream *stream, bool &missingLoaderInfo);
    const AOTCacheMethodRecord *getMethodRecord(J9Method *method, J9Class *definingClass, JITServer::ServerStream *stream);
    // If this function sets the missingLoaderInfo flag then a NULL result is due to missing class loader info;
-   // if this function sets the referencesArrayClass flag then a NULL result is due to an array class being present in the class chain;
-   // otherwise that result is due to a failure to allocate.
+   // otherwise that result is due to reaching the AOT cache size limit.
    const AOTCacheClassChainRecord *getClassChainRecord(J9Class *clazz, uintptr_t classChainOffset,
-                                                       const std::vector<J9Class *> &ramClassChain, JITServer::ServerStream *stream,
-                                                       bool &missingLoaderInfo,
-                                                       bool &referencesArrayClass);
+                                                       const std::vector<J9Class *> &ramClassChain,
+                                                       JITServer::ServerStream *stream, bool &missingLoaderInfo);
    const AOTCacheWellKnownClassesRecord *getWellKnownClassesRecord(const AOTCacheClassChainRecord *const *chainRecords,
-                                                       size_t length, uintptr_t includedClasses);
+                                                                   size_t length, uintptr_t includedClasses);
 
    JITServerAOTCache::KnownIdSet &getAOTCacheKnownIds() { return _aotCacheKnownIds; }
    TR::Monitor *getAOTCacheKnownIdsMonitor() const { return _aotCacheKnownIdsMonitor; }
 
    bool useServerOffsets(JITServer::ServerStream *stream);
+
 private:
    void destroyMonitors();
 
-   // If this function sets the missingLoaderInfo flag then a NULL result is due to missing class loader info; otherwise that
-   // result is due to a failure to allocate.
-   const AOTCacheClassRecord *getClassRecord(ClientSessionData::ClassInfo &classInfo, bool &missingLoaderInfo);
-   // If this function sets one of the two boolean flags then a NULL result is due to one of those error conditions; otherwise
-   // that result is due to a failure to allocate.
-   const AOTCacheClassRecord *getClassRecord(J9Class *clazz, bool &missingLoaderInfo, bool &uncachedClass);
+   // If this function sets the missingLoaderInfo flag then a NULL result is due to missing class loader info;
+   // otherwise that result is due to either the base component (returned via non-NULL uncachedBaseComponent)
+   // of the array class being uncached, or having reached the AOT cache size limit.
+   const AOTCacheClassRecord *getClassRecord(ClassInfo &classInfo, bool &missingLoaderInfo,
+                                             J9Class *&uncachedBaseComponent);
+   // If this function sets one of the two boolean flags or uncachedBaseComponent then a NULL result is due to
+   // one of those error conditions; otherwise that result is due to having reached the AOT cache size limit.
+   const AOTCacheClassRecord *getClassRecord(J9Class *clazz, bool &missingLoaderInfo,
+                                             bool &uncachedClass, J9Class *&uncachedBaseComponent);
 
    const uint64_t _clientUID;
    int64_t  _timeOfLastAccess; // in ms

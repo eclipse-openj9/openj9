@@ -29,6 +29,7 @@
 
 struct JITServerAOTCacheReadContext;
 
+
 enum AOTSerializationRecordType
    {
    // Used for class loader identification (by name of the first loaded class).
@@ -147,18 +148,19 @@ public:
    uintptr_t classLoaderId() const { return _classLoaderId; }
    const JITServerROMClassHash &hash() const { return _hash; }
    uint32_t romClassSize() const { return _romClassSize; }
-   size_t nameLength() const { return _nameLength; }
+   uint32_t nameLength() const { return _nameLength; }
    const uint8_t *name() const { return _name; }
 
 private:
    friend class AOTCacheRecord;
    friend class AOTCacheClassRecord;
 
-   ClassSerializationRecord(uintptr_t id, uintptr_t classLoaderId,
-                            const JITServerROMClassHash &hash, const J9ROMClass *romClass);
+   ClassSerializationRecord(uintptr_t id, uintptr_t classLoaderId, const JITServerROMClassHash &hash,
+                            const J9ROMClass *romClass, const J9ROMClass *baseComponent,
+                            uint32_t numDimensions, uint32_t nameLength);
    ClassSerializationRecord();
 
-   static size_t size(size_t nameLength)
+   static size_t size(uint32_t nameLength)
       {
       return sizeof(ClassSerializationRecord) + OMR::alignNoCheck(nameLength, sizeof(size_t));
       }

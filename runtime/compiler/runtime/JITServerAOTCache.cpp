@@ -138,13 +138,15 @@ AOTCacheClassLoaderRecord::create(uintptr_t id, const uint8_t *name, size_t name
    return new (ptr) AOTCacheClassLoaderRecord(id, name, nameLength);
    }
 
-ClassSerializationRecord::ClassSerializationRecord(uintptr_t id, uintptr_t classLoaderId,
-                                                   const JITServerROMClassHash &hash, const J9ROMClass *romClass) :
-   AOTSerializationRecord(size(J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(romClass))), id, AOTSerializationRecordType::Class),
-   _classLoaderId(classLoaderId), _hash(hash), _romClassSize(romClass->romSize),
-   _nameLength(J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(romClass)))
+
+ClassSerializationRecord::ClassSerializationRecord(
+   uintptr_t id, uintptr_t classLoaderId, const JITServerROMClassHash &hash, const J9ROMClass *romClass,
+   const J9ROMClass *baseComponent, uint32_t numDimensions, uint32_t nameLength
+) :
+   AOTSerializationRecord(size(nameLength), id, AOTSerializationRecordType::Class),
+   _classLoaderId(classLoaderId), _hash(hash), _romClassSize(romClass->romSize), _nameLength(nameLength)
    {
-   memcpy(_name, J9UTF8_DATA(J9ROMCLASS_CLASSNAME(romClass)), _nameLength);
+   JITServerHelpers::getFullClassName(_name, nameLength, romClass, baseComponent, numDimensions);
    }
 
 ClassSerializationRecord::ClassSerializationRecord() :
@@ -161,10 +163,12 @@ ClassSerializationRecord::isValidHeader(const JITServerAOTCacheReadContext &cont
           context._classLoaderRecords[classLoaderId()];
    }
 
+
 AOTCacheClassRecord::AOTCacheClassRecord(uintptr_t id, const AOTCacheClassLoaderRecord *classLoaderRecord,
-                                         const JITServerROMClassHash &hash, const J9ROMClass *romClass) :
+                                         const JITServerROMClassHash &hash, const J9ROMClass *romClass,
+                                         const J9ROMClass *baseComponent, uint32_t numDimensions, uint32_t nameLength) :
    _classLoaderRecord(classLoaderRecord),
-   _data(id, classLoaderRecord->data().id(), hash, romClass)
+   _data(id, classLoaderRecord->data().id(), hash, romClass, baseComponent, numDimensions, nameLength)
    {
    }
 
@@ -175,10 +179,12 @@ AOTCacheClassRecord::AOTCacheClassRecord(const JITServerAOTCacheReadContext &con
 
 AOTCacheClassRecord *
 AOTCacheClassRecord::create(uintptr_t id, const AOTCacheClassLoaderRecord *classLoaderRecord,
-                            const JITServerROMClassHash &hash, const J9ROMClass *romClass)
+                            const JITServerROMClassHash &hash, const J9ROMClass *romClass,
+                            const J9ROMClass *baseComponent, uint32_t numDimensions)
    {
-   void *ptr = AOTCacheRecord::allocate(size(J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(romClass))));
-   return new (ptr) AOTCacheClassRecord(id, classLoaderRecord, hash, romClass);
+   uint32_t nameLength = JITServerHelpers::getFullClassNameLength(romClass, baseComponent, numDimensions);
+   void *ptr = AOTCacheRecord::allocate(size(nameLength));
+   return new (ptr) AOTCacheClassRecord(id, classLoaderRecord, hash, romClass, baseComponent, numDimensions, nameLength);
    }
 
 void
@@ -186,6 +192,7 @@ AOTCacheClassRecord::subRecordsDo(const std::function<void(const AOTCacheRecord 
    {
    f(_classLoaderRecord);
    }
+
 
 MethodSerializationRecord::MethodSerializationRecord(uintptr_t id, uintptr_t definingClassId, uint32_t index) :
    AOTSerializationRecord(sizeof(*this), id, AOTSerializationRecordType::Method),
@@ -808,19 +815,18 @@ JITServerAOTCache::getClassLoaderRecord(const uint8_t *name, size_t nameLength)
    }
 
 const AOTCacheClassRecord *
-JITServerAOTCache::getClassRecord(const AOTCacheClassLoaderRecord *classLoaderRecord, const J9ROMClass *romClass)
+JITServerAOTCache::getClassRecord(const AOTCacheClassLoaderRecord *classLoaderRecord, const J9ROMClass *romClass,
+                                  const J9ROMClass *baseComponent, uint32_t numDimensions)
    {
-   // The current implementation cannot handle array ROM classes  - the name must be recorded
-   // properly and the hash of the class must incorporate the array ROM class, the arity of the array,
-   // and the element ROM class.
-   if (J9ROMCLASS_IS_ARRAY(romClass))
-      return NULL;
+   auto cache = TR::CompilationInfo::get()->getJITServerSharedROMClassCache();
+   JITServerROMClassHash hash = cache ? cache->getHash(romClass) : JITServerROMClassHash(romClass);
 
-   JITServerROMClassHash hash;
-   if (auto cache = TR::CompilationInfo::get()->getJITServerSharedROMClassCache())
-      hash = cache->getHash(romClass);
-   else
-      hash = JITServerROMClassHash(romClass);
+   if (numDimensions)
+      {
+      TR_ASSERT(baseComponent, "Invalid arguments");
+      JITServerROMClassHash baseHash = cache ? cache->getHash(baseComponent) : JITServerROMClassHash(baseComponent);
+      hash = JITServerROMClassHash(hash, baseHash, numDimensions);
+      }
 
    OMR::CriticalSection cs(_classMonitor);
 
@@ -829,11 +835,10 @@ JITServerAOTCache::getClassRecord(const AOTCacheClassLoaderRecord *classLoaderRe
       return it->second;
 
    if (!JITServerAOTCacheMap::cacheHasSpace())
-      {
       return NULL;
-      }
 
-   auto record = AOTCacheClassRecord::create(_nextClassId, classLoaderRecord, hash, romClass);
+   auto record = AOTCacheClassRecord::create(_nextClassId, classLoaderRecord, hash,
+                                             romClass, baseComponent, numDimensions);
    addToMap(_classMap, _classHead, _classTail, it, getRecordKey(record), record);
    ++_nextClassId;
 
@@ -842,8 +847,8 @@ JITServerAOTCache::getClassRecord(const AOTCacheClassLoaderRecord *classLoaderRe
       const ClassSerializationRecord &c = record->data();
       char buffer[ROMCLASS_HASH_BYTES * 2 + 1];
       TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
-         "AOT cache %s: created class ID %zu -> %.*s size %u hash %s",
-         _name.c_str(), c.id(), RECORD_NAME(c), romClass->romSize, hash.toString(buffer, sizeof(buffer))
+         "AOT cache %s: created class ID %zu -> %.*s size %u hash %s class loader ID %zu", _name.c_str(), c.id(),
+         RECORD_NAME(c), romClass->romSize, hash.toString(buffer, sizeof(buffer)), classLoaderRecord->data().id()
       );
       }
 
