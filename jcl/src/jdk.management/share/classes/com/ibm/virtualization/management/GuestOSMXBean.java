@@ -32,7 +32,7 @@ import java.lang.management.*;
  * <b>Where there are multiple levels of Hypervisor, only the top level Hypervisor information is returned.</b>
  * These are the supported Hypervisor and Guest Operating System combinations:
  * <ol>
- *      <li>Windows and Linux on VMWare ESXi.
+ *      <li>Windows and Linux on VMWare ESXi (IBM Java 8 only).
  *      <ul>
  *          <li><a href="http://www.vmware.com/support/developer/guest-sdk" target="_blank">VMware GuestSDK</a>
  *              (Generally packaged with VMWare tools) must be installed in the Guest Operating System.
