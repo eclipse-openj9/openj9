@@ -2635,7 +2635,7 @@ TR_ResolvedRelocatableJ9JITServerMethod::validateMethodFieldAttributes(const TR_
    return equal;
    }
 
-TR_J9ServerMethod::TR_J9ServerMethod(TR_FrontEnd * fe, TR_Memory * trMemory, J9Class * aClazz, uintptr_t cpIndex)
+TR_J9ServerMethod::TR_J9ServerMethod(TR_FrontEnd * fe, TR_Memory * trMemory, J9Class * aClazz, int32_t cpIndex)
    : TR_J9Method()
    {
    TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
