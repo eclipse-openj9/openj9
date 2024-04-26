@@ -480,7 +480,10 @@ final class J9VMInternals {
 	 */
 	static int fastIdentityHashCode(Object anObject) {
 		com.ibm.jit.JITHelpers h = jitHelpers;
-		if ((null == h) || h.isArray(anObject)) {
+		if (null == h) {
+			return identityHashCode(anObject); /* use early returns to make the JIT code faster */
+		}
+		if (h.isArray(anObject)) {
 			return identityHashCode(anObject); /* use early returns to make the JIT code faster */
 		}
 		if (h.is32Bit()) {
