@@ -2995,7 +2995,7 @@ remoteCompilationEnd(J9VMThread *vmThread, TR::Compilation *comp, TR_ResolvedMet
 
             // Relocation failed, fail compilation
             // attempt to recompile in non-AOT mode
-            entry->_doNotUseAotCodeFromSharedCache = true;
+            entry->_doNotAOTCompile = true;
             entry->_doNotLoadFromJITServerAOTCache = true;
             entry->_compErrCode = returnCode;
 

@@ -77,7 +77,7 @@ void TR_MethodToBeCompiled::initialize(TR::IlGeneratorMethodDetails &details, vo
    _unloadedMethod = false;
    _doAotLoad = false;
    _useAotCompilation = false;
-   _doNotUseAotCodeFromSharedCache = false;
+   _doNotAOTCompile = false;
    _tryCompilingAgain = false;
    _async = false;
    _changedFromAsyncToSync = false;

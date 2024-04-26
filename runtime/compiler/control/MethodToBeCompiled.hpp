@@ -123,7 +123,8 @@ struct TR_MethodToBeCompiled
                                            // need to have vmaccess for accessing this flag
    bool                   _doAotLoad;// used for AOT shared cache
    bool                   _useAotCompilation;// used for AOT shared cache
-   bool                   _doNotUseAotCodeFromSharedCache;
+   bool                   _doNotAOTCompile; // Set when we want to forbid all future compilation attempts
+                                            // from being AOT compilations (loads or stores).
    bool                   _tryCompilingAgain;
 
    bool                   _async;           // flag for async compilation; used to print in vlog

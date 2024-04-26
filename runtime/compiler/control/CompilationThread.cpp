@@ -676,7 +676,7 @@ bool TR::CompilationInfo::shouldDowngradeCompReq(TR_MethodToBeCompiled *entry)
               // perform JNI at cold
       else if (entry->isJNINative() ||
               // downgrade AOT loads that failed
-              (entry->_methodIsInSharedCache == TR_yes && entry->_doNotUseAotCodeFromSharedCache && entry->_compilationAttemptsLeft < MAX_COMPILE_ATTEMPTS))
+              (entry->_methodIsInSharedCache == TR_yes && entry->_doNotAOTCompile && entry->_compilationAttemptsLeft < MAX_COMPILE_ATTEMPTS))
          {
          doDowngrade = true;
          }
@@ -2264,7 +2264,7 @@ bool TR::CompilationInfo::shouldRetryCompilation(J9VMThread *vmThread, TR_Method
             case compilationAOTRelocationRecordGenerationFailure:
             case compilationRelocationFailure:
                // switch to JIT for these cases (we don't want to relocate again)
-               entry->_doNotUseAotCodeFromSharedCache = true;
+               entry->_doNotAOTCompile = true;
                tryCompilingAgain = true;
                break;
             case compilationAotTrampolineReloFailure:
@@ -2272,7 +2272,7 @@ bool TR::CompilationInfo::shouldRetryCompilation(J9VMThread *vmThread, TR_Method
             case compilationAotCacheFullReloFailure:
                // for the last one, switch to JIT
                if (entry->_compilationAttemptsLeft == 1)
-                  entry->_doNotUseAotCodeFromSharedCache = true;
+                  entry->_doNotAOTCompile = true;
                tryCompilingAgain = true;
                break;
 #if defined(J9VM_OPT_JITSERVER)
@@ -6885,7 +6885,7 @@ TR::CompilationInfoPerThreadBase::installAotCachedMethod(
          {
          entry->_compErrCode = returnCode;
          entry->setAotCodeToBeRelocated(NULL); // reset if relocation failed
-         entry->_tryCompilingAgain = _compInfo.shouldRetryCompilation(vmThread, entry, compiler); // this will set entry->_doNotUseAotCodeFromSharedCache = true;
+         entry->_tryCompilingAgain = _compInfo.shouldRetryCompilation(vmThread, entry, compiler); // this will set entry->_doNotAOTCompile = true;
 
          // Feature [Defect 172216/180384]: Implement hints for failed AOT validations.  The idea is that the failed validations are due to the
          // fact that AOT methods are loaded at a lower count than when they were compiled so the JVM is given less opportunity to resolve things.
@@ -7349,7 +7349,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
 #if defined(J9VM_INTERP_AOT_RUNTIME_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
    if (entry->_methodIsInSharedCache == TR_yes     // possible AOT load
        && !TR::CompilationInfo::isCompiled(method)
-       && !entry->_doNotUseAotCodeFromSharedCache
+       && !entry->_doNotAOTCompile
        && !TR::Options::getAOTCmdLineOptions()->getOption(TR_NoLoadAOT)
        && !(_jitConfig->runtimeFlags & J9JIT_TOSS_CODE)
        && !_jitConfig->inlineFieldWatches)
@@ -7389,7 +7389,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
                }
             *aotCachedMethod = NULL;
             canRelocateMethod = false;
-            entry->_doNotUseAotCodeFromSharedCache = true;
+            entry->_doNotAOTCompile = true;
             }
 
          if (*aotCachedMethod)
@@ -7433,7 +7433,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
                   // If we can not inflate the method data, JIT compile the method.
                   canRelocateMethod = false;
                   *aotCachedMethod = NULL;
-                  entry->_doNotUseAotCodeFromSharedCache = true;
+                  entry->_doNotAOTCompile = true;
                   }
                else
                   {
@@ -7504,7 +7504,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
 
          // Is this a JIT retrial of a failed AOT load?
          if (entry->_methodIsInSharedCache == TR_yes &&  // possible AOT load
-            entry->_doNotUseAotCodeFromSharedCache &&    // transformed into a JIT request
+            entry->_doNotAOTCompile &&    // transformed into a JIT request
             entry->_compilationAttemptsLeft < MAX_COMPILE_ATTEMPTS) // because it failed previously
             {
             // Lower priority to CP_ASYNC_NORMAL
@@ -7545,6 +7545,13 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
             && !_compInfo.isMethodIneligibleForAot(method)
             && (!TR::Options::getAOTCmdLineOptions()->getOption(TR_AOTCompileOnlyFromBootstrap)
                 || fe->isClassLibraryMethod((TR_OpaqueMethodBlock *)method), true)
+            // Including this here has the effect of forbidding JITServer AOT cache compilations
+            // following local AOT failures that we could technically recover from (e.g., failing
+            // to load a method from the SCC because initial class chain validation failed). We
+            // have it here nevertheless because in most cases we should not send remote AOT cache
+            // compilation requests if this flag is set, and distinguishing these two types of failures
+            // would complicate the retry logic.
+            && !entry->_doNotAOTCompile
 
             // Do not perform AOT compilation if field watch is enabled; there
             // is no benefit to having an AOT body with field watch as it increases
@@ -7563,7 +7570,6 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
             && entry->_methodIsInSharedCache != TR_yes
 
             // Eligibility checks
-            && !entry->_doNotUseAotCodeFromSharedCache
             && fe->sharedCache()->isClassInSharedCache(J9_CLASS_FROM_METHOD(method))
 
             // Ensure we can generate a class chain for the class of the
@@ -8269,8 +8275,8 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
          );
    if (TR::Options::getVerboseOption(TR_VerboseCompilationDispatch))
       TR_VerboseLog::writeLineLocked(TR_Vlog_DISPATCH,
-         "Compilation thread executing compile(): j9method=%p isAotLoad=%d canDoRelocatableCompile=%d eligibleForRelocatableCompile=%d isRemoteCompReq=%d _doNotUseAotCodeFromSharedCache=%d AOTfe=%d isDLT=%d",
-          method, entry->isAotLoad(), canDoRelocatableCompile, eligibleForRelocatableCompile, entry->isRemoteCompReq(), entry->_doNotUseAotCodeFromSharedCache, _vm->isAOT_DEPRECATED_DO_NOT_USE(), entry->isDLTCompile());
+         "Compilation thread executing compile(): j9method=%p isAotLoad=%d canDoRelocatableCompile=%d eligibleForRelocatableCompile=%d isRemoteCompReq=%d _doNotAOTCompile=%d AOTfe=%d isDLT=%d",
+          method, entry->isAotLoad(), canDoRelocatableCompile, eligibleForRelocatableCompile, entry->isRemoteCompReq(), entry->_doNotAOTCompile, _vm->isAOT_DEPRECATED_DO_NOT_USE(), entry->isDLTCompile());
 
       if (
           (TR::Options::canJITCompile()
@@ -10451,7 +10457,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                      }
                   else
                      {
-                     entry->_doNotUseAotCodeFromSharedCache = true;
+                     entry->_doNotAOTCompile = true;
                      entry->_compErrCode = returnCode;
                      startPC = NULL;
 
@@ -10526,7 +10532,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                fprintf(stderr, "ERROR: AOT compiling but shared class is not available. Method will run interpreted\n");
 #endif
                TR_ASSERT(0, "shared classes flag not enabled yet we got an AOT compilation"); // This is a branch that is never expected to enter
-               entry->_doNotUseAotCodeFromSharedCache = true;
+               entry->_doNotAOTCompile = true;
                startPC = NULL;
 
                if (entry->_compilationAttemptsLeft > 0)
