@@ -7762,11 +7762,13 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
    startLabel->setStartInternalControlFlow();
    fallThru->setEndInternalControlFlow();
 
+   bool enableTLHBatchClearing = fej9->tlhHasBeenCleared();
+
 #ifdef J9VM_GC_NON_ZERO_TLH
    // If we can skip zero init, and it is not outlined new, we use the new TLH
    // same logic also appears later, but we need to do this before generate the helper call
    //
-   if (node->canSkipZeroInitialization() && !comp->getOption(TR_DisableDualTLH) && !comp->getOptions()->realTimeGC())
+   if (node->canSkipZeroInitialization() && (enableTLHBatchClearing || !comp->getOption(TR_DisableDualTLH)) && !comp->getOptions()->realTimeGC())
       {
       // For value types, it should use jitNewValue helper call which is set up before code gen
       if ((node->getOpCodeValue() == TR::New)
@@ -7875,7 +7877,7 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
    bool shouldInitZeroSizedArrayHeader = true;
 
 #ifdef J9VM_GC_NON_ZERO_TLH
-   if (comp->getOption(TR_DisableDualTLH) || comp->getOptions()->realTimeGC())
+   if (!enableTLHBatchClearing || comp->getOptions()->realTimeGC())
       {
 #endif
       if (!maxZeroInitWordsPerIteration)
