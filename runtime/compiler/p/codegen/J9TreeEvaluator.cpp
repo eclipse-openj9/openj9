@@ -5579,7 +5579,7 @@ static void genHeapAlloc(TR::Node *node, TR::Instruction *&iCursor, TR_OpaqueCla
                {
                static char *disableAlign = feGetEnv("TR_DisableAlignAlloc");
 
-               if (0 && !disableAlign && (node->getOpCodeValue() == TR::New) && (comp->getMethodHotness() >= hot || node->shouldAlignTLHAlloc()))
+               if (0 && !disableAlign && (node->getOpCodeValue() == TR::New) && (comp->getMethodHotness() >= hot))
                   {
                   TR_OpaqueMethodBlock *ownMethod = node->getOwningMethod();
 
