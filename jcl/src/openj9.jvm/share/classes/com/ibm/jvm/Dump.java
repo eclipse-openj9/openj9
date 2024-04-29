@@ -102,8 +102,11 @@ import openj9.management.internal.InvalidDumpOptionExceptionBase;
  * configuration.
  */
 public class Dump {
-	@SuppressWarnings("nls")
-	private static final String SystemRequestPrefix = "z/OS".equalsIgnoreCase(System.getProperty("os.name")) ? "system:dsn=" : "system:file=";
+
+	private static final String SystemRequestPrefix =
+		"z/OS".equalsIgnoreCase(com.ibm.oti.vm.VM.internalGetProperties().getProperty("os.name")) //$NON-NLS-1$ //$NON-NLS-2$
+			? "system:dsn=" //$NON-NLS-1$
+			: "system:file="; //$NON-NLS-1$
 
 	/**
 	 * Trigger a java dump. A java dump is in a human-readable format, and
