@@ -21,14 +21,16 @@
  *******************************************************************************/
 package org.openj9.test.varhandle;
 
-import org.testng.annotations.Test;
-
-import org.testng.Assert;
 import java.lang.invoke.*;
 import java.lang.invoke.VarHandle.*;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.List;
+
+import org.testng.annotations.Test;
+import org.testng.Assert;
+
+import org.openj9.test.util.VersionCheck;
 
 @Test(groups = { "level.extended" })
 public class VarHandleUtilTests {
@@ -438,38 +440,38 @@ public class VarHandleUtilTests {
 		Assert.assertEquals(getAndSet, getAndBitwiseXorReleaseMT);
 	}
 	
-	private static void isAccessModeSupported_AllSupported(VarHandle vh) {
+	private static void isAccessModeSupported_AllSupported(VarHandle vh, boolean supportsAllAtomicOps) {
 		Assert.assertTrue(vh.isAccessModeSupported(AccessMode.GET));
 		Assert.assertTrue(vh.isAccessModeSupported(AccessMode.SET));
-		Assert.assertTrue(vh.isAccessModeSupported(AccessMode.GET_VOLATILE));
-		Assert.assertTrue(vh.isAccessModeSupported(AccessMode.SET_VOLATILE));
-		Assert.assertTrue(vh.isAccessModeSupported(AccessMode.GET_OPAQUE));
-		Assert.assertTrue(vh.isAccessModeSupported(AccessMode.SET_OPAQUE));
-		Assert.assertTrue(vh.isAccessModeSupported(AccessMode.GET_ACQUIRE));
-		Assert.assertTrue(vh.isAccessModeSupported(AccessMode.SET_RELEASE));
-		Assert.assertTrue(vh.isAccessModeSupported(AccessMode.COMPARE_AND_SET));
-		Assert.assertTrue(vh.isAccessModeSupported(AccessMode.COMPARE_AND_EXCHANGE));
-		Assert.assertTrue(vh.isAccessModeSupported(AccessMode.COMPARE_AND_EXCHANGE_ACQUIRE));
-		Assert.assertTrue(vh.isAccessModeSupported(AccessMode.COMPARE_AND_EXCHANGE_RELEASE));
-		Assert.assertTrue(vh.isAccessModeSupported(AccessMode.WEAK_COMPARE_AND_SET));
-		Assert.assertTrue(vh.isAccessModeSupported(AccessMode.WEAK_COMPARE_AND_SET_ACQUIRE));
-		Assert.assertTrue(vh.isAccessModeSupported(AccessMode.WEAK_COMPARE_AND_SET_RELEASE));
-		Assert.assertTrue(vh.isAccessModeSupported(AccessMode.WEAK_COMPARE_AND_SET_PLAIN));
-		Assert.assertTrue(vh.isAccessModeSupported(AccessMode.GET_AND_SET));
-		Assert.assertTrue(vh.isAccessModeSupported(AccessMode.GET_AND_SET_ACQUIRE));
-		Assert.assertTrue(vh.isAccessModeSupported(AccessMode.GET_AND_SET_RELEASE));
-		Assert.assertTrue(vh.isAccessModeSupported(AccessMode.GET_AND_ADD));
-		Assert.assertTrue(vh.isAccessModeSupported(AccessMode.GET_AND_ADD_ACQUIRE));
-		Assert.assertTrue(vh.isAccessModeSupported(AccessMode.GET_AND_ADD_RELEASE));
-		Assert.assertTrue(vh.isAccessModeSupported(AccessMode.GET_AND_BITWISE_AND));
-		Assert.assertTrue(vh.isAccessModeSupported(AccessMode.GET_AND_BITWISE_AND_ACQUIRE));
-		Assert.assertTrue(vh.isAccessModeSupported(AccessMode.GET_AND_BITWISE_AND_RELEASE));
-		Assert.assertTrue(vh.isAccessModeSupported(AccessMode.GET_AND_BITWISE_OR));
-		Assert.assertTrue(vh.isAccessModeSupported(AccessMode.GET_AND_BITWISE_OR_ACQUIRE));
-		Assert.assertTrue(vh.isAccessModeSupported(AccessMode.GET_AND_BITWISE_OR_RELEASE));
-		Assert.assertTrue(vh.isAccessModeSupported(AccessMode.GET_AND_BITWISE_XOR));
-		Assert.assertTrue(vh.isAccessModeSupported(AccessMode.GET_AND_BITWISE_XOR_ACQUIRE));
-		Assert.assertTrue(vh.isAccessModeSupported(AccessMode.GET_AND_BITWISE_XOR_RELEASE));
+		Assert.assertEquals(vh.isAccessModeSupported(AccessMode.GET_VOLATILE), supportsAllAtomicOps);
+		Assert.assertEquals(vh.isAccessModeSupported(AccessMode.SET_VOLATILE), supportsAllAtomicOps);
+		Assert.assertEquals(vh.isAccessModeSupported(AccessMode.GET_OPAQUE), supportsAllAtomicOps);
+		Assert.assertEquals(vh.isAccessModeSupported(AccessMode.SET_OPAQUE), supportsAllAtomicOps);
+		Assert.assertEquals(vh.isAccessModeSupported(AccessMode.GET_ACQUIRE), supportsAllAtomicOps);
+		Assert.assertEquals(vh.isAccessModeSupported(AccessMode.SET_RELEASE), supportsAllAtomicOps);
+		Assert.assertEquals(vh.isAccessModeSupported(AccessMode.COMPARE_AND_SET), supportsAllAtomicOps);
+		Assert.assertEquals(vh.isAccessModeSupported(AccessMode.COMPARE_AND_EXCHANGE), supportsAllAtomicOps);
+		Assert.assertEquals(vh.isAccessModeSupported(AccessMode.COMPARE_AND_EXCHANGE_ACQUIRE), supportsAllAtomicOps);
+		Assert.assertEquals(vh.isAccessModeSupported(AccessMode.COMPARE_AND_EXCHANGE_RELEASE), supportsAllAtomicOps);
+		Assert.assertEquals(vh.isAccessModeSupported(AccessMode.WEAK_COMPARE_AND_SET), supportsAllAtomicOps);
+		Assert.assertEquals(vh.isAccessModeSupported(AccessMode.WEAK_COMPARE_AND_SET_ACQUIRE), supportsAllAtomicOps);
+		Assert.assertEquals(vh.isAccessModeSupported(AccessMode.WEAK_COMPARE_AND_SET_RELEASE), supportsAllAtomicOps);
+		Assert.assertEquals(vh.isAccessModeSupported(AccessMode.WEAK_COMPARE_AND_SET_PLAIN), supportsAllAtomicOps);
+		Assert.assertEquals(vh.isAccessModeSupported(AccessMode.GET_AND_SET), supportsAllAtomicOps);
+		Assert.assertEquals(vh.isAccessModeSupported(AccessMode.GET_AND_SET_ACQUIRE), supportsAllAtomicOps);
+		Assert.assertEquals(vh.isAccessModeSupported(AccessMode.GET_AND_SET_RELEASE), supportsAllAtomicOps);
+		Assert.assertEquals(vh.isAccessModeSupported(AccessMode.GET_AND_ADD), supportsAllAtomicOps);
+		Assert.assertEquals(vh.isAccessModeSupported(AccessMode.GET_AND_ADD_ACQUIRE), supportsAllAtomicOps);
+		Assert.assertEquals(vh.isAccessModeSupported(AccessMode.GET_AND_ADD_RELEASE), supportsAllAtomicOps);
+		Assert.assertEquals(vh.isAccessModeSupported(AccessMode.GET_AND_BITWISE_AND), supportsAllAtomicOps);
+		Assert.assertEquals(vh.isAccessModeSupported(AccessMode.GET_AND_BITWISE_AND_ACQUIRE), supportsAllAtomicOps);
+		Assert.assertEquals(vh.isAccessModeSupported(AccessMode.GET_AND_BITWISE_AND_RELEASE), supportsAllAtomicOps);
+		Assert.assertEquals(vh.isAccessModeSupported(AccessMode.GET_AND_BITWISE_OR), supportsAllAtomicOps);
+		Assert.assertEquals(vh.isAccessModeSupported(AccessMode.GET_AND_BITWISE_OR_ACQUIRE), supportsAllAtomicOps);
+		Assert.assertEquals(vh.isAccessModeSupported(AccessMode.GET_AND_BITWISE_OR_RELEASE), supportsAllAtomicOps);
+		Assert.assertEquals(vh.isAccessModeSupported(AccessMode.GET_AND_BITWISE_XOR), supportsAllAtomicOps);
+		Assert.assertEquals(vh.isAccessModeSupported(AccessMode.GET_AND_BITWISE_XOR_ACQUIRE), supportsAllAtomicOps);
+		Assert.assertEquals(vh.isAccessModeSupported(AccessMode.GET_AND_BITWISE_XOR_RELEASE), supportsAllAtomicOps);
 	}
 	
 	private static void isAccessModeSupported_Ref(VarHandle vh) {
@@ -574,26 +576,26 @@ public class VarHandleUtilTests {
 		Assert.assertFalse(vh.isAccessModeSupported(AccessMode.GET_AND_BITWISE_XOR_RELEASE));
 	}
 
-	private static void isAccessModeSupported_FloatingPointView(VarHandle vh) {
+	private static void isAccessModeSupported_FloatingPointView(VarHandle vh, boolean supportsAllAtomicOps) {
 		Assert.assertTrue(vh.isAccessModeSupported(AccessMode.GET));
 		Assert.assertTrue(vh.isAccessModeSupported(AccessMode.SET));
-		Assert.assertTrue(vh.isAccessModeSupported(AccessMode.GET_VOLATILE));
-		Assert.assertTrue(vh.isAccessModeSupported(AccessMode.SET_VOLATILE));
-		Assert.assertTrue(vh.isAccessModeSupported(AccessMode.GET_OPAQUE));
-		Assert.assertTrue(vh.isAccessModeSupported(AccessMode.SET_OPAQUE));
-		Assert.assertTrue(vh.isAccessModeSupported(AccessMode.GET_ACQUIRE));
-		Assert.assertTrue(vh.isAccessModeSupported(AccessMode.SET_RELEASE));
-		Assert.assertTrue(vh.isAccessModeSupported(AccessMode.COMPARE_AND_SET));
-		Assert.assertTrue(vh.isAccessModeSupported(AccessMode.COMPARE_AND_EXCHANGE));
-		Assert.assertTrue(vh.isAccessModeSupported(AccessMode.COMPARE_AND_EXCHANGE_ACQUIRE));
-		Assert.assertTrue(vh.isAccessModeSupported(AccessMode.COMPARE_AND_EXCHANGE_RELEASE));
-		Assert.assertTrue(vh.isAccessModeSupported(AccessMode.WEAK_COMPARE_AND_SET));
-		Assert.assertTrue(vh.isAccessModeSupported(AccessMode.WEAK_COMPARE_AND_SET_ACQUIRE));
-		Assert.assertTrue(vh.isAccessModeSupported(AccessMode.WEAK_COMPARE_AND_SET_RELEASE));
-		Assert.assertTrue(vh.isAccessModeSupported(AccessMode.WEAK_COMPARE_AND_SET_PLAIN));
-		Assert.assertTrue(vh.isAccessModeSupported(AccessMode.GET_AND_SET));
-		Assert.assertTrue(vh.isAccessModeSupported(AccessMode.GET_AND_SET_ACQUIRE));
-		Assert.assertTrue(vh.isAccessModeSupported(AccessMode.GET_AND_SET_RELEASE));
+		Assert.assertEquals(vh.isAccessModeSupported(AccessMode.GET_VOLATILE), supportsAllAtomicOps);
+		Assert.assertEquals(vh.isAccessModeSupported(AccessMode.SET_VOLATILE), supportsAllAtomicOps);
+		Assert.assertEquals(vh.isAccessModeSupported(AccessMode.GET_OPAQUE), supportsAllAtomicOps);
+		Assert.assertEquals(vh.isAccessModeSupported(AccessMode.SET_OPAQUE), supportsAllAtomicOps);
+		Assert.assertEquals(vh.isAccessModeSupported(AccessMode.GET_ACQUIRE), supportsAllAtomicOps);
+		Assert.assertEquals(vh.isAccessModeSupported(AccessMode.SET_RELEASE), supportsAllAtomicOps);
+		Assert.assertEquals(vh.isAccessModeSupported(AccessMode.COMPARE_AND_SET), supportsAllAtomicOps);
+		Assert.assertEquals(vh.isAccessModeSupported(AccessMode.COMPARE_AND_EXCHANGE), supportsAllAtomicOps);
+		Assert.assertEquals(vh.isAccessModeSupported(AccessMode.COMPARE_AND_EXCHANGE_ACQUIRE), supportsAllAtomicOps);
+		Assert.assertEquals(vh.isAccessModeSupported(AccessMode.COMPARE_AND_EXCHANGE_RELEASE), supportsAllAtomicOps);
+		Assert.assertEquals(vh.isAccessModeSupported(AccessMode.WEAK_COMPARE_AND_SET), supportsAllAtomicOps);
+		Assert.assertEquals(vh.isAccessModeSupported(AccessMode.WEAK_COMPARE_AND_SET_ACQUIRE), supportsAllAtomicOps);
+		Assert.assertEquals(vh.isAccessModeSupported(AccessMode.WEAK_COMPARE_AND_SET_RELEASE), supportsAllAtomicOps);
+		Assert.assertEquals(vh.isAccessModeSupported(AccessMode.WEAK_COMPARE_AND_SET_PLAIN), supportsAllAtomicOps);
+		Assert.assertEquals(vh.isAccessModeSupported(AccessMode.GET_AND_SET), supportsAllAtomicOps);
+		Assert.assertEquals(vh.isAccessModeSupported(AccessMode.GET_AND_SET_ACQUIRE), supportsAllAtomicOps);
+		Assert.assertEquals(vh.isAccessModeSupported(AccessMode.GET_AND_SET_RELEASE), supportsAllAtomicOps);
 		Assert.assertFalse(vh.isAccessModeSupported(AccessMode.GET_AND_ADD));
 		Assert.assertFalse(vh.isAccessModeSupported(AccessMode.GET_AND_ADD_ACQUIRE));
 		Assert.assertFalse(vh.isAccessModeSupported(AccessMode.GET_AND_ADD_RELEASE));
@@ -608,15 +610,15 @@ public class VarHandleUtilTests {
 		Assert.assertFalse(vh.isAccessModeSupported(AccessMode.GET_AND_BITWISE_XOR_RELEASE));
 	}
 	
-	private static void isAccessModeSupported_ByteView(VarHandle vh) {
+	private static void isAccessModeSupported_ByteView(VarHandle vh, boolean supportsAllAtomicOps) {
 		Assert.assertTrue(vh.isAccessModeSupported(AccessMode.GET));
 		Assert.assertTrue(vh.isAccessModeSupported(AccessMode.SET));
-		Assert.assertTrue(vh.isAccessModeSupported(AccessMode.GET_VOLATILE));
-		Assert.assertTrue(vh.isAccessModeSupported(AccessMode.SET_VOLATILE));
-		Assert.assertTrue(vh.isAccessModeSupported(AccessMode.GET_OPAQUE));
-		Assert.assertTrue(vh.isAccessModeSupported(AccessMode.SET_OPAQUE));
-		Assert.assertTrue(vh.isAccessModeSupported(AccessMode.GET_ACQUIRE));
-		Assert.assertTrue(vh.isAccessModeSupported(AccessMode.SET_RELEASE));
+		Assert.assertEquals(vh.isAccessModeSupported(AccessMode.GET_VOLATILE), supportsAllAtomicOps);
+		Assert.assertEquals(vh.isAccessModeSupported(AccessMode.SET_VOLATILE), supportsAllAtomicOps);
+		Assert.assertEquals(vh.isAccessModeSupported(AccessMode.GET_OPAQUE), supportsAllAtomicOps);
+		Assert.assertEquals(vh.isAccessModeSupported(AccessMode.SET_OPAQUE), supportsAllAtomicOps);
+		Assert.assertEquals(vh.isAccessModeSupported(AccessMode.GET_ACQUIRE), supportsAllAtomicOps);
+		Assert.assertEquals(vh.isAccessModeSupported(AccessMode.SET_RELEASE), supportsAllAtomicOps);
 		Assert.assertFalse(vh.isAccessModeSupported(AccessMode.COMPARE_AND_SET));
 		Assert.assertFalse(vh.isAccessModeSupported(AccessMode.COMPARE_AND_EXCHANGE));
 		Assert.assertFalse(vh.isAccessModeSupported(AccessMode.COMPARE_AND_EXCHANGE_ACQUIRE));
@@ -682,61 +684,69 @@ public class VarHandleUtilTests {
 	@Test
 	public void testIsAccessModeSupportedByteInstanceField() throws Throwable {
 		VarHandle vh = MethodHandles.lookup().findVarHandle(InstanceHelper.class, "b", byte.class);
-		isAccessModeSupported_AllSupported(vh);
+		isAccessModeSupported_AllSupported(vh, true);
 	}
 
 	@Test
 	public void testIsAccessModeSupportedByteStaticField() throws Throwable {
 		VarHandle vh = MethodHandles.lookup().findStaticVarHandle(StaticHelper.class, "b", byte.class);
-		isAccessModeSupported_AllSupported(vh);
+		isAccessModeSupported_AllSupported(vh, true);
 	}
 
 	@Test
 	public void testIsAccessModeSupportedByteArrayElement() throws Throwable {
 		VarHandle vh = MethodHandles.arrayElementVarHandle(byte[].class);
-		isAccessModeSupported_AllSupported(vh);
+		isAccessModeSupported_AllSupported(vh, true);
 	}
 
 	@Test
 	public void testIsAccessModeSupportedCharInstanceField() throws Throwable {
 		VarHandle vh = MethodHandles.lookup().findVarHandle(InstanceHelper.class, "c", char.class);
-		isAccessModeSupported_AllSupported(vh);
+		isAccessModeSupported_AllSupported(vh, true);
 	}
 
 	@Test
 	public void testIsAccessModeSupportedCharStaticField() throws Throwable {
 		VarHandle vh = MethodHandles.lookup().findStaticVarHandle(StaticHelper.class, "c", char.class);
-		isAccessModeSupported_AllSupported(vh);
+		isAccessModeSupported_AllSupported(vh, true);
 	}
 
 	@Test
 	public void testIsAccessModeSupportedCharArrayElement() throws Throwable {
 		VarHandle vh = MethodHandles.arrayElementVarHandle(char[].class);
-		isAccessModeSupported_AllSupported(vh);
+		isAccessModeSupported_AllSupported(vh, true);
 	}
 
 	@Test
 	public void testIsAccessModeSupportedCharByteArrayViewBE() throws Throwable {
 		VarHandle vh = MethodHandles.byteArrayViewVarHandle(char[].class, ByteOrder.BIG_ENDIAN);
-		isAccessModeSupported_ByteView(vh);
+		boolean supportsAllAtomicOps = true;
+		if (VersionCheck.major() >= 23) {
+			supportsAllAtomicOps = false;
+		}
+		isAccessModeSupported_ByteView(vh, supportsAllAtomicOps);
 	}
 	
 	@Test
 	public void testIsAccessModeSupportedCharByteArrayViewLE() throws Throwable {
 		VarHandle vh = MethodHandles.byteArrayViewVarHandle(char[].class, ByteOrder.LITTLE_ENDIAN);
-		isAccessModeSupported_ByteView(vh);
+		boolean supportsAllAtomicOps = true;
+		if (VersionCheck.major() >= 23) {
+			supportsAllAtomicOps = false;
+		}
+		isAccessModeSupported_ByteView(vh, supportsAllAtomicOps);
 	}
 	
 	@Test
 	public void testIsAccessModeSupportedCharByteBufferViewBE() throws Throwable {
 		VarHandle vh = MethodHandles.byteBufferViewVarHandle(char[].class, ByteOrder.BIG_ENDIAN);
-		isAccessModeSupported_ByteView(vh);
+		isAccessModeSupported_ByteView(vh, true);
 	}
 	
 	@Test
 	public void testIsAccessModeSupportedCharByteBufferViewLE() throws Throwable {
 		VarHandle vh = MethodHandles.byteBufferViewVarHandle(char[].class, ByteOrder.LITTLE_ENDIAN);
-		isAccessModeSupported_ByteView(vh);
+		isAccessModeSupported_ByteView(vh, true);
 	}
 	
 	@Test
@@ -760,25 +770,33 @@ public class VarHandleUtilTests {
 	@Test
 	public void testIsAccessModeSupportedDoubleByteArrayViewBE() throws Throwable {
 		VarHandle vh = MethodHandles.byteArrayViewVarHandle(double[].class, ByteOrder.BIG_ENDIAN);
-		isAccessModeSupported_FloatingPointView(vh);
+		boolean supportsAllAtomicOps = true;
+		if (VersionCheck.major() >= 23) {
+			supportsAllAtomicOps = false;
+		}
+		isAccessModeSupported_FloatingPointView(vh, supportsAllAtomicOps);
 	}
 
 	@Test
 	public void testIsAccessModeSupportedDoubleByteArrayViewLE() throws Throwable {
 		VarHandle vh = MethodHandles.byteArrayViewVarHandle(double[].class, ByteOrder.LITTLE_ENDIAN);
-		isAccessModeSupported_FloatingPointView(vh);
+		boolean supportsAllAtomicOps = true;
+		if (VersionCheck.major() >= 23) {
+			supportsAllAtomicOps = false;
+		}
+		isAccessModeSupported_FloatingPointView(vh, supportsAllAtomicOps);
 	}
 
 	@Test
 	public void testIsAccessModeSupportedDoubleByteBufferViewBE() throws Throwable {
 		VarHandle vh = MethodHandles.byteBufferViewVarHandle(double[].class, ByteOrder.BIG_ENDIAN);
-		isAccessModeSupported_FloatingPointView(vh);
+		isAccessModeSupported_FloatingPointView(vh, true);
 	}
 
 	@Test
 	public void testIsAccessModeSupportedDoubleByteBufferViewLE() throws Throwable {
 		VarHandle vh = MethodHandles.byteBufferViewVarHandle(double[].class, ByteOrder.LITTLE_ENDIAN);
-		isAccessModeSupported_FloatingPointView(vh);
+		isAccessModeSupported_FloatingPointView(vh, true);
 	}
 
 	@Test
@@ -802,122 +820,146 @@ public class VarHandleUtilTests {
 	@Test
 	public void testIsAccessModeSupportedFloatByteArrayViewBE() throws Throwable {
 		VarHandle vh = MethodHandles.byteArrayViewVarHandle(float[].class, ByteOrder.BIG_ENDIAN);
-		isAccessModeSupported_FloatingPointView(vh);
+		boolean supportsAllAtomicOps = true;
+		if (VersionCheck.major() >= 23) {
+			supportsAllAtomicOps = false;
+		}
+		isAccessModeSupported_FloatingPointView(vh, supportsAllAtomicOps);
 	}
 
 	@Test
 	public void testIsAccessModeSupportedFloatByteArrayViewLE() throws Throwable {
 		VarHandle vh = MethodHandles.byteArrayViewVarHandle(float[].class, ByteOrder.LITTLE_ENDIAN);
-		isAccessModeSupported_FloatingPointView(vh);
+		boolean supportsAllAtomicOps = true;
+		if (VersionCheck.major() >= 23) {
+			supportsAllAtomicOps = false;
+		}
+		isAccessModeSupported_FloatingPointView(vh, supportsAllAtomicOps);
 	}
 
 	@Test
 	public void testIsAccessModeSupportedFloatByteBufferViewBE() throws Throwable {
 		VarHandle vh = MethodHandles.byteBufferViewVarHandle(float[].class, ByteOrder.BIG_ENDIAN);
-		isAccessModeSupported_FloatingPointView(vh);
+		isAccessModeSupported_FloatingPointView(vh, true);
 	}
 
 	@Test
 	public void testIsAccessModeSupportedFloatByteBufferViewLE() throws Throwable {
 		VarHandle vh = MethodHandles.byteBufferViewVarHandle(float[].class, ByteOrder.LITTLE_ENDIAN);
-		isAccessModeSupported_FloatingPointView(vh);
+		isAccessModeSupported_FloatingPointView(vh, true);
 	}
 	
 	@Test
 	public void testIsAccessModeSupportedIntInstanceField() throws Throwable {
 		VarHandle vh = MethodHandles.lookup().findVarHandle(InstanceHelper.class, "i", int.class);
-		isAccessModeSupported_AllSupported(vh);
+		isAccessModeSupported_AllSupported(vh, true);
 	}
 	
 
 	@Test
 	public void testIsAccessModeSupportedIntStaticField() throws Throwable {
 		VarHandle vh = MethodHandles.lookup().findStaticVarHandle(StaticHelper.class, "i", int.class);
-		isAccessModeSupported_AllSupported(vh);
+		isAccessModeSupported_AllSupported(vh, true);
 	}
 	
 
 	@Test
 	public void testIsAccessModeSupportedIntArrayElement() throws Throwable {
 		VarHandle vh = MethodHandles.arrayElementVarHandle(int[].class);
-		isAccessModeSupported_AllSupported(vh);
+		isAccessModeSupported_AllSupported(vh, true);
 	}
 	
 
 	@Test
 	public void testIsAccessModeSupportedIntByteArrayViewBE() throws Throwable {
 		VarHandle vh = MethodHandles.byteArrayViewVarHandle(int[].class, ByteOrder.BIG_ENDIAN);
-		isAccessModeSupported_AllSupported(vh);
+		boolean supportsAllAtomicOps = true;
+		if (VersionCheck.major() >= 23) {
+			supportsAllAtomicOps = false;
+		}
+		isAccessModeSupported_AllSupported(vh, supportsAllAtomicOps);
 	}
 	
 
 	@Test
 	public void testIsAccessModeSupportedIntByteArrayViewLE() throws Throwable {
 		VarHandle vh = MethodHandles.byteArrayViewVarHandle(int[].class, ByteOrder.LITTLE_ENDIAN);
-		isAccessModeSupported_AllSupported(vh);
+		boolean supportsAllAtomicOps = true;
+		if (VersionCheck.major() >= 23) {
+			supportsAllAtomicOps = false;
+		}
+		isAccessModeSupported_AllSupported(vh, supportsAllAtomicOps);
 	}
 	
 
 	@Test
 	public void testIsAccessModeSupportedIntByteBufferViewBE() throws Throwable {
 		VarHandle vh = MethodHandles.byteBufferViewVarHandle(int[].class, ByteOrder.BIG_ENDIAN);
-		isAccessModeSupported_AllSupported(vh);
+		isAccessModeSupported_AllSupported(vh, true);
 	}
 	
 
 	@Test
 	public void testIsAccessModeSupportedIntByteBufferViewLE() throws Throwable {
 		VarHandle vh = MethodHandles.byteBufferViewVarHandle(int[].class, ByteOrder.LITTLE_ENDIAN);
-		isAccessModeSupported_AllSupported(vh);
+		isAccessModeSupported_AllSupported(vh, true);
 	}
 
 
 	@Test
 	public void testIsAccessModeSupportedLongInstanceField() throws Throwable {
 		VarHandle vh = MethodHandles.lookup().findVarHandle(InstanceHelper.class, "j", long.class);
-		isAccessModeSupported_AllSupported(vh);
+		isAccessModeSupported_AllSupported(vh, true);
 	}
 	
 
 	@Test
 	public void testIsAccessModeSupportedLongStaticField() throws Throwable {
 		VarHandle vh = MethodHandles.lookup().findStaticVarHandle(StaticHelper.class, "j", long.class);
-		isAccessModeSupported_AllSupported(vh);
+		isAccessModeSupported_AllSupported(vh, true);
 	}
 	
 
 	@Test
 	public void testIsAccessModeSupportedLongArrayElement() throws Throwable {
 		VarHandle vh = MethodHandles.arrayElementVarHandle(long[].class);
-		isAccessModeSupported_AllSupported(vh);
+		isAccessModeSupported_AllSupported(vh, true);
 	}
 
 
 	@Test
 	public void testIsAccessModeSupportedLongByteArrayViewBE() throws Throwable {
 		VarHandle vh = MethodHandles.byteArrayViewVarHandle(long[].class, ByteOrder.BIG_ENDIAN);
-		isAccessModeSupported_AllSupported(vh);
+		boolean supportsAllAtomicOps = true;
+		if (VersionCheck.major() >= 23) {
+			supportsAllAtomicOps = false;
+		}
+		isAccessModeSupported_AllSupported(vh, supportsAllAtomicOps);
 	}
 	
 
 	@Test
 	public void testIsAccessModeSupportedLongByteArrayViewLE() throws Throwable {
 		VarHandle vh = MethodHandles.byteArrayViewVarHandle(long[].class, ByteOrder.LITTLE_ENDIAN);
-		isAccessModeSupported_AllSupported(vh);
+		boolean supportsAllAtomicOps = true;
+		if (VersionCheck.major() >= 23) {
+			supportsAllAtomicOps = false;
+		}
+		isAccessModeSupported_AllSupported(vh, supportsAllAtomicOps);
 	}
 	
 
 	@Test
 	public void testIsAccessModeSupportedLongByteBufferViewBE() throws Throwable {
 		VarHandle vh = MethodHandles.byteBufferViewVarHandle(long[].class, ByteOrder.BIG_ENDIAN);
-		isAccessModeSupported_AllSupported(vh);
+		isAccessModeSupported_AllSupported(vh, true);
 	}
 	
 
 	@Test
 	public void testIsAccessModeSupportedLongByteBufferViewLE() throws Throwable {
 		VarHandle vh = MethodHandles.byteBufferViewVarHandle(long[].class, ByteOrder.LITTLE_ENDIAN);
-		isAccessModeSupported_AllSupported(vh);
+		isAccessModeSupported_AllSupported(vh, true);
 	}
 	
 	@Test
@@ -944,49 +986,57 @@ public class VarHandleUtilTests {
 	@Test
 	public void testIsAccessModeSupportedShortInstanceField() throws Throwable {
 		VarHandle vh = MethodHandles.lookup().findVarHandle(InstanceHelper.class, "s", short.class);
-		isAccessModeSupported_AllSupported(vh);
+		isAccessModeSupported_AllSupported(vh, true);
 	}
 	
 
 	@Test
 	public void testIsAccessModeSupportedShortStaticField() throws Throwable {
 		VarHandle vh = MethodHandles.lookup().findStaticVarHandle(StaticHelper.class, "s", short.class);
-		isAccessModeSupported_AllSupported(vh);
+		isAccessModeSupported_AllSupported(vh, true);
 	}
 	
 
 	@Test
 	public void testIsAccessModeSupportedShortArrayElement() throws Throwable {
 		VarHandle vh = MethodHandles.arrayElementVarHandle(short[].class);
-		isAccessModeSupported_AllSupported(vh);
+		isAccessModeSupported_AllSupported(vh, true);
 	}
 	
 
 	@Test
 	public void testIsAccessModeSupportedShortByteArrayViewBE() throws Throwable {
 		VarHandle vh = MethodHandles.byteArrayViewVarHandle(short[].class, ByteOrder.BIG_ENDIAN);
-		isAccessModeSupported_ByteView(vh);
+		boolean supportsAllAtomicOps = true;
+		if (VersionCheck.major() >= 23) {
+			supportsAllAtomicOps = false;
+		}
+		isAccessModeSupported_ByteView(vh, supportsAllAtomicOps);
 	}
 	
 
 	@Test
 	public void testIsAccessModeSupportedShortByteArrayViewLE() throws Throwable {
 		VarHandle vh = MethodHandles.byteArrayViewVarHandle(short[].class, ByteOrder.LITTLE_ENDIAN);
-		isAccessModeSupported_ByteView(vh);
+		boolean supportsAllAtomicOps = true;
+		if (VersionCheck.major() >= 23) {
+			supportsAllAtomicOps = false;
+		}
+		isAccessModeSupported_ByteView(vh, supportsAllAtomicOps);
 	}
 	
 
 	@Test
 	public void testIsAccessModeSupportedShortByteBufferViewBE() throws Throwable {
 		VarHandle vh = MethodHandles.byteBufferViewVarHandle(short[].class, ByteOrder.BIG_ENDIAN);
-		isAccessModeSupported_ByteView(vh);
+		isAccessModeSupported_ByteView(vh, true);
 	}
 	
 
 	@Test
 	public void testIsAccessModeSupportedShortByteBufferViewLE() throws Throwable {
 		VarHandle vh = MethodHandles.byteBufferViewVarHandle(short[].class, ByteOrder.LITTLE_ENDIAN);
-		isAccessModeSupported_ByteView(vh);
+		isAccessModeSupported_ByteView(vh, true);
 	}
 	
 
