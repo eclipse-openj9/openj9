@@ -6256,7 +6256,7 @@ static void genHeapAlloc(
 
 #if defined(J9VM_GC_THREAD_LOCAL_HEAP)
          if ((node->getOpCodeValue() == TR::New) &&
-             (comp->getMethodHotness() >= hot || node->shouldAlignTLHAlloc()) &&
+             (comp->getMethodHotness() >= hot) &&
              !disableAllocationAlignment)
             {
             TR_OpaqueMethodBlock *ownMethod = node->getOwningMethod();
@@ -6634,7 +6634,7 @@ static void genHeapAlloc2(
 
 #if defined(J9VM_GC_THREAD_LOCAL_HEAP)
          if ((node->getOpCodeValue() == TR::New) &&
-             (comp->getMethodHotness() >= hot || node->shouldAlignTLHAlloc()) &&
+             (comp->getMethodHotness() >= hot) &&
              !disableAllocationAlignment)
             {
             TR_OpaqueMethodBlock *ownMethod = node->getOwningMethod();
