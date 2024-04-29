@@ -39,6 +39,7 @@
 	<variable name="currentMode" value="$mode204$"/>
 	<variable name="XXShareClassesEnableBCI" value="-XX:ShareClassesEnableBCI"/>
 	
+	<variable name="UTILSJAR" value="$UTILSDIR$$PATHSEP$utils.jar" />
 	<variable name="CP_HANOI" value="-cp $UTILSJAR$" />
  	<variable name="BOOTCP_HANOI" value="-Xbootclasspath/a:$UTILSJAR$" />
  	<variable name="PROGRAM_HANOI" value="org.openj9.test.ivj.Hanoi 2" />
@@ -830,6 +831,35 @@
 	<test id="Test 199-c: Re-use the cache as read-only to load sample program with its classpath added to boot classpath" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $BOOTCP_HANOI$ $currentMode$,readonly -Xnolinenumbers $PROGRAM_HANOI$</command>
 		<output type="success" caseSensitive="yes" regex="no">Puzzle solved!</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<!-- Test fix for https://github.com/eclipse-openj9/openj9/issues/19378 -->
+	<test id="Test 200a: reset cache and run program with utils jar file that is missing the typical .jar ending">
+		<exec command="cp $UTILSJAR$ $UTILSDIR$$PATHSEP$utils"/>
+		<command>$JAVA_EXE$ $currentMode$,reset -cp $UTILSDIR$$PATHSEP$utils -Xnolinenumbers $PROGRAM_HANOI$</command>
+		<output type="success" caseSensitive="yes" regex="no">Puzzle solved!</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<test id="Test 200b: run program with utils jar file that is missing the typical .jar ending">
+		<command>$JAVA_EXE$ $currentMode$ -cp $UTILSDIR$$PATHSEP$utils -Xnolinenumbers $PROGRAM_HANOI$</command>
+		<output type="success" caseSensitive="yes" regex="no">Puzzle solved!</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<test id="Test 200c: verify that no classes are marked stale and classes from the utils jar file were reused">
+		<command>$JAVA_EXE$ $currentMode$,printStats -cp $UTILSDIR$$PATHSEP$utils -Xnolinenumbers $PROGRAM_HANOI$</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes"># Stale classes += 0</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
