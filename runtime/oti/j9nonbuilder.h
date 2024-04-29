@@ -6049,6 +6049,10 @@ typedef struct J9JavaVM {
 	/* Pool for allocating J9MemberNameListNode. */
 	struct J9Pool *memberNameListNodePool;
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
+#if JAVA_SPEC_VERSION >= 22
+	omrthread_monitor_t closeScopeMutex;
+	UDATA closeScopeNotifyCount;
+#endif /* JAVA_SPEC_VERSION >= 22 */
 } J9JavaVM;
 
 #define J9VM_PHASE_STARTUP  1

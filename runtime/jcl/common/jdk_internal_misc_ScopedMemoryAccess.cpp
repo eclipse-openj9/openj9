@@ -86,6 +86,8 @@ Java_jdk_internal_misc_ScopedMemoryAccess_closeScope0(JNIEnv *env, jobject insta
 					setHaltFlag(walkThread, J9_PUBLIC_FLAGS_CLOSE_SCOPE);
 					walkThread->scopedError = errorObj;
 					walkThread->closeScopeObj = closeScopeObj;
+					/* Atomic add is not needed since exclusive VM access has been acquired. */
+					vm->closeScopeNotifyCount += 1;
 #else /* JAVA_SPEC_VERSION >= 22 */
 					scopeFound = JNI_TRUE;
 					break;
@@ -99,6 +101,21 @@ Java_jdk_internal_misc_ScopedMemoryAccess_closeScope0(JNIEnv *env, jobject insta
 	}
 
 	vmFuncs->internalExitVMToJNI(currentThread);
+
+#if JAVA_SPEC_VERSION >= 22
+	/* There are gaps where async exceptions are not processed in time
+	 * (e.g. JIT compiled code in a loop). Wait until J9VMThread->scopedError
+	 * (async exception) is transferred to J9VMThread->currentException. The
+	 * wait prevents a MemorySession to be closed until no more operations are
+	 * being performed on it.
+	 */
+	omrthread_monitor_enter(vm->closeScopeMutex);
+	while (0 != vm->closeScopeNotifyCount) {
+		omrthread_monitor_wait(vm->closeScopeMutex);
+	}
+	omrthread_monitor_exit(vm->closeScopeMutex);
+#endif /* JAVA_SPEC_VERSION >= 22 */
+
 #if JAVA_SPEC_VERSION <= 21
 	return !scopeFound;
 #endif /* JAVA_SPEC_VERSION <= 21 */
