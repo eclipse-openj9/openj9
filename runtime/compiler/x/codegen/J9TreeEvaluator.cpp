@@ -6150,7 +6150,7 @@ static void genHeapAlloc(
             }
          else
             {
-            generateRegImmInstruction(TR::InstOpCode::CMPRegImm4(), node, sizeReg, (int32_t)maxObjectSizeInElements, cg);
+            generateRegImmInstruction(TR::InstOpCode::CMP4RegImm4, node, sizeReg, (int32_t)maxObjectSizeInElements, cg);
             }
 
          // Must be an unsigned comparison on sizes.
@@ -6541,7 +6541,7 @@ static void genHeapAlloc2(
             }
          else
             {
-            generateRegImmInstruction(TR::InstOpCode::CMPRegImm4(), node, sizeReg, (int32_t)maxObjectSizeInElements, cg);
+            generateRegImmInstruction(TR::InstOpCode::CMP4RegImm4, node, sizeReg, (int32_t)maxObjectSizeInElements, cg);
             }
 
          // Must be an unsigned comparison on sizes.
