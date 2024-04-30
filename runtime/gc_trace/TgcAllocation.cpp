@@ -76,9 +76,9 @@ tgcAllocationPrintPerThreadStats(OMR_VMThread *omrVMThread)
 	tgcExtensions->printf("----- Per Thread Allocation Statistics %s ----\n", timestamp);
 
 #if defined(J9VM_GC_THREAD_LOCAL_HEAP)
-	tgcExtensions->printf("   JVM thread ID |                                                                             name | refresh/remaining cache size | TLH fresh count/bytes | TLH discards\n");
+	tgcExtensions->printf("   JVM thread ID |                                                                             name | refresh/remaining cache size | obj alloc count/bytes | TLH fresh count/bytes | TLH discards\n");
 #else /* defined(J9VM_GC_THREAD_LOCAL_HEAP) */
-	tgcExtensions->printf("   JVM thread ID |                                                                             name | refresh/remaining cache size\n");
+	tgcExtensions->printf("   JVM thread ID |                                                                             name | refresh/remaining cache size | obj alloc count/bytes\n");
 #endif /* defined(J9VM_GC_THREAD_LOCAL_HEAP) */
 
 	while ((walkOmrVMThread = threadListIterator.nextOMRVMThread()) != NULL) {
@@ -87,14 +87,14 @@ tgcAllocationPrintPerThreadStats(OMR_VMThread *omrVMThread)
 		MM_AllocationStats *walkStats = walkInterface->getAllocationStats();
 
 #if defined(J9VM_GC_THREAD_LOCAL_HEAP)
-		/* To reduce output, skip the threads that did not refresh TLH since the last GC */
-		if (0 == walkStats->_tlhRefreshCountFresh) {
+		/* To reduce output, skip the threads that did not refresh TLH or allocated object directly from heap, since the last GC. */
+		if ((0 == walkStats->_tlhRefreshCountFresh) && (0 == walkStats->_allocationCount)) {
 			continue;
 		}
 #endif /* defined(J9VM_GC_THREAD_LOCAL_HEAP) */
 
-		tgcExtensions->printf("%8p | %80s | %14zu %13zu", walkOmrVMThread->_language_vmthread, getOMRVMThreadName(walkOmrVMThread),
-				walkInterface->getRefreshCacheSize(false), walkInterface->getRemainingCacheSize(false));
+		tgcExtensions->printf("%8p | %80s | %14zu %13zu | %8zu %12zu", walkOmrVMThread->_language_vmthread, getOMRVMThreadName(walkOmrVMThread),
+				walkInterface->getRefreshCacheSize(false), walkInterface->getRemainingCacheSize(false), walkStats->_allocationCount,  walkStats->_allocationBytes);
 #if defined(J9VM_GC_THREAD_LOCAL_HEAP)
 		tgcExtensions->printf(" | %8zu %12zu | %12zu\n", walkStats->_tlhRefreshCountFresh, walkStats->_tlhAllocatedFresh, walkStats->_tlhDiscardedBytes);
 #else /* defined(J9VM_GC_THREAD_LOCAL_HEAP) */
