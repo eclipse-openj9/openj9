@@ -1,7 +1,7 @@
 /*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 package com.ibm.jit;
 
-/*******************************************************************************
+/*
  * Copyright IBM Corp. and others 1998
  *
  * This program and the accompanying materials are made available under
@@ -21,7 +21,7 @@ package com.ibm.jit;
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
- *******************************************************************************/
+ */
 
 import com.ibm.oti.vm.J9UnmodifiableClass;
 import java.lang.reflect.Field;

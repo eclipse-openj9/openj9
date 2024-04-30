@@ -28,7 +28,7 @@
 				@ClassAnnotation(value = "ClassAnnotation1"),
 				@ClassAnnotation(value = "ClassAnnotation2") })
 package org.openj9.test.annotation;
-/*******************************************************************************
+/*
  * Copyright IBM Corp. and others 2010
  *
  * This program and the accompanying materials are made available under
@@ -48,4 +48,4 @@ package org.openj9.test.annotation;
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
- *******************************************************************************/
+ */

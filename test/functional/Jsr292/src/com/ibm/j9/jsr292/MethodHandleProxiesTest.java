@@ -1,4 +1,4 @@
-/*******************************************************************************
+/*
  * Copyright IBM Corp. and others 2001
  *
  * This program and the accompanying materials are made available under
@@ -18,7 +18,7 @@
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
- *******************************************************************************/
+ */
 package com.ibm.j9.jsr292;
 
 import org.testng.annotations.Test;
@@ -35,11 +35,11 @@ import examples.PackageExamples;
  * This class contains tests for the MethodHandleProxies API. 
  */
 public class MethodHandleProxiesTest {
-	
-	/********************************
+
+	/*
 	 * Tests for asInterfaceInstance
-	 ********************************/
-	
+	 */
+
 	/**
 	 * Tests asInterfaceInstance using a public single method interface from the same package and followed by one from a different package.
 	 * Wrapper is a public virtual method from same package and cross-package respectively. 
@@ -100,12 +100,11 @@ public class MethodHandleProxiesTest {
 		CrossPackageSingleMethodInterfaceExample interfaceInstanceCrossPackage = MethodHandleProxies.asInterfaceInstance( CrossPackageSingleMethodInterfaceExample.class, mh2 );
 		AssertJUnit.assertEquals( 3, interfaceInstanceCrossPackage.singleMethodAdd( 1, 2 ) );
 	}
-	
-	
-	/******************************
+
+	/*
 	 *Tests for isWrapperInstance
-	 ******************************/
-	
+	 */
+
 	/**
 	 * Tests isWrapperInstance using a public single method interface from the same package and followed by one from a different package.
 	 * Wrapper is a public virtual method defined in an inner class from same package and cross-package respectively. 
@@ -185,11 +184,11 @@ public class MethodHandleProxiesTest {
 		//cross package test
 		AssertJUnit.assertFalse( MethodHandleProxies.isWrapperInstance( new PackageExamples() ) );
 	}
-	
-	/****************************************
+
+	/*
 	 * Tests for wrapperInstanceTarget
-	 * *************************************/
-	
+	 */
+
 	/**
 	 * Tests wrapperInstanceTarget using single method interface and wrapper types from same package and cross-package 
 	 * @throws Throwable
@@ -271,11 +270,11 @@ public class MethodHandleProxiesTest {
 		
 		AssertJUnit.assertTrue( notAWrapperInstance );
 	}
-	
-	/**********************************
+
+	/*
 	 * Tests for wrapperInstanceType
-	 * *******************************/
-	
+	 */
+
 	/**
 	 * Tests wrapperInstanceType using public virtual wrappers and single method interfaces from same package and cross-package.
 	 * @throws Throwable

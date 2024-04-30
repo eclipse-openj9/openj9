@@ -1,4 +1,4 @@
-/*******************************************************************************
+/*
  * Copyright IBM Corp. and others 2001
  *
  * This program and the accompanying materials are made available under
@@ -18,7 +18,7 @@
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
- *******************************************************************************/
+ */
 package com.ibm.j9ddr.vm29.tools.ddrinteractive.commands;
 
 import java.io.PrintStream;
@@ -529,7 +529,7 @@ public class VmCheckCommand extends Command
 	 * @note If morecharacters are required to fully decode the character,
 	 *       return failure
 	 */
-	U32 decodeUTF8CharN(U8Pointer input, /** not used **/
+	U32 decodeUTF8CharN(U8Pointer input, /** not used */
 	U16 result, UDATA bytesRemaining) throws CorruptDataException {
 		U8 c;
 		U8Pointer cursor = input;

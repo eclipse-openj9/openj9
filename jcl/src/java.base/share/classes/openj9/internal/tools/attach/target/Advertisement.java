@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 package openj9.internal.tools.attach.target;
-/*******************************************************************************
+/*
  * Copyright IBM Corp. and others 2009
  *
  * This program and the accompanying materials are made available under
@@ -20,7 +20,7 @@ package openj9.internal.tools.attach.target;
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
- *******************************************************************************/
+ */
 
 import java.io.File;
 import java.io.FileOutputStream;

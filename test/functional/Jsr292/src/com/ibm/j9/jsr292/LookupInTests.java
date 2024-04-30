@@ -1,4 +1,4 @@
-/*******************************************************************************
+/*
  * Copyright IBM Corp. and others 2001
  *
  * This program and the accompanying materials are made available under
@@ -18,7 +18,7 @@
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
- *******************************************************************************/
+ */
 package com.ibm.j9.jsr292;
 import org.testng.annotations.Test;
 import org.testng.Assert;
@@ -60,11 +60,11 @@ public class LookupInTests {
 	SamePackageInnerClass innerClassD = spe.new SamePackageInnerClass();
 	final Lookup samePackageInnerClassLookup = spe.new SamePackageInnerClass().getLookup();
 	final Lookup samePackageInnerClass_Nested_Level2Lookup = innerClassD.new SamePackageInnerClass_Nested_Level2().getLookup();
-	
-	/******************************************
+
+	/*
 	 * Basic Sanity tests for Lookup modes
-	 * ****************************************/
-	
+	 */
+
 	/**
 	 * Validates public access mode of a Lookup factory created by a call to MethodHandles.publicLookup() 
 	 * @throws Throwable
@@ -128,11 +128,11 @@ public class LookupInTests {
 		Lookup newLookup = localLookup.in(Assert.class);
 		assertClassAndMode(newLookup, Assert.class, MethodHandles.Lookup.PUBLIC);
 	}
-	
-	/*******************************************************************************
+
+	/*
 	 * Tests involving same package, cross package, super class, subclass lookups
-	 * *****************************************************************************/
-	
+	 */
+
 	/**
 	 * Validates access restrictions stored in a new Lookup object created from an old Lookup object 
 	 * where the new lookup class is a different class but under the same package as the lookup class 
@@ -236,11 +236,11 @@ public class LookupInTests {
 		Lookup inObj = packageExamplesLookup.in(PackageClass.class);
 		assertClassAndMode(inObj, PackageClass.class, NO_ACCESS);
 	}
-	
-	/***************************************************
+
+	/*
 	 * Tests involving public inner classes 
-	 * ************************************************/
-	
+	 */
+
 	/**
 	 * Validates access restrictions stored in a new Lookup object created from an old Lookup object
 	 * where the new lookup class is a public inner class under the old lookup class.
@@ -297,11 +297,11 @@ public class LookupInTests {
 		Lookup inObj = packageExamplesLookup.in(SamePackageInnerClass.class);
 		assertClassAndMode(inObj, SamePackageInnerClass.class, MethodHandles.Lookup.PUBLIC);
 	}
-	
-	/***************************************************
+
+	/*
 	 * Tests involving protected inner classes 
-	 * ************************************************/
-	
+	 */
+
 	/**
 	 * Validates access restrictions stored in a new Lookup object created from an old Lookup object
 	 * where the new lookup class is a protected inner class under the old lookup class.
@@ -361,11 +361,11 @@ public class LookupInTests {
 		Lookup inObj = packageExamplesLookup.in(SamePackageInnerClass_Protected.class);
 		assertClassAndMode(inObj, SamePackageInnerClass_Protected.class, MethodHandles.Lookup.PUBLIC);
 	}
-	
-	/***************************************************
+
+	/*
 	 * Tests involving static inner classes 
-	 * ************************************************/
-	
+	 */
+
 	/**
 	 * Validates access restrictions stored in a new Lookup object created from an old Lookup object
 	 * where the new lookup class is a static inner class under the old lookup class.
@@ -423,11 +423,11 @@ public class LookupInTests {
 		Lookup inObj = packageExamplesLookup.in(SamePackageInnerClass_Static.class);
 		assertClassAndMode(inObj, SamePackageInnerClass_Static.class, NO_ACCESS);
 	}
-	
-	/***************************************************
+
+	/*
 	 * Tests involving nested public inner classes 
-	 * ************************************************/
-	
+	 */
+
 	/**
 	 * Validates access restrictions stored in a new Lookup object created from an old Lookup object
 	 * where the new lookup class is a second level inner class under the old lookup class which is a first level inner class.
@@ -508,12 +508,11 @@ public class LookupInTests {
 		Lookup inObj = samePackageInnerClass_Nested_Level2Lookup.in(SamePackageExample.class);
 		assertClassAndMode(inObj, SamePackageExample.class, PUBLIC_PACKAGE_PRIVATE_MODE);
 	}
-	
-	
-	/****************************************************
+
+	/*
 	 * Tests involving cross class loaders 
-	 * ***************************************************/
-	
+	 */
+
 	/**
 	 * Validates access restrictions stored in a new Lookup object created from an old Lookup object
 	 * where the new lookup class was loaded using a custom class loader unrelated to the class loader 

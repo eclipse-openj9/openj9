@@ -4,7 +4,7 @@ import org.testng.annotations.Test;
 import org.testng.Assert;
 import com.ibm.oti.vm.VM;
 
-/*******************************************************************************
+/*
  * Copyright IBM Corp. and others 2012
  *
  * This program and the accompanying materials are made available under
@@ -24,7 +24,7 @@ import com.ibm.oti.vm.VM;
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
- *******************************************************************************/
+ */
 
 @Test(groups = { "level.sanity" })
 public class Test_VM {

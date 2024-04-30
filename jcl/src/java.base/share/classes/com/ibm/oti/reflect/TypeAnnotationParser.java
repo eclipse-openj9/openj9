@@ -10,7 +10,7 @@ import sun.misc.Unsafe;
 import jdk.internal.misc.Unsafe;
 /*[ENDIF]*/
 
-/*******************************************************************************
+/*
  * Copyright IBM Corp. and others 2014
  *
  * This program and the accompanying materials are made available under
@@ -30,7 +30,7 @@ import jdk.internal.misc.Unsafe;
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
- *******************************************************************************/
+ */
 /**
  * Retrieve RuntimeVisibleType Annotation attributes (JVM spec, section 4.7.20) from the ROM class and parse them into Java objects
  *

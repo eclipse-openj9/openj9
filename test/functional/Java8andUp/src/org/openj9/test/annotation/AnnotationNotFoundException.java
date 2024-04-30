@@ -1,6 +1,6 @@
 package org.openj9.test.annotation;
 
-/*******************************************************************************
+/*
  * Copyright IBM Corp. and others 2010
  *
  * This program and the accompanying materials are made available under
@@ -20,7 +20,7 @@ package org.openj9.test.annotation;
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
- *******************************************************************************/
+ */
 public class AnnotationNotFoundException extends Exception {
 	private static final long serialVersionUID = 3258129146209972275L;
 
