@@ -376,6 +376,15 @@ bool J9::ValuePropagation::transformIndexOfKnownString(
       }
    else if (targetIsConstChar)
       {
+      if (!is16Bit)
+         {
+         // The implementations of the 8-bit indexOf operations cast the character for
+         // which they are searching to a signed byte value, and the characters in the
+         // String themselves are stored in a signed byte array.  Make sure that folding
+         // at compile-time takes into account that operations are on signed bytes.
+         targetChar = (int32_t)(int8_t) targetChar;
+         }
+
       for (int32_t i = start; i < length; ++i)
          {
          int32_t ch;
@@ -397,6 +406,15 @@ bool J9::ValuePropagation::transformIndexOfKnownString(
             // getStringCharacter should handle both 8 bit and 16 bit strings
             ch = TR::Compiler->cls.getStringCharacter(comp(), string, i);
             }
+         if (!is16Bit)
+            {
+            // The implementations of the 8-bit indexOf operations cast the character for
+            // which they are searching to a signed byte value, and the characters in the
+            // String themselves are stored in a signed byte array.  Make sure that folding
+            // at compile-time takes into account that operations are on signed bytes.
+            ch = (int32_t)(int8_t) ch;
+            }
+
          if (ch == targetChar)
             {
             if (performTransformation(comp(), "%sReplacing indexOf call node [" POINTER_PRINTF_FORMAT "] on known string receiver with constant value of %d\n", OPT_DETAILS, indexOfNode, i))
@@ -433,8 +451,37 @@ bool J9::ValuePropagation::transformIndexOfKnownString(
          // getStringCharacter should handle both 8 bit and 16 bit strings
          ch = TR::Compiler->cls.getStringCharacter(comp(), string, start);
          }
+
+      if (!is16Bit)
+         {
+         // The implementations of the 8-bit indexOf operations cast the character for
+         // which they are searching to a signed byte value, and the characters in the
+         // String themselves are stored in a signed byte array.  Make sure that the
+         // inlined version similarly operates on signed bytes.
+         ch = (int32_t)(int8_t) ch;
+         }
+
       if (!performTransformation(comp(), "%sReplacing indexOf call node [" POINTER_PRINTF_FORMAT "] on known string receiver with equivalent icmpeq tree\n", OPT_DETAILS, indexOfNode))
          return false;
+
+      // The implementations of the 8-bit indexOf operations cast the character for
+      // which they are searching to a signed byte value.  In some cases that happens
+      // at the call to the known method that's being processed here, and in some
+      // cases that happens within the known method itself.  If targetCharNode is not
+      // known to be the result of a b2i operation and is not already known to be in
+      // the required range for a signed byte value, force that.  Otherwise, this
+      // could end up looking for the degree symbol, U+00B0, say, as an unsigned
+      // value 176 rather than the signed value -80.
+      if (!is16Bit
+          && (targetCharNode->getOpCodeValue() != TR::b2i)
+          && ((targetConstraint == NULL)
+              || (targetConstraint->getLowInt() < -128)
+              || (targetConstraint->getHighInt() > 127)))
+         {
+         targetCharNode = TR::Node::create(indexOfNode, TR::b2i, 1,
+                             TR::Node::create(indexOfNode, TR::i2b, 1, targetCharNode));
+         }
+
       transformCallToNodeDelayedTransformations(
          _curTree,
          TR::Node::create(indexOfNode, TR::isub, 2,
@@ -448,7 +495,29 @@ bool J9::ValuePropagation::transformIndexOfKnownString(
       }
    else if (length < 4)
       {
+      if (!performTransformation(comp(), "%sReplacing indexOf call node [" POINTER_PRINTF_FORMAT "] on known string receiver with equivalent iselect tree\n", OPT_DETAILS, indexOfNode))
+         return false;
+
       TR::Node *root = TR::Node::iconst(indexOfNode, -1);
+
+      // The implementations of the 8-bit indexOf operations cast the character for
+      // which they are searching to a signed byte value.  In some cases that happens
+      // at the call to the known method that's being processed here, and in some
+      // cases that happens within the known method itself.  If targetCharNode is not
+      // known to be the result of a b2i operation and is not already known to be in
+      // the required range for a signed byte value, force that.  Otherwise, this
+      // could end up looking for the degree symbol, U+00B0, say, as an unsigned
+      // value 176 rather than the signed value -80.
+      if (!is16Bit
+          && (targetCharNode->getOpCodeValue() != TR::b2i)
+          && ((targetConstraint == NULL)
+              || (targetConstraint->getLowInt() < -128)
+              || (targetConstraint->getHighInt() > 127)))
+         {
+         targetCharNode = TR::Node::create(indexOfNode, TR::b2i, 1,
+                             TR::Node::create(indexOfNode, TR::i2b, 1, targetCharNode));
+         }
+
       for (int32_t i = length - 1; i >= start; --i)
          {
          int32_t ch;
@@ -470,8 +539,16 @@ bool J9::ValuePropagation::transformIndexOfKnownString(
             // getStringCharacter should handle both 8 bit and 16 bit strings
             ch = TR::Compiler->cls.getStringCharacter(comp(), string, i);
             }
-         if (!performTransformation(comp(), "%sReplacing indexOf call node [" POINTER_PRINTF_FORMAT "] on known string receiver with equivalent iselect tree\n", OPT_DETAILS, indexOfNode))
-            return false;
+
+         if (!is16Bit)
+            {
+            // The implementations of the 8-bit indexOf operations cast the character for
+            // which they are searching to a signed byte value, and the characters in the
+            // String themselves are stored in a signed byte array.  Make sure that the
+            // inlined version similarly operates on signed bytes.
+            ch = (int32_t)(int8_t) ch;
+            }
+
          root = TR::Node::create(TR::iselect, 3,
             TR::Node::create(indexOfNode, TR::icmpeq, 2,
                targetCharNode,
