@@ -456,7 +456,7 @@ TR_PersistentClassLoaderTable::removeClassLoader(J9VMThread *vmThread, void *loa
             loader, nameLength, (const char *)name, info->_chain
          );
 
-      if (!_sharedCache || !_sharedCache->isPointerInSharedCache(nameStr))
+      if (!_sharedCache || !_sharedCache->isPtrToROMClassesSectionInSharedCache(nameStr))
          _persistentMemory->freePersistentMemory(nameStr);
       }
 #endif /* defined(J9VM_OPT_JITSERVER) */
