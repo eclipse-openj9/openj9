@@ -42,6 +42,12 @@
 			-explainExcludes -xids all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
 			$(TEST_STATUS)
 		</command>
+		<platformRequirementsList>
+			<platformRequirements>os.linux.ubuntu.22+</platformRequirements>
+			<platformRequirements>os.linux.rhel.8+</platformRequirements>
+			<platformRequirements>os.linux.sles.15+</platformRequirements>
+			<platformRequirements>os.linux.cent.8+</platformRequirements>
+		</platformRequirementsList>
 		<features>
 			<feature>CRIU:required</feature>
 		</features>
@@ -79,6 +85,12 @@
 			-explainExcludes -xids all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
 			$(TEST_STATUS)
 		</command>
+		<platformRequirementsList>
+			<platformRequirements>os.linux.ubuntu.22+</platformRequirements>
+			<platformRequirements>os.linux.rhel.8+</platformRequirements>
+			<platformRequirements>os.linux.sles.15+</platformRequirements>
+			<platformRequirements>os.linux.cent.8+</platformRequirements>
+		</platformRequirementsList>
 		<features>
 			<feature>CRIU:required</feature>
 		</features>
@@ -122,6 +134,12 @@
 			-explainExcludes -xids all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
 			$(TEST_STATUS)
 		</command>
+		<platformRequirementsList>
+			<platformRequirements>os.linux.ubuntu.22+</platformRequirements>
+			<platformRequirements>os.linux.rhel.8+</platformRequirements>
+			<platformRequirements>os.linux.sles.15+</platformRequirements>
+			<platformRequirements>os.linux.cent.8+</platformRequirements>
+		</platformRequirementsList>
 		<features>
 			<feature>CRIU:required</feature>
 		</features>
@@ -158,6 +176,12 @@
 			-explainExcludes -xids all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
 			$(TEST_STATUS)
 		</command>
+		<platformRequirementsList>
+			<platformRequirements>os.linux.ubuntu.22+</platformRequirements>
+			<platformRequirements>os.linux.rhel.8+</platformRequirements>
+			<platformRequirements>os.linux.sles.15+</platformRequirements>
+			<platformRequirements>os.linux.cent.8+</platformRequirements>
+		</platformRequirementsList>
 		<features>
 			<feature>CRAC:required</feature>
 		</features>
@@ -196,6 +220,12 @@
 			-explainExcludes -xids all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
 			$(TEST_STATUS)
 		</command>
+		<platformRequirementsList>
+			<platformRequirements>os.linux.ubuntu.22+</platformRequirements>
+			<platformRequirements>os.linux.rhel.8+</platformRequirements>
+			<platformRequirements>os.linux.sles.15+</platformRequirements>
+			<platformRequirements>os.linux.cent.8+</platformRequirements>
+		</platformRequirementsList>
 		<features>
 			<feature>CRIU:required</feature>
 		</features>
@@ -236,7 +266,12 @@
 			fi; \
 			$(TEST_STATUS)
 		</command>
-		<platformRequirements>os.linux,^arch.arm,bits.64</platformRequirements>
+		<platformRequirementsList>
+			<platformRequirements>os.linux,^arch.arm,bits.64,os.linux.ubuntu.22+</platformRequirements>
+			<platformRequirements>os.linux,^arch.arm,bits.64,os.linux.rhel.8+</platformRequirements>
+			<platformRequirements>os.linux,^arch.arm,bits.64,os.linux.sles.15+</platformRequirements>
+			<platformRequirements>os.linux,^arch.arm,bits.64,os.linux.cent.8+</platformRequirements>
+		</platformRequirementsList>
 		<features>
 			<feature>CRIU:required</feature>
 			<feature>JITAAS:nonapplicable</feature>
@@ -281,7 +316,12 @@
 			fi; \
 			$(TEST_STATUS)
 		</command>
-		<platformRequirements>os.linux,^arch.arm,bits.64</platformRequirements>
+		<platformRequirementsList>
+			<platformRequirements>os.linux,^arch.arm,bits.64,os.linux.ubuntu.22+</platformRequirements>
+			<platformRequirements>os.linux,^arch.arm,bits.64,os.linux.rhel.8+</platformRequirements>
+			<platformRequirements>os.linux,^arch.arm,bits.64,os.linux.sles.15+</platformRequirements>
+			<platformRequirements>os.linux,^arch.arm,bits.64,os.linux.cent.8+</platformRequirements>
+		</platformRequirementsList>
 		<features>
 			<feature>CRIU:required</feature>
 		</features>
@@ -319,6 +359,12 @@
 			-explainExcludes -xids all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
 			$(TEST_STATUS)
 		</command>
+		<platformRequirementsList>
+			<platformRequirements>os.linux.ubuntu.22+</platformRequirements>
+			<platformRequirements>os.linux.rhel.8+</platformRequirements>
+			<platformRequirements>os.linux.sles.15+</platformRequirements>
+			<platformRequirements>os.linux.cent.8+</platformRequirements>
+		</platformRequirementsList>
 		<features>
 			<feature>CRIU:required</feature>
 		</features>
@@ -356,6 +402,12 @@
 			-explainExcludes -xids all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
 			$(TEST_STATUS)
 		</command>
+		<platformRequirementsList>
+			<platformRequirements>os.linux.ubuntu.22+</platformRequirements>
+			<platformRequirements>os.linux.rhel.8+</platformRequirements>
+			<platformRequirements>os.linux.sles.15+</platformRequirements>
+			<platformRequirements>os.linux.cent.8+</platformRequirements>
+		</platformRequirementsList>
 		<features>
 			<feature>CRIU:required</feature>
 		</features>
@@ -393,6 +445,12 @@
 			-explainExcludes -xids all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
 			$(TEST_STATUS)
 		</command>
+		<platformRequirementsList>
+			<platformRequirements>os.linux.ubuntu.22+</platformRequirements>
+			<platformRequirements>os.linux.rhel.8+</platformRequirements>
+			<platformRequirements>os.linux.sles.15+</platformRequirements>
+			<platformRequirements>os.linux.cent.8+</platformRequirements>
+		</platformRequirementsList>
 		<features>
 			<feature>CRIU:required</feature>
 		</features>
@@ -430,6 +488,12 @@
 			-explainExcludes -xids all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
 			$(TEST_STATUS)
 		</command>
+		<platformRequirementsList>
+			<platformRequirements>os.linux.ubuntu.22+</platformRequirements>
+			<platformRequirements>os.linux.rhel.8+</platformRequirements>
+			<platformRequirements>os.linux.sles.15+</platformRequirements>
+			<platformRequirements>os.linux.cent.8+</platformRequirements>
+		</platformRequirementsList>
 		<features>
 			<feature>CRIU:required</feature>
 		</features>
@@ -465,6 +529,12 @@
 			-explainExcludes -xids all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
 			$(TEST_STATUS)
 		</command>
+		<platformRequirementsList>
+			<platformRequirements>os.linux.ubuntu.22+</platformRequirements>
+			<platformRequirements>os.linux.rhel.8+</platformRequirements>
+			<platformRequirements>os.linux.sles.15+</platformRequirements>
+			<platformRequirements>os.linux.cent.8+</platformRequirements>
+		</platformRequirementsList>
 		<features>
 			<feature>CRIU:required</feature>
 		</features>
@@ -502,6 +572,12 @@
 			-explainExcludes -xids all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
 			$(TEST_STATUS)
 		</command>
+		<platformRequirementsList>
+			<platformRequirements>os.linux.ubuntu.22+</platformRequirements>
+			<platformRequirements>os.linux.rhel.8+</platformRequirements>
+			<platformRequirements>os.linux.sles.15+</platformRequirements>
+			<platformRequirements>os.linux.cent.8+</platformRequirements>
+		</platformRequirementsList>
 		<features>
 			<feature>CRIU:required</feature>
 		</features>
@@ -537,6 +613,12 @@
 			-explainExcludes -xids all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
 			$(TEST_STATUS)
 		</command>
+		<platformRequirementsList>
+			<platformRequirements>os.linux.ubuntu.22+</platformRequirements>
+			<platformRequirements>os.linux.rhel.8+</platformRequirements>
+			<platformRequirements>os.linux.sles.15+</platformRequirements>
+			<platformRequirements>os.linux.cent.8+</platformRequirements>
+		</platformRequirementsList>
 		<features>
 			<feature>CRIU:required</feature>
 		</features>
@@ -569,6 +651,12 @@
 			-explainExcludes -xids all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
 			$(TEST_STATUS)
 		</command>
+		<platformRequirementsList>
+			<platformRequirements>os.linux.ubuntu.22+</platformRequirements>
+			<platformRequirements>os.linux.rhel.8+</platformRequirements>
+			<platformRequirements>os.linux.sles.15+</platformRequirements>
+			<platformRequirements>os.linux.cent.8+</platformRequirements>
+		</platformRequirementsList>
 		<features>
 			<feature>CRIU:required</feature>
 		</features>
@@ -597,6 +685,12 @@
 			-explainExcludes -xids all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
 			$(TEST_STATUS)
 		</command>
+		<platformRequirementsList>
+			<platformRequirements>os.linux.ubuntu.22+</platformRequirements>
+			<platformRequirements>os.linux.rhel.8+</platformRequirements>
+			<platformRequirements>os.linux.sles.15+</platformRequirements>
+			<platformRequirements>os.linux.cent.8+</platformRequirements>
+		</platformRequirementsList>
 		<features>
 			<feature>CRIU:required</feature>
 		</features>
