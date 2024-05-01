@@ -20,34 +20,35 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 ################################################################################
 
-# Note: we need to inject WIN32 et al, as OMR no longer uses them
+# Note: Define WIN32 etc. until OMR no longer uses them.
 
 list(APPEND OMR_PLATFORM_DEFINITIONS
-    -DWIN32
-    -D_WIN32
+	-DWIN32
+	-D_WIN32
 )
 if(OMR_ENV_DATA64)
-    list(APPEND OMR_PLATFORM_DEFINITIONS
-        -DWIN64
-        -D_WIN64
-    )
+	list(APPEND OMR_PLATFORM_DEFINITIONS
+		-DWIN64
+		-D_WIN64
+	)
 endif()
+
 list(APPEND OMR_PLATFORM_DEFINITIONS -DWINDOWS)
 
-# Set flags we use to build the interpreter
+# Set flags we use to build the interpreter.
 omr_stringify(CMAKE_J9VM_CXX_FLAGS
-    -O3
-    -fno-rtti
-    -fno-threadsafe-statics
-    -fno-strict-aliasing
-    -fno-exceptions
-    -fno-asynchronous-unwind-tables
-    -std=c++0x
-    -D_CRT_SUPPRESS_RESTRICT
-    -DVS12AndHigher
-    ${OMR_PLATFORM_DEFINITIONS}
+	-O3
+	-fno-rtti
+	-fno-threadsafe-statics
+	-fno-strict-aliasing
+	-fno-exceptions
+	-fno-asynchronous-unwind-tables
+	-std=c++0x
+	-D_CRT_SUPPRESS_RESTRICT
+	-DVS12AndHigher
+	${OMR_PLATFORM_DEFINITIONS}
 )
 
 if(OMR_ENV_DATA32)
-    set(CMAKE_J9VM_CXX_FLAGS "${CMAKE_J9VM_CXX_FLAGS} -m32")
+	set(CMAKE_J9VM_CXX_FLAGS "${CMAKE_J9VM_CXX_FLAGS} -m32")
 endif()
