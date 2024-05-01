@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar16]*/
 package com.ibm.tools.attach.attacher;
-/*******************************************************************************
+/*
  * Copyright IBM Corp. and others 2009
  *
  * This program and the accompanying materials are made available under
@@ -20,7 +20,7 @@ package com.ibm.tools.attach.attacher;
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
- *******************************************************************************/
+ */
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -37,18 +37,18 @@ import com.sun.tools.attach.spi.AttachProvider;
  */
 final class OpenJ9VirtualMachineDescriptor extends VirtualMachineDescriptor {
 
-	@Override
 	/**
 	 * @note this compares two remote VMs, not the objects
 	 */
+	@Override
 	public boolean equals(Object comparand) {
 		return super.equals(comparand);
 	}
 
-	@Override
 	/**
-	 * 	@note this obtains the hashcode of the remote VM, not of this object
+	 * @note this obtains the hashcode of the remote VM, not of this object
 	 */
+	@Override
 	public int hashCode() {
 		return super.hashCode();
 	}

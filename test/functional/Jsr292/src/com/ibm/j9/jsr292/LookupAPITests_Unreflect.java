@@ -1,4 +1,4 @@
-/*******************************************************************************
+/*
  * Copyright IBM Corp. and others 2001
  *
  * This program and the accompanying materials are made available under
@@ -18,7 +18,7 @@
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
- *******************************************************************************/
+ */
 package com.ibm.j9.jsr292;
 
 import org.testng.annotations.Test;
@@ -39,12 +39,12 @@ import examples.PackageExamples;
  * This class contains tests for the unreflect*() methods of the MethodHandles.Lookup API.
  */
 public class LookupAPITests_Unreflect {
-	
-	/******************************************************************************************************
+
+	/*
 	 * unreflect tests. 
 	 * Combinations : same package - public [static] and private [static] , virtual [overridden] methods
-	 * ***************************************************************************************************/
-	
+	 */
+
 	/**
 	 * Test to unreflect a public virtual method belonging to the same package as the Lookup class.
 	 * @throws Throwable
@@ -170,12 +170,12 @@ public class LookupAPITests_Unreflect {
 		int out = ( int ) mh.invoke( g, 1, 2 );
 		AssertJUnit.assertEquals( 13, out );
 	}
-	
-	/****************************************************************************************************
+
+	/*
 	 * unreflect tests. 
 	 * Combinations :Cross package - public [static] and private [static] , virtual [overridden] methods
-	 * **************************************************************************************************/
-	
+	 */
+
 	/**
 	 * Test to unreflect a public virtual method belonging to a different package than the Lookup class.
 	 * @throws Throwable
@@ -283,12 +283,12 @@ public class LookupAPITests_Unreflect {
 		int out = ( int ) mh.invoke( g, 1, 2 );
 		AssertJUnit.assertEquals( -1, out );
 	}
-	
-	/****************************************************************************
+
+	/*
 	 * unreflectGetter, unreflectSetter tests. 
 	 * Combinations : same package - public [static] and private [static] fields
-	 ****************************************************************************/
-	
+	 */
+
 	/**
 	 * unreflectSetter/getter test using a public virtual method belonging to the same package as the Lookup class.
 	 * @throws Throwable
@@ -449,12 +449,12 @@ public class LookupAPITests_Unreflect {
 		
 		AssertJUnit.assertEquals( 100, out );
 	}
-	
-	/****************************************************************************** 
+
+	/*
 	 * unreflectGetter unreflectSetter tests. 
 	 * Combinations : cross package - public [static] and private [static] fields
-	 ******************************************************************************/
-	
+	 */
+
 	/**
 	 * unreflectSetter/getter test using a public virtual method belonging to a different package than the Lookup class.
 	 * @throws Throwable
@@ -548,11 +548,11 @@ public class LookupAPITests_Unreflect {
 		AssertJUnit.assertEquals( 100, out );
 	}
 
-	/***********************************************
+	/*
 	 * unreflectConstructor tests
 	 * Combinations : Same package , cross package
-	 ***********************************************/
-	
+	 */
+
 	/**
 	 * Test to unreflect a constructor belonging to the same package as the Lookup class.
 	 * @throws Throwable
@@ -580,12 +580,12 @@ public class LookupAPITests_Unreflect {
 		PackageExamples example = ( PackageExamples )mh.invoke( 1, 2 );
 		AssertJUnit.assertEquals( example.nonStaticPublicField, 3 );
 	}
-	
-	/***************************************************************************************************
+
+	/*
 	 * unreflectSpecial tests. 
 	 * Combinations :Same package - public [static] and private [static] , virtual [overridden] methods
-	 ***************************************************************************************************/
-	
+	 */
+
 	/**
 	 * unreflectSpecial test using a public virtual method belonging to the same package as the lookup class.
 	 * @throws Throwable
@@ -693,12 +693,12 @@ public class LookupAPITests_Unreflect {
 		
 		AssertJUnit.assertTrue( illegalAccessExceptionThrown );
 	}
-	
-	/*******************************************************************************
+
+	/*
 	 * unreflectSpecial tests. 
 	 * Combinations: Cross package - public, private, virtual [overridden] methods
-	 *******************************************************************************/
-	
+	 */
+
 	/**
 	 * unreflectSpecial test using a public method belonging to a different package than the lookup class.
 	 * @throws Throwable
@@ -835,12 +835,12 @@ public class LookupAPITests_Unreflect {
 		}
 		assert(iaeThrown);
 	}
-	
-	/*********************************************************************
+
+	/*
 	 *unreflect tests involving inheritance.
 	 *Combinations : parent / child lookups within the same package 
-	 *********************************************************************/
-	
+	 */
+
 	/**
 	 * unreflect a subclass method using a super class lookup, parent child in same package.
 	 * @throws Throwable
@@ -894,13 +894,12 @@ public class LookupAPITests_Unreflect {
 		int out = ( int ) mh.invokeExact( g, 1, 2 );
 		AssertJUnit.assertEquals( 3, out );
 	}
-	
-	
-	/*********************************************************************
+
+	/*
 	 *unreflect tests involving inheritance.
 	 *Combinations : parent / child lookups , cross-package
-	 *********************************************************************/
-	
+	 */
+
 	/**
 	 * unreflect a subclass method using a super class lookup, parent child in different packages.
 	 * @throws Throwable
@@ -954,13 +953,12 @@ public class LookupAPITests_Unreflect {
 		int out = ( int ) mh.invokeExact( g, 1, 2 );
 		AssertJUnit.assertEquals( 3, out );
 	}
-	
-	
-	/*********************************************************************
+
+	/*
 	 *unreflectConstructor tests involving inheritance.
 	 *Combinations : parent / child lookups within the same package 
-	 *********************************************************************/
-	
+	 */
+
 	/**
 	 * unreflect subclass constructor using super class lookup, parent child in same package.
 	 * @throws Throwable
@@ -994,13 +992,12 @@ public class LookupAPITests_Unreflect {
 		SamePackageExample g = ( SamePackageExample )mh.invoke( 1, 2 );
 		AssertJUnit.assertEquals( g.nonStaticPublicField, 3 );
 	}
-	
-	
-	/*********************************************************************
+
+	/*
 	 *unreflectConstructor tests involving inheritance.
 	 *Combinations : parent / child lookups , cross-package
-	 *********************************************************************/
-	
+	 */
+
 	/**
 	 * unreflect subclass constructor using super class lookup, parent child in different packages.
 	 * @throws Throwable
@@ -1283,12 +1280,11 @@ public class LookupAPITests_Unreflect {
 		
 		AssertJUnit.assertTrue( illegalAccessException );
 	}
-	
-	
-	/****************************************************
-	 * unreflect Tests involving custom-loaded classes. 
-	 * ***************************************************/
-	
+
+	/*
+	 * unreflect Tests involving custom-loaded classes
+	 */
+
 	/**
 	 * unreflect a static method belonging to a class that has been dynamically loaded using a custom class loader
 	 * @throws Throwable

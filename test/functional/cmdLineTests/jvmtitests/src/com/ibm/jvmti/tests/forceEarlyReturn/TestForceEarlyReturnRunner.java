@@ -1,4 +1,4 @@
-/*******************************************************************************
+/*
  * Copyright IBM Corp. and others 2001
  *
  * This program and the accompanying materials are made available under
@@ -18,7 +18,7 @@
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
- *******************************************************************************/
+ */
 package com.ibm.jvmti.tests.forceEarlyReturn;
 
 
@@ -144,8 +144,6 @@ public class TestForceEarlyReturnRunner extends Thread
 		return 0xdeadbeef;
 	}
 
-	/**********************************************************/
-	
 	public boolean testReturnFloat()
 	{
 		float ret;
@@ -170,8 +168,6 @@ public class TestForceEarlyReturnRunner extends Thread
 		return 0xdeadbeef;
 	}
 
-	/**********************************************************/
-	
 	public boolean testReturnLong()
 	{
 		long ret;
@@ -196,8 +192,6 @@ public class TestForceEarlyReturnRunner extends Thread
 		return 0xdeadbeef;
 	}
 
-	/**********************************************************/
-	
 	public boolean testReturnDouble()
 	{
 		double ret;
@@ -222,8 +216,6 @@ public class TestForceEarlyReturnRunner extends Thread
 		return 0.0;
 	}
 
-	/**********************************************************/
-
 	public boolean testReturnVoid()
 	{
 		sem.up();
@@ -240,8 +232,6 @@ public class TestForceEarlyReturnRunner extends Thread
 		return;
 	}
 
-	/**********************************************************/
-	
 	public boolean testReturnObject()
 	{
 		sem.up();
@@ -269,8 +259,6 @@ public class TestForceEarlyReturnRunner extends Thread
 
 		return ret;
 	}
-
-	/**********************************************************/
 
 	public void error()
 	{

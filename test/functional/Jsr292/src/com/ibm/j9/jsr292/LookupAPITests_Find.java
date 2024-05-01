@@ -1,4 +1,4 @@
-/*******************************************************************************
+/*
  * Copyright IBM Corp. and others 2001
  *
  * This program and the accompanying materials are made available under
@@ -18,7 +18,7 @@
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
- *******************************************************************************/
+ */
 package com.ibm.j9.jsr292;
 
 import org.openj9.test.util.VersionCheck;
@@ -46,12 +46,12 @@ import examples.PackageExamples.CrossPackageInnerClass;
  */
 public class LookupAPITests_Find {
 
-	/*******************************************************************************
+	/*
 	 * findSetter, findGetter, findStaticSetter, findStaticGetter tests. 
 	 * COMBINATIONS: same package - public, private, public static, private static, 
 	 * protected, super-class, sub-class, inner class fields.
-	 * *****************************************************************************/
-	
+	 */
+
 	/**
 	 * Basic validation that get of static with method handles works for all types
 	 * validate get of static using method handles returns the same values a normal lookup
@@ -556,7 +556,7 @@ public class LookupAPITests_Find {
 		 * Works in J9 but fails in Oracle.
 		 * Error summary: The following line of code throws java.lang.InternalError: uncaught exception in Oracle, "Caused by: java.lang.NoSuchFieldException: staticPublicField"
 		 * Note: The 'staticPublicField' belongs to the parent of SamePackageExampleSubclass.   
-		 **/ 
+		 */
 		MethodHandle mhSetter = superclassLookup.findStaticSetter( SamePackageExampleSubclass.class, "staticPublicField", int.class );
 		MethodHandle mhGetter = superclassLookup.findStaticGetter( SamePackageExampleSubclass.class, "staticPublicField", int.class );
 		mhSetter.invokeExact( 5 );
@@ -891,11 +891,11 @@ public class LookupAPITests_Find {
 	}
 	
 	
-	/******************************************************************************** 
+	/*
 	 * findSetter, findGetter, findStaticSetter, findStaticGetter tests. 
 	 * COMBINATIONS: Cross package - public, private, public static, private static, 
 	 * protected, super-class, sub-class fields
-	 * ******************************************************************************/
+	 */
 
 	/*public fields ( cross package )*/ 
 	
@@ -1401,14 +1401,13 @@ public class LookupAPITests_Find {
 		
 		AssertJUnit.assertTrue( illegalAccessExceptionThrown );
 	}
-	
-	
-	/********************************************************************
+
+	/*
 	 * findVirtual tests 
 	 * COMBINATIONS: Same package and cross package, public [overridden], 
 	 * protected [overridden], private, super-class, sub-class methods
-	 * ******************************************************************/
-	
+	 */
+
 	/*public methods ( same package )*/
 	
 	/**
@@ -1829,12 +1828,12 @@ public class LookupAPITests_Find {
         Object r2 = ( Object )m.invokeExact( ( NavigableMap )t, o, o2 );
         AssertJUnit.assertEquals( o, r2 );
 	}
-	
-	/**************************************************************************************** 
+
+	/*
 	 * findStatic tests. 
 	 * Combinations : same package, cross package; public static and private static methods 
-	 * ***************************************************************************************/
-	
+	 */
+
 	/**
 	 * findStatic test using public static methods ( same package )
 	 * @throws Throwable
@@ -1905,13 +1904,13 @@ public class LookupAPITests_Find {
 		}
 		AssertJUnit.assertTrue( illegalAccessExceptionThrown );
 	}
-	
-	/********************************************************************************************
+
+	/*
 	 * findSpecial tests.
 	 * Combinations : same package, cross package; public [static] and private [static] methods 
 	 * & super-class / sub-class invocations
-	 * ******************************************************************************************/
-	
+	 */
+
 	/**
 	 * findSpecial test using a public method of a different class than the class the resultant 
 	 * method handle will be bound to.

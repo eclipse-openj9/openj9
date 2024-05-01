@@ -1,4 +1,4 @@
-/*******************************************************************************
+/*
  * Copyright IBM Corp. and others 2001
  *
  * This program and the accompanying materials are made available under
@@ -18,7 +18,7 @@
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
- *******************************************************************************/
+ */
 package j9vm.test.classunloading;
 
 import java.util.jar.*;
@@ -30,7 +30,7 @@ import java.io.*;
  *		Named instances of SimpleJarClassLoader report their own finalization to 
  *	the FinalizationIndicator class, which may be querried to determine whether any
  *	given instance has been finalized.
- **/
+ */
 public class SimpleJarClassLoader extends ClassLoader {
 	
 	public static boolean instanceFinalized = false;

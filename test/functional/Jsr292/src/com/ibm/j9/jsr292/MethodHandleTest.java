@@ -1,4 +1,4 @@
-/*******************************************************************************
+/*
  * Copyright IBM Corp. and others 2001
  *
  * This program and the accompanying materials are made available under
@@ -18,7 +18,7 @@
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
- *******************************************************************************/
+ */
 package com.ibm.j9.jsr292;
 
 import org.testng.annotations.Test;
@@ -39,11 +39,11 @@ import examples.PackageExamples;
  * This class contains tests for the MethodType API. 
  */
 public class MethodHandleTest{
-	
-	/****************************
+
+	/*
 	 * Tests for asCollector
-	 * **************************/
-	
+	 */
+
 	/**
 	 * Basic asCollector test. Tests by invoking a MH obtained through a findVirtual call to a class in the same package
 	 * @throws Throwable
@@ -244,12 +244,11 @@ public class MethodHandleTest{
 		mhIntArray = mhIntArray.asCollector(int[].class,0);
 		Assert.assertEquals((int)mhIntArray.invokeExact(), 0);
 	}
-	
-	
-	/******************************
+
+	/*
 	 * Tests for asVarargsCollector
-	 * ****************************/
-	
+	 */
+
 	/**
 	 * Basic asVarargsCollector test using a virtual method in a class living in the same package (uses MethodHandle.invoke)
 	 * @throws Throwable
@@ -399,12 +398,11 @@ public class MethodHandleTest{
 		mh = mh.asVarargsCollector(Object[].class);
 		Assert.assertEquals(mh.invoke("a",1000,true,1.1,Long.MAX_VALUE,Short.MIN_VALUE), "[a,1000,true,1.1,9223372036854775807,-32768]"); 
 	}
-	
-	
-	/******************************
+
+	/*
 	 * Tests for asSpreader
-	 * ****************************/
-	
+	 */
+
 	/**
 	 * Basic asSpreader test using a virtual method in the same package 
 	 * @throws Throwable
@@ -530,10 +528,11 @@ public class MethodHandleTest{
 		mh = mh.asSpreader(int[].class, 3);
 		Assert.fail("The test case failed to throw an IllegalArgumentException in the case of the wrong argument count");
 	}
-	
-	/******************************
+
+	/*
 	 * Tests for MethodHandle arity
-	 * ****************************/
+	 */
+
 	/**
 	 * Create MethodHandle with highest possible arity and use findConstructor (253)
 	 * @throws Throwable
@@ -895,11 +894,11 @@ public class MethodHandleTest{
 				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 	}
-	
-	/******************************
+
+	/*
 	 * Tests for asFixedArity
-	 * ****************************/
-	
+	 */
+
 	/**
 	 * asFixedArity test to ensure MethodHandles.lookup().find* methods returned varargs handles for methods with the ACC_VARARGS bit
 	 * @throws Throwable
@@ -949,12 +948,11 @@ public class MethodHandleTest{
 		mhFix.invoke("a","b","c","d","e");
 		Assert.fail("The test case failed to throw an WrongMethodTypeException in using variable input");
 	}
-	
-	
-	/****************************************
+
+	/*
 	 * Tests for invokeWithArguments(List<?>)
-	 * **************************************/
-	
+	 */
+
 	public static String helper_invokeWithArguments_List_Different_Array_Type(Object a, Object b, Object c) {
 		return "" + a + ":" + b + ":" + c;
 	}
@@ -1055,12 +1053,11 @@ public class MethodHandleTest{
 		
 		Assert.assertEquals((int)mh.invokeWithArguments(l), 3);
 	}
-	
 
-	/****************************************
+	/*
 	 * Tests for invokeWithArguments(Object...)
-	 * **************************************/
-	
+	 */
+
 	@Test(expectedExceptions = WrongMethodTypeException.class, groups = { "level.extended" })
 	public void test_invokeWithArguments_WMT_NULL_args()  throws Throwable {
 		MethodHandle mh = MethodHandles.lookup().findVirtual(Object.class, "toString", MethodType.methodType(String.class));
@@ -1173,11 +1170,11 @@ public class MethodHandleTest{
 		mh2.invokeWithArguments(l2);
 		Assert.fail("The test case failed to throw an WrongMethodTypeException in the case of 0 length array");
 	}
-	
-	/****************************************
+
+	/*
 	 * Tests for isVarargsCollector
-	 * **************************************/
-	
+	 */
+
 	/**
 	 * Test isVarargsCollector using a call to asVarargsCollector
 	 * @throws Throwable

@@ -11,7 +11,7 @@ import com.ibm.dtfj.image.ImageFactory;
 import com.ibm.dtfj.image.ImageSection;
 import com.ibm.j9ddr.view.dtfj.image.J9DDRImageFactory;
 
-/*******************************************************************************
+/*
  * Copyright IBM Corp. and others 2010
  *
  * This program and the accompanying materials are made available under
@@ -31,7 +31,7 @@ import com.ibm.j9ddr.view.dtfj.image.J9DDRImageFactory;
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
- *******************************************************************************/
+ */
 
 /**
  * @author andhall

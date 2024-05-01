@@ -12,7 +12,7 @@ import java.util.TreeMap;
 
 import examples.PackageExamples;
 
-/*******************************************************************************
+/*
  * Copyright IBM Corp. and others 2001
  *
  * This program and the accompanying materials are made available under
@@ -32,7 +32,7 @@ import examples.PackageExamples;
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
- *******************************************************************************/
+ */
 public class LookupAPITests_Bind {
 
 	/*public methods ( same package )*/

@@ -1,4 +1,4 @@
-/*******************************************************************************
+/*
  * Copyright IBM Corp. and others 2001
  *
  * This program and the accompanying materials are made available under
@@ -18,7 +18,7 @@
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
- *******************************************************************************/
+ */
 package com.ibm.jvmti.tests.BCIWithASM;
 import static org.objectweb.asm.Opcodes.ACC_PRIVATE;
 import static org.objectweb.asm.Opcodes.ACC_PUBLIC;
@@ -650,7 +650,7 @@ public class ASMTransformer {
 					return -1;												<--injected
 				}
 			}
-		}**/
+		}*/
 		{
 			mv = cw.visitMethod( ACC_PUBLIC, "returnOne", "()I", null, null );
 			mv.visitCode();
