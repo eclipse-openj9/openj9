@@ -766,32 +766,20 @@ enum INIT_STAGE {
 #if JAVA_SPEC_VERSION == 8
 
 /* The FIPS 140-3 command-line options should not be accepted anywhere the preview is not enabled.
- * Tech preview is enabled on (all 64-bit platforms only, not enabled on any 31/32 bit platform):
- *	Windows on x86-64
- *	Linux on x86-64
- *	AIX on 64-bit POWER
- *	Linux on 64-bit POWER BE
- *	Linux on 64-bit POWER LE
+ * Tech preview is enabled on all 64-bit platforms only, not enabled on any 31/32 bit platform.
  *
  * This is a Java 8 specific feature.
  *
  */
-#if (defined(J9VM_ENV_DATA64) && (defined(J9VM_ARCH_X86) || defined(AIXPPC) || defined(LINUXPPC64)))
+#if defined(J9VM_ENV_DATA64)
 #define FIPS_PREVIEW_OPTIONS_ACCEPTED_PLATFORM 1
-#endif /* (defined(J9VM_ENV_DATA64) && (defined(J9VM_ARCH_X86) || defined(AIXPPC) || defined(LINUXPPC64))) */
 
-/* For this platform, the system properties need to be set and classpaths updated but command line
- * options rejected. This platform will always use the FIPS 140-2 settings because there is no
- * way to enable the preview:
- *	Linux on 64-bit Z    (will eventually join the list above, along with 64-bit zOS)
- *
- * A FIPS preview platform is one where the system properties should be set and the
+/* A FIPS preview platform is one where the system properties should be set and the
  * bootclasspath and extended classpath should be modified (whether or not the command-line
  * options should be respected).
  */
-#if (defined(FIPS_PREVIEW_OPTIONS_ACCEPTED_PLATFORM) || (defined(J9VM_ENV_DATA64) && defined(LINUX) && defined(S39064)))
 #define FIPS_PREVIEW_PLATFORM 1
-#endif /* (defined(FIPS_PREVIEW_OPTIONS_ACCEPTED_PLATFORM) || (defined(J9VM_ENV_DATA64) && defined(LINUX) && defined(S39064))) */
+#endif /* defined(J9VM_ENV_DATA64) */
 
 #endif /* JAVA_SPEC_VERSION == 8 */
 
