@@ -918,6 +918,14 @@ extern "C" {
 #define J9_JAVA_NATIVE 0x100
 #define J9_JAVA_STATIC 0x8
 
+/* JFR event types */
+
+#define J9JFR_EVENT_TYPE_EXECUTION_SAMPLE 0
+
+/* JFR thread states */
+
+#define J9JFR_THREAD_STATE_RUNNING 0
+
 /* Constants for JIT flattened field resolution */
 
 #define J9TR_FLAT_RESOLVE_WITHFIELD 0

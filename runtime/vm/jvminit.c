@@ -7459,6 +7459,14 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 		goto error;
 	}
 
+#if defined(J9VM_OPT_JFR)
+	if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_JFR_ENABLED)) {
+		if (JNI_OK != initializeJFR(vm) ) {
+			goto error;
+		}
+	}
+#endif /* defined(J9VM_OPT_JFR) */
+
 	/* Use this stage to load libraries which need to set up hooks as early as possible */
 	if (JNI_OK != runLoadStage(vm, EARLY_LOAD)) {
 		goto error;
