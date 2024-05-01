@@ -99,6 +99,10 @@ UDATA initializeVMThreading(J9JavaVM *vm)
 		omrthread_monitor_init_with_name(&vm->delayedLockingOperationsMutex, 0, "Delayed locking operations mutex") ||
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
+#if JAVA_SPEC_VERSION >= 22
+		omrthread_monitor_init_with_name(&vm->closeScopeMutex, 0, "ScopedMemoryAccess closeScope0 mutex") ||
+#endif /* JAVA_SPEC_VERSION >= 22 */
+
 		initializeMonitorTable(vm)
 	)
 	{

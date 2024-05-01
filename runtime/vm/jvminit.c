@@ -1025,6 +1025,13 @@ freeJavaVM(J9JavaVM * vm)
 	}
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
+#if JAVA_SPEC_VERSION >= 22
+	if (NULL != vm->closeScopeMutex) {
+		omrthread_monitor_destroy(vm->closeScopeMutex);
+		vm->closeScopeMutex = NULL;
+	}
+#endif /* JAVA_SPEC_VERSION >= 22 */
+
 	j9mem_free_memory(vm);
 
 	if (NULL != tmpLib->self_handle) {
