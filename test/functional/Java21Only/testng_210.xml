@@ -24,6 +24,9 @@
 
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
 <suite name="Java21 only test suite" parallel="none" verbose="2">
+	<listeners>
+		<listener class-name="org.openj9.test.util.IncludeExcludeTestAnnotationTransformer" />
+	</listeners>
 	<test name="Jep442Tests_testLinkerFfi_DownCall">
 		<classes>
 			<class name="org.openj9.test.jep442.downcall.InvalidDownCallTests"/>

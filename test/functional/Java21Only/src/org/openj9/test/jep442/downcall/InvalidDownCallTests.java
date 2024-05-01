@@ -114,6 +114,7 @@ public class InvalidDownCallTests {
 		}
 	}
 
+	@Test
 	public void test_nullSegmentForPtrArgument() throws Throwable {
 		FunctionDescriptor fd = FunctionDescriptor.of(JAVA_INT, JAVA_INT, ADDRESS);
 		MemorySegment functionSymbol = nativeLibLookup.find("validateNullAddrArgument").get();
@@ -154,6 +155,7 @@ public class InvalidDownCallTests {
 		fail("Failed to throw out IllegalArgumentException in the case of the heap segment");
 	}
 
+	@Test
 	public void test_heapSegmentForStructArgument() throws Throwable {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_INT.withName("elem1"), JAVA_INT.withName("elem2"));
 		VarHandle intHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));

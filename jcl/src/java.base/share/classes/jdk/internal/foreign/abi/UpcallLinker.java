@@ -144,9 +144,13 @@ public final class UpcallLinker {
 	 * @return a factory instance that wraps up the upcall specific code
 	 */
 	public static UpcallStubFactory makeFactory(MethodType methodType, FunctionDescriptor descriptor, LinkerOptions options) {
+		/*[IF PLATFORM-mz31 | PLATFORM-mz64]*/
+		throw new InternalError("Upcall is not yet implemented"); //$NON-NLS-1$
+		/*[ELSE] PLATFORM-mz31 | PLATFORM-mz64 */
 		return (target, arena) -> {
 			return UpcallLinker.make(target, methodType, descriptor, arena, options);
 		};
+		/*[ENDIF] PLATFORM-mz31 | PLATFORM-mz64 */
 	}
 	/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 }

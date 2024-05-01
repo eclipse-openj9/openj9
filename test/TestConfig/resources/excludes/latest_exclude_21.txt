@@ -31,6 +31,18 @@ org.openj9.test.nestmates.NestAttributeTest:testGetNestMembersAPINestMemberWrong
 org.openj9.test.nestmates.NestAttributeTest:testGetNestMembersAPINestMemberWrongNestHost NA generic-all
 org.openj9.test.nestmates.NestAttributeTest:testGetNestMembersAPINestMemberWrongNestHost2 NA generic-all
 
+org.openj9.test.jep442.downcall.InvalidDownCallTests:test_heapSegmentForStructArgument javanext/issues/441 zos_390-64
+org.openj9.test.jep442.downcall.InvalidDownCallTests:test_invalidMemoryLayoutForMemAddr javanext/issues/441 zos_390-64
+org.openj9.test.jep442.downcall.InvalidDownCallTests:test_invalidMemoryLayoutForReturnType javanext/issues/441 zos_390-64
+org.openj9.test.jep442.downcall.PrimitiveTypeTests1:test_memoryAllocFreeFromDefaultLib_1 javanext/issues/441 zos_390-64
+org.openj9.test.jep442.downcall.PrimitiveTypeTests1:test_printfFromDefaultLibWithMemAddr_1 javanext/issues/441 zos_390-64
+org.openj9.test.jep442.downcall.PrimitiveTypeTests1:test_printfFromDefaultLibWithMemAddr_LinkerOption_1 javanext/issues/441 zos_390-64
+org.openj9.test.jep442.downcall.PrimitiveTypeTests1:test_strlenFromDefaultLibWithMemAddr_1 javanext/issues/441 zos_390-64
+org.openj9.test.jep442.downcall.PrimitiveTypeTests2:test_memoryAllocFreeFromDefaultLib_2 javanext/issues/441 zos_390-64
+org.openj9.test.jep442.downcall.PrimitiveTypeTests2:test_printfFromDefaultLibWithMemAddr_2 javanext/issues/441 zos_390-64
+org.openj9.test.jep442.downcall.PrimitiveTypeTests2:test_printfFromDefaultLibWithMemAddr_LinkerOption_2 javanext/issues/441 zos_390-64
+org.openj9.test.jep442.downcall.PrimitiveTypeTests2:test_strlenFromDefaultLibWithMemAddr_2 javanext/issues/441 zos_390-64
+
 # Exclude Java 19 Thread related failures
 
 org.openj9.test.java.lang.Test_ThreadGroup:test_activeCount NA generic-all
