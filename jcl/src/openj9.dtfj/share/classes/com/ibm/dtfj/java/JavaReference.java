@@ -1,5 +1,5 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
-/*******************************************************************************
+/*
  * Copyright IBM Corp. and others 2008
  *
  * This program and the accompanying materials are made available under
@@ -19,7 +19,7 @@
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
- *******************************************************************************/
+ */
 package com.ibm.dtfj.java;
 
 import com.ibm.dtfj.image.CorruptDataException;
@@ -84,7 +84,7 @@ public interface JavaReference
     int REFERENCE_LOADED_CLASS     	= 11;
     /** Reference from a class to its java.lang.Class instance */
     int REFERENCE_CLASS_OBJECT      = 12;
-	/** Reference from a JavaObject representing a Class to the associated JavaClass **/
+	/** Reference from a JavaObject representing a Class to the associated JavaClass */
     int REFERENCE_ASSOCIATED_CLASS 	= 13;
     int REFERENCE_UNUSED_14 = 14;
 

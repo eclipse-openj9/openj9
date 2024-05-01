@@ -1,5 +1,5 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
-/*******************************************************************************
+/*
  * Copyright IBM Corp. and others 2008
  *
  * This program and the accompanying materials are made available under
@@ -19,7 +19,7 @@
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
- *******************************************************************************/
+ */
 package com.ibm.dtfj.phd;
 
 import com.ibm.dtfj.image.CorruptDataException;
@@ -99,7 +99,7 @@ class PHDJavaReference implements JavaReference {
 		case REFERENCE_CLASS_OBJECT:
 			desc = "Class object reference";
 			break;
-		/** Reference from a JavaObject representing a Class to the associated JavaClass **/
+		/** Reference from a JavaObject representing a Class to the associated JavaClass */
 		case REFERENCE_ASSOCIATED_CLASS:
 			desc = "Associated class reference";
 			break;

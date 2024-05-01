@@ -10,7 +10,7 @@ import java.lang.reflect.Executable;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 
-/*******************************************************************************
+/*
  * Copyright IBM Corp. and others 2014
  *
  * This program and the accompanying materials are made available under
@@ -30,7 +30,7 @@ import java.lang.reflect.Parameter;
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
- *******************************************************************************/
+ */
 
 @Test(groups = { "level.sanity" })
 public class Test_Executable {
@@ -85,7 +85,7 @@ public class Test_Executable {
 			Parameter[] parameters = null;
 			int javaVersion = VersionCheck.major();
 
-			/*************** TESTING WITHPARAMS.JAVA ************************************/
+			/* TESTING WITHPARAMS.JAVA */
 			withParamsClass = Class.forName("org.openj9.resources.methodparameters.WithParams", false, loader);
 			methods = withParamsClass.getDeclaredMethods();
 			constructors = withParamsClass.getDeclaredConstructors();
@@ -120,7 +120,7 @@ public class Test_Executable {
 				}
 			}
 
-			/*************** TESTING WITHPARAMS$INNERCLASS.JAVA ************************************/
+			/* TESTING WITHPARAMS$INNERCLASS.JAVA */
 			withParamsClass_InnerClass = Class.forName("org.openj9.resources.methodparameters.WithParams$InnerClass", false, loader);
 			methods = withParamsClass_InnerClass.getDeclaredMethods();
 			constructors = withParamsClass_InnerClass.getDeclaredConstructors();
@@ -148,7 +148,7 @@ public class Test_Executable {
 			checkParameterModifiers(constructors[0], parameters[0], ACC_FINAL + ACC_MANDATED);
 			checkParameterType(constructors[0], parameters[0], withParamsClass);
 
-			/*************** TESTING WITHPARAMS$MOOD.JAVA ************************************/
+			/* TESTING WITHPARAMS$MOOD.JAVA */
 			withParamsClass_EnumClass = Class.forName("org.openj9.resources.methodparameters.WithParams$MOOD", false, loader);
 			methods = withParamsClass_EnumClass.getDeclaredMethods();
 			constructors = withParamsClass_EnumClass.getDeclaredConstructors();
@@ -221,7 +221,7 @@ public class Test_Executable {
 				}
 			}
 
-			/*************** TESTING WITHOUTPARAMS.JAVA ************************************/
+			/* TESTING WITHOUTPARAMS.JAVA */
 			withoutParamsClass = Class.forName("org.openj9.resources.methodparameters.WithoutParams", false, loader);
 			methods = withoutParamsClass.getDeclaredMethods();
 			constructors = withoutParamsClass.getDeclaredConstructors();
@@ -268,7 +268,7 @@ public class Test_Executable {
 				}
 			}
 
-			/*************** TESTING WITHOUTPARAMS$INNERCLASS.JAVA ************************************/
+			/* TESTING WITHOUTPARAMS$INNERCLASS.JAVA */
 			withoutParamsClass_InnerClass = Class.forName("org.openj9.resources.methodparameters.WithoutParams$InnerClass", false,
 					loader);
 			methods = withoutParamsClass_InnerClass.getDeclaredMethods();
@@ -304,7 +304,7 @@ public class Test_Executable {
 			checkParameterModifiers(constructors[0], parameters[0], outerThisFlags);
 			checkParameterType(constructors[0], parameters[0], withoutParamsClass);
 
-			/*************** TESTING WITHOUTPARAMS$MOOD.JAVA ************************************/
+			/* TESTING WITHOUTPARAMS$MOOD.JAVA */
 			withoutParamsClass_EnumClass = Class.forName("org.openj9.resources.methodparameters.WithoutParams$MOOD", false, loader);
 			methods = withoutParamsClass_EnumClass.getDeclaredMethods();
 			constructors = withoutParamsClass_EnumClass.getDeclaredConstructors();

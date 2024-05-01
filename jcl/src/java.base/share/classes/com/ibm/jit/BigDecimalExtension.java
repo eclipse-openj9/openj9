@@ -7,7 +7,7 @@ import java.math.MathContext;
 import java.math.RoundingMode;
 import java.util.Arrays;
 
-/*******************************************************************************
+/*
  * Copyright IBM Corp. and others 2009
  *
  * This program and the accompanying materials are made available under
@@ -27,7 +27,7 @@ import java.util.Arrays;
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
- *******************************************************************************/
+ */
 
 public class BigDecimalExtension implements java.math.BigDecimal.BigDecimalExtension {
    // Used to keep behavior of DFPHWAvailable consistent between

@@ -1,6 +1,6 @@
 package com.ibm.j9.offload.tests.jniservice;
 
-/*******************************************************************************
+/*
  * Copyright IBM Corp. and others 2008
  *
  * This program and the accompanying materials are made available under
@@ -20,7 +20,7 @@ package com.ibm.j9.offload.tests.jniservice;
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
- *******************************************************************************/
+ */
 
 public class JValue {
 	private boolean z;

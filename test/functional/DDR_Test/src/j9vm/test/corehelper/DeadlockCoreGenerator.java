@@ -1,4 +1,4 @@
-/*******************************************************************************
+/*
  * Copyright IBM Corp. and others 2001
  *
  * This program and the accompanying materials are made available under
@@ -18,7 +18,7 @@
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
- *******************************************************************************/
+ */
 package j9vm.test.corehelper;
 
 import java.lang.reflect.InvocationTargetException;
@@ -108,9 +108,9 @@ public final class DeadlockCoreGenerator {
 		}
 	}
 
-	/* *****************************
+	/*
 	 * Utility Methods for all Tests
-	 * *****************************/
+	 */
 
 	public static native void setup();
 	public static native void enterFirstMonitor();
@@ -147,10 +147,10 @@ public final class DeadlockCoreGenerator {
 		}
 	}
 
-	/* *****************************
+	/*
 	 *         Test Case #1
 	 *       JOO, JOO deadlock.
-	 * *****************************/
+	 */
 
 	public static void testCase1() throws InterruptedException {
 		final Object firstLock = new LockObject("firstLock");
@@ -186,10 +186,10 @@ public final class DeadlockCoreGenerator {
 		}
 	}
 
-	/* *****************************
+	/*
 	 *         Test Case #2
 	 *       JOS, JSO deadlock.
-	 * *****************************/
+	 */
 
 	public static void testCase2() throws InterruptedException {
 		setup();
@@ -224,10 +224,10 @@ public final class DeadlockCoreGenerator {
 		}
 	}
 
-	/* *****************************
+	/*
 	 *         Test Case #3
 	 *       JSS, JSS deadlock.
-	 * *****************************/
+	 */
 
 	public static void testCase3() throws InterruptedException {
 		setup();
@@ -259,10 +259,10 @@ public final class DeadlockCoreGenerator {
 		}
 	}
 
-	/* *****************************
+	/*
 	 *         Test Case #4
 	 *       JSS, NSS deadlock.
-	 * *****************************/
+	 */
 
 	public static void testCase4() {
 		setup();
@@ -272,20 +272,20 @@ public final class DeadlockCoreGenerator {
 		enterSecondMonitor(); // deadlock
 	}
 
-	/* *****************************
+	/*
 	 *         Test Case #5
 	 *       NSS, NSS deadlock.
-	 * *****************************/
+	 */
 
 	public static void testCase5() {
 		setup();
 		createNativeDeadlock();
 	}
 
-	/* *****************************
+	/*
 	 *         Test Case #6
 	 * Test JOS, NSS, JSO deadlock.
-	 * *****************************/
+	 */
 
 	private static final Object lock1Test6 = new LockObject("lock1Test6");
 

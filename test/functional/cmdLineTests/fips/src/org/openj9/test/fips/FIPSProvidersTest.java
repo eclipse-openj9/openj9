@@ -1,4 +1,4 @@
-/*******************************************************************************
+/*
  * Copyright IBM Corp. and others 2022
  *
  * This program and the accompanying materials are made available under
@@ -18,7 +18,7 @@
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
- *******************************************************************************/
+ */
 package org.openj9.test.fips;
 
 import java.security.NoSuchProviderException;
@@ -36,13 +36,13 @@ public class FIPSProvidersTest {
         // Make sure there are 4 providers available when FIPS mode is enabled.
         Provider[] providers = Security.getProviders();
 
-        /*********************
+        /*
          * There should be four providers when FIPS mode is enabled.
          * SunPKCS11-NSS-FIPS
          * SUN
          * SunEC
          * SunJSSE
-         *********************/
+         */
 
         // remove duplicate
         Set<Provider> set = new HashSet<>();
