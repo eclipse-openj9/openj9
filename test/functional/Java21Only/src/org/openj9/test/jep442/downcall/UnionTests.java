@@ -48,7 +48,7 @@ import static java.lang.foreign.ValueLayout.*;
  * The test suite is mainly intended for the following Linker API:
  * MethodHandle downcallHandle(MemorySegment symbol, FunctionDescriptor function)
  */
-@Test(groups = { "level.sanity" })
+@Test(groups = { "level.sanity", "disabled.os.zos" })
 public class UnionTests {
 	private static Linker linker = Linker.nativeLinker();
 

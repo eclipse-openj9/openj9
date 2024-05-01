@@ -35,7 +35,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			-excludegroups $(DEFAULT_EXCLUDE); \
 			$(TEST_STATUS)
 		</command>
-		<platformRequirements>bits.64,^arch.arm,^arch.riscv,^os.zos,^os.sunos</platformRequirements>
+		<platformRequirements>bits.64,^arch.arm,^arch.riscv,^os.sunos</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -44,6 +44,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		</groups>
 		<impls>
 			<impl>openj9</impl>
+			<impl>ibm</impl>
 		</impls>
 		<versions>
 			<version>21</version>
