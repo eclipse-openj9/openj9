@@ -2401,3 +2401,10 @@ J9NLS_VM_CRIU_CHECK_TRANSITION_TO_DEBUG_INTERPRETER_FAILED.explanation=checkTran
 J9NLS_VM_CRIU_CHECK_TRANSITION_TO_DEBUG_INTERPRETER_FAILED.system_action=The JVM will throw a JVMRestoreException.
 J9NLS_VM_CRIU_CHECK_TRANSITION_TO_DEBUG_INTERPRETER_FAILED.user_response=View CRIU documentation to determine how to resolve the error.
 # END NON-TRANSLATABLE
+
+J9NLS_VM_CLASS_NAME_EXCEEDS_MAX_LENGTH=Class name exceeds maximum length
+# START NON-TRANSLATABLE
+J9NLS_VM_CLASS_NAME_EXCEEDS_MAX_LENGTH.explanation=Class name cannot be longer than 65535 characters.
+J9NLS_VM_CLASS_NAME_EXCEEDS_MAX_LENGTH.system_action=The JVM will throw a ClassNotFoundException.
+J9NLS_VM_CLASS_NAME_EXCEEDS_MAX_LENGTH.user_response=Shorten the class name.
+# END NON-TRANSLATABLE
