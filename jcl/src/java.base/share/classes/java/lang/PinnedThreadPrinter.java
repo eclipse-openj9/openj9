@@ -27,9 +27,7 @@ import java.lang.StackWalker.StackFrame;
 import java.lang.StackWalker.StackFrameImpl;
 import java.util.List;
 import java.util.stream.Collectors;
-/*[IF JAVA_SPEC_VERSION >= 22]*/
 import jdk.internal.vm.Continuation;
-/*[ENDIF] JAVA_SPEC_VERSION >= 22 */
 
 /**
  * Prints the stack trace of a pinned thread that is attempting to yield.
@@ -57,10 +55,8 @@ final class PinnedThreadPrinter {
 		}
 	}
 
-/*[IF JAVA_SPEC_VERSION >= 22]*/
 	static void printStackTrace(PrintStream out, Continuation.Pinned reason, boolean printAll) {
 		out.println(Thread.currentThread() + " reason:" + reason); //$NON-NLS-1$
 		printStackTraceHelper(out, printAll);
 	}
-/*[ENDIF] JAVA_SPEC_VERSION >= 22 */
 }
