@@ -596,6 +596,7 @@ javaOffloadSwitchOffWithReason(J9VMThread *currentThread, UDATA reason);
 
 #endif /* defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT) */
 
+#if defined(J9VM_OPT_JFR)
 /* ------------------- jfr.cpp ------------------- */
 
 /**
@@ -615,6 +616,8 @@ initializeJFR(J9JavaVM *vm);
  */
 void
 jfrExecutionSample(J9VMThread *currentThread);
+
+#endif /* defined(J9VM_OPT_JFR) */
 
 /* ------------------- ArrayCopyHelpers.cpp ----------------- */
 

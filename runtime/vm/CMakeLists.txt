@@ -195,6 +195,12 @@ if(J9VM_OPT_CRIU_SUPPORT)
 	)
 endif()
 
+if(J9VM_OPT_JFR)
+	list(APPEND main_sources
+		jfr.cpp
+	)
+endif()
+
 if(NOT JAVA_SPEC_VERSION LESS 19)
 	list(APPEND main_sources
 		ContinuationHelpers.cpp
