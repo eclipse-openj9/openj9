@@ -11762,6 +11762,14 @@ J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::CodeGenerator *c
       case TR::java_lang_String_andOR:
          return TR::TreeEvaluator::andORStringEvaluator(node, cg);
 
+      case TR::java_math_BigInteger_implSquareToLen:
+      {
+         auto helper = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_intrinsicImplSquareToLen);
+         helper->getSymbol()->getMethodSymbol()->setLinkage(TR_CHelper);
+         returnRegister = TR::TreeEvaluator::performHelperCall(node, helper, TR::acall, /*spillFPRegs*/ true, cg);
+         break;
+      }
+
       default:
          break;
       }
