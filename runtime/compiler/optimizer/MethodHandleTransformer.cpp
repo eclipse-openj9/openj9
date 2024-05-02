@@ -406,26 +406,6 @@ TR_MethodHandleTransformer::getObjectInfoOfNode(TR::Node* node)
                comp(), dmhIndex, trace());
             }
 #endif
-         case TR::java_lang_invoke_Invokers_directVarHandleTarget:
-         case TR::java_lang_invoke_VarHandle_asDirect:
-            {
-            auto vhIndex = getObjectInfoOfNode(node->getLastChild());
-            if (knot && isKnownObject(vhIndex) && !knot->isNull(vhIndex))
-               {
-               auto directVHIndex = comp()->fej9()->getDirectVarHandleTargetIndex(comp(), vhIndex);
-               if (directVHIndex == TR::KnownObjectTable::UNKNOWN)
-                  break;
-               if (trace())
-                  {
-                  if (rm == TR::java_lang_invoke_Invokers_directVarHandleTarget)
-                     traceMsg(comp(), "Invokers_directVarHandleTarget with known VarHandle object %d, updating node n%dn with known object info\n", directVHIndex, node->getGlobalIndex());
-                  else traceMsg(comp(), "VarHandle_asDirect with known VarHandle object %d, updating node n%dn with known object info\n", directVHIndex, node->getGlobalIndex());
-                  }
-               node->setKnownObjectIndex(directVHIndex);
-               return directVHIndex;
-               }
-            break;
-            }
          case TR::java_lang_invoke_Invokers_checkVarHandleGenericType:
             {
             auto vhIndex = getObjectInfoOfNode(node->getFirstArgument());

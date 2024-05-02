@@ -1073,22 +1073,6 @@ InterpreterEmulator::getReturnValue(TR_ResolvedMethod *callee)
             }
          break;
          }
-      case TR::java_lang_invoke_VarHandle_asDirect:
-      case TR::java_lang_invoke_Invokers_directVarHandleTarget:
-         {
-         Operand* varHandleOperand = top();
-         TR::KnownObjectTable::Index vhIndex = varHandleOperand->getKnownObjectIndex();
-         TR::KnownObjectTable *knot = comp()->getKnownObjectTable();
-         if (knot
-              && vhIndex != TR::KnownObjectTable::UNKNOWN
-              && !knot->isNull(vhIndex))
-            {
-            TR::KnownObjectTable::Index directVHIndex = comp()->fej9()->getDirectVarHandleTargetIndex(comp(), vhIndex);
-            if (directVHIndex != TR::KnownObjectTable::UNKNOWN)
-               result = new (trStackMemory()) KnownObjOperand(directVHIndex);
-            }
-         break;
-         }
       case TR::java_lang_invoke_Invokers_checkVarHandleGenericType:
          {
          Operand* varHandleOperand = topn(1);

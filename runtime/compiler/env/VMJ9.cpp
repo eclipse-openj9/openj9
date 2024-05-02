@@ -5161,21 +5161,6 @@ TR_J9VMBase::getMethodHandleTableEntryIndex(TR::Compilation *comp, TR::KnownObje
    return result;
    }
 
-
-TR::KnownObjectTable::Index
-TR_J9VMBase::getDirectVarHandleTargetIndex(TR::Compilation* comp, TR::KnownObjectTable::Index vhIndex)
-   {
-   // Since IndirectVarHandle.asDirect can override VarHandle.asDirect, an exact type check here is necessary
-   const char * varHandleClassName = "java/lang/invoke/VarHandle";
-   TR_OpaqueClassBlock * varHandleClass =
-      getSystemClassFromClassName(varHandleClassName, strlen(varHandleClassName));
-   TR_OpaqueClassBlock * objectClass = getObjectClassFromKnownObjectIndex(comp, vhIndex);
-   if (NULL == varHandleClass || NULL == objectClass || varHandleClass != objectClass)
-      return TR::KnownObjectTable::UNKNOWN;
-
-   return vhIndex;
-   }
-
 bool
 TR_J9VMBase::isMethodHandleExpectedType(
    TR::Compilation *comp,
