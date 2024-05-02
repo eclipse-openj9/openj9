@@ -5206,6 +5206,33 @@ typedef struct J9VMContinuation {
 } J9VMContinuation;
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
+typedef struct J9JFRThreadData {
+	UDATA bufferSize;
+	UDATA bufferRemaining;
+	U_8 *bufferStart;
+	U_8 *bufferCurrent;
+} J9JFRThreadData;
+
+/* JFR event structures */
+
+#define J9FR_EVENT_COMMON_FIELDS \
+	I_64 time; \
+	UDATA eventType; \
+	UDATA threadState; \
+	struct J9VMThread *vmThread;
+
+typedef struct J9JFREvent {
+	J9FR_EVENT_COMMON_FIELDS
+} J9JFREvent;
+
+/* Variable-size structure - stackTraceSize worth of UDATA follow the fixed portion */
+typedef struct J9JFRExecutionSample {
+	J9FR_EVENT_COMMON_FIELDS
+	UDATA stackTraceSize;
+} J9JFRExecutionSample;
+
+#define J9JFREXECUTIONSAMPLE_STACKTRACE(sample) ((UDATA*)(((J9JFRExecutionSample*)(sample)) + 1))
+
 /* @ddr_namespace: map_to_type=J9VMThread */
 
 typedef struct J9VMThread {
@@ -5444,6 +5471,9 @@ typedef struct J9VMThread {
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
 	UDATA safePointCount;
 	struct J9HashTable * volatile utfCache;
+#if defined(J9VM_OPT_JFR)
+	J9JFRThreadData jfrData;
+#endif /* defined(J9VM_OPT_JFR) */
 #if JAVA_SPEC_VERSION >= 16
 	U_64 *ffiArgs;
 	UDATA ffiArgCount;
