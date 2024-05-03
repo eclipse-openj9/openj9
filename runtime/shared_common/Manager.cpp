@@ -65,11 +65,13 @@ SH_Manager::HashLinkedListImpl::initialize(const J9UTF8* key_, const ShcItem* it
 
 	_key = key_? (U_8*)J9UTF8_DATA(key_): NULL;
 	_keySize = key_? (U_16)J9UTF8_LENGTH(key_): 0;
+#if JAVA_SPEC_VERSION < 21
 	char *end = getLastDollarSignOfLambdaClassName((const char *)_key, _keySize);
 	if (NULL != end) {
 		/* if it's a lambda class, we need the part of the class name before the index number so that classes that are the same but have different index numbers can get matched */
 		_keySize = (U_16)(end - (char *)_key + 1);
 	}
+#endif /* JAVA_SPEC_VERSION < 21 */
 	_item = item_;
 	/* Create the required circular link during initialization so
 	 * it will be there when the entry is added to the hashtable under

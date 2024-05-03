@@ -130,7 +130,7 @@ private:
 	InterfaceInjectionInfo _interfaceInjectionInfo;
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
-	BuildResult handleAnonClassName(J9CfrClassFile *classfile, bool *isLambda, ROMClassCreationContext *context);
+	BuildResult handleAnonClassName(J9CfrClassFile *classfile, ROMClassCreationContext *context);
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	BuildResult injectInterfaces(ClassFileOracle *classFileOracle);
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
@@ -159,9 +159,21 @@ private:
 			ROMClassWriter *romClassWriter, SRPOffsetTable *srpOffsetTable, U_32 romSize, U_32 modifiers, U_32 extraModifiers, U_32 optionalFlags,
 			ROMClassStringInternManager *internManager, ROMClassCreationContext *context, SizeInformation *sizeInformation);
 
-	bool compareROMClassForEquality(U_8 *romClass, bool romClassIsShared,
-			ROMClassWriter *romClassWriter, SRPOffsetTable *srpOffsetTable, SRPKeyProducer *srpKeyProducer, ClassFileOracle *classFileOracle,
-			U_32 modifiers, U_32 extraModifiers, U_32 optionalFlags, ROMClassCreationContext * context, U_32 sizeToCompareForLambda, bool isLambda);
+	bool compareROMClassForEquality(
+			U_8 *romClass,
+			bool romClassIsShared,
+			ROMClassWriter *romClassWriter,
+			SRPOffsetTable *srpOffsetTable,
+			SRPKeyProducer *srpKeyProducer,
+			ClassFileOracle *classFileOracle,
+			U_32 modifiers,
+			U_32 extraModifiers,
+			U_32 optionalFlags,
+#if JAVA_SPEC_VERSION < 21
+			U_32 sizeToCompareForLambda,
+#endif /* JAVA_SPEC_VERSION < 21 */
+			ROMClassCreationContext *context);
+
 	SharedCacheRangeInfo getSharedCacheSRPRangeInfo(void *address);
 	void getSizeInfo(ROMClassCreationContext *context, ROMClassWriter *romClassWriter, SRPOffsetTable *srpOffsetTable, bool *countDebugDataOutOfLine, SizeInformation *sizeInformation);
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)

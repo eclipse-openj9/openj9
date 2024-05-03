@@ -233,13 +233,17 @@ public:
 	bool shouldPreserveLocalVariablesInfo() const { return 0 == (_bctFlags & (BCT_StripDebugVars|BCT_StripDebugAttributes)); }
 	bool shouldPreserveSourceFileName() const { return 0 == (_bctFlags & (BCT_StripDebugSource|BCT_StripDebugAttributes)); }
 	bool shouldPreserveSourceDebugExtension() const { return 0 == (_bctFlags & (BCT_StripSourceDebugExtension|BCT_StripDebugAttributes)); }
-	bool isClassUnsafe() const { return J9_FINDCLASS_FLAG_UNSAFE == (_findClassFlags & J9_FINDCLASS_FLAG_UNSAFE); }
-	bool isClassAnon() const { return J9_FINDCLASS_FLAG_ANON == (_findClassFlags & J9_FINDCLASS_FLAG_ANON); }
+	bool isClassUnsafe() const { return J9_ARE_ALL_BITS_SET(_findClassFlags, J9_FINDCLASS_FLAG_UNSAFE); }
+	bool isClassAnon() const { return J9_ARE_ALL_BITS_SET(_findClassFlags, J9_FINDCLASS_FLAG_ANON); }
 	bool alwaysSplitBytecodes() const { return J9_ARE_ANY_BITS_SET(_bctFlags, BCT_AlwaysSplitBytecodes); }
-	bool isClassHidden() const { return J9_FINDCLASS_FLAG_HIDDEN == (_findClassFlags & J9_FINDCLASS_FLAG_HIDDEN);}
-	bool isHiddenClassOptNestmateSet() const { return J9_FINDCLASS_FLAG_CLASS_OPTION_NESTMATE == (_findClassFlags & J9_FINDCLASS_FLAG_CLASS_OPTION_NESTMATE);}
-	bool isHiddenClassOptStrongSet() const { return J9_FINDCLASS_FLAG_CLASS_OPTION_STRONG == (_findClassFlags & J9_FINDCLASS_FLAG_CLASS_OPTION_STRONG);}
+	bool isClassHidden() const { return J9_ARE_ALL_BITS_SET(_findClassFlags, J9_FINDCLASS_FLAG_HIDDEN); }
+	bool isHiddenClassOptNestmateSet() const { return J9_ARE_ALL_BITS_SET(_findClassFlags, J9_FINDCLASS_FLAG_CLASS_OPTION_NESTMATE); }
+	bool isHiddenClassOptStrongSet() const { return J9_ARE_ALL_BITS_SET(_findClassFlags, J9_FINDCLASS_FLAG_CLASS_OPTION_STRONG); }
 	bool isDoNotShareClassFlagSet() const {return J9_ARE_ALL_BITS_SET(_findClassFlags, J9_FINDCLASS_FLAG_DO_NOT_SHARE);}
+	bool isLambdaClass() const { return J9_ARE_ALL_BITS_SET(_findClassFlags, J9_FINDCLASS_FLAG_LAMBDA); }
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	bool isLambdaFormClass() const { return J9_ARE_ALL_BITS_SET(_findClassFlags, J9_FINDCLASS_FLAG_LAMBDAFORM); }
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 	bool isClassUnmodifiable() const {
 		bool unmodifiable = false;
@@ -398,32 +402,31 @@ public:
 	{
 		if (!isRedefining() && !isRetransforming()) {
 			if (NULL != _className) {
-				U_16 classNameLenToCompare0 = (U_16)_classNameLength;
+				U_16 classNameLenToCompare0 = static_cast<U_16>(_classNameLength);
 				U_16 classNameLenToCompare1 = classNameLength;
 				BOOLEAN misMatch = FALSE;
 				if (isClassHidden()) {
+					/* For hidden classes, className has the ROM address appended, _className does not. */
+					classNameLenToCompare1 = static_cast<U_16>(_classNameLength);
+#if JAVA_SPEC_VERSION < 21
 					if (isROMClassShareable()) {
-						U_8* lambdaClass0 = (U_8*)getLastDollarSignOfLambdaClassName((const char*)_className, _classNameLength);
-						U_8* lambdaClass1 = (U_8*)getLastDollarSignOfLambdaClassName((const char*)className, classNameLength);
-						if ((NULL != lambdaClass0) 
-							&& (NULL != lambdaClass1)
-						) {
-							/**
-							 * Lambda class has class name: HostClassName$$Lambda$<IndexNumber>/0x0000000000000000. 
-							 * Do not need to compare the IndexNumber as it can be different from run to run.
-							 */
-							classNameLenToCompare0 = (U_16)(lambdaClass0 - _className + 1);
-							classNameLenToCompare1 = (U_16)(lambdaClass1 - className + 1);
-						} else if ((NULL == lambdaClass0) && (NULL == lambdaClass1)) {
-							/* for hidden class className has ROM address appended at the end, _className does not have that */
-							classNameLenToCompare1 = (U_16)_classNameLength;
-						} else {
+						/*
+						 * Before JDK21, Lambda class names are in the format:
+						 *	HostClassName$$Lambda$<IndexNumber>/<zeroed out ROM_ADDRESS>
+						 * Do not compare the IndexNumber as it can be different from run to run.
+						 */
+						U_8 *lambdaClass0 = reinterpret_cast<U_8 *>(getLastDollarSignOfLambdaClassName(
+									reinterpret_cast<const char *>(_className), _classNameLength));
+						U_8 *lambdaClass1 = reinterpret_cast<U_8 *>(getLastDollarSignOfLambdaClassName(
+									reinterpret_cast<const char *>(className), classNameLength));
+						if ((NULL != lambdaClass0) && (NULL != lambdaClass1)) {
+							classNameLenToCompare0 = static_cast<U_16>(lambdaClass0 - _className + 1);
+							classNameLenToCompare1 = static_cast<U_16>(lambdaClass1 - className + 1);
+						} else if ((NULL == lambdaClass0) != (NULL == lambdaClass1)) {
 							misMatch = TRUE;
 						}
-					} else {
-						/* for hidden class className has ROM address appended at the end, _className does not have that */
-						classNameLenToCompare1 = (U_16)_classNameLength;
 					}
+#endif /* JAVA_SPEC_VERSION < 21 */
 				}
 				if (misMatch
 				|| !J9UTF8_DATA_EQUALS(_className, classNameLenToCompare0, className, classNameLenToCompare1)
