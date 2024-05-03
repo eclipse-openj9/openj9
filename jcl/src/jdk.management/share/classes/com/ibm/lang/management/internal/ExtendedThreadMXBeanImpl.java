@@ -100,10 +100,12 @@ public final class ExtendedThreadMXBeanImpl extends ThreadMXBeanImpl implements 
 		return allocatedBytes;
 	}
 
+	/*[IF Sidecar18-SE-OpenJ9]*/
 	/**
 	 * {@inheritDoc}
 	 */
 	@Override
+	/*[ENDIF] Sidecar18-SE-OpenJ9 */
 	public long getTotalThreadAllocatedBytes() {
 		if (!isThreadAllocatedMemorySupported()) {
 			throw new UnsupportedOperationException();
