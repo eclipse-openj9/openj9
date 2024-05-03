@@ -732,6 +732,27 @@ JVM_IsValhallaEnabled()
 {
 	return JNI_TRUE;
 }
+
+JNIEXPORT jboolean JNICALL
+JVM_IsImplicitlyConstructibleClass(JNIEnv *env, jclass cls)
+{
+	assert(!"JVM_IsImplicitlyConstructibleClass unimplemented");
+	return JNI_FALSE;
+}
+
+JNIEXPORT jboolean JNICALL
+JVM_IsNullRestrictedArray(JNIEnv *env, jobject obj)
+{
+	assert(!"JVM_IsNullRestrictedArray unimplemented");
+	return JNI_FALSE;
+}
+
+JNIEXPORT jarray JNICALL
+JVM_NewNullRestrictedArray(JNIEnv *env, jclass cls, jint length)
+{
+	assert(!"JVM_NewNullRestrictedArray unimplemented");
+	return NULL;
+}
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 #if JAVA_SPEC_VERSION >= 22

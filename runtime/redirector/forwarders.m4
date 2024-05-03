@@ -428,6 +428,12 @@ _IF([JAVA_SPEC_VERSION >= 21],
 	[_X(JVM_VirtualThreadUnmount, JNICALL, false, void, JNIEnv *env, jobject vthread, jboolean hide)])
 _IF([defined(J9VM_OPT_VALHALLA_VALUE_TYPES)],
 	[_X(JVM_IsValhallaEnabled, JNICALL, false, jboolean, void)])
+_IF([defined(J9VM_OPT_VALHALLA_VALUE_TYPES)],
+	[_X(JVM_IsImplicitlyConstructibleClass, JNICALL, false, jboolean, JNIEnv *env, jclass cls)])
+_IF([defined(J9VM_OPT_VALHALLA_VALUE_TYPES)],
+	[_X(JVM_IsNullRestrictedArray, JNICALL, false, jboolean, JNIEnv *env, jobject obj)])
+_IF([defined(J9VM_OPT_VALHALLA_VALUE_TYPES)],
+	[_X(JVM_NewNullRestrictedArray, JNICALL, false, jarray, JNIEnv *env, jclass cls, jint length)])
 _IF([JAVA_SPEC_VERSION >= 22],
 	[_X(JVM_ExpandStackFrameInfo, JNICALL, false, void, JNIEnv *env, jobject object)])
 _IF([JAVA_SPEC_VERSION == 22],

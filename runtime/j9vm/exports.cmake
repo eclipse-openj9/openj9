@@ -469,5 +469,8 @@ endif()
 if(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	jvm_add_exports(jvm
 		JVM_IsValhallaEnabled
+		JVM_IsImplicitlyConstructibleClass
+		JVM_IsNullRestrictedArray
+		JVM_NewNullRestrictedArray
 	)
 endif()

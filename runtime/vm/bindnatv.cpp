@@ -288,8 +288,8 @@ static inlMapping mappings[] = {
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	{ "Java_jdk_internal_misc_Unsafe_getValue__Ljava_lang_Object_2JLjava_lang_Class_2", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_GETVALUE },
 	{ "Java_jdk_internal_misc_Unsafe_putValue__Ljava_lang_Object_2JLjava_lang_Class_2Ljava_lang_Object_2", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_PUTVALUE },
-	{ "Java_jdk_internal_misc_Unsafe_isFlattenedArray__Ljava_lang_Class_2", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ISFLATTENEDARRAY },
-	{ "Java_jdk_internal_misc_Unsafe_isFlattened__Ljava_lang_reflect_Field_2", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ISFLATTENED },
+	{ "Java_jdk_internal_misc_Unsafe_isFlatArray__Ljava_lang_Class_2", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ISFLATARRAY },
+	{ "Java_jdk_internal_misc_Unsafe_isFlatField__Ljava_lang_reflect_Field_2", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ISFLATFIELD },
 	{ "Java_jdk_internal_misc_Unsafe_isFieldAtOffsetFlattened__Ljava_lang_Class_2J", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ISFIELDATOFFSETFLATTENED },
 #endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
 	{ "Java_java_lang_Thread_onSpinWait__", J9_BCLOOP_SEND_TARGET_INL_THREAD_ON_SPIN_WAIT },
