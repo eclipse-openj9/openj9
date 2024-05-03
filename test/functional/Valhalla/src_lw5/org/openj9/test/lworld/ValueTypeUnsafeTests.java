@@ -142,13 +142,13 @@ public class ValueTypeUnsafeTests {
 
 	@Test
 	static public void testFlattenedFieldIsFlattened() throws Throwable {
-		boolean isFlattened = myUnsafe.isFlattened(vtPoint.getClass().getDeclaredField("x"));
+		boolean isFlattened = myUnsafe.isFlatField(vtPoint.getClass().getDeclaredField("x"));
 		assertEquals(isFlattened, isFlatteningEnabled);
 	}
 
 	@Test
 	static public void testFlattenedArrayIsFlattened() throws Throwable {
-		boolean isArrayFlattened = myUnsafe.isFlattenedArray(vtPointAry.getClass());
+		boolean isArrayFlattened = myUnsafe.isFlatArray(vtPointAry.getClass());
 		assertEquals(isArrayFlattened, isArrayFlatteningEnabled);
 	}
 
@@ -156,40 +156,40 @@ public class ValueTypeUnsafeTests {
 	static public void testRegularArrayIsNotFlattened() throws Throwable {
 		ClassTypePoint2D[] ary = {};
 		assertTrue(ary.getClass().isArray());
-		boolean isArrayFlattened = myUnsafe.isFlattenedArray(ary.getClass());
+		boolean isArrayFlattened = myUnsafe.isFlatArray(ary.getClass());
 		assertFalse(isArrayFlattened);
 	}
 
 	@Test
 	static public void testRegularFieldIsNotFlattened() throws Throwable {
 		ClassTypePoint2D p = new ClassTypePoint2D(1, 1);
-		boolean isFlattened = myUnsafe.isFlattened(p.getClass().getDeclaredField("x"));
+		boolean isFlattened = myUnsafe.isFlatField(p.getClass().getDeclaredField("x"));
 		assertFalse(isFlattened);
 	}
 
 	@Test
 	static public void testUnflattenableFieldInVTIsNotFlattened() throws Throwable {
 		ValueClassPoint2D p = new ValueClassPoint2D(new ValueClassInt(1), new ValueClassInt(2));
-		boolean isFlattened = myUnsafe.isFlattened(p.getClass().getDeclaredField("x"));
+		boolean isFlattened = myUnsafe.isFlatField(p.getClass().getDeclaredField("x"));
 		assertFalse(isFlattened);
 	}
 
 	@Test
 	static public void testFlattenedObjectIsNotFlattenedArray() throws Throwable {
-		boolean isArrayFlattened = myUnsafe.isFlattenedArray(vtPoint.getClass());
+		boolean isArrayFlattened = myUnsafe.isFlatArray(vtPoint.getClass());
 		assertFalse(isArrayFlattened);
 	}
 
 	@Test
 	static public void testNullIsNotFlattenedArray() throws Throwable {
-		boolean isArrayFlattened = myUnsafe.isFlattenedArray(null);
+		boolean isArrayFlattened = myUnsafe.isFlatArray(null);
 		assertFalse(isArrayFlattened);
 	}
 
 	@Test
 	static public void testPassingNullToIsFlattenedThrowsException() throws Throwable {
 		assertThrows(NullPointerException.class, () -> {
-			myUnsafe.isFlattened(null);
+			myUnsafe.isFlatField(null);
 		});
 	}
 

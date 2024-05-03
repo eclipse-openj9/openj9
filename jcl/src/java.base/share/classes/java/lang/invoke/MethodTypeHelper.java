@@ -29,9 +29,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.lang.StringBuilder;
-/*[IF INLINE-TYPES]*/
-import jdk.internal.value.PrimitiveClass;
-/*[ENDIF] INLINE-TYPES */
 
 import com.ibm.oti.util.Msg;
 import com.ibm.oti.vm.VM;
@@ -178,14 +175,7 @@ final class MethodTypeHelper {
 		}
 		/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 		if (c.isArray()) {
-		}
-		/*[IF INLINE-TYPES]*/
-		else if (PrimitiveClass.isPrimitiveClass(c)) {
-			name = new StringBuilder(name.length() + 2).
-				append('Q').append(name).append(';').toString();
-		}
-		/*[ENDIF] INLINE-TYPES */
-		else {
+		} else {
 			name = new StringBuilder(name.length() + 2).
 				append('L').append(name).append(';').toString();
 		}
