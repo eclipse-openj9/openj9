@@ -104,6 +104,27 @@ public final class ExtendedThreadMXBeanImpl extends ThreadMXBeanImpl implements 
 	 * {@inheritDoc}
 	 */
 	@Override
+	public long getTotalThreadAllocatedBytes() {
+		if (!isThreadAllocatedMemorySupported()) {
+			throw new UnsupportedOperationException();
+		}
+		if (!isThreadAllocatedMemoryEnabled()) {
+			return -1;
+		}
+		long total = 0;
+		long[] allocatedBytes = getThreadAllocatedBytes(getAllThreadIds());
+		for (long threadAllocated : allocatedBytes) {
+			if (threadAllocated != -1) {
+				total += threadAllocated;
+			}
+		}
+		return total;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
 	public long[] getThreadCpuTime(long[] threadIds) {
 		long[] result = new long[threadIds.length];
 		for (int i = 0; i < threadIds.length; i++) {
