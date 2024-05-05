@@ -455,13 +455,13 @@ static TR_OutlinedInstructions *generateArrayletReference(
       //
       if (loadNeedsDecompression)
          {
-		 if (comp->target().is64Bit() && comp->useCompressedPointers())
-		    {
+         if (comp->target().is64Bit() && comp->useCompressedPointers())
+            {
             if (shiftOffset > 0)
                {
                generateRegImmInstruction(TR::InstOpCode::SHL8RegImm1, node, loadOrStoreReg, shiftOffset, cg);
                }
-			}
+            }
          }
       }
    else
@@ -5828,8 +5828,6 @@ static void genHeapAlloc(
 
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
 
-   static char *disableAllocationAlignment = feGetEnv("TR_DisableAllocationAlignment");
-
    if (comp->getOptions()->realTimeGC())
       {
 #if defined(J9VM_GC_REALTIME)
@@ -6031,7 +6029,6 @@ static void genHeapAlloc(
       }
    else
       {
-      bool shouldAlignToCacheBoundary = false;
       bool isSmallAllocation = false;
 
       size_t heapAlloc_offset = offsetof(J9VMThread, heapAlloc);
@@ -6254,59 +6251,6 @@ static void genHeapAlloc(
          isSmallAllocation = allocationSizeOrDataOffset <= 0x40 ? true : false;
          allocationSizeOrDataOffset = (allocationSizeOrDataOffset+TR::Compiler->om.getObjectAlignmentInBytes()-1) & (-TR::Compiler->om.getObjectAlignmentInBytes());
 
-#if defined(J9VM_GC_THREAD_LOCAL_HEAP)
-         if ((node->getOpCodeValue() == TR::New) &&
-             (comp->getMethodHotness() >= hot) &&
-             !disableAllocationAlignment)
-            {
-            TR_OpaqueMethodBlock *ownMethod = node->getOwningMethod();
-            TR::Node *classChild = node->getFirstChild();
-            char * className = NULL;
-            TR_OpaqueClassBlock *clazz = NULL;
-
-            if (classChild &&
-                classChild->getSymbolReference() &&
-                !classChild->getSymbolReference()->isUnresolved())
-               {
-               TR::SymbolReference *symRef = classChild->getSymbolReference();
-               TR::Symbol *sym = symRef->getSymbol();
-
-               if (sym &&
-                   sym->getKind() == TR::Symbol::IsStatic &&
-                   sym->isClassObject())
-                  {
-                  TR::StaticSymbol * staticSym = symRef->getSymbol()->castToStaticSymbol();
-                  void * staticAddress = staticSym->getStaticAddress();
-                  if (symRef->getCPIndex() >= 0)
-                     {
-                     if (!staticSym->addressIsCPIndexOfStatic() && staticAddress)
-                        {
-                        int32_t len;
-                        className = TR::Compiler->cls.classNameChars(comp,symRef, len);
-                        clazz = (TR_OpaqueClassBlock *)staticAddress;
-                        }
-                     }
-                  }
-               }
-
-            uint32_t instanceSizeForAlignment = 30;
-            static char *p= feGetEnv("TR_AlignInstanceSize");
-            if (p)
-               instanceSizeForAlignment = atoi(p);
-
-            if ((comp->getMethodHotness() >= hot) && clazz &&
-                !cg->getCurrentEvaluationBlock()->isCold() &&
-                TR::Compiler->cls.classInstanceSize(clazz)>=instanceSizeForAlignment)
-               {
-               shouldAlignToCacheBoundary = true;
-
-               generateRegMemInstruction(TR::InstOpCode::LEARegMem(), node, eaxReal,
-                                         generateX86MemoryReference(eaxReal, 63, cg), cg);
-               generateRegImmInstruction(TR::InstOpCode::ANDRegImm4(), node, eaxReal, 0xFFFFFFC0, cg);
-               }
-            }
-#endif // J9VM_GC_THREAD_LOCAL_HEAP
-
          if ((uint32_t)allocationSizeOrDataOffset > cg->getMaxObjectSizeGuaranteedNotToOverflow())
             {
             generateRegRegInstruction(TR::InstOpCode::MOVRegReg(),  node, tempReg, eaxReal, cg);
@@ -6335,70 +6279,6 @@ static void genHeapAlloc(
       generateLabelInstruction(TR::InstOpCode::JA4, node, failLabel, cg);
 
 #if defined(J9VM_GC_THREAD_LOCAL_HEAP)
-
-      if (shouldAlignToCacheBoundary)
-         {
-         TR_ASSERT_FATAL_WITH_NODE(node, !disableAllocationAlignment, "Allocation alignment is disabled");
-
-         // Alignment to a cache line boundary may require inserting more padding than is normally
-         // necessary to achieve the alignment.  In those cases, insert GC dark matter to describe
-         // the space inserted.
-         //
-
-         generateRegInstruction(TR::InstOpCode::PUSHReg, node, tempReg, cg);
-         generateRegMemInstruction(TR::InstOpCode::LRegMem(),
-                                   node,
-                                   tempReg,
-                                   generateX86MemoryReference(vmThreadReg,heapAlloc_offset, cg), cg);
-
-         generateRegRegInstruction(TR::InstOpCode::SUBRegReg(),  node, eaxReal, tempReg, cg);
-
-         TR::LabelSymbol *doneAlignLabel = generateLabelSymbol(cg);
-         TR::LabelSymbol *multiSlotGapLabel = generateLabelSymbol(cg);
-
-         generateRegImmInstruction(TR::InstOpCode::CMPRegImms(), node, eaxReal, sizeof(uintptr_t), cg);
-         generateLabelInstruction(TR::InstOpCode::JB4, node, doneAlignLabel, cg);
-         generateLabelInstruction(TR::InstOpCode::JA4, node, multiSlotGapLabel, cg);
-
-         int32_t singleSlotHole;
-
-         singleSlotHole = J9_GC_SINGLE_SLOT_HOLE;
-
-         if (cg->comp()->target().is64Bit() && fej9->generateCompressedLockWord())
-            {
-            generateMemImmInstruction(TR::InstOpCode::S4MemImm4, node,
-                                      generateX86MemoryReference(tempReg, 0, cg), singleSlotHole, cg);
-            generateMemImmInstruction(TR::InstOpCode::S4MemImm4, node,
-                                      generateX86MemoryReference(tempReg, 4, cg), singleSlotHole, cg);
-            }
-         else
-            {
-            generateMemImmInstruction(
-            TR::InstOpCode::SMemImm4(), node,
-            generateX86MemoryReference(tempReg, 0, cg), singleSlotHole, cg);
-            }
-
-         generateLabelInstruction(TR::InstOpCode::JMP4, node, doneAlignLabel, cg);
-         generateLabelInstruction(TR::InstOpCode::label, node, multiSlotGapLabel, cg);
-
-         int32_t multiSlotHole;
-
-         multiSlotHole = J9_GC_MULTI_SLOT_HOLE;
-
-         generateMemImmInstruction(
-                                   TR::InstOpCode::SMemImm4(), node,
-                                   generateX86MemoryReference(tempReg, 0, cg),
-                                   multiSlotHole, cg);
-
-         generateMemRegInstruction(
-                                   TR::InstOpCode::SMemReg(), node,
-                                   generateX86MemoryReference(tempReg, sizeof(uintptr_t), cg),
-                                   eaxReal, cg);
-
-         generateLabelInstruction(TR::InstOpCode::label, node, doneAlignLabel, cg);
-         generateRegRegInstruction(TR::InstOpCode::ADDRegReg(), node, eaxReal, tempReg, cg);
-         generateRegInstruction(TR::InstOpCode::POPReg, node, tempReg, cg);
-         }
 
       // Make sure that the arraylet is aligned properly.
       //
@@ -6508,11 +6388,7 @@ static void genHeapAlloc2(
    bool generateArraylets = comp->generateArraylets();
    bool isTooSmallToPrefetch = false;
 
-   static char *disableAllocationAlignment = feGetEnv("TR_DisableAllocationAlignment");
-
       {
-      bool shouldAlignToCacheBoundary = false;
-
       // Load the base of the next available heap storage.  This load is done speculatively on the assumption that the
       // allocation will be inlined.  If the assumption turns out to be false then the performance impact should be minimal
       // because the helper will be called in that case.  It is necessary to insert this load here so that it dominates all
@@ -6588,7 +6464,7 @@ static void genHeapAlloc2(
          // Native 64-bit array headers do not need this adjustment because the
          // contiguous and discontiguous array headers are the same size.
          //
-         if (cg->comp()->target().is32Bit() || (cg->comp()->target().is64Bit() && comp->useCompressedPointers()))
+         if (comp->target().is32Bit() || (comp->target().is64Bit() && comp->useCompressedPointers()))
             {
             generateRegImmInstruction(TR::InstOpCode::CMP4RegImm4, node, segmentReg, 1, cg);
             generateRegImmInstruction(TR::InstOpCode::ADC4RegImm4, node, segmentReg, 0, cg);
@@ -6632,60 +6508,6 @@ static void genHeapAlloc2(
 
          allocationSizeOrDataOffset = (allocationSizeOrDataOffset+TR::Compiler->om.getObjectAlignmentInBytes()-1) & (-TR::Compiler->om.getObjectAlignmentInBytes());
 
-#if defined(J9VM_GC_THREAD_LOCAL_HEAP)
-         if ((node->getOpCodeValue() == TR::New) &&
-             (comp->getMethodHotness() >= hot) &&
-             !disableAllocationAlignment)
-            {
-            TR_OpaqueMethodBlock *ownMethod = node->getOwningMethod();
-
-            TR::Node *classChild = node->getFirstChild();
-            char * className = NULL;
-            TR_OpaqueClassBlock *clazz = NULL;
-
-            if (classChild &&
-                classChild->getSymbolReference() &&
-                !classChild->getSymbolReference()->isUnresolved())
-               {
-               TR::SymbolReference *symRef = classChild->getSymbolReference();
-               TR::Symbol *sym = symRef->getSymbol();
-
-               if (sym &&
-                   sym->getKind() == TR::Symbol::IsStatic &&
-                   sym->isClassObject())
-                  {
-                  TR::StaticSymbol * staticSym = symRef->getSymbol()->castToStaticSymbol();
-                  void * staticAddress = staticSym->getStaticAddress();
-                  if (symRef->getCPIndex() >= 0)
-                     {
-                     if (!staticSym->addressIsCPIndexOfStatic() && staticAddress)
-                        {
-                        int32_t len;
-                        className = TR::Compiler->cls.classNameChars(comp, symRef, len);
-                        clazz = (TR_OpaqueClassBlock *)staticAddress;
-                        }
-                     }
-                  }
-               }
-
-            uint32_t instanceSizeForAlignment = 30;
-            static char *p= feGetEnv("TR_AlignInstanceSize");
-            if (p)
-               instanceSizeForAlignment = atoi(p);
-
-            if ((comp->getMethodHotness() >= hot) && clazz &&
-                !cg->getCurrentEvaluationBlock()->isCold() &&
-                TR::Compiler->cls.classInstanceSize(clazz)>=instanceSizeForAlignment)
-               {
-               shouldAlignToCacheBoundary = true;
-
-               generateRegMemInstruction(TR::InstOpCode::LEARegMem(), node, eaxReal,
-                                         generateX86MemoryReference(eaxReal, 63, cg), cg);
-               generateRegImmInstruction(TR::InstOpCode::ANDRegImm4(), node, eaxReal, 0xFFFFFFC0, cg);
-               }
-            }
-#endif // J9VM_GC_THREAD_LOCAL_HEAP
-
          if ((uint32_t)allocationSizeOrDataOffset > cg->getMaxObjectSizeGuaranteedNotToOverflow())
             {
             generateRegRegInstruction(TR::InstOpCode::MOVRegReg(),  node, segmentReg, eaxReal, cg);
@@ -6723,71 +6545,6 @@ static void genHeapAlloc2(
 
       if (!isTooSmallToPrefetch && cg->enableTLHPrefetching())
          generateMemInstruction(TR::InstOpCode::PREFETCHNTA, node, generateX86MemoryReference(segmentReg, 0xc0, cg), cg);
-
-      if (shouldAlignToCacheBoundary)
-         {
-         TR_ASSERT_FATAL_WITH_NODE(node, !disableAllocationAlignment, "Allocation alignment is disabled");
-
-         // Alignment to a cache line boundary may require inserting more padding than is normally
-         // necessary to achieve the alignment.  In those cases, insert GC dark matter to describe
-         // the space inserted.
-         //
-
-         generateRegInstruction(TR::InstOpCode::PUSHReg, node, segmentReg, cg);
-         generateRegMemInstruction(TR::InstOpCode::LRegMem(),
-                                   node,
-                                   segmentReg,
-                                   generateX86MemoryReference(vmThreadReg,
-                                                              offsetof(J9VMThread, heapAlloc), cg), cg);
-
-         generateRegRegInstruction(TR::InstOpCode::SUBRegReg(),  node, eaxReal, segmentReg, cg);
-
-         TR::LabelSymbol *doneAlignLabel = generateLabelSymbol(cg);
-         TR::LabelSymbol *multiSlotGapLabel = generateLabelSymbol(cg);
-
-         generateRegImmInstruction(TR::InstOpCode::CMPRegImms(), node, eaxReal, sizeof(uintptr_t), cg);
-         generateLabelInstruction(TR::InstOpCode::JB4, node, doneAlignLabel, cg);
-         generateLabelInstruction(TR::InstOpCode::JA4, node, multiSlotGapLabel, cg);
-
-         int32_t singleSlotHole;
-
-         singleSlotHole = J9_GC_SINGLE_SLOT_HOLE;
-
-         if (cg->comp()->target().is64Bit() && fej9->generateCompressedLockWord())
-            {
-            generateMemImmInstruction(TR::InstOpCode::S4MemImm4, node,
-                                      generateX86MemoryReference(segmentReg, 0, cg), singleSlotHole, cg);
-            generateMemImmInstruction(TR::InstOpCode::S4MemImm4, node,
-                                      generateX86MemoryReference(segmentReg, 4, cg), singleSlotHole, cg);
-            }
-         else
-            {
-            generateMemImmInstruction(
-                                      TR::InstOpCode::SMemImm4(), node,
-                                      generateX86MemoryReference(segmentReg, 0, cg), singleSlotHole, cg);
-            }
-
-         generateLabelInstruction(TR::InstOpCode::JMP4, node, doneAlignLabel, cg);
-         generateLabelInstruction(TR::InstOpCode::label, node, multiSlotGapLabel, cg);
-
-         int32_t multiSlotHole;
-
-         multiSlotHole = J9_GC_MULTI_SLOT_HOLE;
-
-         generateMemImmInstruction(
-                                   TR::InstOpCode::SMemImm4(), node,
-                                   generateX86MemoryReference(segmentReg, 0, cg),
-                                   multiSlotHole, cg);
-
-         generateMemRegInstruction(
-                                   TR::InstOpCode::SMemReg(), node,
-                                   generateX86MemoryReference(segmentReg, sizeof(uintptr_t), cg),
-                                   eaxReal, cg);
-
-         generateLabelInstruction(TR::InstOpCode::label, node, doneAlignLabel, cg);
-         generateRegRegInstruction(TR::InstOpCode::ADDRegReg(), node, eaxReal, segmentReg, cg);
-         generateRegInstruction(TR::InstOpCode::POPReg, node, segmentReg, cg);
-         }
 
       // Make sure that the arraylet is aligned properly.
       //
@@ -8655,7 +8412,7 @@ J9::X86::TreeEvaluator::VMarrayStoreCHKEvaluator(
          sourceClassReg = scratchRegisterManager->findOrCreateScratchRegister();
          TR::MemoryReference *sourceClassMR = generateX86MemoryReference(sourceReg, TR::Compiler->om.offsetOfObjectVftField(), cg);
          generateRegMemInstruction(TR::InstOpCode::LRegMem(), node, sourceClassReg, sourceClassMR, cg);
-	 TR::TreeEvaluator::generateVFTMaskInstruction(node, sourceClassReg, cg);
+         TR::TreeEvaluator::generateVFTMaskInstruction(node, sourceClassReg, cg);
          }
 
       TR::MemoryReference *tempMR = generateX86MemoryReference(sourceClassReg, offsetof(J9Class,superclasses), cg);
@@ -8692,7 +8449,7 @@ J9::X86::TreeEvaluator::VMarrayStoreCHKEvaluator(
          TR::MemoryReference *destClassMR = generateX86MemoryReference(destReg, TR::Compiler->om.offsetOfObjectVftField(), cg);
 
          generateRegMemInstruction(TR::InstOpCode::LRegMem(), node, destComponentClassReg, destClassMR, cg);
-	 TR::TreeEvaluator::generateVFTMaskInstruction(node, destComponentClassReg, cg);
+         TR::TreeEvaluator::generateVFTMaskInstruction(node, destComponentClassReg, cg);
          TR::MemoryReference *destCompTypeMR =
             generateX86MemoryReference(destComponentClassReg, offsetof(J9ArrayClass, componentType), cg);
 
@@ -8777,8 +8534,8 @@ TR::Register *J9::X86::TreeEvaluator::VMarrayCheckEvaluator(TR::Node *node, TR::
       else
          generateRegMemInstruction(TR::InstOpCode::LRegMem(), node, tempReg, generateX86MemoryReference(object1Reg,  TR::Compiler->om.offsetOfObjectVftField(), cg), cg);
 
-	 TR::TreeEvaluator::generateVFTMaskInstruction(node, tempReg, cg);
-         generateMemImmInstruction(testOpCode, node, generateX86MemoryReference(tempReg,  offsetof(J9Class, classDepthAndFlags), cg), J9AccClassRAMArray, cg);
+      TR::TreeEvaluator::generateVFTMaskInstruction(node, tempReg, cg);
+      generateMemImmInstruction(testOpCode, node, generateX86MemoryReference(tempReg,  offsetof(J9Class, classDepthAndFlags), cg), J9AccClassRAMArray, cg);
       if (!snippetLabel)
          {
          snippetLabel = generateLabelSymbol(cg);
@@ -8827,12 +8584,12 @@ TR::Register *J9::X86::TreeEvaluator::VMarrayCheckEvaluator(TR::Node *node, TR::
       if (!node->isArrayChkReferenceArray1())
          {
 
-    	 if (TR::Compiler->om.compressObjectReferences())
+         if (TR::Compiler->om.compressObjectReferences())
             generateRegMemInstruction(TR::InstOpCode::L4RegMem, node, tempReg, generateX86MemoryReference(object1Reg,  TR::Compiler->om.offsetOfObjectVftField(), cg), cg);
          else
             generateRegMemInstruction(TR::InstOpCode::LRegMem(), node, tempReg, generateX86MemoryReference(object1Reg,  TR::Compiler->om.offsetOfObjectVftField(), cg), cg);
 
-	 TR::TreeEvaluator::generateVFTMaskInstruction(node, tempReg, cg);
+         TR::TreeEvaluator::generateVFTMaskInstruction(node, tempReg, cg);
          generateRegMemInstruction(TR::InstOpCode::LRegMem(), node, tempReg, generateX86MemoryReference(tempReg, offsetof(J9Class, classDepthAndFlags), cg), cg);
          // X = (ramclass->ClassDepthAndFlags)>>J9AccClassRAMShapeShift
 
@@ -8866,8 +8623,8 @@ TR::Register *J9::X86::TreeEvaluator::VMarrayCheckEvaluator(TR::Node *node, TR::
             generateRegMemInstruction(TR::InstOpCode::L4RegMem, node, tempReg, generateX86MemoryReference(object2Reg,  TR::Compiler->om.offsetOfObjectVftField(), cg), cg);
          else
             generateRegMemInstruction(TR::InstOpCode::LRegMem(), node, tempReg, generateX86MemoryReference(object2Reg,  TR::Compiler->om.offsetOfObjectVftField(), cg), cg);
-	    TR::TreeEvaluator::generateVFTMaskInstruction(node, tempReg, cg);
-            generateMemImmInstruction(testOpCode, node, generateX86MemoryReference(tempReg,  offsetof(J9Class, classDepthAndFlags), cg), J9AccClassRAMArray, cg);
+         TR::TreeEvaluator::generateVFTMaskInstruction(node, tempReg, cg);
+         generateMemImmInstruction(testOpCode, node, generateX86MemoryReference(tempReg,  offsetof(J9Class, classDepthAndFlags), cg), J9AccClassRAMArray, cg);
          if (!snippetLabel)
             {
             snippetLabel = generateLabelSymbol(cg);
@@ -10133,7 +9890,7 @@ bool J9::X86::TreeEvaluator::VMinlineCallEvaluator(
            break;
            }
         default:
-      	  break;
+           break;
          }
       }
 
@@ -10153,7 +9910,7 @@ bool J9::X86::TreeEvaluator::VMinlineCallEvaluator(
             }
 #endif
          default:
-         	break;
+            break;
          }
       }
 
