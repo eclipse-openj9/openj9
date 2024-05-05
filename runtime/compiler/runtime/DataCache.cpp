@@ -293,6 +293,19 @@ TR_DataCache* TR_DataCacheManager::allocateNewDataCache(uint32_t minimumSize)
                dataCache->_status = 0;
                dataCache->_vmThread = NULL;
                dataCache->_allocationMark = dataCacheSeg->heapAlloc;
+
+#ifdef LINUX
+               if (OMR::RSSReport::instance())
+                  {
+                  J9JavaVM * javaVM = jitConfig->javaVM;
+                  PORT_ACCESS_FROM_JAVAVM(javaVM); // for j9vmem_supported_page_sizes
+
+                  dataCache->_rssRegion = OMR::RSSRegion("data cache", dataCacheSeg->heapBase, segSize, OMR::RSSRegion::lowToHigh,
+                                                         j9vmem_supported_page_sizes()[0]);
+                  OMR::RSSReport::instance()->addRegion(&dataCache->_rssRegion);
+                  }
+#endif
+
                _numAllocatedCaches++;
                _totalSegmentMemoryAllocated += (uint32_t)allocatedSize;
 #ifdef DATA_CACHE_DEBUG
@@ -301,6 +314,7 @@ TR_DataCache* TR_DataCacheManager::allocateNewDataCache(uint32_t minimumSize)
 #endif
                if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
                   TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "Allocated new data cache segment starting at address %p", dataCacheSeg->heapBase);
+
 #ifdef LINUX
                if (_disclaimEnabled)
                   {
@@ -741,7 +755,7 @@ extern "C" {
 #endif
 }
 
-//#define DEBUG_DISCLAIM
+#define DEBUG_DISCLAIM  // GITA
 //----------------------------- disclaimSegment -----------------------------
 // Disclaim memory for the given segment
 // Return 1 if the memory segment was disclaimed, or 0 otherwise
