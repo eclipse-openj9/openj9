@@ -293,6 +293,18 @@ TR_DataCache* TR_DataCacheManager::allocateNewDataCache(uint32_t minimumSize)
                dataCache->_status = 0;
                dataCache->_vmThread = NULL;
                dataCache->_allocationMark = dataCacheSeg->heapAlloc;
+               dataCache->_rssRegion = NULL;
+
+               if (OMR::RSSReport::instance())
+                  {
+                  J9JavaVM * javaVM = jitConfig->javaVM;
+                  PORT_ACCESS_FROM_JAVAVM(javaVM); // for j9vmem_supported_page_sizes
+
+                  dataCache->_rssRegion = new (PERSISTENT_NEW) OMR::RSSRegion("data cache", dataCacheSeg->heapBase, segSize, OMR::RSSRegion::lowToHigh,
+                                                         j9vmem_supported_page_sizes()[0]);
+                  OMR::RSSReport::instance()->addRegion(dataCache->_rssRegion);
+                  }
+
                _numAllocatedCaches++;
                _totalSegmentMemoryAllocated += (uint32_t)allocatedSize;
 #ifdef DATA_CACHE_DEBUG
@@ -301,6 +313,7 @@ TR_DataCache* TR_DataCacheManager::allocateNewDataCache(uint32_t minimumSize)
 #endif
                if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
                   TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "Allocated new data cache segment starting at address %p", dataCacheSeg->heapBase);
+
 #ifdef LINUX
                if (_disclaimEnabled)
                   {
@@ -1186,4 +1199,3 @@ TR_InstrumentedDataCacheManager::calculatePoolSize()
       }
    return poolSize;
    }
-
