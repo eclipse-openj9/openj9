@@ -4639,6 +4639,7 @@ void memoryDisclaimLogic(TR::CompilationInfo *compInfo, uint64_t crtElapsedTime,
 #endif
    // Don't do anything during startup phase
    J9JavaVM *javaVM = jitConfig->javaVM;
+
    if (javaVM->phase != J9VM_PHASE_NOT_STARTUP || jitState == STARTUP_STATE)
       return;
 
@@ -4702,6 +4703,23 @@ void memoryDisclaimLogic(TR::CompilationInfo *compInfo, uint64_t crtElapsedTime,
 #endif // J9VM_INTERP_PROFILING_BYTECODES
    }
 
+void rssReportLogic(TR::CompilationInfo *compInfo)
+   {
+   static OMR::RSSReport *rssReport = OMR::RSSReport::instance();
+
+   if (rssReport)
+      {
+      static int printRSS = 0;
+
+      printRSS++;
+
+      if (printRSS == 2)   // ~every second
+         {
+         rssReport->printRegions();
+         printRSS = 0;
+         }
+      }
+   }
 
 static void samplingObservationsLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInfo)
    {
@@ -4748,6 +4766,8 @@ static uint64_t timeToAllocateTrackingHT = 0xffffffffffffffff; // never
 static bool lateDisclaimNeeded = true;
 
 #define GCR_HYSTERESIS 100
+
+
 
 static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInfo, uint32_t diffTime)
    {
@@ -5392,6 +5412,8 @@ static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInf
       printRSS = 0;
       }
 #endif
+
+   rssReportLogic(compInfo);
 
    if (lateDisclaimNeeded)
       {

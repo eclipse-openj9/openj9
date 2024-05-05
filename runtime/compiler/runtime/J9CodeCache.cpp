@@ -146,6 +146,10 @@ J9::CodeCache::initialize(TR::CodeCacheManager *manager,
    if (!self()->OMR::CodeCache::initialize(manager, codeCacheSegment, allocatedCodeCacheSizeInBytes))
       return false;
 
+   J9JavaVM * javaVM = jitConfig->javaVM;
+   PORT_ACCESS_FROM_JAVAVM(javaVM); // for j9vmem_supported_page_sizes
+   _coldRSSRegion.setPageSize(j9vmem_supported_page_sizes()[0]);
+
    self()->setInitialAllocationPointers();
 
 #ifdef LINUX
