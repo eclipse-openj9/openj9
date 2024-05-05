@@ -6911,16 +6911,18 @@ static bool genZeroInitObject2(
    // This allows rep stosb to initialize the size field of zero sized arrays appropriately.
    //
    // Refer to J9IndexableObject(Dis)contiguousCompressed structs in runtime/oti/j9nonbuilder.h for more detail
-   if (!cg->comp()->target().is32Bit() && isArrayNew
+   if (!comp->target().is32Bit() && isArrayNew
          && (TR::Compiler->om.isIndexableDataAddrPresent() || !TR::Compiler->om.compressObjectReferences()))
       {
+      TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
+
       TR_ASSERT_FATAL_WITH_NODE(node,
-         (cg->fej9()->getOffsetOfDiscontiguousArraySizeField() - cg->fe()->getOffsetOfContiguousArraySizeField()) == 4,
+         (fej9->getOffsetOfDiscontiguousArraySizeField() - fej9->getOffsetOfContiguousArraySizeField()) == 4,
          "Offset of size field in discontiguous array header is expected to be 4 bytes more than contiguous array header. "
          "But size field offset for contiguous array header was %d bytes and %d bytes for discontiguous array header.\n",
-         cg->fe()->getOffsetOfContiguousArraySizeField(), cg->fe()->getOffsetOfDiscontiguousArraySizeField());
+         fej9->getOffsetOfContiguousArraySizeField(), fej9->getOffsetOfDiscontiguousArraySizeField());
 
-      headerSize = static_cast<uint32_t>(cg->fej9()->getOffsetOfDiscontiguousArraySizeField());
+      headerSize = static_cast<uint32_t>(fej9->getOffsetOfDiscontiguousArraySizeField());
       }
    TR_ASSERT(headerSize >= 4, "Object/Array header must be >= 4.");
    objectSize -= headerSize;
@@ -6928,10 +6930,7 @@ static bool genZeroInitObject2(
    if (!minRepstosdWords)
       {
       static char *p= feGetEnv("TR_MinRepstosdWords");
-      if (p)
-         minRepstosdWords = atoi(p);
-      else
-         minRepstosdWords = MIN_REPSTOSD_WORDS; // Use default value
+      minRepstosdWords = p ? atoi(p) : MIN_REPSTOSD_WORDS;
       }
 
    if (sizeReg || objectSize >= minRepstosdWords)
@@ -6941,10 +6940,9 @@ static bool genZeroInitObject2(
       if (sizeReg)
          {
          // -------------
-         //
          // VARIABLE SIZE
-         //
          // -------------
+
          // Subtract off the header size and initialize the remaining slots.
          //
          generateRegImmInstruction(TR::InstOpCode::SUBRegImms(), node, tempReg, headerSize, cg);
@@ -7634,10 +7632,7 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
       if (!maxZeroInitWordsPerIteration)
          {
          static char *p = feGetEnv("TR_MaxZeroInitWordsPerIteration");
-         if (p)
-            maxZeroInitWordsPerIteration = atoi(p);
-         else
-            maxZeroInitWordsPerIteration = MAX_ZERO_INIT_WORDS_PER_ITERATION; // Use default value
+         maxZeroInitWordsPerIteration = p ? atoi(p) : MAX_ZERO_INIT_WORDS_PER_ITERATION;
          }
 
       if (initInfo && initInfo->zeroInitSlots)
@@ -7938,7 +7933,7 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
          reloKind = TR_VerifyRefArrayForAlloc;
 
          if (comp->getOption(TR_UseSymbolValidationManager))
-            classToValidate = comp->fej9()->getComponentClassFromArrayClass(classToValidate);
+            classToValidate = fej9->getComponentClassFromArrayClass(classToValidate);
          }
 
       if (comp->getOption(TR_UseSymbolValidationManager))
