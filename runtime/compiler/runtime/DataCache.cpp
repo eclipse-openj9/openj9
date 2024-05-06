@@ -300,7 +300,7 @@ TR_DataCache* TR_DataCacheManager::allocateNewDataCache(uint32_t minimumSize)
                   dataCacheSeg, segSize, dataCache, dataCacheSeg->heapAlloc);
 #endif
                if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
-                  TR_VerboseLog::writeLine(TR_Vlog_INFO, "Allocated new data cache segment starting at address %p", dataCacheSeg->heapBase);
+                  TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "Allocated new data cache segment starting at address %p", dataCacheSeg->heapBase);
 #ifdef LINUX
                if (_disclaimEnabled)
                   {
@@ -312,7 +312,7 @@ TR_DataCache* TR_DataCacheManager::allocateNewDataCache(uint32_t minimumSize)
                   if (madvise(dataCacheSeg->heapBase, segLength, MADV_NOHUGEPAGE) != 0)
                      {
                      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
-                        TR_VerboseLog::writeLine(TR_Vlog_INFO, "Failed to set MADV_NOHUGEPAGE for data cache");
+                        TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "Failed to set MADV_NOHUGEPAGE for data cache");
                      }
                   // If the memory segment is backed by a file, disable read-ahead
                   // so that touching one byte brings a single page in
@@ -321,7 +321,7 @@ TR_DataCache* TR_DataCacheManager::allocateNewDataCache(uint32_t minimumSize)
                      if (madvise(dataCacheSeg->heapBase, segLength, MADV_RANDOM) != 0)
                         {
                         if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
-                           TR_VerboseLog::writeLine(TR_Vlog_INFO, "Failed to set MADV_RANDOM for data cache");
+                           TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "Failed to set MADV_RANDOM for data cache");
                         }
                      }
                   }
@@ -330,7 +330,7 @@ TR_DataCache* TR_DataCacheManager::allocateNewDataCache(uint32_t minimumSize)
             else
                {
                if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
-                  TR_VerboseLog::writeLine(TR_Vlog_INFO, "Failed to allocate %d Kb data cache", _jitConfig->dataCacheKB);
+                  TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "Failed to allocate %d Kb data cache", _jitConfig->dataCacheKB);
                j9mem_free_memory(dataCache);
                dataCache = NULL;
                _jitConfig->runtimeFlags |= J9JIT_DATA_CACHE_FULL;  // prevent future allocations
@@ -341,7 +341,7 @@ TR_DataCache* TR_DataCacheManager::allocateNewDataCache(uint32_t minimumSize)
             }
          else // cannot allocate even a bit of memory from the JVM
             {
-            TR_VerboseLog::writeLine(TR_Vlog_INFO, "Failed to allocate %d bytes for data cache", sizeof(TR_DataCache));
+            TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "Failed to allocate %d bytes for data cache", sizeof(TR_DataCache));
             _jitConfig->runtimeFlags |= J9JIT_DATA_CACHE_FULL;  // prevent future allocations
 #ifdef DATA_CACHE_DEBUG
             fprintf(stderr, "Memory allocation for TR_DataCache failed\n");
@@ -761,7 +761,7 @@ int TR_DataCacheManager::disclaimSegment(J9MemorySegment *segment, bool canDiscl
       int filePageCount = 0;
       int numPresentPages = countPresentPagesInSegment(segment, swappedCount, filePageCount);
       if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
-         TR_VerboseLog::writeLine(TR_Vlog_PERF, "Will disclaim data cache segment %p of size %zu. Present pages =%d swapped=%d fileMapped=%d\n",
+         TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "Will disclaim data cache segment %p of size %zu. Present pages =%d swapped=%d fileMapped=%d\n",
               segment, segLength, numPresentPages, swappedCount, filePageCount);
 #endif // DEBUG_DISCLAIM
       int ret = madvise(segment->heapBase, segLength, MADV_PAGEOUT);
@@ -769,12 +769,12 @@ int TR_DataCacheManager::disclaimSegment(J9MemorySegment *segment, bool canDiscl
          {
          // madvise() could fail with EINVAL if MADV_PAGEOUT is not supported by the kernel
          if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
-            TR_VerboseLog::writeLine(TR_Vlog_PERF, "WARNING: Failed to use madvise to disclaim memory for data cache");
+            TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "WARNING: Failed to use madvise to disclaim memory for data cache");
          if (ret == EINVAL)
             {
             _disclaimEnabled = false; // Don't try to disclaim again, since support seems to be missing
             if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
-               TR_VerboseLog::writeLine(TR_Vlog_PERF, "WARNING: Disabling data cache disclaiming from now on");
+               TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "WARNING: Disabling data cache disclaiming from now on");
             }
          }
       else
@@ -785,7 +785,7 @@ int TR_DataCacheManager::disclaimSegment(J9MemorySegment *segment, bool canDiscl
          filePageCount = 0;
          numPresentPages = countPresentPagesInSegment(segment, swappedCount, filePageCount);
          if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
-            TR_VerboseLog::writeLine(TR_Vlog_PERF, "Disclaimed data cache segment %p of size %zu. Present pages =%d swapped=%d fileMapped=%d\n",
+            TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "Disclaimed data cache segment %p of size %zu. Present pages =%d swapped=%d fileMapped=%d\n",
                  segment, segLength, numPresentPages, swappedCount, filePageCount);
 #endif // DEBUG_DISCLAIM
          }
@@ -793,7 +793,7 @@ int TR_DataCacheManager::disclaimSegment(J9MemorySegment *segment, bool canDiscl
    else // Cannot disclaim because the memory is not backed by a file and swap is not present
       {
       if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
-         TR_VerboseLog::writeLine(TR_Vlog_PERF, "WARNING: Data cache segment %p is not backed by a file/swap", segment);
+         TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "WARNING: Data cache segment %p is not backed by a file/swap", segment);
       }
 #endif // LINUX
    return disclaimDone;
