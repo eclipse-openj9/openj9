@@ -276,14 +276,14 @@ public final void wait(long time) throws InterruptedException {
 public final void wait(long time, int frac) throws InterruptedException {
 /*[IF JAVA_SPEC_VERSION < 19]*/
 	waitImpl(time, frac);
-/*[ELSEIF (JAVA_SPEC_VERSION < 23) | INLINE-TYPES]*/
+/*[ELSEIF JAVA_SPEC_VERSION < 23]*/
 	long blockerRC = Blocker.begin();
 	try {
 		waitImpl(time, frac);
 	} finally {
 		Blocker.end(blockerRC);
 	}
-/*[ELSE] (JAVA_SPEC_VERSION < 23) | INLINE-TYPES */
+/*[ELSE] JAVA_SPEC_VERSION < 23 */
 	if (!Thread.currentThread().isVirtual()) {
 		waitImpl(time, frac);
 	} else {
