@@ -136,6 +136,7 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
     * parameter passed to it.
     */
    static TR::Register *inlineStringHashCode(TR::Node *node, TR::CodeGenerator *cg, bool isCompressed);
+   static TR::Register *inlineVectorizedHashCode(TR::Node* node, TR::CodeGenerator* cg);
    static TR::Register *inlineUTF16BEEncodeSIMD(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register* inlineUTF16BEEncode    (TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *inlineCRC32CUpdateBytes(TR::Node *node, TR::CodeGenerator *cg, bool isDirectBuffer);
@@ -345,7 +346,7 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
 
    static bool isZonedOperationAnEffectiveNop(TR::Node * node, int32_t shiftAmount, bool isTruncation, TR_PseudoRegister *srcReg, bool isSetSign, int32_t sign,TR::CodeGenerator * cg);
 
-   
+
    static TR::Register *BCDCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *BCDCHKEvaluatorImpl(TR::Node * node,
                                             TR::CodeGenerator * cg,
@@ -412,9 +413,9 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    /** \brief
     *     Helper to generate a VPSOP instruction.
     *
-    *  \param node 
+    *  \param node
     *     The node to which the instruction is associated.
-    *  \param cg 
+    *  \param cg
     *     The codegen object.
     *  \param setPrecision
     *     Determines whether the VPSOP instruction will set precision.
@@ -430,7 +431,7 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
     *     Validate the input digits
     *  \param sign
     *     The new sign. Used if signOpType is SignOperationType::setSign. Possible values include:
-    *       - positive: 0xA, 0xC 
+    *       - positive: 0xA, 0xC
     *       - negative: 0xB, 0xD
     *       - unsigned: 0xF
     *  \param setConditionCode
@@ -496,13 +497,13 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
 
 /** \brief
     *  Generates Sequence to check and use Guarded Load for ArrayCopy
-    *  
+    *
     * \param node
     *     The arraycopy node.
     *
     *  \param cg
     *     The code generator used to generate the instructions.
-    * 
+    *
     *  \param byteSrcReg
     *     Register holding starting address of source
     *
@@ -511,16 +512,16 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
     *
     *  \param byteLenReg
     *     Register holding number of bytes to copy
-    * 
+    *
     *  \param mergeLabel
     *     Label Symbol to merge from generated OOL sequence
-    * 
+    *
     *  \param srm
     *     Scratch Register Manager providing pool of scratch registers to use
-    * 
+    *
     *  \param isForward
     *     Boolean specifying if we need to copy elements in forward direction
-    * 
+    *
     */
    static void         genGuardedLoadOOL(TR::Node *node, TR::CodeGenerator *cg, TR::Register *byteSrcReg, TR::Register *byteDstReg, TR::Register *byteLenReg, TR::LabelSymbol *mergeLabel, TR_S390ScratchRegisterManager *srm, bool isForward);
    static void         genArrayCopyWithArrayStoreCHK(TR::Node *node, TR::Register *srcObjReg, TR::Register *dstObjReg, TR::Register *srcAddrReg, TR::Register *dstAddrReg, TR::Register *lengthReg, TR::CodeGenerator *cg);
@@ -535,14 +536,14 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    /*
     * Generate instructions for static/instance field access report.
     * @param dataSnippetRegister: Optional, can be used to pass the address of the snippet inside the register.
-    */ 
+    */
    static void generateTestAndReportFieldWatchInstructions(TR::CodeGenerator *cg, TR::Node *node, TR::Snippet *dataSnippet, bool isWrite, TR::Register *sideEffectRegister, TR::Register *valueReg, TR::Register *dataSnippetRegister);
 
 
    /*
     * Generate instructions to fill in the J9JITWatchedStaticFieldData.fieldAddress, J9JITWatchedStaticFieldData.fieldClass for static fields,
     * and J9JITWatchedInstanceFieldData.offset for instance fields at runtime. Used for fieldwatch support.
-    * @param dataSnippetRegister: Optional, can be used to pass the address of the snippet inside the register.  
+    * @param dataSnippetRegister: Optional, can be used to pass the address of the snippet inside the register.
     */
    static void generateFillInDataBlockSequenceForUnresolvedField (TR::CodeGenerator *cg, TR::Node *node, TR::Snippet *dataSnippet, bool isWrite, TR::Register *sideEffectRegister, TR::Register *dataSnippetRegister);
    static TR::Register *irdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);

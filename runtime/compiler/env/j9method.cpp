@@ -4017,6 +4017,7 @@ void TR_ResolvedJ9Method::construct()
    static X ArraysSupportMethods [] =
       {
       {x(TR::jdk_internal_util_ArraysSupport_vectorizedMismatch, "vectorizedMismatch", "(Ljava/lang/Object;JLjava/lang/Object;JII)I")},
+      {x(TR::jdk_internal_util_ArraysSupport_vectorizedHashCode, "vectorizedHashCode", "(Ljava/lang/Object;IIII)I")},
       {  TR::unknownMethod}
       };
 

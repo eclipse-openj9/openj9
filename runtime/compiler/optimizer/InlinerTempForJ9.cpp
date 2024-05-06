@@ -4870,6 +4870,14 @@ TR_J9InlinerPolicy::supressInliningRecognizedInitialCallee(TR_CallSite* callsite
             return true;
             }
          break;
+      case TR::jdk_internal_util_ArraysSupport_vectorizedHashCode:
+         {
+         if (comp->cg()->getSupportsInlineVectorizedHashCode())
+            {
+            return true;
+            }
+         break;
+         }
       case TR::java_lang_StringLatin1_inflate:
          if (comp->cg()->getSupportsInlineStringLatin1Inflate())
             {

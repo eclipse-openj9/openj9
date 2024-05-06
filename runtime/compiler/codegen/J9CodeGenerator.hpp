@@ -502,6 +502,16 @@ public:
    */
    void setSupportsInlineVectorizedMismatch() { _j9Flags.set(SupportsInlineVectorizedMismatch); }
 
+   /** \brief
+   *   Determines whether the code generator supports inlining of jdk/internal/util/ArraysSupport.vectorizedHashCode
+   */
+   bool getSupportsInlineVectorizedHashCode() { return _j9Flags.testAny(SupportsInlineVectorizedHashCode); }
+
+   /** \brief
+   *   The code generator supports inlining of jdk/internal/util/ArraysSupport.vectorizedHashCode
+   */
+   void setSupportsInlineVectorizedHashCode() { _j9Flags.set(SupportsInlineVectorizedHashCode); }
+
    /**
     * \brief
     *    The number of nodes between a monext and the next monent before
@@ -666,6 +676,7 @@ private:
       SupportsInlineEncodeASCII                           = 0x00000400,
       SavesNonVolatileGPRsForGC                           = 0x00000800,
       SupportsInlineVectorizedMismatch                    = 0x00001000,
+      SupportsInlineVectorizedHashCode                    = 0x00002000,
       };
 
    flags32_t _j9Flags;

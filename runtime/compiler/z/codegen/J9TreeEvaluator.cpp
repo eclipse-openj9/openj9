@@ -2640,16 +2640,15 @@ J9::Z::TreeEvaluator::inlineUTF16BEEncodeSIMD(TR::Node *node, TR::CodeGenerator 
    return node->setRegister(translated);
    }
 
-TR::Register*
-J9::Z::TreeEvaluator::inlineStringHashCode(TR::Node* node, TR::CodeGenerator* cg, bool isCompressed)
+static TR::Register*
+hashCodeHelper(TR::Node* node, TR::CodeGenerator* cg, TR::DataType elementType, TR::Node* nodeHash, bool isSigned)
    {
    TR::Compilation* comp = cg->comp();
-   //stringSize = Number of bytes to load to process 4 characters in SIMD loop
+   //chunkSize = Number of bytes to load to process 4 characters in SIMD loop
    //terminateVal = SIMD loop cotroller allowing characters in multiple of 4 to be processes by loop
-   //VLLEZ instruction will load word(compressed String) or double word (decompressed String), elementSize is used for that
-   const short stringSize = (isCompressed ? 4 : 8);
-   const short terminateVal = (isCompressed ? 3 : 6);
-   const short elementSize = (isCompressed ? 2 : 3);
+   const int32_t chunkSize = 4 * TR::DataType::getSize(elementType);
+   const int32_t terminateVal = 3 * TR::DataType::getSize(elementType);
+   const bool nonZeroInitial = nodeHash != NULL && !nodeHash->isConstZeroValue();
 
    TR::Node* nodeValue = node->getChild(0);
    TR::Node* nodeIndex = node->getChild(1);
@@ -2669,8 +2668,6 @@ J9::Z::TreeEvaluator::inlineStringHashCode(TR::Node* node, TR::CodeGenerator* cg
    TR::LabelSymbol * cFlowRegionEnd    = generateLabelSymbol(cg);
 
    // Create the necessary registers
-   TR::Register* registerHash = cg->allocateRegister();
-
    TR::Register* registerValue = cg->evaluate(nodeValue);
    TR::Register* registerIndex = cg->gprClobberEvaluate(nodeIndex);
    TR::Register* registerCount = cg->gprClobberEvaluate(nodeCount);
@@ -2687,26 +2684,45 @@ J9::Z::TreeEvaluator::inlineStringHashCode(TR::Node* node, TR::CodeGenerator* cg
 
    TR::Register* registerEnd = cg->allocateRegister(TR_GPR);
 
+   TR::Register* registerHash = NULL;
+   if(nonZeroInitial)
+      {
+      registerHash = cg->gprClobberEvaluate(nodeHash);
+      }
+   else
+      {
+      registerHash = cg->allocateRegister();
+      generateRREInstruction(cg, TR::InstOpCode::getXORRegOpCode(), node, registerHash, registerHash);
+      }
+
    TR::RegisterDependencyConditions* dependencies = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 12, cg);
 
    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, cFlowRegionStart);
    cFlowRegionStart->setStartInternalControlFlow();
 
-   if(!isCompressed)
+   int shiftBy = 2;
+   switch (elementType)
       {
-      // registerIndex *= 2 and registerCount *= 2
-      generateRSInstruction(cg, TR::InstOpCode::getShiftLeftLogicalSingleOpCode(), node, registerIndex, registerIndex, 1);
-      generateRSInstruction(cg, TR::InstOpCode::getShiftLeftLogicalSingleOpCode(), node, registerCount, registerCount, 1);
+      case TR::Int8:
+         break;
+      case TR::Int16:
+         // registerIndex *= 2 and registerCount *= 2
+         shiftBy = 1;
+         // intentional fallthrough
+      case TR::Int32:
+         // registerIndex *= 4 and registerCount *= 4
+         generateRSInstruction(cg, TR::InstOpCode::getShiftLeftLogicalSingleOpCode(), node, registerIndex, registerIndex, shiftBy);
+         generateRSInstruction(cg, TR::InstOpCode::getShiftLeftLogicalSingleOpCode(), node, registerCount, registerCount, shiftBy);
+         break;
+      default:
+         TR_ASSERT_FATAL(false, "Unsupported vectorizedHashCode element type");
       }
 
    // registerEnd = registerIndex + registerCount
    generateRXInstruction(cg, TR::InstOpCode::getLoadAddressOpCode(), node, registerEnd, generateS390MemoryReference(registerIndex, registerCount, 0, cg));
 
-   // registerHash = 0
-   generateRREInstruction(cg, TR::InstOpCode::getXORRegOpCode(), node, registerHash, registerHash);
-
-   // Branch to labelSerial if registerCount < stringSize
-   generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpLogicalOpCode(), node, registerCount, static_cast<int32_t>(stringSize), TR::InstOpCode::COND_MASK4, labelSerial, false, false);
+   // Branch to labelSerial if registerCount < chunkSize
+   generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpLogicalOpCode(), node, registerCount, chunkSize, TR::InstOpCode::COND_BL, labelSerial, false, false);
 
    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, labelVector);
 
@@ -2723,33 +2739,45 @@ J9::Z::TreeEvaluator::inlineStringHashCode(TR::Node* node, TR::CodeGenerator* cg
    // registerVA = snippetData1
    generateVRXInstruction(cg, TR::InstOpCode::VL, node, registerVA, memrefSnippet1);
 
-   // registerVB = 0
+   // registerVB = 0, 0, 0, hash
    generateVRIaInstruction(cg, TR::InstOpCode::VGBM, node, registerVB, 0, 0 /*unused*/);
+   if (nonZeroInitial)
+      {
+      generateVRScInstruction(cg, TR::InstOpCode::VLVG, node, registerVB, registerHash, generateS390MemoryReference(3, cg), 2);
+      }
 
    // ----------------- Incoming branch -----------------
 
    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, labelVectorLoop);
 
-   // registerVC = 4 consecutive chars (16 bit shorts or 8 bit bytes depending on String Compression) at the current index
-   generateVRXInstruction(cg, TR::InstOpCode::VLLEZ, node, registerVC, generateS390MemoryReference(registerValue, registerIndex, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg), elementSize);
-
-   if (!isCompressed)
+   switch (elementType)
       {
-      // registerVC = unpack 4 (16 bit) short elements into 4 (32 bit) int elements
-      generateVRRaInstruction(cg, TR::InstOpCode::VUPLH, node, registerVC, registerVC, 0, 0, 1);
-      }
-   else
-      {
-      // registerVC = unpack 4 (8 bit) byte elements into 4 (32 bit) int elements
-      generateVRRaInstruction(cg, TR::InstOpCode::VUPLH, node, registerVC, registerVC, 0, 0, 0);
-      generateVRRaInstruction(cg, TR::InstOpCode::VUPLL, node, registerVC, registerVC, 0, 0, 1);
+      case TR::Int8:
+         // registerVC = 4 consecutive (8 bit) bytes at the current index
+         generateVRXInstruction(cg, TR::InstOpCode::VLLEZ, node, registerVC, generateS390MemoryReference(registerValue, registerIndex, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg), 2);
+         // registerVC = unpack 4 (8 bit) byte elements into 4 (32 bit) int elements
+         generateVRRaInstruction(cg, isSigned ? TR::InstOpCode::VUPH : TR::InstOpCode::VUPLH, node, registerVC, registerVC, 0, 0, 0);
+         generateVRRaInstruction(cg, isSigned ? TR::InstOpCode::VUPL : TR::InstOpCode::VUPLL, node, registerVC, registerVC, 0, 0, 1);
+         break;
+      case TR::Int16:
+         // registerVC = 4 consecutive (16 bit) shorts at the current index
+         generateVRXInstruction(cg, TR::InstOpCode::VLLEZ, node, registerVC, generateS390MemoryReference(registerValue, registerIndex, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg), 3);
+         // registerVC = unpack 4 (16 bit) short elements into 4 (32 bit) int elements
+         generateVRRaInstruction(cg, isSigned ? TR::InstOpCode::VUPL : TR::InstOpCode::VUPLH, node, registerVC, registerVC, 0, 0, 1);
+         break;
+      case TR::Int32:
+         // registerVC = 4 consecutive (32 bit) ints at the current index
+         generateVRXInstruction(cg, TR::InstOpCode::VL, node, registerVC, generateS390MemoryReference(registerValue, registerIndex, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg));
+         break;
+      default:
+         TR_ASSERT_FATAL(false, "Unsupported vectorizedHashCode element type");
       }
 
    // registerVB = registerVB * registerVA + registerVC
    generateVRRdInstruction(cg, TR::InstOpCode::VMAL, node, registerVB, registerVB, registerVA, registerVC, 0, 2);
 
-   // registerIndex += stringSize
-   generateRXInstruction(cg, TR::InstOpCode::getLoadAddressOpCode(), node, registerIndex, generateS390MemoryReference(registerIndex, stringSize, cg));
+   // registerIndex += chunkSize
+   generateRXInstruction(cg, TR::InstOpCode::getLoadAddressOpCode(), node, registerIndex, generateS390MemoryReference(registerIndex, chunkSize, cg));
 
    // Branch to labelVectorLoop if registerIndex < registerEnd
    generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpLogicalRegOpCode(), node, registerIndex, registerEnd, TR::InstOpCode::COND_MASK4, labelVectorLoop, false, false);
@@ -2801,17 +2829,26 @@ J9::Z::TreeEvaluator::inlineStringHashCode(TR::Node* node, TR::CodeGenerator* cg
    // registerTemp -= registerHash
    generateRRInstruction(cg, TR::InstOpCode::getSubstractRegOpCode(), node, registerTemp, registerHash);
 
-   // registerHash = char at registerIndex
-   if(isCompressed)
-      generateRXInstruction(cg, TR::InstOpCode::LLGC, node, registerHash, generateS390MemoryReference(registerValue, registerIndex, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg));
-   else
-      generateRXInstruction(cg, TR::InstOpCode::LLH, node, registerHash, generateS390MemoryReference(registerValue, registerIndex, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg));
+   switch (elementType)
+      {
+      case TR::Int8:
+         // registerHash = byte at registerIndex
+         generateRXInstruction(cg, isSigned ? TR::InstOpCode::LB : TR::InstOpCode::LLC, node, registerHash, generateS390MemoryReference(registerValue, registerIndex, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg));
+         break;
+      case TR::Int16:
+         // registerHash = short at registerIndex
+         generateRXInstruction(cg, isSigned ? TR::InstOpCode::LH : TR::InstOpCode::LLH, node, registerHash, generateS390MemoryReference(registerValue, registerIndex, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg));
+         break;
+      case TR::Int32:
+         // registerHash = int at registerIndex
+         generateRXInstruction(cg, TR::InstOpCode::L, node, registerHash, generateS390MemoryReference(registerValue, registerIndex, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg));
+         break;
+      default:
+         TR_ASSERT_FATAL(false, "Unsupported vectorizedHashCode element type");
+      }
 
-   if(isCompressed) //registerIndex += 1
-      generateRXInstruction(cg, TR::InstOpCode::getLoadAddressOpCode(), node, registerIndex, generateS390MemoryReference(registerIndex, 1, cg));
-   else //registerIndex += 2
-      generateRXInstruction(cg, TR::InstOpCode::getLoadAddressOpCode(), node, registerIndex, generateS390MemoryReference(registerIndex, 2, cg));
-
+   //registerIndex += element size
+   generateRXInstruction(cg, TR::InstOpCode::getLoadAddressOpCode(), node, registerIndex, generateS390MemoryReference(registerIndex, TR::DataType::getSize(elementType), cg));
 
    // registerHash += registerTemp
    generateRRInstruction(cg, TR::InstOpCode::getAddRegOpCode(), node, registerHash, registerTemp);
@@ -2834,11 +2871,6 @@ J9::Z::TreeEvaluator::inlineStringHashCode(TR::Node* node, TR::CodeGenerator* cg
    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, cFlowRegionEnd, dependencies);
    cFlowRegionEnd->setEndInternalControlFlow();
 
-   // Cleanup nodes before returning
-   cg->decReferenceCount(nodeValue);
-   cg->decReferenceCount(nodeIndex);
-   cg->decReferenceCount(nodeCount);
-
    // Cleanup registers before returning
    cg->stopUsingRegister(registerValue);
    cg->stopUsingRegister(registerIndex);
@@ -2850,7 +2882,51 @@ J9::Z::TreeEvaluator::inlineStringHashCode(TR::Node* node, TR::CodeGenerator* cg
    cg->stopUsingRegister(registerVB);
    cg->stopUsingRegister(registerVC);
 
-   return node->setRegister(registerHash);
+   node->setRegister(registerHash);
+
+   // Cleanup nodes before returning
+   cg->decReferenceCount(nodeValue);
+   cg->decReferenceCount(nodeIndex);
+   cg->decReferenceCount(nodeCount);
+   if (nodeHash)
+      cg->decReferenceCount(nodeHash);
+
+   return registerHash;
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::inlineStringHashCode(TR::Node* node, TR::CodeGenerator* cg, bool isCompressed)
+   {
+   return hashCodeHelper(node, cg, isCompressed ? TR::Int8 : TR::Int16, NULL, false);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::inlineVectorizedHashCode(TR::Node* node, TR::CodeGenerator* cg)
+   {
+   TR::Register* registerHash = NULL;
+
+   switch (node->getChild(4)->getConstValue())
+      {
+      // The following constants come from the values for the type operand of the NEWARRAY instruction
+      // See https://docs.oracle.com/javase/specs/jvms/se9/html/jvms-6.html#jvms-6.5.newarray.
+      case 4:  // T_BOOLEAN
+         registerHash = hashCodeHelper(node, cg, TR::Int8, node->getChild(3), false);
+         break;
+      case 8:  // T_BYTE
+         registerHash = hashCodeHelper(node, cg, TR::Int8, node->getChild(3), true);
+         break;
+      case 5:  // T_CHAR
+      case 9:  // T_SHORT
+         registerHash = hashCodeHelper(node, cg, TR::Int16, node->getChild(3), false);
+         break;
+      case 10: // T_INT
+         registerHash = hashCodeHelper(node, cg, TR::Int32, node->getChild(3), false);
+         break;
+      }
+   if (registerHash != NULL)
+      cg->decReferenceCount(node->getChild(4));
+
+   return registerHash;
    }
 
 TR::Register*
