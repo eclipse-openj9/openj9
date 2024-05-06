@@ -6891,7 +6891,7 @@ static bool genZeroInitObject2(
       TR::Register *targetReg,
       TR::Register *tempReg,
       TR::Register *segmentReg,
-      TR::Register *&scratchReg,
+      TR_X86ScratchRegisterManager *srm,
       TR::CodeGenerator *cg)
    {
    TR::Compilation *comp = cg->comp();
@@ -6966,9 +6966,11 @@ static bool genZeroInitObject2(
       // Destination
       // -----------
       generateRegMemInstruction(TR::InstOpCode::LEARegMem(), node, segmentReg, generateX86MemoryReference(targetReg, headerSize, cg), cg);
+
+      TR::Register *scratchReg = NULL;
       if (comp->target().is64Bit())
          {
-         scratchReg = cg->allocateRegister();
+         scratchReg = srm->findOrCreateScratchRegister();
          generateRegRegInstruction(TR::InstOpCode::MOVRegReg(), node, scratchReg, targetReg, cg);
          }
       else
@@ -6980,11 +6982,13 @@ static bool genZeroInitObject2(
       if (comp->target().is64Bit())
          {
          generateRegRegInstruction(TR::InstOpCode::MOVRegReg(), node, targetReg, scratchReg, cg);
+         srm->reclaimScratchRegister(scratchReg);
          }
       else
          {
          generateRegInstruction(TR::InstOpCode::POPReg, node, targetReg, cg);
          }
+
       return true;
       }
    else if (objectSize > 0)
@@ -6995,7 +6999,8 @@ static bool genZeroInitObject2(
          objectSize += 4;
          headerSize -= 4;
          }
-      scratchReg = cg->allocateRegister(TR_FPR);
+
+      TR::Register *scratchReg = srm->findOrCreateScratchRegister(TR_FPR);
       generateRegRegInstruction(TR::InstOpCode::PXORRegReg, node, scratchReg, scratchReg, cg);
       int32_t offset = 0;
       while (objectSize >= 16)
@@ -7004,6 +7009,7 @@ static bool genZeroInitObject2(
          objectSize -= 16;
          offset += 16;
          }
+
       switch (objectSize)
          {
          case 8:
@@ -7017,6 +7023,8 @@ static bool genZeroInitObject2(
          default:
             TR_ASSERT(false, "residue size should only be 0, 4 or 8.");
          }
+
+      srm->reclaimScratchRegister(scratchReg);
       return false;
       }
    else
@@ -7040,7 +7048,7 @@ static bool genZeroInitObject(
       TR::Register *targetReg,
       TR::Register *tempReg,
       TR::Register *segmentReg,
-      TR::Register *&scratchReg,
+      TR_X86ScratchRegisterManager *srm,
       TR::CodeGenerator *cg)
    {
    // object header flags now occupy 4bytes on 64-bit
@@ -7221,9 +7229,10 @@ static bool genZeroInitObject(
             }
          }
 
+      TR::Register *scratchReg = NULL;
       if (comp->target().is64Bit())
          {
-         scratchReg = cg->allocateRegister();
+         scratchReg = srm->findOrCreateScratchRegister();
          generateRegRegInstruction(TR::InstOpCode::MOVRegReg(), node, scratchReg, targetReg, cg);
          }
       else
@@ -7253,6 +7262,7 @@ static bool genZeroInitObject(
       if (comp->target().is64Bit())
          {
          generateRegRegInstruction(TR::InstOpCode::MOVRegReg(), node, targetReg, scratchReg, cg);
+         srm->reclaimScratchRegister(scratchReg);
          }
       else
          {
@@ -7365,11 +7375,6 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
       TR::Node *node,
       TR::CodeGenerator *cg)
    {
-   // See if inline allocation is appropriate.
-   //
-   // Don't do the inline allocation if we are generating JVMPI hooks, since
-   // JVMPI needs to know about the allocation.
-   //
    TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = comp->fej9();
 
@@ -7387,17 +7392,19 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
    if (!helperSym->preservesAllRegisters())
       return NULL;
 
-   TR_OpaqueClassBlock *clazz      = NULL;
-   TR::Register        *classReg   = NULL;
-   bool                 isArrayNew = false;
-   int32_t allocationSize = 0;
-   int32_t objectSize     = 0;
-   int32_t elementSize    = 0;
-   int32_t dataOffset     = 0;
-
    bool realTimeGC = comp->getOptions()->realTimeGC();
    bool generateArraylets = comp->generateArraylets();
 
+   TR_OpaqueClassBlock *clazz = NULL;
+   bool isArrayNew = false;
+   int32_t allocationSize = 0;
+   int32_t objectSize = 0;
+   int32_t elementSize = 0;
+   int32_t dataOffset = 0;
+
+   TR_X86ScratchRegisterManager *srm = cg->generateScratchRegisterManager(comp->target().is64Bit() ? 8 : 7);
+
+   TR::Register *classReg   = NULL;
    TR::Register *segmentReg = NULL;
    TR::Register *tempReg    = NULL;
    TR::Register *targetReg  = NULL;
@@ -7426,8 +7433,6 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
     *
     */
 
-   TR::RegisterDependencyConditions *deps;
-
    // --------------------------------------------------------------------------------
    //
    // Find the class info and allocation size depending on the node type.
@@ -7446,6 +7451,7 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
    // Currently dynamic allocation is only supported on reference array.
    // We are performing dynamic array allocation if both object size and
    // class block cannot be statically determined.
+   //
    bool dynamicArrayAllocation =
       (node->getOpCodeValue() == TR::anewarray) &&
       (objectSize == 0) &&
@@ -7513,11 +7519,6 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
          TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
       }
 
-   TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
-   TR::LabelSymbol *fallThru = generateLabelSymbol(cg);
-   startLabel->setStartInternalControlFlow();
-   fallThru->setEndInternalControlFlow();
-
    bool enableTLHBatchClearing = fej9->tlhHasBeenCleared();
 
 #ifdef J9VM_GC_NON_ZERO_TLH
@@ -7542,10 +7543,9 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
          traceMsg(comp, "NOSKIPZEROINIT: for %p,  keep symbol as %p ", node, node->getSymbolReference());
       }
 #endif
-   TR::LabelSymbol *failLabel = generateLabelSymbol(cg);
 
-   segmentReg = cg->allocateRegister();
-   tempReg = cg->allocateRegister();
+   segmentReg = srm->findOrCreateScratchRegister();
+   tempReg = srm->findOrCreateScratchRegister();
 
    // If the size is variable, evaluate it into a register
    //
@@ -7561,16 +7561,22 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
       sizeReg = NULL;
       }
 
+   TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
+   startLabel->setStartInternalControlFlow();
    generateLabelInstruction(TR::InstOpCode::label, node, startLabel, cg);
 
-   // Generate the heap allocation, and the snippet that will handle heap overflow.
+   // Generate the helper call for out-of-line allocation
    //
-   TR_OutlinedInstructions *outlinedHelperCall = NULL;
-   targetReg = cg->allocateRegister();
-   outlinedHelperCall = new (cg->trHeapMemory()) TR_OutlinedInstructions(node, TR::acall, targetReg, failLabel, fallThru, cg);
+   targetReg = srm->findOrCreateScratchRegister();
+   TR::LabelSymbol *fallThru = generateLabelSymbol(cg);
+   fallThru->setEndInternalControlFlow();
+   TR::LabelSymbol *failLabel = generateLabelSymbol(cg);
+
+   TR_OutlinedInstructions *outlinedHelperCall =
+      new (cg->trHeapMemory()) TR_OutlinedInstructions(node, TR::acall, targetReg, failLabel, fallThru, cg);
    cg->getOutlinedInstructionsList().push_front(outlinedHelperCall);
 
-   TR::Instruction * startInstr = cg->getAppendInstruction();
+   TR::Instruction *startInstr = cg->getAppendInstruction();
 
    // --------------------------------------------------------------------------------
    //
@@ -7669,7 +7675,7 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
             int32_t nextE = -2;
             int32_t span = 0;
             int32_t lastSpan = -1;
-            scratchReg = cg->allocateRegister(TR_FPR);
+            scratchReg = srm->findOrCreateScratchRegister(TR_FPR);
             generateRegRegInstruction(TR::InstOpCode::PXORRegReg, node, scratchReg, scratchReg, cg);
             while (bvi.hasMoreElements())
                {
@@ -7715,8 +7721,8 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
             TR::InstOpCode::Mnemonic storeOpCode = TR::InstOpCode::bad;
 
             switch (lastSpan)
-               {¬
-               case 0:¬
+               {
+               case 0:
                   storeOpCode = TR::InstOpCode::MOVDMemReg;
                   break;
                case 1:
@@ -7735,6 +7741,8 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
                {
                generateMemRegInstruction(storeOpCode, node, generateX86MemoryReference(targetReg, lastElementIndex*4 + adjustedDataOffset, cg), scratchReg, cg);
                }
+
+            srm->reclaimScratchRegister(scratchReg);
             }
 
          useRepInstruction = false;
@@ -7749,12 +7757,12 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
          //
          if (canUseFastInlineAllocation)
             {
-            useRepInstruction = genZeroInitObject2(node, objectSize, elementSize, sizeReg, targetReg, tempReg, segmentReg, scratchReg, cg);
+            useRepInstruction = genZeroInitObject2(node, objectSize, elementSize, sizeReg, targetReg, tempReg, segmentReg, srm, cg);
             shouldInitZeroSizedArrayHeader = false;
             }
          else
             {
-            useRepInstruction = genZeroInitObject(node, objectSize, elementSize, sizeReg, targetReg, tempReg, segmentReg, scratchReg, cg);
+            useRepInstruction = genZeroInitObject(node, objectSize, elementSize, sizeReg, targetReg, tempReg, segmentReg, srm, cg);
             }
 
          J9JavaVM * jvm = fej9->getJ9JITConfig()->javaVM;
@@ -7835,7 +7843,6 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
       genInitObjectHeader(node, clazz, classReg, targetReg, tempReg, monitorSlotIsInitialized, false, cg);
       }
 
-   TR::Register *discontiguousDataAddrOffsetReg = NULL;
 #ifdef J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION
    if (isArrayNew && TR::Compiler->om.isIndexableDataAddrPresent())
       {
@@ -7863,7 +7870,7 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
             "But was %d bytes for discontiguous and %d bytes for contiguous array.\n",
             fej9->getOffsetOfDiscontiguousDataAddrField(), fej9->getOffsetOfContiguousDataAddrField());
 
-         discontiguousDataAddrOffsetReg = cg->allocateRegister();
+         TR::Register *discontiguousDataAddrOffsetReg = srm->findOrCreateScratchRegister();
          generateRegRegInstruction(TR::InstOpCode::XOR4RegReg, node, discontiguousDataAddrOffsetReg, discontiguousDataAddrOffsetReg, cg);
          generateRegImmInstruction(TR::InstOpCode::CMPRegImm4(), node, sizeReg, 1, cg);
          generateRegImmInstruction(TR::InstOpCode::ADCRegImm4(), node, discontiguousDataAddrOffsetReg, 0, cg);
@@ -7949,32 +7956,25 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
                            __FILE__, __LINE__, node);
       }
 
-   int32_t numDeps = 4;
-   if (classReg)
-      numDeps += 2;
+   // 1 == vmThread
+   int32_t numDeps = 1;
+
    if (sizeReg)
+      numDeps++;
+   if (classReg)
+      numDeps++;
+
+   // Outlined helper call
+   //
+   if (node->getOpCodeValue() == TR::New)
+      numDeps++;
+   else
       numDeps += 2;
 
-   if (scratchReg)
-      numDeps++;
+   numDeps += srm->numAvailableRegisters();
 
-   if (outlinedHelperCall)
-      {
-      if (node->getOpCodeValue() == TR::New)
-         numDeps++;
-      else
-         numDeps += 2;
-      }
-
-   if (discontiguousDataAddrOffsetReg)
-      numDeps++;
-
-   // Create dependencies for the allocation registers here.
-   // The size and class registers, if they exist, must be the first
-   // dependencies since the heap allocation snippet needs to find them to grab
-   // the real registers from them.
-   //
-   deps = generateRegisterDependencyConditions((uint8_t)0, numDeps, cg);
+   TR::RegisterDependencyConditions *deps =
+      generateRegisterDependencyConditions((uint8_t)0, numDeps, cg);
 
    if (sizeReg)
       deps->addPostCondition(sizeReg, TR::RealRegister::NoReg, cg);
@@ -7986,70 +7986,53 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
 
    if (useRepInstruction)
       {
+      // These real register dependencies must be added here because the same
+      // virtuals may appear in the scratch register manager
+      //
       deps->addPostCondition(tempReg, TR::RealRegister::ecx, cg);
       deps->addPostCondition(segmentReg, TR::RealRegister::edi, cg);
       }
-   else
+
+   // Outlined helper call
+   //
+   TR::Node *callNode = outlinedHelperCall->getCallNode();
+   TR::Register *reg;
+
+   if (callNode->getFirstChild() == node->getFirstChild())
       {
-      deps->addPostCondition(tempReg, TR::RealRegister::NoReg, cg);
-      if (segmentReg)
-         deps->addPostCondition(segmentReg, TR::RealRegister::NoReg, cg);
+      reg = callNode->getFirstChild()->getRegister();
+      if (reg)
+         deps->unionPostCondition(reg, TR::RealRegister::NoReg, cg);
       }
 
-   if (NULL != discontiguousDataAddrOffsetReg)
+   if (node->getOpCodeValue() != TR::New)
       {
-      deps->addPostCondition(discontiguousDataAddrOffsetReg, TR::RealRegister::NoReg, cg);
-      cg->stopUsingRegister(discontiguousDataAddrOffsetReg);
-      }
-
-   if (scratchReg)
-      {
-      deps->addPostCondition(scratchReg, TR::RealRegister::NoReg, cg);
-      cg->stopUsingRegister(scratchReg);
-      }
-
-   if (outlinedHelperCall)
-      {
-      TR::Node *callNode = outlinedHelperCall->getCallNode();
-      TR::Register *reg;
-
-      if (callNode->getFirstChild() == node->getFirstChild())
+      if (callNode->getSecondChild() == node->getSecondChild())
          {
-         reg = callNode->getFirstChild()->getRegister();
+         reg = callNode->getSecondChild()->getRegister();
          if (reg)
             deps->unionPostCondition(reg, TR::RealRegister::NoReg, cg);
          }
-
-      if (node->getOpCodeValue() != TR::New)
-         if (callNode->getSecondChild() == node->getSecondChild())
-            {
-            reg = callNode->getSecondChild()->getRegister();
-            if (reg)
-               deps->unionPostCondition(reg, TR::RealRegister::NoReg, cg);
-            }
       }
+
+   srm->addScratchRegistersToDependencyList(deps);
 
    deps->stopAddingConditions();
 
    generateLabelInstruction(TR::InstOpCode::label, node, fallThru, deps, cg);
 
-   if (outlinedHelperCall) // 64bit or TR_newstructRef||TR_anewarraystructRef
-      {
-      // Copy the newly allocated object into a collected reference register now that it is a valid object.
-      //
-      TR::Register *targetReg2 = cg->allocateCollectedReferenceRegister();
-      TR::RegisterDependencyConditions  *deps2 = generateRegisterDependencyConditions(0, 1, cg);
-      deps2->addPostCondition(targetReg2, TR::RealRegister::eax, cg);
-      generateRegRegInstruction(TR::InstOpCode::MOVRegReg(), node, targetReg2, targetReg, deps2, cg);
-      cg->stopUsingRegister(targetReg);
-      targetReg = targetReg2;
-      }
-
-   cg->stopUsingRegister(segmentReg);
-   cg->stopUsingRegister(tempReg);
-
-   // Decrement use counts on the children
+   // Copy the newly allocated object into a collected reference register
+   // now that it is a valid object.
    //
+   TR::Register *targetReg2 = cg->allocateCollectedReferenceRegister();
+   TR::RegisterDependencyConditions  *deps2 = generateRegisterDependencyConditions(0, 1, cg);
+   deps2->addPostCondition(targetReg2, TR::RealRegister::eax, cg);
+   generateRegRegInstruction(TR::InstOpCode::MOVRegReg(), node, targetReg2, targetReg, deps2, cg);
+   cg->stopUsingRegister(targetReg);
+   targetReg = targetReg2;
+
+   srm->stopUsingRegisters();
+
    cg->decReferenceCount(node->getFirstChild());
    if (isArrayNew)
       cg->decReferenceCount(node->getSecondChild());
