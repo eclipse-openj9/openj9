@@ -175,8 +175,8 @@ int32_t J9::Options::_iProfilerMemoryConsumptionLimit=32*1024*1024;
 #else
 int32_t J9::Options::_iProfilerMemoryConsumptionLimit=18*1024*1024;
 #endif
-int32_t J9::Options::_iProfilerBcHashTableSize = 34501; // prime number; Note: 131049 * 8 fits in 1 segment of persistent memory
-int32_t J9::Options::_iProfilerMethodHashTableSize = 12007; // 32707 could be another good value for larger apps
+int32_t J9::Options::_iProfilerBcHashTableSize = 131049; // prime number; Note: 131049 * 8 fits in 1 segment of persistent memory
+int32_t J9::Options::_iProfilerMethodHashTableSize = 32707; // 32707 could be another good value for larger apps
 
 int32_t J9::Options::_IprofilerOffSubtractionFactor = 500;
 int32_t J9::Options::_IprofilerOffDivisionFactor = 16;

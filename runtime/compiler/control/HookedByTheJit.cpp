@@ -4592,10 +4592,27 @@ void disclaimDataCaches(uint64_t crtElapsedTime)
                                      (uint32_t)crtElapsedTime, numDisclaimed, rssBefore, rssAfter, rssBefore - rssAfter);
    }
 
+void disclaimIProfilerSegments(uint64_t crtElapsedTime)
+   {
+   // Find the IprofilerAllocator and traverse all its segments
+   TR::PersistentAllocator * iprofilerAllocator = TR_IProfiler::allocator();
+   if (iprofilerAllocator)
+      {
+      size_t rssBefore = getRSS_Kb();
+      int numSegDisclaimed = iprofilerAllocator->disclaimAllSegments();
+      size_t rssAfter = getRSS_Kb();
+      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "t=%u JIT disclaimed %d IProfiler segments out of %d. RSS before=%zu KB, RSS after=%zu KB, delta=%zu KB",
+                                        (uint32_t)crtElapsedTime, numSegDisclaimed, iprofilerAllocator->getNumSegments(), rssBefore, rssAfter, rssBefore - rssAfter);
+      }
+   }
+
 void memoryDisclaimLogic(TR::CompilationInfo *compInfo, uint64_t crtElapsedTime, uint8_t jitState)
    {
    static uint64_t lastDataCacheDisclaimTime = 0;
    static int32_t  lastNumAllocatedDataCaches = 0;
+   static uint64_t lastIProfilerDisclaimTime = 0;
+   static uint32_t lastNumCompilationsDuringIProfilerDisclaim = 0;
 
    J9JITConfig *jitConfig = compInfo->getJITConfig();
 
@@ -4624,6 +4641,29 @@ void memoryDisclaimLogic(TR::CompilationInfo *compInfo, uint64_t crtElapsedTime,
             }
          }
       }
+#if defined(J9VM_INTERP_PROFILING_BYTECODES)
+   if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableInterpreterProfiling))
+      {
+      TR::PersistentAllocator * iprofilerAllocator = TR_IProfiler::allocator();
+      if (iprofilerAllocator->isDisclaimEnabled())
+         {
+         if (crtElapsedTime > lastIProfilerDisclaimTime + TR::Options::_minTimeBetweenMemoryDisclaims &&
+             // Avoid disclaiming IProfiler segments if IProfiler is still active
+             returnIprofilerState() == IPROFILING_STATE_OFF &&
+             // Avoid disclaiming if compilations are still to pe performed
+             compInfo->getMethodQueueSize() <= TR::CompilationInfo::VERY_SMALL_QUEUE &&
+             // If there was no compilation since the last disclaim,
+             // then don't do it because nothing could have touched those pages
+             // It's very unlikely for the IProfiler to be turned on and then off again with no compilation occuring
+             compInfo->getNumTotalCompilations() > lastNumCompilationsDuringIProfilerDisclaim + 5)
+            {
+            disclaimIProfilerSegments(crtElapsedTime);
+            lastIProfilerDisclaimTime = crtElapsedTime; // Update the time when disclaim was last performed
+            lastNumCompilationsDuringIProfilerDisclaim = compInfo->getNumTotalCompilations();
+            }
+         }
+      }
+#endif // J9VM_INTERP_PROFILING_BYTECODES
    }
 
 

@@ -39,14 +39,16 @@ namespace J9
 
 struct PersistentAllocatorKit
    {
-   PersistentAllocatorKit(size_t const minimumSegmentSize, J9JavaVM &javaVM) :
+   PersistentAllocatorKit(size_t const minimumSegmentSize, J9JavaVM &javaVM, uint32_t memType = 0) :
       minimumSegmentSize(minimumSegmentSize),
-      javaVM(javaVM)
+      javaVM(javaVM),
+      memoryType(memType)
       {
       }
 
    size_t const minimumSegmentSize;
    J9JavaVM &javaVM;
+   uint32_t memoryType; // extra flags to be passed to the persistent allocator
    };
 
 }
