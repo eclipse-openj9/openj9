@@ -244,6 +244,7 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
    TR::SymbolReference * findOrCreateDescriptionWordFromPtrSymbolRef();
    TR::SymbolReference * findOrCreateClassFlagsSymbolRef();
    TR::SymbolReference * findOrCreateClassAndDepthFlagsSymbolRef();
+   TR::SymbolReference * findOrCreateClassDepthAndFlagsSymbolRef();
    TR::SymbolReference * findOrCreateArrayComponentTypeAsPrimitiveSymbolRef();
    TR::SymbolReference * findOrCreateMethodTypeCheckSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol);
    TR::SymbolReference * findOrCreateIncompatibleReceiverSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol);

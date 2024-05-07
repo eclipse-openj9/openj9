@@ -686,7 +686,7 @@ public:
    virtual uintptr_t         getConstantPoolFromClass(TR_OpaqueClassBlock *);
 
    virtual uintptr_t         getOffsetOfIsArrayFieldFromRomClass();
-   virtual uintptr_t         getOffsetOfClassAndDepthFlags();
+   virtual uintptr_t         getOffsetOfClassDepthAndFlags();
    virtual uintptr_t         getOffsetOfClassFlags();
    virtual uintptr_t         getOffsetOfArrayComponentTypeField();
    virtual uintptr_t         getOffsetOfIndexableSizeField();
