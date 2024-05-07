@@ -22,6 +22,7 @@
 
 #include <algorithm>
 #include <limits.h>
+#include <malloc.h>
 #include <stdarg.h>
 #include "bcnames.h"
 #include "jithash.h"
@@ -6723,6 +6724,16 @@ static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
                }
 
 #if defined(J9VM_OPT_JITSERVER)
+#if defined(LINUX)
+            static uint64_t lastMallocTrimTime = 0;
+            if ((TR::Options::_jitserverMallocTrimInterval > 0) &&
+               (persistentInfo->getRemoteCompilationMode() == JITServer::CLIENT) &&
+               (crtTime > lastMallocTrimTime + TR::Options::_jitserverMallocTrimInterval))
+               {
+               malloc_trim(0);
+               lastMallocTrimTime = crtTime;
+               }
+#endif /* defined(LINUX) */
             if (persistentInfo->getRemoteCompilationMode() == JITServer::CLIENT &&
                 TR::Options::_lowCompDensityModeEnterThreshold > 0 && // A value of 0 disables this feature
                 !TR::Options::getCmdLineOptions()->getOption(TR_FullSpeedDebug) && // FSD interferes with recompilations in LPQ
