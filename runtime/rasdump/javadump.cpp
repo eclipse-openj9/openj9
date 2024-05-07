@@ -33,6 +33,12 @@
 #elif defined(J9ZOS390)
 #include <stdlib.h>
 #endif
+#if defined(J9ZTPF)
+#include <sys/mman.h>
+#include <tpf/c_cinfc.h>
+#include <tpf/c_eb0eb.h>
+#include <tpf/c_proc.h>
+#endif /* defined(J9ZTPF) */
 #include "rasdump_internal.h"
 #include "j2sever.h"
 #include "HeapIteratorAPI.h"
@@ -1776,6 +1782,53 @@ JavaCoreDumpWriter::writeMemoryCountersSection(void)
 		"NULL\n"
 		"NULL           ------------------------------------------------------------------------\n"
 	);
+
+#if defined(J9ZTPF)
+	if (MAP_FAILED != mmap(NULL, 0, 0, MAP_SUPPORTED, 0, 0)) {
+		struct immap_privatemstats ztpfNativeStats;
+		int rc = mprivatestats(&ztpfNativeStats);
+
+		_OutputStream.writeCharacters("0SECTION       Native configuration information for z/TPF\n");
+		_OutputStream.writeCharacters("NULL           ==========================================\n");
+		if (0 != rc) {
+			_OutputStream.writeCharacters("1TPFCONFIG     Unavailable: ");
+			_OutputStream.writeInteger((UDATA)(IDATA)rc, "%zd\n");
+		} else {
+			_OutputStream.writeCharacters("1TPFHWMAXX     Highwater mark 64-bit heap 1MB frames (limited by MAXXMMES): ");
+			_OutputStream.writeInteger(ztpfNativeStats.totalMAXXMMESRegion1MBFrames, "%zu\n");
+			_OutputStream.writeCharacters("1TPFLIMMAXX    MAXXMMES keypoint A setting: ");
+			_OutputStream.writeInteger(ecbp2()->ce2proc->iproc_maxheap_64, "%zu\n");
+			_OutputStream.writeCharacters("1TPFHWMMAP     Highwater mark 64-bit MMAP heap 1MB frames (limited by MAXMMAP): ");
+			_OutputStream.writeInteger(ztpfNativeStats.totalMMAPRegion1MBFrames, "%zu\n");
+			_OutputStream.writeCharacters("1TPFLIMMMAP    MAXMMAP process setting (either keypoint A MAXMMAP or com.ibm.tpf.maxmmap property): ");
+			_OutputStream.writeInteger(ztpfNativeStats.currentProcessMAXMMAPLimit, "%zu\n");
+			_OutputStream.writeCharacters("1TPFTOTHW64    Total highwater mark 64-bit heap 1MB frames (limited by MAXXMMES+MAXMMAP): ");
+			_OutputStream.writeInteger(ztpfNativeStats.total64bitHeap1MBFrames, "%zu\n");
+			_OutputStream.writeCharacters("1TPFHWEMPS     Total highwater mark 31-bit heap 1MB frames (limited by EMPS): ");
+			_OutputStream.writeInteger(ztpfNativeStats.total31bitHeap1MBFrames, "%zu\n");
+			_OutputStream.writeCharacters("1TPFLIMEMPS    EMPS keypoint A setting: ");
+			_OutputStream.writeInteger(ecbp2()->ce2proc->iproc_maxheap_31, "%zu\n");
+			_OutputStream.writeCharacters("1TPFHWGC       Total highwater mark GC heap 1MB frames (limited by -Xmx): ");
+			_OutputStream.writeInteger(ztpfNativeStats.totalGCHeap1MBFrames, "%zu\n");
+			_OutputStream.writeCharacters("1TPFHWJITCC    Total highwater mark JIT code cache heap 1MB frames: ");
+			_OutputStream.writeInteger(ztpfNativeStats.totalJITCodeCache1MBFrames, "%zu\n");
+			_OutputStream.writeCharacters("1TPFMMSTART    MMAP region virtual address start: ");
+			_OutputStream.writePointer(ztpfNativeStats.mmapRegionVirtualAddressStart);
+			_OutputStream.writeCharacters("\n");
+			_OutputStream.writeCharacters("1TPFMMEND      MMAP region highwater mark virtual address (limited by CINFC_CMMEVEN): ");
+			_OutputStream.writePointer(ztpfNativeStats.mmapRegionVirtualAddressEnd);
+			_OutputStream.writeCharacters("\n");
+			_OutputStream.writeCharacters("1TPFLIMMTHD    MTHD keypoint A setting: ");
+			_OutputStream.writeInteger((UDATA)(IDATA)*(short *)(cinfc_fast(CINFC_CMMTHMAX)), "%zd\n");
+		}
+	}
+
+	/* Write the section trailer */
+	_OutputStream.writeCharacters(
+		"NULL\n"
+		"NULL           ------------------------------------------------------------------------\n"
+	);
+#endif /* defined(J9ZTPF) */
 }
 
 /**
