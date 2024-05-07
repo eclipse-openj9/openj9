@@ -1768,8 +1768,15 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
          TR::Node *classChild = node->getLastChild();
          bool classChildGlobal;
          TR::VPConstraint *classChildConstraint = getConstraint(classChild, classChildGlobal);
-         if (classChildConstraint && classChildConstraint->isJavaLangClassObject() == TR_yes
-             && classChildConstraint->isNonNullObject()
+         bool isNonNullJavaLangClass = classChildConstraint
+                                       && classChildConstraint->isJavaLangClassObject() == TR_yes
+                                       && classChildConstraint->isNonNullObject();
+
+         // If the specific Class is known and is non-null, the result of Class.getComponentType()
+         // is known statically - either the component type, if the Class is an array class or
+         // the null reference if the Class is not an array class
+         //
+         if (isNonNullJavaLangClass
              && classChildConstraint->getClassType()
              && classChildConstraint->getClassType()->asFixedClass())
             {
@@ -1824,6 +1831,117 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                TR::DebugCounter::incStaticDebugCounter(comp(), TR::DebugCounter::debugCounterName(comp(), "constrainCall/(%s)", signature));
                return;
                }
+            }
+         else if (isNonNullJavaLangClass)
+            {
+            if (!performTransformation(comp(), "%sTransforming %s on node %p to load component type inline\n", OPT_DETAILS, signature, node))
+               break;
+
+            // Consider two cases:
+            //
+            // (i)  The operand is an instance of java.lang.Class indirectly loaded through a vft.  In that case,
+            //      we can work with the vft directly
+            // (ii) The operand is definitely a non-null instance of java.lang.Class.  In that case, load the
+            //      J9Class from the java.lang.Class by way of <classFromJavaLangClass>
+            //
+
+            TR::SymbolReference *symRef = classChild->getOpCode().hasSymbolReference() ? classChild->getSymbolReference() : NULL;
+            TR::SymbolReference *jlcFromClassSymRef = comp()->getSymRefTab()->findOrCreateJavaLangClassFromClassSymbolRef();
+            TR::Node *classOperand = NULL;
+
+            if ((symRef != NULL) && (symRef == jlcFromClassSymRef))
+               {
+               classOperand = classChild->getFirstChild();
+               }
+            else
+               {
+               classOperand = TR::Node::createWithSymRef(TR::aloadi, 1, 1, classChild,
+                                 comp()->getSymRefTab()->findOrCreateClassFromJavaLangClassSymbolRef());
+               }
+
+            TR::Node *loadComponentTypeNode = comp()->fej9()->loadArrayClassComponentType(classOperand);
+            TR::Node *jlcOfComponentTypeNode = NULL;
+
+            if ((classChildConstraint == NULL)
+                || (classChildConstraint->getClassType() == NULL)
+                || !comp()->fej9()->isClassArray(classChildConstraint->getClass()))
+               {
+               // Generate IL of the following form, inlining Class.getComponentType()
+               // without control flow:
+               //
+               //    n99n aselect
+               //    n98n   icmpne
+               //    n97n     iand
+               //    n96n       l2i
+               //    n95n         lloadi <classDepthAndFlags>
+               //    n94n           aloadi <vft> (or aloadi <classFromJavaLangClass>)
+               //    n93n       iconst 0x10000
+               //    n92n     iconst 0
+               //    n91n   aloadi <javaLangClassFromClass>
+               //    n90n     aselect
+               //    n98n       ==> icmpne
+               //    n89n       aloadi <componentClass>
+               //    n94n         ==> aloadi <vft> (or aloadi <classFromJavaLangClass>)
+               //    n94n       ==> aloadi <vft> (or aloadi <classFromJavaLangClass>)
+               //    n88n   aconst NULL
+               //
+               // Note that the same condition testing whether the class is an array
+               // class applies to both aselect operations.  If it is an array, the
+               // <componentClass> field of the j9ArrayClass is loaded, and then the
+               // corresponding java/lang/Class is returned; if it is not an array, a
+               // null reference results.
+               //
+               // Note further that both operands of an aselect are always evaluated,
+               // so if the class is not an array class, whatever bits appear
+               // at the offset of <componentClass> will be loaded for the second
+               // operand of the inner aselect (node n89n, in the example above), but
+               // the result of that aselect in that case will be the j9class for the
+               // original class, which is the third operand of the inner aselect.  That
+               // ensures that the aloadi <javaLangClassFromClass> (node n91n) has a
+               // valid j9Class to operate on regardless of whether the original operand
+               // was an array class, but the result of that aloadi is discarded if the
+               // class was not an array class.
+               //
+
+
+               // Assert that overlaying a J9Class instance with the layout of
+               // J9ArrayClass and loading the J9ArrayClass.componentType field will not
+               // access memory that is beyond the end of the J9Class.  This inline IL
+               // generated for Class.getComponentType() relies on that.
+               //
+               static_assert(sizeof(J9Class) >= offsetof(J9ArrayClass, componentType)
+                                                   + sizeof(J9ArrayClass::componentType),
+                             "The J9ArrayClass.componentType field must be within the size of J9Class");
+
+               TR::Node *testIsArrayClassNode =
+                     TR::Node::create(node, TR::icmpne, 2,
+                        comp()->fej9()->testIsClassArrayType(classOperand),
+                        TR::Node::iconst(node, 0));
+               loadComponentTypeNode =
+                  TR::Node::create(TR::aselect, 3,
+                                   testIsArrayClassNode,
+                                   loadComponentTypeNode,
+                                   classOperand);
+               loadComponentTypeNode =
+                  TR::Node::createWithSymRef(node, TR::aloadi, 1, loadComponentTypeNode, jlcFromClassSymRef);
+               jlcOfComponentTypeNode =
+                  TR::Node::create(TR::aselect, 3,
+                                   testIsArrayClassNode,
+                                   loadComponentTypeNode,
+                                   TR::Node::aconst(node, 0));
+               }
+            else
+               {
+               // Class is known to be an array, but actual component type is not
+               // statically known.  Simply load java/lang/Class from component
+               // type's j9Class
+               //
+               jlcOfComponentTypeNode =
+                  TR::Node::createWithSymRef(node, TR::aloadi, 1, loadComponentTypeNode, jlcFromClassSymRef);
+               }
+
+            transformCallToNodeDelayedTransformations(_curTree, jlcOfComponentTypeNode, false);
+            return;
             }
          break;
          }
