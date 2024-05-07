@@ -38,6 +38,12 @@ if(OMR_ARCH_X86)
 		endif()
 	endif()
 	enable_language(ASM_NASM)
+	if(OMR_OS_WINDOWS)
+		# On Windows, automatic dependency tracking for ASM_NASM files doesn't play
+		# nicely with fixpath.sh. Remove the nasm options that would produce *.d
+		# files: cmake silently treats missing *.d files as if they were empty.
+		set(CMAKE_DEPFILE_FLAGS_ASM_NASM "")
+	endif()
 	# We have to manually append "/" to the paths as NASM versions older than v2.14 requires trailing / in the directory paths.
 	set(asm_inc_dirs
 		"-I${j9vm_SOURCE_DIR}/oti/"
