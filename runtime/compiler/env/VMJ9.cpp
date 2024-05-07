@@ -1603,7 +1603,7 @@ UDATA TR_J9VMBase::getOffsetOfClassFromJavaLangClassField()
 
 UDATA TR_J9VMBase::getOffsetOfRamStaticsFromClassField()            {return offsetof(J9Class, ramStatics);}
 UDATA TR_J9VMBase::getOffsetOfIsArrayFieldFromRomClass()            {return offsetof(J9ROMClass, modifiers);}
-UDATA TR_J9VMBase::getOffsetOfClassAndDepthFlags()                  {return offsetof(J9Class, classDepthAndFlags);}
+UDATA TR_J9VMBase::getOffsetOfClassDepthAndFlags()                  {return offsetof(J9Class, classDepthAndFlags);}
 UDATA TR_J9VMBase::getOffsetOfClassFlags()                          {return offsetof(J9Class, classFlags);}
 UDATA TR_J9VMBase::getOffsetOfArrayComponentTypeField()             {return offsetof(J9ArrayClass, componentType);}
 UDATA TR_J9VMBase::constReleaseVMAccessOutOfLineMask()              {return J9_PUBLIC_FLAGS_VMACCESS_RELEASE_BITS;}
@@ -7408,7 +7408,7 @@ TR_J9VM::transformJavaLangClassIsArray(TR::Compilation * comp, TR::Node * callNo
    // treetop
    //   iushr
    //    iand
-   //     iloadi <classAndDepthFlags>
+   //     iloadi <ClassDepthAndFlags>
    //       aloadi <classFromJavaLangClass>
    //        aload <parm 1>         <= jlClass
    //    iconst J9AccClassArray
@@ -7437,11 +7437,11 @@ TR_J9VM::transformJavaLangClassIsArray(TR::Compilation * comp, TR::Node * callNo
 
    if (comp->target().is32Bit())
       {
-      classFlag = TR::Node::createWithSymRef(callNode, TR::iloadi, 1, vftLoad, symRefTab->findOrCreateClassAndDepthFlagsSymbolRef());
+      classFlag = TR::Node::createWithSymRef(callNode, TR::iloadi, 1, vftLoad, symRefTab->findOrCreateClassDepthAndFlagsSymbolRef());
       }
    else
       {
-      classFlag = TR::Node::createWithSymRef(callNode, TR::lloadi, 1, vftLoad, symRefTab->findOrCreateClassAndDepthFlagsSymbolRef());
+      classFlag = TR::Node::createWithSymRef(callNode, TR::lloadi, 1, vftLoad, symRefTab->findOrCreateClassDepthAndFlagsSymbolRef());
       classFlag = TR::Node::create(callNode, TR::l2i, 1, classFlag);
       }
 
@@ -8317,13 +8317,13 @@ TR_J9VM::inlineNativeCall(TR::Compilation * comp, TR::TreeTop * callNodeTreeTop,
          case TR::com_ibm_jit_JITHelpers_getClassDepthAndFlagsFromJ9Class32:
             {
             loadOp = TR::iloadi;
-            newSymRef = comp->getSymRefTab()->findOrCreateClassAndDepthFlagsSymbolRef();
+            newSymRef = comp->getSymRefTab()->findOrCreateClassDepthAndFlagsSymbolRef();
             break;
             }
          case TR::com_ibm_jit_JITHelpers_getClassDepthAndFlagsFromJ9Class64:
             {
             loadOp = TR::lloadi;
-            newSymRef = comp->getSymRefTab()->findOrCreateClassAndDepthFlagsSymbolRef();
+            newSymRef = comp->getSymRefTab()->findOrCreateClassDepthAndFlagsSymbolRef();
             break;
             }
          case TR::com_ibm_jit_JITHelpers_getComponentTypeFromJ9Class32:
