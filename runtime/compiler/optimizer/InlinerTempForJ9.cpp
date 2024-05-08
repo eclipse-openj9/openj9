@@ -2533,6 +2533,14 @@ TR_J9InlinerPolicy::willBeInlinedInCodeGen(TR::RecognizedMethod method)
 bool
 TR_J9InlinerPolicy::skipHCRGuardForCallee(TR_ResolvedMethod *callee)
    {
+   // Skip HCR guards for callees annotated with @IntrinsicCandidate, and ignore any
+   // later redefinition as these methods are meant to have special handling for
+   // performance reasons. @IntrinsicCandidate annotation is only used in the JCL.
+   // We would only be inlining @IntrinsicCandidate methods because we do not
+   // have any special handling for them yet.
+   if (comp()->fej9()->isIntrinsicCandidate(callee))
+      return true;
+
    // TODO: This is a very hacky way of avoiding HCR guards on sensitive String Compression methods which allows idiom
    // recognition to work. It also avoids unnecessary block splitting in performance sensitive methods for String
    // operations that are quite common. Can we do something better?
