@@ -826,13 +826,13 @@ TraceEvent=Trc_VM_ConvertMethodSignature_Signature_Result Overhead=1 Level=4 Tem
 TraceEvent=Trc_VM_initializeModulesPathEntry_loadJImageFailed NoEnv Overhead=1 Level=1 Template="initializeModulesPathEntry - attempt to load %.*s as jimage file failed with error=%d"
 
 TraceEvent=Trc_VM_GetCompleteNPEMessage_Not_Required Overhead=1 Level=3 Template="GetCompleteNPEMessage - No message generated for new NullPointerException().getMessage()"
-TraceEntry=Trc_VM_ComputeNPEMsgAtPC_Entry Overhead=1 Level=3 Template="ComputeNPEMsgAtPC : romClass (%p) romMethod (%p) temps (%p) bytecodeOffset (%p) bcCurrent (0x%x) npePC (%u) npeFlag (%d) isMethodFlag (%d) npeMsg (%s)"
+TraceEntry=Trc_VM_ComputeNPEMsgAtPC_Entry Obsolete Overhead=1 Level=3 Template="ComputeNPEMsgAtPC : romClass (%p) romMethod (%p) temps (%p) bytecodeOffset (%p) bcCurrent (0x%x) npePC (%u) npeFlag (%d) isMethodFlag (%d) npeMsg (%s)"
 TraceEvent=Trc_VM_ComputeNPEMsgAtPC_Constants Overhead=1 Level=4 Template="ComputeNPEMsgAtPC - constants : bcCurrent (0x%x) constNum (%d) numLen (%u) npeMsgTemp (%s)"
 TraceEvent=Trc_VM_ComputeNPEMsgAtPC_Operators Overhead=1 Level=4 Template="ComputeNPEMsgAtPC - operators : bcCurrent (0x%x) npeMsgTemp (%s) msgLen (%u)"
 TraceEvent=Trc_VM_ComputeNPEMsgAtPC_NotScalarType Overhead=1 Level=1 Template="ComputeNPEMsgAtPC - NOT scalar type : romClass (%p) romMethod (%p) constantPool (%p) aaloadIndex (%zu) info (%p) cpType (0x%x)"
 TraceEvent=Trc_VM_ComputeNPEMsgAtPC_Constants_UnexpectedBC Overhead=1 Level=1 Template="ComputeNPEMsgAtPC - constants unexpected bytecode : bcCurrent (0x%x)"
 TraceEvent=Trc_VM_ComputeNPEMsgAtPC_SkippedBC Overhead=1 Level=1 Template="ComputeNPEMsgAtPC - skipped bytecode : bcCurrent (0x%x) npeFinalFlag (%d)"
-TraceExit=Trc_VM_ComputeNPEMsgAtPC_Exit Overhead=1 Level=3 Template="ComputeNPEMsgAtPC : bcCurrent (0x%x) npePC (%u) npeFlag (%d) isMethodFlag (%d) npeMsg (%s)"
+TraceExit=Trc_VM_ComputeNPEMsgAtPC_Exit Obsolete Overhead=1 Level=3 Template="ComputeNPEMsgAtPC : bcCurrent (0x%x) npePC (%u) npeFlag (%d) isMethodFlag (%d) npeMsg (%s)"
 TraceEvent=Trc_VM_SimulateStack_BranchTarget Overhead=1 Level=3 Template="simulateStack - bytecodeMap[%zu] (0x%x) is BRANCH_TARGET with bcPos (%zu)"
 TraceEvent=Trc_VM_SimulateStack_JustLoadedStack Overhead=1 Level=3 Template="simulateStack - justLoadedStack bytecodeMap[%zu] (0x%x) stackIndex (%zu) bcIndex (%p) currentBytecode (0x%zx) npePC (%zu)"
 TraceEvent=Trc_VM_SimulateStack_AlreadyWalked Overhead=1 Level=3 Template="simulateStack - already walked, try next one in the queue : bytecodeMap[%zu] (0x%x) currentBytecode (0x%zx) npePC (%zu)"
@@ -966,3 +966,8 @@ TraceEvent=Trc_VM_criu_after_dump Overhead=1 Level=2 Template="After checkpoint 
 TraceEvent=Trc_VM_criu_process_restore_start_after_dump Overhead=1 Level=2 Template="After checkpoint criu_dump(), restorePid (%zu), processRestoreStartTimeInNanoseconds (%lld)"
 
 TraceEvent=Trc_VM_hashClassTablePackageDelete Overhead=1 Level=1 Template="hashClassTablePackageDelete %p (%.*s)"
+
+TraceEntry=Trc_VM_ComputeNPEMsgAtPC_Entry Overhead=1 Level=3 Template="ComputeNPEMsgAtPC : romClass (%p) romMethod (%p) temps (%p) bytecodeOffset (%p) npePC (0x%zx) npeFlag (%d) isMethodFlag (%d) npeMsg (%s)"
+TraceEvent=Trc_VM_ComputeNPEMsgAtPC_start Overhead=1 Level=3 Template="ComputeNPEMsgAtPC with bcCurrent : romClass (%p) romMethod (%p) temps (%p) bytecodeOffset (%p) bcCurrent (0x%x) npePC (0x%zx) npeFlag (%d) isMethodFlag (%d) npeMsg (%s)"
+TraceEvent=Trc_VM_ComputeNPEMsgAtPC_end Overhead=1 Level=3 Template="ComputeNPEMsgAtPC with bcCurrent : bcCurrent (0x%x) npePC (%u) npeFlag (%d) isMethodFlag (%d) npeMsg (%s)"
+TraceExit=Trc_VM_ComputeNPEMsgAtPC_Exit Overhead=1 Level=3 Template="ComputeNPEMsgAtPC : npePC (0x%zx) npeFlag (%d) isMethodFlag (%d) npeMsg (%s)"
