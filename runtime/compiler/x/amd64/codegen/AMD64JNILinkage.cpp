@@ -78,7 +78,7 @@ TR::Register *J9::X86::AMD64::JNILinkage::processJNIReferenceArg(TR::Node *child
          if (child->pointsToNull())
             {
             refReg = cg()->allocateRegister();
-            generateRegRegInstruction(TR::InstOpCode::XORRegReg(), child, refReg, refReg, cg());
+            generateRegRegInstruction(TR::InstOpCode::XOR4RegReg, child, refReg, refReg, cg());
             // TODO (81564): We need to kill the scratch register to prevent an
             // assertion error, but is this the right place to do so?
             cg()->stopUsingRegister(refReg);
@@ -938,7 +938,7 @@ void J9::X86::AMD64::JNILinkage::acquireVMAccess(TR::Node *callNode)
    TR::Register *scratchReg1 = cg()->allocateRegister();
    TR::Register *scratchReg2 = cg()->allocateRegister();
 
-   generateRegRegInstruction(TR::InstOpCode::XORRegReg(), callNode, scratchReg1, scratchReg1, cg());
+   generateRegRegInstruction(TR::InstOpCode::XOR4RegReg, callNode, scratchReg1, scratchReg1, cg());
 
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
    uintptr_t mask = fej9->constAcquireVMAccessOutOfLineMask();
