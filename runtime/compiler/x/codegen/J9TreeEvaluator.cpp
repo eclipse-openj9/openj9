@@ -7448,6 +7448,60 @@ static void handleOffHeapDataForArrays(
    }
 #endif /* J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION */
 
+static void verifyInlinedAllocation(
+      TR::Node *node,
+      TR_OpaqueClassBlock *clazz,
+      int32_t allocationSize,
+      TR::LabelSymbol *failLabel,
+      TR::Instruction *startInstr,
+      TR::CodeGenerator *cg)
+   {
+   TR::Compilation *comp = cg->comp();
+
+   startInstr = startInstr->getNext();
+   TR_OpaqueClassBlock *classToValidate = clazz;
+
+   TR_RelocationRecordInformation *recordInfo =
+      (TR_RelocationRecordInformation *) comp->trMemory()->allocateMemory(sizeof(TR_RelocationRecordInformation), heapAlloc);
+   recordInfo->data1 = allocationSize;
+   recordInfo->data2 = node->getInlinedSiteIndex();
+   recordInfo->data3 = (uintptr_t) failLabel;
+   recordInfo->data4 = (uintptr_t) startInstr;
+
+   TR::SymbolReference *classSymRef;
+   TR_ExternalRelocationTargetKind reloKind;
+
+   if (node->getOpCodeValue() == TR::New)
+      {
+      classSymRef = node->getFirstChild()->getSymbolReference();
+      reloKind = TR_VerifyClassObjectForAlloc;
+      }
+   else
+      {
+      classSymRef = node->getSecondChild()->getSymbolReference();
+      reloKind = TR_VerifyRefArrayForAlloc;
+
+      if (comp->getOption(TR_UseSymbolValidationManager))
+         {
+         classToValidate = comp->fej9()->getComponentClassFromArrayClass(classToValidate);
+         }
+      }
+
+   if (comp->getOption(TR_UseSymbolValidationManager))
+      {
+      TR_ASSERT(classToValidate, "classToValidate should not be NULL, clazz=%p\n", clazz);
+      recordInfo->data5 = (uintptr_t)classToValidate;
+      }
+
+   cg->addExternalRelocation(new (cg->trHeapMemory())
+      TR::BeforeBinaryEncodingExternalRelocation(
+         startInstr,
+         (uint8_t *) classSymRef,
+         (uint8_t *) recordInfo,
+         reloKind, cg),
+      __FILE__, __LINE__, node);
+   }
+
 TR::Register *
 J9::X86::TreeEvaluator::VMnewEvaluator(
       TR::Node *node,
@@ -7931,44 +7985,7 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
    if (fej9->inlinedAllocationsMustBeVerified() &&
        (node->getOpCodeValue() == TR::New || node->getOpCodeValue() == TR::anewarray))
       {
-      startInstr = startInstr->getNext();
-      TR_OpaqueClassBlock *classToValidate = clazz;
-
-      TR_RelocationRecordInformation *recordInfo =
-         (TR_RelocationRecordInformation *) comp->trMemory()->allocateMemory(sizeof(TR_RelocationRecordInformation), heapAlloc);
-      recordInfo->data1 = allocationSize;
-      recordInfo->data2 = node->getInlinedSiteIndex();
-      recordInfo->data3 = (uintptr_t) failLabel;
-      recordInfo->data4 = (uintptr_t) startInstr;
-
-      TR::SymbolReference * classSymRef;
-      TR_ExternalRelocationTargetKind reloKind;
-
-      if (node->getOpCodeValue() == TR::New)
-         {
-         classSymRef = node->getFirstChild()->getSymbolReference();
-         reloKind = TR_VerifyClassObjectForAlloc;
-         }
-      else
-         {
-         classSymRef = node->getSecondChild()->getSymbolReference();
-         reloKind = TR_VerifyRefArrayForAlloc;
-
-         if (comp->getOption(TR_UseSymbolValidationManager))
-            classToValidate = fej9->getComponentClassFromArrayClass(classToValidate);
-         }
-
-      if (comp->getOption(TR_UseSymbolValidationManager))
-         {
-         TR_ASSERT(classToValidate, "classToValidate should not be NULL, clazz=%p\n", clazz);
-         recordInfo->data5 = (uintptr_t)classToValidate;
-         }
-
-      cg->addExternalRelocation(new (cg->trHeapMemory()) TR::BeforeBinaryEncodingExternalRelocation(startInstr,
-                                                                               (uint8_t *) classSymRef,
-                                                                               (uint8_t *) recordInfo,
-                                                                               reloKind, cg),
-                           __FILE__, __LINE__, node);
+      verifyInlinedAllocation(node, clazz, allocationSize, failLabel, startInstr, cg);
       }
 
    // 1 == vmThread
