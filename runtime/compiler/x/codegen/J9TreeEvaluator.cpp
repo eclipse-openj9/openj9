@@ -6880,10 +6880,10 @@ static void genInitArrayHeader(
 
 
 // ------------------------------------------------------------------------------
-// genZeroInitObject2
+// genZeroInitEntireObject2
 // ------------------------------------------------------------------------------
 
-static bool genZeroInitObject2(
+static bool genZeroInitEntireObject2(
       TR::Node *node,
       int32_t objectSize,
       int32_t elementSize,
@@ -7040,7 +7040,7 @@ static bool genZeroInitObject2(
 // "elementSize" contains the size of each element.
 // Otherwise the object size is in "objectSize".
 //
-static bool genZeroInitObject(
+static bool genZeroInitEntireObject(
       TR::Node *node,
       int32_t objectSize,
       int32_t elementSize,
@@ -7718,27 +7718,10 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
    //
    // --------------------------------------------------------------------------------
 
-   bool canUseFastInlineAllocation = (!realTimeGC && !generateArraylets) ? true : false;
-
    bool useRepInstruction;
    bool monitorSlotIsInitialized;
-   bool skipOutlineZeroInit = false;
-   TR_ExtraInfoForNew *initInfo = node->getSymbolReference()->getExtraInfo();
 
-   if (node->canSkipZeroInitialization())
-      {
-      skipOutlineZeroInit = true;
-      }
-   else if (initInfo)
-      {
-      if (initInfo->numZeroInitSlots <= 0)
-         {
-         skipOutlineZeroInit = true;
-         }
-      }
-
-   if (skipOutlineZeroInit && !performTransformation(comp, "O^O OUTLINED NEW: skip outlined zero init on %s %p\n", cg->getDebug()->getName(node), node))
-      skipOutlineZeroInit = false;
+   bool canUseFastInlineAllocation = (!realTimeGC && !generateArraylets) ? true : false;
 
    // Faster inlined sequence.  It does not understand arraylet shapes yet.
    //
@@ -7772,6 +7755,8 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
          static char *p = feGetEnv("TR_MaxZeroInitWordsPerIteration");
          maxZeroInitWordsPerIteration = p ? atoi(p) : MAX_ZERO_INIT_WORDS_PER_ITERATION;
          }
+
+      TR_ExtraInfoForNew *initInfo = node->getSymbolReference()->getExtraInfo();
 
       if (initInfo && initInfo->zeroInitSlots)
          {
@@ -7889,12 +7874,12 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
          //
          if (canUseFastInlineAllocation)
             {
-            useRepInstruction = genZeroInitObject2(node, objectSize, elementSize, sizeReg, targetReg, tempReg, segmentReg, srm, cg);
+            useRepInstruction = genZeroInitEntireObject2(node, objectSize, elementSize, sizeReg, targetReg, tempReg, segmentReg, srm, cg);
             shouldInitZeroSizedArrayHeader = false;
             }
          else
             {
-            useRepInstruction = genZeroInitObject(node, objectSize, elementSize, sizeReg, targetReg, tempReg, segmentReg, srm, cg);
+            useRepInstruction = genZeroInitEntireObject(node, objectSize, elementSize, sizeReg, targetReg, tempReg, segmentReg, srm, cg);
             }
 
          J9JavaVM * jvm = fej9->getJ9JITConfig()->javaVM;
