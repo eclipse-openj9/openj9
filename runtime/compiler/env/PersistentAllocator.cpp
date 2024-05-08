@@ -707,8 +707,9 @@ PersistentAllocator::disclaimAllSegments()
    TR::CompilationInfo *compInfo = TR::CompilationInfo::get(_javaVM.jitConfig);
    bool canDisclaimOnSwap = TR::Options::getCmdLineOptions()->getOption(TR_DisclaimMemoryOnSwap) && !compInfo->isSwapMemoryDisabled();
    j9thread_monitor_enter(_segmentMonitor);
-   for (const J9MemorySegment &segment : _segments)
+   for (auto segmentIterator = _segments.begin(); segmentIterator != _segments.end(); ++segmentIterator)
       {
+      J9MemorySegment &segment = *segmentIterator;
       if (segment.vmemIdentifier.allocator == OMRPORT_VMEM_RESERVE_USED_MMAP_SHM || // Can disclaim to file
         ((segment.vmemIdentifier.mode & J9PORT_VMEM_MEMORY_MODE_VIRTUAL) && canDisclaimOnSwap)) // Can disclaim to swap
          {
