@@ -337,6 +337,6 @@ protected:
 class TR_J9ServerMethod : public TR_J9Method
    {
 public:
-   TR_J9ServerMethod(TR_FrontEnd *trvm, TR_Memory *, J9Class * aClazz, uintptr_t cpIndex);
+   TR_J9ServerMethod(TR_FrontEnd *trvm, TR_Memory *, J9Class * aClazz, int32_t cpIndex);
    };
 #endif // J9METHODSERVER_H
