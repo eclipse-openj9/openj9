@@ -790,365 +790,366 @@ static void
 computeNPEMsgAtPC(J9VMThread *vmThread, J9ROMMethod *romMethod, J9ROMClass *romClass, UDATA npePC,
 		bool npeFinalFlag, char **npeMsg, bool *isMethodFlag, UDATA *temps, J9BytecodeOffset *bytecodeOffset)
 {
-	J9ROMConstantPoolItem *constantPool = J9_ROM_CP_FROM_ROM_CLASS(romClass);
-	U_8 *code = J9_BYTECODE_START_FROM_ROM_METHOD(romMethod);
-	U_8 *bcCurrentPtr = code + npePC;
-	U_8 bcCurrent = *bcCurrentPtr;
-#ifdef J9VM_ENV_LITTLE_ENDIAN
-//	UDATA bigEndian = BCT_LittleEndianOutput;
-#else
-//	UDATA bigEndian = BCT_BigEndianOutput;
-#endif
+	Trc_VM_ComputeNPEMsgAtPC_Entry(vmThread, romClass, romMethod, temps, bytecodeOffset, npePC, npeFinalFlag, *isMethodFlag, *npeMsg);
 	PORT_ACCESS_FROM_VMC(vmThread);
-
-	Trc_VM_ComputeNPEMsgAtPC_Entry(vmThread, romClass, romMethod, temps, bytecodeOffset, bcCurrent, npePC, npeFinalFlag, *isMethodFlag, *npeMsg);
 	if (NULL != *npeMsg) {
 		j9mem_free_memory(*npeMsg);
 		*npeMsg = NULL;
 	}
-	if ((bcCurrent >= JBiconstm1) && (bcCurrent <= JBdconst1)) {
-		/*
-		 * JBiconstm1, JBiconst0, JBiconst1, JBiconst2, JBiconst3, JBiconst4, JBiconst5
-		 * JBlconst0, JBlconst1
-		 * JBfconst0, JBfconst1, JBfconst2
-		 * JBdconst0, JBdconst1
-		 */
-		I_8 constNum = 0;
-		bool missedBCFlag = false;
-
-		if (JBiconstm1 == bcCurrent) {
-			constNum = -1;
-		} else {
-			if ((bcCurrent >= JBiconst0) && (bcCurrent <= JBiconst5)) {
-				constNum = bcCurrent - 3; /* iconst_0 = 3 (0x3) */
-			} else if ((JBlconst0 == bcCurrent) || (JBfconst0 == bcCurrent) || (JBdconst0 == bcCurrent)) {
-				constNum = 0;
-			} else if ((JBlconst1 == bcCurrent) || (JBfconst1 == bcCurrent) || (JBdconst1 == bcCurrent)) {
-				constNum = 1;
-			} else if (JBfconst2 == bcCurrent) {
-				constNum = 2;
-			} else {
-				missedBCFlag = true;
-				Trc_VM_ComputeNPEMsgAtPC_Constants_UnexpectedBC(vmThread, bcCurrent);
-			}
-		}
-		if (!missedBCFlag) {
-			*npeMsg = getMsgWithAllocation(vmThread, "%d", constNum);
-		}
-	} else if (((bcCurrent >= JBiadd) && (bcCurrent <= JBlxor))
-		|| ((bcCurrent >= JBlcmp) && (bcCurrent <= JBdcmpg))
-	) {
-		/* JBiadd, JBladd, JBfadd, JBdadd, JBisub, JBlsub, JBfsub, JBdsub, JBimul, JBlmul, JBfmul, JBdmul
-		 * JBidiv, JBldiv, JBfdiv, JBddiv, JBirem, JBlrem, JBfrem, JBdrem, JBineg, JBlneg, JBfneg, JBdneg
-		 * JBishl, JBlshl, JBishr, JBlshr, JBiushr, JBlushr, JBiand, JBland, JBior, JBlor, JBixor, JBlxor
-		 *
-		 * JBlcmp, JBfcmpl, JBfcmpg, JBdcmpl, JBdcmpg
-		 */
-		*npeMsg = getMsgWithAllocation(vmThread, "...");
+	if (BYTECODE_TEMP_CHANGED == npePC) {
+		/* *npeMsg is NULL */
 	} else {
-		switch (bcCurrent) {
-		case JBaconstnull:
-			*npeMsg = getMsgWithAllocation(vmThread, "null");
-			break;
+		J9ROMConstantPoolItem *constantPool = J9_ROM_CP_FROM_ROM_CLASS(romClass);
+		U_8 *code = J9_BYTECODE_START_FROM_ROM_METHOD(romMethod);
+		U_8 *bcCurrentPtr = code + npePC;
+		U_8 bcCurrent = *bcCurrentPtr;
 
-		case JBbipush:
-			*npeMsg = getMsgWithAllocation(vmThread, "%lu", *(bcCurrentPtr + 1));
-			break;
-
-		case JBsipush: {
-			UDATA sipushIndex = 0;
-			U_8 *tmpbcPtr = bcCurrentPtr + 1;
-
-			GETNEXT_U16(sipushIndex, tmpbcPtr);
-			*npeMsg = getMsgWithAllocation(vmThread, "%lu", sipushIndex);
-			break;
-		}
-
-		case JBldc:		/* Fall through case !!! */
-		case JBldcw:	/* Fall through case !!! */
-		case JBldc2dw:	/* Fall through case !!! */
-		case JBldc2lw: {
-			UDATA ldcIndex = 0;
-			U_8 *tmpbcPtr = bcCurrentPtr + 1;
-
-			if (JBldc == bcCurrent) {
-				GETNEXT_U8(ldcIndex, tmpbcPtr);
-			} else if (JBldcw == bcCurrent) {
-				GETNEXT_U16(ldcIndex, tmpbcPtr);
-			} else {
-				/* bcCurrent is JBldc2lw or JBldc2dw */
-				GETNEXT_U8(ldcIndex, tmpbcPtr);
-			}
-
-			J9ROMConstantPoolItem *info = &constantPool[ldcIndex];
-			if (BCT_J9DescriptionCpTypeScalar == ((J9ROMSingleSlotConstantRef *) info)->cpType) {
-				/* this is a float/int constant */
-				ldcIndex = ((J9ROMSingleSlotConstantRef *) info)->data;
-				*npeMsg = getMsgWithAllocation(vmThread, "%lu", ldcIndex);
-			} else {
-				 Trc_VM_ComputeNPEMsgAtPC_NotScalarType(vmThread, romClass, romMethod, constantPool, ldcIndex, info, ((J9ROMSingleSlotConstantRef *) info)->cpType);
-			}
-			break;
-		}
-
-		case JBanewarray: {
-			UDATA index = PARAM_16(bcCurrentPtr, 1);
-			J9ROMConstantPoolItem *info = &constantPool[index];
-			J9UTF8 *className = J9ROMSTRINGREF_UTF8DATA((J9ROMStringRef *) info);
-			char *fullyQualifiedClassName = convertToJavaFullyQualifiedName(vmThread, className);
-
-			*npeMsg = getMsgWithAllocation(vmThread, fullyQualifiedClassName);
-			j9mem_free_memory(fullyQualifiedClassName);
-			break;
-		}
-
-		case JBinvokeinterface2:	/* Fall through case !!! */
-		case JBinvokevirtual:		/* Fall through case !!! */
-		case JBinvokespecial:		/* Fall through case !!! */
-		case JBinvokeinterface:		/* Fall through case !!! */
-		case JBinvokestatic: {
-			if (npeFinalFlag) {
-				UDATA objectrefPos = bytecodeOffset[npePC].first;
-
-				if (BYTECODE_BRANCH_TARGET == objectrefPos) {
-					/* *npeMsg is NULL */
-				} else {
-					computeNPEMsgAtPC(vmThread, romMethod, romClass, objectrefPos, false, npeMsg, isMethodFlag, temps, bytecodeOffset);
-				}
-			} else {
-				U_8 *bcPtrTemp = (JBinvokeinterface2 == bcCurrent) ? bcCurrentPtr + 2 : bcCurrentPtr;
-				char *methodName = getFullyQualifiedMethodName(vmThread, romClass, bcPtrTemp);
-
-				*npeMsg = getMsgWithAllocation(vmThread, methodName);
-				j9mem_free_memory(methodName);
-				*isMethodFlag = true;
-			}
-			break;
-		}
-
-		case JBiload0:	/* Fall through case !!! */
-		case JBiload1:	/* Fall through case !!! */
-		case JBiload2:	/* Fall through case !!! */
-		case JBiload3:	/* Fall through case !!! */
-		case JBlload0:	/* Fall through case !!! */
-		case JBlload1:	/* Fall through case !!! */
-		case JBlload2:	/* Fall through case !!! */
-		case JBlload3:	/* Fall through case !!! */
-		case JBfload0:	/* Fall through case !!! */
-		case JBfload1:	/* Fall through case !!! */
-		case JBfload2:	/* Fall through case !!! */
-		case JBfload3:	/* Fall through case !!! */
-		case JBdload0:	/* Fall through case !!! */
-		case JBdload1:	/* Fall through case !!! */
-		case JBdload2:	/* Fall through case !!! */
-		case JBdload3:	/* Fall through case !!! */
-		case JBaload0:	/* Fall through case !!! */
-		case JBaload1:	/* Fall through case !!! */
-		case JBaload2:	/* Fall through case !!! */
-		case JBaload3:	/* Fall through case !!! */
-		case JBaload0getfield: {
-			U_16 localVar = 0;
-			if (bcCurrent >= JBiload0 && bcCurrent <= JBiload3) {
-				localVar = bcCurrent - JBiload0;
-			} else if (bcCurrent >= JBlload0 && bcCurrent <= JBlload3) {
-				localVar = bcCurrent - JBlload0;
-			} else if (bcCurrent >= JBfload0 && bcCurrent <= JBfload3) {
-				localVar = bcCurrent - JBfload0;
-			} else if (bcCurrent >= JBdload0 && bcCurrent <= JBdload3) {
-				localVar = bcCurrent - JBdload0;
-			} else if (bcCurrent >= JBaload0 && bcCurrent <= JBaload3) {
-				localVar = bcCurrent - JBaload0;
-			} else if (JBaload0getfield == bcCurrent) {
-				localVar = 0;
-			}
-			*npeMsg = getLocalsName(vmThread, romMethod, localVar, npePC, temps);
-			break;
-		}
-
-		case JBiload:	/* Fall through case !!! */
-		case JBlload:	/* Fall through case !!! */
-		case JBfload:	/* Fall through case !!! */
-		case JBdload:	/* Fall through case !!! */
-		case JBaload: {
-			/* The index is an unsigned byte that must be an index into the
-			 * local variable array of the current frame (section 2.6).
-			 * The local variable at index must contain a reference.
+		Trc_VM_ComputeNPEMsgAtPC_start(vmThread, romClass, romMethod, temps, bytecodeOffset, bcCurrent, npePC, npeFinalFlag, *isMethodFlag, *npeMsg);
+		if ((bcCurrent >= JBiconstm1) && (bcCurrent <= JBdconst1)) {
+			/*
+			 * JBiconstm1, JBiconst0, JBiconst1, JBiconst2, JBiconst3, JBiconst4, JBiconst5
+			 * JBlconst0, JBlconst1
+			 * JBfconst0, JBfconst1, JBfconst2
+			 * JBdconst0, JBdconst1
 			 */
-			*npeMsg = getLocalsName(vmThread, romMethod, *(bcCurrentPtr + 1), npePC, temps);
-			break;
-		}
+			I_8 constNum = 0;
+			bool missedBCFlag = false;
 
-		case JBiloadw:	/* Fall through case !!! */
-		case JBlloadw:	/* Fall through case !!! */
-		case JBfloadw:	/* Fall through case !!! */
-		case JBdloadw:	/* Fall through case !!! */
-		case JBaloadw: {
-			U_16 localVar = 0;
-			U_8 *tmpbcPtr = bcCurrentPtr + 1;
-
-			GETNEXT_U16(localVar, tmpbcPtr);
-			*npeMsg = getLocalsName(vmThread, romMethod, localVar, npePC, temps);
-			break;
-		}
-
-		case JBi2l:	/* Fall through case !!! */
-		case JBi2f:	/* Fall through case !!! */
-		case JBi2d:	/* Fall through case !!! */
-		case JBl2i:	/* Fall through case !!! */
-		case JBl2f:	/* Fall through case !!! */
-		case JBl2d:	/* Fall through case !!! */
-		case JBf2i:	/* Fall through case !!! */
-		case JBf2l:	/* Fall through case !!! */
-		case JBf2d:	/* Fall through case !!! */
-		case JBd2i:	/* Fall through case !!! */
-		case JBd2l:	/* Fall through case !!! */
-		case JBd2f:	/* Fall through case !!! */
-		case JBi2b:	/* Fall through case !!! */
-		case JBi2c:	/* Fall through case !!! */
-		case JBi2s:	/* Fall through case !!! */
-		case JBarraylength:	/* Fall through case !!! */
-		case JBathrow:	/* Fall through case !!! */
-		case JBmonitorenter:	/* Fall through case !!! */
-		case JBmonitorexit:	/* Fall through case !!! */
-		case JBdup:	/* Fall through case !!! */
-		case JBdupx1:	/* Fall through case !!! */
-		case JBdupx2:	/* Fall through case !!! */
-		case JBdup2:	/* Fall through case !!! */
-		case JBdup2x1:	/* Fall through case !!! */
-		case JBdup2x2:
-			computeNPEMsgAtPC(vmThread, romMethod, romClass, bytecodeOffset[npePC].first, false, npeMsg, isMethodFlag, temps, bytecodeOffset);
-			break;
-
-		case JBiastore:	/* Fall through case !!! */
-		case JBlastore:	/* Fall through case !!! */
-		case JBfastore:	/* Fall through case !!! */
-		case JBdastore:	/* Fall through case !!! */
-		case JBbastore:	/* Fall through case !!! */
-		case JBcastore:	/* Fall through case !!! */
-		case JBsastore:	/* Fall through case !!! */
-		case JBaastore: {
-			UDATA bcCausePos2 = bytecodeOffset[npePC].second;
-			UDATA bcCausePos = bytecodeOffset[npePC].first;
-
-			if ((BYTECODE_BRANCH_TARGET == bcCausePos)
-				|| (BYTECODE_BRANCH_TARGET == bcCausePos2)
-			) {
-				/* *npeMsg is NULL */
+			if (JBiconstm1 == bcCurrent) {
+				constNum = -1;
 			} else {
-				computeNPEMsgAtPC(vmThread, romMethod, romClass, bcCausePos, false, npeMsg, isMethodFlag, temps, bytecodeOffset);
-			}
-			break;
-		}
-
-		case JBiaload:	/* Fall through case !!! */
-		case JBlaload:	/* Fall through case !!! */
-		case JBfaload:	/* Fall through case !!! */
-		case JBdaload:	/* Fall through case !!! */
-		case JBbaload:	/* Fall through case !!! */
-		case JBcaload:	/* Fall through case !!! */
-		case JBsaload:	/* Fall through case !!! */
-		case JBaaload: {
-			UDATA bcCausePos = bytecodeOffset[npePC].first;
-
-			char *npeMsgObjref = NULL;
-			UDATA aaloadIndexPos = 0;
-			if (BYTECODE_BRANCH_TARGET == bcCausePos) {
-				if (!npeFinalFlag) {
-					npeMsgObjref = getMsgWithAllocation(vmThread, "<array>");
-				}
-			} else {
-				computeNPEMsgAtPC(vmThread, romMethod, romClass, bcCausePos, false, &npeMsgObjref, isMethodFlag, temps, bytecodeOffset);
-			}
-			aaloadIndexPos = bytecodeOffset[npePC].second;
-			if (npeFinalFlag || (NULL == npeMsgObjref)) {
-				*npeMsg = npeMsgObjref;
-			} else {
-				char *npeMsgIndex = NULL;
-				if (BYTECODE_BRANCH_TARGET == aaloadIndexPos) {
-					npeMsgIndex = getMsgWithAllocation(vmThread, "...");
+				if ((bcCurrent >= JBiconst0) && (bcCurrent <= JBiconst5)) {
+					constNum = bcCurrent - 3; /* iconst_0 = 3 (0x3) */
+				} else if ((JBlconst0 == bcCurrent) || (JBfconst0 == bcCurrent) || (JBdconst0 == bcCurrent)) {
+					constNum = 0;
+				} else if ((JBlconst1 == bcCurrent) || (JBfconst1 == bcCurrent) || (JBdconst1 == bcCurrent)) {
+					constNum = 1;
+				} else if (JBfconst2 == bcCurrent) {
+					constNum = 2;
 				} else {
-					computeNPEMsgAtPC(vmThread, romMethod, romClass, aaloadIndexPos, false, &npeMsgIndex, isMethodFlag, temps, bytecodeOffset);
+					missedBCFlag = true;
+					Trc_VM_ComputeNPEMsgAtPC_Constants_UnexpectedBC(vmThread, bcCurrent);
+				}
+			}
+			if (!missedBCFlag) {
+				*npeMsg = getMsgWithAllocation(vmThread, "%d", constNum);
+			}
+		} else if (((bcCurrent >= JBiadd) && (bcCurrent <= JBlxor))
+			|| ((bcCurrent >= JBlcmp) && (bcCurrent <= JBdcmpg))
+		) {
+			/* JBiadd, JBladd, JBfadd, JBdadd, JBisub, JBlsub, JBfsub, JBdsub, JBimul, JBlmul, JBfmul, JBdmul
+			 * JBidiv, JBldiv, JBfdiv, JBddiv, JBirem, JBlrem, JBfrem, JBdrem, JBineg, JBlneg, JBfneg, JBdneg
+			 * JBishl, JBlshl, JBishr, JBlshr, JBiushr, JBlushr, JBiand, JBland, JBior, JBlor, JBixor, JBlxor
+			 *
+			 * JBlcmp, JBfcmpl, JBfcmpg, JBdcmpl, JBdcmpg
+			 */
+			*npeMsg = getMsgWithAllocation(vmThread, "...");
+		} else {
+			switch (bcCurrent) {
+			case JBaconstnull:
+				*npeMsg = getMsgWithAllocation(vmThread, "null");
+				break;
+
+			case JBbipush:
+				*npeMsg = getMsgWithAllocation(vmThread, "%lu", *(bcCurrentPtr + 1));
+				break;
+
+			case JBsipush: {
+				UDATA sipushIndex = 0;
+				U_8 *tmpbcPtr = bcCurrentPtr + 1;
+
+				GETNEXT_U16(sipushIndex, tmpbcPtr);
+				*npeMsg = getMsgWithAllocation(vmThread, "%lu", sipushIndex);
+				break;
+			}
+
+			case JBldc:		/* Fall through case !!! */
+			case JBldcw:	/* Fall through case !!! */
+			case JBldc2dw:	/* Fall through case !!! */
+			case JBldc2lw: {
+				UDATA ldcIndex = 0;
+				U_8 *tmpbcPtr = bcCurrentPtr + 1;
+
+				if (JBldc == bcCurrent) {
+					GETNEXT_U8(ldcIndex, tmpbcPtr);
+				} else if (JBldcw == bcCurrent) {
+					GETNEXT_U16(ldcIndex, tmpbcPtr);
+				} else {
+					/* bcCurrent is JBldc2lw or JBldc2dw */
+					GETNEXT_U8(ldcIndex, tmpbcPtr);
 				}
 
-				if (NULL != npeMsgIndex) {
-					*npeMsg = getMsgWithAllocation(vmThread, "%s[%s]", npeMsgObjref, npeMsgIndex);
-					*isMethodFlag = false;
-					j9mem_free_memory(npeMsgIndex);
+				J9ROMConstantPoolItem *info = &constantPool[ldcIndex];
+				if (BCT_J9DescriptionCpTypeScalar == ((J9ROMSingleSlotConstantRef *) info)->cpType) {
+					/* this is a float/int constant */
+					ldcIndex = ((J9ROMSingleSlotConstantRef *) info)->data;
+					*npeMsg = getMsgWithAllocation(vmThread, "%lu", ldcIndex);
+				} else {
+					 Trc_VM_ComputeNPEMsgAtPC_NotScalarType(vmThread, romClass, romMethod, constantPool, ldcIndex, info, ((J9ROMSingleSlotConstantRef *) info)->cpType);
 				}
-				j9mem_free_memory(npeMsgObjref);
-			}
-			break;
-		}
-
-		case JBgetstatic: {
-			UDATA index = PARAM_16(bcCurrentPtr, 1);
-			J9ROMConstantPoolItem *info = &constantPool[index];
-			J9UTF8 *className = J9ROMCLASSREF_NAME((J9ROMClassRef *) &constantPool[((J9ROMFieldRef *) info)->classRefCPIndex]);
-			char *fullyQualifiedClassName = convertToJavaFullyQualifiedName(vmThread, className);
-			J9UTF8 *fieldName = ((J9UTF8 *) (J9ROMNAMEANDSIGNATURE_NAME(J9ROMFIELDREF_NAMEANDSIGNATURE((J9ROMFieldRef *) info))));
-
-			if (NULL != fullyQualifiedClassName) {
-				*npeMsg = getMsgWithAllocation(vmThread, "%s.%.*s", fullyQualifiedClassName, J9UTF8_LENGTH(fieldName), J9UTF8_DATA(fieldName));
-			}
-			j9mem_free_memory(fullyQualifiedClassName);
-			break;
-		}
-
-		case JBgetfield: {
-			UDATA bcCausePos = bytecodeOffset[npePC].first;
-			char *npeMsgObjref = NULL;
-			if (BYTECODE_BRANCH_TARGET != bcCausePos) {
-				computeNPEMsgAtPC(vmThread, romMethod, romClass, bcCausePos, false, &npeMsgObjref, isMethodFlag, temps, bytecodeOffset);
+				break;
 			}
 
-			if (npeFinalFlag) {
-				*npeMsg = npeMsgObjref;
-			} else {
+			case JBanewarray: {
 				UDATA index = PARAM_16(bcCurrentPtr, 1);
 				J9ROMConstantPoolItem *info = &constantPool[index];
+				J9UTF8 *className = J9ROMSTRINGREF_UTF8DATA((J9ROMStringRef *) info);
+				char *fullyQualifiedClassName = convertToJavaFullyQualifiedName(vmThread, className);
+
+				*npeMsg = getMsgWithAllocation(vmThread, fullyQualifiedClassName);
+				j9mem_free_memory(fullyQualifiedClassName);
+				break;
+			}
+
+			case JBinvokeinterface2:	/* Fall through case !!! */
+			case JBinvokevirtual:		/* Fall through case !!! */
+			case JBinvokespecial:		/* Fall through case !!! */
+			case JBinvokeinterface:		/* Fall through case !!! */
+			case JBinvokestatic: {
+				if (npeFinalFlag) {
+					UDATA objectrefPos = bytecodeOffset[npePC].first;
+
+					if (BYTECODE_BRANCH_TARGET == objectrefPos) {
+						/* *npeMsg is NULL */
+					} else {
+						computeNPEMsgAtPC(vmThread, romMethod, romClass, objectrefPos, false, npeMsg, isMethodFlag, temps, bytecodeOffset);
+					}
+				} else {
+					U_8 *bcPtrTemp = (JBinvokeinterface2 == bcCurrent) ? bcCurrentPtr + 2 : bcCurrentPtr;
+					char *methodName = getFullyQualifiedMethodName(vmThread, romClass, bcPtrTemp);
+
+					*npeMsg = getMsgWithAllocation(vmThread, methodName);
+					j9mem_free_memory(methodName);
+					*isMethodFlag = true;
+				}
+				break;
+			}
+
+			case JBiload0:	/* Fall through case !!! */
+			case JBiload1:	/* Fall through case !!! */
+			case JBiload2:	/* Fall through case !!! */
+			case JBiload3:	/* Fall through case !!! */
+			case JBlload0:	/* Fall through case !!! */
+			case JBlload1:	/* Fall through case !!! */
+			case JBlload2:	/* Fall through case !!! */
+			case JBlload3:	/* Fall through case !!! */
+			case JBfload0:	/* Fall through case !!! */
+			case JBfload1:	/* Fall through case !!! */
+			case JBfload2:	/* Fall through case !!! */
+			case JBfload3:	/* Fall through case !!! */
+			case JBdload0:	/* Fall through case !!! */
+			case JBdload1:	/* Fall through case !!! */
+			case JBdload2:	/* Fall through case !!! */
+			case JBdload3:	/* Fall through case !!! */
+			case JBaload0:	/* Fall through case !!! */
+			case JBaload1:	/* Fall through case !!! */
+			case JBaload2:	/* Fall through case !!! */
+			case JBaload3:	/* Fall through case !!! */
+			case JBaload0getfield: {
+				U_16 localVar = 0;
+				if (bcCurrent >= JBiload0 && bcCurrent <= JBiload3) {
+					localVar = bcCurrent - JBiload0;
+				} else if (bcCurrent >= JBlload0 && bcCurrent <= JBlload3) {
+					localVar = bcCurrent - JBlload0;
+				} else if (bcCurrent >= JBfload0 && bcCurrent <= JBfload3) {
+					localVar = bcCurrent - JBfload0;
+				} else if (bcCurrent >= JBdload0 && bcCurrent <= JBdload3) {
+					localVar = bcCurrent - JBdload0;
+				} else if (bcCurrent >= JBaload0 && bcCurrent <= JBaload3) {
+					localVar = bcCurrent - JBaload0;
+				} else if (JBaload0getfield == bcCurrent) {
+					localVar = 0;
+				}
+				*npeMsg = getLocalsName(vmThread, romMethod, localVar, npePC, temps);
+				break;
+			}
+
+			case JBiload:	/* Fall through case !!! */
+			case JBlload:	/* Fall through case !!! */
+			case JBfload:	/* Fall through case !!! */
+			case JBdload:	/* Fall through case !!! */
+			case JBaload: {
+				/* The index is an unsigned byte that must be an index into the
+				 * local variable array of the current frame (section 2.6).
+				 * The local variable at index must contain a reference.
+				 */
+				*npeMsg = getLocalsName(vmThread, romMethod, *(bcCurrentPtr + 1), npePC, temps);
+				break;
+			}
+
+			case JBiloadw:	/* Fall through case !!! */
+			case JBlloadw:	/* Fall through case !!! */
+			case JBfloadw:	/* Fall through case !!! */
+			case JBdloadw:	/* Fall through case !!! */
+			case JBaloadw: {
+				U_16 localVar = 0;
+				U_8 *tmpbcPtr = bcCurrentPtr + 1;
+
+				GETNEXT_U16(localVar, tmpbcPtr);
+				*npeMsg = getLocalsName(vmThread, romMethod, localVar, npePC, temps);
+				break;
+			}
+
+			case JBi2l:	/* Fall through case !!! */
+			case JBi2f:	/* Fall through case !!! */
+			case JBi2d:	/* Fall through case !!! */
+			case JBl2i:	/* Fall through case !!! */
+			case JBl2f:	/* Fall through case !!! */
+			case JBl2d:	/* Fall through case !!! */
+			case JBf2i:	/* Fall through case !!! */
+			case JBf2l:	/* Fall through case !!! */
+			case JBf2d:	/* Fall through case !!! */
+			case JBd2i:	/* Fall through case !!! */
+			case JBd2l:	/* Fall through case !!! */
+			case JBd2f:	/* Fall through case !!! */
+			case JBi2b:	/* Fall through case !!! */
+			case JBi2c:	/* Fall through case !!! */
+			case JBi2s:	/* Fall through case !!! */
+			case JBarraylength:	/* Fall through case !!! */
+			case JBathrow:	/* Fall through case !!! */
+			case JBmonitorenter:	/* Fall through case !!! */
+			case JBmonitorexit:	/* Fall through case !!! */
+			case JBdup:	/* Fall through case !!! */
+			case JBdupx1:	/* Fall through case !!! */
+			case JBdupx2:	/* Fall through case !!! */
+			case JBdup2:	/* Fall through case !!! */
+			case JBdup2x1:	/* Fall through case !!! */
+			case JBdup2x2:
+				computeNPEMsgAtPC(vmThread, romMethod, romClass, bytecodeOffset[npePC].first, false, npeMsg, isMethodFlag, temps, bytecodeOffset);
+				break;
+
+			case JBiastore:	/* Fall through case !!! */
+			case JBlastore:	/* Fall through case !!! */
+			case JBfastore:	/* Fall through case !!! */
+			case JBdastore:	/* Fall through case !!! */
+			case JBbastore:	/* Fall through case !!! */
+			case JBcastore:	/* Fall through case !!! */
+			case JBsastore:	/* Fall through case !!! */
+			case JBaastore: {
+				UDATA bcCausePos2 = bytecodeOffset[npePC].second;
+				UDATA bcCausePos = bytecodeOffset[npePC].first;
+
+				if ((BYTECODE_BRANCH_TARGET == bcCausePos)
+					|| (BYTECODE_BRANCH_TARGET == bcCausePos2)
+				) {
+					/* *npeMsg is NULL */
+				} else {
+					computeNPEMsgAtPC(vmThread, romMethod, romClass, bcCausePos, false, npeMsg, isMethodFlag, temps, bytecodeOffset);
+				}
+				break;
+			}
+
+			case JBiaload:	/* Fall through case !!! */
+			case JBlaload:	/* Fall through case !!! */
+			case JBfaload:	/* Fall through case !!! */
+			case JBdaload:	/* Fall through case !!! */
+			case JBbaload:	/* Fall through case !!! */
+			case JBcaload:	/* Fall through case !!! */
+			case JBsaload:	/* Fall through case !!! */
+			case JBaaload: {
+				UDATA bcCausePos = bytecodeOffset[npePC].first;
+
+				char *npeMsgObjref = NULL;
+				UDATA aaloadIndexPos = 0;
+				if (BYTECODE_BRANCH_TARGET == bcCausePos) {
+					if (!npeFinalFlag) {
+						npeMsgObjref = getMsgWithAllocation(vmThread, "<array>");
+					}
+				} else {
+					computeNPEMsgAtPC(vmThread, romMethod, romClass, bcCausePos, false, &npeMsgObjref, isMethodFlag, temps, bytecodeOffset);
+				}
+				aaloadIndexPos = bytecodeOffset[npePC].second;
+				if (npeFinalFlag || (NULL == npeMsgObjref)) {
+					*npeMsg = npeMsgObjref;
+				} else {
+					char *npeMsgIndex = NULL;
+					if (BYTECODE_BRANCH_TARGET == aaloadIndexPos) {
+						npeMsgIndex = getMsgWithAllocation(vmThread, "...");
+					} else {
+						computeNPEMsgAtPC(vmThread, romMethod, romClass, aaloadIndexPos, false, &npeMsgIndex, isMethodFlag, temps, bytecodeOffset);
+					}
+
+					if (NULL != npeMsgIndex) {
+						*npeMsg = getMsgWithAllocation(vmThread, "%s[%s]", npeMsgObjref, npeMsgIndex);
+						*isMethodFlag = false;
+						j9mem_free_memory(npeMsgIndex);
+					}
+					j9mem_free_memory(npeMsgObjref);
+				}
+				break;
+			}
+
+			case JBgetstatic: {
+				UDATA index = PARAM_16(bcCurrentPtr, 1);
+				J9ROMConstantPoolItem *info = &constantPool[index];
+				J9UTF8 *className = J9ROMCLASSREF_NAME((J9ROMClassRef *) &constantPool[((J9ROMFieldRef *) info)->classRefCPIndex]);
+				char *fullyQualifiedClassName = convertToJavaFullyQualifiedName(vmThread, className);
 				J9UTF8 *fieldName = ((J9UTF8 *) (J9ROMNAMEANDSIGNATURE_NAME(J9ROMFIELDREF_NAMEANDSIGNATURE((J9ROMFieldRef *) info))));
 
-				if (NULL == npeMsgObjref) {
-					*npeMsg = getMsgWithAllocation(vmThread, "%.*s", J9UTF8_LENGTH(fieldName), J9UTF8_DATA(fieldName));
+				if (NULL != fullyQualifiedClassName) {
+					*npeMsg = getMsgWithAllocation(vmThread, "%s.%.*s", fullyQualifiedClassName, J9UTF8_LENGTH(fieldName), J9UTF8_DATA(fieldName));
+				}
+				j9mem_free_memory(fullyQualifiedClassName);
+				break;
+			}
+
+			case JBgetfield: {
+				UDATA bcCausePos = bytecodeOffset[npePC].first;
+				char *npeMsgObjref = NULL;
+				if (BYTECODE_BRANCH_TARGET != bcCausePos) {
+					computeNPEMsgAtPC(vmThread, romMethod, romClass, bcCausePos, false, &npeMsgObjref, isMethodFlag, temps, bytecodeOffset);
+				}
+
+				if (npeFinalFlag) {
+					*npeMsg = npeMsgObjref;
 				} else {
+					UDATA index = PARAM_16(bcCurrentPtr, 1);
+					J9ROMConstantPoolItem *info = &constantPool[index];
+					J9UTF8 *fieldName = ((J9UTF8 *) (J9ROMNAMEANDSIGNATURE_NAME(J9ROMFIELDREF_NAMEANDSIGNATURE((J9ROMFieldRef *) info))));
+
+					if (NULL == npeMsgObjref) {
+						*npeMsg = getMsgWithAllocation(vmThread, "%.*s", J9UTF8_LENGTH(fieldName), J9UTF8_DATA(fieldName));
+					} else {
+						*npeMsg = getMsgWithAllocation(vmThread, "%s.%.*s", npeMsgObjref, J9UTF8_LENGTH(fieldName), J9UTF8_DATA(fieldName));
+						j9mem_free_memory(npeMsgObjref);
+					}
+					*isMethodFlag = false;
+				}
+				break;
+			}
+
+			case JBputfield: {
+				UDATA bcCausePos = bytecodeOffset[npePC].first;
+				char *npeMsgObjref = NULL;
+
+				computeNPEMsgAtPC(vmThread, romMethod, romClass, bcCausePos, false, &npeMsgObjref, isMethodFlag, temps, bytecodeOffset);
+				if (npeFinalFlag || (NULL == npeMsgObjref)) {
+					*npeMsg = npeMsgObjref;
+				} else {
+					UDATA index = PARAM_16(bcCurrentPtr, 1);
+					J9ROMConstantPoolItem *info = &constantPool[index];
+					J9UTF8 *fieldName = ((J9UTF8 *) (J9ROMNAMEANDSIGNATURE_NAME(J9ROMFIELDREF_NAMEANDSIGNATURE((J9ROMFieldRef *) info))));
+
 					*npeMsg = getMsgWithAllocation(vmThread, "%s.%.*s", npeMsgObjref, J9UTF8_LENGTH(fieldName), J9UTF8_DATA(fieldName));
 					j9mem_free_memory(npeMsgObjref);
 				}
-				*isMethodFlag = false;
-			}
-			break;
-		}
 
-		case JBputfield: {
-			UDATA bcCausePos = bytecodeOffset[npePC].first;
-			char *npeMsgObjref = NULL;
-
-			computeNPEMsgAtPC(vmThread, romMethod, romClass, bcCausePos, false, &npeMsgObjref, isMethodFlag, temps, bytecodeOffset);
-			if (npeFinalFlag || (NULL == npeMsgObjref)) {
-				*npeMsg = npeMsgObjref;
-			} else {
-				UDATA index = PARAM_16(bcCurrentPtr, 1);
-				J9ROMConstantPoolItem *info = &constantPool[index];
-				J9UTF8 *fieldName = ((J9UTF8 *) (J9ROMNAMEANDSIGNATURE_NAME(J9ROMFIELDREF_NAMEANDSIGNATURE((J9ROMFieldRef *) info))));
-
-				*npeMsg = getMsgWithAllocation(vmThread, "%s.%.*s", npeMsgObjref, J9UTF8_LENGTH(fieldName), J9UTF8_DATA(fieldName));
-				j9mem_free_memory(npeMsgObjref);
+				break;
 			}
 
-			break;
+			default:
+				Trc_VM_ComputeNPEMsgAtPC_SkippedBC(vmThread, bcCurrent, npeFinalFlag);
+				break;
+			}
 		}
 
-		default:
-			Trc_VM_ComputeNPEMsgAtPC_SkippedBC(vmThread, bcCurrent, npeFinalFlag);
-			break;
+		if (npeFinalFlag) {
+			*npeMsg = getCompleteNPEMessage(vmThread, bcCurrentPtr, romClass, *npeMsg, *isMethodFlag);
 		}
+		Trc_VM_ComputeNPEMsgAtPC_end(vmThread, bcCurrent, npePC, npeFinalFlag, *isMethodFlag, *npeMsg);
 	}
 
-	if (npeFinalFlag) {
-		*npeMsg = getCompleteNPEMessage(vmThread, bcCurrentPtr, romClass, *npeMsg, *isMethodFlag);
-	}
-
-	Trc_VM_ComputeNPEMsgAtPC_Exit(vmThread, bcCurrent, npePC, npeFinalFlag, *isMethodFlag, *npeMsg);
+	Trc_VM_ComputeNPEMsgAtPC_Exit(vmThread, npePC, npeFinalFlag, *isMethodFlag, *npeMsg);
 }
 
 /**
