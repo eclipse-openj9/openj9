@@ -1452,11 +1452,11 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::get_params_to_construct_TR_j9method:
          {
-         auto recv = client->getRecvData<J9Class *, uintptr_t>();
+         auto recv = client->getRecvData<J9Class *, int32_t>();
          J9Class * aClazz = std::get<0>(recv);
-         uintptr_t cpIndex = std::get<1>(recv);
+         int32_t cpIndex = std::get<1>(recv);
          J9ROMClass * romClass = aClazz->romClass;
-         uintptr_t realCPIndex = jitGetRealCPIndex(fe->vmThread(), romClass, cpIndex);
+         uintptr_t realCPIndex = jitGetRealCPIndex(fe->vmThread(), romClass, (uintptr_t)(intptr_t)cpIndex);
          J9ROMMethodRef * romRef = &J9ROM_CP_BASE(romClass, J9ROMMethodRef)[realCPIndex];
          J9ROMClassRef * classRef = &J9ROM_CP_BASE(romClass, J9ROMClassRef)[romRef->classRefCPIndex];
          J9ROMNameAndSignature * nameAndSignature = J9ROMMETHODREF_NAMEANDSIGNATURE(romRef);
