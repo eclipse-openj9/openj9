@@ -971,13 +971,13 @@ writeGPInfo(struct J9PortLibrary* portLibrary, void *writeGPInfoCrashData)
 
 		switch (infoKind) {
 		case J9PORT_SIG_VALUE_16:
-				n = j9str_printf(PORTLIB,  cursor, length, "%s=%04X%c", name, *(U_16 *)value, c);
+				n = j9str_printf(PORTLIB, cursor, length, "%s=%04X%c", name, *(U_16 *)value, c);
 			break;
 		case J9PORT_SIG_VALUE_32:
-				n = j9str_printf(PORTLIB, cursor , length, "%s=%08.8x%c", name, *(U_32 *)value, c);
+				n = j9str_printf(PORTLIB, cursor, length, "%s=%08.8x%c", name, *(U_32 *)value, c);
 			break;
 		case J9PORT_SIG_VALUE_64:
-				n = j9str_printf(PORTLIB, cursor, length,"%s=%016.16llx%c", name, *(U_64 *)value, c);
+				n = j9str_printf(PORTLIB, cursor, length, "%s=%016.16llx%c", name, *(U_64 *)value, c);
 			break;
 		case J9PORT_SIG_VALUE_128:
 			{
@@ -985,22 +985,22 @@ writeGPInfo(struct J9PortLibrary* portLibrary, void *writeGPInfoCrashData)
 				const U_64 h = v->high64;
 				const U_64 l = v->low64;
 
-				n = j9str_printf(PORTLIB, cursor, length,"%s=%016.16llx%016.16llx%c", name, h, l, c);
+				n = j9str_printf(PORTLIB, cursor, length, "%s=%016.16llx%016.16llx%c", name, h, l, c);
 			}
 			break;
 		case J9PORT_SIG_VALUE_STRING:
-				n = j9str_printf(PORTLIB,  cursor, length, "%s=%s%c", name, (char *)value, c);
+				n = j9str_printf(PORTLIB, cursor, length, "%s=%s%c", name, (char *)value, c);
 			break;
 		case J9PORT_SIG_VALUE_ADDRESS:
-				n = j9str_printf(PORTLIB,  cursor, length, "%s=%p%c", name, *(void**)value, c);
+				n = j9str_printf(PORTLIB, cursor, length, "%s=%p%c", name, *(void**)value, c);
 			break;
 		case J9PORT_SIG_VALUE_FLOAT_64:
 			/* make sure when casting to a float that we get least significant 32-bits. */
-				n = j9str_printf(PORTLIB, cursor, length,"%s %016.16llx (f: %f, d: %e)%c", name, *(U_64 *)value, (float)LOW_U32_FROM_DBL_PTR(value), *(double *)value, c);
+				n = j9str_printf(PORTLIB, cursor, length, "%s=%016.16llx (f: %f, d: %e)%c", name, *(U_64 *)value, (float)LOW_U32_FROM_DBL_PTR(value), *(double *)value, c);
 			break;
 		case J9PORT_SIG_VALUE_UNDEFINED:
 		default:
-				n = j9str_printf(PORTLIB,  cursor, length, "%s=<UNDEFINED>%c", name, c);
+				n = j9str_printf(PORTLIB, cursor, length, "%s=<UNDEFINED>%c", name, c);
 			break;
 		}
 
