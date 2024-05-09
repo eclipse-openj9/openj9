@@ -27,6 +27,7 @@
 #include "control/CompilationController.hpp"
 #include "control/CompilationRuntime.hpp"
 #include "control/CompilationStrategy.hpp"
+#include "control/CompilationThread.hpp"
 #include "control/CompileBeforeCheckpoint.hpp"
 #include "control/Options.hpp"
 #include "control/OptionsPostRestore.hpp"
@@ -41,6 +42,7 @@
 #include "infra/CriticalSection.hpp"
 #include "infra/Monitor.hpp"
 #include "runtime/CRRuntime.hpp"
+#include "runtime/IProfiler.hpp"
 #include "runtime/J9VMAccess.hpp"
 
 #if defined(J9VM_OPT_JITSERVER)
