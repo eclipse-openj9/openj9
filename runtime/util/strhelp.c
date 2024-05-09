@@ -34,3 +34,18 @@ strnrchrHelper(const char *str, char c, UDATA len)
 	}
 	return ret;
 }
+
+BOOLEAN
+isStrSuffixHelper(const char *str, UDATA strLen, const char *suffix, UDATA suffixLen)
+{
+	BOOLEAN ret = FALSE;
+
+	if ((NULL != str) && (NULL != suffix) && (suffixLen <= strLen)) {
+		char *suffixStart = (char *)str + strLen - suffixLen;
+		if (0 == memcmp(suffixStart, suffix, suffixLen)) {
+			ret = TRUE;
+		}
+	}
+
+	return ret;
+}
