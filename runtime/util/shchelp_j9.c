@@ -87,15 +87,7 @@ getOpenJ9Sha()
 	return sha;
 }
 
-/**
- * If the class is a lambda class get the pointer to the last '$' sign of the class name which is in the format of HostClassName$$Lambda$<IndexNumber>/0x0000000000000000.
- * NULL otherwise.
- *
- * @param[in] className  pointer to the class name
- * @param[in] classNameLength  length of the class name
- * @return Pointer to the last '$' sign of the class name if it is a lambda class.
- * 		   NULL otherwise.
- */
+#if JAVA_SPEC_VERSION < 21
 char*
 getLastDollarSignOfLambdaClassName(const char *className, UDATA classNameLength)
 {
@@ -118,3 +110,61 @@ getLastDollarSignOfLambdaClassName(const char *className, UDATA classNameLength)
 	/* return NULL if it is not a lambda class */
 	return NULL;
 }
+#endif /* JAVA_SPEC_VERSION < 21 */
+
+BOOLEAN
+isLambdaClassName(const char *className, UDATA classNameLength)
+{
+	BOOLEAN result = FALSE;
+
+#if JAVA_SPEC_VERSION < 21
+	/*
+	 * Before JDK21, Lambda class names are in the format:
+	 *	HostClassName$$Lambda$<IndexNumber>/<zeroed out ROM_ADDRESS>
+	 * getLastDollarSignOfLambdaClassName verifies this format and returns
+	 * a non-NULL pointer if successfully verified.
+	 */
+	char *isValid = getLastDollarSignOfLambdaClassName(className, classNameLength);
+	if (NULL != isValid) {
+		result = TRUE;
+	}
+#else /* JAVA_SPEC_VERSION < 21 */
+	/*
+	 * For JDK21 and later, Lambda class names are in the format:
+	 *	HostClassName$$Lambda/<zeroed out ROM_ADDRESS>
+	 * Verifies format by identifiying last occurence of '$' and checking for the
+	 * Lambda suffix.
+	 */
+#if defined(J9VM_ENV_DATA64)
+#define J9_LAMBDA_CLASS_SUFFIX "$$Lambda/0x0000000000000000"
+#else /* defined(J9VM_ENV_DATA64) */
+#define J9_LAMBDA_CLASS_SUFFIX "$$Lambda/0x00000000"
+#endif /* defined(J9VM_ENV_DATA64) */
+	UDATA lambdaSuffixLength = LITERAL_STRLEN(J9_LAMBDA_CLASS_SUFFIX);
+	if (isStrSuffixHelper(className, classNameLength, J9_LAMBDA_CLASS_SUFFIX, lambdaSuffixLength)) {
+		result = TRUE;
+	}
+#undef J9_LAMBDA_CLASSNAME_SUFFIX
+#endif /* JAVA_SPEC_VERSION < 21 */
+
+	return result;
+}
+
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+BOOLEAN
+isLambdaFormClassName(const char *className, UDATA classNameLength)
+{
+	BOOLEAN result = FALSE;
+
+#define J9_LAMBDA_FORM_CLASSNAME "java/lang/invoke/LambdaForm$"
+	UDATA lambdaFormComparatorLength = LITERAL_STRLEN(J9_LAMBDA_FORM_CLASSNAME);
+	if (classNameLength > lambdaFormComparatorLength) {
+		if (0 == memcmp(className, J9_LAMBDA_FORM_CLASSNAME, lambdaFormComparatorLength)) {
+			result = TRUE;
+		}
+	}
+#undef J9_LAMBDA_FORM_CLASSNAME
+
+	return result;
+}
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
