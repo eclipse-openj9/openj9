@@ -4673,6 +4673,8 @@ done:
 			if (J9_ARE_ANY_BITS_SET(_vm->sharedClassConfig->runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_SHAREANONYMOUSCLASSES)) {
 				/* ShareAnonymousClasses is enabled by default so we set the class loader flag */
 				_vm->anonClassLoader->flags |= J9CLASSLOADER_SHARED_CLASSES_ENABLED;
+			} else {
+				_vm->anonClassLoader->flags &= ~J9CLASSLOADER_SHARED_CLASSES_ENABLED;
 			}
 		}
 		J9CLASSLOADER_SET_CLASSLOADEROBJECT(_currentThread, _vm->anonClassLoader, anonClassLoaderObject);

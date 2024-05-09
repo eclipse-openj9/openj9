@@ -381,3 +381,6 @@ TraceEvent=Trc_BCU_ClassFileOracle_walkRecordComponents_UnknownAttribute Noenv O
 TraceExit=Trc_BCU_j9bcutil_readClassFileBytes_Basic_Check_Exit NoEnv Overhead=1 Level=3 Template="BCU j9bcutil_readClassFileBytes: exiting with result=%d" 
 
 TraceException=Trc_BCU_j9bcutil_readClassFileBytes_NoClassDefFoundError_Exception NoEnv Overhead=1 Level=3 Template="BCU j9bcutil_readClassFileBytes: NoClassDefFoundError %d - %s"
+
+TraceEvent=Trc_BCU_isROMClassShareable_TRUE Noenv Overhead=1 Level=6 Template="BCU ROMClass is sharable [classname=%.*s]"
+TraceEvent=Trc_BCU_isROMClassShareable_FALSE Noenv Overhead=1 Level=6 Template="BCU ROMClass is not sharable [classname=%.*s], shared class enabled %d, loader shared enabled %d, enablebci %d, replaced %d, intermediate %d, location %zu"

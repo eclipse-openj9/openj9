@@ -1244,6 +1244,12 @@ j9shr_dump_help(J9JavaVM* vm, UDATA more)
 	tmpcstr = j9nls_lookup_message((J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG), J9NLS_EXELIB_INTERNAL_HELP_XXDISABLESHAREUNSAFECLASSES, NULL);
 	j9file_printf(PORTLIB, J9PORT_TTY_OUT, "%s", tmpcstr);
 	
+	tmpcstr = j9nls_lookup_message((J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG), J9NLS_EXELIB_INTERNAL_HELP_XXENABLESHAREORPAH, NULL);
+	j9file_printf(PORTLIB, J9PORT_TTY_OUT, "%s", tmpcstr);
+
+	tmpcstr = j9nls_lookup_message((J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG), J9NLS_EXELIB_INTERNAL_HELP_XXDISABLESHAREORPAHN, NULL);
+	j9file_printf(PORTLIB, J9PORT_TTY_OUT, "%s", tmpcstr);
+
 	tmpcstr = j9nls_lookup_message((J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG), J9NLS_EXELIB_INTERNAL_HELP_XXENABLEUSEGCSTARTUPHINTS, NULL);
 	j9file_printf(PORTLIB, J9PORT_TTY_OUT, "%s", tmpcstr);
 
@@ -3394,6 +3400,7 @@ j9shr_init(J9JavaVM *vm, UDATA loadFlags, UDATA* nonfatal)
 	}
 
 	tempConfig->runtimeFlags = runtimeFlags;
+	tempConfig->runtimeFlags2 = vm->sharedCacheAPI->runtimeFlags2;
 	tempConfig->verboseFlags = verboseFlags;
 	tempConfig->softMaxBytes = vm->sharedCacheAPI->softMaxBytes;
 	tempConfig->minAOT = vm->sharedCacheAPI->minAOT;
@@ -3942,9 +3949,11 @@ j9shr_getCacheSizeBytes(J9JavaVM *vm)
 }
 
 /**
- * Determine the type of shared class cache that is enabled. Either the current default (Bootstrap Classes Only), 
- * or user defined shared cache, enabled via "-Xshareclasses" on the command line. 
- * 
+ * Determine the type of shared class cache that is enabled.
+ * Either the current default (Bootstrap Classes Only),
+ * or classes with class path information (from class loaders that are SCC enabled via Java shared classes Helper API),
+ * or classes from all class loaders (classes with no class path info shared as orphans).
+ *
  * @param [in] vm Pointer to the VM structure for the JVM
  *
  * @return J9SharedClassCacheMode enum that indicates the Shared Class Cache that is in effect
@@ -3953,14 +3962,14 @@ j9shr_getCacheSizeBytes(J9JavaVM *vm)
 J9SharedClassCacheMode
 j9shr_getSharedClassCacheMode(J9JavaVM *vm)
 {
-	J9SharedClassCacheMode ret = J9SharedClassCacheBootstrapOnly;
 	/* Only bootstrap classes are shared by default */
-	if (J9_ARE_ALL_BITS_SET(vm->sharedClassConfig->runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_CACHEBOOTCLASSES)) {
-		if (J9_ARE_ALL_BITS_SET(vm->sharedClassConfig->runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_CACHE_NON_BOOT_CLASSES)) {
-			ret = J9SharedClassCacheUserDefined;
-		} else {
-			ret = J9SharedClassCacheBootstrapOnly;
-		}
+	J9SharedClassCacheMode ret = J9SharedClassCacheBootstrapOnly;
+	J9SharedClassConfig* config = vm->sharedClassConfig;
+	if (J9_ARE_ALL_BITS_SET(config->runtimeFlags2, J9SHR_RUNTIMEFLAG2_ENABLE_CACHEORPHAN)) {
+		Trc_SHR_Assert_True(J9_ARE_ALL_BITS_SET(config->runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_CACHE_NON_BOOT_CLASSES));
+		ret = J9SharedClassCacheClassesAllLoaders;
+	} else if (J9_ARE_ALL_BITS_SET(config->runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_CACHE_NON_BOOT_CLASSES)) {
+		ret = J9SharedClassCacheClassesWithCPInfo;
 	}
 	return ret;
 }
