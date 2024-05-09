@@ -5795,8 +5795,35 @@ bool J9::X86::TreeEvaluator::monEntryExitHelper(
    }
 
 
+/**
+ * @brief Inserts a prefetch instruction at the given offset from a base register.
+ *    Each successive prefetch instruction offsets its prefetch by one cache line
+ *    (64 bytes) from the previous.
+ *
+ * @param[in] node : \c TR::Node associated with this prefetch
+ * @param[in] numPrefetches : number of consecutive prefetch instructions to insert
+ * @param[in] allocationReg : register containing the base address from which
+ *               prefetches start
+ * @param[in] offset : offset from \c allocationReg to begin prefetch
+ * @param[in] cg : \c TR::CodeGenerator object
+ */
+static void insertAllocationPrefetch(
+      TR::Node *node,
+      int32_t numPrefetches,
+      TR::Register *allocationReg,
+      int32_t offset,
+      TR::CodeGenerator *cg)
+   {
+   for (int32_t i=0; i<numPrefetches; i++)
+      {
+      generateMemInstruction(TR::InstOpCode::PREFETCHNTA, node,
+         generateX86MemoryReference(allocationReg, offset, cg), cg);
+      offset += 64;
+      }
+   }
 
-// Generate code to allocate from the object heap.  Returns the register
+// Generate code to allocate discontiguous arrays or objects and arrays when
+// using a realtime GC policy from the object heap.  Returns the register
 // containing the address of the allocation.
 //
 // If the sizeReg is non-null, the allocation is variable length.  In this case
@@ -5806,7 +5833,7 @@ bool J9::X86::TreeEvaluator::monEntryExitHelper(
 // Also, on return the "segmentReg" register is set to the address of the
 // memory segment.
 //
-static void genHeapAlloc(
+static void genHeapAllocForDiscontiguousArraysOrRealtime(
       TR::Node *node,
       TR_OpaqueClassBlock *clazz,
       int32_t allocationSizeOrDataOffset,
@@ -6361,224 +6388,171 @@ static void genHeapAlloc(
    }
 
 // ------------------------------------------------------------------------------
-// genHeapAlloc2
+// genHeapAllocNoArraylets
 //
-// Will eventually become the de facto genHeapAlloc.  Needs packed array and 2TLH
-// support.
+// Needs 2TLH support.
 // ------------------------------------------------------------------------------
 
-static void genHeapAlloc2(
-   TR::Node             *node,
-   TR_OpaqueClassBlock *clazz,
-   int32_t              allocationSizeOrDataOffset,
-   int32_t              elementSize,
-   TR::Register         *sizeReg,
-   TR::Register         *eaxReal,
-   TR::Register         *segmentReg,
-   TR::Register         *tempReg,
-   TR::LabelSymbol       *failLabel,
-   TR::CodeGenerator    *cg)
+static void genHeapAllocNoArraylets(
+      TR::Node *node,
+      TR_OpaqueClassBlock *clazz,
+      int32_t allocationSizeOrDataOffset,
+      int32_t elementSize,
+      TR::Register *sizeReg,
+      TR::Register *eaxReal,
+      TR::Register *segmentReg,
+      TR::Register *tempReg,
+      TR::LabelSymbol *failLabel,
+      TR::CodeGenerator *cg)
    {
-   // Load the current heap segment and see if there is room in it. Loop if
-   // we can't get the lock on the segment.
-   //
    TR::Compilation *comp = cg->comp();
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
    TR::Register *vmThreadReg = cg->getVMThreadRegister();
-   bool generateArraylets = comp->generateArraylets();
+
+   TR_ASSERT_FATAL(!comp->generateArraylets(), "This function does not handle arraylets");
+
    bool isTooSmallToPrefetch = false;
 
+   if (sizeReg)
       {
-      // Load the base of the next available heap storage.  This load is done speculatively on the assumption that the
-      // allocation will be inlined.  If the assumption turns out to be false then the performance impact should be minimal
-      // because the helper will be called in that case.  It is necessary to insert this load here so that it dominates all
-      // control paths through this internal control flow region.
+      // -------------
       //
+      // VARIABLE SIZE
+      //
+      // -------------
 
-      if (sizeReg)
+      // The GC will guarantee that at least 'maxObjectSizeGuaranteedNotToOverflow' bytes
+      // of slush will exist between the top of the heap and the end of the address space.
+      //
+      uintptr_t maxObjectSize = cg->getMaxObjectSizeGuaranteedNotToOverflow();
+      uintptr_t maxObjectSizeInElements = maxObjectSize / elementSize;
+
+      if (comp->target().is64Bit() && !(maxObjectSizeInElements > 0 && maxObjectSizeInElements <= (uintptr_t)INT_MAX))
          {
-
-         // -------------
-         //
-         // VARIABLE SIZE
-         //
-         // -------------
-
-         // The GC will guarantee that at least 'maxObjectSizeGuaranteedNotToOverflow' bytes
-         // of slush will exist between the top of the heap and the end of the address space.
-         //
-         uintptr_t maxObjectSize = cg->getMaxObjectSizeGuaranteedNotToOverflow();
-         uintptr_t maxObjectSizeInElements = maxObjectSize / elementSize;
-
-         if (cg->comp()->target().is64Bit() && !(maxObjectSizeInElements > 0 && maxObjectSizeInElements <= (uintptr_t)INT_MAX))
-            {
-            generateRegImm64Instruction(TR::InstOpCode::MOV8RegImm64, node, segmentReg, maxObjectSizeInElements, cg);
-            generateRegRegInstruction(TR::InstOpCode::CMP8RegReg, node, sizeReg, segmentReg, cg);
-            }
-         else
-            {
-            generateRegImmInstruction(TR::InstOpCode::CMP4RegImm4, node, sizeReg, (int32_t)maxObjectSizeInElements, cg);
-            }
-
-         // Must be an unsigned comparison on sizes.
-         //
-         generateLabelInstruction(TR::InstOpCode::JAE4, node, failLabel, cg);
-
-
-         generateRegMemInstruction(TR::InstOpCode::LRegMem(),
-                                   node,
-                                   eaxReal,
-                                   generateX86MemoryReference(vmThreadReg,
-                                                              offsetof(J9VMThread, heapAlloc), cg), cg);
-
-
-         // calculate variable size, rounding up if necessary to a intptr_t multiple boundary
-         //
-         int32_t round; // zero indicates no rounding is necessary
-
-         if (!generateArraylets)
-            {
-//            TR_ASSERT(allocationSizeOrDataOffset % fej9->getObjectAlignmentInBytes() == 0, "Array header size of %d is not a multiple of %d", allocationSizeOrDataOffset, fej9->getObjectAlignmentInBytes());
-            }
-
-         round = (elementSize >= TR::Compiler->om.getObjectAlignmentInBytes())? 0 : TR::Compiler->om.getObjectAlignmentInBytes();
-         int32_t disp32 = round ? (round-1) : 0;
-
-/*
-   mov rcx, rdx               ; # of array elements                  (1)
-   cmp rcx, 1                                                        (1)
-   adc rcx, 0                 ; adjust for zero length               (1)
-
-   shl rcx, 2                                                        (1)
-   add rcx, 0xf               ; rcx + header (8) + 7                 (1)
-
-   and rcx,0xfffffffffffffff8 ; round down                           (1)
-*/
-
-         generateRegRegInstruction(TR::InstOpCode::MOV4RegReg, node, segmentReg, sizeReg, cg);
-
-         // Artificially adjust the number of elements by 1 if the array is zero length.  This works
-         // because either the array is zero length and needs a discontiguous array length field
-         // (occupying a slot) or it has at least 1 element which will take up a slot anyway.
-         //
-         // Native 64-bit array headers do not need this adjustment because the
-         // contiguous and discontiguous array headers are the same size.
-         //
-         if (comp->target().is32Bit() || (comp->target().is64Bit() && comp->useCompressedPointers()))
-            {
-            generateRegImmInstruction(TR::InstOpCode::CMP4RegImm4, node, segmentReg, 1, cg);
-            generateRegImmInstruction(TR::InstOpCode::ADC4RegImm4, node, segmentReg, 0, cg);
-            }
-
-         uint8_t shiftVal = TR::MemoryReference::convertMultiplierToStride(elementSize);
-         if (shiftVal > 0)
-            {
-            generateRegImmInstruction(TR::InstOpCode::SHLRegImm1(), node, segmentReg, shiftVal, cg);
-            }
-
-         generateRegImmInstruction(TR::InstOpCode::ADDRegImm4(), node, segmentReg, allocationSizeOrDataOffset+disp32, cg);
-
-         if (round)
-            {
-            generateRegImmInstruction(TR::InstOpCode::ANDRegImm4(), node, segmentReg, -round, cg);
-            }
-
-         // Copy full object size in bytes to RCX for zero init via REP TR::InstOpCode::STOSQ
-         //
-         generateRegRegInstruction(TR::InstOpCode::MOVRegReg(), node, tempReg, segmentReg, cg);
-
-         generateRegRegInstruction(TR::InstOpCode::ADDRegReg(), node, segmentReg, eaxReal, cg);
+         generateRegImm64Instruction(TR::InstOpCode::MOV8RegImm64, node, segmentReg, maxObjectSizeInElements, cg);
+         generateRegRegInstruction(TR::InstOpCode::CMP8RegReg, node, sizeReg, segmentReg, cg);
          }
       else
          {
-         // ----------
-         //
-         // FIXED SIZE
-         //
-         // ----------
-
-         generateRegMemInstruction(TR::InstOpCode::LRegMem(),
-                                   node,
-                                   eaxReal,
-                                   generateX86MemoryReference(vmThreadReg,
-                                                              offsetof(J9VMThread, heapAlloc), cg), cg);
-
-         if (comp->getOptLevel() < hot)
-            isTooSmallToPrefetch = allocationSizeOrDataOffset <= 0x40 ? true : false;
-
-         allocationSizeOrDataOffset = (allocationSizeOrDataOffset+TR::Compiler->om.getObjectAlignmentInBytes()-1) & (-TR::Compiler->om.getObjectAlignmentInBytes());
-
-         if ((uint32_t)allocationSizeOrDataOffset > cg->getMaxObjectSizeGuaranteedNotToOverflow())
-            {
-            generateRegRegInstruction(TR::InstOpCode::MOVRegReg(),  node, segmentReg, eaxReal, cg);
-            if (allocationSizeOrDataOffset <= 127)
-               generateRegImmInstruction(TR::InstOpCode::ADDRegImms(), node, segmentReg, allocationSizeOrDataOffset, cg);
-            else if (allocationSizeOrDataOffset == 128)
-               generateRegImmInstruction(TR::InstOpCode::SUBRegImms(), node, segmentReg, (unsigned)-128, cg);
-            else
-               generateRegImmInstruction(TR::InstOpCode::ADDRegImm4(), node, segmentReg, allocationSizeOrDataOffset, cg);
-
-            // Check for overflow
-            generateLabelInstruction(TR::InstOpCode::JB4, node, failLabel, cg);
-            }
-         else
-            {
-            generateRegMemInstruction(TR::InstOpCode::LEARegMem(), node, segmentReg,
-                                      generateX86MemoryReference(eaxReal, allocationSizeOrDataOffset, cg), cg);
-            }
+         generateRegImmInstruction(TR::InstOpCode::CMP4RegImm4, node, sizeReg, (int32_t)maxObjectSizeInElements, cg);
          }
 
-      // -----------
-      // MERGED PATH
-      // -----------
-
-      generateRegMemInstruction(TR::InstOpCode::CMPRegMem(),
-                                node,
-                                segmentReg,
-                                generateX86MemoryReference(vmThreadReg, offsetof(J9VMThread, heapTop), cg), cg);
-
-      generateLabelInstruction(TR::InstOpCode::JA4, node, failLabel, cg);
-
-      // ------------
-      // 1st PREFETCH
-      // ------------
-
-      if (!isTooSmallToPrefetch && cg->enableTLHPrefetching())
-         generateMemInstruction(TR::InstOpCode::PREFETCHNTA, node, generateX86MemoryReference(segmentReg, 0xc0, cg), cg);
-
-      // Make sure that the arraylet is aligned properly.
+      // Must be an unsigned comparison on sizes.
       //
-      if (generateArraylets && (node->getOpCodeValue() == TR::anewarray || node->getOpCodeValue() == TR::newarray) )
-         {
-         generateRegMemInstruction(TR::InstOpCode::LEARegMem(),node,segmentReg, generateX86MemoryReference(tempReg,TR::Compiler->om.getObjectAlignmentInBytes()-1,cg),cg);
-         if (cg->comp()->target().is64Bit())
-            generateRegImmInstruction(TR::InstOpCode::AND8RegImm4,node,segmentReg,-TR::Compiler->om.getObjectAlignmentInBytes(),cg);
-         else
-            generateRegImmInstruction(TR::InstOpCode::AND4RegImm4,node,segmentReg,-TR::Compiler->om.getObjectAlignmentInBytes(),cg);
-         }
+      generateLabelInstruction(TR::InstOpCode::JAE4, node, failLabel, cg);
 
-      generateMemRegInstruction(TR::InstOpCode::SMemReg(),
+      generateRegMemInstruction(TR::InstOpCode::LRegMem(),
                                 node,
-                                generateX86MemoryReference(vmThreadReg, offsetof(J9VMThread, heapAlloc), cg),
-                                segmentReg, cg);
+                                eaxReal,
+                                generateX86MemoryReference(vmThreadReg,
+                                                           offsetof(J9VMThread, heapAlloc), cg), cg);
 
-      if (!isTooSmallToPrefetch && node->getOpCodeValue() != TR::New && cg->enableTLHPrefetching())
+      // calculate variable size, rounding up if necessary to a intptr_t multiple boundary
+      //
+      // zero round indicates no rounding is necessary
+      //
+      int32_t round =
+         (elementSize >= TR::Compiler->om.getObjectAlignmentInBytes()) ?
+            0 :
+            TR::Compiler->om.getObjectAlignmentInBytes();
+      int32_t disp32 = round ? (round-1) : 0;
+
+      generateRegRegInstruction(TR::InstOpCode::MOV4RegReg, node, segmentReg, sizeReg, cg);
+
+      // Artificially adjust the number of elements by 1 if the array is zero length.  This works
+      // because either the array is zero length and needs a discontiguous array length field
+      // (occupying a slot) or it has at least 1 element which will take up a slot anyway.
+      //
+      // Native 64-bit array headers do not need this adjustment because the
+      // contiguous and discontiguous array headers are the same size.
+      //
+      if (comp->target().is32Bit() || (comp->target().is64Bit() && comp->useCompressedPointers()))
          {
-         // ------------
-         // 2nd PREFETCH
-         // ------------
-         generateMemInstruction(TR::InstOpCode::PREFETCHNTA, node, generateX86MemoryReference(segmentReg, 0x100, cg), cg);
-
-         // ------------
-         // 3rd PREFETCH
-         // ------------
-         generateMemInstruction(TR::InstOpCode::PREFETCHNTA, node, generateX86MemoryReference(segmentReg, 0x140, cg), cg);
-
-         // ------------
-         // 4th PREFETCH
-         // ------------
-         generateMemInstruction(TR::InstOpCode::PREFETCHNTA, node, generateX86MemoryReference(segmentReg, 0x180, cg), cg);
+         generateRegImmInstruction(TR::InstOpCode::CMP4RegImm4, node, segmentReg, 1, cg);
+         generateRegImmInstruction(TR::InstOpCode::ADC4RegImm4, node, segmentReg, 0, cg);
          }
+
+      uint8_t shiftVal = TR::MemoryReference::convertMultiplierToStride(elementSize);
+      if (shiftVal > 0)
+         {
+         generateRegImmInstruction(TR::InstOpCode::SHLRegImm1(), node, segmentReg, shiftVal, cg);
+         }
+
+      generateRegImmInstruction(TR::InstOpCode::ADDRegImm4(), node, segmentReg, allocationSizeOrDataOffset+disp32, cg);
+
+      if (round)
+         {
+         generateRegImmInstruction(TR::InstOpCode::ANDRegImm4(), node, segmentReg, -round, cg);
+         }
+
+      // Copy full object size in bytes to RCX for zero init via REP TR::InstOpCode::STOSQ
+      //
+      generateRegRegInstruction(TR::InstOpCode::MOVRegReg(), node, tempReg, segmentReg, cg);
+
+      generateRegRegInstruction(TR::InstOpCode::ADDRegReg(), node, segmentReg, eaxReal, cg);
+      }
+   else
+      {
+      // ----------
+      //
+      // FIXED SIZE
+      //
+      // ----------
+
+      generateRegMemInstruction(TR::InstOpCode::LRegMem(),
+                                node,
+                                eaxReal,
+                                generateX86MemoryReference(vmThreadReg,
+                                                           offsetof(J9VMThread, heapAlloc), cg), cg);
+
+      if (comp->getOptLevel() < hot)
+         isTooSmallToPrefetch = allocationSizeOrDataOffset <= 0x40 ? true : false;
+
+      allocationSizeOrDataOffset = (allocationSizeOrDataOffset+TR::Compiler->om.getObjectAlignmentInBytes()-1) & (-TR::Compiler->om.getObjectAlignmentInBytes());
+
+      if ((uint32_t)allocationSizeOrDataOffset > cg->getMaxObjectSizeGuaranteedNotToOverflow())
+         {
+         generateRegRegInstruction(TR::InstOpCode::MOVRegReg(),  node, segmentReg, eaxReal, cg);
+         if (allocationSizeOrDataOffset <= 127)
+            generateRegImmInstruction(TR::InstOpCode::ADDRegImms(), node, segmentReg, allocationSizeOrDataOffset, cg);
+         else if (allocationSizeOrDataOffset == 128)
+            generateRegImmInstruction(TR::InstOpCode::SUBRegImms(), node, segmentReg, (unsigned)-128, cg);
+         else
+            generateRegImmInstruction(TR::InstOpCode::ADDRegImm4(), node, segmentReg, allocationSizeOrDataOffset, cg);
+
+         // Check for overflow
+         generateLabelInstruction(TR::InstOpCode::JB4, node, failLabel, cg);
+         }
+      else
+         {
+         generateRegMemInstruction(TR::InstOpCode::LEARegMem(), node, segmentReg,
+                                   generateX86MemoryReference(eaxReal, allocationSizeOrDataOffset, cg), cg);
+         }
+      }
+
+   // -----------
+   // MERGED PATH
+   // -----------
+
+   generateRegMemInstruction(TR::InstOpCode::CMPRegMem(),
+                             node,
+                             segmentReg,
+                             generateX86MemoryReference(vmThreadReg, offsetof(J9VMThread, heapTop), cg), cg);
+
+   generateLabelInstruction(TR::InstOpCode::JA4, node, failLabel, cg);
+
+   if (!isTooSmallToPrefetch && cg->enableTLHPrefetching())
+      {
+      insertAllocationPrefetch(node, 1, segmentReg, 0xc0, cg);
+      }
+
+   generateMemRegInstruction(TR::InstOpCode::SMemReg(),
+                             node,
+                             generateX86MemoryReference(vmThreadReg, offsetof(J9VMThread, heapAlloc), cg),
+                             segmentReg, cg);
+
+   if (!isTooSmallToPrefetch && node->getOpCodeValue() != TR::New && cg->enableTLHPrefetching())
+      {
+      insertAllocationPrefetch(node, 3, segmentReg, 0x100, cg);
       }
    }
 
@@ -6885,7 +6859,7 @@ static void genInitArrayHeader(
 
 static bool genZeroInitEntireObject2(
       TR::Node *node,
-      int32_t objectSize,
+      int32_t objectSizeInBytes,
       int32_t elementSize,
       TR::Register *sizeReg,
       TR::Register *targetReg,
@@ -6900,13 +6874,13 @@ static bool genZeroInitEntireObject2(
    TR_OpaqueClassBlock *clazz = NULL;
    bool isArrayNew = (node->getOpCodeValue() != TR::New);
    comp->canAllocateInline(node, clazz);
-   auto headerSize = isArrayNew ? TR::Compiler->om.contiguousArrayHeaderSizeInBytes() : TR::Compiler->om.objectHeaderSizeInBytes();
+   auto headerSizeInBytes = isArrayNew ? TR::Compiler->om.contiguousArrayHeaderSizeInBytes() : TR::Compiler->om.objectHeaderSizeInBytes();
 
    // In order for us to successfully initialize the size field of a zero sized array
-   // we must set headerSize to 8 bytes for compressed refs and 12 bytes for full refs.
+   // we must set headerSizeInBytes to 8 bytes for compressed refs and 12 bytes for full refs.
    // This can be accomplished by using offset of discontiguous array size field.
    // However, when dealing with compressed refs with dual header shape enabled we don't
-   // need to change the headerSize because contiguous header size is equal to the offset
+   // need to change the headerSizeInBytes because contiguous header size is equal to the offset
    // of discontiguous array size field.
    // This allows rep stosb to initialize the size field of zero sized arrays appropriately.
    //
@@ -6922,10 +6896,10 @@ static bool genZeroInitEntireObject2(
          "But size field offset for contiguous array header was %d bytes and %d bytes for discontiguous array header.\n",
          fej9->getOffsetOfContiguousArraySizeField(), fej9->getOffsetOfDiscontiguousArraySizeField());
 
-      headerSize = static_cast<uint32_t>(fej9->getOffsetOfDiscontiguousArraySizeField());
+      headerSizeInBytes = static_cast<uint32_t>(fej9->getOffsetOfDiscontiguousArraySizeField());
       }
-   TR_ASSERT(headerSize >= 4, "Object/Array header must be >= 4.");
-   objectSize -= headerSize;
+   TR_ASSERT(headerSizeInBytes >= 4, "Object/Array header must be >= 4.");
+   objectSizeInBytes -= headerSizeInBytes;
 
    if (!minRepstosdWords)
       {
@@ -6933,7 +6907,7 @@ static bool genZeroInitEntireObject2(
       minRepstosdWords = p ? atoi(p) : MIN_REPSTOSD_WORDS;
       }
 
-   if (sizeReg || objectSize >= minRepstosdWords)
+   if (sizeReg || objectSizeInBytes >= minRepstosdWords)
       {
       // Zero-initialize by using REP TR::InstOpCode::STOSB.
       //
@@ -6945,27 +6919,27 @@ static bool genZeroInitEntireObject2(
 
          // Subtract off the header size and initialize the remaining slots.
          //
-         generateRegImmInstruction(TR::InstOpCode::SUBRegImms(), node, tempReg, headerSize, cg);
+         generateRegImmInstruction(TR::InstOpCode::SUBRegImms(), node, tempReg, headerSizeInBytes, cg);
          }
       else
          {
          // ----------
          // FIXED SIZE
          // ----------
-         if (comp->target().is64Bit() && !IS_32BIT_SIGNED(objectSize))
+         if (comp->target().is64Bit() && !IS_32BIT_SIGNED(objectSizeInBytes))
             {
-            generateRegImm64Instruction(TR::InstOpCode::MOV8RegImm64, node, tempReg, objectSize, cg);
+            generateRegImm64Instruction(TR::InstOpCode::MOV8RegImm64, node, tempReg, objectSizeInBytes, cg);
             }
          else
             {
-            generateRegImmInstruction(TR::InstOpCode::MOVRegImm4(), node, tempReg, objectSize, cg);
+            generateRegImmInstruction(TR::InstOpCode::MOVRegImm4(), node, tempReg, objectSizeInBytes, cg);
             }
          }
 
       // -----------
       // Destination
       // -----------
-      generateRegMemInstruction(TR::InstOpCode::LEARegMem(), node, segmentReg, generateX86MemoryReference(targetReg, headerSize, cg), cg);
+      generateRegMemInstruction(TR::InstOpCode::LEARegMem(), node, segmentReg, generateX86MemoryReference(targetReg, headerSizeInBytes, cg), cg);
 
       TR::Register *scratchReg = NULL;
       if (comp->target().is64Bit())
@@ -6991,32 +6965,32 @@ static bool genZeroInitEntireObject2(
 
       return true;
       }
-   else if (objectSize > 0)
+   else if (objectSizeInBytes > 0)
       {
-      if (objectSize % 16 == 12)
+      if (objectSizeInBytes % 16 == 12)
          {
          // Zero-out header to avoid a 12-byte residue
-         objectSize += 4;
-         headerSize -= 4;
+         objectSizeInBytes += 4;
+         headerSizeInBytes -= 4;
          }
 
       TR::Register *scratchReg = srm->findOrCreateScratchRegister(TR_FPR);
       generateRegRegInstruction(TR::InstOpCode::PXORRegReg, node, scratchReg, scratchReg, cg);
       int32_t offset = 0;
-      while (objectSize >= 16)
+      while (objectSizeInBytes >= 16)
          {
-         generateMemRegInstruction(TR::InstOpCode::MOVDQUMemReg, node, generateX86MemoryReference(targetReg, headerSize + offset, cg), scratchReg, cg);
-         objectSize -= 16;
+         generateMemRegInstruction(TR::InstOpCode::MOVDQUMemReg, node, generateX86MemoryReference(targetReg, headerSizeInBytes + offset, cg), scratchReg, cg);
+         objectSizeInBytes -= 16;
          offset += 16;
          }
 
-      switch (objectSize)
+      switch (objectSizeInBytes)
          {
          case 8:
-            generateMemRegInstruction(TR::InstOpCode::MOVQMemReg, node, generateX86MemoryReference(targetReg, headerSize + offset, cg), scratchReg, cg);
+            generateMemRegInstruction(TR::InstOpCode::MOVQMemReg, node, generateX86MemoryReference(targetReg, headerSizeInBytes + offset, cg), scratchReg, cg);
             break;
          case 4:
-            generateMemRegInstruction(TR::InstOpCode::MOVDMemReg, node, generateX86MemoryReference(targetReg, headerSize + offset, cg), scratchReg, cg);
+            generateMemRegInstruction(TR::InstOpCode::MOVDMemReg, node, generateX86MemoryReference(targetReg, headerSizeInBytes + offset, cg), scratchReg, cg);
             break;
          case 0:
             break;
@@ -7727,11 +7701,11 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
    //
    if (canUseFastInlineAllocation)
       {
-      genHeapAlloc2(node, clazz, allocationSize, elementSize, sizeReg, targetReg, segmentReg, tempReg, failLabel, cg);
+      genHeapAllocNoArraylets(node, clazz, allocationSize, elementSize, sizeReg, targetReg, segmentReg, tempReg, failLabel, cg);
       }
    else
       {
-      genHeapAlloc(node, clazz, allocationSize, elementSize, sizeReg, targetReg, segmentReg, tempReg, failLabel, cg);
+      genHeapAllocForDiscontiguousArraysOrRealtime(node, clazz, allocationSize, elementSize, sizeReg, targetReg, segmentReg, tempReg, failLabel, cg);
       }
 
    // --------------------------------------------------------------------------------
