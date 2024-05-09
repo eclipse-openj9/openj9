@@ -190,6 +190,14 @@ allocateClassLoader(J9JavaVM *javaVM)
 			freeClassLoader(classLoader, javaVM, NULL, TRUE);
 			classLoader = NULL;
 		} else {
+			BOOLEAN cacheClassFromAllLoaders = FALSE;
+			if (NULL != javaVM->sharedClassConfig) {
+				cacheClassFromAllLoaders = (J9SharedClassCacheClassesAllLoaders == javaVM->sharedClassConfig->getSharedClassCacheMode(javaVM));
+			}
+			if (cacheClassFromAllLoaders) {
+				classLoader->flags |= J9CLASSLOADER_SHARED_CLASSES_ENABLED;
+				Trc_VM_allocateClassLoader_SetFlag(classLoader);
+			}
 			TRIGGER_J9HOOK_VM_CLASS_LOADER_CREATED(javaVM->hookInterface, javaVM, classLoader);
 		}
 	}
