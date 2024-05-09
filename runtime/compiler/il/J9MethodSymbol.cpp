@@ -707,6 +707,8 @@ static TR::RecognizedMethod canSkipZeroInitializationOnNewarrays[] =
    //TR::java_lang_String_toUpperCaseCore,
    TR::java_lang_String_split_str_int,
    TR::java_math_BigDecimal_toString,
+   TR::java_lang_Integer_toString,
+   TR::java_lang_Long_toString,
    TR::java_lang_StringCoding_encode,
    TR::java_lang_StringCoding_decode,
    TR::java_lang_StringCoding_StringEncoder_encode,
