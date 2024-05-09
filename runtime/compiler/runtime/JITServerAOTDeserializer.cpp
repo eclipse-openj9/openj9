@@ -460,7 +460,14 @@ JITServerLocalSCCAOTDeserializer::cacheRecord(const ClassSerializationRecord *re
    uintptr_t loaderOffset = (uintptr_t)-1;
    J9ClassLoader *loader = getClassLoader(record->classLoaderId(), loaderOffset, comp, wasReset);
    if (!loader)
+      {
+      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+            "ERROR: Class loader for class %.*s ID %zu was marked invalid",
+            RECORD_NAME(record), record->id()
+         );
       return false;
+      }
 
    // Lookup the RAMClass by name in the class loader
    J9Class *ramClass = jitGetClassInClassloaderFromUTF8(comp->j9VMThread(), loader, (char *)record->name(),
@@ -1072,7 +1079,14 @@ JITServerNoSCCAOTDeserializer::cacheRecord(const ClassSerializationRecord *recor
    // we simply fail to deserialize here.
    auto loader = findInMap(_classLoaderIdMap, record->classLoaderId(), getClassLoaderMonitor(), comp, wasReset);
    if (!loader)
+      {
+      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+            "ERROR: Class loader for class %.*s ID %zu was marked invalid",
+            RECORD_NAME(record), record->id()
+         );
       return false;
+      }
 
    // Lookup the RAMClass by name in the class loader
    J9Class *ramClass = jitGetClassInClassloaderFromUTF8(comp->j9VMThread(), loader, (char *)record->name(),
