@@ -6079,34 +6079,6 @@ static void genHeapAllocForDiscontiguousArraysOrRealtime(
                                 eaxReal,
                                 generateX86MemoryReference(vmThreadReg,heapAlloc_offset, cg), cg);
 
-      if (comp->getOption(TR_EnableNewAllocationProfiling))
-         {
-         TR::LabelSymbol *doneProfilingLabel = generateLabelSymbol(cg);
-
-         uint32_t *globalAllocationDataPointer = fej9->getGlobalAllocationDataPointer();
-         if (globalAllocationDataPointer)
-            {
-            TR::MemoryReference *gmr = generateX86MemoryReference((uintptr_t)globalAllocationDataPointer, cg);
-
-            generateMemImmInstruction(TR::InstOpCode::CMP4MemImm4,
-                                      node,
-                                      generateX86MemoryReference((uint32_t)(uintptr_t)globalAllocationDataPointer, cg),
-                                      0x07ffffff,
-                                      cg);
-            generateLabelInstruction(TR::InstOpCode::JAE4, node, doneProfilingLabel, cg);
-
-            generateMemInstruction(TR::InstOpCode::INC4Mem, node, gmr, cg);
-            uint32_t *dataPointer = fej9->getAllocationProfilingDataPointer(node->getByteCodeInfo(), clazz, node->getOwningMethod(), comp);
-            if (dataPointer)
-               {
-               TR::MemoryReference *mr = generateX86MemoryReference((uint32_t)(uintptr_t)dataPointer, cg);
-               generateMemInstruction(TR::InstOpCode::INC4Mem, node, mr, cg);
-               }
-
-            generateLabelInstruction(TR::InstOpCode::label, node, doneProfilingLabel, cg);
-            }
-         }
-
       bool canSkipOverflowCheck = false;
 
       // If the array length is constant, check to see if the size of the array will fit in a single arraylet leaf.
