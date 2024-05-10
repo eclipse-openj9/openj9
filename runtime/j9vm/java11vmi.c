@@ -763,8 +763,12 @@ JVM_DefineModule(JNIEnv * env, jobject module, jboolean isOpen, jstring version,
 	const char** packages = NULL;
 	PORT_ACCESS_FROM_ENV(env);
 #endif /* JAVA_SPEC_VERSION >= 15 */
+	BOOLEAN firstModule = J9_ARE_NO_BITS_SET(vm->runtimeFlags, J9_RUNTIME_JAVA_BASE_MODULE_CREATED);
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
+	if (firstModule) {
+		f_monitorEnter(vm->classTableMutex);
+	}
 	f_monitorEnter(vm->classLoaderModuleAndLocationMutex);
 
 #if JAVA_SPEC_VERSION >= 15
@@ -854,7 +858,7 @@ JVM_DefineModule(JNIEnv * env, jobject module, jboolean isOpen, jstring version,
 					success = (ERRCODE_SUCCESS == rc);
 					if (success) {
 						/* For "java.base" module setting of jrt URL and patch paths is already done during startup. Avoid doing it here. */
-						if (J9_ARE_ALL_BITS_SET(vm->runtimeFlags, J9_RUNTIME_JAVA_BASE_MODULE_CREATED)) {
+						if (!firstModule) {
 							Trc_MODULE_defineModule(currentThread, nameUTF, j9mod);
 							if (classLoader == systemClassLoader) {
 								success = vmFuncs->setBootLoaderModulePatchPaths(vm, j9mod, (const char *)nameUTF);
@@ -944,6 +948,9 @@ done:
 #endif /* JAVA_SPEC_VERSION >= 15 */
 
 	f_monitorExit(vm->classLoaderModuleAndLocationMutex);
+	if (firstModule) {
+		f_monitorExit(vm->classTableMutex);
+	}
 	vmFuncs->internalExitVMToJNI(currentThread);
 
 	return module;
