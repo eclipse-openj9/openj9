@@ -24,12 +24,15 @@ package org.openj9.test.varhandle;
 import java.lang.invoke.VarHandle;
 import java.nio.*;
 
+import org.openj9.test.util.VersionCheck;
 import org.testng.*;
 
 class ViewVarHandleTests {
+	static int versionMajor = VersionCheck.major();
+
 	ByteOrder _byteOrder;
 	ByteBuffer _buffer;
-	
+
 	// These should be static, but we use _byteOrder (test parameter) to create them.
 	VarHandle vhChar;
 	VarHandle vhDouble;
@@ -37,15 +40,15 @@ class ViewVarHandleTests {
 	VarHandle vhInt;
 	VarHandle vhLong;
 	VarHandle vhShort;
-	
-	// Expected value of the first element in the buffer for each type 
+
+	// Expected value of the first element in the buffer for each type
 	final char FIRST_CHAR;
 	final double FIRST_DOUBLE;
 	final float FIRST_FLOAT;
 	final int FIRST_INT;
 	final long FIRST_LONG;
 	final short FIRST_SHORT;
-	
+
 	// The value we change to and expect to see after updates
 	final char CHANGED_CHAR;
 	final double CHANGED_DOUBLE;
@@ -54,23 +57,23 @@ class ViewVarHandleTests {
 	final long CHANGED_LONG;
 	final short CHANGED_SHORT;
 
-	// Expected value of the last element in the buffer for each type 
+	// Expected value of the last element in the buffer for each type
 	final char LAST_CHAR;
 	final double LAST_DOUBLE;
 	final float LAST_FLOAT;
 	final int LAST_INT;
 	final long LAST_LONG;
 	final short LAST_SHORT;
-	
+
 	// Expected values of values at other indices
 	final int INITIAL_INT_AT_INDEX_3;
 	final int INITIAL_INT_AT_INDEX_4;
 	final short INITIAL_SHORT_AT_INDEX_1;
-	
+
 	public ViewVarHandleTests(String byteOrder) {
 		if (byteOrder.equals("bigEndian")) {
 			_byteOrder = ByteOrder.BIG_ENDIAN;
-			
+
 			FIRST_CHAR = ConstantsHelper.FIRST_CHAR_BE;
 			FIRST_DOUBLE = ConstantsHelper.FIRST_DOUBLE_BE;
 			FIRST_FLOAT = ConstantsHelper.FIRST_FLOAT_BE;
@@ -84,7 +87,7 @@ class ViewVarHandleTests {
 			CHANGED_INT = ConstantsHelper.CHANGED_INT_BE;
 			CHANGED_LONG = ConstantsHelper.CHANGED_LONG_BE;
 			CHANGED_SHORT = ConstantsHelper.CHANGED_SHORT_BE;
-			
+
 			LAST_CHAR = ConstantsHelper.LAST_CHAR_BE;
 			LAST_DOUBLE = ConstantsHelper.LAST_DOUBLE_BE;
 			LAST_FLOAT = ConstantsHelper.LAST_FLOAT_BE;
@@ -97,7 +100,7 @@ class ViewVarHandleTests {
 			INITIAL_SHORT_AT_INDEX_1 = ConstantsHelper.INITIAL_SHORT_AT_INDEX_1_BE;
 		} else if (byteOrder.equals("littleEndian")) {
 			_byteOrder = ByteOrder.LITTLE_ENDIAN;
-			
+
 			FIRST_CHAR = ConstantsHelper.FIRST_CHAR_LE;
 			FIRST_DOUBLE = ConstantsHelper.FIRST_DOUBLE_LE;
 			FIRST_FLOAT = ConstantsHelper.FIRST_FLOAT_LE;
@@ -111,7 +114,7 @@ class ViewVarHandleTests {
 			CHANGED_INT = ConstantsHelper.CHANGED_INT_LE;
 			CHANGED_LONG = ConstantsHelper.CHANGED_LONG_LE;
 			CHANGED_SHORT = ConstantsHelper.CHANGED_SHORT_LE;
-			
+
 			LAST_CHAR = ConstantsHelper.LAST_CHAR_LE;
 			LAST_DOUBLE = ConstantsHelper.LAST_DOUBLE_LE;
 			LAST_FLOAT = ConstantsHelper.LAST_FLOAT_LE;
@@ -126,26 +129,26 @@ class ViewVarHandleTests {
 			throw new TestException(byteOrder + " is an invalid byte order. Should be either bigEndian or littleEndian.");
 		}
 	}
-	
+
 	void checkUpdated2(int offset) {
 		Assert.assertEquals((byte)10, _buffer.get(offset + 0));
 		Assert.assertEquals((byte)20, _buffer.get(offset + 1));
 	}
-	
+
 	void checkUpdated4(int offset) {
 		Assert.assertEquals((byte)10, _buffer.get(offset + 0));
 		Assert.assertEquals((byte)20, _buffer.get(offset + 1));
 		Assert.assertEquals((byte)30, _buffer.get(offset + 2));
 		Assert.assertEquals((byte)40, _buffer.get(offset + 3));
 	}
-	
+
 	void checkNotUpdated4(int offset) {
 		Assert.assertEquals((byte)(offset + 1), _buffer.get(offset + 0));
 		Assert.assertEquals((byte)(offset + 2), _buffer.get(offset + 1));
 		Assert.assertEquals((byte)(offset + 3), _buffer.get(offset + 2));
 		Assert.assertEquals((byte)(offset + 4), _buffer.get(offset + 3));
 	}
-	
+
 	void checkUpdated8(int offset) {
 		Assert.assertEquals((byte)10, _buffer.get(offset + 0));
 		Assert.assertEquals((byte)20, _buffer.get(offset + 1));
@@ -156,7 +159,7 @@ class ViewVarHandleTests {
 		Assert.assertEquals((byte)70, _buffer.get(offset + 6));
 		Assert.assertEquals((byte)80, _buffer.get(offset + 7));
 	}
-	
+
 	void checkNotUpdated8() {
 		Assert.assertEquals((byte)1, _buffer.get(0));
 		Assert.assertEquals((byte)2, _buffer.get(1));
@@ -167,7 +170,7 @@ class ViewVarHandleTests {
 		Assert.assertEquals((byte)7, _buffer.get(6));
 		Assert.assertEquals((byte)8, _buffer.get(7));
 	}
-	
+
 	void checkIntAddition(byte value, int offset) {
 		if (_byteOrder == ByteOrder.BIG_ENDIAN) {
 			Assert.assertEquals((byte)(offset + 1), _buffer.get(offset + 0));
@@ -179,7 +182,7 @@ class ViewVarHandleTests {
 		Assert.assertEquals((byte)(offset + 2), _buffer.get(offset + 1));
 		Assert.assertEquals((byte)(offset + 3), _buffer.get(offset + 2));
 	}
-	
+
 	void checkIntBitwiseAnd(int mask, int offset) {
 		if (_byteOrder == ByteOrder.BIG_ENDIAN) {
 			Assert.assertEquals((byte)((offset + 1) & (mask & 0xFF000000)), _buffer.get(offset + 0));
@@ -193,7 +196,7 @@ class ViewVarHandleTests {
 			Assert.assertEquals((byte)((offset + 4) & (mask & 0xFF000000)), _buffer.get(offset + 3));
 		}
 	}
-	
+
 	void checkIntBitwiseOr(int mask, int offset) {
 		if (_byteOrder == ByteOrder.BIG_ENDIAN) {
 			Assert.assertEquals((byte)((offset + 1) | (mask & 0xFF000000)), _buffer.get(offset + 0));
@@ -207,7 +210,7 @@ class ViewVarHandleTests {
 			Assert.assertEquals((byte)((offset + 4) | (mask & 0xFF000000)), _buffer.get(offset + 3));
 		}
 	}
-	
+
 	void checkIntBitwiseXor(int mask, int offset) {
 		if (_byteOrder == ByteOrder.BIG_ENDIAN) {
 			Assert.assertEquals((byte)((offset + 1) ^ (mask & 0xFF000000)), _buffer.get(offset + 0));
@@ -221,7 +224,7 @@ class ViewVarHandleTests {
 			Assert.assertEquals((byte)((offset + 4) ^ (mask & 0xFF000000)), _buffer.get(offset + 3));
 		}
 	}
-	
+
 	void checkLongAddition() {
 		if (_byteOrder == ByteOrder.BIG_ENDIAN) {
 			Assert.assertEquals((byte)1, _buffer.get(0));
@@ -237,7 +240,7 @@ class ViewVarHandleTests {
 		Assert.assertEquals((byte)6, _buffer.get(5));
 		Assert.assertEquals((byte)7, _buffer.get(6));
 	}
-	
+
 	void checkLongBitwiseAnd() {
 		if (_byteOrder == ByteOrder.BIG_ENDIAN) {
 			Assert.assertEquals((byte)0, _buffer.get(0));
@@ -253,7 +256,7 @@ class ViewVarHandleTests {
 		Assert.assertEquals((byte)0, _buffer.get(5));
 		Assert.assertEquals((byte)0, _buffer.get(6));
 	}
-	
+
 	void checkLongBitwiseOr() {
 		if (_byteOrder == ByteOrder.BIG_ENDIAN) {
 			Assert.assertEquals((byte)1, _buffer.get(0));
@@ -269,7 +272,7 @@ class ViewVarHandleTests {
 		Assert.assertEquals((byte)6, _buffer.get(5));
 		Assert.assertEquals((byte)7, _buffer.get(6));
 	}
-	
+
 	void checkLongBitwiseXor() {
 		if (_byteOrder == ByteOrder.BIG_ENDIAN) {
 			Assert.assertEquals((byte)1, _buffer.get(0));
@@ -288,34 +291,34 @@ class ViewVarHandleTests {
 
 	/**
 	 * Calculates the last aligned index that can store an element of size {@code bytes}.
-	 *  
+	 *
 	 * @param bytes The size in bytes of the data type being stored
 	 * @return
 	 */
 	int lastCompleteIndex(int bytes) {
 		return bytes * (Math.floorDiv(_buffer.capacity(), bytes) - 1);
 	}
-	
+
 	static void failUnalignedAccess() {
 		Assert.fail("Unaligned access. Expected IllegalStateException.");
 	}
-	
+
 	static void failReadOnlyAccess() {
 		Assert.fail("Modified read-only buffer. Expected ReadOnlyBufferException.");
 	}
-	
+
 	static void assertEquals(int expected, int actual) {
 		Assert.assertEquals(Integer.toHexString(actual), Integer.toHexString(expected));
 	}
-	
+
 	static void assertEquals(long expected, long actual) {
 		Assert.assertEquals(Long.toHexString(actual), Long.toHexString(expected));
 	}
-	
+
 	static void assertEquals(float expected, float actual) {
 		Assert.assertEquals(Integer.toHexString(Float.floatToRawIntBits(actual)), Integer.toHexString(Float.floatToRawIntBits(expected)));
 	}
-	
+
 	static void assertEquals(double expected, double actual) {
 		Assert.assertEquals(Long.toHexString(Double.doubleToRawLongBits(actual)), Long.toHexString(Double.doubleToRawLongBits(expected)));
 	}
