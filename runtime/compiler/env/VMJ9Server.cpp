@@ -60,17 +60,20 @@ TR_J9ServerVM::getResolvedMethodsAndMethods(TR_Memory *trMemory, TR_OpaqueClassB
 bool
 TR_J9ServerVM::isClassLibraryMethod(TR_OpaqueMethodBlock *method, bool vettedForAOT)
    {
-   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITServer::MessageType::VM_isClassLibraryMethod, method, vettedForAOT);
-   return std::get<0>(stream->read<bool>());
+   return isClassLibraryClass(getClassFromMethodBlock(method));
    }
 
 bool
 TR_J9ServerVM::isClassLibraryClass(TR_OpaqueClassBlock *clazz)
    {
+   // Use the local cache to determine whether the class loader of the given
+   // class is the same as the system classloader
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITServer::MessageType::VM_isClassLibraryClass, clazz);
-   return std::get<0>(stream->read<bool>());
+   void *classLoader = NULL;
+   JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, _compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_CLASS_LOADER, &classLoader);
+   auto *vmInfo = _compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+   TR_ASSERT(vmInfo->_systemClassLoader, "_systemClassLoader cannot be NULL");
+   return vmInfo->_systemClassLoader == classLoader;
    }
 
 TR_OpaqueClassBlock *
