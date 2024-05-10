@@ -719,6 +719,22 @@ static TR::RecognizedMethod canSkipZeroInitializationOnNewarrays[] =
    TR::java_io_Writer_write_I,
    TR::java_util_regex_Matcher_init,
    TR::java_util_regex_Matcher_usePattern,
+   //
+   TR::java_lang_StringLatin1_toBytes_C,
+   TR::java_lang_StringLatin1_toBytes_III,
+   TR::java_lang_StringLatin1_toChars,
+   TR::java_lang_StringLatin1_toLowerCase,
+   TR::java_lang_StringLatin1_toUpperCase,
+
+   TR::java_lang_StringUTF16_toBytes_C,
+   TR::java_lang_StringUTF16_toBytesSupplementary,
+   TR::java_lang_StringUTF16_toChars,
+   TR::java_lang_StringUTF16_replace,
+   TR::java_lang_StringUTF16_compress_BII,
+   TR::java_lang_StringUTF16_compress_CII,
+   TR::java_lang_StringUTF16_toLowerCase,
+   TR::java_lang_StringUTF16_toUpperCase,
+
    TR::unknownMethod
    };
 

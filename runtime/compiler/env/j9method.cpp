@@ -3226,6 +3226,11 @@ void TR_ResolvedJ9Method::construct()
       { x(TR::java_lang_StringLatin1_indexOf,                                 "indexOf",       "([BI[BII)I")},
       { x(TR::java_lang_StringLatin1_indexOfChar,                             "indexOfChar",   "([BIII)I")},
       { x(TR::java_lang_StringLatin1_inflate,                                 "inflate",       "([BI[CII)V")},
+      { x(TR::java_lang_StringLatin1_toBytes_C,                               "toBytes",       "([BI[CII)V")},
+      { x(TR::java_lang_StringLatin1_toBytes_III,                             "toBytes",       "([BI[CII)V")},
+      { x(TR::java_lang_StringLatin1_toChars,                                 "toChars",       "([BI[CII)V")},
+      { x(TR::java_lang_StringLatin1_toLowerCase,                             "toLowerCase",   "(Ljava/lang/String;[BLjava/util/Locale;)Ljava/lang/String;")},
+      { x(TR::java_lang_StringLatin1_toUpperCase,                             "toUpperCase",   "(Ljava/lang/String;[BLjava/util/Locale;)Ljava/lang/String;")},
       { TR::unknownMethod }
       };
 
@@ -3243,8 +3248,16 @@ void TR_ResolvedJ9Method::construct()
       { x(TR::java_lang_StringUTF16_newBytesFor,                              "newBytesFor",        "(I)[B")},
       { x(TR::java_lang_StringUTF16_putChar,                                  "putChar",            "([BII)V")},
       { x(TR::java_lang_StringUTF16_toBytes,                                  "toBytes",            "([CII)[B")},
-      { x(TR::java_lang_StringUTF16_getChars_Integer,                         "getChars",            "(II[B)I")},
-      { x(TR::java_lang_StringUTF16_getChars_Long,                            "getChars",            "(JI[B)I")},
+      { x(TR::java_lang_StringUTF16_getChars_Integer,                         "getChars",           "(II[B)I")},
+      { x(TR::java_lang_StringUTF16_getChars_Long,                            "getChars",           "(JI[B)I")},
+      { x(TR::java_lang_StringUTF16_toBytes_C,                                "toBytes",            "(C)[B")},
+      { x(TR::java_lang_StringUTF16_toBytesSupplementary,                     "toBytesSupplementary", "(I)[B")},
+      { x(TR::java_lang_StringUTF16_toChars,                                  "toChars",            "([B)[C")},
+      { x(TR::java_lang_StringUTF16_replace,                                  "replace",            "([BCC)Ljava/lang/String;")},
+      { x(TR::java_lang_StringUTF16_compress_CII,                             "compress",           "([CII)[B")},
+      { x(TR::java_lang_StringUTF16_compress_BII,                             "compress",           "([BII)[B")},
+      { x(TR::java_lang_StringUTF16_toLowerCase,                              "toLowerCase",        "(Ljava/lang/String;[BLjava/util/Locale;)Ljava/lang/String;")},
+      { x(TR::java_lang_StringUTF16_toUpperCase,                              "toUpperCase",        "(Ljava/lang/String;[BLjava/util/Locale;)Ljava/lang/String;")},
       { TR::unknownMethod }
       };
 
