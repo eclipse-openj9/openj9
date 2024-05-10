@@ -24,9 +24,12 @@ package org.openj9.test.varhandle;
 import java.lang.invoke.VarHandle;
 import java.nio.*;
 
+import org.openj9.test.util.VersionCheck;
 import org.testng.*;
 
 class ViewVarHandleTests {
+	static int versionMajor = VersionCheck.major();
+
 	ByteOrder _byteOrder;
 	ByteBuffer _buffer;
 	

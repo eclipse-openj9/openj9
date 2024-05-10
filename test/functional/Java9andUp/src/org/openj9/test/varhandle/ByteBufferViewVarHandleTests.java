@@ -81,30 +81,60 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 
 		ByteBufferViewHelper.reset();
 		/* GetOpaque */
-		cFromVH = (char) vhChar.getOpaque(_buffer, 0);
-		Assert.assertEquals(FIRST_CHAR, cFromVH);
+		try {
+			cFromVH = (char) vhChar.getOpaque(_buffer, 0);
+			Assert.assertEquals(FIRST_CHAR, cFromVH);
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
 		/* SetOpaque */
-		vhChar.setOpaque(_buffer, 0, CHANGED_CHAR);
-		checkUpdated2(0);
+		try {
+			vhChar.setOpaque(_buffer, 0, CHANGED_CHAR);
+			checkUpdated2(0);
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
 		ByteBufferViewHelper.reset();
 		/* GetVolatile */
-		cFromVH = (char) vhChar.getVolatile(_buffer, 0);
-		Assert.assertEquals(FIRST_CHAR, cFromVH);
+		try {
+			cFromVH = (char) vhChar.getVolatile(_buffer, 0);
+			Assert.assertEquals(FIRST_CHAR, cFromVH);
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
 		/* SetVolatile */
-		vhChar.setVolatile(_buffer, 0, CHANGED_CHAR);
-		checkUpdated2(0);
+		try {
+			vhChar.setVolatile(_buffer, 0, CHANGED_CHAR);
+			checkUpdated2(0);
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
 		ByteBufferViewHelper.reset();
 		/* GetAcquire */
-		cFromVH = (char) vhChar.getAcquire(_buffer, 0);
-		Assert.assertEquals(FIRST_CHAR, cFromVH);
+		try {
+			cFromVH = (char) vhChar.getAcquire(_buffer, 0);
+			Assert.assertEquals(FIRST_CHAR, cFromVH);
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
 		/* SetRelease */
-		vhChar.setRelease(_buffer, 0, CHANGED_CHAR);
-		checkUpdated2(0);
+		try {
+			vhChar.setRelease(_buffer, 0, CHANGED_CHAR);
+			checkUpdated2(0);
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
 		@SuppressWarnings("unused")
 		boolean casResult;
@@ -283,144 +313,272 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 
 		ByteBufferViewHelper.reset();
 		/* GetOpaque */
-		dFromVH = (double)vhDouble.getOpaque(_buffer, 0);
-		assertEquals(FIRST_DOUBLE, dFromVH);
-
+		try {
+			dFromVH = (double)vhDouble.getOpaque(_buffer, 0);
+			assertEquals(FIRST_DOUBLE, dFromVH);
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
+		
 		/* SetOpaque */
-		vhDouble.setOpaque(_buffer, 0, CHANGED_DOUBLE);
-		assertEquals(FIRST_DOUBLE, dFromVH);
-
+		try {
+			vhDouble.setOpaque(_buffer, 0, CHANGED_DOUBLE);
+			assertEquals(FIRST_DOUBLE, dFromVH);
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
+		
 		ByteBufferViewHelper.reset();
 		/* GetVolatile */
-		dFromVH = (double)vhDouble.getVolatile(_buffer, 0);
-		assertEquals(FIRST_DOUBLE, dFromVH);
-
+		try {
+			dFromVH = (double)vhDouble.getVolatile(_buffer, 0);	
+			assertEquals(FIRST_DOUBLE, dFromVH);
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
+		
 		/* SetVolatile */
-		vhDouble.setVolatile(_buffer, 0, CHANGED_DOUBLE);
-		assertEquals(FIRST_DOUBLE, dFromVH);
+		try {
+			vhDouble.setVolatile(_buffer, 0, CHANGED_DOUBLE);
+			assertEquals(FIRST_DOUBLE, dFromVH);
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
+		
 		ByteBufferViewHelper.reset();
 		/* GetAcquire */
-		dFromVH = (double)vhDouble.getAcquire(_buffer, 0);
-		assertEquals(FIRST_DOUBLE, dFromVH);
+		try {
+			dFromVH = (double)vhDouble.getAcquire(_buffer, 0);
+			assertEquals(FIRST_DOUBLE, dFromVH);
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
 		/* SetRelease */
-		vhDouble.setRelease(_buffer, 0, CHANGED_DOUBLE);
-		assertEquals(FIRST_DOUBLE, dFromVH);
+		try {
+			vhDouble.setRelease(_buffer, 0, CHANGED_DOUBLE);
+			assertEquals(FIRST_DOUBLE, dFromVH);
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* CompareAndSet - Fail */
 		ByteBufferViewHelper.reset();
-		boolean casResult = vhDouble.compareAndSet(_buffer, 0, 2.0, 3.0);
-		checkNotUpdated8();
-		Assert.assertFalse(casResult);
+		boolean casResult = false;
+		try {
+			casResult = vhDouble.compareAndSet(_buffer, 0, 2.0, 3.0);
+			checkNotUpdated8();
+			Assert.assertFalse(casResult);
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
 		/* CompareAndSet - Succeed */
 		ByteBufferViewHelper.reset();
-		casResult = vhDouble.compareAndSet(_buffer, 0, FIRST_DOUBLE, CHANGED_DOUBLE);
-		checkUpdated8(0);
-		Assert.assertTrue(casResult);
+		try {
+			casResult = vhDouble.compareAndSet(_buffer, 0, FIRST_DOUBLE, CHANGED_DOUBLE);
+			checkUpdated8(0);
+			Assert.assertTrue(casResult);
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* compareAndExchange - Fail */
 		ByteBufferViewHelper.reset();
-		double caeResult = (double)vhDouble.compareAndExchange(_buffer, 0, 1.0, 2.0);
-		checkNotUpdated8();
-		assertEquals(FIRST_DOUBLE, caeResult);
+		double caeResult = 0;
+		try {
+			caeResult = (double)vhDouble.compareAndExchange(_buffer, 0, 1.0, 2.0);
+			checkNotUpdated8();
+			assertEquals(FIRST_DOUBLE, caeResult);
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* compareAndExchange - Succeed */
 		ByteBufferViewHelper.reset();
-		caeResult = (double)vhDouble.compareAndExchange(_buffer, 0, FIRST_DOUBLE, CHANGED_DOUBLE);
-		checkUpdated8(0);
-		assertEquals(FIRST_DOUBLE, caeResult);
+		try {
+			caeResult = (double)vhDouble.compareAndExchange(_buffer, 0, FIRST_DOUBLE, CHANGED_DOUBLE);
+			checkUpdated8(0);
+			assertEquals(FIRST_DOUBLE, caeResult);
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* compareAndExchangeAcquire - Fail */
 		ByteBufferViewHelper.reset();
-		caeResult = (double)vhDouble.compareAndExchangeAcquire(_buffer, 0, 1.0, 2.0);
-		checkNotUpdated8();
-		assertEquals(FIRST_DOUBLE, caeResult);
+		try {
+			caeResult = (double)vhDouble.compareAndExchangeAcquire(_buffer, 0, 1.0, 2.0);
+			checkNotUpdated8();
+			assertEquals(FIRST_DOUBLE, caeResult);
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* compareAndExchangeAcquire - Succeed */
 		ByteBufferViewHelper.reset();
-		caeResult = (double)vhDouble.compareAndExchangeAcquire(_buffer, 0, FIRST_DOUBLE, CHANGED_DOUBLE);
-		checkUpdated8(0);
-		assertEquals(FIRST_DOUBLE, caeResult);
+		try {
+			caeResult = (double)vhDouble.compareAndExchangeAcquire(_buffer, 0, FIRST_DOUBLE, CHANGED_DOUBLE);
+			checkUpdated8(0);
+			assertEquals(FIRST_DOUBLE, caeResult);
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* compareAndExchangeRelease - Fail */
 		ByteBufferViewHelper.reset();
-		caeResult = (double)vhDouble.compareAndExchangeRelease(_buffer, 0, 1.0, 2.0);
-		checkNotUpdated8();
-		assertEquals(FIRST_DOUBLE, caeResult);
+		try {
+			caeResult = (double)vhDouble.compareAndExchangeRelease(_buffer, 0, 1.0, 2.0);
+			checkNotUpdated8();
+			assertEquals(FIRST_DOUBLE, caeResult);
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* compareAndExchangeRelease - Succeed */
 		ByteBufferViewHelper.reset();
-		caeResult = (double)vhDouble.compareAndExchangeRelease(_buffer, 0, FIRST_DOUBLE, CHANGED_DOUBLE);
-		checkUpdated8(0);
-		assertEquals(FIRST_DOUBLE, caeResult);
+		try {
+			caeResult = (double)vhDouble.compareAndExchangeRelease(_buffer, 0, FIRST_DOUBLE, CHANGED_DOUBLE);
+			checkUpdated8(0);
+			assertEquals(FIRST_DOUBLE, caeResult);
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
 		/* WeakCompareAndSet - Fail */
 		ByteBufferViewHelper.reset();
-		casResult = vhDouble.weakCompareAndSet(_buffer, 0, 2.0, 3.0);
-		checkNotUpdated8();
-		Assert.assertFalse(casResult);
+		try {
+			casResult = vhDouble.weakCompareAndSet(_buffer, 0, 2.0, 3.0);
+			checkNotUpdated8();
+			Assert.assertFalse(casResult);
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
 		/* WeakCompareAndSet - Succeed */
 		ByteBufferViewHelper.reset();
-		casResult = vhDouble.weakCompareAndSet(_buffer, 0, FIRST_DOUBLE, CHANGED_DOUBLE);
-		checkUpdated8(0);
-		Assert.assertTrue(casResult);
+		try {
+			casResult = vhDouble.weakCompareAndSet(_buffer, 0, FIRST_DOUBLE, CHANGED_DOUBLE);
+			checkUpdated8(0);
+			Assert.assertTrue(casResult);
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
 		/* WeakCompareAndSetAcquire - Fail */
 		ByteBufferViewHelper.reset();
-		casResult = vhDouble.weakCompareAndSetAcquire(_buffer, 0, 2.0, 3.0);
-		checkNotUpdated8();
-		Assert.assertFalse(casResult);
+		try {
+			casResult = vhDouble.weakCompareAndSetAcquire(_buffer, 0, 2.0, 3.0);
+			checkNotUpdated8();
+			Assert.assertFalse(casResult);
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
 		/* WeakCompareAndSetAcquire - Succeed */
 		ByteBufferViewHelper.reset();
-		casResult = vhDouble.weakCompareAndSetAcquire(_buffer, 0, FIRST_DOUBLE, CHANGED_DOUBLE);
-		checkUpdated8(0);
-		Assert.assertTrue(casResult);
+		try {
+			casResult = vhDouble.weakCompareAndSetAcquire(_buffer, 0, FIRST_DOUBLE, CHANGED_DOUBLE);
+			checkUpdated8(0);
+			Assert.assertTrue(casResult);
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
 		/* WeakCompareAndSetRelease - Fail */
 		ByteBufferViewHelper.reset();
-		casResult = vhDouble.weakCompareAndSetRelease(_buffer, 0, 2.0, 3.0);
-		checkNotUpdated8();
-		Assert.assertFalse(casResult);
+		try {
+			casResult = vhDouble.weakCompareAndSetRelease(_buffer, 0, 2.0, 3.0);
+			checkNotUpdated8();
+			Assert.assertFalse(casResult);
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
 		/* WeakCompareAndSetRelease - Succeed */
 		ByteBufferViewHelper.reset();
-		casResult = vhDouble.weakCompareAndSetRelease(_buffer, 0, FIRST_DOUBLE, CHANGED_DOUBLE);
-		checkUpdated8(0);
-		Assert.assertTrue(casResult);
+		try {
+			casResult = vhDouble.weakCompareAndSetRelease(_buffer, 0, FIRST_DOUBLE, CHANGED_DOUBLE);
+			checkUpdated8(0);
+			Assert.assertTrue(casResult);
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
 		/* WeakCompareAndSetPlain - Fail */
 		ByteBufferViewHelper.reset();
-		casResult = vhDouble.weakCompareAndSetPlain(_buffer, 0, 2.0, 3.0);
-		checkNotUpdated8();
-		Assert.assertFalse(casResult);
+		try {
+			casResult = vhDouble.weakCompareAndSetPlain(_buffer, 0, 2.0, 3.0);
+			checkNotUpdated8();
+			Assert.assertFalse(casResult);
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
 		/* WeakCompareAndSetPlain - Succeed */
 		ByteBufferViewHelper.reset();
-		casResult = vhDouble.weakCompareAndSetPlain(_buffer, 0, FIRST_DOUBLE, CHANGED_DOUBLE);
-		checkUpdated8(0);
-		Assert.assertTrue(casResult);
+		try {
+			casResult = vhDouble.weakCompareAndSetPlain(_buffer, 0, FIRST_DOUBLE, CHANGED_DOUBLE);	
+			checkUpdated8(0);
+			Assert.assertTrue(casResult);
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* GetAndSet */
 		ByteBufferViewHelper.reset();
-		dFromVH = (double)vhDouble.getAndSet(_buffer, 0, CHANGED_DOUBLE);
-		checkUpdated8(0);
-		assertEquals(FIRST_DOUBLE, dFromVH);
-		
-		/* GetAndSet */
-		ByteBufferViewHelper.reset();
-		dFromVH = (double)vhDouble.getAndSet(_buffer, 0, CHANGED_DOUBLE);
-		checkUpdated8(0);
-		assertEquals(FIRST_DOUBLE, dFromVH);
-		
-		/* GetAndSet */
-		ByteBufferViewHelper.reset();
-		dFromVH = (double)vhDouble.getAndSet(_buffer, 0, CHANGED_DOUBLE);
-		checkUpdated8(0);
-		assertEquals(FIRST_DOUBLE, dFromVH);
+		try {
+			dFromVH = (double)vhDouble.getAndSet(_buffer, 0, CHANGED_DOUBLE);
+			checkUpdated8(0);
+			assertEquals(FIRST_DOUBLE, dFromVH);
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
+		/* GetAndSet */
+		ByteBufferViewHelper.reset();
+		try {
+			dFromVH = (double)vhDouble.getAndSet(_buffer, 0, CHANGED_DOUBLE);
+			checkUpdated8(0);
+			assertEquals(FIRST_DOUBLE, dFromVH);
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
+
+		/* GetAndSet */
+		ByteBufferViewHelper.reset();
+		try {
+			dFromVH = (double)vhDouble.getAndSet(_buffer, 0, CHANGED_DOUBLE);
+			checkUpdated8(0);
+			assertEquals(FIRST_DOUBLE, dFromVH);
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
+		
 		/* GetAndAdd */
 		try {
 			dFromVH = (double)vhDouble.getAndAdd(_buffer, 0, 2.0);
@@ -526,143 +684,272 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 
 		ByteBufferViewHelper.reset();
 		/* GetOpaque */
-		dFromVH = (float)vhFloat.getOpaque(_buffer, 0);
-		assertEquals(FIRST_FLOAT, dFromVH);
+		try {
+			dFromVH = (float)vhFloat.getOpaque(_buffer, 0);
+			assertEquals(FIRST_FLOAT, dFromVH);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
 		/* SetOpaque */
-		vhFloat.setOpaque(_buffer, 0, CHANGED_FLOAT);
-		assertEquals(FIRST_FLOAT, dFromVH);
+		try {
+			vhFloat.setOpaque(_buffer, 0, CHANGED_FLOAT);
+			assertEquals(FIRST_FLOAT, dFromVH);
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
 		ByteBufferViewHelper.reset();
 		/* GetVolatile */
-		dFromVH = (float)vhFloat.getVolatile(_buffer, 0);
-		assertEquals(FIRST_FLOAT, dFromVH);
+		try {
+			dFromVH = (float)vhFloat.getVolatile(_buffer, 0);
+			assertEquals(FIRST_FLOAT, dFromVH);		
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
 		/* SetVolatile */
-		vhFloat.setVolatile(_buffer, 0, CHANGED_FLOAT);
-		assertEquals(FIRST_FLOAT, dFromVH);
+		try {
+			vhFloat.setVolatile(_buffer, 0, CHANGED_FLOAT);
+			assertEquals(FIRST_FLOAT, dFromVH);
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
+		
 		ByteBufferViewHelper.reset();
 		/* GetAcquire */
-		dFromVH = (float)vhFloat.getAcquire(_buffer, 0);
-		assertEquals(FIRST_FLOAT, dFromVH);
+		try {
+			dFromVH = (float)vhFloat.getAcquire(_buffer, 0);
+			assertEquals(FIRST_FLOAT, dFromVH);
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
 		/* SetRelease */
-		vhFloat.setRelease(_buffer, 0, CHANGED_FLOAT);
-		assertEquals(FIRST_FLOAT, dFromVH);
+		try {
+			vhFloat.setRelease(_buffer, 0, CHANGED_FLOAT);
+			assertEquals(FIRST_FLOAT, dFromVH);
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* CompareAndSet - Fail */
 		ByteBufferViewHelper.reset();
-		boolean casResult = vhFloat.compareAndSet(_buffer, 0, 2.0f, 3.0f);
-		checkNotUpdated4(0);
-		Assert.assertFalse(casResult);
+		boolean casResult = false;
+		try {
+			casResult = vhFloat.compareAndSet(_buffer, 0, 2.0f, 3.0f);
+			checkNotUpdated4(0);
+			Assert.assertFalse(casResult);
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
 		/* CompareAndSet - Succeed */
 		ByteBufferViewHelper.reset();
-		casResult = vhFloat.compareAndSet(_buffer, 0, FIRST_FLOAT, CHANGED_FLOAT);
-		checkUpdated4(0);
-		Assert.assertTrue(casResult);
+		try {
+			casResult = vhFloat.compareAndSet(_buffer, 0, FIRST_FLOAT, CHANGED_FLOAT);
+			checkUpdated4(0);
+			Assert.assertTrue(casResult);
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* compareAndExchange - Fail */
 		ByteBufferViewHelper.reset();
-		float caeResult = (float)vhFloat.compareAndExchange(_buffer, 0, 1.0f, 2.0f);
-		checkNotUpdated4(0);
-		assertEquals(FIRST_FLOAT, caeResult);
+		float caeResult = 0;
+		try {
+			caeResult = (float)vhFloat.compareAndExchange(_buffer, 0, 1.0f, 2.0f);
+			checkNotUpdated4(0);
+			assertEquals(FIRST_FLOAT, caeResult);
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* compareAndExchange - Succeed */
 		ByteBufferViewHelper.reset();
-		caeResult = (float)vhFloat.compareAndExchange(_buffer, 0, FIRST_FLOAT, CHANGED_FLOAT);
-		checkUpdated4(0);
-		assertEquals(FIRST_FLOAT, caeResult);
+		try {
+			caeResult = (float)vhFloat.compareAndExchange(_buffer, 0, FIRST_FLOAT, CHANGED_FLOAT);
+			checkUpdated4(0);
+			assertEquals(FIRST_FLOAT, caeResult);
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* compareAndExchangeAcquire - Fail */
 		ByteBufferViewHelper.reset();
-		caeResult = (float)vhFloat.compareAndExchangeAcquire(_buffer, 0, 1.0f, 2.0f);
-		checkNotUpdated4(0);
-		assertEquals(FIRST_FLOAT, caeResult);
+		try {
+			caeResult = (float)vhFloat.compareAndExchangeAcquire(_buffer, 0, 1.0f, 2.0f);
+			checkNotUpdated4(0);
+			assertEquals(FIRST_FLOAT, caeResult);
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* compareAndExchangeAcquire - Succeed */
 		ByteBufferViewHelper.reset();
-		caeResult = (float)vhFloat.compareAndExchangeAcquire(_buffer, 0, FIRST_FLOAT, CHANGED_FLOAT);
-		checkUpdated4(0);
-		assertEquals(FIRST_FLOAT, caeResult);
+		try {
+			caeResult = (float)vhFloat.compareAndExchangeAcquire(_buffer, 0, FIRST_FLOAT, CHANGED_FLOAT);
+			checkUpdated4(0);
+			assertEquals(FIRST_FLOAT, caeResult);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* compareAndExchangeRelease - Fail */
 		ByteBufferViewHelper.reset();
-		caeResult = (float)vhFloat.compareAndExchangeRelease(_buffer, 0, 1.0f, 2.0f);
-		checkNotUpdated4(0);
-		assertEquals(FIRST_FLOAT, caeResult);
+		try {
+			caeResult = (float)vhFloat.compareAndExchangeRelease(_buffer, 0, 1.0f, 2.0f);
+			checkNotUpdated4(0);
+			assertEquals(FIRST_FLOAT, caeResult);
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* compareAndExchangeRelease - Succeed */
 		ByteBufferViewHelper.reset();
-		caeResult = (float)vhFloat.compareAndExchangeRelease(_buffer, 0, FIRST_FLOAT, CHANGED_FLOAT);
-		checkUpdated4(0);
-		assertEquals(FIRST_FLOAT, caeResult);
+		try {
+			caeResult = (float)vhFloat.compareAndExchangeRelease(_buffer, 0, FIRST_FLOAT, CHANGED_FLOAT);
+			checkUpdated4(0);
+			assertEquals(FIRST_FLOAT, caeResult);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
 		/* WeakCompareAndSet - Fail */
 		ByteBufferViewHelper.reset();
-		casResult = vhFloat.weakCompareAndSet(_buffer, 0, 2.0f, 3.0f);
-		checkNotUpdated4(0);
-		Assert.assertFalse(casResult);
+		try {
+			casResult = vhFloat.weakCompareAndSet(_buffer, 0, 2.0f, 3.0f);
+			checkNotUpdated4(0);
+			Assert.assertFalse(casResult);
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
 		/* WeakCompareAndSet - Succeed */
 		ByteBufferViewHelper.reset();
-		casResult = vhFloat.weakCompareAndSet(_buffer, 0, FIRST_FLOAT, CHANGED_FLOAT);
-		checkUpdated4(0);
-		Assert.assertTrue(casResult);
+		try {
+			casResult = vhFloat.weakCompareAndSet(_buffer, 0, FIRST_FLOAT, CHANGED_FLOAT);
+			checkUpdated4(0);
+			Assert.assertTrue(casResult);
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
 		/* WeakCompareAndSetAcquire - Fail */
 		ByteBufferViewHelper.reset();
-		casResult = vhFloat.weakCompareAndSetAcquire(_buffer, 0, 2.0f, 3.0f);
-		checkNotUpdated4(0);
-		Assert.assertFalse(casResult);
+		try {
+			casResult = vhFloat.weakCompareAndSetAcquire(_buffer, 0, 2.0f, 3.0f);
+			checkNotUpdated4(0);
+			Assert.assertFalse(casResult);
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
 		/* WeakCompareAndSetAcquire - Succeed */
 		ByteBufferViewHelper.reset();
-		casResult = vhFloat.weakCompareAndSetAcquire(_buffer, 0, FIRST_FLOAT, CHANGED_FLOAT);
-		checkUpdated4(0);
-		Assert.assertTrue(casResult);
+		try {
+			casResult = vhFloat.weakCompareAndSetAcquire(_buffer, 0, FIRST_FLOAT, CHANGED_FLOAT);
+			checkUpdated4(0);
+			Assert.assertTrue(casResult);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
 		/* WeakCompareAndSetRelease - Fail */
 		ByteBufferViewHelper.reset();
-		casResult = vhFloat.weakCompareAndSetRelease(_buffer, 0, 2.0f, 3.0f);
-		checkNotUpdated4(0);
-		Assert.assertFalse(casResult);
+		try {
+			casResult = vhFloat.weakCompareAndSetRelease(_buffer, 0, 2.0f, 3.0f);
+			checkNotUpdated4(0);
+			Assert.assertFalse(casResult);
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
 		/* WeakCompareAndSetRelease - Succeed */
 		ByteBufferViewHelper.reset();
-		casResult = vhFloat.weakCompareAndSetRelease(_buffer, 0, FIRST_FLOAT, CHANGED_FLOAT);
-		checkUpdated4(0);
-		Assert.assertTrue(casResult);
+		try {
+			casResult = vhFloat.weakCompareAndSetRelease(_buffer, 0, FIRST_FLOAT, CHANGED_FLOAT);
+			checkUpdated4(0);
+			Assert.assertTrue(casResult);
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
 		/* WeakCompareAndSetPlain - Fail */
 		ByteBufferViewHelper.reset();
-		casResult = vhFloat.weakCompareAndSetPlain(_buffer, 0, 2.0f, 3.0f);
-		checkNotUpdated4(0);
-		Assert.assertFalse(casResult);
+		try {
+			casResult = vhFloat.weakCompareAndSetPlain(_buffer, 0, 2.0f, 3.0f);
+			checkNotUpdated4(0);
+			Assert.assertFalse(casResult);
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
 		/* WeakCompareAndSetPlain - Succeed */
 		ByteBufferViewHelper.reset();
-		casResult = vhFloat.weakCompareAndSetPlain(_buffer, 0, FIRST_FLOAT, CHANGED_FLOAT);
-		checkUpdated4(0);
-		Assert.assertTrue(casResult);
+		try {
+			casResult = vhFloat.weakCompareAndSetPlain(_buffer, 0, FIRST_FLOAT, CHANGED_FLOAT);
+			checkUpdated4(0);
+			Assert.assertTrue(casResult);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* GetAndSet */
 		ByteBufferViewHelper.reset();
-		dFromVH = (float)vhFloat.getAndSet(_buffer, 0, CHANGED_FLOAT);
-		checkUpdated4(0);
-		assertEquals(FIRST_FLOAT, dFromVH);
+		try {
+			dFromVH = (float)vhFloat.getAndSet(_buffer, 0, CHANGED_FLOAT);
+			checkUpdated4(0);
+			assertEquals(FIRST_FLOAT, dFromVH);
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* GetAndSet */
 		ByteBufferViewHelper.reset();
-		dFromVH = (float)vhFloat.getAndSet(_buffer, 0, CHANGED_FLOAT);
-		checkUpdated4(0);
-		assertEquals(FIRST_FLOAT, dFromVH);
+		try {
+			dFromVH = (float)vhFloat.getAndSet(_buffer, 0, CHANGED_FLOAT);
+			checkUpdated4(0);
+			assertEquals(FIRST_FLOAT, dFromVH);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* GetAndSet */
 		ByteBufferViewHelper.reset();
-		dFromVH = (float)vhFloat.getAndSet(_buffer, 0, CHANGED_FLOAT);
-		checkUpdated4(0);
-		assertEquals(FIRST_FLOAT, dFromVH);
+		try {
+			dFromVH = (float)vhFloat.getAndSet(_buffer, 0, CHANGED_FLOAT);
+			checkUpdated4(0);
+			assertEquals(FIRST_FLOAT, dFromVH);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
+
 
 		/* GetAndAdd */
 		try {
@@ -769,198 +1056,375 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 
 		ByteBufferViewHelper.reset();
 		/* GetOpaque */
-		iFromVH = (int) vhInt.getOpaque(_buffer, 0);
-		assertEquals(FIRST_INT, iFromVH);
+		try {
+			iFromVH = (int) vhInt.getOpaque(_buffer, 0);
+			assertEquals(FIRST_INT, iFromVH);			
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
 		/* SetOpaque */
-		vhInt.setOpaque(_buffer, 0, CHANGED_INT);
-		checkUpdated4(0);
+		try {
+			vhInt.setOpaque(_buffer, 0, CHANGED_INT);
+			checkUpdated4(0);			
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
 		ByteBufferViewHelper.reset();
 		/* GetVolatile */
-		iFromVH = (int) vhInt.getVolatile(_buffer, 0);
-		assertEquals(FIRST_INT, iFromVH);
+		try {
+			iFromVH = (int) vhInt.getVolatile(_buffer, 0);
+			assertEquals(FIRST_INT, iFromVH);			
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
 		/* SetVolatile */
-		vhInt.setVolatile(_buffer, 0, CHANGED_INT);
-		checkUpdated4(0);
+		try {
+			vhInt.setVolatile(_buffer, 0, CHANGED_INT);
+			checkUpdated4(0);			
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
 		ByteBufferViewHelper.reset();
 		/* GetAcquire */
-		iFromVH = (int) vhInt.getAcquire(_buffer, 0);
-		assertEquals(FIRST_INT, iFromVH);
+		try {
+			iFromVH = (int) vhInt.getAcquire(_buffer, 0);
+			assertEquals(FIRST_INT, iFromVH);			
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
 		/* SetRelease */
-		vhInt.setRelease(_buffer, 0, CHANGED_INT);
-		checkUpdated4(0);
+		try {
+			vhInt.setRelease(_buffer, 0, CHANGED_INT);
+			checkUpdated4(0);			
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* CompareAndSet - Fail */
 		ByteBufferViewHelper.reset();
-		boolean casResult = (boolean)vhInt.compareAndSet(_buffer, 0, 2, 3);
-		checkNotUpdated4(0);
-		Assert.assertFalse(casResult);
+		boolean casResult = false;
+		try {
+			casResult = (boolean)vhInt.compareAndSet(_buffer, 0, 2, 3);
+			checkNotUpdated4(0);
+			Assert.assertFalse(casResult);
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
 		/* CompareAndSet - Succeed */
 		ByteBufferViewHelper.reset();
-		casResult = (boolean)vhInt.compareAndSet(_buffer, 0, FIRST_INT, CHANGED_INT);
-		checkUpdated4(0);
-		Assert.assertTrue(casResult);
+		try {
+			casResult = (boolean)vhInt.compareAndSet(_buffer, 0, FIRST_INT, CHANGED_INT);
+			checkUpdated4(0);
+			Assert.assertTrue(casResult);			
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* compareAndExchange - Fail */
 		ByteBufferViewHelper.reset();
-		int caeResult = (int)vhInt.compareAndExchange(_buffer, 0, 2, 3);
-		checkNotUpdated4(0);
-		assertEquals(FIRST_INT, caeResult);
+		int caeResult = 0;
+		try {
+			caeResult = (int)vhInt.compareAndExchange(_buffer, 0, 2, 3);
+			checkNotUpdated4(0);
+			assertEquals(FIRST_INT, caeResult);			
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
 		/* compareAndExchange - Succeed */
-		caeResult = (int)vhInt.compareAndExchange(_buffer, 0, FIRST_INT, CHANGED_INT);
-		checkUpdated4(0);
-		assertEquals(FIRST_INT, caeResult);
+		try {
+			caeResult = (int)vhInt.compareAndExchange(_buffer, 0, FIRST_INT, CHANGED_INT);
+			checkUpdated4(0);
+			assertEquals(FIRST_INT, caeResult);			
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* CompareAndExchangeAcquire - Fail */
 		ByteBufferViewHelper.reset();
-		caeResult = (int)vhInt.compareAndExchangeAcquire(_buffer, 0, 2, 3);
-		checkNotUpdated4(0);
-		assertEquals(FIRST_INT, caeResult);
+		try {
+			caeResult = (int)vhInt.compareAndExchangeAcquire(_buffer, 0, 2, 3);
+			checkNotUpdated4(0);
+			assertEquals(FIRST_INT, caeResult);			
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
 		/* CompareAndExchangeAcquire - Succeed */
-		caeResult = (int)vhInt.compareAndExchangeAcquire(_buffer, 0, FIRST_INT, CHANGED_INT);
-		checkUpdated4(0);
-		assertEquals(FIRST_INT, caeResult);
+		try {
+			caeResult = (int)vhInt.compareAndExchangeAcquire(_buffer, 0, FIRST_INT, CHANGED_INT);
+			checkUpdated4(0);
+			assertEquals(FIRST_INT, caeResult);			
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* CompareAndExchangeRelease - Fail */
 		ByteBufferViewHelper.reset();
-		caeResult = (int)vhInt.compareAndExchangeRelease(_buffer, 0, 2, 3);
-		checkNotUpdated4(0);
-		assertEquals(FIRST_INT, caeResult);
+		try {
+			caeResult = (int)vhInt.compareAndExchangeRelease(_buffer, 0, 2, 3);
+			checkNotUpdated4(0);
+			assertEquals(FIRST_INT, caeResult);			
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
 		/* CompareAndExchangeRelease - Succeed */
-		caeResult = (int)vhInt.compareAndExchangeRelease(_buffer, 0, FIRST_INT, CHANGED_INT);
-		checkUpdated4(0);
-		assertEquals(FIRST_INT, caeResult);
+		try {
+			caeResult = (int)vhInt.compareAndExchangeRelease(_buffer, 0, FIRST_INT, CHANGED_INT);
+			checkUpdated4(0);
+			assertEquals(FIRST_INT, caeResult);			
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* WeakCompareAndSet - Fail */
 		ByteBufferViewHelper.reset();
-		casResult = (boolean)vhInt.weakCompareAndSet(_buffer, 0, 2, 3);
-		checkNotUpdated4(0);
-		Assert.assertFalse(casResult);
+		try {
+			casResult = (boolean)vhInt.weakCompareAndSet(_buffer, 0, 2, 3);
+			checkNotUpdated4(0);
+			Assert.assertFalse(casResult);			
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
 		/* WeakCompareAndSet - Succeed */
-		casResult = (boolean)vhInt.weakCompareAndSet(_buffer, 0, FIRST_INT, CHANGED_INT);
-		checkUpdated4(0);
-		Assert.assertTrue(casResult);
+		try {
+			casResult = (boolean)vhInt.weakCompareAndSet(_buffer, 0, FIRST_INT, CHANGED_INT);
+			checkUpdated4(0);
+			Assert.assertTrue(casResult);			
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* WeakCompareAndSetAcquire - Fail */
 		ByteBufferViewHelper.reset();
-		casResult = (boolean)vhInt.weakCompareAndSetAcquire(_buffer, 0, 2, 3);
-		checkNotUpdated4(0);
-		Assert.assertFalse(casResult);
+		try {
+			casResult = (boolean)vhInt.weakCompareAndSetAcquire(_buffer, 0, 2, 3);
+			checkNotUpdated4(0);
+			Assert.assertFalse(casResult);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
 		/* WeakCompareAndSetAcquire - Succeed */
-		casResult = (boolean)vhInt.weakCompareAndSetAcquire(_buffer, 0, FIRST_INT, CHANGED_INT);
-		checkUpdated4(0);
-		Assert.assertTrue(casResult);
+		try {
+			casResult = (boolean)vhInt.weakCompareAndSetAcquire(_buffer, 0, FIRST_INT, CHANGED_INT);
+			checkUpdated4(0);
+			Assert.assertTrue(casResult);
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* WeakCompareAndSetRelease - Fail */
 		ByteBufferViewHelper.reset();
-		casResult = (boolean)vhInt.weakCompareAndSetRelease(_buffer, 0, 2, 3);
-		checkNotUpdated4(0);
-		Assert.assertFalse(casResult);
+		try {
+			casResult = (boolean)vhInt.weakCompareAndSetRelease(_buffer, 0, 2, 3);
+			checkNotUpdated4(0);
+			Assert.assertFalse(casResult);			
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
 		/* WeakCompareAndSetRelease - Succeed */
-		casResult = (boolean)vhInt.weakCompareAndSetRelease(_buffer, 0, FIRST_INT, CHANGED_INT);
-		checkUpdated4(0);
-		Assert.assertTrue(casResult);	
+		try {
+			casResult = (boolean)vhInt.weakCompareAndSetRelease(_buffer, 0, FIRST_INT, CHANGED_INT);
+			checkUpdated4(0);
+			Assert.assertTrue(casResult);			
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}	
 		
 		/* GetAndSet */
 		ByteBufferViewHelper.reset();
-		iFromVH = (int)vhInt.getAndSet(_buffer, 0, CHANGED_INT);
-		assertEquals(FIRST_INT, iFromVH);
-		checkUpdated4(0);
+		try {
+			iFromVH = (int)vhInt.getAndSet(_buffer, 0, CHANGED_INT);
+			assertEquals(FIRST_INT, iFromVH);
+			checkUpdated4(0);			
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* GetAndSetAcquire */
 		ByteBufferViewHelper.reset();
-		iFromVH = (int)vhInt.getAndSetAcquire(_buffer, 0, CHANGED_INT);
-		assertEquals(FIRST_INT, iFromVH);
-		checkUpdated4(0);
+		try {
+			iFromVH = (int)vhInt.getAndSetAcquire(_buffer, 0, CHANGED_INT);
+			assertEquals(FIRST_INT, iFromVH);
+			checkUpdated4(0);			
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* GetAndSetRelease */
 		ByteBufferViewHelper.reset();
-		iFromVH = (int)vhInt.getAndSetRelease(_buffer, 0, CHANGED_INT);
-		assertEquals(FIRST_INT, iFromVH);
-		checkUpdated4(0);
+		try {
+			iFromVH = (int)vhInt.getAndSetRelease(_buffer, 0, CHANGED_INT);
+			assertEquals(FIRST_INT, iFromVH);
+			checkUpdated4(0);			
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* GetAndAdd */
 		ByteBufferViewHelper.reset();
-		iFromVH = (int)vhInt.getAndAdd(_buffer, 0, 2);
-		assertEquals(FIRST_INT, iFromVH);
-		checkIntAddition((byte)2, 0);
+		try {
+			iFromVH = (int)vhInt.getAndAdd(_buffer, 0, 2);
+			assertEquals(FIRST_INT, iFromVH);
+			checkIntAddition((byte)2, 0);
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* GetAndAddAcquire */
 		ByteBufferViewHelper.reset();
-		iFromVH = (int)vhInt.getAndAddAcquire(_buffer, 0, 2);
-		assertEquals(FIRST_INT, iFromVH);
-		checkIntAddition((byte)2, 0);
+		try {
+			iFromVH = (int)vhInt.getAndAddAcquire(_buffer, 0, 2);
+			assertEquals(FIRST_INT, iFromVH);
+			checkIntAddition((byte)2, 0);
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* GetAndAddRelease */
 		ByteBufferViewHelper.reset();
-		iFromVH = (int)vhInt.getAndAddRelease(_buffer, 0, 2);
-		assertEquals(FIRST_INT, iFromVH);
-		checkIntAddition((byte)2, 0);
+		try {
+			iFromVH = (int)vhInt.getAndAddRelease(_buffer, 0, 2);
+			assertEquals(FIRST_INT, iFromVH);
+			checkIntAddition((byte)2, 0);			
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* GetAndBitwiseAnd*/
 		ByteBufferViewHelper.reset();
-		iFromVH = (int)vhInt.getAndBitwiseAnd(_buffer, 0, 7);
-		assertEquals(FIRST_INT, iFromVH);
-		checkIntBitwiseAnd(7, 0);
+		try {
+			iFromVH = (int)vhInt.getAndBitwiseAnd(_buffer, 0, 7);
+			assertEquals(FIRST_INT, iFromVH);
+			checkIntBitwiseAnd(7, 0);			
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* GetAndBitwiseAndAcquire*/
 		ByteBufferViewHelper.reset();
-		iFromVH = (int)vhInt.getAndBitwiseAndAcquire(_buffer, 0, 7);
-		assertEquals(FIRST_INT, iFromVH);
-		checkIntBitwiseAnd(7, 0);
+		try {
+			iFromVH = (int)vhInt.getAndBitwiseAndAcquire(_buffer, 0, 7);
+			assertEquals(FIRST_INT, iFromVH);
+			checkIntBitwiseAnd(7, 0);			
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* GetAndBitwiseAndRelease*/
 		ByteBufferViewHelper.reset();
-		iFromVH = (int)vhInt.getAndBitwiseAndRelease(_buffer, 0, 7);
-		assertEquals(FIRST_INT, iFromVH);
-		checkIntBitwiseAnd(7, 0);
+		try {
+			iFromVH = (int)vhInt.getAndBitwiseAndRelease(_buffer, 0, 7);
+			assertEquals(FIRST_INT, iFromVH);
+			checkIntBitwiseAnd(7, 0);			
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* GetAndBitwiseOr*/
 		ByteBufferViewHelper.reset();
-		iFromVH = (int)vhInt.getAndBitwiseOr(_buffer, 0, 1);
-		assertEquals(FIRST_INT, iFromVH);
-		checkIntBitwiseOr(1, 0);
+		try {
+			iFromVH = (int)vhInt.getAndBitwiseOr(_buffer, 0, 1);
+			assertEquals(FIRST_INT, iFromVH);
+			checkIntBitwiseOr(1, 0);			
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* GetAndBitwiseOrAcquire*/
 		ByteBufferViewHelper.reset();
-		iFromVH = (int)vhInt.getAndBitwiseOrAcquire(_buffer, 0, 1);
-		assertEquals(FIRST_INT, iFromVH);
-		checkIntBitwiseOr(1, 0);
+		try {
+			iFromVH = (int)vhInt.getAndBitwiseOrAcquire(_buffer, 0, 1);
+			assertEquals(FIRST_INT, iFromVH);
+			checkIntBitwiseOr(1, 0);			
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* GetAndBitwiseOrRelease*/
 		ByteBufferViewHelper.reset();
-		iFromVH = (int)vhInt.getAndBitwiseOrRelease(_buffer, 0, 1);
-		assertEquals(FIRST_INT, iFromVH);
-		checkIntBitwiseOr(1, 0);
+		try {
+			iFromVH = (int)vhInt.getAndBitwiseOrRelease(_buffer, 0, 1);
+			assertEquals(FIRST_INT, iFromVH);
+			checkIntBitwiseOr(1, 0);			
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* GetAndBitwiseXor*/
 		ByteBufferViewHelper.reset();
-		iFromVH = (int)vhInt.getAndBitwiseXor(_buffer, 0, 6);
-		assertEquals(FIRST_INT, iFromVH);
-		checkIntBitwiseXor(6, 0);
+		try {
+			iFromVH = (int)vhInt.getAndBitwiseXor(_buffer, 0, 6);
+			assertEquals(FIRST_INT, iFromVH);
+			checkIntBitwiseXor(6, 0);
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* GetAndBitwiseXorAcquire*/
 		ByteBufferViewHelper.reset();
-		iFromVH = (int)vhInt.getAndBitwiseXorAcquire(_buffer, 0, 6);
-		assertEquals(FIRST_INT, iFromVH);
-		checkIntBitwiseXor(6, 0);
+		try {
+			iFromVH = (int)vhInt.getAndBitwiseXorAcquire(_buffer, 0, 6);
+			assertEquals(FIRST_INT, iFromVH);
+			checkIntBitwiseXor(6, 0);			
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* GetAndBitwiseXorRelease*/
 		ByteBufferViewHelper.reset();
-		iFromVH = (int)vhInt.getAndBitwiseXorRelease(_buffer, 0, 6);
-		assertEquals(FIRST_INT, iFromVH);
-		checkIntBitwiseXor(6, 0);
+		try {
+			iFromVH = (int)vhInt.getAndBitwiseXorRelease(_buffer, 0, 6);
+			assertEquals(FIRST_INT, iFromVH);
+			checkIntBitwiseXor(6, 0);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 	}
 	
 	/**
@@ -995,198 +1459,375 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 	
 		ByteBufferViewHelper.reset();
 		/* GetOpaque */
-		iFromVH = (int) vhInt.getOpaque(_buffer, 4);
-		assertEquals(INITIAL_INT_AT_INDEX_4, iFromVH);
+		try {
+			iFromVH = (int) vhInt.getOpaque(_buffer, 4);
+			assertEquals(INITIAL_INT_AT_INDEX_4, iFromVH);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 	
 		/* SetOpaque */
-		vhInt.setOpaque(_buffer, 4, CHANGED_INT);
-		checkUpdated4(4);
+		try {
+			vhInt.setOpaque(_buffer, 4, CHANGED_INT);
+			checkUpdated4(4);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 	
 		ByteBufferViewHelper.reset();
 		/* GetVolatile */
-		iFromVH = (int) vhInt.getVolatile(_buffer, 4);
-		assertEquals(INITIAL_INT_AT_INDEX_4, iFromVH);
+		try {
+			iFromVH = (int) vhInt.getVolatile(_buffer, 4);
+			assertEquals(INITIAL_INT_AT_INDEX_4, iFromVH);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 	
 		/* SetVolatile */
-		vhInt.setVolatile(_buffer, 4, CHANGED_INT);
-		checkUpdated4(4);
+		try {
+			vhInt.setVolatile(_buffer, 4, CHANGED_INT);
+			checkUpdated4(4);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 	
 		ByteBufferViewHelper.reset();
 		/* GetAcquire */
-		iFromVH = (int) vhInt.getAcquire(_buffer, 4);
-		assertEquals(INITIAL_INT_AT_INDEX_4, iFromVH);
+		try {
+			iFromVH = (int) vhInt.getAcquire(_buffer, 4);
+			assertEquals(INITIAL_INT_AT_INDEX_4, iFromVH);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 	
 		/* SetRelease */
-		vhInt.setRelease(_buffer, 4, CHANGED_INT);
-		checkUpdated4(4);
+		try {
+			vhInt.setRelease(_buffer, 4, CHANGED_INT);
+			checkUpdated4(4);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* CompareAndSet - Fail */
 		ByteBufferViewHelper.reset();
-		boolean casResult = (boolean)vhInt.compareAndSet(_buffer, 4, 2, 3);
-		checkNotUpdated4(4);
-		Assert.assertFalse(casResult);
+		boolean casResult = false;
+		try {
+			casResult = (boolean)vhInt.compareAndSet(_buffer, 4, 2, 3);
+			checkNotUpdated4(4);
+			Assert.assertFalse(casResult);
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 	
 		/* CompareAndSet - Succeed */
 		ByteBufferViewHelper.reset();
-		casResult = (boolean)vhInt.compareAndSet(_buffer, 4, INITIAL_INT_AT_INDEX_4, CHANGED_INT);
-		checkUpdated4(4);
-		Assert.assertTrue(casResult);
+		try {
+			casResult = (boolean)vhInt.compareAndSet(_buffer, 4, INITIAL_INT_AT_INDEX_4, CHANGED_INT);
+			checkUpdated4(4);
+			Assert.assertTrue(casResult);
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* compareAndExchange - Fail */
 		ByteBufferViewHelper.reset();
-		int caeResult = (int)vhInt.compareAndExchange(_buffer, 4, 2, 3);
-		checkNotUpdated4(4);
-		assertEquals(INITIAL_INT_AT_INDEX_4, caeResult);
+		int caeResult = 0;
+		try {
+			caeResult = (int)vhInt.compareAndExchange(_buffer, 4, 2, 3);
+			checkNotUpdated4(4);
+			assertEquals(INITIAL_INT_AT_INDEX_4, caeResult);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 	
 		/* compareAndExchange - Succeed */
-		caeResult = (int)vhInt.compareAndExchange(_buffer, 4, INITIAL_INT_AT_INDEX_4, CHANGED_INT);
-		checkUpdated4(4);
-		assertEquals(INITIAL_INT_AT_INDEX_4, caeResult);
+		try {
+			caeResult = (int)vhInt.compareAndExchange(_buffer, 4, INITIAL_INT_AT_INDEX_4, CHANGED_INT);
+			checkUpdated4(4);
+			assertEquals(INITIAL_INT_AT_INDEX_4, caeResult);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* CompareAndExchangeAcquire - Fail */
 		ByteBufferViewHelper.reset();
-		caeResult = (int)vhInt.compareAndExchangeAcquire(_buffer, 4, 2, 3);
-		checkNotUpdated4(4);
-		assertEquals(INITIAL_INT_AT_INDEX_4, caeResult);
+		try {
+			caeResult = (int)vhInt.compareAndExchangeAcquire(_buffer, 4, 2, 3);
+			checkNotUpdated4(4);
+			assertEquals(INITIAL_INT_AT_INDEX_4, caeResult);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 	
 		/* CompareAndExchangeAcquire - Succeed */
-		caeResult = (int)vhInt.compareAndExchangeAcquire(_buffer, 4, INITIAL_INT_AT_INDEX_4, CHANGED_INT);
-		checkUpdated4(4);
-		assertEquals(INITIAL_INT_AT_INDEX_4, caeResult);
+		try {
+			caeResult = (int)vhInt.compareAndExchangeAcquire(_buffer, 4, INITIAL_INT_AT_INDEX_4, CHANGED_INT);
+			checkUpdated4(4);
+			assertEquals(INITIAL_INT_AT_INDEX_4, caeResult);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* CompareAndExchangeRelease - Fail */
 		ByteBufferViewHelper.reset();
-		caeResult = (int)vhInt.compareAndExchangeRelease(_buffer, 4, 2, 3);
-		checkNotUpdated4(4);
-		assertEquals(INITIAL_INT_AT_INDEX_4, caeResult);
+		try {
+			caeResult = (int)vhInt.compareAndExchangeRelease(_buffer, 4, 2, 3);
+			checkNotUpdated4(4);
+			assertEquals(INITIAL_INT_AT_INDEX_4, caeResult);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 	
 		/* CompareAndExchangeRelease - Succeed */
-		caeResult = (int)vhInt.compareAndExchangeRelease(_buffer, 4, INITIAL_INT_AT_INDEX_4, CHANGED_INT);
-		checkUpdated4(4);
-		assertEquals(INITIAL_INT_AT_INDEX_4, caeResult);
+		try {
+			caeResult = (int)vhInt.compareAndExchangeRelease(_buffer, 4, INITIAL_INT_AT_INDEX_4, CHANGED_INT);
+			checkUpdated4(4);
+			assertEquals(INITIAL_INT_AT_INDEX_4, caeResult);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* WeakCompareAndSet - Fail */
 		ByteBufferViewHelper.reset();
-		casResult = (boolean)vhInt.weakCompareAndSet(_buffer, 4, 2, 3);
-		checkNotUpdated4(4);
-		Assert.assertFalse(casResult);
+		try {
+			casResult = (boolean)vhInt.weakCompareAndSet(_buffer, 4, 2, 3);
+			checkNotUpdated4(4);
+			Assert.assertFalse(casResult);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 	
 		/* WeakCompareAndSet - Succeed */
-		casResult = (boolean)vhInt.weakCompareAndSet(_buffer, 4, INITIAL_INT_AT_INDEX_4, CHANGED_INT);
-		checkUpdated4(4);
-		Assert.assertTrue(casResult);
+		try {
+			casResult = (boolean)vhInt.weakCompareAndSet(_buffer, 4, INITIAL_INT_AT_INDEX_4, CHANGED_INT);
+			checkUpdated4(4);
+			Assert.assertTrue(casResult);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* WeakCompareAndSetAcquire - Fail */
 		ByteBufferViewHelper.reset();
-		casResult = (boolean)vhInt.weakCompareAndSetAcquire(_buffer, 4, 2, 3);
-		checkNotUpdated4(4);
-		Assert.assertFalse(casResult);
+		try {
+			casResult = (boolean)vhInt.weakCompareAndSetAcquire(_buffer, 4, 2, 3);
+			checkNotUpdated4(4);
+			Assert.assertFalse(casResult);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 	
 		/* WeakCompareAndSetAcquire - Succeed */
-		casResult = (boolean)vhInt.weakCompareAndSetAcquire(_buffer, 4, INITIAL_INT_AT_INDEX_4, CHANGED_INT);
-		checkUpdated4(4);
-		Assert.assertTrue(casResult);
+		try {
+			casResult = (boolean)vhInt.weakCompareAndSetAcquire(_buffer, 4, INITIAL_INT_AT_INDEX_4, CHANGED_INT);
+			checkUpdated4(4);
+			Assert.assertTrue(casResult);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* WeakCompareAndSetRelease - Fail */
 		ByteBufferViewHelper.reset();
-		casResult = (boolean)vhInt.weakCompareAndSetRelease(_buffer, 4, 2, 3);
-		checkNotUpdated4(4);
-		Assert.assertFalse(casResult);
+		try {
+			casResult = (boolean)vhInt.weakCompareAndSetRelease(_buffer, 4, 2, 3);
+			checkNotUpdated4(4);
+			Assert.assertFalse(casResult);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 	
 		/* WeakCompareAndSetRelease - Succeed */
-		casResult = (boolean)vhInt.weakCompareAndSetRelease(_buffer, 4, INITIAL_INT_AT_INDEX_4, CHANGED_INT);
-		checkUpdated4(4);
-		Assert.assertTrue(casResult);	
+		try {
+			casResult = (boolean)vhInt.weakCompareAndSetRelease(_buffer, 4, INITIAL_INT_AT_INDEX_4, CHANGED_INT);
+			checkUpdated4(4);
+			Assert.assertTrue(casResult);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}	
 		
 		/* GetAndSet */
 		ByteBufferViewHelper.reset();
-		iFromVH = (int)vhInt.getAndSet(_buffer, 4, CHANGED_INT);
-		assertEquals(INITIAL_INT_AT_INDEX_4, iFromVH);
-		checkUpdated4(4);
+		try {
+			iFromVH = (int)vhInt.getAndSet(_buffer, 4, CHANGED_INT);
+			assertEquals(INITIAL_INT_AT_INDEX_4, iFromVH);
+			checkUpdated4(4);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* GetAndSetAcquire */
 		ByteBufferViewHelper.reset();
-		iFromVH = (int)vhInt.getAndSetAcquire(_buffer, 4, CHANGED_INT);
-		assertEquals(INITIAL_INT_AT_INDEX_4, iFromVH);
-		checkUpdated4(4);
+		try {
+			iFromVH = (int)vhInt.getAndSetAcquire(_buffer, 4, CHANGED_INT);
+			assertEquals(INITIAL_INT_AT_INDEX_4, iFromVH);
+			checkUpdated4(4);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* GetAndSetRelease */
 		ByteBufferViewHelper.reset();
-		iFromVH = (int)vhInt.getAndSetRelease(_buffer, 4, CHANGED_INT);
-		assertEquals(INITIAL_INT_AT_INDEX_4, iFromVH);
-		checkUpdated4(4);
+		try {
+			iFromVH = (int)vhInt.getAndSetRelease(_buffer, 4, CHANGED_INT);
+			assertEquals(INITIAL_INT_AT_INDEX_4, iFromVH);
+			checkUpdated4(4);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* GetAndAdd */
 		ByteBufferViewHelper.reset();
-		iFromVH = (int)vhInt.getAndAdd(_buffer, 4, 2);
-		assertEquals(INITIAL_INT_AT_INDEX_4, iFromVH);
-		checkIntAddition((byte)2, 4);
+		try {
+			iFromVH = (int)vhInt.getAndAdd(_buffer, 4, 2);
+			assertEquals(INITIAL_INT_AT_INDEX_4, iFromVH);
+			checkIntAddition((byte)2, 4);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* GetAndAddAcquire */
 		ByteBufferViewHelper.reset();
-		iFromVH = (int)vhInt.getAndAddAcquire(_buffer, 4, 2);
-		assertEquals(INITIAL_INT_AT_INDEX_4, iFromVH);
-		checkIntAddition((byte)2, 4);
+		try {
+			iFromVH = (int)vhInt.getAndAddAcquire(_buffer, 4, 2);
+			assertEquals(INITIAL_INT_AT_INDEX_4, iFromVH);
+			checkIntAddition((byte)2, 4);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* GetAndAddRelease */
 		ByteBufferViewHelper.reset();
-		iFromVH = (int)vhInt.getAndAddRelease(_buffer, 4, 2);
-		assertEquals(INITIAL_INT_AT_INDEX_4, iFromVH);
-		checkIntAddition((byte)2, 4);
+		try {
+			iFromVH = (int)vhInt.getAndAddRelease(_buffer, 4, 2);
+			assertEquals(INITIAL_INT_AT_INDEX_4, iFromVH);
+			checkIntAddition((byte)2, 4);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* GetAndBitwiseAnd*/
 		ByteBufferViewHelper.reset();
-		iFromVH = (int)vhInt.getAndBitwiseAnd(_buffer, 4, 7);
-		assertEquals(INITIAL_INT_AT_INDEX_4, iFromVH);
-		checkIntBitwiseAnd(7, 4);
+		try {
+			iFromVH = (int)vhInt.getAndBitwiseAnd(_buffer, 4, 7);
+			assertEquals(INITIAL_INT_AT_INDEX_4, iFromVH);
+			checkIntBitwiseAnd(7, 4);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* GetAndBitwiseAndAcquire*/
 		ByteBufferViewHelper.reset();
-		iFromVH = (int)vhInt.getAndBitwiseAndAcquire(_buffer, 4, 7);
-		assertEquals(INITIAL_INT_AT_INDEX_4, iFromVH);
-		checkIntBitwiseAnd(7, 4);
+		try {
+			iFromVH = (int)vhInt.getAndBitwiseAndAcquire(_buffer, 4, 7);
+			assertEquals(INITIAL_INT_AT_INDEX_4, iFromVH);
+			checkIntBitwiseAnd(7, 4);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* GetAndBitwiseAndRelease*/
 		ByteBufferViewHelper.reset();
-		iFromVH = (int)vhInt.getAndBitwiseAndRelease(_buffer, 4, 7);
-		assertEquals(INITIAL_INT_AT_INDEX_4, iFromVH);
-		checkIntBitwiseAnd(7, 4);
+		try {
+			iFromVH = (int)vhInt.getAndBitwiseAndRelease(_buffer, 4, 7);
+			assertEquals(INITIAL_INT_AT_INDEX_4, iFromVH);
+			checkIntBitwiseAnd(7, 4);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* GetAndBitwiseOr*/
 		ByteBufferViewHelper.reset();
-		iFromVH = (int)vhInt.getAndBitwiseOr(_buffer, 4, 1);
-		assertEquals(INITIAL_INT_AT_INDEX_4, iFromVH);
-		checkIntBitwiseOr(1, 4);
+		try {
+			iFromVH = (int)vhInt.getAndBitwiseOr(_buffer, 4, 1);
+			assertEquals(INITIAL_INT_AT_INDEX_4, iFromVH);
+			checkIntBitwiseOr(1, 4);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* GetAndBitwiseOrAcquire*/
 		ByteBufferViewHelper.reset();
-		iFromVH = (int)vhInt.getAndBitwiseOrAcquire(_buffer, 4, 1);
-		assertEquals(INITIAL_INT_AT_INDEX_4, iFromVH);
-		checkIntBitwiseOr(1, 4);
+		try {
+			iFromVH = (int)vhInt.getAndBitwiseOrAcquire(_buffer, 4, 1);
+			assertEquals(INITIAL_INT_AT_INDEX_4, iFromVH);
+			checkIntBitwiseOr(1, 4);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* GetAndBitwiseOrRelease*/
 		ByteBufferViewHelper.reset();
-		iFromVH = (int)vhInt.getAndBitwiseOrRelease(_buffer, 4, 1);
-		assertEquals(INITIAL_INT_AT_INDEX_4, iFromVH);
-		checkIntBitwiseOr(1, 4);
+		try {
+			iFromVH = (int)vhInt.getAndBitwiseOrRelease(_buffer, 4, 1);
+			assertEquals(INITIAL_INT_AT_INDEX_4, iFromVH);
+			checkIntBitwiseOr(1, 4);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* GetAndBitwiseXor*/
 		ByteBufferViewHelper.reset();
-		iFromVH = (int)vhInt.getAndBitwiseXor(_buffer, 4, 6);
-		assertEquals(INITIAL_INT_AT_INDEX_4, iFromVH);
-		checkIntBitwiseXor(6, 4);
+		try {
+			iFromVH = (int)vhInt.getAndBitwiseXor(_buffer, 4, 6);
+			assertEquals(INITIAL_INT_AT_INDEX_4, iFromVH);
+			checkIntBitwiseXor(6, 4);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* GetAndBitwiseXorAcquire*/
 		ByteBufferViewHelper.reset();
-		iFromVH = (int)vhInt.getAndBitwiseXorAcquire(_buffer, 4, 6);
-		assertEquals(INITIAL_INT_AT_INDEX_4, iFromVH);
-		checkIntBitwiseXor(6, 4);
+		try {
+			iFromVH = (int)vhInt.getAndBitwiseXorAcquire(_buffer, 4, 6);
+			assertEquals(INITIAL_INT_AT_INDEX_4, iFromVH);
+			checkIntBitwiseXor(6, 4);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* GetAndBitwiseXorRelease*/
 		ByteBufferViewHelper.reset();
-		iFromVH = (int)vhInt.getAndBitwiseXorRelease(_buffer, 4, 6);
-		assertEquals(INITIAL_INT_AT_INDEX_4, iFromVH);
-		checkIntBitwiseXor(6, 4);
+		try {
+			iFromVH = (int)vhInt.getAndBitwiseXorRelease(_buffer, 4, 6);
+			assertEquals(INITIAL_INT_AT_INDEX_4, iFromVH);
+			checkIntBitwiseXor(6, 4);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 	}
 
 	/**
@@ -1205,198 +1846,375 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 
 		ByteBufferViewHelper.reset();
 		/* GetOpaque */
-		iFromVH = (long) vhLong.getOpaque(_buffer, 0);
-		assertEquals(FIRST_LONG, iFromVH);
+		try {
+			iFromVH = (long) vhLong.getOpaque(_buffer, 0);
+			assertEquals(FIRST_LONG, iFromVH);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
 		/* SetOpaque */
-		vhLong.setOpaque(_buffer, 0, CHANGED_LONG);
-		checkUpdated8(0);
+		try {
+			vhLong.setOpaque(_buffer, 0, CHANGED_LONG);
+			checkUpdated8(0);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
 		ByteBufferViewHelper.reset();
 		/* GetVolatile */
-		iFromVH = (long) vhLong.getVolatile(_buffer, 0);
-		assertEquals(FIRST_LONG, iFromVH);
+		try {
+			iFromVH = (long) vhLong.getVolatile(_buffer, 0);
+			assertEquals(FIRST_LONG, iFromVH);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
 		/* SetVolatile */
-		vhLong.setVolatile(_buffer, 0, CHANGED_LONG);
-		checkUpdated8(0);
+		try {
+			vhLong.setVolatile(_buffer, 0, CHANGED_LONG);
+			checkUpdated8(0);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
 		ByteBufferViewHelper.reset();
 		/* GetAcquire */
-		iFromVH = (long) vhLong.getAcquire(_buffer, 0);
-		assertEquals(FIRST_LONG, iFromVH);
+		try {
+			iFromVH = (long) vhLong.getAcquire(_buffer, 0);
+			assertEquals(FIRST_LONG, iFromVH);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
 		/* SetRelease */
-		vhLong.setRelease(_buffer, 0, CHANGED_LONG);
-		checkUpdated8(0);
+		try {
+			vhLong.setRelease(_buffer, 0, CHANGED_LONG);
+			checkUpdated8(0);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* CompareAndSet - Fail */
 		ByteBufferViewHelper.reset();
-		boolean casResult = (boolean)vhLong.compareAndSet(_buffer, 0, 2L, 3L);
-		checkNotUpdated8();
-		Assert.assertFalse(casResult);
+		boolean casResult = false;
+		try {
+			casResult = (boolean)vhLong.compareAndSet(_buffer, 0, 2L, 3L);
+			checkNotUpdated8();
+			Assert.assertFalse(casResult);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
 		/* CompareAndSet - Succeed */
 		ByteBufferViewHelper.reset();
-		casResult = (boolean)vhLong.compareAndSet(_buffer, 0, FIRST_LONG, CHANGED_LONG);
-		checkUpdated8(0);
-		Assert.assertTrue(casResult);
+		try {
+			casResult = (boolean)vhLong.compareAndSet(_buffer, 0, FIRST_LONG, CHANGED_LONG);
+			checkUpdated8(0);
+			Assert.assertTrue(casResult);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* compareAndExchange - Fail */
 		ByteBufferViewHelper.reset();
-		long caeResult = (long)vhLong.compareAndExchange(_buffer, 0, 2L, 3L);
-		checkNotUpdated8();
-		assertEquals(FIRST_LONG, caeResult);
+		long caeResult = 0;
+		try {
+			caeResult = (long)vhLong.compareAndExchange(_buffer, 0, 2L, 3L);
+			checkNotUpdated8();
+			assertEquals(FIRST_LONG, caeResult);
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
 		/* compareAndExchange - Succeed */
-		caeResult = (long)vhLong.compareAndExchange(_buffer, 0, FIRST_LONG, CHANGED_LONG);
-		checkUpdated8(0);
-		assertEquals(FIRST_LONG, caeResult);
+		try {
+			caeResult = (long)vhLong.compareAndExchange(_buffer, 0, FIRST_LONG, CHANGED_LONG);
+			checkUpdated8(0);
+			assertEquals(FIRST_LONG, caeResult);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* CompareAndExchangeAcquire - Fail */
 		ByteBufferViewHelper.reset();
-		caeResult = (long)vhLong.compareAndExchangeAcquire(_buffer, 0, 2L, 3L);
-		checkNotUpdated8();
-		assertEquals(FIRST_LONG, caeResult);
+		try {
+			caeResult = (long)vhLong.compareAndExchangeAcquire(_buffer, 0, 2L, 3L);
+			checkNotUpdated8();
+			assertEquals(FIRST_LONG, caeResult);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
 		/* CompareAndExchangeAcquire - Succeed */
-		caeResult = (long)vhLong.compareAndExchangeAcquire(_buffer, 0, FIRST_LONG, CHANGED_LONG);
-		checkUpdated8(0);
-		assertEquals(FIRST_LONG, caeResult);
+		try {
+			caeResult = (long)vhLong.compareAndExchangeAcquire(_buffer, 0, FIRST_LONG, CHANGED_LONG);
+			checkUpdated8(0);
+			assertEquals(FIRST_LONG, caeResult);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* CompareAndExchangeRelease - Fail */
 		ByteBufferViewHelper.reset();
-		caeResult = (long)vhLong.compareAndExchangeRelease(_buffer, 0, 2L, 3L);
-		checkNotUpdated8();
-		assertEquals(FIRST_LONG, caeResult);
+		try {
+			caeResult = (long)vhLong.compareAndExchangeRelease(_buffer, 0, 2L, 3L);
+			checkNotUpdated8();
+			assertEquals(FIRST_LONG, caeResult);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
 		/* CompareAndExchangeRelease - Succeed */
-		caeResult = (long)vhLong.compareAndExchangeRelease(_buffer, 0, FIRST_LONG, CHANGED_LONG);
-		checkUpdated8(0);
-		assertEquals(FIRST_LONG, caeResult);
+		try {
+			caeResult = (long)vhLong.compareAndExchangeRelease(_buffer, 0, FIRST_LONG, CHANGED_LONG);
+			checkUpdated8(0);
+			assertEquals(FIRST_LONG, caeResult);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* WeakCompareAndSet - Fail */
 		ByteBufferViewHelper.reset();
-		casResult = (boolean)vhLong.weakCompareAndSet(_buffer, 0, 2L, 3L);
-		checkNotUpdated8();
-		Assert.assertFalse(casResult);
+		try {
+			casResult = (boolean)vhLong.weakCompareAndSet(_buffer, 0, 2L, 3L);
+			checkNotUpdated8();
+			Assert.assertFalse(casResult);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
 		/* WeakCompareAndSet - Succeed */
-		casResult = (boolean)vhLong.weakCompareAndSet(_buffer, 0, FIRST_LONG, CHANGED_LONG);
-		checkUpdated8(0);
-		Assert.assertTrue(casResult);
+		try {
+			casResult = (boolean)vhLong.weakCompareAndSet(_buffer, 0, FIRST_LONG, CHANGED_LONG);
+			checkUpdated8(0);
+			Assert.assertTrue(casResult);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* WeakCompareAndSetAcquire - Fail */
 		ByteBufferViewHelper.reset();
-		casResult = (boolean)vhLong.weakCompareAndSetAcquire(_buffer, 0, 2L, 3L);
-		checkNotUpdated8();
-		Assert.assertFalse(casResult);
+		try {
+			casResult = (boolean)vhLong.weakCompareAndSetAcquire(_buffer, 0, 2L, 3L);
+			checkNotUpdated8();
+			Assert.assertFalse(casResult);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
 		/* WeakCompareAndSetAcquire - Succeed */
-		casResult = (boolean)vhLong.weakCompareAndSetAcquire(_buffer, 0, FIRST_LONG, CHANGED_LONG);
-		checkUpdated8(0);
-		Assert.assertTrue(casResult);
+		try {
+			casResult = (boolean)vhLong.weakCompareAndSetAcquire(_buffer, 0, FIRST_LONG, CHANGED_LONG);
+			checkUpdated8(0);
+			Assert.assertTrue(casResult);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* WeakCompareAndSetRelease - Fail */
 		ByteBufferViewHelper.reset();
-		casResult = (boolean)vhLong.weakCompareAndSetRelease(_buffer, 0, 2L, 3L);
-		checkNotUpdated8();
-		Assert.assertFalse(casResult);
+		try {
+			casResult = (boolean)vhLong.weakCompareAndSetRelease(_buffer, 0, 2L, 3L);
+			checkNotUpdated8();
+			Assert.assertFalse(casResult);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
 		/* WeakCompareAndSetRelease - Succeed */
-		casResult = (boolean)vhLong.weakCompareAndSetRelease(_buffer, 0, FIRST_LONG, CHANGED_LONG);
-		checkUpdated8(0);
-		Assert.assertTrue(casResult);	
+		try {
+			casResult = (boolean)vhLong.weakCompareAndSetRelease(_buffer, 0, FIRST_LONG, CHANGED_LONG);
+			checkUpdated8(0);
+			Assert.assertTrue(casResult);		
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* GetAndSet */
 		ByteBufferViewHelper.reset();
-		iFromVH = (long)vhLong.getAndSet(_buffer, 0, CHANGED_LONG);
-		assertEquals(FIRST_LONG, iFromVH);
-		checkUpdated8(0);
+		try {
+			iFromVH = (long)vhLong.getAndSet(_buffer, 0, CHANGED_LONG);
+			assertEquals(FIRST_LONG, iFromVH);
+			checkUpdated8(0);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* GetAndSetAcquire */
 		ByteBufferViewHelper.reset();
-		iFromVH = (long)vhLong.getAndSetAcquire(_buffer, 0, CHANGED_LONG);
-		assertEquals(FIRST_LONG, iFromVH);
-		checkUpdated8(0);
+		try {
+			iFromVH = (long)vhLong.getAndSetAcquire(_buffer, 0, CHANGED_LONG);
+			assertEquals(FIRST_LONG, iFromVH);
+			checkUpdated8(0);
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* GetAndSetRelease */
 		ByteBufferViewHelper.reset();
-		iFromVH = (long)vhLong.getAndSetRelease(_buffer, 0, CHANGED_LONG);
-		assertEquals(FIRST_LONG, iFromVH);
-		checkUpdated8(0);
+		try {
+			iFromVH = (long)vhLong.getAndSetRelease(_buffer, 0, CHANGED_LONG);
+			assertEquals(FIRST_LONG, iFromVH);
+			checkUpdated8(0);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* GetAndAdd */
 		ByteBufferViewHelper.reset();
-		iFromVH = (long)vhLong.getAndAdd(_buffer, 0, 2);
-		assertEquals(FIRST_LONG, iFromVH);
-		checkLongAddition();
+		try {
+			iFromVH = (long)vhLong.getAndAdd(_buffer, 0, 2);
+			assertEquals(FIRST_LONG, iFromVH);
+			checkLongAddition();	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* GetAndAddAcquire */
 		ByteBufferViewHelper.reset();
-		iFromVH = (long)vhLong.getAndAddAcquire(_buffer, 0, 2);
-		assertEquals(FIRST_LONG, iFromVH);
-		checkLongAddition();
+		try {
+			iFromVH = (long)vhLong.getAndAddAcquire(_buffer, 0, 2);
+			assertEquals(FIRST_LONG, iFromVH);
+			checkLongAddition();
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* GetAndAddRelease */
 		ByteBufferViewHelper.reset();
-		iFromVH = (long)vhLong.getAndAddRelease(_buffer, 0, 2);
-		assertEquals(FIRST_LONG, iFromVH);
-		checkLongAddition();
+		try {
+			iFromVH = (long)vhLong.getAndAddRelease(_buffer, 0, 2);
+			assertEquals(FIRST_LONG, iFromVH);
+			checkLongAddition();	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* GetAndBitwiseAnd*/
 		ByteBufferViewHelper.reset();
-		iFromVH = (long)vhLong.getAndBitwiseAnd(_buffer, 0, 15);
-		assertEquals(FIRST_LONG, iFromVH);
-		checkLongBitwiseAnd();
+		try {
+			iFromVH = (long)vhLong.getAndBitwiseAnd(_buffer, 0, 15);
+			assertEquals(FIRST_LONG, iFromVH);
+			checkLongBitwiseAnd();	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* GetAndBitwiseAndAcquire*/
 		ByteBufferViewHelper.reset();
-		iFromVH = (long)vhLong.getAndBitwiseAndAcquire(_buffer, 0, 15);
-		assertEquals(FIRST_LONG, iFromVH);
-		checkLongBitwiseAnd();
+		try {
+			iFromVH = (long)vhLong.getAndBitwiseAndAcquire(_buffer, 0, 15);
+			assertEquals(FIRST_LONG, iFromVH);
+			checkLongBitwiseAnd();	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* GetAndBitwiseAndRelease*/
 		ByteBufferViewHelper.reset();
-		iFromVH = (long)vhLong.getAndBitwiseAndRelease(_buffer, 0, 15);
-		assertEquals(FIRST_LONG, iFromVH);
-		checkLongBitwiseAnd();
+		try {
+			iFromVH = (long)vhLong.getAndBitwiseAndRelease(_buffer, 0, 15);
+			assertEquals(FIRST_LONG, iFromVH);
+			checkLongBitwiseAnd();	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* GetAndBitwiseOr*/
 		ByteBufferViewHelper.reset();
-		iFromVH = (long)vhLong.getAndBitwiseOr(_buffer, 0, 2);
-		assertEquals(FIRST_LONG, iFromVH);
-		checkLongBitwiseOr();
+		try {
+			iFromVH = (long)vhLong.getAndBitwiseOr(_buffer, 0, 2);
+			assertEquals(FIRST_LONG, iFromVH);
+			checkLongBitwiseOr();	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* GetAndBitwiseOrAcquire*/
 		ByteBufferViewHelper.reset();
-		iFromVH = (long)vhLong.getAndBitwiseOrAcquire(_buffer, 0, 2);
-		assertEquals(FIRST_LONG, iFromVH);
-		checkLongBitwiseOr();
+		try {
+			iFromVH = (long)vhLong.getAndBitwiseOrAcquire(_buffer, 0, 2);
+			assertEquals(FIRST_LONG, iFromVH);
+			checkLongBitwiseOr();	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* GetAndBitwiseOrRelease*/
 		ByteBufferViewHelper.reset();
-		iFromVH = (long)vhLong.getAndBitwiseOrRelease(_buffer, 0, 2);
-		assertEquals(FIRST_LONG, iFromVH);
-		checkLongBitwiseOr();
+		try {
+			iFromVH = (long)vhLong.getAndBitwiseOrRelease(_buffer, 0, 2);
+			assertEquals(FIRST_LONG, iFromVH);
+			checkLongBitwiseOr();	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* GetAndBitwiseXor*/
 		ByteBufferViewHelper.reset();
-		iFromVH = (long)vhLong.getAndBitwiseXor(_buffer, 0, 10);
-		assertEquals(FIRST_LONG, iFromVH);
-		checkLongBitwiseXor();
+		try {
+			iFromVH = (long)vhLong.getAndBitwiseXor(_buffer, 0, 10);
+			assertEquals(FIRST_LONG, iFromVH);
+			checkLongBitwiseXor();	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* GetAndBitwiseXorAcquire*/
 		ByteBufferViewHelper.reset();
-		iFromVH = (long)vhLong.getAndBitwiseXorAcquire(_buffer, 0, 10);
-		assertEquals(FIRST_LONG, iFromVH);
-		checkLongBitwiseXor();
+		try {
+			iFromVH = (long)vhLong.getAndBitwiseXorAcquire(_buffer, 0, 10);
+			assertEquals(FIRST_LONG, iFromVH);
+			checkLongBitwiseXor();	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		/* GetAndBitwiseXorRelease*/
 		ByteBufferViewHelper.reset();
-		iFromVH = (long)vhLong.getAndBitwiseXorRelease(_buffer, 0, 10);
-		assertEquals(FIRST_LONG, iFromVH);
-		checkLongBitwiseXor();
+		try {
+			iFromVH = (long)vhLong.getAndBitwiseXorRelease(_buffer, 0, 10);
+			assertEquals(FIRST_LONG, iFromVH);
+			checkLongBitwiseXor();	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 	}
 	
 	/**
@@ -1432,30 +2250,60 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 
 		ByteBufferViewHelper.reset();
 		/* GetOpaque */
-		sFromVH = (short) vhShort.getOpaque(_buffer, 0);
-		Assert.assertEquals(FIRST_SHORT, sFromVH);
+		try {
+			sFromVH = (short) vhShort.getOpaque(_buffer, 0);
+			Assert.assertEquals(FIRST_SHORT, sFromVH);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
 		/* SetOpaque */
-		vhShort.setOpaque(_buffer, 0, CHANGED_SHORT);
-		checkUpdated2(0);
+		try {
+			vhShort.setOpaque(_buffer, 0, CHANGED_SHORT);
+			checkUpdated2(0);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
 		ByteBufferViewHelper.reset();
 		/* GetVolatile */
-		sFromVH = (short) vhShort.getVolatile(_buffer, 0);
-		Assert.assertEquals(FIRST_SHORT, sFromVH);
+		try {
+			sFromVH = (short) vhShort.getVolatile(_buffer, 0);
+			Assert.assertEquals(FIRST_SHORT, sFromVH);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
 		/* SetVolatile */
-		vhShort.setVolatile(_buffer, 0, CHANGED_SHORT);
-		checkUpdated2(0);
+		try {
+			vhShort.setVolatile(_buffer, 0, CHANGED_SHORT);
+			checkUpdated2(0);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
 		ByteBufferViewHelper.reset();
 		/* GetAcquire */
-		sFromVH = (short) vhShort.getAcquire(_buffer, 0);
-		Assert.assertEquals(FIRST_SHORT, sFromVH);
+		try {
+			sFromVH = (short) vhShort.getAcquire(_buffer, 0);
+			Assert.assertEquals(FIRST_SHORT, sFromVH);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
 		/* SetRelease */
-		vhShort.setRelease(_buffer, 0, CHANGED_SHORT);
-		checkUpdated2(0);
+		try {
+			vhShort.setRelease(_buffer, 0, CHANGED_SHORT);
+			checkUpdated2(0);
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 
 		@SuppressWarnings("unused")
 		boolean casResult;
@@ -1743,140 +2591,255 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			vhInt.set(buffer, 0, CHANGED_INT);
 			failReadOnlyAccess();
 		} catch (ReadOnlyBufferException e) { }
-		
-		iFromVH = (int)vhInt.getVolatile(buffer, 0);
-		assertEquals(FIRST_INT, iFromVH);
+
+		try {
+			iFromVH = (int)vhInt.getVolatile(buffer, 0);
+			assertEquals(FIRST_INT, iFromVH);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		try {
 			vhInt.setVolatile(buffer, 0, CHANGED_INT);
 			failReadOnlyAccess();
-		} catch (ReadOnlyBufferException e) { }
+		} catch (ReadOnlyBufferException e) {
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
-		iFromVH = (int)vhInt.getOpaque(buffer, 0);
-		assertEquals(FIRST_INT, iFromVH);
+		try {
+			iFromVH = (int)vhInt.getOpaque(buffer, 0);
+			assertEquals(FIRST_INT, iFromVH);
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}	
 		
 		try {
 			vhInt.setOpaque(buffer, 0, CHANGED_INT);
 			failReadOnlyAccess();
-		} catch (ReadOnlyBufferException e) { }
+		} catch (ReadOnlyBufferException e) {
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
-		iFromVH = (int)vhInt.getAcquire(buffer, 0);
-		assertEquals(FIRST_INT, iFromVH);
+		try {
+			iFromVH = (int)vhInt.getAcquire(buffer, 0);
+			assertEquals(FIRST_INT, iFromVH);	
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		try {
 			vhInt.setRelease(buffer, 0, CHANGED_INT);
 			failReadOnlyAccess();
-		} catch (ReadOnlyBufferException e) { }
+		} catch (ReadOnlyBufferException e) {
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		try {
 			casResult = (boolean)vhInt.compareAndSet(buffer, 0, 2, 3);
 			failReadOnlyAccess();
-		} catch (ReadOnlyBufferException e) { }
+		} catch (ReadOnlyBufferException e) {
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		try {
 			caeResult = (int)vhInt.compareAndExchange(buffer, 0, 2, 3);
 			failReadOnlyAccess();
-		} catch (ReadOnlyBufferException e) { }
+		} catch (ReadOnlyBufferException e) {
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		try {
 			caeResult = (int)vhInt.compareAndExchangeAcquire(buffer, 0, 2, 3);
 			failReadOnlyAccess();
-		} catch (ReadOnlyBufferException e) { }
+		} catch (ReadOnlyBufferException e) {
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		try {
 			caeResult = (int)vhInt.compareAndExchangeRelease(buffer, 0, 2, 3);
 			failReadOnlyAccess();
-		} catch (ReadOnlyBufferException e) { }
+		} catch (ReadOnlyBufferException e) {
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		try {
 			casResult = (boolean)vhInt.weakCompareAndSet(buffer, 0, 2, 3);
 			failReadOnlyAccess();
-		} catch (ReadOnlyBufferException e) { }
+		} catch (ReadOnlyBufferException e) {
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		try {
 			casResult = (boolean)vhInt.weakCompareAndSetAcquire(buffer, 0, 2, 3);
 			failReadOnlyAccess();
-		} catch (ReadOnlyBufferException e) { }
+		} catch (ReadOnlyBufferException e) {
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		try {
 			casResult = (boolean)vhInt.weakCompareAndSetRelease(buffer, 0, 2, 3);
 			failReadOnlyAccess();
-		} catch (ReadOnlyBufferException e) { }
+		} catch (ReadOnlyBufferException e) {
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		try {
 			iFromVH = (int)vhInt.getAndSet(buffer, 0, CHANGED_INT);
 			failReadOnlyAccess();
-		} catch (ReadOnlyBufferException e) { }
+		} catch (ReadOnlyBufferException e) {
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		try {
 			iFromVH = (int)vhInt.getAndSetAcquire(buffer, 0, CHANGED_INT);
 			failReadOnlyAccess();
-		} catch (ReadOnlyBufferException e) { }
+		} catch (ReadOnlyBufferException e) {
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		try {
 			iFromVH = (int)vhInt.getAndSetRelease(buffer, 0, CHANGED_INT);
 			failReadOnlyAccess();
-		} catch (ReadOnlyBufferException e) { }
+		} catch (ReadOnlyBufferException e) {
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		try {
 			iFromVH = (int)vhInt.getAndAdd(buffer, 0, 2);
 			failReadOnlyAccess();
-		} catch (ReadOnlyBufferException e) { }
+		} catch (ReadOnlyBufferException e) {
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		try {
 			iFromVH = (int)vhInt.getAndAddAcquire(buffer, 0, 2);
 			failReadOnlyAccess();
-		} catch (ReadOnlyBufferException e) { }
+		} catch (ReadOnlyBufferException e) {
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		try {
 			iFromVH = (int)vhInt.getAndAddRelease(buffer, 0, 2);
 			failReadOnlyAccess();
-		} catch (ReadOnlyBufferException e) { }
+		} catch (ReadOnlyBufferException e) {
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		try {
 			iFromVH = (int)vhInt.getAndBitwiseAnd(buffer, 0, 7);
 			failReadOnlyAccess();
-		} catch (ReadOnlyBufferException e) { }
+		} catch (ReadOnlyBufferException e) {
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		try {
 			iFromVH = (int)vhInt.getAndBitwiseAndAcquire(buffer, 0, 7);
 			failReadOnlyAccess();
-		} catch (ReadOnlyBufferException e) { }
+		} catch (ReadOnlyBufferException e) {
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		try {
 			iFromVH = (int)vhInt.getAndBitwiseAndRelease(buffer, 0, 7);
 			failReadOnlyAccess();
-		} catch (ReadOnlyBufferException e) { }
+		} catch (ReadOnlyBufferException e) {
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		try {
 			iFromVH = (int)vhInt.getAndBitwiseOr(buffer, 0, 1);
 			failReadOnlyAccess();
-		} catch (ReadOnlyBufferException e) { }
+		} catch (ReadOnlyBufferException e) {
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		try {
 			iFromVH = (int)vhInt.getAndBitwiseOrAcquire(buffer, 0, 1);
 			failReadOnlyAccess();
-		} catch (ReadOnlyBufferException e) { }
+		} catch (ReadOnlyBufferException e) {
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		try {
 			iFromVH = (int)vhInt.getAndBitwiseOrRelease(buffer, 0, 1);
 			failReadOnlyAccess();
-		} catch (ReadOnlyBufferException e) { }
+		} catch (ReadOnlyBufferException e) {
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		try {
 			iFromVH = (int)vhInt.getAndBitwiseXor(buffer, 0, 6);
 			failReadOnlyAccess();
-		} catch (ReadOnlyBufferException e) { }
+		} catch (ReadOnlyBufferException e) {
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		try {
 			iFromVH = (int)vhInt.getAndBitwiseXorAcquire(buffer, 0, 6);
 			failReadOnlyAccess();
-		} catch (ReadOnlyBufferException e) { }
+		} catch (ReadOnlyBufferException e) {
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 		
 		try {
 			iFromVH = (int)vhInt.getAndBitwiseXorRelease(buffer, 0, 6);
 			failReadOnlyAccess();
-		} catch (ReadOnlyBufferException e) {	}
+		} catch (ReadOnlyBufferException e) {
+			Assert.assertTrue(versionMajor < 23);
+		} catch (IllegalStateException iae) {
+			Assert.assertTrue(versionMajor >= 23);
+		}
 	}
 	
 	/**
