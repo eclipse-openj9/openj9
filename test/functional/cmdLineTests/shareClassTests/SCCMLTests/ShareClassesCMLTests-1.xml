@@ -1485,12 +1485,12 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<output type="failure" caseSensitive="yes" regex="no">JVM requested Snap dump</output>
 	</test>
 
-	<test id="Test 68-b: Make sure CustomClassLoader (not using SCC Java API) did not store classes in SCC" timeout="600" runPath=".">
+	<test id="Test 68-b: Make sure CustomClassLoader (not using SCC Java API) did store classes in SCC" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,printStats=romclass+orphan</command>
 		<output type="success" caseSensitive="yes" regex="no">Current statistics for cache</output>
+		<output type="required" caseSensitive="yes" regex="no">ORPHAN: org/openj9/test/classtests/UnsafeBootClass</output>
+		<output type="required" caseSensitive="yes" regex="no">ORPHAN: org/openj9/test/classtests/AnonClassAndUnsafeClassTest</output>
 
-		<output type="failure" caseSensitive="no" regex="no">UnsafeBootClass</output>
-		<output type="failure" caseSensitive="no" regex="no">AnonClassAndUnsafeClassTest</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -1500,7 +1500,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	</test>
 
 	<test id="Test 69-a: Rerun the test with -XX:+ShareOrphans" timeout="600" runPath=".">
-		<command>$JAVA_EXE$ $currentMode$ -XX:-ShareOrphans -XX:+ShareOrphans $CP_UTILS$ $PROGRAM_ORPHANTEST$</command>
+		<command>$JAVA_EXE$ $currentMode$,reset -XX:-ShareOrphans -XX:+ShareOrphans $CP_UTILS$ $PROGRAM_ORPHANTEST$</command>
 		<output type="success" caseSensitive="yes" regex="no">ShareOrphanTest Finished</output>
 
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
@@ -1555,12 +1555,12 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<output type="failure" caseSensitive="yes" regex="no">JVM requested Snap dump</output>
 	</test>
 
-	<test id="Test 69-e: Make sure orpahn classes from CustomClassLoader are not re-used via compareROMClassForEquality in default mode" timeout="600" runPath=".">
+	<test id="Test 69-e: Make sure orpahn classes from CustomClassLoader are re-used via compareROMClassForEquality in default -Xshareclasses mode" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$ -Xtrace:print={j9bcu.270} $CP_UTILS$ $PROGRAM_ORPHANTEST$</command>
 		<output type="success" caseSensitive="yes" regex="no">ShareOrphanTest Finished</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">compareROMClassForEquality returns 1 for class name 'org/openj9/test/classtests/UnsafeBootClass'</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">compareROMClassForEquality returns 1 for class name 'org/openj9/test/classtests/AnonClassAndUnsafeClassTest'</output>
 
-		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">compareROMClassForEquality returns 1 for class name 'org/openj9/test/classtests/UnsafeBootClass'</output>
-		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">compareROMClassForEquality returns 1 for class name 'org/openj9/test/classtests/AnonClassAndUnsafeClassTest'</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
