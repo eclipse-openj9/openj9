@@ -296,11 +296,9 @@ private:
    virtual bool cacheRecord(const ThunkSerializationRecord *record, TR::Compilation *comp, bool &isNew, bool &wasReset) override;
 
    virtual bool updateSCCOffsets(SerializedAOTMethod *method, TR::Compilation *comp, bool &wasReset, bool &usesSVM) override;
+   bool revalidateRecord(AOTSerializationRecordType type, uintptr_t id, TR::Compilation *comp, bool &wasReset);
 
-   bool revalidateClassChain(uintptr_t *classChain, TR::Compilation *comp, bool &wasReset);
    void getRAMClassChain(TR::Compilation *comp, J9Class *clazz, J9Class **chainBuffer, size_t &chainLength);
-
-   bool revalidateWellKnownClasses(uintptr_t *wellKnownClassesChain, TR::Compilation *comp, bool &wasReset);
 
    J9ROMClass *romClassFromOffsetInSharedCache(uintptr_t offset, TR::Compilation *comp, bool &wasReset);
    void *pointerFromOffsetInSharedCache(uintptr_t offset, TR::Compilation *comp, bool &wasReset);
