@@ -396,6 +396,12 @@ Add the path to `nasm.exe` to the `PATH` environment variable to override the ol
 export PATH="/cygdrive/c/Program Files/NASM:$PATH" (in Cygwin)
 ```
 
+Update your `INCLUDE` environment variable to provide a path to the Windows debugging tools with the following command:
+
+```
+set INCLUDE=C:\Program Files\Debugging Tools for Windows (x64)\sdk\inc;%INCLUDE%
+```
+
    You can download Visual Studio manually or obtain it using the [wget](https://www.gnu.org/software/wget/faq.html#download) utility. If you choose to use `wget`, follow these steps:
 
 - Open a cygwin terminal and change to the `/temp` directory:
