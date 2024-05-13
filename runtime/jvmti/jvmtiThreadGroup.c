@@ -391,6 +391,11 @@ getThreadGroupChildrenImpl(J9JavaVM *vm, J9VMThread *currentThread, jobject grou
 
 	vmFuncs->acquireExclusiveVMAccess(currentThread);
 
+	/* While acquiring exclusive VM access, VM access can be released.
+	 * GC might relocate threadGroupObject when VM access is released.
+	 * threadGroupObject is refetched to avoid a stale object.
+	 */
+	threadGroupObject = J9_JNI_UNWRAP_REFERENCE(group);
 	threads = j9mem_allocate_memory(sizeof(jthread) * vm->totalThreadCount, J9MEM_CATEGORY_JVMTI_ALLOCATE);
 	if (NULL == threads) {
 		j9mem_free_memory(groups);
