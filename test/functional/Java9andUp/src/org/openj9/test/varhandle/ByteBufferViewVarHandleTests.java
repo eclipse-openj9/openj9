@@ -36,6 +36,7 @@ import java.nio.*;
  */
 @Test(groups = { "level.extended" })
 public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
+	boolean _offHeap;
 	/**
 	 * Initialize the expected values based on the provided {@code byteOrder}.
 	 * Initialize {@link ByteBufferViewVarHandleTests#_buffer _buffer} based on the provided {@code memoryLocation}.
@@ -52,6 +53,7 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			_buffer = ByteBufferViewHelper.onHeap;
 		} else if (memoryLocation.equals("offHeap")) {
 			_buffer = ByteBufferViewHelper.offHeap;
+			_offHeap = true;
 		} else {
 			throw new TestException(memoryLocation + " is an invalid memory location. Should be either onHeap or offHeap.");
 		}
@@ -84,18 +86,18 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 		try {
 			cFromVH = (char) vhChar.getOpaque(_buffer, 0);
 			Assert.assertEquals(FIRST_CHAR, cFromVH);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* SetOpaque */
 		try {
 			vhChar.setOpaque(_buffer, 0, CHANGED_CHAR);
 			checkUpdated2(0);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		ByteBufferViewHelper.reset();
@@ -103,18 +105,18 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 		try {
 			cFromVH = (char) vhChar.getVolatile(_buffer, 0);
 			Assert.assertEquals(FIRST_CHAR, cFromVH);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* SetVolatile */
 		try {
 			vhChar.setVolatile(_buffer, 0, CHANGED_CHAR);
 			checkUpdated2(0);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		ByteBufferViewHelper.reset();
@@ -122,18 +124,18 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 		try {
 			cFromVH = (char) vhChar.getAcquire(_buffer, 0);
 			Assert.assertEquals(FIRST_CHAR, cFromVH);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* SetRelease */
 		try {
 			vhChar.setRelease(_buffer, 0, CHANGED_CHAR);
 			checkUpdated2(0);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		@SuppressWarnings("unused")
@@ -316,18 +318,18 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 		try {
 			dFromVH = (double)vhDouble.getOpaque(_buffer, 0);
 			assertEquals(FIRST_DOUBLE, dFromVH);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* SetOpaque */
 		try {
 			vhDouble.setOpaque(_buffer, 0, CHANGED_DOUBLE);
 			assertEquals(FIRST_DOUBLE, dFromVH);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		ByteBufferViewHelper.reset();
@@ -335,18 +337,18 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 		try {
 			dFromVH = (double)vhDouble.getVolatile(_buffer, 0);
 			assertEquals(FIRST_DOUBLE, dFromVH);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* SetVolatile */
 		try {
 			vhDouble.setVolatile(_buffer, 0, CHANGED_DOUBLE);
 			assertEquals(FIRST_DOUBLE, dFromVH);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		ByteBufferViewHelper.reset();
@@ -354,18 +356,18 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 		try {
 			dFromVH = (double)vhDouble.getAcquire(_buffer, 0);
 			assertEquals(FIRST_DOUBLE, dFromVH);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* SetRelease */
 		try {
 			vhDouble.setRelease(_buffer, 0, CHANGED_DOUBLE);
 			assertEquals(FIRST_DOUBLE, dFromVH);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* CompareAndSet - Fail */
@@ -375,9 +377,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			casResult = vhDouble.compareAndSet(_buffer, 0, 2.0, 3.0);
 			checkNotUpdated8();
 			Assert.assertFalse(casResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* CompareAndSet - Succeed */
@@ -386,9 +388,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			casResult = vhDouble.compareAndSet(_buffer, 0, FIRST_DOUBLE, CHANGED_DOUBLE);
 			checkUpdated8(0);
 			Assert.assertTrue(casResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* compareAndExchange - Fail */
@@ -398,9 +400,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			caeResult = (double)vhDouble.compareAndExchange(_buffer, 0, 1.0, 2.0);
 			checkNotUpdated8();
 			assertEquals(FIRST_DOUBLE, caeResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* compareAndExchange - Succeed */
@@ -409,9 +411,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			caeResult = (double)vhDouble.compareAndExchange(_buffer, 0, FIRST_DOUBLE, CHANGED_DOUBLE);
 			checkUpdated8(0);
 			assertEquals(FIRST_DOUBLE, caeResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* compareAndExchangeAcquire - Fail */
@@ -420,9 +422,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			caeResult = (double)vhDouble.compareAndExchangeAcquire(_buffer, 0, 1.0, 2.0);
 			checkNotUpdated8();
 			assertEquals(FIRST_DOUBLE, caeResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* compareAndExchangeAcquire - Succeed */
@@ -431,9 +433,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			caeResult = (double)vhDouble.compareAndExchangeAcquire(_buffer, 0, FIRST_DOUBLE, CHANGED_DOUBLE);
 			checkUpdated8(0);
 			assertEquals(FIRST_DOUBLE, caeResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* compareAndExchangeRelease - Fail */
@@ -442,9 +444,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			caeResult = (double)vhDouble.compareAndExchangeRelease(_buffer, 0, 1.0, 2.0);
 			checkNotUpdated8();
 			assertEquals(FIRST_DOUBLE, caeResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* compareAndExchangeRelease - Succeed */
@@ -453,9 +455,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			caeResult = (double)vhDouble.compareAndExchangeRelease(_buffer, 0, FIRST_DOUBLE, CHANGED_DOUBLE);
 			checkUpdated8(0);
 			assertEquals(FIRST_DOUBLE, caeResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* WeakCompareAndSet - Fail */
@@ -464,9 +466,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			casResult = vhDouble.weakCompareAndSet(_buffer, 0, 2.0, 3.0);
 			checkNotUpdated8();
 			Assert.assertFalse(casResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* WeakCompareAndSet - Succeed */
@@ -475,9 +477,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			casResult = vhDouble.weakCompareAndSet(_buffer, 0, FIRST_DOUBLE, CHANGED_DOUBLE);
 			checkUpdated8(0);
 			Assert.assertTrue(casResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* WeakCompareAndSetAcquire - Fail */
@@ -486,9 +488,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			casResult = vhDouble.weakCompareAndSetAcquire(_buffer, 0, 2.0, 3.0);
 			checkNotUpdated8();
 			Assert.assertFalse(casResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* WeakCompareAndSetAcquire - Succeed */
@@ -497,9 +499,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			casResult = vhDouble.weakCompareAndSetAcquire(_buffer, 0, FIRST_DOUBLE, CHANGED_DOUBLE);
 			checkUpdated8(0);
 			Assert.assertTrue(casResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* WeakCompareAndSetRelease - Fail */
@@ -508,9 +510,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			casResult = vhDouble.weakCompareAndSetRelease(_buffer, 0, 2.0, 3.0);
 			checkNotUpdated8();
 			Assert.assertFalse(casResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* WeakCompareAndSetRelease - Succeed */
@@ -519,9 +521,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			casResult = vhDouble.weakCompareAndSetRelease(_buffer, 0, FIRST_DOUBLE, CHANGED_DOUBLE);
 			checkUpdated8(0);
 			Assert.assertTrue(casResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* WeakCompareAndSetPlain - Fail */
@@ -530,9 +532,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			casResult = vhDouble.weakCompareAndSetPlain(_buffer, 0, 2.0, 3.0);
 			checkNotUpdated8();
 			Assert.assertFalse(casResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* WeakCompareAndSetPlain - Succeed */
@@ -541,9 +543,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			casResult = vhDouble.weakCompareAndSetPlain(_buffer, 0, FIRST_DOUBLE, CHANGED_DOUBLE);
 			checkUpdated8(0);
 			Assert.assertTrue(casResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* GetAndSet */
@@ -552,9 +554,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			dFromVH = (double)vhDouble.getAndSet(_buffer, 0, CHANGED_DOUBLE);
 			checkUpdated8(0);
 			assertEquals(FIRST_DOUBLE, dFromVH);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* GetAndSet */
@@ -563,9 +565,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			dFromVH = (double)vhDouble.getAndSet(_buffer, 0, CHANGED_DOUBLE);
 			checkUpdated8(0);
 			assertEquals(FIRST_DOUBLE, dFromVH);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* GetAndSet */
@@ -574,9 +576,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			dFromVH = (double)vhDouble.getAndSet(_buffer, 0, CHANGED_DOUBLE);
 			checkUpdated8(0);
 			assertEquals(FIRST_DOUBLE, dFromVH);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* GetAndAdd */
@@ -687,18 +689,18 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 		try {
 			dFromVH = (float)vhFloat.getOpaque(_buffer, 0);
 			assertEquals(FIRST_FLOAT, dFromVH);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* SetOpaque */
 		try {
 			vhFloat.setOpaque(_buffer, 0, CHANGED_FLOAT);
 			assertEquals(FIRST_FLOAT, dFromVH);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		ByteBufferViewHelper.reset();
@@ -706,18 +708,18 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 		try {
 			dFromVH = (float)vhFloat.getVolatile(_buffer, 0);
 			assertEquals(FIRST_FLOAT, dFromVH);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* SetVolatile */
 		try {
 			vhFloat.setVolatile(_buffer, 0, CHANGED_FLOAT);
 			assertEquals(FIRST_FLOAT, dFromVH);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		ByteBufferViewHelper.reset();
@@ -725,18 +727,18 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 		try {
 			dFromVH = (float)vhFloat.getAcquire(_buffer, 0);
 			assertEquals(FIRST_FLOAT, dFromVH);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* SetRelease */
 		try {
 			vhFloat.setRelease(_buffer, 0, CHANGED_FLOAT);
 			assertEquals(FIRST_FLOAT, dFromVH);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* CompareAndSet - Fail */
@@ -746,9 +748,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			casResult = vhFloat.compareAndSet(_buffer, 0, 2.0f, 3.0f);
 			checkNotUpdated4(0);
 			Assert.assertFalse(casResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* CompareAndSet - Succeed */
@@ -757,9 +759,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			casResult = vhFloat.compareAndSet(_buffer, 0, FIRST_FLOAT, CHANGED_FLOAT);
 			checkUpdated4(0);
 			Assert.assertTrue(casResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* compareAndExchange - Fail */
@@ -769,9 +771,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			caeResult = (float)vhFloat.compareAndExchange(_buffer, 0, 1.0f, 2.0f);
 			checkNotUpdated4(0);
 			assertEquals(FIRST_FLOAT, caeResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* compareAndExchange - Succeed */
@@ -780,9 +782,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			caeResult = (float)vhFloat.compareAndExchange(_buffer, 0, FIRST_FLOAT, CHANGED_FLOAT);
 			checkUpdated4(0);
 			assertEquals(FIRST_FLOAT, caeResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* compareAndExchangeAcquire - Fail */
@@ -791,9 +793,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			caeResult = (float)vhFloat.compareAndExchangeAcquire(_buffer, 0, 1.0f, 2.0f);
 			checkNotUpdated4(0);
 			assertEquals(FIRST_FLOAT, caeResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* compareAndExchangeAcquire - Succeed */
@@ -802,9 +804,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			caeResult = (float)vhFloat.compareAndExchangeAcquire(_buffer, 0, FIRST_FLOAT, CHANGED_FLOAT);
 			checkUpdated4(0);
 			assertEquals(FIRST_FLOAT, caeResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* compareAndExchangeRelease - Fail */
@@ -813,9 +815,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			caeResult = (float)vhFloat.compareAndExchangeRelease(_buffer, 0, 1.0f, 2.0f);
 			checkNotUpdated4(0);
 			assertEquals(FIRST_FLOAT, caeResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* compareAndExchangeRelease - Succeed */
@@ -824,9 +826,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			caeResult = (float)vhFloat.compareAndExchangeRelease(_buffer, 0, FIRST_FLOAT, CHANGED_FLOAT);
 			checkUpdated4(0);
 			assertEquals(FIRST_FLOAT, caeResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* WeakCompareAndSet - Fail */
@@ -835,9 +837,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			casResult = vhFloat.weakCompareAndSet(_buffer, 0, 2.0f, 3.0f);
 			checkNotUpdated4(0);
 			Assert.assertFalse(casResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* WeakCompareAndSet - Succeed */
@@ -846,9 +848,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			casResult = vhFloat.weakCompareAndSet(_buffer, 0, FIRST_FLOAT, CHANGED_FLOAT);
 			checkUpdated4(0);
 			Assert.assertTrue(casResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* WeakCompareAndSetAcquire - Fail */
@@ -857,9 +859,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			casResult = vhFloat.weakCompareAndSetAcquire(_buffer, 0, 2.0f, 3.0f);
 			checkNotUpdated4(0);
 			Assert.assertFalse(casResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* WeakCompareAndSetAcquire - Succeed */
@@ -868,9 +870,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			casResult = vhFloat.weakCompareAndSetAcquire(_buffer, 0, FIRST_FLOAT, CHANGED_FLOAT);
 			checkUpdated4(0);
 			Assert.assertTrue(casResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* WeakCompareAndSetRelease - Fail */
@@ -879,9 +881,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			casResult = vhFloat.weakCompareAndSetRelease(_buffer, 0, 2.0f, 3.0f);
 			checkNotUpdated4(0);
 			Assert.assertFalse(casResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* WeakCompareAndSetRelease - Succeed */
@@ -890,9 +892,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			casResult = vhFloat.weakCompareAndSetRelease(_buffer, 0, FIRST_FLOAT, CHANGED_FLOAT);
 			checkUpdated4(0);
 			Assert.assertTrue(casResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* WeakCompareAndSetPlain - Fail */
@@ -901,9 +903,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			casResult = vhFloat.weakCompareAndSetPlain(_buffer, 0, 2.0f, 3.0f);
 			checkNotUpdated4(0);
 			Assert.assertFalse(casResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* WeakCompareAndSetPlain - Succeed */
@@ -912,9 +914,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			casResult = vhFloat.weakCompareAndSetPlain(_buffer, 0, FIRST_FLOAT, CHANGED_FLOAT);
 			checkUpdated4(0);
 			Assert.assertTrue(casResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* GetAndSet */
@@ -923,9 +925,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			dFromVH = (float)vhFloat.getAndSet(_buffer, 0, CHANGED_FLOAT);
 			checkUpdated4(0);
 			assertEquals(FIRST_FLOAT, dFromVH);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* GetAndSet */
@@ -934,9 +936,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			dFromVH = (float)vhFloat.getAndSet(_buffer, 0, CHANGED_FLOAT);
 			checkUpdated4(0);
 			assertEquals(FIRST_FLOAT, dFromVH);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* GetAndSet */
@@ -945,9 +947,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			dFromVH = (float)vhFloat.getAndSet(_buffer, 0, CHANGED_FLOAT);
 			checkUpdated4(0);
 			assertEquals(FIRST_FLOAT, dFromVH);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 
@@ -1059,18 +1061,18 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 		try {
 			iFromVH = (int) vhInt.getOpaque(_buffer, 0);
 			assertEquals(FIRST_INT, iFromVH);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* SetOpaque */
 		try {
 			vhInt.setOpaque(_buffer, 0, CHANGED_INT);
 			checkUpdated4(0);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		ByteBufferViewHelper.reset();
@@ -1078,18 +1080,18 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 		try {
 			iFromVH = (int) vhInt.getVolatile(_buffer, 0);
 			assertEquals(FIRST_INT, iFromVH);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* SetVolatile */
 		try {
 			vhInt.setVolatile(_buffer, 0, CHANGED_INT);
 			checkUpdated4(0);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		ByteBufferViewHelper.reset();
@@ -1097,18 +1099,18 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 		try {
 			iFromVH = (int) vhInt.getAcquire(_buffer, 0);
 			assertEquals(FIRST_INT, iFromVH);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* SetRelease */
 		try {
 			vhInt.setRelease(_buffer, 0, CHANGED_INT);
 			checkUpdated4(0);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* CompareAndSet - Fail */
@@ -1118,9 +1120,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			casResult = (boolean)vhInt.compareAndSet(_buffer, 0, 2, 3);
 			checkNotUpdated4(0);
 			Assert.assertFalse(casResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* CompareAndSet - Succeed */
@@ -1129,9 +1131,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			casResult = (boolean)vhInt.compareAndSet(_buffer, 0, FIRST_INT, CHANGED_INT);
 			checkUpdated4(0);
 			Assert.assertTrue(casResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* compareAndExchange - Fail */
@@ -1141,9 +1143,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			caeResult = (int)vhInt.compareAndExchange(_buffer, 0, 2, 3);
 			checkNotUpdated4(0);
 			assertEquals(FIRST_INT, caeResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* compareAndExchange - Succeed */
@@ -1151,9 +1153,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			caeResult = (int)vhInt.compareAndExchange(_buffer, 0, FIRST_INT, CHANGED_INT);
 			checkUpdated4(0);
 			assertEquals(FIRST_INT, caeResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* CompareAndExchangeAcquire - Fail */
@@ -1162,9 +1164,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			caeResult = (int)vhInt.compareAndExchangeAcquire(_buffer, 0, 2, 3);
 			checkNotUpdated4(0);
 			assertEquals(FIRST_INT, caeResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* CompareAndExchangeAcquire - Succeed */
@@ -1172,9 +1174,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			caeResult = (int)vhInt.compareAndExchangeAcquire(_buffer, 0, FIRST_INT, CHANGED_INT);
 			checkUpdated4(0);
 			assertEquals(FIRST_INT, caeResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* CompareAndExchangeRelease - Fail */
@@ -1183,9 +1185,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			caeResult = (int)vhInt.compareAndExchangeRelease(_buffer, 0, 2, 3);
 			checkNotUpdated4(0);
 			assertEquals(FIRST_INT, caeResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* CompareAndExchangeRelease - Succeed */
@@ -1193,9 +1195,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			caeResult = (int)vhInt.compareAndExchangeRelease(_buffer, 0, FIRST_INT, CHANGED_INT);
 			checkUpdated4(0);
 			assertEquals(FIRST_INT, caeResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* WeakCompareAndSet - Fail */
@@ -1204,9 +1206,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			casResult = (boolean)vhInt.weakCompareAndSet(_buffer, 0, 2, 3);
 			checkNotUpdated4(0);
 			Assert.assertFalse(casResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* WeakCompareAndSet - Succeed */
@@ -1214,9 +1216,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			casResult = (boolean)vhInt.weakCompareAndSet(_buffer, 0, FIRST_INT, CHANGED_INT);
 			checkUpdated4(0);
 			Assert.assertTrue(casResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* WeakCompareAndSetAcquire - Fail */
@@ -1225,9 +1227,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			casResult = (boolean)vhInt.weakCompareAndSetAcquire(_buffer, 0, 2, 3);
 			checkNotUpdated4(0);
 			Assert.assertFalse(casResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* WeakCompareAndSetAcquire - Succeed */
@@ -1235,9 +1237,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			casResult = (boolean)vhInt.weakCompareAndSetAcquire(_buffer, 0, FIRST_INT, CHANGED_INT);
 			checkUpdated4(0);
 			Assert.assertTrue(casResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* WeakCompareAndSetRelease - Fail */
@@ -1246,9 +1248,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			casResult = (boolean)vhInt.weakCompareAndSetRelease(_buffer, 0, 2, 3);
 			checkNotUpdated4(0);
 			Assert.assertFalse(casResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* WeakCompareAndSetRelease - Succeed */
@@ -1256,9 +1258,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			casResult = (boolean)vhInt.weakCompareAndSetRelease(_buffer, 0, FIRST_INT, CHANGED_INT);
 			checkUpdated4(0);
 			Assert.assertTrue(casResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* GetAndSet */
@@ -1267,9 +1269,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			iFromVH = (int)vhInt.getAndSet(_buffer, 0, CHANGED_INT);
 			assertEquals(FIRST_INT, iFromVH);
 			checkUpdated4(0);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* GetAndSetAcquire */
@@ -1278,9 +1280,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			iFromVH = (int)vhInt.getAndSetAcquire(_buffer, 0, CHANGED_INT);
 			assertEquals(FIRST_INT, iFromVH);
 			checkUpdated4(0);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* GetAndSetRelease */
@@ -1289,9 +1291,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			iFromVH = (int)vhInt.getAndSetRelease(_buffer, 0, CHANGED_INT);
 			assertEquals(FIRST_INT, iFromVH);
 			checkUpdated4(0);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* GetAndAdd */
@@ -1300,9 +1302,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			iFromVH = (int)vhInt.getAndAdd(_buffer, 0, 2);
 			assertEquals(FIRST_INT, iFromVH);
 			checkIntAddition((byte)2, 0);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* GetAndAddAcquire */
@@ -1311,9 +1313,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			iFromVH = (int)vhInt.getAndAddAcquire(_buffer, 0, 2);
 			assertEquals(FIRST_INT, iFromVH);
 			checkIntAddition((byte)2, 0);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* GetAndAddRelease */
@@ -1322,9 +1324,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			iFromVH = (int)vhInt.getAndAddRelease(_buffer, 0, 2);
 			assertEquals(FIRST_INT, iFromVH);
 			checkIntAddition((byte)2, 0);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* GetAndBitwiseAnd*/
@@ -1333,9 +1335,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			iFromVH = (int)vhInt.getAndBitwiseAnd(_buffer, 0, 7);
 			assertEquals(FIRST_INT, iFromVH);
 			checkIntBitwiseAnd(7, 0);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* GetAndBitwiseAndAcquire*/
@@ -1344,9 +1346,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			iFromVH = (int)vhInt.getAndBitwiseAndAcquire(_buffer, 0, 7);
 			assertEquals(FIRST_INT, iFromVH);
 			checkIntBitwiseAnd(7, 0);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* GetAndBitwiseAndRelease*/
@@ -1355,9 +1357,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			iFromVH = (int)vhInt.getAndBitwiseAndRelease(_buffer, 0, 7);
 			assertEquals(FIRST_INT, iFromVH);
 			checkIntBitwiseAnd(7, 0);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* GetAndBitwiseOr*/
@@ -1366,9 +1368,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			iFromVH = (int)vhInt.getAndBitwiseOr(_buffer, 0, 1);
 			assertEquals(FIRST_INT, iFromVH);
 			checkIntBitwiseOr(1, 0);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* GetAndBitwiseOrAcquire*/
@@ -1377,9 +1379,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			iFromVH = (int)vhInt.getAndBitwiseOrAcquire(_buffer, 0, 1);
 			assertEquals(FIRST_INT, iFromVH);
 			checkIntBitwiseOr(1, 0);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* GetAndBitwiseOrRelease*/
@@ -1388,9 +1390,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			iFromVH = (int)vhInt.getAndBitwiseOrRelease(_buffer, 0, 1);
 			assertEquals(FIRST_INT, iFromVH);
 			checkIntBitwiseOr(1, 0);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* GetAndBitwiseXor*/
@@ -1399,9 +1401,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			iFromVH = (int)vhInt.getAndBitwiseXor(_buffer, 0, 6);
 			assertEquals(FIRST_INT, iFromVH);
 			checkIntBitwiseXor(6, 0);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* GetAndBitwiseXorAcquire*/
@@ -1410,9 +1412,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			iFromVH = (int)vhInt.getAndBitwiseXorAcquire(_buffer, 0, 6);
 			assertEquals(FIRST_INT, iFromVH);
 			checkIntBitwiseXor(6, 0);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* GetAndBitwiseXorRelease*/
@@ -1421,9 +1423,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			iFromVH = (int)vhInt.getAndBitwiseXorRelease(_buffer, 0, 6);
 			assertEquals(FIRST_INT, iFromVH);
 			checkIntBitwiseXor(6, 0);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 	}
 
@@ -1462,18 +1464,18 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 		try {
 			iFromVH = (int) vhInt.getOpaque(_buffer, 4);
 			assertEquals(INITIAL_INT_AT_INDEX_4, iFromVH);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* SetOpaque */
 		try {
 			vhInt.setOpaque(_buffer, 4, CHANGED_INT);
 			checkUpdated4(4);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		ByteBufferViewHelper.reset();
@@ -1481,18 +1483,18 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 		try {
 			iFromVH = (int) vhInt.getVolatile(_buffer, 4);
 			assertEquals(INITIAL_INT_AT_INDEX_4, iFromVH);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* SetVolatile */
 		try {
 			vhInt.setVolatile(_buffer, 4, CHANGED_INT);
 			checkUpdated4(4);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		ByteBufferViewHelper.reset();
@@ -1500,18 +1502,18 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 		try {
 			iFromVH = (int) vhInt.getAcquire(_buffer, 4);
 			assertEquals(INITIAL_INT_AT_INDEX_4, iFromVH);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* SetRelease */
 		try {
 			vhInt.setRelease(_buffer, 4, CHANGED_INT);
 			checkUpdated4(4);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* CompareAndSet - Fail */
@@ -1521,9 +1523,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			casResult = (boolean)vhInt.compareAndSet(_buffer, 4, 2, 3);
 			checkNotUpdated4(4);
 			Assert.assertFalse(casResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* CompareAndSet - Succeed */
@@ -1532,9 +1534,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			casResult = (boolean)vhInt.compareAndSet(_buffer, 4, INITIAL_INT_AT_INDEX_4, CHANGED_INT);
 			checkUpdated4(4);
 			Assert.assertTrue(casResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* compareAndExchange - Fail */
@@ -1544,9 +1546,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			caeResult = (int)vhInt.compareAndExchange(_buffer, 4, 2, 3);
 			checkNotUpdated4(4);
 			assertEquals(INITIAL_INT_AT_INDEX_4, caeResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* compareAndExchange - Succeed */
@@ -1554,9 +1556,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			caeResult = (int)vhInt.compareAndExchange(_buffer, 4, INITIAL_INT_AT_INDEX_4, CHANGED_INT);
 			checkUpdated4(4);
 			assertEquals(INITIAL_INT_AT_INDEX_4, caeResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* CompareAndExchangeAcquire - Fail */
@@ -1565,9 +1567,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			caeResult = (int)vhInt.compareAndExchangeAcquire(_buffer, 4, 2, 3);
 			checkNotUpdated4(4);
 			assertEquals(INITIAL_INT_AT_INDEX_4, caeResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* CompareAndExchangeAcquire - Succeed */
@@ -1575,9 +1577,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			caeResult = (int)vhInt.compareAndExchangeAcquire(_buffer, 4, INITIAL_INT_AT_INDEX_4, CHANGED_INT);
 			checkUpdated4(4);
 			assertEquals(INITIAL_INT_AT_INDEX_4, caeResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* CompareAndExchangeRelease - Fail */
@@ -1586,9 +1588,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			caeResult = (int)vhInt.compareAndExchangeRelease(_buffer, 4, 2, 3);
 			checkNotUpdated4(4);
 			assertEquals(INITIAL_INT_AT_INDEX_4, caeResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* CompareAndExchangeRelease - Succeed */
@@ -1596,9 +1598,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			caeResult = (int)vhInt.compareAndExchangeRelease(_buffer, 4, INITIAL_INT_AT_INDEX_4, CHANGED_INT);
 			checkUpdated4(4);
 			assertEquals(INITIAL_INT_AT_INDEX_4, caeResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* WeakCompareAndSet - Fail */
@@ -1607,9 +1609,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			casResult = (boolean)vhInt.weakCompareAndSet(_buffer, 4, 2, 3);
 			checkNotUpdated4(4);
 			Assert.assertFalse(casResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* WeakCompareAndSet - Succeed */
@@ -1617,9 +1619,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			casResult = (boolean)vhInt.weakCompareAndSet(_buffer, 4, INITIAL_INT_AT_INDEX_4, CHANGED_INT);
 			checkUpdated4(4);
 			Assert.assertTrue(casResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* WeakCompareAndSetAcquire - Fail */
@@ -1628,9 +1630,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			casResult = (boolean)vhInt.weakCompareAndSetAcquire(_buffer, 4, 2, 3);
 			checkNotUpdated4(4);
 			Assert.assertFalse(casResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* WeakCompareAndSetAcquire - Succeed */
@@ -1638,9 +1640,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			casResult = (boolean)vhInt.weakCompareAndSetAcquire(_buffer, 4, INITIAL_INT_AT_INDEX_4, CHANGED_INT);
 			checkUpdated4(4);
 			Assert.assertTrue(casResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* WeakCompareAndSetRelease - Fail */
@@ -1649,9 +1651,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			casResult = (boolean)vhInt.weakCompareAndSetRelease(_buffer, 4, 2, 3);
 			checkNotUpdated4(4);
 			Assert.assertFalse(casResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* WeakCompareAndSetRelease - Succeed */
@@ -1659,9 +1661,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			casResult = (boolean)vhInt.weakCompareAndSetRelease(_buffer, 4, INITIAL_INT_AT_INDEX_4, CHANGED_INT);
 			checkUpdated4(4);
 			Assert.assertTrue(casResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* GetAndSet */
@@ -1670,9 +1672,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			iFromVH = (int)vhInt.getAndSet(_buffer, 4, CHANGED_INT);
 			assertEquals(INITIAL_INT_AT_INDEX_4, iFromVH);
 			checkUpdated4(4);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* GetAndSetAcquire */
@@ -1681,9 +1683,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			iFromVH = (int)vhInt.getAndSetAcquire(_buffer, 4, CHANGED_INT);
 			assertEquals(INITIAL_INT_AT_INDEX_4, iFromVH);
 			checkUpdated4(4);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* GetAndSetRelease */
@@ -1692,9 +1694,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			iFromVH = (int)vhInt.getAndSetRelease(_buffer, 4, CHANGED_INT);
 			assertEquals(INITIAL_INT_AT_INDEX_4, iFromVH);
 			checkUpdated4(4);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* GetAndAdd */
@@ -1703,9 +1705,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			iFromVH = (int)vhInt.getAndAdd(_buffer, 4, 2);
 			assertEquals(INITIAL_INT_AT_INDEX_4, iFromVH);
 			checkIntAddition((byte)2, 4);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* GetAndAddAcquire */
@@ -1714,9 +1716,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			iFromVH = (int)vhInt.getAndAddAcquire(_buffer, 4, 2);
 			assertEquals(INITIAL_INT_AT_INDEX_4, iFromVH);
 			checkIntAddition((byte)2, 4);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* GetAndAddRelease */
@@ -1725,9 +1727,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			iFromVH = (int)vhInt.getAndAddRelease(_buffer, 4, 2);
 			assertEquals(INITIAL_INT_AT_INDEX_4, iFromVH);
 			checkIntAddition((byte)2, 4);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* GetAndBitwiseAnd*/
@@ -1736,9 +1738,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			iFromVH = (int)vhInt.getAndBitwiseAnd(_buffer, 4, 7);
 			assertEquals(INITIAL_INT_AT_INDEX_4, iFromVH);
 			checkIntBitwiseAnd(7, 4);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* GetAndBitwiseAndAcquire*/
@@ -1747,9 +1749,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			iFromVH = (int)vhInt.getAndBitwiseAndAcquire(_buffer, 4, 7);
 			assertEquals(INITIAL_INT_AT_INDEX_4, iFromVH);
 			checkIntBitwiseAnd(7, 4);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* GetAndBitwiseAndRelease*/
@@ -1758,9 +1760,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			iFromVH = (int)vhInt.getAndBitwiseAndRelease(_buffer, 4, 7);
 			assertEquals(INITIAL_INT_AT_INDEX_4, iFromVH);
 			checkIntBitwiseAnd(7, 4);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* GetAndBitwiseOr*/
@@ -1769,9 +1771,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			iFromVH = (int)vhInt.getAndBitwiseOr(_buffer, 4, 1);
 			assertEquals(INITIAL_INT_AT_INDEX_4, iFromVH);
 			checkIntBitwiseOr(1, 4);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* GetAndBitwiseOrAcquire*/
@@ -1780,9 +1782,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			iFromVH = (int)vhInt.getAndBitwiseOrAcquire(_buffer, 4, 1);
 			assertEquals(INITIAL_INT_AT_INDEX_4, iFromVH);
 			checkIntBitwiseOr(1, 4);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* GetAndBitwiseOrRelease*/
@@ -1791,9 +1793,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			iFromVH = (int)vhInt.getAndBitwiseOrRelease(_buffer, 4, 1);
 			assertEquals(INITIAL_INT_AT_INDEX_4, iFromVH);
 			checkIntBitwiseOr(1, 4);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* GetAndBitwiseXor*/
@@ -1802,9 +1804,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			iFromVH = (int)vhInt.getAndBitwiseXor(_buffer, 4, 6);
 			assertEquals(INITIAL_INT_AT_INDEX_4, iFromVH);
 			checkIntBitwiseXor(6, 4);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* GetAndBitwiseXorAcquire*/
@@ -1813,9 +1815,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			iFromVH = (int)vhInt.getAndBitwiseXorAcquire(_buffer, 4, 6);
 			assertEquals(INITIAL_INT_AT_INDEX_4, iFromVH);
 			checkIntBitwiseXor(6, 4);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* GetAndBitwiseXorRelease*/
@@ -1824,9 +1826,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			iFromVH = (int)vhInt.getAndBitwiseXorRelease(_buffer, 4, 6);
 			assertEquals(INITIAL_INT_AT_INDEX_4, iFromVH);
 			checkIntBitwiseXor(6, 4);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 	}
 
@@ -1849,18 +1851,18 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 		try {
 			iFromVH = (long) vhLong.getOpaque(_buffer, 0);
 			assertEquals(FIRST_LONG, iFromVH);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* SetOpaque */
 		try {
 			vhLong.setOpaque(_buffer, 0, CHANGED_LONG);
 			checkUpdated8(0);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		ByteBufferViewHelper.reset();
@@ -1868,18 +1870,18 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 		try {
 			iFromVH = (long) vhLong.getVolatile(_buffer, 0);
 			assertEquals(FIRST_LONG, iFromVH);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* SetVolatile */
 		try {
 			vhLong.setVolatile(_buffer, 0, CHANGED_LONG);
 			checkUpdated8(0);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		ByteBufferViewHelper.reset();
@@ -1887,18 +1889,18 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 		try {
 			iFromVH = (long) vhLong.getAcquire(_buffer, 0);
 			assertEquals(FIRST_LONG, iFromVH);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* SetRelease */
 		try {
 			vhLong.setRelease(_buffer, 0, CHANGED_LONG);
 			checkUpdated8(0);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* CompareAndSet - Fail */
@@ -1908,9 +1910,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			casResult = (boolean)vhLong.compareAndSet(_buffer, 0, 2L, 3L);
 			checkNotUpdated8();
 			Assert.assertFalse(casResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* CompareAndSet - Succeed */
@@ -1919,9 +1921,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			casResult = (boolean)vhLong.compareAndSet(_buffer, 0, FIRST_LONG, CHANGED_LONG);
 			checkUpdated8(0);
 			Assert.assertTrue(casResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* compareAndExchange - Fail */
@@ -1931,9 +1933,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			caeResult = (long)vhLong.compareAndExchange(_buffer, 0, 2L, 3L);
 			checkNotUpdated8();
 			assertEquals(FIRST_LONG, caeResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* compareAndExchange - Succeed */
@@ -1941,9 +1943,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			caeResult = (long)vhLong.compareAndExchange(_buffer, 0, FIRST_LONG, CHANGED_LONG);
 			checkUpdated8(0);
 			assertEquals(FIRST_LONG, caeResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* CompareAndExchangeAcquire - Fail */
@@ -1952,9 +1954,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			caeResult = (long)vhLong.compareAndExchangeAcquire(_buffer, 0, 2L, 3L);
 			checkNotUpdated8();
 			assertEquals(FIRST_LONG, caeResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* CompareAndExchangeAcquire - Succeed */
@@ -1962,9 +1964,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			caeResult = (long)vhLong.compareAndExchangeAcquire(_buffer, 0, FIRST_LONG, CHANGED_LONG);
 			checkUpdated8(0);
 			assertEquals(FIRST_LONG, caeResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* CompareAndExchangeRelease - Fail */
@@ -1973,9 +1975,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			caeResult = (long)vhLong.compareAndExchangeRelease(_buffer, 0, 2L, 3L);
 			checkNotUpdated8();
 			assertEquals(FIRST_LONG, caeResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* CompareAndExchangeRelease - Succeed */
@@ -1983,9 +1985,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			caeResult = (long)vhLong.compareAndExchangeRelease(_buffer, 0, FIRST_LONG, CHANGED_LONG);
 			checkUpdated8(0);
 			assertEquals(FIRST_LONG, caeResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* WeakCompareAndSet - Fail */
@@ -1994,9 +1996,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			casResult = (boolean)vhLong.weakCompareAndSet(_buffer, 0, 2L, 3L);
 			checkNotUpdated8();
 			Assert.assertFalse(casResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* WeakCompareAndSet - Succeed */
@@ -2004,9 +2006,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			casResult = (boolean)vhLong.weakCompareAndSet(_buffer, 0, FIRST_LONG, CHANGED_LONG);
 			checkUpdated8(0);
 			Assert.assertTrue(casResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* WeakCompareAndSetAcquire - Fail */
@@ -2015,9 +2017,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			casResult = (boolean)vhLong.weakCompareAndSetAcquire(_buffer, 0, 2L, 3L);
 			checkNotUpdated8();
 			Assert.assertFalse(casResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* WeakCompareAndSetAcquire - Succeed */
@@ -2025,9 +2027,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			casResult = (boolean)vhLong.weakCompareAndSetAcquire(_buffer, 0, FIRST_LONG, CHANGED_LONG);
 			checkUpdated8(0);
 			Assert.assertTrue(casResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* WeakCompareAndSetRelease - Fail */
@@ -2036,9 +2038,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			casResult = (boolean)vhLong.weakCompareAndSetRelease(_buffer, 0, 2L, 3L);
 			checkNotUpdated8();
 			Assert.assertFalse(casResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* WeakCompareAndSetRelease - Succeed */
@@ -2046,9 +2048,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			casResult = (boolean)vhLong.weakCompareAndSetRelease(_buffer, 0, FIRST_LONG, CHANGED_LONG);
 			checkUpdated8(0);
 			Assert.assertTrue(casResult);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* GetAndSet */
@@ -2057,9 +2059,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			iFromVH = (long)vhLong.getAndSet(_buffer, 0, CHANGED_LONG);
 			assertEquals(FIRST_LONG, iFromVH);
 			checkUpdated8(0);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* GetAndSetAcquire */
@@ -2068,9 +2070,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			iFromVH = (long)vhLong.getAndSetAcquire(_buffer, 0, CHANGED_LONG);
 			assertEquals(FIRST_LONG, iFromVH);
 			checkUpdated8(0);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* GetAndSetRelease */
@@ -2079,9 +2081,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			iFromVH = (long)vhLong.getAndSetRelease(_buffer, 0, CHANGED_LONG);
 			assertEquals(FIRST_LONG, iFromVH);
 			checkUpdated8(0);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* GetAndAdd */
@@ -2090,9 +2092,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			iFromVH = (long)vhLong.getAndAdd(_buffer, 0, 2);
 			assertEquals(FIRST_LONG, iFromVH);
 			checkLongAddition();
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* GetAndAddAcquire */
@@ -2101,9 +2103,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			iFromVH = (long)vhLong.getAndAddAcquire(_buffer, 0, 2);
 			assertEquals(FIRST_LONG, iFromVH);
 			checkLongAddition();
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* GetAndAddRelease */
@@ -2112,9 +2114,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			iFromVH = (long)vhLong.getAndAddRelease(_buffer, 0, 2);
 			assertEquals(FIRST_LONG, iFromVH);
 			checkLongAddition();
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* GetAndBitwiseAnd*/
@@ -2123,9 +2125,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			iFromVH = (long)vhLong.getAndBitwiseAnd(_buffer, 0, 15);
 			assertEquals(FIRST_LONG, iFromVH);
 			checkLongBitwiseAnd();
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* GetAndBitwiseAndAcquire*/
@@ -2134,9 +2136,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			iFromVH = (long)vhLong.getAndBitwiseAndAcquire(_buffer, 0, 15);
 			assertEquals(FIRST_LONG, iFromVH);
 			checkLongBitwiseAnd();
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* GetAndBitwiseAndRelease*/
@@ -2145,9 +2147,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			iFromVH = (long)vhLong.getAndBitwiseAndRelease(_buffer, 0, 15);
 			assertEquals(FIRST_LONG, iFromVH);
 			checkLongBitwiseAnd();
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* GetAndBitwiseOr*/
@@ -2156,9 +2158,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			iFromVH = (long)vhLong.getAndBitwiseOr(_buffer, 0, 2);
 			assertEquals(FIRST_LONG, iFromVH);
 			checkLongBitwiseOr();
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* GetAndBitwiseOrAcquire*/
@@ -2167,9 +2169,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			iFromVH = (long)vhLong.getAndBitwiseOrAcquire(_buffer, 0, 2);
 			assertEquals(FIRST_LONG, iFromVH);
 			checkLongBitwiseOr();
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* GetAndBitwiseOrRelease*/
@@ -2178,9 +2180,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			iFromVH = (long)vhLong.getAndBitwiseOrRelease(_buffer, 0, 2);
 			assertEquals(FIRST_LONG, iFromVH);
 			checkLongBitwiseOr();
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* GetAndBitwiseXor*/
@@ -2189,9 +2191,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			iFromVH = (long)vhLong.getAndBitwiseXor(_buffer, 0, 10);
 			assertEquals(FIRST_LONG, iFromVH);
 			checkLongBitwiseXor();
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* GetAndBitwiseXorAcquire*/
@@ -2200,9 +2202,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			iFromVH = (long)vhLong.getAndBitwiseXorAcquire(_buffer, 0, 10);
 			assertEquals(FIRST_LONG, iFromVH);
 			checkLongBitwiseXor();
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* GetAndBitwiseXorRelease*/
@@ -2211,9 +2213,9 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 			iFromVH = (long)vhLong.getAndBitwiseXorRelease(_buffer, 0, 10);
 			assertEquals(FIRST_LONG, iFromVH);
 			checkLongBitwiseXor();
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 	}
 
@@ -2253,18 +2255,18 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 		try {
 			sFromVH = (short) vhShort.getOpaque(_buffer, 0);
 			Assert.assertEquals(FIRST_SHORT, sFromVH);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* SetOpaque */
 		try {
 			vhShort.setOpaque(_buffer, 0, CHANGED_SHORT);
 			checkUpdated2(0);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		ByteBufferViewHelper.reset();
@@ -2272,18 +2274,18 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 		try {
 			sFromVH = (short) vhShort.getVolatile(_buffer, 0);
 			Assert.assertEquals(FIRST_SHORT, sFromVH);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* SetVolatile */
 		try {
 			vhShort.setVolatile(_buffer, 0, CHANGED_SHORT);
 			checkUpdated2(0);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		ByteBufferViewHelper.reset();
@@ -2291,18 +2293,18 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 		try {
 			sFromVH = (short) vhShort.getAcquire(_buffer, 0);
 			Assert.assertEquals(FIRST_SHORT, sFromVH);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		/* SetRelease */
 		try {
 			vhShort.setRelease(_buffer, 0, CHANGED_SHORT);
 			checkUpdated2(0);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		@SuppressWarnings("unused")
@@ -2595,250 +2597,250 @@ public class ByteBufferViewVarHandleTests extends ViewVarHandleTests {
 		try {
 			iFromVH = (int)vhInt.getVolatile(buffer, 0);
 			assertEquals(FIRST_INT, iFromVH);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		try {
 			vhInt.setVolatile(buffer, 0, CHANGED_INT);
 			failReadOnlyAccess();
 		} catch (ReadOnlyBufferException e) {
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		try {
 			iFromVH = (int)vhInt.getOpaque(buffer, 0);
 			assertEquals(FIRST_INT, iFromVH);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		try {
 			vhInt.setOpaque(buffer, 0, CHANGED_INT);
 			failReadOnlyAccess();
 		} catch (ReadOnlyBufferException e) {
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		try {
 			iFromVH = (int)vhInt.getAcquire(buffer, 0);
 			assertEquals(FIRST_INT, iFromVH);
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		try {
 			vhInt.setRelease(buffer, 0, CHANGED_INT);
 			failReadOnlyAccess();
 		} catch (ReadOnlyBufferException e) {
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		try {
 			casResult = (boolean)vhInt.compareAndSet(buffer, 0, 2, 3);
 			failReadOnlyAccess();
 		} catch (ReadOnlyBufferException e) {
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		try {
 			caeResult = (int)vhInt.compareAndExchange(buffer, 0, 2, 3);
 			failReadOnlyAccess();
 		} catch (ReadOnlyBufferException e) {
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		try {
 			caeResult = (int)vhInt.compareAndExchangeAcquire(buffer, 0, 2, 3);
 			failReadOnlyAccess();
 		} catch (ReadOnlyBufferException e) {
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		try {
 			caeResult = (int)vhInt.compareAndExchangeRelease(buffer, 0, 2, 3);
 			failReadOnlyAccess();
 		} catch (ReadOnlyBufferException e) {
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		try {
 			casResult = (boolean)vhInt.weakCompareAndSet(buffer, 0, 2, 3);
 			failReadOnlyAccess();
 		} catch (ReadOnlyBufferException e) {
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		try {
 			casResult = (boolean)vhInt.weakCompareAndSetAcquire(buffer, 0, 2, 3);
 			failReadOnlyAccess();
 		} catch (ReadOnlyBufferException e) {
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		try {
 			casResult = (boolean)vhInt.weakCompareAndSetRelease(buffer, 0, 2, 3);
 			failReadOnlyAccess();
 		} catch (ReadOnlyBufferException e) {
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		try {
 			iFromVH = (int)vhInt.getAndSet(buffer, 0, CHANGED_INT);
 			failReadOnlyAccess();
 		} catch (ReadOnlyBufferException e) {
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		try {
 			iFromVH = (int)vhInt.getAndSetAcquire(buffer, 0, CHANGED_INT);
 			failReadOnlyAccess();
 		} catch (ReadOnlyBufferException e) {
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		try {
 			iFromVH = (int)vhInt.getAndSetRelease(buffer, 0, CHANGED_INT);
 			failReadOnlyAccess();
 		} catch (ReadOnlyBufferException e) {
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		try {
 			iFromVH = (int)vhInt.getAndAdd(buffer, 0, 2);
 			failReadOnlyAccess();
 		} catch (ReadOnlyBufferException e) {
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		try {
 			iFromVH = (int)vhInt.getAndAddAcquire(buffer, 0, 2);
 			failReadOnlyAccess();
 		} catch (ReadOnlyBufferException e) {
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		try {
 			iFromVH = (int)vhInt.getAndAddRelease(buffer, 0, 2);
 			failReadOnlyAccess();
 		} catch (ReadOnlyBufferException e) {
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		try {
 			iFromVH = (int)vhInt.getAndBitwiseAnd(buffer, 0, 7);
 			failReadOnlyAccess();
 		} catch (ReadOnlyBufferException e) {
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		try {
 			iFromVH = (int)vhInt.getAndBitwiseAndAcquire(buffer, 0, 7);
 			failReadOnlyAccess();
 		} catch (ReadOnlyBufferException e) {
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		try {
 			iFromVH = (int)vhInt.getAndBitwiseAndRelease(buffer, 0, 7);
 			failReadOnlyAccess();
 		} catch (ReadOnlyBufferException e) {
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		try {
 			iFromVH = (int)vhInt.getAndBitwiseOr(buffer, 0, 1);
 			failReadOnlyAccess();
 		} catch (ReadOnlyBufferException e) {
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		try {
 			iFromVH = (int)vhInt.getAndBitwiseOrAcquire(buffer, 0, 1);
 			failReadOnlyAccess();
 		} catch (ReadOnlyBufferException e) {
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		try {
 			iFromVH = (int)vhInt.getAndBitwiseOrRelease(buffer, 0, 1);
 			failReadOnlyAccess();
 		} catch (ReadOnlyBufferException e) {
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		try {
 			iFromVH = (int)vhInt.getAndBitwiseXor(buffer, 0, 6);
 			failReadOnlyAccess();
 		} catch (ReadOnlyBufferException e) {
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		try {
 			iFromVH = (int)vhInt.getAndBitwiseXorAcquire(buffer, 0, 6);
 			failReadOnlyAccess();
 		} catch (ReadOnlyBufferException e) {
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 
 		try {
 			iFromVH = (int)vhInt.getAndBitwiseXorRelease(buffer, 0, 6);
 			failReadOnlyAccess();
 		} catch (ReadOnlyBufferException e) {
-			Assert.assertTrue(versionMajor < 23);
+			Assert.assertTrue((versionMajor < 23) || _offHeap);
 		} catch (IllegalStateException iae) {
-			Assert.assertTrue(versionMajor >= 23);
+			Assert.assertTrue((versionMajor >= 23) && !_offHeap);
 		}
 	}
 
