@@ -1256,13 +1256,13 @@ j9shr_dump_help(J9JavaVM* vm, UDATA more)
 	tmpcstr = j9nls_lookup_message((J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG), J9NLS_EXELIB_INTERNAL_HELP_XXDISABLEUSEGCSTARTUPHINTS, NULL);
 	j9file_printf(PORTLIB, J9PORT_TTY_OUT, "%s", tmpcstr);
 
-#if defined(J9VM_ARCH_X86)
+#if defined(J9VM_OPT_PORTABLE_SHARED_CACHE)
 	tmpcstr = j9nls_lookup_message((J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG), J9NLS_EXELIB_INTERNAL_HELP_XXPORTABLESHAREDCACHE, NULL);
 	j9file_printf(PORTLIB, J9PORT_TTY_OUT, "%s", tmpcstr);
 
 	tmpcstr = j9nls_lookup_message((J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG), J9NLS_EXELIB_INTERNAL_HELP_XXNOPORTABLESHAREDCACHE, NULL);
 	j9file_printf(PORTLIB, J9PORT_TTY_OUT, "%s", tmpcstr);
-#endif /* defined(J9VM_ARCH_X86) */
+#endif /* defined(J9VM_OPT_PORTABLE_SHARED_CACHE) */
 
 	j9file_printf(PORTLIB, J9PORT_TTY_OUT, "\n\n");
 }
