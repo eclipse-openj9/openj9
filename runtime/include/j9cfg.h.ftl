@@ -64,6 +64,11 @@ extern "C" {
 #define J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE
 #endif
 
+#if defined(J9VM_OPT_SHARED_CLASSES) \
+	&& (defined(J9VM_ARCH_AARCH64) || defined(J9VM_ARCH_POWER) || defined(J9VM_ARCH_S390) || defined(J9VM_ARCH_X86))
+#define J9VM_OPT_PORTABLE_SHARED_CACHE
+#endif
+
 #ifdef __cplusplus
 }
 #endif
