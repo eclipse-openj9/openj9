@@ -103,7 +103,6 @@ enum MessageType : uint16_t
    ResolvedRelocatableMethod_getFieldType,
 
    // For TR_J9ServerVM methods
-   VM_isClassLibraryClass,
    VM_isClassLibraryMethod,
    VM_isClassArray,
    VM_transformJlrMethodInvoke,

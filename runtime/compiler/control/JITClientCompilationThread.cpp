@@ -269,12 +269,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
             }
          }
          break;
-      case MessageType::VM_isClassLibraryClass:
-         {
-         bool rv = fe->isClassLibraryClass(std::get<0>(client->getRecvData<TR_OpaqueClassBlock*>()));
-         client->write(response, rv);
-         }
-         break;
       case MessageType::VM_isClassLibraryMethod:
          {
          auto tup = client->getRecvData<TR_OpaqueMethodBlock*, bool>();
