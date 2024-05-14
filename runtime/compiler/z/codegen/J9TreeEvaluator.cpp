@@ -13742,7 +13742,7 @@ J9::Z::TreeEvaluator::tabortEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    TR::Register *codeReg = cg->allocateRegister();
    generateRIInstruction(cg, cg->comp()->target().is64Bit() ? TR::InstOpCode::LGHI : TR::InstOpCode::LHI, node, codeReg, 0);
    //Get the nesting depth
-   cursor = generateRREInstruction(cg, TR::InstOpCode::ETND, node, codeReg, codeReg);
+   cursor = generateRREInstruction(cg, TR::InstOpCode::ETND, node, codeReg);
 
    generateRIInstruction(cg, TR::InstOpCode::CHI, node, codeReg, 0);
    //branch on zero to done label
