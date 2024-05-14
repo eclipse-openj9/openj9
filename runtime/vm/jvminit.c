@@ -2013,18 +2013,18 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 				IDATA argIndex8 = 0;
 				IDATA argIndex9 = 0;
 				BOOLEAN sharedClassDisabled = FALSE;
+#if defined(J9VM_OPT_PORTABLE_SHARED_CACHE)
 				BOOLEAN processPortableSharedCacheFlag = FALSE;
 
-#if (defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390) || defined(J9VM_ARCH_POWER) || defined(J9VM_ARCH_AARCH64))
 				IDATA argIndexXXPortableSharedCache = 0;
 				IDATA argIndexXXNoPortableSharedCache = 0;
-#endif /* defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390) || defined(J9VM_ARCH_POWER) || defined(J9VM_ARCH_AARCH64) */
 #if defined(J9VM_OPT_JITSERVER)
 				IDATA argIndexXXJITServerAOTCache = 0;
 				IDATA argIndexXXNoJITServerAOTCache = 0;
 				IDATA argIndexXXJITServerAOTCacheIgnoreLocalSCC = 0;
 				IDATA argIndexXXNoJITServerAOTCacheIgnoreLocalSCC = 0;
 #endif /* defined(J9VM_OPT_JITSERVER) */
+#endif /* defined(J9VM_OPT_PORTABLE_SHARED_CACHE) */
 
 				vm->sharedClassPreinitConfig = NULL;
 				argIndex = FIND_ARG_IN_VMARGS(OPTIONAL_LIST_MATCH, VMOPT_XSHARECLASSES, NULL);
@@ -2052,16 +2052,16 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 				argIndex8 = FIND_AND_CONSUME_VMARG(EXACT_MEMORY_MATCH, VMOPT_XSCMAXJITDATA, NULL);
 				argIndex9 = FIND_AND_CONSUME_VMARG(EXACT_MEMORY_MATCH, VMOPT_XXSHARED_CACHE_HARD_LIMIT_EQUALS, NULL);
 
-#if (defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390) || defined(J9VM_ARCH_POWER) || defined(J9VM_ARCH_AARCH64))
+#if defined(J9VM_OPT_PORTABLE_SHARED_CACHE)
 				argIndexXXPortableSharedCache = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXPORTABLESHAREDCACHE, NULL);
 				argIndexXXNoPortableSharedCache = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXNOPORTABLESHAREDCACHE, NULL);
-#endif /* defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390) || defined(J9VM_ARCH_POWER) || defined(J9VM_ARCH_AARCH64) */
 #if defined(J9VM_OPT_JITSERVER)
 				argIndexXXJITServerAOTCache = FIND_ARG_IN_VMARGS(EXACT_MATCH, "-XX:+JITServerUseAOTCache", NULL);
 				argIndexXXNoJITServerAOTCache = FIND_ARG_IN_VMARGS(EXACT_MATCH, "-XX:-JITServerUseAOTCache", NULL);
 				argIndexXXJITServerAOTCacheIgnoreLocalSCC = FIND_ARG_IN_VMARGS(EXACT_MATCH, "-XX:+JITServerAOTCacheIgnoreLocalSCC", NULL);
 				argIndexXXNoJITServerAOTCacheIgnoreLocalSCC = FIND_ARG_IN_VMARGS(EXACT_MATCH, "-XX:-JITServerAOTCacheIgnoreLocalSCC", NULL);
 #endif /* defined(J9VM_OPT_JITSERVER) */
+#endif /* defined(J9VM_OPT_PORTABLE_SHARED_CACHE) */
 
 				if (!sharedClassDisabled
 					&& !J9_SHARED_CACHE_DEFAULT_BOOT_SHARING(vm)
@@ -2153,11 +2153,12 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 					vm->sharedClassPreinitConfig = piConfig;
 
 					if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_AOT)) {
-#if (defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390) || defined(J9VM_ARCH_POWER) || defined(J9VM_ARCH_AARCH64))
+#if defined(J9VM_OPT_PORTABLE_SHARED_CACHE)
 						processPortableSharedCacheFlag = TRUE;
-#endif /* defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390) || defined(J9VM_ARCH_POWER) || defined(J9VM_ARCH_AARCH64) */
+#endif /* defined(J9VM_OPT_PORTABLE_SHARED_CACHE) */
 					}
 				}
+#if defined(J9VM_OPT_PORTABLE_SHARED_CACHE)
 #if defined(J9VM_OPT_JITSERVER)
 				if ((argIndexXXJITServerAOTCache > argIndexXXNoJITServerAOTCache)
 					&& (argIndexXXJITServerAOTCacheIgnoreLocalSCC > argIndexXXNoJITServerAOTCacheIgnoreLocalSCC)
@@ -2168,7 +2169,6 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 					processPortableSharedCacheFlag = TRUE;
 				}
 #endif /* defined(J9VM_OPT_JITSERVER) */
-
 				if (TRUE == processPortableSharedCacheFlag) {
 					if (argIndexXXPortableSharedCache > argIndexXXNoPortableSharedCache) {
 						vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_ENABLE_PORTABLE_SHARED_CACHE;
@@ -2182,6 +2182,7 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 						}
 					}
 				}
+#endif /* defined(J9VM_OPT_PORTABLE_SHARED_CACHE) */
 			}
 #endif
 
