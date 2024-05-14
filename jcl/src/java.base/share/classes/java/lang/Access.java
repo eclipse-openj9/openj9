@@ -46,6 +46,9 @@ import com.ibm.oti.reflect.TypeAnnotationParser;
 import java.io.InputStream;
 /*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 import java.io.IOException;
+/*[IF JAVA_SPEC_VERSION >= 23]*/
+import java.io.PrintStream;
+/*[ENDIF] JAVA_SPEC_VERSION >= 23 */
 import java.lang.module.ModuleDescriptor;
 import java.net.URL;
 import java.net.URI;
@@ -561,6 +564,13 @@ final class Access implements JavaLangAccess {
 	@Override
 	public int stringSize(long x) {
 		return Long.stringSize(x);
+	}
+
+	/*[IF !INLINE-TYPES]*/
+	@Override
+	/*[ENDIF] !INLINE-TYPES */
+	public PrintStream initialSystemErr() {
+		return System.initialErr;
 	}
 /*[ENDIF] JAVA_SPEC_VERSION >= 23 */
 
