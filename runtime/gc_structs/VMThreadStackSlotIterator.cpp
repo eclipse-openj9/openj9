@@ -148,8 +148,8 @@ GC_VMThreadStackSlotIterator::scanContinuationSlots(
 
 #if JAVA_SPEC_VERSION >= 19
 	J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(vmThread, continuationObjectPtr);
-	j9object_t threadObject = VM_ContinuationHelpers::getThreadObjectForContinuation(vmThread, continuation, continuationObjectPtr);
-	vmThread->javaVM->internalVMFunctions->walkContinuationStackFrames(vmThread, continuation, threadObject, &stackWalkState);
+	/* pass NULL as threadObject to avoid to retrieve threadObject via const pool api, since we don't need it for this case */
+	vmThread->javaVM->internalVMFunctions->walkContinuationStackFrames(vmThread, continuation, NULL, &stackWalkState);
 #endif /* JAVA_SPEC_VERSION >= 19 */
 }
 
