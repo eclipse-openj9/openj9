@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.lang.management.ClassLoadingMXBean;
 import java.lang.management.CompilationMXBean;
 import java.lang.management.GarbageCollectorMXBean;
+import java.lang.management.LockInfo;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
 import java.lang.management.MemoryManagerMXBean;
@@ -1301,6 +1302,35 @@ public class TestManagementFactory {
 			ThreadInfo ti2 = ManagementFactory.getThreadMXBean().getThreadInfo(Thread.currentThread().getId());
 			logger.debug("ti1 : " + ti1.toString());
 			logger.debug("ti2 : " + ti2.toString());
+			if (!ti2.equals(ti1)) {
+				System.out.println("blockedCount ti1: " + ti1.getBlockedCount() + " ti2: " + ti2.getBlockedCount());
+				System.out.println("blockedTime ti1: " + ti1.getBlockedTime() + " ti2: " + ti2.getBlockedTime());
+				System.out.println("lockOwnerId ti1: " + ti1.getLockOwnerId() + " ti2: " + ti2.getLockOwnerId());
+				System.out.println("waitedCount ti1: " + ti1.getWaitedCount() + " ti2: " + ti2.getWaitedCount());
+				System.out.println("waitedTime ti1: " + ti1.getWaitedTime() + " ti2: " + ti2.getWaitedTime());
+				System.out.println("inNative ti1: " + ti1.isInNative() + " ti2: " + ti2.isInNative());
+				System.out.println("suspended ti1: " + ti1.isSuspended() + " ti2: " + ti2.isSuspended());
+				System.out.println("threadName ti1: " + ti1.getThreadName() + " ti2: " + ti2.getThreadName());
+				System.out.println("threadState ti1: " + ti1.getThreadState() + " ti2: " + ti2.getThreadState());
+				System.out.println("lockName ti1: " + ti1.getLockName() + " ti2: " + ti2.getLockName());
+				System.out.println("lockOwnerName ti1: " + ti1.getLockOwnerName() + " ti2: " + ti2.getLockOwnerName());
+				LockInfo li1 = ti1.getLockInfo();
+				LockInfo li2 = ti2.getLockInfo();
+				if (!li2.equals(li1)) {
+					System.out.println("lockInfo ti1: " + li1 + " ti2: " + li2);
+				}
+				StackTraceElement[] st1 = ti1.getStackTrace();
+				StackTraceElement[] st2 = ti2.getStackTrace();
+				if (!st2.equals(st1)) {
+					System.out.println("stackTrace length ti1: " + st1.length + " ti2: " + st2.length);
+					if (st1.length == st2.length) {
+						for (int i = 0; i < st1.length; i++) {
+							System.out.println("ti1: " + st1[i]);
+							System.out.println("ti2: " + st2[i]);
+						}
+					}
+				}
+			}
 			AssertJUnit.assertEquals(ti2, ti1);
 
 			AssertJUnit.assertEquals(proxy.getThreadInfo(Thread.currentThread().getId(), 2),
