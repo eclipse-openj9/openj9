@@ -10862,12 +10862,13 @@ static TR::Register *inlineIntrinsicIndexOf_P10(TR::Node *node, TR::CodeGenerato
    generateTrg1Src1Instruction(cg, TR::InstOpCode::extsw, node, position, offset);
    generateTrg1Src1Instruction(cg, TR::InstOpCode::extsw, node, endPos, length);
 
-   // sanity check : if str isLatin1, then ch should be isLatin1 too.
+   /*
+    * Zero out upper bits. ch is later compared against values loaded by lbzx.
+    * Comparison expect bits other than the lowest 8 bits are zero.
+    */
    if (isLatin1)
       {
-      generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, temp, ch, 24, 0xFF);
-      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpi4, node, cr6, temp, 0);
-      generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, endLabel, cr6);
+      generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, ch, ch, 0, 0xFF);
       }
 
 
