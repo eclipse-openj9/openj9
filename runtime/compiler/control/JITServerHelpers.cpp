@@ -1461,3 +1461,49 @@ JITServerHelpers::generateUID()
       uid = dist(rng);
    return uid;
    }
+
+
+uint32_t
+JITServerHelpers::getFullClassNameLength(const J9ROMClass *romClass, const J9ROMClass *baseComponent,
+                                         uint32_t numDimensions)
+   {
+   if (!numDimensions)
+      return J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(romClass));
+
+   TR_ASSERT(baseComponent, "Invalid arguments");
+   return J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(baseComponent)) + numDimensions +
+          (J9ROMCLASS_IS_ARRAY(baseComponent) ? 0 : 2);
+   }
+
+void
+JITServerHelpers::getFullClassName(uint8_t *name, uint32_t length, const J9ROMClass *romClass,
+                                   const J9ROMClass *baseComponent, uint32_t numDimensions)
+   {
+   TR_ASSERT(length == getFullClassNameLength(romClass, baseComponent, numDimensions), "Invalid length");
+
+   if (!numDimensions)
+      {
+      memcpy(name, J9UTF8_DATA(J9ROMCLASS_CLASSNAME(romClass)), length);
+      return;
+      }
+
+   TR_ASSERT(baseComponent, "Invalid arguments");
+   // The base component is the class that represents the leaf of the tree that is the (generally multi-dimensional)
+   // array. For primitive arrays of any number of dimensions, the base component is always a 1D primitive array
+   // (e.g., "[I"), while for object arrays the base component is always a regular (non-primitive) class.
+   bool primitive = J9ROMCLASS_IS_ARRAY(baseComponent);
+   const J9UTF8 *baseName = J9ROMCLASS_CLASSNAME(baseComponent);
+   uint32_t baseNameLength = J9UTF8_LENGTH(baseName);
+
+   // Build the array class signature that will be passed to jitGetClassInClassloaderFromUTF8() on the client.
+   // Note that for object arrays we can simply use the "L" type signature since the distinction with "Q" types
+   // is ignored during array class lookup by name (see internalFindArrayClass() in runtime/vm/classsupport.c).
+   uint32_t i;
+   for (i = 0; i < numDimensions; ++i)
+      name[i] = '[';
+   if (!primitive)
+      name[i++] = 'L';
+   memcpy(name + i, J9UTF8_DATA(baseName), baseNameLength);
+   if (!primitive)
+      name[i + baseNameLength] = ';';
+   }

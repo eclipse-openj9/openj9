@@ -167,7 +167,8 @@ public:
 
    static const char *getRecordName() { return "class"; }
    static AOTCacheClassRecord *create(uintptr_t id, const AOTCacheClassLoaderRecord *classLoaderRecord,
-                                      const JITServerROMClassHash &hash, const J9ROMClass *romClass);
+                                      const JITServerROMClassHash &hash, const J9ROMClass *romClass,
+                                      const J9ROMClass *baseComponent, uint32_t numDimensions);
    void subRecordsDo(const std::function<void(const AOTCacheRecord *)> &f) const override;
 
 private:
@@ -176,10 +177,11 @@ private:
    friend AOTCacheClassRecord *AOTCacheRecord::readRecord<>(FILE *f, const JITServerAOTCacheReadContext &context);
 
    AOTCacheClassRecord(uintptr_t id, const AOTCacheClassLoaderRecord *classLoaderRecord,
-                       const JITServerROMClassHash &hash, const J9ROMClass *romClass);
+                       const JITServerROMClassHash &hash, const J9ROMClass *romClass, const J9ROMClass *baseComponent,
+                       uint32_t numDimensions, uint32_t nameLength);
    AOTCacheClassRecord(const JITServerAOTCacheReadContext &context, const ClassSerializationRecord &header);
 
-   static size_t size(size_t nameLength)
+   static size_t size(uint32_t nameLength)
       {
       return offsetof(AOTCacheClassRecord, _data) + ClassSerializationRecord::size(nameLength);
       }
@@ -414,7 +416,8 @@ public:
    // space. The getThunkRecord method instead has an accompanying createAndStoreThunk method that will create and store
    // a new thunk record if there is sufficient space.
    const AOTCacheClassLoaderRecord *getClassLoaderRecord(const uint8_t *name, size_t nameLength);
-   const AOTCacheClassRecord *getClassRecord(const AOTCacheClassLoaderRecord *loaderRecord, const J9ROMClass *romClass);
+   const AOTCacheClassRecord *getClassRecord(const AOTCacheClassLoaderRecord *loaderRecord, const J9ROMClass *romClass,
+                                             const J9ROMClass *baseComponent, uint32_t numDimensions);
    const AOTCacheMethodRecord *getMethodRecord(const AOTCacheClassRecord *definingClassRecord,
                                                uint32_t index, const J9ROMMethod *romMethod);
    const AOTCacheClassChainRecord *getClassChainRecord(const AOTCacheClassRecord *const *classRecords, size_t length);

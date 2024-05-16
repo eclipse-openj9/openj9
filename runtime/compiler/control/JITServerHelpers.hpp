@@ -146,6 +146,14 @@ public:
    // Helper routine to generate a unique ID for the client or server
    static uint64_t generateUID();
 
+   static uint32_t getFullClassNameLength(const J9ROMClass *romClass, const J9ROMClass *baseComponent,
+                                          uint32_t numDimensions);
+   // Writes the full class name (array class signature for arrays, class name otherwise) into the result buffer.
+   // The buffer length must be at least getFullClassNameLength(romClass, baseComponent, numDimensions).
+   // The baseComponent ROMClass and numDimensions correspond to the result of TR_J9VM::getBaseComponentClass().
+   static void getFullClassName(uint8_t *result, uint32_t length, const J9ROMClass *romClass,
+                                const J9ROMClass *baseComponent, uint32_t numDimensions);
+
 private:
    static void getROMClassData(const ClientSessionData::ClassInfo &classInfo, ClassInfoDataType dataType, void *data);
 
