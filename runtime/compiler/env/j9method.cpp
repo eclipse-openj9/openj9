@@ -2636,9 +2636,13 @@ void TR_ResolvedJ9Method::construct()
 
    static X BigIntegerMethods[] =
       {
-      {x(TR::java_math_BigInteger_add,                   "add",                   "(Ljava/math/BigInteger;)Ljava/math/BigInteger;")},
-      {x(TR::java_math_BigInteger_subtract,              "subtract",              "(Ljava/math/BigInteger;)Ljava/math/BigInteger;")},
-      {x(TR::java_math_BigInteger_multiply,              "multiply",              "(Ljava/math/BigInteger;)Ljava/math/BigInteger;")},
+      {x(TR::java_math_BigInteger_add,                             "add",                   "(Ljava/math/BigInteger;)Ljava/math/BigInteger;")},
+      {x(TR::java_math_BigInteger_subtract,                        "subtract",              "(Ljava/math/BigInteger;)Ljava/math/BigInteger;")},
+      {x(TR::java_math_BigInteger_multiply,                        "multiply",              "(Ljava/math/BigInteger;)Ljava/math/BigInteger;")},
+      {x(TR::java_math_BigInteger_init_long,                       "<init>",                "(J)V")},
+      {x(TR::java_math_BigInteger_toByteArray,                     "toByteArray",           "()[B")},
+      {x(TR::java_math_BigInteger_stripLeadingZeroBytes1,          "stripLeadingZeroBytes", "([BII)[I")},
+      {x(TR::java_math_BigInteger_stripLeadingZeroBytes2,          "stripLeadingZeroBytes", "(I[BII)[I")},
       {    TR::unknownMethod}
       };
 

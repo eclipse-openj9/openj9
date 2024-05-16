@@ -835,6 +835,10 @@
    java_math_BigInteger_add,
    java_math_BigInteger_subtract,
    java_math_BigInteger_multiply,
+   java_math_BigInteger_init_long,
+   java_math_BigInteger_toByteArray,
+   java_math_BigInteger_stripLeadingZeroBytes1,
+   java_math_BigInteger_stripLeadingZeroBytes2,
 
    java_text_NumberFormat_format,
 
