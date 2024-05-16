@@ -137,6 +137,7 @@ int32_t J9::Options::_highActiveThreadThreshold = -1;
 int32_t J9::Options::_veryHighActiveThreadThreshold = -1;
 int32_t J9::Options::_aotCachePersistenceMinDeltaMethods = 200;
 int32_t J9::Options::_aotCachePersistenceMinPeriodMs = 10000; // ms
+int32_t J9::Options::_jitserverMallocTrimInterval = 1000 * 30; // 30000ms = 30s
 int32_t J9::Options::_lowCompDensityModeEnterThreshold = 4; // Maximum number of compilations per 10 min of CPU required to enter low compilation density mode. Use 0 to disable feature
 int32_t J9::Options::_lowCompDensityModeExitThreshold = 15; // Minimum number of compilations per 10 min of CPU required to exit low compilation density mode
 int32_t J9::Options::_lowCompDensityModeExitLPQSize = 120;  // Minimum number of compilations in LPQ to take us out of low compilation density mode
@@ -1062,6 +1063,8 @@ TR::OptionTable OMR::Options::_feOptions[] = {
         TR::Options::JITServerAOTCacheLoadLimitOption, 1, 0, "P%s"},
    {"jitserverAOTCacheStoreExclude=", "D{regex}\tdo not store methods matching regex in the JITServer AOT cache",
         TR::Options::JITServerAOTCacheStoreLimitOption, 1, 0, "P%s"},
+   {"jitserverMallocTrimInterval=", "M<nnn>\tmiminum time between two consecutive JITServer client malloc_trim invocations (ms)",
+        TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_jitserverMallocTrimInterval, 0, "F%d", NOT_IN_SUBSET },
 #endif /* defined(J9VM_OPT_JITSERVER) */
    {"jProfilingEnablementSampleThreshold=", "M<nnn>\tNumber of global samples to allow generation of JProfiling bodies",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_jProfilingEnablementSampleThreshold, 0, "F%d", NOT_IN_SUBSET },
