@@ -376,6 +376,7 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    static const uint32_t DEFAULT_JITSERVER_TIMEOUT = 30000; // ms
    static int32_t _aotCachePersistenceMinDeltaMethods;
    static int32_t _aotCachePersistenceMinPeriodMs;
+   static int32_t _jitserverMallocTrimInterval;
    static int32_t _lowCompDensityModeEnterThreshold;
    static int32_t _lowCompDensityModeExitThreshold;
    static int32_t _lowCompDensityModeExitLPQSize;
