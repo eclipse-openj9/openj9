@@ -6905,6 +6905,7 @@ static bool genZeroInitForEntireObjectOrHybridArraylet(
          // ----------
          // FIXED SIZE
          // ----------
+
          if (comp->target().is64Bit() && !IS_32BIT_SIGNED(objectSizeInBytes))
             {
             generateRegImm64Instruction(TR::InstOpCode::MOV8RegImm64, node, numBytesToZeroInitReg, objectSizeInBytes, cg);
@@ -6915,31 +6916,141 @@ static bool genZeroInitForEntireObjectOrHybridArraylet(
             }
          }
 
-      // Begin zero initialization after the header
+      // If the compile-time size is unknown, generate a runtime length check to
+      // determine if REP STOS initialization is more appropriate.
       //
-      generateRegMemInstruction(TR::InstOpCode::LEARegMem(), node, segmentReg, generateX86MemoryReference(newObjectAddressReg, headerSizeInBytes, cg), cg);
+      // On 32-bit, always do REP STOS initialization inline.
+      //
+      static const char *p = feGetEnv("TR_repStosZeroInitThresholdBytes");
+      static int32_t repStosZeroInitThresholdBytes = p ? atoi(p) : 64;
+      static bool doInlineRepStosZeroInit = feGetEnv("TR_dontInlineRepStosZeroInit") ? false : true;
 
-      TR::Register *scratchReg = NULL;
+      TR::Register *zeroInitScratchReg = NULL;
       if (comp->target().is64Bit())
          {
-         scratchReg = srm->findOrCreateScratchRegister();
-         generateRegRegInstruction(TR::InstOpCode::MOVRegReg(), node, scratchReg, newObjectAddressReg, cg);
+         zeroInitScratchReg = srm->findOrCreateScratchRegister();
+         }
+
+#ifdef TR_TARGET_64BIT
+      if (sizeReg && doInlineRepStosZeroInit)
+         {
+         int32_t repSTOSThresholdAdjustment = 0;
+         int32_t startingAddressAdjustment = 0;
+
+         /**
+          * When initialization will be done inline with 8-byte stores, if the object
+          * header is not a multiple of 8 then adjust the starting address back by
+          * four bytes to ensure the stores are aligned on their natural boundary
+          * and so that initialization does not run past the end of the newly allocated
+          * object.  The REP STOS threshold will also need to be adjusted to account
+          * for these four bytes.
+          */
+         if (headerSizeInBytes % 16 == 12)
+            {
+            repSTOSThresholdAdjustment = -4;
+            startingAddressAdjustment = -4;
+            }
+
+         TR::LabelSymbol *repStosInitLabelSym = generateLabelSymbol(cg);
+         TR::LabelSymbol *mergeInitLabelSym = generateLabelSymbol(cg);
+
+         generateRegImmInstruction(
+            TR::InstOpCode::CMPRegImms(),
+            node,
+            numBytesToZeroInitReg,
+            repStosZeroInitThresholdBytes + repSTOSThresholdAdjustment,
+            cg);
+         generateLabelInstruction(TR::InstOpCode::JG4, node, repStosInitLabelSym, cg);
+
+         // Begin zero initialization after the header, adjusting for header size
+         // if necessary
+         //
+         generateRegMemInstruction(
+            TR::InstOpCode::LEARegMem(),
+            node,
+            segmentReg,
+            generateX86MemoryReference(newObjectAddressReg, headerSizeInBytes + startingAddressAdjustment, cg),
+            cg);
+
+         generateRegRegInstruction(TR::InstOpCode::XOR4RegReg, node, zeroInitScratchReg, zeroInitScratchReg, cg);
+
+         // Generate mainline zero initialization with stores
+         //
+         TR::LabelSymbol *zeroInitLoopLabelSym = generateLabelSymbol(cg);
+         generateLabelInstruction(TR::InstOpCode::label, node, zeroInitLoopLabelSym, cg);
+         generateMemRegInstruction(TR::InstOpCode::S8MemReg, node,
+            generateX86MemoryReference(segmentReg, 0, cg),
+            zeroInitScratchReg, cg);
+         generateRegImmInstruction(TR::InstOpCode::ADD8RegImms, node, segmentReg, 8, cg);
+         generateRegImmInstruction(TR::InstOpCode::SUB8RegImms, node, numBytesToZeroInitReg, 8, cg);
+         generateLabelInstruction(TR::InstOpCode::JG4, node, zeroInitLoopLabelSym, cg);
+
+         {
+         // Generate out-of-line REP STOS initialization
+         //
+         TR_OutlinedInstructionsGenerator og(repStosInitLabelSym, node, cg);
+
+         // newObjectAddressReg must be in rax
+         // segmentReg must be in rdi
+         // numBytesToZeroInitReg must be in rcx
+
+         // Begin zero initialization after the header
+         //
+         generateRegMemInstruction(
+            TR::InstOpCode::LEARegMem(),
+            node,
+            segmentReg,
+            generateX86MemoryReference(newObjectAddressReg, headerSizeInBytes, cg),
+            cg);
+
+         generateRegRegInstruction(TR::InstOpCode::MOVRegReg(), node, zeroInitScratchReg, newObjectAddressReg, cg);
+         generateRegRegInstruction(TR::InstOpCode::XOR4RegReg, node, newObjectAddressReg, newObjectAddressReg, cg);
+         generateInstruction(TR::InstOpCode::REPSTOSB, node, cg);
+         generateRegRegInstruction(TR::InstOpCode::MOVRegReg(), node, newObjectAddressReg, zeroInitScratchReg, cg);
+         generateLabelInstruction(TR::InstOpCode::JMP4, node, mergeInitLabelSym, cg);
+         og.endOutlinedInstructionSequence();
+         }
+
+         srm->reclaimScratchRegister(zeroInitScratchReg);
+
+         // Merge
+         //
+         generateLabelInstruction(TR::InstOpCode::label, node, mergeInitLabelSym, cg);
          }
       else
          {
-         generateRegInstruction(TR::InstOpCode::PUSHReg, node, newObjectAddressReg, cg);
+#endif
+         // Begin zero initialization after the header
+         //
+         generateRegMemInstruction(
+            TR::InstOpCode::LEARegMem(),
+            node,
+            segmentReg,
+            generateX86MemoryReference(newObjectAddressReg, headerSizeInBytes, cg),
+            cg);
+
+         if (comp->target().is64Bit())
+            {
+            generateRegRegInstruction(TR::InstOpCode::MOVRegReg(), node, zeroInitScratchReg, newObjectAddressReg, cg);
+            }
+         else
+            {
+            generateRegInstruction(TR::InstOpCode::PUSHReg, node, newObjectAddressReg, cg);
+            }
+         generateRegRegInstruction(TR::InstOpCode::XOR4RegReg, node, newObjectAddressReg, newObjectAddressReg, cg);
+         generateInstruction(TR::InstOpCode::REPSTOSB, node, cg);
+         if (comp->target().is64Bit())
+            {
+            generateRegRegInstruction(TR::InstOpCode::MOVRegReg(), node, newObjectAddressReg, zeroInitScratchReg, cg);
+            srm->reclaimScratchRegister(zeroInitScratchReg);
+            }
+         else
+            {
+            generateRegInstruction(TR::InstOpCode::POPReg, node, newObjectAddressReg, cg);
+            }
+#ifdef TR_TARGET_64BIT
          }
-      generateRegRegInstruction(TR::InstOpCode::XOR4RegReg, node, newObjectAddressReg, newObjectAddressReg, cg);
-      generateInstruction(TR::InstOpCode::REPSTOSB, node, cg);
-      if (comp->target().is64Bit())
-         {
-         generateRegRegInstruction(TR::InstOpCode::MOVRegReg(), node, newObjectAddressReg, scratchReg, cg);
-         srm->reclaimScratchRegister(scratchReg);
-         }
-      else
-         {
-         generateRegInstruction(TR::InstOpCode::POPReg, node, newObjectAddressReg, cg);
-         }
+#endif
 
       return true;
       }
