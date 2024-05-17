@@ -22,7 +22,9 @@
 
 #include <algorithm>
 #include <limits.h>
+#ifdef LINUX
 #include <malloc.h>
+#endif // LINUX
 #include <stdarg.h>
 #include "bcnames.h"
 #include "jithash.h"
