@@ -390,7 +390,7 @@ fixJNIMethodID(J9VMThread *currentThread, J9Method *oldMethod, J9Method *newMeth
 				void **methodIDs = NULL;
 				J9Method *equivalentMethod = NULL;
 				BOOLEAN found = FALSE;
-				
+
 				currentClass = currentClass->replacedClass;
 				methodIDs = currentClass->jniIDs;
 
@@ -493,13 +493,13 @@ areSingleSlotConstantRefsIdentical(J9ROMConstantPoolItem * romCP1, U_32 index1, 
 #define CALL_SITE_HEADER_OFFSET 2
 
 static UDATA
-isMethodHandleAField(UDATA cpType) 
+isMethodHandleAField(UDATA cpType)
 {
 	return (cpType == MH_REF_GETFIELD) || (cpType == MH_REF_GETSTATIC) || (cpType == MH_REF_PUTSTATIC) || (cpType == MH_REF_PUTFIELD);
 }
 
 static U_16*
-findBSMDataAtIndex(U_16* bsmData, U_16 bsmIndex) 
+findBSMDataAtIndex(U_16* bsmData, U_16 bsmIndex)
 {
 	U_16 i = 0;
 	for (i = 0; i < bsmIndex; i++) {
@@ -510,7 +510,7 @@ findBSMDataAtIndex(U_16* bsmData, U_16 bsmIndex)
 }
 
 static U_32
-iterateToNextArgument(U_32 sigIndex, U_32 sigLength, U_8* sigData) 
+iterateToNextArgument(U_32 sigIndex, U_32 sigLength, U_8* sigData)
 {
 	if (sigIndex >= sigLength) return sigIndex;
 
@@ -526,10 +526,10 @@ iterateToNextArgument(U_32 sigIndex, U_32 sigLength, U_8* sigData)
 }
 
 /**
- * Verify callsite equivalence. 
- * 
+ * Verify callsite equivalence.
+ *
  * Structure of CallSiteData structure in ROM class (also see romclasswalk.c):
- * 
+ *
  * romClass->callSiteData : {
  * 	SRP callSiteNAS[romClass->callSiteCount]; // structures describing the resolved callsite. Note: SRP is 32 bits
  * 	U_16 callSiteBSMIndex[romClass->callSiteCount]; // map from callSiteIndex value to bootStrapMethodData index
@@ -539,7 +539,7 @@ iterateToNextArgument(U_32 sigIndex, U_32 sigLength, U_8* sigData)
  *		U_16 argument[argumentCount]; // The additional BSM arguments, these are constant pool indices.
  * 	} bootStrapMethodData[romClass->bsmCount];
  * }
- * 
+ *
  */
 static UDATA
 areCallSiteDataMethodsEquivalent(J9ROMClass* romClass1, UDATA callSiteIndex1, J9ROMClass* romClass2, UDATA callSiteIndex2)
@@ -676,7 +676,7 @@ areDoubleSlotConstantRefsIdentical(J9ROMConstantPoolItem * romCP1, U_32 index1, 
 
 /**
  * Compares two methods bytecode by bytecode to determine equivalence.
- * 
+ *
  * @param method1 first method to compare
  * @param romClass1 ROM class associated with method1
  * @param method2 second method to compare
@@ -702,7 +702,7 @@ areMethodsEquivalent(J9ROMMethod * method1, J9ROMClass * romClass1, J9ROMMethod 
  * @return true if equivalent, false otherwise
  */
 static UDATA
-areMethodsEquivalentPropagateCallSites(J9ROMMethod * method1, J9Class *ramClass1, J9ROMMethod * method2, J9Class *ramClass2) 
+areMethodsEquivalentPropagateCallSites(J9ROMMethod * method1, J9Class *ramClass1, J9ROMMethod * method2, J9Class *ramClass2)
 {
 	return areMethodsEquivalentSub(method1, ramClass1->romClass, ramClass1, method2, ramClass2->romClass, ramClass2);
 }
@@ -712,7 +712,7 @@ areMethodsEquivalentPropagateCallSites(J9ROMMethod * method1, J9Class *ramClass1
  * dynamic callsites are determined to be equivalent and RAM classes are not null, resolved
  * callsites will be propagated from ramClass1 to ramClass2. It is assumed that callsites will
  * be propagated from 1 (original) to 2 (new).
- * 
+ *
  * @param method1 first method to compare
  * @param romClass1 ROM class associated with method1
  * @param ramClass1 RAM class associated with method1, must be provided to propagate callsites
@@ -989,9 +989,9 @@ fixSubclassHierarchy(J9VMThread * currentThread, J9HashTable * classPairs)
 		}
 
 		superclass = GET_SUPERCLASS(replacementClass);
-		
+
 		/* Find the correct superclass. If the superclass of replacementClass
-		 * was replaced itself, make sure we use the new superclass 
+		 * was replaced itself, make sure we use the new superclass
 		 */
 		exemplar.originalRAMClass = superclass;
 		result = hashTableFind(classPairs, &exemplar);
@@ -1791,7 +1791,7 @@ fixMemberNames(J9VMThread *currentThread, j9object_t *memberNamesToFix)
 			UDATA offset = fieldID->offset;
 
 			if (J9_ARE_ANY_BITS_SET(romField->modifiers, J9AccStatic)) {
-				offset |= J9_SUN_STATIC_FIELD_OFFSET_TAG;
+				offset = J9VM_STATIC_FIELD_OFFSET(currentThread, fieldID);
 				if (J9_ARE_ANY_BITS_SET(romField->modifiers, J9AccFinal)) {
 					offset |= J9_SUN_FINAL_FIELD_OFFSET_TAG;
 				}
@@ -3360,7 +3360,7 @@ verifyRecordAttributesAreSame(J9ROMClass *originalROMClass, J9ROMClass *replacem
 {
 	jvmtiError rc = JVMTI_ERROR_NONE;
 
-	/* Since retranformation is not allowed to change inheritance there's no need to consider 
+	/* Since retranformation is not allowed to change inheritance there's no need to consider
 	 * one class being a record and one not. */
 	if (J9ROMCLASS_IS_RECORD(originalROMClass) && J9ROMCLASS_IS_RECORD(replacementROMClass)) {
 		U_32 originalNumberOfRecords = getNumberOfRecordComponents(originalROMClass);
@@ -3373,15 +3373,15 @@ verifyRecordAttributesAreSame(J9ROMClass *originalROMClass, J9ROMClass *replacem
 				U_32 i = 0;
 
 				/* Compare record components in order. For two records to be the same their record components
-				 * must be in the same order. According to the spec: "Each component of the record must have 
-				 * exactly one corresponding entry in the 
+				 * must be in the same order. According to the spec: "Each component of the record must have
+				 * exactly one corresponding entry in the
 				 * components array, in the order in which the components are declared."
 				 */
 				originalRecordComponent = recordComponentStartDo(originalROMClass);
 				replacementRecordComponent = recordComponentStartDo(replacementROMClass);
 				for (; i < originalNumberOfRecords; i++) {
 					/* verify name and signature */
-					if (!NAME_AND_SIG_IDENTICAL(originalRecordComponent, replacementRecordComponent, 
+					if (!NAME_AND_SIG_IDENTICAL(originalRecordComponent, replacementRecordComponent,
 						J9ROMRECORDCOMPONENTSHAPE_NAME, J9ROMRECORDCOMPONENTSHAPE_SIGNATURE)
 					) {
 						rc = JVMTI_ERROR_UNSUPPORTED_REDEFINITION_CLASS_ATTRIBUTE_CHANGED;
@@ -3416,7 +3416,7 @@ verifyPermittedSubclassAttributeContentsMatch(J9ROMClass *originalROMClass, J9RO
 				U_32 j = 0;
 				BOOLEAN foundMatchingSubclass = FALSE;
 				J9UTF8* originalSubclassNameUTF = permittedSubclassesNameAtIndex(originalPermittedSubclassesCountPtr, i);
-				
+
 				/* Find matching subclass name in replacement ROM class. The permitted subclasses are not required to be in the same order
 				 * as the original class. Assume the replacement subclass is in the same slot as original to try to improve speed.
 				 */
@@ -3474,10 +3474,10 @@ verifyClassesAreCompatible(J9VMThread * currentThread, jint class_count, J9JVMTI
 
 		if (NULL == originalSuperclassName) {
 			if (NULL != replacementSuperclassName) {
-				return JVMTI_ERROR_UNSUPPORTED_REDEFINITION_HIERARCHY_CHANGED;							
+				return JVMTI_ERROR_UNSUPPORTED_REDEFINITION_HIERARCHY_CHANGED;
 			}
 		} else if (NULL == replacementSuperclassName) {
-			return JVMTI_ERROR_UNSUPPORTED_REDEFINITION_HIERARCHY_CHANGED;			
+			return JVMTI_ERROR_UNSUPPORTED_REDEFINITION_HIERARCHY_CHANGED;
 		} else if (!utfsAreIdentical(originalSuperclassName, replacementSuperclassName)) {
 			return JVMTI_ERROR_UNSUPPORTED_REDEFINITION_HIERARCHY_CHANGED;
 		}
@@ -3488,7 +3488,7 @@ verifyClassesAreCompatible(J9VMThread * currentThread, jint class_count, J9JVMTI
 			return JVMTI_ERROR_UNSUPPORTED_REDEFINITION_CLASS_MODIFIERS_CHANGED;
 		}
 
-		/* 
+		/*
 		 * cannot add or remove a finalizer.  If (FINALIZE_NEEDED || HAS_EMPTY_FINALIZE) has changed between
 		 * the original and new ROM class then the shape of the class will have to change. This can occur
 		 * if a finalizer has been added or removed.
@@ -3503,9 +3503,9 @@ verifyClassesAreCompatible(J9VMThread * currentThread, jint class_count, J9JVMTI
 			}
 		}
 
-		/* 
-		 * cannot modify java.lang.Object to have a non-empty finalizer, java.lang.Object has a null 
-		 * for the superclass name 
+		/*
+		 * cannot modify java.lang.Object to have a non-empty finalizer, java.lang.Object has a null
+		 * for the superclass name
 		 */
 		if (J9ROMCLASS_FINALIZE_NEEDED(originalROMClass) != J9ROMCLASS_FINALIZE_NEEDED(replacementROMClass)){
 			if (NULL == J9ROMCLASS_SUPERCLASSNAME(originalROMClass)){
@@ -3701,8 +3701,8 @@ reloadROMClasses(J9VMThread * currentThread, jint class_count, const jvmtiClassD
 		} else if (J9_ARE_ALL_BITS_SET(originalRAMClass->classFlags, J9ClassIsAnonymous)) {
 			options = options | J9_FINDCLASS_FLAG_ANON;
 			loadData.classLoader = vm->anonClassLoader;
-		} 
-		
+		}
+
 		/* Create the new ROM class */
 
 		loadData.classBeingRedefined = originalRAMClass;
@@ -3824,7 +3824,7 @@ verifyNewClasses(J9VMThread * currentThread, jint class_count, J9JVMTIClassPair 
 			}
 		}
 	}
-	
+
 	verifyData->redefinedClasses = NULL;
 	verifyData->redefinedClassesCount = 0;
 	verifyData->vmStruct = NULL;
@@ -4025,7 +4025,7 @@ addMethodEquivalence(J9VMThread * currentThread, J9Method * oldMethod, J9Method 
 {
 	J9JVMTIMethodEquivalence newEquivalence = {0};
 	jvmtiError rc = JVMTI_ERROR_NONE;
-	
+
 	/* Create the equivalence hash table if it does not already exist */
 
 	if (NULL == *methodEquivalences) {
@@ -4067,7 +4067,7 @@ getMethodEquivalence(J9VMThread * currentThread, J9Method * method, J9HashTable 
 {
 	J9JVMTIMethodEquivalence* equivalence;
 	J9JVMTIMethodEquivalence find = {0};
-	
+
 	find.oldMethod = method;
 
 	if (NULL != *methodEquivalences) {

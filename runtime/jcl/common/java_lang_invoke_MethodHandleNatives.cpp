@@ -194,7 +194,9 @@ initImpl(J9VMThread *currentThread, j9object_t membernameObject, j9object_t refO
 		UDATA offset = fieldID->offset;
 
 		if (J9_ARE_ANY_BITS_SET(romField->modifiers, J9AccStatic)) {
+			//offset = VM_VMHelpers::staticFieldOffset(currentThread, fieldID);
 			offset |= J9_SUN_STATIC_FIELD_OFFSET_TAG;
+
 			if (J9_ARE_ANY_BITS_SET(romField->modifiers, J9AccFinal)) {
 				offset |= J9_SUN_FINAL_FIELD_OFFSET_TAG;
 			}
@@ -1140,7 +1142,8 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(
 					romField = fieldID->field;
 
 					if (J9_ARE_ANY_BITS_SET(romField->modifiers, J9AccStatic)) {
-						offset = fieldID->offset | J9_SUN_STATIC_FIELD_OFFSET_TAG;
+						//offset = VM_VMHelpers::staticFieldOffset(currentThread, fieldID);
+						offset |= J9_SUN_STATIC_FIELD_OFFSET_TAG;
 						if (J9_ARE_ANY_BITS_SET(romField->modifiers, J9AccFinal)) {
 							offset |= J9_SUN_FINAL_FIELD_OFFSET_TAG;
 						}
@@ -1149,6 +1152,9 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(
 							new_flags |= (MH_REF_PUTSTATIC << MN_REFERENCE_KIND_SHIFT);
 						} else {
 							new_flags |= (MH_REF_GETSTATIC << MN_REFERENCE_KIND_SHIFT);
+						}
+						if (J9VM_STATIC_FIELD_IS_SINGLE_OR_DOUBLE(romField->modifiers)) {
+							new_flags |= MN_SINGLE_OR_DOUBLE_STATIC;
 						}
 					} else {
 						if ((MH_REF_PUTFIELD == ref_kind) || (MH_REF_PUTSTATIC == ref_kind)) {
@@ -1621,7 +1627,7 @@ Java_java_lang_invoke_MethodHandleNatives_staticFieldBase(JNIEnv *env, jclass cl
 		} else {
 			jint flags = J9VMJAVALANGINVOKEMEMBERNAME_FLAGS(currentThread, membernameObject);
 			if (J9_ARE_ALL_BITS_SET(flags, MN_IS_FIELD & J9AccStatic)) {
-				result = vmFuncs->j9jni_createLocalRef(env, clazzObject);
+				result = vmFuncs->j9jni_createLocalRef(env, J9VM_STATIC_FIELD_BASE(currentThread, FALSE, clazzObject));
 			} else {
 				vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
 			}

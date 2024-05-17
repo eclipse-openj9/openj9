@@ -63,7 +63,7 @@ accessCheckFieldType(J9VMThread *currentThread, J9Class* lookupClass, J9Class* t
 						typeClassloader,
 						&lookupSigData[1],
 						&lookupSigData[1],
-						J9UTF8_LENGTH(lookupSig) - 2, 
+						J9UTF8_LENGTH(lookupSig) - 2,
 						TRUE) != 0) {
 					result = FALSE;
 				}
@@ -155,7 +155,7 @@ Java_java_lang_invoke_FieldVarHandle_unreflectField(JNIEnv *env, jobject handle,
 	fieldOffset = fieldID->offset;
 	if (isStatic) {
 		/* ensure this is correctly tagged so that the JIT targets using Unsafe will correctly detect this is static */
-		fieldOffset |= J9_SUN_STATIC_FIELD_OFFSET_TAG;
+		fieldOffset = VM_VMHelpers::staticFieldOffset(currentThread, fieldID);
 	}
 
 	J9VMJAVALANGINVOKEVARHANDLE_SET_MODIFIERS(vmThread, J9_JNI_UNWRAP_REFERENCE(handle), fieldID->field->modifiers);
