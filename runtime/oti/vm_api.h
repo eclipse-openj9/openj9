@@ -4383,7 +4383,7 @@ fatalRecursiveStackOverflow(J9VMThread *currentThread);
 * @return J9VMThread *
 */
 J9VMThread *
-allocateVMThread(J9JavaVM * vm, omrthread_t osThread, UDATA privateFlags, void * memorySpace, J9Object * threadObject);
+allocateVMThread(J9JavaVM *vm, omrthread_t osThread, UDATA privateFlags, void *memorySpace, J9Object *threadObject);
 
 
 /**

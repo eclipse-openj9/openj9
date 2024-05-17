@@ -4045,6 +4045,16 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 		}
 	}
 
+	{
+		if ((FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, MAPOPT_AGENTLIB_JDWP_EQUALS, NULL) >= 0)
+			|| (FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, MAPOPT_XRUNJDWP, NULL) >= 0)
+		) {
+			vm->checkpointState.flags |= J9VM_CRIU_IS_JDWP_ENABLED;
+		}
+		memset(vm->checkpointState.javaDebugThreads, 0, sizeof(vm->checkpointState.javaDebugThreads));
+		vm->checkpointState.javaDebugThreadCount = 0;
+	}
+
 	vm->checkpointState.lastRestoreTimeInNanoseconds = -1;
 	vm->checkpointState.processRestoreStartTimeInNanoseconds = -1;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
