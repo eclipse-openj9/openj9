@@ -23,28 +23,32 @@
 #include <algorithm>
 #include <stdlib.h>
 #include <string.h>
+#if defined(LINUX)
+#include <sys/mman.h> // for madvise
+#endif // LINUX
+#include "OMR/Bytes.hpp"
 #include "j9.h"
+#include "j9cp.h"
 #include "j9protos.h"
 #include "j9thread.h"
 #include "jitprotos.h"
-#include "j9cp.h"
 #define J9_EXTERNAL_TO_VM
-#include "runtime/J9VMAccess.hpp"
 #include "vmaccess.h"
-#include "infra/Monitor.hpp"
+#include "control/CompilationRuntime.hpp"
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
-#include "control/CompilationRuntime.hpp"
 #include "env/FrontEnd.hpp"
-#include "env/ut_j9jit.h"
-#include "infra/CriticalSection.hpp"
-#include "runtime/CodeCacheManager.hpp"
-#include "runtime/CodeCache.hpp"
-#include "runtime/CodeCacheMemorySegment.hpp"
-#include "env/VMJ9.h"
-#include "runtime/ArtifactManager.hpp"
 #include "env/IO.hpp"
 #include "env/VerboseLog.hpp"
+#include "env/VMJ9.h"
+#include "env/ut_j9jit.h"
+#include "infra/CriticalSection.hpp"
+#include "infra/Monitor.hpp"
+#include "runtime/ArtifactManager.hpp"
+#include "runtime/CodeCache.hpp"
+#include "runtime/CodeCacheManager.hpp"
+#include "runtime/CodeCacheMemorySegment.hpp"
+#include "runtime/J9VMAccess.hpp"
 
 TR::CodeCacheManager *J9::CodeCacheManager::_codeCacheManager = NULL;
 J9JavaVM *J9::CodeCacheManager::_javaVM = NULL;
@@ -355,18 +359,50 @@ J9::CodeCacheManager::allocateCodeCacheSegment(size_t segmentSize,
 
    void *defaultEndAddress = vmemParams.endAddress;
 
+   uintptr_t someJitLibraryAddress = self()->getSomeJitLibraryAddress();
+
+#if defined(TR_TARGET_POWER)
+   size_t alignment = 64 * 1024;
+#elif (defined(LINUX) && defined(TR_TARGET_X86))
+   size_t alignment = 2 * 1024 * 1024;
+#elif (defined(TR_TARGET_S390))
+   size_t alignment = 1024 * 1024;
+#else
+   size_t alignment = pageSizes[0];
+#endif
+   if (largeCodePageSize > 0)
+      alignment = largeCodePageSize;
+
    if (preferredStartAddress)
       {
-   // J9PORT_VMEM_ADDRESS_HINT is only supported for default pages and linux
+      vmemParams.options |= J9PORT_VMEM_STRICT_ADDRESS; // if we cannot allocate a block in the desired range, return NULL
+      vmemParams.alignmentInBytes = alignment;
 #if defined(LINUX)
-      if (largeCodePageSize == 0)
-         {
-         vmemParams.options |= J9PORT_VMEM_ADDRESS_HINT;
-         }
-#endif
-      vmemParams.options |= J9PORT_VMEM_STRICT_ADDRESS; // if we cannot allocate a block whose start is between preferredStartAddress and endAddress, return NULL
+      vmemParams.options |= J9PORT_VMEM_ALLOC_QUICK; // Use smaps for guidance
       vmemParams.startAddress = preferredStartAddress;
-      vmemParams.endAddress = (void *)(((UDATA)preferredStartAddress) + SAFE_DISTANCE_REPOSITORY_JITLIBRARY);
+      if ((uintptr_t)preferredStartAddress < someJitLibraryAddress) // Allocate before JIT dll
+         {
+         vmemParams.endAddress = (void *)(someJitLibraryAddress - SAFE_DISTANCE_REPOSITORY_JITLIBRARY - segmentSize);
+         }
+      else // Allocate after JIT dll
+         {
+         vmemParams.endAddress = (void *)(someJitLibraryAddress + MAX_DISTANCE_NEAR_JITLIBRARY_TO_AVOID_TRAMPOLINE - segmentSize);
+         }
+      // If the code cache repository size is very large, it may not be possible to
+      // allocate it in the vicinity of the JIT dll. If that's the case, let the OS
+      // pick any address it wants.
+      if (vmemParams.startAddress >= vmemParams.endAddress)
+         {
+         preferredStartAddress = NULL;
+         vmemParams.startAddress = NULL;
+         vmemParams.endAddress = defaultEndAddress;
+         vmemParams.options &= ~(J9PORT_VMEM_STRICT_ADDRESS);
+         vmemParams.options &= ~(J9PORT_VMEM_ALLOC_QUICK);
+         }
+#else
+     vmemParams.startAddress = preferredStartAddress;
+     vmemParams.endAddress = (void *)(((UDATA)preferredStartAddress) + SAFE_DISTANCE_REPOSITORY_JITLIBRARY);
+#endif
       }
 #if defined(J9ZOS390)
    else
@@ -401,51 +437,11 @@ J9::CodeCacheManager::allocateCodeCacheSegment(size_t segmentSize,
                                                                       segmentType,
                                                                       &vmemParams);
 
-   uintptr_t someJitLibraryAddress = self()->getSomeJitLibraryAddress();
-   // isInRange() checks whether the allocated codeCacheSegment baseAddress is in range of JitLibrary to avoid trampoline
-   if (codeCacheSegment &&
-       (vmemParams.options & J9PORT_VMEM_ADDRESS_HINT) &&
-       !(self()->isInRange((uintptr_t)(codeCacheSegment->baseAddress), someJitLibraryAddress, MAX_DISTANCE_NEAR_JITLIBRARY_TO_AVOID_TRAMPOLINE)))
-      {
-      // allocated code cache is not in range to avoid trampoline
-      // try with full address range that avoids trampoline
-      // free old segment
-      javaVM->internalVMFunctions->freeMemorySegment(javaVM, codeCacheSegment, 1);
-      size_t alignment = 2 * 1024 * 1024;
-
-      // if jit library address is greater than MAX_DISTANCE, then we search in the addresses before the jit library address
-      // if jit library address is less than MAX_DISTANCE, which means we do not have the full MAX_DISTANCE(2GB-24MB) range before the jit library
-      // in this case we search in the addresses after the jit library address
-      if (someJitLibraryAddress > MAX_DISTANCE_NEAR_JITLIBRARY_TO_AVOID_TRAMPOLINE)
-         {
-         // align the startAddress to page boundary
-         vmemParams.startAddress = (void *)OMR::align((size_t)(someJitLibraryAddress - MAX_DISTANCE_NEAR_JITLIBRARY_TO_AVOID_TRAMPOLINE), alignment);
-         vmemParams.endAddress = preferredStartAddress;
-         }
-      else
-         {
-         vmemParams.startAddress = (void *)OMR::align((size_t)(someJitLibraryAddress + SAFE_DISTANCE_REPOSITORY_JITLIBRARY), alignment);
-         vmemParams.endAddress = (void *)(someJitLibraryAddress + MAX_DISTANCE_NEAR_JITLIBRARY_TO_AVOID_TRAMPOLINE);
-         }
-      // unset STRICT_ADDRESS and ADDRESS_HINT
-      vmemParams.options &= ~(J9PORT_VMEM_STRICT_ADDRESS);
-      vmemParams.options &= ~(J9PORT_VMEM_ADDRESS_HINT);
-      // for Linux allocate using QUICK method based on smaps
-#if defined(LINUX)
-      vmemParams.options |= J9PORT_VMEM_ALLOC_QUICK;
-#endif
-      codeCacheSegment =
-          javaVM->internalVMFunctions->allocateVirtualMemorySegmentInList(javaVM,
-                                                                          jitConfig->codeCacheList,
-                                                                          codeCacheSizeToAllocate,
-                                                                          segmentType,
-                                                                          &vmemParams);
-      }
    if (!codeCacheSegment && preferredStartAddress)
       {
 #if !defined(J9ZOS390)
-      // we could have failed because we wanted a start address
-      // let's try without it
+      // We could have failed because we wanted a start address.
+      // Let's try without it.
       vmemParams.startAddress = NULL;
       vmemParams.options &= ~(J9PORT_VMEM_STRICT_ADDRESS);
       vmemParams.options &= ~(J9PORT_VMEM_ADDRESS_HINT);
@@ -478,16 +474,22 @@ J9::CodeCacheManager::allocateCodeCacheSegment(size_t segmentSize,
       mcc_printf("TR::CodeCache::allocated : codeCacheSegment is %p\n",codeCacheSegment);
       if (config.verboseCodeCache())
          {
-         const char *verboseLogString = "The code cache repository was allocated between addresses %p and %p";
+         const char *verboseLogString = "The code cache repository was allocated between addresses %p and %p alignment=%zu largeCodePageSize=%zu";
          if (preferredStartAddress && self()->isInRange((uintptr_t)(codeCacheSegment->baseAddress), someJitLibraryAddress, MAX_DISTANCE_NEAR_JITLIBRARY_TO_AVOID_TRAMPOLINE))
             {
-            verboseLogString = "The code cache repository was allocated between addresses %p and %p to be near the VM/JIT modules to avoid trampolines";
+            verboseLogString = "The code cache repository was allocated between addresses %p and %p to avoid helper trampolines. alignment=%zu largeCodePageSize=%zu";
             }
-         TR_VerboseLog::writeLineLocked(TR_Vlog_CODECACHE,
-            verboseLogString,
-            vmemParams.startAddress,
-            vmemParams.endAddress);
+         TR_VerboseLog::writeLineLocked(TR_Vlog_CODECACHE, verboseLogString, codeCacheSegment->baseAddress, codeCacheSegment->heapTop, alignment, largeCodePageSize);
          }
+#ifdef LINUX
+      if (0 != madvise((void *)codeCacheSegment->baseAddress, (codeCacheSegment->heapTop - codeCacheSegment->baseAddress), MADV_HUGEPAGE))
+         {
+         if (config.verboseCodeCache() || TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
+            {
+            TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,"Warning: madvise failed while providing hint to use large pages for code cache");
+            }
+         }
+#endif // LINUX
       }
    else
       {
@@ -539,6 +541,7 @@ J9::CodeCacheManager::setupMemorySegmentFromRepository(uint8_t *start,
    {
    // create and set the j9segment object
    J9MemorySegment *j9segment = (J9MemorySegment *) self()->getMemory(sizeof(J9MemorySegment));
+   j9segment->baseAddress = start;
    j9segment->heapBase = start;
    j9segment->heapAlloc = start;
    j9segment->heapTop = end;
@@ -566,7 +569,7 @@ J9::CodeCacheManager::chooseCacheStartAddress(size_t repositorySize)
 #if defined(TR_HOST_64BIT) && defined(TR_TARGET_X86)
    if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableSmartPlacementOfCodeCaches))
       {
-      size_t alignment = 2 * 1024 * 1024; // 2MB alignment
+      size_t alignment = 2 * 1024 * 1024; // 2MB alignment is preferred on x86-64
       TR::CodeCacheConfig & config = self()->codeCacheConfig();
       const size_t largeCodePageSize = config.largeCodePageSize();
 
@@ -574,31 +577,31 @@ J9::CodeCacheManager::chooseCacheStartAddress(size_t repositorySize)
       if (largeCodePageSize > alignment)
          alignment = largeCodePageSize;
 
-      size_t safeDistance = repositorySize + SAFE_DISTANCE_REPOSITORY_JITLIBRARY;
       uintptr_t someFunctionPointer = self()->getSomeJitLibraryAddress();
 
       mcc_printf("addCodeCache() function address is %p\n", someFunctionPointer);
 
-      // if we are using 1GB pages or something even larger
-      if (largeCodePageSize >= 0x40000000)
+      // Depending on where the JIT dll is placed in memory, we may want
+      // to allocate the code cache before or after the JIT dll
+      if (someFunctionPointer > MAX_DISTANCE_NEAR_JITLIBRARY_TO_AVOID_TRAMPOLINE)
          {
-         if (someFunctionPointer > largeCodePageSize * 2)
+         // Enough space is available before the JIT dll
+         // For Linux we can afford to search a larger space (~2 GB) because we use smaps to accelerate the search operation.
+         // Also, if we use very large pages (1 GB), then we can afford to search a larger space because there won't be
+         // too many attempts to find the right spot.
+         if (TR::Compiler->target.isLinux() || alignment > 2 * 1024 * 1024)
             {
-            // round down to the nearest GB first
-            startAddress = (void *)(((uintptr_t)someFunctionPointer - SAFE_DISTANCE_REPOSITORY_JITLIBRARY) & ~(largeCodePageSize-1));
-            // then move down 1GB to allocate the code cache
-            startAddress = (void *)(((uintptr_t)startAddress) - largeCodePageSize);
+            startAddress = (void *)OMR::align((size_t)(someFunctionPointer - MAX_DISTANCE_NEAR_JITLIBRARY_TO_AVOID_TRAMPOLINE), alignment);
+            }
+         else
+            {
+            size_t safeDistance = repositorySize + SAFE_DISTANCE_REPOSITORY_JITLIBRARY;
+            startAddress = (void *)OMR::align((size_t)(someFunctionPointer - safeDistance), alignment);
             }
          }
-      else
+      else // Choose a starting address after the JIT dll
          {
-         if (someFunctionPointer > safeDistance+alignment)
-            {
-            // otherwise move back some space larger than the VM DLL footprint
-            startAddress = (void *)(((uint8_t *)someFunctionPointer) - safeDistance);
-            // align so that port library returns exactly what we wanted
-            startAddress = (void *)OMR::align((size_t)startAddress, alignment);
-            }
+         startAddress = (void *)OMR::align((size_t)(someFunctionPointer + SAFE_DISTANCE_REPOSITORY_JITLIBRARY), alignment);
          }
       }
 #endif
