@@ -3392,6 +3392,7 @@ j9vmem_testOverlappingSegments(struct J9PortLibrary *portLibrary)
 	struct J9PortVmemIdentifier *vmemID;
 	int *keepCycles;
 	int freed = 0;
+	int cycleCleanupBound = 0;
 	int i = 0;
 	int j = 0;
 	const char* testName = "j9vmem__testOverlappingSegments";
@@ -3415,6 +3416,9 @@ j9vmem_testOverlappingSegments(struct J9PortLibrary *portLibrary)
 		if (NULL == memPtr) {
 			outputComment(PORTLIB, "Failed to get memory. Error: %s.\n", strerror(errno));
 			outputComment(PORTLIB, "Ignoring memory allocation failure(%d of %d loops finished).\n", i, CYCLES);
+			if (0 == i) {
+				keepCycles[0] = -1; /* This segment would otherwise look like it needed to be freed during cleanup */
+			}
 			goto exit;
 		}
 		/* Determine how long to keep the segment */
@@ -3457,7 +3461,8 @@ exit:
 
 	/* Free remaining segments */
 	freed = 0;
-	for (j = 0; j < CYCLES; j++) {
+	cycleCleanupBound = (CYCLES == i) ? i : i + 1;
+	for (j = 0; j < cycleCleanupBound; j++) {
 		if (keepCycles[j] >= i) {
 			I_32 rc = j9vmem_free_memory(vmemID[j].address, vmemParams[j].byteAmount, &vmemID[j]);
 			if (0 == rc) {
