@@ -678,3 +678,8 @@ TraceEvent=Trc_JVMTI_isFileNameInLibPath_path_not_match Overhead=1 Level=5 Noenv
 TraceEvent=Trc_JVMTI_isFileNameInLibPath_path_match Overhead=1 Level=3 Noenv Template="isFileNameInLibPath() fileName(%s) path matches (%s) with dirLen (%zu)"
 TraceEvent=Trc_JVMTI_searchObjectFileFromLDInfo_library_object_file_found Overhead=1 Level=5 Noenv Template="searchObjectFileFromLDInfo() fileName(%s) is same as libName"
 TraceEvent=Trc_JVMTI_searchObjectFileFromLDInfo_library_object_file_not_found Overhead=1 Level=5 Noenv Template="searchObjectFileFromLDInfo() fileName(%s) is not same as libName(%s)"
+
+TraceEntry=Trc_JVMTI_jvmtiHookVMCheckpoint_Entry Overhead=1 Level=2 Noenv Template="HookVMCheckpoint"
+TraceExit=Trc_JVMTI_jvmtiHookVMCheckpoint_Exit Overhead=1 Level=2 Noenv Template="HookVMCheckpoint"
+TraceEntry=Trc_JVMTI_jvmtiHookVMRestore_Entry Overhead=1 Level=2 Noenv Template="HookVMRestore"
+TraceExit=Trc_JVMTI_jvmtiHookVMRestore_Exit Overhead=1 Level=2 Noenv Template="HookVMRestore"

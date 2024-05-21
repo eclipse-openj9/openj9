@@ -973,3 +973,10 @@ TraceEvent=Trc_VM_ComputeNPEMsgAtPC_end Overhead=1 Level=3 Template="ComputeNPEM
 TraceExit=Trc_VM_ComputeNPEMsgAtPC_Exit Overhead=1 Level=3 Template="ComputeNPEMsgAtPC : npePC (0x%zx) npeFlag (%d) isMethodFlag (%d) npeMsg (%s)"
 
 TraceEvent=Trc_VM_allocateClassLoader_SetFlag NoEnv Overhead=1 Level=3 Template="allocateClassLoader set flag J9CLASSLOADER_SHARED_CLASSES_ENABLED for class loader (%p)"
+
+TraceEvent=Trc_VM_criu_allocateVMThread_check_delayflag noEnv Overhead=1 Level=5 Template="allocateVMThread() checks newThread (%p) J9_PRIVATE_FLAGS2_DELAY_HALT_FOR_CHECKPOINT"
+TraceEvent=Trc_VM_criu_allocateVMThread_set_delayflag noEnv Overhead=1 Level=5 Template="allocateVMThread() sets J9_PRIVATE_FLAGS2_DELAY_HALT_FOR_CHECKPOINT with i = %zu"
+TraceEvent=Trc_VM_criu_allocateVMThread_set_haltflag noEnv Overhead=1 Level=5 Template="allocateVMThread() sets newThread (%p) J9_PUBLIC_FLAGS_HALT_THREAD_FOR_CHECKPOINT"
+TraceEvent=Trc_VM_criu_toggleSuspendOnJavaThreads_start Test Overhead=1 Level=5 Template="toggleSuspendOnJavaThreads with currentThreadName(%s) suspendResumeFlag(%u)"
+TraceEvent=Trc_VM_criu_toggleSuspendOnJavaThreads_walkStatus Overhead=1 Level=5 Template="toggleSuspendOnJavaThreads (%s) walkThread(%p)"
+TraceEvent=Trc_VM_criu_toggleSuspendOnJavaThreads_walkThread Test Overhead=1 Level=5 Template="toggleSuspendOnJavaThreads with walkThreadName(%s) suspendResumeFlag(%u) walkThread(%p) currentThread(%p)"

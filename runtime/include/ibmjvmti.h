@@ -106,6 +106,12 @@
 #define COM_SUN_HOTSPOT_EVENTS_VIRTUAL_THREAD_MOUNT "com.sun.hotspot.events.VirtualThreadMount"
 #define COM_SUN_HOTSPOT_EVENTS_VIRTUAL_THREAD_UNMOUNT "com.sun.hotspot.events.VirtualThreadUnmount"
 
+#define OPENJ9_EVENT_VM_CHECKPOINT "openj9.event.VMCheckpoint"
+#define OPENJ9_EVENT_VM_RESTORE "openj9.event.VMRestore"
+
+#define OPENJ9_FUNCTION_ADD_DEBUG_THREAD "openj9.function.AddDebugThreadToCheckpointState"
+#define OPENJ9_FUNCTION_REMOVE_DEBUG_THREAD "openj9.function.RemoveDebugThreadFromCheckpointState"
+
 #define COM_IBM_SHARED_CACHE_MODLEVEL_JAVA5 1
 #define COM_IBM_SHARED_CACHE_MODLEVEL_JAVA6 2
 #define COM_IBM_SHARED_CACHE_MODLEVEL_JAVA7 3
