@@ -247,9 +247,7 @@ PPA2   DS    0D
         DC   XL3'000000'
 })
 
-define({FILE_END},{
-    END
-})
+define({FILE_END},{END})
 
 },{
 
@@ -297,8 +295,7 @@ LCALLDESC DS 0D
     DC BL.3'000',BL.5'00000'
     DC BL.6'001000',BL.6'000000',BL.6'000000',BL.6'000000'
 })
-    END
-})
+    END})
 
 })
 
