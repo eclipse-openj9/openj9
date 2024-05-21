@@ -7717,17 +7717,44 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
    bool enableTLHBatchClearing = fej9->tlhHasBeenCleared();
 
 #ifdef J9VM_GC_NON_ZERO_TLH
-   // If we can skip zero init, and it is not outlined new, we use the new TLH
-   // same logic also appears later, but we need to do this before generate the helper call
-   //
-   if (node->canSkipZeroInitialization() && (enableTLHBatchClearing || !comp->getOption(TR_DisableDualTLH)) && !realTimeGC)
+   if (node->canSkipZeroInitialization() &&
+       (enableTLHBatchClearing || !comp->getOption(TR_DisableDualTLH)) &&
+       !realTimeGC)
       {
-      // For value types, it should use jitNewValue helper call which is set up before code gen
-      if ((node->getOpCodeValue() == TR::New)
-          && (!TR::Compiler->om.areValueTypesEnabled() || (node->getSymbolReference() != comp->getSymRefTab()->findOrCreateNewValueSymbolRef(comp->getMethodSymbol()))))
-         node->setSymbolReference(comp->getSymRefTab()->findOrCreateNewObjectNoZeroInitSymbolRef(comp->getMethodSymbol()));
-      else if (node->getOpCodeValue() == TR::newarray)
-         node->setSymbolReference(comp->getSymRefTab()->findOrCreateNewArrayNoZeroInitSymbolRef(comp->getMethodSymbol()));
+      // Choose appropriate helper call if zero initialization can be skipped
+      //
+      TR::SymbolReference *noZeroInitSymRef = NULL;
+      TR::SymbolReferenceTable *symRefTab = comp->getSymRefTab();
+
+      switch (node->getOpCodeValue())
+         {
+         case TR::New:
+            // For value types, it should use the jitNewValue helper call which
+            // is set up before codegen
+            //
+            if (!TR::Compiler->om.areValueTypesEnabled() ||
+               (node->getSymbolReference() != symRefTab->findOrCreateNewValueSymbolRef(comp->getMethodSymbol())))
+               {
+               noZeroInitSymRef = symRefTab->findOrCreateNewObjectNoZeroInitSymbolRef(comp->getMethodSymbol());
+               }
+            break;
+
+         case TR::newarray:
+            noZeroInitSymRef = symRefTab->findOrCreateNewArrayNoZeroInitSymbolRef(comp->getMethodSymbol());
+            break;
+
+         case TR::anewarray:
+            noZeroInitSymRef = symRefTab->findOrCreateANewArrayNoZeroInitSymbolRef(comp->getMethodSymbol());
+            break;
+
+         default:
+            break;
+         }
+
+      if (noZeroInitSymRef)
+         {
+         node->setSymbolReference(noZeroInitSymRef);
+         }
 
       if (comp->getOption(TR_TraceCG))
          traceMsg(comp, "SKIPZEROINIT: for %p, change the symbol to %p ", node, node->getSymbolReference());
