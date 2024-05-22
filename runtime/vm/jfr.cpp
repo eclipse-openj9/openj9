@@ -29,18 +29,85 @@ extern "C" {
 
 #undef DEBUG
 
-// TODO: allow different buffer sizes on different threads
+// TODO: allow different buffer sizes on different threads and configureable sizes
 #define J9JFR_THREAD_BUFFER_SIZE (1024*1024)
+#define J9JFR_GLOBAL_BUFFER_SIZE (10 * J9JFR_THREAD_BUFFER_SIZE)
 
 static void tearDownJFR(J9JavaVM *vm);
 static bool flushBufferToGlobal(J9VMThread *currentThread, J9VMThread *flushThread);
-static bool flushAllThreadBuffers(J9VMThread *currentThread);
+static bool flushAllThreadBuffers(J9VMThread *currentThread, bool freeBuffers);
 static U_8* reserveBuffer(J9VMThread *currentThread, UDATA size);
 static void jfrThreadCreated(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
 static void jfrThreadDestroy(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
 static void jfrClassesUnload(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
 static void jfrVMShutdown(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
 static void initializeEventFields(J9VMThread *currentThread, J9JFREvent *event, UDATA eventType, UDATA threadState);
+
+UDATA
+jfrEventSize(J9JFREvent *event)
+{
+	UDATA size = sizeof(J9JFREvent);
+	switch(event->eventType) {
+	case J9JFR_EVENT_TYPE_EXECUTION_SAMPLE:
+		size += (((J9JFRExecutionSample*)event)->stackTraceSize * sizeof(UDATA));
+		break;
+	default:
+		break;
+	}
+	return size;
+}
+
+J9JFREvent*
+jfrBufferStartDo(J9JFRBuffer *buffer, J9JFRBufferWalkState *walkState)
+{
+	U_8 *start = buffer->bufferStart;
+	U_8 *end = buffer->bufferCurrent;
+	walkState->end = end;
+	walkState->current = start;
+	if (start == end) {
+		start = NULL;
+	}
+	return (J9JFREvent*)start;
+}
+
+J9JFREvent*
+jfrBufferNextDo(J9JFRBufferWalkState *walkState)
+{
+	U_8 *current = walkState->current;
+	U_8 *next = NULL;
+	if (walkState->end != current) {
+		next = current + jfrEventSize((J9JFREvent*)current);
+		walkState->current = next;
+	}
+	return (J9JFREvent*)next;
+}
+
+/**
+ * Write out the contents of the global JFR buffer.
+ *
+ * The current thread must hold the jfrBufferMutex or have exclusive VM access.
+ *
+ * @param currentThread[in] the current J9VMThread
+ *
+ * @returns true on success, false on failure
+ */
+static bool
+writeOutGlobalBuffer(J9VMThread *currentThread)
+{
+	J9JavaVM *vm = currentThread->javaVM;
+#if defined(DEBUG)
+	PORT_ACCESS_FROM_VMC(currentThread);
+	j9tty_printf(PORTLIB, "\n!!! writing global buffer %p of size %p\n", currentThread, vm->jfrBuffer.bufferSize - vm->jfrBuffer.bufferRemaining);
+#endif /* defined(DEBUG) */
+
+	// TODO: actually write the buffer
+
+	/* Reset the buffer */
+	vm->jfrBuffer.bufferRemaining = vm->jfrBuffer.bufferSize;
+	vm->jfrBuffer.bufferCurrent = vm->jfrBuffer.bufferStart;
+
+	return true;
+}
 
 /**
  * Flush a thread local buffer to the global buffer.
@@ -56,18 +123,32 @@ static void initializeEventFields(J9VMThread *currentThread, J9JFREvent *event, 
 static bool
 flushBufferToGlobal(J9VMThread *currentThread, J9VMThread *flushThread)
 {
+	J9JavaVM *vm = currentThread->javaVM;
+	UDATA bufferSize = flushThread->jfrBuffer.bufferSize - flushThread->jfrBuffer.bufferRemaining;
+	bool success = true;
 #if defined(DEBUG)
 	PORT_ACCESS_FROM_VMC(currentThread);
-	j9tty_printf(PORTLIB, "\n!!! flushing %p of size %p\n", flushThread, flushThread->jfrData.bufferSize - flushThread->jfrData.bufferRemaining);
+	j9tty_printf(PORTLIB, "\n!!! flushing %p of size %p\n", flushThread, bufferSize);
 #endif /* defined(DEBUG) */
 
-	// TODO: flush to global
+	omrthread_monitor_enter(vm->jfrBufferMutex);
+	if (vm->jfrBuffer.bufferRemaining < bufferSize) {
+		if (!writeOutGlobalBuffer(currentThread)) {
+			omrthread_monitor_exit(vm->jfrBufferMutex);
+			success = false;
+			goto done;
+		}
+	}
+	memcpy(vm->jfrBuffer.bufferStart, flushThread->jfrBuffer.bufferStart, bufferSize);
+	vm->jfrBuffer.bufferCurrent += bufferSize;
+	vm->jfrBuffer.bufferRemaining -= bufferSize;
+	omrthread_monitor_exit(vm->jfrBufferMutex);
 
 	/* Reset the buffer */
-	flushThread->jfrData.bufferRemaining = flushThread->jfrData.bufferSize;
-	flushThread->jfrData.bufferCurrent = flushThread->jfrData.bufferStart;
-
-	return true;
+	flushThread->jfrBuffer.bufferRemaining = flushThread->jfrBuffer.bufferSize;
+	flushThread->jfrBuffer.bufferCurrent = flushThread->jfrBuffer.bufferStart;
+done:
+	return success;
 }
 
 /**
@@ -76,18 +157,24 @@ flushBufferToGlobal(J9VMThread *currentThread, J9VMThread *flushThread)
  * The current thread must have exclusive VM access.
  *
  * @param currentThread[in] the current J9VMThread
+ * @param freeBuffers[in] true to free the buffers after flush, false to retain the buffers
  *
  * @returns true if all buffers flushed successfully, false if not
  */
 static bool
-flushAllThreadBuffers(J9VMThread *currentThread)
+flushAllThreadBuffers(J9VMThread *currentThread, bool freeBuffers)
 {
+	PORT_ACCESS_FROM_VMC(currentThread);
 	J9VMThread *loopThread = currentThread;
 	bool allSucceeded = true;
 
 	do {
 		if (!flushBufferToGlobal(currentThread, loopThread)) {
 			allSucceeded = false;
+		}
+		if (freeBuffers) {
+			j9mem_free_memory((void*)loopThread->jfrBuffer.bufferStart);
+			memset(&loopThread->jfrBuffer, 0, sizeof(loopThread->jfrBuffer));
 		}
 		loopThread = loopThread->linkNext;
 	} while (loopThread != currentThread);
@@ -109,16 +196,16 @@ reserveBuffer(J9VMThread *currentThread, UDATA size)
 	U_8 *event = NULL;
 
 	/* If the event is larger than the buffer, fail without attemptiong to flush */
-	if (size <= currentThread->jfrData.bufferSize) {
+	if (size <= currentThread->jfrBuffer.bufferSize) {
 		/* If there isn't enough space, flush the thread buffer to global */
-		if (size > currentThread->jfrData.bufferRemaining) {
+		if (size > currentThread->jfrBuffer.bufferRemaining) {
 			if (!flushBufferToGlobal(currentThread, currentThread)) {
 				goto done;
 			}
 		}
-		event = currentThread->jfrData.bufferCurrent;
-		currentThread->jfrData.bufferCurrent += size;
-		currentThread->jfrData.bufferRemaining -= size;
+		event = currentThread->jfrBuffer.bufferCurrent;
+		currentThread->jfrBuffer.bufferCurrent += size;
+		currentThread->jfrBuffer.bufferRemaining -= size;
 	}
 done:
 	return event;
@@ -145,10 +232,10 @@ jfrThreadCreated(J9HookInterface **hook, UDATA eventNum, void *eventData, void *
 	if (NULL == buffer) {
 		event->continueInitialization = FALSE;
 	} else {
-		currentThread->jfrData.bufferSize = J9JFR_THREAD_BUFFER_SIZE;
-		currentThread->jfrData.bufferRemaining = J9JFR_THREAD_BUFFER_SIZE;
-		currentThread->jfrData.bufferStart = buffer;
-		currentThread->jfrData.bufferCurrent = buffer;
+		currentThread->jfrBuffer.bufferStart = buffer;
+		currentThread->jfrBuffer.bufferCurrent = buffer;
+		currentThread->jfrBuffer.bufferSize = J9JFR_THREAD_BUFFER_SIZE;
+		currentThread->jfrBuffer.bufferRemaining = J9JFR_THREAD_BUFFER_SIZE;
 	}
 }
 
@@ -173,7 +260,8 @@ jfrThreadDestroy(J9HookInterface **hook, UDATA eventNum, void *eventData, void *
 
 	/* Flush and free the thread local buffer */
 	flushBufferToGlobal(currentThread, currentThread);
-	j9mem_free_memory(currentThread->jfrData.bufferStart);
+	j9mem_free_memory((void*)currentThread->jfrBuffer.bufferStart);
+	memset(&currentThread->jfrBuffer, 0, sizeof(currentThread->jfrBuffer));
 }
 
 /**
@@ -197,13 +285,12 @@ jfrClassesUnload(J9HookInterface **hook, UDATA eventNum, void *eventData, void *
 	j9tty_printf(PORTLIB, "\n!!! class unload %p\n", currentThread);
 #endif /* defined(DEBUG) */
 
-	flushAllThreadBuffers(currentThread);
+	flushAllThreadBuffers(currentThread, false);
+	writeOutGlobalBuffer(currentThread);
 }
 
 /**
  * Hook for VM shutting down.
- *
- * Fkushes and frees the thread local buffer.
  *
  * @param hook[in] the VM hook interface
  * @param eventNum[in] the event number
@@ -228,7 +315,9 @@ jfrVMShutdown(J9HookInterface **hook, UDATA eventNum, void *eventData, void *use
 		acquiredExclusive = true;
 	}
 
-	flushAllThreadBuffers(currentThread);
+	/* Flush and free all the thread buffers and write out the global buffer */
+	flushAllThreadBuffers(currentThread, true);
+	writeOutGlobalBuffer(currentThread);
 
 	if (acquiredExclusive) {
 		releaseExclusiveVMAccess(currentThread);
@@ -241,8 +330,10 @@ jfrVMShutdown(J9HookInterface **hook, UDATA eventNum, void *eventData, void *use
 jint
 initializeJFR(J9JavaVM *vm)
 {
+	PORT_ACCESS_FROM_JAVAVM(vm);
 	jint rc = JNI_ERR;
 	J9HookInterface **vmHooks = getVMHookInterface(vm);
+	U_8 *buffer = NULL;
 
 	if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_THREAD_CREATED, jfrThreadCreated, OMR_GET_CALLSITE(), NULL)) {
 		goto fail;
@@ -257,7 +348,18 @@ initializeJFR(J9JavaVM *vm)
 		goto fail;
 	}
 
-	// TODO: allocate global structures
+	/* Allocate the global buffer and mutex */
+	buffer = (U_8*)j9mem_allocate_memory(J9JFR_GLOBAL_BUFFER_SIZE, OMRMEM_CATEGORY_VM);
+	if (NULL == buffer) {
+		goto fail;
+	}
+	vm->jfrBuffer.bufferStart = buffer;
+	vm->jfrBuffer.bufferCurrent = buffer;
+	vm->jfrBuffer.bufferSize = J9JFR_GLOBAL_BUFFER_SIZE;
+	vm->jfrBuffer.bufferRemaining = J9JFR_GLOBAL_BUFFER_SIZE;
+	if (omrthread_monitor_init_with_name(&vm->jfrBufferMutex, 0, "JFR global buffer mutex")) {
+		goto done;
+	}
 
 	rc = JNI_OK;
 done:
@@ -275,14 +377,23 @@ fail:
 static void
 tearDownJFR(J9JavaVM *vm)
 {
+	PORT_ACCESS_FROM_JAVAVM(vm);
 	J9HookInterface **vmHooks = getVMHookInterface(vm);
 
-	// TODO: free global structures
-
+	/* Unhook all the events */
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_THREAD_CREATED, jfrThreadCreated, NULL);
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_THREAD_DESTROY, jfrThreadDestroy, NULL);
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_CLASSES_UNLOAD, jfrClassesUnload, NULL);
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_SHUTTING_DOWN, jfrVMShutdown, NULL);
+
+	/* Free global buffer and mutex */
+
+	j9mem_free_memory((void*)vm->jfrBuffer.bufferStart);
+	memset(&vm->jfrBuffer, 0, sizeof(vm->jfrBuffer));
+	if (NULL != vm->jfrBufferMutex) {
+		omrthread_monitor_destroy(vm->jfrBufferMutex);
+		vm->jfrBufferMutex = NULL;
+	}
 }
 
 /**
