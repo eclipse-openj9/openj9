@@ -4212,6 +4212,16 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 			vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_CPU_LOAD_COMPATIBILITY;
 		}
 	}
+	{
+		IDATA enableExtendedHCR =  FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXENABLEEXTENDEDHCR, NULL);
+		IDATA disableExtendedHCR =  FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXDISABLEEXTENDEDHCR, NULL);
+		vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_DISABLE_EXTENDED_HCR;
+		if (enableExtendedHCR > disableExtendedHCR) {
+			vm->extendedRuntimeFlags2 &= ~J9_EXTENDED_RUNTIME2_DISABLE_EXTENDED_HCR;
+		} else if (enableExtendedHCR < disableExtendedHCR) {
+			vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_DISABLE_EXTENDED_HCR;
+		}
+	}
 
 #if defined(J9VM_OPT_JFR)
 	{

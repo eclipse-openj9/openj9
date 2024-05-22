@@ -26,6 +26,10 @@ UDATA
 areExtensionsEnabled(J9JavaVM * vm)
 {
 
+	if (J9_ARE_ALL_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_DISABLE_EXTENDED_HCR)) {
+		return FALSE;
+	}
+
 	/* If -Xfuture is specified, adhere strictly to the specification */
 
 	if (vm->runtimeFlags & J9_RUNTIME_XFUTURE) {
