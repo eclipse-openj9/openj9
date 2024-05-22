@@ -248,7 +248,10 @@ bool TR_UnsafeFastPath::tryTransformUnsafeAtomicCallInVarHandleAccessMethod(TR::
       return false;
 
    TR::Node* unsafeAddress = NULL;
-   if (callerMethod == TR::java_lang_invoke_StaticFieldVarHandle_StaticFieldVarHandleOperations_OpMethod)
+   static char *useAbsoluteAddressesForStatics = feGetEnv("TR_UseAbsoluteAddressesForStatics");
+
+   if ((callerMethod == TR::java_lang_invoke_StaticFieldVarHandle_StaticFieldVarHandleOperations_OpMethod)
+       && !useAbsoluteAddressesForStatics)
       {
       TR::Node *jlClass = node->getChild(1);
       TR::Node *j9Class = TR::Node::createWithSymRef(node, TR::aloadi, 1, jlClass, comp()->getSymRefTab()->findOrCreateClassFromJavaLangClassSymbolRef());
@@ -757,7 +760,11 @@ int32_t TR_UnsafeFastPath::perform()
 
             object = node->getChild(objectChild);
             object->setIsNonNull(true);
-            if (isStatic)
+
+            static char *useAbsoluteAddressesForStatics = feGetEnv("TR_UseAbsoluteAddressesForStatics");
+            bool useRamStaticsForStaticFields = (useAbsoluteAddressesForStatics == NULL);
+
+            if (isStatic && useRamStaticsForStaticFields)
                {
                TR::Node *jlClass = object;
                TR::Node *j9Class =

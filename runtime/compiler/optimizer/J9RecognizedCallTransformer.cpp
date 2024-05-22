@@ -518,8 +518,10 @@ end Block_F
 */
 void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop, TR::SymbolReferenceTable::CommonNonhelperSymbol helper, bool needsNullCheck)
    {
+   static char *useAbsoluteAddressesForStatics = feGetEnv("TR_UseAbsoluteAddressesForStatics");
    bool enableTrace = trace();
-   bool isNotStaticField = !strncmp(comp()->getCurrentMethod()->classNameChars(), "java/util/concurrent/atomic/", strlen("java/util/concurrent/atomic/"));
+   bool isNotStaticField = !strncmp(comp()->getCurrentMethod()->classNameChars(), "java/util/concurrent/atomic/", strlen("java/util/concurrent/atomic/"))
+                           || (useAbsoluteAddressesForStatics != NULL);
    bool fixupCommoning = true;
    TR::Node* unsafeCall = treetop->getNode()->getFirstChild();
    TR::Node* objectNode = unsafeCall->getChild(1);
