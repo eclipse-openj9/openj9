@@ -198,30 +198,30 @@ j9sock_test11_getnameinfo(struct J9PortLibrary *portLibrary)
 		return reportTestExit(portLibrary, testName);
 	}
 
-	if (0 != j9sock_getaddrinfo_length(&res, &numOfAddrinfo)){
+	if (0 != j9sock_getaddrinfo_length(&res, &numOfAddrinfo)) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "error calling getaddrinfo_length: %s\n", j9error_last_error_message());
 		return reportTestExit(portLibrary, testName);
 	}
 
 	for (i = 0; i < numOfAddrinfo; i++) {
-	    if (0!= j9sock_getaddrinfo_family(&res, &family, i)){
-	    	outputErrorMessage(PORTTEST_ERROR_ARGS, "error calling j9sock_getaddrinfo_family: %s\n", j9error_last_error_message());
-	    	return reportTestExit(portLibrary, testName);
-	    }
-	    if ((family == J9ADDR_FAMILY_AFINET4)){
-	    	if (0 != j9sock_getaddrinfo_address(&res, (U_8 *) nipAddr, i, &scope_id)){
-	    		outputErrorMessage(PORTTEST_ERROR_ARGS, "error calling j9sock_getaddrinfo_address: %s\n", j9error_last_error_message());
-	    		return reportTestExit(portLibrary, testName);
-	    	}
-	    	if (0 != j9sock_getaddrinfo_name(&res, hostname3, 0)){
-	    		outputErrorMessage(PORTTEST_ERROR_ARGS, "error calling j9sock_getaddrinfo_name: %s\n", j9error_last_error_message());
-	    		return reportTestExit(portLibrary, testName);
-	    	}
-	    	break;
-	    }
+		if (0 != j9sock_getaddrinfo_family(&res, &family, i)) {
+			outputErrorMessage(PORTTEST_ERROR_ARGS, "error calling j9sock_getaddrinfo_family: %s\n", j9error_last_error_message());
+			return reportTestExit(portLibrary, testName);
+		}
+		if (J9ADDR_FAMILY_AFINET4 == family) {
+			if (0 != j9sock_getaddrinfo_address(&res, (U_8 *) nipAddr, i, &scope_id)) {
+				outputErrorMessage(PORTTEST_ERROR_ARGS, "error calling j9sock_getaddrinfo_address: %s\n", j9error_last_error_message());
+				return reportTestExit(portLibrary, testName);
+			}
+			if (0 != j9sock_getaddrinfo_name(&res, hostname3, 0)) {
+				outputErrorMessage(PORTTEST_ERROR_ARGS, "error calling j9sock_getaddrinfo_name: %s\n", j9error_last_error_message());
+				return reportTestExit(portLibrary, testName);
+			}
+			break;
+		}
 	}
 
-	if (0 != j9sock_freeaddrinfo(&res)){
+	if (0 != j9sock_freeaddrinfo(&res)) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "error calling j9sock_freeaddrinfo: %s\n", j9error_last_error_message());
 		return reportTestExit(portLibrary, testName);
 	}
