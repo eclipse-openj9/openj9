@@ -155,6 +155,7 @@ static BOOLEAN shouldPostEvent(J9VMThread *currentThread, J9Method *method);
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 static void jvmtiHookVMCheckpoint(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
 static void jvmtiHookVMRestore(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
+static void jvmtiHookVMRestoreCRIUInit(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 static void
@@ -537,6 +538,20 @@ jvmtiHookVMCheckpoint(J9HookInterface **hook, UDATA eventNum, void *eventData, v
 	}
 
 	TRACE_JVMTI_EVENT_RETURN(jvmtiHookVMCheckpoint);
+}
+
+static void
+jvmtiHookVMRestoreCRIUInit(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData)
+{
+	J9RestoreEvent *data = eventData;
+
+	Trc_JVMTI_jvmtiHookVMRestore_Entry();
+
+	data->currentThread->javaVM->internalVMFunctions->internalExitVMToJNI(data->currentThread);
+	criuRestoreInitializeLib(data->currentThread->javaVM);
+	data->currentThread->javaVM->internalVMFunctions->internalEnterVMFromJNI(data->currentThread);
+
+	TRACE_JVMTI_EVENT_RETURN(jvmtiHookVMRestore);
 }
 
 static void
@@ -1913,6 +1928,14 @@ hookGlobalEvents(J9JVMTIData * jvmtiData)
 	if ((*vmHook)->J9HookRegisterWithCallSite(vmHook, J9HOOK_TAG_AGENT_ID | J9HOOK_VM_STARTED, jvmtiHookVMStartedFirst, OMR_GET_CALLSITE(), jvmtiData, J9HOOK_AGENTID_FIRST)) {
 		return 1;
 	}
+
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	if (vm->internalVMFunctions->isDebugOnRestoreEnabled(vm->mainThread)) {
+		if ((*vmHook)->J9HookRegisterWithCallSite(vmHook, J9HOOK_TAG_AGENT_ID | J9HOOK_VM_CRIU_RESTORE, jvmtiHookVMRestoreCRIUInit, OMR_GET_CALLSITE(), jvmtiData, J9HOOK_AGENTID_FIRST)) {
+			return 1;
+		}
+	}
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 	if ((*vmHook)->J9HookRegisterWithCallSite(vmHook, J9HOOK_TAG_AGENT_ID | J9HOOK_VM_SHUTTING_DOWN, jvmtiHookVMShutdownLast, OMR_GET_CALLSITE(), jvmtiData, J9HOOK_AGENTID_LAST)) {
 		return 1;
