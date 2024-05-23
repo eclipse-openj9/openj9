@@ -364,7 +364,9 @@ jvmtiAddCapabilities(jvmtiEnv* env,
 
 			/* Make sure all of the requested capabilities are available */
 
-			if ((byte & ~(((U_8 *) &potentialCapabilities)[i])) != 0) {
+			if (0 != (byte & ~(((U_8 *) &potentialCapabilities)[i]))) {
+				Trc_JVMTI_jvmtiAddCapabilities_no_capability(currentThread,
+					i, ((U_8 *) &potentialCapabilities)[i], (byte & ~(((U_8 *) &potentialCapabilities)[i])));
 				goto fail;
 			}
 
@@ -382,6 +384,7 @@ jvmtiAddCapabilities(jvmtiEnv* env,
 					vm->requiredDebugAttributes |= J9VM_DEBUG_ATTRIBUTE_MAINTAIN_ORIGINAL_METHOD_ORDER;
 				} else {
 					rc = JVMTI_ERROR_NOT_AVAILABLE;
+					Trc_JVMTI_jvmtiAddCapabilities_not_onload(currentThread);
 					goto fail;
 				}
 			}
@@ -391,6 +394,7 @@ jvmtiAddCapabilities(jvmtiEnv* env,
 		if (newCapabilities.can_generate_sampled_object_alloc_events) {
 			if (J9_ARE_ANY_BITS_SET(jvmtiData->flags, J9JVMTI_FLAG_SAMPLED_OBJECT_ALLOC_ENABLED)) {
 				rc = JVMTI_ERROR_NOT_AVAILABLE;
+				Trc_JVMTI_jvmtiAddCapabilities_object_alloc_set_already(currentThread);
 				goto fail;
 			}
 
@@ -411,13 +415,15 @@ jvmtiAddCapabilities(jvmtiEnv* env,
 
 		/* Reserve hooks for any events now allowed by the new capabilities */
 
-		if (mapCapabilitiesToEvents(j9env, &newCapabilities, reserveEvent) != 0) {
+		if (0 != mapCapabilitiesToEvents(j9env, &newCapabilities, reserveEvent)) {
+			Trc_JVMTI_jvmtiAddCapabilities_mapCapabilitiesToEvents_failed(currentThread);
 			goto fail;
 		}
 
 		/* Handle non-event hooks */
 
-		if (hookNonEventCapabilities(j9env, &newCapabilities) != 0) {
+		if (0 != hookNonEventCapabilities(j9env, &newCapabilities)) {
+			Trc_JVMTI_jvmtiAddCapabilities_hookNonEventCapabilities_failed(currentThread);
 			goto fail;
 		}
 
@@ -540,53 +546,80 @@ mapCapabilitiesToEvents(J9JVMTIEnv * j9env, jvmtiCapabilities * capabilities, J9
 {
 	IDATA rc = 0;
 
-	if (capabilities->can_generate_single_step_events) {
-		rc |= eventHookFunction(j9env, JVMTI_EVENT_SINGLE_STEP);
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	J9JavaVM * vm = j9env->vm;
+	J9VMThread *mainThread = vm->mainThread;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	BOOLEAN skipHookReserve = vmFuncs->isCheckpointAllowed(mainThread)
+			&& vmFuncs->isDebugOnRestoreEnabled(mainThread);
+	/* Skip J9HookReserve for the events required by JDWP agent pre-checkpoint when DebugOnRestore is enabled,
+	 * these events will be registered post-restore if a JDWP agent is specified in the restore option file,
+	 * otherwise they are going to be unregistered by J9HookUnregister() which only clears J9HOOK_FLAG_HOOKED,
+	 * but not J9HOOK_FLAG_RESERVED.
+	 * J9HookUnreserve() might clear the flag set by other callers.
+	 */
+	if (!skipHookReserve)
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT)*/
+	{
+		if (capabilities->can_generate_single_step_events) {
+			rc |= eventHookFunction(j9env, JVMTI_EVENT_SINGLE_STEP);
+		}
+		if (capabilities->can_generate_breakpoint_events) {
+			rc |= eventHookFunction(j9env, JVMTI_EVENT_BREAKPOINT);
+		}
+		if (capabilities->can_generate_field_access_events) {
+			rc |= eventHookFunction(j9env, JVMTI_EVENT_FIELD_ACCESS);
+		}
+		if (capabilities->can_generate_field_modification_events) {
+			rc |= eventHookFunction(j9env, JVMTI_EVENT_FIELD_MODIFICATION);
+		}
+		if (capabilities->can_generate_frame_pop_events) {
+			rc |= eventHookFunction(j9env, JVMTI_EVENT_FRAME_POP);
+		}
+		if (capabilities->can_generate_monitor_events) {
+			rc |= eventHookFunction(j9env, JVMTI_EVENT_MONITOR_CONTENDED_ENTER);
+			rc |= eventHookFunction(j9env, JVMTI_EVENT_MONITOR_CONTENDED_ENTERED);
+			rc |= eventHookFunction(j9env, JVMTI_EVENT_MONITOR_WAIT);
+			rc |= eventHookFunction(j9env, JVMTI_EVENT_MONITOR_WAITED);
+		}
+#if JAVA_SPEC_VERSION >= 19
+		if (capabilities->can_support_virtual_threads) {
+			rc |= eventHookFunction(j9env, JVMTI_EVENT_VIRTUAL_THREAD_START);
+			rc |= eventHookFunction(j9env, JVMTI_EVENT_VIRTUAL_THREAD_END);
+		}
+#endif /* JAVA_SPEC_VERSION >= 19 */
+		if (capabilities->can_generate_garbage_collection_events) {
+			rc |= eventHookFunction(j9env, JVMTI_EVENT_GARBAGE_COLLECTION_START);
+			rc |= eventHookFunction(j9env, JVMTI_EVENT_GARBAGE_COLLECTION_FINISH);
+		}
 	}
-
-	if (capabilities->can_generate_breakpoint_events) {
-		rc |= eventHookFunction(j9env, JVMTI_EVENT_BREAKPOINT);
+	/* CRIU can't skip J9HookReserve for the following events when they are requested via
+	 * jvmtiAddCapabilities(), otherwise, the corresponding hooks will be disabled by JIT.
+	 * For example, can_generate_method_exit_events/JVMTI_EVENT_METHOD_EXIT related hooks
+	 * are J9HOOK_VM_METHOD_RETURN/J9HOOK_VM_NATIVE_METHOD_RETURN, the hook
+	 * J9HOOK_VM_METHOD_RETURN is to be disabled if not reserved in advance.
+	 * Similarly for the other events, if they are not reserved and a jdwp agent is
+	 * specified at the restore option file, the capability can't be added,
+	 * and the debugger won't be able to run.
+	 */
+	if (capabilities->can_generate_method_exit_events) {
+		rc |= eventHookFunction(j9env, JVMTI_EVENT_METHOD_EXIT);
 	}
-
-	if (capabilities->can_generate_field_access_events) {
-		rc |= eventHookFunction(j9env, JVMTI_EVENT_FIELD_ACCESS);
-	}
-
-	if (capabilities->can_generate_field_modification_events) {
-		rc |= eventHookFunction(j9env, JVMTI_EVENT_FIELD_MODIFICATION);
-	}
-
-	if (capabilities->can_generate_frame_pop_events) {
-		rc |= eventHookFunction(j9env, JVMTI_EVENT_FRAME_POP);
-	}
-
 	if (capabilities->can_generate_method_entry_events) {
 		rc |= eventHookFunction(j9env, JVMTI_EVENT_METHOD_ENTRY);
 	}
-
-	if (capabilities->can_generate_method_exit_events) {
-		rc |= eventHookFunction(j9env, JVMTI_EVENT_METHOD_EXIT);
+	if (capabilities->can_generate_exception_events) {
+		rc |= eventHookFunction(j9env, JVMTI_EVENT_EXCEPTION);
+		rc |= eventHookFunction(j9env, JVMTI_EVENT_EXCEPTION_CATCH);
 	}
 
 	if (capabilities->can_generate_native_method_bind_events) {
 		rc |= eventHookFunction(j9env, JVMTI_EVENT_NATIVE_METHOD_BIND);
 	}
 
-	if (capabilities->can_generate_exception_events) {
-		rc |= eventHookFunction(j9env, JVMTI_EVENT_EXCEPTION);
-		rc |= eventHookFunction(j9env, JVMTI_EVENT_EXCEPTION_CATCH);
-	}
-
 	if (capabilities->can_generate_compiled_method_load_events) {
 		rc |= eventHookFunction(j9env, JVMTI_EVENT_COMPILED_METHOD_LOAD);
 		rc |= eventHookFunction(j9env, JVMTI_EVENT_COMPILED_METHOD_UNLOAD);
-	}
-
-	if (capabilities->can_generate_monitor_events) {
-		rc |= eventHookFunction(j9env, JVMTI_EVENT_MONITOR_CONTENDED_ENTER);
-		rc |= eventHookFunction(j9env, JVMTI_EVENT_MONITOR_CONTENDED_ENTERED);
-		rc |= eventHookFunction(j9env, JVMTI_EVENT_MONITOR_WAIT);
-		rc |= eventHookFunction(j9env, JVMTI_EVENT_MONITOR_WAITED);
 	}
 
 	if (capabilities->can_generate_vm_object_alloc_events) {
@@ -599,20 +632,8 @@ mapCapabilitiesToEvents(J9JVMTIEnv * j9env, jvmtiCapabilities * capabilities, J9
 	}
 #endif /* JAVA_SPEC_VERSION >= 11 */
 
-#if JAVA_SPEC_VERSION >= 19
-	if (capabilities->can_support_virtual_threads) {
-		rc |= eventHookFunction(j9env, JVMTI_EVENT_VIRTUAL_THREAD_START);
-		rc |= eventHookFunction(j9env, JVMTI_EVENT_VIRTUAL_THREAD_END);
-	}
-#endif /* JAVA_SPEC_VERSION >= 19 */
-
 	if (capabilities->can_generate_object_free_events) {
 		rc |= eventHookFunction(j9env, JVMTI_EVENT_OBJECT_FREE);
-	}
-
-	if (capabilities->can_generate_garbage_collection_events) {
-		rc |= eventHookFunction(j9env, JVMTI_EVENT_GARBAGE_COLLECTION_START);
-		rc |= eventHookFunction(j9env, JVMTI_EVENT_GARBAGE_COLLECTION_FINISH);
 	}
 
 	if (capabilities->can_generate_resource_exhaustion_heap_events ||
@@ -622,5 +643,3 @@ mapCapabilitiesToEvents(J9JVMTIEnv * j9env, jvmtiCapabilities * capabilities, J9
 
 	return rc;
 }
-
-
