@@ -352,6 +352,7 @@ JIT_HELPER(doAESENCDecrypt);
 
 JIT_HELPER(methodHandleJ2IGlue);
 JIT_HELPER(methodHandleJ2I_unwrapper);
+JIT_HELPER(java_util_zip_CRC32C_updateBytes_impl);
 
 // --------------------------------------------------------------------------------
 //                                    IA32
@@ -1230,6 +1231,7 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_AMD64arrayTranslateTROT,                    (void *)arrayTranslateTROT,        TR_Helper);
    SET(TR_AMD64encodeUTF16Big,                        (void *)encodeUTF16Big,            TR_Helper);
    SET(TR_AMD64encodeUTF16Little,                     (void *)encodeUTF16Little,         TR_Helper);
+   SET(TR_AMD64java_util_zip_CRC32C_updateBytes,      (void *)java_util_zip_CRC32C_updateBytes_impl,   TR_Helper);
 #ifdef J9VM_OPT_JAVA_CRYPTO_ACCELERATION
    SET(TR_AMD64doAESENCEncrypt,                       (void *)doAESENCEncrypt,           TR_Helper);
    SET(TR_AMD64doAESENCDecrypt,                       (void *)doAESENCDecrypt,           TR_Helper);
