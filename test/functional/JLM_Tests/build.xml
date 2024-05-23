@@ -73,15 +73,11 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 				</javac>
 			</then>
 			<else>
-				<if>
-					<equals arg1="${JCL_VERSION}" arg2="latest"/>
-					<then>
-						<property name="addExports" value="--add-exports java.management/com.ibm.java.lang.management.internal=ALL-UNNAMED --add-exports jdk.management/com.ibm.lang.management.internal=ALL-UNNAMED --add-exports java.management/javax.management=ALL-UNNAMED --add-exports java.base/java.security=ALL-UNNAMED" />
-					</then>
-					<else>
-						<property name="addExports" value="--add-exports java.management/com.ibm.java.lang.management.internal=ALL-UNNAMED --add-exports jdk.management/com.ibm.lang.management.internal=ALL-UNNAMED --add-exports java.management/javax.management=ALL-UNNAMED --add-exports java.base/java.security=ALL-UNNAMED" />
-					</else>
-				</if>
+				<property name="addExports" value="--add-exports jdk.management/jdk.crac.management=ALL-UNNAMED
+					--add-exports java.management/com.ibm.java.lang.management.internal=ALL-UNNAMED
+					--add-exports jdk.management/com.ibm.lang.management.internal=ALL-UNNAMED
+					--add-exports java.management/javax.management=ALL-UNNAMED
+					--add-exports java.base/java.security=ALL-UNNAMED" />
 				<property name="TestUtilitiesExports" value="--add-exports java.base/openj9.internal.tools.attach.target=ALL-UNNAMED" />
 				<property name="srcpath" location="${src}:${src_90}:${transformerListener}:${TestUtilities}" />
 				<path id="build.cp">

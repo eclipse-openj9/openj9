@@ -84,7 +84,8 @@
 				</javac>
 			</then>
 			<else>
-				<property name="addExports" value="--add-exports java.base/jdk.crac=ALL-UNNAMED --add-exports java.base/openj9.internal.criu=ALL-UNNAMED --add-exports java.base/jdk.internal.misc=ALL-UNNAMED" />
+				<property name="addExports" value="--add-exports jdk.management/jdk.crac.management=ALL-UNNAMED --add-exports java.base/jdk.crac=ALL-UNNAMED
+					--add-exports java.base/openj9.internal.criu=ALL-UNNAMED --add-exports java.base/jdk.internal.misc=ALL-UNNAMED" />
 				<echo>===addExports:        ${addExports}</echo>
 				<echo>===enablePreview:     ${enablePreview}</echo>
 				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
