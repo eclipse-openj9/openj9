@@ -248,7 +248,7 @@ bool TR_UnsafeFastPath::tryTransformUnsafeAtomicCallInVarHandleAccessMethod(TR::
       return false;
 
    TR::Node* unsafeAddress = NULL;
-   if (callerMethod == TR::java_lang_invoke_StaticFieldVarHandle_StaticFieldVarHandleOperations_OpMethod)
+   if (isUnsafeCallerAccessingStaticField(callerMethod))
       {
       TR::Node *jlClass = node->getChild(1);
       TR::Node *j9Class = TR::Node::createWithSymRef(node, TR::aloadi, 1, jlClass, comp()->getSymRefTab()->findOrCreateClassFromJavaLangClassSymbolRef());
@@ -772,7 +772,7 @@ int32_t TR_UnsafeFastPath::perform()
                // The offset for a static field is low taged, mask out the last bit to get the real offset
                TR::Node *newOffset =
                   TR::Node::create(offset, TR::land, 2, offset,
-                                  TR::Node::lconst(offset, ~1));
+                                  TR::Node::lconst(offset, ~J9_SUN_FIELD_OFFSET_MASK));
                node->setAndIncChild(offsetChild, newOffset);
                offset->recursivelyDecReferenceCount();
                base = ramStatics;
