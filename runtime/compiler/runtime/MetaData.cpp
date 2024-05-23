@@ -1494,8 +1494,13 @@ createMethodMetaData(
 
    data->startPC = (UDATA)comp->cg()->getCodeStart();
    data->endPC = (UDATA)comp->cg()->getCodeEnd();
-   data->startColdPC = (UDATA)0;
-   data->endWarmPC = data->endPC;
+   data->startColdPC = (UDATA)comp->cg()->getColdCodeStart();
+
+   if (data->startColdPC)
+      data->endWarmPC = (UDATA)comp->cg()->getWarmCodeEnd();
+   else
+      data->endWarmPC = data->endPC;
+
    data->codeCacheAlloc = (UDATA)comp->cg()->getBinaryBufferStart();
 
    if (fourByteOffsets)

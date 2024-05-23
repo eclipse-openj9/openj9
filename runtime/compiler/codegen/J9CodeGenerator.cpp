@@ -1707,6 +1707,12 @@ J9::CodeGenerator::doInstructionSelection()
 
    bool fixedUpBlock = false;
 
+   if (self()->comp()->getOption(TR_SplitWarmAndColdBlocks) &&
+       !self()->comp()->compileRelocatableCode())
+      {
+      setInstructionSelectionInWarmCodeCache();
+      }
+
    for (TR::TreeTop *tt = self()->comp()->getStartTree(); tt; tt = self()->getCurrentEvaluationTreeTop()->getNextTreeTop())
       {
       if(traceLiveMon)
@@ -2166,6 +2172,26 @@ J9::CodeGenerator::doInstructionSelection()
       if (doEvaluation)
          self()->evaluate(node);
 
+      if (self()->comp()->getOption(TR_SplitWarmAndColdBlocks) &&
+          opCode == TR::BBEnd)
+         {
+         TR::Block *b = self()->getCurrentEvaluationBlock();
+
+         if (b->isLastWarmBlock())
+            {
+            resetInstructionSelectionInWarmCodeCache();
+            // Mark the split point between warm and cold instructions, so they
+            // can be allocated in different code sections.
+            //
+            TR::Instruction *lastInstr = b->getLastInstruction();
+
+            if (self()->comp()->getOption(TR_TraceCG))
+               traceMsg(self()->comp(), "%s Last warm instruction is %p\n", SPLIT_WARM_COLD_STRING, lastInstr);
+
+            lastInstr->setLastWarmInstruction(true);
+            self()->setLastWarmInstruction(lastInstr);
+            }
+         }
 
       if (self()->comp()->getOption(TR_TraceCG) || debug("traceGRA"))
          {
@@ -5008,7 +5034,7 @@ void
 J9::CodeGenerator::trimCodeMemoryToActualSize()
    {
    uint8_t *bufferStart = self()->getBinaryBufferStart();
-   size_t actualCodeLengthInBytes = self()->getCodeEnd() - bufferStart;
+   size_t actualCodeLengthInBytes = self()->getWarmCodeEnd() - bufferStart;
 
    TR::VMAccessCriticalSection trimCodeMemoryAllocation(self()->comp());
    self()->getCodeCache()->trimCodeMemoryAllocation(bufferStart, actualCodeLengthInBytes);
