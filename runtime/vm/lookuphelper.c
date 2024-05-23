@@ -29,17 +29,26 @@
 #include "vm_internal.h"
 
 UDATA
-mustReportEnterStepOrBreakpoint(J9JavaVM * vm)
+mustReportEnterStepOrBreakpoint(J9JavaVM *vm)
 {
-	J9HookInterface** hookInterface = J9_HOOK_INTERFACE(vm->hookInterface);
+	J9HookInterface **hookInterface = J9_HOOK_INTERFACE(vm->hookInterface);
+	UDATA hookedOrReserved = 0;
 
-	return
-		((*hookInterface)->J9HookDisable(hookInterface, J9HOOK_VM_METHOD_ENTER) != 0) ||
-		((*hookInterface)->J9HookDisable(hookInterface, J9HOOK_VM_METHOD_RETURN) != 0) ||
-		((*hookInterface)->J9HookDisable(hookInterface, J9HOOK_VM_SINGLE_STEP) != 0) ||
-		((*hookInterface)->J9HookDisable(hookInterface, J9HOOK_VM_BREAKPOINT) != 0);
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	if (isDebugOnRestoreEnabled(vm->mainThread)) {
+		hookedOrReserved = J9_EVENT_IS_HOOKED_OR_RESERVED(vm->hookInterface, J9HOOK_VM_METHOD_ENTER)
+			|| J9_EVENT_IS_HOOKED_OR_RESERVED(vm->hookInterface, J9HOOK_VM_METHOD_RETURN)
+			|| J9_EVENT_IS_HOOKED_OR_RESERVED(vm->hookInterface, J9HOOK_VM_SINGLE_STEP)
+			|| J9_EVENT_IS_HOOKED_OR_RESERVED(vm->hookInterface, J9HOOK_VM_BREAKPOINT);
+	} else
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+	{
+		hookedOrReserved = (0 != (*hookInterface)->J9HookDisable(hookInterface, J9HOOK_VM_METHOD_ENTER)) ||
+			(0 != (*hookInterface)->J9HookDisable(hookInterface, J9HOOK_VM_METHOD_RETURN)) ||
+			(0 != (*hookInterface)->J9HookDisable(hookInterface, J9HOOK_VM_SINGLE_STEP)) ||
+			(0 != (*hookInterface)->J9HookDisable(hookInterface, J9HOOK_VM_BREAKPOINT));
+	}
+	Trc_VM_mustReportEnterStepOrBreakpoint_hookedOrReserved(hookedOrReserved);
+
+	return hookedOrReserved;
 }
-
-
-
-

@@ -2345,12 +2345,13 @@ javaLookupMethodImpl (J9VMThread *vmContext, J9Class *clazz, J9ROMNameAndSignatu
 /* ---------------- lookuphelper.c ---------------- */
 
 /**
-* @brief
-* @param vm
-* @return UDATA
+* @brief Disable hooks which must have been hooked by now if isDebugOnRestoreEnabled() returns false,
+*        otherwise, check if the events are hooked or reserved instead.
+* @param[in] vm pointer to the J9JavaVM
+* @return TRUE if EnterStep or Breakpoint must be reported, otherwise FALSE.
 */
 UDATA
-mustReportEnterStepOrBreakpoint(J9JavaVM * vm);
+mustReportEnterStepOrBreakpoint(J9JavaVM *vm);
 
 
 /* ---------------- monhelpers.c ---------------- */

@@ -2985,6 +2985,17 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 				goto _error;
 			}
 #endif /* defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH) */
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+			if (isDebugOnRestoreEnabled(vm->mainThread)) {
+				Trc_VM_VMInitStages_isDebugOnRestoreEnabled();
+				/* enable jvmtiCapabilities.can_get_source_debug_extension */
+				vm->requiredDebugAttributes |= J9VM_DEBUG_ATTRIBUTE_SOURCE_DEBUG_EXTENSION;
+				/* enable jvmtiCapabilities.can_access_local_variables */
+				vm->requiredDebugAttributes |= J9VM_DEBUG_ATTRIBUTE_CAN_ACCESS_LOCALS;
+				/* enable jvmtiCapabilities.can_maintain_original_method_order */
+				vm->requiredDebugAttributes |= J9VM_DEBUG_ATTRIBUTE_MAINTAIN_ORIGINAL_METHOD_ORDER;
+			}
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 			TRIGGER_J9HOOK_VM_ABOUT_TO_BOOTSTRAP(vm->hookInterface, vm->mainThread);
 			/* At this point, the decision about which interpreter to use has been made */
 
