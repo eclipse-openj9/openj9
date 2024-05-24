@@ -573,6 +573,8 @@ JCL      - 7f27c537a8 based on jdk8u172-b11)
 :apple:
 The following instructions guide you through the process of building a macOS **OpenJDK V8** binary that contains Eclipse OpenJ9. This process can be used to build binaries to run on macOS 10.9.0 or later.
 
+:pencil: OpenJ9 for AArch64 macOS does not support OpenJDK V8.
+
 ### 1. Prepare your system
 :apple:
 You must install a number of software dependencies to create a suitable build environment on your system (the specified versions are minimums):
@@ -659,8 +661,6 @@ Mixed references is the default to build when no options are specified. _Note th
 - `--with-mixedrefs=dynamic` create a mixed references build that uses runtime checks
 - `--with-mixedrefs=static` (this is the default) create a mixed references build which avoids runtime checks by compiling source twice
 - `--with-noncompressedrefs` create a build supporting non-compressed references only
-
-:pencil: **AArch64 macOS only:** Please specify `--with-noncompressedrefs` because compressed references is not supported on AArch64 macOS yet.
 
 :pencil: **OpenSSL support:** If you want to build an OpenJDK that includes OpenSSL, you must specify `--with-openssl={fetched|path_to_library}`
 
