@@ -212,13 +212,13 @@ class TR_J9InlinerPolicy : public OMR_InlinerPolicy
       bool         inlineUnsafeCall(TR::ResolvedMethodSymbol *, TR::ResolvedMethodSymbol *, TR::TreeTop *, TR::Node *);
       TR::Block * addNullCheckForUnsafeGetPut(TR::Node* unsafeAddress, TR::SymbolReference* newSymbolReferenceForAddress, TR::TreeTop* callNodeTreeTop, TR::TreeTop* directAccessTreeTop, TR::TreeTop* arrayDirectAccessTreeTop, TR::TreeTop* indirectAccessTreeTop);
       bool createUnsafePutWithOffset(TR::ResolvedMethodSymbol *, TR::ResolvedMethodSymbol *, TR::TreeTop *, TR::Node *, TR::DataType, bool, bool needNullCheck = false, bool isOrdered = false);
-      TR::TreeTop* genDirectAccessCodeForUnsafeGetPut(TR::Node* callNode, bool conversionNeeded, bool isUnsafeGet);
+      TR::TreeTop* genDirectAccessCodeForUnsafeGetPut(TR::Node* callNode, bool conversionNeeded, bool isUnsafeGet, bool isOffsetMasked);
       void createTempsForUnsafePutGet(TR::Node*& unsafeAddress, TR::Node* unsafeCall, TR::TreeTop* callNodeTreeTop, TR::Node*& offset, TR::SymbolReference*& newSymbolReferenceForAddress, bool isUnsafeGet);
       bool         createUnsafeGet(TR::ResolvedMethodSymbol *, TR::ResolvedMethodSymbol *, TR::TreeTop *, TR::Node *, TR::DataType, bool compress = true);
       bool         createUnsafePut(TR::ResolvedMethodSymbol *, TR::ResolvedMethodSymbol *, TR::TreeTop *, TR::Node *, TR::DataType, bool compress = true);
       TR::Node *    createUnsafeAddress(TR::Node *);
       bool         createUnsafeGetWithOffset(TR::ResolvedMethodSymbol *, TR::ResolvedMethodSymbol *, TR::TreeTop *, TR::Node *, TR::DataType, bool, bool needNullCheck = false);
-      TR::Node *    createUnsafeAddressWithOffset(TR::Node *);
+      TR::Node *    createUnsafeAddressWithOffset(TR::Node *, bool);
       bool         createUnsafeFence(TR::TreeTop *, TR::Node *, TR::ILOpCodes);
 
       TR::Node *    createUnsafeMonitorOp(TR::ResolvedMethodSymbol *calleeSymbol, TR::ResolvedMethodSymbol *callerSymbol, TR::TreeTop * callNodeTreeTop, TR::Node * unsafeCall, bool isEnter);
