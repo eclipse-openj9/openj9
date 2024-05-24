@@ -338,6 +338,42 @@ struct J9UpcallNativeSignature;
 struct J9VMContinuation;
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
+#if defined(J9VM_OPT_JFR)
+
+typedef struct J9JFRBufferWalkState {
+	U_8 *current;
+	U_8 *end;
+} J9JFRBufferWalkState;
+
+typedef struct J9JFRBuffer {
+	UDATA bufferSize;
+	UDATA bufferRemaining;
+	U_8 *bufferStart;
+	U_8 *bufferCurrent;
+} J9JFRBuffer;
+
+/* JFR event structures */
+
+#define J9FR_EVENT_COMMON_FIELDS \
+	I_64 time; \
+	UDATA eventType; \
+	UDATA threadState; \
+	struct J9VMThread *vmThread;
+
+typedef struct J9JFREvent {
+	J9FR_EVENT_COMMON_FIELDS
+} J9JFREvent;
+
+/* Variable-size structure - stackTraceSize worth of UDATA follow the fixed portion */
+typedef struct J9JFRExecutionSample {
+	J9FR_EVENT_COMMON_FIELDS
+	UDATA stackTraceSize;
+} J9JFRExecutionSample;
+
+#define J9JFREXECUTIONSAMPLE_STACKTRACE(sample) ((UDATA*)(((J9JFRExecutionSample*)(sample)) + 1))
+
+#endif /* defined(J9VM_OPT_JFR) */
+
 /* @ddr_namespace: map_to_type=J9CfrError */
 
 /* Jazz 82615: Both errorPC (current pc value) and errorFrameBCI (bci value in the stack map frame)
@@ -5219,33 +5255,6 @@ typedef struct J9VMContinuation {
 } J9VMContinuation;
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
-typedef struct J9JFRThreadData {
-	UDATA bufferSize;
-	UDATA bufferRemaining;
-	U_8 *bufferStart;
-	U_8 *bufferCurrent;
-} J9JFRThreadData;
-
-/* JFR event structures */
-
-#define J9FR_EVENT_COMMON_FIELDS \
-	I_64 time; \
-	UDATA eventType; \
-	UDATA threadState; \
-	struct J9VMThread *vmThread;
-
-typedef struct J9JFREvent {
-	J9FR_EVENT_COMMON_FIELDS
-} J9JFREvent;
-
-/* Variable-size structure - stackTraceSize worth of UDATA follow the fixed portion */
-typedef struct J9JFRExecutionSample {
-	J9FR_EVENT_COMMON_FIELDS
-	UDATA stackTraceSize;
-} J9JFRExecutionSample;
-
-#define J9JFREXECUTIONSAMPLE_STACKTRACE(sample) ((UDATA*)(((J9JFRExecutionSample*)(sample)) + 1))
-
 /* @ddr_namespace: map_to_type=J9VMThread */
 
 typedef struct J9VMThread {
@@ -5485,7 +5494,7 @@ typedef struct J9VMThread {
 	UDATA safePointCount;
 	struct J9HashTable * volatile utfCache;
 #if defined(J9VM_OPT_JFR)
-	J9JFRThreadData jfrData;
+	J9JFRBuffer jfrBuffer;
 #endif /* defined(J9VM_OPT_JFR) */
 #if JAVA_SPEC_VERSION >= 16
 	U_64 *ffiArgs;
@@ -6096,6 +6105,10 @@ typedef struct J9JavaVM {
 	/* Pool for allocating J9MemberNameListNode. */
 	struct J9Pool *memberNameListNodePool;
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
+#if defined(J9VM_OPT_JFR)
+	J9JFRBuffer jfrBuffer;
+	omrthread_monitor_t jfrBufferMutex;
+#endif /* defined(J9VM_OPT_JFR) */
 #if JAVA_SPEC_VERSION >= 22
 	omrthread_monitor_t closeScopeMutex;
 	UDATA closeScopeNotifyCount;
