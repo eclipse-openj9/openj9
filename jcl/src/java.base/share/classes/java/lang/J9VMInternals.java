@@ -175,6 +175,13 @@ final class J9VMInternals {
 		if (openj9.internal.criu.InternalCRIUSupport.isCRaCSupportEnabled()) {
 			// export java.base/jdk.crac unconditionally
 			J9VMInternals.class.getModule().implAddExports("jdk.crac"); //$NON-NLS-1$
+
+			// export jdk.management/jdk.crac.management unconditionally
+			java.util.Optional<Module> om = ModuleLayer.boot().findModule("jdk.management");  //$NON-NLS-1$
+			if (om.isEmpty()) {
+				throw new InternalError("module jdk.management wasn't found"); //$NON-NLS-1$
+			}
+			om.get().implAddExports("jdk.crac.management"); //$NON-NLS-1$
 		}
 /*[ENDIF] CRAC_SUPPORT */
 	}
