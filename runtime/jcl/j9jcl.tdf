@@ -181,7 +181,7 @@ TraceExit=Trc_JCL_com_ibm_oti_shared_createCPEntries_ExitFalse1 Overhead=1 Level
 TraceExit=Trc_JCL_com_ibm_oti_shared_createCPEntries_ExitFalse2 Overhead=1 Level=1 Template="JCL: com.ibm.oti.shared createCPEntries: Exiting FALSE due to memory allocation failure"
 TraceExit=Trc_JCL_com_ibm_oti_shared_createCPEntries_ExitFalse3 Overhead=1 Level=1 Template="JCL: com.ibm.oti.shared createCPEntries: Exiting FALSE as getPathProtocolFromURL failed"
 TraceExit=Trc_JCL_com_ibm_oti_shared_createCPEntries_ExitFalse4 Overhead=1 Level=1 Template="JCL: com.ibm.oti.shared createCPEntries: Exiting FALSE as getCpeTypeForProtocol failed"
-TraceExit=Trc_JCL_com_ibm_oti_shared_createCPEntries_ExitFalse5 Overhead=1 Level=1 Template="JCL: com.ibm.oti.shared createCPEntries: Exiting FALSE as correctURLPath failed"
+TraceExit=Trc_JCL_com_ibm_oti_shared_createCPEntries_ExitFalse5 Obsolete Overhead=1 Level=1 Template="JCL: com.ibm.oti.shared createCPEntries: Exiting FALSE as correctURLPath failed"
 TraceExit=Trc_JCL_com_ibm_oti_shared_createCPEntries_ExitFalse6 Overhead=1 Level=1 Template="JCL: com.ibm.oti.shared createCPEntries: Exiting FALSE as pool_newElement failed"
 TraceExit=Trc_JCL_com_ibm_oti_shared_createCPEntries_ExitFalse7 Overhead=1 Level=1 Template="JCL: com.ibm.oti.shared createCPEntries: Exiting FALSE as copyString failed"
 TraceExit=Trc_JCL_com_ibm_oti_shared_createCPEntries_ExitTrue Overhead=1 Level=1 Template="JCL: com.ibm.oti.shared createCPEntries: Exiting with TRUE"
@@ -215,7 +215,7 @@ TraceExit=Trc_JCL_com_ibm_oti_shared_getCachedURL_ExitFound Overhead=1 Level=2 T
 TraceExit=Trc_JCL_com_ibm_oti_shared_getCachedURL_ExitNull Overhead=1 Level=2 Template="JCL: com.ibm.oti.shared getCachedURL: Exiting with NULL"
 
 TraceEntry=Trc_JCL_com_ibm_oti_shared_getCpeTypeForProtocol_Entry Noenv Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared getCpeTypeForProtocol: Entering"
-TraceExit=Trc_JCL_com_ibm_oti_shared_getCpeTypeForProtocol_Exit0 Noenv Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared getCpeTypeForProtocol: Exiting with 0 as protocol is NULL"
+TraceExit=Trc_JCL_com_ibm_oti_shared_getCpeTypeForProtocol_Exit0 Obsolete Noenv Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared getCpeTypeForProtocol: Exiting with 0 as protocol is NULL"
 TraceExit=Trc_JCL_com_ibm_oti_shared_getCpeTypeForProtocol_ExitJAR Noenv Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared getCpeTypeForProtocol: Exiting with JAR"
 TraceExit=Trc_JCL_com_ibm_oti_shared_getCpeTypeForProtocol_ExitDIR Noenv Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared getCpeTypeForProtocol: Exiting with DIR"
 TraceExit=Trc_JCL_com_ibm_oti_shared_getCpeTypeForProtocol_ExitJXE Noenv Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared getCpeTypeForProtocol: Exiting with JXE"
@@ -707,3 +707,7 @@ TraceEvent=Trc_JCL_MXBean_getUptimeImpl Overhead=1 Level=3 Template="RuntimeMXBe
 
 TraceException=Trc_JCL_memoryManagement_verifyMemoryUsageAfterGC_memoryUsageError Test NoEnv Overhead=1 Level=1 Template="JCL: verifyMemoryUsageAfterGC memoryUsageError: GcName=%s, MemoryPool=%s, initialSize=%lld, preUsedSize=%llu, preCommittedSize==%llu, preMaxSize=%lld, postUsedSize=%llu, postCommittedSize==%llu, postMaxSize=%lld"
 TraceEvent=Trc_JCL_memoryManagement_verifyMemoryUsageAfterGC_memoryUsage Test NoEnv Overhead=1 Level=6 Template="JCL: verifyMemoryUsageAfterGC memoryUsage: GcName=%s, MemoryPool=%s, initialSize=%lld, preUsedSize=%llu, preCommittedSize==%llu, preMaxSize=%lld, postUsedSize=%llu, postCommittedSize==%llu, postMaxSize=%lld"
+
+TraceExit=Trc_JCL_com_ibm_oti_shared_getCpeTypeForProtocol_ExitFail1 Noenv Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared getCpeTypeForProtocol: Protocol is NULL"
+TraceExit=Trc_JCL_com_ibm_oti_shared_getCpeTypeForProtocol_ExitFail2 Noenv Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared getCpeTypeForProtocol: Call to correctURLPath failed"
+TraceExit=Trc_JCL_com_ibm_oti_shared_getCpeTypeForProtocol_ExitFail3 Noenv Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared getCpeTypeForProtocol: Attempt to determine path type resulted in error code %d"
