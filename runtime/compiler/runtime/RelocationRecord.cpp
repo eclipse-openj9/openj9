@@ -60,6 +60,7 @@
 #include "control/CompilationRuntime.hpp"
 #include "control/CompilationThread.hpp"
 #include "control/MethodToBeCompiled.hpp"
+#include "runtime/JITServerAOTDeserializer.hpp"
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
 // TODO: move this someplace common for RuntimeAssumptions.cpp and here
@@ -3292,23 +3293,37 @@ TR_RelocationRecordProfiledInlinedMethod::preparePrivateData(TR_RelocationRuntim
       }
    else
       {
-      J9ROMClass *inlinedCodeRomClass = reloRuntime->fej9()->sharedCache()->romClassFromOffsetInSharedCache(romClassOffsetInSharedCache(reloTarget));
+      auto sharedCache = reloRuntime->fej9()->sharedCache();
+      uintptr_t romClassOffset = romClassOffsetInSharedCache(reloTarget);
+      J9ROMClass *inlinedCodeRomClass = sharedCache->romClassFromOffsetInSharedCache(romClassOffset);
       J9UTF8 *inlinedCodeClassName = J9ROMCLASS_CLASSNAME(inlinedCodeRomClass);
-      RELO_LOG(reloRuntime->reloLogger(), 6,"\tpreparePrivateData: inlinedCodeRomClass %p %.*s\n", inlinedCodeRomClass, J9UTF8_LENGTH(inlinedCodeClassName), J9UTF8_DATA(inlinedCodeClassName));
+      RELO_LOG(reloRuntime->reloLogger(), 6, "\tpreparePrivateData: inlinedCodeRomClass %p %.*s\n", inlinedCodeRomClass,
+               J9UTF8_LENGTH(inlinedCodeClassName), J9UTF8_DATA(inlinedCodeClassName));
 
-      void *classChainIdentifyingLoader = reloRuntime->fej9()->sharedCache()->pointerFromOffsetInSharedCache(classChainIdentifyingLoaderOffsetInSharedCache(reloTarget));
-      RELO_LOG(reloRuntime->reloLogger(), 6,"\tpreparePrivateData: classChainIdentifyingLoader %p\n", classChainIdentifyingLoader);
-      J9ClassLoader *classLoader = (J9ClassLoader *) reloRuntime->fej9()->sharedCache()->lookupClassLoaderAssociatedWithClassChain(classChainIdentifyingLoader);
-
-      RELO_LOG(reloRuntime->reloLogger(), 6,"\tpreparePrivateData: classLoader %p\n", classLoader);
+      void *classChainIdentifyingLoader = sharedCache->pointerFromOffsetInSharedCache(
+                                          classChainIdentifyingLoaderOffsetInSharedCache(reloTarget));
+      RELO_LOG(reloRuntime->reloLogger(), 6, "\tpreparePrivateData: classChainIdentifyingLoader %p\n",
+               classChainIdentifyingLoader);
+      J9ClassLoader *classLoader = (J9ClassLoader *)sharedCache->lookupClassLoaderAssociatedWithClassChain(classChainIdentifyingLoader);
+      RELO_LOG(reloRuntime->reloLogger(), 6, "\tpreparePrivateData: classLoader %p\n", classLoader);
 
       if (classLoader)
          {
          TR::VMAccessCriticalSection preparePrivateDataCriticalSection(reloRuntime->fej9());
-         inlinedCodeClass = (TR_OpaqueClassBlock *) jitGetClassInClassloaderFromUTF8(reloRuntime->currentThread(),
-                                                                                     classLoader,
-                                                                                     J9UTF8_DATA(inlinedCodeClassName),
-                                                                                     J9UTF8_LENGTH(inlinedCodeClassName));
+         inlinedCodeClass = (TR_OpaqueClassBlock *)jitGetClassInClassloaderFromUTF8(reloRuntime->currentThread(),
+                                                                                    classLoader,
+                                                                                    J9UTF8_DATA(inlinedCodeClassName),
+                                                                                    J9UTF8_LENGTH(inlinedCodeClassName));
+#if defined(J9VM_OPT_JITSERVER)
+         // If this is a deserialized method from the JITServer AOT cache, the lookup could have failed because the
+         // class is runtime-generated (e.g., a lambda). Try to look it up in the AOT deserializer cache instead.
+         if (!inlinedCodeClass && reloRuntime->comp()->isDeserializedAOTMethod())
+            {
+            auto deserializer = TR::CompilationInfo::get()->getJITServerAOTDeserializer();
+            inlinedCodeClass = (TR_OpaqueClassBlock *)deserializer->getGeneratedClass(classLoader, romClassOffset,
+                                                                                      reloRuntime->comp());
+            }
+#endif /* defined(J9VM_OPT_JITSERVER) */
          }
       }
 
@@ -3804,16 +3819,19 @@ TR_RelocationRecordValidateArbitraryClass::applyRelocation(TR_RelocationRuntime 
    if (aotStats)
       aotStats->numClassValidations++;
 
-   void *classChainIdentifyingLoader = reloRuntime->fej9()->sharedCache()->pointerFromOffsetInSharedCache(classChainIdentifyingLoaderOffset(reloTarget));
+   auto sharedCache = reloRuntime->fej9()->sharedCache();
+   void *classChainIdentifyingLoader = sharedCache->pointerFromOffsetInSharedCache(classChainIdentifyingLoaderOffset(reloTarget));
    RELO_LOG(reloRuntime->reloLogger(), 6, "\t\tpreparePrivateData: classChainIdentifyingLoader %p\n", classChainIdentifyingLoader);
 
-   J9ClassLoader *classLoader = (J9ClassLoader *) reloRuntime->fej9()->sharedCache()->lookupClassLoaderAssociatedWithClassChain(classChainIdentifyingLoader);
+   J9ClassLoader *classLoader = (J9ClassLoader *)sharedCache->lookupClassLoaderAssociatedWithClassChain(classChainIdentifyingLoader);
    RELO_LOG(reloRuntime->reloLogger(), 6, "\t\tpreparePrivateData: classLoader %p\n", classLoader);
 
    if (classLoader)
       {
-      uintptr_t *classChainForClassBeingValidated = (uintptr_t *) reloRuntime->fej9()->sharedCache()->pointerFromOffsetInSharedCache(classChainOffsetForClassBeingValidated(reloTarget));
-      TR_OpaqueClassBlock *clazz = reloRuntime->fej9()->sharedCache()->lookupClassFromChainAndLoader(classChainForClassBeingValidated, classLoader);
+      uintptr_t *classChainForClassBeingValidated = (uintptr_t *)sharedCache->pointerFromOffsetInSharedCache(
+                                                    classChainOffsetForClassBeingValidated(reloTarget));
+      TR_OpaqueClassBlock *clazz = sharedCache->lookupClassFromChainAndLoader(classChainForClassBeingValidated,
+                                                                              classLoader, reloRuntime->comp());
       RELO_LOG(reloRuntime->reloLogger(), 6, "\t\tpreparePrivateData: clazz %p\n", clazz);
 
       if (clazz)
@@ -5637,17 +5655,18 @@ TR_RelocationRecordPointer::preparePrivateData(TR_RelocationRuntime *reloRuntime
    J9Class *classPointer = NULL;
    if (getInlinedSiteMethod(reloRuntime, inlinedSiteIndex(reloTarget)) != (TR_OpaqueMethodBlock *)-1)
       {
+      auto sharedCache = reloRuntime->fej9()->sharedCache();
       J9ClassLoader *classLoader = NULL;
-      void *classChainIdentifyingLoader = reloRuntime->fej9()->sharedCache()->pointerFromOffsetInSharedCache(classChainIdentifyingLoaderOffsetInSharedCache(reloTarget));
+      void *classChainIdentifyingLoader = sharedCache->pointerFromOffsetInSharedCache(classChainIdentifyingLoaderOffsetInSharedCache(reloTarget));
       RELO_LOG(reloRuntime->reloLogger(), 6,"\tpreparePrivateData: classChainIdentifyingLoader %p\n", classChainIdentifyingLoader);
-      classLoader = (J9ClassLoader *) reloRuntime->fej9()->sharedCache()->lookupClassLoaderAssociatedWithClassChain(classChainIdentifyingLoader);
+      classLoader = (J9ClassLoader *)sharedCache->lookupClassLoaderAssociatedWithClassChain(classChainIdentifyingLoader);
       RELO_LOG(reloRuntime->reloLogger(), 6,"\tpreparePrivateData: classLoader %p\n", classLoader);
 
       if (classLoader != NULL)
          {
-         uintptr_t *classChain = (uintptr_t *) reloRuntime->fej9()->sharedCache()->pointerFromOffsetInSharedCache(classChainForInlinedMethod(reloTarget));
+         uintptr_t *classChain = (uintptr_t *)sharedCache->pointerFromOffsetInSharedCache(classChainForInlinedMethod(reloTarget));
          RELO_LOG(reloRuntime->reloLogger(), 6,"\tpreparePrivateData: classChain %p\n", classChain);
-         classPointer = (J9Class *) reloRuntime->fej9()->sharedCache()->lookupClassFromChainAndLoader(classChain, (void *) classLoader);
+         classPointer = (J9Class *)sharedCache->lookupClassFromChainAndLoader(classChain, (void *) classLoader, reloRuntime->comp());
          RELO_LOG(reloRuntime->reloLogger(), 6,"\tpreparePrivateData: classPointer %p\n", classPointer);
          }
       }

@@ -282,7 +282,7 @@ ROMClassBuilder::handleAnonClassName(J9CfrClassFile *classfile, ROMClassCreation
 	 * When there are a large number of such classes in the shared cache, they trigger a lot of class comparisons.
 	 * Performance can be much worse (compared to shared cache turned off).
 	 */
-	if (isLambdaFormClassName(originalStringBytes, originalStringLength)) {
+	if (isLambdaFormClassName(originalStringBytes, originalStringLength, NULL/*deterministicPrefixLength*/)) {
 		context->addFindClassFlags(J9_FINDCLASS_FLAG_DO_NOT_SHARE);
 		context->addFindClassFlags(J9_FINDCLASS_FLAG_LAMBDAFORM);
 	}
@@ -429,12 +429,15 @@ ROMClassBuilder::handleAnonClassName(J9CfrClassFile *classfile, ROMClassCreation
 	/* Mark if the class is a Lambda class. */
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
 	if (!context->isLambdaFormClass()
-		&& isLambdaClassName(reinterpret_cast<const char *>(_anonClassNameBuffer), newAnonClassNameLength - 1)
+		&& isLambdaClassName(reinterpret_cast<const char *>(_anonClassNameBuffer),
+		                     newAnonClassNameLength - 1, NULL/*deterministicPrefixLength*/)
 	) {
 		context->addFindClassFlags(J9_FINDCLASS_FLAG_LAMBDA);
 	}
 #else /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
-	if (isLambdaClassName(reinterpret_cast<const char *>(_anonClassNameBuffer), newAnonClassNameLength - 1)) {
+	if (isLambdaClassName(reinterpret_cast<const char *>(_anonClassNameBuffer),
+	                      newAnonClassNameLength - 1, NULL/*deterministicPrefixLength*/)
+	) {
 		context->addFindClassFlags(J9_FINDCLASS_FLAG_LAMBDA);
 	}
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */

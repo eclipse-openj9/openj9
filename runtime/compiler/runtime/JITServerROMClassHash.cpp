@@ -30,8 +30,9 @@
 #include "runtime/JITServerAOTSerializationRecords.hpp"
 
 
-JITServerROMClassHash::JITServerROMClassHash(const JITServerROMClassHash &objectArrayHash,
-                                             const JITServerROMClassHash &baseComponentHash, size_t numDimensions)
+void
+JITServerROMClassHash::init(const JITServerROMClassHash &objectArrayHash,
+                            const JITServerROMClassHash &baseComponentHash, size_t numDimensions)
    {
    size_t data[ROMCLASS_HASH_WORDS * 2 + 1];
    memcpy(data, objectArrayHash._data, sizeof(_data));
@@ -62,11 +63,16 @@ JITServerROMClassHash::init(const void *data, size_t size)
    }
 
 void
-JITServerROMClassHash::init(const J9ROMClass *romClass, TR_Memory &trMemory, TR_J9VMBase *fej9)
+JITServerROMClassHash::init(const J9ROMClass *romClass, TR_Memory &trMemory,
+                            TR_J9VMBase *fej9, bool checkGenerated, size_t prefixLength)
    {
+   TR_ASSERT(!prefixLength || checkGenerated, "Invalid arguments");
+
    TR::StackMemoryRegion region(trMemory);
    size_t packedSize = 0;
-   J9ROMClass *packedROMClass = JITServerHelpers::packROMClass((J9ROMClass *)romClass, &trMemory, fej9, packedSize, 0);
+   if (checkGenerated && !prefixLength)
+      prefixLength = JITServerHelpers::getGeneratedClassNamePrefixLength(romClass);
+   J9ROMClass *packedROMClass = JITServerHelpers::packROMClass(romClass, &trMemory, fej9, packedSize, 0, prefixLength);
 
    init(packedROMClass, packedSize);
    }
@@ -100,7 +106,7 @@ JITServerROMClassHash::getObjectArrayHash(const J9ROMClass *objectArrayROMClass,
    // There is no need to synchronize writes into _objectArrayHash since the only existing
    // call site of this function in JITServerAOTDeserializer::isClassMatching() is always
    // inside a critical section of the same monitor JITServerAOTDeserializer::_classMonitor.
-   _objectArrayHash.init(objectArrayROMClass, trMemory, fej9);
+   _objectArrayHash.init(objectArrayROMClass, trMemory, fej9, false, 0);
    VM_AtomicSupport::writeBarrier();
    _cachedObjectArrayHash = true;
    return _objectArrayHash;

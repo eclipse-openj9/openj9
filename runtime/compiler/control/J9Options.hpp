@@ -380,6 +380,7 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    static int32_t _lowCompDensityModeEnterThreshold;
    static int32_t _lowCompDensityModeExitThreshold;
    static int32_t _lowCompDensityModeExitLPQSize;
+   static bool _aotCacheDisableGeneratedClassSupport;
    static TR::CompilationFilters *_JITServerAOTCacheStoreFilters;
    static TR::CompilationFilters *_JITServerAOTCacheLoadFilters;
    static TR::CompilationFilters *_JITServerRemoteExcludeFilters;

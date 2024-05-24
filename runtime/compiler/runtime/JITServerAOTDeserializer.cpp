@@ -40,8 +40,14 @@
 #define ROMMETHOD_NAS(romMethod) \
    LENGTH_AND_DATA(J9ROMMETHOD_NAME(romMethod)), LENGTH_AND_DATA(J9ROMMETHOD_SIGNATURE(romMethod))
 
-JITServerAOTDeserializer::JITServerAOTDeserializer(TR_PersistentClassLoaderTable *loaderTable) :
+
+JITServerAOTDeserializer::JITServerAOTDeserializer(TR_PersistentClassLoaderTable *loaderTable, J9JITConfig *jitConfig) :
    _loaderTable(loaderTable),
+   _rawAllocator(jitConfig->javaVM),
+   _segmentAllocator(MEMORY_TYPE_JIT_SCRATCH_SPACE | MEMORY_TYPE_VIRTUAL, *jitConfig->javaVM),
+   _segmentProvider(64 * 1024, classLoadScratchMemoryLimit, classLoadScratchMemoryLimit, _segmentAllocator, _rawAllocator),
+   _classLoadRegion(_segmentProvider, _rawAllocator),
+   _classLoadTRMemory(*(TR_PersistentMemory *)jitConfig->scratchSegment, _classLoadRegion),
    _classLoaderMonitor(TR::Monitor::create("JIT-JITServerAOTDeserializerClassLoaderMonitor")),
    _classMonitor(TR::Monitor::create("JIT-JITServerAOTDeserializerClassMonitor")),
    _methodMonitor(TR::Monitor::create("JIT-JITServerAOTDeserializerMethodMonitor")),
@@ -50,6 +56,9 @@ JITServerAOTDeserializer::JITServerAOTDeserializer(TR_PersistentClassLoaderTable
    _newKnownIds(decltype(_newKnownIds)::allocator_type(TR::Compiler->persistentAllocator())),
    _newKnownIdsMonitor(TR::Monitor::create("JIT-JITServerAOTDeserializerNewKnownIdsMonitor")),
    _resetMonitor(TR::Monitor::create("JIT-JITServerAOTDeserializerResetMonitor")),
+   _jitConfig(jitConfig),
+   _generatedClasses(decltype(_generatedClasses)::allocator_type(TR::Compiler->persistentAllocator())),
+   _generatedClassesMonitor(TR::Monitor::create("JIT-JITServerAOTDeserializerGeneratedClassesMonitor")),
    _numCacheBypasses(0), _numCacheHits(0), _numCacheMisses(0), _numDeserializedMethods(0),
    _numDeserializationFailures(0), _numClassSizeMismatches(0), _numClassHashMismatches(0)
    {
@@ -69,6 +78,15 @@ JITServerAOTDeserializer::~JITServerAOTDeserializer()
    TR::Monitor::destroy(_newKnownIdsMonitor);
    TR::Monitor::destroy(_resetMonitor);
    }
+
+
+TR_Memory &
+JITServerAOTDeserializer::classLoadTRMemory()
+   {
+   TR_ASSERT(TR::MonitorTable::get()->getClassTableMutex()->owned_by_self(), "Must hold classTableMutex");
+   return _classLoadTRMemory;
+   }
+
 
 bool
 JITServerAOTDeserializer::deserializerWasReset(TR::Compilation *comp, bool &wasReset)
@@ -181,6 +199,126 @@ JITServerAOTDeserializer::deserialize(SerializedAOTMethod *method, const std::ve
    return true;
    }
 
+
+// Invalidating classes and class loaders during GC can be done without locking since current thread
+// has exclusive VM access, and compilation threads have shared VM access during deserialization.
+static void
+assertExclusiveVmAccess(J9VMThread *vmThread)
+   {
+   TR_ASSERT((vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS) && vmThread->omrVMThread->exclusiveCount,
+             "Must have exclusive VM access");
+   }
+
+static void
+assertSharedVmAccess(J9VMThread *vmThread)
+   {
+   TR_ASSERT((vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS) && !vmThread->omrVMThread->exclusiveCount,
+             "Must have shared VM access");
+   }
+
+
+void
+JITServerAOTDeserializer::onClassLoad(J9Class *ramClass, J9VMThread *vmThread)
+   {
+   assertSharedVmAccess(vmThread);
+   TR_ASSERT(TR::MonitorTable::get()->getClassTableMutex()->owned_by_self(), "Must hold classTableMutex");
+
+   const J9UTF8 *name = J9ROMCLASS_CLASSNAME(ramClass->romClass);
+   const uint8_t *nameStr = J9UTF8_DATA(name);
+   int nameLen = J9UTF8_LENGTH(name);
+
+   // Class load JIT hook doesn't expect this function to throw exceptions
+   try
+      {
+      if (auto prefixLength = JITServerHelpers::getGeneratedClassNamePrefixLength(name))
+         {
+         // Add this runtime-generated RAMClass to the map so that it can be found when deserializing AOT methods
+         OMR::CriticalSection cs(_generatedClassesMonitor);
+
+         // Find the entry for this class loader and deterministic class name prefix
+         auto it = _generatedClasses.find({ ramClass->classLoader, StringKey(nameStr, prefixLength) });
+         if (it == _generatedClasses.end())
+            {
+            // Allocate a persistent copy of the name prefix for the new GeneratedClassMap instance
+            auto namePrefix = (uint8_t *)jitPersistentAlloc(prefixLength);
+            if (!namePrefix)
+               throw std::bad_alloc();
+            memcpy(namePrefix, nameStr, prefixLength);
+
+            try
+               {
+               // Add a new GeneratedClassMap instance for this class loader and name prefix
+               it = _generatedClasses.emplace_hint(it, std::piecewise_construct,
+                  std::forward_as_tuple(ramClass->classLoader, StringKey(namePrefix, prefixLength)),
+                  std::forward_as_tuple(namePrefix)
+               );
+               }
+            catch (...)
+               {
+               jitPersistentFree(namePrefix);
+               throw;
+               }
+            }
+
+         try
+            {
+            // Compute the deterministic ROMClass hash for this class
+            JITServerROMClassHash hash(ramClass->romClass, classLoadTRMemory(), TR_J9VMBase::get(_jitConfig, vmThread), true);
+            // Add a new entry to the GeneratedClassMap for this RAMClass
+            auto h_r = it->second._classHashMap.insert({ hash, ramClass });
+            if (h_r.second)
+               {
+               try
+                  {
+                  // Establish two-way mapping from the RAMClass so that it can be invalidated at class unload
+                  auto p_r = it->second._classPtrMap.insert({ ramClass, hash });
+                  TR_ASSERT_FATAL(p_r.second, "Duplicate generated class %p", ramClass);
+
+                  if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+                     {
+                     char buffer[ROMCLASS_HASH_BYTES * 2 + 1];
+                     TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+                        "Loaded generated class %.*s %p ROMClass %p hash %s", ROMCLASS_NAME(ramClass->romClass),
+                        ramClass, ramClass->romClass, hash.toString(buffer, sizeof(buffer))
+                     );
+                     }
+                  }
+               catch (...)
+                  {
+                  it->second._classHashMap.erase(h_r.first);
+                  throw;
+                  }
+               }
+            else if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+               {
+               char buffer[ROMCLASS_HASH_BYTES * 2 + 1];
+               TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+                  "ERROR: Duplicate generated class %.*s %p ROMClass %p hash %s", ROMCLASS_NAME((ramClass)->romClass),
+                  ramClass, ramClass->romClass, hash.toString(buffer, sizeof(buffer))
+               );
+               }
+            }
+         catch (...)
+            {
+            TR_ASSERT_FATAL(it->second._classHashMap.size() == it->second._classPtrMap.size(),
+                            "Broken two-way map for generated class %p", ramClass);
+            if (it->second._classHashMap.empty())
+               _generatedClasses.erase(it);
+            throw;
+            }
+         }
+      }
+
+   catch (const std::exception &e)
+      {
+      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+            "ERROR: AOT deserializer failed to handle class load for %.*s %p: %s", nameLen, nameStr, ramClass, e.what()
+         );
+      }
+   }
+
+
 bool
 JITServerAOTDeserializer::cacheRecord(const AOTSerializationRecord *record, TR::Compilation *comp,
                                       bool &isNew, bool &wasReset)
@@ -205,6 +343,23 @@ JITServerAOTDeserializer::cacheRecord(const AOTSerializationRecord *record, TR::
       }
    }
 
+
+J9Class *
+JITServerAOTDeserializer::findGeneratedClass(J9ClassLoader *loader, const uint8_t *namePrefix, size_t namePrefixLength,
+                                             const JITServerROMClassHash &hash, J9VMThread *vmThread)
+   {
+   assertSharedVmAccess(vmThread);
+   OMR::CriticalSection cs(_generatedClassesMonitor);
+
+   auto n_it = _generatedClasses.find({ loader, StringKey(namePrefix, namePrefixLength) });
+   if (n_it == _generatedClasses.end())
+      return NULL;
+
+   auto h_it = n_it->second._classHashMap.find(hash);
+   return (h_it != n_it->second._classHashMap.end()) ? h_it->second : NULL;
+   }
+
+
 void
 JITServerAOTDeserializer::printStats(FILE *f) const
    {
@@ -225,6 +380,24 @@ JITServerAOTDeserializer::printStats(FILE *f) const
       _numClassSizeMismatches,
       _numClassHashMismatches
    );
+
+   if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITServer, TR_VerbosePerformance))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "AOT deserializer class load mem=[region=%llu system=%llu]KB",
+                                     (unsigned long long)_segmentProvider.regionBytesAllocated() / 1024,
+                                     (unsigned long long)_segmentProvider.systemBytesAllocated() / 1024);
+   }
+
+
+JITServerAOTDeserializer::GeneratedClassMap::GeneratedClassMap(uint8_t *namePrefix) :
+   _namePrefix(namePrefix),
+   _classHashMap(decltype(_classHashMap)::allocator_type(TR::Compiler->persistentAllocator())),
+   _classPtrMap(decltype(_classPtrMap)::allocator_type(TR::Compiler->persistentAllocator()))
+   {
+   }
+
+JITServerAOTDeserializer::GeneratedClassMap::~GeneratedClassMap()
+   {
+   jitPersistentFree(_namePrefix);
    }
 
 
@@ -234,8 +407,7 @@ JITServerAOTDeserializer::isClassMatching(const ClassSerializationRecord *record
    {
    int32_t numDimensions = 0;
    // Use base (non-SCC) front-end method to avoid needless validations
-   auto baseComponent = (J9Class *)comp->fej9vm()->TR_J9VM::getBaseComponentClass((TR_OpaqueClassBlock *)ramClass,
-                                                                                  numDimensions);
+   auto baseComponent = (J9Class *)TR_J9VMBase::staticGetBaseComponentClass((TR_OpaqueClassBlock *)ramClass, numDimensions);
    TR_ASSERT(numDimensions >= 0, "Invalid number of array dimensions: %d", numDimensions);
 
    TR::StackMemoryRegion stackMemoryRegion(*comp->trMemory());
@@ -282,7 +454,7 @@ JITServerAOTDeserializer::isClassMatching(const ClassSerializationRecord *record
       }
 
    return true;
-}
+   }
 
 
 // Atomically (w.r.t. exceptions) insert into two maps. id is the key in map0 and the value in map1.
@@ -319,17 +491,40 @@ JITServerAOTDeserializer::findInMap(const PersistentUnorderedMap<uintptr_t, V> &
    return V();
    }
 
-// Invalidating classes and class loaders during GC can be done without locking since current thread
-// has exclusive VM access, and compilation threads have shared VM access during deserialization.
-static void
-assertExclusiveVmAccess(J9VMThread *vmThread)
+
+bool
+JITServerAOTDeserializer::invalidateGeneratedClass(J9Class *ramClass)
    {
-   TR_ASSERT((vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS) && vmThread->omrVMThread->exclusiveCount,
-             "Must have exclusive VM access");
+   size_t prefixLength = JITServerHelpers::getGeneratedClassNamePrefixLength(ramClass->romClass);
+   if (!prefixLength)
+      return false;
+
+   const uint8_t *name = J9UTF8_DATA(J9ROMCLASS_CLASSNAME(ramClass->romClass));
+   //NOTE: No need to acquire the _generatedClassesMonitor because this function is only called with
+   // exclusive VM access, whereas all other accesses to _generatedClasses are done with shared VM access.
+   auto n_it = _generatedClasses.find({ ramClass->classLoader, StringKey(name, prefixLength) });
+   if (n_it == _generatedClasses.end())
+      return false;
+
+   auto c_it = n_it->second._classPtrMap.find(ramClass);
+   if (c_it == n_it->second._classPtrMap.end())
+      return false;
+
+   size_t count = n_it->second._classHashMap.erase(c_it->second);
+   TR_ASSERT_FATAL(count == 1, "Broken two-way map for generated class %p", ramClass);
+   n_it->second._classPtrMap.erase(c_it);
+
+   TR_ASSERT_FATAL(n_it->second._classHashMap.size() == n_it->second._classPtrMap.size(),
+                   "Broken two-way map for generated class %p", ramClass);
+   if (n_it->second._classHashMap.empty())
+      _generatedClasses.erase(n_it);
+   return true;
    }
 
-JITServerLocalSCCAOTDeserializer::JITServerLocalSCCAOTDeserializer(TR_PersistentClassLoaderTable *loaderTable) :
-   JITServerAOTDeserializer(loaderTable),
+
+JITServerLocalSCCAOTDeserializer::JITServerLocalSCCAOTDeserializer(TR_PersistentClassLoaderTable *loaderTable,
+                                                                   J9JITConfig *jitConfig) :
+   JITServerAOTDeserializer(loaderTable, jitConfig),
    _sharedCache(loaderTable->getSharedCache()),
    _classLoaderIdMap(decltype(_classLoaderIdMap)::allocator_type(TR::Compiler->persistentAllocator())),
    _classLoaderPtrMap(decltype(_classLoaderPtrMap)::allocator_type(TR::Compiler->persistentAllocator())),
@@ -337,7 +532,8 @@ JITServerLocalSCCAOTDeserializer::JITServerLocalSCCAOTDeserializer(TR_Persistent
    _classPtrMap(decltype(_classPtrMap)::allocator_type(TR::Compiler->persistentAllocator())),
    _methodMap(decltype(_methodMap)::allocator_type(TR::Compiler->persistentAllocator())),
    _classChainMap(decltype(_classChainMap)::allocator_type(TR::Compiler->persistentAllocator())),
-   _wellKnownClassesMap(decltype(_wellKnownClassesMap)::allocator_type(TR::Compiler->persistentAllocator()))
+   _wellKnownClassesMap(decltype(_wellKnownClassesMap)::allocator_type(TR::Compiler->persistentAllocator())),
+   _generatedClassesSccMap(decltype(_generatedClassesSccMap)::allocator_type(TR::Compiler->persistentAllocator()))
    { }
 
 void
@@ -384,6 +580,13 @@ JITServerLocalSCCAOTDeserializer::invalidateClass(J9VMThread *vmThread, J9Class 
    {
    assertExclusiveVmAccess(vmThread);
 
+   if (invalidateGeneratedClass(ramClass))
+      {
+      uintptr_t offset;
+      if (_sharedCache->isROMClassInSharedCache(ramClass->romClass, &offset))
+         _generatedClassesSccMap.erase({ ramClass->classLoader, offset });
+      }
+
    auto p_it = _classPtrMap.find(ramClass);
    if (p_it == _classPtrMap.end())// Not cached
       return;
@@ -408,6 +611,19 @@ JITServerLocalSCCAOTDeserializer::invalidateClass(J9VMThread *vmThread, J9Class 
    if (TR::Options::getVerboseOption(TR_VerboseJITServer))
       TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Invalidated RAMClass %p ID %zu", ramClass, id);
    }
+
+
+J9Class *
+JITServerLocalSCCAOTDeserializer::getGeneratedClass(J9ClassLoader *loader, uintptr_t romClassSccOffset,
+                                                    TR::Compilation *comp)
+   {
+   assertSharedVmAccess(comp->j9VMThread());
+   OMR::CriticalSection cs(getClassMonitor());
+
+   auto it = _generatedClassesSccMap.find({ loader, romClassSccOffset });
+   return (it != _generatedClassesSccMap.end()) ? it->second : NULL;
+   }
+
 
 bool
 JITServerLocalSCCAOTDeserializer::cacheRecord(const ClassLoaderSerializationRecord *record, TR::Compilation *comp, bool &isNew, bool &wasReset)
@@ -485,9 +701,10 @@ JITServerLocalSCCAOTDeserializer::cacheRecord(const ClassSerializationRecord *re
       return false;
       }
 
-   // Lookup the RAMClass by name in the class loader
-   J9Class *ramClass = jitGetClassInClassloaderFromUTF8(comp->j9VMThread(), loader, (char *)record->name(),
-                                                        record->nameLength());
+   // Lookup the RAMClass by name in the class loader, or in the generated classes map if the class is runtime-generated
+   J9Class *ramClass = record->isGenerated()
+      ? findGeneratedClass(loader, record->name(), record->nameLength(), record->hash(), comp->j9VMThread())
+      : jitGetClassInClassloaderFromUTF8(comp->j9VMThread(), loader, (char *)record->name(), record->nameLength());
    if (!ramClass)
       {
       if (TR::Options::getVerboseOption(TR_VerboseJITServer))
@@ -508,14 +725,19 @@ JITServerLocalSCCAOTDeserializer::cacheRecord(const ClassSerializationRecord *re
       return false;
       }
 
-   // Check that the ROMClass hash matches, otherwise remember that it doesn't
-   if (!isClassMatching(record, ramClass, comp))
+   // Check that the ROMClass hash matches, otherwise remember that it doesn't. Note that for generated classes,
+   // the hash is already guaranteed to be valid since their RAMClasses are looked up based on the hash.
+   if (!record->isGenerated() && !isClassMatching(record, ramClass, comp))
       {
       addToMaps(_classIdMap, _classPtrMap, it, record->id(), { ramClass, (uintptr_t)-1, (uintptr_t)-1 }, ramClass);
       return false;
       }
 
    addToMaps(_classIdMap, _classPtrMap, it, record->id(), { ramClass, offset, loaderOffset }, ramClass);
+
+   // Doesn't have to be atomic with the above w.r.t. exceptions
+   if (record->isGenerated())
+      _generatedClassesSccMap.insert({{ loader, offset }, ramClass });
 
    if (TR::Options::getVerboseOption(TR_VerboseJITServer))
       TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
@@ -807,6 +1029,16 @@ JITServerLocalSCCAOTDeserializer::getRAMClass(uintptr_t id, TR::Compilation *com
                                                         J9UTF8_LENGTH(name));
    if (!ramClass)
       {
+      if (auto prefixLength = JITServerHelpers::getGeneratedClassNamePrefixLength(ramClass->romClass))
+         {
+         // Try to lookup a new version of the generated class using its deterministic ROMClass hash
+         JITServerROMClassHash hash(romClass, *comp->trMemory(), comp->fej9(), true);
+         ramClass = findGeneratedClass(loader, J9UTF8_DATA(name), prefixLength, hash, comp->j9VMThread());
+         }
+      }
+
+   if (!ramClass)
+      {
       if (TR::Options::getVerboseOption(TR_VerboseJITServer))
          TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
             "ERROR: Failed to find class %.*s ID %zu in class loader %p", ROMCLASS_NAME(romClass), id, loader
@@ -922,8 +1154,9 @@ JITServerLocalSCCAOTDeserializer::updateSCCOffsets(SerializedAOTMethod *method, 
    return true;
    }
 
-JITServerNoSCCAOTDeserializer::JITServerNoSCCAOTDeserializer(TR_PersistentClassLoaderTable *loaderTable) :
-   JITServerAOTDeserializer(loaderTable),
+JITServerNoSCCAOTDeserializer::JITServerNoSCCAOTDeserializer(TR_PersistentClassLoaderTable *loaderTable,
+                                                             J9JITConfig *jitConfig) :
+   JITServerAOTDeserializer(loaderTable, jitConfig),
    _classLoaderIdMap(decltype(_classLoaderIdMap)::allocator_type(TR::Compiler->persistentAllocator())),
    _classLoaderPtrMap(decltype(_classLoaderPtrMap)::allocator_type(TR::Compiler->persistentAllocator())),
    _classIdMap(decltype(_classIdMap)::allocator_type(TR::Compiler->persistentAllocator())),
@@ -960,6 +1193,8 @@ void
 JITServerNoSCCAOTDeserializer::invalidateClass(J9VMThread *vmThread, J9Class *ramClass)
    {
    assertExclusiveVmAccess(vmThread);
+
+   invalidateGeneratedClass(ramClass);
 
    auto p_it = _classPtrMap.find(ramClass);
    if (p_it == _classPtrMap.end()) // Not cached or already marked invalid
@@ -1010,6 +1245,20 @@ JITServerNoSCCAOTDeserializer::invalidateMethod(J9Method *method)
    if (TR::Options::getVerboseOption(TR_VerboseJITServer))
       TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Invalidated RAMMethod %p ID %zu in the deserializer cache", method, id);
    }
+
+
+J9Class *
+JITServerNoSCCAOTDeserializer::getGeneratedClass(J9ClassLoader *loader, uintptr_t romClassSccOffset,
+                                                 TR::Compilation *comp)
+   {
+   bool wasReset = false;
+   J9Class *ramClass = classFromOffset(romClassSccOffset, comp, wasReset);
+   if (wasReset)
+      comp->failCompilation<J9::AOTDeserializerReset>("Deserializer reset during relocation of method %s",
+                                                      comp->signature());
+   return ramClass;
+   }
+
 
 void
 JITServerNoSCCAOTDeserializer::clearCachedData()
@@ -1104,9 +1353,10 @@ JITServerNoSCCAOTDeserializer::cacheRecord(const ClassSerializationRecord *recor
       return false;
       }
 
-   // Lookup the RAMClass by name in the class loader
-   J9Class *ramClass = jitGetClassInClassloaderFromUTF8(comp->j9VMThread(), loader, (char *)record->name(),
-                                                        record->nameLength());
+   // Lookup the RAMClass by name in the class loader, or in the generated classes map if the class is runtime-generated
+   J9Class *ramClass = record->isGenerated()
+      ? findGeneratedClass(loader, record->name(), record->nameLength(), record->hash(), comp->j9VMThread())
+      : jitGetClassInClassloaderFromUTF8(comp->j9VMThread(), loader, (char *)record->name(), record->nameLength());
    if (!ramClass)
       {
       if (TR::Options::getVerboseOption(TR_VerboseJITServer))
@@ -1117,8 +1367,9 @@ JITServerNoSCCAOTDeserializer::cacheRecord(const ClassSerializationRecord *recor
       return false;
       }
 
-   // Check that the ROMClass hash matches, otherwise remember that it doesn't
-   if (!isClassMatching(record, ramClass, comp))
+   // Check that the ROMClass hash matches, otherwise remember that it doesn't. Note that for generated classes,
+   // the hash is already guaranteed to be valid since their RAMClasses are looked up based on the hash.
+   if (!record->isGenerated() && !isClassMatching(record, ramClass, comp))
       {
       // We add {ID, NULL} and {ramClass, ID} to their respective maps because
       //

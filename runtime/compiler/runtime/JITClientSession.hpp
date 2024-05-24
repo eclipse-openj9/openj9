@@ -475,14 +475,19 @@ public:
       }
 
    // If this function sets the missingLoaderInfo flag then a NULL result is due to missing class loader info;
-   // otherwise that result is due to reaching the AOT cache size limit.
-   const AOTCacheClassRecord *getClassRecord(J9Class *clazz, JITServer::ServerStream *stream, bool &missingLoaderInfo);
+   // otherwise that result is due to reaching the AOT cache size limit. If this function (or any other function
+   // in this class that takes a scratchSegmentProvider) is called outside of a compilation (e.g., at the start
+   // of processing a client compilation request), must pass a scratchSegmentProvider that will be used for
+   // scratch memory allocations when re-packing a runtime-generated ROMClass to compute its deterministic hash.
+   const AOTCacheClassRecord *getClassRecord(J9Class *clazz, JITServer::ServerStream *stream, bool &missingLoaderInfo,
+                                             J9::J9SegmentProvider *scratchSegmentProvider = NULL);
    const AOTCacheMethodRecord *getMethodRecord(J9Method *method, J9Class *definingClass, JITServer::ServerStream *stream);
    // If this function sets the missingLoaderInfo flag then a NULL result is due to missing class loader info;
    // otherwise that result is due to reaching the AOT cache size limit.
    const AOTCacheClassChainRecord *getClassChainRecord(J9Class *clazz, uintptr_t classChainOffset,
                                                        const std::vector<J9Class *> &ramClassChain,
-                                                       JITServer::ServerStream *stream, bool &missingLoaderInfo);
+                                                       JITServer::ServerStream *stream, bool &missingLoaderInfo,
+                                                       J9::J9SegmentProvider *scratchSegmentProvider = NULL);
    const AOTCacheWellKnownClassesRecord *getWellKnownClassesRecord(const AOTCacheClassChainRecord *const *chainRecords,
                                                                    size_t length, uintptr_t includedClasses);
 
@@ -498,11 +503,13 @@ private:
    // otherwise that result is due to either the base component (returned via non-NULL uncachedBaseComponent)
    // of the array class being uncached, or having reached the AOT cache size limit.
    const AOTCacheClassRecord *getClassRecord(ClassInfo &classInfo, bool &missingLoaderInfo,
-                                             J9Class *&uncachedBaseComponent);
+                                             J9Class *&uncachedBaseComponent,
+                                             J9::J9SegmentProvider *scratchSegmentProvider = NULL);
    // If this function sets one of the two boolean flags or uncachedBaseComponent then a NULL result is due to
    // one of those error conditions; otherwise that result is due to having reached the AOT cache size limit.
    const AOTCacheClassRecord *getClassRecord(J9Class *clazz, bool &missingLoaderInfo,
-                                             bool &uncachedClass, J9Class *&uncachedBaseComponent);
+                                             bool &uncachedClass, J9Class *&uncachedBaseComponent,
+                                             J9::J9SegmentProvider *scratchSegmentProvider = NULL);
 
    const uint64_t _clientUID;
    int64_t  _timeOfLastAccess; // in ms
