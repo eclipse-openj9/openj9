@@ -71,6 +71,17 @@ typedef UDATA (* lookupNativeAddressCallback)(struct J9VMThread *currentThread, 
 	</event>
 
 	<event>
+		<name>J9HOOK_VM_THREAD_STARTING</name>
+		<description>
+			Triggered when Thread.start() succeeds. The current thread is the caller of Thread.start().
+			The current thread has VM access when this hook is fired.
+		</description>
+		<struct>J9VMThreadStartingEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="struct J9VMThread*" name="startedThread" description="started thread" />
+	</event>
+
+	<event>
 		<name>J9HOOK_VM_THREAD_CREATED</name>
 		<description>
 			Triggered during initialization of a J9VMThread. At this point the thread has an object associated with it.

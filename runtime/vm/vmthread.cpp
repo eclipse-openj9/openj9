@@ -2011,6 +2011,8 @@ startJavaThreadInternal(J9VMThread * currentThread, UDATA privateFlags, UDATA os
 
 	omrthread_resume(osThread);
 
+	TRIGGER_J9HOOK_VM_THREAD_STARTING(vm->hookInterface, currentThread, newThread);
+
 	return J9_THREAD_START_NO_ERROR;
 }
 
