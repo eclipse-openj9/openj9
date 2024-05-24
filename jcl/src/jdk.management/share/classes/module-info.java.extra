@@ -25,6 +25,3 @@ exports com.ibm.lang.management;
 exports openj9.lang.management;
 exports com.ibm.virtualization.management;
 provides sun.management.spi.PlatformMBeanProvider with com.ibm.lang.management.internal.PlatformMBeanProvider;
-/*[IF CRAC_SUPPORT]*/
-exports jdk.crac.management;
-/*[ENDIF] CRAC_SUPPORT*/
