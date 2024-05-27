@@ -476,6 +476,13 @@ void
 MM_ClassLoaderManager::cleanUpSegmentsInAnonymousClassLoader(MM_EnvironmentBase *env, J9MemorySegment **reclaimedSegments)
 {
 	if (NULL != _javaVM->anonClassLoader) {
+
+		uintptr_t totalRAMClasses = 0;
+		uintptr_t deadRAMClasses = 0;
+		uintptr_t unloadableROMClasses = 0;
+		uintptr_t foundROMClassesFast = 0;
+		uintptr_t foundROMClassesSlow = 0;
+
 		J9MemorySegment **previousSegmentPointer = &_javaVM->anonClassLoader->classSegments;
 		J9MemorySegment *segment = *previousSegmentPointer;
 
@@ -489,23 +496,48 @@ MM_ClassLoaderManager::cleanUpSegmentsInAnonymousClassLoader(MM_EnvironmentBase 
 				/* Anonymous classes expected to be allocated one per segment */
 				Assert_MM_true(NULL == classHeapIterator.nextClass());
 
-				if (J9AccClassDying == (J9CLASS_FLAGS(clazz) & J9AccClassDying)) {
-					/* TODO replace this to better algorithm */
-					/* Try to find ROM class for unloading anonymous RAM class if it is not an array */
-					if (!_extensions->objectModel.isIndexable(clazz)) {
-						J9ROMClass *romClass = clazz->romClass;
-						if (NULL != romClass) {
-							J9MemorySegment **previousSegmentPointerROM = &_javaVM->anonClassLoader->classSegments;
-							J9MemorySegment *segmentROM = *previousSegmentPointerROM;
+				totalRAMClasses += 1;
 
+				if (J9AccClassDying == (J9CLASS_FLAGS(clazz) & J9AccClassDying)) {
+
+					deadRAMClasses += 1;
+
+					/* Try to find ROM class for unloading anonymous RAM class if it is possible to unload */
+					if (isROMClassUnloadable(clazz)) {
+						J9ROMClass *romClass = clazz->romClass;
+
+						unloadableROMClasses += 1;
+
+						/* Check next segment, there is a high probability it is what we are looking for */
+						if ((NULL != nextSegment)
+								&& (MEMORY_TYPE_ROM_CLASS == (nextSegment->type & MEMORY_TYPE_ROM_CLASS))
+								&& ((J9ROMClass *)nextSegment->heapBase == romClass)) {
+
+							foundROMClassesFast += 1;
+
+							/* Yes, next segment is the ROM segment to be freed */
+							J9MemorySegment *segmentToFree = nextSegment;
+
+							/* correct pre-cached next for RAM iteration cycle */
+							nextSegment = segmentToFree->nextSegmentInClassLoader;
+
+							/* Free memory segment */
+							_javaVM->internalVMFunctions->freeMemorySegment(_javaVM, segmentToFree, 1);
+						} else {
 							/*
 							 *  Walk all anonymous classloader's ROM memory segments
 							 *  If ROM class is allocated there it would be one per segment
 							 */
+							J9MemorySegment **previousSegmentPointerROM = &_javaVM->anonClassLoader->classSegments;
+							J9MemorySegment *segmentROM = *previousSegmentPointerROM;
+
 							while (NULL != segmentROM) {
 								J9MemorySegment *nextSegmentROM = segmentROM->nextSegmentInClassLoader;
 								if ((MEMORY_TYPE_ROM_CLASS == (segmentROM->type & MEMORY_TYPE_ROM_CLASS)) && ((J9ROMClass *)segmentROM->heapBase == romClass)) {
+
 									/* found! */
+									foundROMClassesSlow += 1;
+
 									/* remove memory segment from list */
 									*previousSegmentPointerROM = nextSegmentROM;
 									/* correct pre-cached next for RAM iteration cycle if necessary */
@@ -532,16 +564,22 @@ MM_ClassLoaderManager::cleanUpSegmentsInAnonymousClassLoader(MM_EnvironmentBase 
 					segment->nextSegmentInClassLoader = *reclaimedSegments;
 					*reclaimedSegments = segment;
 					segment->classLoader = NULL;
-					/* remove RAM memory segment from classloader segments list */
+					/* remove RAM memory segment and possibly ROM (if it is the next one) from classloader segments list */
 					*previousSegmentPointer = nextSegment;
 					removed = true;
 				}
 			}
+
 			if (!removed) {
 				previousSegmentPointer = &segment->nextSegmentInClassLoader;
 			}
 			segment = nextSegment;
 		}
+
+		uintptr_t notFoundROMClasses = unloadableROMClasses - foundROMClassesFast - foundROMClassesSlow;
+		Trc_MM_cleanUpSegmentsInAnonymousClassLoader_stats(
+				env->getLanguageVMThread(), totalRAMClasses, deadRAMClasses, unloadableROMClasses,
+				foundROMClassesFast, foundROMClassesSlow, notFoundROMClasses);
 	}
 }
 
