@@ -1150,6 +1150,13 @@
    java_lang_invoke_MethodHandleImpl_profileBoolean,
    java_lang_invoke_MethodHandleImpl_isCompileConstant,
 
+   java_lang_invoke_VarHandleX_Array_method,
+   java_lang_invoke_VarHandleX_FieldInstanceReadOnlyOrReadWrite_method,
+   java_lang_invoke_VarHandleX_FieldStaticReadOnlyOrReadWrite_method,
+
+   java_lang_invoke_VarHandleByteArrayAsX_ArrayHandle_method,
+   java_lang_invoke_VarHandleByteArrayAsX_ByteBufferHandle_method,
+
    // Clone and Deep Copy
    java_lang_J9VMInternals_is32Bit,
    java_lang_J9VMInternals_isClassModifierPublic,
