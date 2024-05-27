@@ -627,7 +627,6 @@ TR_IProfiler::TR_IProfiler(J9JITConfig *jitConfig)
 #endif
       _methodHashTable = NULL;
       _readSampleRequestsHistory = NULL;
-      _isIProfilingEnabled = false;
       }
    else
 #endif
