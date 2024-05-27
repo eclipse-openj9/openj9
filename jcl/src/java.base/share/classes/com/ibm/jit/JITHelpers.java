@@ -566,6 +566,19 @@ public final class JITHelpers {
 		}
 	}
 
+	public boolean canEncodeAsLatin1(byte[] array, int start, int length) {
+		int index = start << 1;
+		if (!IS_BIG_ENDIAN) {
+			index += 1;
+		}
+		for (int end = index + (length << 1); index < end; index += 2) {
+			if (array[index] != 0) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	/**
 	 * Returns the first index of the target character array within the source character array starting from the specified
 	 * offset.
