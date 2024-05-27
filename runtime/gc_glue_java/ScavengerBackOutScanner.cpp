@@ -59,25 +59,22 @@ MM_ScavengerBackOutScanner::scanAllSlots(MM_EnvironmentBase *env)
 	/* Walk roots fixing up pointers through reverse forwarding information */
 	MM_RootScanner::scanAllSlots(env);
 
-	if (!_extensions->isConcurrentScavengerEnabled()) {
-		/* Back out Ownable Synchronizer and Continuation Processing */
-		MM_HeapRegionDescriptorStandard *region = NULL;
-		GC_HeapRegionIteratorStandard regionIterator(_extensions->heapRegionManager);
-		while (NULL != (region = regionIterator.nextRegion())) {
-			MM_HeapRegionDescriptorStandardExtension *regionExtension = MM_ConfigurationDelegate::getHeapRegionDescriptorStandardExtension(env, region);
-			for (uintptr_t i = 0; i < regionExtension->_maxListIndex; i++) {
-				/**
-				 * For Ownable Synchronizers lists, back out all of regions (includes tenure region, which is backed up during startProcessing).
-				 * Tenure list might have gotten new elements during main Scavenge phase and it is important to restore the list, since it will be iterated later during Marking Clearable phase.
-				 */
-				regionExtension->_ownableSynchronizerObjectLists[i].backoutList();
-				if ((MEMORY_TYPE_NEW == (region->getTypeFlags() & MEMORY_TYPE_NEW))) {
-					/**
-					 * For Continuation lists, Consistent with startProcessing that was earlier (in this GC cycle) called only on NEW regions.
-					 * Tenure list cannot get new elements, since they are added only during Scavenge Clearable phase that cannot be reached if there was a Scavenge abort.
-					 */
+	/* Back out Ownable Synchronizer and Continuation Processing */
+	MM_HeapRegionDescriptorStandard *region = NULL;
+	GC_HeapRegionIteratorStandard regionIterator(_extensions->heapRegionManager);
+
+	while (NULL != (region = regionIterator.nextRegion())) {
+		MM_HeapRegionDescriptorStandardExtension *regionExtension = MM_ConfigurationDelegate::getHeapRegionDescriptorStandardExtension(env, region);
+		for (uintptr_t i = 0; i < regionExtension->_maxListIndex; i++) {
+			if (_extensions->isConcurrentScavengerEnabled()) {
+				if (_scavenger->isObjectInEvacuateMemory((omrobjectptr_t )region->getLowAddress())) {
+					/* for concurrent scavenger case, only backout lists in Evacuate region. */
 					regionExtension->_continuationObjectLists[i].backoutList();
 				}
+			} else {
+				/* Back out all of regions (includes tenure region, which is backed up during startProcessing). */
+				regionExtension->_ownableSynchronizerObjectLists[i].backoutList();
+				regionExtension->_continuationObjectLists[i].backoutList();
 			}
 		}
 	}
