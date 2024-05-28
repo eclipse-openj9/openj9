@@ -420,8 +420,10 @@ hookGcCycleEnd(J9HookInterface** hook, UDATA eventNum, void* eventData, void* us
 
 	UDATA oldVMState = vmThread->omrVMThread->vmState;
 	vmThread->omrVMThread->vmState = OMRVMSTATE_GC_CHECK_AFTER_GC;
+	/* the OMR_GC_CYCLE_TYPE_STATE_UNSUCCESSFUL bit is set in the event->cycleType for cycleEnd in scavenge backout case, so mask off the bit to get the cycleType without it. */
+	uintptr_t cycleType = event->cycleType & (~OMR_GC_CYCLE_TYPE_STATE_UNSUCCESSFUL);
 
-	if (OMR_GC_CYCLE_TYPE_GLOBAL == event->cycleType) {
+	if (OMR_GC_CYCLE_TYPE_GLOBAL == cycleType) {
 		if (!excludeGlobalGc(vmThread)) {
 			if (cycle->getMiscFlags() & J9MODRON_GCCHK_VERBOSE) {
 				j9tty_printf(PORTLIB, "<gc check: start verifying slots after global gc (%zu)>\n", extensions->globalGcCount);
@@ -435,7 +437,7 @@ hookGcCycleEnd(J9HookInterface** hook, UDATA eventNum, void* eventData, void* us
 		}
 	}
 #if defined(J9VM_GC_MODRON_SCAVENGER)
-	else if (OMR_GC_CYCLE_TYPE_SCAVENGE == event->cycleType) {
+	else if (OMR_GC_CYCLE_TYPE_SCAVENGE == cycleType) {
 		if (!excludeLocalGc(javaVM)) {
 			if (cycle->getMiscFlags() & J9MODRON_GCCHK_VERBOSE) {
 				j9tty_printf(PORTLIB, "<gc check: start verifying slots after local gc (%zu)>\n", extensions->localGcCount);
