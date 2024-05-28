@@ -171,7 +171,7 @@ getVMThread(J9VMThread *currentThread, jthread thread, J9VMThread **vmThreadPtr,
 		if (NULL != carrierThread) {
 			targetThread = J9VMJAVALANGTHREAD_THREADREF(currentThread, carrierThread);
 		}
-		if (J9OBJECT_I64_LOAD(currentThread, threadObject, vm->virtualThreadInspectorCountOffset) < -1) {
+		if (J9OBJECT_I64_LOAD(currentThread, threadObject, vm->virtualThreadInspectorCountOffset) < -2) {
 			/* If the virtual thread is suspended in transition, check if the mounting process is already completed. */
 			J9VMThread *carrierVMThread = VM_VMHelpers::getCarrierVMThread(currentThread, threadObject);
 			if (NULL != carrierVMThread->currentContinuation) {

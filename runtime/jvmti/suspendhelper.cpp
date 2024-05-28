@@ -96,7 +96,7 @@ suspendThread(J9VMThread *currentThread, jthread thread, BOOLEAN allowNull, BOOL
 		if (VM_VMHelpers::isThreadSuspended(currentThread, threadObject)) {
 			rc = JVMTI_ERROR_THREAD_SUSPENDED;
 		} else {
-			U_64 internalSuspendState = (U_64)VM_VMHelpers::getCarrierVMThread(currentThread, threadObject);
+			U_64 internalSuspendState = J9OBJECT_U64_LOAD(currentThread, threadObject, vm->internalSuspendStateOffset);
 			J9OBJECT_U64_STORE(currentThread, threadObject, vm->internalSuspendStateOffset, (internalSuspendState | J9_VIRTUALTHREAD_INTERNAL_STATE_SUSPENDED));
 		}
 #endif /* JAVA_SPEC_VERSION >= 19 */
