@@ -926,6 +926,8 @@ extern "C" {
 /* JFR event types */
 
 #define J9JFR_EVENT_TYPE_EXECUTION_SAMPLE 0
+#define J9JFR_EVENT_TYPE_THREAD_START 1
+#define J9JFR_EVENT_TYPE_THREAD_END 2
 
 /* JFR thread states */
 
