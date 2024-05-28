@@ -391,6 +391,7 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 				vm->sharedCacheAPI->verboseFlags = J9SHR_VERBOSEFLAG_ENABLE_VERBOSE_DEFAULT;
 			}
 			vm->sharedCacheAPI->runtimeFlags = runtimeFlags;
+			vm->sharedCacheAPI->cacheDirPerm = J9SH_DIRPERM_ABSENT;
 		}
 	}
 
