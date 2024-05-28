@@ -50,6 +50,12 @@
 #include "runtime/CodeCacheMemorySegment.hpp"
 #include "runtime/J9VMAccess.hpp"
 
+#if defined(LINUX)
+#if !defined(MADV_HUGEPAGE)
+#define MADV_HUGEPAGE 14
+#endif /* MADV_HUGEPAGE */
+#endif /* LINUX */
+
 TR::CodeCacheManager *J9::CodeCacheManager::_codeCacheManager = NULL;
 J9JavaVM *J9::CodeCacheManager::_javaVM = NULL;
 J9JITConfig *J9::CodeCacheManager::_jitConfig = NULL;
