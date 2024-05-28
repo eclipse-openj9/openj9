@@ -619,16 +619,6 @@ void
 jfrExecutionSample(J9VMThread *currentThread);
 
 /**
- * Calculate the size in bytes of a JFR event.
- *
- * @param event[in] pointer to the event
- *
- * @returns total size in bytes of the event
- */
-UDATA
-jfrEventSize(J9JFREvent *event);
-
-/**
  * Begin event iteration in a JFR buffer.
  *
  * @param buffer[in] pointer to the buffer
