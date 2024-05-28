@@ -161,7 +161,7 @@ public:
       readMessage(_cMsg);
       if (_cMsg.fullVersion() != 0 && _cMsg.fullVersion() != getJITServerFullVersion())
          {
-         throw StreamVersionIncompatible(getJITServerFullVersion(), _cMsg.fullVersion());
+         throw StreamVersionIncompatible(showFullVersionIncompatibility(getJITServerFullVersion(), _cMsg.fullVersion()));
          }
 
       switch (_cMsg.type())

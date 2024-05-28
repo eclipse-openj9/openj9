@@ -129,4 +129,35 @@ CommunicationStream::writeMessage(Message &msg)
    writeBlocking(serialMsg, msg.serializedSize());
    msg.clearForWrite();
    }
+
+std::string
+CommunicationStream::showFullVersionIncompatibility(uint64_t serverFullVersion, uint64_t clientFullVersion)
+   {
+   // See JITServer::Message::buildFullVersion() and CommunicationStream::initConfigurationFlags() for the encoding
+
+   uint32_t serverProtocolVersion = serverFullVersion & 0xFFFFFFFF;
+   uint32_t clientProtocolVersion = clientFullVersion & 0xFFFFFFFF;
+   if (serverProtocolVersion != clientProtocolVersion)
+      return "protocol version: server " + CommunicationStream::showJITServerVersion(serverProtocolVersion) +
+             ", client " + CommunicationStream::showJITServerVersion(clientProtocolVersion);
+
+   uint32_t serverFlags = serverFullVersion >> 32;
+   uint32_t clientFlags = clientFullVersion >> 32;
+
+   uint32_t serverJDKVersion = serverFlags & JITServerCompatibilityFlags::JITServerJavaVersionMask;
+   uint32_t clientJDKVersion = clientFlags & JITServerCompatibilityFlags::JITServerJavaVersionMask;
+   if (serverJDKVersion != clientJDKVersion)
+      return "JDK version: server " + std::to_string(serverJDKVersion) +
+             ", client " + std::to_string(clientJDKVersion);
+
+   bool serverCompressesRefs = serverFlags & JITServerCompatibilityFlags::JITServerCompressedRef;
+   bool clientCompressesRefs = clientFlags & JITServerCompatibilityFlags::JITServerCompressedRef;
+   if (serverCompressesRefs != clientCompressesRefs)
+      return "compressed refs: server " + std::to_string(serverCompressesRefs) +
+             ", client " + std::to_string(clientCompressesRefs);
+
+   return "full version: server " + std::to_string(serverFullVersion) +
+          ", client " + std::to_string(clientFullVersion);
+   }
+
 }
