@@ -1191,7 +1191,16 @@ resumeThread(J9VMThread *currentThread, jthread thread)
 		} else {
 			carrierVMThread = VM_VMHelpers::getCarrierVMThread(currentThread, threadObject);
 			J9OBJECT_U64_STORE(currentThread, threadObject, vm->internalSuspendStateOffset, (U_64)carrierVMThread);
+			/* Check if this is a vthread in transition. */
 			if (NULL != carrierVMThread) {
+				MM_ObjectAccessBarrierAPI objectAccessBarrier = MM_ObjectAccessBarrierAPI(currentThread);
+				I_64 vthreadInspectorCount = J9OBJECT_I64_LOAD(currentThread, threadObject, vm->virtualThreadInspectorCountOffset);
+
+				/* Increment inspector count by 1 to reverse the decrement done during suspend. */
+				while (!objectAccessBarrier.inlineMixedObjectCompareAndSwapU64(currentThread, threadObject, vm->virtualThreadInspectorCountOffset, vthreadInspectorCount, vthreadInspectorCount + 1)) {
+					vthreadInspectorCount = J9OBJECT_I64_LOAD(currentThread, threadObject, vm->virtualThreadInspectorCountOffset);
+				}
+				Assert_JVMTI_true(vthreadInspectorCount < 0);
 				targetThread = (J9VMThread *)carrierVMThread;
 				/* For virtual thread in transition, ensure thread cannot start running until releaseVMThread is called. */
 				vm->internalVMFunctions->haltThreadForInspection(currentThread, targetThread);
@@ -1418,14 +1427,27 @@ jvmtiSuspendResumeCallBack(J9VMThread *vmThread, J9MM_IterateObjectDescriptor *o
 						setHaltFlag(targetThread, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND);
 						Trc_JVMTI_threadSuspended(targetThread);
 					}
+					if (inTransition) {
+						/* Decrement inspector count to reflect vthread suspended in transition. */
+						MM_ObjectAccessBarrierAPI objectAccessBarrier = MM_ObjectAccessBarrierAPI(vmThread);
+						objectAccessBarrier.inlineMixedObjectCompareAndSwapU64(vmThread, vthread, vm->virtualThreadInspectorCountOffset, (U_64)-1, (U_64)-2);
+					}
 				}
-			} else {
+			} else if (VM_VMHelpers::isThreadSuspended(vmThread, vthread)) {
 				/* Resume the virtual thread. */
 				J9OBJECT_U64_STORE(vmThread, vthread, vm->internalSuspendStateOffset, (isSuspendedFlag & J9_VIRTUALTHREAD_INTERNAL_STATE_CARRIERID_MASK));
 				if ((NULL != targetThread) && ((vthread == targetThread->threadObject) || inTransition)) {
 					if (OMR_ARE_ANY_BITS_SET(targetThread->publicFlags, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND)) {
 						clearHaltFlag(targetThread, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND);
 						Trc_JVMTI_threadResumed(targetThread);
+					}
+					if (inTransition) {
+						MM_ObjectAccessBarrierAPI objectAccessBarrier = MM_ObjectAccessBarrierAPI(vmThread);
+
+						/* Increment inspector count by 1 to reverse the decrement done during suspend. */
+						I_64 vthreadInspectorCount = J9OBJECT_I64_LOAD(vmThread, vthread, vm->virtualThreadInspectorCountOffset);
+						objectAccessBarrier.inlineMixedObjectCompareAndSwapU64(vmThread, vthread, vm->virtualThreadInspectorCountOffset, vthreadInspectorCount, vthreadInspectorCount + 1);
+						Assert_JVMTI_true(vthreadInspectorCount < 0);
 					}
 				}
 			}

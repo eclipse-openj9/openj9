@@ -535,11 +535,14 @@ retry:
 	/* Consistently re-fetch threadObj for all the cases below. */
 	threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
 	vthreadInspectorCount = J9OBJECT_I64_LOAD(currentThread, threadObj, vm->virtualThreadInspectorCountOffset);
+
+	/* -1 indicates vthread is in transition and doesn't allow any inspector.
+	 * Count less than -1 indicates vthread was suspended in transition and every inspector acquired in this state
+	 * will continue to decrement the count by 1 to keep track of total inspector access granted.
+	 * Once the suspended vthread is resumed, no inspector should be allowed to acquire access before transition ends.
+	 */
 	if (vthreadInspectorCount < 0) {
-		if (VM_VMHelpers::isThreadSuspended(currentThread, threadObj)) {
-			/* Thread is suspended, so we can directly allow access to thread without waiting for transition to complete.
-			 * Decrement the inspector count to represent inspector during suspended transition.
-			 */
+		if ((vthreadInspectorCount < -1) && VM_VMHelpers::isThreadSuspended(currentThread, threadObj)) {
 			if (!objectAccessBarrier.inlineMixedObjectCompareAndSwapU64(
 					currentThread,
 					threadObj,
