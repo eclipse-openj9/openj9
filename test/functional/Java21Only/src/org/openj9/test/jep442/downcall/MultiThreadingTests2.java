@@ -44,7 +44,7 @@ import static java.lang.foreign.ValueLayout.*;
  * verifies the downcalls with the shared downcall handlder (cached as soft reference in OpenJDK)
  * in multithreading.
  */
-@Test(groups = { "level.sanity", "disabled.os.zos" })
+@Test(groups = { "level.sanity" })
 public class MultiThreadingTests2 implements Thread.UncaughtExceptionHandler {
 	private volatile Throwable initException;
 
