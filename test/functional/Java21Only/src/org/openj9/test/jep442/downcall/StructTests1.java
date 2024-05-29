@@ -52,7 +52,7 @@ import static java.lang.foreign.ValueLayout.*;
  * [2] the test suite is mainly intended for the following Clinker API:
  * MethodHandle downcallHandle(MemorySegment symbol, FunctionDescriptor function)
  */
-@Test(groups = { "level.sanity", "disabled.os.zos" })
+@Test(groups = { "level.sanity" })
 public class StructTests1 {
 	private static boolean isAixOS = System.getProperty("os.name").toLowerCase().contains("aix");
 	private static Linker linker = Linker.nativeLinker();
