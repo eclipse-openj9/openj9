@@ -994,11 +994,16 @@ J9::TransformUtil::canFoldStaticFinalField(
       {
       // Both putstatic and reflection have been ruled out, so fields declared
       // in declaringClass must not be modified. We do not support modifying
-      // them using Unsafe.
-      //
-      // For the time being, limit aggressive folding here to static final
-      // fields with declared type VarHandle.
-      //
+      // them using Unsafe. Go for it.
+      static const bool disableAggressiveSFFF =
+         feGetEnv("TR_disableAggressiveSFFF17") != NULL;
+
+      if (!disableAggressiveSFFF)
+         return TR_yes;
+
+      // General aggressive folding is disabled by environment variable. Still
+      // try to apply it to static final fields with declared type VarHandle,
+      // as before.
       static const bool disableAggressiveVarHandleSFFF =
          feGetEnv("TR_disableAggressiveVarHandleSFFF17") != NULL;
 
