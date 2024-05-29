@@ -1608,6 +1608,9 @@ TR_J9InlinerPolicy::createUnsafeGetWithOffset(TR::ResolvedMethodSymbol *calleeSy
       {
       callNodeTreeTop->getNextTreeTop()->insertTreeTopsBeforeMe(directAccessTreeTop);
 
+      callNodeTreeTop->getPrevTreeTop()->join(callNodeTreeTop->getNextTreeTop());
+      callNodeTreeTop->getNode()->removeAllChildren();
+
       createAnchorNodesForUnsafeGetPut(directAccessTreeTop, type, true);
       if (arrayDirectAccessTreeTop)
          createAnchorNodesForUnsafeGetPut(arrayDirectAccessTreeTop, type, true);
