@@ -2161,10 +2161,10 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 #if defined(J9VM_OPT_PORTABLE_SHARED_CACHE)
 #if defined(J9VM_OPT_JITSERVER)
 				if ((argIndexXXJITServerAOTCache > argIndexXXNoJITServerAOTCache)
-					&& (argIndexXXJITServerAOTCacheIgnoreLocalSCC > argIndexXXNoJITServerAOTCacheIgnoreLocalSCC)
+					&& (argIndexXXJITServerAOTCacheIgnoreLocalSCC >= argIndexXXNoJITServerAOTCacheIgnoreLocalSCC)
 				) {
 					/* If we are using the JITServer AOT cache and ignoring the local SCC (which we detect by checking
-					 * for an explicit -XX:+JITServerAOTCacheIgnoreLocalSCC, since it's off by default) then the portable
+					 * that -XX:-JITServerAOTCacheIgnoreLocalSCC is not explicitly set, since it's on by default) then the portable
 					 * SCC flag must still be set as necessary, even if the SCC itself is disabled. */
 					processPortableSharedCacheFlag = TRUE;
 				}
