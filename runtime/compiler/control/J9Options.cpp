@@ -1419,7 +1419,12 @@ J9::Options::JITServerParseCommonOptions(J9VMInitArgs *vmArgsArray, J9JavaVM *vm
          return false;
       }
 
-   if (xxJITServerUseAOTCacheArgIndex > xxDisableJITServerUseAOTCacheArgIndex)
+   // If not explicitly set, AOT cache is disabled by default at the client and enabled by default at the server
+   if (xxDisableJITServerUseAOTCacheArgIndex > xxJITServerUseAOTCacheArgIndex)
+      compInfo->getPersistentInfo()->setJITServerUseAOTCache(false);
+   else if (xxJITServerUseAOTCacheArgIndex > xxDisableJITServerUseAOTCacheArgIndex)
+      compInfo->getPersistentInfo()->setJITServerUseAOTCache(true);
+   else if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
       compInfo->getPersistentInfo()->setJITServerUseAOTCache(true);
    else
       compInfo->getPersistentInfo()->setJITServerUseAOTCache(false);
