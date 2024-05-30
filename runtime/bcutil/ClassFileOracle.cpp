@@ -91,6 +91,17 @@ ClassFileOracle::KnownAnnotation ClassFileOracle::_knownAnnotations[] = {
 		{JVMTIMOUNTTRANSITION_SIGNATURE , sizeof(JVMTIMOUNTTRANSITION_SIGNATURE)},
 #undef JVMTIMOUNTTRANSITION_SIGNATURE
 #endif /* JAVA_SPEC_VERSION >= 20 */
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+#define NULLRESTRICTED_SIGNATURE "Ljdk/internal/vm/annotation/NullRestricted;"
+		{NULLRESTRICTED_SIGNATURE , sizeof(NULLRESTRICTED_SIGNATURE)},
+#undef NULLRESTRICTED_SIGNATURE
+#define IMPLICITLYCONSTRUCTIBLE_SIGNATURE "Ljdk/internal/vm/annotation/ImplicitlyConstructible;"
+		{IMPLICITLYCONSTRUCTIBLE_SIGNATURE , sizeof(IMPLICITLYCONSTRUCTIBLE_SIGNATURE)},
+#undef IMPLICITLYCONSTRUCTIBLE_SIGNATURE
+#define LOOSELYCONSISTENTVALUE_SIGNATURE "Ljdk/internal/vm/annotation/LooselyConsistentValue;"
+		{LOOSELYCONSISTENTVALUE_SIGNATURE , sizeof(LOOSELYCONSISTENTVALUE_SIGNATURE)},
+#undef LOOSELYCONSISTENTVALUE_SIGNATURE
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 		{0, 0}
 };
 
@@ -233,7 +244,8 @@ ClassFileOracle::ClassFileOracle(BufferManager *bufferManager, J9CfrClassFile *c
 	_preloadAttribute(NULL),
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-	_implicitCreation(NULL),
+	_hasImplicitCreationAttribute(false),
+	_implicitCreationFlags(0),
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 	_recordComponentCount(0),
 	_permittedSubclassesAttribute(NULL),
@@ -435,13 +447,19 @@ ClassFileOracle::walkFields()
 					knownAnnotations = addAnnotationBit(knownAnnotations, CONTENDED_ANNOTATION);
 					knownAnnotations = addAnnotationBit(knownAnnotations, JAVA8_CONTENDED_ANNOTATION);
 				}
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+				knownAnnotations = addAnnotationBit(knownAnnotations, NULLRESTRICTED_ANNOTATION);
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 				if (0 == attribAnnotations->rawDataLength) {
 					UDATA foundAnnotations = walkAnnotations(attribAnnotations->numberOfAnnotations, attribAnnotations->annotations, knownAnnotations);
-
-
 					if (containsKnownAnnotation(foundAnnotations, CONTENDED_ANNOTATION) || containsKnownAnnotation(foundAnnotations, JAVA8_CONTENDED_ANNOTATION)) {
 						_fieldsInfo[fieldIndex].isFieldContended = true;
 					}
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+					if (containsKnownAnnotation(foundAnnotations, NULLRESTRICTED_ANNOTATION)) {
+						_fieldsInfo[fieldIndex].isNullRestricted = true;
+					}
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 				}
 				_fieldsInfo[fieldIndex].annotationsAttribute = attribAnnotations;
 				break;
@@ -568,6 +586,10 @@ ClassFileOracle::walkAttributes()
 			}
 			knownAnnotations = addAnnotationBit(knownAnnotations, UNMODIFIABLE_ANNOTATION);
 			knownAnnotations = addAnnotationBit(knownAnnotations, VALUEBASED_ANNOTATION);
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+			knownAnnotations = addAnnotationBit(knownAnnotations, IMPLICITLYCONSTRUCTIBLE_ANNOTATION);
+			knownAnnotations = addAnnotationBit(knownAnnotations, LOOSELYCONSISTENTVALUE_ANNOTATION);
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 			_annotationsAttribute = (J9CfrAttributeRuntimeVisibleAnnotations *)attrib;
 			if (0 == _annotationsAttribute->rawDataLength) {
 				UDATA foundAnnotations = walkAnnotations(_annotationsAttribute->numberOfAnnotations, _annotationsAttribute->annotations, knownAnnotations);
@@ -580,6 +602,16 @@ ClassFileOracle::walkAttributes()
 				if (containsKnownAnnotation(foundAnnotations, VALUEBASED_ANNOTATION)) {
 					_isClassValueBased = true;
 				}
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+				if (containsKnownAnnotation(foundAnnotations, IMPLICITLYCONSTRUCTIBLE_ANNOTATION)) {
+					_hasImplicitCreationAttribute = true;
+					_implicitCreationFlags |= J9AccImplicitCreateHasDefaultValue;
+				}
+				if (containsKnownAnnotation(foundAnnotations, LOOSELYCONSISTENTVALUE_ANNOTATION)) {
+					_hasImplicitCreationAttribute = true;
+					_implicitCreationFlags |= J9AccImplicitCreateNonAtomic;
+				}
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 			}
 			break;
 		}
@@ -634,7 +666,8 @@ ClassFileOracle::walkAttributes()
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 		case CFR_ATTRIBUTE_ImplicitCreation: {
-			_implicitCreation = (J9CfrAttributeImplicitCreation *)attrib;
+			_hasImplicitCreationAttribute = true;
+			_implicitCreationFlags = ((J9CfrAttributeImplicitCreation *)attrib)->implicitCreationFlags;
 			break;
 		}
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
