@@ -4606,20 +4606,12 @@ break
       TR::Node* obj = callNode->getChild(1);
       TR::Node* vftLoad = TR::Node::createWithSymRef(callNode, TR::aloadi, 1, obj, symRefTab()->findOrCreateVftSymbolRef());
 
-      if (comp()->target().is32Bit())
-         {
-         resultNode = TR::Node::createWithSymRef(callNode, TR::iloadi, 1, vftLoad, symRefTab()->findOrCreateClassAndDepthFlagsSymbolRef());
-         }
-      else
-         {
-         resultNode = TR::Node::createWithSymRef(callNode, TR::lloadi, 1, vftLoad, symRefTab()->findOrCreateClassAndDepthFlagsSymbolRef());
-         resultNode = TR::Node::create(callNode, TR::l2i, 1, resultNode);
-         }
-
       int32_t andMask = comp()->fej9()->getFlagValueForArrayCheck();
+      resultNode = comp()->fej9()->testIsClassArrayType(vftLoad);
+
       int32_t shiftAmount = trailingZeroes(andMask);
-      resultNode  = TR::Node::create(callNode, TR::iand, 2, resultNode, TR::Node::iconst(callNode, andMask));
       resultNode  = TR::Node::create(callNode, TR::iushr, 2, resultNode, TR::Node::iconst(callNode, shiftAmount));
+
       // Handle NullCHK
       if (callNodeTreeTop->getNode()->getOpCode().isNullCheck())
          TR::Node::recreate(callNodeTreeTop->getNode(), TR::treetop);
