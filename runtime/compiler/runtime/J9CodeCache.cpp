@@ -27,6 +27,7 @@
 #include <algorithm>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 #include "j9.h"
 #include "j9protos.h"
 #include "j9thread.h"
@@ -55,10 +56,20 @@
 #include "env/VerboseLog.hpp"
 #include "omrformatconsts.h"
 
+// for madvise
+#ifdef LINUX
+#include <sys/mman.h>
+#ifndef MADV_NOHUGEPAGE
+#define MADV_NOHUGEPAGE  15
+#endif // MADV_NOHUGEPAGE
+#ifndef MADV_PAGEOUT
+#define MADV_PAGEOUT     21
+#endif // MADV_PAGEOUT
+#endif
+
 OMR::CodeCacheMethodHeader *getCodeCacheMethodHeader(char *p, int searchLimit, J9JITExceptionTable * metaData);
 
 #define addFreeBlock2(start, end) addFreeBlock2WithCallSite((start), (end), __FILE__, __LINE__)
-
 
 TR::CodeCache *
 J9::CodeCache::self()
@@ -134,7 +145,47 @@ J9::CodeCache::initialize(TR::CodeCacheManager *manager,
 
    if (!self()->OMR::CodeCache::initialize(manager, codeCacheSegment, allocatedCodeCacheSizeInBytes))
       return false;
+
    self()->setInitialAllocationPointers();
+
+#ifdef LINUX
+   if (manager->isDisclaimEnabled())
+      {
+      J9JavaVM * javaVM = jitConfig->javaVM;
+      PORT_ACCESS_FROM_JAVAVM(javaVM); // for j9vmem_supported_page_sizes
+
+      uint8_t *middle  = _warmCodeAlloc + (_coldCodeAllocBase - _warmCodeAlloc) / 2;
+      size_t round = j9vmem_supported_page_sizes()[0] - 1;
+      middle = (uint8_t *)(((size_t)(middle + round)) & ~round);
+
+      TR_ASSERT_FATAL(_coldCodeAlloc > middle, "A code cache can't be smaller than a page");
+
+      size_t coldCacheSize = _coldCodeAlloc - middle;
+      coldCacheSize = (coldCacheSize + round) & ~round;
+
+      if (madvise(middle, coldCacheSize, MADV_NOHUGEPAGE) != 0)
+         {
+         const char *error = strerror(errno);
+         if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "Failed to set MADV_NOHUGEPAGE for code cache: %s: %p %zu", error, middle, coldCacheSize);
+         }
+      else if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
+         {
+         TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "Forcing code cache cold region %p-%p to use default size memory pages",                                          middle, middle + coldCacheSize);
+         }
+
+      // If the memory segment is backed by a file, disable read-ahead
+      // so that touching one byte brings a single page in
+      if (codeCacheSegment->j9segment()->vmemIdentifier.allocator == OMRPORT_VMEM_RESERVE_USED_MMAP_SHM)
+         {
+         if (madvise(middle, coldCacheSize, MADV_RANDOM) != 0)
+            {
+            if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
+                TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "Failed to set MADV_RANDOM for cold code cache");
+            }
+         }
+      }
+#endif // ifdef LINUX
 
    _manager->reportCodeLoadEvents();
 
@@ -762,4 +813,58 @@ extern "C"
       return TR::CodeCacheManager::instance()->replaceTrampoline(method, callSite, oldTrampoline, oldTargetPC, newTargetPC, needSync);
       }
 
+   }
+
+
+int32_t
+J9::CodeCache::disclaim(TR::CodeCacheManager *manager, bool canDisclaimOnSwap)
+   {
+   int32_t disclaimDone = 0;
+
+#ifdef LINUX
+   J9JavaVM * javaVM = jitConfig->javaVM;
+   PORT_ACCESS_FROM_JAVAVM(javaVM); // for j9vmem_supported_page_sizes
+
+   bool trace = TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance);
+   uint8_t *disclaim_start = _coldCodeAlloc;
+   size_t pageSize = j9vmem_supported_page_sizes()[0];
+   size_t round = pageSize - 1;
+   disclaim_start = (uint8_t *)(((size_t)(disclaim_start + round)) & ~round);
+
+   if (_coldCodeAllocBase <= disclaim_start)
+      return 0;
+
+   size_t disclaim_size = (_coldCodeAllocBase - disclaim_start + round) & ~round;
+
+   if (trace)
+      {
+      size_t warm_size = _warmCodeAlloc - _segment->segmentBase() + sizeof(this);
+      size_t cold_size = _coldCodeAllocBase - _coldCodeAlloc;
+
+      TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "Will disclaim cold code cache %p : coldStart=%p coldBase=%p warm_size=%zuB cold_size=%zuB cold_size/(cold_size + warm_size)=%5.2f%%\n",
+                               this, _coldCodeAlloc, _coldCodeAllocBase,
+                               warm_size, cold_size, cold_size * 100.0/(cold_size + warm_size));
+      }
+
+   int32_t ret = madvise((void *)disclaim_start, disclaim_size, MADV_PAGEOUT);
+
+   if (ret != 0)
+      {
+      if (trace)
+         TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "WARNING: Failed to use madvise to disclaim memory for code cache");
+
+      if (ret == EINVAL)
+         {
+         manager->setDisclaimEnabled(false); // Don't try to disclaim again, since support seems to be missing
+         if (trace)
+            TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "WARNING: Disabling data cache disclaiming from now on");
+         }
+      }
+   else
+      {
+      disclaimDone = 1;
+      }
+#endif // ifdef LINUX
+
+   return disclaimDone;
    }
