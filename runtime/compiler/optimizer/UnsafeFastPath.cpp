@@ -249,9 +249,14 @@ bool TR_UnsafeFastPath::tryTransformUnsafeAtomicCallInVarHandleAccessMethod(TR::
 
    TR::Node* unsafeAddress = NULL;
    static char *useAbsoluteAddressesForStatics = feGetEnv("TR_UseAbsoluteAddressesForStatics");
+   TR::DataType type = node->getType();
+   bool typeAllowsDirectAccess = type.isInt32() ||
+                                 type.isInt64() ||
+                                 type.isFloat() ||
+                                 type.isDouble();
 
    if ((callerMethod == TR::java_lang_invoke_StaticFieldVarHandle_StaticFieldVarHandleOperations_OpMethod)
-       && !useAbsoluteAddressesForStatics)
+       && (!useAbsoluteAddressesForStatics || !typeAllowsDirectAccess))
       {
       TR::Node *jlClass = node->getChild(1);
       TR::Node *j9Class = TR::Node::createWithSymRef(node, TR::aloadi, 1, jlClass, comp()->getSymRefTab()->findOrCreateClassFromJavaLangClassSymbolRef());
@@ -762,7 +767,11 @@ int32_t TR_UnsafeFastPath::perform()
             object->setIsNonNull(true);
 
             static char *useAbsoluteAddressesForStatics = feGetEnv("TR_UseAbsoluteAddressesForStatics");
-            bool useRamStaticsForStaticFields = (useAbsoluteAddressesForStatics == NULL);
+            bool typeAllowsDirectAccess = type == TR::Int32 ||
+                                          type == TR::Int64 ||
+                                          type == TR::Float ||
+                                          type == TR::Double;
+            bool useRamStaticsForStaticFields = (useAbsoluteAddressesForStatics == NULL) || !typeAllowsDirectAccess;
 
             if (isStatic && useRamStaticsForStaticFields)
                {
