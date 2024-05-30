@@ -97,6 +97,7 @@ J9::Z::CodeGenerator::initialize()
        !TR::Compiler->om.canGenerateArraylets())
       {
       cg->setSupportsInlineStringHashCode();
+      cg->setSupportsInlineVectorizedHashCode();
       }
 
    if (cg->getSupportsVectorRegisters() && comp->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z14) &&
@@ -3699,6 +3700,14 @@ J9::Z::CodeGenerator::suppressInliningOfRecognizedMethod(TR::RecognizedMethod me
          }
       }
 
+   if (self()->getSupportsInlineVectorizedHashCode())
+      {
+      if (method == TR::jdk_internal_util_ArraysSupport_vectorizedHashCode)
+         {
+         return true;
+         }
+      }
+
    if (method == TR::java_lang_Integer_highestOneBit ||
        method == TR::java_lang_Integer_numberOfLeadingZeros ||
        method == TR::java_lang_Integer_numberOfTrailingZeros ||
@@ -3929,6 +3938,16 @@ J9::Z::CodeGenerator::inlineDirectCall(
             return resultReg = TR::TreeEvaluator::inlineStringHashCode(node, cg, true);
             }
         break;
+
+      case TR::jdk_internal_util_ArraysSupport_vectorizedHashCode:
+         {
+         if (cg->getSupportsInlineVectorizedHashCode() && node->getArgument(4)->getOpCode().isLoadConst())
+            {
+            resultReg = TR::TreeEvaluator::inlineVectorizedHashCode(node, cg);
+            return resultReg != NULL;
+            }
+         break;
+         }
 
       case TR::java_lang_StringLatin1_inflate:
          if (cg->getSupportsInlineStringLatin1Inflate())
