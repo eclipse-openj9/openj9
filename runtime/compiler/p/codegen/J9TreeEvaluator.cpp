@@ -4255,7 +4255,7 @@ TR::Register *J9::Power::TreeEvaluator::VMifInstanceOfEvaluator(TR::Node *node, 
          }
       depIndex = numberOfRegisterCandidate(cg, depNode, TR_GPR) + numberOfRegisterCandidate(cg, depNode, TR_FPR) +
                  numberOfRegisterCandidate(cg, depNode, TR_CCR) + numberOfRegisterCandidate(cg, depNode, TR_VRF) +
-	         numberOfRegisterCandidate(cg, depNode, TR_VSX_SCALAR) + numberOfRegisterCandidate(cg, depNode, TR_VSX_VECTOR);
+                 numberOfRegisterCandidate(cg, depNode, TR_VSX_SCALAR) + numberOfRegisterCandidate(cg, depNode, TR_VSX_VECTOR);
       }
 
    doneLabel = generateLabelSymbol(cg);
@@ -5536,7 +5536,6 @@ static void genHeapAlloc(TR::Node *node, TR::Instruction *&iCursor, TR_OpaqueCla
       if (usingTLH)
          {
          bool sizeInReg = (isVariableLen || (allocSize > UPPER_IMMED));
-         bool shouldAlignToCacheBoundary = false;
          int32_t instanceBoundaryForAlignment = 64;
 
          static bool verboseDualTLH = feGetEnv("TR_verboseDualTLH") != NULL;
@@ -5572,78 +5571,14 @@ static void genHeapAlloc(TR::Node *node, TR::Instruction *&iCursor, TR_OpaqueCla
          //TODO: This code is never executed, check if this can be deleted now.
          if (!cg->isDualTLH())
             {
-            //All of this code never gets executed because of the 0 && in
-            //the inside if statement. Candidate for deletion
+            iCursor = generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, node, resReg,
+                  TR::MemoryReference::createWithDisplacement(cg, metaReg, offsetof(J9VMThread, heapAlloc), TR::Compiler->om.sizeofReferenceAddress()), iCursor);
 
-            if (!isVariableLen)
-               {
-               static char *disableAlign = feGetEnv("TR_DisableAlignAlloc");
-
-               if (0 && !disableAlign && (node->getOpCodeValue() == TR::New) && (comp->getMethodHotness() >= hot || node->shouldAlignTLHAlloc()))
-                  {
-                  TR_OpaqueMethodBlock *ownMethod = node->getOwningMethod();
-
-                  TR::Node *classChild = node->getFirstChild();
-                  char * className = NULL;
-                  TR_OpaqueClassBlock *clazz = NULL;
-
-                  if (classChild && classChild->getSymbolReference() && !classChild->getSymbolReference()->isUnresolved())
-                     {
-                     TR::SymbolReference *symRef = classChild->getSymbolReference();
-                     TR::Symbol *sym = symRef->getSymbol();
-
-                     if (sym && sym->getKind() == TR::Symbol::IsStatic && sym->isClassObject())
-                        {
-                        TR::StaticSymbol * staticSym = symRef->getSymbol()->castToStaticSymbol();
-                        void * staticAddress = staticSym->getStaticAddress();
-                        if (symRef->getCPIndex() >= 0)
-                           {
-                           if (!staticSym->addressIsCPIndexOfStatic() && staticAddress)
-                              {
-                              int32_t len;
-                              className = TR::Compiler->cls.classNameChars(comp, symRef, len);
-                              clazz = (TR_OpaqueClassBlock *) staticAddress;
-                              }
-                           }
-                        }
-                     }
-
-                  int32_t instanceSizeForAlignment = 56;
-                  static char *alignSize = feGetEnv("TR_AlignInstanceSize");
-                  static char *alignBoundary = feGetEnv("TR_AlignInstanceBoundary");
-
-                  if (alignSize)
-                     instanceSizeForAlignment = atoi(alignSize);
-                  if (alignBoundary)
-                     instanceBoundaryForAlignment = atoi(alignBoundary);
-
-                  if (clazz && !cg->getCurrentEvaluationBlock()->isCold() && TR::Compiler->cls.classInstanceSize(clazz) >= instanceSizeForAlignment)
-                     {
-                     shouldAlignToCacheBoundary = true;
-
-                     iCursor = generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, node, temp1Reg,
-                           TR::MemoryReference::createWithDisplacement(cg, metaReg, offsetof(J9VMThread, heapAlloc), TR::Compiler->om.sizeofReferenceAddress()), iCursor);
-
-                     iCursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, resReg, temp1Reg, instanceBoundaryForAlignment - 1, iCursor);
-                     if (comp->target().is64Bit())
-                        iCursor = generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldicr, node, resReg, resReg, 0, int64_t(-instanceBoundaryForAlignment), iCursor);
-                     else
-                        iCursor = generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, resReg, resReg, 0, -instanceBoundaryForAlignment, iCursor);
-                     }
-                  }
-               }
-
-            if (!shouldAlignToCacheBoundary)
-               {
-               iCursor = generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, node, resReg,
-                     TR::MemoryReference::createWithDisplacement(cg, metaReg, offsetof(J9VMThread, heapAlloc), TR::Compiler->om.sizeofReferenceAddress()), iCursor);
-               }
             iCursor = generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, node, heapTopReg,
                   TR::MemoryReference::createWithDisplacement(cg, metaReg, offsetof(J9VMThread, heapTop), TR::Compiler->om.sizeofReferenceAddress()), iCursor);
 
             if (needZeroInit)
                iCursor = generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, zeroReg, 0, iCursor);
-
             }
          else
             {
@@ -5815,15 +5750,9 @@ static void genHeapAlloc(TR::Node *node, TR::Instruction *&iCursor, TR_OpaqueCla
          else
             iCursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, temp2Reg, resReg, allocSize, iCursor);
 
-         //TODO: shouldAlignToCacheBoundary is never true, check its effects here.
-         int32_t padding = shouldAlignToCacheBoundary ? instanceBoundaryForAlignment : 0;
-
-         if (!isVariableLen && ((uint32_t) allocSize + padding) > maxSafeSize)
+         if (!isVariableLen && ((uint32_t) allocSize) > maxSafeSize)
             {
-            if (!shouldAlignToCacheBoundary)
-               iCursor = generateTrg1Src2Instruction(cg,TR::InstOpCode::Op_cmpl, node, condReg, temp2Reg, resReg, iCursor);
-            else
-               iCursor = generateTrg1Src2Instruction(cg,TR::InstOpCode::Op_cmpl, node, condReg, temp2Reg, temp1Reg, iCursor);
+            iCursor = generateTrg1Src2Instruction(cg,TR::InstOpCode::Op_cmpl, node, condReg, temp2Reg, resReg, iCursor);
             iCursor = generateConditionalBranchInstruction(cg, TR::InstOpCode::blt, node, callLabel, condReg, iCursor);
             }
 
@@ -5847,53 +5776,6 @@ static void genHeapAlloc(TR::Node *node, TR::Instruction *&iCursor, TR_OpaqueCla
          //branch to regular heapAlloc Snippet if we overflow (ie callLabel).
          iCursor = generateTrg1Src2Instruction(cg,TR::InstOpCode::Op_cmpl, node, condReg, temp2Reg, heapTopReg, iCursor);
          iCursor = generateConditionalBranchInstruction(cg, TR::InstOpCode::bgt, node, callLabel, condReg, iCursor);
-
-         //TODO: this code is never executed, check if we can remove this now.
-         if (!cg->isDualTLH())
-            {
-            //shouldAlignToCacheBoundary is false at definition at the top, and
-            //the only codepoint where its set to true is never executed
-            //so this looks like a candidate for deletion.
-            if (shouldAlignToCacheBoundary)
-               {
-               TR::LabelSymbol *doneAlignLabel = generateLabelSymbol(cg);
-               TR::LabelSymbol *multiSlotGapLabel = generateLabelSymbol(cg);
-               ;
-               iCursor = generateTrg1Src2Instruction(cg, TR::InstOpCode::subf, node, dataSizeReg, temp1Reg, resReg, iCursor);
-
-               if (sizeInReg)
-                  iCursor = generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, sizeReg, dataSizeReg, sizeReg, iCursor);
-               else
-                  iCursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, sizeReg, dataSizeReg, allocSize, iCursor);
-
-               sizeInReg = true;
-
-               iCursor = generateTrg1Src1ImmInstruction(cg,TR::InstOpCode::Op_cmpli, node, condReg, dataSizeReg, sizeof(uintptr_t), iCursor);
-               iCursor = generateConditionalBranchInstruction(cg, TR::InstOpCode::blt, node, doneAlignLabel, condReg, iCursor);
-               iCursor = generateConditionalBranchInstruction(cg, TR::InstOpCode::bgt, node, multiSlotGapLabel, condReg, iCursor);
-               iCursor = generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, dataSizeReg, J9_GC_SINGLE_SLOT_HOLE, iCursor);
-
-               if (comp->target().is64Bit() && fej9->generateCompressedLockWord())
-                  {
-                  iCursor = generateMemSrc1Instruction(cg, TR::InstOpCode::stw, node, TR::MemoryReference::createWithDisplacement(cg, temp1Reg, 0, 4), dataSizeReg, iCursor);
-                  iCursor = generateMemSrc1Instruction(cg, TR::InstOpCode::stw, node, TR::MemoryReference::createWithDisplacement(cg, temp1Reg, 4, 4), dataSizeReg, iCursor);
-                  }
-               else
-                  {
-                  iCursor = generateMemSrc1Instruction(cg,TR::InstOpCode::Op_st, node, TR::MemoryReference::createWithDisplacement(cg, temp1Reg, 0, TR::Compiler->om.sizeofReferenceAddress()), dataSizeReg,
-                        iCursor);
-                  }
-
-               iCursor = generateLabelInstruction(cg, TR::InstOpCode::b, node, doneAlignLabel, iCursor);
-               iCursor = generateLabelInstruction(cg, TR::InstOpCode::label, node, multiSlotGapLabel, iCursor);
-               iCursor = generateMemSrc1Instruction(cg,TR::InstOpCode::Op_st, node, TR::MemoryReference::createWithDisplacement(cg, temp1Reg, TR::Compiler->om.sizeofReferenceAddress(), TR::Compiler->om.sizeofReferenceAddress()),
-                     dataSizeReg, iCursor);
-               iCursor = generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, dataSizeReg, J9_GC_MULTI_SLOT_HOLE, iCursor);
-               iCursor = generateMemSrc1Instruction(cg,TR::InstOpCode::Op_st, node, TR::MemoryReference::createWithDisplacement(cg, temp1Reg, 0, TR::Compiler->om.sizeofReferenceAddress()), dataSizeReg,
-                     iCursor);
-               iCursor = generateLabelInstruction(cg, TR::InstOpCode::label, node, doneAlignLabel, iCursor);
-               }
-            }
 
          if (cg->enableTLHPrefetching())
             {
