@@ -46,7 +46,6 @@
 #define J9AccSuper                         0x00000020 /* class */
 #define J9AccClassHasIdentity              0x00000020 /* class */
 #define J9AccSynchronized                  0x00000020 /* method */
-#define J9AccValueType                     0x00000040 /* class(Valhalla) */
 #define J9AccBridge                        0x00000040 /* method */
 #define J9AccVolatile                      0x00000040 /* field */
 #define J9AccVarArgs                       0x00000080 /* method */
