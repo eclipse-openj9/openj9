@@ -554,7 +554,9 @@ uint8_t *J9::X86::AMD64::PrivateLinkage::generateVirtualIndirectThunk(TR::Node *
       }
    else
       {
-      thunk = (uint8_t *)cg()->allocateCodeMemory(codeSize, true);
+      // if disclaim enabled, put into warm
+      bool disclaim = TR::Options::getCmdLineOptions()->getOption(TR_EnableCodeCacheDisclaiming);
+      thunk = (uint8_t *)cg()->allocateCodeMemory(codeSize, !disclaim);
       cursor = thunkEntry = thunk;
       }
 
