@@ -33,6 +33,8 @@ echo "start running script";
 # $7 is the NUM_CHECKPOINT
 # $8 is the KEEP_CHECKPOINT
 # $9 is the KEEP_TEST_OUTPUT
+# #10 is the ENABLE_COMMAND_LINE_RESTORE
+# #11 is the COMMAND_LINE_RESTORE_OPTIONS
 
 echo "export GLIBC_TUNABLES=glibc.cpu.hwcaps=-XSAVEC,-XSAVE,-AVX2,-ERMS,-AVX,-AVX_Fast_Unaligned_Load";
 export GLIBC_TUNABLES=glibc.pthread.rseq=0:glibc.cpu.hwcaps=-XSAVEC,-XSAVE,-AVX2,-ERMS,-AVX,-AVX_Fast_Unaligned_Load
@@ -46,7 +48,11 @@ if [ "$8" != true ]; then
     for ((i=0; i<$NUM_CHECKPOINT; i++)); do
         sleep 2;
         echo "initiate restore" >>criuOutput
-        criu restore -D ./cpData -v2 --shell-job >>criuOutput 2>&1;
+        if [ "${10}" != true ]; then
+            criu restore -D ./cpData -v2 --shell-job >>criuOutput 2>&1;
+        else
+            $2 ${11} --shell-job >>criuOutput 2>&1;
+        fi
     done
 fi
 
