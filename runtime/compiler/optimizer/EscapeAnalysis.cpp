@@ -4179,7 +4179,7 @@ static bool isFinalizableInlineTest(TR::Compilation *comp, TR::Node *candidate, 
 
       if[i/l]cmpne                                      <root>
          [i/l]and                                       <r1>
-            [i/l]loadi <classAndDepthFlags>             <r11/loadNode>
+            [i/l]loadi <classDepthAndFlags>             <r11/loadNode>
                aloadi <vft-symbol>                      <vftLoad>
                   ...                                   <ref>
             [i/l]const <FlagValueForFinalizerCheck>     <r12>
@@ -4190,7 +4190,7 @@ static bool isFinalizableInlineTest(TR::Compilation *comp, TR::Node *candidate, 
       ificmpne                                          <root>
          iand                                           <r1>
             l2i                                         <r11>
-               lloadi <classAndDepthFlags>              <loadNode>
+               lloadi <classDepthAndFlags>              <loadNode>
                   aloadi <vft-symbol>                   <vftLoad>
                      ...                                <ref>
             iconst <FlagValueForFinalizerCheck>         <r12>

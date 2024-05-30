@@ -1311,14 +1311,20 @@ J9::SymbolReferenceTable::findOrCreateClassFlagsSymbolRef()
 TR::SymbolReference *
 J9::SymbolReferenceTable::findOrCreateClassAndDepthFlagsSymbolRef()
    {
-   if (!element(isClassAndDepthFlagsSymbol))
+   return self()->findOrCreateClassDepthAndFlagsSymbolRef();
+   }
+
+TR::SymbolReference *
+J9::SymbolReferenceTable::findOrCreateClassDepthAndFlagsSymbolRef()
+   {
+   if (!element(isClassDepthAndFlagsSymbol))
       {
       TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
       TR::Symbol * sym = TR::Symbol::createShadow(trHeapMemory(), TR::Int32);
-      element(isClassAndDepthFlagsSymbol) = new (trHeapMemory()) TR::SymbolReference(self(), isClassAndDepthFlagsSymbol, sym);
-      element(isClassAndDepthFlagsSymbol)->setOffset(fej9->getOffsetOfClassAndDepthFlags());
+      element(isClassDepthAndFlagsSymbol) = new (trHeapMemory()) TR::SymbolReference(self(), isClassDepthAndFlagsSymbol, sym);
+      element(isClassDepthAndFlagsSymbol)->setOffset(fej9->getOffsetOfClassDepthAndFlags());
       }
-   return element(isClassAndDepthFlagsSymbol);
+   return element(isClassDepthAndFlagsSymbol);
    }
 
 
