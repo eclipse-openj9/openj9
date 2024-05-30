@@ -46,6 +46,7 @@ private:
 	void backoutUnfinalizedObjects(MM_EnvironmentStandard *env);
 	void backoutFinalizableObjects(MM_EnvironmentStandard *env);
 #endif
+	void backoutContinuationObjects(MM_EnvironmentStandard *env);
 
 public:
 	MM_ScavengerBackOutScanner(MM_EnvironmentBase *env, bool singleThread, MM_Scavenger *scavenger)
@@ -117,11 +118,12 @@ public:
 
 	/* empty, move ownable synchronizer backout processing in scanAllSlots() */
 	virtual void scanOwnableSynchronizerObjects(MM_EnvironmentBase *env) {}
-	/**
-	 * empty, move continuation backout processing in scanAllSlots(), scavenger abort would never happen after continuationObjectList processing
-	 * so only need to backout list._head from _priorHead
-	 */
-	virtual void scanContinuationObjects(MM_EnvironmentBase *env) {}
+	virtual void scanContinuationObjects(MM_EnvironmentBase *env)
+	{
+		reportScanningStarted(RootScannerEntity_ContinuationObjects);
+		backoutContinuationObjects(MM_EnvironmentStandard::getEnvironment(env));
+		reportScanningEnded(RootScannerEntity_ContinuationObjects);
+	}
 };
 #endif /* defined(OMR_GC_MODRON_SCAVENGER) */
 

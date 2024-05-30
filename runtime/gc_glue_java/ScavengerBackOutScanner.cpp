@@ -328,4 +328,51 @@ MM_ScavengerBackOutScanner::backoutUnfinalizedObjects(MM_EnvironmentStandard *en
 	env->getGCEnvironment()->_unfinalizedObjectBuffer->flush(env);
 }
 #endif /* J9VM_GC_FINALIZATION */
+
+/**
+ * Backout the continuation objects.
+ * Move continuation backout processing in scanAllSlots(), scavenger abort would never happen after continuationObjectList processing
+ * (so only need to backout list._head from _priorHead).
+ * Here walk the lists in the Evacuate region only for helping to back out the references in java stacks of the unmounted continuations.
+ */
+void
+MM_ScavengerBackOutScanner::backoutContinuationObjects(MM_EnvironmentStandard *env)
+{
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+	if (_extensions->isConcurrentScavengerEnabled()) {
+		/**
+		 * For ConcurrentScavenge no need to backout stack references,
+		 * since they will be fixed up to point to the new version of the object
+		 * (if not already do so), later during marking when continuation objects are found live.
+		 */
+		return;
+	} else
+#endif /* OMR_GC_CONCURRENT_SCAVENGER */
+	{
+		MM_Heap *heap = _extensions->heap;
+		MM_HeapRegionManager *regionManager = heap->getHeapRegionManager();
+		MM_HeapRegionDescriptorStandard *region = NULL;
+		bool const compressed = _extensions->compressObjectReferences();
+		GC_HeapRegionIteratorStandard regionIterator(regionManager);
+
+		while (NULL != (region = regionIterator.nextRegion())) {
+			if (_scavenger->isObjectInEvacuateMemory((omrobjectptr_t )region->getLowAddress())) {
+				MM_HeapRegionDescriptorStandardExtension *regionExtension = MM_ConfigurationDelegate::getHeapRegionDescriptorStandardExtension(env, region);
+				for (uintptr_t i = 0; i < regionExtension->_maxListIndex; i++) {
+					MM_ContinuationObjectList *list = &regionExtension->_continuationObjectLists[i];
+					if (!list->wasEmpty()) {
+						omrobjectptr_t object = list->getPriorList();
+						while (NULL != object) {
+							omrobjectptr_t next = _extensions->accessBarrier->getContinuationLink(object);
+							MM_ForwardedHeader forwardHeader(object, compressed);
+							Assert_MM_false(forwardHeader.isForwardedPointer());
+							_scavenger->getDelegate()->scanContinuationNativeSlots(env, object, SCAN_REASON_BACKOUT);
+							object = next;
+						}
+					}
+				}
+			}
+		}
+	}
+}
 #endif /* defined(OMR_GC_MODRON_SCAVENGER) */
