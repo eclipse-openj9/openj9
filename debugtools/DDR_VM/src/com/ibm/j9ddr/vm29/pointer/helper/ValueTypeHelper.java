@@ -217,7 +217,8 @@ public class ValueTypeHelper {
 
 		@Override
 		public boolean isRomClassAValueType(J9ROMClassPointer romClass) throws CorruptDataException {
-			return !romClass.modifiers().allBitsIn(J9JavaAccessFlags.J9AccClassHasIdentity);
+			long flag = J9JavaAccessFlags.J9AccClassHasIdentity;
+			return (flag != 0) && !romClass.modifiers().anyBitsIn(flag);
 		}
 
 		@Override
