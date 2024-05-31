@@ -743,7 +743,7 @@ JVM_IsImplicitlyConstructibleClass(JNIEnv *env, jclass cls)
 JNIEXPORT jboolean JNICALL
 JVM_IsNullRestrictedArray(JNIEnv *env, jobject obj)
 {
-	assert(!"JVM_IsNullRestrictedArray unimplemented");
+	// TODO implement this with https://github.com/eclipse-openj9/openj9/issues/19460
 	return JNI_FALSE;
 }
 
