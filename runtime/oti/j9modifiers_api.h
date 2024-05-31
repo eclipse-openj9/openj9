@@ -88,7 +88,7 @@
  * TODO: Will need to modify this if ValObject/RefObject proposal goes through.
  * Some exiting places using J9ROMCLASS_IS_VALUE() may need to check J9ROMCLASS_IS_PRIMITIVE_VALUE_TYPE().
  */
-#define J9ROMCLASS_IS_VALUE(romClass)	_J9ROMCLASS_SUNMODIFIER_IS_SET((romClass), J9AccValueType)
+#define J9ROMCLASS_IS_VALUE(romClass)	!_J9ROMCLASS_SUNMODIFIER_IS_SET((romClass), J9AccClassHasIdentity)
 #else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 #define J9ROMCLASS_IS_VALUE(romClass)	FALSE
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
@@ -140,7 +140,7 @@
 
 /* Class instances are allocated via the new bytecode */
 #define J9ROMCLASS_ALLOCATES_VIA_NEW(romClass) \
-	J9_ARE_NO_BITS_SET((romClass)->modifiers, J9AccAbstract | J9AccInterface | J9AccClassArray | J9AccValueType)
+	J9_ARE_NO_BITS_SET((romClass)->modifiers, J9AccAbstract | J9AccInterface | J9AccClassArray)
 
 /* Class instances are allocated via J9RAMClass->totalInstanceSize */
 #define J9ROMCLASS_ALLOCATE_USES_TOTALINSTANCESIZE(romClass) \

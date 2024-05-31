@@ -2011,7 +2011,7 @@ loadFlattenableFieldValueClasses(J9VMThread *currentThread, J9ClassLoader *class
 						* ImplicitCreation attribute. The attribute must have the ACC_DEFAULT flag set.
 						* Static fields will be checked during class preparation.
 						*/
-						if (J9_ARE_NO_BITS_SET(valueROMClass->modifiers, J9AccValueType)
+						if (!J9ROMCLASS_IS_VALUE(valueROMClass)
 							|| J9_ARE_NO_BITS_SET(valueROMClass->optionalFlags, J9_ROMCLASS_OPTINFO_IMPLICITCREATION_ATTRIBUTE)
 							|| J9_ARE_NO_BITS_SET(getImplicitCreationFlags(valueROMClass), J9AccImplicitCreateHasDefaultValue)
 						) {
@@ -2331,30 +2331,20 @@ nativeOOM:
 		}
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-		if (J9_ARE_ALL_BITS_SET(classFlags, J9ClassHasIdentity)) {
-			if (J9ROMCLASS_IS_VALUE(romClass)) {
-				J9UTF8* className = J9ROMCLASS_CLASSNAME(romClass);
-				J9UTF8 *superclassName = J9ROMCLASS_SUPERCLASSNAME(romClass);
-				setCurrentExceptionNLSWithArgs(vmThread, J9NLS_VM_VALUETYPE_HAS_WRONG_SUPERCLASS,
-						J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, J9UTF8_LENGTH(className),
-						J9UTF8_DATA(className), J9UTF8_LENGTH(superclassName), J9UTF8_DATA(superclassName));
-			}
-		} else {
-			if (J9ROMCLASS_HAS_IDENTITY(romClass)) {
-				classFlags |= J9ClassHasIdentity;
-			}
+		if (J9ROMCLASS_HAS_IDENTITY(romClass)) {
+			classFlags |= J9ClassHasIdentity;
 		}
 
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-	if (J9_ARE_ALL_BITS_SET(romClass->optionalFlags, J9_ROMCLASS_OPTINFO_IMPLICITCREATION_ATTRIBUTE)) {
-		U_16 implicitCreationFlags = getImplicitCreationFlags(romClass);
-		if (J9_ARE_ALL_BITS_SET(implicitCreationFlags, J9AccImplicitCreateNonAtomic)) {
-			classFlags |= J9ClassAllowsNonAtomicCreation;
+		if (J9_ARE_ALL_BITS_SET(romClass->optionalFlags, J9_ROMCLASS_OPTINFO_IMPLICITCREATION_ATTRIBUTE)) {
+			U_16 implicitCreationFlags = getImplicitCreationFlags(romClass);
+			if (J9_ARE_ALL_BITS_SET(implicitCreationFlags, J9AccImplicitCreateNonAtomic)) {
+				classFlags |= J9ClassAllowsNonAtomicCreation;
+			}
+			if (J9_ARE_ALL_BITS_SET(implicitCreationFlags, J9AccImplicitCreateHasDefaultValue)) {
+				classFlags |= J9ClassAllowsInitialDefaultValue;
+			}
 		}
-		if (J9_ARE_ALL_BITS_SET(implicitCreationFlags, J9AccImplicitCreateHasDefaultValue)) {
-			classFlags |= J9ClassAllowsInitialDefaultValue;
-		}
-	}
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
 		if (J9ROMCLASS_IS_VALUE(romClass)) {
