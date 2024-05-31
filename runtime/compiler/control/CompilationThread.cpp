@@ -4170,6 +4170,9 @@ TR::CompilationInfoPerThread::processEntries()
             {
             // Compilation request extracted; go work on it
             TR_ASSERT(entry, "Attempting to process NULL entry");
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+            entry->_checkpointInProgress = compInfo->getCRRuntime()->isCheckpointInProgress();
+#endif
             processEntry(*entry, scratchSegmentCache);
             break;
             }
@@ -8271,7 +8274,8 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
          regionSegmentProvider,
          dispatchRegion,
          trMemory,
-         TR::CompileIlGenRequest(entry->getMethodDetails())
+         TR::CompileIlGenRequest(entry->getMethodDetails()),
+         entry->_checkpointInProgress
          );
    if (TR::Options::getVerboseOption(TR_VerboseCompilationDispatch))
       TR_VerboseLog::writeLineLocked(TR_Vlog_DISPATCH,
@@ -8554,7 +8558,6 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                   aotCompilationReUpgradedToWarm = true;
                   }
                }
-
 
             TR_PersistentCHTable *cht = that->_compInfo.getPersistentInfo()->getPersistentCHTable();
             if (cht && !cht->isActive())
@@ -10574,7 +10577,8 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                jitMethodTranslated(vmThread, method, startPC);
 #if defined(J9VM_OPT_CRIU_SUPPORT)
                if (jitConfig->javaVM->internalVMFunctions->isCheckpointAllowed(vmThread)
-                   && jitConfig->javaVM->internalVMFunctions->isDebugOnRestoreEnabled(vmThread))
+                   && jitConfig->javaVM->internalVMFunctions->isDebugOnRestoreEnabled(vmThread)
+                   && (!compInfo->getCRRuntime()->isCheckpointInProgress() || comp->getOption(TR_FullSpeedDebug)))
                   {
                   if (comp->getRecompilationInfo() && comp->getRecompilationInfo()->getJittedBodyInfo())
                      {

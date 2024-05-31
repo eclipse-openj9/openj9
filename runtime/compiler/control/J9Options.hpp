@@ -644,9 +644,33 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
+   /**
+    * \brief Static method used to reset FSD post-restore
+    *
+    * \param vm the J9JavaVM
+    * \param vmThread the J9VMThread
+    * \param[out] doAOT a boolean to indicate whether AOT should be disabled
+    *                   after the call to this method
+    *
+    * \return The FSDInitStatus indicating the FSD Status
+    */
    static FSDInitStatus resetFSD(J9JavaVM *vm, J9VMThread *vmThread, bool &doAOT);
-   void resetFSDOptions();
-   void resetFSDOptionsForAll();
+
+   /**
+    * \brief Method to enable or disable FSD options for the given TR::Options
+    *        object
+    *
+    * \param flag true results in FSD enabled; false results in FSD disabled.
+    */
+   void setFSDOptions(bool flag);
+
+   /**
+    * \brief Method to enable or disable FSD options for the given TR::Options
+    *        and all subsets
+    *
+    * \param flag true results in FSD enabled; false results in FSD disabled.
+    */
+   void setFSDOptionsForAll(bool flag);
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
    private:

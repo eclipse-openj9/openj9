@@ -790,4 +790,7 @@ private:
    static int32_t                  _STATS_IPEntryRead;
    static int32_t                  _STATS_IPEntryChoosePersistent;
    };
+
+void turnOffInterpreterProfiling(J9JITConfig *jitConfig);
+
 #endif
