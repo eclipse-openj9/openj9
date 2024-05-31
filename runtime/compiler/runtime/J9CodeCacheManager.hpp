@@ -29,7 +29,7 @@ namespace J9 { class CodeCacheManager; }
 namespace J9 { typedef CodeCacheManager CodeCacheManagerConnector; }
 #endif
 
-
+#include "control/Options.hpp"
 #include "env/jittypes.h"
 //#include "runtime/CodeCacheMemorySegment.hpp"
 //#include "runtime/CodeCache.hpp"
@@ -56,6 +56,7 @@ public:
       _fe(fe)
       {
       _codeCacheManager = reinterpret_cast<TR::CodeCacheManager *>(this);
+      _disclaimEnabled = TR::Options::getCmdLineOptions()->getOption(TR_EnableCodeCacheDisclaiming);
       }
 
    void *operator new(size_t s, TR::CodeCacheManager *m) { return m; }
@@ -152,12 +153,16 @@ public:
     * @brief Print occupancy stats for each code cache
     */
    void printOccupancyStats();
+   bool isDisclaimEnabled() const { return _disclaimEnabled; }
+   void setDisclaimEnabled(bool value)  { _disclaimEnabled = value; }
+   int32_t disclaimAllCodeCaches();
 
 private :
    TR_FrontEnd *_fe;
    static TR::CodeCacheManager *_codeCacheManager;
    static J9JITConfig *_jitConfig;
    static J9JavaVM *_javaVM;
+   bool  _disclaimEnabled; // If true, code cache can be disclaimed to a file or swap
    };
 
 } // namespace J9

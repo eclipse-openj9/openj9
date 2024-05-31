@@ -4610,10 +4610,22 @@ void disclaimIProfilerSegments(uint64_t crtElapsedTime)
       }
    }
 
+void disclaimCodeCaches(uint64_t crtElapsedTime)
+   {
+   size_t rssBefore = getRSS_Kb();
+   int numDisclaimed = TR::CodeCacheManager::instance()->disclaimAllCodeCaches();
+   size_t rssAfter = getRSS_Kb();
+   if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "t=%u JIT disclaimed %d Code Caches RSS before=%zu KB, RSS after=%zu KB, delta=%zu KB = %5.2f%%",
+                                     (uint32_t)crtElapsedTime, numDisclaimed, rssBefore, rssAfter, rssBefore - rssAfter, ((long)(rssAfter - rssBefore) * 100.0 / rssBefore));
+   }
+
 void memoryDisclaimLogic(TR::CompilationInfo *compInfo, uint64_t crtElapsedTime, uint8_t jitState)
    {
    static uint64_t lastDataCacheDisclaimTime = 0;
    static int32_t  lastNumAllocatedDataCaches = 0;
+   static uint64_t lastCodeCacheDisclaimTime = 0;
+   static int32_t  lastNumAllocatedCodeCaches = 0;
    static uint64_t lastIProfilerDisclaimTime = 0;
    static uint32_t lastNumCompilationsDuringIProfilerDisclaim = 0;
 
@@ -4644,6 +4656,25 @@ void memoryDisclaimLogic(TR::CompilationInfo *compInfo, uint64_t crtElapsedTime,
             }
          }
       }
+
+   // Use logic similar to Data caches above
+   if (TR::CodeCacheManager::instance()->isDisclaimEnabled())
+      {
+      // Ensure we don't do it too often
+      if (crtElapsedTime > lastCodeCacheDisclaimTime + TR::Options::_minTimeBetweenMemoryDisclaims)
+         {
+         // Disclaim if at least one code cache has been allocated since the last disclaim
+         // or if there was a large time interval since the last disclaim
+         if (TR::CodeCacheManager::instance()->getCurrentNumberOfCodeCaches() > lastNumAllocatedCodeCaches ||
+             crtElapsedTime > lastCodeCacheDisclaimTime + 12 * TR::Options::_minTimeBetweenMemoryDisclaims)
+            {
+            disclaimCodeCaches(crtElapsedTime);
+            lastCodeCacheDisclaimTime = crtElapsedTime; // Update the time when disclaim was last performed
+            lastNumAllocatedCodeCaches = TR::CodeCacheManager::instance()->getCurrentNumberOfCodeCaches();
+            }
+         }
+      }
+
 #if defined(J9VM_INTERP_PROFILING_BYTECODES)
    if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableInterpreterProfiling))
       {
@@ -5343,6 +5374,17 @@ static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInf
             }
          }
       }
+
+#ifdef DEBUG_CODE_DISCLAIM
+   static int printRSS = 0;
+   printRSS++;
+   if (printRSS == 4 &&   // ~every 2s
+       TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
+      {
+      TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "Current RSS %zuKB", getRSS_Kb());
+      printRSS = 0;
+      }
+#endif
 
    if (lateDisclaimNeeded)
       {

@@ -763,8 +763,29 @@ void J9::X86::PrivateLinkage::createPrologue(TR::Instruction *cursor)
          cursor = generateLabelInstruction(cursor, TR::InstOpCode::JBE4, checkLabel, cg());
          cursor = generateLabelInstruction(cursor, TR::InstOpCode::label, endLabel, cg());
 
-         // At this point, cg()->getAppendInstruction() is already in the cold code section.
-         generateVFPRestoreInstruction(vfp, cursor->getNode(), cg());
+         // Code Cache disclaim is more efficient if this code is in the warm area
+         bool moveToWarm = TR::Options::getCmdLineOptions()->getOption(TR_EnableCodeCacheDisclaiming) &&
+                           cg()->getLastWarmInstruction();
+
+         TR::Instruction* prevAppendInstruction = NULL;
+         TR::Instruction* followInstruction = NULL;
+
+         if (moveToWarm)
+            {
+            // OverflowCheck OOL executes often so move it to the warm cache
+            if (cg()->getAppendInstruction() != cg()->getLastWarmInstruction())
+               prevAppendInstruction = cg()->getAppendInstruction();
+
+            cg()->setAppendInstruction(cg()->getLastWarmInstruction());
+
+            followInstruction = cg()->getAppendInstruction()->getNext();
+            }
+         else
+            {
+            // At this point, cg()->getAppendInstruction() is already in the cold code section.
+            generateVFPRestoreInstruction(vfp, cursor->getNode(), cg());
+            }
+
          generateLabelInstruction(TR::InstOpCode::label, cursor->getNode(), checkLabel, cg());
          generateRegImmInstruction(TR::InstOpCode::MOV4RegImm4, cursor->getNode(), machine()->getRealRegister(TR::RealRegister::edi), allocSize, cg());
          if (doAllocateFrameSpeculatively)
@@ -779,6 +800,23 @@ void J9::X86::PrivateLinkage::createPrologue(TR::Instruction *cursor)
             generateRegImmInstruction(TR::InstOpCode::SUBRegImm4(), cursor->getNode(), espReal, allocSize, cg());
             }
          generateLabelInstruction(TR::InstOpCode::JMP4, cursor->getNode(), endLabel, cg());
+
+         if (moveToWarm)
+            {
+            TR::Instruction *appendInstruction = cg()->getAppendInstruction();
+            cg()->getLastWarmInstruction()->setLastWarmInstruction(false);
+            cg()->setLastWarmInstruction(appendInstruction);
+            appendInstruction->setLastWarmInstruction(true);
+            appendInstruction->setNext(followInstruction);
+
+            if (followInstruction)
+               {
+               followInstruction->setPrev(appendInstruction);
+               }
+
+            if (prevAppendInstruction)
+               cg()->setAppendInstruction(prevAppendInstruction);
+            }
          }
 
       if (cg()->canEmitBreakOnDFSet())

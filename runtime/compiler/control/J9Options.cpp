@@ -2736,6 +2736,7 @@ J9::Options::fePreProcess(void * base)
       {
       self()->setOption(TR_DisableDataCacheDisclaiming);
       self()->setOption(TR_DisableIProfilerDataDisclaiming);
+      self()->setOption(TR_EnableCodeCacheDisclaiming, false);
       }
 
    return true;
@@ -2900,10 +2901,26 @@ J9::Options::fePostProcessJIT(void * base)
       }
 
    if (!self()->getOption(TR_DisableDataCacheDisclaiming) ||
-       !self()->getOption(TR_DisableIProfilerDataDisclaiming))
+       !self()->getOption(TR_DisableIProfilerDataDisclaiming) ||
+       self()->getOption(TR_EnableCodeCacheDisclaiming))
       {
       // Check requirements for memory disclaiming (Linux kernel and default page size)
       TR::Options::disableMemoryDisclaimIfNeeded(jitConfig);
+      }
+
+   const char *ccOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::Xcodecache];
+   J9JavaVM *vm = javaVM; // needed by FIND_ARG_IN_VMARGS macro
+   int32_t argIndex = FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, ccOption, 0);
+
+   if (argIndex >= 0)
+      {
+      if (jitConfig->codeCacheKB < 4*1024*1024)
+         self()->setOption(TR_EnableCodeCacheDisclaiming, false);
+      }
+   else if (TR::Compiler->target.isLinux() &&
+            self()->getOption(TR_EnableCodeCacheDisclaiming))
+      {
+      jitConfig->codeCacheKB *= 2;
       }
 
 #if defined(J9VM_OPT_JITSERVER)
@@ -2957,6 +2974,7 @@ J9::Options::disableMemoryDisclaimIfNeeded(J9JITConfig *jitConfig)
       {
       TR::Options::getCmdLineOptions()->setOption(TR_DisableDataCacheDisclaiming);
       TR::Options::getCmdLineOptions()->setOption(TR_DisableIProfilerDataDisclaiming);
+      TR::Options::getCmdLineOptions()->setOption(TR_EnableCodeCacheDisclaiming, false);
       }
    return shouldDisableMemoryDisclaim;
    }
