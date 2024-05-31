@@ -26,6 +26,10 @@
 #include "env/TRMemory.hpp"
 #include "infra/Link.hpp"
 
+#if defined(J9VM_OPT_JITSERVER)
+#include "env/J9PersistentInfo.hpp"
+#endif // if defined(J9VM_OPT_JITSERVER)
+
 extern "C" {
 struct J9JITConfig;
 struct J9VMThread;
@@ -127,10 +131,12 @@ class CRRuntime
    /* The following methods should be only be invoked with the CR Runtime
     * Monitor in hand.
     */
-   void pushFailedCompilation(J9Method *method)    { pushMemoizedCompilation(_failedComps, method);   }
-   J9Method * popFailedCompilation()               { return popMemoizedCompilation(_failedComps);     }
-   void pushForcedRecompilation(J9Method *method)  { pushMemoizedCompilation(_forcedRecomps, method); }
-   J9Method * popForcedRecompilation()             { return popMemoizedCompilation(_forcedRecomps);   }
+   void pushFailedCompilation(J9Method *method)    { pushMemoizedCompilation(_failedComps, method);    }
+   J9Method * popFailedCompilation()               { return popMemoizedCompilation(_failedComps);      }
+   void pushForcedRecompilation(J9Method *method)  { pushMemoizedCompilation(_forcedRecomps, method);  }
+   J9Method * popForcedRecompilation()             { return popMemoizedCompilation(_forcedRecomps);    }
+   void pushImportantMethodForCR(J9Method *method) { pushMemoizedCompilation(_impMethodForCR, method); }
+   J9Method * popImportantMethodForCR()            { return popMemoizedCompilation(_impMethodForCR);   }
 
    /**
     * @brief Remove appropriate methods from all of the memoized lists. This
@@ -190,6 +196,39 @@ class CRRuntime
       J9Method *_method;
       };
    typedef TR_LinkHead0<TR_MemoizedComp> TR_MemoizedCompilations;
+
+   struct ProactiveCompEnv
+      {
+#if defined(J9VM_OPT_JITSERVER)
+      bool _canDoRemoteComp;
+      uint64_t _clientUID;
+      uint64_t _serverUID;
+      JITServer::RemoteCompilationModes _remoteCompMode;
+#endif // if defined(J9VM_OPT_JITSERVER)
+      };
+
+   class SetupEnvForProactiveComp
+      {
+      public:
+      SetupEnvForProactiveComp(TR::CRRuntime *crRuntime, J9JavaVM *javaVM, J9VMThread *vmThread, TR_J9VMBase *fej9) :
+         _crRuntime(crRuntime),
+         _javaVM(javaVM),
+         _vmThread(vmThread),
+         _fej9(fej9)
+         {
+         _crRuntime->setupEnvForProactiveCompilation(_javaVM, _vmThread, _fej9);
+         }
+      ~SetupEnvForProactiveComp()
+         {
+         _crRuntime->teardownEnvForProactiveCompilation(_javaVM, _vmThread, _fej9);
+         }
+
+      private:
+      TR::CRRuntime *_crRuntime;
+      J9JavaVM *_javaVM;
+      J9VMThread *_vmThread;
+      TR_J9VMBase *_fej9;
+      };
 
    /* These are private since this monitor should only be externally accessed
     * via the TR::CompilationInfo object.
@@ -303,16 +342,6 @@ class CRRuntime
    void purgeMemoizedCompilation(TR_MemoizedCompilations& list);
 
    /**
-    * @brief Trigger compilation of any compilations that failed pre-checkpoint;
-    *        specifically, any compilations added to the _failedComps list.
-    *
-    *        This method is called with the CR Runtime Monitor in hand.
-    *
-    * @param vmThread the J9VMThread
-    */
-   void triggerCompilationOfFailedCompilationsPreCheckpoint(J9VMThread *vmThread);
-
-   /**
     * @brief Trigger recompilation of the compilations that were generated with
     *        FSD enabled pre-checkpoint; specifically, any compilations added to
     *        the _forcedRecomps list.
@@ -322,6 +351,22 @@ class CRRuntime
     * @param vmThread the J9VMThread
     */
    void triggerRecompilationForPreCheckpointGeneratedFSDBodies(J9VMThread *vmThread);
+
+   /**
+    * @brief Resets the FSD enabled environment to allow proactive compilations
+    *        to occur with FSD disabled.
+    *
+    * @param javaVM the J9JavaVM
+    */
+   void setupEnvForProactiveCompilation(J9JavaVM *javaVM, J9VMThread *vmThread, TR_J9VMBase *fej9);
+
+   /**
+    * @brief Reverts the envirionment back to having FSD enabled in case the
+    *        JVM runs with FSD enabled post-restore.
+    *
+    * @param javaVM the J9JavaVM
+    */
+   void teardownEnvForProactiveCompilation(J9JavaVM *javaVM, J9VMThread *vmThread, TR_J9VMBase *fej9);
 
    J9JITConfig *_jitConfig;
    TR::CompilationInfo *_compInfo;
@@ -338,6 +383,9 @@ class CRRuntime
 
    TR_MemoizedCompilations _failedComps;
    TR_MemoizedCompilations _forcedRecomps;
+   TR_MemoizedCompilations _impMethodForCR;
+
+   ProactiveCompEnv _proactiveCompEnv;
 
    bool _vmMethodTraceEnabled;
    bool _vmExceptionEventsHooked;

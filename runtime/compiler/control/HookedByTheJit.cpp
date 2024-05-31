@@ -438,6 +438,18 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
    int32_t count = -1; // means we didn't set the value yet
 
       {
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+      bool cpAllowedAndDebugOnRestoreEnabled
+         = jitConfig->javaVM->internalVMFunctions->isDebugOnRestoreEnabled(vmThread)
+           && jitConfig->javaVM->internalVMFunctions->isCheckpointAllowed(vmThread);
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+
+      bool sccCounts =
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+         (cpAllowedAndDebugOnRestoreEnabled && jitConfig->javaVM->sharedClassConfig) ||
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+         TR::Options::sharedClassCache();
+
       J9ROMClass *declaringClazz = J9_CLASS_FROM_METHOD(method)->romClass;
       J9UTF8 * className = J9ROMCLASS_CLASSNAME(declaringClazz);
       J9UTF8 * name = J9ROMMETHOD_NAME(romMethod);
@@ -463,7 +475,7 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
                      TR::Options::getHighCodeCacheOccupancyBCount() :
                      TR::Options::getHighCodeCacheOccupancyCount();
          }
-      else if (TR::Options::sharedClassCache())
+      else if (sccCounts)
          {
          // The default FE may not have TR_J9SharedCache object because the FE may have
          // been created before options were processed.
@@ -477,7 +489,18 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
             if (optionsAOT->getOption(TR_EnableSharedCacheTiming))
                sharedQueryTime = j9time_hires_clock(); // may not be good for SMP
 
-            if (jitConfig->javaVM->sharedClassConfig->existsCachedCodeForROMMethod(vmThread, romMethod))
+            bool methodExistsInSCC = jitConfig->javaVM->sharedClassConfig->existsCachedCodeForROMMethod(vmThread, romMethod);
+
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+            if (methodExistsInSCC && cpAllowedAndDebugOnRestoreEnabled)
+               compInfo->getCRRuntime()->pushImportantMethodForCR(method);
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+
+            if (methodExistsInSCC
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+                && !cpAllowedAndDebugOnRestoreEnabled
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+               )
                {
                int32_t scount = optionsAOT->getInitialSCount();
                uint16_t newScount = 0;
@@ -3217,10 +3240,6 @@ static bool updateCHTable(J9VMThread * vmThread, J9Class  * cl)
    return !updateFailed;
    }
 
-void turnOffInterpreterProfiling(J9JITConfig *jitConfig);
-
-
-
 /**
  * @brief  A function to get the available virtual memory.
  *
@@ -3981,28 +4000,6 @@ int32_t returnIprofilerState()
 #define TEST_verbose 0
 #define TEST_events  0
 #define TEST_records 0
-
-void turnOffInterpreterProfiling(J9JITConfig *jitConfig)
-   {
-   // Turn off interpreter profiling
-   //
-   if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableInterpreterProfiling))
-      {
-      if (interpreterProfilingState != IPROFILING_STATE_OFF)
-         {
-         interpreterProfilingState = IPROFILING_STATE_OFF;
-         J9HookInterface ** hook = jitConfig->javaVM->internalVMFunctions->getVMHookInterface(jitConfig->javaVM);
-         (*hook)->J9HookUnregister(hook, J9HOOK_VM_PROFILING_BYTECODE_BUFFER_FULL, jitHookBytecodeProfiling, NULL);
-
-         PORT_ACCESS_FROM_JITCONFIG(jitConfig);
-         if (TR::Options::getCmdLineOptions()->getOption(TR_VerboseInterpreterProfiling))
-            {
-            TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
-            TR_VerboseLog::writeLineLocked(TR_Vlog_IPROFILER,"t=%6u IProfiler stopped", (uint32_t)compInfo->getPersistentInfo()->getElapsedTime());
-            }
-         }
-      }
-   }
 
 /// The following two methods (stopInterpreterProfiling and restartInterpreterProfiling)
 /// are used when we disable/enable JIT compilation at runtime
@@ -6844,7 +6841,12 @@ static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
             // fprintf(stderr, "samplingPeriod=%u numProcs=%u numActiveThreads=%u samplingFrequency=%d\n", samplingPeriod, compInfo->getNumTargetCPUs(), numActiveThreads, jitConfig->samplingFrequency);
 
             // compute jit state
-            jitStateLogic(jitConfig, compInfo, diffTime); // Update JIT state before going to sleep
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+            if (!jitConfig->javaVM->internalVMFunctions->isCheckpointAllowed(samplerThread))
+#endif
+               {
+               jitStateLogic(jitConfig, compInfo, diffTime); // Update JIT state before going to sleep
+               }
 
             // detect high code cache occupancy
             TR::CodeCacheManager *manager = TR::CodeCacheManager::instance();
@@ -7643,3 +7645,27 @@ int32_t waitJITServerTermination(J9JITConfig *jitConfig)
 #endif /* J9VM_OPT_JITSERVER */
 
 } /* extern "C" */
+
+#if defined(J9VM_INTERP_PROFILING_BYTECODES)
+void turnOffInterpreterProfiling(J9JITConfig *jitConfig)
+   {
+   // Turn off interpreter profiling
+   //
+   if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableInterpreterProfiling))
+      {
+      if (interpreterProfilingState != IPROFILING_STATE_OFF)
+         {
+         interpreterProfilingState = IPROFILING_STATE_OFF;
+         J9HookInterface ** hook = jitConfig->javaVM->internalVMFunctions->getVMHookInterface(jitConfig->javaVM);
+         (*hook)->J9HookUnregister(hook, J9HOOK_VM_PROFILING_BYTECODE_BUFFER_FULL, jitHookBytecodeProfiling, NULL);
+
+         PORT_ACCESS_FROM_JITCONFIG(jitConfig);
+         if (TR::Options::getCmdLineOptions()->getOption(TR_VerboseInterpreterProfiling))
+            {
+            TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
+            TR_VerboseLog::writeLineLocked(TR_Vlog_IPROFILER,"t=%6u IProfiler stopped", (uint32_t)compInfo->getPersistentInfo()->getElapsedTime());
+            }
+         }
+      }
+   }
+#endif /* defined(J9VM_INTERP_PROFILING_BYTECODES) */

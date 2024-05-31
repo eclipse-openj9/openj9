@@ -101,7 +101,8 @@ struct CompileParameters
          TR::SegmentAllocator &scratchSegmentProvider,
          TR::Region &dispatchRegion,
          TR_Memory &trMemory,
-         const TR::CompileIlGenRequest &ilGenRequest
+         const TR::CompileIlGenRequest &ilGenRequest,
+         bool checkpointInProgress
       ) :
       _compilationInfo(compilationInfo),
       _vm(vm),
@@ -111,7 +112,8 @@ struct CompileParameters
       _scratchSegmentProvider(scratchSegmentProvider),
       _dispatchRegion(dispatchRegion),
       _trMemory(trMemory),
-      _ilGenRequest(ilGenRequest)
+      _ilGenRequest(ilGenRequest),
+      _checkpointInProgress(checkpointInProgress)
       {}
 
    TR_Memory *trMemory() { return &_trMemory; }
@@ -125,6 +127,7 @@ struct CompileParameters
    TR::Region           &_dispatchRegion;
    TR_Memory            &_trMemory;
    TR::CompileIlGenRequest  _ilGenRequest;
+   bool _checkpointInProgress;
    };
 
 #if defined(TR_HOST_S390)

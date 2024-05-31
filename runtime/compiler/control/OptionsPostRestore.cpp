@@ -734,7 +734,7 @@ J9::OptionsPostRestore::postProcessInternalCompilerOptions()
    TR::Options::FSDInitStatus fsdStatus = TR::Options::resetFSD(vm, _vmThread, doAOT);
    disableAOT = !doAOT;
 
-   if (fsdStatus == TR::Options::FSDInitStatus::FSDInit_Error)
+   if (fsdStatus != TR::Options::FSDInitStatus::FSDInit_NotInitialized)
       {
       invalidateAll = true;
       disableAOT = true;

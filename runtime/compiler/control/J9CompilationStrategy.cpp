@@ -192,8 +192,11 @@ TR_OptimizationPlan *J9::CompilationStrategy::processEvent(TR_MethodEvent *event
          break;
       case TR_MethodEvent::CompilationBeforeCheckpoint:
          {
-         // use the counts to determine the first level of compilation
-         hotnessLevel = self()->getInitialOptLevel(event->_j9method);
+         J9Method *method = event->_j9method;
+         bool jninative = J9_ARE_ANY_BITS_SET(J9_ROM_METHOD_FROM_RAM_METHOD(method)->modifiers, J9AccNative);
+
+         // use the counts to determine the first level of compilation if not JNI
+         hotnessLevel = jninative ? TR_Hotness::cold : self()->getInitialOptLevel(method);
          plan = TR_OptimizationPlan::alloc(hotnessLevel);
          *newPlanCreated = true;
          }
