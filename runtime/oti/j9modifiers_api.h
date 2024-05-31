@@ -88,7 +88,7 @@
  * TODO: Will need to modify this if ValObject/RefObject proposal goes through.
  * Some exiting places using J9ROMCLASS_IS_VALUE() may need to check J9ROMCLASS_IS_PRIMITIVE_VALUE_TYPE().
  */
-#define J9ROMCLASS_IS_VALUE(romClass)	!_J9ROMCLASS_SUNMODIFIER_IS_SET((romClass), J9AccClassHasIdentity)
+#define J9ROMCLASS_IS_VALUE(romClass)   (!_J9ROMCLASS_SUNMODIFIER_IS_SET((romClass), J9AccClassHasIdentity))
 #else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 #define J9ROMCLASS_IS_VALUE(romClass)	FALSE
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
