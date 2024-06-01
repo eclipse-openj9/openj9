@@ -805,7 +805,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		}
 	}
 
-	String(byte[] data, int start, int length, boolean compressed) {
+	private String(byte[] data, int start, int length, boolean compressed) {
 		if (length == 0) {
 			value = emptyValue;
 
@@ -824,19 +824,25 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			} else {
 				char theChar = helpers.getCharFromArrayByIndex(data, start);
 
-				if (theChar <= 255) {
-					value = decompressedAsciiTable[theChar];
+				if (COMPACT_STRINGS && (theChar <= 255)) {
+					value = compressedAsciiTable[theChar];
+					coder = LATIN1;
+					hash = theChar;
 				} else {
-					value = new byte[2];
+					if (theChar <= 255) {
+						value = decompressedAsciiTable[theChar];
+					} else {
+						value = new byte[2];
 
-					helpers.putCharInArrayByIndex(value, 0, theChar);
-				}
+						helpers.putCharInArrayByIndex(value, 0, theChar);
+					}
 
-				coder = UTF16;
-				hash = theChar;
+					coder = UTF16;
+					hash = theChar;
 
-				if (COMPACT_STRINGS) {
-					initCompressionFlag();
+					if (COMPACT_STRINGS) {
+						initCompressionFlag();
+					}
 				}
 			}
 		} else {
@@ -845,17 +851,19 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 					value = data;
 				} else {
 					value = new byte[length];
-
 					compressedArrayCopy(data, start, value, 0, length);
 				}
 
+				coder = LATIN1;
+			} else if (COMPACT_STRINGS && helpers.canEncodeAsLatin1(data, start, length)) {
+				value = new byte[length];
+				compress(data, start, value, 0, length);
 				coder = LATIN1;
 			} else {
 				if (start == 0 && data.length == length * 2) {
 					value = data;
 				} else {
 					value = StringUTF16.newBytesFor(length);
-
 					decompressedArrayCopy(data, start, value, 0, length);
 				}
 
@@ -868,7 +876,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		}
 	}
 
-	String(byte[] data, int start, int length, boolean compressed, boolean sharingIsAllowed) {
+	private String(byte[] data, int start, int length, boolean compressed, boolean sharingIsAllowed) {
 		if (length == 0) {
 			value = emptyValue;
 
@@ -887,41 +895,38 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			} else {
 				char theChar = helpers.getCharFromArrayByIndex(data, start);
 
-				if (theChar <= 255) {
-					value = decompressedAsciiTable[theChar];
+				if (COMPACT_STRINGS && (theChar <= 255)) {
+					value = compressedAsciiTable[theChar];
+					coder = LATIN1;
+					hash = theChar;
 				} else {
-					value = new byte[2];
+					if (theChar <= 255) {
+						value = decompressedAsciiTable[theChar];
+					} else {
+						value = new byte[2];
+						helpers.putCharInArrayByIndex(value, 0, theChar);
+					}
 
-					helpers.putCharInArrayByIndex(value, 0, theChar);
-				}
+					coder = UTF16;
+					hash = theChar;
 
-				coder = UTF16;
-				hash = theChar;
-
-				if (COMPACT_STRINGS) {
-					initCompressionFlag();
+					if (COMPACT_STRINGS) {
+						initCompressionFlag();
+					}
 				}
 			}
 		} else {
 			if (COMPACT_STRINGS && compressed) {
-				if (sharingIsAllowed && start == 0 && data.length == length) {
-					value = data;
-				} else {
-					value = new byte[length];
-
-					compressedArrayCopy(data, start, value, 0, length);
-				}
-
+				value = new byte[length];
+				compressedArrayCopy(data, start, value, 0, length);
+				coder = LATIN1;
+			} else if (COMPACT_STRINGS && helpers.canEncodeAsLatin1(data, start, length)) {
+				value = new byte[length];
+				compress(data, start, value, 0, length);
 				coder = LATIN1;
 			} else {
-				if (sharingIsAllowed && start == 0 && data.length == length * 2) {
-					value = data;
-				} else {
-					value = StringUTF16.newBytesFor(length);
-
-					decompressedArrayCopy(data, start, value, 0, length);
-				}
-
+				value = StringUTF16.newBytesFor(length);
+				decompressedArrayCopy(data, start, value, 0, length);
 				coder = UTF16;
 
 				if (COMPACT_STRINGS) {
@@ -2581,7 +2586,12 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 				helpers.putCharInArrayByIndex(buffer, index++, (char) newChar);
 			} while ((index = indexOf(oldChar, index)) != -1);
 
-			return new String(buffer, UTF16);
+			if (newChar > 255) {
+				// If the original String isn't compressed and the replacement character isn't Latin1, the result is uncompressed.
+				return new String(buffer, UTF16);
+			}
+
+			return new String(buffer, 0, len, false);
 		}
 	}
 
@@ -3194,7 +3204,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 				if (COMPACT_STRINGS && isCompressed() && (substituteLength == 0 || substitute.isCompressed())) {
 					byte[] newChars = new byte[length];
 					byte toReplace = helpers.getByteFromArrayByIndex(regex.value, 0);
-					byte replacement = (byte)-1;  // assign dummy value that will never be used
+					byte replacement = (byte)0; // assign dummy value that isn't used
 					if (substituteLength == 1) {
 						replacement = helpers.getByteFromArrayByIndex(substitute.value, 0);
 						checkLastChar((char)replacement);
@@ -3212,7 +3222,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 				} else if (!COMPACT_STRINGS || !isCompressed()) {
 					byte[] newChars = StringUTF16.newBytesFor(length);
 					char toReplace = regex.charAtInternal(0);
-					char replacement = (char)-1; // assign dummy value that will never be used
+					char replacement = (char)0; // assign dummy value that must be Latin1 (0 - 255)
 					if (substituteLength == 1) {
 						replacement = substitute.charAtInternal(0);
 						checkLastChar(replacement);
@@ -3225,6 +3235,10 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 						} else if (substituteLength == 1) {
 							helpers.putCharInArrayByIndex(newChars, newCharIndex++, replacement);
 						}
+					}
+					if (replacement > 255) {
+						// If the original String isn't compressed and the replacement character isn't Latin1, the result is uncompressed.
+						return new String(newChars, UTF16);
 					}
 					return new String(newChars, 0, newCharIndex, false);
 				}
