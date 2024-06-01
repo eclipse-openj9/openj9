@@ -2124,6 +2124,14 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, TR::Compiler->cls.getDefaultValueSlotAddress(comp, clazz));
          }
          break;
+      case MessageType::ClassEnv_setClassHasIllegalStaticFinalFieldModification:
+         {
+         auto recv = client->getRecvData<TR_OpaqueClassBlock *>();
+         auto clazz = std::get<0>(recv);
+         TR::Compiler->cls.setClassHasIllegalStaticFinalFieldModification(clazz, comp);
+         client->write(response, JITServer::Void());
+         }
+         break;
       case MessageType::ClassEnv_enumerateFields:
          {
          auto recv = client->getRecvData<TR_OpaqueClassBlock *>();

@@ -2924,6 +2924,19 @@ void *
 staticFieldAddress(J9VMThread *vmStruct, J9Class *clazz, U_8 *fieldName, UDATA fieldNameLength, U_8 *signature, UDATA signatureLength, J9Class **definingClass, UDATA *staticField, UDATA options, J9Class *sourceClass);
 
 /**
+* @brief Get the J9ROMFieldShape of all static fields of the given class.
+*
+* Count the static fields declared by romClass and collect their J9ROMFieldShapes into outFields if specified.
+*
+* @param *currentThread
+* @param *romClass The J9ROMClass whose static fields should be reported.
+* @param *outFields The resulting array of J9ROMFieldShape pointers. May be null.
+* @return The number of static fields declared by the class.
+*/
+UDATA
+getStaticFields(J9VMThread *currentThread, J9ROMClass *romClass, J9ROMFieldShape **outFields);
+
+/**
  *@brief find field in class
  *@param vmstruct vmthread token
  *@param clazz ramclass

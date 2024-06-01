@@ -371,6 +371,36 @@ staticFieldAddress(J9VMThread *vmStruct, J9Class *clazz, U_8 *fieldName, UDATA f
 }
 
 
+UDATA
+getStaticFields(J9VMThread *currentThread, J9ROMClass *romClass, J9ROMFieldShape **outFields)
+{
+	J9JavaVM *vm = currentThread->javaVM;
+	uint32_t walkFlags = J9VM_FIELD_OFFSET_WALK_INCLUDE_STATIC;
+	J9Class *superclass = NULL; /* needed only for instance fields */
+	UDATA count = 0;
+
+	J9ROMFieldOffsetWalkState walkState;
+	J9ROMFieldOffsetWalkResult *cursor;
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+	J9FlattenedClassCache *flattenedClassCache = NULL; /* needed only for instance fields */
+	cursor = fieldOffsetsStartDo(vm, romClass, superclass, &walkState, walkFlags, flattenedClassCache);
+#else
+	cursor = fieldOffsetsStartDo(vm, romClass, superclass, &walkState, walkFlags);
+#endif
+
+	while (NULL != cursor->field) {
+		if (NULL != outFields) {
+			outFields[count] = cursor->field;
+		}
+
+		count++;
+		cursor = fieldOffsetsNextDo(&walkState);
+	}
+
+	return count;
+}
+
+
 VMINLINE static UDATA
 calculateJ9UTFSize(UDATA stringLength)
 {
