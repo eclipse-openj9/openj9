@@ -24,6 +24,7 @@
 
 #include "CollectionStatisticsVLHGC.hpp"
 #include "ConcurrentPhaseStatsBase.hpp"
+#include "ContinuationStats.hpp"
 #include "CopyForwardStats.hpp"
 #include "CycleStateVLHGC.hpp"
 #include "EnvironmentBase.hpp"
@@ -282,6 +283,15 @@ MM_VerboseHandlerOutputVLHGC::outputContinuationInfo(MM_EnvironmentBase *env, UD
 }
 
 void
+MM_VerboseHandlerOutputVLHGC::outputContinuationObjectInfo(MM_EnvironmentBase *env, uintptr_t indent)
+{
+	MM_ContinuationStats *continuationStats = &static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._continuationStats;
+	if (0 != continuationStats->_total) {
+		_manager->getWriterChain()->formatAndOutput(env, indent, "<continuation-objects total=\"%zu\" started=\"%zu\" />", continuationStats->_total, continuationStats->_started);
+	}
+}
+
+void
 MM_VerboseHandlerOutputVLHGC::outputReferenceInfo(MM_EnvironmentBase *env, UDATA indent, const char *referenceType, MM_ReferenceStats *referenceStats, UDATA dynamicThreshold, UDATA maxThreshold)
 {
 	if(0 != referenceStats->_candidates) {
@@ -362,7 +372,7 @@ MM_VerboseHandlerOutputVLHGC::outputMemoryInfoInnerStanza(MM_EnvironmentBase *en
 	}
 
 	MM_VerboseHandlerJava::outputFinalizableInfo(_manager, env, indent);
-
+	outputContinuationObjectInfo(env, indent);
 	UDATA rememberedSetFreePercent = (UDATA)((100 * (U_64)stats->_rememberedSetBytesFree) / ((U_64)stats->_rememberedSetBytesTotal));
 
 	writer->formatAndOutput(env, indent, "<remembered-set count=\"%zu\" freebytes=\"%zu\" totalbytes=\"%zu\" percent=\"%zu\" regionsoverflowed=\"%zu\" regionsstable=\"%zu\" regionsrebuilding=\"%zu\"/>",
