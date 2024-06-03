@@ -1400,7 +1400,7 @@ onLoadInternal(
    bool produceRSSReport = produceRSSReportDetailed || TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseRSSReport);
 
    if (produceRSSReport)
-      new (PERSISTENT_NEW) OMR::RSSReport(persistentMemory, produceRSSReportDetailed);
+      new (PERSISTENT_NEW) OMR::RSSReport(produceRSSReportDetailed);
 
    TR::CodeCacheManager *codeCacheManager = (TR::CodeCacheManager *) j9mem_allocate_memory(sizeof(TR::CodeCacheManager), J9MEM_CATEGORY_JIT);
    if (codeCacheManager == NULL)
