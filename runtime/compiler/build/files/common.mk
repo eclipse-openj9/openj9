@@ -394,7 +394,7 @@ JIT_PRODUCT_SOURCE_FILES+=\
     omr/compiler/runtime/OMRCodeCacheMemorySegment.cpp \
     omr/compiler/runtime/OMRRuntimeAssumptions.cpp
 
-ifneq ($(J9VM_OPT_JITSERVER),)
+ifneq ($(j9vm_opt_jitserver),)
 JIT_PRODUCT_SOURCE_FILES+=\
     compiler/control/JITClientCompilationThread.cpp \
     compiler/control/JITServerCompilationThread.cpp \
@@ -422,7 +422,7 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/runtime/MetricsServer.cpp
 endif
 
-ifneq ($(J9VM_OPT_CRIU_SUPPORT),)
+ifneq ($(j9vm_opt_criuSupport),)
 JIT_PRODUCT_SOURCE_FILES+=\
     compiler/control/OptionsPostRestore.cpp \
     compiler/runtime/CRRuntime.cpp
