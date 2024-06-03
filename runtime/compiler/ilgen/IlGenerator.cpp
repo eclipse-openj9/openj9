@@ -2157,7 +2157,7 @@ TR_J9ByteCodeIlGenerator::inlineJitCheckIfFinalizeObject(TR::Block *firstBlock)
 
             TR::Node *classDepthAndFlagsNode = TR::Node::createWithSymRef(loadOp, 1, 1,
                                               vftLoad,
-                                              comp()->getSymRefTab()->findOrCreateClassAndDepthFlagsSymbolRef());
+                                              comp()->getSymRefTab()->findOrCreateClassDepthAndFlagsSymbolRef());
             TR::Node *andConstNode = TR::Node::create(classDepthAndFlagsNode, is64bit ? TR::lconst : TR::iconst, 0);
             if (is64bit)
                andConstNode->setLongInt(fej9()->getFlagValueForFinalizerCheck());
