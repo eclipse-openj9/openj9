@@ -1035,8 +1035,8 @@ class RecordComponentIterator
 	}
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-	bool hasImplicitCreation() const { return NULL != _implicitCreation; }
-	U_16 getImplicitCreationFlags() const { return hasImplicitCreation() ? _implicitCreation->implicitCreationFlags : 0; }
+	bool hasImplicitCreation() const { return _hasImplicitCreationAttribute; }
+	U_16 getImplicitCreationFlags() const { return _implicitCreationFlags; }
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
 	U_16 getPermittedSubclassesClassNameAtIndex(U_16 index) const {
@@ -1092,6 +1092,11 @@ private:
 #if JAVA_SPEC_VERSION >= 20
 		JVMTIMOUNTTRANSITION_ANNOTATION,
 #endif /* JAVA_SPEC_VERSION >= 20 */
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+		NULLRESTRICTED_ANNOTATION,
+		IMPLICITLYCONSTRUCTIBLE_ANNOTATION,
+		LOOSELYCONSISTENTVALUE_ANNOTATION,
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 		KNOWN_ANNOTATION_COUNT
 	};
 
@@ -1170,7 +1175,8 @@ private:
 	J9CfrAttributePreload *_preloadAttribute;
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-	J9CfrAttributeImplicitCreation *_implicitCreation;
+	bool _hasImplicitCreationAttribute;
+	U_16 _implicitCreationFlags;
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 #if JAVA_SPEC_VERSION >= 11
 	J9CfrAttributeNestMembers *_nestMembers;

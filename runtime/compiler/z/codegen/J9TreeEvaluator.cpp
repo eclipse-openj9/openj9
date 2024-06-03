@@ -2763,7 +2763,7 @@ hashCodeHelper(TR::Node* node, TR::CodeGenerator* cg, TR::DataType elementType, 
          // registerVC = 4 consecutive (16 bit) shorts at the current index
          generateVRXInstruction(cg, TR::InstOpCode::VLLEZ, node, registerVC, generateS390MemoryReference(registerValue, registerIndex, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg), 3);
          // registerVC = unpack 4 (16 bit) short elements into 4 (32 bit) int elements
-         generateVRRaInstruction(cg, isSigned ? TR::InstOpCode::VUPL : TR::InstOpCode::VUPLH, node, registerVC, registerVC, 0, 0, 1);
+         generateVRRaInstruction(cg, isSigned ? TR::InstOpCode::VUPH : TR::InstOpCode::VUPLH, node, registerVC, registerVC, 0, 0, 1);
          break;
       case TR::Int32:
          // registerVC = 4 consecutive (32 bit) ints at the current index
@@ -2916,11 +2916,13 @@ J9::Z::TreeEvaluator::inlineVectorizedHashCode(TR::Node* node, TR::CodeGenerator
          registerHash = hashCodeHelper(node, cg, TR::Int8, node->getChild(3), true);
          break;
       case 5:  // T_CHAR
-      case 9:  // T_SHORT
          registerHash = hashCodeHelper(node, cg, TR::Int16, node->getChild(3), false);
          break;
+      case 9:  // T_SHORT
+         registerHash = hashCodeHelper(node, cg, TR::Int16, node->getChild(3), true);
+         break;
       case 10: // T_INT
-         registerHash = hashCodeHelper(node, cg, TR::Int32, node->getChild(3), false);
+         registerHash = hashCodeHelper(node, cg, TR::Int32, node->getChild(3), true);
          break;
       }
    if (registerHash != NULL)
