@@ -56,23 +56,23 @@ J9DescriptionBits.J9DescriptionCpBsmIndexMask = 0
 
 J9FieldFlags.J9FieldFlagIsNullRestricted = 0
 
+J9JavaAccessFlags.J9AccClassHasIdentity = 0
 J9JavaAccessFlags.J9AccClassIsUnmodifiable = 0
 J9JavaAccessFlags.J9AccRecord = 0
 J9JavaAccessFlags.J9AccSealed = 0
-J9JavaAccessFlags.J9AccClassHasIdentity = 0
-J9JavaAccessFlags.J9StaticFieldIsNullRestricted = 0
 J9JavaAccessFlags.J9PutfieldNarrowing = 0
+J9JavaAccessFlags.J9StaticFieldIsNullRestricted = 0
 J9JavaAccessFlags.J9StaticFieldRefBaseType = 0
-J9JavaAccessFlags.J9StaticFieldRefDouble = 0
 J9JavaAccessFlags.J9StaticFieldRefBoolean = 0
-J9JavaAccessFlags.J9StaticFieldRefTypeMask = 0
-J9JavaAccessFlags.J9StaticFieldRefTypeObject = 0
+J9JavaAccessFlags.J9StaticFieldRefDouble = 0
 J9JavaAccessFlags.J9StaticFieldRefTypeBoolean = 0
 J9JavaAccessFlags.J9StaticFieldRefTypeByte = 0
 J9JavaAccessFlags.J9StaticFieldRefTypeChar = 0
-J9JavaAccessFlags.J9StaticFieldRefTypeShort = 0
 J9JavaAccessFlags.J9StaticFieldRefTypeIntFloat = 0
 J9JavaAccessFlags.J9StaticFieldRefTypeLongDouble = 0
+J9JavaAccessFlags.J9StaticFieldRefTypeMask = 0
+J9JavaAccessFlags.J9StaticFieldRefTypeObject = 0
+J9JavaAccessFlags.J9StaticFieldRefTypeShort = 0
 
 J9JavaClassFlags.J9ClassIsFlattened = 0
 J9JavaClassFlags.J9ClassIsPrimitiveValueType = 0
