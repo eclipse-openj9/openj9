@@ -32,6 +32,8 @@
 
 namespace JITServer
 {
+// When adding another compatibility mask/flag, also add a new message in
+// CommunicationStream::showFullVersionIncompatibility that handles the new enum value.
 enum JITServerCompatibilityFlags
    {
    JITServerJavaVersionMask    = 0x00000FFF,
@@ -62,10 +64,18 @@ public:
       return (MAJOR_NUMBER << 24) | (MINOR_NUMBER << 8); // PATCH_NUMBER is ignored
       }
 
+   static std::string showJITServerVersion(uint32_t fullVersion)
+      {
+      uint8_t majorVersion = fullVersion >> 24;
+      uint16_t minorVersion = (fullVersion >> 8) & 0xFFFF;
+      return std::to_string(majorVersion) + "." + std::to_string(minorVersion);
+      }
+
    static uint64_t getJITServerFullVersion()
       {
       return Message::buildFullVersion(getJITServerVersion(), CONFIGURATION_FLAGS);
       }
+   static std::string showFullVersionIncompatibility(uint64_t serverFullVersion, uint64_t clientFullVersion);
 
    static void printJITServerVersion()
       {

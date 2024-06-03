@@ -116,10 +116,7 @@ class StreamVersionIncompatible: public virtual std::exception
    {
 public:
    StreamVersionIncompatible() : _message("JITServer/JITClient incompatibility detected") { }
-   StreamVersionIncompatible(uint64_t serverVersion, uint64_t clientVersion)
-      {
-      _message = "JITServer expected version " + std::to_string(serverVersion) + " received " + std::to_string(clientVersion);
-      }
+   StreamVersionIncompatible(const std::string &message) : _message(message) { }
    virtual const char* what() const throw()
       {
       return _message.c_str();
