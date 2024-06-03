@@ -202,7 +202,9 @@ static TR::RecognizedMethod canSkipNullChecks[] =
    TR::java_math_BigDecimal_longString1C,
    TR::java_math_BigDecimal_longString2,
    TR::java_math_BigInteger_init_long,
+#ifdef OPENJ9_BUILD
    TR::java_math_BigInteger_toByteArray,
+#endif // OPENJ9_BUILD
    TR::java_math_BigInteger_stripLeadingZeroBytes1,
    TR::java_math_BigInteger_stripLeadingZeroBytes2,
    TR::java_util_EnumMap__nec_,
@@ -296,7 +298,9 @@ static TR::RecognizedMethod canSkipBoundChecks[] =
    TR::java_math_BigDecimal_longString1C,
    TR::java_math_BigDecimal_longString2,
    TR::java_math_BigInteger_init_long,
+#ifdef OPENJ9_BUILD
    TR::java_math_BigInteger_toByteArray,
+#endif // OPENJ9_BUILD
    TR::java_math_BigInteger_stripLeadingZeroBytes1,
    TR::java_math_BigInteger_stripLeadingZeroBytes2,
    TR::java_util_HashMap_get,
@@ -716,7 +720,9 @@ static TR::RecognizedMethod canSkipZeroInitializationOnNewarrays[] =
    TR::java_lang_String_split_str_int,
    TR::java_math_BigDecimal_toString,
    TR::java_math_BigInteger_init_long,
+#ifdef OPENJ9_BUILD
    TR::java_math_BigInteger_toByteArray,
+#endif // OPENJ9_BUILD
    TR::java_math_BigInteger_stripLeadingZeroBytes1,
    TR::java_math_BigInteger_stripLeadingZeroBytes2,
    TR::java_lang_Integer_toString,
