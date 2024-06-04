@@ -2171,8 +2171,13 @@ void J9::Options::preProcessTLHPrefetch(J9JavaVM *vm)
 #elif defined(TR_HOST_ARM64)
    preferTLHPrefetch = true;
 #else // TR_HOST_X86
-   preferTLHPrefetch = true;
-   // Disable TM on x86 because we cannot tell whether a Haswell chip supports TM or not, plus it's killing the performance on dayTrader3
+   preferTLHPrefetch =
+      (TR::Compiler->target.cpu.isGenuineIntel() &&
+       TR::Compiler->target.cpu.isAtMost(OMR_PROCESSOR_X86_INTEL_SKYLAKE)) ||
+      !TR::Compiler->target.cpu.isGenuineIntel();
+
+   // Disable TM on x86 because we cannot tell whether a Haswell chip supports
+   // TM or not, plus it's killing the performance on dayTrader3
    self()->setOption(TR_DisableTM);
 #endif
 
