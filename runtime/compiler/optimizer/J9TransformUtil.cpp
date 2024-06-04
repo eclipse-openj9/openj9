@@ -932,12 +932,41 @@ J9::TransformUtil::canFoldStaticFinalField(
        || !fej9->isClassInitialized(declaringClass))
       return TR_no;
 
-   int32_t len;
-   char * name = fej9->getClassNameChars(declaringClass, len);
+   // Rely on the CP entry to get the name and signature. There is always an
+   // owning method and CP index here because we don't (yet) fabricate static
+   // field symrefs.
+   TR_ASSERT_FATAL(owningMethod != NULL, "missing owningMethod");
+   TR_ASSERT_FATAL(cpIndex >= 0, "missing CP index");
+
+   int32_t classNameLen;
+   char *className = fej9->getClassNameChars(declaringClass, classNameLen);
 
    // Keep our hands off out/in/err, which are declared final but aren't really
-   if (len == 16 && !strncmp(name, "java/lang/System", 16))
+   if (classNameLen == 16 && !strncmp(className, "java/lang/System", 16))
       return TR_no;
+
+   int32_t fieldNameLen;
+   const char *fieldName = owningMethod->staticNameChars(cpIndex, fieldNameLen);
+
+   int32_t sigLen;
+   const char *sig = owningMethod->staticSignatureChars(cpIndex, sigLen);
+
+   // Reject any fields that are disabled by option.
+   TR::SimpleRegex *dontFold = comp->getOptions()->getDontFoldStaticFinalFields();
+   if (dontFold != NULL)
+      {
+      char buf[256];
+      TR::Region &stackRegion = comp->trMemory()->currentStackRegion();
+      TR::StringBuf fqNameAndSig(stackRegion, buf, sizeof(buf));
+
+      // <class>.<field>:<sig>
+      fqNameAndSig.appendf("%.*s", classNameLen, className);
+      fqNameAndSig.appendf(".%.*s", fieldNameLen, fieldName);
+      fqNameAndSig.appendf(":%.*s", sigLen, sig);
+
+      if (dontFold->match(fqNameAndSig.text()))
+         return TR_no;
+      }
 
    // Static initializer can produce different values in different runs
    // so for AOT we cannot allow this transformation. However for String
@@ -973,12 +1002,10 @@ J9::TransformUtil::canFoldStaticFinalField(
       static const bool disableAggressiveVarHandleSFFF =
          feGetEnv("TR_disableAggressiveVarHandleSFFF17") != NULL;
 
-      if (!disableAggressiveVarHandleSFFF && cpIndex >= 0)
+      if (!disableAggressiveVarHandleSFFF)
          {
-         int32_t len;
-         const char *sig = owningMethod->fieldSignatureChars(cpIndex, len);
          const char *vhSig = "Ljava/lang/invoke/VarHandle;";
-         if (len == (int32_t)strlen(vhSig) && !strncmp(sig, vhSig, len))
+         if (sigLen == (int32_t)strlen(vhSig) && !strncmp(sig, vhSig, sigLen))
             return TR_yes;
          }
       }
@@ -986,7 +1013,8 @@ J9::TransformUtil::canFoldStaticFinalField(
 
    if (!comp->getOption(TR_RestrictStaticFieldFolding) ||
        recField == TR::Symbol::assertionsDisabled ||
-       J9::TransformUtil::foldFinalFieldsIn(declaringClass, name, len, true, comp))
+       J9::TransformUtil::foldFinalFieldsIn(
+         declaringClass, className, classNameLen, true, comp))
       return TR_yes;
 
    if (TR::Compiler->cls.classHasIllegalStaticFinalFieldModification(declaringClass))

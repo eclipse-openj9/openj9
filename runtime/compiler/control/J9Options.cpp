@@ -3517,6 +3517,7 @@ J9::Options::packOptions(const TR::Options *origOptions)
    addRegexStringSize(origOptions->_memUsage, totalSize);
    addRegexStringSize(origOptions->_classesWithFolableFinalFields, totalSize);
    addRegexStringSize(origOptions->_disabledIdiomPatterns, totalSize);
+   addRegexStringSize(origOptions->_dontFoldStaticFinalFields, totalSize);
 
    std::string optionsStr(totalSize, '\0');
    TR::Options * options = (TR::Options *)optionsStr.data();
@@ -3558,6 +3559,7 @@ J9::Options::packOptions(const TR::Options *origOptions)
    appendRegex(options->_memUsage, curPos);
    appendRegex(options->_classesWithFolableFinalFields, curPos);
    appendRegex(options->_disabledIdiomPatterns, curPos);
+   appendRegex(options->_dontFoldStaticFinalFields, curPos);
    options->_osVersionString = NULL;
    options->_logListForOtherCompThreads = NULL;
    options->_objectFileName = NULL;
@@ -3626,6 +3628,7 @@ J9::Options::unpackOptions(char *clientOptions, size_t clientOptionsSize, TR::Co
    unpackRegex(options->_memUsage);
    unpackRegex(options->_classesWithFolableFinalFields);
    unpackRegex(options->_disabledIdiomPatterns);
+   unpackRegex(options->_dontFoldStaticFinalFields);
 
    return options;
    }
