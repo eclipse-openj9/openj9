@@ -300,9 +300,9 @@ TR_DataCache* TR_DataCacheManager::allocateNewDataCache(uint32_t minimumSize)
                   J9JavaVM * javaVM = jitConfig->javaVM;
                   PORT_ACCESS_FROM_JAVAVM(javaVM); // for j9vmem_supported_page_sizes
 
-                  dataCache->_rssRegion = OMR::RSSRegion("data cache", dataCacheSeg->heapBase, segSize, OMR::RSSRegion::lowToHigh,
+                  dataCache->_rssRegion = new (PERSISTENT_NEW) OMR::RSSRegion("data cache", dataCacheSeg->heapBase, segSize, OMR::RSSRegion::lowToHigh,
                                                          j9vmem_supported_page_sizes()[0]);
-                  OMR::RSSReport::instance()->addRegion(&dataCache->_rssRegion);
+                  OMR::RSSReport::instance()->addRegion(dataCache->_rssRegion);
                   }
 #endif
 
