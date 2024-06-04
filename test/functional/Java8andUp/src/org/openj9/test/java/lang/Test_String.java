@@ -937,6 +937,18 @@ public class Test_String {
 		String needle = "\u00b0\u00b1";
 		String hay = new StringBuilder("a").append(needle).toString();
 		AssertJUnit.assertEquals("Failed to find string 3", 1, hay.indexOf(needle));
+
+		String multi = "\u0100:abc";
+		String[] splits = multi.split(":");
+		AssertJUnit.assertEquals("Failed to find string 4", 3, "123abc".indexOf(splits[1]));
+		String sub = multi.substring(2);
+		AssertJUnit.assertEquals("Failed to find string 5", 3, "123abc".indexOf(sub));
+		String r1 = multi.replace('\u0100', '1');
+		AssertJUnit.assertEquals("Failed to find string 6", 0, "1:abc".indexOf(r1));
+		String r2 = multi.replaceAll("\u0100", "1");
+		AssertJUnit.assertEquals("Failed to find string 7", 0, "1:abc".indexOf(r2));
+		String r3 = multi.replaceAll("\u0100", "");
+		AssertJUnit.assertEquals("Failed to find string 8", 0, ":abc".indexOf(r3));
 	}
 
 	/**
