@@ -1143,7 +1143,9 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(
 					if (J9_ARE_ANY_BITS_SET(romField->modifiers, J9AccStatic)) {
 						offset = VM_VMHelpers::staticFieldOffset(currentThread, fieldID);
 
-						if (J9_ARE_ANY_BITS_SET(romField->modifiers, J9AccFinal)) {
+						if (J9VM_STATIC_FIELD_IS_SINGLE_OR_DOUBLE(romField->modifiers)) {
+							new_flags |= MN_SINGLE_OR_DOUBLE_STATIC;
+						} else if (J9_ARE_ANY_BITS_SET(romField->modifiers, J9AccFinal)) {
 							offset |= J9_SUN_FINAL_FIELD_OFFSET_TAG;
 						}
 
@@ -1152,9 +1154,7 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(
 						} else {
 							new_flags |= (MH_REF_GETSTATIC << MN_REFERENCE_KIND_SHIFT);
 						}
-						if (J9VM_STATIC_FIELD_IS_SINGLE_OR_DOUBLE(romField->modifiers)) {
-							new_flags |= MN_SINGLE_OR_DOUBLE_STATIC;
-						}
+
 					} else {
 						if ((MH_REF_PUTFIELD == ref_kind) || (MH_REF_PUTSTATIC == ref_kind)) {
 							new_flags |= (MH_REF_PUTFIELD << MN_REFERENCE_KIND_SHIFT);
