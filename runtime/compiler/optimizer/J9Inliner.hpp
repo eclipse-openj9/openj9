@@ -210,7 +210,26 @@ class TR_J9InlinerPolicy : public OMR_InlinerPolicy
       void createTempsForUnsafeCall( TR::TreeTop *callNodeTreeTop, TR::Node * unsafeCallNode );
       TR::Node *   inlineGetClassAccessFlags(TR::ResolvedMethodSymbol *, TR::ResolvedMethodSymbol *, TR::TreeTop *, TR::Node *);
       bool         inlineUnsafeCall(TR::ResolvedMethodSymbol *, TR::ResolvedMethodSymbol *, TR::TreeTop *, TR::Node *);
-      TR::Block * addNullCheckForUnsafeGetPut(TR::Node* unsafeAddress, TR::SymbolReference* newSymbolReferenceForAddress, TR::TreeTop* callNodeTreeTop, TR::TreeTop* directAccessTreeTop, TR::TreeTop* arrayDirectAccessTreeTop, TR::TreeTop* indirectAccessTreeTop);
+
+      /**
+       * \brief Generates a diamond that will be used as the outline of the IL generated
+       *        for inlining a call to \c Unsafe.get* or \c Unsafe.put*.  It splits the block
+       *        that contains \c callNodeTreeTop at that point, adds \c comparisonTree
+       *        as the branch for the diamond, branching to a block containing \c ifTree
+       *
+       * \param callNodeTreeTop A pointer to the \ref TR::TreeTop for the call that is
+       *           being inlined
+       * \param comparisonTree A pointer to a \ref TR::TreeTop for a \c if node that will
+       *           be the root of the diamond
+       * \param ifTree A pointer to a \ref TR::TreeTop representing the taken branch of
+       *           \c comparisonTree
+       * \param elseTree A pointer to a \ref TR::TreeTop reprenting the fall-through branch
+       *           of \c comparisonTree
+       *
+       * \return A pointer to a \ref TR::Block representing the join point of the diamond
+       *         after executing either \c ifTree or \c elseTree
+       */
+      TR::Block * createUnsafeGetPutCallDiamond(TR::TreeTop* callNodeTreeTop, TR::TreeTop* comparisonTree, TR::TreeTop* ifTree, TR::TreeTop* elseTree);
       bool createUnsafePutWithOffset(TR::ResolvedMethodSymbol *, TR::ResolvedMethodSymbol *, TR::TreeTop *, TR::Node *, TR::DataType, bool, bool needNullCheck = false, bool isOrdered = false);
       TR::TreeTop* genDirectAccessCodeForUnsafeGetPut(TR::Node* callNode, bool conversionNeeded, bool isUnsafeGet);
       void createTempsForUnsafePutGet(TR::Node*& unsafeAddress, TR::Node* unsafeCall, TR::TreeTop* callNodeTreeTop, TR::Node*& offset, TR::SymbolReference*& newSymbolReferenceForAddress, bool isUnsafeGet);
@@ -223,8 +242,21 @@ class TR_J9InlinerPolicy : public OMR_InlinerPolicy
 
       TR::Node *    createUnsafeMonitorOp(TR::ResolvedMethodSymbol *calleeSymbol, TR::ResolvedMethodSymbol *callerSymbol, TR::TreeTop * callNodeTreeTop, TR::Node * unsafeCall, bool isEnter);
       bool         createUnsafeCASCallDiamond(TR::TreeTop *, TR::Node *);
-      TR::TreeTop* genClassCheckForUnsafeGetPut(TR::Node* offset);
-      TR::TreeTop* genClassCheckForUnsafeGetPut(TR::Node* offset, bool isNotLowTagged);
+
+      /**
+       * \brief Generates an \c if node that will test whether the low-order bit of
+       *           the supplied \c offset is set.  The branch target must be set
+       *           by the caller.
+       *
+       * \param offset A pointer to a \ref TR::Node representing the offset value
+       *           whose low-order bit is to be tested
+       * \param branchIfLowTagged A value of type \c bool that indicates whether the
+       *           branch should be taken if the low-order bit of \c offset is set
+       *           or not set
+       *
+       * \return A pointer to a \ref TR::TreeTop holding the generated \c if node
+       */
+      TR::TreeTop* genClassCheckForUnsafeGetPut(TR::Node* offset, bool branchIfLowTagged);
 
       /** \brief
        *     Generates the indirect access for an unsafe get/put operation given a direct access. This function will
@@ -245,7 +277,50 @@ class TR_J9InlinerPolicy : public OMR_InlinerPolicy
 
       void createAnchorNodesForUnsafeGetPut(TR::TreeTop* treeTop, TR::DataType type, bool isUnsafeGet);
       TR::Node *     genCompressedRefs(TR::Node *, bool genTT = true, int32_t isLoad = 1);
-      void genCodeForUnsafeGetPut(TR::Node* unsafeAddress, TR::TreeTop* callNodeTreeTop, TR::TreeTop* prevTreeTop, TR::SymbolReference* newSymbolReferenceForAddress, TR::TreeTop* directAccessTreeTop, TR::TreeTop* lowTagCmpTree, bool needNullCheck, bool isUnsafeGet, bool conversionNeeded, TR::Block * joinBlock, TR_OpaqueClassBlock *javaLangClass, TR::Node* orderedCallNode);
+
+      /**
+       * \brief Puts together fragments of IL that have been generated for parts of the
+       *        IL that are needed to generate \c Unsafe.get* or \c Unsafe.put* inline.
+       *        Resultant IL is placed in the \ref TR:CFG in place of the existing call.
+       *
+       * \param unsafeAddress Pointer to a \ref TR::Node representing the \c Object
+       *           argument of the call
+       * \param unsafeOffset Pointer to a \ref TR::Node representing the \c long
+       *           value offset argument of the call
+       * \param type A \ref TR::DataType indicating the OMR data type corresponding to
+       *           the Java type of the \c Unsafe method call
+       * \param callNodeTreeTop A pointer to a \ref TR::TreeTop representing the call
+       *           that is being inlined
+       * \param prevTreeTop  A pointer to a \ref TR::TreeTop preceding the call in the IL
+       * \param newSymbolReferenceForAddress A \ref TR::SymbolReference representing the
+       *           the \c Object argument of the \c Unsafe call
+       * \param directAccessTreeTop A pointer to a \ref TR::TreeTop for the IL needed
+       *           to perform a nearly "direct" reference loading or storing a value
+       *           for the \c Unsafe method call, without any conversion for one or
+       *           two byte values
+       * \param arraydirectAccessTreeTop A pointer to a \ref TR::TreeTop for the IL
+       *           needed to perform a nearly "direct" reference loading or storing a
+       *           value for the \c Unsafe method call, without any conversion for one
+       *           or two byte values
+       * \param indirectAccessTreeTop A pointer to a \ref TR::TreeTop for the IL
+       *           needed to perform a more "indirect" reference loading or storing a
+       *           static field value for the \c Unsafe method call
+       * \param needNullCheck A \bool value indicating whether a \ref TR::NULLCHK
+       *           needs to be generated for the value of \c unsafeAddress
+       * \param isUnsafeGet A \bool value indicating whether the call represents an
+       *           \c Unsafe.get* operation &mdash; \c true &mdash; or an
+       *           \c Unsafe.put* operation &mdash; \c false.
+       * \param conversionNeeded Indicates whether the call reprents an \c Unsafe
+       *           method call involving any of Java \c char, \c short, \c byte or
+       *           \c boolean.
+       * \param orderedCallNode Indicates whether the call represents an \c Unsafe
+       *           ordered method
+       */
+      void genCodeForUnsafeGetPut(TR::Node* unsafeAddress, TR::Node *unsafeOffset, TR::DataType type, TR::TreeTop* callNodeTreeTop,
+                                  TR::TreeTop* prevTreeTop, TR::SymbolReference* newSymbolReferenceForAddress,
+                                  TR::TreeTop* directAccessTreeTop, TR::TreeTop* arraydirectAccessTreeTop,
+                                  TR::TreeTop* indirectAccessTreeTop, bool needNullCheck, bool isUnsafeGet,
+                                  bool conversionNeeded, TR::Node* orderedCallNode);
       virtual bool callMustBeInlined(TR_CallTarget *calltarget);
       virtual bool callMustBeInlinedInCold(TR_ResolvedMethod *method);
       bool mustBeInlinedEvenInDebug(TR_ResolvedMethod * calleeMethod, TR::TreeTop *callNodeTreeTop);
