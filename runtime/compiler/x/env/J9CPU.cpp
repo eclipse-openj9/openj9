@@ -214,35 +214,45 @@ J9::X86::CPU::is_test(OMRProcessorArchitecture p)
 
    switch(p)
       {
-      case OMR_PROCESSOR_X86_INTELWESTMERE:
+      case OMR_PROCESSOR_X86_INTEL_WESTMERE:
          return TR::CodeGenerator::getX86ProcessorInfo().isIntelWestmere() == (_processorDescription.processor == p);
-      case OMR_PROCESSOR_X86_INTELNEHALEM:
+      case OMR_PROCESSOR_X86_INTEL_NEHALEM:
          return TR::CodeGenerator::getX86ProcessorInfo().isIntelNehalem() == (_processorDescription.processor == p);
-      case OMR_PROCESSOR_X86_INTELPENTIUM:
+      case OMR_PROCESSOR_X86_INTEL_PENTIUM:
          return TR::CodeGenerator::getX86ProcessorInfo().isIntelPentium() == (_processorDescription.processor == p);
-      case OMR_PROCESSOR_X86_INTELP6:
+      case OMR_PROCESSOR_X86_INTEL_P6:
          return TR::CodeGenerator::getX86ProcessorInfo().isIntelP6() == (_processorDescription.processor == p);
-      case OMR_PROCESSOR_X86_INTELPENTIUM4:
+      case OMR_PROCESSOR_X86_INTEL_PENTIUM4:
          return TR::CodeGenerator::getX86ProcessorInfo().isIntelPentium4() == (_processorDescription.processor == p);
-      case OMR_PROCESSOR_X86_INTELCORE2:
+      case OMR_PROCESSOR_X86_INTEL_CORE2:
          return TR::CodeGenerator::getX86ProcessorInfo().isIntelCore2() == (_processorDescription.processor == p);
-      case OMR_PROCESSOR_X86_INTELTULSA:
+      case OMR_PROCESSOR_X86_INTEL_TULSA:
          return TR::CodeGenerator::getX86ProcessorInfo().isIntelTulsa() == (_processorDescription.processor == p);
-      case OMR_PROCESSOR_X86_INTELSANDYBRIDGE:
+      case OMR_PROCESSOR_X86_INTEL_SANDYBRIDGE:
          return TR::CodeGenerator::getX86ProcessorInfo().isIntelSandyBridge() == (_processorDescription.processor == p);
-      case OMR_PROCESSOR_X86_INTELIVYBRIDGE:
+      case OMR_PROCESSOR_X86_INTEL_IVYBRIDGE:
          return TR::CodeGenerator::getX86ProcessorInfo().isIntelIvyBridge() == (_processorDescription.processor == p);
-      case OMR_PROCESSOR_X86_INTELHASWELL:
+      case OMR_PROCESSOR_X86_INTEL_HASWELL:
          return TR::CodeGenerator::getX86ProcessorInfo().isIntelHaswell() == (_processorDescription.processor == p);
-      case OMR_PROCESSOR_X86_INTELBROADWELL:
+      case OMR_PROCESSOR_X86_INTEL_BROADWELL:
          return TR::CodeGenerator::getX86ProcessorInfo().isIntelBroadwell() == (_processorDescription.processor == p);
-      case OMR_PROCESSOR_X86_INTELSKYLAKE:
+      case OMR_PROCESSOR_X86_INTEL_SKYLAKE:
          return TR::CodeGenerator::getX86ProcessorInfo().isIntelSkylake() == (_processorDescription.processor == p);
-      case OMR_PROCESSOR_X86_AMDATHLONDURON:
+      case OMR_PROCESSOR_X86_INTEL_CASCADELAKE:
+         return TR::CodeGenerator::getX86ProcessorInfo().isIntelCascadeLake() == (_processorDescription.processor == p);
+      case OMR_PROCESSOR_X86_INTEL_COOPERLAKE:
+         return TR::CodeGenerator::getX86ProcessorInfo().isIntelCooperLake() == (_processorDescription.processor == p);
+     case OMR_PROCESSOR_X86_INTEL_ICELAKE:
+         return TR::CodeGenerator::getX86ProcessorInfo().isIntelIceLake() == (_processorDescription.processor == p);
+      case OMR_PROCESSOR_X86_INTEL_SAPPHIRERAPIDS:
+         return TR::CodeGenerator::getX86ProcessorInfo().isIntelSapphireRapids() == (_processorDescription.processor == p);
+      case OMR_PROCESSOR_X86_INTEL_EMERALDRAPIDS:
+         return TR::CodeGenerator::getX86ProcessorInfo().isIntelEmeraldRapids() == (_processorDescription.processor == p);
+      case OMR_PROCESSOR_X86_AMD_ATHLONDURON:
          return TR::CodeGenerator::getX86ProcessorInfo().isAMDAthlonDuron() == (_processorDescription.processor == p);
-      case OMR_PROCESSOR_X86_AMDOPTERON:
+      case OMR_PROCESSOR_X86_AMD_OPTERON:
          return TR::CodeGenerator::getX86ProcessorInfo().isAMDOpteron() == (_processorDescription.processor == p);
-      case OMR_PROCESSOR_X86_AMDFAMILY15H:
+      case OMR_PROCESSOR_X86_AMD_FAMILY15H:
          return TR::CodeGenerator::getX86ProcessorInfo().isAMD15h() == (_processorDescription.processor == p);
       default:
          return false;
