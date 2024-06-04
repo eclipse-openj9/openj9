@@ -2523,7 +2523,7 @@ MM_IncrementalGenerationalGC::unloadDeadClassLoaders(MM_EnvironmentVLHGC *env)
 		/* The list of classLoaders to be unloaded by cleanUpClassLoadersEnd is rooted in unloadLink */
 		J9ClassLoader *unloadLink = NULL;
 		J9MemorySegment *reclaimedSegments = NULL;
-		_extensions->classLoaderManager->cleanUpClassLoaders(env, classLoadersUnloadedList, &reclaimedSegments, &unloadLink, &env->_cycleState->_finalizationRequired);
+		_extensions->classLoaderManager->cleanUpClassLoaders(env, classLoadersUnloadedList, classUnloadStats, &reclaimedSegments, &unloadLink, &env->_cycleState->_finalizationRequired);
 
 		/* Free the class memory segments associated with dead classLoaders, unload (free) the dead classLoaders that don't
 		 * require finalization, and perform any final clean up after the dead classLoaders are gone.
