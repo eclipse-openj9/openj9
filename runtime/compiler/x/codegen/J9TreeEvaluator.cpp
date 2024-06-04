@@ -1887,11 +1887,50 @@ TR::Register *J9::X86::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::Cod
       auto RDI = cg->allocateRegister();
       auto RCX = cg->allocateRegister();
 
+      TR::Register* tmpReg1 = NULL;
+      TR::Register* tmpReg2 = NULL;
+      TR::Register* tmpXmmYmmReg1 = NULL;
+      TR::Register* tmpXmmYmmReg2 = NULL;
+
+      static char *enableReferenceArrayCopyInlineSmallSizeWithoutREPMOVS = feGetEnv("TR_EnableReferenceArrayCopyInlineSmallSizeWithoutREPMOVS");
+
+      //bool enableInlineForSmallSize = enableReferenceArrayCopyInlineSmallSizeWithoutREPMOVS &&
+      bool enableInlineForSmallSize = !cg->comp()->getOption(TR_DisableReferenceArrayCopyInlineSmallSizeWithoutREPMOVS) &&
+                                      cg->comp()->target().cpu.supportsAVX() &&
+                                      cg->comp()->target().is64Bit();
+
+      int32_t repMovsThresholdBytes = 32;
+      int32_t newThreshold = cg->comp()->getOptions()->getArraycopyRepMovsThreshold();
+
+      if (repMovsThresholdBytes < newThreshold)
+         {
+         TR_ASSERT_FATAL(newThreshold == 64 || newThreshold == 128, "newThreshold %d is not supported\n", newThreshold);
+
+         if ((newThreshold == 128) && !cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_X86_AVX512F))
+            {
+            repMovsThresholdBytes = 64;
+            }
+         else
+            {
+            repMovsThresholdBytes = newThreshold;
+            }
+         }
+
+      if (enableInlineForSmallSize)
+         {
+         tmpReg1 = cg->allocateRegister(TR_GPR);
+         tmpReg2 = cg->allocateRegister(TR_GPR);
+         tmpXmmYmmReg1 = cg->allocateRegister(TR_VRF);
+         tmpXmmYmmReg2 = cg->allocateRegister(TR_VRF);
+         }
+
       generateRegRegInstruction(TR::InstOpCode::MOVRegReg(), node, RSI, srcReg, cg);
       generateRegRegInstruction(TR::InstOpCode::MOVRegReg(), node, RDI, dstReg, cg);
       generateRegRegInstruction(TR::InstOpCode::MOVRegReg(), node, RCX, sizeReg, cg);
 
-      auto deps = generateRegisterDependencyConditions((uint8_t)5, 5, cg);
+      TR::RegisterDependencyConditions* deps = enableInlineForSmallSize ? generateRegisterDependencyConditions((uint8_t)9, 9, cg) :
+                                                                          generateRegisterDependencyConditions((uint8_t)5, 5, cg);
+
       deps->addPreCondition(RSI, TR::RealRegister::esi, cg);
       deps->addPreCondition(RDI, TR::RealRegister::edi, cg);
       deps->addPreCondition(RCX, TR::RealRegister::ecx, cg);
@@ -1902,6 +1941,19 @@ TR::Register *J9::X86::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::Cod
       deps->addPostCondition(RCX, TR::RealRegister::ecx, cg);
       deps->addPostCondition(srcObjReg, TR::RealRegister::NoReg, cg);
       deps->addPostCondition(dstObjReg, TR::RealRegister::NoReg, cg);
+
+      if (enableInlineForSmallSize)
+         {
+         deps->addPreCondition(tmpReg1, TR::RealRegister::NoReg, cg);
+         deps->addPreCondition(tmpReg2, TR::RealRegister::NoReg, cg);
+         deps->addPreCondition(tmpXmmYmmReg1, TR::RealRegister::NoReg, cg);
+         deps->addPreCondition(tmpXmmYmmReg2, TR::RealRegister::NoReg, cg);
+
+         deps->addPostCondition(tmpReg1, TR::RealRegister::NoReg, cg);
+         deps->addPostCondition(tmpReg2, TR::RealRegister::NoReg, cg);
+         deps->addPostCondition(tmpXmmYmmReg1, TR::RealRegister::NoReg, cg);
+         deps->addPostCondition(tmpXmmYmmReg2, TR::RealRegister::NoReg, cg);
+         }
 
       auto begLabel = generateLabelSymbol(cg);
       auto endLabel = generateLabelSymbol(cg);
@@ -1926,6 +1978,25 @@ TR::Register *J9::X86::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::Cod
          generateLabelInstruction(TR::InstOpCode::JMP4, node, endLabel, cg);
          og.endOutlinedInstructionSequence();
          }
+
+      if (enableInlineForSmallSize)
+         {
+         TR::LabelSymbol* repMovsLabel = generateLabelSymbol(cg);
+
+         if (use64BitClasses)
+            {
+            OMR::TreeEvaluatorConnector::arrayCopy64BitPrimitiveInlineSmallSizeWithoutREPMOVSImplRoot16(node, RDI /* dstReg */, RSI /* srcReg */, RCX /* sizeReg */, tmpReg1, tmpReg2,
+                                                                                                        tmpXmmYmmReg1, tmpXmmYmmReg2, cg, repMovsThresholdBytes, repMovsLabel, endLabel);
+            }
+         else
+            {
+            OMR::TreeEvaluatorConnector::arrayCopy32BitPrimitiveInlineSmallSizeWithoutREPMOVSImplRoot16(node, RDI /* dstReg */, RSI /* srcReg */, RCX /* sizeReg */, tmpReg1, tmpReg2,
+                                                                                                        tmpXmmYmmReg1, tmpXmmYmmReg2, cg, repMovsThresholdBytes, repMovsLabel, endLabel);
+            }
+
+         generateLabelInstruction(TR::InstOpCode::label, node, repMovsLabel, cg);
+         }
+
       if (!node->isForwardArrayCopy())
          {
          TR::LabelSymbol* backwardLabel = generateLabelSymbol(cg);
@@ -1945,13 +2016,23 @@ TR::Register *J9::X86::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::Cod
          generateLabelInstruction(TR::InstOpCode::JMP4, node, endLabel, cg);
          og.endOutlinedInstructionSequence();
          }
+
       generateRegImmInstruction(TR::InstOpCode::SHRRegImm1(), node, RCX, use64BitClasses ? 3 : 2, cg);
       generateInstruction(use64BitClasses ? TR::InstOpCode::REPMOVSQ : TR::InstOpCode::REPMOVSD, node, cg);
+
       generateLabelInstruction(TR::InstOpCode::label, node, endLabel, deps, cg);
 
       cg->stopUsingRegister(RSI);
       cg->stopUsingRegister(RDI);
       cg->stopUsingRegister(RCX);
+
+      if (enableInlineForSmallSize)
+         {
+         cg->stopUsingRegister(tmpReg1);
+         cg->stopUsingRegister(tmpReg2);
+         cg->stopUsingRegister(tmpXmmYmmReg1);
+         cg->stopUsingRegister(tmpXmmYmmReg2);
+         }
 
       TR::TreeEvaluator::VMwrtbarWithoutStoreEvaluator(node, node->getChild(1), NULL, NULL, cg->generateScratchRegisterManager(), cg);
       }
