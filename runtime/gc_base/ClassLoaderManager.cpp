@@ -560,7 +560,7 @@ MM_ClassLoaderManager::removeFromSubclassHierarchy(MM_EnvironmentBase *env, J9Cl
 }
 
 void
-MM_ClassLoaderManager::cleanUpClassLoaders(MM_EnvironmentBase *env, J9ClassLoader *classLoadersUnloadedList, J9MemorySegment **reclaimedSegments, J9ClassLoader **unloadLink, volatile bool *finalizationRequired)
+MM_ClassLoaderManager::cleanUpClassLoaders(MM_EnvironmentBase *env, J9ClassLoader *classLoadersUnloadedList, MM_ClassUnloadStats *classUnloadStats, J9MemorySegment **reclaimedSegments, J9ClassLoader **unloadLink, volatile bool *finalizationRequired)
 {
 	*reclaimedSegments = NULL;
 	*unloadLink = NULL;
@@ -568,7 +568,9 @@ MM_ClassLoaderManager::cleanUpClassLoaders(MM_EnvironmentBase *env, J9ClassLoade
 	/*
 	 * Cleanup segments in anonymous classloader
 	 */
-	cleanUpSegmentsInAnonymousClassLoader(env, reclaimedSegments);
+	if (0 < classUnloadStats->_anonymousClassesUnloadedCount) {
+		cleanUpSegmentsInAnonymousClassLoader(env, reclaimedSegments);
+	}
 	
 	/* For each classLoader that is not already unloading, not scanned and not enqueued for finalization:
 	 * perform classLoader-specific clean up, if it died on the current collection cycle; and either enqueue it for

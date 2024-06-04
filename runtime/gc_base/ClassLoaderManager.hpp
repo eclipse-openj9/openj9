@@ -177,11 +177,12 @@ public:
 	 * Perform generic clean up for a list of class loaders to unload.
 	 * @param env[in] the current thread
 	 * @param classLoader[in] the list of class loaders to clean up
+	 * @param classUnloadStats[in] the Class Unloading Stats structure
 	 * @param reclaimedSegments[out] a linked list of memory segments to be reclaimed by cleanUpClassLoadersEnd
 	 * @param unloadLink[out] a linked list of class loaders to be reclaimed by cleanUpClassLoadersEnd
 	 * @param finalizationRequired[out] set to true if the finalize thread must be started, unmodified otherwise
 	 */
-	void cleanUpClassLoaders(MM_EnvironmentBase *env, J9ClassLoader *classLoadersUnloadedList, J9MemorySegment **reclaimedSegments, J9ClassLoader **unloadLink, volatile bool *finalizationRequired);
+	void cleanUpClassLoaders(MM_EnvironmentBase *env, J9ClassLoader *classLoadersUnloadedList, MM_ClassUnloadStats *classUnloadStats, J9MemorySegment **reclaimedSegments, J9ClassLoader **unloadLink, volatile bool *finalizationRequired);
 
 	/**
 	 * Attempt to enter the class unload mutex if it is uncontended.

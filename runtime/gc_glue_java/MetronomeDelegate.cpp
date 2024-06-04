@@ -648,11 +648,13 @@ MM_MetronomeDelegate::unloadDeadClassLoaders(MM_EnvironmentBase *envModron)
 	
 	processDyingClasses(env, &classUnloadCount, &anonymousClassUnloadCount, &classLoaderUnloadCount, &classLoadersUnloadedList);
 
-	/* cleanup segments in anonymous classloader */
-	_extensions->classLoaderManager->cleanUpSegmentsInAnonymousClassLoader(env, &reclaimedSegments);
-	
-	/* enqueue all the segments we just salvaged from the dead class loaders for delayed free (this work was historically attributed in the unload end operation so it goes after the timer start) */
-	_extensions->classLoaderManager->enqueueUndeadClassSegments(reclaimedSegments);
+	if (0 < anonymousClassUnloadCount) {
+		/* cleanup segments in anonymous classloader */
+		_extensions->classLoaderManager->cleanUpSegmentsInAnonymousClassLoader(env, &reclaimedSegments);
+
+		/* enqueue all the segments we just salvaged from the anonymous classloader for delayed free */
+		_extensions->classLoaderManager->enqueueUndeadClassSegments(reclaimedSegments);
+	}
 
 	yieldFromClassUnloading(env);
 
