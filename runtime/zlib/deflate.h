@@ -15,9 +15,6 @@
 
 #include "zutil.h"
 
-/* Source is modified from the original zlib version in order to enable NO_GZIP */
-#define NO_GZIP
-
 /* define NO_GZIP when compiling if you want to disable gzip header and
    trailer creation by deflate().  NO_GZIP would be used to avoid linking in
    the crc code when it is not needed.  For shared libraries, gzip encoding
