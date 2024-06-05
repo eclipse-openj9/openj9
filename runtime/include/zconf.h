@@ -8,7 +8,11 @@
 #ifndef ZCONF_H
 #define ZCONF_H
 
-/* Source is modified from the original zlib version in order to enable Z_PREFIX and so symbols exported from zlib are prefixed with j9zlib_ */
+/* Source is modified from the original zlib version in order to:
+ * - disable GZIP support
+ * - enable Z_PREFIX and so symbols exported from zlib are prefixed with "j9zlib_"
+ */
+#define NO_GZIP
 #define Z_PREFIX
 
 /*
