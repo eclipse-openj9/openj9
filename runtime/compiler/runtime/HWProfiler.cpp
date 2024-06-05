@@ -519,7 +519,7 @@ bool TR_HWProfiler::checkAndTurnBufferProcessingOn()
          if (TR::Options::isAnyVerboseOptionSet(TR_VerboseHWProfiler, TR_VerbosePerformance))
             {
             TR_VerboseLog::writeLineLocked(TR_Vlog_HWPROFILER,
-                                           "RI buffer processing re-enabled because we downgraded %d methods at cold since RI was turned off\n",
+                                           "RI buffer processing re-enabled because we downgraded %d methods at cold since RI was turned off",
                                            _numDowngradesSinceTurnedOff);
             }
          return true;

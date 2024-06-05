@@ -841,7 +841,7 @@ J9::CodeCache::disclaim(TR::CodeCacheManager *manager, bool canDisclaimOnSwap)
       size_t warm_size = _warmCodeAlloc - _segment->segmentBase() + sizeof(this);
       size_t cold_size = _coldCodeAllocBase - _coldCodeAlloc;
 
-      TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "Will disclaim cold code cache %p : coldStart=%p coldBase=%p warm_size=%zuB cold_size=%zuB cold_size/(cold_size + warm_size)=%5.2f%%\n",
+      TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "Will disclaim cold code cache %p : coldStart=%p coldBase=%p warm_size=%zuB cold_size=%zuB cold_size/(cold_size + warm_size)=%5.2f%%",
                                this, _coldCodeAlloc, _coldCodeAllocBase,
                                warm_size, cold_size, cold_size * 100.0/(cold_size + warm_size));
       }
