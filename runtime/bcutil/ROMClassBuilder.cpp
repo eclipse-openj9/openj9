@@ -419,12 +419,12 @@ ROMClassBuilder::handleAnonClassName(J9CfrClassFile *classfile, ROMClassCreation
 	}
 	memcpy (constantPool[newUtfCPEntry].bytes + newHostPackageLength, originalStringBytes, originalStringLength);
 	*(U_8*)((UDATA) constantPool[newUtfCPEntry].bytes + newHostPackageLength + originalStringLength) = ANON_CLASSNAME_CHARACTER_SEPARATOR;
-	/* 
+	/*
 	 * 0x<romAddress> will be appended to anon/hidden class name.
 	 * Initialize the 0x<romAddress> part to 0x00000000 or 0x0000000000000000 (depending on the platforms).
 	 */
 	j9str_printf(PORTLIB, buf, ROM_ADDRESS_LENGTH + 1, ROM_ADDRESS_FORMAT, 0);
-	memcpy(constantPool[newUtfCPEntry].bytes + newHostPackageLength + originalStringLength + 1, buf, ROM_ADDRESS_LENGTH + 1);	
+	memcpy(constantPool[newUtfCPEntry].bytes + newHostPackageLength + originalStringLength + 1, buf, ROM_ADDRESS_LENGTH + 1);
 
 	/* Mark if the class is a Lambda class. */
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
@@ -599,8 +599,8 @@ ROMClassBuilder::prepareAndLaydown( BufferManager *bufferManager, ClassFileParse
 #if JAVA_SPEC_VERSION < 21
 	U_32 sizeToCompareForLambda = 0;
 	if (context->isLambdaClass()) {
-		/* 
-		 * romSize calculated from getSizeInfo() does not involve StringInternManager. It is only accurate for string intern disabled classes. 
+		/*
+		 * romSize calculated from getSizeInfo() does not involve StringInternManager. It is only accurate for string intern disabled classes.
 		 * Lambda classes in java 15 and up are strong hidden classes (defined with Option.STONG), which has the same lifecycle as its
 		 * defining class loader. It is string intern enabled. So pass classFileSize instead of romSize to sizeToCompareForLambda.
 		 */
@@ -673,7 +673,7 @@ ROMClassBuilder::prepareAndLaydown( BufferManager *bufferManager, ClassFileParse
 		) {
 			/* For redefining/transforming, we still want loadType to be J9SHR_LOADTYPE_REDEFINED/J9SHR_LOADTYPE_RETRANSFORMED,
 			 * so put these checks after the redefining/transforming checks.
-			 */ 
+			 */
 			loadType = J9SHR_LOADTYPE_NOT_FROM_PATH;
 		}
 
@@ -774,10 +774,13 @@ ROMClassBuilder::prepareAndLaydown( BufferManager *bufferManager, ClassFileParse
 			 */
 			if (!sharedStoreClassTransaction.isCacheFull()) {
 				if ( sharedStoreClassTransaction.allocateSharedClass(&sizeRequirements) ){
-					U_8 *romClassBuffer = (U_8*)sharedStoreClassTransaction.getRomClass();
+					J9ROMClass *romClassBuffer = (J9ROMClass*)sharedStoreClassTransaction.getRomClass();
 					/*
 					 * Make note that the laydown is occurring in SharedClasses
 					 */
+
+					romClassBuffer->extraModifiers |= J9AccClassIsStoredInSCC;
+
 					romSize = finishPrepareAndLaydown(
 							(U_8*)sharedStoreClassTransaction.getRomClass(),
 							(U_8*)sharedStoreClassTransaction.getLineNumberTable(),
@@ -788,15 +791,15 @@ ROMClassBuilder::prepareAndLaydown( BufferManager *bufferManager, ClassFileParse
 							context, &constantPoolMap
 							);
 
-					fixReturnBytecodes(_portLibrary, (J9ROMClass *)romClassBuffer);
+					fixReturnBytecodes(_portLibrary, romClassBuffer);
 
 					/*
 					 * inform the shared class transaction what the final ROMSize is
 					 */
 					sharedStoreClassTransaction.updateSharedClassSize(romSize);
-					context->recordROMClass((J9ROMClass *)romClassBuffer);
+					context->recordROMClass(romClassBuffer);
 					if ((NULL != _javaVM) && (_javaVM->extendedRuntimeFlags & J9_EXTENDED_RUNTIME_CHECK_DEBUG_INFO_COMPRESSION)) {
-						checkDebugInfoCompression((J9ROMClass *)romClassBuffer, classFileOracle, &srpKeyProducer, &constantPoolMap, &srpOffsetTable);
+						checkDebugInfoCompression(romClassBuffer, classFileOracle, &srpKeyProducer, &constantPoolMap, &srpOffsetTable);
 					}
 					return OK;
 				}
@@ -1271,7 +1274,7 @@ ROMClassBuilder::computeExtraModifiers(ClassFileOracle *classFileOracle, ROMClas
 	if ( context->isClassAnon() ) {
 		modifiers |= J9AccClassAnonClass;
 	}
-	
+
 	if (context->isClassHidden()) {
 		modifiers |= J9AccClassHidden;
 		if (context->isHiddenClassOptNestmateSet()) {
@@ -1305,7 +1308,7 @@ ROMClassBuilder::computeExtraModifiers(ClassFileOracle *classFileOracle, ROMClas
 	if ( classFileOracle->isClassUnmodifiable() ) {
 		modifiers |= J9AccClassIsUnmodifiable;
 	}
-	
+
 	if (classFileOracle->isValueBased()) {
 		modifiers |= J9AccClassIsValueBased;
 	}
