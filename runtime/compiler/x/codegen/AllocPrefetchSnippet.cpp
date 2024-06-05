@@ -236,7 +236,7 @@ uint8_t* TR::X86AllocPrefetchSnippet::emitSharedBody(uint8_t* prefetchSnippetBuf
    for (int32_t lineOffset = 0; lineOffset < numLines; ++lineOffset)
       {
       prefetchSnippetBuffer[0] = 0x0F;
-      if (comp->target().cpu.is(OMR_PROCESSOR_X86_AMDFAMILY15H))
+      if (comp->target().cpu.is(OMR_PROCESSOR_X86_AMD_FAMILY15H))
          prefetchSnippetBuffer[1] = 0x0D;
       else
          prefetchSnippetBuffer[1] = 0x18;
