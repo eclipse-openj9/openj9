@@ -28,10 +28,6 @@ cleandeps: ; @echo SUCCESS - All dependencies are cleaned
 cleandll: ; @echo SUCCESS - All shared libraries are cleaned
 .PHONY: all clean cleanobjs cleandeps cleandll
 
-# Include build flags so names like j9vm_opt_jitserver can be used in places
-# like files/common.mk to conditionally include sources.
-include ../makelib/mkconstants.mk
-
 # This is the logic right now for locating Clang and LLVM-config
 # There's probably a nicer way to do all of this... it's pretty bad
 
