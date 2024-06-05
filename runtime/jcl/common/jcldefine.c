@@ -203,11 +203,10 @@ retry:
 						NULL,
 						hostClass);
 				/* Done if a class was found or and exception is pending, otherwise try to define the bytes */
-				if ((clazz != NULL) || (currentThread->currentException != NULL)) {
+				if ((NULL != clazz) || (NULL != currentThread->currentException)) {
 					goto done;
-				} else {
-					loadedClass = NULL;
 				}
+				loadedClass = NULL;
 			} else {
 				tempClassBytes = J9ROMCLASS_INTERMEDIATECLASSDATA(loadedClass);
 				tempLength = loadedClass->intermediateClassDataLength;

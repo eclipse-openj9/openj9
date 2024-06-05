@@ -345,11 +345,7 @@ getClassSignature(J9VMThread *currentThread, J9Class * clazz)
 				if (J9ROMCLASS_IS_ARRAY(clazz->romClass)) {
 					vm->internalVMFunctions->copyStringToUTF8Helper(currentThread, sigString, J9_STR_NULL_TERMINATE_RESULT | J9_STR_XLAT, 0, J9VMJAVALANGSTRING_LENGTH(currentThread, sigString), (U_8*)sig, utfLength);
 				} else {
-					if (J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(clazz)) {
-						sig[0] = 'Q';
-					} else {
-						sig[0] = 'L';
-					}
+					sig[0] = 'L';
 					vm->internalVMFunctions->copyStringToUTF8Helper(currentThread, sigString, J9_STR_XLAT, 0, J9VMJAVALANGSTRING_LENGTH(currentThread, sigString), (U_8*)(sig + 1), utfLength - 1);
 					sig[utfLength - 2] = ';';
 					sig[utfLength - 1] = '\0';
@@ -385,11 +381,7 @@ getClassSignature(J9VMThread *currentThread, J9Class * clazz)
 				}
 
 				if (*name != '[') {
-					if (J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(myClass)) {
-						sig[i++] = 'Q';
-					} else {
-						sig[i++] = 'L';
-					}
+					sig[i++] = 'L';
 				}
 
 				memcpy(sig+i, name, nameLength);
@@ -1103,7 +1095,7 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(
 							J9BytecodeVerificationData *verifyData = vm->bytecodeVerificationData;
 							U_16 sigOffset = 0;
 
-							/* Skip the '[', 'L', or 'Q' prefix */
+							/* Skip the '[' or 'L' prefix */
 							while ('[' == J9UTF8_DATA(signature)[sigOffset]) {
 								sigOffset += 1;
 							}
