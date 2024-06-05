@@ -747,9 +747,10 @@ Java_sun_misc_Unsafe_staticFieldOffset(JNIEnv *env, jobject receiver, jobject fi
 			vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, NULL);
 		} else {
 			offset = VM_VMHelpers::staticFieldOffset(currentThread, fieldID);
-
-			if (J9_ARE_ANY_BITS_SET(romField->modifiers, J9AccFinal)) {
-				offset |= J9_SUN_FINAL_FIELD_OFFSET_TAG;
+			if (!J9VM_STATIC_FIELD_IS_SINGLE_OR_DOUBLE(fieldID->field->modifiers)) {
+				if (J9_ARE_ANY_BITS_SET(romField->modifiers, J9AccFinal)) {
+					offset |= J9_SUN_FINAL_FIELD_OFFSET_TAG;
+				}
 			}
 		}
 	}
