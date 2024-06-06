@@ -2858,27 +2858,42 @@ static TR::ILOpCodes udataCmpEqOpCode(TR::Compilation * comp)
       }
    }
 
+static TR::Node *
+normalizeMaskedResult(TR::Node *maskedResult, uint32_t maskFlags)
+   {
+   if (isPowerOf2(maskFlags))
+      {
+      int32_t shiftAmount = trailingZeroes(maskFlags);
+      return TR::Node::create(TR::iushr, 2, maskedResult, TR::Node::iconst(maskedResult, shiftAmount));
+      }
+   else
+      {
+      return TR::Node::create(TR::icmpne, 2, maskedResult, TR::Node::iconst(maskedResult, 0));
+      }
+   }
+
 TR::Node *
-TR_J9VMBase::testAreSomeClassFlagsSet(TR::Node *j9ClassRefNode, uint32_t flagsToTest)
+TR_J9VMBase::testAreSomeClassFlagsSet(TR::Node *j9ClassRefNode, uint32_t flagsToTest, bool zeroOrOneResult)
    {
    TR::SymbolReference *classFlagsSymRef = TR::comp()->getSymRefTab()->findOrCreateClassFlagsSymbolRef();
 
    TR::Node *loadClassFlags = TR::Node::createWithSymRef(TR::iloadi, 1, 1, j9ClassRefNode, classFlagsSymRef);
    TR::Node *maskedFlags = TR::Node::create(TR::iand, 2, loadClassFlags, TR::Node::iconst(j9ClassRefNode, flagsToTest));
 
-   return maskedFlags;
+   return zeroOrOneResult ? normalizeMaskedResult(maskedFlags, flagsToTest)
+                          : maskedFlags;
    }
 
 TR::Node *
-TR_J9VMBase::testIsClassValueType(TR::Node *j9ClassRefNode)
+TR_J9VMBase::testIsClassValueType(TR::Node *j9ClassRefNode, bool zeroOrOneResult)
    {
-   return testAreSomeClassFlagsSet(j9ClassRefNode, J9ClassIsValueType);
+   return testAreSomeClassFlagsSet(j9ClassRefNode, J9ClassIsValueType, zeroOrOneResult);
    }
 
 TR::Node *
-TR_J9VMBase::testIsClassIdentityType(TR::Node *j9ClassRefNode)
+TR_J9VMBase::testIsClassIdentityType(TR::Node *j9ClassRefNode, bool zeroOrOneResult)
    {
-   return testAreSomeClassFlagsSet(j9ClassRefNode, J9ClassHasIdentity);
+   return testAreSomeClassFlagsSet(j9ClassRefNode, J9ClassHasIdentity, zeroOrOneResult);
    }
 
 TR::Node *
@@ -2902,18 +2917,19 @@ TR_J9VMBase::loadClassDepthAndFlags(TR::Node *j9ClassRefNode)
    }
 
 TR::Node *
-TR_J9VMBase::testAreSomeClassDepthAndFlagsSet(TR::Node *j9ClassRefNode, uint32_t flagsToTest)
+TR_J9VMBase::testAreSomeClassDepthAndFlagsSet(TR::Node *j9ClassRefNode, uint32_t flagsToTest, bool zeroOrOneResult)
    {
    TR::Node *classFlags = loadClassDepthAndFlags(j9ClassRefNode);
    TR::Node *maskedFlags = TR::Node::create(TR::iand, 2, classFlags, TR::Node::iconst(j9ClassRefNode, flagsToTest));
 
-   return maskedFlags;
+   return zeroOrOneResult ? normalizeMaskedResult(maskedFlags, flagsToTest)
+                          : maskedFlags;
    }
 
 TR::Node *
-TR_J9VMBase::testIsClassArrayType(TR::Node *j9ClassRefNode)
+TR_J9VMBase::testIsClassArrayType(TR::Node *j9ClassRefNode, bool zeroOrOneResult)
    {
-   return testAreSomeClassDepthAndFlagsSet(j9ClassRefNode, getFlagValueForArrayCheck());
+   return testAreSomeClassDepthAndFlagsSet(j9ClassRefNode, getFlagValueForArrayCheck(), zeroOrOneResult);
    }
 
 TR::Node *

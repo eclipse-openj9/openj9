@@ -4712,11 +4712,7 @@ break
       TR::Node* obj = callNode->getChild(1);
       TR::Node* vftLoad = TR::Node::createWithSymRef(callNode, TR::aloadi, 1, obj, symRefTab()->findOrCreateVftSymbolRef());
 
-      int32_t andMask = comp()->fej9()->getFlagValueForArrayCheck();
-      resultNode = comp()->fej9()->testIsClassArrayType(vftLoad);
-
-      int32_t shiftAmount = trailingZeroes(andMask);
-      resultNode  = TR::Node::create(callNode, TR::iushr, 2, resultNode, TR::Node::iconst(callNode, shiftAmount));
+      resultNode = comp()->fej9()->testIsClassArrayType(vftLoad, /* zeroOrOneResult */ true);
 
       // Handle NullCHK
       if (callNodeTreeTop->getNode()->getOpCode().isNullCheck())
