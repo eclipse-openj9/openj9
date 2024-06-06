@@ -153,7 +153,12 @@ FFITypeHelpers::freeStructFFIType(ffi_type *ffiType)
 {
 	if (NULL != ffiType) {
 		PORT_ACCESS_FROM_JAVAVM(_vm);
-		if (FFI_TYPE_STRUCT == ffiType->type) {
+		if (FFI_TYPE_STRUCT == ffiType->type
+#if defined(J9ZOS390)
+			|| FFI_TYPE_STRUCT_FF == ffiType->type
+			|| FFI_TYPE_STRUCT_DD == ffiType->type
+#endif /* defined(J9ZOS390) */
+		) {
 			/* ffiType->elements is NULL weve already seen this a free'd it.
 			 * This will occur when dealing with inlined arrays.
 			 */

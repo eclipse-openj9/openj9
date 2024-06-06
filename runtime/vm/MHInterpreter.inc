@@ -2373,7 +2373,12 @@ VM_MHInterpreter::nativeMethodHandleCallout(void *function, UDATA *javaArgs, U_8
 		IDATA offset = 0;
 		for (U_8 i = 0; i < argTypeCount; i++) {
 			bool isStructArg = false;
-			if (FFI_TYPE_STRUCT == args[i+1]->type) {
+			if (FFI_TYPE_STRUCT == args[i+1]->type
+#if defined(J9ZOS390)
+					|| FFI_TYPE_STRUCT_FF == args[i+1]->type
+					|| FFI_TYPE_STRUCT_DD == args[i+1]->type
+#endif /* defined(J9ZOS390) */
+			) {
 				isStructArg = true;
 			}
 
@@ -2403,7 +2408,12 @@ VM_MHInterpreter::nativeMethodHandleCallout(void *function, UDATA *javaArgs, U_8
 		}
 		ffi_status status = FFI_OK;
 
-		if (FFI_TYPE_STRUCT == args[0]->type) {
+		if (FFI_TYPE_STRUCT == args[0]->type
+#if defined(J9ZOS390)
+			|| FFI_TYPE_STRUCT_FF == args[0]->type
+			|| FFI_TYPE_STRUCT_DD == args[0]->type
+#endif /* defined(J9ZOS390) */
+		) {
 			size_t structSize = args[0]->size;
 			returnStorage = j9mem_allocate_memory(structSize, OMRMEM_CATEGORY_VM);
 			if (NULL == returnStorage) {

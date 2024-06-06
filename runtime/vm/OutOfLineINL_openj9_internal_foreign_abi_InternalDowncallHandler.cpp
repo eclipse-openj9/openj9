@@ -113,8 +113,13 @@ OutOfLineINL_openj9_internal_foreign_abi_InternalDowncallHandler_initCifNativeTh
 		goto done;
 	/* Only intended for strut as the primitive's ffi_type is non-null */
 	} else if ((NULL == returnType)
-	|| ((FFI_TYPE_STRUCT == returnType->type) && (NULL == returnType->elements))
-	) {
+				|| ((FFI_TYPE_STRUCT == returnType->type
+#if defined(J9ZOS390)
+					|| FFI_TYPE_STRUCT_FF == returnType->type
+					|| FFI_TYPE_STRUCT_DD == returnType->type
+#endif /* defined(J9ZOS390) */
+				) && (NULL == returnType->elements)))
+	{
 		rc = GOTO_THROW_CURRENT_EXCEPTION;
 		setNativeOutOfMemoryError(currentThread, 0, 0);
 		goto done;
@@ -141,8 +146,13 @@ OutOfLineINL_openj9_internal_foreign_abi_InternalDowncallHandler_initCifNativeTh
 				goto freeAllMemoryThenExit;
 			/* Only intended for struct as the primitive's ffi_type is non-null */
 			} else if ((NULL == argTypes[argIndex])
-			|| ((FFI_TYPE_STRUCT == argTypes[argIndex]->type) && (NULL == argTypes[argIndex]->elements))
-			) {
+						|| ((FFI_TYPE_STRUCT == argTypes[argIndex]->type
+#if defined(J9ZOS390)
+							|| FFI_TYPE_STRUCT_FF == returnType->type
+							|| FFI_TYPE_STRUCT_DD == returnType->type
+#endif /* defined(J9ZOS390) */
+						) && (NULL == argTypes[argIndex]->elements)))
+			{
 				rc = GOTO_THROW_CURRENT_EXCEPTION;
 				setNativeOutOfMemoryError(currentThread, 0, 0);
 				goto freeAllMemoryThenExit;

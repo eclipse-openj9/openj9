@@ -203,7 +203,12 @@ done:
 void
 LayoutFFITypeHelpers::freeStructFFIType(ffi_type *ffiType)
 {
-	if ((NULL != ffiType) && (FFI_TYPE_STRUCT == ffiType->type)) {
+	if ((NULL != ffiType) && (FFI_TYPE_STRUCT == ffiType->type
+#if defined(J9ZOS390)
+			|| FFI_TYPE_STRUCT_FF == ffiType->type
+			|| FFI_TYPE_STRUCT_DD == ffiType->type
+#endif /* defined(J9ZOS390) */
+	)) {
 		if (NULL != ffiType->elements) {
 			PORT_ACCESS_FROM_JAVAVM(_vm);
 			freeStructFFITypeElements(ffiType->elements);
