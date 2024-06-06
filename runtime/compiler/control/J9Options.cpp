@@ -2488,9 +2488,9 @@ bool J9::Options::preProcessJitServer(J9JavaVM *vm, J9JITConfig *jitConfig)
             int32_t xxDisableJITServerAOTCacheIgnoreLocalSCCArgIndex =
                FIND_ARG_IN_VMARGS(EXACT_MATCH, xxDisableJITServerAOTCacheIgnoreLocalSCC, 0);
 
-            if (xxJITServerAOTCacheIgnoreLocalSCCArgIndex > xxDisableJITServerAOTCacheIgnoreLocalSCCArgIndex)
+            if (xxDisableJITServerAOTCacheIgnoreLocalSCCArgIndex > xxJITServerAOTCacheIgnoreLocalSCCArgIndex)
                {
-               compInfo->getPersistentInfo()->setJITServerAOTCacheIgnoreLocalSCC(true);
+               compInfo->getPersistentInfo()->setJITServerAOTCacheIgnoreLocalSCC(false);
                }
             }
 #if defined(J9VM_OPT_CRIU_SUPPORT)
