@@ -5320,6 +5320,11 @@ static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInf
          static char *disableIdleRATCleanup = feGetEnv("TR_disableIdleRATCleanup");
          if (disableIdleRATCleanup == NULL)
             persistentInfo->getRuntimeAssumptionTable()->reclaimMarkedAssumptionsFromRAT(-1);
+
+#if defined(J9VM_OPT_JITSERVER)
+         if (compInfo->getMethodQueueSize() == 0)
+            JITServer::MessageBuffer::tryFreePersistentAllocator();
+#endif /* defined(J9VM_OPT_JITSERVER) */
          }
 
       // Logic related to IdleCPU exploitation

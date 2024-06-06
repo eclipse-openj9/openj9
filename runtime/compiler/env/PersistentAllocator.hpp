@@ -77,6 +77,11 @@ public:
    int disclaimAllSegments();
    int getNumSegments() const { return _numSegments; }
 
+   // Issue MADV_DONTNEED on the segments allocated by this allocator. This has the effect
+   // of zeroing out that memory if it has no persistent backing (see madvise(2)), so you must
+   // be sure that these segments are not actually in use in that case.
+   void adviseDontNeedSegments();
+
 private:
 
    // Persistent block header

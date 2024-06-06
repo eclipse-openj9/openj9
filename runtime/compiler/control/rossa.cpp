@@ -1792,6 +1792,9 @@ onLoadInternal(
          }
       }
 
+   if (compInfo->getPersistentInfo()->getRemoteCompilationMode() != JITServer::NONE)
+      JITServer::MessageBuffer::initTotalBuffersMonitor();
+
    if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
       {
       JITServer::CommunicationStream::initConfigurationFlags();
