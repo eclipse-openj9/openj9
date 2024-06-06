@@ -830,7 +830,7 @@ def match_fail_pattern(outputLines) {
 
     println("Build failure, searching fail pattern in the last ${outputLines.size()} output lines")
 
-    for (failPattern in FAIL_PATTERN.tokenize(' ')) {
+    for (failPattern in FAIL_PATTERN.tokenize('|')) {
         Pattern pattern = Pattern.compile(failPattern)
         for (line in outputLines) {
             Matcher matcher = pattern.matcher(line)
@@ -864,8 +864,11 @@ def recompile() {
             LOG_LINES.addAll(newLines)
 
             if (!match_fail_pattern(newLines)) {
-                //different error
+                // different error
                 archive_diagnostics()
+                throw f
+            }
+            if (retryCounter >= maxRetry) {
                 throw f
             }
         }

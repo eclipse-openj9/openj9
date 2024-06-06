@@ -335,6 +335,7 @@ aarch64_linux:
   build_env:
     vars:
       all: 'CC=/usr/local/gcc10/bin/gcc-10.3 CXX=/usr/local/gcc10/bin/g++-10.3'
+  fail_pattern: 'IOException caught during compilation: Resource deadlock avoided'
 #========================================#
 # Linux Aarch 64bits /w JITSERVER
 #========================================#
@@ -358,7 +359,7 @@ x86-64_windows:
     build: 'ci.role.build && hw.arch.x86 && sw.os.windows'
   build_env:
     vars: 'PATH+TOOLS=/cygdrive/c/openjdk/LLVM64/bin:/cygdrive/c/openjdk/nasm-2.13.03'
-  fail_pattern: 'C1083 LNK1181 RC1015'
+  fail_pattern: 'C1083|LNK1181|RC1015'
 #========================================#
 # Windows x86 32bits
 #========================================#
@@ -377,7 +378,7 @@ x86-32_windows:
   build_env:
     vars:
       8: 'PATH+TOOLS=/cygdrive/c/openjdk/LLVM32/bin:/cygdrive/c/openjdk/nasm-2.13.03'
-  fail_pattern: 'C1083 LNK1181 RC1015'
+  fail_pattern: 'C1083|LNK1181|RC1015'
 #========================================#
 # Mac x86 64bits
 #========================================#
@@ -402,6 +403,7 @@ x86-64_mac:
   extra_test_labels:
     22: '!sw.os.mac.10_15'
     next: '!sw.os.mac.10_15'
+  fail_pattern: 'IOException caught during compilation: Resource deadlock avoided'
 #========================================#
 # Mac Aarch64
 #========================================#
@@ -421,6 +423,7 @@ aarch64_mac:
   openjdk_reference_repo: '/Users/jenkins/openjdk_cache'
   node_labels:
     build: 'ci.role.build && hw.arch.aarch64 && sw.os.mac'
+  fail_pattern: 'IOException caught during compilation: Resource deadlock avoided'
 #========================================#
 # Linux PPCLE 64bits /w OpenJDK JSR292
 #========================================#
