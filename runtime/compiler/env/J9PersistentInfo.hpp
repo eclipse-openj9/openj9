@@ -176,7 +176,7 @@ class PersistentInfo : public OMR::PersistentInfoConnector
          _JITServerUseAOTCachePersistence(false),
          _JITServerAOTCacheDir(),
          _JITServerAOTCacheDelayMethodRelocation(false),
-         _JITServerAOTCacheIgnoreLocalSCC(false),
+         _JITServerAOTCacheIgnoreLocalSCC(true),
          _doNotRequestJITServerAOTCacheLoad(false),
          _doNotRequestJITServerAOTCacheStore(false),
 #endif /* defined(J9VM_OPT_JITSERVER) */
