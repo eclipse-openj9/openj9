@@ -4765,8 +4765,20 @@ void TR_ResolvedJ9Method::construct()
                {
                setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleByteArrayAsX_ByteBufferHandle_method);
                }
+#if JAVA_SPEC_VERSION >= 21
+            else if ((classNameLen == 39 && !strncmp(className, "java/lang/invoke/VarHandleSegmentAsInts", 39))
+                  || (classNameLen == 40 && !strncmp(className, "java/lang/invoke/VarHandleSegmentAsBytes", 40))
+                  || (classNameLen == 40 && !strncmp(className, "java/lang/invoke/VarHandleSegmentAsChars", 40))
+                  || (classNameLen == 40 && !strncmp(className, "java/lang/invoke/VarHandleSegmentAsLongs", 40))
+                  || (classNameLen == 41 && !strncmp(className, "java/lang/invoke/VarHandleSegmentAsFloats", 41))
+                  || (classNameLen == 41 && !strncmp(className, "java/lang/invoke/VarHandleSegmentAsShorts", 41))
+                  || (classNameLen == 42 && !strncmp(className, "java/lang/invoke/VarHandleSegmentAsDoubles", 42)))
+               {
+               setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleSegmentAsX_method);
+               }
+#endif // JAVA_SPEC_VERSION >= 21
             }
-#endif
+#endif // defined(J9VM_OPT_OPENJDK_METHODHANDLE)
          else if ((classNameLen >= 59 + 3 && classNameLen <= 59 + 7) && !strncmp(className, "java/lang/invoke/ArrayVarHandle$ArrayVarHandleOperations$Op", 59))
             {
             setRecognizedMethodInfo(TR::java_lang_invoke_ArrayVarHandle_ArrayVarHandleOperations_OpMethod);
@@ -5879,6 +5891,7 @@ TR_J9MethodBase::isVarHandleOperationMethod(TR::RecognizedMethod rm)
       case TR::java_lang_invoke_VarHandleX_FieldStaticReadOnlyOrReadWrite_method:
       case TR::java_lang_invoke_VarHandleByteArrayAsX_ArrayHandle_method:
       case TR::java_lang_invoke_VarHandleByteArrayAsX_ByteBufferHandle_method:
+      case TR::java_lang_invoke_VarHandleSegmentAsX_method:
 #else
       case TR::java_lang_invoke_ArrayVarHandle_ArrayVarHandleOperations_OpMethod:
       case TR::java_lang_invoke_StaticFieldVarHandle_StaticFieldVarHandleOperations_OpMethod:
