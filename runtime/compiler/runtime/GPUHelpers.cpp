@@ -842,8 +842,8 @@ cudaInfoHashPut(CudaInfo *cudaInfo, void **hostref, int32_t elementSize, CUdevic
 
       cudaInfo->hashSize = hashSize;
       cudaInfo->hashTable = hashTable;
-
-      memcpy(cudaInfo->hashTable, oldHashTable, oldHashSize * sizeof(HashEntry));
+      // Makes no sense hashTable to oldHashTable in 2 lines???
+      cudaInfo->hashTable = oldHashTable
 
       TR_Memory::jitPersistentFree(oldHashTable);
 
@@ -1504,12 +1504,11 @@ launchKernel(int tracing, CudaInfo *cudaInfo, int gridDimX, int gridDimY, int gr
       TR_VerboseLog::writeLine(TR_Vlog_GPU, "\tgrid: Dim(%d %d %d), Block(%d %d %d)", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ);
       }
 
-   if (needExtraArg)
-      {
+   if (needExtraArg){
       _args = (void **)malloc((argCount + 1) * sizeof(void**));
-      memcpy(_args, args, argCount * sizeof(void**));
+      _args = args;
       argCount++;
-      }
+  }
    _args[argCount-1] = &(cudaInfo->exceptionPointer);
 
    if (tracing > 1)

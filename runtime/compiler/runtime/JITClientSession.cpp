@@ -195,21 +195,19 @@ ClientSessionData::processUnloadedClasses(const std::vector<TR_OpaqueClassBlock*
          // here because compilation object hasn't been initialized yet
 
          std::string sigStr(sigLen, 0);
-         if (className[0] == '[')
-            {
-            memcpy(&sigStr[0], className, sigLen);
-            }
-         else
-            {
+         if (className[0] == '['){
+            sigStr = className;
+        }
+         else{
             if (TR::Compiler->om.areFlattenableValueTypesEnabled() &&
                 TR::Compiler->om.isQDescriptorForValueTypesSupported() &&
                 TR::Compiler->cls.isPrimitiveValueTypeClass(clazz))
                sigStr[0] = 'Q';
             else
                sigStr[0] = 'L';
-            memcpy(&sigStr[1], className, sigLen - 2);
+            sigStr.replace(1,sigLen-2,std::string(className).substr(0,sigLen-2));
             sigStr[sigLen-1]=';';
-            }
+         }
 
          J9ClassLoader * cl = (J9ClassLoader *)(it->second._classLoader);
          ClassLoaderStringPair key = { cl, sigStr };
@@ -756,16 +754,13 @@ ClientSessionData::cacheWellKnownClassChainOffsets(unsigned int includedClasses,
    OMR::CriticalSection wellKnownClasses(_wellKnownClassesMonitor);
 
    _wellKnownClasses._includedClasses = includedClasses;
-   memcpy(_wellKnownClasses._classChainOffsets, classChainOffsets,
-          numClasses * sizeof(classChainOffsets[0]));
+   _wellKnownClasses._classChainOffsets = classChainOffsets;
    // Zero out the tail of the array
-   memset(_wellKnownClasses._classChainOffsets + numClasses, 0,
-          (WELL_KNOWN_CLASS_COUNT - numClasses) * sizeof(classChainOffsets[0]));
+   memset(_wellKnownClasses._classChainOffsets + numClasses, 0, (WELL_KNOWN_CLASS_COUNT - numClasses) * sizeof(classChainOffsets[0]));
    _wellKnownClasses._wellKnownClassChainOffsets = wellKnownClassChainOffsets;
 
    // Create and save AOT cache well-known classes record if requested
-   wellKnownClassesRecord = classChainRecords ?
-      _aotCache->getWellKnownClassesRecord(classChainRecords, numClasses, includedClasses) : NULL;
+   wellKnownClassesRecord = classChainRecords ? _aotCache->getWellKnownClassesRecord(classChainRecords, numClasses, includedClasses) : NULL;
    _wellKnownClasses._aotCacheWellKnownClassesRecord = wellKnownClassesRecord;
    }
 

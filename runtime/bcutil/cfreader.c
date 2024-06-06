@@ -20,6 +20,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
+#include <stdlib.h>
 #include "cfreader.h"
 #include "j9protos.h"
 #include "j9user.h"
@@ -256,7 +257,7 @@ readAttributes(J9CfrClassFile * classfile, J9CfrAttribute *** pAttributes, U_32 
 				return -2;
 			}
 			code->originalCode = index;
-			memcpy (code->code, index, code->codeLength);
+            code->code = index;
 			index += code->codeLength;
 
 			CHECK_EOF(2);
@@ -861,7 +862,7 @@ readAttributes(J9CfrClassFile * classfile, J9CfrAttribute *** pAttributes, U_32 
 			}
 
 			CHECK_EOF(stackMap->mapLength);
-			memcpy (stackMap->entries, index, stackMap->mapLength);
+            stackMap->entries = index;
 			index += stackMap->mapLength;
 			
 			break;
@@ -1079,7 +1080,7 @@ readAttributes(J9CfrClassFile * classfile, J9CfrAttribute *** pAttributes, U_32 
 				return -2;
 			}
 			CHECK_EOF(length);
-			memcpy (((J9CfrAttributeUnknown *) attrib)->value, index, length);
+            ((J9CfrAttributeUnknown *)attrib)->value = index;
 			index += length;
 			break;
 		}
@@ -3401,7 +3402,7 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 					Trc_BCU_inlineJsrs_Exit();
 					return -2;
 				}
-				memcpy(method->codeAttribute->code, method->codeAttribute->originalCode, method->codeAttribute->codeLength);
+                method->codeAttribute->code = method->codeAttribute->originalCode;
 			}
 		}
 
