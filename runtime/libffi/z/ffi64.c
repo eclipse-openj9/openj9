@@ -699,6 +699,8 @@ ffi_prep_args (unsigned char *stack, extended_cif *ecif)
       switch (type)
 	{
 	  case FFI_TYPE_STRUCT:
+	  case FFI_TYPE_STRUCT_FF:
+	  case FFI_TYPE_STRUCT_DD:
 	    memcpy(arg_ptr, *p_argv, size);
 	    break;
 
@@ -765,6 +767,50 @@ ffi_prep_args (unsigned char *stack, extended_cif *ecif)
 }
 
 /*======================== End of Routine ============================*/
+
+/**
+ * Helper functions to know if the given struct needs to be treated for complex
+ * type for float or double.
+ */
+static unsigned short
+get_ffi_element_type_in_struct(ffi_type *arg_type)
+{
+  while ((FFI_TYPE_STRUCT == arg_type->type)
+        && (NULL != arg_type->elements[0])
+        && (NULL == arg_type->elements[1])
+  ) {
+    arg_type = arg_type->elements[0];
+  }
+  return arg_type->type;
+}
+
+static unsigned short
+ffi_check_struct_for_complex(ffi_type *arg_type)
+{
+  if ((FFI_TYPE_STRUCT == arg_type->type) && (NULL != arg_type->elements[0]))
+  {
+    unsigned short firstArgType = get_ffi_element_type_in_struct(arg_type->elements[0]);
+    if (FFI_TYPE_FLOAT == firstArgType)
+    {
+      if ((NULL != arg_type->elements[1])
+          && (NULL == arg_type->elements[2])
+          && (FFI_TYPE_FLOAT == get_ffi_element_type_in_struct(arg_type->elements[1]))
+      ) {
+        return FFI_TYPE_STRUCT_FF;
+      }
+    }
+    else if (FFI_TYPE_DOUBLE == firstArgType)
+    {
+      if ((NULL != arg_type->elements[1])
+          && (NULL == arg_type->elements[2])
+          && (FFI_TYPE_DOUBLE == get_ffi_element_type_in_struct(arg_type->elements[1]))
+      ) {
+        return FFI_TYPE_STRUCT_DD;
+      }
+    }
+  }
+  return arg_type->type;
+}
 
 /*====================================================================*/
 /*                                                                    */
@@ -861,7 +907,7 @@ ffi_prep_cif_machdep(ffi_cif *cif)
         FFI_ASSERT (0);
         break;
     }
-
+  cif->rtype->type = ffi_check_struct_for_complex(cif->rtype);
   /* Now for the arguments.  */
 
   for (ptr = cif->arg_types, i = cif->nargs;
@@ -874,6 +920,8 @@ ffi_prep_cif_machdep(ffi_cif *cif)
       if (type == FFI_TYPE_STRUCT)
 	{
 		type = ffi_check_struct_type (*ptr);
+
+		(*ptr)->type = ffi_check_struct_for_complex(*ptr);
 
 	  /* If we pass the struct via pointer, we must reserve space
 	     to copy its data for proper call-by-value semantics.  */
