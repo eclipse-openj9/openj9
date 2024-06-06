@@ -449,6 +449,13 @@ ClassFileOracle::walkFields()
 					}
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 					if (containsKnownAnnotation(foundAnnotations, NULLRESTRICTED_ANNOTATION)) {
+						if (!IS_REF_OR_VAL_SIGNATURE(fieldChar)) {
+							if ('[' == fieldChar) {
+								throwGenericErrorWithCustomMsg(J9NLS_CFR_NO_NULLRESTRICTED_IN_ARRAYFIELD__ID, fieldIndex);
+							} else { /* primitive type */
+								throwGenericErrorWithCustomMsg(J9NLS_CFR_NO_NULLRESTRICTED_IN_PRIMITIVEFIELD__ID, fieldIndex);
+							}
+						}
 						_fieldsInfo[fieldIndex].isNullRestricted = true;
 					}
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
@@ -476,7 +483,7 @@ ClassFileOracle::walkFields()
 				if (!IS_REF_OR_VAL_SIGNATURE(fieldChar)) {
 					if ('[' == fieldChar) {
 						throwGenericErrorWithCustomMsg(J9NLS_CFR_NO_NULLRESTRICTED_IN_ARRAYFIELD__ID, fieldIndex);
-					} else { /* primitive type*/
+					} else { /* primitive type */
 						throwGenericErrorWithCustomMsg(J9NLS_CFR_NO_NULLRESTRICTED_IN_PRIMITIVEFIELD__ID, fieldIndex);
 					}
 				}
