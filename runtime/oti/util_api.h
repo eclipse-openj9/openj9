@@ -2800,9 +2800,8 @@ isDirectSuperInterface(J9VMThread *vmStruct, J9Class *resolvedClass, J9Class *cu
 void
 setIncompatibleClassChangeErrorInvalidDefenderSupersend(J9VMThread *vmStruct, J9Class *resolvedClass, J9Class *currentClass);
 
-
 void
-printModifiers(J9PortLibrary *portLib, U_32 modifiers, modifierScope modScope, modifierSource modifierSrc);
+printModifiers(J9PortLibrary *portLib, U_32 modifiers, modifierScope modScope, modifierSource modifierSrc, BOOLEAN valueTypeClass);
 
 void
 j9_printClassExtraModifiers(J9PortLibrary *portLib, U_32 modifiers);

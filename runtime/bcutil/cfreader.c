@@ -1713,7 +1713,7 @@ checkFields(J9PortLibrary* portLib, J9CfrClassFile * classfile, U_8 * segment, U
 		}
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-		if (J9_ARE_ALL_BITS_SET(classfile->accessFlags, CFR_ACC_VALUE_TYPE)) {
+		if (J9_IS_CLASSFILE_VALUETYPE(classfile)) {
 			if (J9_ARE_ALL_BITS_SET(classfile->accessFlags, CFR_ACC_ABSTRACT)) {
 				if (J9_ARE_NO_BITS_SET(value, CFR_ACC_STATIC)) {
 					errorCode = J9NLS_CFR_ERR_MISSING_ACC_STATIC_ON_ABSTRACT_IDENTITYLESS_CLASS_FIELD__ID;
@@ -1966,7 +1966,7 @@ checkMethods(J9PortLibrary* portLib, J9CfrClassFile* classfile, U_8* segment, U_
 		}
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-		if (J9_ARE_ALL_BITS_SET(classfile->accessFlags, CFR_ACC_VALUE_TYPE)) {
+		if (J9_IS_CLASSFILE_VALUETYPE(classfile)) {
 			if (J9_ARE_ALL_BITS_SET(value, CFR_ACC_SYNCHRONIZED)) {
 				if (J9_ARE_NO_BITS_SET(value, CFR_ACC_STATIC)) {
 					errorCode = J9NLS_CFR_ERR_NON_STATIC_SYNCHRONIZED_VALUE_TYPE_METHOD_V1__ID;
@@ -2624,7 +2624,7 @@ checkAttributes(J9PortLibrary* portLib, J9CfrClassFile* classfile, J9CfrAttribut
 			 * value class... There must not be an ImplicitCreation attribute in the attributes table of any
 			 * other ClassFile structure representing a class, interface, or module.
 			 */
-			if (J9_ARE_NO_BITS_SET(classfile->accessFlags, CFR_ACC_VALUE_TYPE)
+			if (!J9_IS_CLASSFILE_VALUETYPE(classfile)
 			 || J9_ARE_ANY_BITS_SET(classfile->accessFlags, CFR_ACC_INTERFACE | CFR_ACC_ABSTRACT | CFR_ACC_MODULE)
 			) {
 				errorCode = J9NLS_CFR_ERR_IMPLICITCREATION_ILLEGAL_CLASS_MODIFIERS__ID;
@@ -3140,19 +3140,10 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	/* Currently value type is built on JDK22, so compare with JDK22 for now. */
-	if ((flags & BCT_MajorClassFileVersionMask) < BCT_JavaMajorVersionShifted(22)) {
-		classfile->accessFlags &= ~(CFR_ACC_VALUE_TYPE | CFR_ACC_PRIMITIVE_VALUE_TYPE | CFR_ACC_IDENTITY);
+	if ((flags & BCT_MajorClassFileVersionMask) < BCT_JavaMajorVersionShifted(23)) {
+		classfile->accessFlags &= ~CFR_ACC_IDENTITY;
 	}
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-	if (J9_ARE_ALL_BITS_SET(classfile->accessFlags, CFR_ACC_PRIMITIVE_VALUE_TYPE)) {
-		if (J9_ARE_NO_BITS_SET(classfile->accessFlags, CFR_ACC_VALUE_TYPE)) {
-			errorCode = J9NLS_CFR_ERR_VALUE_FLAG_MISSING_ON_PRIMITIVE_CLASS__ID;
-			offset = index - data - 2;
-			goto _errorFound;
-		}
-	}
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
-	if (J9_ARE_ALL_BITS_SET(classfile->accessFlags, CFR_ACC_VALUE_TYPE)) {
+	if (J9_IS_CLASSFILE_VALUETYPE(classfile)) {
 		if (J9_ARE_NO_BITS_SET(classfile->accessFlags, CFR_ACC_ABSTRACT | CFR_ACC_FINAL)) {
 			errorCode = J9NLS_CFR_ERR_FINAL_ABSTRACT_FLAG_MISSING_ON_VALUE_CLASS__ID;
 			offset = index - data - 2;
@@ -3160,13 +3151,6 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 		}
 		if (J9_ARE_ANY_BITS_SET(classfile->accessFlags, CFR_ACC_IDENTITY | CFR_ACC_ENUM | CFR_ACC_MODULE)) {
 			errorCode = J9NLS_CFR_ERR_INCORRECT_FLAG_FOUND_ON_VALUE_CLASS__ID;
-			offset = index - data - 2;
-			goto _errorFound;
-		}
-	}
-	if (J9_IS_CLASSFILE_PRIMITIVE_VALUETYPE(classfile)) {
-		if (J9_ARE_ANY_BITS_SET(classfile->accessFlags, CFR_ACC_ABSTRACT | CFR_ACC_INTERFACE)) {
-			errorCode = J9NLS_CFR_ERR_INCORRECT_FLAG_FOUND_ON_PRMITIVE_VALUE_CLASS__ID;
 			offset = index - data - 2;
 			goto _errorFound;
 		}
