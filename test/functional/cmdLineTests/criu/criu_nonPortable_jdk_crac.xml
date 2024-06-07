@@ -30,7 +30,7 @@
   <variable name="CRACCHECKPOINTTO" value="-XX:CRaCCheckpointTo=./cpData"/>
 
   <test id="jdk.crac - create and restore once">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ $EXPORTS$ $CRACCHECKPOINTTO$" $TESTNG$ $MAINCLASS_TESTJDKCRAC$ testJDKCheckpoint 1 false false</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ $EXPORTS$ $CRACCHECKPOINTTO$" $TESTNG$ $MAINCLASS_TESTJDKCRAC$ testJDKCheckpoint 1 false false false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
     <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
@@ -46,7 +46,7 @@
   </test>
 
   <test id="jdk.crac - jcmd request checkpoint via JDK.checkpoint">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ $EXPORTS$ $CRACCHECKPOINTTO$" $TESTNG$ $MAINCLASS_TESTJDKCRAC$ JDK.checkpoint 1 false false</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ $EXPORTS$ $CRACCHECKPOINTTO$" $TESTNG$ $MAINCLASS_TESTJDKCRAC$ JDK.checkpoint 1 false false false</command>
     <output type="success" caseSensitive="no" regex="no">JVM checkpoint requested</output>
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
     <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
@@ -60,7 +60,7 @@
   </test>
 
   <test id="jdk.crac.management - testCRaCMXBeanGetUptimeSinceRestore">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ $EXPORTS$ $CRACCHECKPOINTTO$" $TESTNG$ $MAINCLASS_TESTJDKCRAC$ testCRaCMXBeanGetUptimeSinceRestore 1 false false</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ $EXPORTS$ $CRACCHECKPOINTTO$" $TESTNG$ $MAINCLASS_TESTJDKCRAC$ testCRaCMXBeanGetUptimeSinceRestore 1 false false false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="success" caseSensitive="yes" regex="no">PASSED: CRaCMXBean.getUptimeSinceRestore()</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
@@ -78,7 +78,7 @@
   </test>
 
   <test id="jdk.crac.management - testCRaCMXBeanGetRestoreTime">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ $EXPORTS$ $CRACCHECKPOINTTO$" $TESTNG$ $MAINCLASS_TESTJDKCRAC$ testCRaCMXBeanGetRestoreTime 1 false false</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ $EXPORTS$ $CRACCHECKPOINTTO$" $TESTNG$ $MAINCLASS_TESTJDKCRAC$ testCRaCMXBeanGetRestoreTime 1 false false false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="success" caseSensitive="yes" regex="no">PASSED: CRaCMXBean.getRestoreTime()</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
@@ -96,7 +96,7 @@
   </test>
 
   <test id="jdk.crac.management - testCRaCMXBeanGetObjectName">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ $EXPORTS$ $CRACCHECKPOINTTO$" $TESTNG$ $MAINCLASS_TESTJDKCRAC$ testCRaCMXBeanGetObjectName 0 false false</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ $EXPORTS$ $CRACCHECKPOINTTO$" $TESTNG$ $MAINCLASS_TESTJDKCRAC$ testCRaCMXBeanGetObjectName 0 false false false</command>
     <output type="success" caseSensitive="yes" regex="no">PASSED: CRaCMXBean.getObjectName()</output>
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
     <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
@@ -112,7 +112,7 @@
   </test>
 
   <test id="jdk.crac.management - testCRaCMXBeanGetObjectNameThrowsInternalError">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ $EXPORTS$ $CRACCHECKPOINTTO$" $TESTNG$ $MAINCLASS_TESTJDKCRAC$ testCRaCMXBeanGetObjectNameThrowsInternalError 0 false false</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ $EXPORTS$ $CRACCHECKPOINTTO$" $TESTNG$ $MAINCLASS_TESTJDKCRAC$ testCRaCMXBeanGetObjectNameThrowsInternalError 0 false false false</command>
     <output type="success" caseSensitive="yes" regex="no">PASSED: CRaCMXBean.getObjectName()</output>
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
     <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
@@ -127,7 +127,7 @@
   </test>
 
   <test id="Test restore with -XX:CRaCRestoreFrom=PATH">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ $EXPORTS$ $CRACCHECKPOINTTO$" $TESTNG$ $MAINCLASS_TESTJDKCRAC$ testCRaCRestoreFrom 1 false false</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ $EXPORTS$ $CRACCHECKPOINTTO$" $TESTNG$ $MAINCLASS_TESTJDKCRAC$ testCRaCRestoreFrom 1 false false true</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
     <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
