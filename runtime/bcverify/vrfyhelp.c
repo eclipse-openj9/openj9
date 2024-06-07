@@ -1093,15 +1093,6 @@ static void getNameAndLengthFromClassNameList (J9BytecodeVerificationData *verif
 		J9ROMClass * romClass = verifyData->romClass;
 		*name = (U_8 *) ((UDATA) offset[0] + (UDATA) romClass);
 	}
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-	if (IS_QTYPE(*(char *)*name)
-		&& (';' == *(char *)(*name + (*length - 1)))
-	) {
-		/* we are dealing with signature envelope, extract the name from it */
-		*name += 1;
-		*length -= 2;
-	}
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 }
 
 /* return BCV_SUCCESS if field is found
