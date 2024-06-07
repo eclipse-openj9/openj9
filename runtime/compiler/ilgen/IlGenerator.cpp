@@ -2652,6 +2652,20 @@ void TR_J9ByteCodeIlGenerator::expandUnresolvedClassInstanceof(TR::TreeTop *tree
    TR_ASSERT(origClassNode->getSymbolReference()->isUnresolved(), "unresolved class instanceof n%un: expected symref of class child n%un to be unresolved\n", instanceofNode->getGlobalIndex(), origClassNode->getGlobalIndex());
 
    bool trace = comp()->getOption(TR_TraceILGen);
+
+   // If the receiver of the instanceof is non-null, there is no need of the null case
+   if(instanceofNode->isReferenceNonNull() || objNode->isNonNull())
+      {
+      TR::Node *resolveCheckNode = genResolveCheck(origClassNode);
+      resolveCheckNode->copyByteCodeInfo(instanceofNode);
+      tree->insertBefore(TR::TreeTop::create(comp(), resolveCheckNode));
+
+      if (trace)
+         traceMsg(comp(), "%s: emit ResolveCHK n%dn before the unresolved class instanceof n%un in block_%d\n", __FUNCTION__,
+            resolveCheckNode->getGlobalIndex(), instanceofNode->getGlobalIndex(), tree->getEnclosingBlock()->getNumber());
+      return;
+      }
+
    if (trace)
       traceMsg(comp(), "expanding unresolved class instanceof n%un in block_%d\n", instanceofNode->getGlobalIndex(), tree->getEnclosingBlock()->getNumber());
 
