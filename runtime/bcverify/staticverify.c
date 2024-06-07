@@ -1917,30 +1917,7 @@ j9bcv_verifyClassStructure (J9PortLibrary * portLib, J9CfrClassFile * classfile,
 			}
 		}
 		if (isInit) {
-			BOOLEAN invalidRetType = FALSE;
-			if (
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-				(CFR_METHOD_NAME_NEW == isInit)
-#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
-				FALSE
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
-			) {
-				U_16 returnChar = getReturnTypeFromSignature(info->bytes, info->slot1, NULL);
-				if (J9_IS_CLASSFILE_PRIMITIVE_VALUETYPE(classfile)) {
-					if (!IS_QTYPE(returnChar)) {
-						invalidRetType = TRUE;
-					}
-				} else {
-					if (!IS_LTYPE(returnChar)) {
-						invalidRetType = TRUE;
-					}
-				}
-			} else {
-				if (info->bytes[info->slot1 - 1] != 'V') {
-					invalidRetType = TRUE;
-				}
-			}
-			if (invalidRetType) {
+			if (info->bytes[info->slot1 - 1] != 'V') {
 				Trc_STV_j9bcv_verifyClassStructure_MethodError(J9NLS_CFR_ERR_BC_METHOD_INVALID_SIG__ID, i);
 				buildMethodError((J9CfrError *)segment, errorType, CFR_ThrowClassFormatError, (I_32) i, 0, method, classfile->constantPool);
 				result = -1;

@@ -36,11 +36,6 @@
 #include "util_api.h"
 #include "j9protos.h"
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-/* major version 63 is Java 19 */
-#define VALUE_TYPES_MAJOR_VERSION 63
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
-
 /* The array entries must be in same order as the enums in ClassFileOracle.hpp */
 ClassFileOracle::KnownAnnotation ClassFileOracle::_knownAnnotations[] = {
 #define FRAMEITERATORSKIP_SIGNATURE "Ljava/lang/invoke/MethodHandle$FrameIteratorSkip;"
@@ -279,7 +274,15 @@ ClassFileOracle::ClassFileOracle(BufferManager *bufferManager, J9CfrClassFile *c
 		return;
 	}
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)	
-	if (J9_ARE_ALL_BITS_SET(_classFile->accessFlags, CFR_ACC_VALUE_TYPE) 
+	if (J9_ARE_ALL_BITS_SET(_classFile->accessFlags, CFR_ACC_IDENTITY)) {
+		_hasIdentityFlagSet = true;
+	} else if ((_classFile->majorVersion >= VALUE_TYPES_MAJOR_VERSION)
+		&& (PREVIEW_MINOR_VERSION == _classFile->minorVersion)
+	) {
+		_isValueType = true;
+	}
+
+	if (_isValueType
 		|| J9_ARE_NO_BITS_SET(_classFile->accessFlags, CFR_ACC_ABSTRACT | CFR_ACC_INTERFACE)
 	) {
 		/**
@@ -287,12 +290,6 @@ ClassFileOracle::ClassFileOracle(BufferManager *bufferManager, J9CfrClassFile *c
 		 * Simply set _hasNonEmptyConstructor to true for value types, or concrete classes.
 		 */ 
 		_hasNonEmptyConstructor = true;
-	}
-
-	if (J9_ARE_ALL_BITS_SET(_classFile->accessFlags, CFR_ACC_IDENTITY)) {
-		_hasIdentityFlagSet = true;
-	} else {
-		_isValueType = true;
 	}
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 

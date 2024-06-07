@@ -136,7 +136,7 @@ IDATA j9bcutil_dumpRomClass( J9ROMClass *romClass, J9PortLibrary *portLib, J9Tra
 	dumpEnclosingMethod(portLib, romClass, flags);
 
 	j9tty_printf( PORTLIB,  "Basic Access Flags (0x%X): ", romClass->modifiers);
-	printModifiers(PORTLIB, romClass->modifiers, ONLY_SPEC_MODIFIERS, MODIFIERSOURCE_CLASS);
+	printModifiers(PORTLIB, romClass->modifiers, ONLY_SPEC_MODIFIERS, MODIFIERSOURCE_CLASS, J9ROMCLASS_IS_VALUE(romClass));
 	j9tty_printf( PORTLIB,  "\n");
 	j9tty_printf( PORTLIB,  "J9 Access Flags (0x%X): ", romClass->extraModifiers);
 	j9_printClassExtraModifiers(portLib, romClass->extraModifiers);
@@ -169,7 +169,7 @@ IDATA j9bcutil_dumpRomClass( J9ROMClass *romClass, J9PortLibrary *portLib, J9Tra
 		}
 		j9tty_printf( PORTLIB, "\n");
 		j9tty_printf( PORTLIB,  "Member Access Flags (0x%X): ", romClass->memberAccessFlags);
-		printModifiers(PORTLIB, romClass->memberAccessFlags, ONLY_SPEC_MODIFIERS, MODIFIERSOURCE_CLASS);
+		printModifiers(PORTLIB, romClass->memberAccessFlags, ONLY_SPEC_MODIFIERS, MODIFIERSOURCE_CLASS, J9ROMCLASS_IS_VALUE(romClass));
 
 		j9tty_printf( PORTLIB,  "\n");
 	}
@@ -323,7 +323,7 @@ static I_32 dumpRomField( J9ROMFieldShape *romField, J9PortLibrary *portLib, U_3
 	j9tty_printf( PORTLIB,  "\n");
 
 	j9tty_printf( PORTLIB, "  Access Flags (%X): ", romField->modifiers);
-	printModifiers(PORTLIB, romField->modifiers, ONLY_SPEC_MODIFIERS, MODIFIERSOURCE_FIELD);
+	printModifiers(PORTLIB, romField->modifiers, ONLY_SPEC_MODIFIERS, MODIFIERSOURCE_FIELD, FALSE);
 	j9tty_printf( PORTLIB, "\n");
 	return BCT_ERR_NO_ERROR;
 }
@@ -347,7 +347,7 @@ static I_32 dumpRomStaticField( J9ROMFieldShape *romStatic, J9PortLibrary *portL
 	j9tty_printf( PORTLIB,  "\n");
 
 	j9tty_printf( PORTLIB, "  Access Flags (%X): ", romStatic->modifiers);
-	printModifiers(PORTLIB, romStatic->modifiers, ONLY_SPEC_MODIFIERS, MODIFIERSOURCE_FIELD);
+	printModifiers(PORTLIB, romStatic->modifiers, ONLY_SPEC_MODIFIERS, MODIFIERSOURCE_FIELD, FALSE);
 	j9tty_printf( PORTLIB, "\n");
 
 	return BCT_ERR_NO_ERROR;
@@ -954,7 +954,7 @@ I_32 j9bcutil_dumpRomMethod( J9ROMMethod *romMethod, J9ROMClass *romClass, J9Por
 	j9tty_printf( PORTLIB,  "\n");
 
 	j9tty_printf( PORTLIB, "  Access Flags (%X): ", romMethod->modifiers);
-	printModifiers(PORTLIB, (U_32)romMethod->modifiers, INCLUDE_INTERNAL_MODIFIERS, MODIFIERSOURCE_METHOD);
+	printModifiers(PORTLIB, (U_32)romMethod->modifiers, INCLUDE_INTERNAL_MODIFIERS, MODIFIERSOURCE_METHOD, FALSE);
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	if (J9_ARE_ALL_BITS_SET(romClass->optionalFlags, J9_ROMCLASS_OPTINFO_IMPLICITCREATION_ATTRIBUTE)) {
 		if (J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(J9ROMMETHOD_NAME(romMethod)), J9UTF8_LENGTH(J9ROMMETHOD_NAME(romMethod)), "<vnew>")) {
@@ -1022,7 +1022,7 @@ I_32 j9bcutil_dumpRomMethod( J9ROMMethod *romMethod, J9ROMClass *romClass, J9Por
 				dumpUTF( parameterNameUTF8, portLib, 0);
 			}
 			j9tty_printf( PORTLIB, "    0x%x ( ", parameters[i].flags);
-			printModifiers(PORTLIB, parameters[i].flags, ONLY_SPEC_MODIFIERS, MODIFIERSOURCE_METHODPARAMETER);
+			printModifiers(PORTLIB, parameters[i].flags, ONLY_SPEC_MODIFIERS, MODIFIERSOURCE_METHODPARAMETER, FALSE);
 			j9tty_printf( PORTLIB, " )\n");
 		}
 		j9tty_printf( PORTLIB, "\n");
@@ -1122,7 +1122,7 @@ dumpModifierWord(J9PortLibrary *portLib, U_32 modifiers, J9ModifierInfo *modInfo
 }
 
 void
-printModifiers(J9PortLibrary *portLib, U_32 modifiers, modifierScope modScope, modifierSource modifierSrc)
+printModifiers(J9PortLibrary *portLib, U_32 modifiers, modifierScope modScope, modifierSource modifierSrc, BOOLEAN valueTypeClass)
 {
 	PORT_ACCESS_FROM_PORT(portLib);
 
@@ -1352,13 +1352,9 @@ printModifiers(J9PortLibrary *portLib, U_32 modifiers, modifierScope modScope, m
 	}
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-	if (MODIFIERSOURCE_CLASS == modifierSrc) {
-		if(modifiers & CFR_ACC_VALUE_TYPE)
-		{
-			j9tty_printf(PORTLIB, "value");
-			modifiers &= ~CFR_ACC_VALUE_TYPE;
-			if(modifiers) j9tty_printf(PORTLIB, " ");
-		}
+	if (MODIFIERSOURCE_CLASS == modifierSrc && valueTypeClass) {
+		j9tty_printf(PORTLIB, "value");
+		if(modifiers) j9tty_printf(PORTLIB, " ");
 	}
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
