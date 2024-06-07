@@ -807,16 +807,16 @@ TR_J9InlinerPolicy::genIndirectAccessCodeForUnsafeGetPut(TR::Node* directAccessO
 TR::Block *
 TR_J9InlinerPolicy::createUnsafeGetPutCallDiamond(TR::TreeTop* callNodeTreeTop,
                                             TR::TreeTop* comparisonTree,
-                                            TR::TreeTop* ifTree,
-                                            TR::TreeTop* elseTree)
+                                            TR::TreeTop* branchTargetTree,
+                                            TR::TreeTop* fallThroughTree)
    {
    // Connect the trees/add blocks etc. properly and split the original block
    TR::Block * joinBlock =
       callNodeTreeTop->getEnclosingBlock()
             ->createConditionalBlocksBeforeTree(callNodeTreeTop,
                                                 comparisonTree,
-                                                ifTree,
-                                                elseTree,
+                                                branchTargetTree,
+                                                fallThroughTree,
                                                 comp()->getFlowGraph(), false, false);
    return joinBlock;
    }
@@ -874,8 +874,8 @@ TR_J9InlinerPolicy::genCodeForUnsafeGetPut(TR::Node* unsafeAddress,
    TR::TreeTop *lowTagCmpTree = genClassCheckForUnsafeGetPut(unsafeOffset, /* branchIfLowTagged */ !conversionNeeded);
 
    TR::TreeTop *firstComparisonTree;
-   TR::TreeTop *ifTree;
-   TR::TreeTop *elseTree;
+   TR::TreeTop *branchTargetTree;
+   TR::TreeTop *fallThroughTree;
 
    TR_OpaqueClassBlock *javaLangClass = comp()->getClassClassPointer(/* isVettedForAOT = */ true);
 
@@ -886,19 +886,19 @@ TR_J9InlinerPolicy::genCodeForUnsafeGetPut(TR::Node* unsafeAddress,
    if (conversionNeeded)
       {
       firstComparisonTree = nullComparisonTree;
-      ifTree = arrayDirectAccessTreeTop;
-      elseTree = indirectAccessTreeTop;
+      branchTargetTree = arrayDirectAccessTreeTop;
+      fallThroughTree = indirectAccessTreeTop;
       }
    else
       {
       firstComparisonTree = (javaLangClass != NULL) ? lowTagCmpTree : nullComparisonTree;
-      ifTree = indirectAccessTreeTop;
-      elseTree = directAccessTreeTop;
+      branchTargetTree = indirectAccessTreeTop;
+      fallThroughTree = directAccessTreeTop;
       }
 
    TR::Block *joinBlock =
          createUnsafeGetPutCallDiamond(
-               callNodeTreeTop, firstComparisonTree, ifTree, elseTree);
+               callNodeTreeTop, firstComparisonTree, branchTargetTree, fallThroughTree);
 
    debugTrace(tracer(), "\t In genCodeForUnsafeGetPut, joinBlock is %d\n", joinBlock->getNumber());
 
@@ -1409,18 +1409,18 @@ TR_J9InlinerPolicy::createUnsafeCASCallDiamond( TR::TreeTop *callNodeTreeTop, TR
 
    // genClassCheck generates a ifcmpne offset&mask 1, meaning if it is NOT
    // lowtagged (ie offset&mask == 0), the branch will be taken
-   TR::TreeTop *ifTree = TR::TreeTop::create(comp(),callNodeTreeTop->getNode()->duplicateTree());
-   ifTree->getNode()->getFirstChild()->setIsSafeForCGToFastPathUnsafeCall(true);
+   TR::TreeTop *branchTargetTree = TR::TreeTop::create(comp(),callNodeTreeTop->getNode()->duplicateTree());
+   branchTargetTree->getNode()->getFirstChild()->setIsSafeForCGToFastPathUnsafeCall(true);
 
 
-   TR::TreeTop *elseTree = TR::TreeTop::create(comp(),callNodeTreeTop->getNode()->duplicateTree());
+   TR::TreeTop *fallThroughTree = TR::TreeTop::create(comp(),callNodeTreeTop->getNode()->duplicateTree());
 
 
-   ifTree->getNode()->getFirstChild()->setVisitCount(_inliner->getVisitCount());
-   elseTree->getNode()->getFirstChild()->setVisitCount(_inliner->getVisitCount());
+   branchTargetTree->getNode()->getFirstChild()->setVisitCount(_inliner->getVisitCount());
+   fallThroughTree->getNode()->getFirstChild()->setVisitCount(_inliner->getVisitCount());
 
 
-   debugTrace(tracer(),"ifTree = %p elseTree = %p",ifTree->getNode(),elseTree->getNode());
+   debugTrace(tracer(),"branchTargetTree = %p fallThroughTree = %p",branchTargetTree->getNode(),fallThroughTree->getNode());
 
 
 
@@ -1442,25 +1442,25 @@ TR_J9InlinerPolicy::createUnsafeCASCallDiamond( TR::TreeTop *callNodeTreeTop, TR
 
    TR::Block *callBlock = callNodeTreeTop->getEnclosingBlock();
 
-   callBlock->createConditionalBlocksBeforeTree(callNodeTreeTop,compareTree, ifTree, elseTree, comp()->getFlowGraph(),false,false);
+   callBlock->createConditionalBlocksBeforeTree(callNodeTreeTop,compareTree, branchTargetTree, fallThroughTree, comp()->getFlowGraph(),false,false);
 
    // the original call will be deleted by createConditionalBlocksBeforeTree, but if the refcount was > 1, we need to insert stores.
 
    if (newSymbolReference)
       {
-      TR::Node *ifStoreNode = TR::Node::createWithSymRef(comp()->il.opCodeForDirectStore(dataType), 1, 1, ifTree->getNode()->getFirstChild(), newSymbolReference);
-      TR::TreeTop *ifStoreTree = TR::TreeTop::create(comp(), ifStoreNode);
+      TR::Node *branchTargetStoreNode = TR::Node::createWithSymRef(comp()->il.opCodeForDirectStore(dataType), 1, 1, branchTargetTree->getNode()->getFirstChild(), newSymbolReference);
+      TR::TreeTop *branchTargetStoreTree = TR::TreeTop::create(comp(), branchTargetStoreNode);
 
-      ifTree->insertAfter(ifStoreTree);
+      branchTargetTree->insertAfter(branchTargetStoreTree);
 
-      debugTrace(tracer(),"Inserted store tree %p for if side of the diamond",ifStoreNode);
+      debugTrace(tracer(),"Inserted store tree %p for branch target (taken) side of the diamond",branchTargetStoreNode);
 
-      TR::Node *elseStoreNode = TR::Node::createWithSymRef(comp()->il.opCodeForDirectStore(dataType), 1, 1, elseTree->getNode()->getFirstChild(), newSymbolReference);
-      TR::TreeTop *elseStoreTree = TR::TreeTop::create(comp(), elseStoreNode);
+      TR::Node *fallThroughStoreNode = TR::Node::createWithSymRef(comp()->il.opCodeForDirectStore(dataType), 1, 1, fallThroughTree->getNode()->getFirstChild(), newSymbolReference);
+      TR::TreeTop *fallThroughStoreTree = TR::TreeTop::create(comp(), fallThroughStoreNode);
 
-      elseTree->insertAfter(elseStoreTree);
+      fallThroughTree->insertAfter(fallThroughStoreTree);
 
-      debugTrace(tracer(),"Inserted store tree %p for else side of the diamond",elseStoreNode);
+      debugTrace(tracer(),"Inserted store tree %p for fall-through side of the diamond",fallThroughStoreNode);
 
       }
 
@@ -1840,19 +1840,19 @@ TR_J9InlinerPolicy::inlineGetClassAccessFlags(TR::ResolvedMethodSymbol *calleeSy
                           0);
    TR::TreeTop *compareTree = TR::TreeTop::create(comp(), compareNode);
 
-   // generating if-then part "   modifiers = J9AccAbstract | J9AccFinal | J9AccPublic;"
-   TR::Node *modifiersIfStrNode = TR::Node::createStore(modifiersSymRef,
+   // generating if-then (branch target) part "   modifiers = J9AccAbstract | J9AccFinal | J9AccPublic;"
+   TR::Node *modifiersBranchTargStrNode = TR::Node::createStore(modifiersSymRef,
                                  TR::Node::iconst(callNode, (int32_t)(comp()->fej9()->constClassFlagsAbstract() | comp()->fej9()->constClassFlagsFinal() | comp()->fej9()->constClassFlagsPublic()))
                                                      );
-   TR::TreeTop *ifTree = TR::TreeTop::create(comp(), modifiersIfStrNode);
+   TR::TreeTop *branchTargetTree = TR::TreeTop::create(comp(), modifiersBranchTargStrNode);
 
 
-   // generating else part "   modifiers &= 0xFFF;"
+   // generating else (fall-through) part "   modifiers &= 0xFFF;"
    TR::Node *modifiersIAndNode = TR::Node::create(TR::iand, 2,
                                 TR::Node::createLoad(callNode, modifiersSymRef),
                                 TR::Node::iconst(callNode, 0xFFF));
-   TR::Node *modifiersElseStrNode = TR::Node::createStore(modifiersSymRef, modifiersIAndNode);
-   TR::TreeTop *elseTree = TR::TreeTop::create(comp(), modifiersElseStrNode);
+   TR::Node *modifiersFallThroughStrNode = TR::Node::createStore(modifiersSymRef, modifiersIAndNode);
+   TR::TreeTop *fallThroughTree = TR::TreeTop::create(comp(), modifiersFallThroughStrNode);
 
    // generating "   return modifiers;"
    // - simply convert the original call node to an iload of the modifiers
@@ -1861,7 +1861,7 @@ TR_J9InlinerPolicy::inlineGetClassAccessFlags(TR::ResolvedMethodSymbol *calleeSy
    callNode->removeAllChildren();
    callNode->setSymbolReference(modifiersSymRef);
 
-   block->createConditionalBlocksBeforeTree(callNodeTreeTop, compareTree, ifTree, elseTree, callerSymbol->getFlowGraph(), false);
+   block->createConditionalBlocksBeforeTree(callNodeTreeTop, compareTree, branchTargetTree, fallThroughTree, callerSymbol->getFlowGraph(), false);
 
    return resultNode;
 
@@ -2832,9 +2832,9 @@ TR_MultipleCallTargetInliner::eliminateTailRecursion(
          //       iload #101[0
          //       iconst 1
          //   iconst 2
-         TR::TreeTop * ifTreeTop = conditionBlock->getLastRealTreeTop();
+         TR::TreeTop * branchTargetTreeTop = conditionBlock->getLastRealTreeTop();
 
-         TR::TreeTop::create(comp(), ifTreeTop->getPrevTreeTop(),
+         TR::TreeTop::create(comp(), branchTargetTreeTop->getPrevTreeTop(),
                             TR::Node::create(TR::ireturn, 1,
                                             TR::Node::create(TR::idiv, 2,
                                                   TR::Node::create(TR::imul, 2,
@@ -2845,7 +2845,7 @@ TR_MultipleCallTargetInliner::eliminateTailRecursion(
                                                   TR::Node::create(returnNode, TR::iconst, 0, 2))));
 
 
-         callerSymbol->removeTree(ifTreeTop);
+         callerSymbol->removeTree(branchTargetTreeTop);
          TR::CFG * cfg = callerSymbol->getFlowGraph();
          cfg->removeEdge(conditionBlock->getSuccessors().front());
          cfg->removeEdge(*(++conditionBlock->getSuccessors().begin()));

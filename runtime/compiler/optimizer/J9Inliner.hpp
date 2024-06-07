@@ -221,15 +221,15 @@ class TR_J9InlinerPolicy : public OMR_InlinerPolicy
        *           being inlined
        * \param comparisonTree A pointer to a \ref TR::TreeTop for a \c if node that will
        *           be the root of the diamond
-       * \param ifTree A pointer to a \ref TR::TreeTop representing the taken branch of
+       * \param branchTargetTree A pointer to a \ref TR::TreeTop representing the taken branch of
        *           \c comparisonTree
-       * \param elseTree A pointer to a \ref TR::TreeTop reprenting the fall-through branch
+       * \param fallThroughTree A pointer to a \ref TR::TreeTop reprenting the fall-through branch
        *           of \c comparisonTree
        *
        * \return A pointer to a \ref TR::Block representing the join point of the diamond
-       *         after executing either \c ifTree or \c elseTree
+       *         after executing either \c branchTargetTree or \c fallThroughTree
        */
-      TR::Block * createUnsafeGetPutCallDiamond(TR::TreeTop* callNodeTreeTop, TR::TreeTop* comparisonTree, TR::TreeTop* ifTree, TR::TreeTop* elseTree);
+      TR::Block * createUnsafeGetPutCallDiamond(TR::TreeTop* callNodeTreeTop, TR::TreeTop* comparisonTree, TR::TreeTop* branchTargetTree, TR::TreeTop* fallThroughTree);
       bool createUnsafePutWithOffset(TR::ResolvedMethodSymbol *, TR::ResolvedMethodSymbol *, TR::TreeTop *, TR::Node *, TR::DataType, bool, bool needNullCheck = false, bool isOrdered = false);
       TR::TreeTop* genDirectAccessCodeForUnsafeGetPut(TR::Node* callNode, bool conversionNeeded, bool isUnsafeGet);
       void createTempsForUnsafePutGet(TR::Node*& unsafeAddress, TR::Node* unsafeCall, TR::TreeTop* callNodeTreeTop, TR::Node*& offset, TR::SymbolReference*& newSymbolReferenceForAddress, bool isUnsafeGet);
