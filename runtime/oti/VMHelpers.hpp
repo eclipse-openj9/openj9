@@ -2264,6 +2264,12 @@ exit:
 		targetThread->privateFlags2 |= J9_PRIVATE_FLAGS2_REENTER_INTERPRETER;
 		indicateAsyncMessagePending(targetThread);
 	}
+
+	static VMINLINE UDATA
+	staticFieldOffset(J9VMThread *currentThread, J9JNIFieldID *fieldID)
+	{
+		return J9VM_STATIC_FIELD_OFFSET(currentThread, fieldID);
+	}
 };
 
 #endif /* VMHELPERS_HPP_ */

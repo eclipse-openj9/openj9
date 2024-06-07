@@ -422,4 +422,10 @@ static_assert((LITERAL_STRLEN(J9_UNMODIFIABLE_CLASS_ANNOTATION) < (size_t)'/'), 
 #endif /* __cplusplus */
 #endif /* 0 */
 
+#define J9VM_STATIC_FIELD_IS_SINGLE_OR_DOUBLE(modifiers) J9_ARE_ANY_BITS_SET((modifiers) & J9FieldTypeMask, (J9FieldTypeInt | J9FieldTypeFloat | J9FieldTypeLong | J9FieldTypeDouble))
+
+#define J9VM_STATIC_FIELD_OFFSET(currentThread, fieldID) J9VM_STATIC_FIELD_IS_SINGLE_OR_DOUBLE(fieldID->field->modifiers) ? (((UDATA)(fieldID)->declaringClass->ramStatics) + (fieldID)->offset) : ((fieldID)->offset | J9_SUN_STATIC_FIELD_OFFSET_TAG)
+
+#define J9VM_STATIC_FIELD_BASE(currentThread, isSingleOrDouble, fieldBase) (isSingleOrDouble) ? NULL : (fieldBase)
+
 #endif /* J9_H */

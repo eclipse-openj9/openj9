@@ -720,7 +720,7 @@ Java_sun_misc_Unsafe_staticFieldBase__Ljava_lang_reflect_Field_2(JNIEnv *env, jo
 		} else if (J9_ARE_NO_BITS_SET(romField->modifiers, J9AccStatic)) {
 			vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, NULL);
 		} else {
-			base = vmFuncs->j9jni_createLocalRef(env, J9VM_J9CLASS_TO_HEAPCLASS(fieldID->declaringClass));
+			base = vmFuncs->j9jni_createLocalRef(env, J9VM_STATIC_FIELD_BASE(currentThread, J9VM_STATIC_FIELD_IS_SINGLE_OR_DOUBLE(romField->modifiers), (J9VM_J9CLASS_TO_HEAPCLASS(fieldID->declaringClass))));
 		}
 	}
 	vmFuncs->internalExitVMToJNI(currentThread);
@@ -746,14 +746,16 @@ Java_sun_misc_Unsafe_staticFieldOffset(JNIEnv *env, jobject receiver, jobject fi
 		} else if (J9_ARE_NO_BITS_SET(romField->modifiers, J9AccStatic)) {
 			vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, NULL);
 		} else {
-			offset = fieldID->offset | J9_SUN_STATIC_FIELD_OFFSET_TAG;
-
-			if (J9_ARE_ANY_BITS_SET(romField->modifiers, J9AccFinal)) {
-				offset |= J9_SUN_FINAL_FIELD_OFFSET_TAG;
+			offset = VM_VMHelpers::staticFieldOffset(currentThread, fieldID);
+			if (!J9VM_STATIC_FIELD_IS_SINGLE_OR_DOUBLE(fieldID->field->modifiers)) {
+				if (J9_ARE_ANY_BITS_SET(romField->modifiers, J9AccFinal)) {
+					offset |= J9_SUN_FINAL_FIELD_OFFSET_TAG;
+				}
 			}
 		}
 	}
 	vmFuncs->internalExitVMToJNI(currentThread);
+
 	return offset;
 }
 
@@ -840,7 +842,7 @@ Java_jdk_internal_misc_Unsafe_objectFieldOffset1(JNIEnv *env, jobject receiver, 
 		if (NULL == romField) {
 			vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
 		} else if (J9_ARE_ANY_BITS_SET(romField->modifiers, J9AccStatic)) {
-			offset = fieldID->offset | J9_SUN_STATIC_FIELD_OFFSET_TAG;
+			offset = VM_VMHelpers::staticFieldOffset(currentThread, fieldID);
 
 			if (J9_ARE_ANY_BITS_SET(romField->modifiers, J9AccFinal)) {
 				offset |= J9_SUN_FINAL_FIELD_OFFSET_TAG;
