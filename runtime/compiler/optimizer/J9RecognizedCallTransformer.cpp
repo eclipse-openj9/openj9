@@ -242,31 +242,11 @@ void J9::RecognizedCallTransformer::process_java_lang_StringCoding_encodeASCII(T
    TR::SymbolReference *methodSymRef = comp()->getSymRefTab()->findOrCreateEncodeASCIISymbolRef();
    TR::Node *encodeASCIINode = TR::Node::createWithSymRef(TR::call, 3, methodSymRef);
 
-   TR::Node *newInputNode = NULL;
-   TR::Node *arrayHeaderSizeNode = NULL;
-   TR::Node *newOutputNode = NULL;
+   TR::Node *newInputNode = TR::TransformUtil::generateFirstArrayElementAddressTrees(comp(), sourceArrayNode);
+   TR::Node *newOutputNode = TR::TransformUtil::generateFirstArrayElementAddressTrees(comp(), destinationArrayNode);
 
-   if (comp()->target().is64Bit())
-      {
-      newInputNode = TR::Node::create(sourceArrayNode, TR::aladd, 2);
-      newOutputNode = TR::Node::create(destinationArrayNode, TR::aladd, 2);
-      arrayHeaderSizeNode = TR::Node::lconst((int64_t)TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
-      }
-   else
-      {
-      newInputNode = TR::Node::create(sourceArrayNode, TR::aiadd, 2);
-      newOutputNode = TR::Node::create(destinationArrayNode, TR::aiadd, 2);
-      arrayHeaderSizeNode = TR::Node::iconst((int32_t)TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
-      }
-
-   newInputNode->setAndIncChild(0, sourceArrayNode);
-   newInputNode->setAndIncChild(1, arrayHeaderSizeNode);
    encodeASCIINode->setAndIncChild(0, newInputNode);
-
-   newOutputNode->setAndIncChild(0, destinationArrayNode);
-   newOutputNode->setAndIncChild(1, arrayHeaderSizeNode);
    encodeASCIINode->setAndIncChild(1, newOutputNode);
-
    encodeASCIINode->setAndIncChild(2, lenNode);
 
    TR::TreeTop *encodeASCIITreeTop = TR::TreeTop::create(comp(), TR::Node::create(node, TR::treetop, 1, encodeASCIINode));
