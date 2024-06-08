@@ -214,7 +214,7 @@ class TR_DataAccessAccelerator : public TR::Optimization
 
    private:
 
-   TR::Node* constructAddressNode(TR::Node* callNode, TR::Node* arrayNode, TR::Node* offsetNode);
+   TR::Node* constructAddressNode(TR::Node* callNode, TR::Node* arrayNode, TR::Node* offsetNodee, bool isUnicodeOrExternalDecimalInvolved = false, bool isSrcOrTargetUnicodeDecimal = false);
 
    void createPrecisionDiamond(TR::Compilation* comp,
                                TR::TreeTop* treeTop,
@@ -233,13 +233,12 @@ class TR_DataAccessAccelerator : public TR::Optimization
    bool genComparisionIntrinsic(TR::TreeTop* treeTop, TR::Node* callNode, TR::ILOpCodes opCode);
    bool genShiftLeftIntrinsic(TR::TreeTop* treeTop, TR::Node* callNode);
    bool genShiftRightIntrinsic(TR::TreeTop* treeTop, TR::Node* callNode);
-   bool generateUD2PD(TR::TreeTop* treeTop, TR::Node* callNode, bool isUD2PD);
-   bool generatePD2UD(TR::TreeTop* treeTop, TR::Node* callNode, bool isPD2UD);
+   bool generateUD2PD(TR::TreeTop* treeTop, TR::Node* callNode, bool isSrcUnicodeDecimal);
+   bool generatePD2UD(TR::TreeTop* treeTop, TR::Node* callNode, bool isTargetUnicodeDecimal);
 
    void insertByteArrayNULLCHK(TR::TreeTop* callTreeTop, TR::Node* callNode, TR::Node* byteArrayNode);
    void insertByteArrayBNDCHK(TR::TreeTop* callTreeTop, TR::Node* callNode, TR::Node* byteArrayNode, TR::Node* offsetNode, int32_t index);
 
-   TR::Node* createByteArrayElementAddress(TR::TreeTop* callTreeTop, TR::Node* callNode, TR::Node* byteArrayNode, TR::Node* offsetNode);
 
    bool printInliningStatus(bool status, TR::Node* node, const char* reason = "")
       {
