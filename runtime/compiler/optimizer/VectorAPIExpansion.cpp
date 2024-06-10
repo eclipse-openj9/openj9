@@ -1253,22 +1253,15 @@ TR_VectorAPIExpansion::generateAddressNode(TR::Compilation *comp, TR::Node *arra
    while ((elementSize = (elementSize >> 1)))
         ++shiftAmount;
 
-   TR::Node *laddNode = TR::Node::create(TR::ladd, 2);
-
    if (shiftAmount != 0)
       {
       TR::Node *lshlNode = TR::Node::create(TR::lshl, 2);
       lshlNode->setAndIncChild(0, arrayIndex);
       lshlNode->setAndIncChild(1, TR::Node::create(TR::iconst, 0, shiftAmount));
-
-      laddNode->setAndIncChild(0, lshlNode);
-      }
-   else
-      {
-      laddNode->setAndIncChild(0, arrayIndex);
+      arrayIndex = lshlNode;
       }
 
-   TR::Node *aladdNode = TR::TransformUtil::generateArrayElementAddressTrees(comp, array, laddNode);
+   TR::Node *aladdNode = TR::TransformUtil::generateArrayElementAddressTrees(comp, array, arrayIndex);
    aladdNode->setIsInternalPointer(true);
 
    return aladdNode;
