@@ -104,6 +104,7 @@ IDATA testByteDataManager(J9JavaVM* vm)
 	UnitTest::unitTest = UnitTest::BYTE_DATA_TEST;
 
 	cachePointers.testCache1 = createTestCache(vm, SMALL_CACHE_SIZE, NULL, &existingCachePtr);
+	cachePointers.testCache2 = NULL;
 	if (cachePointers.testCache1 && existingCachePtr) {
 		cachePointers.config1 = vm->sharedClassConfig;
 		cachePointers.preConfig1 = vm->sharedClassPreinitConfig;

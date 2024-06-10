@@ -5935,6 +5935,7 @@ SH_CacheMap::startupLowerLayerForStats(J9VMThread* currentThread, const char* ct
 	IDATA rc = CC_STARTUP_OK;
 	SH_CompositeCacheImpl* ccToUse = _ccHead;
 	const char* cacheName = NULL;
+	char cacheNameBuf[USER_SPECIFIED_CACHE_NAME_MAXLEN];
 	U_32 cacheType = oscache->getCacheType();
 	char cacheUniqueID[J9SHR_UNIQUE_CACHE_ID_BUFSIZE];
 	J9JavaVM *vm = currentThread->javaVM;
@@ -5971,7 +5972,6 @@ SH_CacheMap::startupLowerLayerForStats(J9VMThread* currentThread, const char* ct
 				rc = CC_STARTUP_FAILED;
 				break;
 			}
-			char cacheNameBuf[USER_SPECIFIED_CACHE_NAME_MAXLEN];
 			Trc_SHR_Assert_True(idLen < sizeof(cacheUniqueID));
 			memcpy(cacheUniqueID, cacheUniqueIDPtr, idLen);
 			cacheUniqueID[idLen] = '\0';
@@ -6327,9 +6327,6 @@ SH_CacheMap::matchAotMethod(MethodSpecTable* specTable, IDATA numSpecs, J9UTF8* 
 		if (NULL == specTable[i].methodSig) {
 			/* Any signature */
 			sigMatch = true;
-		} else if (NULL == J9UTF8_DATA(romMethodSig)) {
-			/* Signature is missing */
-			sigMatch = false;
 		} else {
 			char* methodSig = (char *)J9UTF8_DATA(romMethodSig);
 			char* sigStart = strchr(methodSig, '(') + 1;

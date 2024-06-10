@@ -96,10 +96,6 @@ SH_ScopeManagerImpl::scHashEqualFn(void* left, void* right, void *userData)
 		Trc_SHR_SMI_scHashEqualFn_Exit2();
 		return 0;
 	}
-	if (J9UTF8_DATA(utf8left)==NULL || J9UTF8_DATA(utf8right)==NULL) {
-		Trc_SHR_SMI_scHashEqualFn_Exit1();
-		return 0;
-	}
 	result = J9UTF8_EQUALS(utf8left, utf8right);
 	Trc_SHR_SMI_scHashEqualFn_Exit3(result);
 	return result;
