@@ -1,6 +1,5 @@
 /*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*
- *******************************************************************************
  * Copyright IBM Corp. and others 2005
  *
  * This program and the accompanying materials are made available under
@@ -45,7 +44,7 @@ import java.util.Map;
  * &quot;java.lang:type=Runtime&quot; for the value of the second parameter.
  * </li>
  * </ol>
- *  
+ *
  * @since 1.5
  */
 /*[IF JAVA_SPEC_VERSION >= 17]*/
@@ -62,7 +61,7 @@ public interface RuntimeMXBean extends PlatformManagedObject {
 	 * loader mechanism can be found from invoking the
 	 * {@link #isBootClassPathSupported()} method.
 	 * </p>
-	 * 
+	 *
 	 * @return the bootstrap classpath with each entry separated by the path
 	 *         separator character corresponding to the underlying operating
 	 *         system.
@@ -79,7 +78,7 @@ public interface RuntimeMXBean extends PlatformManagedObject {
 	 * and load class files. The value is identical to that which would be
 	 * obtained from a call to {@link System#getProperty(java.lang.String)}
 	 * supplying the value &quot;java.class.path&quot; for the key.
-	 * 
+	 *
 	 * @return the system classpath with each entry separated by the path
 	 *         separator character corresponding to the underlying operating
 	 *         system.
@@ -95,7 +94,7 @@ public interface RuntimeMXBean extends PlatformManagedObject {
 	 * machine on start-up. This will <i>not </i> include any input arguments
 	 * that are passed into the application's <code>main(String[] args)</code>
 	 * method.
-	 * 
+	 *
 	 * @return a list of strings, each one containing an argument to the virtual
 	 *         machine. If no virtual machine arguments were passed in at
 	 *         start-up time then this will be an empty list.
@@ -107,7 +106,7 @@ public interface RuntimeMXBean extends PlatformManagedObject {
 	 * locate and load libraries. The value is identical to that which would be
 	 * obtained from a call to {@link System#getProperty(java.lang.String)}
 	 * supplying the value &quot;java.library.path&quot; for the key.
-	 * 
+	 *
 	 * @return the Java library path with each entry separated by the path
 	 *         separator character corresponding to the underlying operating
 	 *         system.
@@ -121,7 +120,7 @@ public interface RuntimeMXBean extends PlatformManagedObject {
 	/**
 	 * Returns a string containing the management interface specification
 	 * version that the virtual machine meets.
-	 * 
+	 *
 	 * @return the version of the management interface specification adhered to
 	 *         by the virtual machine.
 	 */
@@ -130,7 +129,7 @@ public interface RuntimeMXBean extends PlatformManagedObject {
 	/**
 	 * Returns the string name of this virtual machine. This value may be
 	 * different for each particular running virtual machine.
-	 * 
+	 *
 	 * @return the name of this running virtual machine.
 	 */
 	public String getName();
@@ -138,9 +137,9 @@ public interface RuntimeMXBean extends PlatformManagedObject {
 	/*[IF JAVA_SPEC_VERSION >= 10]*/
 	/**
 	 * Returns the process ID (PID) of the current running Java virtual machine.
-	 * 
+	 *
 	 * @return the process ID of the current running JVM
-	 * 
+	 *
 	 * @since 10
 	 */
 	@SuppressWarnings("boxing")
@@ -158,7 +157,7 @@ public interface RuntimeMXBean extends PlatformManagedObject {
 	 * this virtual machine. The value is identical to that which would be
 	 * obtained from a call to {@link System#getProperty(java.lang.String)}
 	 * supplying the value &quot;java.vm.specification.name&quot; for the key.
-	 * 
+	 *
 	 * @return the name of the Java virtual machine specification.
 	 * @throws SecurityException
 	 *             if there is a security manager in operation and the caller
@@ -172,7 +171,7 @@ public interface RuntimeMXBean extends PlatformManagedObject {
 	 * value is identical to that which would be obtained from a call to
 	 * {@link System#getProperty(java.lang.String)} supplying the value
 	 * &quot;java.vm.specification.vendor&quot; for the key.
-	 * 
+	 *
 	 * @return the name of the Java virtual machine specification vendor.
 	 * @throws SecurityException
 	 *             if there is a security manager in operation and the caller
@@ -186,7 +185,7 @@ public interface RuntimeMXBean extends PlatformManagedObject {
 	 * value is identical to that which would be obtained from a call to
 	 * {@link System#getProperty(java.lang.String)} supplying the value
 	 * &quot;java.vm.specification.version&quot; for the key.
-	 * 
+	 *
 	 * @return the Java virtual machine specification version.
 	 * @throws SecurityException
 	 *             if there is a security manager in operation and the caller
@@ -197,7 +196,7 @@ public interface RuntimeMXBean extends PlatformManagedObject {
 
 	/**
 	 * Returns the time, in milliseconds, when the virtual machine was started.
-	 * 
+	 *
 	 * @return the virtual machine start time in milliseconds.
 	 */
 	public long getStartTime();
@@ -205,7 +204,7 @@ public interface RuntimeMXBean extends PlatformManagedObject {
 	/**
 	 * Returns a map of the names and values of every system property known to
 	 * the virtual machine.
-	 * 
+	 *
 	 * @return a map containing the names and values of every system property.
 	 * @throws SecurityException
 	 *             if there is a security manager in operation and the caller
@@ -215,7 +214,7 @@ public interface RuntimeMXBean extends PlatformManagedObject {
 
 	/**
 	 * Returns the lifetime of the virtual machine in milliseconds.
-	 * 
+	 *
 	 * @return the number of milliseconds the virtual machine has been running.
 	 */
 	public long getUptime();
@@ -225,7 +224,7 @@ public interface RuntimeMXBean extends PlatformManagedObject {
 	 * identical to that which would be obtained from a call to
 	 * {@link System#getProperty(java.lang.String)} supplying the value
 	 * &quot;java.vm.name&quot; for the key.
-	 * 
+	 *
 	 * @return the name of the Java virtual machine implementation.
 	 * @throws SecurityException
 	 *             if there is a security manager in operation and the caller
@@ -239,7 +238,7 @@ public interface RuntimeMXBean extends PlatformManagedObject {
 	 * value is identical to that which would be obtained from a call to
 	 * {@link System#getProperty(java.lang.String)} supplying the value
 	 * &quot;java.vm.vendor&quot; for the key.
-	 * 
+	 *
 	 * @return the name of the Java virtual machine implementation vendor.
 	 * @throws SecurityException
 	 *             if there is a security manager in operation and the caller
@@ -253,7 +252,7 @@ public interface RuntimeMXBean extends PlatformManagedObject {
 	 * is identical to that which would be obtained from a call to
 	 * {@link System#getProperty(java.lang.String)} supplying the value
 	 * &quot;java.vm.version&quot; for the key.
-	 * 
+	 *
 	 * @return the version of the Java virtual machine implementation.
 	 * @throws SecurityException
 	 *             if there is a security manager in operation and the caller
@@ -265,7 +264,7 @@ public interface RuntimeMXBean extends PlatformManagedObject {
 	/**
 	 * Returns a boolean indication of whether or not the virtual machine
 	 * supports a bootstrap class loading mechanism.
-	 * 
+	 *
 	 * @return <code>true</code> if supported, <code>false</code> otherwise.
 	 */
 	public boolean isBootClassPathSupported();

@@ -1,6 +1,5 @@
 /*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*
- *******************************************************************************
  * Copyright IBM Corp. and others 2005
  *
  * This program and the accompanying materials are made available under
@@ -26,7 +25,7 @@ package java.lang.management;
 import java.util.List;
 
 /**
- * The management interface for the logging facility. 
+ * The management interface for the logging facility.
  * <p>
  * Precisely one instance of this interface will be made available to management
  * clients.
@@ -42,7 +41,7 @@ import java.util.List;
  * &quot;java.util.logging:type=Logging&quot; for the value of the second parameter.
  * </li>
  * </ol>
- * 
+ *
  * @since 1.5
  */
 /*[IF JAVA_SPEC_VERSION >= 17]*/
@@ -58,7 +57,7 @@ public interface PlatformLoggingMXBean extends PlatformManagedObject{
 	 * {@link java.util.logging.Logger}
 	/*[ENDIF] JAVA_SPEC_VERSION >= 17
 	 * instance's current log level.
-	 * 
+	 *
 	 * @param loggerName
 	 *            the name of a particular <code>Logger</code> instance
 	 * @return if <code>loggerName</code> resolves to an existing registered
@@ -73,7 +72,7 @@ public interface PlatformLoggingMXBean extends PlatformManagedObject{
 	public String getLoggerLevel(String loggerName);
 
 	/**
-	 * Returns a list of the names of all of the currently registered 
+	 * Returns a list of the names of all of the currently registered
 	 * <code>Logger</code> instances.
 	 * @return a list of the names of all registered <code>Logger</code> objects.
 	 */
@@ -87,7 +86,7 @@ public interface PlatformLoggingMXBean extends PlatformManagedObject{
 	 * {@link java.util.logging.Logger}
 	/*[ENDIF] JAVA_SPEC_VERSION >= 17
 	 * of the specified registered <code>Logger</code>,<code>loggerName</code>.
-	 * 
+	 *
 	 * @param loggerName
 	 *            the name of a particular <code>Logger</code> instance
 	 * @return if <code>loggerName</code> resolves to an existing registered
@@ -111,18 +110,18 @@ public interface PlatformLoggingMXBean extends PlatformManagedObject{
 	 * with name <code>loggerName</code> to <code>levelName</code>.
 	 * <p>
 	 * If <code>levelName</code> is <code>null</code> then the <code>Logger</code>
-	 * instance's log level is set to be <code>null</code> with the result that 
+	 * instance's log level is set to be <code>null</code> with the result that
 	 * it will inherit its log level from its nearest parent which does not have
 	 * a <code>null</code> log level value.
 	 * </p>
 	 * @param loggerName the name of a registered <code>Logger</code>
-	 * @param levelName the name of the new log level. May be <code>null</code>, 
+	 * @param levelName the name of the new log level. May be <code>null</code>,
 	 * in which case <code>loggerName</code> will inherit the log level of its
 	 * closest parent with a non-<code>null</code> log level.
 	 * @throws IllegalArgumentException if there is no <code>Logger</code>
-	 * with the name <code>loggerName</code>. Also may be thrown if 
+	 * with the name <code>loggerName</code>. Also may be thrown if
 	 * <code>loggerName</code> is not a known log level name.
-	 * @throws SecurityException if there is a security manager active and 
+	 * @throws SecurityException if there is a security manager active and
 	 * the caller does not have
 	/*[IF JAVA_SPEC_VERSION >= 17]
 	 * {@link java.logging/java.util.logging.LoggingPermission}

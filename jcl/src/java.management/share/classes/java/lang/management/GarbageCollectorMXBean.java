@@ -1,6 +1,5 @@
 /*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*
- *******************************************************************************
  * Copyright IBM Corp. and others 2005
  *
  * This program and the accompanying materials are made available under
@@ -44,7 +43,7 @@ package java.lang.management;
  * string &quot;java.lang:type=GarbageCollector,name= <i>unique collector's name
  * </i>&quot; for the value of the second parameter.</li>
  * </ol>
- *  
+ *
  * @since 1.5
  */
 public interface GarbageCollectorMXBean extends MemoryManagerMXBean {
@@ -52,7 +51,7 @@ public interface GarbageCollectorMXBean extends MemoryManagerMXBean {
 	/**
 	 * Returns in a long the number of garbage collections carried out by the
 	 * associated collector.
-	 * 
+	 *
 	 * @return the total number of garbage collections that have been carried
 	 *         out by the associated garbage collector.
 	 */
@@ -61,7 +60,7 @@ public interface GarbageCollectorMXBean extends MemoryManagerMXBean {
 	/**
 	 * For the associated garbage collector, returns the total amount of time in
 	 * milliseconds that it has spent carrying out garbage collection.
-	 * 
+	 *
 	 * @return the number of milliseconds that have been spent in performing
 	 *         garbage collection. This is a cumulative figure.
 	 */

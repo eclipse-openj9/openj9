@@ -1,6 +1,5 @@
 /*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*
- *******************************************************************************
  * Copyright IBM Corp. and others 2005
  *
  * This program and the accompanying materials are made available under
@@ -64,7 +63,7 @@ public class MemoryUsage {
 
 	/**
 	 * Constructs a new <code>MemoryUsage</code> instance.
-	 * 
+	 *
 	 * @param init
 	 *            if defined, the initial amount of memory that can be allocated
 	 *            by the virtual machine in bytes. If not defined, then
@@ -129,7 +128,7 @@ public class MemoryUsage {
 	/**
 	 * Returns the amount of memory that has been pledged by the operating
 	 * system for the virtual machine to use. This value is in bytes.
-	 * 
+	 *
 	 * @return the number of bytes committed to memory.
 	 */
 	public long getCommitted() {
@@ -144,7 +143,7 @@ public class MemoryUsage {
 	 * if the initial memory size was not defined, this method will return a
 	 * value of <code>-1</code>.
 	 * </p>
-	 * 
+	 *
 	 * @return the initial amount of memory requested at virtual machine start
 	 *         up. <code>-1</code> if not defined.
 	 */
@@ -156,7 +155,7 @@ public class MemoryUsage {
 	 * Returns the maximum amount of memory that is available to the virtual
 	 * machine which may change over the lifecycle of the virtual machine. The
 	 * value is in bytes.
-	 * 
+	 *
 	 * @return if defined, the maximum memory size in bytes. If not defined,
 	 *         <code>-1</code>.
 	 */
@@ -167,7 +166,7 @@ public class MemoryUsage {
 	/**
 	 * Returns the number of bytes currently used for memory management
 	 * purposes.
-	 * 
+	 *
 	 * @return the current number of bytes used for memory.
 	 */
 	public long getUsed() {
@@ -176,7 +175,7 @@ public class MemoryUsage {
 
 	/**
 	 * Returns a text description of this memory usage.
-	 * 
+	 *
 	 * @return a text description of this memory usage.
 	 */
 	@Override
@@ -213,7 +212,7 @@ public class MemoryUsage {
 	 * If <code>value</code> is <code>-1</code> then the appended text will
 	 * comprise of the word &quot;undefined&quot;.
 	 * </p>
-	 * 
+	 *
 	 * @param buff
 	 *            an existing <code>StringBuilder</code> that will be updated
 	 *            with <code>value</code> expressed in kilobytes.
@@ -221,7 +220,7 @@ public class MemoryUsage {
 	 *            a <code>long</code> value.
 	 */
 	private static void appendSizeInKBytes(StringBuilder buff, long value) {
-		// it would be better to write "undefined" for values of -1 but in 
+		// it would be better to write "undefined" for values of -1 but in
 		// order to do as the RI does...
 		if (value == -1) {
 			buff.append("(-1K) "); //$NON-NLS-1$
@@ -234,7 +233,7 @@ public class MemoryUsage {
 	 * Receives a {@link CompositeData} representing a <code>MemoryUsage</code>
 	 * object and attempts to return the root <code>MemoryUsage</code>
 	 * instance.
-	 * 
+	 *
 	 * @param cd
 	 *            a <code>CompositeDate</code> that represents a
 	 *            <code>MemoryUsage</code>.

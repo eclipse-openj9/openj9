@@ -1,6 +1,5 @@
 /*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*
- *******************************************************************************
  * Copyright IBM Corp. and others 2005
  *
  * This program and the accompanying materials are made available under
@@ -41,7 +40,7 @@ package java.lang.management;
  * &quot;java.lang:type=OperatingSystem&quot; for the value of the second
  * parameter.</li>
  * </ol>
- *  
+ *
  * @since 1.5
  */
 public interface OperatingSystemMXBean extends PlatformManagedObject {
@@ -51,7 +50,7 @@ public interface OperatingSystemMXBean extends PlatformManagedObject {
 	 * operating system. The identifier value is identical to that which would
 	 * be obtained from a call to {@link System#getProperty(java.lang.String)}
 	 * supplying the value &quot;os.arch&quot; for the key.
-	 * 
+	 *
 	 * @return the identifier for the operating system architecture.
 	 * @throws SecurityException
 	 *             if there is a security manager in operation and the caller
@@ -65,7 +64,7 @@ public interface OperatingSystemMXBean extends PlatformManagedObject {
 	 * machine to run on. The information returned from this method is identical
 	 * to that which would be received from a call to
 	 * {@link Runtime#availableProcessors()}.
-	 * 
+	 *
 	 * @return the number of available processors.
 	 */
 	public int getAvailableProcessors();
@@ -75,7 +74,7 @@ public interface OperatingSystemMXBean extends PlatformManagedObject {
 	 * identical to that which would be obtained from a call to
 	 * {@link System#getProperty(java.lang.String)} supplying the value
 	 * &quot;os.name&quot; for the key.
-	 * 
+	 *
 	 * @return the name of the operating system.
 	 * @throws SecurityException
 	 *             if there is a security manager in operation and the caller
@@ -89,7 +88,7 @@ public interface OperatingSystemMXBean extends PlatformManagedObject {
 	 * is identical to that which would be obtained from a call to
 	 * {@link System#getProperty(java.lang.String)} supplying the value
 	 * &quot;os.version&quot; for the key.
-	 * 
+	 *
 	 * @return the version of the operating system.
 	 * @throws SecurityException
 	 *             if there is a security manager in operation and the caller
@@ -107,12 +106,12 @@ public interface OperatingSystemMXBean extends PlatformManagedObject {
 	 * running on the available processors and the number of runnable entities
 	 * ready and queued to run on the available processors. The averaging
 	 * technique adopted can vary depending on the underlying operating system.
-	 * 
+	 *
 	 * @return normally, the system load average as a double. If the system load
 	 *         average is not obtainable (e.g. because the calculation may
 	 *         involve an unacceptable performance impact) then a negative value
 	 *         is returned.
-	 * @since 1.6        
+	 * @since 1.6
 	 */
 	public double getSystemLoadAverage();
 

@@ -1,6 +1,5 @@
 /*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*
- *******************************************************************************
  * Copyright IBM Corp. and others 2005
  *
  * This program and the accompanying materials are made available under
@@ -76,7 +75,7 @@ public class MemoryNotificationInfo {
 
 	/**
 	 * Creates a new <code>MemoryNotificationInfo</code> instance.
-	 * 
+	 *
 	 * @param poolName
 	 *            the name of the memory pool that the notification relates to.
 	 * @param usage
@@ -117,7 +116,7 @@ public class MemoryNotificationInfo {
 	 * has been met or exceeded. For
 	 * {@link #MEMORY_COLLECTION_THRESHOLD_EXCEEDED} notifications, this will be
 	 * the number of times that the collection usage threshold was passed.
-	 * 
+	 *
 	 * @return the number of times the related memory usage was passed at the
 	 *         time of the notification construction.
 	 */
@@ -127,7 +126,7 @@ public class MemoryNotificationInfo {
 
 	/**
 	 * Returns the name of the memory pool that the notification relates to.
-	 * 
+	 *
 	 * @return the name of the associated memory pool.
 	 */
 	public String getPoolName() {
@@ -139,7 +138,7 @@ public class MemoryNotificationInfo {
 	 * usage of the memory pool that gave rise to this notification at the time
 	 * the notification was created. The <code>MemoryUsage</code> may be
 	 * interrogated by the caller to find out the details of the memory usage.
-	 * 
+	 *
 	 * @return the memory usage of the related memory pool at the point when
 	 *         this notification was created.
 	 */
@@ -151,16 +150,16 @@ public class MemoryNotificationInfo {
 	 * Receives a {@link CompositeData} representing a
 	 * <code>MemoryNotificationInfo</code> object and attempts to return
 	 * the root <code>MemoryNotificationInfo</code> instance.
-	 * 
+	 *
 	 * @param cd
 	 *            a <code>CompositeDate</code> that represents a
 	 *            <code>MemoryNotificationInfo</code>.
 	 * @return if <code>cd</code> is non- <code>null</code>, returns a new
-	 *         instance of <code>MemoryNotificationInfo</code>. 
+	 *         instance of <code>MemoryNotificationInfo</code>.
 	 *         If <code>cd</code> is <code>null</code>, returns <code>null</code>.
 	 * @throws IllegalArgumentException
 	 *             if argument <code>cd</code> does not correspond to a
-	 *             <code>MemoryNotificationInfo</code> with the following 
+	 *             <code>MemoryNotificationInfo</code> with the following
 	 *             attributes:
 	 *             <ul>
 	 *             <li><code>poolName</code>(<code>java.lang.String</code>)
@@ -172,7 +171,7 @@ public class MemoryNotificationInfo {
 	 * <p>
 	 * The <code>usage</code> attribute must represent a {@link MemoryUsage}
 	 * instance which encapsulates the memory usage of a memory pool.
-	 * </p>             
+	 * </p>
 	 */
 	public static MemoryNotificationInfo from(CompositeData cd) {
 		MemoryNotificationInfo result = null;
@@ -183,7 +182,7 @@ public class MemoryNotificationInfo {
 			// IllegalArgumentException
 
 			ManagementUtils.verifyFieldNumber(cd, 3);
-			String[] attributeNames = { "poolName", "usage", "count" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ 
+			String[] attributeNames = { "poolName", "usage", "count" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 			ManagementUtils.verifyFieldNames(cd, attributeNames);
 			String[] attributeTypes = { "java.lang.String", CompositeData.class.getName(), "java.lang.Long" }; //$NON-NLS-1$ //$NON-NLS-2$
 			ManagementUtils.verifyFieldTypes(cd, attributeNames, attributeTypes);

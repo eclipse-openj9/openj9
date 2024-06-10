@@ -1,6 +1,5 @@
 /*[INCLUDE-IF JAVA_SPEC_VERSION > 8]*/
 /*
- *******************************************************************************
  * Copyright IBM Corp. and others 2016
  *
  * This program and the accompanying materials are made available under
