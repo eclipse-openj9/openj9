@@ -234,7 +234,24 @@ public:
 protected:
 	bool initialize(MM_EnvironmentBase *env);
 	void tearDown(MM_EnvironmentBase *env);
+
 private:
+	/**
+	 * Check is ROM class possible to unload.
+	 * There are might be multiple checks:
+	 * - ROM class should not be NULL
+	 * - ROM class for Indexable object can not be unloaded
+	 * @param clazz[in] class to check
+	 * @return true if class is possible to unload
+	 */
+	MMINLINE bool
+	isROMClassUnloadable(J9Class *clazz)
+	{
+		J9ROMClass *romClass = clazz->romClass;
+
+		return (NULL != romClass)
+				&& !_extensions->objectModel.isIndexable(clazz);
+	}
 
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 	/**
