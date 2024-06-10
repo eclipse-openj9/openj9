@@ -4139,7 +4139,7 @@ TR::CompilationInfoPerThread::processEntries()
       {
       TR_VerboseLog::writeLineLocked(
          TR_Vlog_DISPATCH,
-         "Starting to process queue entries. compThreadID=%d state=%d Q_SZ=%d Q_SZI=%d QW=%d\n",
+         "Starting to process queue entries. compThreadID=%d state=%d Q_SZ=%d Q_SZI=%d QW=%d",
          getCompThreadId(),
          getCompilationThreadState(),
          _compInfo.getMethodQueueSize(),
@@ -10472,7 +10472,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                      if (TR::Options::isAnyVerboseOptionSet(TR_VerboseCompileEnd, TR_VerbosePerformance, TR_VerboseCompFailure))
                         {
                         TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE,
-                                                          "Failure while relocating for %s, return code = %d [%s], relo error code = %s\n",
+                                                          "Failure while relocating for %s, return code = %d [%s], relo error code = %s",
                                                           comp->signature(),
                                                           returnCode,
                                                           (returnCode >= 0) && (returnCode < compilationMaxError) ? compilationErrorNames[returnCode] : "unknown error",

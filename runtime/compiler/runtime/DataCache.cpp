@@ -761,7 +761,7 @@ int TR_DataCacheManager::disclaimSegment(J9MemorySegment *segment, bool canDiscl
       int filePageCount = 0;
       int numPresentPages = countPresentPagesInSegment(segment, swappedCount, filePageCount);
       if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "Will disclaim data cache segment %p of size %zu. Present pages =%d swapped=%d fileMapped=%d\n",
+         TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "Will disclaim data cache segment %p of size %zu. Present pages =%d swapped=%d fileMapped=%d",
               segment, segLength, numPresentPages, swappedCount, filePageCount);
 #endif // DEBUG_DISCLAIM
       int ret = madvise(segment->heapBase, segLength, MADV_PAGEOUT);
@@ -785,7 +785,7 @@ int TR_DataCacheManager::disclaimSegment(J9MemorySegment *segment, bool canDiscl
          filePageCount = 0;
          numPresentPages = countPresentPagesInSegment(segment, swappedCount, filePageCount);
          if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
-            TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "Disclaimed data cache segment %p of size %zu. Present pages =%d swapped=%d fileMapped=%d\n",
+            TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "Disclaimed data cache segment %p of size %zu. Present pages =%d swapped=%d fileMapped=%d",
                  segment, segLength, numPresentPages, swappedCount, filePageCount);
 #endif // DEBUG_DISCLAIM
          }
