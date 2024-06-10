@@ -7262,6 +7262,15 @@ static void jitHookReleaseCodeGCCycleEnd(J9HookInterface **hook, UDATA eventNum,
    {
    MM_GCCycleEndEvent *event = (MM_GCCycleEndEvent *)eventData;
    OMR_VMThread *omrVMThread = event->omrVMThread;
+
+   if (OMR_GC_CYCLE_TYPE_STATE_UNSUCCESSFUL == (event->cycleType & OMR_GC_CYCLE_TYPE_STATE_UNSUCCESSFUL))
+      {
+	   /**
+	    *  We skip the reclamation in the case of an unsuccessfully completed GC cycle
+	    *  (such as aborted Scavenge) since it does not have full object liveness info.
+	    */
+      return;
+      }
    condYieldFromGCFunctionPtr condYield = NULL;
    if (TR::Options::getCmdLineOptions()->realTimeGC())
       condYield = event->condYieldFromGCFunction;
