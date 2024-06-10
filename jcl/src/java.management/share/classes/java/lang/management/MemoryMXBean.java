@@ -1,6 +1,5 @@
 /*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*
- *******************************************************************************
  * Copyright IBM Corp. and others 2005
  *
  * This program and the accompanying materials are made available under
@@ -41,7 +40,6 @@ package java.lang.management;
  * string &quot;java.lang:type=ClassLoading&quot; for the value of the second
  * parameter.</li>
  * </ol>
- * 
  */
 public interface MemoryMXBean extends PlatformManagedObject {
 
@@ -53,7 +51,7 @@ public interface MemoryMXBean extends PlatformManagedObject {
 	/**
 	 * Returns the current memory usage of the heap for both live objects and
 	 * for objects no longer in use which are awaiting garbage collection.
-	 * 
+	 *
 	 * @return an instance of {@link MemoryUsage} which can be interrogated by
 	 *         the caller.
 	 */
@@ -61,7 +59,7 @@ public interface MemoryMXBean extends PlatformManagedObject {
 
 	/**
 	 * Returns the current non-heap memory usage for the virtual machine.
-	 * 
+	 *
 	 * @return an instance of {@link MemoryUsage} which can be interrogated by
 	 *         the caller.
 	 */
@@ -71,7 +69,7 @@ public interface MemoryMXBean extends PlatformManagedObject {
 	 * Returns the number of objects in the virtual machine that are awaiting
 	 * finalization. The returned value should only be used as an approximate
 	 * guide.
-	 * 
+	 *
 	 * @return the number of objects awaiting finalization.
 	 */
 	/*[IF JAVA_SPEC_VERSION >= 18]*/
@@ -82,7 +80,7 @@ public interface MemoryMXBean extends PlatformManagedObject {
 	/**
 	 * Returns a boolean indication of whether or not the memory system is
 	 * producing verbose output.
-	 * 
+	 *
 	 * @return <code>true</code> if verbose output is being produced ;
 	 *         <code>false</code> otherwise.
 	 */
@@ -90,7 +88,7 @@ public interface MemoryMXBean extends PlatformManagedObject {
 
 	/**
 	 * Updates the verbose output setting of the memory system.
-	 * 
+	 *
 	 * @param value
 	 *            <code>true</code> enables verbose output ;
 	 *            <code>false</code> disables verbose output.

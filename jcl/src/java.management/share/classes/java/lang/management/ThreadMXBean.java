@@ -1,6 +1,5 @@
 /*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*
- *******************************************************************************
  * Copyright IBM Corp. and others 2005
  *
  * This program and the accompanying materials are made available under
@@ -41,7 +40,7 @@ package java.lang.management;
  * &quot;java.lang:type=Threading&quot; for the value of the second parameter.
  * </li>
  * </ol>
- *  
+ *
  * @since 1.5
  */
 public interface ThreadMXBean extends PlatformManagedObject {
@@ -60,7 +59,7 @@ public interface ThreadMXBean extends PlatformManagedObject {
 	 * synchronization in a virtual machine. This is because the method may be
 	 * very expensive to run.
 	 * </p>
-	 * 
+	 *
 	 * @return an array of the identifiers of every thread in the virtual
 	 *         machine that has been detected as currently being in a deadlock
 	 *         situation over an object monitor. May be <code>null</code> if
@@ -76,7 +75,7 @@ public interface ThreadMXBean extends PlatformManagedObject {
 	 * in the current virtual machine. When processing the return from this
 	 * method it should <i>not </i> be assumed that each identified thread is
 	 * still alive.
-	 * 
+	 *
 	 * @return the identifiers of all of the threads currently alive in the
 	 *         virtual machine.
 	 */
@@ -98,7 +97,7 @@ public interface ThreadMXBean extends PlatformManagedObject {
 	 * {@link #getThreadCpuTime} with an argument
 	 * <code>Thread.currentThread().getId())</code>.
 	 * </p>
-	 * 
+	 *
 	 * @return on virtual machines where current thread CPU timing is supported
 	 *         and thread CPU timing is enabled, the number of nanoseconds CPU
 	 *         usage by the current thread. On virtual machines where current
@@ -107,7 +106,7 @@ public interface ThreadMXBean extends PlatformManagedObject {
 	 * @throws UnsupportedOperationException
 	 *             if the virtual machine does not support current thread CPU
 	 *             timing.
-	 * 
+	 *
 	 */
 	public long getCurrentThreadCpuTime();
 
@@ -127,7 +126,7 @@ public interface ThreadMXBean extends PlatformManagedObject {
 	 * {@link #getThreadUserTime} with an argument
 	 * <code>Thread.currentThread().getId())</code>.
 	 * </p>
-	 * 
+	 *
 	 * @return on virtual machines where current thread CPU timing is supported
 	 *         and thread CPU timing is enabled, the number of nanoseconds CPU
 	 *         time used by the current thread running in user mode. On virtual
@@ -136,14 +135,14 @@ public interface ThreadMXBean extends PlatformManagedObject {
 	 * @throws UnsupportedOperationException
 	 *             if the virtual machine does not support current thread CPU
 	 *             timing.
-	 * 
+	 *
 	 */
 	public long getCurrentThreadUserTime();
 
 	/**
 	 * Returns the number of daemon threads currently alive in the virtual
 	 * machine.
-	 * 
+	 *
 	 * @return the number of currently alive daemon threads.
 	 */
 	public int getDaemonThreadCount();
@@ -152,7 +151,7 @@ public interface ThreadMXBean extends PlatformManagedObject {
 	 * Returns the peak number of threads that have ever been alive in the
 	 * virtual machine at any one instant since either the virtual machine
 	 * start-up or the peak was reset.
-	 * 
+	 *
 	 * @return the peak number of live threads
 	 * @see #resetPeakThreadCount()
 	 */
@@ -161,7 +160,7 @@ public interface ThreadMXBean extends PlatformManagedObject {
 	/**
 	 * Returns the number of threads currently alive in the virtual machine.
 	 * This includes both daemon threads and non-daemon threads.
-	 * 
+	 *
 	 * @return the number of currently alive threads.
 	 */
 	public int getThreadCount();
@@ -177,7 +176,7 @@ public interface ThreadMXBean extends PlatformManagedObject {
 	 * {@link #isThreadCpuTimeEnabled()} may be used to determine if thread CPU
 	 * timing is actually enabled.
 	 * </p>
-	 * 
+	 *
 	 * @param id
 	 *            the identifier for a thread. Must be a positive number greater
 	 *            than zero.
@@ -205,7 +204,7 @@ public interface ThreadMXBean extends PlatformManagedObject {
 	 * will hold no details of locked synchronizers or locked object monitors
 	 * for the specified thread; calls to <code>getLockedMonitors()</code> and
 	 * <code>getLockedSynchronizers</code> will both return array values.
-	 * 
+	 *
 	 * @param id
 	 *            the identifier for a thread. Must be a positive number greater
 	 *            than zero.
@@ -230,7 +229,7 @@ public interface ThreadMXBean extends PlatformManagedObject {
 	 * will hold no details of locked synchronizers or locked object monitors
 	 * for the specified thread; calls to <code>getLockedMonitors()</code> and
 	 * <code>getLockedSynchronizers</code> will both return array values.
-	 * 
+	 *
 	 * @param ids
 	 *            an array of thread identifiers. Each one must be a positive
 	 *            number greater than zero.
@@ -269,7 +268,7 @@ public interface ThreadMXBean extends PlatformManagedObject {
 	 * <code>getLockedMonitors()</code> and
 	 * <code>getLockedSynchronizers</code> will both return array values.
 	 * </p>
-	 * 
+	 *
 	 * @param ids
 	 *            an array of thread identifiers. Each must be a positive number
 	 *            greater than zero.
@@ -315,7 +314,7 @@ public interface ThreadMXBean extends PlatformManagedObject {
 	 * arguments should only be set to <code>true</code> if the virtual
 	 * machine supports the requested monitoring.
 	 * </p>
-	 * 
+	 *
 	 * @param ids
 	 *            an array of thread identifiers. Each one must be a positive
 	 *            number greater than zero.
@@ -379,7 +378,7 @@ public interface ThreadMXBean extends PlatformManagedObject {
 	 * <code>getLockedMonitors()</code> and
 	 * <code>getLockedSynchronizers</code> will both return array values.
 	 * </p>
-	 * 
+	 *
 	 * @param id
 	 *            the identifier for a thread. Must be a positive number greater
 	 *            than zero.
@@ -414,7 +413,7 @@ public interface ThreadMXBean extends PlatformManagedObject {
 	 * {@link #isThreadCpuTimeEnabled()} may be used to determine if thread CPU
 	 * timing is actually enabled.
 	 * </p>
-	 * 
+	 *
 	 * @param id
 	 *            the identifier for a thread. Must be a positive number greater
 	 *            than zero.
@@ -444,7 +443,7 @@ public interface ThreadMXBean extends PlatformManagedObject {
 	/**
 	 * Returns the number of threads that have been started in this virtual
 	 * machine since it came into being.
-	 * 
+	 *
 	 * @return the total number of started threads.
 	 */
 	public long getTotalStartedThreadCount();
@@ -456,7 +455,7 @@ public interface ThreadMXBean extends PlatformManagedObject {
 	 * Note that this method must return <code>true</code> if
 	 * {@link #isThreadCpuTimeSupported()} returns <code>true</code>.
 	 * </p>
-	 * 
+	 *
 	 * @return <code>true</code> if CPU timing of the current thread is
 	 *         supported, otherwise <code>false</code>.
 	 */
@@ -465,7 +464,7 @@ public interface ThreadMXBean extends PlatformManagedObject {
 	/**
 	 * Returns a boolean indication of whether or not the monitoring of thread
 	 * contention situations is enabled on this virtual machine.
-	 * 
+	 *
 	 * @return <code>true</code> if thread contention monitoring is enabled,
 	 *         <code>false</code> otherwise.
 	 */
@@ -474,7 +473,7 @@ public interface ThreadMXBean extends PlatformManagedObject {
 	/**
 	 * Returns a boolean indication of whether or not the monitoring of thread
 	 * contention situations is supported on this virtual machine.
-	 * 
+	 *
 	 * @return <code>true</code> if thread contention monitoring is supported,
 	 *         <code>false</code> otherwise.
 	 */
@@ -483,7 +482,7 @@ public interface ThreadMXBean extends PlatformManagedObject {
 	/**
 	 * Returns a boolean indication of whether or not the CPU timing of threads
 	 * is enabled on this virtual machine.
-	 * 
+	 *
 	 * @return <code>true</code> if thread CPU timing is enabled,
 	 *         <code>false</code> otherwise.
 	 * @throws UnsupportedOperationException
@@ -495,7 +494,7 @@ public interface ThreadMXBean extends PlatformManagedObject {
 	/**
 	 * Returns a boolean indication of whether or not the virtual machine
 	 * supports the CPU time measurement of any threads (current or otherwise).
-	 * 
+	 *
 	 * @return <code>true</code> if the virtual machine supports the CPU
 	 *         timing of threads, <code>false</code> otherwise.
 	 */
@@ -504,7 +503,7 @@ public interface ThreadMXBean extends PlatformManagedObject {
 	/**
 	 * Resets the peak thread count to be the current number of threads alive in
 	 * the virtual machine when the call is made.
-	 * 
+	 *
 	 * @throws SecurityException
 	 *             if there is a security manager in effect and the caller does
 	 *             not have {@link ManagementPermission} of &quot;control&quot;.
@@ -518,7 +517,7 @@ public interface ThreadMXBean extends PlatformManagedObject {
 	 * If it is supported, the virtual machine will initially not monitor thread
 	 * contention situations.
 	 * </p>
-	 * 
+	 *
 	 * @param enable
 	 *            enable thread contention monitoring if <code>true</code>,
 	 *            otherwise disable thread contention monitoring.
@@ -539,7 +538,7 @@ public interface ThreadMXBean extends PlatformManagedObject {
 	 * The default value of this property depends on the underlying operating
 	 * system on which the virtual machine is running.
 	 * </p>
-	 * 
+	 *
 	 * @param enable
 	 *            enable thread CPU timing if <code>true</code>, otherwise
 	 *            disable thread CPU timing
@@ -555,7 +554,7 @@ public interface ThreadMXBean extends PlatformManagedObject {
 	/**
 	 * Returns a boolean indication of whether or not the virtual machine
 	 * supports the monitoring of object monitor usage.
-	 * 
+	 *
 	 * @return <code>true</code> if object monitor usage is permitted,
 	 *         otherwise <code>false</code>
 	 * @since 1.6
@@ -567,7 +566,7 @@ public interface ThreadMXBean extends PlatformManagedObject {
 	 * supports the monitoring of ownable synchronizers (synchronizers that make
 	 * use of the <code>AbstractOwnableSynchronizer</code> type and which are
 	 * completely owned by a single thread).
-	 * 
+	 *
 	 * @return <code>true</code> if synchronizer usage monitoring is
 	 *         permitted, otherwise <code>false</code>
 	 */
@@ -587,7 +586,7 @@ public interface ThreadMXBean extends PlatformManagedObject {
 	 * synchronization in a virtual machine. This is because the method may be
 	 * very expensive to run.
 	 * </p>
-	 * 
+	 *
 	 * @return an array of the identifiers of every thread in the virtual
 	 *         machine that has been detected as currently being in a deadlock
 	 *         situation involving object monitors <i>and</i> ownable
@@ -600,14 +599,14 @@ public interface ThreadMXBean extends PlatformManagedObject {
 	 *             if the virtual machine does not support any monitoring of
 	 *             ownable synchronizers.
 	 * @see #isSynchronizerUsageSupported()
-	 * 
+	 *
 	 */
 	public long[] findDeadlockedThreads();
 
 	/**
 	 * Returns an array of {@link ThreadInfo} objects holding information on all
 	 * threads that were alive when the call was invoked.
-	 * 
+	 *
 	 * @param lockedMonitors
 	 *            boolean indication of whether or not information on all
 	 *            currently locked object monitors is to be included in the
@@ -638,7 +637,7 @@ public interface ThreadMXBean extends PlatformManagedObject {
 	/**
 	 * Returns an array of {@link ThreadInfo} objects holding information on all
 	 * threads that were alive when the call was invoked.
-	 * 
+	 *
 	 * @param lockedMonitors
 	 *            boolean indication of whether or not information on all
 	 *            currently locked object monitors is to be included in the
@@ -690,7 +689,7 @@ public interface ThreadMXBean extends PlatformManagedObject {
 	 * arguments should only be set to <code>true</code> if the virtual
 	 * machine supports the requested monitoring.
 	 * </p>
-	 * 
+	 *
 	 * @param ids
 	 *            an array of thread identifiers. Each one must be a positive
 	 *            number greater than zero.
