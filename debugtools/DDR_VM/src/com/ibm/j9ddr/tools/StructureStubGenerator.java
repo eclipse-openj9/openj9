@@ -416,7 +416,7 @@ public class StructureStubGenerator {
 	}
 
 	private static void writeCopyright(PrintWriter writer) {
-		writer.println("/*******************************************************************************");
+		writer.println("/*");
 		writer.println(" * Copyright IBM Corp. and others 1991");
 		writer.println(" *");
 		writer.println(" * This program and the accompanying materials are made available under");
