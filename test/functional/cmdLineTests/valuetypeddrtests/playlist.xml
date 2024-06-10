@@ -41,7 +41,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			-DVALUETYPEJAR=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)Valhalla$(D)ValhallaTests.jar$(Q) \
 			-DCPDL=$(Q)$(P)$(Q) \
 			-jar $(CMDLINETESTER_JAR) \
-			-config $(Q)$(TEST_RESROOT)$(D)flattenedvaluetypeddrtests.xml$(Q) \
+			-config $(Q)$(TEST_RESROOT)$(D)flattenedvaluetypeddrtests_lw5.xml$(Q) \
 			-outputLimit 1000 -explainExcludes -nonZeroExitWhenError; \
 			${TEST_STATUS}
 		</command>
@@ -56,10 +56,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<versions>
 			<version>Valhalla</version>
 		</versions>
-		<impls>
-			<impl>openj9</impl>
-			<impl>ibm</impl>
-		</impls>
 	</test>
 	<test>
 		<testCaseName>cmdLineTester_unflattenedvaluetypeddrtests</testCaseName>
@@ -95,10 +91,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<versions>
 			<version>Valhalla</version>
 		</versions>
-		<impls>
-			<impl>openj9</impl>
-			<impl>ibm</impl>
-		</impls>
 	</test>
 	<test>
 		<testCaseName>cmdLineTester_flattened32bitRefBackfillTest</testCaseName>
@@ -135,10 +127,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<versions>
 			<version>Valhalla</version>
 		</versions>
-		<impls>
-			<impl>openj9</impl>
-			<impl>ibm</impl>
-		</impls>
 	</test>
 	<test>
 		<testCaseName>cmdLineTester_flattened32bitRefBackfillTestJIT</testCaseName>
@@ -175,9 +163,5 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<versions>
 			<version>Valhalla</version>
 		</versions>
-		<impls>
-			<impl>openj9</impl>
-			<impl>ibm</impl>
-		</impls>
 	</test>
 </playlist>

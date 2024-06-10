@@ -56,8 +56,12 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<input>!stackslots $mainThreadId$</input>
 			<input>quit</input>
 		</command>
-		<output regex="no" type="success" showMatch="yes">I-Slot: a0[0x</output>
-		<saveoutput regex="no" type="required" saveName="objectAddr" splitIndex="1" splitBy="= " showMatch="yes">I-Slot: a0[0x</saveoutput>
+		<!-- this regex is a hack until reflection for ValueTypeTests.checkObject is no longer needed -->
+		<output regex="yes" javaUtilPattern="yes" type="success" showMatch="yes">checkObject.*\n.*\n.*\n.*\n.*</output>
+		<!-- navigate to I-Slot: a0[0x] = <address> after call to ValueTypeTests.checkObject -->
+		<saveoutput regex="yes" javaUtilPattern="yes" type="required" saveName="objectAddr" splitIndex="93" splitBy="= " showMatch="yes">checkObject.*\n.*\n.*\n.*\n.*</saveoutput>
+		<!--<output regex="no" type="success" showMatch="yes">I-Slot: a0[0x</output>
+		<saveoutput regex="no" type="required" saveName="objectAddr" splitIndex="1" splitBy="= " showMatch="yes">I-Slot: a0[0x</saveoutput>-->
 		<output regex="no" type="failure">Problem running command</output>
 	</test>
 
@@ -103,8 +107,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<input>!flatobject $flatSingleBackfillInstance$</input>
 			<input>quit</input>
 		</command>
-		<!-- TODO change to J l = 0xFAFBFCFD11223344 for lw5-->
-		<output regex="no" type="success" showMatch="yes">J j = 0xFAFBFCFD11223344</output>
+		<output regex="no" type="success" showMatch="yes">J l = 0xFAFBFCFD11223344</output>
 		<output regex="no" type="success" showMatch="yes">I i = 0x12123434</output>
 		<output regex="no" type="success" showMatch="yes">i (offset = 0) (ValueInt)</output>
 		<output regex="no" type="success" showMatch="yes">// FlatSingleBackfill</output>
