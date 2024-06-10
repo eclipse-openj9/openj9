@@ -6135,7 +6135,6 @@ bool TR_PrexArgInfo::validateAndPropagateArgsFromCalleeSymbol(TR_PrexArgInfo* ar
          if (!storeNode || !storeNode->getSymbolReference()->getSymbol()->isParm())
             continue;
 
-         TR_ASSERT(storeNode->getSymbolReference(), "stores should have symRefs");
          TR::ParameterSymbol*  parmSymbol = storeNode->getSymbolReference()->getSymbol()->getParmSymbol();
          if (parmSymbol->getOrdinal() < getNumArgs())
             {
