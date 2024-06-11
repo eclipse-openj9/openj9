@@ -303,6 +303,10 @@ static TR::RecognizedMethod canSkipBoundChecks[] =
 #endif // OPENJ9_BUILD
    TR::java_math_BigInteger_stripLeadingZeroBytes1,
    TR::java_math_BigInteger_stripLeadingZeroBytes2,
+#ifdef OPENJ9_BUILD
+   TR::java_math_BigInteger_bitCount,
+   TR::java_math_BigInteger_bitLength,
+#endif // OPENJ9_BUILD
    TR::java_util_HashMap_get,
    TR::java_util_HashMap_findNonNullKeyEntry,
    TR::java_util_HashMap_putImpl,
