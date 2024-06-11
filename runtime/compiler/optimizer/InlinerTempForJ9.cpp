@@ -1016,6 +1016,7 @@ TR_J9InlinerPolicy::genCodeForUnsafeGetPut(TR::Node* unsafeAddress,
       nullComparisonNode->setBranchDestination(directAccessBlock->getEntry());
       nullComparisonBlock->append(nullComparisonTree);
       cfg->addNode(nullComparisonBlock);
+      nullComparisonBlock->setIsCold();
 
       debugTrace(tracer(), "\t In genCodeForUnsafeGetPut, Block %d created for null object comparison\n", nullComparisonBlock->getNumber());
 
@@ -1045,6 +1046,7 @@ TR_J9InlinerPolicy::genCodeForUnsafeGetPut(TR::Node* unsafeAddress,
       isClassBlock->append(isClassTreeTop);
       isClassNode->setBranchDestination(directAccessBlock->getEntry());
       cfg->addNode(isClassBlock);
+      isClassBlock->setIsCold();
 
       indirectAccessBlock->getEntry()->insertTreeTopsBeforeMe(isClassBlock->getEntry(), isClassBlock->getExit());
 
