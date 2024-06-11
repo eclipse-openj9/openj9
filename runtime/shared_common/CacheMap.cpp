@@ -6329,8 +6329,8 @@ SH_CacheMap::matchAotMethod(MethodSpecTable* specTable, IDATA numSpecs, J9UTF8* 
 			sigMatch = true;
 		} else {
 			char* methodSig = (char *)J9UTF8_DATA(romMethodSig);
-			char* sigStart = strchr(methodSig, '(') + 1;
-			char* sigEnd = strchr(methodSig, ')');
+			char* sigStart = (char *)memchr(methodSig, '(', J9UTF8_LENGTH(romMethodSig)) + 1;
+			char* sigEnd = (char *)memchr(methodSig, ')', J9UTF8_LENGTH(romMethodSig));
 			IDATA sigLength = sigEnd - sigStart;
 
 			/* Use string between '(' and ')' only */

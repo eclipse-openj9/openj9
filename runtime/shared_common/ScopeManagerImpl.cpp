@@ -91,11 +91,6 @@ SH_ScopeManagerImpl::scHashEqualFn(void* left, void* right, void *userData)
 
 	Trc_SHR_SMI_scHashEqualFn_Entry(utf8left, utf8right);
 
-	/* PERFORMANCE: Compare key size first as this is the most likely cause for exit */
-	if (J9UTF8_LENGTH(utf8left) != J9UTF8_LENGTH(utf8right)) {
-		Trc_SHR_SMI_scHashEqualFn_Exit2();
-		return 0;
-	}
 	result = J9UTF8_EQUALS(utf8left, utf8right);
 	Trc_SHR_SMI_scHashEqualFn_Exit3(result);
 	return result;
