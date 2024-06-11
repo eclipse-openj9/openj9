@@ -5205,7 +5205,8 @@ done:
 #if JAVA_SPEC_VERSION >= 22
 		UDATA argSlots = 13;
 		I_32 *returnState = NULL;
-		UDATA curHeapArgIdx = 0;
+		UDATA curPtrArgIdx = 0;
+		j9object_t heapBase = NULL;
 		BOOLEAN isHeapPassed = FALSE;
 #elif JAVA_SPEC_VERSION == 21
 		UDATA argSlots = 11;
@@ -5285,25 +5286,25 @@ done:
 		for (U_8 i = 0; i < ffiArgCount; i++) {
 			U_8 argType = LayoutFFITypeHelpers::getJ9NativeTypeCodeFromFFIType(cif->arg_types[i]);
 
-			if (0 == ffiArgs[i]) {
-				values[i] = &(ffiArgs[i]);
-			} else if (J9NtcPointer == argType) {
+			if (J9NtcPointer == argType) {
 				/* ffi_call expects the address of the pointer is the address of the stackslot. */
 				pointerValues[i] = (U_64)ffiArgs[i];
 #if JAVA_SPEC_VERSION >= 22
-				if (J9_FFI_DOWNCALL_HEAP_ARGUMENT_ID == pointerValues[i]) {
-					j9object_t heapBase = (j9object_t)J9JAVAARRAYOFOBJECT_LOAD(
-							_currentThread,
-							J9_JNI_UNWRAP_REFERENCE(_sp + 11), /* The heap base array. */
-							curHeapArgIdx);
-					if (NULL == heapBase) {
-						rc = THROW_NPE;
-						goto done;
-					}
+				heapBase = (j9object_t)J9JAVAARRAYOFOBJECT_LOAD(
+						_currentThread,
+						J9_JNI_UNWRAP_REFERENCE(_sp + 11), /* The heap base array. */
+						curPtrArgIdx);
+
+				/* A non-null heapBase object denotes the existence of the heap array;
+				 * otherwise, it is set to null in java in terms of the native array.
+				 * See memSegmtOfPtrToLongArg() in InternalDowncallHandler.java for
+				 * more details.
+				 */
+				if (NULL != heapBase) {
 					U_64 heapOffset = (U_64)J9JAVAARRAYOFLONG_LOAD(
 							_currentThread,
 							J9_JNI_UNWRAP_REFERENCE(_sp + 10), /* The heap offset array. */
-							curHeapArgIdx);
+							curPtrArgIdx);
 					/* Extract the heap address from the base object of the heap segment which is
 					 * created by MemorySegment.ofArray(), MemorySegment.ofBuffer() or other methods
 					 * (which only returns part of the heap array) in OpenJDK.
@@ -5322,12 +5323,12 @@ done:
 						void *elems = memcpyFromHeapArray(_currentThread, heapBase, JNI_FALSE);
 						pointerValues[i] = (UDATA)elems;
 					}
-					curHeapArgIdx += 1;
 					/* Set the flag to obtain the VMAccess so as to prevent the GC from
 					 * updating the heap address during the critical downcall.
 					 */
 					isHeapPassed = TRUE;
 				}
+				curPtrArgIdx += 1;
 #endif /* JAVA_SPEC_VERSION >= 22 */
 				values[i] = &pointerValues[i];
 			} else if (J9NtcStruct == argType) {
@@ -5336,13 +5337,15 @@ done:
 			} else {
 				values[i] = &(ffiArgs[i]);
 #if !defined(J9VM_ENV_LITTLE_ENDIAN)
-				/* Note: A float number is converted to int by Float.floatToIntBits() in InternalDowncallHandler. */
-				if ((J9NtcInt == argType) || (J9NtcFloat == argType)) {
-					values[i] = (void *)((U_64)values[i] + extraBytesOfInt);
-				} else if ((J9NtcShort == argType) || (J9NtcChar == argType)) {
-					values[i] = (void *)((U_64)values[i] + extraBytesOfShortAndChar);
-				} else if ((J9NtcBoolean == argType) || (J9NtcByte == argType)) {
-					values[i] = (void *)((U_64)values[i] + extraBytesOfBoolAndByte);
+				if (0 != ffiArgs[i]) {
+					/* Note: A float number is converted to int by Float.floatToIntBits() in InternalDowncallHandler. */
+					if ((J9NtcInt == argType) || (J9NtcFloat == argType)) {
+						values[i] = (void *)((U_64)values[i] + extraBytesOfInt);
+					} else if ((J9NtcShort == argType) || (J9NtcChar == argType)) {
+						values[i] = (void *)((U_64)values[i] + extraBytesOfShortAndChar);
+					} else if ((J9NtcBoolean == argType) || (J9NtcByte == argType)) {
+						values[i] = (void *)((U_64)values[i] + extraBytesOfBoolAndByte);
+					}
 				}
 #endif /*J9VM_ENV_LITTLE_ENDIAN */
 			}
@@ -5401,22 +5404,18 @@ done:
 		 * to the heap region in the case of the discontiguous array.
 		 */
 		if (isHeapPassed) {
-			curHeapArgIdx = 0;
+			curPtrArgIdx = 0;
 			for (U_8 i = 0; i < ffiArgCount; i++) {
 				U_8 argType = LayoutFFITypeHelpers::getJ9NativeTypeCodeFromFFIType(cif->arg_types[i]);
-				if ((J9NtcPointer == argType) && (J9_FFI_DOWNCALL_HEAP_ARGUMENT_ID == (U_64)ffiArgs[i])) {
-					j9object_t heapBase = (j9object_t)J9JAVAARRAYOFOBJECT_LOAD(
+				if (J9NtcPointer == argType) {
+					heapBase = (j9object_t)J9JAVAARRAYOFOBJECT_LOAD(
 							_currentThread,
 							J9_JNI_UNWRAP_REFERENCE(_sp + 11), /* The heap base array. */
-							curHeapArgIdx);
-					if (NULL == heapBase) {
-						rc = THROW_NPE;
-						goto done;
-					}
-					if (!J9ISCONTIGUOUSARRAY(_currentThread, heapBase)) {
+							curPtrArgIdx);
+					if ((NULL != heapBase) && !J9ISCONTIGUOUSARRAY(_currentThread, heapBase)) {
 						memcpyToHeapArray(_currentThread, heapBase, (void *)(UDATA)(pointerValues[i]), 0, JNI_FALSE);
 					}
-					curHeapArgIdx += 1;
+					curPtrArgIdx += 1;
 				}
 			}
 		}
