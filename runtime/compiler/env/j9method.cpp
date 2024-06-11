@@ -2643,6 +2643,8 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::java_math_BigInteger_toByteArray,                     "toByteArray",           "()[B")},
       {x(TR::java_math_BigInteger_stripLeadingZeroBytes1,          "stripLeadingZeroBytes", "([BII)[I")},
       {x(TR::java_math_BigInteger_stripLeadingZeroBytes2,          "stripLeadingZeroBytes", "(I[BII)[I")},
+      {x(TR::java_math_BigInteger_bitCount,                        "bitCount",              "()I")},
+      {x(TR::java_math_BigInteger_bitLength,                       "bitLength",             "()I")},
       {    TR::unknownMethod}
       };
 

@@ -839,6 +839,8 @@
    java_math_BigInteger_toByteArray,
    java_math_BigInteger_stripLeadingZeroBytes1,
    java_math_BigInteger_stripLeadingZeroBytes2,
+   java_math_BigInteger_bitCount,
+   java_math_BigInteger_bitLength,
 
    java_text_NumberFormat_format,
 
