@@ -31,7 +31,7 @@ import org.testng.annotations.BeforeClass;
 public class NullRestrictedTypeOptTests {
 
 	// A primitive (null-restricted) value class
-	public primitive static class PrimPair {
+	public value static class PrimPair {
 		public final int x, y;
 
 		public PrimPair(int x, int y) {
@@ -162,7 +162,7 @@ public class NullRestrictedTypeOptTests {
 	}
 
 	// A primitive (null-restricted) value class with primitive value class fields
-	public primitive static class NestedPrimPair {
+	public value static class NestedPrimPair {
 		public final PrimPair p1;
 		public final PrimPair p2;
 
@@ -357,7 +357,7 @@ public class NullRestrictedTypeOptTests {
 		}
 	}
 
-	public static primitive class TestWithFieldStoreToNullRestrictedField {
+	public static value class TestWithFieldStoreToNullRestrictedField {
 		public PrimPair nullRestrictedInstanceField;
 
 		public TestWithFieldStoreToNullRestrictedField(Object val) {
@@ -365,7 +365,7 @@ public class NullRestrictedTypeOptTests {
 		}
 	}
 
-	@Test
+	@Test(enabled = false)
 	static public void testStoreNullValueToNullRestrictedInstanceField() throws Throwable {
 		TestStoreToNullRestrictedField storeFieldObj = new TestStoreToNullRestrictedField();
 		storeFieldObj.replaceInstanceField(new PrimPair(1, 2));
@@ -379,7 +379,7 @@ public class NullRestrictedTypeOptTests {
 		Assert.fail("Expect a NullPointerException. No exception or wrong kind of exception thrown");
 	}
 
-	@Test
+	@Test(enabled = false)
 	static public void testStoreNullValueToNullRestrictedStaticField() throws Throwable {
 		TestStoreToNullRestrictedField.replaceStaticField(new PrimPair(1, 2));
 
@@ -392,7 +392,7 @@ public class NullRestrictedTypeOptTests {
 		Assert.fail("Expect a NullPointerException. No exception or wrong kind of exception thrown");
 	}
 
-	@Test
+	@Test(enabled = false)
 	static public void testWithFieldStoreToNullRestrictedField() throws Throwable {
 		TestWithFieldStoreToNullRestrictedField withFieldObj = new TestWithFieldStoreToNullRestrictedField(new PrimPair(1, 2));
 

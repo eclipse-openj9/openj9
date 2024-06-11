@@ -209,9 +209,9 @@ public class ValueTypeGenerator extends ClassLoader {
 		String classFileName = className + ".class";
 
 		if (isRef) {
-			cw.visit(ValhallaUtils.CLASS_FILE_MAJOR_VERSION, ACC_PUBLIC + ACC_FINAL + extraClassFlags, className, null, superName, null);
+			cw.visit(ValhallaUtils.VALUE_TYPE_CLASS_FILE_VERSION, ACC_PUBLIC + ACC_FINAL + ValhallaUtils.ACC_IDENTITY + extraClassFlags, className, null, superName, null);
 		} else {
-			cw.visit(ValhallaUtils.CLASS_FILE_MAJOR_VERSION, ACC_PUBLIC + ACC_FINAL + ValhallaUtils.ACC_VALUE_TYPE + ValhallaUtils.ACC_PRIMITIVE + extraClassFlags, className, null, superName, null);
+			cw.visit(ValhallaUtils.VALUE_TYPE_CLASS_FILE_VERSION, ACC_PUBLIC + ACC_FINAL + extraClassFlags, className, null, superName, null);
 		}
 
 		cw.visitSource(className + ".java", null);
