@@ -269,9 +269,9 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 				if (J9_ARE_NO_BITS_SET(runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_CACHERETRANSFORMED)
 					&& J9_ARE_ALL_BITS_SET(runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_CACHE_NON_BOOT_CLASSES)
 				) {
-					/* Check for -XX:+ShareOrphans and -XX:-ShareOrphans whichever comes later wins. The default behaviour is -XX:-ShareOrphans.
+					/* Check for -XX:+ShareOrphans and -XX:-ShareOrphans whichever comes later wins.
 					 */
-					if (shareOrphansArgIndex2 < shareOrphansArgIndex1) {
+					if (shareOrphansArgIndex2 <= shareOrphansArgIndex1) {
 						runtimeFlags2 |= J9SHR_RUNTIMEFLAG2_ENABLE_CACHEORPHAN;
 					}
 				}
