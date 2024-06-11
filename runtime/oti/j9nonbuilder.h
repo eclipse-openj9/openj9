@@ -5592,6 +5592,15 @@ typedef struct J9VMThread {
 #define J9VMTHREAD_CONTIGUOUS_INDEXABLE_HEADER_SIZE(vmThread) ((vmThread)->contiguousIndexableHeaderSize)
 #define J9VMTHREAD_DISCONTIGUOUS_INDEXABLE_HEADER_SIZE(vmThread) ((vmThread)->discontiguousIndexableHeaderSize)
 
+typedef struct JFRState {
+	char *jfrFileName;
+	U_8 *metaDataBlobFile;
+	UDATA metaDataBlobFileSize;
+	IDATA blobFileDescriptor;
+	void *jfrWriter;
+	UDATA jfrChunkCount;
+} JFRState;
+
 typedef struct J9ReflectFunctionTable {
 	jobject  ( *idToReflectMethod)(struct J9VMThread* vmThread, jmethodID methodID) ;
 	jobject  ( *idToReflectField)(struct J9VMThread* vmThread, jfieldID fieldID) ;
@@ -6117,6 +6126,7 @@ typedef struct J9JavaVM {
 	struct J9Pool *memberNameListNodePool;
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 #if defined(J9VM_OPT_JFR)
+	JFRState jfrState;
 	J9JFRBuffer jfrBuffer;
 	omrthread_monitor_t jfrBufferMutex;
 #endif /* defined(J9VM_OPT_JFR) */
