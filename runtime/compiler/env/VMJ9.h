@@ -1505,6 +1505,10 @@ public:
    virtual bool isJ9VMThreadCurrentThreadImmutable();
 
 protected:
+   bool isSignatureForPrimitiveType(const char * sig, int32_t sigLength)
+      {
+      return sigLength == 1 && (*sig == 'I' || *sig == 'Z' || *sig == 'C' || *sig == 'B' || *sig == 'J' || *sig == 'F' || *sig == 'D' || *sig == 'S');
+      }
 
    enum // _flags
       {
