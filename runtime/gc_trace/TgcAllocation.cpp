@@ -76,8 +76,13 @@ tgcAllocationPrintPerThreadStats(OMR_VMThread *omrVMThread)
 	tgcExtensions->printf("----- Per Thread Allocation Statistics %s ----\n", timestamp);
 
 #if defined(J9VM_GC_THREAD_LOCAL_HEAP)
+#if defined(OMR_GC_NON_ZERO_TLH)
+	tgcExtensions->printf("   JVM thread ID |                                                                             name | refresh/remaining cache size | refresh/remaining non-0 cache | obj alloc count/bytes | TLH fresh count/bytes | TLH discards\n");
+#else /* defined(OMR_GC_NON_ZERO_TLH) */
 	tgcExtensions->printf("   JVM thread ID |                                                                             name | refresh/remaining cache size | obj alloc count/bytes | TLH fresh count/bytes | TLH discards\n");
+#endif /* defined(OMR_GC_NON_ZERO_TLH) */
 #else /* defined(J9VM_GC_THREAD_LOCAL_HEAP) */
+	/* OMR_GC_NON_ZERO_TLH should not be defined, if J9VM_GC_THREAD_LOCAL_HEAP is not defined */
 	tgcExtensions->printf("   JVM thread ID |                                                                             name | refresh/remaining cache size | obj alloc count/bytes\n");
 #endif /* defined(J9VM_GC_THREAD_LOCAL_HEAP) */
 
@@ -93,9 +98,19 @@ tgcAllocationPrintPerThreadStats(OMR_VMThread *omrVMThread)
 		}
 #endif /* defined(J9VM_GC_THREAD_LOCAL_HEAP) */
 
-		tgcExtensions->printf("%8p | %80s | %14zu %13zu | %8zu %12zu", walkOmrVMThread->_language_vmthread, getOMRVMThreadName(walkOmrVMThread),
-				walkInterface->getRefreshCacheSize(false), walkInterface->getRemainingCacheSize(false), walkStats->_allocationCount,  walkStats->_allocationBytes);
+#if defined(OMR_GC_NON_ZERO_TLH)
+		tgcExtensions->printf("%8p | %80s | %14zu %13zu | %14zu %14zu | %8zu %12zu",
+#else /* defined(OMR_GC_NON_ZERO_TLH) */
+		tgcExtensions->printf("%8p | %80s | %14zu %13zu | %8zu %12zu",
+#endif /* defined(OMR_GC_NON_ZERO_TLH) */
+				walkOmrVMThread->_language_vmthread, getOMRVMThreadName(walkOmrVMThread),
+				walkInterface->getRefreshCacheSize(false), walkInterface->getRemainingCacheSize(false),
+#if defined(OMR_GC_NON_ZERO_TLH)
+				walkInterface->getRefreshCacheSize(true), walkInterface->getRemainingCacheSize(true),
+#endif /* defined(OMR_GC_NON_ZERO_TLH) */
+				walkStats->_allocationCount,  walkStats->_allocationBytes);
 #if defined(J9VM_GC_THREAD_LOCAL_HEAP)
+		/* If OMR_GC_NON_ZERO_TLH is enabled, the stats are cumulative for both zero and non-zero TLH */
 		tgcExtensions->printf(" | %8zu %12zu | %12zu\n", walkStats->_tlhRefreshCountFresh, walkStats->_tlhAllocatedFresh, walkStats->_tlhDiscardedBytes);
 #else /* defined(J9VM_GC_THREAD_LOCAL_HEAP) */
 		tgcExtensions->printf("\n");
