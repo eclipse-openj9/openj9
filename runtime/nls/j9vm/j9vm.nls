@@ -2402,6 +2402,14 @@ J9NLS_VM_CRIU_CHECK_TRANSITION_TO_DEBUG_INTERPRETER_FAILED.system_action=The JVM
 J9NLS_VM_CRIU_CHECK_TRANSITION_TO_DEBUG_INTERPRETER_FAILED.user_response=View CRIU documentation to determine how to resolve the error.
 # END NON-TRANSLATABLE
 
+J9NLS_VM_UNRECOGNISED_SUN_MISC_UNSAFE_MEMORY_ACCESS_VALUE=Value specified to --sun-misc-unsafe-memory-access not recognized: '%s'
+# START NON-TRANSLATABLE
+J9NLS_VM_UNRECOGNISED_CMD_LINE_OPT.sample_input_1=allow
+J9NLS_VM_UNRECOGNISED_CMD_LINE_OPT.explanation=The value specified is not known.
+J9NLS_VM_UNRECOGNISED_CMD_LINE_OPT.system_action=The JVM will fail to start.
+J9NLS_VM_UNRECOGNISED_CMD_LINE_OPT.user_response=Change the value to one of "allow", "warn", "debug" or "deny".
+# END NON-TRANSLATABLE
+
 J9NLS_VM_CLASS_NAME_EXCEEDS_MAX_LENGTH=Class name exceeds maximum length
 # START NON-TRANSLATABLE
 J9NLS_VM_CLASS_NAME_EXCEEDS_MAX_LENGTH.explanation=Class name cannot be longer than 65535 characters.

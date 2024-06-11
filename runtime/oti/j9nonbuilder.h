@@ -924,6 +924,7 @@ typedef struct J9VMCustomSpinOptions {
 #define J9SYSPROP_ERROR_INVALID_JCL  4
 #define J9SYSPROP_ERROR_UNSUPPORTED_PROP 5
 #define J9SYSPROP_ERROR_ARG_MISSING 6
+#define J9SYSPROP_ERROR_INVALID_VALUE  7
 
 typedef struct J9VMDllLoadInfo {
 	char dllName[32];

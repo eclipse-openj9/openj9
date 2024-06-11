@@ -24,6 +24,7 @@
 	<test>
 		<testCaseName>IllegalAccessProtectedMethodTest</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	-XX:+EnableExtendedHCR \
 	-javaagent:$(Q)$(TEST_RESROOT)$(D)IllegalAccessProtectedMethod.jar$(Q) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(LIB_DIR)$(D)asm-all.jar$(P)$(TEST_RESROOT)$(D)IllegalAccessProtectedMethod.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \

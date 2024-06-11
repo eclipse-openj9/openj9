@@ -1148,6 +1148,42 @@ initializeSystemProperties(J9JavaVM * vm)
 	}
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
+#if JAVA_SPEC_VERSION >= 23
+	{
+		/* JEP 471: Deprecate the Memory-Access Methods in sun.misc.Unsafe for Removal
+		 * --sun-misc-unsafe-memory-access=value which is expected to be "allow", "warn", "debug" or "deny".
+		 */
+		IDATA argIndex = FIND_AND_CONSUME_VMARG(STARTSWITH_MATCH, VMOPT_DISABLE_SUN_MISC_UNSAFE_MEMORY_ACCESS, NULL);
+		if (argIndex >= 0) {
+			PORT_ACCESS_FROM_JAVAVM(vm);
+			UDATA optionNameLen = LITERAL_STRLEN(VMOPT_DISABLE_SUN_MISC_UNSAFE_MEMORY_ACCESS);
+			/* option name includes the '=' so go back one to get the option arg */
+			char *optionArg = getOptionArg(vm, argIndex, optionNameLen - 1);
+
+			if (NULL != optionArg) {
+				if ((0 == strcmp(optionArg, "allow"))
+					|| (0 == strcmp(optionArg, "warn"))
+					|| (0 == strcmp(optionArg, "debug"))
+					|| (0 == strcmp(optionArg, "deny"))
+				) {
+					rc = addSystemProperty(vm, SYSPROP_SUN_MISC_UNSAFE_MEMORY_ACCESS, optionArg, J9SYSPROP_FLAG_VALUE_ALLOCATED);
+					if (J9SYSPROP_ERROR_NONE != rc) {
+						goto fail;
+					}
+				} else {
+					j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_VM_UNRECOGNISED_SUN_MISC_UNSAFE_MEMORY_ACCESS_VALUE, optionArg);
+					rc = J9SYSPROP_ERROR_INVALID_VALUE;
+					goto fail;
+				}
+			} else {
+				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_VM_UNRECOGNISED_SUN_MISC_UNSAFE_MEMORY_ACCESS_VALUE, "");
+				rc = J9SYSPROP_ERROR_ARG_MISSING;
+				goto fail;
+			}
+		}
+	}
+#endif /* JAVA_SPEC_VERSION >= 23 */
+
 	/* If we get here all is good */
 	rc = J9SYSPROP_ERROR_NONE;
 

@@ -419,6 +419,8 @@ enum INIT_STAGE {
 #define VMOPT_XXNOOPENJ9COMMANDLINEENV "-XX:-OpenJ9CommandLineEnv"
 #define VMOPT_XXCPULOADCOMPATIBILITY "-XX:+CpuLoadCompatibility"
 #define VMOPT_XXNOCPULOADCOMPATIBILITY "-XX:-CpuLoadCompatibility"
+#define VMOPT_XXENABLEEXTENDEDHCR "-XX:+EnableExtendedHCR"
+#define VMOPT_XXDISABLEEXTENDEDHCR "-XX:-EnableExtendedHCR"
 
 #if defined(J9VM_ZOS_3164_INTEROPERABILITY)
 #define VMOPT_XXENABLE3164INTEROPERABILITY "-XX:+Enable3164Interoperability"
@@ -687,6 +689,9 @@ enum INIT_STAGE {
 /* JEP 421: Deprecate Finalization for Removal */
 #define VMOPT_DISABLE_FINALIZATION "--finalization="
 
+/* JEP 471: Deprecate the Memory-Access Methods in sun.misc.Unsafe for Removal */
+#define VMOPT_DISABLE_SUN_MISC_UNSAFE_MEMORY_ACCESS "--sun-misc-unsafe-memory-access="
+
 #define ENVVAR_IBM_MIXED_MODE_THRESHOLD "IBM_MIXED_MODE_THRESHOLD"
 #define ENVVAR_JAVA_COMPILER "JAVA_COMPILER"
 #define ENVVAR_JAVA_OPTIONS "_JAVA_OPTIONS"
@@ -716,6 +721,9 @@ enum INIT_STAGE {
 #define SYSPROP_JDK_MODULE_PATCH "jdk.module.patch."
 #define SYSPROP_JDK_MODULE_ILLEGALACCESS "jdk.module.illegalAccess"
 #define SYSPROP_JDK_MODULE_ENABLENATIVEACCESS "jdk.module.enable.native.access."
+#if JAVA_SPEC_VERSION >= 23
+#define SYSPROP_SUN_MISC_UNSAFE_MEMORY_ACCESS "sun.misc.unsafe.memory.access"
+#endif /* JAVA_SPEC_VERSION >= 23 */
 #define JAVA_BASE_MODULE "java.base"
 
 #define SYSPROP_COM_SUN_MANAGEMENT "-Dcom.sun.management."

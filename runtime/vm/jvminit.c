@@ -3708,6 +3708,7 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 	vm->extendedRuntimeFlags |= (UDATA)J9_EXTENDED_RUNTIME_CLASSLOADER_LOCKING_ENABLED | J9_EXTENDED_RUNTIME_REDUCE_CPU_MONITOR_OVERHEAD; /* enabled by default */
 	vm->extendedRuntimeFlags |= (UDATA)J9_EXTENDED_RUNTIME_ENABLE_CPU_MONITOR; /* Cpu monitoring is enabled by default */
 	vm->extendedRuntimeFlags |= (UDATA)J9_EXTENDED_RUNTIME_ALLOW_CONTENDED_FIELDS; /* Allow contended fields on bootstrap classes */
+	vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_DISABLE_EXTENDED_HCR; /* disable extended HCR by default */
 	if (J2SE_VERSION(vm) >= J2SE_V11) {
 		vm->extendedRuntimeFlags |= (UDATA)J9_EXTENDED_RUNTIME_RESTRICT_IFA; /* Enable zAAP switching for Registered Natives and JVMTI callbacks by default in Java 9 and later. */
 	}
@@ -4220,6 +4221,15 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 		IDATA noCpuLoadCompatibility = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXNOCPULOADCOMPATIBILITY, NULL);
 		if (cpuLoadCompatibility > noCpuLoadCompatibility) {
 			vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_CPU_LOAD_COMPATIBILITY;
+		}
+	}
+	{
+		IDATA enableExtendedHCR =  FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXENABLEEXTENDEDHCR, NULL);
+		IDATA disableExtendedHCR =  FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXDISABLEEXTENDEDHCR, NULL);
+		if (enableExtendedHCR > disableExtendedHCR) {
+			vm->extendedRuntimeFlags2 &= ~J9_EXTENDED_RUNTIME2_DISABLE_EXTENDED_HCR;
+		} else if (enableExtendedHCR < disableExtendedHCR) {
+			vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_DISABLE_EXTENDED_HCR;
 		}
 	}
 
