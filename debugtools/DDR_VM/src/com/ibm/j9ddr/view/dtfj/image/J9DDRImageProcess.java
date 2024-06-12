@@ -365,26 +365,29 @@ public class J9DDRImageProcess implements ImageProcess {
 
 		try {
 			IVMData data = VMDataFactory.getVMData(process);
-			version = data.getVersion();
 
-			Object[] passbackArray = new Object[1];
+			if (data != null) {
+				version = data.getVersion();
 
-			try {
-				// attempt to load a default bootstrap class which will allow different implementations to provide their own initializers
-				data.bootstrapRelative("view.dtfj.DTFJBootstrapShim", (Object) passbackArray, this);
-			} catch (ClassNotFoundException e) {
-				// no specific class was found, so use a generic native one instead
+				Object[] passbackArray = new Object[1];
+
 				try {
-					data.bootstrap("com.ibm.j9ddr.view.nativert.Bootstrap", (Object) passbackArray, this);
+					// attempt to load a default bootstrap class which will allow different implementations to provide their own initializers
+					data.bootstrapRelative("view.dtfj.DTFJBootstrapShim", (Object) passbackArray, this);
+				} catch (ClassNotFoundException e) {
+					// no specific class was found, so use a generic native one instead
+					try {
+						data.bootstrap("com.ibm.j9ddr.view.nativert.Bootstrap", (Object) passbackArray, this);
 
-				} catch (ClassNotFoundException e1) {
-					// this class should be packaged and without it we can't work, so abort
-					throw new Error(e1);
+					} catch (ClassNotFoundException e1) {
+						// this class should be packaged and without it we can't work, so abort
+						throw new Error(e1);
+					}
 				}
-			}
 
-			if (passbackArray[0] != null) {
-				toIterate.add(passbackArray[0]);
+				if (passbackArray[0] != null) {
+					toIterate.add(passbackArray[0]);
+				}
 			}
 		} catch (IOException e) {
 			// VMDataFactory may throw IOException for JVMs that this level of DDR does not support. Pass the

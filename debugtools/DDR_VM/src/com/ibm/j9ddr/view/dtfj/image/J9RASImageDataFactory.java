@@ -104,26 +104,28 @@ public class J9RASImageDataFactory
 	{
 		try {
 			IVMData vmData = VMDataFactory.getVMData(p);
-			
-			Object[] passBackArray = new Object[1];
-			
-			try {
-				vmData.bootstrapRelative("view.dtfj.J9RASInfoBootstrapShim", (Object)passBackArray);
-			} catch (ClassNotFoundException e) {
-				// Need to return null here for IDDE as the class will not be found for Node.js cores
-				return null;
+
+			if (vmData != null) {
+				Object[] passBackArray = new Object[1];
+
+				try {
+					vmData.bootstrapRelative("view.dtfj.J9RASInfoBootstrapShim", (Object) passBackArray);
+				} catch (ClassNotFoundException e) {
+					// Need to return null here for IDDE as the class will not be found for Node.js cores.
+					return null;
+				}
+
+				return passBackArray[0];
 			}
-			
-			return passBackArray[0];
 		} catch (IOException e) {
 			//Ignore
 		} catch (UnsupportedOperationException e) {
 			// VMDataFactory may throw unsupported UnsupportedOperationException
-			// exceptions for JVM's DDR does not support.
+			// for JVMs DDR does not support.
 		} catch (Exception e) {
 			// Ignore
 		}
-		
+
 		return null;
 	}
 
