@@ -98,13 +98,7 @@ public abstract class VMDataFactory {
 	 * @throws IOException
 	 */
 	public static IVMData getVMData(IProcess process) throws IOException {
-		List<IVMData> cachedVMData = vmDataCache.get(process);
-
-		if ((cachedVMData != null) && (cachedVMData.size() > 0)) {
-			return cachedVMData.get(0); // return the first VM found
-		}
-
-		cachedVMData = getAllVMData(process);
+		List<IVMData> cachedVMData = getAllVMData(process);
 
 		if (cachedVMData.size() > 0) {
 			return cachedVMData.get(0); // return the first VM found
