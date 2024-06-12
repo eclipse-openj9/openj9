@@ -1,0 +1,60 @@
+Test.instanceCount Test.sFld Test.fFld = 0,18776,1121641038
+Test.sFld1 Test.iFld Test.iFld1 = -15981,-250,1
+Test.iArrFld = -15617
+iMeth_check_sum: 0
+vMeth1_check_sum: -3928787524595057683
+vMeth_check_sum: -7212646572559099343
+Test.instanceCount Test.sFld Test.fFld = 0,18776,1121641038
+Test.sFld1 Test.iFld Test.iFld1 = -15981,-250,1
+Test.iArrFld = -15617
+iMeth_check_sum: 0
+vMeth1_check_sum: -7857575049190115366
+vMeth_check_sum: 4021450928591352930
+Test.instanceCount Test.sFld Test.fFld = 0,18776,1121641038
+Test.sFld1 Test.iFld Test.iFld1 = -15981,-250,1
+Test.iArrFld = -15617
+iMeth_check_sum: 0
+vMeth1_check_sum: 6660381499924378567
+vMeth_check_sum: -3191195643967746413
+Test.instanceCount Test.sFld Test.fFld = 0,18776,1121641038
+Test.sFld1 Test.iFld Test.iFld1 = -15981,-250,1
+Test.iArrFld = -15617
+iMeth_check_sum: 0
+vMeth1_check_sum: 2731593975329320884
+vMeth_check_sum: 8042901857182705860
+Test.instanceCount Test.sFld Test.fFld = 0,18776,1121641038
+Test.sFld1 Test.iFld Test.iFld1 = -15981,-250,1
+Test.iArrFld = -15617
+iMeth_check_sum: 0
+vMeth1_check_sum: -1197193549265736799
+vMeth_check_sum: 830255284623606517
+Test.instanceCount Test.sFld Test.fFld = 0,18776,1121641038
+Test.sFld1 Test.iFld Test.iFld1 = -15981,-250,1
+Test.iArrFld = -15617
+iMeth_check_sum: 0
+vMeth1_check_sum: -5125981073860794482
+vMeth_check_sum: -6382391287935492826
+Test.instanceCount Test.sFld Test.fFld = 0,18776,1121641038
+Test.sFld1 Test.iFld Test.iFld1 = -15981,-250,1
+Test.iArrFld = -15617
+iMeth_check_sum: 0
+vMeth1_check_sum: -9054768598455852165
+vMeth_check_sum: 4851706213214959447
+Test.instanceCount Test.sFld Test.fFld = 0,18776,1121641038
+Test.sFld1 Test.iFld Test.iFld1 = -15981,-250,1
+Test.iArrFld = -15617
+iMeth_check_sum: 0
+vMeth1_check_sum: 5463187950658641768
+vMeth_check_sum: -2360940359344139896
+Test.instanceCount Test.sFld Test.fFld = 0,18776,1121641038
+Test.sFld1 Test.iFld Test.iFld1 = -15981,-250,1
+Test.iArrFld = -15617
+iMeth_check_sum: 0
+vMeth1_check_sum: 1534400426063584085
+vMeth_check_sum: 8873157141806312377
+Test.instanceCount Test.sFld Test.fFld = 0,18776,1121641038
+Test.sFld1 Test.iFld Test.iFld1 = -15981,-250,1
+Test.iArrFld = -15617
+iMeth_check_sum: 0
+vMeth1_check_sum: -2394387098531473598
+vMeth_check_sum: 1660510569247213034
