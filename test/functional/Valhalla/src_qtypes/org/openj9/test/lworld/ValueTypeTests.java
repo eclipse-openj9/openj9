@@ -193,30 +193,30 @@ public class ValueTypeTests {
 
 	/* fields */
 	static String typeWithSingleAlignmentFields[] = {
-		"tri:QTriangle2D;:value",
-		"point:QPoint2D;:value",
-		"line:QFlattenedLine2D;:value",
-		"i:QValueInt;:value",
-		"f:QValueFloat;:value",
-		"tri2:QTriangle2D;:value"
+		"tri:LTriangle2D;:NR",
+		"point:LPoint2D;:NR",
+		"line:LFlattenedLine2D;:NR",
+		"i:LValueInt;:NR",
+		"f:LValueFloat;:NR",
+		"tri2:LTriangle2D;:NR"
 	};
 	static String typeWithObjectAlignmentFields[] = {
-		"tri:QTriangle2D;:value",
-		"point:QPoint2D;:value",
-		"line:QFlattenedLine2D;:value",
-		"o:QValueObject;:value",
-		"i:QValueInt;:value",
-		"f:QValueFloat;:value",
-		"tri2:QTriangle2D;:value"
+		"tri:LTriangle2D;:NR",
+		"point:LPoint2D;:NR",
+		"line:LFlattenedLine2D;:NR",
+		"o:LValueObject;:NR",
+		"i:LValueInt;:NR",
+		"f:LValueFloat;:NR",
+		"tri2:LTriangle2D;:NR"
 	};
 	static String typeWithLongAlignmentFields[] = {
-		"point:QPoint2D;:value",
-		"line:QFlattenedLine2D;:value",
-		"o:QValueObject;:value",
-		"l:QValueLong;:value",
-		"d:QValueDouble;:value",
-		"i:QValueInt;:value",
-		"tri:QTriangle2D;:value"
+		"point:LPoint2D;:NR",
+		"line:LFlattenedLine2D;:NR",
+		"o:LValueObject;:NR",
+		"l:LValueLong;:NR",
+		"d:LValueDouble;:NR",
+		"i:LValueInt;:NR",
+		"tri:LTriangle2D;:NR"
 	};
 	
 	/* default values */
@@ -466,7 +466,7 @@ public class ValueTypeTests {
 	 */
 	@Test(priority=2)
 	static public void testCreateLine2D() throws Throwable {
-		String fields[] = {"st:QPoint2D;:value", "en:QPoint2D;:value"};
+		String fields[] = {"st:LPoint2D;:NR", "en:LPoint2D;:NR"};
 		line2DClass = ValueTypeGenerator.generateValueClass("Line2D", fields);
 		
 		makeLine2D = lookup.findStatic(line2DClass, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class));
@@ -524,7 +524,7 @@ public class ValueTypeTests {
 	 */
 	@Test(priority=2)
 	static public void testCreateFlattenedLine2D() throws Throwable {
-		String fields[] = {"st:QPoint2D;:value", "en:QPoint2D;:value"};
+		String fields[] = {"st:LPoint2D;:NR", "en:LPoint2D;:NR"};
 		flattenedLine2DClass = ValueTypeGenerator.generateValueClass("FlattenedLine2D", fields);
 				
 		makeFlattenedLine2D = lookup.findStatic(flattenedLine2DClass, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class));
@@ -627,7 +627,7 @@ public class ValueTypeTests {
 	 */
 	@Test(priority=3)
 	static public void testInvalidNestedField() throws Throwable {
-		String fields[] = {"st:QPoint2D;:value", "x:QInvalid;:value"};
+		String fields[] = {"st:LPoint2D;:value", "x:LInvalid;:value"};
 
 		try {
 			Class<?> invalidField = ValueTypeGenerator.generateValueClass("InvalidField", fields);
@@ -646,7 +646,7 @@ public class ValueTypeTests {
 	 */
 	@Test(priority=3)
 	static public void testNoneValueQTypeAsNestedField() throws Throwable {
-		String fields[] = {"st:QPoint2D;:value", "o:Qjava/lang/Object;:value"};
+		String fields[] = {"st:LPoint2D;:value", "o:Ljava/lang/Object;:value"};
 		try {
 			Class<?> noneValueQType = ValueTypeGenerator.generateValueClass("NoneValueQType", fields);
 			Assert.fail("should throw error. j.l.Object is not a qtype!");
@@ -664,7 +664,7 @@ public class ValueTypeTests {
 	 */
 	@Test(enabled=false, priority=3)
 	static public void testDefaultValueWithNonValueType() throws Throwable {
-		String fields[] = {"f1:Ljava/lang/Object;:value", "f2:Ljava/lang/Object;:value"};
+		String fields[] = {"f1:Ljava/lang/Object;:NR", "f2:Ljava/lang/Object;:NR"};
 		Class<?> defaultValueWithNonValueType = ValueTypeGenerator.generateRefClass("DefaultValueWithNonValueType", fields);
 		MethodHandle makeDefaultValueWithNonValueType = lookup.findStatic(defaultValueWithNonValueType, "makeValueTypeDefaultValue", MethodType.methodType(Object.class));
 		try {
@@ -1234,7 +1234,7 @@ public class ValueTypeTests {
 	 */
 	@Test(priority=3)
 	static public void testCreateTriangle2D() throws Throwable {
-		String fields[] = {"v1:QFlattenedLine2D;:value", "v2:QFlattenedLine2D;:value", "v3:QFlattenedLine2D;:value"};
+		String fields[] = {"v1:LFlattenedLine2D;:NR", "v2:LFlattenedLine2D;:NR", "v3:LFlattenedLine2D;:NR"};
 		triangle2DClass = ValueTypeGenerator.generateValueClass("Triangle2D", fields);
 
 		makeTriangle2D = lookup.findStatic(triangle2DClass, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class, Object.class));
@@ -1412,7 +1412,7 @@ public class ValueTypeTests {
 	 */
 	@Test(priority=1)
 	static public void testCreateValueObject() throws Throwable {
-		String fields[] = {"val:Ljava/lang/Object;:value"};
+		String fields[] = {"val:Ljava/lang/Object;"};
 
 		valueObjectClass = ValueTypeGenerator.generateValueClass("ValueObject", fields);
 
@@ -1448,8 +1448,8 @@ public class ValueTypeTests {
 	 */
 	@Test(priority=3)
 	static public Object createValueTypeWithVolatileFields() throws Throwable {
-		String fields[] = {"i:QValueInt;:value", "i2:QValueInt;:value", "point:QPoint2D;:value", "vpoint:QPoint2D;:volatile",
-				"line:QFlattenedLine2D;:value", "vline:QFlattenedLine2D;:volatile"};
+		String fields[] = {"i:LValueInt;:NR", "i2:LValueInt;:NR", "point:LPoint2D;:NR", "vpoint:LPoint2D;:NR:volatile",
+				"line:LFlattenedLine2D;:NR", "vline:LFlattenedLine2D;:NR:volatile"};
 		Class ValueTypeWithVolatileFieldsClass = ValueTypeGenerator.generateValueClass("ValueTypeWithVolatileFields", fields);
 		MethodHandle valueWithVolatile = lookup.findStatic(ValueTypeWithVolatileFieldsClass, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class, Object.class,
 				Object.class, Object.class, Object.class));
@@ -1558,53 +1558,53 @@ public class ValueTypeTests {
 	
 	@Test(priority=4)
 	static public void testCreateFlatLayoutsWithValueTypes() throws Throwable {
-		String flatSingleBackfill[] = {"l:QValueLong;", "o:QValueObject;", "i:QValueInt;"};
+		String flatSingleBackfill[] = {"l:LValueLong;:NR", "o:LValueObject;:NR", "i:LValueInt;:NR"};
 		flatSingleBackfillClass = ValueTypeGenerator.generateValueClass("FlatSingleBackfill", flatSingleBackfill);
 		makeFlatSingleBackfillClass = lookup.findStatic(flatSingleBackfillClass, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class, Object.class));
 		getVTSingleI = generateGenericGetter(flatSingleBackfillClass, "i");
 		getVTSingleO = generateGenericGetter(flatSingleBackfillClass, "o");
 		getVTSingleL = generateGenericGetter(flatSingleBackfillClass, "l");
 		
-		String flatObjectBackfill[] = {"l:QValueLong;", "o:QValueObject;"};
+		String flatObjectBackfill[] = {"l:LValueLong;:NR", "o:LValueObject;:NR"};
 		flatObjectBackfillClass = ValueTypeGenerator.generateValueClass("FlatObjectBackfill", flatObjectBackfill);
 		makeFlatObjectBackfillClass = lookup.findStatic(flatObjectBackfillClass, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class));
 		getVTObjectO = generateGenericGetter(flatObjectBackfillClass, "o");
 		getVTObjectL = generateGenericGetter(flatObjectBackfillClass, "l");
 		
-		String flatUnAlignedSingle[] = {"i:QValueInt;", "i2:QValueInt;"};
+		String flatUnAlignedSingle[] = {"i:LValueInt;:NR", "i2:LValueInt;:NR"};
 		flatUnAlignedSingleClass = ValueTypeGenerator.generateValueClass("FlatUnAlignedSingle", flatUnAlignedSingle);
 		makeFlatUnAlignedSingleClass = lookup.findStatic(flatUnAlignedSingleClass, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class));
 		getUnAlignedSingleI = generateGenericGetter(flatUnAlignedSingleClass, "i");
 		getUnAlignedSingleI2 = generateGenericGetter(flatUnAlignedSingleClass, "i2");
 		
-		String flatUnAlignedSingleBackfill[] = {"l:QValueLong;","singles:QFlatUnAlignedSingle;", "o:QValueObject;"};
+		String flatUnAlignedSingleBackfill[] = {"l:LValueLong;:NR","singles:LFlatUnAlignedSingle;:NR", "o:LValueObject;:NR"};
 		flatUnAlignedSingleBackfillClass = ValueTypeGenerator.generateValueClass("FlatUnAlignedSingleBackfill", flatUnAlignedSingleBackfill);
 		makeFlatUnAlignedSingleBackfillClass = lookup.findStatic(flatUnAlignedSingleBackfillClass, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class, Object.class));
 		getUnAlignedSingleflatSingleBackfillInstanceO = generateGenericGetter(flatUnAlignedSingleBackfillClass, "o");
 		getUnAlignedSingleflatSingleBackfillInstanceSingles = generateGenericGetter(flatUnAlignedSingleBackfillClass, "singles");
 		getUnAlignedSingleflatSingleBackfillInstanceL = generateGenericGetter(flatUnAlignedSingleBackfillClass, "l");
 		
-		String flatUnAlignedSingleBackfill2[] = {"l:QValueLong;","singles:QFlatUnAlignedSingle;", "singles2:QFlatUnAlignedSingle;"};
+		String flatUnAlignedSingleBackfill2[] = {"l:LValueLong;:NR","singles:LFlatUnAlignedSingle;:NR", "singles2:LFlatUnAlignedSingle;:NR"};
 		flatUnAlignedSingleBackfillClass2 = ValueTypeGenerator.generateValueClass("FlatUnAlignedSingleBackfill2", flatUnAlignedSingleBackfill2);
 		makeFlatUnAlignedSingleBackfillClass2 = lookup.findStatic(flatUnAlignedSingleBackfillClass2, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class, Object.class));
 		getUnAlignedSingleflatSingleBackfill2InstanceSingles = generateGenericGetter(flatUnAlignedSingleBackfillClass2, "singles");
 		getUnAlignedSingleflatSingleBackfill2InstanceSingles2 = generateGenericGetter(flatUnAlignedSingleBackfillClass2, "singles2");
 		getUnAlignedSingleflatSingleBackfill2InstanceL = generateGenericGetter(flatUnAlignedSingleBackfillClass2, "l");
 		
-		String flatUnAlignedObject[] = {"o:QValueObject;", "o2:QValueObject;"};
+		String flatUnAlignedObject[] = {"o:LValueObject;:NR", "o2:LValueObject;:NR"};
 		flatUnAlignedObjectClass = ValueTypeGenerator.generateValueClass("FlatUnAlignedObject", flatUnAlignedObject);
 		makeFlatUnAlignedObjectClass = lookup.findStatic(flatUnAlignedObjectClass, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class));
 		getUnAlignedObjectO = generateGenericGetter(flatUnAlignedObjectClass, "o");
 		getUnAlignedObjectO2 = generateGenericGetter(flatUnAlignedObjectClass, "o2");
 		
-		String flatUnAlignedObjectBackfill[] = {"objects:QFlatUnAlignedObject;", "objects2:QFlatUnAlignedObject;", "l:QValueLong;"};
+		String flatUnAlignedObjectBackfill[] = {"objects:LFlatUnAlignedObject;:NR", "objects2:LFlatUnAlignedObject;:NR", "l:LValueLong;:NR"};
 		flatUnAlignedObjectBackfillClass = ValueTypeGenerator.generateValueClass("FlatUnAlignedObjectBackfill", flatUnAlignedObjectBackfill);
 		makeFlatUnAlignedObjectBackfillClass = lookup.findStatic(flatUnAlignedObjectBackfillClass, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class, Object.class));
 		getUnAlignedObjectflatObjectBackfillInstanceObjects = generateGenericGetter(flatUnAlignedObjectBackfillClass, "objects");
 		getUnAlignedObjectflatObjectBackfillInstanceObjects2 = generateGenericGetter(flatUnAlignedObjectBackfillClass, "objects2");
 		getUnAlignedObjectflatObjectBackfillInstanceL = generateGenericGetter(flatUnAlignedObjectBackfillClass, "l");
 		
-		String flatUnAlignedObjectBackfill2[] = {"o:QValueObject;", "objects:QFlatUnAlignedObject;", "l:QValueLong;"};
+		String flatUnAlignedObjectBackfill2[] = {"o:LValueObject;:NR", "objects:LFlatUnAlignedObject;:NR", "l:LValueLong;:NR"};
 		flatUnAlignedObjectBackfillClass2 = ValueTypeGenerator.generateValueClass("FlatUnAlignedObjectBackfill2", flatUnAlignedObjectBackfill2);
 		makeFlatUnAlignedObjectBackfillClass2 = lookup.findStatic(flatUnAlignedObjectBackfillClass2, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class, Object.class));
 		getUnAlignedObjectflatObjectBackfill2InstanceO = generateGenericGetter(flatUnAlignedObjectBackfillClass2, "o");
@@ -1825,22 +1825,22 @@ public class ValueTypeTests {
 	@Test(priority=2)
 	static public void testCreateLargeObjectAndMegaValue() throws Throwable {
 		String largeFields[] = {
-				"val1:QValueObject;:value",
-				"val2:QValueObject;:value",
-				"val3:QValueObject;:value",
-				"val4:QValueObject;:value",
-				"val5:QValueObject;:value",
-				"val6:QValueObject;:value",
-				"val7:QValueObject;:value",
-				"val8:QValueObject;:value",
-				"val9:QValueObject;:value",
-				"val10:QValueObject;:value",
-				"val11:QValueObject;:value",
-				"val12:QValueObject;:value",
-				"val13:QValueObject;:value",
-				"val14:QValueObject;:value",
-				"val15:QValueObject;:value",
-				"val16:QValueObject;:value"};
+				"val1:LValueObject;:NR",
+				"val2:LValueObject;:NR",
+				"val3:LValueObject;:NR",
+				"val4:LValueObject;:NR",
+				"val5:LValueObject;:NR",
+				"val6:LValueObject;:NR",
+				"val7:LValueObject;:NR",
+				"val8:LValueObject;:NR",
+				"val9:LValueObject;:NR",
+				"val10:LValueObject;:NR",
+				"val11:LValueObject;:NR",
+				"val12:LValueObject;:NR",
+				"val13:LValueObject;:NR",
+				"val14:LValueObject;:NR",
+				"val15:LValueObject;:NR",
+				"val16:LValueObject;:NR"};
 
 		largeObjectValueClass = ValueTypeGenerator.generateValueClass("LargeObject", largeFields);
 		makeLargeObjectValue = lookup.findStatic(largeObjectValueClass, "makeValueGeneric",
@@ -1865,22 +1865,22 @@ public class ValueTypeTests {
 		 * create MegaObject
 		 */
 		String megaFields[] = {
-				"val1:QLargeObject;:value",
-				"val2:QLargeObject;:value",
-				"val3:QLargeObject;:value",
-				"val4:QLargeObject;:value",
-				"val5:QLargeObject;:value",
-				"val6:QLargeObject;:value",
-				"val7:QLargeObject;:value",
-				"val8:QLargeObject;:value",
-				"val9:QLargeObject;:value",
-				"val10:QLargeObject;:value",
-				"val11:QLargeObject;:value",
-				"val12:QLargeObject;:value",
-				"val13:QLargeObject;:value",
-				"val14:QLargeObject;:value",
-				"val15:QLargeObject;:value",
-				"val16:QLargeObject;:value"};
+				"val1:LLargeObject;:NR",
+				"val2:LLargeObject;:NR",
+				"val3:LLargeObject;:NR",
+				"val4:LLargeObject;:NR",
+				"val5:LLargeObject;:NR",
+				"val6:LLargeObject;:NR",
+				"val7:LLargeObject;:NR",
+				"val8:LLargeObject;:NR",
+				"val9:LLargeObject;:NR",
+				"val10:LLargeObject;:NR",
+				"val11:LLargeObject;:NR",
+				"val12:LLargeObject;:NR",
+				"val13:LLargeObject;:NR",
+				"val14:LLargeObject;:NR",
+				"val15:LLargeObject;:NR",
+				"val16:LLargeObject;:NR"};
 
 		megaObjectValueClass = ValueTypeGenerator.generateValueClass("MegaObject", megaFields);
 		makeMegaObjectValue = lookup.findStatic(megaObjectValueClass, "makeValueGeneric",
@@ -1917,22 +1917,22 @@ public class ValueTypeTests {
 	@Test(priority=3)
 	static public void testCreateLargeObjectAndMegaRef() throws Throwable {
 		String largeFields[] = {
-				"val1:QValueObject;:value",
-				"val2:QValueObject;:value",
-				"val3:QValueObject;:value",
-				"val4:QValueObject;:value",
-				"val5:QValueObject;:value",
-				"val6:QValueObject;:value",
-				"val7:QValueObject;:value",
-				"val8:QValueObject;:value",
-				"val9:QValueObject;:value",
-				"val10:QValueObject;:value",
-				"val11:QValueObject;:value",
-				"val12:QValueObject;:value",
-				"val13:QValueObject;:value",
-				"val14:QValueObject;:value",
-				"val15:QValueObject;:value",
-				"val16:QValueObject;:value"};
+				"val1:LValueObject;:NR",
+				"val2:LValueObject;:NR",
+				"val3:LValueObject;:NR",
+				"val4:LValueObject;:NR",
+				"val5:LValueObject;:NR",
+				"val6:LValueObject;:NR",
+				"val7:LValueObject;:NR",
+				"val8:LValueObject;:NR",
+				"val9:LValueObject;:NR",
+				"val10:LValueObject;:NR",
+				"val11:LValueObject;:NR",
+				"val12:LValueObject;:NR",
+				"val13:LValueObject;:NR",
+				"val14:LValueObject;:NR",
+				"val15:LValueObject;:NR",
+				"val16:LValueObject;:NR"};
 
 		Class largeRefClass = ValueTypeGenerator.generateRefClass("LargeRef", largeFields);
 		MethodHandle makeLargeObjectRef = lookup.findStatic(largeRefClass, "makeRefGeneric",
@@ -1957,22 +1957,22 @@ public class ValueTypeTests {
 		 * create MegaObject
 		 */
 		String megaFields[] = {
-				"val1:QLargeObject;:value",
-				"val2:QLargeObject;:value",
-				"val3:QLargeObject;:value",
-				"val4:QLargeObject;:value",
-				"val5:QLargeObject;:value",
-				"val6:QLargeObject;:value",
-				"val7:QLargeObject;:value",
-				"val8:QLargeObject;:value",
-				"val9:QLargeObject;:value",
-				"val10:QLargeObject;:value",
-				"val11:QLargeObject;:value",
-				"val12:QLargeObject;:value",
-				"val13:QLargeObject;:value",
-				"val14:QLargeObject;:value",
-				"val15:QLargeObject;:value",
-				"val16:QLargeObject;:value"};
+				"val1:LLargeObject;:NR",
+				"val2:LLargeObject;:NR",
+				"val3:LLargeObject;:NR",
+				"val4:LLargeObject;:NR",
+				"val5:LLargeObject;:NR",
+				"val6:LLargeObject;:NR",
+				"val7:LLargeObject;:NR",
+				"val8:LLargeObject;:NR",
+				"val9:LLargeObject;:NR",
+				"val10:LLargeObject;:NR",
+				"val11:LLargeObject;:NR",
+				"val12:LLargeObject;:NR",
+				"val13:LLargeObject;:NR",
+				"val14:LLargeObject;:NR",
+				"val15:LLargeObject;:NR",
+				"val16:LLargeObject;:NR"};
 		Class megaObjectClass = ValueTypeGenerator.generateRefClass("MegaRef", megaFields);
 		MethodHandle makeMegaObjectRef = lookup.findStatic(megaObjectClass, "makeRefGeneric",
 				MethodType.methodType(Object.class, Object.class, Object.class, Object.class, Object.class,
@@ -2056,8 +2056,8 @@ public class ValueTypeTests {
 	
 	@Test(priority=1)
 	static public void testCyclicalStaticFieldDefaultValues1() throws Throwable {
-		String cycleA1[] = { "val1:QCycleB1;:static" };
-		String cycleB1[] = { "val1:QCycleA1;:static" };
+		String cycleA1[] = { "val1:LCycleB1;:static" };
+		String cycleB1[] = { "val1:LCycleA1;:static" };
 		
 		Class cycleA1Class = ValueTypeGenerator.generateValueClass("CycleA1", cycleA1);
 		Class cycleB1Class = ValueTypeGenerator.generateValueClass("CycleB1", cycleB1);
@@ -2071,9 +2071,9 @@ public class ValueTypeTests {
 	
 	@Test(priority=1)
 	static public void testCyclicalStaticFieldDefaultValues2() throws Throwable {
-		String cycleA2[] = { "val1:QCycleB2;:static" };
-		String cycleB2[] = { "val1:QCycleC2;:static" };
-		String cycleC2[] = { "val1:QCycleA2;:static" };
+		String cycleA2[] = { "val1:LCycleB2;:static" };
+		String cycleB2[] = { "val1:LCycleC2;:static" };
+		String cycleC2[] = { "val1:LCycleA2;:static" };
 		
 		Class cycleA2Class = ValueTypeGenerator.generateValueClass("CycleA2", cycleA2);
 		Class cycleB2Class = ValueTypeGenerator.generateValueClass("CycleB2", cycleB2);
@@ -2090,7 +2090,7 @@ public class ValueTypeTests {
 	
 	@Test(priority=1)
 	static public void testCyclicalStaticFieldDefaultValues3() throws Throwable {
-		String cycleA3[] = { "val1:QCycleA3;:static" };
+		String cycleA3[] = { "val1:LCycleA3;:static" };
 		
 		Class cycleA3Class = ValueTypeGenerator.generateValueClass("CycleA3", cycleA3);
 		
@@ -2102,12 +2102,12 @@ public class ValueTypeTests {
 	@Test(priority=4)
 	static public void testStaticFieldsWithSingleAlignment() throws Throwable {
 		String fields[] = {
-			"tri:QTriangle2D;:static",
-			"point:QPoint2D;:static",
-			"line:QFlattenedLine2D;:static",
-			"i:QValueInt;:static",
-			"f:QValueFloat;:static",
-			"tri2:QTriangle2D;:static"};
+			"tri:LTriangle2D;:static",
+			"point:LPoint2D;:static",
+			"line:LFlattenedLine2D;:static",
+			"i:LValueInt;:static",
+			"f:LValueFloat;:static",
+			"tri2:LTriangle2D;:static"};
 		classWithOnlyStaticFieldsWithSingleAlignment = ValueTypeGenerator.generateValueClass("ClassWithOnlyStaticFieldsWithSingleAlignment", fields);
 		staticFieldsWithSingleAlignmentGenericGetterAndSetter = generateStaticGenericGetterAndSetter(classWithOnlyStaticFieldsWithSingleAlignment, fields);
 		
@@ -2118,13 +2118,13 @@ public class ValueTypeTests {
 	@Test(priority=4)
 	static public void testStaticFieldsWithLongAlignment() throws Throwable {
 		String fields[] = {
-			"point:QPoint2D;:static",
-			"line:QFlattenedLine2D;:static",
-			"o:QValueObject;:static",
-			"l:QValueLong;:static",
-			"d:QValueDouble;:static",
-			"i:QValueInt;:static",
-			"tri:QTriangle2D;:static"};
+			"point:LPoint2D;:static",
+			"line:LFlattenedLine2D;:static",
+			"o:LValueObject;:static",
+			"l:LValueLong;:static",
+			"d:LValueDouble;:static",
+			"i:LValueInt;:static",
+			"tri:LTriangle2D;:static"};
 		classWithOnlyStaticFieldsWithLongAlignment = ValueTypeGenerator.generateValueClass("ClassWithOnlyStaticFieldsWithLongAlignment", fields);
 		staticFieldsWithLongAlignmentGenericGetterAndSetter = generateStaticGenericGetterAndSetter(classWithOnlyStaticFieldsWithLongAlignment, fields);
 		
@@ -2135,13 +2135,13 @@ public class ValueTypeTests {
 	@Test(priority=4)
 	static public void testStaticFieldsWithObjectAlignment() throws Throwable {
 		String fields[] = {
-			"tri:QTriangle2D;:static",
-			"point:QPoint2D;:static",
-			"line:QFlattenedLine2D;:static",
-			"o:QValueObject;:static",
-			"i:QValueInt;:static",
-			"f:QValueFloat;:static",
-			"tri2:QTriangle2D;:static"};
+			"tri:LTriangle2D;:static",
+			"point:LPoint2D;:static",
+			"line:LFlattenedLine2D;:static",
+			"o:LValueObject;:static",
+			"i:LValueInt;:static",
+			"f:LValueFloat;:static",
+			"tri2:LTriangle2D;:static"};
 		classWithOnlyStaticFieldsWithObjectAlignment = ValueTypeGenerator.generateValueClass("ClassWithOnlyStaticFieldsWithObjectAlignment", fields);
 		staticFieldsWithObjectAlignmentGenericGetterAndSetter = generateStaticGenericGetterAndSetter(classWithOnlyStaticFieldsWithObjectAlignment, fields);
 
@@ -2254,7 +2254,7 @@ public class ValueTypeTests {
 	@Test(priority=4)
 	static public void testDefaultValueInLineInstanceMultiArray() throws Throwable {
 		Object flattenedLineArray = Array.newInstance(flattenedLine2DClass, new int[]{genericArraySize, genericArraySize});
-		String[] fields = {"st:QPoint;:value","en:QPoint;:value"};
+		String[] fields = {"st:LPoint;:NR","en:LPoint;:NR"};
 		MethodHandle[][] getterAndWither = generateGenericGetterAndWither(flattenedLine2DClass, fields);
 		for (int i = 0; i < genericArraySize; i++) {
 			for (int j = 0; j < genericArraySize; j++) {
@@ -2279,7 +2279,7 @@ public class ValueTypeTests {
 	static public void testDefaultValueInLineByteCodeMultiArray() throws Throwable {
 		MethodHandle makeLineArray = lookup.findStatic(flattenedLine2DClass, "generate2DMultiANewArray", MethodType.methodType(Object.class, int.class, int.class));
 		Object flattenedLineArray = makeLineArray.invoke(genericArraySize, genericArraySize);
-		String[] fields = {"st:QPoint;:value","en:QPoint;:value"};
+		String[] fields = {"st:LPoint;:NR","en:LPoint;:NR"};
 		MethodHandle[][] getterAndWither = generateGenericGetterAndWither(flattenedLine2DClass, fields);
 		for (int i = 0; i < genericArraySize; i++) {
 			for (int j = 0; j < genericArraySize; j++) {
@@ -2318,7 +2318,7 @@ public class ValueTypeTests {
 	@Test(priority=4)
 	static public void testDefaultValueInTriangleInstanceMultiArray() throws Throwable {
 		Object triangleArray = Array.newInstance(triangle2DClass, new int[]{genericArraySize, genericArraySize});
-		String[] fields = {"v1:QFlattenedLine2D;:value", "v2:QFlattenedLine2D;:value", "v3:QFlattenedLine2D;:value"};
+		String[] fields = {"v1:LFlattenedLine2D;:NR", "v2:LFlattenedLine2D;:NR", "v3:LFlattenedLine2D;:NR"};
 		MethodHandle[][] getterAndWither = generateGenericGetterAndWither(triangle2DClass, fields);
 		for (int i = 0; i < genericArraySize; i++) {
 			for (int j = 0; j < genericArraySize; j++) {
@@ -2343,7 +2343,7 @@ public class ValueTypeTests {
 	static public void testDefaultValueInTriangleByteCodeMultiArray() throws Throwable {
 		MethodHandle makeTriangleArray = lookup.findStatic(triangle2DClass, "generate2DMultiANewArray", MethodType.methodType(Object.class, int.class, int.class));
 		Object triangleArray = makeTriangleArray.invoke(genericArraySize, genericArraySize);
-		String[] fields = {"v1:QFlattenedLine2D;:value", "v2:QFlattenedLine2D;:value", "v3:QFlattenedLine2D;:value"};
+		String[] fields = {"v1:LFlattenedLine2D;:NR", "v2:LFlattenedLine2D;:NR", "v3:LFlattenedLine2D;:NR"};
 		MethodHandle[][] getterAndWither = generateGenericGetterAndWither(triangle2DClass, fields);
 		for (int i = 0; i < genericArraySize; i++) {
 			for (int j = 0; j < genericArraySize; j++) {
@@ -2598,10 +2598,10 @@ public class ValueTypeTests {
 		String fields[] = {"x:I", "y:I"};
 		Class nestAClass = ValueTypeGenerator.generateValueClass("NestedA", fields);
 		
-		String fields2[] = {"a:QNestedA;", "b:QNestedA;"};
+		String fields2[] = {"a:LNestedA;:NR", "b:LNestedA;:NR"};
 		Class nestBClass = ValueTypeGenerator.generateValueClass("NestedB", fields2);
 		
-		String fields3[] = {"c:QNestedB;", "d:QNestedB;"};
+		String fields3[] = {"c:LNestedB;:NR", "d:LNestedB;:NR"};
 		Class containerCClass = ValueTypeGenerator.generateValueClass("ContainerC", fields3);
 		
 		MethodHandle defaultValueContainerC = lookup.findStatic(containerCClass, "makeValueTypeDefaultValue", MethodType.methodType(Object.class));
@@ -2803,7 +2803,7 @@ public class ValueTypeTests {
 			UnresolvedClassDesc desc = uclassDescArr[i];
 			valueClassArr[i] = ValueTypeGenerator.generateValueClass(desc.name, desc.fields);
 			valueFieldGetters[i] = new MethodHandle[desc.fields.length];
-			containerFields[i] = "v"+(i+1)+":Q"+desc.name+";";
+			containerFields[i] = "v"+(i+1)+":L"+desc.name+";:NR";
 
 			for (int j = 0; j < desc.fields.length; j++) {
 				String[] nameAndSig = desc.fields[j].split(":");
@@ -2906,7 +2906,7 @@ public class ValueTypeTests {
 			UnresolvedClassDesc desc = uclassDescArr[i];
 			valueClassArr[i] = ValueTypeGenerator.generateValueClass(desc.name, desc.fields);
 			valueFieldGetters[i] = new MethodHandle[desc.fields.length];
-			containerFields[i] = "v"+(i+1)+":Q"+desc.name+";";
+			containerFields[i] = "v"+(i+1)+":L"+desc.name+";:NR";
 
 			for (int j = 0; j < desc.fields.length; j++) {
 				String[] nameAndSig = desc.fields[j].split(":");
@@ -3126,8 +3126,8 @@ public class ValueTypeTests {
 	static public void testMethodTypeDescriptorValue() throws Throwable {
 		String fields[] = {"longField:J"};
 		Class valueClass = ValueTypeGenerator.generateValueClass("testMethodTypeDescriptorValue", fields);
-		assertEquals(MethodType.methodType(valueClass).toMethodDescriptorString(), "()QtestMethodTypeDescriptorValue;");
-		assertEquals(valueClass.descriptorString(), "QtestMethodTypeDescriptorValue;");
+		assertEquals(MethodType.methodType(valueClass).toMethodDescriptorString(), "()LtestMethodTypeDescriptorValue;");
+		assertEquals(valueClass.descriptorString(), "LtestMethodTypeDescriptorValue;");
 	}
 
 	@Test(priority=1)
@@ -3299,31 +3299,31 @@ public class ValueTypeTests {
 			String nameAndSigValue[] = fields[i].split(":");
 			String signature = nameAndSigValue[1];
 			switch (signature) {
-			case "QPoint2D;":
+			case "LPoint2D;":
 				args[i] = createPoint2D(useInitFields ? (int[])initFields[i] : defaultPointPositions1);
 				break;
-			case "QFlattenedLine2D;":
+			case "LFlattenedLine2D;":
 				args[i] = createFlattenedLine2D(useInitFields ? (int[][])initFields[i] : defaultLinePositions1);
 				break;
-			case "QTriangle2D;":
+			case "LTriangle2D;":
 				args[i] = createTriangle2D(useInitFields ? (int[][][])initFields[i] : defaultTrianglePositions);
 				break;
-			case "QValueInt;":
+			case "LValueInt;":
 				args[i] = makeValueInt.invoke(useInitFields ? (int)initFields[i] : defaultInt);
 				break;
-			case "QValueFloat;":
+			case "LValueFloat;":
 				args[i] = makeValueFloat.invoke(useInitFields ? (float)initFields[i] : defaultFloat);
 				break;
-			case "QValueDouble;":
+			case "LValueDouble;":
 				args[i] = makeValueDouble.invoke(useInitFields ? (double)initFields[i] : defaultDouble);
 				break;
-			case "QValueObject;":
+			case "LValueObject;":
 				args[i] = makeValueObject.invoke(useInitFields ? (Object)initFields[i] : defaultObject);
 				break;
-			case "QValueLong;":
+			case "LValueLong;":
 				args[i] = makeValueLong.invoke(useInitFields ? (long)initFields[i] : defaultLong);
 				break;
-			case "QLargeObject;":
+			case "LLargeObject;":
 				args[i] = createLargeObject(useInitFields ? (Object)initFields[i] : defaultObject);
 				break;
 			default:
@@ -3339,31 +3339,31 @@ public class ValueTypeTests {
 		for (int i = 0; i < fields.length; i++) {
 			String signature = (fields[i].split(":"))[1];
 			switch (signature) {
-			case "QPoint2D;":
+			case "LPoint2D;":
 				defaultValue = createPoint2D(defaultPointPositions1);
 				break;
-			case "QFlattenedLine2D;":
+			case "LFlattenedLine2D;":
 				defaultValue = createFlattenedLine2D(defaultLinePositions1);
 				break;
-			case "QTriangle2D;":
+			case "LTriangle2D;":
 				defaultValue = createTriangle2D(defaultTrianglePositions);
 				break;
-			case "QValueInt;":
+			case "LValueInt;":
 				defaultValue = makeValueInt.invoke(defaultInt);
 				break;
-			case "QValueFloat;":
+			case "LValueFloat;":
 				defaultValue = makeValueFloat.invoke(defaultFloat);
 				break;
-			case "QValueDouble;":
+			case "LValueDouble;":
 				defaultValue = makeValueDouble.invoke(defaultDouble);
 				break;
-			case "QValueObject;":
+			case "LValueObject;":
 				defaultValue = makeValueObject.invoke(defaultObject);
 				break;
-			case "QValueLong;":
+			case "LValueLong;":
 				defaultValue = makeValueLong.invoke(defaultLong);
 				break;
-			case "QLargeObject;":
+			case "LLargeObject;":
 				defaultValue = createLargeObject(defaultObject);
 				break;
 			default:
@@ -3381,7 +3381,7 @@ public class ValueTypeTests {
 			String nameAndSigValue[] = fields[i].split(":");
 			String signature = nameAndSigValue[1];
 			switch (signature) {
-			case "QPoint2D;":
+			case "LPoint2D;":
 				checkEqualPoint2D(fieldAccessMHs[i][0].invoke(instance), defaultPointPositions1);
 				Object pointNew = createPoint2D(defaultPointPositionsNew);
 				if (ifValue) {
@@ -3391,7 +3391,7 @@ public class ValueTypeTests {
 				}
 				checkEqualPoint2D(fieldAccessMHs[i][0].invoke(instance), defaultPointPositionsNew);
 				break;
-			case "QFlattenedLine2D;":
+			case "LFlattenedLine2D;":
 				checkEqualFlattenedLine2D(fieldAccessMHs[i][0].invoke(instance), defaultLinePositions1);
 				Object lineNew = createFlattenedLine2D(defaultLinePositionsNew);
 				if (ifValue) {
@@ -3401,7 +3401,7 @@ public class ValueTypeTests {
 				}
 				checkEqualFlattenedLine2D(fieldAccessMHs[i][0].invoke(instance), defaultLinePositionsNew);
 				break;
-			case "QTriangle2D;":
+			case "LTriangle2D;":
 				checkEqualTriangle2D(fieldAccessMHs[i][0].invoke(instance), defaultTrianglePositions);
 				Object triNew = createTriangle2D(defaultTrianglePositionsNew);
 				if (ifValue) {
@@ -3411,7 +3411,7 @@ public class ValueTypeTests {
 				}
 				checkEqualTriangle2D(fieldAccessMHs[i][0].invoke(instance), defaultTrianglePositionsNew);
 				break;
-			case "QValueInt;":
+			case "LValueInt;":
 				assertEquals(getInt.invoke(fieldAccessMHs[i][0].invoke(instance)), defaultInt);
 				Object iNew = makeValueInt.invoke(defaultIntNew);
 				if (ifValue) {
@@ -3421,7 +3421,7 @@ public class ValueTypeTests {
 				}
 				assertEquals(getInt.invoke(fieldAccessMHs[i][0].invoke(instance)), defaultIntNew);
 				break;
-			case "QValueFloat;":
+			case "LValueFloat;":
 				assertEquals(getFloat.invoke(fieldAccessMHs[i][0].invoke(instance)), defaultFloat);
 				Object fNew = makeValueFloat.invoke(defaultFloatNew);
 				if (ifValue) {
@@ -3431,7 +3431,7 @@ public class ValueTypeTests {
 				}
 				assertEquals(getFloat.invoke(fieldAccessMHs[i][0].invoke(instance)), defaultFloatNew);
 				break;
-			case "QValueDouble;":
+			case "LValueDouble;":
 				assertEquals(getDouble.invoke(fieldAccessMHs[i][0].invoke(instance)), defaultDouble);
 				Object dNew = makeValueDouble.invoke(defaultDoubleNew);
 				if (ifValue) {
@@ -3441,7 +3441,7 @@ public class ValueTypeTests {
 				}
 				assertEquals(getDouble.invoke(fieldAccessMHs[i][0].invoke(instance)), defaultDoubleNew);
 				break;
-			case "QValueObject;":
+			case "LValueObject;":
 				assertEquals(getObject.invoke(fieldAccessMHs[i][0].invoke(instance)), defaultObject);
 				Object oNew = makeValueObject.invoke(defaultObjectNew);
 				if (ifValue) {
@@ -3451,7 +3451,7 @@ public class ValueTypeTests {
 				}
 				assertEquals(getObject.invoke(fieldAccessMHs[i][0].invoke(instance)), defaultObjectNew);
 				break;
-			case "QValueLong;":
+			case "LValueLong;":
 				assertEquals(getLong.invoke(fieldAccessMHs[i][0].invoke(instance)), defaultLong);
 				Object lNew = makeValueLong.invoke(defaultLongNew);
 				if (ifValue) {
@@ -3461,7 +3461,7 @@ public class ValueTypeTests {
 				}
 				assertEquals(getLong.invoke(fieldAccessMHs[i][0].invoke(instance)), defaultLongNew);
 				break;
-			case "QLargeObject;":
+			case "LLargeObject;":
 				checkEqualLargeObject(fieldAccessMHs[i][0].invoke(instance), defaultObject);
 				Object largeNew = createLargeObject(defaultObjectNew);
 				if (ifValue) {
@@ -3484,55 +3484,55 @@ public class ValueTypeTests {
 			String nameAndSigValue[] = fields[i].split(":");
 			String signature = nameAndSigValue[1];
 			switch (signature) {
-			case "QPoint2D;":
+			case "LPoint2D;":
 				checkEqualPoint2D(fieldAccessMHs[i][0].invoke(), defaultPointPositions1);
 				Object pointNew = createPoint2D(defaultPointPositionsNew);
 				fieldAccessMHs[i][1].invoke(pointNew);
 				checkEqualPoint2D(fieldAccessMHs[i][0].invoke(), defaultPointPositionsNew);
 				break;
-			case "QFlattenedLine2D;":
+			case "LFlattenedLine2D;":
 				checkEqualFlattenedLine2D(fieldAccessMHs[i][0].invoke(), defaultLinePositions1);
 				Object lineNew = createFlattenedLine2D(defaultLinePositionsNew);
 				fieldAccessMHs[i][1].invoke(lineNew);
 				checkEqualFlattenedLine2D(fieldAccessMHs[i][0].invoke(), defaultLinePositionsNew);
 				break;
-			case "QTriangle2D;":
+			case "LTriangle2D;":
 				checkEqualTriangle2D(fieldAccessMHs[i][0].invoke(), defaultTrianglePositions);
 				Object triNew = createTriangle2D(defaultTrianglePositionsNew);
 				fieldAccessMHs[i][1].invoke(triNew);
 				checkEqualTriangle2D(fieldAccessMHs[i][0].invoke(), defaultTrianglePositionsNew);
 				break;
-			case "QValueInt;":
+			case "LValueInt;":
 				assertEquals(getInt.invoke(fieldAccessMHs[i][0].invoke()), defaultInt);
 				Object iNew = makeValueInt.invoke(defaultIntNew);
 				fieldAccessMHs[i][1].invoke(iNew);
 				assertEquals(getInt.invoke(fieldAccessMHs[i][0].invoke()), defaultIntNew);
 				break;
-			case "QValueFloat;":
+			case "LValueFloat;":
 				assertEquals(getFloat.invoke(fieldAccessMHs[i][0].invoke()), defaultFloat);
 				Object fNew = makeValueFloat.invoke(defaultFloatNew);
 				fieldAccessMHs[i][1].invoke(fNew);
 				assertEquals(getFloat.invoke(fieldAccessMHs[i][0].invoke()), defaultFloatNew);
 				break;
-			case "QValueDouble;":
+			case "LValueDouble;":
 				assertEquals(getDouble.invoke(fieldAccessMHs[i][0].invoke()), defaultDouble);
 				Object dNew = makeValueDouble.invoke(defaultDoubleNew);
 				fieldAccessMHs[i][1].invoke(dNew);
 				assertEquals(getDouble.invoke(fieldAccessMHs[i][0].invoke()), defaultDoubleNew);
 				break;
-			case "QValueObject;":
+			case "LValueObject;":
 				assertEquals(getObject.invoke(fieldAccessMHs[i][0].invoke()), defaultObject);
 				Object oNew = makeValueObject.invoke(defaultObjectNew);
 				fieldAccessMHs[i][1].invoke(oNew);
 				assertEquals(getObject.invoke(fieldAccessMHs[i][0].invoke()), defaultObjectNew);
 				break;
-			case "QValueLong;":
+			case "LValueLong;":
 				assertEquals(getLong.invoke(fieldAccessMHs[i][0].invoke()), defaultLong);
 				Object lNew = makeValueLong.invoke(defaultLongNew);
 				fieldAccessMHs[i][1].invoke(lNew);
 				assertEquals(getLong.invoke(fieldAccessMHs[i][0].invoke()), defaultLongNew);
 				break;
-			case "QLargeObject;":
+			case "LLargeObject;":
 				checkEqualLargeObject(fieldAccessMHs[i][0].invoke(), defaultObject);
 				Object largeNew = createLargeObject(defaultObjectNew);
 				fieldAccessMHs[i][1].invoke(largeNew);
