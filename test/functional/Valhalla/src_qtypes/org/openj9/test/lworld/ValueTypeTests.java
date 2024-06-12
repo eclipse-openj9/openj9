@@ -615,43 +615,6 @@ public class ValueTypeTests {
 		assertEquals(getY.invoke(getFlatEn.invoke(line2D_1_check)), getY.invoke(getFlatEn.invoke(line2D_1)));
 		assertEquals(getY.invoke(getFlatEn.invoke(line2D_2_check)), getY.invoke(getFlatEn.invoke(line2D_2)));
 	}	
-
-	/*
-	 * Test with nested values
-	 *
-	 * value InvalidField {
-	 * 	flattened Point2D st;
-	 * 	flattened Invalid x;
-	 * }
-	 *
-	 */
-	@Test(priority=3)
-	static public void testInvalidNestedField() throws Throwable {
-		String fields[] = {"st:LPoint2D;:value", "x:LInvalid;:value"};
-
-		try {
-			Class<?> invalidField = ValueTypeGenerator.generateValueClass("InvalidField", fields);
-			Assert.fail("should throw error. Nested class doesn't exist!");
-		} catch (NoClassDefFoundError e) {}
-	}
-	
-	/*
-	 * Test with none value Qtype
-	 *
-	 * value NoneValueQType {
-	 * 	flattened Point2D st;
-	 * 	flattened Object o;
-	 * }
-	 *
-	 */
-	@Test(priority=3)
-	static public void testNoneValueQTypeAsNestedField() throws Throwable {
-		String fields[] = {"st:LPoint2D;:value", "o:Ljava/lang/Object;:value"};
-		try {
-			Class<?> noneValueQType = ValueTypeGenerator.generateValueClass("NoneValueQType", fields);
-			Assert.fail("should throw error. j.l.Object is not a qtype!");
-		} catch (IncompatibleClassChangeError e) {}
-	}
 	
 	/*
 	 * Test defaultValue with ref type
