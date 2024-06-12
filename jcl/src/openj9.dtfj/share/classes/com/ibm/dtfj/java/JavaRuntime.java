@@ -64,7 +64,19 @@ public interface JavaRuntime extends ManagedRuntime {
      * @throws CorruptDataException
      */
     public JavaVMInitArgs getJavaVMInitArgs() throws DataUnavailable, CorruptDataException;
-    
+
+    /**
+     * Fetch the JavaVMInitArgs which were used when this VM is restored from
+     * a checkpoint.
+     *
+     * @return the JavaVMInitArgs which were used to create this VM.
+     * @throws DataUnavailable if the arguments are not available
+     * @throws CorruptDataException
+     */
+    public default JavaVMInitArgs getJavaVMRestoreArgs() throws DataUnavailable, CorruptDataException {
+        throw new DataUnavailable("Restore args are not available for this runtime.");
+    }
+
     /**
      * Get the set of class loaders active in this VM
      * @return an iterator of all of the class loaders within this JavaVM

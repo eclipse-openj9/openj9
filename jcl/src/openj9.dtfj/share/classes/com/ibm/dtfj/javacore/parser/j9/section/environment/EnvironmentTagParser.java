@@ -99,7 +99,10 @@ public class EnvironmentTagParser extends TagParser implements
 		addTag(T_1CISYSCP, lineRule2);
 		
 		addTag(T_1CIUSERARGS, lineRule);
-		addUserArgs();
+		addUserArgs(T_2CIUSERARG);
+		addTag(T_1CIRESTARGS, lineRule);
+		addUserArgs(T_2CIRESTARG);
+
 
 		addTag(T_1CIJVMMI, null);
 		addTag(T_2CIJVMMIOFF, null);
@@ -158,9 +161,10 @@ public class EnvironmentTagParser extends TagParser implements
 	}
 	
 	/**
-	 * Add rule for an individual user args line (2CIUSERARG tag)
+	 * Add rule for an individual user args line
+	 * @param argsType the type of user arg being processed (ex. 2CIUSERARG tag)
 	 */
-	private void addUserArgs() {
+	private void addUserArgs(String argsType) {
 		final Matcher hexEnd = CommonPatternMatchers.generateMatcher(" 0x\\p{XDigit}+[\\r\\n]*$");
 		
 		ILineRule lineRule = new LineRule() {
@@ -175,7 +179,7 @@ public class EnvironmentTagParser extends TagParser implements
 				}
 			}
 		};
-		addTag(T_2CIUSERARG, lineRule);		
+		addTag(argsType, lineRule);
 	}
 	
 	/**
