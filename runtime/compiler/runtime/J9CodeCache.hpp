@@ -36,7 +36,6 @@ namespace J9 { typedef CodeCache CodeCacheConnector; }
 #include "env/IO.hpp"
 #include "env/VMJ9.h"
 
-
 struct J9MemorySegment;
 struct J9ClassLoader;
 
