@@ -32,7 +32,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
-import sun.misc.Unsafe;
 import org.testng.Assert;
 import static org.testng.Assert.*;
 import org.testng.annotations.Test;
@@ -58,7 +57,6 @@ import static org.openj9.test.lworld.ValueTypeTestClasses.*;
 @Test(groups = { "level.sanity" })
 public class ValueTypeTests {
 	static Lookup lookup = MethodHandles.lookup();
-	static Unsafe myUnsafe = null;
 	/* point2D */
 	static Class point2DClass = null;
 	static MethodHandle makePoint2D = null;
@@ -252,17 +250,6 @@ public class ValueTypeTests {
 	/* miscellaneous constants */
 	static final int genericArraySize = 10;
 	static final int objectGCScanningIterationCount = 1000;
-
-	@BeforeClass
-	static public void testSetUp() throws RuntimeException {
-		try {
-			Field f = Unsafe.class.getDeclaredField("theUnsafe");
-			f.setAccessible(true);
-			myUnsafe = (Unsafe)f.get(null);
-		} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
-			throw new RuntimeException(e);
-		}	
-	}
 
 	/*
 	 * Create a value type
@@ -3233,15 +3220,6 @@ public class ValueTypeTests {
 			e.printStackTrace();
 		}
 		return null;
-	}
-		
-	static long getFieldOffset(Class clazz, String field) {
-		try {
-			Field f = clazz.getDeclaredField(field);
-			return myUnsafe.objectFieldOffset(f);
-		} catch (Throwable t) {
-			throw new RuntimeException(t);
-		}
 	}
 
 	static MethodHandle[][] generateGenericGetterAndWither(Class clazz, String[] fields) {
