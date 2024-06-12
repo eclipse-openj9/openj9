@@ -4528,6 +4528,245 @@ void TR_ResolvedJ9Method::construct()
             if (!strncmp(name, "invokeExact_thunkArchetype_", 27))
                setRecognizedMethodInfo(TR::java_lang_invoke_InterfaceHandle_invokeExact);
             }
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+         // The classes containing VarHandle operator or access methods also contain methods that provide other functionality.
+         // There can be unintended consequences if we were to treat them the same way as VH operator/access methods. The VarHandle
+         // operator/access methods we need to recognize all have two things in common - they are static methods and their first
+         // parameter is Ljava/lang/invoke/VarHandle;, which is different from the non VH operator methods that we should not be
+         // treating the same way. The VH operator methods without the leading VH in the signature are just helper methods that
+         // are called from other VH operator methods which fulfil the leading VH parameter check.
+         else if (sigLen > 29 && !strncmp(sig, "(Ljava/lang/invoke/VarHandle;", 29) && isStatic())
+            {
+            if ((classNameLen == 40 && !strncmp(className, "java/lang/invoke/VarHandleBooleans$Array", 40)))
+               {
+               setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleX_Array_method);
+               }
+            else if ((classNameLen == 56 && !strncmp(className, "java/lang/invoke/VarHandleBooleans$FieldInstanceReadOnly", 56)))
+               {
+               setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleX_FieldInstanceReadOnlyOrReadWrite_method);
+               }
+            else if ((classNameLen == 57 && !strncmp(className, "java/lang/invoke/VarHandleBooleans$FieldInstanceReadWrite", 57)))
+               {
+               setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleX_FieldInstanceReadOnlyOrReadWrite_method);
+               }
+            else if ((classNameLen == 54 && !strncmp(className, "java/lang/invoke/VarHandleBooleans$FieldStaticReadOnly", 54)))
+               {
+               setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleX_FieldStaticReadOnlyOrReadWrite_method);
+               }
+            else if ((classNameLen == 55 && !strncmp(className, "java/lang/invoke/VarHandleBooleans$FieldStaticReadWrite", 55)))
+               {
+               setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleX_FieldStaticReadOnlyOrReadWrite_method);
+               }
+            else if ((classNameLen == 37 && !strncmp(className, "java/lang/invoke/VarHandleBytes$Array", 37)))
+               {
+               setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleX_Array_method);
+               }
+            else if ((classNameLen == 53 && !strncmp(className, "java/lang/invoke/VarHandleBytes$FieldInstanceReadOnly", 53)))
+               {
+               setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleX_FieldInstanceReadOnlyOrReadWrite_method);
+               }
+            else if ((classNameLen == 54 && !strncmp(className, "java/lang/invoke/VarHandleBytes$FieldInstanceReadWrite", 54)))
+               {
+               setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleX_FieldInstanceReadOnlyOrReadWrite_method);
+               }
+            else if ((classNameLen == 51 && !strncmp(className, "java/lang/invoke/VarHandleBytes$FieldStaticReadOnly", 51)))
+               {
+               setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleX_FieldStaticReadOnlyOrReadWrite_method);
+               }
+            else if ((classNameLen == 52 && !strncmp(className, "java/lang/invoke/VarHandleBytes$FieldStaticReadWrite", 52)))
+               {
+               setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleX_FieldStaticReadOnlyOrReadWrite_method);
+               }
+            else if ((classNameLen == 37 && !strncmp(className, "java/lang/invoke/VarHandleChars$Array", 37)))
+               {
+               setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleX_Array_method);
+               }
+            else if ((classNameLen == 53 && !strncmp(className, "java/lang/invoke/VarHandleChars$FieldInstanceReadOnly", 53)))
+               {
+               setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleX_FieldInstanceReadOnlyOrReadWrite_method);
+               }
+            else if ((classNameLen == 54 && !strncmp(className, "java/lang/invoke/VarHandleChars$FieldInstanceReadWrite", 54)))
+               {
+               setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleX_FieldInstanceReadOnlyOrReadWrite_method);
+               }
+            else if ((classNameLen == 51 && !strncmp(className, "java/lang/invoke/VarHandleChars$FieldStaticReadOnly", 51)))
+               {
+               setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleX_FieldStaticReadOnlyOrReadWrite_method);
+               }
+            else if ((classNameLen == 52 && !strncmp(className, "java/lang/invoke/VarHandleChars$FieldStaticReadWrite", 52)))
+               {
+               setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleX_FieldStaticReadOnlyOrReadWrite_method);
+               }
+            else if ((classNameLen == 39 && !strncmp(className, "java/lang/invoke/VarHandleDoubles$Array", 39)))
+               {
+               setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleX_Array_method);
+               }
+            else if ((classNameLen == 55 && !strncmp(className, "java/lang/invoke/VarHandleDoubles$FieldInstanceReadOnly", 55)))
+               {
+               setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleX_FieldInstanceReadOnlyOrReadWrite_method);
+               }
+            else if ((classNameLen == 56 && !strncmp(className, "java/lang/invoke/VarHandleDoubles$FieldInstanceReadWrite", 56)))
+               {
+               setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleX_FieldInstanceReadOnlyOrReadWrite_method);
+               }
+            else if ((classNameLen == 53 && !strncmp(className, "java/lang/invoke/VarHandleDoubles$FieldStaticReadOnly", 53)))
+               {
+               setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleX_FieldStaticReadOnlyOrReadWrite_method);
+               }
+            else if ((classNameLen == 54 && !strncmp(className, "java/lang/invoke/VarHandleDoubles$FieldStaticReadWrite", 54)))
+               {
+               setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleX_FieldStaticReadOnlyOrReadWrite_method);
+               }
+            else if ((classNameLen == 38 && !strncmp(className, "java/lang/invoke/VarHandleFloats$Array", 38)))
+               {
+               setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleX_Array_method);
+               }
+            else if ((classNameLen == 54 && !strncmp(className, "java/lang/invoke/VarHandleFloats$FieldInstanceReadOnly", 54)))
+               {
+               setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleX_FieldInstanceReadOnlyOrReadWrite_method);
+               }
+            else if ((classNameLen == 55 && !strncmp(className, "java/lang/invoke/VarHandleFloats$FieldInstanceReadWrite", 55)))
+               {
+               setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleX_FieldInstanceReadOnlyOrReadWrite_method);
+               }
+            else if ((classNameLen == 52 && !strncmp(className, "java/lang/invoke/VarHandleFloats$FieldStaticReadOnly", 52)))
+               {
+               setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleX_FieldStaticReadOnlyOrReadWrite_method);
+               }
+            else if ((classNameLen == 53 && !strncmp(className, "java/lang/invoke/VarHandleFloats$FieldStaticReadWrite", 53)))
+               {
+               setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleX_FieldStaticReadOnlyOrReadWrite_method);
+               }
+            else if ((classNameLen == 36 && !strncmp(className, "java/lang/invoke/VarHandleInts$Array", 36)))
+               {
+               setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleX_Array_method);
+               }
+            else if ((classNameLen == 52 && !strncmp(className, "java/lang/invoke/VarHandleInts$FieldInstanceReadOnly", 52)))
+               {
+               setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleX_FieldInstanceReadOnlyOrReadWrite_method);
+               }
+            else if ((classNameLen == 53 && !strncmp(className, "java/lang/invoke/VarHandleInts$FieldInstanceReadWrite", 53)))
+               {
+               setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleX_FieldInstanceReadOnlyOrReadWrite_method);
+               }
+            else if ((classNameLen == 50 && !strncmp(className, "java/lang/invoke/VarHandleInts$FieldStaticReadOnly", 50)))
+               {
+               setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleX_FieldStaticReadOnlyOrReadWrite_method);
+               }
+            else if ((classNameLen == 51 && !strncmp(className, "java/lang/invoke/VarHandleInts$FieldStaticReadWrite", 51)))
+               {
+               setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleX_FieldStaticReadOnlyOrReadWrite_method);
+               }
+            else if ((classNameLen == 37 && !strncmp(className, "java/lang/invoke/VarHandleLongs$Array", 37)))
+               {
+               setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleX_Array_method);
+               }
+            else if ((classNameLen == 53 && !strncmp(className, "java/lang/invoke/VarHandleLongs$FieldInstanceReadOnly", 53)))
+               {
+               setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleX_FieldInstanceReadOnlyOrReadWrite_method);
+               }
+            else if ((classNameLen == 54 && !strncmp(className, "java/lang/invoke/VarHandleLongs$FieldInstanceReadWrite", 54)))
+               {
+               setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleX_FieldInstanceReadOnlyOrReadWrite_method);
+               }
+            else if ((classNameLen == 51 && !strncmp(className, "java/lang/invoke/VarHandleLongs$FieldStaticReadOnly", 51)))
+               {
+               setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleX_FieldStaticReadOnlyOrReadWrite_method);
+               }
+            else if ((classNameLen == 52 && !strncmp(className, "java/lang/invoke/VarHandleLongs$FieldStaticReadWrite", 52)))
+               {
+               setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleX_FieldStaticReadOnlyOrReadWrite_method);
+               }
+            else if ((classNameLen == 42 && !strncmp(className, "java/lang/invoke/VarHandleReferences$Array", 42)))
+               {
+               setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleX_Array_method);
+               }
+            else if ((classNameLen == 58 && !strncmp(className, "java/lang/invoke/VarHandleReferences$FieldInstanceReadOnly", 58)))
+               {
+               setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleX_FieldInstanceReadOnlyOrReadWrite_method);
+               }
+            else if ((classNameLen == 59 && !strncmp(className, "java/lang/invoke/VarHandleReferences$FieldInstanceReadWrite", 59)))
+               {
+               setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleX_FieldInstanceReadOnlyOrReadWrite_method);
+               }
+            else if ((classNameLen == 56 && !strncmp(className, "java/lang/invoke/VarHandleReferences$FieldStaticReadOnly", 56)))
+               {
+               setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleX_FieldStaticReadOnlyOrReadWrite_method);
+               }
+            else if ((classNameLen == 57 && !strncmp(className, "java/lang/invoke/VarHandleReferences$FieldStaticReadWrite", 57)))
+               {
+               setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleX_FieldStaticReadOnlyOrReadWrite_method);
+               }
+            else if ((classNameLen == 38 && !strncmp(className, "java/lang/invoke/VarHandleShorts$Array", 38)))
+               {
+               setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleX_Array_method);
+               }
+            else if ((classNameLen == 54 && !strncmp(className, "java/lang/invoke/VarHandleShorts$FieldInstanceReadOnly", 54)))
+               {
+               setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleX_FieldInstanceReadOnlyOrReadWrite_method);
+               }
+            else if ((classNameLen == 55 && !strncmp(className, "java/lang/invoke/VarHandleShorts$FieldInstanceReadWrite", 55)))
+               {
+               setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleX_FieldInstanceReadOnlyOrReadWrite_method);
+               }
+            else if ((classNameLen == 52 && !strncmp(className, "java/lang/invoke/VarHandleShorts$FieldStaticReadOnly", 52)))
+               {
+               setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleX_FieldStaticReadOnlyOrReadWrite_method);
+               }
+            else if ((classNameLen == 53 && !strncmp(className, "java/lang/invoke/VarHandleShorts$FieldStaticReadWrite", 53)))
+               {
+               setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleX_FieldStaticReadOnlyOrReadWrite_method);
+               }
+            else if ((classNameLen == 54 && !strncmp(className, "java/lang/invoke/VarHandleByteArrayAsChars$ArrayHandle", 54)))
+               {
+               setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleByteArrayAsX_ArrayHandle_method);
+               }
+            else if ((classNameLen == 59 && !strncmp(className, "java/lang/invoke/VarHandleByteArrayAsChars$ByteBufferHandle", 59)))
+               {
+               setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleByteArrayAsX_ByteBufferHandle_method);
+               }
+            else if ((classNameLen == 56 && !strncmp(className, "java/lang/invoke/VarHandleByteArrayAsDoubles$ArrayHandle", 56)))
+               {
+               setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleByteArrayAsX_ArrayHandle_method);
+               }
+            else if ((classNameLen == 61 && !strncmp(className, "java/lang/invoke/VarHandleByteArrayAsDoubles$ByteBufferHandle", 61)))
+               {
+               setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleByteArrayAsX_ByteBufferHandle_method);
+               }
+            else if ((classNameLen == 55 && !strncmp(className, "java/lang/invoke/VarHandleByteArrayAsFloats$ArrayHandle", 55)))
+               {
+               setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleByteArrayAsX_ArrayHandle_method);
+               }
+            else if ((classNameLen == 60 && !strncmp(className, "java/lang/invoke/VarHandleByteArrayAsFloats$ByteBufferHandle", 60)))
+               {
+               setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleByteArrayAsX_ByteBufferHandle_method);
+               }
+            else if ((classNameLen == 53 && !strncmp(className, "java/lang/invoke/VarHandleByteArrayAsInts$ArrayHandle", 53)))
+               {
+               setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleByteArrayAsX_ArrayHandle_method);
+               }
+            else if ((classNameLen == 58 && !strncmp(className, "java/lang/invoke/VarHandleByteArrayAsInts$ByteBufferHandle", 58)))
+               {
+               setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleByteArrayAsX_ByteBufferHandle_method);
+               }
+            else if ((classNameLen == 54 && !strncmp(className, "java/lang/invoke/VarHandleByteArrayAsLongs$ArrayHandle", 54)))
+               {
+               setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleByteArrayAsX_ArrayHandle_method);
+               }
+            else if ((classNameLen == 59 && !strncmp(className, "java/lang/invoke/VarHandleByteArrayAsLongs$ByteBufferHandle", 59)))
+               {
+               setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleByteArrayAsX_ByteBufferHandle_method);
+               }
+            else if ((classNameLen == 55 && !strncmp(className, "java/lang/invoke/VarHandleByteArrayAsShorts$ArrayHandle", 55)))
+               {
+               setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleByteArrayAsX_ArrayHandle_method);
+               }
+            else if ((classNameLen == 60 && !strncmp(className, "java/lang/invoke/VarHandleByteArrayAsShorts$ByteBufferHandle", 60)))
+               {
+               setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleByteArrayAsX_ByteBufferHandle_method);
+               }
+            }
+#endif
          else if ((classNameLen >= 59 + 3 && classNameLen <= 59 + 7) && !strncmp(className, "java/lang/invoke/ArrayVarHandle$ArrayVarHandleOperations$Op", 59))
             {
             setRecognizedMethodInfo(TR::java_lang_invoke_ArrayVarHandle_ArrayVarHandleOperations_OpMethod);
@@ -5634,10 +5873,18 @@ TR_J9MethodBase::isVarHandleOperationMethod(TR::RecognizedMethod rm)
    {
    switch (rm)
       {
+#if defined (J9VM_OPT_OPENJDK_METHODHANDLE)
+      case TR::java_lang_invoke_VarHandleX_Array_method:
+      case TR::java_lang_invoke_VarHandleX_FieldInstanceReadOnlyOrReadWrite_method:
+      case TR::java_lang_invoke_VarHandleX_FieldStaticReadOnlyOrReadWrite_method:
+      case TR::java_lang_invoke_VarHandleByteArrayAsX_ArrayHandle_method:
+      case TR::java_lang_invoke_VarHandleByteArrayAsX_ByteBufferHandle_method:
+#else
       case TR::java_lang_invoke_ArrayVarHandle_ArrayVarHandleOperations_OpMethod:
       case TR::java_lang_invoke_StaticFieldVarHandle_StaticFieldVarHandleOperations_OpMethod:
       case TR::java_lang_invoke_InstanceFieldVarHandle_InstanceFieldVarHandleOperations_OpMethod:
       case TR::java_lang_invoke_ByteArrayViewVarHandle_ByteArrayViewVarHandleOperations_OpMethod:
+#endif
          return true;
       default:
          return false;
