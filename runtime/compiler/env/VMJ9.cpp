@@ -7358,6 +7358,10 @@ TR_J9VM::getClassFromSignature(const char * sig, int32_t sigLength, TR_OpaqueMet
 TR_OpaqueClassBlock *
 TR_J9VM::getClassFromSignature(const char * sig, int32_t sigLength, J9ConstantPool * constantPool)
    {
+   // Primitive types don't have a class associated with them
+   if (isSignatureForPrimitiveType(sig, sigLength))
+      return NULL;
+
    TR::VMAccessCriticalSection getClassFromSignature(this);
    J9Class * j9class = NULL;
    TR_OpaqueClassBlock * returnValue = NULL;

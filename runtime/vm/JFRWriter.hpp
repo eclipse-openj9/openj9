@@ -29,6 +29,8 @@
 #include "j9vmnls.h"
 #include "vm_api.h"
 
+#if defined(J9VM_OPT_JFR)
+
 extern "C" {
 class VM_JFRWriter {
 	/*
@@ -163,5 +165,6 @@ done:
 };
 } /* extern "C" */
 
+#endif /* defined(J9VM_OPT_JFR) */
 
 #endif /* JFRWRITER_HPP_ */
