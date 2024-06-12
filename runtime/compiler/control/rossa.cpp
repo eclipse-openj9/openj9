@@ -246,6 +246,11 @@ extern "C" int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_Fro
 extern "C" int32_t startJITServer(J9JITConfig *jitConfig);
 extern "C" int32_t waitJITServerTermination(J9JITConfig *jitConfig);
 
+extern "C" void jitAddNewLowToHighRSSRegion(const char *name, uint8_t *start, uint32_t size, size_t pageSize)
+   {
+   static OMR::RSSReport *rssReport = OMR::RSSReport::instance();
+   rssReport->addNewRegion(name, start, size, OMR::RSSRegion::lowToHigh, pageSize);
+   }
 
 
 // -----------------------------------------------------------------------------
@@ -1903,6 +1908,10 @@ onLoadInternal(
          return -1;
       persistentMemory->getPersistentInfo()->setInvokeExactJ2IThunkTable(ieThunkTable);
       }
+
+
+   jitConfig->jitAddNewLowToHighRSSRegion = jitAddNewLowToHighRSSRegion;
+
    return 0;
    }
 
