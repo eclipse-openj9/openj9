@@ -350,6 +350,10 @@ TR_J9ServerVM::getLeafComponentClassFromArrayClass(TR_OpaqueClassBlock * arrayCl
 TR_OpaqueClassBlock *
 TR_J9ServerVM::getClassFromSignature(const char *sig, int32_t length, TR_ResolvedMethod *method, bool isVettedForAOT)
    {
+   // Primitive types don't have a class associated with them
+   if (isSignatureForPrimitiveType(sig, length))
+      return NULL;
+
    TR_OpaqueClassBlock * clazz = NULL;
    J9ClassLoader * cl = ((TR_ResolvedJ9Method *)method)->getClassLoader();
    ClassLoaderStringPair key = {cl, std::string(sig, length)};
@@ -383,6 +387,10 @@ TR_J9ServerVM::getClassFromSignature(const char *sig, int32_t length, TR_Resolve
 TR_OpaqueClassBlock *
 TR_J9ServerVM::getClassFromSignature(const char *sig, int32_t length, TR_OpaqueMethodBlock *method, bool isVettedForAOT)
    {
+   // Primitive types don't have a class associated with them
+   if (isSignatureForPrimitiveType(sig, length))
+      return NULL;
+
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    std::string str(sig, length);
    stream->write(JITServer::MessageType::VM_getClassFromSignature, str, method, isVettedForAOT);
@@ -2683,6 +2691,10 @@ TR_J9SharedCacheServerVM::supportAllocationInlining(TR::Compilation *comp, TR::N
 TR_OpaqueClassBlock *
 TR_J9SharedCacheServerVM::getClassFromSignature(const char * sig, int32_t sigLength, TR_ResolvedMethod * method, bool isVettedForAOT)
    {
+   // Primitive types don't have a class associated with them
+   if (isSignatureForPrimitiveType(sig, sigLength))
+      return NULL;
+
    TR_ResolvedRelocatableJ9JITServerMethod* resolvedJITServerMethod = (TR_ResolvedRelocatableJ9JITServerMethod *)method;
    TR_OpaqueClassBlock* clazz = NULL;
    J9ClassLoader * cl = ((TR_ResolvedJ9Method *)method)->getClassLoader();
