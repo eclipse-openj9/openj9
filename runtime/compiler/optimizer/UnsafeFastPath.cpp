@@ -103,6 +103,9 @@ static bool isTransformableUnsafeAtomic(TR::Compilation *comp, TR::RecognizedMet
 
 static bool isKnownUnsafeCaller(TR::RecognizedMethod rm)
    {
+#if defined (J9VM_OPT_OPENJDK_METHODHANDLE)
+   return TR_J9MethodBase::isVarHandleOperationMethod(rm);
+#else
    switch (rm)
       {
       case TR::java_lang_invoke_ArrayVarHandle_ArrayVarHandleOperations_OpMethod:
@@ -118,15 +121,40 @@ static bool isKnownUnsafeCaller(TR::RecognizedMethod rm)
          return false;
       }
    return false;
+#endif
    }
 
 static bool isUnsafeCallerAccessingStaticField(TR::RecognizedMethod rm)
    {
    switch (rm)
       {
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+      case TR::java_lang_invoke_VarHandleX_FieldStaticReadOnlyOrReadWrite_method:
+#else
       case TR::java_lang_invoke_StaticFieldVarHandle_StaticFieldVarHandleOperations_OpMethod:
       case TR::java_lang_invoke_StaticFieldGetterHandle_invokeExact:
       case TR::java_lang_invoke_StaticFieldSetterHandle_invokeExact:
+#endif
+         return true;
+      default:
+         return false;
+      }
+   return false;
+   }
+
+
+static bool isVarHandleOperationMethodOnArray(TR::RecognizedMethod rm)
+   {
+   switch (rm)
+      {
+#if defined (J9VM_OPT_OPENJDK_METHODHANDLE)
+      case TR::java_lang_invoke_VarHandleX_Array_method:
+      case TR::java_lang_invoke_VarHandleByteArrayAsX_ArrayHandle_method:
+      case TR::java_lang_invoke_VarHandleByteArrayAsX_ByteBufferHandle_method:
+#else
+      case TR::java_lang_invoke_ArrayVarHandle_ArrayVarHandleOperations_OpMethod:
+      case TR::java_lang_invoke_ByteArrayViewVarHandle_ByteArrayViewVarHandleOperations_OpMethod:
+#endif
          return true;
       default:
          return false;
@@ -136,6 +164,9 @@ static bool isUnsafeCallerAccessingStaticField(TR::RecognizedMethod rm)
 
 static bool isUnsafeCallerAccessingArrayElement(TR::RecognizedMethod rm)
    {
+#if defined (J9VM_OPT_OPENJDK_METHODHANDLE)
+   return isVarHandleOperationMethodOnArray(rm);
+#else
    switch (rm)
       {
       case TR::java_lang_invoke_ArrayVarHandle_ArrayVarHandleOperations_OpMethod:
@@ -144,19 +175,7 @@ static bool isUnsafeCallerAccessingArrayElement(TR::RecognizedMethod rm)
       default:
          return false;
       }
-   return false;
-   }
-
-static bool isVarHandleOperationMethodOnArray(TR::RecognizedMethod rm)
-   {
-   switch (rm)
-      {
-      case TR::java_lang_invoke_ArrayVarHandle_ArrayVarHandleOperations_OpMethod:
-      case TR::java_lang_invoke_ByteArrayViewVarHandle_ByteArrayViewVarHandleOperations_OpMethod:
-         return true;
-      default:
-         return false;
-      }
+#endif
    return false;
    }
 
@@ -164,9 +183,16 @@ static bool isVarHandleOperationMethodOnNonStaticField(TR::RecognizedMethod rm)
    {
    switch (rm)
       {
+#if defined (J9VM_OPT_OPENJDK_METHODHANDLE)
+      case TR::java_lang_invoke_VarHandleX_FieldInstanceReadOnlyOrReadWrite_method:
+      case TR::java_lang_invoke_VarHandleX_Array_method:
+      case TR::java_lang_invoke_VarHandleByteArrayAsX_ArrayHandle_method:
+      case TR::java_lang_invoke_VarHandleByteArrayAsX_ByteBufferHandle_method:
+#else
       case TR::java_lang_invoke_InstanceFieldVarHandle_InstanceFieldVarHandleOperations_OpMethod:
       case TR::java_lang_invoke_ArrayVarHandle_ArrayVarHandleOperations_OpMethod:
       case TR::java_lang_invoke_ByteArrayViewVarHandle_ByteArrayViewVarHandleOperations_OpMethod:
+#endif
          return true;
       default:
          return false;
@@ -248,7 +274,7 @@ bool TR_UnsafeFastPath::tryTransformUnsafeAtomicCallInVarHandleAccessMethod(TR::
       return false;
 
    TR::Node* unsafeAddress = NULL;
-   if (callerMethod == TR::java_lang_invoke_StaticFieldVarHandle_StaticFieldVarHandleOperations_OpMethod)
+   if (isUnsafeCallerAccessingStaticField(callerMethod))
       {
       TR::Node *jlClass = node->getChild(1);
       TR::Node *j9Class = TR::Node::createWithSymRef(node, TR::aloadi, 1, jlClass, comp()->getSymRefTab()->findOrCreateClassFromJavaLangClassSymbolRef());
@@ -336,6 +362,7 @@ int32_t TR_UnsafeFastPath::perform()
       {
       TR::Node *ttNode = tt->getNode();
       TR::Node *node = ttNode->getNumChildren() > 0 ? ttNode->getFirstChild() : NULL; // Get the first child of the tree
+      TR::RecognizedMethod recognizedVarHandleOpMethod = TR::unknownMethod;
       if (node && node->getOpCode().isCall() && !node->getSymbol()->castToMethodSymbol()->isHelper())
          {
          TR::SymbolReference *symRef = node->getSymbolReference();
@@ -345,6 +372,10 @@ int32_t TR_UnsafeFastPath::perform()
             {
             TR::RecognizedMethod caller = getVarHandleAccessMethodFromInlinedCallStack(comp(), node);
             TR::RecognizedMethod callee = symbol->getRecognizedMethod();
+
+            if (TR_J9MethodBase::isVarHandleOperationMethod(caller))
+               recognizedVarHandleOpMethod = caller;
+
             if (TR_J9MethodBase::isVarHandleOperationMethod(caller) &&
                 (isTransformableUnsafeAtomic(comp(), callee) ||
                  symbol->getMethod()->isUnsafeCAS(comp())))
@@ -696,6 +727,8 @@ int32_t TR_UnsafeFastPath::perform()
          // Handle VarHandle operation methods
          bool isStatic = false;
          TR::RecognizedMethod callerMethod = methodSymbol->getRecognizedMethod();
+         if (recognizedVarHandleOpMethod != TR::unknownMethod)
+            callerMethod = recognizedVarHandleOpMethod;
          TR::RecognizedMethod calleeMethod = symbol->getRecognizedMethod();
          if (isKnownUnsafeCaller(callerMethod) &&
              TR_J9MethodBase::isUnsafeGetPutWithObjectArg(calleeMethod))
@@ -772,7 +805,7 @@ int32_t TR_UnsafeFastPath::perform()
                // The offset for a static field is low taged, mask out the last bit to get the real offset
                TR::Node *newOffset =
                   TR::Node::create(offset, TR::land, 2, offset,
-                                  TR::Node::lconst(offset, ~1));
+                                  TR::Node::lconst(offset, ~J9_SUN_FIELD_OFFSET_MASK));
                node->setAndIncChild(offsetChild, newOffset);
                offset->recursivelyDecReferenceCount();
                base = ramStatics;

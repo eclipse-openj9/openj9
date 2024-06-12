@@ -2410,6 +2410,13 @@ J9NLS_VM_UNRECOGNISED_CMD_LINE_OPT.system_action=The JVM will fail to start.
 J9NLS_VM_UNRECOGNISED_CMD_LINE_OPT.user_response=Change the value to one of "allow", "warn", "debug" or "deny".
 # END NON-TRANSLATABLE
 
+J9NLS_VM_OPENJ9_JFR_METADATA_FILE_NOT_FOUND=Either the %s environment variable is not set, or the file does not exist in the specified location.
+# START NON-TRANSLATABLE
+J9NLS_VM_OPENJ9_JFR_METADATA_FILE_NOT_FOUND.explanation=Couldn't find JFR metadata blob file.
+J9NLS_VM_OPENJ9_JFR_METADATA_FILE_NOT_FOUND.system_action=The JVM will not generate a JFR file.
+J9NLS_VM_OPENJ9_JFR_METADATA_FILE_NOT_FOUND.user_response=Set the required environment variables.
+# END NON-TRANSLATABLE
+
 J9NLS_VM_CLASS_NAME_EXCEEDS_MAX_LENGTH=Class name exceeds maximum length
 # START NON-TRANSLATABLE
 J9NLS_VM_CLASS_NAME_EXCEEDS_MAX_LENGTH.explanation=Class name cannot be longer than 65535 characters.
