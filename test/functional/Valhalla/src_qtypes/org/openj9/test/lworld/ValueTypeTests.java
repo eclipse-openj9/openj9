@@ -3036,7 +3036,7 @@ public class ValueTypeTests {
 	@Test(priority = 1)
 	static public void testIdentityObjectOnJLObject() throws Throwable {
 		assertFalse(Object.class.isValue());
-		assertFalse(Object.class.isIdentity());
+		assertTrue(Object.class.isIdentity());
 	}
 
 	@Test(priority = 1)
