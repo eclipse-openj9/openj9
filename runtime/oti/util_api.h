@@ -158,7 +158,7 @@ compareUTF8Length(U_8* data1, UDATA length1, void* data2, UDATA length2);
 /**
 * @brief	Returns TRUE if instanceClass can be cast to castClass, FALSE otherwise.
 * 			Updates the castClassCache.  DO NOT call this without VM access.
-* 
+*
 * @param *instanceClass
 * @param *castClass
 * @return IDATA
@@ -194,19 +194,19 @@ getDefinedArgumentFromJavaVMInitArgs(JavaVMInitArgs *vmInitArgs, const char *def
 /* ---------------- divhelp.c ---------------- */
 
 /**
-* @brief Helper function called by VM interpreter, using pointers to 
+* @brief Helper function called by VM interpreter, using pointers to
 *        values. Calculates quotient of 2 longs.
 * @param[in] *a Pointer to long dividend.
 * @param[in] *b Pointer to long divisor.
 * @param[out] *c Pointer to long quotient.
 * @return I_32 0.
-* 
+*
 */
 void helperLongDivideLong(I_64 *a, I_64 *b, I_64 *c);
 
 
 /**
-* @brief Helper function called by VM interpreter, using 
+* @brief Helper function called by VM interpreter, using
 *        pointers to values. Calculates the product of
 *        2 longs.
 * @param[in] *a Pointer to long multiplicand.
@@ -218,7 +218,7 @@ void helperLongMultiplyLong(I_64 *a, I_64 *b, I_64 *c);
 
 
 /**
-* @brief Helper function called by VM interpreter, using 
+* @brief Helper function called by VM interpreter, using
 *        pointers to values. Calculates the remainder when
 *        dividing 2 longs.
 * @param[in] *a Pointer to long dividend.
@@ -237,7 +237,7 @@ void helperLongRemainderLong(I_64 *a, I_64 *b, I_64 *c);
 * @param[in] a Long dividend.
 * @param[in] b Long divisor.
 * @return Resulting long quotient.
-* 
+*
 */
 I_64 helperCLongDivideLong(I_64 a, I_64 b);
 
@@ -248,7 +248,7 @@ I_64 helperCLongDivideLong(I_64 a, I_64 b);
 * @param[in] a Long multiplicand.
 * @param[in] b Long multiplier.
 * @return Resulting long product.
-* 
+*
 */
 I_64 helperCLongMultiplyLong(I_64 a, I_64 b);
 
@@ -259,7 +259,7 @@ I_64 helperCLongMultiplyLong(I_64 a, I_64 b);
 * @param[in] a Long dividend.
 * @param[in] b Long divisor.
 * @return Resulting long remainder.
-* 
+*
 */
 I_64 helperCLongRemainderLong(I_64 a, I_64 b);
 
@@ -311,7 +311,7 @@ pushEventFrame(J9VMThread * currentThread, UDATA wantVMAccess, UDATA jniRefSlots
 * @param method
 * @return U_8 *
 */
-U_8 * 
+U_8 *
 fetchMethodExtendedFlagsPointer(J9Method* method);
 
 
@@ -439,75 +439,75 @@ UDATA methodIsFinalInObject(UDATA nameLength, U_8* name, UDATA sigLength, U_8* s
 #if (defined(J9VM_INTERP_FLOAT_SUPPORT))  /* File Level Build Flags */
 
 /**
-* @brief Helper function called by VM interpreter, using pointers 
+* @brief Helper function called by VM interpreter, using pointers
 *        to values. Converts a double precision number to a
 *        floating point value.
 * @param[in] *src Pointer to double value to be converted to floating point.
 * @param[out] *dst Pointer to the resulting floating point value.
-* @return Void. 
-* 
+* @return Void.
+*
 */
 void helperConvertDoubleToFloat(jdouble *src, jfloat *dst);
 
 
 /**
-* @brief Helper function called by VM interpreter, using pointers 
+* @brief Helper function called by VM interpreter, using pointers
 *        to values. Converts a double precision number to an integer value.
 * @param[in] *src Pointer to double value to be converted to integer.
 * @param[out] *dst Pointer to the resulting integer value.
-* @return Void. 
-* 
+* @return Void.
+*
 */
 void helperConvertDoubleToInteger(jdouble *src, I_32 *dst);
 
 
 /**
-* @brief Helper function called by VM interpreter, using pointers 
+* @brief Helper function called by VM interpreter, using pointers
 *        to values. Converts a double precision number to long value.
 * @param[in] *src Pointer to double value to be converted to long.
 * @param[out] *dst Pointer to the resulting long value.
-* @return Void. 
-* 
+* @return Void.
+*
 */
 void helperConvertDoubleToLong(jdouble *src, I_64 *dst);
 
 
 /**
-* @brief Helper function called by VM interpreter, using pointers 
-*        to values. Converts floating point number to a double 
+* @brief Helper function called by VM interpreter, using pointers
+*        to values. Converts floating point number to a double
 *        precision value.
 * @param[in] *src Pointer to floating point value to be converted to double.
 * @param[out] *dst Pointer to the resulting double value.
-* @return Void. 
-* 
+* @return Void.
+*
 */
 void helperConvertFloatToDouble(jfloat *src, jdouble *dst);
 
 
 /**
-* @brief Helper function called by VM interpreter, using pointers 
+* @brief Helper function called by VM interpreter, using pointers
 *        to values. Converts floating point number to an integer value.
 * @param[in] *src Pointer to floating point value to be converted to integer.
 * @param[out] *dst Pointer to the resulting integer value.
-* @return Void. 
-* 
+* @return Void.
+*
 */
 void helperConvertFloatToInteger(jfloat *src, I_32 *dst);
 
 
 /**
-* @brief Helper function called by VM interpreter, using pointers 
+* @brief Helper function called by VM interpreter, using pointers
 *        to values. Converts floating point number to long value.
 * @param[in] *src Pointer to floating point value to be converted to long.
 * @param[out] *dst Pointer to the resulting long value.
-* @return Void. 
-* 
+* @return Void.
+*
 */
 void helperConvertFloatToLong(jfloat *src, I_64 *dst);
 
 
 /**
-* @brief Helper function called by VM interpreter, using pointers 
+* @brief Helper function called by VM interpreter, using pointers
 *        to values. Converts an integer number to double.
 * @param[in] *src Pointer to integer value to be converted to double.
 * @param[out] *dst Pointer to the resulting double value.
@@ -518,7 +518,7 @@ void helperConvertIntegerToDouble(I_32 *src, jdouble *dst);
 
 
 /**
-* @brief Helper function called by VM interpreter, using pointers 
+* @brief Helper function called by VM interpreter, using pointers
 *        to values. Converts an integer number to floating point.
 * @param[in] *src Pointer to integer value to be converted to floating point.
 * @param[out] *dst Pointer to the resulting floating point value.
@@ -529,7 +529,7 @@ void helperConvertIntegerToFloat(I_32 *src, jfloat *dst);
 
 
 /**
-* @brief Helper function called by VM interpreter, using pointers 
+* @brief Helper function called by VM interpreter, using pointers
 *        to values. Converts a long number to double precision.
 * @param[in] *src Pointer to long value to be converted to double.
 * @param[out] *dst Pointer to the resulting double value.
@@ -540,7 +540,7 @@ void helperConvertLongToDouble(I_64 *src, jdouble *dst);
 
 
 /**
-* @brief Helper function called by VM interpreter, using pointers 
+* @brief Helper function called by VM interpreter, using pointers
 *        to values. Converts a long number to floating point.
 * @param[in] *src Pointer to long value to be converted to floating point.
 * @param[out] *dst Pointer to the resulting floating point value.
@@ -553,21 +553,21 @@ void helperConvertLongToFloat(I_64 *src, jfloat *dst);
 /* ---------------- fltconv.c C-helpers---------------- */
 
 /**
-* @brief Helper function called by JIT, using standard 
-*        C-calling convention. Given a double number, 
-*        converts it to floating point and returns the 
+* @brief Helper function called by JIT, using standard
+*        C-calling convention. Given a double number,
+*        converts it to floating point and returns the
 *        floating point value.
 * @param[in] src Double number to be converted to floating point.
 * @return Resulting floating point value.
-* 
+*
 */
 jfloat helperCConvertDoubleToFloat(jdouble src);
 
 
 /**
-* @brief Helper function called by JIT, using standard 
-*        C-calling convention. Given a double number, 
-*        converts it to an integer and returns the 
+* @brief Helper function called by JIT, using standard
+*        C-calling convention. Given a double number,
+*        converts it to an integer and returns the
 *        integer value.
 * @param[in] src Double number to be converted to an integer.
 * @return Resulting integer value.
@@ -577,9 +577,9 @@ I_32 helperCConvertDoubleToInteger(jdouble src);
 
 
 /**
-* @brief Helper function called by JIT, using standard 
-*        C-calling convention. Given a double number, 
-*        converts it to a long and returns the 
+* @brief Helper function called by JIT, using standard
+*        C-calling convention. Given a double number,
+*        converts it to a long and returns the
 *        long value.
 * @param[in] src Double number to be converted to a long.
 * @return Resulting long value.
@@ -589,9 +589,9 @@ I_64 helperCConvertDoubleToLong(jdouble src);
 
 
 /**
-* @brief Helper function called by JIT, using standard 
-*        C-calling convention. Given a floating point number, 
-*        converts it to a double and returns the 
+* @brief Helper function called by JIT, using standard
+*        C-calling convention. Given a floating point number,
+*        converts it to a double and returns the
 *        double value.
 * @param[in] src Floating point number to be converted to a double.
 * @return Resulting double value.
@@ -601,9 +601,9 @@ jdouble helperCConvertFloatToDouble(jfloat src);
 
 
 /**
-* @brief Helper function called by JIT, using standard 
-*        C-calling convention. Given a floating point number, 
-*        converts it to an integer and returns the 
+* @brief Helper function called by JIT, using standard
+*        C-calling convention. Given a floating point number,
+*        converts it to an integer and returns the
 *        integer value.
 * @param[in] src Floating point number to be converted to an integer.
 * @return Resulting integer value.
@@ -612,21 +612,21 @@ jdouble helperCConvertFloatToDouble(jfloat src);
 I_32 helperCConvertFloatToInteger(jfloat src);
 
 /**
-* @brief Helper function called by JIT, using standard 
-*        C-calling convention. Given floating point number, 
+* @brief Helper function called by JIT, using standard
+*        C-calling convention. Given floating point number,
 *        converts it to long and returns the long value.
 * @param[in] a Floating point number to be converted to long.
 * @return Resulting long value.
-* 
+*
 */
 I_64 helperCConvertFloatToLong(jfloat src);
 
 
 
 /**
-* @brief Helper function called by JIT, using standard 
-*        C-calling convention. Given a floating point number, 
-*        converts it to a double and returns the 
+* @brief Helper function called by JIT, using standard
+*        C-calling convention. Given a floating point number,
+*        converts it to a double and returns the
 *        double value.
 * @param[in] src Floating point number to be converted to a double.
 * @return Resulting double value.
@@ -636,9 +636,9 @@ jdouble helperCConvertIntegerToDouble(I_32 src);
 
 
 /**
-* @brief Helper function called by JIT, using standard 
-*        C-calling convention. Given an integer number, 
-*        converts it to floating point and returns the 
+* @brief Helper function called by JIT, using standard
+*        C-calling convention. Given an integer number,
+*        converts it to floating point and returns the
 *        floating point value.
 * @param[in] src Integer number to be converted to floating point.
 * @return Resulting floating point value.
@@ -648,9 +648,9 @@ jfloat helperCConvertIntegerToFloat(I_32 src);
 
 
 /**
-* @brief Helper function called by JIT, using standard 
-*        C-calling convention. Given a floating point number, 
-*        converts it to a double and returns the 
+* @brief Helper function called by JIT, using standard
+*        C-calling convention. Given a floating point number,
+*        converts it to a double and returns the
 *        double value.
 * @param[in] src Floating point number to be converted to a double.
 * @return Resulting double value.
@@ -660,9 +660,9 @@ jdouble helperCConvertLongToDouble(I_64 src);
 
 
 /**
-* @brief Helper function called by JIT, using standard 
-*        C-calling convention. Given a long number, 
-*        converts it to floating point and returns the 
+* @brief Helper function called by JIT, using standard
+*        C-calling convention. Given a long number,
+*        converts it to floating point and returns the
 *        floating point value.
 * @param[in] src The long number to be converted to floating point.
 * @return Resulting floating point value.
@@ -817,7 +817,7 @@ void subDF(float f1, float f2, float *rp);
 #if (defined(J9VM_INTERP_FLOAT_SUPPORT))  /* File Level Build Flags */
 
 /**
-* @brief Helper function called by VM interpreter, using 
+* @brief Helper function called by VM interpreter, using
 *        pointers to values. Given 2 pointers to double values,
 *        returns  flag indicating how the values compare.
 * @param[in] *a Pointer to double value.
@@ -826,13 +826,13 @@ void subDF(float f1, float f2, float *rp);
 *                       1 if a>b
 *                      -1 if a<b
 * 					   -2 if a or b NaN.
-* 
+*
 */
 int helperDoubleCompareDouble(jdouble *a, jdouble *b);
 
 
 /**
-* @brief Helper function called by VM interpreter, using 
+* @brief Helper function called by VM interpreter, using
 *        pointers to values. Calculates the quotient of
 *        2 double precision numbers.
 * @param[in] *a Pointer to double dividend.
@@ -844,19 +844,19 @@ I_32 helperDoubleDivideDouble(jdouble *a, jdouble *b, jdouble *c);
 
 
 /**
-* @brief Helper function called by VM interpreter, using pointers to 
+* @brief Helper function called by VM interpreter, using pointers to
 *        values. Calculates difference of 2 double numbers.
 * @param[in] *a Pointer to double minuend.
 * @param[in] *b Pointer to double subtrahend.
 * @param[out] *c Pointer to double difference.
 * @return I_32 0.
-* 
+*
 */
 I_32 helperDoubleMinusDouble(jdouble *a, jdouble *b, jdouble *c);
 
 
 /**
-* @brief Helper function called by VM interpreter, using 
+* @brief Helper function called by VM interpreter, using
 *        pointers to values. Calculates the product of
 *        2 double precision numbers.
 * @param[in] *a Pointer to double multiplicand.
@@ -868,22 +868,22 @@ I_32 helperDoubleMultiplyDouble(jdouble *a, jdouble *b, jdouble *c);
 
 
 /**
-* @brief Helper function called by VM interpreter, using 
+* @brief Helper function called by VM interpreter, using
 *        pointers to values. Calculates the sum of
 *        2 double precision numbers.
 * @param[in] *a Pointer to double addend.
 * @param[in] *b Pointer to double addend.
 * @param[out] *c Pointer to double sum.
 * @return I_32 0.
-* 
+*
 */
 I_32 helperDoublePlusDouble(jdouble *a, jdouble *b, jdouble *c);
 
 
 /**
-* @brief Helper function called by VM interpreter, using 
+* @brief Helper function called by VM interpreter, using
 *        pointers to values. Given 2 pointers to floating
-*        point values, returns  flag indicating how the 
+*        point values, returns  flag indicating how the
 *        values compare.
 * @param[in] *a Pointer to floating point value.
 * @param[in] *b Pointer to floating point value.
@@ -891,13 +891,13 @@ I_32 helperDoublePlusDouble(jdouble *a, jdouble *b, jdouble *c);
 *                       1 if a>b
 *                      -1 if a<b
 * 					   -2 if a or b NaN.
-* 
+*
 */
 I_32 helperFloatCompareFloat(jfloat *a, jfloat *b);
 
 
 /**
-* @brief Helper function called by VM interpreter, using 
+* @brief Helper function called by VM interpreter, using
 *        pointers to values. Calculates the quotient of
 *        2 floating point numbers.
 * @param[in] *a Pointer to floating point dividend.
@@ -905,24 +905,24 @@ I_32 helperFloatCompareFloat(jfloat *a, jfloat *b);
 * @param[out] *c Pointer to floating point quotient.
 * @return I_32 0.
 */
-I_32 helperFloatDivideFloat(jfloat *a, jfloat *b, jfloat *c); 
+I_32 helperFloatDivideFloat(jfloat *a, jfloat *b, jfloat *c);
 
 
 /**
-* @brief Helper function called by VM interpreter, using 
+* @brief Helper function called by VM interpreter, using
 *        pointers to values. Calculates the difference of
 *        2 floating point numbers.
 * @param[in] *a Pointer to floating point minuend.
 * @param[in] *b Pointer to floating point subtrahend.
 * @param[out] *c Pointer to floating point difference.
 * @return I_32 0.
-* 
+*
 */
 I_32 helperFloatMinusFloat(jfloat *a, jfloat *b, jfloat *c);
 
 
 /**
-* @brief Helper function called by VM interpreter, using 
+* @brief Helper function called by VM interpreter, using
 *        pointers to values. Calculates the product of
 *        2 floating point numbers.
 * @param[in] *a Pointer to floating point multiplicand.
@@ -934,36 +934,36 @@ I_32 helperFloatMultiplyFloat(jfloat *a, jfloat *b, jfloat *c);
 
 
 /**
-* @brief Helper function called by VM interpreter, using 
+* @brief Helper function called by VM interpreter, using
 *        pointers to values. Calculates the sum of
 *        2 floating point numbers.
 * @param[in] *a Pointer to floating point addend.
 * @param[in] *b Pointer to floating point addend.
 * @param[out] *c Pointer to floating point sum.
 * @return I_32 0.
-* 
+*
 */
 I_32 helperFloatPlusFloat(jfloat *a, jfloat *b, jfloat *c);
 
 
 /**
-* @brief Helper function called by VM interpreter, using 
+* @brief Helper function called by VM interpreter, using
 *        pointers to values. Negates a double precision number.
 * @param[in] *a Pointer to double value.
 * @param[in] *b Pointer to double value.
 * @return I_32 0.
-* 
+*
 */
 I_32 helperNegateDouble(jdouble *a, jdouble *b);
 
 
 /**
-* @brief Helper function called by VM interpreter, using 
+* @brief Helper function called by VM interpreter, using
 *        pointers to values. Negates a floating point number.
 * @param[in] *a Pointer to floating point value.
 * @param[in] *b Pointer to floating point negative value.
 * @return I_32 0.
-* 
+*
 */
 I_32 helperNegateFloat(jfloat *a, jfloat *b);
 
@@ -972,7 +972,7 @@ I_32 helperNegateFloat(jfloat *a, jfloat *b);
 
 
 /**
-* @brief Helper function called by JIT, using standard 
+* @brief Helper function called by JIT, using standard
 *        C-calling convention. Given 2 double values,
 *        returns a flag indicating how the values compare.
 * @param[in] a Double value.
@@ -981,31 +981,31 @@ I_32 helperNegateFloat(jfloat *a, jfloat *b);
 *                       1 if a>b
 *                      -1 if a<b
 * 					   -2 if a or b NaN.
-* 
+*
 */
 I_32 helperCDoubleCompareDouble(jdouble a, jdouble b);
 
 
 /**
-* @brief Helper function called by JIT, using standard 
-*        C-calling convention. Given 2 double values, 
+* @brief Helper function called by JIT, using standard
+*        C-calling convention. Given 2 double values,
 *        returns quotient.
 * @param[in] a Double dividend.
 * @param[in] b Double divisor.
 * @return Resulting double quotient.
-* 
+*
 */
 jdouble helperCDoubleDivideDouble(jdouble a, jdouble b);
 /**
-* @brief Helper function called by JIT, using standard 
-*        C-calling convention. Given 2 double values, 
+* @brief Helper function called by JIT, using standard
+*        C-calling convention. Given 2 double values,
 *        returns difference.
 * @param[in] a Double minuend.
 * @param[in] b Double subtrahend.
 * @return Resulting double difference.
-* 
+*
 */
-jdouble helperCDoubleMinusDouble(jdouble a, jdouble b); 
+jdouble helperCDoubleMinusDouble(jdouble a, jdouble b);
 
 
 /**
@@ -1014,7 +1014,7 @@ jdouble helperCDoubleMinusDouble(jdouble a, jdouble b);
 * @param[in] a Double multiplicand.
 * @param[in] b Double multiplier.
 * @return Resulting double product.
-* 
+*
 */
 jdouble helperCDoubleMultiplyDouble(jdouble a, jdouble b);
 
@@ -1025,13 +1025,13 @@ jdouble helperCDoubleMultiplyDouble(jdouble a, jdouble b);
 * @param[in] a Double addend.
 * @param[in] b Double addend.
 * @return Resulting double sum.
-* 
+*
 */
 jdouble helperCDoublePlusDouble(jdouble a, jdouble b);
 
 
 /**
-* @brief Helper function called by JIT, using standard 
+* @brief Helper function called by JIT, using standard
 *        C-calling convention. Given 2 double values,
 *        returns  flag indicating how the values compare.
 * @param[in] a Double value.
@@ -1040,18 +1040,18 @@ jdouble helperCDoublePlusDouble(jdouble a, jdouble b);
 *                       1 if a>b
 *                      -1 if a<b
 * 					   -2 if a or b NaN.
-* 
+*
 */
 I_32 helperCFloatCompareFloat(jfloat a, jfloat b);
 
 /**
-* @brief Helper function called by JIT, using standard 
+* @brief Helper function called by JIT, using standard
 *        C-calling convention. Given 2 floating point
 *        values, returns quotient.
 * @param[in] a Floating point dividend.
 * @param[in] b Floating point divisor.
 * @return Resulting floating point quotient.
-* 
+*
 */
 jfloat helperCFloatDivideFloat(jfloat a, jfloat b);
 
@@ -1062,7 +1062,7 @@ jfloat helperCFloatDivideFloat(jfloat a, jfloat b);
 * @param[in] a Floating point minuend.
 * @param[in] b Floating point subtrahend.
 * @return Resulting floating point difference.
-* 
+*
 */
 jfloat helperCFloatMinusFloat(jfloat a, jfloat b);
 
@@ -1073,7 +1073,7 @@ jfloat helperCFloatMinusFloat(jfloat a, jfloat b);
 * @param[in] a Floating point multiplicand.
 * @param[in] b Floating point multiplier.
 * @return Resulting floating point product.
-* 
+*
 */
 jfloat helperCFloatMultiplyFloat(jfloat a, jfloat b);
 
@@ -1084,7 +1084,7 @@ jfloat helperCFloatMultiplyFloat(jfloat a, jfloat b);
 * @param[in] a Floating point addend.
 * @param[in] b Floating point addend.
 * @return Resulting floating point addition.
-* 
+*
 */
 jfloat helperCFloatPlusFloat(jfloat a, jfloat b);
 
@@ -1134,7 +1134,7 @@ I_32 helperFloatRemainderFloat(jfloat * a, jfloat * b, jfloat * c);
 * @param[in] a Double dividend.
 * @param[in] b Double divisor.
 * @return Resulting double remainder.
-* 
+*
 */
 jdouble helperCDoubleRemainderDouble(jdouble a, jdouble b);
 
@@ -1145,7 +1145,7 @@ jdouble helperCDoubleRemainderDouble(jdouble a, jdouble b);
 * @param[in] a Floating point dividend.
 * @param[in] b Floating point  divisor.
 * @return Resulting floating point  remainder.
-* 
+*
 */
 jfloat helperCFloatRemainderFloat(jfloat a, jfloat b);
 
@@ -1211,7 +1211,7 @@ J9JITExceptionTable* jit_artifact_search(J9AVLTree *tree, UDATA searchValue);
 
 /* ---------------- jitresolveframe.c ---------------- */
 
-#if (defined(J9VM_INTERP_NATIVE_SUPPORT)) 
+#if (defined(J9VM_INTERP_NATIVE_SUPPORT))
 /**
 * @brief
 * @param vmThread
@@ -1219,7 +1219,7 @@ J9JITExceptionTable* jit_artifact_search(J9AVLTree *tree, UDATA searchValue);
 * @param pc
 * @return J9SFJITResolveFrame*
 */
-J9SFJITResolveFrame* 
+J9SFJITResolveFrame*
 jitPushResolveFrame(J9VMThread* vmThread, UDATA* sp, U_8* pc);
 #endif /* J9VM_INTERP_NATIVE_SUPPORT */
 
@@ -1240,7 +1240,7 @@ JlmStart(J9VMThread* vmThread);
 * @param void
 * @return jint
 */
-jint 
+jint
 JlmStartTimeStamps(void);
 
 
@@ -1249,7 +1249,7 @@ JlmStartTimeStamps(void);
 * @param void
 * @return jint
 */
-jint 
+jint
 JlmStop(void);
 
 
@@ -1258,7 +1258,7 @@ JlmStop(void);
 * @param void
 * @return jint
 */
-jint 
+jint
 JlmStopTimeStamps(void);
 
 
@@ -1269,7 +1269,7 @@ JlmStopTimeStamps(void);
 * @param  dump_format
 * @return jint
 */
-jint 
+jint
 request_MonitorJlmDump(jvmtiEnv* env, J9VMJlmDump *jlmd, jint dump_format);
 
 
@@ -1292,7 +1292,7 @@ jint request_MonitorJlmDumpSize(J9JavaVM *jvm, UDATA *dump_size, jint dump_forma
 * @param pcount
 * @return J9VMThread*
 */
-J9VMThread* 
+J9VMThread*
 getObjectMonitorOwner(J9JavaVM* vm, j9object_t object, UDATA* pcount);
 
 
@@ -1323,9 +1323,9 @@ validateLibrary(struct J9JavaVM *javaVM, const char *libraryName, UDATA libraryH
 /* ---------------- optinfo.c ---------------- */
 
 /**
- * Retrieves number of permitted subclasses in this sealed class. Assumes that 
+ * Retrieves number of permitted subclasses in this sealed class. Assumes that
  * ROM class parameter references a sealed class.
- * 
+ *
  * @param J9ROMClass sealed class
  * @return U_32 number of permitted subclasses in optionalinfo
  */
@@ -1335,7 +1335,7 @@ getNumberOfPermittedSubclassesPtr(J9ROMClass *romClass);
 /**
  * Find the permitted subclass name constant pool entry at index in the optional data of the ROM class parameter.
  * This method assumes there is at least one permitted subclass in the ROM class.
- * 
+ *
  * @param U_32* permittedSubclassesCountPtr
  * @param U_32 class index
  * @return the permitted subclass name at index from ROM class
@@ -1389,9 +1389,9 @@ getImplicitCreationFlags(J9ROMClass *romClass);
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
 /**
- * Retrieves number of record components in this record. Assumes that 
+ * Retrieves number of record components in this record. Assumes that
  * ROM class parameter references a record class.
- * 
+ *
  * @param J9ROMClass record class
  * @return U_32 number of record components in optionalinfo
  */
@@ -1400,7 +1400,7 @@ getNumberOfRecordComponents(J9ROMClass *romClass);
 
 /**
  * Reason if record component has an optional signature attribute.
- * 
+ *
  * @param J9ROMRecordComponentShape* record component
  * @return true if record component has an optional signature attribute
  */
@@ -1409,7 +1409,7 @@ recordComponentHasSignature(J9ROMRecordComponentShape* recordComponent);
 
 /**
  * Reason if record component has an optional annotations attribute.
- * 
+ *
  * @param J9ROMRecordComponentShape* record component
  * @return true if record component has an optional annotations attribute
  */
@@ -1418,7 +1418,7 @@ recordComponentHasAnnotations(J9ROMRecordComponentShape* recordComponent);
 
 /**
  * Reason if record component has an optional type annotations attribute.
- * 
+ *
  * @param J9ROMRecordComponentShape* record component
  * @return true if record component has an optional type annotations attribute
  */
@@ -1427,7 +1427,7 @@ recordComponentHasTypeAnnotations(J9ROMRecordComponentShape* recordComponent);
 
 /**
  * Return the generic signature attribute from record component parameter.
- * 
+ *
  * @param J9ROMRecordComponentShape* record component
  * @return J9UTF8* generic signature attribute, or null if one does
  * not exist for this record component.
@@ -1438,9 +1438,9 @@ getRecordComponentGenericSignature(J9ROMRecordComponentShape* recordComponent);
 
 /**
  * Return the annotation attribute data from the record component parameter.
- * 
+ *
  * @param J9ROMRecordComponentShape* record component
- * @return U_32* annotation attribute data, or null is it does not exist 
+ * @return U_32* annotation attribute data, or null is it does not exist
  * for this record component.
  */
 U_32*
@@ -1448,9 +1448,9 @@ getRecordComponentAnnotationData(J9ROMRecordComponentShape* recordComponent);
 
 /**
  * Return the type annotation attribute data from the record component parameter.
- * 
+ *
  * @param J9ROMRecordComponentShape* record component
- * @return U_32* type annotation attribute data, or null is it does not exist 
+ * @return U_32* type annotation attribute data, or null is it does not exist
  * for this record component.
  */
 U_32*
@@ -1459,21 +1459,21 @@ getRecordComponentTypeAnnotationData(J9ROMRecordComponentShape* recordComponent)
 /**
  * Find first record component in the optional data of the ROM class parameter.
  * This method assumes there is at least one record component in the ROM class.
- * 
+ *
  * @param J9ROMClass* record class
  * @return first record component from ROM class
  */
-J9ROMRecordComponentShape* 
+J9ROMRecordComponentShape*
 recordComponentStartDo(J9ROMClass *romClass);
 
 /**
  * Find the record component. This method assumes there is
  * at least one more record component.
- * 
+ *
  * @param J9ROMRecordComponentShape* last record component
  * @return J9ROMRecordComponentShape* next record component
  */
-J9ROMRecordComponentShape* 
+J9ROMRecordComponentShape*
 recordComponentNextDo(J9ROMRecordComponentShape* recordComponent);
 
 /**
@@ -1686,7 +1686,7 @@ releaseOptInfoBuffer(J9JavaVM *vm, J9ROMClass *romClass);
 * @param *state
 * @return J9VariableInfoValues *
 */
-J9VariableInfoValues * 
+J9VariableInfoValues *
 variableInfoNextDo(J9VariableInfoWalkState *state);
 
 /**
@@ -1695,7 +1695,7 @@ variableInfoNextDo(J9VariableInfoWalkState *state);
 * @param state
 * @return J9VariableInfoValues *
 */
-J9VariableInfoValues * 
+J9VariableInfoValues *
 variableInfoStartDo(J9MethodDebugInfo * methodInfo, J9VariableInfoWalkState* state);
 
 
@@ -1808,7 +1808,7 @@ allSubclassesStartDo(J9Class * rootClass, J9SubclassWalkState * subclassState, U
 * @param baseClass
 * @return UDATA
 */
-UDATA 
+UDATA
 isSameOrSuperClassOf(J9Class * superClass, J9Class * baseClass);
 
 /**
@@ -2181,9 +2181,9 @@ typedef struct J9JVMTIClassPair {
 
 /**
  * @brief
- * Struct used in the class loader hotswap hashtable to keep track of 
+ * Struct used in the class loader hotswap hashtable to keep track of
  * replaced classes. We need this data to correctly fix static refs upon
- * redefinition 
+ * redefinition
  */
 typedef struct J9HotswappedClassPair {
 	J9Class * originalClass;
@@ -2196,8 +2196,8 @@ typedef struct J9HotswappedClassPair {
 
 /**
  * @brief
- * struct used to map a replaced Classes method address to the method 
- * address in the replacing Class. 
+ * struct used to map a replaced Classes method address to the method
+ * address in the replacing Class.
  */
 typedef struct J9JVMTIMethodPair {
 	J9Method * oldMethod;
@@ -2205,7 +2205,7 @@ typedef struct J9JVMTIMethodPair {
 } J9JVMTIMethodPair;
 
 /**
- *  Helper structure used while creating the jit class redefinition event data 
+ *  Helper structure used while creating the jit class redefinition event data
  */
 typedef struct J9JVMTIHCRJitEventData {
 	UDATA * dataCursor;      /*!< cursor into the data buffer */
@@ -2338,7 +2338,7 @@ enum jvmtiError
 verifyNewClasses (J9VMThread * currentThread, jint class_count, J9JVMTIClassPair * classPairs);
 
 jvmtiError
-fixMethodEquivalencesAndCallSites(J9VMThread * currentThread, 
+fixMethodEquivalencesAndCallSites(J9VMThread * currentThread,
 	J9HashTable * classPairs,
 	J9JVMTIHCRJitEventData * eventData,
 	BOOLEAN fastHCR, J9HashTable ** methodEquivalences,
@@ -2517,7 +2517,7 @@ getClassPathEntry(J9VMThread * currentThread, J9ClassLoader * classLoader, IDATA
  * @param [in] currentThread Current J9VMThread
  * @param [in] clazz pointer to J9Class
  * @param [out] length length of the string returned
- * @return string representing the location from which class has been loaded 
+ * @return string representing the location from which class has been loaded
  */
 U_8 *
 getClassLocation(J9VMThread * currentThread, J9Class * clazz, UDATA *length);
@@ -2528,7 +2528,7 @@ getClassLocation(J9VMThread * currentThread, J9Class * clazz, UDATA *length);
  * @param [in] currentThread Current J9VMThread
  * @param [in] module module for which jrt URL is needed
  *
- * @return pointer to J9UTF8 representing jrt URL for the module. Returns NULL if any error occurs 
+ * @return pointer to J9UTF8 representing jrt URL for the module. Returns NULL if any error occurs
  */
 J9UTF8 *
 getModuleJRTURL(J9VMThread *currentThread, J9ClassLoader *classLoader, J9Module *module);
@@ -2553,7 +2553,7 @@ addJarToSystemClassLoaderClassPathEntries(J9JavaVM *vm, const char *filename);
 * @param *portLibrary	the port library
 * @param *gpType		the port library defined signal
 * @param *gpInfo		opaque cookie needed by the port library signal handling mechanism
-* @param *userData		not used.  
+* @param *userData		not used.
 * @return UDATA
 */
 UDATA genericSignalHandler(struct J9PortLibrary* portLibrary, U_32 gpType, void* gpInfo, void* userData);
@@ -2561,7 +2561,7 @@ UDATA genericSignalHandler(struct J9PortLibrary* portLibrary, U_32 gpType, void*
 
 typedef struct J9PropsFile {
 	J9PortLibrary* portLibrary;
-	J9HashTable* properties; 
+	J9HashTable* properties;
 } J9PropsFile, *j9props_file_t;
 
 /**
@@ -2682,14 +2682,14 @@ void registerSystemStackPointerThreadOffset(J9VMThread *currentThread);
 
 /* ---------------- sethwprefetch.c ---------------- */
 
-/** 
- * HWPrefetch value on AIX, corresponding to 
+/**
+ * HWPrefetch value on AIX, corresponding to
  * DPFD_DEFAULT
  */
 #define XXSETHWPREFETCH_OS_DEFAULT_VALUE 0
 
-/** 
- * HWPrefetch value on AIX, corresponding to 
+/**
+ * HWPrefetch value on AIX, corresponding to
  * DPFD_NONE
  */
 #define XXSETHWPREFETCH_NONE_VALUE 1
@@ -2697,15 +2697,15 @@ void registerSystemStackPointerThreadOffset(J9VMThread *currentThread);
 /**
  * Set hardware prefetch value on AIX.
  *
- * @param[in] value Valid values are: 
- * 	DPFD_DEFAULT 0 
- * 	DPFD_NONE 1 
- * 	DPFD_SHALLOWEST 2 
- * 	DPFD_SHALLOW 3 
- * 	DPFD_MEDIUM 4 
- * 	DPFD_DEEP 5 
- * 	DPFD_DEEPER 6 
- * 	DPFD_DEEPEST 7 
+ * @param[in] value Valid values are:
+ * 	DPFD_DEFAULT 0
+ * 	DPFD_NONE 1
+ * 	DPFD_SHALLOWEST 2
+ * 	DPFD_SHALLOW 3
+ * 	DPFD_MEDIUM 4
+ * 	DPFD_DEEP 5
+ * 	DPFD_DEEPER 6
+ * 	DPFD_DEEPEST 7
  * 	DSCR_SSE 8
  *
  * @return 0 on success, -1 on error

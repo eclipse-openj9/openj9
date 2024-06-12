@@ -32,7 +32,7 @@
 -->
 
 <suite id="JVMTI Tests" timeout="240">
-	<variable name="JVM_OPTS" value=" " />
+	<variable name="JVM_OPTS" value="-XX:+EnableExtendedHCR" />
 	<variable name="JVM_MX512M" value="-Xmx512m" />
 	<variable name="AGENTLIB" value="-agentlib:jvmtitest" />
 	<variable name="TESTID" value="testid" />
@@ -348,7 +348,7 @@
 		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:rbc001 -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
 		<return type="success" value="0"/>
 	</test>
-	
+
 	<test id="nmr001">
 		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:nmr001 -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
 		<return type="success" value="0"/>

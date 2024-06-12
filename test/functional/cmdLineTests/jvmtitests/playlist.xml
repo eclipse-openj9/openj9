@@ -437,6 +437,7 @@
 	-DTEST_ROOT=$(Q)$(TEST_RESROOT)$(Q) \
 	-DJAR=$(Q)$(TEST_RESROOT)$(D)jvmtitest.jar$(Q) \
 	-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump $(SQ) \
+	-XX:+EnableExtendedHCR \
 	-DMODE_HINTS=$(Q)$(MODE_HINTS)$(Q) \
 	-jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)fieldwatchtests.xml$(Q) \
