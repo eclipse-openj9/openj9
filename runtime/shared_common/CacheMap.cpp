@@ -6328,18 +6328,19 @@ SH_CacheMap::matchAotMethod(MethodSpecTable* specTable, IDATA numSpecs, J9UTF8* 
 			/* Any signature */
 			sigMatch = true;
 		} else {
-			char* methodSig = (char *)J9UTF8_DATA(romMethodSig);
-			char* sigStart = (char *)memchr(methodSig, '(', J9UTF8_LENGTH(romMethodSig)) + 1;
-			char* sigEnd = (char *)memchr(methodSig, ')', J9UTF8_LENGTH(romMethodSig));
-			IDATA sigLength = sigEnd - sigStart;
+			const char *methodSig = (const char *)J9UTF8_DATA(romMethodSig);
+			const char *sigStart = (const char *)memchr(methodSig, '(', J9UTF8_LENGTH(romMethodSig)) + 1;
+			const char *sigEnd = (const char *)memchr(methodSig, ')', J9UTF8_LENGTH(romMethodSig));
 
-			/* Use string between '(' and ')' only */
-			if (sigLength < 0) {
+			if ((NULL == sigStart) || (NULL == sigEnd) || (sigEnd <= sigStart)) {
 				sigMatch = false;
 			} else {
+				/* Use string between '(' and ')' only */
+				IDATA sigLength = sigEnd - sigStart - 1;
+
 				sigMatch = (TRUE == wildcardMatch(specTable[i].methodSigMatchFlag,
-										(const char *)specTable[i].methodSig, specTable[i].methodSigLength,
-										(const char *)sigStart, sigLength));
+												  (const char *)specTable[i].methodSig, specTable[i].methodSigLength,
+												  sigStart, sigLength));
 			}
 		}
 

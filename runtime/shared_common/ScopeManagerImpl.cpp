@@ -87,12 +87,13 @@ SH_ScopeManagerImpl::scHashEqualFn(void* left, void* right, void *userData)
 	HashEntry* rightItem = (HashEntry*)right;
 	const J9UTF8* utf8left = leftItem->_value;
 	const J9UTF8* utf8right = rightItem->_value;
-	UDATA result;
 
 	Trc_SHR_SMI_scHashEqualFn_Entry(utf8left, utf8right);
 
-	result = J9UTF8_EQUALS(utf8left, utf8right);
+	UDATA result = J9UTF8_EQUALS(utf8left, utf8right);
+
 	Trc_SHR_SMI_scHashEqualFn_Exit3(result);
+
 	return result;
 }
 
