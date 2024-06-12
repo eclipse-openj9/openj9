@@ -42,7 +42,7 @@ private:
    uint8_t         *_allocationMark; // used if we want to give back memory up to previously set mark
    //TR::Monitor       *_mutex;     // Is this needed?
    int32_t          _status;    // mostly RAS at this point
-   OMR::RSSRegion  *_rssRegion;
+   OMR::RSSRegion  *_rssRegion; // to report footprint
 public:
    enum {
       RESERVED=1,
@@ -50,6 +50,8 @@ public:
       ALMOST_FULL,
       FULL,
    };
+
+   TR_DataCache() : _rssRegion(NULL) {}
    friend class TR_DataCacheManager;
    // The following methods need to be called on a reserved DataCache
    uint8_t *allocateDataCacheSpace(int32_t size);
