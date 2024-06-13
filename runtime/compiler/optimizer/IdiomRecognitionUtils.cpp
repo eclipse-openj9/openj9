@@ -30,7 +30,6 @@
 #include "compile/Compilation.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/TRMemory.hpp"
-#include "env/VMJ9.h"
 #include "il/Block.hpp"
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
@@ -48,7 +47,6 @@
 #include "optimizer/IdiomRecognition.hpp"
 #include "optimizer/Structure.hpp"
 #include "optimizer/TranslateTable.hpp"
-#include "optimizer/TransformUtil.hpp"
 
 /************************************/
 /************ Utilities *************/
@@ -824,7 +822,21 @@ createArrayHeaderConst(TR::Compilation *comp, bool is64bit, TR::Node *baseNode)
 TR::Node*
 createArrayTopAddressTree(TR::Compilation *comp, bool is64bit, TR::Node *baseNode)
    {
-   TR::Node *top = TR::TransformUtil::generateFirstArrayElementAddressTrees(comp, baseNode);
+   TR::Node *top, *c2;
+   TR::Node *aload = createLoad(baseNode);
+   if (is64bit)
+      {
+      top = TR::Node::create(baseNode, TR::aladd, 2);
+      c2 = TR::Node::create(baseNode, TR::lconst, 0);
+      c2->setLongInt((int32_t)TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
+      }
+   else
+      {
+      top = TR::Node::create(baseNode, TR::aiadd, 2);
+      c2 = TR::Node::create(baseNode, TR::iconst, 0, (int32_t)TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
+      }
+   top->setAndIncChild(0, aload);
+   top->setAndIncChild(1, c2);
    return top;
    }
 
@@ -885,24 +897,51 @@ createBytesFromElement(TR::Compilation *comp, bool is64bit, TR::Node *indexNode,
 
 
 //*****************************************************************************************
+// It creates an index address tree for the given indexNode and size.
+//*****************************************************************************************
+TR::Node*
+createIndexOffsetTree(TR::Compilation *comp, bool is64bit, TR::Node *indexNode, int multiply)
+   {
+   TR::Node *top, *c1, *c2;
+   c1 = createBytesFromElement(comp, is64bit, indexNode, multiply);
+
+   if (is64bit)
+      {
+      c2 = TR::Node::create(indexNode, TR::lconst, 0);
+      c2->setLongInt(-(int32_t)TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
+      top = TR::Node::create(indexNode, TR::lsub, 2);
+      }
+   else
+      {
+      c2 = TR::Node::create(indexNode, TR::iconst, 0, -(int32_t)TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
+      top = TR::Node::create(indexNode, TR::isub, 2);
+      }
+   top->setAndIncChild(0, c1);
+   top->setAndIncChild(1, c2);
+   return top;
+   }
+
+
+//*****************************************************************************************
 // It creates an effective address tree for the given baseNode, indexNode and size.
 //*****************************************************************************************
 TR::Node*
 createArrayAddressTree(TR::Compilation *comp, bool is64bit, TR::Node *baseNode, TR::Node *indexNode, int multiply)
    {
-   TR::Node *top = NULL;
-   TR::Node *c2 = NULL;
    if (indexNode->getOpCodeValue() == TR::iconst && indexNode->getInt() == 0)
       {
-      top = TR::TransformUtil::generateFirstArrayElementAddressTrees(comp, baseNode);
+      return createArrayTopAddressTree(comp, is64bit, baseNode);
       }
    else
       {
-      c2 = TR::TransformUtil::generateConvertArrayElementIndexToOffsetTrees(comp, indexNode, NULL, multiply);
-      top = TR::TransformUtil::generateArrayElementAddressTrees(comp, baseNode, c2);
+      TR::Node *top, *c2;
+      TR::Node *aload = createLoad(baseNode);
+      c2 = createIndexOffsetTree(comp, is64bit, indexNode, multiply);
+      top = TR::Node::create(baseNode, is64bit ? TR::aladd : TR::aiadd, 2);
+      top->setAndIncChild(0, aload);
+      top->setAndIncChild(1, c2);
+      return top;
       }
-
-   return top;
    }
 
 
