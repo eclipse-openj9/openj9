@@ -163,8 +163,8 @@ boot_jdk_default:
       17: '17'
       21: '21'
       22: '21'
-      23: '22'
-      next: '22'
+      23: '21'
+      next: '21'
     dir_strip:
       all: '1'
     url:
