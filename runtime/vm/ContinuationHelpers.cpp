@@ -96,7 +96,7 @@ createContinuation(J9VMThread *currentThread, j9object_t continuationObject)
 		}
 
 #ifdef J9VM_INTERP_GROWABLE_STACKS
-#define VMTHR_INITIAL_STACK_SIZE ((vm->initialStackSize > (UDATA) vm->stackSize) ? vm->stackSize : vm->initialStackSize)
+#define VMTHR_INITIAL_STACK_SIZE ((vm->initialVirtualStackSize > (UDATA) vm->stackSize) ? vm->stackSize : vm->initialVirtualStackSize)
 #else
 #define VMTHR_INITIAL_STACK_SIZE vm->stackSize
 #endif
