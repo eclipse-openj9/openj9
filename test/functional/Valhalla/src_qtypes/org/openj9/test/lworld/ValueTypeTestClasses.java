@@ -21,10 +21,13 @@
  */
 package org.openj9.test.lworld;
 
+import jdk.internal.vm.annotation.ImplicitlyConstructible;
+import jdk.internal.vm.annotation.NullRestricted;
 
 public class ValueTypeTestClasses {
 
-	static primitive class ValueTypeInt {
+	@ImplicitlyConstructible
+	static value class ValueTypeInt {
 		ValueTypeInt(int i) { this.i = i; }
 		final int i;
 	}
@@ -34,7 +37,8 @@ public class ValueTypeTestClasses {
 		final int i;
 	}
 
-	static primitive class ValueTypeLong {
+	@ImplicitlyConstructible
+	static value class ValueTypeLong {
 		final long l;
 		ValueTypeLong(long l) {this.l = l;}
 		public long getL() {
@@ -42,7 +46,9 @@ public class ValueTypeTestClasses {
 		}
 	}
 
-	static primitive class ValueTypePoint2D {
+	@ImplicitlyConstructible
+	static value class ValueTypePoint2D {
+		@NullRestricted
 		final ValueTypeInt x, y;
 
 		ValueTypePoint2D(ValueTypeInt x, ValueTypeInt y) {
@@ -62,6 +68,7 @@ public class ValueTypeTestClasses {
 
 	static class IntWrapper {
 		IntWrapper(int i) { this.vti = new ValueTypeInt(i); }
+		@NullRestricted
 		final ValueTypeInt vti;
 	}
 
@@ -74,7 +81,9 @@ public class ValueTypeTestClasses {
 		}
 	}
 
-	static primitive class ValueTypeWithLongField {
+	@ImplicitlyConstructible
+	static value class ValueTypeWithLongField {
+		@NullRestricted
 		final ValueTypeLong l;
 
 		ValueTypeWithLongField() {
@@ -82,7 +91,9 @@ public class ValueTypeTestClasses {
 		}
 	}
 
-	static primitive class ValueTypeLongPoint2D {
+	@ImplicitlyConstructible
+	static value class ValueTypeLongPoint2D {
+		@NullRestricted
 		final ValueTypeLong x, y;
 
 		ValueTypeLongPoint2D(long x, long y) {
@@ -91,11 +102,14 @@ public class ValueTypeTestClasses {
 		}
 	}
 
-	static primitive class ZeroSizeValueType {
+	@ImplicitlyConstructible
+	static value class ZeroSizeValueType {
 		ZeroSizeValueType() {}
 	}
 
-	static primitive class ZeroSizeValueTypeWrapper {
+	@ImplicitlyConstructible
+	static value class ZeroSizeValueTypeWrapper {
+		@NullRestricted
 		final ZeroSizeValueType z;
 
 		ZeroSizeValueTypeWrapper() {
@@ -103,12 +117,14 @@ public class ValueTypeTestClasses {
 		}
 	}
 
-	static primitive class ValueTypeInt2 {
+	@ImplicitlyConstructible
+	static value class ValueTypeInt2 {
 		ValueTypeInt2(int i) { this.i = i; }
 		final int i;
 	}
 
-	static primitive class ValueTypeFastSubVT {
+	@ImplicitlyConstructible
+	static value class ValueTypeFastSubVT {
 		final int x,y,z;
 		final Object[] arr;
 		ValueTypeFastSubVT(int x, int y, int z, Object[] arr) {
@@ -119,7 +135,9 @@ public class ValueTypeTestClasses {
 		}
 	}
 
-	static primitive class ValueTypeDoubleLong {
+	@ImplicitlyConstructible
+	static value class ValueTypeDoubleLong {
+		@NullRestricted
 		final ValueTypeLong l;
 		final long l2;
 		ValueTypeDoubleLong(ValueTypeLong l, long l2) {
@@ -134,8 +152,11 @@ public class ValueTypeTestClasses {
 		}
 	}
 
-	static primitive class ValueTypeQuadLong {
+	@ImplicitlyConstructible
+	static value class ValueTypeQuadLong {
+		@NullRestricted
 		final ValueTypeDoubleLong l;
+		@NullRestricted
 		final ValueTypeLong l2;
 		final long l3;
 		ValueTypeQuadLong(ValueTypeDoubleLong l, ValueTypeLong l2, long l3) {
@@ -154,9 +175,13 @@ public class ValueTypeTestClasses {
 		}
 	}
 
-	static primitive class ValueTypeDoubleQuadLong {
+	@ImplicitlyConstructible
+	static value class ValueTypeDoubleQuadLong {
+		@NullRestricted
 		final ValueTypeQuadLong l;
+		@NullRestricted
 		final ValueTypeDoubleLong l2;
+		@NullRestricted
 		final ValueTypeLong l3;
 		final long l4;
 		ValueTypeDoubleQuadLong(ValueTypeQuadLong l, ValueTypeDoubleLong l2, ValueTypeLong l3, long l4) {

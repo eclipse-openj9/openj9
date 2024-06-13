@@ -32,7 +32,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
-import jdk.internal.value.PrimitiveClass;
 import sun.misc.Unsafe;
 import org.testng.Assert;
 import static org.testng.Assert.*;
@@ -2973,7 +2972,6 @@ public class ValueTypeTests {
 	static public void testIdentityObjectOnValueType() throws Throwable {
 		String fields[] = {"longField:J"};
 		Class valueClass = ValueTypeGenerator.generateValueClass("testIdentityObjectOnValueType", fields);
-		assertTrue(PrimitiveClass.isPrimitiveClass(valueClass));
 		assertTrue(valueClass.isValue());
 		assertFalse(valueClass.isIdentity());
 	}
@@ -2981,7 +2979,6 @@ public class ValueTypeTests {
 	@Test(priority=1)
 	static public void testIdentityObjectOnHeavyAbstract() throws Throwable {
 		assertFalse(HeavyAbstractClass.class.isValue());
-		assertFalse(PrimitiveClass.isPrimitiveClass(HeavyAbstractClass.class));
 		assertTrue(HeavyAbstractClass.class.isIdentity());
 	}
 	public static abstract class HeavyAbstractClass {
@@ -3029,7 +3026,7 @@ public class ValueTypeTests {
 			superClassName = "java/lang/Object";
 		}
 		Class valueClass = ValueTypeGenerator.generateValueClass(testName, superClassName, fields, extraClassFlags);
-		assertTrue(PrimitiveClass.isPrimitiveClass(valueClass));
+		assertTrue(valueClass.isValue());
 	}
 
 	@Test(priority=1, expectedExceptions=IncompatibleClassChangeError.class)
@@ -3101,22 +3098,8 @@ public class ValueTypeTests {
 	}
 
 	@Test(priority=1)
-	static public void testIsPrimitiveClassOnRef() throws Throwable {
-		String fields[] = {"longField:J"};
-		Class refClass = ValueTypeGenerator.generateRefClass("testIsPrimitiveClassOnRef", fields);
-		assertFalse(PrimitiveClass.isPrimitiveClass(refClass));
-	}
-
-	@Test(priority=1)
-	static public void testIsPrimitiveClassOnValueType() throws Throwable {
-		String fields[] = {"longField:J"};
-		Class valueClass = ValueTypeGenerator.generateValueClass("testIsPrimitiveClassOnValueType", fields);
-		assertTrue(PrimitiveClass.isPrimitiveClass(valueClass));
-	}
-
-	@Test(priority=1)
-	static public void testIsPrimitiveClassOnInterface() throws Throwable {
-		assertFalse(PrimitiveClass.isPrimitiveClass(TestInterface.class));
+	static public void testIsValueClassOnInterface() throws Throwable {
+		assertFalse(TestInterface.class.isValue());
 	}
 
 	private interface TestInterface {
@@ -3124,23 +3107,23 @@ public class ValueTypeTests {
 	}
 
 	@Test(priority=1)
-	static public void testIsPrimitiveClassOnAbstractClass() throws Throwable {
-		assertFalse(PrimitiveClass.isPrimitiveClass(HeavyAbstractClass.class));
+	static public void testIsValueClassOnAbstractClass() throws Throwable {
+		assertFalse(HeavyAbstractClass.class.isValue());
 	}
 
 	@Test(priority=1)
-	static public void testIsPrimitiveOnValueArrayClass() throws Throwable {
+	static public void testIsValueOnValueArrayClass() throws Throwable {
 		String fields[] = {"longField:J"};
 		Class valueClass = ValueTypeGenerator.generateValueClass("testIsPrimitiveOnValueArrayClass", fields);
-		assertFalse(PrimitiveClass.isPrimitiveClass(valueClass.arrayType()));
+		assertFalse(valueClass.arrayType().isValue());
 		assertTrue(valueClass.arrayType().isIdentity());
 	}
 
 	@Test(priority=1)
-	static public void testIsPrimitiveOnRefArrayClass() throws Throwable {
+	static public void testIsValueOnRefArrayClass() throws Throwable {
 		String fields[] = {"longField:J"};
 		Class refClass = ValueTypeGenerator.generateRefClass("testIsPrimitiveOnRefArrayClass", fields);
-		assertFalse(PrimitiveClass.isPrimitiveClass(refClass.arrayType()));
+		assertFalse(refClass.arrayType().isValue());
 		assertTrue(refClass.arrayType().isIdentity());
 	}
 
@@ -3167,26 +3150,6 @@ public class ValueTypeTests {
 		Object p3 = new ValueClassPoint2D(new ValueClassInt(2), new ValueClassInt(2));
 		Object p4 = new ValueClassPoint2D(new ValueClassInt(2), new ValueClassInt(1));
 		Object p5 = new ValueClassPoint2D(new ValueClassInt(3), new ValueClassInt(4));
-
-		int h1 = p1.hashCode();
-		int h2 = p2.hashCode();
-		int h3 = p3.hashCode();
-		int h4 = p4.hashCode();
-		int h5 = p5.hashCode();
-
-		assertEquals(h1, h2);
-		assertNotEquals(h1, h3);
-		assertNotEquals(h1, h4);
-		assertNotEquals(h1, h5);
-	}
-
-	@Test(priority=1)
-	static public void testPrimitiveClassHashCode() throws Throwable {
-		Object p1 = new ValueTypePoint2D(new ValueTypeInt(1), new ValueTypeInt(2));
-		Object p2 = new ValueTypePoint2D(new ValueTypeInt(1), new ValueTypeInt(2));
-		Object p3 = new ValueTypePoint2D(new ValueTypeInt(2), new ValueTypeInt(2));
-		Object p4 = new ValueTypePoint2D(new ValueTypeInt(2), new ValueTypeInt(1));
-		Object p5 = new ValueTypePoint2D(new ValueTypeInt(3), new ValueTypeInt(4));
 
 		int h1 = p1.hashCode();
 		int h2 = p2.hashCode();

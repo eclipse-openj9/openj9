@@ -26,6 +26,10 @@ import static org.testng.Assert.*;
 import org.testng.annotations.Test;
 import org.testng.annotations.BeforeClass;
 
+import jdk.internal.value.NullRestrictedCheckedType;
+import jdk.internal.value.ValueClass;
+import jdk.internal.vm.annotation.ImplicitlyConstructible;
+import jdk.internal.vm.annotation.NullRestricted;
 
 @Test(groups = { "level.sanity" })
 public class ValueTypeSystemArraycopyTests {
@@ -80,7 +84,8 @@ public class ValueTypeSystemArraycopyTests {
 		}
 	}
 
-	public primitive static class SomePrimitiveValueClass implements SomeInterface {
+	@ImplicitlyConstructible
+	public static value class SomePrimitiveValueClass implements SomeInterface {
 		double val1;
 		long val2;
 		SomePrimitiveValueClass2 val3;
@@ -94,7 +99,8 @@ public class ValueTypeSystemArraycopyTests {
 		}
 	}
 
-	public primitive static class SomePrimitiveValueClass2 implements SomeInterface {
+	@ImplicitlyConstructible
+	public static value class SomePrimitiveValueClass2 implements SomeInterface {
 		long val1;
 		double val2;
 
@@ -110,8 +116,12 @@ public class ValueTypeSystemArraycopyTests {
 	public static SomeIdentityClass[] idArraySrc = new SomeIdentityClass[ARRAY_SIZE];
 	public static SomeValueClass[] vtArrayDst = new SomeValueClass[ARRAY_SIZE];
 	public static SomeValueClass[] vtArraySrc = new SomeValueClass[ARRAY_SIZE];
-	public static SomePrimitiveValueClass[] primitiveVtArrayDst = new SomePrimitiveValueClass[ARRAY_SIZE];
-	public static SomePrimitiveValueClass[] primitiveVtArraySrc = new SomePrimitiveValueClass[ARRAY_SIZE];
+	public static SomePrimitiveValueClass[] primitiveVtArrayDst =
+		(SomePrimitiveValueClass[])ValueClass.newArrayInstance(
+			NullRestrictedCheckedType.of(SomePrimitiveValueClass.class), ARRAY_SIZE);
+	public static SomePrimitiveValueClass[] primitiveVtArraySrc =
+			(SomePrimitiveValueClass[])ValueClass.newArrayInstance(
+				NullRestrictedCheckedType.of(SomePrimitiveValueClass.class), ARRAY_SIZE);
 
 	public static SomeInterface[] ifIdArrayDst = new SomeIdentityClass[ARRAY_SIZE];
 	public static SomeInterface[] ifIdArraySrc = new SomeIdentityClass[ARRAY_SIZE];
@@ -124,7 +134,9 @@ public class ValueTypeSystemArraycopyTests {
 	public static SomeInterface[] ifArray3 = new SomeInterface[ARRAY_SIZE];
 
 	public static SomeIdentityClass[] idArrayDstCheckForException = new SomeIdentityClass[ARRAY_SIZE];
-	public static SomePrimitiveValueClass[] primitiveVtArrayDstCheckForException = new SomePrimitiveValueClass[ARRAY_SIZE];
+	public static SomePrimitiveValueClass[] primitiveVtArrayDstCheckForException =
+		(SomePrimitiveValueClass[])ValueClass.newArrayInstance(
+			NullRestrictedCheckedType.of(SomePrimitiveValueClass.class), ARRAY_SIZE);
 
 	static private void initArrays() {
 		for (int i=0; i < ARRAY_SIZE; i++) {
