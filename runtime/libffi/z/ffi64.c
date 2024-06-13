@@ -620,8 +620,6 @@ ffi_call_CEL4RO31(void (*fn)(void), extended_cif *ecif)
   }
 }
 
-
-
 /*======================== End of Routine ============================*/
 
 /*====================================================================*/
@@ -701,8 +699,8 @@ ffi_prep_args (unsigned char *stack, extended_cif *ecif)
       switch (type)
 	{
 	  case FFI_TYPE_STRUCT:
-    case FFI_TYPE_STRUCT_FF:
-    case FFI_TYPE_STRUCT_DD:
+	  case FFI_TYPE_STRUCT_FF:
+	  case FFI_TYPE_STRUCT_DD:
 	    memcpy(arg_ptr, *p_argv, size);
 	    break;
 
@@ -774,43 +772,43 @@ ffi_prep_args (unsigned char *stack, extended_cif *ecif)
  */
 unsigned short
 get_ffi_element_type_in_struct(ffi_type *arg_type)
-  {
-  while (arg_type->type == FFI_TYPE_STRUCT
-        && arg_type->elements[0]
-        && !arg_type->elements[1])
-    {
+{
+  while ((FFI_TYPE_STRUCT == arg_type->type)
+        && (NULL != arg_type->elements[0])
+        && (NULL == arg_type->elements[1])
+  ) {
     arg_type = arg_type->elements[0];
-    }
-  return arg_type->type;
   }
+  return arg_type->type;
+}
 
 unsigned short
 ffi_check_struct_for_complex(ffi_type *arg_type)
+{
+  if (FFI_TYPE_STRUCT == arg_type->type)
   {
-  if (arg_type->type == FFI_TYPE_STRUCT)
+    unsigned short firstArgType = get_ffi_element_type_in_struct(arg_type->elements[0]);
+    if (FFI_TYPE_FLOAT == firstArgType)
     {
-    int firstArgType = get_ffi_element_type_in_struct(arg_type->elements[0]);
-    if (firstArgType == FFI_TYPE_FLOAT)
-      {
-      if (arg_type->elements[1]
-          && !arg_type->elements[2]
-          && get_ffi_element_type_in_struct(arg_type->elements[1]) == FFI_TYPE_FLOAT)
-        {
+      if ((NULL != arg_type->elements[1])
+          && (NULL == arg_type->elements[2])
+          && (FFI_TYPE_FLOAT == get_ffi_element_type_in_struct(arg_type->elements[1]))
+      ) {
         return FFI_TYPE_STRUCT_FF;
-        }
-      }
-    else if (firstArgType == FFI_TYPE_DOUBLE)
-      {
-      if (arg_type->elements[1]
-          && !arg_type->elements[2]
-          && get_ffi_element_type_in_struct(arg_type->elements[1]) == FFI_TYPE_DOUBLE)
-        {
-        return FFI_TYPE_STRUCT_DD;
-        }
       }
     }
-  return arg_type->type;
+    else if (FFI_TYPE_DOUBLE == firstArgType)
+    {
+      if ((NULL != arg_type->elements[1])
+          && (NULL == arg_type->elements[2])
+          && (FFI_TYPE_DOUBLE == get_ffi_element_type_in_struct(arg_type->elements[1]))
+      ) {
+        return FFI_TYPE_STRUCT_DD;
+      }
+    }
   }
+  return arg_type->type;
+}
 
 /*======================== End of Routine ============================*/
 
