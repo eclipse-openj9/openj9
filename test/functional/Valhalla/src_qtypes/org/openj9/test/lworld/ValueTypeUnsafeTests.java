@@ -23,6 +23,7 @@ package org.openj9.test.lworld;
 
 
 import jdk.internal.misc.Unsafe;
+import jdk.internal.vm.annotation.ImplicitlyConstructible;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
@@ -281,7 +282,8 @@ public class ValueTypeUnsafeTests {
 
 	@Test
 	static public void testuninitializedVTClassHasNullDefaultValue() {
-		primitive class NeverInitialized {
+		@ImplicitlyConstructible
+		value class NeverInitialized {
 			final ValueTypeInt i;
 			NeverInitialized(ValueTypeInt i) { this.i = i; }
 		}

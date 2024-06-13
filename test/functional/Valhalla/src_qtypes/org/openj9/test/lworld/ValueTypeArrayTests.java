@@ -25,6 +25,11 @@ import org.testng.Assert;
 import static org.testng.Assert.*;
 import org.testng.annotations.Test;
 
+import jdk.internal.value.NullRestrictedCheckedType;
+import jdk.internal.value.ValueClass;
+import jdk.internal.vm.annotation.ImplicitlyConstructible;
+import jdk.internal.vm.annotation.NullRestricted;
+
 /**
  * Test array element assignment involving arrays of type {@code Object},
  * of an interface type, and of value types, with values of those types,
@@ -55,7 +60,8 @@ public class ValueTypeArrayTests {
 	/**
 	 * A simple primitive value type class
 	 */
-	static primitive class PointPV implements SomeIface {
+	@ImplicitlyConstructible
+	static value class PointPV implements SomeIface {
 		double x;
 		double y;
 
@@ -357,7 +363,8 @@ public class ValueTypeArrayTests {
 		}
 	}
 
-	static primitive class SomePrimitiveClassWithDoubleField{
+	@ImplicitlyConstructible
+	static value class SomePrimitiveClassWithDoubleField {
 		public double d;
 
 		SomePrimitiveClassWithDoubleField(double x) {
@@ -365,7 +372,8 @@ public class ValueTypeArrayTests {
 		}
 	}
 
-	static primitive class SomePrimitiveClassWithFloatField{
+	@ImplicitlyConstructible
+	static value class SomePrimitiveClassWithFloatField {
 		public float f;
 
 		SomePrimitiveClassWithFloatField(float x) {
@@ -373,7 +381,8 @@ public class ValueTypeArrayTests {
 		}
 	}
 
-	static primitive class SomePrimitiveClassWithLongField{
+	@ImplicitlyConstructible
+	static value class SomePrimitiveClassWithLongField {
 		public long l;
 
 		SomePrimitiveClassWithLongField(long x) {
@@ -381,7 +390,7 @@ public class ValueTypeArrayTests {
 		}
 	}
 
-	static class SomeIdentityClassWithDoubleField{
+	static class SomeIdentityClassWithDoubleField {
 		public double d;
 
 		SomeIdentityClassWithDoubleField(double x) {
@@ -409,7 +418,8 @@ public class ValueTypeArrayTests {
 
 	interface SomeInterface2WithSingleImplementer {}
 
-	static primitive class SomePrimitiveClassImplIf implements SomeInterface1WithSingleImplementer {
+	@ImplicitlyConstructible
+	static value class SomePrimitiveClassImplIf implements SomeInterface1WithSingleImplementer {
 		public double d;
 		public long l;
 
@@ -588,9 +598,13 @@ public class ValueTypeArrayTests {
 	@Test(priority=1,invocationCount=2)
 	static public void testValueTypeAaload() throws Throwable {
 		int ARRAY_LENGTH = 10;
-		SomePrimitiveClassWithDoubleField[] data1  = new SomePrimitiveClassWithDoubleField[ARRAY_LENGTH];
-		SomePrimitiveClassWithFloatField[]  data2  = new SomePrimitiveClassWithFloatField[ARRAY_LENGTH];
-		SomePrimitiveClassWithLongField[]   data3  = new SomePrimitiveClassWithLongField[ARRAY_LENGTH];
+
+		SomePrimitiveClassWithDoubleField[] data1 = (SomePrimitiveClassWithDoubleField[])ValueClass.newArrayInstance(
+			NullRestrictedCheckedType.of(SomePrimitiveClassWithDoubleField.class), ARRAY_LENGTH);
+		SomePrimitiveClassWithFloatField[] data2 = (SomePrimitiveClassWithFloatField[])ValueClass.newArrayInstance(
+			NullRestrictedCheckedType.of(SomePrimitiveClassWithFloatField.class), ARRAY_LENGTH);
+		SomePrimitiveClassWithLongField[] data3 = (SomePrimitiveClassWithLongField[])ValueClass.newArrayInstance(
+			NullRestrictedCheckedType.of(SomePrimitiveClassWithLongField.class), ARRAY_LENGTH);
 
 		SomeIdentityClassWithDoubleField[] data4  = new SomeIdentityClassWithDoubleField[ARRAY_LENGTH];
 		SomeIdentityClassWithFloatField[]  data5  = new SomeIdentityClassWithFloatField[ARRAY_LENGTH];
@@ -623,12 +637,18 @@ public class ValueTypeArrayTests {
 	@Test(priority=1,invocationCount=2)
 	static public void testValueTypeAastore() throws Throwable {
 		int ARRAY_LENGTH = 10;
-		SomePrimitiveClassWithDoubleField[] srcData1 = new SomePrimitiveClassWithDoubleField[ARRAY_LENGTH];
-		SomePrimitiveClassWithDoubleField[] dstData1 = new SomePrimitiveClassWithDoubleField[ARRAY_LENGTH];
-		SomePrimitiveClassWithFloatField[]  srcData2 = new SomePrimitiveClassWithFloatField[ARRAY_LENGTH];
-		SomePrimitiveClassWithFloatField[]  dstData2 = new SomePrimitiveClassWithFloatField[ARRAY_LENGTH];
-		SomePrimitiveClassWithLongField[]   srcData3 = new SomePrimitiveClassWithLongField[ARRAY_LENGTH];
-		SomePrimitiveClassWithLongField[]   dstData3 = new SomePrimitiveClassWithLongField[ARRAY_LENGTH];
+		SomePrimitiveClassWithDoubleField[] srcData1 = (SomePrimitiveClassWithDoubleField[])ValueClass.newArrayInstance(
+			NullRestrictedCheckedType.of(SomePrimitiveClassWithDoubleField.class), ARRAY_LENGTH);
+		SomePrimitiveClassWithDoubleField[] dstData1 = (SomePrimitiveClassWithDoubleField[])ValueClass.newArrayInstance(
+			NullRestrictedCheckedType.of(SomePrimitiveClassWithDoubleField.class), ARRAY_LENGTH);
+		SomePrimitiveClassWithFloatField[]  srcData2 = (SomePrimitiveClassWithFloatField[])ValueClass.newArrayInstance(
+			NullRestrictedCheckedType.of(SomePrimitiveClassWithFloatField.class), ARRAY_LENGTH);
+		SomePrimitiveClassWithFloatField[]  dstData2 = (SomePrimitiveClassWithFloatField[])ValueClass.newArrayInstance(
+			NullRestrictedCheckedType.of(SomePrimitiveClassWithFloatField.class), ARRAY_LENGTH);
+		SomePrimitiveClassWithLongField[]   srcData3 = (SomePrimitiveClassWithLongField[])ValueClass.newArrayInstance(
+			NullRestrictedCheckedType.of(SomePrimitiveClassWithLongField.class), ARRAY_LENGTH);
+		SomePrimitiveClassWithLongField[]   dstData3 = (SomePrimitiveClassWithLongField[])ValueClass.newArrayInstance(
+			NullRestrictedCheckedType.of(SomePrimitiveClassWithLongField.class), ARRAY_LENGTH);
 
 		SomeIdentityClassWithDoubleField[] srcData4  = new SomeIdentityClassWithDoubleField[ARRAY_LENGTH];
 		SomeIdentityClassWithDoubleField[] dstData4  = new SomeIdentityClassWithDoubleField[ARRAY_LENGTH];
@@ -669,7 +689,8 @@ public class ValueTypeArrayTests {
 		writeArrayElementWithSomeIdentityClassImplIf(holder);
 	}
 
-	public static primitive class EmptyPrim {
+	@ImplicitlyConstructible
+	public static value class EmptyPrim {
 	}
 
 	public static value class EmptyVal {
@@ -701,8 +722,10 @@ public class ValueTypeArrayTests {
 
 	@Test(priority=1,invocationCount=2)
 	static public void testEmptyValueArrayElement() {
-		EmptyPrim[] primArr1 = new EmptyPrim[4];
-		EmptyPrim[] primArr2 = new EmptyPrim[4];
+		EmptyPrim[] primArr1 = (EmptyPrim[])ValueClass.newArrayInstance(
+			NullRestrictedCheckedType.of(EmptyPrim.class), 4);
+		EmptyPrim[] primArr2 = (EmptyPrim[])ValueClass.newArrayInstance(
+			NullRestrictedCheckedType.of(EmptyPrim.class), 4);
 
 		copyBetweenEmptyPrimArrays(primArr1, primArr2);
 		compareEmptyPrimArrays(primArr1, primArr2);
@@ -725,7 +748,8 @@ public class ValueTypeArrayTests {
 	@Test(priority=1,invocationCount=2)
 	static public void testStoreNullToNullRestrictedArrayElement1() throws Throwable {
 		int ARRAY_LENGTH = 10;
-		SomePrimitiveClassWithDoubleField[] dstData = new SomePrimitiveClassWithDoubleField[ARRAY_LENGTH];
+		SomePrimitiveClassWithDoubleField[] dstData = (SomePrimitiveClassWithDoubleField[])ValueClass.newArrayInstance(
+			NullRestrictedCheckedType.of(SomePrimitiveClassWithDoubleField.class), ARRAY_LENGTH);
 
 		try {
 			arrayElementStoreNull(dstData, ARRAY_LENGTH/2);
@@ -739,7 +763,8 @@ public class ValueTypeArrayTests {
 	@Test(priority=1,invocationCount=2)
 	static public void testStoreNullToNullRestrictedArrayElement2() throws Throwable {
 		int ARRAY_LENGTH = 10;
-		SomePrimitiveClassWithDoubleField[] dstData = new SomePrimitiveClassWithDoubleField[ARRAY_LENGTH];
+		SomePrimitiveClassWithDoubleField[] dstData = (SomePrimitiveClassWithDoubleField[])ValueClass.newArrayInstance(
+			NullRestrictedCheckedType.of(SomePrimitiveClassWithDoubleField.class), ARRAY_LENGTH);
 		Object obj = null;
 
 		try {

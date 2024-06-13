@@ -188,8 +188,8 @@ public class ValueTypeGenerator extends ClassLoader {
 
 		ClassWriter cw = new ClassWriter(0);
 
-		int classFlags = ACC_PUBLIC + ACC_FINAL + (isRef? ValhallaUtils.ACC_IDENTITY : ValhallaUtils.ACC_VALUE_TYPE) + extraClassFlags;
-		cw.visit(ValhallaUtils.CLASS_FILE_MAJOR_VERSION, classFlags,
+		int classFlags = ACC_PUBLIC + ACC_FINAL + (isRef? ValhallaUtils.ACC_IDENTITY : 0) + extraClassFlags;
+		cw.visit(ValhallaUtils.VALUE_TYPE_CLASS_FILE_VERSION, classFlags,
 			className, null, superName, null);
 
 		int makeMaxLocal = 0;
