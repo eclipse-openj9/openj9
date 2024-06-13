@@ -791,7 +791,6 @@ C|build_java8
 C|build_java8raw
 C|build_java9
 C|build_newCompiler
-C|build_openj9
 C|build_ouncemake
 C|build_product
 C|build_realtime

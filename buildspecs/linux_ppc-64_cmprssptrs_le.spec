@@ -129,7 +129,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<flag id="build_java8" value="true"/>
 		<flag id="build_java9" value="false"/>
 		<flag id="build_product" value="true"/>
-		<flag id="build_openj9" value="true"/>
 		<flag id="build_openj9JDK8" value="true"/>
 		<flag id="build_stage_toronto_lab" value="true"/>
 		<flag id="env_gcc" value="true"/>
