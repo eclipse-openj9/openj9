@@ -917,7 +917,6 @@ ffi_prep_cif_machdep(ffi_cif *cif)
        i--, ptr++)
     {
     int type = (*ptr)->type;
- 
     /* Check how a structure type is passed.  */
     if (type == FFI_TYPE_STRUCT)
       {
@@ -932,7 +931,7 @@ ffi_prep_cif_machdep(ffi_cif *cif)
       {
       /**
        * The first MAX_FPRARGS floating point arguments
-       * go in FPRs, the rest overflow to the stack. 
+       * go in FPRs, the rest overflow to the stack.
        */
 
       case FFI_TYPE_LONGDOUBLE:

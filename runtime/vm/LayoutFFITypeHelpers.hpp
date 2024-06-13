@@ -117,8 +117,8 @@ public:
 			break;
 		case FFI_TYPE_STRUCT:
 #if defined(J9ZOS390)
-		case FFI_TYPE_STRUCT_FF:
-		case FFI_TYPE_STRUCT_DD:
+		case FFI_TYPE_STRUCT_FF: /* Fall through */
+		case FFI_TYPE_STRUCT_DD: /* Fall through */
 #endif /* defined(J9ZOS390) */
 			typeCode = J9NtcStruct;
 			break;
