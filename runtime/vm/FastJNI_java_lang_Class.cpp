@@ -137,8 +137,8 @@ jboolean JNICALL
 Fast_java_lang_Class_isIdentity(J9VMThread *currentThread, j9object_t classObject)
 {
 	J9Class *receiverClazz = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, classObject);
-	bool isIdentity = J9ROMCLASS_HAS_IDENTITY(receiverClazz->romClass);
-	return isIdentity ? JNI_TRUE : JNI_FALSE;
+	bool isValue = J9ROMCLASS_IS_VALUE(receiverClazz->romClass);
+	return isValue ? JNI_FALSE : JNI_TRUE;
 }
 
 /* java.lang.Class: private native int getClassFileVersion0(); */

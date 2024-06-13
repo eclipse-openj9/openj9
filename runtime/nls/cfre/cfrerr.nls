@@ -1781,3 +1781,10 @@ J9NLS_CFR_NO_NULLRESTRICTED_IN_PRIMITIVEFIELD.explanation=Please consult the Jav
 J9NLS_CFR_NO_NULLRESTRICTED_IN_PRIMITIVEFIELD.system_action=The JVM will throw a verification or classloading related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_NO_NULLRESTRICTED_IN_PRIMITIVEFIELD.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
+
+J9NLS_CFR_ERR_CLASS_MUST_HAVE_AT_LEAST_ONE_FINAL_IDENTITY_ABSTRACT_FLAG=A non-interface class must have at least one of ACC_FINAL, ACC_IDENTITY, or ACC_ABSTRACT flags set
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_CLASS_MUST_HAVE_AT_LEAST_ONE_FINAL_IDENTITY_ABSTRACT_FLAG.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_CLASS_MUST_HAVE_AT_LEAST_ONE_FINAL_IDENTITY_ABSTRACT_FLAG.system_action=The JVM will throw a verification or classloading related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_CLASS_MUST_HAVE_AT_LEAST_ONE_FINAL_IDENTITY_ABSTRACT_FLAG.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE

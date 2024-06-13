@@ -3128,6 +3128,12 @@ public class ValueTypeTests {
 		assertNotEquals(h1, h5);
 	}
 
+	@Test(priority = 1, expectedExceptions = ClassFormatError.class,
+		expectedExceptionsMessageRegExp = ".*A non-interface class must have at least one of ACC_FINAL, ACC_IDENTITY, or ACC_ABSTRACT flags set.*")
+	static public void testNonInterfaceClassMustHaveFinalIdentityAbstractSet() throws Throwable {
+		ValueTypeGenerator.generateNonInterfaceClassWithMissingFlags("testNonInterfaceClassMustHaveFinalIdentityAbstractSet");
+	}
+
 	static MethodHandle generateGetter(Class<?> clazz, String fieldName, Class<?> fieldType) {
 		try {
 			return lookup.findVirtual(clazz, "get"+fieldName, MethodType.methodType(fieldType));

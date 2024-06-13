@@ -51,10 +51,6 @@ public class J9ROMClassHelper {
 		return romclass.modifiers().allBitsIn(J9AccFinal);
 	}
 
-	public static boolean isSuper(J9ROMClassPointer romclass) throws CorruptDataException {
-		return romclass.modifiers().allBitsIn(J9AccSuper);
-	}
-
 	public static boolean isInterface(J9ROMClassPointer romclass) throws CorruptDataException {
 		return romclass.modifiers().allBitsIn(J9AccInterface);
 	}

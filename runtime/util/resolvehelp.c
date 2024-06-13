@@ -35,13 +35,17 @@ getMethodForSpecialSend(J9VMThread *vmStruct, J9Class *currentClass, J9Class *re
 {
 	/* See if this is meant to be a super send.  Super send requires:
 	 *
-	 *	A) ACC_SUPER set for current class
+	 *	A) ACC_SUPER set for current class. This condition will be
+	 *    removed when ACC_SUPER is replaced in JEP 401.
 	 *	B) Resolved method class is a superclass of current class
 	 *	C) Resolved method is not <init>
 	 *	D) Skip checking vTables if resolved or current class is an interface
 	 */
-	if ((J9AccSuper == (currentClass->romClass->modifiers & J9AccSuper))
-	|| J9_ARE_NO_BITS_SET(vmStruct->javaVM->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_ALLOW_NON_VIRTUAL_CALLS)
+	if (
+#if !defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		J9_ARE_ALL_BITS_SET(currentClass->romClass->modifiers, J9AccSuper) ||
+#endif /* !defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+		J9_ARE_NO_BITS_SET(vmStruct->javaVM->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_ALLOW_NON_VIRTUAL_CALLS)
 	) {
 		J9Class *methodClass = J9_CLASS_FROM_METHOD(method);
 		UDATA currentDepth = J9CLASS_DEPTH(currentClass);
