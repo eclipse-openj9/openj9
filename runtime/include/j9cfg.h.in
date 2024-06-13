@@ -78,7 +78,6 @@ extern "C" {
 #cmakedefine J9VM_BUILD_JAVA8RAW
 #cmakedefine J9VM_BUILD_JAVA9
 #cmakedefine J9VM_BUILD_NEW_COMPILER
-#cmakedefine J9VM_BUILD_OPENJ9
 #cmakedefine J9VM_BUILD_OUNCEMAKE
 #cmakedefine J9VM_BUILD_PRODUCT
 #cmakedefine J9VM_BUILD_REALTIME
