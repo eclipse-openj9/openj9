@@ -29,7 +29,6 @@
 			<variation>Mode107</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	-XX:+EnableExtendedHCR \
 	--add-opens=java.base/java.lang.reflect=ALL-UNNAMED --add-opens=java.base/jdk.internal.org.objectweb.asm=ALL-UNNAMED  --add-opens=java.base/java.lang=ALL-UNNAMED \
 	--add-exports=java.base/jdk.internal.org.objectweb.asm.commons=ALL-UNNAMED \
 	-javaagent:$(Q)$(TEST_RESROOT)$(D)javaagenttest.jar$(Q) \
@@ -59,7 +58,6 @@
 			<variation>Mode100</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	-XX:+EnableExtendedHCR \
 	--add-opens=java.base/java.lang.reflect=ALL-UNNAMED --add-opens=java.base/jdk.internal.org.objectweb.asm=ALL-UNNAMED  --add-opens=java.base/java.lang=ALL-UNNAMED \
 	--add-exports=java.base/jdk.internal.org.objectweb.asm.commons=ALL-UNNAMED \
 	-javaagent:$(Q)$(TEST_RESROOT)$(D)javaagenttest.jar$(Q) \
@@ -88,7 +86,6 @@
 			<variation>Mode107</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	-XX:+EnableExtendedHCR \
 	--add-opens=java.base/java.lang.reflect=ALL-UNNAMED --add-opens=java.base/jdk.internal.org.objectweb.asm=ALL-UNNAMED  --add-opens=java.base/java.lang=ALL-UNNAMED \
 	--add-exports=java.base/jdk.internal.org.objectweb.asm.commons=ALL-UNNAMED \
 	-javaagent:$(Q)$(TEST_RESROOT)$(D)javaagenttest.jar$(Q) \
@@ -119,7 +116,6 @@
 			<variation>Mode107</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	-XX:+EnableExtendedHCR \
 	--add-opens=java.base/java.lang.reflect=ALL-UNNAMED --add-opens=java.base/jdk.internal.org.objectweb.asm=ALL-UNNAMED  --add-opens=java.base/java.lang=ALL-UNNAMED \
 	--add-exports=java.base/jdk.internal.org.objectweb.asm.commons=ALL-UNNAMED \
 	--add-exports=java.base/jdk.internal.org.objectweb.asm.util=ALL-UNNAMED \
@@ -259,7 +255,6 @@
 			<variation>Mode107</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	-XX:+EnableExtendedHCR \
 	-javaagent:$(Q)$(TEST_RESROOT)$(D)javaagenttest.jar$(Q) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames Cmvc196982 \
@@ -287,7 +282,6 @@
 			<variation>Mode100</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	-XX:+EnableExtendedHCR \
 	-javaagent:$(Q)$(TEST_RESROOT)$(D)javaagenttest.jar$(Q) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames RefreshGCCache_NoBCI_Test \
@@ -314,7 +308,6 @@
 			<variation>Mode107</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	-XX:+EnableExtendedHCR \
 	-javaagent:$(Q)$(TEST_RESROOT)$(D)javaagenttest.jar$(Q) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames RefreshGCCache_NoBCI_Test \
@@ -342,7 +335,6 @@
 			<variation>Mode100</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	-XX:+EnableExtendedHCR \
 	-javaagent:$(Q)$(TEST_RESROOT)$(D)javaagenttest.jar$(Q) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames RefreshGCCache_FastHCR_Test \
@@ -369,7 +361,6 @@
 			<variation>Mode107</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	-XX:+EnableExtendedHCR \
 	-javaagent:$(Q)$(TEST_RESROOT)$(D)javaagenttest.jar$(Q) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames RefreshGCCache_FastHCR_Test \

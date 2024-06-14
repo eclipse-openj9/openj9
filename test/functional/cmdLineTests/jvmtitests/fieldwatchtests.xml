@@ -26,7 +26,7 @@
 
 
 <suite id="JVMTI-fieldwatch Tests" timeout="360">
-	<variable name="JVM_OPTS" value="-XX:+EnableExtendedHCR -Xdump:system:events=abort " />
+	<variable name="JVM_OPTS" value="-Xdump:system:events=abort " />
 	<variable name="AGENTLIB" value="-agentlib:jvmtitest" />
 	<variable name="TESTID" value="testid" />
 	<variable name="ENABLE_ATTACH" value="-Dcom.ibm.tools.attach.enable=yes" />

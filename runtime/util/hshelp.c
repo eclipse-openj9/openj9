@@ -3347,7 +3347,9 @@ done:
 	/* If extensions are not enabled, treat any schema change as a real error */
 
     if (extensionsEnabled == 0) {
-		emitExtendedHCRWarning(currentThread);
+		if (JVMTI_ERROR_NONE != rc) {
+			emitExtendedHCRWarning(currentThread);
+		}
 		return rc;
 	}
 
