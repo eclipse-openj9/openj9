@@ -54,9 +54,11 @@ public class TestJavaCoreAndSnap {
 
 		String[] jcTrace = extractJCTrace(javacoreFileName);
 
-		String lastTPid = getTracePointId(jcTrace[0]);
+		if ((jcTrace != null) && (jcTrace.length != 0)) {
+			String lastTPid = getTracePointId(jcTrace[0]);
 
-		// System.err.println("Last tpid is: " + lastTPid);
+			// System.err.println("Last tpid is: " + lastTPid);
+		}
 
 		String[] snapTrace = extractFormattedTrace(traceFileName);
 
