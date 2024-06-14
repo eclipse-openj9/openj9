@@ -300,7 +300,6 @@ public class ValueTypeGenerator extends ClassLoader {
 			}
 		}
 		test2DMultiANewArray(cw, className);
-		testCheckCastOnInvalidQtype(cw);
 		testCheckCastOnInvalidLtype(cw);
 		addStaticSynchronizedMethods(cw);
 		if (addSyncMethods) {
@@ -512,16 +511,6 @@ public class ValueTypeGenerator extends ClassLoader {
 		mv.visitCode();
 		mv.visitInsn(ACONST_NULL);
 		mv.visitTypeInsn(CHECKCAST, getSigFromSimpleName(className));
-		mv.visitInsn(ARETURN);
-		mv.visitMaxs(1, 2);
-		mv.visitEnd();
-	}
-	
-	private static void testCheckCastOnInvalidQtype(ClassWriter cw) {
-		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC + ACC_STATIC, "testCheckCastOnInvalidQtype", "()Ljava/lang/Object;", null, null);
-		mv.visitCode();
-		mv.visitInsn(ACONST_NULL);
-		mv.visitTypeInsn(CHECKCAST, "LClassDoesNotExist;");
 		mv.visitInsn(ARETURN);
 		mv.visitMaxs(1, 2);
 		mv.visitEnd();

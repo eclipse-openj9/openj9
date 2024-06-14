@@ -161,7 +161,8 @@ public class ValhallaAttributeTests {
 	}
 
 	/* Instance field with NullRestricted attribute cannot be set to null. */
-	@Test(priority=2, invocationCount=2, expectedExceptions = java.lang.NullPointerException.class)
+	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
+	@Test(priority=2, invocationCount=2, expectedExceptions = java.lang.NullPointerException.class, enabled = false)
 	static public void testPutFieldNullToNullRestrictedField() throws Throwable {
 		testPutFieldNullToNullRestrictedFieldClass.newInstance();
 	}
