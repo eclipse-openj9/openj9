@@ -185,10 +185,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<description>BuildSpec represents a Java 9x configuration.</description>
 		<ifRemoved></ifRemoved>
 	</flag>
-	<flag id="build_openj9JDK8">
-		<description>Buildspec compiles sources with openjdk-jdk8.</description>
-		<ifRemoved>OpenJ9 compile job, sanity and extended tests no longer run on this buildspec.</ifRemoved>
-	</flag>
 	<flag id="build_ouncemake">
 		<description>Buildspec compiles source using ouncemake for appscan.</description>
 		<ifRemoved>Ouncemake compile jobs will no longer run on this buildspec.</ifRemoved>

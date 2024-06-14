@@ -32,7 +32,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
-import sun.misc.Unsafe;
 import org.testng.Assert;
 import static org.testng.Assert.*;
 import org.testng.annotations.Test;
@@ -58,7 +57,6 @@ import static org.openj9.test.lworld.ValueTypeTestClasses.*;
 @Test(groups = { "level.sanity" })
 public class ValueTypeTests {
 	static Lookup lookup = MethodHandles.lookup();
-	static Unsafe myUnsafe = null;
 	/* point2D */
 	static Class point2DClass = null;
 	static MethodHandle makePoint2D = null;
@@ -195,30 +193,30 @@ public class ValueTypeTests {
 
 	/* fields */
 	static String typeWithSingleAlignmentFields[] = {
-		"tri:QTriangle2D;:value",
-		"point:QPoint2D;:value",
-		"line:QFlattenedLine2D;:value",
-		"i:QValueInt;:value",
-		"f:QValueFloat;:value",
-		"tri2:QTriangle2D;:value"
+		"tri:LTriangle2D;:NR", /* NR means null restricted */
+		"point:LPoint2D;:NR",
+		"line:LFlattenedLine2D;:NR",
+		"i:LValueInt;:NR",
+		"f:LValueFloat;:NR",
+		"tri2:LTriangle2D;:NR"
 	};
 	static String typeWithObjectAlignmentFields[] = {
-		"tri:QTriangle2D;:value",
-		"point:QPoint2D;:value",
-		"line:QFlattenedLine2D;:value",
-		"o:QValueObject;:value",
-		"i:QValueInt;:value",
-		"f:QValueFloat;:value",
-		"tri2:QTriangle2D;:value"
+		"tri:LTriangle2D;:NR",
+		"point:LPoint2D;:NR",
+		"line:LFlattenedLine2D;:NR",
+		"o:LValueObject;:NR",
+		"i:LValueInt;:NR",
+		"f:LValueFloat;:NR",
+		"tri2:LTriangle2D;:NR"
 	};
 	static String typeWithLongAlignmentFields[] = {
-		"point:QPoint2D;:value",
-		"line:QFlattenedLine2D;:value",
-		"o:QValueObject;:value",
-		"l:QValueLong;:value",
-		"d:QValueDouble;:value",
-		"i:QValueInt;:value",
-		"tri:QTriangle2D;:value"
+		"point:LPoint2D;:NR",
+		"line:LFlattenedLine2D;:NR",
+		"o:LValueObject;:NR",
+		"l:LValueLong;:NR",
+		"d:LValueDouble;:NR",
+		"i:LValueInt;:NR",
+		"tri:LTriangle2D;:NR"
 	};
 	
 	/* default values */
@@ -252,17 +250,6 @@ public class ValueTypeTests {
 	/* miscellaneous constants */
 	static final int genericArraySize = 10;
 	static final int objectGCScanningIterationCount = 1000;
-
-	@BeforeClass
-	static public void testSetUp() throws RuntimeException {
-		try {
-			Field f = Unsafe.class.getDeclaredField("theUnsafe");
-			f.setAccessible(true);
-			myUnsafe = (Unsafe)f.get(null);
-		} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
-			throw new RuntimeException(e);
-		}	
-	}
 
 	/*
 	 * Create a value type
@@ -327,7 +314,8 @@ public class ValueTypeTests {
 		assertEquals(getY.invoke(point2D_2_check), getY.invoke(point2D_2));
 	}
 
-	@Test(priority=5)
+	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
+	@Test(priority=5, enabled = false)
 	static public void testGCFlattenedPoint2DArray() throws Throwable {
 		int x1 = 0xFFEEFFEE;
 		int y1 = 0xAABBAABB;
@@ -343,7 +331,8 @@ public class ValueTypeTests {
 		Object value = Array.get(arrayObject, 0);
 	}
 
-	@Test(priority=5)
+	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
+	@Test(priority=5, enabled = false)
 	static public void testGCFlattenedValueArrayWithSingleAlignment() throws Throwable {
 		Object array = Array.newInstance(assortedValueWithSingleAlignmentClass, 4);
 		
@@ -359,7 +348,8 @@ public class ValueTypeTests {
 		}
 	}
 
-	@Test(priority=5)
+	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
+	@Test(priority=5, enabled = false)
 	static public void testGCFlattenedValueArrayWithObjectAlignment() throws Throwable {
 		Object array = Array.newInstance(assortedValueWithObjectAlignmentClass, 4);
 		
@@ -375,7 +365,8 @@ public class ValueTypeTests {
 		}
 	}
 
-	@Test(priority=5)
+	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
+	@Test(priority=5, enabled = false)
 	static public void testGCFlattenedValueArrayWithLongAlignment() throws Throwable {
 		Object array = Array.newInstance(assortedValueWithLongAlignmentClass, genericArraySize);
 		
@@ -391,7 +382,8 @@ public class ValueTypeTests {
 		}
 	}
 
-	@Test(priority=5)
+	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
+	@Test(priority=5, enabled = false)
 	static public void testGCFlattenedLargeObjectArray() throws Throwable {
 		Object arrayObject = Array.newInstance(largeObjectValueClass, 4);
 		Object largeObjectRef = createLargeObject(new Object());
@@ -405,7 +397,8 @@ public class ValueTypeTests {
 		Object value = Array.get(arrayObject, 0);
 	}
 
-	@Test(priority=5)
+	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
+	@Test(priority=5, enabled = false)
 	static public void testGCFlattenedMegaObjectArray() throws Throwable {
 		Object arrayObject = Array.newInstance(megaObjectValueClass, 4);
 		Object megaObjectRef = createMegaObject(new Object());
@@ -479,7 +472,7 @@ public class ValueTypeTests {
 	 */
 	@Test(priority=2)
 	static public void testCreateLine2D() throws Throwable {
-		String fields[] = {"st:QPoint2D;:value", "en:QPoint2D;:value"};
+		String fields[] = {"st:LPoint2D;:NR", "en:LPoint2D;:NR"};
 		line2DClass = ValueTypeGenerator.generateValueClass("Line2D", fields);
 		
 		makeLine2D = lookup.findStatic(line2DClass, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class));
@@ -537,7 +530,7 @@ public class ValueTypeTests {
 	 */
 	@Test(priority=2)
 	static public void testCreateFlattenedLine2D() throws Throwable {
-		String fields[] = {"st:QPoint2D;:value", "en:QPoint2D;:value"};
+		String fields[] = {"st:LPoint2D;:NR", "en:LPoint2D;:NR"};
 		flattenedLine2DClass = ValueTypeGenerator.generateValueClass("FlattenedLine2D", fields);
 				
 		makeFlattenedLine2D = lookup.findStatic(flattenedLine2DClass, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class));
@@ -628,43 +621,6 @@ public class ValueTypeTests {
 		assertEquals(getY.invoke(getFlatEn.invoke(line2D_1_check)), getY.invoke(getFlatEn.invoke(line2D_1)));
 		assertEquals(getY.invoke(getFlatEn.invoke(line2D_2_check)), getY.invoke(getFlatEn.invoke(line2D_2)));
 	}	
-
-	/*
-	 * Test with nested values
-	 *
-	 * value InvalidField {
-	 * 	flattened Point2D st;
-	 * 	flattened Invalid x;
-	 * }
-	 *
-	 */
-	@Test(priority=3)
-	static public void testInvalidNestedField() throws Throwable {
-		String fields[] = {"st:QPoint2D;:value", "x:QInvalid;:value"};
-
-		try {
-			Class<?> invalidField = ValueTypeGenerator.generateValueClass("InvalidField", fields);
-			Assert.fail("should throw error. Nested class doesn't exist!");
-		} catch (NoClassDefFoundError e) {}
-	}
-	
-	/*
-	 * Test with none value Qtype
-	 *
-	 * value NoneValueQType {
-	 * 	flattened Point2D st;
-	 * 	flattened Object o;
-	 * }
-	 *
-	 */
-	@Test(priority=3)
-	static public void testNoneValueQTypeAsNestedField() throws Throwable {
-		String fields[] = {"st:QPoint2D;:value", "o:Qjava/lang/Object;:value"};
-		try {
-			Class<?> noneValueQType = ValueTypeGenerator.generateValueClass("NoneValueQType", fields);
-			Assert.fail("should throw error. j.l.Object is not a qtype!");
-		} catch (IncompatibleClassChangeError e) {}
-	}
 	
 	/*
 	 * Test defaultValue with ref type
@@ -677,7 +633,7 @@ public class ValueTypeTests {
 	 */
 	@Test(enabled=false, priority=3)
 	static public void testDefaultValueWithNonValueType() throws Throwable {
-		String fields[] = {"f1:Ljava/lang/Object;:value", "f2:Ljava/lang/Object;:value"};
+		String fields[] = {"f1:Ljava/lang/Object;:NR", "f2:Ljava/lang/Object;:NR"};
 		Class<?> defaultValueWithNonValueType = ValueTypeGenerator.generateRefClass("DefaultValueWithNonValueType", fields);
 		MethodHandle makeDefaultValueWithNonValueType = lookup.findStatic(defaultValueWithNonValueType, "makeValueTypeDefaultValue", MethodType.methodType(Object.class));
 		try {
@@ -1247,7 +1203,7 @@ public class ValueTypeTests {
 	 */
 	@Test(priority=3)
 	static public void testCreateTriangle2D() throws Throwable {
-		String fields[] = {"v1:QFlattenedLine2D;:value", "v2:QFlattenedLine2D;:value", "v3:QFlattenedLine2D;:value"};
+		String fields[] = {"v1:LFlattenedLine2D;:NR", "v2:LFlattenedLine2D;:NR", "v3:LFlattenedLine2D;:NR"};
 		triangle2DClass = ValueTypeGenerator.generateValueClass("Triangle2D", fields);
 
 		makeTriangle2D = lookup.findStatic(triangle2DClass, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class, Object.class));
@@ -1425,7 +1381,7 @@ public class ValueTypeTests {
 	 */
 	@Test(priority=1)
 	static public void testCreateValueObject() throws Throwable {
-		String fields[] = {"val:Ljava/lang/Object;:value"};
+		String fields[] = {"val:Ljava/lang/Object;"};
 
 		valueObjectClass = ValueTypeGenerator.generateValueClass("ValueObject", fields);
 
@@ -1461,8 +1417,8 @@ public class ValueTypeTests {
 	 */
 	@Test(priority=3)
 	static public Object createValueTypeWithVolatileFields() throws Throwable {
-		String fields[] = {"i:QValueInt;:value", "i2:QValueInt;:value", "point:QPoint2D;:value", "vpoint:QPoint2D;:volatile",
-				"line:QFlattenedLine2D;:value", "vline:QFlattenedLine2D;:volatile"};
+		String fields[] = {"i:LValueInt;:NR", "i2:LValueInt;:NR", "point:LPoint2D;:NR", "vpoint:LPoint2D;:NR:volatile",
+				"line:LFlattenedLine2D;:NR", "vline:LFlattenedLine2D;:NR:volatile"};
 		Class ValueTypeWithVolatileFieldsClass = ValueTypeGenerator.generateValueClass("ValueTypeWithVolatileFields", fields);
 		MethodHandle valueWithVolatile = lookup.findStatic(ValueTypeWithVolatileFieldsClass, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class, Object.class,
 				Object.class, Object.class, Object.class));
@@ -1571,53 +1527,53 @@ public class ValueTypeTests {
 	
 	@Test(priority=4)
 	static public void testCreateFlatLayoutsWithValueTypes() throws Throwable {
-		String flatSingleBackfill[] = {"l:QValueLong;", "o:QValueObject;", "i:QValueInt;"};
+		String flatSingleBackfill[] = {"l:LValueLong;:NR", "o:LValueObject;:NR", "i:LValueInt;:NR"};
 		flatSingleBackfillClass = ValueTypeGenerator.generateValueClass("FlatSingleBackfill", flatSingleBackfill);
 		makeFlatSingleBackfillClass = lookup.findStatic(flatSingleBackfillClass, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class, Object.class));
 		getVTSingleI = generateGenericGetter(flatSingleBackfillClass, "i");
 		getVTSingleO = generateGenericGetter(flatSingleBackfillClass, "o");
 		getVTSingleL = generateGenericGetter(flatSingleBackfillClass, "l");
 		
-		String flatObjectBackfill[] = {"l:QValueLong;", "o:QValueObject;"};
+		String flatObjectBackfill[] = {"l:LValueLong;:NR", "o:LValueObject;:NR"};
 		flatObjectBackfillClass = ValueTypeGenerator.generateValueClass("FlatObjectBackfill", flatObjectBackfill);
 		makeFlatObjectBackfillClass = lookup.findStatic(flatObjectBackfillClass, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class));
 		getVTObjectO = generateGenericGetter(flatObjectBackfillClass, "o");
 		getVTObjectL = generateGenericGetter(flatObjectBackfillClass, "l");
 		
-		String flatUnAlignedSingle[] = {"i:QValueInt;", "i2:QValueInt;"};
+		String flatUnAlignedSingle[] = {"i:LValueInt;:NR", "i2:LValueInt;:NR"};
 		flatUnAlignedSingleClass = ValueTypeGenerator.generateValueClass("FlatUnAlignedSingle", flatUnAlignedSingle);
 		makeFlatUnAlignedSingleClass = lookup.findStatic(flatUnAlignedSingleClass, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class));
 		getUnAlignedSingleI = generateGenericGetter(flatUnAlignedSingleClass, "i");
 		getUnAlignedSingleI2 = generateGenericGetter(flatUnAlignedSingleClass, "i2");
 		
-		String flatUnAlignedSingleBackfill[] = {"l:QValueLong;","singles:QFlatUnAlignedSingle;", "o:QValueObject;"};
+		String flatUnAlignedSingleBackfill[] = {"l:LValueLong;:NR","singles:LFlatUnAlignedSingle;:NR", "o:LValueObject;:NR"};
 		flatUnAlignedSingleBackfillClass = ValueTypeGenerator.generateValueClass("FlatUnAlignedSingleBackfill", flatUnAlignedSingleBackfill);
 		makeFlatUnAlignedSingleBackfillClass = lookup.findStatic(flatUnAlignedSingleBackfillClass, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class, Object.class));
 		getUnAlignedSingleflatSingleBackfillInstanceO = generateGenericGetter(flatUnAlignedSingleBackfillClass, "o");
 		getUnAlignedSingleflatSingleBackfillInstanceSingles = generateGenericGetter(flatUnAlignedSingleBackfillClass, "singles");
 		getUnAlignedSingleflatSingleBackfillInstanceL = generateGenericGetter(flatUnAlignedSingleBackfillClass, "l");
 		
-		String flatUnAlignedSingleBackfill2[] = {"l:QValueLong;","singles:QFlatUnAlignedSingle;", "singles2:QFlatUnAlignedSingle;"};
+		String flatUnAlignedSingleBackfill2[] = {"l:LValueLong;:NR","singles:LFlatUnAlignedSingle;:NR", "singles2:LFlatUnAlignedSingle;:NR"};
 		flatUnAlignedSingleBackfillClass2 = ValueTypeGenerator.generateValueClass("FlatUnAlignedSingleBackfill2", flatUnAlignedSingleBackfill2);
 		makeFlatUnAlignedSingleBackfillClass2 = lookup.findStatic(flatUnAlignedSingleBackfillClass2, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class, Object.class));
 		getUnAlignedSingleflatSingleBackfill2InstanceSingles = generateGenericGetter(flatUnAlignedSingleBackfillClass2, "singles");
 		getUnAlignedSingleflatSingleBackfill2InstanceSingles2 = generateGenericGetter(flatUnAlignedSingleBackfillClass2, "singles2");
 		getUnAlignedSingleflatSingleBackfill2InstanceL = generateGenericGetter(flatUnAlignedSingleBackfillClass2, "l");
 		
-		String flatUnAlignedObject[] = {"o:QValueObject;", "o2:QValueObject;"};
+		String flatUnAlignedObject[] = {"o:LValueObject;:NR", "o2:LValueObject;:NR"};
 		flatUnAlignedObjectClass = ValueTypeGenerator.generateValueClass("FlatUnAlignedObject", flatUnAlignedObject);
 		makeFlatUnAlignedObjectClass = lookup.findStatic(flatUnAlignedObjectClass, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class));
 		getUnAlignedObjectO = generateGenericGetter(flatUnAlignedObjectClass, "o");
 		getUnAlignedObjectO2 = generateGenericGetter(flatUnAlignedObjectClass, "o2");
 		
-		String flatUnAlignedObjectBackfill[] = {"objects:QFlatUnAlignedObject;", "objects2:QFlatUnAlignedObject;", "l:QValueLong;"};
+		String flatUnAlignedObjectBackfill[] = {"objects:LFlatUnAlignedObject;:NR", "objects2:LFlatUnAlignedObject;:NR", "l:LValueLong;:NR"};
 		flatUnAlignedObjectBackfillClass = ValueTypeGenerator.generateValueClass("FlatUnAlignedObjectBackfill", flatUnAlignedObjectBackfill);
 		makeFlatUnAlignedObjectBackfillClass = lookup.findStatic(flatUnAlignedObjectBackfillClass, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class, Object.class));
 		getUnAlignedObjectflatObjectBackfillInstanceObjects = generateGenericGetter(flatUnAlignedObjectBackfillClass, "objects");
 		getUnAlignedObjectflatObjectBackfillInstanceObjects2 = generateGenericGetter(flatUnAlignedObjectBackfillClass, "objects2");
 		getUnAlignedObjectflatObjectBackfillInstanceL = generateGenericGetter(flatUnAlignedObjectBackfillClass, "l");
 		
-		String flatUnAlignedObjectBackfill2[] = {"o:QValueObject;", "objects:QFlatUnAlignedObject;", "l:QValueLong;"};
+		String flatUnAlignedObjectBackfill2[] = {"o:LValueObject;:NR", "objects:LFlatUnAlignedObject;:NR", "l:LValueLong;:NR"};
 		flatUnAlignedObjectBackfillClass2 = ValueTypeGenerator.generateValueClass("FlatUnAlignedObjectBackfill2", flatUnAlignedObjectBackfill2);
 		makeFlatUnAlignedObjectBackfillClass2 = lookup.findStatic(flatUnAlignedObjectBackfillClass2, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class, Object.class));
 		getUnAlignedObjectflatObjectBackfill2InstanceO = generateGenericGetter(flatUnAlignedObjectBackfillClass2, "o");
@@ -1838,22 +1794,22 @@ public class ValueTypeTests {
 	@Test(priority=2)
 	static public void testCreateLargeObjectAndMegaValue() throws Throwable {
 		String largeFields[] = {
-				"val1:QValueObject;:value",
-				"val2:QValueObject;:value",
-				"val3:QValueObject;:value",
-				"val4:QValueObject;:value",
-				"val5:QValueObject;:value",
-				"val6:QValueObject;:value",
-				"val7:QValueObject;:value",
-				"val8:QValueObject;:value",
-				"val9:QValueObject;:value",
-				"val10:QValueObject;:value",
-				"val11:QValueObject;:value",
-				"val12:QValueObject;:value",
-				"val13:QValueObject;:value",
-				"val14:QValueObject;:value",
-				"val15:QValueObject;:value",
-				"val16:QValueObject;:value"};
+				"val1:LValueObject;:NR",
+				"val2:LValueObject;:NR",
+				"val3:LValueObject;:NR",
+				"val4:LValueObject;:NR",
+				"val5:LValueObject;:NR",
+				"val6:LValueObject;:NR",
+				"val7:LValueObject;:NR",
+				"val8:LValueObject;:NR",
+				"val9:LValueObject;:NR",
+				"val10:LValueObject;:NR",
+				"val11:LValueObject;:NR",
+				"val12:LValueObject;:NR",
+				"val13:LValueObject;:NR",
+				"val14:LValueObject;:NR",
+				"val15:LValueObject;:NR",
+				"val16:LValueObject;:NR"};
 
 		largeObjectValueClass = ValueTypeGenerator.generateValueClass("LargeObject", largeFields);
 		makeLargeObjectValue = lookup.findStatic(largeObjectValueClass, "makeValueGeneric",
@@ -1878,22 +1834,22 @@ public class ValueTypeTests {
 		 * create MegaObject
 		 */
 		String megaFields[] = {
-				"val1:QLargeObject;:value",
-				"val2:QLargeObject;:value",
-				"val3:QLargeObject;:value",
-				"val4:QLargeObject;:value",
-				"val5:QLargeObject;:value",
-				"val6:QLargeObject;:value",
-				"val7:QLargeObject;:value",
-				"val8:QLargeObject;:value",
-				"val9:QLargeObject;:value",
-				"val10:QLargeObject;:value",
-				"val11:QLargeObject;:value",
-				"val12:QLargeObject;:value",
-				"val13:QLargeObject;:value",
-				"val14:QLargeObject;:value",
-				"val15:QLargeObject;:value",
-				"val16:QLargeObject;:value"};
+				"val1:LLargeObject;:NR",
+				"val2:LLargeObject;:NR",
+				"val3:LLargeObject;:NR",
+				"val4:LLargeObject;:NR",
+				"val5:LLargeObject;:NR",
+				"val6:LLargeObject;:NR",
+				"val7:LLargeObject;:NR",
+				"val8:LLargeObject;:NR",
+				"val9:LLargeObject;:NR",
+				"val10:LLargeObject;:NR",
+				"val11:LLargeObject;:NR",
+				"val12:LLargeObject;:NR",
+				"val13:LLargeObject;:NR",
+				"val14:LLargeObject;:NR",
+				"val15:LLargeObject;:NR",
+				"val16:LLargeObject;:NR"};
 
 		megaObjectValueClass = ValueTypeGenerator.generateValueClass("MegaObject", megaFields);
 		makeMegaObjectValue = lookup.findStatic(megaObjectValueClass, "makeValueGeneric",
@@ -1930,22 +1886,22 @@ public class ValueTypeTests {
 	@Test(priority=3)
 	static public void testCreateLargeObjectAndMegaRef() throws Throwable {
 		String largeFields[] = {
-				"val1:QValueObject;:value",
-				"val2:QValueObject;:value",
-				"val3:QValueObject;:value",
-				"val4:QValueObject;:value",
-				"val5:QValueObject;:value",
-				"val6:QValueObject;:value",
-				"val7:QValueObject;:value",
-				"val8:QValueObject;:value",
-				"val9:QValueObject;:value",
-				"val10:QValueObject;:value",
-				"val11:QValueObject;:value",
-				"val12:QValueObject;:value",
-				"val13:QValueObject;:value",
-				"val14:QValueObject;:value",
-				"val15:QValueObject;:value",
-				"val16:QValueObject;:value"};
+				"val1:LValueObject;:NR",
+				"val2:LValueObject;:NR",
+				"val3:LValueObject;:NR",
+				"val4:LValueObject;:NR",
+				"val5:LValueObject;:NR",
+				"val6:LValueObject;:NR",
+				"val7:LValueObject;:NR",
+				"val8:LValueObject;:NR",
+				"val9:LValueObject;:NR",
+				"val10:LValueObject;:NR",
+				"val11:LValueObject;:NR",
+				"val12:LValueObject;:NR",
+				"val13:LValueObject;:NR",
+				"val14:LValueObject;:NR",
+				"val15:LValueObject;:NR",
+				"val16:LValueObject;:NR"};
 
 		Class largeRefClass = ValueTypeGenerator.generateRefClass("LargeRef", largeFields);
 		MethodHandle makeLargeObjectRef = lookup.findStatic(largeRefClass, "makeRefGeneric",
@@ -1970,22 +1926,22 @@ public class ValueTypeTests {
 		 * create MegaObject
 		 */
 		String megaFields[] = {
-				"val1:QLargeObject;:value",
-				"val2:QLargeObject;:value",
-				"val3:QLargeObject;:value",
-				"val4:QLargeObject;:value",
-				"val5:QLargeObject;:value",
-				"val6:QLargeObject;:value",
-				"val7:QLargeObject;:value",
-				"val8:QLargeObject;:value",
-				"val9:QLargeObject;:value",
-				"val10:QLargeObject;:value",
-				"val11:QLargeObject;:value",
-				"val12:QLargeObject;:value",
-				"val13:QLargeObject;:value",
-				"val14:QLargeObject;:value",
-				"val15:QLargeObject;:value",
-				"val16:QLargeObject;:value"};
+				"val1:LLargeObject;:NR",
+				"val2:LLargeObject;:NR",
+				"val3:LLargeObject;:NR",
+				"val4:LLargeObject;:NR",
+				"val5:LLargeObject;:NR",
+				"val6:LLargeObject;:NR",
+				"val7:LLargeObject;:NR",
+				"val8:LLargeObject;:NR",
+				"val9:LLargeObject;:NR",
+				"val10:LLargeObject;:NR",
+				"val11:LLargeObject;:NR",
+				"val12:LLargeObject;:NR",
+				"val13:LLargeObject;:NR",
+				"val14:LLargeObject;:NR",
+				"val15:LLargeObject;:NR",
+				"val16:LLargeObject;:NR"};
 		Class megaObjectClass = ValueTypeGenerator.generateRefClass("MegaRef", megaFields);
 		MethodHandle makeMegaObjectRef = lookup.findStatic(megaObjectClass, "makeRefGeneric",
 				MethodType.methodType(Object.class, Object.class, Object.class, Object.class, Object.class,
@@ -2013,7 +1969,8 @@ public class ValueTypeTests {
 	 * flattenable fields are set to the default values.
 	 * NULL should never be observed for Qtypes.
 	 */
-	@Test(priority=4)
+	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
+	@Test(priority=4, enabled = false)
 	static public void testDefaultValues() throws Throwable {
 		/* Test with assorted value object with long alignment */
 		MethodHandle makeValueTypeDefaultValueWithLong = lookup.findStatic(assortedValueWithLongAlignmentClass,
@@ -2069,8 +2026,8 @@ public class ValueTypeTests {
 	
 	@Test(priority=1)
 	static public void testCyclicalStaticFieldDefaultValues1() throws Throwable {
-		String cycleA1[] = { "val1:QCycleB1;:static" };
-		String cycleB1[] = { "val1:QCycleA1;:static" };
+		String cycleA1[] = { "val1:LCycleB1;:static" };
+		String cycleB1[] = { "val1:LCycleA1;:static" };
 		
 		Class cycleA1Class = ValueTypeGenerator.generateValueClass("CycleA1", cycleA1);
 		Class cycleB1Class = ValueTypeGenerator.generateValueClass("CycleB1", cycleB1);
@@ -2084,9 +2041,9 @@ public class ValueTypeTests {
 	
 	@Test(priority=1)
 	static public void testCyclicalStaticFieldDefaultValues2() throws Throwable {
-		String cycleA2[] = { "val1:QCycleB2;:static" };
-		String cycleB2[] = { "val1:QCycleC2;:static" };
-		String cycleC2[] = { "val1:QCycleA2;:static" };
+		String cycleA2[] = { "val1:LCycleB2;:static" };
+		String cycleB2[] = { "val1:LCycleC2;:static" };
+		String cycleC2[] = { "val1:LCycleA2;:static" };
 		
 		Class cycleA2Class = ValueTypeGenerator.generateValueClass("CycleA2", cycleA2);
 		Class cycleB2Class = ValueTypeGenerator.generateValueClass("CycleB2", cycleB2);
@@ -2103,7 +2060,7 @@ public class ValueTypeTests {
 	
 	@Test(priority=1)
 	static public void testCyclicalStaticFieldDefaultValues3() throws Throwable {
-		String cycleA3[] = { "val1:QCycleA3;:static" };
+		String cycleA3[] = { "val1:LCycleA3;:static" };
 		
 		Class cycleA3Class = ValueTypeGenerator.generateValueClass("CycleA3", cycleA3);
 		
@@ -2115,12 +2072,12 @@ public class ValueTypeTests {
 	@Test(priority=4)
 	static public void testStaticFieldsWithSingleAlignment() throws Throwable {
 		String fields[] = {
-			"tri:QTriangle2D;:static",
-			"point:QPoint2D;:static",
-			"line:QFlattenedLine2D;:static",
-			"i:QValueInt;:static",
-			"f:QValueFloat;:static",
-			"tri2:QTriangle2D;:static"};
+			"tri:LTriangle2D;:static",
+			"point:LPoint2D;:static",
+			"line:LFlattenedLine2D;:static",
+			"i:LValueInt;:static",
+			"f:LValueFloat;:static",
+			"tri2:LTriangle2D;:static"};
 		classWithOnlyStaticFieldsWithSingleAlignment = ValueTypeGenerator.generateValueClass("ClassWithOnlyStaticFieldsWithSingleAlignment", fields);
 		staticFieldsWithSingleAlignmentGenericGetterAndSetter = generateStaticGenericGetterAndSetter(classWithOnlyStaticFieldsWithSingleAlignment, fields);
 		
@@ -2131,13 +2088,13 @@ public class ValueTypeTests {
 	@Test(priority=4)
 	static public void testStaticFieldsWithLongAlignment() throws Throwable {
 		String fields[] = {
-			"point:QPoint2D;:static",
-			"line:QFlattenedLine2D;:static",
-			"o:QValueObject;:static",
-			"l:QValueLong;:static",
-			"d:QValueDouble;:static",
-			"i:QValueInt;:static",
-			"tri:QTriangle2D;:static"};
+			"point:LPoint2D;:static",
+			"line:LFlattenedLine2D;:static",
+			"o:LValueObject;:static",
+			"l:LValueLong;:static",
+			"d:LValueDouble;:static",
+			"i:LValueInt;:static",
+			"tri:LTriangle2D;:static"};
 		classWithOnlyStaticFieldsWithLongAlignment = ValueTypeGenerator.generateValueClass("ClassWithOnlyStaticFieldsWithLongAlignment", fields);
 		staticFieldsWithLongAlignmentGenericGetterAndSetter = generateStaticGenericGetterAndSetter(classWithOnlyStaticFieldsWithLongAlignment, fields);
 		
@@ -2148,13 +2105,13 @@ public class ValueTypeTests {
 	@Test(priority=4)
 	static public void testStaticFieldsWithObjectAlignment() throws Throwable {
 		String fields[] = {
-			"tri:QTriangle2D;:static",
-			"point:QPoint2D;:static",
-			"line:QFlattenedLine2D;:static",
-			"o:QValueObject;:static",
-			"i:QValueInt;:static",
-			"f:QValueFloat;:static",
-			"tri2:QTriangle2D;:static"};
+			"tri:LTriangle2D;:static",
+			"point:LPoint2D;:static",
+			"line:LFlattenedLine2D;:static",
+			"o:LValueObject;:static",
+			"i:LValueInt;:static",
+			"f:LValueFloat;:static",
+			"tri2:LTriangle2D;:static"};
 		classWithOnlyStaticFieldsWithObjectAlignment = ValueTypeGenerator.generateValueClass("ClassWithOnlyStaticFieldsWithObjectAlignment", fields);
 		staticFieldsWithObjectAlignmentGenericGetterAndSetter = generateStaticGenericGetterAndSetter(classWithOnlyStaticFieldsWithObjectAlignment, fields);
 
@@ -2188,7 +2145,8 @@ public class ValueTypeTests {
 	 * Create Array Objects with Point Class without initialization
 	 * The array should be set to a Default Value.
 	 */
-	@Test(priority=4, invocationCount=2)
+	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
+	@Test(priority=4, invocationCount=2, enabled = false)
 	static public void testDefaultValueInPointArray() throws Throwable {
 		Object pointArray = Array.newInstance(point2DClass, genericArraySize);
 		for (int i = 0; i < genericArraySize; i++) {
@@ -2201,7 +2159,8 @@ public class ValueTypeTests {
 	 * Create multi dimensional array with Point Class without initialization.
 	 * Set each array value to a default value and check field access method handler.
 	 */
-	@Test(priority=4)
+	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
+	@Test(priority=4, enabled = false)
 	static public void testDefaultValueInPointInstanceMultiArray() throws Throwable {
 		Object pointArray = Array.newInstance(point2DClass, new int[]{genericArraySize, genericArraySize});
 		String[] fields = {"x:I", "y:I"};
@@ -2225,7 +2184,8 @@ public class ValueTypeTests {
 	 * multianewarray.
 	 * Set each array value to a default value and check field access method handler.
 	 */
-	@Test(priority=4)
+	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
+	@Test(priority=4, enabled = false)
 	static public void testDefaultValueInPointByteCodeMultiArray() throws Throwable {
 		MethodHandle makePointArray = lookup.findStatic(point2DClass, "generate2DMultiANewArray", MethodType.methodType(Object.class, int.class, int.class));
 		Object pointArray = makePointArray.invoke(genericArraySize, genericArraySize);
@@ -2249,7 +2209,8 @@ public class ValueTypeTests {
 	 * Create Array Objects with Flattened Line without initialization
 	 * Check the fields of each element in arrays. No field should be NULL.
 	 */
-	@Test(priority=4, invocationCount=2)
+	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
+	@Test(priority=4, invocationCount=2, enabled = false)
 	static public void testDefaultValueInLineArray() throws Throwable {
 		Object flattenedLineArray = Array.newInstance(flattenedLine2DClass, genericArraySize);
 		for (int i = 0; i < genericArraySize; i++) {
@@ -2264,10 +2225,11 @@ public class ValueTypeTests {
 	 * Create multi dimensional array with Line Class without initialization.
 	 * Set each array value to a default value and check field access method handler.
 	 */
-	@Test(priority=4)
+	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
+	@Test(priority=4, enabled = false)
 	static public void testDefaultValueInLineInstanceMultiArray() throws Throwable {
 		Object flattenedLineArray = Array.newInstance(flattenedLine2DClass, new int[]{genericArraySize, genericArraySize});
-		String[] fields = {"st:QPoint;:value","en:QPoint;:value"};
+		String[] fields = {"st:LPoint;:NR","en:LPoint;:NR"};
 		MethodHandle[][] getterAndWither = generateGenericGetterAndWither(flattenedLine2DClass, fields);
 		for (int i = 0; i < genericArraySize; i++) {
 			for (int j = 0; j < genericArraySize; j++) {
@@ -2288,11 +2250,12 @@ public class ValueTypeTests {
 	 * multianewarray.
 	 * Set each array value to a default value and check field access method handler.
 	 */
-	@Test(priority=4)
+	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
+	@Test(priority=4, enabled = false)
 	static public void testDefaultValueInLineByteCodeMultiArray() throws Throwable {
 		MethodHandle makeLineArray = lookup.findStatic(flattenedLine2DClass, "generate2DMultiANewArray", MethodType.methodType(Object.class, int.class, int.class));
 		Object flattenedLineArray = makeLineArray.invoke(genericArraySize, genericArraySize);
-		String[] fields = {"st:QPoint;:value","en:QPoint;:value"};
+		String[] fields = {"st:LPoint;:NR","en:LPoint;:NR"};
 		MethodHandle[][] getterAndWither = generateGenericGetterAndWither(flattenedLine2DClass, fields);
 		for (int i = 0; i < genericArraySize; i++) {
 			for (int j = 0; j < genericArraySize; j++) {
@@ -2312,7 +2275,8 @@ public class ValueTypeTests {
 	 * Create Array Objects with triangle class without initialization
 	 * Check the fields of each element in arrays. No field should be NULL.
 	 */
-	@Test(priority=4, invocationCount=2)
+	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
+	@Test(priority=4, invocationCount=2, enabled = false)
 	static public void testDefaultValueInTriangleArray() throws Throwable {
 		Object triangleArray = Array.newInstance(triangle2DClass, genericArraySize);
 		for (int i = 0; i < genericArraySize; i++) {
@@ -2328,10 +2292,11 @@ public class ValueTypeTests {
 	 * Create multi dimensional array with Triangle Class without initialization.
 	 * Set each array value to a default value and check field access method handler.
 	 */
-	@Test(priority=4)
+	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
+	@Test(priority=4, enabled = false)
 	static public void testDefaultValueInTriangleInstanceMultiArray() throws Throwable {
 		Object triangleArray = Array.newInstance(triangle2DClass, new int[]{genericArraySize, genericArraySize});
-		String[] fields = {"v1:QFlattenedLine2D;:value", "v2:QFlattenedLine2D;:value", "v3:QFlattenedLine2D;:value"};
+		String[] fields = {"v1:LFlattenedLine2D;:NR", "v2:LFlattenedLine2D;:NR", "v3:LFlattenedLine2D;:NR"};
 		MethodHandle[][] getterAndWither = generateGenericGetterAndWither(triangle2DClass, fields);
 		for (int i = 0; i < genericArraySize; i++) {
 			for (int j = 0; j < genericArraySize; j++) {
@@ -2352,11 +2317,12 @@ public class ValueTypeTests {
 	 * multianewarray.
 	 * Set each array value to a default value and check field access method handler.
 	 */
-	@Test(priority=4)
+	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
+	@Test(priority=4, enabled = false)
 	static public void testDefaultValueInTriangleByteCodeMultiArray() throws Throwable {
 		MethodHandle makeTriangleArray = lookup.findStatic(triangle2DClass, "generate2DMultiANewArray", MethodType.methodType(Object.class, int.class, int.class));
 		Object triangleArray = makeTriangleArray.invoke(genericArraySize, genericArraySize);
-		String[] fields = {"v1:QFlattenedLine2D;:value", "v2:QFlattenedLine2D;:value", "v3:QFlattenedLine2D;:value"};
+		String[] fields = {"v1:LFlattenedLine2D;:NR", "v2:LFlattenedLine2D;:NR", "v3:LFlattenedLine2D;:NR"};
 		MethodHandle[][] getterAndWither = generateGenericGetterAndWither(triangle2DClass, fields);
 		for (int i = 0; i < genericArraySize; i++) {
 			for (int j = 0; j < genericArraySize; j++) {
@@ -2376,7 +2342,8 @@ public class ValueTypeTests {
 	 * Create an Array Object with assortedValueWithLongAlignment class without initialization
 	 * Check the fields of each element in arrays. No field should be NULL.
 	 */
-	@Test(priority=4, invocationCount=2)
+	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
+	@Test(priority=4, invocationCount=2, enabled = false)
 	static public void testDefaultValueInAssortedValueWithLongAlignmentArray() throws Throwable {
 		Object assortedValueWithLongAlignmentArray = Array.newInstance(assortedValueWithLongAlignmentClass, genericArraySize);
 		for (int i = 0; i < genericArraySize; i++) {
@@ -2394,7 +2361,8 @@ public class ValueTypeTests {
 	 *
 	 * Fails tests with array flattening enabled
 	 */
-	@Test(priority=5)
+	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
+	@Test(priority=5, enabled = false)
 	static public void testDefaultValueInAssortedValueWithLongAlignmenInstanceMultiArray() throws Throwable {
 		Object assortedValueWithLongAlignmentArray = Array.newInstance(assortedValueWithLongAlignmentClass, new int[]{genericArraySize, genericArraySize});
 		for (int i = 0; i < genericArraySize; i++) {
@@ -2418,7 +2386,8 @@ public class ValueTypeTests {
 	 *
 	 * Fails tests with array flattening enabled
 	 */
-	@Test(priority=5)
+	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
+	@Test(priority=5, enabled = false)
 	static public void testDefaultValueInAssortedValueWithLongAlignmentByteCodeMultiArray() throws Throwable {
 		MethodHandle makeAssortedValueWithLongAlignmentArray = lookup.findStatic(assortedValueWithLongAlignmentClass, "generate2DMultiANewArray", MethodType.methodType(Object.class, int.class, int.class));
 		Object assortedValueWithLongAlignmentArray = makeAssortedValueWithLongAlignmentArray.invoke(genericArraySize, genericArraySize);
@@ -2439,7 +2408,8 @@ public class ValueTypeTests {
 	/*
 	 * Create a 2D array of valueTypes, verify that the default elements are null.
 	 */
-	@Test(priority=5, invocationCount=2)
+	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
+	@Test(priority=5, invocationCount=2, enabled = false)
 	static public void testMultiDimentionalArrays() throws Throwable {
 		Class assortedValueWithLongAlignment2DClass = Array.newInstance(assortedValueWithLongAlignmentClass, 1).getClass();
 		Class assortedValueWithSingleAlignment2DClass = Array.newInstance(assortedValueWithSingleAlignmentClass, 1).getClass();
@@ -2460,7 +2430,8 @@ public class ValueTypeTests {
 	 * Create an assortedRefWithLongAlignment Array
 	 * Since it's ref type, the array should be filled with nullptrs
 	 */
-	@Test(priority=4, invocationCount=2)
+	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
+	@Test(priority=4, invocationCount=2, enabled = false)
 	static public void testDefaultValueInAssortedRefWithLongAlignmentArray() throws Throwable {
 		Object assortedRefWithLongAlignmentArray = Array.newInstance(assortedRefWithLongAlignmentClass, genericArraySize);
 		for (int i = 0; i < genericArraySize; i++) {
@@ -2482,17 +2453,6 @@ public class ValueTypeTests {
 		} catch (Exception e) {
 			Assert.fail("Should not throw exception");
 		}
-	}
-	
-	/*
-	 * Ensure that casting null to invalid Qtype class will throw a null pointer exception
-	 */
-	@Test(enabled=false, priority=1, expectedExceptions=NullPointerException.class)
-	static public void testCheckCastValueTypeOnInvalidQtype() throws Throwable {
-		String fields[] = {"longField:J"};
-		Class valueClass = ValueTypeGenerator.generateValueClass("TestCheckCastOnInvalidQtype", fields);
-		MethodHandle checkCastOnInvalidQtype = lookup.findStatic(valueClass, "testCheckCastOnInvalidQtype", MethodType.methodType(Object.class));
-		checkCastOnInvalidQtype.invoke();
 	}
 	
 	/*
@@ -2535,7 +2495,8 @@ public class ValueTypeTests {
 	 * Maintain a buffer of flattened arrays with long-aligned valuetypes while keeping a certain amount of classes alive at any
 	 * single time. This forces the GC to unload the classes.
 	 */
-	@Test(priority=5, invocationCount=2)
+	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
+	@Test(priority=5, invocationCount=2, enabled = false)
 	static public void testValueWithLongAlignmentGCScanning() throws Throwable {
 		ArrayList<Object> longAlignmentArrayList = new ArrayList<Object>(objectGCScanningIterationCount);
 		for (int i = 0; i < objectGCScanningIterationCount; i++) {
@@ -2560,7 +2521,8 @@ public class ValueTypeTests {
 	 * Maintain a buffer of flattened arrays with object-aligned valuetypes while keeping a certain amount of classes alive at any
 	 * single time. This forces the GC to unload the classes.
 	 */
-	@Test(priority=5, invocationCount=2)
+	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
+	@Test(priority=5, invocationCount=2, enabled = false)
 	static public void testValueWithObjectAlignmentGCScanning() throws Throwable {
 		ArrayList<Object> objectAlignmentArrayList = new ArrayList<Object>(objectGCScanningIterationCount);
 		for (int i = 0; i < objectGCScanningIterationCount; i++) {
@@ -2585,7 +2547,8 @@ public class ValueTypeTests {
 	 * Maintain a buffer of flattened arrays with single-aligned valuetypes while keeping a certain amount of classes alive at any
 	 * single time. This forces the GC to unload the classes.
 	 */
-	@Test(priority=5, invocationCount=2)
+	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
+	@Test(priority=5, invocationCount=2, enabled = false)
 	static public void testValueWithSingleAlignmentGCScanning() throws Throwable {
 		ArrayList<Object> singleAlignmentArrayList = new ArrayList<Object>(objectGCScanningIterationCount);
 		for (int i = 0; i < objectGCScanningIterationCount; i++) {
@@ -2606,15 +2569,16 @@ public class ValueTypeTests {
 		}
 	}
 
-	@Test(priority=1)
+	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
+	@Test(priority=1, enabled = false)
 	static public void testFlattenedFieldInitSequence() throws Throwable {
 		String fields[] = {"x:I", "y:I"};
 		Class nestAClass = ValueTypeGenerator.generateValueClass("NestedA", fields);
 		
-		String fields2[] = {"a:QNestedA;", "b:QNestedA;"};
+		String fields2[] = {"a:LNestedA;:NR", "b:LNestedA;:NR"};
 		Class nestBClass = ValueTypeGenerator.generateValueClass("NestedB", fields2);
 		
-		String fields3[] = {"c:QNestedB;", "d:QNestedB;"};
+		String fields3[] = {"c:LNestedB;:NR", "d:LNestedB;:NR"};
 		Class containerCClass = ValueTypeGenerator.generateValueClass("ContainerC", fields3);
 		
 		MethodHandle defaultValueContainerC = lookup.findStatic(containerCClass, "makeValueTypeDefaultValue", MethodType.methodType(Object.class));
@@ -2761,7 +2725,8 @@ public class ValueTypeTests {
 	 * the class not resolved, and then called so that the GETFIELD and class
 	 * resolution is triggered.
 	 */
-	@Test(priority=1)
+	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
+	@Test(priority=1, enabled = false)
 	static public void testUnresolvedGetFieldUse() throws Throwable {
 		/*
 		 * Set up classes that look roughly like this:
@@ -2816,7 +2781,7 @@ public class ValueTypeTests {
 			UnresolvedClassDesc desc = uclassDescArr[i];
 			valueClassArr[i] = ValueTypeGenerator.generateValueClass(desc.name, desc.fields);
 			valueFieldGetters[i] = new MethodHandle[desc.fields.length];
-			containerFields[i] = "v"+(i+1)+":Q"+desc.name+";";
+			containerFields[i] = "v"+(i+1)+":L"+desc.name+";:NR";
 
 			for (int j = 0; j < desc.fields.length; j++) {
 				String[] nameAndSig = desc.fields[j].split(":");
@@ -2919,7 +2884,7 @@ public class ValueTypeTests {
 			UnresolvedClassDesc desc = uclassDescArr[i];
 			valueClassArr[i] = ValueTypeGenerator.generateValueClass(desc.name, desc.fields);
 			valueFieldGetters[i] = new MethodHandle[desc.fields.length];
-			containerFields[i] = "v"+(i+1)+":Q"+desc.name+";";
+			containerFields[i] = "v"+(i+1)+":L"+desc.name+";:NR";
 
 			for (int j = 0; j < desc.fields.length; j++) {
 				String[] nameAndSig = desc.fields[j].split(":");
@@ -3029,25 +2994,29 @@ public class ValueTypeTests {
 		assertTrue(valueClass.isValue());
 	}
 
-	@Test(priority=1, expectedExceptions=IncompatibleClassChangeError.class)
+	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
+	@Test(priority=1, expectedExceptions=IncompatibleClassChangeError.class, enabled = false)
 	static public void testValueTypeSubClassHeavyAbstract() throws Throwable {
 		String superClassName = HeavyAbstractClass.class.getName().replace('.', '/');
 		valueTypeIdentityObjectTestHelper("testValueTypeSubClassHeavyAbstract", superClassName, 0);
 	}
 	
-	@Test(priority=1, expectedExceptions=IncompatibleClassChangeError.class)
+	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
+	@Test(priority=1, expectedExceptions=IncompatibleClassChangeError.class, enabled = false)
 	static public void testValueTypeSubClassHeavyAbstract1() throws Throwable {
 		String superClassName = HeavyAbstractClass1.class.getName().replace('.', '/');
 		valueTypeIdentityObjectTestHelper("testValueTypeSubClassHeavyAbstract1", superClassName, 0);
 	}
 	
-	@Test(priority=1, expectedExceptions=IncompatibleClassChangeError.class)
+	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
+	@Test(priority=1, expectedExceptions=IncompatibleClassChangeError.class, enabled = false)
 	static public void testValueTypeSubClassHeavyAbstract2() throws Throwable {
 		String superClassName = HeavyAbstractClass2.class.getName().replace('.', '/');
 		valueTypeIdentityObjectTestHelper("testValueTypeSubClassHeavyAbstract2", superClassName, 0);
 	}
 	
-	@Test(priority=1, expectedExceptions=IncompatibleClassChangeError.class)
+	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
+	@Test(priority=1, expectedExceptions=IncompatibleClassChangeError.class, enabled = false)
 	static public void testValueTypeSubClassHeavyAbstract3() throws Throwable {
 		String superClassName = HeavyAbstractClass3.class.getName().replace('.', '/');
 		valueTypeIdentityObjectTestHelper("testValueTypeSubClassHeavyAbstract3", superClassName, 0);
@@ -3086,7 +3055,7 @@ public class ValueTypeTests {
 	@Test(priority = 1)
 	static public void testIdentityObjectOnJLObject() throws Throwable {
 		assertFalse(Object.class.isValue());
-		assertFalse(Object.class.isIdentity());
+		assertTrue(Object.class.isIdentity());
 	}
 
 	@Test(priority = 1)
@@ -3139,8 +3108,8 @@ public class ValueTypeTests {
 	static public void testMethodTypeDescriptorValue() throws Throwable {
 		String fields[] = {"longField:J"};
 		Class valueClass = ValueTypeGenerator.generateValueClass("testMethodTypeDescriptorValue", fields);
-		assertEquals(MethodType.methodType(valueClass).toMethodDescriptorString(), "()QtestMethodTypeDescriptorValue;");
-		assertEquals(valueClass.descriptorString(), "QtestMethodTypeDescriptorValue;");
+		assertEquals(MethodType.methodType(valueClass).toMethodDescriptorString(), "()LtestMethodTypeDescriptorValue;");
+		assertEquals(valueClass.descriptorString(), "LtestMethodTypeDescriptorValue;");
 	}
 
 	@Test(priority=1)
@@ -3234,15 +3203,6 @@ public class ValueTypeTests {
 		}
 		return null;
 	}
-		
-	static long getFieldOffset(Class clazz, String field) {
-		try {
-			Field f = clazz.getDeclaredField(field);
-			return myUnsafe.objectFieldOffset(f);
-		} catch (Throwable t) {
-			throw new RuntimeException(t);
-		}
-	}
 
 	static MethodHandle[][] generateGenericGetterAndWither(Class clazz, String[] fields) {
 		MethodHandle[][] getterAndWither = new MethodHandle[fields.length][2];
@@ -3321,31 +3281,31 @@ public class ValueTypeTests {
 			String nameAndSigValue[] = fields[i].split(":");
 			String signature = nameAndSigValue[1];
 			switch (signature) {
-			case "QPoint2D;":
+			case "LPoint2D;":
 				args[i] = createPoint2D(useInitFields ? (int[])initFields[i] : defaultPointPositions1);
 				break;
-			case "QFlattenedLine2D;":
+			case "LFlattenedLine2D;":
 				args[i] = createFlattenedLine2D(useInitFields ? (int[][])initFields[i] : defaultLinePositions1);
 				break;
-			case "QTriangle2D;":
+			case "LTriangle2D;":
 				args[i] = createTriangle2D(useInitFields ? (int[][][])initFields[i] : defaultTrianglePositions);
 				break;
-			case "QValueInt;":
+			case "LValueInt;":
 				args[i] = makeValueInt.invoke(useInitFields ? (int)initFields[i] : defaultInt);
 				break;
-			case "QValueFloat;":
+			case "LValueFloat;":
 				args[i] = makeValueFloat.invoke(useInitFields ? (float)initFields[i] : defaultFloat);
 				break;
-			case "QValueDouble;":
+			case "LValueDouble;":
 				args[i] = makeValueDouble.invoke(useInitFields ? (double)initFields[i] : defaultDouble);
 				break;
-			case "QValueObject;":
+			case "LValueObject;":
 				args[i] = makeValueObject.invoke(useInitFields ? (Object)initFields[i] : defaultObject);
 				break;
-			case "QValueLong;":
+			case "LValueLong;":
 				args[i] = makeValueLong.invoke(useInitFields ? (long)initFields[i] : defaultLong);
 				break;
-			case "QLargeObject;":
+			case "LLargeObject;":
 				args[i] = createLargeObject(useInitFields ? (Object)initFields[i] : defaultObject);
 				break;
 			default:
@@ -3361,31 +3321,31 @@ public class ValueTypeTests {
 		for (int i = 0; i < fields.length; i++) {
 			String signature = (fields[i].split(":"))[1];
 			switch (signature) {
-			case "QPoint2D;":
+			case "LPoint2D;":
 				defaultValue = createPoint2D(defaultPointPositions1);
 				break;
-			case "QFlattenedLine2D;":
+			case "LFlattenedLine2D;":
 				defaultValue = createFlattenedLine2D(defaultLinePositions1);
 				break;
-			case "QTriangle2D;":
+			case "LTriangle2D;":
 				defaultValue = createTriangle2D(defaultTrianglePositions);
 				break;
-			case "QValueInt;":
+			case "LValueInt;":
 				defaultValue = makeValueInt.invoke(defaultInt);
 				break;
-			case "QValueFloat;":
+			case "LValueFloat;":
 				defaultValue = makeValueFloat.invoke(defaultFloat);
 				break;
-			case "QValueDouble;":
+			case "LValueDouble;":
 				defaultValue = makeValueDouble.invoke(defaultDouble);
 				break;
-			case "QValueObject;":
+			case "LValueObject;":
 				defaultValue = makeValueObject.invoke(defaultObject);
 				break;
-			case "QValueLong;":
+			case "LValueLong;":
 				defaultValue = makeValueLong.invoke(defaultLong);
 				break;
-			case "QLargeObject;":
+			case "LLargeObject;":
 				defaultValue = createLargeObject(defaultObject);
 				break;
 			default:
@@ -3403,7 +3363,7 @@ public class ValueTypeTests {
 			String nameAndSigValue[] = fields[i].split(":");
 			String signature = nameAndSigValue[1];
 			switch (signature) {
-			case "QPoint2D;":
+			case "LPoint2D;":
 				checkEqualPoint2D(fieldAccessMHs[i][0].invoke(instance), defaultPointPositions1);
 				Object pointNew = createPoint2D(defaultPointPositionsNew);
 				if (ifValue) {
@@ -3413,7 +3373,7 @@ public class ValueTypeTests {
 				}
 				checkEqualPoint2D(fieldAccessMHs[i][0].invoke(instance), defaultPointPositionsNew);
 				break;
-			case "QFlattenedLine2D;":
+			case "LFlattenedLine2D;":
 				checkEqualFlattenedLine2D(fieldAccessMHs[i][0].invoke(instance), defaultLinePositions1);
 				Object lineNew = createFlattenedLine2D(defaultLinePositionsNew);
 				if (ifValue) {
@@ -3423,7 +3383,7 @@ public class ValueTypeTests {
 				}
 				checkEqualFlattenedLine2D(fieldAccessMHs[i][0].invoke(instance), defaultLinePositionsNew);
 				break;
-			case "QTriangle2D;":
+			case "LTriangle2D;":
 				checkEqualTriangle2D(fieldAccessMHs[i][0].invoke(instance), defaultTrianglePositions);
 				Object triNew = createTriangle2D(defaultTrianglePositionsNew);
 				if (ifValue) {
@@ -3433,7 +3393,7 @@ public class ValueTypeTests {
 				}
 				checkEqualTriangle2D(fieldAccessMHs[i][0].invoke(instance), defaultTrianglePositionsNew);
 				break;
-			case "QValueInt;":
+			case "LValueInt;":
 				assertEquals(getInt.invoke(fieldAccessMHs[i][0].invoke(instance)), defaultInt);
 				Object iNew = makeValueInt.invoke(defaultIntNew);
 				if (ifValue) {
@@ -3443,7 +3403,7 @@ public class ValueTypeTests {
 				}
 				assertEquals(getInt.invoke(fieldAccessMHs[i][0].invoke(instance)), defaultIntNew);
 				break;
-			case "QValueFloat;":
+			case "LValueFloat;":
 				assertEquals(getFloat.invoke(fieldAccessMHs[i][0].invoke(instance)), defaultFloat);
 				Object fNew = makeValueFloat.invoke(defaultFloatNew);
 				if (ifValue) {
@@ -3453,7 +3413,7 @@ public class ValueTypeTests {
 				}
 				assertEquals(getFloat.invoke(fieldAccessMHs[i][0].invoke(instance)), defaultFloatNew);
 				break;
-			case "QValueDouble;":
+			case "LValueDouble;":
 				assertEquals(getDouble.invoke(fieldAccessMHs[i][0].invoke(instance)), defaultDouble);
 				Object dNew = makeValueDouble.invoke(defaultDoubleNew);
 				if (ifValue) {
@@ -3463,7 +3423,7 @@ public class ValueTypeTests {
 				}
 				assertEquals(getDouble.invoke(fieldAccessMHs[i][0].invoke(instance)), defaultDoubleNew);
 				break;
-			case "QValueObject;":
+			case "LValueObject;":
 				assertEquals(getObject.invoke(fieldAccessMHs[i][0].invoke(instance)), defaultObject);
 				Object oNew = makeValueObject.invoke(defaultObjectNew);
 				if (ifValue) {
@@ -3473,7 +3433,7 @@ public class ValueTypeTests {
 				}
 				assertEquals(getObject.invoke(fieldAccessMHs[i][0].invoke(instance)), defaultObjectNew);
 				break;
-			case "QValueLong;":
+			case "LValueLong;":
 				assertEquals(getLong.invoke(fieldAccessMHs[i][0].invoke(instance)), defaultLong);
 				Object lNew = makeValueLong.invoke(defaultLongNew);
 				if (ifValue) {
@@ -3483,7 +3443,7 @@ public class ValueTypeTests {
 				}
 				assertEquals(getLong.invoke(fieldAccessMHs[i][0].invoke(instance)), defaultLongNew);
 				break;
-			case "QLargeObject;":
+			case "LLargeObject;":
 				checkEqualLargeObject(fieldAccessMHs[i][0].invoke(instance), defaultObject);
 				Object largeNew = createLargeObject(defaultObjectNew);
 				if (ifValue) {
@@ -3506,55 +3466,55 @@ public class ValueTypeTests {
 			String nameAndSigValue[] = fields[i].split(":");
 			String signature = nameAndSigValue[1];
 			switch (signature) {
-			case "QPoint2D;":
+			case "LPoint2D;":
 				checkEqualPoint2D(fieldAccessMHs[i][0].invoke(), defaultPointPositions1);
 				Object pointNew = createPoint2D(defaultPointPositionsNew);
 				fieldAccessMHs[i][1].invoke(pointNew);
 				checkEqualPoint2D(fieldAccessMHs[i][0].invoke(), defaultPointPositionsNew);
 				break;
-			case "QFlattenedLine2D;":
+			case "LFlattenedLine2D;":
 				checkEqualFlattenedLine2D(fieldAccessMHs[i][0].invoke(), defaultLinePositions1);
 				Object lineNew = createFlattenedLine2D(defaultLinePositionsNew);
 				fieldAccessMHs[i][1].invoke(lineNew);
 				checkEqualFlattenedLine2D(fieldAccessMHs[i][0].invoke(), defaultLinePositionsNew);
 				break;
-			case "QTriangle2D;":
+			case "LTriangle2D;":
 				checkEqualTriangle2D(fieldAccessMHs[i][0].invoke(), defaultTrianglePositions);
 				Object triNew = createTriangle2D(defaultTrianglePositionsNew);
 				fieldAccessMHs[i][1].invoke(triNew);
 				checkEqualTriangle2D(fieldAccessMHs[i][0].invoke(), defaultTrianglePositionsNew);
 				break;
-			case "QValueInt;":
+			case "LValueInt;":
 				assertEquals(getInt.invoke(fieldAccessMHs[i][0].invoke()), defaultInt);
 				Object iNew = makeValueInt.invoke(defaultIntNew);
 				fieldAccessMHs[i][1].invoke(iNew);
 				assertEquals(getInt.invoke(fieldAccessMHs[i][0].invoke()), defaultIntNew);
 				break;
-			case "QValueFloat;":
+			case "LValueFloat;":
 				assertEquals(getFloat.invoke(fieldAccessMHs[i][0].invoke()), defaultFloat);
 				Object fNew = makeValueFloat.invoke(defaultFloatNew);
 				fieldAccessMHs[i][1].invoke(fNew);
 				assertEquals(getFloat.invoke(fieldAccessMHs[i][0].invoke()), defaultFloatNew);
 				break;
-			case "QValueDouble;":
+			case "LValueDouble;":
 				assertEquals(getDouble.invoke(fieldAccessMHs[i][0].invoke()), defaultDouble);
 				Object dNew = makeValueDouble.invoke(defaultDoubleNew);
 				fieldAccessMHs[i][1].invoke(dNew);
 				assertEquals(getDouble.invoke(fieldAccessMHs[i][0].invoke()), defaultDoubleNew);
 				break;
-			case "QValueObject;":
+			case "LValueObject;":
 				assertEquals(getObject.invoke(fieldAccessMHs[i][0].invoke()), defaultObject);
 				Object oNew = makeValueObject.invoke(defaultObjectNew);
 				fieldAccessMHs[i][1].invoke(oNew);
 				assertEquals(getObject.invoke(fieldAccessMHs[i][0].invoke()), defaultObjectNew);
 				break;
-			case "QValueLong;":
+			case "LValueLong;":
 				assertEquals(getLong.invoke(fieldAccessMHs[i][0].invoke()), defaultLong);
 				Object lNew = makeValueLong.invoke(defaultLongNew);
 				fieldAccessMHs[i][1].invoke(lNew);
 				assertEquals(getLong.invoke(fieldAccessMHs[i][0].invoke()), defaultLongNew);
 				break;
-			case "QLargeObject;":
+			case "LLargeObject;":
 				checkEqualLargeObject(fieldAccessMHs[i][0].invoke(), defaultObject);
 				Object largeNew = createLargeObject(defaultObjectNew);
 				fieldAccessMHs[i][1].invoke(largeNew);

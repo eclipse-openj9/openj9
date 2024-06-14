@@ -91,7 +91,7 @@ automated test builds at the Adoptium project.
     <disables>
         <disable>
             <comment>issue url or issue comment url</comment>
-        <disable>
+        </disable>
     </disables>
  ```
 
