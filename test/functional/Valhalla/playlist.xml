@@ -63,13 +63,14 @@
 		<variations>
 			<variation>-Xjit:count=0</variation>
 			<variation>-Xjit:count=1,disableAsyncCompilation -Xgcpolicy:optthruput</variation>
-			<variation>-Xjit:count=1,disableAsyncCompilation -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999 -XX:-EnableArrayFlattening</variation>
+			<!-- issue to fix disabled tests is https://github.com/eclipse-openj9/openj9/issues/19708 -->
+			<!--<variation>-Xjit:count=1,disableAsyncCompilation -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999 -XX:-EnableArrayFlattening</variation>
 			<variation>-Xjit:count=1,disableAsyncCompilation -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
 			<variation>-Xjit:count=1,disableAsyncCompilation -Xgcpolicy:gencon -XX:ValueTypeFlatteningThreshold=12 -XX:-EnableArrayFlattening</variation>
 			<variation>-Xjit:count=1,disableAsyncCompilation -Xgcpolicy:gencon -XX:ValueTypeFlatteningThreshold=99999 -XX:-EnableArrayFlattening</variation>
 			<variation>-Xjit:count=1,disableAsyncCompilation -Xgcpolicy:gencon -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
 			<variation>-Xjit:count=1,disableAsyncCompilation -Xnocompressedrefs -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
-			<variation>-Xjit:count=1,disableAsyncCompilation -Xnocompressedrefs -Xgcpolicy:gencon -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
+			<variation>-Xjit:count=1,disableAsyncCompilation -Xnocompressedrefs -Xgcpolicy:gencon -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>-->
 			<variation>-Xjit:count=1,disableAsyncCompilation -Xnocompressedrefs -Xgcpolicy:gencon</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -97,6 +98,11 @@
 	</test>
 	<test>
 		<testCaseName>ValueTypeArrayTests</testCaseName>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/19460</comment>
+			</disable>
+		</disables>
 		<variations>
 			<variation>-Xgcpolicy:optthruput</variation>
 			<variation>-Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999 -XX:-EnableArrayFlattening</variation>
@@ -134,6 +140,11 @@
 	</test>
 	<test>
 		<testCaseName>ValueTypeArrayTestsJIT</testCaseName>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/19460</comment>
+			</disable>
+		</disables>
 		<variations>
 			<variation>-Xjit:count=0</variation>
 			<variation>-Xjit:count=1,disableAsyncCompilation -Xgcpolicy:optthruput</variation>
@@ -328,6 +339,11 @@
 	</test>
 	<test>
 		<testCaseName>ValueTypeSystemArraycopyTests</testCaseName>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/19460</comment>
+			</disable>
+		</disables>
 		<variations>
 			<variation>-Xint</variation>
 			<variation>-Xint -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999</variation>
