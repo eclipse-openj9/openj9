@@ -25,7 +25,9 @@ import org.testng.annotations.Test;
 import org.testng.Assert;
 import org.testng.AssertJUnit;
 
+import java.io.UnsupportedEncodingException;
 import java.lang.invoke.MethodHandle;
+import java.util.Arrays;
 
 import java.lang.foreign.Arena;
 import java.lang.foreign.Linker;
@@ -44,6 +46,7 @@ import static java.lang.foreign.ValueLayout.*;
  */
 @Test(groups = { "level.sanity" })
 public class PrimitiveTypeTests1 {
+	private static final boolean isZos = "z/OS".equalsIgnoreCase(System.getProperty("os.name"));
 	private static Linker linker = Linker.nativeLinker();
 	private static Arena arena = Arena.ofAuto();
 
@@ -52,6 +55,21 @@ public class PrimitiveTypeTests1 {
 	}
 	private static final SymbolLookup nativeLibLookup = SymbolLookup.loaderLookup();
 	private static final SymbolLookup defaultLibLookup = linker.defaultLookup();
+
+	static MemorySegment allocateString(String string) throws UnsupportedEncodingException {
+		MemorySegment segment;
+
+		if (isZos) {
+			byte[] bytes = string.getBytes("IBM1047");
+			byte[] withNul = Arrays.copyOf(bytes, bytes.length + 1);
+
+			segment = arena.allocateArray(JAVA_BYTE, withNul);
+		} else {
+			segment = arena.allocateUtf8String(string);
+		}
+
+		return segment;
+	}
 
 	@Test
 	public void test_addTwoBoolsWithOr_1() throws Throwable {
@@ -263,7 +281,7 @@ public class PrimitiveTypeTests1 {
 		MemorySegment strlenSymbol = defaultLibLookup.find("strlen").get();
 		FunctionDescriptor fd = FunctionDescriptor.of(JAVA_LONG, ADDRESS);
 		MethodHandle mh = linker.downcallHandle(strlenSymbol, fd);
-		MemorySegment funcSegmt = arena.allocateUtf8String("JEP424 DOWNCALL TEST SUITES");
+		MemorySegment funcSegmt = allocateString("JEP442 DOWNCALL TEST SUITES");
 		long strLength = (long)mh.invoke(funcSegmt);
 		Assert.assertEquals(strLength, 27);
 	}
@@ -289,7 +307,7 @@ public class PrimitiveTypeTests1 {
 		MemorySegment functionSymbol = defaultLibLookup.find("printf").get();
 		FunctionDescriptor fd = FunctionDescriptor.of(JAVA_INT, ADDRESS, JAVA_INT, JAVA_INT, JAVA_INT);
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
-		MemorySegment formatSegmt = arena.allocateUtf8String("\n%d + %d = %d\n");
+		MemorySegment formatSegmt = allocateString("\n%d + %d = %d\n");
 		mh.invoke(formatSegmt, 15, 27, 42);
 	}
 
@@ -298,7 +316,7 @@ public class PrimitiveTypeTests1 {
 		MemorySegment functionSymbol = defaultLibLookup.find("printf").get();
 		FunctionDescriptor fd = FunctionDescriptor.of(JAVA_INT, ADDRESS, JAVA_INT, JAVA_INT, JAVA_INT);
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd, Linker.Option.firstVariadicArg(1));
-		MemorySegment formatSegmt = arena.allocateUtf8String("\n%d + %d = %d\n");
+		MemorySegment formatSegmt = allocateString("\n%d + %d = %d\n");
 		mh.invoke(formatSegmt, 15, 27, 42);
 	}
 
