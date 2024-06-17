@@ -6339,11 +6339,11 @@ SH_CacheMap::matchAotMethod(MethodSpecTable* specTable, IDATA numSpecs, J9UTF8* 
 				IDATA sigLength = sigEnd - sigStart - 1;
 
 				sigMatch = (TRUE == wildcardMatch(
-								specTable[i].methodSigMatchFlag,
-								(const char *)specTable[i].methodSig,
-								specTable[i].methodSigLength,
-								sigStart,
-								sigLength));
+						specTable[i].methodSigMatchFlag,
+						(const char *)specTable[i].methodSig,
+						specTable[i].methodSigLength,
+						sigStart,
+						sigLength));
 			}
 		}
 

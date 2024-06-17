@@ -493,7 +493,7 @@ dlmmap_locked (void *start, size_t length, int prot, int flags, off_t offset)
 	  goto retry_open;
 	}
       if (ftruncate (execfd, offset)) {
-        /* ignore any failure. */
+        /* ignore any failure */
       }
       return MFAIL;
     }
@@ -507,7 +507,7 @@ dlmmap_locked (void *start, size_t length, int prot, int flags, off_t offset)
     {
       munmap (ptr, length);
       if (ftruncate (execfd, offset)) {
-        /* ignore any failure. */
+        /* ignore any failure */
       }
       return start;
     }
