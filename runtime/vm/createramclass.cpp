@@ -2264,6 +2264,22 @@ nativeOOM:
 			 */
 			const U_32 inheritedFlags = J9ClassHasWatchedFields | J9ClassIsExemptFromValidation | J9ClassHasIdentity | J9ClassEnsureHashed;
 			classFlags |= (superclass->classFlags & inheritedFlags);
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+			if (J9_ARE_ALL_BITS_SET(classFlags, J9ClassHasIdentity)) {
+				if (J9ROMCLASS_IS_VALUE(romClass)) {
+					J9UTF8 *superclassName = J9ROMCLASS_SUPERCLASSNAME(romClass);
+					J9UTF8* className = J9ROMCLASS_CLASSNAME(romClass);
+					setCurrentExceptionNLSWithArgs(vmThread, J9NLS_VM_VALUETYPE_HAS_WRONG_SUPERCLASS,
+							J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, J9UTF8_LENGTH(className),
+							J9UTF8_DATA(className), J9UTF8_LENGTH(superclassName), J9UTF8_DATA(superclassName));
+				}
+			} else {
+				if (!J9ROMCLASS_IS_VALUE(romClass)) {
+					classFlags |= J9ClassHasIdentity;
+				}
+			}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		}
 		if (J9_ARE_ALL_BITS_SET(options, J9_FINDCLASS_FLAG_ANON)) {
 			/* if anonClass replace classLoader with hostClassLoader, no one can know about anonClassLoader */
@@ -2294,10 +2310,6 @@ nativeOOM:
 		}
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-		if (J9ROMCLASS_HAS_IDENTITY(romClass)) {
-			classFlags |= J9ClassHasIdentity;
-		}
-
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 		if (J9_ARE_ALL_BITS_SET(romClass->optionalFlags, J9_ROMCLASS_OPTINFO_IMPLICITCREATION_ATTRIBUTE)) {
 			U_16 implicitCreationFlags = getImplicitCreationFlags(romClass);
