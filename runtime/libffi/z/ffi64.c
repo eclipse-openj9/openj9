@@ -766,9 +766,11 @@ ffi_prep_args (unsigned char *stack, extended_cif *ecif)
 
 }
 
+/*======================== End of Routine ============================*/
+
 /**
- * Helper functions to know if the given struct needed to be treated for Complex
- * type for Float or Doubles
+ * Helper functions to know if the given struct needs to be treated for complex
+ * type for float or double
  */
 unsigned short
 get_ffi_element_type_in_struct(ffi_type *arg_type)
@@ -809,8 +811,6 @@ ffi_check_struct_for_complex(ffi_type *arg_type)
   }
   return arg_type->type;
 }
-
-/*======================== End of Routine ============================*/
 
 /*====================================================================*/
 /*                                                                    */
@@ -1023,7 +1023,6 @@ ffi_call(ffi_cif *cif,
   switch (cif->abi)
     {
       case FFI_SYSV:
-        {
         if (cif->arg_types != NULL)
           ffi_call_SYSV(fn, &ecif, cif->flags, ecif.rvalue, cif->bytes, cif->nargs, (*cif->arg_types)->size);
         else
@@ -1032,7 +1031,6 @@ ffi_call(ffi_cif *cif,
 	printf("called_ffi_call_sysv nargs=%d\n",cif->nargs);
 #endif
         break;
-        }
       case FFI_CEL4RO31:
         ffi_call_CEL4RO31(fn, &ecif);
         break;

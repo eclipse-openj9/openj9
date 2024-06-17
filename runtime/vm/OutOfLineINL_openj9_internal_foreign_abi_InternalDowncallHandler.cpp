@@ -111,7 +111,7 @@ OutOfLineINL_openj9_internal_foreign_abi_InternalDowncallHandler_initCifNativeTh
 		rc = GOTO_THROW_CURRENT_EXCEPTION;
 		setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
 		goto done;
-	/* Only intended for strut as the primitive's ffi_type is non-null */
+	/* Only intended for struct as the primitive's ffi_type is non-null */
 	} else if ((NULL == returnType)
 				|| (((FFI_TYPE_STRUCT == returnType->type)
 #if defined(J9ZOS390)
@@ -148,11 +148,11 @@ OutOfLineINL_openj9_internal_foreign_abi_InternalDowncallHandler_initCifNativeTh
 			} else if ((NULL == argTypes[argIndex])
 						|| (((FFI_TYPE_STRUCT == argTypes[argIndex]->type)
 #if defined(J9ZOS390)
-							|| (FFI_TYPE_STRUCT_FF == returnType->type)
-							|| (FFI_TYPE_STRUCT_DD == returnType->type)
+							|| (FFI_TYPE_STRUCT_FF == argTypes[argIndex]->type)
+							|| (FFI_TYPE_STRUCT_DD == argTypes[argIndex]->type)
 #endif /* defined(J9ZOS390) */
-						) && (NULL == argTypes[argIndex]->elements)))
-			{
+						) && (NULL == argTypes[argIndex]->elements))
+			) {
 				rc = GOTO_THROW_CURRENT_EXCEPTION;
 				setNativeOutOfMemoryError(currentThread, 0, 0);
 				goto freeAllMemoryThenExit;

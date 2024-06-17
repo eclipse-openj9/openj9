@@ -35,11 +35,11 @@ FFISYS CELQPRLG DSASIZE=DSASZ,PSECT=ASP
 
          LGR 5,14              Copy of parameter types
 *Reset registers used in code gen
-         LA  0,0             GPR counter
-         LA  14,0            FPR counter
-         LA  7,0             Offset in the arg area
-         LA  10,0            Offset in array of parm types
-         LA  6,0             Offset in stored parm values
+          LA  0,0             GPR counter
+          LA  14,0            FPR counter
+          LA  7,0             Offset in the arg area
+          LA  10,0            Offset in array of parm types
+          LA  6,0             Offset in stored parm values
 
 *bytes, we need to allocate space for the dummy argument
 *that holds the return value pointer
