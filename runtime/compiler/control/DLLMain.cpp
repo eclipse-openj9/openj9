@@ -562,16 +562,24 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
             if (isAOT && !isJIT && TR::Options::getAOTCmdLineOptions()->getOption(TR_NoStoreAOT))
                  TR::Options::getCmdLineOptions()->setOption(TR_DisableInterpreterProfiling, true);
 
+            // If -Xnojit, then recompilation is not supported
+            if (!TR::Options::canJITCompile())
+               {
+               TR::Options::getJITCmdLineOptions()->setAllowRecompilation(false);
+               TR::Options::getAOTCmdLineOptions()->setAllowRecompilation(false);
+               }
 
-            if (!TR::Options::canJITCompile()) // -Xnojit, then recompilation is not supported
-                                              // Ensure JIT and AOT flags are set appropriately
-              {
-              TR::Options::getAOTCmdLineOptions()->setAllowRecompilation(false);
-              TR::Options::getAOTCmdLineOptions()->setOption(TR_DisableCHOpts);
-
-              TR::Options::getJITCmdLineOptions()->setAllowRecompilation(false);
-              TR::Options::getJITCmdLineOptions()->setOption(TR_DisableCHOpts);
-              }
+            // if AOT is not possible and recompilation is disabled,
+            // disable CH Table opts
+            if (!TR::Options::sharedClassCache())
+               {
+               if (!TR::Options::getJITCmdLineOptions()->allowRecompilation()
+                   || !TR::Options::getAOTCmdLineOptions()->allowRecompilation())
+                  {
+                  TR::Options::getAOTCmdLineOptions()->setOption(TR_DisableCHOpts);
+                  TR::Options::getJITCmdLineOptions()->setOption(TR_DisableCHOpts);
+                  }
+               }
 
             if (!isJIT)
                {
