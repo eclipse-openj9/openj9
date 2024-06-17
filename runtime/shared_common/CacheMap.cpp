@@ -6329,18 +6329,21 @@ SH_CacheMap::matchAotMethod(MethodSpecTable* specTable, IDATA numSpecs, J9UTF8* 
 			sigMatch = true;
 		} else {
 			const char *methodSig = (const char *)J9UTF8_DATA(romMethodSig);
-			const char *sigStart = (const char *)memchr(methodSig, '(', J9UTF8_LENGTH(romMethodSig)) + 1;
+			const char *sigStart = (const char *)memchr(methodSig, '(', J9UTF8_LENGTH(romMethodSig));
 			const char *sigEnd = (const char *)memchr(methodSig, ')', J9UTF8_LENGTH(romMethodSig));
 
 			if ((NULL == sigStart) || (NULL == sigEnd) || (sigEnd <= sigStart)) {
 				sigMatch = false;
 			} else {
-				/* Use string between '(' and ')' only */
+				/* Use string between '(' and ')' only. */
 				IDATA sigLength = sigEnd - sigStart - 1;
 
-				sigMatch = (TRUE == wildcardMatch(specTable[i].methodSigMatchFlag,
-												  (const char *)specTable[i].methodSig, specTable[i].methodSigLength,
-												  sigStart, sigLength));
+				sigMatch = (TRUE == wildcardMatch(
+								specTable[i].methodSigMatchFlag,
+								(const char *)specTable[i].methodSig,
+								specTable[i].methodSigLength,
+								sigStart,
+								sigLength));
 			}
 		}
 
