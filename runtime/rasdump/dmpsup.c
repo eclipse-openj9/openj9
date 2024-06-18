@@ -125,7 +125,7 @@ static void triggerAbend(void);
 /*
  * this code causes omrsig to be looked up dynamically and for the local functions to pass through to it.
  */
-typedef sig_handler_t (*omrsig_primary_signal_Type)(int sig, sig_handler_t disp);
+typedef sighandler_t (*omrsig_primary_signal_Type)(int sig, sighandler_t disp);
 typedef int (*omrsig_handler_Type)(int sig, void *siginfo, void *uc);
 
 static omrsig_primary_signal_Type omrsig_primary_signal_Static;
@@ -162,8 +162,8 @@ unloadOMRSIG(J9PortLibrary *portLib)
 	omrsigHandle = 0;
 }
 
-sig_handler_t
-omrsig_primary_signal(int sig, sig_handler_t disp)
+sighandler_t
+omrsig_primary_signal(int sig, sighandler_t disp)
 {
 	if (NULL == omrsig_primary_signal_Static)
 		return NULL;
