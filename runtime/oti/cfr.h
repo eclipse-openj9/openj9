@@ -837,13 +837,7 @@ typedef struct J9CfrMethod {
 #define CFR_BC_goto_w 200
 #define CFR_BC_jsr_w 201
 #define CFR_BC_breakpoint 202  			/* Reserved opcodes */
-#define CFR_BC_aconst_init 203
-#define CFR_BC_withfield 204
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-#define CFR_BC_MaxDefined CFR_BC_withfield
-#else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 #define CFR_BC_MaxDefined CFR_BC_jsr_w
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 #define CFR_BC_impdep1 254
 #define CFR_BC_impdep2 255
 #define CFR_BC_invokehandle 232 		/* JSR 292 internals */
