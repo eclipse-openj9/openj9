@@ -976,8 +976,8 @@ loadNonArrayClass(J9VMThread* vmThread, J9Module *j9module, U_8* className, UDAT
 
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	if (J9_IS_STRING_DESCRIPTOR(className, classNameLength)) {
-		className += 1; /* 1 for 'L' or 'Q' */
-		classNameLength -= 2; /* 2 for 'L'/'Q' and ';' */
+		className += 1; /* 1 for 'L' */
+		classNameLength -= 2; /* 2 for 'L' and ';' */
 	}
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 

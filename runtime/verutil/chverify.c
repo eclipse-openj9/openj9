@@ -31,7 +31,7 @@
  * Methods, other than <init> and <clinit> cannot contain '<' or '>'.
  * Classes can contain '[' only at the front if they are array classes.
  * Classes can end with ';' only if they are array classes for class file major version < 62
- * 				For class major file version >= 62. They can be array classes or descriptors of form "LClassName;" or "QClassName;".
+ * 				For class major file version >= 62. They can be array classes or descriptors of form "LClassName;".
  * Classes can contain '/'
  * 		if not the first character,
  * 		if not the last character,
@@ -88,7 +88,7 @@ checkNameImpl (J9CfrConstantPoolInfo * info, BOOLEAN isClass, BOOLEAN isMethod, 
 				if (J9_ARE_ALL_BITS_SET(info->flags1, CFR_CLASS_FILE_VERSION_SUPPORT_FLATTENABLE_VALUE_TYPE)) {
 					/* If CFR_CLASS_FILE_VERSION_SUPPORT_FLATTENABLE_VALUE_TYPE is set (class major file version >= 62)
 					 * Valid at the end of array classes
-					 * or descriptors of form "LClassName;" or "QClassName;".
+					 * or descriptors of form "LClassName;".
 					 */
 					if ((arity || IS_REF_OR_VAL_SIGNATURE(*info->bytes))
 						&& ((c + 1) == end)
@@ -225,7 +225,7 @@ bcvIsReferenceTypeDescriptor(J9CfrConstantPoolInfo * info) {
 		/* All referencetype descriptors must be more than one character long */
 		result = FALSE;
 	} else if (('[' == bytes[0]) || /* Check if bytes is an ArrayType descriptor */
-		((';' == bytes[length - 1]) && (('L' == bytes[0]) || ('Q' == bytes[0]))) /* Check if bytes is a StandardReferenceType or DeclaredPrimitiveType descriptor */
+		((';' == bytes[length - 1]) && ('L' == bytes[0])) /* Check if bytes is a StandardReferenceType descriptor */
 	) {
 		result = TRUE;
 	}
