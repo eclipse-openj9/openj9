@@ -47,6 +47,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import javax.management.ListenerNotFoundException;
@@ -1316,12 +1317,12 @@ public class TestManagementFactory {
 				System.out.println("lockOwnerName ti1: " + ti1.getLockOwnerName() + " ti2: " + ti2.getLockOwnerName());
 				LockInfo li1 = ti1.getLockInfo();
 				LockInfo li2 = ti2.getLockInfo();
-				if (!li2.equals(li1)) {
+				if (!Objects.equals(li2, li1)) {
 					System.out.println("lockInfo ti1: " + li1 + " ti2: " + li2);
 				}
 				StackTraceElement[] st1 = ti1.getStackTrace();
 				StackTraceElement[] st2 = ti2.getStackTrace();
-				if (!st2.equals(st1)) {
+				if (!Objects.equals(st2, st1)) {
 					System.out.println("stackTrace length ti1: " + st1.length + " ti2: " + st2.length);
 					if (st1.length == st2.length) {
 						for (int i = 0; i < st1.length; i++) {
