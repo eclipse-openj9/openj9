@@ -1164,6 +1164,8 @@
    java_lang_invoke_VarHandleByteArrayAsX_ArrayHandle_method,
    java_lang_invoke_VarHandleByteArrayAsX_ByteBufferHandle_method,
 
+   java_lang_invoke_VarHandleSegmentAsX_method,
+
    // Clone and Deep Copy
    java_lang_J9VMInternals_is32Bit,
    java_lang_J9VMInternals_isClassModifierPublic,

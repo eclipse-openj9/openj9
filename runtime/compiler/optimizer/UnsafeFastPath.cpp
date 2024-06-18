@@ -151,6 +151,7 @@ static bool isVarHandleOperationMethodOnArray(TR::RecognizedMethod rm)
       case TR::java_lang_invoke_VarHandleX_Array_method:
       case TR::java_lang_invoke_VarHandleByteArrayAsX_ArrayHandle_method:
       case TR::java_lang_invoke_VarHandleByteArrayAsX_ByteBufferHandle_method:
+      case TR::java_lang_invoke_VarHandleSegmentAsX_method:
 #else
       case TR::java_lang_invoke_ArrayVarHandle_ArrayVarHandleOperations_OpMethod:
       case TR::java_lang_invoke_ByteArrayViewVarHandle_ByteArrayViewVarHandleOperations_OpMethod:
@@ -188,6 +189,7 @@ static bool isVarHandleOperationMethodOnNonStaticField(TR::RecognizedMethod rm)
       case TR::java_lang_invoke_VarHandleX_Array_method:
       case TR::java_lang_invoke_VarHandleByteArrayAsX_ArrayHandle_method:
       case TR::java_lang_invoke_VarHandleByteArrayAsX_ByteBufferHandle_method:
+      case TR::java_lang_invoke_VarHandleSegmentAsX_method:
 #else
       case TR::java_lang_invoke_InstanceFieldVarHandle_InstanceFieldVarHandleOperations_OpMethod:
       case TR::java_lang_invoke_ArrayVarHandle_ArrayVarHandleOperations_OpMethod:
