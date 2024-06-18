@@ -2552,9 +2552,6 @@ old_slow_jitResolveFlattenableField(J9VMThread *currentThread)
 	if (!resolved) {
 		UDATA resolveFlags = J9_RESOLVE_FLAG_RUNTIME_RESOLVE;
 		switch(resolveType) {
-		case J9TR_FLAT_RESOLVE_WITHFIELD:
-			resolveFlags |= J9_RESOLVE_FLAG_WITH_FIELD;
-			break;
 		case J9TR_FLAT_RESOLVE_GETFIELD:
 			break;
 		case J9TR_FLAT_RESOLVE_PUTFIELD:

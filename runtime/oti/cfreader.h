@@ -78,9 +78,6 @@
 
 #define	CFR_METHOD_NAME_INIT	1
 #define	CFR_METHOD_NAME_CLINIT	2
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-#define	CFR_METHOD_NAME_NEW		3
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 #define	CFR_METHOD_NAME_INVALID	-1
 
 /* Macros. */

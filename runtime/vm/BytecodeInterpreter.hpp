@@ -9769,170 +9769,6 @@ done:
 		return GOTO_DONE;
 	}
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-	VMINLINE VM_BytecodeAction
-	aconst_init(REGISTER_ARGS_LIST)
-	{
-retry:
-		VM_BytecodeAction rc = EXECUTE_BYTECODE;
-		const U_16 index = *(U_16*)(_pc + 1);
-		J9ConstantPool * const ramConstantPool = J9_CP_FROM_METHOD(_literals);
-		J9RAMClassRef * const ramCPEntry = ((J9RAMClassRef*)ramConstantPool) + index;
-		J9Class * volatile resolvedClass = ramCPEntry->value;
-
-		if ((NULL != resolvedClass) && J9_IS_J9CLASS_VALUETYPE(resolvedClass) && !VM_VMHelpers::classRequiresInitialization(_currentThread, resolvedClass)) {
-			_pc += 3;
-			*(j9object_t*)--_sp = resolvedClass->flattenedClassCache->defaultValue;
-			goto done;
-		}
-
-		buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
-		updateVMStruct(REGISTER_ARGS);
-
-		if (NULL == resolvedClass) {
-			resolveClassRef(_currentThread, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE | J9_RESOLVE_FLAG_INIT_CLASS);
-		} else if (!J9_IS_J9CLASS_VALUETYPE(resolvedClass)) {
-			J9UTF8 *badClassName = J9ROMCLASS_CLASSNAME(resolvedClass->romClass);
-			setCurrentExceptionNLSWithArgs(_currentThread, J9NLS_VM_ERROR_BYTECODE_CLASSREF_MUST_BE_VALUE_TYPE, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, J9UTF8_LENGTH(badClassName), J9UTF8_DATA(badClassName));
-		} else if (VM_VMHelpers::classRequiresInitialization(_currentThread, resolvedClass)) {
-			initializeClass(_currentThread, resolvedClass);
-		}
-
-		VMStructHasBeenUpdated(REGISTER_ARGS);
-
-		if (immediateAsyncPending()) {
-			rc = GOTO_ASYNC_CHECK;
-			goto done;
-		} else if (VM_VMHelpers::exceptionPending(_currentThread)) {
-			rc = GOTO_THROW_CURRENT_EXCEPTION;
-			goto done;
-		}
-
-		restoreGenericSpecialStackFrame(REGISTER_ARGS);
-
-		goto retry;
-done:
-		return rc;
-	}
-
-	VMINLINE VM_BytecodeAction
-	withfield(REGISTER_ARGS_LIST)
-	{
-retry:
-		VM_BytecodeAction rc = EXECUTE_BYTECODE;
-		U_16 const index = *(U_16 *)(_pc + 1);
-		J9ConstantPool * const ramConstantPool = J9_CP_FROM_METHOD(_literals);
-		J9RAMFieldRef * const ramFieldRef = ((J9RAMFieldRef *)ramConstantPool) + index;
-		UDATA const flags = ramFieldRef->flags;
-		UDATA const valueOffset = ramFieldRef->valueOffset;
-		j9object_t copyObjectRef = NULL;
-		J9Class *objectRefClass = NULL;
-
-		/* In a resolved field, flags will have the J9FieldFlagResolved bit set, thus
-		 * having a higher value than any valid valueOffset.
-		 *
-		 * This check avoids the need for a barrier, as it will only succeed if flags
-		 * and valueOffset have both been updated. It is crucial that we do not treat
-		 * a field ref as resolved if only one of the two values has been set (by
-		 * another thread that is in the middle of a resolve).
-		 */
-		if (!VM_VMHelpers::instanceFieldRefIsResolved(flags, valueOffset)) {
-			/* Field is unresolved */
-			J9Method *method = _literals;
-			buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
-			updateVMStruct(REGISTER_ARGS);
-			resolveInstanceFieldRef(_currentThread, method, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE | J9_RESOLVE_FLAG_WITH_FIELD, NULL);
-			VMStructHasBeenUpdated(REGISTER_ARGS);
-			if (immediateAsyncPending()) {
-				rc = GOTO_ASYNC_CHECK;
-				goto done;
-			} else if (VM_VMHelpers::exceptionPending(_currentThread)) {
-				rc = GOTO_THROW_CURRENT_EXCEPTION;
-				goto done;
-			}
-			restoreGenericSpecialStackFrame(REGISTER_ARGS);
-			goto retry;
-		}
-		{
-			j9object_t originalObjectRef = *(j9object_t *)(_sp + (J9_ARE_ALL_BITS_SET(flags, J9FieldSizeDouble) ? 2 : 1));
-
-			if (NULL == originalObjectRef) {
-				rc = THROW_NPE;
-				goto done;
-			}
-
-			objectRefClass = J9OBJECT_CLAZZ(_currentThread, originalObjectRef);
-
-			if (!J9_IS_J9CLASS_VALUETYPE(objectRefClass)) {
-				J9UTF8 *badClassName = J9ROMCLASS_CLASSNAME(objectRefClass->romClass);
-				setCurrentExceptionNLSWithArgs(_currentThread, J9NLS_VM_ERROR_BYTECODE_OBJECTREF_MUST_BE_VALUE_TYPE, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, J9UTF8_LENGTH(badClassName), J9UTF8_DATA(badClassName));
-				rc = GOTO_THROW_CURRENT_EXCEPTION;
-				goto done;
-			}
-
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-			if (J9_ARE_ALL_BITS_SET(flags, J9FieldFlagIsNullRestricted)) {
-				j9object_t valueref = *(j9object_t*)_sp;
-				if (NULL == valueref) {
-					rc = THROW_NPE;
-					goto done;
-				}
-			}
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
-
-			/* need to zero memset the memory so padding bytes are zeroed for memcmp-like comparisons */
-			copyObjectRef = VM_ValueTypeHelpers::cloneValueType(_currentThread, _objectAccessBarrier, _objectAllocate, objectRefClass, originalObjectRef, true);
-			if (NULL == copyObjectRef) {
-				buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
-				updateVMStruct(REGISTER_ARGS);
-				copyObjectRef = VM_ValueTypeHelpers::cloneValueType(_currentThread, _objectAccessBarrier, _objectAllocate, objectRefClass, originalObjectRef, false);
-				VMStructHasBeenUpdated(REGISTER_ARGS);
-				restoreGenericSpecialStackFrame(REGISTER_ARGS);
-				if (J9_UNEXPECTED(NULL == copyObjectRef)) {
-					rc = THROW_HEAP_OOM;
-					goto done;
-				}
-			}
-		}
-		{
-			UDATA const objectHeaderSize = J9VMTHREAD_OBJECT_HEADER_SIZE(_currentThread);
-			bool const isVolatile = (0 != (flags & J9AccVolatile));
-			UDATA const newValueOffset = valueOffset + objectHeaderSize;
-
-			if (J9_ARE_ALL_BITS_SET(flags, J9FieldSizeDouble)) {
-				_objectAccessBarrier.inlineMixedObjectStoreU64(_currentThread, copyObjectRef, newValueOffset, *(U_64*)_sp, isVolatile);
-				_sp += 2;
-			} else if (J9_ARE_ALL_BITS_SET(flags, J9FieldFlagObject)) {
-				VM_ValueTypeHelpers::putFlattenableField(_currentThread, _objectAccessBarrier, ramFieldRef, copyObjectRef, *(j9object_t*)_sp);
-				_sp += 1;
-			} else {
-				U_32 value = *(U_32*)_sp;
-				switch(flags & J9FieldTypeMask) {
-				case J9FieldTypeBoolean:
-					value &= 1;
-					break;
-				case J9FieldTypeByte:
-					value = (U_32)(I_32)(I_8)value;
-					break;
-				case J9FieldTypeChar:
-					value &= 0xFFFF;
-					break;
-				case J9FieldTypeShort:
-					value = (U_32)(I_32)(I_16)value;
-					break;
-				}
-				_objectAccessBarrier.inlineMixedObjectStoreU32(_currentThread, copyObjectRef, newValueOffset, value, isVolatile);
-				_sp += 1;
-			}
-		}
-
-		*(j9object_t *)_sp = copyObjectRef;
-		_pc += 3;
-done:
-		return rc;
-	}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
-
 protected:
 
 public:
@@ -10216,13 +10052,8 @@ public:
 #else /* DEBUG_VERSION */
 		JUMP_TABLE_ENTRY(JBunimplemented), /* 0xCA(202) */
 #endif /* DEBUG_VERSION */
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-		JUMP_TABLE_ENTRY(JBaconst_init), /* 0xCB(203) */
-		JUMP_TABLE_ENTRY(JBwithfield), /* 0xCC(204) */
-#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		JUMP_TABLE_ENTRY(JBunimplemented), /* 0xCB(203) */
 		JUMP_TABLE_ENTRY(JBunimplemented), /* 0xCC(204) */
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		JUMP_TABLE_ENTRY(JBunimplemented), /* 0xCD(205) */
 		JUMP_TABLE_ENTRY(JBunimplemented), /* 0xCE(206) */
 		JUMP_TABLE_ENTRY(JBunimplemented), /* 0xCF(207) */
@@ -11944,14 +11775,6 @@ executeBytecodeFromLocal:
 		JUMP_TARGET(JBimpdep2):
 			/* No single step for this bytecode */
 			PERFORM_ACTION(impdep2(REGISTER_ARGS));
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-		JUMP_TARGET(JBaconst_init):
-			SINGLE_STEP();
-			PERFORM_ACTION(aconst_init(REGISTER_ARGS));
-		JUMP_TARGET(JBwithfield):
-			SINGLE_STEP();
-			PERFORM_ACTION(withfield(REGISTER_ARGS));
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 #if defined(USE_COMPUTED_GOTO)
 		cJBunimplemented:
 #else

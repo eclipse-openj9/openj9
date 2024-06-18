@@ -426,11 +426,6 @@ static VMINLINE bool
 isConstructor(J9ROMMethod *romMethod)
 {
 	bool rc = (!J9ROMMETHOD_IS_STATIC(romMethod)) && isSpecialMethod(romMethod);
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-	if (!rc) {
-		rc = J9ROMMETHOD_IS_UNNAMED_FACTORY(romMethod);
-	}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	return rc;
 }
 

@@ -257,11 +257,7 @@ buildStackFromMethodSignature( J9BytecodeVerificationData *verifyData, UDATA **s
 
 		/* In the <init> method of Object the type of this is Object.  In other <init> methods, the type of this is uninitializedThis */
 		if ((classIndex != BCV_JAVA_LANG_OBJECT_INDEX)
-			&& (J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(utf8string), J9UTF8_LENGTH(utf8string), "<init>")
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-				|| J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(utf8string), J9UTF8_LENGTH(utf8string), "<vnew>")
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
-			)
+			&& J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(utf8string), J9UTF8_LENGTH(utf8string), "<init>")
 		) {
 			PUSH(BCV_SPECIAL_INIT | (classIndex << BCV_CLASS_INDEX_SHIFT));
 			isUninitializedThis = TRUE;
