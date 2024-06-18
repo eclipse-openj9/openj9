@@ -37,20 +37,13 @@ getSendSlotsFromSignature(const U_8* signature)
 		case '[':
 			/* skip all '['s */
 			for (i++; signature[i] == '['; i++);
-			if ((signature[i] == 'L')
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-				|| (signature[i] == 'Q')
-#endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
-			) {
+			if (signature[i] == 'L') {
 				/* FALL THRU */
 			} else {
 				sendArgs++;
 				break;
 			}
 		case 'L':
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-		case 'Q':
-#endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
 			for (i++; signature[i] != ';'; i++);
 			sendArgs++;
 			break;

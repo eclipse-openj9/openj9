@@ -972,9 +972,6 @@ fillInJValue(char signatureType, jvalue * jvaluePtr, void * valueAddress, j9obje
 			memcpy(&(jvaluePtr->d), valueAddress, 8);
 			break;
 		case 'L':
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-		case 'Q':
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 			object = *((j9object_t*) valueAddress);
 			if (object == NULL) {
 				jvaluePtr->l = NULL;

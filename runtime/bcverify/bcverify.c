@@ -1166,9 +1166,6 @@ printMethod (J9BytecodeVerificationData * verifyData)
 			break;
 
 		case 'L':
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-		case 'Q':
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 			i++;
 			while(string[i] != ';')
 			{
@@ -1225,9 +1222,6 @@ printMethod (J9BytecodeVerificationData * verifyData)
 				break;
 
 			case 'L':
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-			case 'Q':
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 				i++;
 				while(string[i] != ';')
 				{
