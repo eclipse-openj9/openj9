@@ -24,33 +24,33 @@
 #include "jvmti_internal.h"
 
 typedef struct J9JVMTIMonitorStats {
-	J9JavaVM * vm;
-	J9VMThread * currentThread;
+	J9JavaVM *vm;
+	J9VMThread *currentThread;
 	j9object_t lockObject;
 	UDATA numWaiting;
 	UDATA waitingCntr;
 	UDATA numBlocked;
 	UDATA blockedCntr;
-	jthread * waiting;
-	jthread * blocked;
+	jthread *waiting;
+	jthread *blocked;
 } J9JVMTIMonitorStats;
 
-static void findMonitorThreads(J9VMThread * vmThread, J9JVMTIMonitorStats * pStats);
+static void findMonitorThreads(J9VMThread *vmThread, J9JVMTIMonitorStats *pStats);
 
 jvmtiError JNICALL
-jvmtiGetObjectSize(jvmtiEnv* env,
+jvmtiGetObjectSize(jvmtiEnv *env,
 	jobject object,
-	jlong* size_ptr)
+	jlong *size_ptr)
 {
-	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
-	jvmtiError rc;
-	J9VMThread * currentThread;
+	J9JavaVM *vm = JAVAVM_FROM_ENV(env);
+	jvmtiError rc = JVMTI_ERROR_NONE;
+	J9VMThread *currentThread = NULL;
 	jlong rv_size = 0;
 
 	Trc_JVMTI_jvmtiGetObjectSize2_Entry(env, object, size_ptr);
 
 	rc = getCurrentVMThread(vm, &currentThread);
-	if (rc == JVMTI_ERROR_NONE) {
+	if (JVMTI_ERROR_NONE == rc) {
 		vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
 
 		ENSURE_PHASE_START_OR_LIVE(env);
@@ -72,20 +72,20 @@ done:
 
 
 jvmtiError JNICALL
-jvmtiGetObjectHashCode(jvmtiEnv* env,
+jvmtiGetObjectHashCode(jvmtiEnv *env,
 	jobject object,
-	jint* hash_code_ptr)
+	jint *hash_code_ptr)
 {
-	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
-	jvmtiError rc;
-	J9VMThread * currentThread;
+	J9JavaVM *vm = JAVAVM_FROM_ENV(env);
+	jvmtiError rc = JVMTI_ERROR_NONE;
+	J9VMThread *currentThread = NULL;
 	jint rv_hash_code = 0;
 
 	Trc_JVMTI_jvmtiGetObjectHashCode2_Entry(env, object, hash_code_ptr);
 
 	rc = getCurrentVMThread(vm, &currentThread);
-	if (rc == JVMTI_ERROR_NONE) {
-		j9object_t obj;
+	if (JVMTI_ERROR_NONE == rc) {
+		j9object_t obj = NULL;
 
 		vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
 
@@ -94,7 +94,7 @@ jvmtiGetObjectHashCode(jvmtiEnv* env,
 		ENSURE_JOBJECT_NON_NULL(object);
 		ENSURE_NON_NULL(hash_code_ptr);
 
-		obj = *((j9object_t*) object);
+		obj = *((j9object_t *)object);
 		rv_hash_code = (jint)objectHashCode(vm, obj);
 done:
 		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
@@ -108,13 +108,13 @@ done:
 
 
 jvmtiError JNICALL
-jvmtiGetObjectMonitorUsage(jvmtiEnv* env,
+jvmtiGetObjectMonitorUsage(jvmtiEnv *env,
 	jobject object,
-	jvmtiMonitorUsage* info_ptr)
+	jvmtiMonitorUsage *info_ptr)
 {
-	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
-	jvmtiError rc;
-	J9VMThread * currentThread;
+	J9JavaVM *vm = JAVAVM_FROM_ENV(env);
+	jvmtiError rc = JVMTI_ERROR_NONE;
+	J9VMThread *currentThread;
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	jthread rv_owner = NULL;
 	jint rv_entry_count = 0;
@@ -126,11 +126,11 @@ jvmtiGetObjectMonitorUsage(jvmtiEnv* env,
 	Trc_JVMTI_jvmtiGetObjectMonitorUsage2_Entry(env, object, info_ptr);
 
 	rc = getCurrentVMThread(vm, &currentThread);
-	if (rc == JVMTI_ERROR_NONE) {
-		J9VMThread * owner;
-		J9VMThread * walkThread;
+	if (JVMTI_ERROR_NONE == rc) {
+		J9VMThread *owner = NULL;
+		J9VMThread *walkThread = NULL;
 		UDATA count = 0;
-		J9JVMTIMonitorStats stats;
+		J9JVMTIMonitorStats stats = {0};
 
 		vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
 
@@ -142,12 +142,12 @@ jvmtiGetObjectMonitorUsage(jvmtiEnv* env,
 
 		vm->internalVMFunctions->acquireExclusiveVMAccess(currentThread);
 
-		owner = getObjectMonitorOwner(vm, *((j9object_t*) object), &count);
+		owner = getObjectMonitorOwner(vm, *((j9object_t *) object), &count);
 		memset(info_ptr, 0, sizeof(jvmtiMonitorUsage));
 
 		if (owner && owner->threadObject) {
 			j9object_t target = (j9object_t)owner->threadObject;
-			rv_owner = (jthread) vm->internalVMFunctions->j9jni_createLocalRef((JNIEnv *) currentThread, target);
+			rv_owner = (jthread) vm->internalVMFunctions->j9jni_createLocalRef((JNIEnv *)currentThread, target);
 			rv_entry_count = (jint)count;
 		}
 
@@ -155,21 +155,21 @@ jvmtiGetObjectMonitorUsage(jvmtiEnv* env,
 
 		stats.vm = vm;
 		stats.currentThread = currentThread;
-		stats.lockObject = *((j9object_t*) object);
+		stats.lockObject = *((j9object_t *)object);
 
 		/* Search for blocked/waiting threads (wind up counts) */
 		walkThread = J9_LINKED_LIST_START_DO(vm->mainThread);
-		while (walkThread != NULL) {
+		while (NULL != walkThread) {
 			findMonitorThreads(walkThread, &stats);
 			walkThread = J9_LINKED_LIST_NEXT_DO(vm->mainThread, walkThread);
 		}
 
 		stats.waiting = j9mem_allocate_memory(sizeof(jthread) * stats.numWaiting, J9MEM_CATEGORY_JVMTI_ALLOCATE);
-		if (stats.waiting == NULL) {
+		if (NULL == stats.waiting) {
 			rc = JVMTI_ERROR_OUT_OF_MEMORY;
 		} else {
 			stats.blocked = j9mem_allocate_memory(sizeof(jthread) * stats.numBlocked, J9MEM_CATEGORY_JVMTI_ALLOCATE);
-			if (stats.blocked == NULL) {
+			if (NULL == stats.blocked) {
 				j9mem_free_memory(stats.waiting);
 				rc = JVMTI_ERROR_OUT_OF_MEMORY;
 			} else {
@@ -178,7 +178,7 @@ jvmtiGetObjectMonitorUsage(jvmtiEnv* env,
 
 				/* Record blocked/waiting threads (wind down counts) */
 				walkThread = J9_LINKED_LIST_START_DO(vm->mainThread);
-				while (walkThread != NULL) {
+				while (NULL != walkThread) {
 					findMonitorThreads(walkThread, &stats);
 					walkThread = J9_LINKED_LIST_NEXT_DO(vm->mainThread, walkThread);
 				}
@@ -208,9 +208,9 @@ done:
 
 
 static void
-findMonitorThreads(J9VMThread * vmThread, J9JVMTIMonitorStats * pStats)
+findMonitorThreads(J9VMThread *vmThread, J9JVMTIMonitorStats *pStats)
 {
-	j9object_t lockObject;
+	j9object_t lockObject = NULL;
 
 	UDATA threadState = getVMThreadObjectStatesAll(vmThread, &lockObject, NULL, NULL);
 
@@ -219,10 +219,10 @@ findMonitorThreads(J9VMThread * vmThread, J9JVMTIMonitorStats * pStats)
 
 		j9object_t target = (j9object_t)vmThread->threadObject;
 
-		if (target) {
+		if (NULL == target) {
 
-			J9JavaVM * vm = pStats->vm;
-			JNIEnv * jniEnv = (JNIEnv *)pStats->currentThread;
+			J9JavaVM *vm = pStats->vm;
+			JNIEnv *jniEnv = (JNIEnv *)pStats->currentThread;
 
 			/* CMVC 87023 - the spec is unclear, but from experimentation it appears that 'waiting to be notified' threads
 			 * should appear in both lists
@@ -231,25 +231,25 @@ findMonitorThreads(J9VMThread * vmThread, J9JVMTIMonitorStats * pStats)
 			switch (threadState) {
 				case J9VMTHREAD_STATE_WAITING:
 				case J9VMTHREAD_STATE_WAITING_TIMED:
-					if (pStats->waiting == NULL) {
-						(pStats->numWaiting)++;
+					if (NULL == pStats->waiting) {
+						pStats->numWaiting += 1;
 					} else {
 						if (pStats->waitingCntr < pStats->numWaiting) {
 							pStats->waiting[pStats->waitingCntr] =
 									(jthread) vm->internalVMFunctions->j9jni_createLocalRef(jniEnv, target);
-							++(pStats->waitingCntr);
+							pStats->waitingCntr += 1;
 						}
 					}
 					/* FALL THROUGH */
 
 				case J9VMTHREAD_STATE_BLOCKED:
-					if (pStats->blocked == NULL) {
-						(pStats->numBlocked)++;
+					if (NULL == pStats->blocked) {
+						pStats->numBlocked += 1;
 					} else {
 						if (pStats->blockedCntr < pStats->numBlocked) {
 							pStats->blocked[pStats->blockedCntr] =
 									(jthread) vm->internalVMFunctions->j9jni_createLocalRef(jniEnv, target);
-							++(pStats->blockedCntr);
+							pStats->blockedCntr += 1;
 						}
 					}
 					break;
@@ -260,5 +260,3 @@ findMonitorThreads(J9VMThread * vmThread, J9JVMTIMonitorStats * pStats)
 		}
 	}
 }
-
-
