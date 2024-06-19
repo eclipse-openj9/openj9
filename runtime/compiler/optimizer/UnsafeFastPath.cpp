@@ -51,6 +51,37 @@
 #include "optimizer/TransformUtil.hpp"
 #include "infra/Checklist.hpp"
 
+// Wrap TR_J9MethodBase::isVarHandleOperationMethod() to exclude byte buffer
+// view VarHandle operations from being special-cased by unsafe fast path. (It
+// stays in TR_J9MethodBase::isVarHandleOperationMethod() so that it can still
+// be recognized as always worth inlining.)
+//
+// There are a few obstacles to handling byte buffer view operations properly
+// in unsafe fast path.
+//
+// First, some VarHandleByteArrayAs*$ByteBufferHandle utility methods (index(),
+// indexRO(), address()) do unsafe accesses to fields of a non-array ByteBuffer
+// object and are called from the operation methods. One of these (indexRO())
+// accesses a boolean, and boolean array entries don't have the same shape as
+// boolean fields. Trying to load a field as though it's an array element on a
+// big-endian system results in false even when the field's value is true.
+//
+// Additionally, even for larger types that have only a single representation
+// for both fields and array elements, the null / non-array object case differs
+// from the array case if arraylets or off-heap arrays are in use. This will be
+// a problem for the previously mentioned utility methods, and further:
+//
+// - The operation methods themselves directly do unsafe accesses to fields of
+//   a non-array ByteBuffer object (mostly ByteBuffer.hb).
+//
+// - In the actual access that an operation method is meant to carry out, the
+//   base object can be either an array object or null.
+//
+static bool isVarHandleOperationMethod(TR::RecognizedMethod rm)
+   {
+   return TR_J9MethodBase::isVarHandleOperationMethod(rm)
+      && rm != TR::java_lang_invoke_VarHandleByteArrayAsX_ByteBufferHandle_method;
+   }
 
 static TR::RecognizedMethod getVarHandleAccessMethodFromInlinedCallStack(TR::Compilation* comp, TR::Node* node)
    {
@@ -59,7 +90,7 @@ static TR::RecognizedMethod getVarHandleAccessMethodFromInlinedCallStack(TR::Com
       {
       TR_ResolvedMethod* caller = comp->getInlinedResolvedMethod(callerIndex);
       TR::RecognizedMethod callerRm = caller->getRecognizedMethod();
-      if (TR_J9MethodBase::isVarHandleOperationMethod(callerRm))
+      if (isVarHandleOperationMethod(callerRm))
          {
          return callerRm;
          }
@@ -69,7 +100,7 @@ static TR::RecognizedMethod getVarHandleAccessMethodFromInlinedCallStack(TR::Com
       }
 
    TR::RecognizedMethod rm = comp->getJittedMethodSymbol()->getRecognizedMethod();
-   if (TR_J9MethodBase::isVarHandleOperationMethod(rm))
+   if (isVarHandleOperationMethod(rm))
       return rm;
 
    return TR::unknownMethod;
@@ -104,7 +135,7 @@ static bool isTransformableUnsafeAtomic(TR::Compilation *comp, TR::RecognizedMet
 static bool isKnownUnsafeCaller(TR::RecognizedMethod rm)
    {
 #if defined (J9VM_OPT_OPENJDK_METHODHANDLE)
-   return TR_J9MethodBase::isVarHandleOperationMethod(rm);
+   return isVarHandleOperationMethod(rm);
 #else
    switch (rm)
       {
@@ -148,9 +179,12 @@ static bool isVarHandleOperationMethodOnArray(TR::RecognizedMethod rm)
    switch (rm)
       {
 #if defined (J9VM_OPT_OPENJDK_METHODHANDLE)
+      case TR::java_lang_invoke_VarHandleByteArrayAsX_ByteBufferHandle_method:
+         TR_ASSERT_FATAL(false, "attempt to process ByteBufferHandle method");
+         return false;
+
       case TR::java_lang_invoke_VarHandleX_Array_method:
       case TR::java_lang_invoke_VarHandleByteArrayAsX_ArrayHandle_method:
-      case TR::java_lang_invoke_VarHandleByteArrayAsX_ByteBufferHandle_method:
 #else
       case TR::java_lang_invoke_ArrayVarHandle_ArrayVarHandleOperations_OpMethod:
       case TR::java_lang_invoke_ByteArrayViewVarHandle_ByteArrayViewVarHandleOperations_OpMethod:
@@ -184,10 +218,13 @@ static bool isVarHandleOperationMethodOnNonStaticField(TR::RecognizedMethod rm)
    switch (rm)
       {
 #if defined (J9VM_OPT_OPENJDK_METHODHANDLE)
+      case TR::java_lang_invoke_VarHandleByteArrayAsX_ByteBufferHandle_method:
+         TR_ASSERT_FATAL(false, "attempt to process ByteBufferHandle method");
+         return false;
+
       case TR::java_lang_invoke_VarHandleX_FieldInstanceReadOnlyOrReadWrite_method:
       case TR::java_lang_invoke_VarHandleX_Array_method:
       case TR::java_lang_invoke_VarHandleByteArrayAsX_ArrayHandle_method:
-      case TR::java_lang_invoke_VarHandleByteArrayAsX_ByteBufferHandle_method:
 #else
       case TR::java_lang_invoke_InstanceFieldVarHandle_InstanceFieldVarHandleOperations_OpMethod:
       case TR::java_lang_invoke_ArrayVarHandle_ArrayVarHandleOperations_OpMethod:
@@ -373,10 +410,10 @@ int32_t TR_UnsafeFastPath::perform()
             TR::RecognizedMethod caller = getVarHandleAccessMethodFromInlinedCallStack(comp(), node);
             TR::RecognizedMethod callee = symbol->getRecognizedMethod();
 
-            if (TR_J9MethodBase::isVarHandleOperationMethod(caller))
+            if (isVarHandleOperationMethod(caller))
                recognizedVarHandleOpMethod = caller;
 
-            if (TR_J9MethodBase::isVarHandleOperationMethod(caller) &&
+            if (isVarHandleOperationMethod(caller) &&
                 (isTransformableUnsafeAtomic(comp(), callee) ||
                  symbol->getMethod()->isUnsafeCAS(comp())))
                {
