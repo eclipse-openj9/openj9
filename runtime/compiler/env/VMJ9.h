@@ -1263,15 +1263,6 @@ public:
    TR::Node * testIsClassValueType(TR::Node *j9ClassRefNode);
 
    /**
-    * \brief Load class flags field of the specified class and test whether the primitive value type
-    *        flag is set.
-    * \param j9ClassRefNode A node representing a reference to a \ref J9Class
-    * \return \ref TR::Node that evaluates to a non-zero integer if the class is a primitive value type,
-    *         or zero otherwise
-    */
-   TR::Node * testIsClassPrimitiveValueType(TR::Node *j9ClassRefNode);
-
-   /**
     * \brief Load class flags field of the specified class and test whether the hasIdentity
     *        flag is set.
     * \param j9ClassRefNode A node representing a reference to a \ref J9Class

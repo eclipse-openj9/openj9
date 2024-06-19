@@ -2632,14 +2632,6 @@ public native boolean isPrimitive();
 
 /*[IF INLINE-TYPES]*/
 /**
- * Answers true if the receiver represents a primitive class type. Array classes
- * return false.
- *
- * @return	true if receiver is primitive class type, and false otherwise.
- */
-native boolean isPrimitiveClass();
-
-/**
  * Answers true if the receiver represents a value class type. Array classes
  * return false.
  *
@@ -2661,26 +2653,6 @@ public native boolean isIdentity();
  */
 public Class<?> asNullRestrictedType() {
 	return this;
-}
-
-/**
- * ToDo: add comments for public methods - https://github.com/eclipse-openj9/openj9/issues/13615
- */
-Class<?> asPrimaryType() {
-	// ToDo: this is a temporary implementation - https://github.com/eclipse-openj9/openj9/issues/13615
-	return this;
-}
-Class<?> asValueType() {
-	// ToDo: this is a temporary implementation - https://github.com/eclipse-openj9/openj9/issues/13615
-	return this;
-}
-boolean isPrimaryType() {
-	// ToDo: this is a temporary implementation - https://github.com/eclipse-openj9/openj9/issues/13615
-	return true;
-}
-boolean isPrimitiveValueType() {
-	// ToDo: this is a temporary implementation - https://github.com/eclipse-openj9/openj9/issues/13615
-	return isPrimitiveClass();
 }
 /*[ENDIF] INLINE-TYPES */
 
