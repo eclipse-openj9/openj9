@@ -752,6 +752,16 @@ def cleanWorkspace (KEEP_WORKSPACE) {
     }
 }
 
+def getDockerRegistry(String name) {
+    def i = name.indexOf('/')
+    def defaultDomain = ''
+
+    if (i == -1 || (!name[0..<i].contains('.') && !name[0..<i].contains(':') && name[0..<i] != 'localhost')){
+        return  defaultDomain
+    }
+    return 'https://' + name[0..<i]
+}
+
 def clean_docker_containers() {
     println("Listing docker containers to attempt removal")
     sh "docker ps -a"
@@ -771,8 +781,9 @@ def prepare_docker_environment() {
     // if there is no id found then attempt to pull it
     if (!DOCKER_IMAGE_ID) {
         echo "${DOCKER_IMAGE} not found locally, attempting to pull from dockerhub"
-        dockerCredentialID = variableFile.get_user_credentials_id('dockerhub')
-        docker.withRegistry("", "${dockerCredentialID}") {
+        dockerRegistry = getDockerRegistry(DOCKER_IMAGE)
+        dockerCredentialID = variableFile.get_user_credentials_id(dockerRegistry.replaceAll('https://','') ?: 'dockerhub')
+        docker.withRegistry(dockerRegistry, "${dockerCredentialID}") {
             sh "docker pull ${DOCKER_IMAGE}"
         }
         DOCKER_IMAGE_ID = get_docker_image_id(DOCKER_IMAGE)
