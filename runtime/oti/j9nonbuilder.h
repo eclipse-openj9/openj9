@@ -6101,6 +6101,7 @@ typedef struct J9JavaVM {
 	omrthread_monitor_t cifArgumentTypesCacheMutex;
 	struct J9UpcallThunkHeapList *thunkHeapHead;
 	omrthread_monitor_t thunkHeapListMutex;
+	struct J9HashTable *layoutStrFFITypeTable;
 #endif /* JAVA_SPEC_VERSION >= 16 */
 	struct J9HashTable* ensureHashedClasses;
 #if JAVA_SPEC_VERSION >= 19
@@ -6318,6 +6319,12 @@ typedef struct J9UpcallMetaDataEntry {
 	UDATA thunkAddrValue;
 	J9UpcallMetaData *upcallMetaData;
 } J9UpcallMetaDataEntry;
+
+typedef struct J9LayoutStrFFITypeEntry {
+	U_8 *layoutStr;
+	UDATA layoutStrLength;
+	void *structFFIType;
+} J9LayoutStrFFITypeEntry;
 
 #endif /* JAVA_SPEC_VERSION >= 16 */
 
