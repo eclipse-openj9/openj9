@@ -49,20 +49,21 @@ freeAllStructFFITypes(J9VMThread *currentThread, void *cifNode)
 	}
 }
 
-ffi_type*
-LayoutFFITypeHelpers::getArrayFFIType(char **layout, UDATA nElements) {
+ffi_type *
+LayoutFFITypeHelpers::getArrayFFIType(const char **layout, UDATA nElements)
+{
 	ffi_type *typeFFI = NULL;
 	ffi_type *elementType = NULL;
 	PORT_ACCESS_FROM_JAVAVM(_vm);
 
 	/* A struct starts with "#" plus the count of struct elements,
-	 * followed by the type of struct elements.
+	 * followed by the types of the struct elements.
 	 * e.g. the preprocessed layout of
-	 * struct int_struct{
-	 *                   int elem1,
-	 *                   int elem2
-	 *                  }int_struct[2]
-	 *     is #2[II]
+	 *     struct int_struct {
+	 *         int elem1;
+	 *         int elem2;
+	 *     };
+	 * is "#2[II]".
 	 */
 	if ('#' == **layout) {
 		elementType = getStructFFIType(layout);
@@ -83,7 +84,7 @@ LayoutFFITypeHelpers::getArrayFFIType(char **layout, UDATA nElements) {
 		typeFFI->size = 0;
 		typeFFI->alignment = 0;
 		typeFFI->type = FFI_TYPE_STRUCT;
-		typeFFI->elements = (ffi_type **) j9mem_allocate_memory(sizeof(ffi_type*) * (nElements + 1), J9MEM_CATEGORY_VM_FFI);
+		typeFFI->elements = (ffi_type **)j9mem_allocate_memory(sizeof(ffi_type *) * (nElements + 1), J9MEM_CATEGORY_VM_FFI);
 		if (NULL == typeFFI->elements) {
 			freeStructFFIType(elementType);
 			j9mem_free_memory(typeFFI);
@@ -100,51 +101,117 @@ done:
 	return typeFFI;
 }
 
-ffi_type*
-LayoutFFITypeHelpers::getStructFFIType(char **layout)
+ffi_type *
+LayoutFFITypeHelpers::getStructFFIType(const char **layout)
 {
+	const char *currentLayout = *layout;
+	J9LayoutStrFFITypeEntry *layoutStrFFITypeEntry = NULL;
+	J9LayoutStrFFITypeEntry *resultEntry = NULL;
+	ffi_type **structElements = NULL;
 	ffi_type *typeFFI = NULL;
+	PORT_ACCESS_FROM_JAVAVM(_vm);
+
+	if (NULL == _vm->layoutStrFFITypeTable) {
+		_vm->layoutStrFFITypeTable = createLayoutStrFFITypeTable(_vm);
+		if (NULL == _vm->layoutStrFFITypeTable) {
+			goto freeAllMemoryThenExit;
+		}
+	}
+
+	layoutStrFFITypeEntry = (J9LayoutStrFFITypeEntry *)j9mem_allocate_memory(sizeof(J9LayoutStrFFITypeEntry), J9MEM_CATEGORY_VM_FFI);
+	if (NULL == layoutStrFFITypeEntry) {
+		goto freeAllMemoryThenExit;
+	}
+
+	layoutStrFFITypeEntry->layoutStrLength = getLengthOfStructLayout(currentLayout);
+	if (0 == layoutStrFFITypeEntry->layoutStrLength) {
+		/* Malformed input. */
+		goto freeAllMemoryThenExit;
+	}
+	layoutStrFFITypeEntry->layoutStr = (U_8 *)j9mem_allocate_memory(layoutStrFFITypeEntry->layoutStrLength + 1, J9MEM_CATEGORY_VM_FFI);
+	if (NULL == layoutStrFFITypeEntry->layoutStr) {
+		goto freeAllMemoryThenExit;
+	}
+
+	memcpy(layoutStrFFITypeEntry->layoutStr, currentLayout, layoutStrFFITypeEntry->layoutStrLength);
+	layoutStrFFITypeEntry->layoutStr[layoutStrFFITypeEntry->layoutStrLength] = '\0';
+
+	/* Search the hashtable for the ffi_type if the same struct layout string exists. */
+	resultEntry = findLayoutStrFFIType(_vm->layoutStrFFITypeTable, layoutStrFFITypeEntry);
+	if (NULL != resultEntry) {
+		j9mem_free_memory(layoutStrFFITypeEntry->layoutStr);
+		j9mem_free_memory(layoutStrFFITypeEntry);
+		/* Return the duplicate ffi_type for the same struct if found in the hashtable. */
+		typeFFI = (ffi_type *)(resultEntry->structFFIType);
+		/* Reach the end of the nested struct layout string so as to move to
+		 * the next element in getStructFFITypeElements() if exists.
+		 */
+		(*layout) += resultEntry->layoutStrLength - 1;
+		goto done;
+	}
+
+	/* Skip over the '#' case. */
+	(*layout) = currentLayout + 1;
+
 	/* The struct layout is incremented for the '[' case in getStructFFITypeElements(), in which case
 	 * the remaining layout string is then traversed when getStructFFITypeElements() is called recursively.
 	 */
-	(*layout) += 1; // skip over the '#' case
-	ffi_type **structElements = getStructFFITypeElements(layout);
-	PORT_ACCESS_FROM_JAVAVM(_vm);
+	structElements = getStructFFITypeElements(layout);
+	if (NULL == structElements) {
+		goto freeAllMemoryThenExit;
+	}
+
 	typeFFI = (ffi_type *)j9mem_allocate_memory(sizeof(ffi_type), J9MEM_CATEGORY_VM_FFI);
 	if (NULL == typeFFI) {
-		setNativeOutOfMemoryError(_currentThread, 0, 0);
-		goto done;
+		goto freeAllMemoryThenExit;
 	}
 	typeFFI->size = 0;
 	typeFFI->alignment = 0;
 	typeFFI->type = FFI_TYPE_STRUCT;
 	typeFFI->elements = structElements;
 
+	/* Add the created ffi_type for the struct to the hashtable
+	 * if the corresponding layout string doesn't exist.
+	 */
+	layoutStrFFITypeEntry->structFFIType = (void *)typeFFI;
+	resultEntry = addLayoutStrFFIType(_vm->layoutStrFFITypeTable, layoutStrFFITypeEntry);
+	if (NULL == resultEntry) {
+		freeStructFFIType(typeFFI);
+		typeFFI = NULL;
+		goto freeAllMemoryThenExit;
+	}
+
 done:
 	return typeFFI;
+
+freeAllMemoryThenExit:
+	if (NULL != layoutStrFFITypeEntry) {
+		j9mem_free_memory(layoutStrFFITypeEntry->layoutStr);
+		j9mem_free_memory(layoutStrFFITypeEntry);
+	}
+	freeStructFFITypeElements(structElements);
+	setNativeOutOfMemoryError(_currentThread, 0, 0);
+	goto done;
 }
 
-ffi_type**
-LayoutFFITypeHelpers::getStructFFITypeElements(char **layout)
+ffi_type **
+LayoutFFITypeHelpers::getStructFFITypeElements(const char **layout)
 {
 	PORT_ACCESS_FROM_JAVAVM(_vm);
-
-	char *currentLayout = *layout;
-	ffi_type **elements = NULL;
+	const char *currentLayout = *layout;
 	UDATA nElements = 0;
 	UDATA elementCount = getIntFromLayout(&currentLayout);
-
-	elements = (ffi_type **) j9mem_allocate_memory(sizeof(ffi_type *) * (elementCount + 1), J9MEM_CATEGORY_VM_FFI);
+	ffi_type **elements = (ffi_type **)j9mem_allocate_memory(sizeof(ffi_type *) * (elementCount + 1), J9MEM_CATEGORY_VM_FFI);
 	if (NULL == elements) {
 		goto done;
 	}
 	elements[elementCount] = NULL;
-	currentLayout += 1; // Skip over the '[' case to the struct elements
+	currentLayout += 1; /* Skip over the '[' case to the struct elements. */
 
 	while ('\0' != *currentLayout) {
 		char symb = *currentLayout;
 		switch (symb) {
-		case '#': // Start of nested struct e.g. #5[...]
+		case '#': /* Start of nested struct. e.g. #5[...] */
 		{
 			ffi_type *result = getStructFFIType(&currentLayout);
 			if (NULL == result) {
@@ -156,9 +223,9 @@ LayoutFFITypeHelpers::getStructFFITypeElements(char **layout)
 			nElements += 1;
 			break;
 		}
-		case ']': // End of struct
+		case ']': /* End of struct. */
 			*layout = currentLayout;
-			/* The last element of struct needs to be NULL for FFI_TYPE_STRUCT */
+			/* The last element of struct needs to be NULL for FFI_TYPE_STRUCT. */
 			elements[nElements] = NULL;
 			goto done;
 		case '0':
@@ -178,7 +245,7 @@ LayoutFFITypeHelpers::getStructFFITypeElements(char **layout)
 			 * 2) "5:#2[II]" for a struct array with 5 struct elements (each stuct contains 2 integers).
 			 */
 			UDATA nArray = getIntFromLayout(&currentLayout);
-			currentLayout += 1; // Skip over the separator of an array (":") to the elements
+			currentLayout += 1; /* Skip over the separator of an array (":") to the elements. */
 			ffi_type *result = getArrayFFIType(&currentLayout, nArray);
 			if (NULL == result) {
 				freeStructFFITypeElements(elements);
@@ -204,10 +271,10 @@ void
 LayoutFFITypeHelpers::freeStructFFIType(ffi_type *ffiType)
 {
 	if ((NULL != ffiType)
-			&& ((FFI_TYPE_STRUCT == ffiType->type)
+		&& ((FFI_TYPE_STRUCT == ffiType->type)
 #if defined(J9ZOS390) && defined(J9VM_ENV_DATA64)
-				|| (FFI_TYPE_STRUCT_FF == ffiType->type)
-				|| (FFI_TYPE_STRUCT_DD == ffiType->type)
+			|| (FFI_TYPE_STRUCT_FF == ffiType->type)
+			|| (FFI_TYPE_STRUCT_DD == ffiType->type)
 #endif /* defined(J9ZOS390) && defined(J9VM_ENV_DATA64) */
 	)) {
 		if (NULL != ffiType->elements) {

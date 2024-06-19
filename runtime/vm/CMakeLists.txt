@@ -136,6 +136,7 @@ set(main_sources
 	jvmrisup.c
 	KeyHashTable.c
 	LayoutFFITypeHelpers.cpp
+	LayoutFFITypeTable.cpp
 	leconditionexceptionsup.c
 	linearswalk.c
 	lockwordconfig.c
