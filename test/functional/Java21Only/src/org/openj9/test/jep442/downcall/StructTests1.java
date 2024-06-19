@@ -21,25 +21,30 @@
  */
 package org.openj9.test.jep442.downcall;
 
-import org.testng.annotations.Test;
 import org.testng.Assert;
-import org.testng.AssertJUnit;
-
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.VarHandle;
+import org.testng.annotations.Test;
 
 import java.lang.foreign.Arena;
-import java.lang.foreign.Linker;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.GroupLayout;
+import java.lang.foreign.Linker;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemoryLayout.PathElement;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.SegmentAllocator;
 import java.lang.foreign.SequenceLayout;
 import java.lang.foreign.SymbolLookup;
-import java.lang.foreign.ValueLayout;
-import static java.lang.foreign.ValueLayout.*;
+import static java.lang.foreign.ValueLayout.ADDRESS;
+import static java.lang.foreign.ValueLayout.JAVA_BOOLEAN;
+import static java.lang.foreign.ValueLayout.JAVA_BYTE;
+import static java.lang.foreign.ValueLayout.JAVA_CHAR;
+import static java.lang.foreign.ValueLayout.JAVA_DOUBLE;
+import static java.lang.foreign.ValueLayout.JAVA_FLOAT;
+import static java.lang.foreign.ValueLayout.JAVA_INT;
+import static java.lang.foreign.ValueLayout.JAVA_LONG;
+import static java.lang.foreign.ValueLayout.JAVA_SHORT;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.VarHandle;
 
 /**
  * Test cases for JEP 442: Foreign Linker API (Third Preview) for argument/return struct in downcall.
@@ -368,7 +373,7 @@ public class StructTests1 {
 			boolHandle2.set(structSegmt2, true);
 
 			MemorySegment resultAddr = (MemorySegment)mh.invoke(structSegmt1, structSegmt2);
-			MemorySegment resultSegmt = resultAddr.reinterpret(structLayout.byteSize());;
+			MemorySegment resultSegmt = resultAddr.reinterpret(structLayout.byteSize());
 			Assert.assertEquals(resultSegmt.get(JAVA_BOOLEAN, 0), false);
 			Assert.assertEquals(resultSegmt.get(JAVA_BOOLEAN, 1), true);
 		}
@@ -710,7 +715,7 @@ public class StructTests1 {
 			byteHandle2.set(structSegmt2, (byte)13);
 
 			MemorySegment resultAddr = (MemorySegment)mh.invoke(structSegmt1, structSegmt2);
-			MemorySegment resultSegmt = resultAddr.reinterpret(structLayout.byteSize());;
+			MemorySegment resultSegmt = resultAddr.reinterpret(structLayout.byteSize());
 			Assert.assertEquals(resultSegmt.get(JAVA_BYTE, 0), 49);
 			Assert.assertEquals(resultSegmt.get(JAVA_BYTE, 1), 24);
 		}
@@ -1033,7 +1038,7 @@ public class StructTests1 {
 			charHandle2.set(structSegmt2, 'D');
 
 			MemorySegment resultAddr = (MemorySegment)mh.invoke(structSegmt1, structSegmt2);
-			MemorySegment resultSegmt = resultAddr.reinterpret(structLayout.byteSize());;
+			MemorySegment resultSegmt = resultAddr.reinterpret(structLayout.byteSize());
 			Assert.assertEquals(resultSegmt.get(JAVA_CHAR, 0), 'C');
 			Assert.assertEquals(resultSegmt.get(JAVA_CHAR, 2), 'E');
 		}
@@ -1375,7 +1380,7 @@ public class StructTests1 {
 			shortHandle2.set(structSegmt2, (short)67);
 
 			MemorySegment resultAddr = (MemorySegment)mh.invoke(structSegmt1, structSegmt2);
-			MemorySegment resultSegmt = resultAddr.reinterpret(structLayout.byteSize());;
+			MemorySegment resultSegmt = resultAddr.reinterpret(structLayout.byteSize());
 			Assert.assertEquals(resultSegmt.get(JAVA_SHORT, 0), 134);
 			Assert.assertEquals(resultSegmt.get(JAVA_SHORT, 2), 112);
 		}
@@ -1761,7 +1766,7 @@ public class StructTests1 {
 			intHandle2.set(structSegmt2, 33445566);
 
 			MemorySegment resultAddr = (MemorySegment)mh.invoke(structSegmt1, structSegmt2);
-			MemorySegment resultSegmt = resultAddr.reinterpret(structLayout.byteSize());;
+			MemorySegment resultSegmt = resultAddr.reinterpret(structLayout.byteSize());
 			Assert.assertEquals(resultSegmt.get(JAVA_INT, 0), 110224466);
 			Assert.assertEquals(resultSegmt.get(JAVA_INT, 4), 89113354);
 		}
@@ -2144,7 +2149,7 @@ public class StructTests1 {
 			longHandle2.set(structSegmt2, 3344556677L);
 
 			MemorySegment resultAddr = (MemorySegment)mh.invoke(structSegmt1, structSegmt2);
-			MemorySegment resultSegmt = resultAddr.reinterpret(structLayout.byteSize());;
+			MemorySegment resultSegmt = resultAddr.reinterpret(structLayout.byteSize());
 			Assert.assertEquals(resultSegmt.get(JAVA_LONG, 0), 11022446688L);
 			Assert.assertEquals(resultSegmt.get(JAVA_LONG, 8), 8911335576L);
 		}
@@ -2485,7 +2490,7 @@ public class StructTests1 {
 			floatHandle2.set(structSegmt2, 13.45F);
 
 			MemorySegment resultAddr = (MemorySegment)mh.invoke(structSegmt1, structSegmt2);
-			MemorySegment resultSegmt = resultAddr.reinterpret(structLayout.byteSize());;
+			MemorySegment resultSegmt = resultAddr.reinterpret(structLayout.byteSize());
 			Assert.assertEquals(resultSegmt.get(JAVA_FLOAT, 0), 49.46F, 0.01F);
 			Assert.assertEquals(resultSegmt.get(JAVA_FLOAT, 4), 24.68F, 0.01F);
 		}
@@ -2923,7 +2928,7 @@ public class StructTests1 {
 			doubleHandle2.set(structSegmt2, 44.555D);
 
 			MemorySegment resultAddr = (MemorySegment)mh.invoke(structSegmt1, structSegmt2);
-			MemorySegment resultSegmt = resultAddr.reinterpret(structLayout.byteSize());;
+			MemorySegment resultSegmt = resultAddr.reinterpret(structLayout.byteSize());
 			Assert.assertEquals(resultSegmt.get(JAVA_DOUBLE, 0), 44.666D, 0.001D);
 			Assert.assertEquals(resultSegmt.get(JAVA_DOUBLE, 8), 66.888D, 0.001D);
 		}

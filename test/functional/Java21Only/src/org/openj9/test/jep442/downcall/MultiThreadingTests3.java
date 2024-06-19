@@ -21,17 +21,15 @@
  */
 package org.openj9.test.jep442.downcall;
 
-import org.testng.annotations.Test;
 import org.testng.Assert;
-import org.testng.AssertJUnit;
+import org.testng.annotations.Test;
 
-import java.lang.invoke.MethodHandle;
-
-import java.lang.foreign.Linker;
 import java.lang.foreign.FunctionDescriptor;
+import java.lang.foreign.Linker;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.SymbolLookup;
-import static java.lang.foreign.ValueLayout.*;
+import static java.lang.foreign.ValueLayout.JAVA_INT;
+import java.lang.invoke.MethodHandle;
 
 /**
  * Test cases for JEP 442: Foreign Linker API (Third Preview) for primitive types in downcall,
@@ -87,6 +85,7 @@ public class MultiThreadingTests3 implements Thread.UncaughtExceptionHandler {
 
 		thr1.setUncaughtExceptionHandler(this);
 		thr2.setUncaughtExceptionHandler(this);
+		initException = null;
 
 		thr1.start();
 		thr2.start();

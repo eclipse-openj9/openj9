@@ -21,13 +21,9 @@
  */
 package org.openj9.test.jep454.upcall;
 
-import org.testng.annotations.Test;
 import org.testng.Assert;
-import org.testng.AssertJUnit;
 import static org.testng.Assert.fail;
-
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.VarHandle;
+import org.testng.annotations.Test;
 
 import java.lang.foreign.Arena;
 import java.lang.foreign.FunctionDescriptor;
@@ -37,10 +33,11 @@ import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemoryLayout.PathElement;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.SegmentAllocator;
-import java.lang.foreign.SequenceLayout;
 import java.lang.foreign.SymbolLookup;
-import java.lang.foreign.ValueLayout;
-import static java.lang.foreign.ValueLayout.*;
+import static java.lang.foreign.ValueLayout.ADDRESS;
+import static java.lang.foreign.ValueLayout.JAVA_INT;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.VarHandle;
 
 /**
  * Test cases for JEP 454: Foreign Linker API in upcall,

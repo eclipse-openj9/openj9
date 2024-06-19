@@ -21,21 +21,26 @@
  */
 package org.openj9.test.jep454.downcall;
 
-import org.testng.annotations.Test;
 import org.testng.Assert;
-import org.testng.AssertJUnit;
-
-import java.lang.invoke.MethodHandle;
+import org.testng.annotations.Test;
 
 import java.lang.foreign.Arena;
-import java.lang.foreign.Linker;
 import java.lang.foreign.FunctionDescriptor;
+import java.lang.foreign.Linker;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.SequenceLayout;
 import java.lang.foreign.SymbolLookup;
-import java.lang.foreign.ValueLayout;
-import static java.lang.foreign.ValueLayout.*;
+import static java.lang.foreign.ValueLayout.ADDRESS;
+import static java.lang.foreign.ValueLayout.JAVA_BOOLEAN;
+import static java.lang.foreign.ValueLayout.JAVA_BYTE;
+import static java.lang.foreign.ValueLayout.JAVA_CHAR;
+import static java.lang.foreign.ValueLayout.JAVA_DOUBLE;
+import static java.lang.foreign.ValueLayout.JAVA_FLOAT;
+import static java.lang.foreign.ValueLayout.JAVA_INT;
+import static java.lang.foreign.ValueLayout.JAVA_LONG;
+import static java.lang.foreign.ValueLayout.JAVA_SHORT;
+import java.lang.invoke.MethodHandle;
 
 /**
  * Test cases for JEP 454: Foreign Linker API for argument/return struct in the
@@ -47,7 +52,6 @@ import static java.lang.foreign.ValueLayout.*;
  */
 @Test(groups = { "level.sanity" })
 public class HeapArrayTests2 {
-	private static boolean isAixOS = System.getProperty("os.name").toLowerCase().contains("aix");
 	private static Linker linker = Linker.nativeLinker();
 	private static int arrayLength = 1024 * 1024;
 

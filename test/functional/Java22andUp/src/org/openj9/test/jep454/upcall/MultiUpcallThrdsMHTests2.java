@@ -21,20 +21,17 @@
  */
 package org.openj9.test.jep454.upcall;
 
-import org.testng.annotations.Test;
 import org.testng.Assert;
-import org.testng.AssertJUnit;
-
-import java.lang.invoke.MethodHandle;
+import org.testng.annotations.Test;
 
 import java.lang.foreign.Arena;
-import java.lang.foreign.Linker;
 import java.lang.foreign.FunctionDescriptor;
-import java.lang.foreign.MemoryLayout;
+import java.lang.foreign.Linker;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.SymbolLookup;
-import java.lang.foreign.ValueLayout;
-import static java.lang.foreign.ValueLayout.*;
+import static java.lang.foreign.ValueLayout.ADDRESS;
+import static java.lang.foreign.ValueLayout.JAVA_INT;
+import java.lang.invoke.MethodHandle;
 
 /**
  * Test cases for JEP 454: Foreign Linker API intended for
@@ -79,6 +76,7 @@ public class MultiUpcallThrdsMHTests2 implements Thread.UncaughtExceptionHandler
 			}
 		};
 		thr1.setUncaughtExceptionHandler(this);
+		initException = null;
 		thr1.start();
 
 		Thread thr2 = new Thread() {

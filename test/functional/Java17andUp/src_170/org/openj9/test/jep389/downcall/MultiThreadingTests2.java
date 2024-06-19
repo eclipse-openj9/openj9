@@ -21,9 +21,8 @@
  */
 package org.openj9.test.jep389.downcall;
 
-import org.testng.annotations.Test;
 import org.testng.Assert;
-import org.testng.AssertJUnit;
+import org.testng.annotations.Test;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
@@ -31,7 +30,7 @@ import java.lang.invoke.VarHandle;
 
 import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.CLinker;
-import static jdk.incubator.foreign.CLinker.*;
+import static jdk.incubator.foreign.CLinker.C_INT;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryLayout;
@@ -40,7 +39,6 @@ import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SegmentAllocator;
 import jdk.incubator.foreign.SymbolLookup;
-import jdk.incubator.foreign.ValueLayout;
 
 /**
  * Test cases for JEP 389: Foreign Linker API (Incubator) for primitive types in downcall,
@@ -120,6 +118,7 @@ public class MultiThreadingTests2 implements Thread.UncaughtExceptionHandler {
 
 		thr1.setUncaughtExceptionHandler(this);
 		thr2.setUncaughtExceptionHandler(this);
+		initException = null;
 
 		thr1.start();
 		thr2.start();

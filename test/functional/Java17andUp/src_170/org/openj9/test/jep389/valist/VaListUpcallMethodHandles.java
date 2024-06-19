@@ -24,13 +24,20 @@ package org.openj9.test.jep389.valist;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
-import java.nio.ByteOrder;
 import java.lang.invoke.MethodType;
 import static java.lang.invoke.MethodType.methodType;
 import java.lang.invoke.VarHandle;
+import java.nio.ByteOrder;
 
-import jdk.incubator.foreign.CLinker;
-import static jdk.incubator.foreign.CLinker.*;
+import static jdk.incubator.foreign.CLinker.C_CHAR;
+import static jdk.incubator.foreign.CLinker.C_DOUBLE;
+import static jdk.incubator.foreign.CLinker.C_FLOAT;
+import static jdk.incubator.foreign.CLinker.C_INT;
+import static jdk.incubator.foreign.CLinker.C_LONG;
+import static jdk.incubator.foreign.CLinker.C_LONG_LONG;
+import static jdk.incubator.foreign.CLinker.C_POINTER;
+import static jdk.incubator.foreign.CLinker.C_SHORT;
+import jdk.incubator.foreign.CLinker.VaList;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryHandles;
@@ -39,7 +46,6 @@ import jdk.incubator.foreign.MemoryLayout.PathElement;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SegmentAllocator;
-import jdk.incubator.foreign.SequenceLayout;
 import jdk.incubator.foreign.ValueLayout;
 
 /**
