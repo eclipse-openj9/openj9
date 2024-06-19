@@ -2404,10 +2404,10 @@ J9NLS_VM_CRIU_CHECK_TRANSITION_TO_DEBUG_INTERPRETER_FAILED.user_response=View CR
 
 J9NLS_VM_UNRECOGNISED_SUN_MISC_UNSAFE_MEMORY_ACCESS_VALUE=Value specified to --sun-misc-unsafe-memory-access not recognized: '%s'
 # START NON-TRANSLATABLE
-J9NLS_VM_UNRECOGNISED_CMD_LINE_OPT.sample_input_1=allow
-J9NLS_VM_UNRECOGNISED_CMD_LINE_OPT.explanation=The value specified is not known.
-J9NLS_VM_UNRECOGNISED_CMD_LINE_OPT.system_action=The JVM will fail to start.
-J9NLS_VM_UNRECOGNISED_CMD_LINE_OPT.user_response=Change the value to one of "allow", "warn", "debug" or "deny".
+J9NLS_VM_UNRECOGNISED_SUN_MISC_UNSAFE_MEMORY_ACCESS_VALUE.sample_input_1=disallow
+J9NLS_VM_UNRECOGNISED_SUN_MISC_UNSAFE_MEMORY_ACCESS_VALUE.explanation=The value specified is not known.
+J9NLS_VM_UNRECOGNISED_SUN_MISC_UNSAFE_MEMORY_ACCESS_VALUE.system_action=The JVM will fail to start.
+J9NLS_VM_UNRECOGNISED_SUN_MISC_UNSAFE_MEMORY_ACCESS_VALUE.user_response=Change the value to one of "allow", "warn", "debug" or "deny".
 # END NON-TRANSLATABLE
 
 J9NLS_VM_OPENJ9_JFR_METADATA_FILE_NOT_FOUND=Either the %s environment variable is not set, or the file does not exist in the specified location.
