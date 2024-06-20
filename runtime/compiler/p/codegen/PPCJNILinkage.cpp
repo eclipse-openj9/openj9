@@ -134,7 +134,7 @@ TR::Register *J9::Power::JNILinkage::buildDirectDispatch(TR::Node *callNode)
    // The specialCaseJNI shortcut will mangle register dependencies and use system/C dispatch.
    // The addresses of the optimized helpers in the server process will not necessarily
    // match the client-side addresses, so we can't take this shortcut in JITServer mode.
-   bool specialCaseJNI = (crc32m1 || crc32m2 || crc32m3) && !comp()->requiresSpineChecks();
+   bool specialCaseJNI = (crc32m1 || crc32m2 || crc32m3) && !comp()->requiresSpineChecks() && !TR::Compiler->om.isOffHeapAllocationEnabled();
 
 #ifdef J9VM_OPT_JITSERVER
    specialCaseJNI = specialCaseJNI && !comp()->isOutOfProcessCompilation();

@@ -278,6 +278,7 @@ bool J9::ValuePropagation::transformIndexOfKnownString(
    // Keep track of whether or not all constraints are global.
    bool isGlobal = true;
    bool isGlobalQuery;
+   int32_t headerAdjustment = TR::Compiler->om.isOffHeapAllocationEnabled() ? 0 : TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
 
    TR::VPConstraint *sourceConstraint = getConstraint(sourceStringNode, isGlobalQuery);
    isGlobal &= isGlobalQuery;
@@ -392,12 +393,12 @@ bool J9::ValuePropagation::transformIndexOfKnownString(
             {
             if (is16Bit)
                {
-               uintptr_t element = TR::Compiler->om.getAddressOfElement(comp(), string, (2 * i) + TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
+               uintptr_t element = TR::Compiler->om.getAddressOfElement(comp(), string, (2 * i) + headerAdjustment);
                ch  = *((uint16_t*)element);
                }
             else
                {
-               uintptr_t element = TR::Compiler->om.getAddressOfElement(comp(), string, i + TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
+               uintptr_t element = TR::Compiler->om.getAddressOfElement(comp(), string, i + headerAdjustment);
                ch  = *((uint8_t*)element);
                }
             }
@@ -437,12 +438,12 @@ bool J9::ValuePropagation::transformIndexOfKnownString(
          {
          if (is16Bit)
             {
-            uintptr_t element = TR::Compiler->om.getAddressOfElement(comp(), string, (2 * start) + TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
+            uintptr_t element = TR::Compiler->om.getAddressOfElement(comp(), string, (2 * start) + headerAdjustment);
             ch  = *((uint16_t*)element);
             }
          else
             {
-            uintptr_t element = TR::Compiler->om.getAddressOfElement(comp(), string, start + TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
+            uintptr_t element = TR::Compiler->om.getAddressOfElement(comp(), string, start + headerAdjustment);
             ch  = *((uint8_t*)element);
             }
          }
@@ -525,12 +526,12 @@ bool J9::ValuePropagation::transformIndexOfKnownString(
             {
             if (is16Bit)
                {
-               uintptr_t element = TR::Compiler->om.getAddressOfElement(comp(), string, (2 * i) + TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
+               uintptr_t element = TR::Compiler->om.getAddressOfElement(comp(), string, (2 * i) + headerAdjustment);
                ch  = *((uint16_t*)element);
                }
             else
                {
-               uintptr_t element = TR::Compiler->om.getAddressOfElement(comp(), string, i + TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
+               uintptr_t element = TR::Compiler->om.getAddressOfElement(comp(), string, i + headerAdjustment);
                ch  = *((uint8_t*)element);
                }
             }

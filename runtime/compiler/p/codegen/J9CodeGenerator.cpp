@@ -94,7 +94,7 @@ J9::Power::CodeGenerator::initialize()
 
    if (comp->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P8) && comp->target().cpu.supportsFeature(OMR_FEATURE_PPC_HAS_VSX) &&
       comp->target().is64Bit() && !comp->getOption(TR_DisableFastStringIndexOf) &&
-      !TR::Compiler->om.canGenerateArraylets())
+      !TR::Compiler->om.canGenerateArraylets() && !TR::Compiler->om.isOffHeapAllocationEnabled())
       cg->setSupportsInlineStringIndexOf();
 
    static bool disableStringInflateIntrinsic = feGetEnv("TR_DisableStringInflateIntrinsic") != NULL;

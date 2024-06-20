@@ -663,9 +663,10 @@ J9::ObjectModel::isDiscontiguousArray(TR::Compilation* comp, uintptr_t objectPoi
  *    Pointer to the array.
  *
  * \parm offset
- *    The offset of the element in bytes. It should contain the array header. If
- *    objectPointer is a discontiguous array, offset should be an integer that's
- *    calculated as if the array was a contiguous array.
+ *    The offset of the element in bytes. It should contain the array header,
+ *    except when OffHeap is enabled. If objectPointer is a discontiguous array,
+ *    offset should be an integer that's calculated as if the array was a
+ *    contiguous array.
  *
  * \return
  *    The address of the element.
@@ -679,6 +680,16 @@ J9::ObjectModel::getAddressOfElement(TR::Compilation* comp, uintptr_t objectPoin
              offset < TR::Compiler->om.getArrayLengthInBytes(comp, objectPointer) + TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), "Array is out of bound");
 
    // If the array is contiguous, return the addition of objectPointer and offset
+#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+   // When OffHeap is enabled, offset trees and passed value do not include headerSize.
+   // If Unsafe accesses reaches this helper offset would not have headerSize included
+   // as Unsafe.arrayBaseOffset returns 0 when OffHeap is enabled.
+   if (TR::Compiler->om.isOffHeapAllocationEnabled())
+      {
+      objectPointer = *(uintptr_t *)(objectPointer + TR::Compiler->om.offsetOfContiguousDataAddrField());
+      return objectPointer + offset;
+      }
+#endif /* J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION */
    if (!TR::Compiler->om.isDiscontiguousArray(comp, objectPointer))
       return objectPointer + offset;
 

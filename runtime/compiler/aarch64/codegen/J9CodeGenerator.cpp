@@ -82,16 +82,16 @@ J9::ARM64::CodeGenerator::initialize()
       {
       cg->setSupportsInlineVectorizedMismatch();
       }
-   if ((!TR::Compiler->om.canGenerateArraylets()) && (!comp->getOption(TR_DisableSIMDStringHashCode)))
+   if ((!TR::Compiler->om.canGenerateArraylets()) && (!comp->getOption(TR_DisableSIMDStringHashCode)) && !TR::Compiler->om.isOffHeapAllocationEnabled())
       {
       cg->setSupportsInlineStringHashCode();
       }
-   if ((!TR::Compiler->om.canGenerateArraylets()) && (!comp->getOption(TR_DisableFastStringIndexOf)))
+   if ((!TR::Compiler->om.canGenerateArraylets()) && (!comp->getOption(TR_DisableFastStringIndexOf)) && !TR::Compiler->om.isOffHeapAllocationEnabled())
       {
       cg->setSupportsInlineStringIndexOf();
       }
    static bool disableInlineStringLatin1Inflate = feGetEnv("TR_disableInlineStringLatin1Inflate") != NULL;
-   if ((!TR::Compiler->om.canGenerateArraylets()) && (!disableInlineStringLatin1Inflate))
+   if ((!TR::Compiler->om.canGenerateArraylets()) && (!disableInlineStringLatin1Inflate) && !TR::Compiler->om.isOffHeapAllocationEnabled())
       {
       cg->setSupportsInlineStringLatin1Inflate();
       }
@@ -262,7 +262,7 @@ J9::ARM64::CodeGenerator::suppressInliningOfRecognizedMethod(TR::RecognizedMetho
    if (method == TR::java_util_zip_CRC32C_updateBytes ||
        method == TR::java_util_zip_CRC32C_updateDirectByteBuffer)
       {
-      return (!TR::Compiler->om.canGenerateArraylets()) && comp->target().cpu.supportsFeature(OMR_FEATURE_ARM64_CRC32) && (!disableCRC32);
+      return (!TR::Compiler->om.canGenerateArraylets() && !TR::Compiler->om.isOffHeapAllocationEnabled()) && comp->target().cpu.supportsFeature(OMR_FEATURE_ARM64_CRC32) && (!disableCRC32);
       }
    return false;
    }

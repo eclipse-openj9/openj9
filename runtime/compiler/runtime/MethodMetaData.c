@@ -1395,6 +1395,7 @@ void walkJITFrameSlotsForInternalPointers(J9StackWalkState * walkState,  U_8 ** 
       internalPointersInRegisters = 1;
 
 
+   BOOLEAN offHeapAllocationEnabled = walkState->walkThread->javaVM->memoryManagerFunctions->j9gc_off_heap_allocation_enabled(walkState->walkThread->javaVM);
    while (i < numDistinctPinningArrays)
       {
       U_8 currPinningArrayIndex = *(tempJitDescriptionCursor++);
@@ -1402,6 +1403,9 @@ void walkJITFrameSlotsForInternalPointers(J9StackWalkState * walkState,  U_8 ** 
       J9Object ** currPinningArrayCursor = (J9Object **) (((U_8 *) walkState->bp) + (offsetOfFirstInternalPtr + (((U_16) currPinningArrayIndex * sizeof(UDATA)))));
       J9Object *oldPinningArrayAddress = *((J9Object **) currPinningArrayCursor);
       J9Object * newPinningArrayAddress;
+      void *oldDataAddr = 0, *newDataAddr = 0;
+      if (offHeapAllocationEnabled && oldPinningArrayAddress)
+         oldDataAddr = walkState->walkThread->javaVM->memoryManagerFunctions->j9gc_objaccess_getArrayObjectDataAddress(walkState->walkThread, (J9IndexableObject*)oldPinningArrayAddress);
       IDATA displacement = 0;
 
 
@@ -1410,7 +1414,13 @@ void walkJITFrameSlotsForInternalPointers(J9StackWalkState * walkState,  U_8 ** 
 #endif
       walkState->objectSlotWalkFunction(walkState->walkThread, walkState, currPinningArrayCursor, currPinningArrayCursor);
       newPinningArrayAddress = *((J9Object **) currPinningArrayCursor);
-      displacement = (IDATA) (((UDATA)newPinningArrayAddress) - ((UDATA)oldPinningArrayAddress));
+      if (offHeapAllocationEnabled && newPinningArrayAddress)
+         {
+         newDataAddr = walkState->walkThread->javaVM->memoryManagerFunctions->j9gc_objaccess_getArrayObjectDataAddress(walkState->walkThread, (J9IndexableObject*)newPinningArrayAddress);
+         displacement = (IDATA) (((UDATA)newDataAddr) - ((UDATA)oldDataAddr));
+         }
+      else
+         displacement = (IDATA) (((UDATA)newPinningArrayAddress) - ((UDATA)oldPinningArrayAddress));
       ++(walkState->slotIndex);
 
 #ifdef J9VM_INTERP_STACKWALK_TRACING

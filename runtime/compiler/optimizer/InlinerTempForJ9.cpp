@@ -4877,7 +4877,7 @@ TR_J9InlinerPolicy::supressInliningRecognizedInitialCallee(TR_CallSite* callsite
           * When Power gets a fast implementation of TR::java_lang_String_hashCodeImplCompressed, this case can be merged into the case
           * for java_lang_String_hashCodeImplCompressed instead of using a fallthrough.
           */
-         if (!TR::Compiler->om.canGenerateArraylets() &&
+         if (!TR::Compiler->om.canGenerateArraylets() && !TR::Compiler->om.isOffHeapAllocationEnabled() &&
              comp->target().cpu.isPower() && comp->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P8) && comp->target().cpu.supportsFeature(OMR_FEATURE_PPC_HAS_VSX) && !comp->compileRelocatableCode())
                {
                return true;
