@@ -42,6 +42,7 @@ static void tearDownJFR(J9JavaVM *vm);
 static bool flushBufferToGlobal(J9VMThread *currentThread, J9VMThread *flushThread);
 static bool flushAllThreadBuffers(J9VMThread *currentThread, bool freeBuffers, bool threadEnd);
 static U_8* reserveBuffer(J9VMThread *currentThread, UDATA size);
+static J9JFREvent* reserveBufferWithStackTrace(J9VMThread *currentThread, UDATA eventType, UDATA eventFixedSize);
 static void jfrThreadCreated(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
 static void jfrThreadDestroy(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
 static void jfrClassesUnload(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
@@ -49,7 +50,6 @@ static void jfrVMShutdown(J9HookInterface **hook, UDATA eventNum, void *eventDat
 static void jfrThreadStarting(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
 static void jfrThreadEnd(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
 static void initializeEventFields(J9VMThread *currentThread, J9JFREvent *jfrEvent, UDATA eventType);
-static UDATA collectStackTrace(J9VMThread *currentThread, J9StackWalkState *walkState);
 
 /**
  * Calculate the size in bytes of a JFR event.
@@ -71,6 +71,9 @@ jfrEventSize(J9JFREvent *jfrEvent)
 		break;
 	case J9JFR_EVENT_TYPE_THREAD_END:
 		size = sizeof(J9JFREvent);
+		break;
+	case J9JFR_EVENT_TYPE_THREAD_SLEEP:
+		size = sizeof(J9JFRThreadSleep) + (((J9JFRThreadSleep*)jfrEvent)->stackTraceSize * sizeof(UDATA));
 		break;
 	default:
 		Assert_VM_unreachable();
@@ -250,6 +253,44 @@ done:
 }
 
 /**
+ * Reserve space for an event, initialize the common fields
+ * and attach the stack trace.
+ *
+ * @param currentThread[in] the current J9VMThread
+ * @param eventType[in] the event type
+ * @param eventFixedSize[in] size of the fixed portion of the event
+ *
+ * @returns pointer to the start of the reserved space or NULL if the space could not be reserved
+ */
+static J9JFREvent*
+reserveBufferWithStackTrace(J9VMThread *currentThread, UDATA eventType, UDATA eventFixedSize)
+{
+	J9JFREvent *jfrEvent = NULL;
+	J9StackWalkState *walkState = currentThread->stackWalkState;
+	walkState->walkThread = currentThread;
+	walkState->flags = J9_STACKWALK_CACHE_PCS | J9_STACKWALK_WALK_TRANSLATE_PC |
+			J9_STACKWALK_VISIBLE_ONLY | J9_STACKWALK_INCLUDE_NATIVES | J9_STACKWALK_SKIP_INLINES;
+	walkState->skipCount = 0;
+	UDATA walkRC = currentThread->javaVM->walkStackFrames(currentThread, walkState);
+	if (J9_STACKWALK_RC_NONE == walkRC) {
+		UDATA framesWalked = walkState->framesWalked;
+		UDATA stackTraceBytes = framesWalked * sizeof(UDATA);
+		UDATA eventSize = eventFixedSize + stackTraceBytes;
+		jfrEvent = (J9JFREvent*)reserveBuffer(currentThread, eventSize);
+		if (NULL != jfrEvent) {
+			initializeEventFields(currentThread, jfrEvent, eventType);
+			((J9JFREventWithStackTrace*)jfrEvent)->stackTraceSize = framesWalked;
+			memcpy(((U_8*)jfrEvent) + eventFixedSize, walkState->cache, stackTraceBytes);
+		}
+		freeStackWalkCaches(currentThread, walkState);
+
+	} else {
+		// TODO: tracepoint
+	}
+	return jfrEvent;
+}
+
+/**
  * Hook for new thread being created.
  *
  * @param hook[in] the VM hook interface
@@ -398,21 +439,10 @@ jfrThreadStarting(J9HookInterface **hook, UDATA eventNum, void *eventData, void 
 	j9tty_printf(PORTLIB, "\n!!! thread starting %p %p\n", currentThread, startedThread);
 #endif /* defined(DEBUG) */
 
-	J9StackWalkState *walkState = currentThread->stackWalkState;
-	UDATA walkRC = collectStackTrace(currentThread, walkState);
-	if (J9_STACKWALK_RC_NONE == walkRC) {
-		UDATA framesWalked = walkState->framesWalked;
-		UDATA stackTraceBytes = framesWalked * sizeof(UDATA);
-		UDATA eventSize = sizeof(J9JFRThreadStart) + stackTraceBytes;
-		J9JFRThreadStart *jfrEvent = (J9JFRThreadStart*)reserveBuffer(currentThread, eventSize);
-		if (NULL != jfrEvent) {
-			initializeEventFields(currentThread, (J9JFREvent*)jfrEvent, J9JFR_EVENT_TYPE_THREAD_START);
-			jfrEvent->thread = startedThread;
-			jfrEvent->parentThread = currentThread;
-			jfrEvent->stackTraceSize = framesWalked;
-			memcpy(J9JFRTHREADSTART_STACKTRACE(jfrEvent), walkState->cache, stackTraceBytes);
-		}
-		freeStackWalkCaches(currentThread, walkState);
+	J9JFRThreadStart *jfrEvent = (J9JFRThreadStart*)reserveBufferWithStackTrace(currentThread, J9JFR_EVENT_TYPE_THREAD_START, sizeof(*jfrEvent));
+	if (NULL != jfrEvent) {
+		jfrEvent->thread = startedThread;
+		jfrEvent->parentThread = currentThread;
 	}
 }
 
@@ -441,6 +471,32 @@ jfrThreadEnd(J9HookInterface **hook, UDATA eventNum, void *eventData, void *user
 	}
 }
 
+/**
+ * Hook for thread about to sleep.
+ *
+ * @param hook[in] the VM hook interface
+ * @param eventNum[in] the event number
+ * @param eventData[in] the event data
+ * @param userData[in] the registered user data
+ */
+static void
+jfrVMSleep(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData)
+{
+	J9VMSleepEvent *event = (J9VMSleepEvent *)eventData;
+	J9VMThread *currentThread = event->currentThread;
+
+#if defined(DEBUG)
+	PORT_ACCESS_FROM_VMC(currentThread);
+	j9tty_printf(PORTLIB, "\n!!! thread sleep %p\n", currentThread);
+#endif /* defined(DEBUG) */
+
+	J9JFRThreadSleep *jfrEvent = (J9JFRThreadSleep*)reserveBufferWithStackTrace(currentThread, J9JFR_EVENT_TYPE_THREAD_SLEEP, sizeof(*jfrEvent));
+	if (NULL != jfrEvent) {
+		// TODO: worry about overflow?
+		jfrEvent->time = (event->millis * 1000) + event->nanos;
+	}
+}
+
 jint
 initializeJFR(J9JavaVM *vm)
 {
@@ -465,6 +521,9 @@ initializeJFR(J9JavaVM *vm)
 		goto fail;
 	}
 	if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_THREAD_END, jfrThreadEnd, OMR_GET_CALLSITE(), NULL)) {
+		goto fail;
+	}
+	if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_SLEEP, jfrVMSleep, OMR_GET_CALLSITE(), NULL)) {
 		goto fail;
 	}
 
@@ -514,6 +573,7 @@ tearDownJFR(J9JavaVM *vm)
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_SHUTTING_DOWN, jfrVMShutdown, NULL);
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_THREAD_STARTING, jfrThreadStarting, NULL);
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_THREAD_END, jfrThreadEnd, NULL);
+	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_SLEEP, jfrVMSleep, NULL);
 
 	/* Free global buffer and mutex */
 
@@ -538,7 +598,7 @@ static void
 initializeEventFields(J9VMThread *currentThread, J9JFREvent *event, UDATA eventType)
 {
 	PORT_ACCESS_FROM_VMC(currentThread);
-	event->time = j9time_current_time_millis();
+	event->startTime = j9time_current_time_millis();
 	event->eventType = eventType;
 	event->vmThread = currentThread;
 }
@@ -546,41 +606,10 @@ initializeEventFields(J9VMThread *currentThread, J9JFREvent *event, UDATA eventT
 void
 jfrExecutionSample(J9VMThread *currentThread)
 {
-	J9StackWalkState *walkState = currentThread->stackWalkState;
-	UDATA walkRC = collectStackTrace(currentThread, walkState);
-	if (J9_STACKWALK_RC_NONE == walkRC) {
-		UDATA framesWalked = walkState->framesWalked;
-		UDATA stackTraceBytes = framesWalked * sizeof(UDATA);
-		UDATA eventSize = sizeof(J9JFRExecutionSample) + stackTraceBytes;
-		J9JFRExecutionSample *jfrEvent = (J9JFRExecutionSample*)reserveBuffer(currentThread, eventSize);
-
-#if defined(DEBUG)
-	PORT_ACCESS_FROM_VMC(currentThread);
-	j9tty_printf(PORTLIB, "\n!!! execution sample thread=%p\n", currentThread);
-#endif /* defined(DEBUG) */
-
-		if (NULL != jfrEvent) {
-			initializeEventFields(currentThread, (J9JFREvent*)jfrEvent, J9JFR_EVENT_TYPE_EXECUTION_SAMPLE);
-			jfrEvent->threadState = J9JFR_THREAD_STATE_RUNNING;
-			jfrEvent->stackTraceSize = framesWalked;
-			memcpy(J9JFREXECUTIONSAMPLE_STACKTRACE(jfrEvent), walkState->cache, stackTraceBytes);
-		}
-		freeStackWalkCaches(currentThread, walkState);
+	J9JFRExecutionSample *jfrEvent = (J9JFRExecutionSample*)reserveBufferWithStackTrace(currentThread, J9JFR_EVENT_TYPE_EXECUTION_SAMPLE, sizeof(*jfrEvent));
+	if (NULL != jfrEvent) {
+		jfrEvent->threadState = J9JFR_THREAD_STATE_RUNNING;
 	}
-}
-
-static UDATA
-collectStackTrace(J9VMThread *currentThread, J9StackWalkState *walkState)
-{
-	walkState->walkThread = currentThread;
-	walkState->flags = J9_STACKWALK_CACHE_PCS | J9_STACKWALK_WALK_TRANSLATE_PC |
-			J9_STACKWALK_VISIBLE_ONLY | J9_STACKWALK_INCLUDE_NATIVES | J9_STACKWALK_SKIP_INLINES;
-	walkState->skipCount = 0;
-	UDATA walkRC = currentThread->javaVM->walkStackFrames(currentThread, walkState);
-	if (J9_STACKWALK_RC_NONE != walkRC) {
-		// TODO: tracepoint
-	}
-	return walkRC;
 }
 
 } /* extern "C" */
