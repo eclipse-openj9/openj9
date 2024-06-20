@@ -194,6 +194,7 @@ allocateVMThread(J9JavaVM *vm, omrthread_t osThread, UDATA privateFlags, void *m
 
 	newThread->contiguousIndexableHeaderSize = vm->contiguousIndexableHeaderSize;
 	newThread->discontiguousIndexableHeaderSize = vm->discontiguousIndexableHeaderSize;
+	newThread->unsafeIndexableHeaderSize = vm->unsafeIndexableHeaderSize;
 #if defined(J9VM_ENV_DATA64)
 	newThread->isIndexableDataAddrPresent = vm->isIndexableDataAddrPresent;
 #endif /* defined(J9VM_ENV_DATA64) */

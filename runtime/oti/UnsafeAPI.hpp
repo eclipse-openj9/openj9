@@ -91,7 +91,7 @@ public:
 private:
 
 	static VMINLINE UDATA arrayBase(J9VMThread *currentThread) {
-		return J9VMTHREAD_CONTIGUOUS_INDEXABLE_HEADER_SIZE(currentThread);
+		return J9VMTHREAD_UNSAFE_INDEXABLE_HEADER_SIZE(currentThread);
 	}
 
 	static VMINLINE UDATA logFJ9ObjectSize(J9VMThread *currentThread) {
@@ -526,7 +526,7 @@ public:
 	compareAndSwapObject(J9VMThread *currentThread, MM_ObjectAccessBarrierAPI *objectAccessBarrier, j9object_t object, UDATA offset, j9object_t *compareValue, j9object_t *swapValue)
 	{
 		bool result = false;
-		
+
 		if (VM_VMHelpers::objectIsArray(currentThread, object)) {
 			UDATA index = convertOffsetToIndex(currentThread, offset, logFJ9ObjectSize(currentThread));
 			result = objectAccessBarrier->inlineIndexableObjectCompareAndSwapObject(currentThread, object, index, *compareValue, *swapValue, true);
@@ -550,7 +550,7 @@ public:
 	{
 		UDATA logElementSize = 3;
 		bool result = false;
-		
+
 		if (NULL == object) {
 			result = (compareValue == VM_AtomicSupport::lockCompareExchangeU64((U_64*)offset, compareValue, swapValue));
 		} else {
