@@ -424,11 +424,10 @@ TR_J9EstimateCodeSize::adjustEstimateForConstArgs(TR_CallTarget * target, int32_
 
    // Weight adjustments performed for load consts or boxed primitive arg types can still be beneficial but
    // may require a different adjustment factor.
-   static const char * enableLoadConstArgWeightAdjustment = feGetEnv("TR_enableLoadConstArgWeightAdjustment");
+   static const char * disableLoadConstArgWeightAdjustment = feGetEnv("TR_disableLoadConstArgWeightAdjustment");
 
-   // Weight reduction by numArgs * 4 is done in TR_MultipleCallTargetInliner::applyArgumentHeuristics, but
-   // doing this adjustment this early can have a negative impact on performance in some workloads
-   static const char * enableArgCountWeightAdjustment = feGetEnv("TR_enableArgCountWeightAdjustment");
+   // Weight reduction by numArgs * 4 is done in TR_MultipleCallTargetInliner::applyArgumentHeuristics
+   static const char * disableArgCountWeightAdjustment = feGetEnv("TR_disableArgCountWeightAdjustment");
 
    // This for remaining consistent with TR_MultipleCallTargetInliner::applyArgumentHeuristics
    static const char * envKnownObjWeight = feGetEnv("TR_constClassWeight");
@@ -506,13 +505,13 @@ TR_J9EstimateCodeSize::adjustEstimateForConstArgs(TR_CallTarget * target, int32_
             value *= lessAggressiveAdjustmentFactor;
             heuristicTrace(tracer(),"Setting size from %d to %d because arg is a class ref.", interimWeight, value);
             }
-         else if (enableLoadConstArgWeightAdjustment
+         else if (!disableLoadConstArgWeightAdjustment
                && parmNode->getOpCode().isLoadConst())
             {
             value *= factor;
             heuristicTrace(tracer(),"Setting size from %d to %d because arg is load const.", interimWeight, value);
             }
-         else if (enableLoadConstArgWeightAdjustment
+         else if (!disableLoadConstArgWeightAdjustment
                && argClassName
                && parmClassName
                && strncmp(argClassName, parmClassName, parmClassNameLen) != 0
@@ -535,7 +534,7 @@ TR_J9EstimateCodeSize::adjustEstimateForConstArgs(TR_CallTarget * target, int32_
             break;
             }
          }
-      if (enableArgCountWeightAdjustment)
+      if (!disableArgCountWeightAdjustment)
          {
          value -= (argMap.getSize() * 4);
          heuristicTrace(tracer(),"Reduced size estimate to %d (subtract num args * 4)", value);
