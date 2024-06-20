@@ -12029,9 +12029,13 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
          return true;
 
       case TR::java_lang_String_hashCodeImplDecompressed:
-         if (!TR::Compiler->om.canGenerateArraylets() && comp->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P8) && comp->target().cpu.supportsFeature(OMR_FEATURE_PPC_HAS_VSX) && !comp->compileRelocatableCode()
+         if (!TR::Compiler->om.canGenerateArraylets()
+             && !TR::Compiler->om.isOffHeapAllocationEnabled()
+             && comp->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P8)
+             && comp->target().cpu.supportsFeature(OMR_FEATURE_PPC_HAS_VSX)
+             && !comp->compileRelocatableCode()
 #ifdef J9VM_OPT_JITSERVER
-               && !comp->isOutOfProcessCompilation()
+             && !comp->isOutOfProcessCompilation()
 #endif
             )
             {

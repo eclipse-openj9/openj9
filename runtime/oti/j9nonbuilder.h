@@ -358,33 +358,47 @@ typedef struct J9JFRBuffer {
 
 /* JFR event structures */
 
-#define J9FR_EVENT_COMMON_FIELDS \
-	I_64 time; \
+#define J9JFR_EVENT_COMMON_FIELDS \
+	I_64 startTime; \
 	UDATA eventType; \
 	struct J9VMThread *vmThread;
 
+#define J9JFR_EVENT_WITH_STACKTRACE_FIELDS \
+	J9JFR_EVENT_COMMON_FIELDS \
+	UDATA stackTraceSize;
+
 typedef struct J9JFREvent {
-	J9FR_EVENT_COMMON_FIELDS
+	J9JFR_EVENT_COMMON_FIELDS
 } J9JFREvent;
+
+typedef struct J9JFREventWithStackTrace {
+	J9JFR_EVENT_WITH_STACKTRACE_FIELDS
+} J9JFREventWithStackTrace;
 
 /* Variable-size structure - stackTraceSize worth of UDATA follow the fixed portion */
 typedef struct J9JFRExecutionSample {
-	J9FR_EVENT_COMMON_FIELDS
+	J9JFR_EVENT_WITH_STACKTRACE_FIELDS
 	UDATA threadState;
-	UDATA stackTraceSize;
 } J9JFRExecutionSample;
 
 #define J9JFREXECUTIONSAMPLE_STACKTRACE(jfrEvent) ((UDATA*)(((J9JFRExecutionSample*)(jfrEvent)) + 1))
 
 /* Variable-size structure - stackTraceSize worth of UDATA follow the fixed portion */
 typedef struct J9JFRThreadStart {
-	J9FR_EVENT_COMMON_FIELDS
+	J9JFR_EVENT_WITH_STACKTRACE_FIELDS
 	struct J9VMThread *thread;
 	struct J9VMThread *parentThread;
-	UDATA stackTraceSize;
 } J9JFRThreadStart;
 
 #define J9JFRTHREADSTART_STACKTRACE(jfrEvent) ((UDATA*)(((J9JFRThreadStart*)(jfrEvent)) + 1))
+
+/* Variable-size structure - stackTraceSize worth of UDATA follow the fixed portion */
+typedef struct J9JFRThreadSleep {
+	J9JFR_EVENT_WITH_STACKTRACE_FIELDS
+	I_64 time;
+} J9JFRThreadSleep;
+
+#define J9JFRTHREADSLEEP_STACKTRACE(jfrEvent) ((UDATA*)(((J9JFRThreadSleep*)(jfrEvent)) + 1))
 
 #endif /* defined(J9VM_OPT_JFR) */
 

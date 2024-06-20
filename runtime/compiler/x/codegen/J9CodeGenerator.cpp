@@ -73,7 +73,7 @@ J9::X86::CodeGenerator::initialize()
 
    cg->setAheadOfTimeCompile(new (cg->trHeapMemory()) TR::AheadOfTimeCompile(cg));
 
-   if (!TR::Compiler->om.canGenerateArraylets())
+   if (!TR::Compiler->om.canGenerateArraylets() && !TR::Compiler->om.isOffHeapAllocationEnabled())
       {
       cg->setSupportsReferenceArrayCopy();
       cg->setSupportsInlineStringLatin1Inflate();
@@ -104,19 +104,19 @@ J9::X86::CodeGenerator::initialize()
 
    if (comp->target().cpu.supportsFeature(OMR_FEATURE_X86_SSE4_1) &&
        !comp->getOption(TR_DisableSIMDStringCaseConv) &&
-       !TR::Compiler->om.canGenerateArraylets())
+       !TR::Compiler->om.canGenerateArraylets() && !TR::Compiler->om.isOffHeapAllocationEnabled())
       cg->setSupportsInlineStringCaseConversion();
 
    if (comp->target().cpu.supportsFeature(OMR_FEATURE_X86_SSSE3) &&
        !comp->getOption(TR_DisableFastStringIndexOf) &&
-       !TR::Compiler->om.canGenerateArraylets())
+       !TR::Compiler->om.canGenerateArraylets() && !TR::Compiler->om.isOffHeapAllocationEnabled())
       {
       cg->setSupportsInlineStringIndexOf();
       }
 
    if (comp->target().cpu.supportsFeature(OMR_FEATURE_X86_SSE4_1) &&
        !comp->getOption(TR_DisableSIMDStringHashCode) &&
-       !TR::Compiler->om.canGenerateArraylets())
+       !TR::Compiler->om.canGenerateArraylets() && !TR::Compiler->om.isOffHeapAllocationEnabled())
       {
       cg->setSupportsInlineStringHashCode();
       }
