@@ -240,7 +240,7 @@ getThreadGroupChildrenImpl(J9JavaVM *vm, J9VMThread *currentThread, jobject grou
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 		if (J9_OBJECT_MONITOR_CRIU_SINGLE_THREAD_MODE_THROW == (UDATA)childrenGroupsLock) {
 			vmFuncs->setCRIUSingleThreadModeJVMCRIUException(currentThread, 0, 0);
-			rc = JVMTI_ERROR_THREAD_SUSPENDED;
+			rc = JVMTI_ERROR_INTERNAL;
 		} else
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 		if (J9_OBJECT_MONITOR_OOM == (UDATA)childrenGroupsLock) {
@@ -276,7 +276,7 @@ getThreadGroupChildrenImpl(J9JavaVM *vm, J9VMThread *currentThread, jobject grou
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 		if (J9_OBJECT_MONITOR_CRIU_SINGLE_THREAD_MODE_THROW == (UDATA)childrenThreadsLock) {
 			vmFuncs->setCRIUSingleThreadModeJVMCRIUException(currentThread, 0, 0);
-			rc = JVMTI_ERROR_THREAD_SUSPENDED;
+			rc = JVMTI_ERROR_INTERNAL;
 		} else
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 		if (J9_OBJECT_MONITOR_OOM == (UDATA)childrenThreadsLock) {
@@ -347,7 +347,7 @@ getThreadGroupChildrenImpl(J9JavaVM *vm, J9VMThread *currentThread, jobject grou
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 		if (J9_OBJECT_MONITOR_CRIU_SINGLE_THREAD_MODE_THROW == (UDATA)threadGroupObject) {
 			vmFuncs->setCRIUSingleThreadModeJVMCRIUException(currentThread, 0, 0);
-			rc = JVMTI_ERROR_THREAD_SUSPENDED;
+			rc = JVMTI_ERROR_INTERNAL;
 		} else
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 		if (J9_OBJECT_MONITOR_OOM == (UDATA)threadGroupObject) {
