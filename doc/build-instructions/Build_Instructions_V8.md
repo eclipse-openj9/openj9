@@ -192,7 +192,7 @@ Two Java builds are produced: a full developer kit (jdk) and a runtime environme
 - **build/linux-x86_64-normal-server-release/images/j2sdk-image**
 - **build/linux-x86_64-normal-server-release/images/j2re-image**
 
-    :whale: If you built your binaries in a Docker container, copy the binaries to the containers **/root/hostdir** directory so that you can access them on your local system. You'll find them in the directory you set for `<host_directory>` when you started your Docker container. See [Setting up your build environment with Docker](#setting-up-your-build-environment-with-docker).
+    :whale: If you built your binaries in a Docker container, copy the binaries to the containers **/root/hostdir** directory so that you can access them on your local system. You'll find them in the directory you set for `<host_directory>` when you started your Docker container. See [Setting up your build environment with Docker](#setting-up-your-build-environment-with-docker-whale).
 
     :pencil: On other architectures the **/j2sdk-image** and **/j2re-image** directories are in **build/linux-ppc64le-normal-server-release/images** (Linux on 64-bit Power systems) and **build/linux-s390x-normal-server-release/images** (Linux on 64-bit z Systems)
 
