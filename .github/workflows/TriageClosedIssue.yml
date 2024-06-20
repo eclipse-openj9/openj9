@@ -1,0 +1,68 @@
+name: Testing Triager on Closed issues
+run-name: Triager Tester in GitHub Actions
+
+on:
+
+    issues:
+        types: [closed]
+
+jobs:
+  issue_closed:
+    name: Issue Closed
+    runs-on: ubuntu-latest
+    steps:
+      - name: Commenting on the issue
+        uses: actions/github-script@v4
+        with:
+          script: |
+            const { data: issueData } = await github.issues.get({
+              issue_number: context.payload.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo
+            });
+
+            console.log(issueData);
+
+            const commentsUrl = issueData.comments_url;
+            const { data: commentsData } = await github.request(commentsUrl);
+
+            const sandboxIssueNumber = 10;
+            const sandboxOwner = context.repo.owner;
+            const sandboxRepo = context.repo.repo;
+
+            let assigned = false;
+            const actualLabels = issueData.labels.map(label => label['name']);
+
+            resultString = `Issue number: ${context.issue.number}\n`;
+            resultString += 'Status: Closed\n';
+            resultString += `Actual Components: ${actualLabels.join(', ')}\n`;
+
+            // Filtering the Comments Data to find "FYI"
+            for (const comment of commentsData) {
+              const lowercaseCommentBody = comment.body.toLowerCase();
+              if (lowercaseCommentBody.includes("fyi")) {
+                const restCommentBody = lowercaseCommentBody.replace("fyi", "");
+                let profiles = restCommentBody.replace(/[^\w\s]/g, '');
+                profiles = profiles.trim().replace(/\s+/g, ', ');
+                resultString += `Actual Assignees: ${profiles}\n`;
+                assigned = true;
+              }
+            }
+
+            if (!assigned) {
+              if (issueData.assignees.length != 0) {
+                const assignees = issueData.assignees.map(assignee => assignee.login).join(', ');
+                resultString += `Actual Assignees: ${assignees}`;
+              } else {
+                resultString += "Actual Assignees: No one :(";
+              }
+            }
+
+            await github.issues.createComment({
+              issue_number: sandboxIssueNumber,
+              owner: sandboxOwner,
+              repo: sandboxRepo,
+              body: resultString
+            });
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
