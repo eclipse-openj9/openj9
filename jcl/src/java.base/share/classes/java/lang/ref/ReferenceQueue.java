@@ -28,6 +28,10 @@ import jdk.internal.ref.Cleaner;
 import sun.misc.Cleaner;
 /*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
+/*[IF CRIU_SUPPORT]*/
+import openj9.internal.criu.NotCheckpointSafe;
+/*[ENDIF] CRIU_SUPPORT */
+
 /**
  * ReferenceQueue is the container on which reference objects
  * are enqueued when their reachability type is detected for 
@@ -75,6 +79,9 @@ public class ReferenceQueue<T> extends Object {
  * @return		Reference
  *					next available Reference or NULL.
  */	
+/*[IF CRIU_SUPPORT]*/
+@NotCheckpointSafe
+/*[ENDIF] CRIU_SUPPORT */
 public Reference<? extends T> poll () {	
 	Reference ref;
 	
