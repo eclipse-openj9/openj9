@@ -39,7 +39,7 @@ set(gc_structs_sources
 	ConstantPoolClassSlotIterator.cpp
 	ConstantPoolObjectSlotIterator.cpp
 	JVMTIObjectTagTableIterator.cpp
-	MethodTypesIterator.cpp
+	InvokeCacheTypesIterator.cpp
 	MixedObjectDeclarationOrderIterator.cpp
 	MixedObjectIterator.cpp
 	FlattenedContiguousArrayIterator.cpp
