@@ -74,7 +74,6 @@ enum ROMClassCreationPhase {
 	MethodIsNonStaticNonAbstract,
 	MethodIsObjectConstructor,
 #if	defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-	MethodIsConstructor,
 	MethodIsNonStaticSynchronized,
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	ShouldConvertInvokeVirtualToInvokeSpecial,
