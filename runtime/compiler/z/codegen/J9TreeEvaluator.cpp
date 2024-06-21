@@ -4834,6 +4834,22 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    bool use64BitClasses = comp->target().is64Bit() && !TR::Compiler->om.generateCompressedObjectHeaders();
 
    generateRXInstruction(cg, use64BitClasses ? TR::InstOpCode::STG : TR::InstOpCode::ST, node, classReg, generateS390MemoryReference(targetReg, TR::Compiler->om.offsetOfObjectVftField(), cg));
+
+   static char * disableBatchClear = feGetEnv("TR_DisableBatchClear");
+   // If batch clear is disabled, set element's size and mustBeZero fields to 0
+   if (disableBatchClear)
+      {
+      // Zero size arrays are considered "discontiguous" and the "mustBeZero" field of discontiguous arrays must be located where the "size" field of contiguous arrays is.
+      // With this design, we can check the size of an array as if it is contiguous, if the size is not zero then array is contiguous otherwise it is discontiguous.
+      // Check runtime/oti/j9nonbuilder.h for layout details. Simplified layout would look like:
+      // Discontiguous array layout: |  class  | mustBeZero |  size   | ...
+      // Contiguous array layout:    |  class  |    size    | ...
+      cursor = generateRXInstruction(cg, TR::InstOpCode::ST, node, firstDimLenReg, generateS390MemoryReference(targetReg, fej9->getOffsetOfContiguousArraySizeField()/* = "mustBeZero" offset!*/, cg));
+      iComment("Init 1st dim mustBeZero field.");
+      cursor = generateRXInstruction(cg, TR::InstOpCode::ST, node, firstDimLenReg, generateS390MemoryReference(targetReg, fej9->getOffsetOfDiscontiguousArraySizeField(), cg));
+      iComment("Init 1st dim size field.");
+      }
+
 #if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
    if (isIndexableDataAddrPresent)
       {
@@ -4905,7 +4921,6 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    // We have enough space, so proceed with the allocation.
    generateRXInstruction(cg, TR::InstOpCode::STG, node, temp2Reg, generateS390MemoryReference(vmThreadReg, offsetof(J9VMThread, heapAlloc), cg));
 
-
    // Init 1st dim array class and size fields.
    cursor = generateRXInstruction(cg, use64BitClasses ? TR::InstOpCode::STG : TR::InstOpCode::ST, node, classReg, generateS390MemoryReference(targetReg, TR::Compiler->om.offsetOfObjectVftField(), cg));
    iComment("Init 1st dim class field.");
@@ -4932,6 +4947,16 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    // Init 2nd dim element's class
    cursor = generateRXInstruction(cg, use64BitClasses ? TR::InstOpCode::STG : TR::InstOpCode::ST, node, componentClassReg, generateS390MemoryReference(temp2Reg, TR::Compiler->om.offsetOfObjectVftField(), cg));
    iComment("Init 2nd dim class field.");
+
+   // If batch clear is disabled, set element's size and mustBeZero ('0') fields to 0
+   if (disableBatchClear)
+      {
+      // Similar to the previous case when the first dimension length is zero.
+      cursor = generateRXInstruction(cg, TR::InstOpCode::ST, node, secondDimLenReg, generateS390MemoryReference(temp2Reg, fej9->getOffsetOfContiguousArraySizeField()/* = "mustBeZero" offset!*/, cg));
+      iComment("Init 2st dim mustBeZero field.");
+      cursor = generateRXInstruction(cg, TR::InstOpCode::ST, node, secondDimLenReg, generateS390MemoryReference(temp2Reg, fej9->getOffsetOfDiscontiguousArraySizeField(), cg));
+      iComment("Init 2st dim size field.");
+      }
 
    TR::Register *temp3Reg = cg->allocateRegister();
 
