@@ -2257,12 +2257,10 @@ nativeOOM:
 		if (NULL != superclass) {
 			/**
 			 * watched fields tag and exemption from validation are inherited from the superclass.
-			 * J9ClassHasIdentity is also inherited. If a class cannot be super class
-			 * of value types, its subclasses cannot be super of value types either.
 			 * J9ClassEnsureHashed inherited as subclasses of commonly hashed classes are likely
 			 * to be hashed as well.
 			 */
-			const U_32 inheritedFlags = J9ClassHasWatchedFields | J9ClassIsExemptFromValidation | J9ClassHasIdentity | J9ClassEnsureHashed;
+			const U_32 inheritedFlags = J9ClassHasWatchedFields | J9ClassIsExemptFromValidation| J9ClassEnsureHashed;
 			classFlags |= (superclass->classFlags & inheritedFlags);
 		}
 		if (J9_ARE_ALL_BITS_SET(options, J9_FINDCLASS_FLAG_ANON)) {
@@ -2294,10 +2292,6 @@ nativeOOM:
 		}
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-		if (J9ROMCLASS_HAS_IDENTITY(romClass)) {
-			classFlags |= J9ClassHasIdentity;
-		}
-
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 		if (J9_ARE_ALL_BITS_SET(romClass->optionalFlags, J9_ROMCLASS_OPTINFO_IMPLICITCREATION_ATTRIBUTE)) {
 			U_16 implicitCreationFlags = getImplicitCreationFlags(romClass);
@@ -2312,6 +2306,16 @@ nativeOOM:
 
 		if (J9ROMCLASS_IS_VALUE(romClass)) {
 			classFlags |= J9ClassIsValueType;
+			/* superclass can be NULL if primitive classes are changed to value typess in the future. */
+			if ((NULL != superclass) && J9_ARE_ALL_BITS_SET(superclass->classFlags, J9ClassHasIdentity)) {
+				J9UTF8 *superclassName = J9ROMCLASS_SUPERCLASSNAME(romClass);
+				if (!J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(superclassName), J9UTF8_LENGTH(superclassName), "java/lang/Object")) {
+					J9UTF8* className = J9ROMCLASS_CLASSNAME(romClass);
+					setCurrentExceptionNLSWithArgs(vmThread, J9NLS_VM_VALUETYPE_HAS_WRONG_SUPERCLASS,
+							J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, J9UTF8_LENGTH(className),
+							J9UTF8_DATA(className), J9UTF8_LENGTH(superclassName), J9UTF8_DATA(superclassName));
+				}
+			}
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 			if (J9ROMCLASS_IS_PRIMITIVE_VALUE_TYPE(romClass)
 				|| J9_ARE_ALL_BITS_SET(classFlags, J9ClassAllowsInitialDefaultValue)
@@ -2339,6 +2343,8 @@ nativeOOM:
 				}
 			}
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+		} else {
+			classFlags |= J9ClassHasIdentity;
 		}
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 		if (J9_ARE_ALL_BITS_SET(state->valueTypeFlags, J9ClassContainsUnflattenedFlattenables)) {
@@ -3187,7 +3193,7 @@ fail:
 			 *                   + J9ClassHasReferences
 			 *                  + J9ClassRequiresPrePadding
 			 *                 + J9ClassIsValueBased
-			 *                + J9ClassHasIdentity (inherited)
+			 *                + J9ClassHasIdentity
 			 *
 			 *              + J9ClassEnsureHashed (inherited)
 			 *             + J9ClassHasOffloadAllowSubtasksNatives
