@@ -3820,7 +3820,7 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 		}
 	}
 
-#if (JAVA_SPEC_VERSION <= 19) && !defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if (JAVA_SPEC_VERSION <= 19)
 	{
 		/**
 		 * From the spec, the ACC_SUPER semantics became mandatory. The bit CFR_ACC_SUPER is reused as CFR_ACC_IDENTITY in Valhalla.
@@ -3834,7 +3834,7 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 			vm->extendedRuntimeFlags &= ~(UDATA)J9_EXTENDED_RUNTIME_ALLOW_NON_VIRTUAL_CALLS;
 		}
 	}
-#endif /* (JAVA_SPEC_VERSION <= 19) && !defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* (JAVA_SPEC_VERSION <= 19) */
 
 	{
 		IDATA debugInterpreter = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXDEBUGINTERPRETER, NULL);

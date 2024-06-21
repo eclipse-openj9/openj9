@@ -1733,12 +1733,7 @@ loadSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J9
 				setCurrentExceptionForBadClass(vmThread, superclassName, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, J9NLS_VM_CLASS_LOADING_ERROR_SUPERCLASS_IS_INTERFACE);
 				return FALSE;
 			}
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-			/**
-			 * TODO: From the latest spec, for a value class or an abstract class with ACC_PERMITS_VALUE, its direct super class must have ACC_PERMITS_VALUE set,
-			 * otherwise throw IncompatibleClassChangeError. OpenJDK Valhalla implementation is not complete on this yet. We are seeing bootstrap classes in violation of this.
-			 */
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
 			/* JEP 360 sealed classes: if superclass is sealed it must contain the romClass's name in its PermittedSubclasses attribute */
 			if (! isClassPermittedBySealedSuper(superclass->romClass, J9UTF8_DATA(className), J9UTF8_LENGTH(className))) {
 				Trc_VM_CreateRAMClassFromROMClass_classIsNotPermittedBySealedSuperclass(vmThread, superclass, J9UTF8_LENGTH(className), J9UTF8_DATA(className));
