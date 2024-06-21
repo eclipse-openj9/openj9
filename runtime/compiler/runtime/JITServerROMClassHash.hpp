@@ -29,6 +29,7 @@
 
 #include "infra/Assert.hpp"
 
+struct J9Class;
 struct J9ROMClass;
 class TR_J9VMBase;
 class TR_Memory;
@@ -48,11 +49,27 @@ struct JITServerROMClassHash
    {
 public:
    JITServerROMClassHash() : _data() { }
+
+   // Computes the hash of romClass assuming it is already packed (only possible on the server side)
    JITServerROMClassHash(const J9ROMClass *romClass) { init(romClass, romClass->romSize); }
+
    // Builds a hash for an array class by combining the ROMClass hash of the "[L" object array class,
    // the ROMClass hash of the base component class, and the number of array dimensions.
    JITServerROMClassHash(const JITServerROMClassHash &objectArrayHash,
-                         const JITServerROMClassHash &baseComponentHash, size_t numDimensions);
+                         const JITServerROMClassHash &baseComponentHash, size_t numDimensions)
+      {
+      init(objectArrayHash, baseComponentHash, numDimensions);
+      }
+
+   // Computes the hash of romClass, packing it if needed, using trMemory for scratch allocations.
+   // A NULL fej9 means that romClass is already packed (only possible on the server side).
+   // If checkGenerated is true and romClass is a recognized runtime-generated class (e.g., a lambda),
+   // it is re-packed to exclude non-deterministic parts of all instances of the class name string.
+   JITServerROMClassHash(const J9ROMClass *romClass, TR_Memory &trMemory, TR_J9VMBase *fej9,
+                         bool checkGenerated = false, size_t prefixLength = 0)
+      {
+      init(romClass, trMemory, fej9, checkGenerated, prefixLength);
+      }
 
    bool operator==(const JITServerROMClassHash &h) const
       {
@@ -75,7 +92,10 @@ public:
 
 private:
    void init(const void *data, size_t size);
-   void init(const J9ROMClass *romClass, TR_Memory &trMemory, TR_J9VMBase *fej9);
+   void init(const J9ROMClass *romClass, TR_Memory &trMemory,
+             TR_J9VMBase *fej9, bool checkGenerated, size_t prefixLength);
+   void init(const JITServerROMClassHash &objectArrayHash,
+             const JITServerROMClassHash &baseComponentHash, size_t numDimensions);
 
    static volatile bool _cachedObjectArrayHash;
    static JITServerROMClassHash _objectArrayHash;

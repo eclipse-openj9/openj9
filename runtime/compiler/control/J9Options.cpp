@@ -141,6 +141,7 @@ int32_t J9::Options::_jitserverMallocTrimInterval = 1000 * 30; // 30000ms = 30s
 int32_t J9::Options::_lowCompDensityModeEnterThreshold = 4; // Maximum number of compilations per 10 min of CPU required to enter low compilation density mode. Use 0 to disable feature
 int32_t J9::Options::_lowCompDensityModeExitThreshold = 15; // Minimum number of compilations per 10 min of CPU required to exit low compilation density mode
 int32_t J9::Options::_lowCompDensityModeExitLPQSize = 120;  // Minimum number of compilations in LPQ to take us out of low compilation density mode
+bool J9::Options::_aotCacheDisableGeneratedClassSupport = false;
 TR::CompilationFilters *J9::Options::_JITServerAOTCacheStoreFilters = NULL;
 TR::CompilationFilters *J9::Options::_JITServerAOTCacheLoadFilters = NULL;
 TR::CompilationFilters *J9::Options::_JITServerRemoteExcludeFilters = NULL;
@@ -850,6 +851,8 @@ TR::OptionTable OMR::Options::_feOptions[] = {
    {"activeThreadsThresholdForInterpreterSampling=", "M<nnn>\tSampling does not affect invocation count beyond this threshold",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_activeThreadsThreshold, 0, "F%d", NOT_IN_SUBSET },
 #if defined(J9VM_OPT_JITSERVER)
+   {"aotCacheDisableGeneratedClassSupport", " \tDisable support for generated classes such as lambdas in JITServer AOT cache",
+        TR::Options::setStaticBool, (intptr_t)&TR::Options::_aotCacheDisableGeneratedClassSupport, 1, "F%d", NOT_IN_SUBSET },
    {"aotCachePersistenceMinDeltaMethods=", "M<nnn>\tnumber of extra AOT methods that need to be added to the JITServer AOT cache before considering a save operation",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_aotCachePersistenceMinDeltaMethods, 0, "F%d", NOT_IN_SUBSET },
    {"aotCachePersistenceMinPeriodMs=", "M<nnn>\tmiminum time between two consecutive JITServer AOT cache save operations (ms)",

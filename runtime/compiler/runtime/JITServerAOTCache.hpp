@@ -27,6 +27,7 @@
 
 #include "env/TRMemory.hpp"
 #include "env/PersistentCollections.hpp"
+#include "env/SystemSegmentProvider.hpp"
 #include "runtime/JITServerAOTSerializationRecords.hpp"
 
 static const uint32_t JITSERVER_AOTCACHE_VERSION = 1;
@@ -166,9 +167,11 @@ public:
    const AOTSerializationRecord *dataAddr() const override { return &_data; }
 
    static const char *getRecordName() { return "class"; }
+
    static AOTCacheClassRecord *create(uintptr_t id, const AOTCacheClassLoaderRecord *classLoaderRecord,
-                                      const JITServerROMClassHash &hash, const J9ROMClass *romClass,
-                                      const J9ROMClass *baseComponent, uint32_t numDimensions);
+                                      const JITServerROMClassHash &hash, uint32_t romClassSize, bool generated,
+                                      const J9ROMClass *romClass, const J9ROMClass *baseComponent, uint32_t numDimensions);
+
    void subRecordsDo(const std::function<void(const AOTCacheRecord *)> &f) const override;
 
 private:
@@ -176,9 +179,9 @@ private:
 
    friend AOTCacheClassRecord *AOTCacheRecord::readRecord<>(FILE *f, const JITServerAOTCacheReadContext &context);
 
-   AOTCacheClassRecord(uintptr_t id, const AOTCacheClassLoaderRecord *classLoaderRecord,
-                       const JITServerROMClassHash &hash, const J9ROMClass *romClass, const J9ROMClass *baseComponent,
-                       uint32_t numDimensions, uint32_t nameLength);
+   AOTCacheClassRecord(uintptr_t id, const AOTCacheClassLoaderRecord *classLoaderRecord, const JITServerROMClassHash &hash,
+                       uint32_t romClassSize, bool generated, const J9ROMClass *romClass,
+                       const J9ROMClass *baseComponent, uint32_t numDimensions, uint32_t nameLength);
    AOTCacheClassRecord(const JITServerAOTCacheReadContext &context, const ClassSerializationRecord &header);
 
    static size_t size(uint32_t nameLength)
@@ -416,8 +419,10 @@ public:
    // space. The getThunkRecord method instead has an accompanying createAndStoreThunk method that will create and store
    // a new thunk record if there is sufficient space.
    const AOTCacheClassLoaderRecord *getClassLoaderRecord(const uint8_t *name, size_t nameLength);
+   // Must pass a scratchSegmentProvider if this function is called outside of a compilation
    const AOTCacheClassRecord *getClassRecord(const AOTCacheClassLoaderRecord *loaderRecord, const J9ROMClass *romClass,
-                                             const J9ROMClass *baseComponent, uint32_t numDimensions);
+                                             const J9ROMClass *baseComponent, uint32_t numDimensions,
+                                             J9::J9SegmentProvider *scratchSegmentProvider = NULL);
    const AOTCacheMethodRecord *getMethodRecord(const AOTCacheClassRecord *definingClassRecord,
                                                uint32_t index, const J9ROMMethod *romMethod);
    const AOTCacheClassChainRecord *getClassChainRecord(const AOTCacheClassRecord *const *classRecords, size_t length);
@@ -504,18 +509,7 @@ public:
    bool isAOTCacheBetterThanSnapshot(const std::string &cacheFileName, size_t numExtraMethods);
 
 private:
-   struct StringKey
-      {
-      bool operator==(const StringKey &k) const;
-      struct Hash { size_t operator()(const StringKey &k) const noexcept; };
-
-      const uint8_t *const _string;
-      const size_t _stringLength;
-      };
-
-   using ClassLoaderKey = StringKey;
-
-   static ClassLoaderKey getRecordKey(const AOTCacheClassLoaderRecord *record)
+   static StringKey getRecordKey(const AOTCacheClassLoaderRecord *record)
       { return { record->data().name(), record->data().nameLength() }; }
 
    struct ClassKey
@@ -571,9 +565,7 @@ private:
    static AOTHeaderKey getRecordKey(const AOTCacheAOTHeaderRecord *record)
       { return { record->data().header() }; }
 
-   using ThunkKey = StringKey;
-
-   static ThunkKey getRecordKey(const AOTCacheThunkRecord *record)
+   static StringKey getRecordKey(const AOTCacheThunkRecord *record)
       { return { record->data().signature(), record->data().signatureSize() }; }
 
    //NOTE: Current implementation doesn't support compatible differences in AOT headers.
@@ -595,7 +587,7 @@ private:
 
    // Along with each map we also store pointers to the start and end points of a traversal of all the records.
    // The _nextRecord in each record points to the next record in this traversal.
-   PersistentUnorderedMap<ClassLoaderKey, AOTCacheClassLoaderRecord *, ClassLoaderKey::Hash> _classLoaderMap;
+   PersistentUnorderedMap<StringKey, AOTCacheClassLoaderRecord *> _classLoaderMap;
    uintptr_t _nextClassLoaderId;
    AOTCacheClassLoaderRecord *_classLoaderHead;
    AOTCacheClassLoaderRecord *_classLoaderTail;
@@ -632,7 +624,7 @@ private:
    uintptr_t _nextAOTHeaderId;
    TR::Monitor *const _aotHeaderMonitor;
 
-   PersistentUnorderedMap<ThunkKey, AOTCacheThunkRecord *, ThunkKey::Hash> _thunkMap;
+   PersistentUnorderedMap<StringKey, AOTCacheThunkRecord *> _thunkMap;
    uintptr_t _nextThunkId;
    AOTCacheThunkRecord *_thunkHead;
    AOTCacheThunkRecord *_thunkTail;
@@ -654,6 +646,7 @@ private:
    size_t _numCacheMisses;
    size_t _numDeserializedMethods;
    size_t _numDeserializationFailures;
+   size_t _numGeneratedClasses;
    };
 
 

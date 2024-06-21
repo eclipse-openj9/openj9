@@ -2110,14 +2110,15 @@ aboutToBootstrap(J9JavaVM * javaVM, J9JITConfig * jitConfig)
    // Create AOT deserializer at the client if using JITServer with AOT cache
    if ((persistentInfo->getRemoteCompilationMode() == JITServer::CLIENT) && persistentInfo->getJITServerUseAOTCache())
       {
+      auto loaderTable = persistentInfo->getPersistentClassLoaderTable();
       JITServerAOTDeserializer *deserializer = NULL;
       if (persistentInfo->getJITServerAOTCacheIgnoreLocalSCC())
          {
-         deserializer = new (PERSISTENT_NEW) JITServerNoSCCAOTDeserializer(persistentInfo->getPersistentClassLoaderTable());
+         deserializer = new (PERSISTENT_NEW) JITServerNoSCCAOTDeserializer(loaderTable, jitConfig);
          }
       else if (TR::Options::sharedClassCache())
          {
-         deserializer = new (PERSISTENT_NEW) JITServerLocalSCCAOTDeserializer(persistentInfo->getPersistentClassLoaderTable());
+         deserializer = new (PERSISTENT_NEW) JITServerLocalSCCAOTDeserializer(loaderTable, jitConfig);
          }
       else
          {

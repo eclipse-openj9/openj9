@@ -3223,7 +3223,7 @@ TR_IPBCDataCallGraph::loadFromPersistentCopy(TR_IPBCDataStorageHeader * storage,
             J9ClassLoader *classLoader = (J9ClassLoader *)sharedCache->lookupClassLoaderAssociatedWithClassChain(classChainIdentifyingLoader);
             if (classLoader)
                {
-               TR_OpaqueClassBlock *j9class = sharedCache->lookupClassFromChainAndLoader(classChain, classLoader);
+               TR_OpaqueClassBlock *j9class = sharedCache->lookupClassFromChainAndLoader(classChain, classLoader, comp);
                if (j9class)
                   {
                   // Optimizer and the codegen assume receiver classes of a call from profiling data are initialized,

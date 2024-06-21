@@ -561,7 +561,8 @@ public:
    uintptr_t                 getOffsetOfSuperclassesInClassObject();
    uintptr_t                 getOffsetOfBackfillOffsetField();
 
-   virtual TR_OpaqueClassBlock * getBaseComponentClass(TR_OpaqueClassBlock * clazz, int32_t & numDims) { return 0; }
+   static TR_OpaqueClassBlock *staticGetBaseComponentClass(TR_OpaqueClassBlock *clazz, int32_t &numDims);
+   virtual TR_OpaqueClassBlock *getBaseComponentClass(TR_OpaqueClassBlock *clazz, int32_t &numDims) { return NULL; }
 
    bool vftFieldRequiresMask(){ return ~TR::Compiler->om.maskOfObjectVftField() != 0; }
 
@@ -1556,7 +1557,12 @@ public:
    virtual int32_t               getNewArrayTypeFromClass(TR_OpaqueClassBlock *clazz);
    virtual TR_OpaqueClassBlock * getClassFromSignature(const char * sig, int32_t length, TR_ResolvedMethod *method, bool isVettedForAOT=false);
    virtual TR_OpaqueClassBlock * getClassFromSignature(const char * sig, int32_t length, TR_OpaqueMethodBlock *method, bool isVettedForAOT=false);
-   virtual TR_OpaqueClassBlock * getBaseComponentClass(TR_OpaqueClassBlock * clazz, int32_t & numDims);
+
+   virtual TR_OpaqueClassBlock *getBaseComponentClass(TR_OpaqueClassBlock *clazz, int32_t &numDims)
+      {
+      return staticGetBaseComponentClass(clazz, numDims);
+      }
+
    virtual TR_OpaqueClassBlock * getSystemClassFromClassName(const char * name, int32_t length, bool isVettedForAOT=false);
    virtual TR_YesNoMaybe      isInstanceOf(TR_OpaqueClassBlock *instanceClass, TR_OpaqueClassBlock *castClass, bool instanceIsFixed, bool castIsFixed = true, bool optimizeForAOT=false);
 
