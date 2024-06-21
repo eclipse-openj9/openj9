@@ -147,7 +147,8 @@ struct ClassSerializationRecord : public AOTSerializationRecord
 public:
    uintptr_t classLoaderId() const { return _classLoaderId; }
    const JITServerROMClassHash &hash() const { return _hash; }
-   uint32_t romClassSize() const { return _romClassSize; }
+   uint32_t romClassSize() const { return _romClassSize & ~AOTCACHE_CLASS_RECORD_GENERATED; }
+   bool isGenerated() const { return _romClassSize & AOTCACHE_CLASS_RECORD_GENERATED; }
    uint32_t nameLength() const { return _nameLength; }
    const uint8_t *name() const { return _name; }
 
@@ -155,9 +156,12 @@ private:
    friend class AOTCacheRecord;
    friend class AOTCacheClassRecord;
 
+   static const uint32_t AOTCACHE_CLASS_RECORD_GENERATED = 1;
+
+   // The `generated` flag refers to runtime-generated classes such as lambdas
    ClassSerializationRecord(uintptr_t id, uintptr_t classLoaderId, const JITServerROMClassHash &hash,
-                            const J9ROMClass *romClass, const J9ROMClass *baseComponent,
-                            uint32_t numDimensions, uint32_t nameLength);
+                            uint32_t romClassSize, bool generated, const J9ROMClass *romClass,
+                            const J9ROMClass *baseComponent, uint32_t numDimensions, uint32_t nameLength);
    ClassSerializationRecord();
 
    static size_t size(uint32_t nameLength)
@@ -170,7 +174,7 @@ private:
    const uintptr_t _classLoaderId;
    const JITServerROMClassHash _hash;
    // Used to quickly detect class mismatches (without computing the hash) when ROMClass size is different
-   const uint32_t _romClassSize;
+   const uint32_t _romClassSize; // isGenerated flag is encoded in LSB
    // Class name string
    const uint32_t _nameLength;
    uint8_t _name[];

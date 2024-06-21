@@ -3827,6 +3827,11 @@ void jitHookClassLoadHelper(J9VMThread *vmThread,
 
    compInfo->getPersistentInfo()->getPersistentClassLoaderTable()->associateClassLoaderWithClass(vmThread, classLoader, clazz);
 
+#if defined(J9VM_OPT_JITSERVER)
+   if (auto deserializer = compInfo->getJITServerAOTDeserializer())
+      deserializer->onClassLoad(cl, vmThread);
+#endif /* defined(J9VM_OPT_JITSERVER) */
+
    // Update the count for the newInstance
    //
    TR::Options * options = TR::Options::getCmdLineOptions();

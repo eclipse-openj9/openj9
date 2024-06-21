@@ -7285,23 +7285,21 @@ TR_J9VM::methodTrampolineLookup(TR::Compilation *comp, TR::SymbolReference * sym
    return tramp;
    }
 
+
 TR_OpaqueClassBlock *
-TR_J9VM::getBaseComponentClass(TR_OpaqueClassBlock * clazz, int32_t & numDims)
+TR_J9VMBase::staticGetBaseComponentClass(TR_OpaqueClassBlock *clazz, int32_t &numDims)
    {
-   J9Class * myClass = TR::Compiler->cls.convertClassOffsetToClassPtr(clazz);
+   J9Class *myClass = TR::Compiler->cls.convertClassOffsetToClassPtr(clazz);
    while (J9ROMCLASS_IS_ARRAY(myClass->romClass))
       {
-      J9Class * componentClass = (J9Class *)(((J9ArrayClass*)myClass)->componentType);
+      J9Class *componentClass = (J9Class *)(((J9ArrayClass *)myClass)->componentType);
       if (J9ROMCLASS_IS_PRIMITIVE_TYPE(componentClass->romClass))
          break;
       numDims++;
       myClass = componentClass;
       }
-   return convertClassPtrToClassOffset(myClass);
+   return TR::Compiler->cls.convertClassPtrToClassOffset(myClass);
    }
-
-
-
 
 
 TR_YesNoMaybe

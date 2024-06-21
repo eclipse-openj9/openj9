@@ -113,7 +113,7 @@ getLastDollarSignOfLambdaClassName(const char *className, UDATA classNameLength)
 #endif /* JAVA_SPEC_VERSION < 21 */
 
 BOOLEAN
-isLambdaClassName(const char *className, UDATA classNameLength)
+isLambdaClassName(const char *className, UDATA classNameLength, UDATA *deterministicPrefixLength)
 {
 	BOOLEAN result = FALSE;
 
@@ -124,9 +124,16 @@ isLambdaClassName(const char *className, UDATA classNameLength)
 	 * getLastDollarSignOfLambdaClassName verifies this format and returns
 	 * a non-NULL pointer if successfully verified.
 	 */
-	char *isValid = getLastDollarSignOfLambdaClassName(className, classNameLength);
-	if (NULL != isValid) {
+	const char *dollarSign = getLastDollarSignOfLambdaClassName(className, classNameLength);
+	if (NULL != dollarSign) {
 		result = TRUE;
+		if (NULL != deterministicPrefixLength) {
+			/*
+			 * To reliably identify lambda classes across JVM instances, JITServer AOT cache uses the
+			 * deterministic class name prefix (up to and including the last '$') and the ROMClass hash.
+			 */
+			*deterministicPrefixLength = dollarSign + 1 - className;
+		}
 	}
 #else /* JAVA_SPEC_VERSION < 21 */
 	/*
@@ -143,6 +150,13 @@ isLambdaClassName(const char *className, UDATA classNameLength)
 	UDATA lambdaSuffixLength = LITERAL_STRLEN(J9_LAMBDA_CLASS_SUFFIX);
 	if (isStrSuffixHelper(className, classNameLength, J9_LAMBDA_CLASS_SUFFIX, lambdaSuffixLength)) {
 		result = TRUE;
+		if (NULL != deterministicPrefixLength) {
+			/*
+			 * To reliably identify lambda classes across JVM instances, JITServer AOT cache uses the
+			 * deterministic class name prefix (up to and including the last '/') and the ROMClass hash.
+			 */
+			*deterministicPrefixLength = classNameLength - lambdaSuffixLength + LITERAL_STRLEN("$$Lambda/");
+		}
 	}
 #undef J9_LAMBDA_CLASSNAME_SUFFIX
 #endif /* JAVA_SPEC_VERSION < 21 */
@@ -152,15 +166,29 @@ isLambdaClassName(const char *className, UDATA classNameLength)
 
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
 BOOLEAN
-isLambdaFormClassName(const char *className, UDATA classNameLength)
+isLambdaFormClassName(const char *className, UDATA classNameLength, UDATA *deterministicPrefixLength)
 {
 	BOOLEAN result = FALSE;
 
+	/*
+	 * Lambda form class names are in the format:
+	 *  java/lang/invoke/LambdaForm$<method-handle-type>/<zeroed out ROM_ADDRESS>
+	 * where <method-handle-type> is BMH, DMH, or MH.
+	 */
 #define J9_LAMBDA_FORM_CLASSNAME "java/lang/invoke/LambdaForm$"
 	UDATA lambdaFormComparatorLength = LITERAL_STRLEN(J9_LAMBDA_FORM_CLASSNAME);
 	if (classNameLength > lambdaFormComparatorLength) {
 		if (0 == memcmp(className, J9_LAMBDA_FORM_CLASSNAME, lambdaFormComparatorLength)) {
 			result = TRUE;
+			if (NULL != deterministicPrefixLength) {
+				/*
+				 * To reliably identify lambda form classes across JVM instances, JITServer AOT cache uses the
+				 * deterministic class name prefix (up to and including the last '/') and the ROMClass hash.
+				 */
+				const char *slash = memchr(className + lambdaFormComparatorLength, '/',
+				                           classNameLength - lambdaFormComparatorLength);
+				*deterministicPrefixLength = slash ? (slash + 1 - className) : 0;
+			}
 		}
 	}
 #undef J9_LAMBDA_FORM_CLASSNAME

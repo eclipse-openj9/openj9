@@ -140,13 +140,15 @@ AOTCacheClassLoaderRecord::create(uintptr_t id, const uint8_t *name, size_t name
 
 
 ClassSerializationRecord::ClassSerializationRecord(
-   uintptr_t id, uintptr_t classLoaderId, const JITServerROMClassHash &hash, const J9ROMClass *romClass,
-   const J9ROMClass *baseComponent, uint32_t numDimensions, uint32_t nameLength
+   uintptr_t id, uintptr_t classLoaderId, const JITServerROMClassHash &hash, uint32_t romClassSize, bool generated,
+   const J9ROMClass *romClass, const J9ROMClass *baseComponent, uint32_t numDimensions, uint32_t nameLength
 ) :
    AOTSerializationRecord(size(nameLength), id, AOTSerializationRecordType::Class),
-   _classLoaderId(classLoaderId), _hash(hash), _romClassSize(romClass->romSize), _nameLength(nameLength)
+   _classLoaderId(classLoaderId), _hash(hash),
+   _romClassSize(romClassSize | (generated ? AOTCACHE_CLASS_RECORD_GENERATED : 0)), _nameLength(nameLength)
    {
-   JITServerHelpers::getFullClassName(_name, nameLength, romClass, baseComponent, numDimensions);
+   TR_ASSERT(!(romClassSize & AOTCACHE_CLASS_RECORD_GENERATED), "Unaligned romClassSize %u", romClassSize);
+   JITServerHelpers::getFullClassName(_name, nameLength, romClass, baseComponent, numDimensions, isGenerated());
    }
 
 ClassSerializationRecord::ClassSerializationRecord() :
@@ -164,11 +166,14 @@ ClassSerializationRecord::isValidHeader(const JITServerAOTCacheReadContext &cont
    }
 
 
-AOTCacheClassRecord::AOTCacheClassRecord(uintptr_t id, const AOTCacheClassLoaderRecord *classLoaderRecord,
-                                         const JITServerROMClassHash &hash, const J9ROMClass *romClass,
-                                         const J9ROMClass *baseComponent, uint32_t numDimensions, uint32_t nameLength) :
+AOTCacheClassRecord::AOTCacheClassRecord(
+   uintptr_t id, const AOTCacheClassLoaderRecord *classLoaderRecord, const JITServerROMClassHash &hash,
+   uint32_t romClassSize, bool generated, const J9ROMClass *romClass,
+   const J9ROMClass *baseComponent, uint32_t numDimensions, uint32_t nameLength
+) :
    _classLoaderRecord(classLoaderRecord),
-   _data(id, classLoaderRecord->data().id(), hash, romClass, baseComponent, numDimensions, nameLength)
+   _data(id, classLoaderRecord->data().id(), hash, romClassSize, generated,
+         romClass, baseComponent, numDimensions, nameLength)
    {
    }
 
@@ -179,12 +184,13 @@ AOTCacheClassRecord::AOTCacheClassRecord(const JITServerAOTCacheReadContext &con
 
 AOTCacheClassRecord *
 AOTCacheClassRecord::create(uintptr_t id, const AOTCacheClassLoaderRecord *classLoaderRecord,
-                            const JITServerROMClassHash &hash, const J9ROMClass *romClass,
-                            const J9ROMClass *baseComponent, uint32_t numDimensions)
+                            const JITServerROMClassHash &hash, uint32_t romClassSize, bool generated,
+                            const J9ROMClass *romClass, const J9ROMClass *baseComponent, uint32_t numDimensions)
    {
-   uint32_t nameLength = JITServerHelpers::getFullClassNameLength(romClass, baseComponent, numDimensions);
+   uint32_t nameLength = JITServerHelpers::getFullClassNameLength(romClass, baseComponent, numDimensions, generated);
    void *ptr = AOTCacheRecord::allocate(size(nameLength));
-   return new (ptr) AOTCacheClassRecord(id, classLoaderRecord, hash, romClass, baseComponent, numDimensions, nameLength);
+   return new (ptr) AOTCacheClassRecord(id, classLoaderRecord, hash, romClassSize, generated,
+                                        romClass, baseComponent, numDimensions, nameLength);
    }
 
 void
@@ -526,21 +532,6 @@ error:
    return false;
    }
 
-bool
-JITServerAOTCache::StringKey::operator==(const StringKey &k) const
-   {
-   return J9UTF8_DATA_EQUALS(_string, _stringLength, k._string, k._stringLength);
-   }
-
-size_t
-JITServerAOTCache::StringKey::Hash::operator()(const StringKey &k) const noexcept
-   {
-   size_t h = 0;
-   for (size_t i = 0; i < k._stringLength; ++i)
-      h = (h << 5) - h + k._string[i];
-   return h;
-   }
-
 
 bool
 JITServerAOTCache::ClassKey::operator==(const ClassKey &k) const
@@ -738,7 +729,7 @@ JITServerAOTCache::JITServerAOTCache(const std::string &name) :
    _saveOperationInProgress(false), // protected by the _cachedMethodMonitor
    _excludedFromSavingToFile(false),
    _numCacheBypasses(0), _numCacheHits(0), _numCacheMisses(0),
-   _numDeserializedMethods(0), _numDeserializationFailures(0)
+   _numDeserializedMethods(0), _numDeserializationFailures(0), _numGeneratedClasses(0)
    {
    bool allMonitors = _classLoaderMonitor && _classMonitor && _methodMonitor &&
                       _classChainMonitor && _wellKnownClassesMonitor &&
@@ -816,16 +807,55 @@ JITServerAOTCache::getClassLoaderRecord(const uint8_t *name, size_t nameLength)
 
 const AOTCacheClassRecord *
 JITServerAOTCache::getClassRecord(const AOTCacheClassLoaderRecord *classLoaderRecord, const J9ROMClass *romClass,
-                                  const J9ROMClass *baseComponent, uint32_t numDimensions)
+                                  const J9ROMClass *baseComponent, uint32_t numDimensions,
+                                  J9::J9SegmentProvider *scratchSegmentProvider)
    {
-   auto cache = TR::CompilationInfo::get()->getJITServerSharedROMClassCache();
-   JITServerROMClassHash hash = cache ? cache->getHash(romClass) : JITServerROMClassHash(romClass);
+   auto compInfo = TR::CompilationInfo::get();
+   auto cache = compInfo->getJITServerSharedROMClassCache();
+
+   JITServerROMClassHash hash;
+   size_t size = 0;
+   //NOTE: Assuming array classes are not runtime-generated
+   size_t prefixLength = numDimensions ? 0 : JITServerHelpers::getGeneratedClassNamePrefixLength(romClass);
+   if (prefixLength)
+      {
+      // The class is runtime-generated. Re-pack the romClass to compute its deterministic hash.
+      J9ROMClass *packedROMClass;
+      if (scratchSegmentProvider)
+         {
+         // Called from outside of a compilation. Use supplied scratchSegmentProvider for scratch memory allocations.
+         size_t segmentSize = scratchSegmentProvider->getPreferredSegmentSize();
+         if (!segmentSize)
+            segmentSize = 1 << 24/*16 MB*/;
+         TR::RawAllocator rawAllocator(compInfo->getJITConfig()->javaVM);
+         J9::SystemSegmentProvider segmentProvider(1 << 16/*64 KB*/, segmentSize, TR::Options::getScratchSpaceLimit(),
+                                                   *scratchSegmentProvider, rawAllocator);
+         TR::Region region(segmentProvider, rawAllocator);
+         TR_Memory trMemory(*compInfo->persistentMemory(), region);
+         packedROMClass = JITServerHelpers::packROMClass(romClass, &trMemory, NULL, size, 0, prefixLength);
+         }
+      else
+         {
+         TR_ASSERT(TR::comp(), "Must be inside a compilation");
+         TR_Memory *trMemory = TR::comp()->trMemory();
+         TR::StackMemoryRegion region(*trMemory);
+         packedROMClass = JITServerHelpers::packROMClass(romClass, trMemory, NULL, size, 0, prefixLength);
+         }
+
+      hash = JITServerROMClassHash(packedROMClass);
+      }
+   else
+      {
+      hash = cache ? cache->getHash(romClass) : JITServerROMClassHash(romClass);
+      size = romClass->romSize;
+      }
 
    if (numDimensions)
       {
       TR_ASSERT(baseComponent, "Invalid arguments");
       JITServerROMClassHash baseHash = cache ? cache->getHash(baseComponent) : JITServerROMClassHash(baseComponent);
       hash = JITServerROMClassHash(hash, baseHash, numDimensions);
+      size = romClass->romSize;
       }
 
    OMR::CriticalSection cs(_classMonitor);
@@ -837,8 +867,8 @@ JITServerAOTCache::getClassRecord(const AOTCacheClassLoaderRecord *classLoaderRe
    if (!JITServerAOTCacheMap::cacheHasSpace())
       return NULL;
 
-   auto record = AOTCacheClassRecord::create(_nextClassId, classLoaderRecord, hash,
-                                             romClass, baseComponent, numDimensions);
+   auto record = AOTCacheClassRecord::create(_nextClassId, classLoaderRecord, hash, size,
+                                             prefixLength != 0, romClass, baseComponent, numDimensions);
    addToMap(_classMap, _classHead, _classTail, it, getRecordKey(record), record);
    ++_nextClassId;
 
@@ -852,6 +882,7 @@ JITServerAOTCache::getClassRecord(const AOTCacheClassLoaderRecord *classLoaderRe
       );
       }
 
+   _numGeneratedClasses += prefixLength ? 1 : 0;
    return record;
    }
 
@@ -1144,7 +1175,7 @@ JITServerAOTCache::printStats(FILE *f) const
       "JITServer AOT cache %s statistics:\n"
       "\tstored methods: %zu\n"
       "\tclass loader records: %zu\n"
-      "\tclass records: %zu\n"
+      "\tclass records: %zu (%zu generated)\n"
       "\tmethod records: %zu\n"
       "\tclass chain records: %zu\n"
       "\twell-known classes records: %zu\n"
@@ -1157,7 +1188,7 @@ JITServerAOTCache::printStats(FILE *f) const
       _name.c_str(),
       _cachedMethodMap.size(),
       _classLoaderMap.size(),
-      _classMap.size(),
+      _classMap.size(), _numGeneratedClasses,
       _methodMap.size(),
       _classChainMap.size(),
       _wellKnownClassesMap.size(),
