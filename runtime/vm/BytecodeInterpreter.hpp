@@ -1415,6 +1415,29 @@ obj:
 				memset(_sp, 0, sizeof(UDATA) * ((methodIndexAndArgCount & 0xFF) + 1));
 				break;
 			}
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+			case JBinvokestatic: {
+				U_16 index = *(U_16*)(_pc + 1);
+				J9ConstantPool *ramConstantPool = J9_CP_FROM_METHOD(_literals);
+				J9RAMMethodRef *ramMethodRef = ((J9RAMMethodRef*)ramConstantPool) + index;
+				J9Method *method = ramMethodRef->method;
+				void *methodRunAddress = method->methodRunAddress;
+				if (((void *)J9_BCLOOP_SEND_TARGET_METHODHANDLE_LINKTOSTATICSPECIAL == methodRunAddress)
+				|| ((void *)J9_BCLOOP_SEND_TARGET_METHODHANDLE_LINKTOINTERFACE == methodRunAddress)
+				|| ((void *)J9_BCLOOP_SEND_TARGET_METHODHANDLE_LINKTOVIRTUAL == methodRunAddress)
+				) {
+					j9object_t dmhReceiver = *(j9object_t *)_arg0EA;
+					Assert_VM_true(0 != isSameOrSuperClassOf(
+						J9VMJAVALANGINVOKEDIRECTMETHODHANDLE_OR_NULL(_vm),
+						J9OBJECT_CLAZZ(_currentThread, dmhReceiver)));
+					j9object_t memberName = J9VMJAVALANGINVOKEDIRECTMETHODHANDLE_MEMBER(_currentThread, dmhReceiver);
+					*--_sp = (UDATA)memberName;
+				}
+				break;
+			}
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
+			default:
+				break;
 			}
 		} else {
 			/* ForceEarlyReturn */
