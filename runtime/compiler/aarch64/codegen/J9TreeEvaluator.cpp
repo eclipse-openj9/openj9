@@ -2711,7 +2711,6 @@ const T clamp(const int& value, const T& low, const T& high)
  * @brief Generates instructions for allocating heap for new/newarray/anewarray
  *        The limitation of the current implementation:
  *          - supports `new` only
- *          - does not support dual TLH
  *          - does not support realtimeGC
  *
  * @param[in] node:          node
@@ -2752,11 +2751,25 @@ genHeapAlloc(TR::Node *node, TR::CodeGenerator *cg, bool isVariableLen, uint32_t
    TR::Compilation *comp = cg->comp();
    TR::Register *metaReg = cg->getMethodMetaDataRegister();
 
+   bool useDualTLH = !comp->getOption(TR_DisableDualTLH);
+   size_t heapAlloc_offset = offsetof(J9VMThread, heapAlloc);
+   size_t heapTop_offset = offsetof(J9VMThread, heapTop);
+
+#if defined(J9VM_GC_NON_ZERO_TLH)
+   if (useDualTLH && node->canSkipZeroInitialization())
+      {
+      heapAlloc_offset = offsetof(J9VMThread, nonZeroHeapAlloc);
+      heapTop_offset = offsetof(J9VMThread, nonZeroHeapTop);
+      }
+#endif
+
    uint32_t maxSafeSize = cg->getMaxObjectSizeGuaranteedNotToOverflow();
    bool isTooSmallToPrefetch = false;
 
    static_assert(offsetof(J9VMThread, heapAlloc) < 32760, "Expecting offset to heapAlloc fits in imm12");
    static_assert(offsetof(J9VMThread, heapTop) < 32760, "Expecting offset to heapTop fits in imm12");
+   static_assert(offsetof(J9VMThread, nonZeroHeapAlloc) < 32760, "Expecting offset to nonZeroHeapAlloc fits in imm12");
+   static_assert(offsetof(J9VMThread, nonZeroHeapTop) < 32760, "Expecting offset to nonZeroHeapTop fits in imm12");
 
    if (isVariableLen)
       {
@@ -2808,7 +2821,7 @@ genHeapAlloc(TR::Node *node, TR::CodeGenerator *cg, bool isVariableLen, uint32_t
 
       // Load the base of the next available heap storage.
       generateTrg1MemInstruction(cg,TR::InstOpCode::ldrimmx, node, resultReg,
-            TR::MemoryReference::createWithDisplacement(cg, metaReg, offsetof(J9VMThread, heapAlloc)));
+            TR::MemoryReference::createWithDisplacement(cg, metaReg, heapAlloc_offset));
 
       // calculate variable size, rounding up if necessary to a intptr_t multiple boundary
       //
@@ -2871,7 +2884,7 @@ genHeapAlloc(TR::Node *node, TR::CodeGenerator *cg, bool isVariableLen, uint32_t
 
       // Load the heap top
       generateTrg1MemInstruction(cg,TR::InstOpCode::ldrimmx, node, heapTopReg,
-               TR::MemoryReference::createWithDisplacement(cg, metaReg, offsetof(J9VMThread, heapTop)));
+               TR::MemoryReference::createWithDisplacement(cg, metaReg, heapTop_offset));
       generateTrg1Src2Instruction(cg, TR::InstOpCode::addx, node, tempReg, resultReg, dataSizeReg);
 
       }
@@ -2896,10 +2909,10 @@ genHeapAlloc(TR::Node *node, TR::CodeGenerator *cg, bool isVariableLen, uint32_t
 
       // Load the base of the next available heap storage.
       generateTrg1MemInstruction(cg,TR::InstOpCode::ldrimmx, node, resultReg,
-            TR::MemoryReference::createWithDisplacement(cg, metaReg, offsetof(J9VMThread, heapAlloc)));
+            TR::MemoryReference::createWithDisplacement(cg, metaReg, heapAlloc_offset));
       // Load the heap top
       generateTrg1MemInstruction(cg,TR::InstOpCode::ldrimmx, node, heapTopReg,
-            TR::MemoryReference::createWithDisplacement(cg, metaReg, offsetof(J9VMThread, heapTop)));
+            TR::MemoryReference::createWithDisplacement(cg, metaReg, heapTop_offset));
 
       // Calculate the after-allocation heapAlloc: if the size is huge,
       // we need to check address wrap-around also. This is unsigned
@@ -2946,10 +2959,9 @@ genHeapAlloc(TR::Node *node, TR::CodeGenerator *cg, bool isVariableLen, uint32_t
          offset += cacheLineSize;
          }
       }
-   //Done, write back to heapAlloc here.
+   //Done, write back to heapAlloc (zero or nonZero TLH) here.
    generateMemSrc1Instruction(cg, TR::InstOpCode::strimmx, node,
-         TR::MemoryReference::createWithDisplacement(cg, metaReg, offsetof(J9VMThread, heapAlloc)), tempReg);
-
+         TR::MemoryReference::createWithDisplacement(cg, metaReg, heapAlloc_offset), tempReg);
    }
 
 /**
