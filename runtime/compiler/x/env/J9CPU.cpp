@@ -83,7 +83,7 @@ J9::X86::CPU::enableFeatureMasks()
                                         OMR_FEATURE_X86_FMA, OMR_FEATURE_X86_HLE, OMR_FEATURE_X86_RTM,
                                         OMR_FEATURE_X86_SSE3, OMR_FEATURE_X86_AVX2, OMR_FEATURE_X86_AVX512F,
                                         OMR_FEATURE_X86_AVX512VL, OMR_FEATURE_X86_AVX512BW, OMR_FEATURE_X86_AVX512DQ,
-                                        OMR_FEATURE_X86_AVX512CD, OMR_FEATURE_X86_SSE4_2};
+                                        OMR_FEATURE_X86_AVX512CD, OMR_FEATURE_X86_SSE4_2, OMR_FEATURE_X86_BMI2};
 
    memset(_supportedFeatureMasks.features, 0, OMRPORT_SYSINFO_FEATURES_SIZE*sizeof(uint32_t));
    OMRPORT_ACCESS_FROM_OMRPORT(TR::Compiler->omrPortLib);
@@ -359,6 +359,7 @@ J9::X86::CPU::supports_feature_test(uint32_t feature)
       case OMR_FEATURE_X86_AVX512DQ:
       case OMR_FEATURE_X86_AVX512CD:
       case OMR_FEATURE_X86_FMA:
+      case OMR_FEATURE_X86_BMI2:
          return true;
       default:
          return false;
