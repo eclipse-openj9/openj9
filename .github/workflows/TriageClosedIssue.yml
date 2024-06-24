@@ -1,11 +1,9 @@
-name: Testing Triager on Closed issues
-run-name: Triager Tester in GitHub Actions
+name: Triager on Closed issues
+run-name: TriagerX closed Issue
 
 on:
-
     issues:
         types: [closed]
-
 jobs:
   issue_closed:
     name: Issue Closed
