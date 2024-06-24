@@ -2942,11 +2942,11 @@ public class ValueTypeTests {
 	}
 
 	@Test(priority=1)
-	static public void testIdentityObjectOnHeavyAbstract() throws Throwable {
-		assertFalse(HeavyAbstractClass.class.isValue());
-		assertTrue(HeavyAbstractClass.class.isIdentity());
+	static public void testIdentityObjectOnAbstractClass() throws Throwable {
+		assertFalse(AbstractClass.class.isValue());
+		assertTrue(AbstractClass.class.isIdentity());
 	}
-	public static abstract class HeavyAbstractClass {
+	public static abstract class AbstractClass {
 		/* Abstract class that has fields */
 		private int x;
 		private int y;
@@ -2958,30 +2958,30 @@ public class ValueTypeTests {
 		}
 	}
 	
-	public static abstract class HeavyAbstractClass1 {
+	public static abstract class AbstractClass1 {
 		/* Abstract class that has non-empty constructors */
-		public HeavyAbstractClass1() {
-			System.out.println("This class is HeavyAbstractClass1");
+		public AbstractClass1() {
+			System.out.println("This class is AbstractClass1");
 		}
 	}
 	
-	public static abstract class HeavyAbstractClass2 {
+	public static abstract class AbstractClass2 {
 		/* Abstract class that has synchronized methods */
 		public synchronized void printClassName() {
-			System.out.println("This class is HeavyAbstractClass2");
+			System.out.println("This class is AbstractClass2");
 		}
 	}
 	
-	public static abstract class HeavyAbstractClass3 {
+	public static abstract class AbstractClass3 {
 		/* Abstract class that has initializer */
-		{ System.out.println("This class is HeavyAbstractClass3"); }
+		{ System.out.println("This class is AbstractClass3"); }
 	}
 	
-	public static abstract class LightAbstractClass {
+	public static abstract class AbstractClass4 {
 		
 	}
 
-	private static abstract class InvisibleLightAbstractClass {
+	private static abstract class InvisibleAbstractClass {
 		
 	}
 	
@@ -2994,38 +2994,34 @@ public class ValueTypeTests {
 		assertTrue(valueClass.isValue());
 	}
 
-	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
-	@Test(priority=1, expectedExceptions=IncompatibleClassChangeError.class, enabled = false)
-	static public void testValueTypeSubClassHeavyAbstract() throws Throwable {
-		String superClassName = HeavyAbstractClass.class.getName().replace('.', '/');
-		valueTypeIdentityObjectTestHelper("testValueTypeSubClassHeavyAbstract", superClassName, 0);
+	@Test(priority=1, expectedExceptions=IncompatibleClassChangeError.class)
+	static public void testValueTypeSubClassAbstractClass() throws Throwable {
+		String superClassName = AbstractClass.class.getName().replace('.', '/');
+		valueTypeIdentityObjectTestHelper("testValueTypeSubClassAbstractClass", superClassName, 0);
 	}
 	
-	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
-	@Test(priority=1, expectedExceptions=IncompatibleClassChangeError.class, enabled = false)
-	static public void testValueTypeSubClassHeavyAbstract1() throws Throwable {
-		String superClassName = HeavyAbstractClass1.class.getName().replace('.', '/');
-		valueTypeIdentityObjectTestHelper("testValueTypeSubClassHeavyAbstract1", superClassName, 0);
+	@Test(priority=1, expectedExceptions=IncompatibleClassChangeError.class)
+	static public void testValueTypeSubClassAbstractClass1() throws Throwable {
+		String superClassName = AbstractClass1.class.getName().replace('.', '/');
+		valueTypeIdentityObjectTestHelper("testValueTypeSubClassAbstractClass1", superClassName, 0);
 	}
 	
-	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
-	@Test(priority=1, expectedExceptions=IncompatibleClassChangeError.class, enabled = false)
-	static public void testValueTypeSubClassHeavyAbstract2() throws Throwable {
-		String superClassName = HeavyAbstractClass2.class.getName().replace('.', '/');
-		valueTypeIdentityObjectTestHelper("testValueTypeSubClassHeavyAbstract2", superClassName, 0);
+	@Test(priority=1, expectedExceptions=IncompatibleClassChangeError.class)
+	static public void testValueTypeSubClassAbstractClass2() throws Throwable {
+		String superClassName = AbstractClass2.class.getName().replace('.', '/');
+		valueTypeIdentityObjectTestHelper("testValueTypeSubClassAbstractClass2", superClassName, 0);
 	}
 	
-	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
-	@Test(priority=1, expectedExceptions=IncompatibleClassChangeError.class, enabled = false)
-	static public void testValueTypeSubClassHeavyAbstract3() throws Throwable {
-		String superClassName = HeavyAbstractClass3.class.getName().replace('.', '/');
-		valueTypeIdentityObjectTestHelper("testValueTypeSubClassHeavyAbstract3", superClassName, 0);
+	@Test(priority=1, expectedExceptions=IncompatibleClassChangeError.class)
+	static public void testValueTypeSubClassAbstractClass3() throws Throwable {
+		String superClassName = AbstractClass3.class.getName().replace('.', '/');
+		valueTypeIdentityObjectTestHelper("testValueTypeSubClassAbstractClass3", superClassName, 0);
 	}
 
-	@Test(priority=1)
-	static public void testValueTypeSubClassLightAbstract() throws Throwable {
-		String superClassName = LightAbstractClass.class.getName().replace('.', '/');
-		valueTypeIdentityObjectTestHelper("testValueTypeSubClassLightAbstract", superClassName, 0);
+	@Test(priority=1, expectedExceptions=IncompatibleClassChangeError.class)
+	static public void testValueTypeSubClassAbstractClass4() throws Throwable {
+		String superClassName = AbstractClass4.class.getName().replace('.', '/');
+		valueTypeIdentityObjectTestHelper("testValueTypeSubClassAbstractClass4", superClassName, 0);
 	}
 
 	@Test(priority=1, expectedExceptions=ClassFormatError.class)
@@ -3041,9 +3037,9 @@ public class ValueTypeTests {
 	}
 
 	@Test(priority=1, expectedExceptions=IllegalAccessError.class)
-	static public void testValueTypeSubClassInvisibleLightAbstractClass() throws Throwable {
-		String superClassName = InvisibleLightAbstractClass.class.getName().replace('.', '/');
-		valueTypeIdentityObjectTestHelper("testValueTypeSubClassInvisibleLightAbstractClass", superClassName, 0);
+	static public void testValueTypeSubClassInvisibleAbstractClass() throws Throwable {
+		String superClassName = InvisibleAbstractClass.class.getName().replace('.', '/');
+		valueTypeIdentityObjectTestHelper("testValueTypeSubClassInvisibleAbstractClass", superClassName, 0);
 	}
 
 	@Test(priority=1, expectedExceptions=ClassFormatError.class)
@@ -3077,7 +3073,7 @@ public class ValueTypeTests {
 
 	@Test(priority=1)
 	static public void testIsValueClassOnAbstractClass() throws Throwable {
-		assertFalse(HeavyAbstractClass.class.isValue());
+		assertFalse(AbstractClass.class.isValue());
 	}
 
 	@Test(priority=1)

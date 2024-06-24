@@ -212,7 +212,8 @@ public:
     * \return A pointer. Raises a fatal assertion before returning NULL if the pointer is invalid.
     */
    virtual void *lookupClassLoaderAssociatedWithClassChain(void *chainData);
-   virtual TR_OpaqueClassBlock *lookupClassFromChainAndLoader(uintptr_t *chainData, void *classLoader);
+   virtual TR_OpaqueClassBlock *lookupClassFromChainAndLoader(uintptr_t *chainData, void *classLoader,
+                                                              TR::Compilation *comp);
 
    /**
     * \brief Checks whether the specified pointer points into the metadata section
@@ -668,8 +669,11 @@ public:
 
    virtual bool classMatchesCachedVersion(J9Class *clazz, UDATA *chainData=NULL) override { TR_ASSERT_FATAL(false, "called"); return false;}
 
-   virtual void *lookupClassLoaderAssociatedWithClassChain(void *chainData) override { TR_ASSERT_FATAL(false, "called"); return NULL; }
-   virtual TR_OpaqueClassBlock *lookupClassFromChainAndLoader(uintptr_t *chainData, void *classLoader) override { TR_ASSERT_FATAL(false, "called"); return NULL;}
+   virtual void *lookupClassLoaderAssociatedWithClassChain(void *chainData) override
+      { TR_ASSERT_FATAL(false, "called"); return NULL; }
+   virtual TR_OpaqueClassBlock *lookupClassFromChainAndLoader(uintptr_t *chainData, void *classLoader,
+                                                              TR::Compilation *comp) override
+      { TR_ASSERT_FATAL(false, "called"); return NULL;}
 
    static void setSharedCacheDisabledReason(TR_J9SharedCacheDisabledReason state) { TR_ASSERT_FATAL(false, "called"); }
    static TR_J9SharedCacheDisabledReason getSharedCacheDisabledReason() { TR_ASSERT_FATAL(false, "called"); return TR_J9SharedCache::TR_J9SharedCacheDisabledReason::UNINITIALIZED;}
@@ -733,7 +737,8 @@ public:
    virtual J9ROMClass *romClassFromOffsetInSharedCache(uintptr_t offset) override;
    virtual J9ROMMethod *romMethodFromOffsetInSharedCache(uintptr_t offset) override;
    virtual bool classMatchesCachedVersion(J9Class *clazz, UDATA *chainData=NULL) override;
-   virtual TR_OpaqueClassBlock *lookupClassFromChainAndLoader(uintptr_t *chainData, void *classLoader) override;
+   virtual TR_OpaqueClassBlock *lookupClassFromChainAndLoader(uintptr_t *chainData, void *classLoader,
+                                                              TR::Compilation *comp) override;
 
    virtual bool isHint(TR_ResolvedMethod *, TR_SharedCacheHint, uint16_t *dataField = NULL) override { TR_ASSERT_FATAL(false, "called"); return false; }
    virtual bool isHint(J9Method *, TR_SharedCacheHint, uint16_t *dataField = NULL) override { TR_ASSERT_FATAL(false, "called"); return false; }

@@ -962,8 +962,8 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
          // Get defining class chain record to use as a part of the key to lookup or store the method in AOT cache
          JITServerHelpers::cacheRemoteROMClassBatch(clientSession, uncachedRAMClasses, uncachedClassInfos);
          bool missingLoaderInfo = false;
-         _definingClassChainRecord = clientSession->getClassChainRecord(clazz, classChainOffset, ramClassChain,
-                                                                        stream, missingLoaderInfo);
+         _definingClassChainRecord = clientSession->getClassChainRecord(clazz, classChainOffset, ramClassChain, stream,
+                                                                        missingLoaderInfo, &scratchSegmentProvider);
          if (!_definingClassChainRecord)
             {
             if (TR::Options::getVerboseOption(TR_VerboseJITServer))

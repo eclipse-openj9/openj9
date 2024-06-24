@@ -2476,23 +2476,25 @@ getLastDollarSignOfLambdaClassName(const char *className, UDATA classNameLength)
 /**
  * Checks if the given class name corresponds to a Lambda class.
  *
- * @param className The class name to check
- * @param classNameLength The length of the class name
+ * @param[in] className The class name to check
+ * @param[in] classNameLength The length of the class name
+ * @param[in,out] deterministicPrefixLength The length of the deterministic class name prefix (optional)
  * @return TRUE if the class name corresponds to a lambda class, otherwise FALSE
  */
 BOOLEAN
-isLambdaClassName(const char *className, UDATA classNameLength);
+isLambdaClassName(const char *className, UDATA classNameLength, UDATA *deterministicPrefixLength);
 
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
 /**
  * Checks if the given class name corresponds to a LambdaForm class.
  *
- * @param className The class name to check
- * @param classNameLength The length of the class name
+ * @param[in] className The class name to check
+ * @param[in] classNameLength The length of the class name
+ * @param[in,out] deterministicPrefixLength The length of the deterministic class name prefix (optional)
  * @return TRUE if the class name corresponds to a lambdaForm class, otherwise FALSE
  */
 BOOLEAN
-isLambdaFormClassName(const char *className, UDATA classNameLength);
+isLambdaFormClassName(const char *className, UDATA classNameLength, UDATA *deterministicPrefixLength);
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 /* ---------------- cphelp.c ---------------- */

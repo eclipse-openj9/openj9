@@ -1327,19 +1327,26 @@ TR_J9SharedCache::classMatchesCachedVersion(J9Class *clazz, UDATA *chainData)
    }
 
 TR_OpaqueClassBlock *
-TR_J9SharedCache::lookupClassFromChainAndLoader(uintptr_t *chainData, void *classLoader)
+TR_J9SharedCache::lookupClassFromChainAndLoader(uintptr_t *chainData, void *classLoader, TR::Compilation *comp)
    {
-   UDATA *ptrToRomClassOffset = chainData+1;
-   J9ROMClass *romClass = romClassFromOffsetInSharedCache(*ptrToRomClassOffset);
+   uintptr_t romClassOffset = *(chainData + 1);
+   J9ROMClass *romClass = romClassFromOffsetInSharedCache(romClassOffset);
    J9UTF8 *className = J9ROMCLASS_CLASSNAME(romClass);
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)fe();
    J9VMThread *vmThread = fej9->getCurrentVMThread();
-   J9Class *clazz = jitGetClassInClassloaderFromUTF8(vmThread, (J9ClassLoader *) classLoader,
-                                                     (char *) J9UTF8_DATA(className),
-                                                     J9UTF8_LENGTH(className));
+   J9Class *clazz = jitGetClassInClassloaderFromUTF8(vmThread, (J9ClassLoader *)classLoader,
+                                                     (char *)J9UTF8_DATA(className), J9UTF8_LENGTH(className));
+
+#if defined(J9VM_OPT_JITSERVER)
+   if (!clazz && comp->isDeserializedAOTMethod())
+      {
+      auto deserializer = TR::CompilationInfo::get()->getJITServerAOTDeserializer();
+      clazz = deserializer->getGeneratedClass((J9ClassLoader *)classLoader, romClassOffset, comp);
+      }
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
    if (clazz != NULL && classMatchesCachedVersion(clazz, chainData))
-      return (TR_OpaqueClassBlock *) clazz;
+      return (TR_OpaqueClassBlock *)clazz;
 
    return NULL;
    }
@@ -1758,13 +1765,12 @@ TR_J9DeserializerSharedCache::classMatchesCachedVersion(J9Class *clazz, UDATA *c
    }
 
 TR_OpaqueClassBlock *
-TR_J9DeserializerSharedCache::lookupClassFromChainAndLoader(uintptr_t *chainData, void *classLoader)
+TR_J9DeserializerSharedCache::lookupClassFromChainAndLoader(uintptr_t *chainData, void *classLoader, TR::Compilation *comp)
    {
    // The base TR_J9SharedCache::lookupClassFromChainAndLoader(), when given a class chain and class loader, will look in the loader
    // a J9Class correspoding to the first class in the chain. If one could be found, it then verifies that the class matches the cached version.
    // We do not need to perform that checking here, because during deserialization we will have already resolved the first class in the chain to
    // a J9Class and verified that it matches. Thus we can simply return that cached first J9Class.
-   TR::Compilation *comp = _compInfoPT->getCompilation();
    bool wasReset = false;
    auto clazz = _deserializer->classFromOffset(chainData[1], comp, wasReset);
    if (wasReset)

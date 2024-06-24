@@ -2916,7 +2916,8 @@ TR::Register *J9::Power::PrivateLinkage::buildDirectDispatch(TR::Node *callNode)
          }
       }
 
-   if (!comp()->requiresSpineChecks() &&
+   if (!TR::Compiler->om.canGenerateArraylets() &&
+       !TR::Compiler->om.isOffHeapAllocationEnabled() &&
        comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P8) &&
        comp()->target().cpu.supportsFeature(OMR_FEATURE_PPC_HAS_VSX) &&
        (callNode->getSymbol()->castToMethodSymbol()->getRecognizedMethod() == TR::java_util_zip_CRC32C_updateBytes ||

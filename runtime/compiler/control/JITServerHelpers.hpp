@@ -95,7 +95,8 @@ public:
    // structures used for packing). This function should be used with TR::StackMemoryRegion.
    // If passed non-zero expectedSize, and it doesn't match the resulting packedSize
    // (which is returned to the caller by reference), this function returns NULL.
-   static J9ROMClass *packROMClass(J9ROMClass *romClass, TR_Memory *trMemory, TR_J9VMBase *fej9, size_t &packedSize, size_t expectedSize = 0);
+   static J9ROMClass *packROMClass(const J9ROMClass *romClass, TR_Memory *trMemory, TR_J9VMBase *fej9,
+                                   size_t &packedSize, size_t expectedSize = 0, size_t generatedPrefixLength = 0);
 
    static ClassInfoTuple packRemoteROMClassInfo(J9Class *clazz, J9VMThread *vmThread, TR_Memory *trMemory, bool serializeClass);
    static void freeRemoteROMClass(J9ROMClass *romClass, TR_PersistentMemory *persistentMemory);
@@ -147,12 +148,21 @@ public:
    static uint64_t generateUID();
 
    static uint32_t getFullClassNameLength(const J9ROMClass *romClass, const J9ROMClass *baseComponent,
-                                          uint32_t numDimensions);
+                                          uint32_t numDimensions, bool checkGenerated = false);
    // Writes the full class name (array class signature for arrays, class name otherwise) into the result buffer.
    // The buffer length must be at least getFullClassNameLength(romClass, baseComponent, numDimensions).
    // The baseComponent ROMClass and numDimensions correspond to the result of TR_J9VM::getBaseComponentClass().
    static void getFullClassName(uint8_t *result, uint32_t length, const J9ROMClass *romClass,
-                                const J9ROMClass *baseComponent, uint32_t numDimensions);
+                                const J9ROMClass *baseComponent, uint32_t numDimensions, bool checkGenerated = false);
+
+   // If name matches one of the recognized runtime-generated class name patterns (where the name can vary across JVM
+   // instances, e.g., lambdas), returns the length of the deterministic class name prefix, otherwise returns 0.
+   static size_t getGeneratedClassNamePrefixLength(const J9UTF8 *name);
+
+   static size_t getGeneratedClassNamePrefixLength(const J9ROMClass *romClass)
+      {
+      return getGeneratedClassNamePrefixLength(J9ROMCLASS_CLASSNAME(romClass));
+      }
 
 private:
    static void getROMClassData(const ClientSessionData::ClassInfo &classInfo, ClassInfoDataType dataType, void *data);

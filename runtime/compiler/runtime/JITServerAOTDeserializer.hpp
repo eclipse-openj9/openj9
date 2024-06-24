@@ -31,6 +31,7 @@ class TR_PersistentClassLoaderTable;
 namespace TR { class Compilation; }
 namespace TR { class Monitor; }
 
+
 // This class defines the base interface for the deserialization of cached AOT methods received from a JITServer,
 // and initializes certain elements common to the implementations. Its derived classes contain the actual
 // deserialization implementation, and at most one of those implementations should be initialized at any one time.
@@ -62,14 +63,17 @@ class JITServerAOTDeserializer
 public:
    TR_PERSISTENT_ALLOC(TR_Memory::JITServerAOTCache)
 
-   JITServerAOTDeserializer(TR_PersistentClassLoaderTable *loaderTable);
+   JITServerAOTDeserializer(TR_PersistentClassLoaderTable *loaderTable, J9JITConfig *jitConfig);
    ~JITServerAOTDeserializer();
+
+   TR_Memory &classLoadTRMemory();
 
    // Deserializes in place a serialized AOT method received from JITServer. Returns true on success.
    // Caches new serialization records and adds their IDs to the set of new known IDs.
    bool deserialize(SerializedAOTMethod *method, const std::vector<std::string> &records,
                     TR::Compilation *comp, bool &usesSVM);
 
+   void onClassLoad(J9Class *ramClass, J9VMThread *vmThread);
    // Invalidation functions called from class and class loader unload JIT hooks to invalidate RAMClass
    // and class loader pointers cached by the deserializer.
    virtual void invalidateClassLoader(J9VMThread *vmThread, J9ClassLoader *loader) = 0;
@@ -86,6 +90,12 @@ public:
    // This function returns the list of IDs cached since the last call, and clears the set of new known IDs.
    std::vector<uintptr_t/*idAndType*/> getNewKnownIds(TR::Compilation *comp);
 
+   // Find a runtime-generated class for given class loader, deterministic class name prefix, and ROMClass hash
+   J9Class *findGeneratedClass(J9ClassLoader *loader, const uint8_t *namePrefix, size_t namePrefixLength,
+                               const JITServerROMClassHash &hash, J9VMThread *vmThread);
+   // Get the RAMClass for a previously deserialized ROMClass offset for a runtime-generated class
+   virtual J9Class *getGeneratedClass(J9ClassLoader *loader, uintptr_t romClassSccOffset, TR::Compilation *comp) = 0;
+
    void incNumCacheBypasses() { ++_numCacheBypasses; }
    void incNumCacheMisses() { ++_numCacheMisses; }
    size_t getNumDeserializedMethods() const { return _numDeserializedMethods; }
@@ -93,6 +103,19 @@ public:
    void printStats(FILE *f) const;
 
 protected:
+   // Keeps track of runtime-generated classes for a specific class loader and deterministic class name prefix.
+   // E.g., for lambdas there will be one instance of this struct for each host class that defines any lambdas.
+   struct GeneratedClassMap
+      {
+      GeneratedClassMap(uint8_t *namePrefix);
+      ~GeneratedClassMap();
+
+      uint8_t *const _namePrefix;
+      PersistentUnorderedMap<JITServerROMClassHash, J9Class *> _classHashMap;
+      // This map is needed for invalidating unloaded classes
+      PersistentUnorderedMap<J9Class *, JITServerROMClassHash> _classPtrMap;
+      };
+
    bool deserializerWasReset(TR::Compilation *comp, bool &wasReset);
    bool deserializationFailure(const SerializedAOTMethod *method, TR::Compilation *comp, bool wasReset);
 
@@ -113,6 +136,14 @@ protected:
 
    PersistentUnorderedSet<uintptr_t/*idAndType*/> &getNewKnownIds() { return _newKnownIds; }
    TR_PersistentClassLoaderTable *getLoaderTable() const { return _loaderTable; }
+
+   // Removes the class from the generated classes map and returns true if the class is generated, otherwise returns false
+   bool invalidateGeneratedClass(J9Class *ramClass);
+
+   J9JITConfig *const _jitConfig;
+
+   PersistentUnorderedMap<std::pair<J9ClassLoader *, StringKey/*namePrefix*/>, GeneratedClassMap> _generatedClasses;
+   TR::Monitor *const _generatedClassesMonitor;
 
 private:
    // Clear the internal caches of the deserializer. Must be called with every monitor in hand
@@ -154,6 +185,15 @@ private:
 
    TR_PersistentClassLoaderTable *const _loaderTable;
 
+   // Scratch memory used in the class load hook to pack generated ROMClasses. Synchronized with the class table mutex.
+   // This hard-coded limit covers the vast majority of cases since most lambdas and other generated classes are small.
+   static const size_t classLoadScratchMemoryLimit = 256 * 1024;
+   TR::RawAllocator _rawAllocator;
+   J9::SegmentAllocator _segmentAllocator;
+   J9::SystemSegmentProvider _segmentProvider;
+   TR::Region _classLoadRegion;
+   TR_Memory _classLoadTRMemory;
+
    // NOTE: Locking hierarchy used in this class and its derivatives follows cycle-free dependency order
    // between serialization record types and guarantees that there are no deadlocks:
    // - _resetMonitor < _wellKnownClassesMonitor < _classChainMonitor < _classMonitor;
@@ -180,6 +220,7 @@ private:
    size_t _numClassHashMismatches;
    };
 
+
 // This deserializer implements the following scheme:
 //
 // 1. AOT cache serialization records are resolved into their corresponding "RAM" entities.
@@ -196,10 +237,12 @@ class JITServerLocalSCCAOTDeserializer : public JITServerAOTDeserializer
 public:
    TR_PERSISTENT_ALLOC(TR_Memory::JITServerAOTCache)
 
-   JITServerLocalSCCAOTDeserializer(TR_PersistentClassLoaderTable *loaderTable);
+   JITServerLocalSCCAOTDeserializer(TR_PersistentClassLoaderTable *loaderTable, J9JITConfig *jitConfig);
 
    virtual void invalidateClassLoader(J9VMThread *vmThread, J9ClassLoader *loader) override;
    virtual void invalidateClass(J9VMThread *vmThread, J9Class *ramClass) override;
+
+   virtual J9Class *getGeneratedClass(J9ClassLoader *loader, uintptr_t romClassSccOffset, TR::Compilation *comp) override;
 
 private:
    virtual void clearCachedData() override;
@@ -252,7 +295,11 @@ private:
    PersistentUnorderedMap<uintptr_t/*ID*/, uintptr_t/*SCC offset*/> _classChainMap;
 
    PersistentUnorderedMap<uintptr_t/*ID*/, uintptr_t/*SCC offset*/> _wellKnownClassesMap;
+
+   //NOTE: Synchronized using _classMonitor
+   PersistentUnorderedMap<std::pair<J9ClassLoader *, uintptr_t/*romClassSccOffset*/>, J9Class *> _generatedClassesSccMap;
    };
+
 
 // This deserializer implements the following scheme:
 //
@@ -267,11 +314,13 @@ public:
 
    TR_PERSISTENT_ALLOC(TR_Memory::JITServerAOTCache)
 
-   JITServerNoSCCAOTDeserializer(TR_PersistentClassLoaderTable *loaderTable);
+   JITServerNoSCCAOTDeserializer(TR_PersistentClassLoaderTable *loaderTable, J9JITConfig *jitConfig);
 
    virtual void invalidateClassLoader(J9VMThread *vmThread, J9ClassLoader *loader) override;
    virtual void invalidateClass(J9VMThread *vmThread, J9Class *ramClass) override;
    void invalidateMethod(J9Method *method);
+
+   virtual J9Class *getGeneratedClass(J9ClassLoader *loader, uintptr_t romClassSccOffset, TR::Compilation *comp) override;
 
    static uintptr_t offsetId(uintptr_t offset)
       { return AOTSerializationRecord::getId(offset); }
@@ -330,5 +379,6 @@ private:
 
    PersistentUnorderedMap<uintptr_t/*ID*/, uintptr_t * /*deserializer chain offsets*/> _wellKnownClassesMap;
    };
+
 
 #endif /* JITSERVER_AOT_DESERIALIZER_H */
