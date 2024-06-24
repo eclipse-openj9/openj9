@@ -85,9 +85,6 @@ static inlMapping mappings[] = {
 	{ "Java_java_lang_Class_isAssignableFrom__Ljava_lang_Class_2", J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_ASSIGNABLE_FROM },
 	{ "Java_java_lang_Class_isArray__", J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_ARRAY },
 	{ "Java_java_lang_Class_isPrimitive__", J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_PRIMITIVE },
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-	{ "Java_java_lang_Class_isPrimitiveClass__", J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_PRIMITIVE_CLASS },
-#endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	{ "Java_java_lang_Class_isValue__", J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_VALUE },
 	{ "Java_java_lang_Class_isIdentity__", J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_IDENTITY },
