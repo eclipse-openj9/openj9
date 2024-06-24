@@ -984,6 +984,7 @@ jobject JNICALL Java_java_lang_invoke_MethodType_makeTenured(JNIEnv *env, jclass
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
 void JNICALL Java_java_lang_invoke_MethodHandleNatives_init(JNIEnv *env, jclass clazz, jobject self, jobject ref);
 void JNICALL Java_java_lang_invoke_MethodHandleNatives_expand(JNIEnv *env, jclass clazz, jobject self);
+jobject JNICALL Java_java_lang_invoke_MethodHandleNatives_findInSCC(JNIEnv *env, jclass clazz, jstring classname, jclass lookupClass);
 jobject JNICALL Java_java_lang_invoke_MethodHandleNatives_resolve(
 #if JAVA_SPEC_VERSION == 8
                                                                   JNIEnv *env, jclass clazz, jobject self, jclass caller);

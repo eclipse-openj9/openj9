@@ -639,6 +639,7 @@ if(J9VM_OPT_OPENJDK_METHODHANDLE)
 	omr_add_exports(jclse
 		Java_java_lang_invoke_MethodHandleNatives_init
 		Java_java_lang_invoke_MethodHandleNatives_expand
+		Java_java_lang_invoke_MethodHandleNatives_findInSCC
 		Java_java_lang_invoke_MethodHandleNatives_resolve
 		Java_java_lang_invoke_MethodHandleNatives_getMembers
 		Java_java_lang_invoke_MethodHandleNatives_objectFieldOffset
