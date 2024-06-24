@@ -713,3 +713,7 @@ TraceExit=Trc_JCL_com_ibm_oti_shared_getCpeTypeForProtocol_ExitFail2 Noenv Overh
 TraceExit=Trc_JCL_com_ibm_oti_shared_getCpeTypeForProtocol_ExitFail3 Noenv Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared getCpeTypeForProtocol: Attempt to determine path type resulted in error code %d"
 
 TraceEntry=Trc_JCL_com_ibm_oti_shared_getCachedURL_Entry_1 Overhead=1 Level=2 Template="JCL: com.ibm.oti.shared getCachedURL: Entering for helperID=%d"
+
+TraceEntry=Trc_JCL_java_lang_invoke_MethodHandleNatives_findLambdaOrLambdaFormInSCC_Entry Overhead=1 Level=3 Template="Trc_JCL_java_lang_invoke_MethodHandleNatives_findLambdaOrLambdaFormInSCC Enter: classnameObject = %p, lookupClass = %p, options = 0x%08X"
+TraceEvent=Trc_JCL_java_lang_invoke_MethodHandleNatives_findLambdaOrLambdaFormInSCC_Found Overhead=1 Level=3 Template="Trc_JCL_java_lang_invoke_MethodHandleNatives_findLambdaOrLambdaFormInSCC Found: name = %.*s, lookupClass = %p, options = 0x%08X"
+TraceExit=Trc_JCL_java_lang_invoke_MethodHandleNatives_findLambdaOrLambdaFormInSCC_Exit Overhead=1 Level=3 Template="MethodHandleNatives_findLambdaOrLambdaFormInSCC Exit"

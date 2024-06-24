@@ -87,8 +87,7 @@ getOpenJ9Sha()
 	return sha;
 }
 
-#if JAVA_SPEC_VERSION < 21
-char*
+char *
 getLastDollarSignOfLambdaClassName(const char *className, UDATA classNameLength)
 {
 	char *end = NULL;
@@ -110,17 +109,14 @@ getLastDollarSignOfLambdaClassName(const char *className, UDATA classNameLength)
 	/* return NULL if it is not a lambda class */
 	return NULL;
 }
-#endif /* JAVA_SPEC_VERSION < 21 */
 
 BOOLEAN
 isLambdaClassName(const char *className, UDATA classNameLength, UDATA *deterministicPrefixLength)
 {
 	BOOLEAN result = FALSE;
-
-#if JAVA_SPEC_VERSION < 21
 	/*
-	 * Before JDK21, Lambda class names are in the format:
-	 *	HostClassName$$Lambda$<IndexNumber>/<zeroed out ROM_ADDRESS>
+	 * Lambda class names are in the format:
+	 *	HostClassName$$Lambda$<UniqueID>/<zeroed out ROM_ADDRESS>
 	 * getLastDollarSignOfLambdaClassName verifies this format and returns
 	 * a non-NULL pointer if successfully verified.
 	 */
@@ -130,36 +126,12 @@ isLambdaClassName(const char *className, UDATA classNameLength, UDATA *determini
 		if (NULL != deterministicPrefixLength) {
 			/*
 			 * To reliably identify lambda classes across JVM instances, JITServer AOT cache uses the
-			 * deterministic class name prefix (up to and including the last '$') and the ROMClass hash.
-			 */
-			*deterministicPrefixLength = dollarSign + 1 - className;
-		}
-	}
-#else /* JAVA_SPEC_VERSION < 21 */
-	/*
-	 * For JDK21 and later, Lambda class names are in the format:
-	 *	HostClassName$$Lambda/<zeroed out ROM_ADDRESS>
-	 * Verifies format by identifiying last occurence of '$' and checking for the
-	 * Lambda suffix.
-	 */
-#if defined(J9VM_ENV_DATA64)
-#define J9_LAMBDA_CLASS_SUFFIX "$$Lambda/0x0000000000000000"
-#else /* defined(J9VM_ENV_DATA64) */
-#define J9_LAMBDA_CLASS_SUFFIX "$$Lambda/0x00000000"
-#endif /* defined(J9VM_ENV_DATA64) */
-	UDATA lambdaSuffixLength = LITERAL_STRLEN(J9_LAMBDA_CLASS_SUFFIX);
-	if (isStrSuffixHelper(className, classNameLength, J9_LAMBDA_CLASS_SUFFIX, lambdaSuffixLength)) {
-		result = TRUE;
-		if (NULL != deterministicPrefixLength) {
-			/*
-			 * To reliably identify lambda classes across JVM instances, JITServer AOT cache uses the
 			 * deterministic class name prefix (up to and including the last '/') and the ROMClass hash.
 			 */
-			*deterministicPrefixLength = classNameLength - lambdaSuffixLength + LITERAL_STRLEN("$$Lambda/");
+			const char *slash = memchr(dollarSign, '/', classNameLength - (UDATA)(dollarSign - className));
+			*deterministicPrefixLength = slash ? (slash + 1 - className) : 0;
 		}
 	}
-#undef J9_LAMBDA_CLASSNAME_SUFFIX
-#endif /* JAVA_SPEC_VERSION < 21 */
 
 	return result;
 }
@@ -172,7 +144,7 @@ isLambdaFormClassName(const char *className, UDATA classNameLength, UDATA *deter
 
 	/*
 	 * Lambda form class names are in the format:
-	 *  java/lang/invoke/LambdaForm$<method-handle-type>/<zeroed out ROM_ADDRESS>
+	 *  java/lang/invoke/LambdaForm$<method-handle-type>$<UniqueID>/<zeroed out ROM_ADDRESS>
 	 * where <method-handle-type> is BMH, DMH, or MH.
 	 */
 #define J9_LAMBDA_FORM_CLASSNAME "java/lang/invoke/LambdaForm$"

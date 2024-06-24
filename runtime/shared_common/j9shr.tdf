@@ -3004,3 +3004,6 @@ TraceEvent=Trc_SHR_TMI_LocalCheckTimestamp_Timestamps Overhead=1 Level=6 Templat
 TraceEvent=Trc_SHR_VMInitStages_Event_UsingJITServerAOTCacheLayer Overhead=1 Level=1 Template="The shared cache is using a temporary top layer for the JITServer AOT cache"
 TraceEvent=Trc_SHR_OSC_Mmap_startup_jitserverlayergooddelete NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::startup: deleteCacheFile succeeded for cache path name = %s, file handle %zd"
 TraceException=Trc_SHR_OSC_Mmap_startup_jitserverlayerbaddelete NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::startup: deleteCacheFile failed for cache path name = %s, file handle %zd"
+
+TraceEntry=Trc_SHR_API_j9shr_jclFindOrphanROMClassByUniqueID_Entry Overhead=1 Level=3 Template="API Trc_SHR_API_j9shr_jclFindOrphanROMClassByUniqueID : enter uniqueID=%.*s"
+TraceEntry=Trc_SHR_API_j9shr_jclFindOrphanROMClassByUniqueID_Exit Overhead=1 Level=3 Template="API Trc_SHR_API_j9shr_jclFindOrphanROMClassByUniqueID : exit uniqueID=%.*s"

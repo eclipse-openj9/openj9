@@ -3033,6 +3033,7 @@ initializeSharedAPI(J9JavaVM *vm)
 	scapi->classStoreTransaction_updateUnstoredBytes = j9shr_classStoreTransaction_updateUnstoredBytes;
 	/*Set JCL functions*/
 	scapi->jclUpdateROMClassMetaData = j9shr_jclUpdateROMClassMetaData;
+	scapi->jclFindOrphanROMClassByUniqueID = j9shr_jclFindOrphanROMClassByUniqueID;
 	/*Set up functions for finishing share classes initialization*/
 	scapi->sharedClassesFinishInitialization = j9shr_sharedClassesFinishInitialization;
 	/*Set up functions to query the state of shared classes*/
