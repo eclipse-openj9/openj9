@@ -2890,12 +2890,6 @@ TR_J9VMBase::testIsClassValueType(TR::Node *j9ClassRefNode)
    }
 
 TR::Node *
-TR_J9VMBase::testIsClassPrimitiveValueType(TR::Node *j9ClassRefNode)
-   {
-   return testAreSomeClassFlagsSet(j9ClassRefNode, J9ClassIsPrimitiveValueType);
-   }
-
-TR::Node *
 TR_J9VMBase::testIsClassIdentityType(TR::Node *j9ClassRefNode)
    {
    return testAreSomeClassFlagsSet(j9ClassRefNode, J9ClassHasIdentity);

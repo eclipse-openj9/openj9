@@ -59,7 +59,6 @@
    java_lang_Class_isArray,
    java_lang_Class_isPrimitive,
    java_lang_Class_isValue,
-   java_lang_Class_isPrimitiveClass,
    java_lang_Class_isIdentity,
    java_lang_Class_getComponentType,
    java_lang_Class_getModifiersImpl,

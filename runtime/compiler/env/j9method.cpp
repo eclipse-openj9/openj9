@@ -2101,7 +2101,6 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::java_lang_Class_isArray,              "isArray",              "()Z")},
       {x(TR::java_lang_Class_isPrimitive,          "isPrimitive",          "()Z")},
       {x(TR::java_lang_Class_isValue,              "isValue",              "()Z")},
-      {x(TR::java_lang_Class_isPrimitiveClass,     "isPrimitiveClass",     "()Z")},
       {x(TR::java_lang_Class_isIdentity,           "isIdentity",           "()Z")},
       {x(TR::java_lang_Class_getComponentType,     "getComponentType",     "()Ljava/lang/Class;")},
       {x(TR::java_lang_Class_getModifiersImpl,     "getModifiersImpl",     "()I")},
