@@ -182,7 +182,7 @@ A binary for the full developer kit (jdk) is built and stored in the following d
 
 - **build/linux-x86_64-server-release/images/jdk**
 
-    :whale: If you built your binaries in a Docker container, copy the binaries to the containers **/root/hostdir** directory so that you can access them on your local system. You'll find them in the directory you set for `<host_directory>` when you started your Docker container. See [Setting up your build environment with Docker](#setting-up-your-build-environment-with-docker).
+    :whale: If you built your binaries in a Docker container, copy the binaries to the containers **/root/hostdir** directory so that you can access them on your local system. You'll find them in the directory you set for `<host_directory>` when you started your Docker container. See [Setting up your build environment with Docker](#setting-up-your-build-environment-with-docker-whale).
 
     :pencil: On other architectures the **jdk** directory is in **build/linux-ppc64le-server-release/images** (Linux on 64-bit Power systems) or **build/linux-s390x-server-release/images** (Linux on 64-bit z Systems).
 
