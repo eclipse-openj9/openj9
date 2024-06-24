@@ -4106,16 +4106,6 @@ I_32
 invoke31BitJNI_OnXLoad(J9JavaVM *vm, void *handle, jboolean isOnLoad, void *reserved);
 #endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) && (JAVA_SPEC_VERSION >= 17) */
 
-#if defined(LINUX)
-/**
- * Utilize the madvise function with the segments of the classloaders to disclaim all class memory.
- * @param currentThread The current thread
- * @return 0 if successfully discalimed all class memory, error code otherwise
- */
-int
-disclaimAllClassMemory(struct J9VMThread *currentThread);
-#endif /* defined(LINUX) */
-
 /* ---------------- vmhook.c ---------------- */
 
 #if defined(J9VM_INTERP_NATIVE_SUPPORT)

@@ -1837,13 +1837,22 @@ criuCheckpointJVMImpl(JNIEnv *env,
 
 		VM_VMHelpers::setVMState(currentThread, J9VMSTATE_CRIU_SUPPORT_CHECKPOINT_PHASE_END);
 
-		systemReturnCode = vm->internalVMFunctions->disclaimAllClassMemory(currentThread);
-		if (0 != vm->internalVMFunctions->disclaimAllClassMemory(currentThread)) {
+		systemReturnCode = disclaimAllClassMemory(currentThread);
+		if (-1 == systemReturnCode) {
 			systemReturnCode = errno;
 			currentExceptionClass = vm->checkpointState.criuJVMCheckpointExceptionClass;
 			nlsMsgFormat = j9nls_lookup_message(
 				J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
 				J9NLS_VM_CRIU_DISCLAIM_ALL_CLASS_MEMORY_FAILURE,
+				NULL);
+			j9mem_free_memory(syslogOptions);
+			goto wakeJavaThreadsWithExclusiveVMAccess;
+		} else if (-2 == systemReturnCode) {
+			systemReturnCode = errno;
+			currentExceptionClass = vm->checkpointState.criuJVMCheckpointExceptionClass;
+			nlsMsgFormat = j9nls_lookup_message(
+				J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+				J9NLS_VM_CRIU_DISCLAIM_ALL_CLASS_MEMORY_FAILURE_AND_DISCLAIM_RAM_CLASSES_OPTION_NOT_SET_FAILURE,
 				NULL);
 			j9mem_free_memory(syslogOptions);
 			goto wakeJavaThreadsWithExclusiveVMAccess;

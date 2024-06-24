@@ -22,9 +22,6 @@
 
 #include <string.h>
 #include <ctype.h>
-#if defined(LINUX)
-#include <sys/mman.h>
-#endif /* defined(LINUX) */
 
 #include "j9.h"
 #include "j9consts.h"
@@ -56,11 +53,6 @@
 #define J9DYNAMIC_ONLOAD                "JNI_OnLoad"
 #define J9DYNAMIC_ONUNLOAD              "JNI_OnUnload"
 #define J9DYNAMIC_ONUNLOAD_LENGTH       sizeof(J9DYNAMIC_ONUNLOAD)
-#if defined(LINUX)
-#ifndef MADV_PAGEOUT
-#define MADV_PAGEOUT     21
-#endif /* MADV_PAGEOUT */
-#endif /* defined(LINUX) */
 
 /** Function type called by openNativeLibrary. Usually this is classLoaderRegisterLibrary
  *
@@ -925,58 +917,3 @@ invoke31BitJNI_OnXLoad(J9JavaVM *vm, void *handle, jboolean isOnLoad, void *rese
 	return result;
 }
 #endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) && (JAVA_SPEC_VERSION >= 17) */
-
-#if defined(LINUX)
-// void seeIfIAmMissingAnything(int ret) {
-	// madvise() could fail with EINVAL if MADV_PAGEOUT is not supported by the kernel
-	// if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
-		// TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "WARNING: Failed to use madvise to disclaim memory for data cache");
-	// printf("Failed to use madvise to disclaim memory for data cache, ret=%d\n", ret);
-	// if (ret == EINVAL)
-		// _disclaimEnabled = false; // Don't try to disclaim again, since support seems to be missing
-		// if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
-			// TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "WARNING: Disabling data cache disclaiming from now on");
-	// }
-	// if ((9943 == ret) || (22 == ret)) {
-		// printf("Don't try to disclaim again, since support seems to be missing\n");
-	// }
-// }
-
-/**
- * Note this funciton is specific to linux
- *
- * Disclaim all class loader memory segments.
- *
- * Walks all class loaders (via allClassLoadersStartDo, etc.) and calls madvise(segment->baseAddress, segment->size, MADV_PAGEOUT)
- * on all the J9MemorySegments (classloader->classSegments)
- *
- * There is a chance that MADV_PAGEOUT is not supported on the OS level, so we need to the error code to see if it was successful
- *
- * @return 0 if successful, error code otherwise
- */
-int
-disclaimAllClassMemory(J9VMThread *currentThread)
-{
-	int result = 0;
-	J9JavaVM *javaVM = currentThread->javaVM;
-	J9ClassLoader *classLoader = NULL;
-	J9ClassLoaderWalkState walkState;
-	J9MemorySegment *segment = NULL;
-	classLoader = javaVM->internalVMFunctions->allClassLoadersStartDo(&walkState, javaVM, 0);
-	while (NULL != classLoader) {
-		segment = classLoader->classSegments;
-		while (NULL != segment) {
-			Trc_VM_ciru_disclaimAllClassMemory_segment(currentThread, segment->baseAddress, segment->heapBase, segment->type, segment->size);
-			result = madvise(segment->heapBase, segment->size, MADV_PAGEOUT);
-			if (-1 == result) {
-				// seeIfIAmMissingAnything(result);
-				goto done;
-			}
-			segment = segment->nextSegmentInClassLoader;
-		}
-		classLoader = javaVM->internalVMFunctions->allClassLoadersNextDo(&walkState);
-	}
-done:
-	return result;
-}
-#endif /* defined(LINUX) */
