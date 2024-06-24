@@ -915,11 +915,15 @@ ffi_prep_cif_machdep(ffi_cif *cif)
        i--, ptr++)
     {
     int type = (*ptr)->type;
+
     /* Check how a structure type is passed.  */
     if (type == FFI_TYPE_STRUCT)
       {
       type = ffi_check_struct_type (*ptr);
       (*ptr)->type = ffi_check_struct_for_complex(*ptr);
+
+      /* If we pass the struct via pointer, we must reserve space
+         to copy its data for proper call-by-value semantics.  */
       if (type == FFI_TYPE_POINTER)
 	      struct_size += ROUND_SIZE ((*ptr)->size);
       }
