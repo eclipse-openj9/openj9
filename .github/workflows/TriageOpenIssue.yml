@@ -1,5 +1,5 @@
-name: Testing Triager on Opened issues
-run-name: Triager Tester in GitHub Actions
+name: Triager on Opened issues
+run-name: TriagerX for opened issues
 
 on:
     issues:
