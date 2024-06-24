@@ -8492,7 +8492,7 @@ retry:
 				j9object_t instance = NULL;
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 				if (J9_ARE_NO_BITS_SET(arrayClass->classFlags, J9ClassContainsUnflattenedFlattenables))
-#endif
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 				{
 					instance = VM_VMHelpers::inlineAllocateIndexableObject(_currentThread, &_objectAllocate, arrayClass, (U_32) size);
 				}

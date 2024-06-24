@@ -1326,14 +1326,6 @@ readPool(J9CfrClassFile* classfile, U_8* data, U_8* dataEnd, U_8* segment, U_8* 
 				previousUTF8 = info;
 			}
 			classfile->lastUTF8CPIndex = i;
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-			/**
-			 * The following line should be put inside if (classfile->majorVersion > 61) according to the SPEC. However, the current
-			 * OpenJDK Valhalla implementation is not updated on this yet. There are cases that the new VT form is used in old classes
-			 * from OpenJDK Valhalla JCL.
-			 */
-			info->flags1 |= CFR_CLASS_FILE_VERSION_SUPPORT_FLATTENABLE_VALUE_TYPE;
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 			i++;
 			break;
 

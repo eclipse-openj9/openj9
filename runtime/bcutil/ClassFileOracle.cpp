@@ -829,9 +829,9 @@ ClassFileOracle::walkInterfaces()
 	InterfaceVisitor interfaceVisitor(this, _constantPoolMap);
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	interfacesDo(&interfaceVisitor, 0);
-#else
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	interfacesDo(&interfaceVisitor);
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	_isCloneable = interfaceVisitor.wasCloneableSeen();
 	_isSerializable = interfaceVisitor.wasSerializableSeen();
 }
