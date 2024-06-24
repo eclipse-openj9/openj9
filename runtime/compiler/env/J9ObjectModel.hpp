@@ -63,25 +63,36 @@ public:
    bool mayRequireSpineChecks();
 
    /**
-   * @brief Whether or not value object is enabled
-   */
+    * @brief Whether or not value object is enabled
+    */
    bool areValueTypesEnabled();
+
    /**
-   * @brief Whether or not flattenable value object (aka null restricted) type is enabled
-   */
+    * \brief Indicates whether \c new bytecode can create value type instances
+    *
+    * \returns \c true if \c new creates value type instances; or
+    *          \c false if \c aconst_init and \c withfield create value type instances.
+    */
+   bool areValueTypeInstancesCreatedWithBCNew();
+
+   /**
+    * @brief Whether or not flattenable value object (aka null restricted) type is enabled
+    */
    bool areFlattenableValueTypesEnabled();
+
    /**
-   * @brief Whether or not `Q` signature is supported
-   */
+    * @brief Whether or not `Q` signature is supported
+    */
    bool isQDescriptorForValueTypesSupported();
 
    /**
-   * @brief Whether the check is enabled on monitor object being value based class type
-   */
+    * @brief Whether the check is enabled on monitor object being value based class type
+    */
    bool areValueBasedMonitorChecksEnabled();
+
    /**
-   * @brief Whether the array flattening is enabled for value types
-   */
+    * @brief Whether the array flattening is enabled for value types
+    */
    bool isValueTypeArrayFlatteningEnabled();
 
    int32_t sizeofReferenceField();
