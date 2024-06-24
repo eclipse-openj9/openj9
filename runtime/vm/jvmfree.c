@@ -493,10 +493,12 @@ disclaimAllClassMemory(J9VMThread *currentThread)
 		segment = classLoader->classSegments;
 		while (NULL != segment) {
 			Trc_VM_ciru_disclaimAllClassMemory_segment(currentThread, segment->baseAddress, segment->heapBase, segment->type, segment->size);
-			result = madvise(segment->heapBase, segment->size, MADV_PAGEOUT);
-			if (-1 == result) {
-				// seeIfIAmMissingAnything(result);
-				goto done;
+			if (J9_ARE_ALL_BITS_SET(segment->type, MEMORY_TYPE_RAM_CLASS)) {
+				result = madvise(segment->heapBase, segment->size, MADV_PAGEOUT);
+				if (-1 == result) {
+					// seeIfIAmMissingAnything(result);
+					goto done;
+				}
 			}
 			segment = segment->nextSegmentInClassLoader;
 		}
