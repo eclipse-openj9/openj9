@@ -279,30 +279,45 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 				</path>
 				<property name="commonArgs" value="${addExports} ${addExports_90_jcl} ${addExports_version} --add-modules openj9.sharedclasses" />
 				<if>
-					<matches string="${JDK_VERSION}" pattern="^(1[1-8])$$" />
+					<matches string="${JDK_VERSION}" pattern="^(1[1-6])$$" />
 					<then>
-						<!-- Java 11-18 -->
+						<!-- Java 11-16 -->
 						<javac srcdir="${srcpath}" excludes="${commonExcludes}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" classpathref="build.cp">
 							<compilerarg line='${commonArgs}' />
 						</javac>
 					</then>
 					<else>
-						<!-- Java 19+ (SecurityManager removed) -->
-						<javac srcdir="${srcpath}" excludes="${commonExcludes}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" classpathref="build.cp">
-							<compilerarg line='${commonArgs}' />
-							<!-- exclude tests that depend on SecurityManager -->
-							<exclude name="org/openj9/test/java/security/Test_AccessController.java" />
-							<exclude name="org/openj9/test/java/security/Test_AccessControlContext.java" />
-							<exclude name="org/openj9/test/java/lang/Test_Class_SM.java" />
-							<exclude name="org/openj9/test/java/lang/Test_System_SM.java" />
-							<exclude name="org/openj9/test/java/lang/Test_Thread_SM.java" />
-							<exclude name="org/openj9/test/java/lang/Test_ThreadGroup_SM.java" />
-							<exclude name="org/openj9/test/java/lang/invoke/Test_MethodHandleInfo_SM.java" />
-							<exclude name="org/openj9/test/java/lang/Test_ClassLoader_SM.java" />
-							<exclude name="org/openj9/test/java/lang/Test_J9VMInternals_SM.java" />
-							<exclude name="org/openj9/test/java/lang/Test_J9VMInternalsImpl_SM.java" />
-							<exclude name="org/openj9/test/vm/Test_VM.java" />
-						</javac>
+						<if>
+							<matches string="${JDK_VERSION}" pattern="^(1[7-8])$$" />
+							<then>
+								<!-- Java 17-18 -->
+								<javac srcdir="${srcpath}" excludes="${commonExcludes}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" classpathref="build.cp">
+									<compilerarg line='${commonArgs}' />
+									<!-- exclude tests that depend on OpenJ9 String -->
+									<exclude name="org/openj9/test/com/ibm/jit/Test_JITHelpersIntrinsicIndexOf.java" />
+								</javac>
+							</then>
+							<else>
+								<!-- Java 19+ (SecurityManager removed) -->
+								<javac srcdir="${srcpath}" excludes="${commonExcludes}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" classpathref="build.cp">
+									<compilerarg line='${commonArgs}' />
+									<!-- exclude tests that depend on SecurityManager -->
+									<exclude name="org/openj9/test/java/security/Test_AccessController.java" />
+									<exclude name="org/openj9/test/java/security/Test_AccessControlContext.java" />
+									<exclude name="org/openj9/test/java/lang/Test_Class_SM.java" />
+									<exclude name="org/openj9/test/java/lang/Test_System_SM.java" />
+									<exclude name="org/openj9/test/java/lang/Test_Thread_SM.java" />
+									<exclude name="org/openj9/test/java/lang/Test_ThreadGroup_SM.java" />
+									<exclude name="org/openj9/test/java/lang/invoke/Test_MethodHandleInfo_SM.java" />
+									<exclude name="org/openj9/test/java/lang/Test_ClassLoader_SM.java" />
+									<exclude name="org/openj9/test/java/lang/Test_J9VMInternals_SM.java" />
+									<exclude name="org/openj9/test/java/lang/Test_J9VMInternalsImpl_SM.java" />
+									<exclude name="org/openj9/test/vm/Test_VM.java" />
+									<!-- exclude tests that depend on OpenJ9 String -->
+									<exclude name="org/openj9/test/com/ibm/jit/Test_JITHelpersIntrinsicIndexOf.java" />
+								</javac>
+							</else>
+						</if>
 					</else>
 				</if>
 			</else>

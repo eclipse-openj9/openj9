@@ -579,7 +579,6 @@ public final class JITHelpers {
 		}
 		return true;
 	}
-/*[ENDIF] JAVA_SPEC_VERSION < 17 */
 
 	/**
 	 * Returns the first index of the target character array within the source character array starting from the specified
@@ -724,6 +723,7 @@ public final class JITHelpers {
 		}
 		return -1;
 	}
+/*[ENDIF] JAVA_SPEC_VERSION < 17 */
 
 	/*
 	 * Constants for optimizedClone
