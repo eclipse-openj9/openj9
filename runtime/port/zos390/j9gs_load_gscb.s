@@ -50,9 +50,6 @@ GSLDCB CELQPRLG BASEREG=6,DSASIZE=0
          LA    R3,1
          B     EXIT           Without this branch fails at runtime
 EXIT     DS    0F
-         DROP  R2
-         DROP  R1
-         DROP  R0
 
          AIF  ('&SYSPARM' EQ 'BIT64').JMP3
          EDCXEPLG
