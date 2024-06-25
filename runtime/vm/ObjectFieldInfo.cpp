@@ -46,11 +46,9 @@ ObjectFieldInfo::countInstanceFields(void)
 		if (J9_ARE_NO_BITS_SET(modifiers, J9AccStatic) ) {
 			if (modifiers & J9FieldFlagObject) {
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-				J9UTF8 *fieldSig = J9ROMFIELDSHAPE_SIGNATURE(field);
-				U_8 *fieldSigBytes = J9UTF8_DATA(J9ROMFIELDSHAPE_SIGNATURE(field));
-				if (('Q' == *fieldSigBytes)
-					|| J9_ARE_ALL_BITS_SET(modifiers, J9FieldFlagIsNullRestricted)
-				) {
+				if (J9_ARE_ALL_BITS_SET(modifiers, J9FieldFlagIsNullRestricted)) {
+					J9UTF8 *fieldSig = J9ROMFIELDSHAPE_SIGNATURE(field);
+					U_8 *fieldSigBytes = J9UTF8_DATA(J9ROMFIELDSHAPE_SIGNATURE(field));
 					J9Class *fieldClass = findJ9ClassInFlattenedClassCache(_flattenedClassCache, fieldSigBytes + 1, J9UTF8_LENGTH(fieldSig) - 2);
 					U_32 size = (U_32)fieldClass->totalInstanceSize;
 					if (!J9_IS_FIELD_FLATTENED(fieldClass, field)) {
