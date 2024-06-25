@@ -64,6 +64,7 @@ public:
 		
 		env->_workPacketStats.clear();
 		env->_copyForwardStats.clear();
+		env->_continuationStats.clear();
 		
 		/* record that this thread is participating in this cycle */
 		env->_copyForwardStats._gcCount = MM_GCExtensions::getExtensions(env)->globalVLHGCStats.gcCount;

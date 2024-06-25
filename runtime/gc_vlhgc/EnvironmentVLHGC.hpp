@@ -84,6 +84,7 @@ public:
 	MM_CompactVLHGCStats _compactVLHGCStats;
 #endif /* J9VM_GC_MODRON_COMPACTION */
 	MM_InterRegionRememberedSetStats _irrsStats;
+	MM_ContinuationStats _continuationStats;
 
 protected:
 private:

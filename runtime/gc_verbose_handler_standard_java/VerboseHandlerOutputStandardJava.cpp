@@ -79,6 +79,7 @@ void
 MM_VerboseHandlerOutputStandardJava::outputMemoryInfoInnerStanzaInternal(MM_EnvironmentBase *env, uintptr_t indent, MM_CollectionStatistics *statsBase)
 {
 	MM_VerboseHandlerJava::outputFinalizableInfo(_manager, env, indent);
+	outputContinuationObjectInfo(env, indent);
 }
 
 void
@@ -138,6 +139,15 @@ MM_VerboseHandlerOutputStandardJava::outputContinuationInfo(MM_EnvironmentBase *
 {
 	if (0 != continuationCandidates) {
 		_manager->getWriterChain()->formatAndOutput(env, indent, "<continuations candidates=\"%zu\" cleared=\"%zu\" />", continuationCandidates, continuationCleared);
+	}
+}
+
+void
+MM_VerboseHandlerOutputStandardJava::outputContinuationObjectInfo(MM_EnvironmentBase *env, uintptr_t indent)
+{
+	MM_ContinuationStats *continuationStats = &MM_GCExtensions::getExtensions(env->getOmrVM())->continuationStats;
+	if (0 != continuationStats->_total) {
+		_manager->getWriterChain()->formatAndOutput(env, indent, "<continuation-objects total=\"%zu\" started=\"%zu\"/>", continuationStats->_total, continuationStats->_started);
 	}
 }
 

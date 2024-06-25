@@ -162,6 +162,7 @@ MM_ParallelGlobalMarkTask::setup(MM_EnvironmentBase *envBase)
 	}
 	env->_markVLHGCStats.clear();
 	env->_workPacketStats.clear();
+	env->_continuationStats.clear();
 
 	/*
 	 * Get gc threads cpu time for when mark started, and add it to the stats structure.
@@ -194,6 +195,7 @@ MM_ParallelGlobalMarkTask::cleanup(MM_EnvironmentBase *envBase)
 
 	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._markStats.merge(&env->_markVLHGCStats);
 	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._workPacketStats.merge(&env->_workPacketStats);
+	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._continuationStats.merge(&env->_continuationStats);
 
 	if (!env->isMainThread()) {
 		env->_cycleState = NULL;
@@ -376,6 +378,7 @@ MM_GlobalMarkingScheme::mainSetupForGC(MM_EnvironmentVLHGC *env)
 	/* Initialize the marking stack */
 	env->_cycleState->_workPackets->reset(env);
 	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._workPacketStats.clear();
+	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._continuationStats.clear();
 
 	_interRegionRememberedSet->prepareOverflowedRegionsForRebuilding(env);
 }

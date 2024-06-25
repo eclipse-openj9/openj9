@@ -110,6 +110,7 @@ public:
 #if defined(J9VM_GC_MODRON_SCAVENGER)
 	MM_ScavengerJavaStats scavengerJavaStats;
 #endif /* J9VM_GC_MODRON_SCAVENGER */
+	MM_ContinuationStats continuationStats;
 
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 	enum DynamicClassUnloading {

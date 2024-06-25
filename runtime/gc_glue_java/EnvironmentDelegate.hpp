@@ -28,6 +28,7 @@
 
 #include "MarkJavaStats.hpp"
 #include "ScavengerJavaStats.hpp"
+#include "ContinuationStats.hpp"
 #include "GCExtensionsBase.hpp"
 #include "ObjectModel.hpp"
 
@@ -57,6 +58,7 @@ public:
 #if defined(OMR_GC_MODRON_SCAVENGER)
 	MM_ScavengerJavaStats _scavengerJavaStats;
 #endif /* OMR_GC_MODRON_SCAVENGER */
+	MM_ContinuationStats _continuationStats;
 	MM_ReferenceObjectBuffer *_referenceObjectBuffer; /**< The thread-specific buffer of recently discovered reference objects */
 	MM_UnfinalizedObjectBuffer *_unfinalizedObjectBuffer; /**< The thread-specific buffer of recently allocated unfinalized objects */
 	MM_OwnableSynchronizerObjectBuffer *_ownableSynchronizerObjectBuffer; /**< The thread-specific buffer of recently allocated ownable synchronizer objects */

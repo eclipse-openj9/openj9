@@ -416,6 +416,7 @@ MM_CopyForwardScheme::clearGCStats(MM_EnvironmentVLHGC *env)
 {
 	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._copyForwardStats.clear();
 	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._workPacketStats.clear();
+	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._continuationStats.clear();
 }
 
 void
@@ -1558,6 +1559,7 @@ MM_CopyForwardScheme::mergeGCStats(MM_EnvironmentVLHGC *env)
 	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._copyForwardStats.merge(localStats);
 	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._workPacketStats.merge(&env->_workPacketStats);
 	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._irrsStats.merge(&env->_irrsStats);
+	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._continuationStats.merge(&env->_continuationStats);
 	omrthread_monitor_exit(_extensions->gcStatsMutex);
 	
 	/* record the thread-specific parallelism stats in the trace buffer. This partially duplicates info in -Xtgc:parallel */ 

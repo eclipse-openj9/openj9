@@ -43,6 +43,7 @@
 #include "CompactVLHGCStats.hpp"
 #endif /* J9VM_GC_MODRON_COMPACTION */
 #include "CopyForwardStats.hpp"
+#include "ContinuationStats.hpp"
 #include "InterRegionRememberedSetStats.hpp"
 #include "MarkVLHGCStats.hpp"
 #include "SweepVLHGCStats.hpp"
@@ -64,6 +65,7 @@ public:
 	class MM_CopyForwardStats _copyForwardStats;  /**< Stats for copy forward phase of increment */
 	class MM_ClassUnloadStats _classUnloadStats;  /**< Stats for class unload operations of the increment */
 	class MM_InterRegionRememberedSetStats _irrsStats; /**< Stats for Inter Region Remembered Set processing */
+	class MM_ContinuationStats _continuationStats;
 
 	enum GlobalMarkIncrementType {
 		mark_idle = 0, /**< No Global marking in progress */
@@ -81,8 +83,8 @@ public:
 #endif /* J9VM_GC_MODRON_COMPACTION */
 		,_workPacketStats()
 		,_copyForwardStats()
-		,_classUnloadStats()
 		,_irrsStats()
+		,_continuationStats()
 		,_globalMarkIncrementType(MM_VLHGCIncrementStats::mark_idle)
 		{};
 
@@ -100,6 +102,7 @@ public:
 		_copyForwardStats.clear();
 		_classUnloadStats.clear();
 		_irrsStats.clear();
+		_continuationStats.clear();
 		_globalMarkIncrementType = MM_VLHGCIncrementStats::mark_idle;
 	}
 
@@ -116,6 +119,7 @@ public:
 		_workPacketStats.merge(&stats->_workPacketStats);
 		_copyForwardStats.merge(&stats->_copyForwardStats);
 		_irrsStats.merge(&stats->_irrsStats);
+		_continuationStats.merge(&stats->_continuationStats);
 	}
 
 	/**

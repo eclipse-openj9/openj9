@@ -53,6 +53,7 @@
 #include "ConcurrentSweepScheme.hpp"
 #endif /* J9VM_GC_CONCURRENT_SWEEP */
 #include "ConfigurationDelegate.hpp"
+#include "ContinuationStats.hpp"
 #include "EnvironmentStandard.hpp"
 #include "ExcessiveGCStats.hpp"
 #include "FinalizableObjectBuffer.hpp"
@@ -158,6 +159,7 @@ MM_ScavengerDelegate::tearDown(MM_EnvironmentBase *env)
 void
 MM_ScavengerDelegate::mainSetupForGC(MM_EnvironmentBase * envBase)
 {
+	_extensions->continuationStats.clear();
 	/* Remember the candidates of OwnableSynchronizerObject before
 	 * clearing scavenger statistics
 	 */
@@ -201,6 +203,7 @@ MM_ScavengerDelegate::workerSetupForGC_clearEnvironmentLangStats(MM_EnvironmentB
 {
 	/* clear thread-local java-only gc stats */
 	envBase->getGCEnvironment()->_scavengerJavaStats.clear();
+	envBase->getGCEnvironment()->_continuationStats.clear();
 }
 
 void
@@ -229,6 +232,8 @@ MM_ScavengerDelegate::mergeGCStats_mergeLangStats(MM_EnvironmentBase * envBase)
 
 	finalGCJavaStats->_unfinalizedCandidates += scavJavaStats->_unfinalizedCandidates;
 	finalGCJavaStats->_unfinalizedEnqueued += scavJavaStats->_unfinalizedEnqueued;
+
+	_extensions->continuationStats.merge(&env->getGCEnvironment()->_continuationStats);
 
 	finalGCJavaStats->_ownableSynchronizerCandidates += scavJavaStats->_ownableSynchronizerCandidates;
 	finalGCJavaStats->_ownableSynchronizerTotalSurvived += scavJavaStats->_ownableSynchronizerTotalSurvived;
