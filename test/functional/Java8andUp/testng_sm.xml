@@ -181,6 +181,11 @@
 			<class name="org.openj9.test.com.ibm.jit.Test_JITHelpers"/>
 		</classes>
 	</test>
+	<test name="JCL_TEST_JITHelpersIntrinsicIndexOf">
+		<classes>
+			<class name="org.openj9.test.com.ibm.jit.Test_JITHelpersIntrinsicIndexOf"/>
+		</classes>
+	</test>
 	<test name="JCL_TEST_MathMethods">
 		<classes>
 			<class name="org.openj9.test.java.lang.Test_Math"/>

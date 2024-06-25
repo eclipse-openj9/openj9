@@ -279,13 +279,24 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 				</path>
 				<property name="commonArgs" value="${addExports} ${addExports_90_jcl} ${addExports_version} --add-modules openj9.sharedclasses" />
 				<if>
-					<matches string="${JDK_VERSION}" pattern="^(1[1-8])$$" />
+					<matches string="${JDK_VERSION}" pattern="^(1[1-6])$$" />
 					<then>
-						<!-- Java 11-18 -->
+						<!-- Java 11-16 -->
 						<javac srcdir="${srcpath}" excludes="${commonExcludes}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" classpathref="build.cp">
 							<compilerarg line='${commonArgs}' />
 						</javac>
 					</then>
+					<elseif>
+						<matches string="${JDK_VERSION}" pattern="^(1[7-8])$$" />
+						<then>
+							<!-- Java 17 - 18 (String implementation changed) -->
+							<javac srcdir="${srcpath}" excludes="${commonExcludes}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" classpathref="build.cp">
+								<compilerarg line='${commonArgs}' />
+								<!-- exclude tests that depend on old OpenJ9 String -->
+								<exclude name="org/openj9/test/com/ibm/jit/Test_JITHelpersIntrinsicIndexOf.java" />
+							</javac>
+						</then>
+					</elseif>
 					<elseif>
 						<matches string="${JDK_VERSION}" pattern="^(19|2[0-2])$$" />
 						<then>
@@ -304,6 +315,8 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 								<exclude name="org/openj9/test/java/lang/Test_J9VMInternals_SM.java" />
 								<exclude name="org/openj9/test/java/lang/Test_J9VMInternalsImpl_SM.java" />
 								<exclude name="org/openj9/test/vm/Test_VM.java" />
+								<!-- exclude tests that depend on old OpenJ9 String -->
+								<exclude name="org/openj9/test/com/ibm/jit/Test_JITHelpersIntrinsicIndexOf.java" />
 							</javac>
 						</then>
 					</elseif>
@@ -325,6 +338,8 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 							<exclude name="org/openj9/test/java/lang/Test_Thread.java" />
 							<exclude name="org/openj9/test/java/lang/Test_ThreadGroup.java" />
 							<exclude name="org/openj9/test/vm/Test_VM.java" />
+							<!-- exclude tests that depend on old OpenJ9 String -->
+							<exclude name="org/openj9/test/com/ibm/jit/Test_JITHelpersIntrinsicIndexOf.java" />
 						</javac>
 					</else>
 				</if>

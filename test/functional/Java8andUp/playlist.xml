@@ -1824,6 +1824,68 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<impl>ibm</impl>
 		</impls>
 	</test>
+	<!-- Java 8 only -->
+	<test>
+		<testCaseName>JCL_Test_JITHelpersIntrinsicIndexOf_SE80</testCaseName>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	-Xbootclasspath/a:$(Q)$(TEST_RESROOT)$(D)TestResources.jar$(Q) \
+	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames JCL_TEST_JITHelpersIntrinsicIndexOf \
+	-groups $(TEST_GROUP) \
+	-excludegroups $(DEFAULT_EXCLUDE); \
+	$(TEST_STATUS)</command>
+		<versions>
+			<version>8</version>
+		</versions>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<variations>
+			<variation>-Xjit:count=0 -XX:-CompactStrings</variation>
+			<variation>-Xjit:count=0 -XX:+CompactStrings</variation>
+			<variation>-Xjit:count=1,disableAsyncCompilation -XX:-CompactStrings</variation>
+			<variation>-Xjit:count=1,disableAsyncCompilation -XX:+CompactStrings</variation>
+		</variations>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
+	</test>
+	<!-- Java 11 only (these methods are not used by Java 17+) -->
+	<test>
+		<testCaseName>JCL_Test_JITHelpersIntrinsicIndexOf</testCaseName>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	--add-opens=java.base/java.lang=ALL-UNNAMED \
+	--add-exports=java.base/com.ibm.jit=ALL-UNNAMED \
+	--add-opens=java.base/com.ibm.jit=ALL-UNNAMED -Xbootclasspath/a:$(Q)$(TEST_RESROOT)$(D)TestResources.jar$(Q) \
+	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames JCL_TEST_JITHelpersIntrinsicIndexOf \
+	-groups $(TEST_GROUP) \
+	-excludegroups $(DEFAULT_EXCLUDE); \
+	$(TEST_STATUS)</command>
+		<versions>
+			<version>11</version>
+		</versions>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<variations>
+			<variation>-Xjit:count=0 -XX:-CompactStrings</variation>
+			<variation>-Xjit:count=0 -XX:+CompactStrings</variation>
+			<variation>-Xjit:count=1,disableAsyncCompilation -XX:-CompactStrings</variation>
+			<variation>-Xjit:count=1,disableAsyncCompilation -XX:+CompactStrings</variation>
+		</variations>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
+	</test>
 	<test>
 		<testCaseName>JCL_TEST_MathMethods</testCaseName>
 		<variations>
