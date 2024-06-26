@@ -2805,7 +2805,7 @@ findIndexInFlattenedClassCache(J9FlattenedClassCache *flattenedClassCache, J9ROM
 #endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
 
 /**
- * Returns the offset of a qtype field.
+ * Returns the offset of a flattenable field.
  *
  * @param[in] fieldOwner the J9class that defines the field
  * @param[in] field romfieldshape of the field
@@ -2817,7 +2817,7 @@ getFlattenableFieldOffset(J9Class *fieldOwner, J9ROMFieldShape *field);
 
 /**
  * Returns if a field is flattened. `J9_IS_J9CLASS_FLATTENED` will be deprecated.
- * This helper assumes field is a qtype.
+ * This helper assumes field is null restricted.
  *
  * @param[in] fieldOwner the J9class that defines the field
  * @param[in] field romfieldshape of the field
@@ -2829,7 +2829,7 @@ isFlattenableFieldFlattened(J9Class *fieldOwner, J9ROMFieldShape *field);
 
 /**
  * Returns the type of an instance field. `J9_IS_J9CLASS_FLATTENED` will be deprecated.
- * This helper assumes field is a qtype.
+ * This helper assumes field is null restricted.
  *
  * @param[in] fieldOwner the J9class that defines the field
  * @param[in] field romfieldshape of the field
@@ -2841,7 +2841,7 @@ getFlattenableFieldType(J9Class *fieldOwner, J9ROMFieldShape *field);
 
 /**
  * Returns the size of an instance field. `J9_VALUETYPE_FLATTENED_SIZE` will be deprecated.
- * This helper assumes field is a qtype.
+ * This helper assumes field is null restricted.
  *
  * @param[in] currentThread thread token
  * @param[in] fieldOwner the J9class that defines the field
@@ -2865,7 +2865,7 @@ arrayElementSize(J9ArrayClass* arrayClass);
 
 /**
  * Performs a getfield operation on an object. Handles flattened and non-flattened cases.
- * This helper assumes that the cpIndex points to the fieldRef of a resolved Qtype. This helper
+ * This helper assumes that the cpIndex points to a resolved null restricted fieldRef. This helper
  * also assumes that the cpIndex points to an instance field.
  *
  * @param currentThread thread token
@@ -2895,7 +2895,7 @@ cloneValueType(J9VMThread *currentThread, J9Class *receiverClass, j9object_t ori
 
 /**
  * Performs a putfield operation on an object. Handles flattened and non-flattened cases.
- * This helper assumes that the cpIndex points to the fieldRef of a resolved Qtype. This helper
+ * This helper assumes that the cpIndex points to a resolved null restricted fieldRef. This helper
  * also assumes that the cpIndex points to an instance field.
  *
  * @param currentThread thread token

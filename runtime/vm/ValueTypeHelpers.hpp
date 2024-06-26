@@ -150,31 +150,6 @@ private:
 					}
 					break;
 				}
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-				case 'Q': { /* Null-free class type */
-					J9Class *fieldClass = findJ9ClassInFlattenedClassCache(clazz->flattenedClassCache, sigChar + 1, J9UTF8_LENGTH(signature) - 2);
-					rc = false;
-
-					if (J9_IS_FIELD_FLATTENED(fieldClass, result->field)) {
-						rc = isSubstitutable(currentThread, objectAccessBarrier, lhs, rhs, startOffset + result->offset, fieldClass);
-					} else {
-						j9object_t lhsFieldObject = objectAccessBarrier.inlineMixedObjectReadObject(currentThread, lhs, startOffset + result->offset);
-						j9object_t rhsFieldObject = objectAccessBarrier.inlineMixedObjectReadObject(currentThread, rhs, startOffset + result->offset);
-
-						if (lhsFieldObject == rhsFieldObject) {
-							rc = true;
-						} else {
-							/* When unflattened, we get our object from the specified offset, then increment past the header to the first field. */
-							rc = isSubstitutable(currentThread, objectAccessBarrier, lhsFieldObject, rhsFieldObject, J9VMTHREAD_OBJECT_HEADER_SIZE(currentThread), fieldClass);
-						}
-					}
-
-					if (false == rc) {
-						goto done;
-					}
-					break;
-				}
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 				default:
 					Assert_VM_unreachable();
 				} /* switch */
