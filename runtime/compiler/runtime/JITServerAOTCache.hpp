@@ -122,11 +122,11 @@ public:
 protected:
    AOTCacheRecord() : _nextRecord(NULL) {}
 
-private:
    // Set the subrecord pointers in the variable-length portion of a record if necessary.
    // The subrecord pointers in the statically-sized portion of a record are set in the record constructors.
    virtual bool setSubrecordPointers(const JITServerAOTCacheReadContext &context) { return true; }
 
+private:
    AOTCacheRecord *_nextRecord;
    };
 
