@@ -9643,28 +9643,11 @@ TR_J9ByteCodeIlGenerator::packReferenceChainOffsets(TR::Node *node, std::vector<
 #endif
 
 bool
-TR_ResolvedJ9Method::isFieldQType(int32_t cpIndex)
-   {
-   J9ROMFieldRef *ref = (J9ROMFieldRef *) (&romCPBase()[cpIndex]);
-   J9ROMNameAndSignature *nameAndSignature = J9ROMFIELDREF_NAMEANDSIGNATURE(ref);
-   J9UTF8 *signature = J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSignature);
-
-   J9VMThread *vmThread = fej9()->vmThread();
-   return vmThread->javaVM->internalVMFunctions->isNameOrSignatureQtype(signature);
-   }
-
-bool
 TR_ResolvedJ9Method::isFieldNullRestricted(TR::Compilation *comp, int32_t cpIndex, bool isStatic, bool isStore)
    {
    if (!TR::Compiler->om.areFlattenableValueTypesEnabled() ||
       (-1 == cpIndex))
       return false;
-
-   if (TR::Compiler->om.isQDescriptorForValueTypesSupported())
-      {
-      if (isFieldQType(cpIndex)) // Temporary until javac supports NullRestricted attribute
-         return true;
-      }
 
    J9VMThread *vmThread = fej9()->vmThread();
    J9ROMFieldShape *fieldShape = NULL;

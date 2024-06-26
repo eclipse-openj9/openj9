@@ -244,8 +244,6 @@ protected:
    virtual bool validateMethodFieldAttributes(const TR_J9MethodFieldAttributes &attributes, bool isStatic, int32_t cpIndex, bool isStore, bool needAOTValidation);
    virtual bool canCacheFieldAttributes(int32_t cpIndex, const TR_J9MethodFieldAttributes &attributes, bool isStatic);
 
-   virtual bool isFieldQType(int32_t cpIndex) override;
-
 private:
 
    J9ROMClass *_romClass; // cached copy of ROM class from client

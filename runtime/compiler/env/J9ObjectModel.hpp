@@ -71,11 +71,6 @@ public:
    */
    bool areFlattenableValueTypesEnabled();
    /**
-   * @brief Whether or not `Q` signature is supported
-   */
-   bool isQDescriptorForValueTypesSupported();
-
-   /**
    * @brief Whether the check is enabled on monitor object being value based class type
    */
    bool areValueBasedMonitorChecksEnabled();

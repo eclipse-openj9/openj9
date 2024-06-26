@@ -513,22 +513,8 @@ static void addEntryForFieldImpl(TR_VMField *field, TR::TypeLayoutBuilder &tlb, 
    bool trace = comp->getOption(TR_TraceILGen);
    uint32_t mergedLength = 0;
    J9UTF8 *signature = J9ROMFIELDSHAPE_SIGNATURE(field->shape);
-
-   bool isFieldPrimitiveValueType = false;
-
-   if (TR::Compiler->om.areFlattenableValueTypesEnabled())
-      {
-      if (TR::Compiler->om.isQDescriptorForValueTypesSupported())
-         {
-         isFieldPrimitiveValueType = vm->internalVMFunctions->isNameOrSignatureQtype(signature);
-         }
-      else
-         {
-         isFieldPrimitiveValueType = vm->internalVMFunctions->isFieldNullRestricted(field->shape);
-         }
-      }
-
-   if (isFieldPrimitiveValueType &&
+   if (TR::Compiler->om.areFlattenableValueTypesEnabled() &&
+       vm->internalVMFunctions->isFieldNullRestricted(field->shape) &&
        vm->internalVMFunctions->isFlattenableFieldFlattened(definingClass, field->shape))
       {
       char *prefixForChild = buildTransitiveFieldNames(prefix, prefixLength, field->shape, comp->trMemory()->currentStackRegion(), mergedLength);
@@ -1033,14 +1019,7 @@ J9::ClassEnv::classNameToSignature(const char *name, int32_t &len, TR::Compilati
       {
       len += 2;
       sig = (char *)comp->trMemory()->allocateMemory(len+1, allocKind);
-      if (clazz &&
-         TR::Compiler->om.areFlattenableValueTypesEnabled() &&
-         TR::Compiler->om.isQDescriptorForValueTypesSupported() &&
-         self()->isPrimitiveValueTypeClass(clazz)
-         )
-         sig[0] = 'Q';
-      else
-         sig[0] = 'L';
+      sig[0] = 'L';
       memcpy(sig+1,name,len-2);
       sig[len-1]=';';
       }

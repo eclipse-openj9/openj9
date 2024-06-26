@@ -4379,7 +4379,7 @@ done:
 				rc = GOTO_THROW_CURRENT_EXCEPTION;
 			} else {
 				I_32 result = false;
-				if (VM_ValueTypeHelpers::isNameOrSignatureQtype(J9ROMFIELDSHAPE_SIGNATURE(fieldID->field)) || J9ROMFIELD_IS_NULL_RESTRICTED(fieldID->field)) {
+				if (J9ROMFIELD_IS_NULL_RESTRICTED(fieldID->field)) {
 					result = (I_32)isFlattenableFieldFlattened(fieldID->declaringClass, fieldID->field);
 				}
 				restoreInternalNativeStackFrame(REGISTER_ARGS);
@@ -8551,9 +8551,6 @@ retry:
 					goto done;
 				}
 			} else {
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-resolve:
-#endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
 				/* Unresolved */
 				buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
 				updateVMStruct(REGISTER_ARGS);
@@ -8570,23 +8567,12 @@ resolve:
 				goto retry;
 			}
 		}
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-		else if (VM_ValueTypeHelpers::isClassRefQtype(ramConstantPool, index)) {
-			/* Even though an NPE is going to be thrown the classref must still be resolved because
-			 * its a qtype.
-			 *
-			 * TODO in the future a different type of exception may thrown, spec for this behaviour
-			 * not currently known.
-			 */
-			if (NULL == castClass) {
-				/* Resolve the class and then check again whether it is a value type */
-				goto resolve;
-			}
 
-			rc = THROW_NPE;
-			goto done;
-		}
-#endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
+		/* In the future Valhalla checkcast needs to throw exception on
+		 * null restricted checkedType if obj is null,
+		 * see issue https://github.com/eclipse-openj9/openj9/issues/19764
+		 */
+
 		_pc += 3;
 done:
 		return rc;
