@@ -682,7 +682,7 @@ public:
 
    virtual uintptr_t getClassChainOffsetIdentifyingLoader(TR_OpaqueClassBlock *clazz, uintptr_t **classChain = NULL) override;
 
-   virtual J9SharedClassCacheDescriptor *getCacheDescriptorList();
+   virtual J9SharedClassCacheDescriptor *getCacheDescriptorList() override;
 
    void setStream(JITServer::ServerStream *stream) { _stream = stream; }
    void setCompInfoPT(TR::CompilationInfoPerThread *compInfoPT) { _compInfoPT = compInfoPT; }
@@ -690,19 +690,19 @@ public:
 
 private:
 
-   virtual bool isPointerInMetadataSectionInCache(const J9SharedClassCacheDescriptor *cacheDesc, void *ptr)
+   virtual bool isPointerInMetadataSectionInCache(const J9SharedClassCacheDescriptor *cacheDesc, void *ptr) override
       {
       return isPointerInCache(cacheDesc, ptr);
       }
-   virtual bool isOffsetInMetadataSectionInCache(const J9SharedClassCacheDescriptor *cacheDesc, uintptr_t offset)
+   virtual bool isOffsetInMetadataSectionInCache(const J9SharedClassCacheDescriptor *cacheDesc, uintptr_t offset) override
       {
       return (isOffsetFromEnd(offset) && isOffsetInCache(cacheDesc, offset));
       }
-   virtual bool isPointerInROMClassesSectionInCache(const J9SharedClassCacheDescriptor *cacheDesc, void *ptr)
+   virtual bool isPointerInROMClassesSectionInCache(const J9SharedClassCacheDescriptor *cacheDesc, void *ptr) override
       {
       return isPointerInCache(cacheDesc, ptr);
       }
-   virtual bool isOffsetinROMClassesSectionInCache(const J9SharedClassCacheDescriptor *cacheDesc, uintptr_t offset)
+   virtual bool isOffsetinROMClassesSectionInCache(const J9SharedClassCacheDescriptor *cacheDesc, uintptr_t offset) override
       {
       return (isOffsetFromStart(offset) && isOffsetInCache(cacheDesc, offset));
       }

@@ -522,9 +522,9 @@ public:
       static uint8_t *copyDataToCodeCache(const void *startAddress, size_t totalSize, TR_J9VMBase *fe);
 
 private:
-      virtual uint8_t * allocateSpaceInCodeCache(UDATA codeSize);
-      virtual uint8_t * allocateSpaceInDataCache(UDATA metaDataSize, UDATA type);
-      virtual void initializeCacheDeltas();
+      virtual uint8_t * allocateSpaceInCodeCache(UDATA codeSize) override;
+      virtual uint8_t * allocateSpaceInDataCache(UDATA metaDataSize, UDATA type) override;
+      virtual void initializeCacheDeltas() override;
       virtual void initializeAotRuntimeInfo() override { _classReloAmount = 1; }
 };
 #endif /* defined(J9VM_OPT_JITSERVER) */
