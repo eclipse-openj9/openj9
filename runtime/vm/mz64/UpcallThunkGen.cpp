@@ -250,7 +250,7 @@ STG(I_8 *instructionPtr, I_32 sourceRegister, I_32 offsetRegister, I_32 baseRegi
 void *
 createUpcallThunk(J9UpcallMetaData *metaData)
 {
-	J9JavaVM *vm = metaData->vm;
+    J9JavaVM *vm = metaData->vm;
     const J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
     J9UpcallSigType *sigArray = metaData->nativeFuncSignature->sigArray;
     /* The index of the return type in the signature array */
@@ -258,7 +258,7 @@ createUpcallThunk(J9UpcallMetaData *metaData)
 
     Assert_VM_true(lastSigIdx >= 0);
 
-    I_32 numInstructions = 0;
+    I_32 numInstructions = 10;
     I_32 numStackSlots = 0;
 
     // Test the return type
@@ -316,7 +316,7 @@ createUpcallThunk(J9UpcallMetaData *metaData)
             default:
                 Assert_VM_unreachable();
         }
-        if (fprArgCount + gprArgCount >= 7)
+        if (fprArgCount>=4 && gprArgCount>=3)
             break;
 
     }
@@ -325,21 +325,18 @@ createUpcallThunk(J9UpcallMetaData *metaData)
     // must account for the frame size of the thunk.
     const I_32 defaultStackPointerBias = 2048;
     const I_32 offsetToParamArea = 128;
-    const I_32 calleeFrameSize = 256;
-    const I_32 offsetFromR4 = defaultStackPointerBias + offsetToParamArea + calleeFrameSize;
+    const I_32 thunkFrameSize = 256;
+    const I_32 offsetFromR4 = defaultStackPointerBias + offsetToParamArea + thunkFrameSize;
     I_8 *thunkMem = NULL;
 
-    // Size of the instructions that are always present in the thunk, 8 byte-aligned.
-    const I_32 extraInstructionsSize = 80;
     // Size of thunk including the numInstructions generated to store all arguments in memory, 8-byte aligned.
-    metaData->thunkSize = ((( numInstructions * 6 + extraInstructionsSize) / 8) + 1) * 8;
+    metaData->thunkSize = ((( numInstructions * 6) / 8) + 1) * 8;
     thunkMem = (I_8 *)vmFuncs->allocateUpcallThunkMemory(metaData);
     if (NULL == thunkMem) {
         return NULL;
     }
     metaData->thunkAddress = (void *)thunkMem;
 
-    // Generate the instruction sequence to copy data from C side to Java side.
     I_32 gprIndex = 1;
     I_32 maxGPRIndex = 3;
     I_32 fprIndex = 0;
@@ -368,9 +365,9 @@ createUpcallThunk(J9UpcallMetaData *metaData)
                     currArgIndex += 1;
                 }
                 fprIndex += 2;
-		        if (i < 3) {
-		            gprIndex++; // If one of the first three doublewords of the argument area is float/double, then the corresponding GPR is undefined. So we must ignore any value in there.
-		        }
+                if (i < 3) {
+                    gprIndex++; // If one of the first three doublewords of the argument area is float/double, then the corresponding GPR is undefined. So we must ignore any value in there.
+                }
                 break;
             case J9_FFI_UPCALL_SIG_TYPE_DOUBLE:
                 if (fprIndex <= maxFPRIndex) {
@@ -378,9 +375,9 @@ createUpcallThunk(J9UpcallMetaData *metaData)
                     currArgIndex += 1;
                 }
                 fprIndex += 2;
-		        if (i < 3) {
-		            gprIndex++; // If one of the first three doublewords of the argument area is float/double, then the corresponding GPR is undefined. So we must ignore any value in there.
-		        }
+                if (i < 3) {
+                    gprIndex++; // If one of the first three doublewords of the argument area is float/double, then the corresponding GPR is undefined. So we must ignore any value in there.
+                }
                 break;
             default:
                 Assert_VM_unreachable();
