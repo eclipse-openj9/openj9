@@ -1089,9 +1089,7 @@ illegalAccess:
 			if ((NULL != ramCPEntry) && J9_ARE_NO_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_NO_CP_UPDATE)) {
 				UDATA valueOffset = fieldOffset;
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-				if (('Q' == J9UTF8_DATA(signature)[0])
-					|| J9ROMFIELD_IS_NULL_RESTRICTED(field)
-				) {
+				if (J9ROMFIELD_IS_NULL_RESTRICTED(field)) {
 					if (fccEntryFieldNotSet) {
 						flattenedClassCache = definingClass->flattenedClassCache;
 						fieldIndex = findIndexInFlattenedClassCache(flattenedClassCache, nameAndSig);

@@ -1683,9 +1683,6 @@ j9bcv_verifyClassStructure (J9PortLibrary * portLib, J9CfrClassFile * classfile,
 
 				switch (utf8->bytes[arity]) {
 				case 'L':		/* object array */
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-				case 'Q':
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 					if (utf8->bytes[--end] != ';') {
 						errorType = J9NLS_CFR_ERR_BAD_CLASS_NAME__ID;
 						goto _formatError;

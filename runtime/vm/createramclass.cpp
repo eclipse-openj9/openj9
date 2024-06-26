@@ -1908,7 +1908,7 @@ checkSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 /**
  * This method has four main functions:
- * 1. Attempts to load Q instance fields and NullRestricted value classes.
+ * 1. Attempts to load NullRestricted value classes.
  *
  * 2. Records total number of flattenable instance fields
  * to flattenedClassCache->numberOfEntries.
@@ -1921,9 +1921,9 @@ checkSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J
  *
  * 4. Sets the J9ClassCanSupportFastSubstitutability flag in
  * valuetypeFlags given that the class does not contain any field of
- * nullable-class/interface type (L) or null-free
- * class type (Q) that are not both flattened and recursively compatible for
- * the fast substitutability optimization.
+ * nullable-class/interface type or null-free
+ * class type (NullRestricted attribute) that are not both flattened
+ * and recursively compatible for the fast substitutability optimization.
  *
  * 5. Speculatively preload classes with a preload class attribute. No class loading
  * errors will be thrown if loading fails at this stage.
@@ -1942,7 +1942,7 @@ loadFlattenableFieldValueClasses(J9VMThread *currentThread, J9ClassLoader *class
 	UDATA flattenableFieldCount = 0;
 	bool eligibleForFastSubstitutability = true;
 
-	/* iterate over fields and load classes of fields marked as QTypes */
+	/* iterate over fields and load classes of fields marked as NullRestricted */
 	while (NULL != field) {
 		const U_32 modifiers = field->modifiers;
 		J9UTF8 *signature = J9ROMFIELDSHAPE_SIGNATURE(field);
@@ -2060,7 +2060,7 @@ checkFlattenableFieldValueClasses(J9VMThread *currentThread, J9ClassLoader *clas
 	J9ROMFieldShape *field = romFieldsStartDo(romClass, &fieldWalkState);
 	BOOLEAN result = TRUE;
 
-	/* iterate over fields and load classes of fields marked as QTypes or NullRestricted */
+	/* iterate over fields and load classes of fields marked as NullRestricted */
 	while (NULL != field) {
 		const U_32 modifiers = field->modifiers;
 		J9UTF8 *signature = J9ROMFIELDSHAPE_SIGNATURE(field);

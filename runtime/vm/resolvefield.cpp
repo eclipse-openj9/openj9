@@ -1103,11 +1103,9 @@ fieldOffsetsFindNext(J9ROMFieldOffsetWalkState *state, J9ROMFieldShape *field)
 				{
 					if( modifiers & J9FieldFlagObject ) {
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-						J9UTF8 *fieldSig = J9ROMFIELDSHAPE_SIGNATURE(field);
-						U_8 *fieldSigBytes = J9UTF8_DATA(fieldSig);
-						if (('Q' == *fieldSigBytes)
-							|| J9_ARE_ALL_BITS_SET(modifiers, J9FieldFlagIsNullRestricted)
-						) {
+						if (J9_ARE_ALL_BITS_SET(modifiers, J9FieldFlagIsNullRestricted)) {
+							J9UTF8 *fieldSig = J9ROMFIELDSHAPE_SIGNATURE(field);
+							U_8 *fieldSigBytes = J9UTF8_DATA(fieldSig);
 							J9Class *fieldClass = NULL;
 							fieldClass = findJ9ClassInFlattenedClassCache(state->flattenedClassCache, fieldSigBytes + 1, J9UTF8_LENGTH(fieldSig) - 2);
 							if (!J9_IS_FIELD_FLATTENED(fieldClass, field)) {
