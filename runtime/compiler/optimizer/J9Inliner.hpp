@@ -230,13 +230,14 @@ class TR_J9InlinerPolicy : public OMR_InlinerPolicy
        *         after executing either \c branchTargetTree or \c fallThroughTree
        */
       TR::Block * createUnsafeGetPutCallDiamond(TR::TreeTop* callNodeTreeTop, TR::TreeTop* comparisonTree, TR::TreeTop* branchTargetTree, TR::TreeTop* fallThroughTree);
-      bool createUnsafePutWithOffset(TR::ResolvedMethodSymbol *, TR::ResolvedMethodSymbol *, TR::TreeTop *, TR::Node *, TR::DataType, bool, bool needNullCheck = false, bool isOrdered = false);
+      bool createUnsafePutWithOffset(TR::ResolvedMethodSymbol *, TR::ResolvedMethodSymbol *, TR::TreeTop *, TR::Node *, TR::DataType, bool, bool needNullCheck = false, bool isOrdered = false, bool isUnaligned = false);
+      TR::Block * addNullCheckForUnsafeGetPut(TR::Node* unsafeAddress, TR::SymbolReference* newSymbolReferenceForAddress, TR::TreeTop* callNodeTreeTop, TR::TreeTop* directAccessTreeTop, TR::TreeTop* arrayDirectAccessTreeTop, TR::TreeTop* indirectAccessTreeTop);
       TR::TreeTop* genDirectAccessCodeForUnsafeGetPut(TR::Node* callNode, bool conversionNeeded, bool isUnsafeGet);
       void createTempsForUnsafePutGet(TR::Node*& unsafeAddress, TR::Node* unsafeCall, TR::TreeTop* callNodeTreeTop, TR::Node*& offset, TR::SymbolReference*& newSymbolReferenceForAddress, bool isUnsafeGet);
       bool         createUnsafeGet(TR::ResolvedMethodSymbol *, TR::ResolvedMethodSymbol *, TR::TreeTop *, TR::Node *, TR::DataType, bool compress = true);
       bool         createUnsafePut(TR::ResolvedMethodSymbol *, TR::ResolvedMethodSymbol *, TR::TreeTop *, TR::Node *, TR::DataType, bool compress = true);
       TR::Node *    createUnsafeAddress(TR::Node *);
-      bool         createUnsafeGetWithOffset(TR::ResolvedMethodSymbol *, TR::ResolvedMethodSymbol *, TR::TreeTop *, TR::Node *, TR::DataType, bool, bool needNullCheck = false);
+      bool         createUnsafeGetWithOffset(TR::ResolvedMethodSymbol *, TR::ResolvedMethodSymbol *, TR::TreeTop *, TR::Node *, TR::DataType, bool, bool needNullCheck = false, bool isUnaligned = false);
       TR::Node *    createUnsafeAddressWithOffset(TR::Node *);
       bool         createUnsafeFence(TR::TreeTop *, TR::Node *, TR::ILOpCodes);
 
