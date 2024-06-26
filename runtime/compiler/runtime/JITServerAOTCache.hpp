@@ -222,42 +222,18 @@ private:
    };
 
 
-// Helper template class to avoid duplicating code for class chain records and well-known classes records
-// D is one of: ClassChainSerializationRecord, WellKnownClassesSerializationRecord
-// R is one of: AOTCacheClassRecord, AOTCacheClassChainRecord
-template<class D, class R, typename... Args>
-class AOTCacheListRecord : public AOTCacheRecord
+class AOTCacheClassChainRecord final : public AOTCacheRecord
    {
 public:
-   const D &data() const { return _data; }
+   const ClassChainSerializationRecord &data() const { return _data; }
    const AOTSerializationRecord *dataAddr() const override { return &_data; }
-   // Array of record pointers is stored inline after the array of IDs that is stored inline after struct D header
-   const R *const *records() const { return (const R *const *)_data.end(); }
-   R **records() { return (R **)_data.end(); }
+   // Array of record pointers is stored inline after the array of IDs that is stored inline
+   // after struct ClassChainSerializationRecord header
+   const AOTCacheClassRecord *const *records() const { return (const AOTCacheClassRecord *const *)_data.end(); }
+   AOTCacheClassRecord **records() { return (AOTCacheClassRecord **)_data.end(); }
 
    void subRecordsDo(const std::function<void(const AOTCacheRecord *)> &f) const override;
 
-protected:
-   AOTCacheListRecord(uintptr_t id, const R *const *records, size_t length, Args... args);
-   AOTCacheListRecord(const JITServerAOTCacheReadContext &context, const D &header) {}
-
-   static size_t size(size_t length)
-      {
-      return offsetof(AOTCacheListRecord, _data) + D::size(length) + length * sizeof(R *);
-      }
-
-   static size_t size(const D &header) { return size(header.list().length()); }
-
-   bool setSubrecordPointers(const Vector<R *> &cacheRecords, const char *recordName, const char *subrecordName);
-
-   // Layout: struct D header, uintptr_t ids[length], const R *records[length]
-   D _data;
-   };
-
-
-class AOTCacheClassChainRecord final : public AOTCacheListRecord<ClassChainSerializationRecord, AOTCacheClassRecord>
-   {
-public:
    static const char *getRecordName() { return "class chain"; }
    static AOTCacheClassChainRecord *create(uintptr_t id, const AOTCacheClassRecord *const *records, size_t length);
 
@@ -265,32 +241,65 @@ public:
    const AOTCacheClassLoaderRecord *rootClassLoaderRecord() const { return rootClassRecord()->classLoaderRecord(); }
 
 private:
+   AOTCacheClassChainRecord(uintptr_t id, const AOTCacheClassRecord *const *records, size_t length);
+   AOTCacheClassChainRecord(const JITServerAOTCacheReadContext &context, const ClassChainSerializationRecord &header) {}
+
+   static size_t size(size_t length)
+      {
+      return offsetof(AOTCacheClassChainRecord, _data) + ClassChainSerializationRecord::size(length) + length * sizeof(AOTCacheClassRecord *);
+      }
+
+   static size_t size(const ClassChainSerializationRecord &header) { return size(header.list().length()); }
+
+
    using SerializationRecord = ClassChainSerializationRecord;
 
    friend AOTCacheClassChainRecord *AOTCacheRecord::readRecord<>(FILE *f, const JITServerAOTCacheReadContext &context);
 
-   bool setSubrecordPointers(const JITServerAOTCacheReadContext &context) override;
+   virtual bool setSubrecordPointers(const JITServerAOTCacheReadContext &context) override;
 
-   using AOTCacheListRecord::AOTCacheListRecord;
+   // Layout: struct ClassChainSerializationRecord header, uintptr_t ids[length], const AOTCacheClassRecord *records[length]
+   ClassChainSerializationRecord _data;
    };
 
 
-class AOTCacheWellKnownClassesRecord final :
-   public AOTCacheListRecord<WellKnownClassesSerializationRecord, AOTCacheClassChainRecord, uintptr_t>
+class AOTCacheWellKnownClassesRecord final : public AOTCacheRecord
    {
 public:
+   const WellKnownClassesSerializationRecord &data() const { return _data; }
+   const AOTSerializationRecord *dataAddr() const override { return &_data; }
+   // Array of record pointers is stored inline after the array of IDs that is stored inline
+   // after struct WellKnownClassesSerializationRecord header
+   const AOTCacheClassChainRecord *const *records() const { return (const AOTCacheClassChainRecord *const *)_data.end(); }
+   AOTCacheClassChainRecord **records() { return (AOTCacheClassChainRecord **)_data.end(); }
+
+   void subRecordsDo(const std::function<void(const AOTCacheRecord *)> &f) const override;
+
+
    static const char *getRecordName() { return "well-known classes"; }
    static AOTCacheWellKnownClassesRecord *create(uintptr_t id, const AOTCacheClassChainRecord *const *records,
                                                  size_t length, uintptr_t includedClasses);
 
 private:
+   AOTCacheWellKnownClassesRecord(uintptr_t id, const AOTCacheClassChainRecord *const *records, size_t length, uintptr_t includedClasses);
+   AOTCacheWellKnownClassesRecord(const JITServerAOTCacheReadContext &context, const WellKnownClassesSerializationRecord &header) {}
+
+   static size_t size(size_t length)
+      {
+      return offsetof(AOTCacheWellKnownClassesRecord, _data) + WellKnownClassesSerializationRecord::size(length) + length * sizeof(AOTCacheClassChainRecord *);
+      }
+
+   static size_t size(const WellKnownClassesSerializationRecord &header) { return size(header.list().length()); }
+
+
    using SerializationRecord = WellKnownClassesSerializationRecord;
 
    friend AOTCacheWellKnownClassesRecord *AOTCacheRecord::readRecord<>(FILE *f, const JITServerAOTCacheReadContext &context);
 
-   bool setSubrecordPointers(const JITServerAOTCacheReadContext &context) override;
+   virtual bool setSubrecordPointers(const JITServerAOTCacheReadContext &context) override;
 
-   using AOTCacheListRecord::AOTCacheListRecord;
+   // Layout: struct WellKnownClassesSerializationRecord header, uintptr_t ids[length], const AOTCacheClassChainRecord *records[length]
+   WellKnownClassesSerializationRecord _data;
    };
 
 
