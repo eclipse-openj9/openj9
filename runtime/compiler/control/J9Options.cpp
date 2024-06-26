@@ -2181,7 +2181,7 @@ void J9::Options::preProcessTLHPrefetch(J9JavaVM *vm)
 #else // TR_HOST_X86
    preferTLHPrefetch =
       (TR::Compiler->target.cpu.isGenuineIntel() &&
-       TR::Compiler->target.cpu.isAtMost(OMR_PROCESSOR_X86_INTEL_SKYLAKE)) ||
+       TR::Compiler->target.cpu.isAtMost(OMR_PROCESSOR_X86_INTEL_BROADWELL)) ||
       !TR::Compiler->target.cpu.isGenuineIntel();
 
    // Disable TM on x86 because we cannot tell whether a Haswell chip supports
