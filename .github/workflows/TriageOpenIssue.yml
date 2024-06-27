@@ -21,6 +21,7 @@ jobs:
         - name: commenting on issues
           uses: actions/github-script@v4
           with:
+              github-token: ${{ secrets.GITHUB_TOKEN }}
               script: |
                   const axios = require('axios');
                   const input = {
@@ -65,5 +66,3 @@ jobs:
                       body: `Error: ${error.message}`,
                     });
                   }
-          env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
