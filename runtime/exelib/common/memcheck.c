@@ -753,6 +753,9 @@ static void *memoryCheck_allocate_memory32(OMRPortLibrary *portLib, UDATA byteAm
 	memCheckPortLib->tty_printf( memCheckPortLib, "allocate_memory32(%d)\n", byteAmount);
 #endif
 
+#if defined(OMR_ENV_DATA64)
+	portLib->port_copy_suballocator_heap_globals(memCheckPortLib, portLib);
+#endif /* defined(OMR_ENV_DATA64) */
 	return memoryCheck_wrapper_allocate_memory(memCheckPortLib, byteAmount, "allocate_memory", globalAllocator32,
 		J9_MEMCHECK_DATA_PADDING_VALUE, J9_MEMCHECK_DATA_FILL_VALUE, J9_MEMCHECK_DATA_FREED_VALUE, callSite, category);
 }
