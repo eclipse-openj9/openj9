@@ -1,9 +1,10 @@
 name: Triager on Closed issues
-run-name: TriagerX closed Issue
+run-name: TriagerX for closed Issue
 
 on:
-    issues:
-        types: [closed]
+  issues:
+    types: [closed]
+
 jobs:
   issue_closed:
     name: Issue Closed
@@ -12,6 +13,7 @@ jobs:
       - name: Commenting on the issue
         uses: actions/github-script@v4
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const { data: issueData } = await github.issues.get({
               issue_number: context.payload.issue.number,
@@ -31,7 +33,7 @@ jobs:
             let assigned = false;
             const actualLabels = issueData.labels.map(label => label['name']);
 
-            resultString = `Issue number: ${context.issue.number}\n`;
+            let resultString = `Issue number: ${context.issue.number}\n`;
             resultString += 'Status: Closed\n';
             resultString += `Actual Components: ${actualLabels.join(', ')}\n`;
 
@@ -62,5 +64,3 @@ jobs:
               repo: sandboxRepo,
               body: resultString
             });
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
