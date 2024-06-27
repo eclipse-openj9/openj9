@@ -35,10 +35,6 @@ public class ValhallaUtils {
 	/* workaround till the new ASM is released */
 	static final int ACC_IDENTITY = 0x20;
 
-	/* these can be removed with qtypes tests */
-	static final int ACONST_INIT = 203;
-	static final int WITHFIELD = 204;
-
 	/* ImplicitCreation flags */
 	static final int ACC_DEFAULT = 0x1;
 	static final int ACC_NON_ATOMIC = 0x2;
