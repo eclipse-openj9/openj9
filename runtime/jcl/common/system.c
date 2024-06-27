@@ -176,6 +176,23 @@ Java_java_lang_System_getSysPropBeforePropertiesInitialized(JNIEnv *env, jclass 
 		sysPropValue = getTmpDir(env, &envSpace);
 		break;
 
+#if defined(J9ZOS390) && (JAVA_SPEC_VERSION >= 21)
+	case 5: /* com.ibm.autocvt setting on z/OS */
+		sysPropValue = getDefinedArgumentFromJavaVMInitArgs(vmInitArgs, "com.ibm.autocvt");
+		if (NULL == sysPropValue) {
+			/* As part of better handling of JEP400 constraints on z/OS, the com.ibm.autocvt property
+			 * determines whether we convert input file I/O based on file tagging. If not explicitly specified,
+			 * the property defaults to true, unless file.encoding is set to COMPAT. */
+			const char *fileEncodingValue = getDefinedArgumentFromJavaVMInitArgs(vmInitArgs, "file.encoding");
+			if ((NULL != fileEncodingValue) && (0 == strcmp("COMPAT", fileEncodingValue))) {
+				sysPropValue = "false";
+			} else {
+				sysPropValue = "true";
+			}
+		}
+		break;
+#endif /* defined(J9ZOS390) && (JAVA_SPEC_VERSION >= 21) */
+
 	default:
 		break;
 	}
