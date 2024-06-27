@@ -23,6 +23,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 <vmconstantpool>
 	<classref name="java/lang/ArrayStoreException"/>
 	<classref name="java/lang/ClassCastException"/>
+	<classref name="java/lang/IdentityException" flags="opt_valhallaValueTypes"/>
 	<classref name="java/lang/IllegalMonitorStateException"/>
 	<classref name="java/lang/IndexOutOfBoundsException"/>
 	<classref name="java/lang/NegativeArraySizeException"/>
