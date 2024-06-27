@@ -2562,14 +2562,7 @@ TR_J9VMBase::getClassSignature_DEPRECATED(TR_OpaqueClassBlock * clazz, int32_t &
    for (i = 0; i < numDims; i++)
       sig[i] = '[';
    if (* name != '[')
-      {
-      if (TR::Compiler->om.areFlattenableValueTypesEnabled() &&
-          TR::Compiler->om.isQDescriptorForValueTypesSupported() &&
-          TR::Compiler->cls.isPrimitiveValueTypeClass(myClass))
-         sig[i++] = 'Q';
-      else
-         sig[i++] = 'L';
-      }
+      sig[i++] = 'L';
    memcpy(sig+i, name, len);
    i += len;
    if (* name != '[')
@@ -2597,14 +2590,7 @@ TR_J9VMBase::getClassSignature(TR_OpaqueClassBlock * clazz, TR_Memory * trMemory
    for (i = 0; i < numDims; i++)
       sig[i] = '[';
    if (* name != '[')
-      {
-      if (TR::Compiler->om.areFlattenableValueTypesEnabled() &&
-          TR::Compiler->om.isQDescriptorForValueTypesSupported() &&
-          TR::Compiler->cls.isPrimitiveValueTypeClass(myClass))
-         sig[i++] = 'Q';
-      else
-         sig[i++] = 'L';
-      }
+      sig[i++] = 'L';
    memcpy(sig+i, name, len);
    i += len;
    if (* name != '[')

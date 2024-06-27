@@ -110,18 +110,6 @@ valueTypeCapableAcmp(J9VMThread *currentThread, j9object_t lhs, j9object_t rhs)
 }
 
 BOOLEAN
-isNameOrSignatureQtype(J9UTF8 *utfWrapper)
-{
-	return VM_ValueTypeHelpers::isNameOrSignatureQtype(utfWrapper);
-}
-
-BOOLEAN
-isClassRefQtype(J9Class *cpContextClass, U_16 cpIndex)
-{
-	return VM_ValueTypeHelpers::isClassRefQtype(cpContextClass->ramConstantPool, cpIndex);
-}
-
-BOOLEAN
 isFieldNullRestricted(J9ROMFieldShape *field)
 {
 	return VM_ValueTypeHelpers::isFieldNullRestricted(field);
