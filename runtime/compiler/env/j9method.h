@@ -470,13 +470,6 @@ protected:
    TR_ResolvedMethod *             aotMaskResolvedPossiblyPrivateVirtualMethod(TR::Compilation *comp, TR_ResolvedMethod *method);
    TR_ResolvedMethod *             aotMaskResolvedImproperInterfaceMethod(TR::Compilation *comp, TR_ResolvedMethod *method);
 
-   /**
-    * @brief Check if a field is a QType or not.
-    *
-    * @param[in] cpIndex : the constant pool index of the field
-    */
-   virtual bool isFieldQType(int32_t cpIndex);
-
 public:
    virtual bool                    virtualMethodIsOverridden();
    virtual void                    setVirtualMethodIsOverridden();

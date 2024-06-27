@@ -190,48 +190,6 @@ public:
 	}
 
 	/**
-	* Determines if a name or a signature pointed by a J9UTF8 pointer is a Qtype.
-	*
-	* @param[in] utfWrapper J9UTF8 pointer that points to the name or the signature
-	*
-	* @return true if the name or the signature pointed by the J9UTF8 pointer is a Qtype, false otherwise
-	*/
-	static VMINLINE bool
-	isNameOrSignatureQtype(J9UTF8 *utfWrapper)
-	{
-		bool rc = false;
-		if (NULL != utfWrapper) {
-			U_8 *nameOrSignatureData = J9UTF8_DATA(utfWrapper);
-			U_16 nameOrSignatureLength = J9UTF8_LENGTH(utfWrapper);
-
-			if ((nameOrSignatureLength > 0)
-				&& (';' == nameOrSignatureData[nameOrSignatureLength - 1])
-				&& ('Q' == nameOrSignatureData[0])
-			) {
-				rc = true;
-			}
-		}
-		return rc;
-	}
-
-	/**
-	* Determines if the classref c=signature is a Qtype. There is no validation performed
-	* to ensure that the cpIndex points at a classref.
-	*
-	* @param[in] ramCP the constantpool that is being queried
-	* @param[in] cpIndex the CP index
-	*
-	* @return true if classref is a Qtype, false otherwise
-	*/
-	static VMINLINE bool
-	isClassRefQtype(J9ConstantPool *ramCP, U_16 cpIndex)
-	{
-		J9ROMStringRef *romStringRef = (J9ROMStringRef *)&ramCP->romConstantPool[cpIndex];
-		J9UTF8 *classNameWrapper = J9ROMSTRINGREF_UTF8DATA(romStringRef);
-		return isNameOrSignatureQtype(classNameWrapper);
-	}
-
-	/**
 	 * Determines if null restricted attribute is set on a field or not.
 	 *
 	 * @param[in] field The field to be checked

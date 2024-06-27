@@ -279,7 +279,7 @@ public class ValueTypeGenerator extends ClassLoader {
 			testWithFieldOnNonExistentClass(cw, className, fields);
 			testMonitorExitOnObject(cw, className, fields);
 			testMonitorEnterAndExitWithRefType(cw, className, fields);
-			testCheckCastRefClassOnNull(cw, className, fields);
+			testCheckCastNullableTypeOnNull(cw, className, fields);
 			if (valueUsedInCode != null) {
 				testUnresolvedValueTypeDefaultValue(cw, className, valueUsedInCode);
 				if (valueFields != null) {
@@ -293,14 +293,13 @@ public class ValueTypeGenerator extends ClassLoader {
 		} else {
 			makeValue(cw, className, makeValueSig, fields, makeMaxLocal);
 			makeValueTypeDefaultValue(cw, className, makeValueSig, fields, makeMaxLocal);
-			testCheckCastValueTypeOnNull(cw, className, fields);
-			testCheckCastValueTypeOnNonNullType(cw, className, fields);
+			testCheckCastNullRestrictedTypeOnNull(cw, className, fields);
+			testCheckCastNullRestrictedTypeOnNonNullType(cw, className, fields);
 			if (!isVerifiable) {
 				makeGeneric(cw, className, "makeValueGeneric", "makeValue", makeValueSig, makeValueGenericSig, fields, makeMaxLocal);
 			}
 		}
 		test2DMultiANewArray(cw, className);
-		testCheckCastOnInvalidLtype(cw);
 		addStaticSynchronizedMethods(cw);
 		if (addSyncMethods) {
 			addSynchronizedMethods(cw);
@@ -496,8 +495,8 @@ public class ValueTypeGenerator extends ClassLoader {
 		mv.visitEnd();
 	}
 
-	private static void testCheckCastValueTypeOnNonNullType(ClassWriter cw, String className, String[] fields) {
-		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC  + ACC_STATIC, "testCheckCastValueTypeOnNonNullType", "()Ljava/lang/Object;", null, null);
+	private static void testCheckCastNullRestrictedTypeOnNonNullType(ClassWriter cw, String className, String[] fields) {
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC  + ACC_STATIC, "testCheckCastNullRestrictedTypeOnNonNullType", "()Ljava/lang/Object;", null, null);
 		mv.visitCode();
 		mv.visitTypeInsn(ValhallaUtils.ACONST_INIT, className);
 		mv.visitTypeInsn(CHECKCAST, className);
@@ -506,8 +505,8 @@ public class ValueTypeGenerator extends ClassLoader {
 		mv.visitEnd();
 	}
 
-	private static void testCheckCastValueTypeOnNull(ClassWriter cw, String className, String[] fields) {
-		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC + ACC_STATIC, "testCheckCastValueTypeOnNull", "()Ljava/lang/Object;", null, null);
+	private static void testCheckCastNullRestrictedTypeOnNull(ClassWriter cw, String className, String[] fields) {
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC + ACC_STATIC, "testCheckCastNullRestrictedTypeOnNull", "()Ljava/lang/Object;", null, null);
 		mv.visitCode();
 		mv.visitInsn(ACONST_NULL);
 		mv.visitTypeInsn(CHECKCAST, className);
@@ -515,19 +514,9 @@ public class ValueTypeGenerator extends ClassLoader {
 		mv.visitMaxs(1, 2);
 		mv.visitEnd();
 	}
-	
-	private static void testCheckCastOnInvalidLtype(ClassWriter cw) {
-		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC + ACC_STATIC, "testCheckCastOnInvalidLtype", "()Ljava/lang/Object;", null, null);
-		mv.visitCode();
-		mv.visitInsn(ACONST_NULL);
-		mv.visitTypeInsn(CHECKCAST, "ClassDoesNotExist");
-		mv.visitInsn(ARETURN);
-		mv.visitMaxs(1, 2);
-		mv.visitEnd();
-	}
 
-	private static void testCheckCastRefClassOnNull(ClassWriter cw, String className, String[] fields) {
-		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC + ACC_STATIC, "testCheckCastRefClassOnNull", "()Ljava/lang/Object;", null, null);
+	private static void testCheckCastNullableTypeOnNull(ClassWriter cw, String className, String[] fields) {
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC + ACC_STATIC, "testCheckCastNullableTypeOnNull", "()Ljava/lang/Object;", null, null);
 		mv.visitCode();
 		mv.visitInsn(ACONST_NULL);
 		mv.visitTypeInsn(CHECKCAST, className);

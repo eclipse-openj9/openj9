@@ -142,28 +142,6 @@ J9::ObjectModel::areFlattenableValueTypesEnabled()
    }
 
 bool
-J9::ObjectModel::isQDescriptorForValueTypesSupported()
-   {
-   // TODO: Implementation is required to determine under which case 'Q' descriptor is removed
-#if defined(J9VM_OPT_JITSERVER)
-   if (auto stream = TR::CompilationInfo::getStream())
-      {
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-      return true;
-#else /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
-      return false;
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
-      }
-#endif /* defined(J9VM_OPT_JITSERVER) */
-
-   J9JavaVM * javaVM = TR::Compiler->javaVM;
-   if (javaVM->internalVMFunctions->areFlattenableValueTypesEnabled(javaVM))
-     return true;
-
-   return false;
-   }
-
-bool
 J9::ObjectModel::areValueBasedMonitorChecksEnabled()
    {
 #if defined(J9VM_OPT_JITSERVER)

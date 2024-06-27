@@ -2441,19 +2441,6 @@ public class ValueTypeTests {
 	}
 
 	/*
-	 * Ensure that casting null to invalid Qtype class will throw a NoClassDef
-	 */
-	@Test(priority=1)
-	static public void testCheckCastValueTypeOnInvalidLtype() throws Throwable {
-		try {
-			String fields[] = {"longField:J"};
-			Class valueClass = ValueTypeGenerator.generateValueClass("TestCheckCastOnInvalidLtype", fields);
-			MethodHandle checkCastOnInvalidLtype = lookup.findStatic(valueClass, "testCheckCastOnInvalidLtype", MethodType.methodType(Object.class));
-			checkCastOnInvalidLtype.invoke();
-		} catch (Exception e) {
-			Assert.fail("Should not throw exception");
-		}
-	}
 	
 	/*
 	 * Ensure that casting null to a value type class will throw a null pointer exception
@@ -2462,10 +2449,10 @@ public class ValueTypeTests {
 	 * no longer requires null check on the objectref for null restricted value type class
 	 */
 	@Test(enabled=false, priority=1, expectedExceptions=NullPointerException.class)
-	static public void testCheckCastValueTypeOnNull() throws Throwable {
+	static public void testCheckCastNullRestrictedTypeOnNull() throws Throwable {
 		String fields[] = {"longField:J"};
-		Class valueClass = ValueTypeGenerator.generateValueClass("TestCheckCastValueTypeOnNull", fields);
-		MethodHandle checkCastValueTypeOnNull = lookup.findStatic(valueClass, "testCheckCastValueTypeOnNull", MethodType.methodType(Object.class));
+		Class valueClass = ValueTypeGenerator.generateValueClass("TestCheckCastNullRestrictedTypeOnNull", fields);
+		MethodHandle checkCastValueTypeOnNull = lookup.findStatic(valueClass, "testCheckCastNullRestrictedTypeOnNull", MethodType.methodType(Object.class));
 		checkCastValueTypeOnNull.invoke();
 	}
 
@@ -2473,10 +2460,10 @@ public class ValueTypeTests {
 	 * Ensure that casting a non null value type to a valid value type will pass
 	 */
 	@Test(priority=1)
-	static public void testCheckCastValueTypeOnNonNullType() throws Throwable {
+	static public void testCheckCastNullRestrictedTypeOnNonNullType() throws Throwable {
 		String fields[] = {"longField:J"};
-		Class valueClass = ValueTypeGenerator.generateValueClass("TestCheckCastValueTypeOnNonNullType", fields);
-		MethodHandle checkCastValueTypeOnNonNullType = lookup.findStatic(valueClass, "testCheckCastValueTypeOnNonNullType", MethodType.methodType(Object.class));
+		Class valueClass = ValueTypeGenerator.generateValueClass("TestCheckCastNullRestrictedTypeOnNonNullType", fields);
+		MethodHandle checkCastValueTypeOnNonNullType = lookup.findStatic(valueClass, "testCheckCastNullRestrictedTypeOnNonNullType", MethodType.methodType(Object.class));
 		checkCastValueTypeOnNonNullType.invoke();
 	}
 
@@ -2484,10 +2471,10 @@ public class ValueTypeTests {
 	 * Ensure that casting null to a reference type class will pass
 	 */
 	@Test(priority=1)
-	static public void testCheckCastRefClassOnNull() throws Throwable {
+	static public void testCheckCastNullableTypeOnNull() throws Throwable {
 		String fields[] = {"longField:J"};
-		Class refClass = ValueTypeGenerator.generateRefClass("TestCheckCastRefClassOnNull", fields);
-		MethodHandle checkCastRefClassOnNull = lookup.findStatic(refClass, "testCheckCastRefClassOnNull", MethodType.methodType(Object.class));
+		Class refClass = ValueTypeGenerator.generateRefClass("TestCheckCastNullableTypeOnNull", fields);
+		MethodHandle checkCastRefClassOnNull = lookup.findStatic(refClass, "testCheckCastNullableTypeOnNull", MethodType.methodType(Object.class));
 		checkCastRefClassOnNull.invoke();
 	}
 
