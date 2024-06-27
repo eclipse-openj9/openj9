@@ -1181,7 +1181,7 @@ J9::CodeGenerator::lowerTreeIfNeeded(
 #if defined(J9VM_OPT_JITSERVER)
             // This is currently the only place where this flag gets cleared. For JITServer, we should propagate it to the client,
             // to avoid having to call scanForNativeMethodsUntilMonitorNode again.
-            if (auto stream = TR::CompilationInfo::getStream())
+            if (auto stream = self()->comp()->getStream())
                {
                stream->write(JITServer::MessageType::CHTable_clearReservable, classPointer);
                stream->read<JITServer::Void>();
