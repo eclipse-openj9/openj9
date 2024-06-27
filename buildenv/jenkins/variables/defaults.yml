@@ -138,7 +138,7 @@ jitserver:
 # OpenSSL
 #========================================#
 openssl:
-  extra_getsource_options: '-openssl-branch=openssl-3.0.14'
+  extra_getsource_options: '-openssl-repo=https://github.com/ibmruntimes/openssl.git -openssl-branch=openssl-3.0.14+CVEs1'
   extra_configure_options: '--with-openssl=fetched'
 #========================================#
 # OpenSSL Bundling
