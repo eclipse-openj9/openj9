@@ -11580,6 +11580,14 @@ J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::CodeGenerator *c
             return TR::TreeEvaluator::inlineStringLatin1Inflate(node, cg);
             }
          break;
+      case TR::java_lang_Integer_compress:
+         return inlineParallelBitOperation(node, cg, TR::Int32, true);
+      case TR::java_lang_Integer_expand:
+         return inlineParallelBitOperation(node, cg, TR::Int32, false);
+      case TR::java_lang_Long_compress:
+         return inlineParallelBitOperation(node, cg, TR::Int64, true);
+      case TR::java_lang_Long_expand:
+         return inlineParallelBitOperation(node, cg, TR::Int64, false);
       case TR::java_lang_Math_sqrt:
       case TR::java_lang_StrictMath_sqrt:
       case TR::java_lang_System_nanoTime:
@@ -11793,6 +11801,49 @@ J9::X86::TreeEvaluator::inlineStringLatin1Inflate(TR::Node *node, TR::CodeGenera
       }
 
    return NULL;
+   }
+
+TR::Register *
+J9::X86::TreeEvaluator::inlineParallelBitOperation(TR::Node *node, TR::CodeGenerator *cg, TR::DataType dt, bool compress)
+   {
+   TR::Node *intNode = node->getFirstChild();
+   TR::Node *maskNode = node->getSecondChild();
+
+   TR::Register *intReg = cg->evaluate(intNode);
+   TR::Register *maskReg = cg->evaluate(maskNode);
+   TR::Register *result = cg->allocateRegister(TR_GPR);
+
+   traceMsg(cg->comp(), "Inlining parallel bits operation");
+
+   if (dt == TR::Int32)
+      {
+      if (compress)
+         {
+         generateRegRegRegInstruction(TR::InstOpCode::PEXT4RegRegReg, node, result, intReg, maskReg, cg);
+         }
+         else
+         {
+         generateRegRegRegInstruction(TR::InstOpCode::PDEP4RegRegReg, node, result, intReg, maskReg, cg);
+         }
+      }
+   else if (dt == TR::Int64)
+      {
+      if (compress)
+         {
+         generateRegRegRegInstruction(TR::InstOpCode::PEXT8RegRegReg, node, result, intReg, maskReg, cg);
+         }
+         else
+         {
+         generateRegRegRegInstruction(TR::InstOpCode::PDEP8RegRegReg, node, result, intReg, maskReg, cg);
+         }
+      }
+   else
+      {
+      TR_ASSERT_FATAL(false, "Unsupported data type for parallel bit operation");
+      }
+
+   node->setRegister(result);
+   return result;
    }
 
 TR::Register *
