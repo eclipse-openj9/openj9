@@ -32,7 +32,7 @@
 -->
 
 <suite id="JVMTI Tests" timeout="240">
-	<variable name="JVM_OPTS" value="-XX:+EnableExtendedHCR" />
+	<variable name="JVM_OPTS" value=" " />
 	<variable name="AGENTLIB" value="-agentlib:jvmtitest" />
 	<variable name="TESTRUNNER" value="com.ibm.jvmti.tests.util.TestRunner" />
 

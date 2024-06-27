@@ -71,13 +71,13 @@ static jvmtiError jvmtiGetConstantPool_addNAS_name_sig(jvmtiGcp_translation *tra
 static jvmtiError jvmtiGetConstantPool_addInvokeDynamic(jvmtiGcp_translation *translation, UDATA key, J9ROMNameAndSignature *nameAndSig, U_32 bsmIndex, U_32 *sunCpIndex);
 
 
-/** 
- * \brief	Get the count of loaded classes  
- * 
- * @param[in] vm 
+/**
+ * \brief	Get the count of loaded classes
+ *
+ * @param[in] vm
  * @return  Count of loaded classes
- * 
- *	Assumes caller acquired classTableMutex 
+ *
+ *	Assumes caller acquired classTableMutex
  */
 static jint
 jvmtiGetLoadedClassesCount(J9JavaVM * vm)
@@ -152,7 +152,7 @@ jvmtiGetLoadedClasses(jvmtiEnv* env,
 				if (i == lastClassCount) {
 					jclass * tempClassRefs;
 
-					lastClassCount = lastClassCount + 128; 
+					lastClassCount = lastClassCount + 128;
 					tempClassRefs = j9mem_reallocate_memory(classRefs, lastClassCount * sizeof(jclass), J9MEM_CATEGORY_JVMTI);
 					if (NULL == tempClassRefs) {
 						/* realloc failed - need to free the original allocation */
@@ -440,7 +440,7 @@ done:
 	}
 
 	if (NULL != signature_ptr) {
-		*signature_ptr = rv_signature; 
+		*signature_ptr = rv_signature;
 	}
 	if (NULL != generic_ptr) {
 		*generic_ptr = rv_generic;
@@ -784,7 +784,7 @@ jvmtiGetImplementedInterfaces(jvmtiEnv* env,
 
 		if (!J9ROMCLASS_IS_PRIMITIVE_OR_ARRAY(romClass)) {
 			/* Must walk the interface names in the ROM class to be sure to get the whole list */
- 
+
 			interfaceCount = (jint) romClass->interfaceCount;
 			interfaces = j9mem_allocate_memory(interfaceCount * sizeof(jclass), J9MEM_CATEGORY_JVMTI_ALLOCATE);
 			if (interfaces == NULL) {
@@ -1138,7 +1138,7 @@ redefineClassesCommon(jvmtiEnv* env,
 	J9JVMTIHCRJitEventData *jitEventDataPtr = NULL;
 	UDATA safePoint = J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_OSR_SAFE_POINT);
 
-#ifdef J9VM_INTERP_NATIVE_SUPPORT	
+#ifdef J9VM_INTERP_NATIVE_SUPPORT
 	/* Ensure that jitEventData is initialized in case we hit failure handling before
 	 * it is fully initialized */
 	memset(&jitEventData, 0, sizeof(J9JVMTIHCRJitEventData));
@@ -1147,7 +1147,7 @@ redefineClassesCommon(jvmtiEnv* env,
 	/* Check whether we should permit j9 specific class redefine extensions */
 
 	extensionsEnabled = areExtensionsEnabled(vm);
-	
+
 	/* Verify that all of the classes are allowed to be replaced */
 
 	rc = verifyClassesCanBeReplaced(currentThread, class_count, class_definitions);
@@ -1163,7 +1163,7 @@ redefineClassesCommon(jvmtiEnv* env,
 		goto failed;
 	}
 	memset(specifiedClasses, 0, class_count * sizeof(J9JVMTIClassPair));
-	
+
 	/* Create ROM classes for each of the replaced classes */
 
 	rc = reloadROMClasses(currentThread, class_count, class_definitions, specifiedClasses, options);
@@ -1193,7 +1193,7 @@ redefineClassesCommon(jvmtiEnv* env,
 #endif
 
 	if (safePoint) {
-		vm->internalVMFunctions->acquireSafePointVMAccess(currentThread);	
+		vm->internalVMFunctions->acquireSafePointVMAccess(currentThread);
 	} else {
 		vm->internalVMFunctions->acquireExclusiveVMAccess(currentThread);
 	}
@@ -1277,6 +1277,9 @@ redefineClassesCommon(jvmtiEnv* env,
 
 			/* Notify the JIT about redefined classes */
 			jitClassRedefineEvent(currentThread, &jitEventData, FALSE, FALSE);
+
+			/* Clear/suspend all breakpoints in the classes being replaced */
+			clearBreakpointsInClasses(currentThread, classPairs);
 
 		} else {
 			/* Clear/suspend all breakpoints in the classes being replaced */
@@ -1391,12 +1394,12 @@ failed:
 			}
  			if (classPair->methodRemapIndices) {
 				j9mem_free_memory(classPair->methodRemapIndices);
-			} 
+			}
 			classPair++;
 		}
 		j9mem_free_memory(specifiedClasses);
 	}
-	
+
 	hashTableFree(methodPairs);
 
 	hashTableFree(methodEquivalences);
@@ -1436,9 +1439,9 @@ clearBreakpointsInClasses(J9VMThread * currentThread, J9HashTable* classHashTabl
 			classPair = hashTableNextDo(&hashTableState);
 			continue;
 		}
-		
+
 		explicitlyRecreated = (originalRAMClass->romClass != replacementRAMClass->romClass);
-		
+
 		agentBreakpoint = allAgentBreakpointsStartDo(jvmtiData, &state);
 		while (agentBreakpoint != NULL) {
 			if (J9_CLASS_FROM_METHOD(((J9JNIMethodID *) agentBreakpoint->method)->method) == originalRAMClass) {
@@ -1488,7 +1491,7 @@ copyInitiatedClass(J9Class * clazz, J9JVMTIClassStats * results)
 			/* Reverse fill */
 			if (slot >= 0) {
 				j9object_t classObject = J9VM_J9CLASS_TO_HEAPCLASS(clazz);
-				
+
 				results->classRefs[slot] = (jclass)vmFuncs->j9jni_createLocalRef(jniEnv, classObject);
 				results->classCount = slot;
 			}
@@ -1507,7 +1510,7 @@ restoreBreakpointsInClasses(J9VMThread * currentThread, J9HashTable * classPairs
 	J9HashTableState hashTableState;
 	J9JVMTIClassPair * classPair;
 	J9JVMTIData * jvmtiData = J9JVMTI_DATA_FROM_VM(currentThread->javaVM);
-	
+
 	classPair = hashTableStartDo(classPairs, &hashTableState);
 	while (classPair != NULL) {
 		J9Class * originalRAMClass = classPair->originalRAMClass;
@@ -1797,7 +1800,7 @@ done:
 			dst += 2; \
 		} while (0)
 #endif
-		
+
 
 #ifdef J9VM_ENV_LITTLE_ENDIAN
 #define GCP_WRITE_U32(dst, src) \
@@ -1815,7 +1818,7 @@ done:
 		dst += 4; \
 	} while (0)
 #endif
- 
+
 
 #ifdef JVMTI_GCP_DEBUG
 #define jvmtiGetConstantPoolTranslate_printf(args) printf args
@@ -1826,24 +1829,24 @@ done:
 #endif
 
 
-/** 
+/**
  * \brief	Return the raw Constant Pool bytes for the specified class
- * \ingroup	jvmtiClass 
- * 
- * 
- * @param env  				JVMTI environment 
+ * \ingroup	jvmtiClass
+ *
+ *
+ * @param env  				JVMTI environment
  * @param klass 			The class to query
  * @param constant_pool_count_ptr 	On return, points to the number of entries in the constant pool table plus one.
  * @param constant_pool_byte_count_ptr	On return, points to the number of bytes in the returned raw constant pool.
- * @param constant_pool_bytes_ptr 	On return, points to the raw constant pool, that is the bytes defined by the constant_pool 
- * 					item of the Class File Format. Agent passes a pointer to a unsigned char*. On return, the 
- * 					unsigned char* points to a newly allocated array of size *constant_pool_byte_count_ptr. 
+ * @param constant_pool_bytes_ptr 	On return, points to the raw constant pool, that is the bytes defined by the constant_pool
+ * 					item of the Class File Format. Agent passes a pointer to a unsigned char*. On return, the
+ * 					unsigned char* points to a newly allocated array of size *constant_pool_byte_count_ptr.
  * 					The array should be freed with Deallocate.
  * @return 				a jvmtiError code
- *      
- *      The call GetConstantPool call is described in detail by the JVMTI1.1 spec: 
+ *
+ *      The call GetConstantPool call is described in detail by the JVMTI1.1 spec:
  *      http://www.icogitate.com/~jsr163/eg/jvmti.html#GetConstantPool
- * 
+ *
  */
 jvmtiError JNICALL
 jvmtiGetConstantPool(jvmtiEnv* env,
@@ -1864,12 +1867,12 @@ jvmtiGetConstantPool(jvmtiEnv* env,
 	Trc_JVMTI_jvmtiGetConstantPool_Entry(env);
 
     memset(&translation, 0x00, sizeof(jvmtiGcp_translation));
-	
+
 	rc = getCurrentVMThread(vm, &currentThread);
 	if (rc == JVMTI_ERROR_NONE) {
 		J9Class* clazz;
 		PORT_ACCESS_FROM_JAVAVM(vm);
-		
+
 		vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
 
 		ENSURE_PHASE_START_OR_LIVE(env);
@@ -1882,19 +1885,19 @@ jvmtiGetConstantPool(jvmtiEnv* env,
 		ENSURE_NON_NULL(constant_pool_bytes_ptr);
 
 		clazz = J9VM_J9CLASS_FROM_JCLASS(currentThread, klass);
-		
+
 		/* Return an error for Array or Primitive classes */
 		if (J9ROMCLASS_IS_PRIMITIVE_OR_ARRAY(clazz->romClass)) {
 			rc = JVMTI_ERROR_ABSENT_INFORMATION;
 			JVMTI_ERROR(rc);
 		}
 
-		/* Figure out how much space we'll need on the return buffer and store translation 
-		 * entries for all CP types. The translation is performed to make sure the CP indices 
-		 * match those used by the bytecodes returned by GetBytecodes jvmti call. 
+		/* Figure out how much space we'll need on the return buffer and store translation
+		 * entries for all CP types. The translation is performed to make sure the CP indices
+		 * match those used by the bytecodes returned by GetBytecodes jvmti call.
 		 */
 		rc = jvmtiGetConstantPool_translateCP(PORTLIB, &translation, clazz, TRUE);
-		if (rc != JVMTI_ERROR_NONE) {    
+		if (rc != JVMTI_ERROR_NONE) {
 			JVMTI_ERROR(rc);
 		}
 
@@ -1903,7 +1906,7 @@ jvmtiGetConstantPool(jvmtiEnv* env,
 		if (constantPoolBuf == NULL) {
 			JVMTI_ERROR(JVMTI_ERROR_OUT_OF_MEMORY);
 		}
-		
+
 		/* Write out all constants */
 		rc = jvmtiGetConstantPool_writeConstants(&translation, constantPoolBuf);
 		if (rc != JVMTI_ERROR_NONE) {
@@ -1936,37 +1939,37 @@ done:
 
 
 
-/** 
- * \brief	Translate constant pool indices 
+/**
+ * \brief	Translate constant pool indices
  * \ingroup 	jvmtiClass
  *
- * @param privatePortLibrary	port library  
- * @param translation		a data structure holding the translation HashTable and Array. 
+ * @param privatePortLibrary	port library
+ * @param translation		a data structure holding the translation HashTable and Array.
  * 				This call will allocate a HashTable and an array that must be
- * 				freed via the jvmtiGetConstantPool_free() call once done. 
+ * 				freed via the jvmtiGetConstantPool_free() call once done.
  * @param class			class to be used as the constant pool source
- * @param translateUTF8andNAS	the translated constant pool should include UTF8 and Name and Type 
+ * @param translateUTF8andNAS	the translated constant pool should include UTF8 and Name and Type
  * 				constants. A distinction is made since when used by GetBytecodes
- * 				we do not care about those two constant types. 
+ * 				we do not care about those two constant types.
  * @return 			a jvmtiError code
- * 
+ *
  *
  *	This call is used by the GetConstantPool and GetBytecodes jvmti API calls. It serves as
- *	means of obtaining identical constant pool indices for the said two calls. 
+ *	means of obtaining identical constant pool indices for the said two calls.
  *
- *	To achieve this it provides a HashTable of unique constant pool entries. The HashTable is 
- *	keyed by the j9vm constant pool index for all items except UTF8 and NameAndSignature. The two 
+ *	To achieve this it provides a HashTable of unique constant pool entries. The HashTable is
+ *	keyed by the j9vm constant pool index for all items except UTF8 and NameAndSignature. The two
  *	prior items are not directly present on J9ROMClass CP and are instead keyed by their SRPs.
- *	The HashTable is used by the GetBytecodes call. It is also utilized while reindexing the 
+ *	The HashTable is used by the GetBytecodes call. It is also utilized while reindexing the
  *	constant pool.
- *	
+ *
  *	The translation structure also provides an array of HashTable nodes. The array is indexed
  *	by the 'reindexed' constant pool indices. It provides efficient means of writing out the
- *	constant pool by the jvmtiGetConstantPool_writeConstants function. 
- * 
+ *	constant pool by the jvmtiGetConstantPool_writeConstants function.
+ *
  *	ISSUES:
  *		The UTF8 and NameAndSignature constants are not stored on the constant pool and
- *		therefore do not have an "index" but rather use SRP references. This call will 
+ *		therefore do not have an "index" but rather use SRP references. This call will
  *		create CP entries and update referring CP items accordingly
  *
  *		The Long and Double type is defined by the spec to take _TWO_ constant pool entries
@@ -1979,16 +1982,16 @@ done:
  *		The first 255 CP items must not be reindexed to an index greater then 255. Breaking
  *		that rule will cause LDC bytecode breakage as it uses a 1 byte constant pool index
  *		that cannot be fixed if the referenced CP item is out of range. To address this issue
- *		we first write out the J9RomClass constant pool and then append UTF8 and NameAndType 
- *		items. This ensures that whatever items were indexed below 255 still remain so. 
- * 
- *	NOTE: 
- *		Caller is responsible for freeing the hashtable and cp array tracked by the translation 
- *		structure by calling the jvmtiGetConstantPool_free API call. 
+ *		we first write out the J9RomClass constant pool and then append UTF8 and NameAndType
+ *		items. This ensures that whatever items were indexed below 255 still remain so.
+ *
+ *	NOTE:
+ *		Caller is responsible for freeing the hashtable and cp array tracked by the translation
+ *		structure by calling the jvmtiGetConstantPool_free API call.
  *
  */
 jvmtiError
-jvmtiGetConstantPool_translateCP(J9PortLibrary *privatePortLibrary, jvmtiGcp_translation *translation, 
+jvmtiGetConstantPool_translateCP(J9PortLibrary *privatePortLibrary, jvmtiGcp_translation *translation,
 				 J9Class *class, jboolean translateUTF8andNAS)
 {
 	U_32 sunCpIndex = 1;
@@ -2020,17 +2023,17 @@ jvmtiGetConstantPool_translateCP(J9PortLibrary *privatePortLibrary, jvmtiGcp_tra
 	}
 
 	/* Allocate an array of hash node ptrs. The size is an upper bound on the number of CP items given the
-	 * constantPoolCount. ie the max number of items we can have is if they were all Reference types. 
+	 * constantPoolCount. ie the max number of items we can have is if they were all Reference types.
 	 * We allocate more in order to prevent a second pass after the real total number of CP items is calculated and
 	 * the HashTable populated. Instead we initialize the lookup array at the same time as creating the HT. */
-	/* The "6" is calculated by taking a worst case of lets say a FieldRef and counting the max number of 
+	/* The "6" is calculated by taking a worst case of lets say a FieldRef and counting the max number of
 	 * unique items used to completely describe it */
 	translation->cp = j9mem_allocate_memory((constantPoolCount * 6) * sizeof(jvmtiGcp_translationEntry *), J9MEM_CATEGORY_JVMTI);
 	if (NULL == translation->cp) {
 		JVMTI_ERROR(JVMTI_ERROR_OUT_OF_MEMORY);
 	}
 
-		
+
 	jvmtiGetConstantPoolTranslate_printf(("JVMTI GetConstantPool: Creating Translation Table\n"));
 
 	for (cpIndex = 1; cpIndex < constantPoolCount; cpIndex++) {
@@ -2078,7 +2081,7 @@ jvmtiGetConstantPool_translateCP(J9PortLibrary *privatePortLibrary, jvmtiGcp_tra
 					) {
 						cpType = (U_8)CFR_CONSTANT_InterfaceMethodref;
 					}
-					
+
 					rc = jvmtiGetConstantPool_addReference(translation, cpIndex,
 										cpType,
 										(J9ROMFieldRef *) cpItem,
@@ -2136,7 +2139,7 @@ jvmtiGetConstantPool_translateCP(J9PortLibrary *privatePortLibrary, jvmtiGcp_tra
 				}
 				break;
 
-			default:        
+			default:
 				jvmtiGetConstantPoolTranslate_printf(("	Unknown cpType %2d\n", cpItemType));
 				JVMTI_ERROR(JVMTI_ERROR_INTERNAL);
 		}
@@ -2196,7 +2199,7 @@ jvmtiGetConstantPool_translateCP(J9PortLibrary *privatePortLibrary, jvmtiGcp_tra
 
 				case CFR_CONSTANT_Fieldref:
 				case CFR_CONSTANT_Methodref:
-				case CFR_CONSTANT_InterfaceMethodref: 
+				case CFR_CONSTANT_InterfaceMethodref:
 
 					/* Fix the Reference by adding the UTF8 and NameAndSignature items to the hashtable and binding
 					 * the indices to this ref */
@@ -2211,7 +2214,7 @@ jvmtiGetConstantPool_translateCP(J9PortLibrary *privatePortLibrary, jvmtiGcp_tra
 									     J9UTF8_DATA(J9ROMNAMEANDSIGNATURE_SIGNATURE(nas))));
 
 					/* Add the referenced Class item to the HT, we explicitly do it here in case the refered class
-					 * has not yet been added. Deferring it to be done via the CFR_CONSTANT_Class case would 
+					 * has not yet been added. Deferring it to be done via the CFR_CONSTANT_Class case would
 					 * prevent us from being able to save the index in htEntry->type.ref.classIndex (ie another
 					 * pass would be needed once the CFR_CONSTANT_Class case adds it) */
 					rc = jvmtiGetConstantPool_addClassOrString(translation, ref->classRefCPIndex, (U_8)CFR_CONSTANT_Class,
@@ -2320,14 +2323,14 @@ done:
 
 
 
-/** 
- * \brief	Free the translation HashTable and Array 
+/**
+ * \brief	Free the translation HashTable and Array
  * \ingroup 	jvmtiClass
- * 
- * 
+ *
+ *
  * @param privatePortLibrary 	port library
  * @param translation 		constant pool translation data
- * 
+ *
  */
 void
 jvmtiGetConstantPool_free(J9PortLibrary *privatePortLibrary, jvmtiGcp_translation *translation)
@@ -2345,19 +2348,19 @@ jvmtiGetConstantPool_free(J9PortLibrary *privatePortLibrary, jvmtiGcp_translatio
 
 
 
-/** 
+/**
  * \brief 	Write the translated constant pool in SUN byte packed format
- * \ingroup	jvmtiClass 
- * 
- * 
+ * \ingroup	jvmtiClass
+ *
+ *
  * @param translation 		an initialized translation structure
  * @param constantPoolBuf 	the return buffer to contain the written constant pool bytes
  * @return 			a jvmtiError code
- * 
+ *
  * 	Use the translation data gathered by jvmtiGetConstantPool_translateCP to create a byte packed
  * 	constant pool stream. The constant pool conforms to the SUN classfile specification and must
- * 	match with the indices used by the bytecodes returned by the GetBytecodes jvmti API call. 
- *	
+ * 	match with the indices used by the bytecodes returned by the GetBytecodes jvmti API call.
+ *
  */
 static jvmtiError
 jvmtiGetConstantPool_writeConstants(jvmtiGcp_translation *translation, unsigned char *constantPoolBuf)
@@ -2365,30 +2368,30 @@ jvmtiGetConstantPool_writeConstants(jvmtiGcp_translation *translation, unsigned 
 {
 	jvmtiError rc = JVMTI_ERROR_NONE;
 	U_16 sunCpIndex;
-	U_8  cpItemType;	 
+	U_8  cpItemType;
 	jvmtiGcp_translationEntry *htEntry;
 	unsigned char * constantPoolBufIndex;
-	
-		
+
+
 	jvmtiGetConstantPoolWrite_printf(("============ JVMTI GetConstantPool: Writing Constant Pool ===============\n"));
-	
+
 	constantPoolBufIndex = constantPoolBuf;
-	
-	
+
+
 	for (sunCpIndex = 1; sunCpIndex < translation->cpSize; sunCpIndex++) {
-		
+
 		htEntry = translation->cp[sunCpIndex];
 		cpItemType = htEntry->cpType;
 
-		jvmtiGetConstantPoolWrite_printf(("W %2d/%d type: %2d    [%3d/%3d]     ---  ", 
-						  sunCpIndex, translation->cpSize, cpItemType, 
+		jvmtiGetConstantPoolWrite_printf(("W %2d/%d type: %2d    [%3d/%3d]     ---  ",
+						  sunCpIndex, translation->cpSize, cpItemType,
 						  constantPoolBufIndex - constantPoolBuf, translation->totalSize));
 
 
 
 		switch(cpItemType) {
 			case CFR_CONSTANT_Class:
-				jvmtiGetConstantPoolWrite_printf(("        HT CPT %2d <Class> UTF8 %d->[%s]\n", 
+				jvmtiGetConstantPoolWrite_printf(("        HT CPT %2d <Class> UTF8 %d->[%s]\n",
 								  htEntry->cpType, htEntry->type.clazz.nameIndex, ""));
 				GCP_WRITE_U8 (constantPoolBufIndex, CFR_CONSTANT_Class);
 				GCP_WRITE_U16(constantPoolBufIndex, htEntry->type.clazz.nameIndex);
@@ -2398,7 +2401,7 @@ jvmtiGetConstantPool_writeConstants(jvmtiGcp_translation *translation, unsigned 
 			case CFR_CONSTANT_Fieldref:
 			case CFR_CONSTANT_Methodref:
 			case CFR_CONSTANT_InterfaceMethodref:
-				jvmtiGetConstantPoolWrite_printf(("        HT CPT %2d <Ref> Class %d  NAS %d\n", 
+				jvmtiGetConstantPoolWrite_printf(("        HT CPT %2d <Ref> Class %d  NAS %d\n",
 								  htEntry->cpType, htEntry->type.ref.classIndex, htEntry->type.ref.nameAndTypeIndex));
 				GCP_WRITE_U8 (constantPoolBufIndex, cpItemType);
 				GCP_WRITE_U16(constantPoolBufIndex, htEntry->type.ref.classIndex);
@@ -2425,13 +2428,13 @@ jvmtiGetConstantPool_writeConstants(jvmtiGcp_translation *translation, unsigned 
 				break;
 
 			case CFR_CONSTANT_String:
-				jvmtiGetConstantPoolWrite_printf(("        HT CPT %2d <String> UTF8 %d->[%s]\n", 
+				jvmtiGetConstantPoolWrite_printf(("        HT CPT %2d <String> UTF8 %d->[%s]\n",
 								  htEntry->cpType, htEntry->type.string.stringIndex, ""));
 				GCP_WRITE_U8 (constantPoolBufIndex, CFR_CONSTANT_String);
 				GCP_WRITE_U16(constantPoolBufIndex, htEntry->type.string.stringIndex);
-				
+
 				break;
-				
+
 			case CFR_CONSTANT_MethodType:
 				if (J9_METHOD_TYPE_ORIGIN_LDC == (htEntry->type.methodType.methodType->cpType >> J9DescriptionCpTypeShift)) {
 					jvmtiGetConstantPoolWrite_printf(("        HT CPT %2d <MethodType> UTF8 %d->[%s]\n",
@@ -2449,14 +2452,14 @@ jvmtiGetConstantPool_writeConstants(jvmtiGcp_translation *translation, unsigned 
 				break;
 
 			case CFR_CONSTANT_Integer:
-				jvmtiGetConstantPoolWrite_printf(("        HT CPT %2d <Int> [0x%04x]\n", 
+				jvmtiGetConstantPoolWrite_printf(("        HT CPT %2d <Int> [0x%04x]\n",
 								  htEntry->cpType, htEntry->type.intFloat.data));
 				GCP_WRITE_U8 (constantPoolBufIndex, CFR_CONSTANT_Integer);
 				GCP_WRITE_U32(constantPoolBufIndex, htEntry->type.intFloat.data);
 				break;
 
 			case CFR_CONSTANT_Float:
-				jvmtiGetConstantPoolWrite_printf(("        HT CPT %2d <Float> [0x%04x]\n", 
+				jvmtiGetConstantPoolWrite_printf(("        HT CPT %2d <Float> [0x%04x]\n",
 								  htEntry->cpType, htEntry->type.intFloat.data));
 				GCP_WRITE_U8 (constantPoolBufIndex, CFR_CONSTANT_Float);
 				GCP_WRITE_U32(constantPoolBufIndex, htEntry->type.intFloat.data);
@@ -2464,8 +2467,8 @@ jvmtiGetConstantPool_writeConstants(jvmtiGcp_translation *translation, unsigned 
 
 			case CFR_CONSTANT_Double:
 			case CFR_CONSTANT_Long:
-				jvmtiGetConstantPoolWrite_printf(("        HT CPT %2d <Double/Long> [0x%04x%04x]\n", 
-								  htEntry->cpType, htEntry->type.longDouble.slot1,  
+				jvmtiGetConstantPoolWrite_printf(("        HT CPT %2d <Double/Long> [0x%04x%04x]\n",
+								  htEntry->cpType, htEntry->type.longDouble.slot1,
 								  htEntry->type.longDouble.slot2));
 				if (cpItemType == CFR_CONSTANT_Double) {
 					GCP_WRITE_U8 (constantPoolBufIndex, CFR_CONSTANT_Double);
@@ -2475,17 +2478,17 @@ jvmtiGetConstantPool_writeConstants(jvmtiGcp_translation *translation, unsigned 
 #ifdef J9VM_ENV_LITTLE_ENDIAN
 				GCP_WRITE_U32(constantPoolBufIndex, htEntry->type.longDouble.slot2);
 				GCP_WRITE_U32(constantPoolBufIndex, htEntry->type.longDouble.slot1);
-#else					
+#else
 				GCP_WRITE_U32(constantPoolBufIndex, htEntry->type.longDouble.slot1);
 				GCP_WRITE_U32(constantPoolBufIndex, htEntry->type.longDouble.slot2);
-#endif				
+#endif
 				/* Skip additional CP entry. See JVM spec v2 section 4.4.5 for the brilliant rationale */
 				sunCpIndex++;
 
 				break;
 
 			case CFR_CONSTANT_Utf8:
-				jvmtiGetConstantPoolWrite_printf(("        HT CPT %2d <UTF8> [%*s]\n", 
+				jvmtiGetConstantPoolWrite_printf(("        HT CPT %2d <UTF8> [%*s]\n",
 								 htEntry->cpType,  J9UTF8_LENGTH(htEntry->type.utf8.data), J9UTF8_DATA(htEntry->type.utf8.data)));
 				GCP_WRITE_U8 (constantPoolBufIndex, CFR_CONSTANT_Utf8);
 				GCP_WRITE_U16(constantPoolBufIndex, J9UTF8_LENGTH(htEntry->type.utf8.data));
@@ -2496,7 +2499,7 @@ jvmtiGetConstantPool_writeConstants(jvmtiGcp_translation *translation, unsigned 
 
 			case CFR_CONSTANT_NameAndType:
 
-				jvmtiGetConstantPoolWrite_printf(("        HT CPT %2d <NAS> Name %d->[%s] Sig %d->[%s]\n", htEntry->cpType, 
+				jvmtiGetConstantPoolWrite_printf(("        HT CPT %2d <NAS> Name %d->[%s] Sig %d->[%s]\n", htEntry->cpType,
 								 htEntry->type.nas.nameIndex, "",
 								 htEntry->type.nas.signatureIndex, ""));
 
@@ -2518,7 +2521,7 @@ done:
 
 	/* Belt and suspenders, check if we have not overflown the return buffer */
 	if ((U_32) (constantPoolBufIndex - constantPoolBuf) > translation->totalSize) {
-		jvmtiGetConstantPoolWrite_printf(("ERROR: Constant Pool buffer Overflow   %d > %d\n", 
+		jvmtiGetConstantPoolWrite_printf(("ERROR: Constant Pool buffer Overflow   %d > %d\n",
 						 constantPoolBufIndex - constantPoolBuf, translation->totalSize));
 		rc = JVMTI_ERROR_INTERNAL;
 	}
@@ -2540,7 +2543,7 @@ jvmtiGetConstantPool_addClassOrString(jvmtiGcp_translation *translation, UDATA c
 	if (NULL != (htEntry = hashTableFind(translation->ht, &entry))) {
 		/* Found a match, we've already added it before hence return to prevent
 		 * unnecessary duplication */
-		if (refIndex) 
+		if (refIndex)
 			*refIndex = htEntry->sunCpIndex;
 		return JVMTI_ERROR_NONE;
 	}
@@ -2568,7 +2571,7 @@ jvmtiGetConstantPool_addClassOrString(jvmtiGcp_translation *translation, UDATA c
 	(*sunCpIndex)++;
 
 	jvmtiGetConstantPoolTranslate_printf(("	Class|String : UTF8 [%*s]\n", J9UTF8_LENGTH(utf8), J9UTF8_DATA(utf8)));
-	
+
 	return JVMTI_ERROR_NONE;
 }
 
@@ -2690,13 +2693,13 @@ jvmtiGetConstantPool_addUTF8(jvmtiGcp_translation *translation, J9UTF8 *utf8, U_
 	return JVMTI_ERROR_NONE;
 }
 
-	
+
 static jvmtiError
 jvmtiGetConstantPool_addReference(jvmtiGcp_translation *translation, UDATA cpIndex, U_8 cpType, J9ROMFieldRef *ref, U_32 *sunCpIndex)
 {
 	jvmtiGcp_translationEntry entry;
 	jvmtiGcp_translationEntry *htEntry;
-	
+
 	/* Add the Reference item to the hashtable, use our CP index as key */
 	entry.key = (void *) cpIndex;
 	entry.cpType = cpType;
@@ -2707,11 +2710,11 @@ jvmtiGetConstantPool_addReference(jvmtiGcp_translation *translation, UDATA cpInd
 	if (NULL == (htEntry = hashTableAdd(translation->ht, &entry))) {
 		return JVMTI_ERROR_OUT_OF_MEMORY;
 	}
-	
+
 	translation->totalSize += 5;
 	translation->cp[*sunCpIndex] = htEntry;
 	(*sunCpIndex)++;
-	
+
 	return JVMTI_ERROR_NONE;
 }
 
@@ -2781,14 +2784,14 @@ jvmtiGetConstantPool_addNAS_name_sig(jvmtiGcp_translation *translation, void *ke
 {
 	jvmtiError rc;
 	jvmtiGcp_translationEntry entry, *htEntry;
-	
+
 	entry.key = key;
 	entry.sunCpIndex = *sunCpIndex;
 	entry.cpType = CFR_CONSTANT_NameAndType;
 	entry.type.nas.name = name;
 	entry.type.nas.signature = sig;
 
-	jvmtiGetConstantPoolTranslate_printf(("        NAS [%*s][%*s]\n", 
+	jvmtiGetConstantPoolTranslate_printf(("        NAS [%*s][%*s]\n",
 					     J9UTF8_LENGTH(entry.type.nas.name), J9UTF8_DATA(entry.type.nas.name),
 					     J9UTF8_LENGTH(entry.type.nas.signature), J9UTF8_DATA(entry.type.nas.signature)));
 
@@ -2815,7 +2818,7 @@ jvmtiGetConstantPool_addNAS_name_sig(jvmtiGcp_translation *translation, void *ke
 		return rc;
 	}
 
-	/* Add an entry for the signature_index part of the NAS entry */ 
+	/* Add an entry for the signature_index part of the NAS entry */
 	rc = jvmtiGetConstantPool_addUTF8(translation, sig, sunCpIndex, &htEntry->type.nas.signatureIndex);
 	if (rc != JVMTI_ERROR_NONE) {
 		return rc;
@@ -2823,7 +2826,7 @@ jvmtiGetConstantPool_addNAS_name_sig(jvmtiGcp_translation *translation, void *ke
 
 	translation->totalSize += 5;
 
-	return JVMTI_ERROR_NONE; 
+	return JVMTI_ERROR_NONE;
 
 }
 
@@ -2856,15 +2859,15 @@ static jvmtiError
 jvmtiGetConstantPool_addLongDouble(jvmtiGcp_translation *translation, UDATA cpIndex, U_8 cpType, U_32 slot1, U_32 slot2, U_32 *sunCpIndex)
 {
 	jvmtiGcp_translationEntry entry;
-	
+
 	jvmtiGetConstantPoolTranslate_printf(("	Long/Double [0x%08x%08x]\n", slot1, slot2));
-	
+
 	entry.key = (void *) cpIndex;
 	entry.sunCpIndex = *sunCpIndex;
 	entry.cpType = cpType;
 	entry.type.longDouble.slot1 = slot1;
 	entry.type.longDouble.slot2 = slot2;
-	
+
 	/* Add the entry to the hashtable */
 	if (NULL == (translation->cp[*sunCpIndex] = hashTableAdd(translation->ht, &entry))) {
 		return JVMTI_ERROR_OUT_OF_MEMORY;

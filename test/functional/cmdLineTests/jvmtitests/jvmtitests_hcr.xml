@@ -25,7 +25,7 @@
 <!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
 
 <suite id="JVMTI Tests" timeout="240">
-	<variable name="JVM_OPTS" value="-XX:+EnableExtendedHCR" />
+	<variable name="JVM_OPTS" value=" " />
 	<variable name="AGENTLIB" value="-agentlib:jvmtitest" />
 	<variable name="TESTRUNNER" value="com.ibm.jvmti.tests.util.TestRunner" />
 
@@ -44,17 +44,17 @@
 	</test>
 
 	<test id="rc002">
-		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:rc002 -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
+		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:rc002 -XX:+EnableExtendedHCR -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
 		<return type="success" value="0"/>
 	</test>
 
 	<test id="rc003">
-		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:rc003 -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
+		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:rc003 -XX:+EnableExtendedHCR -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
 		<return type="success" value="0"/>
 	</test>
 
 	<test id="rc004">
-		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:rc004 -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
+		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:rc004 -XX:+EnableExtendedHCR -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
 		<return type="success" value="0"/>
 	</test>
 
@@ -79,12 +79,12 @@
 	</test>
 
 	<test id="rc009">
-		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:rc009 -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
+		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:rc009 -XX:+EnableExtendedHCR -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
 		<return type="success" value="0"/>
 	</test>
 
  	<test id="rc010">
-		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:rc010 -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
+		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:rc010 -XX:+EnableExtendedHCR -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
 		<return type="success" value="0"/>
 	</test>
 
@@ -99,7 +99,7 @@
 	</test>
 
  	<test id="rc013">
-		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:rc013 -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
+		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:rc013 -XX:+EnableExtendedHCR -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
 		<return type="success" value="0"/>
 	</test>
 
