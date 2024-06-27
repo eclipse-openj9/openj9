@@ -21,6 +21,7 @@
  *******************************************************************************/
 
 #include "compile/Compilation.hpp"
+#include "AtomicSupport.hpp"
 #if defined(J9VM_OPT_JITSERVER)
 #include "control/CompilationRuntime.hpp"
 #include "control/CompilationThread.hpp"
@@ -392,6 +393,38 @@ J9::ClassEnv::classHasIllegalStaticFinalFieldModification(TR_OpaqueClassBlock * 
       }
 #endif /* defined(J9VM_OPT_JITSERVER) */
    return J9_ARE_ANY_BITS_SET(j9clazz->classFlags, J9ClassHasIllegalFinalFieldModifications);
+   }
+
+void
+J9::ClassEnv::setClassHasIllegalStaticFinalFieldModification(
+   TR_OpaqueClassBlock *clazz, TR::Compilation *comp)
+   {
+   J9Class *j9c = TR::Compiler->cls.convertClassOffsetToClassPtr(clazz);
+
+#if defined(J9VM_OPT_JITSERVER)
+   if (comp->isOutOfProcessCompilation())
+      {
+      // Set the flag on the actual class in the client.
+      auto stream = comp->getStream();
+      stream->write(
+         JITServer::MessageType::ClassEnv_setClassHasIllegalStaticFinalFieldModification,
+         clazz);
+
+      stream->read<JITServer::Void>();
+
+      // Update the cache
+      ClientSessionData *clientSessionData = TR::compInfoPT->getClientData();
+      OMR::CriticalSection romMapCS(clientSessionData->getROMMapMonitor());
+      auto it = clientSessionData->getROMClassMap().find(j9c);
+      if (it != clientSessionData->getROMClassMap().end())
+         it->second._classFlags |= J9ClassHasIllegalFinalFieldModifications;
+
+      return;
+      }
+#endif
+
+   VM_AtomicSupport::bitOrU32(
+      &j9c->classFlags, J9ClassHasIllegalFinalFieldModifications);
    }
 
 bool

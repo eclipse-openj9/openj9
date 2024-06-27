@@ -4793,6 +4793,7 @@ typedef struct J9InternalVMFunctions {
 	void  ( *internalReleaseVMAccessSetStatus)(struct J9VMThread * vmThread, UDATA flags) ;
 	IDATA  ( *instanceFieldOffset)(struct J9VMThread *vmStruct, struct J9Class *clazz, U_8 *fieldName, UDATA fieldNameLength, U_8 *signature, UDATA signatureLength, struct J9Class **definingClass, UDATA *instanceField, UDATA options) ;
 	void*  ( *staticFieldAddress)(struct J9VMThread *vmStruct, struct J9Class *clazz, U_8 *fieldName, UDATA fieldNameLength, U_8 *signature, UDATA signatureLength, struct J9Class **definingClass, UDATA *staticField, UDATA options, struct J9Class *sourceClass) ;
+	UDATA  ( *getStaticFields)(struct J9VMThread *currentThread, struct J9ROMClass *romClass, J9ROMFieldShape **outFields);
 	struct J9Class*  ( *internalFindKnownClass)(struct J9VMThread *currentThread, UDATA index, UDATA flags) ;
 	struct J9Class*  ( *resolveKnownClass)(struct J9JavaVM * vm, UDATA index) ;
 	UDATA  ( *computeHashForUTF8)(const U_8 * string, UDATA size) ;

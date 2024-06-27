@@ -69,6 +69,7 @@ J9InternalVMFunctions J9InternalFunctions = {
 	internalReleaseVMAccessSetStatus,
 	instanceFieldOffset,
 	staticFieldAddress,
+	getStaticFields,
 	internalFindKnownClass,
 	resolveKnownClass,
 	computeHashForUTF8,

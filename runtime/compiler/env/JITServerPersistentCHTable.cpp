@@ -620,6 +620,12 @@ void TR_JITClientPersistentClassInfo::clearShouldNotBeNewlyExtended()
    TR_PersistentClassInfo::clearShouldNotBeNewlyExtended();
    }
 
+void TR_JITClientPersistentClassInfo::setAlreadyScannedForFinalPutstatic()
+   {
+   TR_JITClientPersistentClassInfo::_chTable->markDirty(getClassId());
+   TR_PersistentClassInfo::setAlreadyScannedForFinalPutstatic();
+   }
+
 void TR_JITClientPersistentClassInfo::setHasRecognizedAnnotations(bool v)
    {
    TR_JITClientPersistentClassInfo::_chTable->markDirty(getClassId());

@@ -212,6 +212,7 @@ public:
    virtual void setShouldNotBeNewlyExtended(int32_t ID) override;
    virtual void resetShouldNotBeNewlyExtended(int32_t ID) override;
    virtual void clearShouldNotBeNewlyExtended() override;
+   virtual void setAlreadyScannedForFinalPutstatic() override;
    virtual void setHasRecognizedAnnotations(bool v = true) override;
    virtual void setAlreadyCheckedForAnnotations(bool v = true) override;
    virtual void setCannotTrustStaticFinal(bool v = true) override;
