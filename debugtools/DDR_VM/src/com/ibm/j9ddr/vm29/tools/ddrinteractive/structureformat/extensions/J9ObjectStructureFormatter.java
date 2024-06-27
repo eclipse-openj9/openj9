@@ -221,9 +221,6 @@ public class J9ObjectStructureFormatter extends BaseStructureFormatter
 				}
 				break;
 			case 'L':
-			/*[IF INLINE-TYPES]*/
-			case 'Q':
-			/*[ENDIF] INLINE-TYPES */
 			case '[':
 				if (ValueTypeHelper.getValueTypeHelper().isJ9ClassIsFlattened(localClazz)) {
 					formatFlattenedObjectArray(out, tabLevel, begin, finish, array);

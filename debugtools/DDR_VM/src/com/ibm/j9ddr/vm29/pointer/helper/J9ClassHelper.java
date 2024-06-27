@@ -169,9 +169,6 @@ public class J9ClassHelper
 		case 'Z': return "boolean" + aritySuffix;
 
 		case 'L':
-			/*[IF INLINE-TYPES]*/
-		case 'Q':
-			/*[ENDIF] INLINE-TYPES */
 			return getName(arrayClass.leafComponentType()) + aritySuffix;
 		}
 
@@ -537,10 +534,6 @@ public class J9ClassHelper
 	 * @return true if the character indicates the beginning of a reference or value signature, false otherwise
 	 */
 	public static boolean isRefOrValSignature(char firstChar) {
-		return firstChar == 'L'
-			/*[IF INLINE-TYPES]*/
-			|| (firstChar == 'Q')
-			/*[ENDIF] INLINE-TYPES */
-			;
+		return firstChar == 'L';
 	}
 }

@@ -361,9 +361,7 @@ j9ThunkIterateAndEncode(char ** signatureDataPtr, U_8 ** encodedTypesPtr, U_8 * 
 				while ((c = *signatureData++) == '[') ;
 				/* intentional fall-through */
 			case 'L':
-				/* intentional fall-through */
-			case 'Q':
-				if ((c == 'L') || (c == 'Q')) {
+				if (c == 'L') {
 					while (*signatureData++ != ';') ;
 				}
 #if defined(J9VM_ENV_DATA64)
@@ -503,8 +501,6 @@ j9ThunkVMHelperFromSignature(void * jitConfig, UDATA signatureLength, char *sign
 		case '[':
 			/* intentional fall-through */
 		case 'L':
-			/* intentional fall-through */
-		case 'Q':
 #if defined(J9VM_ENV_DATA64)
 			helper = J9_BUILDER_SYMBOL(icallVMprJavaSendVirtualL);
 			break;
@@ -540,8 +536,6 @@ j9ThunkInvokeExactHelperFromSignature(void * jitConfig, UDATA signatureLength, c
 		case '[':
 			/* intentional fall-through */
 		case 'L':
-			/* intentional fall-through */
-		case 'Q':
 			helper = J9_BUILDER_SYMBOL(icallVMprJavaSendInvokeExactL);
 			break;
 		default:

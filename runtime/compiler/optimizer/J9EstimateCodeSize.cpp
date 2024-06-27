@@ -95,7 +95,7 @@ class NeedsPeekingHeuristic
             int32_t len;
             const char *sig = p->getTypeSignature(len);
             if (i >= argInfo->getNumArgs() ||            //not enough slots in argInfo
-               (*sig != 'L' && *sig != 'Q') ||           //primitive arg
+               (*sig != 'L') ||                          //primitive arg
                !argInfo->get(i) ||                       //no arg at the i-th slot
                !argInfo->get(i)->getClass()         //no classInfo at the i-th slot
                )

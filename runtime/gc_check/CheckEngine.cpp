@@ -899,7 +899,7 @@ GC_CheckEngine::checkClassStatics(J9JavaVM* vm, J9Class* clazz)
 
 						if (IS_REF_OR_VAL_SIGNATURE(toSearchString[0])) {
 							/*  Convert signature to class name:
-							 *  Entering 'L'/'Q' as well as closing ';' must be removed to get a proper class name
+							 *  Entering 'L' as well as closing ';' must be removed to get a proper class name
 							 */
 							toSearchString += 1;
 							toSearchLength -= 2;
