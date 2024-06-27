@@ -87,6 +87,8 @@ public:
    bool isStringClass(TR_OpaqueClassBlock *clazz);
 
    bool classHasIllegalStaticFinalFieldModification(TR_OpaqueClassBlock * clazzPointer);
+   void setClassHasIllegalStaticFinalFieldModification(
+      TR_OpaqueClassBlock *clazz, TR::Compilation *comp);
    bool isAbstractClass(TR::Compilation *comp, TR_OpaqueClassBlock *clazzPointer);
    bool isInterfaceClass(TR::Compilation *comp, TR_OpaqueClassBlock *clazzPointer);
    bool isConcreteClass(TR::Compilation *comp, TR_OpaqueClassBlock * clazzPointer);

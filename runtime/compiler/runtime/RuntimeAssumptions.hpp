@@ -142,6 +142,9 @@ class TR_PersistentClassInfo : public TR_Link0<TR_PersistentClassInfo>
    bool shouldNotBeNewlyExtended(int32_t ID)         { return _shouldNotBeNewlyExtended.testAny(1 << ID); }
    flags16_t getShouldNotBeNewlyExtendedMask() const { return _shouldNotBeNewlyExtended; }
 
+   virtual void setAlreadyScannedForFinalPutstatic() { _flags.set(_alreadyScannedForFinalPutstatic, true); }
+   bool alreadyScannedForFinalPutstatic() { return _flags.testAny(_alreadyScannedForFinalPutstatic); }
+
    virtual void setHasRecognizedAnnotations(bool v = true){ _flags.set(_containsRecognizedAnnotations, v); }
    bool hasRecognizedAnnotations()                { return _flags.testAny(_containsRecognizedAnnotations); }
    virtual void setAlreadyCheckedForAnnotations(bool v = true){ _flags.set(_alreadyScannedForAnnotations, v); }
@@ -161,6 +164,7 @@ class TR_PersistentClassInfo : public TR_Link0<TR_PersistentClassInfo>
 
    enum // flag bits
       {
+      _alreadyScannedForFinalPutstatic      = 0x01,
       _isReservable                         = 0x02,
       _containsRecognizedAnnotations        = 0x04,
       _alreadyScannedForAnnotations         = 0x08,
