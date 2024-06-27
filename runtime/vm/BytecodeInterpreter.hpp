@@ -303,7 +303,9 @@ retry:
 		U_8 *profilingCursor = NULL;
 		if (J9_EVENT_IS_HOOKED(_vm->hookInterface, J9HOOK_VM_PROFILING_BYTECODE_BUFFER_FULL)) {
 			IDATA count = (IDATA)(UDATA)_literals->extra;
-			if ((count > 0) && (count <= (IDATA)_currentThread->maxProfilingCount)) {
+			if (((count > 0) && (count <= (IDATA)_currentThread->maxProfilingCount))
+				|| (J9_JIT_QUEUED_FOR_COMPILATION == count))
+			{
 #if defined(DEBUG_VERSION)
 				/* Do not profile breakpointed methods because the pc points to memory
 				 * which will go away when the breakpoint is removed.
