@@ -36,6 +36,9 @@
 #include <string.h>
 #include <assert.h>
 
+#undef UT_MODULE_LOADED
+#undef UT_MODULE_UNLOADED
+#include "CacheMap.hpp"
 #include "VMHelpers.hpp"
 
 extern "C" {
@@ -932,6 +935,115 @@ Java_java_lang_invoke_MethodHandleNatives_expand(JNIEnv *env, jclass clazz, jobj
 	}
 	Trc_JCL_java_lang_invoke_MethodHandleNatives_expand_Exit(env);
 	vmFuncs->internalExitVMToJNI(currentThread);
+}
+
+/**
+ * Find a Lambda or customized LambdaForm class in the SCC.
+ * Requires non-null input arguments.
+ * Returns a pointer to a SCC-cached ROMClass if found, otherwise nullptr.
+ *
+ * Throws OutOfMemoryError upon failure to allocate memory.
+ */
+jobject JNICALL
+Java_java_lang_invoke_MethodHandleNatives_findInSCC(JNIEnv *env, jclass clazz, jstring classnameObject, jclass lookupClass)
+{
+#if defined(J9VM_OPT_SHARED_CLASSES)
+#if defined(J9VM_ENV_DATA64)
+#define J9_ROM_ADDRESS_SUFFIX "/0x0000000000000000"
+#else /* defined(J9VM_ENV_DATA64) */
+#define J9_ROM_ADDRESS_SUFFIX "/0x00000000"
+#endif /* defined(J9VM_ENV_DATA64) */
+
+	J9VMThread *currentThread = reinterpret_cast<J9VMThread*>(env);
+	J9JavaVM *vm = currentThread->javaVM;
+	const J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	PORT_ACCESS_FROM_JAVAVM(vm);
+
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+
+	J9Class *hostClass = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, J9_JNI_UNWRAP_REFERENCE(lookupClass));
+	J9ClassLoader *classloader = hostClass->classLoader;
+	if (nullptr == classloader) {
+		vmFuncs->internalEnterVMFromJNI(currentThread);
+		return nullptr;
+	}
+
+	j9object_t classname = J9_JNI_UNWRAP_REFERENCE(classnameObject);
+	IDATA classnameLength = vmFuncs->getStringUTF8Length(currentThread, classname);
+	UDATA romAddressSuffixLength = LITERAL_STRLEN(J9_ROM_ADDRESS_SUFFIX);
+	UDATA lookupKeyLength = classnameLength + romAddressSuffixLength + /* null terminator */ 1;
+	char *lookupKey = static_cast<char *>(j9mem_allocate_memory(lookupKeyLength, OMRMEM_CATEGORY_VM));
+
+	/* Memory cleanup and exit routine. */
+	auto cleanup = [=]() {
+		if (nullptr != lookupKey) {
+			j9mem_free_memory(lookupKey);
+		}
+		vmFuncs->internalExitVMToJNI(currentThread);
+	};
+
+	if (nullptr == lookupKey) {
+		vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+		cleanup();
+		return nullptr;
+	}
+
+	vmFuncs->copyStringToUTF8Helper(currentThread, classname, J9_STR_NONE, 0, classnameLength, reinterpret_cast<U_8 *>(lookupKey), classnameLength);
+	memcpy(lookupKey + classnameLength, J9_ROM_ADDRESS_SUFFIX, romAddressSuffixLength);
+	lookupKey[lookupKeyLength - 1] = '\0';
+
+	J9SharedClassConfig *sconfig = currentThread->javaVM->sharedClassConfig;
+	if (nullptr == sconfig) {
+		cleanup();
+		return nullptr;
+	}
+
+	SH_CacheMap* cachemap = reinterpret_cast<SH_CacheMap*>(sconfig->sharedClassCache);
+	/* TODO Look to see if we should use a different API here. */
+	void *iterator = nullptr;
+	void *firstFound = nullptr;
+	omrthread_monitor_enter(vm->classMemorySegments->segmentMutex);
+	J9ROMClass *romClass = const_cast<J9ROMClass *>(cachemap->findNextROMClass(currentThread, iterator, firstFound, lookupKeyLength - 1, lookupKey));
+	omrthread_monitor_exit(vm->classMemorySegments->segmentMutex);
+
+	if (nullptr == romClass) {
+		cleanup();
+		return nullptr;
+	}
+
+	UDATA options = J9_FINDCLASS_FLAG_NO_CHECK_FOR_EXISTING_CLASS
+					| J9_FINDCLASS_FLAG_THROW_ON_FAIL
+					| J9_FINDCLASS_FLAG_UNSAFE
+					| J9_FINDCLASS_FLAG_HIDDEN
+					| J9_FINDCLASS_FLAG_ANON
+					| J9_FINDCLASS_FLAG_CLASS_OPTION_NESTMATE
+					| J9_FINDCLASS_FLAG_CLASS_OPTION_STRONG;
+
+	omrthread_monitor_enter(vm->classTableMutex);
+	/* internalCreateRAMClassFromROMClass will release the classTableMutex. */
+	J9Class *ramClass = vmFuncs->internalCreateRAMClassFromROMClass(currentThread,
+									classloader,
+									romClass,
+									options,
+									nullptr /* elementClass */,
+									nullptr /* protectionDomain */,
+									nullptr /* methodRemapArray */,
+									J9_CP_INDEX_NONE,
+									LOAD_LOCATION_UNKNOWN,
+									nullptr /* classBeingRedefined */,
+									hostClass);
+	if (nullptr == ramClass || nullptr != currentThread->currentException) {
+		cleanup();
+		return nullptr;
+	}
+
+	jobject result = vmFuncs->j9jni_createLocalRef(env, J9VM_J9CLASS_TO_HEAPCLASS(ramClass));
+	cleanup();
+	return result;
+#undef J9_ROM_ADDRESS_SUFFIX
+#else /* J9VM_OPT_SHARED_CLASSES */
+	return nullptr;
+#endif /* J9VM_OPT_SHARED_CLASSES */
 }
 
 /**

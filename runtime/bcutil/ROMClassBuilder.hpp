@@ -169,9 +169,6 @@ private:
 			U_32 modifiers,
 			U_32 extraModifiers,
 			U_32 optionalFlags,
-#if JAVA_SPEC_VERSION < 21
-			U_32 sizeToCompareForLambda,
-#endif /* JAVA_SPEC_VERSION < 21 */
 			ROMClassCreationContext *context);
 
 	SharedCacheRangeInfo getSharedCacheSRPRangeInfo(void *address);

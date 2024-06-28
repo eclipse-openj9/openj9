@@ -240,10 +240,6 @@ public:
 	bool isHiddenClassOptNestmateSet() const { return J9_ARE_ALL_BITS_SET(_findClassFlags, J9_FINDCLASS_FLAG_CLASS_OPTION_NESTMATE); }
 	bool isHiddenClassOptStrongSet() const { return J9_ARE_ALL_BITS_SET(_findClassFlags, J9_FINDCLASS_FLAG_CLASS_OPTION_STRONG); }
 	bool isDoNotShareClassFlagSet() const {return J9_ARE_ALL_BITS_SET(_findClassFlags, J9_FINDCLASS_FLAG_DO_NOT_SHARE);}
-	bool isLambdaClass() const { return J9_ARE_ALL_BITS_SET(_findClassFlags, J9_FINDCLASS_FLAG_LAMBDA); }
-#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
-	bool isLambdaFormClass() const { return J9_ARE_ALL_BITS_SET(_findClassFlags, J9_FINDCLASS_FLAG_LAMBDAFORM); }
-#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 	bool isClassUnmodifiable() const {
 		bool unmodifiable = false;
@@ -406,33 +402,11 @@ public:
 			if (NULL != _className) {
 				U_16 classNameLenToCompare0 = static_cast<U_16>(_classNameLength);
 				U_16 classNameLenToCompare1 = classNameLength;
-				BOOLEAN misMatch = FALSE;
 				if (isClassHidden()) {
 					/* For hidden classes, className has the ROM address appended, _className does not. */
 					classNameLenToCompare1 = static_cast<U_16>(_classNameLength);
-#if JAVA_SPEC_VERSION < 21
-					if (isROMClassShareable()) {
-						/*
-						 * Before JDK21, Lambda class names are in the format:
-						 *	HostClassName$$Lambda$<IndexNumber>/<zeroed out ROM_ADDRESS>
-						 * Do not compare the IndexNumber as it can be different from run to run.
-						 */
-						U_8 *lambdaClass0 = reinterpret_cast<U_8 *>(getLastDollarSignOfLambdaClassName(
-									reinterpret_cast<const char *>(_className), _classNameLength));
-						U_8 *lambdaClass1 = reinterpret_cast<U_8 *>(getLastDollarSignOfLambdaClassName(
-									reinterpret_cast<const char *>(className), classNameLength));
-						if ((NULL != lambdaClass0) && (NULL != lambdaClass1)) {
-							classNameLenToCompare0 = static_cast<U_16>(lambdaClass0 - _className + 1);
-							classNameLenToCompare1 = static_cast<U_16>(lambdaClass1 - className + 1);
-						} else if ((NULL == lambdaClass0) != (NULL == lambdaClass1)) {
-							misMatch = TRUE;
-						}
-					}
-#endif /* JAVA_SPEC_VERSION < 21 */
 				}
-				if (misMatch
-				|| !J9UTF8_DATA_EQUALS(_className, classNameLenToCompare0, className, classNameLenToCompare1)
-				) {
+				if (!J9UTF8_DATA_EQUALS(_className, classNameLenToCompare0, className, classNameLenToCompare1)) {
 #define J9WRONGNAME " (wrong name: "
 					PORT_ACCESS_FROM_PORT(_portLibrary);
 					UDATA errorStringSize = _classNameLength + sizeof(J9WRONGNAME) + 1 + classNameLength;
