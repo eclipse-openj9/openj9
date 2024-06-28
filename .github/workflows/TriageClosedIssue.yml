@@ -66,6 +66,7 @@ jobs:
 
             if (prAuthors.length > 0) {
               resultString += `PR Authors: ${prAuthors.join(', ')}`;
+            }
             if (prAuthors.length > 0) {
               resultString += `PR Authors: ${prAuthors.join(', ')}\n`;
             } else {
