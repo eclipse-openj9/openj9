@@ -26,7 +26,7 @@ jobs:
             const commentsUrl = issueData.comments_url;
             const { data: commentsData } = await github.request(commentsUrl);
 
-            const sandboxIssueNumber = 19673;
+            const sandboxIssueNumber = 1;
             const sandboxOwner = context.repo.owner;
             const sandboxRepo = context.repo.repo;
 
@@ -40,7 +40,7 @@ jobs:
             // Check if there is a closed/merged pull request associated with the issue
             // Check if the pull request has been merged
             let prAuthors = [];
-            const timeline = await github.rest.issues.listEventsForTimeline({
+            const timeline = await github.issues.listEventsForTimeline({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
