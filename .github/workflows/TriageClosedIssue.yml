@@ -56,7 +56,6 @@ jobs:
             });
 
             prAuthors = [...new Set(prAuthors)];
-            console.log(prAuthors)
             if (!assigned) {
               if (issueData.assignees.length != 0) {
                 const assignees = issueData.assignees.map(assignee => assignee.login).join(', ');
