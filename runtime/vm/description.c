@@ -178,8 +178,7 @@ calculateInstanceDescription( J9VMThread *vmThread, J9Class *ramClass, J9Class *
 				}
 
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-				if (('Q' == *fieldSigBytes)
-					|| J9ROMFIELD_IS_NULL_RESTRICTED(walkResult->field)
+				if (J9ROMFIELD_IS_NULL_RESTRICTED(walkResult->field)
 				) {
 					J9Class *fieldClass = walkResult->flattenedClass;
 					if ((NULL != fieldClass) 
@@ -336,12 +335,12 @@ checkLockwordNeeded(J9JavaVM *vm, J9ROMClass *romClass, J9Class *ramSuperClass, 
 	if (J9ROMCLASS_IS_ARRAY(romClass)) {
 		return NO_LOCKWORD_NEEDED;
 	}
-#ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	/* ValueTypes don not have lockwords */
 	if (J9ROMCLASS_IS_VALUE(romClass)) {
 		return NO_LOCKWORD_NEEDED;
 	}
-#endif
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	
 	/* check for primitive types or java.lang.Object */
 	if (ramSuperClass == NULL) {

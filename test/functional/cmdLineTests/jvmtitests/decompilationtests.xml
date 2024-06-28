@@ -25,7 +25,7 @@
 <!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
 
 <suite id="Decompilation Tests" timeout="600"> <!-- CMVC 161669: some machines take a long time to run decomp002 -->
-	<variable name="JVM_OPTS" value="-XX:+EnableExtendedHCR -Xdump:system:events=abort " />
+	<variable name="JVM_OPTS" value="-Xdump:system:events=abort " />
 	<variable name="AGENTLIB" value="-agentlib:jvmtitest" />
 	<variable name="TESTRUNNER" value="com.ibm.jvmti.tests.util.TestRunner" />
 

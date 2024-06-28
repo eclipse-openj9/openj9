@@ -2632,14 +2632,6 @@ public native boolean isPrimitive();
 
 /*[IF INLINE-TYPES]*/
 /**
- * Answers true if the receiver represents a primitive class type. Array classes
- * return false.
- *
- * @return	true if receiver is primitive class type, and false otherwise.
- */
-native boolean isPrimitiveClass();
-
-/**
  * Answers true if the receiver represents a value class type. Array classes
  * return false.
  *
@@ -2661,40 +2653,6 @@ public native boolean isIdentity();
  */
 public Class<?> asNullRestrictedType() {
 	return this;
-}
-
-/**
- * Return class file version (minorVersion << 16 + majorVersion) in an int.
- *
- * @return	the class file version
- */
-int getClassFileVersion() {
-	Class<?> thisObject = this;
-	while (thisObject.isArray()) {
-		thisObject = thisObject.getComponentType();
-	}
-	return thisObject.getClassFileVersion0();
-}
-private native int getClassFileVersion0();
-
-/**
- * ToDo: add comments for public methods - https://github.com/eclipse-openj9/openj9/issues/13615
- */
-Class<?> asPrimaryType() {
-	// ToDo: this is a temporary implementation - https://github.com/eclipse-openj9/openj9/issues/13615
-	return this;
-}
-Class<?> asValueType() {
-	// ToDo: this is a temporary implementation - https://github.com/eclipse-openj9/openj9/issues/13615
-	return this;
-}
-boolean isPrimaryType() {
-	// ToDo: this is a temporary implementation - https://github.com/eclipse-openj9/openj9/issues/13615
-	return true;
-}
-boolean isPrimitiveValueType() {
-	// ToDo: this is a temporary implementation - https://github.com/eclipse-openj9/openj9/issues/13615
-	return isPrimitiveClass();
 }
 /*[ENDIF] INLINE-TYPES */
 
@@ -5802,6 +5760,24 @@ SecurityException {
 		}
 		return AccessFlag.maskToAccessFlags(rawModifiers, location);
 	}
+
+	/**
+	 * Return class file version (minorVersion << 16 + majorVersion) in an int.
+	 *
+	 * @return	the class file version
+	 */
+/*[IF !INLINE-TYPES]*/
+	private
+/*[ENDIF] !INLINE-TYPES */
+	int getClassFileVersion() {
+		Class<?> thisObject = this;
+		while (thisObject.isArray()) {
+			thisObject = thisObject.getComponentType();
+		}
+		return thisObject.getClassFileVersion0();
+	}
+
+	private native int getClassFileVersion0();
 /*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 /*[IF JAVA_SPEC_VERSION == 21]*/
 	/**

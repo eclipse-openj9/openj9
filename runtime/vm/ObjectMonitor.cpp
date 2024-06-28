@@ -320,9 +320,9 @@ objectMonitorEnterNonBlocking(J9VMThread *currentThread, j9object_t object)
 	UDATA result = (UDATA)object;
 	J9JavaVM *vm = currentThread->javaVM;
 	j9objectmonitor_t volatile *lwEA = VM_ObjectMonitor::inlineGetLockAddress(currentThread, object);
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) || (JAVA_SPEC_VERSION >= 16)
+#if JAVA_SPEC_VERSION >= 16
 	J9Class * objClass = J9OBJECT_CLAZZ(currentThread, object);
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) || (JAVA_SPEC_VERSION >= 16) */
+#endif /* JAVA_SPEC_VERSION >= 16 */
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 	BOOLEAN retry = FALSE;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */

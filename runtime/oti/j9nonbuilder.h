@@ -4793,6 +4793,7 @@ typedef struct J9InternalVMFunctions {
 	void  ( *internalReleaseVMAccessSetStatus)(struct J9VMThread * vmThread, UDATA flags) ;
 	IDATA  ( *instanceFieldOffset)(struct J9VMThread *vmStruct, struct J9Class *clazz, U_8 *fieldName, UDATA fieldNameLength, U_8 *signature, UDATA signatureLength, struct J9Class **definingClass, UDATA *instanceField, UDATA options) ;
 	void*  ( *staticFieldAddress)(struct J9VMThread *vmStruct, struct J9Class *clazz, U_8 *fieldName, UDATA fieldNameLength, U_8 *signature, UDATA signatureLength, struct J9Class **definingClass, UDATA *staticField, UDATA options, struct J9Class *sourceClass) ;
+	UDATA  ( *getStaticFields)(struct J9VMThread *currentThread, struct J9ROMClass *romClass, J9ROMFieldShape **outFields);
 	struct J9Class*  ( *internalFindKnownClass)(struct J9VMThread *currentThread, UDATA index, UDATA flags) ;
 	struct J9Class*  ( *resolveKnownClass)(struct J9JavaVM * vm, UDATA index) ;
 	UDATA  ( *computeHashForUTF8)(const U_8 * string, UDATA size) ;
@@ -5110,8 +5111,6 @@ typedef struct J9InternalVMFunctions {
 #endif /* J9VM_OPT_JITSERVER */
 	IDATA ( *createJoinableThreadWithCategory)(omrthread_t* handle, UDATA stacksize, UDATA priority, UDATA suspend, omrthread_entrypoint_t entrypoint, void* entryarg, U_32 category) ;
 	BOOLEAN ( *valueTypeCapableAcmp)(struct J9VMThread *currentThread, j9object_t lhs, j9object_t rhs) ;
-	BOOLEAN ( *isNameOrSignatureQtype)(J9UTF8 *utfWrapper) ;
-	BOOLEAN ( *isClassRefQtype)(struct J9Class *cpContextClass, U_16 cpIndex) ;
 	BOOLEAN ( *isFieldNullRestricted)(J9ROMFieldShape *field);
 	UDATA ( *getFlattenableFieldOffset)(struct J9Class *fieldOwner, J9ROMFieldShape *field);
 	BOOLEAN ( *isFlattenableFieldFlattened)(J9Class *fieldOwner, J9ROMFieldShape *field);

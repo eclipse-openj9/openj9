@@ -2124,6 +2124,14 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, TR::Compiler->cls.getDefaultValueSlotAddress(comp, clazz));
          }
          break;
+      case MessageType::ClassEnv_setClassHasIllegalStaticFinalFieldModification:
+         {
+         auto recv = client->getRecvData<TR_OpaqueClassBlock *>();
+         auto clazz = std::get<0>(recv);
+         TR::Compiler->cls.setClassHasIllegalStaticFinalFieldModification(clazz, comp);
+         client->write(response, JITServer::Void());
+         }
+         break;
       case MessageType::ClassEnv_enumerateFields:
          {
          auto recv = client->getRecvData<TR_OpaqueClassBlock *>();
@@ -3706,13 +3714,14 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
             // Intersect classesThatShouldNotBeNewlyExtended with newlyExtendedClasses
             // and abort on overlap
             auto newlyExtendedClasses = compInfo->getNewlyExtendedClasses();
-            for (TR_OpaqueClassBlock* clazz : classesThatShouldNotBeNewlyExtended)
+            for (TR_OpaqueClassBlock *clazz : classesThatShouldNotBeNewlyExtended)
                {
                auto it = newlyExtendedClasses->find(clazz);
-               if (it != newlyExtendedClasses->end() && (it->second & (1 << TR::compInfoPT->getCompThreadId())))
+               if (it != newlyExtendedClasses->end() && (it->second & (1 << compInfoPT->getCompThreadId())))
                   {
                   if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITServer, TR_VerboseCompileEnd, TR_VerbosePerformance, TR_VerboseCompFailure))
-                     TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE, "Class that should not be newly extended was extended when compiling %s", compiler->signature());
+                     TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE, "Class that should not be newly extended was extended when compiling %s",
+                                                    compiler->signature());
                   compiler->failCompilation<J9::CHTableCommitFailure>("Class that should not be newly extended was extended");
                   }
                }

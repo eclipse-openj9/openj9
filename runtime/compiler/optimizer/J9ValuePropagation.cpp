@@ -1676,14 +1676,13 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
          break;
          }
       case TR::java_lang_Class_isValue:
-      case TR::java_lang_Class_isPrimitiveClass:
       case TR::java_lang_Class_isIdentity:
          {
          TR::Node *classChild = node->getLastChild();
          bool classChildGlobal;
          TR::VPConstraint *classChildConstraint = getConstraint(classChild, classChildGlobal);
 
-         // If the class is known for a call to Class.isValue, Class.isPrimitiveClass or
+         // If the class is known for a call to Class.isValue or
          // Class.isIdentity, fold it at compile-time.  Otherwise, inline a test of the
          // class flags
          //
@@ -1696,7 +1695,6 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
             TR_OpaqueClassBlock *thisClass = classChildConstraint->getClass();
 
             const int queryResult = ((rm == TR::java_lang_Class_isValue) && TR::Compiler->cls.isValueTypeClass(thisClass))
-                                     || ((rm == TR::java_lang_Class_isPrimitiveClass) && TR::Compiler->cls.isPrimitiveValueTypeClass(thisClass))
                                      || ((rm == TR::java_lang_Class_isIdentity) && TR::Compiler->cls.classHasIdentity(thisClass));
             transformCallToIconstInPlaceOrInDelayedTransformations(_curTree, queryResult, classChildGlobal, true, false);
             TR::DebugCounter::incStaticDebugCounter(comp(), TR::DebugCounter::debugCounterName(comp(), "constrainCall/(%s)", signature));
@@ -1735,11 +1733,6 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                case TR::java_lang_Class_isValue:
                   {
                   testFlagsNode = comp()->fej9()->testIsClassValueType(classOperand);
-                  break;
-                  }
-               case TR::java_lang_Class_isPrimitiveClass:
-                  {
-                  testFlagsNode = comp()->fej9()->testIsClassPrimitiveValueType(classOperand);
                   break;
                   }
                case TR::java_lang_Class_isIdentity:

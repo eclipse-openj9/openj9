@@ -209,9 +209,7 @@ initImpl(J9VMThread *currentThread, j9object_t membernameObject, j9object_t refO
 			flags |= MN_TRUSTED_FINAL;
 		}
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-		if (vmFuncs->isNameOrSignatureQtype(J9ROMFIELDSHAPE_SIGNATURE(romField))
-			|| J9ROMFIELD_IS_NULL_RESTRICTED(romField)
-		) {
+		if (J9ROMFIELD_IS_NULL_RESTRICTED(romField)) {
 			if (vmFuncs->isFlattenableFieldFlattened(fieldID->declaringClass, fieldID->field)) {
 				flags |= MN_FLAT_FIELD;
 			}
@@ -293,70 +291,137 @@ initImpl(J9VMThread *currentThread, j9object_t membernameObject, j9object_t refO
 	}
 }
 
-static char *
-sigForPrimitiveOrVoid(J9JavaVM *vm, J9Class *clazz)
-{
-	PORT_ACCESS_FROM_JAVAVM(vm);
-	char* signature = (char*)j9mem_allocate_memory(2, OMRMEM_CATEGORY_VM);
+typedef struct LocalJ9UTF8Buffer {
+	/**
+	 * Constructs an empty LocalJ9UTF8Buffer.
+	 */
+	LocalJ9UTF8Buffer() = default;
 
-	if (NULL != signature) {
-		if (clazz == vm->booleanReflectClass) {
-			signature[0] = 'Z';
-		} else if (clazz == vm->byteReflectClass) {
-			signature[0] = 'B';
-		} else if (clazz == vm->charReflectClass) {
-			signature[0] = 'C';
-		} else if (clazz == vm->shortReflectClass) {
-			signature[0] = 'S';
-		} else if (clazz == vm->intReflectClass) {
-			signature[0] = 'I';
-		} else if (clazz == vm->longReflectClass) {
-			signature[0] = 'J';
-		} else if (clazz == vm->floatReflectClass) {
-			signature[0] = 'F';
-		} else if (clazz == vm->doubleReflectClass) {
-			signature[0] = 'D';
-		} else if (clazz == vm->voidReflectClass) {
-			signature[0] = 'V';
-		}
-
-		signature[1] = '\0';
+	/**
+	 * Constructs a LocalJ9UTF8Buffer object from a J9UTF8 object pointer
+	 * and its size.
+	 * @param[in] buffer Pointer to the J9UTF8 buffer
+	 * @param[in] length Length of the entire J9UTF8 buffer in bytes
+	 */
+	LocalJ9UTF8Buffer(J9UTF8 *buffer, size_t length)
+	{
+		utf8 = buffer;
+		cursor = J9UTF8_DATA(buffer);
+		capacity = length - sizeof(J9UTF8::length);
 	}
 
-	return signature;
+	/**
+	 * Delegating constructor to create a LocalJ9UTF8Buffer object
+	 * from a pointer to a character buffer and its length.
+	 * @param[in] buffer Pointer to the character buffer
+	 * @param[in] length Length of the character buffer in bytes
+	 */
+	LocalJ9UTF8Buffer(char *buffer, size_t length)
+		: LocalJ9UTF8Buffer(reinterpret_cast<J9UTF8 *>(buffer), length)
+	{}
+
+	/**
+	 * Calculate the remaining slots in the buffer.
+	 * @return number of remaining slots in the buffer
+	 */
+	size_t remaining()
+	{
+		return capacity - static_cast<size_t>(cursor - J9UTF8_DATA(utf8));
+	}
+
+	/**
+	 * Put a character into the buffer at the cursor, then advance the cursor.
+	 * @param[in] c The character to put into the buffer
+	 */
+	void putCharAtCursor(const char c)
+	{
+		*cursor = c;
+		cursor += 1;
+	}
+
+	/**
+	 * Advance the cursor N slots.
+	 * @param[in] N The number of slots to advance the cursor by
+	 */
+	void advanceN(size_t n)
+	{
+		cursor += n;
+	}
+
+	/**
+	 * Null-terminates the data, and sets the J9UTF8 length from a cursor-position calcuation.
+	 */
+	void commitLength()
+	{
+		*cursor = '\0';
+		J9UTF8_SET_LENGTH(utf8, static_cast<U_16>(cursor - J9UTF8_DATA(utf8)));
+	}
+
+	J9UTF8 *utf8; /**< Pointer to the J9UTF8 struct */
+	size_t capacity; /**< Capacity of the J9UTF8 data buffer */
+	U_8 *cursor; /**< Pointer to current position in J9UTF8 data buffer */
+} LocalJ9UTF8Buffer;
+
+/**
+ * Returns a character corresponding to a primitive-type class.
+ * @param[in] vm J9JavaVM instance for current thread
+ * @param[in] clazz The class of signature character of interest
+ * @return character to newly allocated and filled-in signature buffer
+ * @return the character corresponding to a primitive type
+ */
+static VMINLINE char
+sigForPrimitiveOrVoid(J9JavaVM *vm, J9Class *clazz)
+{
+	char c = '\0';
+
+	if (clazz == vm->booleanReflectClass) {
+		c = 'Z';
+	} else if (clazz == vm->byteReflectClass) {
+		c = 'B';
+	} else if (clazz == vm->charReflectClass) {
+		c = 'C';
+	} else if (clazz == vm->shortReflectClass) {
+		c = 'S';
+	} else if (clazz == vm->intReflectClass) {
+		c = 'I';
+	} else if (clazz == vm->longReflectClass) {
+		c = 'J';
+	} else if (clazz == vm->floatReflectClass) {
+		c = 'F';
+	} else if (clazz == vm->doubleReflectClass) {
+		c = 'D';
+	} else if (clazz == vm->voidReflectClass) {
+		c = 'V';
+	}
+
+	return c;
 }
 
-static char *
-getClassSignature(J9VMThread *currentThread, J9Class * clazz)
+/**
+ * Gets a class signature's string length.
+ * @param[in] currentThread The J9VMThread of the current thread
+ * @param[in] clazz The class whose signature is being queried
+ * @return length of a class' signature without null-termination
+ */
+static UDATA
+getClassSignatureLength(J9VMThread *currentThread, J9Class *clazz)
 {
 	J9JavaVM *vm = currentThread->javaVM;
-	PORT_ACCESS_FROM_JAVAVM(vm);
-	char *sig = NULL;
+	UDATA signatureLength = 0;
 
 	if (J9ROMCLASS_IS_PRIMITIVE_TYPE(clazz->romClass)) {
-		sig = sigForPrimitiveOrVoid(vm, clazz);
+		signatureLength = 1;
 	} else {
 		j9object_t sigString = J9VMJAVALANGCLASS_CLASSNAMESTRING(currentThread, J9VM_J9CLASS_TO_HEAPCLASS(clazz));
 		if (NULL != sigString) {
-			/* +3 so that we can fit 'L' and ';' around the class name with the null-terminator */
-			UDATA utfLength = vm->internalVMFunctions->getStringUTF8Length(currentThread, sigString) + 3;
-			sig = (char *)j9mem_allocate_memory(utfLength, OMRMEM_CATEGORY_VM);
-			if (NULL != sig) {
-				if (J9ROMCLASS_IS_ARRAY(clazz->romClass)) {
-					vm->internalVMFunctions->copyStringToUTF8Helper(currentThread, sigString, J9_STR_NULL_TERMINATE_RESULT | J9_STR_XLAT, 0, J9VMJAVALANGSTRING_LENGTH(currentThread, sigString), (U_8*)sig, utfLength);
-				} else {
-					sig[0] = 'L';
-					vm->internalVMFunctions->copyStringToUTF8Helper(currentThread, sigString, J9_STR_XLAT, 0, J9VMJAVALANGSTRING_LENGTH(currentThread, sigString), (U_8*)(sig + 1), utfLength - 1);
-					sig[utfLength - 2] = ';';
-					sig[utfLength - 1] = '\0';
-				}
-			}
+			/* +2 so that we can fit 'L' and ';' around the class name. */
+			signatureLength = vm->internalVMFunctions->getStringUTF8Length(currentThread, sigString) + 2;
 		} else {
 			U_32 numDims = 0;
 
 			J9Class *myClass = clazz;
 			while (J9ROMCLASS_IS_ARRAY(myClass->romClass)) {
-				J9Class * componentClass = (J9Class *)(((J9ArrayClass*)myClass)->componentType);
+				J9Class *componentClass = reinterpret_cast<J9Class *>(reinterpret_cast<J9ArrayClass *>(myClass)->componentType);
 				if (J9ROMCLASS_IS_PRIMITIVE_TYPE(componentClass->romClass)) {
 					break;
 				}
@@ -366,111 +431,208 @@ getClassSignature(J9VMThread *currentThread, J9Class * clazz)
 
 			J9UTF8 *romName = J9ROMCLASS_CLASSNAME(myClass->romClass);
 			U_32 nameLength = J9UTF8_LENGTH(romName);
-			char * name = (char *)J9UTF8_DATA(romName);
-			U_32 sigLength = nameLength + numDims;
-			if (* name != '[') {
-				sigLength += 2;
-			}
-
-			sigLength++; /* for null-termination */
-			sig = (char *)j9mem_allocate_memory(sigLength, OMRMEM_CATEGORY_VM);
-			if (NULL != sig) {
-				U_32 i = 0;
-				for (i = 0; i < numDims; i++) {
-					sig[i] = '[';
-				}
-
-				if (*name != '[') {
-					sig[i++] = 'L';
-				}
-
-				memcpy(sig+i, name, nameLength);
-				i += nameLength;
-
-				if (*name != '[') {
-					sig[i++] = ';';
-				}
-				sig[sigLength-1] = '\0';
+			const char *name = reinterpret_cast<const char *>(J9UTF8_DATA(romName));
+			signatureLength = nameLength + numDims;
+			if ('[' != name[0]) {
+				signatureLength += 2;
 			}
 		}
 	}
 
-	return sig;
+	return signatureLength;
 }
 
+/**
+ * Fills in a class signature into a signature buffer.
+ * @param[in] currentThread The J9VMThread of the current thread
+ * @param[in] clazz The class whose signature is being queried
+ * @param[in,out] stringBuffer The signature buffer to place the signature into
+ * @return true if the signature fits into stringBuffer, false otherwise
+ */
+static bool
+getClassSignatureInout(J9VMThread *currentThread, J9Class *clazz, LocalJ9UTF8Buffer *stringBuffer)
+{
+	J9JavaVM *vm = currentThread->javaVM;
+	bool result = false;
+
+	if (J9ROMCLASS_IS_PRIMITIVE_TYPE(clazz->romClass)) {
+		/* 2 to ensure that a null-termination can be appended if this primitive type is
+		 * the final type in the signature.
+		 */
+		if (2 <= stringBuffer->remaining()) {
+			const char c = sigForPrimitiveOrVoid(vm, clazz);
+			stringBuffer->putCharAtCursor(c);
+			result = true;
+		}
+	} else {
+		j9object_t sigString = J9VMJAVALANGCLASS_CLASSNAMESTRING(currentThread, J9VM_J9CLASS_TO_HEAPCLASS(clazz));
+		if (NULL != sigString) {
+			/* +3 so that we can fit 'L' and ';' around the class name and add null-terminator. */
+			UDATA utfLength = vm->internalVMFunctions->getStringUTF8Length(currentThread, sigString) + 3;
+			if (utfLength <= stringBuffer->remaining()) {
+				if (J9ROMCLASS_IS_ARRAY(clazz->romClass)) {
+					vm->internalVMFunctions->copyStringToUTF8Helper(
+						currentThread, sigString, J9_STR_XLAT, 0, J9VMJAVALANGSTRING_LENGTH(currentThread, sigString),
+						stringBuffer->cursor, utfLength - 3);
+					/* Adjust cursor to account for the call to copyStringToUTF8Helper. */
+					stringBuffer->advanceN(utfLength - 3);
+				} else {
+					stringBuffer->putCharAtCursor('L');
+					vm->internalVMFunctions->copyStringToUTF8Helper(
+						currentThread, sigString, J9_STR_XLAT, 0, J9VMJAVALANGSTRING_LENGTH(currentThread, sigString),
+						stringBuffer->cursor, utfLength - 3);
+					/* Adjust cursor to account for the call to copyStringToUTF8Helper. */
+					stringBuffer->advanceN(utfLength - 3);
+					stringBuffer->putCharAtCursor(';');
+				}
+				result = true;
+			}
+		} else {
+			U_32 numDims = 0;
+
+			J9Class *myClass = clazz;
+			while (J9ROMCLASS_IS_ARRAY(myClass->romClass)) {
+				J9Class *componentClass = reinterpret_cast<J9Class *>(reinterpret_cast<J9ArrayClass *>(myClass)->componentType);
+				if (J9ROMCLASS_IS_PRIMITIVE_TYPE(componentClass->romClass)) {
+					break;
+				}
+				numDims += 1;
+				myClass = componentClass;
+			}
+
+			J9UTF8 *romName = J9ROMCLASS_CLASSNAME(myClass->romClass);
+			U_32 nameLength = J9UTF8_LENGTH(romName);
+			const char *name = reinterpret_cast<const char *>(J9UTF8_DATA(romName));
+			U_32 sigLength = nameLength + numDims;
+			if ('[' != name[0]) {
+				sigLength += 2;
+			}
+
+			if (sigLength <= stringBuffer->remaining()) {
+				for (U_32 i = 0; i < numDims; i++) {
+					stringBuffer->putCharAtCursor('[');
+				}
+
+				if ('[' != name[0]) {
+					stringBuffer->putCharAtCursor('L');
+				}
+
+				memcpy(stringBuffer->cursor, name, nameLength);
+				/* Adjust cursor to account for the memcpy. */
+				stringBuffer->advanceN(nameLength);
+
+				if ('[' != name[0]) {
+					stringBuffer->putCharAtCursor(';');
+				}
+				result = true;
+			}
+		}
+	}
+
+	return result;
+}
+
+/**
+ * Allocates a J9UTF8 signature buffer and places a method signature constructed from a MethodType into it.
+ * @param[in] currentThread The J9VMThread of the current thread
+ * @param[in] typeObject A MethodType object that contains parameter and return type information
+ * @return pointer to newly allocated and filled-in JUTF8 signature buffer
+ */
 static J9UTF8 *
-getJ9UTF8SignatureFromMethodType(J9VMThread *currentThread, j9object_t typeObject)
+getJ9UTF8SignatureFromMethodTypeWithMemAlloc(J9VMThread *currentThread, j9object_t typeObject)
 {
 	J9JavaVM *vm = currentThread->javaVM;
 	j9object_t ptypes = J9VMJAVALANGINVOKEMETHODTYPE_PTYPES(currentThread, typeObject);
 	U_32 numArgs = J9INDEXABLEOBJECT_SIZE(currentThread, ptypes);
-
-	J9UTF8* methodDescriptor = NULL;
-	char* cursor = NULL;
-	char* rSignature = NULL;
+	J9UTF8 *result = NULL;
 	UDATA signatureLength = 2; /* space for '(', ')' */
-
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
-	char** signatures = (char**)j9mem_allocate_memory(numArgs * sizeof(char*), OMRMEM_CATEGORY_VM);
-	if (NULL == signatures) {
-		goto done;
-	}
-
-	memset(signatures, 0, numArgs * sizeof(char*));
-
+	/* Calculate total signature length, including all ptypes and rtype. */
 	for (U_32 i = 0; i < numArgs; i++) {
 		j9object_t pObject = J9JAVAARRAYOFOBJECT_LOAD(currentThread, ptypes, i);
 		J9Class *pclass = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, pObject);
-		signatures[i] = getClassSignature(currentThread, pclass);
-		if (NULL == signatures[i]) {
-			goto done;
-		}
-
-		signatureLength += strlen(signatures[i]);
+		signatureLength += getClassSignatureLength(currentThread, pclass);
 	}
+	j9object_t rtype = J9VMJAVALANGINVOKEMETHODTYPE_RTYPE(currentThread, typeObject);
+	J9Class *rclass = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, rtype);
+	signatureLength += getClassSignatureLength(currentThread, rclass);
 
-	{
-		/* Return type */
+	UDATA signatureUtf8Size = signatureLength + sizeof(J9UTF8) + 1; /* +1 for a null-terminator */
+	result = reinterpret_cast<J9UTF8 *>(j9mem_allocate_memory(signatureUtf8Size, OMRMEM_CATEGORY_VM));
+	if (NULL != result) {
+		LocalJ9UTF8Buffer stringBuffer = LocalJ9UTF8Buffer(result, signatureUtf8Size);
+
+		stringBuffer.putCharAtCursor('(');
+		for (U_32 i = 0; i < numArgs; i++) {
+			j9object_t pObject = J9JAVAARRAYOFOBJECT_LOAD(currentThread, ptypes, i);
+			J9Class *pclass = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, pObject);
+			getClassSignatureInout(currentThread, pclass, &stringBuffer);
+		}
+		stringBuffer.putCharAtCursor(')');
+
 		j9object_t rtype = J9VMJAVALANGINVOKEMETHODTYPE_RTYPE(currentThread, typeObject);
 		J9Class *rclass = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, rtype);
-		rSignature = getClassSignature(currentThread, rclass);
-		if (NULL == rSignature) {
-			goto done;
-		}
-
-		signatureLength += strlen(rSignature);
+		getClassSignatureInout(currentThread, rclass, &stringBuffer);
+		stringBuffer.commitLength();
 	}
 
-	methodDescriptor = (J9UTF8*)j9mem_allocate_memory(signatureLength + sizeof(J9UTF8), OMRMEM_CATEGORY_VM);
-	if (NULL == methodDescriptor) {
-		goto done;
-	}
-	J9UTF8_SET_LENGTH(methodDescriptor, (U_16)signatureLength);
-	cursor = (char*)J9UTF8_DATA(methodDescriptor);
-	*cursor++ = '(';
+	return result;
+}
 
-	/* Copy class signatures to descriptor string */
+/**
+ * Attempts to fill in a method signature constructed from a MethodType into a passed in signature buffer.
+ * Falls back to a dynamic buffer allocation if the statically allocated buffer's capacity is exceeded.
+ * @param[in] currentThread The J9VMThread of the current thread
+ * @param[in] typeObject A MethodType object that contains parameter and return type information
+ * @param[in,out] stringBuffer The signature buffer to place the signature into
+ * @return pointer to a filled-in JUTF8 signature buffer, either the dynamically or statically allocated buffer
+ */
+static J9UTF8 *
+getJ9UTF8SignatureFromMethodType(J9VMThread *currentThread, j9object_t typeObject, LocalJ9UTF8Buffer *stringBuffer)
+{
+	j9object_t ptypes = J9VMJAVALANGINVOKEMETHODTYPE_PTYPES(currentThread, typeObject);
+	U_32 numArgs = J9INDEXABLEOBJECT_SIZE(currentThread, ptypes);
+
+	stringBuffer->putCharAtCursor('(');
 	for (U_32 i = 0; i < numArgs; i++) {
-		UDATA len = strlen(signatures[i]);
-		memcpy(cursor, signatures[i], len);
-		cursor += len;
-	}
-
-	*cursor++ = ')';
-	/* Copy return type signature to descriptor string */
-	memcpy(cursor, rSignature, strlen(rSignature));
-
-done:
-	j9mem_free_memory(rSignature);
-
-	if (NULL != signatures) {
-		for (U_32 i = 0; i < numArgs; i++) {
-			j9mem_free_memory(signatures[i]);
+		j9object_t pObject = J9JAVAARRAYOFOBJECT_LOAD(currentThread, ptypes, i);
+		J9Class *pclass = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, pObject);
+		if (!getClassSignatureInout(currentThread, pclass, stringBuffer)) {
+			/* Failing getClassSignatureInout means stringBuffer exceeded capacity.
+			 * Fall back to dynamic allocation.
+			 */
+			return getJ9UTF8SignatureFromMethodTypeWithMemAlloc(currentThread, typeObject);
 		}
-		j9mem_free_memory(signatures);
 	}
-	return methodDescriptor;
+
+	if (1 >= stringBuffer->remaining()) {
+		/* Not enough space left in statically allocated buffer.
+		 * Fall back to dynamic allocation.
+		 */
+		return getJ9UTF8SignatureFromMethodTypeWithMemAlloc(currentThread, typeObject);
+	}
+	stringBuffer->putCharAtCursor(')');
+
+	/* Return type */
+	j9object_t rtype = J9VMJAVALANGINVOKEMETHODTYPE_RTYPE(currentThread, typeObject);
+	J9Class *rclass = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, rtype);
+	if (!getClassSignatureInout(currentThread, rclass, stringBuffer)) {
+		/* Failing getClassSignatureInout means stringBuffer exceeded capacity.
+		 * Fall back to dynamic allocation.
+		 */
+		return getJ9UTF8SignatureFromMethodTypeWithMemAlloc(currentThread, typeObject);
+	}
+
+	if (0 == stringBuffer->remaining()) {
+		/* Not enough space left in statically allocated buffer.
+		 * Fall back to dynamic allocation.
+		 */
+		return getJ9UTF8SignatureFromMethodTypeWithMemAlloc(currentThread, typeObject);
+	}
+
+	stringBuffer->commitLength();
+	return stringBuffer->utf8;
 }
 
 j9object_t
@@ -811,7 +973,9 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(
 	const J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	jobject result = NULL;
 	J9UTF8 *name = NULL;
+	char nameBuffer[256] = {0};
 	J9UTF8 *signature = NULL;
+	char signatureBuffer[256] = {0};
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 
@@ -855,25 +1019,30 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(
 			if (J9VMJAVALANGINVOKEMETHODTYPE(vm) == typeClass) {
 				j9object_t sigString = J9VMJAVALANGINVOKEMETHODTYPE_METHODDESCRIPTOR(currentThread, typeObject);
 				if (NULL != sigString) {
-					signature = vmFuncs->copyStringToJ9UTF8WithMemAlloc(currentThread, sigString, J9_STR_XLAT, "", 0, NULL, 0);
+					signature = vmFuncs->copyStringToJ9UTF8WithMemAlloc(currentThread, sigString, J9_STR_XLAT, "", 0, signatureBuffer, sizeof(signatureBuffer));
 				} else {
-					signature = getJ9UTF8SignatureFromMethodType(currentThread, typeObject);
+					LocalJ9UTF8Buffer stringBuffer = LocalJ9UTF8Buffer(signatureBuffer, sizeof(signatureBuffer));
+					signature = getJ9UTF8SignatureFromMethodType(currentThread, typeObject, &stringBuffer);
 				}
 			} else if (J9VMJAVALANGSTRING_OR_NULL(vm) == typeClass) {
-				signature = vmFuncs->copyStringToJ9UTF8WithMemAlloc(currentThread, typeObject, J9_STR_XLAT, "", 0, NULL, 0);
+				signature = vmFuncs->copyStringToJ9UTF8WithMemAlloc(currentThread, typeObject, J9_STR_XLAT, "", 0, signatureBuffer, sizeof(signatureBuffer));
 			} else if (J9VMJAVALANGCLASS(vm) == typeClass) {
 				J9Class *rclass = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, typeObject);
-				char *classSignature = getClassSignature(currentThread, rclass);
-				if (NULL != classSignature) {
-					UDATA signatureLength = strlen(classSignature);
-					PORT_ACCESS_FROM_JAVAVM(vm);
-					signature = (J9UTF8*)j9mem_allocate_memory(signatureLength + sizeof(J9UTF8), OMRMEM_CATEGORY_VM);
-					if (NULL != signature) {
-						J9UTF8_SET_LENGTH(signature, (U_16)signatureLength);
-						memcpy(J9UTF8_DATA(signature), classSignature, signatureLength);
+				UDATA signatureLength = getClassSignatureLength(currentThread, rclass) + sizeof(J9UTF8) + 1 /* null-terminator */;
+				LocalJ9UTF8Buffer stringBuffer;
+				if (signatureLength <= sizeof(signatureBuffer)) {
+					stringBuffer = LocalJ9UTF8Buffer(signatureBuffer, sizeof(signatureBuffer));
+				} else {
+					signature = reinterpret_cast<J9UTF8 *>(j9mem_allocate_memory(signatureLength, OMRMEM_CATEGORY_VM));
+					if (NULL == signature) {
+						vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
+						goto done;
 					}
-					j9mem_free_memory(classSignature);
+					stringBuffer = LocalJ9UTF8Buffer(signature, static_cast<size_t>(signatureLength));
 				}
+				getClassSignatureInout(currentThread, rclass, &stringBuffer);
+				stringBuffer.commitLength();
+				signature = stringBuffer.utf8;
 			} else {
 				vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
 				goto done;
@@ -890,7 +1059,7 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(
 			/* Refetch reference after GC point */
 			membernameObject = J9_JNI_UNWRAP_REFERENCE(self);
 			nameObject = J9VMJAVALANGINVOKEMEMBERNAME_NAME(currentThread, membernameObject);
-			name = vmFuncs->copyStringToJ9UTF8WithMemAlloc(currentThread, nameObject, 0, "", 0, NULL, 0);
+			name = vmFuncs->copyStringToJ9UTF8WithMemAlloc(currentThread, nameObject, J9_STR_NONE, "", 0, nameBuffer, sizeof(nameBuffer));
 			if (NULL == name) {
 				vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
 				goto done;
@@ -1041,7 +1210,7 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(
 					J9Class *newJ9Clazz = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, new_clazz);
 					vmindex = vmindexValueForMethodMemberName(methodID, newJ9Clazz, new_flags);
 				}
-			} if (J9_ARE_ANY_BITS_SET(flags, MN_IS_FIELD)) {
+			} else if (J9_ARE_ANY_BITS_SET(flags, MN_IS_FIELD)) {
 				J9Class *declaringClass;
 				J9ROMFieldShape *romField;
 				UDATA lookupOptions = 0;
@@ -1187,8 +1356,12 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(
 	}
 
 done:
-	j9mem_free_memory(name);
-	j9mem_free_memory(signature);
+	if (name != reinterpret_cast<J9UTF8 *>(nameBuffer)) {
+		j9mem_free_memory(name);
+	}
+	if (signature != reinterpret_cast<J9UTF8 *>(signatureBuffer)) {
+		j9mem_free_memory(signature);
+	}
 #if JAVA_SPEC_VERSION >= 11
 	if ((JNI_TRUE == speculativeResolve) && VM_VMHelpers::exceptionPending(currentThread)) {
 		VM_VMHelpers::clearException(currentThread);
@@ -1230,7 +1403,9 @@ Java_java_lang_invoke_MethodHandleNatives_getMembers(
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 	jint result = 0;
 	J9UTF8 *name = NULL;
-	J9UTF8 *sig = NULL;
+	char nameBuffer[256] = {0};
+	J9UTF8 *signature = NULL;
+	char signatureBuffer[256] = {0};
 	j9object_t callerObject = ((NULL == caller) ? NULL : J9_JNI_UNWRAP_REFERENCE(caller));
 
 	PORT_ACCESS_FROM_JAVAVM(vm);
@@ -1244,21 +1419,21 @@ Java_java_lang_invoke_MethodHandleNatives_getMembers(
 		J9Class *defClass = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, defcObject);
 
 		if (NULL != matchName) {
-			name = vmFuncs->copyStringToJ9UTF8WithMemAlloc(currentThread, J9_JNI_UNWRAP_REFERENCE(matchName), J9_STR_NONE, "", 0, NULL, 0);
+			name = vmFuncs->copyStringToJ9UTF8WithMemAlloc(currentThread, J9_JNI_UNWRAP_REFERENCE(matchName), J9_STR_NONE, "", 0, nameBuffer, sizeof(nameBuffer));
 			if (NULL == name) {
 				vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
 				goto done;
 			}
 		}
 		if (NULL != matchSig) {
-			sig = vmFuncs->copyStringToJ9UTF8WithMemAlloc(currentThread, J9_JNI_UNWRAP_REFERENCE(matchSig), J9_STR_NONE, "", 0, NULL, 0);
-			if (NULL == sig) {
+			signature = vmFuncs->copyStringToJ9UTF8WithMemAlloc(currentThread, J9_JNI_UNWRAP_REFERENCE(matchSig), J9_STR_NONE, "", 0, signatureBuffer, sizeof(signatureBuffer));
+			if (NULL == signature) {
 				vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
 				goto done;
 			}
 		}
 
-		if (!(((NULL != matchName) && (0 == J9UTF8_LENGTH(name))) || ((NULL != matchSig) && (0 == J9UTF8_LENGTH(sig))))) {
+		if (!(((NULL != matchName) && (0 == J9UTF8_LENGTH(name))) || ((NULL != matchSig) && (0 == J9UTF8_LENGTH(signature))))) {
 			j9array_t resultsArray = (j9array_t)J9_JNI_UNWRAP_REFERENCE(results);
 			UDATA length = J9INDEXABLEOBJECT_SIZE(currentThread, resultsArray);
 			UDATA index = 0;
@@ -1287,7 +1462,7 @@ Java_java_lang_invoke_MethodHandleNatives_getMembers(
 							J9UTF8 *signatureUTF = J9ROMFIELDSHAPE_SIGNATURE(romField);
 
 							if (((NULL == matchName) || J9UTF8_EQUALS(name, nameUTF))
-							&& ((NULL == matchSig) || J9UTF8_EQUALS(sig, signatureUTF))
+							&& ((NULL == matchSig) || J9UTF8_EQUALS(signature, signatureUTF))
 							) {
 								if (skip > 0) {
 									skip -=1;
@@ -1340,7 +1515,7 @@ Java_java_lang_invoke_MethodHandleNatives_getMembers(
 								J9UTF8 *signatureUTF = J9ROMFIELDSHAPE_SIGNATURE(romField);
 
 								if (((NULL == matchName) || J9UTF8_EQUALS(name, nameUTF))
-								&& ((NULL == matchSig) || J9UTF8_EQUALS(sig, signatureUTF))
+								&& ((NULL == matchSig) || J9UTF8_EQUALS(signature, signatureUTF))
 								) {
 									if (skip > 0) {
 										skip -=1;
@@ -1392,7 +1567,7 @@ Java_java_lang_invoke_MethodHandleNatives_getMembers(
 								J9UTF8 *signatureUTF = J9ROMMETHOD_SIGNATURE(romMethod);
 
 								if (((NULL == matchName) || J9UTF8_EQUALS(name, nameUTF))
-								&& ((NULL == matchSig) || J9UTF8_EQUALS(sig, signatureUTF))
+								&& ((NULL == matchSig) || J9UTF8_EQUALS(signature, signatureUTF))
 								) {
 									if (skip > 0) {
 										skip -=1;
@@ -1454,7 +1629,7 @@ Java_java_lang_invoke_MethodHandleNatives_getMembers(
 								J9UTF8 *signatureUTF = J9ROMMETHOD_SIGNATURE(romMethod);
 
 								if (((NULL == matchName) || J9UTF8_EQUALS(name, nameUTF))
-								&& ((NULL == matchSig) || J9UTF8_EQUALS(sig, signatureUTF))
+								&& ((NULL == matchSig) || J9UTF8_EQUALS(signature, signatureUTF))
 								) {
 									if (skip > 0) {
 										skip -=1;
@@ -1499,8 +1674,12 @@ Java_java_lang_invoke_MethodHandleNatives_getMembers(
 		}
 	}
 done:
-	j9mem_free_memory(name);
-	j9mem_free_memory(sig);
+	if (name != reinterpret_cast<J9UTF8 *>(nameBuffer)) {
+		j9mem_free_memory(name);
+	}
+	if (signature != reinterpret_cast<J9UTF8 *>(signatureBuffer)) {
+		j9mem_free_memory(signature);
+	}
 
 	Trc_JCL_java_lang_invoke_MethodHandleNatives_getMembers_Exit(env, result);
 	vmFuncs->internalExitVMToJNI(currentThread);

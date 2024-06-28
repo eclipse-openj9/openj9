@@ -5441,7 +5441,7 @@ TR_J9ByteCodeIlGenerator::loadStatic(int32_t cpIndex)
 
    TR::SymbolReference * symRef = symRefTab()->findOrCreateStaticSymbol(_methodSymbol, cpIndex, false);
    if (comp()->getOption(TR_TraceILGen))
-      traceMsg(comp(), "load static symref %d created with knownObjectIndex %d", symRef->getReferenceNumber(), symRef->getKnownObjectIndex());
+      traceMsg(comp(), "load static symref %d created with knownObjectIndex %d\n", symRef->getReferenceNumber(), symRef->getKnownObjectIndex());
    TR::StaticSymbol *      symbol = symRef->getSymbol()->castToStaticSymbol();
    TR_ASSERT(symbol, "Didn't geta static symbol.");
 
@@ -6749,24 +6749,9 @@ TR_J9ByteCodeIlGenerator::genAconst_init(TR_OpaqueClassBlock *valueTypeClass, in
             case TR::Address:
                {
                const char *fieldSignature = entry._typeSignature;
-
-               // If the field's signature begins with a Q, it is a value type and should be initialized with a default value
-               // for that value type.  That's handled with a recursive call to genAconst_init.
-               // If the signature does not begin with a Q, the field is an identity type whose default value is a Java null
-               /// reference.
-               bool isNullRestricted = false;
                if (TR::Compiler->om.areFlattenableValueTypesEnabled())
                   {
-                  if (!TR::Compiler->om.isQDescriptorForValueTypesSupported())
-                     {
-                     isNullRestricted = entry._isNullRestricted;
-                     }
-                  else if (fieldSignature[0] == 'Q')
-                     {
-                     isNullRestricted = true;
-                     }
-
-                  if (isNullRestricted)
+                  if (entry._isNullRestricted)
                      {
                      // In non-SVM AOT compilation, cpIndex is required for AOT relocation.
                      // In this case, cpindex is unknown for the field.
@@ -6787,7 +6772,7 @@ TR_J9ByteCodeIlGenerator::genAconst_init(TR_OpaqueClassBlock *valueTypeClass, in
                      }
                   }
 
-               if (!isNullRestricted)
+               if (!entry._isNullRestricted)
                   {
                   if (comp()->target().is64Bit())
                      {

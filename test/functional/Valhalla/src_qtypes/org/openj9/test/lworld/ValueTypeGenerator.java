@@ -279,7 +279,7 @@ public class ValueTypeGenerator extends ClassLoader {
 			testWithFieldOnNonExistentClass(cw, className, fields);
 			testMonitorExitOnObject(cw, className, fields);
 			testMonitorEnterAndExitWithRefType(cw, className, fields);
-			testCheckCastRefClassOnNull(cw, className, fields);
+			testCheckCastNullableTypeOnNull(cw, className, fields);
 			if (valueUsedInCode != null) {
 				testUnresolvedValueTypeDefaultValue(cw, className, valueUsedInCode);
 				if (valueFields != null) {
@@ -293,14 +293,13 @@ public class ValueTypeGenerator extends ClassLoader {
 		} else {
 			makeValue(cw, className, makeValueSig, fields, makeMaxLocal);
 			makeValueTypeDefaultValue(cw, className, makeValueSig, fields, makeMaxLocal);
-			testCheckCastValueTypeOnNull(cw, className, fields);
-			testCheckCastValueTypeOnNonNullType(cw, className, fields);
+			testCheckCastNullRestrictedTypeOnNull(cw, className, fields);
+			testCheckCastNullRestrictedTypeOnNonNullType(cw, className, fields);
 			if (!isVerifiable) {
 				makeGeneric(cw, className, "makeValueGeneric", "makeValue", makeValueSig, makeValueGenericSig, fields, makeMaxLocal);
 			}
 		}
 		test2DMultiANewArray(cw, className);
-		testCheckCastOnInvalidLtype(cw);
 		addStaticSynchronizedMethods(cw);
 		if (addSyncMethods) {
 			addSynchronizedMethods(cw);
@@ -446,7 +445,7 @@ public class ValueTypeGenerator extends ClassLoader {
 		boolean doubleDetected = false;
 		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC + ACC_STATIC, "makeValue", "(" + makeValueSig + ")" + getSigFromSimpleName(valueName), null, null);
 		mv.visitCode();
-		mv.visitTypeInsn(ValhallaUtils.ACONST_INIT, getSigFromSimpleName(valueName));
+		mv.visitTypeInsn(ValhallaUtils.ACONST_INIT, valueName);
 		for (int i = 0, count = 0; i <  fields.length; i++) {
 			String nameAndSig[] = fields[i].split(":");
 			if ((nameAndSig.length < 3) ||  !(nameAndSig[2].equals("static"))) {
@@ -490,44 +489,34 @@ public class ValueTypeGenerator extends ClassLoader {
 	private static void makeValueTypeDefaultValue(ClassWriter cw, String valueName, String makeValueSig, String[] fields, int makeMaxLocal) {
 		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC  + ACC_STATIC, "makeValueTypeDefaultValue", "()Ljava/lang/Object;", null, null);
 		mv.visitCode();
-		mv.visitTypeInsn(ValhallaUtils.ACONST_INIT, getSigFromSimpleName(valueName));
+		mv.visitTypeInsn(ValhallaUtils.ACONST_INIT, valueName);
 		mv.visitInsn(ARETURN);
 		mv.visitMaxs(1, 0);
 		mv.visitEnd();
 	}
 
-	private static void testCheckCastValueTypeOnNonNullType(ClassWriter cw, String className, String[] fields) {
-		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC  + ACC_STATIC, "testCheckCastValueTypeOnNonNullType", "()Ljava/lang/Object;", null, null);
+	private static void testCheckCastNullRestrictedTypeOnNonNullType(ClassWriter cw, String className, String[] fields) {
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC  + ACC_STATIC, "testCheckCastNullRestrictedTypeOnNonNullType", "()Ljava/lang/Object;", null, null);
 		mv.visitCode();
-		mv.visitTypeInsn(ValhallaUtils.ACONST_INIT, getSigFromSimpleName(className));
+		mv.visitTypeInsn(ValhallaUtils.ACONST_INIT, className);
 		mv.visitTypeInsn(CHECKCAST, className);
 		mv.visitInsn(ARETURN);
 		mv.visitMaxs(1, 2);
 		mv.visitEnd();
 	}
 
-	private static void testCheckCastValueTypeOnNull(ClassWriter cw, String className, String[] fields) {
-		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC + ACC_STATIC, "testCheckCastValueTypeOnNull", "()Ljava/lang/Object;", null, null);
+	private static void testCheckCastNullRestrictedTypeOnNull(ClassWriter cw, String className, String[] fields) {
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC + ACC_STATIC, "testCheckCastNullRestrictedTypeOnNull", "()Ljava/lang/Object;", null, null);
 		mv.visitCode();
 		mv.visitInsn(ACONST_NULL);
-		mv.visitTypeInsn(CHECKCAST, getSigFromSimpleName(className));
-		mv.visitInsn(ARETURN);
-		mv.visitMaxs(1, 2);
-		mv.visitEnd();
-	}
-	
-	private static void testCheckCastOnInvalidLtype(ClassWriter cw) {
-		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC + ACC_STATIC, "testCheckCastOnInvalidLtype", "()Ljava/lang/Object;", null, null);
-		mv.visitCode();
-		mv.visitInsn(ACONST_NULL);
-		mv.visitTypeInsn(CHECKCAST, "ClassDoesNotExist");
+		mv.visitTypeInsn(CHECKCAST, className);
 		mv.visitInsn(ARETURN);
 		mv.visitMaxs(1, 2);
 		mv.visitEnd();
 	}
 
-	private static void testCheckCastRefClassOnNull(ClassWriter cw, String className, String[] fields) {
-		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC + ACC_STATIC, "testCheckCastRefClassOnNull", "()Ljava/lang/Object;", null, null);
+	private static void testCheckCastNullableTypeOnNull(ClassWriter cw, String className, String[] fields) {
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC + ACC_STATIC, "testCheckCastNullableTypeOnNull", "()Ljava/lang/Object;", null, null);
 		mv.visitCode();
 		mv.visitInsn(ACONST_NULL);
 		mv.visitTypeInsn(CHECKCAST, className);
@@ -543,13 +532,13 @@ public class ValueTypeGenerator extends ClassLoader {
 		Label falseLabel = new Label();
 		Label endLabel = new Label();
 		mv.visitJumpInsn(IFEQ, falseLabel);
-		mv.visitTypeInsn(ValhallaUtils.ACONST_INIT, getSigFromSimpleName(valueUsedInCode));
+		mv.visitTypeInsn(ValhallaUtils.ACONST_INIT, valueUsedInCode);
 		mv.visitJumpInsn(GOTO, endLabel);
 		mv.visitLabel(falseLabel);
 		mv.visitFrame(F_SAME, 1, new Object[] {INTEGER}, 0, new Object[]{});
 		mv.visitInsn(ACONST_NULL);
 		mv.visitLabel(endLabel);
-		mv.visitFrame(F_SAME1, 1, new Object[] {INTEGER}, 1, new Object[] {"Ljava/lang/Object;"});
+		mv.visitFrame(F_SAME1, 1, new Object[] {INTEGER}, 1, new Object[] {"java/lang/Object"});
 		mv.visitInsn(ARETURN);
 		mv.visitMaxs(1, 1);
 		mv.visitEnd();
@@ -571,10 +560,10 @@ public class ValueTypeGenerator extends ClassLoader {
 		}
 		mv.visitJumpInsn(GOTO, endLabel);
 		mv.visitLabel(falseLabel);
-		mv.visitFrame(F_SAME, 2, new Object[] {INTEGER, "Ljava/lang/Object;"}, 0, new Object[]{});
+		mv.visitFrame(F_SAME, 2, new Object[] {INTEGER, "java/lang/Object"}, 0, new Object[]{});
 		mv.visitInsn(ACONST_NULL);
 		mv.visitLabel(endLabel);
-		mv.visitFrame(F_SAME1, 2, new Object[] {INTEGER, "Ljava/lang/Object;"}, 1, new Object[] {"Ljava/lang/Object;"});
+		mv.visitFrame(F_SAME1, 2, new Object[] {INTEGER, "java/lang/Object"}, 1, new Object[] {"java/lang/Object"});
 		mv.visitInsn(ARETURN);
 		mv.visitMaxs(2, 2);
 		mv.visitEnd();
@@ -595,16 +584,16 @@ public class ValueTypeGenerator extends ClassLoader {
 		for (int i = 0; i < fieldCount; i++) {
 			String nameAndSigValue[] = containerFields[i].split(":");
 			mv.visitLabel(caseLabels[i]);
-			mv.visitFrame(F_SAME, 3, new Object[] {INTEGER, containerClassName, "Ljava/lang/Object;"}, 0, new Object[]{});
+			mv.visitFrame(F_SAME, 3, new Object[] {INTEGER, containerClassName, "java/lang/Object"}, 0, new Object[]{});
 			mv.visitVarInsn(ALOAD, 1);
 			mv.visitFieldInsn(GETFIELD, containerClassName, nameAndSigValue[0], nameAndSigValue[1]);
 			mv.visitJumpInsn(GOTO, endLabel);
 		}
 		mv.visitLabel(defaultLabel);
-		mv.visitFrame(F_SAME, 3, new Object[] {INTEGER, containerClassName, "Ljava/lang/Object;"}, 0, new Object[]{});
+		mv.visitFrame(F_SAME, 3, new Object[] {INTEGER, containerClassName, "java/lang/Object"}, 0, new Object[]{});
 		mv.visitInsn(ACONST_NULL);
 		mv.visitLabel(endLabel);
-		mv.visitFrame(F_SAME1, 3, new Object[] {INTEGER, containerClassName, "Ljava/lang/Object;"}, 1, new Object[]{"Ljava/lang/Object;"});
+		mv.visitFrame(F_SAME1, 3, new Object[] {INTEGER, containerClassName, "java/lang/Object"}, 1, new Object[]{"java/lang/Object"});
 		mv.visitInsn(ARETURN);
 		mv.visitMaxs(1, 2);
 		mv.visitEnd();
@@ -625,16 +614,17 @@ public class ValueTypeGenerator extends ClassLoader {
 		for (int i = 0; i < fieldCount; i++) {
 			String nameAndSigValue[] = containerFields[i].split(":");
 			mv.visitLabel(caseLabels[i]);
-			mv.visitFrame(F_SAME, 3, new Object[] {INTEGER, containerClassName, "Ljava/lang/Object;"}, 0, new Object[]{});
+			mv.visitFrame(F_SAME, 3, new Object[] {INTEGER, containerClassName, "java/lang/Object"}, 0, new Object[]{});
 			mv.visitVarInsn(ALOAD, 1);
 			mv.visitVarInsn(ALOAD, 2);
-			mv.visitTypeInsn(CHECKCAST, nameAndSigValue[1]);
+			// TODO do I need to check if this (and other cases) are objects or not?
+			mv.visitTypeInsn(CHECKCAST, nameAndSigValue[1].substring(1, nameAndSigValue[1].length() - 1));
 			mv.visitFieldInsn(PUTFIELD, containerClassName, nameAndSigValue[0], nameAndSigValue[1]);
 			mv.visitJumpInsn(GOTO, endLabel);
 		}
 		mv.visitLabel(defaultLabel);
 		mv.visitLabel(endLabel);
-		mv.visitFrame(F_SAME, 3, new Object[] {INTEGER, containerClassName, "Ljava/lang/Object;"}, 0, new Object[]{});
+		mv.visitFrame(F_SAME, 3, new Object[] {INTEGER, containerClassName, "java/lang/Object"}, 0, new Object[]{});
 		mv.visitInsn(RETURN);
 		mv.visitMaxs(2, 3);
 		mv.visitEnd();
@@ -872,7 +862,7 @@ public class ValueTypeGenerator extends ClassLoader {
 			break;
 		default:
 			if ((nameAndSigValue[1].length() >= 1) && (nameAndSigValue[1].charAt(0) == 'L')) {
-				mv.visitTypeInsn(CHECKCAST, nameAndSigValue[1]);
+				mv.visitTypeInsn(CHECKCAST, nameAndSigValue[1].substring(1, nameAndSigValue[1].length() - 1));
 			}
 			break;
 		}
@@ -926,7 +916,7 @@ public class ValueTypeGenerator extends ClassLoader {
 			break;
 		default:
 			if ((nameAndSigValue[1].length() >= 1) && (nameAndSigValue[1].charAt(0) == 'L')) {
-				mv.visitTypeInsn(CHECKCAST, nameAndSigValue[1]);
+				mv.visitTypeInsn(CHECKCAST, nameAndSigValue[1].substring(1, nameAndSigValue[1].length() - 1));
 			}
 			break;
 		}
@@ -1015,7 +1005,7 @@ public class ValueTypeGenerator extends ClassLoader {
 			break;
 		default:
 			if ((nameAndSigValue[1].length() >= 1) && (nameAndSigValue[1].charAt(0) == 'L')) {
-				mv.visitTypeInsn(CHECKCAST, nameAndSigValue[1]);
+				mv.visitTypeInsn(CHECKCAST, nameAndSigValue[1].substring(1, nameAndSigValue[1].length() - 1));
 			}
 			break;
 		}

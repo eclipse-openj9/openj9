@@ -27,6 +27,8 @@
 #include "control/CompilationRuntime.hpp"
 #endif /* defined(J9VM_OPT_JITSERVER) */
 #include "env/CompilerEnv.hpp"
+#include "env/ClassTableCriticalSection.hpp"
+#include "env/PersistentCHTable.hpp"
 #include "il/AnyConst.hpp"
 #include "il/Block.hpp"
 #include "il/Block_inlines.hpp"
@@ -39,6 +41,7 @@
 #include "il/StaticSymbol_inlines.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
+#include "ilgen/J9ByteCodeIterator.hpp"
 #include "env/VMAccessCriticalSection.hpp"
 #include "env/VMJ9.h"
 #include "env/j9method.h"
@@ -809,6 +812,104 @@ J9::TransformUtil::foldStaticFinalFieldAssumingProtection(TR::Compilation *comp,
    return false;
    }
 
+static bool
+classHasFinalPutstaticOutsideClinit(TR::Compilation *comp, TR_OpaqueClassBlock *clazz)
+   {
+   TR_J9VMBase *fej9 = comp->fej9();
+   J9VMThread *vmThread = fej9->vmThread();
+
+   J9ROMClass *romClass = TR::Compiler->cls.romClassOf(clazz);
+   TR::Region &stackRegion = comp->trMemory()->currentStackRegion();
+
+   // Get all of the final fields declared by clazz from the VM.
+   J9Class *j9c = TR::Compiler->cls.convertClassOffsetToClassPtr(clazz);
+   uintptr_t numStaticFields =
+      fej9->_vmFunctionTable->getStaticFields(vmThread, romClass, NULL);
+
+   uintptr_t staticFieldsSize = numStaticFields * sizeof(J9ROMFieldShape*);
+   J9ROMFieldShape **staticFields =
+      (J9ROMFieldShape**)stackRegion.allocate(staticFieldsSize);
+
+   fej9->_vmFunctionTable->getStaticFields(vmThread, romClass, staticFields);
+
+   // Partition so that the final ones are at the beginning and the non-final
+   // ones follow.
+   uintptr_t numStaticFinalFields = 0;
+   for (uintptr_t i = 0; i < numStaticFields; i++)
+      {
+      if ((staticFields[i]->modifiers & J9AccFinal) != 0)
+         {
+         // Field i is final. Swap to add it to the end of the final prefix.
+         // Swapping is OK because we don't depend on the order of the fields.
+         TR_ASSERT_FATAL(numStaticFinalFields < numStaticFields, "out of bounds");
+         J9ROMFieldShape *tmp = staticFields[numStaticFinalFields];
+         staticFields[numStaticFinalFields] = staticFields[i];
+         staticFields[i] = tmp;
+         numStaticFinalFields++;
+         }
+      }
+
+   if (numStaticFinalFields == 0)
+      return false;
+
+   // Iterate the bytecode of all methods looking for a putstatic to a static
+   // field of clazz with a name and signature matching one in the final prefix
+   // of staticFields, i.e. staticFields[0..numStaticFinalFields].
+   J9UTF8 *className = J9ROMCLASS_CLASSNAME(romClass);
+
+   TR_ScratchList<TR_ResolvedMethod> resolvedMethods(comp->trMemory());
+   fej9->getResolvedMethods(comp->trMemory(), clazz, &resolvedMethods);
+
+   ListIterator<TR_ResolvedMethod> mIt(&resolvedMethods);
+   for (auto *method = mIt.getFirst(); method != NULL; method = mIt.getNext())
+      {
+      if (method->isNative() || method->isAbstract())
+         continue; // method has no bytecode
+
+      if (method->nameLength() == 8 && !strncmp(method->nameChars(), "<clinit>", 8))
+         continue; // putstatic is always allowed in <clinit>
+
+      auto *methodJ9 = (TR_ResolvedJ9Method*)method;
+      TR_J9ByteCodeIterator bcIt(
+         TR::ResolvedMethodSymbol::create(comp->trHeapMemory(), method, comp),
+         methodJ9,
+         fej9,
+         comp);
+
+      for (TR_J9ByteCode bc = bcIt.first(); bc != J9BCunknown; bc = bcIt.next())
+         {
+         if (bc != J9BCputstatic)
+            continue;
+
+         int32_t cpIndex = bcIt.next2Bytes();
+         J9ROMConstantPoolItem *romCP = ((TR_ResolvedJ9Method*)method)->romLiterals();
+         J9ROMFieldRef *fieldRef = (J9ROMFieldRef*)&romCP[cpIndex];
+         J9ROMClassRef *classRef = (J9ROMClassRef*)&romCP[fieldRef->classRefCPIndex];
+         J9UTF8 *classRefName = J9ROMCLASSREF_NAME(classRef);
+         if (!J9UTF8_EQUALS(classRefName, className))
+            continue;
+
+         // putstatic to one of clazz's own static fields. Check whether it's
+         // one of the final ones.
+         J9ROMNameAndSignature *refNameAndSig = J9ROMFIELDREF_NAMEANDSIGNATURE(fieldRef);
+         J9UTF8 *refName = J9ROMNAMEANDSIGNATURE_NAME(refNameAndSig);
+         J9UTF8 *refSig = J9ROMNAMEANDSIGNATURE_SIGNATURE(refNameAndSig);
+         for (uintptr_t i = 0; i < numStaticFinalFields; i++)
+            {
+            J9UTF8 *finalFieldName = J9ROMFIELDSHAPE_NAME(staticFields[i]);
+            J9UTF8 *finalFieldSig = J9ROMFIELDSHAPE_SIGNATURE(staticFields[i]);
+            if (J9UTF8_EQUALS(refName, finalFieldName)
+                && J9UTF8_EQUALS(refSig, finalFieldSig))
+               {
+               return true;
+               }
+            }
+         }
+      }
+
+   return false;
+   }
+
 TR_YesNoMaybe
 J9::TransformUtil::canFoldStaticFinalField(TR::Compilation *comp, TR::Node* node)
    {
@@ -844,12 +945,41 @@ J9::TransformUtil::canFoldStaticFinalField(
        || !fej9->isClassInitialized(declaringClass))
       return TR_no;
 
-   int32_t len;
-   char * name = fej9->getClassNameChars(declaringClass, len);
+   // Rely on the CP entry to get the name and signature. There is always an
+   // owning method and CP index here because we don't (yet) fabricate static
+   // field symrefs.
+   TR_ASSERT_FATAL(owningMethod != NULL, "missing owningMethod");
+   TR_ASSERT_FATAL(cpIndex >= 0, "missing CP index");
+
+   int32_t classNameLen;
+   char *className = fej9->getClassNameChars(declaringClass, classNameLen);
 
    // Keep our hands off out/in/err, which are declared final but aren't really
-   if (len == 16 && !strncmp(name, "java/lang/System", 16))
+   if (classNameLen == 16 && !strncmp(className, "java/lang/System", 16))
       return TR_no;
+
+   int32_t fieldNameLen;
+   const char *fieldName = owningMethod->staticNameChars(cpIndex, fieldNameLen);
+
+   int32_t sigLen;
+   const char *sig = owningMethod->staticSignatureChars(cpIndex, sigLen);
+
+   // Reject any fields that are disabled by option.
+   TR::SimpleRegex *dontFold = comp->getOptions()->getDontFoldStaticFinalFields();
+   if (dontFold != NULL)
+      {
+      char buf[256];
+      TR::Region &stackRegion = comp->trMemory()->currentStackRegion();
+      TR::StringBuf fqNameAndSig(stackRegion, buf, sizeof(buf));
+
+      // <class>.<field>:<sig>
+      fqNameAndSig.appendf("%.*s", classNameLen, className);
+      fqNameAndSig.appendf(".%.*s", fieldNameLen, fieldName);
+      fqNameAndSig.appendf(":%.*s", sigLen, sig);
+
+      if (dontFold->match(fqNameAndSig.text()))
+         return TR_no;
+      }
 
    // Static initializer can produce different values in different runs
    // so for AOT we cannot allow this transformation. However for String
@@ -863,9 +993,6 @@ J9::TransformUtil::canFoldStaticFinalField(
          return TR_no;
       }
 
-   // in Java 17 and above, it is not possible to remove the final attribute of a field
-   // to make it writable via reflection.
-#if JAVA_SPEC_VERSION >= 17
    // In classes with version 53 and later, putstatic can write to static final
    // fields only during class initialization.
    //
@@ -873,37 +1000,154 @@ J9::TransformUtil::canFoldStaticFinalField(
    // static final fields after initialization.
    //
    J9ROMClass *romClass = TR::Compiler->cls.romClassOf(declaringClass);
-   if (romClass->majorVersion >= 53 || fej9->isClassLibraryClass(declaringClass))
+   bool putstaticIsToSpec =
+      romClass->majorVersion >= 53 || fej9->isClassLibraryClass(declaringClass);
+
+   // in Java 17 and above, it is not possible to remove the final attribute of a field
+   // to make it writable via reflection.
+#if JAVA_SPEC_VERSION >= 17
+   if (putstaticIsToSpec)
       {
       // Both putstatic and reflection have been ruled out, so fields declared
       // in declaringClass must not be modified. We do not support modifying
-      // them using Unsafe.
-      //
-      // For the time being, limit aggressive folding here to static final
-      // fields with declared type VarHandle.
-      //
+      // them using Unsafe. Go for it.
+      static const bool disableAggressiveSFFF =
+         feGetEnv("TR_disableAggressiveSFFF17") != NULL;
+
+      if (!disableAggressiveSFFF)
+         return TR_yes;
+
+      // General aggressive folding is disabled by environment variable. Still
+      // try to apply it to static final fields with declared type VarHandle,
+      // as before.
       static const bool disableAggressiveVarHandleSFFF =
          feGetEnv("TR_disableAggressiveVarHandleSFFF17") != NULL;
 
-      if (!disableAggressiveVarHandleSFFF && cpIndex >= 0)
+      if (!disableAggressiveVarHandleSFFF)
          {
-         int32_t len;
-         const char *sig = owningMethod->fieldSignatureChars(cpIndex, len);
          const char *vhSig = "Ljava/lang/invoke/VarHandle;";
-         if (len == (int32_t)strlen(vhSig) && !strncmp(sig, vhSig, len))
+         if (sigLen == (int32_t)strlen(vhSig) && !strncmp(sig, vhSig, sigLen))
             return TR_yes;
          }
       }
 #endif
 
+   // Fold $assertionsDisabled and static final fields declared by allowlisted
+   // classes regardless of classHasIllegalStaticFinalFieldModification(). An
+   // allowlisted class (e.g. String) can have "illegal" stores occur during
+   // bootstrap that we want to ignore.
    if (!comp->getOption(TR_RestrictStaticFieldFolding) ||
        recField == TR::Symbol::assertionsDisabled ||
-       J9::TransformUtil::foldFinalFieldsIn(declaringClass, name, len, true, comp))
+       J9::TransformUtil::foldFinalFieldsIn(
+         declaringClass, className, classNameLen, true, comp))
       return TR_yes;
 
+   // Determine whether this class contains putstatic instructions outside of
+   // <clinit> that store to its static final fields. If it does, it can be
+   // considered to have an illegal modification, preventing all future folding
+   // of its static final fields.
+   bool putstaticScanDone = false;
+   if (putstaticIsToSpec)
+      {
+      // The problem can't occur. Such putstatic instructions would simply
+      // fail, so no scan is needed.
+      putstaticScanDone = true;
+      }
+   else
+      {
+      // Use the persistent class info to avoid repeated scanning.
+      TR_PersistentCHTable *cht = comp->getPersistentInfo()->getPersistentCHTable();
+      if (cht != NULL)
+         {
+         TR_PersistentClassInfo *classInfo =
+            cht->findClassInfoAfterLocking(declaringClass, comp);
+
+         if (classInfo != NULL)
+            {
+            putstaticScanDone = true;
+            if (!classInfo->alreadyScannedForFinalPutstatic())
+               {
+               if (classHasFinalPutstaticOutsideClinit(comp, declaringClass))
+                  {
+                  // There are no assumptions to invalidate when setting this
+                  // flag here. Any earlier attempts to fold static final fields
+                  // in this class have failed to scan, and therefore they have
+                  // refused to do even guarded folding.
+                  //
+                  // There could be a concurrent scan in another compilation
+                  // thread, but if so, it will also find the bad putstatic and
+                  // refuse to fold.
+                  //
+                  TR::Compiler->cls.setClassHasIllegalStaticFinalFieldModification(
+                     declaringClass, comp);
+                  }
+
+               TR::ClassTableCriticalSection chtCS(comp->fe());
+               classInfo->setAlreadyScannedForFinalPutstatic();
+               }
+            }
+         }
+      }
+
+   // If this class needs a scan that we failed to perform, then don't fold at
+   // all. Without the scan, we can't trust its static final fields. We could
+   // still do guarded folding, but if we did, there would be a possibility of
+   // successfully scanning later on and finding a bad putstatic. Then when
+   // setting the illegal write flag, there would be assumptions to invalidate.
+   if (!putstaticScanDone)
+      return TR_no;
+
+   // Reject fields belonging to classes in which illegal static final stores
+   // have been observed, and classes with old versions that have been found to
+   // contain a bad putstatic (even if no illegal store has occurred yet).
    if (TR::Compiler->cls.classHasIllegalStaticFinalFieldModification(declaringClass))
       return TR_no;
 
+   // The putstatic scan has been done (or ruled out), so we know that if
+   // declaringClass had a bad putstatic, it would have been flagged as having
+   // an illegal write. But it wasn't flagged, so there is no bad putstatic,
+   // and we can be very aggressive here.
+   //
+   // This applies in JDK 8 and 11, and it applies in JDK 17+ to static final
+   // fields declared by classes with !putstaticIsToSpec. We should be able to
+   // support references here in the future, at which point the path specific
+   // to JDK 17+ will be redundant.
+   //
+   switch (sig[0])
+      {
+      case 'B':
+      case 'Z':
+      case 'S':
+      case 'C':
+      case 'I':
+      case 'J':
+      case 'F':
+      case 'D':
+         {
+         static const bool disable =
+            feGetEnv("TR_disableAggressivePrimitiveSFFF") != NULL;
+
+         if (!disable)
+            return TR_yes;
+
+         break;
+         }
+
+      case 'L':
+      case '[':
+         {
+         // Ideally we should trust these as well, but current known
+         // object handling in the compiler is unable to deal with the
+         // possibility of a later store to the field, e.g. via the
+         // setAccessible modifiers hack. If we derive a known object at
+         // a particular point and then later reach that point after the
+         // field is modified, we get undefined behaviour, which is too
+         // steep a consequence.
+         break;
+         }
+      }
+
+   // Fall back to guarded folding.
    return TR_maybe;
    }
 

@@ -977,9 +977,6 @@ decompileOuterFrame(J9VMThread * currentThread, J9JITDecompileState * decompileS
 #ifdef J9VM_ENV_DATA64
 			case '[':
 			case 'L':
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-			case 'Q':
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 #endif /* J9VM_ENV_DATA64 */
 				j2iFrame->exitPoint = J9_BUILDER_SYMBOL(jitExitInterpreterJ);
 				break;
@@ -1117,9 +1114,6 @@ fixStackForNewDecompilation(J9VMThread * currentThread, J9StackWalkState * walkS
 #ifdef J9VM_ENV_DATA64
 			case '[':
 			case 'L':
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-			case 'Q':
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 				*pcStoreAddress = (U_8 *) J9_BUILDER_SYMBOL(jitDecompileOnReturnL);
 				break;
 #endif /* J9VM_ENV_DATA64 */

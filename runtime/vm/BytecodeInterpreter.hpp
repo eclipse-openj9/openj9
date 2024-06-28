@@ -2886,18 +2886,6 @@ done:
 		return EXECUTE_BYTECODE;
 	}
 
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-	/* java.lang.Class: public native boolean isPrimitiveClass(); */
-	VMINLINE VM_BytecodeAction
-	inlClassIsPrimitiveClass(REGISTER_ARGS_LIST)
-	{
-		J9Class *receiverClazz = J9VM_J9CLASS_FROM_HEAPCLASS(_currentThread, *(j9object_t*)_sp);
-		bool isPrimitiveClass = J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(receiverClazz);
-		returnSingleFromINL(REGISTER_ARGS, (isPrimitiveClass ? 1 : 0), 1);
-		return EXECUTE_BYTECODE;
-	}
-#endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
-
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	/* java.lang.Class: public native boolean isValue(); */
 	VMINLINE VM_BytecodeAction
@@ -4391,7 +4379,7 @@ done:
 				rc = GOTO_THROW_CURRENT_EXCEPTION;
 			} else {
 				I_32 result = false;
-				if (VM_ValueTypeHelpers::isNameOrSignatureQtype(J9ROMFIELDSHAPE_SIGNATURE(fieldID->field)) || J9ROMFIELD_IS_NULL_RESTRICTED(fieldID->field)) {
+				if (J9ROMFIELD_IS_NULL_RESTRICTED(fieldID->field)) {
 					result = (I_32)isFlattenableFieldFlattened(fieldID->declaringClass, fieldID->field);
 				}
 				restoreInternalNativeStackFrame(REGISTER_ARGS);
@@ -8492,7 +8480,7 @@ retry:
 				j9object_t instance = NULL;
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 				if (J9_ARE_NO_BITS_SET(arrayClass->classFlags, J9ClassContainsUnflattenedFlattenables))
-#endif
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 				{
 					instance = VM_VMHelpers::inlineAllocateIndexableObject(_currentThread, &_objectAllocate, arrayClass, (U_32) size);
 				}
@@ -8563,9 +8551,6 @@ retry:
 					goto done;
 				}
 			} else {
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-resolve:
-#endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
 				/* Unresolved */
 				buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
 				updateVMStruct(REGISTER_ARGS);
@@ -8582,23 +8567,12 @@ resolve:
 				goto retry;
 			}
 		}
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-		else if (VM_ValueTypeHelpers::isClassRefQtype(ramConstantPool, index)) {
-			/* Even though an NPE is going to be thrown the classref must still be resolved because
-			 * its a qtype.
-			 *
-			 * TODO in the future a different type of exception may thrown, spec for this behaviour
-			 * not currently known.
-			 */
-			if (NULL == castClass) {
-				/* Resolve the class and then check again whether it is a value type */
-				goto resolve;
-			}
 
-			rc = THROW_NPE;
-			goto done;
-		}
-#endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
+		/* In the future Valhalla checkcast needs to throw exception on
+		 * null restricted checkedType if obj is null,
+		 * see issue https://github.com/eclipse-openj9/openj9/issues/19764
+		 */
+
 		_pc += 3;
 done:
 		return rc;
@@ -10336,9 +10310,6 @@ public:
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_ASSIGNABLE_FROM),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_ARRAY),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_PRIMITIVE),
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_PRIMITIVE_CLASS),
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_VALUE),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_IDENTITY),
@@ -10871,10 +10842,6 @@ runMethod: {
 		PERFORM_ACTION(inlClassIsArray(REGISTER_ARGS));
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_PRIMITIVE):
 		PERFORM_ACTION(inlClassIsPrimitive(REGISTER_ARGS));
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_PRIMITIVE_CLASS):
-		PERFORM_ACTION(inlClassIsPrimitiveClass(REGISTER_ARGS));
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_VALUE):
 		PERFORM_ACTION(inlClassIsValue(REGISTER_ARGS));

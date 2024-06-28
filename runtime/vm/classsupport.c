@@ -974,13 +974,6 @@ loadNonArrayClass(J9VMThread* vmThread, J9Module *j9module, U_8* className, UDAT
 	BOOLEAN fastMode = J9_ARE_ALL_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_FAST_CLASS_HASH_TABLE);
 	BOOLEAN loaderMonitorLocked = FALSE;
 
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-	if (J9_IS_STRING_DESCRIPTOR(className, classNameLength)) {
-		className += 1; /* 1 for 'L' */
-		classNameLength -= 2; /* 2 for 'L' and ';' */
-	}
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
-
 	vmThread->privateFlags &= ~J9_PRIVATE_FLAGS_CLOAD_NO_MEM;
 
 	if (J9CLASSLOADER_PARALLEL_CAPABLE == (J9CLASSLOADER_PARALLEL_CAPABLE & classLoader->flags)) {

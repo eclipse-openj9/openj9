@@ -74,7 +74,6 @@ getOriginalROMMethod(J9Method * method)
 }
 
 #if JAVA_SPEC_VERSION >= 20
-/* J9VM_OPT_VALHALLA_VALUE_TYPES is enabled for Java 21 and up. */
 U_32
 getClassFileVersion(J9VMThread *currentThread, J9Class *cls)
 {

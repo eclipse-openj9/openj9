@@ -69,6 +69,7 @@ J9InternalVMFunctions J9InternalFunctions = {
 	internalReleaseVMAccessSetStatus,
 	instanceFieldOffset,
 	staticFieldAddress,
+	getStaticFields,
 	internalFindKnownClass,
 	resolveKnownClass,
 	computeHashForUTF8,
@@ -382,8 +383,6 @@ J9InternalVMFunctions J9InternalFunctions = {
 #endif /* J9VM_OPT_JITSERVER */
 	createJoinableThreadWithCategory,
 	valueTypeCapableAcmp,
-	isNameOrSignatureQtype,
-	isClassRefQtype,
 	isFieldNullRestricted,
 	getFlattenableFieldOffset,
 	isFlattenableFieldFlattened,
