@@ -294,6 +294,7 @@ TR_DataCache* TR_DataCacheManager::allocateNewDataCache(uint32_t minimumSize)
                dataCache->_vmThread = NULL;
                dataCache->_allocationMark = dataCacheSeg->heapAlloc;
 
+#if 0  // GITA
                if (OMR::RSSReport::instance())
                   {
                   J9JavaVM * javaVM = jitConfig->javaVM;
@@ -303,6 +304,7 @@ TR_DataCache* TR_DataCacheManager::allocateNewDataCache(uint32_t minimumSize)
                                                          j9vmem_supported_page_sizes()[0]);
                   OMR::RSSReport::instance()->addRegion(dataCache->_rssRegion);
                   }
+#endif
 
                _numAllocatedCaches++;
                _totalSegmentMemoryAllocated += (uint32_t)allocatedSize;

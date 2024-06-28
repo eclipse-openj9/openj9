@@ -102,6 +102,7 @@
 #include "control/JITServerHelpers.hpp"
 #include "runtime/JITClientSession.hpp"
 #include "runtime/JITServerAOTDeserializer.hpp"
+#include "runtime/OMRRSSReport.hpp"
 #include "net/ClientStream.hpp"
 #include "net/ServerStream.hpp"
 #include "net/CommunicationStream.hpp"
@@ -3255,6 +3256,14 @@ void printAllCounts(J9JavaVM *javaVM)
 
 void TR::CompilationInfo::stopCompilationThreads()
    {
+   OMR::RSSReport *rssReport = OMR::RSSReport::instance();
+
+   if (rssReport)
+      {
+      rssReport->printTitle();
+      rssReport->printRegions();
+      }
+
    J9JavaVM   * const vm       = _jitConfig->javaVM;
    J9VMThread * const vmThread = vm->internalVMFunctions->currentVMThread(vm);
 

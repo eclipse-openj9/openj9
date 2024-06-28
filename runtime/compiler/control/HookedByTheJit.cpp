@@ -4671,7 +4671,18 @@ void memoryDisclaimLogic(TR::CompilationInfo *compInfo, uint64_t crtElapsedTime,
          if (TR::CodeCacheManager::instance()->getCurrentNumberOfCodeCaches() > lastNumAllocatedCodeCaches ||
              crtElapsedTime > lastCodeCacheDisclaimTime + 12 * TR::Options::_minTimeBetweenMemoryDisclaims)
             {
+            static OMR::RSSReport *rssReport = OMR::RSSReport::instance();
+
+            if (rssReport)
+               {
+               rssReport->printTitle();
+               rssReport->printRegions();
+               }
+
             disclaimCodeCaches(crtElapsedTime);
+
+            if (rssReport) rssReport->printRegions();
+
             lastCodeCacheDisclaimTime = crtElapsedTime; // Update the time when disclaim was last performed
             lastNumAllocatedCodeCaches = TR::CodeCacheManager::instance()->getCurrentNumberOfCodeCaches();
             }
@@ -5412,8 +5423,6 @@ static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInf
       printRSS = 0;
       }
 #endif
-
-   rssReportLogic(compInfo);
 
    if (lateDisclaimNeeded)
       {
