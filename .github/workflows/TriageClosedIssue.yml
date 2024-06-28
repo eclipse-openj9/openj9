@@ -21,8 +21,6 @@ jobs:
               repo: context.repo.repo
             });
 
-            console.log(issueData);
-
             const commentsUrl = issueData.comments_url;
             const { data: commentsData } = await github.request(commentsUrl);
 
@@ -39,6 +37,7 @@ jobs:
 
             // Check if there is a closed/merged pull request associated with the issue
             // Check if the pull request has been merged
+
             let prAuthors = [];
             const timeline = await github.issues.listEventsForTimeline({
               owner: context.repo.owner,
@@ -67,6 +66,8 @@ jobs:
 
             if (prAuthors.length > 0) {
               resultString += `PR Authors: ${prAuthors.join(', ')}`;
+            if (prAuthors.length > 0) {
+              resultString += `PR Authors: ${prAuthors.join(', ')}\n`;
             } else {
               resultString += `PR Authors: No one :(`;
             }
@@ -76,8 +77,5 @@ jobs:
               owner: sandboxOwner,
               repo: sandboxRepo,
               body: resultString,
+              body: resultString,
             });
-
-
-
-            
