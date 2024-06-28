@@ -60,16 +60,16 @@ jobs:
             if (!assigned) {
               if (issueData.assignees.length != 0) {
                 const assignees = issueData.assignees.map(assignee => assignee.login).join(', ');
-                resultString += `Actual Assignees: ${assignees}`;
+                resultString += `Actual Assignees: ${assignees}\n`;
               } else {
-                resultString += "Actual Assignees: No one :(";
+                resultString += "Actual Assignees: No one :(\n";
               }
             }
 
             if (prAuthors.length > 0) {
-              resultString += `PR Authors: ${prAuthors.join(', ')}\n`;
+              resultString += `PR Authors: ${prAuthors.join(', ')}`;
             } else {
-              resultString += `PR Authors: No one :(\n`;
+              resultString += `PR Authors: No one :(`;
             }
 
             await github.issues.createComment({
