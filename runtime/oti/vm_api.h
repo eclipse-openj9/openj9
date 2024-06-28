@@ -4096,7 +4096,6 @@ I_32
 invoke31BitJNI_OnXLoad(J9JavaVM *vm, void *handle, jboolean isOnLoad, void *reserved);
 #endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) && (JAVA_SPEC_VERSION >= 17) */
 
-
 /* ---------------- vmhook.c ---------------- */
 
 #if defined(J9VM_INTERP_NATIVE_SUPPORT)

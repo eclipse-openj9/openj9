@@ -34,6 +34,8 @@
 #include "j9modron.h"
 #include "omrutilbase.h"
 
+#define J9SEGMENT_ALIGNMENT 0x1000
+
 #define ROUND_TO(granularity, number) (((number) + (granularity) - 1) & ~((UDATA)(granularity) - 1))
 
 J9MemorySegment * allocateMemorySegment (J9JavaVM *javaVM, UDATA size, UDATA type, U_32 memoryCategory);
@@ -218,7 +220,6 @@ U_32 memorySegmentListSize (J9MemorySegmentList *segmentList)
 	return (U_32) pool_numElements(segmentList->segmentPool);
 }
 
-
 /*
  *	Allocates the memory for a segment.
  *	only 2 cases are delt with:
@@ -256,10 +257,14 @@ allocateMemoryForSegment(J9JavaVM *javaVM,J9MemorySegment *segment, J9PortVmemPa
 		tmpAddr = j9vmem_reserve_memory_ex(&segment->vmemIdentifier, vmemParams);
 		Trc_VM_virtualRAMClassAlloc(tmpAddr);
 	} else if (J9_ARE_ALL_BITS_SET(segment->type, MEMORY_TYPE_RAM_CLASS)) {
+		UDATA segmentAllocationSize = segment->size;
+		if (J9_ARE_ALL_BITS_SET(javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_DISCLAIM_RAM_CLASSES)) {
+			segmentAllocationSize = J9SEGMENT_ALIGNMENT + ROUND_TO(sizeof(UDATA), segment->size);
+		}
 		if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(javaVM)) {
-			tmpAddr = j9mem_allocate_memory32(segment->size, memoryCategory);
+			tmpAddr = j9mem_allocate_memory32(segmentAllocationSize, memoryCategory);
 		} else {
-			tmpAddr = j9mem_allocate_memory(segment->size, memoryCategory);
+			tmpAddr = j9mem_allocate_memory(segmentAllocationSize, memoryCategory);
 		}
 	} else {
 		tmpAddr = j9mem_allocate_memory(segment->size, memoryCategory);
@@ -427,7 +432,13 @@ static J9MemorySegment * allocateVirtualMemorySegmentInListInternal(J9JavaVM *ja
 				omrthread_jit_write_protect_enable();
 			}
 			segment->baseAddress = allocatedBase;
-			segment->heapBase = allocatedBase;
+			if (J9_ARE_ALL_BITS_SET(segment->type, MEMORY_TYPE_RAM_CLASS)
+				&& J9_ARE_ALL_BITS_SET(javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_DISCLAIM_RAM_CLASSES)
+			) {
+				segment->heapBase = (uint8_t *)ROUND_TO(J9SEGMENT_ALIGNMENT, (UDATA)allocatedBase);
+			} else {
+				segment->heapBase = allocatedBase;
+			}
 			segment->heapTop = (U_8 *)&(segment->heapBase)[size];
 			segment->heapAlloc = segment->heapBase;
 

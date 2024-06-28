@@ -65,6 +65,7 @@ UDATA debugBytecodeLoopFull(J9VMThread *currentThread);
 #if defined(OMR_GC_COMPRESSED_POINTERS)
 UDATA debugBytecodeLoopCompressed(J9VMThread *currentThread);
 #endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
+int disclaimAllClassMemory(J9VMThread *currentThread);
 
 #define STRING_BUFFER_SIZE 256
 #define ENV_FILE_BUFFER 1024
@@ -1835,6 +1836,27 @@ criuCheckpointJVMImpl(JNIEnv *env,
 		Trc_VM_criu_before_checkpoint(currentThread, j9time_nano_time(), j9time_current_time_nanos(&success));
 
 		VM_VMHelpers::setVMState(currentThread, J9VMSTATE_CRIU_SUPPORT_CHECKPOINT_PHASE_END);
+
+		systemReturnCode = disclaimAllClassMemory(currentThread);
+		if (-1 == systemReturnCode) {
+			systemReturnCode = errno;
+			currentExceptionClass = vm->checkpointState.criuJVMCheckpointExceptionClass;
+			nlsMsgFormat = j9nls_lookup_message(
+				J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+				J9NLS_VM_CRIU_DISCLAIM_ALL_CLASS_MEMORY_FAILURE,
+				NULL);
+			j9mem_free_memory(syslogOptions);
+			goto wakeJavaThreadsWithExclusiveVMAccess;
+		} else if (-2 == systemReturnCode) {
+			systemReturnCode = errno;
+			currentExceptionClass = vm->checkpointState.criuJVMCheckpointExceptionClass;
+			nlsMsgFormat = j9nls_lookup_message(
+				J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+				J9NLS_VM_CRIU_DISCLAIM_ALL_CLASS_MEMORY_FAILURE_AND_DISCLAIM_RAM_CLASSES_OPTION_NOT_SET_FAILURE,
+				NULL);
+			j9mem_free_memory(syslogOptions);
+			goto wakeJavaThreadsWithExclusiveVMAccess;
+		}
 
 		/* Pre-checkpoint */
 		criuDumpReturnCode = vm->checkpointState.criuDumpFunctionPointerType();
