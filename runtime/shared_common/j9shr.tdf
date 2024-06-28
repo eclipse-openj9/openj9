@@ -806,8 +806,8 @@ TraceEntry=Trc_SHR_SMI_scHashFn_Entry Noenv Overhead=1 Level=6 Template="SMI scH
 TraceExit=Trc_SHR_SMI_scHashFn_Exit Noenv Overhead=1 Level=6 Template="SMI scHashFn: Returning hashcode %u"
 
 TraceEntry=Trc_SHR_SMI_scHashEqualFn_Entry Noenv Overhead=1 Level=6 Template="SMI scHashEqualFn: Comparing 0x%p with 0x%p"
-TraceExit=Trc_SHR_SMI_scHashEqualFn_Exit1 Noenv Overhead=1 Level=6 Template="SMI scHashEqualFn: One key is null. Exiting with false."
-TraceExit=Trc_SHR_SMI_scHashEqualFn_Exit2 Noenv Overhead=1 Level=6 Template="SMI scHashEqualFn: Key lengths don't match. Exiting with false."
+TraceExit=Trc_SHR_SMI_scHashEqualFn_Exit1 Obsolete Noenv Overhead=1 Level=6 Template="SMI scHashEqualFn: One key is null. Exiting with false."
+TraceExit=Trc_SHR_SMI_scHashEqualFn_Exit2 Obsolete Noenv Overhead=1 Level=6 Template="SMI scHashEqualFn: Key lengths don't match. Exiting with false."
 TraceExit=Trc_SHR_SMI_scHashEqualFn_Exit3 Noenv Overhead=1 Level=6 Template="SMI scHashEqualFn: Called compareUTF8. Result=%d"
 
 TraceEntry=Trc_SHR_SMI_scTableAdd_Entry Overhead=1 Level=6 Template="SMI scTableAdd: Entering add with key %.*s for item 0x%p"
