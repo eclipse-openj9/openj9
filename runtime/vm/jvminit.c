@@ -4056,6 +4056,24 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 		vm->checkpointState.javaDebugThreadCount = 0;
 	}
 
+#if defined(LINUX)
+	{
+		IDATA enableCRIUDisclaimClasses = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXENABLECRIUDISCLAIMCLASSES, NULL);
+		IDATA disableCRIUDisclaimClasses = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXDISABLECRIUDISCLAIMCLASSES, NULL);
+		if (enableCRIUDisclaimClasses > disableCRIUDisclaimClasses) {
+			PORT_ACCESS_FROM_JAVAVM(vm);
+			UDATA *pageSizes = j9vmem_supported_page_sizes();
+			/* Only disclaim classes for 4K page sizes. */
+			if (4096 == pageSizes[0]) {
+				vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_CRIU_DISCLAIM_CLASSES;
+				j9port_control(J9PORT_CTLDATA_MEM_32BIT, J9PORT_MEM_32BIT_FLAGS_TMP_FILE_BACKED_VMEM);
+			} else {
+				j9nls_printf(PORTLIB, J9NLS_WARNING, J9NLS_VM_CRIU_DISCLAIM_CLASSES_INVALID_PAGE_SIZE);
+			}
+		}
+	}
+#endif /* defined(LINUX) */
+
 	vm->checkpointState.lastRestoreTimeInNanoseconds = -1;
 	vm->checkpointState.processRestoreStartTimeInNanoseconds = -1;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
