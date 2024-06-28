@@ -941,6 +941,11 @@ extern "C" {
 #define J9TR_FLAT_RESOLVE_GETFIELD 1
 #define J9TR_FLAT_RESOLVE_PUTFIELD 2
 
+/* Class version minimum for value type support. */
+
+#define VALUE_TYPES_MAJOR_VERSION 67
+#define PREVIEW_MINOR_VERSION 65535
+
 #ifdef __cplusplus
 }
 #endif

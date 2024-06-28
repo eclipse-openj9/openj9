@@ -1274,4 +1274,12 @@ public class ValueTypeGenerator extends ClassLoader {
 		mv.visitMaxs(2, 2);
 		mv.visitEnd();
 	}
+
+	public static void generateNonInterfaceClassWithMissingFlags(String name) {
+		ClassWriter classWriter = new ClassWriter(0);
+		classWriter.visit(ValhallaUtils.VALUE_TYPE_CLASS_FILE_VERSION, 0, name, null, "java/lang/Object", null);
+		classWriter.visitEnd();
+		byte[] bytes = classWriter.toByteArray();
+		generator.defineClass(name, bytes, 0, bytes.length);
+	}
 }
