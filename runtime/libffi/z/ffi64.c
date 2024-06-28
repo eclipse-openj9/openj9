@@ -699,6 +699,8 @@ ffi_prep_args (unsigned char *stack, extended_cif *ecif)
       switch (type)
 	{
 	  case FFI_TYPE_STRUCT:
+	  case FFI_TYPE_STRUCT_FF:
+	  case FFI_TYPE_STRUCT_DD:
 	    memcpy(arg_ptr, *p_argv, size);
 	    break;
 
@@ -765,6 +767,50 @@ ffi_prep_args (unsigned char *stack, extended_cif *ecif)
 }
 
 /*======================== End of Routine ============================*/
+
+/**
+ * Helper functions to know if the given struct needs to be treated for complex
+ * type for float or double
+ */
+unsigned short
+get_ffi_element_type_in_struct(ffi_type *arg_type)
+{
+  while ((FFI_TYPE_STRUCT == arg_type->type)
+        && (NULL != arg_type->elements[0])
+        && (NULL == arg_type->elements[1])
+  ) {
+    arg_type = arg_type->elements[0];
+  }
+  return arg_type->type;
+}
+
+unsigned short
+ffi_check_struct_for_complex(ffi_type *arg_type)
+{
+  if (FFI_TYPE_STRUCT == arg_type->type)
+  {
+    unsigned short firstArgType = get_ffi_element_type_in_struct(arg_type->elements[0]);
+    if (FFI_TYPE_FLOAT == firstArgType)
+    {
+      if ((NULL != arg_type->elements[1])
+          && (NULL == arg_type->elements[2])
+          && (FFI_TYPE_FLOAT == get_ffi_element_type_in_struct(arg_type->elements[1]))
+      ) {
+        return FFI_TYPE_STRUCT_FF;
+      }
+    }
+    else if (FFI_TYPE_DOUBLE == firstArgType)
+    {
+      if ((NULL != arg_type->elements[1])
+          && (NULL == arg_type->elements[2])
+          && (FFI_TYPE_DOUBLE == get_ffi_element_type_in_struct(arg_type->elements[1]))
+      ) {
+        return FFI_TYPE_STRUCT_DD;
+      }
+    }
+  }
+  return arg_type->type;
+}
 
 /*====================================================================*/
 /*                                                                    */
@@ -861,72 +907,76 @@ ffi_prep_cif_machdep(ffi_cif *cif)
         FFI_ASSERT (0);
         break;
     }
-
+  cif->rtype->type = ffi_check_struct_for_complex(cif->rtype);
   /* Now for the arguments.  */
 
   for (ptr = cif->arg_types, i = cif->nargs;
        i > 0;
        i--, ptr++)
     {
-      int type = (*ptr)->type;
+    int type = (*ptr)->type;
 
-      /* Check how a structure type is passed.  */
-      if (type == FFI_TYPE_STRUCT)
-	{
-		type = ffi_check_struct_type (*ptr);
+    /* Check how a structure type is passed.  */
+    if (type == FFI_TYPE_STRUCT)
+      {
+      type = ffi_check_struct_type (*ptr);
+      (*ptr)->type = ffi_check_struct_for_complex(*ptr);
 
-	  /* If we pass the struct via pointer, we must reserve space
-	     to copy its data for proper call-by-value semantics.  */
-	  if (type == FFI_TYPE_POINTER)
-	    struct_size += ROUND_SIZE ((*ptr)->size);
-	}
+      /* If we pass the struct via pointer, we must reserve space
+         to copy its data for proper call-by-value semantics.  */
+      if (type == FFI_TYPE_POINTER)
+	      struct_size += ROUND_SIZE ((*ptr)->size);
+      }
 
       /* Now handle all primitive int/float data types.  */
-      switch (type)
+    switch (type)
       {
-       	/* The first MAX_FPRARGS floating point arguments
-	     go in FPRs, the rest overflow to the stack.  */
+      /**
+       * The first MAX_FPRARGS floating point arguments
+       * go in FPRs, the rest overflow to the stack.
+       */
 
-	case FFI_TYPE_LONGDOUBLE:
-	  if (n_fpr < MAX_FPRARGS)
-	    n_fpr+=2;
-	  else
-	    n_ov += sizeof(long double) / sizeof(long);
-	  break;
+      case FFI_TYPE_LONGDOUBLE:
+	      if (n_fpr < MAX_FPRARGS)
+	        n_fpr+=2;
+	      else
+	        n_ov += sizeof(long double) / sizeof(long);
+	      break;
+      case FFI_TYPE_COMPLEX:
+      case FFI_TYPE_DOUBLE:
+      case FFI_TYPE_FLOAT:
+        if (n_fpr < MAX_FPRARGS)
+	        n_fpr++;
+	      else
+	        n_ov += sizeof (double) / sizeof (long);
+	      break;
 
-	case FFI_TYPE_COMPLEX:
-       	case FFI_TYPE_DOUBLE:
-       	case FFI_TYPE_FLOAT:
-	  if (n_fpr < MAX_FPRARGS)
-	    n_fpr++;
-	  else
-	    n_ov += sizeof (double) / sizeof (long);
-	  break;
+	    /**
+       * On 31-bit machines, 64-bit integers are passed in GPR pairs,
+       * if one is still available, or else on the stack.  If only one
+       * register is free, skip the register (it won't be used for any
+       * subsequent argument either).
+       */
+	    case FFI_TYPE_UINT64:
+      case FFI_TYPE_SINT64:
+	      if (n_gpr == MAX_GPRARGS-1)
+	        n_gpr = MAX_GPRARGS;
+	      if (n_gpr < MAX_GPRARGS)
+	        n_gpr += 2;
+	      else
+	        n_ov += 2;
+        break;
 
-	  /* On 31-bit machines, 64-bit integers are passed in GPR pairs,
-	     if one is still available, or else on the stack.  If only one
-	     register is free, skip the register (it won't be used for any
-	     subsequent argument either).  */
-
-	case FFI_TYPE_UINT64:
-       	case FFI_TYPE_SINT64:
-	  if (n_gpr == MAX_GPRARGS-1)
-	    n_gpr = MAX_GPRARGS;
-	  if (n_gpr < MAX_GPRARGS)
-	    n_gpr += 2;
-	  else
-	    n_ov += 2;
-	  break;
-
-	  /* Everything else is passed in GPRs (until MAX_GPRARGS
-	     have been used) or overflows to the stack.  */
-
-	default:
-	  if (n_gpr < MAX_GPRARGS)
-	    n_gpr++;
-	  else
-	    n_ov++;
-	  break;
+	    /**
+       * Everything else is passed in GPRs (until MAX_GPRARGS have been used)
+       * or overflows to the stack.
+       */
+	    default:
+	      if (n_gpr < MAX_GPRARGS)
+	        n_gpr++;
+	      else
+	        n_ov++;
+	      break;
       }
     }
 

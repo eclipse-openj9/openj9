@@ -466,18 +466,18 @@ void ffi_call(ffi_cif *cif,
 
 #if !defined(ZOS)
 /* If these change, update src/mips/ffitarget.h. */
-#define FFI_TYPE_VOID       0    
+#define FFI_TYPE_VOID       0
 #define FFI_TYPE_INT        1
-#define FFI_TYPE_FLOAT      2    
+#define FFI_TYPE_FLOAT      2
 #define FFI_TYPE_DOUBLE     3
 #if 1
 #define FFI_TYPE_LONGDOUBLE 4
 #else
 #define FFI_TYPE_LONGDOUBLE FFI_TYPE_DOUBLE
 #endif
-#define FFI_TYPE_UINT8      5   
+#define FFI_TYPE_UINT8      5
 #define FFI_TYPE_SINT8      6
-#define FFI_TYPE_UINT16     7 
+#define FFI_TYPE_UINT16     7
 #define FFI_TYPE_SINT16     8
 #define FFI_TYPE_UINT32     9
 #define FFI_TYPE_SINT32     10
@@ -495,23 +495,25 @@ void ffi_call(ffi_cif *cif,
 #else
 #define FFI_TYPE_LONGDOUBLE FFI_TYPE_DOUBLE
 #endif
-#define FFI_TYPE_UINT8      3   
+#define FFI_TYPE_UINT8      3
 #define FFI_TYPE_SINT8      4
-#define FFI_TYPE_UINT16     5 
+#define FFI_TYPE_UINT16     5
 #define FFI_TYPE_SINT16     6
 #define FFI_TYPE_UINT32     7
-#define FFI_TYPE_SINT64     8 
-#define FFI_TYPE_POINTER    9 
+#define FFI_TYPE_SINT64     8
+#define FFI_TYPE_POINTER    9
 #define FFI_TYPE_UINT64     10
-#define FFI_TYPE_FLOAT      11   
+#define FFI_TYPE_FLOAT      11
 #define FFI_TYPE_STRUCT     12
-#define FFI_TYPE_VOID       13    
+#define FFI_TYPE_VOID       13
 #define FFI_TYPE_SINT32     14
 #define FFI_TYPE_COMPLEX    15
+#define FFI_TYPE_STRUCT_FF  16
+#define FFI_TYPE_STRUCT_DD  17
 #endif
 
 /* This should always refer to the last type code (for sanity checks) */
-#define FFI_TYPE_LAST       FFI_TYPE_COMPLEX
+#define FFI_TYPE_LAST       FFI_TYPE_STRUCT_DD
 
 #ifdef __cplusplus
 }
