@@ -24,7 +24,7 @@ jobs:
             const commentsUrl = issueData.comments_url;
             const { data: commentsData } = await github.request(commentsUrl);
 
-            const sandboxIssueNumber = 19673;
+            const sandboxIssueNumber = 1;
             const sandboxOwner = context.repo.owner;
             const sandboxRepo = context.repo.repo;
 
@@ -39,7 +39,7 @@ jobs:
             // Check if the pull request has been merged
 
             let prAuthors = [];
-            const timeline = await github.rest.issues.listEventsForTimeline({
+            const timeline = await github.issues.listEventsForTimeline({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
@@ -58,21 +58,24 @@ jobs:
             if (!assigned) {
               if (issueData.assignees.length != 0) {
                 const assignees = issueData.assignees.map(assignee => assignee.login).join(', ');
-                resultString += `Actual Assignees: ${assignees}`;
+                resultString += `Actual Assignees: ${assignees}\n`;
               } else {
-                resultString += "Actual Assignees: No one :(";
+                resultString += "Actual Assignees: No one :(\n";
               }
             }
 
             if (prAuthors.length > 0) {
+              resultString += `PR Authors: ${prAuthors.join(', ')}`;
+            if (prAuthors.length > 0) {
               resultString += `PR Authors: ${prAuthors.join(', ')}\n`;
             } else {
-              resultString += `PR Authors: No one :(\n`;
+              resultString += `PR Authors: No one :(`;
             }
 
             await github.issues.createComment({
               issue_number: sandboxIssueNumber,
               owner: sandboxOwner,
               repo: sandboxRepo,
+              body: resultString,
               body: resultString,
             });
