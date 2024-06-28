@@ -9,6 +9,14 @@ jobs:
     runs-on: ubuntu-latest
     if: startsWith(github.event.comment.body, 'triagerx')
     steps:
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+
+      - name: Install dependencies
+        run: npm install axios
+
       - name: Checkout repository
         uses: actions/checkout@v2
 
