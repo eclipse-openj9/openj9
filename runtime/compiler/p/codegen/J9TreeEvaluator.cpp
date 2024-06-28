@@ -62,6 +62,7 @@
 #include "infra/Annotations.hpp"
 #include "infra/ILWalk.hpp"
 #include "infra/Bit.hpp"
+#include "optimizer/J9TransformUtil.hpp"
 #include "optimizer/VectorAPIExpansion.hpp"
 #include "p/codegen/ForceRecompilationSnippet.hpp"
 #include "p/codegen/GenerateInstructions.hpp"
@@ -11921,12 +11922,71 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
             TR::Node *destOffset = node->getChild(2);
             TR::Node *len = node->getChild(3);
             TR::Node *byteValue = node->getChild(4);
-            dest = TR::Node::create(TR::aladd, 2, dest, destOffset);
 
-            TR::Node * copyMemNode = TR::Node::createWithSymRef(TR::arrayset, 3, 3, dest, len, byteValue, node->getSymbolReference());
+            // When using balanced GC policy with offheap allocation enabled, there are three possible cases:
+            //
+            // 1.) The object at dest is known to be a non-array object at compile time. In this scenario, the final destination address
+            //     can be calculated by simply adding dest and destOffset.
+            // 2.) The object at dest is known to be an array at compile time. In this scenario, we must load dataAddr from dest
+            //     to account for the way arrays are allocated when offheap is enabled. Once this adjustment is made, the final
+            //     destination address can be calculated by adding the adjusted dest and destOffset, similar to case (1)
+            // 3.) The type of the object at dest is unknown at compile time. In this scenario, a runtime arrayCHK must be generated to
+            //     determine whether dataAddr needs to be loaded before calculating the final destination address. Thus, dest
+            //     and destOffset will be passed to setmemoryEvaluator() separately so that both possible control flow paths are accounted
+            //     for in the generated assembly code.
+            //
+            // Note that if the default (gencon) GC policy is being used, dataAddr will never need to be loaded no matter
+            // the type of the object at dest, so all of the above cases will be treated like case (1).
+
+            bool arrayCheckNeeded, adjustmentNeeded;
+
+            if (dest->getSymbolReference() != NULL)
+            {
+               //check dstBaseAddrNode type at compile time
+               int length;
+               char *objTypeSig = dest->getSymbolReference()->getTypeSignature(length);
+               int objSigLength = strlen("Ljava/lang/Object;");
+
+               //generate arrayCHK in case (3) only
+               arrayCheckNeeded = TR::Compiler->om.isOffHeapAllocationEnabled() && comp->target().is64Bit() &&
+                                       (objTypeSig == NULL || strncmp(objTypeSig, "Ljava/lang/Object;", objSigLength) == 0);
+
+               //adjust dstBaseAddr in cases (2) and (3)
+               adjustmentNeeded = arrayCheckNeeded ||
+                                       (TR::Compiler->om.isOffHeapAllocationEnabled() && comp->target().is64Bit() && objTypeSig[0] == '[');
+            }
+            else
+            {
+               arrayCheckNeeded = false;
+               adjustmentNeeded = false;
+            }
+
+            TR::Node *copyMemNode;
+
+            //generate array check if needed
+            if (arrayCheckNeeded) // CASE (3)
+            {
+               copyMemNode = TR::Node::createWithSymRef(TR::arrayset, 4, 4, dest, destOffset, len, byteValue, node->getSymbolReference());
+            }
+            else
+            {
+            #if defined (J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+
+               if (adjustmentNeeded) // CASE (2)
+               {
+                  //load dataAddr and use as object base address (previously dest)
+                  TR::Node *dataAddrNode = J9::TransformUtil::generateDataAddrLoadTrees(comp, dest);
+                  dest = dataAddrNode;
+               }
+
+            #endif /* J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION */
+
+               dest = TR::Node::create(TR::aladd, 2, dest, destOffset);
+               copyMemNode = TR::Node::createWithSymRef(TR::arrayset, 3, 3, dest, len, byteValue, node->getSymbolReference());
+            }
+
             copyMemNode->setByteCodeInfo(node->getByteCodeInfo());
-
-            TR::TreeEvaluator::setmemoryEvaluator(copyMemNode,cg);
+            TR::TreeEvaluator::setmemoryEvaluator(copyMemNode, cg, arrayCheckNeeded);
 
             if (node->getChild(0)->getRegister())
                cg->decReferenceCount(node->getChild(0));
