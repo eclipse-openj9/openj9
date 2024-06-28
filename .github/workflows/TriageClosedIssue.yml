@@ -27,7 +27,7 @@ jobs:
             const sandboxIssueNumber = 19673;
             const sandboxOwner = context.repo.owner;
             const sandboxRepo = context.repo.repo;
-            
+
             const actualLabels = issueData.labels.map(label => label['name']);
             let resultString = `Issue number: ${context.issue.number}\n`;
             resultString += 'Status: Closed\n';
@@ -36,7 +36,7 @@ jobs:
             } else {
               resultString += `Actual components: None :(\n`;
             }
-            
+
             // Check if there is a closed/merged pull request associated with the issue
             // Check if the pull request has been merged
 
@@ -57,11 +57,11 @@ jobs:
             });
 
             actualAssignees = [...new Set(actualAssignees)];
-           
+
             if (issueData.assignees.length != 0) {
               const assignees = issueData.assignees.map(assignee => assignee.login);
               actualAssignees.concat(assignees);
-            } 
+            }
             if (actualAssignees.length > 0) {
               resultString += `Actual assignees: ${actualAssignees.join(', ')}`;
             } else {
