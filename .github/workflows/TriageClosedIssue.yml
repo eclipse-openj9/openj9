@@ -66,7 +66,7 @@ jobs:
               }
             }
 
-            if (prCreators.length > 0) {
+            if (prAuthors.length > 0) {
               resultString += `PR Authors: ${prAuthors.join(', ')}\n`;
             } else {
               resultString += `PR Authors: No one :(\n`;
