@@ -1652,6 +1652,12 @@ public class ValueTypeTests {
 		checkCastRefClassOnNull.invoke();
 	}
 
+	@Test(priority = 1, expectedExceptions = ClassFormatError.class,
+		expectedExceptionsMessageRegExp = ".*A non-interface class must have at least one of ACC_FINAL, ACC_IDENTITY, or ACC_ABSTRACT flags set.*")
+	static public void testNonInterfaceClassMustHaveFinalIdentityAbstractSet() throws Throwable {
+		ValueTypeGenerator.generateNonInterfaceClassWithMissingFlags("testNonInterfaceClassMustHaveFinalIdentityAbstractSet");
+	}
+
 	static void checkObject(Object ...objects) throws Throwable {
 		com.ibm.jvm.Dump.SystemDump();
 	}

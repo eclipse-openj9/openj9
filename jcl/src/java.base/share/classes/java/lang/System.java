@@ -129,19 +129,27 @@ public final class System {
 
 	private static boolean propertiesInitialized;
 
-	private static String platformEncoding;
-	private static String fileEncoding;
-	private static String osEncoding;
-	private static String defaultTmpDir;
-
-	private static final int sysPropID_PlatformEncoding = 1;
-	private static final int sysPropID_FileEncoding = 2;
-	private static final int sysPropID_OSEncoding = 3;
-	private static final int sysPropID_DefaultTmpDir = 4;
 	/*[IF JAVA_SPEC_VERSION >= 17]*/
 	private static final int sysPropID_OSVersion = 0;
 	private static final String sysPropOSVersion;
 	/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
+
+	private static final int sysPropID_PlatformEncoding = 1;
+	private static String platformEncoding;
+
+	private static final int sysPropID_FileEncoding = 2;
+	private static String fileEncoding;
+
+	private static final int sysPropID_OSEncoding = 3;
+	private static String osEncoding;
+
+	private static final int sysPropID_DefaultTmpDir = 4;
+	private static String defaultTmpDir;
+
+	/*[IF (JAVA_SPEC_VERSION >= 21) & (PLATFORM-mz31 | PLATFORM-mz64)]*/
+	private static final int sysPropID_zOSAutoConvert = 5;
+	private static String zOSAutoConvert;
+	/*[ENDIF] (JAVA_SPEC_VERSION >= 21) & (PLATFORM-mz31 | PLATFORM-mz64) */
 
 	/*[IF JAVA_SPEC_VERSION >= 11]*/
 	private static boolean hasSetErrEncoding;
@@ -195,6 +203,14 @@ public final class System {
 			osEncoding = definedOSEncoding;
 		}
 		defaultTmpDir = getSysPropBeforePropertiesInitialized(sysPropID_DefaultTmpDir);
+
+		/*[IF (JAVA_SPEC_VERSION >= 21) & (PLATFORM-mz31 | PLATFORM-mz64)]*/
+		/* As part of better handling of JEP400 constraints on z/OS, the com.ibm.autocvt property
+		 * determines whether we convert input file I/O based on file tagging. If not explicitly specified,
+		 * the property defaults to true, unless file.encoding is set to COMPAT.
+		 */
+		zOSAutoConvert = getSysPropBeforePropertiesInitialized(sysPropID_zOSAutoConvert);
+		/*[ENDIF] (JAVA_SPEC_VERSION >= 21) & (PLATFORM-mz31 | PLATFORM-mz64) */
 	}
 
 	/*[IF JAVA_SPEC_VERSION >= 11]*/
@@ -717,6 +733,10 @@ private static void ensureProperties(boolean isInitialization) {
 	/* Set native.encoding after setting all the defined properties, it can't be modified by using -D on the command line */
 	initializedProperties.put("native.encoding", platformEncoding); //$NON-NLS-1$
 	/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
+
+	/*[IF (JAVA_SPEC_VERSION >= 21) & (PLATFORM-mz31 | PLATFORM-mz64)]*/
+	initializedProperties.put("com.ibm.autocvt", zOSAutoConvert); //$NON-NLS-1$
+	/*[ENDIF] (JAVA_SPEC_VERSION >= 21) & (PLATFORM-mz31 | PLATFORM-mz64) */
 
 	/*[IF JAVA_SPEC_VERSION >= 19]*/
 	if (null != stdoutProp) {

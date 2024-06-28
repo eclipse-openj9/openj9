@@ -173,6 +173,14 @@ public class ValueTypeGenerator extends ClassLoader {
 		return generator.defineClass(name, bytes, 0, bytes.length);
 	}
 
+	public static void generateNonInterfaceClassWithMissingFlags(String name) {
+		ClassWriter classWriter = new ClassWriter(0);
+		classWriter.visit(ValhallaUtils.VALUE_TYPE_CLASS_FILE_VERSION, 0, name, null, "java/lang/Object", null);
+		classWriter.visitEnd();
+		byte[] bytes = classWriter.toByteArray();
+		generator.defineClass(name, bytes, 0, bytes.length);
+	}
+
 	private static byte[] generateClass(ClassConfiguration config) {
 		String className = config.getName();
 		String superName = config.getSuperName();

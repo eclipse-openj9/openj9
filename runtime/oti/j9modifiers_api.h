@@ -45,14 +45,12 @@
  * that has already been read in */
 #define J9ROMCLASS_IS_PUBLIC(romClass)          _J9ROMCLASS_SUNMODIFIER_IS_SET((romClass), J9AccPublic)
 #define J9ROMCLASS_IS_FINAL(romClass)           _J9ROMCLASS_SUNMODIFIER_IS_SET((romClass), J9AccFinal)
-#define J9ROMCLASS_IS_SUPER(romClass)           _J9ROMCLASS_SUNMODIFIER_IS_SET((romClass), J9AccSuper)
 #define J9ROMCLASS_IS_INTERFACE(romClass)       _J9ROMCLASS_SUNMODIFIER_IS_SET((romClass), J9AccInterface)
 #define J9ROMCLASS_IS_ABSTRACT(romClass)        _J9ROMCLASS_SUNMODIFIER_IS_SET((romClass), J9AccAbstract)
 
 #define J9ROMCLASS_IS_SYNTHETIC(romClass)		_J9ROMCLASS_SUNMODIFIER_IS_SET((romClass), J9AccSynthetic)
 #define J9ROMCLASS_IS_ARRAY(romClass)			_J9ROMCLASS_SUNMODIFIER_IS_SET((romClass), J9AccClassArray)
 #define J9ROMCLASS_IS_PRIMITIVE_TYPE(romClass)	_J9ROMCLASS_SUNMODIFIER_IS_SET((romClass), J9AccClassInternalPrimitiveType)
-#define J9ROMCLASS_HAS_IDENTITY(romClass)			_J9ROMCLASS_SUNMODIFIER_IS_SET((romClass), J9AccClassHasIdentity)
 
 #define J9ROMCLASS_IS_INTERMEDIATE_DATA_A_CLASSFILE(romClass)		_J9ROMCLASS_J9MODIFIER_IS_SET((romClass), J9AccClassIntermediateDataIsClassfile)
 #define J9ROMCLASS_IS_UNSAFE(romClass)			_J9ROMCLASS_J9MODIFIER_IS_SET((romClass), J9AccClassUnsafe)

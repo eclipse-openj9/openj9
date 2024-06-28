@@ -2902,8 +2902,8 @@ done:
 	inlClassIsIdentity(REGISTER_ARGS_LIST)
 	{
 		J9Class *receiverClazz = J9VM_J9CLASS_FROM_HEAPCLASS(_currentThread, *(j9object_t*)_sp);
-		bool isIdentity = J9ROMCLASS_HAS_IDENTITY(receiverClazz->romClass);
-		returnSingleFromINL(REGISTER_ARGS, (isIdentity ? 1 : 0), 1);
+		bool isValue = J9ROMCLASS_IS_VALUE(receiverClazz->romClass);
+		returnSingleFromINL(REGISTER_ARGS, (isValue ? 0 : 1), 1);
 		return EXECUTE_BYTECODE;
 	}
 
