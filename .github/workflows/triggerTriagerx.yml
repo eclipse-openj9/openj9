@@ -48,8 +48,7 @@ jobs:
 
             const apiUrl = "http://140.211.168.122/recommendation";
 
-            // actual one: 19673
-            const sandboxIssueNumber = 1;
+            const sandboxIssueNumber = 19673;
             const sandboxOwner = context.repo.owner;
             const sandboxRepo = context.repo.repo;
 
