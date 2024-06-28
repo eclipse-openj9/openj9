@@ -515,7 +515,7 @@ public class ValueTypeGenerator extends ClassLoader {
 		mv.visitMaxs(1, 2);
 		mv.visitEnd();
 	}
-	
+
 	private static void testCheckCastOnInvalidLtype(ClassWriter cw) {
 		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC + ACC_STATIC, "testCheckCastOnInvalidLtype", "()Ljava/lang/Object;", null, null);
 		mv.visitCode();
