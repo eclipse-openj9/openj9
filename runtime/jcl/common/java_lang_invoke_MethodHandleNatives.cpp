@@ -295,7 +295,8 @@ typedef struct LocalJ9UTF8Buffer {
 	/**
 	 * Constructs an empty LocalJ9UTF8Buffer.
 	 */
-	LocalJ9UTF8Buffer() = default;
+	LocalJ9UTF8Buffer() : utf8(nullptr), capacity(0), cursor(nullptr)
+	{}
 
 	/**
 	 * Constructs a LocalJ9UTF8Buffer object from a J9UTF8 object pointer
@@ -349,7 +350,7 @@ typedef struct LocalJ9UTF8Buffer {
 	}
 
 	/**
-	 * Null-terminates the data, and sets the J9UTF8 length from a cursor-position calcuation.
+	 * Null-terminates the data, and sets the J9UTF8 length from a cursor-position calculation.
 	 */
 	void commitLength()
 	{
@@ -561,7 +562,7 @@ getJ9UTF8SignatureFromMethodTypeWithMemAlloc(J9VMThread *currentThread, j9object
 	UDATA signatureUtf8Size = signatureLength + sizeof(J9UTF8) + 1; /* +1 for a null-terminator */
 	result = reinterpret_cast<J9UTF8 *>(j9mem_allocate_memory(signatureUtf8Size, OMRMEM_CATEGORY_VM));
 	if (NULL != result) {
-		LocalJ9UTF8Buffer stringBuffer = LocalJ9UTF8Buffer(result, signatureUtf8Size);
+		LocalJ9UTF8Buffer stringBuffer(result, signatureUtf8Size);
 
 		stringBuffer.putCharAtCursor('(');
 		for (U_32 i = 0; i < numArgs; i++) {
@@ -973,9 +974,11 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(
 	const J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	jobject result = NULL;
 	J9UTF8 *name = NULL;
-	char nameBuffer[256] = {0};
+	char nameBuffer[256];
+	nameBuffer[0] = 0;
 	J9UTF8 *signature = NULL;
-	char signatureBuffer[256] = {0};
+	char signatureBuffer[256];
+	signatureBuffer[0] = 0;
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 
@@ -1021,7 +1024,7 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(
 				if (NULL != sigString) {
 					signature = vmFuncs->copyStringToJ9UTF8WithMemAlloc(currentThread, sigString, J9_STR_XLAT, "", 0, signatureBuffer, sizeof(signatureBuffer));
 				} else {
-					LocalJ9UTF8Buffer stringBuffer = LocalJ9UTF8Buffer(signatureBuffer, sizeof(signatureBuffer));
+					LocalJ9UTF8Buffer stringBuffer(signatureBuffer, sizeof(signatureBuffer));
 					signature = getJ9UTF8SignatureFromMethodType(currentThread, typeObject, &stringBuffer);
 				}
 			} else if (J9VMJAVALANGSTRING_OR_NULL(vm) == typeClass) {
@@ -1403,9 +1406,11 @@ Java_java_lang_invoke_MethodHandleNatives_getMembers(
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 	jint result = 0;
 	J9UTF8 *name = NULL;
-	char nameBuffer[256] = {0};
+	char nameBuffer[256];
+	nameBuffer[0] = 0;
 	J9UTF8 *signature = NULL;
-	char signatureBuffer[256] = {0};
+	char signatureBuffer[256];
+	signatureBuffer[0] = 0;
 	j9object_t callerObject = ((NULL == caller) ? NULL : J9_JNI_UNWRAP_REFERENCE(caller));
 
 	PORT_ACCESS_FROM_JAVAVM(vm);
