@@ -17,9 +17,6 @@ jobs:
       - name: Install dependencies
         run: npm install axios
 
-      - name: Checkout repository
-        uses: actions/checkout@v2
-
       - name: Make a request to the TriagerX server
         uses: actions/github-script@v4
         with:
