@@ -71,7 +71,7 @@ typedef struct URLElements {
 } URLElements;
 
 
-static J9ClassPathEntry *getCachedURL(JNIEnv *env, jint helperID, const char *pathChars, jsize pathLen, UDATA cpeType, U_16 cpeStatus, const char *correctedPath);
+static J9ClassPathEntry *getCachedURL(JNIEnv *env, jint helperID, const URLElements *urlElements, U_16 cpeStatus);
 static const char* copyString(J9PortLibrary* portlib, const char* toCopy, UDATA length, J9SharedStringFarm** farmRoot, const J9UTF8** makeUTF8);
 UDATA urlHashFn(void* item, void *userData);
 static jint createURLEntry(JNIEnv *env, jint helperID, J9ClassPathEntry **cpEntry_, const char *correctedPathCopy, UDATA cpeType, U_16 cpeStatus);
@@ -615,7 +615,7 @@ getCpeTypeForProtocol(JNIEnv *env, const char *protocol, jsize protocolLen, cons
 
 /* THREADING: Must be protected by jclCacheMutex */
 static J9ClassPathEntry *
-getCachedURL(JNIEnv *env, jint helperID, const char *pathChars, jsize pathLen, UDATA cpeType, U_16 cpeStatus, const char *correctedPath)
+getCachedURL(JNIEnv *env, jint helperID, const URLElements *urlElements, U_16 cpeStatus)
 {
 	J9JavaVM* vm = ((J9VMThread*)env)->javaVM;
 	struct URLhtEntry* anElement = NULL;
@@ -625,15 +625,14 @@ getCachedURL(JNIEnv *env, jint helperID, const char *pathChars, jsize pathLen, U
 
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
-	Trc_JCL_com_ibm_oti_shared_getCachedURL_Entry(env, helperID, cpeType);
+	Trc_JCL_com_ibm_oti_shared_getCachedURL_Entry_1(env, helperID);
 
 	if (urlHashTable) {
 		struct URLhtEntry dummy;
 
-		dummy.origPath = pathChars;
-		dummy.origPathLen = pathLen;
+		dummy.origPath = urlElements->pathChars;
+		dummy.origPathLen = urlElements->pathLen;
 		dummy.helperID = helperID;
-		dummy.cpeType = cpeType;
 
 		anElement = (struct URLhtEntry*)hashTableFind(urlHashTable, (void*)&dummy);
 	}
@@ -643,10 +642,21 @@ getCachedURL(JNIEnv *env, jint helperID, const char *pathChars, jsize pathLen, U
 	} else {
 		URLhtEntry newEntry;
 		const char* origPathCopy;
+		char *correctedPath = NULL;
+		UDATA cpeType = getCpeTypeForProtocol(
+			env,
+			urlElements->protocolChars,
+			urlElements->protocolLen,
+			urlElements->pathChars,
+			urlElements->pathLen,
+			&correctedPath);
+		if (CPE_TYPE_UNKNOWN == cpeType) {
+			goto _error;
+		}
 
 		/* We must make a copy of the path
 			This is kept in the URLhtEntry and must be valid for the lifetime of the JVM */
-		if (!(origPathCopy = getCachedString(env, (const char*)pathChars, (jsize)pathLen, &(config->jclStringFarm), NULL))) {
+		if (!(origPathCopy = getCachedString(env, urlElements->pathChars, urlElements->pathLen, &(config->jclStringFarm), NULL))) {
 			Trc_JCL_com_ibm_oti_shared_getCachedURL_FailedStringCopy(env);
 			goto _error;
 		}
@@ -657,7 +667,7 @@ getCachedURL(JNIEnv *env, jint helperID, const char *pathChars, jsize pathLen, U
 
 		/* The original (not corrected) path is used as a key so that the correction does not have to be performed for each lookup */
 		newEntry.origPath = (const char*)origPathCopy;
-		newEntry.origPathLen = pathLen;
+		newEntry.origPathLen = urlElements->pathLen;
 		newEntry.helperID = helperID;
 		newEntry.cpeType = cpeType;
 		newEntry.data = urlEntry;
@@ -816,10 +826,6 @@ urlHashEqualFn(void* left, void* right, void *userData)
 
 	if (leftItem->helperID != rightItem->helperID) {
 		Trc_JCL_com_ibm_oti_shared_urlHashEqualFn_Exit1();
-		return 0;
-	}
-	if (leftItem->cpeType != rightItem->cpeType) {
-		Trc_JCL_com_ibm_oti_shared_urlHashEqualFn_Exit2();
 		return 0;
 	}
 	result = J9UTF8_DATA_EQUALS(leftItem->origPath, leftItem->origPathLen, rightItem->origPath, rightItem->origPathLen);
@@ -1246,14 +1252,12 @@ Java_com_ibm_oti_shared_SharedClassURLHelperImpl_findSharedClassImpl3(JNIEnv* en
 	jmethodID urlGetProtocolID = NULL;
 	J9ROMClass* romClass = NULL;
 	J9ClassPathEntry* urlEntry = NULL;
-	UDATA cpeType = 0;
 	UDATA oldState;
 	const J9UTF8* partition = NULL;
 	omrthread_monitor_t jclCacheMutex = config->jclCacheMutex;
 	U_16 cpeStatus = minimizeUpdateChecks ? CPE_STATUS_IGNORE_ZIP_LOAD_STATE : 0;
 	J9ClassLoader* classloader;
 	URLElements urlElements = {0};
-	char *correctedPath = NULL;
 	
 	Trc_JCL_com_ibm_oti_shared_SharedClassURLHelperImpl_findSharedClassImpl_Entry(env, helperID);
 
@@ -1285,20 +1289,10 @@ Java_com_ibm_oti_shared_SharedClassURLHelperImpl_findSharedClassImpl3(JNIEnv* en
 	if (!getStringPair(env, &nameChars, &nameLen, &partitionChars, &partitionLen, classNameObj, partitionObj)) {
 		goto _errorPostClassNamePartition;
 	}
-	cpeType = getCpeTypeForProtocol(
-			env,
-			urlElements.protocolChars,
-			urlElements.protocolLen,
-			urlElements.pathChars,
-			urlElements.pathLen,
-			&correctedPath);
-	if (CPE_TYPE_UNKNOWN == cpeType) {
-		goto _errorPostClassNamePartition;
-	}
 
 	omrthread_monitor_enter(jclCacheMutex);
 
-	urlEntry = getCachedURL(env, helperID, urlElements.pathChars, urlElements.pathLen, cpeType, cpeStatus, correctedPath);
+	urlEntry = getCachedURL(env, helperID, &urlElements, cpeStatus);
 	if (NULL == urlEntry) {
 		omrthread_monitor_exit(jclCacheMutex);
 		goto _errorPostClassNamePartition;
@@ -1364,7 +1358,6 @@ Java_com_ibm_oti_shared_SharedClassURLHelperImpl_storeSharedClassImpl3(JNIEnv* e
 	J9ROMClass* romClass = NULL;
 	J9ROMClass* newROMClass = NULL;
 	J9ClassPathEntry* urlEntry = NULL;
-	UDATA cpeType = 0;
 	J9ClassLoader* classloader;
 	UDATA oldState;
 	jint result;
@@ -1373,7 +1366,6 @@ Java_com_ibm_oti_shared_SharedClassURLHelperImpl_storeSharedClassImpl3(JNIEnv* e
 	SCAbstractAPI * sharedapi = (SCAbstractAPI *)(config->sharedAPIObject);
 	U_16 cpeStatus = minimizeUpdateChecks ? CPE_STATUS_IGNORE_ZIP_LOAD_STATE : 0;
 	URLElements urlElements = {0};
-	char *correctedPath = NULL;
 
 	Trc_JCL_com_ibm_oti_shared_SharedClassURLHelperImpl_storeSharedClassImpl_Entry(env, helperID);
 
@@ -1406,20 +1398,10 @@ Java_com_ibm_oti_shared_SharedClassURLHelperImpl_storeSharedClassImpl3(JNIEnv* e
 	if (!getStringChars(env, &partitionChars, &partitionLen, partitionObj)) {
 		goto _errorPostPathProtocol;
 	}
-	cpeType = getCpeTypeForProtocol(
-			env,
-			urlElements.protocolChars,
-			urlElements.protocolLen,
-			urlElements.pathChars,
-			urlElements.pathLen,
-			&correctedPath);
-	if (CPE_TYPE_UNKNOWN == cpeType) {
-		goto _errorPostPartition;
-	}
 
 	omrthread_monitor_enter(jclCacheMutex);
 
-	urlEntry = getCachedURL(env, helperID, urlElements.pathChars, urlElements.pathLen, cpeType, cpeStatus, correctedPath);
+	urlEntry = getCachedURL(env, helperID, &urlElements, cpeStatus);
 	if (NULL == urlEntry) {
 		omrthread_monitor_exit(jclCacheMutex);
 		goto _errorPostPartition;
