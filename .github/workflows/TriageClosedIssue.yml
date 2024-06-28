@@ -29,11 +29,14 @@ jobs:
             const sandboxRepo = context.repo.repo;
             
             const actualLabels = issueData.labels.map(label => label['name']);
-
             let resultString = `Issue number: ${context.issue.number}\n`;
             resultString += 'Status: Closed\n';
-            resultString += `Actual Components: ${actualLabels.join(', ')}\n`;
-
+            if (actualLabels.length > 0) {
+              resultString += `Actual components: ${actualLabels.join(', ')}\n`;
+            } else {
+              resultString += `Actual components: None :(\n`;
+            }
+            
             // Check if there is a closed/merged pull request associated with the issue
             // Check if the pull request has been merged
 
