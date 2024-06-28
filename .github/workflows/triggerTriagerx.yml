@@ -46,7 +46,7 @@ jobs:
               "issue_description": issueDescription,
             }
 
-            const apiUrl = "http://140.211.168.122/recommendation";
+            const apiUrl = "http://140.211.168.122/recommendatio";
 
             // actual one: 19673
             const sandboxIssueNumber = 1;
