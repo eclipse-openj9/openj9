@@ -43,7 +43,7 @@ jobs:
 
             const input = {
               "issue_title": issueTitle,
-              "issue_description": issueDescripton,
+              "issue_description": issueDescription,
             }
 
             const apiUrl = "http://140.211.168.122/recommendation";
