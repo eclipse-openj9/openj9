@@ -11097,21 +11097,21 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
                OMR::CodeGenerator::MethodStats methodStats;
                compiler->cg()->getMethodStats(methodStats);
 
-               TR_VerboseLog::writeLineLocked(TR_Vlog_METHOD_STATS, "%s j9m=%p "
-                                                                    "codeSize=%iB warmBlocks=%iB coldBlocks=%iB "
-                                                                    "prologue=%iB snippets=%iB outOfLine=%iB "
-                                                                    "unaccounted=%iB blocksInColdCache=%iB "
-                                                                    "overestimateInColdCache=%iB",
-                                                                     compiler->signature(), method,
-                                                                     methodStats.codeSize,
-                                                                     methodStats.warmBlocks,
-                                                                     methodStats.coldBlocks,
-                                                                     methodStats.prologue,
-                                                                     methodStats.snippets,
-                                                                     methodStats.outOfLine,
-                                                                     methodStats.unaccounted,
-                                                                     methodStats.blocksInColdCache,
-                                                                     methodStats.overestimateInColdCache);
+               TR_VerboseLog::writeLine(TR_Vlog_METHOD_STATS, "%s j9m=%p "
+                                                              "codeSize=%iB warmBlocks=%iB coldBlocks=%iB "
+                                                              "prologue=%iB snippets=%iB outOfLine=%iB "
+                                                              "unaccounted=%iB blocksInColdCache=%iB "
+                                                              "overestimateInColdCache=%iB",
+                                                               compiler->signature(), method,
+                                                               methodStats.codeSize,
+                                                               methodStats.warmBlocks,
+                                                               methodStats.coldBlocks,
+                                                               methodStats.prologue,
+                                                               methodStats.snippets,
+                                                               methodStats.outOfLine,
+                                                               methodStats.unaccounted,
+                                                               methodStats.blocksInColdCache,
+                                                               methodStats.overestimateInColdCache);
                }
             }
 
