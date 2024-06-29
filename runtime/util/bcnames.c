@@ -486,13 +486,8 @@ const char * const sunJavaBCNames[] = {
 "JBgotow" /* 200 */,
 "JBjsrw" /* 201 */,
 "JBbreakpoint" /* 202 */,
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-"JBaconst_init" /* 203 */,
-"JBwithfield" /* 204 */,
-#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 "JBunimplemented" /* 203 */,
 "JBunimplemented" /* 204 */,
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 "JBunimplemented" /* 205 */,
 "JBunimplemented" /* 206 */,
 "JBunimplemented" /* 207 */,

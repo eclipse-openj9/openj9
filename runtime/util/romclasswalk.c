@@ -546,9 +546,6 @@ static void allSlotsInBytecodesDo(J9ROMClass* romClass, J9ROMMethod* method, J9R
 			case JBputstatic:
 			case JBgetfield:
 			case JBputfield:
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-			case JBwithfield:
-#endif
 			case JBinvokevirtual:
 			case JBinvokespecial:
 			case JBinvokestatic:
@@ -557,9 +554,6 @@ static void allSlotsInBytecodesDo(J9ROMClass* romClass, J9ROMMethod* method, J9R
 			case JBinvokedynamic:
 			case JBinvokeinterface:
 			case JBnew:
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-			case JBaconst_init:
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 			case JBnewdup:
 			case JBanewarray:
 			case JBcheckcast:

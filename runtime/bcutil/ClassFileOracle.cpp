@@ -2176,24 +2176,6 @@ ClassFileOracle::walkMethodCodeAttributeCode(U_16 methodIndex)
 			}
 			break;
 		}
-
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-		case CFR_BC_aconst_init:
-			if (_classFile->majorVersion >= VALUE_TYPES_MAJOR_VERSION) {
-				cpIndex = PARAM_U16();
-				addBytecodeFixupEntry(entry++, codeIndex + 1, cpIndex, ConstantPoolMap::ACONST_INIT);
-				markClassAsUsedByAconst_init(cpIndex);
-			}
-			break;
-		case CFR_BC_withfield:
-			if (_classFile->majorVersion >= VALUE_TYPES_MAJOR_VERSION) {
-				cpIndex = PARAM_U16();
-				addBytecodeFixupEntry(entry++, codeIndex + 1, cpIndex, ConstantPoolMap::WITH_FIELD);
-				markFieldRefAsUsedByWithField(cpIndex);
-			}
-			break;
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
-
 		default:
 			/* Do nothing */
 			break;
@@ -2865,22 +2847,6 @@ ClassFileOracle::markClassAsUsedByNew(U_16 classCPIndex)
 	markClassAsReferenced(classCPIndex);
 	_constantPoolMap->markClassAsUsedByNew(classCPIndex);
 }
-
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-void
-ClassFileOracle::markClassAsUsedByAconst_init(U_16 classCPIndex)
-{
-	markClassAsReferenced(classCPIndex);
-	_constantPoolMap->markClassAsUsedByAconst_init(classCPIndex);
-}
-
-void
-ClassFileOracle::markFieldRefAsUsedByWithField(U_16 fieldRefCPIndex)
-{
-	markFieldRefAsReferenced(fieldRefCPIndex);
-	_constantPoolMap->markFieldRefAsUsedByWithField(fieldRefCPIndex);
-}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 void
 ClassFileOracle::markFieldRefAsUsedByGetStatic(U_16 fieldRefCPIndex)
