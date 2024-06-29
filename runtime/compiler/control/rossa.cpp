@@ -246,6 +246,11 @@ extern "C" int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_Fro
 extern "C" int32_t startJITServer(J9JITConfig *jitConfig);
 extern "C" int32_t waitJITServerTermination(J9JITConfig *jitConfig);
 
+extern "C" void jitAddNewLowToHighRSSRegion(const char *name, uint8_t *start, uint32_t size, size_t pageSize)
+   {
+   static OMR::RSSReport *rssReport = OMR::RSSReport::instance();
+   rssReport->addNewRegion(name, start, size, OMR::RSSRegion::lowToHigh, pageSize);
+   }
 
 
 // -----------------------------------------------------------------------------
@@ -1396,6 +1401,12 @@ onLoadInternal(
    memset(aotStats, 0, sizeof(TR_AOTStats));
    ((TR_JitPrivateConfig*)jitConfig->privateConfig)->aotStats = aotStats;
 
+   bool produceRSSReportDetailed = TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseRSSReportDetailed);
+   bool produceRSSReport = produceRSSReportDetailed || TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseRSSReport);
+
+   if (produceRSSReport)
+      new (PERSISTENT_NEW) OMR::RSSReport(produceRSSReportDetailed);
+
    TR::CodeCacheManager *codeCacheManager = (TR::CodeCacheManager *) j9mem_allocate_memory(sizeof(TR::CodeCacheManager), J9MEM_CATEGORY_JIT);
    if (codeCacheManager == NULL)
       return -1;
@@ -1894,6 +1905,10 @@ onLoadInternal(
          return -1;
       persistentMemory->getPersistentInfo()->setInvokeExactJ2IThunkTable(ieThunkTable);
       }
+
+
+   jitConfig->jitAddNewLowToHighRSSRegion = jitAddNewLowToHighRSSRegion;
+
    return 0;
    }
 

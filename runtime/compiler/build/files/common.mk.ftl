@@ -392,7 +392,8 @@ JIT_PRODUCT_SOURCE_FILES+=\
     omr/compiler/runtime/OMRCodeCacheConfig.cpp \
     omr/compiler/runtime/OMRCodeCacheManager.cpp \
     omr/compiler/runtime/OMRCodeCacheMemorySegment.cpp \
-    omr/compiler/runtime/OMRRuntimeAssumptions.cpp
+    omr/compiler/runtime/OMRRuntimeAssumptions.cpp \
+    omr/compiler/runtime/OMRRSSReport.cpp
 
 <#if uma.spec.flags.opt_jitserver.enabled>
 JIT_PRODUCT_SOURCE_FILES+=\
