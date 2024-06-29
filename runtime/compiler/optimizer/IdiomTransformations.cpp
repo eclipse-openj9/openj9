@@ -9171,28 +9171,21 @@ CISCTransform2ArrayCmp2Ifs(TR_CISCTransformer *trans)
    lengthNode = TR::Node::create(TR::isub, 2, lengthNode, TR::Node::create(mulFactorNode, TR::iconst, 0, 1));
 
    int shrCount = 0;
-   TR::Node * elementSizeNode = NULL;
    if (elementSize > 1)
       {
-      //FIXME: enable this code for 64-bit
-      // currently disabled until all uses of lengthNode are
-      // sign-extended correctly
-      //
-      TR::ILOpCodes mulOp = TR::imul;
-#if 0
       if (comp->target().is64Bit())
          {
-         elementSizeNode = TR::Node::create(mulFactorNode, TR::lconst);
-         elementSizeNode->setLongInt(elementSize);
+         TR::Node *elementSizeNode = TR::Node::lconst(mulFactorNode, elementSize);
          lengthNode = TR::Node::create(TR::i2l, 1, lengthNode);
-         mulOp = TR::lmul;
+         lengthNode = TR::Node::create(TR::lmul, 2, lengthNode, elementSizeNode);
          }
       else
-#endif
-         elementSizeNode = TR::Node::create(mulFactorNode, TR::iconst, 0, elementSize);
-      lengthNode = TR::Node::create(mulOp, 2,
-                                   lengthNode,
-                                   elementSizeNode);
+         {
+         TR::Node *elementSizeNode = TR::Node::iconst(mulFactorNode, elementSize);
+         lengthNode = TR::Node::create(TR::imul, 2, lengthNode, elementSizeNode);
+         lengthNode = TR::Node::create(TR::iu2l, 1, lengthNode);
+         }
+
       switch(elementSize)
          {
          case 2: shrCount = 1; break;
@@ -9201,6 +9194,8 @@ CISCTransform2ArrayCmp2Ifs(TR_CISCTransformer *trans)
          default: TR_ASSERT(false, "error");
          }
       }
+   else
+      lengthNode = TR::Node::create(TR::iu2l, 1, lengthNode);
 
    // Currently, it is inserted by reorderTargetNodesInBB()
    bool isCompensateCode = !trans->isEmptyAfterInsertionIdiomList(0) || !trans->isEmptyAfterInsertionIdiomList(1);
@@ -9228,20 +9223,19 @@ CISCTransform2ArrayCmp2Ifs(TR_CISCTransformer *trans)
    TR::TreeTop * newLastTreeTop[2];
 
    // Using arraycmplen
-   lengthNode = TR::Node::create(TR::iu2l, 1, lengthNode);
    TR::Node * arraycmplen = TR::Node::create(TR::arraycmplen, 3, input1Node, input2Node, lengthNode);
    arraycmplen->setSymbolReference(comp->getSymRefTab()->findOrCreateArrayCmpLenSymbol());
 
-   arraycmplen = TR::Node::create(TR::l2i, 1, arraycmplen);
-   TR::SymbolReference * resultSymRef = comp->getSymRefTab()->createTemporary(comp->getMethodSymbol(), TR::Int32);
+   TR::SymbolReference * resultSymRef = comp->getSymRefTab()->createTemporary(comp->getMethodSymbol(), TR::Int64);
    topArraycmp = TR::Node::createStore(resultSymRef, arraycmplen);
    TR::Node *equalLen = TR::Node::createLoad(topArraycmp, resultSymRef);
    if (shrCount != 0)
       {
-      equalLen = TR::Node::create(TR::ishr, 2,
+      equalLen = TR::Node::create(TR::lshr, 2,
                                  equalLen,
-                                 TR::Node::create(equalLen, TR::iconst, 0, shrCount));
+                                 TR::Node::iconst(shrCount));
       }
+   equalLen = TR::Node::create(TR::l2i, 1, equalLen);
 
    TR::Node *tmpNode = createStoreOP2(comp, src1IdxSymRef, TR::iadd, src1IdxSymRef, equalLen, trNode);
    newFirstTreeTop[0] = TR::TreeTop::create(comp, tmpNode);
@@ -9721,28 +9715,21 @@ CISCTransform2ArrayCmp(TR_CISCTransformer *trans)
       }
 
    int shrCount = 0;
-   TR::Node * elementSizeNode = NULL;
    if (elementSize > 1)
       {
-      //FIXME: enable this code for 64-bit
-      // currently disabled until all uses of lengthNode are
-      // sign-extended correctly
-      //
-      TR::ILOpCodes mulOp = TR::imul;
-#if 0
       if (comp->target().is64Bit())
          {
-         elementSizeNode = TR::Node::create(mulFactorNode, TR::lconst);
-         elementSizeNode->setLongInt(elementSize);
-         mulOp = TR::lmul;
+         TR::Node *elementSizeNode = TR::Node::lconst(mulFactorNode, elementSize);
          lengthNode = TR::Node::create(TR::i2l, 1, lengthNode);
+         lengthNode = TR::Node::create(TR::lmul, 2, lengthNode, elementSizeNode);
          }
       else
-#endif
-         elementSizeNode = TR::Node::create(mulFactorNode, TR::iconst, 0, elementSize);
-      lengthNode = TR::Node::create(mulOp, 2,
-                                   lengthNode,
-                                   elementSizeNode);
+         {
+         TR::Node *elementSizeNode = TR::Node::iconst(mulFactorNode, elementSize);
+         lengthNode = TR::Node::create(TR::imul, 2, lengthNode, elementSizeNode);
+         lengthNode = TR::Node::create(TR::iu2l, 1, lengthNode);
+         }
+
       switch(elementSize)
          {
          case 2: shrCount = 1; break;
@@ -9751,6 +9738,8 @@ CISCTransform2ArrayCmp(TR_CISCTransformer *trans)
          default: TR_ASSERT(false, "error");
          }
       }
+   else
+      lengthNode = TR::Node::create(TR::iu2l, 1, lengthNode);
 
    TR_ASSERT(!generateArraycmplen || !generateArraycmpsign, "error");
 
@@ -9795,20 +9784,20 @@ CISCTransform2ArrayCmp(TR_CISCTransformer *trans)
    if (generateArraycmplen)
       {
       // Using arraycmplen
-      TR::Node * arraycmplen = TR::Node::create(TR::arraycmplen, 3, input1Node, input2Node, TR::Node::create(lengthNode, TR::iu2l, 1, lengthNode));
+      TR::Node * arraycmplen = TR::Node::create(TR::arraycmplen, 3, input1Node, input2Node, lengthNode);
       arraycmplen->setSymbolReference(comp->getSymRefTab()->findOrCreateArrayCmpLenSymbol());
 
-      arraycmplen = TR::Node::create(TR::l2i, 1, arraycmplen);
-      TR::SymbolReference * resultSymRef = comp->getSymRefTab()->createTemporary(comp->getMethodSymbol(), TR::Int32);
+      TR::SymbolReference * resultSymRef = comp->getSymRefTab()->createTemporary(comp->getMethodSymbol(), TR::Int64);
       topArraycmp = TR::Node::createStore(resultSymRef, arraycmplen);
       TR::Node *resultLoad = TR::Node::createLoad(topArraycmp, resultSymRef);
       TR::Node *equalLen = resultLoad;
       if (shrCount != 0)
          {
-         equalLen = TR::Node::create(TR::ishr, 2,
+         equalLen = TR::Node::create(TR::lshr, 2,
                                     equalLen,
                                     TR::Node::create(equalLen, TR::iconst, 0, shrCount));
          }
+      equalLen = TR::Node::create(TR::l2i, 1, equalLen);
 
       TR::Node *tmpNode = createStoreOP2(comp, src1IdxSymRef, TR::iadd, src1IdxSymRef, equalLen, trNode);
       newFirstTreeTop = TR::TreeTop::create(comp, tmpNode);
@@ -9823,7 +9812,7 @@ CISCTransform2ArrayCmp(TR_CISCTransformer *trans)
          newLastTreeTop = tmpTreeTop;
          }
 
-      tmpNode = TR::Node::createif(TR::ificmpeq, lengthNode, resultLoad, okDest);
+      tmpNode = TR::Node::createif(TR::iflcmpeq, lengthNode, resultLoad, okDest);
 
       tmpTreeTop = TR::TreeTop::create(comp, tmpNode);
       newLastTreeTop->join(tmpTreeTop);
@@ -9832,7 +9821,7 @@ CISCTransform2ArrayCmp(TR_CISCTransformer *trans)
    else
       {
       // Using arraycmp
-      TR::Node * arraycmp = TR::Node::create(TR::arraycmp, 3, input1Node, input2Node, createI2LIfNecessary(comp, trans->isGenerateI2L(), lengthNode));
+      TR::Node * arraycmp = TR::Node::create(TR::arraycmp, 3, input1Node, input2Node, lengthNode);
       arraycmp->setSymbolReference(comp->getSymRefTab()->findOrCreateArrayCmpSymbol());
 
       TR::Node * cmpIfNode;
