@@ -35,6 +35,7 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9IndexableObjectContiguousPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9IndexableObjectPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9JavaVMPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMArrayClassPointer;
+import com.ibm.j9ddr.vm29.pointer.generated.MM_GCExtensionsPointer;
 import com.ibm.j9ddr.vm29.pointer.helper.J9IndexableObjectHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ObjectHelper;
 import com.ibm.j9ddr.vm29.structure.GC_ArrayletObjectModelBase$ArrayLayout;
@@ -53,6 +54,8 @@ public abstract class GCArrayletObjectModelBase extends GCArrayObjectModel
 	protected UDATA arrayletLeafSize;
 	protected UDATA arrayletLeafLogSize;
 	protected UDATA arrayletLeafSizeMask;
+	protected boolean enableDoubleMapping;
+	protected boolean enableVirtualLargeObjectHeap;
 
 	public GCArrayletObjectModelBase() throws CorruptDataException
 	{
@@ -64,6 +67,16 @@ public abstract class GCArrayletObjectModelBase extends GCArrayObjectModel
 		arrayletLeafSize = vm.arrayletLeafSize();
 		arrayletLeafLogSize = vm.arrayletLeafLogSize();
 		arrayletLeafSizeMask = arrayletLeafSize.sub(1);
+		try {
+			enableDoubleMapping = arrayletObjectModel._enableDoubleMapping();
+		} catch (NoSuchFieldException e) {
+			enableDoubleMapping = false;
+		}
+		try {
+			enableVirtualLargeObjectHeap = arrayletObjectModel._enableVirtualLargeObjectHeap();
+		} catch (NoSuchFieldException e) {
+			enableVirtualLargeObjectHeap = false;
+		}
 	}
 
 	/**
@@ -163,9 +176,13 @@ public abstract class GCArrayletObjectModelBase extends GCArrayObjectModel
 			}
 		}
 
+		boolean isAllIndexableDataContiguousEnabled = enableDoubleMapping || enableVirtualLargeObjectHeap;
+
 		UDATA spineDataSize = new UDATA(0);
 		if (GC_ArrayletObjectModelBase$ArrayLayout.InlineContiguous == layout) {
-			spineDataSize = dataSize; // All data in spine
+			if (!isAllIndexableDataContiguousEnabled || isArrayletDataAdjacentToHeader(dataSize)) {
+				spineDataSize = dataSize; // All data in spine
+			}
 		} else if (GC_ArrayletObjectModelBase$ArrayLayout.Hybrid == layout) {
 			//TODO: lpnguyen put this pattern that appears everywhere into UDATA and think up a name, or just use mod?00
 			spineDataSize = dataSize.bitAnd(arrayletLeafSizeMask); // Last arraylet in spine.
@@ -242,20 +259,28 @@ public abstract class GCArrayletObjectModelBase extends GCArrayObjectModel
 			}
 		} else {
 			UDATA lastArrayletBytes = dataSizeInBytes.bitAnd(arrayletLeafSizeMask);
+			boolean isAllIndexableDataContiguousEnabled = enableVirtualLargeObjectHeap || enableDoubleMapping;
 
-			/* determine how large the spine would be if this were a hybrid array */
-			UDATA numberArraylets = numArraylets(dataSizeInBytes);
-			boolean align = shouldAlignSpineDataSection(clazz);
-			UDATA hybridSpineBytes = getSpineSize(GC_ArrayletObjectModelBase$ArrayLayout.Hybrid, numberArraylets, dataSizeInBytes, align);
-			UDATA adjustedHybridSpineBytes = ObjectModel.adjustSizeInBytes(hybridSpineBytes);
-			UDATA adjustedHybridSpineBytesAfterMove = adjustedHybridSpineBytes;
-			if (GCExtensions.isVLHGC()) {
-				adjustedHybridSpineBytesAfterMove.add(ObjectModel.getObjectAlignmentInBytes());
-			}
+			if (isAllIndexableDataContiguousEnabled && dataSizeInBytes.gt(0)) {
+				layout = GC_ArrayletObjectModelBase$ArrayLayout.InlineContiguous;
+			} else if (lastArrayletBytes.gt(0)) {
+				/* determine how large the spine would be if this were a hybrid array */
+				UDATA numberArraylets = numArraylets(dataSizeInBytes);
+				boolean align = shouldAlignSpineDataSection(clazz);
+				UDATA hybridSpineBytes = getSpineSize(GC_ArrayletObjectModelBase$ArrayLayout.Hybrid, numberArraylets, dataSizeInBytes, align);
+				UDATA adjustedHybridSpineBytes = ObjectModel.adjustSizeInBytes(hybridSpineBytes);
+				UDATA adjustedHybridSpineBytesAfterMove = adjustedHybridSpineBytes;
+				if (GCExtensions.isVLHGC()) {
+					adjustedHybridSpineBytesAfterMove.add(ObjectModel.getObjectAlignmentInBytes());
+				}
 
-			if (lastArrayletBytes.gt(0) && adjustedHybridSpineBytesAfterMove.lte(largestDesirableArraySpineSize)) {
-				layout = GC_ArrayletObjectModelBase$ArrayLayout.Hybrid;
+				if (adjustedHybridSpineBytesAfterMove.lte(largestDesirableArraySpineSize)) {
+					layout = GC_ArrayletObjectModelBase$ArrayLayout.Hybrid;
+				} else {
+					layout = GC_ArrayletObjectModelBase$ArrayLayout.Discontiguous;
+				}
 			} else {
+				/* remainder is empty, so no arraylet allocated; last arrayoid pointer is set to MULL */
 				layout = GC_ArrayletObjectModelBase$ArrayLayout.Discontiguous;
 			}
 		}
@@ -289,6 +314,16 @@ public abstract class GCArrayletObjectModelBase extends GCArrayObjectModel
 		return VoidPointer.cast(array.addOffset(J9IndexableObjectHelper.contiguousHeaderSize()));
 	}
 
+	/**
+	 * Determine the validity of the data address belonging to arrayPtr.
+	 *
+	 * @param arrayPtr array object who's data address validity we are checking
+	 * @throws CorruptDataException if there's a problem accessing the indexable object dataAddr field
+	 * @throws NoSuchFieldException if the indexable object dataAddr field does not exist on the build that generated the core file
+	 * @return true if the data address of arrayPtr is valid, false otherwise
+	 */
+	public abstract boolean hasCorrectDataAddrPointer(J9IndexableObjectPointer arrayPtr) throws CorruptDataException;
+
 	@Override
 	public UDATA getHashcodeOffset(J9IndexableObjectPointer array) throws CorruptDataException
 	{
@@ -313,6 +348,68 @@ public abstract class GCArrayletObjectModelBase extends GCArrayObjectModel
 	public boolean isInlineContiguousArraylet(J9IndexableObjectPointer array) throws CorruptDataException
 	{
 		return getArrayLayout(array) == GC_ArrayletObjectModelBase$ArrayLayout.InlineContiguous;
+	}
+
+	/**
+	 * Determine if the arraylet data of arrayPtr is adjacent to its header.
+	 *
+	 * @param arrayPtr array object
+	 * @throws CorruptDataException If there's a problem accessing the indexable object dataAddr field
+	 * @return true if the arrayPtr has its data adjacent to its header
+	 */
+	public boolean isArrayletDataAdjacentToHeader(J9IndexableObjectPointer array) throws CorruptDataException
+	{
+		UDATA dataSizeInBytes = getDataSizeInBytes(array);
+		return isArrayletDataAdjacentToHeader(dataSizeInBytes);
+	}
+
+	/**
+	 * Determine if the arraylet data of arrayPtr is adjacent to its header.
+	 *
+	 * @param arrayPtr array object
+	 * @throws CorruptDataException if there's a problem accessing the indexable object dataAddr field
+	 * @return true if the arrayPtr has its data adjacent to its header
+	 */
+	public boolean isArrayletDataAdjacentToHeader(UDATA dataSizeInBytes)  throws CorruptDataException
+	{
+		MM_GCExtensionsPointer extensions = GCBase.getExtensions();
+		UDATA minimumSpineSizeAfterGrowing = new UDATA(ObjectModel.getObjectAlignmentInBytes());
+
+		return largestDesirableArraySpineSize.eq(UDATA.MAX) ||
+        dataSizeInBytes.lte(largestDesirableArraySpineSize
+							.sub(minimumSpineSizeAfterGrowing)
+							.sub(J9IndexableObjectHelper.contiguousHeaderSize()));
+	}
+
+	/**
+	 * Check if the given indexable object is double mapped.
+	 *
+	 * @param address indexable object to check if it is double mapped
+	 * @throws CorruptDataException if there's a problem accessing card table heap fields
+	 * @return true if the given indexable object is double mapped
+	 */
+	public boolean isIndexableObjectDoubleMapped(VoidPointer indexableDataAddr, UDATA dataSizeInBytes) throws CorruptDataException
+	{
+		boolean isObjectWithinHeap = isAddressWithinHeap(indexableDataAddr);
+		return !isObjectWithinHeap && dataSizeInBytes.gte(arrayletLeafSize);
+	}
+
+	/**
+	 * Check if the given address is within the heap.
+	 *
+	 * @param address Address to check if it is within the heap
+	 * @throws CorruptDataException if there's a problem accessing card table heap fields
+	 * @return true if the given address is within the heap
+	 */
+	public boolean isAddressWithinHeap(VoidPointer address) throws CorruptDataException
+	{
+		MM_GCExtensionsPointer extensions = GCBase.getExtensions();
+
+		UDATA heapAddr = UDATA.cast(address);
+		UDATA heapBase = UDATA.cast(extensions.cardTable()._heapBase());
+		UDATA heapTop = UDATA.cast(extensions.cardTable()._heapAlloc());
+
+		return heapAddr.gte(heapBase) && heapAddr.lte(heapTop);
 	}
 
 	/**

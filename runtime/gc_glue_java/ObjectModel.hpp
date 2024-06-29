@@ -562,6 +562,20 @@ public:
 	{
 		GC_ObjectModelBase::fixupForwardedObject(forwardedHeader, destinationObjectPtr, objectAge);
 
+#if defined(J9VM_ENV_DATA64)
+		if (_javaVM->isIndexableDataAddrPresent) {
+			if (isIndexable(forwardedHeader)) {
+				/**
+				 * Update the dataAddr internal field of the indexable object. The field being updated
+				 * points to the array data. In the case of contiguous data, it will point to the data
+				 * itself, and in case of discontiguous arraylets, it will point to the first arrayoid. How to
+				 * update dataAddr is up to the target language that must override fixupDataAddr.
+				 */
+				_indexableObjectModel->fixupDataAddr(forwardedHeader, destinationObjectPtr);
+			}
+		}
+#endif /* defined(J9VM_ENV_DATA64) */
+
 		fixupHashFlagsAndSlot(forwardedHeader, destinationObjectPtr);
 	}
 
