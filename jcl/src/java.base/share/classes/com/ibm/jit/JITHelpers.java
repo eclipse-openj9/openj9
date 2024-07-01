@@ -566,6 +566,7 @@ public final class JITHelpers {
 		}
 	}
 
+/*[IF JAVA_SPEC_VERSION < 17]*/
 	public boolean canEncodeAsLatin1(byte[] array, int start, int length) {
 		int index = start << 1;
 		if (!IS_BIG_ENDIAN) {
@@ -722,6 +723,7 @@ public final class JITHelpers {
 		}
 		return -1;
 	}
+/*[ENDIF] JAVA_SPEC_VERSION < 17 */
 
 	/*
 	 * Constants for optimizedClone
