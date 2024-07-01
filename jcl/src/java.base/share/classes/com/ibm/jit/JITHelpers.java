@@ -566,6 +566,7 @@ public final class JITHelpers {
 		}
 	}
 
+/*[IF JAVA_SPEC_VERSION < 17]*/
 	public boolean canEncodeAsLatin1(byte[] array, int start, int length) {
 		int index = start << 1;
 		if (!IS_BIG_ENDIAN) {
@@ -578,6 +579,7 @@ public final class JITHelpers {
 		}
 		return true;
 	}
+/*[ENDIF] JAVA_SPEC_VERSION < 17 */
 
 	/**
 	 * Returns the first index of the target character array within the source character array starting from the specified
