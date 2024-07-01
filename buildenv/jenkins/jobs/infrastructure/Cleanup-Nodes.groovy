@@ -109,7 +109,7 @@ timeout(time: TIMEOUT_TIME.toInteger(), unit: TIMEOUT_UNITS) {
                                  'testParentDir',
                                  'jni-*',
                                  'mauve',
-                                 'test*',
+                                 'test[^D]*',
                                  'blah-*.tmp',
                                  'lines*.tmp',
                                  'prefix*.json',
