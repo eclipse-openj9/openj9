@@ -23,10 +23,10 @@
 #ifndef ILOPCODES_ENUM_INCL
 #define ILOPCODES_ENUM_INCL
 
-#include "compiler/il/OMRILOpCodesEnum.hpp" 
+#include "compiler/il/OMRILOpCodesEnum.hpp"
 
    FirstJ9Op = LastScalarOMROp + 1,
-   LastJ9Op = BCDCHK,
+   LastJ9Op = storeStoreFence,
    FirstTROp = FirstOMROp,
    LastTROp = LastJ9Op,
 

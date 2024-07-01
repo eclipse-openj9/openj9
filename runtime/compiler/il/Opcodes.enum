@@ -1542,3 +1542,19 @@ OPCODE_MACRO(\
    /* .ifCompareOpCode      = */ TR::BadILOp, \
    /* .description          = */ \
 )
+OPCODE_MACRO(\
+   /* .opcode               = */ storeStoreFence, \
+   /* .name                 = */ "storeStoreFence", \
+   /* .properties1          = */ ILProp1::TreeTop | ILProp1::HasSymbolRef, \
+   /* .properties2          = */ 0, \
+   /* .properties3          = */ ILProp3::LikeUse | ILProp3::LikeDef, \
+   /* .properties4          = */ 0, \
+   /* .dataType             = */ TR::NoType, \
+   /* .typeProperties       = */ 0, \
+   /* .childProperties      = */ ILChildProp::Unspecified, \
+   /* .swapChildrenOpCode   = */ TR::BadILOp, \
+   /* .reverseBranchOpCode  = */ TR::BadILOp, \
+   /* .booleanCompareOpCode = */ TR::BadILOp, \
+   /* .ifCompareOpCode      = */ TR::BadILOp, \
+   /* .description          =    JEP171: prohibits storeStore reordering (on globals) */ \
+)

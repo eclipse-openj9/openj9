@@ -877,6 +877,7 @@ extern void TEMPORARY_initJ9X86TreeEvaluatorTable(TR::CodeGenerator *cg)
    tet[TR::allocationFence] =       TR::TreeEvaluator::NOPEvaluator;
    tet[TR::loadFence] =             TR::TreeEvaluator::barrierFenceEvaluator;
    tet[TR::storeFence] =            TR::TreeEvaluator::barrierFenceEvaluator;
+   tet[TR::storeStoreFence] =       TR::TreeEvaluator::barrierFenceEvaluator;
    tet[TR::fullFence] =             TR::TreeEvaluator::barrierFenceEvaluator;
    tet[TR::ihbit] =                 TR::TreeEvaluator::integerHighestOneBit;
    tet[TR::ilbit] =                 TR::TreeEvaluator::integerLowestOneBit;
@@ -3531,11 +3532,16 @@ TR::Register *J9::X86::TreeEvaluator::BNDCHKwithSpineCHKEvaluator(TR::Node *node
 /*
  * this evaluator is used specifically for evaluate the following three nodes
  *
- *  storFence
- *  loadFence
  *  storeFence
+ *  storeStoreFence
+ *  loadFence
+ *  fullFence
  *
- * Since Java specification for loadfence and storefenc is stronger
+ * For storeStoreFence, The x86 memory model implicitly orders stores
+ * such that stores preceding another store are always made visible.
+ * So it is effectively a nop and does not require additional code.
+ *
+ * Since Java specification for loadfence and storefence is stronger
  * than the intel specification, a full mfence instruction have to
  * be used for all three of them
  *
@@ -3549,11 +3555,11 @@ TR::Register *J9::X86::TreeEvaluator::barrierFenceEvaluator(TR::Node *node, TR::
       {
       generateLabelInstruction(TR::InstOpCode::label, node, generateLabelSymbol(cg), cg);
       }
-   else if(cg->comp()->getOption(TR_X86UseMFENCE))
+   else if (cg->comp()->getOption(TR_X86UseMFENCE))
       {
       generateInstruction(TR::InstOpCode::MFENCE, node, cg);
       }
-   else
+   else if (opCode != TR::storeStoreFence)
       {
       TR::RealRegister *stackReg = cg->machine()->getRealRegister(TR::RealRegister::esp);
       TR::MemoryReference *mr = generateX86MemoryReference(stackReg, intptr_t(0), cg);
