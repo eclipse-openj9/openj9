@@ -122,6 +122,8 @@ set(main_sources
 	intfunc.c
 	J9OMRHelpers.cpp
 	javaPriority.c
+	JFRConstantPoolTypes.cpp
+	JFRChunkWriter.cpp
 	jnicgen.c
 	jnicsup.cpp
 	jnifield.cpp
