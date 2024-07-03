@@ -153,6 +153,8 @@ J9::CodeCache::initialize(TR::CodeCacheManager *manager,
       PORT_ACCESS_FROM_JAVAVM(javaVM); // for j9vmem_supported_page_sizes
 
 #if 0 // might be useful but better to track the whole CodeCache
+      TR_ASSERT_FATAL(_coldCodeRSSRegion == NULL, "Cold code RSS Region is already non-NULL");
+
       _coldCodeRSSRegion = new (PERSISTENT_NEW) OMR::RSSRegion("cold code", _coldCodeAlloc, 0,
                                                                OMR::RSSRegion::highToLow,
                                                                j9vmem_supported_page_sizes()[0]);

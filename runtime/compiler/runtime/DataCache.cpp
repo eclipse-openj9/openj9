@@ -293,8 +293,8 @@ TR_DataCache* TR_DataCacheManager::allocateNewDataCache(uint32_t minimumSize)
                dataCache->_status = 0;
                dataCache->_vmThread = NULL;
                dataCache->_allocationMark = dataCacheSeg->heapAlloc;
+               dataCache->_rssRegion = NULL;
 
-#if 0  // GITA
                if (OMR::RSSReport::instance())
                   {
                   J9JavaVM * javaVM = jitConfig->javaVM;
@@ -304,7 +304,6 @@ TR_DataCache* TR_DataCacheManager::allocateNewDataCache(uint32_t minimumSize)
                                                          j9vmem_supported_page_sizes()[0]);
                   OMR::RSSReport::instance()->addRegion(dataCache->_rssRegion);
                   }
-#endif
 
                _numAllocatedCaches++;
                _totalSegmentMemoryAllocated += (uint32_t)allocatedSize;
@@ -755,7 +754,7 @@ extern "C" {
 #endif
 }
 
-#define DEBUG_DISCLAIM
+//#define DEBUG_DISCLAIM
 //----------------------------- disclaimSegment -----------------------------
 // Disclaim memory for the given segment
 // Return 1 if the memory segment was disclaimed, or 0 otherwise

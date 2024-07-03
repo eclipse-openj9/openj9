@@ -51,7 +51,8 @@ public:
       FULL,
    };
 
-   TR_DataCache() : _rssRegion(NULL) {}
+   // Note: the constructor is not called
+   TR_DataCache() {}
    friend class TR_DataCacheManager;
    // The following methods need to be called on a reserved DataCache
    uint8_t *allocateDataCacheSpace(int32_t size);
