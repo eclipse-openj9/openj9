@@ -134,7 +134,7 @@
 	</test>
 
 	<test id="rc020">
-		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:rc020 -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
+		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:rc020 -XX:+EnableExtendedHCR -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
 		<return type="success" value="0"/>
 	</test>
 
