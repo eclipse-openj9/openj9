@@ -460,6 +460,12 @@ if(NOT JAVA_SPEC_VERSION LESS 23)
 	)
 endif()
 
+if(NOT JAVA_SPEC_VERSION LESS 24)
+	jvm_add_exports(jvm
+		JVM_IsContainerized
+	)
+endif()
+
 if(J9VM_OPT_JITSERVER)
 	jvm_add_exports(jvm
 		JITServer_CreateServer
