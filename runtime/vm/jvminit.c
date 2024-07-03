@@ -1822,18 +1822,37 @@ processContinuationCacheOptions(J9JavaVM *vm)
 	IDATA argIndex = FIND_AND_CONSUME_VMARG(STARTSWITH_MATCH, VMOPT_XXCONTINUATIONCACHE, NULL);
 	if (-1 != argIndex) {
 		char *cursor = NULL;
+		char* scanEnd = NULL;
 		U_32 cacheSize = 0;
+
 		GET_OPTION_OPTION(argIndex, ':', ':', &cursor);
+		scanEnd = cursor + strlen(cursor);
 
-		if (try_scan(&cursor, "t1=") && (0 == omr_scan_u32(&cursor, &cacheSize))) {
-			vm->continuationT1Size = cacheSize;
+		while (cursor < scanEnd) {
+			if (try_scan(&cursor, "t1=") && (0 == omr_scan_u32(&cursor, &cacheSize))) {
+				vm->continuationT1Size = cacheSize;
 
-			if (try_scan(&cursor, ",t2=") && (0 == omr_scan_u32(&cursor, &cacheSize))){
-				vm->continuationT2Size = cacheSize;
+				if (try_scan(&cursor, ",t2=") && (0 == omr_scan_u32(&cursor, &cacheSize))){
+					vm->continuationT2Size = cacheSize;
+					rc = 0;
+				}
+			} else if (try_scan(&cursor, "printSummary")) {
+				/* Set VM flag. */
+				vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_ENABLE_CONTINUATION_CACHE_SUMMARY;
 				rc = 0;
+			} else {
+				rc = -1;
+				break;
+			}
+
+			/* Skip ',' delimiter. */
+			if (',' == *cursor) {
+				cursor++;
 			}
 		}
-	} else {
+	}
+	/* Set default cache size. */
+	if (0 == vm->continuationT1Size) {
 		PORT_ACCESS_FROM_JAVAVM(vm);
 		vm->continuationT1Size = 1;
 		vm->continuationT2Size = (U_32)(j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_TARGET) * 2);
@@ -6530,22 +6549,32 @@ runExitStages(J9JavaVM* vm, J9VMThread* vmThread)
 		}
 	}
 #endif
-
-#if defined(J9VM_PROF_CONTINUATION_ALLOCATION)
-	if (0 < (vm->t1CacheHit + vm->t2CacheHit + vm->fastAlloc + vm->slowAlloc)) {
+#if JAVA_SPEC_VERSION >= 19
+	if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_CONTINUATION_CACHE_SUMMARY)
+	&& (0 < (vm->t1CacheHit + vm->t2CacheHit + vm->cacheMiss))
+	) {
 		PORT_ACCESS_FROM_JAVAVM(vm);
-		j9tty_printf(PORTLIB, "\nTotal Continuation entries: %u\n", vm->t1CacheHit + vm->t2CacheHit + vm->fastAlloc + vm->slowAlloc);
+		j9tty_printf(PORTLIB, "\nContinuation Cache Summary:");
+		j9tty_printf(PORTLIB, "\n    T1 size: %u    T2 size: %u\n", vm->continuationT1Size, vm->continuationT2Size);
+		j9tty_printf(PORTLIB, "\nTotal Continuation entries: %u\n", vm->t1CacheHit + vm->t2CacheHit + vm->cacheMiss);
 		j9tty_printf(PORTLIB, "\nCache Hits:                 %u", vm->t1CacheHit + vm->t2CacheHit);
 		j9tty_printf(PORTLIB, "\n     T1 Cache Hits:             %u", vm->t1CacheHit);
 		j9tty_printf(PORTLIB, "\n     T2 Cache Hits:             %u", vm->t2CacheHit);
-		j9tty_printf(PORTLIB, "\nCache Miss:                 %u", vm->fastAlloc + vm->slowAlloc);
+		j9tty_printf(PORTLIB, "\nCache Miss:                 %u", vm->cacheMiss);
+#if defined(J9VM_PROF_CONTINUATION_ALLOCATION)
 		j9tty_printf(PORTLIB, "\n     Fast Alloc (<10000ns):     %u", vm->fastAlloc);
-		j9tty_printf(PORTLIB, "\n     Avg Fast Alloc Time:       %lldns", (vm->fastAlloc > 0 ? (vm->fastAllocAvgTime / (I_64)vm->fastAlloc) : 0));
+		j9tty_printf(PORTLIB, "\n     Avg Fast Alloc Time:       %lld ns", (vm->fastAlloc > 0 ? (vm->fastAllocAvgTime / (I_64)vm->fastAlloc) : 0));
 		j9tty_printf(PORTLIB, "\n     Slow Alloc (>10000ns):     %u", vm->slowAlloc);
-		j9tty_printf(PORTLIB, "\n     Avg Slow Alloc Time:       %lldns", (vm->slowAlloc > 0 ? (vm->slowAllocAvgTime / (I_64)vm->slowAlloc) : 0));
-		j9tty_printf(PORTLIB, "\nAvg Cache Lookup Time:      %lldns\n", (vm->avgCacheLookupTime / (I_64)(vm->t1CacheHit + vm->t2CacheHit + vm->fastAlloc + vm->slowAlloc)));
-	}
+		j9tty_printf(PORTLIB, "\n     Avg Slow Alloc Time:       %lld ns", (vm->slowAlloc > 0 ? (vm->slowAllocAvgTime / (I_64)vm->slowAlloc) : 0));
+		j9tty_printf(PORTLIB, "\nAvg Cache Lookup Time:      %lld ns", (vm->avgCacheLookupTime / (I_64)(vm->t1CacheHit + vm->t2CacheHit + vm->fastAlloc + vm->slowAlloc)));
 #endif /* defined(J9VM_PROF_CONTINUATION_ALLOCATION) */
+		j9tty_printf(PORTLIB, "\n\nCache store:                %u", vm->t1CacheHit + vm->t2CacheHit + vm->cacheMiss - vm->cacheFree);
+		j9tty_printf(PORTLIB, "\n     T1 Cache store:            %u", vm->t1CacheHit + vm->t2CacheHit + vm->cacheMiss - vm->cacheFree - vm->t2store);
+		j9tty_printf(PORTLIB, "\n     T2 Cache store:            %u", vm->t2store);
+		j9tty_printf(PORTLIB, "\nCache Freed:                %u\n", vm->cacheFree);
+		j9tty_printf(PORTLIB, "\nAvg Cache Stack Size:       %.2f KB\n", (double)vm->totalContinuationStackSize / (vm->t1CacheHit + vm->t2CacheHit + vm->cacheMiss) / 1024);
+	}
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
 	/* Unload before trace engine exits */
 	UT_MODULE_UNLOADED(J9_UTINTERFACE_FROM_VM(vm));
