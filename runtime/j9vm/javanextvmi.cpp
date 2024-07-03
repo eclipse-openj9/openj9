@@ -792,4 +792,12 @@ JVM_GetCDSConfigStatus()
 }
 #endif /* JAVA_SPEC_VERSION >= 23 */
 
+#if JAVA_SPEC_VERSION >= 24
+JNIEXPORT jboolean JNICALL
+JVM_IsContainerized(void)
+{
+	return JNI_FALSE;
+}
+#endif /* JAVA_SPEC_VERSION >= 24 */
+
 } /* extern "C" */
