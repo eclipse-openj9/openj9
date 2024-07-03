@@ -40,6 +40,7 @@ typedef UDATA (*callback_func_t) (J9VMThread * vmThread, void * userData, UDATA 
 static void printExceptionInThread (J9VMThread* vmThread);
 static UDATA isSubclassOfThreadDeath (J9VMThread *vmThread, j9object_t exception);
 static void printExceptionMessage (J9VMThread* vmThread, j9object_t exception);
+static J9Class* findJ9ClassForROMClass(J9VMThread *vmThread, J9ROMClass *romClass, J9ClassLoader **resultClassLoader);
 
 
 /* assumes VM access */
@@ -219,6 +220,98 @@ printStackTraceEntry(J9VMThread * vmThread, void * voidUserData, UDATA bytecodeO
 	return TRUE;
 }
 
+/**
+* Find the J9Class given a ROMClass.
+* @param[in] vmThread The current VM thread.
+* @param[in] ROMClass The J9ROMClass from which the J9Class is created.
+* @param[in, out] resultClassLoader This is the classLoader that owns the memory segment that the ROMClass was found in.
+*	The romclass memory segment in the shared cache always belongs to vm->systemClassLoader. Set it to the actual class loader which loaded the class in this case.
+*
+* @return The J9class, or NULL on failure.
+*/
+static J9Class*
+findJ9ClassForROMClass(J9VMThread *vmThread, J9ROMClass *romClass, J9ClassLoader **resultClassLoader)
+{
+	J9UTF8 const *utfClassName = J9ROMCLASS_CLASSNAME(romClass);
+	J9JavaVM *vm = vmThread->javaVM;
+	J9Class* ret = NULL;
+	if (j9shr_Query_IsAddressInCache(vm, romClass, romClass->romSize)) {
+		J9ClassLoaderWalkState walkState;
+		J9ClassLoader* classLoader = NULL;
+		BOOLEAN fastMode = J9_ARE_ALL_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_FAST_CLASS_HASH_TABLE);
+		J9Class* ramClass = NULL;
+		if (!fastMode) {
+			omrthread_monitor_enter(vm->classTableMutex);
+		}
+		/**
+		 * Use hashClassTableAt() instead of peekClassHashTable() because classLoaderBlocksMutex must be acquired after classTableMutex.
+		 * (allClassLoadersStartDo enters classLoaderBlocksMutex and peekClassHashTable() enters classTableMutex)
+		 */
+		/**
+		 * All ROMClasses from the SCC are owned by the bootstrap class loader. To minimize the chances to iterate all class loaders, probe
+		 * the booststrap loader, extensionClassLoader and application loader first to determine if they have the J9Class for the current class.
+		 */
+		ramClass = hashClassTableAt(*resultClassLoader, J9UTF8_DATA(utfClassName), J9UTF8_LENGTH(utfClassName));
+		if ((NULL != ramClass)
+			&& (romClass == ramClass->romClass)
+		) {
+			ret = ramClass;
+			if (!fastMode) {
+				omrthread_monitor_exit(vm->classTableMutex);
+			}
+			goto done;
+		}
+
+		ramClass = hashClassTableAt(vm->extensionClassLoader, J9UTF8_DATA(utfClassName), J9UTF8_LENGTH(utfClassName));
+		if ((NULL != ramClass)
+			&& (romClass == ramClass->romClass)
+		) {
+			ret = ramClass;
+			*resultClassLoader = vm->extensionClassLoader;
+			if (!fastMode) {
+				omrthread_monitor_exit(vm->classTableMutex);
+			}
+			goto done;
+		}
+
+		ramClass = hashClassTableAt(vm->applicationClassLoader, J9UTF8_DATA(utfClassName), J9UTF8_LENGTH(utfClassName));
+		if ((NULL != ramClass)
+			&& (romClass == ramClass->romClass)
+		) {
+			ret = ramClass;
+			*resultClassLoader = vm->applicationClassLoader;
+			if (!fastMode) {
+				omrthread_monitor_exit(vm->classTableMutex);
+			}
+			goto done;
+		}
+
+		classLoader = vm->internalVMFunctions->allClassLoadersStartDo(&walkState, vm, 0);
+		while (NULL != classLoader) {
+			if ((classLoader != *resultClassLoader)
+				&& (classLoader != vm->applicationClassLoader)
+			) {
+				ramClass = hashClassTableAt(classLoader, J9UTF8_DATA(utfClassName), J9UTF8_LENGTH(utfClassName));
+				if ((NULL != ramClass)
+					&& (romClass == ramClass->romClass)
+				) {
+					ret = ramClass;
+					*resultClassLoader = classLoader;
+					break;
+				}
+			}
+			classLoader = vm->internalVMFunctions->allClassLoadersNextDo(&walkState);
+		}
+		vm->internalVMFunctions->allClassLoadersEndDo(&walkState);
+		if (!fastMode) {
+			omrthread_monitor_exit(vm->classTableMutex);
+		}
+	} else {
+		ret = peekClassHashTable(vmThread, *resultClassLoader, J9UTF8_DATA(utfClassName), J9UTF8_LENGTH(utfClassName));
+	}
+done:
+	return ret;
+}
 
 /*
  * Walks the backtrace of an exception instance, invoking a user-supplied callback function for
@@ -352,29 +445,7 @@ inlinedEntry:
 #endif
 					romClass = findROMClassFromPC(vmThread, methodPC, &classLoader);
 					if (NULL != romClass) {
-						J9UTF8 const *utfClassName = J9ROMCLASS_CLASSNAME(romClass);
-
-						ramClass = peekClassHashTable(vmThread, classLoader, J9UTF8_DATA(utfClassName), J9UTF8_LENGTH(utfClassName));
-						if (j9shr_Query_IsAddressInCache(vm, romClass, romClass->romSize)) {
-							if (ramClass == NULL) {
-								/* Probe the application loader to determine if it has the J9Class for the current class.
-								 * This secondary probe is required as all ROMClasses from the SCC appear to be owned
-								 * by the bootstrap classloader.
-								 */
-								ramClass = peekClassHashTable(vmThread, vm->applicationClassLoader, J9UTF8_DATA(utfClassName), J9UTF8_LENGTH(utfClassName));
-							}
-							if (NULL != ramClass) {
-								if (romClass != ramClass->romClass) {
-									/**
-									 * It is possible this romClass is not loaded by bootstrap/app class loader.
-									 * There is another class loader that loads a different class with the same name,
-									 * Do not return the ramClass from bootstrap/app loader in this case.
-									 */
-									ramClass = NULL;
-								}
-							}
-						}
-
+						ramClass = findJ9ClassForROMClass(vmThread, romClass, &classLoader);
 						while (NULL != ramClass) {
 							U_32 i = 0;
 							J9Method *methods = ramClass->ramMethods;
