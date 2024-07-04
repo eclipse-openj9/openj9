@@ -829,9 +829,6 @@ checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA len
 */
 			break;
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-		case CFR_BC_withfield:
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 		case CFR_BC_getstatic:
 		case CFR_BC_putstatic:
 		case CFR_BC_getfield:
@@ -892,11 +889,6 @@ checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA len
 					if (CFR_BC_invokespecial == bc) {
 						legal = J9UTF8_DATA_EQUALS("<init>", 6, info->bytes, info->slot1);
 					}
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-					else if (CFR_BC_invokestatic == bc) {
-						legal = J9UTF8_DATA_EQUALS("<vnew>", 6, info->bytes, info->slot1);
-					}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 				}
 				if (!legal) {
 					errorType = J9NLS_CFR_ERR_BC_METHOD_INVALID__ID;
@@ -976,10 +968,6 @@ checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA len
 			}
 			break;
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-		case CFR_BC_aconst_init:
-			/* fall through */
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 		case CFR_BC_new:
 			NEXT_U16(index, bcIndex);
 			if ((!index) || (index >= cpCount)) {
@@ -1002,12 +990,6 @@ checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA len
 				goto _verifyError;
 			}
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-			if ((CFR_BC_aconst_init == bc) && ('[' == *info->bytes)) {
-				errorType = J9NLS_CFR_ERR_ACONST_INIT_INVALID_ARRAY__ID;
-				goto _verifyError;
-			}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 			break;
 
 		case CFR_BC_newarray:
@@ -1786,14 +1768,6 @@ j9bcv_verifyClassStructure (J9PortLibrary * portLib, J9CfrClassFile * classfile,
 			&& !isConstantInvokeDynamic
 #endif /* JAVA_SPEC_VERSION >= 18 */
 			) {
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-				if (CFR_METHOD_NAME_NEW == isInit) {
-					if ('V' == info->bytes[info->slot1 - 1]) {
-						errorType = J9NLS_CFR_ERR_BC_METHOD_INVALID_SIG__ID;
-						goto _formatError;
-					}
-				} else
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 				{
 					if (info->bytes[info->slot1 - 1] != 'V') {
 						errorType = J9NLS_CFR_ERR_BC_METHOD_INVALID_SIG__ID;
@@ -1821,7 +1795,7 @@ j9bcv_verifyClassStructure (J9PortLibrary * portLib, J9CfrClassFile * classfile,
 				J9CfrConstantPoolInfo *methodref = &classfile->constantPool[info->slot2];
 				nameAndSig = &classfile->constantPool[methodref->slot2];
 				utf8 = &classfile->constantPool[nameAndSig->slot1];
-				isInit = bcvIsInitOrClinitOrNew(utf8);
+				isInit = bcvIsInitOrClinit(utf8);
 				if (CFR_METHOD_NAME_CLINIT == isInit) {
 					errorType = J9NLS_CFR_ERR_BAD_METHOD_NAME__ID;
 					goto _formatError;
@@ -1834,14 +1808,6 @@ j9bcv_verifyClassStructure (J9PortLibrary * portLib, J9CfrClassFile * classfile,
 						goto _formatError;
 					}
 				}
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-				if (CFR_METHOD_NAME_NEW == isInit) {
-					if (info->slot1 != MH_REF_INVOKESTATIC) {
-						errorType = J9NLS_CFR_ERR_BAD_METHOD_NAME__ID;
-						goto _formatError;
-					}
-				}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 			}
 			break;
 

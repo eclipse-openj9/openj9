@@ -138,6 +138,7 @@ MM_MarkingDelegate::workerSetupForGC(MM_EnvironmentBase *env)
 		gcEnv->_scavengerJavaStats.clearContinuationCounts();
 	}
 #endif /* defined(J9VM_GC_MODRON_SCAVENGER) */
+	gcEnv->_continuationStats.clear();
 #if defined(OMR_GC_MODRON_STANDARD) || defined(OMR_GC_REALTIME)
 		/* record that this thread is participating in this cycle */
 		env->_markStats._gcCount = env->_workPacketStats._gcCount = _extensions->globalGCStats.gcCount;
@@ -168,6 +169,8 @@ MM_MarkingDelegate::workerCleanupAfterGC(MM_EnvironmentBase *env)
 	Assert_MM_true(gcEnv->_referenceObjectBuffer->isEmpty());
 
 	_extensions->markJavaStats.merge(&gcEnv->_markJavaStats);
+	_extensions->continuationStats.merge(&gcEnv->_continuationStats);
+
 #if defined(J9VM_GC_MODRON_SCAVENGER)
 	if (_extensions->scavengerEnabled) {
 		/* merge scavenger ownableSynchronizerObjects stats, only in generational gc */
@@ -187,6 +190,7 @@ MM_MarkingDelegate::mainSetupForGC(MM_EnvironmentBase *env)
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 
 	_collectStringConstantsEnabled = _extensions->collectStringConstants;
+	_extensions->continuationStats.clear();
 }
 
 void
