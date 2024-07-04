@@ -814,12 +814,40 @@ def _build_all() {
     }
 }
 
+// TODO: remove this workaround when https://github.com/adoptium/infrastructure/issues/3597 resolved. related: infra 9292
+def create_docker_image_locally()
+{
+    new_image_name=DOCKER_IMAGE.split(':')[0]+'_cuda'
+    sh '''
+        echo 'ARG image
+            ARG cuda_ver=12.2.0
+            ARG cuda_distro=ubi8
+            FROM nvidia/cuda:${cuda_ver}-devel-${cuda_distro} as cuda
+            FROM $image
+            RUN mkdir -p /usr/local/cuda/nvvm
+            COPY --from=cuda /usr/local/cuda/include         /usr/local/cuda/include
+            COPY --from=cuda /usr/local/cuda/nvvm/include    /usr/local/cuda/nvvm/include
+            ENV CUDA_HOME="/usr/local/cuda"' > dockerFile
+    '''
+    println "Preparing Docker image ${new_image_name} locally ..."
+    dockerRegistry = getDockerRegistry(DOCKER_IMAGE)
+    dockerCredentialID = variableFile.get_user_credentials_id(dockerRegistry.replaceAll('https://','') ?: 'dockerhub')
+    docker.withRegistry(dockerRegistry, "${dockerCredentialID}") {
+            docker.build(new_image_name, "--build-arg image=${DOCKER_IMAGE} -f dockerFile .")
+    }    
+    DOCKER_IMAGE = new_image_name
+}
+
 def build_all() {
     stage ('Queue') {
         timeout(time: 10, unit: 'HOURS') {
             node("${NODE}") {
                 timeout(time: 5, unit: 'HOURS') {
                     if ("${DOCKER_IMAGE}") {
+                        // TODO: remove this workaround when https://github.com/adoptium/infrastructure/issues/3597 resolved. related: infra 9292
+                        if (SDK_VERSION.toInteger() >= 17 && PLATFORM ==~ /(x86-64_linux.*|ppc64le_linux.*)/ ) {
+                            create_docker_image_locally()
+                        }                        
                         prepare_docker_environment()
                         docker.image(DOCKER_IMAGE_ID).inside("-v /home/jenkins/openjdk_cache:/home/jenkins/openjdk_cache:rw,z -v /home/jenkins/.ssh:/home/jenkins/.ssh:rw,z") {
                             _build_all()
