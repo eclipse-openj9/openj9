@@ -78,11 +78,6 @@ isConstructor(J9Method *ramMethod)
 {
 	J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(ramMethod);
 	UDATA rc = (!J9ROMMETHOD_IS_STATIC(romMethod)) && ('<' == J9UTF8_DATA(J9ROMMETHOD_NAME(romMethod))[0]);
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-	if (!rc) {
-		rc = J9ROMMETHOD_IS_UNNAMED_FACTORY(romMethod);
-	}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	return rc;
 }
 

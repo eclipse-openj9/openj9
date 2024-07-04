@@ -1886,23 +1886,6 @@ checkMethods(J9PortLibrary* portLib, J9CfrClassFile* classfile, U_8* segment, U_
 			}
 		}
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-		if (nameIndexOK && utf8Equal(&classfile->constantPool[method->nameIndex], "<vnew>", 6)) {
-			if (J9_ARE_ANY_BITS_SET(classfile->accessFlags, CFR_ACC_ABSTRACT | CFR_ACC_IDENTITY | CFR_ACC_INTERFACE)) {
-				errorCode = J9NLS_CFR_ERR_INVALID_CLASS_FLAGS_ON_VNEW__ID;
-				goto _errorFound;
-			}
-			if (J9_ARE_NO_BITS_SET(value, CFR_ACC_STATIC)) {
-				errorCode = J9NLS_CFR_ERR_INVALID_FLAGS_ON_NEW__ID;
-				goto _errorFound;
-			}
-			if (J9_ARE_ANY_BITS_SET(value, ~CFR_VNEW_METHOD_ACCESS_MASK)) {
-				errorCode = J9NLS_CFR_ERR_INVALID_FLAGS_ON_NEW__ID;
-				goto _errorFound;
-			}
-		}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
-
 		/* Check interface-method-only access flag constraints. */
 		if (classfile->accessFlags & CFR_ACC_INTERFACE) {
 			if (classfileVersion < BCT_JavaMajorVersionShifted(8)) {

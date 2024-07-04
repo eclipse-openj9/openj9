@@ -114,11 +114,11 @@ checkNameImpl (J9CfrConstantPoolInfo * info, BOOLEAN isClass, BOOLEAN isMethod, 
 
 
 static VMINLINE I_32
-isInitOrClinitOrNewImpl (J9CfrConstantPoolInfo * info)
+isInitOrClinitImpl (J9CfrConstantPoolInfo * info)
 {
 	U_8 *name = info->bytes;
 
-	/* Handle <init>/<clinit>/<vnew> cases */
+	/* Handle <init>/<clinit> cases */
 	if (*name == '<') {
 		if (J9UTF8_DATA_EQUALS("<init>", 6, name, info->slot1)) {
 			return CFR_METHOD_NAME_INIT;
@@ -126,38 +126,33 @@ isInitOrClinitOrNewImpl (J9CfrConstantPoolInfo * info)
 		if (J9UTF8_DATA_EQUALS("<clinit>", 8, name, info->slot1)) {
 			return CFR_METHOD_NAME_CLINIT;
 		}
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-		if (J9UTF8_DATA_EQUALS("<vnew>", 6, name, info->slot1)) {
-			return CFR_METHOD_NAME_NEW;
-		}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		return CFR_METHOD_NAME_INVALID;
 	}
 	return 0; /* not <init> or <clinit> */
 }
 
 /**
- * Determine if this name is "<init>", "<clinit>", or "<vnew>".
+ * Determine if this name is "<init>" or "<clinit>".
  *
- * @returns 0 if name is a normal name, CFR_METHOD_NAME_INIT if '<init>', CFR_METHOD_NAME_CLINIT if '<clinit>', CFR_METHOD_NAME_NEW if '<vnew>', and -1 if it starts with '<' but is not a valid class name.
- * @note result is positive if the name is "<init>", "<clinit>", or "<vnew>", result is negative if the name is illegal
+ * @returns 0 if name is a normal name, CFR_METHOD_NAME_INIT if '<init>', CFR_METHOD_NAME_CLINIT if '<clinit>', and -1 if it starts with '<' but is not a valid class name.
+ * @note result is positive if the name is "<init>" or "<clinit>", result is negative if the name is illegal
  */
 I_32
-bcvIsInitOrClinitOrNew (J9CfrConstantPoolInfo * info)
+bcvIsInitOrClinit (J9CfrConstantPoolInfo * info)
 {
-	return isInitOrClinitOrNewImpl(info);
+	return isInitOrClinitImpl(info);
 }
 
 /**
  * Determine if this a valid name for Methods.
  *
- * @returns CFR_METHOD_NAME_INIT if '<init>', CFR_METHOD_NAME_CLINIT if '<clinit>', and CFR_METHOD_NAME_NEW if '<vnew>', otherwise 0 if a valid name; negative value if class name is invalid
+ * @returns CFR_METHOD_NAME_INIT if '<init>' or CFR_METHOD_NAME_CLINIT if '<clinit>', otherwise 0 if a valid name; negative value if class name is invalid
  */
 I_32
 bcvCheckMethodName (J9CfrConstantPoolInfo * info)
 {
 	U_8 *c = info->bytes;
-	I_32 nameStatus = isInitOrClinitOrNewImpl(info);
+	I_32 nameStatus = isInitOrClinitImpl(info);
 	if (0 == nameStatus) {
 		nameStatus = checkNameImpl(info, FALSE, TRUE, FALSE);
 	}
