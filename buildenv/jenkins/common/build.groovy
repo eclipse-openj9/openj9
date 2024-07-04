@@ -834,7 +834,7 @@ def create_docker_image_locally()
     dockerCredentialID = variableFile.get_user_credentials_id(dockerRegistry.replaceAll('https://','') ?: 'dockerhub')
     docker.withRegistry(dockerRegistry, "${dockerCredentialID}") {
             docker.build(new_image_name, "--build-arg image=${DOCKER_IMAGE} -f dockerFile .")
-    }    
+    }
     DOCKER_IMAGE = new_image_name
 }
 
@@ -845,9 +845,9 @@ def build_all() {
                 timeout(time: 5, unit: 'HOURS') {
                     if ("${DOCKER_IMAGE}") {
                         // TODO: remove this workaround when https://github.com/adoptium/infrastructure/issues/3597 resolved. related: infra 9292
-                        if (SDK_VERSION.toInteger() >= 17 && PLATFORM ==~ /(x86-64_linux.*|ppc64le_linux.*)/ ) {
+                        if ((SDK_VERSION.toInteger() >= 17 && PLATFORM ==~ /x86-64_linux.*/) || (PLATFORM ==~ /ppc64le_linux.*/ )) {
                             create_docker_image_locally()
-                        }                        
+                        }
                         prepare_docker_environment()
                         docker.image(DOCKER_IMAGE_ID).inside("-v /home/jenkins/openjdk_cache:/home/jenkins/openjdk_cache:rw,z -v /home/jenkins/.ssh:/home/jenkins/.ssh:rw,z") {
                             _build_all()
