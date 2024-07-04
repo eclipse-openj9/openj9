@@ -149,7 +149,7 @@ MetricsDatabase::MetricsDatabase(TR::CompilationInfo *compInfo) : _compInfo(comp
    _metrics[1] = new (PERSISTENT_NEW) AvailableMemoryMetric();
    _metrics[2] = new (PERSISTENT_NEW) ConnectedClientsMetric();
    _metrics[3] = new (PERSISTENT_NEW) ActiveThreadsMetric();
-   static_assert(3 == MAX_METRICS - 1);
+   static_assert(3 == MAX_METRICS - 1, "Unsupported number of metrics");
    }
 
 MetricsDatabase::~MetricsDatabase()
