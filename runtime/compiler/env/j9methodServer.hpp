@@ -313,7 +313,7 @@ class TR_ResolvedRelocatableJ9JITServerMethod : public TR_ResolvedJ9JITServerMet
    virtual bool                  getUnresolvedVirtualMethodInCP(int32_t cpIndex) override;
    /* No need to override the stringConstant method as the parent method will be sufficient */
    virtual bool                  fieldAttributes(TR::Compilation * comp, int32_t cpIndex, uint32_t * fieldOffset, TR::DataType * type, bool * volatileP, bool * isFinal, bool * isPrivate, bool isStore, bool * unresolvedInCP, bool needAOTValidation) override;
-   virtual bool                  staticAttributes(TR::Compilation * comp, int32_t cpIndex, void * * address,TR::DataType * type, bool * volatileP, bool * isFinal, bool * isPrivate, bool isStore, bool * unresolvedInCP, bool needAOTValidation);
+   virtual bool                  staticAttributes(TR::Compilation * comp, int32_t cpIndex, void * * address,TR::DataType * type, bool * volatileP, bool * isFinal, bool * isPrivate, bool isStore, bool * unresolvedInCP, bool needAOTValidation) override;
    virtual TR_ResolvedMethod *   getResolvedImproperInterfaceMethod(TR::Compilation * comp, I_32 cpIndex) override;
 
    virtual TR_OpaqueMethodBlock *getNonPersistentIdentifier() override;
