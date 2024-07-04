@@ -35,6 +35,8 @@
 #include "j9vmnls.h"
 #include "j9version.h"
 
+extern J9JavaVM *BFUjavaVM; /* from jvm.c */
+
 #if JAVA_SPEC_VERSION >= 11
 
 #define J9TIME_NANOSECONDS_PER_SECOND         ((jlong) 1000000000)
@@ -1730,12 +1732,18 @@ JVM_IsSharingEnabled(JNIEnv *env)
 #endif /* JAVA_SPEC_VERSION < 23 */
 #endif /* JAVA_SPEC_VERSION >= 16 */
 
+/**
+ * @brief Determine if container support is enabled.
+ *
+ * @return JNI_FALSE if -XX:-UseContainerSupport is specified; otherwise, JNI_TRUE
+ */
 JNIEXPORT jboolean JNICALL
-JVM_IsUseContainerSupport(JNIEnv *env)
+JVM_IsUseContainerSupport(void)
 {
-	J9VMThread *const currentThread = (J9VMThread *)env;
-	J9JavaVM *vm = currentThread->javaVM;
+	J9JavaVM *vm = BFUjavaVM;
 	jboolean result = JNI_FALSE;
+
+	Assert_SC_true(NULL != vm);
 
 	if (J9_ARE_ALL_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_USE_CONTAINER_SUPPORT)) {
 		/* Return true if -XX:+UseContainerSupport is specified. This option is enabled by default. */
