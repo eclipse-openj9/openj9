@@ -6802,6 +6802,38 @@ TR_J9ByteCodeIlGenerator::genAconst_init(TR_OpaqueClassBlock *valueTypeClass, in
    genFlush(0);
    }
 
+/**
+ * Check the call chain for the following pattern: StringBuilder.toString() -> String<init>(StringBuilder)
+ *                -> String<init>(AbstractStringBuilder, Void) -> Arrays.copyOfRange([BII)
+ *
+ * @param comp the compilation class.
+ * @return true if the call chain matches the expected stack or false otherwise.
+ */
+static bool isCallChainFromStringBuilderToStringToArraysCopyOfRange(TR::Compilation *comp)
+   {
+   if(comp->getInlineDepth() < 4)
+      return false;
+
+   int32_t callerIndex = comp->getCurrentInlinedCallSite()->_byteCodeInfo.getCallerIndex();
+   if(comp->getInlinedResolvedMethodSymbol(callerIndex)->getRecognizedMethod() != TR::java_util_Arrays_copyOfRange_byte)
+      return false;
+
+   callerIndex = comp->getInlinedCallSite(callerIndex)._byteCodeInfo.getCallerIndex();
+   if(comp->getInlinedResolvedMethodSymbol(callerIndex)->getRecognizedMethod() != TR::java_lang_String_init_AbstractStringBuilder_Void)
+      return false;
+
+   callerIndex = comp->getInlinedCallSite(callerIndex)._byteCodeInfo.getCallerIndex();
+   if(comp->getInlinedResolvedMethodSymbol(callerIndex)->getRecognizedMethod() != TR::java_lang_String_init_StringBuilder)
+      return false;
+
+   callerIndex = comp->getInlinedCallSite(callerIndex)._byteCodeInfo.getCallerIndex();
+   TR::ResolvedMethodSymbol *caller = callerIndex > -1 ? comp->getInlinedResolvedMethodSymbol(callerIndex) : comp->getOptimizer()->getMethodSymbol();
+   if(caller->getRecognizedMethod() != TR::java_lang_StringBuilder_toString)
+      return false;
+
+   return true;
+   }
+
 void
 TR_J9ByteCodeIlGenerator::genNewArray(int32_t typeIndex)
    {
@@ -6836,6 +6868,16 @@ TR_J9ByteCodeIlGenerator::genNewArray(int32_t typeIndex)
            break;
         }
      }
+
+   // Special case for handling Arrays.copyOfRangeByte when called from StringBuilder.toString method
+   // The call chain is: StringBuilder.toString() -> String<init>(StringBuilder) -> String<init>(AbstractStringBuilder, Void)
+   //                                                             -> Arrays.copyOfRange([BII) -> Arrays.copyOfRangeByte([BII)
+   if (!comp()->isPeekingMethod() && !generateArraylets
+       && _methodSymbol->getRecognizedMethod() == TR::java_util_Arrays_copyOfRangeByte
+       && isCallChainFromStringBuilderToStringToArraysCopyOfRange(comp()))
+      {
+      node->setCanSkipZeroInitialization(true);
+      }
 
    bool separateInitializationFromAllocation;
    switch (_methodSymbol->getRecognizedMethod())
