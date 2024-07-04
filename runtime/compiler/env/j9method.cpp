@@ -2734,6 +2734,8 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::java_util_Arrays_copyOfRange_double, "copyOfRange",     "([DII)[D")},
       {x(TR::java_util_Arrays_copyOfRange_Object1,"copyOfRange",     "([Ljava/lang/Object;II)[Ljava/lang/Object;")},
       {x(TR::java_util_Arrays_copyOfRange_Object2,"copyOfRange",     "([Ljava/lang/Object;IILjava/lang/Class;)[Ljava/lang/Object;")},
+
+      {x(TR::java_util_Arrays_copyOfRangeByte, "copyOfRangeByte",    "([BII)[B")},
       {  TR::unknownMethod}
       };
 
@@ -2743,7 +2745,9 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::java_lang_String_init_String,         "<init>",              "(Ljava/lang/String;)V")},
       {x(TR::java_lang_String_init_String_char,    "<init>",              "(Ljava/lang/String;C)V")},
       {x(TR::java_lang_String_init_int_String_int_String_String, "<init>","(ILjava/lang/String;ILjava/lang/String;Ljava/lang/String;)V")},
-      {x(TR::java_lang_String_init_int_int_char_boolean, "<init>",       "(II[CZ)V")},
+      {x(TR::java_lang_String_init_int_int_char_boolean,       "<init>",  "(II[CZ)V")},
+      {x(TR::java_lang_String_init_StringBuilder,              "<init>",  "(Ljava/lang/StringBuilder;)V")},
+      {x(TR::java_lang_String_init_AbstractStringBuilder_Void, "<init>",  "(Ljava/lang/AbstractStringBuilder;Ljava/lang/Void;)V")},
       {  TR::java_lang_String_init,          6,    "<init>", (int16_t)-1,    "*"},
       {x(TR::java_lang_String_charAt,              "charAt",              "(I)C")},
       {x(TR::java_lang_String_charAtInternal_I,    "charAtInternal",      "(I)C")},
