@@ -2326,13 +2326,6 @@ void jitDiscardPendingCompilationsOfNatives(J9VMThread *vmThread, J9Class *clazz
    compInfo->releaseCompilationLock();
    }
 
-static bool classesAreRedefinedInPlace()
-   {
-   if(TR::Options::getCmdLineOptions()->getOption(TR_EnableHCR))
-      return true;
-   else return false;
-   }
-
 static bool methodsAreRedefinedInPlace()
    {
    // NOTE: making this return "true" will require careful thought.
@@ -2343,8 +2336,78 @@ static bool methodsAreRedefinedInPlace()
    return false;
    }
 
-// Hack markers
-#define VM_PASSES_SAME_CLASS_TWICE 1
+namespace { // file-local
+
+/**
+ * \brief A pair of corresponding classes related by redefinition,
+ * distinguished from each other in two ways: old/new and fresh/stale.
+ *
+ * NOTE: Neither set of terminology, i.e. neither old/new nor fresh/stale as
+ * used here, is necessarily consistent with terminology elsewhere in the VM.
+ */
+struct ElaboratedClassPair
+   {
+   /**
+    * \brief The original class that existed before HCR.
+    *
+    * This is always different from newClass.
+    */
+   TR_OpaqueClassBlock *oldClass;
+
+   /**
+    * \brief The class that was created in order to carry out HCR.
+    *
+    * This is always different from oldClass.
+    */
+   TR_OpaqueClassBlock *newClass;
+
+   /**
+    * \brief The class whose methods have the old bytecode.
+    *
+    * This is always different from freshClass. It is equal to newClass if the
+    * class has been redefined in-place, and oldClass otherwise.
+    */
+   TR_OpaqueClassBlock *staleClass;
+
+   /**
+    * \brief The class whose methods have the new bytecode.
+    *
+    * This is always different from staleClass. It is equal to oldClass if the
+    * class has been redefined in-place, and newClass otherwise.
+    */
+   TR_OpaqueClassBlock *freshClass;
+   };
+
+void setElaboratedClassPair(ElaboratedClassPair *ecp, J9JITRedefinedClass *classPair)
+   {
+   // The VM tells us the old J9Class and the fresh one (which here it calls "new").
+   J9Class *oldJ9Class = classPair->oldClass;
+   J9Class *freshJ9Class = classPair->newClass;
+   J9Class *staleJ9Class = freshJ9Class->replacedClass;
+
+   ecp->oldClass = TR::Compiler->cls.convertClassPtrToClassOffset(oldJ9Class);
+   ecp->freshClass = TR::Compiler->cls.convertClassPtrToClassOffset(freshJ9Class);
+   ecp->staleClass = TR::Compiler->cls.convertClassPtrToClassOffset(staleJ9Class);
+
+   TR_ASSERT_FATAL(
+      ecp->freshClass != ecp->staleClass,
+      "fresh and stale classes are the same: %p",
+      ecp->freshClass);
+
+   TR_ASSERT_FATAL(
+      ecp->oldClass == ecp->freshClass || ecp->oldClass == ecp->staleClass,
+      "oldClass %p matches neither freshClass %p nor staleClass %p",
+      ecp->oldClass,
+      ecp->freshClass,
+      ecp->staleClass);
+
+   // Don't try to predict whether classes should be redefined in-place.
+   // Instead just check whether this one was in fact redefined in-place.
+   ecp->newClass =
+      ecp->oldClass == ecp->freshClass ? ecp->staleClass : ecp->freshClass;
+   }
+
+} // anonymous namespace
 
 #if (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
 void jitClassesRedefined(J9VMThread * currentThread, UDATA classCount, J9JITRedefinedClass *classList, UDATA extensionsUsed)
@@ -2366,23 +2429,19 @@ void jitClassesRedefined(J9VMThread * currentThread, UDATA classCount, J9JITRede
 
    TR_RuntimeAssumptionTable * rat = compInfo->getPersistentInfo()->getRuntimeAssumptionTable();
 
-   TR_OpaqueClassBlock  *oldClass,          *newClass;
-   J9Method             *oldMethod,         *newMethod;
+   ElaboratedClassPair elaboratedPair = {};
 
-   // A few definitions.  In the jit's terminology:
-   //   The "stale method" is the one that points at the old bytecodes from before the hot swap.
-   //   The "stale class" is the one that points at the stale methods.
-   //   The "old class" is the j9class struct that existed before the hot swap.
-   //   The "new class" is the one created in response to the hot swap.
-   //
-   // NOTE: THIS MAY NOT MATCH THE VM'S TERMINOLOGY!
-   //
-   // Here we define various aliases so we can freely use the terminology we want.
-   //
-   TR_OpaqueClassBlock  *&freshClass = classesAreRedefinedInPlace()? oldClass : newClass;
-   TR_OpaqueClassBlock  *&staleClass = classesAreRedefinedInPlace()? newClass : oldClass;
-   J9Method             *&freshMethod = methodsAreRedefinedInPlace()? oldMethod : newMethod;
-   J9Method             *&staleMethod = methodsAreRedefinedInPlace()? newMethod : oldMethod;
+   // Local aliases to avoid elaboratedPair.someClass everywhere.
+   // These will reflect changes to elaboratedPair.
+   TR_OpaqueClassBlock * const &oldClass = elaboratedPair.oldClass;
+   TR_OpaqueClassBlock * const &newClass = elaboratedPair.newClass;
+   TR_OpaqueClassBlock * const &staleClass = elaboratedPair.staleClass;
+   TR_OpaqueClassBlock * const &freshClass = elaboratedPair.freshClass;
+
+   // Here old/new and stale/fresh have the same meaning as in ElaboratedClassPair.
+   J9Method *oldMethod, *newMethod;
+   J9Method *&freshMethod = methodsAreRedefinedInPlace() ? oldMethod : newMethod;
+   J9Method *&staleMethod = methodsAreRedefinedInPlace() ? newMethod : oldMethod;
 
    int methodCount;
    J9JITMethodEquivalence *methodList;
@@ -2398,11 +2457,7 @@ void jitClassesRedefined(J9VMThread * currentThread, UDATA classCount, J9JITRede
       {
       for (i = 0; i < classCount; i++)
          {
-         freshClass = ((TR_J9VMBase *)fe)->convertClassPtrToClassOffset(classPair->newClass);
-         if (VM_PASSES_SAME_CLASS_TWICE)
-            staleClass = ((TR_J9VMBase *)fe)->convertClassPtrToClassOffset(((J9Class*)freshClass)->replacedClass);
-         else
-            staleClass = ((TR_J9VMBase *)fe)->convertClassPtrToClassOffset(classPair->oldClass);
+         setElaboratedClassPair(&elaboratedPair, classPair); // affects oldClass, etc.
          methodCount = classPair->methodCount;
          methodList  = classPair->methodList;
 
@@ -2495,11 +2550,8 @@ void jitClassesRedefined(J9VMThread * currentThread, UDATA classCount, J9JITRede
             deserializer->invalidateClass(currentThread, classPair->oldClass);
          }
 #endif
-      freshClass = ((TR_J9VMBase *)fe)->convertClassPtrToClassOffset(classPair->newClass);
-      if (VM_PASSES_SAME_CLASS_TWICE)
-         staleClass = ((TR_J9VMBase *)fe)->convertClassPtrToClassOffset(((J9Class*)freshClass)->replacedClass);
-      else
-         staleClass = ((TR_J9VMBase *)fe)->convertClassPtrToClassOffset(classPair->oldClass);
+
+      setElaboratedClassPair(&elaboratedPair, classPair); // affects oldClass, etc.
       methodCount = classPair->methodCount;
       methodList = classPair->methodList;
 
