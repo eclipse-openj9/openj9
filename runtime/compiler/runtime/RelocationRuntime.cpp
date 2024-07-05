@@ -707,7 +707,7 @@ TR_RelocationRuntime::relocateAOTCodeAndData(U_8 *tempDataStart,
       } //end if J9_JIT_DCE_EXCEPTION_INFO
 
 #if defined(J9VM_OPT_JITSERVER)
-   TR_ASSERT_FATAL(!_comp->getStream(), "TR_RelocationRuntime::relocateAOTCodeAndData should not be called at the JITSERVER");
+   TR_ASSERT_FATAL(!TR::CompilationInfo::getStream(), "TR_RelocationRuntime::relocateAOTCodeAndData should not be called at the JITSERVER");
 #endif /* defined(J9VM_OPT_JITSERVER) */
    if (startPC)
       {

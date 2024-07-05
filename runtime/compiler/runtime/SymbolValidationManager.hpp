@@ -711,9 +711,9 @@ struct IsClassVisibleRecord : public SymbolValidationRecord
 class SymbolValidationManager
    {
 public:
-   TR_ALLOC(TR_MemoryBase::SymbolValidationManager)
+   TR_ALLOC(TR_MemoryBase::SymbolValidationManager);
 
-   SymbolValidationManager(TR::Region &region, TR_ResolvedMethod *compilee, TR::Compilation *comp);
+   SymbolValidationManager(TR::Region &region, TR_ResolvedMethod *compilee);
 
    struct SystemClassNotWorthRemembering
       {

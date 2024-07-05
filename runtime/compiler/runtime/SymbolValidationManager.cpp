@@ -56,11 +56,11 @@ TR::SymbolValidationManager::_systemClassesNotWorthRemembering[] = {
    { "java/lang/StringBuffer", NULL, false }
 };
 
-TR::SymbolValidationManager::SymbolValidationManager(TR::Region &region, TR_ResolvedMethod *compilee, TR::Compilation *comp)
+TR::SymbolValidationManager::SymbolValidationManager(TR::Region &region, TR_ResolvedMethod *compilee)
    : _symbolID(FIRST_ID),
      _heuristicRegion(0),
      _region(region),
-     _comp(comp),
+     _comp(TR::comp()),
      _vmThread(_comp->j9VMThread()),
      _fej9((TR_J9VM *)TR_J9VMBase::get(
         _vmThread->javaVM->jitConfig,
