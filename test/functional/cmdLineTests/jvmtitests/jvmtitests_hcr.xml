@@ -119,7 +119,7 @@
 	</test>
 
 	<test id="rc018">
-		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:rc018 -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
+		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:rc018 -XX:+EnableExtendedHCR -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
 		<return type="success" value="0"/>
 	</test>
 
@@ -144,7 +144,7 @@
 	</test> -->
 
  	<test id="rtc001">
-		<command>$EXE$ $JVM_OPTS$ $EXTRA_Add_OPEN_OPTION$ $AGENTLIB$=test:rtc001 -Dsun.reflect.noInflation=true  -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
+		<command>$EXE$ $JVM_OPTS$ $EXTRA_Add_OPEN_OPTION$ $AGENTLIB$=test:rtc001 -Dsun.reflect.noInflation=true -XX:+EnableExtendedHCR -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
 		<return type="success" value="0"/>
 	</test>
 
