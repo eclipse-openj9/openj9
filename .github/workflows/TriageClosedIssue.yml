@@ -62,9 +62,9 @@ jobs:
               actualAssignees.concat(assignees);
             }
             if (actualAssignees.length > 0) {
-              resultString += `Actual assignees: ${actualAssignees.join(', ')}`;
+              resultString += `Actual assignees: ${actualAssignees.join(', ')}\n`;
             } else {
-              resultString += `Actual assignees: No one :(`;
+              resultString += `Actual assignees: No one :(\n`;
             }
             
             if (prAssignees.length > 0) {
