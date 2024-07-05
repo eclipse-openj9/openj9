@@ -1385,7 +1385,6 @@ C|CFR_BC_vload
 C|CFR_BC_vreturn
 C|CFR_BC_vstore
 C|CFR_BC_vunbox
-C|CFR_BC_vwithfield
 C|CFR_BC_wide
 S|J9ClassInitFlags|J9ClassInitFlagsPointer|
 C|J9ClassInitFailed

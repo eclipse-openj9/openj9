@@ -230,8 +230,6 @@ public class BCNames {
 	public static final int JBifnonnull = 199;
 	public static final int JBgotow = 200;
 	public static final int JBbreakpoint = 202;
-	public static final int JBaconst_init;
-	public static final int JBwithfield;
 	public static final int JBiincw;
 	public static final int JBaload0getfield;
 	public static final int JBnewdup;
@@ -270,8 +268,6 @@ public class BCNames {
 	static {
 		switch (AlgorithmVersion.getVersionOf(AlgorithmVersion.BYTECODE_VERSION).getAlgorithmVersion()) {
 		case 0:
-			JBaconst_init = 224;
-			JBwithfield = 226;
 			JBiloadw = 203;
 			JBlloadw = 204;
 			JBfloadw = 205;
@@ -306,8 +302,6 @@ public class BCNames {
 			JBreturnFromJ2I = 251;
 			break;
 		case 1:
-			JBaconst_init = 203;
-			JBwithfield = 204;
 			JBiincw = 213;
 			JBaload0getfield = 215;
 			JBnewdup = 216;

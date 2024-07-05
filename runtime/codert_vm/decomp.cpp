@@ -620,14 +620,10 @@ getPendingStackHeight(J9VMThread *currentThread, U_8 *interpreterPC, J9Method *r
 			case JBmultianewarray: /* Dimensions stacked (number of dimensions is 3 bytes from the multianewarray) */
 				pendingStackHeight -= interpreterPC[3];
 				break;
-			case JBwithfield:
-				/* it will always be two slots since we only ever need to allocate qtype */
-				pendingStackHeight -= 2;
-				break;
 			case JBgetfield:
 				pendingStackHeight -= 1;
 				break;
-			default: /* JBnew/JBaconst_init - no stacked parameters*/
+			default: /* JBnew - no stacked parameters*/
 				break;
 			}
 		}

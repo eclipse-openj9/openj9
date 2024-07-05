@@ -237,8 +237,6 @@ extern J9_CDATA char * const sunJavaBCNames[];
 #define JBifnonnull 199
 #define JBgotow 200
 #define JBbreakpoint 202
-#define JBaconst_init 203
-#define JBwithfield 204
 #define JBiincw 213
 #define JBaload0getfield 215
 #define JBnewdup 216

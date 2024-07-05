@@ -424,7 +424,6 @@ mapStack(UDATA *scratch, UDATA totalStack, U_8 * map, J9ROMClass * romClass, J9R
 				
 				break;
 
-			case JBwithfield:
 			case JBputfield:
 				POP();			/* fall through case !!! */
 
@@ -435,9 +434,6 @@ mapStack(UDATA *scratch, UDATA totalStack, U_8 * map, J9ROMClass * romClass, J9R
 													((J9ROMFieldRef *) (&(pool[index]))));
 				signature = (U_8) J9UTF8_DATA(utf8Signature)[0];
 				stackTop -= (UDATA) argCountCharConversion[signature - 'A'];
-				if (JBwithfield == bc) {
-					PUSH(OBJ);
-				}
 
 				break;
 
