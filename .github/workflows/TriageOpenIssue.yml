@@ -28,7 +28,7 @@ jobs:
                     "issue_title": context.payload.issue.title,
                     "issue_description": context.payload.issue.body,
                   }
-                  issueNumber = github.event.issue.number
+                  const issueNumber = context.payload.issue.number
                   console.log('input: ', input)
 
                   const apiUrl = "http://140.211.168.122/recommendation";
@@ -52,7 +52,6 @@ jobs:
                     resultString += 'Status: Open\n';
                     resultString += `Recommended Components: ${predictedLabels.join(', ')}\n`;
                     resultString += `Recommended Assignees: ${predictedAssignees.join(', ')}\n`;
-                    resultString += issueNumber;
                     await github.issues.createComment({
                       issue_number: sandboxIssueNumber,
                       owner: sandboxOwner,
@@ -64,6 +63,6 @@ jobs:
                       issue_number: sandboxIssueNumber,
                       owner: sandboxOwner,
                       repo: sandboxRepo,
-                      body: `Error: ${error.message}`,
+                      body: `The TriagerX model is currently not responding to the issue ${issueNumber}. Please try again later.`,
                     });
                   }
