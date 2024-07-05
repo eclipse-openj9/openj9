@@ -990,7 +990,7 @@ public class ValueTypeTests {
 		try {
 			monitorEnterAndExitOnValueType.invoke(valueType);
 			Assert.fail("should throw exception. MonitorExit cannot be used with ValueType");
-		} catch (IllegalMonitorStateException e) {}
+		} catch (IdentityException e) {}
 		
 		try {
 			monitorEnterAndExitOnValueType.invoke(valueTypeArray);

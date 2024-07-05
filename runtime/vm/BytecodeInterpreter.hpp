@@ -11055,7 +11055,7 @@ valueTypeIllegalMonitorState:
 #define badClassName J9ROMCLASS_CLASSNAME(J9OBJECT_CLAZZ(_currentThread, (j9object_t)_currentThread->tempSlot)->romClass)
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	if (J9_IS_J9CLASS_VALUETYPE(J9OBJECT_CLAZZ(_currentThread, (j9object_t)_currentThread->tempSlot))) {
-		setCurrentExceptionNLSWithArgs(_currentThread, J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE, J9VMCONSTANTPOOL_JAVALANGILLEGALMONITORSTATEEXCEPTION, J9UTF8_LENGTH(badClassName), J9UTF8_DATA(badClassName));
+		setCurrentExceptionNLSWithArgs(_currentThread, J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE, J9VMCONSTANTPOOL_JAVALANGIDENTITYEXCEPTION, J9UTF8_LENGTH(badClassName), J9UTF8_DATA(badClassName));
 	} else
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	{
