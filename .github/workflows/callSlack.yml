@@ -32,5 +32,6 @@ jobs:
 
             // for every component, send a message to the corresponding slack channel
             // tell the developers in the channel that the issue with number <n> needs to be reviewed
-            
+            // if possible, send a direcy link to the channel
+
 
