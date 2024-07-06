@@ -46,7 +46,7 @@ jobs:
               repo: context.repo.repo,
               issue_number: context.issue.number,
             });
-            
+
             let prAssignees = [];
             timeline.data.forEach(event => {
               if (event.event === 'cross-referenced' && event.source && event.source.issue.pull_request) {
@@ -56,7 +56,7 @@ jobs:
                 }
               }
             });
-            
+
             if (issueData.assignees.length != 0) {
               const assignees = issueData.assignees.map(assignee => assignee.login);
               actualAssignees.concat(assignees);
@@ -66,13 +66,13 @@ jobs:
             } else {
               resultString += `Actual assignees: No one :(\n`;
             }
-            
+
             if (prAssignees.length > 0) {
-              resultString += `Pr assignees: ${prAssignees.join(', ')}`;
+              resultString += `PR assignees: ${prAssignees.join(', ')}`;
             } else {
-              resultString += `Pr assignees: No one :(`;
+              resultString += `PR assignees: No one :(`;
             }
-            
+
             await github.issues.createComment({
               issue_number: sandboxIssueNumber,
               owner: sandboxOwner,
