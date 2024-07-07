@@ -1,6 +1,5 @@
 const axios = require('axios');
 const github = require('@actions/github');
-const core = require('@actions/core');
 
 async function run() {
   const sandboxIssueNumber = 1;
