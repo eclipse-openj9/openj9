@@ -53,7 +53,3 @@ jobs:
             }
       - name: Run recommendation
         run: node .github/recommendation.js
-          
-      - name: Run recommendations
-        run: node recommendation.js
-        working-directory: .github
