@@ -28,7 +28,7 @@ jobs:
 
       - name: Extract issue details
         id: extract_issue
-        uses: actions/github-script@v4
+        uses: actions/github-script@v5
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
