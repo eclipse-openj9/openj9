@@ -39,7 +39,7 @@ jobs:
             let issueOwner = issueUrl.split('/')[3];
             let issueRepo = issueUrl.split('/')[4];
 
-            const { data: issueData } = await github.issues.get({
+            const { data: issueData } = await github.rest.issues.get({
               issue_number: issueNumber,
               owner: issueOwner,
               repo: issueRepo

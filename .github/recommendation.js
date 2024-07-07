@@ -30,7 +30,7 @@ async function run() {
     resultString += 'Status: Open\n';
     resultString += `Recommended Components: ${predictedLabels.join(', ')}\n`;
     resultString += `Recommended Assignees: ${predictedAssignees.join(', ')}\n`;
-    await github.issues.createComment({
+    await github.rest.issues.createComment({
       issue_number: sandboxIssueNumber,
       owner: sandboxOwner,
       repo: sandboxRepo,
@@ -38,7 +38,7 @@ async function run() {
     });
   } catch (error) {
     core.setFailed(`Action failed with error: ${error}`);
-    await github.issues.createComment({
+    await github.rest.issues.createComment({
       issue_number: sandboxIssueNumber,
       owner: sandboxOwner,
       repo: sandboxRepo,
