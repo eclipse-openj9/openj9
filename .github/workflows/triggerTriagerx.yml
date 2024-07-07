@@ -9,6 +9,12 @@ jobs:
     runs-on: ubuntu-latest
     if: startsWith(github.event.comment.body, 'triagerx')
     steps:
+      - name: Check out repository
+        uses: actions/checkout@v2
+        with:
+          repository: Tigers-X/openj9
+          ref: master
+          
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
@@ -45,9 +51,8 @@ jobs:
               "issue_title": issueTitle,
               "issue_description": issueDescription,
             }
-      - name: Run recommendations
-        run: |
-          node .github/recommendation.js
+      - name: Run recommendation
+        run: node .github/recommendation.js
           
       - name: Run recommendations
         run: node recommendation.js
