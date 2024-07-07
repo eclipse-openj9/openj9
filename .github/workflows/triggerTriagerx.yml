@@ -45,3 +45,5 @@ jobs:
               "issue_title": issueTitle,
               "issue_description": issueDescription,
             }
+      - name: run recommendations
+        run: .github/workflows/recommendation.js
