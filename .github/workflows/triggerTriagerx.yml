@@ -45,5 +45,6 @@ jobs:
               "issue_title": issueTitle,
               "issue_description": issueDescription,
             }
-      - name: run recommendations
-        run: node .github/recommendation.js
+      - name: Run recommendations
+        run: node recommendation.js
+        working-directory: .github
