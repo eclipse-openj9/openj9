@@ -51,9 +51,11 @@ jobs:
 
             core.setOutput('issue_title', issueTitle);
             core.setOutput('issue_description', issueDescription);
+            core.setOutput('issue_number', issueNumber);
 
       - name: Run recommendations
         run: node .github/recommendation.js
         env:
           ISSUE_TITLE: ${{ steps.extract_issue.outputs.issue_title }}
           ISSUE_DESCRIPTION: ${{ steps.extract_issue.outputs.issue_description }}
+          ISSUE_NUMBER: ${{ steps.extract_issue.outputs.issue_number }}
