@@ -46,4 +46,4 @@ jobs:
               "issue_description": issueDescription,
             }
       - name: run recommendations
-        run: .github/recommendation.js
+        run: node .github/recommendation.js
