@@ -28,10 +28,6 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const axios = require('axios');
-            const core = require('@actions/core');
-            const github = require('@actions/github');
-
             const commentBody = context.payload.comment.body;
             const restCommentBody = commentBody.replace('triagerx', '');
 
