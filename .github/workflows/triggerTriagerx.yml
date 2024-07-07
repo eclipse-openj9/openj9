@@ -21,7 +21,7 @@ jobs:
           node-version: '14'
 
       - name: Install dependencies
-        run: npm install axios
+        run: npm install axios @actions/github @actions/core
 
       - name: Make a request to the TriagerX server
         uses: actions/github-script@v4
