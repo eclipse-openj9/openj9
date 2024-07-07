@@ -10,23 +10,33 @@ jobs:
       name: Issue Opened
       runs-on: ubuntu-latest
       steps:
-        - name: Set up Node.js
-          uses: actions/setup-node@v2
+        - name: Check out repository
+          uses: actions/checkout@v4
           with:
-            node-version: '14'
+            repository: Tigers-X/openj9
+            ref: master
+
+        - name: Set up Node.js
+          uses: actions/setup-node@v4
+          with:
+            node-version: '18'
 
         - name: Install dependencies
-          run: npm install axios
+          run: npm install axios@0.28.0 @actions/github @actions/core
 
         - name: commenting on issues
           uses: actions/github-script@v4
           with:
               github-token: ${{ secrets.GITHUB_TOKEN }}
               script: |
-                  const axios = require('axios');
-                  const input = {
-                    "issue_title": context.payload.issue.title,
-                    "issue_description": context.payload.issue.body,
-                  }
-                  const issueNumber = context.payload.issue.number
-                  console.log('input: ', input)
+                  core.setOutput('issue_title', context.payload.issue.title);
+                  core.setOutput('issue_description', context.payload.issue.body);
+                  core.setOutput('issue_number', context.payload.issue.number);
+
+        - name: Run recommendations
+          run: node .github/recommendation.js
+          env:
+            ISSUE_TITLE: ${{ steps.extract_issue.outputs.issue_title }}
+            ISSUE_DESCRIPTION: ${{ steps.extract_issue.outputs.issue_description }}
+            ISSUE_NUMBER: ${{ steps.extract_issue.outputs.issue_number }}
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
