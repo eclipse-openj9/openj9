@@ -29,10 +29,8 @@ jobs:
           with:
               github-token: ${{ secrets.GITHUB_TOKEN }}
               script: |
-                  let issueNumber = context.issue.number;
-                  console.log(typeof issueNumber);
-                  console.log(`Issue number: ${issueNumber}`);
-                  console.log(issueNumber.toString());
+                  let issueNumber = context.issue.number.toString();
+                  console.log(context.payload.issue.title);
                   
                   core.setOutput('issue_title', context.payload.issue.title);
                   core.setOutput('issue_description', context.payload.issue.body);
