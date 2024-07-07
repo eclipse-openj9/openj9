@@ -10,15 +10,15 @@ jobs:
     if: startsWith(github.event.comment.body, 'triagerx')
     steps:
       - name: Check out repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           repository: Tigers-X/openj9
           ref: master
           
       - name: Set up Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v4
         with:
-          node-version: '14'
+          node-version: '18'
 
       - name: Node Version
         run: node --version
