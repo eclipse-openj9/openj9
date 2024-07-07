@@ -31,7 +31,7 @@ jobs:
               script: |
                   core.setOutput('issue_title', context.payload.issue.title);
                   core.setOutput('issue_description', context.payload.issue.body);
-                  core.setOutput('issue_number', context.payload.issue.number);
+                  core.setOutput('issue_number', context.issue.number);
 
         - name: Run recommendations
           run: node .github/recommendation.js
