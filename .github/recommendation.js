@@ -27,13 +27,6 @@ async function run() {
         predictedAssignees = issueComment.recommended_developers;
         predictedLabels = issueComment.recommended_components;
 
-        console.log(process.env.ISSUE_NUMBER);
-        console.log(typeof process.env.ISSUE_NUMBER);
-        console.log(`Issue number: ${process.env.ISSUE_NUMBER}`);
-
-        console.log(input);
-
-        resultString = `Issue Number: ${process.env.ISSUE_NUMBER}\n`;
         resultString += 'Status: Open\n';
         resultString += `Recommended Components: ${predictedLabels.join(', ')}\n`;
         resultString += `Recommended Assignees: ${predictedAssignees.join(', ')}\n`;
