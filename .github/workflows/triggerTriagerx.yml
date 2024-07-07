@@ -1,4 +1,5 @@
 name: Run when "triagerx" is mentioned in an issue comment
+run-name: Triagerx Trigger
 
 on:
   issue_comment:
@@ -12,9 +13,9 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
         with:
-          repository: Tigers-X/openj9
+          repository: eclipse-openj9/openj9
           ref: master
-          
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:

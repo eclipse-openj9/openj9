@@ -1,5 +1,5 @@
 name: Triager on Opened issues
-run-name: TriagerX for opened issues
+run-name: Triage Opened Issue
 
 on:
     issues:
@@ -13,7 +13,7 @@ jobs:
         - name: Check out repository
           uses: actions/checkout@v4
           with:
-            repository: Tigers-X/openj9
+            repository: eclipse-openj9/openj9
             ref: master
 
         - name: Set up Node.js
