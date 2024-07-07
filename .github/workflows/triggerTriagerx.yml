@@ -45,7 +45,5 @@ jobs:
               "issue_title": issueTitle,
               "issue_description": issueDescription,
             }
-      - name: List .github directory contents
-        run: ls -al .github/
       - name: run recommendations
         run: node .github/recommendation.js
