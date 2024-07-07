@@ -1,12 +1,19 @@
 const axios = require('axios');
 const github = require('@actions/github');
+const core = require('@actions/core');
 
-const apiUrl = "http://140.211.168.122/recommendation";
-
-const sandboxIssueNumber = 1;
-const sandboxOwner = context.repo.owner;
-const sandboxRepo = context.repo.repo;
 async function run() {
+  const sandboxIssueNumber = 1;
+  const sandboxOwner = 'Tigers-X';
+  const sandboxRepo = 'openj9';
+
+  const input = {
+    issue_title: process.env.ISSUE_TITLE,
+    issue_description: process.env.ISSUE_DESCRIPTION,
+  };
+
+  const apiUrl = "http://140.211.168.122/recommendation";
+
   try {
     const response = await axios.post(apiUrl, JSON.stringify(input), {
       headers: {
@@ -30,6 +37,7 @@ async function run() {
       body: resultString
     });
   } catch (error) {
+    core.setFailed(`Action failed with error: ${error}`);
     await github.issues.createComment({
       issue_number: sandboxIssueNumber,
       owner: sandboxOwner,

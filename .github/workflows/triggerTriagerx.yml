@@ -29,6 +29,8 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const axios = require('axios');
+            const core = require('@actions/core');
+            const github = require('@actions/github');
 
             const commentBody = context.payload.comment.body;
             const restCommentBody = commentBody.replace('triagerx', '');
@@ -47,9 +49,11 @@ jobs:
             const issueTitle = issueData.title;
             const issueDescription = issueData.body;
 
-            const input = {
-              "issue_title": issueTitle,
-              "issue_description": issueDescription,
-            }
-      - name: Run recommendation
+            core.setOutput('issue_title', issueTitle);
+            core.setOutput('issue_description', issueDescription);
+
+      - name: Run recommendations
         run: node .github/recommendation.js
+        env:
+          ISSUE_TITLE: ${{ steps.extract_issue.outputs.issue_title }}
+          ISSUE_DESCRIPTION: ${{ steps.extract_issue.outputs.issue_description }}
