@@ -24,17 +24,15 @@ jobs:
         - name: Install dependencies
           run: npm install axios@0.28.0 @actions/github @actions/core
 
-        - name: commenting on issues
+        - name: Extract issue details
+          id: extract_issue
           uses: actions/github-script@v4
           with:
               github-token: ${{ secrets.GITHUB_TOKEN }}
               script: |
-                  let issueNumber = context.issue.number.toString();
-                  console.log(context.payload.issue.title);
-                  
                   core.setOutput('issue_title', context.payload.issue.title);
                   core.setOutput('issue_description', context.payload.issue.body);
-                  core.setOutput('issue_number', issueNumber);
+                  core.setOutput('issue_number', context.issue.number.toString());
 
         - name: Run recommendations
           run: node .github/recommendation.js
