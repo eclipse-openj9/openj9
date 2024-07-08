@@ -27,6 +27,7 @@
 #include "env/TRMemory.hpp"
 #include "OMR/Bytes.hpp" // for alignNoCheck
 #include "env/CompilerEnv.hpp"
+#include "infra/Monitor.hpp"
 
 namespace JITServer
 {
@@ -45,16 +46,17 @@ namespace JITServer
 
    Variable _curPtr defines the boundary of the current data. Reading/writing to/from buffer
    will always advance the pointer.
+
+   A shared, reference-counted persistent allocator is used for all message buffers at a JITServer client.
+   The freed persistent memory tracked by the allocator is disclaimed when the last MessageBuffer is destroyed,
+   and the allocator itself can be destroyed with tryFreePersistentAllocator() if there are no active connections
+   to a server. Servers use the persistent global allocator.
  */
 class MessageBuffer
    {
 public:
    MessageBuffer();
-
-   ~MessageBuffer()
-      {
-      freeMemory(_storage);
-      }
+   ~MessageBuffer();
 
 
    /**
@@ -204,18 +206,28 @@ public:
 
    uint32_t getCapacity() const { return _capacity; }
 
+   // Must be called before any client-server communication takes place
+   static void initTotalBuffersMonitor() { _totalBuffersMonitor = TR::Monitor::create("JIT-JITServerTotalBuffersMonitor"); }
+
+   // Try to free the custom persistent allocator for message buffers. This method does nothing
+   // if the JVM is not in client mode, or if there is at least one active message buffer.
+   static void tryFreePersistentAllocator();
 
 private:
    static const size_t INITIAL_BUFFER_SIZE = 32768; // Initial buffer size is 32K
    uint32_t offset(char *addr) const { return addr - _storage; }
-   char *allocateMemory(uint32_t capacity) { return static_cast<char *>(_allocator.allocate(capacity)); }
-   void freeMemory(char *storage) { _allocator.deallocate(storage); }
+   char *allocateMemory(uint32_t capacity) { return static_cast<char *>(_allocator->allocate(capacity)); }
+   void freeMemory(char *storage) { _allocator->deallocate(storage); }
    uint32_t computeRequiredCapacity(uint32_t requiredSize);
+   static TR::Monitor *getTotalBuffersMonitor() { return _totalBuffersMonitor; }
 
    uint32_t _capacity;
    char *_storage;
    char *_curPtr;
-   TR::PersistentAllocator &_allocator;
+
+   static TR::Monitor *_totalBuffersMonitor;
+   static int _totalBuffers;
+   static TR::PersistentAllocator *_allocator;
    };
 };
 #endif
