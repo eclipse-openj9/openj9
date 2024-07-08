@@ -980,7 +980,7 @@ J9::ClassEnv::isZeroInitializable(TR_OpaqueClassBlock *clazz)
    }
 
 bool
-J9::ClassEnv::containsZeroOrOneConcreteClass(TR::Compilation *comp, List<TR_PersistentClassInfo> *subClasses)
+J9::ClassEnv::containsZeroOrOneConcreteClass(TR::Compilation *comp, List<TR_PersistentClassInfo>* subClasses)
    {
    int count = 0;
 #if defined(J9VM_OPT_JITSERVER)
@@ -990,7 +990,7 @@ J9::ClassEnv::containsZeroOrOneConcreteClass(TR::Compilation *comp, List<TR_Pers
       TR_ScratchList<TR_PersistentClassInfo> subClassesNotCached(comp->trMemory());
 
       // Process classes cached at the server first
-      ClientSessionData *clientData = comp->getClientData();
+      ClientSessionData * clientData = TR::compInfoPT->getClientData();
       for (TR_PersistentClassInfo *ptClassInfo = j.getFirst(); ptClassInfo; ptClassInfo = j.getNext())
          {
          TR_OpaqueClassBlock *clazz = ptClassInfo->getClassId();
@@ -1068,15 +1068,14 @@ J9::ClassEnv::flattenedArrayElementSize(TR::Compilation *comp, TR_OpaqueClassBlo
    if (auto stream = comp->getStream())
       {
       int32_t arrayElementSize = 0;
-      JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)arrayClass, comp->getClientData(), stream,
-                                                JITServerHelpers::CLASSINFO_ARRAY_ELEMENT_SIZE, &arrayElementSize);
+      JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)arrayClass, TR::compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_ARRAY_ELEMENT_SIZE, (void *)&arrayElementSize);
       return arrayElementSize;
       }
    else
 #endif /* defined(J9VM_OPT_JITSERVER) */
       {
       J9JavaVM *vm = comp->fej9()->getJ9JITConfig()->javaVM;
-      return vm->internalVMFunctions->arrayElementSize((J9ArrayClass *)self()->convertClassOffsetToClassPtr(arrayClass));
+      return vm->internalVMFunctions->arrayElementSize((J9ArrayClass*)self()->convertClassOffsetToClassPtr(arrayClass));
       }
    }
 
