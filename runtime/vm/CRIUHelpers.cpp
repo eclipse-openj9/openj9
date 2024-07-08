@@ -1838,7 +1838,7 @@ criuCheckpointJVMImpl(JNIEnv *env,
 
 #if defined(LINUX)
 		if (J9_ARE_ALL_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_CRIU_DISCLAIM_CLASSES)) {
-			systemReturnCode = vm->internalVMFunctions->disclaimAllClassMemory(currentThread);
+			systemReturnCode = vm->internalVMFunctions->disclaimAllClassMemory(vm);
 			if (0 != systemReturnCode) {
 				systemReturnCode = errno;
 				currentExceptionClass = vm->checkpointState.criuJVMCheckpointExceptionClass;

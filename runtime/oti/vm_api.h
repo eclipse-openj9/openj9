@@ -725,7 +725,7 @@ criuCheckpointJVMImpl(JNIEnv *env, jstring imagesDir, jboolean leaveRunning, jbo
  * @return 0 if successful, -1 if madvise returns an error
  */
 I_32
-disclaimAllClassMemory(J9VMThread *currentThread);
+disclaimAllClassMemory(J9JavaVM *vm);
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 /* ---------------- classloadersearch.c ---------------- */
