@@ -1183,7 +1183,7 @@ notCheckpointSafeOrClinitFrameWalkFunction(J9VMThread *vmThread, J9StackWalkStat
 		J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
 		J9ClassLoader *methodLoader = J9_CLASS_FROM_METHOD(method)->classLoader;
 		J9UTF8 *romMethodName = J9ROMMETHOD_NAME(romMethod);
-		/* only method names that start with '<' are <init>, <vnew> and <clinit>  */
+		/* only method names that start with '<' are <init> and <clinit>  */
 		if (0 == strncmp((char*)J9UTF8_DATA(romMethodName), "<c", 2)) {
 			*(UDATA*)walkState->userData1 = J9VM_DELAYCHECKPOINT_CLINIT;
 			goto fail;

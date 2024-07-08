@@ -43,7 +43,6 @@ import static com.ibm.j9ddr.vm29.j9.BCNames.JBldc;
 import static com.ibm.j9ddr.vm29.j9.BCNames.JBldcw;
 import static com.ibm.j9ddr.vm29.j9.BCNames.JBmultianewarray;
 import static com.ibm.j9ddr.vm29.j9.BCNames.JBputfield;
-import static com.ibm.j9ddr.vm29.j9.BCNames.JBwithfield;
 import static com.ibm.j9ddr.vm29.j9.BCNames.JBputstatic;
 import static com.ibm.j9ddr.vm29.j9.BCNames.JBswap;
 import static com.ibm.j9ddr.vm29.j9.BCNames.JBtableswitch;
@@ -524,7 +523,7 @@ public class StackMap
 								PUSH(INT);
 							}
 						}
-					} else if ((bc == JBputfield)  || (bc == JBwithfield)) {
+					} else if (bc == JBputfield) {
 						POP();
 						index = PARAM_16(bcIndex, 1).intValue();
 						utf8Signature = J9ROMFieldRefPointer.cast(pool.add(index)).nameAndSignature().signature();
@@ -532,9 +531,6 @@ public class StackMap
 						POP();
 						if ((signature == 'D') || (signature == 'J')) {
 							POP();
-						}
-						if (bc == JBwithfield) {
-							PUSH(OBJ);
 						}
 					} else if (bc == JBputstatic) {
 						index = PARAM_16(bcIndex, 1).intValue();

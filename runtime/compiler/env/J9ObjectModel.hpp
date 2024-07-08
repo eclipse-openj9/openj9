@@ -63,20 +63,23 @@ public:
    bool mayRequireSpineChecks();
 
    /**
-   * @brief Whether or not value object is enabled
-   */
+    * @brief Whether or not value object is enabled
+    */
    bool areValueTypesEnabled();
+
    /**
-   * @brief Whether or not flattenable value object (aka null restricted) type is enabled
-   */
+    * @brief Whether or not flattenable value object (aka null restricted) type is enabled
+    */
    bool areFlattenableValueTypesEnabled();
+
    /**
    * @brief Whether the check is enabled on monitor object being value based class type
    */
    bool areValueBasedMonitorChecksEnabled();
+
    /**
-   * @brief Whether the array flattening is enabled for value types
-   */
+    * @brief Whether the array flattening is enabled for value types
+    */
    bool isValueTypeArrayFlatteningEnabled();
 
    int32_t sizeofReferenceField();
