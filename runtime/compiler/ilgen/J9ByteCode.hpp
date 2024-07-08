@@ -110,8 +110,6 @@ enum TR_J9ByteCode
    J9BCmonitorenter, J9BCmonitorexit,
    J9BCwide,
    J9BCasyncCheck,
-   J9BCaconst_init,
-   J9BCwithfield,
    J9BCbreakpoint,
    J9BCunknown
    };
