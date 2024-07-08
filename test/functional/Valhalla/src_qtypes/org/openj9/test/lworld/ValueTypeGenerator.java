@@ -237,9 +237,9 @@ public class ValueTypeGenerator extends ClassLoader {
 				if ((nameAndSigValue.length > 2) && nameAndSigValue[2].equals("static")) {
 					fieldModifiers = ACC_PUBLIC + ACC_STATIC;
 				} else if ((nameAndSigValue.length > 3) && nameAndSigValue[3].equals("volatile")) {
-					fieldModifiers = ACC_PUBLIC + ACC_FINAL + ACC_VOLATILE;
+					fieldModifiers = ACC_PUBLIC + ACC_FINAL + ACC_STRICT + ACC_VOLATILE;
 				} else {
-					fieldModifiers = ACC_PUBLIC + ACC_FINAL;
+					fieldModifiers = ACC_PUBLIC + ACC_FINAL + ACC_STRICT;
 				}
 			}
 			fv = cw.visitField(fieldModifiers, nameAndSigValue[0], nameAndSigValue[1], null, null);
@@ -1116,6 +1116,33 @@ public class ValueTypeGenerator extends ClassLoader {
 	public static void generateNonInterfaceClassWithMissingFlags(String name) {
 		ClassWriter classWriter = new ClassWriter(0);
 		classWriter.visit(ValhallaUtils.VALUE_TYPE_CLASS_FILE_VERSION, 0, name, null, "java/lang/Object", null);
+		classWriter.visitEnd();
+		byte[] bytes = classWriter.toByteArray();
+		generator.defineClass(name, bytes, 0, bytes.length);
+	}
+
+	public static void generateTestFieldCantHaveAccFinalAndAccVolatile() {
+		generateAccStaticTestGeneric("TestFieldCantHaveAccFinalAndAccVolatile", ACC_FINAL | ACC_VOLATILE, true);
+	}
+
+	public static void generateTestFieldCantHaveAccStrictAndAccStatic() {
+		generateAccStaticTestGeneric("TestFieldCantHaveAccStrictAndAccStatic", ACC_STRICT | ACC_STATIC, true);
+	}
+
+	public static void generateTestAccStrictFieldMustHaveAccFinal() {
+		generateAccStaticTestGeneric("TestAccStrictFieldMustHaveAccFinal", ACC_STRICT, true);
+	}
+
+	public static void generateTestValueClassFieldMustHaveAccStaticOrAccStrict() {
+		generateAccStaticTestGeneric("TestValueClassFieldMustHaveAccStaticOrAccStrict", 0, false);
+	}
+
+	private static void generateAccStaticTestGeneric(String name, int fieldFlags, boolean isRef) {
+		ClassWriter classWriter = new ClassWriter(0);
+		classWriter.visit(ValhallaUtils.VALUE_TYPE_CLASS_FILE_VERSION,
+			ACC_PUBLIC + ACC_FINAL + (isRef ? ValhallaUtils.ACC_IDENTITY : 0),
+			name, null, "java/lang/Object", null);
+		classWriter.visitField(fieldFlags, "test", "LObject;", null, null);
 		classWriter.visitEnd();
 		byte[] bytes = classWriter.toByteArray();
 		generator.defineClass(name, bytes, 0, bytes.length);
