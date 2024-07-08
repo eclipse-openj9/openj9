@@ -449,17 +449,16 @@ cleanUpClassLoader(J9VMThread *vmThread, J9ClassLoader* classLoader)
 
 #if defined(J9VM_OPT_CRIU_SUPPORT) && defined(LINUX)
 I_32
-disclaimAllClassMemory(J9VMThread *currentThread)
+disclaimAllClassMemory(J9JavaVM *vm)
 {
 	I_32 result = 0;
-	J9JavaVM *javaVM = currentThread->javaVM;
 	J9MemorySegment *segment = NULL;
 	J9ClassLoaderWalkState walkState;
-	J9ClassLoader *classLoader = javaVM->internalVMFunctions->allClassLoadersStartDo(&walkState, javaVM, 0);
+	J9ClassLoader *classLoader = vm->internalVMFunctions->allClassLoadersStartDo(&walkState, vm, 0);
 	while (NULL != classLoader) {
 		segment = classLoader->classSegments;
 		while (NULL != segment) {
-			Trc_VM_criu_disclaimAllClassMemory_segment(currentThread, segment, segment->baseAddress, segment->heapBase, segment->size, segment->type);
+			Trc_VM_criu_disclaimAllClassMemory_segment(segment, segment->baseAddress, segment->heapBase, segment->size, segment->type);
 			Assert_VM_true(J9_ARE_ANY_BITS_SET(segment->type, MEMORY_TYPE_RAM_CLASS | MEMORY_TYPE_ROM_CLASS));
 			result = madvise(segment->heapBase, segment->size, MADV_PAGEOUT);
 			if (-1 == result) {
@@ -467,9 +466,9 @@ disclaimAllClassMemory(J9VMThread *currentThread)
 			}
 			segment = segment->nextSegmentInClassLoader;
 		}
-		classLoader = javaVM->internalVMFunctions->allClassLoadersNextDo(&walkState);
+		classLoader = vm->internalVMFunctions->allClassLoadersNextDo(&walkState);
 	}
-	javaVM->internalVMFunctions->allClassLoadersEndDo(&walkState);
+	vm->internalVMFunctions->allClassLoadersEndDo(&walkState);
 done:
 	return result;
 }
