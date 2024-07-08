@@ -469,6 +469,7 @@ disclaimAllClassMemory(J9VMThread *currentThread)
 		}
 		classLoader = javaVM->internalVMFunctions->allClassLoadersNextDo(&walkState);
 	}
+	javaVM->internalVMFunctions->allClassLoadersEndDo(&walkState);
 done:
 	return result;
 }
