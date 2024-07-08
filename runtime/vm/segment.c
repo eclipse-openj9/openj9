@@ -401,6 +401,9 @@ static J9MemorySegment * allocateVirtualMemorySegmentInListInternal(J9JavaVM *ja
 {
 	U_8 *allocatedBase;
 	J9MemorySegment *segment;
+#if defined(J9VM_OPT_CRIU_SUPPORT) && defined(LINUX)
+	J9JITConfig *jitConfig = javaVM->jitConfig;
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) && defined(LINUX) */
 
 	Trc_VM_allocateMemorySegmentInList_Entry(segmentList, size, type);
 
@@ -444,6 +447,12 @@ static J9MemorySegment * allocateVirtualMemorySegmentInListInternal(J9JavaVM *ja
 			) {
 				/* Adjust address to achieve 4K alignment. */
 				segment->heapBase = (uint8_t *)ROUND_TO(J9SEGMENT_ALIGNMENT, (UDATA)allocatedBase);
+				jitConfig->jitAddNewLowToHighRSSRegion(
+					J9_ARE_ANY_BITS_SET(segment->type, MEMORY_TYPE_RAM_CLASS) ? "RAM_CLASS" : "ROM_CLASS",
+					segment->heapBase,
+					segment->size,
+					J9SEGMENT_ALIGNMENT
+				);
 			} else
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) && defined(LINUX) */
 			{
