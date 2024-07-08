@@ -55,7 +55,7 @@ ffiCallWithSetJmpForUpcall(J9VMThread *currentThread, ffi_cif *cif, void *functi
 ffiCallWithSetJmpForUpcall(J9VMThread *currentThread, ffi_cif *cif, void *function, UDATA *returnStorage, void **values)
 #endif /* FFI_NATIVE_RAW_API */
 {
-	jmp_buf jmpBufferEnv = {0};
+	jmp_buf jmpBufferEnv = {};
 	void *jmpBufEnvPtr = currentThread->jmpBufEnvPtr;
 
 	/* We only need to restore back to the latest call-out from the dispatcher
