@@ -2066,9 +2066,7 @@ checkFlattenableFieldValueClasses(J9VMThread *currentThread, J9ClassLoader *clas
 		J9UTF8 *signature = J9ROMFIELDSHAPE_SIGNATURE(field);
 		U_8 *signatureChars = J9UTF8_DATA(signature);
 		if (J9_ARE_NO_BITS_SET(modifiers, J9AccStatic)) {
-			if ('Q' == signatureChars[0]
-				|| J9_ARE_ALL_BITS_SET(modifiers, J9FieldFlagIsNullRestricted)
-			) {
+			if (J9_ARE_ALL_BITS_SET(modifiers, J9FieldFlagIsNullRestricted)) {
 				J9Class *valueClass = internalFindClassUTF8(currentThread, signatureChars + 1, J9UTF8_LENGTH(signature) - 2, classLoader, J9_FINDCLASS_FLAG_EXISTING_ONLY);
 				Assert_VM_notNull(valueClass);
 				J9ROMClass *valueROMClass = valueClass->romClass;

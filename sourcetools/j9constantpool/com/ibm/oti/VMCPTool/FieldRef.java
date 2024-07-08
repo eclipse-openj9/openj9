@@ -124,7 +124,6 @@ public class FieldRef extends PrimaryItem implements Constants {
 		switch (((Alias) primary).nas.signature.data.charAt(0)) {
 		case '[':
 		case 'L':
-		case 'Q':
 			return "OBJECT";
 		default:
 			// Do nothing
@@ -154,7 +153,6 @@ public class FieldRef extends PrimaryItem implements Constants {
 		switch (((Alias) primary).nas.signature.data.charAt(0)) {
 		case '[':
 		case 'L':
-		case 'Q':
 			return "OBJECT";
 		case 'J':
 			return "I64";

@@ -208,14 +208,14 @@ J9::Compilation::Compilation(int32_t id,
    _osrProhibitedOverRangeOfTrees(false),
    _wasFearPointAnalysisDone(false)
    {
-   _symbolValidationManager = new (self()->region()) TR::SymbolValidationManager(self()->region(), compilee, self());
+   _symbolValidationManager = new (self()->region()) TR::SymbolValidationManager(self()->region(), compilee);
 
    _aotClassClassPointer = NULL;
    _aotClassClassPointerInitialized = false;
 
-   _aotGuardPatchSites = new (m->trHeapMemory()) TR::list<TR_AOTGuardSite *>(getTypedAllocator<TR_AOTGuardSite *>(self()->allocator()));
+   _aotGuardPatchSites = new (m->trHeapMemory()) TR::list<TR_AOTGuardSite*>(getTypedAllocator<TR_AOTGuardSite*>(self()->allocator()));
 
-   _aotClassInfo = new (m->trHeapMemory()) TR::list<TR::AOTClassInfo *>(getTypedAllocator<TR::AOTClassInfo *>(self()->allocator()));
+   _aotClassInfo = new (m->trHeapMemory()) TR::list<TR::AOTClassInfo*>(getTypedAllocator<TR::AOTClassInfo*>(self()->allocator()));
 
    if (_updateCompYieldStats)
       _hiresTimeForPreviousCallingContext = TR::Compiler->vm.getHighResClock(self());

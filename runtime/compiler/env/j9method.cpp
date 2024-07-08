@@ -7489,9 +7489,9 @@ TR_ResolvedJ9Method::makeParameterList(TR::ResolvedMethodSymbol *methodSym)
          }
 
       // Walk to the end of the class name, if this is a class name
-      if (*end == 'L' || *end == 'Q')
+      if (*end == 'L')
          {
-         // Assume the form is L<classname> or Q<classname>; where <classname> is
+         // Assume the form is L<classname>; where <classname> is
          // at least 1 char and therefore skip the first 2 chars
          end += 2;
          end = (char *)memchr(end, ';', sigEnd - end);
@@ -7670,7 +7670,7 @@ TR_J9MethodParameterIterator::TR_J9MethodParameterIterator(TR_J9MethodBase &j9Me
 
 TR::DataType TR_J9MethodParameterIterator::getDataType()
    {
-   if (*_sig == 'L' || *_sig == '[' || *_sig == 'Q')
+   if (*_sig == 'L' || *_sig == '[')
       {
       _nextIncrBy = 0;
       while (_sig[_nextIncrBy] == '[')
@@ -7678,7 +7678,7 @@ TR::DataType TR_J9MethodParameterIterator::getDataType()
          ++_nextIncrBy;
          }
 
-      if (_sig[_nextIncrBy] != 'L' && _sig[_nextIncrBy] != 'Q')
+      if (_sig[_nextIncrBy] != 'L')
          {
          // Primitive array
          ++_nextIncrBy;
@@ -7735,7 +7735,7 @@ TR::DataType TR_J9MethodParameterIterator::getDataType()
 TR_OpaqueClassBlock * TR_J9MethodParameterIterator::getOpaqueClass()
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(_comp.fe());
-   TR_ASSERT(*_sig == '[' || *_sig == 'L' || *_sig == 'Q', "Asked for class of incorrect Java parameter.");
+   TR_ASSERT(*_sig == '[' || *_sig == 'L', "Asked for class of incorrect Java parameter.");
    if (_nextIncrBy == 0) getDataType();
    return _resolvedMethod == NULL ? NULL :
       fej9->getClassFromSignature(_sig, _nextIncrBy, _resolvedMethod);
@@ -7754,7 +7754,7 @@ bool TR_J9MethodParameterIterator::isArray()
 
 bool TR_J9MethodParameterIterator::isClass()
    {
-   return (*_sig == 'L' || *_sig == 'Q');
+   return (*_sig == 'L');
    }
 
 bool TR_J9MethodParameterIterator::atEnd()
@@ -7804,7 +7804,6 @@ static TR::DataType typeFromSig(char sig)
       {
       case 'L':
       case '[':
-      case 'Q':
          return TR::Address;
       case 'I':
       case 'Z':
@@ -7856,7 +7855,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 #if defined(J9VM_OPT_JITSERVER)
             if (comp()->isOutOfProcessCompilation())
                {
-               auto stream = comp()->getStream();
+               auto stream = TR::CompilationInfo::getStream();
                stream->write(JITServer::MessageType::runFEMacro_invokeCollectHandleAllocateArray,
                              methodHandleNode->getSymbolReference()->getKnownObjectIndex());
                auto recv = stream->read<int32_t, int32_t, TR_OpaqueClassBlock *>();
@@ -7919,7 +7918,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 #if defined(J9VM_OPT_JITSERVER)
          if (comp()->isOutOfProcessCompilation())
             {
-            auto stream = comp()->getStream();
+            auto stream = TR::CompilationInfo::getStream();
             stream->write(JITServer::MessageType::runFEMacro_invokeCollectHandleNumArgsToCollect,
                           thunkDetails->getHandleRef(), getCollectPosition);
             auto recv = stream->read<int32_t, int32_t, int32_t>();
@@ -7979,7 +7978,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 #if defined(J9VM_OPT_JITSERVER)
          if (comp()->isOutOfProcessCompilation())
             {
-            auto stream = comp()->getStream();
+            auto stream = TR::CompilationInfo::getStream();
             stream->write(JITServer::MessageType::runFEMacro_invokeExplicitCastHandleConvertArgs, thunkDetails->getHandleRef());
             auto recv = stream->read<std::string>();
             auto &methodDescriptorString = std::get<0>(recv);
@@ -8028,7 +8027,6 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             const char *targetName = targetBuf; const char *targetType = targetBuf;
             switch (sourceSig[0])
                {
-               case 'Q':
                case 'L':
                case '[':
                   sourceName = "object";
@@ -8040,7 +8038,6 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
                }
             switch (targetSig[0])
                {
-               case 'Q':
                case 'L':
                case '[':
                   targetName = "object";
@@ -8056,7 +8053,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             if (strcmp(sourceType, targetType))
                {
                char methodName[30], methodSignature[50];
-               if ((sourceType[0] == 'L' || sourceType[0] == 'Q') && isExplicit)
+               if ((sourceType[0] == 'L') && isExplicit)
                   sprintf(methodName, "explicitObject2%s", targetName);
                else
                   sprintf(methodName, "%s2%s", sourceName, targetName);
@@ -8077,7 +8074,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 
             // Address conversions need a downcast after the call
             //
-            if (targetType[0] == 'L' || targetType[0] == 'Q')
+            if (targetType[0] == 'L')
                {
                uintptr_t methodHandle;
                uintptr_t sourceArguments;
@@ -8087,9 +8084,9 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 #if defined(J9VM_OPT_JITSERVER)
                if (comp()->isOutOfProcessCompilation())
                   {
-                  auto stream = comp()->getStream();
+                  auto stream = TR::CompilationInfo::getStream();
                   stream->write(JITServer::MessageType::runFEMacro_targetTypeL, thunkDetails->getHandleRef(), argIndex);
-                  auto recv = stream->read<TR_OpaqueClassBlock *, TR_OpaqueClassBlock *>();
+                  auto recv = stream->read<TR_OpaqueClassBlock*, TR_OpaqueClassBlock *>();
                   sourceParmClass = std::get<0>(recv);
                   targetParmClass = std::get<1>(recv);
                   }
@@ -8182,7 +8179,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
                {
                packReferenceChainOffsets(methodHandleExpression, listOfOffsets);
                }
-            auto stream = comp()->getStream();
+            auto stream = TR::CompilationInfo::getStream();
             stream->write(JITServer::MessageType::runFEMacro_invokeILGenMacrosInvokeExactAndFixup, thunkDetails->getHandleRef(), listOfOffsets);
             auto recv = stream->read<std::string>();
             auto &methodDescriptorString = std::get<0>(recv);
@@ -8244,7 +8241,6 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
                break;
             case 'L':
             case '[':
-            case 'Q':
                callOp = TR::acalli;
                break;
             case 'V':
@@ -8292,7 +8288,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 #if defined(J9VM_OPT_JITSERVER)
          if (comp()->isOutOfProcessCompilation())
             {
-            auto stream = comp()->getStream();
+            auto stream = TR::CompilationInfo::getStream();
             stream->write(JITServer::MessageType::runFEMacro_invokeArgumentMoverHandlePermuteArgs, thunkDetails->getHandleRef());
             auto recv = stream->read<std::string>();
             auto &methodDescString = std::get<0>(recv);
@@ -8344,7 +8340,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 #if defined(J9VM_OPT_JITSERVER)
          if (comp()->isOutOfProcessCompilation())
             {
-            auto stream = comp()->getStream();
+            auto stream = TR::CompilationInfo::getStream();
             stream->write(JITServer::MessageType::runFEMacro_invokePermuteHandlePermuteArgs, thunkDetails->getHandleRef());
 
             // Do the client-side operations
@@ -8382,7 +8378,6 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
                      {
                      case 'L':
                      case '[':
-                     case 'Q':
                         sprintf(extraName, "extra_L");
                         extraSignature = artificialSignature(stackAlloc, "(L" JSR292_ArgumentMoverHandle ";I)Ljava/lang/Object;");
                         break;
@@ -8466,7 +8461,6 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
                      {
                      case 'L':
                      case '[':
-                     case 'Q':
                         sprintf(extraName, "extra_L");
                         extraSignature = artificialSignature(stackAlloc, "(L" JSR292_ArgumentMoverHandle ";I)Ljava/lang/Object;");
                         break;
@@ -8538,7 +8532,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 #if defined(J9VM_OPT_JITSERVER)
          if (comp()->isOutOfProcessCompilation())
             {
-            auto stream = comp()->getStream();
+            auto stream = TR::CompilationInfo::getStream();
             stream->write(JITServer::MessageType::runFEMacro_invokeGuardWithTestHandleNumGuardArgs, thunkDetails->getHandleRef());
             numGuardArgs = std::get<0>(stream->read<int32_t>());
             }
@@ -8574,7 +8568,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 #if defined(J9VM_OPT_JITSERVER)
          if (comp()->isOutOfProcessCompilation())
             {
-            auto stream = comp()->getStream();
+            auto stream = TR::CompilationInfo::getStream();
             stream->write(JITServer::MessageType::runFEMacro_invokeInsertHandle, thunkDetails->getHandleRef());
             auto recv = stream->read<int32_t, int32_t, int32_t>();
             insertionIndex = std::get<0>(recv);
@@ -8743,7 +8737,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 #if defined(J9VM_OPT_JITSERVER)
          if (comp()->isOutOfProcessCompilation())
             {
-            auto stream = comp()->getStream();
+            auto stream = TR::CompilationInfo::getStream();
             stream->write(JITServer::MessageType::runFEMacro_invokeSpreadHandleArrayArg, thunkDetails->getHandleRef());
             auto recv = stream->read<J9ArrayClass *, int32_t, uintptr_t, J9Class *, std::string, bool>();
             arrayJ9Class = std::get<0>(recv);
@@ -8846,10 +8840,9 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 #if defined(J9VM_OPT_JITSERVER)
          if (comp()->isOutOfProcessCompilation())
             {
-            auto stream = comp()->getStream();
-            auto recognizedMethod = symRef->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod();
-            bool getSpreadPos = (recognizedMethod == TR::java_lang_invoke_SpreadHandle_spreadStart) ||
-                                (recognizedMethod == TR::java_lang_invoke_SpreadHandle_numArgsAfterSpreadArray);
+            auto stream = TR::CompilationInfo::getStream();
+            bool getSpreadPos = symRef->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod() == TR::java_lang_invoke_SpreadHandle_spreadStart ||
+               symRef->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod() == TR::java_lang_invoke_SpreadHandle_numArgsAfterSpreadArray;
             stream->write(JITServer::MessageType::runFEMacro_invokeSpreadHandle, thunkDetails->getHandleRef(), getSpreadPos);
             auto recv = stream->read<int32_t, int32_t, int32_t>();
             numArguments = std::get<0>(recv);
@@ -8904,7 +8897,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 #if defined(J9VM_OPT_JITSERVER)
          if (comp()->isOutOfProcessCompilation())
             {
-            auto stream = comp()->getStream();
+            auto stream = TR::CompilationInfo::getStream();
             stream->write(JITServer::MessageType::runFEMacro_invokeFoldHandle, thunkDetails->getHandleRef());
             auto recv = stream->read<std::vector<int32_t>, int32_t, int32_t>();
 
@@ -8983,7 +8976,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 #if defined(J9VM_OPT_JITSERVER)
          if (comp()->isOutOfProcessCompilation())
             {
-            auto stream = comp()->getStream();
+            auto stream = TR::CompilationInfo::getStream();
             stream->write(JITServer::MessageType::runFEMacro_invokeFilterArgumentsWithCombinerHandleArgumentIndices, thunkDetails->getHandleRef());
 
             auto recv = stream->read<int32_t, std::vector<int32_t>>();
@@ -9025,7 +9018,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 #if defined(J9VM_OPT_JITSERVER)
          if (comp()->isOutOfProcessCompilation())
             {
-            auto stream = comp()->getStream();
+            auto stream = TR::CompilationInfo::getStream();
             stream->write(JITServer::MessageType::runFEMacro_invokeFoldHandle2, thunkDetails->getHandleRef());
             foldPosition = std::get<0>(stream->read<int32_t>());
             }
@@ -9054,7 +9047,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 #if defined(J9VM_OPT_JITSERVER)
          if (comp()->isOutOfProcessCompilation())
             {
-            auto stream = comp()->getStream();
+            auto stream = TR::CompilationInfo::getStream();
             stream->write(JITServer::MessageType::runFEMacro_invokeFilterArgumentsWithCombinerHandleFilterPosition, thunkDetails->getHandleRef());
             filterPosition = std::get<0>(stream->read<int32_t>());
             }
@@ -9117,7 +9110,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 #if defined(J9VM_OPT_JITSERVER)
          if (comp()->isOutOfProcessCompilation())
             {
-            auto stream = comp()->getStream();
+            auto stream = TR::CompilationInfo::getStream();
             stream->write(JITServer::MessageType::runFEMacro_invokeFinallyHandle, thunkDetails->getHandleRef());
             auto recv = stream->read<int32_t, std::string>();
             numArgsPassToFinallyTarget = std::get<0>(recv);
@@ -9168,7 +9161,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 #if defined(J9VM_OPT_JITSERVER)
          if (comp()->isOutOfProcessCompilation())
             {
-            auto stream = comp()->getStream();
+            auto stream = TR::CompilationInfo::getStream();
             stream->write(JITServer::MessageType::runFEMacro_invokeFilterArgumentsWithCombinerHandleNumSuffixArgs, thunkDetails->getHandleRef());
             auto recv = stream->read<int32_t, int32_t>();
             numArguments = std::get<0>(recv);
@@ -9207,7 +9200,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 #if defined(J9VM_OPT_JITSERVER)
          if (comp()->isOutOfProcessCompilation())
             {
-            auto stream = comp()->getStream();
+            auto stream = TR::CompilationInfo::getStream();
             stream->write(JITServer::MessageType::runFEMacro_invokeFilterArgumentsHandle2, thunkDetails->getHandleRef());
             auto recv = stream->read<int32_t, int32_t, int32_t>();
             numArguments = std::get<0>(recv);
@@ -9266,7 +9259,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 #if defined(J9VM_OPT_JITSERVER)
          if (comp()->isOutOfProcessCompilation())
             {
-            auto stream = comp()->getStream();
+            auto stream = TR::CompilationInfo::getStream();
             stream->write(JITServer::MessageType::runFEMacro_invokeFilterArgumentsHandle, thunkDetails->getHandleRef(), knotEnabled);
             auto recv = stream->read<int32_t, std::string, std::vector<uint8_t>, std::vector<TR::KnownObjectTable::Index>, std::vector<uintptr_t *>>();
             startPos = std::get<0>(recv);
@@ -9421,7 +9414,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 #if defined(J9VM_OPT_JITSERVER)
          if (comp()->isOutOfProcessCompilation())
             {
-            auto stream = comp()->getStream();
+            auto stream = TR::CompilationInfo::getStream();
             stream->write(JITServer::MessageType::runFEMacro_invokeCatchHandle, thunkDetails->getHandleRef());
             numCatchArguments = std::get<0>(stream->read<int32_t>());
             }
@@ -9452,7 +9445,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 #if defined(J9VM_OPT_JITSERVER)
          if (comp()->isOutOfProcessCompilation())
             {
-            auto stream = comp()->getStream();
+            auto stream = TR::CompilationInfo::getStream();
             std::vector<uintptr_t> listOfOffsets;
             packReferenceChainOffsets(pop(), listOfOffsets);
             stream->write(JITServer::MessageType::runFEMacro_invokeILGenMacrosParameterCount, thunkDetails->getHandleRef(), listOfOffsets);
@@ -9485,7 +9478,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 #if defined(J9VM_OPT_JITSERVER)
          if (comp()->isOutOfProcessCompilation())
             {
-            auto stream = comp()->getStream();
+            auto stream = TR::CompilationInfo::getStream();
             std::vector<uintptr_t> listOfOffsets;
             packReferenceChainOffsets(pop(), listOfOffsets);
             stream->write(JITServer::MessageType::runFEMacro_invokeILGenMacrosArrayLength, thunkDetails->getHandleRef(), listOfOffsets);
@@ -9522,7 +9515,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 #if defined(J9VM_OPT_JITSERVER)
          if (comp()->isOutOfProcessCompilation())
             {
-            auto stream = comp()->getStream();
+            auto stream = TR::CompilationInfo::getStream();
             std::vector<uintptr_t> listOfOffsets;
             packReferenceChainOffsets(baseObjectNode, listOfOffsets);
             TR_ASSERT(fieldSym->getDataType() == TR::Int32, "ILGenMacros.getField expecting int field; found load of %s", comp()->getDebug()->getName(symRef));

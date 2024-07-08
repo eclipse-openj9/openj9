@@ -373,14 +373,14 @@ InterpreterEmulator::maintainStackForGetField()
 #if defined(J9VM_OPT_JITSERVER)
          if (comp()->isOutOfProcessCompilation())
             {
-            TR_ResolvedJ9JITServerMethod *serverMethod = static_cast<TR_ResolvedJ9JITServerMethod *>(_calltarget->_calleeMethod);
+            TR_ResolvedJ9JITServerMethod *serverMethod = static_cast<TR_ResolvedJ9JITServerMethod*>(_calltarget->_calleeMethod);
             TR_ResolvedMethod *clientMethod = serverMethod->getRemoteMirror();
 
-            auto stream = comp()->getStream();
+            auto stream = TR::CompilationInfo::getStream();
             stream->write(JITServer::MessageType::KnownObjectTable_dereferenceKnownObjectField,
-                          baseObjectIndex, clientMethod, cpIndex);
+                  baseObjectIndex, clientMethod, cpIndex);
 
-            auto recv = stream->read<TR::KnownObjectTable::Index, uintptr_t *, uintptr_t, uintptr_t, bool>();
+            auto recv = stream->read<TR::KnownObjectTable::Index, uintptr_t*, uintptr_t, uintptr_t, bool>();
             resultIndex = std::get<0>(recv);
             uintptr_t *objectPointerReference = std::get<1>(recv);
             fieldAddress = std::get<2>(recv);
@@ -1016,10 +1016,10 @@ InterpreterEmulator::getReturnValue(TR_ResolvedMethod *callee)
    #if defined(J9VM_OPT_JITSERVER)
             if (comp()->isOutOfProcessCompilation())
                {
-               auto stream = comp()->getStream();
+               auto stream = TR::CompilationInfo::getStream();
                stream->write(JITServer::MessageType::KnownObjectTable_dereferenceKnownObjectField2, mutableCallsiteClass, callSiteIndex);
 
-               auto recv = stream->read<TR::KnownObjectTable::Index, uintptr_t *>();
+               auto recv = stream->read<TR::KnownObjectTable::Index, uintptr_t*>();
                resultIndex = std::get<0>(recv);
                uintptr_t *objectPointerReference = std::get<1>(recv);
 
