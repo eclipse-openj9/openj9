@@ -202,9 +202,6 @@ jitParseSignature (const J9UTF8 *signature, U_8 *paramBuffer, UDATA *paramElemen
 			state = returnValue;
 		} else {
 			switch (*sigChar) {
-			case 'Q':
-                                /* VALHALLA_TODO:  Need to return a J9_NATIVE_TYPE_VALUE for 'Q' in future */
-                                /* FALLTHROUGH */
 			case 'L': next = J9_NATIVE_TYPE_OBJECT; break;
 			case '[': 
 				next = J9_NATIVE_TYPE_OBJECT; 
@@ -231,7 +228,7 @@ jitParseSignature (const J9UTF8 *signature, U_8 *paramBuffer, UDATA *paramElemen
 			case 'V': next = J9_NATIVE_TYPE_VOID; break;
 			}
 			
-			if ('L' == *sigChar || 'Q' == *sigChar) {
+			if ('L' == *sigChar) {
 				/* flush the name of the class */
 				while (';' != *sigChar) {
 					++sigChar;

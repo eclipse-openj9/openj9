@@ -128,8 +128,8 @@ public:
     *    Checks whether a class supports direct memory comparison if its fields meet
     *    the criteria that NO field is of
     *    - type double (D) or float (F)
-    *    - nullable-class/interface type (L)
-    *    - null-free class type (Q) that are not both flattened and recursively
+    *    - nullable-class/interface type
+    *    - null restricted class type that are not both flattened and recursively
     *      compatible for direct memory comparison
     *
     *  \param clazz

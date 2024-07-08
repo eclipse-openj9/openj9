@@ -468,7 +468,6 @@ classForSignature(struct J9VMThread *vmThread, U_8 **sigDataPtr, struct J9ClassL
 
 	/* Non-array case */
 	switch (c) {
-	case 'Q':
 	case 'L': {
 		/* object case */
 		U_8 *tempData = sigData;

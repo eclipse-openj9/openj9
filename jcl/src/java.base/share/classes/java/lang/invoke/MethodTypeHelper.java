@@ -185,17 +185,13 @@ final class MethodTypeHelper {
 	/*
 	 * Convert the string from bytecode format to the format needed for ClassLoader#loadClass().
 	 * Change all '/' to '.'.
-	 * Remove the 'L', 'Q', and ';' from objects, unless they are array classes.
+	 * Remove the 'L' and ';' from objects, unless they are array classes.
 	 */
 	private static final Class<?> nonPrimitiveClassFromString(String name, ClassLoader classLoader) {
 		try {
 			name = name.replace('/', '.');
-			if ((name.charAt(0) == 'L')
-				/*[IF INLINE-TYPES]*/
-				|| (name.charAt(0) == 'Q')
-				/*[ENDIF] INLINE-TYPES */
-			) {
-				// Remove the 'L'/'Q' and ';'.
+			if (name.charAt(0) == 'L') {
+				// Remove the 'L' and ';'.
 				name = name.substring(1, name.length() - 1);
 			}
 			return Class.forName(name, false, classLoader);
@@ -212,21 +208,13 @@ final class MethodTypeHelper {
 		char current = signature[index];
 		Class<?> c;
 
-		if ((current == 'L') || (current == '[')
-			/*[IF INLINE-TYPES]*/
-			|| (current == 'Q')
-			/*[ENDIF] INLINE-TYPES */
-		) {
+		if ((current == 'L') || (current == '[')) {
 			int start = index;
 			while(signature[index] == '[') {
 				index++;
 			}
 			String name;
-			if ((signature[index] != 'L')
-				/*[IF INLINE-TYPES]*/
-				&& (signature[index] != 'Q')
-				/*[ENDIF] INLINE-TYPES */
-			) {
+			if (signature[index] != 'L') {
 				name = descriptor.substring(start, index + 1);
 			} else {
 				int end = descriptor.indexOf(';', index);

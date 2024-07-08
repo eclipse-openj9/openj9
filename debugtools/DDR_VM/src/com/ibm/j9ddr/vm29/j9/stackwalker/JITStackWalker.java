@@ -553,9 +553,6 @@ public class JITStackWalker
 					while ((sigChar = jitNextSigChar(signatureString)) != ')') {
 						switch (sigChar) {
 						case 'L':
-						/*[IF INLINE-TYPES]*/
-						case 'Q':
-						/*[ENDIF] INLINE-TYPES */
 							if (J9SW_ARGUMENT_REGISTER_COUNT_DEFINED && !stackSpillCount.eq(0)) {
 								if ((walkState.flags & J9_STACKWALK_ITERATE_O_SLOTS) != 0) {
 									try {
@@ -633,9 +630,6 @@ public class JITStackWalker
 				/* Fall through to consume type name, utfChar == 'L' for return value */
 
 			case 'L':
-			/*[IF INLINE-TYPES]*/
-			case 'Q':
-			/*[ENDIF] INLINE-TYPES */
 				while (signatureString.charAt(charIndex++) != ';')
 					;
 			}

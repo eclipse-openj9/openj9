@@ -55,9 +55,6 @@ public class SendSlot
 					break;
 				}
 			case 'L':
-			/*[IF INLINE-TYPES]*/
-			case 'Q':
-			/*[ENDIF] INLINE-TYPES */
 				for (i++; J9UTF8Helper.stringValue(signature).charAt(i) != ';'; i++);
 				sendArgs = sendArgs.add(1);
 				break;

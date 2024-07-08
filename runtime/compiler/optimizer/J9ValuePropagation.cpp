@@ -4151,7 +4151,7 @@ J9::ValuePropagation::innerConstrainAcall(TR::Node *node)
    if (sig == NULL)  // helper
        return node;
 
-   TR_ASSERT(sig[0] == 'L' || sig[0] == '[' || sig[0] == 'Q', "Ref call return type is not a class");
+   TR_ASSERT(sig[0] == 'L' || sig[0] == '[', "Ref call return type is not a class");
 
    TR::MethodSymbol *symbol = node->getSymbol()->castToMethodSymbol();
    TR_ResolvedMethod *owningMethod = symRef->getOwningMethod(comp());

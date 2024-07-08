@@ -205,7 +205,7 @@ public:
 
 	/**
 	 * Performs a getfield operation on an object. Handles flattened and non-flattened cases.
-	 * This helper assumes that the cpIndex points to the fieldRef of a resolved Qtype. This helper
+	 * This helper assumes that the cpIndex points to a resolved null-restricted fieldRef. This helper
 	 * also assumes that the cpIndex points to an instance field.
 	 *
 	 * @param currentThread thread token
@@ -366,7 +366,7 @@ done:
 
 	/**
 	 * Performs a putfield operation on an object. Handles flattened and non-flattened cases.
-	 * This helper assumes that the cpIndex points to the fieldRef of a resolved Qtype. This helper
+	 * This helper assumes that the cpIndex points to a resolved null-restricted fieldRef. This helper
 	 * also assumes that the cpIndex points to an instance field.
 	 *
 	 * @param currentThread thread token

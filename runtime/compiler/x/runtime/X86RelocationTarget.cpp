@@ -121,7 +121,6 @@ j9ThunkInvokeExactHelperFromTerseSignature(UDATA signatureLength, char *signatur
       case '[':
          /* intentional fall-through */
       case 'L':
-      case 'Q':
          helper = TR_icallVMprJavaSendInvokeExactL;
          break;
       default:

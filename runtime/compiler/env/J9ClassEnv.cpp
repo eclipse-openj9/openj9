@@ -606,7 +606,6 @@ static void addEntryForFieldImpl(TR_VMField *field, TR::TypeLayoutBuilder &tlb, 
             break;
             }
          case 'L':
-         case 'Q':
          case '[':
             {
             dataType = TR::Address;

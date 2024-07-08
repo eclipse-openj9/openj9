@@ -1526,8 +1526,6 @@ JITServerHelpers::getFullClassName(uint8_t *name, uint32_t length, const J9ROMCl
    uint32_t baseNameLength = J9UTF8_LENGTH(baseName);
 
    // Build the array class signature that will be passed to jitGetClassInClassloaderFromUTF8() on the client.
-   // Note that for object arrays we can simply use the "L" type signature since the distinction with "Q" types
-   // is ignored during array class lookup by name (see internalFindArrayClass() in runtime/vm/classsupport.c).
    uint32_t i;
    for (i = 0; i < numDimensions; ++i)
       name[i] = '[';
