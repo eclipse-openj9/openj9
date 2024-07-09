@@ -249,7 +249,9 @@ extern "C" int32_t waitJITServerTermination(J9JITConfig *jitConfig);
 extern "C" void jitAddNewLowToHighRSSRegion(const char *name, uint8_t *start, uint32_t size, size_t pageSize)
    {
    static OMR::RSSReport *rssReport = OMR::RSSReport::instance();
-   rssReport->addNewRegion(name, start, size, OMR::RSSRegion::lowToHigh, pageSize);
+
+   if (rssReport)
+      rssReport->addNewRegion(name, start, size, OMR::RSSRegion::lowToHigh, pageSize);
    }
 
 
