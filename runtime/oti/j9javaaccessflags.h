@@ -54,7 +54,6 @@
 #define J9AccInterface                     0x00000200 /* class */
 #define J9AccGetterMethod                  0x00000200 /* method */
 #define J9AccAbstract                      0x00000400 /* class method */
-#define J9AccPrimitiveValueType            0x00000800 /* class(Valhalla) */
 #define J9AccStrict                        0x00000800 /* method */
 #define J9AccSynthetic                     0x00001000 /* class method field */
 #define J9AccAnnotation                    0x00002000 /* class */
