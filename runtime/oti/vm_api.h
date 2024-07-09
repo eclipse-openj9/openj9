@@ -847,6 +847,29 @@ internalExceptionDescribe(J9VMThread *vmThread);
 UDATA
 iterateStackTrace(J9VMThread * vmThread, j9object_t* exception,  UDATA  (*callback) (J9VMThread * vmThread, void * userData, UDATA bytecodeOffset, J9ROMClass * romClass, J9ROMMethod * romMethod, J9UTF8 * fileName, UDATA lineNumber, J9ClassLoader* classLoader, J9Class* ramClass), void * userData, UDATA pruneConstructors, UDATA skipHiddenFrames);
 
+/**
+* @brief
+* @param vmThread
+* @param exception
+* @param vmThread
+* @param userData
+* @param bytecodeOffset
+* @param romClass
+* @param romMethod
+* @param fileName
+* @param lineNumber
+* @param classLoader
+* @param ramClass)
+* @param userData
+* @param pruneConstructors
+* @param skipHiddenFrames
+* @param sizeOfWalkstateCache
+* @param exceptionIsJavaObject
+* @return UDATA
+*/
+UDATA
+iterateStackTraceImpl(J9VMThread * vmThread, j9object_t* exception,  UDATA  (*callback) (J9VMThread * vmThread, void * userData, UDATA bytecodeOffset, J9ROMClass * romClass, J9ROMMethod * romMethod, J9UTF8 * fileName, UDATA lineNumber, J9ClassLoader* classLoader, J9Class* ramClass), void * userData, UDATA pruneConstructors, UDATA skipHiddenFrames, UDATA sizeOfWalkstateCache, BOOLEAN exceptionIsJavaObject);
+
 
 /* ---------------- exceptionsupport.c ---------------- */
 

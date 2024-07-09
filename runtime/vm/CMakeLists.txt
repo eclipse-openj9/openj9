@@ -200,6 +200,8 @@ endif()
 if(J9VM_OPT_JFR)
 	list(APPEND main_sources
 		jfr.cpp
+		JFRConstantPoolTypes.cpp
+		JFRChunkWriter.cpp
 	)
 endif()
 
