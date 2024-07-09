@@ -19,15 +19,14 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
-
 #include "j9protos.h"
 #include "omrlinkedlist.h"
 #include "ut_j9vm.h"
 #include "vm_internal.h"
 
-#include "JFRWriter.hpp"
-
 #if defined(J9VM_OPT_JFR)
+
+#include "JFRWriter.hpp"
 
 extern "C" {
 
@@ -42,7 +41,7 @@ static void tearDownJFR(J9JavaVM *vm);
 static bool flushBufferToGlobal(J9VMThread *currentThread, J9VMThread *flushThread);
 static bool flushAllThreadBuffers(J9VMThread *currentThread, bool freeBuffers, bool threadEnd);
 static U_8* reserveBuffer(J9VMThread *currentThread, UDATA size);
-static J9JFREvent* reserveBufferWithStackTrace(J9VMThread *currentThread, UDATA eventType, UDATA eventFixedSize);
+static J9JFREvent* reserveBufferWithStackTrace(J9VMThread *currentThread, J9VMThread *sampleThread, UDATA eventType, UDATA eventFixedSize);
 static void jfrThreadCreated(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
 static void jfrThreadDestroy(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
 static void jfrClassesUnload(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
@@ -263,11 +262,11 @@ done:
  * @returns pointer to the start of the reserved space or NULL if the space could not be reserved
  */
 static J9JFREvent*
-reserveBufferWithStackTrace(J9VMThread *currentThread, UDATA eventType, UDATA eventFixedSize)
+reserveBufferWithStackTrace(J9VMThread *currentThread, J9VMThread *sampleThread, UDATA eventType, UDATA eventFixedSize)
 {
 	J9JFREvent *jfrEvent = NULL;
 	J9StackWalkState *walkState = currentThread->stackWalkState;
-	walkState->walkThread = currentThread;
+	walkState->walkThread = sampleThread;
 	walkState->flags = J9_STACKWALK_CACHE_PCS | J9_STACKWALK_WALK_TRANSLATE_PC |
 			J9_STACKWALK_VISIBLE_ONLY | J9_STACKWALK_INCLUDE_NATIVES | J9_STACKWALK_SKIP_INLINES;
 	walkState->skipCount = 0;
@@ -276,9 +275,9 @@ reserveBufferWithStackTrace(J9VMThread *currentThread, UDATA eventType, UDATA ev
 		UDATA framesWalked = walkState->framesWalked;
 		UDATA stackTraceBytes = framesWalked * sizeof(UDATA);
 		UDATA eventSize = eventFixedSize + stackTraceBytes;
-		jfrEvent = (J9JFREvent*)reserveBuffer(currentThread, eventSize);
+		jfrEvent = (J9JFREvent*)reserveBuffer(sampleThread, eventSize);
 		if (NULL != jfrEvent) {
-			initializeEventFields(currentThread, jfrEvent, eventType);
+			initializeEventFields(sampleThread, jfrEvent, eventType);
 			((J9JFREventWithStackTrace*)jfrEvent)->stackTraceSize = framesWalked;
 			memcpy(((U_8*)jfrEvent) + eventFixedSize, walkState->cache, stackTraceBytes);
 		}
@@ -439,7 +438,7 @@ jfrThreadStarting(J9HookInterface **hook, UDATA eventNum, void *eventData, void 
 	j9tty_printf(PORTLIB, "\n!!! thread starting %p %p\n", currentThread, startedThread);
 #endif /* defined(DEBUG) */
 
-	J9JFRThreadStart *jfrEvent = (J9JFRThreadStart*)reserveBufferWithStackTrace(currentThread, J9JFR_EVENT_TYPE_THREAD_START, sizeof(*jfrEvent));
+	J9JFRThreadStart *jfrEvent = (J9JFRThreadStart*)reserveBufferWithStackTrace(currentThread, currentThread, J9JFR_EVENT_TYPE_THREAD_START, sizeof(*jfrEvent));
 	if (NULL != jfrEvent) {
 		jfrEvent->thread = startedThread;
 		jfrEvent->parentThread = currentThread;
@@ -490,7 +489,7 @@ jfrVMSleep(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userDa
 	j9tty_printf(PORTLIB, "\n!!! thread sleep %p\n", currentThread);
 #endif /* defined(DEBUG) */
 
-	J9JFRThreadSleep *jfrEvent = (J9JFRThreadSleep*)reserveBufferWithStackTrace(currentThread, J9JFR_EVENT_TYPE_THREAD_SLEEP, sizeof(*jfrEvent));
+	J9JFRThreadSleep *jfrEvent = (J9JFRThreadSleep*)reserveBufferWithStackTrace(currentThread, currentThread, J9JFR_EVENT_TYPE_THREAD_SLEEP, sizeof(*jfrEvent));
 	if (NULL != jfrEvent) {
 		// TODO: worry about overflow?
 		jfrEvent->time = (event->millis * 1000) + event->nanos;
@@ -604,9 +603,9 @@ initializeEventFields(J9VMThread *currentThread, J9JFREvent *event, UDATA eventT
 }
 
 void
-jfrExecutionSample(J9VMThread *currentThread)
+jfrExecutionSample(J9VMThread *currentThread, J9VMThread *sampleThread)
 {
-	J9JFRExecutionSample *jfrEvent = (J9JFRExecutionSample*)reserveBufferWithStackTrace(currentThread, J9JFR_EVENT_TYPE_EXECUTION_SAMPLE, sizeof(*jfrEvent));
+	J9JFRExecutionSample *jfrEvent = (J9JFRExecutionSample*)reserveBufferWithStackTrace(currentThread, sampleThread, J9JFR_EVENT_TYPE_EXECUTION_SAMPLE, sizeof(*jfrEvent));
 	if (NULL != jfrEvent) {
 		jfrEvent->threadState = J9JFR_THREAD_STATE_RUNNING;
 	}

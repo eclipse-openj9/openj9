@@ -43,16 +43,16 @@ static void printExceptionMessage (J9VMThread* vmThread, j9object_t exception);
 
 
 /* assumes VM access */
-static void 
-printExceptionInThread(J9VMThread* vmThread) 
+static void
+printExceptionInThread(J9VMThread* vmThread)
 {
 	char* name;
 	const char* format;
 
 	PORT_ACCESS_FROM_VMC(vmThread);
-	
+
 	format = j9nls_lookup_message(
-		J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, 
+		J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
 		J9NLS_VM_STACK_TRACE_EXCEPTION_IN,
 		"Exception in thread \"%s\"");
 
@@ -60,7 +60,7 @@ printExceptionInThread(J9VMThread* vmThread)
 
 	j9tty_err_printf(PORTLIB, format, name);
 	j9tty_err_printf(PORTLIB, " ");
-	
+
 	releaseOMRVMThreadName(vmThread->omrVMThread);
 }
 
@@ -90,7 +90,7 @@ printExceptionMessage(J9VMThread* vmThread, j9object_t exception) {
 		(UDATA)J9UTF8_LENGTH(exceptionClassName),
 		J9UTF8_DATA(exceptionClassName),
 		separator,
-		length, 
+		length,
 		buf);
 
 	if (buf != stackBuffer) {
@@ -220,7 +220,7 @@ printStackTraceEntry(J9VMThread * vmThread, void * voidUserData, UDATA bytecodeO
 }
 
 
-/* 
+/*
  * Walks the backtrace of an exception instance, invoking a user-supplied callback function for
  * each frame on the call stack.
  *
@@ -229,40 +229,54 @@ printStackTraceEntry(J9VMThread * vmThread, void * voidUserData, UDATA bytecodeO
  * @param callback The callback function to be invoked for each stack frame.
  * @param userData Opaque data pointer passed to the callback function.
  * @param pruneConstructors Non-zero if constructors should be pruned from the stack trace.
+ * @param sizeOfWalkstateCache Non-zero if exception is walkstate cache instead of exception object.
+ * 								Indicatest the size of cache.
  * @return The number of times the callback function was invoked.
  *
  * @note Assumes VM access
  **/
 UDATA
-iterateStackTrace(J9VMThread * vmThread, j9object_t* exception, callback_func_t callback, void * userData, UDATA pruneConstructors, UDATA skipHiddenFrames)
+iterateStackTraceImpl(J9VMThread * vmThread, j9object_t* exception, callback_func_t callback, void * userData, UDATA pruneConstructors, UDATA skipHiddenFrames, UDATA sizeOfWalkstateCache, BOOLEAN exceptionIsJavaObject)
 {
 	J9JavaVM * vm = vmThread->javaVM;
 	UDATA totalEntries = 0;
-	j9object_t walkback = J9VMJAVALANGTHROWABLE_WALKBACK(vmThread, (*exception));
+	void *walkback = NULL;
+
+	if (exceptionIsJavaObject) {
+		walkback = J9VMJAVALANGTHROWABLE_WALKBACK(vmThread, (*exception));
+	} else {
+		walkback = exception;
+	}
 
 	/* Note that exceptionAddr might be a pointer into the current thread's stack, so no java code is allowed to run
 	   (nothing which could cause the stack to grow).
 	*/
 
 	if (walkback) {
-		U_32 arraySize = J9INDEXABLEOBJECT_SIZE(vmThread, walkback);
+		U_32 arraySize = 0;
+
 		U_32 currentElement = 0;
 		UDATA callbackResult = TRUE;
 #ifndef J9VM_INTERP_NATIVE_SUPPORT
 		pruneConstructors = FALSE;
 #endif
+		if (exceptionIsJavaObject) {
+			arraySize = J9INDEXABLEOBJECT_SIZE(vmThread, walkback);
 
-		/* A zero terminates the stack trace - search backwards through the array to determine the correct size */
+			/* A zero terminates the stack trace - search backwards through the array to determine the correct size */
 
-		while ((arraySize != 0) && (J9JAVAARRAYOFUDATA_LOAD(vmThread, walkback, arraySize-1)) == 0) {
-			--arraySize;
+			while ((arraySize != 0) && (J9JAVAARRAYOFUDATA_LOAD(vmThread, walkback, arraySize-1)) == 0) {
+				--arraySize;
+			}
+		} else {
+			arraySize = (U_32)sizeOfWalkstateCache;
 		}
 
 		/* Loop over the stack trace */
 
 		while (currentElement != arraySize) {
-			/* write as for or move currentElement++ to very end */ 
-			UDATA methodPC = J9JAVAARRAYOFUDATA_LOAD(vmThread, J9VMJAVALANGTHROWABLE_WALKBACK(vmThread, (*exception)), currentElement);
+			/* write as for or move currentElement++ to very end */
+			UDATA methodPC = 0;
 			J9ROMMethod * romMethod = NULL;
 			J9ROMClass *romClass = NULL;
 			UDATA lineNumber = 0;
@@ -275,6 +289,12 @@ iterateStackTrace(J9VMThread * vmThread, j9object_t* exception, callback_func_t 
 			void * inlinedCallSite = NULL;
 			void * inlineMap = NULL;
 			J9JITConfig * jitConfig = vm->jitConfig;
+
+			if (exceptionIsJavaObject) {
+				methodPC = J9JAVAARRAYOFUDATA_LOAD(vmThread, J9VMJAVALANGTHROWABLE_WALKBACK(vmThread, (*exception)), currentElement);
+			} else {
+				methodPC = ((UDATA *)exception)[currentElement];
+			}
 
 			if (jitConfig) {
 				metaData = jitConfig->jitGetExceptionTableFromPC(vmThread, methodPC);
@@ -335,7 +355,7 @@ inlinedEntry:
 						J9UTF8 const *utfClassName = J9ROMCLASS_CLASSNAME(romClass);
 
 						ramClass = peekClassHashTable(vmThread, classLoader, J9UTF8_DATA(utfClassName), J9UTF8_LENGTH(utfClassName));
-						if (j9shr_Query_IsAddressInCache(vm, romClass, romClass->romSize)) {	
+						if (j9shr_Query_IsAddressInCache(vm, romClass, romClass->romSize)) {
 							if (ramClass == NULL) {
 								/* Probe the application loader to determine if it has the J9Class for the current class.
 								 * This secondary probe is required as all ROMClasses from the SCC appear to be owned
@@ -444,16 +464,35 @@ done:
 	return totalEntries;
 }
 
+/*
+ * Walks the backtrace of an exception instance, invoking a user-supplied callback function for
+ * each frame on the call stack.
+ *
+ * @param vmThread
+ * @param exception The exception object that contains the backtrace.
+ * @param callback The callback function to be invoked for each stack frame.
+ * @param userData Opaque data pointer passed to the callback function.
+ * @param pruneConstructors Non-zero if constructors should be pruned from the stack trace.
+ * @return The number of times the callback function was invoked.
+ *
+ * @note Assumes VM access
+ **/
+UDATA
+iterateStackTrace(J9VMThread * vmThread, j9object_t* exception, callback_func_t callback, void * userData, UDATA pruneConstructors, UDATA skipHiddenFrames)
+{
+	return iterateStackTraceImpl(vmThread, exception, callback, userData, pruneConstructors, skipHiddenFrames, 0, TRUE);
+}
+
 /**
  * This is an helper function to call exceptionDescribe indirectly from gpProtectAndRun function.
- * 
+ *
  * @param entryArg	Current VM Thread (JNIEnv * env)
  */
 static UDATA
 gpProtectedExceptionDescribe(void *entryArg)
 {
 	JNIEnv * env = (JNIEnv *)entryArg;
-	
+
 	exceptionDescribe(env);
 
 	return 0;					/* return value required to conform to port library definition */
@@ -461,13 +500,13 @@ gpProtectedExceptionDescribe(void *entryArg)
 
 /**
  * Assumes VM access
- * 
- * Builds the exception	
+ *
+ * Builds the exception
  *
  * @param env    J9VMThread *
  *
  */
-void   
+void
 internalExceptionDescribe(J9VMThread * vmThread)
 {
 	/* If the exception is NULL, do nothing.  Do not fetch the exception value into a local here as we do not have VM access yet. */
@@ -536,17 +575,17 @@ internalExceptionDescribe(J9VMThread * vmThread)
 				break;
 			}
 		} while (exception != NULL);
-	
+
 done: ;
 	}
 }
 
 /**
  * This function makes sure that call to "internalExceptionDescribe" is gpProtected
- * 
+ *
  * @param env	Current VM thread (J9VMThread *)
  */
-void JNICALL   
+void JNICALL
 exceptionDescribe(JNIEnv * env)
 {
 	J9VMThread * vmThread = (J9VMThread *) env;
