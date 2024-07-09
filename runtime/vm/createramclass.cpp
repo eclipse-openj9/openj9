@@ -2310,13 +2310,8 @@ nativeOOM:
 				}
 			}
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-			if (J9ROMCLASS_IS_PRIMITIVE_VALUE_TYPE(romClass)
-				|| J9_ARE_ALL_BITS_SET(classFlags, J9ClassAllowsInitialDefaultValue)
-			) {
+			if (J9_ARE_ALL_BITS_SET(classFlags, J9ClassAllowsInitialDefaultValue)) {
 				UDATA instanceSize = state->ramClass->totalInstanceSize;
-				if (J9ROMCLASS_IS_PRIMITIVE_VALUE_TYPE(romClass)) {
-					classFlags |= J9ClassIsPrimitiveValueType;
-				}
 				if ((instanceSize <= javaVM->valueFlatteningThreshold)
 					&& !J9ROMCLASS_IS_CONTENDED(romClass)
 				) {
