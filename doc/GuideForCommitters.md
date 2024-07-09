@@ -138,9 +138,10 @@ possible between them.
     recently (generally within a day of a successful build).
 
     It is strongly recommended that you check that the tips of the
-    `eclipse-openj9/openj9-omr` [`master`](https://github.com/eclipse-openj9/openj9-omr/tree/master)
-    and [`openj9`](https://github.com/eclipse-openj9/openj9-omr/tree/openj9)
-    branches are the same before proceeding.  If they are different,
+    `eclipse-openj9/openj9-omr` [`master`](https://github.com/eclipse-openj9/openj9-omr/tree/master),
+    `eclipse-openj9/openj9-omr` [`openj9`](https://github.com/eclipse-openj9/openj9-omr/tree/openj9)
+    and `eclipse/omr` [`master`](https://github.com/eclipse/omr/tree/master)
+    branches are all the same before proceeding.  If they are different,
     be aware that you will be introducing other OMR changes that have
     not yet passed an OMR Acceptance build.  While not strictly
     required for the following steps to succeed, you should use your
