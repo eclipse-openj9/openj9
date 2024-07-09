@@ -793,10 +793,25 @@ JVM_GetCDSConfigStatus()
 #endif /* JAVA_SPEC_VERSION >= 23 */
 
 #if JAVA_SPEC_VERSION >= 24
+/**
+ * @brief Determine if the JVM is running inside a container.
+ *
+ * @return JNI_TRUE if running inside a container; otherwise, JNI_FALSE
+ */
 JNIEXPORT jboolean JNICALL
 JVM_IsContainerized(void)
 {
-	return JNI_FALSE;
+	J9JavaVM *vm = BFUjavaVM;
+	jboolean isContainerized = JNI_FALSE;
+
+	Assert_SC_true(NULL != vm);
+
+	OMRPORT_ACCESS_FROM_J9PORT(vm->portLibrary);
+	if (omrsysinfo_is_running_in_container()) {
+		isContainerized = JNI_TRUE;
+	}
+
+	return isContainerized;
 }
 #endif /* JAVA_SPEC_VERSION >= 24 */
 

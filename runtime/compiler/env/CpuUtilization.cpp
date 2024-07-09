@@ -33,19 +33,19 @@
 
 /*
  * Relevant port library API:
- * 
+ *
  * IDATA j9sysinfo_get_CPU_utilization(struct J9PortLibrary *portLibrary, struct J9SysinfoCPUTime *cpuTime)
- * 
+ *
  * typedef struct J9SysinfoCPUTime {
  *
  *    I_64 timestamp;    // time in nanoseconds from a fixed but arbitrary point in time
  *    I_64 cpuTime;      // cumulative CPU utilization (sum of system and user time in nanoseconds) of all CPUs on the system.
  *    I_32 numberOfCpus; // number of CPUs as reported by the operating system
- * 
+ *
  * } J9SysinfoCPUTime;
  *
  * I_64 j9thread_get_process_times(j9thread_process_time_t * processTime)
- * 
+ *
  * typedef struct j9thread_process_time_t {
  *
  *    // for consistency sake, times are stored as I_64s
@@ -56,31 +56,30 @@
  */
 
 int32_t CpuUtilization::getCpuUtil(J9JITConfig *jitConfig, J9SysinfoCPUTime *machineCpuStats, j9thread_process_time_t *vmCpuStats)
-   {  
+   {
    IDATA portLibraryStatusSys; // port lib call return value for system cpu usage
    IDATA portLibraryStatusVm;  // port lib call return value for vm cpu usage
-   
+
    // get access to portlib
    PORT_ACCESS_FROM_JITCONFIG(jitConfig);
-   
+
    // get CPU stats for the machine
    portLibraryStatusSys = j9sysinfo_get_CPU_utilization(machineCpuStats);
    portLibraryStatusVm  = j9thread_get_process_times(vmCpuStats);
-   
+
    // if either call failed, disable self
    if (portLibraryStatusSys < 0 || portLibraryStatusVm < 0)
       {
       disable();
       return (-1);
       }
-   
+
    return 0;
    }
 
 /*
  * Update the values stored inside the object. Only updates the values
- * when called more than _minIntervalLength milliseconds after the last
- * update.
+ * when called more than _minIntervalLength ns after the last update.
  */
 int CpuUtilization::updateCpuUtil(J9JITConfig *jitConfig)
    {
@@ -89,41 +88,45 @@ int CpuUtilization::updateCpuUtil(J9JITConfig *jitConfig)
       {
       return (-1);
       }
-   
+
    // portlib data
    J9SysinfoCPUTime        machineCpuStats;      // stats for overall CPU usage on machine
    j9thread_process_time_t vmCpuStats;           // stats for VM's CPU usage
-   
+
    if (getCpuUtil(jitConfig, &machineCpuStats, &vmCpuStats) == -1)
       return (-1);
-   
+
    // calculate interval
-   _prevIntervalLength = machineCpuStats.timestamp - _prevMachineUptime;
-   
+   int64_t elapsedTime = machineCpuStats.timestamp - _prevMachineUptime;
+   if (elapsedTime < _minIntervalLength)
+      return -1; // update not done
+
+   _prevIntervalLength = elapsedTime;
+
    // calculate usage and idle percentages
-   if (_prevIntervalLength > 0)
+   if (elapsedTime > 0)
       {
       int64_t prevTotalTimeUsedByVm = _prevVmSysTime + _prevVmUserTime;
       int64_t newTotalTimeUsedByVm = vmCpuStats._systemTime + vmCpuStats._userTime;
-      
-      _cpuUsage = (100 * (machineCpuStats.cpuTime - _prevMachineCpuTime)) / _prevIntervalLength;
+
+      _cpuUsage = (100 * (machineCpuStats.cpuTime - _prevMachineCpuTime)) / elapsedTime;
       _cpuIdle = 100 * machineCpuStats.numberOfCpus - _cpuUsage;
-      _vmCpuUsage = (100 * (newTotalTimeUsedByVm - prevTotalTimeUsedByVm)) / _prevIntervalLength;
+      _vmCpuUsage = (100 * (newTotalTimeUsedByVm - prevTotalTimeUsedByVm)) / elapsedTime;
       }
-   
+
    if (machineCpuStats.numberOfCpus > 0)
       {
       _avgCpuUsage = _cpuUsage / machineCpuStats.numberOfCpus;
       }
-   
+
    _avgCpuIdle = 100 - _avgCpuUsage;
-   
+
    // remember values for next time
    _prevMachineUptime  = machineCpuStats.timestamp;
    _prevMachineCpuTime = machineCpuStats.cpuTime;
    _prevVmSysTime      = vmCpuStats._systemTime;
    _prevVmUserTime     = vmCpuStats._userTime;
-   
+
    return 0;
    } // updateCpuUtil
 
@@ -134,22 +137,22 @@ int32_t CpuUtilization::updateCpuUsageCircularBuffer(J9JITConfig *jitConfig)
       {
       return (-1);
       }
-   
+
    // portlib data
    J9SysinfoCPUTime        machineCpuStats;      // stats for overall CPU usage on machine
    j9thread_process_time_t vmCpuStats;           // stats for VM's CPU usage
-   
+
    if (getCpuUtil(jitConfig, &machineCpuStats, &vmCpuStats) == -1)
       return (-1);
-    
+
    _cpuUsageCircularBuffer[_cpuUsageCircularBufferIndex]._timeStamp = machineCpuStats.timestamp;
    _cpuUsageCircularBuffer[_cpuUsageCircularBufferIndex]._sampleSystemCpu = machineCpuStats.cpuTime;
    _cpuUsageCircularBuffer[_cpuUsageCircularBufferIndex]._sampleJvmCpu = vmCpuStats._systemTime + vmCpuStats._userTime;
-   
+
    _cpuUsageCircularBufferIndex = (_cpuUsageCircularBufferIndex + 1)%_cpuUsageCircularBufferSize;
-   
+
    return 0;
-   
+
    } // updateCpuUsageArray
 
 CpuUtilization::CpuUtilization(J9JITConfig *jitConfig):
@@ -160,18 +163,20 @@ CpuUtilization::CpuUtilization(J9JITConfig *jitConfig):
    _avgCpuUsage (INITIAL_USAGE),
    _cpuIdle     (INITIAL_IDLE),
    _avgCpuIdle  (INITIAL_IDLE),
-   
+
+   _minIntervalLength (100000000), // 100 ms
+
    _prevIntervalLength (0),
-   
+
    _prevMachineUptime (0),
    _prevMachineCpuTime (0),
    _prevVmSysTime (0),
    _prevVmUserTime (0),
-   
+
    _isFunctional (true),
-   
+
    _cpuUsageCircularBufferIndex(0)
-   
+
    {
    // If the circular buffer size is set to 0, disable the circular buffer
    if (TR::Options::_cpuUsageCircularBufferSize == 0)
@@ -180,26 +185,26 @@ CpuUtilization::CpuUtilization(J9JITConfig *jitConfig):
       _cpuUsageCircularBuffer = NULL;
       return;
       }
-   
+
    _isCpuUsageCircularBufferFunctional = true;
-   
+
    // Enforce a minimum size
    if (TR::Options::_cpuUsageCircularBufferSize < CPU_UTIL_ARRAY_DEFAULT_SIZE)
       _cpuUsageCircularBufferSize = CPU_UTIL_ARRAY_DEFAULT_SIZE;
    else
       _cpuUsageCircularBufferSize = TR::Options::_cpuUsageCircularBufferSize;
-   
+
    // Allocate the memory for the buffer
-   _cpuUsageCircularBuffer = 
-         (CpuUsageCircularBuffer *)TR_PersistentMemory::jitPersistentAlloc(sizeof(CpuUsageCircularBuffer)*_cpuUsageCircularBufferSize);   
-   
+   _cpuUsageCircularBuffer =
+         (CpuUsageCircularBuffer *)TR_PersistentMemory::jitPersistentAlloc(sizeof(CpuUsageCircularBuffer)*_cpuUsageCircularBufferSize);
+
    // Since this happens at bootstrap, if this fails, disable and return
    if (!_cpuUsageCircularBuffer)
       {
       _isCpuUsageCircularBufferFunctional = false;
       return;
       }
-   
+
    // Initialize the buffer; no need to initialize the _sampleSystemCpu and _sampleJvmCpu
    // fields since we can just check if _timeStamp equals 0
    for (int32_t i = 0; i < _cpuUsageCircularBufferSize; i++)
@@ -223,24 +228,24 @@ CpuSelfThreadUtilization::CpuSelfThreadUtilization(TR::PersistentInfo *persisten
         _isFunctional(true) // optimistic
    {
    _lowResolutionClockAtLastUpdate = _persistentInfo->getElapsedTime();
-   _clockTimeAtLastUpdate = getCrtTimeNs(); 
+   _clockTimeAtLastUpdate = getCrtTimeNs();
    _cpuTimeAtLastUpdate   = 0; //getCpuTimeNow(); The constructor might not be called by the compilation thread
-   } 
+   }
 
-void CpuSelfThreadUtilization::setAsUnfunctional() 
-   { 
+void CpuSelfThreadUtilization::setAsUnfunctional()
+   {
    _isFunctional = false;
    // set an invalid value which sometimes may obviate the need to test _isFunctional
    _cpuTimeDuringLastInterval = _cpuTimeDuringSecondLastInterval = _cpuTimeAtLastUpdate = -1;
    _lastCpuUtil = _secondLastCpuUtil = - 1;
    // TODO: place a VM style trace point
-   } 
+   }
 
 bool CpuSelfThreadUtilization::update() // return true if an update was performed
    {
    if (!_isFunctional)
       return false;
-   // Refuse to update if not enough time has passed; 
+   // Refuse to update if not enough time has passed;
    // use the lower resolution time to avoid overhead
    if ((_persistentInfo->getElapsedTime() - _lowResolutionClockAtLastUpdate)*1000000  < _minMeasurementIntervalLength)
       return false;
