@@ -3142,7 +3142,7 @@ J9::ValuePropagation::transformVTObjectEqNeCompare(TR_OpaqueClassBlock *containi
        * n101n        aladd
        * n36n           aload  ACMPWideFieldsPrimitive.VALUE1 QWideFieldsPrimitive;
        * n99n           ==>lconst 4
-       * n98n         iconst 12
+       * n98n         lconst 12
        * n102n      iconst 0
        */
       int32_t totalFieldSize = 0;
@@ -3154,7 +3154,7 @@ J9::ValuePropagation::transformVTObjectEqNeCompare(TR_OpaqueClassBlock *containi
          totalFieldSize += TR::DataType::getSize(fieldEntry._datatype);
          }
 
-      TR::Node *totalFieldSizeNode = TR::Node::iconst(callNode, totalFieldSize);
+      TR::Node *totalFieldSizeNode = TR::Node::lconst(callNode, totalFieldSize);
 
       TR::Node * lhsOffsetNode = NULL;
       TR::Node * rhsOffsetNode = NULL;
