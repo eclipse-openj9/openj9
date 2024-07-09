@@ -51,6 +51,7 @@ public class ValueTypeGenerator extends ClassLoader {
 		private boolean isReference;
 		private boolean hasNonStaticSynchronizedMethods;
 		private int extraClassFlags;
+		private boolean generateIllegalSetters;
 
 		/**
 		 * @see setAccessedContainer
@@ -178,6 +179,14 @@ public class ValueTypeGenerator extends ClassLoader {
 		public ClassConfiguration getValueClassUsedInCode() {
 			return valueClassUsedInCode;
 		}
+
+		public void setGenerateIllegalSetters() {
+			generateIllegalSetters = true;
+		}
+
+		public boolean getGenerateIllegalSetters() {
+			return generateIllegalSetters;
+		}
 	}
 
 	private static byte[] generateClass(ClassConfiguration config) {
@@ -199,6 +208,7 @@ public class ValueTypeGenerator extends ClassLoader {
 		boolean isVerifiable = config.isVerifiable();
 		boolean isRef = config.isReference();
 		boolean addSyncMethods = config.hasNonStaticSynchronizedMethods();
+		boolean generateIllegalSetters = config.getGenerateIllegalSetters();
 
 		ClassWriter cw = new ClassWriter(0);
 		FieldVisitor fv;
@@ -257,7 +267,7 @@ public class ValueTypeGenerator extends ClassLoader {
 				}
 			}
 
-			generateFieldMethods(cw, nameAndSigValue, className, isVerifiable, isRef);
+			generateFieldMethods(cw, nameAndSigValue, className, isVerifiable, isRef, generateIllegalSetters);
 		}
 		
 		addInit(cw);
@@ -317,7 +327,7 @@ public class ValueTypeGenerator extends ClassLoader {
 		mv.visitEnd();
 	}
 	
-	private static void generateFieldMethods(ClassWriter cw, String[] nameAndSigValue, String className, boolean isVerifiable, boolean isRef) {
+	private static void generateFieldMethods(ClassWriter cw, String[] nameAndSigValue, String className, boolean isVerifiable, boolean isRef, boolean generateIllegalSetters) {
 		if ((nameAndSigValue.length > 2) && nameAndSigValue[2].equals("static")) {
 			generateSetterStatic(cw, nameAndSigValue, className);
 			generateGetterStatic(cw, nameAndSigValue, className);
@@ -327,10 +337,14 @@ public class ValueTypeGenerator extends ClassLoader {
 			}
 		} else {
 			generateGetter(cw, nameAndSigValue, className);
-			generateSetter(cw, nameAndSigValue, className);
+			if (isRef || generateIllegalSetters) {
+				generateSetter(cw, nameAndSigValue, className);
+			}
 			if (!isVerifiable) {
 				generateGetterGeneric(cw, nameAndSigValue, className);
-				generateSetterGeneric(cw, nameAndSigValue, className);
+				if (isRef || generateIllegalSetters) {
+					generateSetterGeneric(cw, nameAndSigValue, className);
+				}
 			}
 		}
 	}
@@ -1137,14 +1151,46 @@ public class ValueTypeGenerator extends ClassLoader {
 		generateAccStaticTestGeneric("TestValueClassFieldMustHaveAccStaticOrAccStrict", 0, false);
 	}
 
-	private static void generateAccStaticTestGeneric(String name, int fieldFlags, boolean isRef) {
+	public static Class<?> generateTestValueClassPutStrictFieldAfterInitialization() {
+		return generateAccStaticTestGeneric("TestValueClassPutStrictFieldAfterInitialization", ACC_FINAL | ACC_STRICT, false, true);
+	}
+
+	private static Class<?> generateAccStaticTestGeneric(String name, int fieldFlags, boolean isRef) {
+		return generateAccStaticTestGeneric(name, fieldFlags, isRef, false);
+	}
+
+	private static Class<?> generateAccStaticTestGeneric(String className, int fieldFlags, boolean isRef, boolean genIllegalInit) {
+		String fieldName = "o";
+		String fieldDesc = "LObject;";
+
 		ClassWriter classWriter = new ClassWriter(0);
 		classWriter.visit(ValhallaUtils.VALUE_TYPE_CLASS_FILE_VERSION,
 			ACC_PUBLIC + ACC_FINAL + (isRef ? ValhallaUtils.ACC_IDENTITY : 0),
-			name, null, "java/lang/Object", null);
-		classWriter.visitField(fieldFlags, "test", "LObject;", null, null);
+			className, null, "java/lang/Object", null);
+		classWriter.visitField(fieldFlags, fieldName, fieldDesc, null, null);
+
+		if (genIllegalInit) {
+			MethodVisitor mv = classWriter.visitMethod(ACC_PUBLIC, "<init>", "(" + fieldDesc + ")V", null, null);
+			mv.visitCode();
+			mv.visitVarInsn(ALOAD, 0);
+			mv.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
+			mv.visitVarInsn(ALOAD, 0);
+			mv.visitVarInsn(ALOAD, 1);
+			mv.visitFieldInsn(PUTFIELD, className, fieldName, fieldDesc);
+			mv.visitInsn(RETURN);
+			mv.visitMaxs(2, 2);
+			mv.visitEnd();
+		}
+
 		classWriter.visitEnd();
 		byte[] bytes = classWriter.toByteArray();
-		generator.defineClass(name, bytes, 0, bytes.length);
+		return generator.defineClass(className, bytes, 0, bytes.length);
+	}
+
+	public static Class<?> generateValueClassWithIllegalSetters(String name, String[] fields) {
+		ClassConfiguration classConfig = new ClassConfiguration(name, fields);
+		classConfig.setGenerateIllegalSetters();
+		byte[] bytes = generateClass(classConfig);
+		return generator.defineClass(name, bytes, 0, bytes.length);
 	}
 }

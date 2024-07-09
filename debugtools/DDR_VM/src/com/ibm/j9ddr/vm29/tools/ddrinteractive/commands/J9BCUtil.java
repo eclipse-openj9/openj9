@@ -435,7 +435,7 @@ public class J9BCUtil {
 				modifiers &= ~J9CfrClassFile.CFR_ACC_TRANSIENT;
 			}
 
-			if (isValueClass && (modifiers & J9CfrClassFile.CFR_ACC_STRICT) != 0) {
+			if ((modifiers & J9CfrClassFile.CFR_ACC_STRICT) != 0) {
 				out.append("strict ");
 				modifiers &= ~J9CfrClassFile.CFR_ACC_STRICT;
 			}

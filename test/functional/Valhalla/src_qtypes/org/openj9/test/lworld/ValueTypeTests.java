@@ -2943,6 +2943,21 @@ public class ValueTypeTests {
 		ValueTypeGenerator.generateTestValueClassFieldMustHaveAccStaticOrAccStrict();
 	}
 
+	/* putfield is not allowed outside <init> for ACC_STRICT fields */
+	@Test(expectedExceptions = VerifyError.class)
+	static public void testValueClassWithIllegalSetters() throws Throwable {
+		String fields[] = {"x:I"};
+		Class valueClass = ValueTypeGenerator.generateValueClassWithIllegalSetters("TestValueClassWithIllegalSetters", fields);
+		valueClass.newInstance();
+	}
+
+	/* putfield not allowed in <init> after class initialization for ACC_STRICT fields */
+	@Test(expectedExceptions = VerifyError.class)
+	static public void testValueClassPutStrictFieldAfterInitialization() throws Throwable {
+		Class valueClass = ValueTypeGenerator.generateTestValueClassPutStrictFieldAfterInitialization();
+		valueClass.newInstance();
+	}
+
 	static MethodHandle generateGetter(Class<?> clazz, String fieldName, Class<?> fieldType) {
 		try {
 			return lookup.findVirtual(clazz, "get"+fieldName, MethodType.methodType(fieldType));
