@@ -4714,6 +4714,7 @@ void memoryDisclaimLogic(TR::CompilationInfo *compInfo, uint64_t crtElapsedTime,
 #endif // J9VM_INTERP_PROFILING_BYTECODES
    }
 
+// this method can be used to produce regular RSS reports
 void rssReportLogic(TR::CompilationInfo *compInfo)
    {
    static OMR::RSSReport *rssReport = OMR::RSSReport::instance();
