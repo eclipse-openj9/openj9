@@ -304,8 +304,7 @@ public class ValueTypeTests {
 		assertEquals(getY.invoke(point2D_2_check), getY.invoke(point2D_2));
 	}
 
-	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
-	@Test(priority=5, enabled = false)
+	@Test(priority=5)
 	static public void testGCFlattenedPoint2DArray() throws Throwable {
 		int x1 = 0xFFEEFFEE;
 		int y1 = 0xAABBAABB;
@@ -321,8 +320,7 @@ public class ValueTypeTests {
 		Object value = Array.get(arrayObject, 0);
 	}
 
-	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
-	@Test(priority=5, enabled = false)
+	@Test(priority=5)
 	static public void testGCFlattenedValueArrayWithSingleAlignment() throws Throwable {
 		Object array = Array.newInstance(assortedValueWithSingleAlignmentClass, 4);
 		
@@ -338,8 +336,7 @@ public class ValueTypeTests {
 		}
 	}
 
-	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
-	@Test(priority=5, enabled = false)
+	@Test(priority=5)
 	static public void testGCFlattenedValueArrayWithObjectAlignment() throws Throwable {
 		Object array = Array.newInstance(assortedValueWithObjectAlignmentClass, 4);
 		
@@ -355,8 +352,7 @@ public class ValueTypeTests {
 		}
 	}
 
-	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
-	@Test(priority=5, enabled = false)
+	@Test(priority=5)
 	static public void testGCFlattenedValueArrayWithLongAlignment() throws Throwable {
 		Object array = Array.newInstance(assortedValueWithLongAlignmentClass, genericArraySize);
 		
@@ -372,8 +368,7 @@ public class ValueTypeTests {
 		}
 	}
 
-	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
-	@Test(priority=5, enabled = false)
+	@Test(priority=5)
 	static public void testGCFlattenedLargeObjectArray() throws Throwable {
 		Object arrayObject = Array.newInstance(largeObjectValueClass, 4);
 		Object largeObjectRef = createLargeObject(new Object());
@@ -387,8 +382,7 @@ public class ValueTypeTests {
 		Object value = Array.get(arrayObject, 0);
 	}
 
-	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
-	@Test(priority=5, enabled = false)
+	@Test(priority=5)
 	static public void testGCFlattenedMegaObjectArray() throws Throwable {
 		Object arrayObject = Array.newInstance(megaObjectValueClass, 4);
 		Object megaObjectRef = createMegaObject(new Object());
@@ -1823,14 +1817,13 @@ public class ValueTypeTests {
 	 * Create a value type and read the fields before
 	 * they are set. The test should Verify that the
 	 * flattenable fields are set to the default values.
-	 * NULL should never be observed for Qtypes.
+	 * NULL should never be observed for null restricted fields.
 	 */
-	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
-	@Test(priority=4, enabled = false)
+	@Test(priority=4)
 	static public void testDefaultValues() throws Throwable {
 		/* Test with assorted value object with long alignment */
 		MethodHandle makeValueTypeDefaultValueWithLong = lookup.findStatic(assortedValueWithLongAlignmentClass,
-				"makeDefaultValue", MethodType.methodType(Object.class));
+				"makeDefaultValue", MethodType.methodType(assortedValueWithLongAlignmentClass));
 
 		Object assortedValueWithLongAlignment = makeValueTypeDefaultValueWithLong.invoke();
 		for (int i = 0; i < 7; i++) {
@@ -1846,13 +1839,13 @@ public class ValueTypeTests {
 		}
 
 		/* Test with flattened line 2D */
-		MethodHandle makeDefaultValueFlattenedLine2D = lookup.findStatic(flattenedLine2DClass, "makeDefaultValue", MethodType.methodType(Object.class));
+		MethodHandle makeDefaultValueFlattenedLine2D = lookup.findStatic(flattenedLine2DClass, "makeDefaultValue", MethodType.methodType(flattenedLine2DClass));
 		Object lineObject = makeDefaultValueFlattenedLine2D.invoke();
 		assertNotNull(getFlatSt.invoke(lineObject));
 		assertNotNull(getFlatEn.invoke(lineObject));
 
 		/* Test with triangle 2D */
-		MethodHandle makeDefaultValueTriangle2D = lookup.findStatic(triangle2DClass, "makeDefaultValue", MethodType.methodType(Object.class));
+		MethodHandle makeDefaultValueTriangle2D = lookup.findStatic(triangle2DClass, "makeDefaultValue", MethodType.methodType(triangle2DClass));
 		Object triangleObject = makeDefaultValueTriangle2D.invoke();
 		assertNotNull(getV1.invoke(triangleObject));
 		assertNotNull(getV2.invoke(triangleObject));
@@ -2001,8 +1994,7 @@ public class ValueTypeTests {
 	 * Create Array Objects with Point Class without initialization
 	 * The array should be set to a Default Value.
 	 */
-	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
-	@Test(priority=4, invocationCount=2, enabled = false)
+	@Test(priority=4, invocationCount=2)
 	static public void testDefaultValueInPointArray() throws Throwable {
 		Object pointArray = Array.newInstance(point2DClass, genericArraySize);
 		for (int i = 0; i < genericArraySize; i++) {
@@ -2015,8 +2007,7 @@ public class ValueTypeTests {
 	 * Create multi dimensional array with Point Class without initialization.
 	 * Set each array value to a default value and check field access method handler.
 	 */
-	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
-	@Test(priority=4, enabled = false)
+	@Test(priority=4)
 	static public void testDefaultValueInPointInstanceMultiArray() throws Throwable {
 		Object pointArray = Array.newInstance(point2DClass, new int[]{genericArraySize, genericArraySize});
 		String[] fields = {"x:I", "y:I"};
@@ -2040,8 +2031,7 @@ public class ValueTypeTests {
 	 * multianewarray.
 	 * Set each array value to a default value and check field access method handler.
 	 */
-	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
-	@Test(priority=4, enabled = false)
+	@Test(priority=4)
 	static public void testDefaultValueInPointByteCodeMultiArray() throws Throwable {
 		MethodHandle makePointArray = lookup.findStatic(point2DClass, "generate2DMultiANewArray", MethodType.methodType(Object.class, int.class, int.class));
 		Object pointArray = makePointArray.invoke(genericArraySize, genericArraySize);
@@ -2065,8 +2055,7 @@ public class ValueTypeTests {
 	 * Create Array Objects with Flattened Line without initialization
 	 * Check the fields of each element in arrays. No field should be NULL.
 	 */
-	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
-	@Test(priority=4, invocationCount=2, enabled = false)
+	@Test(priority=4, invocationCount=2)
 	static public void testDefaultValueInLineArray() throws Throwable {
 		Object flattenedLineArray = Array.newInstance(flattenedLine2DClass, genericArraySize);
 		for (int i = 0; i < genericArraySize; i++) {
@@ -2081,8 +2070,7 @@ public class ValueTypeTests {
 	 * Create multi dimensional array with Line Class without initialization.
 	 * Set each array value to a default value and check field access method handler.
 	 */
-	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
-	@Test(priority=4, enabled = false)
+	@Test(priority=4)
 	static public void testDefaultValueInLineInstanceMultiArray() throws Throwable {
 		Object flattenedLineArray = Array.newInstance(flattenedLine2DClass, new int[]{genericArraySize, genericArraySize});
 		String[] fields = {"st:LPoint;:NR","en:LPoint;:NR"};
@@ -2106,8 +2094,7 @@ public class ValueTypeTests {
 	 * multianewarray.
 	 * Set each array value to a default value and check field access method handler.
 	 */
-	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
-	@Test(priority=4, enabled = false)
+	@Test(priority=4)
 	static public void testDefaultValueInLineByteCodeMultiArray() throws Throwable {
 		MethodHandle makeLineArray = lookup.findStatic(flattenedLine2DClass, "generate2DMultiANewArray", MethodType.methodType(Object.class, int.class, int.class));
 		Object flattenedLineArray = makeLineArray.invoke(genericArraySize, genericArraySize);
@@ -2131,8 +2118,7 @@ public class ValueTypeTests {
 	 * Create Array Objects with triangle class without initialization
 	 * Check the fields of each element in arrays. No field should be NULL.
 	 */
-	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
-	@Test(priority=4, invocationCount=2, enabled = false)
+	@Test(priority=4, invocationCount=2)
 	static public void testDefaultValueInTriangleArray() throws Throwable {
 		Object triangleArray = Array.newInstance(triangle2DClass, genericArraySize);
 		for (int i = 0; i < genericArraySize; i++) {
@@ -2148,8 +2134,7 @@ public class ValueTypeTests {
 	 * Create multi dimensional array with Triangle Class without initialization.
 	 * Set each array value to a default value and check field access method handler.
 	 */
-	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
-	@Test(priority=4, enabled = false)
+	@Test(priority=4)
 	static public void testDefaultValueInTriangleInstanceMultiArray() throws Throwable {
 		Object triangleArray = Array.newInstance(triangle2DClass, new int[]{genericArraySize, genericArraySize});
 		String[] fields = {"v1:LFlattenedLine2D;:NR", "v2:LFlattenedLine2D;:NR", "v3:LFlattenedLine2D;:NR"};
@@ -2173,8 +2158,7 @@ public class ValueTypeTests {
 	 * multianewarray.
 	 * Set each array value to a default value and check field access method handler.
 	 */
-	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
-	@Test(priority=4, enabled = false)
+	@Test(priority=4)
 	static public void testDefaultValueInTriangleByteCodeMultiArray() throws Throwable {
 		MethodHandle makeTriangleArray = lookup.findStatic(triangle2DClass, "generate2DMultiANewArray", MethodType.methodType(Object.class, int.class, int.class));
 		Object triangleArray = makeTriangleArray.invoke(genericArraySize, genericArraySize);
@@ -2198,8 +2182,7 @@ public class ValueTypeTests {
 	 * Create an Array Object with assortedValueWithLongAlignment class without initialization
 	 * Check the fields of each element in arrays. No field should be NULL.
 	 */
-	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
-	@Test(priority=4, invocationCount=2, enabled = false)
+	@Test(priority=4, invocationCount=2)
 	static public void testDefaultValueInAssortedValueWithLongAlignmentArray() throws Throwable {
 		Object assortedValueWithLongAlignmentArray = Array.newInstance(assortedValueWithLongAlignmentClass, genericArraySize);
 		for (int i = 0; i < genericArraySize; i++) {
@@ -2214,11 +2197,8 @@ public class ValueTypeTests {
 	/**
 	 * Create multi dimensional array with assortedValueWithLongAlignment without initialization.
 	 * Set each array value to a default value and check field access method handler.
-	 *
-	 * Fails tests with array flattening enabled
 	 */
-	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
-	@Test(priority=5, enabled = false)
+	@Test(priority=5)
 	static public void testDefaultValueInAssortedValueWithLongAlignmenInstanceMultiArray() throws Throwable {
 		Object assortedValueWithLongAlignmentArray = Array.newInstance(assortedValueWithLongAlignmentClass, new int[]{genericArraySize, genericArraySize});
 		for (int i = 0; i < genericArraySize; i++) {
@@ -2239,11 +2219,8 @@ public class ValueTypeTests {
 	 * Create multi dimensional array with assortedValueWithLongAlignment using bytecode instruction
 	 * multianewarray.
 	 * Set each array value to a default value and check field access method handler.
-	 *
-	 * Fails tests with array flattening enabled
 	 */
-	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
-	@Test(priority=5, enabled = false)
+	@Test(priority=5)
 	static public void testDefaultValueInAssortedValueWithLongAlignmentByteCodeMultiArray() throws Throwable {
 		MethodHandle makeAssortedValueWithLongAlignmentArray = lookup.findStatic(assortedValueWithLongAlignmentClass, "generate2DMultiANewArray", MethodType.methodType(Object.class, int.class, int.class));
 		Object assortedValueWithLongAlignmentArray = makeAssortedValueWithLongAlignmentArray.invoke(genericArraySize, genericArraySize);
@@ -2264,8 +2241,7 @@ public class ValueTypeTests {
 	/*
 	 * Create a 2D array of valueTypes, verify that the default elements are null.
 	 */
-	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
-	@Test(priority=5, invocationCount=2, enabled = false)
+	@Test(priority=5, invocationCount=2)
 	static public void testMultiDimentionalArrays() throws Throwable {
 		Class assortedValueWithLongAlignment2DClass = Array.newInstance(assortedValueWithLongAlignmentClass, 1).getClass();
 		Class assortedValueWithSingleAlignment2DClass = Array.newInstance(assortedValueWithSingleAlignmentClass, 1).getClass();
@@ -2286,8 +2262,7 @@ public class ValueTypeTests {
 	 * Create an assortedRefWithLongAlignment Array
 	 * Since it's ref type, the array should be filled with nullptrs
 	 */
-	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
-	@Test(priority=4, invocationCount=2, enabled = false)
+	@Test(priority=4, invocationCount=2)
 	static public void testDefaultValueInAssortedRefWithLongAlignmentArray() throws Throwable {
 		Object assortedRefWithLongAlignmentArray = Array.newInstance(assortedRefWithLongAlignmentClass, genericArraySize);
 		for (int i = 0; i < genericArraySize; i++) {
@@ -2336,8 +2311,7 @@ public class ValueTypeTests {
 	 * Maintain a buffer of flattened arrays with long-aligned valuetypes while keeping a certain amount of classes alive at any
 	 * single time. This forces the GC to unload the classes.
 	 */
-	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
-	@Test(priority=5, invocationCount=2, enabled = false)
+	@Test(priority=5, invocationCount=2)
 	static public void testValueWithLongAlignmentGCScanning() throws Throwable {
 		ArrayList<Object> longAlignmentArrayList = new ArrayList<Object>(objectGCScanningIterationCount);
 		for (int i = 0; i < objectGCScanningIterationCount; i++) {
@@ -2362,8 +2336,7 @@ public class ValueTypeTests {
 	 * Maintain a buffer of flattened arrays with object-aligned valuetypes while keeping a certain amount of classes alive at any
 	 * single time. This forces the GC to unload the classes.
 	 */
-	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
-	@Test(priority=5, invocationCount=2, enabled = false)
+	@Test(priority=5, invocationCount=2)
 	static public void testValueWithObjectAlignmentGCScanning() throws Throwable {
 		ArrayList<Object> objectAlignmentArrayList = new ArrayList<Object>(objectGCScanningIterationCount);
 		for (int i = 0; i < objectGCScanningIterationCount; i++) {
@@ -2388,8 +2361,7 @@ public class ValueTypeTests {
 	 * Maintain a buffer of flattened arrays with single-aligned valuetypes while keeping a certain amount of classes alive at any
 	 * single time. This forces the GC to unload the classes.
 	 */
-	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
-	@Test(priority=5, invocationCount=2, enabled = false)
+	@Test(priority=5, invocationCount=2)
 	static public void testValueWithSingleAlignmentGCScanning() throws Throwable {
 		ArrayList<Object> singleAlignmentArrayList = new ArrayList<Object>(objectGCScanningIterationCount);
 		for (int i = 0; i < objectGCScanningIterationCount; i++) {
@@ -2410,8 +2382,7 @@ public class ValueTypeTests {
 		}
 	}
 
-	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
-	@Test(priority=1, enabled = false)
+	@Test(priority=1)
 	static public void testFlattenedFieldInitSequence() throws Throwable {
 		String fields[] = {"x:I", "y:I"};
 		Class nestAClass = ValueTypeGenerator.generateValueClass("NestedA", fields);
@@ -2422,7 +2393,7 @@ public class ValueTypeTests {
 		String fields3[] = {"c:LNestedB;:NR", "d:LNestedB;:NR"};
 		Class containerCClass = ValueTypeGenerator.generateValueClass("ContainerC", fields3);
 		
-		MethodHandle defaultValueContainerC = lookup.findStatic(containerCClass, "makeDefaultValue", MethodType.methodType(Object.class));
+		MethodHandle defaultValueContainerC = lookup.findStatic(containerCClass, "makeDefaultValue", MethodType.methodType(containerCClass));
 		
 		Object containerC = defaultValueContainerC.invoke();
 		
@@ -2510,8 +2481,7 @@ public class ValueTypeTests {
 	 * the class not resolved, and then called so that the GETFIELD and class
 	 * resolution is triggered.
 	 */
-	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
-	@Test(priority=1, enabled = false)
+	@Test(priority=1)
 	static public void testUnresolvedGetFieldUse() throws Throwable {
 		/*
 		 * Set up classes that look roughly like this:
