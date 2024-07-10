@@ -4680,6 +4680,7 @@ void memoryDisclaimLogic(TR::CompilationInfo *compInfo, uint64_t crtElapsedTime,
                }
 
             disclaimCodeCaches(crtElapsedTime);
+            javaVM->internalVMFunctions->disclaimAllClassMemory(javaVM);
 
             if (rssReport) rssReport->printRegions();
 
