@@ -56,9 +56,9 @@ namespace Z
 class UnresolvedDataSnippet : public J9::UnresolvedDataSnippet
    {
    /** _branchInstruction is actually the instruction which branch to the UDS. */
-   TR::Instruction     *_branchInstruction;
+   TR::Instruction         *_branchInstruction;
    TR::SymbolReference     *_dataSymbolReference;
-   TR::MemoryReference *_memoryReference;
+   TR::MemoryReference     *_memoryReference;
    bool                    _isStore;
 
    /**
@@ -66,10 +66,11 @@ class UnresolvedDataSnippet : public J9::UnresolvedDataSnippet
     * that references it. The address of this will be resolved
     * when emitting the snippet code.
     */
-   TR::Instruction         *_dataReferenceInstruction;
-   TR::S390WritableDataSnippet *_unresolvedData;
-   uint8_t                    *_literalPoolPatchAddress;
-   uint8_t                    *_literalPoolSlot;         ///< For trace file generation
+   TR::Instruction               *_dataReferenceInstruction;
+   TR::S390WritableDataSnippet   *_unresolvedData;
+   uint8_t                       *_literalPoolPatchAddress;
+   uint8_t                       *_literalPoolSlot;         ///< For trace file generation
+   TR::Instruction               *_fenceNOPInst;
 
    public:
 
@@ -112,6 +113,9 @@ class UnresolvedDataSnippet : public J9::UnresolvedDataSnippet
    TR::MemoryReference *getMemoryReference() {return _memoryReference;}
    TR::MemoryReference *setMemoryReference(TR::MemoryReference *mr)
       {return _memoryReference = mr;}
+
+   TR::Instruction *getFenceNOPInstruction() { return _fenceNOPInst; }
+   TR::Instruction *setFenceNOPInstruction(TR::Instruction *instr) { return _fenceNOPInst = instr; }
 
    bool isInstanceData();
 
