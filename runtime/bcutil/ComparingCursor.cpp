@@ -464,10 +464,6 @@ ComparingCursor::shouldCheckForEquality(DataType dataType, U_32 u32Value)
 	case INTERMEDIATE_CLASS_DATA_LENGTH:
 		return false;
 	case ROM_CLASS_MODIFIERS:
-		if (u32Value == (u32Value & _context->romMethodModifiers())) {
-			/*It's ok if the existing rom class has extra debug information and it is not required*/
-			return false;
-		}
 		break;
 	case OPTIONAL_FLAGS:
 		if (u32Value == (u32Value & _context->romClassOptionalFlags())) {
