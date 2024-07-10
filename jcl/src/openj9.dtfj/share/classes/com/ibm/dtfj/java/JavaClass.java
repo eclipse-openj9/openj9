@@ -87,7 +87,6 @@ public interface JavaClass {
 	 */
 	public JavaClass getSuperclass() throws CorruptDataException;
 
-
 	/**
 	 * Get the set of names of interfaces directly implemented by this class.
 	 * @return an iterator over the collection of the names of interfaces

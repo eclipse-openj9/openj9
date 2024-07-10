@@ -32,14 +32,14 @@ import com.ibm.dtfj.java.JavaVMOption;
  * and the extraInfo pointer value are available in the ENVINFO section of the
  * javacore, e.g.
  *         2CIUSERARG   _port_library 0x002A04F8
- * 
+ *
  * @see com.ibm.dtfj.java.JavaRuntime
  */
 public class JCJavaVMOption implements JavaVMOption {
 
 	private String fOptionString;
 	private ImagePointer fExtraInfo;
-	
+
 	public JCJavaVMOption(String optionString, ImagePointer extraInfo)
 					throws JCInvalidArgumentsException {
 
@@ -49,7 +49,7 @@ public class JCJavaVMOption implements JavaVMOption {
 		fOptionString = optionString;
 		fExtraInfo = extraInfo;
 	}
-	
+
 	public String getOptionString() throws DataUnavailable, CorruptDataException {
 		return fOptionString;
 	}

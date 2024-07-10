@@ -42,7 +42,7 @@ public class NodeHeap extends NodeAbstract
 	private JavaHeap _heap;
 	private JavaHeapRegion _legacyRegion;
 	private long _arrayletLeafSize;
-	
+
 	public NodeHeap(JavaRuntime runtime, Attributes attributes)
 	{
 		// OLD: <heap name="object heap" objectAlignment="8" minimumObjectSize="16" start="0x97925000" end="0x97d25000" >
@@ -54,7 +54,7 @@ public class NodeHeap extends NodeAbstract
 		_javaVM = runtime;
 		//assume that we are looking at the old format until we notice an omission which absolutely required in the old format (alignment and minimum size)
 		boolean isOldFormat = true;
-		
+
 		String idString = attributes.getValue("id");
 		String startString = attributes.getValue("start");
 		String endString = attributes.getValue("end");
@@ -81,7 +81,7 @@ public class NodeHeap extends NodeAbstract
 
 		String arrayletIdResultString = attributes.getValue("arrayletIdResult");
 		long arrayletIdResult = _longFromString(arrayletIdResultString);
-		
+
 		int fobjectSize = (int)_longFromString(attributes.getValue("fobjectSize"), runtime.bytesPerPointer());
 		int fobjectPointerScale = (int)_longFromString(attributes.getValue("fobjectPointerScale"), 1);
 		long fobjectPointerDisplacement = _longFromString(attributes.getValue("fobjectPointerDisplacement"));
@@ -90,29 +90,29 @@ public class NodeHeap extends NodeAbstract
 
 		long classAlignment = _longFromString(attributes.getValue("classAlignment"), 0);
 		boolean isSWH =  _longFromString(attributes.getValue("SWH"), 0) >= 1;
-		
+
 		_heap = new JavaHeap(runtime, name, runtime.pointerInAddressSpace(id), runtime.pointerInAddressSpace(start), (end - start), arrayletIdOffset, arrayletIdWidth, arrayletIdMask, arrayletIdResult, fobjectSize, fobjectPointerScale, fobjectPointerDisplacement, classOffset, classSize, classAlignment, isSWH);
 		_javaVM.addHeap(_heap);
-		
+
 		if (isOldFormat) {
 			//the legacy format also includes the start and end of the heap (which we need in order to do anything useful here)
 			String heapBaseString = attributes.getValue("start");
 			long heapStart = _longFromString(heapBaseString);
 			String heapEndString = attributes.getValue("end");
 			long heapEnd = _longFromString(heapEndString);
-			
+
 			_legacyRegion = createJavaHeapRegion(name, id, alignment, minimumObjectSize, heapStart, heapEnd);
 			_completeRegions.add(_legacyRegion);
 		}
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.jvm.j9.dump.indexsupport.IParserNode#nodeToPushAfterStarting(java.lang.String, java.lang.String, java.lang.String, org.xml.sax.Attributes)
 	 */
 	public IParserNode nodeToPushAfterStarting(String uri, String localName, String qName, Attributes attributes)
 	{
 		IParserNode child = null;
-		
+
 		if (qName.equals("region")) {
 			//note that the legacy region must be null if this has a new world XML shape
 			if (null != _legacyRegion) {
@@ -130,7 +130,7 @@ public class NodeHeap extends NodeAbstract
 		}
 		return child;
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.jvm.j9.dump.indexsupport.NodeAbstract#didFinishParsing()
 	 */
@@ -139,7 +139,7 @@ public class NodeHeap extends NodeAbstract
 		//we collect the regions under the heap in this object so we need to hook in here to write back before we are done
 		_heap.setRegions(_completeRegions);
 	}
-	
+
 	public JavaHeapRegion createJavaHeapRegion(String name, long id, int objectAlignment, int minimumObjectSize, long heapStart, long heapEnd)
 	{
 		ImagePointer basePointer = null;

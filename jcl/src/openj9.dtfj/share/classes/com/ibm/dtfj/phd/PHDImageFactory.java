@@ -36,14 +36,14 @@ import javax.imageio.stream.ImageInputStream;
 import com.ibm.dtfj.image.Image;
 import com.ibm.dtfj.image.ImageFactory;
 
-/** 
+/**
  * @author ajohnson
  */
 public class PHDImageFactory implements ImageFactory {
 
 	static final Date earliestDump = new Date((2000-1970)*(365*4+1)/4*24*3600*1000L);
 	static final Date latestDump = new Date(Integer.MAX_VALUE*1000L);
-	
+
 	public PHDImageFactory() {
 	}
 
@@ -130,8 +130,8 @@ public class PHDImageFactory implements ImageFactory {
 			// Name may be of form heapdump.20081016.125646.7376.0001.phd
 			// with metafile javacore.20081016.125646.7376.0002.txt
 			// or heapdump.20081016.125646.7376.phd
-			// with metafile javacore.20081016.125646.7376.txt  
-			// or heapdump.20081106.111729.675904.phd 
+			// with metafile javacore.20081016.125646.7376.txt
+			// or heapdump.20081106.111729.675904.phd
 			// with metafile javacore.20081106.111729.675904.txt
 			// or heapdump.20081016.125646.7376.0001.phd.gz
 			// with metafile javacore.20081016.125646.7376.0002.txt
@@ -180,7 +180,7 @@ public class PHDImageFactory implements ImageFactory {
 						}
 					}
 				}
-			}			
+			}
 			// or for AIX 1.4.2 filenamePID.EPOCHTIME.ext
 			// heapdump454808.1244656860.phd
 			// javacore454808.1244656979.txt
@@ -245,5 +245,5 @@ public class PHDImageFactory implements ImageFactory {
 		// modification level is VM stream plus build version - historically the tag from RAS_Auto-Build/projects.psf - now just a number
 		return 28002;
 	}
-	
+
 }

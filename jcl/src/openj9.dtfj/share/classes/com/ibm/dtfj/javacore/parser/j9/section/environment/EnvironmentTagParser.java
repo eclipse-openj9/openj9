@@ -40,9 +40,9 @@ public class EnvironmentTagParser extends TagParser implements
 	public EnvironmentTagParser() {
 		super(ENVIRONMENT_SECTION);
 	}
-	
+
 	/**
-	 * Initialize parser with rules for lines in the environment (CI) section in 
+	 * Initialize parser with rules for lines in the environment (CI) section in
 	 * the javacore
 	 */
 	protected void initTagAttributeRules() {
@@ -85,37 +85,37 @@ public class EnvironmentTagParser extends TagParser implements
 				addToken(ARG_STRING, CommonPatternMatchers.allButLineFeed);
 			}
 		};
-		
+
 		addTag(T_1CIJAVAVERSION, lineRule3);
 		addTag(T_1CIVMVERSION, lineRule);
 		addTag(T_1CIJITVERSION, lineRule);
 		addTag(T_1CIGCVERSION, lineRule);
 		addJITModesRule();
 		addTag(T_1CIRUNNINGAS, null);
-		addProcessIDRule(); 
-		addCmdLineRule(); 
+		addProcessIDRule();
+		addCmdLineRule();
 		addTag(T_1CIJAVAHOMEDIR, lineRule2);
 		addTag(T_1CIJAVADLLDIR, lineRule2);
 		addTag(T_1CISYSCP, lineRule2);
-		
+
 		addTag(T_1CIUSERARGS, lineRule);
 		addUserArgs();
 
 		addTag(T_1CIJVMMI, null);
 		addTag(T_2CIJVMMIOFF, null);
-		
+
 		addTag(T_1CIENVVARS, lineRule);
 		addEnvironmentVars();
-		
+
 		addStartTimeRule();
 		addStartTimeNanoRule();
 	}
-	
+
 	/**
 	 * Add rule for the command line (2CICMDLINE tag)
 	 */
 	private void addCmdLineRule() {
-		
+
 		ILineRule lineRule = new LineRule() {
 			public void processLine(String source, int startingOffset) {
 				// command line is on a single line, can include whitespace, separators etc
@@ -124,14 +124,14 @@ public class EnvironmentTagParser extends TagParser implements
 				addToken(CMD_LINE, CommonPatternMatchers.allButLineFeed);
 			}
 		};
-		addTag(T_1CICMDLINE, lineRule);		
+		addTag(T_1CICMDLINE, lineRule);
 	}
-	
+
 	/**
 	 * Add rule for the process id (2CIPROCESSID tag)
 	 */
 	private void addProcessIDRule() {
-		
+
 		ILineRule lineRule = new LineRule() {
 			public void processLine(String source, int startingOffset) {
 				// pid is in decimal then hex, we only need the first one.
@@ -139,14 +139,14 @@ public class EnvironmentTagParser extends TagParser implements
 				addToken(PID_STRING, CommonPatternMatchers.dec);
 			}
 		};
-		addTag(T_1CIPROCESSID, lineRule);		
+		addTag(T_1CIPROCESSID, lineRule);
 	}
-		
+
 	/**
 	 * Add rule for the JIT modes (2CICMDLINE tag)
 	 */
 	private void addJITModesRule() {
-		
+
 		ILineRule lineRule = new LineRule() {
 			public void processLine(String source, int startingOffset) {
 				// command line is on a single line, can include whitespace, separators etc
@@ -154,18 +154,18 @@ public class EnvironmentTagParser extends TagParser implements
 				addToken(JIT_MODE, CommonPatternMatchers.allButLineFeed);
 			}
 		};
-		addTag(T_1CIJITMODES, lineRule);		
+		addTag(T_1CIJITMODES, lineRule);
 	}
-	
+
 	/**
 	 * Add rule for an individual user args line (2CIUSERARG tag)
 	 */
 	private void addUserArgs() {
 		final Matcher hexEnd = CommonPatternMatchers.generateMatcher(" 0x\\p{XDigit}+[\\r\\n]*$");
-		
+
 		ILineRule lineRule = new LineRule() {
 			public void processLine(String source, int startingOffset) {
-				// each user arg setting is on a separate line, comprising a string after 
+				// each user arg setting is on a separate line, comprising a string after
 				// some whitespace, with optional extra information (hex address) following
 				consumeUntilFirstMatch(CommonPatternMatchers.whitespace);
 				if (addAllCharactersAsTokenUntilFirstMatch(ARG_STRING, hexEnd) != null) {
@@ -175,9 +175,9 @@ public class EnvironmentTagParser extends TagParser implements
 				}
 			}
 		};
-		addTag(T_2CIUSERARG, lineRule);		
+		addTag(T_2CIUSERARG, lineRule);
 	}
-	
+
 	/**
 	 * Add rule for an individual environment variable tags
 	 */
@@ -195,7 +195,7 @@ public class EnvironmentTagParser extends TagParser implements
 		};
 		addTag(T_2CIENVVAR, lineRule);
 	}
-	
+
 	/**
 	 * Add rule for the JVM start time line
 	 * 1CISTARTTIME   JVM start time: 2015/07/17 at 13:31:04:547
@@ -210,7 +210,7 @@ public class EnvironmentTagParser extends TagParser implements
 		};
 		addTag(T_1CISTARTTIME, lineRule);
 	}
-	
+
 	/**
 	 * Add rule for the JVM start nanotime line
 	 * 1CISTARTNANO   JVM start nanotime: 3534023113503

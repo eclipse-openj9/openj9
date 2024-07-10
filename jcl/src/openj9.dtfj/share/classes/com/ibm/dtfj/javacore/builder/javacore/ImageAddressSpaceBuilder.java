@@ -42,7 +42,7 @@ public class ImageAddressSpaceBuilder extends AbstractBuilderComponent implement
 	private BuilderContainer fBuilderContainer;
 
 	/**
-	 * 
+	 *
 	 * @param image valid com.ibm.dtfj.javacore.image.JCImage associated with this image address factory. Must not be null.
 	 * @param id unique id for this factory. Must not be null.
 	 * @throws JCInvalidArgumentsException if image is null
@@ -63,7 +63,7 @@ public class ImageAddressSpaceBuilder extends AbstractBuilderComponent implement
 	public IImageProcessBuilder getCurrentImageProcessBuilder() {
 		return (IImageProcessBuilder) fBuilderContainer.getLastAdded();
 	}
-	
+
 	/**
 	 * @see com.ibm.dtfj.javacore.builder.IImageAddressSpaceBuilder#generateImageProcessBuilder(String)
 	 * @param id unique id for the new image address space factory
@@ -87,7 +87,7 @@ public class ImageAddressSpaceBuilder extends AbstractBuilderComponent implement
 		}
 		return imageProcessBuilder;
 	}
-	
+
 	/**
 	 * @see com.ibm.dtfj.javacore.builder.IImageAddressSpaceBuilder#getImageProcessBuilder(String)
 	 * @return found image process factory, or null if not found
@@ -95,7 +95,7 @@ public class ImageAddressSpaceBuilder extends AbstractBuilderComponent implement
 	public IImageProcessBuilder getImageProcessBuilder(String builderID) {
 		return (IImageProcessBuilder) fBuilderContainer.findComponent(builderID);
 	}
-	
+
 	public ImageSection addImageSection(String name, long base, long size) {
 		ImagePointer basePointer = fImageAddressSpace.getPointer(base);
 		ImageSection section = new JCImageSection(name, basePointer, size);

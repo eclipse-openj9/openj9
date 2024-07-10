@@ -49,7 +49,7 @@ public class PHDJavaMonitor implements JavaMonitor {
 	private CorruptData owner_cd;
 	private ArrayList<JavaThread> enterWaiters = new ArrayList<JavaThread>();
 	private ArrayList<JavaThread> notifyWaiters = new ArrayList<JavaThread>();
-	
+
 	/**
 	 * Build Java monitor information from a JavaMonitor from another dump type.
 	 * Extract all the information on object construction.
@@ -74,10 +74,10 @@ public class PHDJavaMonitor implements JavaMonitor {
 			}
 		}
 		try {
-		    JavaThread thr = source.getOwner();
-		    if (thr != null) {
-		    	owner = runtime.getThread(thr);
-		    }
+			JavaThread thr = source.getOwner();
+			if (thr != null) {
+				owner = runtime.getThread(thr);
+			}
 		} catch (CorruptDataException e) {
 			owner_cd = new PHDCorruptData(space, e);
 		}
@@ -100,7 +100,7 @@ public class PHDJavaMonitor implements JavaMonitor {
 			}
 		}
 	}
-	
+
 	public Iterator<JavaThread> getEnterWaiters() {
 		return enterWaiters.iterator();
 	}
@@ -131,7 +131,7 @@ public class PHDJavaMonitor implements JavaMonitor {
 		if (o == null || !getClass().equals(o.getClass())) return false;
 		return id == ((PHDJavaMonitor)o).id;
 	}
-	
+
 	public int hashCode() {
 		return id.hashCode();
 	}

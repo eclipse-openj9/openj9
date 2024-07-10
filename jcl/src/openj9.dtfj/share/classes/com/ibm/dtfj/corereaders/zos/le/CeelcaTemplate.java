@@ -43,7 +43,7 @@ public final class CeelcaTemplate {
     public static int getCeelca_caa$length() {
         return 64;
     }
-    
+
     //CMVC 156864 : : updated code to fix traversal of native stacks
     public static long getCeelca_savstack(ImageInputStream inputStream, long address) throws IOException {
         inputStream.seek(address + 32);

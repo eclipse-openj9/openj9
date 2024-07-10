@@ -81,7 +81,7 @@ public class Edb {
         return address;
     }
 
-    /** 
+    /**
      * Returns the ceeosigr address
      * @throws IOException if an error occurred reading from the address space
      */
@@ -89,8 +89,8 @@ public class Edb {
         return ceexedbTemplate.getCeeedb_ceeosigr(inputStream, address);
     }
 
-    /** 
-     * Returns the ceeedbdba 
+    /**
+     * Returns the ceeedbdba
      * @throws IOException if an error occurred reading from the address space
      */
     public long ceeedbdba() throws IOException {
@@ -139,16 +139,16 @@ public class Edb {
             return envVars;
         envVars = new Properties();
         long ceeedbenvar = ceexedbTemplate.getCeeedbenvar(inputStream, address);
-        for (long env = 0; (env = space.readWord(ceeedbenvar)) != 0; ceeedbenvar += space.getWordLength()) {						
+        for (long env = 0; (env = space.readWord(ceeedbenvar)) != 0; ceeedbenvar += space.getWordLength()) {
             String name = space.readEbcdicCString(env);
             int eq = name.indexOf('=');
             if (eq > 0) {
-            	String key = name.substring(0, eq);
-            	String value = name.substring(eq + 1);
-            	envVars.put(key, value);
+                String key = name.substring(0, eq);
+                String value = name.substring(eq + 1);
+                envVars.put(key, value);
             } else {
-            	// no equals sign, so not a complete property pair, just return the key
-            	envVars.put(name, "");
+                // no equals sign, so not a complete property pair, just return the key
+                envVars.put(name, "");
             }
         }
         return envVars;

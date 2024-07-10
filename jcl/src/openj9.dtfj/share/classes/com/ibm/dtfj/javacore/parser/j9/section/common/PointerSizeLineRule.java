@@ -33,7 +33,7 @@ import com.ibm.dtfj.javacore.parser.framework.tag.LineRule;
 public class PointerSizeLineRule extends LineRule {
 
 	/**
-	 * 
+	 *
 	 */
 	public void processLine(String source, int startingOffset) {
 		consumeUntilFirstMatch(CommonPatternMatchers.open_paren);

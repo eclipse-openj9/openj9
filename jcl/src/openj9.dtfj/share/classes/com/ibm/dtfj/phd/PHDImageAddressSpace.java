@@ -43,21 +43,21 @@ import com.ibm.dtfj.java.JavaHeap;
 import com.ibm.dtfj.java.JavaRuntime;
 import com.ibm.dtfj.runtime.ManagedRuntime;
 
-/** 
+/**
  * @author ajohnson
  */
 class PHDImageAddressSpace implements ImageAddressSpace {
 
 	private final List<ImageProcess> processList;
 	private final ImageAddressSpace metaImageAddressSpace;
-	
+
 	PHDImageAddressSpace(File file, PHDImage parentImage, ImageAddressSpace metaImageAddressSpace) throws IOException {
 		this.metaImageAddressSpace = metaImageAddressSpace;
 		processList = new ArrayList<>();
 		ImageProcess metaProc = metaImageAddressSpace != null ? metaImageAddressSpace.getCurrentProcess() : null;
 		processList.add(new PHDImageProcess(file, parentImage,this, metaProc));
 	}
-	
+
 	PHDImageAddressSpace(ImageInputStream stream, PHDImage parentImage, ImageAddressSpace metaImageAddressSpace) throws IOException {
 		this.metaImageAddressSpace = metaImageAddressSpace;
 		processList = new ArrayList<>();

@@ -36,27 +36,27 @@ import javax.imageio.stream.ImageInputStream;
 import javax.imageio.stream.MemoryCacheImageInputStream;
 
 /**
- * Sniffs files attempting to determine the contents, typically from known 
+ * Sniffs files attempting to determine the contents, typically from known
  * magic numbers/values.
- * 
+ *
  * @author adam
  *
  */
 public class FileSniffer {
 	//ELF identifier
 	private static final int ELF = 0x7F454C46;		//0x7F,E,L,F
-	
+
 	//minidump identifier
 	private static final int MINIDUMP = 0x4D444D50;	//MDMP
-	
+
 	//userdump identifier
 	private static final int USERDUMP_1 = 0x55534552;
 	private static final int USERDUMP_2 = 0x44554D50;
-	
+
 	//DR1 and DR2 are z/OS core file identifiers
     private static final int DR1 = 0xc4d9f140;
     private static final int DR2 = 0xc4d9f240;
-    
+
     //XCOFF identifiers
 	private static final int CORE_DUMP_XX_VERSION = 0xFEEDDB2;
 	private static final int CORE_DUMP_X_VERSION = 0xFEEDDB1;
@@ -64,30 +64,30 @@ public class FileSniffer {
 	//MACHO identifiers
 	private static final int MACHO_64 = 0xFEEDFACF;
 	private static final int MACHO_64_REV = 0xCFFAEDFE;
-    
+
     private static int[] coreid = new int[]{ELF, MINIDUMP, DR1, DR2};
-    
+
     //PHD identifier
     private static final String PHD_HEADER = "portable heap dump";
     private static final int PHD_HEADER_SIZE = PHD_HEADER.length() + 2;		//UTF-8 string so need to add 2 length bytes
-    
+
     //zip file identifier
     private static final int ZIP_ID = 0x04034b50;
-    
+
     //the format for a core file
     public enum CoreFormatType {
-		ELF,
-		MINIDUMP,
-		MVS,
-		XCOFF,
-		USERDUMP,
-		MACHO,
-    	UNKNOWN
+        ELF,
+        MINIDUMP,
+        MVS,
+        XCOFF,
+        USERDUMP,
+        MACHO,
+        UNKNOWN
     }
-    
+
     /**
      * Determine the format of the core file.
-     * 
+     *
      * @param iis stream to the core file
      * @return format
      * @throws IOException re-thrown
@@ -123,14 +123,14 @@ public class FileSniffer {
 			return CoreFormatType.UNKNOWN;
 		} finally {
 			iis.seek(0);		//do not close the stream but reset it back
-		}		
+		}
 	}
-    
+
 	public static boolean isCoreFile(InputStream in, long filesize) throws IOException {
 		ImageInputStream iis = new MemoryCacheImageInputStream(in);
-		return isCoreFile(iis, filesize);		
+		return isCoreFile(iis, filesize);
 	}
-	
+
 	public static boolean isCoreFile(ImageInputStream iis, long filesize) throws IOException {
 		try {
 			int header = iis.readInt();
@@ -163,9 +163,9 @@ public class FileSniffer {
 			return false;
 		} finally {
 			iis.seek(0);		//do not close the stream but reset it back
-		}		
+		}
 	}
-	
+
 	/* Check that an elf file is definitely an elf core file.
 	 * (It could also be a library, executable etc...)
 	 */
@@ -182,7 +182,7 @@ public class FileSniffer {
 		// Before that byte 6 tells us if we are big or little endian, which we also need to know
 		// as e_type is two bytes long.
 		boolean isCore = false;
-		ByteOrder originalOrder = iis.getByteOrder(); 
+		ByteOrder originalOrder = iis.getByteOrder();
 		iis.seek(5);
 		byte order = iis.readByte();
 		iis.seek(16);
@@ -198,7 +198,7 @@ public class FileSniffer {
 		}
 		if( type == 4 ) {
 			isCore = true;
-		}	 
+		}
 		iis.setByteOrder(originalOrder);
 		return isCore;
 	}
@@ -217,18 +217,18 @@ public class FileSniffer {
 		iis.setByteOrder(originalOrder);
 		return filetype == 4;
 	}
-	
+
 	public static boolean isJavaCoreFile(InputStream in, long filesize) throws IOException {
 		ImageInputStream iis = new MemoryCacheImageInputStream(in);
 		return isJavaCoreFile(iis, filesize);
 	}
-	
+
 	public static boolean isJavaCoreFile(ImageInputStream iis, long filesize) throws IOException {
 		try {
 			byte[] headBytes = new byte[256];
 			iis.read(headBytes);
 			ByteBuffer headByteBuffer = ByteBuffer.wrap(headBytes);
-			String[] estimates = new String[] { 
+			String[] estimates = new String[] {
 				"IBM1047", // EBCDIC
 				"UTF-16BE", // Multibyte big endian
 				"UTF-16LE", // Multibyte Windows
@@ -247,19 +247,19 @@ public class FileSniffer {
 			}
 		} finally {
 			iis.seek(0);		//do not close the stream but reset it back
-		}		
+		}
 	}
-	
+
 	private static Charset attemptCharset(ByteBuffer headByteBuffer, Charset trialCharset) throws IOException {
 		final String sectionEyeCatcher = "0SECTION";
 		final String charsetEyeCatcher = "1TICHARSET";
 		headByteBuffer.rewind();
 		String head = trialCharset.decode(headByteBuffer).toString();
-		
+
 		/* If we can find the section eyecatcher, this encoding is mostly good */
 		if (head.indexOf(sectionEyeCatcher) >= 0) {
 			int idx = head.indexOf(charsetEyeCatcher);
-			
+
 			/* The charset eyecatcher is much newer, so may not be present */
 			if (idx >= 0) {
 				idx += charsetEyeCatcher.length();
@@ -290,12 +290,12 @@ public class FileSniffer {
 		/* Failed to find section eyecatcher after decoding in this charset. */
 		return null;
 	}
-	
+
 	public static boolean isPHDFile(InputStream in, long filesize) throws IOException {
 		ImageInputStream iis = new MemoryCacheImageInputStream(in);
-		return isPHDFile(iis, filesize);	
+		return isPHDFile(iis, filesize);
 	}
-	
+
 	public static boolean isPHDFile(ImageInputStream iis, long filesize) throws IOException {
 		if(filesize < PHD_HEADER_SIZE) {
 			return false;
@@ -305,9 +305,9 @@ public class FileSniffer {
 			return header.equals(PHD_HEADER);
 		} finally {
 			iis.reset();		//do not close the stream but reset it back
-		}		
+		}
 	}
-	
+
 	private static String readUTF(ImageInputStream iis, int maxlen) throws IOException {
 		int length = iis.readUnsignedShort();
 		if((length > maxlen) && (maxlen > 0)) {
@@ -317,21 +317,21 @@ public class FileSniffer {
 		iis.readFully(buf);
 		return new String(buf, "UTF-8");//AJ
 	}
-	
+
 	/**
 	 * Checks to see if the input stream is for a zip file, assumes that the stream is correctly positioned.
 	 * This method will reset the stream if possible to it's starting position. The reason for using this
 	 * method over just trying java.util.zip.ZipFile(File) and catching errors is that on some platforms
-	 * the zip support is provided by native libraries. It is possible to cause the native library to 
+	 * the zip support is provided by native libraries. It is possible to cause the native library to
 	 * crash when speculatively passing files into it.
-	 * 
+	 *
 	 * @param in stream to analyze
 	 * @return true if it is a zip file
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	/*
 	 * zip format
-	 * 
+	 *
 	 A.  Local file header:
 
         local file header signature     4 bytes  (0x04034b50)
@@ -385,7 +385,7 @@ public class FileSniffer {
 		}
 		return true;
 	}
-	
+
 	public static boolean isZipFile(File file) throws IOException {
 		FileImageInputStream fis = new FileImageInputStream(file);
 		boolean result = isZipFile(fis);

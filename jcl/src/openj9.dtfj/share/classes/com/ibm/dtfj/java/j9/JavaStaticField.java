@@ -35,7 +35,7 @@ import com.ibm.dtfj.java.JavaObject;
 public class JavaStaticField extends JavaField
 {
 	private String _value;
-	
+
 	public JavaStaticField(JavaRuntime runtime, String name, String sig, int modifiers, String value, long declaringClassID)
 	{
 		super(runtime, name, sig, modifiers, declaringClassID);
@@ -48,7 +48,7 @@ public class JavaStaticField extends JavaField
 	public Object getReferenceType(JavaObject object) throws CorruptDataException, MemoryAccessException
 	{
 		String sig = getSignature();
-		
+
 		if (sig.startsWith(OBJECT_PREFIX_SIGNATURE) || sig.startsWith(ARRAY_PREFIX_SIGNATURE)) {
 			try {
 				ImagePointer pointer = getDeclaringClass().getID().getAddressSpace().getPointer(parse(16));
@@ -91,7 +91,7 @@ public class JavaStaticField extends JavaField
 
 	public char getChar(JavaObject object) throws CorruptDataException, MemoryAccessException
 	{
- 		if (getSignature().equals(CHAR_SIGNATURE)) {
+		if (getSignature().equals(CHAR_SIGNATURE)) {
 			return (char) parse(4);
 		} else {
 			throw new IllegalArgumentException("field is not of type char. actual signature is "+getSignature());
@@ -144,10 +144,10 @@ public class JavaStaticField extends JavaField
 			return super.getShort(object);
 		}
 	}
-	
+
 	private long parse(int maxLength) throws CorruptDataException {
 		if (null == _value ) throw new CorruptDataException(new CorruptData("parse error: value is null", null));
-		if (_value.length() > maxLength) throw new CorruptDataException(new CorruptData("parse error: value ["+_value+ "] length "+_value.length()+" exceeds maximum of "+maxLength, null));			
+		if (_value.length() > maxLength) throw new CorruptDataException(new CorruptData("parse error: value ["+_value+ "] length "+_value.length()+" exceeds maximum of "+maxLength, null));
 
 		if (16 == _value.length()) {
 			// split and shift since this would overflow

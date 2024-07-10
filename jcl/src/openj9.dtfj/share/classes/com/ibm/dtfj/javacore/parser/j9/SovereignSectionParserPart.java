@@ -25,13 +25,12 @@ package com.ibm.dtfj.javacore.parser.j9;
 import com.ibm.dtfj.javacore.parser.framework.parser.ILookAheadBuffer;
 import com.ibm.dtfj.javacore.parser.framework.parser.ParserException;
 
-
 public abstract class SovereignSectionParserPart extends SectionParserGrammar{
-	
+
 	public SovereignSectionParserPart(String sectionName) {
 		super(sectionName);
 	}
-	
+
 	public abstract void computeSovRule(String sovRuleID, ILookAheadBuffer lookAheadBuffer) throws ParserException;
 
 }

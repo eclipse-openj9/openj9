@@ -38,14 +38,14 @@ import com.ibm.dtfj.corereaders.MemoryRange;
 public abstract class CommonAddressSpace implements IAbstractAddressSpace {
 	private static final int BUFFER_MAX = 4096;
 	private static final int MEMORY_CHECK_THRESHOLD = 0x100000;
-	
+
 	private MemoryRange[] _translations;
 	private Integer _lastTranslationUsed = Integer.valueOf(0);
 	private boolean _isLittleEndian;
 	private boolean _is64Bit;
 	private int lastAsid;
 	private int _is64BitAsid[];
-	
+
 	protected CommonAddressSpace(MemoryRange[] translations, boolean isLittleEndian, boolean is64Bit)
 	{
 		_translations = _sortRanges(translations);
@@ -53,14 +53,14 @@ public abstract class CommonAddressSpace implements IAbstractAddressSpace {
 		_is64Bit = is64Bit;
 		set64Bitness();
 	}
-	
+
 	private static MemoryRange[] _sortRanges(MemoryRange[] ranges)
 	{
 		Arrays.sort(ranges, new Comparator<MemoryRange>() {
 			@Override
 			public int compare(MemoryRange one, MemoryRange two)
 			{
-				return compareAddress(one.getAsid(), one.getVirtualAddress(), two.getAsid(), two.getVirtualAddress()); 
+				return compareAddress(one.getAsid(), one.getVirtualAddress(), two.getAsid(), two.getVirtualAddress());
 			}
 		});
 		return ranges;
@@ -78,7 +78,7 @@ public abstract class CommonAddressSpace implements IAbstractAddressSpace {
 			if (_translations[i].getVirtualAddress()+_translations[i].getSize() >= 0x100000000L) {
 				// Found 64-bit entry
 				int asid = _translations[i].getAsid();
-				
+
 				// Remember the ASID
 				int newa[] = new int[count+1];
 				for (int j = 0; j < count; ++j) {
@@ -86,9 +86,9 @@ public abstract class CommonAddressSpace implements IAbstractAddressSpace {
 				}
 				newa[count] = asid;
 				_is64BitAsid = newa;
-				
+
 				++count;
-				
+
 				// Skip to the end of the ASID range
 				while (i < _translations.length && _translations[i].getAsid() == asid) ++i;
 			}
@@ -106,18 +106,18 @@ public abstract class CommonAddressSpace implements IAbstractAddressSpace {
 	protected MemoryRange _residentRange(int asid, long address) throws MemoryAccessException
 	{
 		int range = findWhichMemoryRange(asid, address, _translations, _lastTranslationUsed, true);
-		
+
 		if (range >= 0) {
 			return _translations[range];
 		} else {
 			throw new MemoryAccessException(asid, address);
 		}
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * This searches memory ranges for an addr using a binary chop and returns an int indicating the memory range
-	 *  or -1 if address is not within any memory range...... 
+	 *  or -1 if address is not within any memory range......
 	 * @param asid TODO
 	 */
 	protected static int findWhichMemoryRange(int asid, long addr, MemoryRange[] ranges, Integer lastRange, boolean doLinearIfNotFound)
@@ -125,32 +125,32 @@ public abstract class CommonAddressSpace implements IAbstractAddressSpace {
 		int retI=-1; //assume we won't find it
 		int last = lastRange.intValue();
 		int lastPlusOne = last+1;
-		
-		if ((last < ranges.length) && 
-			(ranges[last].contains(asid, addr)) && 
+
+		if ((last < ranges.length) &&
+			(ranges[last].contains(asid, addr)) &&
 			(ranges[last].isInCoreFile() || (!ranges[last].isInCoreFile() && ranges[last].getLibraryReader() != null))) { //TLB hit
 			retI = last;
-		} else if ((lastPlusOne < ranges.length) && 
-				   (ranges[lastPlusOne].contains(asid, addr)) && 
+		} else if ((lastPlusOne < ranges.length) &&
+				   (ranges[lastPlusOne].contains(asid, addr)) &&
 				   (ranges[last].isInCoreFile() || (!ranges[last].isInCoreFile() && ranges[last].getLibraryReader() != null))) { //TLB hit
 			retI = lastPlusOne;
 		} else {
 			// TLB failed to do the search
-			
+
 			// Now effectively do a binary search find the right range....
 			// note: on some platforms we can have overlapping memory ranges!!
 			//   (ie. AIX, zOs and linux) so we always give back the first
 
 			int highpos = ranges.length-1;
 			int lowpos  = 0;
-			
+
 			while (lowpos <= highpos) {
 				int currentPos = lowpos + ((highpos-lowpos) >>> 1);
 				long mraStartAddr = ranges[currentPos].getVirtualAddress();
 				int mraAsid = ranges[currentPos].getAsid();
 
 				if (compareAddress(asid, addr, mraAsid, mraStartAddr) >= 0) { 	//addr above base of range
-					if(compareAddress(asid, addr, mraAsid, mraStartAddr + ranges[currentPos].getSize()) < 0 && 
+					if(compareAddress(asid, addr, mraAsid, mraStartAddr + ranges[currentPos].getSize()) < 0 &&
 					  (ranges[currentPos].isInCoreFile() || !ranges[currentPos].isInCoreFile() && ranges[currentPos].getLibraryReader() != null)) {
 						retI = currentPos;
 						break;
@@ -158,7 +158,7 @@ public abstract class CommonAddressSpace implements IAbstractAddressSpace {
 					lowpos = currentPos + 1;
 				} else {
 					highpos = currentPos-1;
-				}					
+				}
 			}
 
 			// No match using binary chop, probably due to overlapping ranges => revert to a linear search
@@ -168,8 +168,8 @@ public abstract class CommonAddressSpace implements IAbstractAddressSpace {
 				for (int i = 0; i < lowpos; i++) {
 					long mraStartAddr = ranges[i].getVirtualAddress();
 					int mraAsid = ranges[i].getAsid();
-					if ((compareAddress(asid, addr, mraAsid, mraStartAddr) >= 0) && 
-						(compareAddress(asid, addr, mraAsid, mraStartAddr + ranges[i].getSize()) < 0) && 
+					if ((compareAddress(asid, addr, mraAsid, mraStartAddr) >= 0) &&
+						(compareAddress(asid, addr, mraAsid, mraStartAddr + ranges[i].getSize()) < 0) &&
 						(ranges[i].isInCoreFile() || (!ranges[i].isInCoreFile() && ranges[i].getLibraryReader() != null))) {
 						retI = i;
 						break;
@@ -182,7 +182,7 @@ public abstract class CommonAddressSpace implements IAbstractAddressSpace {
 		}
 		return retI;
 	}
-	
+
 	protected static int compareAddress(int lasid, long lhs, int rasid, long rhs) {
 		if (lasid < rasid) return -1;
 		if (lasid > rasid) return 1;
@@ -194,7 +194,7 @@ public abstract class CommonAddressSpace implements IAbstractAddressSpace {
 			return lhs < rhs ? 1 : -1;
 		}
 	}
-	
+
 	private boolean isMemoryAccessible(int asid, long address, int size)
 	{
 		// CMVC 125071 - jextract failing with OOM error
@@ -205,13 +205,13 @@ public abstract class CommonAddressSpace implements IAbstractAddressSpace {
 		int startRange;
 		long hi;
 		long memhi;
-		
+
 		startRange = findWhichMemoryRange(asid, address, _translations, _lastTranslationUsed, true);
 		if (startRange == -1) {
 			// Range not found, so return false
 			return rc;
 		}
-		
+
 		// Now we have a start range, check if the size fits
 		hi = _translations[startRange].getVirtualAddress() + _translations[startRange].getSize();
 		memhi = address + size;
@@ -222,12 +222,12 @@ public abstract class CommonAddressSpace implements IAbstractAddressSpace {
 			// size goes beyond the end of this range, so walk the contiguous
 			// ranges to find if it will still fit
 			cumulativeSize = hi - address;
-			
+
 			for (int i = startRange+1; i < _translations.length; i++) {
 				long rangeBaseAddress = _translations[i].getVirtualAddress();
 				long rangeSize = _translations[i].getSize();
 				long rangeTopAddress = rangeBaseAddress + rangeSize;
-				
+
 				if (rangeBaseAddress == hi) {
 					// contiguous range
 					cumulativeSize += rangeSize;
@@ -279,23 +279,23 @@ public abstract class CommonAddressSpace implements IAbstractAddressSpace {
 	{
 		// CMVC 125071 - jextract failing with OOM error
 		// This check is to help protect from OOM situations where a damaged core
-		// has given us a ridiculously large memory size to allocate. If size is 
+		// has given us a ridiculously large memory size to allocate. If size is
 		// sufficiently large, then check if the memory really exists before trying
 		// to allocate it. Obviously, this does not stop OOM occurring, if the memory
 		// exists in the core file we may pass the test and still OOM on the allocation.
 		boolean getMem = true;
 		lastAsid = asid;
 		byte[] buffer = null;
-		
+
 		if (size < 0) {
 			return null;
 		}
-		
+
 		if (0 != vaddr) {
 			if (size > MEMORY_CHECK_THRESHOLD) {
 				getMem = isMemoryAccessible(0, vaddr, size);
 			}
-		
+
 			if (getMem) {
 				buffer = new byte[size];
 
@@ -321,7 +321,7 @@ public abstract class CommonAddressSpace implements IAbstractAddressSpace {
 
 		long location = -1;
 		Iterator ranges = getMemoryRanges();
-		
+
 		while ((-1 == location) && ranges.hasNext()) {
 			MemoryRange range = (MemoryRange) ranges.next();
 			// Skip over previous asids
@@ -334,7 +334,7 @@ public abstract class CommonAddressSpace implements IAbstractAddressSpace {
 		if (location == -1) lastAsid = 0;
 		return location;
 	}
-	
+
 	private static int match(byte[] whatBytes, int matchedSoFar, byte[] buffer, int index) {
 		int matched = matchedSoFar;
 		for (int i = index; i < buffer.length && matched < whatBytes.length; i++, matched++)
@@ -342,7 +342,7 @@ public abstract class CommonAddressSpace implements IAbstractAddressSpace {
 				return 0;
 		return matched;
 	}
-	
+
 	private long findPatternInRange(byte[] whatBytes, int alignment, long start, MemoryRange range, int bufferMax) {
 		if (range.getVirtualAddress() >= start || range.contains(start)) {
 			// Ensure the address is within the range and aligned
@@ -353,7 +353,7 @@ public abstract class CommonAddressSpace implements IAbstractAddressSpace {
 				addr += alignment - (addr % alignment);
 
 			long edge = range.getVirtualAddress() + range.getSize();
-			
+
 			int asid = range.getAsid();
 
 			// FIXME this is somewhat inefficient - should use Boyer-Moore
@@ -362,22 +362,22 @@ public abstract class CommonAddressSpace implements IAbstractAddressSpace {
 			while (addr < edge) {
 				long bytesLeftInRange = edge - addr;
 				long count = bufferMax < bytesLeftInRange ? bufferMax : bytesLeftInRange;
-				
+
 				if (0 != addr) {
 					byte[] buffer = getMemoryBytes(asid, addr, (int)count);
-					
+
 					if (null != buffer) {
 						// Handle partial match
 						if (0 != matched) {
 							matched = match(whatBytes, matched, buffer, 0);
 						}
-						
+
 						// Handle no match
 						for (int i = 0; i < buffer.length && 0 == matched; i += alignment) {
 							matchAddr = addr + i;
 							matched = match(whatBytes, 0, buffer, i);
 						}
-						
+
 						// Check for a full match
 						if (whatBytes.length == matched) {
 							return matchAddr;
@@ -392,7 +392,7 @@ public abstract class CommonAddressSpace implements IAbstractAddressSpace {
 		}
 		return -1;
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.dtfj.addressspace.IAbstractAddressSpace#getLongAt(int, long)
 	 */

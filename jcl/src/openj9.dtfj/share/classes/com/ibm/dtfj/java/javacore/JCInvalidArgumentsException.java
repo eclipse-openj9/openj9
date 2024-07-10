@@ -25,14 +25,14 @@ package com.ibm.dtfj.java.javacore;
 public class JCInvalidArgumentsException extends Exception{
 
 	/**
-	 * 
+	 *
 	 */
 	private static final long serialVersionUID = 612811530485940394L;
-	
+
 	public JCInvalidArgumentsException(String message) {
 		super(message);
 	}
-	
+
 	public JCInvalidArgumentsException(Throwable e) {
 		super(e);
 	}

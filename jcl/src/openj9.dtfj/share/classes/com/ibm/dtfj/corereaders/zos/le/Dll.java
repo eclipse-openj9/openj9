@@ -29,7 +29,7 @@ import com.ibm.dtfj.corereaders.zos.dumpreader.AddressSpace;
 import com.ibm.dtfj.corereaders.zos.dumpreader.AddressSpaceImageInputStream;
 
 /**
- * This class represents a DLL (Dynamically Linked Library). 
+ * This class represents a DLL (Dynamically Linked Library).
  */
 
 public class Dll {
@@ -125,7 +125,7 @@ public class Dll {
         return next;
     }
 
-    /** 
+    /**
      * Returns the named {@link com.ibm.dtfj.corereaders.zos.le.DllVariable} (or null if it can't be found).
      */
     public DllVariable getVariable(String name) throws IOException {
@@ -225,7 +225,7 @@ public class Dll {
         return variables;
     }
 
-    /** 
+    /**
      * Returns the named {@link com.ibm.dtfj.corereaders.zos.le.DllFunction} (or null if it can't be found).
      */
     public DllFunction getFunction(String name) throws IOException {
@@ -319,7 +319,7 @@ public class Dll {
         return functions;
     }
 
-    /** 
+    /**
      * From the given AddressSpace returns the named {@link com.ibm.dtfj.corereaders.zos.le.DllFunction}
      * (or null if it can't be found). This caches previously found functions for speed.
      * Note that this searches all the Dlls and returns the first match it finds so take care

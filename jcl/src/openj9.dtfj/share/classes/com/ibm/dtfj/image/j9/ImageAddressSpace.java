@@ -44,7 +44,7 @@ public class ImageAddressSpace implements com.ibm.dtfj.image.ImageAddressSpace
 	private Vector _processes = new Vector();
 	private IAbstractAddressSpace _shadow;
 	private int _asid = 0;	// This is used for z/OS multi-spatial support
-	
+
 	public ImageAddressSpace(IAbstractAddressSpace memory, int asid)
 	{
 		_shadow = memory;
@@ -63,7 +63,7 @@ public class ImageAddressSpace implements com.ibm.dtfj.image.ImageAddressSpace
 	public ImageProcess getCurrentProcess()
 	{
 		ImageProcess currentProc = null;
-		
+
 		if (_processes.size() > 0) {
 			//TODO: sniff this from the core
 			currentProc = (ImageProcess) _processes.elementAt(0);
@@ -142,7 +142,7 @@ public class ImageAddressSpace implements com.ibm.dtfj.image.ImageAddressSpace
 	{
 		Iterator rangeWalker = _shadow.getMemoryRanges();
 		Vector sections = new Vector();
-		
+
 		while (rangeWalker.hasNext()) {
 			MemoryRange range = (MemoryRange) rangeWalker.next();
 			if (range.getAsid() == _asid) {
@@ -153,7 +153,7 @@ public class ImageAddressSpace implements com.ibm.dtfj.image.ImageAddressSpace
 		}
 		return sections.iterator();
 	}
-	
+
 	//these methods are provided so that pointers in the address space can look up their permission bits
 	boolean isExecutableAt(long address) throws DataUnavailable
 	{
@@ -163,7 +163,7 @@ public class ImageAddressSpace implements com.ibm.dtfj.image.ImageAddressSpace
 			throw new DataUnavailable();
 		}
 	}
-	
+
 	boolean isReadOnly(long address) throws DataUnavailable
 	{
 		try {
@@ -181,7 +181,7 @@ public class ImageAddressSpace implements com.ibm.dtfj.image.ImageAddressSpace
 			throw new DataUnavailable();
 		}
 	}
-	
+
 	/**
 	 * This shouldn't be added to the public API but it is required by the current hashCode algorithm in JavaObject.
 	 * It may be possible to remove this method if that callsite is changed to a less hackish solution
@@ -191,7 +191,7 @@ public class ImageAddressSpace implements com.ibm.dtfj.image.ImageAddressSpace
 	{
 		return _shadow.bytesPerPointer(_asid);
 	}
-	
+
 	/**
 	 * If available, show the ASID as toString.
 	 * Change this once getID() is available.

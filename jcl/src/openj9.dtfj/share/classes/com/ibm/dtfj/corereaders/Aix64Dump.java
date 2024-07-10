@@ -27,7 +27,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 /*
- * CMVC 166477 : 
+ * CMVC 166477 :
  * 	- moved the AIX 64 bit subclass from an inner class
  * 	- created known offsets for an arbitrarily named version 1 and 2 of the structures
  * 	- added function to determine the size of the structure by testing the validity of the stack pointer
@@ -40,9 +40,9 @@ public class Aix64Dump extends NewAixDump {
 	private static final long THRDENTRY64_V2_SIZE = 512;
 	private static final long THRDCTX64_V1 = 1000;
 	private static final long THRDCTX64_V2 = 1088;
-	
+
 	private static final int GPR_COUNT = 32;
-	
+
 	private boolean hasVersionBeenDetermined = false;
 	//set structure sizes to default values of version 1
 	private long sizeofThreadCtx64 = THRDCTX64_V1;
@@ -57,7 +57,7 @@ public class Aix64Dump extends NewAixDump {
 	protected int readLoaderInfoFlags() throws IOException {
 		return coreReadInt();
 	}
-	
+
 	protected long userInfoOffset() {
 		// offsetof(core_dumpxx, c_u)
 		return 1216;
@@ -127,7 +127,7 @@ public class Aix64Dump extends NewAixDump {
 	protected long getLinkRegisterFrom(Map registers) {
 		return ((Long) registers.get("lr")).longValue();
 	}
-	
+
 	protected int sizeofTopOfStack() {
 		// see struct top_of_stack in execargs.h
 		return 304;	//this is sizeof(top_of_stack)

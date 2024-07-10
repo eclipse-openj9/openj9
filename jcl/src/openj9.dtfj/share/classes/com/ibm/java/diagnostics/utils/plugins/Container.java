@@ -30,9 +30,9 @@ import java.util.List;
 import java.util.logging.Level;
 
 /**
- * Represents a class file container in the file system, this 
+ * Represents a class file container in the file system, this
  * could be a directory or a jar file.
- * 
+ *
  * @author adam
  */
 public class Container extends Entry {
@@ -86,7 +86,7 @@ public class Container extends Entry {
 
 	/**
 	 * Recursively scan all nodes in the tree looking for the specified entry.
-	 * 
+	 *
 	 * @param entry entry to be searched for
 	 * @return
 	 */

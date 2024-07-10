@@ -51,7 +51,7 @@ public interface Builder {
 	public Object buildCorruptData(Object addressSpace, String message, long address);
 
 	public ClosingFileReader openFile(String filename) throws IOException;
-	
+
 	public long getEnvironmentAddress();
 
 	public long getValueOfNamedRegister(List registers, String string);
@@ -59,7 +59,7 @@ public interface Builder {
 	/**
 	 * Called to inform the builder that the executable data cannot be trusted.
 	 * Note that this also set the libraries unavailable as a side-effect
-	 * 
+	 *
 	 * @param description
 	 */
 	public void setExecutableUnavailable(String description);

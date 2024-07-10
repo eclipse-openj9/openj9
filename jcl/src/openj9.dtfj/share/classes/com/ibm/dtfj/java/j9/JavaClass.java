@@ -47,7 +47,7 @@ public class JavaClass extends JavaAbstractClass
 	private Vector _constantPoolObjects = new Vector();
 	private int _instanceSize;
 	private String _fileName;
-	
+
 	public JavaClass(JavaRuntime vm, ImagePointer classPointer, long superClassID, String name, int instanceSize, long classLoaderID, int modifiers, int flagOffset, String fileName, ImagePointer objectID, int hashcodeSlot)
 	{
 		super(vm,classPointer, modifiers, classLoaderID, objectID, flagOffset, hashcodeSlot);
@@ -122,7 +122,7 @@ public class JavaClass extends JavaAbstractClass
 		//first look up all the class IDs and translate them into classes then add the objects
 		Iterator ids = _constantPoolClassRefs.iterator();
 		Vector allRefs = new Vector();
-		
+
 		while (ids.hasNext()) {
 			long oneID = ((Long)ids.next()).longValue();
 			Object toBeAdded = null;
@@ -140,20 +140,20 @@ public class JavaClass extends JavaAbstractClass
 			}
 			allRefs.add(toBeAdded);
 		}
-		
+
 		// Loop through the list of constant pool objects, instantiating them and adding them to the list
 		for (int i = 0; i < _constantPoolObjects.size(); i++) {
 			try {
 				long objectId = ((Long)(_constantPoolObjects.get(i))).longValue();
-				if (objectId != 0) {				
-					ImagePointer pointer = _javaVM.pointerInAddressSpace(objectId); 
+				if (objectId != 0) {
+					ImagePointer pointer = _javaVM.pointerInAddressSpace(objectId);
 					try {
 						JavaObject instance = _javaVM.getObjectAtAddress(pointer);
 						allRefs.add(instance);
 					} catch (IllegalArgumentException e) {
 						// getObjectAtAddress may throw an IllegalArgumentException if the address is not aligned
 						allRefs.add(new CorruptData(e.getMessage(),pointer));
-					}					
+					}
 				}
 			} catch(CorruptDataException e) {
 				allRefs.add(e.getCorruptData());
@@ -162,10 +162,10 @@ public class JavaClass extends JavaAbstractClass
 
 		return allRefs.iterator();
 	}
-	
+
 	/**
 	 * The constant pool consists of class IDs and object instances.  This is how the class IDs are added
-	 * 
+	 *
 	 * @param id
 	 */
 	public void addConstantPoolClassRef(long id)
@@ -180,13 +180,13 @@ public class JavaClass extends JavaAbstractClass
 	{
 		return _instanceSize;
 	}
-	
+
 	public String getFilename() throws DataUnavailable, CorruptDataException
 	{
 		if (_fileName != null) {
 			return _fileName;
 		}
-		throw new DataUnavailable(); 
+		throw new DataUnavailable();
 	}
 
 	public void createNewField(String name, String sig, int modifiers, int offset, long classID)
@@ -209,7 +209,7 @@ public class JavaClass extends JavaAbstractClass
 	public void createConstantPoolObjectRef(long id)
 	{
 		// Add the id to the list
-		_constantPoolObjects.add(Long.valueOf(id));	
+		_constantPoolObjects.add(Long.valueOf(id));
 	}
 
 	public void createNewStaticField(String name, String sig, int modifiers, String value)
@@ -217,7 +217,7 @@ public class JavaClass extends JavaAbstractClass
 		JavaStaticField newStatic = new JavaStaticField(_javaVM, name, sig, modifiers, value, getID().getAddress());
 		_fields.add(newStatic);
 	}
-	
+
 	public String toString()
 	{
 		return _className+ "@" + Long.toHexString(_classPointer.getAddress());
@@ -231,7 +231,7 @@ public class JavaClass extends JavaAbstractClass
 		// need to build a list of references from this class.
 		Vector references = new Vector();
 		JavaReference jRef = null;
-		
+
 		// get the Constant Pool references from this class.
 		Iterator constantPoolIt = getConstantPoolReferences();
 		while (constantPoolIt.hasNext()) {
@@ -248,12 +248,12 @@ public class JavaClass extends JavaAbstractClass
 				// add the reference to the container.
 				jRef = new JavaReference(_javaVM, this, jClass, "Constant Pool Class", JavaReference.REFERENCE_CONSTANT_POOL, JavaReference.HEAP_ROOT_UNKNOWN, JavaReference.REACHABILITY_STRONG);
 			}
-			
+
 			if (null != jRef) {
 				references.add(jRef);
 			}
 		}
-		
+
 		// get the static field references from this class.
 		Iterator declaredFieldIt = getDeclaredFields();
 		while (declaredFieldIt.hasNext()) {
@@ -265,16 +265,16 @@ public class JavaClass extends JavaAbstractClass
 					Object obj = sField.getReferenceType(null);
 					if (null != obj) {
 						if (obj instanceof JavaObject) {
-							
+
 							// build a JavaReference type and add the reference to the container.
 							String fieldName = sField.getName();
 							String description = "Static field";
 							if (null != fieldName) {
 								description  = description + " [field name:" + fieldName + "]";
 							}
-							
+
 							JavaObject jObject = (JavaObject)obj;
-							jRef = new JavaReference(_javaVM, this, jObject, description, JavaReference.REFERENCE_STATIC_FIELD, JavaReference.HEAP_ROOT_UNKNOWN, JavaReference.REACHABILITY_STRONG); 
+							jRef = new JavaReference(_javaVM, this, jObject, description, JavaReference.REFERENCE_STATIC_FIELD, JavaReference.HEAP_ROOT_UNKNOWN, JavaReference.REACHABILITY_STRONG);
 							references.add(jRef);
 						}
 					}
@@ -282,7 +282,7 @@ public class JavaClass extends JavaAbstractClass
 					// Corrupt data, so add it to the container.
 					references.add(e.getCorruptData());
 				} catch (MemoryAccessException e) {
-					// Memory access problems, so create a CorruptData object 
+					// Memory access problems, so create a CorruptData object
 					// to describe the problem and add it to the container.
 					ImagePointer ptrInError = e.getPointer();
 					String message = e.getMessage();
@@ -292,11 +292,11 @@ public class JavaClass extends JavaAbstractClass
 				}
 			}
 		}
-		
+
 		addSuperclassReference(references);
 		addClassLoaderReference(references);
 		addClassObjectReference(references);
-		
+
 		return references.iterator();
 	}
 

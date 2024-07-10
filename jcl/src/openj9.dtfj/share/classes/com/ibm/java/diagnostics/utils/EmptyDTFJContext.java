@@ -31,7 +31,7 @@ import com.ibm.dtfj.java.JavaRuntime;
  * It is possible that if a core file is sufficiently corrupt, or that an invalid type of
  * file is passed to jdmpview, then at least one context needs to be created so that the
  * user can exit the tool
- * 
+ *
  * @author adam
  *
  */
@@ -45,6 +45,6 @@ public class EmptyDTFJContext extends DTFJContext {
 	public void refresh() {
 		commands.clear();
 		//these are the only hardwired commands that are always available within any context
-		addGlobalCommandsToContext();	
+		addGlobalCommandsToContext();
 	}
 }

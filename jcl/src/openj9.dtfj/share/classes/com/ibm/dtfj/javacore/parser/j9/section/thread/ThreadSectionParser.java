@@ -420,7 +420,6 @@ public class ThreadSectionParser extends SectionParser implements IThreadTypes{
 		}
 	}
 
-
 	/**
 	 *
 	 * @param startingTag

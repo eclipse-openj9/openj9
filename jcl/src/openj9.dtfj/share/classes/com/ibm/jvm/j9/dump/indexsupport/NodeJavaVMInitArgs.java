@@ -34,7 +34,7 @@ import com.ibm.dtfj.java.j9.JavaVMInitArgs;
 public class NodeJavaVMInitArgs extends NodeAbstract
 {
 	private JavaVMInitArgs _initArgs;
-	
+
 	public NodeJavaVMInitArgs(JavaRuntime runtime, Attributes attributes)
 	{
 		// the "javavminitargs" shows up under "javavm" to describe the invocation arguments
@@ -43,14 +43,14 @@ public class NodeJavaVMInitArgs extends NodeAbstract
 		int version = (int)_longFromString(attributes.getValue("version"));
 		_initArgs = runtime.createJavaVMInitArgs(version, ignoreUnrecognized);
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.jvm.j9.dump.indexsupport.IParserNode#nodeToPushAfterStarting(java.lang.String, java.lang.String, java.lang.String, org.xml.sax.Attributes)
 	 */
 	public IParserNode nodeToPushAfterStarting(String uri, String localName, String qName, Attributes attributes)
 	{
 		IParserNode child = null;
-		
+
 		if (qName.equals("javavmoption")) {
 			child = new NodeJavaVMOption(_initArgs, attributes);
 		} else {

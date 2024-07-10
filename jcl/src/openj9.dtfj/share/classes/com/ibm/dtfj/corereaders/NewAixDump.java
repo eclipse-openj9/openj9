@@ -43,7 +43,7 @@ public abstract class NewAixDump extends CoreReaderSupport {
 	private static final long FAULTING_THREAD_OFFSET = 216; // offsetof(core_dumpx, c_flt)
 	private static final int S64BIT = 0x00000001; // indicates a 64-bit process
 	private static final long CORE_FILE_VERSION_OFFSET = 4;
-	
+
 	//See /usr/include/core.h on an AIX box for the core structures
 	private static final int CORE_DUMP_XX_VERSION = 0xFEEDDB2;
 	private static final int CORE_DUMP_X_VERSION = 0xFEEDDB1;
@@ -69,7 +69,7 @@ public abstract class NewAixDump extends CoreReaderSupport {
 	{
 		super(reader);
 	}
-	
+
 	private List _memoryRanges = new ArrayList();
 	private Set _additionalFileNames = new TreeSet();
 	private int _implementation;
@@ -82,9 +82,9 @@ public abstract class NewAixDump extends CoreReaderSupport {
 	private MemoryRange _stackRange = null;
 	//addresses required to find the bottom of the main thread's stack (for some reason called the "top of stack" in AIX documentation)
 	private long _structTopOfStackVirtualAddress;
-	
+
 	private boolean _isTruncated = false;
-	
+
 	public static boolean isSupportedDump(ImageInputStream stream) throws IOException {
 		// There are no magic signatures in an AIX dump header.  Some simple validation of the header
 		// allows a best guess about validity of the file.
@@ -99,13 +99,13 @@ public abstract class NewAixDump extends CoreReaderSupport {
 		assert isSupportedDump(stream);
 		stream.seek(CORE_FILE_VERSION_OFFSET);
 		int version = stream.readInt();
-		
+
 		boolean is64Bit = false;
 		if (version == CORE_DUMP_X_VERSION) {
 			//Could be a 64 bit if generated on a pre-AIX5 machine
 			stream.seek(CORE_DUMP_X_PI_FLAGS_2_OFFSET);
 			int flags = stream.readInt();
-			
+
 			is64Bit = (S64BIT & flags) != 0;
 		} else if (version == CORE_DUMP_XX_VERSION) {
 			//All core_dump_xx are 64 bit processes
@@ -113,7 +113,7 @@ public abstract class NewAixDump extends CoreReaderSupport {
 		} else {
 			throw new IOException("Unrecognised core file version: " + Long.toHexString(version));
 		}
-		
+
 		DumpReader reader = new DumpReader(stream, is64Bit);
 		if (is64Bit) {
 			return new Aix64Dump(reader);
@@ -121,7 +121,7 @@ public abstract class NewAixDump extends CoreReaderSupport {
 			return new Aix32Dump(reader);
 		}
 	}
-	
+
 	protected void readCore() throws IOException
 	{
 		//Note that this structure is core_dumpx defined in "/usr/include/sys/core.h"
@@ -148,11 +148,11 @@ public abstract class NewAixDump extends CoreReaderSupport {
 		long stackVirtualAddress = coreReadLong();
 		long stackSize = coreReadLong();
 		_structTopOfStackVirtualAddress = stackVirtualAddress  + stackSize  - sizeofTopOfStack();
-		
+
 		MemoryRange memoryRange1 = new MemoryRange(stackVirtualAddress, stackOffset, stackSize);
 		//memoryRange1.setDescription("stack");
 		_memoryRanges.add(memoryRange1);
-		
+
 		// This is a temporary hack until we can understand signal handler frames better.
 		_stackRange  = memoryRange1;
 
@@ -166,7 +166,7 @@ public abstract class NewAixDump extends CoreReaderSupport {
 
 		coreReadLong();	// Ignore sdataVirtualAddress
 		coreReadLong(); // Ignore sdataSize
-		
+
 		long vmRegionCount = coreReadLong();
 		long vmRegionOffset = coreReadLong();
 		_implementation = coreReadInt();
@@ -175,11 +175,11 @@ public abstract class NewAixDump extends CoreReaderSupport {
 		coreReadLong();	// Ignore unsigned long long c_extctx;    (Extended Context Table offset)
 
 		coreReadBytes(6 * 8); // Ignore padding (6 longs)
-		
+
 		//ignore struct thrdctx     c_flt;    (faulting thread's context)	//this is resolved later via that constant "FAULTING_THREAD_OFFSET"
 		//ignore struct userx       c_u;       (copy of the user structure)
 		//>> end of core_dumpx structure
-		
+
 		readVMRegions(vmRegionOffset, vmRegionCount);
 		readSegments(segmentOffset, segmentCount);
 		readLoaderInfoAsMemoryRanges();
@@ -190,7 +190,7 @@ public abstract class NewAixDump extends CoreReaderSupport {
 			// Unfortunately, it turns out that the last VM region in any AIX dump is always missing the last few KBytes.
 			_isTruncated |= !coreCheckOffset(highestRange.getFileOffset());
 		}
-		
+
 	}
 
 	private MemoryRange getHighestRange() {
@@ -206,7 +206,7 @@ public abstract class NewAixDump extends CoreReaderSupport {
 		}
 		return highestRange;
 	}
-	
+
 	private void readVMRegions(long offset, long count) throws IOException {
 		coreSeek(offset);
 		for (int i = 0; i < count; i++) {
@@ -234,7 +234,7 @@ public abstract class NewAixDump extends CoreReaderSupport {
 			_memoryRanges.add(memoryRange);
 		}
 	}
-	
+
 	private void readLoaderInfoAsMemoryRanges() throws IOException {
 		int next = 0;
 		long current = _loaderOffset;
@@ -259,7 +259,7 @@ public abstract class NewAixDump extends CoreReaderSupport {
 			}
 		} while (0 != next && current + next < _loaderOffset + _loaderSize);
 	}
-	
+
 	private List readLoaderInfoAsModules(Builder builder, Object addressSpace) throws IOException
 	{
 		List modules = new ArrayList();
@@ -305,9 +305,9 @@ public abstract class NewAixDump extends CoreReaderSupport {
 	/**
 	 * Returns an XCOFFReader for the library at the specified fileName.  If the library is an archive, the objectName is used to find the library
 	 * inside the archive and the reader will be for that "file"
-	 * 
+	 *
 	 * Returns null if the library cannot be found or is not an understood XCOFF or AR archive
-	 * 
+	 *
 	 * @param fileName
 	 * @param objectName
 	 * @return
@@ -322,7 +322,7 @@ public abstract class NewAixDump extends CoreReaderSupport {
 		} catch (IOException e) {
 			//this is safe since we will just produce incomplete data
 		}
-		
+
 		if (null != library) {
 			//we found the library so figure out what it is and open it
 			long fileOffset = 0;
@@ -350,13 +350,13 @@ public abstract class NewAixDump extends CoreReaderSupport {
 	}
 
 	private void readUserInfo(Builder builder, Object addressSpace) throws IOException {
-		
+
 		// Get the process ID
 		coreSeek(userInfoOffset());
 		int pid = coreReadInt();
-		
-		// Get the process command line. For AIX dumps we find the registers in the initial (top - this is to be consistent with AIX headers) 
-		// stack frame. Register 3 has the number of command line arguments (argc), register 4 has 
+
+		// Get the process command line. For AIX dumps we find the registers in the initial (top - this is to be consistent with AIX headers)
+		// stack frame. Register 3 has the number of command line arguments (argc), register 4 has
 		// a pointer to a list of pointers to the command line arguments (argv), and register 5 contains the pointer to the environment vars
 		String commandLine = "";
 		try
@@ -375,7 +375,7 @@ public abstract class NewAixDump extends CoreReaderSupport {
 		long reg4 = coreReadAddress();	//argv
 		long reg5 = coreReadAddress();	//env
 		int argc = (int)reg3; // truncate to integer
-		
+
 		if (argc > 0) {
 			long[] addresses = new long[argc];
 			try
@@ -405,7 +405,7 @@ public abstract class NewAixDump extends CoreReaderSupport {
 			// argc is zero or negative.
 			commandLine = null;
 		}
-		
+
 		// NOTE modules must be read before thread information in order to properly support stack traces.
 		// Thread information is required before building the process, so the following order must be maintained:
 		// 1) Read module information.
@@ -417,7 +417,7 @@ public abstract class NewAixDump extends CoreReaderSupport {
 		if (libraries.hasNext()) {
 			executable = libraries.next();
 		}
-		
+
 		List threads = readThreads(builder, addressSpace);
 		//the current thread is parsed before the rest so it is put first
 		Object currentThread = threads.get(0);
@@ -426,13 +426,13 @@ public abstract class NewAixDump extends CoreReaderSupport {
 		Properties environment = new Properties();
 		//on AIX, we should trust the env var pointer found in the core and ignore whatever the XML told us it is since this internal value is more likely correct
 		environment = getEnvironmentVariables(reg5);
-		
+
 		builder.buildProcess(addressSpace, String.valueOf(pid), commandLine, environment, currentThread, threads.iterator(), executable, libraries, pointerSize());
 	}
-	
+
 	/**
 	 * The environment structure is a null-terminated list of addresses which point to strings of form x=y
-	 * 
+	 *
 	 * @param environmentAddress The pointer to the environment variables data structure
 	 * @return A property list of the key-value pairs found for the env vars
 	 * @throws IOException Failure reading the underlying core file
@@ -442,8 +442,8 @@ public abstract class NewAixDump extends CoreReaderSupport {
 		//make sure that the pointer is valid
 		if (0 == environmentAddress) {
 			return null;
- 		}
-		
+		}
+
 		// Get the environment variable addresses
 		List addresses = new ArrayList();
 		try
@@ -461,29 +461,29 @@ public abstract class NewAixDump extends CoreReaderSupport {
 			address = coreReadAddress();
 		}
 
-         // Get the environment variables
-         Properties environment = new Properties();
-         for (Iterator iter = addresses.iterator(); iter.hasNext();) {
-        	 Long varAddress = (Long)iter.next();
-        	 String pair = null;
-             try {
-            	 coreSeekVirtual(varAddress.longValue());
-            	 pair = readString();
-             } catch (MemoryAccessException e) {
-                 // catch errors here, we can carry on getting other environment variables - unlikely to be missing only some of these
-                 continue;
-             }
-             if (null != pair)
-             {
-                 // Pair is the x=y string, now break it into key and value
-                 int equalSignIndex = pair.indexOf('=');
-                 if (equalSignIndex >= 0)
-                 {
-                     String key = pair.substring(0, equalSignIndex);
-                     String value = pair.substring(equalSignIndex + 1);
-                     environment.put(key, value);
-                 }
-             }
+        // Get the environment variables
+        Properties environment = new Properties();
+        for (Iterator iter = addresses.iterator(); iter.hasNext();) {
+            Long varAddress = (Long)iter.next();
+            String pair = null;
+            try {
+                coreSeekVirtual(varAddress.longValue());
+                pair = readString();
+            } catch (MemoryAccessException e) {
+                // catch errors here, we can carry on getting other environment variables - unlikely to be missing only some of these
+                continue;
+            }
+            if (null != pair)
+            {
+                // Pair is the x=y string, now break it into key and value
+                int equalSignIndex = pair.indexOf('=');
+                if (equalSignIndex >= 0)
+                {
+                    String key = pair.substring(0, equalSignIndex);
+                    String value = pair.substring(equalSignIndex + 1);
+                    environment.put(key, value);
+                }
+            }
          }
 
          return environment;
@@ -508,7 +508,7 @@ public abstract class NewAixDump extends CoreReaderSupport {
 		//tid is 64-bits one 64-bit platforms but 32-bits on 32-bit platforms
 		long tid = coreReadAddress();	//	unsigned long            ti_tid;      /* thread identifier */
 		coreReadInt();	//	unsigned long            ti_pid;      /* process identifier */
-        /* scheduler information */
+		/* scheduler information */
 		int ti_policy = coreReadInt();	//	unsigned long               ti_policy;   /* scheduling policy */
 		int ti_pri = coreReadInt();	//	unsigned long               ti_pri;      /* current effective priority */
 		int ti_state = coreReadInt();	//	unsigned long               ti_state;    /* thread state -- from thread.h */
@@ -523,38 +523,38 @@ public abstract class NewAixDump extends CoreReaderSupport {
 		coreReadInt();	//  unsigned long   ti_code;        /* iar of exception */
 		coreReadAddress();	//  struct sigcontext *ti_scp;      /* sigctx location in user space */
 		int signalNumber = 0xFF & coreReadByte();	//  char            ti_cursig;      /* current/last signal taken */
-		
-	    Map registers = readRegisters(offset);
-	    Properties properties = new Properties();
-	    properties.put("scheduling policy", Integer.toHexString(ti_policy));
-	    properties.put("current effective priority", Integer.toHexString(ti_pri));
-	    properties.put("thread state", Integer.toHexString(ti_state));
-	    properties.put("thread flags", Integer.toHexString(ti_flag));
-	    properties.put("suspend count", Integer.toHexString(ti_scount));
-	    properties.put("type of thread wait", Integer.toHexString(ti_wtype));
-	    properties.put("wait channel", Integer.toHexString(ti_wchan));
-	    properties.put("processor usage", Integer.toHexString(ti_cpu));
-	    properties.put("processor on which I'm bound", Integer.toHexString(ti_cpuid));
-	    //the signal number should probably be exposed through a real API for, for now, it is interesting info so just return it
-	    properties.put("current/last signal taken", Integer.toHexString(signalNumber));
-	    
-	    List sections = new ArrayList();
-	    List frames = new ArrayList();
-	    long stackPointer = getStackPointerFrom(registers);
-	    long instructionPointer = getInstructionPointerFrom(registers);
-	    if (0 == instructionPointer || false == isValidAddress(instructionPointer)) {
-	    		instructionPointer = getLinkRegisterFrom(registers);
-	    }
-	    try {
+
+		Map registers = readRegisters(offset);
+		Properties properties = new Properties();
+		properties.put("scheduling policy", Integer.toHexString(ti_policy));
+		properties.put("current effective priority", Integer.toHexString(ti_pri));
+		properties.put("thread state", Integer.toHexString(ti_state));
+		properties.put("thread flags", Integer.toHexString(ti_flag));
+		properties.put("suspend count", Integer.toHexString(ti_scount));
+		properties.put("type of thread wait", Integer.toHexString(ti_wtype));
+		properties.put("wait channel", Integer.toHexString(ti_wchan));
+		properties.put("processor usage", Integer.toHexString(ti_cpu));
+		properties.put("processor on which I'm bound", Integer.toHexString(ti_cpuid));
+		//the signal number should probably be exposed through a real API for, for now, it is interesting info so just return it
+		properties.put("current/last signal taken", Integer.toHexString(signalNumber));
+
+		List sections = new ArrayList();
+		List frames = new ArrayList();
+		long stackPointer = getStackPointerFrom(registers);
+		long instructionPointer = getInstructionPointerFrom(registers);
+		if (0 == instructionPointer || false == isValidAddress(instructionPointer)) {
+			instructionPointer = getLinkRegisterFrom(registers);
+		}
+		try {
 			if (0 != instructionPointer && 0 != stackPointer && isValidAddress(instructionPointer) && isValidAddress(stackPointer)) {
 				MemoryRange range = memoryRangeFor(stackPointer);
-				if (range != null) {					
+				if (range != null) {
 					sections.add(builder.buildStackSection(addressSpace, range.getVirtualAddress(), range.getVirtualAddress() + range.getSize()));
 					frames.add(builder.buildStackFrame(addressSpace, stackPointer, instructionPointer));
 					IAbstractAddressSpace memory = getAddressSpace();
-					
+
 					long previousStackPointer = -1;
-					
+
 					// Sometimes stack frames reference themselves. We need to avoid an infinite cycle in those cases
 					// In case of other infinite loops or damaged stacks we limit stack size to 1024 frames.
 					while (range.contains(stackPointer) && previousStackPointer != stackPointer && frames.size() < 1024) {
@@ -569,15 +569,15 @@ public abstract class NewAixDump extends CoreReaderSupport {
 				}
 			} else {
 				// This is a temporary hack until we can understand signal handler stacks better
-	    			sections.add(builder.buildStackSection(addressSpace, _stackRange.getVirtualAddress(), _stackRange.getVirtualAddress() + _stackRange.getSize()));
+				sections.add(builder.buildStackSection(addressSpace, _stackRange.getVirtualAddress(), _stackRange.getVirtualAddress() + _stackRange.getSize()));
 			}
-	    } catch (MemoryAccessException e) {
-	    		// Ignore
-	    }
+		} catch (MemoryAccessException e) {
+			// Ignore
+		}
 		return builder.buildThread(String.valueOf(tid), registersAsList(builder, registers).iterator(),
-				   				   sections.iterator(), frames.iterator(), properties, signalNumber);
+								   sections.iterator(), frames.iterator(), properties, signalNumber);
 	}
-	
+
 	private void coreReadSigset() throws IOException
 	{
 		coreReadBytes(is64Bit() ? 32 : 8);
@@ -592,23 +592,23 @@ public abstract class NewAixDump extends CoreReaderSupport {
 			return false;
 		}
 	}
-	
+
 	protected MemoryRange memoryRangeFor(long address)
 	{
 		//TODO:  change the callers of this method to use some mechanism which will work better within the realm of the new address spaces
 		Iterator ranges = _memoryRanges.iterator();
 		MemoryRange match = null;
-		
+
 		while ((null == match) && ranges.hasNext()) {
 			MemoryRange range = (MemoryRange) ranges.next();
-			
+
 			if (range.contains(address)) {
 				match = range;
 			}
 		}
 		return match;
 	}
-	
+
 	private String readString() throws IOException {
 		StringBuffer buffer = new StringBuffer();
 		byte b = coreReadByte();
@@ -686,11 +686,11 @@ public abstract class NewAixDump extends CoreReaderSupport {
 	public Iterator getAdditionalFileNames() {
 		return _additionalFileNames.iterator();
 	}
-	
+
 	protected MemoryRange[] getMemoryRangesAsArray() {
 		return (MemoryRange[])_memoryRanges.toArray(new MemoryRange[_memoryRanges.size()]);
 	}
-	
+
 	private LayeredAddressSpace internalAddressSpace()
 	{
 		if (null == _addressSpace) {
@@ -699,7 +699,7 @@ public abstract class NewAixDump extends CoreReaderSupport {
 		}
 		return _addressSpace;
 	}
-	
+
 	public IAbstractAddressSpace getAddressSpace()
 	{
 		return internalAddressSpace();
@@ -721,7 +721,7 @@ public abstract class NewAixDump extends CoreReaderSupport {
 		//currently, all the AIX platforms that we work with are big endian
 		return false;
 	}
-	
+
 	/**
 	 * Seeks the core file reader to the on-disk location of the given virtual address
 	 * @param virtualAddress The address we wish to seek to in the process's virtual address space
@@ -741,7 +741,7 @@ public abstract class NewAixDump extends CoreReaderSupport {
 			coreSeek(onDisk);
 		}
 	}
-	
+
 	public boolean isTruncated() {
 		return _isTruncated;
 	}

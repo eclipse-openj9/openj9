@@ -43,7 +43,7 @@ import com.ibm.dtfj.addressspace.IAbstractAddressSpace;
 public abstract class NewWinDump extends CoreReaderSupport {
 	public String _processorSubtypeDescription;
 	protected boolean _is64Bit;
-	
+
 	private static class MiniDump extends NewWinDump {
 		private static abstract class Stream {
 			protected final static int PROCESSOR_ARCHITECTURE_INTEL = 0;
@@ -73,17 +73,17 @@ public abstract class NewWinDump extends CoreReaderSupport {
 
 			public static Stream create(int streamType, int dataSize, int location) {
 				switch (streamType) {
-				case THREADLIST: 
+				case THREADLIST:
 					return new ThreadStream(dataSize, location);
-				case MODULELIST: 
+				case MODULELIST:
 					return new ModuleStream(dataSize, location);
-				case SYSTEMINFO: 
+				case SYSTEMINFO:
 					return new SystemInfoStream(dataSize, location);
-				case MEMORY64LIST: 
+				case MEMORY64LIST:
 					return new Memory64Stream(dataSize, location);
-				case MISCINFO: 
+				case MISCINFO:
 					return new MiscInfoStream(dataSize, location);
-				default: 
+				default:
 					return null;
 				}
 			}
@@ -102,20 +102,20 @@ public abstract class NewWinDump extends CoreReaderSupport {
 			protected long getLocation() {
 				return _location;
 			}
-			
+
 			/**
 			 * This is part of a hack which allows us to find out the native word size of a Windows MiniDump since it doesn't seem to expose that
 			 * in any nice way.
-			 * 
+			 *
 			 * @return 0, unless this is a stream which can determine the value, in that case it returns the value (32 or 64)
 			 */
 			public int readPtrSize(ImageInputStream stream)
 			{
 				return 0;
 			}
-			
+
 			public abstract void readFrom(MiniDump dump) throws IOException;
-			
+
 			public abstract void readFrom(MiniDump dump, Builder builder, Object addressSpace, IAbstractAddressSpace memory, boolean is64Bit) throws IOException;
 		}
 
@@ -125,7 +125,7 @@ public abstract class NewWinDump extends CoreReaderSupport {
 			public MiscInfoStream(int dataSize, int location) {
 				super(dataSize, location);
 			}
-			
+
 			public void readFrom(MiniDump dump) throws IOException {
 				// Do nothing
 			}
@@ -154,7 +154,7 @@ public abstract class NewWinDump extends CoreReaderSupport {
 			public Memory64Stream(int dataSize, int location) {
 				super(dataSize, location);
 			}
-			
+
 			public void readFrom(MiniDump dump) throws IOException {
 				long location = getLocation();
 				dump.coreSeek(location);
@@ -177,14 +177,14 @@ public abstract class NewWinDump extends CoreReaderSupport {
 						// Add the previous MemoryRange and start the next one
 						memoryRanges.add(memoryRange);
 						memoryRange = new MemoryRange(start,
-								  					  memoryRange.getFileOffset() + memoryRange.getSize(),
-								  					  size, 0, false, false, true);
+													  memoryRange.getFileOffset() + memoryRange.getSize(),
+													  size, 0, false, false, true);
 					}
 				}
-				
+
 				if (null != memoryRange)
 					memoryRanges.add(memoryRange);
-				
+
 				dump.setMemoryRanges(memoryRanges);
 			}
 
@@ -192,7 +192,7 @@ public abstract class NewWinDump extends CoreReaderSupport {
 				// Do nothing
 			}
 		}
-		
+
 		private static class ModuleStream extends Stream {
 
 			public ModuleStream(int dataSize, int location) {
@@ -209,7 +209,7 @@ public abstract class NewWinDump extends CoreReaderSupport {
 					long imageBaseAddress = -1;
 					Properties properties = new Properties();
 				}
-				
+
 				dump.coreSeek(getLocation());
 				int numberOfModules = dump.coreReadInt();
 				Module[] modules = new Module[numberOfModules];
@@ -238,10 +238,10 @@ public abstract class NewWinDump extends CoreReaderSupport {
 					dump.coreReadInt(); // Ignore cvRecordDataRva
 					dump.coreReadInt(); // Ignore miscRecordDataSize
 					dump.coreReadInt(); // Ignore miscRecordDataRva
-					
+
 					dump.coreReadLong(); // Ignore reserved0
 					dump.coreReadLong(); // Ignore reserved1
-					
+
 					//populate this module with some interesting properties
 					modules[i].properties.setProperty("imageSize", Integer.toHexString(imageSize));
 					modules[i].properties.setProperty("checksum", Integer.toHexString(checksum));
@@ -262,7 +262,7 @@ public abstract class NewWinDump extends CoreReaderSupport {
 					modules[i].properties.setProperty("versionInfoDwFileDateMS", Integer.toHexString(versionInfoDwFileDateMS));
 					modules[i].properties.setProperty("versionInfoDwFileDateLS", Integer.toHexString(versionInfoDwFileDateLS));
 				}
-				
+
 				//NOTE:  by this point, we are no longer in the module stream so it makes sense to use the memory argument to seek more freely
 				for (int i = 0; i < modules.length; i++) {
 					String moduleName = getModuleName(dump, modules[i].nameAddress);
@@ -295,7 +295,7 @@ public abstract class NewWinDump extends CoreReaderSupport {
 							readingAddress += 4;	//numberOfSymbols
 							short sizeOfOptionalHeader = memory.getShortAt(0, readingAddress);	readingAddress += 2;
 							readingAddress += 2;	//characteristics
-							
+
 							//now skip ahead to after the optional header since that is where section headers can be found
 							readingAddress = modules[i].imageBaseAddress + e_lfanew + 24 /* sizeof PE header */ + (0xFFFFL & sizeOfOptionalHeader);
 							for (int j = 0; j < numberOfSections; j++) {
@@ -311,7 +311,7 @@ public abstract class NewWinDump extends CoreReaderSupport {
 								readingAddress+=2;	//numberOfRelocations
 								readingAddress+=2;	//numberOfLineNumbers
 								readingAddress+=4;	//section_characteristics
-								
+
 								long relocatedAddress = virtualAddress + modules[i].imageBaseAddress;
 								Object oneSection = builder.buildModuleSection(addressSpace, new String(rawName).trim(), relocatedAddress, relocatedAddress + virtualSize);
 								sections.add(oneSection);
@@ -354,14 +354,13 @@ public abstract class NewWinDump extends CoreReaderSupport {
 					//look up the PE offset:  it is base+3c
 					int peInt = memory.getIntAt(0, imageBase + 0x3cL);
 					long peBase = (peInt & 0xFFFFFFFFL) + imageBase;
-    
+
 					memory.getBytesAt(0, peBase, magic);
 					stuff = new String(magic);
 					if (!stuff.equals("PE")) {
 						return Collections.singleton(builder.buildCorruptData(addressSpace, "Invalid PE magic number: \"" + stuff + "\"", peBase)).iterator();
 					}
 					long nextRead = peBase + 4;
-					
 
 					//cue us up to the optional header
 					nextRead += 2;	// Machine;
@@ -372,7 +371,7 @@ public abstract class NewWinDump extends CoreReaderSupport {
 					long imageOptionalHeaderSizeAddress = nextRead;
 					short optionalHeaderSize = memory.getShortAt(0, imageOptionalHeaderSizeAddress);
 					nextRead+= 2;
-					
+
 					nextRead += 2;	// Characteristics;
 					//cue us up to the first data directory
 					if (224 == optionalHeaderSize) {
@@ -450,9 +449,9 @@ public abstract class NewWinDump extends CoreReaderSupport {
 						//invalid size
 						return Collections.singleton(builder.buildCorruptData(addressSpace, "Invalid IMAGE_OPTIONAL_HEADER size: \"" + optionalHeaderSize + "\" bytes", imageOptionalHeaderSizeAddress)).iterator();
 					}
-					
+
 					//we should now be at the data directory
-					
+
 					//note that it is this first directory which we are interested in since it is the export dir
 					//read that pointer and size and calculate where to seek to begin work again
 					int exportRVA = memory.getIntAt(0, nextRead);
@@ -463,7 +462,7 @@ public abstract class NewWinDump extends CoreReaderSupport {
 					}
 					nextRead += 4;	// Size;
 					nextRead = moduleLoadAddress + (exportRVA & 0xFFFFFFFFL);//dump.seekToAddress(moduleLoadAddress + (exportRVA & 0xFFFFFFFFL));
-					
+
 					nextRead += 4;	// Characteristics;
 					nextRead += 4;	// TimeDateStamp;
 					nextRead += 2;	// MajorVersion;
@@ -475,10 +474,10 @@ public abstract class NewWinDump extends CoreReaderSupport {
 					nextRead+=4;
 					int numberOfNames = memory.getIntAt(0, nextRead);
 					nextRead+=4;
-					
+
 					//although it is theoretically possible for numberOfFunctions != numberOfNames, we have no notion of how to interpret that (all documentation seems to assume that they must be equal) so it is a kind of corruption
 					if (numberOfFunctions < numberOfNames) {
-						return Collections.singleton(builder.buildCorruptData(addressSpace, "IMAGE_EXPORT_DIRECTORY NumberOfFunctions (" + numberOfFunctions + ") < NumberOfNames (" + numberOfNames + ")", numberOfFunctionsAddress)).iterator();						
+						return Collections.singleton(builder.buildCorruptData(addressSpace, "IMAGE_EXPORT_DIRECTORY NumberOfFunctions (" + numberOfFunctions + ") < NumberOfNames (" + numberOfNames + ")", numberOfFunctionsAddress)).iterator();
 					}
 					//Note:  despite the fact that these are pointers, they appear to be 4 bytes in both 32-bit and 64-bit binaries
 					long funcAddress = (memory.getIntAt(0, nextRead) & 0xFFFFFFFFL);
@@ -487,14 +486,14 @@ public abstract class NewWinDump extends CoreReaderSupport {
 					nextRead+=4;
 					long ordinalAddress = (memory.getIntAt(0, nextRead) & 0xFFFFFFFFL);
 					nextRead+=4;
-					
+
 					int nameAddresses[] = new int[numberOfNames];
 					nextRead = nameAddress + moduleLoadAddress;
 					for (int x = 0; x < numberOfNames; x++) {
 						nameAddresses[x] = memory.getIntAt(0, nextRead);
 						nextRead+=4;
 					}
-					
+
 					//the function addresses after the first numberOfNames entries are not addressable as symbols so this array could be made smaller if this is ever found to be a problem (for the near-term, however, it seems more correct to read them all since they should all be addressable)
 					long addresses[] = new long[numberOfFunctions];
 					nextRead = funcAddress + moduleLoadAddress;
@@ -502,14 +501,14 @@ public abstract class NewWinDump extends CoreReaderSupport {
 						addresses[x] = memory.getIntAt(0, nextRead);
 						nextRead+=4;
 					}
-					
+
 					short ordinals[] = new short[numberOfNames];
 					nextRead = ordinalAddress + moduleLoadAddress;
 					for (int x = 0; x < numberOfNames; x++) {
 						ordinals[x] = memory.getShortAt(0, nextRead);
 						nextRead += 2;
 					}
-					
+
 					String names[] = new String[numberOfNames];
 					byte buffer[] = new byte[2048]; //Support symbols over 1Kb long. (We have seen some.)
 					for (int x = 0; x < numberOfNames; x++) {
@@ -543,8 +542,8 @@ public abstract class NewWinDump extends CoreReaderSupport {
 
 			/**
 			 * Get the module name as a String from the UTF-16LE data held in the dump
-			 * @throws IOException 
-			 */    
+			 * @throws IOException
+			 */
 			private String getModuleName(MiniDump dump, int position) throws IOException {
 				dump.coreSeek(position);
 				int length = dump.coreReadInt();
@@ -554,7 +553,7 @@ public abstract class NewWinDump extends CoreReaderSupport {
 				return new String(nameWide, "UTF-16LE");
 			}
 		}
-		
+
 		private static class SystemInfoStream extends Stream {
 			public SystemInfoStream(int dataSize, int location) {
 				super(dataSize, location);
@@ -571,9 +570,9 @@ public abstract class NewWinDump extends CoreReaderSupport {
 				byte model = (byte)((processorRevision >> 8) & 0xFF);
 				byte stepping = (byte)(processorRevision & 0xFF);
 				String procSubtype = "Level " + processorLevel + " Model " + model + " Stepping " + stepping;
-				
+
 				dump.setProcessorArchitecture(processorArchitecture, procSubtype);
-				
+
 				dump.coreReadByte(); // skip NumberOfProcessors
 				dump.coreReadByte(); // skip ProductType
 				int majorVersion = dump.coreReadInt();
@@ -583,7 +582,7 @@ public abstract class NewWinDump extends CoreReaderSupport {
 			public int readPtrSize(ImageInputStream f)
 			{
 				short processorArchitecture = 0;
-				
+
 				try {
 					f.seek(getLocation());
 					byte[] buffer = new byte[2];
@@ -592,7 +591,7 @@ public abstract class NewWinDump extends CoreReaderSupport {
 				} catch (IOException e) {
 					return 0;
 				}
-				return (PROCESSOR_ARCHITECTURE_AMD64 == processorArchitecture || 
+				return (PROCESSOR_ARCHITECTURE_AMD64 == processorArchitecture ||
 						PROCESSOR_ARCHITECTURE_IA64 == processorArchitecture ||
 						PROCESSOR_ARCHITECTURE_ALPHA64 == processorArchitecture ||
 						PROCESSOR_ARCHITECTURE_IA32_ON_WIN64 == processorArchitecture) ? 64 : 32;
@@ -613,7 +612,7 @@ public abstract class NewWinDump extends CoreReaderSupport {
 			}
 
 			public void readFrom(MiniDump dump, Builder builder, Object addressSpace, IAbstractAddressSpace memory, boolean is64Bit) throws IOException {
-				
+
 				//get the thread ID of the failing thread
 				long tid = -1;
 				if (null != dump._j9rasReader) {
@@ -627,7 +626,7 @@ public abstract class NewWinDump extends CoreReaderSupport {
 						// do nothing
 					}
 				}
-				
+
 				dump.coreSeek(getLocation());
 				int numberOfThreads = dump.coreReadInt();
 				List threads = new ArrayList();
@@ -647,7 +646,7 @@ public abstract class NewWinDump extends CoreReaderSupport {
 					Properties properties = new Properties();
 					properties.setProperty("priorityClass", String.valueOf(priorityClass));
 					properties.setProperty("priority", String.valueOf(priority));
-					
+
 					List registers = readRegisters(dump, builder, contextRva, contextDataSize);
 					long stackEnd = stackStart + stackSize;
 					Object section = builder.buildStackSection(addressSpace, stackStart, stackEnd);
@@ -662,7 +661,7 @@ public abstract class NewWinDump extends CoreReaderSupport {
 						dump._failingThread = thread;
 					}
 				}
-				
+
 				dump.addThreads(threads);
 
 //				for (int i=0;i<numberOfThreads;i++) {
@@ -684,7 +683,7 @@ public abstract class NewWinDump extends CoreReaderSupport {
 				long eip = builder.getValueOfNamedRegister(registers, "eip");
 				long esp = builder.getValueOfNamedRegister(registers, "esp");
 				List frames = new ArrayList();
-				
+
 				// eip may be -1 if we're in a system call
 				if (-1 == eip && stackStart <= esp && esp < stackEnd) {
 					try {
@@ -693,9 +692,9 @@ public abstract class NewWinDump extends CoreReaderSupport {
 						// ignore
 					}
 				}
-				
+
 				int bytesPerPointer = (is64Bit ? 8 : 4);
-				
+
 				// Add the current frame first.  If ebp doesn't point into the stack, try esp.
 				if (stackStart <= ebp && ebp < stackEnd) {
 					frames.add(builder.buildStackFrame(addressSpace, ebp, eip));
@@ -703,7 +702,7 @@ public abstract class NewWinDump extends CoreReaderSupport {
 					frames.add(builder.buildStackFrame(addressSpace, esp, eip));
 					ebp = esp + bytesPerPointer;
 				}
-				
+
 				while (stackStart <= ebp && ebp < stackEnd) {
 					try {
 						long newBP = memory.getPointerAt(0, ebp);
@@ -815,7 +814,7 @@ public abstract class NewWinDump extends CoreReaderSupport {
 			int streamDirectoryRva = littleEndianReadInt(stream);
 			littleEndianReadInt(stream); // Ignore checkSum
 			littleEndianReadInt(stream); //ignore time and date
-			
+
 			stream.seek(streamDirectoryRva);
 			Vector entries = new Vector();
 			for (int i = 0; i < numberOfStreams; i++) {
@@ -830,7 +829,7 @@ public abstract class NewWinDump extends CoreReaderSupport {
 					entries.add(entry);
 				}
 			}
-			
+
 			Iterator accessEntries = entries.iterator();
 			while (accessEntries.hasNext()) {
 				Stream entry = (Stream) accessEntries.next();
@@ -845,7 +844,7 @@ public abstract class NewWinDump extends CoreReaderSupport {
 		public void addModule(String moduleName) {
 			_additionalFileNames.add(moduleName);
 		}
-		
+
 		public Iterator getAdditionalFileNames() {
 			return _additionalFileNames.iterator();
 		}
@@ -881,11 +880,11 @@ public abstract class NewWinDump extends CoreReaderSupport {
 			// 1, 1970)
 			return _timeAndDate * 1000L;
 		}
-		
+
 		protected short getProcessorArchitecture() {
 			return _processorArchitecture;
 		}
-		
+
 		protected void setMemoryRanges(List memoryRanges) {
 			_memoryRanges = memoryRanges;
 		}
@@ -913,7 +912,7 @@ public abstract class NewWinDump extends CoreReaderSupport {
 				if (null != entry)
 					_directory.add(entry);
 			}
-			
+
 			for (Iterator iter = _directory.iterator(); iter.hasNext();) {
 				Stream entry = (Stream) iter.next();
 				entry.readFrom(this);
@@ -935,7 +934,7 @@ public abstract class NewWinDump extends CoreReaderSupport {
 					} catch (UnsupportedOperationException use) {
 					}
 				}
-				 
+
 				builder.buildProcess(addressSpace, pid, commandLine, getEnvironmentVariables(builder),
 									 _failingThread, _threads.iterator(), _executable,
 									 _libraries.iterator(), _is64Bit ? 64 : 32);
@@ -966,17 +965,17 @@ public abstract class NewWinDump extends CoreReaderSupport {
 		private static final int COMMAND_LINE_ADDRESS_ADDRESS_64 = INFO_BLOCK_ADDRESS + 0x78;
 		private static final int COMMAND_LINE_LENGTH_ADDRESS_32 = INFO_BLOCK_ADDRESS + 0x40;
 		private static final int COMMAND_LINE_LENGTH_ADDRESS_64 = INFO_BLOCK_ADDRESS + 0x70;
-		
+
 		private String _extractCommandLine()
 		{
 			// Windows Vista, Server 2008 and later, we have no way to find the command line
 			if ( _windowsMajorVersion >= 6 ) {
 				return "[unknown]";
 			}
-			
+
 			// Older Windows versions, we can get the command line from the known PEB location
 			String commandLine = null;
-			
+
 			try {
 				IAbstractAddressSpace memory = getAddressSpace();
 				if (null != memory) {
@@ -989,7 +988,7 @@ public abstract class NewWinDump extends CoreReaderSupport {
 			} catch (MemoryAccessException e) {
 			} catch (UnsupportedEncodingException e) {
 			} catch (Exception e) {
-				//rather than fail silently or throw a runtime exception when there is the possibility of continuing 
+				//rather than fail silently or throw a runtime exception when there is the possibility of continuing
 				//just record that the cmd line is unknown - as per other comments there should be a way to indicate to the builder
 				//that an error has occurred and allow it to determine if processing should continue.
 				//Additionally the returned command line is not subsequently used by jextract
@@ -997,12 +996,12 @@ public abstract class NewWinDump extends CoreReaderSupport {
 			}
 			return commandLine;
 		}
-		
+
 		public boolean is64Bit()
 		{
 			return _is64Bit;
 		}
-		
+
 		protected MemoryRange[] getMemoryRangesAsArray() {
 			if (null == _memoryRanges) {
 				return null;
@@ -1042,7 +1041,7 @@ public abstract class NewWinDump extends CoreReaderSupport {
 			coreReadInt(); // Ignore unknown 1
 			coreReadInt(); // Ignore unknown 2
 			coreReadInt(); // Ignore unknown 3
-			
+
 			coreReadInt(); // Ignore threadCount
 			coreReadInt(); // Ignore moduleCount
 			_regionCount = coreReadInt();
@@ -1067,7 +1066,7 @@ public abstract class NewWinDump extends CoreReaderSupport {
 				coreReadInt(); // Ignore state
 				coreReadInt(); // Ignore protect
 				coreReadInt(); // Ignore type
-				
+
 				if (null == memoryRange) {
 					// Allocate the first memory range starting at _dataOffset in the dump file
 					memoryRange = new MemoryRange(start, _dataOffset, size);
@@ -1080,18 +1079,18 @@ public abstract class NewWinDump extends CoreReaderSupport {
 					// Add the previous MemoryRange and start the next one
 					_memoryRanges.add(memoryRange);
 					memoryRange = new MemoryRange(start,
-							  					  memoryRange.getFileOffset() + memoryRange.getSize(),
-							  					  size);
+												  memoryRange.getFileOffset() + memoryRange.getSize(),
+												  size);
 				}
 			}
-			
+
 			if (null != memoryRange)
 				_memoryRanges.add(memoryRange);
 		}
 
 		public void extract(Builder builder) {
 			// TODO: figure out how to extract process information from User Dumps
-			
+
 			String pid = "";
 			if (null != _j9rasReader) {
 				try {
@@ -1099,7 +1098,7 @@ public abstract class NewWinDump extends CoreReaderSupport {
 				} catch (Exception e) {
 				}
 			}
-			
+
 			try {
 				builder.buildProcess(builder.buildAddressSpace("Windows UserDump Address Space", 0), pid, "",
 									 getEnvironmentVariables(builder), null,
@@ -1128,7 +1127,7 @@ public abstract class NewWinDump extends CoreReaderSupport {
 
 	public static ICoreFileReader dumpFromFile(ImageInputStream stream) throws IOException {
 		assert isSupportedDump(stream);
-		
+
 		if (isMiniDump(stream))
 			return new MiniDump(stream);
 		else if (isUserDump(stream))
@@ -1190,12 +1189,12 @@ public abstract class NewWinDump extends CoreReaderSupport {
 		}
 		return envVars;
 	}
-	
+
 	public boolean isLittleEndian()
 	{
 		return true;
 	}
-	
+
 	private static int littleEndianReadInt(ImageInputStream stream) throws IOException
 	{
 		byte[] buffer = new byte[4];

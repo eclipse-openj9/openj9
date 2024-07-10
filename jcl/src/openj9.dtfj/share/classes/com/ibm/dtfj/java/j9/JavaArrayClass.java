@@ -44,8 +44,7 @@ public class JavaArrayClass extends JavaAbstractClass
 	private int _firstElementOffset;
 	private long _leafClassID;
 	private int _dimension;
-	
-	
+
 	public JavaArrayClass(JavaRuntime runtime, ImagePointer pointer, int modifiers, int flagOffset, int sizeOffset, int bytesForSize, int firstElementOffset, long leafClassID, int dimension, long loaderID, ImagePointer objectID, int hashcodeSlot)
 	{
 		super(runtime, pointer, modifiers, loaderID, objectID, flagOffset, hashcodeSlot);
@@ -66,20 +65,20 @@ public class JavaArrayClass extends JavaAbstractClass
 		for (int x = 0; x < _dimension; x++) {
 			name += JavaObject.ARRAY_PREFIX_SIGNATURE;
 		}
-		
+
 		JavaClass leafClass=getLeafClass();
 		if(null == leafClass) {
 			CorruptData data=new CorruptData("unable to retrieve leaf class",null);
 			throw new CorruptDataException(data);
 		}
-		
+
 		String elementClassName = leafClass.getName();
 
 		if (elementClassName.equals("boolean")) {
 			name += JavaObject.BOOLEAN_SIGNATURE;
 		} else if (elementClassName.equals("byte")) {
 			name += JavaObject.BYTE_SIGNATURE;
-		} else if (elementClassName.equals("char")) { 
+		} else if (elementClassName.equals("char")) {
 			name += JavaObject.CHAR_SIGNATURE;
 		} else if (elementClassName.equals("short")) {
 			name += JavaObject.SHORT_SIGNATURE;
@@ -109,7 +108,7 @@ public class JavaArrayClass extends JavaAbstractClass
 		//the superclass for every array class is j/l/O
 		return _javaVM._javaLangObjectClass;
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.dtfj.java.JavaClass#isArray()
 	 */
@@ -119,14 +118,14 @@ public class JavaArrayClass extends JavaAbstractClass
 	}
 
 	/* J9-specific method (not in API).
-	 * Returns the leaf class of this ArrayClass. 
+	 * Returns the leaf class of this ArrayClass.
 	 * For example, the leaf class for String[][] is java.lang.String.
 	 * This is different from getComponentType for multi-dimensional arrays.
 	 */
 	public JavaClass getLeafClass() {
 		return _javaVM.getClassForID(_leafClassID);
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.dtfj.java.JavaClass#getComponentType()
 	 */
@@ -137,7 +136,7 @@ public class JavaArrayClass extends JavaAbstractClass
 			 componentType = getLeafClass();
 		} else {
 			componentType = _javaVM.getComponentTypeForClass(this);
-			
+
 		}
 		if (componentType == null) {
 			throw new CorruptDataException(new CorruptData("Unable to retrieve component type for array: " + getName(), null));
@@ -158,7 +157,6 @@ public class JavaArrayClass extends JavaAbstractClass
 		return cl;
 	}
 
-	
 	/* (non-Javadoc)
 	 * @see com.ibm.dtfj.java.JavaClass#getDeclaredFields()
 	 */
@@ -195,36 +193,36 @@ public class JavaArrayClass extends JavaAbstractClass
 			int numberOfElements = instance.getArraySize();
 			int instanceOverhead = getFirstElementOffset();
 			int bytesPerElement = getBytesPerElement(((JavaObject)instance).getFObjectSize());
-			
+
 			return instanceOverhead + (numberOfElements * bytesPerElement);
 		} catch (CorruptDataException e) {
 			//we get here if we couldn't read the class name so this should probably throw
 			return -1;
 		}
 	}
-	
+
 	/**
 	 * Looks up the class name of the child elements to determine the size of one element
-	 * 
+	 *
 	 * @param refFieldSize The size of reference fields (fj9object_t) in the heap of the object instance we are sizing
 	 * @return The size of one element, in bytes
-	 * @throws CorruptDataException 
+	 * @throws CorruptDataException
 	 */
 	public int getBytesPerElement(int refFieldSize) throws CorruptDataException
 	{
 		String elementClassName = getName().substring(1);
 		int size = 0;
-		
-		if ((elementClassName.equals(JavaObject.BYTE_SIGNATURE)) || 
+
+		if ((elementClassName.equals(JavaObject.BYTE_SIGNATURE)) ||
 			(elementClassName.equals(JavaObject.BOOLEAN_SIGNATURE))) {
 			size = 1;
-		} else if ((elementClassName.equals(JavaObject.CHAR_SIGNATURE)) || 
+		} else if ((elementClassName.equals(JavaObject.CHAR_SIGNATURE)) ||
 			(elementClassName.equals(JavaObject.SHORT_SIGNATURE))) {
 			size = 2;
-		} else if ((elementClassName.equals(JavaObject.FLOAT_SIGNATURE)) || 
+		} else if ((elementClassName.equals(JavaObject.FLOAT_SIGNATURE)) ||
 			(elementClassName.equals(JavaObject.INTEGER_SIGNATURE))) {
 			size = 4;
-		} else if ((elementClassName.equals(JavaObject.DOUBLE_SIGNATURE)) || 
+		} else if ((elementClassName.equals(JavaObject.DOUBLE_SIGNATURE)) ||
 			(elementClassName.equals(JavaObject.LONG_SIGNATURE))) {
 			size = 8;
 		} else {
@@ -241,7 +239,7 @@ public class JavaArrayClass extends JavaAbstractClass
 	{
 		return _firstElementOffset;
 	}
-	
+
 	/**
 	 * @return The offset into an array where the length (in elements) is found
 	 */
@@ -249,7 +247,7 @@ public class JavaArrayClass extends JavaAbstractClass
 	{
 		return _sizeOffset;
 	}
-	
+
 	/**
 	 * @return The number of bytes to read from the object header as the size field
 	 */
@@ -269,12 +267,12 @@ public class JavaArrayClass extends JavaAbstractClass
 		addSuperclassReference(references);
 		addClassLoaderReference(references);
 		addClassObjectReference(references);
-		
+
 		return references.iterator();
 	}
 
 	public long getInstanceSize() throws CorruptDataException {
 		throw new java.lang.UnsupportedOperationException("JavaArrayClass does not support getInstanceSize");
 	}
-	
+
 }

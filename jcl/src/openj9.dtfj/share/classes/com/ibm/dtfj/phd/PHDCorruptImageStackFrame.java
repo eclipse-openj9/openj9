@@ -36,7 +36,7 @@ public class PHDCorruptImageStackFrame extends PHDCorruptData implements ImageSt
 	PHDCorruptImageStackFrame(ImageAddressSpace space, CorruptData cd) {
 		super(space, cd);
 	}
-	
+
 	public ImagePointer getBasePointer() throws CorruptDataException {
 		throw new CorruptDataException(this);
 	}

@@ -32,12 +32,12 @@ import com.ibm.dtfj.image.ImageModule;
 import com.ibm.dtfj.image.ImageSymbol;
 
 public class JCImageModule implements ImageModule {
-	
+
 	private Vector fSections;
 	private Vector fSymbols;
 	private Properties fProperties;
 	private final String fName;
-	
+
 	public JCImageModule(String name) {
 		fName = name;
 		fSections = new Vector();
@@ -45,9 +45,8 @@ public class JCImageModule implements ImageModule {
 		fProperties = new Properties();
 	}
 
-	
 	/**
-	 * 
+	 *
 	 */
 	public String getName() throws CorruptDataException {
 		if (fName == null) {
@@ -55,21 +54,18 @@ public class JCImageModule implements ImageModule {
 		}
 		return fName;
 	}
-	
-	
+
 	/**
 	 * NON-DTFJ. Used for internal building purposes. Do NOT call outside the building process.
 	 * Use the DTFJ alternative instead.
-	 * 
+	 *
 	 */
 	public String getInternalName() {
 		return fName;
 	}
 
-	
-	
 	/**
-	 * 
+	 *
 	 */
 	public Properties getProperties() throws CorruptDataException {
 		if (fProperties.size() == 0) {
@@ -77,10 +73,9 @@ public class JCImageModule implements ImageModule {
 		}
 		return fProperties;
 	}
-	
-	
+
 	/**
-	 * 
+	 *
 	 * @param key
 	 * @param value
 	 */
@@ -88,17 +83,15 @@ public class JCImageModule implements ImageModule {
 		fProperties.put(key, value);
 	}
 
-	
 	/**
-	 * 
+	 *
 	 */
 	public Iterator getSections() {
 		return fSections.iterator();
 	}
 
-	
 	/**
-	 * 
+	 *
 	 */
 	public Iterator getSymbols() {
 		return fSymbols.iterator();
@@ -112,7 +105,7 @@ public class JCImageModule implements ImageModule {
 			fSymbols.add(symbol);
 		}
 	}
-	
+
 	public long getLoadAddress() throws DataUnavailable {
 		throw new DataUnavailable("no load address in a javacore");
 	}

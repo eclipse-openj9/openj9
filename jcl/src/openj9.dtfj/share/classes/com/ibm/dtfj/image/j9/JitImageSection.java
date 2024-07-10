@@ -31,13 +31,13 @@ import com.ibm.dtfj.image.ImagePointer;
 public class JitImageSection extends ImageSection
 {
 	private ImagePointer _id;
-	
+
 	public JitImageSection(ImagePointer id, ImagePointer startPointer, long size)
 	{
 		super (startPointer, size);
 		_id = id;
 	}
-	
+
 	public String getName()
 	{
 		return "jit section (" + _id.getAddress() + ") at " + getBaseAddress().getAddress();

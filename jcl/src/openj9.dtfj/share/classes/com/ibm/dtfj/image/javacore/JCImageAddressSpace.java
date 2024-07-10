@@ -37,12 +37,11 @@ import com.ibm.dtfj.java.javacore.JCInvalidArgumentsException;
 import com.ibm.dtfj.javacore.builder.IBuilderData;
 
 public class JCImageAddressSpace implements ImageAddressSpace {
-	
+
 	private Vector fProcesses;
 	private Vector fImageSections;
 	private JCImage fImage;
 
-	
 	public JCImageAddressSpace(JCImage image) {
 		if (image == null) {
 			throw new IllegalArgumentException("Must pass a valid image");
@@ -72,14 +71,14 @@ public class JCImageAddressSpace implements ImageAddressSpace {
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	public Iterator getImageSections() {
 		return fImageSections.iterator();
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	public ImagePointer getPointer(long address) {
 		try {
@@ -91,12 +90,12 @@ public class JCImageAddressSpace implements ImageAddressSpace {
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	public Iterator getProcesses() {
 		return fProcesses.iterator();
 	}
-	
+
 	/**
 	 * Not in DTFJ
 	 * @param imageProcess
@@ -106,25 +105,25 @@ public class JCImageAddressSpace implements ImageAddressSpace {
 			fProcesses.add(imageProcess);
 		}
 	}
-	
+
 	/**
 	 * Not in DTFJ
-	 * 
+	 *
 	 */
 	public JCImage getImage() {
 		return fImage;
 	}
-	
+
 	/**
 	 * NOT in DTFJ. For building purposes only. Do not use to check if an address value is found in a given address space.
 	 * It only checks that the address is not set to a default "unavailable" value.
 	 * @param id
-	 * 
+	 *
 	 */
 	public boolean isValidAddressID(long id) {
 		return id != (long)IBuilderData.NOT_AVAILABLE;
 	}
-	
+
 	/**
 	 * Not in DTFJ
 	 * @param imageSection The new image section to add to the list

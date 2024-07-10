@@ -24,7 +24,7 @@ package com.ibm.dtfj.corereaders.zos.util;
 
 /**
  * This class provides a low level interface to some of the z/OS C library. This approach was
- * inspired by the 
+ * inspired by the
  * <a href="https://www.eclipse.org/articles/Article-SWT-Design-1/SWT-Design-1.html">SWT design</a>
  * in that we have a one-to-one mapping between JNI calls and C library calls: no extra work is
  * done in the native functions. This is much easier to maintain because this library should
@@ -101,7 +101,7 @@ public class Clib {
         assert fp != 0;
         return rawFseek(fp, offset, whence);
     }
-        
+
     private static native int rawFseek(long fp, long offset, int whence);
 
     /** fseek whence argument to indicate that offset is from the beginning of the file */

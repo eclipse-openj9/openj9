@@ -26,7 +26,6 @@ import java.io.IOException;
 
 import javax.imageio.stream.ImageInputStream;
 
-
 public class LittleEndianDumpReader extends DumpReader {
 	public LittleEndianDumpReader(ImageInputStream stream, boolean is64Bit)
 	{

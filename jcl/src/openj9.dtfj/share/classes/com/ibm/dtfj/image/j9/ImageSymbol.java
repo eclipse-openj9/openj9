@@ -28,7 +28,7 @@ public class ImageSymbol implements com.ibm.dtfj.image.ImageSymbol
 {
 	private String _functionName;
 	private ImagePointer _functionAddress;
-	
+
 	public ImageSymbol(String functionName, ImagePointer relocatedFunctionAddress)
 	{
 		_functionName = functionName;

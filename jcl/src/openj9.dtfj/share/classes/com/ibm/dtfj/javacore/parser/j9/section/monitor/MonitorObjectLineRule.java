@@ -28,7 +28,7 @@ import com.ibm.dtfj.javacore.parser.j9.section.common.CommonPatternMatchers;
 
 public abstract class MonitorObjectLineRule extends LineRule implements IMonitorTypes{
 	/**
-	 * 
+	 *
 	 *
 	 */
 	protected void addMonitorObjectOwnedAttributes() {
@@ -40,15 +40,15 @@ public abstract class MonitorObjectLineRule extends LineRule implements IMonitor
 			addToken(MONITOR_ENTRY_COUNT, CommonPatternMatchers.dec);
 		}
 	}
-	
+
 	protected void addVMThreadInformation() {
 		addToken(MONITOR_THREAD_NAME, CommonPatternMatchers.quoted_stringvalue);
 		// Some older versions of Sovereign display the threadID without the "0x" prefix.
 		addHexToken(MONITOR_THREAD_ID);
 	}
-	
+
 	/**
-	 * 
+	 *
 	 *
 	 */
 	protected void addMonitorLockNameAndAddress() {
@@ -56,12 +56,12 @@ public abstract class MonitorObjectLineRule extends LineRule implements IMonitor
 		addAllCharactersAsTokenAndConsumeFirstMatch(MONITOR_NAME, MonitorPatternMatchers.lock);
 		addPrefixedHexToken(MONITOR_ADDRESS);
 	}
-	
+
 	protected IParserToken addHexToken(String token) {
 		IParserToken ret;
 		// Be careful as the thread ID can be prefixed while the monitor object might not be
 		CommonPatternMatchers.hex_0x.reset(fSource);
-		if (CommonPatternMatchers.hex_0x.lookingAt()) { 
+		if (CommonPatternMatchers.hex_0x.lookingAt()) {
 			// Immediate 0x
 			ret = addPrefixedHexToken(token);
 		} else {
@@ -81,9 +81,9 @@ public abstract class MonitorObjectLineRule extends LineRule implements IMonitor
 		};
 		return ret;
 	}
-	
+
 	/**
-	 * 
+	 *
 	 *
 	 */
 	protected void addMonitorObjectNameAndAddress() {
@@ -103,11 +103,9 @@ public abstract class MonitorObjectLineRule extends LineRule implements IMonitor
 		consumeUntilFirstMatch(CommonPatternMatchers.colon);
 		addMonitorObjectOwnedAttributes();
 	}
-	
-	
-	
+
 	/**
-	 * 
+	 *
 	 *
 	 */
 	protected void addSystemAndInflatedThdInfo() {

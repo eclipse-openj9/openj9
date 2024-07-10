@@ -35,13 +35,13 @@ import com.ibm.dtfj.image.Image;
  * Simple Java bean which contains the data from the Image interface.
  * This allows commands to access this information without being given
  * a handle to the Image object itself
- * 
+ *
  * @author adam
  *
  */
 public class DTFJImageBean implements Image {
 	private final Image image;
-	
+
 	public DTFJImageBean(Image image) {
 		this.image = image;
 	}
@@ -81,7 +81,7 @@ public class DTFJImageBean implements Image {
 	public String getSystemType() throws DataUnavailable, CorruptDataException {
 		return image.getSystemType();
 	}
-	
+
 	public Properties getProperties() {
 		return image.getProperties();
 	}
@@ -113,7 +113,7 @@ public class DTFJImageBean implements Image {
 
 	/* (non-Javadoc)
 	 * @see com.ibm.dtfj.image.Image#getAddressSpaces()
-	 * 
+	 *
 	 * This call is not supported so that plugins are not able to 'escape'
 	 * from their context and into other address spaces / processes.
 	 */

@@ -40,10 +40,10 @@ import com.ibm.dtfj.corereaders.ResourceReleaser;
  * CMVC 154851 : class created
  * This is a SAX 'lite' input stream whose primary purpose is to clean up
  * xml being allowing to be read by the SAX parser in DTFJ. It currently performs
- * the following 
- * 
+ * the following
+ *
  * 1. Automatically closes any missing tags which can be as a result of jextract not properly closing tags when invalid data is encountered.
- *    
+ *
  * @author Adam Pilkington
  *
  */
@@ -51,7 +51,7 @@ public class XMLInputStream extends InputStream implements ResourceReleaser {
 	private InputStream in = null;												//underlying input stream to wrap
 	private static final int BUFFER_SIZE = 4096;								//size of buffer to use when reading from the wrapped stream
 	private char[] buffer = new char[BUFFER_SIZE];								//buffer to read data from the underlying stream into
-	private InputStreamReader reader = null;									//reader to convert incoming bytes into chars 
+	private InputStreamReader reader = null;									//reader to convert incoming bytes into chars
 	private OutputStreamWriter writer = null;									//writer for outgoing chars to the same charset as they were read in under
 	private int index = 0;														//index within the buffer, default to past the end of the buffer to force a read
 	private int indexMax = 0;													//the maximum amount of data available in the buffer
@@ -60,7 +60,7 @@ public class XMLInputStream extends InputStream implements ResourceReleaser {
 	private int[] utf8Data = new int[3];										//utf 8 encoded string
 	private int utf8Index = 0;													//current pointer within the UTF-8 index
 	private int utf8MaxIndex = -1;												//the total number of items in the UTF 8 data buffer
-	
+
 	private static final int STATE_START_TAG = 1;								//currently parsing a start tag
 	private static final int STATE_CLOSE_TAG = 2;								//parsing a close tag
 	private static final int STATE_CONTENTS = 3;								//reading tag contents
@@ -74,12 +74,12 @@ public class XMLInputStream extends InputStream implements ResourceReleaser {
 	private String peekName = null;												//name of the tag peeked from the stream
 	private StringBuffer missingDataBuffer = null;								//buffer holding the missing tag data
 	private int missingDataIndex = 0;											//index within the buffer
-	
+
 	private Logger log = Logger.getLogger(this.getClass().getName());			//logger for this class
-	private boolean outputWritten = false;										//flag to indicate if the output has been written 
+	private boolean outputWritten = false;										//flag to indicate if the output has been written
 	private File temp = null;
 	private FileOutputStream fout = null;
-	
+
 	/**
 	 * Construct a new XML input stream
 	 * @param in The underlying input stream to wrap
@@ -106,13 +106,13 @@ public class XMLInputStream extends InputStream implements ResourceReleaser {
 			}
 		}
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see java.io.InputStream#read()
 	 */
 	public int read() throws IOException {
 		if(reader == null) {		//no reader to convert the underlying bytes into chars so just delegate call
-			return in.read();	
+			return in.read();
 		}
 		if(utf8Index <= utf8MaxIndex) {
 			return utf8Data[utf8Index++];	//return from the UTF8 encoded data first before fetching new data
@@ -162,9 +162,9 @@ public class XMLInputStream extends InputStream implements ResourceReleaser {
 				throw new IllegalStateException("An unknown state of " + state + " was encountered");
 		}
 	}
-	
+
 	/**
-	 * This method is called when the state is STATE_CLOSE_TAG. It occurs when 
+	 * This method is called when the state is STATE_CLOSE_TAG. It occurs when
 	 * a </ is detected in the stream
 	 * @param data character to process
 	 * @return the character to return to the stream consumer
@@ -179,9 +179,9 @@ public class XMLInputStream extends InputStream implements ResourceReleaser {
 		}
 		return data;						//return the data unmodified
 	}
-	
+
 	/**
-	 * This method is called when the state is STATE_CONTENTS. It occurs when 
+	 * This method is called when the state is STATE_CONTENTS. It occurs when
 	 * the stream is moving over a tag's content
 	 * @param data character to process
 	 * @return the character to return to the stream consumer
@@ -191,7 +191,7 @@ public class XMLInputStream extends InputStream implements ResourceReleaser {
 		if(data == '<') {	//found the start of another tag
 			if(!tags.isEmpty()) {
 				peekName = peekTagFromStream(' ');
-				//CMVC 168448 : correctly handle comments and processing instructions when peeking the tag name 
+				//CMVC 168448 : correctly handle comments and processing instructions when peeking the tag name
 				char checkInvalidTagNameChar = peekName.charAt(0);		//check the start character does not show that the tag is a comment or PI i.e. starts with ! of ?
 				if(('!' == checkInvalidTagNameChar) || ('?' == checkInvalidTagNameChar)) {
 					return data;
@@ -212,9 +212,9 @@ public class XMLInputStream extends InputStream implements ResourceReleaser {
 		}
 		return data;						//return the data unmodified
 	}
-	
+
 	/**
-	 * This method is called when the state is STATE_ATTRIBUTE_CONTENTS. It occurs when 
+	 * This method is called when the state is STATE_ATTRIBUTE_CONTENTS. It occurs when
 	 * the stream is moving over a tag's attribute values
 	 * @param data character to process
 	 * @return the character to return to the stream consumer
@@ -226,9 +226,9 @@ public class XMLInputStream extends InputStream implements ResourceReleaser {
 		}
 		return data;						//return the data unmodified
 	}
-	
+
 	/**
-	 * This method is called when the state is STATE_INSERT_MISSING_CLOSING_TAG. It occurs when 
+	 * This method is called when the state is STATE_INSERT_MISSING_CLOSING_TAG. It occurs when
 	 * a missing closing tag has been detected and one is being inserted into the stream.
 	 * @param data character to process
 	 * @return the character to return to the stream consumer
@@ -246,13 +246,13 @@ public class XMLInputStream extends InputStream implements ResourceReleaser {
 					break;
 				default :
 			}
-						
+
 		}
 		return data;							//return the data unmodified
 	}
-	
+
 	/**
-	 * This method is called when the state is STATE_ATTRIBUTES. It occurs when 
+	 * This method is called when the state is STATE_ATTRIBUTES. It occurs when
 	 * the stream is moving over the attributes of the current tag. One important
 	 * function of this method is to detect self closing tags i.e. <name />
 	 * @param data character to process
@@ -280,7 +280,7 @@ public class XMLInputStream extends InputStream implements ResourceReleaser {
 	}
 
 	/**
-	 * This method is called when the state is STATE_START_TAG. It occurs when 
+	 * This method is called when the state is STATE_START_TAG. It occurs when
 	 * a < character is the next character to process.
 	 * @param data character to process
 	 * @return the character to return to the stream consumer
@@ -319,7 +319,7 @@ public class XMLInputStream extends InputStream implements ResourceReleaser {
 		}
 		return data;						//return the data unmodified
 	}
-	
+
 	/**
 	 * Reads the next character from the appropriate data source. This can be the buffer associated with the underlying
 	 * input stream or an alternative source applicable to the current state.
@@ -334,7 +334,7 @@ public class XMLInputStream extends InputStream implements ResourceReleaser {
 				return readFromBuffer();
 		}
 	}
-	
+
 	/**
 	 * Allows the process to peek ahead in the stream and see what the next closing tag is.
 	 * It handles peeks beyond the end of the current buffer contents.
@@ -361,7 +361,7 @@ public class XMLInputStream extends InputStream implements ResourceReleaser {
 			return "";
 		}
 	}
-	
+
 	/**
 	 * Performs an integrity check to make sure that the item being popped from the stack
 	 * corresponds to the tag which is currently being processed
@@ -373,7 +373,7 @@ public class XMLInputStream extends InputStream implements ResourceReleaser {
 			log.severe("Tag mismatch : processing " + currentTag + " but stack top is " + popped);
 		}
 	}
-	
+
 	/**
 	 * How much unread data is left in the buffer
 	 * @return number of remaining bytes
@@ -381,7 +381,7 @@ public class XMLInputStream extends InputStream implements ResourceReleaser {
 	private int availableBufferDataLength() {
 		return indexMax - index;
 	}
-	
+
 	/**
 	 * Reads data from the buffer. When the buffer is exhausted then data is read from the underlying
 	 * input stream.
@@ -395,7 +395,7 @@ public class XMLInputStream extends InputStream implements ResourceReleaser {
 				return 0;
 			}
 		}
-		return buffer[index++];							
+		return buffer[index++];
 	}
 
 	/**
@@ -414,7 +414,7 @@ public class XMLInputStream extends InputStream implements ResourceReleaser {
 			index = 0;									//reset the index
 		}
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see java.io.InputStream#close()
 	 */

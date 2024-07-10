@@ -28,13 +28,13 @@ import com.ibm.dtfj.javacore.parser.framework.tag.TagParser;
 import com.ibm.dtfj.javacore.parser.j9.section.common.CommonPatternMatchers;
 
 public class MemoryTagParser extends TagParser implements IMemoryTypes {
-	
+
 	public MemoryTagParser() {
 		super(MEMORY_SECTION);
 	}
 
 	/**
-	 * Initialize parser with rules for lines in the host platform (XH) section in 
+	 * Initialize parser with rules for lines in the host platform (XH) section in
 	 * the javacore
 	 */
 	protected void initTagAttributeRules() {

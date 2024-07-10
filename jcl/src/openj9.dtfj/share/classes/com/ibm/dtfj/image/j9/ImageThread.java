@@ -40,7 +40,7 @@ public class ImageThread implements com.ibm.dtfj.image.ImageThread
 	 * If the thread is currently processing or has a pending signal, it will be non-zero
 	 */
 	private int _signalNumber;
-	
+
 	public ImageThread(String threadID, Iterator registers, Iterator stackSections, Iterator stackFrames, Properties properties, int signalNumber)
 	{
 		_systemThreadID = threadID;
@@ -56,7 +56,7 @@ public class ImageThread implements com.ibm.dtfj.image.ImageThread
 		_signalNumber = signalNumber;
 		_properties = properties;
 	}
-	
+
 	public String getID() throws CorruptDataException
 	{
 		return _systemThreadID;

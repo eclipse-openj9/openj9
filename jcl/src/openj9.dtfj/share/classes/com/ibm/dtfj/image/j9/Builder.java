@@ -55,13 +55,12 @@ public class Builder implements com.ibm.dtfj.corereaders.Builder
 	private String _cpuSubType;
 	private long _creationTimeMillis;
 	private IFileLocationResolver _resolvingAgent;
-	
+
 	private BuilderShutdownHook _fileTracker = new BuilderShutdownHook();
-	
-	
+
 	/**
 	 * @param core The abstraction over the core file
-	 * @param openCoreFile The open file which 
+	 * @param openCoreFile The open file which
 	 * @param environmentAddress The address of the environment structure in the core
 	 * @param resolvingAgent The agent we can delegate to locate files for us
 	 */
@@ -70,17 +69,16 @@ public class Builder implements com.ibm.dtfj.corereaders.Builder
 		_memory = core.getAddressSpace();
 		_environmentAddress = environmentAddress;
 		_resolvingAgent = resolvingAgent;
-		
+
 		//we need to ask for a shutdown hook so we can close all the files we opened
 		Runtime.getRuntime().addShutdownHook(_fileTracker);
 		//no longer track the core as that is being done by the Image
 		_fileTracker.addFile(openCoreFile);
 	}
-	
-	
+
 	/**
 	 * @param core The abstraction over the core file
-	 * @param stream The stream for the core file 
+	 * @param stream The stream for the core file
 	 * @param environmentAddress The address of the environment structure in the core
 	 * @param resolvingAgent The agent we can delegate to locate files for us
 	 */
@@ -88,7 +86,7 @@ public class Builder implements com.ibm.dtfj.corereaders.Builder
 	{
 		_memory = core.getAddressSpace();
 		_environmentAddress = environmentAddress;
-		_resolvingAgent = resolvingAgent;		
+		_resolvingAgent = resolvingAgent;
 	}
 
 	/* (non-Javadoc)
@@ -164,7 +162,7 @@ public class Builder implements com.ibm.dtfj.corereaders.Builder
 	public Iterator getAddressSpaces() {
 		return _addressSpaces.iterator();
 	}
-	
+
 	public long getEnvironmentAddress() {
 		return _environmentAddress;
 	}
@@ -172,7 +170,7 @@ public class Builder implements com.ibm.dtfj.corereaders.Builder
 	public long getValueOfNamedRegister(List registers, String string)
 	{
 		Iterator regs = registers.iterator();
-		
+
 		while (regs.hasNext()) {
 			ImageRegister register = (ImageRegister) regs.next();
 			if (register.getName().equals(string)) {
@@ -199,7 +197,7 @@ public class Builder implements com.ibm.dtfj.corereaders.Builder
 		_fileTracker.addFile(reader);
 		return reader;
 	}
-	
+
 	public Object buildSymbol(Object addressSpace, String functionName, long relocatedFunctionAddress)
 	{
 		return new ImageSymbol(functionName, ((ImageAddressSpace)addressSpace).getPointer(relocatedFunctionAddress));
@@ -220,12 +218,12 @@ public class Builder implements com.ibm.dtfj.corereaders.Builder
 	{
 		return _osType;
 	}
-	
+
 	public String getCPUType()
 	{
 		return _cpuType;
 	}
-	
+
 	public String getCPUSubType()
 	{
 		return _cpuSubType;
@@ -243,7 +241,7 @@ public class Builder implements com.ibm.dtfj.corereaders.Builder
 	{
 		_osType = osType;
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.dtfj.corereaders.Builder#setCPUType(java.lang.String)
 	 */
@@ -251,7 +249,7 @@ public class Builder implements com.ibm.dtfj.corereaders.Builder
 	{
 		_cpuType = cpuType;
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.dtfj.corereaders.Builder#setCPUSubType(java.lang.String)
 	 */

@@ -26,21 +26,19 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 public class RegisteredSections {
-	
+
 	private ArrayList fSections;
-	
+
 	public RegisteredSections()	{
 		loadSections();
 	}
-	
+
 	private void loadSections() {
 
 	}
 
-
 	public Iterator getSections() {
 		return fSections.iterator();
 	}
-	
 
 }

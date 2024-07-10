@@ -27,7 +27,7 @@ public interface IMonitorTypesSov {
 	public static final String LK_POOL_EXP_NUM = "2LKPOOLEXPNUM";
 	public static final String LK_POOL_EXP_BY = "2LKPOOLEXPBY";
 	public static final String LK_POOL_FREE = "2LKPOOLFREE";
-	
+
 	public static final String LK_FLAT_MON_DUMP = "1LKFLATMONDUMP";
 	public static final String LK_FLAT_MON = "2LKFLATMON";
 	public static final String LK_OBJ_MON_DUMP = "1LKOBJMONDUMP";
@@ -35,7 +35,7 @@ public interface IMonitorTypesSov {
 	public static final String LK_INFL_DETAILS = "3LKINFLDETAILS";
 	public static final String LK_FLAT_LOCKED = "2LKFLATLOCKED";
 	public static final String LK_FLAT_DETAILS = "3LKFLATDETAILS";
-	
+
 	public static final String MONITOR_THREAD_EE = "monitor_thread_ee";
 	public static final String MONITOR_FLAT_ID = "monitor_flat_id";
 }

@@ -48,7 +48,7 @@ import com.ibm.dtfj.phd.parser.HeapdumpReader;
 import com.ibm.dtfj.phd.parser.PortableHeapDumpListener;
 import com.ibm.dtfj.phd.util.LongEnumeration;
 
-/** 
+/**
  * @author ajohnson
  */
 class PHDJavaHeap implements JavaHeap {
@@ -61,7 +61,7 @@ class PHDJavaHeap implements JavaHeap {
 	private final boolean isJ9V4;
 	// Approximately ten million refs collected at once, limited if memory is short
 	private final int STEP = (int)Math.min(10000000, Runtime.getRuntime().maxMemory()/32);
-	
+
 	/** A cache of all the chunks */
 	private final LinkedHashMap<Integer,CacheHeapSegment>cache = new LinkedHashMap<Integer,CacheHeapSegment>();
 	/** Cache the PHD readers to allow resumption of reads */
@@ -69,7 +69,7 @@ class PHDJavaHeap implements JavaHeap {
 	/** Flag used to show that all the CacheHeapSegments are set up */
 	private boolean doneScan;
 	private boolean lastSegment;
-	
+
 	PHDJavaHeap(ImageInputStream stream, final PHDImage parentImage, ImageAddressSpace space, PHDJavaRuntime runtime) throws IOException {
 		this.image = parentImage;
 		this.space = space;
@@ -81,7 +81,7 @@ class PHDJavaHeap implements JavaHeap {
 		this.stream = stream;
 		this.file = null;
 	}
-	
+
 	PHDJavaHeap(File file, final PHDImage parentImage, ImageAddressSpace space, PHDJavaRuntime runtime) throws IOException {
 		this.file = file;
 		this.image = parentImage;
@@ -135,20 +135,20 @@ class PHDJavaHeap implements JavaHeap {
 				}
 
 				public JavaObject next() {
-					if (!hasNext()) throw new NoSuchElementException(); 
+					if (!hasNext()) throw new NoSuchElementException();
 					return it.next();
 				}
 
 				public void remove() {
 					throw new UnsupportedOperationException();
 				}
-				
+
 			};
 		} catch (IOException e) {
 			return new ArrayList<JavaObject>().iterator();
 		}
 	}
-	
+
 	/**
 	 * Used to index objects from addresses.
 	 * Subclasses of this can be a bit smaller than a Long - perhaps 16 bytes, not 24.
@@ -191,14 +191,13 @@ class PHDJavaHeap implements JavaHeap {
 		public int hashCode() {
 			return val;
 		}
-		
+
 		public boolean equals(Object o) {
 			if (this == o) return true;
 			return o instanceof IntAddressKey && val == ((IntAddressKey)o).val ;
 		}
-	}	
-		
-	
+	}
+
 	private final static class LongAddressKey extends AddressKey {
 		final long val;
 
@@ -213,13 +212,13 @@ class PHDJavaHeap implements JavaHeap {
 		public int hashCode() {
 			return (int)val^(int)(val>>>32);
 		}
-		
+
 		public boolean equals(Object o) {
 			if (this == o) return true;
 			return o instanceof LongAddressKey && val == ((LongAddressKey)o).val;
 		}
-	}	
-	
+	}
+
 	/**
 	 * Used to store all objects from part of the heap.
 	 * The actual objects can be discarded if we run out of memory, but the range and details remain
@@ -238,7 +237,7 @@ class PHDJavaHeap implements JavaHeap {
 		SoftReference<Map<AddressKey,JavaObject>> objects;
 		/** Whether the JavaObjects have references available */
 		boolean withRefs;
-		/** Smallest address - used to find if a JavaObject at a particular address might be in this chunk. */ 
+		/** Smallest address - used to find if a JavaObject at a particular address might be in this chunk. */
 		final long minAddress;
 		/** Largest address - used to find if a JavaObject at a particular address might be in this chunk. */
 		final long maxAddress;
@@ -269,7 +268,7 @@ class PHDJavaHeap implements JavaHeap {
 			this.withRefs = withRefs;
 		}
 	}
-	
+
 	/**
 	 * Used to save PHD readers to continue reading from later on in the file
 	 *
@@ -306,7 +305,7 @@ class PHDJavaHeap implements JavaHeap {
 					best =rp;
 				}
 			}
-			if (best == null) {	
+			if (best == null) {
 				best = new ReaderPos(parentImage);
 			} else {
 				readers.remove(best);
@@ -317,8 +316,8 @@ class PHDJavaHeap implements JavaHeap {
 			readers.add(rdr);
 		}
 	}
-	
-	/** 
+
+	/**
 	 * Does the chunk starting at object pos has references for all the JavaObjects?
 	 * @param pos
 	 * @return
@@ -326,16 +325,16 @@ class PHDJavaHeap implements JavaHeap {
 	private boolean withRefs(int pos) {
 		CacheHeapSegment seg = cache.get(pos);
 		return seg != null && seg.withRefs;
-		
+
 	}
-	
+
 	/**
 	 * Get a chunk, via a cache, and populate the cache if a new chunk is read.
 	 * @param size
 	 * @param next
 	 * @param withRefs
 	 * @return
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	Map<AddressKey,JavaObject> getObjectsViaCache(final int size, final int next[], boolean withRefs) throws IOException {
 		int index = next[0];
@@ -403,7 +402,7 @@ class PHDJavaHeap implements JavaHeap {
 		try {
 			more = rdr.reader.parse(new PortableHeapDumpListener() {
 				int total;
-				
+
 				public void classDump(long address, long superAddress, String name, int size,
 						int flags, int hashCode, LongEnumeration refs) throws Exception {
 				}
@@ -419,8 +418,8 @@ class PHDJavaHeap implements JavaHeap {
 							int adjustLen2 = Math.min(adjustLen, refsLen);
 							// Use adjustLen for array class so for corrupt Java 5 with 0 refs we have no array class
 							PHDJavaObject.Builder b = new PHDJavaObject.Builder(heap,address,runtime.arrayOf(classAddress, refs, adjustLen),flags,hashCode);
-							PHDJavaObject jo = withRefs 
-								? b.refs(refs,adjustLen2).length(length-adjustLen2).instanceSize(instanceSize).build() 
+							PHDJavaObject jo = withRefs
+								? b.refs(refs,adjustLen2).length(length-adjustLen2).instanceSize(instanceSize).build()
 								: b.length(length-adjustLen2).instanceSize(instanceSize).build();
 							objects.put(AddressKey.getAddress(PHDJavaHeap.this, address),jo);
 							next[0] = rdr.where;
@@ -440,7 +439,7 @@ class PHDJavaHeap implements JavaHeap {
 							PHDJavaObject.Builder b = new PHDJavaObject.Builder(heap,address,runtime.findClass(classAddress),flags,hashCode)
 								.length(PHDJavaObject.SIMPLE_OBJECT)
 								.instanceSize(instanceSize);
-							PHDJavaObject jo = withRefs 
+							PHDJavaObject jo = withRefs
 								? b.refs(refs, 0).build()
 								: b.build();
 							objects.put(AddressKey.getAddress(PHDJavaHeap.this, address),jo);
@@ -512,7 +511,7 @@ class PHDJavaHeap implements JavaHeap {
 				c.add(s);
 			}
 		}
-				
+
 		if (runtime.minClassAddress <= runtime.maxClassAddress) {
 			// Space in heap for class objects
 			long last2 = runtime.maxClassAddress;
@@ -528,7 +527,7 @@ class PHDJavaHeap implements JavaHeap {
 					if (lastObj != null && lastObj.getID().equals(jc.getID())) {
 						size = lastObj.getSize();
 					}
-				}			
+				}
 				last2 += size;
 			} catch (CorruptDataException e) {
 				s = new PHDCorruptImageSection("Corrupt "+getName(),objPointer,8);
@@ -552,11 +551,11 @@ class PHDJavaHeap implements JavaHeap {
 	ImageAddressSpace getImageAddressSpace() {
 		return space;
 	}
-	
+
 	PHDJavaRuntime getJavaRuntime() {
 		return runtime;
 	}
-	
+
 	JavaObject getCachedObjectAtAddress(ImagePointer address, boolean withRefs) throws IOException {
 		for (CacheHeapSegment seg : cache.values()) {
 			SoftReference<Map<AddressKey,JavaObject>>sr = seg.objects;
@@ -581,7 +580,7 @@ class PHDJavaHeap implements JavaHeap {
 		}
 		return null;
 	}
-	
+
 	JavaObject getObjectAtAddress(ImagePointer address, boolean withRefs) {
 		JavaObject jo = null;
 		try {
@@ -603,7 +602,7 @@ class PHDJavaHeap implements JavaHeap {
 	/**
 	 * Find an object in the heap
 	 * Populate each chunk, then search each chunk directly
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	private JavaObject getObjectAtAddress3(ImagePointer address, boolean withRefs) throws IOException {
 			int count[] = new int[1];
@@ -625,7 +624,7 @@ class PHDJavaHeap implements JavaHeap {
 	 * @param classAddress
 	 * @param length
 	 * @return a JavaObject with sufficient information to determine its length
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	JavaObject getLastObject(ImagePointer address, long classAddress, int length) throws IOException {
 		JavaObject jo = getCachedObjectAtAddress(address, false);
@@ -640,11 +639,11 @@ class PHDJavaHeap implements JavaHeap {
 			jo = new PHDJavaObject.Builder(this,addr,jc,PHDJavaObject.NO_HASHCODE,-1).length(length).build();
 		} else {
 			JavaClass jc = runtime.findClass(classAddress);
-			jo = new PHDJavaObject.Builder(this,addr,jc,PHDJavaObject.NO_HASHCODE,-1).length(PHDJavaObject.SIMPLE_OBJECT).build();			
+			jo = new PHDJavaObject.Builder(this,addr,jc,PHDJavaObject.NO_HASHCODE,-1).length(PHDJavaObject.SIMPLE_OBJECT).build();
 		}
 		return jo;
 	}
-	
+
 	/**
 	 * Return all the objects in the heap
 	 * This uses a modified version of the HeapdumpReader which allows abort and resume.
@@ -654,7 +653,7 @@ class PHDJavaHeap implements JavaHeap {
 		try {
 			return new Iterator<JavaObject>() {
 				HeapdumpReader reader = null;
-				
+
 				{
 					if(stream == null) {
 						reader = new HeapdumpReader(file, image);
@@ -662,7 +661,7 @@ class PHDJavaHeap implements JavaHeap {
 						reader = new HeapdumpReader(stream, image);
 					}
 				}
-				
+
 				final int adjustLen = reader.version() == 4 && reader.isJ9() ? 1 : 0;
 				final long current[] = new long[1];
 				static final boolean withRefs = true;
@@ -682,7 +681,7 @@ class PHDJavaHeap implements JavaHeap {
 						// Use adjustLen for array class so for corrupt Java 5 with 0 refs we have no array class
 						PHDJavaObject.Builder b = new PHDJavaObject.Builder(heap,address,runtime.arrayOf(classAddress, refs, adjustLen),flags,hashCode)
 						.instanceSize(instanceSize);
-						jo = withRefs 
+						jo = withRefs
 							? b.refs(refs,adjustLen2).length(length-adjustLen2).build()
 							: b.length(length-adjustLen2).build();
 						current[0] = 0;
@@ -694,7 +693,7 @@ class PHDJavaHeap implements JavaHeap {
 						current[0] = address;
 						PHDJavaObject.Builder b = new PHDJavaObject.Builder(heap,address,runtime.findClass(classAddress),flags,hashCode)
 						.length(PHDJavaObject.SIMPLE_OBJECT).instanceSize(instanceSize);
-						jo = withRefs 
+						jo = withRefs
 							? b.refs(refs, 0).build()
 							: b.build();
 						current[0] = 0;
@@ -711,7 +710,7 @@ class PHDJavaHeap implements JavaHeap {
 					}
 
 				};
-				
+
 				public boolean hasNext() {
 					if (jo == null) getNext();
 					return jo != null;
@@ -724,7 +723,7 @@ class PHDJavaHeap implements JavaHeap {
 					++count;
 					return ret;
 				}
-				
+
 				private void getNext() {
 					try {
 						// Note that the listener forces the parser to end after one object
@@ -758,9 +757,9 @@ class PHDJavaHeap implements JavaHeap {
 				public void remove() {
 					throw new UnsupportedOperationException();
 				}
-				
+
 				protected void finalize() throws Throwable {
-					// shouldn't normally be necessary as the reader is closed in getNext() in most cases, 
+					// shouldn't normally be necessary as the reader is closed in getNext() in most cases,
 					// but the client doesn't have to run the iterator to the end, so we're accounting for that here
 					if (reader != null) {
 						reader.close();

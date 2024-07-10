@@ -66,8 +66,8 @@ public interface PortableHeapDumpListener {
 	 *  @param instanceSize the size of each instance (object) of this class
 	 *  @param flags        flags associated with the object (currently unused)
 	 *  @param hashCode     the object's hash code
-	 *  @param refs         the enumeration of this class's static references. 
-	 *  
+	 *  @param refs         the enumeration of this class's static references.
+	 *
 	 */
 	void classDump(long address, long superAddress, String name, int instanceSize, int flags, int hashCode, LongEnumeration refs) throws Exception;
 	/**

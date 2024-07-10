@@ -30,7 +30,7 @@ public class JavaVMOption implements com.ibm.dtfj.java.JavaVMOption {
 
 	private String _optionString;
 	private ImagePointer _extraInfo;
-	
+
 	public JavaVMOption(String optionString, ImagePointer extraInfo) {
 		if (optionString == null) {
 			throw new IllegalArgumentException();
@@ -38,7 +38,7 @@ public class JavaVMOption implements com.ibm.dtfj.java.JavaVMOption {
 		_optionString = optionString;
 		_extraInfo = extraInfo;
 	}
-	
+
 	public String getOptionString() throws DataUnavailable, CorruptDataException {
 		return _optionString;
 	}

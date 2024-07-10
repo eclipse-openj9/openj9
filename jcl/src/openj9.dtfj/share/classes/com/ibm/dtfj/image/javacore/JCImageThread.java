@@ -36,22 +36,21 @@ import com.ibm.dtfj.image.ImageThread;
 import com.ibm.dtfj.java.javacore.JCInvalidArgumentsException;
 
 public class JCImageThread implements ImageThread {
-	
+
 	/*
 	 * This should be in the form 0x...
 	 */
 	private final String fImageThreadID;
-	
-	
+
 	private final ImagePointer fNativeThreadID;
-	
+
 	private Properties fProperties;
 	private Vector fRegisters;
 	private Vector fStackSections;
 	private Vector fStackFrames;
 	private ImagePointer fSystemThreadID;
 	/**
-	 * 
+	 *
 	 * @param nativeThreadID
 	 */
 	public JCImageThread(ImagePointer nativeThreadID) throws JCInvalidArgumentsException {
@@ -65,9 +64,9 @@ public class JCImageThread implements ImageThread {
 		fStackFrames = new Vector();
 		fProperties = new Properties();
 	}
-	
+
 	/**
-	 * 
+	 *
 	 */
 	public String getID() throws CorruptDataException {
 		if (fImageThreadID == null) {
@@ -75,16 +74,16 @@ public class JCImageThread implements ImageThread {
 		}
 		return fImageThreadID;
 	}
-	
+
 	/**
-	 * 
+	 *
 	 */
 	public Properties getProperties() {
 		return fProperties;
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @param key
 	 * @param value
 	 */
@@ -93,19 +92,19 @@ public class JCImageThread implements ImageThread {
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	public Iterator getRegisters() {
 		return fRegisters.iterator();
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	public Iterator getStackSections() {
 		return fStackSections.iterator();
 	}
-	
+
 	/**
 	 * Not available in javacore
 	 */
@@ -114,9 +113,9 @@ public class JCImageThread implements ImageThread {
 			throw new DataUnavailable("Native stack frame data not available");
 		}
 		return fStackFrames.iterator();
-		
+
 	}
-	
+
 	/**
 	 * NOT in DTFJ
 	 * @param stackFrame
@@ -127,7 +126,6 @@ public class JCImageThread implements ImageThread {
 		}
 	}
 
-	
 	/**
 	 * NOT in DTFJ
 	 * Add a stack section for this thread.
@@ -140,18 +138,18 @@ public class JCImageThread implements ImageThread {
 			fStackSections.add(stackSection);
 		}
 	}
-	
+
 	/**
 	 * NON-DTFJ. Used internally as it bypasses the exception, since due to internal implementation,
 	 * an exception thrown when the id is not set does not necessarily mean an internal building error.
 	 * Do NOT use this outside the building process.
-	 * 
-	 * 
+	 *
+	 *
 	 */
 	public ImagePointer getInternalID() {
 		return fNativeThreadID;
 	}
-	
+
 	/**
 	 * NON-DTFJ. For building purposes only. Don't use as part of DTFJ.
 	 * @param systemThreadID
@@ -159,7 +157,7 @@ public class JCImageThread implements ImageThread {
 	public void setSystemThreadID(ImagePointer systemThreadID) {
 		fSystemThreadID = systemThreadID;
 	}
-	
+
 	/**
 	 * NON-DTFJ. For building purposes only. Don't use as part of DTFJ.
 	 * @return system thread id or null if not set.
@@ -167,7 +165,7 @@ public class JCImageThread implements ImageThread {
 	public ImagePointer getSystemThreadID() {
 		return fSystemThreadID;
 	}
-	
+
 	/**
 	 * NOT in DTFJ
 	 * @param reg register

@@ -26,22 +26,22 @@ import com.ibm.dtfj.image.CorruptData;
 import com.ibm.dtfj.image.ImagePointer;
 
 public class JCCorruptData implements CorruptData{
-	
+
 	private ImagePointer fPointer;
 	private String fMessage = null;
 
 	public JCCorruptData(ImagePointer pointer) {
 		fPointer = pointer;
 	}
-	
+
 	public JCCorruptData(String message, ImagePointer pointer) {
 		fMessage = message;
 		fPointer = pointer;
 	}
-	
+
 	public String toString() {
 		if (fPointer != null) {
-			if (fMessage != null) 
+			if (fMessage != null)
 				return fMessage+" : 0x"+Long.toHexString(fPointer.getAddress());
 			else
 				return "0x"+Long.toHexString(fPointer.getAddress());

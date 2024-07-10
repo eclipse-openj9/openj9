@@ -34,7 +34,7 @@ public class NodeUnexpectedTag extends NodeAbstract
 	{
 		// System.err.println("Error:  Unexpected tag with name \"" + qName + "\"");
 	}
-	
+
 	public static IParserNode unexpectedTag(String name, Attributes attributes)
 	{
 		return new NodeUnexpectedTag(name, attributes);

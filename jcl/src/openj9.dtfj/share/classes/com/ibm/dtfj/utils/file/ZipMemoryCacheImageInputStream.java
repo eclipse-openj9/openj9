@@ -31,7 +31,7 @@ import javax.imageio.stream.MemoryCacheImageInputStream;
  * Sub-class of an image input stream that comes from a zip file entry
  * which allows it to provide more information than the standard
  * MemoryCacheImageInputStream such as the length of the stream.
- * 
+ *
  * @author adam
  *
  */
@@ -55,7 +55,7 @@ public class ZipMemoryCacheImageInputStream extends MemoryCacheImageInputStream 
 	public long length() {
 		return length;
 	}
-	
+
 	public ManagedImageSource getSource() {
 		return source;
 	}
@@ -73,7 +73,5 @@ public class ZipMemoryCacheImageInputStream extends MemoryCacheImageInputStream 
 		}
 		return source.toURI().toString();
 	}
-	
-	
-	
+
 }

@@ -24,7 +24,7 @@ package com.ibm.dtfj.corereaders;
 
 /**
  * Simple paging cache, to speedup getMemoryBytes
- * 
+ *
  */
 public class PageCache
 {
@@ -168,7 +168,6 @@ public class PageCache
 		}
 	}
 
-
 	/*
 	 * Construct a cache with default heuristics
 	 */
@@ -176,7 +175,6 @@ public class PageCache
 	{
 		initialize();
 	}
-
 
 	/*
 	 * Construct a cache with specific heuristics
@@ -191,7 +189,6 @@ public class PageCache
 
 		initialize();
 	}
-
 
 	/*
 	 * Have we cached something matching this request?

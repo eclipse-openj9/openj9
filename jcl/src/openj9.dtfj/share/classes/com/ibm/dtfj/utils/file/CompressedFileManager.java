@@ -33,19 +33,19 @@ import javax.imageio.stream.ImageInputStream;
 
 /**
  * Abstract class for handling compressed files
- * 
+ *
  * @author adam
  *
  */
 public abstract class CompressedFileManager extends SimpleFileManager {
 	protected final byte[] buffer = new byte[4096];
-	
+
 	public CompressedFileManager(File file) {
 		super(file);
 	}
 
 	public abstract void extract(File todir) throws IOException;
-	
+
 	public abstract void extract(ManagedImageSource file, File todir) throws IOException;
 
 	public abstract ImageInputStream getStream(ManagedImageSource source) throws IOException;
@@ -66,7 +66,7 @@ public abstract class CompressedFileManager extends SimpleFileManager {
 			todir.mkdirs();
 		}
 	}
-	
+
 	/**
 	 * Returns a specified image source specified by the path in the zip file
 	 * @param path path within the zip
@@ -83,7 +83,7 @@ public abstract class CompressedFileManager extends SimpleFileManager {
 			throw new FileNotFoundException("The entry " + path + " was not found in " + managedFile.getAbsolutePath());
 		}
 	}
-	
+
 	protected void extractEntry(InputStream in, File path) throws IOException {
 		FileOutputStream out = null;
 		long total = 0;

@@ -29,9 +29,9 @@ import com.ibm.dtfj.image.j9.CorruptData;
 
 /**
  * @author nhardman
- * 
+ *
  * JavaReference is intended to represent either a standard reference within a java heap,
- * for example a reference from one object to another, or a root. A root is a reference 
+ * for example a reference from one object to another, or a root. A root is a reference
  * that is held outside of the heap, in the Java stack or within the JVM itself.
  *
  */
@@ -51,17 +51,17 @@ public class JavaReference implements com.ibm.dtfj.java.JavaReference
 	private Object _target = null;
 	private long   _address = 0;
 	private int _resolution = ResolutionType_UNRESOLVED;
-	
+
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param javaVM JavaRuntime
 	 * @param source Object The source of this reference/root, for example the JVM or an object on the heap
 	 * @param address long Address of the target object of this reference/root.
-	 * @param description String  
-	 * @param referencetype int Mutually exclusive with respect to roottype. 
+	 * @param description String
+	 * @param referencetype int Mutually exclusive with respect to roottype.
 	 * @param roottype int Mutually exclusive with respect to referencetype.
-	 * @param reachability int the strength of the reference (this helps the GC in selection of objects for collection).  
+	 * @param reachability int the strength of the reference (this helps the GC in selection of objects for collection).
 	 */
 	public JavaReference(JavaRuntime javaVM, Object source, long address, String description, int referencetype, int roottype, int reachability) {
 		_javaVM = javaVM;
@@ -75,14 +75,14 @@ public class JavaReference implements com.ibm.dtfj.java.JavaReference
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param javaVM JavaRuntime
 	 * @param source Object The source of this reference/root, for example the JVM or an object on the heap
 	 * @param target Object The target object of this reference/root.
-	 * @param description String  
-	 * @param referencetype int Mutually exclusive with respect to roottype. 
+	 * @param description String
+	 * @param referencetype int Mutually exclusive with respect to roottype.
 	 * @param roottype int Mutually exclusive with respect to referencetype.
-	 * @param reachability int The strength of the reference (this helps the GC in selection of objects for collection).  
+	 * @param reachability int The strength of the reference (this helps the GC in selection of objects for collection).
 	 */
 	public JavaReference(JavaRuntime javaVM, Object source, Object target, String description, int referencetype, int roottype, int reachability) {
 		_javaVM = javaVM;
@@ -94,9 +94,9 @@ public class JavaReference implements com.ibm.dtfj.java.JavaReference
 		_reachability = reachability;
 
 		if (null != _target) {
-			if (JavaReference.HEAP_ROOT_SYSTEM_CLASS == _roottype || 
-				JavaReference.REFERENCE_CLASS == _referencetype || 
-				JavaReference.REFERENCE_SUPERCLASS == _referencetype || 
+			if (JavaReference.HEAP_ROOT_SYSTEM_CLASS == _roottype ||
+				JavaReference.REFERENCE_CLASS == _referencetype ||
+				JavaReference.REFERENCE_SUPERCLASS == _referencetype ||
 				JavaReference.REFERENCE_LOADED_CLASS == _referencetype ||
 				JavaReference.REFERENCE_ASSOCIATED_CLASS == _referencetype) {
 				/* target is a class. */
@@ -181,12 +181,12 @@ public class JavaReference implements com.ibm.dtfj.java.JavaReference
 				return null;
 			}
 
-			if (JavaReference.HEAP_ROOT_SYSTEM_CLASS == _roottype || 
-				JavaReference.REFERENCE_CLASS == _referencetype || 
-				JavaReference.REFERENCE_SUPERCLASS == _referencetype || 
+			if (JavaReference.HEAP_ROOT_SYSTEM_CLASS == _roottype ||
+				JavaReference.REFERENCE_CLASS == _referencetype ||
+				JavaReference.REFERENCE_SUPERCLASS == _referencetype ||
 				JavaReference.REFERENCE_LOADED_CLASS == _referencetype ||
 				JavaReference.REFERENCE_ASSOCIATED_CLASS == _referencetype) {
-				
+
 				// this is a class reference, so create a class to represent the target.
 				_target = _javaVM.getClassForID(_address);
 				if (null == _target) {
@@ -234,7 +234,7 @@ public class JavaReference implements com.ibm.dtfj.java.JavaReference
 				return null;
 			}
 		}
-		
+
 		return _target;
 	}
 
@@ -246,7 +246,7 @@ public class JavaReference implements com.ibm.dtfj.java.JavaReference
 			// the target is unresolved, so we need to get it.
 			_target = getTarget();
 		}
-		
+
 		if (ResolutionType_BROKEN == _resolution) {
 			throw new DataUnavailable();
 		}
@@ -262,7 +262,7 @@ public class JavaReference implements com.ibm.dtfj.java.JavaReference
 			// the target is unresolved, so we need to get it.
 			_target = getTarget();
 		}
-		
+
 		if (ResolutionType_BROKEN == _resolution) {
 			throw new DataUnavailable();
 		}

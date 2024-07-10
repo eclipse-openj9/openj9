@@ -34,7 +34,7 @@ import com.ibm.dtfj.java.j9.TraceBuffer;
 public class NodeTrace extends NodeAbstract
 {
 	private TraceBuffer _traceBuffer;
-	
+
 	public NodeTrace(JavaRuntime runtime, Attributes attributes)
 	{
 		//trace objects are special in that DTFJ says that they are implementation dependent.  As a result, it is hard to know how to implement them, at this time
@@ -48,7 +48,7 @@ public class NodeTrace extends NodeAbstract
 	public IParserNode nodeToPushAfterStarting(String uri, String localName, String qName, Attributes attributes)
 	{
 		IParserNode child = null;
-		
+
 		if (qName.equals("header")) {
 			child = new NodeHeader(_traceBuffer, attributes);
 		} else if (qName.equals("buffers")) {

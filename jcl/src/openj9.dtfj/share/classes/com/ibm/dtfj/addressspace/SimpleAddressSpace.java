@@ -24,7 +24,6 @@ package com.ibm.dtfj.addressspace;
 
 import java.io.IOException;
 
-
 import com.ibm.dtfj.corereaders.ClosingFileReader;
 import com.ibm.dtfj.corereaders.MemoryAccessException;
 import com.ibm.dtfj.corereaders.MemoryRange;
@@ -33,20 +32,19 @@ import com.ibm.dtfj.corereaders.MemoryRange;
  * @author jmdisher
  * Exists to provide a bridge by which to support the deprecated core readers while we use IAbstractAddressSpace
  * to enhance the capability of memory reading for more complicated platforms.
- * 
+ *
  * Ideally, this will be deprecated in the future.
  */
 public class SimpleAddressSpace  extends CommonAddressSpace
 {
 	private ClosingFileReader _backing;
-	
-	
+
 	public SimpleAddressSpace(MemoryRange[] deprecatedMemoryRanges, ClosingFileReader file, boolean isLittleEndian, boolean is64Bit)
 	{
 		super(deprecatedMemoryRanges, isLittleEndian, is64Bit);
 		_backing = file;
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.dtfj.addressspace.IAbstractAddressSpace#isExecutable(int, long)
 	 */
@@ -76,7 +74,7 @@ public class SimpleAddressSpace  extends CommonAddressSpace
 		// TODO Auto-generated method stub
 		return false;
 	}
-	
+
 	public int getBytesAt(int asid, long address, byte[] buffer) throws MemoryAccessException
 	{
 		MemoryRange resident = _residentRange(asid, address);

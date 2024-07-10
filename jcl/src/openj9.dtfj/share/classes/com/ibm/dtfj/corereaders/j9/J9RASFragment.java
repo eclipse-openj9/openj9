@@ -25,7 +25,7 @@ package com.ibm.dtfj.corereaders.j9;
 /**
  * A J9RAS fragment contains the VM version specific offsets which are
  * required to successfully parse a J9RAS structure.
- * 
+ *
  * @author Adam Pilkington
  *
  */
@@ -35,17 +35,17 @@ public interface J9RASFragment {
 	 * @return true if it is supported
 	 */
 	public boolean currentThreadSupported();
-	
+
 	/**
 	 * The ID of the thread which caused the core file generation
 	 * @return thread ID
 	 */
 	public long getTID();
-	
+
 	/**
 	 * The ID of the process which caused the core file generation
 	 * @return
 	 */
 	public long getPID();
-	
+
 }

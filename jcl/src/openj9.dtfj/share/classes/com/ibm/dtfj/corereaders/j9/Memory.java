@@ -31,7 +31,7 @@ import com.ibm.dtfj.corereaders.MemoryRange;
 /**
  * Memory adapter which removes the need for a component to know the address space ID that it is working with.
  * This is set when the adapter is created.
- * 
+ *
  * @author Adam Pilkington
  *
  */
@@ -41,19 +41,19 @@ public class Memory {
 
 	/**
 	 * Create a memory representation
-	 * @param space the underlying address space 
+	 * @param space the underlying address space
 	 */
 	public Memory(IAbstractAddressSpace space) {
 		this.space = space;
 		if (null != space) {				//determine the ASID from the first memory range
-			Iterator ranges = space.getMemoryRanges(); 
+			Iterator ranges = space.getMemoryRanges();
 			if (ranges.hasNext()) {
 				MemoryRange firstRange = (MemoryRange)ranges.next();
 				asid = firstRange.getAsid();
 			}
 		}
 	}
-	
+
 	/**
 	 * Identify the memory as 32 or 64 bit
 	 * @return 4 for 31/32 bit, 8 for 64 bit

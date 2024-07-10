@@ -32,72 +32,71 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-
 /**
  * Handles command line entries and does extra interpretation, such as handling quoted strings (whilst discarding
  * quotes themselves and handling escaped characters), recognising redirection to file etc.
- * 
- * NOTE: As of Nov 2011, another copy of this class lives in com.ibm.j9ddr.command. Any changes to this file must be copied across. 
+ *
+ * NOTE: As of Nov 2011, another copy of this class lives in com.ibm.j9ddr.command. Any changes to this file must be copied across.
  * @author blazejc
  *
  */
 public class CommandParser {
 
 	private String originalLine; // used in toString(), primarily for debugging
-	
+
 	private List<String> allTokens = new ArrayList<String>();
 	private String command;
 	private List<String> arguments = new ArrayList<String>(); // just the command arguments, ignoring file redirection
 	private String redirectionFilename;
-	
+
 	private boolean isAppendToFile;
 	private boolean isRedirectedToFile;
-	
+
 	public CommandParser(String commandLine) throws ParseException {
 		originalLine = commandLine;
 		tokenise(commandLine);
 		parse(allTokens);
 	}
-	
+
 	public CommandParser(String command, String[] arguments) throws ParseException {
 		List<String> allTokens = new ArrayList<String>();
 		allTokens.add(command);
 		allTokens.addAll(Arrays.asList(arguments));
-		
+
 		originalLine = command;
-		
+
 		for (String arg : arguments) {
 			originalLine += " " + arg;
 		}
-		
+
 		parse(allTokens);
 	}
-	
+
 	@Override
 	public String toString() {
 		return originalLine;
 	}
-	
+
 	public String getOriginalLine() {
 		return originalLine;
 	}
-	
+
 	public String getCommand() {
 		return command;
 	}
-	
+
 	public boolean isRedirectedToFile() {
 		return isRedirectedToFile || isAppendToFile;
 	}
-	
+
 	/**
 	 * Just the command arguments, strips the ">" or ">>" and all strings that follow (i.e. file redirection).
-	 * @return 
+	 * @return
 	 */
 	public String[] getArguments() {
 		return arguments.toArray(new String[0]);
 	}
-	
+
 	/**
 	 * Returns a PrintStream, which either writes to a new file or overwrites or appends to an existing one,
 	 * depending on the command.
@@ -109,10 +108,10 @@ public class CommandParser {
 		if (!isRedirectedToFile && !isAppendToFile) {
 			throw new IllegalStateException("Attempt to create output file for a command which does not contain file redirection.");
 		}
-		
+
 		PrintStream outStream = null;
 		File outFile = new File(redirectionFilename);
-		
+
 		if (redirectionFilename.indexOf(File.separator) > -1) {
 			// The last entry is the filename itself (we've checked that during parsing stage)
 			// so everything before it is the directory, some of which may not exist, so need to create it
@@ -122,7 +121,7 @@ public class CommandParser {
 				throw new IOException("Could not create some of the requested directories: " + parentDirectories);
 			}
 		}
-		
+
 		if (isAppendToFile && outFile.exists()) {
 			// in this case do not create a new file, but use the existing one
 			outStream = new PrintStream(new FileOutputStream(outFile, true));
@@ -130,36 +129,36 @@ public class CommandParser {
 			outStream = new PrintStream(outFile); // this will create a new file
 		}
 
-		return outStream; 
+		return outStream;
 	}
-	
+
 	/*
 	 * The tokenise() and parse() work together to interpret the command line.
 	 * Initially, tokenise() reads the raw text and applies syntax rules to break it up into tokens
 	 * (e.g. by handling quoted strings). Then, parse() reads the tokens and extracts the command
-	 * itself, its arguments and possible file redirection options.  
+	 * itself, its arguments and possible file redirection options.
 	 */
 
 	private void tokenise(String commandLine) throws ParseException {
 		char[] characters = commandLine.toCharArray();
-		
+
 		int i = 0;
-		
+
 		TokenisingState currentState = new GenericTokenState(this);
 		do {
 			currentState = currentState.process(characters[i++]);
-			
+
 			if (i == characters.length) {
 				currentState.endOfInput();
 			}
 		} while (i < characters.length);
 	}
-	
+
 	private void parse(List<String> allTokens) throws ParseException {
 		if (allTokens.size() == 0) {
 			return;
 		}
-		
+
 		command = allTokens.get(0);
 		int i;
 		for (i = 1; i < allTokens.size(); i++) {
@@ -169,7 +168,7 @@ public class CommandParser {
 				break;
 			}
 		}
-		
+
 		// all that follows after and including '>' or '>>' is file redirection
 		if (i < allTokens.size()) {
 			if (allTokens.get(i).equals(">")) {
@@ -179,13 +178,13 @@ public class CommandParser {
 				isAppendToFile = true;
 				isRedirectedToFile = false;
 			}
-			
+
 			if (i + 1 < allTokens.size()) {
-				String filename = allTokens.get(i + 1).trim(); 
+				String filename = allTokens.get(i + 1).trim();
 				if (filename.charAt(filename.length() - 1) == File.separatorChar) {
 					throw new ParseException("Invalid redirection path - missing filename", i);
 				}
-				
+
 				redirectionFilename = allTokens.get(i + 1);
 			} else {
 				throw new ParseException("Missing file name for redirection", i);
@@ -194,7 +193,7 @@ public class CommandParser {
 	}
 
 // TokenisingState classes
-	
+
 	/**
 	 * A mini state machine. Each state receives a character and returns the next state.
 	 * So, for example, if a GenericTokenState encounters a quotation mark (either single or double),
@@ -202,22 +201,22 @@ public class CommandParser {
 	 * an (unescaped) quotation mark (i.e. end of quotation) it exits and returns a GenericTokenState.
 	 */
 	abstract class TokenisingState {
-		
+
 		protected CommandParser context;
 		protected StringBuilder currentToken = new StringBuilder();
 		abstract protected TokenisingState process(Character chr) throws ParseException;
-		
+
 		protected TokenisingState(CommandParser context) {
 			this.context = context;
 		}
-		
+
 		protected void storeToken() {
 			if (currentToken.length() > 0) {
 				context.allTokens.add(currentToken.toString());
 				currentToken = new StringBuilder();
 			}
 		}
-		
+
 		abstract protected void endOfInput() throws ParseException;
 	}
 
@@ -243,7 +242,7 @@ public class CommandParser {
 					return this;
 				}
 			}
-			
+
 			switch (chr) {
 				case '"':
 				case '\'':
@@ -260,7 +259,7 @@ public class CommandParser {
 
 		@Override
 		protected void endOfInput() {
-			storeToken();			
+			storeToken();
 		}
 	}
 
@@ -268,7 +267,7 @@ public class CommandParser {
 
 		private Character quoteType;
 		private boolean escape = false;
-		
+
 		protected QuotedStringState(CommandParser context, Character quoteType) {
 			super(context);
 			this.quoteType = quoteType;
@@ -288,7 +287,7 @@ public class CommandParser {
 					return this;
 				case '"':
 				case '\'': {
-					if (chr != quoteType) { // a quote different than the surrounding one doesn't need to be escaped, just treat it as any other character 
+					if (chr != quoteType) { // a quote different than the surrounding one doesn't need to be escaped, just treat it as any other character
 						currentToken.append(chr);
 						return this;
 					} else { // same quote as the surrounding one
@@ -297,7 +296,7 @@ public class CommandParser {
 							escape = false;
 							return this;
 						} else { // same quote as the surrounding one, so we're closing the quote here
-							storeToken(); 
+							storeToken();
 							return new GenericTokenState(context);
 						}
 					}
@@ -321,7 +320,7 @@ public class CommandParser {
 			}
 		}
 	}
-	
+
 	class FilenameState extends TokenisingState {
 
 		protected FilenameState(CommandParser context) {
@@ -331,13 +330,13 @@ public class CommandParser {
 		private Character quoteType = null; // the quote the whole filename is surrounded with, null if it isn't
 		private boolean alreadyStarted = false;
 		private boolean alreadyFinished = false;
-		
+
 		@Override
 		protected TokenisingState process(Character chr) throws ParseException {
 			if (alreadyFinished) {
 				throw new ParseException("Only one file name is permitted", 0);
 			}
-			
+
 			if (!alreadyStarted) {
 				if (chr.equals('"') || chr.equals('\'')) {
 					quoteType = chr;

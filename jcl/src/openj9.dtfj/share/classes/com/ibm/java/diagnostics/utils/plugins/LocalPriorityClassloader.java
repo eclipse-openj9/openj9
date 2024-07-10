@@ -29,12 +29,12 @@ import java.net.URLClassLoader;
  * Classloader to search for classes locally first before delegating to the parent classloader.
  * This 'me first' approach is required so that when classes are 'refreshed' and this loader
  * discarded the old versions on the plugin search path are also discarded.
- * 
+ *
  * @author adam
  *
  */
 public class LocalPriorityClassloader extends URLClassLoader {
-	
+
 	public LocalPriorityClassloader(URL[] urls, ClassLoader parent) {
 		super(urls, parent);
 	}
@@ -45,7 +45,7 @@ public class LocalPriorityClassloader extends URLClassLoader {
 
 	/* (non-Javadoc)
 	 * @see java.lang.ClassLoader#loadClass(java.lang.String, boolean)
-	 * 
+	 *
 	 * Override the delegating model normally provided by this classloader.
 	 */
 	@Override

@@ -27,24 +27,24 @@ import java.util.Set;
 /**
  * A subset of the ASM ClassVisitor and AnnotationVisitor methods on a
  * single interface to allow specific visitor actions to be carried out.
- * 
+ *
  * @author adam
  *
  */
 public interface ClassListener {
-	
+
 	public void visit(int version, int access, String name, String signature, String superName, String[] interfaces);
-	
+
 	public void visitAnnotation(String classname, boolean visible);
-	
+
 	public void visitAnnotationValue(String name, Object value);
-	
+
 	public void scanComplete(Entry entry);
-	
+
 	/**
-	 * List the plugins that have been found by this listener for inclusion into the 
+	 * List the plugins that have been found by this listener for inclusion into the
 	 * context to be returned to the user.
-	 * 
+	 *
 	 * @return list of plugins found, an empty list or null if there are none
 	 */
 	public Set<PluginConfig> getPluginList();

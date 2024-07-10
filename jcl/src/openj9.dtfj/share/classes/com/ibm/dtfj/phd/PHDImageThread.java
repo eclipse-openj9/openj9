@@ -37,7 +37,7 @@ import com.ibm.dtfj.image.ImageSection;
 import com.ibm.dtfj.image.ImageStackFrame;
 import com.ibm.dtfj.image.ImageThread;
 
-/** 
+/**
  * @author ajohnson
  */
 public class PHDImageThread implements ImageThread {
@@ -47,7 +47,7 @@ public class PHDImageThread implements ImageThread {
 	Properties props;
 	private final List<ImageStackFrame>frames = new ArrayList<ImageStackFrame>();
 	private List<ImageRegister>registers = new ArrayList<ImageRegister>();
-	
+
 	public PHDImageThread(ImageAddressSpace space, ImageThread meta) {
 		try {
 			id = meta.getID();
@@ -75,7 +75,7 @@ public class PHDImageThread implements ImageThread {
 			}
 		}
 	}
-	
+
 	public String getID() throws CorruptDataException {
 		if (id_cd != null) throw new CorruptDataException(id_cd);
 		return id;

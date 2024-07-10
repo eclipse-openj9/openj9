@@ -41,7 +41,7 @@ public class NodeObject extends NodeAbstract
 		// <object id="0x421188" address="0x109ae190"/>
 		// here, "id" refers to <unknown> while "address" refers to the location in the constant pool where the reference occurs
 		long id = _longFromString(attributes.getValue("id"));
-		
+
 		theClass.createConstantPoolObjectRef(id);
 	}
 

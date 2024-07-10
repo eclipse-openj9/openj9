@@ -32,11 +32,11 @@ import com.ibm.dtfj.java.JavaLocation;
 import com.ibm.dtfj.java.JavaStackFrame;
 
 public class JCJavaStackFrame implements JavaStackFrame {
-	
+
 	private ImagePointer fPointer;
 	private final JavaLocation fLocation;
 	private final JCJavaThread fThread;
-	
+
 	public JCJavaStackFrame(JCJavaThread thread, JavaLocation location) throws JCInvalidArgumentsException{
 		if (location == null) {
 			throw new JCInvalidArgumentsException("Must have a valid location.");
@@ -48,19 +48,17 @@ public class JCJavaStackFrame implements JavaStackFrame {
 		fLocation = location;
 		fThread.addStackFrame(this);
 	}
-	
-	
+
 	/**
-	 * 
+	 *
 	 * @param imagePointer
 	 */
 	public void setBasePointer(ImagePointer imagePointer) {
 		fPointer = imagePointer;
 	}
 
-	
 	/**
-	 * 
+	 *
 	 */
 	public ImagePointer getBasePointer() throws CorruptDataException {
 		if (fPointer == null) {
@@ -69,14 +67,12 @@ public class JCJavaStackFrame implements JavaStackFrame {
 		return fPointer;
 	}
 
-	
 	/**
-	 * 
+	 *
 	 */
 	public JavaLocation getLocation() throws CorruptDataException {
 		return fLocation;
 	}
-
 
 	public Iterator getHeapRoots() {
 		return Collections.EMPTY_LIST.iterator();

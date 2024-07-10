@@ -27,20 +27,17 @@ import java.util.HashMap;
 import java.util.Iterator;
 
 public class SovereignParserPartManager {
-	
+
 	private static SovereignParserPartManager fManager;
 	private HashMap fSovParts;
-	
-	
-	
+
 	public SovereignParserPartManager() {
 		fSovParts = new HashMap();
 	}
-	
-	
+
 	/**
-	 * 
-	 * 
+	 *
+	 *
 	 */
 	public static SovereignParserPartManager getCurrent() {
 		if (fManager == null) {
@@ -48,9 +45,9 @@ public class SovereignParserPartManager {
 		}
 		return fManager;
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @param partsList
 	 */
 	public void loadSovParts(ArrayList partsList) {
@@ -65,16 +62,14 @@ public class SovereignParserPartManager {
 			}
 		}
 	}
-	
-	
+
 	/**
-	 * 
+	 *
 	 * @param sectionName
-	 * 
+	 *
 	 */
 	public SovereignSectionParserPart getSovPart(String sectionName) {
 		return (SovereignSectionParserPart)fSovParts.get(sectionName);
 	}
-	
 
 }

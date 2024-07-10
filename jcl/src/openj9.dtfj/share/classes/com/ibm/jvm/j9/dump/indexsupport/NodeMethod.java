@@ -34,7 +34,7 @@ import com.ibm.dtfj.java.j9.JavaMethod;
 public class NodeMethod extends NodeAbstract
 {
 	private JavaMethod _method;
-	
+
 	public NodeMethod(JavaClass theClass, Attributes attributes)
 	{
 		//<method id="0x17eff8" name="valueOf" sig="(Ljava/lang/String;)Ljava/lang/Float;" modifiers="0x20009">
@@ -43,17 +43,17 @@ public class NodeMethod extends NodeAbstract
 		String signature = attributes.getValue("sig");
 		long id = _longFromString(attributes.getValue("id"));
 		int modifiers = (int)_longFromString(attributes.getValue("modifiers"));
-		
+
 		_method = theClass.createNewMethod(id, name, signature, modifiers);
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.jvm.j9.dump.indexsupport.IParserNode#nodeToPushAfterStarting(java.lang.String, java.lang.String, java.lang.String, org.xml.sax.Attributes)
 	 */
 	public IParserNode nodeToPushAfterStarting(String uri, String localName, String qName, Attributes attributes)
 	{
 		IParserNode child = null;
-		
+
 		if (qName.equals("bytecode")) {
 			child = new NodeByteCode(_method, attributes);
 		} else if (qName.equals("jit")) {

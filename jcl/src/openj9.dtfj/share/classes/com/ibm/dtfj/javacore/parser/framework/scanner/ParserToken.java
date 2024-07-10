@@ -22,22 +22,21 @@
  */
 package com.ibm.dtfj.javacore.parser.framework.scanner;
 
-
 public class ParserToken implements IParserToken{
-	
+
 	private int fLength;
 	private int fOffset;
 	private int fLineNumber;
 	private String fType;
 	private String fValue;
-	
+
 	public ParserToken(int length, int offset, int lineNumber, String type, String value) {
 		fLength = length;
 		fOffset = offset;
 		fLineNumber = lineNumber;
 		fType = type;
 		fValue = value;
-		
+
 	}
 
 	public int getLength() {

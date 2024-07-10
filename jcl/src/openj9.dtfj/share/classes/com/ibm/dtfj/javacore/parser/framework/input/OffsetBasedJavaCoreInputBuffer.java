@@ -32,40 +32,34 @@ public abstract class OffsetBasedJavaCoreInputBuffer  implements IInputBuffer{
 
 	protected int fOffset;
 	private boolean fStreamEnd;
-	
+
 	protected StringBuffer fBuffer;
 	protected static final int DEFAULT_LENGTH = 10;
 	protected static final int START_OFFSET = 1;
-	
-	
+
 	public OffsetBasedJavaCoreInputBuffer() {
 		fBuffer = new StringBuffer();
 		fStreamEnd = false;
 		fOffset = 1;
 	}
-	
 
-
-	
 	protected void markStreamEnd(boolean mark) {
 		fStreamEnd = mark;
 	}
-	
+
 	protected boolean isStreamEnd() {
 		return fStreamEnd;
 	}
-	
-	
+
 	/**
 	 * @see com.ibm.dtfj.javacore.parser.framework.input.IInputBuffer#endReached()
-	 * 
+	 *
 	 * @return determines if everything has been consumed from the reader stream.
 	 */
 	public boolean endReached() {
 		return fStreamEnd && fBuffer.length() == 0;
 	}
 
-	
 	/**
 	 *
 	 * @see com.ibm.dtfj.javacore.parser.framework.input.IInputBuffer#length()
@@ -75,40 +69,32 @@ public abstract class OffsetBasedJavaCoreInputBuffer  implements IInputBuffer{
 	public int length() {
 		return fBuffer.length();
 	}
-	
-	
 
 	/**
-	 * 
+	 *
 	 * @see com.ibm.dtfj.javacore.parser.framework.input.IInputBuffer#charAt(int)
-	 * 
+	 *
 	 * @param buffer index where character is located
 	 * @return character at specified index
 	 */
 	public char charAt(int i) {
 		return fBuffer.charAt(i);
 	}
-	
 
 	/**
-	 * 
+	 *
 	 * @param length to add to current offset
 	 */
 	protected void updateOffset(int length) {
 		fOffset += length;
 	}
-	
-	
-	
+
 	/**
 	 * Closes the java.io.Reader or input stream associated with this
-	 * buffered reader. 
-	 * 
+	 * buffered reader.
+	 *
 	 * @throws IOException if error encountered while closing.
 	 */
 	abstract public void close()	throws IOException;
-	
-	
-
 
 }

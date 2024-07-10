@@ -33,15 +33,15 @@ import com.ibm.dtfj.corereaders.j9.Memory;
  * This was done to work around a long-standing issue with some platforms (Linux, Windows), on which
  * the process or the thread that generates the core dump is not the same that fails.
  * See CMVC 149882.
- * 
+ *
  *  Client code should:
- *  
+ *
  *  1. instantiate this class;
  *  2. check whether PID and TID are supported, calling this.j9RASSupportsTidAndPid();
  *  3. if they are, get the PID and TID with the appropriate getters.
- *  
- *  Here's the J9RAS structure:  
- * 
+ *
+ *  Here's the J9RAS structure:
+ *
 	typedef struct J9RAS {
 	U_8 eyecatcher[8];
 	U_32 bitpattern1;
@@ -61,7 +61,7 @@ import com.ibm.dtfj.corereaders.j9.Memory;
 	U_8 osarch[16];
 	U_8 osname[48];
 	U_32 cpus;
-	char _j9padding0124[4]; // 4 bytes of automatic padding 
+	char _j9padding0124[4]; // 4 bytes of automatic padding
 	char** environment;
 	U_64 memory;
 	struct J9RASCrashInfo* crashInfo;
@@ -70,27 +70,25 @@ import com.ibm.dtfj.corereaders.j9.Memory;
 	struct J9Statistic** nextStatistic;
 	UDATA pid;
 	UDATA tid;
-} J9RAS; 
+} J9RAS;
 
 */
 
 /*
  * Jazz 18947 : spoole : Implemented support for Java 5
- * 
+ *
  * The structure above is the Java 6 version, the Java 5 version is smaller and as of SR11 contains an additional
  * field which is a pointer to the J9DDR data structures.
  */
-
 
 public class J9RASReader {
 	private Memory memory = null;			//memory in which a J9RAS structure may be located
 	private J9RAS j9ras = null;				//J9RAS structure
 
-	
 	public J9RASReader (IAbstractAddressSpace space, boolean is64Bit) {
 		memory = new Memory(space);			//create a new memory object based on the address space
 	}
-	
+
 	/**
 	 * Attempt to find a valid J9RAS structure in the memory
 	 * @throws MemoryAccessException can be thrown by the Memory class when searching
@@ -118,9 +116,9 @@ public class J9RASReader {
 		if((j9ras == null) || (!j9ras.isValid())) {		//if couldn't find one throw an error
 			throw new CorruptCoreException("Could not find a valid J9RAS structure in the core file");
 		}
-		return j9ras.getTID();							
+		return j9ras.getTID();
 	}
-	
+
 	/**
 	 * Get the ID of the process which caused the core file to be produced
 	 * @return the process ID
@@ -135,5 +133,5 @@ public class J9RASReader {
 		}
 		return j9ras.getPID();
 	}
-	
+
 }

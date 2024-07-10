@@ -52,7 +52,7 @@ public class JavaThread implements com.ibm.dtfj.java.JavaThread
 	private Vector _stackFrames = new Vector();
 	private ImageThread _imageThread;
 	private JavaStackSection _stackSection;
-	
+
 	private JavaObject _javaObject = null;
 
 	private static final HashMap _threadStateMap = new HashMap();
@@ -67,7 +67,7 @@ public class JavaThread implements com.ibm.dtfj.java.JavaThread
 		_threadStateMap.put("Parked",   		Integer.valueOf(STATE_ALIVE | STATE_WAITING | STATE_WAITING_INDEFINITELY | STATE_PARKED));
 		_threadStateMap.put("Parked timed",   	Integer.valueOf(STATE_ALIVE | STATE_WAITING | STATE_WAITING_WITH_TIMEOUT | STATE_PARKED));
 	};
-	
+
 	public JavaThread(JavaRuntime vm, ImagePointer nativeID, ImagePointer objectID, String state, ImageThread imageThread)
 	{
 		if (null == vm) {
@@ -97,7 +97,7 @@ public class JavaThread implements com.ibm.dtfj.java.JavaThread
 		if (null != theObject) {
 			JavaClass threadClass = _javaLangThreadSuperclass();
 			Iterator fields = threadClass.getDeclaredFields();
-			
+
 			while (fields.hasNext()) {
 				JavaField oneField = (JavaField) fields.next();
 				if (oneField.getName().equals("priority")) {
@@ -161,7 +161,7 @@ public class JavaThread implements com.ibm.dtfj.java.JavaThread
 	public Iterator getStackSections()
 	{
 		List toReturn = null;
-		
+
 		if (null == _stackSection) {
 			//we didn't set the stack section so this thread must be corrupt
 			toReturn = Collections.singletonList(new CorruptData("stack section missing", _jniEnv));
@@ -188,7 +188,7 @@ public class JavaThread implements com.ibm.dtfj.java.JavaThread
 		if (null != theObject) {
 			JavaClass threadClass = _javaLangThreadSuperclass();
 			Iterator fields = threadClass.getDeclaredFields();
-			
+
 			while (fields.hasNext()) {
 				JavaField oneField = (JavaField) fields.next();
 				if (oneField.getName().equals("name")) {
@@ -226,7 +226,7 @@ public class JavaThread implements com.ibm.dtfj.java.JavaThread
 	{
 		_stackSection = new JavaStackSection(_jniEnv.getAddressSpace().getPointer(base), size, this);
 	}
-	
+
 	/**
 	 * @author jmdisher
 	 * It might make sense to put this in its own class, at some point, but it is only used here
@@ -236,15 +236,14 @@ public class JavaThread implements com.ibm.dtfj.java.JavaThread
 		private ImagePointer _start;
 		private long _size;
 		private JavaThread _parent;
-		
-		
+
 		public JavaStackSection(ImagePointer start, long size, JavaThread parent)
 		{
 			_start = start;
 			_size = size;
 			_parent = parent;
 		}
-		
+
 		public ImagePointer getBaseAddress()
 		{
 			return _start;
@@ -280,7 +279,7 @@ public class JavaThread implements com.ibm.dtfj.java.JavaThread
 		{
 			return _start.isShared();
 		}
-		
+
 		public Properties getProperties() {
 			return _start.getProperties();
 		}
@@ -290,7 +289,7 @@ public class JavaThread implements com.ibm.dtfj.java.JavaThread
 	{
 		//note that we can't get image threads on all platforms and in all situations but we still need to return equals correctly
 		boolean isEqual = (null == _imageThread) ? (this == obj) : false;
-		
+
 		if ((null != _imageThread) && (obj instanceof JavaThread)) {
 			JavaThread local = (JavaThread) obj;
 			isEqual = (_javaVM.equals(local._javaVM) && (_imageThread.equals(local._imageThread)));
@@ -319,7 +318,7 @@ public class JavaThread implements com.ibm.dtfj.java.JavaThread
 		addFrame(frame);
 		return frame;
 	}
-	
+
 	/**
 	 * Called by the parser if it finds an error tag where the stack was expected
 	 */
@@ -327,7 +326,7 @@ public class JavaThread implements com.ibm.dtfj.java.JavaThread
 	{
 		addFrame(new CorruptData("vmthread encountered error tag where stack expected", _jniEnv));
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.dtfj.java.JavaThread#getBlockingObject()
 	 */

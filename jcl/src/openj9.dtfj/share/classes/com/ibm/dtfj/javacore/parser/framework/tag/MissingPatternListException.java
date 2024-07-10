@@ -25,14 +25,14 @@ package com.ibm.dtfj.javacore.parser.framework.tag;
 public class MissingPatternListException extends Exception {
 
 	/**
-	 * 
+	 *
 	 */
 	private static final long serialVersionUID = 6591080542994720218L;
-	
+
 	public MissingPatternListException(Exception e) {
 		super(e);
 	}
-	
+
 	public MissingPatternListException(String message) {
 		super(message);
 	}

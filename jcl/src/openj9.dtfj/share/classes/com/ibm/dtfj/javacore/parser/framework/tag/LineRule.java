@@ -61,28 +61,27 @@ import com.ibm.dtfj.javacore.parser.j9.section.common.CommonPatternMatchers;
  * return a list of tokens (generally a map, where the key is the token type, and the value is the token value)
  * to the section parser that uses these line rules. A series of line rules
  * can be registered into a Tag Parser, which in turn gets used by a Section Parser.
- * 
+ *
  * <br><br>
  * Note that methods are provided to explicitly generate and add a token, and the concrete-class must
- * call these methods explicitly to add a token. 
+ * call these methods explicitly to add a token.
  * <br><br>
 
- * 
- * 
+ *
+ *
  * @see com.ibm.dtfj.javacore.parser.framework.tag.ITagParser
  * @see com.ibm.dtfj.javacore.parser.framework.tag.ITagAttributeResult
  */
 public abstract class LineRule implements ILineRule {
-	
+
 	protected final StringBuffer fSource;
 	protected final StringBuffer fCharSubSet;
 	protected int fLineNumber;
-	
-	// Support for offset calculation of a token, but 
+
+	// Support for offset calculation of a token, but
 	// not currently used.
 	protected int fOffset;
 	private HashMap fTokenList;
-
 
 	public LineRule() {
 		fSource = new StringBuffer();
@@ -90,12 +89,12 @@ public abstract class LineRule implements ILineRule {
 		fLineNumber = 0;
 		fOffset = 0;
 	}
-	
+
 	/**
 	 * Initializes buffer, token list, and other fields prior to parsing and tokenising a line.
 	 * The user-implemented method that parses the line is called here. This method is called
 	 * internally by the framework, so the user never needs to explicitly call this method.
-	 * 
+	 *
 	 * @param source string containing source to parse
 	 * @param lineNumber line number on file of source
 	 * @param startingOffset offset of the first character in the source line. offsets are determined externally from the start of the file.
@@ -110,31 +109,31 @@ public abstract class LineRule implements ILineRule {
 		processLine(source, startingOffset);
 		return AttributeValueMapFactory.createAttributeValueMap(fTokenList);
 	}
-	
+
 	/**
 	 * @return line number on disk of the source line being parsed.
 	 */
 	protected int getLineNumber() {
 		return fLineNumber;
 	}
-	
+
 	/**
 	 * Must be implemented by the subtype. It gets called internally
 	 * by the parser framework, so the user need not worry about
-	 * calling this explicitly. 
-	 * 
+	 * calling this explicitly.
+	 *
 	 * @param startingOffset
 	 * @param source to be parsed.
 	 */
 	protected abstract void processLine(String source, int startingOffset);
 
 	/**
-	 * Adds a token of the type specified via argument to the internal token map, and assigns it 
+	 * Adds a token of the type specified via argument to the internal token map, and assigns it
 	 * the value matched by the pattern matcher. The generated token is
 	 * returned, or null if no pattern was matched.
 	 * <br><br>
 	 * If the token type already exists in the token map, it overwrites the value with the new token.
-	 * 
+	 *
 	 * @param type of the token to be generated
 	 * @param matcher containing pattern to match. the value matched is assigned as the value of the token
 	 * @return generated token if match is successful, or null otherwise
@@ -142,11 +141,11 @@ public abstract class LineRule implements ILineRule {
 	protected IParserToken addToken(String type, Matcher matcher) {
 		return internalAddToken(type, matcher);
 	}
-	
+
 	/**
 	 * Adds a non-null token to the token map. If the token type already exists, it
 	 * overwrites the value.
-	 * 
+	 *
 	 * @param token
 	 */
 	protected void addToken(IParserToken token) {
@@ -154,14 +153,14 @@ public abstract class LineRule implements ILineRule {
 			fTokenList.put(token.getType(), token);
 		}
 	}
-	
+
 	/**
 	 * Adds a token of the type specified to the internal token list and assigns it the value specified by the argument.
 	 * Returns the generated token.
-	 * 
+	 *
 	 * <br><br>
 	 * If the token type already exists in the token map, it overwrites the value with the new token.
-	 * 
+	 *
 	 * @param type of the token
 	 * @param value of the token
 	 * @return generated token.
@@ -171,15 +170,14 @@ public abstract class LineRule implements ILineRule {
 		addToken(token);
 		return token;
 	}
-	
-	
+
 	/**
-	 * 
+	 *
 	 * Grabs all characters up to the first match specified by the matcher, and adds
 	 * the latter as a token of a argument-specified type to the internal token list. All the aforementioned characters
 	 * as well as the first pattern matched are removed from the source buffer. The matched pattern
 	 * is not included in the token.
-	 * 
+	 *
 	 * <br><br>
 	 * If the token type already exists in the token map, it overwrites the value with the new token.
 	 * @param type
@@ -197,11 +195,11 @@ public abstract class LineRule implements ILineRule {
 		}
 		return token;
 	}
-	
+
 	/**
 	 * Grabs all characters up to but excluding the first match specified by the matcher,
 	 * and adds the latter as a token of an argument-specified type.
-	 * 
+	 *
 	 * <br><br>
 	 * If the token type already exists in the token map, it overwrites the value with the new token.
 	 * @param type
@@ -216,7 +214,7 @@ public abstract class LineRule implements ILineRule {
 		}
 		return token;
 	}
-	
+
 	/**
 	 * Copies all characters from start to endIndex - 1. Also gives the option to strip trailing whitespace.
 	 * <br><br>
@@ -249,14 +247,14 @@ public abstract class LineRule implements ILineRule {
 		addToken(token);
 		return token;
 	}
-	
+
 	/**
 	 * Matches the first hexadecimal match encountered that is not prefixed by "0x" as a token. The latter
 	 * is then prefixed to the value of the token before generating the token.
-	 * 
+	 *
 	 * <br><br>
 	 * If the token type already exists in the token map, it overwrites the value with the new token.
-	 * 
+	 *
 	 * @param type of token to be generated
 	 * @return generated token if hexadecimal match found, or null otherwise.
 	 */
@@ -280,7 +278,7 @@ public abstract class LineRule implements ILineRule {
 		}
 		return token;
 	}
-	
+
 	/**
 	 * Matches the first prefixed hexadecimal pattern encountered, and adds it as a token.
 	 * Pattern, and all characters prior to the pattern are consumed from the buffer.
@@ -295,10 +293,10 @@ public abstract class LineRule implements ILineRule {
 
 	/**
 	 * Used internally for adding a token to the token list.
-	 * 
+	 *
 	 * <br><br>
 	 * If the token type already exists in the token map, it overwrites the value with the new token.
-	 * 
+	 *
 	 * @param type
 	 * @param matcher
 	 * @param offset
@@ -314,8 +312,6 @@ public abstract class LineRule implements ILineRule {
 		}
 		return token;
 	}
-	
-
 
 	/**
 	 * Finds the first occurrence of the pattern in the source.
@@ -339,11 +335,10 @@ public abstract class LineRule implements ILineRule {
 		}
 		return value;
 	}
-	
-	
+
 	/**
 	 * Consumes a section of characters from the buffer.
-	 * 
+	 *
 	 * @param startIndex inclusive
 	 * @param endIndex exclusive
 	 * @throws IndexOutOfBoundsException if start and end are outside the buffer range.
@@ -354,7 +349,7 @@ public abstract class LineRule implements ILineRule {
 		fSource.delete(startIndex, endIndex);
 		return value;
 	}
-	
+
 	/**
 	 * Matches the first occurrence of the pattern and consumes all characters
 	 * from the start of the buffer until the first occurrence of the pattern.
@@ -371,9 +366,9 @@ public abstract class LineRule implements ILineRule {
 		}
 		return matched;
 	}
-	
+
 	/**
-	 * Finds the first match. No consumption or token generation occurs. 
+	 * Finds the first match. No consumption or token generation occurs.
 	 * The buffer state is left intact.
 	 * <br>
 	 * @param matcher
@@ -383,7 +378,7 @@ public abstract class LineRule implements ILineRule {
 		matcher.reset(fSource);
 		return matcher.find();
 	}
-	
+
 	/**
 	 * Returns the starting index of the last matched pattern, but doesn't consume anything or generate
 	 * tokens.

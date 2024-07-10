@@ -24,7 +24,7 @@ package com.ibm.dtfj.javacore.builder;
 
 /**
  * Generates a Image builder factory with a unique id.
- * 
+ *
  * @see com.ibm.dtfj.javacore.builder.IImageBuilder
  *
  */

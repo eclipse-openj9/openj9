@@ -51,7 +51,7 @@ public class JCImageFactory implements ImageFactory {
 			public int read() throws IOException {
 				return in.read();
 			}
-			
+
 		};
 		try {
 			Image image = new JavaCoreReader(new ImageBuilderFactory()).generateImage(stream);
@@ -65,13 +65,13 @@ public class JCImageFactory implements ImageFactory {
 	public Image[] getImagesFromArchive(File archive, boolean extract) throws IOException {
 		throw new IOException("Not supported for JavaCore files");
 	}
-	
+
 	public Image getImage(ImageInputStream in, ImageInputStream meta, URI sourceID) throws IOException {
 		throw new IOException("Not supported for JavaCore files");
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	public Image getImage(File arg0) throws IOException {
 		InputStream stream = new FileInputStream(arg0);
@@ -88,7 +88,7 @@ public class JCImageFactory implements ImageFactory {
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	public Image getImage(File arg0, File arg1) throws IOException {
 		throw new IOException("JavaCore does not use metadata files (yet)");

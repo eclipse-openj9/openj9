@@ -33,7 +33,7 @@ import com.ibm.dtfj.corereaders.MemoryAccessException;
 public class J9RASFragmentJ6v3 implements J9RASFragment {
 	private long tid = 0;
 	private long pid = 0;
-	
+
 	/**
 	 * Create a Java 6/7, version 3 J9RAS fragment
 	 * @param memory address space

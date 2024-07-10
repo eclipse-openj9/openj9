@@ -22,7 +22,6 @@
  */
 package com.ibm.dtfj.corereaders.zos.util;
 
-
 /**
  * This is a simple class to map an integer key to an object value. It has a smaller footprint
  * than the various standard Java classes owing to the use of open addressing (see description

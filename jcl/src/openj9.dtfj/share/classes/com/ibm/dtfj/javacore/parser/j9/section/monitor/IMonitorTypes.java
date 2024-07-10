@@ -24,23 +24,22 @@ package com.ibm.dtfj.javacore.parser.j9.section.monitor;
 
 public interface IMonitorTypes {
 	public static final String MONITOR_SECTION = "LOCKS";
-	
+
 	public static final String T_1LKPOOLINFO = "1LKPOOLINFO";
 	public static final String T_2LKPOOLTOTAL = "2LKPOOLTOTAL";
 	public static final String T_1LKMONPOOLDUMP = "1LKMONPOOLDUMP";
-	
+
 	public static final String T_2LKMONINUSE = "2LKMONINUSE";
 	public static final String T_3LKMONOBJECT = "3LKMONOBJECT";
 	public static final String T_3LKNOTIFYQ = "3LKNOTIFYQ";
 	public static final String T_3LKWAITNOTIFY = "3LKWAITNOTIFY";
-	
+
 	public static final String T_3LKWAITERQ = "3LKWAITERQ";
 	public static final String T_3LKWAITER = "3LKWAITER";
-	
+
 	public static final String T_1LKREGMONDUMP = "1LKREGMONDUMP";
 	public static final String T_2LKREGMON = "2LKREGMON";
-	
-	
+
 //	public static final String T_1LKDEADLOCK = "1LKDEADLOCK";
 //	public static final String T_2LKDEADLOCKTHR = "2LKDEADLOCKTHR";
 //	public static final String T_3LKDEADLOCKWTR = "3LKDEADLOCKWTR";
@@ -49,7 +48,6 @@ public interface IMonitorTypes {
 //	public static final String T_4LKDEADLOCKREG = "4LKDEADLOCKREG";
 //	public static final String T_3LKDEADLOCKOWN = "3LKDEADLOCKOWN";
 
-	
 	/*
 	 * Attributes
 	 */
@@ -58,23 +56,17 @@ public interface IMonitorTypes {
 	public static final String INFLATED_MONITOR = "mon_inflated_monitor";
 	public static final String MONITOR_NAME = "mon_monitor_name";
 	public static final String MONITOR_OBJECT_FULL_JAVA_NAME = "mon_obj_full_java_name";
-	
-	
+
 	public static final String MONITOR_OBJECT_ADDRESS = "monitor_object_address";
 	public static final String MONITOR_WORD_ADDRESS_IN_HEADER = "monitor_word_address";
-	
+
 	public static final String MONITOR_ADDRESS = "mon_monitor_address";
-	
-	
+
 	public static final String UNOWNED = "mon_unowned";
 	public static final String FLATLOCKED = "mon_flat_locked";
 	public static final String MONITOR_THREAD_NAME = "monitor_thd_name";
 	public static final String MONITOR_THREAD_ID = "monitor_thread_id";
 
-	
 	public static final String MONITOR_ENTRY_COUNT = "mon_entry_count";
-	
-	
-	
-	
+
 }

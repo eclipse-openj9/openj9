@@ -32,66 +32,66 @@ import com.ibm.dtfj.image.CorruptDataException;
  * object within with JavaRuntime. For primordial class loaders such as
  * the bootstrap class loader, there may or may not be a corresponding
  * <code>java.lang.ClassLoader</code> instance.</p>
- * 
+ *
  * <p>Since Java does not define any strict inheritance structure between
  * class loaders, there are no APIs for inspecting 'child' or 'parent'
  * class loaders. This information may be inferred by inspecting the
  * corresponding <code>java.lang.ClassLoader</code> instance.</p>
- * 
+ *
  * @see java.lang.ClassLoader
- * 
+ *
  */
 public interface JavaClassLoader {
 
     /**
-     * Get the set of classes which are defined in this JavaClassLoader. 
+     * Get the set of classes which are defined in this JavaClassLoader.
      * @return an iterator over the collection of classes which are defined
-     * in this JavaClassLoader 
-     * 
+     * in this JavaClassLoader
+     *
      * @see JavaClass
      * @see com.ibm.dtfj.image.CorruptData
      */
     public Iterator getDefinedClasses();
-    
+
     /**
      * When a ClassLoader successfully delegates a findClass() request to
      * another ClassLoader, the result of the delegation must be cached within
      * the internal structure so that the VM does not make repeated requests
      * for the same class.
-     * 
+     *
      * @return an iterator over the collection of classes which are defined
      * in this JavaClassLoader <i>or</i> which were found by delegation to
      * other JavaClassLoaders
-     * 
+     *
      * @see JavaClass
      * @see com.ibm.dtfj.image.CorruptData
      */
     public Iterator getCachedClasses();
-    
+
     /**
      * Find a named class within this class loader. The class may have been
      * defined in this class loader, or this class loader may have delegated
      * the load to another class loader and cached the result.
-     * 
+     *
      * @param name of the class to find. Packages should be separated by
      * '/' instead of '.'
      * @return the JavaClass instance, or null if it is not found
-     * @throws CorruptDataException 
+     * @throws CorruptDataException
      */
     public JavaClass findClass(String name) throws CorruptDataException;
-    
+
     /**
      * Get the java.lang.ClassLoader instance associated with this class loader.
      * @return a JavaObject representing the java.lang.ClassLoader instance
      * associated with this class loader, or null if there is no Java class
      * loader associated with this low-level class loader.
-     * @throws CorruptDataException 
-     * 
+     * @throws CorruptDataException
+     *
      * @see JavaObject
      * @see ClassLoader
      */
     public JavaObject getObject() throws CorruptDataException;
-    
+
 	/**
 	 * @param obj
 	 * @return True if the given object refers to the same Java Class Loader in the image

@@ -32,7 +32,7 @@ import com.ibm.dtfj.javacore.parser.framework.parser.ParserException;
  * to parsing methods of the latter. Behaviourally, this interface is more closely associated
  * to a parser behaviour than a javacore tag object. See an implementation example
  * to see how this is used. Using sub sections is optional. It is not required to
- * implement a sub section for each javacore tag. 
+ * implement a sub section for each javacore tag.
  *
  */
 public interface ITagSubSection {

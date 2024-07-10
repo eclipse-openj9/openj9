@@ -25,11 +25,10 @@ package com.ibm.dtfj.javacore.parser.j9.section.common;
 import com.ibm.dtfj.javacore.parser.framework.tag.TagParser;
 
 public class CommonTagParser extends TagParser {
-	
+
 	public CommonTagParser() {
 		super(ICommonTypes.COMMON);
 	}
-
 
 	protected void initTagAttributeRules() {
 		addTag(ICommonTypes.SECTION, null);
